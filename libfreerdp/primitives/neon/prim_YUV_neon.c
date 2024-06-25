@@ -30,7 +30,7 @@
 #include "prim_internal.h"
 #include "prim_YUV.h"
 
-#if defined(WITH_NEON)
+#if defined(NEON_ENABLED)
 #include <arm_neon.h>
 
 static primitives_t* generic = NULL;
@@ -744,7 +744,7 @@ static pstatus_t neon_YUV420CombineToYUV444(avc444_frame_type type,
 
 void primitives_init_YUV_neon(primitives_t* prims)
 {
-#if defined(WITH_NEON)
+#if defined(NEON_ENABLED)
 	generic = primitives_get_generic();
 	primitives_init_YUV(prims);
 

@@ -40,11 +40,17 @@
 #endif
 #endif
 
-#if defined(SSE2_ENABLED) || defined(WITH_NEON) || defined(WITH_OPENCL)
+#if defined(WITH_NEON)
+#if defined(_M_ARM64) || defined(_M_ARM)
+#define NEON_ENABLED
+#endif
+#endif
+
+#if defined(SSE2_ENABLED) || defined(NEON_ENABLED) || defined(WITH_OPENCL)
 #define HAVE_OPTIMIZED_PRIMITIVES 1
 #endif
 
-#if defined(SSE2_ENABLED) || defined(WITH_NEON)
+#if defined(SSE2_ENABLED) || defined(NEON_ENABLED)
 #define HAVE_CPU_OPTIMIZED_PRIMITIVES 1
 #endif
 

@@ -23,16 +23,14 @@
 #include <freerdp/primitives.h>
 #include <winpr/sysinfo.h>
 
-#if defined(WITH_NEON)
-#include <arm_neon.h>
-#endif
-
 #include "prim_internal.h"
 #include "prim_templates.h"
 #include "prim_colors.h"
 
 /*---------------------------------------------------------------------------*/
-#ifdef WITH_NEON
+#if defined(NEON_ENABLED)
+#include <arm_neon.h>
+
 static primitives_t* generic = NULL;
 
 static pstatus_t
@@ -344,12 +342,12 @@ neon_RGBToRGB_16s8u_P3AC4R(const INT16* const WINPR_RESTRICT pSrc[3], /* 16-bit 
 			return generic->RGBToRGB_16s8u_P3AC4R(pSrc, srcStep, pDst, dstStep, DstFormat, roi);
 	}
 }
-#endif /* WITH_NEON */
+#endif /* NEON_ENABLED */
 
 /* ------------------------------------------------------------------------- */
 void primitives_init_colors_neon(primitives_t* prims)
 {
-#if defined(WITH_NEON)
+#if defined(NEON_ENABLED)
 	generic = primitives_get_generic();
 	primitives_init_colors(prims);
 

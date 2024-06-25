@@ -18,6 +18,7 @@
  * limitations under the License.
  */
 
+#include <winpr/platform.h>
 #include <winpr/sysinfo.h>
 #include <freerdp/config.h>
 #include <freerdp/log.h>
@@ -27,9 +28,15 @@
 
 #define TAG FREERDP_TAG("codec.nsc.neon")
 
+#if defined(WITH_NEON)
+#if defined(_M_ARM64) || defined(_M_ARM)
+#define NEON_ENABLED
+#endif
+#endif
+
 void nsc_init_neon(NSC_CONTEXT* context)
 {
-#if defined(WITH_NEON)
+#if defined(NEON_ENABLED)
 	if (!IsProcessorFeaturePresent(PF_ARM_NEON_INSTRUCTIONS_AVAILABLE))
 		return;
 
