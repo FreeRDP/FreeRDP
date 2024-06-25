@@ -143,17 +143,17 @@ if [ ! -d $SRC ];
 then
 	mkdir -p $SRC
 	cd $SRC
-	git clone -b openssl-3.2.0 https://github.com/openssl/openssl.git
-	git clone --depth 1 -b v1.3 https://github.com/madler/zlib.git
-	git clone --depth 1 -b uriparser-0.9.7 https://github.com/uriparser/uriparser.git
-	git clone --depth 1 -b v1.7.16 https://github.com/DaveGamble/cJSON.git
-	git clone --depth 1 -b release-2.28.1 https://github.com/libsdl-org/SDL.git
-	git clone --depth 1 --shallow-submodules --recurse-submodules -b release-2.20.2 https://github.com/libsdl-org/SDL_ttf.git
-	git clone --depth 1 --shallow-submodules --recurse-submodules -b release-2.8.1 https://github.com/libsdl-org/SDL_image.git
-	git clone --depth 1 --shallow-submodules --recurse-submodules -b v1.0.26 https://github.com/libusb/libusb-cmake.git
-	git clone --depth 1 -b n6.0 https://github.com/FFmpeg/FFmpeg.git
-	git clone --depth 1 -b v2.4.0 https://github.com/cisco/openh264.git
-	git clone --depth 1 -b v1.4 https://gitlab.xiph.org/xiph/opus.git
+	git clone --depth 1 -b openssl-3.3.1 https://github.com/openssl/openssl.git
+	git clone --depth 1 -b v1.3.1 https://github.com/madler/zlib.git
+	git clone --depth 1 -b uriparser-0.9.8 https://github.com/uriparser/uriparser.git
+	git clone --depth 1 -b v1.7.18 https://github.com/DaveGamble/cJSON.git
+	git clone --depth 1 -b release-2.30.4 https://github.com/libsdl-org/SDL.git
+	git clone --depth 1 --shallow-submodules --recurse-submodules -b release-2.22.0 https://github.com/libsdl-org/SDL_ttf.git
+	git clone --depth 1 --shallow-submodules --recurse-submodules -b release-2.8.2 https://github.com/libsdl-org/SDL_image.git
+	git clone --depth 1 --shallow-submodules --recurse-submodules -b v1.0.27-1 https://github.com/libusb/libusb-cmake.git
+	git clone --depth 1 -b n7.0.1 https://github.com/FFmpeg/FFmpeg.git
+	git clone --depth 1 -b v2.4.1 https://github.com/cisco/openh264.git
+	git clone --depth 1 -b v1.5.2 https://gitlab.xiph.org/xiph/opus.git
 	git clone --depth 1 -b 2.11.1 https://github.com/knik0/faad2.git
 	git clone --depth 1 -b 1.18.0 https://gitlab.freedesktop.org/cairo/cairo.git
 	git clone --depth 1 -b 1_30 https://github.com/knik0/faac.git
