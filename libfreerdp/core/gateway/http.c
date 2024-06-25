@@ -38,6 +38,7 @@
 #endif
 
 #include "http.h"
+#include "../tcp.h"
 
 #define TAG FREERDP_TAG("core.gateway.http")
 
@@ -1230,14 +1231,34 @@ HttpResponse* http_response_recv(rdpTls* tls, BOOL readContentLength)
 
 	response->ContentLength = 0;
 
+	const UINT32 timeout = freerdp_settings_get_uint32(tls->settings, FreeRDP_TcpConnectTimeout);
 	while (payloadOffset == 0)
 	{
+		int status = -1;
 		size_t s = 0;
 		char* end = NULL;
 		/* Read until we encounter \r\n\r\n */
 		ERR_clear_error();
-		int status = BIO_read(tls->bio, Stream_Pointer(response->data), 1);
+		const long wstatus = BIO_wait_read(tls->bio, timeout);
+		if (wstatus < 0)
+		{
+			if (!BIO_should_retry(tls->bio))
+			{
+				WLog_ERR(TAG, "[BIO_wait_read] Retries exceeded");
+				ERR_print_errors_cb(print_bio_error, NULL);
+				goto out_error;
+			}
+			USleep(100);
+			continue;
+		}
+		else if (wstatus == 0)
+		{
+			WLog_ERR(TAG, "[BIO_wait] timeout exceeded");
+			ERR_print_errors_cb(print_bio_error, NULL);
+			goto out_error;
+		}
 
+		status = BIO_read(tls->bio, Stream_Pointer(response->data), 1);
 		if (status <= 0)
 		{
 			if (!BIO_should_retry(tls->bio))
