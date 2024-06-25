@@ -30,7 +30,7 @@
 
 #define TAG FREERDP_TAG("primitives.copy")
 
-#if defined(WITH_SSE2)
+#if defined(SSE2_ENABLED)
 #include <emmintrin.h>
 #include <immintrin.h>
 
@@ -264,13 +264,12 @@ static pstatus_t sse_image_copy_no_overlap(BYTE* WINPR_RESTRICT pDstData, DWORD 
 		                                         nXSrc, nYSrc, palette, srcVMultiplier, srcVOffset,
 		                                         dstVMultiplier, dstVOffset);
 }
-
 #endif
 
 /* ------------------------------------------------------------------------- */
 void primitives_init_copy_sse41(primitives_t* prims)
 {
-#if defined(WITH_SSE2)
+#if defined(SSE2_ENABLED)
 	if (IsProcessorFeaturePresent(PF_SSE4_1_INSTRUCTIONS_AVAILABLE))
 	{
 		WLog_VRB(PRIM_TAG, "SSE4.1 optimizations");

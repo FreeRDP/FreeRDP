@@ -21,15 +21,13 @@
 #include <freerdp/primitives.h>
 #include <winpr/sysinfo.h>
 
-#ifdef WITH_SSE2
-#include <emmintrin.h>
-#endif /* WITH_SSE2 */
-
 #include "prim_internal.h"
 #include "prim_set.h"
 
 /* ========================================================================= */
-#ifdef WITH_SSE2
+#if defined(SSE2_ENABLED)
+#include <emmintrin.h>
+
 static primitives_t* generic = NULL;
 
 static pstatus_t sse2_set_8u(BYTE val, BYTE* WINPR_RESTRICT pDst, UINT32 len)
@@ -113,10 +111,8 @@ static pstatus_t sse2_set_8u(BYTE val, BYTE* WINPR_RESTRICT pDst, UINT32 len)
 
 	return PRIMITIVES_SUCCESS;
 }
-#endif /* WITH_SSE2 */
 
 /* ------------------------------------------------------------------------- */
-#ifdef WITH_SSE2
 static pstatus_t sse2_set_32u(UINT32 val, UINT32* WINPR_RESTRICT pDst, UINT32 len)
 {
 	const primitives_t* prim = primitives_get_generic();
@@ -214,12 +210,12 @@ static pstatus_t sse2_set_32s(INT32 val, INT32* WINPR_RESTRICT pDst, UINT32 len)
 	UINT32 uval = *((UINT32*)&val);
 	return sse2_set_32u(uval, (UINT32*)pDst, len);
 }
-#endif /* WITH_SSE2 */
+#endif
 
 /* ------------------------------------------------------------------------- */
 void primitives_init_set_sse2(primitives_t* WINPR_RESTRICT prims)
 {
-#if defined(WITH_SSE2)
+#if defined(SSE2_ENABLED)
 	generic = primitives_get_generic();
 	primitives_init_set(prims);
 	/* Pick tuned versions if possible. */

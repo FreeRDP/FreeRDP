@@ -94,9 +94,10 @@ WINPR_PRAGMA_DIAG_IGNORED_RESERVED_ID_MACRO
 
 /* Intel x86 (_M_IX86) */
 
-#if defined(i386) || defined(__i386) || defined(__i386__) || defined(__i486__) ||   \
-    defined(__i586__) || defined(__i686__) || defined(__X86__) || defined(_X86_) || \
-    defined(__I86__) || defined(__IA32__) || defined(__THW_INTEL__) || defined(__INTEL__)
+#if defined(i386) || defined(__i386) || defined(__i386__) || defined(__i486__) ||            \
+    defined(__i586__) || defined(__i686__) || defined(__X86__) || defined(_X86_) ||          \
+    defined(__I86__) || defined(__IA32__) || defined(__THW_INTEL__) || defined(__INTEL__) || \
+    defined(_M_IX86)
 #ifndef _M_IX86
 #define _M_IX86 1
 #endif
@@ -108,6 +109,13 @@ WINPR_PRAGMA_DIAG_IGNORED_RESERVED_ID_MACRO
     defined(_M_X64)
 #ifndef _M_AMD64
 #define _M_AMD64 1
+#endif
+#endif
+
+/* Intel ia64 */
+#if defined(__ia64) || defined(__ia64__) || defined(_M_IA64)
+#ifndef _M_IA64
+#define _M_IA64 1
 #endif
 #endif
 

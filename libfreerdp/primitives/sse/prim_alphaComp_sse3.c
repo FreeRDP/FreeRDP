@@ -28,15 +28,13 @@
 
 #include "prim_alphaComp.h"
 
-#ifdef WITH_SSE2
-#include <emmintrin.h>
-#include <pmmintrin.h>
-#endif /* WITH_SSE2 */
-
 #include "prim_internal.h"
 
 /* ------------------------------------------------------------------------- */
-#ifdef WITH_SSE2
+#if defined(SSE2_ENABLED)
+#include <emmintrin.h>
+#include <pmmintrin.h>
+
 static primitives_t* generic = NULL;
 
 static pstatus_t sse2_alphaComp_argb(const BYTE* WINPR_RESTRICT pSrc1, UINT32 src1Step,
@@ -211,7 +209,7 @@ static pstatus_t sse2_alphaComp_argb(const BYTE* WINPR_RESTRICT pSrc1, UINT32 sr
 /* ------------------------------------------------------------------------- */
 void primitives_init_alphaComp_sse3(primitives_t* WINPR_RESTRICT prims)
 {
-#if defined(WITH_SSE2)
+#if defined(SSE2_ENABLED)
 	generic = primitives_get_generic();
 	primitives_init_alphaComp(prims);
 

@@ -30,7 +30,7 @@
 
 #define TAG FREERDP_TAG("primitives.copy")
 
-#if defined(WITH_SSE2)
+#if defined(SSE2_ENABLED)
 #include <emmintrin.h>
 #include <immintrin.h>
 
@@ -265,13 +265,12 @@ static pstatus_t avx2_image_copy_no_overlap(BYTE* WINPR_RESTRICT pDstData, DWORD
 		                                          nXSrc, nYSrc, palette, srcVMultiplier, srcVOffset,
 		                                          dstVMultiplier, dstVOffset);
 }
-
 #endif
 
 /* ------------------------------------------------------------------------- */
 void primitives_init_copy_avx2(primitives_t* prims)
 {
-#if defined(WITH_SSE2)
+#if defined(SSE2_ENABLED)
 	if (IsProcessorFeaturePresent(PF_AVX2_INSTRUCTIONS_AVAILABLE))
 	{
 		WLog_VRB(PRIM_TAG, "AVX2 optimizations");

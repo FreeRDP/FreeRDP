@@ -25,15 +25,13 @@
 
 #include "prim_YCoCg.h"
 
-#ifdef WITH_SSE2
-#include <emmintrin.h>
-#include <tmmintrin.h>
-#endif
-
 #include "prim_internal.h"
 #include "prim_templates.h"
 
-#ifdef WITH_SSE2
+#if defined(SSE2_ENABLED)
+#include <emmintrin.h>
+#include <tmmintrin.h>
+
 static primitives_t* generic = NULL;
 
 /* ------------------------------------------------------------------------- */
@@ -436,12 +434,12 @@ static pstatus_t ssse3_YCoCgRToRGB_8u_AC4R(const BYTE* WINPR_RESTRICT pSrc, INT3
 	}
 }
 
-#endif /* WITH_SSE2 */
+#endif
 
 /* ------------------------------------------------------------------------- */
 void primitives_init_YCoCg_ssse3(primitives_t* WINPR_RESTRICT prims)
 {
-#if defined(WITH_SSE2)
+#if defined(SSE2_ENABLED)
 	generic = primitives_get_generic();
 	primitives_init_YCoCg(prims);
 

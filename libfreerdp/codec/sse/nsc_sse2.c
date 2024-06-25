@@ -17,6 +17,7 @@
  * limitations under the License.
  */
 
+#include <winpr/platform.h>
 #include <freerdp/config.h>
 #include <freerdp/log.h>
 
@@ -26,6 +27,12 @@
 #define TAG FREERDP_TAG("codec.nsc.sse2")
 
 #if defined(WITH_SSE2)
+#if defined(_M_IX86) || defined(_M_AMD64) || defined(_M_IA64) || defined(_M_IX86_AMD64)
+#define SSE2_ENABLED
+#endif
+#endif
+
+#if defined(SSE2_ENABLED)
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -381,7 +388,7 @@ static BOOL nsc_encode_sse2(NSC_CONTEXT* context, const BYTE* data, UINT32 scanl
 
 void nsc_init_sse2(NSC_CONTEXT* context)
 {
-#if defined(WITH_SSE2)
+#if defined(SSE2_ENABLED)
 	if (!IsProcessorFeaturePresent(PF_XMMI64_INSTRUCTIONS_AVAILABLE))
 		return;
 

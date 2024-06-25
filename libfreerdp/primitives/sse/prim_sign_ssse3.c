@@ -21,14 +21,12 @@
 
 #include "prim_sign.h"
 
-#if defined(WITH_SSE2)
-#include <emmintrin.h>
-#include <tmmintrin.h>
-#endif
-
 #include "prim_internal.h"
 
-#if defined(WITH_SSE2)
+#if defined(SSE2_ENABLED)
+#include <emmintrin.h>
+#include <tmmintrin.h>
+
 static primitives_t* generic = NULL;
 
 /* ------------------------------------------------------------------------- */
@@ -166,12 +164,13 @@ static pstatus_t ssse3_sign_16s(const INT16* WINPR_RESTRICT pSrc, INT16* WINPR_R
 
 	return PRIMITIVES_SUCCESS;
 }
-#endif /* WITH_SSE2 */
+
+#endif /* SSE2_ENABLED */
 
 /* ------------------------------------------------------------------------- */
 void primitives_init_sign_ssse3(primitives_t* WINPR_RESTRICT prims)
 {
-#if defined(WITH_SSE2)
+#if defined(SSE2_ENABLED)
 	generic = primitives_get_generic();
 	primitives_init_sign(prims);
 	/* Pick tuned versions if possible. */

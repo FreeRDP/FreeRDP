@@ -21,15 +21,13 @@
 
 #include "prim_shift.h"
 
-#ifdef WITH_SSE2
-#include <emmintrin.h>
-#include <pmmintrin.h>
-#endif /* WITH_SSE2 */
-
 #include "prim_internal.h"
 #include "prim_templates.h"
 
-#ifdef WITH_SSE2
+#if defined(SSE2_ENABLED)
+#include <emmintrin.h>
+#include <pmmintrin.h>
+
 static primitives_t* generic = NULL;
 
 /* ------------------------------------------------------------------------- */
@@ -135,7 +133,6 @@ static pstatus_t sse2_lShiftC_16s_inplace(INT16* WINPR_RESTRICT pSrcDst, UINT32 
 
 	return PRIMITIVES_SUCCESS;
 }
-
 #endif
 
 /* Note: the IPP version will have to call ippLShiftC_16s or ippRShiftC_16s
@@ -146,7 +143,7 @@ static pstatus_t sse2_lShiftC_16s_inplace(INT16* WINPR_RESTRICT pSrcDst, UINT32 
 /* ------------------------------------------------------------------------- */
 void primitives_init_shift_sse3(primitives_t* WINPR_RESTRICT prims)
 {
-#if defined(WITH_SSE2)
+#if defined(SSE2_ENABLED)
 	generic = primitives_get_generic();
 	primitives_init_shift(prims);
 
