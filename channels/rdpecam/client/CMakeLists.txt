@@ -31,6 +31,16 @@ else()
 	message(FATAL_ERROR "libv4l-dev required for CHANNEL_RDPECAM_CLIENT")
 endif()
 
+option(RDPECAM_INPUT_FORMAT_H264 "[MS-RDPECAM] Enable H264 camera format (passthrough)" ON)
+if(RDPECAM_INPUT_FORMAT_H264)
+	add_definitions("-DWITH_INPUT_FORMAT_H264")
+endif()
+
+option(RDPECAM_INPUT_FORMAT_MJPG "[MS-RDPECAM] Enable MJPG camera format" ON)
+if(RDPECAM_INPUT_FORMAT_MJPG)
+	add_definitions("-DWITH_INPUT_FORMAT_MJPG")
+endif()
+
 include_directories(SYSTEM ${SWSCALE_INCLUDE_DIRS})
 
 set(${MODULE_PREFIX}_SRCS
