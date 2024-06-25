@@ -1725,12 +1725,13 @@ static UINT drdynvc_virtual_channel_event_connected(drdynvcPlugin* drdynvc, LPVO
 			WLog_Print(drdynvc->log, WLOG_ERROR, "CreateThread failed!");
 			goto error;
 		}
-	}
-	if (!SetThreadPriority(drdynvc->thread, THREAD_PRIORITY_HIGHEST))
-	{
-		error = ERROR_INTERNAL_ERROR;
-		WLog_Print(drdynvc->log, WLOG_ERROR, "SetThreadPriority failed!");
-		goto error;
+
+		if (!SetThreadPriority(drdynvc->thread, THREAD_PRIORITY_HIGHEST))
+		{
+			error = ERROR_INTERNAL_ERROR;
+			WLog_Print(drdynvc->log, WLOG_ERROR, "SetThreadPriority failed!");
+			goto error;
+		}
 	}
 
 error:
