@@ -29,6 +29,101 @@
 #include <freerdp/log.h>
 #define TAG FREERDP_TAG("core.timezone")
 
+#if !defined(WITH_DEBUG_TIMEZONE)
+#define log_timezone(tzif, result)
+#else
+#define log_timezone(tzif, result) log_timezone_((tzif), (result), __FILE__, __func__, __LINE__)
+static const char* weekday2str(WORD wDayOfWeek)
+{
+	switch (wDayOfWeek)
+	{
+		case 0:
+			return "SUNDAY";
+		case 1:
+			return "MONDAY";
+		case 2:
+			return "TUESDAY";
+		case 3:
+			return "WEDNESDAY";
+		case 4:
+			return "THURSDAY";
+		case 5:
+			return "FRIDAY";
+		case 6:
+			return "SATURDAY";
+		default:
+			return "DAY-OF-MAGIC";
+	}
+}
+
+static char* systemtime2str(const SYSTEMTIME* t, char* buffer, size_t len)
+{
+	const SYSTEMTIME empty = { 0 };
+
+	if (memcmp(t, &empty, sizeof(SYSTEMTIME)) == 0)
+		_snprintf(buffer, len, "{ not set }");
+	else
+	{
+		_snprintf(buffer, len,
+		          "{ %" PRIu16 "-%" PRIu16 "-%" PRIu16 " [%s] %" PRIu16 ":%" PRIu16 ":%" PRIu16
+		          ".%" PRIu16 "}",
+		          t->wYear, t->wMonth, t->wDay, weekday2str(t->wDayOfWeek), t->wHour, t->wMinute,
+		          t->wSecond, t->wMilliseconds);
+	}
+	return buffer;
+}
+
+static void log_print(wLog* log, DWORD level, const char* file, const char* fkt, size_t line, ...)
+{
+	if (!WLog_IsLevelActive(log, level))
+		return;
+
+	va_list ap;
+	va_start(ap, line);
+	WLog_PrintMessageVA(log, WLOG_MESSAGE_TEXT, level, line, file, fkt, ap);
+	va_end(ap);
+}
+
+static void log_timezone_(const TIME_ZONE_INFORMATION* tzif, DWORD result, const char* file,
+                          const char* fkt, size_t line)
+{
+	WINPR_ASSERT(tzif);
+
+	char buffer[64] = { 0 };
+	DWORD level = WLOG_TRACE;
+	wLog* log = WLog_Get(TIMEZONE_TAG);
+	log_print(log, level, file, fkt, line, "TIME_ZONE_INFORMATION {");
+	log_print(log, level, file, fkt, line, "  Bias=%" PRIu32, tzif->Bias);
+	ConvertWCharNToUtf8(tzif->StandardName, ARRAYSIZE(tzif->StandardName), buffer,
+	                    ARRAYSIZE(buffer));
+	log_print(log, level, file, fkt, line, "  StandardName=%s", buffer);
+	log_print(log, level, file, fkt, line, "  StandardDate=%s",
+	          systemtime2str(&tzif->StandardDate, buffer, sizeof(buffer)));
+	log_print(log, level, file, fkt, line, "  StandardBias=%" PRIu32, tzif->StandardBias);
+
+	ConvertWCharNToUtf8(tzif->DaylightName, ARRAYSIZE(tzif->DaylightName), buffer,
+	                    ARRAYSIZE(buffer));
+	log_print(log, level, file, fkt, line, "  DaylightName=%s", buffer);
+	log_print(log, level, file, fkt, line, "  DaylightDate=%s",
+	          systemtime2str(&tzif->DaylightDate, buffer, sizeof(buffer)));
+	log_print(log, level, file, fkt, line, "  DaylightBias=%" PRIu32, tzif->DaylightBias);
+
+	switch (result)
+	{
+		case TIME_ZONE_ID_DAYLIGHT:
+			log_print(log, level, file, fkt, line, "  DaylightDate in use");
+			break;
+		case TIME_ZONE_ID_STANDARD:
+			log_print(log, level, file, fkt, line, "  StandardDate in use");
+			break;
+		default:
+			log_print(log, level, file, fkt, line, "  UnknownDate in use");
+			break;
+	}
+	log_print(log, level, file, fkt, line, "}");
+}
+#endif
+
 static BOOL rdp_read_system_time(wStream* s, SYSTEMTIME* system_time);
 static BOOL rdp_write_system_time(wStream* s, const SYSTEMTIME* system_time);
 
@@ -78,11 +173,6 @@ BOOL rdp_write_system_time(wStream* s, const SYSTEMTIME* system_time)
 	Stream_Write_UINT16(s, system_time->wMinute);       /* wMinute */
 	Stream_Write_UINT16(s, system_time->wSecond);       /* wSecond */
 	Stream_Write_UINT16(s, system_time->wMilliseconds); /* wMilliseconds */
-	DEBUG_TIMEZONE("Time: y=%" PRIu16 ",m=%" PRIu16 ",dow=%" PRIu16 ",d=%" PRIu16 ", %02" PRIu16
-	               ":%02" PRIu16 ":%02" PRIu16 ".%03" PRIu16 "",
-	               system_time->wYear, system_time->wMonth, system_time->wDayOfWeek,
-	               system_time->wDay, system_time->wHour, system_time->wMinute,
-	               system_time->wSecond, system_time->wMilliseconds);
 	return TRUE;
 }
 
@@ -121,6 +211,7 @@ BOOL rdp_read_client_time_zone(wStream* s, rdpSettings* settings)
 	if (!rdp_read_system_time(s, &tz->DaylightDate)) /* DaylightDate */
 		return FALSE;
 	Stream_Read_UINT32(s, tz->DaylightBias);    /* DaylightBias */
+	log_timezone(tz, 0);
 	return TRUE;
 }
 
@@ -143,6 +234,7 @@ BOOL rdp_write_client_time_zone(wStream* s, rdpSettings* settings)
 	if (!tz)
 		return FALSE;
 
+	log_timezone(tz, 0);
 	if (!Stream_EnsureRemainingCapacity(s, 4ull + sizeof(tz->StandardName)))
 		return FALSE;
 
@@ -154,21 +246,12 @@ BOOL rdp_write_client_time_zone(wStream* s, rdpSettings* settings)
 	if (!rdp_write_system_time(s, &tz->StandardDate))
 		return FALSE;
 
-#ifdef WITH_DEBUG_TIMEZONE
-	WLog_DBG(TIMEZONE_TAG, "bias=%" PRId32 "", tz->Bias);
-	WLog_DBG(TIMEZONE_TAG, "StandardName:");
-	winpr_HexDump(TIMEZONE_TAG, WLOG_DEBUG, (const BYTE*)tz->StandardName,
-	              sizeof(tz->StandardName));
-	WLog_DBG(TIMEZONE_TAG, "DaylightName:");
-	winpr_HexDump(TIMEZONE_TAG, WLOG_DEBUG, (const BYTE*)tz->DaylightName,
-	              sizeof(tz->DaylightName));
-#endif
 	/* Note that StandardBias is ignored if no valid standardDate is provided. */
 	/* StandardBias */
 	if (!Stream_EnsureRemainingCapacity(s, 4ull + sizeof(tz->DaylightName)))
 		return FALSE;
 	Stream_Write_UINT32(s, tz->StandardBias);
-	DEBUG_TIMEZONE("StandardBias=%" PRId32 "", tz->StandardBias);
+
 	/* daylightName (64 bytes) */
 	Stream_Write(s, tz->DaylightName, sizeof(tz->DaylightName));
 	/* DaylightDate */
@@ -179,6 +262,6 @@ BOOL rdp_write_client_time_zone(wStream* s, rdpSettings* settings)
 	if (!Stream_EnsureRemainingCapacity(s, 4ull))
 		return FALSE;
 	Stream_Write_UINT32(s, tz->DaylightBias);
-	DEBUG_TIMEZONE("DaylightBias=%" PRId32 "", tz->DaylightBias);
+
 	return TRUE;
 }

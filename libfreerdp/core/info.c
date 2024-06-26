@@ -414,6 +414,8 @@ static BOOL rdp_read_extended_info_packet(rdpRdp* rdp, wStream* s)
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))
 		return FALSE;
+
+	if (freerdp_settings_get_bool(settings, FreeRDP_SupportDynamicTimeZone))
 	{
 		UINT16 cbDynamicDSTTimeZoneKeyName = 0;
 
@@ -443,6 +445,11 @@ static BOOL rdp_read_extended_info_packet(rdpRdp* rdp, wStream* s)
 		if (!freerdp_settings_set_bool(settings, FreeRDP_DynamicDaylightTimeDisabled,
 		                               DynamicDaylightTimeDisabled != 0))
 			return FALSE;
+		DEBUG_TIMEZONE("DynamicTimeZone=%s [%s]",
+		               freerdp_settings_get_string(settings, FreeRDP_DynamicDSTTimeZoneKeyName),
+		               freerdp_settings_get_bool(settings, FreeRDP_DynamicDaylightTimeDisabled)
+		                   ? "no-DST"
+		                   : "DST");
 	}
 
 end:
