@@ -414,6 +414,8 @@ static BOOL rdp_read_extended_info_packet(rdpRdp* rdp, wStream* s)
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))
 		return FALSE;
+
+	if (freerdp_settings_get_bool(settings, FreeRDP_SupportDynamicTimeZone))
 	{
 		UINT16 cbDynamicDSTTimeZoneKeyName = 0;
 
