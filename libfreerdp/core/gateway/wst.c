@@ -53,7 +53,6 @@
 struct rdp_wst
 {
 	rdpContext* context;
-	rdpSettings* settings;
 	BOOL attached;
 	BIO* frontBio;
 	rdpTls* tls;
@@ -217,7 +216,7 @@ static BOOL wst_tls_connect(rdpWst* wst, rdpTls* tls, int timeout)
 	long status = 0;
 	BIO* socketBio = NULL;
 	BIO* bufferedBio = NULL;
-	rdpSettings* settings = wst->settings;
+	rdpSettings* settings = wst->context->settings;
 	const char* peerHostname = wst->gwhostname;
 	UINT16 peerPort = wst->gwport;
 	const char* proxyUsername = NULL;
@@ -313,11 +312,12 @@ static wStream* wst_build_http_request(rdpWst* wst)
 		if (!wst_set_auth_header(wst->auth, request))
 			goto out;
 	}
-	else if (freerdp_settings_get_string(wst->settings, FreeRDP_GatewayHttpExtAuthBearer))
+	else if (freerdp_settings_get_string(wst->context->settings, FreeRDP_GatewayHttpExtAuthBearer))
 	{
 		http_request_set_auth_scheme(request, "Bearer");
 		http_request_set_auth_param(
-		    request, freerdp_settings_get_string(wst->settings, FreeRDP_GatewayHttpExtAuthBearer));
+		    request,
+		    freerdp_settings_get_string(wst->context->settings, FreeRDP_GatewayHttpExtAuthBearer));
 	}
 
 	s = http_request_write(wst->http, request);
@@ -362,7 +362,7 @@ static BOOL wst_handle_ok_or_forbidden(rdpWst* wst, HttpResponse** ppresponse, D
 
 	/* AVD returns a 403 response with a ARRAffinity cookie set. retry with that cookie */
 	const char* affinity = http_response_get_setcookie(*ppresponse, "ARRAffinity");
-	if (affinity && freerdp_settings_get_bool(wst->settings, FreeRDP_GatewayArmTransport))
+	if (affinity && freerdp_settings_get_bool(wst->context->settings, FreeRDP_GatewayArmTransport))
 	{
 		WLog_DBG(TAG, "Got Affinity cookie %s", affinity);
 		http_context_set_cookie(wst->http, "ARRAffinity", affinity);
@@ -374,19 +374,19 @@ static BOOL wst_handle_ok_or_forbidden(rdpWst* wst, HttpResponse** ppresponse, D
 			closesocket((SOCKET)fd);
 		freerdp_tls_free(wst->tls);
 
-		wst->tls = freerdp_tls_new(wst->settings);
+		wst->tls = freerdp_tls_new(wst->context);
 		if (!wst_tls_connect(wst, wst->tls, timeout))
 			return FALSE;
 
-		if (freerdp_settings_get_string(wst->settings, FreeRDP_GatewayHttpExtAuthBearer) &&
-		    freerdp_settings_get_bool(wst->settings, FreeRDP_GatewayArmTransport))
+		if (freerdp_settings_get_string(wst->context->settings, FreeRDP_GatewayHttpExtAuthBearer) &&
+		    freerdp_settings_get_bool(wst->context->settings, FreeRDP_GatewayArmTransport))
 		{
 			char* urlWithAuth = NULL;
 			size_t urlLen = 0;
 			char firstParam = (strchr(wst->gwpath, '?') != NULL) ? '&' : '?';
-			winpr_asprintf(
-			    &urlWithAuth, &urlLen, arm_query_param, wst->gwpath, firstParam,
-			    freerdp_settings_get_string(wst->settings, FreeRDP_GatewayHttpExtAuthBearer));
+			winpr_asprintf(&urlWithAuth, &urlLen, arm_query_param, wst->gwpath, firstParam,
+			               freerdp_settings_get_string(wst->context->settings,
+			                                           FreeRDP_GatewayHttpExtAuthBearer));
 			if (!urlWithAuth)
 				return FALSE;
 			free(wst->gwpath);
@@ -416,7 +416,7 @@ static BOOL wst_handle_denied(rdpWst* wst, HttpResponse** ppresponse, long* pSta
 	WINPR_ASSERT(*ppresponse);
 	WINPR_ASSERT(pStatusCode);
 
-	if (freerdp_settings_get_string(wst->settings, FreeRDP_GatewayHttpExtAuthBearer))
+	if (freerdp_settings_get_string(wst->context->settings, FreeRDP_GatewayHttpExtAuthBearer))
 		return FALSE;
 
 	if (!wst_auth_init(wst, wst->tls, AUTH_PKG))
@@ -457,7 +457,7 @@ BOOL wst_connect(rdpWst* wst, DWORD timeout)
 	WINPR_ASSERT(wst);
 	if (!wst_tls_connect(wst, wst->tls, timeout))
 		return FALSE;
-	if (freerdp_settings_get_bool(wst->settings, FreeRDP_GatewayArmTransport))
+	if (freerdp_settings_get_bool(wst->context->settings, FreeRDP_GatewayArmTransport))
 	{
 		/*
 		 * If we are directed here from a ARM Gateway first
@@ -793,7 +793,6 @@ rdpWst* wst_new(rdpContext* context)
 	if (wst)
 	{
 		wst->context = context;
-		wst->settings = wst->context->settings;
 
 		wst->gwhostname = NULL;
 		wst->gwport = 443;
@@ -802,7 +801,7 @@ rdpWst* wst_new(rdpContext* context)
 		if (!wst_parse_url(wst, context->settings->GatewayUrl))
 			goto wst_alloc_error;
 
-		wst->tls = freerdp_tls_new(wst->settings);
+		wst->tls = freerdp_tls_new(wst->context);
 		if (!wst->tls)
 			goto wst_alloc_error;
 

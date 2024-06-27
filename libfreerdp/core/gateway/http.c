@@ -26,6 +26,7 @@
 #include <winpr/stream.h>
 #include <winpr/string.h>
 #include <winpr/rpc.h>
+#include <winpr/sysinfo.h>
 
 #include <freerdp/log.h>
 #include <freerdp/crypto/crypto.h>
@@ -1107,9 +1108,11 @@ static BOOL http_use_content_length(const char* cur)
 
 static int print_bio_error(const char* str, size_t len, void* bp)
 {
+	wLog* log = bp;
+
 	WINPR_UNUSED(len);
 	WINPR_UNUSED(bp);
-	WLog_ERR(TAG, "%s", str);
+	WLog_Print(log, WLOG_ERROR, "%s", str);
 	return len;
 }
 
@@ -1219,56 +1222,65 @@ int http_chuncked_read(BIO* bio, BYTE* pBuffer, size_t size,
 	}
 }
 
-HttpResponse* http_response_recv(rdpTls* tls, BOOL readContentLength)
+#define sleep_or_timeout(tls, startMS, timeoutMS) \
+	sleep_or_timeout_((tls), (startMS), (timeoutMS), __FILE__, __func__, __LINE__)
+static BOOL sleep_or_timeout_(rdpTls* tls, UINT64 startMS, UINT32 timeoutMS, const char* file,
+                              const char* fkt, size_t line)
 {
-	size_t position = 0;
-	size_t bodyLength = 0;
-	size_t payloadOffset = 0;
-	HttpResponse* response = http_response_new();
+	WINPR_ASSERT(tls);
 
-	if (!response)
-		return NULL;
-
-	response->ContentLength = 0;
-
-	const UINT32 timeout = freerdp_settings_get_uint32(tls->settings, FreeRDP_TcpConnectTimeout);
-	while (payloadOffset == 0)
+	USleep(100);
+	const UINT64 nowMS = GetTickCount64();
+	if (nowMS - startMS > timeoutMS)
 	{
+		DWORD level = WLOG_ERROR;
+		wLog* log = WLog_Get(TAG);
+		if (WLog_IsLevelActive(log, level))
+			WLog_PrintMessage(log, WLOG_MESSAGE_TEXT, level, line, file, fkt,
+			                  "timeout [%" PRIu32 "ms] exceeded", timeoutMS);
+		return TRUE;
+	}
+	if (!BIO_should_retry(tls->bio))
+	{
+		DWORD level = WLOG_ERROR;
+		wLog* log = WLog_Get(TAG);
+		if (WLog_IsLevelActive(log, level))
+		{
+			WLog_PrintMessage(log, WLOG_MESSAGE_TEXT, level, line, file, fkt, "Retries exceeded");
+			ERR_print_errors_cb(print_bio_error, log);
+		}
+		return TRUE;
+	}
+	if (freerdp_shall_disconnect_context(tls->context))
+		return TRUE;
+
+	return FALSE;
+}
+
+static SSIZE_T http_response_recv_line(rdpTls* tls, HttpResponse* response)
+{
+	WINPR_ASSERT(tls);
+	WINPR_ASSERT(response);
+
+	SSIZE_T payloadOffset = -1;
+	const UINT32 timeoutMS =
+	    freerdp_settings_get_uint32(tls->context->settings, FreeRDP_TcpConnectTimeout);
+	const UINT64 startMS = GetTickCount64();
+	while (payloadOffset <= 0)
+	{
+		size_t bodyLength = 0;
+		size_t position = 0;
 		int status = -1;
 		size_t s = 0;
 		char* end = NULL;
 		/* Read until we encounter \r\n\r\n */
 		ERR_clear_error();
-		const long wstatus = BIO_wait_read(tls->bio, timeout);
-		if (wstatus < 0)
-		{
-			if (!BIO_should_retry(tls->bio))
-			{
-				WLog_ERR(TAG, "[BIO_wait_read] Retries exceeded");
-				ERR_print_errors_cb(print_bio_error, NULL);
-				goto out_error;
-			}
-			USleep(100);
-			continue;
-		}
-		else if (wstatus == 0)
-		{
-			WLog_ERR(TAG, "[BIO_wait] timeout exceeded");
-			ERR_print_errors_cb(print_bio_error, NULL);
-			goto out_error;
-		}
 
 		status = BIO_read(tls->bio, Stream_Pointer(response->data), 1);
 		if (status <= 0)
 		{
-			if (!BIO_should_retry(tls->bio))
-			{
-				WLog_ERR(TAG, "Retries exceeded");
-				ERR_print_errors_cb(print_bio_error, NULL);
+			if (sleep_or_timeout(tls, startMS, timeoutMS))
 				goto out_error;
-			}
-
-			USleep(100);
 			continue;
 		}
 
@@ -1298,6 +1310,119 @@ HttpResponse* http_response_recv(rdpTls* tls, BOOL readContentLength)
 		if (string_strnstr(end, "\r\n\r\n", s) != NULL)
 			payloadOffset = Stream_GetPosition(response->data);
 	}
+
+out_error:
+	return payloadOffset;
+}
+
+static BOOL http_response_recv_body(rdpTls* tls, HttpResponse* response, BOOL readContentLength,
+                                    size_t payloadOffset, size_t bodyLength)
+{
+	BOOL rc = FALSE;
+
+	WINPR_ASSERT(tls);
+	WINPR_ASSERT(response);
+
+	const UINT64 startMS = GetTickCount64();
+	const UINT32 timeoutMS =
+	    freerdp_settings_get_uint32(tls->context->settings, FreeRDP_TcpConnectTimeout);
+
+	if ((response->TransferEncoding == TransferEncodingChunked) && readContentLength)
+	{
+		http_encoding_chunked_context ctx = { 0 };
+		ctx.state = ChunkStateLenghHeader;
+		ctx.nextOffset = 0;
+		ctx.headerFooterPos = 0;
+		int full_len = 0;
+		do
+		{
+			if (!Stream_EnsureRemainingCapacity(response->data, 2048))
+				goto out_error;
+
+			int status = http_chuncked_read(tls->bio, Stream_Pointer(response->data),
+			                                Stream_GetRemainingCapacity(response->data), &ctx);
+			if (status <= 0)
+			{
+				if (sleep_or_timeout(tls, startMS, timeoutMS))
+					goto out_error;
+			}
+			else
+			{
+				Stream_Seek(response->data, (size_t)status);
+				full_len += status;
+			}
+		} while (ctx.state != ChunkStateEnd);
+		response->BodyLength = full_len;
+		if (response->BodyLength > 0)
+			response->BodyContent = &(Stream_Buffer(response->data))[payloadOffset];
+	}
+	else
+	{
+		while (response->BodyLength < bodyLength)
+		{
+			int status = 0;
+
+			if (!Stream_EnsureRemainingCapacity(response->data, bodyLength - response->BodyLength))
+				goto out_error;
+
+			ERR_clear_error();
+			status = BIO_read(tls->bio, Stream_Pointer(response->data),
+			                  bodyLength - response->BodyLength);
+
+			if (status <= 0)
+			{
+				if (sleep_or_timeout(tls, startMS, timeoutMS))
+					goto out_error;
+				continue;
+			}
+
+			Stream_Seek(response->data, (size_t)status);
+			response->BodyLength += (unsigned long)status;
+
+			if (response->BodyLength > RESPONSE_SIZE_LIMIT)
+			{
+				WLog_ERR(TAG, "Request body too large! (%" PRIdz " bytes) Aborting!",
+				         response->BodyLength);
+				goto out_error;
+			}
+		}
+
+		if (response->BodyLength > 0)
+			response->BodyContent = &(Stream_Buffer(response->data))[payloadOffset];
+
+		if (bodyLength != response->BodyLength)
+		{
+			WLog_WARN(TAG, "%s unexpected body length: actual: %" PRIuz ", expected: %" PRIuz,
+			          response->ContentType, response->BodyLength, bodyLength);
+
+			if (bodyLength > 0)
+				response->BodyLength = MIN(bodyLength, response->BodyLength);
+		}
+
+		/* '\0' terminate the http body */
+		if (!Stream_EnsureRemainingCapacity(response->data, sizeof(UINT16)))
+			goto out_error;
+		Stream_Write_UINT16(response->data, 0);
+	}
+
+	rc = TRUE;
+out_error:
+	return rc;
+}
+
+HttpResponse* http_response_recv(rdpTls* tls, BOOL readContentLength)
+{
+	size_t bodyLength = 0;
+	HttpResponse* response = http_response_new();
+
+	if (!response)
+		return NULL;
+
+	response->ContentLength = 0;
+
+	const SSIZE_T payloadOffset = http_response_recv_line(tls, response);
+	if (payloadOffset < 0)
+		goto out_error;
 
 	if (payloadOffset)
 	{
@@ -1370,96 +1495,8 @@ HttpResponse* http_response_recv(rdpTls* tls, BOOL readContentLength)
 		}
 
 		/* Fetch remaining body! */
-		if ((response->TransferEncoding == TransferEncodingChunked) && readContentLength)
-		{
-			http_encoding_chunked_context ctx = { 0 };
-			ctx.state = ChunkStateLenghHeader;
-			ctx.nextOffset = 0;
-			ctx.headerFooterPos = 0;
-			int full_len = 0;
-			do
-			{
-				if (!Stream_EnsureRemainingCapacity(response->data, 2048))
-					goto out_error;
-
-				int status = http_chuncked_read(tls->bio, Stream_Pointer(response->data),
-				                                Stream_GetRemainingCapacity(response->data), &ctx);
-				if (status <= 0)
-				{
-					if (!BIO_should_retry(tls->bio))
-					{
-						WLog_ERR(TAG, "Retries exceeded");
-						ERR_print_errors_cb(print_bio_error, NULL);
-						goto out_error;
-					}
-
-					USleep(100);
-				}
-				else
-				{
-					Stream_Seek(response->data, (size_t)status);
-					full_len += status;
-				}
-			} while (ctx.state != ChunkStateEnd);
-			response->BodyLength = full_len;
-			if (response->BodyLength > 0)
-				response->BodyContent = &(Stream_Buffer(response->data))[payloadOffset];
-		}
-		else
-		{
-			while (response->BodyLength < bodyLength)
-			{
-				int status = 0;
-
-				if (!Stream_EnsureRemainingCapacity(response->data,
-				                                    bodyLength - response->BodyLength))
-					goto out_error;
-
-				ERR_clear_error();
-				status = BIO_read(tls->bio, Stream_Pointer(response->data),
-				                  bodyLength - response->BodyLength);
-
-				if (status <= 0)
-				{
-					if (!BIO_should_retry(tls->bio))
-					{
-						WLog_ERR(TAG, "Retries exceeded");
-						ERR_print_errors_cb(print_bio_error, NULL);
-						goto out_error;
-					}
-
-					USleep(100);
-					continue;
-				}
-
-				Stream_Seek(response->data, (size_t)status);
-				response->BodyLength += (unsigned long)status;
-
-				if (response->BodyLength > RESPONSE_SIZE_LIMIT)
-				{
-					WLog_ERR(TAG, "Request body too large! (%" PRIdz " bytes) Aborting!",
-					         response->BodyLength);
-					goto out_error;
-				}
-			}
-
-			if (response->BodyLength > 0)
-				response->BodyContent = &(Stream_Buffer(response->data))[payloadOffset];
-
-			if (bodyLength != response->BodyLength)
-			{
-				WLog_WARN(TAG, "%s unexpected body length: actual: %" PRIuz ", expected: %" PRIuz,
-				          response->ContentType, response->BodyLength, bodyLength);
-
-				if (bodyLength > 0)
-					response->BodyLength = MIN(bodyLength, response->BodyLength);
-			}
-
-			/* '\0' terminate the http body */
-			if (!Stream_EnsureRemainingCapacity(response->data, sizeof(UINT16)))
-				goto out_error;
-			Stream_Write_UINT16(response->data, 0);
-		}
+		if (!http_response_recv_body(tls, response, readContentLength, payloadOffset, bodyLength))
+			goto out_error;
 	}
 	Stream_SealLength(response->data);
 
