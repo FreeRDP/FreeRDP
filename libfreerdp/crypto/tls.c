@@ -750,7 +750,7 @@ static BOOL tls_prepare(rdpTls* tls, BIO* underlying, SSL_METHOD* method, int op
 {
 	WINPR_ASSERT(tls);
 
-	rdpSettings* settings = tls->settings;
+	rdpSettings* settings = tls->context->settings;
 	WINPR_ASSERT(settings);
 
 	tls_reset(tls);
@@ -1295,7 +1295,7 @@ static BOOL tls_match_hostname(const char* pattern, const size_t pattern_length,
 
 static BOOL is_redirected(rdpTls* tls)
 {
-	rdpSettings* settings = tls->settings;
+	rdpSettings* settings = tls->context->settings;
 
 	if (LB_NOREDIRECT & settings->RedirectionFlags)
 		return FALSE;
@@ -1305,7 +1305,7 @@ static BOOL is_redirected(rdpTls* tls)
 
 static BOOL is_accepted(rdpTls* tls, const BYTE* pem, size_t length)
 {
-	rdpSettings* settings = tls->settings;
+	rdpSettings* settings = tls->context->settings;
 	char* AccpetedKey = NULL;
 	UINT32 AcceptedKeyLength = 0;
 
@@ -1431,7 +1431,7 @@ static BOOL accept_cert(rdpTls* tls, const BYTE* pem, UINT32 length)
 	FreeRDP_Settings_Keys_String id = FreeRDP_AcceptedCert;
 	FreeRDP_Settings_Keys_UInt32 lid = FreeRDP_AcceptedCertLength;
 
-	rdpSettings* settings = tls->settings;
+	rdpSettings* settings = tls->context->settings;
 
 	if (tls->isGatewayTransport)
 	{
@@ -1477,9 +1477,9 @@ int tls_verify_certificate(rdpTls* tls, const rdpCertificate* cert, const char* 
 	freerdp* instance = NULL;
 
 	WINPR_ASSERT(tls);
-	WINPR_ASSERT(tls->settings);
+	WINPR_ASSERT(tls->context->settings);
 
-	instance = (freerdp*)tls->settings->instance;
+	instance = (freerdp*)tls->context->settings->instance;
 	WINPR_ASSERT(instance);
 
 	if (freerdp_shall_disconnect_context(instance->context))
@@ -1495,7 +1495,7 @@ int tls_verify_certificate(rdpTls* tls, const rdpCertificate* cert, const char* 
 		goto end;
 	}
 
-	if (is_accepted_fingerprint(cert, tls->settings->CertificateAcceptedFingerprints))
+	if (is_accepted_fingerprint(cert, tls->context->settings->CertificateAcceptedFingerprints))
 	{
 		verification_status = 1;
 		goto end;
@@ -1511,7 +1511,7 @@ int tls_verify_certificate(rdpTls* tls, const rdpCertificate* cert, const char* 
 		flags |= VERIFY_CERT_FLAG_REDIRECT;
 
 	/* Certificate management is done by the application */
-	if (tls->settings->ExternalCertificateManagement)
+	if (tls->context->settings->ExternalCertificateManagement)
 	{
 		if (instance->VerifyX509Certificate)
 			verification_status =
@@ -1529,15 +1529,15 @@ int tls_verify_certificate(rdpTls* tls, const rdpCertificate* cert, const char* 
 		}
 	}
 	/* ignore certificate verification if user explicitly required it (discouraged) */
-	else if (tls->settings->IgnoreCertificate)
+	else if (tls->context->settings->IgnoreCertificate)
 		verification_status = 1; /* success! */
-	else if (!tls->isGatewayTransport && (tls->settings->AuthenticationLevel == 0))
+	else if (!tls->isGatewayTransport && (tls->context->settings->AuthenticationLevel == 0))
 		verification_status = 1; /* success! */
 	else
 	{
 		/* if user explicitly specified a certificate name, use it instead of the hostname */
-		if (!tls->isGatewayTransport && tls->settings->CertificateName)
-			hostname = tls->settings->CertificateName;
+		if (!tls->isGatewayTransport && tls->context->settings->CertificateName)
+			hostname = tls->context->settings->CertificateName;
 
 		/* attempt verification using OpenSSL and the ~/.freerdp/certs certificate store */
 		certificate_status = freerdp_certificate_verify(
@@ -1612,12 +1612,12 @@ int tls_verify_certificate(rdpTls* tls, const rdpCertificate* cert, const char* 
 				}
 
 				/* Automatically accept certificate on first use */
-				if (tls->settings->AutoAcceptCertificate)
+				if (tls->context->settings->AutoAcceptCertificate)
 				{
 					WLog_INFO(TAG, "No certificate stored, automatically accepting.");
 					accept_certificate = 1;
 				}
-				else if (tls->settings->AutoDenyCertificate)
+				else if (tls->context->settings->AutoDenyCertificate)
 				{
 					WLog_INFO(TAG, "No certificate stored, automatically denying.");
 					accept_certificate = 0;
@@ -1637,7 +1637,7 @@ int tls_verify_certificate(rdpTls* tls, const rdpCertificate* cert, const char* 
 				else if (instance->VerifyCertificateEx)
 				{
 					const BOOL use_pem = freerdp_settings_get_bool(
-					    tls->settings, FreeRDP_CertificateCallbackPreferPEM);
+					    tls->context->settings, FreeRDP_CertificateCallbackPreferPEM);
 					char* fp = NULL;
 					DWORD cflags = flags;
 					if (use_pem)
@@ -1682,7 +1682,7 @@ int tls_verify_certificate(rdpTls* tls, const rdpCertificate* cert, const char* 
 					WLog_WARN(TAG, "Failed to get certificate entry for %s:%" PRIu16 "", hostname,
 					          port);
 
-				if (tls->settings->AutoDenyCertificate)
+				if (tls->context->settings->AutoDenyCertificate)
 				{
 					WLog_INFO(TAG, "No certificate stored, automatically denying.");
 					accept_certificate = 0;
@@ -1708,8 +1708,9 @@ int tls_verify_certificate(rdpTls* tls, const rdpCertificate* cert, const char* 
 					const char* old_fp = freerdp_certificate_data_get_fingerprint(stored_data);
 					const char* old_pem = freerdp_certificate_data_get_pem(stored_data);
 					const BOOL fpIsAllocated =
-					    !old_pem || !freerdp_settings_get_bool(
-					                    tls->settings, FreeRDP_CertificateCallbackPreferPEM);
+					    !old_pem ||
+					    !freerdp_settings_get_bool(tls->context->settings,
+					                               FreeRDP_CertificateCallbackPreferPEM);
 					char* fp = NULL;
 					if (!fpIsAllocated)
 					{
@@ -1857,7 +1858,7 @@ void tls_print_certificate_name_mismatch_error(const char* hostname, UINT16 port
 	WLog_ERR(TAG, "A valid certificate for the wrong name should NOT be trusted!");
 }
 
-rdpTls* freerdp_tls_new(rdpSettings* settings)
+rdpTls* freerdp_tls_new(rdpContext* context)
 {
 	rdpTls* tls = NULL;
 	tls = (rdpTls*)calloc(1, sizeof(rdpTls));
@@ -1865,11 +1866,11 @@ rdpTls* freerdp_tls_new(rdpSettings* settings)
 	if (!tls)
 		return NULL;
 
-	tls->settings = settings;
+	tls->context = context;
 
-	if (!settings->ServerMode)
+	if (!freerdp_settings_get_bool(tls->context->settings, FreeRDP_ServerMode))
 	{
-		tls->certificate_store = freerdp_certificate_store_new(settings);
+		tls->certificate_store = freerdp_certificate_store_new(tls->context->settings);
 
 		if (!tls->certificate_store)
 			goto out_free;

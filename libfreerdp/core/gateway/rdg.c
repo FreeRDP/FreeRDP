@@ -117,7 +117,6 @@ typedef struct
 struct rdp_rdg
 {
 	rdpContext* context;
-	rdpSettings* settings;
 	BOOL attached;
 	BIO* frontBio;
 	rdpTls* tlsIn;
@@ -500,7 +499,8 @@ static BOOL rdg_send_tunnel_request(rdpRdg* rdg)
 
 	if (rdg->extAuth == HTTP_EXTENDED_AUTH_PAA)
 	{
-		PAACookie = ConvertUtf8ToWCharAlloc(rdg->settings->GatewayAccessToken, &PAACookieLen);
+		PAACookie =
+		    ConvertUtf8ToWCharAlloc(rdg->context->settings->GatewayAccessToken, &PAACookieLen);
 
 		if (!PAACookie || (PAACookieLen > UINT16_MAX / sizeof(WCHAR)))
 		{
@@ -553,8 +553,8 @@ static BOOL rdg_send_tunnel_authorization(rdpRdg* rdg)
 	BOOL status = 0;
 	WINPR_ASSERT(rdg);
 	size_t clientNameLen = 0;
-	WCHAR* clientName =
-	    freerdp_settings_get_string_as_utf16(rdg->settings, FreeRDP_ClientHostname, &clientNameLen);
+	WCHAR* clientName = freerdp_settings_get_string_as_utf16(
+	    rdg->context->settings, FreeRDP_ClientHostname, &clientNameLen);
 
 	if (!clientName || (clientNameLen >= UINT16_MAX / sizeof(WCHAR)))
 	{
@@ -600,8 +600,8 @@ static BOOL rdg_send_channel_create(rdpRdg* rdg)
 	size_t serverNameLen = 0;
 
 	WINPR_ASSERT(rdg);
-	serverName =
-	    freerdp_settings_get_string_as_utf16(rdg->settings, FreeRDP_ServerHostname, &serverNameLen);
+	serverName = freerdp_settings_get_string_as_utf16(rdg->context->settings,
+	                                                  FreeRDP_ServerHostname, &serverNameLen);
 
 	if (!serverName || (serverNameLen >= UINT16_MAX / sizeof(WCHAR)))
 		goto fail;
@@ -618,7 +618,8 @@ static BOOL rdg_send_channel_create(rdpRdg* rdg)
 	Stream_Write_UINT32(s, packetSize);              /* PacketLength (4 bytes) */
 	Stream_Write_UINT8(s, 1);                        /* Number of resources. (1 byte) */
 	Stream_Write_UINT8(s, 0);                        /* Number of alternative resources (1 byte) */
-	Stream_Write_UINT16(s, (UINT16)rdg->settings->ServerPort); /* Resource port (2 bytes) */
+	Stream_Write_UINT16(s,
+	                    (UINT16)rdg->context->settings->ServerPort); /* Resource port (2 bytes) */
 	Stream_Write_UINT16(s, 3);                                 /* Protocol number (2 bytes) */
 	Stream_Write_UINT16(s, (UINT16)serverNameLen * sizeof(WCHAR));
 	Stream_Write_UTF16_String(s, serverName, (size_t)serverNameLen);
@@ -688,7 +689,7 @@ static wStream* rdg_build_http_request(rdpRdg* rdg, const char* method,
 	else if (rdg->extAuth == HTTP_EXTENDED_AUTH_BEARER)
 	{
 		http_request_set_auth_scheme(request, "Bearer");
-		http_request_set_auth_param(request, rdg->settings->GatewayHttpExtAuthBearer);
+		http_request_set_auth_param(request, rdg->context->settings->GatewayHttpExtAuthBearer);
 	}
 
 	http_request_set_transfer_encoding(request, transferEncoding);
@@ -1269,7 +1270,7 @@ static BOOL rdg_tls_connect(rdpRdg* rdg, rdpTls* tls, const char* peerAddress, i
 	long status = 0;
 	BIO* socketBio = NULL;
 	BIO* bufferedBio = NULL;
-	rdpSettings* settings = rdg->settings;
+	rdpSettings* settings = rdg->context->settings;
 	const char* peerHostname = settings->GatewayHostname;
 	UINT16 peerPort = (UINT16)settings->GatewayPort;
 	const char* proxyUsername = NULL;
@@ -1355,7 +1356,7 @@ static BOOL rdg_establish_data_connection(rdpRdg* rdg, rdpTls* tls, const char* 
 		return FALSE;
 
 	WINPR_ASSERT(rpcFallback);
-	if (rdg->settings->GatewayHttpExtAuthBearer && rdg->extAuth == HTTP_EXTENDED_AUTH_NONE)
+	if (rdg->context->settings->GatewayHttpExtAuthBearer && rdg->extAuth == HTTP_EXTENDED_AUTH_NONE)
 		rdg->extAuth = HTTP_EXTENDED_AUTH_BEARER;
 	if (rdg->extAuth == HTTP_EXTENDED_AUTH_NONE)
 	{
@@ -2216,21 +2217,22 @@ rdpRdg* rdg_new(rdpContext* context)
 		rdg->log = WLog_Get(TAG);
 		rdg->state = RDG_CLIENT_STATE_INITIAL;
 		rdg->context = context;
-		rdg->settings = rdg->context->settings;
-		rdg->extAuth = (rdg->settings->GatewayHttpExtAuthSspiNtlm ? HTTP_EXTENDED_AUTH_SSPI_NTLM
-		                                                          : HTTP_EXTENDED_AUTH_NONE);
+		rdg->context->settings = rdg->context->settings;
+		rdg->extAuth =
+		    (rdg->context->settings->GatewayHttpExtAuthSspiNtlm ? HTTP_EXTENDED_AUTH_SSPI_NTLM
+		                                                        : HTTP_EXTENDED_AUTH_NONE);
 
-		if (rdg->settings->GatewayAccessToken)
+		if (rdg->context->settings->GatewayAccessToken)
 			rdg->extAuth = HTTP_EXTENDED_AUTH_PAA;
 
 		UuidCreate(&rdg->guid);
 
-		rdg->tlsOut = freerdp_tls_new(rdg->settings);
+		rdg->tlsOut = freerdp_tls_new(rdg->context);
 
 		if (!rdg->tlsOut)
 			goto rdg_alloc_error;
 
-		rdg->tlsIn = freerdp_tls_new(rdg->settings);
+		rdg->tlsIn = freerdp_tls_new(rdg->context);
 
 		if (!rdg->tlsIn)
 			goto rdg_alloc_error;
@@ -2246,12 +2248,12 @@ rdpRdg* rdg_new(rdpContext* context)
 		    !http_context_set_pragma(rdg->http, "no-cache") ||
 		    !http_context_set_connection(rdg->http, "Keep-Alive") ||
 		    !http_context_set_user_agent(rdg->http, "MS-RDGateway/1.0") ||
-		    !http_context_set_host(rdg->http, rdg->settings->GatewayHostname) ||
+		    !http_context_set_host(rdg->http, rdg->context->settings->GatewayHostname) ||
 		    !http_context_set_rdg_connection_id(rdg->http, &rdg->guid) ||
 		    !http_context_set_rdg_correlation_id(rdg->http, &rdg->guid) ||
 		    !http_context_enable_websocket_upgrade(
-		        rdg->http,
-		        freerdp_settings_get_bool(rdg->settings, FreeRDP_GatewayHttpUseWebsockets)))
+		        rdg->http, freerdp_settings_get_bool(rdg->context->settings,
+		                                             FreeRDP_GatewayHttpUseWebsockets)))
 		{
 			goto rdg_alloc_error;
 		}

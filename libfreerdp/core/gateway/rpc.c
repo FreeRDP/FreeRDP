@@ -762,7 +762,7 @@ static BOOL rpc_channel_tls_connect(RpcChannel* channel, UINT32 timeout)
 	}
 
 	channel->bio = bufferedBio;
-	tls = channel->tls = freerdp_tls_new(settings);
+	tls = channel->tls = freerdp_tls_new(context);
 
 	if (!tls)
 		return FALSE;

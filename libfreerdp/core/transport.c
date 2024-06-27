@@ -291,7 +291,7 @@ static BOOL transport_default_connect_tls(rdpTransport* transport)
 	settings = context->settings;
 	WINPR_ASSERT(settings);
 
-	if (!(tls = freerdp_tls_new(settings)))
+	if (!(tls = freerdp_tls_new(context)))
 		return FALSE;
 
 	transport->tls = tls;
@@ -629,7 +629,7 @@ static BOOL transport_default_accept_tls(rdpTransport* transport)
 	WINPR_ASSERT(settings);
 
 	if (!transport->tls)
-		transport->tls = freerdp_tls_new(settings);
+		transport->tls = freerdp_tls_new(context);
 
 	transport->layer = TRANSPORT_LAYER_TLS;
 

@@ -1220,11 +1220,13 @@ int http_chuncked_read(BIO* bio, BYTE* pBuffer, size_t size,
 	}
 }
 
-#define sleep_or_timeout(startMS, timeoutMS) \
-	sleep_or_timeout_((startMS), (timeoutMS), __FILE__, __func__, __LINE__)
-static BOOL sleep_or_timeout_(UINT64 startMS, UINT32 timeoutMS, const char* file, const char* fkt,
-                              size_t line)
+#define sleep_or_timeout(tls, startMS, timeoutMS) \
+	sleep_or_timeout_((tls), (startMS), (timeoutMS), __FILE__, __func__, __LINE__)
+static BOOL sleep_or_timeout_(rdpTls* tls, UINT64 startMS, UINT32 timeoutMS, const char* file,
+                              const char* fkt, size_t line)
 {
+	WINPR_ASSERT(tls);
+
 	USleep(100);
 	const UINT64 nowMS = GetTickCount64();
 	if (nowMS - startMS > timeoutMS)
@@ -1236,6 +1238,15 @@ static BOOL sleep_or_timeout_(UINT64 startMS, UINT32 timeoutMS, const char* file
 			                  "timeout [%" PRIu32 "ms] exceeded", timeoutMS);
 		return TRUE;
 	}
+	if (!BIO_should_retry(tls->bio))
+	{
+		WLog_ERR(TAG, "Retries exceeded");
+		ERR_print_errors_cb(print_bio_error, NULL);
+		return TRUE;
+	}
+	if (freerdp_shall_disconnect_context(tls->context))
+		return TRUE;
+
 	return FALSE;
 }
 
@@ -1245,7 +1256,8 @@ static SSIZE_T http_response_recv_line(rdpTls* tls, HttpResponse* response)
 	WINPR_ASSERT(response);
 
 	SSIZE_T payloadOffset = -1;
-	const UINT32 timeoutMS = freerdp_settings_get_uint32(tls->settings, FreeRDP_TcpConnectTimeout);
+	const UINT32 timeoutMS =
+	    freerdp_settings_get_uint32(tls->context->settings, FreeRDP_TcpConnectTimeout);
 	const UINT64 startMS = GetTickCount64();
 	while (payloadOffset <= 0)
 	{
@@ -1260,14 +1272,7 @@ static SSIZE_T http_response_recv_line(rdpTls* tls, HttpResponse* response)
 		status = BIO_read(tls->bio, Stream_Pointer(response->data), 1);
 		if (status <= 0)
 		{
-			if (!BIO_should_retry(tls->bio))
-			{
-				WLog_ERR(TAG, "Retries exceeded");
-				ERR_print_errors_cb(print_bio_error, NULL);
-				goto out_error;
-			}
-
-			if (sleep_or_timeout(startMS, timeoutMS))
+			if (sleep_or_timeout(tls, startMS, timeoutMS))
 				goto out_error;
 			continue;
 		}
@@ -1312,7 +1317,8 @@ static BOOL http_response_recv_body(rdpTls* tls, HttpResponse* response, BOOL re
 	WINPR_ASSERT(response);
 
 	const UINT64 startMS = GetTickCount64();
-	const UINT32 timeoutMS = freerdp_settings_get_uint32(tls->settings, FreeRDP_TcpConnectTimeout);
+	const UINT32 timeoutMS =
+	    freerdp_settings_get_uint32(tls->context->settings, FreeRDP_TcpConnectTimeout);
 
 	if ((response->TransferEncoding == TransferEncodingChunked) && readContentLength)
 	{
@@ -1330,14 +1336,7 @@ static BOOL http_response_recv_body(rdpTls* tls, HttpResponse* response, BOOL re
 			                                Stream_GetRemainingCapacity(response->data), &ctx);
 			if (status <= 0)
 			{
-				if (!BIO_should_retry(tls->bio))
-				{
-					WLog_ERR(TAG, "Retries exceeded");
-					ERR_print_errors_cb(print_bio_error, NULL);
-					goto out_error;
-				}
-
-				if (sleep_or_timeout(startMS, timeoutMS))
+				if (sleep_or_timeout(tls, startMS, timeoutMS))
 					goto out_error;
 			}
 			else
@@ -1365,14 +1364,7 @@ static BOOL http_response_recv_body(rdpTls* tls, HttpResponse* response, BOOL re
 
 			if (status <= 0)
 			{
-				if (!BIO_should_retry(tls->bio))
-				{
-					WLog_ERR(TAG, "Retries exceeded");
-					ERR_print_errors_cb(print_bio_error, NULL);
-					goto out_error;
-				}
-
-				if (sleep_or_timeout(startMS, timeoutMS))
+				if (sleep_or_timeout(tls, startMS, timeoutMS))
 					goto out_error;
 				continue;
 			}
