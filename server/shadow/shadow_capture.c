@@ -173,19 +173,53 @@ static BOOL pixel_equal_same_format(const BYTE* WINPR_RESTRICT a, UINT32 formatA
 	return memcmp(a, b, count * bppA) == 0;
 }
 
+typedef BOOL (*pixel_equal_fn_t)(const BYTE* WINPR_RESTRICT a, UINT32 formatA,
+                                 const BYTE* WINPR_RESTRICT b, UINT32 formatB, size_t count);
+
+static pixel_equal_fn_t get_comparison_fn(DWORD format1, DWORD format2)
+{
+
+	if (format1 == format2)
+		return pixel_equal_same_format;
+
+	const UINT32 bpp1 = FreeRDPGetBitsPerPixel(format1);
+
+	if (!FreeRDPColorHasAlpha(format1) || !FreeRDPColorHasAlpha(format2))
+	{
+		/* In case we have RGBA32 and RGBX32 or similar assume the alpha data is equal.
+		 * This allows us to use the fast memcmp comparison. */
+		if ((bpp1 == 32) && FreeRDPAreColorFormatsEqualNoAlpha(format1, format2))
+		{
+			switch (format1)
+			{
+				case PIXEL_FORMAT_ARGB32:
+				case PIXEL_FORMAT_XRGB32:
+				case PIXEL_FORMAT_ABGR32:
+				case PIXEL_FORMAT_XBGR32:
+					return pixel_equal;
+				case PIXEL_FORMAT_RGBA32:
+				case PIXEL_FORMAT_RGBX32:
+				case PIXEL_FORMAT_BGRA32:
+				case PIXEL_FORMAT_BGRX32:
+					return pixel_equal;
+				default:
+					break;
+			}
+		}
+		return pixel_equal_no_alpha;
+	}
+	else
+		return pixel_equal_no_alpha;
+
+	return pixel_equal;
+}
+
 int shadow_capture_compare_with_format(const BYTE* WINPR_RESTRICT pData1, UINT32 format1,
                                        UINT32 nStep1, UINT32 nWidth, UINT32 nHeight,
                                        const BYTE* WINPR_RESTRICT pData2, UINT32 format2,
                                        UINT32 nStep2, RECTANGLE_16* WINPR_RESTRICT rect)
 {
-	BOOL(*pixel_equal_fn)
-	(const BYTE* a, UINT32 formatA, const BYTE* b, UINT32 formatB, size_t count) = pixel_equal;
-
-	if (format1 == format2)
-		pixel_equal_fn = pixel_equal_same_format;
-	else if (!FreeRDPColorHasAlpha(format1) || !FreeRDPColorHasAlpha(format2))
-		pixel_equal_fn = pixel_equal_no_alpha;
-
+	pixel_equal_fn_t pixel_equal_fn = get_comparison_fn(format1, format2);
 	BOOL allEqual = TRUE;
 	UINT32 tw = 0;
 	const UINT32 nrow = (nHeight + 15) / 16;
