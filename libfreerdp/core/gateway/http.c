@@ -1108,9 +1108,11 @@ static BOOL http_use_content_length(const char* cur)
 
 static int print_bio_error(const char* str, size_t len, void* bp)
 {
+	wLog* log = bp;
+
 	WINPR_UNUSED(len);
 	WINPR_UNUSED(bp);
-	WLog_ERR(TAG, "%s", str);
+	WLog_Print(log, WLOG_ERROR, "%s", str);
 	return len;
 }
 
@@ -1240,8 +1242,13 @@ static BOOL sleep_or_timeout_(rdpTls* tls, UINT64 startMS, UINT32 timeoutMS, con
 	}
 	if (!BIO_should_retry(tls->bio))
 	{
-		WLog_ERR(TAG, "Retries exceeded");
-		ERR_print_errors_cb(print_bio_error, NULL);
+		DWORD level = WLOG_ERROR;
+		wLog* log = WLog_Get(TAG);
+		if (WLog_IsLevelActive(log, level))
+		{
+			WLog_PrintMessage(log, WLOG_MESSAGE_TEXT, level, line, file, fkt, "Retries exceeded");
+			ERR_print_errors_cb(print_bio_error, log);
+		}
 		return TRUE;
 	}
 	if (freerdp_shall_disconnect_context(tls->context))
