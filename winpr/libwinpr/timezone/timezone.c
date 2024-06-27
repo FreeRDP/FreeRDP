@@ -608,7 +608,7 @@ static void log_timezone_(const DYNAMIC_TIME_ZONE_INFORMATION* tzif, DWORD resul
 	WINPR_ASSERT(tzif);
 
 	char buffer[130] = { 0 };
-	DWORD level = WLOG_INFO;
+	DWORD level = WLOG_TRACE;
 	wLog* log = WLog_Get(TAG);
 	log_print(log, level, file, fkt, line, "DYNAMIC_TIME_ZONE_INFORMATION {");
 
