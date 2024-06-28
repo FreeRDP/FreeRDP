@@ -1,0 +1,65 @@
+# This workflow will build a .NET project
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-net
+
+name: timezone-update
+
+on:
+  workflow_dispatch:
+    branches: [ master, stable* ]
+  schedule:
+  - cron: "0 5 11 * *"
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
+    - name: Restore dependencies
+      run: dotnet restore
+    - name: Configure CMake
+      run: cmake -B build -S . -DCMAKE_INSTALL_PREFIX=install
+    - name: Build & Install CMake
+      run: cmake --build build --target install
+  update:
+    - name: Update timezone mappings
+    needs: build
+    outputs:
+      output1: ${{ steps.update.outputs.test  }}
+    - name: Update timezones
+      run: install\tzextract.exe winpr\libwinpr\timezone
+    - name: clang-format changes
+      run: |
+        git clang-format -f
+        git diff --exit-code
+  create-pr:
+    - name: Create Pull Request
+      needs: update
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.PAT }}
+          commit-message: "[winpr,timezone] automated update on $(date +'%Y-%m-%dT%H:%M:%S')"
+          committer: github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>
+          author: ${{ github.actor }} <${{ github.actor_id }}+${{ github.actor }}@users.noreply.github.com>
+          signoff: false
+          delete-branch: true
+          branch: timezone-update
+          title: "[timezones] update on $(date +'%Y-%m-%dT%H:%M:%S')"
+          body: |
+            Update timezone mappings IANA to windows
+          labels: |
+            automated pr
+          assignees: akallabeth
+          reviewers: akallabeth
+          team-reviewers: |
+            Core
+            FreeRDP-Admin
+          draft: false
