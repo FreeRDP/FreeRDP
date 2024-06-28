@@ -23,7 +23,7 @@
 
 #include <X11/Xlib.h>
 
-char* Safe_XGetAtomName(Display* display, Atom atom);
+char* Safe_XGetAtomName(wLog* log, Display* display, Atom atom);
 
 #define LogTagAndXGetWindowProperty(tag, display, w, property, long_offset, long_length, delete,   \
                                     req_type, actual_type_return, actual_format_return,            \
