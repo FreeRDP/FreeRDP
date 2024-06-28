@@ -247,7 +247,9 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  "Print help" },
 	{ "home-drive", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL,
 	  "Redirect user home as share" },
-	{ "ipv6", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, "6",
+	{ "ipv4", COMMAND_LINE_VALUE_OPTIONAL, "[:force]", NULL, NULL, -1, "4",
+	  "Prefer IPv4 AAA record over IPv6 A record" },
+	{ "ipv6", COMMAND_LINE_VALUE_OPTIONAL, "[:force]", NULL, NULL, -1, "6",
 	  "Prefer IPv6 AAA record over IPv4 A record" },
 #if defined(WITH_JPEG)
 	{ "jpeg", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "JPEG codec support" },

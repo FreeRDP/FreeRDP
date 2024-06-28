@@ -334,6 +334,7 @@ static const struct settings_str_entry settings_map[] = {
 	{ FreeRDP_FakeMouseMotionInterval, FREERDP_SETTINGS_TYPE_UINT32,
 	  "FreeRDP_FakeMouseMotionInterval" },
 	{ FreeRDP_Floatbar, FREERDP_SETTINGS_TYPE_UINT32, "FreeRDP_Floatbar" },
+	{ FreeRDP_ForceIPvX, FREERDP_SETTINGS_TYPE_UINT32, "FreeRDP_ForceIPvX" },
 	{ FreeRDP_FrameAcknowledge, FREERDP_SETTINGS_TYPE_UINT32, "FreeRDP_FrameAcknowledge" },
 	{ FreeRDP_GatewayAcceptedCertLength, FREERDP_SETTINGS_TYPE_UINT32,
 	  "FreeRDP_GatewayAcceptedCertLength" },
