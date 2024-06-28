@@ -1736,6 +1736,9 @@ UINT32 freerdp_settings_get_uint32(const rdpSettings* settings, FreeRDP_Settings
 		case FreeRDP_Floatbar:
 			return settings->Floatbar;
 
+		case FreeRDP_ForceIPvX:
+			return settings->ForceIPvX;
+
 		case FreeRDP_FrameAcknowledge:
 			return settings->FrameAcknowledge;
 
@@ -2167,6 +2170,10 @@ BOOL freerdp_settings_set_uint32(rdpSettings* settings, FreeRDP_Settings_Keys_UI
 
 		case FreeRDP_Floatbar:
 			settings->Floatbar = cnv.c;
+			break;
+
+		case FreeRDP_ForceIPvX:
+			settings->ForceIPvX = cnv.c;
 			break;
 
 		case FreeRDP_FrameAcknowledge:

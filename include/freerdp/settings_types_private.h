@@ -746,7 +746,8 @@ struct rdp_settings
 	SETTINGS_DEPRECATED(ALIGN64 BOOL RedirectSerialPorts);   /* 4672 */
 	SETTINGS_DEPRECATED(ALIGN64 BOOL RedirectParallelPorts); /* 4673 */
 	SETTINGS_DEPRECATED(ALIGN64 BOOL PreferIPv6OverIPv4);    /* 4674 */
-	UINT64 padding4800[4800 - 4675];                         /* 4675 */
+	SETTINGS_DEPRECATED(ALIGN64 UINT32 ForceIPvX);           /* 4675 */
+	UINT64 padding4800[4800 - 4676];                         /* 4676 */
 
 	/**
 	 * Other Redirection

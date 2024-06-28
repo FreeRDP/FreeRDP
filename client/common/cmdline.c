@@ -4554,10 +4554,31 @@ static int freerdp_client_settings_parse_command_line_arguments_int(
 			if (!freerdp_settings_set_bool(settings, FreeRDP_RedirectHomeDrive, enable))
 				return COMMAND_LINE_ERROR;
 		}
+		CommandLineSwitchCase(arg, "ipv4")
+		{
+			if (strncmp(arg->Value, "force", 6) == 0)
+			{
+				if (!freerdp_settings_set_uint32(settings, FreeRDP_ForceIPvX, 4))
+					return COMMAND_LINE_ERROR;
+			}
+			else
+			{
+				if (!freerdp_settings_set_bool(settings, FreeRDP_PreferIPv6OverIPv4, FALSE))
+					return COMMAND_LINE_ERROR;
+			}
+		}
 		CommandLineSwitchCase(arg, "ipv6")
 		{
-			if (!freerdp_settings_set_bool(settings, FreeRDP_PreferIPv6OverIPv4, enable))
-				return COMMAND_LINE_ERROR;
+			if (strncmp(arg->Value, "force", 6) == 0)
+			{
+				if (!freerdp_settings_set_uint32(settings, FreeRDP_ForceIPvX, 6))
+					return COMMAND_LINE_ERROR;
+			}
+			else
+			{
+				if (!freerdp_settings_set_bool(settings, FreeRDP_PreferIPv6OverIPv4, TRUE))
+					return COMMAND_LINE_ERROR;
+			}
 		}
 		CommandLineSwitchCase(arg, "clipboard")
 		{
