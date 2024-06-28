@@ -36,6 +36,7 @@
 
 #include "xf_event.h"
 #include "xf_input.h"
+#include "xf_utils.h"
 
 #include <winpr/assert.h>
 #include <winpr/wtypes.h>
@@ -133,12 +134,16 @@ static BOOL register_input_events(xfContext* xfc, Window window)
 				}
 				case XIValuatorClass:
 				{
-					const XIValuatorClassInfo* t = (const XIValuatorClassInfo*)class;
-					char* name = t->label ? XGetAtomName(xfc->display, t->label) : NULL;
+					static wLog* log = NULL;
+					if (!log)
+						log = WLog_Get(TAG);
 
-					WLog_DBG(TAG, "%s device (id: %d) valuator %d label %s range %f - %f",
-					         dev->name, dev->deviceid, t->number, name ? name : "None", t->min,
-					         t->max);
+					const XIValuatorClassInfo* t = (const XIValuatorClassInfo*)class;
+					char* name = t->label ? Safe_XGetAtomName(log, xfc->display, t->label) : NULL;
+
+					WLog_Print(log, WLOG_DEBUG,
+					           "%s device (id: %d) valuator %d label %s range %f - %f", dev->name,
+					           dev->deviceid, t->number, name ? name : "None", t->min, t->max);
 					free(name);
 
 					if (t->number == 2)
