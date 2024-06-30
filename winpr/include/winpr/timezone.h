@@ -74,6 +74,8 @@ extern "C"
 
 #endif
 
+	WINPR_API TIME_ZONE_INFORMATION* winpr_GetWindowsTimezoneFromIANA(const char* tzid);
+
 /*
  * GetDynamicTimeZoneInformation is provided by the SDK if _WIN32_WINNT >= 0x0600 in SDKs above 7.1A
  * and incorrectly if _WIN32_WINNT >= 0x0501 in older SDKs
