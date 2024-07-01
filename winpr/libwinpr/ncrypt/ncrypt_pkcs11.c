@@ -336,6 +336,23 @@ static const char* CK_RV_error_string(CK_RV rv)
 #undef ERR_ENTRY
 }
 
+#define loge(tag, msg, rv, index, slot) \
+	log_((tag), (msg), (rv), (index), (slot), __FILE__, __func__, __LINE__)
+static void log_(const char* tag, const char* msg, CK_RV rv, CK_ULONG index, CK_SLOT_ID slot,
+                 const char* file, const char* fkt, size_t line)
+{
+	const DWORD log_level = WLOG_ERROR;
+	static wLog* log_cached_ptr = NULL;
+	if (!log_cached_ptr)
+		log_cached_ptr = WLog_Get(tag);
+	if (!WLog_IsLevelActive(log_cached_ptr, log_level))
+		return;
+
+	WLog_PrintMessage(log_cached_ptr, WLOG_MESSAGE_TEXT, log_level, line, file, fkt,
+	                  "%s for slot #%" PRIu32 "(%" PRIu32 "), rv=%s", msg, index, slot,
+	                  CK_RV_error_string(rv));
+}
+
 static SECURITY_STATUS collect_keys(NCryptP11ProviderHandle* provider, P11EnumKeysState* state)
 {
 	CK_OBJECT_HANDLE slotObjects[MAX_KEYS_PER_SLOT] = { 0 };
@@ -358,28 +375,27 @@ static SECURITY_STATUS collect_keys(NCryptP11ProviderHandle* provider, P11EnumKe
 		CK_RV rv = p11->C_GetSlotInfo(state->slots[i], &slotInfo);
 		if (rv != CKR_OK)
 		{
-			WLog_ERR(TAG, "unable to retrieve information for slot #%d(%d)", i, state->slots[i]);
+			loge(TAG, "unable to retrieve information", rv, i, state->slots[i]);
 			continue;
 		}
 
 		fix_padded_string((char*)slotInfo.slotDescription, sizeof(slotInfo.slotDescription));
-		WLog_DBG(TAG, "collecting keys for slot #%d(%lu) descr='%s' flags=0x%x", i, state->slots[i],
-		         slotInfo.slotDescription, slotInfo.flags);
+		WLog_DBG(TAG, "collecting keys for slot #%" PRIu32 "(%" PRIu32 ") descr='%s' flags=0x%x", i,
+		         state->slots[i], slotInfo.slotDescription, slotInfo.flags);
 
 		/* this is a safety guard as we're supposed to have listed only readers with tokens in them
 		 */
 		if (!(slotInfo.flags & CKF_TOKEN_PRESENT))
 		{
-			WLog_INFO(TAG, "token not present for slot #%d(%d)", i, state->slots[i]);
+			WLog_INFO(TAG, "token not present for slot #%" PRIu32 "(%" PRIu32 ")", i,
+			          state->slots[i]);
 			continue;
 		}
 
 		WINPR_ASSERT(p11->C_GetTokenInfo);
 		rv = p11->C_GetTokenInfo(state->slots[i], &tokenInfo);
 		if (rv != CKR_OK)
-		{
-			WLog_INFO(TAG, "unable to retrieve token info for slot #%d(%d)", i, state->slots[i]);
-		}
+			loge(TAG, "unable to retrieve token info", rv, i, state->slots[i]);
 		else
 		{
 			fix_padded_string((char*)tokenInfo.label, sizeof(tokenInfo.label));
@@ -390,8 +406,9 @@ static SECURITY_STATUS collect_keys(NCryptP11ProviderHandle* provider, P11EnumKe
 		rv = p11->C_OpenSession(state->slots[i], CKF_SERIAL_SESSION, NULL, NULL, &session);
 		if (rv != CKR_OK)
 		{
-			WLog_ERR(TAG, "unable to openSession for slot #%d(%d), session=%p rv=%s", i,
-			         state->slots[i], session, CK_RV_error_string(rv));
+			WLog_ERR(TAG,
+			         "unable to openSession for slot #%" PRIu32 "(%" PRIu32 "), session=%p rv=%s",
+			         i, state->slots[i], session, CK_RV_error_string(rv));
 			continue;
 		}
 
@@ -400,8 +417,7 @@ static SECURITY_STATUS collect_keys(NCryptP11ProviderHandle* provider, P11EnumKe
 		if (rv != CKR_OK)
 		{
 			// TODO: shall it be fatal ?
-			WLog_ERR(TAG, "unable to initiate search for slot #%d(%d), rv=%s", i, state->slots[i],
-			         CK_RV_error_string(rv));
+			loge(TAG, "unable to initiate search", rv, i, state->slots[i]);
 			step = "C_FindObjectsInit";
 			goto cleanup_FindObjectsInit;
 		}
@@ -411,8 +427,7 @@ static SECURITY_STATUS collect_keys(NCryptP11ProviderHandle* provider, P11EnumKe
 		rv = p11->C_FindObjects(session, &slotObjects[0], ARRAYSIZE(slotObjects), &nslotObjects);
 		if (rv != CKR_OK)
 		{
-			WLog_ERR(TAG, "unable to findObjects for slot #%d(%d), rv=%s", i, state->slots[i],
-			         CK_RV_error_string(rv));
+			loge(TAG, "unable to findObjects", rv, i, state->slots[i]);
 			step = "C_FindObjects";
 			goto cleanup_FindObjects;
 		}
@@ -447,18 +462,12 @@ static SECURITY_STATUS collect_keys(NCryptP11ProviderHandle* provider, P11EnumKe
 		WINPR_ASSERT(p11->C_FindObjectsFinal);
 		rv = p11->C_FindObjectsFinal(session);
 		if (rv != CKR_OK)
-		{
-			WLog_ERR(TAG, "error during C_FindObjectsFinal for slot #%d(%d) (errorStep=%s), rv=%s",
-			         i, state->slots[i], step, CK_RV_error_string(rv));
-		}
+			loge(TAG, "error during C_FindObjectsFinal", rv, i, state->slots[i]);
 	cleanup_FindObjectsInit:
 		WINPR_ASSERT(p11->C_CloseSession);
 		rv = p11->C_CloseSession(session);
 		if (rv != CKR_OK)
-		{
-			WLog_ERR(TAG, "error closing session for slot #%d(%d) (errorStep=%s), rv=%s", i,
-			         state->slots[i], step, CK_RV_error_string(rv));
-		}
+			loge(TAG, "error closing session", rv, i, state->slots[i]);
 	}
 
 	return ERROR_SUCCESS;
