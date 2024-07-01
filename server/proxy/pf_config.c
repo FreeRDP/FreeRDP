@@ -75,13 +75,6 @@ static const char* key_target_pwd = "Password";
 static const char* key_target_domain = "Domain";
 static const char* key_target_tls_seclevel = "TlsSecLevel";
 
-static const char* section_clipboard = "Clipboard";
-static const char* key_clip_text_only = "TextOnly";
-static const char* key_clip_text_max_len = "MaxTextLength";
-
-static const char* section_gfx_settings = "GFXSettings";
-static const char* key_gfx_decode = "DecodeGFX";
-
 static const char* section_plugins = "Plugins";
 static const char* key_plugins_modules = "Modules";
 static const char* key_plugins_required = "Required";
@@ -358,18 +351,6 @@ static BOOL pf_config_load_security(wIniFile* ini, proxyConfig* config)
 	return TRUE;
 }
 
-static BOOL pf_config_load_clipboard(wIniFile* ini, proxyConfig* config)
-{
-	WINPR_ASSERT(config);
-	config->TextOnly = pf_config_get_bool(ini, section_clipboard, key_clip_text_only, FALSE);
-
-	if (!pf_config_get_uint32(ini, section_clipboard, key_clip_text_max_len, &config->MaxTextLength,
-	                          FALSE))
-		return FALSE;
-
-	return TRUE;
-}
-
 static BOOL pf_config_load_modules(wIniFile* ini, proxyConfig* config)
 {
 	const char* modules_to_load = NULL;
@@ -383,13 +364,6 @@ static BOOL pf_config_load_modules(wIniFile* ini, proxyConfig* config)
 
 	config->RequiredPlugins =
 	    pf_config_parse_comma_separated_list(required_modules, &config->RequiredPluginsCount);
-	return TRUE;
-}
-
-static BOOL pf_config_load_gfx_settings(wIniFile* ini, proxyConfig* config)
-{
-	WINPR_ASSERT(config);
-	config->DecodeGFX = pf_config_get_bool(ini, section_gfx_settings, key_gfx_decode, FALSE);
 	return TRUE;
 }
 
@@ -603,12 +577,6 @@ proxyConfig* server_config_load_ini(wIniFile* ini)
 		if (!pf_config_load_modules(ini, config))
 			goto out;
 
-		if (!pf_config_load_clipboard(ini, config))
-			goto out;
-
-		if (!pf_config_load_gfx_settings(ini, config))
-			goto out;
-
 		if (!pf_config_load_certificates(ini, config))
 			goto out;
 		config->ini = IniFile_Clone(ini);
@@ -709,16 +677,6 @@ BOOL pf_server_config_dump(const char* file)
 		goto fail;
 	if (IniFile_SetKeyValueString(ini, section_plugins, key_plugins_required,
 	                              "module1,module2,...") < 0)
-		goto fail;
-
-	/* Clipboard configuration */
-	if (IniFile_SetKeyValueString(ini, section_clipboard, key_clip_text_only, bool_str_false) < 0)
-		goto fail;
-	if (IniFile_SetKeyValueInt(ini, section_clipboard, key_clip_text_max_len, 0) < 0)
-		goto fail;
-
-	/* GFX configuration */
-	if (IniFile_SetKeyValueString(ini, section_gfx_settings, key_gfx_decode, bool_str_false) < 0)
 		goto fail;
 
 	/* Certificate configuration */
@@ -861,14 +819,6 @@ void pf_server_config_print(const proxyConfig* config)
 		WLog_INFO(TAG, "\tStatic Channels Proxy-Intercept:");
 		pf_server_config_print_list(config->Intercept, config->InterceptCount);
 	}
-
-	CONFIG_PRINT_SECTION(section_clipboard);
-	CONFIG_PRINT_BOOL(config, TextOnly);
-	if (config->MaxTextLength > 0)
-		CONFIG_PRINT_UINT32(config, MaxTextLength);
-
-	CONFIG_PRINT_SECTION(section_gfx_settings);
-	CONFIG_PRINT_BOOL(config, DecodeGFX);
 
 	/* modules */
 	CONFIG_PRINT_SECTION_KEY(section_plugins, key_plugins_modules);
