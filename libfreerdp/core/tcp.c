@@ -1203,6 +1203,7 @@ int freerdp_tcp_default_connect(rdpContext* context, rdpSettings* settings, cons
 					if (!addr)
 					{
 						freerdp_set_last_error_if_not(context, FREERDP_ERROR_DNS_NAME_NOT_FOUND);
+						freeaddrinfo(result);
 						return -1;
 					}
 				}
@@ -1214,6 +1215,7 @@ int freerdp_tcp_default_connect(rdpContext* context, rdpSettings* settings, cons
 			if (!addr)
 			{
 				freerdp_set_last_error_if_not(context, FREERDP_ERROR_DNS_NAME_NOT_FOUND);
+				freeaddrinfo(result);
 				return -1;
 			}
 			sockfd = socket(addr->ai_family, addr->ai_socktype, addr->ai_protocol);
