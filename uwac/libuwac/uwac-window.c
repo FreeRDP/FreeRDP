@@ -78,8 +78,8 @@ static void UwacWindowDestroyBuffers(UwacWindow* w)
 	w->buffers = NULL;
 }
 
-static int UwacWindowShmAllocBuffers(UwacWindow* w, int nbuffers, int allocSize, uint32_t width,
-                                     uint32_t height, enum wl_shm_format format);
+static int UwacWindowShmAllocBuffers(UwacWindow* w, int64_t nbuffers, int64_t allocSize,
+                                     uint32_t width, uint32_t height, enum wl_shm_format format);
 
 static void xdg_handle_toplevel_configure(void* data, struct xdg_toplevel* xdg_toplevel,
                                           int32_t width, int32_t height, struct wl_array* states)
@@ -316,22 +316,28 @@ static void shell_popup_done(void* data, struct wl_shell_surface* surface)
 static const struct wl_shell_surface_listener shell_listener = { shell_ping, shell_configure,
 	                                                             shell_popup_done };
 
-int UwacWindowShmAllocBuffers(UwacWindow* w, int nbuffers, int allocSize, uint32_t width,
+int UwacWindowShmAllocBuffers(UwacWindow* w, int64_t nbuffers, int64_t allocSize, uint32_t width,
                               uint32_t height, enum wl_shm_format format)
 {
 	int ret = UWAC_SUCCESS;
-	UwacBuffer* newBuffers = NULL;
 	int fd = 0;
 	void* data = NULL;
 	struct wl_shm_pool* pool = NULL;
-	size_t pagesize = sysconf(_SC_PAGESIZE);
-	newBuffers = xrealloc(w->buffers, (w->nbuffers + nbuffers) * sizeof(UwacBuffer));
-
-	if (!newBuffers)
+	int64_t pagesize = sysconf(_SC_PAGESIZE);
+	if (pagesize <= 0)
 		return UWAC_ERROR_NOMEMORY;
 
 	/* round up to a multiple of PAGESIZE to page align data for each buffer */
-	allocSize = (allocSize + pagesize - 1) & ~(pagesize - 1);
+	UINT64 test = (0ull + allocSize + pagesize - 1ull) & ~(pagesize - 1);
+	if (test > INT64_MAX)
+		return UWAC_ERROR_NOMEMORY;
+
+	allocSize = (int64_t)test;
+
+	UwacBuffer* newBuffers = xrealloc(w->buffers, (w->nbuffers + nbuffers) * sizeof(UwacBuffer));
+
+	if (!newBuffers)
+		return UWAC_ERROR_NOMEMORY;
 
 	w->buffers = newBuffers;
 	memset(w->buffers + w->nbuffers, 0, sizeof(UwacBuffer) * nbuffers);

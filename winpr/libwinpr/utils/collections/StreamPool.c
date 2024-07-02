@@ -117,7 +117,8 @@ static void StreamPool_ShiftUsed(wStreamPool* pool, size_t index, INT64 count)
 	else if (count < 0)
 	{
 		const size_t pcount = (size_t)-count;
-		if ((pool->uSize - index - pcount) > 0)
+		const size_t off = index + pcount;
+		if (pool->uSize > off)
 		{
 			MoveMemory(&pool->uArray[index], &pool->uArray[index + pcount],
 			           (pool->uSize - index - pcount) * sizeof(wStream*));
@@ -169,8 +170,8 @@ static void StreamPool_ShiftAvailable(wStreamPool* pool, size_t index, INT64 cou
 	else if (count < 0)
 	{
 		const size_t pcount = (size_t)-count;
-
-		if ((pool->aSize - index - pcount) > 0)
+		const size_t off = index + pcount;
+		if (pool->aSize > off)
 		{
 			MoveMemory(&pool->aArray[index], &pool->aArray[index + pcount],
 			           (pool->aSize - index - pcount) * sizeof(wStream*));
