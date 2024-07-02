@@ -90,6 +90,33 @@ static BOOL drive_file_fix_path(WCHAR* path, size_t length)
 	return TRUE;
 }
 
+static BOOL contains_dotdot(const WCHAR* path, size_t base_length, size_t path_length)
+{
+	WCHAR dotdotbuffer[6] = { 0 };
+	const WCHAR* dotdot = InitializeConstWCharFromUtf8("..", dotdotbuffer, ARRAYSIZE(dotdotbuffer));
+	const WCHAR* tst = path;
+
+	do
+	{
+		tst = _wcsstr(tst, dotdot);
+		if (!tst)
+			return FALSE;
+
+		/* Filter .. sequences in file or directory names */
+		if ((base_length == 0) || (*(tst - 1) == L'/') || (*(tst - 1) == L'\\'))
+		{
+			if (tst + 2 < path + path_length)
+			{
+				if ((tst[2] == '/') || (tst[2] == '\\'))
+					return TRUE;
+			}
+		}
+		tst += 2;
+	} while (TRUE);
+
+	return FALSE;
+}
+
 static WCHAR* drive_file_combine_fullpath(const WCHAR* base_path, const WCHAR* path,
                                           size_t PathWCharLength)
 {
@@ -115,9 +142,7 @@ static WCHAR* drive_file_combine_fullpath(const WCHAR* base_path, const WCHAR* p
 		goto fail;
 
 	/* Ensure the path does not contain sequences like '..' */
-	WCHAR dotdotbuffer[6] = { 0 };
-	const WCHAR* dotdot = InitializeConstWCharFromUtf8("..", dotdotbuffer, ARRAYSIZE(dotdotbuffer));
-	if (_wcsstr(&fullpath[base_path_length], dotdot))
+	if (contains_dotdot(&fullpath[base_path_length], base_path_length, PathWCharLength))
 	{
 		char abuffer[MAX_PATH] = { 0 };
 		ConvertWCharToUtf8(&fullpath[base_path_length], abuffer, ARRAYSIZE(abuffer));
