@@ -348,7 +348,8 @@ int UwacWindowShmAllocBuffers(UwacWindow* w, int64_t nbuffers, int64_t allocSize
 		return UWAC_ERROR_INTERNAL;
 	}
 
-	data = mmap(NULL, 1ull * allocSize * nbuffers, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+	const size_t allocbuffersize = 1ull * allocSize * nbuffers;
+	data = mmap(NULL, allocbuffersize, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
 
 	if (data == MAP_FAILED)
 	{
@@ -356,11 +357,11 @@ int UwacWindowShmAllocBuffers(UwacWindow* w, int64_t nbuffers, int64_t allocSize
 		goto error_mmap;
 	}
 
-	pool = wl_shm_create_pool(w->display->shm, fd, allocSize * nbuffers);
+	pool = wl_shm_create_pool(w->display->shm, fd, allocbuffersize);
 
 	if (!pool)
 	{
-		munmap(data, 1ull * allocSize * nbuffers);
+		munmap(data, allocbuffersize);
 		ret = UWAC_ERROR_NOMEMORY;
 		goto error_mmap;
 	}
@@ -386,7 +387,7 @@ int UwacWindowShmAllocBuffers(UwacWindow* w, int64_t nbuffers, int64_t allocSize
 
 	wl_shm_pool_destroy(pool);
 	w->nbuffers += nbuffers;
-	munmap(data, 1ull * allocSize * nbuffers);
+	munmap(data, allocbuffersize);
 
 error_mmap:
 	close(fd);
