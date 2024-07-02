@@ -527,7 +527,7 @@ namespace webview
 				int n = json_unescape(value, value_sz, nullptr);
 				if (n > 0)
 				{
-					char* decoded = new char[n + 1];
+					char* decoded = new char[1ull + n];
 					json_unescape(value, value_sz, decoded);
 					std::string result(decoded, n);
 					delete[] decoded;

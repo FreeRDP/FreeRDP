@@ -230,7 +230,7 @@ void* UwacClipboardDataGet(UwacSeat* seat, const char* mime, size_t* size)
 	size_t alloc = 0;
 	size_t pos = 0;
 	char* data = NULL;
-	int pipefd[2];
+	int pipefd[2] = { 0 };
 
 	if (!seat || !mime || !size || !seat->offer)
 		return NULL;
@@ -250,26 +250,21 @@ void* UwacClipboardDataGet(UwacSeat* seat, const char* mime, size_t* size)
 		alloc += 1024;
 		tmp = xrealloc(data, alloc);
 		if (!tmp)
-		{
-			free(data);
-			close(pipefd[0]);
-			return NULL;
-		}
+			goto fail;
 
 		data = tmp;
+
+		if (pos > alloc)
+			goto fail;
+
 		r = read(pipefd[0], &data[pos], alloc - pos);
 		if (r > 0)
 			pos += r;
 		if (r < 0)
-		{
-			free(data);
-			close(pipefd[0]);
-			return NULL;
-		}
+			goto fail;
 	} while (r > 0);
 
 	close(pipefd[0]);
-	close(pipefd[1]);
 
 	if (alloc > 0)
 	{
@@ -277,4 +272,9 @@ void* UwacClipboardDataGet(UwacSeat* seat, const char* mime, size_t* size)
 		*size = pos + 1;
 	}
 	return data;
+
+fail:
+	free(data);
+	close(pipefd[0]);
+	return NULL;
 }

@@ -231,7 +231,7 @@ static UINT parallel_process_irp_write(PARALLEL_DEVICE* parallel, IRP* irp)
 	{
 		status = write(parallel->file, ptr, len);
 
-		if (status < 0)
+		if ((status < 0) || (status > len))
 		{
 			irp->IoStatus = STATUS_UNSUCCESSFUL;
 			Length = 0;

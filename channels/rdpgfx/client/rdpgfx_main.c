@@ -874,6 +874,11 @@ static UINT rdpgfx_send_cache_offer(RDPGFX_PLUGIN* gfx)
 	}
 
 	count = persistent_cache_get_count(persistent);
+	if (count < 0)
+	{
+		error = ERROR_INVALID_DATA;
+		goto fail;
+	}
 
 	if (count >= RDPGFX_CACHE_ENTRY_MAX_COUNT)
 		count = RDPGFX_CACHE_ENTRY_MAX_COUNT - 1;
