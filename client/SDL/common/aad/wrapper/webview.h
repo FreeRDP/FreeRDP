@@ -991,6 +991,13 @@ namespace webview
 				m_navigateCallbackArg = arg;
 			}
 
+			void add_scheme_handler(const std::string& scheme,
+			                        std::function<void(const std::string&, void*)> callback,
+			                        void* arg)
+			{
+				// TODO: Implement
+			}
+
 			void set_html(const std::string& html)
 			{
 				objc::msg_send<void>(
@@ -2454,6 +2461,13 @@ namespace webview
 			                           void* arg)
 			{
 				m_com_handler->add_navigate_listener(callback, arg);
+			}
+
+			void add_scheme_handler(const std::string& scheme,
+			                        std::function<void(const std::string&, void*)> callback,
+			                        void* arg)
+			{
+				// TODO: Implement
 			}
 
 			void set_html(const std::string& html)
