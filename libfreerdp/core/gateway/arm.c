@@ -270,7 +270,7 @@ static rdpArm* arm_new(rdpContext* context)
 		goto fail;
 
 	arm->context = context;
-	arm->tls = freerdp_tls_new(context->settings);
+	arm->tls = freerdp_tls_new(context);
 	if (!arm->tls)
 		goto fail;
 
