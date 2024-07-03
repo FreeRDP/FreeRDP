@@ -328,13 +328,14 @@ int UwacWindowShmAllocBuffers(UwacWindow* w, int64_t nbuffers, int64_t allocSize
 		return UWAC_ERROR_NOMEMORY;
 
 	/* round up to a multiple of PAGESIZE to page align data for each buffer */
-	UINT64 test = (0ull + allocSize + pagesize - 1ull) & ~(pagesize - 1);
+	uint64_t test = (0ull + allocSize + pagesize - 1ull) & ~(pagesize - 1);
 	if (test > INT64_MAX)
 		return UWAC_ERROR_NOMEMORY;
 
 	allocSize = (int64_t)test;
 
-	UwacBuffer* newBuffers = xrealloc(w->buffers, (w->nbuffers + nbuffers) * sizeof(UwacBuffer));
+	UwacBuffer* newBuffers =
+	    xrealloc(w->buffers, (0ull + w->nbuffers + nbuffers) * sizeof(UwacBuffer));
 
 	if (!newBuffers)
 		return UWAC_ERROR_NOMEMORY;
