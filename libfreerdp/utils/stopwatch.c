@@ -55,7 +55,7 @@ void stopwatch_start(STOPWATCH* stopwatch)
 void stopwatch_stop(STOPWATCH* stopwatch)
 {
 	stopwatch_set_time(&stopwatch->end);
-	stopwatch->elapsed += (stopwatch->end - stopwatch->start);
+	stopwatch->elapsed = (stopwatch->end - stopwatch->start);
 }
 
 void stopwatch_reset(STOPWATCH* stopwatch)
