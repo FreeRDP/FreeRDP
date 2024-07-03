@@ -8,7 +8,7 @@ endif()
 if(X11_XShm_FOUND)
 	add_definitions(-DWITH_XSHM)
 	include_directories(${X11_XShm_INCLUDE_PATH})
-	list(APPEND LIBS ${X11_Xext_LIB})
+	list(APPEND LIBS ${X11_XShm_LIB})
 endif()
 
 if(X11_Xext_FOUND)
