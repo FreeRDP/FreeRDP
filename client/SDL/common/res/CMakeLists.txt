@@ -15,9 +15,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-add_executable(sdl-common-res2bin
-	   convert_res_to_c.cpp
-)
+if(CMAKE_CROSSCOMPILING)
+   find_package(SdlCommonRes2bin)
+else()
+    add_executable(sdl-common-res2bin
+               convert_res_to_c.cpp
+    )
+   export(TARGETS sdl-common-res2bin FILE
+          "${CMAKE_BINARY_DIR}/SdlCommonRes2binConfig.cmake")
+endif()
+
 
 set(FACTORY_SRCS "")
 set(FACTORY_HDR "")
