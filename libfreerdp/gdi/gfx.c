@@ -1707,7 +1707,7 @@ static UINT gdi_MapSurfaceToOutput(RdpgfxClientContext* context,
 
 	if (surface->windowMapped)
 	{
-		WLog_WARN(TAG, "sufrace already windowMapped when trying to set outputMapped");
+		WLog_WARN(TAG, "surface already windowMapped when trying to set outputMapped");
 		goto fail;
 	}
 
@@ -1739,7 +1739,7 @@ gdi_MapSurfaceToScaledOutput(RdpgfxClientContext* context,
 
 	if (surface->windowMapped)
 	{
-		WLog_WARN(TAG, "sufrace already windowMapped when trying to set outputMapped");
+		WLog_WARN(TAG, "surface already windowMapped when trying to set outputMapped");
 		goto fail;
 	}
 
@@ -1775,7 +1775,7 @@ static UINT gdi_MapSurfaceToWindow(RdpgfxClientContext* context,
 
 	if (surface->outputMapped)
 	{
-		WLog_WARN(TAG, "sufrace already outputMapped when trying to set windowMapped");
+		WLog_WARN(TAG, "surface already outputMapped when trying to set windowMapped");
 		goto fail;
 	}
 
@@ -1783,7 +1783,7 @@ static UINT gdi_MapSurfaceToWindow(RdpgfxClientContext* context,
 	{
 		if (surface->windowId != surfaceToWindow->windowId)
 		{
-			WLog_WARN(TAG, "sufrace windowId mismatch, has %" PRIu64 ", expected %" PRIu64,
+			WLog_WARN(TAG, "surface windowId mismatch, has %" PRIu64 ", expected %" PRIu64,
 			          surface->windowId, surfaceToWindow->windowId);
 			goto fail;
 		}
@@ -1818,7 +1818,7 @@ gdi_MapSurfaceToScaledWindow(RdpgfxClientContext* context,
 
 	if (surface->outputMapped)
 	{
-		WLog_WARN(TAG, "sufrace already outputMapped when trying to set windowMapped");
+		WLog_WARN(TAG, "surface already outputMapped when trying to set windowMapped");
 		goto fail;
 	}
 
@@ -1826,7 +1826,7 @@ gdi_MapSurfaceToScaledWindow(RdpgfxClientContext* context,
 	{
 		if (surface->windowId != surfaceToWindow->windowId)
 		{
-			WLog_WARN(TAG, "sufrace windowId mismatch, has %" PRIu64 ", expected %" PRIu64,
+			WLog_WARN(TAG, "surface windowId mismatch, has %" PRIu64 ", expected %" PRIu64,
 			          surface->windowId, surfaceToWindow->windowId);
 			goto fail;
 		}
