@@ -629,7 +629,9 @@ static BOOL tsg_ndr_read_quarenc_data(wLog* log, wStream* s, UINT32* index,
 
 	if (quarenc->certChainLen > 0)
 	{
-		if (!tsg_ndr_read_string(log, s, &quarenc->certChainData, quarenc->certChainLen))
+		/* [MS-TSGU] 2.2.9.2.1.6  TSG_PACKET_QUARENC_RESPONSE::certChainLen number of WCHAR */
+		if (!tsg_ndr_read_string(log, s, &quarenc->certChainData,
+		                         quarenc->certChainLen * sizeof(WCHAR)))
 			return FALSE;
 		/* 4-byte alignment */
 		if (!tsg_stream_align(log, s, 4))
