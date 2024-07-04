@@ -54,6 +54,7 @@ jobs:
             ninja-build \
             libxfixes-dev \
             libxkbcommon-dev \
+            libpkcs11-helper1-dev \
             libwayland-dev \
             libpam0g-dev \
             libxdamage-dev \
