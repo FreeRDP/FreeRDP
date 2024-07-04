@@ -4600,7 +4600,7 @@ static int freerdp_client_settings_parse_command_line_arguments_int(
 		}
 		CommandLineSwitchCase(arg, "ipv4")
 		{
-			if (strncmp(arg->Value, "force", 6) == 0)
+			if (arg->Value != NULL && strncmp(arg->Value, "force", 6) == 0)
 			{
 				if (!freerdp_settings_set_uint32(settings, FreeRDP_ForceIPvX, 4))
 					return fail_at(arg, COMMAND_LINE_ERROR);
@@ -4613,7 +4613,7 @@ static int freerdp_client_settings_parse_command_line_arguments_int(
 		}
 		CommandLineSwitchCase(arg, "ipv6")
 		{
-			if (strncmp(arg->Value, "force", 6) == 0)
+			if (arg->Value != NULL && strncmp(arg->Value, "force", 6) == 0)
 			{
 				if (!freerdp_settings_set_uint32(settings, FreeRDP_ForceIPvX, 6))
 					return fail_at(arg, COMMAND_LINE_ERROR);
