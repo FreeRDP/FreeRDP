@@ -28,6 +28,8 @@ project(xfreerdp-client
 
 message("project ${PROJECT_NAME} is using version ${PROJECT_VERSION}")
 
+set(MODULE_NAME "xfreerdp")
+
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS ON)
@@ -94,8 +96,6 @@ target_include_directories(${PROJECT_NAME} INTERFACE $<INSTALL_INTERFACE:include
 set(PRIV_LIBS
 	${X11_LIBRARIES}
 )
-
-add_subdirectory(man)
 
 find_package(X11 REQUIRED)
 if(X11_XShm_FOUND)
@@ -221,6 +221,7 @@ if(WITH_CLIENT_INTERFACE)
 	install(TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT libraries)
 endif()
 add_subdirectory(cli)
+add_subdirectory(man)
 
 set_property(TARGET ${PROJECT_NAME} PROPERTY FOLDER "Client/X11")
 

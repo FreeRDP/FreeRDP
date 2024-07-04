@@ -1,3 +1,15 @@
+# 2024-07-04 Version 3.6.2
+
+Bugfix release for 3.6.1 issues detected during release tests
+
+Noteworthy changes:
+* Fix xfreerdp and sdl-freerdp manpage names (accidentally changed name)
+* Fix crash of wfreerdp
+
+For a complete and detailed change log since the last release run:
+git log 3.6.2...3.6.1
+
+
 # 2024-07-04 Version 3.6.1
 
 Bugfix release for 3.6.0
