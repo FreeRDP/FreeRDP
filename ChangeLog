@@ -1,3 +1,21 @@
+# 2024-07-04 Version 3.6.1
+
+Bugfix release for 3.6.0
+
+Noteworthy changes:
+* Fix missing dependency for ci abi-checker
+* Fix build WITH_SSE2/WITH_NEON: only enable support if the compiler
+  also defines symbols that suggest support.
+* Fix incomplete changelog for 3.6.0:
+ * Improved image copy (#10208)
+ * Experimental [MS-RDPECAM] support by @oleg0421 (#10258)
+ * Improved primitives (#10304)
+ * Connection timeout for HTTP gateway transport (#10288)
+
+For a complete and detailed change log since the last release run:
+git log 3.6.1...3.6.0
+
+
 # 2024-07-03 Version 3.6.0
 
 With this release we did improve decoder speed so you should notice a significant
