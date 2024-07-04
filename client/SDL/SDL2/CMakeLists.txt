@@ -62,17 +62,18 @@ else()
     list(APPEND LIBS ${SDL2_LIBRARIES})
 endif()
 
-AddTargetWithResourceFile(${MODULE_NAME} "${WIN32_GUI_FLAG}" "${PROJECT_VERSION}" SRCS)
+AddTargetWithResourceFile(${MODULE_NAME} TRUE "${PROJECT_VERSION}" SRCS)
 
 target_link_libraries(${MODULE_NAME} PRIVATE ${LIBS})
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Client/SDL")
 
 if (NOT WITH_CLIENT_SDL_VERSIONED)
-	set_target_properties(${MODULE_NAME}
-		PROPERTIES
-		OUTPUT_NAME ${PROJECT_NAME}
-	)
+    get_target_property(OUT_NAME ${MODULE_NAME} OUTPUT_NAME)
+    string(REPLACE "${MODULE_NAME}" "${PROJECT_NAME}" OUT_NAME "${OUT_NAME}")
+    set_target_properties(${MODULE_NAME}
+        PROPERTIES
+        OUTPUT_NAME ${OUT_NAME})
 endif()
 
 install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT client)

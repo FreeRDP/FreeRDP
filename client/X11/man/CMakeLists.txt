@@ -5,4 +5,4 @@ set(DEPS
         xfreerdp-envvar.1.xml
     )
 
-generate_and_install_freerdp_man_from_xml(${PROJECT_NAME} "1" ${DEPS})
+generate_and_install_freerdp_man_from_xml(${MODULE_NAME} "1" ${DEPS})
