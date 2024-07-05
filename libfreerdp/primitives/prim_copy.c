@@ -236,29 +236,19 @@ pstatus_t generic_image_copy_no_overlap_memcpy(
     SSIZE_T srcVMultiplier, SSIZE_T srcVOffset, SSIZE_T dstVMultiplier, SSIZE_T dstVOffset,
     UINT32 flags)
 {
-	const BOOL vSrcVFlip = (flags & FREERDP_FLIP_VERTICAL) ? TRUE : FALSE;
 	const SSIZE_T dstByte = FreeRDPGetBytesPerPixel(DstFormat);
 	const SSIZE_T srcByte = FreeRDPGetBytesPerPixel(SrcFormat);
 	const SSIZE_T copyDstWidth = nWidth * dstByte;
 	const SSIZE_T xSrcOffset = nXSrc * srcByte;
 	const SSIZE_T xDstOffset = nXDst * dstByte;
 
-	if (!vSrcVFlip && (nDstStep == nSrcStep) && (xSrcOffset == 0) && (xDstOffset == 0))
+	for (SSIZE_T y = 0; y < nHeight; y++)
 	{
-		const void* src = &pSrcData[1ull * nYSrc * nSrcStep];
-		void* dst = &pDstData[1ull * nYDst * nDstStep];
-		memcpy(dst, src, 1ull * nDstStep * nHeight);
-	}
-	else
-	{
-		for (SSIZE_T y = 0; y < nHeight; y++)
-		{
-			const BYTE* WINPR_RESTRICT srcLine =
-			    &pSrcData[srcVMultiplier * (y + nYSrc) * nSrcStep + srcVOffset];
-			BYTE* WINPR_RESTRICT dstLine =
-			    &pDstData[dstVMultiplier * (y + nYDst) * nDstStep + dstVOffset];
-			memcpy(&dstLine[xDstOffset], &srcLine[xSrcOffset], copyDstWidth);
-		}
+		const BYTE* WINPR_RESTRICT srcLine =
+		    &pSrcData[srcVMultiplier * (y + nYSrc) * nSrcStep + srcVOffset];
+		BYTE* WINPR_RESTRICT dstLine =
+		    &pDstData[dstVMultiplier * (y + nYDst) * nDstStep + dstVOffset];
+		memcpy(&dstLine[xDstOffset], &srcLine[xSrcOffset], copyDstWidth);
 	}
 
 	return PRIMITIVES_SUCCESS;
