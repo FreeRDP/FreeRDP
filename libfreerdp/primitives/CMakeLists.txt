@@ -87,7 +87,9 @@ add_library(freerdp-primitives OBJECT
 )
 
 include(CompilerDetect)
+include (DetectIntrinsicSupport)
 if(WITH_SSE2)
+    if (HAVE_SSE_OR_AVX)
 	if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_CLANG)
 		if(PRIMITIVES_SSE2_SRCS)
 			set_source_files_properties(${PRIMITIVES_SSE2_SRCS} PROPERTIES COMPILE_FLAGS "-msse2" )
@@ -111,14 +113,17 @@ if(WITH_SSE2)
 
 	if(MSVC)
 		set_source_files_properties(${PRIMITIVES_OPT_SRCS} PROPERTIES COMPILE_FLAGS "/arch:SSE2")
-	endif()
+        endif()
+    endif()
 elseif(WITH_NEON)
+    if (HAVE_NEON)
 	if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_CLANG)
 		if (NOT MSVC_ARM64 AND NOT ARCH_ARM64)
 			set_source_files_properties(${PRIMITIVES_OPT_SRCS} PROPERTIES COMPILE_FLAGS "-mfpu=neon")
 		endif()
 	endif()
 	# TODO: Add MSVC equivalent
+    endif()
 endif()
 
 freerdp_object_library_add(freerdp-primitives)
