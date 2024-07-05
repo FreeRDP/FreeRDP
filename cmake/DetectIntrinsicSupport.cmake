@@ -17,6 +17,12 @@ check_symbol_exists("__ia64__"  ""  X86_IA642)
 check_symbol_exists("_M_IA64"  ""  X86_M_IA64)
 check_symbol_exists("_M_ARM64"     ""  MSVC_ARM64)
 check_symbol_exists("__aarch64__"  ""  ARCH_ARM64)
+check_symbol_exists("M_ARM" "" ARCH_M_ARM)
+check_symbol_exists("_arm__" "" ARCH_ARM)
+check_symbol_exists("_thumb__" "" ARCH_THUMB)
+check_symbol_exists("_TARGET_ARCH_ARM" "" ARCH_ARM_TARGET)
+check_symbol_exists("_TARGET_ARCH_THUMB" "" ARCH_ARM_TARGET_THUMB)
+
 
 if (X86_i586 OR X86_i686 OR X86_X86 OR X86_X862 OR X86_I86 OR X86_IA32 OR
             X86_M_IX86 OR X86_AMD64 OR X86_AMD642 OR X86_X86_64 OR X86_X86_642 OR
@@ -26,8 +32,14 @@ else()
 	set(HAVE_SSE_OR_AVX OFF CACHE INTERNAL "internal")
 endif()
 
-if (MSVC_ARM64 OR ARCH_ARM64)
+if (MSVC_ARM64 OR ARCH_ARM64 OR ARCH_M_ARM OR ARCH_ARM OR ARCH_THUMB OR ARCH_ARM_TARGET OR ARCH_ARM_TARGET_THUMB)
 	set(HAVE_NEON ON CACHE INTERNAL "internal")
 else()
 	set(HAVE_NEON OFF CACHE INTERNAL "internal")
+endif()
+
+if (MSVC_ARM64 OR ARCH_ARM64)
+	set(HAVE_NEON64 ON CACHE INTERNAL "internal")
+else()
+	set(HAVE_NEON64 OFF CACHE INTERNAL "internal")
 endif()
