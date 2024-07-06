@@ -221,8 +221,9 @@ static BOOL rdp_read_general_capability_set(wStream* s, rdpSettings* settings)
 		{
 			WLog_WARN(TAG,
 			          "TS_GENERAL_CAPABILITYSET::protocolVersion(0x%04" PRIx16
-			          " assuming old FreeRDP, ignoring protocol violation.",
+			          " assuming old FreeRDP, ignoring protocol violation, correcting value.",
 			          settings->CapsProtocolVersion);
+			settings->CapsProtocolVersion = TS_CAPS_PROTOCOLVERSION;
 		}
 		else
 			return FALSE;
