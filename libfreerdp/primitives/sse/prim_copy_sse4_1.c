@@ -98,8 +98,9 @@ static INLINE pstatus_t sse_image_copy_bgrx32_bgrx32(BYTE* WINPR_RESTRICT pDstDa
 	const SSIZE_T srcByte = 4;
 	const SSIZE_T dstByte = 4;
 
-	const __m128i mask = _mm_setr_epi8(0xFF, 0xFF, 0xFF, 0x00, 0xFF, 0xFF, 0xFF, 0x00, 0xFF, 0xFF,
-	                                   0xFF, 0x00, 0xFF, 0xFF, 0xFF, 0x00);
+	const __m128i mask = _mm_setr_epi8((char)0xFF, (char)0xFF, (char)0xFF, 0x00, (char)0xFF,
+	                                   (char)0xFF, (char)0xFF, 0x00, (char)0xFF, (char)0xFF,
+	                                   (char)0xFF, 0x00, (char)0xFF, (char)0xFF, (char)0xFF, 0x00);
 	const SSIZE_T rem = nWidth % 4;
 	const SSIZE_T width = nWidth - rem;
 	for (SSIZE_T y = 0; y < nHeight; y++)
