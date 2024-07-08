@@ -1727,11 +1727,7 @@ static UINT drdynvc_virtual_channel_event_connected(drdynvcPlugin* drdynvc, LPVO
 		}
 
 		if (!SetThreadPriority(drdynvc->thread, THREAD_PRIORITY_HIGHEST))
-		{
-			error = ERROR_INTERNAL_ERROR;
-			WLog_Print(drdynvc->log, WLOG_ERROR, "SetThreadPriority failed!");
-			goto error;
-		}
+			WLog_Print(drdynvc->log, WLOG_WARN, "SetThreadPriority failed, ignoring.");
 	}
 
 error:
