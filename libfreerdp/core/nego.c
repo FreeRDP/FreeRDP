@@ -904,8 +904,11 @@ static BOOL nego_read_request_token_or_cookie(rdpNego* nego, wStream* s)
 		{
 			if (memcmp(Stream_ConstPointer(s), "tsv:", 4) != 0)
 			{
-				/* remaining bytes are neither a token nor a cookie */
-				return TRUE;
+				if (memcmp(Stream_ConstPointer(s), "mth://", 6) != 0)
+				{
+					/* remaining bytes are neither a token nor a cookie */
+					return TRUE;
+				}
 			}
 		}
 		isToken = TRUE;
