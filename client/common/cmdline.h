@@ -127,7 +127,7 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  " * use-selection:<atom>  ... (X11) Specify which X selection to access. Default is "
 	  "CLIPBOARD. PRIMARY is the X-style middle-click selection.\n"
 	  " * direction-to:[all|local|remote|off] control enabled clipboard direction\n"
-	  " * files-to:[all|local|remote|off] control enabled file clipboard directiont" },
+	  " * files-to:[all|local|remote|off] control enabled file clipboard direction" },
 #if defined(WITH_FREERDP_DEPRECATED_COMMANDLINE)
 	{ "codec-cache", COMMAND_LINE_VALUE_REQUIRED, "[rfx|nsc|jpeg]", NULL, NULL, -1, NULL,
 	  "[DEPRECATED, use /cache:codec:[rfx|nsc|jpeg]] Bitmap codec cache" },
