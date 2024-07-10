@@ -43,7 +43,7 @@ static void xfreerdp_print_help(void)
 	printf("\tAction Script\n");
 	printf("\t\tExecutes a predefined script on key press.\n");
 	printf("\t\tShould the script not exist it is ignored.\n");
-	printf("\t\tScripts can be provided at the default localtion ~/.config/freerdp/action.sh or as "
+	printf("\t\tScripts can be provided at the default location ~/.config/freerdp/action.sh or as "
 	       "command line argument /action:script:<path>\n");
 	printf("\t\tThe script will receive the current key combination as argument.\n");
 	printf("\t\tThe output of the script is parsed for 'key-local' which tells that the script "
