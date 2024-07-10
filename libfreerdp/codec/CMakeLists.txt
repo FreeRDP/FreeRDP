@@ -64,7 +64,7 @@ include (DetectIntrinsicSupport)
 
 if(WITH_SSE2)
 
-    if (HAVE_SSE_OR_AVC)
+    if (HAVE_SSE_OR_AVX)
 	if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_CLANG)
 		if (CODEC_SSE2_SRCS)
 			set_source_files_properties(${CODEC_SSE2_SRCS} PROPERTIES COMPILE_FLAGS "-msse2" )
