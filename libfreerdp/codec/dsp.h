@@ -32,6 +32,12 @@ typedef struct
 	ALIGN64 wStream* buffer;
 	ALIGN64 wStream* resample;
 	ALIGN64 wStream* channelmix;
+#if defined(WITH_FDK_AAC)
+	ALIGN64 BOOL fdkSetup;
+	ALIGN64 void* fdkAacInstance;
+	ALIGN64 size_t buffersize;
+	ALIGN64 unsigned frames_per_packet;
+#endif
 } FREERDP_DSP_COMMON_CONTEXT;
 
 BOOL freerdp_dsp_common_context_init(FREERDP_DSP_COMMON_CONTEXT* context, BOOL encode);
