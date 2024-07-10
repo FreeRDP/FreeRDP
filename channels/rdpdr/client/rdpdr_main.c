@@ -1686,8 +1686,8 @@ static BOOL rdpdr_check_channel_state(rdpdrPlugin* rdpdr, UINT16 packetid)
 			    RDPDR_CHANNEL_STATE_CLIENTID_CONFIRM, RDPDR_CHANNEL_STATE_READY);
 		default:
 		{
-			enum RDPDR_CHANNEL_STATE state = RDPDR_CHANNEL_STATE_READY;
-			return rdpdr_state_check(rdpdr, packetid, state, 1, state);
+			return rdpdr_state_check(rdpdr, packetid, rdpdr->state, 2, RDPDR_CHANNEL_STATE_READY,
+			                         RDPDR_CHANNEL_STATE_USER_LOGGEDON);
 		}
 	}
 }
@@ -1782,10 +1782,6 @@ static UINT rdpdr_process_receive(rdpdrPlugin* rdpdr, wStream* s)
 						    rdpdr->log, WLOG_ERROR,
 						    "rdpdr_send_device_list_announce_request failed with error %" PRIu32 "",
 						    error);
-					}
-					else if (!rdpdr_state_advance(rdpdr, RDPDR_CHANNEL_STATE_READY))
-					{
-						error = ERROR_INTERNAL_ERROR;
 					}
 
 					break;
