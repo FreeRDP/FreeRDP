@@ -811,6 +811,8 @@ static BOOL freerdp_dsp_encode_ima_adpcm(FREERDP_DSP_CONTEXT* WINPR_RESTRICT con
 
 	if (!Stream_EnsureRemainingCapacity(out, size))
 		return FALSE;
+	if (!Stream_EnsureRemainingCapacity(context->common.buffer, size + 64))
+		return FALSE;
 
 	align = (context->common.format.nChannels > 1) ? 32 : 4;
 
