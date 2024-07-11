@@ -96,6 +96,18 @@ macro (freerdp_compile_options_add)
 	set (LIBFREERDP_COMPILE_OPTIONS ${LIBFREERDP_COMPILE_OPTIONS} PARENT_SCOPE)
 endmacro()
 
+option(WITH_FDK_AAC "Enable FDK_AAC support" OFF)
+if (WITH_FDK_AAC)
+	find_package(PkgConfig REQUIRED)
+	pkg_check_modules(FDK_AAC REQUIRED fdk-aac)
+
+	add_definitions(-DWITH_FDK_AAC)
+	include_directories(${FDK_AAC_INCLUDE_DIRS})
+
+	link_directories(${FDK_AAC_LIBRARY_DIRS})
+	freerdp_library_add(${FDK_AAC_LIBRARIES})
+endif()
+
 set(OPUS_DEFAULT OFF)
 if (NOT WITH_DSP_FFMPEG)
 	find_package(Opus)
@@ -160,8 +172,8 @@ foreach(${MODULE_PREFIX}_SUBMODULE ${${MODULE_PREFIX}_SUBMODULES})
     add_subdirectory(${${MODULE_PREFIX}_SUBMODULE})
 endforeach()
 
-if (NOT WITH_DSP_FFMPEG AND NOT WITH_FAAC)
-    message(WARNING "Compiling without WITH_DSP_FFMPEG and WITH_FAAC, AAC encoder support disabled")
+if (NOT WITH_DSP_FFMPEG AND NOT WITH_FAAC AND NOT WITH_FDK_AAC)
+	message(WARNING "Compiling without WITH_DSP_FFMPEG, WITH_FAAC and WITH_FDK_AAC. AAC encoder support disabled")
 endif ()
 
 add_subdirectory(codec)

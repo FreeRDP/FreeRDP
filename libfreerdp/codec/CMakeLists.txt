@@ -111,6 +111,14 @@ if(LAME_FOUND)
     include_directories(${LAME_INCLUDE_DIRS})
 endif()
 
+if (WITH_FDK_AAC)
+	list(APPEND CODEC_SRCS
+		dsp_fdk_impl.c
+		dsp_fdk_impl.h
+		dsp_fdk_aac.c
+		dsp_fdk_aac.h)
+endif()
+
 if(FAAD2_FOUND)
 	list(APPEND CODEC_LIBS ${FAAD2_LIBRARIES})
     include_directories(${FAAD2_INCLUDE_DIRS})
