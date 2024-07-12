@@ -1456,14 +1456,14 @@ static UINT rdpdr_send_device_list_announce_request(rdpdrPlugin* rdpdr, BOOL use
 UINT rdpdr_try_send_device_list_announce_request(rdpdrPlugin* rdpdr)
 {
 	WINPR_ASSERT(rdpdr);
-	if (rdpdr->state != RDPDR_CHANNEL_STATE_USER_LOGGEDON)
+	if (rdpdr->state != RDPDR_CHANNEL_STATE_READY)
 	{
 		WLog_Print(rdpdr->log, WLOG_DEBUG,
 		           "hotplug event received, but channel [RDPDR] is not ready (state %s), ignoring.",
 		           rdpdr_state_str(rdpdr->state));
 		return CHANNEL_RC_OK;
 	}
-	return rdpdr_send_device_list_announce_request(rdpdr, TRUE);
+	return rdpdr_send_device_list_announce_request(rdpdr, rdpdr->userLoggedOn);
 }
 
 static UINT dummy_irp_response(rdpdrPlugin* rdpdr, wStream* s)
