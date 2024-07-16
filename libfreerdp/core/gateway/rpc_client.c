@@ -987,6 +987,9 @@ int rpc_in_channel_send_pdu(RpcInChannel* inChannel, const BYTE* buffer, size_t 
 		return -1;
 
 	clientCall = rpc_client_call_find_by_id(inChannel->common.client, header.call_id);
+	if (!clientCall)
+		return -1;
+
 	clientCall->State = RPC_CLIENT_CALL_STATE_DISPATCHED;
 
 	/*
