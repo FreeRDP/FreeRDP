@@ -1235,7 +1235,6 @@ void xf_cliprdr_clear_cached_data(xfClipboard* clipboard)
 
 	ClipboardLock(clipboard->system);
 	ClipboardEmpty(clipboard->system);
-	cliprdr_file_context_clear(clipboard->file);
 
 	HashTable_Clear(clipboard->cachedData);
 	HashTable_Clear(clipboard->cachedRawData);
