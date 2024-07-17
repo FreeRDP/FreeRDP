@@ -124,6 +124,7 @@ struct xf_clipboard
 	BOOL incr_starts;
 	BYTE* incr_data;
 	int incr_data_length;
+	long event_mask;
 
 	/* XFixes extension */
 	int xfixes_event_base;
@@ -862,8 +863,8 @@ static void xf_cliprdr_get_requested_targets(xfClipboard* clipboard)
 	xf_cliprdr_free_formats(formats, numFormats);
 }
 
-static void xf_cliprdr_process_requested_data(xfClipboard* clipboard, BOOL hasData, BYTE* data,
-                                              int size)
+static void xf_cliprdr_process_requested_data(xfClipboard* clipboard, BOOL hasData,
+                                              const BYTE* data, size_t size)
 {
 	BOOL bSuccess = 0;
 	UINT32 SrcSize = 0;
@@ -896,7 +897,7 @@ static void xf_cliprdr_process_requested_data(xfClipboard* clipboard, BOOL hasDa
 		case CF_TEXT:
 		case CF_OEMTEXT:
 		case CF_UNICODETEXT:
-			size = strlen((char*)data) + 1;
+			size = strlen((const char*)data) + 1;
 			srcFormatId = format->localFormat;
 			break;
 
@@ -969,6 +970,37 @@ static void xf_cliprdr_process_requested_data(xfClipboard* clipboard, BOOL hasDa
 	free(pDstData);
 }
 
+static BOOL xf_add_input_flags(xfClipboard* clipboard, long mask)
+{
+	WINPR_ASSERT(clipboard);
+
+	xfContext* xfc = clipboard->xfc;
+	WINPR_ASSERT(xfc);
+
+	XWindowAttributes attr = { 0 };
+	XGetWindowAttributes(xfc->display, xfc->drawable, &attr);
+	if ((attr.all_event_masks & mask) == 0)
+		clipboard->event_mask = attr.all_event_masks;
+
+	XSelectInput(xfc->display, xfc->drawable, attr.all_event_masks | mask);
+	return TRUE;
+}
+
+static BOOL xf_restore_input_flags(xfClipboard* clipboard)
+{
+	WINPR_ASSERT(clipboard);
+
+	xfContext* xfc = clipboard->xfc;
+	WINPR_ASSERT(xfc);
+
+	if (clipboard->event_mask != 0)
+	{
+		XSelectInput(xfc->display, xfc->drawable, clipboard->event_mask);
+		clipboard->event_mask = 0;
+	}
+	return TRUE;
+}
+
 static BOOL xf_cliprdr_get_requested_data(xfClipboard* clipboard, Atom target)
 {
 	Atom type = 0;
@@ -1018,7 +1050,7 @@ static BOOL xf_cliprdr_get_requested_data(xfClipboard* clipboard, Atom target)
 
 		clipboard->incr_data_length = 0;
 		has_data = TRUE; /* data will be followed in PropertyNotify event */
-		XSelectInput(xfc->display, xfc->drawable, PropertyChangeMask);
+		xf_add_input_flags(clipboard, PropertyChangeMask);
 	}
 	else
 	{
@@ -1029,7 +1061,11 @@ static BOOL xf_cliprdr_get_requested_data(xfClipboard* clipboard, Atom target)
 			clipboard->incr_data = NULL;
 			bytes_left = clipboard->incr_data_length;
 			clipboard->incr_data_length = 0;
-			clipboard->incr_starts = 0;
+			clipboard->incr_starts = FALSE;
+
+			/* Restore previous event mask */
+			xf_restore_input_flags(clipboard);
+
 			has_data = TRUE;
 		}
 		else if (LogTagAndXGetWindowProperty(
