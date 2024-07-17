@@ -1707,8 +1707,9 @@ static UINT xf_cliprdr_send_client_format_list(xfClipboard* clipboard, BOOL forc
 	if (clipboard->owner && clipboard->owner != xfc->drawable)
 	{
 		/* Request the owner for TARGETS, and wait for SelectionNotify event */
-		XConvertSelection(xfc->display, clipboard->clipboard_atom, clipboard->targets[1],
-		                  clipboard->property_atom, xfc->drawable, CurrentTime);
+		LogTagAndXConvertSelection(TAG, xfc->display, clipboard->clipboard_atom,
+		                           clipboard->targets[1], clipboard->property_atom, xfc->drawable,
+		                           CurrentTime);
 	}
 
 	xf_cliprdr_free_formats(formats, numFormats);
@@ -2011,8 +2012,8 @@ xf_cliprdr_server_format_data_request(CliprdrClientContext* context,
 	DEBUG_CLIPRDR("requested format 0x%08" PRIx32 " [%s] {local 0x%08" PRIx32 "} [%s]",
 	              format->formatToRequest, ClipboardGetFormatIdString(format->formatToRequest),
 	              format->localFormat, format->formatName);
-	XConvertSelection(xfc->display, clipboard->clipboard_atom, format->atom,
-	                  clipboard->property_atom, xfc->drawable, CurrentTime);
+	LogTagAndXConvertSelection(TAG, xfc->display, clipboard->clipboard_atom, format->atom,
+	                           clipboard->property_atom, xfc->drawable, CurrentTime);
 	XFlush(xfc->display);
 	/* After this point, we expect a SelectionNotify event from the clipboard owner. */
 	return CHANNEL_RC_OK;
