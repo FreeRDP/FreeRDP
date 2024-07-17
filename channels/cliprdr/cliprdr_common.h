@@ -29,6 +29,9 @@
 #include <freerdp/channels/cliprdr.h>
 #include <freerdp/api.h>
 
+FREERDP_LOCAL const char* CB_MSG_TYPE_STRING(UINT16 type, char* buffer, size_t size);
+FREERDP_LOCAL const char* CB_MSG_FLAGS_STRING(UINT16 msgFlags, char* buffer, size_t size);
+
 FREERDP_LOCAL wStream* cliprdr_packet_new(UINT16 msgType, UINT16 msgFlags, UINT32 dataLen);
 FREERDP_LOCAL wStream*
 cliprdr_packet_lock_clipdata_new(const CLIPRDR_LOCK_CLIPBOARD_DATA* lockClipboardData);

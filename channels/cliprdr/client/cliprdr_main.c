@@ -41,37 +41,6 @@
 const char* type_FileGroupDescriptorW = "FileGroupDescriptorW";
 const char* type_FileContents = "FileContents";
 
-static const char* CB_MSG_TYPE_STRINGS(UINT32 type)
-{
-	switch (type)
-	{
-		case CB_MONITOR_READY:
-			return "CB_MONITOR_READY";
-		case CB_FORMAT_LIST:
-			return "CB_FORMAT_LIST";
-		case CB_FORMAT_LIST_RESPONSE:
-			return "CB_FORMAT_LIST_RESPONSE";
-		case CB_FORMAT_DATA_REQUEST:
-			return "CB_FORMAT_DATA_REQUEST";
-		case CB_FORMAT_DATA_RESPONSE:
-			return "CB_FORMAT_DATA_RESPONSE";
-		case CB_TEMP_DIRECTORY:
-			return "CB_TEMP_DIRECTORY";
-		case CB_CLIP_CAPS:
-			return "CB_CLIP_CAPS";
-		case CB_FILECONTENTS_REQUEST:
-			return "CB_FILECONTENTS_REQUEST";
-		case CB_FILECONTENTS_RESPONSE:
-			return "CB_FILECONTENTS_RESPONSE";
-		case CB_LOCK_CLIPDATA:
-			return "CB_LOCK_CLIPDATA";
-		case CB_UNLOCK_CLIPDATA:
-			return "CB_UNLOCK_CLIPDATA";
-		default:
-			return "UNKNOWN";
-	}
-}
-
 CliprdrClientContext* cliprdr_get_client_interface(cliprdrPlugin* cliprdr)
 {
 	CliprdrClientContext* pInterface = NULL;
@@ -475,8 +444,11 @@ static UINT cliprdr_order_recv(LPVOID userdata, wStream* s)
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, dataLen))
 		return ERROR_INVALID_DATA;
 
-	WLog_DBG(TAG, "msgType: %s (%" PRIu16 "), msgFlags: %" PRIu16 " dataLen: %" PRIu32 "",
-	         CB_MSG_TYPE_STRINGS(msgType), msgType, msgFlags, dataLen);
+	char buffer1[64] = { 0 };
+	char buffer2[64] = { 0 };
+	WLog_DBG(TAG, "msgType: %s (%" PRIu16 "), msgFlags: %s dataLen: %" PRIu32 "",
+	         CB_MSG_TYPE_STRING(msgType, buffer1, sizeof(buffer1)), msgType,
+	         CB_MSG_FLAGS_STRING(msgFlags, buffer2, sizeof(buffer2)), dataLen);
 
 	switch (msgType)
 	{
