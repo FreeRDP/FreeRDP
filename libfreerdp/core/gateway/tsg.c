@@ -1339,7 +1339,7 @@ static int TsProxySendToServer(handle_t IDL_handle, const byte pRpcMessage[], UI
 		Stream_Write(s, buffer3, buffer3Length); /* buffer3 (variable) */
 
 	if (!rpc_client_write_call(tsg->rpc, s, TsProxySendToServerOpnum))
-		return -1;
+		goto fail;
 
 	return (int)length;
 fail:
