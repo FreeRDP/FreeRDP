@@ -785,7 +785,9 @@ void xf_lock_x11_(xfContext* xfc, const char* fkt)
 		XLockDisplay(xfc->display);
 
 	xfc->locked++;
+#ifdef WITH_DEBUG_X11
 	WLog_VRB(TAG, "[%" PRIu32 "] from %s", xfc->locked, fkt);
+#endif
 }
 
 void xf_unlock_x11_(xfContext* xfc, const char* fkt)
@@ -793,7 +795,10 @@ void xf_unlock_x11_(xfContext* xfc, const char* fkt)
 	if (xfc->locked == 0)
 		WLog_WARN(TAG, "X11: trying to unlock although not locked!");
 
+#ifdef WITH_DEBUG_X11
 	WLog_VRB(TAG, "[%" PRIu32 "] from %s", xfc->locked - 1, fkt);
+#endif
+
 	if (!xfc->UseXThreads)
 		ReleaseMutex(xfc->mutex);
 	else
