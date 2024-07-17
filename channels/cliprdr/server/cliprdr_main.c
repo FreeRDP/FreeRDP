@@ -902,10 +902,11 @@ static UINT cliprdr_server_receive_pdu(CliprdrServerContext* context, wStream* s
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(header);
 
-	WLog_DBG(TAG,
-	         "CliprdrServerReceivePdu: msgType: %" PRIu16 " msgFlags: 0x%04" PRIX16
-	         " dataLen: %" PRIu32 "",
-	         header->msgType, header->msgFlags, header->dataLen);
+	char buffer1[64] = { 0 };
+	char buffer2[64] = { 0 };
+	WLog_DBG(TAG, "CliprdrServerReceivePdu: msgType: %s, msgFlags: %s dataLen: %" PRIu32 "",
+	         CB_MSG_TYPE_STRING(header->msgType, buffer1, sizeof(buffer1)),
+	         CB_MSG_FLAGS_STRING(header->msgFlags, buffer2, sizeof(buffer2)), header->dataLen);
 
 	switch (header->msgType)
 	{

@@ -28,6 +28,67 @@
 
 #include "cliprdr_common.h"
 
+static const char* CB_MSG_TYPE_STR(UINT32 type)
+{
+	switch (type)
+	{
+		case CB_MONITOR_READY:
+			return "CB_MONITOR_READY";
+		case CB_FORMAT_LIST:
+			return "CB_FORMAT_LIST";
+		case CB_FORMAT_LIST_RESPONSE:
+			return "CB_FORMAT_LIST_RESPONSE";
+		case CB_FORMAT_DATA_REQUEST:
+			return "CB_FORMAT_DATA_REQUEST";
+		case CB_FORMAT_DATA_RESPONSE:
+			return "CB_FORMAT_DATA_RESPONSE";
+		case CB_TEMP_DIRECTORY:
+			return "CB_TEMP_DIRECTORY";
+		case CB_CLIP_CAPS:
+			return "CB_CLIP_CAPS";
+		case CB_FILECONTENTS_REQUEST:
+			return "CB_FILECONTENTS_REQUEST";
+		case CB_FILECONTENTS_RESPONSE:
+			return "CB_FILECONTENTS_RESPONSE";
+		case CB_LOCK_CLIPDATA:
+			return "CB_LOCK_CLIPDATA";
+		case CB_UNLOCK_CLIPDATA:
+			return "CB_UNLOCK_CLIPDATA";
+		default:
+			return "UNKNOWN";
+	}
+}
+
+const char* CB_MSG_TYPE_STRING(UINT16 type, char* buffer, size_t size)
+{
+	_snprintf(buffer, size, "%s [0x%04" PRIx16 "]", CB_MSG_TYPE_STR(type), type);
+	return buffer;
+}
+
+const char* CB_MSG_FLAGS_STRING(UINT16 msgFlags, char* buffer, size_t size)
+{
+	if ((msgFlags & CB_RESPONSE_OK) != 0)
+		winpr_str_append("CB_RESPONSE_OK", buffer, size, "|");
+	if ((msgFlags & CB_RESPONSE_FAIL) != 0)
+		winpr_str_append("CB_RESPONSE_FAIL", buffer, size, "|");
+	if ((msgFlags & CB_ASCII_NAMES) != 0)
+		winpr_str_append("CB_ASCII_NAMES", buffer, size, "|");
+
+	const size_t len = strnlen(buffer, size);
+	if (len > 0)
+	{
+		/* remove trailing | */
+		buffer[len - 1] = '\0';
+	}
+	else
+		winpr_str_append("NONE", buffer, size, "");
+
+	char val[32] = { 0 };
+	_snprintf(val, sizeof(val), "[0x%04" PRIx16 "]", msgFlags);
+	winpr_str_append(val, buffer, size, "|");
+	return buffer;
+}
+
 static BOOL cliprdr_validate_file_contents_request(const CLIPRDR_FILE_CONTENTS_REQUEST* request)
 {
 	/*

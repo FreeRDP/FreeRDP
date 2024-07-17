@@ -86,6 +86,34 @@ int LogDynAndXDeleteProperty_ex(wLog* log, const char* file, const char* fkt, si
 	return XDeleteProperty(display, w, property);
 }
 
+int LogTagAndXConvertSelection_ex(const char* tag, const char* file, const char* fkt, size_t line,
+                                  Display* display, Atom selection, Atom target, Atom property,
+                                  Window requestor, Time time)
+{
+	wLog* log = WLog_Get(tag);
+	return LogDynAndXConvertSelection_ex(log, file, fkt, line, display, selection, target, property,
+	                                     requestor, time);
+}
+
+int LogDynAndXConvertSelection_ex(wLog* log, const char* file, const char* fkt, size_t line,
+                                  Display* display, Atom selection, Atom target, Atom property,
+                                  Window requestor, Time time)
+{
+	if (WLog_IsLevelActive(log, log_level))
+	{
+		char* selectstr = Safe_XGetAtomName(log, display, selection);
+		char* targetstr = Safe_XGetAtomName(log, display, target);
+		char* propstr = Safe_XGetAtomName(log, display, property);
+		write_log(log, log_level, file, fkt, line,
+		          "XConvertSelection(%p, %s [%d], %s [%d], %s [%d], %d, %lu)", display, selectstr,
+		          selection, targetstr, target, propstr, property, requestor, time);
+		XFree(propstr);
+		XFree(targetstr);
+		XFree(selectstr);
+	}
+	return XConvertSelection(display, selection, target, property, requestor, time);
+}
+
 int LogTagAndXGetWindowProperty_ex(const char* tag, const char* file, const char* fkt, size_t line,
                                    Display* display, Window w, Atom property, long long_offset,
                                    long long_length, int delete, Atom req_type,

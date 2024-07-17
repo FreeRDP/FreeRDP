@@ -124,6 +124,7 @@ struct xf_clipboard
 	BOOL incr_starts;
 	BYTE* incr_data;
 	int incr_data_length;
+	long event_mask;
 
 	/* XFixes extension */
 	int xfixes_event_base;
@@ -607,6 +608,23 @@ static CLIPRDR_FORMAT* xf_cliprdr_get_raw_server_formats(xfClipboard* clipboard,
 	return formats;
 }
 
+static BOOL xf_cliprdr_should_add_format(const CLIPRDR_FORMAT* formats, size_t count,
+                                         const xfCliprdrFormat* xformat)
+{
+	WINPR_ASSERT(formats);
+
+	if (!xformat)
+		return FALSE;
+
+	for (size_t x = 0; x < count; x++)
+	{
+		const CLIPRDR_FORMAT* format = &formats[x];
+		if (format->formatId == xformat->formatToRequest)
+			return FALSE;
+	}
+	return TRUE;
+}
+
 static CLIPRDR_FORMAT* xf_cliprdr_get_formats_from_targets(xfClipboard* clipboard,
                                                            UINT32* numFormats)
 {
@@ -647,10 +665,18 @@ static CLIPRDR_FORMAT* xf_cliprdr_get_formats_from_targets(xfClipboard* clipboar
 		Atom tatom = ((Atom*)data)[i];
 		const xfCliprdrFormat* format = xf_cliprdr_get_client_format_by_atom(clipboard, tatom);
 
-		if (format)
+		if (xf_cliprdr_should_add_format(formats, *numFormats, format))
 		{
-			formats[*numFormats].formatId = format->formatToRequest;
-			formats[*numFormats].formatName = _strdup(format->formatName);
+			CLIPRDR_FORMAT* cformat = &formats[*numFormats];
+			cformat->formatId = format->formatToRequest;
+			if (format->formatName)
+			{
+				cformat->formatName = _strdup(format->formatName);
+				WINPR_ASSERT(cformat->formatName);
+			}
+			else
+				cformat->formatName = NULL;
+
 			*numFormats += 1;
 		}
 	}
@@ -837,8 +863,8 @@ static void xf_cliprdr_get_requested_targets(xfClipboard* clipboard)
 	xf_cliprdr_free_formats(formats, numFormats);
 }
 
-static void xf_cliprdr_process_requested_data(xfClipboard* clipboard, BOOL hasData, BYTE* data,
-                                              int size)
+static void xf_cliprdr_process_requested_data(xfClipboard* clipboard, BOOL hasData,
+                                              const BYTE* data, size_t size)
 {
 	BOOL bSuccess = 0;
 	UINT32 SrcSize = 0;
@@ -871,7 +897,7 @@ static void xf_cliprdr_process_requested_data(xfClipboard* clipboard, BOOL hasDa
 		case CF_TEXT:
 		case CF_OEMTEXT:
 		case CF_UNICODETEXT:
-			size = strlen((char*)data) + 1;
+			size = strlen((const char*)data) + 1;
 			srcFormatId = format->localFormat;
 			break;
 
@@ -944,6 +970,37 @@ static void xf_cliprdr_process_requested_data(xfClipboard* clipboard, BOOL hasDa
 	free(pDstData);
 }
 
+static BOOL xf_add_input_flags(xfClipboard* clipboard, long mask)
+{
+	WINPR_ASSERT(clipboard);
+
+	xfContext* xfc = clipboard->xfc;
+	WINPR_ASSERT(xfc);
+
+	XWindowAttributes attr = { 0 };
+	XGetWindowAttributes(xfc->display, xfc->drawable, &attr);
+	if ((attr.all_event_masks & mask) == 0)
+		clipboard->event_mask = attr.all_event_masks;
+
+	XSelectInput(xfc->display, xfc->drawable, attr.all_event_masks | mask);
+	return TRUE;
+}
+
+static BOOL xf_restore_input_flags(xfClipboard* clipboard)
+{
+	WINPR_ASSERT(clipboard);
+
+	xfContext* xfc = clipboard->xfc;
+	WINPR_ASSERT(xfc);
+
+	if (clipboard->event_mask != 0)
+	{
+		XSelectInput(xfc->display, xfc->drawable, clipboard->event_mask);
+		clipboard->event_mask = 0;
+	}
+	return TRUE;
+}
+
 static BOOL xf_cliprdr_get_requested_data(xfClipboard* clipboard, Atom target)
 {
 	Atom type = 0;
@@ -993,7 +1050,7 @@ static BOOL xf_cliprdr_get_requested_data(xfClipboard* clipboard, Atom target)
 
 		clipboard->incr_data_length = 0;
 		has_data = TRUE; /* data will be followed in PropertyNotify event */
-		XSelectInput(xfc->display, xfc->drawable, PropertyChangeMask);
+		xf_add_input_flags(clipboard, PropertyChangeMask);
 	}
 	else
 	{
@@ -1004,7 +1061,11 @@ static BOOL xf_cliprdr_get_requested_data(xfClipboard* clipboard, Atom target)
 			clipboard->incr_data = NULL;
 			bytes_left = clipboard->incr_data_length;
 			clipboard->incr_data_length = 0;
-			clipboard->incr_starts = 0;
+			clipboard->incr_starts = FALSE;
+
+			/* Restore previous event mask */
+			xf_restore_input_flags(clipboard);
+
 			has_data = TRUE;
 		}
 		else if (LogTagAndXGetWindowProperty(
@@ -1210,7 +1271,6 @@ void xf_cliprdr_clear_cached_data(xfClipboard* clipboard)
 
 	ClipboardLock(clipboard->system);
 	ClipboardEmpty(clipboard->system);
-	cliprdr_file_context_clear(clipboard->file);
 
 	HashTable_Clear(clipboard->cachedData);
 	HashTable_Clear(clipboard->cachedRawData);
@@ -1683,8 +1743,9 @@ static UINT xf_cliprdr_send_client_format_list(xfClipboard* clipboard, BOOL forc
 	if (clipboard->owner && clipboard->owner != xfc->drawable)
 	{
 		/* Request the owner for TARGETS, and wait for SelectionNotify event */
-		XConvertSelection(xfc->display, clipboard->clipboard_atom, clipboard->targets[1],
-		                  clipboard->property_atom, xfc->drawable, CurrentTime);
+		LogTagAndXConvertSelection(TAG, xfc->display, clipboard->clipboard_atom,
+		                           clipboard->targets[1], clipboard->property_atom, xfc->drawable,
+		                           CurrentTime);
 	}
 
 	xf_cliprdr_free_formats(formats, numFormats);
@@ -1987,8 +2048,8 @@ xf_cliprdr_server_format_data_request(CliprdrClientContext* context,
 	DEBUG_CLIPRDR("requested format 0x%08" PRIx32 " [%s] {local 0x%08" PRIx32 "} [%s]",
 	              format->formatToRequest, ClipboardGetFormatIdString(format->formatToRequest),
 	              format->localFormat, format->formatName);
-	XConvertSelection(xfc->display, clipboard->clipboard_atom, format->atom,
-	                  clipboard->property_atom, xfc->drawable, CurrentTime);
+	LogTagAndXConvertSelection(TAG, xfc->display, clipboard->clipboard_atom, format->atom,
+	                           clipboard->property_atom, xfc->drawable, CurrentTime);
 	XFlush(xfc->display);
 	/* After this point, we expect a SelectionNotify event from the clipboard owner. */
 	return CHANNEL_RC_OK;
