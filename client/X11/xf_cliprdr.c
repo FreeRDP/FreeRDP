@@ -607,6 +607,23 @@ static CLIPRDR_FORMAT* xf_cliprdr_get_raw_server_formats(xfClipboard* clipboard,
 	return formats;
 }
 
+static BOOL xf_cliprdr_should_add_format(const CLIPRDR_FORMAT* formats, size_t count,
+                                         const xfCliprdrFormat* xformat)
+{
+	WINPR_ASSERT(formats);
+
+	if (!xformat)
+		return FALSE;
+
+	for (size_t x = 0; x < count; x++)
+	{
+		const CLIPRDR_FORMAT* format = &formats[x];
+		if (format->formatId == xformat->formatToRequest)
+			return FALSE;
+	}
+	return TRUE;
+}
+
 static CLIPRDR_FORMAT* xf_cliprdr_get_formats_from_targets(xfClipboard* clipboard,
                                                            UINT32* numFormats)
 {
@@ -647,10 +664,18 @@ static CLIPRDR_FORMAT* xf_cliprdr_get_formats_from_targets(xfClipboard* clipboar
 		Atom tatom = ((Atom*)data)[i];
 		const xfCliprdrFormat* format = xf_cliprdr_get_client_format_by_atom(clipboard, tatom);
 
-		if (format)
+		if (xf_cliprdr_should_add_format(formats, *numFormats, format))
 		{
-			formats[*numFormats].formatId = format->formatToRequest;
-			formats[*numFormats].formatName = _strdup(format->formatName);
+			CLIPRDR_FORMAT* cformat = &formats[*numFormats];
+			cformat->formatId = format->formatToRequest;
+			if (format->formatName)
+			{
+				cformat->formatName = _strdup(format->formatName);
+				WINPR_ASSERT(cformat->formatName);
+			}
+			else
+				cformat->formatName = NULL;
+
 			*numFormats += 1;
 		}
 	}
