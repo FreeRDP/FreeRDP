@@ -926,14 +926,15 @@ static void xf_cliprdr_process_requested_data(xfClipboard* clipboard, BOOL hasDa
 
 		if (error)
 			WLog_ERR(TAG, "failed to serialize CLIPRDR_FILELIST: 0x%08X", error);
+		else
+		{
+			UINT32 formatId = ClipboardGetFormatId(clipboard->system, mime_uri_list);
+			UINT32 url_size = 0;
 
-		UINT32 formatId = ClipboardGetFormatId(clipboard->system, mime_uri_list);
-		UINT32 url_size = 0;
-		ClipboardLock(clipboard->system);
-		char* url = ClipboardGetData(clipboard->system, formatId, &url_size);
-		ClipboardUnlock(clipboard->system);
-		cliprdr_file_context_update_client_data(clipboard->file, url, url_size);
-		free(url);
+			char* url = ClipboardGetData(clipboard->system, formatId, &url_size);
+			cliprdr_file_context_update_client_data(clipboard->file, url, url_size);
+			free(url);
+		}
 
 		free(file_array);
 	}
