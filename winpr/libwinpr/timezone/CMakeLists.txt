@@ -19,12 +19,12 @@ set(SRCS
 		TimeZoneNameMap.c
 		TimeZoneNameMap.h
 		TimeZoneNameMapUtils.c
+		timezone.c
 	)
 if (NOT WIN32)
 	list(APPEND SRCS
             TimeZoneIanaAbbrevMap.c
             TimeZoneIanaAbbrevMap.h
-            timezone.c
 	)
 endif()
 

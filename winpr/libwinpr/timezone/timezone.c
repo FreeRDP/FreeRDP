@@ -38,7 +38,9 @@
 #include "TimeZoneNameMap.h"
 #include "TimeZoneIanaAbbrevMap.h"
 
-#ifndef _WIN32
+#ifdef _WIN32
+#pragma comment(lib, "advapi32")
+#else
 
 #include <time.h>
 #include <unistd.h>
@@ -710,6 +712,34 @@ BOOL TzSpecificLocalTimeToSystemTime(LPTIME_ZONE_INFORMATION lpTimeZoneInformati
     (defined(_WIN32) && (defined(NTDDI_WIN8) && _WIN32_WINNT < 0x0600 || \
                          !defined(NTDDI_WIN8) && _WIN32_WINNT < 0x0501)) /* Windows Vista */
 
+typedef enum
+{
+	HAVE_TRANSITION_DATES = 0,
+	HAVE_NO_STANDARD_TRANSITION_DATE = 1,
+	HAVE_NO_DAYLIGHT_TRANSITION_DATE = 2
+} dyn_transition_result;
+
+static int dynamic_time_zone_from_localtime(const struct tm* local_time,
+                                            PDYNAMIC_TIME_ZONE_INFORMATION tz)
+{
+	WINPR_ASSERT(local_time);
+	WINPR_ASSERT(tz);
+	int rc = HAVE_TRANSITION_DATES;
+
+	tz->Bias = get_bias(local_time, FALSE);
+	if (local_time->tm_isdst >= 0)
+	{
+		/* DST bias is the difference between standard time and DST in minutes */
+		const LONG d = get_bias(local_time, TRUE);
+		tz->DaylightBias = -1 * labs(tz->Bias - d);
+		if (!get_transition_date(local_time, FALSE, &tz->StandardDate))
+			rc |= HAVE_NO_STANDARD_TRANSITION_DATE;
+		if (!get_transition_date(local_time, TRUE, &tz->DaylightDate))
+			rc |= HAVE_NO_DAYLIGHT_TRANSITION_DATE;
+	}
+	return rc;
+}
+
 DWORD GetDynamicTimeZoneInformation(PDYNAMIC_TIME_ZONE_INFORMATION tz)
 {
 	BOOL doesNotHaveStandardDate = FALSE;
@@ -734,12 +764,10 @@ DWORD GetDynamicTimeZoneInformation(PDYNAMIC_TIME_ZONE_INFORMATION tz)
 	tz->Bias = get_bias(local_time, FALSE);
 	if (local_time->tm_isdst >= 0)
 	{
-		/* DST bias is the difference between standard time and DST in minutes */
-		const LONG d = get_bias(local_time, TRUE);
-		tz->DaylightBias = -1 * labs(tz->Bias - d);
-		if (!get_transition_date(local_time, FALSE, &tz->StandardDate))
+		const int rc = dynamic_time_zone_from_localtime(local_time, tz);
+		if (rc & HAVE_NO_STANDARD_TRANSITION_DATE)
 			doesNotHaveStandardDate = TRUE;
-		if (!get_transition_date(local_time, TRUE, &tz->DaylightDate))
+		if (rc & HAVE_NO_DAYLIGHT_TRANSITION_DATE)
 			doesNotHaveDaylightDate = TRUE;
 	}
 
@@ -822,9 +850,57 @@ BOOL TzSpecificLocalTimeToSystemTimeEx(const DYNAMIC_TIME_ZONE_INFORMATION* lpTi
 DWORD EnumDynamicTimeZoneInformation(const DWORD dwIndex,
                                      PDYNAMIC_TIME_ZONE_INFORMATION lpTimeZoneInformation)
 {
-	WINPR_UNUSED(dwIndex);
-	WINPR_UNUSED(lpTimeZoneInformation);
-	return 0;
+	if (!lpTimeZoneInformation)
+		return ERROR_INVALID_PARAMETER;
+	const DYNAMIC_TIME_ZONE_INFORMATION empty = { 0 };
+	*lpTimeZoneInformation = empty;
+
+	if (dwIndex >= TimeZoneNameMapSize)
+		return ERROR_NO_MORE_ITEMS;
+
+	const TimeZoneNameMapEntry* entry = &TimeZoneNameMap[dwIndex];
+	if (entry->DaylightName)
+		ConvertUtf8ToWChar(entry->DaylightName, lpTimeZoneInformation->DaylightName,
+		                   ARRAYSIZE(lpTimeZoneInformation->DaylightName));
+	if (entry->StandardName)
+		ConvertUtf8ToWChar(entry->StandardName, lpTimeZoneInformation->StandardName,
+		                   ARRAYSIZE(lpTimeZoneInformation->StandardName));
+	if (entry->Id)
+		ConvertUtf8ToWChar(entry->Id, lpTimeZoneInformation->TimeZoneKeyName,
+		                   ARRAYSIZE(lpTimeZoneInformation->TimeZoneKeyName));
+
+	const time_t t = time(NULL);
+	struct tm tres = { 0 };
+
+	const char* tz = getenv("TZ");
+	char* tzcopy = NULL;
+	if (tz)
+	{
+		size_t tzianalen = 0;
+		winpr_asprintf(&tzcopy, &tzianalen, "TZ=%s", tz);
+	}
+
+	char* tziana = NULL;
+	{
+		size_t tzianalen = 0;
+		winpr_asprintf(&tziana, &tzianalen, "TZ=%s", entry->Iana);
+	}
+	if (tziana)
+		putenv(tziana);
+
+	tzset();
+	struct tm* local_time = localtime_r(&t, &tres);
+	free(tziana);
+	if (tzcopy)
+		putenv(tzcopy);
+	else
+		unsetenv("TZ");
+	free(tzcopy);
+
+	if (local_time)
+		dynamic_time_zone_from_localtime(local_time, lpTimeZoneInformation);
+
+	return ERROR_SUCCESS;
 }
 
 DWORD GetDynamicTimeZoneInformationEffectiveYears(
