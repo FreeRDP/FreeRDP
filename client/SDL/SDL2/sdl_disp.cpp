@@ -337,7 +337,10 @@ BOOL sdlDispContext::handle_display_event(const SDL_DisplayEvent* ev)
 BOOL sdlDispContext::handle_window_event(const SDL_WindowEvent* ev)
 {
 	WINPR_ASSERT(ev);
-
+#if defined(WITH_DEBUG_SDL_EVENTS)
+	SDL_Log("got windowEvent %s [0x%08" PRIx32 "]", sdl_window_event_str(ev->event).c_str(),
+	        ev->event);
+#endif
 	auto bordered = freerdp_settings_get_bool(_sdl->context()->settings, FreeRDP_Decorations)
 	                    ? SDL_TRUE
 	                    : SDL_FALSE;
@@ -351,7 +354,6 @@ BOOL sdlDispContext::handle_window_event(const SDL_WindowEvent* ev)
 		case SDL_WINDOWEVENT_HIDDEN:
 		case SDL_WINDOWEVENT_MINIMIZED:
 			gdi_send_suppress_output(_sdl->context()->gdi, TRUE);
-
 			return TRUE;
 
 		case SDL_WINDOWEVENT_EXPOSED:

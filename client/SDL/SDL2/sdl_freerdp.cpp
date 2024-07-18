@@ -220,6 +220,14 @@ static const struct sdl_exit_code_map_t* sdl_map_entry_by_code(int exit_code)
 	return nullptr;
 }
 
+static void sdl_hide_connection_dialog(SdlContext* sdl)
+{
+	WINPR_ASSERT(sdl);
+	std::lock_guard<CriticalSection> lock(sdl->critical);
+	if (sdl->connection_dialog)
+		sdl->connection_dialog->hide();
+}
+
 static const struct sdl_exit_code_map_t* sdl_map_entry_by_error(DWORD error)
 {
 	for (size_t x = 0; x < ARRAYSIZE(sdl_exit_code_map); x++)
@@ -914,14 +922,14 @@ static int sdl_run(SdlContext* sdl)
 				case SDL_WINDOWEVENT:
 				{
 					const SDL_WindowEvent* ev = &windowEvent.window;
-					sdl->disp.handle_window_event(ev);
-
+					auto window = sdl->windows.find(ev->windowID);
+					if (window != sdl->windows.end())
+						sdl->disp.handle_window_event(ev);
 					switch (ev->event)
 					{
 						case SDL_WINDOWEVENT_RESIZED:
 						case SDL_WINDOWEVENT_SIZE_CHANGED:
 						{
-							auto window = sdl->windows.find(ev->windowID);
 							if (window != sdl->windows.end())
 							{
 								window->second.fill();
@@ -931,7 +939,6 @@ static int sdl_run(SdlContext* sdl)
 						break;
 						case SDL_WINDOWEVENT_MOVED:
 						{
-							auto window = sdl->windows.find(ev->windowID);
 							if (window != sdl->windows.end())
 							{
 								auto r = window->second.rect();
@@ -1071,11 +1078,7 @@ static BOOL sdl_post_connect(freerdp* instance)
 	auto sdl = get_context(context);
 
 	// Retry was successful, discard dialog
-	{
-		std::lock_guard<CriticalSection> lock(sdl->critical);
-		if (sdl->connection_dialog)
-			sdl->connection_dialog->hide();
-	}
+	sdl_hide_connection_dialog(sdl);
 
 	if (freerdp_settings_get_bool(context->settings, FreeRDP_AuthenticationOnly))
 	{
@@ -1233,12 +1236,19 @@ static DWORD WINAPI sdl_client_thread_proc(SdlContext* sdl)
 			break;
 		}
 
-		status = WaitForMultipleObjects(nCount, handles, FALSE, 100);
+		status = WaitForMultipleObjects(nCount, handles, FALSE, INFINITE);
 
 		if (status == WAIT_FAILED)
+			break;
+
+		if (!freerdp_check_event_handles(context))
 		{
 			if (client_auto_reconnect(instance))
+			{
+				// Retry was successful, discard dialog
+				sdl_hide_connection_dialog(sdl);
 				continue;
+			}
 			else
 			{
 				/*
@@ -1252,14 +1262,8 @@ static DWORD WINAPI sdl_client_thread_proc(SdlContext* sdl)
 			if (freerdp_get_last_error(context) == FREERDP_ERROR_SUCCESS)
 				WLog_Print(sdl->log, WLOG_ERROR, "WaitForMultipleObjects failed with %" PRIu32 "",
 				           status);
-			break;
-		}
-
-		if (!freerdp_check_event_handles(context))
-		{
 			if (freerdp_get_last_error(context) == FREERDP_ERROR_SUCCESS)
 				WLog_Print(sdl->log, WLOG_ERROR, "Failed to check FreeRDP event handles");
-
 			break;
 		}
 	}
