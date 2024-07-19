@@ -19,7 +19,7 @@ internal class Program
 		Environment.Exit(1);
 	}
 
-	private static bool writeZoneMap(string path)
+	private static bool writeZoneMapC(string path)
 	{
 		string fname = "TimeZoneNameMap";
 		string fpath = Path.Combine(path, fname + ".c");
@@ -32,12 +32,16 @@ internal class Program
 			fs.WriteLine("");
 			fs.WriteLine("const " + fname + "Entry " + fname + "[] ={");
 
+			bool first = true;
 			foreach (System.TimeZoneInfo tz in System.TimeZoneInfo.GetSystemTimeZones())
 			{
 				string iana;
 				System.TimeZoneInfo.TryConvertWindowsIdToIanaId(tz.Id, out iana);
 
 				StringBuilder sb = new StringBuilder();
+				if (!first)
+					sb.Append(",");
+				first = false;
 				sb.Append("{ \"");
 				sb.Append(tz.Id);
 				sb.Append("\", \"");
@@ -48,7 +52,7 @@ internal class Program
 				sb.Append(tz.DaylightName);
 				sb.Append("\", \"");
 				sb.Append(iana);
-				sb.Append("\" },");
+				sb.Append("\" }");
 				fs.WriteLine(sb.ToString());
 			}
 
@@ -57,6 +61,56 @@ internal class Program
 			fs.WriteLine("const size_t " + fname + "Size = ARRAYSIZE(" + fname + ");");
 			fs.WriteLine("");
 		}
+		return true;
+	}
+
+	private static bool writeZoneMapJSON(string path)
+	{
+		string fname = "TimeZoneNameMap";
+		string fpath = Path.Combine(path, fname + ".json");
+
+		using (StreamWriter fs = new StreamWriter(fpath))
+		{
+			fs.WriteLine("{");
+			fs.WriteLine("\"TimeZoneNameMap\": [");
+
+			bool first = true;
+			foreach (System.TimeZoneInfo tz in System.TimeZoneInfo.GetSystemTimeZones())
+			{
+				string iana;
+				System.TimeZoneInfo.TryConvertWindowsIdToIanaId(tz.Id, out iana);
+
+				StringBuilder sb = new StringBuilder();
+				if (!first)
+					sb.Append(",");
+				first = false;
+				sb.Append("{ ");
+				sb.Append("\"Id\": \"");
+				sb.Append(tz.Id);
+				sb.Append("\", \"StandardName\": \"");
+				sb.Append(tz.StandardName);
+				sb.Append("\", \"DisplayName\": \"");
+				sb.Append(tz.DisplayName);
+				sb.Append("\", \"DaylightName\": \"");
+				sb.Append(tz.DaylightName);
+				sb.Append("\", \"Iana\": \"");
+				sb.Append(iana);
+				sb.Append("\" }");
+				fs.WriteLine(sb.ToString());
+			}
+
+			fs.WriteLine("]");
+			fs.WriteLine("}");
+		}
+		return true;
+	}
+
+	private static bool writeZoneMap(string path)
+	{
+		if (!writeZoneMapC(path))
+			return false;
+		if (!writeZoneMapJSON(path))
+			return false;
 		return true;
 	}
 
@@ -121,7 +175,7 @@ internal class Program
 			fs.WriteLine("");
 			fs.WriteLine("#include \"" + fname + ".h\"");
 			fs.WriteLine("");
-			fs.WriteLine("const WINDOWS_TZID_ENTRY " + fname + "IdTable[] = {");
+			fs.WriteLine("const WINDOWS_TZID_ENTRY " + fname + "[] = {");
 
 			foreach (XmlNode mzone in mzones)
 			{

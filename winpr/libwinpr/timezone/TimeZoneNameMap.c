@@ -286,7 +286,7 @@ const TimeZoneNameMapEntry TimeZoneNameMap[] = {
 	{ "Samoa Standard Time", "Samoa Standard Time", "(UTC+13:00) Samoa", "Samoa Daylight Time",
 	  "Pacific/Apia" },
 	{ "Line Islands Standard Time", "Line Islands Standard Time", "(UTC+14:00) Kiritimati Island",
-	  "Line Islands Daylight Time", "Pacific/Kiritimati" },
+	  "Line Islands Daylight Time", "Pacific/Kiritimati" }
 };
 
 const size_t TimeZoneNameMapSize = ARRAYSIZE(TimeZoneNameMap);

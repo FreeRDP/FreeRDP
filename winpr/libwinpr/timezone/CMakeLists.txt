@@ -15,12 +15,32 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+option(WITH_TIMEZONE_COMPILED "Use compiled in timezone definitions" ON)
+if (WITH_TIMEZONE_COMPILED)
+	winpr_definition_add(-DWITH_TIMEZONE_COMPILED)
+endif()
+
+include(CMakeDependentOption)
+cmake_dependent_option(WITH_TIMEZONE_FROM_FILE "Use timezone definitions from JSON file" OFF WITH_WINPR_JSON OFF)
+if (WITH_TIMEZONE_FROM_FILE)
+	set(WINPR_RESOURCE_ROOT ${CMAKE_INSTALL_FULL_DATAROOTDIR}/WinPR)
+	winpr_definition_add(-DWINPR_RESOURCE_ROOT="${WINPR_RESOURCE_ROOT}")
+	winpr_definition_add(-DWITH_TIMEZONE_FROM_FILE)
+
+	install(FILES TimeZoneNameMap.json DESTINATION ${WINPR_RESOURCE_ROOT})
+endif()
+
 set(SRCS
-		TimeZoneNameMap.c
-		TimeZoneNameMap.h
 		TimeZoneNameMapUtils.c
+		TimeZoneNameMap.h
 		timezone.c
 	)
+if (WITH_TIMEZONE_COMPILED)
+	list(APPEND SRCS
+		TimeZoneNameMap.c
+	)
+endif()
+
 if (NOT WIN32)
 	list(APPEND SRCS
             TimeZoneIanaAbbrevMap.c
