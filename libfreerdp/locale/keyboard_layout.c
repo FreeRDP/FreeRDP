@@ -24,12 +24,19 @@
 #include <string.h>
 
 #include <winpr/crt.h>
+#include <winpr/path.h>
+#include <winpr/json.h>
 
 #include "liblocale.h"
 
 #include <freerdp/types.h>
 #include <freerdp/scancode.h>
 #include <freerdp/locale/keyboard.h>
+
+#include <freerdp/log.h>
+#define TAG FREERDP_TAG("locale.keyboard.layouts")
+
+// #define DUMP_LAYOUTS_TO_JSON
 
 struct LanguageIdentifier
 {
@@ -47,6 +54,20 @@ struct LanguageIdentifier
 	UINT8 SublangaugeIdentifier;
 	const char* SublanguageSymbol;
 };
+
+typedef struct
+{
+	DWORD code; /* Keyboard layout code */
+	DWORD id;   /* Keyboard variant ID */
+	char* name; /* Keyboard layout variant name */
+} RDP_KEYBOARD_LAYOUT_VARIANT;
+
+typedef struct
+{
+	DWORD code; /* Keyboard layout code */
+	char* file; /* IME file */
+	char* name; /* Keyboard layout name */
+} RDP_KEYBOARD_IME;
 
 static const struct LanguageIdentifier language_identifiers[] = {
 	/* 	[Language identifier]		[Primary language]		[Prim. lang. identifier]		[Prim.
@@ -500,12 +521,31 @@ static const struct LanguageIdentifier language_identifiers[] = {
 	  "SUBLANG_YORUBA_NIGERIA" },
 };
 
+static BOOL reallocate_keyboard_layouts(RDP_KEYBOARD_LAYOUT** layouts, size_t* pcount,
+                                        size_t to_add)
+{
+	WINPR_ASSERT(layouts);
+	WINPR_ASSERT(pcount);
+
+	RDP_KEYBOARD_LAYOUT* copy = (RDP_KEYBOARD_LAYOUT*)realloc(
+	    *layouts, (*pcount + to_add + 1) * sizeof(RDP_KEYBOARD_LAYOUT));
+
+	if (!copy)
+		return FALSE;
+
+	memset(&copy[*pcount], 0, (to_add + 1) * sizeof(RDP_KEYBOARD_LAYOUT));
+	*layouts = copy;
+	*pcount += to_add;
+	return TRUE;
+}
+
+#if !defined(WITH_KEYBOARD_LAYOUT_FROM_FILE)
 /*
  * In Windows XP, this information is available in the system registry at
  * HKEY_LOCAL_MACHINE/SYSTEM/CurrentControlSet001/Control/Keyboard Layouts/
  * https://docs.microsoft.com/en-us/windows-hardware/manufacture/desktop/windows-language-pack-default-values
  */
-static const RDP_KEYBOARD_LAYOUT RDP_KEYBOARD_LAYOUT_TABLE[] = {
+static const RDP_KEYBOARD_LAYOUT sRDP_KEYBOARD_LAYOUT_TABLE[] = {
 	{ 0x0000041c, "Albanian" },
 	{ 0x00000401, "Arabic (101)" },
 	{ 0x00010401, "Arabic (102)" },
@@ -707,15 +747,9 @@ static const RDP_KEYBOARD_LAYOUT RDP_KEYBOARD_LAYOUT_TABLE[] = {
 	{ 0x00000485, "Yakut" },
 	{ 0x0000046a, "Yoruba" },
 };
+static const size_t sRDP_KEYBOARD_LAYOUT_TABLE_len = ARRAYSIZE(sRDP_KEYBOARD_LAYOUT_TABLE);
 
-typedef struct
-{
-	DWORD code;       /* Keyboard layout code */
-	DWORD id;         /* Keyboard variant ID */
-	const char* name; /* Keyboard layout variant name */
-} RDP_KEYBOARD_LAYOUT_VARIANT;
-
-static const RDP_KEYBOARD_LAYOUT_VARIANT RDP_KEYBOARD_LAYOUT_VARIANT_TABLE[] = {
+static const RDP_KEYBOARD_LAYOUT_VARIANT sRDP_KEYBOARD_LAYOUT_VARIANT_TABLE[] = {
 	{ KBD_ARABIC_102, 0x0028, "Arabic (102)" },
 	{ KBD_BULGARIAN_LATIN, 0x0004, "Bulgarian (Latin)" },
 	{ KBD_CZECH_QWERTY, 0x0005, "Czech (QWERTY)" },
@@ -762,19 +796,14 @@ static const RDP_KEYBOARD_LAYOUT_VARIANT RDP_KEYBOARD_LAYOUT_VARIANT_TABLE[] = {
 	{ KBD_FRENCH_BEPO, 0x00C0, "French Bépo" },
 	{ KBD_GERMAN_NEO, 0x00C0, "German Neo" }
 };
+static const size_t sRDP_KEYBOARD_LAYOUT_VARIANT_TABLE_len =
+    ARRAYSIZE(sRDP_KEYBOARD_LAYOUT_VARIANT_TABLE);
 
 /* Input Method Editor (IME) */
 
-typedef struct
-{
-	DWORD code;       /* Keyboard layout code */
-	const char* file; /* IME file */
-	const char* name; /* Keyboard layout name */
-} RDP_KEYBOARD_IME;
-
 /* Global Input Method Editors (IME) */
 
-static const RDP_KEYBOARD_IME RDP_KEYBOARD_IME_TABLE[] = {
+static const RDP_KEYBOARD_IME sRDP_KEYBOARD_IME_TABLE[] = {
 	{ KBD_CHINESE_TRADITIONAL_PHONETIC, "phon.ime", "Chinese (Traditional) - Phonetic" },
 	{ KBD_JAPANESE_INPUT_SYSTEM_MS_IME2002, "imjp81.ime", "Japanese Input System (MS-IME2002)" },
 	{ KBD_KOREAN_INPUT_SYSTEM_IME_2000, "imekr61.ime", "Korean Input System (IME 2000)" },
@@ -796,6 +825,621 @@ static const RDP_KEYBOARD_IME RDP_KEYBOARD_IME_TABLE[] = {
 	  "Chinese (Traditional) - Microsoft Pinyin IME 3.0" },
 	{ KBD_CHINESE_TRADITIONAL_ALPHANUMERIC, "romanime.ime", "Chinese (Traditional) - Alphanumeric" }
 };
+static const size_t sRDP_KEYBOARD_IME_TABLE_len = ARRAYSIZE(sRDP_KEYBOARD_IME_TABLE);
+
+#if defined(DUMP_LAYOUTS_TO_JSON)
+static BOOL append_layout(WINPR_JSON* json)
+{
+	WINPR_JSON* array = WINPR_JSON_AddArrayToObject(json, "KeyboardLayouts");
+	if (!array)
+		return FALSE;
+
+	for (size_t x = 0; x < sRDP_KEYBOARD_LAYOUT_TABLE_len; x++)
+	{
+		const RDP_KEYBOARD_LAYOUT* const ime = &sRDP_KEYBOARD_LAYOUT_TABLE[x];
+		WINPR_JSON* obj = WINPR_JSON_CreateObject();
+		if (!obj)
+			return FALSE;
+		WINPR_JSON_AddNumberToObject(obj, "code", ime->code);
+		WINPR_JSON_AddStringToObject(obj, "name", ime->name);
+
+		if (!WINPR_JSON_AddItemToArray(array, obj))
+			return FALSE;
+	}
+
+	return TRUE;
+}
+
+static BOOL append_variant(WINPR_JSON* json)
+{
+	WINPR_JSON* array = WINPR_JSON_AddArrayToObject(json, "KeyboardVariants");
+	if (!array)
+		return FALSE;
+
+	for (size_t x = 0; x < sRDP_KEYBOARD_LAYOUT_VARIANT_TABLE_len; x++)
+	{
+		const RDP_KEYBOARD_LAYOUT_VARIANT* const ime = &sRDP_KEYBOARD_LAYOUT_VARIANT_TABLE[x];
+		WINPR_JSON* obj = WINPR_JSON_CreateObject();
+		if (!obj)
+			return FALSE;
+		WINPR_JSON_AddNumberToObject(obj, "code", ime->code);
+		WINPR_JSON_AddNumberToObject(obj, "id", ime->id);
+		WINPR_JSON_AddStringToObject(obj, "name", ime->name);
+
+		if (!WINPR_JSON_AddItemToArray(array, obj))
+			return FALSE;
+	}
+
+	return TRUE;
+}
+
+static BOOL append_ime(WINPR_JSON* json)
+{
+	WINPR_JSON* array = WINPR_JSON_AddArrayToObject(json, "KeyboardIme");
+	if (!array)
+		return FALSE;
+
+	for (size_t x = 0; x < sRDP_KEYBOARD_IME_TABLE_len; x++)
+	{
+		const RDP_KEYBOARD_IME* const ime = &sRDP_KEYBOARD_IME_TABLE[x];
+		WINPR_JSON* obj = WINPR_JSON_CreateObject();
+		if (!obj)
+			return FALSE;
+		WINPR_JSON_AddNumberToObject(obj, "code", ime->code);
+		WINPR_JSON_AddStringToObject(obj, "file", ime->file);
+		WINPR_JSON_AddStringToObject(obj, "name", ime->name);
+
+		if (!WINPR_JSON_AddItemToArray(array, obj))
+			return FALSE;
+	}
+
+	return TRUE;
+}
+#endif
+
+static BOOL load_layout_file(void)
+{
+#if defined(DUMP_LAYOUTS_TO_JSON)
+	/* Dump to file in /tmp */
+	char* str = NULL;
+	WINPR_JSON* json = WINPR_JSON_CreateObject();
+	if (!json)
+		goto end;
+
+	if (!append_layout(json))
+		goto end;
+	if (!append_variant(json))
+		goto end;
+	if (!append_ime(json))
+		goto end;
+
+	str = WINPR_JSON_Print(json);
+	if (!str)
+		goto end;
+	{
+		FILE* fp = winpr_fopen("/tmp/kbd.json", "w");
+		if (!fp)
+			goto end;
+		fprintf(fp, "%s", str);
+		fclose(fp);
+	}
+end:
+	free(str);
+	WINPR_JSON_Delete(json);
+#endif
+	return TRUE;
+}
+#else
+static RDP_KEYBOARD_LAYOUT* sRDP_KEYBOARD_LAYOUT_TABLE = NULL;
+static size_t sRDP_KEYBOARD_LAYOUT_TABLE_len = 0;
+
+static RDP_KEYBOARD_LAYOUT_VARIANT* sRDP_KEYBOARD_LAYOUT_VARIANT_TABLE = NULL;
+static size_t sRDP_KEYBOARD_LAYOUT_VARIANT_TABLE_len = 0;
+
+static RDP_KEYBOARD_IME* sRDP_KEYBOARD_IME_TABLE = NULL;
+static size_t sRDP_KEYBOARD_IME_TABLE_len = 0;
+
+static void clear_keyboard_layout(RDP_KEYBOARD_LAYOUT* layout)
+{
+	if (!layout)
+		return;
+
+	free(layout->name);
+	const RDP_KEYBOARD_LAYOUT empty = { 0 };
+	*layout = empty;
+}
+
+static void clear_keyboard_variant(RDP_KEYBOARD_LAYOUT_VARIANT* layout)
+{
+	if (!layout)
+		return;
+
+	free(layout->name);
+	const RDP_KEYBOARD_LAYOUT_VARIANT empty = { 0 };
+	*layout = empty;
+}
+
+static void clear_keyboard_ime(RDP_KEYBOARD_IME* layout)
+{
+	if (!layout)
+		return;
+
+	free(layout->file);
+	free(layout->name);
+	const RDP_KEYBOARD_IME empty = { 0 };
+	*layout = empty;
+}
+
+static void clear_layout_tables(void)
+{
+	for (size_t x = 0; x < sRDP_KEYBOARD_LAYOUT_TABLE_len; x++)
+	{
+		RDP_KEYBOARD_LAYOUT* layout = &sRDP_KEYBOARD_LAYOUT_TABLE[x];
+		clear_keyboard_layout(layout);
+	}
+
+	free(sRDP_KEYBOARD_LAYOUT_TABLE);
+	sRDP_KEYBOARD_LAYOUT_TABLE = NULL;
+	sRDP_KEYBOARD_LAYOUT_TABLE_len = 0;
+
+	for (size_t x = 0; x < sRDP_KEYBOARD_LAYOUT_VARIANT_TABLE_len; x++)
+	{
+		RDP_KEYBOARD_LAYOUT_VARIANT* variant = &sRDP_KEYBOARD_LAYOUT_VARIANT_TABLE[x];
+		clear_keyboard_variant(variant);
+	}
+	free(sRDP_KEYBOARD_LAYOUT_VARIANT_TABLE);
+	sRDP_KEYBOARD_LAYOUT_VARIANT_TABLE = NULL;
+	sRDP_KEYBOARD_LAYOUT_VARIANT_TABLE_len = 0;
+
+	for (size_t x = 0; x < sRDP_KEYBOARD_IME_TABLE_len; x++)
+	{
+		RDP_KEYBOARD_IME* ime = &sRDP_KEYBOARD_IME_TABLE[x];
+		clear_keyboard_ime(ime);
+	}
+	free(sRDP_KEYBOARD_IME_TABLE);
+	sRDP_KEYBOARD_IME_TABLE = NULL;
+	sRDP_KEYBOARD_IME_TABLE_len = 0;
+}
+
+static WINPR_JSON* load_layouts_from_file(const char* filename)
+{
+	INT64 jstrlen = 0;
+	char* jstr = NULL;
+	WINPR_JSON* json = NULL;
+	FILE* fp = winpr_fopen(filename, "r");
+	if (!fp)
+	{
+		WLog_WARN(TAG, "resource file '%s' does not exist or is not readable", filename);
+		return NULL;
+	}
+
+	if (_fseeki64(fp, 0, SEEK_END) < 0)
+	{
+		WLog_WARN(TAG, "resource file '%s' seek failed", filename);
+		goto end;
+	}
+	jstrlen = _ftelli64(fp);
+	if (jstrlen < 0)
+	{
+		WLog_WARN(TAG, "resource file '%s' invalid length %" PRId64, filename, jstrlen);
+		goto end;
+	}
+	if (_fseeki64(fp, 0, SEEK_SET) < 0)
+	{
+		WLog_WARN(TAG, "resource file '%s' seek failed", filename);
+		goto end;
+	}
+
+	jstr = calloc(jstrlen + 1, sizeof(char));
+	if (!jstr)
+	{
+		WLog_WARN(TAG, "resource file '%s' failed to allocate buffer of size %" PRId64, filename,
+		          jstrlen);
+		goto end;
+	}
+
+	if (fread(jstr, jstrlen, sizeof(char), fp) != 1)
+	{
+		WLog_WARN(TAG, "resource file '%s' failed to read buffer of size %" PRId64, filename,
+		          jstrlen);
+		goto end;
+	}
+
+	json = WINPR_JSON_ParseWithLength(jstr, jstrlen);
+	if (!json)
+		WLog_WARN(TAG, "resource file '%s' is not a valid JSON file", filename);
+end:
+	fclose(fp);
+	free(jstr);
+	return json;
+}
+
+static char* get_object_str(WINPR_JSON* json, size_t pos, const char* name)
+{
+	WINPR_ASSERT(json);
+	if (!WINPR_JSON_IsObject(json) || !WINPR_JSON_HasObjectItem(json, name))
+	{
+		WLog_WARN(TAG, "Invalid JSON entry at entry %" PRIuz ", missing an Object named '%s'", pos,
+		          name);
+		return NULL;
+	}
+	WINPR_JSON* obj = WINPR_JSON_GetObjectItem(json, name);
+	WINPR_ASSERT(obj);
+	if (!WINPR_JSON_IsString(obj))
+	{
+		WLog_WARN(TAG,
+		          "Invalid JSON entry at entry %" PRIuz ", Object named '%s': Not of type string",
+		          pos, name);
+		return NULL;
+	}
+
+	const char* str = WINPR_JSON_GetStringValue(obj);
+	if (!str)
+	{
+		WLog_WARN(TAG, "Invalid JSON entry at entry %" PRIuz ", Object named '%s': NULL string",
+		          pos, name);
+		return NULL;
+	}
+
+	return _strdup(str);
+}
+
+static UINT32 get_object_integer(WINPR_JSON* json, size_t pos, const char* name)
+{
+	WINPR_ASSERT(json);
+	if (!WINPR_JSON_IsObject(json) || !WINPR_JSON_HasObjectItem(json, name))
+	{
+		WLog_WARN(TAG, "Invalid JSON entry at entry %" PRIuz ", missing an Object named '%s'", pos,
+		          name);
+		return 0;
+	}
+	WINPR_JSON* obj = WINPR_JSON_GetObjectItem(json, name);
+	WINPR_ASSERT(obj);
+	if (!WINPR_JSON_IsNumber(obj))
+	{
+		WLog_WARN(TAG,
+		          "Invalid JSON entry at entry %" PRIuz ", Object named '%s': Not of type string",
+		          pos, name);
+		return 0;
+	}
+
+	return WINPR_JSON_GetNumberValue(obj);
+}
+
+static BOOL parse_json_layout_entry(WINPR_JSON* json, size_t pos, RDP_KEYBOARD_LAYOUT* entry)
+{
+	WINPR_ASSERT(entry);
+	if (!json || !WINPR_JSON_IsObject(json))
+	{
+		WLog_WARN(TAG, "Invalid JSON entry at entry %" PRIuz ", expected an array", pos);
+		return FALSE;
+	}
+
+	entry->code = get_object_integer(json, pos, "code");
+	entry->name = get_object_str(json, pos, "name");
+	if (!entry->name)
+	{
+		clear_keyboard_layout(entry);
+		return FALSE;
+	}
+	return TRUE;
+}
+
+static BOOL parse_layout_entries(WINPR_JSON* json, const char* filename)
+{
+	if (!WINPR_JSON_IsArray(json))
+	{
+		WLog_WARN(TAG, "Invalid top level JSON type in file %s, expected an array", filename);
+		return FALSE;
+	}
+	return TRUE;
+}
+
+static BOOL parse_json_variant_entry(WINPR_JSON* json, size_t pos,
+                                     RDP_KEYBOARD_LAYOUT_VARIANT* entry)
+{
+	WINPR_ASSERT(entry);
+	if (!json || !WINPR_JSON_IsObject(json))
+	{
+		WLog_WARN(TAG, "Invalid JSON entry at entry %" PRIuz ", expected an array", pos);
+		return FALSE;
+	}
+
+	entry->code = get_object_integer(json, pos, "code");
+	entry->id = get_object_integer(json, pos, "id");
+	entry->name = get_object_str(json, pos, "name");
+	if (!entry->name)
+	{
+		clear_keyboard_variant(entry);
+		return FALSE;
+	}
+	return TRUE;
+}
+
+static BOOL parse_variant_entries(WINPR_JSON* json, const char* filename)
+{
+	if (!WINPR_JSON_IsArray(json))
+	{
+		WLog_WARN(TAG, "Invalid top level JSON type in file %s, expected an array", filename);
+		return FALSE;
+	}
+	WINPR_ASSERT(!sRDP_KEYBOARD_LAYOUT_VARIANT_TABLE);
+	WINPR_ASSERT(sRDP_KEYBOARD_LAYOUT_VARIANT_TABLE_len == 0);
+
+	const size_t count = WINPR_JSON_GetArraySize(json);
+	sRDP_KEYBOARD_LAYOUT_VARIANT_TABLE = calloc(count, sizeof(RDP_KEYBOARD_LAYOUT_VARIANT));
+	if (!sRDP_KEYBOARD_LAYOUT_VARIANT_TABLE)
+		return FALSE;
+	sRDP_KEYBOARD_LAYOUT_VARIANT_TABLE_len = count;
+
+	for (size_t x = 0; x < count; x++)
+	{
+		WINPR_JSON* entry = WINPR_JSON_GetArrayItem(json, x);
+		if (!parse_json_variant_entry(entry, x, &sRDP_KEYBOARD_LAYOUT_VARIANT_TABLE[x]))
+			return FALSE;
+	}
+	return TRUE;
+}
+
+static BOOL parse_json_ime_entry(WINPR_JSON* json, size_t pos, RDP_KEYBOARD_IME* entry)
+{
+	WINPR_ASSERT(entry);
+	if (!json || !WINPR_JSON_IsObject(json))
+	{
+		WLog_WARN(TAG, "Invalid JSON entry at entry %" PRIuz ", expected an array", pos);
+		return FALSE;
+	}
+
+	entry->code = get_object_integer(json, pos, "code");
+	entry->file = get_object_str(json, pos, "file");
+	entry->name = get_object_str(json, pos, "name");
+	if (!entry->file || !entry->name)
+	{
+		clear_keyboard_ime(entry);
+		return FALSE;
+	}
+	return TRUE;
+}
+
+static BOOL parse_ime_entries(WINPR_JSON* json, const char* filename)
+{
+	if (!WINPR_JSON_IsArray(json))
+	{
+		WLog_WARN(TAG, "Invalid top level JSON type in file %s, expected an array", filename);
+		return FALSE;
+	}
+	WINPR_ASSERT(!sRDP_KEYBOARD_IME_TABLE);
+	WINPR_ASSERT(sRDP_KEYBOARD_IME_TABLE_len == 0);
+
+	const size_t count = WINPR_JSON_GetArraySize(json);
+	sRDP_KEYBOARD_IME_TABLE = calloc(count, sizeof(RDP_KEYBOARD_IME));
+	if (!sRDP_KEYBOARD_IME_TABLE)
+		return FALSE;
+	sRDP_KEYBOARD_IME_TABLE_len = count;
+
+	for (size_t x = 0; x < count; x++)
+	{
+		WINPR_JSON* entry = WINPR_JSON_GetArrayItem(json, x);
+		if (!parse_json_ime_entry(entry, x, &sRDP_KEYBOARD_IME_TABLE[x]))
+			return FALSE;
+	}
+	return TRUE;
+}
+
+static BOOL CALLBACK load_layouts(PINIT_ONCE once, PVOID param, PVOID* context)
+{
+	WINPR_UNUSED(once);
+	WINPR_UNUSED(param);
+	WINPR_UNUSED(context);
+
+	WINPR_JSON* json = NULL;
+	char* filename = GetCombinedPath(FREERDP_RESOURCE_ROOT, "KeyboardLayoutMap.json");
+	if (!filename)
+	{
+		WLog_WARN(TAG, "Could not create WinPR timezone resource filename");
+		goto end;
+	}
+
+	json = load_layouts_from_file(filename);
+	if (!json)
+		goto end;
+	if (!WINPR_JSON_IsObject(json))
+	{
+		WLog_WARN(TAG, "Invalid top level JSON type in file %s, expected an array", filename);
+		goto end;
+	}
+
+	{
+		WINPR_JSON* obj = WINPR_JSON_GetObjectItem(json, "KeyboardLayouts");
+		if (!parse_layout_entries(obj, filename))
+			goto end;
+	}
+	{
+		WINPR_JSON* obj = WINPR_JSON_GetObjectItem(json, "KeyboardVariants");
+		if (!parse_variant_entries(obj, filename))
+			goto end;
+	}
+	{
+		WINPR_JSON* obj = WINPR_JSON_GetObjectItem(json, "KeyboardIme");
+		if (!parse_ime_entries(obj, filename))
+			goto end;
+	}
+
+end:
+	free(filename);
+	WINPR_JSON_Delete(json);
+	(void)atexit(clear_layout_tables);
+	return TRUE;
+}
+
+static BOOL load_layout_file(void)
+{
+	static INIT_ONCE once = INIT_ONCE_STATIC_INIT;
+	InitOnceExecuteOnce(&once, load_layouts, NULL, NULL);
+	return TRUE;
+}
+
+#endif
+
+static UINT32 rdp_keyboard_layout_by_name(const char* name)
+{
+	WINPR_ASSERT(name);
+	load_layout_file();
+
+	for (size_t i = 0; i < sRDP_KEYBOARD_LAYOUT_TABLE_len; i++)
+	{
+		const RDP_KEYBOARD_LAYOUT* const layout = &sRDP_KEYBOARD_LAYOUT_TABLE[i];
+		if (strcmp(layout->name, name) == 0)
+			return layout->code;
+	}
+	return 0;
+}
+
+static UINT32 rdp_keyboard_variant_by_name(const char* name)
+{
+	WINPR_ASSERT(name);
+	load_layout_file();
+
+	for (size_t i = 0; i < sRDP_KEYBOARD_LAYOUT_VARIANT_TABLE_len; i++)
+	{
+		const RDP_KEYBOARD_LAYOUT_VARIANT* const variant = &sRDP_KEYBOARD_LAYOUT_VARIANT_TABLE[i];
+		if (strcmp(variant->name, name) == 0)
+			return variant->code;
+	}
+	return 0;
+}
+
+static UINT32 rdp_keyboard_ime_by_name(const char* name)
+{
+	WINPR_ASSERT(name);
+	load_layout_file();
+
+	for (size_t i = 0; i < sRDP_KEYBOARD_IME_TABLE_len; i++)
+	{
+		const RDP_KEYBOARD_IME* const ime = &sRDP_KEYBOARD_IME_TABLE[i];
+		if (strcmp(ime->name, name) == 0)
+			return ime->code;
+	}
+	return 0;
+}
+
+static const char* rdp_keyboard_layout_by_id(UINT32 id)
+{
+	load_layout_file();
+
+	for (size_t i = 0; i < sRDP_KEYBOARD_LAYOUT_TABLE_len; i++)
+	{
+		const RDP_KEYBOARD_LAYOUT* const layout = &sRDP_KEYBOARD_LAYOUT_TABLE[i];
+		if (layout->code == id)
+			return layout->name;
+	}
+
+	return 0;
+}
+
+static const char* rdp_keyboard_variant_by_id(UINT32 id)
+{
+	load_layout_file();
+
+	for (size_t i = 0; i < sRDP_KEYBOARD_LAYOUT_VARIANT_TABLE_len; i++)
+	{
+		const RDP_KEYBOARD_LAYOUT_VARIANT* const variant = &sRDP_KEYBOARD_LAYOUT_VARIANT_TABLE[i];
+		if (variant->code == id)
+			return variant->name;
+	}
+	return 0;
+}
+
+static const char* rdp_keyboard_ime_by_id(UINT32 id)
+{
+	load_layout_file();
+
+	for (size_t i = 0; i < sRDP_KEYBOARD_IME_TABLE_len; i++)
+	{
+		const RDP_KEYBOARD_IME* const ime = &sRDP_KEYBOARD_IME_TABLE[i];
+		if (ime->code == id)
+			return ime->name;
+	}
+	return NULL;
+}
+
+static BOOL rdp_keyboard_layout_clone_append(RDP_KEYBOARD_LAYOUT** layouts, size_t* pcount)
+{
+	WINPR_ASSERT(layouts);
+	WINPR_ASSERT(pcount);
+
+	load_layout_file();
+
+	const size_t length = sRDP_KEYBOARD_LAYOUT_TABLE_len;
+	const size_t offset = *pcount;
+	if (!reallocate_keyboard_layouts(layouts, pcount, length))
+		return FALSE;
+
+	for (size_t i = 0; i < length; i++)
+	{
+		const RDP_KEYBOARD_LAYOUT* const ime = &sRDP_KEYBOARD_LAYOUT_TABLE[i];
+		RDP_KEYBOARD_LAYOUT* layout = &(*layouts)[i + offset];
+		layout->code = ime->code;
+		if (ime->name)
+			layout->name = _strdup(ime->name);
+
+		if (!layout->name)
+			return FALSE;
+	}
+	return TRUE;
+}
+
+static BOOL rdp_keyboard_variant_clone_append(RDP_KEYBOARD_LAYOUT** layouts, size_t* pcount)
+{
+	WINPR_ASSERT(layouts);
+	WINPR_ASSERT(pcount);
+
+	load_layout_file();
+
+	const size_t length = sRDP_KEYBOARD_LAYOUT_VARIANT_TABLE_len;
+	const size_t offset = *pcount;
+	if (!reallocate_keyboard_layouts(layouts, pcount, length))
+		return FALSE;
+
+	for (size_t i = 0; i < length; i++)
+	{
+		const RDP_KEYBOARD_LAYOUT_VARIANT* const ime = &sRDP_KEYBOARD_LAYOUT_VARIANT_TABLE[i];
+		RDP_KEYBOARD_LAYOUT* layout = &(*layouts)[i + offset];
+		layout->code = ime->code;
+		if (ime->name)
+			layout->name = _strdup(ime->name);
+
+		if (!layout->name)
+			return FALSE;
+	}
+	return TRUE;
+}
+
+static BOOL rdp_keyboard_ime_clone_append(RDP_KEYBOARD_LAYOUT** layouts, size_t* pcount)
+{
+	WINPR_ASSERT(layouts);
+	WINPR_ASSERT(pcount);
+
+	load_layout_file();
+
+	const size_t length = sRDP_KEYBOARD_IME_TABLE_len;
+	const size_t offset = *pcount;
+	if (!reallocate_keyboard_layouts(layouts, pcount, length))
+		return FALSE;
+
+	for (size_t i = 0; i < length; i++)
+	{
+		const RDP_KEYBOARD_IME* const ime = &sRDP_KEYBOARD_IME_TABLE[i];
+		RDP_KEYBOARD_LAYOUT* layout = &(*layouts)[i + offset];
+		layout->code = ime->code;
+		if (ime->name)
+			layout->name = _strdup(ime->name);
+
+		if (!layout->name)
+			return FALSE;
+	}
+	return TRUE;
+}
 
 void freerdp_keyboard_layouts_free(RDP_KEYBOARD_LAYOUT* layouts, size_t count)
 {
@@ -817,6 +1461,8 @@ RDP_KEYBOARD_LAYOUT* freerdp_keyboard_get_layouts(DWORD types, size_t* count)
 	size_t num = 0;
 	RDP_KEYBOARD_LAYOUT* layouts = NULL;
 
+	load_layout_file();
+
 	num = 0;
 
 	WINPR_ASSERT(count);
@@ -824,65 +1470,20 @@ RDP_KEYBOARD_LAYOUT* freerdp_keyboard_get_layouts(DWORD types, size_t* count)
 
 	if ((types & RDP_KEYBOARD_LAYOUT_TYPE_STANDARD) != 0)
 	{
-		const size_t length = ARRAYSIZE(RDP_KEYBOARD_LAYOUT_TABLE);
-		RDP_KEYBOARD_LAYOUT* new = (RDP_KEYBOARD_LAYOUT*)realloc(
-		    layouts, (num + length + 1) * sizeof(RDP_KEYBOARD_LAYOUT));
-
-		if (!new)
+		if (!rdp_keyboard_layout_clone_append(&layouts, &num))
 			goto fail;
-
-		layouts = new;
-
-		for (size_t i = 0; i < length; i++, num++)
-		{
-			layouts[num].code = RDP_KEYBOARD_LAYOUT_TABLE[i].code;
-			layouts[num].name = _strdup(RDP_KEYBOARD_LAYOUT_TABLE[i].name);
-
-			if (!layouts[num].name)
-				goto fail;
-		}
 	}
 
 	if ((types & RDP_KEYBOARD_LAYOUT_TYPE_VARIANT) != 0)
 	{
-		const size_t length = ARRAYSIZE(RDP_KEYBOARD_LAYOUT_VARIANT_TABLE);
-		RDP_KEYBOARD_LAYOUT* new = (RDP_KEYBOARD_LAYOUT*)realloc(
-		    layouts, (num + length + 1) * sizeof(RDP_KEYBOARD_LAYOUT));
-
-		if (!new)
+		if (!rdp_keyboard_variant_clone_append(&layouts, &num))
 			goto fail;
-
-		layouts = new;
-
-		for (size_t i = 0; i < length; i++, num++)
-		{
-			layouts[num].code = RDP_KEYBOARD_LAYOUT_VARIANT_TABLE[i].code;
-			layouts[num].name = _strdup(RDP_KEYBOARD_LAYOUT_VARIANT_TABLE[i].name);
-
-			if (!layouts[num].name)
-				goto fail;
-		}
 	}
 
 	if ((types & RDP_KEYBOARD_LAYOUT_TYPE_IME) != 0)
 	{
-		const size_t length = ARRAYSIZE(RDP_KEYBOARD_IME_TABLE);
-		RDP_KEYBOARD_LAYOUT* new = (RDP_KEYBOARD_LAYOUT*)realloc(
-		    layouts, (num + length + 1) * sizeof(RDP_KEYBOARD_LAYOUT));
-
-		if (!new)
+		if (!rdp_keyboard_ime_clone_append(&layouts, &num))
 			goto fail;
-
-		layouts = new;
-
-		for (size_t i = 0; i < length; i++, num++)
-		{
-			layouts[num].code = RDP_KEYBOARD_IME_TABLE[i].code;
-			layouts[num].name = _strdup(RDP_KEYBOARD_IME_TABLE[i].name);
-
-			if (!layouts[num].name)
-				goto fail;
-		}
 	}
 
 	*count = num;
@@ -894,48 +1495,32 @@ fail:
 
 const char* freerdp_keyboard_get_layout_name_from_id(DWORD keyboardLayoutID)
 {
-	for (size_t i = 0; i < ARRAYSIZE(RDP_KEYBOARD_LAYOUT_TABLE); i++)
-	{
-		if (RDP_KEYBOARD_LAYOUT_TABLE[i].code == keyboardLayoutID)
-			return RDP_KEYBOARD_LAYOUT_TABLE[i].name;
-	}
+	const char* name = rdp_keyboard_layout_by_id(keyboardLayoutID);
+	if (name)
+		return name;
 
-	for (size_t i = 0; i < ARRAYSIZE(RDP_KEYBOARD_LAYOUT_VARIANT_TABLE); i++)
-	{
-		if (RDP_KEYBOARD_LAYOUT_VARIANT_TABLE[i].code == keyboardLayoutID)
-			return RDP_KEYBOARD_LAYOUT_VARIANT_TABLE[i].name;
-	}
+	name = rdp_keyboard_variant_by_id(keyboardLayoutID);
+	if (name)
+		return name;
 
-	for (size_t i = 0; i < ARRAYSIZE(RDP_KEYBOARD_IME_TABLE); i++)
-	{
-		if (RDP_KEYBOARD_IME_TABLE[i].code == keyboardLayoutID)
-			return RDP_KEYBOARD_IME_TABLE[i].name;
-	}
+	name = rdp_keyboard_ime_by_id(keyboardLayoutID);
+	if (name)
+		return name;
 
 	return "unknown";
 }
 
 DWORD freerdp_keyboard_get_layout_id_from_name(const char* name)
 {
-	for (size_t i = 0; i < ARRAYSIZE(RDP_KEYBOARD_LAYOUT_TABLE); i++)
-	{
-		if (strcmp(RDP_KEYBOARD_LAYOUT_TABLE[i].name, name) == 0)
-			return RDP_KEYBOARD_LAYOUT_TABLE[i].code;
-	}
+	DWORD rc = rdp_keyboard_layout_by_name(name);
+	if (rc != 0)
+		return rc;
 
-	for (size_t i = 0; i < ARRAYSIZE(RDP_KEYBOARD_LAYOUT_VARIANT_TABLE); i++)
-	{
-		if (strcmp(RDP_KEYBOARD_LAYOUT_VARIANT_TABLE[i].name, name) == 0)
-			return RDP_KEYBOARD_LAYOUT_VARIANT_TABLE[i].code;
-	}
+	rc = rdp_keyboard_variant_by_name(name);
+	if (rc != 0)
+		return rc;
 
-	for (size_t i = 0; i < ARRAYSIZE(RDP_KEYBOARD_IME_TABLE); i++)
-	{
-		if (strcmp(RDP_KEYBOARD_IME_TABLE[i].name, name) == 0)
-			return RDP_KEYBOARD_IME_TABLE[i].code;
-	}
-
-	return 0;
+	return rdp_keyboard_ime_by_name(name);
 }
 
 static void copy(const struct LanguageIdentifier* id, RDP_CODEPAGE* cp)
