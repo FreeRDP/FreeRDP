@@ -853,10 +853,10 @@ DWORD EnumDynamicTimeZoneInformation(const DWORD dwIndex,
 	const DYNAMIC_TIME_ZONE_INFORMATION empty = { 0 };
 	*lpTimeZoneInformation = empty;
 
-	if (dwIndex >= TimeZoneNameMapSize)
+	const TimeZoneNameMapEntry* entry = TimeZoneGetAt(dwIndex);
+	if (!entry)
 		return ERROR_NO_MORE_ITEMS;
 
-	const TimeZoneNameMapEntry* entry = &TimeZoneNameMap[dwIndex];
 	if (entry->DaylightName)
 		ConvertUtf8ToWChar(entry->DaylightName, lpTimeZoneInformation->DaylightName,
 		                   ARRAYSIZE(lpTimeZoneInformation->DaylightName));
