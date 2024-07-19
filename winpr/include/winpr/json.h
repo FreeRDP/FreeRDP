@@ -83,6 +83,8 @@ extern "C"
 	WINPR_API WINPR_JSON* WINPR_JSON_AddObjectToObject(WINPR_JSON* object, const char* name);
 	WINPR_API WINPR_JSON* WINPR_JSON_AddArrayToObject(WINPR_JSON* object, const char* name);
 
+	WINPR_API BOOL WINPR_JSON_AddItemToArray(WINPR_JSON* array, WINPR_JSON* item);
+
 	WINPR_API char* WINPR_JSON_Print(WINPR_JSON* item);
 	WINPR_API char* WINPR_JSON_PrintUnformatted(WINPR_JSON* item);
 

@@ -613,6 +613,22 @@ WINPR_JSON* WINPR_JSON_AddObjectToObject(WINPR_JSON* const object, const char* c
 #endif
 }
 
+BOOL WINPR_JSON_AddItemToArray(WINPR_JSON* array, WINPR_JSON* item)
+{
+#if defined(WITH_JSONC)
+	const int rc = json_object_array_add((json_object*)array, (json_object*)item);
+	if (rc != 0)
+		return FALSE;
+	return TRUE;
+#elif defined(WITH_CJSON)
+	return cJSON_AddItemToArray((cJSON*)array, (cJSON*)item);
+#else
+	WINPR_UNUSED(object);
+	WINPR_UNUSED(name);
+	return FALSE;
+#endif
+}
+
 WINPR_JSON* WINPR_JSON_AddArrayToObject(WINPR_JSON* const object, const char* const name)
 {
 #if defined(WITH_JSONC)
