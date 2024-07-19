@@ -789,6 +789,8 @@ static bool shall_abort(SdlContext* sdl)
 	std::lock_guard<CriticalSection> lock(sdl->critical);
 	if (freerdp_shall_disconnect_context(sdl->context()))
 	{
+		if (sdl->rdp_thread_running)
+			return false;
 		if (!sdl->connection_dialog)
 			return true;
 		return !sdl->connection_dialog->running();
@@ -1168,6 +1170,7 @@ static DWORD WINAPI sdl_client_thread_proc(SdlContext* sdl)
 	auto instance = sdl->context()->instance;
 	WINPR_ASSERT(instance);
 
+	sdl->rdp_thread_running = true;
 	BOOL rc = freerdp_connect(instance);
 
 	rdpContext* context = sdl->context();
@@ -1203,11 +1206,15 @@ static DWORD WINAPI sdl_client_thread_proc(SdlContext* sdl)
 			               freerdp_get_last_error_string(last));
 		}
 
-		if (last == FREERDP_ERROR_AUTHENTICATION_FAILED)
-			exit_code = SDL_EXIT_AUTH_FAILURE;
-		else if (code == ERRINFO_SUCCESS)
-			exit_code = SDL_EXIT_CONN_FAILED;
+		if (exit_code == SDL_EXIT_SUCCESS)
+		{
+			if (last == FREERDP_ERROR_AUTHENTICATION_FAILED)
+				exit_code = SDL_EXIT_AUTH_FAILURE;
+			else if (code == ERRINFO_SUCCESS)
+				exit_code = SDL_EXIT_CONN_FAILED;
+		}
 
+		sdl_hide_connection_dialog(sdl);
 		goto terminate;
 	}
 
@@ -1292,6 +1299,8 @@ static DWORD WINAPI sdl_client_thread_proc(SdlContext* sdl)
 	freerdp_disconnect(instance);
 
 terminate:
+	sdl->rdp_thread_running = false;
+	bool showError = false;
 	if (freerdp_settings_get_bool(settings, FreeRDP_AuthenticationOnly))
 		WLog_Print(sdl->log, WLOG_INFO, "Authentication only, exit status %s [%" PRId32 "]",
 		           sdl_map_to_code_tag(exit_code), exit_code);
@@ -1303,17 +1312,24 @@ terminate:
 			case SDL_EXIT_DISCONNECT:
 			case SDL_EXIT_LOGOFF:
 			case SDL_EXIT_DISCONNECT_BY_USER:
+			case SDL_EXIT_CONNECT_CANCELLED:
 				break;
 			default:
 			{
 				std::lock_guard<CriticalSection> lock(sdl->critical);
 				if (sdl->connection_dialog && error_msg)
+				{
 					sdl->connection_dialog->showError(error_msg);
+					showError = true;
+				}
 			}
 			break;
 		}
 	}
 	free(error_msg);
+	if (!showError)
+		sdl_hide_connection_dialog(sdl);
+
 	sdl->exit_code = exit_code;
 	sdl_push_user_event(SDL_USEREVENT_QUIT);
 #if SDL_VERSION_ATLEAST(2, 0, 16)
@@ -1695,7 +1711,8 @@ BOOL SdlContext::update_resizeable(BOOL enable)
 
 SdlContext::SdlContext(rdpContext* context)
     : _context(context), log(WLog_Get(SDL_TAG)), update_complete(true), disp(this), input(this),
-      primary(nullptr, SDL_FreeSurface), primary_format(nullptr, SDL_FreeFormat)
+      primary(nullptr, SDL_FreeSurface), primary_format(nullptr, SDL_FreeFormat),
+      rdp_thread_running(false)
 {
 	WINPR_ASSERT(context);
 	grab_kbd_enabled = freerdp_settings_get_bool(context->settings, FreeRDP_GrabKeyboard);
