@@ -90,76 +90,55 @@ static void tz_context_free(void)
 }
 
 #if defined(WITH_TIMEZONE_FROM_FILE) && defined(WITH_WINPR_JSON)
+static char* tz_get_object_str(WINPR_JSON* json, size_t pos, const char* name)
+{
+	WINPR_ASSERT(json);
+	if (!WINPR_JSON_IsObject(json) || !WINPR_JSON_HasObjectItem(json, name))
+	{
+		WLog_WARN(TAG, "Invalid JSON entry at entry %" PRIuz ", missing an Object named '%s'", pos,
+		          name);
+		return NULL;
+	}
+	WINPR_JSON* obj = WINPR_JSON_GetObjectItem(json, name);
+	WINPR_ASSERT(obj);
+	if (!WINPR_JSON_IsString(obj))
+	{
+		WLog_WARN(TAG,
+		          "Invalid JSON entry at entry %" PRIuz ", Object named '%s': Not of type string",
+		          pos, name);
+		return NULL;
+	}
+
+	const char* str = WINPR_JSON_GetStringValue(obj);
+	if (!str)
+	{
+		WLog_WARN(TAG, "Invalid JSON entry at entry %" PRIuz ", Object named '%s': NULL string",
+		          pos, name);
+		return NULL;
+	}
+
+	return _strdup(str);
+}
+
 static BOOL tz_parse_json_entry(WINPR_JSON* json, size_t pos, TimeZoneNameMapEntry* entry)
 {
 	WINPR_ASSERT(entry);
-	if (!json || !WINPR_JSON_IsArray(json))
+	if (!json || !WINPR_JSON_IsObject(json))
 	{
 		WLog_WARN(TAG, "Invalid JSON entry at entry %" PRIuz ", expected an array", pos);
 		return FALSE;
 	}
-	const size_t count = WINPR_JSON_GetArraySize(json);
-	if (count != 5)
+
+	entry->Id = tz_get_object_str(json, pos, "Id");
+	entry->StandardName = tz_get_object_str(json, pos, "StandardName");
+	entry->DisplayName = tz_get_object_str(json, pos, "DisplayName");
+	entry->DaylightName = tz_get_object_str(json, pos, "DaylightName");
+	entry->Iana = tz_get_object_str(json, pos, "Iana");
+	if (!entry->Id || !entry->StandardName || !entry->DisplayName || !entry->DaylightName ||
+	    !entry->Iana)
 	{
-		WLog_WARN(TAG,
-		          "Invalid JSON entry at entry %" PRIuz
-		          ", expected an array of 5 elements, got %" PRIuz,
-		          pos, count);
+		tz_entry_free(entry);
 		return FALSE;
-	}
-
-	for (size_t x = 0; x < count; x++)
-	{
-		WINPR_JSON* jstr = WINPR_JSON_GetArrayItem(json, x);
-		if (!jstr || !WINPR_JSON_IsString(jstr))
-		{
-			WLog_WARN(
-			    TAG, "Invalid JSON entry at entry %" PRIuz ", element %" PRIuz " expected a string",
-			    pos, x);
-			tz_entry_free(entry);
-			return FALSE;
-		}
-
-		const char* str = WINPR_JSON_GetStringValue(jstr);
-		if (!str)
-		{
-			WLog_WARN(TAG,
-			          "Invalid JSON entry at entry %" PRIuz ", element %" PRIuz
-			          " expected a value, got a NULL string",
-			          pos, x);
-			tz_entry_free(entry);
-			return FALSE;
-		}
-
-		char* copy = _strdup(str);
-		if (!copy)
-		{
-			WLog_WARN(TAG, "Failed to copy string at entry %" PRIuz ", element %" PRIuz, pos, x);
-			tz_entry_free(entry);
-			return FALSE;
-		}
-		switch (x)
-		{
-			case 0:
-				entry->Id = copy;
-				break;
-			case 1:
-				entry->StandardName = copy;
-				break;
-			case 2:
-				entry->DisplayName = copy;
-				break;
-			case 3:
-				entry->DaylightName = copy;
-				break;
-			case 4:
-				entry->Iana = copy;
-				break;
-			default:
-				free(copy);
-				tz_entry_free(entry);
-				return FALSE;
-		}
 	}
 	return TRUE;
 }
@@ -262,19 +241,25 @@ static BOOL CALLBACK load_timezones(PINIT_ONCE once, PVOID param, PVOID* pvconte
 		if (!json)
 			goto end;
 
-		if (!WINPR_JSON_IsArray(json))
+		if (!WINPR_JSON_IsObject(json))
 		{
 			WLog_WARN(TAG, "Invalid top level JSON type in file %s, expected an array", filename);
 			goto end;
 		}
 
-		const size_t count = WINPR_JSON_GetArraySize(json);
+		WINPR_JSON* obj = WINPR_JSON_GetObjectItem(json, "TimeZoneNameMap");
+		if (!WINPR_JSON_IsArray(obj))
+		{
+			WLog_WARN(TAG, "Invalid top level JSON type in file %s, expected an array", filename);
+			goto end;
+		}
+		const size_t count = WINPR_JSON_GetArraySize(obj);
 		const size_t offset = context->count;
 		if (!reallocate_context(context, count))
 			goto end;
 		for (size_t x = 0; x < count; x++)
 		{
-			WINPR_JSON* entry = WINPR_JSON_GetArrayItem(json, x);
+			WINPR_JSON* entry = WINPR_JSON_GetArrayItem(obj, x);
 			if (!tz_parse_json_entry(entry, x, &context->entries[offset + x]))
 				goto end;
 		}
