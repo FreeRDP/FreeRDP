@@ -34,11 +34,11 @@ typedef enum
 
 typedef struct
 {
-	const char* Id;
-	const char* StandardName;
-	const char* DisplayName;
-	const char* DaylightName;
-	const char* Iana;
+	char* Id;
+	char* StandardName;
+	char* DisplayName;
+	char* DaylightName;
+	char* Iana;
 } TimeZoneNameMapEntry;
 
 const TimeZoneNameMapEntry* TimeZoneGetAt(size_t index);

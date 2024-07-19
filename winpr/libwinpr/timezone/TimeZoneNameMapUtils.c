@@ -21,8 +21,15 @@
 #include <winpr/assert.h>
 #include <winpr/string.h>
 #include <winpr/synch.h>
+#include <winpr/json.h>
+#include <winpr/path.h>
+#include <winpr/file.h>
+
+#include "../log.h"
 
 #include <string.h>
+
+#define TAG WINPR_TAG("timezone.utils")
 
 #if defined(WITH_TIMEZONE_ICU)
 #include <unicode/ucal.h>
@@ -38,28 +45,272 @@ typedef struct
 	TimeZoneNameMapEntry* entries;
 } TimeZoneNameMapContext;
 
+static TimeZoneNameMapContext tz_context = { 0 };
+
+static void tz_entry_free(TimeZoneNameMapEntry* entry)
+{
+	if (!entry)
+		return;
+	free(entry->DaylightName);
+	free(entry->DisplayName);
+	free(entry->Iana);
+	free(entry->Id);
+	free(entry->StandardName);
+
+	const TimeZoneNameMapEntry empty = { 0 };
+	*entry = empty;
+}
+
+static TimeZoneNameMapEntry tz_entry_clone(const TimeZoneNameMapEntry* entry)
+{
+	TimeZoneNameMapEntry clone = { 0 };
+	if (!entry)
+		return clone;
+
+	if (entry->DaylightName)
+		clone.DaylightName = _strdup(entry->DaylightName);
+	if (entry->DisplayName)
+		clone.DisplayName = _strdup(entry->DisplayName);
+	if (entry->Iana)
+		clone.Iana = _strdup(entry->Iana);
+	if (entry->Id)
+		clone.Id = _strdup(entry->Id);
+	if (entry->StandardName)
+		clone.StandardName = _strdup(entry->StandardName);
+	return clone;
+}
+
+static void tz_context_free(void)
+{
+	for (size_t x = 0; x < tz_context.count; x++)
+		tz_entry_free(&tz_context.entries[x]);
+	free(tz_context.entries);
+	tz_context.count = 0;
+	tz_context.entries = NULL;
+}
+
+#if defined(WITH_TIMEZONE_FROM_FILE) && defined(WITH_WINPR_JSON)
+static BOOL tz_parse_json_entry(WINPR_JSON* json, size_t pos, TimeZoneNameMapEntry* entry)
+{
+	WINPR_ASSERT(entry);
+	if (!json || !WINPR_JSON_IsArray(json))
+	{
+		WLog_WARN(TAG, "Invalid JSON entry at entry %" PRIuz ", expected an array", pos);
+		return FALSE;
+	}
+	const size_t count = WINPR_JSON_GetArraySize(json);
+	if (count != 5)
+	{
+		WLog_WARN(TAG,
+		          "Invalid JSON entry at entry %" PRIuz
+		          ", expected an array of 5 elements, got %" PRIuz,
+		          pos, count);
+		return FALSE;
+	}
+
+	for (size_t x = 0; x < count; x++)
+	{
+		WINPR_JSON* jstr = WINPR_JSON_GetArrayItem(json, x);
+		if (!jstr || !WINPR_JSON_IsString(jstr))
+		{
+			WLog_WARN(
+			    TAG, "Invalid JSON entry at entry %" PRIuz ", element %" PRIuz " expected a string",
+			    pos, x);
+			tz_entry_free(entry);
+			return FALSE;
+		}
+
+		const char* str = WINPR_JSON_GetStringValue(jstr);
+		if (!str)
+		{
+			WLog_WARN(TAG,
+			          "Invalid JSON entry at entry %" PRIuz ", element %" PRIuz
+			          " expected a value, got a NULL string",
+			          pos, x);
+			tz_entry_free(entry);
+			return FALSE;
+		}
+
+		char* copy = _strdup(str);
+		if (!copy)
+		{
+			WLog_WARN(TAG, "Failed to copy string at entry %" PRIuz ", element %" PRIuz, pos, x);
+			tz_entry_free(entry);
+			return FALSE;
+		}
+		switch (x)
+		{
+			case 0:
+				entry->Id = copy;
+				break;
+			case 1:
+				entry->StandardName = copy;
+				break;
+			case 2:
+				entry->DisplayName = copy;
+				break;
+			case 3:
+				entry->DaylightName = copy;
+				break;
+			case 4:
+				entry->Iana = copy;
+				break;
+			default:
+				free(copy);
+				tz_entry_free(entry);
+				return FALSE;
+		}
+	}
+	return TRUE;
+}
+
+static WINPR_JSON* load_timezones_from_file(const char* filename)
+{
+	INT64 jstrlen = 0;
+	char* jstr = NULL;
+	WINPR_JSON* json = NULL;
+	FILE* fp = winpr_fopen(filename, "r");
+	if (!fp)
+	{
+		WLog_WARN(TAG, "Timezone resource file '%s' does not exist or is not readable", filename);
+		return NULL;
+	}
+
+	if (_fseeki64(fp, 0, SEEK_END) < 0)
+	{
+		WLog_WARN(TAG, "Timezone resource file '%s' seek failed", filename);
+		goto end;
+	}
+	jstrlen = _ftelli64(fp);
+	if (jstrlen < 0)
+	{
+		WLog_WARN(TAG, "Timezone resource file '%s' invalid length %" PRId64, filename, jstrlen);
+		goto end;
+	}
+	if (_fseeki64(fp, 0, SEEK_SET) < 0)
+	{
+		WLog_WARN(TAG, "Timezone resource file '%s' seek failed", filename);
+		goto end;
+	}
+
+	jstr = calloc(jstrlen + 1, sizeof(char));
+	if (!jstr)
+	{
+		WLog_WARN(TAG, "Timezone resource file '%s' failed to allocate buffer of size %" PRId64,
+		          filename, jstrlen);
+		goto end;
+	}
+
+	if (fread(jstr, jstrlen, sizeof(char), fp) != 1)
+	{
+		WLog_WARN(TAG, "Timezone resource file '%s' failed to read buffer of size %" PRId64,
+		          filename, jstrlen);
+		goto end;
+	}
+
+	json = WINPR_JSON_ParseWithLength(jstr, jstrlen);
+	if (!json)
+		WLog_WARN(TAG, "Timezone resource file '%s' is not a valid JSON file", filename);
+end:
+	fclose(fp);
+	free(jstr);
+	return json;
+}
+#endif
+
+static BOOL reallocate_context(TimeZoneNameMapContext* context, size_t size_to_add)
+{
+	{
+		TimeZoneNameMapEntry* tmp = realloc(context->entries, (context->count + size_to_add) *
+		                                                          sizeof(TimeZoneNameMapEntry));
+		if (!tmp)
+		{
+			WLog_WARN(TAG,
+			          "Failed to reallocate TimeZoneNameMapEntry::entries to %" PRIuz " elements",
+			          context->count + size_to_add);
+			return FALSE;
+		}
+		const size_t offset = context->count;
+		context->entries = tmp;
+		context->count += size_to_add;
+
+		memset(&context->entries[offset], 0, size_to_add * sizeof(TimeZoneNameMapEntry));
+	}
+	return TRUE;
+}
+
 static BOOL CALLBACK load_timezones(PINIT_ONCE once, PVOID param, PVOID* pvcontext)
 {
-	// Do not expose these, only used internally.
-	extern const TimeZoneNameMapEntry TimeZoneNameMap[];
-	extern const size_t TimeZoneNameMapSize;
-
-	TimeZoneNameMapContext* context = pvcontext;
+	TimeZoneNameMapContext* context = param;
 	WINPR_ASSERT(context);
+	WINPR_UNUSED(pvcontext);
+	WINPR_UNUSED(once);
 
-	context->count = TimeZoneNameMapSize;
-	context->entries = TimeZoneNameMap;
+	const TimeZoneNameMapContext empty = { 0 };
+	*context = empty;
+
+#if defined(WITH_TIMEZONE_FROM_FILE) && defined(WITH_WINPR_JSON)
+	{
+		char* filename = GetCombinedPath(WINPR_RESOURCE_ROOT, "TimeZoneNameMap.json");
+		if (!filename)
+		{
+			WLog_WARN(TAG, "Could not create WinPR timezone resource filename");
+			goto end;
+		}
+
+		WINPR_JSON* json = load_timezones_from_file(filename);
+		if (!json)
+			goto end;
+
+		if (!WINPR_JSON_IsArray(json))
+		{
+			WLog_WARN(TAG, "Invalid top level JSON type in file %s, expected an array", filename);
+			goto end;
+		}
+
+		const size_t count = WINPR_JSON_GetArraySize(json);
+		const size_t offset = context->count;
+		if (!reallocate_context(context, count))
+			goto end;
+		for (size_t x = 0; x < count; x++)
+		{
+			WINPR_JSON* entry = WINPR_JSON_GetArrayItem(json, x);
+			if (!tz_parse_json_entry(entry, x, &context->entries[offset + x]))
+				goto end;
+		}
+
+	end:
+		free(filename);
+		WINPR_JSON_Delete(json);
+	}
+#endif
+
+#if defined(WITH_TIMEZONE_COMPILED)
+	{
+		// Do not expose these, only used internally.
+		extern const TimeZoneNameMapEntry TimeZoneNameMap[];
+		extern const size_t TimeZoneNameMapSize;
+
+		const size_t offset = context->count;
+		if (!reallocate_context(context, TimeZoneNameMapSize))
+			return FALSE;
+		for (size_t x = 0; x < TimeZoneNameMapSize; x++)
+			context->entries[offset + x] = tz_entry_clone(&TimeZoneNameMap[x]);
+	}
+#endif
+
+	(void)atexit(tz_context_free);
+	return TRUE;
 }
 
 const TimeZoneNameMapEntry* TimeZoneGetAt(size_t index)
 {
 	static INIT_ONCE init_guard = INIT_ONCE_STATIC_INIT;
-	static TimeZoneNameMapContext context = { 0 };
 
-	InitOnceExecuteOnce(&init_guard, load_timezones, NULL, &context);
-	if (index >= context.count)
+	InitOnceExecuteOnce(&init_guard, load_timezones, &tz_context, NULL);
+	if (index >= tz_context.count)
 		return NULL;
-	return &context.entries[index];
+	return &tz_context.entries[index];
 }
 
 static const char* return_type(const TimeZoneNameMapEntry* entry, TimeZoneNameType type)
