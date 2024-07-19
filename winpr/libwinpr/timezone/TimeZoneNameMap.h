@@ -41,9 +41,7 @@ typedef struct
 	const char* Iana;
 } TimeZoneNameMapEntry;
 
-extern const TimeZoneNameMapEntry TimeZoneNameMap[];
-extern const size_t TimeZoneNameMapSize;
-
+const TimeZoneNameMapEntry* TimeZoneGetAt(size_t index);
 const char* TimeZoneIanaToWindows(const char* iana, TimeZoneNameType type);
 
 #endif

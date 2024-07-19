@@ -20,6 +20,7 @@
 #include <winpr/config.h>
 #include <winpr/assert.h>
 #include <winpr/string.h>
+#include <winpr/synch.h>
 
 #include <string.h>
 
@@ -30,6 +31,36 @@
 #endif
 
 #include "TimeZoneNameMap.h"
+
+typedef struct
+{
+	size_t count;
+	TimeZoneNameMapEntry* entries;
+} TimeZoneNameMapContext;
+
+static BOOL CALLBACK load_timezones(PINIT_ONCE once, PVOID param, PVOID* pvcontext)
+{
+	// Do not expose these, only used internally.
+	extern const TimeZoneNameMapEntry TimeZoneNameMap[];
+	extern const size_t TimeZoneNameMapSize;
+
+	TimeZoneNameMapContext* context = pvcontext;
+	WINPR_ASSERT(context);
+
+	context->count = TimeZoneNameMapSize;
+	context->entries = TimeZoneNameMap;
+}
+
+const TimeZoneNameMapEntry* TimeZoneGetAt(size_t index)
+{
+	static INIT_ONCE init_guard = INIT_ONCE_STATIC_INIT;
+	static TimeZoneNameMapContext context = { 0 };
+
+	InitOnceExecuteOnce(&init_guard, load_timezones, NULL, &context);
+	if (index >= context.count)
+		return NULL;
+	return &context.entries[index];
+}
 
 static const char* return_type(const TimeZoneNameMapEntry* entry, TimeZoneNameType type)
 {
@@ -48,6 +79,37 @@ static const char* return_type(const TimeZoneNameMapEntry* entry, TimeZoneNameTy
 			return entry->DaylightName;
 		default:
 			return NULL;
+	}
+}
+
+static BOOL iana_cmp(const TimeZoneNameMapEntry* entry, const char* iana)
+{
+	if (!entry || !iana || !entry->Iana)
+		return FALSE;
+	return strcmp(iana, entry->Iana) == 0;
+}
+
+static BOOL id_cmp(const TimeZoneNameMapEntry* entry, const char* id)
+{
+	if (!entry || !id || !entry->Id)
+		return FALSE;
+	return strcmp(id, entry->Id) == 0;
+}
+
+static const char* get_for_type(const char* val, TimeZoneNameType type,
+                                BOOL (*cmp)(const TimeZoneNameMapEntry*, const char*))
+{
+	WINPR_ASSERT(val);
+	WINPR_ASSERT(cmp);
+
+	size_t index = 0;
+	while (TRUE)
+	{
+		const TimeZoneNameMapEntry* entry = TimeZoneGetAt(index++);
+		if (!entry)
+			return NULL;
+		if (cmp(entry, val))
+			return return_type(entry, type);
 	}
 }
 
@@ -88,21 +150,11 @@ static char* get(const char* iana)
 
 static const char* map_fallback(const char* iana, TimeZoneNameType type)
 {
-	const char* res = NULL;
 	char* wzid = get(iana);
 	if (!wzid)
 		return NULL;
 
-	for (size_t x = 0; x < TimeZoneNameMapSize; x++)
-	{
-		const TimeZoneNameMapEntry* entry = &TimeZoneNameMap[x];
-		if (strcmp(wzid, entry->Id) == 0)
-		{
-			res = return_type(entry, type);
-			break;
-		}
-	}
-
+	const char* res = get_for_type(wzid, type, id_cmp);
 	free(wzid);
 	return res;
 }
@@ -149,22 +201,13 @@ const char* TimeZoneIanaToWindows(const char* iana, TimeZoneNameType type)
 	if (!iana)
 		return NULL;
 
-	for (size_t x = 0; x < TimeZoneNameMapSize; x++)
-	{
-		const TimeZoneNameMapEntry* entry = &TimeZoneNameMap[x];
-		if (strcmp(iana, entry->Iana) == 0)
-			return return_type(entry, type);
-	}
+	const char* val = get_for_type(iana, type, iana_cmp);
+	if (val)
+		return val;
 
 	const char* wzid = map_fallback(iana, type);
 	if (!wzid)
 		return NULL;
 
-	for (size_t x = 0; x < TimeZoneNameMapSize; x++)
-	{
-		const TimeZoneNameMapEntry* entry = &TimeZoneNameMap[x];
-		if (strcmp(wzid, entry->Id) == 0)
-			return return_type(entry, type);
-	}
-	return NULL;
+	return get_for_type(wzid, type, id_cmp);
 }

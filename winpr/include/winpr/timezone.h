@@ -110,6 +110,8 @@ extern "C"
 	    const PDYNAMIC_TIME_ZONE_INFORMATION lpTimeZoneInformation, LPDWORD FirstYear,
 	    LPDWORD LastYear);
 
+#else
+#pragma comment(lib, "advapi32")
 #endif
 
 #ifdef __cplusplus
