@@ -220,6 +220,14 @@ static const struct sdl_exit_code_map_t* sdl_map_entry_by_code(int exit_code)
 	return nullptr;
 }
 
+static void sdl_hide_connection_dialog(SdlContext* sdl)
+{
+	WINPR_ASSERT(sdl);
+	std::lock_guard<CriticalSection> lock(sdl->critical);
+	if (sdl->connection_dialog)
+		sdl->connection_dialog->hide();
+}
+
 static const struct sdl_exit_code_map_t* sdl_map_entry_by_error(DWORD error)
 {
 	for (size_t x = 0; x < ARRAYSIZE(sdl_exit_code_map); x++)
@@ -779,6 +787,8 @@ static bool shall_abort(SdlContext* sdl)
 	std::lock_guard<CriticalSection> lock(sdl->critical);
 	if (freerdp_shall_disconnect_context(sdl->context()))
 	{
+		if (sdl->rdp_thread_running)
+			return false;
 		if (!sdl->connection_dialog)
 			return true;
 		return !sdl->connection_dialog->running();
@@ -1007,34 +1017,28 @@ static int sdl_run(SdlContext* sdl)
 					         (windowEvent.type <= SDL_EVENT_WINDOW_LAST))
 					{
 						const SDL_WindowEvent* ev = &windowEvent.window;
-						sdl->disp.handle_window_event(ev);
-
-						switch (ev->type)
+						auto window = sdl->windows.find(ev->windowID);
+						if (window != sdl->windows.end())
 						{
-							case SDL_EVENT_WINDOW_RESIZED:
-							case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
+							sdl->disp.handle_window_event(ev);
+
+							switch (ev->type)
 							{
-								auto window = sdl->windows.find(ev->windowID);
-								if (window != sdl->windows.end())
-								{
+								case SDL_EVENT_WINDOW_RESIZED:
+								case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
 									window->second.fill();
 									window->second.updateSurface();
-								}
-							}
-							break;
+									break;
 							case SDL_EVENT_WINDOW_MOVED:
 							{
-								auto window = sdl->windows.find(ev->windowID);
-								if (window != sdl->windows.end())
-								{
-									auto r = window->second.rect();
-									auto id = window->second.id();
-									WLog_DBG(SDL_TAG, "%lu: %dx%d-%dx%d", id, r.x, r.y, r.w, r.h);
-								}
+								auto r = window->second.rect();
+								auto id = window->second.id();
+								WLog_DBG(SDL_TAG, "%lu: %dx%d-%dx%d", id, r.x, r.y, r.w, r.h);
 							}
 							break;
 							default:
 								break;
+						}
 						}
 					}
 					break;
@@ -1066,11 +1070,7 @@ static BOOL sdl_post_connect(freerdp* instance)
 	auto sdl = get_context(context);
 
 	// Retry was successful, discard dialog
-	{
-		std::lock_guard<CriticalSection> lock(sdl->critical);
-		if (sdl->connection_dialog)
-			sdl->connection_dialog->hide();
-	}
+	sdl_hide_connection_dialog(sdl);
 
 	if (freerdp_settings_get_bool(context->settings, FreeRDP_AuthenticationOnly))
 	{
@@ -1160,6 +1160,7 @@ static DWORD WINAPI sdl_client_thread_proc(SdlContext* sdl)
 	auto instance = sdl->context()->instance;
 	WINPR_ASSERT(instance);
 
+	sdl->rdp_thread_running = true;
 	BOOL rc = freerdp_connect(instance);
 
 	rdpContext* context = sdl->context();
@@ -1195,11 +1196,15 @@ static DWORD WINAPI sdl_client_thread_proc(SdlContext* sdl)
 			               freerdp_get_last_error_string(last));
 		}
 
-		if (last == FREERDP_ERROR_AUTHENTICATION_FAILED)
-			exit_code = SDL_EXIT_AUTH_FAILURE;
-		else if (code == ERRINFO_SUCCESS)
-			exit_code = SDL_EXIT_CONN_FAILED;
+		if (exit_code == SDL_EXIT_SUCCESS)
+		{
+			if (last == FREERDP_ERROR_AUTHENTICATION_FAILED)
+				exit_code = SDL_EXIT_AUTH_FAILURE;
+			else if (code == ERRINFO_SUCCESS)
+				exit_code = SDL_EXIT_CONN_FAILED;
+		}
 
+		sdl_hide_connection_dialog(sdl);
 		goto terminate;
 	}
 
@@ -1228,12 +1233,19 @@ static DWORD WINAPI sdl_client_thread_proc(SdlContext* sdl)
 			break;
 		}
 
-		status = WaitForMultipleObjects(nCount, handles, FALSE, 100);
+		status = WaitForMultipleObjects(nCount, handles, FALSE, INFINITE);
 
 		if (status == WAIT_FAILED)
+			break;
+
+		if (!freerdp_check_event_handles(context))
 		{
 			if (client_auto_reconnect(instance))
+			{
+				// Retry was successful, discard dialog
+				sdl_hide_connection_dialog(sdl);
 				continue;
+			}
 			else
 			{
 				/*
@@ -1247,14 +1259,8 @@ static DWORD WINAPI sdl_client_thread_proc(SdlContext* sdl)
 			if (freerdp_get_last_error(context) == FREERDP_ERROR_SUCCESS)
 				WLog_Print(sdl->log, WLOG_ERROR, "WaitForMultipleObjects failed with %" PRIu32 "",
 				           status);
-			break;
-		}
-
-		if (!freerdp_check_event_handles(context))
-		{
 			if (freerdp_get_last_error(context) == FREERDP_ERROR_SUCCESS)
 				WLog_Print(sdl->log, WLOG_ERROR, "Failed to check FreeRDP event handles");
-
 			break;
 		}
 	}
@@ -1283,6 +1289,8 @@ static DWORD WINAPI sdl_client_thread_proc(SdlContext* sdl)
 	freerdp_disconnect(instance);
 
 terminate:
+	sdl->rdp_thread_running = false;
+	bool showError = false;
 	if (freerdp_settings_get_bool(settings, FreeRDP_AuthenticationOnly))
 		WLog_Print(sdl->log, WLOG_INFO, "Authentication only, exit status %s [%" PRId32 "]",
 		           sdl_map_to_code_tag(exit_code), exit_code);
@@ -1294,17 +1302,24 @@ terminate:
 			case SDL_EXIT_DISCONNECT:
 			case SDL_EXIT_LOGOFF:
 			case SDL_EXIT_DISCONNECT_BY_USER:
+			case SDL_EXIT_CONNECT_CANCELLED:
 				break;
 			default:
 			{
 				std::lock_guard<CriticalSection> lock(sdl->critical);
 				if (sdl->connection_dialog && error_msg)
+				{
 					sdl->connection_dialog->showError(error_msg);
+					showError = true;
+				}
 			}
 			break;
 		}
 	}
 	free(error_msg);
+	if (!showError)
+		sdl_hide_connection_dialog(sdl);
+
 	sdl->exit_code = exit_code;
 	sdl_push_user_event(SDL_EVENT_USER_QUIT);
 	SDL_CleanupTLS();
@@ -1685,7 +1700,7 @@ BOOL SdlContext::update_resizeable(BOOL enable)
 SdlContext::SdlContext(rdpContext* context)
     : _context(context), log(WLog_Get(SDL_TAG)), update_complete(true), disp(this), clip(this),
       input(this), primary(nullptr, SDL_DestroySurface),
-      primary_format(nullptr, SDL_DestroyPixelFormat)
+      primary_format(nullptr, SDL_DestroyPixelFormat), rdp_thread_running(false)
 {
 	WINPR_ASSERT(context);
 	grab_kbd_enabled = freerdp_settings_get_bool(context->settings, FreeRDP_GrabKeyboard);

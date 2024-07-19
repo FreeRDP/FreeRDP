@@ -214,8 +214,12 @@ SSIZE_T sdl_retry_dialog(freerdp* instance, const char* what, size_t current, vo
 	WINPR_ASSERT(what);
 
 	auto sdl = get_context(instance->context);
+	auto settings = instance->context->settings;
+	const BOOL enabled = freerdp_settings_get_bool(settings, FreeRDP_AutoReconnectionEnabled);
+	const size_t delay = freerdp_settings_get_uint32(settings, FreeRDP_TcpConnectTimeout);
 	std::lock_guard<CriticalSection> lock(sdl->critical);
-	WINPR_ASSERT(sdl->connection_dialog);
+	if (!sdl->connection_dialog)
+		return delay;
 
 	sdl->connection_dialog->setTitle("Retry connection to %s",
 	                                 freerdp_settings_get_server_name(instance->context->settings));
@@ -233,9 +237,6 @@ SSIZE_T sdl_retry_dialog(freerdp* instance, const char* what, size_t current, vo
 			                                 what);
 	}
 
-	auto settings = instance->context->settings;
-	const BOOL enabled = freerdp_settings_get_bool(settings, FreeRDP_AutoReconnectionEnabled);
-
 	if (!enabled)
 	{
 		sdl->connection_dialog->showError(
@@ -244,7 +245,6 @@ SSIZE_T sdl_retry_dialog(freerdp* instance, const char* what, size_t current, vo
 	}
 
 	const size_t max = freerdp_settings_get_uint32(settings, FreeRDP_AutoReconnectMaxRetries);
-	const size_t delay = freerdp_settings_get_uint32(settings, FreeRDP_TcpConnectTimeout);
 	if (current >= max)
 	{
 		sdl->connection_dialog->showError(

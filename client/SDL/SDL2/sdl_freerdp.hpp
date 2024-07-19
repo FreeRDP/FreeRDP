@@ -22,6 +22,7 @@
 #include <memory>
 #include <thread>
 #include <map>
+#include <atomic>
 
 #include <freerdp/freerdp.h>
 #include <freerdp/client/rdpei.h>
@@ -79,6 +80,8 @@ class SdlContext
 	Uint32 sdl_pixel_format = 0;
 
 	std::unique_ptr<SDLConnectionDialog> connection_dialog;
+
+	std::atomic<bool> rdp_thread_running;
 
   public:
 	BOOL update_resizeable(BOOL enable);
