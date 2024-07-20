@@ -47,7 +47,7 @@ struct s_wStack
 
 size_t Stack_Count(wStack* stack)
 {
-	size_t ret;
+	size_t ret = 0;
 	WINPR_ASSERT(stack);
 	if (stack->synchronized)
 		EnterCriticalSection(&stack->lock);
@@ -86,13 +86,11 @@ wObject* Stack_Object(wStack* stack)
 
 void Stack_Clear(wStack* stack)
 {
-	size_t index;
-
 	WINPR_ASSERT(stack);
 	if (stack->synchronized)
 		EnterCriticalSection(&stack->lock);
 
-	for (index = 0; index < stack->size; index++)
+	for (size_t index = 0; index < stack->size; index++)
 	{
 		if (stack->object.fnObjectFree)
 			stack->object.fnObjectFree(stack->array[index]);
@@ -112,14 +110,13 @@ void Stack_Clear(wStack* stack)
 
 BOOL Stack_Contains(wStack* stack, const void* obj)
 {
-	size_t i;
 	BOOL found = FALSE;
 
 	WINPR_ASSERT(stack);
 	if (stack->synchronized)
 		EnterCriticalSection(&stack->lock);
 
-	for (i = 0; i < stack->size; i++)
+	for (size_t i = 0; i < stack->size; i++)
 	{
 		if (stack->object.fnObjectEquals(stack->array[i], obj))
 		{
@@ -235,7 +232,10 @@ wStack* Stack_New(BOOL synchronized)
 
 	return stack;
 out_free:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	Stack_Free(stack);
+	WINPR_PRAGMA_DIAG_POP
 	return NULL;
 }
 

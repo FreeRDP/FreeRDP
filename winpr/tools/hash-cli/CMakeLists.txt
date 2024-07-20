@@ -21,39 +21,13 @@ set(MODULE_PREFIX "WINPR_TOOLS_HASH")
 set(${MODULE_PREFIX}_SRCS
 	hash.c)
 
-# On windows create dll version information.
-# Vendor, product and year are already set in top level CMakeLists.txt
-if (WIN32)
-	set(RC_VERSION_MAJOR ${WINPR_VERSION_MAJOR})
-	set(RC_VERSION_MINOR ${WINPR_VERSION_MINOR})
-	set(RC_VERSION_BUILD ${WINPR_VERSION_REVISION})
-	set(RC_VERSION_FILE "${MODULE_NAME}${CMAKE_EXECUTABLE_SUFFIX}")
-
-	configure_file(
-		${PROJECT_SOURCE_DIR}/cmake/WindowsDLLVersion.rc.in
-		${CMAKE_CURRENT_BINARY_DIR}/version.rc
-		@ONLY)
-
-	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} ${CMAKE_CURRENT_BINARY_DIR}/version.rc)
-endif()
-
-add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
+AddTargetWithResourceFile(${MODULE_NAME} TRUE "${WINPR_VERSION}" ${MODULE_PREFIX}_SRCS)
 
 set(${MODULE_PREFIX}_LIBS winpr)
 
-set(MANPAGE_NAME "${MODULE_NAME}")
-if (WITH_BINARY_VERSIONING)
-	set_target_properties(${MODULE_NAME} PROPERTIES OUTPUT_NAME "${MODULE_NAME}${WINPR_API_VERSION}")
-        set(MANPAGE_NAME "${MODULE_NAME}${WINPR_API_VERSION}")
-endif()
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 
 install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT tools EXPORT WinPRTargets)
 
-if (WITH_DEBUG_SYMBOLS AND MSVC)
-	install(FILES ${PROJECT_BINARY_DIR}/${MODULE_NAME}.pdb DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT symbols)
-endif()
-
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "WinPR/Tools")
-configure_file(winpr-hash.1.in ${CMAKE_CURRENT_BINARY_DIR}/${MANPAGE_NAME}.1)
-install_freerdp_man(${CMAKE_CURRENT_BINARY_DIR}/${MANPAGE_NAME}.1 1)
+generate_and_install_freerdp_man_from_template(${MODULE_NAME} "1" "${WINPR_API_VERSION}")

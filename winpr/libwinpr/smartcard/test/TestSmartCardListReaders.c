@@ -4,8 +4,8 @@
 
 int TestSmartCardListReaders(int argc, char* argv[])
 {
-	LONG lStatus;
-	LPSTR pReader;
+	LONG lStatus = 0;
+	LPSTR pReader = NULL;
 	SCARDCONTEXT hSC = 0;
 	LPSTR mszReaders = NULL;
 	DWORD cchReaders = SCARD_AUTOALLOCATE;

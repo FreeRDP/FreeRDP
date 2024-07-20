@@ -51,7 +51,9 @@ FREERDP_LOCAL state_run_t multitransport_recv_response(rdpMultitransport* multi,
 FREERDP_LOCAL BOOL multitransport_client_send_response(rdpMultitransport* multi, UINT32 reqId,
                                                        HRESULT hr);
 
-FREERDP_LOCAL rdpMultitransport* multitransport_new(rdpRdp* rdp, UINT16 protocol);
 FREERDP_LOCAL void multitransport_free(rdpMultitransport* multi);
+
+WINPR_ATTR_MALLOC(multitransport_free, 1)
+FREERDP_LOCAL rdpMultitransport* multitransport_new(rdpRdp* rdp, UINT16 protocol);
 
 #endif /* FREERDP_LIB_CORE_MULTITRANSPORT_H */

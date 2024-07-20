@@ -57,6 +57,10 @@ extern "C"
 	} DYNAMIC_TIME_ZONE_INFORMATION, *PDYNAMIC_TIME_ZONE_INFORMATION,
 	    *LPDYNAMIC_TIME_ZONE_INFORMATION;
 
+#define TIME_ZONE_ID_UNKNOWN 0
+#define TIME_ZONE_ID_STANDARD 1
+#define TIME_ZONE_ID_DAYLIGHT 2
+
 	WINPR_API DWORD GetTimeZoneInformation(LPTIME_ZONE_INFORMATION lpTimeZoneInformation);
 	WINPR_API BOOL SetTimeZoneInformation(const TIME_ZONE_INFORMATION* lpTimeZoneInformation);
 	WINPR_API BOOL SystemTimeToFileTime(const SYSTEMTIME* lpSystemTime, LPFILETIME lpFileTime);
@@ -106,6 +110,8 @@ extern "C"
 	    const PDYNAMIC_TIME_ZONE_INFORMATION lpTimeZoneInformation, LPDWORD FirstYear,
 	    LPDWORD LastYear);
 
+#else
+#pragma comment(lib, "advapi32")
 #endif
 
 #ifdef __cplusplus

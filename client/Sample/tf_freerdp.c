@@ -51,7 +51,7 @@
  * It can be used to reset invalidated areas. */
 static BOOL tf_begin_paint(rdpContext* context)
 {
-	rdpGdi* gdi;
+	rdpGdi* gdi = NULL;
 
 	WINPR_ASSERT(context);
 
@@ -71,7 +71,7 @@ static BOOL tf_begin_paint(rdpContext* context)
  */
 static BOOL tf_end_paint(rdpContext* context)
 {
-	rdpGdi* gdi;
+	rdpGdi* gdi = NULL;
 
 	WINPR_ASSERT(context);
 
@@ -90,8 +90,8 @@ static BOOL tf_end_paint(rdpContext* context)
 
 static BOOL tf_desktop_resize(rdpContext* context)
 {
-	rdpGdi* gdi;
-	rdpSettings* settings;
+	rdpGdi* gdi = NULL;
+	rdpSettings* settings = NULL;
 
 	WINPR_ASSERT(context);
 
@@ -139,7 +139,7 @@ static BOOL tf_keyboard_set_ime_status(rdpContext* context, UINT16 imeId, UINT32
  * Set all configuration options to support and load channels here. */
 static BOOL tf_pre_connect(freerdp* instance)
 {
-	rdpSettings* settings;
+	rdpSettings* settings = NULL;
 
 	WINPR_ASSERT(instance);
 	WINPR_ASSERT(instance->context);
@@ -175,7 +175,7 @@ static BOOL tf_pre_connect(freerdp* instance)
  */
 static BOOL tf_post_connect(freerdp* instance)
 {
-	rdpContext* context;
+	rdpContext* context = NULL;
 
 	if (!gdi_init(instance, PIXEL_FORMAT_XRGB32))
 		return FALSE;
@@ -205,7 +205,7 @@ static BOOL tf_post_connect(freerdp* instance)
  */
 static void tf_post_disconnect(freerdp* instance)
 {
-	tfContext* context;
+	tfContext* context = NULL;
 
 	if (!instance)
 		return;
@@ -229,8 +229,8 @@ static void tf_post_disconnect(freerdp* instance)
 static DWORD WINAPI tf_client_thread_proc(LPVOID arg)
 {
 	freerdp* instance = (freerdp*)arg;
-	DWORD nCount;
-	DWORD status;
+	DWORD nCount = 0;
+	DWORD status = 0;
 	DWORD result = 0;
 	HANDLE handles[MAXIMUM_WAIT_OBJECTS] = { 0 };
 	BOOL rc = freerdp_connect(instance);
@@ -302,7 +302,7 @@ static void tf_client_global_uninit(void)
 
 static int tf_logon_error_info(freerdp* instance, UINT32 data, UINT32 type)
 {
-	tfContext* tf;
+	tfContext* tf = NULL;
 	const char* str_data = freerdp_get_logon_error_info_data(data);
 	const char* str_type = freerdp_get_logon_error_info_type(type);
 
@@ -377,9 +377,9 @@ static int RdpClientEntry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints)
 int main(int argc, char* argv[])
 {
 	int rc = -1;
-	DWORD status;
+	DWORD status = 0;
 	RDP_CLIENT_ENTRY_POINTS clientEntryPoints;
-	rdpContext* context;
+	rdpContext* context = NULL;
 	RdpClientEntry(&clientEntryPoints);
 	context = freerdp_client_context_new(&clientEntryPoints);
 

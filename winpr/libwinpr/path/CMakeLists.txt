@@ -17,6 +17,10 @@
 
 winpr_module_add(path.c shell.c)
 
+if (MSVC OR MINGW)
+    winpr_library_add_public(shlwapi)
+endif()
+
 if (IOS)
 	winpr_module_add(shell_ios.m)
 endif (IOS)

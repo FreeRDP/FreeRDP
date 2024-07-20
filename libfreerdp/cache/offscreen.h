@@ -38,8 +38,10 @@ extern "C"
 
 	FREERDP_LOCAL void offscreen_cache_register_callbacks(rdpUpdate* update);
 
-	FREERDP_LOCAL rdpOffscreenCache* offscreen_cache_new(rdpContext* context);
 	FREERDP_LOCAL void offscreen_cache_free(rdpOffscreenCache* offscreen);
+
+	WINPR_ATTR_MALLOC(offscreen_cache_free, 1)
+	FREERDP_LOCAL rdpOffscreenCache* offscreen_cache_new(rdpContext* context);
 
 #ifdef __cplusplus
 }

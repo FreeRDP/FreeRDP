@@ -684,7 +684,7 @@ HRESULT PathCchStripToRootW(PWSTR pszPath, size_t cchPath)
 
 HRESULT PathCchStripPrefixA(PSTR pszPath, size_t cchPath)
 {
-	BOOL hasPrefix;
+	BOOL hasPrefix = 0;
 
 	if (!pszPath)
 		return E_INVALIDARG;
@@ -719,7 +719,7 @@ HRESULT PathCchStripPrefixA(PSTR pszPath, size_t cchPath)
 
 HRESULT PathCchStripPrefixW(PWSTR pszPath, size_t cchPath)
 {
-	BOOL hasPrefix;
+	BOOL hasPrefix = 0;
 
 	if (!pszPath)
 		return E_INVALIDARG;
@@ -734,7 +734,7 @@ HRESULT PathCchStripPrefixW(PWSTR pszPath, size_t cchPath)
 
 	if (hasPrefix)
 	{
-		int rc;
+		int rc = 0;
 		if (cchPath < 6)
 			return S_FALSE;
 
@@ -783,11 +783,9 @@ HRESULT PathCchRemoveFileSpecW(PWSTR pszPath, size_t cchPath)
 
 HRESULT PathCchConvertStyleA(PSTR pszPath, size_t cchPath, unsigned long dwFlags)
 {
-	size_t index;
-
 	if (dwFlags == PATH_STYLE_WINDOWS)
 	{
-		for (index = 0; index < cchPath; index++)
+		for (size_t index = 0; index < cchPath; index++)
 		{
 			if (pszPath[index] == PATH_SLASH_CHR)
 				pszPath[index] = PATH_BACKSLASH_CHR;
@@ -795,7 +793,7 @@ HRESULT PathCchConvertStyleA(PSTR pszPath, size_t cchPath, unsigned long dwFlags
 	}
 	else if (dwFlags == PATH_STYLE_UNIX)
 	{
-		for (index = 0; index < cchPath; index++)
+		for (size_t index = 0; index < cchPath; index++)
 		{
 			if (pszPath[index] == PATH_BACKSLASH_CHR)
 				pszPath[index] = PATH_SLASH_CHR;
@@ -806,7 +804,7 @@ HRESULT PathCchConvertStyleA(PSTR pszPath, size_t cchPath, unsigned long dwFlags
 #if (PATH_SEPARATOR_CHR == PATH_BACKSLASH_CHR)
 		/* Unix-style to Windows-style */
 
-		for (index = 0; index < cchPath; index++)
+		for (size_t index = 0; index < cchPath; index++)
 		{
 			if (pszPath[index] == PATH_SLASH_CHR)
 				pszPath[index] = PATH_BACKSLASH_CHR;
@@ -814,7 +812,7 @@ HRESULT PathCchConvertStyleA(PSTR pszPath, size_t cchPath, unsigned long dwFlags
 #elif (PATH_SEPARATOR_CHR == PATH_SLASH_CHR)
 		/* Windows-style to Unix-style */
 
-		for (index = 0; index < cchPath; index++)
+		for (size_t index = 0; index < cchPath; index++)
 		{
 			if (pszPath[index] == PATH_BACKSLASH_CHR)
 				pszPath[index] = PATH_SLASH_CHR;
@@ -835,11 +833,9 @@ HRESULT PathCchConvertStyleA(PSTR pszPath, size_t cchPath, unsigned long dwFlags
 
 HRESULT PathCchConvertStyleW(PWSTR pszPath, size_t cchPath, unsigned long dwFlags)
 {
-	size_t index;
-
 	if (dwFlags == PATH_STYLE_WINDOWS)
 	{
-		for (index = 0; index < cchPath; index++)
+		for (size_t index = 0; index < cchPath; index++)
 		{
 			if (pszPath[index] == PATH_SLASH_CHR)
 				pszPath[index] = PATH_BACKSLASH_CHR;
@@ -847,7 +843,7 @@ HRESULT PathCchConvertStyleW(PWSTR pszPath, size_t cchPath, unsigned long dwFlag
 	}
 	else if (dwFlags == PATH_STYLE_UNIX)
 	{
-		for (index = 0; index < cchPath; index++)
+		for (size_t index = 0; index < cchPath; index++)
 		{
 			if (pszPath[index] == PATH_BACKSLASH_CHR)
 				pszPath[index] = PATH_SLASH_CHR;
@@ -859,7 +855,7 @@ HRESULT PathCchConvertStyleW(PWSTR pszPath, size_t cchPath, unsigned long dwFlag
 		{
 			/* Unix-style to Windows-style */
 
-			for (index = 0; index < cchPath; index++)
+			for (size_t index = 0; index < cchPath; index++)
 			{
 				if (pszPath[index] == PATH_SLASH_CHR)
 					pszPath[index] = PATH_BACKSLASH_CHR;
@@ -869,7 +865,7 @@ HRESULT PathCchConvertStyleW(PWSTR pszPath, size_t cchPath, unsigned long dwFlag
 		{
 			/* Windows-style to Unix-style */
 
-			for (index = 0; index < cchPath; index++)
+			for (size_t index = 0; index < cchPath; index++)
 			{
 				if (pszPath[index] == PATH_BACKSLASH_CHR)
 					pszPath[index] = PATH_SLASH_CHR;
@@ -1006,7 +1002,7 @@ PCSTR PathGetSharedLibraryExtensionA(unsigned long dwFlags)
 
 PCWSTR PathGetSharedLibraryExtensionW(unsigned long dwFlags)
 {
-	WCHAR buffer[6][16] = { 0 };
+	static WCHAR buffer[6][16] = { 0 };
 	const WCHAR* SharedLibraryExtensionDotDllW = InitializeConstWCharFromUtf8(
 	    SharedLibraryExtensionDotDllA, buffer[0], ARRAYSIZE(buffer[0]));
 	const WCHAR* SharedLibraryExtensionDotSoW =
@@ -1135,11 +1131,12 @@ BOOL winpr_RemoveDirectory_RecursiveW(LPCWSTR lpPathName)
 	WCHAR starbuffer[8] = { 0 };
 	const WCHAR* star = InitializeConstWCharFromUtf8("*", starbuffer, ARRAYSIZE(starbuffer));
 	const HRESULT hr = NativePathCchAppendW(path_slash, path_slash_len, star);
+	HANDLE dir = INVALID_HANDLE_VALUE;
 	if (FAILED(hr))
 		goto fail;
 
 	WIN32_FIND_DATAW findFileData = { 0 };
-	HANDLE dir = FindFirstFileW(path_slash, &findFileData);
+	dir = FindFirstFileW(path_slash, &findFileData);
 
 	if (dir == INVALID_HANDLE_VALUE)
 		goto fail;
@@ -1171,8 +1168,6 @@ BOOL winpr_RemoveDirectory_RecursiveW(LPCWSTR lpPathName)
 			break;
 	} while (ret && FindNextFileW(dir, &findFileData) != 0);
 
-	FindClose(dir);
-
 	if (ret)
 	{
 		if (!RemoveDirectoryW(lpPathName))
@@ -1180,6 +1175,7 @@ BOOL winpr_RemoveDirectory_RecursiveW(LPCWSTR lpPathName)
 	}
 
 fail:
+	FindClose(dir);
 	free(path_slash);
 	return ret;
 }

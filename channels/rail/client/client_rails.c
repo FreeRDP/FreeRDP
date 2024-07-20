@@ -6,7 +6,7 @@
 
 UINT client_rail_server_start_cmd(RailClientContext* context)
 {
-	UINT status;
+	UINT status = 0;
 	char argsAndFile[520] = { 0 };
 	RAIL_EXEC_ORDER exec = { 0 };
 	RAIL_SYSPARAM_ORDER sysparam = { 0 };

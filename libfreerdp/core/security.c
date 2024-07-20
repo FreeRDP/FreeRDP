@@ -304,7 +304,7 @@ static void security_UINT32_le(BYTE* output, size_t out_len, UINT32 value)
 }
 
 BOOL security_mac_data(const BYTE* mac_salt_key, size_t mac_salt_key_length, const BYTE* data,
-                       UINT32 length, BYTE* output, size_t output_length)
+                       size_t length, BYTE* output, size_t output_length)
 {
 	WINPR_DIGEST_CTX* sha1 = NULL;
 	WINPR_DIGEST_CTX* md5 = NULL;
@@ -312,6 +312,7 @@ BOOL security_mac_data(const BYTE* mac_salt_key, size_t mac_salt_key_length, con
 	BYTE sha1_digest[WINPR_SHA1_DIGEST_LENGTH] = { 0 };
 	BOOL result = FALSE;
 
+	WINPR_ASSERT(length <= UINT32_MAX);
 	WINPR_ASSERT(mac_salt_key_length == WINPR_MD5_DIGEST_LENGTH);
 	WINPR_ASSERT(output_length == WINPR_MD5_DIGEST_LENGTH);
 
@@ -367,6 +368,8 @@ BOOL security_mac_data(const BYTE* mac_salt_key, size_t mac_salt_key_length, con
 
 	result = TRUE;
 out:
+	if (!result)
+		WLog_ERR(TAG, "failed to create security mac");
 	winpr_Digest_Free(sha1);
 	winpr_Digest_Free(md5);
 	return result;
@@ -589,6 +592,7 @@ static void fips_expand_key_bits(const BYTE* in, size_t in_len, BYTE* out, size_
 		}
 		else
 		{
+			WINPR_ASSERT(p + 1 < sizeof(buf));
 			/* c is accumulator */
 			BYTE c = (BYTE)(buf[p] << r) & 0xFF;
 			c |= buf[p + 1] >> (8 - r);

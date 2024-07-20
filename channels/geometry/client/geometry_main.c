@@ -65,9 +65,14 @@ static void freerdp_rgndata_reset(FREERDP_RGNDATA* data)
 
 static UINT32 geometry_read_RGNDATA(wLog* logger, wStream* s, UINT32 len, FREERDP_RGNDATA* rgndata)
 {
-	UINT32 dwSize, iType;
-	INT32 right, bottom;
-	INT32 x, y, w, h;
+	UINT32 dwSize = 0;
+	UINT32 iType = 0;
+	INT32 right = 0;
+	INT32 bottom = 0;
+	INT32 x = 0;
+	INT32 y = 0;
+	INT32 w = 0;
+	INT32 h = 0;
 
 	if (len < 32)
 	{
@@ -117,7 +122,6 @@ static UINT32 geometry_read_RGNDATA(wLog* logger, wStream* s, UINT32 len, FREERD
 
 	if (rgndata->nRectCount)
 	{
-		UINT32 i;
 		RDP_RECT* tmp = realloc(rgndata->rects, rgndata->nRectCount * sizeof(RDP_RECT));
 
 		if (!tmp)
@@ -128,7 +132,7 @@ static UINT32 geometry_read_RGNDATA(wLog* logger, wStream* s, UINT32 len, FREERD
 		}
 		rgndata->rects = tmp;
 
-		for (i = 0; i < rgndata->nRectCount; i++)
+		for (UINT32 i = 0; i < rgndata->nRectCount; i++)
 		{
 			Stream_Read_INT32(s, x);
 			Stream_Read_INT32(s, y);
@@ -157,14 +161,16 @@ static UINT32 geometry_read_RGNDATA(wLog* logger, wStream* s, UINT32 len, FREERD
  */
 static UINT geometry_recv_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStream* s)
 {
-	UINT32 length, cbGeometryBuffer;
-	MAPPED_GEOMETRY* mappedGeometry;
-	GEOMETRY_PLUGIN* geometry;
-	GeometryClientContext* context;
+	UINT32 length = 0;
+	UINT32 cbGeometryBuffer = 0;
+	MAPPED_GEOMETRY* mappedGeometry = NULL;
+	GEOMETRY_PLUGIN* geometry = NULL;
+	GeometryClientContext* context = NULL;
 	UINT ret = CHANNEL_RC_OK;
-	UINT32 updateType, geometryType;
-	UINT64 id;
-	wLog* logger;
+	UINT32 updateType = 0;
+	UINT32 geometryType = 0;
+	UINT64 id = 0;
+	wLog* logger = NULL;
 
 	geometry = (GEOMETRY_PLUGIN*)callback->plugin;
 	logger = geometry->base.log;
@@ -254,7 +260,10 @@ static UINT geometry_recv_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStream* s)
 
 		Stream_Read_UINT32(s, cbGeometryBuffer);
 		if (!Stream_CheckAndLogRequiredLength(TAG, s, cbGeometryBuffer))
+		{
+			// NOLINTNEXTLINE(clang-analyzer-unix.Malloc): HashTable_Insert ownership mappedGeometry
 			return ERROR_INVALID_DATA;
+		}
 
 		if (cbGeometryBuffer)
 		{
@@ -333,7 +342,7 @@ static const IWTSVirtualChannelCallback geometry_callbacks = { geometry_on_data_
 
 static UINT init_plugin_cb(GENERIC_DYNVC_PLUGIN* base, rdpContext* rcontext, rdpSettings* settings)
 {
-	GeometryClientContext* context;
+	GeometryClientContext* context = NULL;
 	GEOMETRY_PLUGIN* geometry = (GEOMETRY_PLUGIN*)base;
 
 	WINPR_ASSERT(base);

@@ -256,6 +256,18 @@ struct xf_context
 	Atom WM_PROTOCOLS;
 	Atom WM_DELETE_WINDOW;
 
+	/* Allow actions */
+	Atom NET_WM_ALLOWED_ACTIONS;
+
+	Atom NET_WM_ACTION_CLOSE;
+	Atom NET_WM_ACTION_MINIMIZE;
+	Atom NET_WM_ACTION_MOVE;
+	Atom NET_WM_ACTION_RESIZE;
+	Atom NET_WM_ACTION_MAXIMIZE_HORZ;
+	Atom NET_WM_ACTION_MAXIMIZE_VERT;
+	Atom NET_WM_ACTION_FULLSCREEN;
+	Atom NET_WM_ACTION_CHANGE_DESKTOP;
+
 	/* Channels */
 #if defined(CHANNEL_TSMF_CLIENT)
 	TsmfClientContext* tsmf;
@@ -277,7 +289,7 @@ struct xf_context
 	button_map button_map[NUM_BUTTONS_MAPPED];
 	BYTE savedMaximizedState;
 	UINT32 locked;
-	BOOL firstPressRightCtrl;
+	BOOL wasRightCtrlAlreadyPressed;
 	BOOL ungrabKeyboardWithRightCtrl;
 
 #if defined(WITH_XI)

@@ -6,14 +6,13 @@
 
 int TestWtsApiQuerySessionInformation(int argc, char* argv[])
 {
-	DWORD index, i;
-	DWORD count;
-	BOOL bSuccess;
-	HANDLE hServer;
-	LPSTR pBuffer;
-	DWORD sessionId;
-	DWORD bytesReturned;
-	PWTS_SESSION_INFOA pSessionInfo;
+	DWORD count = 0;
+	BOOL bSuccess = 0;
+	HANDLE hServer = NULL;
+	LPSTR pBuffer = NULL;
+	DWORD sessionId = 0;
+	DWORD bytesReturned = 0;
+	PWTS_SESSION_INFOA pSessionInfo = NULL;
 
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
@@ -41,18 +40,18 @@ int TestWtsApiQuerySessionInformation(int argc, char* argv[])
 
 	printf("WTSEnumerateSessions count: %" PRIu32 "\n", count);
 
-	for (index = 0; index < count; index++)
+	for (DWORD index = 0; index < count; index++)
 	{
-		char* Username;
-		char* Domain;
-		char* ClientName;
-		ULONG ClientBuildNumber;
-		USHORT ClientProductId;
-		ULONG ClientHardwareId;
-		USHORT ClientProtocolType;
-		PWTS_CLIENT_DISPLAY ClientDisplay;
-		PWTS_CLIENT_ADDRESS ClientAddress;
-		WTS_CONNECTSTATE_CLASS ConnectState;
+		char* Username = NULL;
+		char* Domain = NULL;
+		char* ClientName = NULL;
+		ULONG ClientBuildNumber = 0;
+		USHORT ClientProductId = 0;
+		ULONG ClientHardwareId = 0;
+		USHORT ClientProtocolType = 0;
+		PWTS_CLIENT_DISPLAY ClientDisplay = NULL;
+		PWTS_CLIENT_ADDRESS ClientAddress = NULL;
+		WTS_CONNECTSTATE_CLASS ConnectState = WTSInit;
 
 		pBuffer = NULL;
 		bytesReturned = 0;
@@ -182,7 +181,7 @@ int TestWtsApiQuerySessionInformation(int argc, char* argv[])
 		ClientAddress = (PWTS_CLIENT_ADDRESS)pBuffer;
 		printf("\tWTSClientAddress: AddressFamily: %" PRIu32 " Address: ",
 		       ClientAddress->AddressFamily);
-		for (i = 0; i < sizeof(ClientAddress->Address); i++)
+		for (DWORD i = 0; i < sizeof(ClientAddress->Address); i++)
 			printf("%02" PRIX8 "", ClientAddress->Address[i]);
 		printf("\n");
 

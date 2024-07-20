@@ -88,19 +88,19 @@
 
 LPSTR* CommandLineToArgvA(LPCSTR lpCmdLine, int* pNumArgs)
 {
-	const char* p;
-	size_t length;
-	const char* pBeg;
-	const char* pEnd;
-	char* buffer;
-	char* pOutput;
+	const char* p = NULL;
+	size_t length = 0;
+	const char* pBeg = NULL;
+	const char* pEnd = NULL;
+	char* buffer = NULL;
+	char* pOutput = NULL;
 	int numArgs = 0;
-	LPSTR* pArgs;
-	size_t maxNumArgs;
-	size_t maxBufferSize;
-	size_t cmdLineLength;
-	BOOL* lpEscapedChars;
-	LPSTR lpEscapedCmdLine;
+	LPSTR* pArgs = NULL;
+	size_t maxNumArgs = 0;
+	size_t maxBufferSize = 0;
+	size_t cmdLineLength = 0;
+	BOOL* lpEscapedChars = NULL;
+	LPSTR lpEscapedCmdLine = NULL;
 
 	if (!lpCmdLine)
 		return NULL;
@@ -118,8 +118,7 @@ LPSTR* CommandLineToArgvA(LPCSTR lpCmdLine, int* pNumArgs)
 
 	if (strstr(lpCmdLine, "\\\""))
 	{
-		size_t i;
-		size_t n;
+		size_t n = 0;
 		const char* pLastEnd = NULL;
 		lpEscapedCmdLine = (char*)calloc(cmdLineLength + 1, sizeof(char));
 
@@ -164,7 +163,7 @@ LPSTR* CommandLineToArgvA(LPCSTR lpCmdLine, int* pNumArgs)
 			pOutput += length;
 			p += length;
 
-			for (i = 0; i < (n / 2); i++)
+			for (size_t i = 0; i < (n / 2); i++)
 				*pOutput++ = '\\';
 
 			p += n + 1;

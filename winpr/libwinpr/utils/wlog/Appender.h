@@ -22,6 +22,8 @@
 
 #include "wlog.h"
 
+void WLog_Appender_Free(wLog* log, wLogAppender* appender);
+
 #include "FileAppender.h"
 #include "ConsoleAppender.h"
 #include "BinaryAppender.h"
@@ -33,7 +35,5 @@
 #include "SyslogAppender.h"
 #endif
 #include "UdpAppender.h"
-
-void WLog_Appender_Free(wLog* log, wLogAppender* appender);
 
 #endif /* WINPR_WLOG_APPENDER_PRIVATE_H */

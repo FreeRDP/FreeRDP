@@ -22,8 +22,10 @@ typedef struct xf_floatbar xfFloatbar;
 
 #include "xfreerdp.h"
 
-xfFloatbar* xf_floatbar_new(xfContext* xfc, Window window, const char* title, DWORD flags);
 void xf_floatbar_free(xfFloatbar* floatbar);
+
+WINPR_ATTR_MALLOC(xf_floatbar_free, 1)
+xfFloatbar* xf_floatbar_new(xfContext* xfc, Window window, const char* title, DWORD flags);
 
 BOOL xf_floatbar_is_locked(xfFloatbar* floatbar);
 BOOL xf_floatbar_event_process(xfFloatbar* floatbar, const XEvent* event);

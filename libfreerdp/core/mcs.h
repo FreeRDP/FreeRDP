@@ -179,7 +179,9 @@ FREERDP_LOCAL BOOL mcs_write_domain_mcspdu_header(wStream* s, DomainMCSPDU domai
 
 FREERDP_LOCAL BOOL mcs_client_begin(rdpMcs* mcs);
 
-FREERDP_LOCAL rdpMcs* mcs_new(rdpTransport* transport);
 FREERDP_LOCAL void mcs_free(rdpMcs* mcs);
+
+WINPR_ATTR_MALLOC(mcs_free, 1)
+FREERDP_LOCAL rdpMcs* mcs_new(rdpTransport* transport);
 
 #endif /* FREERDP_LIB_CORE_MCS_H */

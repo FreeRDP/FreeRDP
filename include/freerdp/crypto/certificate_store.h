@@ -40,13 +40,18 @@ extern "C"
 		CERT_STORE_MISMATCH = -1
 	} freerdp_certificate_store_result;
 
-	FREERDP_API rdpCertificateStore* freerdp_certificate_store_new(const rdpSettings* settings);
 	FREERDP_API void freerdp_certificate_store_free(rdpCertificateStore* store);
+
+	WINPR_ATTR_MALLOC(freerdp_certificate_store_free, 1)
+	FREERDP_API rdpCertificateStore* freerdp_certificate_store_new(const rdpSettings* settings);
 
 	FREERDP_API freerdp_certificate_store_result freerdp_certificate_store_contains_data(
 	    rdpCertificateStore* store, const rdpCertificateData* data);
+
+	WINPR_ATTR_MALLOC(freerdp_certificate_data_free, 1)
 	FREERDP_API rdpCertificateData*
 	freerdp_certificate_store_load_data(rdpCertificateStore* store, const char* host, UINT16 port);
+
 	FREERDP_API BOOL freerdp_certificate_store_save_data(rdpCertificateStore* store,
 	                                                     const rdpCertificateData* data);
 	FREERDP_API BOOL freerdp_certificate_store_remove_data(rdpCertificateStore* store,

@@ -17,6 +17,8 @@
 
 # Clients
 
+include(CMakeDependentOption)
+
 if(WITH_CLIENT_COMMON)
 	add_subdirectory(common)
 endif()
@@ -30,14 +32,9 @@ if(FREERDP_VENDOR AND WITH_CLIENT)
 		endif()
 	endif()
 
-	if(WITH_CLIENT_SDL)
-		find_package(SDL2)
-		if (SDL2_FOUND)
-			add_subdirectory(SDL)
-		else()
-			message(WARNING "SDL2 requested but not found, continuing build without SDL client")
-		endif()
-	endif()
+	if (WITH_CLIENT_SDL)
+        add_subdirectory(SDL)
+    endif()
 
 	if(WITH_X11)
 		add_subdirectory(X11)
@@ -92,6 +89,11 @@ if(WITH_CLIENT)
 	endforeach()
 endif()
 
+if (WITH_FUSE)
+    list(APPEND FREERDP_CLIENT_PC_PRIVATE_LIBS "-lfuse3")
+endif()
+
+list(JOIN FREERDP_CLIENT_PC_PRIVATE_LIBS " " FREERDP_CLIENT_PC_PRIVATE_LIBS)
 include(pkg-config-install-prefix)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/freerdp-client.pc.in ${CMAKE_CURRENT_BINARY_DIR}/freerdp-client${FREERDP_VERSION_MAJOR}.pc @ONLY)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/freerdp-client${FREERDP_VERSION_MAJOR}.pc DESTINATION ${PKG_CONFIG_PC_INSTALL_DIR})

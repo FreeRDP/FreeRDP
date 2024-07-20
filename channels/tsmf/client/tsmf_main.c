@@ -125,15 +125,15 @@ BOOL tsmf_playback_ack(IWTSVirtualChannelCallback* pChannelCallback, UINT32 mess
  */
 static UINT tsmf_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, wStream* data)
 {
-	size_t length;
-	wStream* input;
-	wStream* output;
+	size_t length = 0;
+	wStream* input = NULL;
+	wStream* output = NULL;
 	UINT error = CHANNEL_RC_OK;
 	BOOL processed = FALSE;
 	TSMF_IFMAN ifman = { 0 };
-	UINT32 MessageId;
-	UINT32 FunctionId;
-	UINT32 InterfaceId;
+	UINT32 MessageId = 0;
+	UINT32 FunctionId = 0;
+	UINT32 InterfaceId = 0;
 	TSMF_CHANNEL_CALLBACK* callback = (TSMF_CHANNEL_CALLBACK*)pChannelCallback;
 	UINT32 cbSize = Stream_GetRemainingLength(data);
 
@@ -399,8 +399,8 @@ out:
  */
 static UINT tsmf_on_close(IWTSVirtualChannelCallback* pChannelCallback)
 {
-	TSMF_STREAM* stream;
-	TSMF_PRESENTATION* presentation;
+	TSMF_STREAM* stream = NULL;
+	TSMF_PRESENTATION* presentation = NULL;
 	TSMF_CHANNEL_CALLBACK* callback = (TSMF_CHANNEL_CALLBACK*)pChannelCallback;
 	DEBUG_TSMF("");
 
@@ -430,7 +430,7 @@ static UINT tsmf_on_new_channel_connection(IWTSListenerCallback* pListenerCallba
                                            IWTSVirtualChannel* pChannel, BYTE* Data, BOOL* pbAccept,
                                            IWTSVirtualChannelCallback** ppCallback)
 {
-	TSMF_CHANNEL_CALLBACK* callback;
+	TSMF_CHANNEL_CALLBACK* callback = NULL;
 	TSMF_LISTENER_CALLBACK* listener_callback = (TSMF_LISTENER_CALLBACK*)pListenerCallback;
 	DEBUG_TSMF("");
 	callback = (TSMF_CHANNEL_CALLBACK*)calloc(1, sizeof(TSMF_CHANNEL_CALLBACK));
@@ -455,7 +455,7 @@ static UINT tsmf_on_new_channel_connection(IWTSListenerCallback* pListenerCallba
  */
 static UINT tsmf_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelManager* pChannelMgr)
 {
-	UINT status;
+	UINT status = 0;
 	TSMF_PLUGIN* tsmf = (TSMF_PLUGIN*)pPlugin;
 	DEBUG_TSMF("");
 	tsmf->listener_callback = (TSMF_LISTENER_CALLBACK*)calloc(1, sizeof(TSMF_LISTENER_CALLBACK));
@@ -493,9 +493,9 @@ static UINT tsmf_plugin_terminated(IWTSPlugin* pPlugin)
  */
 static UINT tsmf_process_addin_args(IWTSPlugin* pPlugin, const ADDIN_ARGV* args)
 {
-	int status;
-	DWORD flags;
-	const COMMAND_LINE_ARGUMENT_A* arg;
+	int status = 0;
+	DWORD flags = 0;
+	const COMMAND_LINE_ARGUMENT_A* arg = NULL;
 	TSMF_PLUGIN* tsmf = (TSMF_PLUGIN*)pPlugin;
 	COMMAND_LINE_ARGUMENT_A tsmf_args[] = { { "sys", COMMAND_LINE_VALUE_REQUIRED, "<subsystem>",
 		                                      NULL, NULL, -1, NULL, "audio subsystem" },
@@ -555,8 +555,8 @@ static UINT tsmf_process_addin_args(IWTSPlugin* pPlugin, const ADDIN_ARGV* args)
 FREERDP_ENTRY_POINT(UINT tsmf_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints))
 {
 	UINT status = 0;
-	TSMF_PLUGIN* tsmf;
-	TsmfClientContext* context;
+	TSMF_PLUGIN* tsmf = NULL;
+	TsmfClientContext* context = NULL;
 	UINT error = CHANNEL_RC_NO_MEMORY;
 	tsmf = (TSMF_PLUGIN*)pEntryPoints->GetPlugin(pEntryPoints, "tsmf");
 

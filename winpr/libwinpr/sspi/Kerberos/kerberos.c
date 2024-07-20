@@ -26,7 +26,6 @@
 #include <string.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <string.h>
 #include <ctype.h>
 
 #include <winpr/assert.h>
@@ -40,6 +39,7 @@
 #include <winpr/crypto.h>
 #include <winpr/path.h>
 #include <winpr/wtypes.h>
+#include <winpr/winsock.h>
 
 #include "kerberos.h"
 
@@ -119,11 +119,34 @@ static const WinPrAsn1_OID kerberos_OID = { 9, (void*)"\x2a\x86\x48\x86\xf7\x12\
 static const WinPrAsn1_OID kerberos_u2u_OID = { 10,
 	                                            (void*)"\x2a\x86\x48\x86\xf7\x12\x01\x02\x02\x03" };
 
-static void kerberos_log_msg(krb5_context ctx, krb5_error_code code)
+#define krb_log_exec(fkt, ctx, ...) \
+	kerberos_log_msg(ctx, fkt(ctx, ##__VA_ARGS__), #fkt, __FILE__, __func__, __LINE__)
+#define krb_log_exec_ptr(fkt, ctx, ...) \
+	kerberos_log_msg(*ctx, fkt(ctx, ##__VA_ARGS__), #fkt, __FILE__, __func__, __LINE__)
+static krb5_error_code kerberos_log_msg(krb5_context ctx, krb5_error_code code, const char* what,
+                                        const char* file, const char* fkt, size_t line)
 {
-	const char* msg = krb5_get_error_message(ctx, code);
-	WLog_ERR(TAG, msg);
-	krb5_free_error_message(ctx, msg);
+	switch (code)
+	{
+		case 0:
+		case KRB5_KT_END:
+			break;
+		default:
+		{
+			const DWORD level = WLOG_ERROR;
+
+			wLog* log = WLog_Get(TAG);
+			if (WLog_IsLevelActive(log, level))
+			{
+				const char* msg = krb5_get_error_message(ctx, code);
+				WLog_PrintMessage(log, WLOG_MESSAGE_TEXT, level, line, file, fkt, "%s (%s [%d])",
+				                  what, msg, code);
+				krb5_free_error_message(ctx, msg);
+			}
+		}
+		break;
+	}
+	return code;
 }
 
 static void kerberos_ContextFree(KRB_CONTEXT* ctx, BOOL allocated)
@@ -143,7 +166,7 @@ static void kerberos_ContextFree(KRB_CONTEXT* ctx, BOOL allocated)
 
 static KRB_CONTEXT* kerberos_ContextNew(void)
 {
-	KRB_CONTEXT* context;
+	KRB_CONTEXT* context = NULL;
 
 	context = (KRB_CONTEXT*)calloc(1, sizeof(KRB_CONTEXT));
 	if (!context)
@@ -174,6 +197,25 @@ static INLINE krb5glue_key get_key(struct krb5glue_keyset* keyset)
 	                               : keyset->session_key;
 }
 
+static BOOL isValidIPv4(const char* ipAddress)
+{
+	struct sockaddr_in sa = { 0 };
+	int result = inet_pton(AF_INET, ipAddress, &(sa.sin_addr));
+	return result != 0;
+}
+
+static BOOL isValidIPv6(const char* ipAddress)
+{
+	struct sockaddr_in6 sa = { 0 };
+	int result = inet_pton(AF_INET6, ipAddress, &(sa.sin6_addr));
+	return result != 0;
+}
+
+static BOOL isValidIP(const char* ipAddress)
+{
+	return isValidIPv4(ipAddress) || isValidIPv6(ipAddress);
+}
+
 #endif /* WITH_KRB5 */
 
 static SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleA(
@@ -184,7 +226,6 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleA(
 #ifdef WITH_KRB5
 	SEC_WINPR_KERBEROS_SETTINGS* krb_settings = NULL;
 	KRB_CREDENTIALS* credentials = NULL;
-	krb5_error_code rv = 0;
 	krb5_context ctx = NULL;
 	krb5_ccache ccache = NULL;
 	krb5_keytab keytab = NULL;
@@ -213,7 +254,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleA(
 			pszPrincipal = username;
 	}
 
-	if ((rv = krb5_init_context(&ctx)))
+	if (krb_log_exec_ptr(krb5_init_context, &ctx))
 		goto cleanup;
 
 	if (domain)
@@ -224,7 +265,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleA(
 
 		CharUpperA(udomain);
 		/* Will use domain if realm is not specified in username */
-		rv = krb5_set_default_realm(ctx, udomain);
+		krb5_error_code rv = krb_log_exec(krb5_set_default_realm, ctx, udomain);
 		free(udomain);
 
 		if (rv)
@@ -242,7 +283,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleA(
 		if (p)
 			CharUpperA(p);
 
-		rv = krb5_parse_name(ctx, cpszPrincipal, &principal);
+		krb5_error_code rv = krb_log_exec(krb5_parse_name, ctx, cpszPrincipal, &principal);
 		free(cpszPrincipal);
 
 		if (rv)
@@ -251,7 +292,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleA(
 
 	if (krb_settings && krb_settings->cache)
 	{
-		if ((rv = krb5_cc_set_default_name(ctx, krb_settings->cache)))
+		if ((krb_log_exec(krb5_cc_set_default_name, ctx, krb_settings->cache)))
 			goto cleanup;
 	}
 	else
@@ -264,16 +305,16 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleA(
 		{
 			if (own_ccache)
 			{
-				if ((rv = krb5_cc_new_unique(ctx, default_ccache_type, 0, &ccache)))
+				if (krb_log_exec(krb5_cc_new_unique, ctx, default_ccache_type, 0, &ccache))
 					goto cleanup;
 			}
 			else
 			{
-				if ((rv = krb5_cc_resolve(ctx, krb_settings->cache, &ccache)))
+				if (krb_log_exec(krb5_cc_resolve, ctx, krb_settings->cache, &ccache))
 					goto cleanup;
 			}
 
-			if ((rv = krb5_cc_initialize(ctx, ccache, principal)))
+			if (krb_log_exec(krb5_cc_initialize, ctx, ccache, principal))
 				goto cleanup;
 		}
 		else
@@ -282,9 +323,9 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleA(
 	else if (fCredentialUse & SECPKG_CRED_OUTBOUND)
 	{
 		/* Use the default cache with it's default principal */
-		if ((rv = krb5_cc_default(ctx, &ccache)))
+		if (krb_log_exec(krb5_cc_default, ctx, &ccache))
 			goto cleanup;
-		if ((rv = krb5_cc_get_principal(ctx, ccache, &principal)))
+		if (krb_log_exec(krb5_cc_get_principal, ctx, ccache, &principal))
 			goto cleanup;
 		own_ccache = FALSE;
 	}
@@ -292,33 +333,33 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleA(
 	{
 		if (own_ccache)
 		{
-			if ((rv = krb5_cc_new_unique(ctx, default_ccache_type, 0, &ccache)))
+			if (krb_log_exec(krb5_cc_new_unique, ctx, default_ccache_type, 0, &ccache))
 				goto cleanup;
 		}
 		else
 		{
-			if ((rv = krb5_cc_resolve(ctx, krb_settings->cache, &ccache)))
+			if (krb_log_exec(krb5_cc_resolve, ctx, krb_settings->cache, &ccache))
 				goto cleanup;
 		}
 	}
 
 	if (krb_settings && krb_settings->keytab)
 	{
-		if ((rv = krb5_kt_resolve(ctx, krb_settings->keytab, &keytab)))
+		if (krb_log_exec(krb5_kt_resolve, ctx, krb_settings->keytab, &keytab))
 			goto cleanup;
 	}
 	else
 	{
 		if (fCredentialUse & SECPKG_CRED_INBOUND)
-			if ((rv = krb5_kt_default(ctx, &keytab)))
+			if (krb_log_exec(krb5_kt_default, ctx, &keytab))
 				goto cleanup;
 	}
 
 	/* Get initial credentials if required */
 	if (fCredentialUse & SECPKG_CRED_OUTBOUND)
 	{
-		if ((rv = krb5glue_get_init_creds(ctx, principal, ccache, krb5_prompter, password,
-		                                  krb_settings)))
+		if (krb_log_exec(krb5glue_get_init_creds, ctx, principal, ccache, krb5_prompter, password,
+		                 krb_settings))
 			goto cleanup;
 	}
 
@@ -330,9 +371,6 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleA(
 	credentials->own_ccache = own_ccache;
 
 cleanup:
-
-	if (rv)
-		kerberos_log_msg(ctx, rv);
 
 	free(domain);
 	free(username);
@@ -376,7 +414,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleW(
     void* pAuthData, SEC_GET_KEY_FN pGetKeyFn, void* pvGetKeyArgument, PCredHandle phCredential,
     PTimeStamp ptsExpiry)
 {
-	SECURITY_STATUS status;
+	SECURITY_STATUS status = 0;
 	char* principal = NULL;
 	char* package = NULL;
 
@@ -408,8 +446,8 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleW(
 static SECURITY_STATUS SEC_ENTRY kerberos_FreeCredentialsHandle(PCredHandle phCredential)
 {
 #ifdef WITH_KRB5
-	KRB_CREDENTIALS* credentials;
-	krb5_context ctx;
+	KRB_CREDENTIALS* credentials = NULL;
+	krb5_context ctx = NULL;
 
 	credentials = sspi_SecureHandleGetLowerPointer(phCredential);
 	if (!credentials)
@@ -470,10 +508,10 @@ static SECURITY_STATUS SEC_ENTRY kerberos_QueryCredentialsAttributesA(PCredHandl
 static BOOL kerberos_mk_tgt_token(SecBuffer* buf, int msg_type, char* sname, char* host,
                                   const krb5_data* ticket)
 {
-	WinPrAsn1Encoder* enc;
+	WinPrAsn1Encoder* enc = NULL;
 	WinPrAsn1_MemoryChunk data;
 	wStream s;
-	size_t len;
+	size_t len = 0;
 	sspi_gss_data token;
 	BOOL ret = FALSE;
 
@@ -555,11 +593,12 @@ cleanup:
 
 static BOOL kerberos_rd_tgt_token(const sspi_gss_data* token, char** target, krb5_data* ticket)
 {
-	WinPrAsn1Decoder dec, dec2;
-	BOOL error;
-	WinPrAsn1_tagId tag;
-	WinPrAsn1_INTEGER val;
-	size_t len;
+	WinPrAsn1Decoder dec;
+	WinPrAsn1Decoder dec2;
+	BOOL error = 0;
+	WinPrAsn1_tagId tag = 0;
+	WinPrAsn1_INTEGER val = 0;
+	size_t len = 0;
 	wStream s;
 	char* buf = NULL;
 	char* str = NULL;
@@ -638,6 +677,7 @@ static BOOL kerberos_rd_tgt_token(const sspi_gss_data* token, char** target, krb
 
 		*buf++ = '@';
 		strcpy(buf, str);
+		free(str);
 		return TRUE;
 	}
 	else if (val == KRB_TGT_REP)
@@ -659,6 +699,8 @@ static BOOL kerberos_rd_tgt_token(const sspi_gss_data* token, char** target, krb
 
 fail:
 	free(buf);
+	if (target)
+		*target = NULL;
 	return FALSE;
 }
 
@@ -712,10 +754,9 @@ static SECURITY_STATUS SEC_ENTRY kerberos_InitializeSecurityContextA(
     PCtxtHandle phNewContext, PSecBufferDesc pOutput, ULONG* pfContextAttr, PTimeStamp ptsExpiry)
 {
 #ifdef WITH_KRB5
-	KRB_CREDENTIALS* credentials;
-	KRB_CONTEXT* context;
+	KRB_CREDENTIALS* credentials = NULL;
+	KRB_CONTEXT* context = NULL;
 	KRB_CONTEXT new_context = { 0 };
-	krb5_error_code rv = KRB5KDC_ERR_NONE;
 	PSecBuffer input_buffer = NULL;
 	PSecBuffer output_buffer = NULL;
 	PSecBuffer bindings_buffer = NULL;
@@ -764,7 +805,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_InitializeSecurityContextA(
 	{
 		context = &new_context;
 
-		if ((rv = krb5_init_context(&context->ctx)))
+		if (krb_log_exec_ptr(krb5_init_context, &context->ctx))
 			return SEC_E_INTERNAL_ERROR;
 
 		if (fContextReq & ISC_REQ_USE_SESSION_KEY)
@@ -801,6 +842,11 @@ static SECURITY_STATUS SEC_ENTRY kerberos_InitializeSecurityContextA(
 		}
 		else
 			host = target;
+		if (isValidIP(host))
+		{
+			status = SEC_E_NO_CREDENTIALS;
+			goto cleanup;
+		}
 	}
 
 	/* SSPI flags are compatible with GSS flags except INTEG_FLAG */
@@ -836,33 +882,34 @@ static SECURITY_STATUS SEC_ENTRY kerberos_InitializeSecurityContextA(
 		case KERBEROS_STATE_AP_REQ:
 
 			/* Set auth_context options */
-			if ((rv = krb5_auth_con_init(context->ctx, &context->auth_ctx)))
+			if (krb_log_exec(krb5_auth_con_init, context->ctx, &context->auth_ctx))
 				goto cleanup;
-			if ((rv = krb5_auth_con_setflags(context->ctx, context->auth_ctx,
-			                                 KRB5_AUTH_CONTEXT_DO_SEQUENCE |
-			                                     KRB5_AUTH_CONTEXT_USE_SUBKEY)))
+			if (krb_log_exec(krb5_auth_con_setflags, context->ctx, context->auth_ctx,
+			                 KRB5_AUTH_CONTEXT_DO_SEQUENCE | KRB5_AUTH_CONTEXT_USE_SUBKEY))
 				goto cleanup;
-			if ((rv = krb5glue_auth_con_set_cksumtype(context->ctx, context->auth_ctx,
-			                                          GSS_CHECKSUM_TYPE)))
+			if (krb_log_exec(krb5glue_auth_con_set_cksumtype, context->ctx, context->auth_ctx,
+			                 GSS_CHECKSUM_TYPE))
 				goto cleanup;
 
 			/* Get a service ticket */
-			if ((rv = krb5_sname_to_principal(context->ctx, host, sname, KRB5_NT_SRV_HST,
-			                                  &in_creds.server)))
+			if (krb_log_exec(krb5_sname_to_principal, context->ctx, host, sname, KRB5_NT_SRV_HST,
+			                 &in_creds.server))
 				goto cleanup;
 
-			if ((rv = krb5_cc_get_principal(context->ctx, credentials->ccache, &in_creds.client)))
+			if (krb_log_exec(krb5_cc_get_principal, context->ctx, credentials->ccache,
+			                 &in_creds.client))
 				goto cleanup;
 
-			if ((rv = krb5_get_credentials(context->ctx, context->u2u ? KRB5_GC_USER_USER : 0,
-			                               credentials->ccache, &in_creds, &creds)))
+			if (krb_log_exec(krb5_get_credentials, context->ctx,
+			                 context->u2u ? KRB5_GC_USER_USER : 0, credentials->ccache, &in_creds,
+			                 &creds))
 				goto cleanup;
 
 			/* Write the checksum (delegation not implemented) */
 			cksum.data = cksum_contents;
 			cksum.length = sizeof(cksum_contents);
-			Data_Write_UINT32(cksum.data, 16);
-			Data_Write_UINT32((cksum.data + 20), context->flags);
+			Data_Write_UINT32(cksum_contents, 16);
+			Data_Write_UINT32((cksum_contents + 20), context->flags);
 
 			if (bindings_buffer)
 			{
@@ -896,8 +943,8 @@ static SECURITY_STATUS SEC_ENTRY kerberos_InitializeSecurityContextA(
 			}
 
 			/* Make the AP_REQ message */
-			if ((rv = krb5_mk_req_extended(context->ctx, &context->auth_ctx, ap_flags, &cksum,
-			                               creds, &output_token)))
+			if (krb_log_exec(krb5_mk_req_extended, context->ctx, &context->auth_ctx, ap_flags,
+			                 &cksum, creds, &output_token))
 				goto cleanup;
 
 			if (!sspi_gss_wrap_token(output_buffer,
@@ -907,12 +954,15 @@ static SECURITY_STATUS SEC_ENTRY kerberos_InitializeSecurityContextA(
 
 			if (context->flags & SSPI_GSS_C_SEQUENCE_FLAG)
 			{
-				krb5_auth_con_getlocalseqnumber(context->ctx, context->auth_ctx,
-				                                (INT32*)&context->local_seq);
+				if (krb_log_exec(krb5_auth_con_getlocalseqnumber, context->ctx, context->auth_ctx,
+				                 (INT32*)&context->local_seq))
+					goto cleanup;
 				context->remote_seq ^= context->local_seq;
 			}
 
-			krb5glue_update_keyset(context->ctx, context->auth_ctx, FALSE, &context->keyset);
+			if (krb_log_exec(krb5glue_update_keyset, context->ctx, context->auth_ctx, FALSE,
+			                 &context->keyset))
+				goto cleanup;
 
 			context->state = KERBEROS_STATE_AP_REP;
 
@@ -927,27 +977,34 @@ static SECURITY_STATUS SEC_ENTRY kerberos_InitializeSecurityContextA(
 
 			if (tok_id == TOK_ID_AP_REP)
 			{
-				if ((rv = krb5_rd_rep(context->ctx, context->auth_ctx, &input_token, &reply)))
+				if (krb_log_exec(krb5_rd_rep, context->ctx, context->auth_ctx, &input_token,
+				                 &reply))
 					goto cleanup;
 				krb5_free_ap_rep_enc_part(context->ctx, reply);
 			}
 			else if (tok_id == TOK_ID_ERROR)
 			{
-				rv = krb5glue_log_error(context->ctx, &input_token, TAG);
+				krb5glue_log_error(context->ctx, &input_token, TAG);
 				goto cleanup;
 			}
 			else
 				goto bad_token;
 
 			if (context->flags & SSPI_GSS_C_SEQUENCE_FLAG)
-				krb5_auth_con_getremoteseqnumber(context->ctx, context->auth_ctx,
-				                                 (INT32*)&context->remote_seq);
+			{
+				if (krb_log_exec(krb5_auth_con_getremoteseqnumber, context->ctx, context->auth_ctx,
+				                 (INT32*)&context->remote_seq))
+					goto cleanup;
+			}
 
-			krb5glue_update_keyset(context->ctx, context->auth_ctx, FALSE, &context->keyset);
+			if (krb_log_exec(krb5glue_update_keyset, context->ctx, context->auth_ctx, FALSE,
+			                 &context->keyset))
+				goto cleanup;
 
 			context->state = KERBEROS_STATE_FINAL;
 
-			output_buffer->cbBuffer = 0;
+			if (output_buffer)
+				output_buffer->cbBuffer = 0;
 			status = SEC_E_OK;
 
 			break;
@@ -984,8 +1041,6 @@ cleanup:
 	in_creds.second_ticket = edata;
 	krb5_free_cred_contents(context->ctx, &in_creds);
 }
-	if (rv)
-		kerberos_log_msg(context->ctx, rv);
 
 	krb5_free_creds(context->ctx, creds);
 	if (output_token.data)
@@ -1011,7 +1066,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_InitializeSecurityContextW(
     ULONG Reserved1, ULONG TargetDataRep, PSecBufferDesc pInput, ULONG Reserved2,
     PCtxtHandle phNewContext, PSecBufferDesc pOutput, ULONG* pfContextAttr, PTimeStamp ptsExpiry)
 {
-	SECURITY_STATUS status;
+	SECURITY_STATUS status = 0;
 	char* target_name = NULL;
 
 	if (pszTargetName)
@@ -1037,23 +1092,22 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcceptSecurityContext(
     PTimeStamp ptsExpity)
 {
 #ifdef WITH_KRB5
-	KRB_CREDENTIALS* credentials;
-	KRB_CONTEXT* context;
+	KRB_CREDENTIALS* credentials = NULL;
+	KRB_CONTEXT* context = NULL;
 	KRB_CONTEXT new_context = { 0 };
 	PSecBuffer input_buffer = NULL;
 	PSecBuffer output_buffer = NULL;
 	WinPrAsn1_OID oid = { 0 };
-	uint16_t tok_id;
+	uint16_t tok_id = 0;
 	krb5_data input_token = { 0 };
 	krb5_data output_token = { 0 };
 	SECURITY_STATUS status = SEC_E_INTERNAL_ERROR;
-	krb5_error_code rv = 0;
 	krb5_flags ap_flags = 0;
-	krb5glue_authenticator authenticator;
+	krb5glue_authenticator authenticator = NULL;
 	char* target = NULL;
 	char* sname = NULL;
 	char* realm = NULL;
-	krb5_kt_cursor cur;
+	krb5_kt_cursor cur = { 0 };
 	krb5_keytab_entry entry = { 0 };
 	krb5_principal principal = NULL;
 	krb5_creds creds = { 0 };
@@ -1080,7 +1134,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcceptSecurityContext(
 	{
 		context = &new_context;
 
-		if ((rv = krb5_init_context(&context->ctx)))
+		if (krb_log_exec_ptr(krb5_init_context, &context->ctx))
 			return SEC_E_INTERNAL_ERROR;
 
 		if (sspi_gss_oid_compare(&oid, &kerberos_u2u_OID))
@@ -1114,59 +1168,73 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcceptSecurityContext(
 				realm++;
 		}
 
-		if ((rv = krb5_parse_name_flags(context->ctx, sname ? sname : "",
-		                                KRB5_PRINCIPAL_PARSE_NO_REALM, &principal)))
+		if (krb_log_exec(krb5_parse_name_flags, context->ctx, sname ? sname : "",
+		                 KRB5_PRINCIPAL_PARSE_NO_REALM, &principal))
 			goto cleanup;
 
 		if (realm)
-			if ((rv = krb5glue_set_principal_realm(context->ctx, principal, realm)))
-				goto cleanup;
-
-		if ((rv = krb5_kt_start_seq_get(context->ctx, credentials->keytab, &cur)))
-			goto cleanup;
-
-		while ((rv = krb5_kt_next_entry(context->ctx, credentials->keytab, &entry, &cur)) == 0)
 		{
-			if ((!sname ||
-			     krb5_principal_compare_any_realm(context->ctx, principal, entry.principal)) &&
-			    (!realm || krb5_realm_compare(context->ctx, principal, entry.principal)))
-				break;
-			krb5glue_free_keytab_entry_contents(context->ctx, &entry);
+			if (krb_log_exec(krb5glue_set_principal_realm, context->ctx, principal, realm))
+				goto cleanup;
 		}
 
-		krb5_kt_end_seq_get(context->ctx, credentials->keytab, &cur);
+		if (krb_log_exec(krb5_kt_start_seq_get, context->ctx, credentials->keytab, &cur))
+			goto cleanup;
+
+		do
+		{
+			krb5_error_code rv =
+			    krb_log_exec(krb5_kt_next_entry, context->ctx, credentials->keytab, &entry, &cur);
+			if (rv == KRB5_KT_END)
+				break;
+			if (rv != 0)
+				goto cleanup;
+
+			if ((!sname || krb_log_exec(krb5_principal_compare_any_realm, context->ctx, principal,
+			                            entry.principal)) &&
+			    (!realm ||
+			     krb_log_exec(krb5_realm_compare, context->ctx, principal, entry.principal)))
+				break;
+			if (krb_log_exec(krb5glue_free_keytab_entry_contents, context->ctx, &entry))
+				goto cleanup;
+		} while (1);
+
+		if (krb_log_exec(krb5_kt_end_seq_get, context->ctx, credentials->keytab, &cur))
+			goto cleanup;
 
 		if (!entry.principal)
 			goto cleanup;
 
 		/* Get the TGT */
-		if ((rv = krb5_get_init_creds_keytab(context->ctx, &creds, entry.principal,
-		                                     credentials->keytab, 0, NULL, NULL)))
+		if (krb_log_exec(krb5_get_init_creds_keytab, context->ctx, &creds, entry.principal,
+		                 credentials->keytab, 0, NULL, NULL))
 			goto cleanup;
 
 		if (!kerberos_mk_tgt_token(output_buffer, KRB_TGT_REP, NULL, NULL, &creds.ticket))
 			goto cleanup;
 
-		if ((rv = krb5_auth_con_init(context->ctx, &context->auth_ctx)))
+		if (krb_log_exec(krb5_auth_con_init, context->ctx, &context->auth_ctx))
 			goto cleanup;
 
-		if ((rv = krb5glue_auth_con_setuseruserkey(context->ctx, context->auth_ctx,
-		                                           &krb5glue_creds_getkey(creds))))
+		if (krb_log_exec(krb5glue_auth_con_setuseruserkey, context->ctx, context->auth_ctx,
+		                 &krb5glue_creds_getkey(creds)))
 			goto cleanup;
 
 		context->state = KERBEROS_STATE_AP_REQ;
 	}
 	else if (context->state == KERBEROS_STATE_AP_REQ && tok_id == TOK_ID_AP_REQ)
 	{
-		if ((rv = krb5_rd_req(context->ctx, &context->auth_ctx, &input_token, NULL,
-		                      credentials->keytab, &ap_flags, NULL)))
+		if (krb_log_exec(krb5_rd_req, context->ctx, &context->auth_ctx, &input_token, NULL,
+		                 credentials->keytab, &ap_flags, NULL))
 			goto cleanup;
 
-		krb5_auth_con_setflags(context->ctx, context->auth_ctx,
-		                       KRB5_AUTH_CONTEXT_DO_SEQUENCE | KRB5_AUTH_CONTEXT_USE_SUBKEY);
+		if (krb_log_exec(krb5_auth_con_setflags, context->ctx, context->auth_ctx,
+		                 KRB5_AUTH_CONTEXT_DO_SEQUENCE | KRB5_AUTH_CONTEXT_USE_SUBKEY))
+			goto cleanup;
 
 		/* Retrieve and validate the checksum */
-		if ((rv = krb5_auth_con_getauthenticator(context->ctx, context->auth_ctx, &authenticator)))
+		if (krb_log_exec(krb5_auth_con_getauthenticator, context->ctx, context->auth_ctx,
+		                 &authenticator))
 			goto cleanup;
 		if (!krb5glue_authenticator_validate_chksum(authenticator, GSS_CHECKSUM_TYPE,
 		                                            &context->flags))
@@ -1176,7 +1244,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcceptSecurityContext(
 		{
 			if (!output_buffer)
 				goto bad_token;
-			if ((rv = krb5_mk_rep(context->ctx, context->auth_ctx, &output_token)))
+			if (krb_log_exec(krb5_mk_rep, context->ctx, context->auth_ctx, &output_token))
 				goto cleanup;
 			if (!sspi_gss_wrap_token(output_buffer,
 			                         context->u2u ? &kerberos_u2u_OID : &kerberos_OID,
@@ -1185,7 +1253,8 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcceptSecurityContext(
 		}
 		else
 		{
-			output_buffer->cbBuffer = 0;
+			if (output_buffer)
+				output_buffer->cbBuffer = 0;
 		}
 
 		*pfContextAttr = context->flags & 0x1F;
@@ -1194,13 +1263,17 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcceptSecurityContext(
 
 		if (context->flags & SSPI_GSS_C_SEQUENCE_FLAG)
 		{
-			krb5_auth_con_getlocalseqnumber(context->ctx, context->auth_ctx,
-			                                (INT32*)&context->local_seq);
-			krb5_auth_con_getremoteseqnumber(context->ctx, context->auth_ctx,
-			                                 (INT32*)&context->remote_seq);
+			if (krb_log_exec(krb5_auth_con_getlocalseqnumber, context->ctx, context->auth_ctx,
+			                 (INT32*)&context->local_seq))
+				goto cleanup;
+			if (krb_log_exec(krb5_auth_con_getremoteseqnumber, context->ctx, context->auth_ctx,
+			                 (INT32*)&context->remote_seq))
+				goto cleanup;
 		}
 
-		krb5glue_update_keyset(context->ctx, context->auth_ctx, TRUE, &context->keyset);
+		if (krb_log_exec(krb5glue_update_keyset, context->ctx, context->auth_ctx, TRUE,
+		                 &context->keyset))
+			goto cleanup;
 
 		context->state = KERBEROS_STATE_FINAL;
 	}
@@ -1233,9 +1306,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcceptSecurityContext(
 
 cleanup:
 
-	if (rv)
-		kerberos_log_msg(context->ctx, rv);
-
+	free(target);
 	if (output_token.data)
 		krb5glue_free_data_contents(context->ctx, &output_token);
 	if (entry.principal)
@@ -1258,6 +1329,9 @@ static KRB_CONTEXT* get_context(PCtxtHandle phContext)
 		return NULL;
 
 	TCHAR* name = sspi_SecureHandleGetUpperPointer(phContext);
+	if (!name)
+		return NULL;
+
 	if (_tcscmp(KERBEROS_SSP_NAME, name) != 0)
 		return NULL;
 	return sspi_SecureHandleGetLowerPointer(phContext);
@@ -1290,8 +1364,10 @@ static SECURITY_STATUS SEC_ENTRY kerberos_QueryContextAttributesA(PCtxtHandle ph
 
 	if (ulAttribute == SECPKG_ATTR_SIZES)
 	{
-		UINT header, pad, trailer;
-		krb5glue_key key;
+		UINT header = 0;
+		UINT pad = 0;
+		UINT trailer = 0;
+		krb5glue_key key = NULL;
 		KRB_CONTEXT* context = get_context(phContext);
 		SecPkgContext_Sizes* ContextSizes = (SecPkgContext_Sizes*)pBuffer;
 
@@ -1312,16 +1388,28 @@ static SECURITY_STATUS SEC_ENTRY kerberos_QueryContextAttributesA(PCtxtHandle ph
 
 		if (context->flags & SSPI_GSS_C_CONF_FLAG)
 		{
-			krb5glue_crypto_length(context->ctx, key, KRB5_CRYPTO_TYPE_HEADER, &header);
-			krb5glue_crypto_length(context->ctx, key, KRB5_CRYPTO_TYPE_PADDING, &pad);
-			krb5glue_crypto_length(context->ctx, key, KRB5_CRYPTO_TYPE_TRAILER, &trailer);
+			krb5_error_code rv = krb_log_exec(krb5glue_crypto_length, context->ctx, key,
+			                                  KRB5_CRYPTO_TYPE_HEADER, &header);
+			if (rv)
+				return rv;
+			rv = krb_log_exec(krb5glue_crypto_length, context->ctx, key, KRB5_CRYPTO_TYPE_PADDING,
+			                  &pad);
+			if (rv)
+				return rv;
+			rv = krb_log_exec(krb5glue_crypto_length, context->ctx, key, KRB5_CRYPTO_TYPE_TRAILER,
+			                  &trailer);
+			if (rv)
+				return rv;
 			/* GSS header (= 16 bytes) + encrypted header = 32 bytes */
 			ContextSizes->cbSecurityTrailer = header + pad + trailer + 32;
 		}
 		if (context->flags & SSPI_GSS_C_INTEG_FLAG)
 		{
-			krb5glue_crypto_length(context->ctx, key, KRB5_CRYPTO_TYPE_CHECKSUM,
-			                       &ContextSizes->cbMaxSignature);
+			krb5_error_code rv =
+			    krb_log_exec(krb5glue_crypto_length, context->ctx, key, KRB5_CRYPTO_TYPE_CHECKSUM,
+			                 &ContextSizes->cbMaxSignature);
+			if (rv)
+				return rv;
 			ContextSizes->cbMaxSignature += 16;
 		}
 
@@ -1361,7 +1449,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_SetCredentialsAttributesX(PCredHandle 
                                                                     BOOL unicode)
 {
 #ifdef WITH_KRB5
-	KRB_CREDENTIALS* credentials;
+	KRB_CREDENTIALS* credentials = NULL;
 
 	if (!phCredential)
 		return SEC_E_INVALID_HANDLE;
@@ -1431,11 +1519,12 @@ static SECURITY_STATUS SEC_ENTRY kerberos_EncryptMessage(PCtxtHandle phContext, 
 {
 #ifdef WITH_KRB5
 	KRB_CONTEXT* context = get_context(phContext);
-	PSecBuffer sig_buffer, data_buffer;
-	BYTE* header;
+	PSecBuffer sig_buffer = NULL;
+	PSecBuffer data_buffer = NULL;
+	char* header = NULL;
 	BYTE flags = 0;
-	krb5glue_key key;
-	krb5_keyusage usage;
+	krb5glue_key key = NULL;
+	krb5_keyusage usage = 0;
 	krb5_crypto_iov encrypt_iov[] = { { KRB5_CRYPTO_TYPE_HEADER, { 0 } },
 		                              { KRB5_CRYPTO_TYPE_DATA, { 0 } },
 		                              { KRB5_CRYPTO_TYPE_DATA, { 0 } },
@@ -1473,7 +1562,8 @@ static SECURITY_STATUS SEC_ENTRY kerberos_EncryptMessage(PCtxtHandle phContext, 
 	encrypt_iov[2].data.length = 16;
 
 	/* Get the lengths of the header, trailer, and padding and ensure sig_buffer is large enough */
-	if (krb5glue_crypto_length_iov(context->ctx, key, encrypt_iov, ARRAYSIZE(encrypt_iov)))
+	if (krb_log_exec(krb5glue_crypto_length_iov, context->ctx, key, encrypt_iov,
+	                 ARRAYSIZE(encrypt_iov)))
 		return SEC_E_INTERNAL_ERROR;
 	if (sig_buffer->cbBuffer <
 	    encrypt_iov[0].data.length + encrypt_iov[3].data.length + encrypt_iov[4].data.length + 32)
@@ -1490,7 +1580,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_EncryptMessage(PCtxtHandle phContext, 
 	/* Write the GSS header with 0 in RRC */
 	Data_Write_UINT16_BE(header, TOK_ID_WRAP);
 	header[2] = flags;
-	header[3] = 0xFF;
+	header[3] = (char)0xFF;
 	Data_Write_UINT32(header + 4, 0);
 	Data_Write_UINT64_BE(header + 8, (context->local_seq + MessageSeqNo));
 
@@ -1500,7 +1590,8 @@ static SECURITY_STATUS SEC_ENTRY kerberos_EncryptMessage(PCtxtHandle phContext, 
 	/* Set the correct RRC */
 	Data_Write_UINT16_BE(header + 6, 16 + encrypt_iov[3].data.length + encrypt_iov[4].data.length);
 
-	if (krb5glue_encrypt_iov(context->ctx, key, usage, encrypt_iov, ARRAYSIZE(encrypt_iov)))
+	if (krb_log_exec(krb5glue_encrypt_iov, context->ctx, key, usage, encrypt_iov,
+	                 ARRAYSIZE(encrypt_iov)))
 		return SEC_E_INTERNAL_ERROR;
 
 	return SEC_E_OK;
@@ -1515,15 +1606,16 @@ static SECURITY_STATUS SEC_ENTRY kerberos_DecryptMessage(PCtxtHandle phContext,
 {
 #ifdef WITH_KRB5
 	KRB_CONTEXT* context = get_context(phContext);
-	PSecBuffer sig_buffer, data_buffer;
-	krb5glue_key key;
-	krb5_keyusage usage;
-	char* header;
-	uint16_t tok_id;
-	BYTE flags;
-	uint16_t ec;
-	uint16_t rrc;
-	uint64_t seq_no;
+	PSecBuffer sig_buffer = NULL;
+	PSecBuffer data_buffer = NULL;
+	krb5glue_key key = NULL;
+	krb5_keyusage usage = 0;
+	char* header = NULL;
+	uint16_t tok_id = 0;
+	BYTE flags = 0;
+	uint16_t ec = 0;
+	uint16_t rrc = 0;
+	uint64_t seq_no = 0;
 	krb5_crypto_iov iov[] = { { KRB5_CRYPTO_TYPE_HEADER, { 0 } },
 		                      { KRB5_CRYPTO_TYPE_DATA, { 0 } },
 		                      { KRB5_CRYPTO_TYPE_DATA, { 0 } },
@@ -1576,7 +1668,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_DecryptMessage(PCtxtHandle phContext,
 	/* Fill in the lengths of the iov array */
 	iov[1].data.length = data_buffer->cbBuffer;
 	iov[2].data.length = 16;
-	if (krb5glue_crypto_length_iov(context->ctx, key, iov, ARRAYSIZE(iov)))
+	if (krb_log_exec(krb5glue_crypto_length_iov, context->ctx, key, iov, ARRAYSIZE(iov)))
 		return SEC_E_INTERNAL_ERROR;
 
 	/* We don't expect a trailer buffer; everything must be in sig_buffer */
@@ -1592,7 +1684,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_DecryptMessage(PCtxtHandle phContext,
 	iov[3].data.data = iov[2].data.data + iov[2].data.length;
 	iov[4].data.data = iov[3].data.data + iov[3].data.length;
 
-	if (krb5glue_decrypt_iov(context->ctx, key, usage, iov, ARRAYSIZE(iov)))
+	if (krb_log_exec(krb5glue_decrypt_iov, context->ctx, key, usage, iov, ARRAYSIZE(iov)))
 		return SEC_E_INTERNAL_ERROR;
 
 	/* Validate the encrypted header */
@@ -1614,10 +1706,11 @@ static SECURITY_STATUS SEC_ENTRY kerberos_MakeSignature(PCtxtHandle phContext, U
 {
 #ifdef WITH_KRB5
 	KRB_CONTEXT* context = get_context(phContext);
-	PSecBuffer sig_buffer, data_buffer;
-	krb5glue_key key;
-	krb5_keyusage usage;
-	char* header;
+	PSecBuffer sig_buffer = NULL;
+	PSecBuffer data_buffer = NULL;
+	krb5glue_key key = NULL;
+	krb5_keyusage usage = 0;
+	char* header = NULL;
 	BYTE flags = 0;
 	krb5_crypto_iov iov[] = { { KRB5_CRYPTO_TYPE_DATA, { 0 } },
 		                      { KRB5_CRYPTO_TYPE_DATA, { 0 } },
@@ -1647,7 +1740,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_MakeSignature(PCtxtHandle phContext, U
 	/* Fill in the lengths of the iov array */
 	iov[0].data.length = data_buffer->cbBuffer;
 	iov[1].data.length = 16;
-	if (krb5glue_crypto_length_iov(context->ctx, key, iov, ARRAYSIZE(iov)))
+	if (krb_log_exec(krb5glue_crypto_length_iov, context->ctx, key, iov, ARRAYSIZE(iov)))
 		return SEC_E_INTERNAL_ERROR;
 
 	/* Ensure the buffer is big enough */
@@ -1666,7 +1759,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_MakeSignature(PCtxtHandle phContext, U
 	iov[1].data.data = header;
 	iov[2].data.data = header + 16;
 
-	if (krb5glue_make_checksum_iov(context->ctx, key, usage, iov, ARRAYSIZE(iov)))
+	if (krb_log_exec(krb5glue_make_checksum_iov, context->ctx, key, usage, iov, ARRAYSIZE(iov)))
 		return SEC_E_INTERNAL_ERROR;
 
 	sig_buffer->cbBuffer = iov[2].data.length + 16;
@@ -1682,14 +1775,15 @@ static SECURITY_STATUS SEC_ENTRY kerberos_VerifySignature(PCtxtHandle phContext,
                                                           ULONG MessageSeqNo, ULONG* pfQOP)
 {
 #ifdef WITH_KRB5
-	PSecBuffer sig_buffer, data_buffer;
-	krb5glue_key key;
-	krb5_keyusage usage;
-	char* header;
-	BYTE flags;
-	uint16_t tok_id;
-	uint64_t seq_no;
-	krb5_boolean is_valid;
+	PSecBuffer sig_buffer = NULL;
+	PSecBuffer data_buffer = NULL;
+	krb5glue_key key = NULL;
+	krb5_keyusage usage = 0;
+	char* header = NULL;
+	BYTE flags = 0;
+	uint16_t tok_id = 0;
+	uint64_t seq_no = 0;
+	krb5_boolean is_valid = 0;
 	krb5_crypto_iov iov[] = { { KRB5_CRYPTO_TYPE_DATA, { 0 } },
 		                      { KRB5_CRYPTO_TYPE_DATA, { 0 } },
 		                      { KRB5_CRYPTO_TYPE_CHECKSUM, { 0 } } };
@@ -1736,7 +1830,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_VerifySignature(PCtxtHandle phContext,
 	/* Fill in the iov array lengths */
 	iov[0].data.length = data_buffer->cbBuffer;
 	iov[1].data.length = 16;
-	if (krb5glue_crypto_length_iov(context->ctx, key, iov, ARRAYSIZE(iov)))
+	if (krb_log_exec(krb5glue_crypto_length_iov, context->ctx, key, iov, ARRAYSIZE(iov)))
 		return SEC_E_INTERNAL_ERROR;
 
 	if (sig_buffer->cbBuffer != iov[2].data.length + 16)
@@ -1747,7 +1841,8 @@ static SECURITY_STATUS SEC_ENTRY kerberos_VerifySignature(PCtxtHandle phContext,
 	iov[1].data.data = header;
 	iov[2].data.data = header + 16;
 
-	if (krb5glue_verify_checksum_iov(context->ctx, key, usage, iov, ARRAYSIZE(iov), &is_valid))
+	if (krb_log_exec(krb5glue_verify_checksum_iov, context->ctx, key, usage, iov, ARRAYSIZE(iov),
+	                 &is_valid))
 		return SEC_E_INTERNAL_ERROR;
 
 	if (!is_valid)

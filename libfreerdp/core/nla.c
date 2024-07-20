@@ -505,6 +505,16 @@ int nla_client_begin(rdpNla* nla)
 			nla_set_state(nla, NLA_STATE_FINAL);
 			break;
 		default:
+			switch (credssp_auth_sspi_error(nla->auth))
+			{
+				case SEC_E_LOGON_DENIED:
+				case SEC_E_NO_CREDENTIALS:
+					freerdp_set_last_error_log(nla->rdpcontext,
+					                           FREERDP_ERROR_CONNECT_LOGON_FAILURE);
+					break;
+				default:
+					break;
+			}
 			return -1;
 	}
 
@@ -818,7 +828,7 @@ static int nla_server_authenticate(rdpNla* nla)
 					break;
 			}
 
-			nla_send(nla);
+			(void)nla_send(nla);
 			/* Access Denied */
 			goto fail;
 		}
@@ -1103,7 +1113,7 @@ static BOOL set_creds_octetstring_to_settings(WinPrAsn1Decoder* dec, WinPrAsn1_t
 {
 	if (optional)
 	{
-		WinPrAsn1_tagId itemTag;
+		WinPrAsn1_tagId itemTag = 0;
 		if (!WinPrAsn1DecPeekTag(dec, &itemTag) || (itemTag != tagId))
 			return TRUE;
 	}
@@ -1125,7 +1135,7 @@ static BOOL nla_read_TSCspDataDetail(WinPrAsn1Decoder* dec, rdpSettings* setting
 	BOOL error = FALSE;
 
 	/* keySpec [0] INTEGER */
-	WinPrAsn1_INTEGER keyspec;
+	WinPrAsn1_INTEGER keyspec = 0;
 	if (!WinPrAsn1DecReadContextualInteger(dec, 0, &error, &keyspec))
 		return FALSE;
 	settings->KeySpec = (UINT32)keyspec;
@@ -1148,6 +1158,11 @@ static BOOL nla_read_TSCspDataDetail(WinPrAsn1Decoder* dec, rdpSettings* setting
 
 static BOOL nla_read_KERB_TICKET_LOGON(rdpNla* nla, wStream* s, KERB_TICKET_LOGON* ticket)
 {
+	WINPR_ASSERT(nla);
+
+	if (!ticket)
+		return FALSE;
+
 	/* mysterious extra 16 bytes before TGS/TGT content */
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 16 + 16))
 		return FALSE;
@@ -1231,6 +1246,7 @@ static BOOL nla_read_TSRemoteGuardPackageCred(rdpNla* nla, WinPrAsn1Decoder* dec
 /** @brief kind of TSCreds */
 typedef enum
 {
+	TSCREDS_INVALID = 0,
 	TSCREDS_USER_PASSWD = 1,
 	TSCREDS_SMARTCARD = 2,
 	TSCREDS_REMOTEGUARD = 6
@@ -1243,7 +1259,7 @@ static BOOL nla_read_ts_credentials(rdpNla* nla, SecBuffer* data)
 	WinPrAsn1_OctetString credentials = { 0 };
 	BOOL error = FALSE;
 	WinPrAsn1_INTEGER credType = -1;
-	BOOL ret = true;
+	BOOL ret = TRUE;
 
 	WINPR_ASSERT(nla);
 	WINPR_ASSERT(data);
@@ -1349,7 +1365,6 @@ static BOOL nla_read_ts_credentials(rdpNla* nla, SecBuffer* data)
 			}
 
 			/* supplementalCreds [1] SEQUENCE OF TSRemoteGuardPackageCred OPTIONAL, */
-			MSV1_0_SUPPLEMENTAL_CREDENTIAL ntlmCreds = { 0 };
 			MSV1_0_SUPPLEMENTAL_CREDENTIAL* suppCreds = NULL;
 			WinPrAsn1Decoder suppCredsSeq = { 0 };
 
@@ -1405,7 +1420,7 @@ static BOOL nla_encode_ts_credentials(rdpNla* nla)
 	WinPrAsn1Encoder* enc = NULL;
 	size_t length = 0;
 	wStream s = { 0 };
-	TsCredentialsType credType;
+	TsCredentialsType credType = TSCREDS_INVALID;
 
 	WINPR_ASSERT(nla);
 	WINPR_ASSERT(nla->rdpcontext);
@@ -1455,7 +1470,7 @@ static BOOL nla_encode_ts_credentials(rdpNla* nla)
 				goto out;
 
 			/* pin [0] OCTET STRING */
-			size_t ss;
+			size_t ss = 0;
 			octet_string.data =
 			    (BYTE*)freerdp_settings_get_string_as_utf16(settings, FreeRDP_Password, &ss);
 			octet_string.len = ss * sizeof(WCHAR);
@@ -1475,7 +1490,7 @@ static BOOL nla_encode_ts_credentials(rdpNla* nla)
 
 			for (size_t i = 0; i < ARRAYSIZE(cspData_fields); i++)
 			{
-				size_t len;
+				size_t len = 0;
 
 				octet_string.data = (BYTE*)freerdp_settings_get_string_as_utf16(
 				    settings, cspData_fields[i].setting_id, &len);
@@ -1846,7 +1861,7 @@ int nla_recv_pdu(rdpNla* nla, wStream* s)
 
 	if (nla_get_state(nla) == NLA_STATE_EARLY_USER_AUTH)
 	{
-		UINT32 code;
+		UINT32 code = 0;
 		Stream_Read_UINT32(s, code);
 		if (code != AUTHZ_SUCCESS)
 		{
@@ -1865,7 +1880,7 @@ int nla_recv_pdu(rdpNla* nla, wStream* s)
 
 		if (nla->errorCode)
 		{
-			UINT32 code;
+			UINT32 code = 0;
 
 			switch (nla->errorCode)
 			{
@@ -1988,9 +2003,10 @@ rdpNla* nla_new(rdpContext* context, rdpTransport* transport)
 
 	return nla;
 cleanup:
-	credssp_auth_free(nla->auth);
-	free(nla->identity);
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	nla_free(nla);
+	WINPR_PRAGMA_DIAG_POP
 	return NULL;
 }
 

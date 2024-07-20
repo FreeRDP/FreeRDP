@@ -1,0 +1,12 @@
+{
+	"name": "krb5",
+	"buildsystem": "autotools",
+	"subdir": "src",
+	"sources": [
+		{
+			"type": "archive",
+			"url": "https://kerberos.org/dist/krb5/1.21/krb5-1.21.2.tar.gz",
+			"sha256": "9560941a9d843c0243a71b17a7ac6fe31c7cebb5bce3983db79e52ae7e850491"
+		}
+	]
+}

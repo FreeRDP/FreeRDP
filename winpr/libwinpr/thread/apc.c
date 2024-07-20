@@ -62,8 +62,8 @@ BOOL apc_uninit(APC_QUEUE* apc)
 
 void apc_register(WINPR_THREAD* thread, WINPR_APC_ITEM* addItem)
 {
-	WINPR_APC_ITEM** nextp;
-	APC_QUEUE* apc;
+	WINPR_APC_ITEM** nextp = NULL;
+	APC_QUEUE* apc = NULL;
 
 	WINPR_ASSERT(thread);
 	WINPR_ASSERT(addItem);
@@ -113,7 +113,7 @@ static INLINE void apc_item_remove(APC_QUEUE* apc, WINPR_APC_ITEM* item)
 APC_REMOVE_RESULT apc_remove(WINPR_APC_ITEM* item)
 {
 	WINPR_THREAD* thread = winpr_GetCurrentThread();
-	APC_QUEUE* apc;
+	APC_QUEUE* apc = NULL;
 	APC_REMOVE_RESULT ret = APC_REMOVE_OK;
 
 	WINPR_ASSERT(item);
@@ -155,9 +155,9 @@ out:
 
 BOOL apc_collectFds(WINPR_THREAD* thread, WINPR_POLL_SET* set, BOOL* haveAutoSignaled)
 {
-	WINPR_APC_ITEM* item;
+	WINPR_APC_ITEM* item = NULL;
 	BOOL ret = FALSE;
-	APC_QUEUE* apc;
+	APC_QUEUE* apc = NULL;
 
 	WINPR_ASSERT(thread);
 	WINPR_ASSERT(haveAutoSignaled);
@@ -186,8 +186,8 @@ out:
 
 int apc_executeCompletions(WINPR_THREAD* thread, WINPR_POLL_SET* set, size_t idx)
 {
-	APC_QUEUE* apc;
-	WINPR_APC_ITEM *item, *nextItem;
+	APC_QUEUE* apc = NULL;
+	WINPR_APC_ITEM* nextItem = NULL;
 	int ret = 0;
 
 	WINPR_ASSERT(thread);
@@ -199,7 +199,7 @@ int apc_executeCompletions(WINPR_THREAD* thread, WINPR_POLL_SET* set, size_t idx
 	apc->treatingCompletions = TRUE;
 
 	/* first pass to compute signaled items */
-	for (item = apc->head; item; item = item->next)
+	for (WINPR_APC_ITEM* item = apc->head; item; item = item->next)
 	{
 		item->isSignaled = item->alwaysSignaled || pollset_isSignaled(set, idx);
 		if (!item->alwaysSignaled)
@@ -207,7 +207,7 @@ int apc_executeCompletions(WINPR_THREAD* thread, WINPR_POLL_SET* set, size_t idx
 	}
 
 	/* second pass: run completions */
-	for (item = apc->head; item; item = nextItem)
+	for (WINPR_APC_ITEM* item = apc->head; item; item = nextItem)
 	{
 		if (item->isSignaled)
 		{
@@ -220,7 +220,7 @@ int apc_executeCompletions(WINPR_THREAD* thread, WINPR_POLL_SET* set, size_t idx
 	}
 
 	/* third pass: to do final cleanup */
-	for (item = apc->head; item; item = nextItem)
+	for (WINPR_APC_ITEM* item = apc->head; item; item = nextItem)
 	{
 		nextItem = item->next;
 
@@ -240,9 +240,9 @@ int apc_executeCompletions(WINPR_THREAD* thread, WINPR_POLL_SET* set, size_t idx
 
 void apc_cleanupThread(WINPR_THREAD* thread)
 {
-	WINPR_APC_ITEM* item;
-	WINPR_APC_ITEM* nextItem;
-	APC_QUEUE* apc;
+	WINPR_APC_ITEM* item = NULL;
+	WINPR_APC_ITEM* nextItem = NULL;
+	APC_QUEUE* apc = NULL;
 
 	WINPR_ASSERT(thread);
 

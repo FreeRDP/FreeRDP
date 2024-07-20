@@ -62,6 +62,11 @@ extern "C"
 		OBJECT_EQUALS_FN fnObjectEquals;
 	} wObject;
 
+	/* utility function with compatible arguments for string data */
+	WINPR_API void* winpr_ObjectStringClone(const void* pvstr);
+	WINPR_API void* winpr_ObjectWStringClone(const void* pvstr);
+	WINPR_API void winpr_ObjectStringFree(void* pvstr);
+
 	/* System.Collections.Queue */
 
 	typedef struct s_wQueue wQueue;
@@ -155,17 +160,18 @@ extern "C"
 	 */
 	WINPR_API void Queue_Discard(wQueue* queue);
 
-	/** @brief Creates a new queue
-	 *
-	 *  @return A newly allocated queue or \b NULL in case of failure
-	 */
-	WINPR_API wQueue* Queue_New(BOOL synchronized, SSIZE_T capacity, SSIZE_T growthFactor);
-
 	/** @brief Clean up a queue, free all resources (e.g. calls \b Queue_Clear)
 	 *
 	 *  @param queue The queue to free, may be \b NULL
 	 */
 	WINPR_API void Queue_Free(wQueue* queue);
+
+	/** @brief Creates a new queue
+	 *
+	 *  @return A newly allocated queue or \b NULL in case of failure
+	 */
+	WINPR_ATTR_MALLOC(Queue_Free, 1)
+	WINPR_API wQueue* Queue_New(BOOL synchronized, SSIZE_T capacity, SSIZE_T growthFactor);
 
 	/* System.Collections.Stack */
 
@@ -184,8 +190,10 @@ extern "C"
 
 	WINPR_API void* Stack_Peek(wStack* stack);
 
-	WINPR_API wStack* Stack_New(BOOL synchronized);
 	WINPR_API void Stack_Free(wStack* stack);
+
+	WINPR_ATTR_MALLOC(Stack_Free, 1)
+	WINPR_API wStack* Stack_New(BOOL synchronized);
 
 	/* System.Collections.ArrayList */
 
@@ -229,8 +237,10 @@ extern "C"
 	WINPR_API SSIZE_T ArrayList_LastIndexOf(wArrayList* arrayList, const void* obj,
 	                                        SSIZE_T startIndex, SSIZE_T count);
 
-	WINPR_API wArrayList* ArrayList_New(BOOL synchronized);
 	WINPR_API void ArrayList_Free(wArrayList* arrayList);
+
+	WINPR_ATTR_MALLOC(ArrayList_Free, 1)
+	WINPR_API wArrayList* ArrayList_New(BOOL synchronized);
 
 	/* System.Collections.DictionaryBase */
 
@@ -362,19 +372,20 @@ extern "C"
 	WINPR_API BOOL ListDictionary_SetItemValue(wListDictionary* listDictionary, const void* key,
 	                                           const void* value);
 
+	/** @brief Free memory allocated by a dictionary. Calls \b ListDictionary_Clear
+	 *
+	 *  @param listDictionary A dictionary to query, may be \b NULL
+	 */
+	WINPR_API void ListDictionary_Free(wListDictionary* listDictionary);
+
 	/** @brief allocate a new dictionary
 	 *
 	 *  @param synchronized Create the dictionary with automatic mutex lock
 	 *
 	 *  @return A newly allocated dictionary or \b NULL in case of failure
 	 */
+	WINPR_ATTR_MALLOC(ListDictionary_Free, 1)
 	WINPR_API wListDictionary* ListDictionary_New(BOOL synchronized);
-
-	/** @brief Free memory allocated by a dictionary. Calls \b ListDictionary_Clear
-	 *
-	 *  @param listDictionary A dictionary to query, may be \b NULL
-	 */
-	WINPR_API void ListDictionary_Free(wListDictionary* listDictionary);
 
 	/* System.Collections.Generic.LinkedList<T> */
 
@@ -490,17 +501,18 @@ extern "C"
 	 */
 	WINPR_API BOOL LinkedList_Enumerator_MoveNext(wLinkedList* list);
 
-	/** @brief Allocate a linked list
-	 *
-	 * @return A pointer to the newly allocated linked list or \b NULL in case of failure
-	 */
-	WINPR_API wLinkedList* LinkedList_New(void);
-
 	/** @brief Free a linked list
 	 *
 	 *  @param list A pointer to the list, may be \b NULL
 	 */
 	WINPR_API void LinkedList_Free(wLinkedList* list);
+
+	/** @brief Allocate a linked list
+	 *
+	 * @return A pointer to the newly allocated linked list or \b NULL in case of failure
+	 */
+	WINPR_ATTR_MALLOC(LinkedList_Free, 1)
+	WINPR_API wLinkedList* LinkedList_New(void);
 
 	/** @brief Return the \b wObject function pointers for list elements
 	 *
@@ -573,19 +585,20 @@ extern "C"
 	 */
 	WINPR_API void CountdownEvent_Reset(wCountdownEvent* countdown, size_t count);
 
+	/** @brief Free a CountdownEvent
+	 *
+	 *  @param countdown A pointer to a CountdownEvent, may be \b NULL
+	 */
+	WINPR_API void CountdownEvent_Free(wCountdownEvent* countdown);
+
 	/** @brief Allocte a CountdownEvent with \b initialCount
 	 *
 	 *  @param initialCount The initial value of the event
 	 *
 	 *  @return The newly allocated event or \b NULL in case of failure
 	 */
+	WINPR_ATTR_MALLOC(CountdownEvent_Free, 1)
 	WINPR_API wCountdownEvent* CountdownEvent_New(size_t initialCount);
-
-	/** @brief Free a CountdownEvent
-	 *
-	 *  @param countdown A pointer to a CountdownEvent, may be \b NULL
-	 */
-	WINPR_API void CountdownEvent_Free(wCountdownEvent* countdown);
 
 	/* Hash Table */
 
@@ -621,8 +634,11 @@ extern "C"
 	WINPR_API void* HashTable_StringClone(const void* str);
 	WINPR_API void HashTable_StringFree(void* str);
 
-	WINPR_API wHashTable* HashTable_New(BOOL synchronized);
 	WINPR_API void HashTable_Free(wHashTable* table);
+
+	WINPR_ATTR_MALLOC(HashTable_Free, 1)
+	WINPR_API wHashTable* HashTable_New(BOOL synchronized);
+
 	WINPR_API void HashTable_Lock(wHashTable* table);
 	WINPR_API void HashTable_Unlock(wHashTable* table);
 
@@ -645,8 +661,10 @@ extern "C"
 	WINPR_API BOOL BufferPool_Return(wBufferPool* pool, void* buffer);
 	WINPR_API void BufferPool_Clear(wBufferPool* pool);
 
-	WINPR_API wBufferPool* BufferPool_New(BOOL synchronized, SSIZE_T fixedSize, DWORD alignment);
 	WINPR_API void BufferPool_Free(wBufferPool* pool);
+
+	WINPR_ATTR_MALLOC(BufferPool_Free, 1)
+	WINPR_API wBufferPool* BufferPool_New(BOOL synchronized, SSIZE_T fixedSize, DWORD alignment);
 
 	/* ObjectPool */
 
@@ -658,8 +676,10 @@ extern "C"
 
 	WINPR_API wObject* ObjectPool_Object(wObjectPool* pool);
 
-	WINPR_API wObjectPool* ObjectPool_New(BOOL synchronized);
 	WINPR_API void ObjectPool_Free(wObjectPool* pool);
+
+	WINPR_ATTR_MALLOC(ObjectPool_Free, 1)
+	WINPR_API wObjectPool* ObjectPool_New(BOOL synchronized);
 
 	/* Message Queue */
 
@@ -706,20 +726,6 @@ extern "C"
 	 */
 	WINPR_API int MessageQueue_Clear(wMessageQueue* queue);
 
-	/*! \brief Creates a new message queue.
-	 * 				 If 'callback' is null, no custom cleanup will be done
-	 * 				 on message queue deallocation.
-	 * 				 If the 'callback' argument contains valid uninit or
-	 * 				 free functions those will be called by
-	 * 				 'MessageQueue_Clear'.
-	 *
-	 * \param callback a pointer to custom initialization / cleanup functions.
-	 * 								 Can be NULL if not used.
-	 *
-	 * \return A pointer to a newly allocated MessageQueue or NULL.
-	 */
-	WINPR_API wMessageQueue* MessageQueue_New(const wObject* callback);
-
 	/*! \brief Frees resources allocated by a message queue.
 	 * 				 This function will only free resources allocated
 	 *				 internally.
@@ -733,6 +739,21 @@ extern "C"
 	 */
 	WINPR_API void MessageQueue_Free(wMessageQueue* queue);
 
+	/*! \brief Creates a new message queue.
+	 * 				 If 'callback' is null, no custom cleanup will be done
+	 * 				 on message queue deallocation.
+	 * 				 If the 'callback' argument contains valid uninit or
+	 * 				 free functions those will be called by
+	 * 				 'MessageQueue_Clear'.
+	 *
+	 * \param callback a pointer to custom initialization / cleanup functions.
+	 * 								 Can be NULL if not used.
+	 *
+	 * \return A pointer to a newly allocated MessageQueue or NULL.
+	 */
+	WINPR_ATTR_MALLOC(MessageQueue_Free, 1)
+	WINPR_API wMessageQueue* MessageQueue_New(const wObject* callback);
+
 	/* Message Pipe */
 
 	typedef struct
@@ -743,8 +764,10 @@ extern "C"
 
 	WINPR_API void MessagePipe_PostQuit(wMessagePipe* pipe, int nExitCode);
 
-	WINPR_API wMessagePipe* MessagePipe_New(void);
 	WINPR_API void MessagePipe_Free(wMessagePipe* pipe);
+
+	WINPR_ATTR_MALLOC(MessagePipe_Free, 1)
+	WINPR_API wMessagePipe* MessagePipe_New(void);
 
 	/* Publisher/Subscriber Pattern */
 
@@ -836,8 +859,10 @@ extern "C"
 	WINPR_API int PubSub_OnEvent(wPubSub* pubSub, const char* EventName, void* context,
 	                             const wEventArgs* e);
 
-	WINPR_API wPubSub* PubSub_New(BOOL synchronized);
 	WINPR_API void PubSub_Free(wPubSub* pubSub);
+
+	WINPR_ATTR_MALLOC(PubSub_Free, 1)
+	WINPR_API wPubSub* PubSub_New(BOOL synchronized);
 
 #ifdef __cplusplus
 }

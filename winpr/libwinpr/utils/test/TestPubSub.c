@@ -32,7 +32,7 @@ static wEventType Node_Events[] = { DEFINE_EVENT_ENTRY(MouseMotion),
 
 int TestPubSub(int argc, char* argv[])
 {
-	wPubSub* node;
+	wPubSub* node = NULL;
 
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);

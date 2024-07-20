@@ -61,14 +61,12 @@
 
 static BOOL drive_file_fix_path(WCHAR* path, size_t length)
 {
-	size_t i;
-
 	if ((length == 0) || (length > UINT32_MAX))
 		return FALSE;
 
 	WINPR_ASSERT(path);
 
-	for (i = 0; i < length; i++)
+	for (size_t i = 0; i < length; i++)
 	{
 		if (path[i] == L'\\')
 			path[i] = L'/';
@@ -92,12 +90,39 @@ static BOOL drive_file_fix_path(WCHAR* path, size_t length)
 	return TRUE;
 }
 
+static BOOL contains_dotdot(const WCHAR* path, size_t base_length, size_t path_length)
+{
+	WCHAR dotdotbuffer[6] = { 0 };
+	const WCHAR* dotdot = InitializeConstWCharFromUtf8("..", dotdotbuffer, ARRAYSIZE(dotdotbuffer));
+	const WCHAR* tst = path;
+
+	do
+	{
+		tst = _wcsstr(tst, dotdot);
+		if (!tst)
+			return FALSE;
+
+		/* Filter .. sequences in file or directory names */
+		if ((base_length == 0) || (*(tst - 1) == L'/') || (*(tst - 1) == L'\\'))
+		{
+			if (tst + 2 < path + path_length)
+			{
+				if ((tst[2] == '/') || (tst[2] == '\\'))
+					return TRUE;
+			}
+		}
+		tst += 2;
+	} while (TRUE);
+
+	return FALSE;
+}
+
 static WCHAR* drive_file_combine_fullpath(const WCHAR* base_path, const WCHAR* path,
                                           size_t PathWCharLength)
 {
 	BOOL ok = FALSE;
 	WCHAR* fullpath = NULL;
-	size_t length;
+	size_t length = 0;
 
 	if (!base_path || (!path && (PathWCharLength > 0)))
 		goto fail;
@@ -117,9 +142,7 @@ static WCHAR* drive_file_combine_fullpath(const WCHAR* base_path, const WCHAR* p
 		goto fail;
 
 	/* Ensure the path does not contain sequences like '..' */
-	WCHAR dotdotbuffer[6] = { 0 };
-	const WCHAR* dotdot = InitializeConstWCharFromUtf8("..", dotdotbuffer, ARRAYSIZE(dotdotbuffer));
-	if (_wcsstr(&fullpath[base_path_length], dotdot))
+	if (contains_dotdot(&fullpath[base_path_length], base_path_length, PathWCharLength))
 	{
 		char abuffer[MAX_PATH] = { 0 };
 		ConvertWCharToUtf8(&fullpath[base_path_length], abuffer, ARRAYSIZE(abuffer));
@@ -292,7 +315,7 @@ DRIVE_FILE* drive_file_new(const WCHAR* base_path, const WCHAR* path, UINT32 Pat
                            UINT32 id, UINT32 DesiredAccess, UINT32 CreateDisposition,
                            UINT32 CreateOptions, UINT32 FileAttributes, UINT32 SharedAccess)
 {
-	DRIVE_FILE* file;
+	DRIVE_FILE* file = NULL;
 
 	if (!base_path || (!path && (PathWCharLength > 0)))
 		return NULL;
@@ -381,7 +404,7 @@ BOOL drive_file_seek(DRIVE_FILE* file, UINT64 Offset)
 
 BOOL drive_file_read(DRIVE_FILE* file, BYTE* buffer, UINT32* Length)
 {
-	DWORD read;
+	DWORD read = 0;
 
 	if (!file || !buffer || !Length)
 		return FALSE;
@@ -399,7 +422,7 @@ BOOL drive_file_read(DRIVE_FILE* file, BYTE* buffer, UINT32* Length)
 
 BOOL drive_file_write(DRIVE_FILE* file, const BYTE* buffer, UINT32 Length)
 {
-	DWORD written;
+	DWORD written = 0;
 
 	if (!file || !buffer)
 		return FALSE;
@@ -549,8 +572,8 @@ static BOOL drive_file_query_from_attributes(const DRIVE_FILE* file,
 BOOL drive_file_query_information(DRIVE_FILE* file, UINT32 FsInformationClass, wStream* output)
 {
 	BY_HANDLE_FILE_INFORMATION fileInformation = { 0 };
-	BOOL status;
-	HANDLE hFile;
+	BOOL status = 0;
+	HANDLE hFile = NULL;
 
 	if (!file || !output)
 		return FALSE;
@@ -589,8 +612,8 @@ out_fail:
 BOOL drive_file_set_information(DRIVE_FILE* file, UINT32 FsInformationClass, UINT32 Length,
                                 wStream* input)
 {
-	INT64 size;
-	WCHAR* fullpath;
+	INT64 size = 0;
+	WCHAR* fullpath = NULL;
 	ULARGE_INTEGER liCreationTime;
 	ULARGE_INTEGER liLastAccessTime;
 	ULARGE_INTEGER liLastWriteTime;
@@ -601,12 +624,12 @@ BOOL drive_file_set_information(DRIVE_FILE* file, UINT32 FsInformationClass, UIN
 	FILETIME* pftCreationTime = NULL;
 	FILETIME* pftLastAccessTime = NULL;
 	FILETIME* pftLastWriteTime = NULL;
-	UINT32 FileAttributes;
-	UINT32 FileNameLength;
+	UINT32 FileAttributes = 0;
+	UINT32 FileNameLength = 0;
 	LARGE_INTEGER liSize;
-	UINT8 delete_pending;
-	UINT8 ReplaceIfExists;
-	DWORD attr;
+	UINT8 delete_pending = 0;
+	UINT8 ReplaceIfExists = 0;
+	DWORD attr = 0;
 
 	if (!file || !input)
 		return FALSE;
@@ -800,8 +823,8 @@ BOOL drive_file_set_information(DRIVE_FILE* file, UINT32 FsInformationClass, UIN
 BOOL drive_file_query_directory(DRIVE_FILE* file, UINT32 FsInformationClass, BYTE InitialQuery,
                                 const WCHAR* path, UINT32 PathWCharLength, wStream* output)
 {
-	size_t length;
-	WCHAR* ent_path;
+	size_t length = 0;
+	WCHAR* ent_path = NULL;
 
 	if (!file || !path || !output)
 		return FALSE;

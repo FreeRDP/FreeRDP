@@ -1,9 +1,18 @@
+include(CMakeFindDependencyMacro)
+if(NOT "@WITH_JSON_DISABLED@" AND NOT "@BUILD_SHARED_LIBS@")
+    if("@JSONC_FOUND@" AND NOT "@WITH_CJSON_REQUIRED@")
+        find_dependency(JSONC)
+    elseif("@CJSON_FOUND@")
+        find_dependency(cJSON)
+    endif()
+endif()
 
 @PACKAGE_INIT@
 
 set(WinPR_VERSION_MAJOR "@WINPR_VERSION_MAJOR@")
 set(WinPR_VERSION_MINOR "@WINPR_VERSION_MINOR@")
 set(WinPR_VERSION_REVISION "@WINPR_VERSION_REVISION@")
+set(WITH_WINPR_JSON "@WITH_WINPR_JSON@")
 
 set_and_check(WinPR_INCLUDE_DIR "@PACKAGE_WINPR_INCLUDE_DIR@")
 

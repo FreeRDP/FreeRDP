@@ -1,6 +1,10 @@
 include(CMakeFindDependencyMacro)
 find_dependency(WinPR @FREERDP_VERSION@)
 
+if("@WITH_SMARTCARD_EMULATE@" AND NOT "@BUILD_SHARED_LIBS@")
+	find_dependency(ZLIB)
+endif()
+
 @PACKAGE_INIT@
 
 set(FreeRDP_VERSION_MAJOR "@FREERDP_VERSION_MAJOR@")

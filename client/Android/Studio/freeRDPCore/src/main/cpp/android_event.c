@@ -57,7 +57,6 @@ static ANDROID_EVENT* android_peek_event(ANDROID_EVENT_QUEUE* queue)
 
 static ANDROID_EVENT* android_pop_event(ANDROID_EVENT_QUEUE* queue)
 {
-	int i;
 	ANDROID_EVENT* event;
 
 	if (queue->count < 1)
@@ -66,7 +65,7 @@ static ANDROID_EVENT* android_pop_event(ANDROID_EVENT_QUEUE* queue)
 	event = queue->events[0];
 	(queue->count)--;
 
-	for (i = 0; i < queue->count; i++)
+	for (size_t i = 0; i < queue->count; i++)
 	{
 		queue->events[i] = queue->events[i + 1];
 	}

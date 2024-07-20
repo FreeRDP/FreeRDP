@@ -81,7 +81,6 @@ static BOOL wf_has_console(void)
 
 static BOOL wf_end_paint(rdpContext* context)
 {
-	int i;
 	rdpGdi* gdi;
 	int ninvalid;
 	RECT updateRect;
@@ -99,7 +98,7 @@ static BOOL wf_end_paint(rdpContext* context)
 
 	region16_init(&invalidRegion);
 
-	for (i = 0; i < ninvalid; i++)
+	for (int i = 0; i < ninvalid; i++)
 	{
 		invalidRect.left = cinvalid[i].x;
 		invalidRect.top = cinvalid[i].y;
@@ -1023,7 +1022,7 @@ static DWORD WINAPI wf_client_thread(LPVOID lpParam)
 	rdpSettings* settings = context->settings;
 	WINPR_ASSERT(settings);
 
-	while (1)
+	while (!freerdp_shall_disconnect_context(instance->context))
 	{
 		HANDLE handles[MAXIMUM_WAIT_OBJECTS] = { 0 };
 		DWORD nCount = 0;
@@ -1046,7 +1045,9 @@ static DWORD WINAPI wf_client_thread(LPVOID lpParam)
 			nCount += tmp;
 		}
 
-		if (MsgWaitForMultipleObjects(nCount, handles, FALSE, 1000, QS_ALLINPUT) == WAIT_FAILED)
+		DWORD status = MsgWaitForMultipleObjectsEx(nCount, handles, 5 * 1000, QS_ALLINPUT,
+		                                           MWMO_ALERTABLE | MWMO_INPUTAVAILABLE);
+		if (status == WAIT_FAILED)
 		{
 			WLog_ERR(TAG, "wfreerdp_run: WaitForMultipleObjects failed: 0x%08lX", GetLastError());
 			break;

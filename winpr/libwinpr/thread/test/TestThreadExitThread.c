@@ -15,16 +15,15 @@ static DWORD WINAPI thread_func(LPVOID arg)
 
 int TestThreadExitThread(int argc, char* argv[])
 {
-	HANDLE thread;
-	DWORD waitResult;
-	int i;
+	HANDLE thread = NULL;
+	DWORD waitResult = 0;
 
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
 
 	/* FIXME: create some noise to better guaranty the test validity and
 	 * decrease the number of loops */
-	for (i = 0; i < 100; i++)
+	for (int i = 0; i < 100; i++)
 	{
 		thread = CreateThread(NULL, 0, thread_func, NULL, 0, NULL);
 

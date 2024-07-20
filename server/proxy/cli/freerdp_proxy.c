@@ -81,7 +81,7 @@ static WINPR_NORETURN(void usage(const char* app))
 	exit(0);
 }
 
-static void version(const char* app)
+static WINPR_NORETURN(void version(const char* app))
 {
 	printf("%s version %s", app, freerdp_get_version_string());
 	exit(0);

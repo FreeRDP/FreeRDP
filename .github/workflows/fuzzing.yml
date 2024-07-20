@@ -1,11 +1,12 @@
 name: Fuzzing testing
 
 on:
-  push:
-    branches:
-      - 'master'
+  workflow_dispatch:
+    branches: [ master, stable* ]
   pull_request:
-    types: [opened, reopened, synchronize, labeled]
+    branches: [ master, stable* ]
+  schedule:
+  - cron: "0 3 21 * *"
 
 jobs:
   fuzzing:
@@ -16,9 +17,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        sanitizer: [address]
+        sanitizer: [address, undefined]
 
     steps:
+      - uses: actions/checkout@v4
+
       - name: Build fuzzers (${{ matrix.sanitizer }})
         id: build
         uses: google/oss-fuzz/infra/cifuzz/actions/build_fuzzers@master

@@ -15,19 +15,21 @@
 
 typedef struct
 {
-	char* utf8;
+	const char* utf8;
 	size_t utf8len;
-	WCHAR* utf16;
+	const WCHAR* utf16;
 	size_t utf16len;
 } testcase_t;
 
 // TODO: The unit tests do not check for valid code points, so always end the test
 // strings with a simple ASCII symbol for now.
 static const testcase_t unit_testcases[] = {
-	{ "foo", 3, "f\x00o\x00o\x00\x00\x00", 3 },
-	{ "foo", 4, "f\x00o\x00o\x00\x00\x00", 4 },
+	{ "foo", 3, (const WCHAR*)"f\x00o\x00o\x00\x00\x00", 3 },
+	{ "foo", 4, (const WCHAR*)"f\x00o\x00o\x00\x00\x00", 4 },
 	{ "✊🎅ęʥ꣸𑗊a", 19,
-	  "\x0a\x27\x3c\xd8\x85\xdf\x19\x01\xa5\x02\xf8\xa8\x05\xd8\xca\xdd\x61\x00\x00\x00", 9 }
+	  (const WCHAR*)"\x0a\x27\x3c\xd8\x85\xdf\x19\x01\xa5\x02\xf8\xa8\x05\xd8\xca\xdd\x61\x00\x00"
+	                "\x00",
+	  9 }
 };
 
 static void create_prefix(char* prefix, size_t prefixlen, size_t buffersize, SSIZE_T rc,
@@ -746,9 +748,9 @@ static int convert_utf8_to_utf16(BYTE* lpMultiByteStr, BYTE* expected_lpWideChar
                                  int expected_cchWideChar)
 {
 	int rc = -1;
-	int length;
-	size_t cbMultiByte;
-	int cchWideChar;
+	int length = 0;
+	size_t cbMultiByte = 0;
+	int cchWideChar = 0;
 	LPWSTR lpWideCharStr = NULL;
 
 	cbMultiByte = strlen((char*)lpMultiByteStr);
@@ -826,9 +828,9 @@ static int convert_utf16_to_utf8(BYTE* lpWideCharStr, BYTE* expected_lpMultiByte
                                  int expected_cbMultiByte)
 {
 	int rc = -1;
-	int length;
-	int cchWideChar;
-	int cbMultiByte;
+	int length = 0;
+	int cchWideChar = 0;
+	int cbMultiByte = 0;
 	LPSTR lpMultiByteStr = NULL;
 
 	cchWideChar = _wcslen((WCHAR*)lpWideCharStr);
@@ -905,9 +907,9 @@ fail:
 static BOOL test_unicode_uppercasing(BYTE* lower, BYTE* upper)
 {
 	WCHAR* lowerW = NULL;
-	int lowerLength;
+	int lowerLength = 0;
 	WCHAR* upperW = NULL;
-	int upperLength;
+	int upperLength = 0;
 
 	lowerLength = ConvertToUnicode(CP_UTF8, 0, (LPSTR)lower, -1, &lowerW, 0);
 	upperLength = ConvertToUnicode(CP_UTF8, 0, (LPSTR)upper, -1, &upperW, 0);
@@ -945,7 +947,7 @@ static BOOL test_ConvertFromUnicode_wrapper(void)
 	const CHAR cmp0[] = { 'R', 'I', 'C', 'H', ' ', 'T', 'E', 'X', 'T',
 		                  ' ', 'F', 'O', 'R', 'M', 'A', 'T', 0 };
 	CHAR* dst = NULL;
-	int i;
+	int i = 0;
 
 	/* Test unterminated unicode string:
 	 * ConvertFromUnicode must always null-terminate, even if the src string isn't
@@ -1034,8 +1036,8 @@ static BOOL test_ConvertToUnicode_wrapper(void)
 	const BYTE cmp0[] = "\x52\x00\x49\x00\x43\x00\x48\x00\x20\x00\x54\x00\x45\x00\x58\x00\x54\x00"
 	                    "\x20\x00\x46\x00\x4f\x00\x52\x00\x4d\x00\x41\x00\x54\x00\x00\x00";
 	WCHAR* dst = NULL;
-	int ii;
-	size_t i;
+	int ii = 0;
+	size_t i = 0;
 
 	/* Test static string buffers of differing sizes */
 	{

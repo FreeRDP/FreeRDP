@@ -112,7 +112,6 @@ jstring jniNewStringUTF(JNIEnv* env, const char* in, int len)
 	jstring out = NULL;
 	jchar* unicode = NULL;
 	jint result_size = 0;
-	jint i;
 	unsigned char* utf8 = (unsigned char*)in;
 
 	if (!in)
@@ -128,7 +127,7 @@ jstring jniNewStringUTF(JNIEnv* env, const char* in, int len)
 		return NULL;
 	}
 
-	for (i = 0; i < len; i++)
+	for (jint i = 0; i < len; i++)
 	{
 		unsigned char one = utf8[i];
 		switch (one >> 4)

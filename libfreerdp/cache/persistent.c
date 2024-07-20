@@ -82,7 +82,7 @@ static int persistent_cache_read_entry_v2(rdpPersistentCache* persistent,
 static int persistent_cache_write_entry_v2(rdpPersistentCache* persistent,
                                            const PERSISTENT_CACHE_ENTRY* entry)
 {
-	int padding;
+	int padding = 0;
 	PERSISTENT_CACHE_ENTRY_V2 entry2 = { 0 };
 
 	WINPR_ASSERT(persistent);
@@ -244,7 +244,7 @@ static int persistent_cache_open_read(rdpPersistentCache* persistent)
 {
 	BYTE sig[8] = { 0 };
 	int status = 1;
-	long offset;
+	long offset = 0;
 
 	WINPR_ASSERT(persistent);
 	persistent->fp = winpr_fopen(persistent->filename, "rb");
@@ -351,7 +351,10 @@ rdpPersistentCache* persistent_cache_new(void)
 	persistent->bmpData = calloc(1, persistent->bmpSize);
 
 	if (!persistent->bmpData)
+	{
+		free(persistent);
 		return NULL;
+	}
 
 	return persistent;
 }

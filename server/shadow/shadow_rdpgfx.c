@@ -29,11 +29,13 @@ int shadow_client_rdpgfx_init(rdpShadowClient* client)
 {
 	WINPR_ASSERT(client);
 
+	if (!freerdp_settings_get_bool(client->context.settings, FreeRDP_SupportGraphicsPipeline))
+		return 1;
+
+#if defined(CHANNEL_RDPGFX_SERVER)
 	RdpgfxServerContext* rdpgfx = client->rdpgfx = rdpgfx_server_context_new(client->vcm);
 	if (!rdpgfx)
-	{
 		return 0;
-	}
 
 	rdpgfx->rdpcontext = &client->context;
 
@@ -41,15 +43,19 @@ int shadow_client_rdpgfx_init(rdpShadowClient* client)
 
 	if (!IFCALLRESULT(CHANNEL_RC_OK, rdpgfx->Initialize, rdpgfx, TRUE))
 		return -1;
+#endif
 
 	return 1;
 }
 
 void shadow_client_rdpgfx_uninit(rdpShadowClient* client)
 {
+	WINPR_ASSERT(client);
 	if (client->rdpgfx)
 	{
+#if defined(CHANNEL_RDPGFX_SERVER)
 		rdpgfx_server_context_free(client->rdpgfx);
+#endif
 		client->rdpgfx = NULL;
 	}
 }

@@ -29,17 +29,16 @@
 
 #define TAG FREERDP_TAG("codec")
 
-#define UNROLL_BODY(_exp, _count)      \
-	do                                 \
-	{                                  \
-		size_t x;                      \
-		for (x = 0; x < (_count); x++) \
-		{                              \
-			do                         \
-			{                          \
-				_exp                   \
-			} while (FALSE);           \
-		}                              \
+#define UNROLL_BODY(_exp, _count)             \
+	do                                        \
+	{                                         \
+		for (size_t x = 0; x < (_count); x++) \
+		{                                     \
+			do                                \
+			{                                 \
+				_exp                          \
+			} while (FALSE);                  \
+		}                                     \
 	} while (FALSE)
 
 #define UNROLL_MULTIPLE(_condition, _exp, _count) \
@@ -204,7 +203,7 @@ static INLINE UINT32 ExtractCodeId(BYTE bOrderHdr)
  */
 static UINT ExtractRunLengthRegularFgBg(const BYTE* pbOrderHdr, const BYTE* pbEnd, UINT32* advance)
 {
-	UINT runLength;
+	UINT runLength = 0;
 
 	WINPR_ASSERT(pbOrderHdr);
 	WINPR_ASSERT(pbEnd);
@@ -213,7 +212,7 @@ static UINT ExtractRunLengthRegularFgBg(const BYTE* pbOrderHdr, const BYTE* pbEn
 	runLength = (*pbOrderHdr) & g_MaskRegularRunLength;
 	if (runLength == 0)
 	{
-		if (!buffer_within_range(pbOrderHdr, 1, pbEnd))
+		if (!buffer_within_range(pbOrderHdr, 2, pbEnd))
 		{
 			*advance = 0;
 			return 0;
@@ -229,7 +228,7 @@ static UINT ExtractRunLengthRegularFgBg(const BYTE* pbOrderHdr, const BYTE* pbEn
 
 static UINT ExtractRunLengthLiteFgBg(const BYTE* pbOrderHdr, const BYTE* pbEnd, UINT32* advance)
 {
-	UINT runLength;
+	UINT runLength = 0;
 
 	WINPR_ASSERT(pbOrderHdr);
 	WINPR_ASSERT(pbEnd);
@@ -238,7 +237,7 @@ static UINT ExtractRunLengthLiteFgBg(const BYTE* pbOrderHdr, const BYTE* pbEnd, 
 	runLength = *pbOrderHdr & g_MaskLiteRunLength;
 	if (runLength == 0)
 	{
-		if (!buffer_within_range(pbOrderHdr, 1, pbEnd))
+		if (!buffer_within_range(pbOrderHdr, 2, pbEnd))
 		{
 			*advance = 0;
 			return 0;
@@ -254,7 +253,7 @@ static UINT ExtractRunLengthLiteFgBg(const BYTE* pbOrderHdr, const BYTE* pbEnd, 
 
 static UINT ExtractRunLengthRegular(const BYTE* pbOrderHdr, const BYTE* pbEnd, UINT32* advance)
 {
-	UINT runLength;
+	UINT runLength = 0;
 
 	WINPR_ASSERT(pbOrderHdr);
 	WINPR_ASSERT(pbEnd);
@@ -263,7 +262,7 @@ static UINT ExtractRunLengthRegular(const BYTE* pbOrderHdr, const BYTE* pbEnd, U
 	runLength = *pbOrderHdr & g_MaskRegularRunLength;
 	if (runLength == 0)
 	{
-		if (!buffer_within_range(pbOrderHdr, 1, pbEnd))
+		if (!buffer_within_range(pbOrderHdr, 2, pbEnd))
 		{
 			*advance = 0;
 			return 0;
@@ -277,13 +276,13 @@ static UINT ExtractRunLengthRegular(const BYTE* pbOrderHdr, const BYTE* pbEnd, U
 
 static UINT ExtractRunLengthMegaMega(const BYTE* pbOrderHdr, const BYTE* pbEnd, UINT32* advance)
 {
-	UINT runLength;
+	UINT runLength = 0;
 
 	WINPR_ASSERT(pbOrderHdr);
 	WINPR_ASSERT(pbEnd);
 	WINPR_ASSERT(advance);
 
-	if (!buffer_within_range(pbOrderHdr, 2, pbEnd))
+	if (!buffer_within_range(pbOrderHdr, 3, pbEnd))
 	{
 		*advance = 0;
 		return 0;
@@ -297,7 +296,7 @@ static UINT ExtractRunLengthMegaMega(const BYTE* pbOrderHdr, const BYTE* pbEnd, 
 
 static UINT ExtractRunLengthLite(const BYTE* pbOrderHdr, const BYTE* pbEnd, UINT32* advance)
 {
-	UINT runLength;
+	UINT runLength = 0;
 
 	WINPR_ASSERT(pbOrderHdr);
 	WINPR_ASSERT(pbEnd);
@@ -306,7 +305,7 @@ static UINT ExtractRunLengthLite(const BYTE* pbOrderHdr, const BYTE* pbEnd, UINT
 	runLength = *pbOrderHdr & g_MaskLiteRunLength;
 	if (runLength == 0)
 	{
-		if (!buffer_within_range(pbOrderHdr, 1, pbEnd))
+		if (!buffer_within_range(pbOrderHdr, 2, pbEnd))
 		{
 			*advance = 0;
 			return 0;
@@ -526,15 +525,16 @@ struct S_BITMAP_INTERLEAVED_CONTEXT
 	wStream* bts;
 };
 
-BOOL interleaved_decompress(BITMAP_INTERLEAVED_CONTEXT* interleaved, const BYTE* pSrcData,
-                            UINT32 SrcSize, UINT32 nSrcWidth, UINT32 nSrcHeight, UINT32 bpp,
-                            BYTE* pDstData, UINT32 DstFormat, UINT32 nDstStep, UINT32 nXDst,
-                            UINT32 nYDst, UINT32 nDstWidth, UINT32 nDstHeight,
-                            const gdiPalette* palette)
+BOOL interleaved_decompress(BITMAP_INTERLEAVED_CONTEXT* WINPR_RESTRICT interleaved,
+                            const BYTE* WINPR_RESTRICT pSrcData, UINT32 SrcSize, UINT32 nSrcWidth,
+                            UINT32 nSrcHeight, UINT32 bpp, BYTE* WINPR_RESTRICT pDstData,
+                            UINT32 DstFormat, UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst,
+                            UINT32 nDstWidth, UINT32 nDstHeight,
+                            const gdiPalette* WINPR_RESTRICT palette)
 {
-	UINT32 scanline;
-	UINT32 SrcFormat;
-	UINT32 BufferSize;
+	UINT32 scanline = 0;
+	UINT32 SrcFormat = 0;
+	UINT32 BufferSize = 0;
 
 	if (!interleaved || !pSrcData || !pDstData)
 	{
@@ -623,9 +623,9 @@ BOOL interleaved_decompress(BITMAP_INTERLEAVED_CONTEXT* interleaved, const BYTE*
 			return FALSE;
 	}
 
-	if (!freerdp_image_copy(pDstData, DstFormat, nDstStep, nXDst, nYDst, nDstWidth, nDstHeight,
-	                        interleaved->TempBuffer, SrcFormat, scanline, 0, 0, palette,
-	                        FREERDP_FLIP_VERTICAL | FREERDP_KEEP_DST_ALPHA))
+	if (!freerdp_image_copy_no_overlap(pDstData, DstFormat, nDstStep, nXDst, nYDst, nDstWidth,
+	                                   nDstHeight, interleaved->TempBuffer, SrcFormat, scanline, 0,
+	                                   0, palette, FREERDP_FLIP_VERTICAL | FREERDP_KEEP_DST_ALPHA))
 	{
 		WLog_ERR(TAG, "freerdp_image_copy failed");
 		return FALSE;
@@ -633,13 +633,14 @@ BOOL interleaved_decompress(BITMAP_INTERLEAVED_CONTEXT* interleaved, const BYTE*
 	return TRUE;
 }
 
-BOOL interleaved_compress(BITMAP_INTERLEAVED_CONTEXT* interleaved, BYTE* pDstData, UINT32* pDstSize,
-                          UINT32 nWidth, UINT32 nHeight, const BYTE* pSrcData, UINT32 SrcFormat,
-                          UINT32 nSrcStep, UINT32 nXSrc, UINT32 nYSrc, const gdiPalette* palette,
-                          UINT32 bpp)
+BOOL interleaved_compress(BITMAP_INTERLEAVED_CONTEXT* WINPR_RESTRICT interleaved,
+                          BYTE* WINPR_RESTRICT pDstData, UINT32* pDstSize, UINT32 nWidth,
+                          UINT32 nHeight, const BYTE* WINPR_RESTRICT pSrcData, UINT32 SrcFormat,
+                          UINT32 nSrcStep, UINT32 nXSrc, UINT32 nYSrc,
+                          const gdiPalette* WINPR_RESTRICT palette, UINT32 bpp)
 {
-	BOOL status;
-	wStream* s;
+	BOOL status = 0;
+	wStream* s = NULL;
 	UINT32 DstFormat = 0;
 	const UINT32 maxSize = 64 * 64 * 4;
 
@@ -682,8 +683,9 @@ BOOL interleaved_compress(BITMAP_INTERLEAVED_CONTEXT* interleaved, BYTE* pDstDat
 			return FALSE;
 	}
 
-	if (!freerdp_image_copy(interleaved->TempBuffer, DstFormat, 0, 0, 0, nWidth, nHeight, pSrcData,
-	                        SrcFormat, nSrcStep, nXSrc, nYSrc, palette, FREERDP_KEEP_DST_ALPHA))
+	if (!freerdp_image_copy_no_overlap(interleaved->TempBuffer, DstFormat, 0, 0, 0, nWidth, nHeight,
+	                                   pSrcData, SrcFormat, nSrcStep, nXSrc, nYSrc, palette,
+	                                   FREERDP_KEEP_DST_ALPHA))
 		return FALSE;
 
 	s = Stream_New(pDstData, *pDstSize);
@@ -705,7 +707,7 @@ BOOL interleaved_compress(BITMAP_INTERLEAVED_CONTEXT* interleaved, BYTE* pDstDat
 	return status;
 }
 
-BOOL bitmap_interleaved_context_reset(BITMAP_INTERLEAVED_CONTEXT* interleaved)
+BOOL bitmap_interleaved_context_reset(BITMAP_INTERLEAVED_CONTEXT* WINPR_RESTRICT interleaved)
 {
 	if (!interleaved)
 		return FALSE;
@@ -715,7 +717,7 @@ BOOL bitmap_interleaved_context_reset(BITMAP_INTERLEAVED_CONTEXT* interleaved)
 
 BITMAP_INTERLEAVED_CONTEXT* bitmap_interleaved_context_new(BOOL Compressor)
 {
-	BITMAP_INTERLEAVED_CONTEXT* interleaved;
+	BITMAP_INTERLEAVED_CONTEXT* interleaved = NULL;
 	interleaved = (BITMAP_INTERLEAVED_CONTEXT*)winpr_aligned_recalloc(
 	    NULL, 1, sizeof(BITMAP_INTERLEAVED_CONTEXT), 32);
 
@@ -736,11 +738,14 @@ BITMAP_INTERLEAVED_CONTEXT* bitmap_interleaved_context_new(BOOL Compressor)
 	return interleaved;
 
 fail:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	bitmap_interleaved_context_free(interleaved);
+	WINPR_PRAGMA_DIAG_POP
 	return NULL;
 }
 
-void bitmap_interleaved_context_free(BITMAP_INTERLEAVED_CONTEXT* interleaved)
+void bitmap_interleaved_context_free(BITMAP_INTERLEAVED_CONTEXT* WINPR_RESTRICT interleaved)
 {
 	if (!interleaved)
 		return;

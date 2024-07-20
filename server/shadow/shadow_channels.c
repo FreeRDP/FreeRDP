@@ -41,26 +41,16 @@ UINT shadow_client_channels_post_connect(rdpShadowClient* client)
 
 	shadow_client_audin_init(client);
 
-	if (freerdp_settings_get_bool(client->context.settings, FreeRDP_SupportGraphicsPipeline))
-	{
-		shadow_client_rdpgfx_init(client);
-	}
+	shadow_client_rdpgfx_init(client);
 
 	return CHANNEL_RC_OK;
 }
 
 void shadow_client_channels_free(rdpShadowClient* client)
 {
-	if (freerdp_settings_get_bool(client->context.settings, FreeRDP_SupportGraphicsPipeline))
-	{
-		shadow_client_rdpgfx_uninit(client);
-	}
-
+	shadow_client_rdpgfx_uninit(client);
 	shadow_client_audin_uninit(client);
-
 	shadow_client_rdpsnd_uninit(client);
-
 	shadow_client_remdesk_uninit(client);
-
 	shadow_client_encomsp_uninit(client);
 }

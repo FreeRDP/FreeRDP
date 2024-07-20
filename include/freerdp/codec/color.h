@@ -280,7 +280,8 @@ typedef struct gdi_palette gdiPalette;
 	 * @return          A buffer allocated with winpr_aligned_malloc(width * height, 16)
 	 *                  if successful, NULL otherwise.
 	 */
-	FREERDP_API BYTE* freerdp_glyph_convert(UINT32 width, UINT32 height, const BYTE* data);
+	FREERDP_API BYTE* freerdp_glyph_convert(UINT32 width, UINT32 height,
+	                                        const BYTE* WINPR_RESTRICT data);
 
 	/***
 	 *
@@ -352,7 +353,8 @@ typedef struct gdi_palette gdiPalette;
 	    UINT32 xorMaskLength, const BYTE* WINPR_RESTRICT andMask, UINT32 andMaskLength,
 	    UINT32 xorBpp, const gdiPalette* WINPR_RESTRICT palette);
 
-	/***
+	/*** Copies an image from source to destination, converting if necessary.
+	 * Source and destination may overlap.
 	 *
 	 * @param pDstData  destination buffer
 	 * @param DstFormat destination buffer format
@@ -374,9 +376,23 @@ typedef struct gdi_palette gdiPalette;
 	FREERDP_API BOOL freerdp_image_copy(BYTE* pDstData, DWORD DstFormat, UINT32 nDstStep,
 	                                    UINT32 nXDst, UINT32 nYDst, UINT32 nWidth, UINT32 nHeight,
 	                                    const BYTE* pSrcData, DWORD SrcFormat, UINT32 nSrcStep,
-	                                    UINT32 nXSrc, UINT32 nYSrc, const gdiPalette* palette,
-	                                    UINT32 flags);
+	                                    UINT32 nXSrc, UINT32 nYSrc,
+	                                    const gdiPalette* WINPR_RESTRICT palette, UINT32 flags);
 
+	/*** Same as freerdp_image_copy() but only for overlapping source and destination
+	 */
+	FREERDP_API BOOL freerdp_image_copy_overlap(
+	    BYTE* pDstData, DWORD DstFormat, UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst, UINT32 nWidth,
+	    UINT32 nHeight, const BYTE* pSrcData, DWORD SrcFormat, UINT32 nSrcStep, UINT32 nXSrc,
+	    UINT32 nYSrc, const gdiPalette* WINPR_RESTRICT palette, UINT32 flags);
+
+	/*** Same as freerdp_image_copy() but only for non overlapping source and destination
+	 */
+	FREERDP_API BOOL freerdp_image_copy_no_overlap(
+	    BYTE* WINPR_RESTRICT pDstData, DWORD DstFormat, UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst,
+	    UINT32 nWidth, UINT32 nHeight, const BYTE* WINPR_RESTRICT pSrcData, DWORD SrcFormat,
+	    UINT32 nSrcStep, UINT32 nXSrc, UINT32 nYSrc, const gdiPalette* WINPR_RESTRICT palette,
+	    UINT32 flags);
 	/***
 	 *
 	 * @param pDstData   destination buffer

@@ -91,7 +91,7 @@ static void WLog_PrintMessagePrefix(wLog* log, wLogMessage* message,
 static const char* get_tid(void* arg)
 {
 	char* str = arg;
-	size_t tid;
+	size_t tid = 0;
 #if defined __linux__ && !defined ANDROID
 	/* On Linux we prefer to see the LWP id */
 	tid = (size_t)syscall(SYS_gettid);
@@ -129,21 +129,6 @@ static int opt_compare_fn(const void* a, const void* b)
 	if (!opt)
 		return -1;
 	return strncmp(what, opt->fmt, opt->fmtlen);
-}
-
-static BOOL has_format_arg(const char* str, size_t len)
-{
-	if (!str || (len == 0))
-		return FALSE;
-
-	for (size_t x = 0; x < len; x++)
-	{
-		char c = str[x];
-		if (c == '%')
-			return TRUE;
-	}
-
-	return FALSE;
 }
 
 static BOOL replace_format_string(const char* FormatString, struct format_option_recurse* recurse,
@@ -268,7 +253,7 @@ BOOL WLog_Layout_GetMessagePrefix(wLog* log, wLogLayout* layout, wLogMessage* me
 		  &recurse }, /* log level */
 		{ ENTRY("%mi"), ENTRY("%02u"), NULL, (void*)(size_t)localTime.wMinute, NULL,
 		  &recurse }, /* minutes */
-		{ ENTRY("%ml"), ENTRY("%02u"), NULL, (void*)(size_t)localTime.wMilliseconds, NULL,
+		{ ENTRY("%ml"), ENTRY("%03u"), NULL, (void*)(size_t)localTime.wMilliseconds, NULL,
 		  &recurse },                                                   /* milliseconds */
 		{ ENTRY("%mn"), ENTRY("%s"), NULL, log->Name, NULL, &recurse }, /* module name */
 		{ ENTRY("%mo"), ENTRY("%u"), NULL, (void*)(size_t)localTime.wMonth, NULL,
@@ -302,7 +287,7 @@ BOOL WLog_Layout_GetMessagePrefix(wLog* log, wLogLayout* layout, wLogMessage* me
 
 wLogLayout* WLog_GetLogLayout(wLog* log)
 {
-	wLogAppender* appender;
+	wLogAppender* appender = NULL;
 	appender = WLog_GetLogAppender(log);
 	return appender->Layout;
 }
@@ -326,9 +311,9 @@ BOOL WLog_Layout_SetPrefixFormat(wLog* log, wLogLayout* layout, const char* form
 wLogLayout* WLog_Layout_New(wLog* log)
 {
 	LPCSTR prefix = "WLOG_PREFIX";
-	DWORD nSize;
+	DWORD nSize = 0;
 	char* env = NULL;
-	wLogLayout* layout;
+	wLogLayout* layout = NULL;
 	layout = (wLogLayout*)calloc(1, sizeof(wLogLayout));
 
 	if (!layout)

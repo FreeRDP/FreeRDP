@@ -5,8 +5,8 @@
 
 static BOOL test_mutex_basic(void)
 {
-	HANDLE mutex;
-	DWORD rc;
+	HANDLE mutex = NULL;
+	DWORD rc = 0;
 
 	if (!(mutex = CreateMutex(NULL, FALSE, NULL)))
 	{
@@ -45,8 +45,9 @@ static BOOL test_mutex_basic(void)
 
 static BOOL test_mutex_recursive(void)
 {
-	HANDLE mutex;
-	DWORD rc, i, cnt = 50;
+	HANDLE mutex = NULL;
+	DWORD rc = 0;
+	DWORD cnt = 50;
 
 	if (!(mutex = CreateMutex(NULL, TRUE, NULL)))
 	{
@@ -54,7 +55,7 @@ static BOOL test_mutex_recursive(void)
 		return FALSE;
 	}
 
-	for (i = 0; i < cnt; i++)
+	for (UINT32 i = 0; i < cnt; i++)
 	{
 		rc = WaitForSingleObject(mutex, INFINITE);
 
@@ -66,7 +67,7 @@ static BOOL test_mutex_recursive(void)
 		}
 	}
 
-	for (i = 0; i < cnt; i++)
+	for (UINT32 i = 0; i < cnt; i++)
 	{
 		if (!ReleaseMutex(mutex))
 		{

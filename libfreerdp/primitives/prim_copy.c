@@ -18,11 +18,15 @@
 #include <string.h>
 #include <freerdp/types.h>
 #include <freerdp/primitives.h>
-#ifdef WITH_IPP
-#include <ipps.h>
-#include <ippi.h>
-#endif /* WITH_IPP */
+#include <freerdp/log.h>
+
 #include "prim_internal.h"
+#include "prim_copy.h"
+#include "../codec/color.h"
+
+#include <freerdp/codec/color.h>
+
+#define TAG FREERDP_TAG("primitives.copy")
 
 static primitives_t* generic = NULL;
 
@@ -132,18 +136,240 @@ static pstatus_t general_copy_8u_AC4r(const BYTE* pSrc, INT32 srcStep, BYTE* pDs
 	return PRIMITIVES_SUCCESS;
 }
 
-#ifdef WITH_IPP
-/* ------------------------------------------------------------------------- */
-/* This is just ippiCopy_8u_AC4R without the IppiSize structure parameter.   */
-static pstatus_t ippiCopy_8u_AC4r(const BYTE* pSrc, INT32 srcStep, BYTE* pDst, INT32 dstStep,
-                                  INT32 width, INT32 height)
+static INLINE pstatus_t generic_image_copy_bgr24_bgrx32(BYTE* WINPR_RESTRICT pDstData,
+                                                        UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst,
+                                                        UINT32 nWidth, UINT32 nHeight,
+                                                        const BYTE* WINPR_RESTRICT pSrcData,
+                                                        UINT32 nSrcStep, UINT32 nXSrc, UINT32 nYSrc,
+                                                        SSIZE_T srcVMultiplier, SSIZE_T srcVOffset,
+                                                        SSIZE_T dstVMultiplier, SSIZE_T dstVOffset)
 {
-	IppiSize roi;
-	roi.width = width;
-	roi.height = height;
-	return (pstatus_t)ippiCopy_8u_AC4R(pSrc, srcStep, pDst, dstStep, roi);
+
+	const SSIZE_T srcByte = 3;
+	const SSIZE_T dstByte = 4;
+
+	for (SSIZE_T y = 0; y < nHeight; y++)
+	{
+		const BYTE* WINPR_RESTRICT srcLine =
+		    &pSrcData[srcVMultiplier * (y + nYSrc) * nSrcStep + srcVOffset];
+		BYTE* WINPR_RESTRICT dstLine =
+		    &pDstData[dstVMultiplier * (y + nYDst) * nDstStep + dstVOffset];
+
+		for (SSIZE_T x = 0; x < nWidth; x++)
+		{
+			dstLine[(x + nXDst) * dstByte + 0] = srcLine[(x + nXSrc) * srcByte + 0];
+			dstLine[(x + nXDst) * dstByte + 1] = srcLine[(x + nXSrc) * srcByte + 1];
+			dstLine[(x + nXDst) * dstByte + 2] = srcLine[(x + nXSrc) * srcByte + 2];
+		}
+	}
+
+	return PRIMITIVES_SUCCESS;
 }
-#endif /* WITH_IPP */
+
+static INLINE pstatus_t generic_image_copy_bgrx32_bgrx32(
+    BYTE* WINPR_RESTRICT pDstData, UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst, UINT32 nWidth,
+    UINT32 nHeight, const BYTE* WINPR_RESTRICT pSrcData, UINT32 nSrcStep, UINT32 nXSrc,
+    UINT32 nYSrc, SSIZE_T srcVMultiplier, SSIZE_T srcVOffset, SSIZE_T dstVMultiplier,
+    SSIZE_T dstVOffset)
+{
+
+	const SSIZE_T srcByte = 4;
+	const SSIZE_T dstByte = 4;
+
+	for (SSIZE_T y = 0; y < nHeight; y++)
+	{
+		const BYTE* WINPR_RESTRICT srcLine =
+		    &pSrcData[srcVMultiplier * (y + nYSrc) * nSrcStep + srcVOffset];
+		BYTE* WINPR_RESTRICT dstLine =
+		    &pDstData[dstVMultiplier * (y + nYDst) * nDstStep + dstVOffset];
+
+		for (SSIZE_T x = 0; x < nWidth; x++)
+		{
+			dstLine[(x + nXDst) * dstByte + 0] = srcLine[(x + nXSrc) * srcByte + 0];
+			dstLine[(x + nXDst) * dstByte + 1] = srcLine[(x + nXSrc) * srcByte + 1];
+			dstLine[(x + nXDst) * dstByte + 2] = srcLine[(x + nXSrc) * srcByte + 2];
+		}
+	}
+
+	return PRIMITIVES_SUCCESS;
+}
+
+pstatus_t generic_image_copy_no_overlap_convert(
+    BYTE* WINPR_RESTRICT pDstData, DWORD DstFormat, UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst,
+    UINT32 nWidth, UINT32 nHeight, const BYTE* WINPR_RESTRICT pSrcData, DWORD SrcFormat,
+    UINT32 nSrcStep, UINT32 nXSrc, UINT32 nYSrc, const gdiPalette* WINPR_RESTRICT palette,
+    SSIZE_T srcVMultiplier, SSIZE_T srcVOffset, SSIZE_T dstVMultiplier, SSIZE_T dstVOffset)
+{
+	const SSIZE_T srcByte = FreeRDPGetBytesPerPixel(SrcFormat);
+	const SSIZE_T dstByte = FreeRDPGetBytesPerPixel(DstFormat);
+
+	const UINT32 width = nWidth - nWidth % 8;
+	for (SSIZE_T y = 0; y < nHeight; y++)
+	{
+		const BYTE* WINPR_RESTRICT srcLine =
+		    &pSrcData[srcVMultiplier * (y + nYSrc) * nSrcStep + srcVOffset];
+		BYTE* WINPR_RESTRICT dstLine =
+		    &pDstData[dstVMultiplier * (y + nYDst) * nDstStep + dstVOffset];
+
+		SSIZE_T x = 0;
+		WINPR_PRAGMA_UNROLL_LOOP
+		for (; x < width; x++)
+		{
+			const UINT32 color = FreeRDPReadColor_int(&srcLine[(x + nXSrc) * srcByte], SrcFormat);
+			const UINT32 dstColor = FreeRDPConvertColor(color, SrcFormat, DstFormat, palette);
+			FreeRDPWriteColor_int(&dstLine[(x + nXDst) * dstByte], DstFormat, dstColor);
+		}
+		for (; x < nWidth; x++)
+		{
+			const UINT32 color = FreeRDPReadColor_int(&srcLine[(x + nXSrc) * srcByte], SrcFormat);
+			const UINT32 dstColor = FreeRDPConvertColor(color, SrcFormat, DstFormat, palette);
+			FreeRDPWriteColor_int(&dstLine[(x + nXDst) * dstByte], DstFormat, dstColor);
+		}
+	}
+	return PRIMITIVES_SUCCESS;
+}
+
+pstatus_t generic_image_copy_no_overlap_memcpy(
+    BYTE* WINPR_RESTRICT pDstData, DWORD DstFormat, UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst,
+    UINT32 nWidth, UINT32 nHeight, const BYTE* WINPR_RESTRICT pSrcData, DWORD SrcFormat,
+    UINT32 nSrcStep, UINT32 nXSrc, UINT32 nYSrc, const gdiPalette* WINPR_RESTRICT palette,
+    SSIZE_T srcVMultiplier, SSIZE_T srcVOffset, SSIZE_T dstVMultiplier, SSIZE_T dstVOffset,
+    UINT32 flags)
+{
+	const SSIZE_T dstByte = FreeRDPGetBytesPerPixel(DstFormat);
+	const SSIZE_T srcByte = FreeRDPGetBytesPerPixel(SrcFormat);
+	const SSIZE_T copyDstWidth = nWidth * dstByte;
+	const SSIZE_T xSrcOffset = nXSrc * srcByte;
+	const SSIZE_T xDstOffset = nXDst * dstByte;
+
+	for (SSIZE_T y = 0; y < nHeight; y++)
+	{
+		const BYTE* WINPR_RESTRICT srcLine =
+		    &pSrcData[srcVMultiplier * (y + nYSrc) * nSrcStep + srcVOffset];
+		BYTE* WINPR_RESTRICT dstLine =
+		    &pDstData[dstVMultiplier * (y + nYDst) * nDstStep + dstVOffset];
+		memcpy(&dstLine[xDstOffset], &srcLine[xSrcOffset], copyDstWidth);
+	}
+
+	return PRIMITIVES_SUCCESS;
+}
+
+static INLINE pstatus_t generic_image_copy_no_overlap_dst_alpha(
+    BYTE* WINPR_RESTRICT pDstData, DWORD DstFormat, UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst,
+    UINT32 nWidth, UINT32 nHeight, const BYTE* WINPR_RESTRICT pSrcData, DWORD SrcFormat,
+    UINT32 nSrcStep, UINT32 nXSrc, UINT32 nYSrc, const gdiPalette* WINPR_RESTRICT palette,
+    SSIZE_T srcVMultiplier, SSIZE_T srcVOffset, SSIZE_T dstVMultiplier, SSIZE_T dstVOffset)
+{
+	WINPR_ASSERT(pDstData);
+	WINPR_ASSERT(pSrcData);
+
+	switch (SrcFormat)
+	{
+		case PIXEL_FORMAT_BGR24:
+			switch (DstFormat)
+			{
+				case PIXEL_FORMAT_BGRX32:
+				case PIXEL_FORMAT_BGRA32:
+					return generic_image_copy_bgr24_bgrx32(
+					    pDstData, nDstStep, nXDst, nYDst, nWidth, nHeight, pSrcData, nSrcStep,
+					    nXSrc, nYSrc, srcVMultiplier, srcVOffset, dstVMultiplier, dstVOffset);
+				default:
+					break;
+			}
+			break;
+		case PIXEL_FORMAT_BGRX32:
+		case PIXEL_FORMAT_BGRA32:
+			switch (DstFormat)
+			{
+				case PIXEL_FORMAT_BGRX32:
+				case PIXEL_FORMAT_BGRA32:
+					return generic_image_copy_bgrx32_bgrx32(
+					    pDstData, nDstStep, nXDst, nYDst, nWidth, nHeight, pSrcData, nSrcStep,
+					    nXSrc, nYSrc, srcVMultiplier, srcVOffset, dstVMultiplier, dstVOffset);
+				case PIXEL_FORMAT_BGR24:
+					return generic_image_copy_bgr24_bgrx32(
+					    pDstData, nDstStep, nXDst, nYDst, nWidth, nHeight, pSrcData, nSrcStep,
+					    nXSrc, nYSrc, srcVMultiplier, srcVOffset, dstVMultiplier, dstVOffset);
+				default:
+					break;
+			}
+			break;
+		default:
+			break;
+	}
+
+	return generic_image_copy_no_overlap_convert(
+	    pDstData, DstFormat, nDstStep, nXDst, nYDst, nWidth, nHeight, pSrcData, SrcFormat, nSrcStep,
+	    nXSrc, nYSrc, palette, srcVMultiplier, srcVOffset, dstVMultiplier, dstVOffset);
+}
+
+static INLINE pstatus_t generic_image_copy_no_overlap_no_alpha(
+    BYTE* WINPR_RESTRICT pDstData, DWORD DstFormat, UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst,
+    UINT32 nWidth, UINT32 nHeight, const BYTE* WINPR_RESTRICT pSrcData, DWORD SrcFormat,
+    UINT32 nSrcStep, UINT32 nXSrc, UINT32 nYSrc, const gdiPalette* WINPR_RESTRICT palette,
+    SSIZE_T srcVMultiplier, SSIZE_T srcVOffset, SSIZE_T dstVMultiplier, SSIZE_T dstVOffset,
+    UINT32 flags)
+{
+	if (FreeRDPAreColorFormatsEqualNoAlpha(SrcFormat, DstFormat))
+		return generic_image_copy_no_overlap_memcpy(pDstData, DstFormat, nDstStep, nXDst, nYDst,
+		                                            nWidth, nHeight, pSrcData, SrcFormat, nSrcStep,
+		                                            nXSrc, nYSrc, palette, srcVMultiplier,
+		                                            srcVOffset, dstVMultiplier, dstVOffset, flags);
+	else
+		return generic_image_copy_no_overlap_convert(pDstData, DstFormat, nDstStep, nXDst, nYDst,
+		                                             nWidth, nHeight, pSrcData, SrcFormat, nSrcStep,
+		                                             nXSrc, nYSrc, palette, srcVMultiplier,
+		                                             srcVOffset, dstVMultiplier, dstVOffset);
+}
+
+static pstatus_t generic_image_copy_no_overlap(BYTE* WINPR_RESTRICT pDstData, DWORD DstFormat,
+                                               UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst,
+                                               UINT32 nWidth, UINT32 nHeight,
+                                               const BYTE* WINPR_RESTRICT pSrcData, DWORD SrcFormat,
+                                               UINT32 nSrcStep, UINT32 nXSrc, UINT32 nYSrc,
+                                               const gdiPalette* WINPR_RESTRICT palette,
+                                               UINT32 flags)
+{
+	const BOOL vSrcVFlip = (flags & FREERDP_FLIP_VERTICAL) ? TRUE : FALSE;
+	SSIZE_T srcVOffset = 0;
+	SSIZE_T srcVMultiplier = 1;
+	SSIZE_T dstVOffset = 0;
+	SSIZE_T dstVMultiplier = 1;
+
+	if ((nWidth == 0) || (nHeight == 0))
+		return PRIMITIVES_SUCCESS;
+
+	if ((nHeight > INT32_MAX) || (nWidth > INT32_MAX))
+		return -1;
+
+	if (!pDstData || !pSrcData)
+		return -1;
+
+	if (nDstStep == 0)
+		nDstStep = nWidth * FreeRDPGetBytesPerPixel(DstFormat);
+
+	if (nSrcStep == 0)
+		nSrcStep = nWidth * FreeRDPGetBytesPerPixel(SrcFormat);
+
+	if (vSrcVFlip)
+	{
+		srcVOffset = (nHeight - 1ll) * nSrcStep;
+		srcVMultiplier = -1;
+	}
+
+	if (((flags & FREERDP_KEEP_DST_ALPHA) != 0) && FreeRDPColorHasAlpha(DstFormat))
+		return generic_image_copy_no_overlap_dst_alpha(
+		    pDstData, DstFormat, nDstStep, nXDst, nYDst, nWidth, nHeight, pSrcData, SrcFormat,
+		    nSrcStep, nXSrc, nYSrc, palette, srcVMultiplier, srcVOffset, dstVMultiplier,
+		    dstVOffset);
+	else
+		return generic_image_copy_no_overlap_no_alpha(
+		    pDstData, DstFormat, nDstStep, nXDst, nYDst, nWidth, nHeight, pSrcData, SrcFormat,
+		    nSrcStep, nXSrc, nYSrc, palette, srcVMultiplier, srcVOffset, dstVMultiplier, dstVOffset,
+		    flags);
+
+	return PRIMITIVES_SUCCESS;
+}
 
 /* ------------------------------------------------------------------------- */
 void primitives_init_copy(primitives_t* prims)
@@ -153,26 +379,11 @@ void primitives_init_copy(primitives_t* prims)
 	prims->copy_8u_AC4r = general_copy_8u_AC4r;
 	/* This is just an alias with void* parameters */
 	prims->copy = (__copy_t)(prims->copy_8u);
+	prims->copy_no_overlap = generic_image_copy_no_overlap;
 }
 
-#if defined(WITH_SSE2) || defined(WITH_NEON)
 void primitives_init_copy_opt(primitives_t* prims)
 {
-	generic = primitives_get_generic();
-	primitives_init_copy(prims);
-	/* Pick tuned versions if possible. */
-#ifdef WITH_IPP
-	prims->copy_8u = (__copy_8u_t)ippsCopy_8u;
-	prims->copy_8u_AC4r = (__copy_8u_AC4r_t)ippiCopy_8u_AC4r;
-#endif
-	/* Performance with an SSE2 version with no prefetch seemed to be
-	 * all over the map vs. memcpy.
-	 * Sometimes it was significantly faster, sometimes dreadfully slower,
-	 * and it seemed to vary a lot depending on block size and processor.
-	 * Hence, no SSE version is used here unless once can be written that
-	 * is consistently faster than memcpy.
-	 */
-	/* This is just an alias with void* parameters */
-	prims->copy = (__copy_t)(prims->copy_8u);
+	primitives_init_copy_sse41(prims);
+	primitives_init_copy_avx2(prims);
 }
-#endif

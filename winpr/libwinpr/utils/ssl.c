@@ -121,7 +121,7 @@ static void _winpr_openssl_dynlock_destroy(struct CRYPTO_dynlock_value* dynlock,
 
 static BOOL _winpr_openssl_initialize_locking(void)
 {
-	int i, count;
+	int count;
 
 	/* OpenSSL static locking */
 
@@ -141,7 +141,7 @@ static BOOL _winpr_openssl_initialize_locking(void)
 				return FALSE;
 			}
 
-			for (i = 0; i < count; i++)
+			for (int i = 0; i < count; i++)
 			{
 				if (!(locks[i] = CreateMutex(NULL, FALSE, NULL)))
 				{
@@ -199,10 +199,9 @@ static BOOL _winpr_openssl_cleanup_locking(void)
 	/* undo our static locking modifications */
 	if (CRYPTO_get_locking_callback() == _winpr_openssl_locking)
 	{
-		int i;
 		CRYPTO_set_locking_callback(NULL);
 
-		for (i = 0; i < g_winpr_openssl_num_locks; i++)
+		for (int i = 0; i < g_winpr_openssl_num_locks; i++)
 		{
 			CloseHandle(g_winpr_openssl_locks[i]);
 		}

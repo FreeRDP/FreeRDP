@@ -54,7 +54,7 @@ extern "C"
 
 	struct rdp_codecs
 	{
-		rdpContext* context;
+		UINT32 ThreadingFlags;
 
 		RFX_CONTEXT* rfx;
 		NSC_CONTEXT* nsc;
@@ -71,8 +71,16 @@ extern "C"
 	FREERDP_API BOOL freerdp_client_codecs_reset(rdpCodecs* codecs, UINT32 flags, UINT32 width,
 	                                             UINT32 height);
 
-	FREERDP_API rdpCodecs* codecs_new(rdpContext* context);
-	FREERDP_API void codecs_free(rdpCodecs* codecs);
+	FREERDP_API void freerdp_client_codecs_free(rdpCodecs* codecs);
+
+	WINPR_ATTR_MALLOC(freerdp_client_codecs_free, 1)
+	FREERDP_API rdpCodecs* freerdp_client_codecs_new(UINT32 TheadingFlags);
+
+	FREERDP_API WINPR_DEPRECATED_VAR("Use freerdp_client_codecs_free",
+	                                 void codecs_free(rdpCodecs* codecs));
+
+	FREERDP_API WINPR_DEPRECATED_VAR("Use freerdp_client_codecs_new",
+	                                 rdpCodecs* codecs_new(rdpContext* context));
 
 #ifdef __cplusplus
 }

@@ -24,13 +24,10 @@ option(WITH_GPROF "Compile with GProf profiler." OFF)
 
 option(WITH_SSE2 "Enable SSE2 optimization." OFF)
 option(WITH_NEON "Enable NEON optimization." OFF)
-option(WITH_IPP "Use Intel Performance Primitives." OFF)
 
 option(WITH_JPEG "Use JPEG decoding." OFF)
 
-if(CMAKE_C_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-	set(CMAKE_COMPILER_IS_CLANG 1)
-endif()
+include(CompilerDetect)
 
 if(NOT WIN32)
 	CMAKE_DEPENDENT_OPTION(WITH_VALGRIND_MEMCHECK "Compile with valgrind helpers." OFF
@@ -80,15 +77,16 @@ endif()
 option(WITH_THIRD_PARTY "Build third-party components" OFF)
 
 option(WITH_CLIENT_INTERFACE "Build clients as a library with an interface" OFF)
+CMAKE_DEPENDENT_OPTION(CLIENT_INTERFACE_SHARED "Build clients as a shared library with an interface" OFF "WITH_CLIENT_INTERFACE" OFF)
 option(WITH_SERVER_INTERFACE "Build servers as a library with an interface" ON)
 
 option(WITH_DEBUG_ALL "Print all debug messages." OFF)
 
 if(WITH_DEBUG_ALL)
     message(WARNING "WITH_DEBUG_ALL=ON, the build will be slow and might leak sensitive information, do not use with release builds!")
-	set(DEFAULT_DEBUG_OPTION "ON")
+    set(DEFAULT_DEBUG_OPTION ON CACHE INTERNAL "debug default")
 else()
-	set(DEFAULT_DEBUG_OPTION "OFF")
+    set(DEFAULT_DEBUG_OPTION OFF CACHE INTERNAL "debug default")
 endif()
 
 option(WITH_DEBUG_CERTIFICATE "Print certificate related debug messages." ${DEFAULT_DEBUG_OPTION})
@@ -237,3 +235,5 @@ if (BUILD_FUZZERS)
             >
     )
 endif()
+
+option(WITH_FULL_CONFIG_PATH "Use <appdata>/Vendor/Product instead of <appdata>/product (lowercase, only if vendor equals product) as config directory" OFF)

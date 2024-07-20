@@ -26,11 +26,6 @@
 
 #include "measure.h"
 
-#ifdef WITH_IPP
-#include <ipps.h>
-#include <ippi.h>
-#endif
-
 #ifdef _WIN32
 #define ALIGN(x) x
 #else

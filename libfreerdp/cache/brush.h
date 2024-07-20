@@ -39,12 +39,16 @@ extern "C"
 
 	FREERDP_LOCAL void brush_cache_register_callbacks(rdpUpdate* update);
 
-	FREERDP_LOCAL rdpBrushCache* brush_cache_new(rdpContext* context);
 	FREERDP_LOCAL void brush_cache_free(rdpBrushCache* brush);
 
+	WINPR_ATTR_MALLOC(brush_cache_free, 1)
+	FREERDP_LOCAL rdpBrushCache* brush_cache_new(rdpContext* context);
+
+	FREERDP_LOCAL void free_cache_brush_order(rdpContext* context, CACHE_BRUSH_ORDER* order);
+
+	WINPR_ATTR_MALLOC(free_cache_brush_order, 1)
 	FREERDP_LOCAL CACHE_BRUSH_ORDER* copy_cache_brush_order(rdpContext* context,
 	                                                        const CACHE_BRUSH_ORDER* order);
-	FREERDP_LOCAL void free_cache_brush_order(rdpContext* context, CACHE_BRUSH_ORDER* order);
 
 #ifdef __cplusplus
 }

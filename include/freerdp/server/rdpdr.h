@@ -215,8 +215,10 @@ struct s_rdpdr_server_context
 	rdpContext* rdpcontext;
 };
 
-	FREERDP_API RdpdrServerContext* rdpdr_server_context_new(HANDLE vcm);
-	FREERDP_API void rdpdr_server_context_free(RdpdrServerContext* context);
+FREERDP_API void rdpdr_server_context_free(RdpdrServerContext* context);
+
+WINPR_ATTR_MALLOC(rdpdr_server_context_free, 1)
+FREERDP_API RdpdrServerContext* rdpdr_server_context_new(HANDLE vcm);
 
 #ifdef __cplusplus
 }

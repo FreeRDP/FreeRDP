@@ -11,11 +11,11 @@ static const char* test_Password = "Password";
 int TestAcquireCredentialsHandle(int argc, char* argv[])
 {
 	int rc = -1;
-	SECURITY_STATUS status;
+	SECURITY_STATUS status = 0;
 	CredHandle credentials = { 0 };
 	TimeStamp expiration;
 	SEC_WINNT_AUTH_IDENTITY identity;
-	SecurityFunctionTable* table;
+	SecurityFunctionTable* table = NULL;
 	SecPkgCredentials_Names credential_names;
 
 	WINPR_UNUSED(argc);

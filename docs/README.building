@@ -19,7 +19,7 @@ optionally there are some algorithms that can be shipped with FreeRDP itself if 
 * -DWITH_INTERNAL_MD5=ON
 * -DWITH_INTERNAL_RC4=ON
 
-2. Kerberos (optional, disable with -DWITH_RB5=OFF)
+2. Kerberos (optional, disable with -DWITH_KRB5=OFF)
 
 Authentication to many services requires kerberos (especially if smartcards are in use)
 
@@ -28,13 +28,14 @@ We support:
 * MIT
 * Heimdal
 
-3. JSON (optional, disable with -DWITH_AAD=OFF)
+3. JSON (optional, disable with -DWITH_JSON_DISABLED=ON)
 
 Azure logon requires HTTP/JSON messages to be parsed.
 
 We support:
 
 * cJSON
+* json-c
 
 4. H264
 

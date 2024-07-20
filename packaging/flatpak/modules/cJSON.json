@@ -1,0 +1,18 @@
+{
+	"name": "cjson",
+	"buildsystem": "cmake-ninja",
+	"cleanup": [],
+	"config-opts": [
+		"-DCMAKE_VERBOSE_MAKEFILE=ON",
+		"-DCMAKE_BUILD_TYPE:STRING=Release",
+		"-DCMAKE_INSTALL_LIBDIR:PATH=lib"
+	],
+	"sources": [
+		{
+			"type": "git",
+			"url": "https://github.com/DaveGamble/cJSON.git",
+			"tag": "v1.7.17",
+			"commit": "87d8f0961a01bf09bef98ff89bae9fdec42181ee"
+		}
+	]
+}

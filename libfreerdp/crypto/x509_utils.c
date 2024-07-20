@@ -39,7 +39,7 @@
 BYTE* x509_utils_get_hash(const X509* xcert, const char* hash, size_t* length)
 {
 	UINT32 fp_len = EVP_MAX_MD_SIZE;
-	BYTE* fp;
+	BYTE* fp = NULL;
 	const EVP_MD* md = EVP_get_digestbyname(hash);
 	if (!md)
 	{
@@ -79,23 +79,30 @@ static char* crypto_print_name(const X509_NAME* name)
 	{
 		UINT64 size = BIO_number_written(outBIO);
 		if (size > INT_MAX)
-			return NULL;
+			goto fail;
 		buffer = calloc(1, (size_t)size + 1);
 
 		if (!buffer)
-			return NULL;
+			goto fail;
 
 		ERR_clear_error();
-		BIO_read(outBIO, buffer, (int)size);
+		const int rc = BIO_read(outBIO, buffer, (int)size);
+		if (rc <= 0)
+		{
+			free(buffer);
+			buffer = NULL;
+			goto fail;
+		}
 	}
 
+fail:
 	BIO_free_all(outBIO);
 	return buffer;
 }
 
 char* x509_utils_get_subject(const X509* xcert)
 {
-	char* subject;
+	char* subject = NULL;
 	if (!xcert)
 	{
 		WLog_ERR(TAG, "Invalid certificate %p", xcert);
@@ -178,9 +185,8 @@ typedef int (*general_name_mapper_pr)(GENERAL_NAME* name, void* data, int index,
 static void map_subject_alt_name(const X509* x509, int general_name_type,
                                  general_name_mapper_pr mapper, void* data)
 {
-	int i;
-	int num;
-	STACK_OF(GENERAL_NAME) * gens;
+	int num = 0;
+	STACK_OF(GENERAL_NAME)* gens = NULL;
 	gens = X509_get_ext_d2i(x509, NID_subject_alt_name, NULL, NULL);
 
 	if (!gens)
@@ -190,7 +196,7 @@ static void map_subject_alt_name(const X509* x509, int general_name_type,
 
 	num = sk_GENERAL_NAME_num(gens);
 
-	for (i = 0; (i < num); i++)
+	for (int i = 0; (i < num); i++)
 	{
 		GENERAL_NAME* name = sk_GENERAL_NAME_value(gens, i);
 
@@ -266,7 +272,7 @@ static int extract_string(GENERAL_NAME* name, void* data, int index, int count)
 {
 	string_list* list = data;
 	unsigned char* cstring = 0;
-	ASN1_STRING* str;
+	ASN1_STRING* str = NULL;
 
 	switch (name->type)
 	{
@@ -360,9 +366,9 @@ static void object_list_allocate(object_list* list, int allocate_count)
 
 static char* object_string(ASN1_TYPE* object)
 {
-	char* result;
-	unsigned char* utf8String;
-	int length;
+	char* result = NULL;
+	unsigned char* utf8String = NULL;
+	int length = 0;
 	/* TODO: check that object.type is a string type. */
 	length = ASN1_STRING_to_UTF8(&utf8String, object->value.asn1_string);
 
@@ -516,7 +522,7 @@ char** x509_utils_get_dns_names(const X509* x509, size_t* count, size_t** length
 
 char* x509_utils_get_issuer(const X509* xcert)
 {
-	char* issuer;
+	char* issuer = NULL;
 	if (!xcert)
 	{
 		WLog_ERR(TAG, "Invalid certificate %p", xcert);
@@ -531,8 +537,8 @@ char* x509_utils_get_issuer(const X509* xcert)
 BOOL x509_utils_check_eku(const X509* xcert, int nid)
 {
 	BOOL ret = FALSE;
-	STACK_OF(ASN1_OBJECT) * oid_stack;
-	ASN1_OBJECT* oid;
+	STACK_OF(ASN1_OBJECT)* oid_stack = NULL;
+	ASN1_OBJECT* oid = NULL;
 
 	if (!xcert)
 		return FALSE;
@@ -554,9 +560,9 @@ BOOL x509_utils_check_eku(const X509* xcert, int nid)
 
 void x509_utils_print_info(const X509* xcert)
 {
-	char* fp;
-	char* issuer;
-	char* subject;
+	char* fp = NULL;
+	char* issuer = NULL;
+	char* subject = NULL;
 	subject = x509_utils_get_subject(xcert);
 	issuer = x509_utils_get_issuer(xcert);
 	fp = (char*)x509_utils_get_hash(xcert, "sha256", NULL);
@@ -583,9 +589,10 @@ out_free_issuer:
 
 static BYTE* x509_utils_get_pem(const X509* xcert, const STACK_OF(X509) * chain, size_t* plength)
 {
-	BIO* bio;
-	int status, count, x;
-	size_t offset;
+	BIO* bio = NULL;
+	int status = 0;
+	int count = 0;
+	size_t offset = 0;
 	size_t length = 0;
 	BOOL rc = FALSE;
 	BYTE* pemCert = NULL;
@@ -616,7 +623,7 @@ static BYTE* x509_utils_get_pem(const X509* xcert, const STACK_OF(X509) * chain,
 	if (chain)
 	{
 		count = sk_X509_num(chain);
-		for (x = 0; x < count; x++)
+		for (int x = 0; x < count; x++)
 		{
 			X509* c = sk_X509_value(chain, x);
 			status = PEM_write_bio_X509(bio, c);
@@ -651,8 +658,8 @@ static BYTE* x509_utils_get_pem(const X509* xcert, const STACK_OF(X509) * chain,
 
 	while (offset >= length)
 	{
-		int new_len;
-		BYTE* new_cert;
+		int new_len = 0;
+		BYTE* new_cert = NULL;
 		new_len = length * 2;
 		new_cert = (BYTE*)realloc(pemCert, new_len + 1);
 
@@ -696,7 +703,7 @@ fail:
 X509* x509_utils_from_pem(const char* data, size_t len, BOOL fromFile)
 {
 	X509* x509 = NULL;
-	BIO* bio;
+	BIO* bio = NULL;
 	if (fromFile)
 		bio = BIO_new_file(data, "rb");
 	else
@@ -716,19 +723,9 @@ X509* x509_utils_from_pem(const char* data, size_t len, BOOL fromFile)
 	return x509;
 }
 
-WINPR_MD_TYPE x509_utils_get_signature_alg(const X509* xcert)
+static WINPR_MD_TYPE hash_nid_to_winpr(int hash_nid)
 {
-	WINPR_ASSERT(xcert);
-
-	EVP_PKEY* evp = X509_get0_pubkey(xcert);
-	WINPR_ASSERT(evp);
-
-	int nid = 0;
-	const int res = EVP_PKEY_get_default_digest_nid(evp, &nid);
-	if (res <= 0)
-		return WINPR_MD_NONE;
-
-	switch (nid)
+	switch (hash_nid)
 	{
 		case NID_md2:
 			return WINPR_MD_MD2;
@@ -766,6 +763,109 @@ WINPR_MD_TYPE x509_utils_get_signature_alg(const X509* xcert)
 		default:
 			return WINPR_MD_NONE;
 	}
+}
+
+static WINPR_MD_TYPE get_rsa_pss_digest(const X509_ALGOR* alg)
+{
+	WINPR_MD_TYPE ret = WINPR_MD_NONE;
+	WINPR_MD_TYPE message_digest = WINPR_MD_NONE;
+	WINPR_MD_TYPE mgf1_digest = WINPR_MD_NONE;
+	int param_type = 0;
+	const void* param_value = NULL;
+	const ASN1_STRING* sequence = NULL;
+	const unsigned char* inp = NULL;
+	RSA_PSS_PARAMS* params = NULL;
+	X509_ALGOR* mgf1_digest_alg = NULL;
+
+	/* The RSA-PSS digest is encoded in a complex structure, defined in
+	https://www.rfc-editor.org/rfc/rfc4055.html. */
+	X509_ALGOR_get0(NULL, &param_type, &param_value, alg);
+
+	/* param_type and param_value the parameter in ASN1_TYPE form, but split into two parameters. A
+	SEQUENCE is has type V_ASN1_SEQUENCE, and the value is an ASN1_STRING with the encoded
+	structure. */
+	if (param_type != V_ASN1_SEQUENCE)
+		goto end;
+	sequence = param_value;
+
+	/* Decode the structure. */
+	inp = ASN1_STRING_get0_data(sequence);
+	params = d2i_RSA_PSS_PARAMS(NULL, &inp, ASN1_STRING_length(sequence));
+	if (params == NULL)
+		goto end;
+
+	/* RSA-PSS uses two hash algorithms, a message digest and also an MGF function which is, itself,
+	parameterized by a hash function. Both fields default to SHA-1, so we must also check for the
+	value being NULL. */
+	message_digest = WINPR_MD_SHA1;
+	if (params->hashAlgorithm != NULL)
+	{
+		const ASN1_OBJECT* obj = NULL;
+		X509_ALGOR_get0(&obj, NULL, NULL, params->hashAlgorithm);
+		message_digest = hash_nid_to_winpr(OBJ_obj2nid(obj));
+		if (message_digest == WINPR_MD_NONE)
+			goto end;
+	}
+
+	mgf1_digest = WINPR_MD_SHA1;
+	if (params->maskGenAlgorithm != NULL)
+	{
+		const ASN1_OBJECT* obj = NULL;
+		int mgf_param_type = 0;
+		const void* mgf_param_value = NULL;
+		const ASN1_STRING* mgf_param_sequence = NULL;
+		/* First, check this is MGF-1, the only one ever defined. */
+		X509_ALGOR_get0(&obj, &mgf_param_type, &mgf_param_value, params->maskGenAlgorithm);
+		if (OBJ_obj2nid(obj) != NID_mgf1)
+			goto end;
+
+		/* MGF-1 is, itself, parameterized by a hash function, encoded as an AlgorithmIdentifier. */
+		if (mgf_param_type != V_ASN1_SEQUENCE)
+			goto end;
+		mgf_param_sequence = mgf_param_value;
+		inp = ASN1_STRING_get0_data(mgf_param_sequence);
+		mgf1_digest_alg = d2i_X509_ALGOR(NULL, &inp, ASN1_STRING_length(mgf_param_sequence));
+		if (mgf1_digest_alg == NULL)
+			goto end;
+
+		/* Finally, extract the digest. */
+		X509_ALGOR_get0(&obj, NULL, NULL, mgf1_digest_alg);
+		mgf1_digest = hash_nid_to_winpr(OBJ_obj2nid(obj));
+		if (mgf1_digest == WINPR_MD_NONE)
+			goto end;
+	}
+
+	/* If the two digests do not match, it is ambiguous which to return. tls-server-end-point leaves
+	it undefined, so return none.
+	https://www.rfc-editor.org/rfc/rfc5929.html#section-4.1 */
+	if (message_digest != mgf1_digest)
+		goto end;
+	ret = message_digest;
+
+end:
+	RSA_PSS_PARAMS_free(params);
+	X509_ALGOR_free(mgf1_digest_alg);
+	return ret;
+}
+
+WINPR_MD_TYPE x509_utils_get_signature_alg(const X509* xcert)
+{
+	WINPR_ASSERT(xcert);
+
+	const int nid = X509_get_signature_nid(xcert);
+
+	if (nid == NID_rsassaPss)
+	{
+		const X509_ALGOR* alg = NULL;
+		X509_get0_signature(NULL, &alg, xcert);
+		return get_rsa_pss_digest(alg);
+	}
+
+	int hash_nid = 0;
+	if (OBJ_find_sigid_algs(nid, &hash_nid, NULL) != 1)
+		return WINPR_MD_NONE;
+
+	return hash_nid_to_winpr(hash_nid);
 }
 
 char* x509_utils_get_common_name(const X509* xcert, size_t* plength)
@@ -861,7 +961,8 @@ BOOL x509_utils_verify(X509* xcert, STACK_OF(X509) * chain, const char* certific
 
 	for (size_t i = 0; i < ARRAYSIZE(purposes); i++)
 	{
-		int err = -1, rc = -1;
+		int err = -1;
+		int rc = -1;
 		int purpose = purposes[i];
 		csc = X509_STORE_CTX_new();
 

@@ -195,7 +195,7 @@ UINT cliprdr_serialize_file_list_ex(UINT32 flags, const FILEDESCRIPTORW* file_de
                                     UINT32* format_data_length)
 {
 	UINT result = NO_ERROR;
-	size_t len;
+	size_t len = 0;
 	wStream* s = NULL;
 
 	if (!file_descriptor_array || !format_data || !format_data_length)

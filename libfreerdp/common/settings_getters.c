@@ -105,6 +105,9 @@ BOOL freerdp_settings_get_bool(const rdpSettings* settings, FreeRDP_Settings_Key
 		case FreeRDP_AutoReconnectionEnabled:
 			return settings->AutoReconnectionEnabled;
 
+		case FreeRDP_AutoReconnectionPacketSupported:
+			return settings->AutoReconnectionPacketSupported;
+
 		case FreeRDP_BitmapCacheEnabled:
 			return settings->BitmapCacheEnabled;
 
@@ -252,6 +255,9 @@ BOOL freerdp_settings_get_bool(const rdpSettings* settings, FreeRDP_Settings_Key
 		case FreeRDP_GatewayHttpUseWebsockets:
 			return settings->GatewayHttpUseWebsockets;
 
+		case FreeRDP_GatewayIgnoreRedirectionPolicy:
+			return settings->GatewayIgnoreRedirectionPolicy;
+
 		case FreeRDP_GatewayRpcTransport:
 			return settings->GatewayRpcTransport;
 
@@ -284,6 +290,9 @@ BOOL freerdp_settings_get_bool(const rdpSettings* settings, FreeRDP_Settings_Key
 
 		case FreeRDP_GfxSmallCache:
 			return settings->GfxSmallCache;
+
+		case FreeRDP_GfxSuspendFrameAck:
+			return settings->GfxSuspendFrameAck;
 
 		case FreeRDP_GfxThinClient:
 			return settings->GfxThinClient;
@@ -573,6 +582,12 @@ BOOL freerdp_settings_get_bool(const rdpSettings* settings, FreeRDP_Settings_Key
 		case FreeRDP_SuspendInput:
 			return settings->SuspendInput;
 
+		case FreeRDP_SynchronousDynamicChannels:
+			return settings->SynchronousDynamicChannels;
+
+		case FreeRDP_SynchronousStaticChannels:
+			return settings->SynchronousStaticChannels;
+
 		case FreeRDP_TcpKeepAlive:
 			return settings->TcpKeepAlive;
 
@@ -587,6 +602,9 @@ BOOL freerdp_settings_get_bool(const rdpSettings* settings, FreeRDP_Settings_Key
 
 		case FreeRDP_TransportDumpReplay:
 			return settings->TransportDumpReplay;
+
+		case FreeRDP_TransportDumpReplayNodelay:
+			return settings->TransportDumpReplayNodelay;
 
 		case FreeRDP_UnicodeInput:
 			return settings->UnicodeInput;
@@ -704,6 +722,10 @@ BOOL freerdp_settings_set_bool(rdpSettings* settings, FreeRDP_Settings_Keys_Bool
 
 		case FreeRDP_AutoReconnectionEnabled:
 			settings->AutoReconnectionEnabled = cnv.c;
+			break;
+
+		case FreeRDP_AutoReconnectionPacketSupported:
+			settings->AutoReconnectionPacketSupported = cnv.c;
 			break;
 
 		case FreeRDP_BitmapCacheEnabled:
@@ -902,6 +924,10 @@ BOOL freerdp_settings_set_bool(rdpSettings* settings, FreeRDP_Settings_Keys_Bool
 			settings->GatewayHttpUseWebsockets = cnv.c;
 			break;
 
+		case FreeRDP_GatewayIgnoreRedirectionPolicy:
+			settings->GatewayIgnoreRedirectionPolicy = cnv.c;
+			break;
+
 		case FreeRDP_GatewayRpcTransport:
 			settings->GatewayRpcTransport = cnv.c;
 			break;
@@ -944,6 +970,10 @@ BOOL freerdp_settings_set_bool(rdpSettings* settings, FreeRDP_Settings_Keys_Bool
 
 		case FreeRDP_GfxSmallCache:
 			settings->GfxSmallCache = cnv.c;
+			break;
+
+		case FreeRDP_GfxSuspendFrameAck:
+			settings->GfxSuspendFrameAck = cnv.c;
 			break;
 
 		case FreeRDP_GfxThinClient:
@@ -1330,6 +1360,14 @@ BOOL freerdp_settings_set_bool(rdpSettings* settings, FreeRDP_Settings_Keys_Bool
 			settings->SuspendInput = cnv.c;
 			break;
 
+		case FreeRDP_SynchronousDynamicChannels:
+			settings->SynchronousDynamicChannels = cnv.c;
+			break;
+
+		case FreeRDP_SynchronousStaticChannels:
+			settings->SynchronousStaticChannels = cnv.c;
+			break;
+
 		case FreeRDP_TcpKeepAlive:
 			settings->TcpKeepAlive = cnv.c;
 			break;
@@ -1348,6 +1386,10 @@ BOOL freerdp_settings_set_bool(rdpSettings* settings, FreeRDP_Settings_Keys_Bool
 
 		case FreeRDP_TransportDumpReplay:
 			settings->TransportDumpReplay = cnv.c;
+			break;
+
+		case FreeRDP_TransportDumpReplayNodelay:
+			settings->TransportDumpReplayNodelay = cnv.c;
 			break;
 
 		case FreeRDP_UnicodeInput:
@@ -1693,6 +1735,9 @@ UINT32 freerdp_settings_get_uint32(const rdpSettings* settings, FreeRDP_Settings
 
 		case FreeRDP_Floatbar:
 			return settings->Floatbar;
+
+		case FreeRDP_ForceIPvX:
+			return settings->ForceIPvX;
 
 		case FreeRDP_FrameAcknowledge:
 			return settings->FrameAcknowledge;
@@ -2125,6 +2170,10 @@ BOOL freerdp_settings_set_uint32(rdpSettings* settings, FreeRDP_Settings_Keys_UI
 
 		case FreeRDP_Floatbar:
 			settings->Floatbar = cnv.c;
+			break;
+
+		case FreeRDP_ForceIPvX:
+			settings->ForceIPvX = cnv.c;
 			break;
 
 		case FreeRDP_FrameAcknowledge:

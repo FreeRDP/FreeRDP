@@ -28,16 +28,17 @@ static const BYTE utctimeContent[] = { 0x17, 0x0D, 0x32, 0x31, 0x30, 0x33, 0x31,
 
 int TestASN1Read(int argc, char* argv[])
 {
-	WinPrAsn1Decoder decoder, seqDecoder;
+	WinPrAsn1Decoder decoder;
+	WinPrAsn1Decoder seqDecoder;
 	wStream staticS;
-	WinPrAsn1_BOOL boolV;
-	WinPrAsn1_INTEGER integerV;
+	WinPrAsn1_BOOL boolV = 0;
+	WinPrAsn1_INTEGER integerV = 0;
 	WinPrAsn1_OID oidV;
-	WinPrAsn1_IA5STRING ia5stringV;
+	WinPrAsn1_IA5STRING ia5stringV = NULL;
 	WinPrAsn1_UTCTIME utctimeV;
-	WinPrAsn1_tag tag;
-	size_t len;
-	BOOL error;
+	WinPrAsn1_tag tag = 0;
+	size_t len = 0;
+	BOOL error = 0;
 
 	/* ============== Test INTEGERs ================ */
 	Stream_StaticConstInit(&staticS, integerContent, sizeof(integerContent));
@@ -140,12 +141,11 @@ static WinPrAsn1_OID oid4 = { sizeof(oid4_val), oid4_val };
 
 int TestASN1Write(int argc, char* argv[])
 {
-	size_t i;
 	wStream* s = NULL;
-	size_t expectedOuputSz;
+	size_t expectedOuputSz = 0;
 	int retCode = 100;
 	WinPrAsn1_UTCTIME utcTime;
-	WinPrAsn1_IA5STRING ia5string;
+	WinPrAsn1_IA5STRING ia5string = NULL;
 	WinPrAsn1Encoder* enc = WinPrAsn1Encoder_New(WINPR_ASN1_DER);
 	if (!enc)
 		goto out;
@@ -299,7 +299,7 @@ int TestASN1Write(int argc, char* argv[])
 	WinPrAsn1Encoder_Reset(enc);
 
 	retCode = 203;
-	for (i = 0; i < 1000; i++)
+	for (size_t i = 0; i < 1000; i++)
 	{
 		if (!WinPrAsn1EncSeqContainer(enc))
 			goto out;
@@ -310,7 +310,7 @@ int TestASN1Write(int argc, char* argv[])
 		goto out;
 
 	retCode = 205;
-	for (i = 0; i < 1000; i++)
+	for (size_t i = 0; i < 1000; i++)
 	{
 		if (!WinPrAsn1EncEndContainer(enc))
 			goto out;

@@ -22,12 +22,11 @@
 /* ------------------------------------------------------------------------- */
 static BOOL test_RGBToRGB_16s8u_P3AC4R_func(prim_size_t roi, DWORD DstFormat)
 {
-	INT16* r;
-	INT16* g;
-	INT16* b;
-	BYTE* out1;
-	BYTE* out2;
-	UINT64 i;
+	INT16* r = NULL;
+	INT16* g = NULL;
+	INT16* b = NULL;
+	BYTE* out1 = NULL;
+	BYTE* out2 = NULL;
 	BOOL failed = FALSE;
 	const INT16* ptrs[3];
 	const UINT32 rgbStride = roi.width * 2;
@@ -47,11 +46,9 @@ static BOOL test_RGBToRGB_16s8u_P3AC4R_func(prim_size_t roi, DWORD DstFormat)
 
 #if 0
 	{
-		UINT32 x, y;
-
-		for (y = 0; y < roi.height; y++)
+		for (UINT32 y = 0; y < roi.height; y++)
 		{
-			for (x = 0; x < roi.width; x++)
+			for (UINT32 x = 0; x < roi.width; x++)
 			{
 				r[y * roi.width + x] = 0x01;
 				g[y * roi.width + x] = 0x02;
@@ -84,7 +81,7 @@ static BOOL test_RGBToRGB_16s8u_P3AC4R_func(prim_size_t roi, DWORD DstFormat)
 
 	if (memcmp(out1, out2, dstStride * roi.height) != 0)
 	{
-		for (i = 0; i < roi.width * roi.height; ++i)
+		for (UINT64 i = 0; i < 1ull * roi.width * roi.height; ++i)
 		{
 			const UINT32 o1 = FreeRDPReadColor(out1 + 4 * i, DstFormat);
 			const UINT32 o2 = FreeRDPReadColor(out2 + 4 * i, DstFormat);
@@ -125,16 +122,17 @@ static BOOL test_RGBToRGB_16s8u_P3AC4R_speed(void)
 		INT16** pv;
 	} cnv;
 	const prim_size_t roi64x64 = { 64, 64 };
-	INT16 ALIGN(r[4096 + 1]), ALIGN(g[4096 + 1]), ALIGN(b[4096 + 1]);
+	INT16 ALIGN(r[4096 + 1]);
+	INT16 ALIGN(g[4096 + 1]);
+	INT16 ALIGN(b[4096 + 1]);
 	UINT32 ALIGN(dst[4096 + 1]);
-	int i;
 	INT16* ptrs[3];
 	winpr_RAND(r, sizeof(r));
 	winpr_RAND(g, sizeof(g));
 	winpr_RAND(b, sizeof(b));
 
 	/* clear upper bytes */
-	for (i = 0; i < 4096; ++i)
+	for (int i = 0; i < 4096; ++i)
 	{
 		r[i] &= 0x00FFU;
 		g[i] &= 0x00FFU;
@@ -162,11 +160,16 @@ static BOOL test_RGBToRGB_16s8u_P3AC4R_speed(void)
 /* ========================================================================= */
 static BOOL test_yCbCrToRGB_16s16s_P3P3_func(void)
 {
-	pstatus_t status;
-	INT16 ALIGN(y[4096]) = { 0 }, ALIGN(cb[4096]) = { 0 }, ALIGN(cr[4096]) = { 0 };
-	INT16 ALIGN(r1[4096]) = { 0 }, ALIGN(g1[4096]) = { 0 }, ALIGN(b1[4096]) = { 0 };
-	INT16 ALIGN(r2[4096]) = { 0 }, ALIGN(g2[4096]) = { 0 }, ALIGN(b2[4096]) = { 0 };
-	int i;
+	pstatus_t status = 0;
+	INT16 ALIGN(y[4096]) = { 0 };
+	INT16 ALIGN(cb[4096]) = { 0 };
+	INT16 ALIGN(cr[4096]) = { 0 };
+	INT16 ALIGN(r1[4096]) = { 0 };
+	INT16 ALIGN(g1[4096]) = { 0 };
+	INT16 ALIGN(b1[4096]) = { 0 };
+	INT16 ALIGN(r2[4096]) = { 0 };
+	INT16 ALIGN(g2[4096]) = { 0 };
+	INT16 ALIGN(b2[4096]) = { 0 };
 	const INT16* in[3];
 	INT16* out1[3];
 	INT16* out2[3];
@@ -176,7 +179,7 @@ static BOOL test_yCbCrToRGB_16s16s_P3P3_func(void)
 	winpr_RAND(cr, sizeof(cr));
 
 	/* Normalize to 11.5 fixed radix */
-	for (i = 0; i < 4096; ++i)
+	for (int i = 0; i < 4096; ++i)
 	{
 		y[i] &= 0x1FE0U;
 		cb[i] &= 0x1FE0U;
@@ -202,7 +205,7 @@ static BOOL test_yCbCrToRGB_16s16s_P3P3_func(void)
 	if (status != PRIMITIVES_SUCCESS)
 		return FALSE;
 
-	for (i = 0; i < 4096; ++i)
+	for (int i = 0; i < 4096; ++i)
 	{
 		if ((ABS(r1[i] - r2[i]) > 1) || (ABS(g1[i] - g2[i]) > 1) || (ABS(b1[i] - b2[i]) > 1))
 		{
@@ -220,9 +223,12 @@ static BOOL test_yCbCrToRGB_16s16s_P3P3_func(void)
 static int test_yCbCrToRGB_16s16s_P3P3_speed(void)
 {
 	prim_size_t roi = { 64, 64 };
-	INT16 ALIGN(y[4096]), ALIGN(cb[4096]), ALIGN(cr[4096]);
-	INT16 ALIGN(r[4096]), ALIGN(g[4096]), ALIGN(b[4096]);
-	int i;
+	INT16 ALIGN(y[4096]);
+	INT16 ALIGN(cb[4096]);
+	INT16 ALIGN(cr[4096]);
+	INT16 ALIGN(r[4096]);
+	INT16 ALIGN(g[4096]);
+	INT16 ALIGN(b[4096]);
 	const INT16* input[3];
 	INT16* output[3];
 	winpr_RAND(y, sizeof(y));
@@ -230,7 +236,7 @@ static int test_yCbCrToRGB_16s16s_P3P3_speed(void)
 	winpr_RAND(cr, sizeof(cr));
 
 	/* Normalize to 11.5 fixed radix */
-	for (i = 0; i < 4096; ++i)
+	for (int i = 0; i < 4096; ++i)
 	{
 		y[i] &= 0x1FE0U;
 		cb[i] &= 0x1FE0U;
@@ -258,13 +264,12 @@ int TestPrimitivesColors(int argc, char* argv[])
 	const DWORD formats[] = { PIXEL_FORMAT_ARGB32, PIXEL_FORMAT_XRGB32, PIXEL_FORMAT_ABGR32,
 		                      PIXEL_FORMAT_XBGR32, PIXEL_FORMAT_RGBA32, PIXEL_FORMAT_RGBX32,
 		                      PIXEL_FORMAT_BGRA32, PIXEL_FORMAT_BGRX32 };
-	DWORD x;
 	prim_size_t roi = { 1920 / 4, 1080 / 4 };
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
 	prim_test_setup(FALSE);
 
-	for (x = 0; x < sizeof(formats) / sizeof(formats[0]); x++)
+	for (UINT32 x = 0; x < sizeof(formats) / sizeof(formats[0]); x++)
 	{
 		if (!test_RGBToRGB_16s8u_P3AC4R_func(roi, formats[x]))
 			return 1;

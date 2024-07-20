@@ -103,7 +103,7 @@
 	((_cb != NULL) ? _cb(__VA_ARGS__) : (_default_return))
 #endif
 
-#if defined(__GNUC__)
+#if defined(__GNUC__) || defined(__clang__)
 #define ALIGN64 __attribute__((aligned(8)))
 #else
 #ifdef _WIN32

@@ -1,0 +1,31 @@
+name: mingw-builder
+on:
+  workflow_dispatch:
+    branches: [ master, stable* ]
+  schedule:
+    - cron: '30 5 * * SUN'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    name: "Run mingw build on ubuntu-latest"
+    steps:
+      - name: "Check out source"
+        uses: actions/checkout@v4
+
+      - name: "Prepare environment"
+        run: |
+          sudo apt-get update -q -y
+          sudo apt-get install -q -y \
+            git \
+            nasm \
+            meson \
+            cmake \
+            ninja-build \
+            mingw-w64 \
+            mingw-w64-tools \
+            binutils-mingw-w64
+
+      - name: "Run mingw build..."
+        run: |
+          ./scripts/mingw.sh

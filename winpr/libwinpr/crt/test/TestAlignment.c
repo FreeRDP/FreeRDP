@@ -5,9 +5,9 @@
 
 int TestAlignment(int argc, char* argv[])
 {
-	void* ptr;
-	size_t alignment;
-	size_t offset;
+	void* ptr = NULL;
+	size_t alignment = 0;
+	size_t offset = 0;
 
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);

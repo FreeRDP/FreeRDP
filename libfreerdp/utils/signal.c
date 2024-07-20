@@ -73,14 +73,22 @@ static void lock(void)
 {
 	const int rc = pthread_mutex_lock(&signal_handler_lock);
 	if (rc != 0)
-		WLog_ERR(TAG, "[pthread_mutex_lock] failed with %s [%d]", strerror(rc), rc);
+	{
+		char ebuffer[256] = { 0 };
+		WLog_ERR(TAG, "[pthread_mutex_lock] failed with %s [%d]",
+		         winpr_strerror(rc, ebuffer, sizeof(ebuffer)), rc);
+	}
 }
 
 static void unlock(void)
 {
 	const int rc = pthread_mutex_unlock(&signal_handler_lock);
 	if (rc != 0)
-		WLog_ERR(TAG, "[pthread_mutex_lock] failed with %s [%d]", strerror(rc), rc);
+	{
+		char ebuffer[256] = { 0 };
+		WLog_ERR(TAG, "[pthread_mutex_lock] failed with %s [%d]",
+		         winpr_strerror(rc, ebuffer, sizeof(ebuffer)), rc);
+	}
 }
 
 static void term_handler(int signum)

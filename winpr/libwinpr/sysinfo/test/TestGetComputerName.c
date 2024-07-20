@@ -27,9 +27,9 @@ static BOOL Test_GetComputerName(void)
 	CHAR netbiosName1[MAX_COMPUTERNAME_LENGTH + 1];
 	CHAR netbiosName2[MAX_COMPUTERNAME_LENGTH + 1];
 	const DWORD netbiosBufferSize = sizeof(netbiosName1) / sizeof(CHAR);
-	DWORD dwSize;
-	DWORD dwNameLength;
-	DWORD dwError;
+	DWORD dwSize = 0;
+	DWORD dwNameLength = 0;
+	DWORD dwError = 0;
 
 	memset(netbiosName1, 0xAA, netbiosBufferSize);
 	memset(netbiosName2, 0xBB, netbiosBufferSize);
@@ -190,10 +190,10 @@ static BOOL Test_GetComputerNameEx_Format(COMPUTER_NAME_FORMAT format)
 	CHAR computerName2[255 + 1];
 
 	const DWORD nameBufferSize = sizeof(computerName1) / sizeof(CHAR);
-	DWORD dwSize;
-	DWORD dwMinSize;
-	DWORD dwNameLength;
-	DWORD dwError;
+	DWORD dwSize = 0;
+	DWORD dwMinSize = 0;
+	DWORD dwNameLength = 0;
+	DWORD dwError = 0;
 
 	memset(computerName1, 0xAA, nameBufferSize);
 	memset(computerName2, 0xBB, nameBufferSize);

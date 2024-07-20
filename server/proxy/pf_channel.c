@@ -83,14 +83,17 @@ ChannelStateTracker* channelTracker_new(pServerStaticChannelContext* channel,
 	return ret;
 
 fail:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	channelTracker_free(ret);
+	WINPR_PRAGMA_DIAG_POP
 	return NULL;
 }
 
 PfChannelResult channelTracker_update(ChannelStateTracker* tracker, const BYTE* xdata, size_t xsize,
                                       UINT32 flags, size_t totalSize)
 {
-	PfChannelResult result;
+	PfChannelResult result = PF_CHANNEL_RESULT_ERROR;
 	BOOL firstPacket = (flags & CHANNEL_FLAG_FIRST);
 	BOOL lastPacket = (flags & CHANNEL_FLAG_LAST);
 
@@ -170,11 +173,11 @@ void channelTracker_free(ChannelStateTracker* t)
 PfChannelResult channelTracker_flushCurrent(ChannelStateTracker* t, BOOL first, BOOL last,
                                             BOOL toBack)
 {
-	proxyData* pdata;
-	pServerContext* ps;
-	pServerStaticChannelContext* channel;
+	proxyData* pdata = NULL;
+	pServerContext* ps = NULL;
+	pServerStaticChannelContext* channel = NULL;
 	UINT32 flags = CHANNEL_FLAG_FIRST;
-	BOOL r;
+	BOOL r = 0;
 	const char* direction = toBack ? "F->B" : "B->F";
 	const size_t currentPacketSize = channelTracker_getCurrentPacketSize(t);
 	wStream* currentPacket = channelTracker_getCurrentPacket(t);

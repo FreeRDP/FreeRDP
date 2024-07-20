@@ -70,12 +70,11 @@ enum
 	PRIM_FLAGS_HAVE_EXTGPU = (1U << 1), /* primitives are using the GPU */
 };
 
-/* Structures compatible with IPP */
 typedef struct
 {
 	UINT32 width;
 	UINT32 height;
-} prim_size_t; /* like IppiSize */
+} prim_size_t;
 
 typedef enum
 {
@@ -103,14 +102,22 @@ typedef pstatus_t (*__alphaComp_argb_t)(const BYTE* WINPR_RESTRICT pSrc1, UINT32
 typedef pstatus_t (*__add_16s_t)(const INT16* WINPR_RESTRICT pSrc1,
 	                             const INT16* WINPR_RESTRICT pSrc2, INT16* WINPR_RESTRICT pDst,
 	                             UINT32 len);
+typedef pstatus_t (*__add_16s_inplace_t)(INT16* WINPR_RESTRICT pSrcDst1,
+	                                     INT16* WINPR_RESTRICT pSrcDst2, UINT32 len);
+typedef pstatus_t (*__copy_no_overlap_t)(BYTE* WINPR_RESTRICT pDstData, DWORD DstFormat,
+	                                     UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst, UINT32 nWidth,
+	                                     UINT32 nHeight, const BYTE* WINPR_RESTRICT pSrcData,
+	                                     DWORD SrcFormat, UINT32 nSrcStep, UINT32 nXSrc,
+	                                     UINT32 nYSrc, const gdiPalette* WINPR_RESTRICT palette,
+	                                     UINT32 flags);
+typedef pstatus_t (*__lShiftC_16s_inplace_t)(INT16* WINPR_RESTRICT pSrcDst, UINT32 val, UINT32 len);
 typedef pstatus_t (*__lShiftC_16s_t)(const INT16* pSrc, UINT32 val, INT16* pSrcDst, UINT32 len);
 typedef pstatus_t (*__lShiftC_16u_t)(const UINT16* pSrc, UINT32 val, UINT16* pSrcDst, UINT32 len);
 typedef pstatus_t (*__rShiftC_16s_t)(const INT16* pSrc, UINT32 val, INT16* pSrcDst, UINT32 len);
 typedef pstatus_t (*__rShiftC_16u_t)(const UINT16* pSrc, UINT32 val, UINT16* pSrcDst, UINT32 len);
 typedef pstatus_t (*__shiftC_16s_t)(const INT16* pSrc, INT32 val, INT16* pSrcDst, UINT32 len);
 typedef pstatus_t (*__shiftC_16u_t)(const UINT16* pSrc, INT32 val, UINT16* pSrcDst, UINT32 len);
-typedef pstatus_t (*__sign_16s_t)(const INT16* WINPR_RESTRICT pSrc, INT16* WINPR_RESTRICT pDst,
-	                              UINT32 len);
+typedef pstatus_t (*__sign_16s_t)(const INT16* pSrc, INT16* pSrcDst, UINT32 len);
 typedef pstatus_t (*__yCbCrToRGB_16s8u_P3AC4R_t)(const INT16* const WINPR_RESTRICT pSrc[3],
 	                                             UINT32 srcStep, BYTE* WINPR_RESTRICT pDst,
 	                                             UINT32 dstStep, UINT32 DstFormat,
@@ -215,6 +222,13 @@ typedef struct
 	/* flags */
 	DWORD flags;
 	primitives_uninit_t uninit;
+
+	/** \brief Do vecotor addition, store result in both input buffers
+	 *  pSrcDst1 = pSrcDst2 = pSrcDst1  + pSrcDst2
+	 */
+	__add_16s_inplace_t add_16s_inplace;
+	__lShiftC_16s_inplace_t lShiftC_16s_inplace;
+	__copy_no_overlap_t copy_no_overlap;
 } primitives_t;
 
 typedef enum

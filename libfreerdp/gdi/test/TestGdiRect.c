@@ -17,7 +17,7 @@
 static int test_gdi_PtInRect(void)
 {
 	int rc = -1;
-	HGDI_RECT hRect;
+	HGDI_RECT hRect = NULL;
 	UINT32 left = 20;
 	UINT32 top = 40;
 	UINT32 right = 60;
@@ -69,12 +69,11 @@ static int test_gdi_FillRect(void)
 	HGDI_RECT hRect = NULL;
 	HGDI_BRUSH hBrush = NULL;
 	HGDI_BITMAP hBitmap = NULL;
-	UINT32 color;
-	UINT32 pixel;
-	UINT32 rawPixel;
-	UINT32 x, y;
-	UINT32 badPixels;
-	UINT32 goodPixels;
+	UINT32 color = 0;
+	UINT32 pixel = 0;
+	UINT32 rawPixel = 0;
+	UINT32 badPixels = 0;
+	UINT32 goodPixels = 0;
 	UINT32 width = 200;
 	UINT32 height = 300;
 	UINT32 left = 20;
@@ -105,9 +104,9 @@ static int test_gdi_FillRect(void)
 	badPixels = 0;
 	goodPixels = 0;
 
-	for (x = 0; x < width; x++)
+	for (UINT32 x = 0; x < width; x++)
 	{
-		for (y = 0; y < height; y++)
+		for (UINT32 y = 0; y < height; y++)
 		{
 			rawPixel = gdi_GetPixel(hdc, x, y);
 			pixel = FreeRDPConvertColor(rawPixel, hdc->format, PIXEL_FORMAT_ARGB32, NULL);

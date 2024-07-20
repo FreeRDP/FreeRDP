@@ -40,6 +40,7 @@
 #define BB_RSA_KEY_BLOB 6
 #define BB_RSA_SIGNATURE_BLOB 8
 
+WINPR_ATTR_MALLOC(freerdp_certificate_free, 1)
 FREERDP_LOCAL rdpCertificate* freerdp_certificate_new_from_x509(const X509* xcert,
                                                                 const STACK_OF(X509) * chain);
 

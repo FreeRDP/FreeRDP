@@ -81,11 +81,11 @@ extern "C"
 		size_t InterceptCount;
 
 		/* clipboard specific settings */
-		BOOL TextOnly;
-		UINT32 MaxTextLength;
+		WINPR_DEPRECATED_VAR("Unused, ignore", BOOL TextOnly);
+		WINPR_DEPRECATED_VAR("Unused, ignore", UINT32 MaxTextLength);
 
 		/* gfx settings */
-		BOOL DecodeGFX;
+		WINPR_DEPRECATED_VAR("Unused, ignore", BOOL DecodeGFX);
 
 		/* modules */
 		char** Modules; /* module file names to load */
@@ -109,6 +109,9 @@ extern "C"
 		size_t PrivateKeyPEMLength;
 
 		wIniFile* ini;
+
+		/* target continued */
+		UINT32 TargetTlsSecLevel;
 	};
 
 	/**

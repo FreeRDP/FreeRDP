@@ -132,8 +132,8 @@ static const char* autodetect_request_type_to_string_buffer(UINT32 requestType, 
 static BOOL autodetect_send_rtt_measure_request(rdpAutoDetect* autodetect,
                                                 RDP_TRANSPORT_TYPE transport, UINT16 sequenceNumber)
 {
-	UINT16 requestType;
-	wStream* s;
+	UINT16 requestType = 0;
+	wStream* s = NULL;
 
 	WINPR_ASSERT(autodetect);
 	WINPR_ASSERT(autodetect->context);
@@ -158,7 +158,7 @@ static BOOL autodetect_send_rtt_measure_request(rdpAutoDetect* autodetect,
 
 static BOOL autodetect_send_rtt_measure_response(rdpAutoDetect* autodetect, UINT16 sequenceNumber)
 {
-	wStream* s;
+	wStream* s = NULL;
 
 	WINPR_ASSERT(autodetect);
 	WINPR_ASSERT(autodetect->context);
@@ -182,8 +182,8 @@ static BOOL autodetect_send_bandwidth_measure_start(rdpAutoDetect* autodetect,
                                                     RDP_TRANSPORT_TYPE transport,
                                                     UINT16 sequenceNumber)
 {
-	UINT16 requestType;
-	wStream* s;
+	UINT16 requestType = 0;
+	wStream* s = NULL;
 
 	WINPR_ASSERT(autodetect);
 	WINPR_ASSERT(autodetect->context);
@@ -210,7 +210,7 @@ static BOOL autodetect_send_bandwidth_measure_payload(rdpAutoDetect* autodetect,
                                                       RDP_TRANSPORT_TYPE transport,
                                                       UINT16 sequenceNumber, UINT16 payloadLength)
 {
-	wStream* s;
+	wStream* s = NULL;
 
 	WINPR_ASSERT(autodetect);
 	WINPR_ASSERT(autodetect->context);
@@ -249,8 +249,8 @@ static BOOL autodetect_send_bandwidth_measure_stop(rdpAutoDetect* autodetect,
                                                    RDP_TRANSPORT_TYPE transport,
                                                    UINT16 sequenceNumber, UINT16 payloadLength)
 {
-	UINT16 requestType;
-	wStream* s;
+	UINT16 requestType = 0;
+	wStream* s = NULL;
 
 	WINPR_ASSERT(autodetect);
 	WINPR_ASSERT(autodetect->context);
@@ -306,7 +306,7 @@ static BOOL autodetect_send_bandwidth_measure_results(rdpAutoDetect* autodetect,
                                                       UINT16 responseType, UINT16 sequenceNumber)
 {
 	BOOL success = TRUE;
-	wStream* s;
+	wStream* s = NULL;
 	UINT64 timeDelta = GetTickCount64();
 
 	WINPR_ASSERT(autodetect);
@@ -358,7 +358,7 @@ static BOOL autodetect_send_netchar_result(rdpAutoDetect* autodetect, RDP_TRANSP
                                            UINT16 sequenceNumber,
                                            const rdpNetworkCharacteristicsResult* result)
 {
-	wStream* s;
+	wStream* s = NULL;
 
 	WINPR_ASSERT(autodetect);
 	WINPR_ASSERT(autodetect->context);
@@ -432,7 +432,7 @@ autodetect_on_connect_time_auto_detect_progress_default(rdpAutoDetect* autodetec
 static BOOL autodetect_send_netchar_sync(rdpAutoDetect* autodetect, RDP_TRANSPORT_TYPE transport,
                                          UINT16 sequenceNumber)
 {
-	wStream* s;
+	wStream* s = NULL;
 
 	WINPR_ASSERT(autodetect);
 	WINPR_ASSERT(autodetect->context);
@@ -544,7 +544,7 @@ static BOOL autodetect_recv_bandwidth_measure_payload(rdpAutoDetect* autodetect,
                                                       RDP_TRANSPORT_TYPE transport, wStream* s,
                                                       const AUTODETECT_REQ_PDU* autodetectReqPdu)
 {
-	UINT16 payloadLength;
+	UINT16 payloadLength = 0;
 
 	WINPR_ASSERT(autodetect);
 	WINPR_ASSERT(s);
@@ -578,8 +578,8 @@ static BOOL autodetect_recv_bandwidth_measure_stop(rdpAutoDetect* autodetect,
                                                    RDP_TRANSPORT_TYPE transport, wStream* s,
                                                    const AUTODETECT_REQ_PDU* autodetectReqPdu)
 {
-	UINT16 payloadLength;
-	UINT16 responseType;
+	UINT16 payloadLength = 0;
+	UINT16 responseType = 0;
 
 	WINPR_ASSERT(autodetect);
 	WINPR_ASSERT(s);
@@ -640,8 +640,8 @@ static BOOL autodetect_recv_bandwidth_measure_results(rdpAutoDetect* autodetect,
                                                       RDP_TRANSPORT_TYPE transport, wStream* s,
                                                       const AUTODETECT_RSP_PDU* autodetectRspPdu)
 {
-	UINT32 timeDelta;
-	UINT32 byteCount;
+	UINT32 timeDelta = 0;
+	UINT32 byteCount = 0;
 	BOOL success = TRUE;
 
 	WINPR_ASSERT(autodetect);
@@ -795,7 +795,7 @@ state_run_t autodetect_recv_request_packet(rdpAutoDetect* autodetect, RDP_TRANSP
                                            wStream* s)
 {
 	AUTODETECT_REQ_PDU autodetectReqPdu = { 0 };
-	const rdpSettings* settings;
+	const rdpSettings* settings = NULL;
 	BOOL success = FALSE;
 
 	WINPR_ASSERT(autodetect);
@@ -812,30 +812,45 @@ state_run_t autodetect_recv_request_packet(rdpAutoDetect* autodetect, RDP_TRANSP
 	Stream_Read_UINT16(s, autodetectReqPdu.sequenceNumber); /* sequenceNumber (2 bytes) */
 	Stream_Read_UINT16(s, autodetectReqPdu.requestType);    /* requestType (2 bytes) */
 
-	char rbuffer[128] = { 0 };
-	const char* requestTypeStr = autodetect_request_type_to_string_buffer(
-	    autodetectReqPdu.requestType, rbuffer, sizeof(rbuffer));
+	if (WLog_IsLevelActive(autodetect->log, WLOG_TRACE))
+	{
+		char rbuffer[128] = { 0 };
+		const char* requestTypeStr = autodetect_request_type_to_string_buffer(
+		    autodetectReqPdu.requestType, rbuffer, sizeof(rbuffer));
 
-	char hbuffer[128] = { 0 };
-	const char* headerStr =
-	    autodetect_header_type_string(autodetectReqPdu.headerTypeId, hbuffer, sizeof(hbuffer));
+		char hbuffer[128] = { 0 };
+		const char* headerStr =
+		    autodetect_header_type_string(autodetectReqPdu.headerTypeId, hbuffer, sizeof(hbuffer));
 
-	WLog_Print(autodetect->log, WLOG_TRACE,
-	           "rdp_recv_autodetect_request_packet: headerLength=%" PRIu8
-	           ", headerTypeId=%s, sequenceNumber=%" PRIu16 ", requestType=%s",
-	           autodetectReqPdu.headerLength, headerStr, autodetectReqPdu.sequenceNumber,
-	           requestTypeStr);
+		WLog_Print(autodetect->log, WLOG_TRACE,
+		           "rdp_recv_autodetect_request_packet: headerLength=%" PRIu8
+		           ", headerTypeId=%s, sequenceNumber=%" PRIu16 ", requestType=%s",
+		           autodetectReqPdu.headerLength, headerStr, autodetectReqPdu.sequenceNumber,
+		           requestTypeStr);
+	}
 
 	if (!freerdp_settings_get_bool(settings, FreeRDP_NetworkAutoDetect))
 	{
+		char rbuffer[128] = { 0 };
+		const char* requestTypeStr = autodetect_request_type_to_string_buffer(
+		    autodetectReqPdu.requestType, rbuffer, sizeof(rbuffer));
+
 		WLog_Print(autodetect->log, WLOG_WARN,
 		           "Received a [MS-RDPBCGR] 2.2.14.1.1 RTT Measure Request [%s] "
 		           "message but support was not enabled",
 		           requestTypeStr);
+		goto fail;
 	}
 
 	if (autodetectReqPdu.headerTypeId != TYPE_ID_AUTODETECT_REQUEST)
 	{
+		char rbuffer[128] = { 0 };
+		const char* requestTypeStr = autodetect_request_type_to_string_buffer(
+		    autodetectReqPdu.requestType, rbuffer, sizeof(rbuffer));
+		char hbuffer[128] = { 0 };
+		const char* headerStr =
+		    autodetect_header_type_string(autodetectReqPdu.headerTypeId, hbuffer, sizeof(hbuffer));
+
 		WLog_Print(autodetect->log, WLOG_ERROR,
 		           "Received a [MS-RDPBCGR] 2.2.14.1.1 RTT Measure Request [%s] "
 		           "message with invalid headerTypeId=%s",
@@ -901,7 +916,7 @@ state_run_t autodetect_recv_response_packet(rdpAutoDetect* autodetect, RDP_TRANS
                                             wStream* s)
 {
 	AUTODETECT_RSP_PDU autodetectRspPdu = { 0 };
-	const rdpSettings* settings;
+	const rdpSettings* settings = NULL;
 	BOOL success = FALSE;
 
 	WINPR_ASSERT(autodetect);
@@ -919,31 +934,44 @@ state_run_t autodetect_recv_response_packet(rdpAutoDetect* autodetect, RDP_TRANS
 	Stream_Read_UINT16(s, autodetectRspPdu.sequenceNumber); /* sequenceNumber (2 bytes) */
 	Stream_Read_UINT16(s, autodetectRspPdu.responseType);   /* responseType (2 bytes) */
 
-	char rbuffer[128] = { 0 };
+	if (WLog_IsLevelActive(autodetect->log, WLOG_TRACE))
+	{
+		char rbuffer[128] = { 0 };
+		const char* requestStr = autodetect_request_type_to_string_buffer(
+		    autodetectRspPdu.responseType, rbuffer, sizeof(rbuffer));
+		char hbuffer[128] = { 0 };
+		const char* headerStr =
+		    autodetect_header_type_string(autodetectRspPdu.headerTypeId, hbuffer, sizeof(hbuffer));
 
-	const char* requestStr = autodetect_request_type_to_string_buffer(autodetectRspPdu.responseType,
-	                                                                  rbuffer, sizeof(rbuffer));
-
-	char hbuffer[128] = { 0 };
-	const char* headerStr =
-	    autodetect_header_type_string(autodetectRspPdu.headerTypeId, hbuffer, sizeof(hbuffer));
-
-	WLog_Print(autodetect->log, WLOG_TRACE,
-	           "rdp_recv_autodetect_response_packet: headerLength=%" PRIu8 ", headerTypeId=%s"
-	           ", sequenceNumber=%" PRIu16 ", requestType=%s",
-	           autodetectRspPdu.headerLength, headerStr, autodetectRspPdu.sequenceNumber,
-	           requestStr);
+		WLog_Print(autodetect->log, WLOG_TRACE,
+		           "rdp_recv_autodetect_response_packet: headerLength=%" PRIu8 ", headerTypeId=%s"
+		           ", sequenceNumber=%" PRIu16 ", requestType=%s",
+		           autodetectRspPdu.headerLength, headerStr, autodetectRspPdu.sequenceNumber,
+		           requestStr);
+	}
 
 	if (!freerdp_settings_get_bool(settings, FreeRDP_NetworkAutoDetect))
 	{
+		char rbuffer[128] = { 0 };
+
+		const char* requestStr = autodetect_request_type_to_string_buffer(
+		    autodetectRspPdu.responseType, rbuffer, sizeof(rbuffer));
+
 		WLog_Print(autodetect->log, WLOG_WARN,
 		           "Received a [MS-RDPBCGR] 2.2.14.2.1 RTT Measure Response [%s] "
 		           "message but support was not enabled",
 		           requestStr);
+		return STATE_RUN_FAILED;
 	}
 
 	if (autodetectRspPdu.headerTypeId != TYPE_ID_AUTODETECT_RESPONSE)
 	{
+		char rbuffer[128] = { 0 };
+		const char* requestStr = autodetect_request_type_to_string_buffer(
+		    autodetectRspPdu.responseType, rbuffer, sizeof(rbuffer));
+		char hbuffer[128] = { 0 };
+		const char* headerStr =
+		    autodetect_header_type_string(autodetectRspPdu.headerTypeId, hbuffer, sizeof(hbuffer));
 		WLog_Print(autodetect->log, WLOG_ERROR,
 		           "Received a [MS-RDPBCGR] 2.2.14.2.1 RTT Measure Response [%s] "
 		           "message with invalid headerTypeId=%s",

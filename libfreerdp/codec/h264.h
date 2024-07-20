@@ -33,11 +33,13 @@ extern "C"
 	typedef BOOL (*pfnH264SubsystemInit)(H264_CONTEXT* h264);
 	typedef void (*pfnH264SubsystemUninit)(H264_CONTEXT* h264);
 
-	typedef int (*pfnH264SubsystemDecompress)(H264_CONTEXT* h264, const BYTE* pSrcData,
-	                                          UINT32 SrcSize);
-	typedef int (*pfnH264SubsystemCompress)(H264_CONTEXT* h264, const BYTE** pSrcYuv,
-	                                        const UINT32* pStride, BYTE** ppDstData,
-	                                        UINT32* pDstSize);
+	typedef int (*pfnH264SubsystemDecompress)(H264_CONTEXT* WINPR_RESTRICT h264,
+	                                          const BYTE* WINPR_RESTRICT pSrcData, UINT32 SrcSize);
+	typedef int (*pfnH264SubsystemCompress)(H264_CONTEXT* WINPR_RESTRICT h264,
+	                                        const BYTE** WINPR_RESTRICT pSrcYuv,
+	                                        const UINT32* WINPR_RESTRICT pStride,
+	                                        BYTE** WINPR_RESTRICT ppDstData,
+	                                        UINT32* WINPR_RESTRICT pDstSize);
 
 	struct S_H264_CONTEXT_SUBSYSTEM
 	{
@@ -59,6 +61,7 @@ extern "C"
 		UINT32 BitRate;
 		UINT32 FrameRate;
 		UINT32 QP;
+		UINT32 UsageType;
 		UINT32 NumberOfThreads;
 
 		UINT32 iStride[3];

@@ -88,8 +88,10 @@ extern "C"
 	                                      BOOL write, UINT32 version);
 	FREERDP_API int persistent_cache_close(rdpPersistentCache* persistent);
 
-	FREERDP_API rdpPersistentCache* persistent_cache_new(void);
 	FREERDP_API void persistent_cache_free(rdpPersistentCache* persistent);
+
+	WINPR_ATTR_MALLOC(persistent_cache_free, 1)
+	FREERDP_API rdpPersistentCache* persistent_cache_new(void);
 
 #ifdef __cplusplus
 }

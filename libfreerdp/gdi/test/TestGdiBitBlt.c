@@ -385,31 +385,36 @@ static BOOL test_rop(HGDI_DC hdcDst, HGDI_DC hdcSrc, HGDI_BITMAP hBmpSrc, HGDI_B
                      HGDI_BITMAP hBmpDstOriginal, UINT32 rop, HGDI_BITMAP expected,
                      const gdiPalette* hPalette)
 {
+	BOOL success = FALSE;
+
 	/* restore original destination bitmap */
 	gdi_SelectObject(hdcSrc, (HGDIOBJECT)hBmpDstOriginal);
 	gdi_SelectObject(hdcDst, (HGDIOBJECT)hBmpDst);
 
 	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_SRCCOPY, hPalette))
-		return FALSE;
+		goto fail;
 
 	if (!test_assert_bitmaps_equal(hBmpDst, hBmpDstOriginal, gdi_rop_to_string(GDI_SRCCOPY),
 	                               hPalette))
-		gdi_SelectObject(hdcSrc, (HGDIOBJECT)hBmpSrc);
+		goto fail;
 
+	gdi_SelectObject(hdcSrc, (HGDIOBJECT)hBmpSrc);
 	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, rop, hPalette))
-		return FALSE;
+		goto fail;
 
 	if (!test_assert_bitmaps_equal(hBmpDst, expected, gdi_rop_to_string(rop), hPalette))
-		return FALSE;
+		goto fail;
 
-	return TRUE;
+	success = TRUE;
+fail:
+	fprintf(stderr, "[%s] ROP=%s returned %d\n", __func__, gdi_rop_to_string(rop), success);
+	return success;
 }
 
 static BOOL test_gdi_BitBlt(UINT32 SrcFormat, UINT32 DstFormat)
 {
 	BOOL rc = FALSE;
 	BOOL failed = FALSE;
-	UINT32 x;
 	HGDI_DC hdcSrc = NULL;
 	HGDI_DC hdcDst = NULL;
 	const UINT32 RawFormat = PIXEL_FORMAT_RGB8;
@@ -458,12 +463,12 @@ static BOOL test_gdi_BitBlt(UINT32 SrcFormat, UINT32 DstFormat)
 	HGDI_BITMAP hBmpSrc = NULL;
 	HGDI_BITMAP hBmpDst = NULL;
 	HGDI_BITMAP hBmpDstOriginal = NULL;
-	HGDI_BRUSH brush;
+	HGDI_BRUSH brush = NULL;
 	gdiPalette g;
 	gdiPalette* hPalette = &g;
 	g.format = DstFormat;
 
-	for (x = 0; x < 256; x++)
+	for (UINT32 x = 0; x < 256; x++)
 		g.palette[x] = FreeRDPGetColor(DstFormat, x, x, x, 0xFF);
 
 	if (!(hdcSrc = gdi_GetDC()))
@@ -499,21 +504,24 @@ static BOOL test_gdi_BitBlt(UINT32 SrcFormat, UINT32 DstFormat)
 	if (!hBmpDstOriginal)
 		goto fail;
 
-	for (x = 0; x < number_tests; x++)
+	for (size_t x = 0; x < ARRAYSIZE(tests); x++)
 	{
-		tests[x].bmp = test_convert_to_bitmap(tests[x].src, RawFormat, 0, 0, 0, SrcFormat, 0, 0, 0,
-		                                      16, 16, hPalette);
+		struct test_bitblt* test = &tests[x];
+		test->bmp = test_convert_to_bitmap(test->src, RawFormat, 0, 0, 0, SrcFormat, 0, 0, 0, 16,
+		                                   16, hPalette);
 
-		if (!tests[x].bmp)
+		if (!test->bmp)
 			goto fail;
 	}
 
 	brush = gdi_CreateSolidBrush(0x123456);
 	gdi_SelectObject(hdcDst, (HGDIOBJECT)brush);
 
-	for (x = 0; x < number_tests; x++)
+	for (size_t x = 0; x < ARRAYSIZE(tests); x++)
 	{
-		if (!test_rop(hdcDst, hdcSrc, hBmpSrc, hBmpDst, hBmpDstOriginal, tests[x].rop, tests[x].bmp,
+		struct test_bitblt* test = &tests[x];
+
+		if (!test_rop(hdcDst, hdcSrc, hBmpSrc, hBmpDst, hBmpDstOriginal, test->rop, test->bmp,
 		              hPalette))
 			failed = TRUE;
 	}
@@ -523,16 +531,19 @@ static BOOL test_gdi_BitBlt(UINT32 SrcFormat, UINT32 DstFormat)
 	rc = !failed;
 fail:
 
-	for (x = 0; x < number_tests; x++)
-		gdi_DeleteObject((HGDIOBJECT)tests[x].bmp);
+	for (size_t x = 0; x < ARRAYSIZE(tests); x++)
+	{
+		struct test_bitblt* test = &tests[x];
+		gdi_DeleteObject((HGDIOBJECT)test->bmp);
+	}
 
 	gdi_DeleteObject((HGDIOBJECT)hBmpSrc);
 	gdi_DeleteObject((HGDIOBJECT)hBmpDst);
 	gdi_DeleteObject((HGDIOBJECT)hBmpDstOriginal);
 	gdi_DeleteDC(hdcSrc);
 	gdi_DeleteDC(hdcDst);
-	fprintf(stderr, "%s: TODO Test not implemented!!!\n", __func__);
-	return TRUE; // rc;
+
+	return rc;
 }
 
 int TestGdiBitBlt(int argc, char* argv[])
@@ -544,14 +555,13 @@ int TestGdiBitBlt(int argc, char* argv[])
 		                          PIXEL_FORMAT_BGR15,  PIXEL_FORMAT_ABGR15, PIXEL_FORMAT_BGR16,
 		                          PIXEL_FORMAT_BGR24,  PIXEL_FORMAT_BGRA32, PIXEL_FORMAT_BGRX32,
 		                          PIXEL_FORMAT_ABGR32, PIXEL_FORMAT_XBGR32 };
-	const size_t listSize = sizeof(formatList) / sizeof(formatList[0]);
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
 
-	for (size_t x = 0; x < listSize; x++)
+	for (size_t x = 0; x < ARRAYSIZE(formatList); x++)
 	{
 		/* Skip 8bpp, only supported on remote end. */
-		for (size_t y = 1; y < listSize; y++)
+		for (size_t y = 1; y < ARRAYSIZE(formatList); y++)
 		{
 			if (!test_gdi_BitBlt(formatList[x], formatList[y]))
 			{

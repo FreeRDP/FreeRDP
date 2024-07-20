@@ -212,6 +212,14 @@ extern "C"
 	 */
 	WINPR_API const char* winpr_NCryptSecurityStatusError(SECURITY_STATUS status);
 
+	/**
+	 * Gives a module path of provider handle
+	 *
+	 * @param phProvider [in] provider handle
+	 * @return module path
+	 */
+	WINPR_API const char* winpr_NCryptGetModulePath(NCRYPT_PROV_HANDLE phProvider);
+
 #ifdef __cplusplus
 }
 #endif

@@ -64,12 +64,10 @@ struct winpr_rc4_ctx_private_st
 
 static WINPR_RC4_CTX* winpr_RC4_New_Internal(const BYTE* key, size_t keylen, BOOL override_fips)
 {
-	WINPR_RC4_CTX* ctx = NULL;
-
 	if (!key || (keylen == 0))
 		return NULL;
 
-	ctx = calloc(1, sizeof(WINPR_RC4_CTX));
+	WINPR_RC4_CTX* ctx = (WINPR_RC4_CTX*)calloc(1, sizeof(WINPR_RC4_CTX));
 	if (!ctx)
 		return NULL;
 
@@ -111,7 +109,11 @@ static WINPR_RC4_CTX* winpr_RC4_New_Internal(const BYTE* key, size_t keylen, BOO
 	return ctx;
 
 fail:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
+
 	winpr_RC4_Free(ctx);
+	WINPR_PRAGMA_DIAG_POP
 	return NULL;
 }
 
@@ -133,7 +135,7 @@ BOOL winpr_RC4_Update(WINPR_RC4_CTX* ctx, size_t length, const void* input, void
 	return winpr_int_rc4_update(ctx->ictx, length, input, output);
 #elif defined(WITH_OPENSSL)
 	WINPR_ASSERT(ctx->ctx);
-	int outputLength;
+	int outputLength = 0;
 	if (length > INT_MAX)
 		return FALSE;
 
@@ -469,9 +471,9 @@ WINPR_CIPHER_CTX* winpr_Cipher_New(int cipher, int op, const void* key, const vo
 {
 	WINPR_CIPHER_CTX* ctx = NULL;
 #if defined(WITH_OPENSSL)
-	int operation;
-	const EVP_CIPHER* evp;
-	EVP_CIPHER_CTX* octx;
+	int operation = 0;
+	const EVP_CIPHER* evp = NULL;
+	EVP_CIPHER_CTX* octx = NULL;
 
 	if (!(evp = winpr_openssl_get_evp_cipher(cipher)))
 		return NULL;
@@ -623,8 +625,8 @@ int winpr_Cipher_BytesToKey(int cipher, WINPR_MD_TYPE md, const void* salt, cons
 	 * https://www.openssl.org/docs/manmaster/crypto/EVP_BytesToKey.html
 	 */
 #if defined(WITH_OPENSSL)
-	const EVP_MD* evp_md;
-	const EVP_CIPHER* evp_cipher;
+	const EVP_MD* evp_md = NULL;
+	const EVP_CIPHER* evp_cipher = NULL;
 	evp_md = winpr_openssl_get_evp_md((WINPR_MD_TYPE)md);
 	evp_cipher = winpr_openssl_get_evp_cipher(cipher);
 	return EVP_BytesToKey(evp_cipher, evp_md, salt, data, datal, count, key, iv);
@@ -632,7 +634,7 @@ int winpr_Cipher_BytesToKey(int cipher, WINPR_MD_TYPE md, const void* salt, cons
 	int rv = 0;
 	BYTE md_buf[64];
 	int niv, nkey, addmd = 0;
-	unsigned int mds = 0, i;
+	unsigned int mds = 0;
 	mbedtls_md_context_t ctx;
 	const mbedtls_md_info_t* md_info;
 	mbedtls_cipher_type_t cipher_type;
@@ -680,7 +682,7 @@ int winpr_Cipher_BytesToKey(int cipher, WINPR_MD_TYPE md, const void* salt, cons
 
 		mds = mbedtls_md_get_size(md_info);
 
-		for (i = 1; i < (unsigned int)count; i++)
+		for (unsigned int i = 1; i < (unsigned int)count; i++)
 		{
 			if (mbedtls_md_starts(&ctx) != 0)
 				goto err;

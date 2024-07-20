@@ -247,7 +247,6 @@ static UINT audin_mac_open(IAudinDevice *device, AudinReceive receive, void *use
 	DWORD errCode;
 	char errString[1024];
 	OSStatus devStat;
-	size_t index;
 
 	if (!mac->isAuthorized)
 		return ERROR_INTERNAL_ERROR;
@@ -265,7 +264,7 @@ static UINT audin_mac_open(IAudinDevice *device, AudinReceive receive, void *use
 		goto err_out;
 	}
 
-	for (index = 0; index < MAC_AUDIO_QUEUE_NUM_BUFFERS; index++)
+	for (size_t index = 0; index < MAC_AUDIO_QUEUE_NUM_BUFFERS; index++)
 	{
 		devStat = AudioQueueAllocateBuffer(mac->audioQueue,
 		                                   mac->FramesPerPacket * 2 * mac->format.nChannels,

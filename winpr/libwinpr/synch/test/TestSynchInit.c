@@ -42,8 +42,8 @@ static BOOL CALLBACK TestOnceFunction(PINIT_ONCE once, PVOID param, PVOID* conte
 
 static DWORD WINAPI TestThreadFunction(LPVOID lpParam)
 {
-	LONG calls;
-	BOOL ok;
+	LONG calls = 0;
+	BOOL ok = 0;
 
 	WINPR_UNUSED(lpParam);
 
@@ -69,7 +69,6 @@ int TestSynchInit(int argc, char* argv[])
 {
 	HANDLE hThreads[TEST_NUM_THREADS];
 	DWORD dwCreatedThreads = 0;
-	DWORD i;
 	BOOL result = FALSE;
 
 	WINPR_UNUSED(argc);
@@ -99,7 +98,7 @@ int TestSynchInit(int argc, char* argv[])
 		goto out;
 	}
 
-	for (i = 0; i < TEST_NUM_THREADS; i++)
+	for (DWORD i = 0; i < TEST_NUM_THREADS; i++)
 	{
 		if (!(hThreads[i] = CreateThread(NULL, 0, TestThreadFunction, NULL, 0, NULL)))
 		{
@@ -113,7 +112,7 @@ int TestSynchInit(int argc, char* argv[])
 	Sleep(100);
 	SetEvent(hStartEvent);
 
-	for (i = 0; i < dwCreatedThreads; i++)
+	for (DWORD i = 0; i < dwCreatedThreads; i++)
 	{
 		if (WaitForSingleObject(hThreads[i], INFINITE) != WAIT_OBJECT_0)
 		{
@@ -148,7 +147,7 @@ out:
 
 	CloseHandle(hStartEvent);
 
-	for (i = 0; i < dwCreatedThreads; i++)
+	for (DWORD i = 0; i < dwCreatedThreads; i++)
 	{
 		CloseHandle(hThreads[i]);
 	}

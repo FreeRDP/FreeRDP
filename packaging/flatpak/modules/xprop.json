@@ -1,0 +1,14 @@
+{
+	"name": "xprop",
+	"sources": [
+		{
+			"type": "archive",
+			"url": "https://xorg.freedesktop.org/releases/individual/app/xprop-1.2.7.tar.xz",
+			"sha256": "4436e3148bb91a162406230d9f736a49ca8b50b74790015dc15d78d6ce8e825f"
+		}
+	],
+	"cleanup": [
+		"/share/doc",
+		"/share/man"
+	]
+}

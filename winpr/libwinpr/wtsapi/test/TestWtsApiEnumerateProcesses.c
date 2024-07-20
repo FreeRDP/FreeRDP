@@ -6,10 +6,10 @@
 
 int TestWtsApiEnumerateProcesses(int argc, char* argv[])
 {
-	DWORD count;
-	BOOL bSuccess;
-	HANDLE hServer;
-	PWTS_PROCESS_INFOA pProcessInfo;
+	DWORD count = 0;
+	BOOL bSuccess = 0;
+	HANDLE hServer = NULL;
+	PWTS_PROCESS_INFOA pProcessInfo = NULL;
 
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
@@ -37,9 +37,8 @@ int TestWtsApiEnumerateProcesses(int argc, char* argv[])
 
 #if 0
 	{
-		DWORD i;
 		printf("WTSEnumerateProcesses enumerated %"PRIu32" processs:\n", count);
-		for (i = 0; i < count; i++)
+		for (DWORD i = 0; i < count; i++)
 			printf("\t[%"PRIu32"]: %s (%"PRIu32")\n", i, pProcessInfo[i].pProcessName, pProcessInfo[i].ProcessId);
 	}
 #endif

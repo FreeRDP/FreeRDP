@@ -31,6 +31,8 @@
 
 #include "streamdump.h"
 
+#define TAG FREERDP_TAG("streamdump")
+
 struct stream_dump_context
 {
 	rdpTransportIo io;
@@ -40,14 +42,15 @@ struct stream_dump_context
 	UINT64 replayTime;
 	CONNECTION_STATE state;
 	BOOL isServer;
+	BOOL nodelay;
+	wLog* log;
 };
 
 static UINT32 crc32b(const BYTE* data, size_t length)
 {
-	size_t x;
 	UINT32 crc = 0xFFFFFFFF;
 
-	for (x = 0; x < length; x++)
+	for (size_t x = 0; x < length; x++)
 	{
 		const UINT32 d = data[x] & 0xFF;
 		crc = crc ^ d;
@@ -67,11 +70,11 @@ static
     stream_dump_read_line(FILE* fp, wStream* s, UINT64* pts, size_t* pOffset, UINT32* flags)
 {
 	BOOL rc = FALSE;
-	UINT64 ts;
+	UINT64 ts = 0;
 	UINT64 size = 0;
-	size_t r;
-	UINT32 crc32;
-	BYTE received;
+	size_t r = 0;
+	UINT32 crc32 = 0;
+	BYTE received = 0;
 
 	if (!fp || !s || !flags)
 		return FALSE;
@@ -162,7 +165,7 @@ fail:
 
 static FILE* stream_dump_get_file(const rdpSettings* settings, const char* mode)
 {
-	const char* cfolder;
+	const char* cfolder = NULL;
 	char* file = NULL;
 	FILE* fp = NULL;
 
@@ -190,7 +193,7 @@ SSIZE_T stream_dump_append(const rdpContext* context, UINT32 flags, wStream* s, 
 	FILE* fp = NULL;
 	const UINT32 mask = STREAM_MSG_SRV_RX | STREAM_MSG_SRV_TX;
 	CONNECTION_STATE state = freerdp_get_state(context);
-	int r;
+	int r = 0;
 
 	if (!context || !s || !offset)
 		return -1;
@@ -229,7 +232,7 @@ SSIZE_T stream_dump_get(const rdpContext* context, UINT32* flags, wStream* s, si
 {
 	SSIZE_T rc = -1;
 	FILE* fp = NULL;
-	int r;
+	int r = 0;
 
 	if (!context || !s || !offset)
 		return -1;
@@ -252,7 +255,7 @@ fail:
 
 static int stream_dump_transport_write(rdpTransport* transport, wStream* s)
 {
-	SSIZE_T r;
+	SSIZE_T r = 0;
 	rdpContext* ctx = transport_get_context(transport);
 
 	WINPR_ASSERT(ctx);
@@ -270,7 +273,7 @@ static int stream_dump_transport_write(rdpTransport* transport, wStream* s)
 
 static int stream_dump_transport_read(rdpTransport* transport, wStream* s)
 {
-	int rc;
+	int rc = 0;
 	rdpContext* ctx = transport_get_context(transport);
 
 	WINPR_ASSERT(ctx);
@@ -292,7 +295,7 @@ static int stream_dump_transport_read(rdpTransport* transport, wStream* s)
 
 static BOOL stream_dump_register_write_handlers(rdpContext* context)
 {
-	rdpTransportIo dump;
+	rdpTransportIo dump = { 0 };
 	const rdpTransportIo* dfl = freerdp_get_io_callbacks(context);
 
 	if (!freerdp_settings_get_bool(context->settings, FreeRDP_TransportDump))
@@ -315,13 +318,13 @@ static BOOL stream_dump_register_write_handlers(rdpContext* context)
 static int stream_dump_replay_transport_write(rdpTransport* transport, wStream* s)
 {
 	rdpContext* ctx = transport_get_context(transport);
-	size_t size;
+	size_t size = 0;
 
 	WINPR_ASSERT(ctx);
 	WINPR_ASSERT(s);
 
 	size = Stream_Length(s);
-	WLog_ERR("abc", "replay write %" PRIuz, size);
+	WLog_Print(ctx->dump->log, WLOG_TRACE, "replay write %" PRIuz, size);
 	// TODO: Compare with write file
 
 	return 1;
@@ -340,19 +343,24 @@ static int stream_dump_replay_transport_read(rdpTransport* transport, wStream* s
 	WINPR_ASSERT(ctx->dump);
 	WINPR_ASSERT(s);
 
+	const size_t start = Stream_GetPosition(s);
 	do
 	{
+		Stream_SetPosition(s, start);
 		if (stream_dump_get(ctx, &flags, s, &ctx->dump->replayOffset, &ts) < 0)
 			return -1;
 	} while (flags & STREAM_MSG_SRV_RX);
 
-	if ((ctx->dump->replayTime > 0) && (ts > ctx->dump->replayTime))
-		slp = ts - ctx->dump->replayTime;
+	if (!ctx->dump->nodelay)
+	{
+		if ((ctx->dump->replayTime > 0) && (ts > ctx->dump->replayTime))
+			slp = ts - ctx->dump->replayTime;
+	}
 	ctx->dump->replayTime = ts;
 
 	size = Stream_Length(s);
 	Stream_SetPosition(s, 0);
-	WLog_ERR("abc", "replay read %" PRIuz, size);
+	WLog_Print(ctx->dump->log, WLOG_TRACE, "replay read %" PRIuz, size);
 
 	if (slp > 0)
 	{
@@ -392,17 +400,18 @@ static BOOL stream_dump_replay_transport_accept(rdpTransport* transport)
 
 static BOOL stream_dump_register_read_handlers(rdpContext* context)
 {
-	rdpTransportIo dump;
 	const rdpTransportIo* dfl = freerdp_get_io_callbacks(context);
 
 	if (!freerdp_settings_get_bool(context->settings, FreeRDP_TransportDumpReplay))
 		return TRUE;
 
 	WINPR_ASSERT(dfl);
-	dump = *dfl;
+	rdpTransportIo dump = *dfl;
 
 	/* Remember original callbacks for later */
 	WINPR_ASSERT(context->dump);
+	context->dump->nodelay =
+	    freerdp_settings_get_bool(context->settings, FreeRDP_TransportDumpReplayNodelay);
 	context->dump->io.ReadPdu = dfl->ReadPdu;
 	context->dump->io.WritePdu = dfl->WritePdu;
 
@@ -416,7 +425,9 @@ static BOOL stream_dump_register_read_handlers(rdpContext* context)
 	dump.TCPConnect = stream_dump_replay_transport_tcp_connect;
 	dump.TLSAccept = stream_dump_replay_transport_accept;
 	dump.TLSConnect = stream_dump_replay_transport_tls_connect;
-	return freerdp_set_io_callbacks(context, &dump);
+	if (!freerdp_set_io_callbacks(context, &dump))
+		return FALSE;
+	return freerdp_io_callback_set_event(context, TRUE);
 }
 
 BOOL stream_dump_register_handlers(rdpContext* context, CONNECTION_STATE state, BOOL isServer)
@@ -440,6 +451,7 @@ rdpStreamDumpContext* stream_dump_new(void)
 	rdpStreamDumpContext* dump = calloc(1, sizeof(rdpStreamDumpContext));
 	if (!dump)
 		return NULL;
+	dump->log = WLog_Get(TAG);
 
 	return dump;
 }

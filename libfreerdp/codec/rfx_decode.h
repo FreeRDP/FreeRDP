@@ -29,8 +29,5 @@
 FREERDP_LOCAL BOOL rfx_decode_rgb(RFX_CONTEXT* WINPR_RESTRICT context,
                                   const RFX_TILE* WINPR_RESTRICT tile,
                                   BYTE* WINPR_RESTRICT rgb_buffer, UINT32 stride);
-FREERDP_LOCAL void rfx_decode_component(RFX_CONTEXT* WINPR_RESTRICT context,
-                                        const UINT32* WINPR_RESTRICT quantization_values,
-                                        const BYTE* WINPR_RESTRICT data, size_t size,
-                                        INT16* WINPR_RESTRICT buffer);
+
 #endif /* FREERDP_LIB_CODEC_RFX_DECODE_H */

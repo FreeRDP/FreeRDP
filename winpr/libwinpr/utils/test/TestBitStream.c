@@ -6,14 +6,13 @@
 
 static void BitStrGen(void)
 {
-	DWORD i, j;
-	char str[64];
+	char str[64] = { 0 };
 
-	for (i = 0; i < 256;)
+	for (DWORD i = 0; i < 256;)
 	{
 		printf("\t");
 
-		for (j = 0; j < 4; j++)
+		for (DWORD j = 0; j < 4; j++)
 		{
 			if (0)
 			{
@@ -52,7 +51,7 @@ static void BitStrGen(void)
 
 int TestBitStream(int argc, char* argv[])
 {
-	wBitStream* bs;
+	wBitStream* bs = NULL;
 	BYTE buffer[1024] = { 0 };
 
 	WINPR_UNUSED(argc);

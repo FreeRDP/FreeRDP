@@ -8,7 +8,6 @@ source $(dirname "${BASH_SOURCE[0]}")/android-build-common.sh
 
 # Run the main program.
 common_parse_arguments $@
-common_check_requirements
 common_update $SCM_URL $SCM_TAG $BUILD_SRC $SCM_HASH
 
 # Prepare the environment

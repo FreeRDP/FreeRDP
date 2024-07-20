@@ -55,9 +55,10 @@
 
 int xf_list_monitors(xfContext* xfc)
 {
-	Display* display;
-	int major, minor;
-	int i, nmonitors = 0;
+	Display* display = NULL;
+	int major = 0;
+	int minor = 0;
+	int nmonitors = 0;
 	display = XOpenDisplay(NULL);
 
 	if (!display)
@@ -74,7 +75,7 @@ int xf_list_monitors(xfContext* xfc)
 		XRRMonitorInfo* monitors =
 		    XRRGetMonitors(display, DefaultRootWindow(display), 1, &nmonitors);
 
-		for (i = 0; i < nmonitors; i++)
+		for (int i = 0; i < nmonitors; i++)
 		{
 			printf("      %s [%d] %dx%d\t+%d+%d\n", monitors[i].primary ? "*" : " ", i,
 			       monitors[i].width, monitors[i].height, monitors[i].x, monitors[i].y);
@@ -91,7 +92,7 @@ int xf_list_monitors(xfContext* xfc)
 		{
 			XineramaScreenInfo* screen = XineramaQueryScreens(display, &nmonitors);
 
-			for (i = 0; i < nmonitors; i++)
+			for (int i = 0; i < nmonitors; i++)
 			{
 				printf("      %s [%d] %hdx%hd\t+%hd+%hd\n", (i == 0) ? "*" : " ", i,
 				       screen[i].width, screen[i].height, screen[i].x_org, screen[i].y_org);
@@ -114,8 +115,7 @@ int xf_list_monitors(xfContext* xfc)
 
 static BOOL xf_is_monitor_id_active(xfContext* xfc, UINT32 id)
 {
-	UINT32 index;
-	const rdpSettings* settings;
+	const rdpSettings* settings = NULL;
 
 	WINPR_ASSERT(xfc);
 
@@ -126,7 +126,7 @@ static BOOL xf_is_monitor_id_active(xfContext* xfc, UINT32 id)
 	if (NumMonitorIds == 0)
 		return TRUE;
 
-	for (index = 0; index < NumMonitorIds; index++)
+	for (UINT32 index = 0; index < NumMonitorIds; index++)
 	{
 		const UINT32* cur = freerdp_settings_get_pointer_array(settings, FreeRDP_MonitorIds, index);
 		if (cur && (*cur == id))
@@ -144,12 +144,15 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 	BOOL primaryMonitorFound = FALSE;
 	VIRTUAL_SCREEN* vscreen = NULL;
 	rdpSettings* settings = NULL;
-	int mouse_x = 0, mouse_y = 0, _dummy_i = 0;
+	int mouse_x = 0;
+	int mouse_y = 0;
+	int _dummy_i = 0;
 	Window _dummy_w = 0;
 	int current_monitor = 0;
 	Screen* screen = NULL;
 #if defined WITH_XINERAMA || defined WITH_XRANDR
-	int major = 0, minor = 0;
+	int major = 0;
+	int minor = 0;
 #endif
 #if defined(USABLE_XRANDR)
 	XRRMonitorInfo* rrmonitors = NULL;
@@ -191,9 +194,7 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 
 		if (vscreen->nmonitors)
 		{
-			int i;
-
-			for (i = 0; i < vscreen->nmonitors; i++)
+			for (int i = 0; i < vscreen->nmonitors; i++)
 			{
 				MONITOR_INFO* cur_vscreen = &vscreen->monitors[i];
 				const XRRMonitorInfo* cur_monitor = &rrmonitors[i];
@@ -219,9 +220,7 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 
 		if (vscreen->nmonitors)
 		{
-			int i;
-
-			for (i = 0; i < vscreen->nmonitors; i++)
+			for (int i = 0; i < vscreen->nmonitors; i++)
 			{
 				MONITOR_INFO* monitor = &vscreen->monitors[i];
 				monitor->area.left = screenInfo[i].x_org;
@@ -241,9 +240,7 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 	/* Determine which monitor that the mouse cursor is on */
 	if (vscreen->monitors)
 	{
-		int i;
-
-		for (i = 0; i < vscreen->nmonitors; i++)
+		for (int i = 0; i < vscreen->nmonitors; i++)
 		{
 			const MONITOR_INFO* monitor = &vscreen->monitors[i];
 
@@ -392,7 +389,7 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 		}
 		for (UINT32 i = 0; i < vscreen->nmonitors; i++)
 		{
-			MONITOR_ATTRIBUTES* attrs;
+			MONITOR_ATTRIBUTES* attrs = NULL;
 
 			if (!xf_is_monitor_id_active(xfc, (UINT32)i))
 				continue;
@@ -429,7 +426,8 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 
 			if (useXRandr && rrmonitors)
 			{
-				Rotation rot, ret;
+				Rotation rot = 0;
+				Rotation ret = 0;
 				attrs = &monitor->attributes;
 				attrs->physicalWidth = rrmonitors[i].mwidth;
 				attrs->physicalHeight = rrmonitors[i].mheight;
@@ -457,7 +455,8 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 	 * to go fullscreen on the current monitor only */
 	if (nmonitors == 0 && vscreen->nmonitors > 0)
 	{
-		INT32 width, height;
+		INT32 width = 0;
+		INT32 height = 0;
 		if (!vscreen->monitors)
 			goto fail;
 

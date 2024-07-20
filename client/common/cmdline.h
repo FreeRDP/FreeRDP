@@ -34,7 +34,7 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  "desktop composition" },
 	{ "app", COMMAND_LINE_VALUE_REQUIRED,
 	  "program:[<path>|<||alias>],cmd:<command>,file:<filename>,guid:<guid>,icon:<filename>,name:<"
-	  "name>,workdir:<directory>",
+	  "name>,workdir:<directory>,hidef:[on|off]",
 	  NULL, NULL, -1, NULL, "Remote application program" },
 #if defined(WITH_FREERDP_DEPRECATED_COMMANDLINE)
 	{ "app-cmd", COMMAND_LINE_VALUE_REQUIRED, "<parameters>", NULL, NULL, -1, NULL,
@@ -119,15 +119,15 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  "Client Build Number sent to server (influences smartcard behaviour, see [MS-RDPESC])" },
 	{ "client-hostname", COMMAND_LINE_VALUE_REQUIRED, "<name>", NULL, NULL, -1, NULL,
 	  "Client Hostname to send to server" },
-	{ "clipboard", COMMAND_LINE_VALUE_OPTIONAL,
+	{ "clipboard", COMMAND_LINE_VALUE_BOOL | COMMAND_LINE_VALUE_OPTIONAL,
 	  "[[use-selection:<atom>],[direction-to:[all|local|remote|off]],[files-to[:all|local|remote|"
-	  "off]]],",
-	  NULL, NULL, -1, NULL,
+	  "off]]]",
+	  BoolValueTrue, NULL, -1, NULL,
 	  "Redirect clipboard:\n"
 	  " * use-selection:<atom>  ... (X11) Specify which X selection to access. Default is "
 	  "CLIPBOARD. PRIMARY is the X-style middle-click selection.\n"
 	  " * direction-to:[all|local|remote|off] control enabled clipboard direction\n"
-	  " * files-to:[all|local|remote|off] control enabled file clipboard directiont" },
+	  " * files-to:[all|local|remote|off] control enabled file clipboard direction" },
 #if defined(WITH_FREERDP_DEPRECATED_COMMANDLINE)
 	{ "codec-cache", COMMAND_LINE_VALUE_REQUIRED, "[rfx|nsc|jpeg]", NULL, NULL, -1, NULL,
 	  "[DEPRECATED, use /cache:codec:[rfx|nsc|jpeg]] Bitmap codec cache" },
@@ -147,8 +147,8 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  "later\" option in MSTSC." },
 	{ "drives", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL,
 	  "Redirect all mount points as shares" },
-	{ "dump", COMMAND_LINE_VALUE_REQUIRED, "<record|replay>,<file>", NULL, NULL, -1, NULL,
-	  "record or replay dump" },
+	{ "dump", COMMAND_LINE_VALUE_REQUIRED, "<record|replay>,file:<file>[,nodelay]", NULL, NULL, -1,
+	  NULL, "record or replay dump" },
 	{ "dvc", COMMAND_LINE_VALUE_REQUIRED, "<channel>[,<options>]", NULL, NULL, -1, NULL,
 	  "Dynamic virtual channel" },
 	{ "dynamic-resolution", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL,
@@ -202,7 +202,7 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	{ "gfx", COMMAND_LINE_VALUE_OPTIONAL,
 	  "[[progressive[:on|off]|RFX[:on|off]|AVC420[:on|off]AVC444[:on|off]],mask:<value>,small-"
 	  "cache[:on|off],thin-client[:on|off],progressive[:on|"
-	  "off]]",
+	  "off],frame-ack[:on|off]]",
 	  NULL, NULL, -1, NULL, "RDP8 graphics pipeline" },
 #if defined(WITH_FREERDP_DEPRECATED_COMMANDLINE)
 	{ "gfx-h264", COMMAND_LINE_VALUE_OPTIONAL, "[[AVC420|AVC444],mask:<value>]", NULL, NULL, -1,
@@ -247,8 +247,10 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  "Print help" },
 	{ "home-drive", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL,
 	  "Redirect user home as share" },
-	{ "ipv6", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, "6",
-	  "Prefer IPv6 AAA record over IPv4 A record" },
+	{ "ipv4", COMMAND_LINE_VALUE_OPTIONAL, "[:force]", NULL, NULL, -1, "4",
+	  "Prefer IPv4 A record over IPv6 AAAA record" },
+	{ "ipv6", COMMAND_LINE_VALUE_OPTIONAL, "[:force]", NULL, NULL, -1, "6",
+	  "Prefer IPv6 AAAA record over IPv4 A record" },
 #if defined(WITH_JPEG)
 	{ "jpeg", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "JPEG codec support" },
 	{ "jpeg-quality", COMMAND_LINE_VALUE_REQUIRED, "<percentage>", NULL, NULL, -1, NULL,
@@ -295,7 +297,7 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	{ "list", COMMAND_LINE_VALUE_REQUIRED | COMMAND_LINE_PRINT,
 	  "[kbd|kbd-scancode|kbd-lang[:<value>]|smartcard[:[pkinit-anchors:<path>][,pkcs11-module:<"
 	  "name>]]|"
-	  "monitor|tune]",
+	  "monitor|tune|timezones]",
 	  "List available options for subcommand", NULL, -1, NULL,
 	  "List available options for subcommand" },
 	{ "log-filters", COMMAND_LINE_VALUE_REQUIRED, "<tag>:<level>[,<tag>:<level>[,...]]", NULL, NULL,
@@ -341,7 +343,7 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	{ "nego", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL,
 	  "protocol security negotiation" },
 	{ "network", COMMAND_LINE_VALUE_REQUIRED,
-	  "[modem|broadband|broadband-low|broadband-high|wan|lan|auto]", NULL, NULL, -1, NULL,
+	  "[invalid|modem|broadband|broadband-low|broadband-high|wan|lan|auto]", NULL, NULL, -1, NULL,
 	  "Network connection type" },
 	{ "nsc", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, "nscodec", "NSCodec support" },
 #if defined(WITH_FREERDP_DEPRECATED_COMMANDLINE)
@@ -451,6 +453,9 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	{ "timeout", COMMAND_LINE_VALUE_REQUIRED, "<time in ms>", "9000", NULL, -1, "timeout",
 	  "Advanced setting for high latency links: Adjust connection timeout, use if you encounter "
 	  "timeout failures with your connection" },
+	{ "timezone", COMMAND_LINE_VALUE_REQUIRED, "<windows timezone>", NULL, NULL, -1, NULL,
+	  "Use supplied windows timezone for connection (requires server support), see /list:timezones "
+	  "for allowed values" },
 	{ "tls", COMMAND_LINE_VALUE_REQUIRED, "[ciphers|seclevel|secrets-file|enforce]", NULL, NULL, -1,
 	  NULL,
 	  "TLS configuration options:"

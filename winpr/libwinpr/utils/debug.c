@@ -20,13 +20,15 @@
 
 #include <winpr/config.h>
 
+#define __STDC_WANT_LIB_EXT1__ 1
 #include <stdio.h>
+#include <string.h>
 #include <fcntl.h>
 
 #include <winpr/crt.h>
 #include <winpr/string.h>
 
-#if defined(WINPR_HAVE_EXECINFO_H)
+#if defined(USE_EXECINFO)
 #include <execinfo/debug.h>
 #endif
 
@@ -43,7 +45,6 @@
 #include <windows/debug.h>
 #endif
 
-#include <winpr/crt.h>
 #include <winpr/wlog.h>
 #include <winpr/debug.h>
 
@@ -92,13 +93,14 @@ void winpr_backtrace_free(void* buffer)
 
 #if defined(USE_UNWIND)
 	winpr_unwind_backtrace_free(buffer);
-#elif defined(WINPR_HAVE_EXECINFO_H)
+#elif defined(USE_EXECINFO)
 	winpr_execinfo_backtrace_free(buffer);
 #elif defined(WINPR_HAVE_CORKSCREW)
 	winpr_corkscrew_backtrace_free(buffer);
 #elif defined(_WIN32) || defined(_WIN64)
 	winpr_win_backtrace_free(buffer);
 #else
+	free(buffer);
 	LOGF(support_msg);
 #endif
 }
@@ -107,7 +109,7 @@ void* winpr_backtrace(DWORD size)
 {
 #if defined(USE_UNWIND)
 	return winpr_unwind_backtrace(size);
-#elif defined(WINPR_HAVE_EXECINFO_H)
+#elif defined(USE_EXECINFO)
 	return winpr_execinfo_backtrace(size);
 #elif defined(WINPR_HAVE_CORKSCREW)
 	return winpr_corkscrew_backtrace(size);
@@ -115,7 +117,9 @@ void* winpr_backtrace(DWORD size)
 	return winpr_win_backtrace(size);
 #else
 	LOGF(support_msg);
-	return NULL;
+	/* return a non NULL buffer to allow the backtrace function familiy to succeed without failing
+	 */
+	return _strdup(support_msg);
 #endif
 }
 
@@ -132,7 +136,7 @@ char** winpr_backtrace_symbols(void* buffer, size_t* used)
 
 #if defined(USE_UNWIND)
 	return winpr_unwind_backtrace_symbols(buffer, used);
-#elif defined(WINPR_HAVE_EXECINFO_H)
+#elif defined(USE_EXECINFO)
 	return winpr_execinfo_backtrace_symbols(buffer, used);
 #elif defined(WINPR_HAVE_CORKSCREW)
 	return winpr_corkscrew_backtrace_symbols(buffer, used);
@@ -140,7 +144,24 @@ char** winpr_backtrace_symbols(void* buffer, size_t* used)
 	return winpr_win_backtrace_symbols(buffer, used);
 #else
 	LOGF(support_msg);
-	return NULL;
+
+	/* We return a char** on heap that is compatible with free:
+	 *
+	 * 1. We allocate sizeof(char*) + strlen + 1 bytes.
+	 * 2. The first sizeof(char*) bytes contain the pointer to the string following the pointer.
+	 * 3. The at data + sizeof(char*) contains the actual string
+	 */
+	size_t len = strlen(support_msg);
+	char* ppmsg = calloc(sizeof(char*) + len + 1, sizeof(char));
+	if (!ppmsg)
+		return NULL;
+	char** msgptr = (char**)ppmsg;
+	char* msg = &ppmsg[sizeof(char*)];
+
+	*msgptr = msg;
+	strncpy(msg, support_msg, len);
+	*used = 1;
+	return msgptr;
 #endif
 }
 
@@ -152,19 +173,19 @@ void winpr_backtrace_symbols_fd(void* buffer, int fd)
 		return;
 	}
 
-#if defined(WINPR_HAVE_EXECINFO_H) && !defined(USE_UNWIND)
+#if defined(USE_EXECINFO) && !defined(USE_UNWIND)
 	winpr_execinfo_backtrace_symbols_fd(buffer, fd);
 #elif !defined(ANDROID)
 	{
-		size_t i;
 		size_t used = 0;
 		char** lines = winpr_backtrace_symbols(buffer, &used);
 
 		if (!lines)
 			return;
 
-		for (i = 0; i < used; i++)
+		for (size_t i = 0; i < used; i++)
 			_write(fd, lines[i], (unsigned)strnlen(lines[i], UINT32_MAX));
+		free(lines);
 	}
 #else
 	LOGF(support_msg);
@@ -178,8 +199,8 @@ void winpr_log_backtrace(const char* tag, DWORD level, DWORD size)
 
 void winpr_log_backtrace_ex(wLog* log, DWORD level, DWORD size)
 {
-	size_t used, x;
-	char** msg;
+	size_t used = 0;
+	char** msg = NULL;
 	void* stack = winpr_backtrace(20);
 
 	if (!stack)
@@ -192,7 +213,7 @@ void winpr_log_backtrace_ex(wLog* log, DWORD level, DWORD size)
 
 	if (msg)
 	{
-		for (x = 0; x < used; x++)
+		for (size_t x = 0; x < used; x++)
 			WLog_Print(log, level, "%" PRIuz ": %s", x, msg[x]);
 	}
 	free(msg);
@@ -203,10 +224,12 @@ fail:
 
 char* winpr_strerror(DWORD dw, char* dmsg, size_t size)
 {
-#if defined(_WIN32)
-	return winpr_win_strerror(dw, dmsg, size);
-#else  /* defined(_WIN32) */
+#ifdef __STDC_LIB_EXT1__
+	strerror_s(dw, dmsg, size);
+#elif defined(WINPR_HAVE_STRERROR_R)
+	strerror_r(dw, dmsg, size);
+#else
 	_snprintf(dmsg, size, "%s", strerror(dw));
-#endif /* defined(_WIN32) */
+#endif
 	return dmsg;
 }

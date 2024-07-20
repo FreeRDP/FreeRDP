@@ -1,0 +1,991 @@
+{
+	"TimeZoneNameMap": [
+		{
+			"Id": "Dateline Standard Time",
+			"StandardName": "Dateline Standard Time",
+			"DisplayName": "(UTC-12:00) International Date Line West",
+			"DaylightName": "Dateline Daylight Time",
+			"Iana": "Etc/GMT+12"
+		},
+		{
+			"Id": "UTC-11",
+			"StandardName": "UTC-11",
+			"DisplayName": "(UTC-11:00) Coordinated Universal Time-11",
+			"DaylightName": "UTC-11",
+			"Iana": "Etc/GMT+11"
+		},
+		{
+			"Id": "Aleutian Standard Time",
+			"StandardName": "Aleutian Standard Time",
+			"DisplayName": "(UTC-10:00) Aleutian Islands",
+			"DaylightName": "Aleutian Daylight Time",
+			"Iana": "America/Adak"
+		},
+		{
+			"Id": "Hawaiian Standard Time",
+			"StandardName": "Hawaiian Standard Time",
+			"DisplayName": "(UTC-10:00) Hawaii",
+			"DaylightName": "Hawaiian Daylight Time",
+			"Iana": "Pacific/Honolulu"
+		},
+		{
+			"Id": "Marquesas Standard Time",
+			"StandardName": "Marquesas Standard Time",
+			"DisplayName": "(UTC-09:30) Marquesas Islands",
+			"DaylightName": "Marquesas Daylight Time",
+			"Iana": "Pacific/Marquesas"
+		},
+		{
+			"Id": "Alaskan Standard Time",
+			"StandardName": "Alaskan Standard Time",
+			"DisplayName": "(UTC-09:00) Alaska",
+			"DaylightName": "Alaskan Daylight Time",
+			"Iana": "America/Anchorage"
+		},
+		{
+			"Id": "UTC-09",
+			"StandardName": "UTC-09",
+			"DisplayName": "(UTC-09:00) Coordinated Universal Time-09",
+			"DaylightName": "UTC-09",
+			"Iana": "Etc/GMT+9"
+		},
+		{
+			"Id": "Pacific Standard Time (Mexico)",
+			"StandardName": "Pacific Standard Time (Mexico)",
+			"DisplayName": "(UTC-08:00) Baja California",
+			"DaylightName": "Pacific Daylight Time (Mexico)",
+			"Iana": "America/Tijuana"
+		},
+		{
+			"Id": "UTC-08",
+			"StandardName": "UTC-08",
+			"DisplayName": "(UTC-08:00) Coordinated Universal Time-08",
+			"DaylightName": "UTC-08",
+			"Iana": "Etc/GMT+8"
+		},
+		{
+			"Id": "Pacific Standard Time",
+			"StandardName": "Pacific Standard Time",
+			"DisplayName": "(UTC-08:00) Pacific Time (US & Canada)",
+			"DaylightName": "Pacific Daylight Time",
+			"Iana": "America/Los_Angeles"
+		},
+		{
+			"Id": "US Mountain Standard Time",
+			"StandardName": "US Mountain Standard Time",
+			"DisplayName": "(UTC-07:00) Arizona",
+			"DaylightName": "US Mountain Daylight Time",
+			"Iana": "America/Phoenix"
+		},
+		{
+			"Id": "Mountain Standard Time (Mexico)",
+			"StandardName": "Mountain Standard Time (Mexico)",
+			"DisplayName": "(UTC-07:00) La Paz, Mazatlan",
+			"DaylightName": "Mountain Daylight Time (Mexico)",
+			"Iana": "America/Chihuahua"
+		},
+		{
+			"Id": "Mountain Standard Time",
+			"StandardName": "Mountain Standard Time",
+			"DisplayName": "(UTC-07:00) Mountain Time (US & Canada)",
+			"DaylightName": "Mountain Daylight Time",
+			"Iana": "America/Denver"
+		},
+		{
+			"Id": "Yukon Standard Time",
+			"StandardName": "Yukon Standard Time",
+			"DisplayName": "(UTC-07:00) Yukon",
+			"DaylightName": "Yukon Daylight Time",
+			"Iana": "America/Whitehorse"
+		},
+		{
+			"Id": "Central America Standard Time",
+			"StandardName": "Central America Standard Time",
+			"DisplayName": "(UTC-06:00) Central America",
+			"DaylightName": "Central America Daylight Time",
+			"Iana": "America/Guatemala"
+		},
+		{
+			"Id": "Central Standard Time",
+			"StandardName": "Central Standard Time",
+			"DisplayName": "(UTC-06:00) Central Time (US & Canada)",
+			"DaylightName": "Central Daylight Time",
+			"Iana": "America/Chicago"
+		},
+		{
+			"Id": "Easter Island Standard Time",
+			"StandardName": "Easter Island Standard Time",
+			"DisplayName": "(UTC-06:00) Easter Island",
+			"DaylightName": "Easter Island Daylight Time",
+			"Iana": "Pacific/Easter"
+		},
+		{
+			"Id": "Central Standard Time (Mexico)",
+			"StandardName": "Central Standard Time (Mexico)",
+			"DisplayName": "(UTC-06:00) Guadalajara, Mexico City, Monterrey",
+			"DaylightName": "Central Daylight Time (Mexico)",
+			"Iana": "America/Mexico_City"
+		},
+		{
+			"Id": "Canada Central Standard Time",
+			"StandardName": "Canada Central Standard Time",
+			"DisplayName": "(UTC-06:00) Saskatchewan",
+			"DaylightName": "Canada Central Daylight Time",
+			"Iana": "America/Regina"
+		},
+		{
+			"Id": "SA Pacific Standard Time",
+			"StandardName": "SA Pacific Standard Time",
+			"DisplayName": "(UTC-05:00) Bogota, Lima, Quito, Rio Branco",
+			"DaylightName": "SA Pacific Daylight Time",
+			"Iana": "America/Bogota"
+		},
+		{
+			"Id": "Eastern Standard Time (Mexico)",
+			"StandardName": "Eastern Standard Time (Mexico)",
+			"DisplayName": "(UTC-05:00) Chetumal",
+			"DaylightName": "Eastern Daylight Time (Mexico)",
+			"Iana": "America/Cancun"
+		},
+		{
+			"Id": "Eastern Standard Time",
+			"StandardName": "Eastern Standard Time",
+			"DisplayName": "(UTC-05:00) Eastern Time (US & Canada)",
+			"DaylightName": "Eastern Daylight Time",
+			"Iana": "America/New_York"
+		},
+		{
+			"Id": "Haiti Standard Time",
+			"StandardName": "Haiti Standard Time",
+			"DisplayName": "(UTC-05:00) Haiti",
+			"DaylightName": "Haiti Daylight Time",
+			"Iana": "America/Port-au-Prince"
+		},
+		{
+			"Id": "Cuba Standard Time",
+			"StandardName": "Cuba Standard Time",
+			"DisplayName": "(UTC-05:00) Havana",
+			"DaylightName": "Cuba Daylight Time",
+			"Iana": "America/Havana"
+		},
+		{
+			"Id": "US Eastern Standard Time",
+			"StandardName": "US Eastern Standard Time",
+			"DisplayName": "(UTC-05:00) Indiana (East)",
+			"DaylightName": "US Eastern Daylight Time",
+			"Iana": "America/Indianapolis"
+		},
+		{
+			"Id": "Turks And Caicos Standard Time",
+			"StandardName": "Turks and Caicos Standard Time",
+			"DisplayName": "(UTC-05:00) Turks and Caicos",
+			"DaylightName": "Turks and Caicos Daylight Time",
+			"Iana": "America/Grand_Turk"
+		},
+		{
+			"Id": "Paraguay Standard Time",
+			"StandardName": "Paraguay Standard Time",
+			"DisplayName": "(UTC-04:00) Asuncion",
+			"DaylightName": "Paraguay Daylight Time",
+			"Iana": "America/Asuncion"
+		},
+		{
+			"Id": "Atlantic Standard Time",
+			"StandardName": "Atlantic Standard Time",
+			"DisplayName": "(UTC-04:00) Atlantic Time (Canada)",
+			"DaylightName": "Atlantic Daylight Time",
+			"Iana": "America/Halifax"
+		},
+		{
+			"Id": "Venezuela Standard Time",
+			"StandardName": "Venezuela Standard Time",
+			"DisplayName": "(UTC-04:00) Caracas",
+			"DaylightName": "Venezuela Daylight Time",
+			"Iana": "America/Caracas"
+		},
+		{
+			"Id": "Central Brazilian Standard Time",
+			"StandardName": "Central Brazilian Standard Time",
+			"DisplayName": "(UTC-04:00) Cuiaba",
+			"DaylightName": "Central Brazilian Daylight Time",
+			"Iana": "America/Cuiaba"
+		},
+		{
+			"Id": "SA Western Standard Time",
+			"StandardName": "SA Western Standard Time",
+			"DisplayName": "(UTC-04:00) Georgetown, La Paz, Manaus, San Juan",
+			"DaylightName": "SA Western Daylight Time",
+			"Iana": "America/La_Paz"
+		},
+		{
+			"Id": "Pacific SA Standard Time",
+			"StandardName": "Pacific SA Standard Time",
+			"DisplayName": "(UTC-04:00) Santiago",
+			"DaylightName": "Pacific SA Daylight Time",
+			"Iana": "America/Santiago"
+		},
+		{
+			"Id": "Newfoundland Standard Time",
+			"StandardName": "Newfoundland Standard Time",
+			"DisplayName": "(UTC-03:30) Newfoundland",
+			"DaylightName": "Newfoundland Daylight Time",
+			"Iana": "America/St_Johns"
+		},
+		{
+			"Id": "Tocantins Standard Time",
+			"StandardName": "Tocantins Standard Time",
+			"DisplayName": "(UTC-03:00) Araguaina",
+			"DaylightName": "Tocantins Daylight Time",
+			"Iana": "America/Araguaina"
+		},
+		{
+			"Id": "E. South America Standard Time",
+			"StandardName": "E. South America Standard Time",
+			"DisplayName": "(UTC-03:00) Brasilia",
+			"DaylightName": "E. South America Daylight Time",
+			"Iana": "America/Sao_Paulo"
+		},
+		{
+			"Id": "SA Eastern Standard Time",
+			"StandardName": "SA Eastern Standard Time",
+			"DisplayName": "(UTC-03:00) Cayenne, Fortaleza",
+			"DaylightName": "SA Eastern Daylight Time",
+			"Iana": "America/Cayenne"
+		},
+		{
+			"Id": "Argentina Standard Time",
+			"StandardName": "Argentina Standard Time",
+			"DisplayName": "(UTC-03:00) City of Buenos Aires",
+			"DaylightName": "Argentina Daylight Time",
+			"Iana": "America/Buenos_Aires"
+		},
+		{
+			"Id": "Montevideo Standard Time",
+			"StandardName": "Montevideo Standard Time",
+			"DisplayName": "(UTC-03:00) Montevideo",
+			"DaylightName": "Montevideo Daylight Time",
+			"Iana": "America/Montevideo"
+		},
+		{
+			"Id": "Magallanes Standard Time",
+			"StandardName": "Magallanes Standard Time",
+			"DisplayName": "(UTC-03:00) Punta Arenas",
+			"DaylightName": "Magallanes Daylight Time",
+			"Iana": "America/Punta_Arenas"
+		},
+		{
+			"Id": "Saint Pierre Standard Time",
+			"StandardName": "Saint Pierre Standard Time",
+			"DisplayName": "(UTC-03:00) Saint Pierre and Miquelon",
+			"DaylightName": "Saint Pierre Daylight Time",
+			"Iana": "America/Miquelon"
+		},
+		{
+			"Id": "Bahia Standard Time",
+			"StandardName": "Bahia Standard Time",
+			"DisplayName": "(UTC-03:00) Salvador",
+			"DaylightName": "Bahia Daylight Time",
+			"Iana": "America/Bahia"
+		},
+		{
+			"Id": "UTC-02",
+			"StandardName": "UTC-02",
+			"DisplayName": "(UTC-02:00) Coordinated Universal Time-02",
+			"DaylightName": "UTC-02",
+			"Iana": "Etc/GMT+2"
+		},
+		{
+			"Id": "Greenland Standard Time",
+			"StandardName": "Greenland Standard Time",
+			"DisplayName": "(UTC-02:00) Greenland",
+			"DaylightName": "Greenland Daylight Time",
+			"Iana": "America/Godthab"
+		},
+		{
+			"Id": "Mid-Atlantic Standard Time",
+			"StandardName": "Mid-Atlantic Standard Time",
+			"DisplayName": "(UTC-02:00) Mid-Atlantic - Old",
+			"DaylightName": "Mid-Atlantic Daylight Time",
+			"Iana": ""
+		},
+		{
+			"Id": "Azores Standard Time",
+			"StandardName": "Azores Standard Time",
+			"DisplayName": "(UTC-01:00) Azores",
+			"DaylightName": "Azores Daylight Time",
+			"Iana": "Atlantic/Azores"
+		},
+		{
+			"Id": "Cape Verde Standard Time",
+			"StandardName": "Cabo Verde Standard Time",
+			"DisplayName": "(UTC-01:00) Cabo Verde Is.",
+			"DaylightName": "Cabo Verde Daylight Time",
+			"Iana": "Atlantic/Cape_Verde"
+		},
+		{
+			"Id": "UTC",
+			"StandardName": "Coordinated Universal Time",
+			"DisplayName": "(UTC) Coordinated Universal Time",
+			"DaylightName": "Coordinated Universal Time",
+			"Iana": "Etc/UTC"
+		},
+		{
+			"Id": "GMT Standard Time",
+			"StandardName": "GMT Standard Time",
+			"DisplayName": "(UTC+00:00) Dublin, Edinburgh, Lisbon, London",
+			"DaylightName": "GMT Daylight Time",
+			"Iana": "Europe/London"
+		},
+		{
+			"Id": "Greenwich Standard Time",
+			"StandardName": "Greenwich Standard Time",
+			"DisplayName": "(UTC+00:00) Monrovia, Reykjavik",
+			"DaylightName": "Greenwich Daylight Time",
+			"Iana": "Atlantic/Reykjavik"
+		},
+		{
+			"Id": "Sao Tome Standard Time",
+			"StandardName": "Sao Tome Standard Time",
+			"DisplayName": "(UTC+00:00) Sao Tome",
+			"DaylightName": "Sao Tome Daylight Time",
+			"Iana": "Africa/Sao_Tome"
+		},
+		{
+			"Id": "Morocco Standard Time",
+			"StandardName": "Morocco Standard Time",
+			"DisplayName": "(UTC+01:00) Casablanca",
+			"DaylightName": "Morocco Daylight Time",
+			"Iana": "Africa/Casablanca"
+		},
+		{
+			"Id": "W. Europe Standard Time",
+			"StandardName": "W. Europe Standard Time",
+			"DisplayName": "(UTC+01:00) Amsterdam, Berlin, Bern, Rome, Stockholm, Vienna",
+			"DaylightName": "W. Europe Daylight Time",
+			"Iana": "Europe/Berlin"
+		},
+		{
+			"Id": "Central Europe Standard Time",
+			"StandardName": "Central Europe Standard Time",
+			"DisplayName": "(UTC+01:00) Belgrade, Bratislava, Budapest, Ljubljana, Prague",
+			"DaylightName": "Central Europe Daylight Time",
+			"Iana": "Europe/Budapest"
+		},
+		{
+			"Id": "Romance Standard Time",
+			"StandardName": "Romance Standard Time",
+			"DisplayName": "(UTC+01:00) Brussels, Copenhagen, Madrid, Paris",
+			"DaylightName": "Romance Daylight Time",
+			"Iana": "Europe/Paris"
+		},
+		{
+			"Id": "Central European Standard Time",
+			"StandardName": "Central European Standard Time",
+			"DisplayName": "(UTC+01:00) Sarajevo, Skopje, Warsaw, Zagreb",
+			"DaylightName": "Central European Daylight Time",
+			"Iana": "Europe/Warsaw"
+		},
+		{
+			"Id": "W. Central Africa Standard Time",
+			"StandardName": "W. Central Africa Standard Time",
+			"DisplayName": "(UTC+01:00) West Central Africa",
+			"DaylightName": "W. Central Africa Daylight Time",
+			"Iana": "Africa/Lagos"
+		},
+		{
+			"Id": "GTB Standard Time",
+			"StandardName": "GTB Standard Time",
+			"DisplayName": "(UTC+02:00) Athens, Bucharest",
+			"DaylightName": "GTB Daylight Time",
+			"Iana": "Europe/Bucharest"
+		},
+		{
+			"Id": "Middle East Standard Time",
+			"StandardName": "Middle East Standard Time",
+			"DisplayName": "(UTC+02:00) Beirut",
+			"DaylightName": "Middle East Daylight Time",
+			"Iana": "Asia/Beirut"
+		},
+		{
+			"Id": "Egypt Standard Time",
+			"StandardName": "Egypt Standard Time",
+			"DisplayName": "(UTC+02:00) Cairo",
+			"DaylightName": "Egypt Daylight Time",
+			"Iana": "Africa/Cairo"
+		},
+		{
+			"Id": "E. Europe Standard Time",
+			"StandardName": "E. Europe Standard Time",
+			"DisplayName": "(UTC+02:00) Chisinau",
+			"DaylightName": "E. Europe Daylight Time",
+			"Iana": "Europe/Chisinau"
+		},
+		{
+			"Id": "West Bank Standard Time",
+			"StandardName": "West Bank Gaza Standard Time",
+			"DisplayName": "(UTC+02:00) Gaza, Hebron",
+			"DaylightName": "West Bank Gaza Daylight Time",
+			"Iana": "Asia/Hebron"
+		},
+		{
+			"Id": "South Africa Standard Time",
+			"StandardName": "South Africa Standard Time",
+			"DisplayName": "(UTC+02:00) Harare, Pretoria",
+			"DaylightName": "South Africa Daylight Time",
+			"Iana": "Africa/Johannesburg"
+		},
+		{
+			"Id": "FLE Standard Time",
+			"StandardName": "FLE Standard Time",
+			"DisplayName": "(UTC+02:00) Helsinki, Kyiv, Riga, Sofia, Tallinn, Vilnius",
+			"DaylightName": "FLE Daylight Time",
+			"Iana": "Europe/Kiev"
+		},
+		{
+			"Id": "Israel Standard Time",
+			"StandardName": "Jerusalem Standard Time",
+			"DisplayName": "(UTC+02:00) Jerusalem",
+			"DaylightName": "Jerusalem Daylight Time",
+			"Iana": "Asia/Jerusalem"
+		},
+		{
+			"Id": "South Sudan Standard Time",
+			"StandardName": "South Sudan Standard Time",
+			"DisplayName": "(UTC+02:00) Juba",
+			"DaylightName": "South Sudan Daylight Time",
+			"Iana": ""
+		},
+		{
+			"Id": "Kaliningrad Standard Time",
+			"StandardName": "Russia TZ 1 Standard Time",
+			"DisplayName": "(UTC+02:00) Kaliningrad",
+			"DaylightName": "Russia TZ 1 Daylight Time",
+			"Iana": "Europe/Kaliningrad"
+		},
+		{
+			"Id": "Sudan Standard Time",
+			"StandardName": "Sudan Standard Time",
+			"DisplayName": "(UTC+02:00) Khartoum",
+			"DaylightName": "Sudan Daylight Time",
+			"Iana": "Africa/Khartoum"
+		},
+		{
+			"Id": "Libya Standard Time",
+			"StandardName": "Libya Standard Time",
+			"DisplayName": "(UTC+02:00) Tripoli",
+			"DaylightName": "Libya Daylight Time",
+			"Iana": "Africa/Tripoli"
+		},
+		{
+			"Id": "Namibia Standard Time",
+			"StandardName": "Namibia Standard Time",
+			"DisplayName": "(UTC+02:00) Windhoek",
+			"DaylightName": "Namibia Daylight Time",
+			"Iana": "Africa/Windhoek"
+		},
+		{
+			"Id": "Jordan Standard Time",
+			"StandardName": "Jordan Standard Time",
+			"DisplayName": "(UTC+03:00) Amman",
+			"DaylightName": "Jordan Daylight Time",
+			"Iana": "Asia/Amman"
+		},
+		{
+			"Id": "Arabic Standard Time",
+			"StandardName": "Arabic Standard Time",
+			"DisplayName": "(UTC+03:00) Baghdad",
+			"DaylightName": "Arabic Daylight Time",
+			"Iana": "Asia/Baghdad"
+		},
+		{
+			"Id": "Syria Standard Time",
+			"StandardName": "Syria Standard Time",
+			"DisplayName": "(UTC+03:00) Damascus",
+			"DaylightName": "Syria Daylight Time",
+			"Iana": "Asia/Damascus"
+		},
+		{
+			"Id": "Turkey Standard Time",
+			"StandardName": "Turkey Standard Time",
+			"DisplayName": "(UTC+03:00) Istanbul",
+			"DaylightName": "Turkey Daylight Time",
+			"Iana": "Europe/Istanbul"
+		},
+		{
+			"Id": "Arab Standard Time",
+			"StandardName": "Arab Standard Time",
+			"DisplayName": "(UTC+03:00) Kuwait, Riyadh",
+			"DaylightName": "Arab Daylight Time",
+			"Iana": "Asia/Riyadh"
+		},
+		{
+			"Id": "Belarus Standard Time",
+			"StandardName": "Belarus Standard Time",
+			"DisplayName": "(UTC+03:00) Minsk",
+			"DaylightName": "Belarus Daylight Time",
+			"Iana": "Europe/Minsk"
+		},
+		{
+			"Id": "Russian Standard Time",
+			"StandardName": "Russia TZ 2 Standard Time",
+			"DisplayName": "(UTC+03:00) Moscow, St. Petersburg",
+			"DaylightName": "Russia TZ 2 Daylight Time",
+			"Iana": "Europe/Moscow"
+		},
+		{
+			"Id": "E. Africa Standard Time",
+			"StandardName": "E. Africa Standard Time",
+			"DisplayName": "(UTC+03:00) Nairobi",
+			"DaylightName": "E. Africa Daylight Time",
+			"Iana": "Africa/Nairobi"
+		},
+		{
+			"Id": "Volgograd Standard Time",
+			"StandardName": "Volgograd Standard Time",
+			"DisplayName": "(UTC+03:00) Volgograd",
+			"DaylightName": "Volgograd Daylight Time",
+			"Iana": "Europe/Volgograd"
+		},
+		{
+			"Id": "Iran Standard Time",
+			"StandardName": "Iran Standard Time",
+			"DisplayName": "(UTC+03:30) Tehran",
+			"DaylightName": "Iran Daylight Time",
+			"Iana": "Asia/Tehran"
+		},
+		{
+			"Id": "Arabian Standard Time",
+			"StandardName": "Arabian Standard Time",
+			"DisplayName": "(UTC+04:00) Abu Dhabi, Muscat",
+			"DaylightName": "Arabian Daylight Time",
+			"Iana": "Asia/Dubai"
+		},
+		{
+			"Id": "Astrakhan Standard Time",
+			"StandardName": "Astrakhan Standard Time",
+			"DisplayName": "(UTC+04:00) Astrakhan, Ulyanovsk",
+			"DaylightName": "Astrakhan Daylight Time",
+			"Iana": "Europe/Astrakhan"
+		},
+		{
+			"Id": "Azerbaijan Standard Time",
+			"StandardName": "Azerbaijan Standard Time",
+			"DisplayName": "(UTC+04:00) Baku",
+			"DaylightName": "Azerbaijan Daylight Time",
+			"Iana": "Asia/Baku"
+		},
+		{
+			"Id": "Russia Time Zone 3",
+			"StandardName": "Russia TZ 3 Standard Time",
+			"DisplayName": "(UTC+04:00) Izhevsk, Samara",
+			"DaylightName": "Russia TZ 3 Daylight Time",
+			"Iana": "Europe/Samara"
+		},
+		{
+			"Id": "Mauritius Standard Time",
+			"StandardName": "Mauritius Standard Time",
+			"DisplayName": "(UTC+04:00) Port Louis",
+			"DaylightName": "Mauritius Daylight Time",
+			"Iana": "Indian/Mauritius"
+		},
+		{
+			"Id": "Saratov Standard Time",
+			"StandardName": "Saratov Standard Time",
+			"DisplayName": "(UTC+04:00) Saratov",
+			"DaylightName": "Saratov Daylight Time",
+			"Iana": "Europe/Saratov"
+		},
+		{
+			"Id": "Georgian Standard Time",
+			"StandardName": "Georgian Standard Time",
+			"DisplayName": "(UTC+04:00) Tbilisi",
+			"DaylightName": "Georgian Daylight Time",
+			"Iana": "Asia/Tbilisi"
+		},
+		{
+			"Id": "Caucasus Standard Time",
+			"StandardName": "Caucasus Standard Time",
+			"DisplayName": "(UTC+04:00) Yerevan",
+			"DaylightName": "Caucasus Daylight Time",
+			"Iana": "Asia/Yerevan"
+		},
+		{
+			"Id": "Afghanistan Standard Time",
+			"StandardName": "Afghanistan Standard Time",
+			"DisplayName": "(UTC+04:30) Kabul",
+			"DaylightName": "Afghanistan Daylight Time",
+			"Iana": "Asia/Kabul"
+		},
+		{
+			"Id": "West Asia Standard Time",
+			"StandardName": "West Asia Standard Time",
+			"DisplayName": "(UTC+05:00) Ashgabat, Tashkent",
+			"DaylightName": "West Asia Daylight Time",
+			"Iana": "Asia/Tashkent"
+		},
+		{
+			"Id": "Qyzylorda Standard Time",
+			"StandardName": "Qyzylorda Standard Time",
+			"DisplayName": "(UTC+05:00) Astana",
+			"DaylightName": "Qyzylorda Daylight Time",
+			"Iana": "Asia/Qyzylorda"
+		},
+		{
+			"Id": "Ekaterinburg Standard Time",
+			"StandardName": "Russia TZ 4 Standard Time",
+			"DisplayName": "(UTC+05:00) Ekaterinburg",
+			"DaylightName": "Russia TZ 4 Daylight Time",
+			"Iana": "Asia/Yekaterinburg"
+		},
+		{
+			"Id": "Pakistan Standard Time",
+			"StandardName": "Pakistan Standard Time",
+			"DisplayName": "(UTC+05:00) Islamabad, Karachi",
+			"DaylightName": "Pakistan Daylight Time",
+			"Iana": "Asia/Karachi"
+		},
+		{
+			"Id": "India Standard Time",
+			"StandardName": "India Standard Time",
+			"DisplayName": "(UTC+05:30) Chennai, Kolkata, Mumbai, New Delhi",
+			"DaylightName": "India Daylight Time",
+			"Iana": "Asia/Calcutta"
+		},
+		{
+			"Id": "Sri Lanka Standard Time",
+			"StandardName": "Sri Lanka Standard Time",
+			"DisplayName": "(UTC+05:30) Sri Jayawardenepura",
+			"DaylightName": "Sri Lanka Daylight Time",
+			"Iana": "Asia/Colombo"
+		},
+		{
+			"Id": "Nepal Standard Time",
+			"StandardName": "Nepal Standard Time",
+			"DisplayName": "(UTC+05:45) Kathmandu",
+			"DaylightName": "Nepal Daylight Time",
+			"Iana": "Asia/Katmandu"
+		},
+		{
+			"Id": "Central Asia Standard Time",
+			"StandardName": "Central Asia Standard Time",
+			"DisplayName": "(UTC+06:00) Bishkek",
+			"DaylightName": "Central Asia Daylight Time",
+			"Iana": "Asia/Almaty"
+		},
+		{
+			"Id": "Bangladesh Standard Time",
+			"StandardName": "Bangladesh Standard Time",
+			"DisplayName": "(UTC+06:00) Dhaka",
+			"DaylightName": "Bangladesh Daylight Time",
+			"Iana": "Asia/Dhaka"
+		},
+		{
+			"Id": "Omsk Standard Time",
+			"StandardName": "Omsk Standard Time",
+			"DisplayName": "(UTC+06:00) Omsk",
+			"DaylightName": "Omsk Daylight Time",
+			"Iana": "Asia/Omsk"
+		},
+		{
+			"Id": "Myanmar Standard Time",
+			"StandardName": "Myanmar Standard Time",
+			"DisplayName": "(UTC+06:30) Yangon (Rangoon)",
+			"DaylightName": "Myanmar Daylight Time",
+			"Iana": "Asia/Rangoon"
+		},
+		{
+			"Id": "SE Asia Standard Time",
+			"StandardName": "SE Asia Standard Time",
+			"DisplayName": "(UTC+07:00) Bangkok, Hanoi, Jakarta",
+			"DaylightName": "SE Asia Daylight Time",
+			"Iana": "Asia/Bangkok"
+		},
+		{
+			"Id": "Altai Standard Time",
+			"StandardName": "Altai Standard Time",
+			"DisplayName": "(UTC+07:00) Barnaul, Gorno-Altaysk",
+			"DaylightName": "Altai Daylight Time",
+			"Iana": "Asia/Barnaul"
+		},
+		{
+			"Id": "W. Mongolia Standard Time",
+			"StandardName": "W. Mongolia Standard Time",
+			"DisplayName": "(UTC+07:00) Hovd",
+			"DaylightName": "W. Mongolia Daylight Time",
+			"Iana": "Asia/Hovd"
+		},
+		{
+			"Id": "North Asia Standard Time",
+			"StandardName": "Russia TZ 6 Standard Time",
+			"DisplayName": "(UTC+07:00) Krasnoyarsk",
+			"DaylightName": "Russia TZ 6 Daylight Time",
+			"Iana": "Asia/Krasnoyarsk"
+		},
+		{
+			"Id": "N. Central Asia Standard Time",
+			"StandardName": "Novosibirsk Standard Time",
+			"DisplayName": "(UTC+07:00) Novosibirsk",
+			"DaylightName": "Novosibirsk Daylight Time",
+			"Iana": "Asia/Novosibirsk"
+		},
+		{
+			"Id": "Tomsk Standard Time",
+			"StandardName": "Tomsk Standard Time",
+			"DisplayName": "(UTC+07:00) Tomsk",
+			"DaylightName": "Tomsk Daylight Time",
+			"Iana": "Asia/Tomsk"
+		},
+		{
+			"Id": "China Standard Time",
+			"StandardName": "China Standard Time",
+			"DisplayName": "(UTC+08:00) Beijing, Chongqing, Hong Kong, Urumqi",
+			"DaylightName": "China Daylight Time",
+			"Iana": "Asia/Shanghai"
+		},
+		{
+			"Id": "North Asia East Standard Time",
+			"StandardName": "Russia TZ 7 Standard Time",
+			"DisplayName": "(UTC+08:00) Irkutsk",
+			"DaylightName": "Russia TZ 7 Daylight Time",
+			"Iana": "Asia/Irkutsk"
+		},
+		{
+			"Id": "Singapore Standard Time",
+			"StandardName": "Malay Peninsula Standard Time",
+			"DisplayName": "(UTC+08:00) Kuala Lumpur, Singapore",
+			"DaylightName": "Malay Peninsula Daylight Time",
+			"Iana": "Asia/Singapore"
+		},
+		{
+			"Id": "W. Australia Standard Time",
+			"StandardName": "W. Australia Standard Time",
+			"DisplayName": "(UTC+08:00) Perth",
+			"DaylightName": "W. Australia Daylight Time",
+			"Iana": "Australia/Perth"
+		},
+		{
+			"Id": "Taipei Standard Time",
+			"StandardName": "Taipei Standard Time",
+			"DisplayName": "(UTC+08:00) Taipei",
+			"DaylightName": "Taipei Daylight Time",
+			"Iana": "Asia/Taipei"
+		},
+		{
+			"Id": "Ulaanbaatar Standard Time",
+			"StandardName": "Ulaanbaatar Standard Time",
+			"DisplayName": "(UTC+08:00) Ulaanbaatar",
+			"DaylightName": "Ulaanbaatar Daylight Time",
+			"Iana": "Asia/Ulaanbaatar"
+		},
+		{
+			"Id": "Aus Central W. Standard Time",
+			"StandardName": "Aus Central W. Standard Time",
+			"DisplayName": "(UTC+08:45) Eucla",
+			"DaylightName": "Aus Central W. Daylight Time",
+			"Iana": "Australia/Eucla"
+		},
+		{
+			"Id": "Transbaikal Standard Time",
+			"StandardName": "Transbaikal Standard Time",
+			"DisplayName": "(UTC+09:00) Chita",
+			"DaylightName": "Transbaikal Daylight Time",
+			"Iana": "Asia/Chita"
+		},
+		{
+			"Id": "Tokyo Standard Time",
+			"StandardName": "Tokyo Standard Time",
+			"DisplayName": "(UTC+09:00) Osaka, Sapporo, Tokyo",
+			"DaylightName": "Tokyo Daylight Time",
+			"Iana": "Asia/Tokyo"
+		},
+		{
+			"Id": "North Korea Standard Time",
+			"StandardName": "North Korea Standard Time",
+			"DisplayName": "(UTC+09:00) Pyongyang",
+			"DaylightName": "North Korea Daylight Time",
+			"Iana": "Asia/Pyongyang"
+		},
+		{
+			"Id": "Korea Standard Time",
+			"StandardName": "Korea Standard Time",
+			"DisplayName": "(UTC+09:00) Seoul",
+			"DaylightName": "Korea Daylight Time",
+			"Iana": "Asia/Seoul"
+		},
+		{
+			"Id": "Yakutsk Standard Time",
+			"StandardName": "Russia TZ 8 Standard Time",
+			"DisplayName": "(UTC+09:00) Yakutsk",
+			"DaylightName": "Russia TZ 8 Daylight Time",
+			"Iana": "Asia/Yakutsk"
+		},
+		{
+			"Id": "Cen. Australia Standard Time",
+			"StandardName": "Cen. Australia Standard Time",
+			"DisplayName": "(UTC+09:30) Adelaide",
+			"DaylightName": "Cen. Australia Daylight Time",
+			"Iana": "Australia/Adelaide"
+		},
+		{
+			"Id": "AUS Central Standard Time",
+			"StandardName": "AUS Central Standard Time",
+			"DisplayName": "(UTC+09:30) Darwin",
+			"DaylightName": "AUS Central Daylight Time",
+			"Iana": "Australia/Darwin"
+		},
+		{
+			"Id": "E. Australia Standard Time",
+			"StandardName": "E. Australia Standard Time",
+			"DisplayName": "(UTC+10:00) Brisbane",
+			"DaylightName": "E. Australia Daylight Time",
+			"Iana": "Australia/Brisbane"
+		},
+		{
+			"Id": "AUS Eastern Standard Time",
+			"StandardName": "AUS Eastern Standard Time",
+			"DisplayName": "(UTC+10:00) Canberra, Melbourne, Sydney",
+			"DaylightName": "AUS Eastern Daylight Time",
+			"Iana": "Australia/Sydney"
+		},
+		{
+			"Id": "West Pacific Standard Time",
+			"StandardName": "West Pacific Standard Time",
+			"DisplayName": "(UTC+10:00) Guam, Port Moresby",
+			"DaylightName": "West Pacific Daylight Time",
+			"Iana": "Pacific/Port_Moresby"
+		},
+		{
+			"Id": "Tasmania Standard Time",
+			"StandardName": "Tasmania Standard Time",
+			"DisplayName": "(UTC+10:00) Hobart",
+			"DaylightName": "Tasmania Daylight Time",
+			"Iana": "Australia/Hobart"
+		},
+		{
+			"Id": "Vladivostok Standard Time",
+			"StandardName": "Russia TZ 9 Standard Time",
+			"DisplayName": "(UTC+10:00) Vladivostok",
+			"DaylightName": "Russia TZ 9 Daylight Time",
+			"Iana": "Asia/Vladivostok"
+		},
+		{
+			"Id": "Lord Howe Standard Time",
+			"StandardName": "Lord Howe Standard Time",
+			"DisplayName": "(UTC+10:30) Lord Howe Island",
+			"DaylightName": "Lord Howe Daylight Time",
+			"Iana": "Australia/Lord_Howe"
+		},
+		{
+			"Id": "Bougainville Standard Time",
+			"StandardName": "Bougainville Standard Time",
+			"DisplayName": "(UTC+11:00) Bougainville Island",
+			"DaylightName": "Bougainville Daylight Time",
+			"Iana": "Pacific/Bougainville"
+		},
+		{
+			"Id": "Russia Time Zone 10",
+			"StandardName": "Russia TZ 10 Standard Time",
+			"DisplayName": "(UTC+11:00) Chokurdakh",
+			"DaylightName": "Russia TZ 10 Daylight Time",
+			"Iana": "Asia/Srednekolymsk"
+		},
+		{
+			"Id": "Magadan Standard Time",
+			"StandardName": "Magadan Standard Time",
+			"DisplayName": "(UTC+11:00) Magadan",
+			"DaylightName": "Magadan Daylight Time",
+			"Iana": "Asia/Magadan"
+		},
+		{
+			"Id": "Norfolk Standard Time",
+			"StandardName": "Norfolk Standard Time",
+			"DisplayName": "(UTC+11:00) Norfolk Island",
+			"DaylightName": "Norfolk Daylight Time",
+			"Iana": "Pacific/Norfolk"
+		},
+		{
+			"Id": "Sakhalin Standard Time",
+			"StandardName": "Sakhalin Standard Time",
+			"DisplayName": "(UTC+11:00) Sakhalin",
+			"DaylightName": "Sakhalin Daylight Time",
+			"Iana": "Asia/Sakhalin"
+		},
+		{
+			"Id": "Central Pacific Standard Time",
+			"StandardName": "Central Pacific Standard Time",
+			"DisplayName": "(UTC+11:00) Solomon Is., New Caledonia",
+			"DaylightName": "Central Pacific Daylight Time",
+			"Iana": "Pacific/Guadalcanal"
+		},
+		{
+			"Id": "Russia Time Zone 11",
+			"StandardName": "Russia TZ 11 Standard Time",
+			"DisplayName": "(UTC+12:00) Anadyr, Petropavlovsk-Kamchatsky",
+			"DaylightName": "Russia TZ 11 Daylight Time",
+			"Iana": "Asia/Kamchatka"
+		},
+		{
+			"Id": "New Zealand Standard Time",
+			"StandardName": "New Zealand Standard Time",
+			"DisplayName": "(UTC+12:00) Auckland, Wellington",
+			"DaylightName": "New Zealand Daylight Time",
+			"Iana": "Pacific/Auckland"
+		},
+		{
+			"Id": "UTC+12",
+			"StandardName": "UTC+12",
+			"DisplayName": "(UTC+12:00) Coordinated Universal Time+12",
+			"DaylightName": "UTC+12",
+			"Iana": "Etc/GMT-12"
+		},
+		{
+			"Id": "Fiji Standard Time",
+			"StandardName": "Fiji Standard Time",
+			"DisplayName": "(UTC+12:00) Fiji",
+			"DaylightName": "Fiji Daylight Time",
+			"Iana": "Pacific/Fiji"
+		},
+		{
+			"Id": "Kamchatka Standard Time",
+			"StandardName": "Kamchatka Standard Time",
+			"DisplayName": "(UTC+12:00) Petropavlovsk-Kamchatsky - Old",
+			"DaylightName": "Kamchatka Daylight Time",
+			"Iana": ""
+		},
+		{
+			"Id": "Chatham Islands Standard Time",
+			"StandardName": "Chatham Islands Standard Time",
+			"DisplayName": "(UTC+12:45) Chatham Islands",
+			"DaylightName": "Chatham Islands Daylight Time",
+			"Iana": "Pacific/Chatham"
+		},
+		{
+			"Id": "UTC+13",
+			"StandardName": "UTC+13",
+			"DisplayName": "(UTC+13:00) Coordinated Universal Time+13",
+			"DaylightName": "UTC+13",
+			"Iana": "Etc/GMT-13"
+		},
+		{
+			"Id": "Tonga Standard Time",
+			"StandardName": "Tonga Standard Time",
+			"DisplayName": "(UTC+13:00) Nuku'alofa",
+			"DaylightName": "Tonga Daylight Time",
+			"Iana": "Pacific/Tongatapu"
+		},
+		{
+			"Id": "Samoa Standard Time",
+			"StandardName": "Samoa Standard Time",
+			"DisplayName": "(UTC+13:00) Samoa",
+			"DaylightName": "Samoa Daylight Time",
+			"Iana": "Pacific/Apia"
+		},
+		{
+			"Id": "Line Islands Standard Time",
+			"StandardName": "Line Islands Standard Time",
+			"DisplayName": "(UTC+14:00) Kiritimati Island",
+			"DaylightName": "Line Islands Daylight Time",
+			"Iana": "Pacific/Kiritimati"
+		}
+	]
+}

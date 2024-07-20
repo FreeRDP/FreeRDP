@@ -33,7 +33,9 @@ struct s_wLogLayout
 	LPSTR FormatString;
 };
 
-wLogLayout* WLog_Layout_New(wLog* log);
 void WLog_Layout_Free(wLog* log, wLogLayout* layout);
+
+WINPR_ATTR_MALLOC(WLog_Layout_Free, 2)
+wLogLayout* WLog_Layout_New(wLog* log);
 
 #endif /* WINPR_WLOG_LAYOUT_PRIVATE_H */

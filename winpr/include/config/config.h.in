@@ -25,6 +25,8 @@
 #cmakedefine WINPR_HAVE_UNWIND_H
 #cmakedefine WINPR_WITH_PNG
 
+#cmakedefine WINPR_HAVE_STRERROR_R
+
 #cmakedefine WITH_EVENTFD_READ_WRITE
 
 #cmakedefine WITH_NATIVE_SSPI
@@ -32,9 +34,15 @@
 #cmakedefine WITH_INTERNAL_MD4
 #cmakedefine WITH_INTERNAL_MD5
 
+#cmakedefine WITH_WINPR_JSON
+
 #cmakedefine WITH_DEBUG_NTLM
 #cmakedefine WITH_DEBUG_THREADS
 #cmakedefine WITH_DEBUG_EVENTS
 #cmakedefine WITH_DEBUG_MUTEX
+
+#cmakedefine WINPR_UTILS_IMAGE_WEBP
+#cmakedefine WINPR_UTILS_IMAGE_PNG
+#cmakedefine WINPR_UTILS_IMAGE_JPEG
 
 #endif /* WINPR_CONFIG_H */

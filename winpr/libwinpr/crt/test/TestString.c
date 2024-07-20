@@ -80,10 +80,10 @@ static BOOL test_url_escape(void)
 
 int TestString(int argc, char* argv[])
 {
-	const WCHAR* p;
-	size_t pos;
-	size_t length;
-	WCHAR* context;
+	const WCHAR* p = NULL;
+	size_t pos = 0;
+	size_t length = 0;
+	WCHAR* context = NULL;
 
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);

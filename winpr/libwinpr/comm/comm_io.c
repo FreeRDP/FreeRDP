@@ -73,12 +73,13 @@ BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 	WINPR_COMM* pComm = (WINPR_COMM*)hDevice;
 	int biggestFd = -1;
 	fd_set read_set;
-	int nbFds;
-	COMMTIMEOUTS* pTimeouts;
+	int nbFds = 0;
+	COMMTIMEOUTS* pTimeouts = NULL;
 	UCHAR vmin = 0;
 	UCHAR vtime = 0;
 	ULONGLONG Tmax = 0;
-	struct timeval tmaxTimeout, *pTmaxTimeout;
+	struct timeval tmaxTimeout;
+	struct timeval* pTmaxTimeout = NULL;
 	struct termios currentTermios;
 	EnterCriticalSection(&pComm->ReadLock); /* KISSer by the function's beginning */
 
@@ -185,8 +186,8 @@ BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 	else
 	{
 		/* Tmax */
-		Tmax = nNumberOfBytesToRead * pTimeouts->ReadTotalTimeoutMultiplier +
-		       pTimeouts->ReadTotalTimeoutConstant;
+		Tmax = 1ull * nNumberOfBytesToRead * pTimeouts->ReadTotalTimeoutMultiplier +
+		       1ull * pTimeouts->ReadTotalTimeoutConstant;
 
 		/* INDEFinitely */
 		if ((Tmax == 0) && (pTimeouts->ReadIntervalTimeout < MAXULONG) &&
@@ -241,7 +242,9 @@ BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 
 	if (nbFds < 0)
 	{
-		CommLog_Print(WLOG_WARN, "select() failure, errno=[%d] %s\n", errno, strerror(errno));
+		char ebuffer[256] = { 0 };
+		CommLog_Print(WLOG_WARN, "select() failure, errno=[%d] %s\n", errno,
+		              winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 		SetLastError(ERROR_IO_DEVICE);
 		goto return_false;
 	}
@@ -268,9 +271,10 @@ BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 			}
 			else
 			{
+				char ebuffer[256] = { 0 };
 				CommLog_Print(WLOG_WARN,
 				              "unexpected error on reading fd_read_event, errno=[%d] %s\n", errno,
-				              strerror(errno));
+				              winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 				/* FIXME: goto return_false ? */
 			}
 
@@ -293,6 +297,7 @@ BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 
 		if (nbRead < 0)
 		{
+			char ebuffer[256] = { 0 };
 			CommLog_Print(WLOG_WARN,
 			              "CommReadFile failed, ReadIntervalTimeout=%" PRIu32
 			              ", ReadTotalTimeoutMultiplier=%" PRIu32
@@ -300,9 +305,9 @@ BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 			              pTimeouts->ReadIntervalTimeout, pTimeouts->ReadTotalTimeoutMultiplier,
 			              pTimeouts->ReadTotalTimeoutConstant, currentTermios.c_cc[VMIN],
 			              currentTermios.c_cc[VTIME]);
-			CommLog_Print(WLOG_WARN,
-			              "CommReadFile failed, nNumberOfBytesToRead=%" PRIu32 ", errno=[%d] %s",
-			              nNumberOfBytesToRead, errno, strerror(errno));
+			CommLog_Print(
+			    WLOG_WARN, "CommReadFile failed, nNumberOfBytesToRead=%" PRIu32 ", errno=[%d] %s",
+			    nNumberOfBytesToRead, errno, winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 
 			if (errno == EAGAIN)
 			{
@@ -362,7 +367,8 @@ BOOL CommWriteFile(HANDLE hDevice, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite
                    LPDWORD lpNumberOfBytesWritten, LPOVERLAPPED lpOverlapped)
 {
 	WINPR_COMM* pComm = (WINPR_COMM*)hDevice;
-	struct timeval tmaxTimeout, *pTmaxTimeout;
+	struct timeval tmaxTimeout;
+	struct timeval* pTmaxTimeout = NULL;
 	EnterCriticalSection(&pComm->WriteLock); /* KISSer by the function's beginning */
 
 	if (!CommIsHandled(hDevice))
@@ -392,8 +398,8 @@ BOOL CommWriteFile(HANDLE hDevice, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite
 	/* discard a possible and no more relevant event */
 	eventfd_read(pComm->fd_write_event, NULL);
 	/* ms */
-	ULONGLONG Tmax = nNumberOfBytesToWrite * pComm->timeouts.WriteTotalTimeoutMultiplier +
-	                 pComm->timeouts.WriteTotalTimeoutConstant;
+	ULONGLONG Tmax = 1ull * nNumberOfBytesToWrite * pComm->timeouts.WriteTotalTimeoutMultiplier +
+	                 1ull * pComm->timeouts.WriteTotalTimeoutConstant;
 	/* NB: select() may update the timeout argument to indicate
 	 * how much time was left. Keep the timeout variable out of
 	 * the while() */
@@ -416,8 +422,9 @@ BOOL CommWriteFile(HANDLE hDevice, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite
 	while (*lpNumberOfBytesWritten < nNumberOfBytesToWrite)
 	{
 		int biggestFd = -1;
-		fd_set event_set, write_set;
-		int nbFds;
+		fd_set event_set;
+		fd_set write_set;
+		int nbFds = 0;
 		biggestFd = pComm->fd_write;
 
 		if (pComm->fd_write_event > biggestFd)
@@ -433,7 +440,9 @@ BOOL CommWriteFile(HANDLE hDevice, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite
 
 		if (nbFds < 0)
 		{
-			CommLog_Print(WLOG_WARN, "select() failure, errno=[%d] %s\n", errno, strerror(errno));
+			char ebuffer[256] = { 0 };
+			CommLog_Print(WLOG_WARN, "select() failure, errno=[%d] %s\n", errno,
+			              winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 			SetLastError(ERROR_IO_DEVICE);
 			goto return_false;
 		}
@@ -460,9 +469,10 @@ BOOL CommWriteFile(HANDLE hDevice, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite
 				}
 				else
 				{
+					char ebuffer[256] = { 0 };
 					CommLog_Print(WLOG_WARN,
 					              "unexpected error on reading fd_write_event, errno=[%d] %s\n",
-					              errno, strerror(errno));
+					              errno, winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 					/* FIXME: goto return_false ? */
 				}
 
@@ -482,16 +492,18 @@ BOOL CommWriteFile(HANDLE hDevice, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite
 
 		if (FD_ISSET(pComm->fd_write, &write_set))
 		{
-			ssize_t nbWritten;
+			ssize_t nbWritten = 0;
 			nbWritten = write(pComm->fd_write, ((const BYTE*)lpBuffer) + (*lpNumberOfBytesWritten),
 			                  nNumberOfBytesToWrite - (*lpNumberOfBytesWritten));
 
 			if (nbWritten < 0)
 			{
+				char ebuffer[256] = { 0 };
 				CommLog_Print(WLOG_WARN,
 				              "CommWriteFile failed after %" PRIu32
 				              " bytes written, errno=[%d] %s\n",
-				              *lpNumberOfBytesWritten, errno, strerror(errno));
+				              *lpNumberOfBytesWritten, errno,
+				              winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 
 				if (errno == EAGAIN)
 				{

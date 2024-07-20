@@ -20,7 +20,9 @@
 
 cmake_minimum_required(VERSION 3.13)
 
-cmake_policy(SET CMP0091 NEW)
+if(POLICY CMP0091)
+	cmake_policy(SET CMP0091 NEW)
+endif()
 project(FreeRDP
 	LANGUAGES C
 )
@@ -56,13 +58,6 @@ endif()
 
 # Include our extra modules
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake/)
-include(CommonConfigOptions)
-
-if((CMAKE_SYSTEM_NAME MATCHES "WindowsStore") AND (CMAKE_SYSTEM_VERSION MATCHES "10.0"))
-	set(UWP 1)
-	add_definitions("-D_UWP")
-	set(CMAKE_WINDOWS_VERSION "WIN10")
-endif()
 
 # Check for cmake compatibility (enable/disable features)
 include(CheckCmakeCompat)
@@ -73,12 +68,12 @@ if(WITH_CLANG_FORMAT)
 endif()
 
 include(CompilerFlags)
-include(DetectBSD)
 include(CheckIncludeFiles)
 include(CheckLibraryExists)
 include(CheckSymbolExists)
 include(CheckStructHasMember)
 include(TestBigEndian)
+include(CompilerDetect)
 
 include(FindFeature)
 include(ShowCMakeVars)
@@ -97,7 +92,7 @@ if ($ENV{BUILD_NUMBER})
 endif()
 
 set(VERSION_REGEX "^(.*)([0-9]+)\\.([0-9]+)\\.([0-9]+)-?(.*)")
-set(RAW_VERSION_STRING "3.1.1-dev0")
+set(RAW_VERSION_STRING "3.6.4-dev0")
 if(EXISTS "${PROJECT_SOURCE_DIR}/.source_tag")
 	file(READ ${PROJECT_SOURCE_DIR}/.source_tag RAW_VERSION_STRING)
 elseif(USE_VERSION_FROM_GIT_TAG)
@@ -208,21 +203,6 @@ if (EXPORT_ALL_SYMBOLS)
 	add_definitions(-DEXPORT_ALL_SYMBOLS)
 endif(EXPORT_ALL_SYMBOLS)
 
-if(FREEBSD)
-	find_path(EPOLLSHIM_INCLUDE_DIR NAMES sys/epoll.h sys/timerfd.h HINTS /usr/local/include/libepoll-shim)
-	find_library(EPOLLSHIM_LIBS NAMES epoll-shim libepoll-shim HINTS /usr/local/lib)
-endif()
-
-# Enable 64bit file support on linux and FreeBSD.
-if("${CMAKE_SYSTEM_NAME}" MATCHES "Linux" OR FREEBSD)
-	add_definitions("-D_FILE_OFFSET_BITS=64")
-endif()
-
-# Use Standard conforming getpwnam_r() on Solaris.
-if("${CMAKE_SYSTEM_NAME}" MATCHES "SunOS")
-	add_definitions("-D_POSIX_PTHREAD_SEMANTICS")
-endif()
-
 # Compiler-specific flags
 if(CMAKE_COMPILER_IS_GNUCC)
 	if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64" OR CMAKE_SYSTEM_PROCESSOR MATCHES "i686")
@@ -270,7 +250,7 @@ if (CMAKE_GENERATOR MATCHES "Unix Makefile*")
 	endif()
 endif()
 
-if(${CMAKE_C_COMPILER_ID} STREQUAL "Clang")
+if(CMAKE_COMPILER_IS_CLANG)
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-c11-extensions -Wno-gnu")
 endif()
 
@@ -281,7 +261,7 @@ if(NOT IOS)
 endif()
 
 # Enable address sanitizer, where supported and when required
-if(${CMAKE_C_COMPILER_ID} STREQUAL "Clang" OR CMAKE_COMPILER_IS_GNUCC)
+if(CMAKE_COMPILER_IS_CLANG OR CMAKE_COMPILER_IS_GNUCC)
 	CHECK_C_COMPILER_FLAG ("-fno-omit-frame-pointer" fno-omit-frame-pointer)
 
 	if (fno-omit-frame-pointer)
@@ -383,14 +363,6 @@ if(WIN32)
 
 	set(CMAKE_DL_LIBS "")
 	set(CMAKE_USE_RELATIVE_PATH ON)
-	if (${CMAKE_GENERATOR} MATCHES "NMake Makefile*" OR ${CMAKE_GENERATOR} MATCHES "Ninja*" OR ${CMAKE_GENERATOR} MATCHES "Unix Makefiles")
-		set(CMAKE_PDB_BINARY_DIR ${PROJECT_BINARY_DIR})
-	elseif (${CMAKE_GENERATOR} MATCHES "Visual Studio*")
-		set(CMAKE_PDB_BINARY_DIR "${PROJECT_BINARY_DIR}/\${CMAKE_INSTALL_CONFIG_NAME}")
-	else()
-		message(FATAL_ERROR "Unknown generator ${CMAKE_GENERATOR}")
-	endif()
-
 	string(TIMESTAMP RC_VERSION_YEAR "%Y")
 
 	if(NOT DEFINED CMAKE_WINDOWS_VERSION)
@@ -494,7 +466,7 @@ else()
 	unset(FREERDP_HAVE_VALGRIND_MEMCHECK_H CACHE)
 endif()
 
-if((UNIX OR CYGWIN) AND NOT BSD)
+if(UNIX OR CYGWIN)
 	set(WAYLAND_FEATURE_TYPE "RECOMMENDED")
 else()
 	set(WAYLAND_FEATURE_TYPE "DISABLED")
@@ -522,18 +494,6 @@ set(PCSC_FEATURE_DESCRIPTION "smart card device redirection")
 set(FFMPEG_FEATURE_TYPE "RECOMMENDED")
 set(FFMPEG_FEATURE_PURPOSE "multimedia")
 set(FFMPEG_FEATURE_DESCRIPTION "multimedia redirection, audio and video playback")
-
-set(VAAPI_FEATURE_TYPE "OPTIONAL")
-set(VAAPI_FEATURE_PURPOSE "multimedia")
-set(VAAPI_FEATURE_DESCRIPTION "VA-API hardware acceleration for video playback")
-
-set(IPP_FEATURE_TYPE "OPTIONAL")
-set(IPP_FEATURE_PURPOSE "performance")
-set(IPP_FEATURE_DESCRIPTION "Intel Integrated Performance Primitives library")
-
-set(JPEG_FEATURE_TYPE "OPTIONAL")
-set(JPEG_FEATURE_PURPOSE "codec")
-set(JPEG_FEATURE_DESCRIPTION "use JPEG library")
 
 set(OPENH264_FEATURE_TYPE "OPTIONAL")
 set(OPENH264_FEATURE_PURPOSE "codec")
@@ -567,12 +527,10 @@ if(WIN32)
 	set(WAYLAND_FEATURE_TYPE "DISABLED")
 	set(PCSC_FEATURE_TYPE "DISABLED")
 	set(FFMPEG_FEATURE_TYPE "OPTIONAL")
-	set(VAAPI_FEATURE_TYPE "DISABLED")
 endif()
 
 if(APPLE)
 	set(FFMPEG_FEATURE_TYPE "OPTIONAL")
-	set(VAAPI_FEATURE_TYPE "DISABLED")
 	set(WAYLAND_FEATURE_TYPE "DISABLED")
 	if(IOS)
 		set(PCSC_FEATURE_TYPE "DISABLED")
@@ -582,7 +540,6 @@ endif()
 if(ANDROID)
 	set(WAYLAND_FEATURE_TYPE "DISABLED")
 	set(PCSC_FEATURE_TYPE "DISABLED")
-	set(VAAPI_FEATURE_TYPE "DISABLED")
 endif()
 
 find_feature(Wayland ${WAYLAND_FEATURE_TYPE} ${WAYLAND_FEATURE_PURPOSE} ${WAYLAND_FEATURE_DESCRIPTION})
@@ -605,16 +562,12 @@ endif()
 
 find_feature(PCSC ${PCSC_FEATURE_TYPE} ${PCSC_FEATURE_PURPOSE} ${PCSC_FEATURE_DESCRIPTION})
 
-find_package(cJSON)
-option(WITH_AAD "Compile with support for Azure AD authentication" ${cJSON_FOUND})
-
 if (WITH_DSP_FFMPEG OR WITH_VIDEO_FFMPEG OR WITH_FFMPEG)
 	set(FFMPEG_FEATURE_TYPE "REQUIRED" )
 endif()
 
 find_feature(FFmpeg ${FFMPEG_FEATURE_TYPE} ${FFMPEG_FEATURE_PURPOSE} ${FFMPEG_FEATURE_DESCRIPTION})
 
-find_feature(JPEG ${JPEG_FEATURE_TYPE} ${JPEG_FEATURE_PURPOSE} ${JPEG_FEATURE_DESCRIPTION})
 find_feature(OpenH264 ${OPENH264_FEATURE_TYPE} ${OPENH264_FEATURE_PURPOSE} ${OPENH264_FEATURE_DESCRIPTION})
 find_feature(OpenCL ${OPENCL_FEATURE_TYPE} ${OPENCL_FEATURE_PURPOSE} ${OPENCL_FEATURE_DESCRIPTION})
 find_feature(GSM ${GSM_FEATURE_TYPE} ${GSM_FEATURE_PURPOSE} ${GSM_FEATURE_DESCRIPTION})
@@ -664,13 +617,6 @@ if (WITH_OPENH264 AND NOT OPENH264_FOUND)
 endif()
 set(WITH_OPENH264 ${OPENH264_FOUND})
 
-if(TARGET_ARCH MATCHES "x86|x64")
-	if (NOT APPLE)
-		# Intel Performance Primitives
-		find_feature(IPP ${IPP_FEATURE_TYPE} ${IPP_FEATURE_PURPOSE} ${IPP_FEATURE_DESCRIPTION})
-	endif()
-endif()
-
 if(OPENSSL_FOUND)
 	add_definitions("-DWITH_OPENSSL")
 	message(STATUS "Using OpenSSL Version: ${OPENSSL_VERSION}")
@@ -690,6 +636,13 @@ endif()
 # Android expects all libraries to be loadable
 # without paths.
 if (ANDROID OR WIN32 OR MAC_BUNDLE)
+	set(PLUGIN_ABS_PATHS_DEFAULT OFF)
+else()
+	set(PLUGIN_ABS_PATHS_DEFAULT ON)
+endif()
+option(WITH_ABSOLUTE_PLUGIN_LOAD_PATHS "Load plugins with absolute paths" ${PLUGIN_ABS_PATHS_DEFAULT})
+
+if (NOT WITH_ABSOLUTE_PLUGIN_LOAD_PATHS)
   set(FREERDP_DATA_PATH "share")
   if (NOT FREERDP_INSTALL_PREFIX)
 	  set(FREERDP_INSTALL_PREFIX ".")
@@ -702,7 +655,11 @@ else()
 		set(FREERDP_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
 	endif()
 	set(FREERDP_LIBRARY_PATH "${CMAKE_INSTALL_LIBDIR}")
-	set(FREERDP_PLUGIN_PATH "${CMAKE_INSTALL_LIBDIR}/${FREERDP_MAJOR_DIR}")
+	if (WIN32)
+		set(FREERDP_PLUGIN_PATH "${CMAKE_INSTALL_BINDIR}/${FREERDP_MAJOR_DIR}")
+	else()
+		set(FREERDP_PLUGIN_PATH "${CMAKE_INSTALL_LIBDIR}/${FREERDP_MAJOR_DIR}")
+	endif()
 endif()
 set(FREERDP_ADDIN_PATH "${FREERDP_PLUGIN_PATH}")
 
@@ -717,10 +674,6 @@ if(NOT DEFINED PROXY_PLUGINDIR)
 	set(FREERDP_PROXY_PLUGINDIR "${FREERDP_PLUGIN_PATH}/proxy/")
 else()
 	set(FREERDP_PROXY_PLUGINDIR "${PROXY_PLUGINDIR}")
-endif()
-
-if (BUILD_SHARED_LIBS)
-	set(CMAKE_MACOSX_RPATH ON)
 endif()
 
 # Android profiling
@@ -746,6 +699,8 @@ if(BUILD_TESTING)
 		set(TESTING_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/Testing")
 	endif()
 endif()
+
+include(CommonConfigOptions)
 
 # WinPR
 # We want to control the winpr assert for the whole project
@@ -773,6 +728,8 @@ else()
 	include_directories(${WinPR_INCLUDE_DIR})
 endif()
 
+option(WITH_AAD "Compile with support for Azure AD authentication" ${WITH_WINPR_JSON})
+
 # Include directories
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 include_directories(${CMAKE_CURRENT_BINARY_DIR}/include)
@@ -789,18 +746,6 @@ endif()
 
 
 add_subdirectory(libfreerdp)
-
-if(BSD)
-	if(IS_DIRECTORY /usr/local/include)
-		include_directories(/usr/local/include)
-		link_directories(/usr/local/lib)
-	endif()
-	if(OPENBSD)
-		if(IS_DIRECTORY /usr/X11R6/include)
-			include_directories(/usr/X11R6/include)
-		endif()
-	endif()
-endif()
 
 if(WITH_CHANNELS)
 	add_subdirectory(channels)

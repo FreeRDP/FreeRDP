@@ -36,6 +36,7 @@
 
 #include "xf_event.h"
 #include "xf_input.h"
+#include "xf_utils.h"
 
 #include <winpr/assert.h>
 #include <winpr/wtypes.h>
@@ -133,12 +134,16 @@ static BOOL register_input_events(xfContext* xfc, Window window)
 				}
 				case XIValuatorClass:
 				{
-					const XIValuatorClassInfo* t = (const XIValuatorClassInfo*)class;
-					char* name = t->label ? XGetAtomName(xfc->display, t->label) : NULL;
+					static wLog* log = NULL;
+					if (!log)
+						log = WLog_Get(TAG);
 
-					WLog_DBG(TAG, "%s device (id: %d) valuator %d label %s range %f - %f",
-					         dev->name, dev->deviceid, t->number, name ? name : "None", t->min,
-					         t->max);
+					const XIValuatorClassInfo* t = (const XIValuatorClassInfo*)class;
+					char* name = t->label ? Safe_XGetAtomName(log, xfc->display, t->label) : NULL;
+
+					WLog_Print(log, WLOG_DEBUG,
+					           "%s device (id: %d) valuator %d label %s range %f - %f", dev->name,
+					           dev->deviceid, t->number, name ? name : "None", t->min, t->max);
 					free(name);
 
 					if (t->number == 2)
@@ -193,14 +198,14 @@ static BOOL register_raw_events(xfContext* xfc, Window window)
 {
 	XIEventMask mask;
 	unsigned char mask_bytes[XIMaskLen(XI_LASTEVENT)] = { 0 };
-	rdpSettings* settings;
+	rdpSettings* settings = NULL;
 
 	WINPR_ASSERT(xfc);
 
 	settings = xfc->common.context.settings;
 	WINPR_ASSERT(settings);
 
-	if (freerdp_client_use_relative_mouse_events(&xfc->common))
+	if (freerdp_settings_get_bool(settings, FreeRDP_MouseUseRelativeMove))
 	{
 		XISetMask(mask_bytes, XI_RawMotion);
 		XISetMask(mask_bytes, XI_RawButtonPress);
@@ -220,7 +225,7 @@ static BOOL register_device_events(xfContext* xfc, Window window)
 {
 	XIEventMask mask;
 	unsigned char mask_bytes[XIMaskLen(XI_LASTEVENT)] = { 0 };
-	rdpSettings* settings;
+	rdpSettings* settings = NULL;
 
 	WINPR_ASSERT(xfc);
 
@@ -243,7 +248,9 @@ int xf_input_init(xfContext* xfc, Window window)
 {
 	int major = XI_2_Major;
 	int minor = XI_2_Minor;
-	int opcode = 0, event = 0, error = 0;
+	int opcode = 0;
+	int event = 0;
+	int error = 0;
 
 	WINPR_ASSERT(xfc);
 
@@ -288,7 +295,7 @@ int xf_input_init(xfContext* xfc, Window window)
 
 static BOOL xf_input_is_duplicate(xfContext* xfc, const XGenericEventCookie* cookie)
 {
-	const XIDeviceEvent* event;
+	const XIDeviceEvent* event = NULL;
 
 	WINPR_ASSERT(xfc);
 	WINPR_ASSERT(cookie);
@@ -309,7 +316,7 @@ static BOOL xf_input_is_duplicate(xfContext* xfc, const XGenericEventCookie* coo
 
 static void xf_input_save_last_event(xfContext* xfc, const XGenericEventCookie* cookie)
 {
-	const XIDeviceEvent* event;
+	const XIDeviceEvent* event = NULL;
 
 	WINPR_ASSERT(xfc);
 	WINPR_ASSERT(cookie);
@@ -328,11 +335,11 @@ static void xf_input_detect_pan(xfContext* xfc)
 {
 	double dx[2];
 	double dy[2];
-	double px;
-	double py;
-	double dist_x;
-	double dist_y;
-	rdpContext* ctx;
+	double px = NAN;
+	double py = NAN;
+	double dist_x = NAN;
+	double dist_y = NAN;
+	rdpContext* ctx = NULL;
 
 	WINPR_ASSERT(xfc);
 	ctx = &xfc->common.context;
@@ -417,10 +424,10 @@ static void xf_input_detect_pan(xfContext* xfc)
 
 static void xf_input_detect_pinch(xfContext* xfc)
 {
-	double dist;
-	double delta;
+	double dist = NAN;
+	double delta = NAN;
 	ZoomingChangeEventArgs e;
-	rdpContext* ctx;
+	rdpContext* ctx = NULL;
 
 	WINPR_ASSERT(xfc);
 	ctx = &xfc->common.context;
@@ -483,10 +490,8 @@ static void xf_input_detect_pinch(xfContext* xfc)
 
 static void xf_input_touch_begin(xfContext* xfc, const XIDeviceEvent* event)
 {
-	int i;
-
 	WINPR_UNUSED(xfc);
-	for (i = 0; i < MAX_CONTACTS; i++)
+	for (int i = 0; i < MAX_CONTACTS; i++)
 	{
 		if (xfc->contacts[i].id == 0)
 		{
@@ -502,12 +507,10 @@ static void xf_input_touch_begin(xfContext* xfc, const XIDeviceEvent* event)
 
 static void xf_input_touch_update(xfContext* xfc, const XIDeviceEvent* event)
 {
-	int i;
-
 	WINPR_ASSERT(xfc);
 	WINPR_ASSERT(event);
 
-	for (i = 0; i < MAX_CONTACTS; i++)
+	for (int i = 0; i < MAX_CONTACTS; i++)
 	{
 		if (xfc->contacts[i].id == event->detail)
 		{
@@ -525,10 +528,8 @@ static void xf_input_touch_update(xfContext* xfc, const XIDeviceEvent* event)
 
 static void xf_input_touch_end(xfContext* xfc, const XIDeviceEvent* event)
 {
-	int i;
-
 	WINPR_UNUSED(xfc);
-	for (i = 0; i < MAX_CONTACTS; i++)
+	for (int i = 0; i < MAX_CONTACTS; i++)
 	{
 		if (xfc->contacts[i].id == event->detail)
 		{
@@ -656,8 +657,9 @@ static void xf_input_show_cursor(xfContext* xfc)
 
 static int xf_input_touch_remote(xfContext* xfc, XIDeviceEvent* event, int evtype)
 {
-	int x, y;
-	int touchId;
+	int x = 0;
+	int y = 0;
+	int touchId = 0;
 	RdpeiClientContext* rdpei = xfc->common.rdpei;
 
 	if (!rdpei)
@@ -689,7 +691,8 @@ static int xf_input_touch_remote(xfContext* xfc, XIDeviceEvent* event, int evtyp
 
 static BOOL xf_input_pen_remote(xfContext* xfc, XIDeviceEvent* event, int evtype, int deviceid)
 {
-	int x, y;
+	int x = 0;
+	int y = 0;
 	RdpeiClientContext* rdpei = xfc->common.rdpei;
 
 	if (!rdpei)
@@ -761,7 +764,7 @@ static int xf_input_pens_unhover(xfContext* xfc)
 
 int xf_input_event(xfContext* xfc, const XEvent* xevent, XIDeviceEvent* event, int evtype)
 {
-	const rdpSettings* settings;
+	const rdpSettings* settings = NULL;
 
 	WINPR_ASSERT(xfc);
 	WINPR_ASSERT(xevent);
@@ -782,21 +785,26 @@ int xf_input_event(xfContext* xfc, const XEvent* xevent, XIDeviceEvent* event, i
 	switch (evtype)
 	{
 		case XI_ButtonPress:
-			xfc->xi_event = TRUE;
-			xf_generic_ButtonEvent(xfc, (int)event->event_x, (int)event->event_y, event->detail,
-			                       event->event, xfc->remote_app, TRUE);
-			break;
-
 		case XI_ButtonRelease:
-			xfc->xi_event = TRUE;
-			xf_generic_ButtonEvent(xfc, (int)event->event_x, (int)event->event_y, event->detail,
-			                       event->event, xfc->remote_app, FALSE);
+			xfc->xi_event = !xfc->common.mouse_grabbed ||
+			                !freerdp_client_use_relative_mouse_events(&xfc->common);
+
+			if (xfc->xi_event)
+			{
+				xf_generic_ButtonEvent(xfc, (int)event->event_x, (int)event->event_y, event->detail,
+				                       event->event, xfc->remote_app, evtype == XI_ButtonPress);
+			}
 			break;
 
 		case XI_Motion:
-			xfc->xi_event = TRUE;
-			xf_generic_MotionNotify(xfc, (int)event->event_x, (int)event->event_y, event->detail,
-			                        event->event, xfc->remote_app);
+			xfc->xi_event = !xfc->common.mouse_grabbed ||
+			                !freerdp_client_use_relative_mouse_events(&xfc->common);
+
+			if (xfc->xi_event)
+			{
+				xf_generic_MotionNotify(xfc, (int)event->event_x, (int)event->event_y,
+				                        event->detail, event->event, xfc->remote_app);
+			}
 			break;
 		case XI_RawButtonPress:
 		case XI_RawButtonRelease:
@@ -923,7 +931,7 @@ int xf_input_init(xfContext* xfc, Window window)
 int xf_input_handle_event(xfContext* xfc, const XEvent* event)
 {
 #ifdef WITH_XI
-	const rdpSettings* settings;
+	const rdpSettings* settings = NULL;
 	WINPR_ASSERT(xfc);
 
 	settings = xfc->common.context.settings;

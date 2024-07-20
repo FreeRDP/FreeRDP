@@ -35,6 +35,8 @@ struct s_rdpgfx_server_private
 	wStream* input_stream;
 	BOOL isOpened;
 	BOOL isReady;
+	wLog* log;
+	RDPGFX_CAPSET activeCapSet;
 };
 
 #endif /* FREERDP_CHANNEL_RDPGFX_SERVER_MAIN_H */

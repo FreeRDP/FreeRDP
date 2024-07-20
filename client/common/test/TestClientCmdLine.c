@@ -30,10 +30,9 @@ typedef BOOL (*validate_settings_pr)(rdpSettings* settings);
 
 static void print_test_title(int argc, char** argv)
 {
-	int i;
 	printf("Running test:");
 
-	for (i = 0; i < argc; i++)
+	for (int i = 0; i < argc; i++)
 	{
 		printf(" %s", argv[i]);
 	}
@@ -44,7 +43,7 @@ static void print_test_title(int argc, char** argv)
 static INLINE BOOL testcase(const char* name, char** argv, size_t argc, int expected_return,
                             validate_settings_pr validate_settings)
 {
-	int status;
+	int status = 0;
 	BOOL valid_settings = TRUE;
 	rdpSettings* settings = freerdp_settings_new(0);
 	print_test_title(argc, argv);
@@ -192,11 +191,11 @@ static const test tests[] = {
 	  check_settings_smartcard_no_redirection,
 	  { "testfreerdp", "/list:monitor", 0 },
 	  { { 0 } } },
-	{ COMMAND_LINE_ERROR,
+	{ 0,
 	  check_settings_smartcard_no_redirection,
 	  { "testfreerdp", "/sound", "/drive:media:" DRIVE_REDIRECT_PATH, "/v:test.freerdp.com", 0 },
 	  { { 0 } } },
-	{ COMMAND_LINE_ERROR,
+	{ 0,
 	  check_settings_smartcard_no_redirection,
 	  { "testfreerdp", "/sound", "/drive:media,/foo/bar/blabla", "/v:test.freerdp.com", 0 },
 	  { { 0 } } },
@@ -212,10 +211,9 @@ static const test tests[] = {
 
 static void check_modified_arguments(const test* test, char** command_line, int* rc)
 {
-	int k;
-	const char* expected_argument;
+	const char* expected_argument = NULL;
 
-	for (k = 0; (expected_argument = test->modified_arguments[k].expected_value); k++)
+	for (int k = 0; (expected_argument = test->modified_arguments[k].expected_value); k++)
 	{
 		int index = test->modified_arguments[k].index;
 		char* actual_argument = command_line[index];
@@ -234,11 +232,10 @@ static void check_modified_arguments(const test* test, char** command_line, int*
 int TestClientCmdLine(int argc, char* argv[])
 {
 	int rc = 0;
-	size_t i;
 
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
-	for (i = 0; i < sizeof(tests) / sizeof(tests[0]); i++)
+	for (size_t i = 0; i < sizeof(tests) / sizeof(tests[0]); i++)
 	{
 		const test* current = &tests[i];
 		int failure = 0;

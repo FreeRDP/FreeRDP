@@ -135,6 +135,7 @@ extern "C"
 		BOOL resizeRequested;
 		UINT32 resizeWidth;
 		UINT32 resizeHeight;
+		BOOL areGfxCapsReady;
 	};
 
 	struct rdp_shadow_server
@@ -301,9 +302,15 @@ extern "C"
 	FREERDP_API void shadow_subsystem_set_entry_builtin(const char* name);
 	FREERDP_API void shadow_subsystem_set_entry(pfnShadowSubsystemEntry pEntry);
 
-	FREERDP_API int shadow_subsystem_pointer_convert_alpha_pointer_data(
-	    BYTE* pixels, BOOL premultiplied, UINT32 width, UINT32 height,
-	    SHADOW_MSG_OUT_POINTER_ALPHA_UPDATE* pointerColor);
+	FREERDP_API WINPR_DEPRECATED_VAR(
+	    "Use shadow_subsystem_pointer_convert_alpha_pointer_data_to_format instead",
+	    int shadow_subsystem_pointer_convert_alpha_pointer_data(
+	        const BYTE* WINPR_RESTRICT pixels, BOOL premultiplied, UINT32 width, UINT32 height,
+	        SHADOW_MSG_OUT_POINTER_ALPHA_UPDATE* WINPR_RESTRICT pointerColor));
+
+	FREERDP_API int shadow_subsystem_pointer_convert_alpha_pointer_data_to_format(
+	    const BYTE* WINPR_RESTRICT pixels, UINT32 format, BOOL premultiplied, UINT32 width,
+	    UINT32 height, SHADOW_MSG_OUT_POINTER_ALPHA_UPDATE* WINPR_RESTRICT pointerColor);
 
 	FREERDP_API int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** argv,
 	                                                 COMMAND_LINE_ARGUMENT_A* cargs);
@@ -319,13 +326,25 @@ extern "C"
 
 	FREERDP_API UINT32 shadow_enum_monitors(MONITOR_DEF* monitors, UINT32 maxMonitors);
 
-	FREERDP_API rdpShadowServer* shadow_server_new(void);
 	FREERDP_API void shadow_server_free(rdpShadowServer* server);
 
-	FREERDP_API int shadow_capture_align_clip_rect(RECTANGLE_16* rect, RECTANGLE_16* clip);
-	FREERDP_API int shadow_capture_compare(BYTE* pData1, UINT32 nStep1, UINT32 nWidth,
-	                                       UINT32 nHeight, BYTE* pData2, UINT32 nStep2,
-	                                       RECTANGLE_16* rect);
+	WINPR_ATTR_MALLOC(shadow_server_free, 1)
+	FREERDP_API rdpShadowServer* shadow_server_new(void);
+
+	FREERDP_API int shadow_capture_align_clip_rect(RECTANGLE_16* rect, const RECTANGLE_16* clip);
+
+	FREERDP_API WINPR_DEPRECATED_VAR(
+	    "Use shadow_capture_compare_with_format",
+	    int shadow_capture_compare(const BYTE* WINPR_RESTRICT pData1, UINT32 nStep1, UINT32 nWidth,
+	                               UINT32 nHeight, const BYTE* WINPR_RESTRICT pData2, UINT32 nStep2,
+	                               RECTANGLE_16* WINPR_RESTRICT rect));
+
+	FREERDP_API int shadow_capture_compare_with_format(const BYTE* WINPR_RESTRICT pData1,
+	                                                   UINT32 format1, UINT32 nStep1, UINT32 nWidth,
+	                                                   UINT32 nHeight,
+	                                                   const BYTE* WINPR_RESTRICT pData2,
+	                                                   UINT32 format2, UINT32 nStep2,
+	                                                   RECTANGLE_16* WINPR_RESTRICT rect);
 
 	FREERDP_API void shadow_subsystem_frame_update(rdpShadowSubsystem* subsystem);
 

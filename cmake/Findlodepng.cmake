@@ -1,8 +1,8 @@
 # - Try to find lodepng
 # Once done this will define
-#  lodepng_FOUND - cJSON was found
-#  lodepng_INCLUDE_DIRS - cJSON include directories
-#  lodepng_LIBRARIES - cJSON libraries for linking
+#  lodepng_FOUND - lodepng was found
+#  lodepng_INCLUDE_DIRS - lodepng include directories
+#  lodepng_LIBRARIES - lodepng libraries for linking
 
 find_path(lodepng_INCLUDE_DIR
     NAMES lodepng.h)

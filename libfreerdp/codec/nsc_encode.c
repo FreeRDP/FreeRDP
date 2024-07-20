@@ -54,14 +54,14 @@ typedef struct
 	UINT8 ChromaSubsamplingLevel;
 } NSC_MESSAGE;
 
-static BOOL nsc_write_message(NSC_CONTEXT* context, wStream* s, const NSC_MESSAGE* message);
+static BOOL nsc_write_message(NSC_CONTEXT* WINPR_RESTRICT context, wStream* WINPR_RESTRICT s,
+                              const NSC_MESSAGE* WINPR_RESTRICT message);
 
-static BOOL nsc_context_initialize_encode(NSC_CONTEXT* context)
+static BOOL nsc_context_initialize_encode(NSC_CONTEXT* WINPR_RESTRICT context)
 {
-	int i;
-	UINT32 length;
-	UINT32 tempWidth;
-	UINT32 tempHeight;
+	UINT32 length = 0;
+	UINT32 tempWidth = 0;
+	UINT32 tempHeight = 0;
 	tempWidth = ROUND_UP_TO(context->width, 8);
 	tempHeight = ROUND_UP_TO(context->height, 2);
 	/* The maximum length a decoded plane can reach in all cases */
@@ -69,7 +69,7 @@ static BOOL nsc_context_initialize_encode(NSC_CONTEXT* context)
 
 	if (length > context->priv->PlaneBuffersLength)
 	{
-		for (i = 0; i < 5; i++)
+		for (int i = 0; i < 5; i++)
 		{
 			BYTE* tmp = (BYTE*)winpr_aligned_recalloc(context->priv->PlaneBuffers[i], length,
 			                                          sizeof(BYTE), 32);
@@ -103,140 +103,123 @@ fail:
 
 	if (length > context->priv->PlaneBuffersLength)
 	{
-		for (i = 0; i < 5; i++)
+		for (int i = 0; i < 5; i++)
 			winpr_aligned_free(context->priv->PlaneBuffers[i]);
 	}
 
 	return FALSE;
 }
 
-static BOOL nsc_encode_argb_to_aycocg(NSC_CONTEXT* context, const BYTE* data, UINT32 scanline)
+static BOOL nsc_encode_argb_to_aycocg(NSC_CONTEXT* WINPR_RESTRICT context,
+                                      const BYTE* WINPR_RESTRICT data, UINT32 scanline)
 {
-	UINT16 x;
-	UINT16 y;
-	UINT16 rw;
-	BYTE ccl;
-	const BYTE* src;
-	const UINT32* src_32;
-	const UINT16* src_16;
+	UINT16 y = 0;
+	UINT16 rw = 0;
+	BYTE ccl = 0;
+	const BYTE* src = NULL;
 	BYTE* yplane = NULL;
 	BYTE* coplane = NULL;
 	BYTE* cgplane = NULL;
 	BYTE* aplane = NULL;
-	INT16 r_val;
-	INT16 g_val;
-	INT16 b_val;
-	BYTE a_val;
-	UINT32 tempWidth;
+	INT16 r_val = 0;
+	INT16 g_val = 0;
+	INT16 b_val = 0;
+	BYTE a_val = 0;
+	UINT32 tempWidth = 0;
 
 	tempWidth = ROUND_UP_TO(context->width, 8);
 	rw = (context->ChromaSubsamplingLevel ? tempWidth : context->width);
 	ccl = context->ColorLossLevel;
 
-	for (y = 0; y < context->height; y++)
+	for (; y < context->height; y++)
 	{
 		src = data + (context->height - 1 - y) * scanline;
 		yplane = context->priv->PlaneBuffers[0] + y * rw;
 		coplane = context->priv->PlaneBuffers[1] + y * rw;
 		cgplane = context->priv->PlaneBuffers[2] + y * rw;
 		aplane = context->priv->PlaneBuffers[3] + y * context->width;
-		src_32 = (const UINT32*)src;
-		src_16 = (const UINT16*)src;
 
-		for (x = 0; x < context->width; x++)
+		UINT16 x = 0;
+		for (; x < context->width; x++)
 		{
 			switch (context->format)
 			{
 				case PIXEL_FORMAT_BGRX32:
-					b_val = (INT16)(*src_32 & 0xFF);
-					g_val = (INT16)((*src_32 >> 8) & 0xFF);
-					r_val = (INT16)((*src_32 >> 16) & 0xFF);
+					b_val = *src++;
+					g_val = *src++;
+					r_val = *src++;
+					src++;
 					a_val = 0xFF;
-					src_32++;
 					break;
 
 				case PIXEL_FORMAT_BGRA32:
-					b_val = (INT16)(*src_32 & 0xFF);
-					g_val = (INT16)((*src_32 >> 8) & 0xFF);
-					r_val = (INT16)((*src_32 >> 16) & 0xFF);
-					a_val = (INT16)((*src_32 >> 24) & 0xFF);
-					src_32++;
+					b_val = *src++;
+					g_val = *src++;
+					r_val = *src++;
+					a_val = *src++;
 					break;
 
 				case PIXEL_FORMAT_RGBX32:
-					r_val = (INT16)(*src_32 & 0xFF);
-					g_val = (INT16)((*src_32 >> 8) & 0xFF);
-					b_val = (INT16)((*src_32 >> 16) & 0xFF);
+					r_val = *src++;
+					g_val = *src++;
+					b_val = *src++;
+					src++;
 					a_val = 0xFF;
-					src_32++;
 					break;
 
 				case PIXEL_FORMAT_RGBA32:
-					r_val = (INT16)(*src_32 & 0xFF);
-					g_val = (INT16)((*src_32 >> 8) & 0xFF);
-					b_val = (INT16)((*src_32 >> 16) & 0xFF);
-					a_val = (INT16)((*src_32 >> 24) & 0xFF);
-					src_32++;
+					r_val = *src++;
+					g_val = *src++;
+					b_val = *src++;
+					a_val = *src++;
 					break;
 
 				case PIXEL_FORMAT_BGR24:
-#ifdef __LITTLE_ENDIAN__
 					b_val = *src++;
 					g_val = *src++;
 					r_val = *src++;
-#else
-					r_val = *src++;
-					g_val = *src++;
-					b_val = *src++;
-#endif
 					a_val = 0xFF;
 					break;
 
 				case PIXEL_FORMAT_RGB24:
-#ifdef __LITTLE_ENDIAN__
 					r_val = *src++;
 					g_val = *src++;
 					b_val = *src++;
-#else
-					b_val = *src++;
-					g_val = *src++;
-					r_val = *src++;
-#endif
 					a_val = 0xFF;
 					break;
 
 				case PIXEL_FORMAT_BGR16:
-					b_val = (INT16)((*src_16) & 0x1F);
-					g_val = (INT16)((*src_16 >> 5) & 0x3F);
-					r_val = (INT16)((*src_16 >> 11) & 0x1F);
+					b_val = (INT16)(((*(src + 1)) & 0xF8) | ((*(src + 1)) >> 5));
+					g_val = (INT16)((((*(src + 1)) & 0x07) << 5) | (((*src) & 0xE0) >> 3));
+					r_val = (INT16)((((*src) & 0x1F) << 3) | (((*src) >> 2) & 0x07));
 					a_val = 0xFF;
-					src_16++;
+					src += 2;
 					break;
 
 				case PIXEL_FORMAT_RGB16:
-					r_val = (INT16)((*src_16) & 0x1F);
-					g_val = (INT16)((*src_16 >> 5) & 0x3F);
-					b_val = (INT16)((*src_16 >> 11) & 0x1F);
+					r_val = (INT16)(((*(src + 1)) & 0xF8) | ((*(src + 1)) >> 5));
+					g_val = (INT16)((((*(src + 1)) & 0x07) << 5) | (((*src) & 0xE0) >> 3));
+					b_val = (INT16)((((*src) & 0x1F) << 3) | (((*src) >> 2) & 0x07));
 					a_val = 0xFF;
-					src_16++;
+					src += 2;
 					break;
 
 				case PIXEL_FORMAT_A4:
 				{
-					int shift;
-					BYTE idx;
+					int shift = 0;
+					BYTE idx = 0;
 					shift = (7 - (x % 8));
-					idx = (BYTE)(((*src_32 & 0xFF) >> shift) & 1);
-					idx |= (BYTE)(((((*src_32 >> 8) & 0xFF) >> shift) & 1) << 1);
-					idx |= (BYTE)(((((*src_32 >> 16) & 0xFF) >> shift) & 1) << 2);
-					idx |= (BYTE)(((((*src_32 >> 24) & 0xFF) >> shift) & 1) << 3);
+					idx = ((*src) >> shift) & 1;
+					idx |= (((*(src + 1)) >> shift) & 1) << 1;
+					idx |= (((*(src + 2)) >> shift) & 1) << 2;
+					idx |= (((*(src + 3)) >> shift) & 1) << 3;
 					idx *= 3;
 					r_val = (INT16)context->palette[idx];
 					g_val = (INT16)context->palette[idx + 1];
 					b_val = (INT16)context->palette[idx + 2];
 
 					if (shift == 0)
-						src_32++;
+						src += 4;
 				}
 
 					a_val = 0xFF;
@@ -287,11 +270,10 @@ static BOOL nsc_encode_argb_to_aycocg(NSC_CONTEXT* context, const BYTE* data, UI
 	return TRUE;
 }
 
-static BOOL nsc_encode_subsampling(NSC_CONTEXT* context)
+static BOOL nsc_encode_subsampling(NSC_CONTEXT* WINPR_RESTRICT context)
 {
-	UINT32 y;
-	UINT32 tempWidth;
-	UINT32 tempHeight;
+	UINT32 tempWidth = 0;
+	UINT32 tempHeight = 0;
 
 	if (!context)
 		return FALSE;
@@ -305,9 +287,8 @@ static BOOL nsc_encode_subsampling(NSC_CONTEXT* context)
 	if (tempWidth > context->priv->PlaneBuffersLength / tempHeight)
 		return FALSE;
 
-	for (y = 0; y < tempHeight >> 1; y++)
+	for (UINT32 y = 0; y < tempHeight >> 1; y++)
 	{
-		UINT32 x;
 		BYTE* co_dst = context->priv->PlaneBuffers[1] + y * (tempWidth >> 1);
 		BYTE* cg_dst = context->priv->PlaneBuffers[2] + y * (tempWidth >> 1);
 		const INT8* co_src0 = (INT8*)context->priv->PlaneBuffers[1] + (y << 1) * tempWidth;
@@ -315,7 +296,7 @@ static BOOL nsc_encode_subsampling(NSC_CONTEXT* context)
 		const INT8* cg_src0 = (INT8*)context->priv->PlaneBuffers[2] + (y << 1) * tempWidth;
 		const INT8* cg_src1 = cg_src0 + tempWidth;
 
-		for (x = 0; x < tempWidth >> 1; x++)
+		for (UINT32 x = 0; x < tempWidth >> 1; x++)
 		{
 			*co_dst++ = (BYTE)(((INT16)*co_src0 + (INT16) * (co_src0 + 1) + (INT16)*co_src1 +
 			                    (INT16) * (co_src1 + 1)) >>
@@ -333,7 +314,8 @@ static BOOL nsc_encode_subsampling(NSC_CONTEXT* context)
 	return TRUE;
 }
 
-BOOL nsc_encode(NSC_CONTEXT* context, const BYTE* bmpdata, UINT32 rowstride)
+BOOL nsc_encode(NSC_CONTEXT* WINPR_RESTRICT context, const BYTE* WINPR_RESTRICT bmpdata,
+                UINT32 rowstride)
 {
 	if (!context || !bmpdata || (rowstride == 0))
 		return FALSE;
@@ -350,9 +332,10 @@ BOOL nsc_encode(NSC_CONTEXT* context, const BYTE* bmpdata, UINT32 rowstride)
 	return TRUE;
 }
 
-static UINT32 nsc_rle_encode(const BYTE* in, BYTE* out, UINT32 originalSize)
+static UINT32 nsc_rle_encode(const BYTE* WINPR_RESTRICT in, BYTE* WINPR_RESTRICT out,
+                             UINT32 originalSize)
 {
-	UINT32 left;
+	UINT32 left = 0;
 	UINT32 runlength = 1;
 	UINT32 planeSize = 0;
 	left = originalSize;
@@ -404,13 +387,12 @@ static UINT32 nsc_rle_encode(const BYTE* in, BYTE* out, UINT32 originalSize)
 	return planeSize;
 }
 
-static void nsc_rle_compress_data(NSC_CONTEXT* context)
+static void nsc_rle_compress_data(NSC_CONTEXT* WINPR_RESTRICT context)
 {
-	UINT16 i;
-	UINT32 planeSize;
-	UINT32 originalSize;
+	UINT32 planeSize = 0;
+	UINT32 originalSize = 0;
 
-	for (i = 0; i < 4; i++)
+	for (UINT16 i = 0; i < 4; i++)
 	{
 		originalSize = context->OrgByteCount[i];
 
@@ -434,12 +416,12 @@ static void nsc_rle_compress_data(NSC_CONTEXT* context)
 	}
 }
 
-static UINT32 nsc_compute_byte_count(NSC_CONTEXT* context, UINT32* ByteCount, UINT32 width,
-                                     UINT32 height)
+static UINT32 nsc_compute_byte_count(NSC_CONTEXT* WINPR_RESTRICT context,
+                                     UINT32* WINPR_RESTRICT ByteCount, UINT32 width, UINT32 height)
 {
-	UINT32 tempWidth;
-	UINT32 tempHeight;
-	UINT32 maxPlaneSize;
+	UINT32 tempWidth = 0;
+	UINT32 tempHeight = 0;
+	UINT32 maxPlaneSize = 0;
 	tempWidth = ROUND_UP_TO(width, 8);
 	tempHeight = ROUND_UP_TO(height, 2);
 	maxPlaneSize = tempWidth * tempHeight + 16;
@@ -462,9 +444,10 @@ static UINT32 nsc_compute_byte_count(NSC_CONTEXT* context, UINT32* ByteCount, UI
 	return maxPlaneSize;
 }
 
-BOOL nsc_write_message(NSC_CONTEXT* context, wStream* s, const NSC_MESSAGE* message)
+BOOL nsc_write_message(NSC_CONTEXT* WINPR_RESTRICT context, wStream* WINPR_RESTRICT s,
+                       const NSC_MESSAGE* WINPR_RESTRICT message)
 {
-	UINT32 totalPlaneByteCount;
+	UINT32 totalPlaneByteCount = 0;
 	totalPlaneByteCount = message->LumaPlaneByteCount + message->OrangeChromaPlaneByteCount +
 	                      message->GreenChromaPlaneByteCount + message->AlphaPlaneByteCount;
 
@@ -498,10 +481,11 @@ BOOL nsc_write_message(NSC_CONTEXT* context, wStream* s, const NSC_MESSAGE* mess
 	return TRUE;
 }
 
-BOOL nsc_compose_message(NSC_CONTEXT* context, wStream* s, const BYTE* data, UINT32 width,
-                         UINT32 height, UINT32 scanline)
+BOOL nsc_compose_message(NSC_CONTEXT* WINPR_RESTRICT context, wStream* WINPR_RESTRICT s,
+                         const BYTE* WINPR_RESTRICT data, UINT32 width, UINT32 height,
+                         UINT32 scanline)
 {
-	BOOL rc;
+	BOOL rc = 0;
 	NSC_MESSAGE message = { 0 };
 
 	if (!context || !s || !data)
@@ -537,9 +521,9 @@ BOOL nsc_compose_message(NSC_CONTEXT* context, wStream* s, const BYTE* data, UIN
 	return nsc_write_message(context, s, &message);
 }
 
-BOOL nsc_decompose_message(NSC_CONTEXT* context, wStream* s, BYTE* bmpdata, UINT32 x, UINT32 y,
-                           UINT32 width, UINT32 height, UINT32 rowstride, UINT32 format,
-                           UINT32 flip)
+BOOL nsc_decompose_message(NSC_CONTEXT* WINPR_RESTRICT context, wStream* WINPR_RESTRICT s,
+                           BYTE* WINPR_RESTRICT bmpdata, UINT32 x, UINT32 y, UINT32 width,
+                           UINT32 height, UINT32 rowstride, UINT32 format, UINT32 flip)
 {
 	size_t size = Stream_GetRemainingLength(s);
 

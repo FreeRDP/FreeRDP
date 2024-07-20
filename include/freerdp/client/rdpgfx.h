@@ -73,7 +73,7 @@ extern "C"
 	typedef UINT (*pcRdpgfxEvictCacheEntry)(RdpgfxClientContext* context,
 	                                        const RDPGFX_EVICT_CACHE_ENTRY_PDU* evictCacheEntry);
 	typedef UINT (*pcRdpgfxImportCacheEntry)(RdpgfxClientContext* context, UINT16 cacheSlot,
-	                                         PERSISTENT_CACHE_ENTRY* importCacheEntry);
+	                                         const PERSISTENT_CACHE_ENTRY* importCacheEntry);
 	typedef UINT (*pcRdpgfxExportCacheEntry)(RdpgfxClientContext* context, UINT16 cacheSlot,
 	                                         PERSISTENT_CACHE_ENTRY* importCacheEntry);
 	typedef UINT (*pcRdpgfxMapSurfaceToOutput)(
@@ -177,8 +177,10 @@ extern "C"
 		PROFILER_DEFINE(SurfaceProfiler)
 	};
 
-	FREERDP_API RdpgfxClientContext* rdpgfx_client_context_new(rdpContext* context);
 	FREERDP_API void rdpgfx_client_context_free(RdpgfxClientContext* context);
+
+	WINPR_ATTR_MALLOC(rdpgfx_client_context_free, 1)
+	FREERDP_API RdpgfxClientContext* rdpgfx_client_context_new(rdpContext* context);
 
 #ifdef __cplusplus
 }

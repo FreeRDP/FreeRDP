@@ -95,7 +95,7 @@ static BOOL MessageQueue_EnsureCapacity(wMessageQueue* queue, size_t count)
 
 	if (queue->size + count >= queue->capacity)
 	{
-		wMessage* new_arr;
+		wMessage* new_arr = NULL;
 		size_t old_capacity = queue->capacity;
 		size_t new_capacity = queue->capacity * 2;
 
@@ -122,7 +122,7 @@ static BOOL MessageQueue_EnsureCapacity(wMessageQueue* queue, size_t count)
 
 BOOL MessageQueue_Dispatch(wMessageQueue* queue, const wMessage* message)
 {
-	wMessage* dst;
+	wMessage* dst = NULL;
 	BOOL ret = FALSE;
 	WINPR_ASSERT(queue);
 
@@ -258,7 +258,10 @@ wMessageQueue* MessageQueue_New(const wObject* callback)
 	return queue;
 
 fail:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	MessageQueue_Free(queue);
+	WINPR_PRAGMA_DIAG_POP
 	return NULL;
 }
 

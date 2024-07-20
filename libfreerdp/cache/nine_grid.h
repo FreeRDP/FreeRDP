@@ -38,8 +38,10 @@ extern "C"
 
 	FREERDP_LOCAL void nine_grid_cache_register_callbacks(rdpUpdate* update);
 
-	FREERDP_LOCAL rdpNineGridCache* nine_grid_cache_new(rdpContext* context);
 	FREERDP_LOCAL void nine_grid_cache_free(rdpNineGridCache* nine_grid);
+
+	WINPR_ATTR_MALLOC(nine_grid_cache_free, 1)
+	FREERDP_LOCAL rdpNineGridCache* nine_grid_cache_new(rdpContext* context);
 
 #ifdef __cplusplus
 }

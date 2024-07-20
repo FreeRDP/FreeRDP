@@ -37,7 +37,10 @@
 	_Pragma("clang diagnostic ignored \"-Wunused-const-variable\"")
 #define WINPR_PRAGMA_DIAG_IGNORED_FORMAT_SECURITY \
 	_Pragma("clang diagnostic ignored \"-Wformat-security\"")
+#define WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC \
+	_Pragma("clang diagnostic ignored \"-Wmismatched-dealloc\"")
 #define WINPR_PRAGMA_DIAG_POP _Pragma("clang diagnostic pop")
+#define WINPR_PRAGMA_UNROLL_LOOP _Pragma("clang loop vectorize_width(8) interleave_count(8)")
 #elif defined(__GNUC__)
 #define WINPR_PRAGMA_DIAG_PUSH _Pragma("GCC diagnostic push")
 #define WINPR_PRAGMA_DIAG_IGNORED_PEDANTIC _Pragma("GCC diagnostic ignored \"-Wpedantic\"")
@@ -54,7 +57,10 @@
 	_Pragma("GCC diagnostic ignored \"-Wunused-const-variable\"")
 #define WINPR_PRAGMA_DIAG_IGNORED_FORMAT_SECURITY \
 	_Pragma("GCC diagnostic ignored \"-Wformat-security\"")
+#define WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC \
+	_Pragma("GCC diagnostic ignored \"-Wmismatched-dealloc\"")
 #define WINPR_PRAGMA_DIAG_POP _Pragma("GCC diagnostic pop")
+#define WINPR_PRAGMA_UNROLL_LOOP _Pragma("GCC unroll 8") _Pragma("GCC ivdep")
 #else
 #define WINPR_PRAGMA_DIAG_PUSH
 #define WINPR_PRAGMA_DIAG_IGNORED_PEDANTIC
@@ -64,7 +70,14 @@
 #define WINPR_PRAGMA_DIAG_IGNORED_ATOMIC_SEQ_CST
 #define WINPR_PRAGMA_DIAG_IGNORED_UNUSED_CONST_VAR
 #define WINPR_PRAGMA_DIAG_IGNORED_FORMAT_SECURITY
+#define WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 #define WINPR_PRAGMA_DIAG_POP
+#define WINPR_PRAGMA_UNROLL_LOOP
+#endif
+
+#if defined(MSVC)
+#undef WINPR_PRAGMA_UNROLL_LOOP
+#define WINPR_PRAGMA_UNROLL_LOOP _Pragma("loop ( ivdep )")
 #endif
 
 WINPR_PRAGMA_DIAG_PUSH
@@ -81,9 +94,10 @@ WINPR_PRAGMA_DIAG_IGNORED_RESERVED_ID_MACRO
 
 /* Intel x86 (_M_IX86) */
 
-#if defined(i386) || defined(__i386) || defined(__i386__) || defined(__i486__) ||   \
-    defined(__i586__) || defined(__i686__) || defined(__X86__) || defined(_X86_) || \
-    defined(__I86__) || defined(__IA32__) || defined(__THW_INTEL__) || defined(__INTEL__)
+#if defined(i386) || defined(__i386) || defined(__i386__) || defined(__i486__) ||            \
+    defined(__i586__) || defined(__i686__) || defined(__X86__) || defined(_X86_) ||          \
+    defined(__I86__) || defined(__IA32__) || defined(__THW_INTEL__) || defined(__INTEL__) || \
+    defined(_M_IX86)
 #ifndef _M_IX86
 #define _M_IX86 1
 #endif
@@ -95,6 +109,13 @@ WINPR_PRAGMA_DIAG_IGNORED_RESERVED_ID_MACRO
     defined(_M_X64)
 #ifndef _M_AMD64
 #define _M_AMD64 1
+#endif
+#endif
+
+/* Intel ia64 */
+#if defined(__ia64) || defined(__ia64__) || defined(_M_IA64)
+#ifndef _M_IA64
+#define _M_IA64 1
 #endif
 #endif
 

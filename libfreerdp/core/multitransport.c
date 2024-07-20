@@ -62,10 +62,10 @@ state_run_t multitransport_recv_request(rdpMultitransport* multi, wStream* s)
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 24))
 		return STATE_RUN_FAILED;
 
-	UINT32 requestId;
-	UINT16 requestedProto;
-	UINT16 reserved;
-	const BYTE* cookie;
+	UINT32 requestId = 0;
+	UINT16 requestedProto = 0;
+	UINT16 reserved = 0;
+	const BYTE* cookie = NULL;
 
 	Stream_Read_UINT32(s, requestId);      /* requestId (4 bytes) */
 	Stream_Read_UINT16(s, requestedProto); /* requestedProtocol (2 bytes) */
@@ -172,8 +172,8 @@ state_run_t multitransport_recv_response(rdpMultitransport* multi, wStream* s)
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
 		return STATE_RUN_FAILED;
 
-	UINT32 requestId;
-	HRESULT hr;
+	UINT32 requestId = 0;
+	HRESULT hr = 0;
 
 	Stream_Read_UINT32(s, requestId); /* requestId (4 bytes) */
 	Stream_Read_UINT32(s, hr);        /* hrResponse (4 bytes) */

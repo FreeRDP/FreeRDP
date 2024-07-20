@@ -1,4 +1,4 @@
-if (WIN32)
+if (MSVC)
 	if (CMAKE_VERSION VERSION_LESS 3.15.0)
 		message(FATAL_ERROR "windows builds require CMake >= 3.15")
 	endif()

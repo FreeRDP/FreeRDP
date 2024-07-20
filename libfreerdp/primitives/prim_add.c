@@ -16,26 +16,54 @@
 
 #include <freerdp/config.h>
 
+#include <stdint.h>
+
 #include <freerdp/types.h>
 #include <freerdp/primitives.h>
 
 #include "prim_internal.h"
+#include "prim_add.h"
 
 /* ----------------------------------------------------------------------------
  * 16-bit signed add with saturation (under and over).
  */
-static pstatus_t general_add_16s(const INT16* pSrc1, const INT16* pSrc2, INT16* pDst, UINT32 len)
+static INLINE INT16 add(INT16 a, INT16 b)
 {
-	while (len--)
-	{
-		INT32 k = (INT32)(*pSrc1++) + (INT32)(*pSrc2++);
+	INT32 k = (INT32)a + (INT32)b;
 
-		if (k > 32767)
-			*pDst++ = ((INT16)32767);
-		else if (k < -32768)
-			*pDst++ = ((INT16)-32768);
-		else
-			*pDst++ = (INT16)k;
+	if (k > INT16_MAX)
+		return INT16_MAX;
+
+	if (k < INT16_MIN)
+		return INT16_MIN;
+
+	return (INT16)k;
+}
+
+static pstatus_t general_add_16s(const INT16* WINPR_RESTRICT pSrc1,
+                                 const INT16* WINPR_RESTRICT pSrc2, INT16* WINPR_RESTRICT pDst,
+                                 UINT32 len)
+{
+	const UINT32 rem = len % 16;
+	const UINT32 align = len - rem;
+
+	for (UINT32 x = 0; x < align; x++)
+		*pDst++ = add(*pSrc1++, *pSrc2++);
+
+	for (UINT32 x = 0; x < rem; x++)
+		*pDst++ = add(*pSrc1++, *pSrc2++);
+
+	return PRIMITIVES_SUCCESS;
+}
+
+static pstatus_t general_add_16s_inplace(INT16* WINPR_RESTRICT pSrcDst1,
+                                         INT16* WINPR_RESTRICT pSrcDst2, UINT32 len)
+{
+	for (UINT32 x = 0; x < len; x++)
+	{
+		INT16 v = add(pSrcDst1[x], pSrcDst2[x]);
+		pSrcDst1[x] = v;
+		pSrcDst2[x] = v;
 	}
 
 	return PRIMITIVES_SUCCESS;
@@ -45,4 +73,10 @@ static pstatus_t general_add_16s(const INT16* pSrc1, const INT16* pSrc2, INT16* 
 void primitives_init_add(primitives_t* prims)
 {
 	prims->add_16s = general_add_16s;
+	prims->add_16s_inplace = general_add_16s_inplace;
+}
+
+void primitives_init_add_opt(primitives_t* WINPR_RESTRICT prims)
+{
+	primitives_init_add_sse3(prims);
 }

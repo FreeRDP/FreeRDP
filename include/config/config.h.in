@@ -18,7 +18,6 @@
 #cmakedefine WITH_GPROF
 #cmakedefine WITH_SSE2
 #cmakedefine WITH_NEON
-#cmakedefine WITH_IPP
 #cmakedefine WITH_CUPS
 #cmakedefine WITH_JPEG
 #cmakedefine WITH_WIN8

@@ -46,8 +46,8 @@ static BOOL pf_server_check_and_sync_input_state(pClientContext* pc)
 
 static BOOL pf_server_synchronize_event(rdpInput* input, UINT32 flags)
 {
-	pServerContext* ps;
-	pClientContext* pc;
+	pServerContext* ps = NULL;
+	pClientContext* pc = NULL;
 
 	WINPR_ASSERT(input);
 	ps = (pServerContext*)input->context;
@@ -66,10 +66,10 @@ static BOOL pf_server_synchronize_event(rdpInput* input, UINT32 flags)
 
 static BOOL pf_server_keyboard_event(rdpInput* input, UINT16 flags, UINT8 code)
 {
-	const proxyConfig* config;
+	const proxyConfig* config = NULL;
 	proxyKeyboardEventInfo event = { 0 };
-	pServerContext* ps;
-	pClientContext* pc;
+	pServerContext* ps = NULL;
+	pClientContext* pc = NULL;
 
 	WINPR_ASSERT(input);
 	ps = (pServerContext*)input->context;
@@ -99,10 +99,10 @@ static BOOL pf_server_keyboard_event(rdpInput* input, UINT16 flags, UINT8 code)
 
 static BOOL pf_server_unicode_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 {
-	const proxyConfig* config;
+	const proxyConfig* config = NULL;
 	proxyUnicodeEventInfo event = { 0 };
-	pServerContext* ps;
-	pClientContext* pc;
+	pServerContext* ps = NULL;
+	pClientContext* pc = NULL;
 
 	WINPR_ASSERT(input);
 	ps = (pServerContext*)input->context;
@@ -131,9 +131,9 @@ static BOOL pf_server_unicode_keyboard_event(rdpInput* input, UINT16 flags, UINT
 static BOOL pf_server_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 {
 	proxyMouseEventInfo event = { 0 };
-	const proxyConfig* config;
-	pServerContext* ps;
-	pClientContext* pc;
+	const proxyConfig* config = NULL;
+	pServerContext* ps = NULL;
+	pClientContext* pc = NULL;
 
 	WINPR_ASSERT(input);
 	ps = (pServerContext*)input->context;
@@ -164,10 +164,10 @@ static BOOL pf_server_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT1
 
 static BOOL pf_server_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 {
-	const proxyConfig* config;
+	const proxyConfig* config = NULL;
 	proxyMouseExEventInfo event = { 0 };
-	pServerContext* ps;
-	pClientContext* pc;
+	pServerContext* ps = NULL;
+	pClientContext* pc = NULL;
 
 	WINPR_ASSERT(input);
 	ps = (pServerContext*)input->context;

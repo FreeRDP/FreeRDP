@@ -1,110 +1,118 @@
 {
-  "app-id": "com.freerdp.FreeRDP",
-  "runtime": "org.freedesktop.Platform",
-  "runtime-version": "23.08",
-  "sdk": "org.freedesktop.Sdk",
-  "build-options" : {
-    "cflags": "-O3",
-    "cxxflags": "-O3"
-  },
-  "command": "freerdp.sh",
-  "cleanup": [
-    "*.la",
-    "/include",
-    "/lib/cmake",
-    "/lib/pkgconfig"
-  ],
-  "finish-args": [
-    /* X11 + XShm access */
-    "--share=ipc",
-    "--socket=x11",
-    /* Needs to talk to the network */
-    "--share=network",
-    /* Play sounds redirected from guests */
-    "--socket=pulseaudio",
-    "--socket=cups",
-    /* Wayland access */
-    "--socket=wayland",
-    /* Allow rw access to download folder */
-    "--filesystem=xdg-download"
-  ],
-  "add-build-extensions": {
-    "org.freedesktop.Platform.ffmpeg-full": {
-    "directory": "lib/ffmpeg",
-    "version": "23.08",
-    "add-ld-path": "."
-    },
-    "org.freedesktop.Platform.openh264": {
-    "directory": "lib/openh264",
-    "version": "2.3.1",
-    "add-ld-path": "."
-    }
-  },
-  "modules": [
-    "modules/libusb.json",
-    "modules/uriparser.json",
-    "modules/cJSON-1.7.16.json",
-    "modules/xprop-1.2.6.json",
-    "modules/pcsc-1.9.9.json",
-    "modules/pkcs11-helper-1.29.0.json",
-    "modules/krb5-1.21.1.json",
-    "modules/opensc-0.23.0.json",
-    {
-      "name": "freerdp",
-      "buildsystem": "cmake-ninja",
-      "builddir": true,
-      "cleanup": [
-      ],
-      "config-opts": [
-        "-DCMAKE_VERBOSE_MAKEFILE=ON",
-        "-DCMAKE_BUILD_TYPE:STRING=Release",
-        "-DCMAKE_INSTALL_LIBDIR:PATH=lib",
-        "-DWITH_FREERDP_DEPRECATED_COMMANDLINE=ON",
-        "-DCHANNEL_TSMF:BOOL=OFF",
-        "-DCHANNEL_URBDRC:BOOL=ON",
-        "-DBUILD_TESTING:BOOL=OFF",
-        "-DWITH_MANPAGES:BOOL=OFF",
-        "-DWITH_KRB5:BOOL=ON",
-        "-DWITH_PCSC:BOOL=ON",
-        "-DWITH_SDL_IMAGE_DIALOGS:BOOL=ON",
-        "-DWITH_INTERNAL_MD4:BOOL=ON",
-        "-DWITH_INTERNAL_MD5:BOOL=ON",
-        "-DWITH_INTERNAL_RC4:BOOL=ON",
-        "-DWITH_PKCS11:BOOL=ON",
-        "-DWITH_SWSCALE:BOOL=ON",
-        "-DWITH_SERVER:BOOL=ON",
-        "-DWITH_SAMPLE:BOOL=ON",
-        "-DWITH_CUPS:BOOL=ON",
-        "-DWITH_OPUS:BOOL=ON",
-        "-DWITH_FUSE:BOOL=OFF",
-        "-DWITH_FFMPEG:BOOL=ON",
-        "-DWITH_URIPARSER:BOOL=ON",
-        "-DWITH_DSP_FFMPEG:BOOL=ON",
-        "-DWITH_OSS:BOOL=OFF",
-        "-DWITH_WEBVIEW:BOOL=OFF",
-        "-DWITH_PULSE:BOOL=ON"
-      ],
-      "sources": [
-      {
-        "type": "dir",
-        "path": "../.."
-      }
-      ]
-    },
-    {
-      "name": "wrapper",
-      "buildsystem": "simple",
-      "build-commands": [
-        "install -D freerdp.sh /app/bin/freerdp.sh",
-        "mkdir -p /app/lib/ffmpeg",
-        "mkdir -p /app/lib/openh264"
-      ],
-      "sources": [
-        {
-          "type": "file",
-          "path": "freerdp.sh"
-        }
-      ]
-    }
-  ]
+	"app-id": "com.freerdp.FreeRDP",
+	"runtime": "org.freedesktop.Platform",
+	"runtime-version": "23.08",
+	"sdk": "org.freedesktop.Sdk",
+	"build-options": {
+		"cflags": "-O3",
+		"cxxflags": "-O3"
+	},
+	"command": "freerdp.sh",
+	"cleanup": [
+		"*.a",
+		"*.la",
+		"/include",
+		"/lib/cmake",
+		"/lib/pkgconfig",
+		"/sbin",
+		"/share/doc",
+		"/share/examples",
+		"/share/man"
+	],
+	"finish-args": [
+		"--device=dri",
+		/* X11 + XShm access */
+		"--share=ipc",
+		"--socket=x11",
+		/* Needs to talk to the network */
+		"--share=network",
+		/* Play sounds redirected from guests */
+		"--socket=pulseaudio",
+		"--socket=cups",
+		/* Wayland access */
+		"--socket=wayland",
+		/* Allow rw access to download folder */
+		"--filesystem=xdg-download"
+	],
+	"add-build-extensions": {
+		"org.freedesktop.Platform.ffmpeg-full": {
+			"directory": "lib/ffmpeg",
+			"version": "23.08",
+			"add-ld-path": "."
+		},
+		"org.freedesktop.Platform.openh264": {
+			"directory": "lib/openh264",
+			"version": "2.4.1",
+			"add-ld-path": "."
+		}
+	},
+	"modules": [
+		"modules/openssl.json",
+		"modules/libusb.json",
+		"modules/uriparser.json",
+		"modules/cJSON.json",
+		"modules/xprop.json",
+		"modules/pcsc.json",
+		"modules/krb5.json",
+		"modules/opensc.json",
+		{
+			"name": "freerdp",
+			"buildsystem": "cmake-ninja",
+			"builddir": true,
+			"cleanup": [],
+			"config-opts": [
+				"-DCMAKE_VERBOSE_MAKEFILE=ON",
+				"-DCMAKE_BUILD_TYPE:STRING=Release",
+				"-DCMAKE_INSTALL_LIBDIR:PATH=lib",
+				"-DWITH_FREERDP_DEPRECATED_COMMANDLINE=ON",
+				"-DCHANNEL_TSMF:BOOL=OFF",
+				"-DCHANNEL_URBDRC:BOOL=ON",
+				"-DBUILD_TESTING:BOOL=OFF",
+				"-DWITH_MANPAGES:BOOL=OFF",
+				"-DWITH_KRB5:BOOL=ON",
+				"-DWITH_PCSC:BOOL=ON",
+				"-DWITH_SDL_IMAGE_DIALOGS:BOOL=ON",
+				"-DWITH_INTERNAL_MD4:BOOL=ON",
+				"-DWITH_INTERNAL_MD5:BOOL=ON",
+				"-DWITH_INTERNAL_RC4:BOOL=ON",
+				"-DWITH_PKCS11:BOOL=ON",
+				"-DWITH_SWSCALE:BOOL=ON",
+				"-DWITH_SERVER:BOOL=ON",
+				"-DWITH_SAMPLE:BOOL=ON",
+				"-DWITH_CUPS:BOOL=ON",
+				"-DWITH_OPUS:BOOL=ON",
+				"-DWITH_FUSE:BOOL=OFF",
+				"-DWITH_FFMPEG:BOOL=ON",
+				"-DWITH_WINPR_UTILS_IMAGE_PNG:BOOL=ON",
+				"-DWITH_WINPR_UTILS_IMAGE_WEBP:BOOL=ON",
+				"-DWITH_WINPR_UTILS_IMAGE_JPEG:BOOL=ON",
+				"-DWITH_URIPARSER:BOOL=ON",
+				"-DWITH_DSP_FFMPEG:BOOL=ON",
+				"-DWITH_OSS:BOOL=OFF",
+				"-DWITH_WEBVIEW:BOOL=OFF",
+				"-DWITH_PULSE:BOOL=ON"
+			],
+			"sources": [
+				{
+					"type": "dir",
+					"path": "../.."
+				}
+			]
+		},
+		{
+			"name": "wrapper",
+			"buildsystem": "simple",
+			"build-commands": [
+				"install -D freerdp.sh /app/bin/freerdp.sh",
+				"mkdir -p /app/lib/ffmpeg",
+				"mkdir -p /app/lib/openh264"
+			],
+			"sources": [
+				{
+					"type": "file",
+					"path": "freerdp.sh"
+				}
+			]
+		}
+	]
 }

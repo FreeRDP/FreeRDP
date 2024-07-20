@@ -48,7 +48,10 @@ static BOOL xf_Pointer_Set(rdpContext* context, rdpPointer* pointer);
 BOOL xf_decode_color(xfContext* xfc, const UINT32 srcColor, XColor* color)
 {
 	UINT32 SrcFormat = 0;
-	BYTE r = 0, g = 0, b = 0, a = 0;
+	BYTE r = 0;
+	BYTE g = 0;
+	BYTE b = 0;
+	BYTE a = 0;
 
 	if (!xfc || !color)
 		return FALSE;
@@ -151,7 +154,7 @@ static BOOL xf_Pointer_GetCursorForCurrentScale(rdpContext* context, rdpPointer*
 
 		if (xpointer->nCursors == xpointer->mCursors)
 		{
-			void* tmp2;
+			void* tmp2 = NULL;
 			xpointer->mCursors = (xpointer->mCursors == 0 ? 1 : xpointer->mCursors * 2);
 
 			tmp2 = realloc(xpointer->cursorWidths, sizeof(UINT32) * xpointer->mCursors);
@@ -268,7 +271,7 @@ static Window xf_Pointer_get_window(xfContext* xfc)
 
 BOOL xf_pointer_update_scale(xfContext* xfc)
 {
-	xfPointer* pointer;
+	xfPointer* pointer = NULL;
 	WINPR_ASSERT(xfc);
 
 	pointer = xfc->pointer;
@@ -283,8 +286,8 @@ static BOOL xf_Pointer_New(rdpContext* context, rdpPointer* pointer)
 	BOOL rc = FALSE;
 
 #ifdef WITH_XCURSOR
-	UINT32 CursorFormat;
-	size_t size;
+	UINT32 CursorFormat = 0;
+	size_t size = 0;
 	xfContext* xfc = (xfContext*)context;
 	xfPointer* xpointer = (xfPointer*)pointer;
 
@@ -327,7 +330,6 @@ static void xf_Pointer_Free(rdpContext* context, rdpPointer* pointer)
 	WLog_DBG(TAG, "%p", pointer);
 
 #ifdef WITH_XCURSOR
-	UINT32 i;
 	xfContext* xfc = (xfContext*)context;
 	xfPointer* xpointer = (xfPointer*)pointer;
 
@@ -337,7 +339,7 @@ static void xf_Pointer_Free(rdpContext* context, rdpPointer* pointer)
 	free(xpointer->cursorWidths);
 	free(xpointer->cursorHeights);
 
-	for (i = 0; i < xpointer->nCursors; i++)
+	for (UINT32 i = 0; i < xpointer->nCursors; i++)
 	{
 		XFreeCursor(xfc->display, xpointer->cursors[i]);
 	}
@@ -499,7 +501,7 @@ BOOL xf_register_pointer(rdpGraphics* graphics)
 
 UINT32 xf_get_local_color_format(xfContext* xfc, BOOL aligned)
 {
-	UINT32 DstFormat;
+	UINT32 DstFormat = 0;
 	BOOL invert = FALSE;
 
 	if (!xfc)

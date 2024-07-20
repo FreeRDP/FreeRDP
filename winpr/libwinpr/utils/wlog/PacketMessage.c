@@ -29,26 +29,10 @@
 #include <winpr/crt.h>
 #include <winpr/file.h>
 #include <winpr/stream.h>
+#include <winpr/sysinfo.h>
 
 #include "../../log.h"
 #define TAG WINPR_TAG("utils.wlog")
-
-#ifndef _WIN32
-#include <sys/time.h>
-#else
-#include <time.h>
-#include <sys/timeb.h>
-#include <winpr/windows.h>
-
-static int gettimeofday(struct timeval* tp, void* tz)
-{
-	struct _timeb timebuffer;
-	_ftime(&timebuffer);
-	tp->tv_sec = (long)timebuffer.time;
-	tp->tv_usec = timebuffer.millitm * 1000;
-	return 0;
-}
-#endif
 
 static BOOL Pcap_Read_Header(wPcap* pcap, wPcapHeader* header)
 {
@@ -89,8 +73,7 @@ static BOOL Pcap_Read_Record(wPcap* pcap, wPcapRecord* record)
 
 static BOOL Pcap_Add_Record(wPcap* pcap, void* data, UINT32 length)
 {
-	wPcapRecord* record;
-	struct timeval tp;
+	wPcapRecord* record = NULL;
 
 	if (!pcap->tail)
 	{
@@ -117,9 +100,10 @@ static BOOL Pcap_Add_Record(wPcap* pcap, void* data, UINT32 length)
 	record->length = length;
 	record->header.incl_len = length;
 	record->header.orig_len = length;
-	gettimeofday(&tp, 0);
-	record->header.ts_sec = tp.tv_sec;
-	record->header.ts_usec = tp.tv_usec;
+
+	UINT64 ns = winpr_GetUnixTimeNS();
+	record->header.ts_sec = WINPR_TIME_NS_TO_S(ns);
+	record->header.ts_usec = WINPR_TIME_NS_REM_US(ns);
 	return TRUE;
 }
 
@@ -266,7 +250,7 @@ void Pcap_Close(wPcap* pcap)
 
 static BOOL WLog_PacketMessage_Write_EthernetHeader(wPcap* pcap, wEthernetHeader* ethernet)
 {
-	wStream* s;
+	wStream* s = NULL;
 	wStream sbuffer = { 0 };
 	BYTE buffer[14] = { 0 };
 	BOOL ret = TRUE;
@@ -288,7 +272,7 @@ static BOOL WLog_PacketMessage_Write_EthernetHeader(wPcap* pcap, wEthernetHeader
 
 static UINT16 IPv4Checksum(BYTE* ipv4, int length)
 {
-	UINT16 tmp16;
+	UINT16 tmp16 = 0;
 	long checksum = 0;
 
 	while (length > 1)
@@ -310,7 +294,7 @@ static UINT16 IPv4Checksum(BYTE* ipv4, int length)
 
 static BOOL WLog_PacketMessage_Write_IPv4Header(wPcap* pcap, wIPv4Header* ipv4)
 {
-	wStream* s;
+	wStream* s = NULL;
 	wStream sbuffer = { 0 };
 	BYTE buffer[20] = { 0 };
 	int ret = TRUE;
@@ -343,7 +327,7 @@ static BOOL WLog_PacketMessage_Write_IPv4Header(wPcap* pcap, wIPv4Header* ipv4)
 
 static BOOL WLog_PacketMessage_Write_TcpHeader(wPcap* pcap, wTcpHeader* tcp)
 {
-	wStream* s;
+	wStream* s = NULL;
 	wStream sbuffer = { 0 };
 	BYTE buffer[20] = { 0 };
 	BOOL ret = TRUE;
@@ -380,7 +364,6 @@ BOOL WLog_PacketMessage_Write(wPcap* pcap, void* data, size_t length, DWORD flag
 {
 	wTcpHeader tcp;
 	wIPv4Header ipv4;
-	struct timeval tp;
 	wPcapRecord record;
 	wEthernetHeader ethernet;
 	ethernet.Type = 0x0800;
@@ -474,9 +457,11 @@ BOOL WLog_PacketMessage_Write(wPcap* pcap, void* data, size_t length, DWORD flag
 	record.header.incl_len = (UINT32)record.length + offset;
 	record.header.orig_len = (UINT32)record.length + offset;
 	record.next = NULL;
-	gettimeofday(&tp, 0);
-	record.header.ts_sec = tp.tv_sec;
-	record.header.ts_usec = tp.tv_usec;
+
+	UINT64 ns = winpr_GetUnixTimeNS();
+	record.header.ts_sec = WINPR_TIME_NS_TO_S(ns);
+	record.header.ts_usec = WINPR_TIME_NS_REM_US(ns);
+
 	if (!Pcap_Write_RecordHeader(pcap, &record.header) ||
 	    !WLog_PacketMessage_Write_EthernetHeader(pcap, &ethernet) ||
 	    !WLog_PacketMessage_Write_IPv4Header(pcap, &ipv4) ||

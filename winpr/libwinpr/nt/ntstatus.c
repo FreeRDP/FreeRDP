@@ -4625,8 +4625,7 @@ const char* NtStatus2Tag(DWORD ntstatus)
 		return NULL;
 	return found->tag;
 #else
-	size_t x;
-	for (x = 0; x < ARRAYSIZE(ntstatusmap); x++)
+	for (size_t x = 0; x < ARRAYSIZE(ntstatusmap); x++)
 	{
 		const struct ntstatus_map* cur = &ntstatusmap[x];
 		if (cur->code == ntstatus)
@@ -4649,8 +4648,7 @@ const char* Win32ErrorCode2Tag(UINT16 code)
 		return NULL;
 	return found->tag;
 #else
-	size_t x;
-	for (x = 0; x < ARRAYSIZE(win32errmap); x++)
+	for (size_t x = 0; x < ARRAYSIZE(win32errmap); x++)
 	{
 		const struct ntstatus_map* cur = &win32errmap[x];
 		if (cur->code == ntstatus)

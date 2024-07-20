@@ -164,14 +164,30 @@ typedef struct rdp_settings rdpSettings;
 	                                                     const char* option, const char* value);
 
 	FREERDP_API BOOL freerdp_device_collection_add(rdpSettings* settings, RDPDR_DEVICE* device);
+
+	/** \brief Removed a device from the settings, returns ownership of the allocated device to
+	 * caller.
+	 *
+	 *  \param settings the settings to remove the device from
+	 *  \param device the device to remove
+	 *
+	 *  \return \b TRUE if the device was removed, \b FALSE if device was not found or is NULL
+	 */
+	FREERDP_API BOOL freerdp_device_collection_del(rdpSettings* settings,
+	                                               const RDPDR_DEVICE* device);
 	FREERDP_API RDPDR_DEVICE* freerdp_device_collection_find(rdpSettings* settings,
 	                                                         const char* name);
 	FREERDP_API RDPDR_DEVICE* freerdp_device_collection_find_type(rdpSettings* settings,
 	                                                              UINT32 type);
 
-	FREERDP_API RDPDR_DEVICE* freerdp_device_new(UINT32 Type, size_t count, const char* args[]);
-	FREERDP_API RDPDR_DEVICE* freerdp_device_clone(const RDPDR_DEVICE* device);
 	FREERDP_API void freerdp_device_free(RDPDR_DEVICE* device);
+
+	WINPR_ATTR_MALLOC(freerdp_device_free, 1)
+	FREERDP_API RDPDR_DEVICE* freerdp_device_new(UINT32 Type, size_t count, const char* args[]);
+
+	WINPR_ATTR_MALLOC(freerdp_device_free, 1)
+	FREERDP_API RDPDR_DEVICE* freerdp_device_clone(const RDPDR_DEVICE* device);
+
 	FREERDP_API BOOL freerdp_device_equal(const RDPDR_DEVICE* one, const RDPDR_DEVICE* other);
 
 	FREERDP_API void freerdp_device_collection_free(rdpSettings* settings);
@@ -696,6 +712,10 @@ typedef struct rdp_settings rdpSettings;
 	 */
 	FREERDP_API const char* freerdp_supported_color_depths_string(UINT16 mask, char* buffer,
 	                                                              size_t size);
+
+	/** \brief return the configuration directory for the library
+	 */
+	FREERDP_API char* freerdp_settings_get_config_path(void);
 
 #ifdef __cplusplus
 }

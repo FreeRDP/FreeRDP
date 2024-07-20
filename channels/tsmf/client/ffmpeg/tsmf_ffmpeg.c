@@ -153,9 +153,9 @@ static BOOL tsmf_ffmpeg_init_audio_stream(ITSMFDecoder* decoder, const TS_AM_MED
 
 static BOOL tsmf_ffmpeg_init_stream(ITSMFDecoder* decoder, const TS_AM_MEDIA_TYPE* media_type)
 {
-	BYTE* p;
-	UINT32 size;
-	const BYTE* s;
+	BYTE* p = NULL;
+	UINT32 size = 0;
+	const BYTE* s = NULL;
 	TSMFFFmpegDecoder* mdecoder = (TSMFFFmpegDecoder*)decoder;
 	mdecoder->codec = avcodec_find_decoder(mdecoder->codec_id);
 
@@ -364,9 +364,9 @@ static BOOL tsmf_ffmpeg_decode_video(ITSMFDecoder* decoder, const BYTE* data, UI
                                      UINT32 extensions)
 {
 	TSMFFFmpegDecoder* mdecoder = (TSMFFFmpegDecoder*)decoder;
-	int decoded;
-	int len;
-	AVFrame* frame;
+	int decoded = 0;
+	int len = 0;
+	AVFrame* frame = NULL;
 	BOOL ret = TRUE;
 #if LIBAVCODEC_VERSION_MAJOR < 52 || \
     (LIBAVCODEC_VERSION_MAJOR == 52 && LIBAVCODEC_VERSION_MINOR <= 20)
@@ -443,17 +443,16 @@ static BOOL tsmf_ffmpeg_decode_audio(ITSMFDecoder* decoder, const BYTE* data, UI
                                      UINT32 extensions)
 {
 	TSMFFFmpegDecoder* mdecoder = (TSMFFFmpegDecoder*)decoder;
-	int len;
-	int frame_size;
-	UINT32 src_size;
-	const BYTE* src;
-	BYTE* dst;
-	int dst_offset;
+	int len = 0;
+	int frame_size = 0;
+	UINT32 src_size = 0;
+	const BYTE* src = NULL;
+	BYTE* dst = NULL;
+	int dst_offset = 0;
 #if 0
 	WLog_DBG(TAG, ("tsmf_ffmpeg_decode_audio: data_size %"PRIu32"", data_size));
-	int i;
 
-	for (i = 0; i < data_size; i++)
+	for (int i = 0; i < data_size; i++)
 	{
 		WLog_DBG(TAG, ("%02"PRIX8"", data[i]));
 
@@ -482,7 +481,7 @@ static BOOL tsmf_ffmpeg_decode_audio(ITSMFDecoder* decoder, const BYTE* data, UI
 		/* Ensure enough space for decoding */
 		if (mdecoder->decoded_size_max - mdecoder->decoded_size < MAX_AUDIO_FRAME_SIZE)
 		{
-			BYTE* tmp_data;
+			BYTE* tmp_data = NULL;
 			tmp_data = realloc(mdecoder->decoded_data, mdecoder->decoded_size_max * 2 + 16);
 
 			if (!tmp_data)
@@ -606,7 +605,7 @@ static BOOL tsmf_ffmpeg_decode(ITSMFDecoder* decoder, const BYTE* data, UINT32 d
 
 static BYTE* tsmf_ffmpeg_get_decoded_data(ITSMFDecoder* decoder, UINT32* size)
 {
-	BYTE* buf;
+	BYTE* buf = NULL;
 	TSMFFFmpegDecoder* mdecoder = (TSMFFFmpegDecoder*)decoder;
 	*size = mdecoder->decoded_size;
 	buf = mdecoder->decoded_data;
@@ -676,9 +675,9 @@ static BOOL CALLBACK InitializeAvCodecs(PINIT_ONCE once, PVOID param, PVOID* con
 	return TRUE;
 }
 
-FREERDP_ENTRY_POINT(ITSMFDecoder* ffmpeg_freerdp_tsmf_client_decoder_subsystem_entry(void))
+FREERDP_ENTRY_POINT(ITSMFDecoder* ffmpeg_freerdp_tsmf_client_decoder_subsystem_entry(void*))
 {
-	TSMFFFmpegDecoder* decoder;
+	TSMFFFmpegDecoder* decoder = NULL;
 	InitOnceExecuteOnce(&g_Initialized, InitializeAvCodecs, NULL, NULL);
 	WLog_DBG(TAG, "TSMFDecoderEntry FFMPEG");
 	decoder = (TSMFFFmpegDecoder*)calloc(1, sizeof(TSMFFFmpegDecoder));

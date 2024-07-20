@@ -69,8 +69,10 @@ extern "C"
 	int shadow_encoder_prepare(rdpShadowEncoder* encoder, UINT32 codecs);
 	UINT32 shadow_encoder_create_frame_id(rdpShadowEncoder* encoder);
 
-	rdpShadowEncoder* shadow_encoder_new(rdpShadowClient* client);
 	void shadow_encoder_free(rdpShadowEncoder* encoder);
+
+	WINPR_ATTR_MALLOC(shadow_encoder_free, 1)
+	rdpShadowEncoder* shadow_encoder_new(rdpShadowClient* client);
 
 #ifdef __cplusplus
 }

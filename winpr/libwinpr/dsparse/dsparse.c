@@ -53,7 +53,7 @@ DWORD DsMakeSpnW(LPCWSTR ServiceClass, LPCWSTR ServiceName, LPCWSTR InstanceName
 	char* InstanceNameA = NULL;
 	char* ReferrerA = NULL;
 	char* pszSpnA = NULL;
-	size_t length;
+	size_t length = 0;
 
 	WINPR_ASSERT(ServiceClass);
 	WINPR_ASSERT(ServiceName);
@@ -108,9 +108,9 @@ fail:
 DWORD DsMakeSpnA(LPCSTR ServiceClass, LPCSTR ServiceName, LPCSTR InstanceName, USHORT InstancePort,
                  LPCSTR Referrer, DWORD* pcSpnLength, LPSTR pszSpn)
 {
-	DWORD SpnLength;
-	DWORD ServiceClassLength;
-	DWORD ServiceNameLength;
+	DWORD SpnLength = 0;
+	DWORD ServiceClassLength = 0;
+	DWORD ServiceNameLength = 0;
 
 	WINPR_ASSERT(ServiceClass);
 	WINPR_ASSERT(ServiceName);

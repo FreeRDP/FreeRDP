@@ -39,9 +39,8 @@
  */
 static UINT rdpgfx_read_h264_metablock(RDPGFX_PLUGIN* gfx, wStream* s, RDPGFX_H264_METABLOCK* meta)
 {
-	UINT32 index;
-	RECTANGLE_16* regionRect;
-	RDPGFX_H264_QUANT_QUALITY* quantQualityVal;
+	RECTANGLE_16* regionRect = NULL;
+	RDPGFX_H264_QUANT_QUALITY* quantQualityVal = NULL;
 	UINT error = ERROR_INVALID_DATA;
 	meta->regionRects = NULL;
 	meta->quantQualityVals = NULL;
@@ -75,7 +74,7 @@ static UINT rdpgfx_read_h264_metablock(RDPGFX_PLUGIN* gfx, wStream* s, RDPGFX_H2
 
 	WLog_DBG(TAG, "H264_METABLOCK: numRegionRects: %" PRIu32 "", meta->numRegionRects);
 
-	for (index = 0; index < meta->numRegionRects; index++)
+	for (UINT32 index = 0; index < meta->numRegionRects; index++)
 	{
 		regionRect = &(meta->regionRects[index]);
 
@@ -97,7 +96,7 @@ static UINT rdpgfx_read_h264_metablock(RDPGFX_PLUGIN* gfx, wStream* s, RDPGFX_H2
 		goto error_out;
 	}
 
-	for (index = 0; index < meta->numRegionRects; index++)
+	for (UINT32 index = 0; index < meta->numRegionRects; index++)
 	{
 		quantQualityVal = &(meta->quantQualityVals[index]);
 		Stream_Read_UINT8(s, quantQualityVal->qpVal);      /* qpVal (1 byte) */
@@ -125,8 +124,8 @@ error_out:
  */
 static UINT rdpgfx_decode_AVC420(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd)
 {
-	UINT error;
-	wStream* s;
+	UINT error = 0;
+	wStream* s = NULL;
 	RDPGFX_AVC420_BITMAP_STREAM h264;
 	RdpgfxClientContext* context = gfx->context;
 	s = Stream_New(cmd->data, cmd->length);
@@ -170,7 +169,8 @@ static UINT rdpgfx_decode_AVC444(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd
 {
 	UINT error = 0;
 	UINT32 tmp = 0;
-	size_t pos1 = 0, pos2 = 0;
+	size_t pos1 = 0;
+	size_t pos2 = 0;
 
 	RDPGFX_AVC444_BITMAP_STREAM h264 = { 0 };
 	RdpgfxClientContext* context = gfx->context;

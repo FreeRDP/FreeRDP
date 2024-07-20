@@ -61,8 +61,6 @@
 
 #if defined(WINPR_HAVE_GETPWUID_R)
 #include <sys/types.h>
-#include <pwd.h>
-#include <unistd.h>
 #endif
 
 #include <pthread.h>
@@ -131,8 +129,8 @@ static HANDLE_OPS ops = { LogonUserIsHandled,
 BOOL LogonUserA(LPCSTR lpszUsername, LPCSTR lpszDomain, LPCSTR lpszPassword, DWORD dwLogonType,
                 DWORD dwLogonProvider, PHANDLE phToken)
 {
-	struct passwd* pw;
-	WINPR_ACCESS_TOKEN* token;
+	struct passwd* pw = NULL;
+	WINPR_ACCESS_TOKEN* token = NULL;
 
 	if (!lpszUsername)
 		return FALSE;
@@ -206,7 +204,7 @@ BOOL GetUserNameExA(EXTENDED_NAME_FORMAT NameFormat, LPSTR lpNameBuffer, PULONG 
 		case NameSamCompatible:
 #if defined(WINPR_HAVE_GETPWUID_R)
 		{
-			int rc;
+			int rc = 0;
 			struct passwd pwd = { 0 };
 			struct passwd* result = NULL;
 			uid_t uid = getuid();
@@ -251,7 +249,7 @@ BOOL GetUserNameExA(EXTENDED_NAME_FORMAT NameFormat, LPSTR lpNameBuffer, PULONG 
 BOOL GetUserNameExW(EXTENDED_NAME_FORMAT NameFormat, LPWSTR lpNameBuffer, PULONG nSize)
 {
 	BOOL rc = FALSE;
-	char* name;
+	char* name = NULL;
 
 	WINPR_ASSERT(nSize);
 	WINPR_ASSERT(lpNameBuffer);

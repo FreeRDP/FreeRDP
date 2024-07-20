@@ -51,8 +51,10 @@ extern "C"
 		DrdynvcServerPrivate* priv;
 	};
 
-	FREERDP_API DrdynvcServerContext* drdynvc_server_context_new(HANDLE vcm);
 	FREERDP_API void drdynvc_server_context_free(DrdynvcServerContext* context);
+
+	WINPR_ATTR_MALLOC(drdynvc_server_context_free, 1)
+	FREERDP_API DrdynvcServerContext* drdynvc_server_context_new(HANDLE vcm);
 
 #ifdef __cplusplus
 }

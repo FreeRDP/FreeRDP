@@ -146,8 +146,8 @@ NSString *DescriptionForObject(NSObject *object, id locale, NSUInteger indent)
 - (NSString *)descriptionWithLocale:(id)locale indent:(NSUInteger)level
 {
 	NSMutableString *indentString = [NSMutableString string];
-	NSUInteger i, count = level;
-	for (i = 0; i < count; i++)
+	NSUInteger count = level;
+	for (NSUInteger i = 0; i < count; i++)
 	{
 		[indentString appendFormat:@"    "];
 	}

@@ -16,6 +16,7 @@
 # limitations under the License.
 
 include(CheckFunctionExists)
+include(JsonDetect)
 
 set(WINPR_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(WINPR_SRCS "")
@@ -130,6 +131,11 @@ if(NOT IOS)
     endif()
 endif()
 
+check_function_exists(pthread_setschedprio PTHREAD_SETSCHEDPRIO)
+if (PTHREAD_SETSCHEDPRIO)
+	winpr_definition_add(-DPTHREAD_SETSCHEDPRIO)
+endif()
+
 if (ANDROID)
     winpr_library_add_private(log)
 endif()
@@ -157,35 +163,12 @@ list(REMOVE_DUPLICATES WINPR_DEFINITIONS)
 list(REMOVE_DUPLICATES WINPR_COMPILE_OPTIONS)
 list(REMOVE_DUPLICATES WINPR_LINK_OPTIONS)
 list(REMOVE_DUPLICATES WINPR_LINK_DIRS)
-list(REMOVE_DUPLICATES WINPR_LIBS_PRIVATE)
-list(REMOVE_DUPLICATES WINPR_LIBS_PUBLIC)
 list(REMOVE_DUPLICATES WINPR_INCLUDES)
 
-# On windows create dll version information.
-# Vendor, product and year are already set in top level CMakeLists.txt
-if (WIN32)
-  set (RC_VERSION_MAJOR ${WINPR_VERSION_MAJOR})
-  set (RC_VERSION_MINOR ${WINPR_VERSION_MINOR})
-  set (RC_VERSION_BUILD ${WINPR_VERSION_REVISION})
-  set (RC_VERSION_FILE "${CMAKE_SHARED_LIBRARY_PREFIX}${MODULE_NAME}${WINPR_API_VERSION}${CMAKE_SHARED_LIBRARY_SUFFIX}" )
+AddTargetWithResourceFile(${MODULE_NAME} FALSE "${WINPR_VERSION}" WINPR_SRCS)
 
-  configure_file(
-    ${PROJECT_SOURCE_DIR}/cmake/WindowsDLLVersion.rc.in
-    ${CMAKE_CURRENT_BINARY_DIR}/version.rc
-    @ONLY)
-
-  set (WINPR_SRCS ${WINPR_SRCS} ${CMAKE_CURRENT_BINARY_DIR}/version.rc)
-  winpr_library_add_public("shlwapi")
-endif()
-
-add_library(${MODULE_NAME} ${WINPR_SRCS})
 if (APPLE)
     set_target_properties(${MODULE_NAME} PROPERTIES INTERPROCEDURAL_OPTIMIZATION FALSE)
-endif()
-set_target_properties(${MODULE_NAME} PROPERTIES LINKER_LANGUAGE C)
-set_target_properties(${MODULE_NAME} PROPERTIES OUTPUT_NAME ${MODULE_NAME}${WINPR_API_VERSION})
-if (WITH_LIBRARY_VERSIONING)
-    set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${WINPR_VERSION} SOVERSION ${WINPR_API_VERSION})
 endif()
 
 if (NOT BUILD_SHARED_LIBS)
@@ -206,8 +189,4 @@ install(TARGETS ${MODULE_NAME} COMPONENT libraries EXPORT WinPRTargets
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
-if (WITH_DEBUG_SYMBOLS AND MSVC AND BUILD_SHARED_LIBS)
-    get_target_property(OUTPUT_FILENAME ${MODULE_NAME} OUTPUT_NAME)
-    install(FILES ${CMAKE_PDB_BINARY_DIR}/${OUTPUT_FILENAME}.pdb DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT symbols)
-endif()
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "WinPR/libwinpr")

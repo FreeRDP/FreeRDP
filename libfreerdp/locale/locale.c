@@ -38,17 +38,6 @@
 
 #include <freerdp/locale/locale.h>
 
-#define LOCALE_LANGUAGE_LEN 6
-#define LOCALE_COUNTRY_LEN 10
-
-typedef struct
-{
-	char language[LOCALE_LANGUAGE_LEN]; /* Two or three letter language code */
-	char country[LOCALE_COUNTRY_LEN];   /* Two or three letter country code (Sometimes with Cyrl_
-	                                       prefix) */
-	DWORD code;                         /* 32-bit unsigned integer corresponding to the locale */
-} SYSTEM_LOCALE;
-
 /*
  * Refer to MSDN article "Locale Identifier Constants and Strings":
  * http://msdn.microsoft.com/en-us/library/ms776260.aspx
@@ -685,9 +674,9 @@ static BOOL freerdp_get_system_language_and_country_codes(char* language, size_t
 	}
 #else
 	{
-		size_t dot;
-		DWORD nSize;
-		size_t underscore;
+		size_t dot = 0;
+		DWORD nSize = 0;
+		size_t underscore = 0;
 		char* env_lang = NULL;
 		LPCSTR lang = "LANG";
 		/* LANG = <language>_<country>.<encoding> */
@@ -746,7 +735,6 @@ static BOOL freerdp_get_system_language_and_country_codes(char* language, size_t
 
 static const SYSTEM_LOCALE* freerdp_detect_system_locale(void)
 {
-	size_t i;
 	char language[LOCALE_LANGUAGE_LEN] = { 0 };
 	char country[LOCALE_COUNTRY_LEN] = { 0 };
 	const SYSTEM_LOCALE* locale = NULL;
@@ -754,7 +742,7 @@ static const SYSTEM_LOCALE* freerdp_detect_system_locale(void)
 	freerdp_get_system_language_and_country_codes(language, ARRAYSIZE(language), country,
 	                                              ARRAYSIZE(country));
 
-	for (i = 0; i < ARRAYSIZE(SYSTEM_LOCALE_TABLE); i++)
+	for (size_t i = 0; i < ARRAYSIZE(SYSTEM_LOCALE_TABLE); i++)
 	{
 		const SYSTEM_LOCALE* current = &SYSTEM_LOCALE_TABLE[i];
 
@@ -770,7 +758,7 @@ static const SYSTEM_LOCALE* freerdp_detect_system_locale(void)
 
 DWORD freerdp_get_system_locale_id(void)
 {
-	const SYSTEM_LOCALE* locale;
+	const SYSTEM_LOCALE* locale = NULL;
 	locale = freerdp_detect_system_locale();
 
 	if (locale != NULL)
@@ -779,42 +767,26 @@ DWORD freerdp_get_system_locale_id(void)
 	return 0;
 }
 
-const char* freerdp_get_system_locale_name_from_id(DWORD localeId)
+static const SYSTEM_LOCALE* get_locale_from_str(const char* name)
 {
-	size_t index;
-
-	for (index = 0; index < ARRAYSIZE(LOCALE_NAME_TABLE); index++)
+	for (size_t i = 0; i < ARRAYSIZE(SYSTEM_LOCALE_TABLE); i++)
 	{
-		const LOCALE_NAME* const current = &LOCALE_NAME_TABLE[index];
+		char buffer[LOCALE_LANGUAGE_LEN + LOCALE_COUNTRY_LEN + 2] = { 0 };
+		const SYSTEM_LOCALE* current = &SYSTEM_LOCALE_TABLE[i];
 
-		if (localeId == current->localeId)
-			return current->name;
+		_snprintf(buffer, sizeof(buffer), "%s_%s", current->language, current->country);
+		/* full match, e.g. en_US */
+		if ((strcmp(name, buffer) == 0))
+			return current;
+		/* simple language only match e.g. 'en' */
+		else if ((strcmp(name, current->language) == 0))
+			return current;
 	}
-
 	return NULL;
 }
 
-int freerdp_detect_keyboard_layout_from_system_locale(DWORD* keyboardLayoutId)
+static INT64 get_layout_from_locale(const SYSTEM_LOCALE* locale)
 {
-	char language[LOCALE_LANGUAGE_LEN] = { 0 };
-	char country[LOCALE_COUNTRY_LEN] = { 0 };
-
-	freerdp_get_system_language_and_country_codes(language, ARRAYSIZE(language), country,
-	                                              ARRAYSIZE(country));
-
-	if ((strcmp(language, "C") == 0) || (strcmp(language, "POSIX") == 0))
-	{
-		*keyboardLayoutId = ENGLISH_UNITED_STATES; /* U.S. Keyboard Layout */
-		return 0;
-	}
-
-	const SYSTEM_LOCALE* locale = freerdp_detect_system_locale();
-
-	if (!locale)
-		return -1;
-
-	DEBUG_KBD("Found locale : %s_%s", locale->language, locale->country);
-
 	for (size_t i = 0; i < ARRAYSIZE(LOCALE_KEYBOARD_LAYOUTS_TABLE); i++)
 	{
 		const LOCALE_KEYBOARD_LAYOUTS* const current = &LOCALE_KEYBOARD_LAYOUTS_TABLE[i];
@@ -837,22 +809,81 @@ int freerdp_detect_keyboard_layout_from_system_locale(DWORD* keyboardLayoutId)
 					 */
 
 					if (j >= 1)
-					{
-						*keyboardLayoutId = ENGLISH_UNITED_STATES;
-						return 0;
-					}
+						return ENGLISH_UNITED_STATES;
 
 					/* No more keyboard layouts */
 					break;
 				}
 				else
-				{
-					*keyboardLayoutId = current->keyboardLayouts[j];
-					return 0;
-				}
+					return current->keyboardLayouts[j];
 			}
 		}
 	}
+	return -1;
+}
 
-	return -1; /* Could not detect the current keyboard layout from locale */
+const char* freerdp_get_system_locale_name_from_id(DWORD localeId)
+{
+	for (size_t index = 0; index < ARRAYSIZE(LOCALE_NAME_TABLE); index++)
+	{
+		const LOCALE_NAME* const current = &LOCALE_NAME_TABLE[index];
+
+		if (localeId == current->localeId)
+			return current->name;
+	}
+
+	return NULL;
+}
+
+INT64 freerdp_get_locale_id_from_string(const char* locale)
+{
+	const SYSTEM_LOCALE* loc = get_locale_from_str(locale);
+	if (!loc)
+		return -1;
+	return loc->code;
+}
+
+int freerdp_detect_keyboard_layout_from_system_locale(DWORD* keyboardLayoutId)
+{
+	char language[LOCALE_LANGUAGE_LEN] = { 0 };
+	char country[LOCALE_COUNTRY_LEN] = { 0 };
+
+	freerdp_get_system_language_and_country_codes(language, ARRAYSIZE(language), country,
+	                                              ARRAYSIZE(country));
+
+	if ((strcmp(language, "C") == 0) || (strcmp(language, "POSIX") == 0))
+	{
+		*keyboardLayoutId = ENGLISH_UNITED_STATES; /* U.S. Keyboard Layout */
+		return 0;
+	}
+
+	const SYSTEM_LOCALE* locale = freerdp_detect_system_locale();
+
+	if (!locale)
+		return -1;
+
+	DEBUG_KBD("Found locale : %s_%s", locale->language, locale->country);
+	INT64 rc = get_layout_from_locale(locale);
+	if (rc < 0)
+		return -1; /* Could not detect the current keyboard layout from locale */
+	*keyboardLayoutId = (DWORD)rc;
+	return 0;
+}
+
+const SYSTEM_LOCALE* freerdp_get_system_locale_list(size_t* count)
+{
+	WINPR_ASSERT(count);
+	*count = ARRAYSIZE(SYSTEM_LOCALE_TABLE);
+	return SYSTEM_LOCALE_TABLE;
+}
+
+DWORD freerdp_get_keyboard_default_layout_for_locale(DWORD locale)
+{
+	for (size_t x = 0; x < ARRAYSIZE(LOCALE_KEYBOARD_LAYOUTS_TABLE); x++)
+	{
+		const LOCALE_KEYBOARD_LAYOUTS* const cur = &LOCALE_KEYBOARD_LAYOUTS_TABLE[x];
+		if (cur->locale == locale)
+			return cur->keyboardLayouts[0];
+	}
+	return 0;
 }

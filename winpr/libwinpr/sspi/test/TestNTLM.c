@@ -460,9 +460,9 @@ static void test_ntlm_server_free(TEST_NTLM_SERVER* ntlm)
 
 static BOOL test_default(void)
 {
-	int status;
+	int status = 0;
 	BOOL rc = FALSE;
-	PSecBuffer pSecBuffer;
+	PSecBuffer pSecBuffer = NULL;
 	TEST_NTLM_CLIENT* client = NULL;
 	TEST_NTLM_SERVER* server = NULL;
 	BOOL DynamicTest = TRUE;

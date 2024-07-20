@@ -17,7 +17,6 @@
  *   newval = alpha1*val1 + (1-alpha1)*val2
  * rather than
  *   newval = alpha1*val1 + (1-alpha1)*alpha2*val2
- * The IPP gives other options.
  */
 
 #include <freerdp/config.h>
@@ -26,6 +25,7 @@
 #include <freerdp/primitives.h>
 
 #include "prim_internal.h"
+#include "prim_alphaComp.h"
 
 #define ALPHA(_k_) (((_k_)&0xFF000000U) >> 24)
 #define RED(_k_) (((_k_)&0x00FF0000U) >> 16)
@@ -37,16 +37,13 @@ static pstatus_t general_alphaComp_argb(const BYTE* pSrc1, UINT32 src1Step, cons
                                         UINT32 src2Step, BYTE* pDst, UINT32 dstStep, UINT32 width,
                                         UINT32 height)
 {
-	UINT32 y;
-
-	for (y = 0; y < height; y++)
+	for (UINT32 y = 0; y < height; y++)
 	{
 		const UINT32* sptr1 = (const UINT32*)(pSrc1 + y * src1Step);
 		const UINT32* sptr2 = (const UINT32*)(pSrc2 + y * src2Step);
 		UINT32* dptr = (UINT32*)(pDst + y * dstStep);
-		UINT32 x;
 
-		for (x = 0; x < width; x++)
+		for (UINT32 x = 0; x < width; x++)
 		{
 			const UINT32 src1 = *sptr1++;
 			const UINT32 src2 = *sptr2++;
@@ -70,7 +67,8 @@ static pstatus_t general_alphaComp_argb(const BYTE* pSrc1, UINT32 src1Step, cons
 				 * I'm not sure who first designed the double-ops trick
 				 * (Red Blue and Alpha Green).
 				 */
-				UINT32 rb, ag;
+				UINT32 rb = 0;
+				UINT32 ag = 0;
 				UINT32 s2rb = src2 & 0x00FF00FFU;
 				UINT32 s2ag = (src2 >> 8) & 0x00FF00FFU;
 				UINT32 s1rb = src1 & 0x00FF00FFU;
@@ -93,4 +91,9 @@ static pstatus_t general_alphaComp_argb(const BYTE* pSrc1, UINT32 src1Step, cons
 void primitives_init_alphaComp(primitives_t* prims)
 {
 	prims->alphaComp_argb = general_alphaComp_argb;
+}
+
+void primitives_init_alphaComp_opt(primitives_t* WINPR_RESTRICT prims)
+{
+	primitives_init_alphaComp_sse3(prims);
 }

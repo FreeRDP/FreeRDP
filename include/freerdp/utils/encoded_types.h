@@ -29,9 +29,18 @@ extern "C"
 {
 #endif
 
+#define FREERDP_FOUR_BYTE_SIGNED_INT_MAX 0x1FFFFFFFl
+#define FREERDP_FOUR_BYTE_SIGNED_INT_MIN -0x1FFFFFFFl
+
+#define FREERDP_FOUR_BYTE_FLOAT_MAX 0x3FFFFFF
+#define FREERDP_FOUR_BYTE_FLOAT_MIN -0x3FFFFFF
+
 	FREERDP_API BOOL freerdp_read_four_byte_signed_integer(wStream* s, INT32* value);
+	FREERDP_API BOOL freerdp_write_four_byte_signed_integer(wStream* s, INT32 value);
 
 	FREERDP_API BOOL freerdp_read_four_byte_float(wStream* s, double* value);
+	FREERDP_API BOOL freerdp_read_four_byte_float_exp(wStream* s, double* value, BYTE* exp);
+	FREERDP_API BOOL freerdp_write_four_byte_float(wStream* s, double value);
 
 #ifdef __cplusplus
 }

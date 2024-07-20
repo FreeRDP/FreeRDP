@@ -28,6 +28,67 @@
 
 #include "cliprdr_common.h"
 
+static const char* CB_MSG_TYPE_STR(UINT32 type)
+{
+	switch (type)
+	{
+		case CB_MONITOR_READY:
+			return "CB_MONITOR_READY";
+		case CB_FORMAT_LIST:
+			return "CB_FORMAT_LIST";
+		case CB_FORMAT_LIST_RESPONSE:
+			return "CB_FORMAT_LIST_RESPONSE";
+		case CB_FORMAT_DATA_REQUEST:
+			return "CB_FORMAT_DATA_REQUEST";
+		case CB_FORMAT_DATA_RESPONSE:
+			return "CB_FORMAT_DATA_RESPONSE";
+		case CB_TEMP_DIRECTORY:
+			return "CB_TEMP_DIRECTORY";
+		case CB_CLIP_CAPS:
+			return "CB_CLIP_CAPS";
+		case CB_FILECONTENTS_REQUEST:
+			return "CB_FILECONTENTS_REQUEST";
+		case CB_FILECONTENTS_RESPONSE:
+			return "CB_FILECONTENTS_RESPONSE";
+		case CB_LOCK_CLIPDATA:
+			return "CB_LOCK_CLIPDATA";
+		case CB_UNLOCK_CLIPDATA:
+			return "CB_UNLOCK_CLIPDATA";
+		default:
+			return "UNKNOWN";
+	}
+}
+
+const char* CB_MSG_TYPE_STRING(UINT16 type, char* buffer, size_t size)
+{
+	_snprintf(buffer, size, "%s [0x%04" PRIx16 "]", CB_MSG_TYPE_STR(type), type);
+	return buffer;
+}
+
+const char* CB_MSG_FLAGS_STRING(UINT16 msgFlags, char* buffer, size_t size)
+{
+	if ((msgFlags & CB_RESPONSE_OK) != 0)
+		winpr_str_append("CB_RESPONSE_OK", buffer, size, "|");
+	if ((msgFlags & CB_RESPONSE_FAIL) != 0)
+		winpr_str_append("CB_RESPONSE_FAIL", buffer, size, "|");
+	if ((msgFlags & CB_ASCII_NAMES) != 0)
+		winpr_str_append("CB_ASCII_NAMES", buffer, size, "|");
+
+	const size_t len = strnlen(buffer, size);
+	if (len > 0)
+	{
+		/* remove trailing | */
+		buffer[len - 1] = '\0';
+	}
+	else
+		winpr_str_append("NONE", buffer, size, "");
+
+	char val[32] = { 0 };
+	_snprintf(val, sizeof(val), "[0x%04" PRIx16 "]", msgFlags);
+	winpr_str_append(val, buffer, size, "|");
+	return buffer;
+}
+
 static BOOL cliprdr_validate_file_contents_request(const CLIPRDR_FILE_CONTENTS_REQUEST* request)
 {
 	/*
@@ -60,7 +121,7 @@ static BOOL cliprdr_validate_file_contents_request(const CLIPRDR_FILE_CONTENTS_R
 
 wStream* cliprdr_packet_new(UINT16 msgType, UINT16 msgFlags, UINT32 dataLen)
 {
-	wStream* s;
+	wStream* s = NULL;
 	s = Stream_New(NULL, dataLen + 8);
 
 	if (!s)
@@ -116,7 +177,7 @@ static void cliprdr_write_file_contents_response(wStream* s,
 
 wStream* cliprdr_packet_lock_clipdata_new(const CLIPRDR_LOCK_CLIPBOARD_DATA* lockClipboardData)
 {
-	wStream* s;
+	wStream* s = NULL;
 
 	if (!lockClipboardData)
 		return NULL;
@@ -133,7 +194,7 @@ wStream* cliprdr_packet_lock_clipdata_new(const CLIPRDR_LOCK_CLIPBOARD_DATA* loc
 wStream*
 cliprdr_packet_unlock_clipdata_new(const CLIPRDR_UNLOCK_CLIPBOARD_DATA* unlockClipboardData)
 {
-	wStream* s;
+	wStream* s = NULL;
 
 	if (!unlockClipboardData)
 		return NULL;
@@ -149,7 +210,7 @@ cliprdr_packet_unlock_clipdata_new(const CLIPRDR_UNLOCK_CLIPBOARD_DATA* unlockCl
 
 wStream* cliprdr_packet_file_contents_request_new(const CLIPRDR_FILE_CONTENTS_REQUEST* request)
 {
-	wStream* s;
+	wStream* s = NULL;
 
 	if (!request)
 		return NULL;
@@ -165,7 +226,7 @@ wStream* cliprdr_packet_file_contents_request_new(const CLIPRDR_FILE_CONTENTS_RE
 
 wStream* cliprdr_packet_file_contents_response_new(const CLIPRDR_FILE_CONTENTS_RESPONSE* response)
 {
-	wStream* s;
+	wStream* s = NULL;
 
 	if (!response)
 		return NULL;
@@ -183,14 +244,13 @@ wStream* cliprdr_packet_file_contents_response_new(const CLIPRDR_FILE_CONTENTS_R
 wStream* cliprdr_packet_format_list_new(const CLIPRDR_FORMAT_LIST* formatList,
                                         BOOL useLongFormatNames)
 {
-	wStream* s;
-	UINT32 index;
+	wStream* s = NULL;
 	size_t formatNameSize = 0;
-	char* szFormatName;
-	WCHAR* wszFormatName;
+	char* szFormatName = NULL;
+	WCHAR* wszFormatName = NULL;
 	BOOL asciiNames = FALSE;
-	CLIPRDR_FORMAT* format;
-	UINT32 length;
+	CLIPRDR_FORMAT* format = NULL;
+	UINT32 length = 0;
 
 	if (formatList->common.msgType != CB_FORMAT_LIST)
 		WLog_WARN(TAG, "called with invalid type %08" PRIx32, formatList->common.msgType);
@@ -206,7 +266,7 @@ wStream* cliprdr_packet_format_list_new(const CLIPRDR_FORMAT_LIST* formatList,
 			return NULL;
 		}
 
-		for (index = 0; index < formatList->numFormats; index++)
+		for (UINT32 index = 0; index < formatList->numFormats; index++)
 		{
 			size_t formatNameLength = 0;
 			format = (CLIPRDR_FORMAT*)&(formatList->formats[index]);
@@ -259,7 +319,7 @@ wStream* cliprdr_packet_format_list_new(const CLIPRDR_FORMAT_LIST* formatList,
 	else
 	{
 		length = 0;
-		for (index = 0; index < formatList->numFormats; index++)
+		for (UINT32 index = 0; index < formatList->numFormats; index++)
 		{
 			format = (CLIPRDR_FORMAT*)&(formatList->formats[index]);
 			length += 4;
@@ -284,7 +344,7 @@ wStream* cliprdr_packet_format_list_new(const CLIPRDR_FORMAT_LIST* formatList,
 			return NULL;
 		}
 
-		for (index = 0; index < formatList->numFormats; index++)
+		for (UINT32 index = 0; index < formatList->numFormats; index++)
 		{
 			format = (CLIPRDR_FORMAT*)&(formatList->formats[index]);
 			Stream_Write_UINT32(s, format->formatId); /* formatId (4 bytes) */
@@ -388,8 +448,8 @@ UINT cliprdr_read_file_contents_response(wStream* s, CLIPRDR_FILE_CONTENTS_RESPO
 
 UINT cliprdr_read_format_list(wStream* s, CLIPRDR_FORMAT_LIST* formatList, BOOL useLongFormatNames)
 {
-	UINT32 index;
-	int formatNameLength;
+	UINT32 index = 0;
+	size_t formatNameLength = 0;
 	const char* szFormatName = NULL;
 	const WCHAR* wszFormatName = NULL;
 	wStream sub1buffer = { 0 };
@@ -489,7 +549,7 @@ UINT cliprdr_read_format_list(wStream* s, CLIPRDR_FORMAT_LIST* formatList, BOOL 
 
 		while (Stream_GetRemainingLength(sub1) > 0)
 		{
-			size_t rest;
+			size_t rest = 0;
 			if (!Stream_SafeSeek(sub1, 4)) /* formatId (4 bytes) */
 				goto error_out;
 
@@ -515,7 +575,7 @@ UINT cliprdr_read_format_list(wStream* s, CLIPRDR_FORMAT_LIST* formatList, BOOL 
 
 		while (Stream_GetRemainingLength(sub2) >= 4)
 		{
-			size_t rest;
+			size_t rest = 0;
 			CLIPRDR_FORMAT* format = &formats[index];
 
 			Stream_Read_UINT32(sub2, format->formatId); /* formatId (4 bytes) */
@@ -550,14 +610,12 @@ error_out:
 
 void cliprdr_free_format_list(CLIPRDR_FORMAT_LIST* formatList)
 {
-	UINT index = 0;
-
 	if (formatList == NULL)
 		return;
 
 	if (formatList->formats)
 	{
-		for (index = 0; index < formatList->numFormats; index++)
+		for (UINT32 index = 0; index < formatList->numFormats; index++)
 		{
 			free(formatList->formats[index].formatName);
 		}

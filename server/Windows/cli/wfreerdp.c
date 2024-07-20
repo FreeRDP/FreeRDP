@@ -50,12 +50,11 @@ int main(int argc, char* argv[])
 	freerdp_server_warn_unmaintained(argc, argv);
 
 	BOOL screen_selected = FALSE;
-	int index;
+	int index = 1;
 	wfServer* server;
 	server = wfreerdp_server_new();
 	set_screen_id(0);
 	// handle args
-	index = 1;
 	errno = 0;
 
 	while (index < argc)
@@ -66,11 +65,10 @@ int main(int argc, char* argv[])
 			int width;
 			int height;
 			int bpp;
-			int i;
 			WLog_INFO(TAG, "Detecting screens...");
 			WLog_INFO(TAG, "ID\tResolution\t\tName (Interface)");
 
-			for (i = 0;; i++)
+			for (int i = 0;; i++)
 			{
 				_TCHAR name[128] = { 0 };
 				if (get_screen_info(i, name, ARRAYSIZE(name), &width, &height, &bpp) != 0)
@@ -139,12 +137,11 @@ int main(int argc, char* argv[])
 		int width;
 		int height;
 		int bpp;
-		int i;
 		WLog_INFO(TAG, "screen id not provided. attempting to detect...");
 		WLog_INFO(TAG, "Detecting screens...");
 		WLog_INFO(TAG, "ID\tResolution\t\tName (Interface)");
 
-		for (i = 0;; i++)
+		for (int i = 0;; i++)
 		{
 			_TCHAR name[128] = { 0 };
 			if (get_screen_info(i, name, ARRAYSIZE(name), &width, &height, &bpp) != 0)

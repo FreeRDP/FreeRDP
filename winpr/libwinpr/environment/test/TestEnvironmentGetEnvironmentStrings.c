@@ -7,9 +7,9 @@
 int TestEnvironmentGetEnvironmentStrings(int argc, char* argv[])
 {
 	int r = -1;
-	TCHAR* p;
-	size_t length;
-	LPTCH lpszEnvironmentBlock;
+	TCHAR* p = NULL;
+	size_t length = 0;
+	LPTCH lpszEnvironmentBlock = NULL;
 
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);

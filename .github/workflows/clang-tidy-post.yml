@@ -1,0 +1,24 @@
+name: Post clang-tidy review comments
+
+on:
+  workflow_run:
+    workflows: ["clang-tidy-review"]
+    types:
+      - completed
+
+permissions:
+  pull-requests: write
+  issues: write
+  checks: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: ZedThree/clang-tidy-review/post@v0.19.0
+        # lgtm_comment_body, max_comments, and annotations need to be set on the posting workflow in a split setup
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          annotations: false
+          max_comments: 10

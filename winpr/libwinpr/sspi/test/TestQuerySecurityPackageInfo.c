@@ -6,10 +6,10 @@
 
 int TestQuerySecurityPackageInfo(int argc, char* argv[])
 {
-	int rc;
-	SECURITY_STATUS status;
-	SecPkgInfo* pPackageInfo;
-	SecurityFunctionTable* table;
+	int rc = 0;
+	SECURITY_STATUS status = 0;
+	SecPkgInfo* pPackageInfo = NULL;
+	SecurityFunctionTable* table = NULL;
 
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);

@@ -24,6 +24,7 @@
 
 #include <freerdp/api.h>
 
-FREERDP_LOCAL BOOL nsc_encode(NSC_CONTEXT* context, const BYTE* bmpdata, UINT32 rowstride);
+FREERDP_LOCAL BOOL nsc_encode(NSC_CONTEXT* WINPR_RESTRICT context,
+                              const BYTE* WINPR_RESTRICT bmpdata, UINT32 rowstride);
 
 #endif /* FREERDP_LIB_CODEC_NSC_ENCODE_H */

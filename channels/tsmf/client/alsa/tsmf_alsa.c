@@ -48,7 +48,7 @@ typedef struct
 
 static BOOL tsmf_alsa_open_device(TSMFAlsaAudioDevice* alsa)
 {
-	int error;
+	int error = 0;
 	error = snd_pcm_open(&alsa->out_handle, alsa->device, SND_PCM_STREAM_PLAYBACK, 0);
 
 	if (error < 0)
@@ -80,10 +80,10 @@ static BOOL tsmf_alsa_open(ITSMFAudioDevice* audio, const char* device)
 static BOOL tsmf_alsa_set_format(ITSMFAudioDevice* audio, UINT32 sample_rate, UINT32 channels,
                                  UINT32 bits_per_sample)
 {
-	int error;
-	snd_pcm_uframes_t frames;
-	snd_pcm_hw_params_t* hw_params;
-	snd_pcm_sw_params_t* sw_params;
+	int error = 0;
+	snd_pcm_uframes_t frames = 0;
+	snd_pcm_hw_params_t* hw_params = NULL;
+	snd_pcm_sw_params_t* sw_params = NULL;
 	TSMFAlsaAudioDevice* alsa = (TSMFAlsaAudioDevice*)audio;
 
 	if (!alsa->out_handle)
@@ -141,13 +141,13 @@ static BOOL tsmf_alsa_set_format(ITSMFAudioDevice* audio, UINT32 sample_rate, UI
 
 static BOOL tsmf_alsa_play(ITSMFAudioDevice* audio, const BYTE* src, UINT32 data_size)
 {
-	int len;
-	int error;
-	int frames;
-	const BYTE* end;
-	const BYTE* pindex;
-	int rbytes_per_frame;
-	int sbytes_per_frame;
+	int len = 0;
+	int error = 0;
+	int frames = 0;
+	const BYTE* end = NULL;
+	const BYTE* pindex = NULL;
+	int rbytes_per_frame = 0;
+	int sbytes_per_frame = 0;
 	TSMFAlsaAudioDevice* alsa = (TSMFAlsaAudioDevice*)audio;
 	DEBUG_TSMF("data_size %" PRIu32 "", data_size);
 
@@ -224,7 +224,7 @@ static void tsmf_alsa_free(ITSMFAudioDevice* audio)
 	free(alsa);
 }
 
-FREERDP_ENTRY_POINT(ITSMFAudioDevice* alsa_freerdp_tsmf_client_audio_subsystem_entry(void))
+FREERDP_ENTRY_POINT(ITSMFAudioDevice* alsa_freerdp_tsmf_client_audio_subsystem_entry(void*))
 {
 	TSMFAlsaAudioDevice* alsa = calloc(1, sizeof(TSMFAlsaAudioDevice));
 	if (!alsa)

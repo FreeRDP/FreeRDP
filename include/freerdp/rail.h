@@ -347,9 +347,9 @@ typedef struct
 typedef struct
 {
 	UINT16 flags;
-	char* RemoteApplicationProgram;
-	char* RemoteApplicationWorkingDir;
-	char* RemoteApplicationArguments;
+	const char* RemoteApplicationProgram;
+	const char* RemoteApplicationWorkingDir;
+	const char* RemoteApplicationArguments;
 } RAIL_EXEC_ORDER;
 
 typedef struct
@@ -582,6 +582,9 @@ typedef enum
 	FREERDP_API BOOL rail_read_unicode_string(wStream* s, RAIL_UNICODE_STRING* unicode_string);
 	FREERDP_API BOOL utf8_string_to_rail_string(const char* string,
 	                                            RAIL_UNICODE_STRING* unicode_string);
+
+	FREERDP_API const char* rail_handshake_ex_flags_to_string(UINT32 flags, char* buffer,
+	                                                          size_t len);
 
 #ifdef __cplusplus
 }

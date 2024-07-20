@@ -26,6 +26,7 @@
 #include <winpr/stream.h>
 #include <winpr/string.h>
 #include <winpr/rpc.h>
+#include <winpr/sysinfo.h>
 
 #include <freerdp/log.h>
 #include <freerdp/crypto/crypto.h>
@@ -38,6 +39,7 @@
 #endif
 
 #include "http.h"
+#include "../tcp.h"
 
 #define TAG FREERDP_TAG("core.gateway.http")
 
@@ -100,8 +102,9 @@ struct s_http_response
 
 static char* string_strnstr(char* str1, const char* str2, size_t slen)
 {
-	char c, sc;
-	size_t len;
+	char c = 0;
+	char sc = 0;
+	size_t len = 0;
 
 	if ((c = *str2++) != '\0')
 	{
@@ -133,14 +136,6 @@ static BOOL strings_equals_nocase(const void* obj1, const void* obj2)
 	return _stricmp(obj1, obj2) == 0;
 }
 
-static void* copy_string(const void* ptr)
-{
-	const char* str = ptr;
-	if (!str)
-		return NULL;
-	return _strdup(ptr);
-}
-
 HttpContext* http_context_new(void)
 {
 	HttpContext* context = (HttpContext*)calloc(1, sizeof(HttpContext));
@@ -156,15 +151,18 @@ HttpContext* http_context_new(void)
 	if (!key || !value)
 		goto fail;
 
-	key->fnObjectFree = free;
-	key->fnObjectNew = copy_string;
-	value->fnObjectFree = free;
-	value->fnObjectNew = copy_string;
+	key->fnObjectFree = winpr_ObjectStringFree;
+	key->fnObjectNew = winpr_ObjectStringClone;
+	value->fnObjectFree = winpr_ObjectStringFree;
+	value->fnObjectNew = winpr_ObjectStringClone;
 
 	return context;
 
 fail:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	http_context_free(context);
+	WINPR_PRAGMA_DIAG_POP
 	return NULL;
 }
 
@@ -326,8 +324,9 @@ static BOOL list_append(HttpContext* context, WINPR_FORMAT_ARG const char* str, 
 	}
 	else
 		sstr = Pragma;
-	free(context->Pragma);
+	Pragma = NULL;
 
+	free(context->Pragma);
 	context->Pragma = sstr;
 
 	rc = TRUE;
@@ -551,9 +550,10 @@ BOOL http_request_set_transfer_encoding(HttpRequest* request, TRANSFER_ENCODING 
 WINPR_ATTR_FORMAT_ARG(2, 3)
 static BOOL http_encode_print(wStream* s, WINPR_FORMAT_ARG const char* fmt, ...)
 {
-	char* str;
+	char* str = NULL;
 	va_list ap;
-	int length, used;
+	int length = 0;
+	int used = 0;
 
 	if (!s || !fmt)
 		return FALSE;
@@ -652,7 +652,7 @@ unlock:
 
 wStream* http_request_write(HttpContext* context, HttpRequest* request)
 {
-	wStream* s;
+	wStream* s = NULL;
 
 	if (!context || !request)
 		return NULL;
@@ -785,8 +785,8 @@ static BOOL http_response_parse_header_status_line(HttpResponse* response, const
 {
 	BOOL rc = FALSE;
 	char* separator = NULL;
-	char* status_code;
-	char* reason_phrase;
+	char* status_code = NULL;
+	char* reason_phrase = NULL;
 
 	if (!response)
 		goto fail;
@@ -833,12 +833,15 @@ static BOOL http_response_parse_header_field(HttpResponse* response, const char*
                                              const char* value)
 {
 	BOOL status = TRUE;
-	if (!response || !name)
+
+	WINPR_ASSERT(response);
+
+	if (!name)
 		return FALSE;
 
 	if (_stricmp(name, "Content-Length") == 0)
 	{
-		unsigned long long val;
+		unsigned long long val = 0;
 		errno = 0;
 		val = _strtoui64(value, NULL, 0);
 
@@ -927,6 +930,10 @@ static BOOL http_response_parse_header_field(HttpResponse* response, const char*
 			*separator = '\0';
 			CookieName = value;
 			CookieValue = separator + 1;
+
+			if (!CookieName || !CookieValue)
+				return FALSE;
+
 			if (*CookieValue == '"')
 			{
 				char* p = CookieValue;
@@ -947,9 +954,6 @@ static BOOL http_response_parse_header_field(HttpResponse* response, const char*
 				}
 				*p = '\0';
 			}
-
-			if (!CookieName || !CookieValue)
-				return FALSE;
 		}
 		else
 		{
@@ -965,14 +969,12 @@ static BOOL http_response_parse_header_field(HttpResponse* response, const char*
 static BOOL http_response_parse_header(HttpResponse* response)
 {
 	BOOL rc = FALSE;
-	char c;
-	size_t count;
-	char* line;
-	char* name;
-	char* value;
-	char* colon_pos;
-	char* end_of_header;
-	char end_of_header_char;
+	char c = 0;
+	char* line = NULL;
+	char* name = NULL;
+	char* colon_pos = NULL;
+	char* end_of_header = NULL;
+	char end_of_header_char = 0;
 
 	if (!response)
 		goto fail;
@@ -983,7 +985,7 @@ static BOOL http_response_parse_header(HttpResponse* response)
 	if (!http_response_parse_header_status_line(response, response->lines[0]))
 		goto fail;
 
-	for (count = 1; count < response->count; count++)
+	for (size_t count = 1; count < response->count; count++)
 	{
 		line = response->lines[count];
 
@@ -1021,7 +1023,8 @@ static BOOL http_response_parse_header(HttpResponse* response)
 		name = line;
 
 		/* eat space and tabs before header value */
-		for (value = colon_pos + 1; *value; value++)
+		char* value = colon_pos + 1;
+		for (; *value; value++)
 		{
 			if ((*value != ' ') && (*value != '\t'))
 				break;
@@ -1057,12 +1060,13 @@ static void http_response_print(wLog* log, DWORD level, const HttpResponse* resp
 	           freerdp_http_status_string_format(status, buffer, ARRAYSIZE(buffer)));
 
 	for (size_t i = 0; i < response->count; i++)
-		WLog_Print(log, level, "[%" PRIuz "] %s", i, response->lines[i]);
+		WLog_Print(log, WLOG_DEBUG, "[%" PRIuz "] %s", i, response->lines[i]);
 
 	if (response->ReasonPhrase)
 		WLog_Print(log, level, "[reason] %s", response->ReasonPhrase);
 
-	WLog_Print(log, level, "[body][%" PRIuz "] %s", response->BodyLength, response->BodyContent);
+	WLog_Print(log, WLOG_TRACE, "[body][%" PRIuz "] %s", response->BodyLength,
+	           response->BodyContent);
 }
 
 static BOOL http_use_content_length(const char* cur)
@@ -1104,16 +1108,18 @@ static BOOL http_use_content_length(const char* cur)
 
 static int print_bio_error(const char* str, size_t len, void* bp)
 {
+	wLog* log = bp;
+
 	WINPR_UNUSED(len);
 	WINPR_UNUSED(bp);
-	WLog_ERR(TAG, "%s", str);
+	WLog_Print(log, WLOG_ERROR, "%s", str);
 	return len;
 }
 
 int http_chuncked_read(BIO* bio, BYTE* pBuffer, size_t size,
                        http_encoding_chunked_context* encodingContext)
 {
-	int status;
+	int status = 0;
 	int effectiveDataLen = 0;
 	WINPR_ASSERT(bio);
 	WINPR_ASSERT(pBuffer);
@@ -1216,36 +1222,65 @@ int http_chuncked_read(BIO* bio, BYTE* pBuffer, size_t size,
 	}
 }
 
-HttpResponse* http_response_recv(rdpTls* tls, BOOL readContentLength)
+#define sleep_or_timeout(tls, startMS, timeoutMS) \
+	sleep_or_timeout_((tls), (startMS), (timeoutMS), __FILE__, __func__, __LINE__)
+static BOOL sleep_or_timeout_(rdpTls* tls, UINT64 startMS, UINT32 timeoutMS, const char* file,
+                              const char* fkt, size_t line)
 {
-	size_t position;
-	size_t bodyLength = 0;
-	size_t payloadOffset = 0;
-	HttpResponse* response = http_response_new();
+	WINPR_ASSERT(tls);
 
-	if (!response)
-		return NULL;
-
-	response->ContentLength = 0;
-
-	while (payloadOffset == 0)
+	USleep(100);
+	const UINT64 nowMS = GetTickCount64();
+	if (nowMS - startMS > timeoutMS)
 	{
-		size_t s;
-		char* end;
+		DWORD level = WLOG_ERROR;
+		wLog* log = WLog_Get(TAG);
+		if (WLog_IsLevelActive(log, level))
+			WLog_PrintMessage(log, WLOG_MESSAGE_TEXT, level, line, file, fkt,
+			                  "timeout [%" PRIu32 "ms] exceeded", timeoutMS);
+		return TRUE;
+	}
+	if (!BIO_should_retry(tls->bio))
+	{
+		DWORD level = WLOG_ERROR;
+		wLog* log = WLog_Get(TAG);
+		if (WLog_IsLevelActive(log, level))
+		{
+			WLog_PrintMessage(log, WLOG_MESSAGE_TEXT, level, line, file, fkt, "Retries exceeded");
+			ERR_print_errors_cb(print_bio_error, log);
+		}
+		return TRUE;
+	}
+	if (freerdp_shall_disconnect_context(tls->context))
+		return TRUE;
+
+	return FALSE;
+}
+
+static SSIZE_T http_response_recv_line(rdpTls* tls, HttpResponse* response)
+{
+	WINPR_ASSERT(tls);
+	WINPR_ASSERT(response);
+
+	SSIZE_T payloadOffset = -1;
+	const UINT32 timeoutMS =
+	    freerdp_settings_get_uint32(tls->context->settings, FreeRDP_TcpConnectTimeout);
+	const UINT64 startMS = GetTickCount64();
+	while (payloadOffset <= 0)
+	{
+		size_t bodyLength = 0;
+		size_t position = 0;
+		int status = -1;
+		size_t s = 0;
+		char* end = NULL;
 		/* Read until we encounter \r\n\r\n */
 		ERR_clear_error();
-		int status = BIO_read(tls->bio, Stream_Pointer(response->data), 1);
 
+		status = BIO_read(tls->bio, Stream_Pointer(response->data), 1);
 		if (status <= 0)
 		{
-			if (!BIO_should_retry(tls->bio))
-			{
-				WLog_ERR(TAG, "Retries exceeded");
-				ERR_print_errors_cb(print_bio_error, NULL);
+			if (sleep_or_timeout(tls, startMS, timeoutMS))
 				goto out_error;
-			}
-
-			USleep(100);
 			continue;
 		}
 
@@ -1275,6 +1310,119 @@ HttpResponse* http_response_recv(rdpTls* tls, BOOL readContentLength)
 		if (string_strnstr(end, "\r\n\r\n", s) != NULL)
 			payloadOffset = Stream_GetPosition(response->data);
 	}
+
+out_error:
+	return payloadOffset;
+}
+
+static BOOL http_response_recv_body(rdpTls* tls, HttpResponse* response, BOOL readContentLength,
+                                    size_t payloadOffset, size_t bodyLength)
+{
+	BOOL rc = FALSE;
+
+	WINPR_ASSERT(tls);
+	WINPR_ASSERT(response);
+
+	const UINT64 startMS = GetTickCount64();
+	const UINT32 timeoutMS =
+	    freerdp_settings_get_uint32(tls->context->settings, FreeRDP_TcpConnectTimeout);
+
+	if ((response->TransferEncoding == TransferEncodingChunked) && readContentLength)
+	{
+		http_encoding_chunked_context ctx = { 0 };
+		ctx.state = ChunkStateLenghHeader;
+		ctx.nextOffset = 0;
+		ctx.headerFooterPos = 0;
+		int full_len = 0;
+		do
+		{
+			if (!Stream_EnsureRemainingCapacity(response->data, 2048))
+				goto out_error;
+
+			int status = http_chuncked_read(tls->bio, Stream_Pointer(response->data),
+			                                Stream_GetRemainingCapacity(response->data), &ctx);
+			if (status <= 0)
+			{
+				if (sleep_or_timeout(tls, startMS, timeoutMS))
+					goto out_error;
+			}
+			else
+			{
+				Stream_Seek(response->data, (size_t)status);
+				full_len += status;
+			}
+		} while (ctx.state != ChunkStateEnd);
+		response->BodyLength = full_len;
+		if (response->BodyLength > 0)
+			response->BodyContent = &(Stream_Buffer(response->data))[payloadOffset];
+	}
+	else
+	{
+		while (response->BodyLength < bodyLength)
+		{
+			int status = 0;
+
+			if (!Stream_EnsureRemainingCapacity(response->data, bodyLength - response->BodyLength))
+				goto out_error;
+
+			ERR_clear_error();
+			status = BIO_read(tls->bio, Stream_Pointer(response->data),
+			                  bodyLength - response->BodyLength);
+
+			if (status <= 0)
+			{
+				if (sleep_or_timeout(tls, startMS, timeoutMS))
+					goto out_error;
+				continue;
+			}
+
+			Stream_Seek(response->data, (size_t)status);
+			response->BodyLength += (unsigned long)status;
+
+			if (response->BodyLength > RESPONSE_SIZE_LIMIT)
+			{
+				WLog_ERR(TAG, "Request body too large! (%" PRIdz " bytes) Aborting!",
+				         response->BodyLength);
+				goto out_error;
+			}
+		}
+
+		if (response->BodyLength > 0)
+			response->BodyContent = &(Stream_Buffer(response->data))[payloadOffset];
+
+		if (bodyLength != response->BodyLength)
+		{
+			WLog_WARN(TAG, "%s unexpected body length: actual: %" PRIuz ", expected: %" PRIuz,
+			          response->ContentType, response->BodyLength, bodyLength);
+
+			if (bodyLength > 0)
+				response->BodyLength = MIN(bodyLength, response->BodyLength);
+		}
+
+		/* '\0' terminate the http body */
+		if (!Stream_EnsureRemainingCapacity(response->data, sizeof(UINT16)))
+			goto out_error;
+		Stream_Write_UINT16(response->data, 0);
+	}
+
+	rc = TRUE;
+out_error:
+	return rc;
+}
+
+HttpResponse* http_response_recv(rdpTls* tls, BOOL readContentLength)
+{
+	size_t bodyLength = 0;
+	HttpResponse* response = http_response_new();
+
+	if (!response)
+		return NULL;
+
+	response->ContentLength = 0;
+
+	const SSIZE_T payloadOffset = http_response_recv_line(tls, response);
+	if (payloadOffset < 0)
+		goto out_error;
 
 	if (payloadOffset)
 	{
@@ -1347,96 +1495,8 @@ HttpResponse* http_response_recv(rdpTls* tls, BOOL readContentLength)
 		}
 
 		/* Fetch remaining body! */
-		if ((response->TransferEncoding == TransferEncodingChunked) && readContentLength)
-		{
-			http_encoding_chunked_context ctx = { 0 };
-			ctx.state = ChunkStateLenghHeader;
-			ctx.nextOffset = 0;
-			ctx.headerFooterPos = 0;
-			int full_len = 0;
-			do
-			{
-				if (!Stream_EnsureRemainingCapacity(response->data, 2048))
-					goto out_error;
-
-				int status = http_chuncked_read(tls->bio, Stream_Pointer(response->data),
-				                                Stream_GetRemainingCapacity(response->data), &ctx);
-				if (status <= 0)
-				{
-					if (!BIO_should_retry(tls->bio))
-					{
-						WLog_ERR(TAG, "Retries exceeded");
-						ERR_print_errors_cb(print_bio_error, NULL);
-						goto out_error;
-					}
-
-					USleep(100);
-				}
-				else
-				{
-					Stream_Seek(response->data, (size_t)status);
-					full_len += status;
-				}
-			} while (ctx.state != ChunkStateEnd);
-			response->BodyLength = full_len;
-			if (response->BodyLength > 0)
-				response->BodyContent = &(Stream_Buffer(response->data))[payloadOffset];
-		}
-		else
-		{
-			while (response->BodyLength < bodyLength)
-			{
-				int status;
-
-				if (!Stream_EnsureRemainingCapacity(response->data,
-				                                    bodyLength - response->BodyLength))
-					goto out_error;
-
-				ERR_clear_error();
-				status = BIO_read(tls->bio, Stream_Pointer(response->data),
-				                  bodyLength - response->BodyLength);
-
-				if (status <= 0)
-				{
-					if (!BIO_should_retry(tls->bio))
-					{
-						WLog_ERR(TAG, "Retries exceeded");
-						ERR_print_errors_cb(print_bio_error, NULL);
-						goto out_error;
-					}
-
-					USleep(100);
-					continue;
-				}
-
-				Stream_Seek(response->data, (size_t)status);
-				response->BodyLength += (unsigned long)status;
-
-				if (response->BodyLength > RESPONSE_SIZE_LIMIT)
-				{
-					WLog_ERR(TAG, "Request body too large! (%" PRIdz " bytes) Aborting!",
-					         response->BodyLength);
-					goto out_error;
-				}
-			}
-
-			if (response->BodyLength > 0)
-				response->BodyContent = &(Stream_Buffer(response->data))[payloadOffset];
-
-			if (bodyLength != response->BodyLength)
-			{
-				WLog_WARN(TAG, "%s unexpected body length: actual: %" PRIuz ", expected: %" PRIuz,
-				          response->ContentType, response->BodyLength, bodyLength);
-
-				if (bodyLength > 0)
-					response->BodyLength = MIN(bodyLength, response->BodyLength);
-			}
-
-			/* '\0' terminate the http body */
-			if (!Stream_EnsureRemainingCapacity(response->data, sizeof(UINT16)))
-				goto out_error;
-			Stream_Write_UINT16(response->data, 0);
-		}
+		if (!http_response_recv_body(tls, response, readContentLength, payloadOffset, bodyLength))
+			goto out_error;
 	}
 	Stream_SealLength(response->data);
 
@@ -1502,7 +1562,10 @@ HttpResponse* http_response_new(void)
 	response->TransferEncoding = TransferEncodingIdentity;
 	return response;
 fail:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	http_response_free(response);
+	WINPR_PRAGMA_DIAG_POP
 	return NULL;
 }
 

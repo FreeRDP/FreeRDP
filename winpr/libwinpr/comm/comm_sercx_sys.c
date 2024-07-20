@@ -123,7 +123,7 @@ static BOOL _set_handflow(WINPR_COMM* pComm, const SERIAL_HANDFLOW* pHandflow)
 
 static BOOL _get_handflow(WINPR_COMM* pComm, SERIAL_HANDFLOW* pHandflow)
 {
-	BOOL result;
+	BOOL result = 0;
 	SERIAL_DRIVER* pSerialSys = SerialSys_s();
 
 	result = pSerialSys->get_handflow(pComm, pHandflow);
@@ -155,7 +155,7 @@ static const ULONG _SERCX_SYS_SUPPORTED_EV_MASK = SERIAL_EV_RXCHAR |
 
 static BOOL _set_wait_mask(WINPR_COMM* pComm, const ULONG* pWaitMask)
 {
-	ULONG possibleMask;
+	ULONG possibleMask = 0;
 	SERIAL_DRIVER* pSerialSys = SerialSys_s();
 
 	possibleMask = *pWaitMask & _SERCX_SYS_SUPPORTED_EV_MASK;

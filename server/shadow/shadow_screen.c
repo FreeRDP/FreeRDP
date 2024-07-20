@@ -85,7 +85,10 @@ rdpShadowScreen* shadow_screen_new(rdpShadowServer* server)
 	return screen;
 
 fail:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	shadow_screen_free(screen);
+	WINPR_PRAGMA_DIAG_POP
 
 	return NULL;
 }
@@ -116,10 +119,12 @@ void shadow_screen_free(rdpShadowScreen* screen)
 
 BOOL shadow_screen_resize(rdpShadowScreen* screen)
 {
-	int x, y;
-	int width, height;
-	MONITOR_DEF* primary;
-	rdpShadowSubsystem* subsystem;
+	int x = 0;
+	int y = 0;
+	int width = 0;
+	int height = 0;
+	MONITOR_DEF* primary = NULL;
+	rdpShadowSubsystem* subsystem = NULL;
 
 	if (!screen)
 		return FALSE;

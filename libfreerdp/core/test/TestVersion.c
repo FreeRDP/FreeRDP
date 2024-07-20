@@ -3,10 +3,12 @@
 
 int TestVersion(int argc, char* argv[])
 {
-	const char* version;
-	const char* git;
-	const char* build;
-	int major = 0, minor = 0, revision = 0;
+	const char* version = NULL;
+	const char* git = NULL;
+	const char* build = NULL;
+	int major = 0;
+	int minor = 0;
+	int revision = 0;
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
 	freerdp_get_version(&major, &minor, &revision);

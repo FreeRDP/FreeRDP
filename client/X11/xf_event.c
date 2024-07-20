@@ -37,15 +37,17 @@
 #include "xf_graphics.h"
 
 #include "xf_event.h"
-#include "xf_input.h"
 
 #define TAG CLIENT_TAG("x11")
 
 #define CLAMP_COORDINATES(x, y) \
-	if (x < 0)                  \
-		x = 0;                  \
-	if (y < 0)                  \
-	y = 0
+	do                          \
+	{                           \
+		if ((x) < 0)            \
+			(x) = 0;            \
+		if ((y) < 0)            \
+			(y) = 0;            \
+	} while (0)
 
 const char* x11_event_string(int event)
 {
@@ -169,13 +171,12 @@ const char* x11_event_string(int event)
 
 BOOL xf_event_action_script_init(xfContext* xfc)
 {
-	wObject* obj;
-	char* xevent;
-	FILE* actionScript;
+	wObject* obj = NULL;
+	FILE* actionScript = NULL;
 	char buffer[1024] = { 0 };
 	char command[1024] = { 0 };
-	const rdpSettings* settings;
-	const char* ActionScript;
+	const rdpSettings* settings = NULL;
+	const char* ActionScript = NULL;
 
 	WINPR_ASSERT(xfc);
 
@@ -188,7 +189,9 @@ BOOL xf_event_action_script_init(xfContext* xfc)
 		return FALSE;
 
 	obj = ArrayList_Object(xfc->xevents);
-	obj->fnObjectFree = free;
+	WINPR_ASSERT(obj);
+	obj->fnObjectNew = winpr_ObjectStringClone;
+	obj->fnObjectFree = winpr_ObjectStringFree;
 	ActionScript = freerdp_settings_get_string(settings, FreeRDP_ActionScript);
 	sprintf_s(command, sizeof(command), "%s xevent", ActionScript);
 	actionScript = popen(command, "r");
@@ -200,9 +203,8 @@ BOOL xf_event_action_script_init(xfContext* xfc)
 	{
 		char* context = NULL;
 		strtok_s(buffer, "\n", &context);
-		xevent = _strdup(buffer);
 
-		if (!xevent || !ArrayList_Append(xfc->xevents, xevent))
+		if (!ArrayList_Append(xfc->xevents, buffer))
 		{
 			pclose(actionScript);
 			ArrayList_Free(xfc->xevents);
@@ -226,13 +228,12 @@ void xf_event_action_script_free(xfContext* xfc)
 
 static BOOL xf_event_execute_action_script(xfContext* xfc, const XEvent* event)
 {
-	int index;
-	int count;
-	char* name;
-	FILE* actionScript;
+	int count = 0;
+	char* name = NULL;
+	FILE* actionScript = NULL;
 	BOOL match = FALSE;
-	const char* xeventName;
-	const char* ActionScript;
+	const char* xeventName = NULL;
+	const char* ActionScript = NULL;
 	char buffer[1024] = { 0 };
 	char command[1024] = { 0 };
 
@@ -245,7 +246,7 @@ static BOOL xf_event_execute_action_script(xfContext* xfc, const XEvent* event)
 	xeventName = x11_event_string(event->type);
 	count = ArrayList_Count(xfc->xevents);
 
-	for (index = 0; index < count; index++)
+	for (int index = 0; index < count; index++)
 	{
 		name = (char*)ArrayList_GetItem(xfc->xevents, index);
 
@@ -279,8 +280,9 @@ static BOOL xf_event_execute_action_script(xfContext* xfc, const XEvent* event)
 
 void xf_adjust_coordinates_to_screen(xfContext* xfc, UINT32* x, UINT32* y)
 {
-	rdpSettings* settings;
-	INT64 tx, ty;
+	rdpSettings* settings = NULL;
+	INT64 tx = 0;
+	INT64 ty = 0;
 
 	if (!xfc || !xfc->common.context.settings || !y || !x)
 		return;
@@ -337,9 +339,11 @@ void xf_event_adjust_coordinates(xfContext* xfc, int* x, int* y)
 
 static BOOL xf_event_Expose(xfContext* xfc, const XExposeEvent* event, BOOL app)
 {
-	int x, y;
-	int w, h;
-	rdpSettings* settings;
+	int x = 0;
+	int y = 0;
+	int w = 0;
+	int h = 0;
+	rdpSettings* settings = NULL;
 
 	WINPR_ASSERT(xfc);
 	WINPR_ASSERT(event);
@@ -446,11 +450,12 @@ static BOOL xf_event_MotionNotify(xfContext* xfc, const XMotionEvent* event, BOO
 {
 	WINPR_ASSERT(xfc);
 
-	if (xfc->xi_event)
-		return TRUE;
-
 	if (xfc->window)
 		xf_floatbar_set_root_y(xfc->window->floatbar, event->y);
+
+	if (xfc->xi_event ||
+	    (xfc->common.mouse_grabbed && freerdp_client_use_relative_mouse_events(&xfc->common)))
+		return TRUE;
 
 	return xf_generic_MotionNotify(xfc, event->x, event->y, event->state, event->window, app);
 }
@@ -555,7 +560,8 @@ static BOOL xf_event_ButtonPress(xfContext* xfc, const XButtonEvent* event, BOOL
 {
 	xf_grab_mouse(xfc);
 
-	if (xfc->xi_event)
+	if (xfc->xi_event ||
+	    (xfc->common.mouse_grabbed && freerdp_client_use_relative_mouse_events(&xfc->common)))
 		return TRUE;
 	return xf_generic_ButtonEvent(xfc, event->x, event->y, event->button, event->window, app, TRUE);
 }
@@ -564,7 +570,8 @@ static BOOL xf_event_ButtonRelease(xfContext* xfc, const XButtonEvent* event, BO
 {
 	xf_grab_mouse(xfc);
 
-	if (xfc->xi_event)
+	if (xfc->xi_event ||
+	    (xfc->common.mouse_grabbed && freerdp_client_use_relative_mouse_events(&xfc->common)))
 		return TRUE;
 	return xf_generic_ButtonEvent(xfc, event->x, event->y, event->button, event->window, app,
 	                              FALSE);
@@ -644,6 +651,8 @@ static BOOL xf_event_FocusIn(xfContext* xfc, const XFocusInEvent* event, BOOL ap
 	 * if the WM decided to use an alternate event order */
 	if (!app)
 		xf_keyboard_release_all_keypress(xfc);
+	else
+		xf_rail_send_activate(xfc, event->window, TRUE);
 
 	xf_pointer_update_scale(xfc);
 
@@ -672,6 +681,8 @@ static BOOL xf_event_FocusOut(xfContext* xfc, const XFocusOutEvent* event, BOOL 
 		XUngrabKeyboard(xfc->display, CurrentTime);
 
 	xf_keyboard_release_all_keypress(xfc);
+	if (app)
+		xf_rail_send_activate(xfc, event->window, FALSE);
 
 	return TRUE;
 }
@@ -809,7 +820,8 @@ static BOOL xf_event_ConfigureNotify(xfContext* xfc, const XConfigureEvent* even
 
 		if (freerdp_settings_get_bool(settings, FreeRDP_DynamicResolutionUpdate))
 		{
-			int alignedWidth, alignedHeight;
+			int alignedWidth = 0;
+			int alignedHeight = 0;
 			alignedWidth = (xfc->window->width / 2) * 2;
 			alignedHeight = (xfc->window->height / 2) * 2;
 			/* ask the server to resize using the display channel */
@@ -913,7 +925,6 @@ static BOOL xf_event_PropertyNotify(xfContext* xfc, const XPropertyEvent* event,
 	if ((((Atom)event->atom == xfc->_NET_WM_STATE) && (event->state != PropertyDelete)) ||
 	    (((Atom)event->atom == xfc->WM_STATE) && (event->state != PropertyDelete)))
 	{
-		unsigned long i = 0;
 		BOOL status = FALSE;
 		BOOL minimized = FALSE;
 		BOOL minimizedChanged = FALSE;
@@ -942,7 +953,7 @@ static BOOL xf_event_PropertyNotify(xfContext* xfc, const XPropertyEvent* event,
 					appWindow->maxVert = FALSE;
 					appWindow->maxHorz = FALSE;
 				}
-				for (i = 0; i < nitems; i++)
+				for (unsigned long i = 0; i < nitems; i++)
 				{
 					if ((Atom)((UINT16**)prop)[i] ==
 					    XInternAtom(xfc->display, "_NET_WM_STATE_MAXIMIZED_VERT", False))
@@ -1263,12 +1274,11 @@ BOOL xf_event_process(freerdp* instance, const XEvent* event)
 BOOL xf_generic_RawButtonEvent(xfContext* xfc, int button, BOOL app, BOOL down)
 {
 	UINT16 flags = 0;
-	size_t i;
 
 	if (app)
 		return FALSE;
 
-	for (i = 0; i < ARRAYSIZE(xfc->button_map); i++)
+	for (size_t i = 0; i < ARRAYSIZE(xfc->button_map); i++)
 	{
 		const button_map* cur = &xfc->button_map[i];
 

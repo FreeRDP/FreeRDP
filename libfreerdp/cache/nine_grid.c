@@ -82,7 +82,7 @@ void nine_grid_cache_register_callbacks(rdpUpdate* update)
 
 void* nine_grid_cache_get(rdpNineGridCache* nine_grid, UINT32 index)
 {
-	void* entry;
+	void* entry = NULL;
 
 	if (index >= nine_grid->maxEntries)
 	{
@@ -115,8 +115,8 @@ void nine_grid_cache_put(rdpNineGridCache* nine_grid, UINT32 index, void* entry)
 
 rdpNineGridCache* nine_grid_cache_new(rdpContext* context)
 {
-	rdpNineGridCache* nine_grid;
-	rdpSettings* settings;
+	rdpNineGridCache* nine_grid = NULL;
+	rdpSettings* settings = NULL;
 
 	WINPR_ASSERT(context);
 
@@ -145,7 +145,10 @@ rdpNineGridCache* nine_grid_cache_new(rdpContext* context)
 	return nine_grid;
 
 fail:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	nine_grid_cache_free(nine_grid);
+	WINPR_PRAGMA_DIAG_POP
 	return NULL;
 }
 
@@ -155,8 +158,7 @@ void nine_grid_cache_free(rdpNineGridCache* nine_grid)
 	{
 		if (nine_grid->entries != NULL)
 		{
-			size_t i;
-			for (i = 0; i < nine_grid->maxEntries; i++)
+			for (size_t i = 0; i < nine_grid->maxEntries; i++)
 				free(nine_grid->entries[i].entry);
 
 			free(nine_grid->entries);

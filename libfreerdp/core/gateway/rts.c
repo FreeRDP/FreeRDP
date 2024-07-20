@@ -177,7 +177,8 @@ static rpcconn_rts_hdr_t rts_pdu_header_init(void)
 
 static BOOL rts_align_stream(wStream* s, size_t alignment, BOOL silent)
 {
-	size_t pos, pad;
+	size_t pos = 0;
+	size_t pad = 0;
 
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(alignment > 0);
@@ -189,7 +190,7 @@ static BOOL rts_align_stream(wStream* s, size_t alignment, BOOL silent)
 
 static char* sdup(const void* src, size_t length)
 {
-	char* dst;
+	char* dst = NULL;
 	WINPR_ASSERT(src || (length == 0));
 	if (length == 0)
 		return NULL;
@@ -312,7 +313,7 @@ static BOOL rts_read_auth_verifier_no_checks(wStream* s, auth_verifier_co_t* aut
 static BOOL rts_read_auth_verifier(wStream* s, auth_verifier_co_t* auth,
                                    const rpcconn_common_hdr_t* header, BOOL silent)
 {
-	size_t pos;
+	size_t pos = 0;
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(auth);
 	WINPR_ASSERT(header);
@@ -331,7 +332,7 @@ static BOOL rts_read_auth_verifier(wStream* s, auth_verifier_co_t* auth,
 static BOOL rts_read_auth_verifier_with_stub(wStream* s, auth_verifier_co_t* auth,
                                              rpcconn_common_hdr_t* header, BOOL silent)
 {
-	size_t pos;
+	size_t pos = 0;
 	size_t alloc_hint = 0;
 	BYTE** ptr = NULL;
 
@@ -394,7 +395,7 @@ static void rts_free_auth_verifier(auth_verifier_co_t* auth)
 static BOOL rts_write_auth_verifier(wStream* s, const auth_verifier_co_t* auth,
                                     const rpcconn_common_hdr_t* header)
 {
-	size_t pos;
+	size_t pos = 0;
 	UINT8 auth_pad_length = 0;
 
 	WINPR_ASSERT(s);
@@ -459,8 +460,6 @@ static void rts_free_supported_versions(p_rt_versions_supported_t* versions)
 static BOOL rts_read_supported_versions(wStream* s, p_rt_versions_supported_t* versions,
                                         BOOL silent)
 {
-	BYTE x;
-
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(versions);
 
@@ -475,7 +474,7 @@ static BOOL rts_read_supported_versions(wStream* s, p_rt_versions_supported_t* v
 		if (!versions->p_protocols)
 			return FALSE;
 	}
-	for (x = 0; x < versions->n_protocols; x++)
+	for (BYTE x = 0; x < versions->n_protocols; x++)
 	{
 		p_rt_version_t* version = &versions->p_protocols[x];
 		if (!rts_read_version(s, version, silent)) /* size_is(n_protocols) */
@@ -604,7 +603,6 @@ static void rts_context_elem_free(p_cont_elem_t* ptr)
 
 static BOOL rts_read_context_elem(wStream* s, p_cont_elem_t* element, BOOL silent)
 {
-	BYTE x;
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(element);
 
@@ -623,7 +621,7 @@ static BOOL rts_read_context_elem(wStream* s, p_cont_elem_t* element, BOOL silen
 		element->transfer_syntaxes = rts_syntax_id_new(element->n_transfer_syn);
 		if (!element->transfer_syntaxes)
 			return FALSE;
-		for (x = 0; x < element->n_transfer_syn; x++)
+		for (BYTE x = 0; x < element->n_transfer_syn; x++)
 		{
 			p_syntax_id_t* syn = &element->transfer_syntaxes[x];
 			if (!rts_read_syntax_id(s, syn, silent)) /* size_is(n_transfer_syn) */
@@ -636,7 +634,6 @@ static BOOL rts_read_context_elem(wStream* s, p_cont_elem_t* element, BOOL silen
 
 static BOOL rts_write_context_elem(wStream* s, const p_cont_elem_t* element)
 {
-	BYTE x;
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(element);
 
@@ -648,7 +645,7 @@ static BOOL rts_write_context_elem(wStream* s, const p_cont_elem_t* element)
 	if (!rts_write_syntax_id(s, &element->abstract_syntax)) /* transfer syntax list */
 		return FALSE;
 
-	for (x = 0; x < element->n_transfer_syn; x++)
+	for (BYTE x = 0; x < element->n_transfer_syn; x++)
 	{
 		const p_syntax_id_t* syn = &element->transfer_syntaxes[x];
 		if (!rts_write_syntax_id(s, syn)) /* size_is(n_transfer_syn) */
@@ -660,8 +657,6 @@ static BOOL rts_write_context_elem(wStream* s, const p_cont_elem_t* element)
 
 static BOOL rts_read_context_list(wStream* s, p_cont_list_t* list, BOOL silent)
 {
-	BYTE x;
-
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(list);
 
@@ -676,7 +671,7 @@ static BOOL rts_read_context_list(wStream* s, p_cont_list_t* list, BOOL silent)
 		list->p_cont_elem = rts_context_elem_new(list->n_context_elem);
 		if (!list->p_cont_elem)
 			return FALSE;
-		for (x = 0; x < list->n_context_elem; x++)
+		for (BYTE x = 0; x < list->n_context_elem; x++)
 		{
 			p_cont_elem_t* element = &list->p_cont_elem[x];
 			if (!rts_read_context_elem(s, element, silent))
@@ -695,8 +690,6 @@ static void rts_free_context_list(p_cont_list_t* list)
 
 static BOOL rts_write_context_list(wStream* s, const p_cont_list_t* list)
 {
-	BYTE x;
-
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(list);
 
@@ -706,7 +699,7 @@ static BOOL rts_write_context_list(wStream* s, const p_cont_list_t* list)
 	Stream_Write_UINT8(s, 0);                    /* alignment pad, m.b.z. */
 	Stream_Write_UINT16(s, 0);                   /* alignment pad, m.b.z. */
 
-	for (x = 0; x < list->n_context_elem; x++)
+	for (BYTE x = 0; x < list->n_context_elem; x++)
 	{
 		const p_cont_elem_t* element = &list->p_cont_elem[x];
 		if (!rts_write_context_elem(s, element))
@@ -748,8 +741,6 @@ static void rts_free_result(p_result_t* result)
 
 static BOOL rts_read_result_list(wStream* s, p_result_list_t* list, BOOL silent)
 {
-	BYTE x;
-
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(list);
 
@@ -765,7 +756,7 @@ static BOOL rts_read_result_list(wStream* s, p_result_list_t* list, BOOL silent)
 		if (!list->p_results)
 			return FALSE;
 
-		for (x = 0; x < list->n_results; x++)
+		for (BYTE x = 0; x < list->n_results; x++)
 		{
 			p_result_t* result = &list->p_results[x]; /* size_is(n_results) */
 			if (!rts_read_result(s, result, silent))
@@ -778,11 +769,9 @@ static BOOL rts_read_result_list(wStream* s, p_result_list_t* list, BOOL silent)
 
 static void rts_free_result_list(p_result_list_t* list)
 {
-	BYTE x;
-
 	if (!list)
 		return;
-	for (x = 0; x < list->n_results; x++)
+	for (BYTE x = 0; x < list->n_results; x++)
 	{
 		p_result_t* result = &list->p_results[x];
 		rts_free_result(result);
@@ -1250,7 +1239,7 @@ static BOOL rts_write_pdu_header(wStream* s, const rpcconn_rts_hdr_t* header)
 static BOOL rts_receive_window_size_command_read(rdpRpc* rpc, wStream* buffer,
                                                  UINT64* ReceiveWindowSize)
 {
-	UINT32 val;
+	UINT32 val = 0;
 
 	WINPR_ASSERT(rpc);
 	WINPR_ASSERT(buffer);
@@ -1338,7 +1327,7 @@ static BOOL rts_flow_control_ack_command_write(wStream* s, UINT32 BytesReceived,
 static BOOL rts_connection_timeout_command_read(rdpRpc* rpc, wStream* buffer,
                                                 UINT64* ConnectionTimeout)
 {
-	UINT32 val;
+	UINT32 val = 0;
 	WINPR_ASSERT(rpc);
 	WINPR_ASSERT(buffer);
 
@@ -1435,7 +1424,7 @@ static BOOL rts_empty_command_write(wStream* s)
 
 static BOOL rts_padding_command_read(wStream* s, size_t* length, BOOL silent)
 {
-	UINT32 ConformanceCount;
+	UINT32 ConformanceCount = 0;
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(length);
 	if (!Stream_ConditionalCheckAndLogRequiredLength(TAG, s, 4, silent))
@@ -1447,7 +1436,7 @@ static BOOL rts_padding_command_read(wStream* s, size_t* length, BOOL silent)
 
 static BOOL rts_client_address_command_read(wStream* s, size_t* length, BOOL silent)
 {
-	UINT32 AddressType;
+	UINT32 AddressType = 0;
 
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(length);
@@ -1486,7 +1475,7 @@ static BOOL rts_association_group_id_command_write(wStream* s, const BYTE* Assoc
 
 static int rts_destination_command_read(rdpRpc* rpc, wStream* buffer, UINT32* Destination)
 {
-	UINT32 val;
+	UINT32 val = 0;
 	WINPR_ASSERT(rpc);
 	WINPR_ASSERT(buffer);
 
@@ -1521,7 +1510,7 @@ void rts_generate_cookie(BYTE* cookie)
 static BOOL rts_send_buffer(RpcChannel* channel, wStream* s, size_t frag_length)
 {
 	BOOL status = FALSE;
-	SSIZE_T rc;
+	SSIZE_T rc = 0;
 
 	WINPR_ASSERT(channel);
 	WINPR_ASSERT(s);
@@ -1547,13 +1536,13 @@ fail:
 BOOL rts_send_CONN_A1_pdu(rdpRpc* rpc)
 {
 	BOOL status = FALSE;
-	wStream* buffer;
+	wStream* buffer = NULL;
 	rpcconn_rts_hdr_t header = rts_pdu_header_init();
-	UINT32 ReceiveWindowSize;
-	BYTE* OUTChannelCookie;
-	BYTE* VirtualConnectionCookie;
-	RpcVirtualConnection* connection;
-	RpcOutChannel* outChannel;
+	UINT32 ReceiveWindowSize = 0;
+	BYTE* OUTChannelCookie = NULL;
+	BYTE* VirtualConnectionCookie = NULL;
+	RpcVirtualConnection* connection = NULL;
+	RpcOutChannel* outChannel = NULL;
 
 	WINPR_ASSERT(rpc);
 
@@ -1601,8 +1590,8 @@ fail:
 
 BOOL rts_recv_CONN_A3_pdu(rdpRpc* rpc, wStream* buffer)
 {
-	BOOL rc;
-	UINT64 ConnectionTimeout;
+	BOOL rc = 0;
+	UINT64 ConnectionTimeout = 0;
 
 	if (!Stream_SafeSeek(buffer, 20))
 		return FALSE;
@@ -1626,13 +1615,13 @@ BOOL rts_recv_CONN_A3_pdu(rdpRpc* rpc, wStream* buffer)
 BOOL rts_send_CONN_B1_pdu(rdpRpc* rpc)
 {
 	BOOL status = FALSE;
-	wStream* buffer;
+	wStream* buffer = NULL;
 	rpcconn_rts_hdr_t header = rts_pdu_header_init();
-	BYTE* INChannelCookie;
-	BYTE* AssociationGroupId;
-	BYTE* VirtualConnectionCookie;
-	RpcVirtualConnection* connection;
-	RpcInChannel* inChannel;
+	BYTE* INChannelCookie = NULL;
+	BYTE* AssociationGroupId = NULL;
+	BYTE* VirtualConnectionCookie = NULL;
+	RpcVirtualConnection* connection = NULL;
+	RpcInChannel* inChannel = NULL;
 
 	WINPR_ASSERT(rpc);
 
@@ -1721,14 +1710,14 @@ BOOL rts_recv_CONN_C2_pdu(rdpRpc* rpc, wStream* buffer)
 BOOL rts_send_flow_control_ack_pdu(rdpRpc* rpc)
 {
 	BOOL status = FALSE;
-	wStream* buffer;
+	wStream* buffer = NULL;
 	rpcconn_rts_hdr_t header = rts_pdu_header_init();
-	UINT32 BytesReceived;
-	UINT32 AvailableWindow;
-	BYTE* ChannelCookie;
-	RpcVirtualConnection* connection;
-	RpcInChannel* inChannel;
-	RpcOutChannel* outChannel;
+	UINT32 BytesReceived = 0;
+	UINT32 AvailableWindow = 0;
+	BYTE* ChannelCookie = NULL;
+	RpcVirtualConnection* connection = NULL;
+	RpcInChannel* inChannel = NULL;
+	RpcOutChannel* outChannel = NULL;
 
 	WINPR_ASSERT(rpc);
 
@@ -1773,9 +1762,9 @@ fail:
 
 static int rts_recv_flow_control_ack_pdu(rdpRpc* rpc, wStream* buffer)
 {
-	int rc;
-	UINT32 BytesReceived;
-	UINT32 AvailableWindow;
+	int rc = 0;
+	UINT32 BytesReceived = 0;
+	UINT32 AvailableWindow = 0;
 	BYTE ChannelCookie[16] = { 0 };
 
 	rc = rts_flow_control_ack_command_read(rpc, buffer, &BytesReceived, &AvailableWindow,
@@ -1905,9 +1894,9 @@ fail:
 static int rts_send_ping_pdu(rdpRpc* rpc)
 {
 	BOOL status = FALSE;
-	wStream* buffer;
+	wStream* buffer = NULL;
 	rpcconn_rts_hdr_t header = rts_pdu_header_init();
-	RpcInChannel* inChannel;
+	RpcInChannel* inChannel = NULL;
 
 	WINPR_ASSERT(rpc);
 	WINPR_ASSERT(rpc->VirtualConnection);
@@ -2021,11 +2010,11 @@ BOOL rts_command_length(UINT32 CommandType, wStream* s, size_t* length, BOOL sil
 static int rts_send_OUT_R2_A7_pdu(rdpRpc* rpc)
 {
 	BOOL status = FALSE;
-	wStream* buffer;
+	wStream* buffer = NULL;
 	rpcconn_rts_hdr_t header = rts_pdu_header_init();
-	BYTE* SuccessorChannelCookie;
-	RpcInChannel* inChannel;
-	RpcOutChannel* nextOutChannel;
+	BYTE* SuccessorChannelCookie = NULL;
+	RpcInChannel* inChannel = NULL;
+	RpcOutChannel* nextOutChannel = NULL;
 
 	WINPR_ASSERT(rpc);
 	WINPR_ASSERT(rpc->VirtualConnection);
@@ -2066,9 +2055,9 @@ fail:
 static int rts_send_OUT_R2_C1_pdu(rdpRpc* rpc)
 {
 	BOOL status = FALSE;
-	wStream* buffer;
+	wStream* buffer = NULL;
 	rpcconn_rts_hdr_t header = rts_pdu_header_init();
-	RpcOutChannel* nextOutChannel;
+	RpcOutChannel* nextOutChannel = NULL;
 
 	WINPR_ASSERT(rpc);
 	WINPR_ASSERT(rpc->VirtualConnection);
@@ -2100,15 +2089,15 @@ fail:
 BOOL rts_send_OUT_R1_A3_pdu(rdpRpc* rpc)
 {
 	BOOL status = FALSE;
-	wStream* buffer;
+	wStream* buffer = NULL;
 	rpcconn_rts_hdr_t header = rts_pdu_header_init();
-	UINT32 ReceiveWindowSize;
-	BYTE* VirtualConnectionCookie;
-	BYTE* PredecessorChannelCookie;
-	BYTE* SuccessorChannelCookie;
-	RpcVirtualConnection* connection;
-	RpcOutChannel* outChannel;
-	RpcOutChannel* nextOutChannel;
+	UINT32 ReceiveWindowSize = 0;
+	BYTE* VirtualConnectionCookie = NULL;
+	BYTE* PredecessorChannelCookie = NULL;
+	BYTE* SuccessorChannelCookie = NULL;
+	RpcVirtualConnection* connection = NULL;
+	RpcOutChannel* outChannel = NULL;
+	RpcOutChannel* nextOutChannel = NULL;
 
 	WINPR_ASSERT(rpc);
 
@@ -2161,9 +2150,9 @@ fail:
 
 static int rts_recv_OUT_R1_A2_pdu(rdpRpc* rpc, wStream* buffer)
 {
-	int status;
+	int status = 0;
 	UINT32 Destination = 0;
-	RpcVirtualConnection* connection;
+	RpcVirtualConnection* connection = NULL;
 	WINPR_ASSERT(rpc);
 	WINPR_ASSERT(buffer);
 
@@ -2196,8 +2185,8 @@ static int rts_recv_OUT_R1_A2_pdu(rdpRpc* rpc, wStream* buffer)
 
 static int rts_recv_OUT_R2_A6_pdu(rdpRpc* rpc, wStream* buffer)
 {
-	int status;
-	RpcVirtualConnection* connection;
+	int status = 0;
+	RpcVirtualConnection* connection = NULL;
 
 	WINPR_ASSERT(rpc);
 	WINPR_ASSERT(buffer);
@@ -2231,7 +2220,7 @@ static int rts_recv_OUT_R2_A6_pdu(rdpRpc* rpc, wStream* buffer)
 
 static int rts_recv_OUT_R2_B3_pdu(rdpRpc* rpc, wStream* buffer)
 {
-	RpcVirtualConnection* connection;
+	RpcVirtualConnection* connection = NULL;
 
 	WINPR_ASSERT(rpc);
 	WINPR_ASSERT(buffer);
@@ -2248,9 +2237,9 @@ static int rts_recv_OUT_R2_B3_pdu(rdpRpc* rpc, wStream* buffer)
 BOOL rts_recv_out_of_sequence_pdu(rdpRpc* rpc, wStream* buffer, const rpcconn_hdr_t* header)
 {
 	BOOL status = FALSE;
-	size_t length;
+	size_t length = 0;
 	RtsPduSignature signature = { 0 };
-	RpcVirtualConnection* connection;
+	RpcVirtualConnection* connection = NULL;
 
 	WINPR_ASSERT(rpc);
 	WINPR_ASSERT(buffer);

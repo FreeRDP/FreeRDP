@@ -15,6 +15,7 @@ static char* resize(char** buffer, size_t* size, size_t increment)
 		fprintf(stderr, "Could not reallocate string buffer from %" PRIuz " to %" PRIuz " bytes.\n",
 		        *size, nsize);
 		free(*buffer);
+		return NULL;
 	}
 	memset(&tmp[*size], '\0', increment);
 	*size = nsize;
@@ -39,7 +40,7 @@ static char* append(char** buffer, size_t* size, const char* str)
 
 static LPSTR tr_esc_str(LPCSTR arg, bool format)
 {
-	const char* str;
+	const char* str = NULL;
 	LPSTR tmp = NULL;
 	size_t ds = 0;
 

@@ -23,7 +23,9 @@
 #include <freerdp/codec/rfx.h>
 #include <freerdp/api.h>
 
-FREERDP_LOCAL void rfx_quantization_decode(INT16* buffer, const UINT32* quantization_values);
-FREERDP_LOCAL void rfx_quantization_encode(INT16* buffer, const UINT32* quantization_values);
+FREERDP_LOCAL void rfx_quantization_decode(INT16* WINPR_RESTRICT buffer,
+                                           const UINT32* WINPR_RESTRICT quantization_values);
+FREERDP_LOCAL void rfx_quantization_encode(INT16* WINPR_RESTRICT buffer,
+                                           const UINT32* WINPR_RESTRICT quantization_values);
 
 #endif /* FREERDP_LIB_CODEC_RFX_QUANTIZATION_H */

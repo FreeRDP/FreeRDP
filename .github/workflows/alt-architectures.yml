@@ -1,0 +1,104 @@
+name: '[arm,ppc,ricsv] architecture builds'
+on:
+  workflow_dispatch:
+    branches: [ master, stable* ]
+  schedule:
+    - cron: '30 5 * * SUN'
+
+jobs:
+  build_job:
+    runs-on: ubuntu-latest
+    name: "Test on ${{ matrix.distro }}/${{ matrix.arch }}"
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: armv6
+            distro: bullseye
+          - arch: armv7
+            distro: bullseye
+          - arch: aarch64
+            distro: bullseye
+          - arch: s390x
+            distro: bullseye
+          - arch: ppc64le
+            distro: bullseye
+          - arch: riscv64
+            distro: ubuntu22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: uraimo/run-on-arch-action@master
+        name: "Run tests"
+        id: build
+        with:
+          arch: ${{ matrix.arch }}
+          distro: ${{ matrix.distro }}
+          githubToken: ${{ github.token }}
+          env: |
+            CTEST_OUTPUT_ON_FAILURE: 1
+            WLOG_LEVEL: 'trace'
+          install: |
+            apt-get update -q -y
+            apt-get install -q -y \
+              libxrandr-dev \
+              libxinerama-dev \
+              libusb-1.0-0-dev \
+              xserver-xorg-dev \
+              libswscale-dev \
+              libswresample-dev \
+              libavutil-dev \
+              libavcodec-dev \
+              libcups2-dev \
+              libpulse-dev \
+              libasound2-dev \
+              libpcsclite-dev \
+              xsltproc \
+              libxml2-dev \
+              libxcb-cursor-dev \
+              libxcursor-dev \
+              libcairo2-dev \
+              libfaad-dev \
+              libgsm1-dev \
+              ninja-build \
+              libxfixes-dev \
+              libxkbcommon-dev \
+              libxkbfile-dev \
+              libwayland-dev \
+              libpam0g-dev \
+              libxdamage-dev \
+              libxcb-damage0-dev \
+              libxtst-dev \
+              libfuse3-dev \
+              libsystemd-dev \
+              libsoxr-dev \
+              libsdl2-dev \
+              libsdl2-ttf-dev \
+              libsdl2-image-dev \
+              docbook-xsl \
+              libkrb5-dev \
+              libcjson-dev \
+              libpkcs11-helper1-dev \
+              libwebkit2gtk-4.0-dev \
+              libopus-dev \
+              libwebp-dev \
+              libpng-dev \
+              libjpeg-dev \
+              liburiparser-dev \
+              libssl-dev \
+              opensc-pkcs11 \
+              libv4l-dev \
+              cmake \
+              clang
+          run: |
+            cmake -GNinja \
+              -C ci/cmake-preloads/config-linux-all.txt \
+              -B ci-build \
+              -S . \
+              -DCMAKE_INSTALL_PREFIX=/tmp/ci-test \
+              -DCMAKE_C_COMPILER=/usr/bin/clang \
+              -DCMAKE_CXX_COMPILER=/usr/bin/clang++ \
+              -DUSE_UNWIND=OFF \
+              -DUSE_EXECINFO=OFF \
+              -DWITH_SANITIZE_ADDRESS=OFF
+            cmake --build ci-build --parallel $(nproc) --target install
+            cmake --build ci-build --parallel $(nproc) --target test

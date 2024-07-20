@@ -49,7 +49,7 @@ UINT32 audio_format_compute_time_length(const AUDIO_FORMAT* format, size_t size)
 
 		if (format->wFormatTag == WAVE_FORMAT_GSM610)
 		{
-			UINT16 nSamplesPerBlock;
+			UINT16 nSamplesPerBlock = 0;
 
 			if ((format->cbSize == 2) && (format->data))
 			{
@@ -130,16 +130,13 @@ void audio_format_print(wLog* log, DWORD level, const AUDIO_FORMAT* format)
 
 void audio_formats_print(wLog* log, DWORD level, const AUDIO_FORMAT* formats, UINT16 count)
 {
-	UINT16 index;
-	const AUDIO_FORMAT* format;
-
 	if (formats)
 	{
 		WLog_Print(log, level, "AUDIO_FORMATS (%" PRIu16 ") ={", count);
 
-		for (index = 0; index < count; index++)
+		for (UINT32 index = 0; index < count; index++)
 		{
-			format = &formats[index];
+			const AUDIO_FORMAT* format = &formats[index];
 			WLog_Print(log, level, "\t");
 			audio_format_print(log, level, format);
 		}
@@ -204,7 +201,8 @@ BOOL audio_format_write(wStream* s, const AUDIO_FORMAT* format)
 	return TRUE;
 }
 
-BOOL audio_format_copy(const AUDIO_FORMAT* srcFormat, AUDIO_FORMAT* dstFormat)
+BOOL audio_format_copy(const AUDIO_FORMAT* WINPR_RESTRICT srcFormat,
+                       AUDIO_FORMAT* WINPR_RESTRICT dstFormat)
 {
 	if (!srcFormat || !dstFormat)
 		return FALSE;
@@ -288,11 +286,9 @@ void audio_format_free(AUDIO_FORMAT* format)
 
 void audio_formats_free(AUDIO_FORMAT* formats, size_t count)
 {
-	size_t index;
-
 	if (formats)
 	{
-		for (index = 0; index < count; index++)
+		for (size_t index = 0; index < count; index++)
 		{
 			AUDIO_FORMAT* format = &formats[index];
 			audio_format_free(format);

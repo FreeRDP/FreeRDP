@@ -90,8 +90,9 @@ static BOOL TestStream_New(void)
 static BOOL TestStream_Static(void)
 {
 	BYTE buffer[20];
-	wStream staticStream, *s = &staticStream;
-	UINT16 v;
+	wStream staticStream;
+	wStream* s = &staticStream;
+	UINT16 v = 0;
 	/* Test creation of a static stream */
 	Stream_StaticInit(s, buffer, sizeof(buffer));
 	Stream_Write_UINT16(s, 0xcab1);
@@ -123,20 +124,26 @@ static BOOL TestStream_Static(void)
 	if (v != 2)
 		return FALSE;
 
+	// Intentional warning as the stream is not allocated.
+	// Still, Stream_Free should not release such memory, therefore this statement
+	// is required to test that.
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	Stream_Free(s, TRUE);
+	WINPR_PRAGMA_DIAG_POP
 	return TRUE;
 }
 
 static BOOL TestStream_Create(size_t count, BOOL selfAlloc)
 {
-	size_t i, len, cap, pos;
+	size_t len = 0;
+	size_t cap = 0;
 	wStream* s = NULL;
 	void* buffer = NULL;
 
-	for (i = 0; i < count; i++)
+	for (size_t i = 0; i < count; i++)
 	{
 		len = cap = i + 1;
-		pos = 0;
 
 		if (selfAlloc)
 		{
@@ -153,12 +160,12 @@ static BOOL TestStream_Create(size_t count, BOOL selfAlloc)
 			goto fail;
 		}
 
-		if (!TestStream_Verify(s, cap, len, pos))
+		if (!TestStream_Verify(s, cap, len, 0))
 		{
 			goto fail;
 		}
 
-		for (pos = 0; pos < len; pos++)
+		for (size_t pos = 0; pos < len; pos++)
 		{
 			Stream_SetPosition(s, pos);
 			Stream_SealLength(s);
@@ -198,7 +205,6 @@ fail:
 
 static BOOL TestStream_Extent(UINT32 maxSize)
 {
-	UINT32 i;
 	wStream* s = NULL;
 	BOOL result = FALSE;
 
@@ -208,7 +214,7 @@ static BOOL TestStream_Extent(UINT32 maxSize)
 		return FALSE;
 	}
 
-	for (i = 1; i < maxSize; i++)
+	for (UINT32 i = 1; i < maxSize; i++)
 	{
 		if (i % 2)
 		{
@@ -250,8 +256,8 @@ fail:
 #define TestStream_PeekAndRead(_s, _r, _t)                            \
 	do                                                                \
 	{                                                                 \
-		_t _a, _b;                                                    \
-		size_t _i;                                                    \
+		_t _a;                                                        \
+		_t _b;                                                        \
 		BYTE* _p = Stream_Buffer(_s);                                 \
 		Stream_SetPosition(_s, 0);                                    \
 		Stream_Peek_##_t(_s, _a);                                     \
@@ -261,7 +267,7 @@ fail:
 			printf("%s: test1 " #_t "_LE failed\n", __func__);        \
 			_r = FALSE;                                               \
 		}                                                             \
-		for (_i = 0; _i < sizeof(_t); _i++)                           \
+		for (size_t _i = 0; _i < sizeof(_t); _i++)                    \
 		{                                                             \
 			if (((_a >> (_i * 8)) & 0xFF) != _p[_i])                  \
 			{                                                         \
@@ -279,7 +285,7 @@ fail:
 			printf("%s: test1 " #_t "_BE failed\n", __func__);        \
 			_r = FALSE;                                               \
 		}                                                             \
-		for (_i = 0; _i < sizeof(_t); _i++)                           \
+		for (size_t _i = 0; _i < sizeof(_t); _i++)                    \
 		{                                                             \
 			if (((_a >> (_i * 8)) & 0xFF) != _p[sizeof(_t) - _i - 1]) \
 			{                                                         \
@@ -318,10 +324,10 @@ static BOOL TestStream_Reading(void)
 static BOOL TestStream_Write(void)
 {
 	BOOL rc = FALSE;
-	UINT8 u8;
-	UINT16 u16;
-	UINT32 u32;
-	UINT64 u64;
+	UINT8 u8 = 0;
+	UINT16 u16 = 0;
+	UINT32 u32 = 0;
+	UINT64 u64 = 0;
 	const BYTE data[] = "someteststreamdata";
 	wStream* s = Stream_New(NULL, 100);
 
@@ -500,7 +506,6 @@ out:
 
 static BOOL TestStream_Zero(void)
 {
-	UINT32 x;
 	BOOL rc = FALSE;
 	const BYTE data[] = "someteststreamdata";
 	wStream* s = Stream_New(NULL, sizeof(data));
@@ -531,9 +536,9 @@ static BOOL TestStream_Zero(void)
 	if (s->pointer != s->buffer)
 		goto out;
 
-	for (x = 0; x < 5; x++)
+	for (UINT32 x = 0; x < 5; x++)
 	{
-		UINT8 val;
+		UINT8 val = 0;
 		Stream_Read_UINT8(s, val);
 
 		if (val != 0)

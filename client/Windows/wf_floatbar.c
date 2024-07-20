@@ -95,13 +95,12 @@ struct s_FloatBar
 
 static BOOL floatbar_kill_timers(wfFloatBar* floatbar)
 {
-	size_t x;
 	UINT_PTR timers[] = { TIMER_HIDE, TIMER_ANIMAT_HIDE, TIMER_ANIMAT_SHOW };
 
 	if (!floatbar)
 		return FALSE;
 
-	for (x = 0; x < ARRAYSIZE(timers); x++)
+	for (size_t x = 0; x < ARRAYSIZE(timers); x++)
 		KillTimer(floatbar->hwnd, timers[x]);
 
 	floatbar->animating = 0;
@@ -324,11 +323,9 @@ static Button* floatbar_create_lock_button(wfFloatBar* const floatbar, const int
 
 static Button* floatbar_get_button(const wfFloatBar* const floatbar, const int x, const int y)
 {
-	int i;
-
 	if ((y > BUTTON_Y) && (y < BUTTON_Y + BUTTON_HEIGHT))
 	{
-		for (i = 0; i < BTN_MAX; i++)
+		for (int i = 0; i < BTN_MAX; i++)
 		{
 			if ((floatbar->buttons[i] != NULL) && (x > floatbar->buttons[i]->x) &&
 			    (x < floatbar->buttons[i]->x + floatbar->buttons[i]->w))
@@ -343,7 +340,6 @@ static Button* floatbar_get_button(const wfFloatBar* const floatbar, const int x
 
 static BOOL floatbar_paint(wfFloatBar* const floatbar, const HDC hdc)
 {
-	int i;
 	HPEN hpen;
 	HGDIOBJECT orig;
 	/* paint background */
@@ -389,7 +385,7 @@ static BOOL floatbar_paint(wfFloatBar* const floatbar, const HDC hdc)
 
 	/* paint buttons */
 
-	for (i = 0; i < BTN_MAX; i++)
+	for (int i = 0; i < BTN_MAX; i++)
 		button_paint(floatbar->buttons[i], hdc);
 
 	return TRUE;
@@ -497,9 +493,7 @@ static LRESULT CALLBACK floatbar_proc(const HWND hWnd, const UINT Msg, const WPA
 			}
 			else
 			{
-				int i;
-
-				for (i = 0; i < BTN_MAX; i++)
+				for (int i = 0; i < BTN_MAX; i++)
 				{
 					if (floatbar->buttons[i] != NULL)
 					{
@@ -525,9 +519,7 @@ static LRESULT CALLBACK floatbar_proc(const HWND hWnd, const UINT Msg, const WPA
 
 		case WM_MOUSELEAVE:
 		{
-			int i;
-
-			for (i = 0; i < BTN_MAX; i++)
+			for (int i = 0; i < BTN_MAX; i++)
 			{
 				if (floatbar->buttons[i] != NULL)
 				{

@@ -293,7 +293,7 @@ BOOL GetCommModemStatus(HANDLE hFile, PDWORD lpModemStat)
 BOOL GetCommProperties(HANDLE hFile, LPCOMMPROP lpCommProp)
 {
 	WINPR_COMM* pComm = (WINPR_COMM*)hFile;
-	DWORD bytesReturned;
+	DWORD bytesReturned = 0;
 
 	if (!CommIsHandleValid(hFile))
 		return FALSE;
@@ -319,10 +319,10 @@ BOOL GetCommProperties(HANDLE hFile, LPCOMMPROP lpCommProp)
  */
 BOOL GetCommState(HANDLE hFile, LPDCB lpDCB)
 {
-	DCB* lpLocalDcb;
+	DCB* lpLocalDcb = NULL;
 	struct termios currentState;
 	WINPR_COMM* pComm = (WINPR_COMM*)hFile;
-	DWORD bytesReturned;
+	DWORD bytesReturned = 0;
 
 	if (!CommIsHandleValid(hFile))
 		return FALSE;
@@ -474,7 +474,7 @@ BOOL SetCommState(HANDLE hFile, LPDCB lpDCB)
 {
 	struct termios upcomingTermios = { 0 };
 	WINPR_COMM* pComm = (WINPR_COMM*)hFile;
-	DWORD bytesReturned;
+	DWORD bytesReturned = 0;
 
 	/* FIXME: validate changes according GetCommProperties? */
 
@@ -694,7 +694,7 @@ BOOL SetCommState(HANDLE hFile, LPDCB lpDCB)
 BOOL GetCommTimeouts(HANDLE hFile, LPCOMMTIMEOUTS lpCommTimeouts)
 {
 	WINPR_COMM* pComm = (WINPR_COMM*)hFile;
-	DWORD bytesReturned;
+	DWORD bytesReturned = 0;
 
 	if (!CommIsHandleValid(hFile))
 		return FALSE;
@@ -718,7 +718,7 @@ BOOL GetCommTimeouts(HANDLE hFile, LPCOMMTIMEOUTS lpCommTimeouts)
 BOOL SetCommTimeouts(HANDLE hFile, LPCOMMTIMEOUTS lpCommTimeouts)
 {
 	WINPR_COMM* pComm = (WINPR_COMM*)hFile;
-	DWORD bytesReturned;
+	DWORD bytesReturned = 0;
 
 	if (!CommIsHandleValid(hFile))
 		return FALSE;
@@ -932,7 +932,6 @@ BOOL WaitCommEvent(HANDLE hFile, PDWORD lpEvtMask, LPOVERLAPPED lpOverlapped)
  */
 BOOL DefineCommDevice(/* DWORD dwFlags,*/ LPCTSTR lpDeviceName, LPCTSTR lpTargetPath)
 {
-	int i = 0;
 	LPTSTR storedDeviceName = NULL;
 	LPTSTR storedTargetPath = NULL;
 
@@ -963,7 +962,8 @@ BOOL DefineCommDevice(/* DWORD dwFlags,*/ LPCTSTR lpDeviceName, LPCTSTR lpTarget
 		goto error_handle;
 	}
 
-	for (i = 0; i < COMM_DEVICE_MAX; i++)
+	int i = 0;
+	for (; i < COMM_DEVICE_MAX; i++)
 	{
 		if (_CommDevices[i] != NULL)
 		{
@@ -1027,8 +1027,7 @@ error_handle:
  */
 DWORD QueryCommDevice(LPCTSTR lpDeviceName, LPTSTR lpTargetPath, DWORD ucchMax)
 {
-	int i;
-	LPTSTR storedTargetPath;
+	LPTSTR storedTargetPath = NULL;
 	SetLastError(ERROR_SUCCESS);
 
 	if (!CommInitialized())
@@ -1049,7 +1048,7 @@ DWORD QueryCommDevice(LPCTSTR lpDeviceName, LPTSTR lpTargetPath, DWORD ucchMax)
 	EnterCriticalSection(&_CommDevicesLock);
 	storedTargetPath = NULL;
 
-	for (i = 0; i < COMM_DEVICE_MAX; i++)
+	for (int i = 0; i < COMM_DEVICE_MAX; i++)
 	{
 		if (_CommDevices[i] != NULL)
 		{
@@ -1107,9 +1106,9 @@ BOOL IsCommDevice(LPCTSTR lpDeviceName)
  */
 void _comm_setServerSerialDriver(HANDLE hComm, SERIAL_DRIVER_ID driverId)
 {
-	ULONG Type;
-	WINPR_HANDLE* Object;
-	WINPR_COMM* pComm;
+	ULONG Type = 0;
+	WINPR_HANDLE* Object = NULL;
+	WINPR_COMM* pComm = NULL;
 
 	if (!CommInitialized())
 		return;
@@ -1165,10 +1164,10 @@ HANDLE CommCreateFileA(LPCSTR lpDeviceName, DWORD dwDesiredAccess, DWORD dwShare
                        LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition,
                        DWORD dwFlagsAndAttributes, HANDLE hTemplateFile)
 {
-	CHAR devicePath[MAX_PATH];
-	struct stat deviceStat;
+	CHAR devicePath[MAX_PATH] = { 0 };
+	struct stat deviceStat = { 0 };
 	WINPR_COMM* pComm = NULL;
-	struct termios upcomingTermios;
+	struct termios upcomingTermios = { 0 };
 
 	if (!CommInitialized())
 		return INVALID_HANDLE_VALUE;
@@ -1298,8 +1297,9 @@ HANDLE CommCreateFileA(LPCSTR lpDeviceName, DWORD dwDesiredAccess, DWORD dwShare
 
 	if (ioctl(pComm->fd, TIOCGICOUNT, &(pComm->counters)) < 0)
 	{
+		char ebuffer[256] = { 0 };
 		CommLog_Print(WLOG_WARN, "TIOCGICOUNT ioctl failed, errno=[%d] %s.", errno,
-		              strerror(errno));
+		              winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 		CommLog_Print(WLOG_WARN, "could not read counters.");
 		/* could not initialize counters but keep on.
 		 *
@@ -1343,7 +1343,10 @@ HANDLE CommCreateFileA(LPCSTR lpDeviceName, DWORD dwDesiredAccess, DWORD dwShare
 
 	return (HANDLE)pComm;
 error_handle:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	CloseHandle(pComm);
+	WINPR_PRAGMA_DIAG_POP
 	return INVALID_HANDLE_VALUE;
 }
 

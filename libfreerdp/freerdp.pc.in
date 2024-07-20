@@ -14,7 +14,7 @@ Description: FreeRDP: A Remote Desktop Protocol Implementation
 URL: http://www.freerdp.com/
 Version: @FREERDP_VERSION@
 Requires: 
-Requires.private: winpr@FREERDP_API_VERSION@
+Requires.private: winpr@FREERDP_API_VERSION@ @FREERDP_REQUIRES_PRIVATE@
 Libs: -L${libdir} ${libs}
-Libs.private: -ldl -lpthread
+Libs.private: -ldl -lpthread @FREERDP_PC_PRIVATE_LIBS@
 Cflags: -I${includedir}

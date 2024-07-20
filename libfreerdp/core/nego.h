@@ -106,8 +106,10 @@ FREERDP_LOCAL BOOL nego_read_request(rdpNego* nego, wStream* s);
 FREERDP_LOCAL BOOL nego_send_negotiation_request(rdpNego* nego);
 FREERDP_LOCAL BOOL nego_send_negotiation_response(rdpNego* nego);
 
-FREERDP_LOCAL rdpNego* nego_new(rdpTransport* transport);
 FREERDP_LOCAL void nego_free(rdpNego* nego);
+
+WINPR_ATTR_MALLOC(nego_free, 1)
+FREERDP_LOCAL rdpNego* nego_new(rdpTransport* transport);
 
 FREERDP_LOCAL void nego_init(rdpNego* nego);
 FREERDP_LOCAL BOOL nego_set_target(rdpNego* nego, const char* hostname, UINT16 port);
@@ -149,5 +151,7 @@ FREERDP_LOCAL NEGO_STATE nego_get_state(rdpNego* nego);
 FREERDP_LOCAL SEC_WINNT_AUTH_IDENTITY* nego_get_identity(rdpNego* nego);
 
 FREERDP_LOCAL void nego_free_nla(rdpNego* nego);
+
+FREERDP_LOCAL const char* nego_protocol_to_str(UINT32 protocol, char* buffer, size_t size);
 
 #endif /* FREERDP_LIB_CORE_NEGO_H */

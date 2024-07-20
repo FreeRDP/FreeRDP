@@ -26,7 +26,6 @@ static DWORD WINAPI test_synch_barrier_thread(LPVOID lpParam)
 {
 	BOOL status = FALSE;
 	struct test_params* p = (struct test_params*)lpParam;
-	DWORD i;
 
 	InterlockedIncrement(&p->threadCount);
 
@@ -41,7 +40,7 @@ static DWORD WINAPI test_synch_barrier_thread(LPVOID lpParam)
 
 	// printf("Thread #%03u unblocked.\n", tnum);
 
-	for (i = 0; i < p->loops && gErrorCount == 0; i++)
+	for (DWORD i = 0; i < p->loops && gErrorCount == 0; i++)
 	{
 		/* simulate different execution times before the barrier */
 		Sleep(1 + abs((rand() % MAX_SLEEP_MS)));
@@ -61,10 +60,11 @@ out:
 
 static BOOL TestSynchBarrierWithFlags(DWORD dwFlags, DWORD dwThreads, DWORD dwLoops)
 {
-	HANDLE* threads;
+	HANDLE* threads = NULL;
 	struct test_params p;
-	DWORD dwStatus, expectedTrueCount, expectedFalseCount;
-	DWORD i;
+	DWORD dwStatus = 0;
+	DWORD expectedTrueCount = 0;
+	DWORD expectedFalseCount = 0;
 	p.threadCount = 0;
 	p.trueCount = 0;
 	p.falseCount = 0;
@@ -99,7 +99,8 @@ static BOOL TestSynchBarrierWithFlags(DWORD dwFlags, DWORD dwThreads, DWORD dwLo
 		return FALSE;
 	}
 
-	for (i = 0; i < dwThreads; i++)
+	DWORD i = 0;
+	for (; i < dwThreads; i++)
 	{
 		if (!(threads[i] = CreateThread(NULL, 0, test_synch_barrier_thread, &p, 0, NULL)))
 		{
@@ -178,8 +179,8 @@ static BOOL TestSynchBarrierWithFlags(DWORD dwFlags, DWORD dwThreads, DWORD dwLo
 int TestSynchBarrier(int argc, char* argv[])
 {
 	SYSTEM_INFO sysinfo;
-	DWORD dwMaxThreads;
-	DWORD dwMinThreads;
+	DWORD dwMaxThreads = 0;
+	DWORD dwMinThreads = 0;
 	DWORD dwNumLoops = 10;
 
 	WINPR_UNUSED(argc);

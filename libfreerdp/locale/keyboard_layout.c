@@ -799,12 +799,10 @@ static const RDP_KEYBOARD_IME RDP_KEYBOARD_IME_TABLE[] = {
 
 void freerdp_keyboard_layouts_free(RDP_KEYBOARD_LAYOUT* layouts, size_t count)
 {
-	size_t x;
-
 	if (!layouts)
 		return;
 
-	for (x = 0; x < count; x++)
+	for (size_t x = 0; x < count; x++)
 	{
 		RDP_KEYBOARD_LAYOUT* current = &layouts[x];
 		free(current->name);
@@ -816,7 +814,7 @@ void freerdp_keyboard_layouts_free(RDP_KEYBOARD_LAYOUT* layouts, size_t count)
 
 RDP_KEYBOARD_LAYOUT* freerdp_keyboard_get_layouts(DWORD types, size_t* count)
 {
-	size_t num, i;
+	size_t num = 0;
 	RDP_KEYBOARD_LAYOUT* layouts = NULL;
 
 	num = 0;
@@ -835,7 +833,7 @@ RDP_KEYBOARD_LAYOUT* freerdp_keyboard_get_layouts(DWORD types, size_t* count)
 
 		layouts = new;
 
-		for (i = 0; i < length; i++, num++)
+		for (size_t i = 0; i < length; i++, num++)
 		{
 			layouts[num].code = RDP_KEYBOARD_LAYOUT_TABLE[i].code;
 			layouts[num].name = _strdup(RDP_KEYBOARD_LAYOUT_TABLE[i].name);
@@ -856,7 +854,7 @@ RDP_KEYBOARD_LAYOUT* freerdp_keyboard_get_layouts(DWORD types, size_t* count)
 
 		layouts = new;
 
-		for (i = 0; i < length; i++, num++)
+		for (size_t i = 0; i < length; i++, num++)
 		{
 			layouts[num].code = RDP_KEYBOARD_LAYOUT_VARIANT_TABLE[i].code;
 			layouts[num].name = _strdup(RDP_KEYBOARD_LAYOUT_VARIANT_TABLE[i].name);
@@ -877,7 +875,7 @@ RDP_KEYBOARD_LAYOUT* freerdp_keyboard_get_layouts(DWORD types, size_t* count)
 
 		layouts = new;
 
-		for (i = 0; i < length; i++, num++)
+		for (size_t i = 0; i < length; i++, num++)
 		{
 			layouts[num].code = RDP_KEYBOARD_IME_TABLE[i].code;
 			layouts[num].name = _strdup(RDP_KEYBOARD_IME_TABLE[i].name);
@@ -896,21 +894,19 @@ fail:
 
 const char* freerdp_keyboard_get_layout_name_from_id(DWORD keyboardLayoutID)
 {
-	size_t i;
-
-	for (i = 0; i < ARRAYSIZE(RDP_KEYBOARD_LAYOUT_TABLE); i++)
+	for (size_t i = 0; i < ARRAYSIZE(RDP_KEYBOARD_LAYOUT_TABLE); i++)
 	{
 		if (RDP_KEYBOARD_LAYOUT_TABLE[i].code == keyboardLayoutID)
 			return RDP_KEYBOARD_LAYOUT_TABLE[i].name;
 	}
 
-	for (i = 0; i < ARRAYSIZE(RDP_KEYBOARD_LAYOUT_VARIANT_TABLE); i++)
+	for (size_t i = 0; i < ARRAYSIZE(RDP_KEYBOARD_LAYOUT_VARIANT_TABLE); i++)
 	{
 		if (RDP_KEYBOARD_LAYOUT_VARIANT_TABLE[i].code == keyboardLayoutID)
 			return RDP_KEYBOARD_LAYOUT_VARIANT_TABLE[i].name;
 	}
 
-	for (i = 0; i < ARRAYSIZE(RDP_KEYBOARD_IME_TABLE); i++)
+	for (size_t i = 0; i < ARRAYSIZE(RDP_KEYBOARD_IME_TABLE); i++)
 	{
 		if (RDP_KEYBOARD_IME_TABLE[i].code == keyboardLayoutID)
 			return RDP_KEYBOARD_IME_TABLE[i].name;
@@ -921,21 +917,19 @@ const char* freerdp_keyboard_get_layout_name_from_id(DWORD keyboardLayoutID)
 
 DWORD freerdp_keyboard_get_layout_id_from_name(const char* name)
 {
-	size_t i;
-
-	for (i = 0; i < ARRAYSIZE(RDP_KEYBOARD_LAYOUT_TABLE); i++)
+	for (size_t i = 0; i < ARRAYSIZE(RDP_KEYBOARD_LAYOUT_TABLE); i++)
 	{
 		if (strcmp(RDP_KEYBOARD_LAYOUT_TABLE[i].name, name) == 0)
 			return RDP_KEYBOARD_LAYOUT_TABLE[i].code;
 	}
 
-	for (i = 0; i < ARRAYSIZE(RDP_KEYBOARD_LAYOUT_VARIANT_TABLE); i++)
+	for (size_t i = 0; i < ARRAYSIZE(RDP_KEYBOARD_LAYOUT_VARIANT_TABLE); i++)
 	{
 		if (strcmp(RDP_KEYBOARD_LAYOUT_VARIANT_TABLE[i].name, name) == 0)
 			return RDP_KEYBOARD_LAYOUT_VARIANT_TABLE[i].code;
 	}
 
-	for (i = 0; i < ARRAYSIZE(RDP_KEYBOARD_IME_TABLE); i++)
+	for (size_t i = 0; i < ARRAYSIZE(RDP_KEYBOARD_IME_TABLE); i++)
 	{
 		if (strcmp(RDP_KEYBOARD_IME_TABLE[i].name, name) == 0)
 			return RDP_KEYBOARD_IME_TABLE[i].code;
@@ -965,7 +959,7 @@ static void copy(const struct LanguageIdentifier* id, RDP_CODEPAGE* cp)
 static BOOL copyOnMatch(DWORD column, const char* filter, const struct LanguageIdentifier* cur,
                         RDP_CODEPAGE* dst)
 {
-	const char* what;
+	const char* what = NULL;
 	switch (column)
 	{
 		case 0:
@@ -999,7 +993,6 @@ static BOOL copyOnMatch(DWORD column, const char* filter, const struct LanguageI
 RDP_CODEPAGE* freerdp_keyboard_get_matching_codepages(DWORD column, const char* filter,
                                                       size_t* count)
 {
-	size_t x;
 	size_t cnt = 0;
 	const size_t c = ARRAYSIZE(language_identifiers);
 	RDP_CODEPAGE* pages = calloc(ARRAYSIZE(language_identifiers), sizeof(RDP_CODEPAGE));
@@ -1013,7 +1006,7 @@ RDP_CODEPAGE* freerdp_keyboard_get_matching_codepages(DWORD column, const char* 
 	if (column > 4)
 		goto fail;
 
-	for (x = 0; x < c; x++)
+	for (size_t x = 0; x < c; x++)
 	{
 		const struct LanguageIdentifier* cur = &language_identifiers[x];
 		if (copyOnMatch(column, filter, cur, &pages[cnt]))

@@ -27,7 +27,7 @@
 
 rdpCache* cache_new(rdpContext* context)
 {
-	rdpCache* cache;
+	rdpCache* cache = NULL;
 
 	WINPR_ASSERT(context);
 
@@ -73,7 +73,10 @@ rdpCache* cache_new(rdpContext* context)
 
 	return cache;
 error:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	cache_free(cache);
+	WINPR_PRAGMA_DIAG_POP
 	return NULL;
 }
 
@@ -103,7 +106,10 @@ CACHE_COLOR_TABLE_ORDER* copy_cache_color_table_order(rdpContext* context,
 	*dst = *order;
 	return dst;
 fail:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	free_cache_color_table_order(context, dst);
+	WINPR_PRAGMA_DIAG_POP
 	return NULL;
 }
 
@@ -131,7 +137,10 @@ SURFACE_BITS_COMMAND* copy_surface_bits_command(rdpContext* context,
 	return dst;
 
 fail:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	free_surface_bits_command(context, dst);
+	WINPR_PRAGMA_DIAG_POP
 	return NULL;
 }
 

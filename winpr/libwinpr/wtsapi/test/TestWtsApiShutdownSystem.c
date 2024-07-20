@@ -5,9 +5,9 @@
 
 int TestWtsApiShutdownSystem(int argc, char* argv[])
 {
-	BOOL bSuccess;
-	HANDLE hServer;
-	DWORD ShutdownFlag;
+	BOOL bSuccess = 0;
+	HANDLE hServer = NULL;
+	DWORD ShutdownFlag = 0;
 
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);

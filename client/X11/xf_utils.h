@@ -23,7 +23,7 @@
 
 #include <X11/Xlib.h>
 
-char* Safe_XGetAtomName(Display* display, Atom atom);
+char* Safe_XGetAtomName(wLog* log, Display* display, Atom atom);
 
 #define LogTagAndXGetWindowProperty(tag, display, w, property, long_offset, long_length, delete,   \
                                     req_type, actual_type_return, actual_format_return,            \
@@ -76,3 +76,16 @@ int LogTagAndXDeleteProperty_ex(const char* tag, const char* file, const char* f
 	LogDynAndXDeleteProperty_ex((log), __FILE__, __func__, __LINE__, (display), (w), (property))
 int LogDynAndXDeleteProperty_ex(wLog* log, const char* file, const char* fkt, size_t line,
                                 Display* display, Window w, Atom property);
+
+#define LogTagAndXConvertSelection(tag, display, selection, target, property, requestor, time) \
+	LogTagAndXConvertSelection_ex((tag), __FILE__, __func__, __LINE__, (display), (selection), \
+	                              (target), (property), (requestor), (time))
+int LogTagAndXConvertSelection_ex(const char* tag, const char* file, const char* fkt, size_t line,
+                                  Display* display, Atom selection, Atom target, Atom property,
+                                  Window requestor, Time time);
+
+#define LogDynAndXConvertSelection(log, display, selection, target, property, requestor, time) \
+	LogDynAndXConvertSelection_ex((log), __FILE__, __func__, __LINE__, (display), (w), (property))
+int LogDynAndXConvertSelection_ex(wLog* log, const char* file, const char* fkt, size_t line,
+                                  Display* display, Atom selection, Atom target, Atom property,
+                                  Window requestor, Time time);

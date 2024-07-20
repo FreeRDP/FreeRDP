@@ -29,7 +29,12 @@
 #include <winpr/string.h>
 #include "debug.h"
 
+#include <winpr/wlog.h>
+#include "../log.h"
+
 #include <dlfcn.h>
+
+#define TAG WINPR_TAG("utils.unwind")
 
 typedef struct
 {
@@ -43,6 +48,51 @@ typedef struct
 	size_t size;
 	unwind_info_t* info;
 } unwind_context_t;
+
+static const char* unwind_reason_str(_Unwind_Reason_Code code)
+{
+	switch (code)
+	{
+#if defined(__arm__) && !defined(__USING_SJLJ_EXCEPTIONS__) && !defined(__ARM_DWARF_EH__) && \
+    !defined(__SEH__)
+		case _URC_OK:
+			return "_URC_OK";
+#else
+		case _URC_NO_REASON:
+			return "_URC_NO_REASON";
+#endif
+		case _URC_FOREIGN_EXCEPTION_CAUGHT:
+			return "_URC_FOREIGN_EXCEPTION_CAUGHT";
+		case _URC_FATAL_PHASE2_ERROR:
+			return "_URC_FATAL_PHASE2_ERROR";
+		case _URC_FATAL_PHASE1_ERROR:
+			return "_URC_FATAL_PHASE1_ERROR";
+		case _URC_NORMAL_STOP:
+			return "_URC_NORMAL_STOP";
+		case _URC_END_OF_STACK:
+			return "_URC_END_OF_STACK";
+		case _URC_HANDLER_FOUND:
+			return "_URC_HANDLER_FOUND";
+		case _URC_INSTALL_CONTEXT:
+			return "_URC_INSTALL_CONTEXT";
+		case _URC_CONTINUE_UNWIND:
+			return "_URC_CONTINUE_UNWIND";
+#if defined(__arm__) && !defined(__USING_SJLJ_EXCEPTIONS__) && !defined(__ARM_DWARF_EH__) && \
+    !defined(__SEH__)
+		case _URC_FAILURE:
+			return "_URC_FAILURE";
+#endif
+		default:
+			return "_URC_UNKNOWN";
+	}
+}
+
+static const char* unwind_reason_str_buffer(_Unwind_Reason_Code code, char* buffer, size_t size)
+{
+	const char* str = unwind_reason_str(code);
+	_snprintf(buffer, size, "%s [0x%02x]", str, code);
+	return buffer;
+}
 
 static _Unwind_Reason_Code unwind_backtrace_callback(struct _Unwind_Context* context, void* arg)
 {
@@ -62,7 +112,7 @@ static _Unwind_Reason_Code unwind_backtrace_callback(struct _Unwind_Context* con
 
 void* winpr_unwind_backtrace(DWORD size)
 {
-	_Unwind_Reason_Code rc;
+	_Unwind_Reason_Code rc = _URC_FOREIGN_EXCEPTION_CAUGHT;
 	unwind_context_t* ctx = calloc(1, sizeof(unwind_context_t));
 	if (!ctx)
 		goto fail;
@@ -73,7 +123,12 @@ void* winpr_unwind_backtrace(DWORD size)
 
 	rc = _Unwind_Backtrace(unwind_backtrace_callback, ctx);
 	if (rc != _URC_END_OF_STACK)
+	{
+		char buffer[64] = { 0 };
+		WLog_ERR(TAG, "_Unwind_Backtrace failed with %s",
+		         unwind_reason_str_buffer(rc, buffer, sizeof(buffer)));
 		goto fail;
+	}
 
 	return ctx;
 fail:
@@ -94,7 +149,6 @@ void winpr_unwind_backtrace_free(void* buffer)
 
 char** winpr_unwind_backtrace_symbols(void* buffer, size_t* used)
 {
-	size_t x;
 	union
 	{
 		char* cp;
@@ -113,7 +167,7 @@ char** winpr_unwind_backtrace_symbols(void* buffer, size_t* used)
 	if (used)
 		*used = ctx->pos;
 
-	for (x = 0; x < ctx->pos; x++)
+	for (size_t x = 0; x < ctx->pos; x++)
 	{
 		char* msg = cnv.cp + ctx->pos * sizeof(char*) + x * UNWIND_MAX_LINE_SIZE;
 		const unwind_info_t* info = &ctx->info[x];

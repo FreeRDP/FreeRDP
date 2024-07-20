@@ -80,13 +80,12 @@ static void xf_keyboard_clear(xfContext* xfc)
 
 static BOOL xf_keyboard_action_script_init(xfContext* xfc)
 {
-	wObject* obj;
-	FILE* keyScript;
-	char* keyCombination;
+	wObject* obj = NULL;
+	FILE* keyScript = NULL;
 	char buffer[1024] = { 0 };
 	char command[1024] = { 0 };
-	const rdpSettings* settings;
-	const char* ActionScript;
+	const rdpSettings* settings = NULL;
+	const char* ActionScript = NULL;
 	WINPR_ASSERT(xfc);
 
 	settings = xfc->common.context.settings;
@@ -104,7 +103,9 @@ static BOOL xf_keyboard_action_script_init(xfContext* xfc)
 		return FALSE;
 
 	obj = ArrayList_Object(xfc->keyCombinations);
-	obj->fnObjectFree = free;
+	WINPR_ASSERT(obj);
+	obj->fnObjectNew = winpr_ObjectStringClone;
+	obj->fnObjectFree = winpr_ObjectStringFree;
 	sprintf_s(command, sizeof(command), "%s key", ActionScript);
 	keyScript = popen(command, "r");
 
@@ -118,9 +119,8 @@ static BOOL xf_keyboard_action_script_init(xfContext* xfc)
 	{
 		char* context = NULL;
 		strtok_s(buffer, "\n", &context);
-		keyCombination = _strdup(buffer);
 
-		if (!keyCombination || !ArrayList_Append(xfc->keyCombinations, keyCombination))
+		if (!ArrayList_Append(xfc->keyCombinations, buffer))
 		{
 			ArrayList_Free(xfc->keyCombinations);
 			xfc->actionScriptExists = FALSE;
@@ -147,7 +147,7 @@ static void xf_keyboard_action_script_free(xfContext* xfc)
 
 BOOL xf_keyboard_init(xfContext* xfc)
 {
-	rdpSettings* settings;
+	rdpSettings* settings = NULL;
 
 	WINPR_ASSERT(xfc);
 
@@ -176,11 +176,11 @@ void xf_keyboard_free(xfContext* xfc)
 
 void xf_keyboard_key_press(xfContext* xfc, const XKeyEvent* event, KeySym keysym)
 {
-	BOOL last;
+	BOOL last = 0;
 
 	WINPR_ASSERT(xfc);
 	WINPR_ASSERT(event);
-	WINPR_ASSERT(event->keycode <= ARRAYSIZE(xfc->KeyboardState));
+	WINPR_ASSERT(event->keycode < ARRAYSIZE(xfc->KeyboardState));
 
 	last = xfc->KeyboardState[event->keycode];
 	xfc->KeyboardState[event->keycode] = TRUE;
@@ -195,7 +195,7 @@ void xf_keyboard_key_release(xfContext* xfc, const XKeyEvent* event, KeySym keys
 {
 	WINPR_ASSERT(xfc);
 	WINPR_ASSERT(event);
-	WINPR_ASSERT(event->keycode <= ARRAYSIZE(xfc->KeyboardState));
+	WINPR_ASSERT(event->keycode < ARRAYSIZE(xfc->KeyboardState));
 
 	BOOL last = xfc->KeyboardState[event->keycode];
 	xfc->KeyboardState[event->keycode] = FALSE;
@@ -236,8 +236,8 @@ BOOL xf_keyboard_key_pressed(xfContext* xfc, KeySym keysym)
 
 void xf_keyboard_send_key(xfContext* xfc, BOOL down, BOOL repeat, const XKeyEvent* event)
 {
-	DWORD rdp_scancode;
-	rdpInput* input;
+	DWORD rdp_scancode = 0;
+	rdpInput* input = NULL;
 
 	WINPR_ASSERT(xfc);
 	WINPR_ASSERT(event);
@@ -276,7 +276,7 @@ void xf_keyboard_send_key(xfContext* xfc, BOOL down, BOOL repeat, const XKeyEven
 					    XCreateIC(xim, XNInputStyle, XIMPreeditNothing | XIMStatusNothing, NULL);
 
 					KeySym ignore = { 0 };
-					Status return_status;
+					Status return_status = 0;
 					XKeyEvent ev = *event;
 					ev.type = KeyPress;
 					xwc = XwcLookupString(xic, &ev, buffer, ARRAYSIZE(buffer), &ignore,
@@ -310,8 +310,8 @@ void xf_keyboard_send_key(xfContext* xfc, BOOL down, BOOL repeat, const XKeyEven
 
 int xf_keyboard_read_keyboard_state(xfContext* xfc)
 {
-	int dummy;
-	Window wdummy;
+	int dummy = 0;
+	Window wdummy = 0;
 	UINT32 state = 0;
 
 	if (!xfc->remote_app && xfc->window)
@@ -422,7 +422,9 @@ void xf_keyboard_focus_in(xfContext* xfc)
 {
 	UINT32 state = 0;
 	Window w = None;
-	int d = 0, x = 0, y = 0;
+	int d = 0;
+	int x = 0;
+	int y = 0;
 
 	WINPR_ASSERT(xfc);
 	if (!xfc->display || !xfc->window)
@@ -553,11 +555,11 @@ BOOL xf_keyboard_handle_special_keys(xfContext* xfc, KeySym keysym)
 	// do not return anything such that the key could be used by client if ungrab is not the goal
 	if (keysym == XK_Control_R)
 	{
-		if (mod.RightCtrl && xfc->firstPressRightCtrl)
+		if (mod.RightCtrl && !xfc->wasRightCtrlAlreadyPressed)
 		{
 			// Right Ctrl is pressed, getting ready to ungrab
 			xfc->ungrabKeyboardWithRightCtrl = TRUE;
-			xfc->firstPressRightCtrl = FALSE;
+			xfc->wasRightCtrlAlreadyPressed = TRUE;
 		}
 	}
 	else
@@ -687,7 +689,7 @@ void xf_keyboard_handle_special_keys_release(xfContext* xfc, KeySym keysym)
 	if (keysym != XK_Control_R)
 		return;
 
-	xfc->firstPressRightCtrl = TRUE;
+	xfc->wasRightCtrlAlreadyPressed = FALSE;
 
 	if (!xfc->ungrabKeyboardWithRightCtrl)
 		return;

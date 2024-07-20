@@ -85,6 +85,9 @@ extern "C"
 #define PERF_ENABLE_DESKTOP_COMPOSITION 0x00000100
 
 /* Connection Types */
+#define CONNECTION_TYPE_INVALID                                                       \
+	0x00 /* synthetic, removes RNS_UD_CS_VALID_CONNECTION_TYPE from ConnectionType in \
+	        EarlyCapabilityFlags */
 #define CONNECTION_TYPE_MODEM 0x01
 #define CONNECTION_TYPE_BROADBAND_LOW 0x02
 #define CONNECTION_TYPE_SATELLITE 0x03
@@ -238,6 +241,9 @@ extern "C"
 /* Cookie Lengths */
 #define MSTSC_COOKIE_MAX_LENGTH 9
 #define DEFAULT_COOKIE_MAX_LENGTH 0xFF
+
+	/* General capability set */
+#define TS_CAPS_PROTOCOLVERSION 0x200
 
 /* Order Support */
 #define NEG_DSTBLT_INDEX 0x00

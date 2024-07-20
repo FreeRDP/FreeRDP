@@ -33,8 +33,6 @@ extern "C"
 {
 #endif
 
-	typedef struct rdp_transport_io rdpTransportIo;
-
 	typedef int (*pTCPConnect)(rdpContext* context, rdpSettings* settings, const char* hostname,
 	                           int port, DWORD timeout);
 	typedef BOOL (*pTransportFkt)(rdpTransport* transport);
@@ -43,6 +41,7 @@ extern "C"
 	typedef SSIZE_T (*pTransportRead)(rdpTransport* transport, BYTE* data, size_t bytes);
 	typedef BOOL (*pTransportGetPublicKey)(rdpTransport* transport, const BYTE** data,
 	                                       DWORD* length);
+	typedef BOOL (*pTransportSetBlockingMode)(rdpTransport* transport, BOOL blocking);
 
 	struct rdp_transport_io
 	{
@@ -55,10 +54,12 @@ extern "C"
 		pTransportRWFkt WritePdu; /* Writes a whole PDU to the transport */
 		pTransportRead ReadBytes; /* Reads up to a requested amount of bytes from the transport */
 		pTransportGetPublicKey GetPublicKey;
+		pTransportSetBlockingMode SetBlockingMode;
+		UINT64 reserved[54]; /* Reserve some space for ABI compatibility */
 	};
 	typedef struct rdp_transport_io rdpTransportIo;
 
-	FREERDP_API BOOL freerdp_io_callback_set_event(rdpContext* context, BOOL reset);
+	FREERDP_API BOOL freerdp_io_callback_set_event(rdpContext* context, BOOL set);
 
 	FREERDP_API const rdpTransportIo* freerdp_get_io_callbacks(rdpContext* context);
 	FREERDP_API BOOL freerdp_set_io_callbacks(rdpContext* context,

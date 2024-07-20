@@ -5,13 +5,12 @@
 
 int TestInterlockedAccess(int argc, char* argv[])
 {
-	int index;
-	LONG* Addend;
-	LONG* Target;
-	LONG oldValue;
-	LONG* Destination;
-	LONGLONG oldValue64;
-	LONGLONG* Destination64;
+	LONG* Addend = NULL;
+	LONG* Target = NULL;
+	LONG oldValue = 0;
+	LONG* Destination = NULL;
+	LONGLONG oldValue64 = 0;
+	LONGLONG* Destination64 = NULL;
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
 	/* InterlockedIncrement */
@@ -25,7 +24,7 @@ int TestInterlockedAccess(int argc, char* argv[])
 
 	*Addend = 0;
 
-	for (index = 0; index < 10; index++)
+	for (int index = 0; index < 10; index++)
 		InterlockedIncrement(Addend);
 
 	if (*Addend != 10)
@@ -36,7 +35,7 @@ int TestInterlockedAccess(int argc, char* argv[])
 
 	/* InterlockedDecrement */
 
-	for (index = 0; index < 10; index++)
+	for (int index = 0; index < 10; index++)
 		InterlockedDecrement(Addend);
 
 	if (*Addend != 0)

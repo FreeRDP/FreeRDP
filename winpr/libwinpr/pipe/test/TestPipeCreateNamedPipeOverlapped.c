@@ -25,15 +25,15 @@ static LPTSTR lpszPipeName = _T("\\\\.\\pipe\\winpr_test_pipe_overlapped");
 
 static DWORD WINAPI named_pipe_client_thread(LPVOID arg)
 {
-	DWORD status;
+	DWORD status = 0;
 	HANDLE hEvent = NULL;
 	HANDLE hNamedPipe = NULL;
 	BYTE* lpReadBuffer = NULL;
 	BOOL fSuccess = FALSE;
 	OVERLAPPED overlapped = { 0 };
-	DWORD nNumberOfBytesToRead;
-	DWORD nNumberOfBytesToWrite;
-	DWORD NumberOfBytesTransferred;
+	DWORD nNumberOfBytesToRead = 0;
+	DWORD nNumberOfBytesToWrite = 0;
+	DWORD NumberOfBytesTransferred = 0;
 
 	WINPR_UNUSED(arg);
 
@@ -155,16 +155,16 @@ finish:
 
 static DWORD WINAPI named_pipe_server_thread(LPVOID arg)
 {
-	DWORD status;
+	DWORD status = 0;
 	HANDLE hEvent = NULL;
 	HANDLE hNamedPipe = NULL;
 	BYTE* lpReadBuffer = NULL;
 	OVERLAPPED overlapped = { 0 };
 	BOOL fSuccess = FALSE;
 	BOOL fConnected = FALSE;
-	DWORD nNumberOfBytesToRead;
-	DWORD nNumberOfBytesToWrite;
-	DWORD NumberOfBytesTransferred;
+	DWORD nNumberOfBytesToRead = 0;
+	DWORD nNumberOfBytesToWrite = 0;
+	DWORD NumberOfBytesTransferred = 0;
 
 	WINPR_UNUSED(arg);
 
@@ -224,7 +224,7 @@ static DWORD WINAPI named_pipe_server_thread(LPVOID arg)
 
 	if (!fConnected && status == ERROR_IO_PENDING)
 	{
-		DWORD dwDummy;
+		DWORD dwDummy = 0;
 		printf("server: waiting up to %u ms for connection ...\n", PIPE_TIMEOUT_MS);
 		status = WaitForSingleObject(hEvent, PIPE_TIMEOUT_MS);
 		if (status == WAIT_OBJECT_0)

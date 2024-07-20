@@ -410,7 +410,7 @@ static int rdtk_font_parse_descriptor_buffer(rdtkFont* font, uint8_t* buffer, si
 
 		*r = '\0';
 		/* start parsing glyph */
-		if (index > font->glyphCount)
+		if (index >= font->glyphCount)
 			return -1;
 
 		rdtkGlyph* glyph = &font->glyphs[index];
@@ -655,8 +655,8 @@ static rdtkFont* rdtk_embedded_font_new(rdtkEngine* engine, const uint8_t* image
                                         size_t imageSize, const uint8_t* descriptorData,
                                         size_t descriptorSize)
 {
-	size_t size;
-	uint8_t* buffer;
+	size_t size = 0;
+	uint8_t* buffer = NULL;
 
 	WINPR_ASSERT(engine);
 

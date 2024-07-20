@@ -71,7 +71,7 @@ HGDI_DC gdi_GetDC(void)
 
 HGDI_DC gdi_CreateDC(UINT32 format)
 {
-	HGDI_DC hDC;
+	HGDI_DC hDC = NULL;
 
 	if (!(hDC = (HGDI_DC)calloc(1, sizeof(GDI_DC))))
 		return NULL;

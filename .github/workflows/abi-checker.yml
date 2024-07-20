@@ -1,0 +1,103 @@
+name: abi-checker
+on:
+  workflow_dispatch:
+    branches: [ master, stable* ]
+    inputs:
+      API_BASE_REF:
+        description: 'Base revision for ABI compatibility check'
+        required: true
+        default: '3.0.0'
+  pull_request:
+    branches: [ master, stable* ]
+  schedule:
+    - cron: '30 4 * * SUN'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    name: "Run ABI checker on ubuntu-latest"
+    steps:
+      - name: "Check out pull request"
+        if: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event_name == 'pull_request'  }}
+        uses: suzuki-shunsuke/get-pr-action@v0.1.0
+        id: pr
+
+      - name: "Check out source"
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{steps.pr.outputs.merge_commit_sha}}
+
+      - name: "Prepare environment"
+        run: |
+          sudo apt-get update -q -y
+          sudo apt-get install -q -y \
+            libxrandr-dev \
+            libxinerama-dev \
+            libusb-1.0-0-dev \
+            xserver-xorg-dev \
+            libswscale-dev \
+            libswresample-dev \
+            libavutil-dev \
+            libavcodec-dev \
+            libcups2-dev \
+            libpulse-dev \
+            libasound2-dev \
+            libpcsclite-dev \
+            xsltproc \
+            libxcb-cursor-dev \
+            libxcursor-dev \
+            libcairo2-dev \
+            libfaad-dev \
+            libjpeg-dev \
+            libgsm1-dev \
+            ninja-build \
+            libxfixes-dev \
+            libxkbcommon-dev \
+            libpkcs11-helper1-dev \
+            libwayland-dev \
+            libpam0g-dev \
+            libxdamage-dev \
+            libxcb-damage0-dev \
+            libxtst-dev \
+            libfuse3-dev \
+            libsystemd-dev \
+            libcairo2-dev \
+            libsoxr-dev \
+            libsdl2-dev \
+            docbook-xsl \
+            libkrb5-dev \
+            libcjson-dev \
+            libsdl2-ttf-dev \
+            libwebkit2gtk-4.0-dev \
+            libopus-dev \
+            libwebp-dev \
+            libpng-dev \
+            libv4l-dev \
+            libjpeg-dev \
+            liburiparser-dev \
+            cmake \
+            clang \
+            abigail-tools \
+            pylint \
+            curl
+
+      - name: "Prepare configuration"
+        run: |
+          mkdir -p checker
+          cp ci/cmake-preloads/config-abi.txt checker/
+          cp scripts/abi-suppr.txt checker/
+          curl https://gist.githubusercontent.com/akallabeth/aa35caed0d39241fa17c3dc8a0539ea3/raw/ef12f8c720ac6be51aa1878710e2502b1b39cf4c/check-abi -o checker/check-abi
+          chmod +x checker/check-abi
+          echo "GITHUB_BASE_REF=$GITHUB_BASE_REF"
+          echo "GITHUB_HEAD_REF=$GITHUB_HEAD_REF"
+          echo "API_BASE_REF=${{ inputs.API_BASE_REF || '3.0.0' }}"
+          echo "HEAD=$(git rev-parse HEAD)"
+          echo "remotes=$(git remote -v)"
+
+      - name: "Run ABI check..."
+        env:
+          BASE_REF: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event_name == 'workflow_dispatch' && inputs.API_BASE_REF || '3.0.0' }}
+        run: |
+          echo "BASE_REF=$BASE_REF"
+          ./checker/check-abi -s checker/abi-suppr.txt --parameters="-Cchecker/config-abi.txt" $BASE_REF $(git rev-parse HEAD) 

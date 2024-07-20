@@ -14,9 +14,9 @@
 
 int TestCryptoCertEnumCertificatesInStore(int argc, char* argv[])
 {
-	int index;
-	DWORD status;
-	LPTSTR pszNameString;
+	int index = 0;
+	DWORD status = 0;
+	LPTSTR pszNameString = NULL;
 	HCERTSTORE hCertStore = NULL;
 	PCCERT_CONTEXT pCertContext = NULL;
 

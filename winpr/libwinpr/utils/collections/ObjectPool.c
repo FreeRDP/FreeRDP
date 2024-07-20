@@ -94,8 +94,8 @@ void ObjectPool_Return(wObjectPool* pool, void* obj)
 
 	if ((pool->size + 1) >= pool->capacity)
 	{
-		size_t new_cap;
-		void** new_arr;
+		size_t new_cap = 0;
+		void** new_arr = NULL;
 
 		new_cap = pool->capacity * 2;
 		new_arr = (void**)realloc(pool->array, sizeof(void*) * new_cap);

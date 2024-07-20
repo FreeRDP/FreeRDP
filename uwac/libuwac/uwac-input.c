@@ -42,9 +42,9 @@
 static struct wl_buffer* create_pointer_buffer(UwacSeat* seat, const void* src, size_t size)
 {
 	struct wl_buffer* buffer = NULL;
-	int fd;
-	void* data;
-	struct wl_shm_pool* pool;
+	int fd = 0;
+	void* data = NULL;
+	struct wl_shm_pool* pool = NULL;
 
 	assert(seat);
 
@@ -94,10 +94,11 @@ static const struct wl_buffer_listener buffer_release_listener = { on_buffer_rel
 static UwacReturnCode set_cursor_image(UwacSeat* seat, uint32_t serial)
 {
 	struct wl_buffer* buffer = NULL;
-	struct wl_cursor* cursor;
+	struct wl_cursor* cursor = NULL;
 	struct wl_cursor_image* image = NULL;
 	struct wl_surface* surface = NULL;
-	int32_t x = 0, y = 0;
+	int32_t x = 0;
+	int32_t y = 0;
 
 	if (!seat || !seat->display || !seat->default_cursor || !seat->default_cursor->images)
 		return UWAC_ERROR_INTERNAL;
@@ -156,7 +157,7 @@ static void keyboard_repeat_func(UwacTask* task, uint32_t events)
 	UwacSeat* input = container_of(task, UwacSeat, repeat_task);
 	assert(input);
 	UwacWindow* window = input->keyboard_focus;
-	uint64_t exp;
+	uint64_t exp = 0;
 
 	if (read(input->repeat_timer_fd, &exp, sizeof exp) != sizeof exp)
 		/* If we change the timer between the fd becoming
@@ -166,7 +167,7 @@ static void keyboard_repeat_func(UwacTask* task, uint32_t events)
 
 	if (window)
 	{
-		UwacKeyEvent* key;
+		UwacKeyEvent* key = NULL;
 
 		key = (UwacKeyEvent*)UwacDisplayNewEvent(input->display, UWAC_EVENT_KEY);
 		if (!key)
@@ -184,9 +185,9 @@ static void keyboard_handle_keymap(void* data, struct wl_keyboard* keyboard, uin
                                    int fd, uint32_t size)
 {
 	UwacSeat* input = data;
-	struct xkb_keymap* keymap;
-	struct xkb_state* state;
-	char* map_str;
+	struct xkb_keymap* keymap = NULL;
+	struct xkb_state* state = NULL;
+	char* map_str = NULL;
 	int mapFlags = MAP_SHARED;
 
 	if (!data)
@@ -248,10 +249,7 @@ static void keyboard_handle_key(void* data, struct wl_keyboard* keyboard, uint32
 static void keyboard_handle_enter(void* data, struct wl_keyboard* keyboard, uint32_t serial,
                                   struct wl_surface* surface, struct wl_array* keys)
 {
-	uint32_t *key, *pressedKey;
 	UwacSeat* input = (UwacSeat*)data;
-	size_t i, found;
-
 	assert(input);
 
 	UwacKeyboardEnterLeaveEvent* event = (UwacKeyboardEnterLeaveEvent*)UwacDisplayNewEvent(
@@ -262,42 +260,22 @@ static void keyboard_handle_enter(void* data, struct wl_keyboard* keyboard, uint
 	event->window = input->keyboard_focus = (UwacWindow*)wl_surface_get_user_data(surface);
 	event->seat = input;
 
-	/* look for keys that have been released */
-	found = false;
-	for (pressedKey = input->pressed_keys.data, i = 0; i < input->pressed_keys.size;
-	     i += sizeof(uint32_t))
-	{
-		wl_array_for_each(key, keys)
-		{
-			if (*key == *pressedKey)
-			{
-				found = true;
-				break;
-			}
-		}
-
-		if (!found)
-		{
-			keyboard_handle_key(data, keyboard, serial, 0, *pressedKey,
-			                    WL_KEYBOARD_KEY_STATE_RELEASED);
-		}
-		else
-		{
-			pressedKey++;
-		}
-	}
-
-	/* handle keys that are now pressed */
-	wl_array_for_each(key, keys)
-	{
-		keyboard_handle_key(data, keyboard, serial, 0, *key, WL_KEYBOARD_KEY_STATE_PRESSED);
-	}
+	/* we may have the keys in the `keys` array, but as this function is called only
+	 * when the window gets focus, so there may be keys from other unrelated windows, eg.
+	 * this was leading to problems like passing CTRL+D to freerdp from closing terminal window
+	 * if it was closing very fast and the keys was still pressed by the user while the freerdp
+	 * gets focus
+	 *
+	 * currently just ignore this, as further key presses will be handled correctly anyway
+	 */
 }
 
 static void keyboard_handle_leave(void* data, struct wl_keyboard* keyboard, uint32_t serial,
                                   struct wl_surface* surface)
 {
 	struct itimerspec its = { 0 };
+	uint32_t* pressedKey = NULL;
+	size_t i = 0;
 
 	UwacSeat* input = (UwacSeat*)data;
 	assert(input);
@@ -314,6 +292,17 @@ static void keyboard_handle_leave(void* data, struct wl_keyboard* keyboard, uint
 		return;
 
 	event->window = input->keyboard_focus;
+
+	/* we are currently loosing input focus of the main window:
+	 * check if we currently have some keys pressed and release them as if we enter the window again
+	 * it will be still "virtually" pressed in remote even if in reality the key has been released
+	 */
+	for (pressedKey = input->pressed_keys.data, i = 0; i < input->pressed_keys.size;
+	     i += sizeof(uint32_t))
+	{
+		keyboard_handle_key(data, keyboard, serial, 0, *pressedKey, WL_KEYBOARD_KEY_STATE_RELEASED);
+		pressedKey++;
+	}
 }
 
 static int update_key_pressed(UwacSeat* seat, uint32_t key)
@@ -338,14 +327,14 @@ static int update_key_pressed(UwacSeat* seat, uint32_t key)
 
 static int update_key_released(UwacSeat* seat, uint32_t key)
 {
-	uint32_t* keyPtr;
-	size_t toMove;
+	size_t toMove = 0;
 	bool found = false;
 
 	assert(seat);
 
-	size_t i;
-	for (i = 0, keyPtr = seat->pressed_keys.data; i < seat->pressed_keys.size; i++, keyPtr++)
+	size_t i = 0;
+	uint32_t* keyPtr = seat->pressed_keys.data;
+	for (; i < seat->pressed_keys.size; i++, keyPtr++)
 	{
 		if (*keyPtr == key)
 		{
@@ -372,12 +361,13 @@ static void keyboard_handle_key(void* data, struct wl_keyboard* keyboard, uint32
 	assert(input);
 
 	UwacWindow* window = input->keyboard_focus;
-	UwacKeyEvent* keyEvent;
+	UwacKeyEvent* keyEvent = NULL;
 
-	uint32_t code, num_syms;
+	uint32_t code = 0;
+	uint32_t num_syms = 0;
 	enum wl_keyboard_key_state state = state_w;
-	const xkb_keysym_t* syms;
-	xkb_keysym_t sym;
+	const xkb_keysym_t* syms = NULL;
+	xkb_keysym_t sym = 0;
 	struct itimerspec its;
 
 	if (state_w == WL_KEYBOARD_KEY_STATE_PRESSED)
@@ -443,8 +433,8 @@ static void keyboard_handle_modifiers(void* data, struct wl_keyboard* keyboard, 
 	UwacSeat* input = data;
 	assert(input);
 
-	UwacKeyboardModifiersEvent* event;
-	xkb_mod_mask_t mask;
+	UwacKeyboardModifiersEvent* event = NULL;
+	xkb_mod_mask_t mask = 0;
 
 	/* If we're not using a keymap, then we don't handle PC-style modifiers */
 	if (!input->xkb.keymap)
@@ -528,7 +518,7 @@ static void touch_handle_down(void* data, struct wl_touch* wl_touch, uint32_t se
                               wl_fixed_t y_w)
 {
 	UwacSeat* seat = data;
-	UwacTouchDown* tdata;
+	UwacTouchDown* tdata = NULL;
 
 	assert(seat);
 	assert(seat->display);
@@ -597,7 +587,7 @@ static void touch_handle_up(void* data, struct wl_touch* wl_touch, uint32_t seri
                             int32_t id)
 {
 	UwacSeat* seat = data;
-	UwacTouchUp* tdata;
+	UwacTouchUp* tdata = NULL;
 
 	assert(seat);
 
@@ -642,7 +632,7 @@ static void touch_handle_motion(void* data, struct wl_touch* wl_touch, uint32_t 
 	UwacSeat* seat = data;
 	assert(seat);
 
-	UwacTouchMotion* tdata;
+	UwacTouchMotion* tdata = NULL;
 
 	if (!seat->touch_frame_started && !touch_send_start_frame(seat))
 		return;
@@ -762,8 +752,8 @@ static void pointer_handle_enter(void* data, struct wl_pointer* pointer, uint32_
                                  struct wl_surface* surface, wl_fixed_t sx_w, wl_fixed_t sy_w)
 {
 	UwacSeat* input = data;
-	UwacWindow* window;
-	UwacPointerEnterLeaveEvent* event;
+	UwacWindow* window = NULL;
+	UwacPointerEnterLeaveEvent* event = NULL;
 
 	assert(input);
 
@@ -802,8 +792,8 @@ static void pointer_handle_enter(void* data, struct wl_pointer* pointer, uint32_
 static void pointer_handle_leave(void* data, struct wl_pointer* pointer, uint32_t serial,
                                  struct wl_surface* surface)
 {
-	UwacPointerEnterLeaveEvent* event;
-	UwacWindow* window;
+	UwacPointerEnterLeaveEvent* event = NULL;
+	UwacWindow* window = NULL;
 	UwacSeat* input = data;
 	assert(input);
 
@@ -823,11 +813,13 @@ static void pointer_handle_leave(void* data, struct wl_pointer* pointer, uint32_
 static void pointer_handle_motion(void* data, struct wl_pointer* pointer, uint32_t time,
                                   wl_fixed_t sx_w, wl_fixed_t sy_w)
 {
-	UwacPointerMotionEvent* motion_event;
+	UwacPointerMotionEvent* motion_event = NULL;
 	UwacSeat* input = data;
 	assert(input);
 
 	UwacWindow* window = input->pointer_focus;
+	if (!window || !window->display)
+		return;
 
 	int scale = window->display->actual_scale;
 	int sx_i = wl_fixed_to_int(sx_w) * scale;
@@ -835,7 +827,7 @@ static void pointer_handle_motion(void* data, struct wl_pointer* pointer, uint32
 	double sx_d = wl_fixed_to_double(sx_w) * scale;
 	double sy_d = wl_fixed_to_double(sy_w) * scale;
 
-	if (!window || (sx_i < 0) || (sy_i < 0))
+	if ((sx_i < 0) || (sy_i < 0))
 		return;
 
 	input->sx = sx_d;
@@ -855,7 +847,7 @@ static void pointer_handle_motion(void* data, struct wl_pointer* pointer, uint32
 static void pointer_handle_button(void* data, struct wl_pointer* pointer, uint32_t serial,
                                   uint32_t time, uint32_t button, uint32_t state_w)
 {
-	UwacPointerButtonEvent* event;
+	UwacPointerButtonEvent* event = NULL;
 	UwacSeat* seat = data;
 	assert(seat);
 
@@ -878,7 +870,7 @@ static void pointer_handle_button(void* data, struct wl_pointer* pointer, uint32
 static void pointer_handle_axis(void* data, struct wl_pointer* pointer, uint32_t time,
                                 uint32_t axis, wl_fixed_t value)
 {
-	UwacPointerAxisEvent* event;
+	UwacPointerAxisEvent* event = NULL;
 	UwacSeat* seat = data;
 	assert(seat);
 
@@ -901,7 +893,7 @@ static void pointer_handle_axis(void* data, struct wl_pointer* pointer, uint32_t
 
 static void pointer_frame(void* data, struct wl_pointer* wl_pointer)
 {
-	UwacPointerFrameEvent* event;
+	UwacPointerFrameEvent* event = NULL;
 	UwacSeat* seat = data;
 	assert(seat);
 
@@ -920,7 +912,7 @@ static void pointer_frame(void* data, struct wl_pointer* wl_pointer)
 
 static void pointer_axis_source(void* data, struct wl_pointer* wl_pointer, uint32_t axis_source)
 {
-	UwacPointerSourceEvent* event;
+	UwacPointerSourceEvent* event = NULL;
 	UwacSeat* seat = data;
 	assert(seat);
 
@@ -949,7 +941,7 @@ static void pointer_axis_discrete(void* data, struct wl_pointer* wl_pointer, uin
                                   int32_t discrete)
 {
 	/*UwacSeat *seat = data;*/
-	UwacPointerAxisEvent* event;
+	UwacPointerAxisEvent* event = NULL;
 	UwacSeat* seat = data;
 	assert(seat);
 
@@ -975,7 +967,7 @@ static void pointer_axis_value120(void* data, struct wl_pointer* wl_pointer, uin
                                   int32_t value120)
 {
 	/*UwacSeat *seat = data;*/
-	UwacPointerAxisEvent* event;
+	UwacPointerAxisEvent* event = NULL;
 	UwacSeat* seat = data;
 	assert(seat);
 

@@ -265,14 +265,13 @@ fail:
 
 DWORD freerdp_detect_solaris_keyboard_layout()
 {
-	int i;
 	int type;
 	int layout;
 
 	if (freerdp_get_solaris_keyboard_layout_and_type(&type, &layout) < 0)
 		return 0;
 
-	for (i = 0; i < ARRAYSIZE(SOLARIS_KEYBOARD_TABLE); i++)
+	for (size_t i = 0; i < ARRAYSIZE(SOLARIS_KEYBOARD_TABLE); i++)
 	{
 		if (SOLARIS_KEYBOARD_TABLE[i].type == type)
 		{

@@ -213,7 +213,8 @@ struct rdp_settings
 	SETTINGS_DEPRECATED(ALIGN64 ARC_CS_PRIVATE_PACKET* ClientAutoReconnectCookie); /* 834 */
 	SETTINGS_DEPRECATED(ALIGN64 ARC_SC_PRIVATE_PACKET* ServerAutoReconnectCookie); /* 835 */
 	SETTINGS_DEPRECATED(ALIGN64 BOOL PrintReconnectCookie);                        /* 836 */
-	UINT64 padding0896[896 - 837];                                                 /* 837 */
+	SETTINGS_DEPRECATED(ALIGN64 BOOL AutoReconnectionPacketSupported);             /* 837 */
+	UINT64 padding0896[896 - 838];                                                 /* 838 */
 
 	/* Client Info (Time Zone) */
 	SETTINGS_DEPRECATED(ALIGN64 TIME_ZONE_INFORMATION* ClientTimeZone); /* 896 */
@@ -431,7 +432,8 @@ struct rdp_settings
 	SETTINGS_DEPRECATED(ALIGN64 char* TransportDumpFile);       /* 1861 */
 	SETTINGS_DEPRECATED(ALIGN64 BOOL TransportDumpReplay);      /* 1862 */
 	SETTINGS_DEPRECATED(ALIGN64 BOOL DeactivateClientDecoding); /* 1863 */
-	UINT64 padding1920[1920 - 1864];                            /* 1864 */
+	SETTINGS_DEPRECATED(ALIGN64 BOOL TransportDumpReplayNodelay); /* 1864 */
+	UINT64 padding1920[1920 - 1865];                              /* 1865 */
 	UINT64 padding1984[1984 - 1920];                            /* 1920 */
 
 	/**
@@ -467,7 +469,8 @@ struct rdp_settings
 	SETTINGS_DEPRECATED(ALIGN64 char* GatewayAvdDiagnosticserviceurl); /* 2009 */
 	SETTINGS_DEPRECATED(ALIGN64 char* GatewayAvdHubdiscoverygeourl);   /* 2010 */
 	SETTINGS_DEPRECATED(ALIGN64 char* GatewayAvdActivityhint);         /* 2011 */
-	UINT64 padding2015[2015 - 2012];                                   /* 2012 */
+	SETTINGS_DEPRECATED(ALIGN64 BOOL GatewayIgnoreRedirectionPolicy);  /* 2012 */
+	UINT64 padding2015[2015 - 2013];                                   /* 2013 */
 
 	/* Proxy */
 	SETTINGS_DEPRECATED(ALIGN64 UINT32 ProxyType);    /* 2015 */
@@ -688,7 +691,8 @@ struct rdp_settings
 	SETTINGS_DEPRECATED(ALIGN64 BOOL GfxAVC444v2);      /* 3847 */
 	SETTINGS_DEPRECATED(ALIGN64 UINT32 GfxCapsFilter);  /* 3848 */
 	SETTINGS_DEPRECATED(ALIGN64 BOOL GfxPlanar);        /* 3849 */
-	UINT64 padding3904[3904 - 3850];                    /* 3850 */
+	SETTINGS_DEPRECATED(ALIGN64 BOOL GfxSuspendFrameAck); /* 3850 */
+	UINT64 padding3904[3904 - 3851];                      /* 3851 */
 
 	/**
 	 * Caches
@@ -742,7 +746,8 @@ struct rdp_settings
 	SETTINGS_DEPRECATED(ALIGN64 BOOL RedirectSerialPorts);   /* 4672 */
 	SETTINGS_DEPRECATED(ALIGN64 BOOL RedirectParallelPorts); /* 4673 */
 	SETTINGS_DEPRECATED(ALIGN64 BOOL PreferIPv6OverIPv4);    /* 4674 */
-	UINT64 padding4800[4800 - 4675];                         /* 4675 */
+	SETTINGS_DEPRECATED(ALIGN64 UINT32 ForceIPvX);           /* 4675 */
+	UINT64 padding4800[4800 - 4676];                         /* 4676 */
 
 	/**
 	 * Other Redirection
@@ -760,7 +765,8 @@ struct rdp_settings
 	SETTINGS_DEPRECATED(ALIGN64 UINT32 StaticChannelCount);       /* 4928 */
 	SETTINGS_DEPRECATED(ALIGN64 UINT32 StaticChannelArraySize);   /* 4929 */
 	SETTINGS_DEPRECATED(ALIGN64 ADDIN_ARGV** StaticChannelArray); /* 4930 */
-	UINT64 padding5056[5056 - 4931];                              /* 4931 */
+	SETTINGS_DEPRECATED(ALIGN64 BOOL SynchronousStaticChannels);  /* 4931 */
+	UINT64 padding5056[5056 - 4932];                              /* 4932 */
 
 	/**
 	 * Dynamic Virtual Channels
@@ -770,7 +776,8 @@ struct rdp_settings
 	SETTINGS_DEPRECATED(ALIGN64 UINT32 DynamicChannelArraySize);   /* 5057 */
 	SETTINGS_DEPRECATED(ALIGN64 ADDIN_ARGV** DynamicChannelArray); /* 5058 */
 	SETTINGS_DEPRECATED(ALIGN64 BOOL SupportDynamicChannels);      /* 5059 */
-	UINT64 padding5184[5184 - 5060];                               /* 5060 */
+	SETTINGS_DEPRECATED(ALIGN64 BOOL SynchronousDynamicChannels);  /* 5060 */
+	UINT64 padding5184[5184 - 5061];                               /* 5061 */
 
 	SETTINGS_DEPRECATED(ALIGN64 BOOL SupportEchoChannel);        /* 5184 */
 	SETTINGS_DEPRECATED(ALIGN64 BOOL SupportDisplayControl);     /* 5185 */

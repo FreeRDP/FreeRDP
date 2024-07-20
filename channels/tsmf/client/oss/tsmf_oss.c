@@ -58,16 +58,20 @@ typedef struct
 	UINT32 data_size_last;
 } TSMFOssAudioDevice;
 
-#define OSS_LOG_ERR(_text, _error)                                         \
-	do                                                                     \
-	{                                                                      \
-		if (_error != 0)                                                   \
-			WLog_ERR(TAG, "%s: %i - %s", _text, _error, strerror(_error)); \
+#define OSS_LOG_ERR(_text, _error)                                        \
+	do                                                                    \
+	{                                                                     \
+		if ((_error) != 0)                                                \
+		{                                                                 \
+			char ebuffer[256] = { 0 };                                    \
+			WLog_ERR(TAG, "%s: %i - %s", (_text), (_error),               \
+			         winpr_strerror((_error), ebuffer, sizeof(ebuffer))); \
+		}                                                                 \
 	} while (0)
 
 static BOOL tsmf_oss_open(ITSMFAudioDevice* audio, const char* device)
 {
-	int tmp;
+	int tmp = 0;
 	TSMFOssAudioDevice* oss = (TSMFOssAudioDevice*)audio;
 
 	if (oss == NULL || oss->pcm_handle != -1)
@@ -90,8 +94,6 @@ static BOOL tsmf_oss_open(ITSMFAudioDevice* audio, const char* device)
 	}
 
 #if 0 /* FreeBSD OSS implementation at this moment (2015.03) does not set PCM_CAP_OUTPUT flag. */
-	tmp = 0;
-
 	if (ioctl(oss->pcm_handle, SNDCTL_DSP_GETCAPS, &mask) == -1)
 	{
 		OSS_LOG_ERR("SNDCTL_DSP_GETCAPS failed, try ignory", errno);
@@ -105,9 +107,8 @@ static BOOL tsmf_oss_open(ITSMFAudioDevice* audio, const char* device)
 	}
 
 #endif
-	tmp = 0;
-
-	if (ioctl(oss->pcm_handle, SNDCTL_DSP_GETFMTS, &tmp) == -1)
+	const int rc = ioctl(oss->pcm_handle, SNDCTL_DSP_GETFMTS, &tmp);
+	if (rc == -1)
 	{
 		OSS_LOG_ERR("SNDCTL_DSP_GETFMTS failed", errno);
 		close(oss->pcm_handle);
@@ -130,7 +131,7 @@ static BOOL tsmf_oss_open(ITSMFAudioDevice* audio, const char* device)
 static BOOL tsmf_oss_set_format(ITSMFAudioDevice* audio, UINT32 sample_rate, UINT32 channels,
                                 UINT32 bits_per_sample)
 {
-	int tmp;
+	int tmp = 0;
 	TSMFOssAudioDevice* oss = (TSMFOssAudioDevice*)audio;
 
 	if (oss == NULL || oss->pcm_handle == -1)
@@ -166,8 +167,8 @@ static BOOL tsmf_oss_set_format(ITSMFAudioDevice* audio, UINT32 sample_rate, UIN
 
 static BOOL tsmf_oss_play(ITSMFAudioDevice* audio, const BYTE* data, UINT32 data_size)
 {
-	int status;
-	UINT32 offset;
+	int status = 0;
+	UINT32 offset = 0;
 	TSMFOssAudioDevice* oss = (TSMFOssAudioDevice*)audio;
 	DEBUG_TSMF("tsmf_oss_play: data_size %" PRIu32 "", data_size);
 
@@ -230,7 +231,7 @@ static void tsmf_oss_free(ITSMFAudioDevice* audio)
 	free(oss);
 }
 
-FREERDP_ENTRY_POINT(ITSMFAudioDevice* oss_freerdp_tsmf_client_audio_subsystem_entry(void))
+FREERDP_ENTRY_POINT(ITSMFAudioDevice* oss_freerdp_tsmf_client_audio_subsystem_entry(void*))
 {
 	TSMFOssAudioDevice* oss = calloc(1, sizeof(TSMFOssAudioDevice));
 	if (!oss)

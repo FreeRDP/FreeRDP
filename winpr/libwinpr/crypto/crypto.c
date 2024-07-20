@@ -139,18 +139,18 @@
 #include "crypto.h"
 
 #include <winpr/crt.h>
-#include <winpr/crypto.h>
 #include <winpr/collections.h>
 
 static wListDictionary* g_ProtectedMemoryBlocks = NULL;
 
 BOOL CryptProtectMemory(LPVOID pData, DWORD cbData, DWORD dwFlags)
 {
-	BYTE* pCipherText;
-	size_t cbOut, cbFinal;
+	BYTE* pCipherText = NULL;
+	size_t cbOut = 0;
+	size_t cbFinal = 0;
 	WINPR_CIPHER_CTX* enc = NULL;
 	BYTE randomKey[256] = { 0 };
-	WINPR_PROTECTED_MEMORY_BLOCK* pMemBlock;
+	WINPR_PROTECTED_MEMORY_BLOCK* pMemBlock = NULL;
 
 	if (dwFlags != CRYPTPROTECTMEMORY_SAME_PROCESS)
 		return FALSE;
@@ -210,7 +210,8 @@ out:
 BOOL CryptUnprotectMemory(LPVOID pData, DWORD cbData, DWORD dwFlags)
 {
 	BYTE* pPlainText = NULL;
-	size_t cbOut, cbFinal;
+	size_t cbOut = 0;
+	size_t cbFinal = 0;
 	WINPR_CIPHER_CTX* dec = NULL;
 	WINPR_PROTECTED_MEMORY_BLOCK* pMemBlock = NULL;
 

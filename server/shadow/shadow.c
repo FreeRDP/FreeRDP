@@ -54,7 +54,7 @@ int main(int argc, char** argv)
 		  "maximum connections allowed to server, 0 to deactivate" },
 		{ "rect", COMMAND_LINE_VALUE_REQUIRED, "<x,y,w,h>", NULL, NULL, -1, NULL,
 		  "Select rectangle within monitor to share" },
-		{ "auth", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL,
+		{ "auth", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL,
 		  "Clients must authenticate" },
 		{ "remote-guard", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL,
 		  "Remote credential guard" },

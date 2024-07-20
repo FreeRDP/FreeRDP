@@ -21,8 +21,10 @@ set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../cmake/)
 if (NOT FREERDP_UNIFIED_BUILD)
 	cmake_minimum_required(VERSION 3.13)
 
-        cmake_policy(SET CMP0091 NEW)
-        project(WinPR LANGUAGES C)
+	if(POLICY CMP0091)
+		cmake_policy(SET CMP0091 NEW)
+	endif()
+	project(WinPR LANGUAGES C)
 
 	set(CMAKE_C_STANDARD 11)
 	set(CMAKE_C_STANDARD_REQUIRED ON)
@@ -45,9 +47,13 @@ if (NOT FREERDP_UNIFIED_BUILD)
 			set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fvisibility=hidden")
 		endif()
 	endif()
+    if(WITH_DEBUG_ALL)
+        message(WARNING "WITH_DEBUG_ALL=ON, the build will be slow and might leak sensitive information, do not use with release builds!")
+        set(DEFAULT_DEBUG_OPTION "ON" CACHE INTERNAL "debug default")
+    else()
+        set(DEFAULT_DEBUG_OPTION "OFF" CACHE INTERNAL "debug default")
+    endif()
 endif()
-
-set(DEFAULT_DEBUG_OPTION OFF)
 
 if (WIN32 AND NOT UWP)
 	set(NATIVE_SSPI ON)
@@ -131,7 +137,7 @@ endif()
 
 # Soname versioning
 set(VERSION_REGEX "^(.*)([0-9]+)\\.([0-9]+)\\.([0-9]+)-?(.*)")
-set(RAW_VERSION_STRING "3.1.1-dev0")
+set(RAW_VERSION_STRING "3.6.4-dev0")
 if(EXISTS "${PROJECT_SOURCE_DIR}/.source_tag")
 	file(READ ${PROJECT_SOURCE_DIR}/.source_tag RAW_VERSION_STRING)
 elseif(USE_VERSION_FROM_GIT_TAG)
@@ -307,7 +313,6 @@ else()
 endif()
 option(WITH_PKCS11 "encryption, certificate validation, hashing functions" ${PKCS11_DEFAULT})
 if (WITH_PKCS11)
-	find_package(Pkcs11 REQUIRED)
 	add_definitions("-DWITH_PKCS11")
 endif()
 
@@ -316,11 +321,6 @@ if(BUILD_SHARED_LIBS)
 endif()
 
 add_definitions(-DWINPR_EXPORTS)
-
-# Enable 64bit file support on linux and FreeBSD.
-if("${CMAKE_SYSTEM_NAME}" MATCHES "Linux" OR FREEBSD)
-	add_definitions("-D_FILE_OFFSET_BITS=64")
-endif()
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 include_directories(${CMAKE_CURRENT_BINARY_DIR}/include)
@@ -340,12 +340,7 @@ endif()
 
 add_subdirectory(include)
 
-set(MANPAGE_NAME wlog)
-if (WITH_BINARY_VERSIONING)
-	set(MANPAGE_NAME wlog${WINPR_API_VERSION})
-endif()
-configure_file(wlog.7.in ${CMAKE_CURRENT_BINARY_DIR}/${MANPAGE_NAME}.7 @ONLY)
-install_freerdp_man(${CMAKE_CURRENT_BINARY_DIR}/${MANPAGE_NAME}.7  7)
+generate_and_install_freerdp_man_from_template("wlog" "7" "${WINPR_API_VERSION}")
 # Exporting
 
 export(PACKAGE winpr)

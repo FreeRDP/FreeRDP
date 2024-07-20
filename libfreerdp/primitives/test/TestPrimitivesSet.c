@@ -20,9 +20,7 @@
 /* ------------------------------------------------------------------------- */
 static BOOL check8(const BYTE* src, UINT32 length, UINT32 offset, BYTE value)
 {
-	UINT32 i;
-
-	for (i = 0; i < length; ++i)
+	for (UINT32 i = 0; i < length; ++i)
 	{
 		if (src[offset + i] != value)
 		{
@@ -38,16 +36,14 @@ static BOOL check8(const BYTE* src, UINT32 length, UINT32 offset, BYTE value)
 
 static BOOL test_set8u_func(void)
 {
-	pstatus_t status;
-	UINT32 off;
+	pstatus_t status = 0;
 
-	for (off = 0; off < 16; ++off)
+	for (UINT32 off = 0; off < 16; ++off)
 	{
-		UINT32 len;
 		BYTE dest[1024];
 
 		memset(dest, 3, sizeof(dest));
-		for (len = 1; len < 48 - off; ++len)
+		for (UINT32 len = 1; len < 48 - off; ++len)
 		{
 			status = generic->set_8u(0xa5, dest + off, len);
 
@@ -59,13 +55,12 @@ static BOOL test_set8u_func(void)
 		}
 	}
 
-	for (off = 0; off < 16; ++off)
+	for (UINT32 off = 0; off < 16; ++off)
 	{
-		UINT32 len;
 		BYTE dest[1024];
 
 		memset(dest, 3, sizeof(dest));
-		for (len = 1; len < 48 - off; ++len)
+		for (UINT32 len = 1; len < 48 - off; ++len)
 		{
 			status = optimized->set_8u(0xa5, dest + off, len);
 
@@ -84,10 +79,9 @@ static BOOL test_set8u_func(void)
 static BOOL test_set8u_speed(void)
 {
 	BYTE dest[1024];
-	BYTE value;
-	UINT32 x;
+	BYTE value = 0;
 
-	for (x = 0; x < 16; x++)
+	for (UINT32 x = 0; x < 16; x++)
 	{
 		winpr_RAND(&value, sizeof(value));
 
@@ -101,9 +95,7 @@ static BOOL test_set8u_speed(void)
 
 static BOOL check32s(const INT32* src, UINT32 length, UINT32 offset, INT32 value)
 {
-	UINT32 i;
-
-	for (i = 0; i < length; ++i)
+	for (UINT32 i = 0; i < length; ++i)
 	{
 		if (src[offset + i] != value)
 		{
@@ -120,16 +112,14 @@ static BOOL check32s(const INT32* src, UINT32 length, UINT32 offset, INT32 value
 /* ------------------------------------------------------------------------- */
 static BOOL test_set32s_func(void)
 {
-	pstatus_t status;
-	UINT32 off;
+	pstatus_t status = 0;
 	const INT32 value = -0x12345678;
 
-	for (off = 0; off < 16; ++off)
+	for (UINT32 off = 0; off < 16; ++off)
 	{
-		UINT32 len;
 		INT32 dest[1024] = { 0 };
 
-		for (len = 1; len < 48 - off; ++len)
+		for (UINT32 len = 1; len < 48 - off; ++len)
 		{
 			status = generic->set_32s(value, dest + off, len);
 
@@ -141,12 +131,11 @@ static BOOL test_set32s_func(void)
 		}
 	}
 
-	for (off = 0; off < 16; ++off)
+	for (UINT32 off = 0; off < 16; ++off)
 	{
-		UINT32 len;
 		INT32 dest[1024] = { 0 };
 
-		for (len = 1; len < 48 - off; ++len)
+		for (UINT32 len = 1; len < 48 - off; ++len)
 		{
 			status = optimized->set_32s(value, dest + off, len);
 
@@ -163,9 +152,7 @@ static BOOL test_set32s_func(void)
 
 static BOOL check32u(const UINT32* src, UINT32 length, UINT32 offset, UINT32 value)
 {
-	UINT32 i;
-
-	for (i = 0; i < length; ++i)
+	for (UINT32 i = 0; i < length; ++i)
 	{
 		if (src[offset + i] != value)
 		{
@@ -182,16 +169,14 @@ static BOOL check32u(const UINT32* src, UINT32 length, UINT32 offset, UINT32 val
 /* ------------------------------------------------------------------------- */
 static BOOL test_set32u_func(void)
 {
-	pstatus_t status;
-	UINT32 off;
+	pstatus_t status = 0;
 	const UINT32 value = 0xABCDEF12;
 
-	for (off = 0; off < 16; ++off)
+	for (UINT32 off = 0; off < 16; ++off)
 	{
-		UINT32 len;
 		UINT32 dest[1024] = { 0 };
 
-		for (len = 1; len < 48 - off; ++len)
+		for (UINT32 len = 1; len < 48 - off; ++len)
 		{
 			status = generic->set_32u(value, dest + off, len);
 
@@ -203,12 +188,11 @@ static BOOL test_set32u_func(void)
 		}
 	}
 
-	for (off = 0; off < 16; ++off)
+	for (UINT32 off = 0; off < 16; ++off)
 	{
-		UINT32 len;
 		UINT32 dest[1024] = { 0 };
 
-		for (len = 1; len < 48 - off; ++len)
+		for (UINT32 len = 1; len < 48 - off; ++len)
 		{
 			status = optimized->set_32u(value, dest + off, len);
 
@@ -227,10 +211,9 @@ static BOOL test_set32u_func(void)
 static BOOL test_set32u_speed(void)
 {
 	UINT32 dest[1024];
-	BYTE value;
-	UINT32 x;
+	BYTE value = 0;
 
-	for (x = 0; x < 16; x++)
+	for (UINT32 x = 0; x < 16; x++)
 	{
 		winpr_RAND(&value, sizeof(value));
 
@@ -246,10 +229,9 @@ static BOOL test_set32u_speed(void)
 static BOOL test_set32s_speed(void)
 {
 	INT32 dest[1024];
-	BYTE value;
-	UINT32 x;
+	BYTE value = 0;
 
-	for (x = 0; x < 16; x++)
+	for (UINT32 x = 0; x < 16; x++)
 	{
 		winpr_RAND(&value, sizeof(value));
 

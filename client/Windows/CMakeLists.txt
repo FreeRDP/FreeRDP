@@ -40,26 +40,6 @@ set(${MODULE_PREFIX}_SRCS
 	resource/wfreerdp.rc
 	resource/resource.h)
 
-# On windows create dll version information.
-# Vendor, product and year are already set in top level CMakeLists.txt
-if (WIN32 AND BUILD_SHARED_LIBS)
-  set (RC_VERSION_MAJOR ${FREERDP_VERSION_MAJOR})
-  set (RC_VERSION_MINOR ${FREERDP_VERSION_MINOR})
-  set (RC_VERSION_BUILD ${FREERDP_VERSION_REVISION})
-  if(WITH_CLIENT_INTERFACE)
-    set (RC_VERSION_FILE "${CMAKE_SHARED_LIBRARY_PREFIX}${MODULE_NAME}${FREERDP_API_VERSION}${CMAKE_SHARED_LIBRARY_SUFFIX}" )
-  else()
-    set (RC_VERSION_FILE "${MODULE_NAME}${CMAKE_EXECUTABLE_SUFFIX}" )
-  endif()
-
-  configure_file(
-    ${PROJECT_SOURCE_DIR}/cmake/WindowsDLLVersion.rc.in
-    ${CMAKE_CURRENT_BINARY_DIR}/version.rc
-    @ONLY)
-
-  set ( ${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} ${CMAKE_CURRENT_BINARY_DIR}/version.rc)
-endif()
-
 option(WITH_WINDOWS_CERT_STORE "Build ${MODULE_NAME} with additional certificate validation against windows certificate store" ON)
 if(WITH_WINDOWS_CERT_STORE)
   add_definitions("-DWITH_WINDOWS_CERT_STORE")
@@ -68,7 +48,7 @@ endif()
 option(WITH_WIN_CONSOLE "Build ${MODULE_NAME} with console support" OFF)
 if(WITH_WIN_CONSOLE)
   add_definitions("-DWITH_WIN_CONSOLE")
-  set(WIN32_GUI_FLAG "")
+  set(WIN32_GUI_FLAG "TRUE")
 else()
   set(WIN32_GUI_FLAG "WIN32")
 endif()
@@ -78,50 +58,27 @@ if(WITH_PROGRESS_BAR)
   add_definitions("-DWITH_PROGRESS_BAR")
 endif()
 
-if(WITH_CLIENT_INTERFACE)
-	if(CLIENT_INTERFACE_SHARED)
-		add_library(${MODULE_NAME} SHARED ${${MODULE_PREFIX}_SRCS})
-	else()
-		add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
-	endif()
-	if (WITH_LIBRARY_VERSIONING)
-        set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${FREERDP_VERSION} SOVERSION ${FREERDP_API_VERSION})
-    endif()
-    set_target_properties(${MODULE_NAME} PROPERTIES OUTPUT_NAME ${MODULE_NAME}${FREERDP_API_VERSION})
-    target_include_directories(${MODULE_NAME} INTERFACE $<INSTALL_INTERFACE:include>)
+if(CLIENT_INTERFACE_SHARED)
+	AddTargetWithResourceFile(${MODULE_NAME} "SHARED" "${FREERDP_VERSION}" ${MODULE_PREFIX}_SRCS)
 else()
-	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} cli/wfreerdp.c cli/wfreerdp.h)
-	add_executable(${MODULE_NAME} ${WIN32_GUI_FLAG} ${${MODULE_PREFIX}_SRCS})
-	include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-	if (WITH_BINARY_VERSIONING)
-		set_target_properties(${MODULE_NAME} PROPERTIES OUTPUT_NAME "wfreerdp${FREERDP_API_VERSION}")
-	else()
-		set_target_properties(${MODULE_NAME} PROPERTIES OUTPUT_NAME "wfreerdp")
-	endif()
+	AddTargetWithResourceFile(${MODULE_NAME} FALSE "${FREERDP_VERSION}" ${MODULE_PREFIX}_SRCS)
 endif()
+target_include_directories(${MODULE_NAME} INTERFACE $<INSTALL_INTERFACE:include>)
 
-list(APPEND LIBS freerdp-client)
-list(APPEND LIBS winpr freerdp)
+list(APPEND PUB_LIBS freerdp-client)
+list(APPEND PUB_LIBS winpr freerdp)
 
-list(APPEND LIBS msimg32.lib credui.lib)
+list(APPEND PRIV_LIBS msimg32.lib credui.lib)
 
 if (MINGW)
-	list(APPEND LIBS ntdll.lib) # only required with MINGW
+    list(APPEND PRIV_LIBS ntdll.lib) # only required with MINGW
 endif()
-target_link_libraries(${MODULE_NAME} PRIVATE ${LIBS})
+target_link_libraries(${MODULE_NAME} PUBLIC ${PUB_LIBS})
+target_link_libraries(${MODULE_NAME} PRIVATE ${PRIV_LIBS})
 
 if(WITH_CLIENT_INTERFACE)
 	install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT libraries)
-	if (WITH_DEBUG_SYMBOLS AND MSVC AND BUILD_SHARED_LIBS)
-		install(FILES ${CMAKE_PDB_BINARY_DIR}/${MODULE_NAME}.pdb DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT symbols)
-	endif()
-	add_subdirectory(cli)
-else()
-	install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT client)
-	if (WITH_DEBUG_SYMBOLS AND MSVC)
-		get_target_property(OUTPUT_FILENAME ${MODULE_NAME} OUTPUT_NAME)
-		install(FILES ${CMAKE_PDB_BINARY_DIR}/${OUTPUT_FILENAME}.pdb DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT symbols)
-	endif()
 endif()
+add_subdirectory(cli)
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Client/Windows")

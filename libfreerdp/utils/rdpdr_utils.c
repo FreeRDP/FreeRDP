@@ -276,7 +276,8 @@ static void rdpdr_dump_packet(wLog* log, DWORD lvl, wStream* s, const char* cust
 	const size_t gpos = Stream_GetPosition(s);
 	const size_t pos = send ? Stream_GetPosition(s) : Stream_Length(s);
 
-	UINT16 component = 0, packetid = 0;
+	UINT16 component = 0;
+	UINT16 packetid = 0;
 
 	Stream_SetPosition(s, 0);
 
@@ -290,7 +291,8 @@ static void rdpdr_dump_packet(wLog* log, DWORD lvl, wStream* s, const char* cust
 		case PAKID_CORE_SERVER_ANNOUNCE:
 		case PAKID_CORE_CLIENTID_CONFIRM:
 		{
-			UINT16 versionMajor = 0, versionMinor = 0;
+			UINT16 versionMajor = 0;
+			UINT16 versionMinor = 0;
 			UINT32 clientID = 0;
 
 			if (pos >= 6)
@@ -337,7 +339,10 @@ static void rdpdr_dump_packet(wLog* log, DWORD lvl, wStream* s, const char* cust
 		case PAKID_CORE_DEVICE_IOREQUEST:
 		{
 			UINT32 CompletionId = 0;
-			UINT32 deviceID = 0, FileId = 0, MajorFunction = 0, MinorFunction = 0;
+			UINT32 deviceID = 0;
+			UINT32 FileId = 0;
+			UINT32 MajorFunction = 0;
+			UINT32 MinorFunction = 0;
 
 			if (pos >= 8)
 				Stream_Read_UINT32(s, deviceID);
@@ -359,7 +364,8 @@ static void rdpdr_dump_packet(wLog* log, DWORD lvl, wStream* s, const char* cust
 		break;
 		case PAKID_CORE_DEVICE_IOCOMPLETION:
 		{
-			UINT32 completionID = 0, ioStatus = 0;
+			UINT32 completionID = 0;
+			UINT32 ioStatus = 0;
 			UINT32 deviceID = 0;
 			if (pos >= 8)
 				Stream_Read_UINT32(s, deviceID);
@@ -377,7 +383,8 @@ static void rdpdr_dump_packet(wLog* log, DWORD lvl, wStream* s, const char* cust
 		break;
 		case PAKID_CORE_DEVICE_REPLY:
 		{
-			UINT32 deviceID = 0, status = 0;
+			UINT32 deviceID = 0;
+			UINT32 status = 0;
 
 			if (pos >= 8)
 				Stream_Read_UINT32(s, deviceID);

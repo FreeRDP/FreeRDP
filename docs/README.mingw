@@ -4,6 +4,6 @@ Overview
 More documentation might be found at https://github.com/FreeRDP/FreeRDP/wiki/Compilation
 
 FreeRDP can be built for Windows using llvm-mingw (https://github.com/mstorsjo/llvm-mingw) with both msvcrt and ucrt. 
-MinGW builds are not actively mantained at the moment and every once in a while the build process may stop working. Pull requests to maintain MinGW support are always welcome.
+MinGW builds are not actively maintained at the moment and every once in a while the build process may stop working. Pull requests to maintain MinGW support are always welcome.
 
 An example build system for LLVM-MinGW can be found here: https://github.com/FreeRDP/FreeRDP/tree/master/docs/mingw-example

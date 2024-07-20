@@ -32,8 +32,9 @@ static void write_log(wLog* log, DWORD level, const char* fname, const char* fkt
 	va_end(ap);
 }
 
-char* Safe_XGetAtomName(Display* display, Atom atom)
+char* Safe_XGetAtomName(wLog* log, Display* display, Atom atom)
 {
+	WLog_Print(log, log_level, "XGetAtomName(0x%08" PRIx32 ")", atom);
 	if (atom == None)
 		return strdup("Atom_None");
 	return XGetAtomName(display, atom);
@@ -54,8 +55,8 @@ int LogDynAndXChangeProperty_ex(wLog* log, const char* file, const char* fkt, si
 {
 	if (WLog_IsLevelActive(log, log_level))
 	{
-		char* propstr = Safe_XGetAtomName(display, property);
-		char* typestr = Safe_XGetAtomName(display, type);
+		char* propstr = Safe_XGetAtomName(log, display, property);
+		char* typestr = Safe_XGetAtomName(log, display, type);
 		write_log(log, log_level, file, fkt, line,
 		          "XChangeProperty(%p, %d, %s [%d], %s [%d], %d, %d, %p, %d)", display, w, propstr,
 		          property, typestr, type, format, mode, data, nelements);
@@ -77,12 +78,40 @@ int LogDynAndXDeleteProperty_ex(wLog* log, const char* file, const char* fkt, si
 {
 	if (WLog_IsLevelActive(log, log_level))
 	{
-		char* propstr = Safe_XGetAtomName(display, property);
+		char* propstr = Safe_XGetAtomName(log, display, property);
 		write_log(log, log_level, file, fkt, line, "XDeleteProperty(%p, %d, %s [%d])", display, w,
 		          propstr, property);
 		XFree(propstr);
 	}
 	return XDeleteProperty(display, w, property);
+}
+
+int LogTagAndXConvertSelection_ex(const char* tag, const char* file, const char* fkt, size_t line,
+                                  Display* display, Atom selection, Atom target, Atom property,
+                                  Window requestor, Time time)
+{
+	wLog* log = WLog_Get(tag);
+	return LogDynAndXConvertSelection_ex(log, file, fkt, line, display, selection, target, property,
+	                                     requestor, time);
+}
+
+int LogDynAndXConvertSelection_ex(wLog* log, const char* file, const char* fkt, size_t line,
+                                  Display* display, Atom selection, Atom target, Atom property,
+                                  Window requestor, Time time)
+{
+	if (WLog_IsLevelActive(log, log_level))
+	{
+		char* selectstr = Safe_XGetAtomName(log, display, selection);
+		char* targetstr = Safe_XGetAtomName(log, display, target);
+		char* propstr = Safe_XGetAtomName(log, display, property);
+		write_log(log, log_level, file, fkt, line,
+		          "XConvertSelection(%p, %s [%d], %s [%d], %s [%d], %d, %lu)", display, selectstr,
+		          selection, targetstr, target, propstr, property, requestor, time);
+		XFree(propstr);
+		XFree(targetstr);
+		XFree(selectstr);
+	}
+	return XConvertSelection(display, selection, target, property, requestor, time);
 }
 
 int LogTagAndXGetWindowProperty_ex(const char* tag, const char* file, const char* fkt, size_t line,
@@ -107,8 +136,8 @@ int LogDynAndXGetWindowProperty_ex(wLog* log, const char* file, const char* fkt,
 {
 	if (WLog_IsLevelActive(log, log_level))
 	{
-		char* propstr = Safe_XGetAtomName(display, property);
-		char* req_type_str = Safe_XGetAtomName(display, req_type);
+		char* propstr = Safe_XGetAtomName(log, display, property);
+		char* req_type_str = Safe_XGetAtomName(log, display, req_type);
 		write_log(log, log_level, file, fkt, line,
 		          "XGetWindowProperty(%p, %d, %s [%d], %ld, %ld, %d, %s [%d], %p, %p, %p, %p, %p)",
 		          display, w, propstr, property, long_offset, long_length, delete, req_type_str,

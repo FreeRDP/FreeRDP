@@ -124,7 +124,7 @@ static BOOL redirection_copy_array(char*** dst, UINT32* plen, const char** str, 
 	if (!str || (len == 0))
 		return TRUE;
 
-	*dst = calloc(len, sizeof(char));
+	*dst = calloc(len, sizeof(char*));
 	if (!*dst)
 		return FALSE;
 	*plen = len;
@@ -195,17 +195,6 @@ static BOOL rdp_redirection_read_unicode_string(wStream* s, char** str, size_t m
 	return TRUE;
 }
 
-static BOOL replace_char(char* utf8, size_t length, char what, char with)
-{
-	for (size_t x = 0; x < length; x++)
-	{
-		char* cur = &utf8[x];
-		if (*cur == what)
-			*cur = with;
-	}
-	return TRUE;
-}
-
 static BOOL rdp_redirection_write_data(wStream* s, size_t length, const void* data)
 {
 	WINPR_ASSERT(data || (length == 0));
@@ -254,7 +243,7 @@ static BOOL rdp_redirection_read_base64_wchar(UINT32 flag, wStream* s, UINT32* p
 	const WCHAR* wchar = (const WCHAR*)ptr;
 
 	size_t utf8_len = 0;
-	char* utf8 = ConvertWCharNToUtf8Alloc(wchar, *pLength, &utf8_len);
+	char* utf8 = ConvertWCharNToUtf8Alloc(wchar, *pLength / sizeof(WCHAR), &utf8_len);
 	if (!utf8)
 		goto fail;
 
@@ -446,10 +435,9 @@ static BOOL rdp_redirection_read_target_cert_stream(wStream* s, rdpRedirection* 
 
 	WINPR_ASSERT(redirection);
 
-	if (!rdp_redirection_read_base64_wchar(LB_TARGET_CERTIFICATE, s, &length, &ptr))
-		return FALSE;
-
-	const BOOL rc = rdp_redirection_read_target_cert(&redirection->TargetCertificate, ptr, length);
+	BOOL rc = FALSE;
+	if (rdp_redirection_read_base64_wchar(LB_TARGET_CERTIFICATE, s, &length, &ptr))
+		rc = rdp_redirection_read_target_cert(&redirection->TargetCertificate, ptr, length);
 	free(ptr);
 	return rc;
 }
@@ -820,28 +808,46 @@ static state_run_t rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 	if (redirection->flags & LB_TARGET_NET_ADDRESSES)
 	{
 		UINT32 targetNetAddressesLength = 0;
+		UINT32 TargetNetAddressesCount = 0;
 
 		if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
 			return STATE_RUN_FAILED;
 
 		Stream_Read_UINT32(s, targetNetAddressesLength);
-		Stream_Read_UINT32(s, redirection->TargetNetAddressesCount);
-		const UINT32 count = redirection->TargetNetAddressesCount;
-		redirection->TargetNetAddresses = NULL;
-		if (count > 0)
+		Stream_Read_UINT32(s, TargetNetAddressesCount);
+
+		/* sanity check: the whole packet has a length limit of UINT16_MAX
+		 * each TargetNetAddress is a WCHAR string, so minimum length 2 bytes
+		 */
+		const size_t size = TargetNetAddressesCount * sizeof(WCHAR);
+		if ((size > Stream_GetRemainingLength(s)) || (size > targetNetAddressesLength))
 		{
-			redirection->TargetNetAddresses = (char**)calloc(count, sizeof(char*));
+			WLog_ERR(TAG,
+			         "Invalid RDP_SERVER_REDIRECTION_PACKET::TargetNetAddressLength %" PRIuz
+			         ", sanity limit is %" PRIuz,
+			         TargetNetAddressesCount * sizeof(WCHAR), Stream_GetRemainingLength(s));
+			return STATE_RUN_FAILED;
+		}
+
+		redirection_free_array(&redirection->TargetNetAddresses,
+		                       &redirection->TargetNetAddressesCount);
+		if (TargetNetAddressesCount > 0)
+		{
+			redirection->TargetNetAddresses =
+			    (char**)calloc(TargetNetAddressesCount, sizeof(char*));
 
 			if (!redirection->TargetNetAddresses)
 			{
-				WLog_ERR(TAG, "TargetNetAddresses %" PRIu32 " failed to allocate", count);
+				WLog_ERR(TAG, "TargetNetAddresses %" PRIu32 " failed to allocate",
+				         TargetNetAddressesCount);
 				return STATE_RUN_FAILED;
 			}
 		}
+		redirection->TargetNetAddressesCount = TargetNetAddressesCount;
 
-		WLog_DBG(TAG, "TargetNetAddressesCount: %" PRIu32 "", count);
+		WLog_DBG(TAG, "TargetNetAddressesCount: %" PRIu32 "", TargetNetAddressesCount);
 
-		for (UINT32 i = 0; i < count; i++)
+		for (UINT32 i = 0; i < TargetNetAddressesCount; i++)
 		{
 			if (!rdp_redirection_read_unicode_string(s, &(redirection->TargetNetAddresses[i]), 80))
 				return STATE_RUN_FAILED;

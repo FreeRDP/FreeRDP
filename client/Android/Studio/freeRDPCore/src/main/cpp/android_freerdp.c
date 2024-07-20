@@ -56,7 +56,7 @@
 #define TAG CLIENT_TAG("android")
 
 /* Defines the JNI version supported by this library. */
-#define FREERDP_JNI_VERSION "3.1.1-dev0"
+#define FREERDP_JNI_VERSION FREERDP_VERSION_FULL
 static void android_OnChannelConnectedEventHandler(void* context,
                                                    const ChannelConnectedEventArgs* e)
 {
@@ -110,7 +110,6 @@ static BOOL android_begin_paint(rdpContext* context)
 
 static BOOL android_end_paint(rdpContext* context)
 {
-	int i;
 	HGDI_WND hwnd;
 	int ninvalid;
 	rdpGdi* gdi;
@@ -152,7 +151,7 @@ static BOOL android_end_paint(rdpContext* context)
 	x2 = cinvalid[0].x + cinvalid[0].w;
 	y2 = cinvalid[0].y + cinvalid[0].h;
 
-	for (i = 0; i < ninvalid; i++)
+	for (int i = 0; i < ninvalid; i++)
 	{
 		x1 = MIN(x1, cinvalid[i].x);
 		y1 = MIN(y1, cinvalid[i].y);
@@ -650,7 +649,9 @@ JNIEXPORT jlong JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp
 
 	if (setenv("HOME", _strdup(envStr), 1) != 0)
 	{
-		WLog_FATAL(TAG, "Failed to set environemnt HOME=%s %s [%d]", env, strerror(errno), errno);
+		char ebuffer[256] = { 0 };
+		WLog_FATAL(TAG, "Failed to set environemnt HOME=%s %s [%d]", env,
+		           winpr_strerror(errno, ebuffer, sizeof(ebuffer)), errno);
 		return (jlong)NULL;
 	}
 
@@ -696,7 +697,7 @@ Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1parse_1arguments(JNIEn
                                                                            jobjectArray arguments)
 {
 	freerdp* inst = (freerdp*)instance;
-	int i, count;
+	int count;
 	char** argv;
 	DWORD status;
 
@@ -709,7 +710,7 @@ Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1parse_1arguments(JNIEn
 	if (!argv)
 		return JNI_TRUE;
 
-	for (i = 0; i < count; i++)
+	for (int i = 0; i < count; i++)
 	{
 		jstring str = (jstring)(*env)->GetObjectArrayElement(env, arguments, i);
 		const char* raw = (*env)->GetStringUTFChars(env, str, 0);
@@ -720,7 +721,7 @@ Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1parse_1arguments(JNIEn
 	status =
 	    freerdp_client_settings_parse_command_line(inst->context->settings, count, argv, FALSE);
 
-	for (i = 0; i < count; i++)
+	for (int i = 0; i < count; i++)
 		free(argv[i]);
 
 	free(argv);

@@ -1,7 +1,7 @@
 message("PRELOADING cache")
 set (CMAKE_VERBOSE_MAKEFILE ON CACHE BOOL "preload")
 set (BUILD_TESTING ON CACHE BOOL "preload")
-set (WITH_MANPAGES OFF CACHE BOOL "preload")
+set (WITH_MANPAGES ON CACHE BOOL "preload")
 set (CMAKE_BUILD_TYPE "preload" CACHE STRING "preload")
 set (BUILD_TESTING ON CACHE BOOL "preload")
 set (WITH_PULSE ON CACHE BOOL "preload")

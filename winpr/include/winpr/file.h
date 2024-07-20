@@ -27,6 +27,7 @@
 #include <winpr/nt.h>
 #include <winpr/io.h>
 #include <winpr/error.h>
+#include <winpr/handle.h>
 
 #ifndef _WIN32
 
@@ -262,11 +263,13 @@ extern "C"
 {
 #endif
 
+	WINPR_ATTR_MALLOC(CloseHandle, 1)
 	WINPR_API HANDLE CreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode,
 	                             LPSECURITY_ATTRIBUTES lpSecurityAttributes,
 	                             DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes,
 	                             HANDLE hTemplateFile);
 
+	WINPR_ATTR_MALLOC(CloseHandle, 1)
 	WINPR_API HANDLE CreateFileW(LPCWSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode,
 	                             LPSECURITY_ATTRIBUTES lpSecurityAttributes,
 	                             DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes,
@@ -359,20 +362,26 @@ extern "C"
 	WINPR_API BOOL SetFileTime(HANDLE hFile, const FILETIME* lpCreationTime,
 	                           const FILETIME* lpLastAccessTime, const FILETIME* lpLastWriteTime);
 
+	WINPR_API BOOL FindClose(HANDLE hFindFile);
+
+	WINPR_ATTR_MALLOC(FindClose, 1)
 	WINPR_API HANDLE FindFirstFileA(LPCSTR lpFileName, LPWIN32_FIND_DATAA lpFindFileData);
+
+	WINPR_ATTR_MALLOC(FindClose, 1)
 	WINPR_API HANDLE FindFirstFileW(LPCWSTR lpFileName, LPWIN32_FIND_DATAW lpFindFileData);
 
+	WINPR_ATTR_MALLOC(FindClose, 1)
 	WINPR_API HANDLE FindFirstFileExA(LPCSTR lpFileName, FINDEX_INFO_LEVELS fInfoLevelId,
 	                                  LPVOID lpFindFileData, FINDEX_SEARCH_OPS fSearchOp,
 	                                  LPVOID lpSearchFilter, DWORD dwAdditionalFlags);
+
+	WINPR_ATTR_MALLOC(FindClose, 1)
 	WINPR_API HANDLE FindFirstFileExW(LPCWSTR lpFileName, FINDEX_INFO_LEVELS fInfoLevelId,
 	                                  LPVOID lpFindFileData, FINDEX_SEARCH_OPS fSearchOp,
 	                                  LPVOID lpSearchFilter, DWORD dwAdditionalFlags);
 
 	WINPR_API BOOL FindNextFileA(HANDLE hFindFile, LPWIN32_FIND_DATAA lpFindFileData);
 	WINPR_API BOOL FindNextFileW(HANDLE hFindFile, LPWIN32_FIND_DATAW lpFindFileData);
-
-	WINPR_API BOOL FindClose(HANDLE hFindFile);
 
 	WINPR_API BOOL CreateDirectoryA(LPCSTR lpPathName, LPSECURITY_ATTRIBUTES lpSecurityAttributes);
 	WINPR_API BOOL CreateDirectoryW(LPCWSTR lpPathName, LPSECURITY_ATTRIBUTES lpSecurityAttributes);

@@ -127,11 +127,9 @@ static void ntlm_print_message_fields(const NTLM_MESSAGE_FIELDS* fields, const c
 
 static void ntlm_print_negotiate_flags(UINT32 flags)
 {
-	int i;
-
 	WLog_VRB(TAG, "negotiateFlags \"0x%08" PRIX32 "\"", flags);
 
-	for (i = 31; i >= 0; i--)
+	for (int i = 31; i >= 0; i--)
 	{
 		if ((flags >> i) & 1)
 		{
@@ -313,7 +311,7 @@ static BOOL ntlm_read_message_fields(wStream* s, NTLM_MESSAGE_FIELDS* fields)
 
 static BOOL ntlm_write_message_fields(wStream* s, const NTLM_MESSAGE_FIELDS* fields)
 {
-	UINT16 MaxLen;
+	UINT16 MaxLen = 0;
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(fields);
 
@@ -466,7 +464,7 @@ static BOOL ntlm_read_message_integrity_check(wStream* s, size_t* offset, BYTE* 
 static BOOL ntlm_write_message_integrity_check(wStream* s, size_t offset, const BYTE* data,
                                                size_t size, const char* name)
 {
-	size_t pos;
+	size_t pos = 0;
 
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(data);
@@ -490,10 +488,10 @@ static BOOL ntlm_write_message_integrity_check(wStream* s, size_t offset, const 
 SECURITY_STATUS ntlm_read_NegotiateMessage(NTLM_CONTEXT* context, PSecBuffer buffer)
 {
 	wStream sbuffer;
-	wStream* s;
-	size_t length;
+	wStream* s = NULL;
+	size_t length = 0;
 	const NTLM_NEGOTIATE_MESSAGE empty = { 0 };
-	NTLM_NEGOTIATE_MESSAGE* message;
+	NTLM_NEGOTIATE_MESSAGE* message = NULL;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(buffer);
@@ -564,10 +562,10 @@ SECURITY_STATUS ntlm_read_NegotiateMessage(NTLM_CONTEXT* context, PSecBuffer buf
 SECURITY_STATUS ntlm_write_NegotiateMessage(NTLM_CONTEXT* context, const PSecBuffer buffer)
 {
 	wStream sbuffer;
-	wStream* s;
-	size_t length;
+	wStream* s = NULL;
+	size_t length = 0;
 	const NTLM_NEGOTIATE_MESSAGE empty = { 0 };
-	NTLM_NEGOTIATE_MESSAGE* message;
+	NTLM_NEGOTIATE_MESSAGE* message = NULL;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(buffer);
@@ -655,13 +653,13 @@ SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer buf
 {
 	SECURITY_STATUS status = SEC_E_INVALID_TOKEN;
 	wStream sbuffer;
-	wStream* s;
-	size_t length;
-	size_t StartOffset;
-	size_t PayloadOffset;
-	NTLM_AV_PAIR* AvTimestamp;
+	wStream* s = NULL;
+	size_t length = 0;
+	size_t StartOffset = 0;
+	size_t PayloadOffset = 0;
+	NTLM_AV_PAIR* AvTimestamp = NULL;
 	const NTLM_CHALLENGE_MESSAGE empty = { 0 };
-	NTLM_CHALLENGE_MESSAGE* message;
+	NTLM_CHALLENGE_MESSAGE* message = NULL;
 
 	if (!context || !buffer)
 		return SEC_E_INTERNAL_ERROR;
@@ -718,7 +716,7 @@ SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer buf
 
 	if (message->TargetInfo.Len > 0)
 	{
-		size_t cbAvTimestamp;
+		size_t cbAvTimestamp = 0;
 
 		if (!ntlm_read_message_fields_buffer(s, &(message->TargetInfo)))
 			goto fail;
@@ -804,11 +802,11 @@ fail:
 SECURITY_STATUS ntlm_write_ChallengeMessage(NTLM_CONTEXT* context, const PSecBuffer buffer)
 {
 	wStream sbuffer;
-	wStream* s;
-	size_t length;
-	UINT32 PayloadOffset;
+	wStream* s = NULL;
+	size_t length = 0;
+	UINT32 PayloadOffset = 0;
 	const NTLM_CHALLENGE_MESSAGE empty = { 0 };
-	NTLM_CHALLENGE_MESSAGE* message;
+	NTLM_CHALLENGE_MESSAGE* message = NULL;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(buffer);
@@ -916,14 +914,14 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 {
 	SECURITY_STATUS status = SEC_E_INVALID_TOKEN;
 	wStream sbuffer;
-	wStream* s;
-	size_t length;
+	wStream* s = NULL;
+	size_t length = 0;
 	UINT32 flags = 0;
 	NTLM_AV_PAIR* AvFlags = NULL;
-	size_t PayloadBufferOffset;
+	size_t PayloadBufferOffset = 0;
 	const NTLM_AUTHENTICATE_MESSAGE empty = { 0 };
-	NTLM_AUTHENTICATE_MESSAGE* message;
-	SSPI_CREDENTIALS* credentials;
+	NTLM_AUTHENTICATE_MESSAGE* message = NULL;
+	SSPI_CREDENTIALS* credentials = NULL;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(buffer);
@@ -1004,7 +1002,7 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 
 	if (message->NtChallengeResponse.Len > 0)
 	{
-		size_t cbAvFlags;
+		size_t cbAvFlags = 0;
 		wStream ssbuffer;
 		wStream* snt = Stream_StaticConstInit(&ssbuffer, message->NtChallengeResponse.Buffer,
 		                                      message->NtChallengeResponse.Len);
@@ -1201,12 +1199,12 @@ fail:
 SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, const PSecBuffer buffer)
 {
 	wStream sbuffer;
-	wStream* s;
-	size_t length;
-	UINT32 PayloadBufferOffset;
+	wStream* s = NULL;
+	size_t length = 0;
+	UINT32 PayloadBufferOffset = 0;
 	const NTLM_AUTHENTICATE_MESSAGE empty = { 0 };
-	NTLM_AUTHENTICATE_MESSAGE* message;
-	SSPI_CREDENTIALS* credentials;
+	NTLM_AUTHENTICATE_MESSAGE* message = NULL;
+	SSPI_CREDENTIALS* credentials = NULL;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(buffer);

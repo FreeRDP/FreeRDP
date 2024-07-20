@@ -31,7 +31,6 @@
 static BOOL parse_xkb_rule_names(char* xkb_rule, unsigned long num_bytes, char** layout,
                                  char** variant)
 {
-	size_t i, index;
 	/* Sample output for "Canadian Multilingual Standard"
 	 *
 	 * _XKB_RULES_NAMES_BACKUP(STRING) = "xorg", "pc105", "ca", "multi", "magic"
@@ -47,7 +46,7 @@ static BOOL parse_xkb_rule_names(char* xkb_rule, unsigned long num_bytes, char**
 	 * “eurosign:e,lv3:ralt_switch,grp:rctrl_toggle”
 	 *         - three options)
 	 */
-	for (i = 0, index = 0; i < num_bytes; i++, index++)
+	for (size_t i = 0, index = 0; i < num_bytes; i++, index++)
 	{
 		char* ptr = xkb_rule + i;
 
@@ -83,7 +82,7 @@ static DWORD kbd_layout_id_from_x_property(Display* display, Window root, char* 
 {
 	char* layout = NULL;
 	char* variant = NULL;
-	char* rule;
+	char* rule = NULL;
 	Atom property = None;
 	Atom type = None;
 	int item_size = 0;

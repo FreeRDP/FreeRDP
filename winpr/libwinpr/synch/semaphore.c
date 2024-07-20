@@ -18,7 +18,7 @@
  */
 
 #include <winpr/config.h>
-
+#include <winpr/debug.h>
 #include <winpr/synch.h>
 
 #include "synch.h"
@@ -53,7 +53,7 @@ static int SemaphoreGetFd(HANDLE handle)
 
 static DWORD SemaphoreCleanupHandle(HANDLE handle)
 {
-	SSIZE_T length;
+	SSIZE_T length = 0;
 	WINPR_SEMAPHORE* sem = (WINPR_SEMAPHORE*)handle;
 
 	if (!SemaphoreIsHandled(handle))
@@ -63,7 +63,9 @@ static DWORD SemaphoreCleanupHandle(HANDLE handle)
 
 	if (length != 1)
 	{
-		WLog_ERR(TAG, "semaphore read() failure [%d] %s", errno, strerror(errno));
+		char ebuffer[256] = { 0 };
+		WLog_ERR(TAG, "semaphore read() failure [%d] %s", errno,
+		         winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 		return WAIT_FAILED;
 	}
 
@@ -127,8 +129,8 @@ static HANDLE_OPS ops = { SemaphoreIsHandled,
 HANDLE CreateSemaphoreW(LPSECURITY_ATTRIBUTES lpSemaphoreAttributes, LONG lInitialCount,
                         LONG lMaximumCount, LPCWSTR lpName)
 {
-	HANDLE handle;
-	WINPR_SEMAPHORE* semaphore;
+	HANDLE handle = NULL;
+	WINPR_SEMAPHORE* semaphore = NULL;
 	semaphore = (WINPR_SEMAPHORE*)calloc(1, sizeof(WINPR_SEMAPHORE));
 
 	if (!semaphore)
@@ -210,9 +212,9 @@ HANDLE OpenSemaphoreA(DWORD dwDesiredAccess, BOOL bInheritHandle, LPCSTR lpName)
 
 BOOL ReleaseSemaphore(HANDLE hSemaphore, LONG lReleaseCount, LPLONG lpPreviousCount)
 {
-	ULONG Type;
-	WINPR_HANDLE* Object;
-	WINPR_SEMAPHORE* semaphore;
+	ULONG Type = 0;
+	WINPR_HANDLE* Object = NULL;
+	WINPR_SEMAPHORE* semaphore = NULL;
 
 	if (!winpr_Handle_GetInfo(hSemaphore, &Type, &Object))
 		return FALSE;

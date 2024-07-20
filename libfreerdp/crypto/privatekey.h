@@ -52,7 +52,7 @@ extern "C"
 	 */
 	FREERDP_LOCAL EVP_PKEY* freerdp_key_get_evp_pkey(const rdpPrivateKey* key);
 
-	FREERDP_LOCAL char* freerdp_key_get_param(const rdpPrivateKey* key,
+	FREERDP_LOCAL BYTE* freerdp_key_get_param(const rdpPrivateKey* key,
 	                                          enum FREERDP_KEY_PARAM param, size_t* plength);
 
 	FREERDP_LOCAL WINPR_DIGEST_CTX* freerdp_key_digest_sign(rdpPrivateKey* key,

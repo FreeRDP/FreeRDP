@@ -209,14 +209,18 @@ extern "C"
 
 	FREERDP_API BOOL audio_format_read(wStream* s, AUDIO_FORMAT* format);
 	FREERDP_API BOOL audio_format_write(wStream* s, const AUDIO_FORMAT* format);
-	FREERDP_API BOOL audio_format_copy(const AUDIO_FORMAT* srcFormat, AUDIO_FORMAT* dstFormat);
+	FREERDP_API BOOL audio_format_copy(const AUDIO_FORMAT* WINPR_RESTRICT srcFormat,
+	                                   AUDIO_FORMAT* WINPR_RESTRICT dstFormat);
 	FREERDP_API BOOL audio_format_compatible(const AUDIO_FORMAT* with, const AUDIO_FORMAT* what);
-
-	FREERDP_API AUDIO_FORMAT* audio_format_new(void);
-	FREERDP_API AUDIO_FORMAT* audio_formats_new(size_t count);
 
 	FREERDP_API void audio_format_free(AUDIO_FORMAT* format);
 	FREERDP_API void audio_formats_free(AUDIO_FORMAT* formats, size_t count);
+
+	WINPR_ATTR_MALLOC(audio_formats_free, 1)
+	FREERDP_API AUDIO_FORMAT* audio_format_new(void);
+
+	WINPR_ATTR_MALLOC(audio_formats_free, 1)
+	FREERDP_API AUDIO_FORMAT* audio_formats_new(size_t count);
 
 #ifdef __cplusplus
 }

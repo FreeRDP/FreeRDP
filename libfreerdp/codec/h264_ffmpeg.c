@@ -91,9 +91,9 @@ typedef struct
 #endif
 } H264_CONTEXT_LIBAVCODEC;
 
-static void libavcodec_destroy_encoder(H264_CONTEXT* h264)
+static void libavcodec_destroy_encoder(H264_CONTEXT* WINPR_RESTRICT h264)
 {
-	H264_CONTEXT_LIBAVCODEC* sys;
+	H264_CONTEXT_LIBAVCODEC* sys = NULL;
 
 	if (!h264 || !h264->subsystem)
 		return;
@@ -114,10 +114,10 @@ static void libavcodec_destroy_encoder(H264_CONTEXT* h264)
 	sys->codecEncoderContext = NULL;
 }
 
-static BOOL libavcodec_create_encoder(H264_CONTEXT* h264)
+static BOOL libavcodec_create_encoder(H264_CONTEXT* WINPR_RESTRICT h264)
 {
 	BOOL recreate = FALSE;
-	H264_CONTEXT_LIBAVCODEC* sys;
+	H264_CONTEXT_LIBAVCODEC* sys = NULL;
 
 	if (!h264 || !h264->subsystem)
 		return FALSE;
@@ -186,7 +186,8 @@ EXCEPTION:
 	return FALSE;
 }
 
-static int libavcodec_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT32 SrcSize)
+static int libavcodec_decompress(H264_CONTEXT* WINPR_RESTRICT h264,
+                                 const BYTE* WINPR_RESTRICT pSrcData, UINT32 SrcSize)
 {
 	union
 	{
@@ -194,7 +195,7 @@ static int libavcodec_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT3
 		BYTE* pv;
 	} cnv;
 	int rc = -1;
-	int status;
+	int status = 0;
 	int gotFrame = 0;
 	AVPacket* packet = NULL;
 
@@ -324,8 +325,10 @@ fail:
 	return rc;
 }
 
-static int libavcodec_compress(H264_CONTEXT* h264, const BYTE** pSrcYuv, const UINT32* pStride,
-                               BYTE** ppDstData, UINT32* pDstSize)
+static int libavcodec_compress(H264_CONTEXT* WINPR_RESTRICT h264,
+                               const BYTE** WINPR_RESTRICT pSrcYuv,
+                               const UINT32* WINPR_RESTRICT pStride,
+                               BYTE** WINPR_RESTRICT ppDstData, UINT32* WINPR_RESTRICT pDstSize)
 {
 	union
 	{
@@ -333,7 +336,7 @@ static int libavcodec_compress(H264_CONTEXT* h264, const BYTE** pSrcYuv, const U
 		uint8_t* pv;
 	} cnv;
 	int rc = -1;
-	int status;
+	int status = 0;
 	int gotFrame = 0;
 
 	WINPR_ASSERT(h264);
@@ -533,9 +536,7 @@ static enum AVPixelFormat libavcodec_get_format(struct AVCodecContext* ctx,
 	H264_CONTEXT_LIBAVCODEC* sys = (H264_CONTEXT_LIBAVCODEC*)h264->pSystemData;
 	WINPR_ASSERT(sys);
 
-	const enum AVPixelFormat* p;
-
-	for (p = fmts; *p != AV_PIX_FMT_NONE; p++)
+	for (const enum AVPixelFormat* p = fmts; *p != AV_PIX_FMT_NONE; p++)
 	{
 		if (*p == sys->hw_pix_fmt)
 		{
@@ -581,7 +582,7 @@ static enum AVPixelFormat libavcodec_get_format(struct AVCodecContext* ctx,
 
 static BOOL libavcodec_init(H264_CONTEXT* h264)
 {
-	H264_CONTEXT_LIBAVCODEC* sys;
+	H264_CONTEXT_LIBAVCODEC* sys = NULL;
 
 	WINPR_ASSERT(h264);
 	sys = (H264_CONTEXT_LIBAVCODEC*)calloc(1, sizeof(H264_CONTEXT_LIBAVCODEC));
@@ -638,6 +639,7 @@ static BOOL libavcodec_init(H264_CONTEXT* h264)
 				goto fail_hwdevice_create;
 			}
 		}
+		WLog_Print(h264->log, WLOG_INFO, "Using VAAPI for accelerated H264 decoding");
 
 		sys->codecDecoderContext->get_format = libavcodec_get_format;
 		sys->hw_pix_fmt = AV_PIX_FMT_VAAPI;

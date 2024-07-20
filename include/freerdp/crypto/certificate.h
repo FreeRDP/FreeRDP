@@ -38,12 +38,19 @@ extern "C"
 
 	typedef struct rdp_certificate rdpCertificate;
 
-	FREERDP_API rdpCertificate* freerdp_certificate_new(void);
-	FREERDP_API rdpCertificate* freerdp_certificate_new_from_file(const char* file);
-	FREERDP_API rdpCertificate* freerdp_certificate_new_from_pem(const char* pem);
-	FREERDP_API rdpCertificate* freerdp_certificate_new_from_der(const BYTE* data, size_t length);
-
 	FREERDP_API void freerdp_certificate_free(rdpCertificate* certificate);
+
+	WINPR_ATTR_MALLOC(freerdp_certificate_free, 1)
+	FREERDP_API rdpCertificate* freerdp_certificate_new(void);
+
+	WINPR_ATTR_MALLOC(freerdp_certificate_free, 1)
+	FREERDP_API rdpCertificate* freerdp_certificate_new_from_file(const char* file);
+
+	WINPR_ATTR_MALLOC(freerdp_certificate_free, 1)
+	FREERDP_API rdpCertificate* freerdp_certificate_new_from_pem(const char* pem);
+
+	WINPR_ATTR_MALLOC(freerdp_certificate_free, 1)
+	FREERDP_API rdpCertificate* freerdp_certificate_new_from_der(const BYTE* data, size_t length);
 
 	FREERDP_API BOOL freerdp_certificate_is_rsa(const rdpCertificate* certificate);
 

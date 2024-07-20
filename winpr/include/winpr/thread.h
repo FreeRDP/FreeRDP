@@ -194,14 +194,27 @@ extern "C"
 #endif
 
 	/* Thread */
+#define THREAD_MODE_BACKGROUND_BEGIN 0x00010000
+#define THREAD_MODE_BACKGROUND_END 0x00020000
+#define THREAD_PRIORITY_ABOVE_NORMAL 1
+#define THREAD_PRIORITY_BELOW_NORMAL -1
+#define THREAD_PRIORITY_HIGHEST 2
+#define THREAD_PRIORITY_IDLE -15
+#define THREAD_PRIORITY_LOWEST -2
+#define THREAD_PRIORITY_NORMAL 0
+#define THREAD_PRIORITY_TIME_CRITICAL 15
+
+	WINPR_API BOOL SetThreadPriority(HANDLE hThread, int nPriority);
 
 #define CREATE_SUSPENDED 0x00000004
 #define STACK_SIZE_PARAM_IS_A_RESERVATION 0x00010000
 
+	WINPR_ATTR_MALLOC(CloseHandle, 1)
 	WINPR_API HANDLE CreateThread(LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize,
 	                              LPTHREAD_START_ROUTINE lpStartAddress, LPVOID lpParameter,
 	                              DWORD dwCreationFlags, LPDWORD lpThreadId);
 
+	WINPR_ATTR_MALLOC(CloseHandle, 1)
 	WINPR_API HANDLE CreateRemoteThread(HANDLE hProcess, LPSECURITY_ATTRIBUTES lpThreadAttributes,
 	                                    SIZE_T dwStackSize, LPTHREAD_START_ROUTINE lpStartAddress,
 	                                    LPVOID lpParameter, DWORD dwCreationFlags,

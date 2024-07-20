@@ -228,7 +228,6 @@ char** winpr_corkscrew_backtrace_symbols(void* buffer, size_t* used)
 	else
 	{
 		size_t line_len = (data->max > 1024) ? data->max : 1024;
-		size_t i;
 		size_t array_size = data->used * sizeof(char*);
 		size_t lines_size = data->used * line_len;
 		char** vlines = calloc(1, array_size + lines_size);
@@ -242,12 +241,12 @@ char** winpr_corkscrew_backtrace_symbols(void* buffer, size_t* used)
 		}
 
 		/* Set the pointers in the allocated buffer's initial array section */
-		for (i = 0; i < data->used; i++)
+		for (size_t i = 0; i < data->used; i++)
 			vlines[i] = (char*)vlines + array_size + i * line_len;
 
 		fkt->get_backtrace_symbols(data->buffer, data->used, symbols);
 
-		for (i = 0; i < data->used; i++)
+		for (size_t i = 0; i < data->used; i++)
 			fkt->format_backtrace_line(i, &data->buffer[i], &symbols[i], vlines[i], line_len);
 
 		fkt->free_backtrace_symbols(symbols, data->used);

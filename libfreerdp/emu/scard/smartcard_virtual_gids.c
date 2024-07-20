@@ -266,6 +266,8 @@ typedef struct vgids_keymap_record vgidsKeymapRecord;
 
 #pragma pack(pop)
 
+static void vgids_ef_free(void* ptr);
+
 static vgidsEF* vgids_ef_new(vgidsContext* ctx, USHORT id)
 {
 	vgidsEF* ef = calloc(1, sizeof(vgidsEF));
@@ -288,7 +290,7 @@ static vgidsEF* vgids_ef_new(vgidsContext* ctx, USHORT id)
 	return ef;
 
 create_failed:
-	free(ef);
+	vgids_ef_free(ef);
 	return NULL;
 }
 
@@ -344,10 +346,10 @@ static BOOL vgids_ef_read_do(vgidsEF* ef, UINT16 doID, BYTE** data, DWORD* dataS
 	/* Look for the requested DO */
 	while (Stream_GetRemainingLength(ef->data) > 3)
 	{
-		BYTE len;
-		size_t curPos;
-		UINT16 doSize;
-		UINT16 nextDOID;
+		BYTE len = 0;
+		size_t curPos = 0;
+		UINT16 doSize = 0;
+		UINT16 nextDOID = 0;
 
 		curPos = Stream_GetPosition(ef->data);
 		Stream_Read_UINT16_BE(ef->data, nextDOID);
@@ -379,7 +381,7 @@ static BOOL vgids_ef_read_do(vgidsEF* ef, UINT16 doID, BYTE** data, DWORD* dataS
 
 		if (nextDOID == doID)
 		{
-			BYTE* outData;
+			BYTE* outData = NULL;
 
 			/* Include Tag and length in result */
 			doSize += (UINT16)(Stream_GetPosition(ef->data) - curPos);
@@ -406,7 +408,7 @@ static BOOL vgids_ef_read_do(vgidsEF* ef, UINT16 doID, BYTE** data, DWORD* dataS
 	return FALSE;
 }
 
-static void vgids_ef_free(void* ptr)
+void vgids_ef_free(void* ptr)
 {
 	vgidsEF* ef = ptr;
 	if (ef)
@@ -423,7 +425,6 @@ static BOOL vgids_prepare_fstable(const vgidsFilesysTableEntry* fstable, DWORD n
 	    BYTE unkonwn: 0x01
 	    Array of vgidsFilesysTableEntry
 	*/
-	DWORD i;
 	BYTE* data = malloc(sizeof(vgidsFilesysTableEntry) * numEntries + 1);
 	if (!data)
 	{
@@ -432,7 +433,7 @@ static BOOL vgids_prepare_fstable(const vgidsFilesysTableEntry* fstable, DWORD n
 	}
 
 	*data = 0x01;
-	for (i = 0; i < numEntries; ++i)
+	for (UINT32 i = 0; i < numEntries; ++i)
 		memcpy(data + 1 + (sizeof(vgidsFilesysTableEntry) * i), &fstable[i],
 		       sizeof(vgidsFilesysTableEntry));
 
@@ -449,7 +450,7 @@ static BOOL vgids_prepare_certificate(const rdpCertificate* cert, BYTE** kxc, DW
 	    UINT16 source size
 	    ZLIB compressed cert
 	*/
-	uLongf destSize;
+	uLongf destSize = 0;
 	wStream* s = NULL;
 	BYTE* comprData = NULL;
 
@@ -535,7 +536,7 @@ static BOOL vgids_prepare_keymap(vgidsContext* context, BYTE** outData, DWORD* o
 	    BYTE unkonwn (count?): 0x01
 	    Array of vgidsKeymapRecord
 	*/
-	BYTE* data;
+	BYTE* data = NULL;
 	vgidsKeymapRecord record = {
 		1,                                /* state */
 		0,                                /* algo */
@@ -638,8 +639,8 @@ static BOOL vgids_create_response(UINT16 status, const BYTE* answer, DWORD answe
 
 static BOOL vgids_read_do_fkt(void* data, size_t index, va_list ap)
 {
-	BYTE* response;
-	DWORD responseSize;
+	BYTE* response = NULL;
+	DWORD responseSize = 0;
 	vgidsEF* file = (vgidsEF*)data;
 	vgidsContext* context = va_arg(ap, vgidsContext*);
 	UINT16 efID = (UINT16)va_arg(ap, unsigned);
@@ -679,7 +680,9 @@ static void vgids_reset_context_command_data(vgidsContext* context)
 static BOOL vgids_ins_select(vgidsContext* context, wStream* s, BYTE** response,
                              DWORD* responseSize)
 {
-	BYTE p1, p2, lc;
+	BYTE p1 = 0;
+	BYTE p2 = 0;
+	BYTE lc = 0;
 	DWORD resultDataSize = 0;
 	const BYTE* resultData = NULL;
 	UINT16 status = ISO_STATUS_SUCCESS;
@@ -742,7 +745,7 @@ static BOOL vgids_ins_select(vgidsContext* context, wStream* s, BYTE** response,
 		case 0x00:
 		{
 			/* read FID from APDU */
-			UINT16 fid;
+			UINT16 fid = 0;
 			if (lc > 2)
 			{
 				WLog_ERR(TAG, "The LC byte for the file ID is greater than 2");
@@ -839,23 +842,25 @@ static BOOL vgids_get_public_key(vgidsContext* context, UINT16 doTag)
 	/* set response data */
 	Stream_SetPosition(response, 0);
 	context->responseData = response;
+	response = NULL;
 
 	rc = TRUE;
 handle_error:
 	free(n);
 	free(e);
 	Stream_Free(pubKey, TRUE);
-	if (!rc)
-		Stream_Free(response, TRUE);
+	Stream_Free(response, TRUE);
 	return rc;
 }
 
 static BOOL vgids_ins_getdata(vgidsContext* context, wStream* s, BYTE** response,
                               DWORD* responseSize)
 {
-	UINT16 doId;
-	UINT16 fileId;
-	BYTE p1, p2, lc;
+	UINT16 doId = 0;
+	UINT16 fileId = 0;
+	BYTE p1 = 0;
+	BYTE p2 = 0;
+	BYTE lc = 0;
 	DWORD resultDataSize = 0;
 	const BYTE* resultData = NULL;
 	UINT16 status = ISO_STATUS_SUCCESS;
@@ -878,7 +883,8 @@ static BOOL vgids_ins_getdata(vgidsContext* context, wStream* s, BYTE** response
 	{
 		case 4:
 		{
-			BYTE tag, length;
+			BYTE tag = 0;
+			BYTE length = 0;
 			Stream_Read_UINT8(s, tag);
 			Stream_Read_UINT8(s, length);
 			if (tag != 0x5C && length != 0x02)
@@ -893,8 +899,10 @@ static BOOL vgids_ins_getdata(vgidsContext* context, wStream* s, BYTE** response
 		}
 		case 0xA:
 		{
-			UINT16 pubKeyDO;
-			BYTE tag, length, keyRef;
+			UINT16 pubKeyDO = 0;
+			BYTE tag = 0;
+			BYTE length = 0;
+			BYTE keyRef = 0;
 
 			/* We want to retrieve the public key? */
 			if (p1 != 0x3F && p2 != 0xFF)
@@ -966,8 +974,11 @@ static BOOL vgids_ins_getdata(vgidsContext* context, wStream* s, BYTE** response
 static BOOL vgids_ins_manage_security_environment(vgidsContext* context, wStream* s,
                                                   BYTE** response, DWORD* responseSize)
 {
-	BYTE tag, length;
-	BYTE p1, p2, lc;
+	BYTE tag = 0;
+	BYTE length = 0;
+	BYTE p1 = 0;
+	BYTE p2 = 0;
+	BYTE lc = 0;
 	DWORD resultDataSize = 0;
 	const BYTE* resultData = NULL;
 	UINT16 status = ISO_STATUS_SUCCESS;
@@ -1026,7 +1037,8 @@ create_response:
 
 static BOOL vgids_perform_digital_signature(vgidsContext* context)
 {
-	size_t sigSize, msgSize;
+	size_t sigSize = 0;
+	size_t msgSize = 0;
 	EVP_PKEY_CTX* ctx = NULL;
 	EVP_PKEY* pk = freerdp_key_get_evp_pkey(context->privateKey);
 	const vgidsDigestInfoMap gidsDigestInfo[VGIDS_MAX_DIGEST_INFO] = {
@@ -1035,8 +1047,10 @@ static BOOL vgids_perform_digital_signature(vgidsContext* context)
 		{ g_PKCS1_SHA256, sizeof(g_PKCS1_SHA256), EVP_sha256() },
 		{ g_PKCS1_SHA384, sizeof(g_PKCS1_SHA384), EVP_sha384() },
 		{ g_PKCS1_SHA512, sizeof(g_PKCS1_SHA512), EVP_sha512() },
+#if OPENSSL_VERSION_NUMBER >= 0x10101000L
 		{ g_PKCS1_SHA512_224, sizeof(g_PKCS1_SHA512_224), EVP_sha512_224() },
 		{ g_PKCS1_SHA512_256, sizeof(g_PKCS1_SHA512_256), EVP_sha512_256() }
+#endif
 	};
 
 	if (!pk)
@@ -1137,7 +1151,7 @@ static BOOL vgids_perform_decrypt(vgidsContext* context)
 {
 	EVP_PKEY_CTX* ctx = NULL;
 	BOOL rc = FALSE;
-	int res;
+	int res = 0;
 	int padding = RSA_NO_PADDING;
 
 	vgids_reset_context_response(context);
@@ -1203,7 +1217,10 @@ decrypt_failed:
 static BOOL vgids_ins_perform_security_operation(vgidsContext* context, wStream* s, BYTE** response,
                                                  DWORD* responseSize)
 {
-	BYTE cla, p1, p2, lc;
+	BYTE cla = 0;
+	BYTE p1 = 0;
+	BYTE p2 = 0;
+	BYTE lc = 0;
 	DWORD resultDataSize = 0;
 	const BYTE* resultData = NULL;
 	UINT16 status = ISO_STATUS_SUCCESS;
@@ -1291,10 +1308,13 @@ create_response:
 static BOOL vgids_ins_getresponse(vgidsContext* context, wStream* s, BYTE** response,
                                   DWORD* responseSize)
 {
-	BYTE p1, p2, le;
+	BYTE p1 = 0;
+	BYTE p2 = 0;
+	BYTE le = 0;
 	DWORD resultDataSize = 0;
 	const BYTE* resultData = NULL;
-	DWORD expectedLen, remainingSize;
+	DWORD expectedLen = 0;
+	DWORD remainingSize = 0;
 	UINT16 status = ISO_STATUS_SUCCESS;
 
 	/* Get response continues data transfer after a previous get data command */
@@ -1345,7 +1365,10 @@ create_response:
 static BOOL vgids_ins_verify(vgidsContext* context, wStream* s, BYTE** response,
                              DWORD* responseSize)
 {
-	BYTE ins, p1, p2, lc;
+	BYTE ins = 0;
+	BYTE p1 = 0;
+	BYTE p2 = 0;
+	BYTE lc = 0;
 	UINT16 status = ISO_STATUS_SUCCESS;
 	char pin[VGIDS_MAX_PIN_SIZE + 1] = { 0 };
 
@@ -1410,7 +1433,7 @@ create_response:
 
 vgidsContext* vgids_new(void)
 {
-	wObject* obj;
+	wObject* obj = NULL;
 	vgidsContext* ctx = calloc(1, sizeof(vgidsContext));
 
 	ctx->files = ArrayList_New(FALSE);
@@ -1432,9 +1455,9 @@ create_failed:
 
 BOOL vgids_init(vgidsContext* ctx, const char* cert, const char* privateKey, const char* pin)
 {
-	DWORD kxcSize;
-	DWORD keymapSize;
-	DWORD fsTableSize;
+	DWORD kxcSize = 0;
+	DWORD keymapSize = 0;
+	DWORD fsTableSize = 0;
 	BOOL rc = FALSE;
 	BYTE* kxc = NULL;
 	BYTE* keymap = NULL;
@@ -1542,6 +1565,9 @@ BOOL vgids_init(vgidsContext* ctx, const char* cert, const char* privateKey, con
 	rc = TRUE;
 
 init_failed:
+	// ArrayList_Append in vgids_ef_new takes ownership
+	// of cardidEF, commonEF, masterEF
+	// NOLINTNEXTLINE(clang-analyzer-unix.Malloc)
 	free(kxc);
 	free(keymap);
 	free(fsTable);

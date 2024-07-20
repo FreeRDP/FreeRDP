@@ -64,8 +64,10 @@ FREERDP_LOCAL state_run_t license_recv(rdpLicense* license, wStream* s);
 FREERDP_LOCAL BOOL license_server_configure(rdpLicense* license);
 FREERDP_LOCAL BOOL license_server_send_request(rdpLicense* license);
 
-FREERDP_LOCAL rdpLicense* license_new(rdpRdp* rdp);
 FREERDP_LOCAL void license_free(rdpLicense* license);
+
+WINPR_ATTR_MALLOC(license_free, 1)
+FREERDP_LOCAL rdpLicense* license_new(rdpRdp* rdp);
 
 #define LICENSE_TAG FREERDP_TAG("core.license")
 #ifdef WITH_DEBUG_LICENSE
