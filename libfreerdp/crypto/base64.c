@@ -402,7 +402,7 @@ static INLINE int base64_decode_char(const signed char* WINPR_RESTRICT alphabet,
 	if (c <= '\0')
 		return -1;
 
-	return alphabet[c];
+	return alphabet[(size_t)c];
 }
 
 static INLINE void* base64_decode(const signed char* WINPR_RESTRICT alphabet,
