@@ -725,7 +725,7 @@ static BOOL freerdp_dsp_channel_mix(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
 
 			case 2:  /* We only support stereo, so we can not handle this case. */
 			default: /* Unsupported number of channels */
-				WLog_WARN(TAG, "[%s] unsuported source channel count %" PRIu16, __FUNCTION__,
+				WLog_WARN(TAG, "[%s] unsuported source channel count %" PRIu16, __func__,
 				          srcFormat->nChannels);
 				return FALSE;
 		}
@@ -754,7 +754,7 @@ static BOOL freerdp_dsp_channel_mix(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
 
 		case 1:  /* Invalid, do we want to use a 0 channel sound? */
 		default: /* Unsupported number of channels */
-			WLog_WARN(TAG, "[%s] unsuported channel count %" PRIu16, __FUNCTION__,
+			WLog_WARN(TAG, "[%s] unsuported channel count %" PRIu16, __func__,
 			          srcFormat->nChannels);
 			return FALSE;
 	}
