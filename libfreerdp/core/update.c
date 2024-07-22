@@ -44,6 +44,8 @@
 
 #define TAG FREERDP_TAG("core.update")
 
+#define FORCE_ASYNC_UPDATE_OFF
+
 static const char* const UPDATE_TYPE_STRINGS[] = { "Orders", "Bitmap", "Palette", "Synchronize" };
 
 static const char* update_type_to_string(UINT16 updateType)
@@ -947,8 +949,15 @@ BOOL update_post_connect(rdpUpdate* update)
 	up->asynchronous = update->context->settings->AsyncUpdate;
 
 	if (up->asynchronous)
+	{
+#if defined(FORCE_ASYNC_UPDATE_OFF)
+		WLog_WARN(TAG, "AsyncUpdate requested, but forced deactivated");
+		WLog_WARN(TAG, "see https://github.com/FreeRDP/FreeRDP/issues/10153 for details");
+#else
 		if (!(up->proxy = update_message_proxy_new(update)))
 			return FALSE;
+#endif
+	}
 
 	altsec->switch_surface.bitmapId = SCREEN_BITMAP_SURFACE;
 	IFCALL(update->altsec->SwitchSurface, update->context, &(altsec->switch_surface));
@@ -966,7 +975,11 @@ void update_post_disconnect(rdpUpdate* update)
 	up->asynchronous = update->context->settings->AsyncUpdate;
 
 	if (up->asynchronous)
+	{
+#if !defined(FORCE_ASYNC_UPDATE_OFF)
 		update_message_proxy_free(up->proxy);
+#endif
+	}
 
 	up->initialState = TRUE;
 }
