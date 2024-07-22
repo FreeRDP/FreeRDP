@@ -23,6 +23,8 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
+#include <string.h>
+
 #include <winpr/assert.h>
 
 #include <freerdp/log.h>
@@ -35,6 +37,7 @@
 #include "xf_input.h"
 #include "xf_gfx.h"
 #include "xf_graphics.h"
+#include "xf_utils.h"
 
 #include "xf_event.h"
 
@@ -982,7 +985,7 @@ static BOOL xf_event_PropertyNotify(xfContext* xfc, const XPropertyEvent* event,
 			if (status)
 			{
 				/* If the window is in the iconic state */
-				if (((UINT32)*prop == 3))
+				if (((UINT32)*prop == 3) && !IsGnome())
 				{
 					minimized = TRUE;
 					if (appWindow)

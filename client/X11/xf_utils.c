@@ -18,7 +18,9 @@
  * limitations under the License.
  */
 
+#include <string.h>
 #include <winpr/assert.h>
+#include <winpr/wtypes.h>
 
 #include "xf_utils.h"
 
@@ -149,4 +151,10 @@ int LogDynAndXGetWindowProperty_ex(wLog* log, const char* file, const char* fkt,
 	return XGetWindowProperty(display, w, property, long_offset, long_length, delete, req_type,
 	                          actual_type_return, actual_format_return, nitems_return,
 	                          bytes_after_return, prop_return);
+}
+
+BOOL IsGnome(void)
+{
+	char* env = getenv("DESKTOP_SESSION");
+	return (env != NULL && strcmp(env, "gnome") == 0);
 }
