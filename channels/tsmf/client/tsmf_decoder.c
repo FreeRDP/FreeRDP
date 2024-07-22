@@ -33,16 +33,15 @@
 static ITSMFDecoder* tsmf_load_decoder_by_name(const char* name)
 {
 	ITSMFDecoder* decoder = NULL;
-	TSMF_DECODER_ENTRY entry = NULL;
-
-	entry = (TSMF_DECODER_ENTRY)(void*)freerdp_load_channel_addin_entry("tsmf", name, "decoder", 0);
+	TSMF_DECODER_ENTRY entry =
+	    (TSMF_DECODER_ENTRY)(void*)freerdp_load_channel_addin_entry("tsmf", name, "decoder", 0);
 
 	if (!entry)
 		return NULL;
 
-	decoder = entry();
+	const UINT rc = entry(&decoder);
 
-	if (!decoder)
+	if ((rc != CHANNEL_RC_OK) || !decoder)
 	{
 		WLog_ERR(TAG, "failed to call export function in %s", name);
 		return NULL;
@@ -64,9 +63,7 @@ ITSMFDecoder* tsmf_load_decoder(const char* name, TS_AM_MEDIA_TYPE* media_type)
 	ITSMFDecoder* decoder = NULL;
 
 	if (name)
-	{
 		decoder = tsmf_load_decoder_by_name(name);
-	}
 
 #if defined(WITH_GSTREAMER_1_0)
 	if (!decoder)

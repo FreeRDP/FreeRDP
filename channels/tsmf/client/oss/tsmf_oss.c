@@ -231,11 +231,15 @@ static void tsmf_oss_free(ITSMFAudioDevice* audio)
 	free(oss);
 }
 
-FREERDP_ENTRY_POINT(ITSMFAudioDevice* oss_freerdp_tsmf_client_audio_subsystem_entry(void*))
+FREERDP_ENTRY_POINT(UINT oss_freerdp_tsmf_client_audio_subsystem_entry(void* ptr))
 {
+	ITSMFAudioDevice** sptr = (ITSMFAudioDevice**)ptr;
+	WINPR_ASSERT(sptr);
+	*sptr = NULL;
+
 	TSMFOssAudioDevice* oss = calloc(1, sizeof(TSMFOssAudioDevice));
 	if (!oss)
-		return NULL;
+		return ERROR_OUTOFMEMORY;
 
 	oss->iface.Open = tsmf_oss_open;
 	oss->iface.SetFormat = tsmf_oss_set_format;
@@ -244,5 +248,6 @@ FREERDP_ENTRY_POINT(ITSMFAudioDevice* oss_freerdp_tsmf_client_audio_subsystem_en
 	oss->iface.Flush = tsmf_oss_flush;
 	oss->iface.Free = tsmf_oss_free;
 	oss->pcm_handle = -1;
-	return &oss->iface;
+	*sptr = &oss->iface;
+	return CHANNEL_RC_OK;
 }

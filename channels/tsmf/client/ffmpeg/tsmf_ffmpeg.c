@@ -35,6 +35,7 @@
 
 #include "tsmf_constants.h"
 #include "tsmf_decoder.h"
+#include "tsmf_audio.h"
 
 /* Compatibility with older FFmpeg */
 #if LIBAVUTIL_VERSION_MAJOR < 50
@@ -688,15 +689,19 @@ static BOOL CALLBACK InitializeAvCodecs(PINIT_ONCE once, PVOID param, PVOID* con
 	return TRUE;
 }
 
-FREERDP_ENTRY_POINT(ITSMFDecoder* ffmpeg_freerdp_tsmf_client_decoder_subsystem_entry(void*))
+FREERDP_ENTRY_POINT(UINT ffmpeg_freerdp_tsmf_client_decoder_subsystem_entry(void* ptr))
 {
+	ITSMFDecoder** sptr = (ITSMFDecoder**)ptr;
+	WINPR_ASSERT(sptr);
+	*sptr = NULL;
+
 	TSMFFFmpegDecoder* decoder = NULL;
 	InitOnceExecuteOnce(&g_Initialized, InitializeAvCodecs, NULL, NULL);
 	WLog_DBG(TAG, "TSMFDecoderEntry FFMPEG");
 	decoder = (TSMFFFmpegDecoder*)calloc(1, sizeof(TSMFFFmpegDecoder));
 
 	if (!decoder)
-		return NULL;
+		return ERROR_OUTOFMEMORY;
 
 	decoder->iface.SetFormat = tsmf_ffmpeg_set_format;
 	decoder->iface.Decode = tsmf_ffmpeg_decode;
@@ -704,5 +709,6 @@ FREERDP_ENTRY_POINT(ITSMFDecoder* ffmpeg_freerdp_tsmf_client_decoder_subsystem_e
 	decoder->iface.GetDecodedFormat = tsmf_ffmpeg_get_decoded_format;
 	decoder->iface.GetDecodedDimension = tsmf_ffmpeg_get_decoded_dimension;
 	decoder->iface.Free = tsmf_ffmpeg_free;
-	return (ITSMFDecoder*)decoder;
+	*sptr = &decoder->iface;
+	return CHANNEL_RC_OK;
 }
