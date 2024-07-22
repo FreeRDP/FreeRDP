@@ -528,7 +528,7 @@ ssize_t fdk_aac_dsp_impl_stream_info(void* handle, int encoder, fdk_log_fkt_t lo
 		AACENC_InfoStruct info = { 0 };
 		HANDLE_AACENCODER self = (HANDLE_AACENCODER)handle;
 		AACENC_ERROR err = aacEncInfo(self, &info);
-		if (err != AAC_DEC_OK)
+		if (err != AACENC_OK)
 		{
 			log(WLOG_ERROR, "aacEncInfo failed with %s", enc_err_str(err));
 			return -1;
