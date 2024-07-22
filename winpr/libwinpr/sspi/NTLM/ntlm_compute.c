@@ -323,6 +323,19 @@ fail:
 
 static int hexchar2nibble(WCHAR wc)
 {
+#if defined(__BIG_ENDIAN__)
+	union
+	{
+		BYTE b[2];
+		WCHAR w;
+	} cnv;
+	cnv.w = wc;
+	const BYTE b = cnv.b[0];
+	cnv.b[0] = cnv.b[1];
+	cnv.b[1] = b;
+	wc = cnv.w;
+#endif
+
 	switch (wc)
 	{
 		case L'0':
