@@ -30,7 +30,7 @@
 #include "debug.h"
 
 #include <winpr/wlog.h>
-#include "../log.h"
+#include "../../log.h"
 
 #include <dlfcn.h>
 
