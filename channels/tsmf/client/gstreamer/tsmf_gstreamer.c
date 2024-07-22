@@ -1003,9 +1003,11 @@ static BOOL tsmf_gstreamer_sync(ITSMFDecoder* decoder, void (*cb)(void*), void* 
 	return TRUE;
 }
 
-FREERDP_ENTRY_POINT(ITSMFDecoder* gstreamer_freerdp_tsmf_client_decoder_subsystem_entry(void*))
+FREERDP_ENTRY_POINT(UINT gstreamer_freerdp_tsmf_client_decoder_subsystem_entry(void* ptr))
 {
-	TSMFGstreamerDecoder* decoder;
+	ITSMFDecoder** sptr = (ITSMFDecoder**)ptr;
+	WINPR_ASSERT(sptr);
+	*sptr = NULL;
 
 #if GST_CHECK_VERSION(0, 10, 31)
 	if (!gst_is_initialized())
@@ -1016,10 +1018,11 @@ FREERDP_ENTRY_POINT(ITSMFDecoder* gstreamer_freerdp_tsmf_client_decoder_subsyste
 	gst_init(NULL, NULL);
 #endif
 
+	TSMFGstreamerDecoder* decoder;
 	decoder = calloc(1, sizeof(TSMFGstreamerDecoder));
 
 	if (!decoder)
-		return NULL;
+		return ERROR_OUTOFMEMORY;
 
 	decoder->iface.SetFormat = tsmf_gstreamer_set_format;
 	decoder->iface.Decode = NULL;
@@ -1047,8 +1050,9 @@ FREERDP_ENTRY_POINT(ITSMFDecoder* gstreamer_freerdp_tsmf_client_decoder_subsyste
 	if (tsmf_platform_create(decoder) < 0)
 	{
 		free(decoder);
-		return NULL;
+		return ERROR_INTERNAL_ERROR;
 	}
 
-	return (ITSMFDecoder*)decoder;
+	*sptr = &decoder->iface;
+	return CHANNEL_RC_OK;
 }

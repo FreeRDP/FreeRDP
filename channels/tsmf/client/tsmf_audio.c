@@ -28,17 +28,15 @@
 static ITSMFAudioDevice* tsmf_load_audio_device_by_name(const char* name, const char* device)
 {
 	ITSMFAudioDevice* audio = NULL;
-	TSMF_AUDIO_DEVICE_ENTRY entry = NULL;
-
-	entry =
+	TSMF_AUDIO_DEVICE_ENTRY entry =
 	    (TSMF_AUDIO_DEVICE_ENTRY)(void*)freerdp_load_channel_addin_entry("tsmf", name, "audio", 0);
 
 	if (!entry)
 		return NULL;
 
-	audio = entry();
+	const UINT rc = entry(&audio);
 
-	if (!audio)
+	if ((rc != CHANNEL_RC_OK) || !audio)
 	{
 		WLog_ERR(TAG, "failed to call export function in %s", name);
 		return NULL;

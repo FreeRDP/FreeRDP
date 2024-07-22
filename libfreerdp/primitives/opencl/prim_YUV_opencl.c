@@ -321,7 +321,11 @@ static BOOL primitives_init_opencl_context(primitives_opencl_context* cl)
 			continue;
 		}
 
+#if defined(CL_VERSION_2_0)
+		cl->commandQueue = clCreateCommandQueueWithProperties(context, device_id, NULL, &ret);
+#else
 		cl->commandQueue = clCreateCommandQueue(context, device_id, 0, &ret);
+#endif
 		if (ret != CL_SUCCESS)
 		{
 			WLog_ERR(TAG, "openCL: unable to create command queue");

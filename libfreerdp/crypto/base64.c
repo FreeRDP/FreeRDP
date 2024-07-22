@@ -23,8 +23,8 @@
 
 #include <freerdp/crypto/crypto.h>
 
-static const char enc_base64[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-static const char enc_base64url[] =
+static const BYTE enc_base64[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+static const BYTE enc_base64url[] =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
 
 static const signed char dec_base64url[] = {
@@ -302,7 +302,7 @@ static const signed char dec_base64[] = {
 	-1, /* 127        177	7F	01111111	DEL	&#127;	 	Delete */
 };
 
-static INLINE char* base64_encode_ex(const char* WINPR_RESTRICT alphabet,
+static INLINE char* base64_encode_ex(const BYTE* WINPR_RESTRICT alphabet,
                                      const BYTE* WINPR_RESTRICT data, size_t length, BOOL pad,
                                      BOOL crLf, size_t lineSize)
 {
@@ -391,7 +391,7 @@ static INLINE char* base64_encode_ex(const char* WINPR_RESTRICT alphabet,
 	return ret;
 }
 
-static INLINE char* base64_encode(const signed char* WINPR_RESTRICT alphabet,
+static INLINE char* base64_encode(const BYTE* WINPR_RESTRICT alphabet,
                                   const BYTE* WINPR_RESTRICT data, size_t length, BOOL pad)
 {
 	return base64_encode_ex(alphabet, data, length, pad, FALSE, 64);
@@ -402,7 +402,7 @@ static INLINE int base64_decode_char(const signed char* WINPR_RESTRICT alphabet,
 	if (c <= '\0')
 		return -1;
 
-	return alphabet[c];
+	return alphabet[(size_t)c];
 }
 
 static INLINE void* base64_decode(const signed char* WINPR_RESTRICT alphabet,

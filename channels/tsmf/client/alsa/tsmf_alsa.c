@@ -224,11 +224,15 @@ static void tsmf_alsa_free(ITSMFAudioDevice* audio)
 	free(alsa);
 }
 
-FREERDP_ENTRY_POINT(ITSMFAudioDevice* alsa_freerdp_tsmf_client_audio_subsystem_entry(void*))
+FREERDP_ENTRY_POINT(UINT alsa_freerdp_tsmf_client_audio_subsystem_entry(void* ptr))
 {
+	ITSMFAudioDevice** sptr = (ITSMFAudioDevice**)ptr;
+	WINPR_ASSERT(sptr);
+	*sptr = NULL;
+
 	TSMFAlsaAudioDevice* alsa = calloc(1, sizeof(TSMFAlsaAudioDevice));
 	if (!alsa)
-		return NULL;
+		return ERROR_OUTOFMEMORY;
 
 	alsa->iface.Open = tsmf_alsa_open;
 	alsa->iface.SetFormat = tsmf_alsa_set_format;
@@ -236,5 +240,6 @@ FREERDP_ENTRY_POINT(ITSMFAudioDevice* alsa_freerdp_tsmf_client_audio_subsystem_e
 	alsa->iface.GetLatency = tsmf_alsa_get_latency;
 	alsa->iface.Flush = tsmf_alsa_flush;
 	alsa->iface.Free = tsmf_alsa_free;
-	return &alsa->iface;
+	*sptr = &alsa->iface;
+	return CHANNEL_RC_OK;
 }

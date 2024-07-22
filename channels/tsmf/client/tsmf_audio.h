@@ -44,7 +44,7 @@ struct s_ITSMFAudioDevice
 };
 
 #define TSMF_AUDIO_DEVICE_EXPORT_FUNC_NAME "TSMFAudioDeviceEntry"
-typedef ITSMFAudioDevice* (*TSMF_AUDIO_DEVICE_ENTRY)(void);
+typedef UINT (*TSMF_AUDIO_DEVICE_ENTRY)(ITSMFAudioDevice** dev);
 
 ITSMFAudioDevice* tsmf_load_audio_device(const char* name, const char* device);
 
