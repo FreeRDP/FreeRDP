@@ -125,7 +125,11 @@ static BOOL tsmf_ffmpeg_init_audio_stream(ITSMFDecoder* decoder, const TS_AM_MED
 	TSMFFFmpegDecoder* mdecoder = (TSMFFFmpegDecoder*)decoder;
 	mdecoder->codec_context->sample_rate = media_type->SamplesPerSecond.Numerator;
 	mdecoder->codec_context->bit_rate = media_type->BitRate;
+#if LIBAVUTIL_VERSION_INT >= AV_VERSION_INT(57, 28, 100)
+	mdecoder->codec_context->ch_layout.nb_channels = media_type->Channels;
+#else
 	mdecoder->codec_context->channels = media_type->Channels;
+#endif
 	mdecoder->codec_context->block_align = media_type->BlockAlign;
 #if LIBAVCODEC_VERSION_MAJOR < 55
 #ifdef AV_CPU_FLAG_SSE2
@@ -373,8 +377,10 @@ static BOOL tsmf_ffmpeg_decode_video(ITSMFDecoder* decoder, const BYTE* data, UI
 	len = avcodec_decode_video(mdecoder->codec_context, mdecoder->frame, &decoded, data, data_size);
 #else
 	{
-		AVPacket pkt;
+		AVPacket pkt = { 0 };
+#if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(58, 133, 100)
 		av_init_packet(&pkt);
+#endif
 		pkt.data = (BYTE*)data;
 		pkt.size = data_size;
 
@@ -514,8 +520,11 @@ static BOOL tsmf_ffmpeg_decode_audio(ITSMFDecoder* decoder, const BYTE* data, UI
 			AVFrame* decoded_frame = av_frame_alloc();
 #endif
 			int got_frame = 0;
-			AVPacket pkt;
+			AVPacket pkt = { 0 };
+#if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(58, 133, 100)
 			av_init_packet(&pkt);
+#endif
+
 			pkt.data = (BYTE*)src;
 			pkt.size = src_size;
 #if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(57, 48, 101)
@@ -533,8 +542,12 @@ static BOOL tsmf_ffmpeg_decode_audio(ITSMFDecoder* decoder, const BYTE* data, UI
 
 			if (len >= 0 && got_frame)
 			{
-				frame_size = av_samples_get_buffer_size(NULL, mdecoder->codec_context->channels,
-				                                        decoded_frame->nb_samples,
+#if LIBAVUTIL_VERSION_INT >= AV_VERSION_INT(57, 28, 100)
+				const int channels = mdecoder->codec_context->ch_layout.nb_channels;
+#else
+				const int channels = mdecoder->codec_context->channels;
+#endif
+				frame_size = av_samples_get_buffer_size(NULL, channels, decoded_frame->nb_samples,
 				                                        mdecoder->codec_context->sample_fmt, 1);
 				memcpy(dst, decoded_frame->data[0], frame_size);
 			}
