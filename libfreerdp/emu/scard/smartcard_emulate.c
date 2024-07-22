@@ -56,7 +56,7 @@ static BOOL CALLBACK g_ReaderNameWInit(PINIT_ONCE InitOnce, PVOID Parameter, PVO
 
 struct smartcard_emulation_context
 {
-	const rdpSettings* settings;
+	rdpSettings* settings;
 	DWORD log_default_level;
 	wLog* log;
 	wHashTable* contexts;
