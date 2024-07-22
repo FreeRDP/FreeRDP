@@ -321,35 +321,77 @@ fail:
 	return rc;
 }
 
-static int ntlm_convert_password_hash(NTLM_CONTEXT* context, BYTE* hash)
+static int hexchar2nibble(WCHAR wc)
 {
-	char PasswordHash[32] = { 0 };
-	INT64 PasswordHashLength = 0;
-	SSPI_CREDENTIALS* credentials = NULL;
+	switch (wc)
+	{
+		case L'0':
+		case L'1':
+		case L'2':
+		case L'3':
+		case L'4':
+		case L'5':
+		case L'6':
+		case L'7':
+		case L'8':
+		case L'9':
+			return wc - L'0';
+		case L'a':
+		case L'b':
+		case L'c':
+		case L'd':
+		case L'e':
+		case L'f':
+			return wc - L'a' + 10;
+		case L'A':
+		case L'B':
+		case L'C':
+		case L'D':
+		case L'E':
+		case L'F':
+			return wc - L'A' + 10;
+		default:
+			return -1;
+	}
+}
+static int ntlm_convert_password_hash(NTLM_CONTEXT* context, BYTE* hash, size_t hashlen)
+{
+	const size_t required_len = 2ull * hashlen;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(hash);
 
-	credentials = context->credentials;
+	SSPI_CREDENTIALS* credentials = context->credentials;
 	/* Password contains a password hash of length (PasswordLength -
 	 * SSPI_CREDENTIALS_HASH_LENGTH_OFFSET) */
-	PasswordHashLength = credentials->identity.PasswordLength - SSPI_CREDENTIALS_HASH_LENGTH_OFFSET;
+	const ULONG PasswordHashLength = credentials->identity.PasswordLength -
+	                                 /* Macro [globalScope] */ SSPI_CREDENTIALS_HASH_LENGTH_OFFSET;
 
-	WINPR_ASSERT(PasswordHashLength >= 0);
-	WINPR_ASSERT((size_t)PasswordHashLength < ARRAYSIZE(PasswordHash));
-	if (ConvertWCharNToUtf8(credentials->identity.Password, PasswordHashLength, PasswordHash,
-	                        ARRAYSIZE(PasswordHash)) <= 0)
-		return -1;
-
-	CharUpperBuffA(PasswordHash, (DWORD)PasswordHashLength);
-
-	for (size_t i = 0; i < ARRAYSIZE(PasswordHash); i += 2)
+	if (PasswordHashLength != required_len)
 	{
-		BYTE hn =
-		    (BYTE)(PasswordHash[i] > '9' ? PasswordHash[i] - 'A' + 10 : PasswordHash[i] - '0');
-		BYTE ln = (BYTE)(PasswordHash[i + 1] > '9' ? PasswordHash[i + 1] - 'A' + 10
-		                                           : PasswordHash[i + 1] - '0');
-		hash[i / 2] = (BYTE)((hn << 4) | ln);
+		WLog_ERR(TAG,
+		         "PasswordHash has invalid length %" PRIu32 " must be exactly %" PRIuz " bytes",
+		         PasswordHashLength, required_len);
+		return -1;
+	}
+
+	const WCHAR* PasswordHash = credentials->identity.Password;
+	for (size_t x = 0; x < hashlen; x++)
+	{
+		const int hi = hexchar2nibble(PasswordHash[2 * x]);
+		if (hi < 0)
+		{
+			WLog_ERR(TAG, "PasswordHash has an invalid value at position %" PRIuz, 2 * x);
+			return -1;
+		}
+		const int lo = hexchar2nibble(PasswordHash[2 * x + 1]);
+		if (lo < 0)
+		{
+			WLog_ERR(TAG, "PasswordHash has an invalid value at position %" PRIuz, 2 * x + 1);
+			return -1;
+		}
+		const BYTE val = (BYTE)((hi << 4) | lo);
+		hash[x] = val;
 	}
 
 	return 1;
@@ -400,7 +442,7 @@ static BOOL ntlm_compute_ntlm_v2_hash(NTLM_CONTEXT* context, BYTE* hash)
 	else if (credentials->identity.PasswordLength > SSPI_CREDENTIALS_HASH_LENGTH_OFFSET)
 	{
 		/* Special case for WinPR: password hash */
-		if (ntlm_convert_password_hash(context, context->NtlmHash) < 0)
+		if (ntlm_convert_password_hash(context, context->NtlmHash, sizeof(context->NtlmHash)) < 0)
 			return FALSE;
 
 		NTOWFv2FromHashW(context->NtlmHash, (LPWSTR)credentials->identity.User,
