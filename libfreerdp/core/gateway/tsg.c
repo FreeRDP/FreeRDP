@@ -693,14 +693,13 @@ static BOOL tsg_ndr_read_packet_response(wLog* log, wStream* s, UINT32* index,
 	UINT32 MaxSizeValue = 0;
 	UINT32 MaxOffsetValue = 0;
 	UINT32 idleTimeout = 0;
-	UINT32 reserved = 0;
 
 	WINPR_ASSERT(response);
 
 	if (!Stream_CheckAndLogRequiredLengthOfSizeWLog(log, s, 2, sizeof(UINT32)))
 		return FALSE;
 	Stream_Read_UINT32(s, response->flags); /* Flags (4 bytes) */
-	Stream_Read_UINT32(s, reserved);        /* Reserved (4 bytes) */
+	Stream_Seek_UINT32(s);                  /* Reserved (4 bytes) */
 
 	if (response->flags != TSG_PACKET_TYPE_QUARREQUEST)
 	{
