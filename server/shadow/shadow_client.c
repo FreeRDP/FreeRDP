@@ -221,7 +221,9 @@ static BOOL shadow_client_context_new(freerdp_peer* peer, rdpContext* context)
 		return FALSE;
 	if (!freerdp_settings_set_bool(settings, FreeRDP_SurfaceFrameMarkerEnabled, TRUE))
 		return FALSE;
-	if (!freerdp_settings_set_bool(settings, FreeRDP_SupportGraphicsPipeline, TRUE))
+	if (!freerdp_settings_set_bool(
+	        settings, FreeRDP_SupportGraphicsPipeline,
+	        freerdp_settings_get_bool(srvSettings, FreeRDP_SupportGraphicsPipeline)))
 		return FALSE;
 	if (!freerdp_settings_set_bool(settings, FreeRDP_GfxH264,
 	                               freerdp_settings_get_bool(srvSettings, FreeRDP_GfxH264)))
