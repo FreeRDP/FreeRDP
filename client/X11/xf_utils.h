@@ -20,6 +20,7 @@
 #pragma once
 
 #include <winpr/wlog.h>
+#include <winpr/wtypes.h>
 
 #include <X11/Xlib.h>
 
@@ -89,3 +90,5 @@ int LogTagAndXConvertSelection_ex(const char* tag, const char* file, const char*
 int LogDynAndXConvertSelection_ex(wLog* log, const char* file, const char* fkt, size_t line,
                                   Display* display, Atom selection, Atom target, Atom property,
                                   Window requestor, Time time);
+
+BOOL IsGnome(void);
