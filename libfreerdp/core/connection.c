@@ -350,19 +350,21 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 	nego_init(rdp->nego);
 	nego_set_target(rdp->nego, hostname, settings->ServerPort);
 
+	const UINT32 RdpVersion = freerdp_settings_get_uint32(rdp->settings, FreeRDP_RdpVersion);
+	const char* username = freerdp_settings_get_string(rdp->settings, FreeRDP_Username);
 	if (settings->GatewayEnabled)
 	{
-		char* user = NULL;
-		char* domain = NULL;
+		const char* user = NULL;
+		const char* domain = NULL;
 		char* cookie = NULL;
 		size_t user_length = 0;
 		size_t domain_length = 0;
 		size_t cookie_length = 0;
 
-		if (settings->Username)
+		if (username)
 		{
-			user = settings->Username;
-			user_length = strlen(settings->Username);
+			user = username;
+			user_length = strlen(username);
 		}
 
 		if (settings->Domain)
@@ -381,17 +383,17 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 		CharUpperBuffA(cookie, domain_length);
 		cookie[domain_length] = '\\';
 
-		if (settings->Username)
+		if (user)
 			CopyMemory(&cookie[domain_length + 1], user, user_length);
 
 		cookie[cookie_length] = '\0';
 		status = nego_set_cookie(rdp->nego, cookie);
 		free(cookie);
 	}
+	else if (RdpVersion <= RDP_VERSION_5_PLUS)
+		status = nego_set_cookie(rdp->nego, username);
 	else
-	{
-		status = nego_set_cookie(rdp->nego, settings->Username);
-	}
+		status = TRUE;
 
 	if (!status)
 		return FALSE;
