@@ -15,6 +15,7 @@ jobs:
 
     permissions:
       contents: write
+      pull-requests: write
       
     steps:
     - uses: actions/checkout@v4
@@ -22,10 +23,10 @@ jobs:
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: 8.0.x
-    - name: Restore dependencies
-      run: dotnet restore
     - name: Configure CMake
       run: cmake -G"Visual Studio 17 2022" -Bbuild -Swinpr\libwinpr\timezone\utils
+    - name: Restore dependencies
+      run: dotnet restore build\tzextract.sln
     - name: Build & Install CMake
       run: cmake --build build --config Release
     - name: Update timezones
@@ -34,7 +35,6 @@ jobs:
       id: cpr
       uses: peter-evans/create-pull-request@v6
       with:
-          token: ${{ secrets.PAT }}
           commit-message: Update timezone definitions
           committer: github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>
           author: ${{ github.actor }} <${{ github.actor_id }}+${{ github.actor }}@users.noreply.github.com>
@@ -55,5 +55,4 @@ jobs:
           team-reviewers: |
             developers
             qa-team
-          milestone: 1
           draft: false
