@@ -412,6 +412,12 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 			if (!WLog_AddStringLogFilters(arg->Value))
 				return COMMAND_LINE_ERROR;
 		}
+		CommandLineSwitchCase(arg, "gfx")
+		{
+			if (!freerdp_settings_set_bool(settings, FreeRDP_SupportGraphicsPipeline,
+			                               arg->Value ? TRUE : FALSE))
+				return COMMAND_LINE_ERROR;
+		}
 		CommandLineSwitchCase(arg, "gfx-progressive")
 		{
 			if (!freerdp_settings_set_bool(settings, FreeRDP_GfxProgressive,
