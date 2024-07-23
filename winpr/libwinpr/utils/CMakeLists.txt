@@ -18,7 +18,7 @@
 include(CheckFunctionExists)
 include(CMakeDependentOption)
 
-set(CMAKE_INCLUDE_CURRENT_DIR ON)
+winpr_include_directory_add(${CMAKE_CURRENT_SOURCE_DIR})
 
 option(WITH_LODEPNG "build WinPR with PNG support" OFF)
 if (WITH_LODEPNG)
