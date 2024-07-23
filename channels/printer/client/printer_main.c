@@ -515,6 +515,8 @@ static UINT printer_process_irp_write(PRINTER_DEVICE* printer_dev, IRP* irp)
 		return ERROR_INVALID_DATA;
 	Stream_Read_UINT32(irp->input, Length);
 	Stream_Read_UINT64(irp->input, Offset);
+	(void)Offset; /* [MS-RDPEPC] 2.2.2.9 Server Printer Write Request (DR_PRN_WRITE_REQ)
+	               * reserved for future use, ignore */
 	Stream_Seek(irp->input, 20); /* Padding */
 	const void* ptr = Stream_ConstPointer(irp->input);
 	if (!Stream_SafeSeek(irp->input, Length))

@@ -1038,7 +1038,6 @@ static UINT urb_control_vendor_or_class_request(IUDEVICE* pdev, GENERIC_CHANNEL_
 	BYTE bmRequestType = 0;
 	UINT16 Value = 0;
 	UINT16 Index = 0;
-	UINT16 Padding = 0;
 	wStream* out = NULL;
 	URBDRC_PLUGIN* urbdrc = NULL;
 	const BOOL noAck = (RequestField & 0x80000000U) != 0;
@@ -1061,7 +1060,7 @@ static UINT urb_control_vendor_or_class_request(IUDEVICE* pdev, GENERIC_CHANNEL_
 	Stream_Read_UINT8(s, Request);             /** Request */
 	Stream_Read_UINT16(s, Value);              /** value */
 	Stream_Read_UINT16(s, Index);              /** index */
-	Stream_Read_UINT16(s, Padding);            /** Padding */
+	Stream_Seek_UINT16(s);                     /** Padding */
 	Stream_Read_UINT32(s, OutputBufferSize);
 	if (OutputBufferSize > UINT32_MAX - 36)
 		return ERROR_INVALID_DATA;

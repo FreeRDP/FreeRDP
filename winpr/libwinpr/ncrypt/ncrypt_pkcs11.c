@@ -356,7 +356,6 @@ static void log_(const char* tag, const char* msg, CK_RV rv, CK_ULONG index, CK_
 static SECURITY_STATUS collect_keys(NCryptP11ProviderHandle* provider, P11EnumKeysState* state)
 {
 	CK_OBJECT_HANDLE slotObjects[MAX_KEYS_PER_SLOT] = { 0 };
-	const char* step = NULL;
 
 	WINPR_ASSERT(provider);
 
@@ -418,7 +417,6 @@ static SECURITY_STATUS collect_keys(NCryptP11ProviderHandle* provider, P11EnumKe
 		{
 			// TODO: shall it be fatal ?
 			loge(TAG, "unable to initiate search", rv, i, state->slots[i]);
-			step = "C_FindObjectsInit";
 			goto cleanup_FindObjectsInit;
 		}
 
@@ -428,7 +426,6 @@ static SECURITY_STATUS collect_keys(NCryptP11ProviderHandle* provider, P11EnumKe
 		if (rv != CKR_OK)
 		{
 			loge(TAG, "unable to findObjects", rv, i, state->slots[i]);
-			step = "C_FindObjects";
 			goto cleanup_FindObjects;
 		}
 
