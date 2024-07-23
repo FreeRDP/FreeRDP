@@ -1,0 +1,88 @@
+﻿
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{2D263FEC-4DB0-3C6F-8D62-876FCA2D3D09}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <EnableDefaultItems>false</EnableDefaultItems>
+    <VCProjectUpgraderObjectName>NoUpgrade</VCProjectUpgraderObjectName>
+    <ManagedAssembly>true</ManagedAssembly>
+    <TargetFramework>net6.0</TargetFramework>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+    <OutputPath>D:\a\FreeRDP\FreeRDP\build\Debug\</OutputPath>
+    <DebugType>full</DebugType>
+    <DefineConstants>DEBUG</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <LangVersion>10</LangVersion>
+    <Optimize>false</Optimize>
+    <WarningLevel>3</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <OutputPath>D:\a\FreeRDP\FreeRDP\build\Release\</OutputPath>
+    <DebugType>none</DebugType>
+    <DefineConstants></DefineConstants>
+    <ErrorReport>queue</ErrorReport>
+    <LangVersion>10</LangVersion>
+    <Optimize>true</Optimize>
+    <WarningLevel>1</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)' == 'MinSizeRel'">
+    <OutputPath>D:\a\FreeRDP\FreeRDP\build\MinSizeRel\</OutputPath>
+    <DebugType>none</DebugType>
+    <DefineConstants></DefineConstants>
+    <LangVersion>10</LangVersion>
+    <Optimize>true</Optimize>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)' == 'RelWithDebInfo'">
+    <OutputPath>D:\a\FreeRDP\FreeRDP\build\RelWithDebInfo\</OutputPath>
+    <DebugType>full</DebugType>
+    <DefineConstants></DefineConstants>
+    <LangVersion>10</LangVersion>
+    <Optimize>false</Optimize>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="D:\a\FreeRDP\FreeRDP\winpr\libwinpr\timezone\utils\tzextract.cs">
+      <Link>tzextract.cs</Link>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="System">
+      <CopyLocalSatelliteAssemblies>true</CopyLocalSatelliteAssemblies>
+      <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
+    </Reference>
+    <Reference Include="System.Collections.Generic">
+      <CopyLocalSatelliteAssemblies>true</CopyLocalSatelliteAssemblies>
+      <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
+    </Reference>
+    <Reference Include="System.IO">
+      <CopyLocalSatelliteAssemblies>true</CopyLocalSatelliteAssemblies>
+      <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
+    </Reference>
+    <Reference Include="System.Net.Http">
+      <CopyLocalSatelliteAssemblies>true</CopyLocalSatelliteAssemblies>
+      <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
+    </Reference>
+    <Reference Include="System.Linq">
+      <CopyLocalSatelliteAssemblies>true</CopyLocalSatelliteAssemblies>
+      <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
+    </Reference>
+    <Reference Include="System.Threading">
+      <CopyLocalSatelliteAssemblies>true</CopyLocalSatelliteAssemblies>
+      <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
+    </Reference>
+    <Reference Include="System.Threading.Tasks">
+      <CopyLocalSatelliteAssemblies>true</CopyLocalSatelliteAssemblies>
+      <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="D:\a\FreeRDP\FreeRDP\build\ZERO_CHECK.vcxproj">
+      <Project>{026CEF78-CB6C-3CA7-AC98-57D283E6DBC2}</Project>
+      <Name>ZERO_CHECK</Name>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </ProjectReference>
+  </ItemGroup>
+</Project>

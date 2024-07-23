@@ -1,0 +1,10 @@
+^D:\A\FREERDP\FREERDP\BUILD\CMAKEFILES\FF07A510D7E519AB12B9742A19426EE4\GENERATE.STAMP.RULE
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SD:/a/FreeRDP/FreeRDP/winpr/libwinpr/timezone/utils -BD:/a/FreeRDP/FreeRDP/build --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file D:/a/FreeRDP/FreeRDP/build/tzextract.sln
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
