@@ -72,7 +72,7 @@ internal class Program
 		using (StreamWriter fs = new StreamWriter(fpath))
 		{
 			fs.WriteLine("{");
-			fs.WriteLine("\"TimeZoneNameMap\": [");
+			fs.WriteLine("\"TimeZoneNameMap\": {");
 
 			bool first = true;
 			foreach (System.TimeZoneInfo tz in System.TimeZoneInfo.GetSystemTimeZones())
