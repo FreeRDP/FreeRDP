@@ -3034,6 +3034,8 @@ static BOOL rdp_apply_bitmap_codecs_capability_set(rdpSettings* settings, const 
 		settings->RemoteFxCodecId = src->RemoteFxCodecId;
 		settings->RemoteFxCaptureFlags = src->RemoteFxCaptureFlags;
 		settings->RemoteFxOnly = src->RemoteFxOnly;
+		settings->RemoteFxRlgrMode = src->RemoteFxRlgrMode;
+		settings->RemoteFxCodecMode = src->RemoteFxCodecMode;
 		settings->NSCodecId = src->NSCodecId;
 		settings->NSCodecAllowDynamicColorFidelity = src->NSCodecAllowDynamicColorFidelity;
 		settings->NSCodecAllowSubsampling = src->NSCodecAllowSubsampling;
