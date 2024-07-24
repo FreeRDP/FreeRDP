@@ -211,6 +211,13 @@ static void test_peer_end_frame(freerdp_peer* client)
 	context->frame_id++;
 }
 
+static BOOL stream_surface_bits_supported(const rdpSettings* settings)
+{
+	const UINT32 supported =
+	    freerdp_settings_get_uint32(settings, FreeRDP_SurfaceCommandsSupported);
+	return ((supported & SURFCMDS_STREAM_SURFACE_BITS) != 0);
+}
+
 static BOOL test_peer_draw_background(freerdp_peer* client)
 {
 	size_t size = 0;
@@ -257,7 +264,7 @@ static BOOL test_peer_draw_background(freerdp_peer* client)
 
 	memset(rgb_data, 0xA0, size);
 
-	if (RemoteFxCodec)
+	if (RemoteFxCodec && stream_surface_bits_supported(settings))
 	{
 		WLog_DBG(TAG, "Using RemoteFX codec");
 		rfx_context_set_pixel_format(context->rfx_context, colorFormat);
@@ -408,8 +415,9 @@ static void test_peer_draw_icon(freerdp_peer* client, UINT32 x, UINT32 y)
 		return;
 
 	test_peer_begin_frame(client);
+
 	const BOOL RemoteFxCodec = freerdp_settings_get_bool(settings, FreeRDP_RemoteFxCodec);
-	if (RemoteFxCodec)
+	if (RemoteFxCodec && stream_surface_bits_supported(settings))
 	{
 		const UINT32 RemoteFxCodecId =
 		    freerdp_settings_get_uint32(settings, FreeRDP_RemoteFxCodecId);
