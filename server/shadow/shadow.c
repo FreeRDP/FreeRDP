@@ -129,6 +129,8 @@ int main(int argc, char** argv)
 	if (!freerdp_settings_set_uint32(settings, FreeRDP_ColorDepth, 32) ||
 	    !freerdp_settings_set_bool(settings, FreeRDP_NSCodec, TRUE) ||
 	    !freerdp_settings_set_bool(settings, FreeRDP_RemoteFxCodec, TRUE) ||
+	    !freerdp_settings_set_bool(settings, FreeRDP_RemoteFxImageCodec, TRUE) ||
+	    !freerdp_settings_set_uint32(settings, FreeRDP_RemoteFxRlgrMode, RLGR3) ||
 	    !freerdp_settings_set_bool(settings, FreeRDP_GfxH264, TRUE) ||
 	    !freerdp_settings_set_bool(settings, FreeRDP_GfxAVC444, TRUE) ||
 	    !freerdp_settings_set_bool(settings, FreeRDP_GfxAVC444v2, TRUE) ||
