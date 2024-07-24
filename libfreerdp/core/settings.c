@@ -391,6 +391,11 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	if (!settings)
 		return NULL;
 
+	if (!freerdp_settings_set_uint32(settings, FreeRDP_SurfaceCommandsSupported,
+	                                 SURFCMDS_SET_SURFACE_BITS | SURFCMDS_STREAM_SURFACE_BITS |
+	                                     SURFCMDS_FRAME_MARKER))
+		goto out_fail;
+
 	if (!freerdp_settings_set_uint32(settings, FreeRDP_RemoteFxRlgrMode, RLGR3))
 		goto out_fail;
 

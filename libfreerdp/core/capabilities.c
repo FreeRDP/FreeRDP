@@ -2867,7 +2867,7 @@ static BOOL rdp_apply_surface_commands_capability_set(rdpSettings* settings, con
 	 */
 	if (src->FastPathOutput)
 	{
-		settings->SurfaceCommandsSupported = src->SurfaceCommandsSupported;
+		settings->SurfaceCommandsSupported &= src->SurfaceCommandsSupported;
 		settings->SurfaceCommandsEnabled = src->SurfaceCommandsEnabled;
 		settings->SurfaceFrameMarkerEnabled = src->SurfaceFrameMarkerEnabled;
 	}
@@ -2916,7 +2916,7 @@ static BOOL rdp_write_surface_commands_capability_set(wStream* s, const rdpSetti
 
 	const size_t header = rdp_capability_set_start(s);
 	// TODO: Make these configurable too
-	UINT32 cmdFlags = SURFCMDS_SET_SURFACE_BITS | SURFCMDS_STREAM_SURFACE_BITS;
+	UINT32 cmdFlags = freerdp_settings_get_uint32(settings, FreeRDP_SurfaceCommandsSupported);
 
 	if (settings->SurfaceFrameMarkerEnabled)
 		cmdFlags |= SURFCMDS_FRAME_MARKER;
