@@ -283,7 +283,7 @@ HANDLE utils_get_abort_event(rdpRdp* rdp)
 	return rdp->abortEvent;
 }
 
-BOOL utils_abort_event_is_set(rdpRdp* rdp)
+BOOL utils_abort_event_is_set(const rdpRdp* rdp)
 {
 	DWORD status = 0;
 	WINPR_ASSERT(rdp);
