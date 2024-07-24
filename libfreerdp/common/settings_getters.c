@@ -1919,6 +1919,9 @@ UINT32 freerdp_settings_get_uint32(const rdpSettings* settings, FreeRDP_Settings
 		case FreeRDP_RemoteFxCodecMode:
 			return settings->RemoteFxCodecMode;
 
+		case FreeRDP_RemoteFxRlgrMode:
+			return settings->RemoteFxRlgrMode;
+
 		case FreeRDP_RemoteWndSupportLevel:
 			return settings->RemoteWndSupportLevel;
 
@@ -2414,6 +2417,10 @@ BOOL freerdp_settings_set_uint32(rdpSettings* settings, FreeRDP_Settings_Keys_UI
 
 		case FreeRDP_RemoteFxCodecMode:
 			settings->RemoteFxCodecMode = cnv.c;
+			break;
+
+		case FreeRDP_RemoteFxRlgrMode:
+			settings->RemoteFxRlgrMode = cnv.c;
 			break;
 
 		case FreeRDP_RemoteWndSupportLevel:

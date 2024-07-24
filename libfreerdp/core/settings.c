@@ -391,6 +391,9 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	if (!settings)
 		return NULL;
 
+	if (!freerdp_settings_set_uint32(settings, FreeRDP_RemoteFxRlgrMode, RLGR3))
+		goto out_fail;
+
 	if (!freerdp_settings_set_uint16(settings, FreeRDP_CapsProtocolVersion,
 	                                 TS_CAPS_PROTOCOLVERSION))
 		goto out_fail;

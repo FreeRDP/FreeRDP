@@ -415,6 +415,7 @@ static const struct settings_str_entry settings_map[] = {
 	{ FreeRDP_RemoteFxCaptureFlags, FREERDP_SETTINGS_TYPE_UINT32, "FreeRDP_RemoteFxCaptureFlags" },
 	{ FreeRDP_RemoteFxCodecId, FREERDP_SETTINGS_TYPE_UINT32, "FreeRDP_RemoteFxCodecId" },
 	{ FreeRDP_RemoteFxCodecMode, FREERDP_SETTINGS_TYPE_UINT32, "FreeRDP_RemoteFxCodecMode" },
+	{ FreeRDP_RemoteFxRlgrMode, FREERDP_SETTINGS_TYPE_UINT32, "FreeRDP_RemoteFxRlgrMode" },
 	{ FreeRDP_RemoteWndSupportLevel, FREERDP_SETTINGS_TYPE_UINT32,
 	  "FreeRDP_RemoteWndSupportLevel" },
 	{ FreeRDP_RequestedProtocols, FREERDP_SETTINGS_TYPE_UINT32, "FreeRDP_RequestedProtocols" },

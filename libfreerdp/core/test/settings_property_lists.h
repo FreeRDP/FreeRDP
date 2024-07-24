@@ -318,6 +318,7 @@ static const size_t uint32_list_indices[] = {
 	FreeRDP_RemoteFxCaptureFlags,
 	FreeRDP_RemoteFxCodecId,
 	FreeRDP_RemoteFxCodecMode,
+	FreeRDP_RemoteFxRlgrMode,
 	FreeRDP_RemoteWndSupportLevel,
 	FreeRDP_RequestedProtocols,
 	FreeRDP_SelectedProtocol,

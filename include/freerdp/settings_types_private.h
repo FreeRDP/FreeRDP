@@ -664,7 +664,8 @@ struct rdp_settings
 	SETTINGS_DEPRECATED(ALIGN64 UINT32 RemoteFxCodecMode);    /* 3651 */
 	SETTINGS_DEPRECATED(ALIGN64 BOOL RemoteFxImageCodec);     /* 3652 */
 	SETTINGS_DEPRECATED(ALIGN64 UINT32 RemoteFxCaptureFlags); /* 3653 */
-	UINT64 padding3712[3712 - 3654];                          /* 3654 */
+	SETTINGS_DEPRECATED(ALIGN64 UINT32 RemoteFxRlgrMode);     /* 3654 */
+	UINT64 padding3712[3712 - 3655];                          /* 3655 */
 
 	/* NSCodec */
 	SETTINGS_DEPRECATED(ALIGN64 BOOL NSCodec);                          /* 3712 */
