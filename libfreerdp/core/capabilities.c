@@ -2867,11 +2867,13 @@ static BOOL rdp_apply_surface_commands_capability_set(rdpSettings* settings, con
 	 */
 	if (src->FastPathOutput)
 	{
+		settings->SurfaceCommandsSupported = src->SurfaceCommandsSupported;
 		settings->SurfaceCommandsEnabled = src->SurfaceCommandsEnabled;
 		settings->SurfaceFrameMarkerEnabled = src->SurfaceFrameMarkerEnabled;
 	}
 	else
 	{
+		settings->SurfaceCommandsSupported = 0;
 		settings->SurfaceCommandsEnabled = FALSE;
 		settings->SurfaceFrameMarkerEnabled = FALSE;
 	}
@@ -2894,7 +2896,9 @@ static BOOL rdp_read_surface_commands_capability_set(wStream* s, rdpSettings* se
 
 	Stream_Read_UINT32(s, cmdFlags); /* cmdFlags (4 bytes) */
 	Stream_Seek_UINT32(s);           /* reserved (4 bytes) */
-	settings->SurfaceCommandsEnabled = (cmdFlags & SURFCMDS_STREAM_SURFACE_BITS) ? TRUE : FALSE;
+	settings->SurfaceCommandsSupported = cmdFlags;
+	settings->SurfaceCommandsEnabled =
+	    (cmdFlags & (SURFCMDS_SET_SURFACE_BITS | SURFCMDS_STREAM_SURFACE_BITS)) ? TRUE : FALSE;
 	settings->SurfaceFrameMarkerEnabled = (cmdFlags & SURFCMDS_FRAME_MARKER) ? TRUE : FALSE;
 	return TRUE;
 }
@@ -2911,6 +2915,7 @@ static BOOL rdp_write_surface_commands_capability_set(wStream* s, const rdpSetti
 		return FALSE;
 
 	const size_t header = rdp_capability_set_start(s);
+	// TODO: Make these configurable too
 	UINT32 cmdFlags = SURFCMDS_SET_SURFACE_BITS | SURFCMDS_STREAM_SURFACE_BITS;
 
 	if (settings->SurfaceFrameMarkerEnabled)
@@ -3029,6 +3034,7 @@ static BOOL rdp_apply_bitmap_codecs_capability_set(rdpSettings* settings, const 
 		settings->RemoteFxCodecId = src->RemoteFxCodecId;
 		settings->RemoteFxCaptureFlags = src->RemoteFxCaptureFlags;
 		settings->RemoteFxOnly = src->RemoteFxOnly;
+		settings->NSCodecId = src->NSCodecId;
 		settings->NSCodecAllowDynamicColorFidelity = src->NSCodecAllowDynamicColorFidelity;
 		settings->NSCodecAllowSubsampling = src->NSCodecAllowSubsampling;
 		settings->NSCodecColorLossLevel = src->NSCodecColorLossLevel;
