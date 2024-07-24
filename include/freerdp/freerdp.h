@@ -575,7 +575,7 @@ owned by rdpRdp */
 	WINPR_DEPRECATED_VAR("use freerdp_shall_disconnect_context instead",
 	                     FREERDP_API BOOL freerdp_shall_disconnect(freerdp* instance));
 
-	FREERDP_API BOOL freerdp_shall_disconnect_context(rdpContext* context);
+	FREERDP_API BOOL freerdp_shall_disconnect_context(const rdpContext* context);
 	FREERDP_API BOOL freerdp_disconnect(freerdp* instance);
 
 	WINPR_DEPRECATED_VAR("use freerdp_disconnect_before_reconnect_context instead",

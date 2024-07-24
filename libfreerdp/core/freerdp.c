@@ -658,7 +658,7 @@ BOOL freerdp_shall_disconnect(freerdp* instance)
 	return freerdp_shall_disconnect_context(instance->context);
 }
 
-BOOL freerdp_shall_disconnect_context(rdpContext* context)
+BOOL freerdp_shall_disconnect_context(const rdpContext* context)
 {
 	if (!context)
 		return FALSE;
@@ -1047,12 +1047,13 @@ void freerdp_set_last_error_ex(rdpContext* context, UINT32 lastError, const char
                                const char* file, int line)
 {
 	WINPR_ASSERT(context);
+	WINPR_ASSERT(line >= 0);
 
 	if (lastError)
 	{
 		if (WLog_IsLevelActive(context->log, WLOG_ERROR))
 		{
-			WLog_PrintMessage(context->log, WLOG_MESSAGE_TEXT, WLOG_ERROR, line, file, fkt,
+			WLog_PrintMessage(context->log, WLOG_MESSAGE_TEXT, WLOG_ERROR, (size_t)line, file, fkt,
 			                  "%s [0x%08" PRIX32 "]", freerdp_get_last_error_name(lastError),
 			                  lastError);
 		}

@@ -56,7 +56,7 @@ static BOOL CALLBACK g_ReaderNameWInit(PINIT_ONCE InitOnce, PVOID Parameter, PVO
 
 struct smartcard_emulation_context
 {
-	rdpSettings* settings;
+	const rdpSettings* settings;
 	DWORD log_default_level;
 	wLog* log;
 	wHashTable* contexts;
@@ -1363,8 +1363,7 @@ LONG WINAPI Emulate_SCardGetStatusChangeA(SmartcardEmulationContext* smartcard,
 		SCardContext* value = HashTable_GetItemValue(smartcard->contexts, (const void*)hContext);
 		WINPR_ASSERT(value); /* Must be valid after Emulate_SCardIsValidContext */
 
-		freerdp* inst =
-		    freerdp_settings_get_pointer_writable(smartcard->settings, FreeRDP_instance);
+		const freerdp* inst = freerdp_settings_get_pointer(smartcard->settings, FreeRDP_instance);
 		WINPR_ASSERT(inst);
 
 		status = SCARD_E_TIMEOUT;
@@ -1446,8 +1445,7 @@ LONG WINAPI Emulate_SCardGetStatusChangeW(SmartcardEmulationContext* smartcard,
 		SCardContext* value = HashTable_GetItemValue(smartcard->contexts, (const void*)hContext);
 		WINPR_ASSERT(value); /* Must be valid after Emulate_SCardIsValidContext */
 
-		freerdp* inst =
-		    freerdp_settings_get_pointer_writable(smartcard->settings, FreeRDP_instance);
+		const freerdp* inst = freerdp_settings_get_pointer(smartcard->settings, FreeRDP_instance);
 		WINPR_ASSERT(inst);
 
 		status = SCARD_E_TIMEOUT;
