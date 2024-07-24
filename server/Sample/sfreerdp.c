@@ -127,7 +127,8 @@ static BOOL test_peer_context_new(freerdp_peer* client, rdpContext* ctx)
 	                       SAMPLE_SERVER_DEFAULT_HEIGHT))
 		goto fail;
 
-	rfx_context_set_mode(context->rfx_context, RLGR3);
+	const UINT32 rlgr = freerdp_settings_get_uint32(ctx->settings, FreeRDP_RemoteFxRlgrMode);
+	rfx_context_set_mode(context->rfx_context, rlgr);
 
 	if (!(context->nsc_context = nsc_context_new()))
 		goto fail;
