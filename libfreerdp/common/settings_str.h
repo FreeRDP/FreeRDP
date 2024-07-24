@@ -434,6 +434,8 @@ static const struct settings_str_entry settings_map[] = {
 	{ FreeRDP_StaticChannelArraySize, FREERDP_SETTINGS_TYPE_UINT32,
 	  "FreeRDP_StaticChannelArraySize" },
 	{ FreeRDP_StaticChannelCount, FREERDP_SETTINGS_TYPE_UINT32, "FreeRDP_StaticChannelCount" },
+	{ FreeRDP_SurfaceCommandsSupported, FREERDP_SETTINGS_TYPE_UINT32,
+	  "FreeRDP_SurfaceCommandsSupported" },
 	{ FreeRDP_TargetNetAddressCount, FREERDP_SETTINGS_TYPE_UINT32,
 	  "FreeRDP_TargetNetAddressCount" },
 	{ FreeRDP_TcpAckTimeout, FREERDP_SETTINGS_TYPE_UINT32, "FreeRDP_TcpAckTimeout" },

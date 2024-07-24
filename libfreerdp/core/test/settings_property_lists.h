@@ -332,6 +332,7 @@ static const size_t uint32_list_indices[] = {
 	FreeRDP_SmartSizingWidth,
 	FreeRDP_StaticChannelArraySize,
 	FreeRDP_StaticChannelCount,
+	FreeRDP_SurfaceCommandsSupported,
 	FreeRDP_TargetNetAddressCount,
 	FreeRDP_TcpAckTimeout,
 	FreeRDP_TcpConnectTimeout,
