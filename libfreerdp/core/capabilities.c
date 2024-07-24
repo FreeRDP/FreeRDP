@@ -2894,7 +2894,7 @@ static BOOL rdp_read_surface_commands_capability_set(wStream* s, rdpSettings* se
 
 	Stream_Read_UINT32(s, cmdFlags); /* cmdFlags (4 bytes) */
 	Stream_Seek_UINT32(s);           /* reserved (4 bytes) */
-	settings->SurfaceCommandsEnabled = TRUE;
+	settings->SurfaceCommandsEnabled = (cmdFlags & SURFCMDS_STREAM_SURFACE_BITS) ? TRUE : FALSE;
 	settings->SurfaceFrameMarkerEnabled = (cmdFlags & SURFCMDS_FRAME_MARKER) ? TRUE : FALSE;
 	return TRUE;
 }
@@ -3044,6 +3044,279 @@ static BOOL rdp_apply_bitmap_codecs_capability_set(rdpSettings* settings, const 
 	return TRUE;
 }
 
+static BOOL rdp_read_codec_ts_rfx_icap(wStream* sub, rdpSettings* settings, UINT16 icapLen)
+{
+	UINT16 version = 0;
+	UINT16 tileSize = 0;
+	BYTE codecFlags = 0;
+	BYTE colConvBits = 0;
+	BYTE transformBits = 0;
+	BYTE entropyBits = 0;
+	/* TS_RFX_ICAP */
+	if (icapLen != 8)
+	{
+		WLog_ERR(TAG,
+		         "[MS-RDPRFX] 2.2.1.1.1.1.1 TS_RFX_ICAP size %" PRIu16
+		         " unsupported, expecting size %" PRIu16 " not supported",
+		         icapLen, 8);
+		return FALSE;
+	}
+
+	if (!Stream_CheckAndLogRequiredLength(TAG, sub, 8))
+		return FALSE;
+
+	Stream_Read_UINT16(sub, version);      /* version (2 bytes) */
+	Stream_Read_UINT16(sub, tileSize);     /* tileSize (2 bytes) */
+	Stream_Read_UINT8(sub, codecFlags);    /* flags (1 byte) */
+	Stream_Read_UINT8(sub, colConvBits);   /* colConvBits (1 byte) */
+	Stream_Read_UINT8(sub, transformBits); /* transformBits (1 byte) */
+	Stream_Read_UINT8(sub, entropyBits);   /* entropyBits (1 byte) */
+
+	if (version == 0x0009)
+	{
+		/* Version 0.9 */
+		if (tileSize != 0x0080)
+		{
+			WLog_ERR(TAG,
+			         "[MS-RDPRFX] 2.2.1.1.1.1.1 TS_RFX_ICAP::version %" PRIu16 " tile size %" PRIu16
+			         " not supported",
+			         version, tileSize);
+			return FALSE;
+		}
+	}
+	else if (version == 0x0100)
+	{
+		/* Version 1.0 */
+		if (tileSize != 0x0040)
+		{
+			WLog_ERR(TAG,
+			         "[MS-RDPRFX] 2.2.1.1.1.1.1 TS_RFX_ICAP::version %" PRIu16 " tile size %" PRIu16
+			         " not supported",
+			         version, tileSize);
+			return FALSE;
+		}
+	}
+	else
+	{
+		WLog_ERR(TAG, "[MS-RDPRFX] 2.2.1.1.1.1.1 TS_RFX_ICAP::version %" PRIu16 " not supported",
+		         version);
+		return FALSE;
+	}
+
+	/* [MS-RDPRFX] 2.2.1.1.1.1.1 TS_RFX_ICAP CLW_COL_CONV_ICT (0x1) */
+	if (colConvBits != 1)
+	{
+		WLog_ERR(TAG,
+		         "[MS-RDPRFX] 2.2.1.1.1.1.1 TS_RFX_ICAP::colConvBits %" PRIu8
+		         " not supported, must be CLW_COL_CONV_ICT (0x1)",
+		         colConvBits);
+		return FALSE;
+	}
+
+	/* [MS-RDPRFX] 2.2.1.1.1.1.1 TS_RFX_ICAP CLW_XFORM_DWT_53_A (0x1) */
+	if (transformBits != 1)
+	{
+		WLog_ERR(TAG,
+		         "[MS-RDPRFX] 2.2.1.1.1.1.1 TS_RFX_ICAP::transformBits %" PRIu8
+		         " not supported, must be CLW_XFORM_DWT_53_A (0x1)",
+		         colConvBits);
+		return FALSE;
+	}
+
+	const UINT8 CODEC_MODE = 0x02; /* [MS-RDPRFX] 2.2.1.1.1.1.1 TS_RFX_ICAP */
+	if (!freerdp_settings_set_uint32(settings, FreeRDP_RemoteFxCodecMode, 0x00))
+		return FALSE;
+
+	if ((codecFlags & CODEC_MODE) != 0)
+	{
+		if (!freerdp_settings_set_uint32(settings, FreeRDP_RemoteFxCodecMode, 0x02))
+			return FALSE;
+	}
+	else if ((codecFlags & ~CODEC_MODE) != 0)
+		WLog_WARN(TAG,
+		          "[MS-RDPRFX] 2.2.1.1.1.1.1 TS_RFX_ICAP::flags unknown value "
+		          "0x%02" PRIx8,
+		          (codecFlags & ~CODEC_MODE));
+
+	switch (entropyBits)
+	{
+		case CLW_ENTROPY_RLGR1:
+			if (!freerdp_settings_set_uint32(settings, FreeRDP_RemoteFxRlgrMode, RLGR1))
+				return FALSE;
+			break;
+		case CLW_ENTROPY_RLGR3:
+			if (!freerdp_settings_set_uint32(settings, FreeRDP_RemoteFxRlgrMode, RLGR3))
+				return FALSE;
+			break;
+		default:
+			WLog_ERR(TAG,
+			         "[MS-RDPRFX] 2.2.1.1.1.1.1 TS_RFX_ICAP::entropyBits "
+			         "unsupported value 0x%02" PRIx8
+			         ", must be CLW_ENTROPY_RLGR1 (0x01) or CLW_ENTROPY_RLGR3 "
+			         "(0x04)",
+			         entropyBits);
+			return FALSE;
+	}
+	return TRUE;
+}
+
+static BOOL rdp_read_codec_ts_rfx_capset(wStream* s, rdpSettings* settings)
+{
+	UINT16 blockType = 0;
+	UINT32 blockLen = 0;
+	BYTE rfxCodecId = 0;
+	UINT16 capsetType = 0;
+	UINT16 numIcaps = 0;
+	UINT16 icapLen = 0;
+
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 6))
+		return FALSE;
+
+	/* TS_RFX_CAPSET */
+	Stream_Read_UINT16(s, blockType); /* blockType (2 bytes) */
+	Stream_Read_UINT32(s, blockLen);  /* blockLen (4 bytes) */
+	if (blockType != 0xCBC1)
+	{
+		WLog_ERR(TAG,
+		         "[MS_RDPRFX] 2.2.1.1.1.1 TS_RFX_CAPSET::blockType[0x%04" PRIx16
+		         "] != CBY_CAPSET (0xCBC1)",
+		         blockType);
+		return FALSE;
+	}
+	if (blockLen < 6ull)
+	{
+		WLog_ERR(TAG, "[MS_RDPRFX] 2.2.1.1.1.1 TS_RFX_CAPSET::blockLen[%" PRIu16 "] < 6", blockLen);
+		return FALSE;
+	}
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, blockLen - 6ull))
+		return FALSE;
+
+	wStream sbuffer = { 0 };
+	wStream* sub = Stream_StaticConstInit(&sbuffer, Stream_Pointer(s), blockLen - 6ull);
+	WINPR_ASSERT(sub);
+
+	if (!Stream_CheckAndLogRequiredLength(TAG, sub, 7))
+		return FALSE;
+
+	Stream_Read_UINT8(sub, rfxCodecId);  /* codecId (1 byte) */
+	Stream_Read_UINT16(sub, capsetType); /* capsetType (2 bytes) */
+	Stream_Read_UINT16(sub, numIcaps);   /* numIcaps (2 bytes) */
+	Stream_Read_UINT16(sub, icapLen);    /* icapLen (2 bytes) */
+
+	if (rfxCodecId != 1)
+	{
+		WLog_ERR(TAG, "[MS_RDPRFX] 2.2.1.1.1.1 TS_RFX_CAPSET::codecId[%" PRIu16 "] != 1",
+		         rfxCodecId);
+		return FALSE;
+	}
+
+	if (capsetType != 0xCFC0)
+	{
+		WLog_ERR(TAG,
+		         "[MS_RDPRFX] 2.2.1.1.1.1 TS_RFX_CAPSET::capsetType[0x%04" PRIx16
+		         "] != CLY_CAPSET (0xCFC0)",
+		         capsetType);
+		return FALSE;
+	}
+
+	while (numIcaps--)
+	{
+		if (!rdp_read_codec_ts_rfx_icap(sub, settings, icapLen))
+			return FALSE;
+	}
+	return TRUE;
+}
+
+static BOOL rdp_read_codec_ts_rfx_caps(wStream* sub, rdpSettings* settings)
+{
+	if (Stream_GetRemainingLength(sub) == 0)
+		return TRUE;
+
+	UINT16 blockType = 0;
+	UINT32 blockLen = 0;
+	UINT16 numCapsets = 0;
+
+	/* TS_RFX_CAPS */
+	if (!Stream_CheckAndLogRequiredLength(TAG, sub, 8))
+		return FALSE;
+	Stream_Read_UINT16(sub, blockType);  /* blockType (2 bytes) */
+	Stream_Read_UINT32(sub, blockLen);   /* blockLen (4 bytes) */
+	Stream_Read_UINT16(sub, numCapsets); /* numCapsets (2 bytes) */
+
+	if (blockType != 0xCBC0)
+	{
+		WLog_ERR(TAG,
+		         "[MS_RDPRFX] 2.2.1.1.1 TS_RFX_CAPS::blockType[0x%04" PRIx16
+		         "] != CBY_CAPS (0xCBC0)",
+		         blockType);
+		return FALSE;
+	}
+
+	if (blockLen != 8)
+	{
+		WLog_ERR(TAG, "[MS_RDPRFX] 2.2.1.1.1 TS_RFX_CAPS::blockLen[%" PRIu16 "] != 8", blockLen);
+		return FALSE;
+	}
+
+	if (numCapsets != 1)
+	{
+		WLog_ERR(TAG, "[MS_RDPRFX] 2.2.1.1.1.1 TS_RFX_CAPSET::numIcaps[" PRIu16 "] != 1",
+		         numCapsets);
+		return FALSE;
+	}
+
+	for (UINT16 x = 0; x < numCapsets; x++)
+	{
+		if (!rdp_read_codec_ts_rfx_capset(sub, settings))
+			return FALSE;
+	}
+
+	return TRUE;
+}
+
+static BOOL rdp_read_codec_ts_rfx_clnt_caps_container(wStream* s, rdpSettings* settings)
+{
+	UINT32 rfxCapsLength = 0;
+	UINT32 rfxPropsLength = 0;
+	UINT32 captureFlags = 0;
+
+	/* [MS_RDPRFX] 2.2.1.1 TS_RFX_CLNT_CAPS_CONTAINER */
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
+		return FALSE;
+	Stream_Read_UINT32(s, rfxPropsLength); /* length (4 bytes) */
+	if (rfxPropsLength < 4)
+	{
+		WLog_ERR(TAG,
+		         "[MS_RDPRFX] 2.2.1.1 TS_RFX_CLNT_CAPS_CONTAINER::length %" PRIu32
+		         " too short, require at least 4 bytes",
+		         rfxPropsLength);
+		return FALSE;
+	}
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, rfxPropsLength - 4ull))
+		return FALSE;
+
+	wStream sbuffer = { 0 };
+	wStream* sub = Stream_StaticConstInit(&sbuffer, Stream_Pointer(s), rfxPropsLength - 4ull);
+	WINPR_ASSERT(sub);
+
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
+		return FALSE;
+
+	Stream_Read_UINT32(sub, captureFlags);  /* captureFlags (4 bytes) */
+	Stream_Read_UINT32(sub, rfxCapsLength); /* capsLength (4 bytes) */
+	if (!Stream_CheckAndLogRequiredLength(TAG, sub, rfxCapsLength))
+		return FALSE;
+
+	settings->RemoteFxCaptureFlags = captureFlags;
+	settings->RemoteFxOnly = (captureFlags & CARDP_CAPS_CAPTURE_NON_CAC) ? FALSE : TRUE;
+
+	/* [MS_RDPRFX] 2.2.1.1.1 TS_RFX_CAPS */
+	wStream tsbuffer = { 0 };
+	wStream* ts_sub = Stream_StaticConstInit(&tsbuffer, Stream_Pointer(sub), rfxCapsLength);
+	WINPR_ASSERT(ts_sub);
+	return rdp_read_codec_ts_rfx_caps(ts_sub, settings);
+}
+
 /*
  * Read bitmap codecs capability set.
  * msdn{dd891377}
@@ -3086,101 +3359,10 @@ static BOOL rdp_read_bitmap_codecs_capability_set(wStream* s, rdpSettings* setti
 		{
 			if (UuidEqual(&codecGuid, &CODEC_GUID_REMOTEFX, &rpc_status))
 			{
-				UINT32 rfxCapsLength = 0;
-				UINT32 rfxPropsLength = 0;
-				UINT32 captureFlags = 0;
 				guidRemoteFx = TRUE;
 				settings->RemoteFxCodecId = codecId;
-				if (!Stream_CheckAndLogRequiredLength(TAG, sub, 12))
+				if (!rdp_read_codec_ts_rfx_clnt_caps_container(sub, settings))
 					return FALSE;
-				Stream_Read_UINT32(sub, rfxPropsLength); /* length (4 bytes) */
-				Stream_Read_UINT32(sub, captureFlags);   /* captureFlags (4 bytes) */
-				Stream_Read_UINT32(sub, rfxCapsLength);  /* capsLength (4 bytes) */
-				settings->RemoteFxCaptureFlags = captureFlags;
-				settings->RemoteFxOnly = (captureFlags & CARDP_CAPS_CAPTURE_NON_CAC) ? FALSE : TRUE;
-
-				if (rfxCapsLength)
-				{
-					UINT16 blockType = 0;
-					UINT32 blockLen = 0;
-					UINT16 numCapsets = 0;
-					BYTE rfxCodecId = 0;
-					UINT16 capsetType = 0;
-					UINT16 numIcaps = 0;
-					UINT16 icapLen = 0;
-					/* TS_RFX_CAPS */
-					if (!Stream_CheckAndLogRequiredLength(TAG, sub, 21))
-						return FALSE;
-					Stream_Read_UINT16(sub, blockType);  /* blockType (2 bytes) */
-					Stream_Read_UINT32(sub, blockLen);   /* blockLen (4 bytes) */
-					Stream_Read_UINT16(sub, numCapsets); /* numCapsets (2 bytes) */
-
-					if (blockType != 0xCBC0)
-						return FALSE;
-
-					if (blockLen != 8)
-						return FALSE;
-
-					if (numCapsets != 1)
-						return FALSE;
-
-					/* TS_RFX_CAPSET */
-					Stream_Read_UINT16(sub, blockType);  /* blockType (2 bytes) */
-					Stream_Read_UINT32(sub, blockLen);   /* blockLen (4 bytes) */
-					Stream_Read_UINT8(sub, rfxCodecId);  /* codecId (1 byte) */
-					Stream_Read_UINT16(sub, capsetType); /* capsetType (2 bytes) */
-					Stream_Read_UINT16(sub, numIcaps);   /* numIcaps (2 bytes) */
-					Stream_Read_UINT16(sub, icapLen);    /* icapLen (2 bytes) */
-
-					if (blockType != 0xCBC1)
-						return FALSE;
-
-					if (rfxCodecId != 1)
-						return FALSE;
-
-					if (capsetType != 0xCFC0)
-						return FALSE;
-
-					while (numIcaps--)
-					{
-						UINT16 version = 0;
-						UINT16 tileSize = 0;
-						BYTE codecFlags = 0;
-						BYTE colConvBits = 0;
-						BYTE transformBits = 0;
-						BYTE entropyBits = 0;
-						/* TS_RFX_ICAP */
-						if (!Stream_CheckAndLogRequiredLength(TAG, sub, 8))
-							return FALSE;
-						Stream_Read_UINT16(sub, version);      /* version (2 bytes) */
-						Stream_Read_UINT16(sub, tileSize);     /* tileSize (2 bytes) */
-						Stream_Read_UINT8(sub, codecFlags);    /* flags (1 byte) */
-						Stream_Read_UINT8(sub, colConvBits);   /* colConvBits (1 byte) */
-						Stream_Read_UINT8(sub, transformBits); /* transformBits (1 byte) */
-						Stream_Read_UINT8(sub, entropyBits);   /* entropyBits (1 byte) */
-
-						if (version == 0x0009)
-						{
-							/* Version 0.9 */
-							if (tileSize != 0x0080)
-								return FALSE;
-						}
-						else if (version == 0x0100)
-						{
-							/* Version 1.0 */
-							if (tileSize != 0x0040)
-								return FALSE;
-						}
-						else
-							return FALSE;
-
-						if (colConvBits != 1)
-							return FALSE;
-
-						if (transformBits != 1)
-							return FALSE;
-					}
-				}
 			}
 			else if (UuidEqual(&codecGuid, &CODEC_GUID_IMAGE_REMOTEFX, &rpc_status))
 			{
