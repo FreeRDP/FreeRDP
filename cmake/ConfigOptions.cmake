@@ -237,3 +237,10 @@ if (BUILD_FUZZERS)
 endif()
 
 option(WITH_FULL_CONFIG_PATH "Use <appdata>/Vendor/Product instead of <appdata>/product (lowercase, only if vendor equals product) as config directory" OFF)
+
+# Configuration settings for manpages
+if (NOT WITH_FULL_CONFIG_PATH AND "${VENDOR}" STREQUAL "${PRODUCT}")
+        string(TOLOWER "${VENDOR}" VENDOR_PRODUCT)
+else()
+        set(VENDOR_PRODUCT "${VENDOR}/${PRODUCT}")
+endif()

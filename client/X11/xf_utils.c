@@ -21,8 +21,14 @@
 #include <string.h>
 #include <winpr/assert.h>
 #include <winpr/wtypes.h>
+#include <winpr/path.h>
 
 #include "xf_utils.h"
+#include "xfreerdp.h"
+
+#include <freerdp/log.h>
+
+#define TAG CLIENT_TAG("xfreerdp.utils")
 
 static const DWORD log_level = WLOG_TRACE;
 
@@ -157,4 +163,55 @@ BOOL IsGnome(void)
 {
 	char* env = getenv("DESKTOP_SESSION");
 	return (env != NULL && strcmp(env, "gnome") == 0);
+}
+
+BOOL run_action_script(xfContext* xfc, const char* what, const char* arg, fn_action_script_run fkt,
+                       void* user)
+{
+	BOOL rc = FALSE;
+	FILE* keyScript = NULL;
+	WINPR_ASSERT(xfc);
+
+	rdpSettings* settings = xfc->common.context.settings;
+	WINPR_ASSERT(settings);
+
+	const char* ActionScript = freerdp_settings_get_string(settings, FreeRDP_ActionScript);
+
+	xfc->actionScriptExists = winpr_PathFileExists(ActionScript);
+
+	if (!xfc->actionScriptExists)
+		goto fail;
+
+	char command[2048] = { 0 };
+	sprintf_s(command, sizeof(command), "%s %s", ActionScript, what);
+	keyScript = popen(command, "r");
+
+	if (!keyScript)
+	{
+		WLog_ERR(TAG, "Failed to execute '%s'", command);
+		goto fail;
+	}
+
+	BOOL read_data = FALSE;
+	char buffer[2048] = { 0 };
+	while (fgets(buffer, sizeof(buffer), keyScript) != NULL)
+	{
+		char* context = NULL;
+		strtok_s(buffer, "\n", &context);
+
+		if (fkt)
+		{
+			if (!fkt(xfc, buffer, strnlen(buffer, sizeof(buffer)), user, what, arg))
+				goto fail;
+		}
+		read_data = TRUE;
+	}
+
+	rc = read_data;
+fail:
+	if (!rc)
+		xfc->actionScriptExists = FALSE;
+	if (keyScript)
+		pclose(keyScript);
+	return rc;
 }
