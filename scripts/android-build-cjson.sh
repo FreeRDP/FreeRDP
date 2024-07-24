@@ -1,7 +1,7 @@
 #!/bin/bash
 
 SCM_URL=https://github.com/DaveGamble/cJSON/archive
-SCM_TAG=v1.7.15
+SCM_TAG=v1.7.18
 SCM_HASH=451131a92c55efc5457276807fc0c4c2c2707c9ee96ef90c47d68852d5384c6c
 
 source $(dirname "${BASH_SOURCE[0]}")/android-build-common.sh
