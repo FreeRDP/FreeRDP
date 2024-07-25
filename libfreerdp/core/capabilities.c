@@ -3307,7 +3307,9 @@ static BOOL rdp_read_codec_ts_rfx_clnt_caps_container(wStream* s, rdpSettings* s
 	wStream* sub = Stream_StaticConstInit(&sbuffer, Stream_Pointer(s), rfxPropsLength - 4ull);
 	WINPR_ASSERT(sub);
 
-	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
+	Stream_Seek(s, rfxPropsLength - 4ull);
+
+	if (!Stream_CheckAndLogRequiredLength(TAG, sub, 8))
 		return FALSE;
 
 	Stream_Read_UINT32(sub, captureFlags);  /* captureFlags (4 bytes) */
