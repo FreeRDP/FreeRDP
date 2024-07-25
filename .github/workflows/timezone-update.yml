@@ -33,8 +33,8 @@ jobs:
       run: build\Release\tzextract.exe winpr\libwinpr\timezone
     - name: Format code
       run: |
-        clang-format -i --style=file winpr/libwinpr/timezone/TimeZoneNameMap.c
-        clang-format -i --style=file winpr/libwinpr/timezone/TimeZoneNameMap.json
+        clang-format -i --style=file:.clang-format winpr/libwinpr/timezone/TimeZoneNameMap.c
+        clang-format -i --style=file:.clang-format winpr/libwinpr/timezone/TimeZoneNameMap.json
     - name: Create Pull Request
       id: cpr
       uses: peter-evans/create-pull-request@v6
@@ -56,6 +56,4 @@ jobs:
             automated pr
           assignees: akallabeth
           reviewers: akallabeth
-          team-reviewers: |
-            FreeRDP-Admin
           draft: false
