@@ -83,20 +83,19 @@ static DWORD kbd_layout_id_from_x_property(Display* display, Window root, char* 
 	char* layout = NULL;
 	char* variant = NULL;
 	char* rule = NULL;
-	Atom property = None;
 	Atom type = None;
 	int item_size = 0;
 	unsigned long items = 0;
 	unsigned long unread_items = 0;
 	DWORD layout_id = 0;
 
-	property = XInternAtom(display, property_name, False);
+	Atom property = XInternAtom(display, property_name, False);
+	if (property == None)
+		return 0;
 
 	if (XGetWindowProperty(display, root, property, 0, 1024, False, XA_STRING, &type, &item_size,
 	                       &items, &unread_items, (unsigned char**)&rule) != Success)
-	{
 		return 0;
-	}
 
 	if (type != XA_STRING || item_size != 8 || unread_items != 0)
 	{
