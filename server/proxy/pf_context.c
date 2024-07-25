@@ -26,6 +26,7 @@
 
 #include <freerdp/server/proxy/proxy_log.h>
 #include <freerdp/server/proxy/proxy_server.h>
+#include <freerdp/channels/drdynvc.h>
 
 #include "pf_client.h"
 #include "pf_utils.h"
@@ -52,6 +53,31 @@ static BOOL ChannelId_Compare(const void* pv1, const void* pv2)
 	return (*v1 == *v2);
 }
 
+static BOOL dyn_intercept(pServerContext* ps, const char* name)
+{
+	if (strncmp(DRDYNVC_SVC_CHANNEL_NAME, name, sizeof(DRDYNVC_SVC_CHANNEL_NAME)) != 0)
+		return FALSE;
+
+	WINPR_ASSERT(ps);
+	WINPR_ASSERT(ps->pdata);
+
+	const proxyConfig* cfg = ps->pdata->config;
+	WINPR_ASSERT(cfg);
+	if (!cfg->GFX)
+		return TRUE;
+	if (!cfg->AudioOutput)
+		return TRUE;
+	if (!cfg->AudioInput)
+		return TRUE;
+	if (!cfg->Multitouch)
+		return TRUE;
+	if (!cfg->VideoRedirection)
+		return TRUE;
+	if (!cfg->CameraRedirection)
+		return TRUE;
+	return FALSE;
+}
+
 pServerStaticChannelContext* StaticChannelContext_new(pServerContext* ps, const char* name,
                                                       UINT32 id)
 {
@@ -76,6 +102,8 @@ pServerStaticChannelContext* StaticChannelContext_new(pServerContext* ps, const 
 	if (pf_modules_run_filter(ps->pdata->module, FILTER_TYPE_STATIC_INTERCEPT_LIST, ps->pdata,
 	                          &channel) &&
 	    channel.intercept)
+		ret->channelMode = PF_UTILS_CHANNEL_INTERCEPT;
+	else if (dyn_intercept(ps, name))
 		ret->channelMode = PF_UTILS_CHANNEL_INTERCEPT;
 	else
 		ret->channelMode = pf_utils_get_channel_mode(ps->pdata->config, name);
