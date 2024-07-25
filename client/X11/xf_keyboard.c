@@ -19,6 +19,7 @@
 
 #include <freerdp/config.h>
 
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -40,6 +41,8 @@
 #include "xf_event.h"
 
 #include "xf_keyboard.h"
+
+#include "xf_utils.h"
 
 #include <freerdp/log.h>
 #define TAG CLIENT_TAG("x11")
@@ -78,24 +81,25 @@ static void xf_keyboard_clear(xfContext* xfc)
 	ZeroMemory(xfc->KeyboardState, sizeof(xfc->KeyboardState));
 }
 
+static BOOL xf_action_script_append(xfContext* xfc, const char* buffer, size_t size, void* user,
+                                    const char* what, const char* arg)
+{
+	WINPR_ASSERT(xfc);
+	WINPR_UNUSED(what);
+	WINPR_UNUSED(arg);
+
+	if (!buffer || (size == 0))
+		return TRUE;
+	return ArrayList_Append(xfc->keyCombinations, buffer);
+}
+
 static BOOL xf_keyboard_action_script_init(xfContext* xfc)
 {
 	wObject* obj = NULL;
-	FILE* keyScript = NULL;
-	char buffer[1024] = { 0 };
-	char command[1024] = { 0 };
 	const rdpSettings* settings = NULL;
-	const char* ActionScript = NULL;
-	WINPR_ASSERT(xfc);
 
 	settings = xfc->common.context.settings;
 	WINPR_ASSERT(settings);
-
-	ActionScript = freerdp_settings_get_string(settings, FreeRDP_ActionScript);
-	xfc->actionScriptExists = winpr_PathFileExists(ActionScript);
-
-	if (!xfc->actionScriptExists)
-		return FALSE;
 
 	xfc->keyCombinations = ArrayList_New(TRUE);
 
@@ -106,30 +110,10 @@ static BOOL xf_keyboard_action_script_init(xfContext* xfc)
 	WINPR_ASSERT(obj);
 	obj->fnObjectNew = winpr_ObjectStringClone;
 	obj->fnObjectFree = winpr_ObjectStringFree;
-	sprintf_s(command, sizeof(command), "%s key", ActionScript);
-	keyScript = popen(command, "r");
 
-	if (!keyScript)
-	{
-		xfc->actionScriptExists = FALSE;
+	if (!run_action_script(xfc, "key", NULL, xf_action_script_append, NULL))
 		return FALSE;
-	}
 
-	while (fgets(buffer, sizeof(buffer), keyScript) != NULL)
-	{
-		char* context = NULL;
-		strtok_s(buffer, "\n", &context);
-
-		if (!ArrayList_Append(xfc->keyCombinations, buffer))
-		{
-			ArrayList_Free(xfc->keyCombinations);
-			xfc->actionScriptExists = FALSE;
-			pclose(keyScript);
-			return FALSE;
-		}
-	}
-
-	pclose(keyScript);
 	return xf_event_action_script_init(xfc);
 }
 
@@ -452,11 +436,51 @@ void xf_keyboard_focus_in(xfContext* xfc)
 	}
 }
 
+static BOOL action_script_run(xfContext* xfc, const char* buffer, size_t size, void* user,
+                              const char* what, const char* arg)
+{
+	WINPR_UNUSED(xfc);
+	WINPR_UNUSED(what);
+	WINPR_UNUSED(arg);
+	WINPR_ASSERT(user);
+	int* pstatus = user;
+
+	if (size == 0)
+	{
+		WLog_WARN(TAG, "ActionScript key: script did not return data");
+		return FALSE;
+	}
+
+	if (strcmp(buffer, "key-local") == 0)
+		*pstatus = 0;
+	else if (winpr_PathFileExists(buffer))
+	{
+		FILE* fp = popen(buffer, "w");
+		if (!fp)
+		{
+			WLog_ERR(TAG, "Failed to execute '%s'", buffer);
+			return FALSE;
+		}
+
+		*pstatus = pclose(fp);
+		if (*pstatus < 0)
+		{
+			WLog_ERR(TAG, "Command '%s' returned %d", buffer, *pstatus);
+			return FALSE;
+		}
+	}
+	else
+	{
+		WLog_WARN(TAG, "ActionScript key: no such file '%s'", buffer);
+		return FALSE;
+	}
+	return TRUE;
+}
+
 static int xf_keyboard_execute_action_script(xfContext* xfc, XF_MODIFIER_KEYS* mod, KeySym keysym)
 {
 	int status = 1;
 	BOOL match = FALSE;
-	char buffer[1024] = { 0 };
 	char command[2048] = { 0 };
 	char combination[1024] = { 0 };
 
@@ -488,7 +512,10 @@ static int xf_keyboard_execute_action_script(xfContext* xfc, XF_MODIFIER_KEYS* m
 	if (mod->Super)
 		winpr_str_append("Super", combination, sizeof(combination), "+");
 
-	winpr_str_append(keyStr, combination, sizeof(combination), NULL);
+	winpr_str_append(keyStr, combination, sizeof(combination), "+");
+
+	for (size_t i = 0; i < strnlen(combination, sizeof(combination)); i++)
+		combination[i] = tolower(combination[i]);
 
 	const size_t count = ArrayList_Count(xfc->keyCombinations);
 
@@ -506,25 +533,9 @@ static int xf_keyboard_execute_action_script(xfContext* xfc, XF_MODIFIER_KEYS* m
 	if (!match)
 		return 1;
 
-	const char* ActionScript =
-	    freerdp_settings_get_string(xfc->common.context.settings, FreeRDP_ActionScript);
-	sprintf_s(command, sizeof(command), "%s key %s", ActionScript, combination);
-	FILE* keyScript = popen(command, "r");
-
-	if (!keyScript)
+	sprintf_s(command, sizeof(command), "key %s", combination);
+	if (!run_action_script(xfc, command, NULL, action_script_run, &status))
 		return -1;
-
-	while (fgets(buffer, sizeof(buffer), keyScript) != NULL)
-	{
-		char* context = NULL;
-		strtok_s(buffer, "\n", &context);
-
-		if (strcmp(buffer, "key-local") == 0)
-			status = 0;
-	}
-
-	if (pclose(keyScript) == -1)
-		status = -1;
 
 	return status;
 }
@@ -569,10 +580,11 @@ BOOL xf_keyboard_handle_special_keys(xfContext* xfc, KeySym keysym)
 			xfc->ungrabKeyboardWithRightCtrl = FALSE;
 	}
 
-	if (!xf_keyboard_execute_action_script(xfc, &mod, keysym))
-	{
+	const int rc = xf_keyboard_execute_action_script(xfc, &mod, keysym);
+	if (rc < 0)
+		return FALSE;
+	if (rc == 0)
 		return TRUE;
-	}
 
 	if (!xfc->remote_app && xfc->fullscreen_toggle)
 	{

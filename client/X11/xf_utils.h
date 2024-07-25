@@ -23,9 +23,15 @@
 #include <winpr/wtypes.h>
 
 #include <X11/Xlib.h>
+#include "xfreerdp.h"
 
 char* Safe_XGetAtomName(wLog* log, Display* display, Atom atom);
 Atom Logging_XInternAtom(wLog* log, Display* display, _Xconst char* atom_name, Bool only_if_exists);
+
+typedef BOOL (*fn_action_script_run)(xfContext* xfc, const char* buffer, size_t size, void* user,
+                                     const char* what, const char* arg);
+BOOL run_action_script(xfContext* xfc, const char* what, const char* arg, fn_action_script_run fkt,
+                       void* user);
 
 #define LogTagAndXGetWindowProperty(tag, display, w, property, long_offset, long_length, delete,   \
                                     req_type, actual_type_return, actual_format_return,            \
