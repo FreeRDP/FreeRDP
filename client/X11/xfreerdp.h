@@ -306,6 +306,7 @@ struct xf_context
 	BOOL xi_rawevent;
 	BOOL xi_event;
 	HANDLE pipethread;
+	wLog* log;
 };
 
 BOOL xf_create_window(xfContext* xfc);

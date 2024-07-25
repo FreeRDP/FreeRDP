@@ -959,14 +959,16 @@ static BOOL xf_event_PropertyNotify(xfContext* xfc, const XPropertyEvent* event,
 				for (unsigned long i = 0; i < nitems; i++)
 				{
 					if ((Atom)((UINT16**)prop)[i] ==
-					    XInternAtom(xfc->display, "_NET_WM_STATE_MAXIMIZED_VERT", False))
+					    Logging_XInternAtom(xfc->log, xfc->display, "_NET_WM_STATE_MAXIMIZED_VERT",
+					                        False))
 					{
 						if (appWindow)
 							appWindow->maxVert = TRUE;
 					}
 
 					if ((Atom)((UINT16**)prop)[i] ==
-					    XInternAtom(xfc->display, "_NET_WM_STATE_MAXIMIZED_HORZ", False))
+					    Logging_XInternAtom(xfc->log, xfc->display, "_NET_WM_STATE_MAXIMIZED_HORZ",
+					                        False))
 					{
 						if (appWindow)
 							appWindow->maxHorz = TRUE;

@@ -42,6 +42,17 @@ char* Safe_XGetAtomName(wLog* log, Display* display, Atom atom)
 	return XGetAtomName(display, atom);
 }
 
+Atom Logging_XInternAtom(wLog* log, Display* display, _Xconst char* atom_name, Bool only_if_exists)
+{
+	Atom atom = XInternAtom(display, atom_name, only_if_exists);
+	if (WLog_IsLevelActive(log, log_level))
+	{
+		WLog_Print(log, log_level, "XInternAtom(0x%08" PRIx32 ", %s, %s) -> 0x%08" PRIx32, display,
+		           atom_name, only_if_exists, atom);
+	}
+	return atom;
+}
+
 int LogTagAndXChangeProperty_ex(const char* tag, const char* file, const char* fkt, size_t line,
                                 Display* display, Window w, Atom property, Atom type, int format,
                                 int mode, const unsigned char* data, int nelements)
