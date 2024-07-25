@@ -2331,7 +2331,7 @@ xfClipboard* xf_clipboard_new(xfContext* xfc, BOOL relieveFilenameRestriction)
 	if (!selectionAtom)
 		selectionAtom = "CLIPBOARD";
 
-	clipboard->clipboard_atom = XInternAtom(xfc->display, selectionAtom, FALSE);
+	clipboard->clipboard_atom = Logging_XInternAtom(xfc->log, xfc->display, selectionAtom, FALSE);
 
 	if (clipboard->clipboard_atom == None)
 	{
@@ -2340,10 +2340,13 @@ xfClipboard* xf_clipboard_new(xfContext* xfc, BOOL relieveFilenameRestriction)
 	}
 
 	clipboard->timestamp_property_atom =
-	    XInternAtom(xfc->display, "_FREERDP_TIMESTAMP_PROPERTY", FALSE);
-	clipboard->property_atom = XInternAtom(xfc->display, "_FREERDP_CLIPRDR", FALSE);
-	clipboard->raw_transfer_atom = XInternAtom(xfc->display, "_FREERDP_CLIPRDR_RAW", FALSE);
-	clipboard->raw_format_list_atom = XInternAtom(xfc->display, "_FREERDP_CLIPRDR_FORMATS", FALSE);
+	    Logging_XInternAtom(xfc->log, xfc->display, "_FREERDP_TIMESTAMP_PROPERTY", FALSE);
+	clipboard->property_atom =
+	    Logging_XInternAtom(xfc->log, xfc->display, "_FREERDP_CLIPRDR", FALSE);
+	clipboard->raw_transfer_atom =
+	    Logging_XInternAtom(xfc->log, xfc->display, "_FREERDP_CLIPRDR_RAW", FALSE);
+	clipboard->raw_format_list_atom =
+	    Logging_XInternAtom(xfc->log, xfc->display, "_FREERDP_CLIPRDR_FORMATS", FALSE);
 	xf_cliprdr_set_raw_transfer_enabled(clipboard, TRUE);
 	XSelectInput(xfc->display, clipboard->root_window, PropertyChangeMask);
 #ifdef WITH_XFIXES
@@ -2377,11 +2380,11 @@ xfClipboard* xf_clipboard_new(xfContext* xfc, BOOL relieveFilenameRestriction)
 	    "Warning: Using clipboard redirection without XFIXES extension is strongly discouraged!");
 #endif
 	clientFormat = &clipboard->clientFormats[n++];
-	clientFormat->atom = XInternAtom(xfc->display, "_FREERDP_RAW", False);
+	clientFormat->atom = Logging_XInternAtom(xfc->log, xfc->display, "_FREERDP_RAW", False);
 	clientFormat->localFormat = clientFormat->formatToRequest = CF_RAW;
 
 	clientFormat = &clipboard->clientFormats[n++];
-	clientFormat->atom = XInternAtom(xfc->display, "UTF8_STRING", False);
+	clientFormat->atom = Logging_XInternAtom(xfc->log, xfc->display, "UTF8_STRING", False);
 	clientFormat->formatToRequest = CF_UNICODETEXT;
 	clientFormat->localFormat = ClipboardGetFormatId(xfc->clipboard->system, mime_text_plain);
 
@@ -2391,7 +2394,7 @@ xfClipboard* xf_clipboard_new(xfContext* xfc, BOOL relieveFilenameRestriction)
 	clientFormat->localFormat = ClipboardGetFormatId(xfc->clipboard->system, mime_text_plain);
 
 	clientFormat = &clipboard->clientFormats[n++];
-	clientFormat->atom = XInternAtom(xfc->display, mime_tiff, False);
+	clientFormat->atom = Logging_XInternAtom(xfc->log, xfc->display, mime_tiff, False);
 	clientFormat->formatToRequest = clientFormat->localFormat = CF_TIFF;
 
 	for (size_t x = 0; x < ARRAYSIZE(mime_bitmap); x++)
@@ -2407,7 +2410,7 @@ xfClipboard* xf_clipboard_new(xfContext* xfc, BOOL relieveFilenameRestriction)
 		WLog_DBG(TAG, "register local bitmap format %s [0x%08" PRIx32 "]", mime_bmp, format);
 		clientFormat = &clipboard->clientFormats[n++];
 		clientFormat->localFormat = format;
-		clientFormat->atom = XInternAtom(xfc->display, mime_bmp, False);
+		clientFormat->atom = Logging_XInternAtom(xfc->log, xfc->display, mime_bmp, False);
 		clientFormat->formatToRequest = CF_DIB;
 	}
 
@@ -2424,12 +2427,12 @@ xfClipboard* xf_clipboard_new(xfContext* xfc, BOOL relieveFilenameRestriction)
 		WLog_DBG(TAG, "register local bitmap format %s [0x%08" PRIx32 "]", mime_bmp, format);
 		clientFormat = &clipboard->clientFormats[n++];
 		clientFormat->localFormat = format;
-		clientFormat->atom = XInternAtom(xfc->display, mime_bmp, False);
+		clientFormat->atom = Logging_XInternAtom(xfc->log, xfc->display, mime_bmp, False);
 		clientFormat->formatToRequest = CF_DIB;
 	}
 
 	clientFormat = &clipboard->clientFormats[n++];
-	clientFormat->atom = XInternAtom(xfc->display, mime_html, False);
+	clientFormat->atom = Logging_XInternAtom(xfc->log, xfc->display, mime_html, False);
 	clientFormat->formatToRequest = ClipboardGetFormatId(xfc->clipboard->system, type_HtmlFormat);
 	clientFormat->localFormat = ClipboardGetFormatId(xfc->clipboard->system, mime_html);
 	clientFormat->formatName = _strdup(type_HtmlFormat);
@@ -2450,7 +2453,7 @@ xfClipboard* xf_clipboard_new(xfContext* xfc, BOOL relieveFilenameRestriction)
 	if (uid)
 	{
 		cliprdr_file_context_set_locally_available(clipboard->file, TRUE);
-		clientFormat->atom = XInternAtom(xfc->display, mime_uri_list, False);
+		clientFormat->atom = Logging_XInternAtom(xfc->log, xfc->display, mime_uri_list, False);
 		clientFormat->localFormat = uid;
 		clientFormat->formatToRequest = fgid;
 		clientFormat->formatName = _strdup(type_FileGroupDescriptorW);
@@ -2465,7 +2468,8 @@ xfClipboard* xf_clipboard_new(xfContext* xfc, BOOL relieveFilenameRestriction)
 	if (gid != 0)
 	{
 		cliprdr_file_context_set_locally_available(clipboard->file, TRUE);
-		clientFormat->atom = XInternAtom(xfc->display, mime_gnome_copied_files, False);
+		clientFormat->atom =
+		    Logging_XInternAtom(xfc->log, xfc->display, mime_gnome_copied_files, False);
 		clientFormat->localFormat = gid;
 		clientFormat->formatToRequest = fgid;
 		clientFormat->formatName = _strdup(type_FileGroupDescriptorW);
@@ -2480,7 +2484,8 @@ xfClipboard* xf_clipboard_new(xfContext* xfc, BOOL relieveFilenameRestriction)
 	if (mid != 0)
 	{
 		cliprdr_file_context_set_locally_available(clipboard->file, TRUE);
-		clientFormat->atom = XInternAtom(xfc->display, mime_mate_copied_files, False);
+		clientFormat->atom =
+		    Logging_XInternAtom(xfc->log, xfc->display, mime_mate_copied_files, False);
 		clientFormat->localFormat = mid;
 		clientFormat->formatToRequest = fgid;
 		clientFormat->formatName = _strdup(type_FileGroupDescriptorW);
@@ -2490,10 +2495,10 @@ xfClipboard* xf_clipboard_new(xfContext* xfc, BOOL relieveFilenameRestriction)
 	}
 
 	clipboard->numClientFormats = n;
-	clipboard->targets[0] = XInternAtom(xfc->display, "TIMESTAMP", FALSE);
-	clipboard->targets[1] = XInternAtom(xfc->display, "TARGETS", FALSE);
+	clipboard->targets[0] = Logging_XInternAtom(xfc->log, xfc->display, "TIMESTAMP", FALSE);
+	clipboard->targets[1] = Logging_XInternAtom(xfc->log, xfc->display, "TARGETS", FALSE);
 	clipboard->numTargets = 2;
-	clipboard->incr_atom = XInternAtom(xfc->display, "INCR", FALSE);
+	clipboard->incr_atom = Logging_XInternAtom(xfc->log, xfc->display, "INCR", FALSE);
 
 	if (relieveFilenameRestriction)
 	{

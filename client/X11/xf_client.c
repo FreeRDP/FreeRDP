@@ -1777,7 +1777,7 @@ static int xfreerdp_client_start(rdpContext* context)
 
 static Atom get_supported_atom(xfContext* xfc, const char* atomName)
 {
-	const Atom atom = XInternAtom(xfc->display, atomName, False);
+	const Atom atom = Logging_XInternAtom(xfc->log, xfc->display, atomName, False);
 
 	for (unsigned long i = 0; i < xfc->supportedAtomCount; i++)
 	{
@@ -1871,8 +1871,9 @@ BOOL xf_setup_x11(xfContext* xfc)
 	xfc->big_endian = (ImageByteOrder(xfc->display) == MSBFirst);
 	xfc->invert = TRUE;
 	xfc->complex_regions = TRUE;
-	xfc->_NET_SUPPORTED = XInternAtom(xfc->display, "_NET_SUPPORTED", True);
-	xfc->_NET_SUPPORTING_WM_CHECK = XInternAtom(xfc->display, "_NET_SUPPORTING_WM_CHECK", True);
+	xfc->_NET_SUPPORTED = Logging_XInternAtom(xfc->log, xfc->display, "_NET_SUPPORTED", True);
+	xfc->_NET_SUPPORTING_WM_CHECK =
+	    Logging_XInternAtom(xfc->log, xfc->display, "_NET_SUPPORTING_WM_CHECK", True);
 
 	if ((xfc->_NET_SUPPORTED != None) && (xfc->_NET_SUPPORTING_WM_CHECK != None))
 	{
@@ -1898,56 +1899,68 @@ BOOL xf_setup_x11(xfContext* xfc)
 	}
 
 	xfc->_XWAYLAND_MAY_GRAB_KEYBOARD =
-	    XInternAtom(xfc->display, "_XWAYLAND_MAY_GRAB_KEYBOARD", False);
-	xfc->_NET_WM_ICON = XInternAtom(xfc->display, "_NET_WM_ICON", False);
-	xfc->_MOTIF_WM_HINTS = XInternAtom(xfc->display, "_MOTIF_WM_HINTS", False);
-	xfc->_NET_CURRENT_DESKTOP = XInternAtom(xfc->display, "_NET_CURRENT_DESKTOP", False);
-	xfc->_NET_WORKAREA = XInternAtom(xfc->display, "_NET_WORKAREA", False);
+	    Logging_XInternAtom(xfc->log, xfc->display, "_XWAYLAND_MAY_GRAB_KEYBOARD", False);
+	xfc->_NET_WM_ICON = Logging_XInternAtom(xfc->log, xfc->display, "_NET_WM_ICON", False);
+	xfc->_MOTIF_WM_HINTS = Logging_XInternAtom(xfc->log, xfc->display, "_MOTIF_WM_HINTS", False);
+	xfc->_NET_CURRENT_DESKTOP =
+	    Logging_XInternAtom(xfc->log, xfc->display, "_NET_CURRENT_DESKTOP", False);
+	xfc->_NET_WORKAREA = Logging_XInternAtom(xfc->log, xfc->display, "_NET_WORKAREA", False);
 	xfc->_NET_WM_STATE = get_supported_atom(xfc, "_NET_WM_STATE");
 	xfc->_NET_WM_STATE_FULLSCREEN = get_supported_atom(xfc, "_NET_WM_STATE_FULLSCREEN");
 	xfc->_NET_WM_STATE_MAXIMIZED_HORZ =
-	    XInternAtom(xfc->display, "_NET_WM_STATE_MAXIMIZED_HORZ", False);
+	    Logging_XInternAtom(xfc->log, xfc->display, "_NET_WM_STATE_MAXIMIZED_HORZ", False);
 	xfc->_NET_WM_STATE_MAXIMIZED_VERT =
-	    XInternAtom(xfc->display, "_NET_WM_STATE_MAXIMIZED_VERT", False);
+	    Logging_XInternAtom(xfc->log, xfc->display, "_NET_WM_STATE_MAXIMIZED_VERT", False);
 	xfc->_NET_WM_FULLSCREEN_MONITORS = get_supported_atom(xfc, "_NET_WM_FULLSCREEN_MONITORS");
-	xfc->_NET_WM_NAME = XInternAtom(xfc->display, "_NET_WM_NAME", False);
-	xfc->_NET_WM_PID = XInternAtom(xfc->display, "_NET_WM_PID", False);
-	xfc->_NET_WM_WINDOW_TYPE = XInternAtom(xfc->display, "_NET_WM_WINDOW_TYPE", False);
+	xfc->_NET_WM_NAME = Logging_XInternAtom(xfc->log, xfc->display, "_NET_WM_NAME", False);
+	xfc->_NET_WM_PID = Logging_XInternAtom(xfc->log, xfc->display, "_NET_WM_PID", False);
+	xfc->_NET_WM_WINDOW_TYPE =
+	    Logging_XInternAtom(xfc->log, xfc->display, "_NET_WM_WINDOW_TYPE", False);
 	xfc->_NET_WM_WINDOW_TYPE_NORMAL =
-	    XInternAtom(xfc->display, "_NET_WM_WINDOW_TYPE_NORMAL", False);
+	    Logging_XInternAtom(xfc->log, xfc->display, "_NET_WM_WINDOW_TYPE_NORMAL", False);
 	xfc->_NET_WM_WINDOW_TYPE_DIALOG =
-	    XInternAtom(xfc->display, "_NET_WM_WINDOW_TYPE_DIALOG", False);
-	xfc->_NET_WM_WINDOW_TYPE_POPUP = XInternAtom(xfc->display, "_NET_WM_WINDOW_TYPE_POPUP", False);
+	    Logging_XInternAtom(xfc->log, xfc->display, "_NET_WM_WINDOW_TYPE_DIALOG", False);
+	xfc->_NET_WM_WINDOW_TYPE_POPUP =
+	    Logging_XInternAtom(xfc->log, xfc->display, "_NET_WM_WINDOW_TYPE_POPUP", False);
 	xfc->_NET_WM_WINDOW_TYPE_POPUP_MENU =
-	    XInternAtom(xfc->display, "_NET_WM_WINDOW_TYPE_POPUP_MENU", False);
+	    Logging_XInternAtom(xfc->log, xfc->display, "_NET_WM_WINDOW_TYPE_POPUP_MENU", False);
 	xfc->_NET_WM_WINDOW_TYPE_UTILITY =
-	    XInternAtom(xfc->display, "_NET_WM_WINDOW_TYPE_UTILITY", False);
+	    Logging_XInternAtom(xfc->log, xfc->display, "_NET_WM_WINDOW_TYPE_UTILITY", False);
 	xfc->_NET_WM_WINDOW_TYPE_DROPDOWN_MENU =
-	    XInternAtom(xfc->display, "_NET_WM_WINDOW_TYPE_DROPDOWN_MENU", False);
+	    Logging_XInternAtom(xfc->log, xfc->display, "_NET_WM_WINDOW_TYPE_DROPDOWN_MENU", False);
 	xfc->_NET_WM_STATE_SKIP_TASKBAR =
-	    XInternAtom(xfc->display, "_NET_WM_STATE_SKIP_TASKBAR", False);
-	xfc->_NET_WM_STATE_SKIP_PAGER = XInternAtom(xfc->display, "_NET_WM_STATE_SKIP_PAGER", False);
-	xfc->_NET_WM_MOVERESIZE = XInternAtom(xfc->display, "_NET_WM_MOVERESIZE", False);
-	xfc->_NET_MOVERESIZE_WINDOW = XInternAtom(xfc->display, "_NET_MOVERESIZE_WINDOW", False);
-	xfc->UTF8_STRING = XInternAtom(xfc->display, "UTF8_STRING", FALSE);
-	xfc->WM_PROTOCOLS = XInternAtom(xfc->display, "WM_PROTOCOLS", False);
-	xfc->WM_DELETE_WINDOW = XInternAtom(xfc->display, "WM_DELETE_WINDOW", False);
-	xfc->WM_STATE = XInternAtom(xfc->display, "WM_STATE", False);
+	    Logging_XInternAtom(xfc->log, xfc->display, "_NET_WM_STATE_SKIP_TASKBAR", False);
+	xfc->_NET_WM_STATE_SKIP_PAGER =
+	    Logging_XInternAtom(xfc->log, xfc->display, "_NET_WM_STATE_SKIP_PAGER", False);
+	xfc->_NET_WM_MOVERESIZE =
+	    Logging_XInternAtom(xfc->log, xfc->display, "_NET_WM_MOVERESIZE", False);
+	xfc->_NET_MOVERESIZE_WINDOW =
+	    Logging_XInternAtom(xfc->log, xfc->display, "_NET_MOVERESIZE_WINDOW", False);
+	xfc->UTF8_STRING = Logging_XInternAtom(xfc->log, xfc->display, "UTF8_STRING", FALSE);
+	xfc->WM_PROTOCOLS = Logging_XInternAtom(xfc->log, xfc->display, "WM_PROTOCOLS", False);
+	xfc->WM_DELETE_WINDOW = Logging_XInternAtom(xfc->log, xfc->display, "WM_DELETE_WINDOW", False);
+	xfc->WM_STATE = Logging_XInternAtom(xfc->log, xfc->display, "WM_STATE", False);
 	xfc->x11event = CreateFileDescriptorEvent(NULL, FALSE, FALSE, xfc->xfds, WINPR_FD_READ);
 
-	xfc->NET_WM_ALLOWED_ACTIONS = XInternAtom(xfc->display, "_NET_WM_ALLOWED_ACTIONS", False);
+	xfc->NET_WM_ALLOWED_ACTIONS =
+	    Logging_XInternAtom(xfc->log, xfc->display, "_NET_WM_ALLOWED_ACTIONS", False);
 
-	xfc->NET_WM_ACTION_CLOSE = XInternAtom(xfc->display, "_NET_WM_ACTION_CLOSE", False);
-	xfc->NET_WM_ACTION_MINIMIZE = XInternAtom(xfc->display, "_NET_WM_ACTION_MINIMIZE", False);
-	xfc->NET_WM_ACTION_MOVE = XInternAtom(xfc->display, "_NET_WM_ACTION_MOVE", False);
-	xfc->NET_WM_ACTION_RESIZE = XInternAtom(xfc->display, "_NET_WM_ACTION_RESIZE", False);
+	xfc->NET_WM_ACTION_CLOSE =
+	    Logging_XInternAtom(xfc->log, xfc->display, "_NET_WM_ACTION_CLOSE", False);
+	xfc->NET_WM_ACTION_MINIMIZE =
+	    Logging_XInternAtom(xfc->log, xfc->display, "_NET_WM_ACTION_MINIMIZE", False);
+	xfc->NET_WM_ACTION_MOVE =
+	    Logging_XInternAtom(xfc->log, xfc->display, "_NET_WM_ACTION_MOVE", False);
+	xfc->NET_WM_ACTION_RESIZE =
+	    Logging_XInternAtom(xfc->log, xfc->display, "_NET_WM_ACTION_RESIZE", False);
 	xfc->NET_WM_ACTION_MAXIMIZE_HORZ =
-	    XInternAtom(xfc->display, "_NET_WM_ACTION_MAXIMIZE_HORZ", False);
+	    Logging_XInternAtom(xfc->log, xfc->display, "_NET_WM_ACTION_MAXIMIZE_HORZ", False);
 	xfc->NET_WM_ACTION_MAXIMIZE_VERT =
-	    XInternAtom(xfc->display, "_NET_WM_ACTION_MAXIMIZE_VERT", False);
-	xfc->NET_WM_ACTION_FULLSCREEN = XInternAtom(xfc->display, "_NET_WM_ACTION_FULLSCREEN", False);
+	    Logging_XInternAtom(xfc->log, xfc->display, "_NET_WM_ACTION_MAXIMIZE_VERT", False);
+	xfc->NET_WM_ACTION_FULLSCREEN =
+	    Logging_XInternAtom(xfc->log, xfc->display, "_NET_WM_ACTION_FULLSCREEN", False);
 	xfc->NET_WM_ACTION_CHANGE_DESKTOP =
-	    XInternAtom(xfc->display, "_NET_WM_ACTION_CHANGE_DESKTOP", False);
+	    Logging_XInternAtom(xfc->log, xfc->display, "_NET_WM_ACTION_CHANGE_DESKTOP", False);
 
 	if (!xfc->x11event)
 	{
@@ -1987,6 +2000,7 @@ static BOOL xfreerdp_client_new(freerdp* instance, rdpContext* context)
 	PubSub_SubscribeZoomingChange(context->pubSub, xf_ZoomingChangeEventHandler);
 	PubSub_SubscribePanningChange(context->pubSub, xf_PanningChangeEventHandler);
 #endif
+	xfc->log = WLog_Get(TAG);
 
 	return TRUE;
 }
