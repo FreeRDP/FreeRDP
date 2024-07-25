@@ -1919,6 +1919,9 @@ UINT32 freerdp_settings_get_uint32(const rdpSettings* settings, FreeRDP_Settings
 		case FreeRDP_RemoteFxCodecMode:
 			return settings->RemoteFxCodecMode;
 
+		case FreeRDP_RemoteFxRlgrMode:
+			return settings->RemoteFxRlgrMode;
+
 		case FreeRDP_RemoteWndSupportLevel:
 			return settings->RemoteWndSupportLevel;
 
@@ -1957,6 +1960,9 @@ UINT32 freerdp_settings_get_uint32(const rdpSettings* settings, FreeRDP_Settings
 
 		case FreeRDP_StaticChannelCount:
 			return settings->StaticChannelCount;
+
+		case FreeRDP_SurfaceCommandsSupported:
+			return settings->SurfaceCommandsSupported;
 
 		case FreeRDP_TargetNetAddressCount:
 			return settings->TargetNetAddressCount;
@@ -2416,6 +2422,10 @@ BOOL freerdp_settings_set_uint32(rdpSettings* settings, FreeRDP_Settings_Keys_UI
 			settings->RemoteFxCodecMode = cnv.c;
 			break;
 
+		case FreeRDP_RemoteFxRlgrMode:
+			settings->RemoteFxRlgrMode = cnv.c;
+			break;
+
 		case FreeRDP_RemoteWndSupportLevel:
 			settings->RemoteWndSupportLevel = cnv.c;
 			break;
@@ -2466,6 +2476,10 @@ BOOL freerdp_settings_set_uint32(rdpSettings* settings, FreeRDP_Settings_Keys_UI
 
 		case FreeRDP_StaticChannelCount:
 			settings->StaticChannelCount = cnv.c;
+			break;
+
+		case FreeRDP_SurfaceCommandsSupported:
+			settings->SurfaceCommandsSupported = cnv.c;
 			break;
 
 		case FreeRDP_TargetNetAddressCount:

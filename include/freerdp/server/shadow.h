@@ -160,7 +160,7 @@ extern "C"
 		RECTANGLE_16 subRect;
 
 		/* Codec settings */
-		RLGR_MODE rfxMode;
+		RLGR_MODE rfxMode; /* unused */
 		H264_RATECONTROL_MODE h264RateControlMode;
 		UINT32 h264BitRate;
 		UINT32 h264FrameRate;

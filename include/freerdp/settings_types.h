@@ -63,6 +63,11 @@ extern "C"
  * application context)
  */
 
+/* Surface Commands Flags */
+#define SURFCMDS_SET_SURFACE_BITS 0x00000002
+#define SURFCMDS_FRAME_MARKER 0x00000010
+#define SURFCMDS_STREAM_SURFACE_BITS 0x00000040
+
 /* RAIL Support Level */
 #define RAIL_LEVEL_SUPPORTED 0x00000001
 #define RAIL_LEVEL_DOCKED_LANGBAR_SUPPORTED 0x00000002
