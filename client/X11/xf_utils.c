@@ -40,9 +40,9 @@ static void write_log(wLog* log, DWORD level, const char* fname, const char* fkt
 	va_end(ap);
 }
 
-char* Safe_XGetAtomName(wLog* log, Display* display, Atom atom)
+char* Safe_XGetAtomNameEx(wLog* log, Display* display, Atom atom, const char* atomvar)
 {
-	WLog_Print(log, log_level, "XGetAtomName(0x%08" PRIx32 ")", atom);
+	WLog_Print(log, log_level, "XGetAtomName(%s, 0x%08" PRIx32 ")", atomvar, atom);
 	if (atom == None)
 		return strdup("Atom_None");
 	return XGetAtomName(display, atom);
@@ -54,7 +54,7 @@ Atom Logging_XInternAtom(wLog* log, Display* display, _Xconst char* atom_name, B
 	if (WLog_IsLevelActive(log, log_level))
 	{
 		WLog_Print(log, log_level, "XInternAtom(0x%08" PRIx32 ", %s, %s) -> 0x%08" PRIx32, display,
-		           atom_name, only_if_exists, atom);
+		           atom_name, only_if_exists ? "True" : "False", atom);
 	}
 	return atom;
 }

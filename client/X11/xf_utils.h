@@ -25,7 +25,10 @@
 #include <X11/Xlib.h>
 #include "xfreerdp.h"
 
-char* Safe_XGetAtomName(wLog* log, Display* display, Atom atom);
+#define X_GET_ATOM_VAR_NAME(x) #x
+#define Safe_XGetAtomName(log, display, atom) \
+	Safe_XGetAtomNameEx((log), (display), (atom), X_GET_ATOM_VAR_NAME(atom))
+char* Safe_XGetAtomNameEx(wLog* log, Display* display, Atom atom, const char* varname);
 Atom Logging_XInternAtom(wLog* log, Display* display, _Xconst char* atom_name, Bool only_if_exists);
 
 typedef BOOL (*fn_action_script_run)(xfContext* xfc, const char* buffer, size_t size, void* user,
