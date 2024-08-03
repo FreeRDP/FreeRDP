@@ -46,7 +46,7 @@ auth_status utils_authenticate_gateway(freerdp* instance, rdp_auth_reason reason
 auth_status utils_authenticate(freerdp* instance, rdp_auth_reason reason, BOOL override);
 
 HANDLE utils_get_abort_event(rdpRdp* rdp);
-BOOL utils_abort_event_is_set(rdpRdp* rdp);
+BOOL utils_abort_event_is_set(const rdpRdp* rdp);
 BOOL utils_reset_abort(rdpRdp* rdp);
 BOOL utils_abort_connect(rdpRdp* rdp);
 BOOL utils_sync_credentials(rdpSettings* settings, BOOL toGateway);

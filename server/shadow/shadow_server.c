@@ -412,6 +412,23 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 			if (!WLog_AddStringLogFilters(arg->Value))
 				return COMMAND_LINE_ERROR;
 		}
+		CommandLineSwitchCase(arg, "nsc")
+		{
+			if (!freerdp_settings_set_bool(settings, FreeRDP_NSCodec, arg->Value ? TRUE : FALSE))
+				return COMMAND_LINE_ERROR;
+		}
+		CommandLineSwitchCase(arg, "rfx")
+		{
+			if (!freerdp_settings_set_bool(settings, FreeRDP_RemoteFxCodec,
+			                               arg->Value ? TRUE : FALSE))
+				return COMMAND_LINE_ERROR;
+		}
+		CommandLineSwitchCase(arg, "gfx")
+		{
+			if (!freerdp_settings_set_bool(settings, FreeRDP_SupportGraphicsPipeline,
+			                               arg->Value ? TRUE : FALSE))
+				return COMMAND_LINE_ERROR;
+		}
 		CommandLineSwitchCase(arg, "gfx-progressive")
 		{
 			if (!freerdp_settings_set_bool(settings, FreeRDP_GfxProgressive,
@@ -963,7 +980,6 @@ rdpShadowServer* shadow_server_new(void)
 	server->port = 3389;
 	server->mayView = TRUE;
 	server->mayInteract = TRUE;
-	server->rfxMode = RLGR3;
 	server->h264RateControlMode = H264_RATECONTROL_VBR;
 	server->h264BitRate = 10000000;
 	server->h264FrameRate = 30;

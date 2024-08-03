@@ -33,6 +33,7 @@
 #include <freerdp/client/tsmf.h>
 
 #include "xf_tsmf.h"
+#include "xf_utils.h"
 
 #ifdef WITH_XV
 
@@ -382,7 +383,10 @@ static int xf_tsmf_xv_init(xfContext* xfc, TsmfClientContext* tsmf)
 	{
 		if (strcmp(attr[i].name, "XV_COLORKEY") == 0)
 		{
-			xv->xv_colorkey_atom = XInternAtom(xfc->display, "XV_COLORKEY", FALSE);
+			static wLog* log = NULL;
+			if (!log)
+				log = WLog_Get(TAG);
+			xv->xv_colorkey_atom = Logging_XInternAtom(log, xfc->display, "XV_COLORKEY", FALSE);
 			XvSetPortAttribute(xfc->display, xv->xv_port, xv->xv_colorkey_atom,
 			                   attr[i].min_value + 1);
 			break;

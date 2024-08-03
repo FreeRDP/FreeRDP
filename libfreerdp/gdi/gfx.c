@@ -1855,14 +1855,11 @@ BOOL gdi_graphics_pipeline_init_ex(rdpGdi* gdi, RdpgfxClientContext* gfx,
                                    pcRdpgfxUnmapWindowForSurface unmap,
                                    pcRdpgfxUpdateSurfaceArea update)
 {
-	rdpContext* context = NULL;
-	const rdpSettings* settings = NULL;
-
 	if (!gdi || !gfx || !gdi->context || !gdi->context->settings)
 		return FALSE;
 
-	context = gdi->context;
-	settings = gdi->context->settings;
+	rdpContext* context = gdi->context;
+	rdpSettings* settings = context->settings;
 
 	gdi->gfx = gfx;
 	gfx->custom = (void*)gdi;

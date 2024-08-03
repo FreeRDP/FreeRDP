@@ -17,9 +17,9 @@
             <term>Action Script</term>
             <listitem><para>executes a predefined script on key press.</para></listitem>
             <listitem><para>Should the script not exist it is ignored.</para></listitem>
-            <listitem><para>Scripts can be provided at the default location ~/.config/freerdp/action.sh or as command line argument /action:script:&lt;path&gt;.</para></listitem>
+						<listitem><para>Scripts can be provided at the default location <replaceable>$XDG_CONFIG_HOME/@VENDOR_PRODUCT@/action.sh</replaceable> or as command line argument <replaceable>/action:script:&lt;path&gt;</replaceable>.</para></listitem>
             <listitem><para>The script will receive the current key combination as argument.</para></listitem>
-            <listitem><para>The output of the script is parsed for key-local which tells that the script used the key combination, otherwise the combination is forwarded to the remote.</para></listitem>
+            <listitem><para>The output of the script is parsed for <replaceable>key-local</replaceable> which tells that the script used the key combination, otherwise the combination is forwarded to the remote.</para></listitem>
 		</varlistentry>
 	</variablelist>
 </refsect1>

@@ -1161,7 +1161,7 @@ BOOL tsmf_stream_flush(TSMF_STREAM* stream)
 		stream->presentation->audio_end_time = 0;
 	}
 
-	return TRUE;
+	return ret;
 }
 
 void _tsmf_presentation_free(void* obj)

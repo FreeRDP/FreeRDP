@@ -1,7 +1,7 @@
 #!/bin/bash
 SCM_URL=https://github.com/cisco/openh264/archive
-SCM_TAG=v2.3.1
-SCM_HASH=453afa66dacb560bc5fd0468aabee90c483741571bca820a39a1c07f0362dc32
+SCM_TAG=v2.4.1
+SCM_HASH=8ffbe944e74043d0d3fb53d4a2a14c94de71f58dbea6a06d0dc92369542958ea
 
 source $(dirname "${BASH_SOURCE[0]}")/android-build-common.sh
 

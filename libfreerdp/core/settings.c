@@ -391,6 +391,14 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	if (!settings)
 		return NULL;
 
+	if (!freerdp_settings_set_uint32(settings, FreeRDP_SurfaceCommandsSupported,
+	                                 SURFCMDS_SET_SURFACE_BITS | SURFCMDS_STREAM_SURFACE_BITS |
+	                                     SURFCMDS_FRAME_MARKER))
+		goto out_fail;
+
+	if (!freerdp_settings_set_uint32(settings, FreeRDP_RemoteFxRlgrMode, RLGR3))
+		goto out_fail;
+
 	if (!freerdp_settings_set_uint16(settings, FreeRDP_CapsProtocolVersion,
 	                                 TS_CAPS_PROTOCOLVERSION))
 		goto out_fail;
@@ -772,6 +780,13 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 
 		char* config = freerdp_settings_get_config_path();
 		rc = freerdp_settings_set_string(settings, FreeRDP_ConfigPath, config);
+		if (rc)
+		{
+			char* action = GetCombinedPath(config, "action.sh");
+			rc = freerdp_settings_set_string(settings, FreeRDP_ActionScript, action);
+			free(action);
+		}
+
 		free(config);
 		if (!rc)
 			goto out_fail;
@@ -779,8 +794,6 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 
 	settings_load_hkey_local_machine(settings);
 
-	if (!freerdp_settings_set_string(settings, FreeRDP_ActionScript, "~/.config/freerdp/action.sh"))
-		goto out_fail;
 	if (!freerdp_settings_set_bool(settings, FreeRDP_SmartcardLogon, FALSE))
 		goto out_fail;
 	if (!freerdp_settings_set_uint32(settings, FreeRDP_TlsSecLevel, 1))

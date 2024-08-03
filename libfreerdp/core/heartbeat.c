@@ -25,7 +25,6 @@
 
 state_run_t rdp_recv_heartbeat_packet(rdpRdp* rdp, wStream* s)
 {
-	BYTE reserved = 0;
 	BYTE period = 0;
 	BYTE count1 = 0;
 	BYTE count2 = 0;
@@ -38,7 +37,7 @@ state_run_t rdp_recv_heartbeat_packet(rdpRdp* rdp, wStream* s)
 	if (!Stream_CheckAndLogRequiredLength(AUTODETECT_TAG, s, 4))
 		return STATE_RUN_FAILED;
 
-	Stream_Read_UINT8(s, reserved); /* reserved (1 byte) */
+	Stream_Seek_UINT8(s);           /* reserved (1 byte) */
 	Stream_Read_UINT8(s, period);   /* period (1 byte) */
 	Stream_Read_UINT8(s, count1);   /* count1 (1 byte) */
 	Stream_Read_UINT8(s, count2);   /* count2 (1 byte) */

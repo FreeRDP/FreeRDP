@@ -37,7 +37,7 @@ static void write_log(unsigned log_level, const char* fmt, ...)
 		vsnprintf(buffer, sizeof(buffer), fmt, ap);
 		va_end(ap);
 
-		WLog_PrintMessage(log, WLOG_MESSAGE_TEXT, log_level, __LINE__, __FILE__, __FUNCTION__, "%s",
+		WLog_PrintMessage(log, WLOG_MESSAGE_TEXT, log_level, __LINE__, __FILE__, __func__, "%s",
 		                  buffer);
 	}
 }

@@ -252,7 +252,7 @@ double WINPR_JSON_GetNumberValue(const WINPR_JSON* const item)
 	return cJSON_GetNumberValue((const cJSON*)item);
 #else
 	WINPR_UNUSED(item);
-	return nan(NULL);
+	return nan("");
 #endif
 }
 
@@ -610,6 +610,22 @@ WINPR_JSON* WINPR_JSON_AddObjectToObject(WINPR_JSON* const object, const char* c
 	WINPR_UNUSED(object);
 	WINPR_UNUSED(name);
 	return NULL;
+#endif
+}
+
+BOOL WINPR_JSON_AddItemToArray(WINPR_JSON* array, WINPR_JSON* item)
+{
+#if defined(WITH_JSONC)
+	const int rc = json_object_array_add((json_object*)array, (json_object*)item);
+	if (rc != 0)
+		return FALSE;
+	return TRUE;
+#elif defined(WITH_CJSON)
+	return cJSON_AddItemToArray((cJSON*)array, (cJSON*)item);
+#else
+	WINPR_UNUSED(array);
+	WINPR_UNUSED(item);
+	return FALSE;
 #endif
 }
 

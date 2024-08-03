@@ -77,13 +77,6 @@ if (NOT SDL2_FOUND AND NOT SDL3_FOUND)
 	message(FATAL_ERROR "No SDL library detected, giving up. Install SDL2 or SDL3 development package to fix")
 endif()
 
-# Configuration settings for manpages
-if (NOT WITH_FULL_CONFIG_PATH AND "${VENDOR}" STREQUAL "${PRODUCT}")
-	string(TOLOWER "${VENDOR}" VENDOR_PRODUCT)
-else()
-	set(VENDOR_PRODUCT "${VENDOR}/${PRODUCT}")
-endif()
-
 add_subdirectory(common)
 include_directories(common)
 

@@ -311,9 +311,9 @@ static PfChannelResult DynvcTrackerPeekFn(ChannelStateTracker* tracker, BOOL fir
 		 */
 		dynChannel = (pServerDynamicChannelContext*)HashTable_GetItemValue(
 		    dynChannelContext->channels, &dynChannelId);
-		if (cmd != CREATE_REQUEST_PDU || !isBackData)
+		if ((cmd != CREATE_REQUEST_PDU) || !isBackData)
 		{
-			if (!dynChannel)
+			if (!dynChannel || (dynChannel->openStatus == CHANNEL_OPENSTATE_CLOSED))
 			{
 				/* we've not found the target channel, so we drop this chunk, plus all the rest of
 				 * the packet */

@@ -140,8 +140,9 @@ static void xdg_handle_toplevel_configure(void* data, struct xdg_toplevel* xdg_t
 		window->width = width;
 		window->stride = width * bppFromShmFormat(window->format);
 		window->height = height;
-		ret = UwacWindowShmAllocBuffers(window, UWAC_INITIAL_BUFFERS, window->stride * height,
-		                                width, height, window->format);
+		ret =
+		    UwacWindowShmAllocBuffers(window, UWAC_INITIAL_BUFFERS, 1ull * window->stride * height,
+		                              width, height, window->format);
 
 		if (ret != UWAC_SUCCESS)
 		{
@@ -229,8 +230,9 @@ static void ivi_handle_configure(void* data, struct ivi_surface* surface, int32_
 		window->width = width;
 		window->stride = width * bppFromShmFormat(window->format);
 		window->height = height;
-		ret = UwacWindowShmAllocBuffers(window, UWAC_INITIAL_BUFFERS, window->stride * height,
-		                                width, height, window->format);
+		ret =
+		    UwacWindowShmAllocBuffers(window, UWAC_INITIAL_BUFFERS, 1ull * window->stride * height,
+		                              width, height, window->format);
 
 		if (ret != UWAC_SUCCESS)
 		{
@@ -287,8 +289,9 @@ static void shell_configure(void* data, struct wl_shell_surface* surface, uint32
 		window->width = width;
 		window->stride = width * bppFromShmFormat(window->format);
 		window->height = height;
-		ret = UwacWindowShmAllocBuffers(window, UWAC_INITIAL_BUFFERS, window->stride * height,
-		                                width, height, window->format);
+		ret =
+		    UwacWindowShmAllocBuffers(window, UWAC_INITIAL_BUFFERS, 1ull * window->stride * height,
+		                              width, height, window->format);
 
 		if (ret != UWAC_SUCCESS)
 		{
@@ -412,7 +415,8 @@ static UwacBuffer* UwacWindowFindFreeBuffer(UwacWindow* w, ssize_t* index)
 		}
 	}
 
-	ret = UwacWindowShmAllocBuffers(w, 2, w->stride * w->height, w->width, w->height, w->format);
+	ret = UwacWindowShmAllocBuffers(w, 2, 1ull * w->stride * w->height, w->width, w->height,
+	                                w->format);
 
 	if (ret != UWAC_SUCCESS)
 	{

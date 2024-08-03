@@ -836,7 +836,7 @@ static void smartcard_trace_write_cache_a_call(const WriteCacheA_Call* call)
 	if (!WLog_IsLevelActive(WLog_Get(TAG), g_LogLevel))
 		return;
 
-	WLog_LVL(TAG, g_LogLevel, "GetTransmitCount_Call {");
+	WLog_LVL(TAG, g_LogLevel, "WriteCacheA_Call {");
 
 	WLog_LVL(TAG, g_LogLevel, "  szLookupName=%s", call->szLookupName);
 
@@ -860,7 +860,7 @@ static void smartcard_trace_write_cache_w_call(const WriteCacheW_Call* call)
 	if (!WLog_IsLevelActive(WLog_Get(TAG), g_LogLevel))
 		return;
 
-	WLog_LVL(TAG, g_LogLevel, "GetTransmitCount_Call {");
+	WLog_LVL(TAG, g_LogLevel, "WriteCacheW_Call {");
 
 	if (call->szLookupName)
 		ConvertWCharToUtf8(call->szLookupName, tmp, ARRAYSIZE(tmp));
@@ -885,7 +885,7 @@ static void smartcard_trace_read_cache_a_call(const ReadCacheA_Call* call)
 	if (!WLog_IsLevelActive(WLog_Get(TAG), g_LogLevel))
 		return;
 
-	WLog_LVL(TAG, g_LogLevel, "GetTransmitCount_Call {");
+	WLog_LVL(TAG, g_LogLevel, "ReadCacheA_Call {");
 
 	WLog_LVL(TAG, g_LogLevel, "  szLookupName=%s", call->szLookupName);
 	smartcard_log_context(TAG, &call->Common.handles.hContext);
@@ -907,7 +907,7 @@ static void smartcard_trace_read_cache_w_call(const ReadCacheW_Call* call)
 	if (!WLog_IsLevelActive(WLog_Get(TAG), g_LogLevel))
 		return;
 
-	WLog_LVL(TAG, g_LogLevel, "GetTransmitCount_Call {");
+	WLog_LVL(TAG, g_LogLevel, "ReadCacheW_Call {");
 	if (call->szLookupName)
 		ConvertWCharToUtf8(call->szLookupName, tmp, ARRAYSIZE(tmp));
 	WLog_LVL(TAG, g_LogLevel, "  szLookupName=%s", tmp);

@@ -160,6 +160,8 @@ static UINT parallel_process_irp_read(PARALLEL_DEVICE* parallel, IRP* irp)
 		return ERROR_INVALID_DATA;
 	Stream_Read_UINT32(irp->input, Length);
 	Stream_Read_UINT64(irp->input, Offset);
+	(void)Offset; /* [MS-RDPESP] 3.2.5.1.4 Processing a Server Read Request Message
+	               * ignored */
 	buffer = (BYTE*)calloc(Length, sizeof(BYTE));
 
 	if (!buffer)
@@ -220,6 +222,8 @@ static UINT parallel_process_irp_write(PARALLEL_DEVICE* parallel, IRP* irp)
 
 	Stream_Read_UINT32(irp->input, Length);
 	Stream_Read_UINT64(irp->input, Offset);
+	(void)Offset; /* [MS-RDPESP] 3.2.5.1.5 Processing a Server Write Request Message
+	               * ignore offset */
 	if (!Stream_SafeSeek(irp->input, 20)) /* Padding */
 		return ERROR_INVALID_DATA;
 	const void* ptr = Stream_ConstPointer(irp->input);

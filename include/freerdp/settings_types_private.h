@@ -650,7 +650,8 @@ struct rdp_settings
 	SETTINGS_DEPRECATED(ALIGN64 BOOL SurfaceCommandsEnabled);    /* 3520 */
 	SETTINGS_DEPRECATED(ALIGN64 BOOL FrameMarkerCommandEnabled); /* 3521 */
 	SETTINGS_DEPRECATED(ALIGN64 BOOL SurfaceFrameMarkerEnabled); /* 3522 */
-	UINT64 padding3584[3584 - 3523];                             /* 3523 */
+	SETTINGS_DEPRECATED(ALIGN64 UINT32 SurfaceCommandsSupported); /* 3523 */
+	UINT64 padding3584[3584 - 3524];                              /* 3524 */
 	UINT64 padding3648[3648 - 3584];                             /* 3584 */
 
 	/*
@@ -664,7 +665,8 @@ struct rdp_settings
 	SETTINGS_DEPRECATED(ALIGN64 UINT32 RemoteFxCodecMode);    /* 3651 */
 	SETTINGS_DEPRECATED(ALIGN64 BOOL RemoteFxImageCodec);     /* 3652 */
 	SETTINGS_DEPRECATED(ALIGN64 UINT32 RemoteFxCaptureFlags); /* 3653 */
-	UINT64 padding3712[3712 - 3654];                          /* 3654 */
+	SETTINGS_DEPRECATED(ALIGN64 UINT32 RemoteFxRlgrMode);     /* 3654 */
+	UINT64 padding3712[3712 - 3655];                          /* 3655 */
 
 	/* NSCodec */
 	SETTINGS_DEPRECATED(ALIGN64 BOOL NSCodec);                          /* 3712 */

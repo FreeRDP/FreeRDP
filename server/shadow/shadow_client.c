@@ -215,13 +215,19 @@ static BOOL shadow_client_context_new(freerdp_peer* peer, rdpContext* context)
 	if (!freerdp_settings_set_bool(settings, FreeRDP_RemoteFxCodec,
 	                               freerdp_settings_get_bool(srvSettings, FreeRDP_RemoteFxCodec)))
 		return FALSE;
+	if (!freerdp_settings_set_uint32(
+	        settings, FreeRDP_RemoteFxRlgrMode,
+	        freerdp_settings_get_uint32(srvSettings, FreeRDP_RemoteFxRlgrMode)))
+		return FALSE;
 	if (!freerdp_settings_set_bool(settings, FreeRDP_BitmapCacheV3Enabled, TRUE))
 		return FALSE;
 	if (!freerdp_settings_set_bool(settings, FreeRDP_FrameMarkerCommandEnabled, TRUE))
 		return FALSE;
 	if (!freerdp_settings_set_bool(settings, FreeRDP_SurfaceFrameMarkerEnabled, TRUE))
 		return FALSE;
-	if (!freerdp_settings_set_bool(settings, FreeRDP_SupportGraphicsPipeline, TRUE))
+	if (!freerdp_settings_set_bool(
+	        settings, FreeRDP_SupportGraphicsPipeline,
+	        freerdp_settings_get_bool(srvSettings, FreeRDP_SupportGraphicsPipeline)))
 		return FALSE;
 	if (!freerdp_settings_set_bool(settings, FreeRDP_GfxH264,
 	                               freerdp_settings_get_bool(srvSettings, FreeRDP_GfxH264)))
@@ -1355,6 +1361,39 @@ static BOOL shadow_client_send_surface_gfx(rdpShadowClient* client, const BYTE* 
 	return TRUE;
 }
 
+static BOOL stream_surface_bits_supported(const rdpSettings* settings)
+{
+	const UINT32 supported =
+	    freerdp_settings_get_uint32(settings, FreeRDP_SurfaceCommandsSupported);
+	return ((supported & SURFCMDS_STREAM_SURFACE_BITS) != 0);
+}
+
+static BOOL set_surface_bits_supported(const rdpSettings* settings)
+{
+	const UINT32 supported =
+	    freerdp_settings_get_uint32(settings, FreeRDP_SurfaceCommandsSupported);
+	return ((supported & SURFCMDS_SET_SURFACE_BITS) != 0);
+}
+
+static BOOL is_surface_command_supported(const rdpSettings* settings)
+{
+	if (stream_surface_bits_supported(settings))
+	{
+		const UINT32 rfxID = freerdp_settings_get_uint32(settings, FreeRDP_RemoteFxCodecId);
+		const BOOL supported = freerdp_settings_get_bool(settings, FreeRDP_RemoteFxCodec);
+		if (supported && (rfxID != 0))
+			return TRUE;
+	}
+	if (set_surface_bits_supported(settings))
+	{
+		const UINT32 nsID = freerdp_settings_get_uint32(settings, FreeRDP_NSCodecId);
+		const BOOL supported = freerdp_settings_get_bool(settings, FreeRDP_NSCodec);
+		if (supported && (nsID != 0))
+			return TRUE;
+	}
+	return FALSE;
+}
+
 /**
  * Function description
  *
@@ -1375,8 +1414,6 @@ static BOOL shadow_client_send_surface_bits(rdpShadowClient* client, BYTE* pSrcD
 	rdpSettings* settings = NULL;
 	rdpShadowEncoder* encoder = NULL;
 	SURFACE_BITS_COMMAND cmd = { 0 };
-	UINT32 nsID = 0;
-	UINT32 rfxID = 0;
 
 	if (!context || !pSrcData)
 		return FALSE;
@@ -1391,9 +1428,11 @@ static BOOL shadow_client_send_surface_bits(rdpShadowClient* client, BYTE* pSrcD
 	if (encoder->frameAck)
 		frameId = shadow_encoder_create_frame_id(encoder);
 
-	nsID = freerdp_settings_get_uint32(settings, FreeRDP_NSCodecId);
-	rfxID = freerdp_settings_get_uint32(settings, FreeRDP_RemoteFxCodecId);
-	if (freerdp_settings_get_bool(settings, FreeRDP_RemoteFxCodec) && (rfxID != 0))
+	// TODO: Check FreeRDP_RemoteFxCodecMode if we should send RFX IMAGE or VIDEO data
+	const UINT32 nsID = freerdp_settings_get_uint32(settings, FreeRDP_NSCodecId);
+	const UINT32 rfxID = freerdp_settings_get_uint32(settings, FreeRDP_RemoteFxCodecId);
+	if (stream_surface_bits_supported(settings) &&
+	    freerdp_settings_get_bool(settings, FreeRDP_RemoteFxCodec) && (rfxID != 0))
 	{
 		RFX_RECT rect = { 0 };
 
@@ -1470,7 +1509,8 @@ static BOOL shadow_client_send_surface_bits(rdpShadowClient* client, BYTE* pSrcD
 
 		rfx_message_list_free(messages);
 	}
-	if (freerdp_settings_get_bool(settings, FreeRDP_NSCodec) && (nsID != 0))
+	else if (set_surface_bits_supported(settings) &&
+	         freerdp_settings_get_bool(settings, FreeRDP_NSCodec) && (nsID != 0))
 	{
 		if (shadow_encoder_prepare(encoder, FREERDP_CODEC_NSCODEC) < 0)
 		{
@@ -1866,8 +1906,7 @@ static BOOL shadow_client_send_surface_update(rdpShadowClient* client, SHADOW_GF
 			ret = TRUE;
 		}
 	}
-	else if (freerdp_settings_get_bool(settings, FreeRDP_RemoteFxCodec) ||
-	         freerdp_settings_get_bool(settings, FreeRDP_NSCodec))
+	else if (is_surface_command_supported(settings))
 	{
 		WINPR_ASSERT(nXSrc >= 0);
 		WINPR_ASSERT(nXSrc <= UINT16_MAX);

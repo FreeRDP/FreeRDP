@@ -241,6 +241,8 @@ static UINT serial_process_irp_read(SERIAL_DEVICE* serial, IRP* irp)
 
 	Stream_Read_UINT32(irp->input, Length); /* Length (4 bytes) */
 	Stream_Read_UINT64(irp->input, Offset); /* Offset (8 bytes) */
+	(void)Offset; /* [MS-RDPESP] 3.2.5.1.4 Processing a Server Read Request Message
+	               * ignored */
 	Stream_Seek(irp->input, 20);            /* Padding (20 bytes) */
 	buffer = (BYTE*)calloc(Length, sizeof(BYTE));
 
@@ -301,6 +303,8 @@ static UINT serial_process_irp_write(SERIAL_DEVICE* serial, IRP* irp)
 
 	Stream_Read_UINT32(irp->input, Length); /* Length (4 bytes) */
 	Stream_Read_UINT64(irp->input, Offset); /* Offset (8 bytes) */
+	(void)Offset; /* [MS-RDPESP] 3.2.5.1.4 Processing a Server Read Request Message
+	               * ignored */
 	if (!Stream_SafeSeek(irp->input, 20))   /* Padding (20 bytes) */
 		return ERROR_INVALID_DATA;
 

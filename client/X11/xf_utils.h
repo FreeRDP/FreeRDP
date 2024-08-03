@@ -20,10 +20,21 @@
 #pragma once
 
 #include <winpr/wlog.h>
+#include <winpr/wtypes.h>
 
 #include <X11/Xlib.h>
+#include "xfreerdp.h"
 
-char* Safe_XGetAtomName(wLog* log, Display* display, Atom atom);
+#define X_GET_ATOM_VAR_NAME(x) #x
+#define Safe_XGetAtomName(log, display, atom) \
+	Safe_XGetAtomNameEx((log), (display), (atom), X_GET_ATOM_VAR_NAME(atom))
+char* Safe_XGetAtomNameEx(wLog* log, Display* display, Atom atom, const char* varname);
+Atom Logging_XInternAtom(wLog* log, Display* display, _Xconst char* atom_name, Bool only_if_exists);
+
+typedef BOOL (*fn_action_script_run)(xfContext* xfc, const char* buffer, size_t size, void* user,
+                                     const char* what, const char* arg);
+BOOL run_action_script(xfContext* xfc, const char* what, const char* arg, fn_action_script_run fkt,
+                       void* user);
 
 #define LogTagAndXGetWindowProperty(tag, display, w, property, long_offset, long_length, delete,   \
                                     req_type, actual_type_return, actual_format_return,            \
@@ -89,3 +100,5 @@ int LogTagAndXConvertSelection_ex(const char* tag, const char* file, const char*
 int LogDynAndXConvertSelection_ex(wLog* log, const char* file, const char* fkt, size_t line,
                                   Display* display, Atom selection, Atom target, Atom property,
                                   Window requestor, Time time);
+
+BOOL IsGnome(void);

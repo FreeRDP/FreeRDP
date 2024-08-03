@@ -749,7 +749,7 @@ static LONG smartcard_ReadCacheW_Call(scard_call_context* smartcard, wStream* ou
 	if ((ret.ReturnCode != SCARD_W_CACHE_ITEM_NOT_FOUND) &&
 	    (ret.ReturnCode != SCARD_W_CACHE_ITEM_STALE))
 	{
-		scard_log_status_error(TAG, "SCardReadCacheA", ret.ReturnCode);
+		scard_log_status_error(TAG, "SCardReadCacheW", ret.ReturnCode);
 	}
 
 	status = smartcard_pack_read_cache_return(out, &ret);

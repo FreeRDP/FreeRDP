@@ -18,9 +18,17 @@
  * limitations under the License.
  */
 
+#include <string.h>
 #include <winpr/assert.h>
+#include <winpr/wtypes.h>
+#include <winpr/path.h>
 
 #include "xf_utils.h"
+#include "xfreerdp.h"
+
+#include <freerdp/log.h>
+
+#define TAG CLIENT_TAG("xfreerdp.utils")
 
 static const DWORD log_level = WLOG_TRACE;
 
@@ -32,12 +40,23 @@ static void write_log(wLog* log, DWORD level, const char* fname, const char* fkt
 	va_end(ap);
 }
 
-char* Safe_XGetAtomName(wLog* log, Display* display, Atom atom)
+char* Safe_XGetAtomNameEx(wLog* log, Display* display, Atom atom, const char* atomvar)
 {
-	WLog_Print(log, log_level, "XGetAtomName(0x%08" PRIx32 ")", atom);
+	WLog_Print(log, log_level, "XGetAtomName(%s, 0x%08" PRIx32 ")", atomvar, atom);
 	if (atom == None)
 		return strdup("Atom_None");
 	return XGetAtomName(display, atom);
+}
+
+Atom Logging_XInternAtom(wLog* log, Display* display, _Xconst char* atom_name, Bool only_if_exists)
+{
+	Atom atom = XInternAtom(display, atom_name, only_if_exists);
+	if (WLog_IsLevelActive(log, log_level))
+	{
+		WLog_Print(log, log_level, "XInternAtom(0x%08" PRIx32 ", %s, %s) -> 0x%08" PRIx32, display,
+		           atom_name, only_if_exists ? "True" : "False", atom);
+	}
+	return atom;
 }
 
 int LogTagAndXChangeProperty_ex(const char* tag, const char* file, const char* fkt, size_t line,
@@ -149,4 +168,61 @@ int LogDynAndXGetWindowProperty_ex(wLog* log, const char* file, const char* fkt,
 	return XGetWindowProperty(display, w, property, long_offset, long_length, delete, req_type,
 	                          actual_type_return, actual_format_return, nitems_return,
 	                          bytes_after_return, prop_return);
+}
+
+BOOL IsGnome(void)
+{
+	char* env = getenv("DESKTOP_SESSION");
+	return (env != NULL && strcmp(env, "gnome") == 0);
+}
+
+BOOL run_action_script(xfContext* xfc, const char* what, const char* arg, fn_action_script_run fkt,
+                       void* user)
+{
+	BOOL rc = FALSE;
+	FILE* keyScript = NULL;
+	WINPR_ASSERT(xfc);
+
+	rdpSettings* settings = xfc->common.context.settings;
+	WINPR_ASSERT(settings);
+
+	const char* ActionScript = freerdp_settings_get_string(settings, FreeRDP_ActionScript);
+
+	xfc->actionScriptExists = winpr_PathFileExists(ActionScript);
+
+	if (!xfc->actionScriptExists)
+		goto fail;
+
+	char command[2048] = { 0 };
+	sprintf_s(command, sizeof(command), "%s %s", ActionScript, what);
+	keyScript = popen(command, "r");
+
+	if (!keyScript)
+	{
+		WLog_ERR(TAG, "Failed to execute '%s'", command);
+		goto fail;
+	}
+
+	BOOL read_data = FALSE;
+	char buffer[2048] = { 0 };
+	while (fgets(buffer, sizeof(buffer), keyScript) != NULL)
+	{
+		char* context = NULL;
+		strtok_s(buffer, "\n", &context);
+
+		if (fkt)
+		{
+			if (!fkt(xfc, buffer, strnlen(buffer, sizeof(buffer)), user, what, arg))
+				goto fail;
+		}
+		read_data = TRUE;
+	}
+
+	rc = read_data;
+fail:
+	if (!rc)
+		xfc->actionScriptExists = FALSE;
+	if (keyScript)
+		pclose(keyScript);
+	return rc;
 }

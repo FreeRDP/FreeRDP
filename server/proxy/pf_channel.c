@@ -291,6 +291,7 @@ static PfChannelResult pf_channel_generic_front_data(proxyData* pdata,
 
 BOOL pf_channel_setup_generic(pServerStaticChannelContext* channel)
 {
+	WINPR_ASSERT(channel);
 	channel->onBackData = pf_channel_generic_back_data;
 	channel->onFrontData = pf_channel_generic_front_data;
 	return TRUE;

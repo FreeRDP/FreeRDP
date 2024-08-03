@@ -1,0 +1,1118 @@
+{
+	"KeyboardLayouts": [
+		{
+			"code": 1052.0,
+			"name": "Albanian"
+		},
+		{
+			"code": 1025.0,
+			"name": "Arabic (101)"
+		},
+		{
+			"code": 66561.0,
+			"name": "Arabic (102)"
+		},
+		{
+			"code": 132097.0,
+			"name": "Arabic (102) AZERTY"
+		},
+		{
+			"code": 1067.0,
+			"name": "Armenian Eastern"
+		},
+		{
+			"code": 132139.0,
+			"name": "Armenian Phonetic"
+		},
+		{
+			"code": 197675.0,
+			"name": "Armenian Typewriter"
+		},
+		{
+			"code": 66603.0,
+			"name": "Armenian Western"
+		},
+		{
+			"code": 1101.0,
+			"name": "Assamese - Inscript"
+		},
+		{
+			"code": 66604.0,
+			"name": "Azerbaijani (Standard)"
+		},
+		{
+			"code": 2092.0,
+			"name": "Azerbaijani Cyrillic"
+		},
+		{
+			"code": 1068.0,
+			"name": "Azerbaijani Latin"
+		},
+		{
+			"code": 1133.0,
+			"name": "Bashkir"
+		},
+		{
+			"code": 1059.0,
+			"name": "Belarusian"
+		},
+		{
+			"code": 67596.0,
+			"name": "Belgian (Comma)"
+		},
+		{
+			"code": 2067.0,
+			"name": "Belgian (Period)"
+		},
+		{
+			"code": 2060.0,
+			"name": "Belgian French"
+		},
+		{
+			"code": 1093.0,
+			"name": "Bangla (Bangladesh)"
+		},
+		{
+			"code": 132165.0,
+			"name": "Bangla (India)"
+		},
+		{
+			"code": 66629.0,
+			"name": "Bangla (India - Legacy)"
+		},
+		{
+			"code": 8218.0,
+			"name": "Bosnian (Cyrillic)"
+		},
+		{
+			"code": 723968.0,
+			"name": "Buginese"
+		},
+		{
+			"code": 197634.0,
+			"name": "Bulgarian"
+		},
+		{
+			"code": 66562.0,
+			"name": "Bulgarian (Latin)"
+		},
+		{
+			"code": 132098.0,
+			"name": "Bulgarian (phonetic layout)"
+		},
+		{
+			"code": 263170.0,
+			"name": "Bulgarian (phonetic traditional)"
+		},
+		{
+			"code": 1026.0,
+			"name": "Bulgarian (Typewriter)"
+		},
+		{
+			"code": 4105.0,
+			"name": "Canadian French"
+		},
+		{
+			"code": 3084.0,
+			"name": "Canadian French (Legacy)"
+		},
+		{
+			"code": 69641.0,
+			"name": "Canadian Multilingual Standard"
+		},
+		{
+			"code": 2143.0,
+			"name": "Central Atlas Tamazight"
+		},
+		{
+			"code": 1065.0,
+			"name": "Central Kurdish"
+		},
+		{
+			"code": 1116.0,
+			"name": "Cherokee Nation"
+		},
+		{
+			"code": 66652.0,
+			"name": "Cherokee Nation Phonetic"
+		},
+		{
+			"code": 2052.0,
+			"name": "Chinese (Simplified) - US Keyboard"
+		},
+		{
+			"code": 1028.0,
+			"name": "Chinese (Traditional) - US Keyboard"
+		},
+		{
+			"code": 3076.0,
+			"name": "Chinese (Traditional, Hong Kong S.A.R.)"
+		},
+		{
+			"code": 5124.0,
+			"name": "Chinese (Traditional Macao S.A.R.) US Keyboard"
+		},
+		{
+			"code": 4100.0,
+			"name": "Chinese (Simplified, Singapore) - US keyboard"
+		},
+		{
+			"code": 1050.0,
+			"name": "Croatian"
+		},
+		{
+			"code": 1029.0,
+			"name": "Czech"
+		},
+		{
+			"code": 66565.0,
+			"name": "Czech (QWERTY)"
+		},
+		{
+			"code": 132101.0,
+			"name": "Czech Programmers"
+		},
+		{
+			"code": 1030.0,
+			"name": "Danish"
+		},
+		{
+			"code": 1081.0,
+			"name": "Devanagari-INSCRIPT"
+		},
+		{
+			"code": 1125.0,
+			"name": "Divehi Phonetic"
+		},
+		{
+			"code": 66661.0,
+			"name": "Divehi Typewriter"
+		},
+		{
+			"code": 1043.0,
+			"name": "Dutch"
+		},
+		{
+			"code": 3153.0,
+			"name": "Dzongkha"
+		},
+		{
+			"code": 1061.0,
+			"name": "Estonian"
+		},
+		{
+			"code": 1080.0,
+			"name": "Faeroese"
+		},
+		{
+			"code": 1035.0,
+			"name": "Finnish"
+		},
+		{
+			"code": 67643.0,
+			"name": "Finnish with Sami"
+		},
+		{
+			"code": 1036.0,
+			"name": "French"
+		},
+		{
+			"code": 1182720.0,
+			"name": "Futhark"
+		},
+		{
+			"code": 1079.0,
+			"name": "Georgian"
+		},
+		{
+			"code": 132151.0,
+			"name": "Georgian (Ergonomic)"
+		},
+		{
+			"code": 66615.0,
+			"name": "Georgian (QWERTY)"
+		},
+		{
+			"code": 197687.0,
+			"name": "Georgian Ministry of Education and Science Schools"
+		},
+		{
+			"code": 263223.0,
+			"name": "Georgian (Old Alphabets)"
+		},
+		{
+			"code": 1031.0,
+			"name": "German"
+		},
+		{
+			"code": 66567.0,
+			"name": "German (IBM)"
+		},
+		{
+			"code": 789504.0,
+			"name": "Gothic"
+		},
+		{
+			"code": 1032.0,
+			"name": "Greek"
+		},
+		{
+			"code": 66568.0,
+			"name": "Greek (220)"
+		},
+		{
+			"code": 197640.0,
+			"name": "Greek (220) Latin"
+		},
+		{
+			"code": 132104.0,
+			"name": "Greek (319)"
+		},
+		{
+			"code": 263176.0,
+			"name": "Greek (319) Latin"
+		},
+		{
+			"code": 328712.0,
+			"name": "Greek Latin"
+		},
+		{
+			"code": 394248.0,
+			"name": "Greek Polytonic"
+		},
+		{
+			"code": 1135.0,
+			"name": "Greenlandic"
+		},
+		{
+			"code": 1140.0,
+			"name": "Guarani"
+		},
+		{
+			"code": 1095.0,
+			"name": "Gujarati"
+		},
+		{
+			"code": 1128.0,
+			"name": "Hausa"
+		},
+		{
+			"code": 1037.0,
+			"name": "Hebrew"
+		},
+		{
+			"code": 66617.0,
+			"name": "Hindi Traditional"
+		},
+		{
+			"code": 1038.0,
+			"name": "Hungarian"
+		},
+		{
+			"code": 66574.0,
+			"name": "Hungarian 101-key"
+		},
+		{
+			"code": 1039.0,
+			"name": "Icelandic"
+		},
+		{
+			"code": 1136.0,
+			"name": "Igbo"
+		},
+		{
+			"code": 16393.0,
+			"name": "India"
+		},
+		{
+			"code": 2141.0,
+			"name": "Inuktitut - Latin"
+		},
+		{
+			"code": 66653.0,
+			"name": "Inuktitut - Naqittaut"
+		},
+		{
+			"code": 6153.0,
+			"name": "Irish"
+		},
+		{
+			"code": 1040.0,
+			"name": "Italian"
+		},
+		{
+			"code": 66576.0,
+			"name": "Italian (142)"
+		},
+		{
+			"code": 1041.0,
+			"name": "Japanese"
+		},
+		{
+			"code": 1117184.0,
+			"name": "Javanese"
+		},
+		{
+			"code": 1099.0,
+			"name": "Kannada"
+		},
+		{
+			"code": 1087.0,
+			"name": "Kazakh"
+		},
+		{
+			"code": 1107.0,
+			"name": "Khmer"
+		},
+		{
+			"code": 66643.0,
+			"name": "Khmer (NIDA)"
+		},
+		{
+			"code": 1042.0,
+			"name": "Korean"
+		},
+		{
+			"code": 1088.0,
+			"name": "Kyrgyz Cyrillic"
+		},
+		{
+			"code": 1108.0,
+			"name": "Lao"
+		},
+		{
+			"code": 2058.0,
+			"name": "Latin American"
+		},
+		{
+			"code": 132134.0,
+			"name": "Latvian (Standard)"
+		},
+		{
+			"code": 66598.0,
+			"name": "Latvian (Legacy)"
+		},
+		{
+			"code": 461824.0,
+			"name": "Lisu (Basic)"
+		},
+		{
+			"code": 527360.0,
+			"name": "Lisu (Standard)"
+		},
+		{
+			"code": 66599.0,
+			"name": "Lithuanian"
+		},
+		{
+			"code": 1063.0,
+			"name": "Lithuanian IBM"
+		},
+		{
+			"code": 132135.0,
+			"name": "Lithuanian Standard"
+		},
+		{
+			"code": 1134.0,
+			"name": "Luxembourgish"
+		},
+		{
+			"code": 1071.0,
+			"name": "Macedonia (FYROM)"
+		},
+		{
+			"code": 66607.0,
+			"name": "Macedonia (FYROM) - Standard"
+		},
+		{
+			"code": 1100.0,
+			"name": "Malayalam"
+		},
+		{
+			"code": 1082.0,
+			"name": "Maltese 47-Key"
+		},
+		{
+			"code": 66618.0,
+			"name": "Maltese 48-key"
+		},
+		{
+			"code": 1153.0,
+			"name": "Maori"
+		},
+		{
+			"code": 1102.0,
+			"name": "Marathi"
+		},
+		{
+			"code": 2128.0,
+			"name": "Mongolian (Mongolian Script - Legacy)"
+		},
+		{
+			"code": 133200.0,
+			"name": "Mongolian (Mongolian Script - Standard)"
+		},
+		{
+			"code": 1104.0,
+			"name": "Mongolian Cyrillic"
+		},
+		{
+			"code": 68608.0,
+			"name": "Myanmar"
+		},
+		{
+			"code": 592896.0,
+			"name": "N'ko"
+		},
+		{
+			"code": 1121.0,
+			"name": "Nepali"
+		},
+		{
+			"code": 134144.0,
+			"name": "New Tai Lue"
+		},
+		{
+			"code": 1044.0,
+			"name": "Norwegian"
+		},
+		{
+			"code": 1083.0,
+			"name": "Norwegian with Sami"
+		},
+		{
+			"code": 1096.0,
+			"name": "Odia"
+		},
+		{
+			"code": 855040.0,
+			"name": "Ol Chiki"
+		},
+		{
+			"code": 986112.0,
+			"name": "Old Italic"
+		},
+		{
+			"code": 920576.0,
+			"name": "Osmanya"
+		},
+		{
+			"code": 1123.0,
+			"name": "Pashto (Afghanistan)"
+		},
+		{
+			"code": 1065.0,
+			"name": "Persian"
+		},
+		{
+			"code": 328745.0,
+			"name": "Persian (Standard)"
+		},
+		{
+			"code": 658432.0,
+			"name": "Phags-pa"
+		},
+		{
+			"code": 66581.0,
+			"name": "Polish (214)"
+		},
+		{
+			"code": 1045.0,
+			"name": "Polish (Programmers)"
+		},
+		{
+			"code": 2070.0,
+			"name": "Portuguese"
+		},
+		{
+			"code": 1046.0,
+			"name": "Portuguese (Brazilian ABNT)"
+		},
+		{
+			"code": 66582.0,
+			"name": "Portuguese (Brazilian ABNT2)"
+		},
+		{
+			"code": 1094.0,
+			"name": "Punjabi"
+		},
+		{
+			"code": 1048.0,
+			"name": "Romanian (Legacy)"
+		},
+		{
+			"code": 132120.0,
+			"name": "Romanian (Programmers)"
+		},
+		{
+			"code": 66584.0,
+			"name": "Romanian (Standard)"
+		},
+		{
+			"code": 1049.0,
+			"name": "Russian"
+		},
+		{
+			"code": 132121.0,
+			"name": "Russian - Mnemonic"
+		},
+		{
+			"code": 66585.0,
+			"name": "Russian (Typewriter)"
+		},
+		{
+			"code": 1157.0,
+			"name": "Sakha"
+		},
+		{
+			"code": 133179.0,
+			"name": "Sami Extended Finland-Sweden"
+		},
+		{
+			"code": 66619.0,
+			"name": "Sami Extended Norway"
+		},
+		{
+			"code": 71689.0,
+			"name": "Scottish Gaelic"
+		},
+		{
+			"code": 3098.0,
+			"name": "Serbian (Cyrillic)"
+		},
+		{
+			"code": 2074.0,
+			"name": "Serbian (Latin)"
+		},
+		{
+			"code": 1132.0,
+			"name": "Sesotho sa Leboa"
+		},
+		{
+			"code": 1074.0,
+			"name": "Setswana"
+		},
+		{
+			"code": 1115.0,
+			"name": "Sinhala"
+		},
+		{
+			"code": 66651.0,
+			"name": "Sinhala - wij 9"
+		},
+		{
+			"code": 1051.0,
+			"name": "Slovak"
+		},
+		{
+			"code": 66587.0,
+			"name": "Slovak (QWERTY)"
+		},
+		{
+			"code": 1060.0,
+			"name": "Slovenian"
+		},
+		{
+			"code": 1051648.0,
+			"name": "Sora"
+		},
+		{
+			"code": 66606.0,
+			"name": "Sorbian Extended"
+		},
+		{
+			"code": 132142.0,
+			"name": "Sorbian Standard"
+		},
+		{
+			"code": 1070.0,
+			"name": "Sorbian Standard (Legacy)"
+		},
+		{
+			"code": 1034.0,
+			"name": "Spanish"
+		},
+		{
+			"code": 66570.0,
+			"name": "Spanish Variation"
+		},
+		{
+			"code": 1053.0,
+			"name": "Swedish"
+		},
+		{
+			"code": 2107.0,
+			"name": "Swedish with Sami"
+		},
+		{
+			"code": 4108.0,
+			"name": "Swiss French"
+		},
+		{
+			"code": 2055.0,
+			"name": "Swiss German"
+		},
+		{
+			"code": 1114.0,
+			"name": "Syriac"
+		},
+		{
+			"code": 66650.0,
+			"name": "Syriac Phonetic"
+		},
+		{
+			"code": 199680.0,
+			"name": "Tai Le"
+		},
+		{
+			"code": 1064.0,
+			"name": "Tajik"
+		},
+		{
+			"code": 1097.0,
+			"name": "Tamil"
+		},
+		{
+			"code": 66628.0,
+			"name": "Tatar"
+		},
+		{
+			"code": 1092.0,
+			"name": "Tatar (Legacy)"
+		},
+		{
+			"code": 1098.0,
+			"name": "Telugu"
+		},
+		{
+			"code": 1054.0,
+			"name": "Thai Kedmanee"
+		},
+		{
+			"code": 132126.0,
+			"name": "Thai Kedmanee (non-ShiftLock)"
+		},
+		{
+			"code": 66590.0,
+			"name": "Thai Pattachote"
+		},
+		{
+			"code": 197662.0,
+			"name": "Thai Pattachote (non-ShiftLock)"
+		},
+		{
+			"code": 66641.0,
+			"name": "Tibetan (PRC - Standard)"
+		},
+		{
+			"code": 1105.0,
+			"name": "Tibetan (PRC - Legacy)"
+		},
+		{
+			"code": 330752.0,
+			"name": "Tifinagh (Basic)"
+		},
+		{
+			"code": 396288.0,
+			"name": "Tifinagh (Full)"
+		},
+		{
+			"code": 66591.0,
+			"name": "Turkish F"
+		},
+		{
+			"code": 1055.0,
+			"name": "Turkish Q"
+		},
+		{
+			"code": 1090.0,
+			"name": "Turkmen"
+		},
+		{
+			"code": 66568.0,
+			"name": "Uyghur"
+		},
+		{
+			"code": 1152.0,
+			"name": "Uyghur (Legacy)"
+		},
+		{
+			"code": 1058.0,
+			"name": "Ukrainian"
+		},
+		{
+			"code": 132130.0,
+			"name": "Ukrainian (Enhanced)"
+		},
+		{
+			"code": 2057.0,
+			"name": "United Kingdom"
+		},
+		{
+			"code": 1106.0,
+			"name": "United Kingdom Extended"
+		},
+		{
+			"code": 66569.0,
+			"name": "United States - Dvorak"
+		},
+		{
+			"code": 132105.0,
+			"name": "United States - International"
+		},
+		{
+			"code": 197641.0,
+			"name": "United States-Dvorak for left hand"
+		},
+		{
+			"code": 263177.0,
+			"name": "United States-Dvorak for right hand"
+		},
+		{
+			"code": 1033.0,
+			"name": "United States - English"
+		},
+		{
+			"code": 1056.0,
+			"name": "Urdu"
+		},
+		{
+			"code": 66688.0,
+			"name": "Uyghur"
+		},
+		{
+			"code": 2115.0,
+			"name": "Uzbek Cyrillic"
+		},
+		{
+			"code": 1066.0,
+			"name": "Vietnamese"
+		},
+		{
+			"code": 1160.0,
+			"name": "Wolof"
+		},
+		{
+			"code": 1157.0,
+			"name": "Yakut"
+		},
+		{
+			"code": 1130.0,
+			"name": "Yoruba"
+		}
+	],
+	"KeyboardVariants": [
+		{
+			"code": 66561.0,
+			"id": 40.0,
+			"name": "Arabic (102)"
+		},
+		{
+			"code": 66562.0,
+			"id": 4.0,
+			"name": "Bulgarian (Latin)"
+		},
+		{
+			"code": 66565.0,
+			"id": 5.0,
+			"name": "Czech (QWERTY)"
+		},
+		{
+			"code": 66567.0,
+			"id": 18.0,
+			"name": "German (IBM)"
+		},
+		{
+			"code": 66568.0,
+			"id": 22.0,
+			"name": "Greek (220)"
+		},
+		{
+			"code": 66569.0,
+			"id": 2.0,
+			"name": "United States-Dvorak"
+		},
+		{
+			"code": 66570.0,
+			"id": 134.0,
+			"name": "Spanish Variation"
+		},
+		{
+			"code": 66574.0,
+			"id": 6.0,
+			"name": "Hungarian 101-key"
+		},
+		{
+			"code": 66576.0,
+			"id": 3.0,
+			"name": "Italian (142)"
+		},
+		{
+			"code": 66581.0,
+			"id": 7.0,
+			"name": "Polish (214)"
+		},
+		{
+			"code": 66582.0,
+			"id": 29.0,
+			"name": "Portuguese (Brazilian ABNT2)"
+		},
+		{
+			"code": 66585.0,
+			"id": 8.0,
+			"name": "Russian (Typewriter)"
+		},
+		{
+			"code": 66587.0,
+			"id": 19.0,
+			"name": "Slovak (QWERTY)"
+		},
+		{
+			"code": 66590.0,
+			"id": 33.0,
+			"name": "Thai Pattachote"
+		},
+		{
+			"code": 66591.0,
+			"id": 20.0,
+			"name": "Turkish F"
+		},
+		{
+			"code": 66598.0,
+			"id": 21.0,
+			"name": "Latvian (QWERTY)"
+		},
+		{
+			"code": 66599.0,
+			"id": 39.0,
+			"name": "Lithuanian"
+		},
+		{
+			"code": 66603.0,
+			"id": 37.0,
+			"name": "Armenian Western"
+		},
+		{
+			"code": 66617.0,
+			"id": 12.0,
+			"name": "Hindi Traditional"
+		},
+		{
+			"code": 66618.0,
+			"id": 43.0,
+			"name": "Maltese 48-key"
+		},
+		{
+			"code": 66619.0,
+			"id": 44.0,
+			"name": "Sami Extended Norway"
+		},
+		{
+			"code": 66629.0,
+			"id": 42.0,
+			"name": "Bengali (Inscript)"
+		},
+		{
+			"code": 66650.0,
+			"id": 14.0,
+			"name": "Syriac Phonetic"
+		},
+		{
+			"code": 66661.0,
+			"id": 13.0,
+			"name": "Divehi Typewriter"
+		},
+		{
+			"code": 67596.0,
+			"id": 30.0,
+			"name": "Belgian (Comma)"
+		},
+		{
+			"code": 67643.0,
+			"id": 45.0,
+			"name": "Finnish with Sami"
+		},
+		{
+			"code": 69641.0,
+			"id": 32.0,
+			"name": "Canadian Multilingual Standard"
+		},
+		{
+			"code": 71689.0,
+			"id": 38.0,
+			"name": "Gaelic"
+		},
+		{
+			"code": 132097.0,
+			"id": 41.0,
+			"name": "Arabic (102) AZERTY"
+		},
+		{
+			"code": 132101.0,
+			"id": 10.0,
+			"name": "Czech Programmers"
+		},
+		{
+			"code": 132104.0,
+			"id": 24.0,
+			"name": "Greek (319)"
+		},
+		{
+			"code": 132105.0,
+			"id": 1.0,
+			"name": "United States-International"
+		},
+		{
+			"code": 132126.0,
+			"id": 34.0,
+			"name": "Thai Kedmanee (non-ShiftLock)"
+		},
+		{
+			"code": 133179.0,
+			"id": 46.0,
+			"name": "Sami Extended Finland-Sweden"
+		},
+		{
+			"code": 197640.0,
+			"id": 23.0,
+			"name": "Greek (220) Latin"
+		},
+		{
+			"code": 197641.0,
+			"id": 26.0,
+			"name": "United States-Dvorak for left hand"
+		},
+		{
+			"code": 197662.0,
+			"id": 35.0,
+			"name": "Thai Pattachote (non-ShiftLock)"
+		},
+		{
+			"code": 263176.0,
+			"id": 17.0,
+			"name": "Greek (319) Latin"
+		},
+		{
+			"code": 263177.0,
+			"id": 27.0,
+			"name": "United States-Dvorak for right hand"
+		},
+		{
+			"code": 422970377.0,
+			"id": 28.0,
+			"name": "United States-Programmer Dvorak"
+		},
+		{
+			"code": 328712.0,
+			"id": 25.0,
+			"name": "Greek Latin"
+		},
+		{
+			"code": 328713.0,
+			"id": 11.0,
+			"name": "US English Table for IBM Arabic 238_L"
+		},
+		{
+			"code": 394248.0,
+			"id": 31.0,
+			"name": "Greek Polytonic"
+		},
+		{
+			"code": 2684355596.0,
+			"id": 192.0,
+			"name": "French Bépo"
+		},
+		{
+			"code": 2952791047.0,
+			"id": 192.0,
+			"name": "German Neo"
+		}
+	],
+	"KeyboardIme": [
+		{
+			"code": 3758162948.0,
+			"file": "phon.ime",
+			"name": "Chinese (Traditional) - Phonetic"
+		},
+		{
+			"code": 3758162961.0,
+			"file": "imjp81.ime",
+			"name": "Japanese Input System (MS-IME2002)"
+		},
+		{
+			"code": 3758162962.0,
+			"file": "imekr61.ime",
+			"name": "Korean Input System (IME 2000)"
+		},
+		{
+			"code": 3758163972.0,
+			"file": "winpy.ime",
+			"name": "Chinese (Simplified) - QuanPin"
+		},
+		{
+			"code": 3758228484.0,
+			"file": "chajei.ime",
+			"name": "Chinese (Traditional) - ChangJie"
+		},
+		{
+			"code": 3758229508.0,
+			"file": "winsp.ime",
+			"name": "Chinese (Simplified) - ShuangPin"
+		},
+		{
+			"code": 3758294020.0,
+			"file": "quick.ime",
+			"name": "Chinese (Traditional) - Quick"
+		},
+		{
+			"code": 3758295044.0,
+			"file": "winzm.ime",
+			"name": "Chinese (Simplified) - ZhengMa"
+		},
+		{
+			"code": 3758359556.0,
+			"file": "winime.ime",
+			"name": "Chinese (Traditional) - Big5 Code"
+		},
+		{
+			"code": 3758425092.0,
+			"file": "winar30.ime",
+			"name": "Chinese (Traditional) - Array"
+		},
+		{
+			"code": 3758426116.0,
+			"file": "wingb.ime",
+			"name": "Chinese (Simplified) - NeiMa"
+		},
+		{
+			"code": 3758490628.0,
+			"file": "dayi.ime",
+			"name": "Chinese (Traditional) - DaYi"
+		},
+		{
+			"code": 3758556164.0,
+			"file": "unicdime.ime",
+			"name": "Chinese (Traditional) - Unicode"
+		},
+		{
+			"code": 3758621700.0,
+			"file": "TINTLGNT.IME",
+			"name": "Chinese (Traditional) - New Phonetic"
+		},
+		{
+			"code": 3758687236.0,
+			"file": "CINTLGNT.IME",
+			"name": "Chinese (Traditional) - New ChangJie"
+		},
+		{
+			"code": 3759015940.0,
+			"file": "pintlgnt.ime",
+			"name": "Chinese (Traditional) - Microsoft Pinyin IME 3.0"
+		},
+		{
+			"code": 3759080452.0,
+			"file": "romanime.ime",
+			"name": "Chinese (Traditional) - Alphanumeric"
+		}
+	]
+}
