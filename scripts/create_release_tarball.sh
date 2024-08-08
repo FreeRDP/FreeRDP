@@ -68,4 +68,11 @@ done
 run mv ${TMPDIR}/freerdp-${TAG}.tar* .
 run mv ${TMPDIR}/freerdp-${TAG}.zip* .
 run rm -rf ${TMPDIR}
+
+# Verify the release tarball signatures
+for EXT in tar.gz tar.bz2 tar.xz zip;
+do
+	run gpg --verify freerdp-${TAG}.${EXT}.asc
+done
+
 exit 0
