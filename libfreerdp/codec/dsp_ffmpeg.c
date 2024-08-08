@@ -423,7 +423,7 @@ static BOOL ffmpeg_encode_frame(AVCodecContext* context, AVFrame* in, AVPacket* 
 		uint8_t** pp = in->extended_data;
 		for (int y = 0; y < in->channels; y++)
 		{
-			float* data = pp[y];
+			float* data = (float*)pp[y];
 			for (int x = 0; x < in->nb_samples; x++)
 			{
 				const float val1 = data[x];

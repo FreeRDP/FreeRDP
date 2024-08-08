@@ -215,8 +215,8 @@ int MultiByteToWideChar(UINT CodePage, DWORD dwFlags, LPCSTR lpMultiByteStr, int
 		else
 		{
 			targetLength =
-			    ucnv_convert("UTF-16LE", "UTF-8", targetStart, targetCapacity * sizeof(WCHAR),
-			                 lpMultiByteStr, cbMultiByte, &error);
+			    ucnv_convert("UTF-16LE", "UTF-8", (char*)targetStart,
+			                 targetCapacity * sizeof(WCHAR), lpMultiByteStr, cbMultiByte, &error);
 			if (targetLength > 0)
 				targetLength /= sizeof(WCHAR);
 			cchWideChar = U_SUCCESS(error) ? targetLength : 0;
@@ -353,14 +353,14 @@ int WideCharToMultiByte(UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr, int
 #if defined(UCNV_CONVERT)
 		if (cbMultiByte == 0)
 		{
-			targetLength = ucnv_convert("UTF-8", "UTF-16LE", NULL, 0, lpWideCharStr,
+			targetLength = ucnv_convert("UTF-8", "UTF-16LE", NULL, 0, (char*)lpWideCharStr,
 			                            cchWideChar * sizeof(WCHAR), &error);
 			cbMultiByte = targetLength;
 		}
 		else
 		{
 			targetLength = ucnv_convert("UTF-8", "UTF-16LE", targetStart, targetCapacity,
-			                            lpWideCharStr, cchWideChar * sizeof(WCHAR), &error);
+			                            (char*)lpWideCharStr, cchWideChar * sizeof(WCHAR), &error);
 			cbMultiByte = U_SUCCESS(error) ? targetLength : 0;
 		}
 
