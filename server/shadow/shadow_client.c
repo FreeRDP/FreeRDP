@@ -42,6 +42,41 @@ typedef struct
 	BOOL gfxSurfaceCreated;
 } SHADOW_GFX_STATUS;
 
+/* See https://github.com/FreeRDP/FreeRDP/issues/10413
+ *
+ * Microsoft ditched support for RFX and multiple rectangles in BitmapUpdate for
+ * windows 11 24H2.
+ *
+ * So send all updates only with a single rectangle.
+ */
+#define BitmapUpdateProxy(update, context, bitmap) \
+	BitmapUpdateProxyEx((update), (context), (bitmap), __FILE__, __LINE__, __func__)
+static BOOL BitmapUpdateProxyEx(rdpUpdate* update, rdpContext* context, const BITMAP_UPDATE* bitmap,
+                                const char* file, size_t line, const char* fkt)
+{
+	WINPR_ASSERT(update);
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(bitmap);
+
+	for (UINT32 x = 0; x < bitmap->number; x++)
+	{
+		BITMAP_UPDATE cur = { 0 };
+		BITMAP_DATA* bmp = &bitmap->rectangles[x];
+		cur.rectangles = bmp;
+		cur.number = 1;
+		cur.skipCompression = bitmap->skipCompression;
+		const BOOL rc = IFCALLRESULT(FALSE, update->BitmapUpdate, context, &cur);
+		if (!rc)
+		{
+			WLog_Print(WLog_Get(TAG), WLOG_ERROR, line, file, fkt,
+			           "BitmapUpdate[%" PRIu32 "] failed", x);
+			return FALSE;
+		}
+	}
+
+	return TRUE;
+}
+
 static INLINE BOOL shadow_client_rdpgfx_new_surface(rdpShadowClient* client)
 {
 	UINT error = CHANNEL_RC_OK;
@@ -1572,21 +1607,18 @@ static BOOL shadow_client_send_bitmap_update(rdpShadowClient* client, BYTE* pSrc
 	UINT32 DstSize = 0;
 	UINT32 SrcFormat = 0;
 	BITMAP_DATA* bitmap = NULL;
-	rdpUpdate* update = NULL;
 	rdpContext* context = (rdpContext*)client;
-	rdpSettings* settings = NULL;
 	UINT32 totalBitmapSize = 0;
 	UINT32 updateSizeEstimate = 0;
 	BITMAP_DATA* bitmapData = NULL;
-	BITMAP_UPDATE bitmapUpdate;
-	rdpShadowEncoder* encoder = NULL;
+	BITMAP_UPDATE bitmapUpdate = { 0 };
 
 	if (!context || !pSrcData)
 		return FALSE;
 
-	update = context->update;
-	settings = context->settings;
-	encoder = client->encoder;
+	rdpUpdate* update = context->update;
+	rdpSettings* settings = context->settings;
+	rdpShadowEncoder* encoder = client->encoder;
 
 	if (!update || !settings || !encoder)
 		return FALSE;
@@ -1744,13 +1776,10 @@ static BOOL shadow_client_send_bitmap_update(rdpShadowClient* client, BYTE* pSrc
 			if ((newUpdateSize >= maxUpdateSize) || (i + 1) >= k)
 			{
 				bitmapUpdate.number = j;
-				IFCALLRET(update->BitmapUpdate, ret, context, &bitmapUpdate);
+				ret = BitmapUpdateProxy(update, context, &bitmapUpdate);
 
 				if (!ret)
-				{
-					WLog_ERR(TAG, "BitmapUpdate failed");
 					break;
-				}
 
 				updateSize = 1024;
 				j = 0;
@@ -1761,12 +1790,7 @@ static BOOL shadow_client_send_bitmap_update(rdpShadowClient* client, BYTE* pSrc
 	}
 	else
 	{
-		IFCALLRET(update->BitmapUpdate, ret, context, &bitmapUpdate);
-
-		if (!ret)
-		{
-			WLog_ERR(TAG, "BitmapUpdate failed");
-		}
+		ret = BitmapUpdateProxy(update, context, &bitmapUpdate);
 	}
 
 out:
