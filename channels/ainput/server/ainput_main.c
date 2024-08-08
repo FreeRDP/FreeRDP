@@ -222,7 +222,7 @@ static HANDLE ainput_server_get_channel_handle(ainput_server* ainput)
 
 	WINPR_ASSERT(ainput);
 
-	if (WTSVirtualChannelQuery(ainput->ainput_channel, WTSVirtualEventHandle, &buffer,
+	if (WTSVirtualChannelQuery(ainput->ainput_channel, WTSVirtualEventHandle, (void**)&buffer,
 	                           &BytesReturned) == TRUE)
 	{
 		if (BytesReturned == sizeof(HANDLE))
@@ -416,7 +416,7 @@ ainput_server_context* ainput_server_context_new(HANDLE vcm)
 		goto fail;
 	return &ainput->context;
 fail:
-	ainput_server_context_free(ainput);
+	ainput_server_context_free(&ainput->context);
 	return NULL;
 }
 
@@ -539,8 +539,8 @@ UINT ainput_server_context_poll_int(ainput_server_context* context)
 			BYTE* buffer = NULL;
 			DWORD BytesReturned = 0;
 
-			if (WTSVirtualChannelQuery(ainput->ainput_channel, WTSVirtualChannelReady, &buffer,
-			                           &BytesReturned) != TRUE)
+			if (WTSVirtualChannelQuery(ainput->ainput_channel, WTSVirtualChannelReady,
+			                           (void**)&buffer, &BytesReturned) != TRUE)
 			{
 				WLog_ERR(TAG, "WTSVirtualChannelReady failed,");
 			}
