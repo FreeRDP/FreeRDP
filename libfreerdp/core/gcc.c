@@ -1387,14 +1387,10 @@ BOOL gcc_write_client_core_data(wStream* s, const rdpMcs* mcs)
 {
 	char buffer[2048] = { 0 };
 	char dbuffer[2048] = { 0 };
-	WCHAR* clientName = NULL;
-	size_t clientNameLength = 0;
 	BYTE connectionType = 0;
 	HIGH_COLOR_DEPTH highColorDepth = HIGH_COLOR_4BPP;
 
 	UINT16 earlyCapabilityFlags = 0;
-	WCHAR* clientDigProductId = NULL;
-	size_t clientDigProductIdLength = 0;
 	const rdpSettings* settings = mcs_get_const_settings(mcs);
 
 	WINPR_ASSERT(s);
@@ -1406,9 +1402,6 @@ BOOL gcc_write_client_core_data(wStream* s, const rdpMcs* mcs)
 
 	if (!gcc_write_user_data_header(s, CS_CORE, 234))
 		return FALSE;
-	clientName = ConvertUtf8ToWCharAlloc(settings->ClientHostname, &clientNameLength);
-	clientDigProductId =
-	    ConvertUtf8ToWCharAlloc(settings->ClientProductId, &clientDigProductIdLength);
 
 	Stream_Write_UINT32(s, settings->RdpVersion);    /* Version */
 	Stream_Write_UINT16(s, settings->DesktopWidth);  /* DesktopWidth */
@@ -1419,15 +1412,17 @@ BOOL gcc_write_client_core_data(wStream* s, const rdpMcs* mcs)
 	Stream_Write_UINT32(s, settings->KeyboardLayout); /* KeyboardLayout */
 	Stream_Write_UINT32(s, settings->ClientBuild);    /* ClientBuild */
 
-	/* clientName (32 bytes, null-terminated unicode, truncated to 15 characters) */
+	if (!Stream_EnsureRemainingCapacity(s, 32 + 12 + 64 + 8))
+		return FALSE;
 
+	/* clientName (32 bytes, null-terminated unicode, truncated to 15 characters) */
+	size_t clientNameLength = 0;
+	WCHAR* clientName = ConvertUtf8ToWCharAlloc(settings->ClientHostname, &clientNameLength);
 	if (clientNameLength >= 16)
 	{
 		clientNameLength = 16;
 		clientName[clientNameLength - 1] = 0;
 	}
-	if (!Stream_EnsureRemainingCapacity(s, 32 + 12 + 64 + 8))
-		return FALSE;
 
 	Stream_Write(s, clientName, (clientNameLength * 2));
 	Stream_Zero(s, 32 - (clientNameLength * 2));
@@ -1455,15 +1450,19 @@ BOOL gcc_write_client_core_data(wStream* s, const rdpMcs* mcs)
 	Stream_Write_UINT16(s, SupportedColorDepths); /* supportedColorDepths */
 	Stream_Write_UINT16(s, earlyCapabilityFlags); /* earlyCapabilityFlags */
 
+	if (!Stream_EnsureRemainingCapacity(s, 64 + 24))
+		return FALSE;
+
 	/* clientDigProductId (64 bytes, null-terminated unicode, truncated to 31 characters) */
+	size_t clientDigProductIdLength = 0;
+	WCHAR* clientDigProductId =
+	    ConvertUtf8ToWCharAlloc(settings->ClientProductId, &clientDigProductIdLength);
 	if (clientDigProductIdLength >= 32)
 	{
 		clientDigProductIdLength = 32;
 		clientDigProductId[clientDigProductIdLength - 1] = 0;
 	}
 
-	if (!Stream_EnsureRemainingCapacity(s, 64 + 24))
-		return FALSE;
 	Stream_Write(s, clientDigProductId, (clientDigProductIdLength * 2));
 	Stream_Zero(s, 64 - (clientDigProductIdLength * 2));
 	free(clientDigProductId);
