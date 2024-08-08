@@ -1,3 +1,38 @@
+# 2024-08-08 Version 3.7.0
+
+This release has accumulated quite a number of changes. Along bugfixes for 3.6.3 it also
+contains a number of improvements for distributors:
+
+* Support for FDK-AAC for sound and microphone redirection (activate with -DWITH_FDK_AAC=ON build option)
+  This allows enabling the AAC compression that do not ship faad2 and/or faac
+* Support keyboard layouts as JSON resources (activate with -DWITH_KEYBOARD_LAYOUT_FROM_FILE=ON build option,
+  also requires JSON support)
+  This allows editing keyboard layouts for existing releases should the need arise
+* Support timezones as JSON resources (activate with -DWITH_TIMEZONE_FROM_FILE=ON -DWITH_TIMEZONE_COMPILED=OFF build options,
+  also requires JSON support)
+  Allows reading the mapping between IANA and windows timezones from a JSON file, allowing easier updates without recompile
+* Improve shadow server compatibility with windows 11 24H2 RDP client
+  Windows 7 RFX and bitmap updates with multiple rectangles have been deactivated, so adjust shadow to not send such.
+
+Noteworthy changes:
+* Fix ActionScript paramter (#10423)
+* Support keyboard layouts as JSON resource (#10394)
+* Support timezones as JSON resource and command line argument (#10428 #10393 #10391)
+* Deactivate AsyncUpdate (#10402)
+* Compatibility fixes for shadow with windows 11 24H2 (#10455 #10422 #10420 #10416)
+* Fix SDL client autoreconnect (#10390)
+* Fix xfreerdp clipboard locking (#10385)
+* Improve logging (#10426 #10441)
+* Improve warnings and code checks (#10381 #10401 #10403 #10405 #10406 #10410 #10421 #10454)
+* Support FDK-AAC (#10372)
+* Fix drive redirection state transitions (#10367 #10374)
+* Support mth:// routing token (#10366)
+* Ignore unsupported SetThreadPriority (#10363)
+* Fix reported documentation and code typos (#10365 #10368 #10370 #10369 #10431 #10446)
+
+For a complete and detailed change log since the last release run:
+git log 3.7.0...3.6.3
+
 # 2024-07-08 Version 3.6.3
 
 Bugfix release for 3.6.2 issues reported
