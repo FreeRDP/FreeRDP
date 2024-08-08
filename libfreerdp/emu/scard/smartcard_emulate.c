@@ -44,6 +44,35 @@ static INIT_ONCE g_ReaderNameWGuard = INIT_ONCE_STATIC_INIT;
 static WCHAR g_ReaderNameW[32] = { 0 };
 static size_t g_ReaderNameWLen = 0;
 
+static char* card_id_and_name_a(const UUID* CardIdentifier, LPCSTR LookupName)
+{
+	WINPR_ASSERT(CardIdentifier);
+	WINPR_ASSERT(LookupName);
+
+	size_t len = strlen(LookupName) + 34;
+	char* id = malloc(len);
+	if (!id)
+		return NULL;
+
+	snprintf(id, len, "%08X%04X%04X%02X%02X%02X%02X%02X%02X%02X%02X\\%s", CardIdentifier->Data1,
+	         CardIdentifier->Data2, CardIdentifier->Data3, CardIdentifier->Data4[0],
+	         CardIdentifier->Data4[1], CardIdentifier->Data4[2], CardIdentifier->Data4[3],
+	         CardIdentifier->Data4[4], CardIdentifier->Data4[5], CardIdentifier->Data4[6],
+	         CardIdentifier->Data4[7], LookupName);
+	return id;
+}
+
+static char* card_id_and_name_w(const UUID* CardIdentifier, LPCWSTR LookupName)
+{
+	char* res = NULL;
+	char* tmp = ConvertWCharToUtf8Alloc(LookupName, NULL);
+	if (!tmp)
+		return NULL;
+	res = card_id_and_name_a(CardIdentifier, tmp);
+	free(tmp);
+	return res;
+}
+
 static BOOL CALLBACK g_ReaderNameWInit(PINIT_ONCE InitOnce, PVOID Parameter, PVOID* Context)
 {
 	WINPR_UNUSED(InitOnce);
@@ -75,8 +104,7 @@ typedef struct
 	SCARD_READERSTATEW readerStateW[MAX_EMULATED_READERS];
 	wHashTable* cards;
 	wArrayList* strings;
-	wHashTable* cacheA;
-	wHashTable* cacheW;
+	wHashTable* cache;
 	BOOL canceled;
 } SCardContext;
 
@@ -171,8 +199,7 @@ static void scard_context_free(void* context)
 	{
 		HashTable_Free(ctx->cards);
 		ArrayList_Free(ctx->strings);
-		HashTable_Free(ctx->cacheA);
-		HashTable_Free(ctx->cacheW);
+		HashTable_Free(ctx->cache);
 	}
 	free(ctx);
 }
@@ -217,37 +244,15 @@ static SCardContext* scard_context_new(void)
 		obj->fnObjectFree = free;
 	}
 
-	ctx->cacheA = HashTable_New(FALSE);
-	if (!ctx->cacheA)
+	ctx->cache = HashTable_New(FALSE);
+	if (!ctx->cache)
+		goto fail;
+	else if (!HashTable_SetupForStringData(ctx->cache, FALSE))
 		goto fail;
 	else
 	{
-		wObject* key = HashTable_KeyObject(ctx->cacheA);
-		wObject* val = HashTable_ValueObject(ctx->cacheA);
-		WINPR_ASSERT(key);
+		wObject* val = HashTable_ValueObject(ctx->cache);
 		WINPR_ASSERT(val);
-
-		key->fnObjectEquals = char_compare;
-		key->fnObjectNew = winpr_ObjectStringClone;
-		key->fnObjectFree = winpr_ObjectStringFree;
-
-		val->fnObjectFree = free;
-	}
-
-	ctx->cacheW = HashTable_New(FALSE);
-	if (!ctx->cacheW)
-		goto fail;
-	else
-	{
-		wObject* key = HashTable_KeyObject(ctx->cacheW);
-		wObject* val = HashTable_ValueObject(ctx->cacheW);
-		WINPR_ASSERT(key);
-		WINPR_ASSERT(val);
-
-		key->fnObjectEquals = wchar_compare;
-		key->fnObjectNew = winpr_ObjectWStringClone;
-		key->fnObjectFree = winpr_ObjectStringFree;
-
 		val->fnObjectFree = free;
 	}
 
@@ -2211,7 +2216,10 @@ LONG WINAPI Emulate_SCardReadCacheA(SmartcardEmulationContext* smartcard, SCARDC
 		SCardContext* value = HashTable_GetItemValue(smartcard->contexts, (const void*)hContext);
 		WINPR_ASSERT(value); /* Must be valid after Emulate_SCardIsValidContext */
 
-		data = HashTable_GetItemValue(value->cacheA, LookupName);
+		char* id = card_id_and_name_a(CardIdentifier, LookupName);
+		data = HashTable_GetItemValue(value->cache, id);
+		free(id);
+
 		if (!data)
 			status = SCARD_W_CACHE_ITEM_NOT_FOUND;
 		else if (data->freshness != FreshnessCounter)
@@ -2252,7 +2260,9 @@ LONG WINAPI Emulate_SCardReadCacheW(SmartcardEmulationContext* smartcard, SCARDC
 		SCardContext* value = HashTable_GetItemValue(smartcard->contexts, (const void*)hContext);
 		WINPR_ASSERT(value); /* Must be valid after Emulate_SCardIsValidContext */
 
-		data = HashTable_GetItemValue(value->cacheW, LookupName);
+		char* id = card_id_and_name_w(CardIdentifier, LookupName);
+		data = HashTable_GetItemValue(value->cache, id);
+		free(id);
 		if (!data)
 			status = SCARD_W_CACHE_ITEM_NOT_FOUND;
 		else if (data->freshness != FreshnessCounter)
@@ -2268,7 +2278,7 @@ LONG WINAPI Emulate_SCardReadCacheW(SmartcardEmulationContext* smartcard, SCARDC
 	return status;
 }
 
-static LONG insert_data(wHashTable* table, DWORD FreshnessCounter, const void* key,
+static LONG insert_data(wHashTable* table, DWORD FreshnessCounter, const char* key,
                         const PBYTE Data, DWORD DataLen)
 {
 	BOOL rc = 0;
@@ -2325,7 +2335,14 @@ LONG WINAPI Emulate_SCardWriteCacheA(SmartcardEmulationContext* smartcard, SCARD
 		SCardContext* value = HashTable_GetItemValue(smartcard->contexts, (const void*)hContext);
 		WINPR_ASSERT(value); /* Must be valid after Emulate_SCardIsValidContext */
 
-		status = insert_data(value->cacheA, FreshnessCounter, LookupName, Data, DataLen);
+		char* id = card_id_and_name_a(CardIdentifier, LookupName);
+		if (!id)
+			status = SCARD_E_NO_MEMORY;
+		else
+		{
+			status = insert_data(value->cache, FreshnessCounter, id, Data, DataLen);
+			free(id);
+		}
 	}
 
 	WLog_Print(smartcard->log, smartcard->log_default_level,
@@ -2352,7 +2369,14 @@ LONG WINAPI Emulate_SCardWriteCacheW(SmartcardEmulationContext* smartcard, SCARD
 		SCardContext* value = HashTable_GetItemValue(smartcard->contexts, (const void*)hContext);
 		WINPR_ASSERT(value); /* Must be valid after Emulate_SCardIsValidContext */
 
-		status = insert_data(value->cacheW, FreshnessCounter, LookupName, Data, DataLen);
+		char* id = card_id_and_name_w(CardIdentifier, LookupName);
+		if (!id)
+			status = SCARD_E_NO_MEMORY;
+		else
+		{
+			status = insert_data(value->cache, FreshnessCounter, id, Data, DataLen);
+			free(id);
+		}
 	}
 
 	WLog_Print(smartcard->log, smartcard->log_default_level,
