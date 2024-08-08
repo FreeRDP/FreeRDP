@@ -17,17 +17,19 @@
 # limitations under the License.
 #
 
-set(PLUGIN_NAME "proxy-capture-plugin")
+# deactivated: does not work
 
-add_library(${PLUGIN_NAME} MODULE
-	cap_main.c
-	cap_config.c
-	cap_config.h
-	cap_protocol.c
-	cap_protocol.h
-)
-
-set_target_properties(${PLUGIN_NAME} PROPERTIES PREFIX "")
-set_target_properties(${PLUGIN_NAME} PROPERTIES NO_SONAME 1)
-set_target_properties(${PLUGIN_NAME} PROPERTIES
-LIBRARY_OUTPUT_DIRECTORY "${FREERDP_PROXY_PLUGINDIR}")
+#set(PLUGIN_NAME "proxy-capture-plugin")
+#
+#add_library(${PLUGIN_NAME} MODULE
+#	cap_main.c
+#	cap_config.c
+#	cap_config.h
+#	cap_protocol.c
+#	cap_protocol.h
+#)
+#
+#set_target_properties(${PLUGIN_NAME} PROPERTIES PREFIX "")
+#set_target_properties(${PLUGIN_NAME} PROPERTIES NO_SONAME 1)
+#set_target_properties(${PLUGIN_NAME} PROPERTIES
+#LIBRARY_OUTPUT_DIRECTORY "${FREERDP_PROXY_PLUGINDIR}")
