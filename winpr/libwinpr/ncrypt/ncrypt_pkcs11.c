@@ -111,7 +111,7 @@ static SECURITY_STATUS NCryptP11StorageProvider_dtor(NCRYPT_HANDLE handle)
 
 	if (provider)
 	{
-		if (provider->p11->C_Finalize)
+		if (provider->p11 && provider->p11->C_Finalize)
 			rv = provider->p11->C_Finalize(NULL);
 		if (rv != CKR_OK)
 		{
@@ -1217,6 +1217,7 @@ static SECURITY_STATUS initialize_pkcs11(HANDLE handle,
 		goto fail;
 	}
 
+	WINPR_ASSERT(ret->p11);
 	WINPR_ASSERT(ret->p11->C_Initialize);
 	rv = ret->p11->C_Initialize(NULL);
 	if (rv != CKR_OK)
