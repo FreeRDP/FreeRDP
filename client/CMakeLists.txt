@@ -18,6 +18,7 @@
 # Clients
 
 include(CMakeDependentOption)
+include(InstallFreeRDPDesktop)
 
 if(WITH_CLIENT_COMMON)
 	add_subdirectory(common)
