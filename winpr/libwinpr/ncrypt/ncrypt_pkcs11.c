@@ -107,18 +107,21 @@ static CK_ATTRIBUTE public_key_filter[] = {
 static SECURITY_STATUS NCryptP11StorageProvider_dtor(NCRYPT_HANDLE handle)
 {
 	NCryptP11ProviderHandle* provider = (NCryptP11ProviderHandle*)handle;
-	CK_RV rv = 0;
+	CK_RV rv = CKR_OK;
 
-	WINPR_ASSERT(provider);
-	rv = provider->p11->C_Finalize(NULL);
-	if (rv != CKR_OK)
+	if (provider)
 	{
+		if (provider->p11->C_Finalize)
+			rv = provider->p11->C_Finalize(NULL);
+		if (rv != CKR_OK)
+		{
+		}
+
+		free(provider->modulePath);
+
+		if (provider->library)
+			FreeLibrary(provider->library);
 	}
-
-	free(provider->modulePath);
-
-	if (provider->library)
-		FreeLibrary(provider->library);
 
 	return winpr_NCryptDefault_dtor(handle);
 }
@@ -1245,12 +1248,13 @@ SECURITY_STATUS NCryptOpenP11StorageProviderEx(NCRYPT_PROV_HANDLE* phProvider,
 
 	while (*modulePaths)
 	{
-		HANDLE library = LoadLibrary(*modulePaths);
+		const char* modulePath = *modulePaths++;
+		HANDLE library = LoadLibrary(modulePath);
 		typedef CK_RV (*c_get_function_list_t)(CK_FUNCTION_LIST_PTR_PTR);
 		c_get_function_list_t c_get_function_list = NULL;
 		NCryptP11ProviderHandle* provider = NULL;
 
-		WLog_DBG(TAG, "Trying pkcs11 module '%s'", *modulePaths);
+		WLog_DBG(TAG, "Trying pkcs11 module '%s'", modulePath);
 		if (!library)
 		{
 			status = NTE_PROV_DLL_NOT_FOUND;
@@ -1272,15 +1276,19 @@ SECURITY_STATUS NCryptOpenP11StorageProviderEx(NCRYPT_PROV_HANDLE* phProvider,
 		}
 
 		provider = (NCryptP11ProviderHandle*)*phProvider;
-		provider->modulePath = _strdup(*modulePaths);
+		provider->modulePath = _strdup(modulePath);
+		if (!provider->modulePath)
+		{
+			status = NTE_NO_MEMORY;
+			goto out_load_library;
+		}
 
-		WLog_DBG(TAG, "module '%s' loaded", *modulePaths);
+		WLog_DBG(TAG, "module '%s' loaded", modulePath);
 		return ERROR_SUCCESS;
 
 	out_load_library:
 		if (library)
 			FreeLibrary(library);
-		modulePaths++;
 	}
 
 	return status;
