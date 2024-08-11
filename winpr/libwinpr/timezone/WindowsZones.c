@@ -12,527 +12,510 @@ const " + fname + "Entry " + fname + "[] ={
 #include "WindowsZones.h"
 
 const WINDOWS_TZID_ENTRY WindowsZones[] = {
-	{ "Etc/GMT+12", "Dateline Standard Time" },         // 001
-	{ "Etc/GMT+12", "Dateline Standard Time" },         // ZZ
-	{ "Etc/GMT+11", "UTC-11" },                         // 001
-	{ "Pacific/Pago_Pago", "UTC-11" },                  // AS
-	{ "Pacific/Niue", "UTC-11" },                       // NU
-	{ "Pacific/Midway", "UTC-11" },                     // UM
-	{ "Etc/GMT+11", "UTC-11" },                         // ZZ
-	{ "America/Adak", "Aleutian Standard Time" },       // 001
-	{ "America/Adak", "Aleutian Standard Time" },       // US
-	{ "Pacific/Honolulu", "Hawaiian Standard Time" },   // 001
-	{ "Pacific/Rarotonga", "Hawaiian Standard Time" },  // CK
-	{ "Pacific/Tahiti", "Hawaiian Standard Time" },     // PF
-	{ "Pacific/Honolulu", "Hawaiian Standard Time" },   // US
-	{ "Etc/GMT+10", "Hawaiian Standard Time" },         // ZZ
+	{ "Etc/GMT+12", "Dateline Standard Time" }, // 001
+	{ "Etc/GMT+12", "Dateline Standard Time" }, // ZZ
+	{ "Etc/GMT+11", "UTC-11" }, // 001
+	{ "Pacific/Pago_Pago", "UTC-11" }, // AS
+	{ "Pacific/Niue", "UTC-11" }, // NU
+	{ "Pacific/Midway", "UTC-11" }, // UM
+	{ "Etc/GMT+11", "UTC-11" }, // ZZ
+	{ "America/Adak", "Aleutian Standard Time" }, // 001
+	{ "America/Adak", "Aleutian Standard Time" }, // US
+	{ "Pacific/Honolulu", "Hawaiian Standard Time" }, // 001
+	{ "Pacific/Rarotonga", "Hawaiian Standard Time" }, // CK
+	{ "Pacific/Tahiti", "Hawaiian Standard Time" }, // PF
+	{ "Pacific/Honolulu", "Hawaiian Standard Time" }, // US
+	{ "Etc/GMT+10", "Hawaiian Standard Time" }, // ZZ
 	{ "Pacific/Marquesas", "Marquesas Standard Time" }, // 001
 	{ "Pacific/Marquesas", "Marquesas Standard Time" }, // PF
-	{ "America/Anchorage", "Alaskan Standard Time" },   // 001
-	{ "America/Anchorage America/Juneau America/Metlakatla America/Nome America/Sitka "
-	  "America/Yakutat",
-	  "Alaskan Standard Time" },                             // US
-	{ "Etc/GMT+9", "UTC-09" },                               // 001
-	{ "Pacific/Gambier", "UTC-09" },                         // PF
-	{ "Etc/GMT+9", "UTC-09" },                               // ZZ
+	{ "America/Anchorage", "Alaskan Standard Time" }, // 001
+	{ "America/Anchorage America/Juneau America/Metlakatla America/Nome America/Sitka America/Yakutat", "Alaskan Standard Time" }, // US
+	{ "Etc/GMT+9", "UTC-09" }, // 001
+	{ "Pacific/Gambier", "UTC-09" }, // PF
+	{ "Etc/GMT+9", "UTC-09" }, // ZZ
 	{ "America/Tijuana", "Pacific Standard Time (Mexico)" }, // 001
 	{ "America/Tijuana", "Pacific Standard Time (Mexico)" }, // MX
-	{ "Etc/GMT+8", "UTC-08" },                               // 001
-	{ "Pacific/Pitcairn", "UTC-08" },                        // PN
-	{ "Etc/GMT+8", "UTC-08" },                               // ZZ
-	{ "America/Los_Angeles", "Pacific Standard Time" },      // 001
-	{ "America/Vancouver", "Pacific Standard Time" },        // CA
-	{ "America/Los_Angeles", "Pacific Standard Time" },      // US
-	{ "PST8PDT", "Pacific Standard Time" },                  // ZZ
-	{ "America/Phoenix", "US Mountain Standard Time" },      // 001
-	{ "America/Creston America/Dawson_Creek America/Fort_Nelson",
-	  "US Mountain Standard Time" },                                                       // CA
-	{ "America/Hermosillo", "US Mountain Standard Time" },                                 // MX
-	{ "America/Phoenix", "US Mountain Standard Time" },                                    // US
-	{ "Etc/GMT+7", "US Mountain Standard Time" },                                          // ZZ
-	{ "America/Mazatlan", "Mountain Standard Time (Mexico)" },                             // 001
-	{ "America/Mazatlan", "Mountain Standard Time (Mexico)" },                             // MX
-	{ "America/Denver", "Mountain Standard Time" },                                        // 001
+	{ "Etc/GMT+8", "UTC-08" }, // 001
+	{ "Pacific/Pitcairn", "UTC-08" }, // PN
+	{ "Etc/GMT+8", "UTC-08" }, // ZZ
+	{ "America/Los_Angeles", "Pacific Standard Time" }, // 001
+	{ "America/Vancouver", "Pacific Standard Time" }, // CA
+	{ "America/Los_Angeles", "Pacific Standard Time" }, // US
+	{ "PST8PDT", "Pacific Standard Time" }, // ZZ
+	{ "America/Phoenix", "US Mountain Standard Time" }, // 001
+	{ "America/Creston America/Dawson_Creek America/Fort_Nelson", "US Mountain Standard Time" }, // CA
+	{ "America/Hermosillo", "US Mountain Standard Time" }, // MX
+	{ "America/Phoenix", "US Mountain Standard Time" }, // US
+	{ "Etc/GMT+7", "US Mountain Standard Time" }, // ZZ
+	{ "America/Mazatlan", "Mountain Standard Time (Mexico)" }, // 001
+	{ "America/Mazatlan", "Mountain Standard Time (Mexico)" }, // MX
+	{ "America/Denver", "Mountain Standard Time" }, // 001
 	{ "America/Edmonton America/Cambridge_Bay America/Inuvik", "Mountain Standard Time" }, // CA
-	{ "America/Ciudad_Juarez", "Mountain Standard Time" },                                 // MX
-	{ "America/Denver America/Boise", "Mountain Standard Time" },                          // US
-	{ "MST7MDT", "Mountain Standard Time" },                                               // ZZ
-	{ "America/Whitehorse", "Yukon Standard Time" },                                       // 001
-	{ "America/Whitehorse America/Dawson", "Yukon Standard Time" },                        // CA
-	{ "America/Guatemala", "Central America Standard Time" },                              // 001
-	{ "America/Belize", "Central America Standard Time" },                                 // BZ
-	{ "America/Costa_Rica", "Central America Standard Time" },                             // CR
-	{ "Pacific/Galapagos", "Central America Standard Time" },                              // EC
-	{ "America/Guatemala", "Central America Standard Time" },                              // GT
-	{ "America/Tegucigalpa", "Central America Standard Time" },                            // HN
-	{ "America/Managua", "Central America Standard Time" },                                // NI
-	{ "America/El_Salvador", "Central America Standard Time" },                            // SV
-	{ "Etc/GMT+6", "Central America Standard Time" },                                      // ZZ
-	{ "America/Chicago", "Central Standard Time" },                                        // 001
+	{ "America/Ciudad_Juarez", "Mountain Standard Time" }, // MX
+	{ "America/Denver America/Boise", "Mountain Standard Time" }, // US
+	{ "MST7MDT", "Mountain Standard Time" }, // ZZ
+	{ "America/Whitehorse", "Yukon Standard Time" }, // 001
+	{ "America/Whitehorse America/Dawson", "Yukon Standard Time" }, // CA
+	{ "America/Guatemala", "Central America Standard Time" }, // 001
+	{ "America/Belize", "Central America Standard Time" }, // BZ
+	{ "America/Costa_Rica", "Central America Standard Time" }, // CR
+	{ "Pacific/Galapagos", "Central America Standard Time" }, // EC
+	{ "America/Guatemala", "Central America Standard Time" }, // GT
+	{ "America/Tegucigalpa", "Central America Standard Time" }, // HN
+	{ "America/Managua", "Central America Standard Time" }, // NI
+	{ "America/El_Salvador", "Central America Standard Time" }, // SV
+	{ "Etc/GMT+6", "Central America Standard Time" }, // ZZ
+	{ "America/Chicago", "Central Standard Time" }, // 001
 	{ "America/Winnipeg America/Rankin_Inlet America/Resolute", "Central Standard Time" }, // CA
-	{ "America/Matamoros America/Ojinaga", "Central Standard Time" },                      // MX
-	{ "America/Chicago America/Indiana/Knox America/Indiana/Tell_City America/Menominee "
-	  "America/North_Dakota/Beulah America/North_Dakota/Center America/North_Dakota/New_Salem",
-	  "Central Standard Time" },                                 // US
-	{ "CST6CDT", "Central Standard Time" },                      // ZZ
-	{ "Pacific/Easter", "Easter Island Standard Time" },         // 001
-	{ "Pacific/Easter", "Easter Island Standard Time" },         // CL
+	{ "America/Matamoros America/Ojinaga", "Central Standard Time" }, // MX
+	{ "America/Chicago America/Indiana/Knox America/Indiana/Tell_City America/Menominee America/North_Dakota/Beulah America/North_Dakota/Center America/North_Dakota/New_Salem", "Central Standard Time" }, // US
+	{ "CST6CDT", "Central Standard Time" }, // ZZ
+	{ "Pacific/Easter", "Easter Island Standard Time" }, // 001
+	{ "Pacific/Easter", "Easter Island Standard Time" }, // CL
 	{ "America/Mexico_City", "Central Standard Time (Mexico)" }, // 001
-	{ "America/Mexico_City America/Bahia_Banderas America/Merida America/Monterrey "
-	  "America/Chihuahua ",
-	  "Central Standard Time (Mexico)" },                                       // MX
-	{ "America/Regina", "Canada Central Standard Time" },                       // 001
+	{ "America/Mexico_City America/Bahia_Banderas America/Merida America/Monterrey America/Chihuahua ", "Central Standard Time (Mexico)" }, // MX
+	{ "America/Regina", "Canada Central Standard Time" }, // 001
 	{ "America/Regina America/Swift_Current", "Canada Central Standard Time" }, // CA
-	{ "America/Bogota", "SA Pacific Standard Time" },                           // 001
-	{ "America/Rio_Branco America/Eirunepe", "SA Pacific Standard Time" },      // BR
-	{ "America/Coral_Harbour", "SA Pacific Standard Time" },                    // CA
-	{ "America/Bogota", "SA Pacific Standard Time" },                           // CO
-	{ "America/Guayaquil", "SA Pacific Standard Time" },                        // EC
-	{ "America/Jamaica", "SA Pacific Standard Time" },                          // JM
-	{ "America/Cayman", "SA Pacific Standard Time" },                           // KY
-	{ "America/Panama", "SA Pacific Standard Time" },                           // PA
-	{ "America/Lima", "SA Pacific Standard Time" },                             // PE
-	{ "Etc/GMT+5", "SA Pacific Standard Time" },                                // ZZ
-	{ "America/Cancun", "Eastern Standard Time (Mexico)" },                     // 001
-	{ "America/Cancun", "Eastern Standard Time (Mexico)" },                     // MX
-	{ "America/New_York", "Eastern Standard Time" },                            // 001
-	{ "America/Nassau", "Eastern Standard Time" },                              // BS
-	{ "America/Toronto America/Iqaluit", "Eastern Standard Time" },             // CA
-	{ "America/New_York America/Detroit America/Indiana/Petersburg America/Indiana/Vincennes "
-	  "America/Indiana/Winamac America/Kentucky/Monticello America/Louisville",
-	  "Eastern Standard Time" },                            // US
-	{ "EST5EDT", "Eastern Standard Time" },                 // ZZ
-	{ "America/Port-au-Prince", "Haiti Standard Time" },    // 001
-	{ "America/Port-au-Prince", "Haiti Standard Time" },    // HT
-	{ "America/Havana", "Cuba Standard Time" },             // 001
-	{ "America/Havana", "Cuba Standard Time" },             // CU
+	{ "America/Bogota", "SA Pacific Standard Time" }, // 001
+	{ "America/Rio_Branco America/Eirunepe", "SA Pacific Standard Time" }, // BR
+	{ "America/Coral_Harbour", "SA Pacific Standard Time" }, // CA
+	{ "America/Bogota", "SA Pacific Standard Time" }, // CO
+	{ "America/Guayaquil", "SA Pacific Standard Time" }, // EC
+	{ "America/Jamaica", "SA Pacific Standard Time" }, // JM
+	{ "America/Cayman", "SA Pacific Standard Time" }, // KY
+	{ "America/Panama", "SA Pacific Standard Time" }, // PA
+	{ "America/Lima", "SA Pacific Standard Time" }, // PE
+	{ "Etc/GMT+5", "SA Pacific Standard Time" }, // ZZ
+	{ "America/Cancun", "Eastern Standard Time (Mexico)" }, // 001
+	{ "America/Cancun", "Eastern Standard Time (Mexico)" }, // MX
+	{ "America/New_York", "Eastern Standard Time" }, // 001
+	{ "America/Nassau", "Eastern Standard Time" }, // BS
+	{ "America/Toronto America/Iqaluit", "Eastern Standard Time" }, // CA
+	{ "America/New_York America/Detroit America/Indiana/Petersburg America/Indiana/Vincennes America/Indiana/Winamac America/Kentucky/Monticello America/Louisville", "Eastern Standard Time" }, // US
+	{ "EST5EDT", "Eastern Standard Time" }, // ZZ
+	{ "America/Port-au-Prince", "Haiti Standard Time" }, // 001
+	{ "America/Port-au-Prince", "Haiti Standard Time" }, // HT
+	{ "America/Havana", "Cuba Standard Time" }, // 001
+	{ "America/Havana", "Cuba Standard Time" }, // CU
 	{ "America/Indianapolis", "US Eastern Standard Time" }, // 001
-	{ "America/Indianapolis America/Indiana/Marengo America/Indiana/Vevay",
-	  "US Eastern Standard Time" },                             // US
+	{ "America/Indianapolis America/Indiana/Marengo America/Indiana/Vevay", "US Eastern Standard Time" }, // US
 	{ "America/Grand_Turk", "Turks And Caicos Standard Time" }, // 001
 	{ "America/Grand_Turk", "Turks And Caicos Standard Time" }, // TC
-	{ "America/Asuncion", "Paraguay Standard Time" },           // 001
-	{ "America/Asuncion", "Paraguay Standard Time" },           // PY
-	{ "America/Halifax", "Atlantic Standard Time" },            // 001
-	{ "Atlantic/Bermuda", "Atlantic Standard Time" },           // BM
-	{ "America/Halifax America/Glace_Bay America/Goose_Bay America/Moncton",
-	  "Atlantic Standard Time" },                                                           // CA
-	{ "America/Thule", "Atlantic Standard Time" },                                          // GL
-	{ "America/Caracas", "Venezuela Standard Time" },                                       // 001
-	{ "America/Caracas", "Venezuela Standard Time" },                                       // VE
-	{ "America/Cuiaba", "Central Brazilian Standard Time" },                                // 001
-	{ "America/Cuiaba America/Campo_Grande", "Central Brazilian Standard Time" },           // BR
-	{ "America/La_Paz", "SA Western Standard Time" },                                       // 001
-	{ "America/Antigua", "SA Western Standard Time" },                                      // AG
-	{ "America/Anguilla", "SA Western Standard Time" },                                     // AI
-	{ "America/Aruba", "SA Western Standard Time" },                                        // AW
-	{ "America/Barbados", "SA Western Standard Time" },                                     // BB
-	{ "America/St_Barthelemy", "SA Western Standard Time" },                                // BL
-	{ "America/La_Paz", "SA Western Standard Time" },                                       // BO
-	{ "America/Kralendijk", "SA Western Standard Time" },                                   // BQ
+	{ "America/Asuncion", "Paraguay Standard Time" }, // 001
+	{ "America/Asuncion", "Paraguay Standard Time" }, // PY
+	{ "America/Halifax", "Atlantic Standard Time" }, // 001
+	{ "Atlantic/Bermuda", "Atlantic Standard Time" }, // BM
+	{ "America/Halifax America/Glace_Bay America/Goose_Bay America/Moncton", "Atlantic Standard Time" }, // CA
+	{ "America/Thule", "Atlantic Standard Time" }, // GL
+	{ "America/Caracas", "Venezuela Standard Time" }, // 001
+	{ "America/Caracas", "Venezuela Standard Time" }, // VE
+	{ "America/Cuiaba", "Central Brazilian Standard Time" }, // 001
+	{ "America/Cuiaba America/Campo_Grande", "Central Brazilian Standard Time" }, // BR
+	{ "America/La_Paz", "SA Western Standard Time" }, // 001
+	{ "America/Antigua", "SA Western Standard Time" }, // AG
+	{ "America/Anguilla", "SA Western Standard Time" }, // AI
+	{ "America/Aruba", "SA Western Standard Time" }, // AW
+	{ "America/Barbados", "SA Western Standard Time" }, // BB
+	{ "America/St_Barthelemy", "SA Western Standard Time" }, // BL
+	{ "America/La_Paz", "SA Western Standard Time" }, // BO
+	{ "America/Kralendijk", "SA Western Standard Time" }, // BQ
 	{ "America/Manaus America/Boa_Vista America/Porto_Velho", "SA Western Standard Time" }, // BR
-	{ "America/Blanc-Sablon", "SA Western Standard Time" },                                 // CA
-	{ "America/Curacao", "SA Western Standard Time" },                                      // CW
-	{ "America/Dominica", "SA Western Standard Time" },                                     // DM
-	{ "America/Santo_Domingo", "SA Western Standard Time" },                                // DO
-	{ "America/Grenada", "SA Western Standard Time" },                                      // GD
-	{ "America/Guadeloupe", "SA Western Standard Time" },                                   // GP
-	{ "America/Guyana", "SA Western Standard Time" },                                       // GY
-	{ "America/St_Kitts", "SA Western Standard Time" },                                     // KN
-	{ "America/St_Lucia", "SA Western Standard Time" },                                     // LC
-	{ "America/Marigot", "SA Western Standard Time" },                                      // MF
-	{ "America/Martinique", "SA Western Standard Time" },                                   // MQ
-	{ "America/Montserrat", "SA Western Standard Time" },                                   // MS
-	{ "America/Puerto_Rico", "SA Western Standard Time" },                                  // PR
-	{ "America/Lower_Princes", "SA Western Standard Time" },                                // SX
-	{ "America/Port_of_Spain", "SA Western Standard Time" },                                // TT
-	{ "America/St_Vincent", "SA Western Standard Time" },                                   // VC
-	{ "America/Tortola", "SA Western Standard Time" },                                      // VG
-	{ "America/St_Thomas", "SA Western Standard Time" },                                    // VI
-	{ "Etc/GMT+4", "SA Western Standard Time" },                                            // ZZ
-	{ "America/Santiago", "Pacific SA Standard Time" },                                     // 001
-	{ "America/Santiago", "Pacific SA Standard Time" },                                     // CL
-	{ "America/St_Johns", "Newfoundland Standard Time" },                                   // 001
-	{ "America/St_Johns", "Newfoundland Standard Time" },                                   // CA
-	{ "America/Araguaina", "Tocantins Standard Time" },                                     // 001
-	{ "America/Araguaina", "Tocantins Standard Time" },                                     // BR
-	{ "America/Sao_Paulo", "E. South America Standard Time" },                              // 001
-	{ "America/Sao_Paulo", "E. South America Standard Time" },                              // BR
-	{ "America/Cayenne", "SA Eastern Standard Time" },                                      // 001
-	{ "Antarctica/Rothera Antarctica/Palmer", "SA Eastern Standard Time" },                 // AQ
-	{ "America/Fortaleza America/Belem America/Maceio America/Recife America/Santarem",
-	  "SA Eastern Standard Time" },                        // BR
-	{ "Atlantic/Stanley", "SA Eastern Standard Time" },    // FK
-	{ "America/Cayenne", "SA Eastern Standard Time" },     // GF
-	{ "America/Paramaribo", "SA Eastern Standard Time" },  // SR
-	{ "Etc/GMT+3", "SA Eastern Standard Time" },           // ZZ
+	{ "America/Blanc-Sablon", "SA Western Standard Time" }, // CA
+	{ "America/Curacao", "SA Western Standard Time" }, // CW
+	{ "America/Dominica", "SA Western Standard Time" }, // DM
+	{ "America/Santo_Domingo", "SA Western Standard Time" }, // DO
+	{ "America/Grenada", "SA Western Standard Time" }, // GD
+	{ "America/Guadeloupe", "SA Western Standard Time" }, // GP
+	{ "America/Guyana", "SA Western Standard Time" }, // GY
+	{ "America/St_Kitts", "SA Western Standard Time" }, // KN
+	{ "America/St_Lucia", "SA Western Standard Time" }, // LC
+	{ "America/Marigot", "SA Western Standard Time" }, // MF
+	{ "America/Martinique", "SA Western Standard Time" }, // MQ
+	{ "America/Montserrat", "SA Western Standard Time" }, // MS
+	{ "America/Puerto_Rico", "SA Western Standard Time" }, // PR
+	{ "America/Lower_Princes", "SA Western Standard Time" }, // SX
+	{ "America/Port_of_Spain", "SA Western Standard Time" }, // TT
+	{ "America/St_Vincent", "SA Western Standard Time" }, // VC
+	{ "America/Tortola", "SA Western Standard Time" }, // VG
+	{ "America/St_Thomas", "SA Western Standard Time" }, // VI
+	{ "Etc/GMT+4", "SA Western Standard Time" }, // ZZ
+	{ "America/Santiago", "Pacific SA Standard Time" }, // 001
+	{ "America/Santiago", "Pacific SA Standard Time" }, // CL
+	{ "America/St_Johns", "Newfoundland Standard Time" }, // 001
+	{ "America/St_Johns", "Newfoundland Standard Time" }, // CA
+	{ "America/Araguaina", "Tocantins Standard Time" }, // 001
+	{ "America/Araguaina", "Tocantins Standard Time" }, // BR
+	{ "America/Sao_Paulo", "E. South America Standard Time" }, // 001
+	{ "America/Sao_Paulo", "E. South America Standard Time" }, // BR
+	{ "America/Cayenne", "SA Eastern Standard Time" }, // 001
+	{ "Antarctica/Rothera Antarctica/Palmer", "SA Eastern Standard Time" }, // AQ
+	{ "America/Fortaleza America/Belem America/Maceio America/Recife America/Santarem", "SA Eastern Standard Time" }, // BR
+	{ "Atlantic/Stanley", "SA Eastern Standard Time" }, // FK
+	{ "America/Cayenne", "SA Eastern Standard Time" }, // GF
+	{ "America/Paramaribo", "SA Eastern Standard Time" }, // SR
+	{ "Etc/GMT+3", "SA Eastern Standard Time" }, // ZZ
 	{ "America/Buenos_Aires", "Argentina Standard Time" }, // 001
-	{ "America/Buenos_Aires America/Argentina/La_Rioja America/Argentina/Rio_Gallegos "
-	  "America/Argentina/Salta America/Argentina/San_Juan America/Argentina/San_Luis "
-	  "America/Argentina/Tucuman America/Argentina/Ushuaia America/Catamarca America/Cordoba "
-	  "America/Jujuy America/Mendoza",
-	  "Argentina Standard Time" },                                      // AR
-	{ "America/Godthab", "Greenland Standard Time" },                   // 001
-	{ "America/Godthab", "Greenland Standard Time" },                   // GL
-	{ "America/Montevideo", "Montevideo Standard Time" },               // 001
-	{ "America/Montevideo", "Montevideo Standard Time" },               // UY
-	{ "America/Punta_Arenas", "Magallanes Standard Time" },             // 001
-	{ "America/Punta_Arenas", "Magallanes Standard Time" },             // CL
-	{ "America/Miquelon", "Saint Pierre Standard Time" },               // 001
-	{ "America/Miquelon", "Saint Pierre Standard Time" },               // PM
-	{ "America/Bahia", "Bahia Standard Time" },                         // 001
-	{ "America/Bahia", "Bahia Standard Time" },                         // BR
-	{ "Etc/GMT+2", "UTC-02" },                                          // 001
-	{ "America/Noronha", "UTC-02" },                                    // BR
-	{ "Atlantic/South_Georgia", "UTC-02" },                             // GS
-	{ "Etc/GMT+2", "UTC-02" },                                          // ZZ
-	{ "Atlantic/Azores", "Azores Standard Time" },                      // 001
-	{ "America/Scoresbysund", "Azores Standard Time" },                 // GL
-	{ "Atlantic/Azores", "Azores Standard Time" },                      // PT
-	{ "Atlantic/Cape_Verde", "Cape Verde Standard Time" },              // 001
-	{ "Atlantic/Cape_Verde", "Cape Verde Standard Time" },              // CV
-	{ "Etc/GMT+1", "Cape Verde Standard Time" },                        // ZZ
-	{ "Etc/UTC", "UTC" },                                               // 001
-	{ "Etc/UTC Etc/GMT", "UTC" },                                       // ZZ
-	{ "Europe/London", "GMT Standard Time" },                           // 001
-	{ "Atlantic/Canary", "GMT Standard Time" },                         // ES
-	{ "Atlantic/Faeroe", "GMT Standard Time" },                         // FO
-	{ "Europe/London", "GMT Standard Time" },                           // GB
-	{ "Europe/Guernsey", "GMT Standard Time" },                         // GG
-	{ "Europe/Dublin", "GMT Standard Time" },                           // IE
-	{ "Europe/Isle_of_Man", "GMT Standard Time" },                      // IM
-	{ "Europe/Jersey", "GMT Standard Time" },                           // JE
-	{ "Europe/Lisbon Atlantic/Madeira", "GMT Standard Time" },          // PT
-	{ "Atlantic/Reykjavik", "Greenwich Standard Time" },                // 001
-	{ "Africa/Ouagadougou", "Greenwich Standard Time" },                // BF
-	{ "Africa/Abidjan", "Greenwich Standard Time" },                    // CI
-	{ "Africa/Accra", "Greenwich Standard Time" },                      // GH
-	{ "America/Danmarkshavn", "Greenwich Standard Time" },              // GL
-	{ "Africa/Banjul", "Greenwich Standard Time" },                     // GM
-	{ "Africa/Conakry", "Greenwich Standard Time" },                    // GN
-	{ "Africa/Bissau", "Greenwich Standard Time" },                     // GW
-	{ "Atlantic/Reykjavik", "Greenwich Standard Time" },                // IS
-	{ "Africa/Monrovia", "Greenwich Standard Time" },                   // LR
-	{ "Africa/Bamako", "Greenwich Standard Time" },                     // ML
-	{ "Africa/Nouakchott", "Greenwich Standard Time" },                 // MR
-	{ "Atlantic/St_Helena", "Greenwich Standard Time" },                // SH
-	{ "Africa/Freetown", "Greenwich Standard Time" },                   // SL
-	{ "Africa/Dakar", "Greenwich Standard Time" },                      // SN
-	{ "Africa/Lome", "Greenwich Standard Time" },                       // TG
-	{ "Africa/Sao_Tome", "Sao Tome Standard Time" },                    // 001
-	{ "Africa/Sao_Tome", "Sao Tome Standard Time" },                    // ST
-	{ "Africa/Casablanca", "Morocco Standard Time" },                   // 001
-	{ "Africa/El_Aaiun", "Morocco Standard Time" },                     // EH
-	{ "Africa/Casablanca", "Morocco Standard Time" },                   // MA
-	{ "Europe/Berlin", "W. Europe Standard Time" },                     // 001
-	{ "Europe/Andorra", "W. Europe Standard Time" },                    // AD
-	{ "Europe/Vienna", "W. Europe Standard Time" },                     // AT
-	{ "Europe/Zurich", "W. Europe Standard Time" },                     // CH
-	{ "Europe/Berlin Europe/Busingen", "W. Europe Standard Time" },     // DE
-	{ "Europe/Gibraltar", "W. Europe Standard Time" },                  // GI
-	{ "Europe/Rome", "W. Europe Standard Time" },                       // IT
-	{ "Europe/Vaduz", "W. Europe Standard Time" },                      // LI
-	{ "Europe/Luxembourg", "W. Europe Standard Time" },                 // LU
-	{ "Europe/Monaco", "W. Europe Standard Time" },                     // MC
-	{ "Europe/Malta", "W. Europe Standard Time" },                      // MT
-	{ "Europe/Amsterdam", "W. Europe Standard Time" },                  // NL
-	{ "Europe/Oslo", "W. Europe Standard Time" },                       // NO
-	{ "Europe/Stockholm", "W. Europe Standard Time" },                  // SE
-	{ "Arctic/Longyearbyen", "W. Europe Standard Time" },               // SJ
-	{ "Europe/San_Marino", "W. Europe Standard Time" },                 // SM
-	{ "Europe/Vatican", "W. Europe Standard Time" },                    // VA
-	{ "Europe/Budapest", "Central Europe Standard Time" },              // 001
-	{ "Europe/Tirane", "Central Europe Standard Time" },                // AL
-	{ "Europe/Prague", "Central Europe Standard Time" },                // CZ
-	{ "Europe/Budapest", "Central Europe Standard Time" },              // HU
-	{ "Europe/Podgorica", "Central Europe Standard Time" },             // ME
-	{ "Europe/Belgrade", "Central Europe Standard Time" },              // RS
-	{ "Europe/Ljubljana", "Central Europe Standard Time" },             // SI
-	{ "Europe/Bratislava", "Central Europe Standard Time" },            // SK
-	{ "Europe/Paris", "Romance Standard Time" },                        // 001
-	{ "Europe/Brussels", "Romance Standard Time" },                     // BE
-	{ "Europe/Copenhagen", "Romance Standard Time" },                   // DK
-	{ "Europe/Madrid Africa/Ceuta", "Romance Standard Time" },          // ES
-	{ "Europe/Paris", "Romance Standard Time" },                        // FR
-	{ "Europe/Warsaw", "Central European Standard Time" },              // 001
-	{ "Europe/Sarajevo", "Central European Standard Time" },            // BA
-	{ "Europe/Zagreb", "Central European Standard Time" },              // HR
-	{ "Europe/Skopje", "Central European Standard Time" },              // MK
-	{ "Europe/Warsaw", "Central European Standard Time" },              // PL
-	{ "Africa/Lagos", "W. Central Africa Standard Time" },              // 001
-	{ "Africa/Luanda", "W. Central Africa Standard Time" },             // AO
-	{ "Africa/Porto-Novo", "W. Central Africa Standard Time" },         // BJ
-	{ "Africa/Kinshasa", "W. Central Africa Standard Time" },           // CD
-	{ "Africa/Bangui", "W. Central Africa Standard Time" },             // CF
-	{ "Africa/Brazzaville", "W. Central Africa Standard Time" },        // CG
-	{ "Africa/Douala", "W. Central Africa Standard Time" },             // CM
-	{ "Africa/Algiers", "W. Central Africa Standard Time" },            // DZ
-	{ "Africa/Libreville", "W. Central Africa Standard Time" },         // GA
-	{ "Africa/Malabo", "W. Central Africa Standard Time" },             // GQ
-	{ "Africa/Niamey", "W. Central Africa Standard Time" },             // NE
-	{ "Africa/Lagos", "W. Central Africa Standard Time" },              // NG
-	{ "Africa/Ndjamena", "W. Central Africa Standard Time" },           // TD
-	{ "Africa/Tunis", "W. Central Africa Standard Time" },              // TN
-	{ "Etc/GMT-1", "W. Central Africa Standard Time" },                 // ZZ
-	{ "Asia/Amman", "Jordan Standard Time" },                           // 001
-	{ "Asia/Amman", "Jordan Standard Time" },                           // JO
-	{ "Europe/Bucharest", "GTB Standard Time" },                        // 001
-	{ "Asia/Nicosia Asia/Famagusta", "GTB Standard Time" },             // CY
-	{ "Europe/Athens", "GTB Standard Time" },                           // GR
-	{ "Europe/Bucharest", "GTB Standard Time" },                        // RO
-	{ "Asia/Beirut", "Middle East Standard Time" },                     // 001
-	{ "Asia/Beirut", "Middle East Standard Time" },                     // LB
-	{ "Africa/Cairo", "Egypt Standard Time" },                          // 001
-	{ "Africa/Cairo", "Egypt Standard Time" },                          // EG
-	{ "Europe/Chisinau", "E. Europe Standard Time" },                   // 001
-	{ "Europe/Chisinau", "E. Europe Standard Time" },                   // MD
-	{ "Asia/Damascus", "Syria Standard Time" },                         // 001
-	{ "Asia/Damascus", "Syria Standard Time" },                         // SY
-	{ "Asia/Hebron", "West Bank Standard Time" },                       // 001
-	{ "Asia/Hebron Asia/Gaza", "West Bank Standard Time" },             // PS
-	{ "Africa/Johannesburg", "South Africa Standard Time" },            // 001
-	{ "Africa/Bujumbura", "South Africa Standard Time" },               // BI
-	{ "Africa/Gaborone", "South Africa Standard Time" },                // BW
-	{ "Africa/Lubumbashi", "South Africa Standard Time" },              // CD
-	{ "Africa/Maseru", "South Africa Standard Time" },                  // LS
-	{ "Africa/Blantyre", "South Africa Standard Time" },                // MW
-	{ "Africa/Maputo", "South Africa Standard Time" },                  // MZ
-	{ "Africa/Kigali", "South Africa Standard Time" },                  // RW
-	{ "Africa/Mbabane", "South Africa Standard Time" },                 // SZ
-	{ "Africa/Johannesburg", "South Africa Standard Time" },            // ZA
-	{ "Africa/Lusaka", "South Africa Standard Time" },                  // ZM
-	{ "Africa/Harare", "South Africa Standard Time" },                  // ZW
-	{ "Etc/GMT-2", "South Africa Standard Time" },                      // ZZ
-	{ "Europe/Kiev", "FLE Standard Time" },                             // 001
-	{ "Europe/Mariehamn", "FLE Standard Time" },                        // AX
-	{ "Europe/Sofia", "FLE Standard Time" },                            // BG
-	{ "Europe/Tallinn", "FLE Standard Time" },                          // EE
-	{ "Europe/Helsinki", "FLE Standard Time" },                         // FI
-	{ "Europe/Vilnius", "FLE Standard Time" },                          // LT
-	{ "Europe/Riga", "FLE Standard Time" },                             // LV
-	{ "Europe/Kiev", "FLE Standard Time" },                             // UA
-	{ "Asia/Jerusalem", "Israel Standard Time" },                       // 001
-	{ "Asia/Jerusalem", "Israel Standard Time" },                       // IL
-	{ "Africa/Juba", "South Sudan Standard Time" },                     // 001
-	{ "Africa/Juba", "South Sudan Standard Time" },                     // SS
-	{ "Europe/Kaliningrad", "Kaliningrad Standard Time" },              // 001
-	{ "Europe/Kaliningrad", "Kaliningrad Standard Time" },              // RU
-	{ "Africa/Khartoum", "Sudan Standard Time" },                       // 001
-	{ "Africa/Khartoum", "Sudan Standard Time" },                       // SD
-	{ "Africa/Tripoli", "Libya Standard Time" },                        // 001
-	{ "Africa/Tripoli", "Libya Standard Time" },                        // LY
-	{ "Africa/Windhoek", "Namibia Standard Time" },                     // 001
-	{ "Africa/Windhoek", "Namibia Standard Time" },                     // NA
-	{ "Asia/Baghdad", "Arabic Standard Time" },                         // 001
-	{ "Asia/Baghdad", "Arabic Standard Time" },                         // IQ
-	{ "Europe/Istanbul", "Turkey Standard Time" },                      // 001
-	{ "Europe/Istanbul", "Turkey Standard Time" },                      // TR
-	{ "Asia/Riyadh", "Arab Standard Time" },                            // 001
-	{ "Asia/Bahrain", "Arab Standard Time" },                           // BH
-	{ "Asia/Kuwait", "Arab Standard Time" },                            // KW
-	{ "Asia/Qatar", "Arab Standard Time" },                             // QA
-	{ "Asia/Riyadh", "Arab Standard Time" },                            // SA
-	{ "Asia/Aden", "Arab Standard Time" },                              // YE
-	{ "Europe/Minsk", "Belarus Standard Time" },                        // 001
-	{ "Europe/Minsk", "Belarus Standard Time" },                        // BY
-	{ "Europe/Moscow", "Russian Standard Time" },                       // 001
-	{ "Europe/Moscow Europe/Kirov", "Russian Standard Time" },          // RU
-	{ "Europe/Simferopol", "Russian Standard Time" },                   // UA
-	{ "Africa/Nairobi", "E. Africa Standard Time" },                    // 001
-	{ "Antarctica/Syowa", "E. Africa Standard Time" },                  // AQ
-	{ "Africa/Djibouti", "E. Africa Standard Time" },                   // DJ
-	{ "Africa/Asmera", "E. Africa Standard Time" },                     // ER
-	{ "Africa/Addis_Ababa", "E. Africa Standard Time" },                // ET
-	{ "Africa/Nairobi", "E. Africa Standard Time" },                    // KE
-	{ "Indian/Comoro", "E. Africa Standard Time" },                     // KM
-	{ "Indian/Antananarivo", "E. Africa Standard Time" },               // MG
-	{ "Africa/Mogadishu", "E. Africa Standard Time" },                  // SO
-	{ "Africa/Dar_es_Salaam", "E. Africa Standard Time" },              // TZ
-	{ "Africa/Kampala", "E. Africa Standard Time" },                    // UG
-	{ "Indian/Mayotte", "E. Africa Standard Time" },                    // YT
-	{ "Etc/GMT-3", "E. Africa Standard Time" },                         // ZZ
-	{ "Asia/Tehran", "Iran Standard Time" },                            // 001
-	{ "Asia/Tehran", "Iran Standard Time" },                            // IR
-	{ "Asia/Dubai", "Arabian Standard Time" },                          // 001
-	{ "Asia/Dubai", "Arabian Standard Time" },                          // AE
-	{ "Asia/Muscat", "Arabian Standard Time" },                         // OM
-	{ "Etc/GMT-4", "Arabian Standard Time" },                           // ZZ
-	{ "Europe/Astrakhan", "Astrakhan Standard Time" },                  // 001
+	{ "America/Buenos_Aires America/Argentina/La_Rioja America/Argentina/Rio_Gallegos America/Argentina/Salta America/Argentina/San_Juan America/Argentina/San_Luis America/Argentina/Tucuman America/Argentina/Ushuaia America/Catamarca America/Cordoba America/Jujuy America/Mendoza", "Argentina Standard Time" }, // AR
+	{ "America/Godthab", "Greenland Standard Time" }, // 001
+	{ "America/Godthab", "Greenland Standard Time" }, // GL
+	{ "America/Montevideo", "Montevideo Standard Time" }, // 001
+	{ "America/Montevideo", "Montevideo Standard Time" }, // UY
+	{ "America/Punta_Arenas", "Magallanes Standard Time" }, // 001
+	{ "America/Punta_Arenas", "Magallanes Standard Time" }, // CL
+	{ "America/Miquelon", "Saint Pierre Standard Time" }, // 001
+	{ "America/Miquelon", "Saint Pierre Standard Time" }, // PM
+	{ "America/Bahia", "Bahia Standard Time" }, // 001
+	{ "America/Bahia", "Bahia Standard Time" }, // BR
+	{ "Etc/GMT+2", "UTC-02" }, // 001
+	{ "America/Noronha", "UTC-02" }, // BR
+	{ "Atlantic/South_Georgia", "UTC-02" }, // GS
+	{ "Etc/GMT+2", "UTC-02" }, // ZZ
+	{ "Atlantic/Azores", "Azores Standard Time" }, // 001
+	{ "America/Scoresbysund", "Azores Standard Time" }, // GL
+	{ "Atlantic/Azores", "Azores Standard Time" }, // PT
+	{ "Atlantic/Cape_Verde", "Cape Verde Standard Time" }, // 001
+	{ "Atlantic/Cape_Verde", "Cape Verde Standard Time" }, // CV
+	{ "Etc/GMT+1", "Cape Verde Standard Time" }, // ZZ
+	{ "Etc/UTC", "UTC" }, // 001
+	{ "Etc/UTC Etc/GMT", "UTC" }, // ZZ
+	{ "Europe/London", "GMT Standard Time" }, // 001
+	{ "Atlantic/Canary", "GMT Standard Time" }, // ES
+	{ "Atlantic/Faeroe", "GMT Standard Time" }, // FO
+	{ "Europe/London", "GMT Standard Time" }, // GB
+	{ "Europe/Guernsey", "GMT Standard Time" }, // GG
+	{ "Europe/Dublin", "GMT Standard Time" }, // IE
+	{ "Europe/Isle_of_Man", "GMT Standard Time" }, // IM
+	{ "Europe/Jersey", "GMT Standard Time" }, // JE
+	{ "Europe/Lisbon Atlantic/Madeira", "GMT Standard Time" }, // PT
+	{ "Atlantic/Reykjavik", "Greenwich Standard Time" }, // 001
+	{ "Africa/Ouagadougou", "Greenwich Standard Time" }, // BF
+	{ "Africa/Abidjan", "Greenwich Standard Time" }, // CI
+	{ "Africa/Accra", "Greenwich Standard Time" }, // GH
+	{ "America/Danmarkshavn", "Greenwich Standard Time" }, // GL
+	{ "Africa/Banjul", "Greenwich Standard Time" }, // GM
+	{ "Africa/Conakry", "Greenwich Standard Time" }, // GN
+	{ "Africa/Bissau", "Greenwich Standard Time" }, // GW
+	{ "Atlantic/Reykjavik", "Greenwich Standard Time" }, // IS
+	{ "Africa/Monrovia", "Greenwich Standard Time" }, // LR
+	{ "Africa/Bamako", "Greenwich Standard Time" }, // ML
+	{ "Africa/Nouakchott", "Greenwich Standard Time" }, // MR
+	{ "Atlantic/St_Helena", "Greenwich Standard Time" }, // SH
+	{ "Africa/Freetown", "Greenwich Standard Time" }, // SL
+	{ "Africa/Dakar", "Greenwich Standard Time" }, // SN
+	{ "Africa/Lome", "Greenwich Standard Time" }, // TG
+	{ "Africa/Sao_Tome", "Sao Tome Standard Time" }, // 001
+	{ "Africa/Sao_Tome", "Sao Tome Standard Time" }, // ST
+	{ "Africa/Casablanca", "Morocco Standard Time" }, // 001
+	{ "Africa/El_Aaiun", "Morocco Standard Time" }, // EH
+	{ "Africa/Casablanca", "Morocco Standard Time" }, // MA
+	{ "Europe/Berlin", "W. Europe Standard Time" }, // 001
+	{ "Europe/Andorra", "W. Europe Standard Time" }, // AD
+	{ "Europe/Vienna", "W. Europe Standard Time" }, // AT
+	{ "Europe/Zurich", "W. Europe Standard Time" }, // CH
+	{ "Europe/Berlin Europe/Busingen", "W. Europe Standard Time" }, // DE
+	{ "Europe/Gibraltar", "W. Europe Standard Time" }, // GI
+	{ "Europe/Rome", "W. Europe Standard Time" }, // IT
+	{ "Europe/Vaduz", "W. Europe Standard Time" }, // LI
+	{ "Europe/Luxembourg", "W. Europe Standard Time" }, // LU
+	{ "Europe/Monaco", "W. Europe Standard Time" }, // MC
+	{ "Europe/Malta", "W. Europe Standard Time" }, // MT
+	{ "Europe/Amsterdam", "W. Europe Standard Time" }, // NL
+	{ "Europe/Oslo", "W. Europe Standard Time" }, // NO
+	{ "Europe/Stockholm", "W. Europe Standard Time" }, // SE
+	{ "Arctic/Longyearbyen", "W. Europe Standard Time" }, // SJ
+	{ "Europe/San_Marino", "W. Europe Standard Time" }, // SM
+	{ "Europe/Vatican", "W. Europe Standard Time" }, // VA
+	{ "Europe/Budapest", "Central Europe Standard Time" }, // 001
+	{ "Europe/Tirane", "Central Europe Standard Time" }, // AL
+	{ "Europe/Prague", "Central Europe Standard Time" }, // CZ
+	{ "Europe/Budapest", "Central Europe Standard Time" }, // HU
+	{ "Europe/Podgorica", "Central Europe Standard Time" }, // ME
+	{ "Europe/Belgrade", "Central Europe Standard Time" }, // RS
+	{ "Europe/Ljubljana", "Central Europe Standard Time" }, // SI
+	{ "Europe/Bratislava", "Central Europe Standard Time" }, // SK
+	{ "Europe/Paris", "Romance Standard Time" }, // 001
+	{ "Europe/Brussels", "Romance Standard Time" }, // BE
+	{ "Europe/Copenhagen", "Romance Standard Time" }, // DK
+	{ "Europe/Madrid Africa/Ceuta", "Romance Standard Time" }, // ES
+	{ "Europe/Paris", "Romance Standard Time" }, // FR
+	{ "Europe/Warsaw", "Central European Standard Time" }, // 001
+	{ "Europe/Sarajevo", "Central European Standard Time" }, // BA
+	{ "Europe/Zagreb", "Central European Standard Time" }, // HR
+	{ "Europe/Skopje", "Central European Standard Time" }, // MK
+	{ "Europe/Warsaw", "Central European Standard Time" }, // PL
+	{ "Africa/Lagos", "W. Central Africa Standard Time" }, // 001
+	{ "Africa/Luanda", "W. Central Africa Standard Time" }, // AO
+	{ "Africa/Porto-Novo", "W. Central Africa Standard Time" }, // BJ
+	{ "Africa/Kinshasa", "W. Central Africa Standard Time" }, // CD
+	{ "Africa/Bangui", "W. Central Africa Standard Time" }, // CF
+	{ "Africa/Brazzaville", "W. Central Africa Standard Time" }, // CG
+	{ "Africa/Douala", "W. Central Africa Standard Time" }, // CM
+	{ "Africa/Algiers", "W. Central Africa Standard Time" }, // DZ
+	{ "Africa/Libreville", "W. Central Africa Standard Time" }, // GA
+	{ "Africa/Malabo", "W. Central Africa Standard Time" }, // GQ
+	{ "Africa/Niamey", "W. Central Africa Standard Time" }, // NE
+	{ "Africa/Lagos", "W. Central Africa Standard Time" }, // NG
+	{ "Africa/Ndjamena", "W. Central Africa Standard Time" }, // TD
+	{ "Africa/Tunis", "W. Central Africa Standard Time" }, // TN
+	{ "Etc/GMT-1", "W. Central Africa Standard Time" }, // ZZ
+	{ "Asia/Amman", "Jordan Standard Time" }, // 001
+	{ "Asia/Amman", "Jordan Standard Time" }, // JO
+	{ "Europe/Bucharest", "GTB Standard Time" }, // 001
+	{ "Asia/Nicosia Asia/Famagusta", "GTB Standard Time" }, // CY
+	{ "Europe/Athens", "GTB Standard Time" }, // GR
+	{ "Europe/Bucharest", "GTB Standard Time" }, // RO
+	{ "Asia/Beirut", "Middle East Standard Time" }, // 001
+	{ "Asia/Beirut", "Middle East Standard Time" }, // LB
+	{ "Africa/Cairo", "Egypt Standard Time" }, // 001
+	{ "Africa/Cairo", "Egypt Standard Time" }, // EG
+	{ "Europe/Chisinau", "E. Europe Standard Time" }, // 001
+	{ "Europe/Chisinau", "E. Europe Standard Time" }, // MD
+	{ "Asia/Damascus", "Syria Standard Time" }, // 001
+	{ "Asia/Damascus", "Syria Standard Time" }, // SY
+	{ "Asia/Hebron", "West Bank Standard Time" }, // 001
+	{ "Asia/Hebron Asia/Gaza", "West Bank Standard Time" }, // PS
+	{ "Africa/Johannesburg", "South Africa Standard Time" }, // 001
+	{ "Africa/Bujumbura", "South Africa Standard Time" }, // BI
+	{ "Africa/Gaborone", "South Africa Standard Time" }, // BW
+	{ "Africa/Lubumbashi", "South Africa Standard Time" }, // CD
+	{ "Africa/Maseru", "South Africa Standard Time" }, // LS
+	{ "Africa/Blantyre", "South Africa Standard Time" }, // MW
+	{ "Africa/Maputo", "South Africa Standard Time" }, // MZ
+	{ "Africa/Kigali", "South Africa Standard Time" }, // RW
+	{ "Africa/Mbabane", "South Africa Standard Time" }, // SZ
+	{ "Africa/Johannesburg", "South Africa Standard Time" }, // ZA
+	{ "Africa/Lusaka", "South Africa Standard Time" }, // ZM
+	{ "Africa/Harare", "South Africa Standard Time" }, // ZW
+	{ "Etc/GMT-2", "South Africa Standard Time" }, // ZZ
+	{ "Europe/Kiev", "FLE Standard Time" }, // 001
+	{ "Europe/Mariehamn", "FLE Standard Time" }, // AX
+	{ "Europe/Sofia", "FLE Standard Time" }, // BG
+	{ "Europe/Tallinn", "FLE Standard Time" }, // EE
+	{ "Europe/Helsinki", "FLE Standard Time" }, // FI
+	{ "Europe/Vilnius", "FLE Standard Time" }, // LT
+	{ "Europe/Riga", "FLE Standard Time" }, // LV
+	{ "Europe/Kiev", "FLE Standard Time" }, // UA
+	{ "Asia/Jerusalem", "Israel Standard Time" }, // 001
+	{ "Asia/Jerusalem", "Israel Standard Time" }, // IL
+	{ "Africa/Juba", "South Sudan Standard Time" }, // 001
+	{ "Africa/Juba", "South Sudan Standard Time" }, // SS
+	{ "Europe/Kaliningrad", "Kaliningrad Standard Time" }, // 001
+	{ "Europe/Kaliningrad", "Kaliningrad Standard Time" }, // RU
+	{ "Africa/Khartoum", "Sudan Standard Time" }, // 001
+	{ "Africa/Khartoum", "Sudan Standard Time" }, // SD
+	{ "Africa/Tripoli", "Libya Standard Time" }, // 001
+	{ "Africa/Tripoli", "Libya Standard Time" }, // LY
+	{ "Africa/Windhoek", "Namibia Standard Time" }, // 001
+	{ "Africa/Windhoek", "Namibia Standard Time" }, // NA
+	{ "Asia/Baghdad", "Arabic Standard Time" }, // 001
+	{ "Asia/Baghdad", "Arabic Standard Time" }, // IQ
+	{ "Europe/Istanbul", "Turkey Standard Time" }, // 001
+	{ "Europe/Istanbul", "Turkey Standard Time" }, // TR
+	{ "Asia/Riyadh", "Arab Standard Time" }, // 001
+	{ "Asia/Bahrain", "Arab Standard Time" }, // BH
+	{ "Asia/Kuwait", "Arab Standard Time" }, // KW
+	{ "Asia/Qatar", "Arab Standard Time" }, // QA
+	{ "Asia/Riyadh", "Arab Standard Time" }, // SA
+	{ "Asia/Aden", "Arab Standard Time" }, // YE
+	{ "Europe/Minsk", "Belarus Standard Time" }, // 001
+	{ "Europe/Minsk", "Belarus Standard Time" }, // BY
+	{ "Europe/Moscow", "Russian Standard Time" }, // 001
+	{ "Europe/Moscow Europe/Kirov", "Russian Standard Time" }, // RU
+	{ "Europe/Simferopol", "Russian Standard Time" }, // UA
+	{ "Africa/Nairobi", "E. Africa Standard Time" }, // 001
+	{ "Antarctica/Syowa", "E. Africa Standard Time" }, // AQ
+	{ "Africa/Djibouti", "E. Africa Standard Time" }, // DJ
+	{ "Africa/Asmera", "E. Africa Standard Time" }, // ER
+	{ "Africa/Addis_Ababa", "E. Africa Standard Time" }, // ET
+	{ "Africa/Nairobi", "E. Africa Standard Time" }, // KE
+	{ "Indian/Comoro", "E. Africa Standard Time" }, // KM
+	{ "Indian/Antananarivo", "E. Africa Standard Time" }, // MG
+	{ "Africa/Mogadishu", "E. Africa Standard Time" }, // SO
+	{ "Africa/Dar_es_Salaam", "E. Africa Standard Time" }, // TZ
+	{ "Africa/Kampala", "E. Africa Standard Time" }, // UG
+	{ "Indian/Mayotte", "E. Africa Standard Time" }, // YT
+	{ "Etc/GMT-3", "E. Africa Standard Time" }, // ZZ
+	{ "Asia/Tehran", "Iran Standard Time" }, // 001
+	{ "Asia/Tehran", "Iran Standard Time" }, // IR
+	{ "Asia/Dubai", "Arabian Standard Time" }, // 001
+	{ "Asia/Dubai", "Arabian Standard Time" }, // AE
+	{ "Asia/Muscat", "Arabian Standard Time" }, // OM
+	{ "Etc/GMT-4", "Arabian Standard Time" }, // ZZ
+	{ "Europe/Astrakhan", "Astrakhan Standard Time" }, // 001
 	{ "Europe/Astrakhan Europe/Ulyanovsk", "Astrakhan Standard Time" }, // RU
-	{ "Asia/Baku", "Azerbaijan Standard Time" },                        // 001
-	{ "Asia/Baku", "Azerbaijan Standard Time" },                        // AZ
-	{ "Europe/Samara", "Russia Time Zone 3" },                          // 001
-	{ "Europe/Samara", "Russia Time Zone 3" },                          // RU
-	{ "Indian/Mauritius", "Mauritius Standard Time" },                  // 001
-	{ "Indian/Mauritius", "Mauritius Standard Time" },                  // MU
-	{ "Indian/Reunion", "Mauritius Standard Time" },                    // RE
-	{ "Indian/Mahe", "Mauritius Standard Time" },                       // SC
-	{ "Europe/Saratov", "Saratov Standard Time" },                      // 001
-	{ "Europe/Saratov", "Saratov Standard Time" },                      // RU
-	{ "Asia/Tbilisi", "Georgian Standard Time" },                       // 001
-	{ "Asia/Tbilisi", "Georgian Standard Time" },                       // GE
-	{ "Europe/Volgograd", "Volgograd Standard Time" },                  // 001
-	{ "Europe/Volgograd", "Volgograd Standard Time" },                  // RU
-	{ "Asia/Yerevan", "Caucasus Standard Time" },                       // 001
-	{ "Asia/Yerevan", "Caucasus Standard Time" },                       // AM
-	{ "Asia/Kabul", "Afghanistan Standard Time" },                      // 001
-	{ "Asia/Kabul", "Afghanistan Standard Time" },                      // AF
-	{ "Asia/Tashkent", "West Asia Standard Time" },                     // 001
-	{ "Antarctica/Mawson", "West Asia Standard Time" },                 // AQ
-	{ "Asia/Oral Asia/Almaty Asia/Aqtau Asia/Aqtobe Asia/Atyrau Asia/Qostanay",
-	  "West Asia Standard Time" },                                                  // KZ
-	{ "Indian/Maldives", "West Asia Standard Time" },                               // MV
-	{ "Indian/Kerguelen", "West Asia Standard Time" },                              // TF
-	{ "Asia/Dushanbe", "West Asia Standard Time" },                                 // TJ
-	{ "Asia/Ashgabat", "West Asia Standard Time" },                                 // TM
-	{ "Asia/Tashkent Asia/Samarkand", "West Asia Standard Time" },                  // UZ
-	{ "Etc/GMT-5", "West Asia Standard Time" },                                     // ZZ
-	{ "Asia/Yekaterinburg", "Ekaterinburg Standard Time" },                         // 001
-	{ "Asia/Yekaterinburg", "Ekaterinburg Standard Time" },                         // RU
-	{ "Asia/Karachi", "Pakistan Standard Time" },                                   // 001
-	{ "Asia/Karachi", "Pakistan Standard Time" },                                   // PK
-	{ "Asia/Qyzylorda", "Qyzylorda Standard Time" },                                // 001
-	{ "Asia/Qyzylorda", "Qyzylorda Standard Time" },                                // KZ
-	{ "Asia/Calcutta", "India Standard Time" },                                     // 001
-	{ "Asia/Calcutta", "India Standard Time" },                                     // IN
-	{ "Asia/Colombo", "Sri Lanka Standard Time" },                                  // 001
-	{ "Asia/Colombo", "Sri Lanka Standard Time" },                                  // LK
-	{ "Asia/Katmandu", "Nepal Standard Time" },                                     // 001
-	{ "Asia/Katmandu", "Nepal Standard Time" },                                     // NP
-	{ "Asia/Bishkek", "Central Asia Standard Time" },                               // 001
-	{ "Antarctica/Vostok", "Central Asia Standard Time" },                          // AQ
-	{ "Asia/Urumqi", "Central Asia Standard Time" },                                // CN
-	{ "Indian/Chagos", "Central Asia Standard Time" },                              // IO
-	{ "Asia/Bishkek", "Central Asia Standard Time" },                               // KG
-	{ "Etc/GMT-6", "Central Asia Standard Time" },                                  // ZZ
-	{ "Asia/Dhaka", "Bangladesh Standard Time" },                                   // 001
-	{ "Asia/Dhaka", "Bangladesh Standard Time" },                                   // BD
-	{ "Asia/Thimphu", "Bangladesh Standard Time" },                                 // BT
-	{ "Asia/Omsk", "Omsk Standard Time" },                                          // 001
-	{ "Asia/Omsk", "Omsk Standard Time" },                                          // RU
-	{ "Asia/Rangoon", "Myanmar Standard Time" },                                    // 001
-	{ "Indian/Cocos", "Myanmar Standard Time" },                                    // CC
-	{ "Asia/Rangoon", "Myanmar Standard Time" },                                    // MM
-	{ "Asia/Bangkok", "SE Asia Standard Time" },                                    // 001
-	{ "Antarctica/Davis", "SE Asia Standard Time" },                                // AQ
-	{ "Indian/Christmas", "SE Asia Standard Time" },                                // CX
-	{ "Asia/Jakarta Asia/Pontianak", "SE Asia Standard Time" },                     // ID
-	{ "Asia/Phnom_Penh", "SE Asia Standard Time" },                                 // KH
-	{ "Asia/Vientiane", "SE Asia Standard Time" },                                  // LA
-	{ "Asia/Bangkok", "SE Asia Standard Time" },                                    // TH
-	{ "Asia/Saigon", "SE Asia Standard Time" },                                     // VN
-	{ "Etc/GMT-7", "SE Asia Standard Time" },                                       // ZZ
-	{ "Asia/Barnaul", "Altai Standard Time" },                                      // 001
-	{ "Asia/Barnaul", "Altai Standard Time" },                                      // RU
-	{ "Asia/Hovd", "W. Mongolia Standard Time" },                                   // 001
-	{ "Asia/Hovd", "W. Mongolia Standard Time" },                                   // MN
-	{ "Asia/Krasnoyarsk", "North Asia Standard Time" },                             // 001
-	{ "Asia/Krasnoyarsk Asia/Novokuznetsk", "North Asia Standard Time" },           // RU
-	{ "Asia/Novosibirsk", "N. Central Asia Standard Time" },                        // 001
-	{ "Asia/Novosibirsk", "N. Central Asia Standard Time" },                        // RU
-	{ "Asia/Tomsk", "Tomsk Standard Time" },                                        // 001
-	{ "Asia/Tomsk", "Tomsk Standard Time" },                                        // RU
-	{ "Asia/Shanghai", "China Standard Time" },                                     // 001
-	{ "Asia/Shanghai", "China Standard Time" },                                     // CN
-	{ "Asia/Hong_Kong", "China Standard Time" },                                    // HK
-	{ "Asia/Macau", "China Standard Time" },                                        // MO
-	{ "Asia/Irkutsk", "North Asia East Standard Time" },                            // 001
-	{ "Asia/Irkutsk", "North Asia East Standard Time" },                            // RU
-	{ "Asia/Singapore", "Singapore Standard Time" },                                // 001
-	{ "Asia/Brunei", "Singapore Standard Time" },                                   // BN
-	{ "Asia/Makassar", "Singapore Standard Time" },                                 // ID
-	{ "Asia/Kuala_Lumpur Asia/Kuching", "Singapore Standard Time" },                // MY
-	{ "Asia/Manila", "Singapore Standard Time" },                                   // PH
-	{ "Asia/Singapore", "Singapore Standard Time" },                                // SG
-	{ "Etc/GMT-8", "Singapore Standard Time" },                                     // ZZ
-	{ "Australia/Perth", "W. Australia Standard Time" },                            // 001
-	{ "Australia/Perth", "W. Australia Standard Time" },                            // AU
-	{ "Asia/Taipei", "Taipei Standard Time" },                                      // 001
-	{ "Asia/Taipei", "Taipei Standard Time" },                                      // TW
-	{ "Asia/Ulaanbaatar", "Ulaanbaatar Standard Time" },                            // 001
-	{ "Asia/Ulaanbaatar Asia/Choibalsan", "Ulaanbaatar Standard Time" },            // MN
-	{ "Australia/Eucla", "Aus Central W. Standard Time" },                          // 001
-	{ "Australia/Eucla", "Aus Central W. Standard Time" },                          // AU
-	{ "Asia/Chita", "Transbaikal Standard Time" },                                  // 001
-	{ "Asia/Chita", "Transbaikal Standard Time" },                                  // RU
-	{ "Asia/Tokyo", "Tokyo Standard Time" },                                        // 001
-	{ "Asia/Jayapura", "Tokyo Standard Time" },                                     // ID
-	{ "Asia/Tokyo", "Tokyo Standard Time" },                                        // JP
-	{ "Pacific/Palau", "Tokyo Standard Time" },                                     // PW
-	{ "Asia/Dili", "Tokyo Standard Time" },                                         // TL
-	{ "Etc/GMT-9", "Tokyo Standard Time" },                                         // ZZ
-	{ "Asia/Pyongyang", "North Korea Standard Time" },                              // 001
-	{ "Asia/Pyongyang", "North Korea Standard Time" },                              // KP
-	{ "Asia/Seoul", "Korea Standard Time" },                                        // 001
-	{ "Asia/Seoul", "Korea Standard Time" },                                        // KR
-	{ "Asia/Yakutsk", "Yakutsk Standard Time" },                                    // 001
-	{ "Asia/Yakutsk Asia/Khandyga", "Yakutsk Standard Time" },                      // RU
-	{ "Australia/Adelaide", "Cen. Australia Standard Time" },                       // 001
+	{ "Asia/Baku", "Azerbaijan Standard Time" }, // 001
+	{ "Asia/Baku", "Azerbaijan Standard Time" }, // AZ
+	{ "Europe/Samara", "Russia Time Zone 3" }, // 001
+	{ "Europe/Samara", "Russia Time Zone 3" }, // RU
+	{ "Indian/Mauritius", "Mauritius Standard Time" }, // 001
+	{ "Indian/Mauritius", "Mauritius Standard Time" }, // MU
+	{ "Indian/Reunion", "Mauritius Standard Time" }, // RE
+	{ "Indian/Mahe", "Mauritius Standard Time" }, // SC
+	{ "Europe/Saratov", "Saratov Standard Time" }, // 001
+	{ "Europe/Saratov", "Saratov Standard Time" }, // RU
+	{ "Asia/Tbilisi", "Georgian Standard Time" }, // 001
+	{ "Asia/Tbilisi", "Georgian Standard Time" }, // GE
+	{ "Europe/Volgograd", "Volgograd Standard Time" }, // 001
+	{ "Europe/Volgograd", "Volgograd Standard Time" }, // RU
+	{ "Asia/Yerevan", "Caucasus Standard Time" }, // 001
+	{ "Asia/Yerevan", "Caucasus Standard Time" }, // AM
+	{ "Asia/Kabul", "Afghanistan Standard Time" }, // 001
+	{ "Asia/Kabul", "Afghanistan Standard Time" }, // AF
+	{ "Asia/Tashkent", "West Asia Standard Time" }, // 001
+	{ "Antarctica/Mawson", "West Asia Standard Time" }, // AQ
+	{ "Asia/Oral Asia/Almaty Asia/Aqtau Asia/Aqtobe Asia/Atyrau Asia/Qostanay", "West Asia Standard Time" }, // KZ
+	{ "Indian/Maldives", "West Asia Standard Time" }, // MV
+	{ "Indian/Kerguelen", "West Asia Standard Time" }, // TF
+	{ "Asia/Dushanbe", "West Asia Standard Time" }, // TJ
+	{ "Asia/Ashgabat", "West Asia Standard Time" }, // TM
+	{ "Asia/Tashkent Asia/Samarkand", "West Asia Standard Time" }, // UZ
+	{ "Etc/GMT-5", "West Asia Standard Time" }, // ZZ
+	{ "Asia/Yekaterinburg", "Ekaterinburg Standard Time" }, // 001
+	{ "Asia/Yekaterinburg", "Ekaterinburg Standard Time" }, // RU
+	{ "Asia/Karachi", "Pakistan Standard Time" }, // 001
+	{ "Asia/Karachi", "Pakistan Standard Time" }, // PK
+	{ "Asia/Qyzylorda", "Qyzylorda Standard Time" }, // 001
+	{ "Asia/Qyzylorda", "Qyzylorda Standard Time" }, // KZ
+	{ "Asia/Calcutta", "India Standard Time" }, // 001
+	{ "Asia/Calcutta", "India Standard Time" }, // IN
+	{ "Asia/Colombo", "Sri Lanka Standard Time" }, // 001
+	{ "Asia/Colombo", "Sri Lanka Standard Time" }, // LK
+	{ "Asia/Katmandu", "Nepal Standard Time" }, // 001
+	{ "Asia/Katmandu", "Nepal Standard Time" }, // NP
+	{ "Asia/Bishkek", "Central Asia Standard Time" }, // 001
+	{ "Antarctica/Vostok", "Central Asia Standard Time" }, // AQ
+	{ "Asia/Urumqi", "Central Asia Standard Time" }, // CN
+	{ "Indian/Chagos", "Central Asia Standard Time" }, // IO
+	{ "Asia/Bishkek", "Central Asia Standard Time" }, // KG
+	{ "Etc/GMT-6", "Central Asia Standard Time" }, // ZZ
+	{ "Asia/Dhaka", "Bangladesh Standard Time" }, // 001
+	{ "Asia/Dhaka", "Bangladesh Standard Time" }, // BD
+	{ "Asia/Thimphu", "Bangladesh Standard Time" }, // BT
+	{ "Asia/Omsk", "Omsk Standard Time" }, // 001
+	{ "Asia/Omsk", "Omsk Standard Time" }, // RU
+	{ "Asia/Rangoon", "Myanmar Standard Time" }, // 001
+	{ "Indian/Cocos", "Myanmar Standard Time" }, // CC
+	{ "Asia/Rangoon", "Myanmar Standard Time" }, // MM
+	{ "Asia/Bangkok", "SE Asia Standard Time" }, // 001
+	{ "Antarctica/Davis", "SE Asia Standard Time" }, // AQ
+	{ "Indian/Christmas", "SE Asia Standard Time" }, // CX
+	{ "Asia/Jakarta Asia/Pontianak", "SE Asia Standard Time" }, // ID
+	{ "Asia/Phnom_Penh", "SE Asia Standard Time" }, // KH
+	{ "Asia/Vientiane", "SE Asia Standard Time" }, // LA
+	{ "Asia/Bangkok", "SE Asia Standard Time" }, // TH
+	{ "Asia/Saigon", "SE Asia Standard Time" }, // VN
+	{ "Etc/GMT-7", "SE Asia Standard Time" }, // ZZ
+	{ "Asia/Barnaul", "Altai Standard Time" }, // 001
+	{ "Asia/Barnaul", "Altai Standard Time" }, // RU
+	{ "Asia/Hovd", "W. Mongolia Standard Time" }, // 001
+	{ "Asia/Hovd", "W. Mongolia Standard Time" }, // MN
+	{ "Asia/Krasnoyarsk", "North Asia Standard Time" }, // 001
+	{ "Asia/Krasnoyarsk Asia/Novokuznetsk", "North Asia Standard Time" }, // RU
+	{ "Asia/Novosibirsk", "N. Central Asia Standard Time" }, // 001
+	{ "Asia/Novosibirsk", "N. Central Asia Standard Time" }, // RU
+	{ "Asia/Tomsk", "Tomsk Standard Time" }, // 001
+	{ "Asia/Tomsk", "Tomsk Standard Time" }, // RU
+	{ "Asia/Shanghai", "China Standard Time" }, // 001
+	{ "Asia/Shanghai", "China Standard Time" }, // CN
+	{ "Asia/Hong_Kong", "China Standard Time" }, // HK
+	{ "Asia/Macau", "China Standard Time" }, // MO
+	{ "Asia/Irkutsk", "North Asia East Standard Time" }, // 001
+	{ "Asia/Irkutsk", "North Asia East Standard Time" }, // RU
+	{ "Asia/Singapore", "Singapore Standard Time" }, // 001
+	{ "Asia/Brunei", "Singapore Standard Time" }, // BN
+	{ "Asia/Makassar", "Singapore Standard Time" }, // ID
+	{ "Asia/Kuala_Lumpur Asia/Kuching", "Singapore Standard Time" }, // MY
+	{ "Asia/Manila", "Singapore Standard Time" }, // PH
+	{ "Asia/Singapore", "Singapore Standard Time" }, // SG
+	{ "Etc/GMT-8", "Singapore Standard Time" }, // ZZ
+	{ "Australia/Perth", "W. Australia Standard Time" }, // 001
+	{ "Australia/Perth", "W. Australia Standard Time" }, // AU
+	{ "Asia/Taipei", "Taipei Standard Time" }, // 001
+	{ "Asia/Taipei", "Taipei Standard Time" }, // TW
+	{ "Asia/Ulaanbaatar", "Ulaanbaatar Standard Time" }, // 001
+	{ "Asia/Ulaanbaatar Asia/Choibalsan", "Ulaanbaatar Standard Time" }, // MN
+	{ "Australia/Eucla", "Aus Central W. Standard Time" }, // 001
+	{ "Australia/Eucla", "Aus Central W. Standard Time" }, // AU
+	{ "Asia/Chita", "Transbaikal Standard Time" }, // 001
+	{ "Asia/Chita", "Transbaikal Standard Time" }, // RU
+	{ "Asia/Tokyo", "Tokyo Standard Time" }, // 001
+	{ "Asia/Jayapura", "Tokyo Standard Time" }, // ID
+	{ "Asia/Tokyo", "Tokyo Standard Time" }, // JP
+	{ "Pacific/Palau", "Tokyo Standard Time" }, // PW
+	{ "Asia/Dili", "Tokyo Standard Time" }, // TL
+	{ "Etc/GMT-9", "Tokyo Standard Time" }, // ZZ
+	{ "Asia/Pyongyang", "North Korea Standard Time" }, // 001
+	{ "Asia/Pyongyang", "North Korea Standard Time" }, // KP
+	{ "Asia/Seoul", "Korea Standard Time" }, // 001
+	{ "Asia/Seoul", "Korea Standard Time" }, // KR
+	{ "Asia/Yakutsk", "Yakutsk Standard Time" }, // 001
+	{ "Asia/Yakutsk Asia/Khandyga", "Yakutsk Standard Time" }, // RU
+	{ "Australia/Adelaide", "Cen. Australia Standard Time" }, // 001
 	{ "Australia/Adelaide Australia/Broken_Hill", "Cen. Australia Standard Time" }, // AU
-	{ "Australia/Darwin", "AUS Central Standard Time" },                            // 001
-	{ "Australia/Darwin", "AUS Central Standard Time" },                            // AU
-	{ "Australia/Brisbane", "E. Australia Standard Time" },                         // 001
-	{ "Australia/Brisbane Australia/Lindeman", "E. Australia Standard Time" },      // AU
-	{ "Australia/Sydney", "AUS Eastern Standard Time" },                            // 001
-	{ "Australia/Sydney Australia/Melbourne", "AUS Eastern Standard Time" },        // AU
-	{ "Pacific/Port_Moresby", "West Pacific Standard Time" },                       // 001
-	{ "Antarctica/DumontDUrville", "West Pacific Standard Time" },                  // AQ
-	{ "Pacific/Truk", "West Pacific Standard Time" },                               // FM
-	{ "Pacific/Guam", "West Pacific Standard Time" },                               // GU
-	{ "Pacific/Saipan", "West Pacific Standard Time" },                             // MP
-	{ "Pacific/Port_Moresby", "West Pacific Standard Time" },                       // PG
-	{ "Etc/GMT-10", "West Pacific Standard Time" },                                 // ZZ
-	{ "Australia/Hobart", "Tasmania Standard Time" },                               // 001
-	{ "Australia/Hobart Antarctica/Macquarie", "Tasmania Standard Time" },          // AU
-	{ "Asia/Vladivostok", "Vladivostok Standard Time" },                            // 001
-	{ "Asia/Vladivostok Asia/Ust-Nera", "Vladivostok Standard Time" },              // RU
-	{ "Australia/Lord_Howe", "Lord Howe Standard Time" },                           // 001
-	{ "Australia/Lord_Howe", "Lord Howe Standard Time" },                           // AU
-	{ "Pacific/Bougainville", "Bougainville Standard Time" },                       // 001
-	{ "Pacific/Bougainville", "Bougainville Standard Time" },                       // PG
-	{ "Asia/Srednekolymsk", "Russia Time Zone 10" },                                // 001
-	{ "Asia/Srednekolymsk", "Russia Time Zone 10" },                                // RU
-	{ "Asia/Magadan", "Magadan Standard Time" },                                    // 001
-	{ "Asia/Magadan", "Magadan Standard Time" },                                    // RU
-	{ "Pacific/Norfolk", "Norfolk Standard Time" },                                 // 001
-	{ "Pacific/Norfolk", "Norfolk Standard Time" },                                 // NF
-	{ "Asia/Sakhalin", "Sakhalin Standard Time" },                                  // 001
-	{ "Asia/Sakhalin", "Sakhalin Standard Time" },                                  // RU
-	{ "Pacific/Guadalcanal", "Central Pacific Standard Time" },                     // 001
-	{ "Antarctica/Casey", "Central Pacific Standard Time" },                        // AQ
-	{ "Pacific/Ponape Pacific/Kosrae", "Central Pacific Standard Time" },           // FM
-	{ "Pacific/Noumea", "Central Pacific Standard Time" },                          // NC
-	{ "Pacific/Guadalcanal", "Central Pacific Standard Time" },                     // SB
-	{ "Pacific/Efate", "Central Pacific Standard Time" },                           // VU
-	{ "Etc/GMT-11", "Central Pacific Standard Time" },                              // ZZ
-	{ "Asia/Kamchatka", "Russia Time Zone 11" },                                    // 001
-	{ "Asia/Kamchatka Asia/Anadyr", "Russia Time Zone 11" },                        // RU
-	{ "Pacific/Auckland", "New Zealand Standard Time" },                            // 001
-	{ "Antarctica/McMurdo", "New Zealand Standard Time" },                          // AQ
-	{ "Pacific/Auckland", "New Zealand Standard Time" },                            // NZ
-	{ "Etc/GMT-12", "UTC+12" },                                                     // 001
-	{ "Pacific/Tarawa", "UTC+12" },                                                 // KI
-	{ "Pacific/Majuro Pacific/Kwajalein", "UTC+12" },                               // MH
-	{ "Pacific/Nauru", "UTC+12" },                                                  // NR
-	{ "Pacific/Funafuti", "UTC+12" },                                               // TV
-	{ "Pacific/Wake", "UTC+12" },                                                   // UM
-	{ "Pacific/Wallis", "UTC+12" },                                                 // WF
-	{ "Etc/GMT-12", "UTC+12" },                                                     // ZZ
-	{ "Pacific/Fiji", "Fiji Standard Time" },                                       // 001
-	{ "Pacific/Fiji", "Fiji Standard Time" },                                       // FJ
-	{ "Pacific/Chatham", "Chatham Islands Standard Time" },                         // 001
-	{ "Pacific/Chatham", "Chatham Islands Standard Time" },                         // NZ
-	{ "Etc/GMT-13", "UTC+13" },                                                     // 001
-	{ "Pacific/Enderbury", "UTC+13" },                                              // KI
-	{ "Pacific/Fakaofo", "UTC+13" },                                                // TK
-	{ "Etc/GMT-13", "UTC+13" },                                                     // ZZ
-	{ "Pacific/Tongatapu", "Tonga Standard Time" },                                 // 001
-	{ "Pacific/Tongatapu", "Tonga Standard Time" },                                 // TO
-	{ "Pacific/Apia", "Samoa Standard Time" },                                      // 001
-	{ "Pacific/Apia", "Samoa Standard Time" },                                      // WS
-	{ "Pacific/Kiritimati", "Line Islands Standard Time" },                         // 001
-	{ "Pacific/Kiritimati", "Line Islands Standard Time" },                         // KI
-	{ "Etc/GMT-14", "Line Islands Standard Time" },                                 // ZZ
+	{ "Australia/Darwin", "AUS Central Standard Time" }, // 001
+	{ "Australia/Darwin", "AUS Central Standard Time" }, // AU
+	{ "Australia/Brisbane", "E. Australia Standard Time" }, // 001
+	{ "Australia/Brisbane Australia/Lindeman", "E. Australia Standard Time" }, // AU
+	{ "Australia/Sydney", "AUS Eastern Standard Time" }, // 001
+	{ "Australia/Sydney Australia/Melbourne", "AUS Eastern Standard Time" }, // AU
+	{ "Pacific/Port_Moresby", "West Pacific Standard Time" }, // 001
+	{ "Antarctica/DumontDUrville", "West Pacific Standard Time" }, // AQ
+	{ "Pacific/Truk", "West Pacific Standard Time" }, // FM
+	{ "Pacific/Guam", "West Pacific Standard Time" }, // GU
+	{ "Pacific/Saipan", "West Pacific Standard Time" }, // MP
+	{ "Pacific/Port_Moresby", "West Pacific Standard Time" }, // PG
+	{ "Etc/GMT-10", "West Pacific Standard Time" }, // ZZ
+	{ "Australia/Hobart", "Tasmania Standard Time" }, // 001
+	{ "Australia/Hobart Antarctica/Macquarie", "Tasmania Standard Time" }, // AU
+	{ "Asia/Vladivostok", "Vladivostok Standard Time" }, // 001
+	{ "Asia/Vladivostok Asia/Ust-Nera", "Vladivostok Standard Time" }, // RU
+	{ "Australia/Lord_Howe", "Lord Howe Standard Time" }, // 001
+	{ "Australia/Lord_Howe", "Lord Howe Standard Time" }, // AU
+	{ "Pacific/Bougainville", "Bougainville Standard Time" }, // 001
+	{ "Pacific/Bougainville", "Bougainville Standard Time" }, // PG
+	{ "Asia/Srednekolymsk", "Russia Time Zone 10" }, // 001
+	{ "Asia/Srednekolymsk", "Russia Time Zone 10" }, // RU
+	{ "Asia/Magadan", "Magadan Standard Time" }, // 001
+	{ "Asia/Magadan", "Magadan Standard Time" }, // RU
+	{ "Pacific/Norfolk", "Norfolk Standard Time" }, // 001
+	{ "Pacific/Norfolk", "Norfolk Standard Time" }, // NF
+	{ "Asia/Sakhalin", "Sakhalin Standard Time" }, // 001
+	{ "Asia/Sakhalin", "Sakhalin Standard Time" }, // RU
+	{ "Pacific/Guadalcanal", "Central Pacific Standard Time" }, // 001
+	{ "Antarctica/Casey", "Central Pacific Standard Time" }, // AQ
+	{ "Pacific/Ponape Pacific/Kosrae", "Central Pacific Standard Time" }, // FM
+	{ "Pacific/Noumea", "Central Pacific Standard Time" }, // NC
+	{ "Pacific/Guadalcanal", "Central Pacific Standard Time" }, // SB
+	{ "Pacific/Efate", "Central Pacific Standard Time" }, // VU
+	{ "Etc/GMT-11", "Central Pacific Standard Time" }, // ZZ
+	{ "Asia/Kamchatka", "Russia Time Zone 11" }, // 001
+	{ "Asia/Kamchatka Asia/Anadyr", "Russia Time Zone 11" }, // RU
+	{ "Pacific/Auckland", "New Zealand Standard Time" }, // 001
+	{ "Antarctica/McMurdo", "New Zealand Standard Time" }, // AQ
+	{ "Pacific/Auckland", "New Zealand Standard Time" }, // NZ
+	{ "Etc/GMT-12", "UTC+12" }, // 001
+	{ "Pacific/Tarawa", "UTC+12" }, // KI
+	{ "Pacific/Majuro Pacific/Kwajalein", "UTC+12" }, // MH
+	{ "Pacific/Nauru", "UTC+12" }, // NR
+	{ "Pacific/Funafuti", "UTC+12" }, // TV
+	{ "Pacific/Wake", "UTC+12" }, // UM
+	{ "Pacific/Wallis", "UTC+12" }, // WF
+	{ "Etc/GMT-12", "UTC+12" }, // ZZ
+	{ "Pacific/Fiji", "Fiji Standard Time" }, // 001
+	{ "Pacific/Fiji", "Fiji Standard Time" }, // FJ
+	{ "Pacific/Chatham", "Chatham Islands Standard Time" }, // 001
+	{ "Pacific/Chatham", "Chatham Islands Standard Time" }, // NZ
+	{ "Etc/GMT-13", "UTC+13" }, // 001
+	{ "Pacific/Enderbury", "UTC+13" }, // KI
+	{ "Pacific/Fakaofo", "UTC+13" }, // TK
+	{ "Etc/GMT-13", "UTC+13" }, // ZZ
+	{ "Pacific/Tongatapu", "Tonga Standard Time" }, // 001
+	{ "Pacific/Tongatapu", "Tonga Standard Time" }, // TO
+	{ "Pacific/Apia", "Samoa Standard Time" }, // 001
+	{ "Pacific/Apia", "Samoa Standard Time" }, // WS
+	{ "Pacific/Kiritimati", "Line Islands Standard Time" }, // 001
+	{ "Pacific/Kiritimati", "Line Islands Standard Time" }, // KI
+	{ "Etc/GMT-14", "Line Islands Standard Time" }, // ZZ
 };
 
 const size_t WindowsZonesNrElements = ARRAYSIZE(WindowsZones);
