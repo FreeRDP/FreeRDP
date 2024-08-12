@@ -251,13 +251,13 @@ bool SdlWidget::update_text(SDL_Renderer* renderer, const std::string& text, SDL
 	{
 		texture = _image;
 		dst = _rect;
-		int w = 0;
-		int h = 0;
-		auto rc = SDL_QueryTexture(_image, nullptr, nullptr, &w, &h);
+		auto propId = SDL_GetTextureProperties(_image);
+		int w = SDL_GetNumberProperty(propId, SDL_PROP_TEXTURE_WIDTH_NUMBER, -1);
+		int h = SDL_GetNumberProperty(propId, SDL_PROP_TEXTURE_HEIGHT_NUMBER, -1);
+		if (w < 0 || h < 0)
+			widget_log_error(-1, "SDL_GetTextureProperties");
 		src.w = w;
 		src.h = h;
-		if (rc < 0)
-			widget_log_error(rc, "SDL_QueryTexture");
 	}
 	else if (_wrap)
 		texture = render_text_wrapped(renderer, text, fgcolor, src, dst);

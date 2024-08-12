@@ -84,7 +84,7 @@ class SDLConnectionDialog
 	void resetTimer();
 
   private:
-	static Uint32 timeout(Uint32 intervalMS, void* _this);
+	static Uint32 timeout(void* pvthis, SDL_TimerID timerID, Uint32 intervalMS);
 
   private:
 	struct widget_cfg_t
