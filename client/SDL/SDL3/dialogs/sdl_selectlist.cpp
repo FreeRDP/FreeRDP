@@ -67,7 +67,7 @@ int SdlSelectList::run()
 			switch (event.type)
 			{
 				case SDL_EVENT_KEY_DOWN:
-					switch (event.key.keysym.sym)
+					switch (event.key.key)
 					{
 						case SDLK_UP:
 						case SDLK_BACKSPACE:

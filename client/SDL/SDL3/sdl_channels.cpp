@@ -43,7 +43,7 @@ void sdl_OnChannelConnectedEventHandler(void* context, const ChannelConnectedEve
 	{
 		auto clip = reinterpret_cast<CliprdrClientContext*>(e->pInterface);
 		WINPR_ASSERT(clip);
-		clip->custom = context;
+		sdl->clip.init(clip);
 	}
 	else if (strcmp(e->name, DISP_DVC_CHANNEL_NAME) == 0)
 	{
