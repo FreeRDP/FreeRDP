@@ -78,6 +78,13 @@ typedef struct
 	UINT32 data_length;
 } xfCachedData;
 
+typedef struct
+{
+	UINT32 localFormat;
+	UINT32 formatToRequest;
+	char* formatName;
+} RequestedFormat;
+
 struct xf_clipboard
 {
 	xfContext* xfc;
@@ -112,7 +119,7 @@ struct xf_clipboard
 
 	BOOL data_raw_format;
 
-	const xfCliprdrFormat* requestedFormat;
+	RequestedFormat* requestedFormat;
 
 	XSelectionEvent* respond;
 
@@ -157,6 +164,60 @@ static const char type_HtmlFormat[] = "HTML Format";
 static void xf_cliprdr_clear_cached_data(xfClipboard* clipboard);
 static UINT xf_cliprdr_send_client_format_list(xfClipboard* clipboard, BOOL force);
 static void xf_cliprdr_set_selection_owner(xfContext* xfc, xfClipboard* clipboard, Time timestamp);
+
+static void requested_format_free(RequestedFormat** ppRequestedFormat)
+{
+	if (!ppRequestedFormat)
+		return;
+	if (!(*ppRequestedFormat))
+		return;
+
+	free((*ppRequestedFormat)->formatName);
+	*ppRequestedFormat = NULL;
+}
+
+static BOOL requested_format_replace(RequestedFormat** ppRequestedFormat, UINT32 formatId,
+                                     const char* formatName)
+{
+	if (!ppRequestedFormat)
+		return FALSE;
+
+	requested_format_free(ppRequestedFormat);
+	RequestedFormat* requested = calloc(1, sizeof(RequestedFormat));
+	if (!requested)
+		return FALSE;
+	requested->localFormat = formatId;
+	requested->formatToRequest = formatId;
+	if (formatName)
+	{
+		requested->formatName = _strdup(formatName);
+		if (!requested->formatName)
+		{
+			free(requested);
+			return FALSE;
+		}
+	}
+
+	*ppRequestedFormat = requested;
+	return TRUE;
+}
+
+static BOOL requested_format_matches(const RequestedFormat* pRequestedFormat, UINT32 formatId,
+                                     const char* formatName)
+{
+	if (!pRequestedFormat)
+		return FALSE;
+	if (pRequestedFormat->formatToRequest != formatId)
+		return FALSE;
+	if (formatName || pRequestedFormat->formatName)
+	{
+		if (!formatName || !pRequestedFormat->formatName)
+			return FALSE;
+		if (strcmp(formatName, pRequestedFormat->formatName) != 0)
+			return FALSE;
+	}
+	return TRUE;
+}
 
 static void xf_cached_data_free(void* ptr)
 {
@@ -869,7 +930,7 @@ static void xf_cliprdr_process_requested_data(xfClipboard* clipboard, BOOL hasDa
 	BOOL bSuccess = 0;
 	UINT32 SrcSize = 0;
 	UINT32 DstSize = 0;
-	UINT32 srcFormatId = 0;
+	INT64 srcFormatId = -1;
 	BYTE* pDstData = NULL;
 	const xfCliprdrFormat* format = NULL;
 
@@ -885,8 +946,6 @@ static void xf_cliprdr_process_requested_data(xfClipboard* clipboard, BOOL hasDa
 		xf_cliprdr_send_data_response(clipboard, format, NULL, 0);
 		return;
 	}
-
-	srcFormatId = 0;
 
 	switch (format->formatToRequest)
 	{
@@ -906,7 +965,7 @@ static void xf_cliprdr_process_requested_data(xfClipboard* clipboard, BOOL hasDa
 			break;
 	}
 
-	if (srcFormatId == 0)
+	if (srcFormatId < 0)
 	{
 		xf_cliprdr_send_data_response(clipboard, format, NULL, 0);
 		return;
@@ -914,7 +973,7 @@ static void xf_cliprdr_process_requested_data(xfClipboard* clipboard, BOOL hasDa
 
 	ClipboardLock(clipboard->system);
 	SrcSize = (UINT32)size;
-	bSuccess = ClipboardSetData(clipboard->system, srcFormatId, data, SrcSize);
+	bSuccess = ClipboardSetData(clipboard->system, (UINT32)srcFormatId, data, SrcSize);
 
 	if (bSuccess)
 	{
@@ -1540,7 +1599,8 @@ static BOOL xf_cliprdr_process_selection_request(xfClipboard* clipboard,
 				 */
 				respond->property = xevent->property;
 				clipboard->respond = respond;
-				clipboard->requestedFormat = cformat;
+				requested_format_replace(&clipboard->requestedFormat, formatId,
+				                         cformat->formatName);
 				clipboard->data_raw_format = rawTransfer;
 				delayRespond = TRUE;
 				xf_cliprdr_send_data_request(clipboard, formatId, cformat);
@@ -1911,7 +1971,7 @@ static UINT xf_cliprdr_server_format_list(CliprdrClientContext* context,
 
 	xf_clipboard_formats_free(clipboard);
 	xf_cliprdr_clear_cached_data(clipboard);
-	clipboard->requestedFormat = NULL;
+	requested_format_free(&clipboard->requestedFormat);
 
 	xf_clipboard_free_server_formats(clipboard);
 
@@ -2105,7 +2165,7 @@ xf_cliprdr_server_format_data_response(CliprdrClientContext* context,
 	srcFormatId = 0;
 	dstFormatId = 0;
 
-	const xfCliprdrFormat* format = clipboard->requestedFormat;
+	const RequestedFormat* format = clipboard->requestedFormat;
 	if (clipboard->data_raw_format)
 	{
 		srcFormatId = CF_RAW;
