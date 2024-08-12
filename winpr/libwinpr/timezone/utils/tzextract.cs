@@ -158,11 +158,6 @@ internal class Program
 				fs.WriteLine(" * version: " + nr.InnerText);
 			}
 
-			fs.WriteLine("");
-			fs.WriteLine("#include \"" + fname + ".h\"");
-			fs.WriteLine("");
-			fs.WriteLine("const \" + fname + \"Entry \" + fname + \"[] ={");
-
 			foreach (XmlNode node in zones)
 			{
 				XmlNode over = node.Attributes.GetNamedItem("otherVersion");
@@ -175,6 +170,7 @@ internal class Program
 			fs.WriteLine("");
 			fs.WriteLine("#include \"" + fname + ".h\"");
 			fs.WriteLine("");
+			fs.WriteLine("// clang-format off");
 			fs.WriteLine("const WINDOWS_TZID_ENTRY " + fname + "[] = {");
 
 			foreach (XmlNode mzone in mzones)
@@ -190,6 +186,7 @@ internal class Program
 			fs.WriteLine("};");
 			fs.WriteLine("");
 			fs.WriteLine("const size_t " + fname + "NrElements = ARRAYSIZE(" + fname + ");");
+			fs.WriteLine("// clang-format on");
 		}
 		stdout.WriteLine("Finished update");
 		return true;
