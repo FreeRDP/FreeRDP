@@ -290,7 +290,7 @@ wStream* cliprdr_packet_format_list_new(const CLIPRDR_FORMAT_LIST* formatList,
 			{
 				wszFormatName = NULL;
 
-				if (szFormatName)
+				if (szFormatName && (strnlen(szFormatName, 2) > 0))
 				{
 					wszFormatName = ConvertUtf8ToWCharAlloc(szFormatName, &formatNameSize);
 
@@ -299,9 +299,9 @@ wStream* cliprdr_packet_format_list_new(const CLIPRDR_FORMAT_LIST* formatList,
 						Stream_Free(s, TRUE);
 						return NULL;
 					}
-					formatNameSize += 1; /* append terminating '\0' */
 				}
 
+				formatNameSize++;
 				if (formatNameSize > 15)
 					formatNameSize = 15;
 
@@ -325,12 +325,12 @@ wStream* cliprdr_packet_format_list_new(const CLIPRDR_FORMAT_LIST* formatList,
 			length += 4;
 			formatNameSize = sizeof(WCHAR);
 
-			if (format->formatName)
+			if (format->formatName && (strnlen(format->formatName, 2) > 0))
 			{
 				SSIZE_T size = ConvertUtf8ToWChar(format->formatName, NULL, 0);
 				if (size < 0)
 					return NULL;
-				formatNameSize = (size_t)(size + 1) * sizeof(WCHAR);
+				formatNameSize += (size_t)size * sizeof(WCHAR);
 			}
 
 			length += (UINT32)formatNameSize;
@@ -349,7 +349,7 @@ wStream* cliprdr_packet_format_list_new(const CLIPRDR_FORMAT_LIST* formatList,
 			format = (CLIPRDR_FORMAT*)&(formatList->formats[index]);
 			Stream_Write_UINT32(s, format->formatId); /* formatId (4 bytes) */
 
-			if (format->formatName)
+			if (format->formatName && (strnlen(format->formatName, 2) > 0))
 			{
 				const size_t cap = Stream_Capacity(s);
 				const size_t pos = Stream_GetPosition(s);
@@ -361,8 +361,7 @@ wStream* cliprdr_packet_format_list_new(const CLIPRDR_FORMAT_LIST* formatList,
 				}
 
 				const size_t len = strnlen(format->formatName, rem / sizeof(WCHAR));
-				if (Stream_Write_UTF16_String_From_UTF8(s, len + 1, format->formatName, len, TRUE) <
-				    0)
+				if (Stream_Write_UTF16_String_From_UTF8(s, len, format->formatName, len, TRUE) < 0)
 				{
 					Stream_Free(s, TRUE);
 					return NULL;
