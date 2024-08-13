@@ -75,12 +75,7 @@ const char* CB_MSG_FLAGS_STRING(UINT16 msgFlags, char* buffer, size_t size)
 		winpr_str_append("CB_ASCII_NAMES", buffer, size, "|");
 
 	const size_t len = strnlen(buffer, size);
-	if (len > 0)
-	{
-		/* remove trailing | */
-		buffer[len - 1] = '\0';
-	}
-	else
+	if (!len)
 		winpr_str_append("NONE", buffer, size, "");
 
 	char val[32] = { 0 };
