@@ -230,7 +230,7 @@ static UINT cliprdr_server_format_list(CliprdrServerContext* context,
 
 	cliprdr = (CliprdrServerPrivate*)context->handle;
 
-	s = cliprdr_packet_format_list_new(formatList, context->useLongFormatNames);
+	s = cliprdr_packet_format_list_new(formatList, context->useLongFormatNames, FALSE);
 	if (!s)
 	{
 		WLog_ERR(TAG, "cliprdr_packet_format_list_new failed!");
