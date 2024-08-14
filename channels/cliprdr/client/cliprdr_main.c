@@ -677,7 +677,7 @@ static UINT cliprdr_client_format_list(CliprdrClientContext* context,
 	}
 	cliprdr->initialFormatListSent = TRUE;
 
-	s = cliprdr_packet_format_list_new(&filterList, cliprdr->useLongFormatNames);
+	s = cliprdr_packet_format_list_new(&filterList, cliprdr->useLongFormatNames, FALSE);
 	cliprdr_free_format_list(&filterList);
 
 	if (!s)
