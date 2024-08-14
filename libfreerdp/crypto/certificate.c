@@ -1426,6 +1426,12 @@ fail:
 
 char* freerdp_certificate_get_pem(const rdpCertificate* cert, size_t* pLength)
 {
+	return freerdp_certificate_get_pem_ex(cert, pLength, TRUE);
+}
+
+char* freerdp_certificate_get_pem_ex(const rdpCertificate* cert, size_t* pLength,
+                                     BOOL withCertChain)
+{
 	char* pem = NULL;
 	WINPR_ASSERT(cert);
 
@@ -1455,7 +1461,7 @@ char* freerdp_certificate_get_pem(const rdpCertificate* cert, size_t* pLength)
 		goto fail;
 	}
 
-	if (cert->chain)
+	if (cert->chain && withCertChain)
 	{
 		int count = sk_X509_num(cert->chain);
 		for (int x = 0; x < count; x++)
