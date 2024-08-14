@@ -336,6 +336,15 @@ static const char key_int_maximizetocurrentdisplays[] = "maximizetocurrentdispla
 static const char key_int_use_multimon[] = "use multimon";
 static const char key_int_redirectwebauthn[] = "redirectwebauthn";
 
+static BOOL utils_str_is_empty(const char* str)
+{
+	if (!str)
+		return TRUE;
+	if (strlen(str) == 0)
+		return TRUE;
+	return FALSE;
+}
+
 static SSIZE_T freerdp_client_rdp_file_add_line(rdpFile* file);
 static rdpFileLine* freerdp_client_rdp_file_find_line_by_name(const rdpFile* file,
                                                               const char* name);
@@ -1774,6 +1783,7 @@ BOOL freerdp_client_populate_settings_from_rdp_file(const rdpFile* file, rdpSett
 				break;
 		}
 	}
+
 	if (~file->DesktopWidth)
 	{
 		if (!freerdp_settings_set_uint32(settings, FreeRDP_DesktopWidth, file->DesktopWidth))
@@ -2298,7 +2308,7 @@ BOOL freerdp_client_populate_settings_from_rdp_file(const rdpFile* file, rdpSett
 			return FALSE;
 	}
 
-	if (~file->RedirectLocation && file->RedirectLocation != 0)
+	if (~file->RedirectLocation && (file->RedirectLocation != 0))
 	{
 		size_t count = 0;
 		union
@@ -2319,7 +2329,7 @@ BOOL freerdp_client_populate_settings_from_rdp_file(const rdpFile* file, rdpSett
 		/* What is this?! */
 	}
 
-	if (~((size_t)file->DevicesToRedirect))
+	if ((~((size_t)file->DevicesToRedirect)) && !utils_str_is_empty(file->DevicesToRedirect))
 	{
 		/**
 		 * Devices to redirect:
@@ -2349,14 +2359,14 @@ BOOL freerdp_client_populate_settings_from_rdp_file(const rdpFile* file, rdpSett
 			return FALSE;
 	}
 
-	if (~((size_t)file->DrivesToRedirect))
+	if ((~((size_t)file->DrivesToRedirect)) && !utils_str_is_empty(file->DrivesToRedirect))
 	{
 		if (!freerdp_settings_set_string(settings, FreeRDP_DrivesToRedirect,
 		                                 file->DrivesToRedirect))
 			return FALSE;
 	}
 
-	if (~((size_t)file->RedirectCameras))
+	if ((~((size_t)file->RedirectCameras)) && !utils_str_is_empty(file->RedirectCameras))
 	{
 #if defined(CHANNEL_RDPECAM_CLIENT)
 		union
@@ -2396,7 +2406,7 @@ BOOL freerdp_client_populate_settings_from_rdp_file(const rdpFile* file, rdpSett
 #endif
 	}
 
-	if (~((size_t)file->UsbDevicesToRedirect))
+	if ((~((size_t)file->UsbDevicesToRedirect)) && !utils_str_is_empty(file->UsbDevicesToRedirect))
 	{
 #ifdef CHANNEL_URBDRC_CLIENT
 		union
