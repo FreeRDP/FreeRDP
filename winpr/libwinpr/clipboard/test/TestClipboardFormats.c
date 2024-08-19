@@ -1,10 +1,12 @@
 
 #include <winpr/crt.h>
 #include <winpr/print.h>
+#include <winpr/image.h>
 #include <winpr/clipboard.h>
 
 int TestClipboardFormats(int argc, char* argv[])
 {
+	int rc = -1;
 	UINT32 count = 0;
 	UINT32* pFormatIds = NULL;
 	const char* formatName = NULL;
@@ -18,9 +20,16 @@ int TestClipboardFormats(int argc, char* argv[])
 	if (!clipboard)
 		return -1;
 
-	ClipboardRegisterFormat(clipboard, "text/html");
-	ClipboardRegisterFormat(clipboard, "image/bmp");
-	ClipboardRegisterFormat(clipboard, "image/png");
+	const char* mime_types[] = { "text/html", "text/html",  "image/bmp",
+		                         "image/png", "image/webp", "image/jpeg" };
+	for (size_t x = 0; x < ARRAYSIZE(mime_types); x++)
+	{
+		const char* mime = mime_types[x];
+		UINT32 id = ClipboardRegisterFormat(clipboard, mime);
+		fprintf(stderr, "ClipboardRegisterFormat(%s) -> 0x%08" PRIx32 "\n", mime, id);
+		if (id == 0)
+			goto fail;
+	}
 
 	utf8StringFormatId = ClipboardRegisterFormat(clipboard, "UTF8_STRING");
 	pFormatIds = NULL;
@@ -76,7 +85,140 @@ int TestClipboardFormats(int argc, char* argv[])
 		fprintf(stderr, "Format: 0x%08" PRIX32 " %s\n", formatId, formatName);
 	}
 
+	if (1)
+	{
+		const char* name = TEST_CLIP_BMP;
+		BOOL bSuccess = FALSE;
+		UINT32 idBmp = ClipboardRegisterFormat(clipboard, "image/bmp");
+
+		wImage* img = winpr_image_new();
+		if (!img)
+			goto fail;
+
+		if (winpr_image_read(img, name) <= 0)
+		{
+			winpr_image_free(img, TRUE);
+			goto fail;
+		}
+
+		size_t bmpsize = 0;
+		void* data = winpr_image_write_buffer(img, WINPR_IMAGE_BITMAP, &bmpsize);
+		bSuccess = ClipboardSetData(clipboard, idBmp, data, bmpsize);
+		fprintf(stderr, "ClipboardSetData: %" PRId32 "\n", bSuccess);
+
+		free(data);
+		winpr_image_free(img, TRUE);
+		if (!bSuccess)
+			goto fail;
+
+		{
+			UINT32 id = CF_DIB;
+
+			UINT32 DstSize = 0;
+			void* pDstData = ClipboardGetData(clipboard, id, &DstSize);
+			fprintf(stderr, "ClipboardGetData: [CF_DIB] %p [%" PRIu32 "]\n", pDstData, DstSize);
+			if (!pDstData)
+				goto fail;
+			bSuccess = ClipboardSetData(clipboard, id, pDstData, DstSize);
+			free(pDstData);
+			if (!bSuccess)
+				goto fail;
+		}
+		{
+			UINT32 id = ClipboardRegisterFormat(clipboard, "image/bmp");
+
+			UINT32 DstSize = 0;
+			void* pDstData = ClipboardGetData(clipboard, id, &DstSize);
+			fprintf(stderr, "ClipboardGetData: [image/bmp] %p [%" PRIu32 "]\n", pDstData, DstSize);
+			if (!pDstData)
+				goto fail;
+			free(pDstData);
+			if (DstSize != bmpsize)
+				goto fail;
+		}
+
+#if defined(WINPR_UTILS_IMAGE_PNG)
+		{
+			UINT32 id = ClipboardRegisterFormat(clipboard, "image/png");
+
+			UINT32 DstSize = 0;
+			void* pDstData = ClipboardGetData(clipboard, id, &DstSize);
+			fprintf(stderr, "ClipboardGetData: [image/png] %p\n", pDstData);
+			if (!pDstData)
+				goto fail;
+			free(pDstData);
+		}
+		{
+			const char* name = TEST_CLIP_PNG;
+			BOOL bSuccess = FALSE;
+			UINT32 idBmp = ClipboardRegisterFormat(clipboard, "image/png");
+
+			wImage* img = winpr_image_new();
+			if (!img)
+				goto fail;
+
+			if (winpr_image_read(img, name) <= 0)
+			{
+				winpr_image_free(img, TRUE);
+				goto fail;
+			}
+
+			size_t bmpsize = 0;
+			void* data = winpr_image_write_buffer(img, WINPR_IMAGE_PNG, &bmpsize);
+			bSuccess = ClipboardSetData(clipboard, idBmp, data, bmpsize);
+			fprintf(stderr, "ClipboardSetData: %" PRId32 "\n", bSuccess);
+
+			free(data);
+			winpr_image_free(img, TRUE);
+			if (!bSuccess)
+				goto fail;
+		}
+		{
+			UINT32 id = CF_DIB;
+
+			UINT32 DstSize = 0;
+			void* pDstData = ClipboardGetData(clipboard, id, &DstSize);
+			fprintf(stderr, "ClipboardGetData: [CF_DIB] %p [%" PRIu32 "]\n", pDstData, DstSize);
+			if (!pDstData)
+				goto fail;
+			bSuccess = ClipboardSetData(clipboard, id, pDstData, DstSize);
+			free(pDstData);
+			if (!bSuccess)
+				goto fail;
+		}
+#endif
+
+#if defined(WINPR_UTILS_IMAGE_WEBP)
+		{
+			UINT32 id = ClipboardRegisterFormat(clipboard, "image/webp");
+
+			UINT32 DstSize = 0;
+			void* pDstData = ClipboardGetData(clipboard, id, &DstSize);
+			fprintf(stderr, "ClipboardGetData: [image/webp] %p\n", pDstData);
+			if (!pDstData)
+				goto fail;
+			free(pDstData);
+		}
+#endif
+
+#if defined(WINPR_UTILS_IMAGE_JPEG)
+		{
+			UINT32 id = ClipboardRegisterFormat(clipboard, "image/jpeg");
+
+			UINT32 DstSize = 0;
+			void* pDstData = ClipboardGetData(clipboard, id, &DstSize);
+			fprintf(stderr, "ClipboardGetData: [image/jpeg] %p\n", pDstData);
+			if (!pDstData)
+				goto fail;
+			free(pDstData);
+		}
+#endif
+	}
+
+	rc = 0;
+
+fail:
 	free(pFormatIds);
 	ClipboardDestroy(clipboard);
-	return 0;
+	return rc;
 }
