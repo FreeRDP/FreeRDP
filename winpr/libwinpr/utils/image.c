@@ -430,7 +430,8 @@ static int winpr_image_bitmap_read_buffer(wImage* image, const BYTE* buffer, siz
 
 	image->bitsPerPixel = bi.biBitCount;
 	image->bytesPerPixel = (image->bitsPerPixel / 8);
-	image->scanline = ((((bi.biWidth * bi.biBitCount) + 31) & ~31) >> 3);
+	const size_t bpp = (bi.biBitCount + 7) / 8;
+	image->scanline = bi.biWidth * bpp;
 	const size_t bmpsize = 1ull * image->scanline * image->height;
 	if (bmpsize != bi.biSizeImage)
 		WLog_WARN(TAG, "bmpsize=%" PRIuz " != bi.biSizeImage=%" PRIu32, bmpsize, bi.biSizeImage);
@@ -939,14 +940,15 @@ static void* winpr_read_png_from_buffer(const void* data, size_t SrcSize, size_t
 	                 NULL, NULL) != 1)
 		goto fail;
 
-	size_t bpp = PNG_IMAGE_PIXEL_SIZE(color_type);
+	const png_byte channelcount = png_get_channels(png_ptr, info_ptr);
+	const size_t bpp = channelcount * bit_depth;
 
 	row_pointers = png_get_rows(png_ptr, info_ptr);
 	if (row_pointers)
 	{
-		const size_t stride = width * bpp;
+		const size_t stride = width * bpp / 8ull;
 		const size_t png_stride = png_get_rowbytes(png_ptr, info_ptr);
-		const size_t size = width * height * bpp;
+		const size_t size = width * height * bpp / 8ull;
 		const size_t copybytes = stride > png_stride ? png_stride : stride;
 
 		rc = malloc(size);
@@ -961,7 +963,7 @@ static void* winpr_read_png_from_buffer(const void* data, size_t SrcSize, size_t
 			*pSize = size;
 			*pWidth = width;
 			*pHeight = height;
-			*pBpp = bpp * 8;
+			*pBpp = bpp;
 		}
 	}
 fail:

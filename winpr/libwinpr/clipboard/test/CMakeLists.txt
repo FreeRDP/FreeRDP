@@ -8,6 +8,20 @@ set(${MODULE_PREFIX}_TESTS
 	TestUri.c
 	TestClipboardFormats.c)
 
+set(TEST_CLIP_PNG "${CMAKE_SOURCE_DIR}/resources/FreeRDP_Icon.png")
+file(TO_NATIVE_PATH "${TEST_CLIP_PNG}" TEST_CLIP_PNG)
+
+set(TEST_CLIP_BMP "${CMAKE_SOURCE_DIR}/resources/FreeRDP_Install.bmp")
+file(TO_NATIVE_PATH "${TEST_CLIP_BMP}" TEST_CLIP_BMP)
+
+if (WIN32)
+	string(REPLACE "\\" "\\\\" TEST_CLIP_PNG "${TEST_CLIP_PNG}")
+	string(REPLACE "\\" "\\\\" TEST_CLIP_BMP "${TEST_CLIP_BMP}")
+endif()
+
+add_definitions(-DTEST_CLIP_BMP="${TEST_CLIP_BMP}")
+add_definitions(-DTEST_CLIP_PNG="${TEST_CLIP_PNG}")
+
 create_test_sourcelist(${MODULE_PREFIX}_SRCS
 	${${MODULE_PREFIX}_DRIVER}
 	${${MODULE_PREFIX}_TESTS})
