@@ -327,6 +327,30 @@ static DWORD sdl_show_ceritifcate_dialog(rdpContext* context, const char* title,
 	return static_cast<DWORD>(event.user.code);
 }
 
+static char* sdl_pem_cert(const char* pem)
+{
+	rdpCertificate* cert = freerdp_certificate_new_from_pem(pem);
+	if (!cert)
+		return NULL;
+
+	char* fp = freerdp_certificate_get_fingerprint(cert);
+	char* start = freerdp_certificate_get_validity(cert, TRUE);
+	char* end = freerdp_certificate_get_validity(cert, FALSE);
+	freerdp_certificate_free(cert);
+
+	char* str = NULL;
+	size_t slen = 0;
+	winpr_asprintf(&str, &slen,
+	               "\tValid from:  %s\n"
+	               "\tValid to:    %s\n"
+	               "\tThumbprint:  %s\n",
+	               start, end, fp);
+	free(fp);
+	free(start);
+	free(end);
+	return str;
+}
+
 DWORD sdl_verify_changed_certificate_ex(freerdp* instance, const char* host, UINT16 port,
                                         const char* common_name, const char* subject,
                                         const char* issuer, const char* new_fingerprint,
@@ -346,13 +370,7 @@ DWORD sdl_verify_changed_certificate_ex(freerdp* instance, const char* host, UIN
 	char* new_fp_str = nullptr;
 	size_t len = 0;
 	if (flags & VERIFY_CERT_FLAG_FP_IS_PEM)
-	{
-		winpr_asprintf(&new_fp_str, &len,
-		               "----------- Certificate --------------\n"
-		               "%s\n"
-		               "--------------------------------------\n",
-		               new_fingerprint);
-	}
+		new_fp_str = sdl_pem_cert(new_fingerprint);
 	else
 		winpr_asprintf(&new_fp_str, &len, "Thumbprint:  %s\n", new_fingerprint);
 
@@ -362,13 +380,7 @@ DWORD sdl_verify_changed_certificate_ex(freerdp* instance, const char* host, UIN
 	char* old_fp_str = nullptr;
 	size_t olen = 0;
 	if (flags & VERIFY_CERT_FLAG_FP_IS_PEM)
-	{
-		winpr_asprintf(&old_fp_str, &olen,
-		               "----------- Certificate --------------\n"
-		               "%s\n"
-		               "--------------------------------------\n",
-		               old_fingerprint);
-	}
+		old_fp_str = sdl_pem_cert(old_fingerprint);
 	else
 		winpr_asprintf(&old_fp_str, &olen, "Thumbprint:  %s\n", old_fingerprint);
 
@@ -429,13 +441,7 @@ DWORD sdl_verify_certificate_ex(freerdp* instance, const char* host, UINT16 port
 	char* fp_str = nullptr;
 	size_t len = 0;
 	if (flags & VERIFY_CERT_FLAG_FP_IS_PEM)
-	{
-		winpr_asprintf(&fp_str, &len,
-		               "----------- Certificate --------------\n"
-		               "%s\n"
-		               "--------------------------------------\n",
-		               fingerprint);
-	}
+		fp_str = sdl_pem_cert(fingerprint);
 	else
 		winpr_asprintf(&fp_str, &len, "Thumbprint:  %s\n", fingerprint);
 

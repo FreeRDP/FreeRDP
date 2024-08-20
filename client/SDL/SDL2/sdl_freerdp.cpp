@@ -573,6 +573,9 @@ static BOOL sdl_pre_connect(freerdp* instance)
 	auto settings = instance->context->settings;
 	WINPR_ASSERT(settings);
 
+	if (!freerdp_settings_set_bool(settings, FreeRDP_CertificateCallbackPreferPEM, TRUE))
+		return FALSE;
+
 	/* Optional OS identifier sent to server */
 	if (!freerdp_settings_set_uint32(settings, FreeRDP_OsMajorType, OSMAJORTYPE_UNIX))
 		return FALSE;
