@@ -147,6 +147,11 @@ static BOOL tf_pre_connect(freerdp* instance)
 	settings = instance->context->settings;
 	WINPR_ASSERT(settings);
 
+	/* If the callbacks provide the PEM all certificate options can be extracted, otherwise
+	 * only the certificate fingerprint is available. */
+	if (!freerdp_settings_set_bool(settings, FreeRDP_CertificateCallbackPreferPEM, TRUE))
+		return FALSE;
+
 	/* Optional OS identifier sent to server */
 	if (!freerdp_settings_set_uint32(settings, FreeRDP_OsMajorType, OSMAJORTYPE_UNIX))
 		return FALSE;
