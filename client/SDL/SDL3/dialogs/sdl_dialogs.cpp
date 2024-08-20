@@ -341,9 +341,9 @@ static char* sdl_pem_cert(const char* pem)
 	char* str = NULL;
 	size_t slen = 0;
 	winpr_asprintf(&str, &slen,
-	               "\tValid from:  %s\n"
-	               "\tValid to:    %s\n"
-	               "\tThumbprint:  %s\n",
+	               "Valid from:  %s\n"
+	               "Valid to:    %s\n"
+	               "Thumbprint:  %s\n",
 	               start, end, fp);
 	free(fp);
 	free(start);
