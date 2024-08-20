@@ -1071,6 +1071,54 @@ int freerdp_tcp_connect(rdpContext* context, const char* hostname, int port, DWO
 	return transport_tcp_connect(context->rdp->transport, hostname, port, timeout);
 }
 
+static int get_next_addrinfo(rdpContext* context, struct addrinfo* input, struct addrinfo** result,
+                             UINT32 errorCode)
+{
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(result);
+
+	struct addrinfo* addr = input;
+	if (!addr)
+		goto fail;
+
+	if (freerdp_settings_get_bool(context->settings, FreeRDP_PreferIPv6OverIPv4))
+	{
+		while (addr && (addr->ai_family != AF_INET6))
+			addr = addr->ai_next;
+		if (!addr)
+			addr = input;
+	}
+
+	/* We want to force IPvX, abort if not detected */
+	const UINT32 IPvX = freerdp_settings_get_uint32(context->settings, FreeRDP_ForceIPvX);
+	switch (IPvX)
+	{
+		case 4:
+		case 6:
+		{
+			const int family = (IPvX == 4) ? AF_INET : AF_INET6;
+			while (addr && (addr->ai_family != family))
+				addr = addr->ai_next;
+			if (!addr)
+				goto fail;
+		}
+		break;
+		default:
+			break;
+	}
+
+	if (!addr)
+		goto fail;
+
+	*result = addr;
+	return 0;
+
+fail:
+	freerdp_set_last_error_if_not(context, errorCode);
+	freeaddrinfo(input);
+	return -1;
+}
+
 int freerdp_tcp_default_connect(rdpContext* context, rdpSettings* settings, const char* hostname,
                                 int port, DWORD timeout)
 {
@@ -1181,52 +1229,22 @@ int freerdp_tcp_default_connect(rdpContext* context, rdpSettings* settings, cons
 			 * If PreferIPv6OverIPv4 = TRUE we force to IPv6 if there
 			 * is such an address available, but fall back to first if not found
 			 */
-			addr = result;
-			if (freerdp_settings_get_bool(settings, FreeRDP_PreferIPv6OverIPv4))
-			{
-				while (addr && (addr->ai_family != AF_INET6))
-					addr = addr->ai_next;
-				if (!addr)
-					addr = result;
-			}
+			const int rc =
+			    get_next_addrinfo(context, result, &addr, FREERDP_ERROR_DNS_NAME_NOT_FOUND);
+			if (rc < 0)
+				return rc;
 
-			/* We want to force IPvX, abort if not detected */
-			const UINT32 IPvX = freerdp_settings_get_uint32(settings, FreeRDP_ForceIPvX);
-			switch (IPvX)
+			do
 			{
-				case 4:
-				case 6:
+				sockfd = socket(addr->ai_family, addr->ai_socktype, addr->ai_protocol);
+				if (sockfd < 0)
 				{
-					const int family = (IPvX == 4) ? AF_INET : AF_INET6;
-					while (addr && (addr->ai_family != family))
-						addr = addr->ai_next;
-					if (!addr)
-					{
-						freerdp_set_last_error_if_not(context, FREERDP_ERROR_DNS_NAME_NOT_FOUND);
-						freeaddrinfo(result);
-						return -1;
-					}
+					const int rc = get_next_addrinfo(context, addr->ai_next, &addr,
+					                                 FREERDP_ERROR_CONNECT_FAILED);
+					if (rc < 0)
+						return rc;
 				}
-				break;
-				default:
-					break;
-			}
-
-			if (!addr)
-			{
-				freerdp_set_last_error_if_not(context, FREERDP_ERROR_DNS_NAME_NOT_FOUND);
-				freeaddrinfo(result);
-				return -1;
-			}
-			sockfd = socket(addr->ai_family, addr->ai_socktype, addr->ai_protocol);
-
-			if (sockfd < 0)
-			{
-				freerdp_set_last_error_if_not(context, FREERDP_ERROR_CONNECT_FAILED);
-
-				freeaddrinfo(result);
-				return -1;
-			}
+			} while (sockfd < 0);
 
 			if ((peerAddress = freerdp_tcp_address_to_string(
 			         (const struct sockaddr_storage*)addr->ai_addr, NULL)) != NULL)
