@@ -3335,8 +3335,11 @@ void rdp_update_unlock(rdpUpdate* update)
 
 BOOL update_begin_paint(rdpUpdate* update)
 {
+	rdp_update_internal* up = update_cast(update);
 	WINPR_ASSERT(update);
 	rdp_update_lock(update);
+
+	up->withinBeginEndPaint = TRUE;
 
 	WINPR_ASSERT(update->context);
 
@@ -3370,6 +3373,13 @@ BOOL update_end_paint(rdpUpdate* update)
 	IFCALLRET(update->EndPaint, rc, update->context);
 	if (!rc)
 		WLog_WARN(TAG, "EndPaint call failed");
+
+	rdp_update_internal* up = update_cast(update);
+
+	if (!up->withinBeginEndPaint)
+		return rc;
+	up->withinBeginEndPaint = FALSE;
+
 	rdp_update_unlock(update);
 	return rc;
 }

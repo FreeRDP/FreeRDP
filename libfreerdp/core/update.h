@@ -64,6 +64,7 @@ typedef struct
 	rdpBounds currentBounds;
 	rdpBounds previousBounds;
 	CRITICAL_SECTION mux;
+	BOOL withinBeginEndPaint;
 } rdp_update_internal;
 
 typedef struct
