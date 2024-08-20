@@ -44,6 +44,7 @@ extern "C"
 	FREERDP_LOCAL char* x509_utils_get_issuer(const X509* xcert);
 	FREERDP_LOCAL char* x509_utils_get_email(const X509* x509);
 	FREERDP_LOCAL char* x509_utils_get_upn(const X509* x509);
+	FREERDP_LOCAL char* x509_utils_get_date(const X509* x509, BOOL startDate);
 
 	FREERDP_LOCAL char* x509_utils_get_common_name(const X509* xcert, size_t* plength);
 	FREERDP_LOCAL char** x509_utils_get_dns_names(const X509* xcert, size_t* count,
