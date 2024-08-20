@@ -1507,6 +1507,12 @@ char* freerdp_certificate_get_email(const rdpCertificate* cert)
 	return x509_utils_get_email(cert->x509);
 }
 
+char* freerdp_certificate_get_validity(const rdpCertificate* cert, BOOL startDate)
+{
+	WINPR_ASSERT(cert);
+	return x509_utils_get_date(cert->x509, startDate);
+}
+
 BOOL freerdp_certificate_check_eku(const rdpCertificate* cert, int nid)
 {
 	WINPR_ASSERT(cert);

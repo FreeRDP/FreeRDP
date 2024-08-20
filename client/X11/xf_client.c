@@ -1112,6 +1112,9 @@ static BOOL xf_pre_connect(freerdp* instance)
 	settings = context->settings;
 	WINPR_ASSERT(settings);
 
+	if (!freerdp_settings_set_bool(settings, FreeRDP_CertificateCallbackPreferPEM, TRUE))
+		return FALSE;
+
 	if (!freerdp_settings_get_bool(settings, FreeRDP_AuthenticationOnly))
 	{
 		if (!xf_setup_x11(xfc))

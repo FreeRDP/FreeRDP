@@ -76,6 +76,9 @@ extern "C"
 	FREERDP_API char* freerdp_certificate_get_upn(const rdpCertificate* certificate);
 	FREERDP_API char* freerdp_certificate_get_email(const rdpCertificate* certificate);
 
+	FREERDP_API char* freerdp_certificate_get_validity(const rdpCertificate* certificate,
+	                                                   BOOL startDate);
+
 	FREERDP_API WINPR_MD_TYPE freerdp_certificate_get_signature_alg(const rdpCertificate* cert);
 
 	FREERDP_API char* freerdp_certificate_get_common_name(const rdpCertificate* cert,
