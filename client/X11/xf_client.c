@@ -458,12 +458,14 @@ static BOOL xf_sw_desktop_resize(rdpContext* context)
 	xfContext* xfc = (xfContext*)context;
 	rdpSettings* settings = context->settings;
 	BOOL ret = FALSE;
-	xf_lock_x11(xfc);
 
 	if (!gdi_resize(gdi, freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth),
 	                freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight)))
-		goto out;
+		return FALSE;
 
+	/* Do not lock during gdi_resize, there might still be drawing operations in progress.
+	 * locking will deadlock. */
+	xf_lock_x11(xfc);
 	if (xfc->image)
 	{
 		xfc->image->data = NULL;
