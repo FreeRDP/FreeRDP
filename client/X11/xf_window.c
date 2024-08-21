@@ -295,14 +295,15 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 				if (xf_GetWindowProperty(xfc, window->handle, xfc->_NET_WM_STATE, 255, &nitems,
 				                         &bytes, &prop))
 				{
+					const Atom* aprop = (const Atom*)prop;
 					state = 0;
 
-					while (nitems-- > 0)
+					for (size_t x = 0; x < nitems; x++)
 					{
-						if (((Atom*)prop)[nitems] == xfc->_NET_WM_STATE_MAXIMIZED_VERT)
+						if (aprop[x] == xfc->_NET_WM_STATE_MAXIMIZED_VERT)
 							state |= 0x01;
 
-						if (((Atom*)prop)[nitems] == xfc->_NET_WM_STATE_MAXIMIZED_HORZ)
+						if (aprop[x] == xfc->_NET_WM_STATE_MAXIMIZED_HORZ)
 							state |= 0x02;
 					}
 

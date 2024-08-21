@@ -2217,7 +2217,6 @@ rdpRdg* rdg_new(rdpContext* context)
 		rdg->log = WLog_Get(TAG);
 		rdg->state = RDG_CLIENT_STATE_INITIAL;
 		rdg->context = context;
-		rdg->context->settings = rdg->context->settings;
 		rdg->extAuth =
 		    (rdg->context->settings->GatewayHttpExtAuthSspiNtlm ? HTTP_EXTENDED_AUTH_SSPI_NTLM
 		                                                        : HTTP_EXTENDED_AUTH_NONE);

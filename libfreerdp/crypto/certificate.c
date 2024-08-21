@@ -1349,6 +1349,9 @@ char* freerdp_certificate_get_fingerprint_by_hash_ex(const rdpCertificate* cert,
 	if (!fp)
 		return NULL;
 
+	if (fp_len < 1)
+		goto fail;
+
 	size = fp_len * 3 + 1;
 	fp_buffer = calloc(size, sizeof(char));
 	if (!fp_buffer)

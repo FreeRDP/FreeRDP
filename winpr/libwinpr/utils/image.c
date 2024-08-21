@@ -940,8 +940,9 @@ static void* winpr_read_png_from_buffer(const void* data, size_t SrcSize, size_t
 	                 NULL, NULL) != 1)
 		goto fail;
 
+	WINPR_ASSERT(bit_depth >= 0);
 	const png_byte channelcount = png_get_channels(png_ptr, info_ptr);
-	const size_t bpp = channelcount * bit_depth;
+	const size_t bpp = channelcount * (size_t)bit_depth;
 
 	row_pointers = png_get_rows(png_ptr, info_ptr);
 	if (row_pointers)

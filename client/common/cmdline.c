@@ -436,7 +436,9 @@ static size_t print_description(const char* text, size_t start_offset, size_t cu
 	} while (cur != NULL);
 
 	free(str);
-	current += (size_t)printf("\n");
+	const int rc = printf("\n");
+	if (rc >= 0)
+		current += (size_t)rc;
 	return current;
 }
 

@@ -220,6 +220,7 @@ static LONG smartcard_ListReaderGroupsW_Call(scard_call_context* smartcard, wStr
 	cchGroups = SCARD_AUTOALLOCATE;
 	status = ret.ReturnCode = wrap(smartcard, SCardListReaderGroupsW, operation->hContext,
 	                               (LPWSTR)&mszGroups, &cchGroups);
+	WINPR_ASSERT(cchGroups != SCARD_AUTOALLOCATE);
 	ret.msz = (BYTE*)mszGroups;
 	ret.cBytes = cchGroups * sizeof(WCHAR);
 
