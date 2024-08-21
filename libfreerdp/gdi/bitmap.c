@@ -155,10 +155,14 @@ HGDI_BITMAP gdi_CreateCompatibleBitmap(HGDI_DC hdc, UINT32 nWidth, UINT32 nHeigh
 
 	hBitmap->objectType = GDIOBJECT_BITMAP;
 	hBitmap->format = hdc->format;
-	hBitmap->width = nWidth;
-	hBitmap->height = nHeight;
-	hBitmap->data = winpr_aligned_malloc(
-	    1ull * nWidth * nHeight * FreeRDPGetBytesPerPixel(hBitmap->format), 16);
+	WINPR_ASSERT(nWidth <= INT32_MAX);
+	hBitmap->width = (INT32)nWidth;
+
+	WINPR_ASSERT(nHeight <= INT32_MAX);
+	hBitmap->height = (INT32)nHeight;
+
+	size_t size = 1ull * nWidth * nHeight * FreeRDPGetBytesPerPixel(hBitmap->format);
+	hBitmap->data = winpr_aligned_malloc(size, 16);
 	hBitmap->free = winpr_aligned_free;
 
 	if (!hBitmap->data)
@@ -167,6 +171,8 @@ HGDI_BITMAP gdi_CreateCompatibleBitmap(HGDI_DC hdc, UINT32 nWidth, UINT32 nHeigh
 		return NULL;
 	}
 
+	/* Initialize with 0xff */
+	memset(hBitmap->data, 0xff, size);
 	hBitmap->scanline = nWidth * FreeRDPGetBytesPerPixel(hBitmap->format);
 	return hBitmap;
 }
