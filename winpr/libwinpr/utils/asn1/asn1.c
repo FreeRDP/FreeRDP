@@ -1020,17 +1020,24 @@ static size_t WinPrAsn1DecReadIntegerLike(WinPrAsn1Decoder* dec, WinPrAsn1_tag e
 	size_t ret = readTagAndLen(dec, &dec->source, &tag, &len);
 	if (!ret || (tag != expectedTag))
 		return 0;
-	if (!Stream_CheckAndLogRequiredLength(TAG, &dec->source, len) || (len > 4))
+	if (len == 0 || !Stream_CheckAndLogRequiredLength(TAG, &dec->source, len) || (len > 4))
 		return 0;
 
 	WinPrAsn1_INTEGER val = 0;
-	for (size_t x = 0; x < len; x++)
+	UINT8 v = 0;
+
+	Stream_Read_UINT8(&dec->source, v);
+	if (v & 0x80)
+		val = 0xFFFFFFFF;
+	val |= v;
+
+	for (size_t x = 1; x < len; x++)
 	{
-		INT8 v = 0;
-		Stream_Read_INT8(&dec->source, v);
+		Stream_Read_UINT8(&dec->source, v);
 		val = (WinPrAsn1_INTEGER)(((UINT32)val) << 8);
 		val |= v;
 	}
+
 	*target = val;
 	ret += len;
 
