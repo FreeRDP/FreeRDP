@@ -1266,7 +1266,7 @@ static BOOL intersect_rect(const RECTANGLE_16* rect, const gdiGfxSurface* surfac
 static UINT gdi_SolidFill(RdpgfxClientContext* context, const RDPGFX_SOLID_FILL_PDU* solidFill)
 {
 	UINT status = ERROR_INTERNAL_ERROR;
-	BYTE a = 0;
+	BYTE a = 0xff;
 	RECTANGLE_16 invalidRect = { 0 };
 	rdpGdi* gdi = (rdpGdi*)context->custom;
 
@@ -1281,10 +1281,17 @@ static UINT gdi_SolidFill(RdpgfxClientContext* context, const RDPGFX_SOLID_FILL_
 	const BYTE b = solidFill->fillPixel.B;
 	const BYTE g = solidFill->fillPixel.G;
 	const BYTE r = solidFill->fillPixel.R;
+
+#if 0
+	/* [MS-RDPEGFX] 3.3.5.4 Processing an RDPGFX_SOLIDFILL_PDU message
+	 * https://learn.microsoft.com/en-us/windows/win32/gdi/binary-raster-operations
+	 *
+	 * this sounds like the alpha value is always ignored.
+	 */
 	if (FreeRDPColorHasAlpha(surface->format))
 		a = solidFill->fillPixel.XA;
-	else
-		a = 0xFF;
+#endif
+
 	const UINT32 color = FreeRDPGetColor(surface->format, r, g, b, a);
 
 	for (UINT16 index = 0; index < solidFill->fillRectCount; index++)
