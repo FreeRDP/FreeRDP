@@ -96,6 +96,9 @@ static BOOL contains_dotdot(const WCHAR* path, size_t base_length, size_t path_l
 	const WCHAR* dotdot = InitializeConstWCharFromUtf8("..", dotdotbuffer, ARRAYSIZE(dotdotbuffer));
 	const WCHAR* tst = path;
 
+	if (path_length < 2)
+		return FALSE;
+
 	do
 	{
 		tst = _wcsstr(tst, dotdot);
@@ -122,13 +125,12 @@ static WCHAR* drive_file_combine_fullpath(const WCHAR* base_path, const WCHAR* p
 {
 	BOOL ok = FALSE;
 	WCHAR* fullpath = NULL;
-	size_t length = 0;
 
 	if (!base_path || (!path && (PathWCharLength > 0)))
 		goto fail;
 
 	const size_t base_path_length = _wcsnlen(base_path, MAX_PATH);
-	length = base_path_length + PathWCharLength + 1;
+	const size_t length = base_path_length + PathWCharLength + 1;
 	fullpath = (WCHAR*)calloc(length, sizeof(WCHAR));
 
 	if (!fullpath)

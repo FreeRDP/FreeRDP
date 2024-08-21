@@ -796,16 +796,17 @@ void xf_unlock_x11_(xfContext* xfc, const char* fkt)
 {
 	if (xfc->locked == 0)
 		WLog_WARN(TAG, "X11: trying to unlock although not locked!");
+	else
+		xfc->locked--;
 
 #ifdef WITH_DEBUG_X11
-	WLog_VRB(TAG, "[%" PRIu32 "] from %s", xfc->locked - 1, fkt);
+	WLog_VRB(TAG, "[%" PRIu32 "] from %s", xfc->locked, fkt);
 #endif
 
 	if (!xfc->UseXThreads)
 		ReleaseMutex(xfc->mutex);
 	else
 		XUnlockDisplay(xfc->display);
-	xfc->locked--;
 }
 
 static BOOL xf_get_pixmap_info(xfContext* xfc)

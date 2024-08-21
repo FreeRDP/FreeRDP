@@ -1084,12 +1084,19 @@ state_run_t rdp_recv_data_pdu(rdpRdp* rdp, wStream* s)
 
 	if (compressedType & PACKET_COMPRESSED)
 	{
+		if (compressedLength < 18)
+		{
+			WLog_Print(rdp->log, WLOG_ERROR,
+			           "bulk_decompress: not enough bytes for compressedLength %" PRIu16 "",
+			           compressedLength);
+			return STATE_RUN_FAILED;
+		}
+
 		UINT32 DstSize = 0;
 		const BYTE* pDstData = NULL;
 		UINT16 SrcSize = compressedLength - 18;
 
-		if ((compressedLength < 18) ||
-		    (!Stream_CheckAndLogRequiredLengthWLog(rdp->log, s, SrcSize)))
+		if (!Stream_CheckAndLogRequiredLengthWLog(rdp->log, s, SrcSize))
 		{
 			WLog_Print(rdp->log, WLOG_ERROR,
 			           "bulk_decompress: not enough bytes for compressedLength %" PRIu16 "",
