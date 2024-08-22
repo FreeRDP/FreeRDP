@@ -156,6 +156,8 @@ static const speed_t _BAUD_TABLE[][3] = {
 	{ BAUD_TABLE_END, 0, 0 }
 };
 
+static BOOL commstatus_error(WINPR_COMM* pComm, const char* ctrl);
+
 static BOOL get_properties(WINPR_COMM* pComm, COMMPROP* pProperties)
 {
 	WINPR_ASSERT(pComm);
@@ -1013,28 +1015,12 @@ static BOOL get_modemstatus(WINPR_COMM* pComm, ULONG* pRegister)
 	WINPR_ASSERT(pComm);
 	WINPR_ASSERT(pRegister);
 
+	*pRegister = 0;
 	if (ioctl(pComm->fd, TIOCMGET, &lines) < 0)
 	{
-		char ebuffer[256] = { 0 };
-		CommLog_Print(WLOG_WARN, "TIOCMGET ioctl failed, errno=[%d] %s", errno,
-		              winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
-		SetLastError(ERROR_IO_DEVICE);
-		return FALSE;
+		if (!commstatus_error(pComm, "TIOCMGET"))
+			return FALSE;
 	}
-
-	ZeroMemory(pRegister, sizeof(ULONG));
-
-	/* FIXME: Is the last read of the MSR register available or
-	 * cached somewhere? Not quite sure we need to return the 4
-	 * LSBits anyway. A direct access to the register -- which
-	 * would reset the register -- is likely not expected from
-	 * this function.
-	 */
-
-	/* #define SERIAL_MSR_DCTS     0x01 */
-	/* #define SERIAL_MSR_DDSR     0x02 */
-	/* #define SERIAL_MSR_TERI     0x04 */
-	/* #define SERIAL_MSR_DDCD     0x08 */
 
 	if (lines & TIOCM_CTS)
 		*pRegister |= SERIAL_MSR_CTS;
@@ -1100,21 +1086,12 @@ static BOOL set_wait_mask(WINPR_COMM* pComm, const ULONG* pWaitMask)
 
 		if (ioctl(pComm->fd, TIOCGICOUNT, &(pComm->counters)) < 0)
 		{
-			char ebuffer[256] = { 0 };
-			CommLog_Print(WLOG_WARN, "TIOCGICOUNT ioctl failed, errno=[%d] %s.", errno,
-			              winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
-
-			if (pComm->permissive)
+			if (!commstatus_error(pComm, "TIOCGICOUNT"))
 			{
-				/* counters could not be reset but keep on */
-				ZeroMemory(&(pComm->counters), sizeof(struct serial_icounter_struct));
-			}
-			else
-			{
-				SetLastError(ERROR_IO_DEVICE);
 				LeaveCriticalSection(&pComm->EventsLock);
 				return FALSE;
 			}
+			ZeroMemory(&(pComm->counters), sizeof(struct serial_icounter_struct));
 		}
 
 		pComm->PendingEvents = 0;
@@ -1260,12 +1237,27 @@ static BOOL purge(WINPR_COMM* pComm, const ULONG* pPurgeMask)
 	return TRUE;
 }
 
+BOOL commstatus_error(WINPR_COMM* pComm, const char* ctrl)
+{
+	char ebuffer[256] = { 0 };
+	CommLog_Print(WLOG_WARN, "%s ioctl failed, errno=[%d] %s.", ctrl, errno,
+	              winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
+
+	if (!pComm->permissive)
+	{
+		SetLastError(ERROR_IO_DEVICE);
+		return FALSE;
+	}
+	return TRUE;
+}
+
 /* NB: get_commstatus also produces most of the events consumed by  wait_on_mask(). Exceptions:
  *  - SERIAL_EV_RXFLAG: FIXME: once EventChar supported
  *
  */
 static BOOL get_commstatus(WINPR_COMM* pComm, SERIAL_STATUS* pCommstatus)
 {
+	BOOL rc = FALSE;
 	/* http://msdn.microsoft.com/en-us/library/jj673022%28v=vs.85%29.aspx */
 
 	struct serial_icounter_struct currentCounters = { 0 };
@@ -1278,26 +1270,23 @@ static BOOL get_commstatus(WINPR_COMM* pComm, SERIAL_STATUS* pCommstatus)
 
 	ZeroMemory(pCommstatus, sizeof(SERIAL_STATUS));
 
+	ULONG status = 0;
+	if (!get_modemstatus(pComm, &status))
+	{
+		if (!commstatus_error(pComm, "TIOCGICOUNT"))
+			goto fail;
+		/* Errors and events based on counters could not be
+		 * detected but keep on.
+		 */
+		SetLastError(0);
+		status = 0;
+	}
+
 	if (ioctl(pComm->fd, TIOCGICOUNT, &currentCounters) < 0)
 	{
-		char ebuffer[256] = { 0 };
-		CommLog_Print(WLOG_WARN, "TIOCGICOUNT ioctl failed, errno=[%d] %s.", errno,
-		              winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
-		CommLog_Print(WLOG_WARN, "  could not read counters.");
-
-		if (pComm->permissive)
-		{
-			/* Errors and events based on counters could not be
-			 * detected but keep on.
-			 */
-			ZeroMemory(&currentCounters, sizeof(struct serial_icounter_struct));
-		}
-		else
-		{
-			SetLastError(ERROR_IO_DEVICE);
-			LeaveCriticalSection(&pComm->EventsLock);
-			return FALSE;
-		}
+		if (!commstatus_error(pComm, "TIOCGICOUNT"))
+			goto fail;
+		ZeroMemory(&currentCounters, sizeof(struct serial_icounter_struct));
 	}
 
 	/* NB: preferred below (currentCounters.* != pComm->counters.*) over (currentCounters.* >
@@ -1352,26 +1341,16 @@ static BOOL get_commstatus(WINPR_COMM* pComm, SERIAL_STATUS* pCommstatus)
 
 	if (ioctl(pComm->fd, TIOCINQ, &(pCommstatus->AmountInInQueue)) < 0)
 	{
-		char ebuffer[256] = { 0 };
-		CommLog_Print(WLOG_WARN, "TIOCINQ ioctl failed, errno=[%d] %s", errno,
-		              winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
-		SetLastError(ERROR_IO_DEVICE);
-
-		LeaveCriticalSection(&pComm->EventsLock);
-		return FALSE;
+		if (!commstatus_error(pComm, "TIOCINQ"))
+			goto fail;
 	}
 
 	/*  AmountInOutQueue */
 
 	if (ioctl(pComm->fd, TIOCOUTQ, &(pCommstatus->AmountInOutQueue)) < 0)
 	{
-		char ebuffer[256] = { 0 };
-		CommLog_Print(WLOG_WARN, "TIOCOUTQ ioctl failed, errno=[%d] %s", errno,
-		              winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
-		SetLastError(ERROR_IO_DEVICE);
-
-		LeaveCriticalSection(&pComm->EventsLock);
-		return FALSE;
+		if (!commstatus_error(pComm, "TIOCOUTQ"))
+			goto fail;
 	}
 
 	/*  BOOLEAN EofReceived; FIXME: once EofChar supported */
@@ -1430,8 +1409,10 @@ static BOOL get_commstatus(WINPR_COMM* pComm, SERIAL_STATUS* pCommstatus)
 
 	pComm->counters = currentCounters;
 
+	rc = TRUE;
+fail:
 	LeaveCriticalSection(&pComm->EventsLock);
-	return TRUE;
+	return rc;
 }
 
 static BOOL refresh_PendingEvents(WINPR_COMM* pComm)
@@ -1461,6 +1442,14 @@ static void consume_event(WINPR_COMM* pComm, ULONG* pOutputMask, ULONG event)
 	}
 }
 
+static BOOL unlock_return(WINPR_COMM* pComm, BOOL res)
+{
+	EnterCriticalSection(&pComm->EventsLock);
+	pComm->PendingEvents &= ~SERIAL_EV_WINPR_WAITING;
+	LeaveCriticalSection(&pComm->EventsLock);
+	return res;
+}
+
 /*
  * NB: see also: set_wait_mask()
  */
@@ -1477,12 +1466,7 @@ static BOOL wait_on_mask(WINPR_COMM* pComm, ULONG* pOutputMask)
 	{
 		/* NB: EventsLock also used by  refresh_PendingEvents() */
 		if (!refresh_PendingEvents(pComm))
-		{
-			EnterCriticalSection(&pComm->EventsLock);
-			pComm->PendingEvents &= ~SERIAL_EV_WINPR_WAITING;
-			LeaveCriticalSection(&pComm->EventsLock);
-			return FALSE;
-		}
+			return unlock_return(pComm, FALSE);
 
 		/* NB: ensure to leave the critical section before to return */
 		EnterCriticalSection(&pComm->EventsLock);
@@ -1498,9 +1482,8 @@ static BOOL wait_on_mask(WINPR_COMM* pComm, ULONG* pOutputMask)
 			 */
 			WINPR_ASSERT(*pOutputMask == 0);
 
-			pComm->PendingEvents &= ~SERIAL_EV_WINPR_WAITING;
 			LeaveCriticalSection(&pComm->EventsLock);
-			return TRUE;
+			return unlock_return(pComm, TRUE);
 		}
 
 		consume_event(pComm, pOutputMask, SERIAL_EV_RXCHAR);
@@ -1520,14 +1503,7 @@ static BOOL wait_on_mask(WINPR_COMM* pComm, ULONG* pOutputMask)
 		 * not pOutputMask */
 
 		if (*pOutputMask != 0)
-		{
-			/* at least an event occurred */
-
-			EnterCriticalSection(&pComm->EventsLock);
-			pComm->PendingEvents &= ~SERIAL_EV_WINPR_WAITING;
-			LeaveCriticalSection(&pComm->EventsLock);
-			return TRUE;
-		}
+			return unlock_return(pComm, TRUE);
 
 		/* waiting for a modification of PendingEvents.
 		 *
@@ -1539,6 +1515,8 @@ static BOOL wait_on_mask(WINPR_COMM* pComm, ULONG* pOutputMask)
 
 		Sleep(100); /* 100 ms */
 	}
+
+	return unlock_return(pComm, FALSE);
 }
 
 static BOOL set_break_on(WINPR_COMM* pComm)
@@ -1608,14 +1586,8 @@ static BOOL get_dtrrts(WINPR_COMM* pComm, ULONG* pMask)
 	WINPR_ASSERT(pComm);
 	WINPR_ASSERT(pMask);
 
-	if (ioctl(pComm->fd, TIOCMGET, &lines) < 0)
-	{
-		char ebuffer[256] = { 0 };
-		CommLog_Print(WLOG_WARN, "TIOCMGET ioctl failed, errno=[%d] %s", errno,
-		              winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
-		SetLastError(ERROR_IO_DEVICE);
+	if (!get_modemstatus(pComm, &lines))
 		return FALSE;
-	}
 
 	*pMask = 0;
 
