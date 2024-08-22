@@ -64,7 +64,6 @@ typedef struct
 
 	/* one thread per pending IRP and indexed according their CompletionId */
 	wListDictionary* IrpThreads;
-	UINT32 IrpThreadToBeTerminatedCount;
 	CRITICAL_SECTION TerminatingIrpThreadsLock;
 	rdpContext* rdpcontext;
 } SERIAL_DEVICE;
@@ -75,6 +74,7 @@ typedef struct
 	IRP* irp;
 } IRP_THREAD_DATA;
 
+static void close_terminated_irp_thread_handles(SERIAL_DEVICE* serial, BOOL forceClose);
 static UINT32 GetLastErrorToIoStatus(SERIAL_DEVICE* serial)
 {
 	/* http://msdn.microsoft.com/en-us/library/ff547466%28v=vs.85%29.aspx#generic_status_values_for_serial_device_control_requests
@@ -214,6 +214,8 @@ static UINT serial_process_irp_close(SERIAL_DEVICE* serial, IRP* irp)
 
 	Stream_Seek(irp->input, 32); /* Padding (32 bytes) */
 
+	close_terminated_irp_thread_handles(serial, TRUE);
+
 	if (!CloseHandle(serial->hComm))
 	{
 		WLog_Print(serial->log, WLOG_WARN, "CloseHandle failure: %s (%" PRIu32 ") closed.",
@@ -224,9 +226,9 @@ static UINT serial_process_irp_close(SERIAL_DEVICE* serial, IRP* irp)
 
 	WLog_Print(serial->log, WLOG_DEBUG, "%s (DeviceId: %" PRIu32 ", FileId: %" PRIu32 ") closed.",
 	           serial->device.name, irp->device->id, irp->FileId);
-	serial->hComm = NULL;
 	irp->IoStatus = STATUS_SUCCESS;
 error_handle:
+	serial->hComm = NULL;
 	Stream_Zero(irp->output, 5); /* Padding (5 bytes) */
 	return CHANNEL_RC_OK;
 }
@@ -521,7 +523,6 @@ static DWORD WINAPI irp_thread_func(LPVOID arg)
 	}
 
 	EnterCriticalSection(&data->serial->TerminatingIrpThreadsLock);
-	data->serial->IrpThreadToBeTerminatedCount++;
 	error = data->irp->Complete(data->irp);
 	LeaveCriticalSection(&data->serial->TerminatingIrpThreadsLock);
 error_out:
@@ -537,6 +538,59 @@ error_out:
 	return error;
 }
 
+static void close_unterminated_irp_thread(wListDictionary* list, wLog* log, ULONG_PTR id)
+{
+	WINPR_ASSERT(list);
+	HANDLE self = _GetCurrentThread();
+	HANDLE cirpThread = ListDictionary_GetItemValue(list, (void*)id);
+	if (self == cirpThread)
+		WLog_Print(log, WLOG_DEBUG, "Skipping termination of own IRP thread");
+	else
+		ListDictionary_Remove(list, (void*)id);
+}
+
+static void close_terminated_irp_thread(wListDictionary* list, wLog* log, ULONG_PTR id)
+{
+	WINPR_ASSERT(list);
+
+	HANDLE cirpThread = ListDictionary_GetItemValue(list, (void*)id);
+	/* FIXME: not quite sure a zero timeout is a good thing to check whether a thread is
+	 * stil alived or not */
+	const DWORD waitResult = WaitForSingleObject(cirpThread, 0);
+
+	if (waitResult == WAIT_OBJECT_0)
+		ListDictionary_Remove(list, (void*)id);
+	else if (waitResult != WAIT_TIMEOUT)
+	{
+		/* unexpected thread state */
+		WLog_Print(log, WLOG_WARN, "WaitForSingleObject, got an unexpected result=0x%" PRIX32 "\n",
+		           waitResult);
+	}
+}
+
+void close_terminated_irp_thread_handles(SERIAL_DEVICE* serial, BOOL forceClose)
+{
+	WINPR_ASSERT(serial);
+
+	EnterCriticalSection(&serial->TerminatingIrpThreadsLock);
+
+	ULONG_PTR* ids = NULL;
+	const size_t nbIds = ListDictionary_GetKeys(serial->IrpThreads, &ids);
+
+	for (size_t i = 0; i < nbIds; i++)
+	{
+		ULONG_PTR id = ids[i];
+		if (forceClose)
+			close_unterminated_irp_thread(serial->IrpThreads, serial->log, id);
+		else
+			close_terminated_irp_thread(serial->IrpThreads, serial->log, id);
+	}
+
+	free(ids);
+
+	LeaveCriticalSection(&serial->TerminatingIrpThreadsLock);
+}
+
 static void create_irp_thread(SERIAL_DEVICE* serial, IRP* irp)
 {
 	IRP_THREAD_DATA* data = NULL;
@@ -547,68 +601,8 @@ static void create_irp_thread(SERIAL_DEVICE* serial, IRP* irp)
 	WINPR_ASSERT(serial);
 	WINPR_ASSERT(irp);
 
-	/* for a test/debug purpose, uncomment the code below to get a
-	 * single thread for all IRPs. NB: two IRPs could not be
-	 * processed at the same time, typically two concurent
-	 * Read/Write operations could block each other. */
-	/* serial_process_irp(serial, irp); */
-	/* irp->Complete(irp); */
-	/* return; */
-	/* NOTE: for good or bad, this implementation relies on the
-	 * server to avoid a flooding of requests. see also _purge().
-	 */
-	EnterCriticalSection(&serial->TerminatingIrpThreadsLock);
+	close_terminated_irp_thread_handles(serial, FALSE);
 
-	while (serial->IrpThreadToBeTerminatedCount > 0)
-	{
-		/* Cleaning up termitating and pending irp
-		 * threads. See also: irp_thread_func() */
-		HANDLE cirpThread = NULL;
-		ULONG_PTR* ids = NULL;
-		const size_t nbIds = ListDictionary_GetKeys(serial->IrpThreads, &ids);
-
-		for (size_t i = 0; i < nbIds; i++)
-		{
-			/* Checking if ids[i] is terminating or pending */
-			DWORD waitResult = 0;
-			ULONG_PTR id = ids[i];
-			cirpThread = ListDictionary_GetItemValue(serial->IrpThreads, (void*)id);
-			/* FIXME: not quite sure a zero timeout is a good thing to check whether a thread is
-			 * stil alived or not */
-			waitResult = WaitForSingleObject(cirpThread, 0);
-
-			if (waitResult == WAIT_OBJECT_0)
-			{
-				/* terminating thread */
-				/* WLog_Print(serial->log, WLOG_DEBUG, "IRP thread with CompletionId=%"PRIuz"
-				 * naturally died", id); */
-				CloseHandle(cirpThread);
-				ListDictionary_Remove(serial->IrpThreads, (void*)id);
-				serial->IrpThreadToBeTerminatedCount--;
-			}
-			else if (waitResult != WAIT_TIMEOUT)
-			{
-				/* unexpected thread state */
-				WLog_Print(serial->log, WLOG_WARN,
-				           "WaitForSingleObject, got an unexpected result=0x%" PRIX32 "\n",
-				           waitResult);
-				WINPR_ASSERT(FALSE);
-			}
-
-			/* pending thread (but not yet terminating thread) if waitResult == WAIT_TIMEOUT */
-		}
-
-		if (serial->IrpThreadToBeTerminatedCount > 0)
-		{
-			WLog_Print(serial->log, WLOG_DEBUG, "%" PRIu32 " IRP thread(s) not yet terminated",
-			           serial->IrpThreadToBeTerminatedCount);
-			Sleep(1); /* 1 ms */
-		}
-
-		free(ids);
-	}
-
-	LeaveCriticalSection(&serial->TerminatingIrpThreadsLock);
 	/* NB: At this point and thanks to the synchronization we're
 	 * sure that the incoming IRP uses well a recycled
 	 * CompletionId or the server sent again an IRP already posted
@@ -698,34 +692,6 @@ error_handle:
 	free(data);
 }
 
-static void terminate_pending_irp_threads(SERIAL_DEVICE* serial)
-{
-	WINPR_ASSERT(serial);
-
-	ULONG_PTR* ids = NULL;
-	const size_t nbIds = ListDictionary_GetKeys(serial->IrpThreads, &ids);
-	WLog_Print(serial->log, WLOG_DEBUG, "Terminating %" PRIuz " IRP thread(s)", nbIds);
-
-	for (size_t i = 0; i < nbIds; i++)
-	{
-		HANDLE irpThread = NULL;
-		ULONG_PTR id = ids[i];
-		irpThread = ListDictionary_GetItemValue(serial->IrpThreads, (void*)id);
-		TerminateThread(irpThread, 0);
-		if (WaitForSingleObject(irpThread, INFINITE) == WAIT_FAILED)
-		{
-			WLog_Print(serial->log, WLOG_ERROR, "WaitForSingleObject failed!");
-			continue;
-		}
-
-		CloseHandle(irpThread);
-		WLog_Print(serial->log, WLOG_DEBUG, "IRP thread terminated, CompletionId %p", (void*)id);
-	}
-
-	ListDictionary_Clear(serial->IrpThreads);
-	free(ids);
-}
-
 static DWORD WINAPI serial_thread_func(LPVOID arg)
 {
 	IRP* irp = NULL;
@@ -752,10 +718,7 @@ static DWORD WINAPI serial_thread_func(LPVOID arg)
 		}
 
 		if (message.id == WMQ_QUIT)
-		{
-			terminate_pending_irp_threads(serial);
 			break;
-		}
 
 		irp = (IRP*)message.wParam;
 
@@ -763,6 +726,7 @@ static DWORD WINAPI serial_thread_func(LPVOID arg)
 			create_irp_thread(serial, irp);
 	}
 
+	ListDictionary_Clear(serial->IrpThreads);
 	if (error && serial->rdpcontext)
 		setChannelError(serial->rdpcontext, error, "serial_thread_func reported an error");
 
@@ -852,6 +816,23 @@ static void serial_message_free(void* obj)
 		return;
 	WINPR_ASSERT(irp->Discard);
 	irp->Discard(irp);
+}
+
+static void irp_thread_close(void* arg)
+{
+	HANDLE hdl = arg;
+	if (hdl)
+	{
+		HANDLE thz = _GetCurrentThread();
+		if (thz == hdl)
+			WLog_WARN(TAG, "closing self, ignoring...");
+		else
+		{
+			TerminateThread(hdl, 0);
+			WaitForSingleObject(hdl, INFINITE);
+			CloseHandle(hdl);
+		}
+	}
 }
 
 /**
@@ -973,9 +954,11 @@ FREERDP_ENTRY_POINT(UINT serial_DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS 
 			goto error_out;
 		}
 
-		wObject* obj = MessageQueue_Object(serial->MainIrpQueue);
-		WINPR_ASSERT(obj);
-		obj->fnObjectFree = serial_message_free;
+		{
+			wObject* obj = MessageQueue_Object(serial->MainIrpQueue);
+			WINPR_ASSERT(obj);
+			obj->fnObjectFree = serial_message_free;
+		}
 
 		/* IrpThreads content only modified by create_irp_thread() */
 		serial->IrpThreads = ListDictionary_New(FALSE);
@@ -987,7 +970,12 @@ FREERDP_ENTRY_POINT(UINT serial_DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS 
 			goto error_out;
 		}
 
-		serial->IrpThreadToBeTerminatedCount = 0;
+		{
+			wObject* obj = ListDictionary_ValueObject(serial->IrpThreads);
+			WINPR_ASSERT(obj);
+			obj->fnObjectFree = irp_thread_close;
+		}
+
 		InitializeCriticalSection(&serial->TerminatingIrpThreadsLock);
 
 		error = pEntryPoints->RegisterDevice(pEntryPoints->devman, &serial->device);
