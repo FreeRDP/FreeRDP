@@ -671,7 +671,7 @@ static void create_irp_thread(SERIAL_DEVICE* serial, IRP* irp)
 	data->serial = serial;
 	data->irp = irp;
 	/* data freed by irp_thread_func */
-	irpThread = CreateThread(NULL, 0, irp_thread_func, (void*)data, 0, NULL);
+	irpThread = CreateThread(NULL, 0, irp_thread_func, (void*)data, CREATE_SUSPENDED, NULL);
 
 	if (irpThread == INVALID_HANDLE_VALUE)
 	{
@@ -687,8 +687,12 @@ static void create_irp_thread(SERIAL_DEVICE* serial, IRP* irp)
 		goto error_handle;
 	}
 
+	ResumeThread(irpThread);
+
 	return;
 error_handle:
+	if (irpThread)
+		CloseHandle(irpThread);
 	irp->IoStatus = STATUS_NO_MEMORY;
 	irp->Complete(irp);
 	free(data);
