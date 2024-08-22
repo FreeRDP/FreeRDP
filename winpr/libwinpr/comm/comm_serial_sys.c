@@ -1075,6 +1075,10 @@ static BOOL set_wait_mask(WINPR_COMM* pComm, const ULONG* pWaitMask)
 		/* waiting the end of the pending wait_on_mask() */
 		while (is_wait_set(pComm))
 			Sleep(10); /* 10ms */
+
+		EnterCriticalSection(&pComm->EventsLock);
+		pComm->PendingEvents &= ~SERIAL_EV_WINPR_STOP;
+		LeaveCriticalSection(&pComm->EventsLock);
 	}
 
 	/* NB: ensure to leave the critical section before to return */
@@ -1473,8 +1477,6 @@ static BOOL wait_on_mask(WINPR_COMM* pComm, ULONG* pOutputMask)
 
 		if (pComm->PendingEvents & SERIAL_EV_WINPR_STOP)
 		{
-			pComm->PendingEvents &= ~SERIAL_EV_WINPR_STOP;
-
 			/* pOutputMask must remain empty but should
 			 * not have been modified.
 			 *

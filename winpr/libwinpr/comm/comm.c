@@ -1378,19 +1378,6 @@ BOOL CommCloseHandle(HANDLE handle)
 	if (!CommIsHandled(handle))
 		return FALSE;
 
-	if (pComm->PendingEvents & SERIAL_EV_WINPR_WAITING)
-	{
-		ULONG WaitMask = 0;
-		DWORD BytesReturned = 0;
-
-		/* ensures to gracefully stop the WAIT_ON_MASK's loop */
-		if (!CommDeviceIoControl(handle, IOCTL_SERIAL_SET_WAIT_MASK, &WaitMask, sizeof(ULONG), NULL,
-		                         0, &BytesReturned, NULL))
-		{
-			CommLog_Print(WLOG_WARN, "failure to WAIT_ON_MASK's loop!");
-		}
-	}
-
 	DeleteCriticalSection(&pComm->ReadLock);
 	DeleteCriticalSection(&pComm->WriteLock);
 	DeleteCriticalSection(&pComm->EventsLock);
