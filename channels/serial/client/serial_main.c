@@ -858,6 +858,7 @@ FREERDP_ENTRY_POINT(UINT serial_DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS 
 	RDPDR_SERIAL* device = (RDPDR_SERIAL*)pEntryPoints->device;
 	WINPR_ASSERT(device);
 
+	wLog* log = WLog_Get(TAG);
 	const char* name = device->device.Name;
 	const char* path = device->Path;
 	const char* driver = device->Driver;
@@ -865,17 +866,13 @@ FREERDP_ENTRY_POINT(UINT serial_DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS 
 	if (!name || (name[0] == '*'))
 	{
 		/* TODO: implement auto detection of serial ports */
+		WLog_Print(log, WLOG_WARN,
+		           "Serial port autodetection not implemented, nothing will be redirected!");
 		return CHANNEL_RC_OK;
 	}
 
 	if ((name && name[0]) && (path && path[0]))
 	{
-		wLog* log = WLog_Get(TAG);
-		WLog_Print(log, WLOG_DEBUG, "initializing");
-#ifndef __linux__ /* to be removed */
-		WLog_Print(log, WLOG_WARN, "Serial ports redirection not supported on this platform.");
-		return CHANNEL_RC_INITIALIZATION_ERROR;
-#else /* __linux __ */
 		WLog_Print(log, WLOG_DEBUG, "Defining %s as %s", name, path);
 
 		if (!DefineCommDevice(name /* eg: COM1 */, path /* eg: /dev/ttyS0 */))
@@ -922,10 +919,10 @@ FREERDP_ENTRY_POINT(UINT serial_DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS 
 				serial->ServerSerialDriverId = SerialDriverSerCx2Sys;
 			else
 			{
-				WINPR_ASSERT(FALSE);
-				WLog_Print(serial->log, WLOG_DEBUG,
-				           "Unknown server's serial driver: %s. SerCx2 will be used", driver);
-				serial->ServerSerialDriverId = SerialDriverSerialSys;
+				WLog_Print(serial->log, WLOG_WARN, "Unknown server's serial driver: %s.", driver);
+				WLog_Print(serial->log, WLOG_WARN,
+				           "Valid options are: 'Serial' (default), 'SerCx' and 'SerCx2'");
+				goto error_out;
 			}
 		}
 		else
@@ -942,14 +939,14 @@ FREERDP_ENTRY_POINT(UINT serial_DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS 
 			}
 			else
 			{
-				WLog_Print(serial->log, WLOG_DEBUG, "Unknown flag: %s", device->Permissive);
-				WINPR_ASSERT(FALSE);
+				WLog_Print(serial->log, WLOG_WARN, "Unknown flag: %s", device->Permissive);
+				goto error_out;
 			}
 		}
 
 		WLog_Print(serial->log, WLOG_DEBUG, "Server's serial driver: %s (id: %d)", driver,
 		           serial->ServerSerialDriverId);
-		/* TODO: implement auto detection of the server's serial driver */
+
 		serial->MainIrpQueue = MessageQueue_New(NULL);
 
 		if (!serial->MainIrpQueue)
@@ -998,8 +995,6 @@ FREERDP_ENTRY_POINT(UINT serial_DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS 
 			error = ERROR_INTERNAL_ERROR;
 			goto error_out;
 		}
-
-#endif /* __linux __ */
 	}
 
 	return error;
