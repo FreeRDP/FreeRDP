@@ -142,13 +142,13 @@ static int persistent_cache_read_entry_v3(rdpPersistentCache* persistent,
 	WINPR_ASSERT(persistent);
 	WINPR_ASSERT(entry);
 
-	if (fread((void*)&entry3, sizeof(entry3), 1, persistent->fp) != 1)
+	if (fread(&entry3, sizeof(entry3), 1, persistent->fp) != 1)
 		return -1;
 
 	entry->key64 = entry3.key64;
 	entry->width = entry3.width;
 	entry->height = entry3.height;
-	entry->size = entry3.width * entry3.height * 4;
+	entry->size = 4ul * entry3.width * entry3.height;
 	entry->flags = 0;
 
 	if (entry->size > persistent->bmpSize)

@@ -564,14 +564,14 @@ void freerdp_device_collection_free(rdpSettings* settings)
 	if (settings->DeviceArray)
 	{
 		for (UINT32 index = 0; index < settings->DeviceArraySize; index++)
-			freerdp_settings_set_pointer_array(settings, FreeRDP_DeviceArray, index, NULL);
+			(void)freerdp_settings_set_pointer_array(settings, FreeRDP_DeviceArray, index, NULL);
 	}
 
 	free(settings->DeviceArray);
 
-	freerdp_settings_set_pointer(settings, FreeRDP_DeviceArray, NULL);
-	freerdp_settings_set_uint32(settings, FreeRDP_DeviceArraySize, 0);
-	freerdp_settings_set_uint32(settings, FreeRDP_DeviceCount, 0);
+	(void)freerdp_settings_set_pointer(settings, FreeRDP_DeviceArray, NULL);
+	(void)freerdp_settings_set_uint32(settings, FreeRDP_DeviceArraySize, 0);
+	(void)freerdp_settings_set_uint32(settings, FreeRDP_DeviceCount, 0);
 }
 
 BOOL freerdp_static_channel_collection_del(rdpSettings* settings, const char* name)

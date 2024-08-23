@@ -1285,6 +1285,7 @@ static LONG smartcard_StatusW_Call(scard_call_context* smartcard, wStream* out,
 	}
 
 	/* SCardStatusW returns number of characters, we need number of bytes */
+	WINPR_ASSERT(ret.cBytes != SCARD_AUTOALLOCATE);
 	ret.cBytes *= sizeof(WCHAR);
 
 	status = smartcard_pack_status_return(out, &ret, TRUE);

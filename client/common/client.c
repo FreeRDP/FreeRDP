@@ -636,12 +636,7 @@ static DWORD client_cli_accept_certificate(freerdp* instance)
 
 		if ((answer == EOF) || feof(stdin))
 		{
-			printf("\nError: Could not read answer from stdin.");
-
-			if (fromStdin)
-				printf(" - Run without parameter \"--from-stdin\" to set trust.");
-
-			printf("\n");
+			printf("\nError: Could not read answer from stdin.\n");
 			return 0;
 		}
 
