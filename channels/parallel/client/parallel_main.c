@@ -53,6 +53,7 @@
 #include <freerdp/constants.h>
 #include <freerdp/channels/rdpdr.h>
 #include <freerdp/channels/log.h>
+#include <freerdp/utils/rdpdr_utils.h>
 
 #define TAG CHANNELS_TAG("drive.client")
 
@@ -67,6 +68,7 @@ typedef struct
 	HANDLE thread;
 	wMessageQueue* queue;
 	rdpContext* rdpcontext;
+	wLog* log;
 } PARALLEL_DEVICE;
 
 /**
@@ -166,7 +168,7 @@ static UINT parallel_process_irp_read(PARALLEL_DEVICE* parallel, IRP* irp)
 
 	if (!buffer)
 	{
-		WLog_ERR(TAG, "malloc failed!");
+		WLog_Print(parallel->log, WLOG_ERROR, "malloc failed!");
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
@@ -190,7 +192,7 @@ static UINT parallel_process_irp_read(PARALLEL_DEVICE* parallel, IRP* irp)
 	{
 		if (!Stream_EnsureRemainingCapacity(irp->output, Length))
 		{
-			WLog_ERR(TAG, "Stream_EnsureRemainingCapacity failed!");
+			WLog_Print(parallel->log, WLOG_ERROR, "Stream_EnsureRemainingCapacity failed!");
 			free(buffer);
 			return CHANNEL_RC_NO_MEMORY;
 		}
@@ -271,7 +273,7 @@ static UINT parallel_process_irp_device_control(PARALLEL_DEVICE* parallel, IRP* 
  */
 static UINT parallel_process_irp(PARALLEL_DEVICE* parallel, IRP* irp)
 {
-	UINT error = 0;
+	UINT error = ERROR_INTERNAL_ERROR;
 
 	WINPR_ASSERT(parallel);
 	WINPR_ASSERT(irp);
@@ -279,57 +281,42 @@ static UINT parallel_process_irp(PARALLEL_DEVICE* parallel, IRP* irp)
 	switch (irp->MajorFunction)
 	{
 		case IRP_MJ_CREATE:
-			if ((error = parallel_process_irp_create(parallel, irp)))
-			{
-				WLog_ERR(TAG, "parallel_process_irp_create failed with error %" PRIu32 "!", error);
-				return error;
-			}
-
+			error = parallel_process_irp_create(parallel, irp);
 			break;
 
 		case IRP_MJ_CLOSE:
-			if ((error = parallel_process_irp_close(parallel, irp)))
-			{
-				WLog_ERR(TAG, "parallel_process_irp_close failed with error %" PRIu32 "!", error);
-				return error;
-			}
-
+			error = parallel_process_irp_close(parallel, irp);
 			break;
 
 		case IRP_MJ_READ:
-			if ((error = parallel_process_irp_read(parallel, irp)))
-			{
-				WLog_ERR(TAG, "parallel_process_irp_read failed with error %" PRIu32 "!", error);
-				return error;
-			}
-
+			error = parallel_process_irp_read(parallel, irp);
 			break;
 
 		case IRP_MJ_WRITE:
-			if ((error = parallel_process_irp_write(parallel, irp)))
-			{
-				WLog_ERR(TAG, "parallel_process_irp_write failed with error %" PRIu32 "!", error);
-				return error;
-			}
-
+			error = parallel_process_irp_write(parallel, irp);
 			break;
 
 		case IRP_MJ_DEVICE_CONTROL:
-			if ((error = parallel_process_irp_device_control(parallel, irp)))
-			{
-				WLog_ERR(TAG, "parallel_process_irp_device_control failed with error %" PRIu32 "!",
-				         error);
-				return error;
-			}
-
+			error = parallel_process_irp_device_control(parallel, irp);
 			break;
 
 		default:
 			irp->IoStatus = STATUS_NOT_SUPPORTED;
-			return irp->Complete(irp);
+			error = irp->Complete(irp);
+			break;
 	}
 
-	return CHANNEL_RC_OK;
+	DWORD level = WLOG_TRACE;
+	if (error)
+		level = WLOG_WARN;
+
+	WLog_Print(parallel->log, level,
+	           "[%s|0x%08" PRIx32 "] completed with %s [0x%08" PRIx32 "] (IoStatus %s [0x%08" PRIx32
+	           "])",
+	           rdpdr_irp_string(irp->MajorFunction), irp->MajorFunction, WTSErrorToString(error),
+	           error, NtStatus2Tag(irp->IoStatus), irp->IoStatus);
+
+	return error;
 }
 
 static DWORD WINAPI parallel_thread_func(LPVOID arg)
@@ -342,7 +329,7 @@ static DWORD WINAPI parallel_thread_func(LPVOID arg)
 	{
 		if (!MessageQueue_Wait(parallel->queue))
 		{
-			WLog_ERR(TAG, "MessageQueue_Wait failed!");
+			WLog_Print(parallel->log, WLOG_ERROR, "MessageQueue_Wait failed!");
 			error = ERROR_INTERNAL_ERROR;
 			break;
 		}
@@ -350,7 +337,7 @@ static DWORD WINAPI parallel_thread_func(LPVOID arg)
 		wMessage message = { 0 };
 		if (!MessageQueue_Peek(parallel->queue, &message, TRUE))
 		{
-			WLog_ERR(TAG, "MessageQueue_Peek failed!");
+			WLog_Print(parallel->log, WLOG_ERROR, "MessageQueue_Peek failed!");
 			error = ERROR_INTERNAL_ERROR;
 			break;
 		}
@@ -360,9 +347,11 @@ static DWORD WINAPI parallel_thread_func(LPVOID arg)
 
 		IRP* irp = (IRP*)message.wParam;
 
-		if ((error = parallel_process_irp(parallel, irp)))
+		error = parallel_process_irp(parallel, irp);
+		if (error)
 		{
-			WLog_ERR(TAG, "parallel_process_irp failed with error %" PRIu32 "!", error);
+			WLog_Print(parallel->log, WLOG_ERROR,
+			           "parallel_process_irp failed with error %" PRIu32 "!", error);
 			break;
 		}
 	}
@@ -383,9 +372,11 @@ static UINT parallel_irp_request(DEVICE* device, IRP* irp)
 {
 	PARALLEL_DEVICE* parallel = (PARALLEL_DEVICE*)device;
 
+	WINPR_ASSERT(parallel);
+
 	if (!MessageQueue_Post(parallel->queue, NULL, 0, (void*)irp, NULL))
 	{
-		WLog_ERR(TAG, "MessageQueue_Post failed!");
+		WLog_Print(parallel->log, WLOG_ERROR, "MessageQueue_Post failed!");
 		return ERROR_INTERNAL_ERROR;
 	}
 
@@ -399,21 +390,24 @@ static UINT parallel_irp_request(DEVICE* device, IRP* irp)
  */
 static UINT parallel_free(DEVICE* device)
 {
-	UINT error = 0;
 	PARALLEL_DEVICE* parallel = (PARALLEL_DEVICE*)device;
 
-	if (!MessageQueue_PostQuit(parallel->queue, 0) ||
-	    (WaitForSingleObject(parallel->thread, INFINITE) == WAIT_FAILED))
+	if (parallel)
 	{
-		error = GetLastError();
-		WLog_ERR(TAG, "WaitForSingleObject failed with error %" PRIu32 "!", error);
-		return error;
-	}
+		if (!MessageQueue_PostQuit(parallel->queue, 0) ||
+		    (WaitForSingleObject(parallel->thread, INFINITE) == WAIT_FAILED))
+		{
+			const UINT error = GetLastError();
+			WLog_Print(parallel->log, WLOG_ERROR,
+			           "WaitForSingleObject failed with error %" PRIu32 "!", error);
+			return error;
+		}
 
-	CloseHandle(parallel->thread);
-	Stream_Free(parallel->device.data, TRUE);
-	MessageQueue_Free(parallel->queue);
-	free(parallel);
+		CloseHandle(parallel->thread);
+		Stream_Free(parallel->device.data, TRUE);
+		MessageQueue_Free(parallel->queue);
+		free(parallel);
+	}
 	return CHANNEL_RC_OK;
 }
 
@@ -439,24 +433,24 @@ static void parallel_message_free(void* obj)
  */
 FREERDP_ENTRY_POINT(UINT parallel_DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints))
 {
-	char* name = NULL;
-	char* path = NULL;
-	size_t length = 0;
-	RDPDR_PARALLEL* device = NULL;
 	PARALLEL_DEVICE* parallel = NULL;
 	UINT error = 0;
 
 	WINPR_ASSERT(pEntryPoints);
 
-	device = (RDPDR_PARALLEL*)pEntryPoints->device;
+	RDPDR_PARALLEL* device = (RDPDR_PARALLEL*)pEntryPoints->device;
 	WINPR_ASSERT(device);
 
-	name = device->device.Name;
-	path = device->Path;
+	wLog* log = WLog_Get(TAG);
+	WINPR_ASSERT(log);
+
+	char* name = device->device.Name;
+	char* path = device->Path;
 
 	if (!name || (name[0] == '*') || !path)
 	{
 		/* TODO: implement auto detection of parallel ports */
+		WLog_Print(log, WLOG_WARN, "Autodetection not implemented, no ports will be redirected");
 		return CHANNEL_RC_INITIALIZATION_ERROR;
 	}
 
@@ -466,21 +460,22 @@ FREERDP_ENTRY_POINT(UINT parallel_DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINT
 
 		if (!parallel)
 		{
-			WLog_ERR(TAG, "calloc failed!");
+			WLog_Print(log, WLOG_ERROR, "calloc failed!");
 			return CHANNEL_RC_NO_MEMORY;
 		}
 
+		parallel->log = log;
 		parallel->device.type = RDPDR_DTYP_PARALLEL;
 		parallel->device.name = name;
 		parallel->device.IRPRequest = parallel_irp_request;
 		parallel->device.Free = parallel_free;
 		parallel->rdpcontext = pEntryPoints->rdpcontext;
-		length = strlen(name);
+		const size_t length = strlen(name);
 		parallel->device.data = Stream_New(NULL, length + 1);
 
 		if (!parallel->device.data)
 		{
-			WLog_ERR(TAG, "Stream_New failed!");
+			WLog_Print(parallel->log, WLOG_ERROR, "Stream_New failed!");
 			error = CHANNEL_RC_NO_MEMORY;
 			goto error_out;
 		}
@@ -493,7 +488,7 @@ FREERDP_ENTRY_POINT(UINT parallel_DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINT
 
 		if (!parallel->queue)
 		{
-			WLog_ERR(TAG, "MessageQueue_New failed!");
+			WLog_Print(parallel->log, WLOG_ERROR, "MessageQueue_New failed!");
 			error = CHANNEL_RC_NO_MEMORY;
 			goto error_out;
 		}
@@ -502,16 +497,18 @@ FREERDP_ENTRY_POINT(UINT parallel_DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINT
 		WINPR_ASSERT(obj);
 		obj->fnObjectFree = parallel_message_free;
 
-		if ((error = pEntryPoints->RegisterDevice(pEntryPoints->devman, (DEVICE*)parallel)))
+		error = pEntryPoints->RegisterDevice(pEntryPoints->devman, &parallel->device);
+		if (error)
 		{
-			WLog_ERR(TAG, "RegisterDevice failed with error %" PRIu32 "!", error);
+			WLog_Print(parallel->log, WLOG_ERROR, "RegisterDevice failed with error %" PRIu32 "!",
+			           error);
 			goto error_out;
 		}
 
-		if (!(parallel->thread =
-		          CreateThread(NULL, 0, parallel_thread_func, (void*)parallel, 0, NULL)))
+		parallel->thread = CreateThread(NULL, 0, parallel_thread_func, parallel, 0, NULL);
+		if (!parallel->thread)
 		{
-			WLog_ERR(TAG, "CreateThread failed!");
+			WLog_Print(parallel->log, WLOG_ERROR, "CreateThread failed!");
 			error = ERROR_INTERNAL_ERROR;
 			goto error_out;
 		}
@@ -519,8 +516,7 @@ FREERDP_ENTRY_POINT(UINT parallel_DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINT
 
 	return CHANNEL_RC_OK;
 error_out:
-	MessageQueue_Free(parallel->queue);
-	Stream_Free(parallel->device.data, TRUE);
-	free(parallel);
+	if (parallel)
+		parallel_free(&parallel->device);
 	return error;
 }
