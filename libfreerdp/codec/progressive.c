@@ -1060,12 +1060,10 @@ fail:
 static INLINE INT16 progressive_rfx_srl_read(RFX_PROGRESSIVE_UPGRADE_STATE* WINPR_RESTRICT state,
                                              UINT32 numBits)
 {
-	UINT32 k = 0;
-	UINT32 bit = 0;
-	UINT32 max = 0;
-	UINT32 mag = 0;
-	UINT32 sign = 0;
+	WINPR_ASSERT(state);
+
 	wBitStream* bs = state->srl;
+	WINPR_ASSERT(bs);
 
 	if (state->nz)
 	{
@@ -1073,12 +1071,12 @@ static INLINE INT16 progressive_rfx_srl_read(RFX_PROGRESSIVE_UPGRADE_STATE* WINP
 		return 0;
 	}
 
-	k = state->kp / 8;
+	const UINT32 k = state->kp / 8;
 
 	if (!state->mode)
 	{
 		/* zero encoding */
-		bit = (bs->accumulator & 0x80000000) ? 1 : 0;
+		const UINT32 bit = (bs->accumulator & 0x80000000) ? 1 : 0;
 		BitStream_Shift(bs, 1);
 
 		if (!bit)
@@ -1117,7 +1115,7 @@ static INLINE INT16 progressive_rfx_srl_read(RFX_PROGRESSIVE_UPGRADE_STATE* WINP
 	state->mode = 0; /* zero encoding is next */
 	/* unary encoding */
 	/* read sign bit */
-	sign = (bs->accumulator & 0x80000000) ? 1 : 0;
+	const UINT32 sign = (bs->accumulator & 0x80000000) ? 1 : 0;
 	BitStream_Shift(bs, 1);
 
 	if (state->kp < 6)
@@ -1128,12 +1126,12 @@ static INLINE INT16 progressive_rfx_srl_read(RFX_PROGRESSIVE_UPGRADE_STATE* WINP
 	if (numBits == 1)
 		return sign ? -1 : 1;
 
-	mag = 1;
-	max = (1 << numBits) - 1;
+	UINT32 mag = 1;
+	const UINT32 max = (1 << numBits) - 1;
 
 	while (mag < max)
 	{
-		bit = (bs->accumulator & 0x80000000) ? 1 : 0;
+		const UINT32 bit = (bs->accumulator & 0x80000000) ? 1 : 0;
 		BitStream_Shift(bs, 1);
 
 		if (bit)

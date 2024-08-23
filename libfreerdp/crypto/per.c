@@ -575,6 +575,8 @@ BOOL per_read_numeric_string(wStream* s, UINT16 min)
 
 BOOL per_write_numeric_string(wStream* s, const BYTE* num_str, UINT16 length, UINT16 min)
 {
+	WINPR_ASSERT(num_str || (length == 0));
+
 	const UINT16 mlength = (length >= min) ? length - min : min;
 
 	if (!per_write_length(s, mlength))

@@ -1526,9 +1526,6 @@ BOOL vgids_init(vgidsContext* ctx, const char* cert, const char* privateKey, con
 	if (size <= 0)
 		goto init_failed;
 
-	if (size <= 0)
-		goto init_failed;
-
 	cmrec.wKeyExchangeKeySizeBits = (WORD)size * 8;
 	if (!vgids_ef_write_do(commonEF, VGIDS_DO_CMAPFILE, &cmrec, sizeof(cmrec)))
 		goto init_failed;
