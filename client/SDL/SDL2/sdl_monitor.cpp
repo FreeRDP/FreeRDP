@@ -24,6 +24,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <algorithm>
 
 #include <SDL.h>
 
@@ -324,17 +325,78 @@ BOOL sdl_detect_monitors(SdlContext* sdl, UINT32* pMaxWidth, UINT32* pMaxHeight)
 	WINPR_ASSERT(settings);
 
 	const int numDisplays = SDL_GetNumVideoDisplays();
-	if (!freerdp_settings_set_pointer_len(settings, FreeRDP_MonitorIds, nullptr, numDisplays))
-		return FALSE;
-
-	for (size_t x = 0; x < numDisplays; x++)
+	auto nr = freerdp_settings_get_uint32(settings, FreeRDP_NumMonitorIds);
+	if (nr == 0)
 	{
-		if (!freerdp_settings_set_pointer_array(settings, FreeRDP_MonitorIds, x, &x))
+		if (!freerdp_settings_set_pointer_len(settings, FreeRDP_MonitorIds, nullptr, numDisplays))
 			return FALSE;
+		for (size_t x = 0; x < numDisplays; x++)
+		{
+			if (!freerdp_settings_set_pointer_array(settings, FreeRDP_MonitorIds, x, &x))
+				return FALSE;
+		}
+	}
+	else
+	{
+
+		/* There were more IDs supplied than there are monitors */
+		if (nr > numDisplays)
+		{
+			WLog_ERR(TAG,
+			         "Found %" PRIu32 " monitor IDs, but only have %" PRIu32 " monitors connected",
+			         nr, numDisplays);
+			return FALSE;
+		}
+
+		std::vector<UINT32> used;
+		for (size_t x = 0; x < nr; x++)
+		{
+			auto cur = static_cast<const UINT32*>(
+			    freerdp_settings_get_pointer_array(settings, FreeRDP_MonitorIds, x));
+			WINPR_ASSERT(cur);
+
+			auto id = *cur;
+
+			/* the ID is no valid monitor index */
+			if (id >= nr)
+			{
+				WLog_ERR(TAG,
+				         "Supplied monitor ID[%" PRIuz "]=%" PRIu32 " is invalid, only [0-%" PRIu32
+				         "] are allowed",
+				         x, id, nr - 1);
+				return FALSE;
+			}
+
+			/* The ID is already taken */
+			if (std::find(used.begin(), used.end(), id) != used.end())
+			{
+				WLog_ERR(TAG, "Duplicate monitor ID[%" PRIuz "]=%" PRIu32 " detected", x, id);
+				return FALSE;
+			}
+			used.push_back(*cur);
+		}
 	}
 
 	if (!sdl_apply_display_properties(sdl))
 		return FALSE;
 
 	return sdl_detect_single_window(sdl, pMaxWidth, pMaxHeight);
+}
+
+INT64 sdl_monitor_id_for_index(SdlContext* sdl, UINT32 index)
+{
+	WINPR_ASSERT(sdl);
+	auto settings = sdl->context()->settings;
+
+	auto nr = freerdp_settings_get_uint32(settings, FreeRDP_NumMonitorIds);
+	if (nr == 0)
+		return index;
+
+	if (nr <= index)
+		return -1;
+
+	auto cur = static_cast<const UINT32*>(
+	    freerdp_settings_get_pointer_array(settings, FreeRDP_MonitorIds, index));
+	WINPR_ASSERT(cur);
+	return *cur;
 }
