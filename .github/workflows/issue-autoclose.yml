@@ -16,6 +16,7 @@ jobs:
         with:
           days-before-stale: 30
           days-before-close: 30
+          operations-per-run: 60
           exempt-issue-labels: "wip,pinned,help-wanted,blocker,feature"
           exempt-pr-labels: "wip,pinned,help-wanted,blocker,feature"
           stale-issue-label: "stale"
