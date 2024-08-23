@@ -497,10 +497,15 @@ static UINT serial_process_irp(SERIAL_DEVICE* serial, IRP* irp)
 			break;
 	}
 
-	WLog_Print(serial->log, WLOG_DEBUG,
-	           "IRP MajorFunction: %s, MinorFunction: 0x%08" PRIX32 " returned 0x%08" PRIx32
-	           ", I0Status=0x%08" PRIx32 "\n",
-	           rdpdr_irp_string(irp->MajorFunction), irp->MinorFunction, error, irp->IoStatus);
+	DWORD level = WLOG_TRACE;
+	if (error)
+		level = WLOG_WARN;
+
+	WLog_Print(serial->log, level,
+	           "[%s|0x%08" PRIx32 "] completed with %s [0x%08" PRIx32 "] (IoStatus %s [0x%08" PRIx32
+	           "])",
+	           rdpdr_irp_string(irp->MajorFunction), irp->MajorFunction, WTSErrorToString(error),
+	           error, NtStatus2Tag(irp->IoStatus), irp->IoStatus);
 
 	return error;
 }
