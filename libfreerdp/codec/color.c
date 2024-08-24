@@ -84,8 +84,6 @@ BOOL freerdp_image_copy_from_monochrome(BYTE* WINPR_RESTRICT pDstData, UINT32 Ds
                                         UINT32 backColor, UINT32 foreColor,
                                         const gdiPalette* WINPR_RESTRICT palette)
 {
-	BOOL vFlip = 0;
-	UINT32 monoStep = 0;
 	const UINT32 dstBytesPerPixel = FreeRDPGetBytesPerPixel(DstFormat);
 
 	if (!pDstData || !pSrcData || !palette)
@@ -94,19 +92,13 @@ BOOL freerdp_image_copy_from_monochrome(BYTE* WINPR_RESTRICT pDstData, UINT32 Ds
 	if (nDstStep == 0)
 		nDstStep = dstBytesPerPixel * nWidth;
 
-	vFlip = FALSE;
-	monoStep = (nWidth + 7) / 8;
+	const UINT32 monoStep = (nWidth + 7) / 8;
 
 	for (UINT32 y = 0; y < nHeight; y++)
 	{
-		const BYTE* monoBits = NULL;
 		BYTE* pDstLine = &pDstData[((nYDst + y) * nDstStep)];
 		UINT32 monoBit = 0x80;
-
-		if (!vFlip)
-			monoBits = &pSrcData[monoStep * y];
-		else
-			monoBits = &pSrcData[monoStep * (nHeight - y - 1)];
+		const BYTE* monoBits = &pSrcData[monoStep * y];
 
 		for (UINT32 x = 0; x < nWidth; x++)
 		{

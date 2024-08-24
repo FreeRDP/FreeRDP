@@ -1349,6 +1349,9 @@ char* freerdp_certificate_get_fingerprint_by_hash_ex(const rdpCertificate* cert,
 	if (!fp)
 		return NULL;
 
+	if (fp_len < 1)
+		goto fail;
+
 	size = fp_len * 3 + 1;
 	fp_buffer = calloc(size, sizeof(char));
 	if (!fp_buffer)
@@ -1426,6 +1429,12 @@ fail:
 
 char* freerdp_certificate_get_pem(const rdpCertificate* cert, size_t* pLength)
 {
+	return freerdp_certificate_get_pem_ex(cert, pLength, TRUE);
+}
+
+char* freerdp_certificate_get_pem_ex(const rdpCertificate* cert, size_t* pLength,
+                                     BOOL withCertChain)
+{
 	char* pem = NULL;
 	WINPR_ASSERT(cert);
 
@@ -1455,7 +1464,7 @@ char* freerdp_certificate_get_pem(const rdpCertificate* cert, size_t* pLength)
 		goto fail;
 	}
 
-	if (cert->chain)
+	if (cert->chain && withCertChain)
 	{
 		int count = sk_X509_num(cert->chain);
 		for (int x = 0; x < count; x++)
@@ -1499,6 +1508,12 @@ char* freerdp_certificate_get_email(const rdpCertificate* cert)
 {
 	WINPR_ASSERT(cert);
 	return x509_utils_get_email(cert->x509);
+}
+
+char* freerdp_certificate_get_validity(const rdpCertificate* cert, BOOL startDate)
+{
+	WINPR_ASSERT(cert);
+	return x509_utils_get_date(cert->x509, startDate);
 }
 
 BOOL freerdp_certificate_check_eku(const rdpCertificate* cert, int nid)

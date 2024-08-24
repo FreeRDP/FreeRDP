@@ -573,6 +573,9 @@ static BOOL sdl_pre_connect(freerdp* instance)
 	auto settings = instance->context->settings;
 	WINPR_ASSERT(settings);
 
+	if (!freerdp_settings_set_bool(settings, FreeRDP_CertificateCallbackPreferPEM, TRUE))
+		return FALSE;
+
 	/* Optional OS identifier sent to server */
 	if (!freerdp_settings_set_uint32(settings, FreeRDP_OsMajorType, OSMAJORTYPE_UNIX))
 		return FALSE;
@@ -702,6 +705,9 @@ static BOOL sdl_create_windows(SdlContext* sdl)
 
 	for (UINT32 x = 0; x < windowCount; x++)
 	{
+		auto id = sdl_monitor_id_for_index(sdl, x);
+		if (id < 0)
+			return FALSE;
 		auto monitor = static_cast<rdpMonitor*>(
 		    freerdp_settings_get_pointer_array_writable(settings, FreeRDP_MonitorDefArray, x));
 
@@ -715,8 +721,8 @@ static BOOL sdl_create_windows(SdlContext* sdl)
 		}
 
 		Uint32 flags = SDL_WINDOW_SHOWN;
-		Uint32 startupX = SDL_WINDOWPOS_CENTERED_DISPLAY(x);
-		Uint32 startupY = SDL_WINDOWPOS_CENTERED_DISPLAY(x);
+		Uint32 startupX = SDL_WINDOWPOS_CENTERED_DISPLAY(id);
+		Uint32 startupY = SDL_WINDOWPOS_CENTERED_DISPLAY(id);
 
 		if (monitor->attributes.desktopScaleFactor > 100)
 		{

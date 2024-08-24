@@ -1303,55 +1303,53 @@ static BOOL is_redirected(rdpTls* tls)
 	return settings->RedirectionFlags != 0;
 }
 
-static BOOL is_accepted(rdpTls* tls, const BYTE* pem, size_t length)
+static BOOL is_accepted(rdpTls* tls, const rdpCertificate* cert)
 {
+	WINPR_ASSERT(tls);
+	WINPR_ASSERT(tls->context);
+	WINPR_ASSERT(cert);
 	rdpSettings* settings = tls->context->settings;
-	char* AccpetedKey = NULL;
-	UINT32 AcceptedKeyLength = 0;
+	WINPR_ASSERT(settings);
+
+	FreeRDP_Settings_Keys_String keyAccepted;
+	FreeRDP_Settings_Keys_UInt32 keyLength;
 
 	if (tls->isGatewayTransport)
 	{
-		AccpetedKey = settings->GatewayAcceptedCert;
-		AcceptedKeyLength = settings->GatewayAcceptedCertLength;
+		keyAccepted = FreeRDP_GatewayAcceptedCert;
+		keyLength = FreeRDP_GatewayAcceptedCertLength;
 	}
 	else if (is_redirected(tls))
 	{
-		AccpetedKey = settings->RedirectionAcceptedCert;
-		AcceptedKeyLength = settings->RedirectionAcceptedCertLength;
+		keyAccepted = FreeRDP_RedirectionAcceptedCert;
+		keyLength = FreeRDP_RedirectionAcceptedCertLength;
 	}
 	else
 	{
-		AccpetedKey = settings->AcceptedCert;
-		AcceptedKeyLength = settings->AcceptedCertLength;
+		keyAccepted = FreeRDP_AcceptedCert;
+		keyLength = FreeRDP_AcceptedCertLength;
 	}
 
-	if (AcceptedKeyLength > 0)
+	const char* AcceptedKey = freerdp_settings_get_string(settings, keyAccepted);
+	const UINT32 AcceptedKeyLength = freerdp_settings_get_uint32(settings, keyLength);
+
+	if ((AcceptedKeyLength > 0) && AcceptedKey)
 	{
-		if (AcceptedKeyLength == length)
+		BOOL accepted = FALSE;
+		size_t pemLength = 0;
+		char* pem = freerdp_certificate_get_pem_ex(cert, &pemLength, FALSE);
+		if (pem && (AcceptedKeyLength == pemLength))
 		{
-			if (memcmp(AccpetedKey, pem, AcceptedKeyLength) == 0)
-				return TRUE;
+			if (memcmp(AcceptedKey, pem, AcceptedKeyLength) == 0)
+				accepted = TRUE;
 		}
+		free(pem);
+		if (accepted)
+			return TRUE;
 	}
 
-	if (tls->isGatewayTransport)
-	{
-		free(settings->GatewayAcceptedCert);
-		settings->GatewayAcceptedCert = NULL;
-		settings->GatewayAcceptedCertLength = 0;
-	}
-	else if (is_redirected(tls))
-	{
-		free(settings->RedirectionAcceptedCert);
-		settings->RedirectionAcceptedCert = NULL;
-		settings->RedirectionAcceptedCertLength = 0;
-	}
-	else
-	{
-		free(settings->AcceptedCert);
-		settings->AcceptedCert = NULL;
-		settings->AcceptedCertLength = 0;
-	}
+	freerdp_settings_set_string(settings, keyAccepted, NULL);
+	freerdp_settings_set_uint32(settings, keyLength, 0);
 
 	return FALSE;
 }
@@ -1425,13 +1423,17 @@ static BOOL is_accepted_fingerprint(const rdpCertificate* cert,
 	return rc;
 }
 
-static BOOL accept_cert(rdpTls* tls, const BYTE* pem, UINT32 length)
+static BOOL accept_cert(rdpTls* tls, const rdpCertificate* cert)
 {
 	WINPR_ASSERT(tls);
+	WINPR_ASSERT(tls->context);
+	WINPR_ASSERT(cert);
+
 	FreeRDP_Settings_Keys_String id = FreeRDP_AcceptedCert;
 	FreeRDP_Settings_Keys_UInt32 lid = FreeRDP_AcceptedCertLength;
 
 	rdpSettings* settings = tls->context->settings;
+	WINPR_ASSERT(settings);
 
 	if (tls->isGatewayTransport)
 	{
@@ -1444,13 +1446,18 @@ static BOOL accept_cert(rdpTls* tls, const BYTE* pem, UINT32 length)
 		lid = FreeRDP_RedirectionAcceptedCertLength;
 	}
 
-	if (!freerdp_settings_set_string_len(settings, id, (const char*)pem, length))
-		return FALSE;
+	size_t pemLength = 0;
+	char* pem = freerdp_certificate_get_pem_ex(cert, &pemLength, FALSE);
 
-	return freerdp_settings_set_uint32(settings, lid, length);
+	BOOL rc = FALSE;
+	if (freerdp_settings_set_string_len(settings, id, pem, pemLength))
+		rc = freerdp_settings_set_uint32(settings, lid, pemLength);
+	free(pem);
+	return rc;
 }
 
-static BOOL tls_extract_pem(const rdpCertificate* cert, BYTE** PublicKey, size_t* PublicKeyLength)
+static BOOL tls_extract_full_pem(const rdpCertificate* cert, BYTE** PublicKey,
+                                 size_t* PublicKeyLength)
 {
 	if (!cert || !PublicKey)
 		return FALSE;
@@ -1485,11 +1492,11 @@ int tls_verify_certificate(rdpTls* tls, const rdpCertificate* cert, const char* 
 	if (freerdp_shall_disconnect_context(instance->context))
 		return -1;
 
-	if (!tls_extract_pem(cert, &pemCert, &length))
+	if (!tls_extract_full_pem(cert, &pemCert, &length))
 		goto end;
 
 	/* Check, if we already accepted this key. */
-	if (is_accepted(tls, pemCert, length))
+	if (is_accepted(tls, cert))
 	{
 		verification_status = 1;
 		goto end;
@@ -1520,7 +1527,7 @@ int tls_verify_certificate(rdpTls* tls, const rdpCertificate* cert, const char* 
 			WLog_ERR(TAG, "No VerifyX509Certificate callback registered!");
 
 		if (verification_status > 0)
-			accept_cert(tls, pemCert, length);
+			accept_cert(tls, cert);
 		else if (verification_status < 0)
 		{
 			WLog_ERR(TAG, "VerifyX509Certificate failed: (length = %" PRIuz ") status: [%d] %s",
@@ -1780,7 +1787,7 @@ int tls_verify_certificate(rdpTls* tls, const rdpCertificate* cert, const char* 
 		}
 
 		if (verification_status > 0)
-			accept_cert(tls, pemCert, length);
+			accept_cert(tls, cert);
 	}
 
 end:

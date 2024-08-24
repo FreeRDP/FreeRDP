@@ -195,7 +195,7 @@ void sdlDispContext::OnGraphicsReset(void* context, const GraphicsResetEventArgs
 	}
 }
 
-Uint32 sdlDispContext::OnTimer(Uint32 interval, void* param)
+Uint32 sdlDispContext::OnTimer(void* param, SDL_TimerID timerID, Uint32 interval)
 {
 	auto ctx = static_cast<sdlDispContext*>(param);
 	if (!ctx)
@@ -372,7 +372,6 @@ BOOL sdlDispContext::handle_window_event(const SDL_WindowEvent* ev)
 			_sdl->input.keyboard_grab(ev->windowID, SDL_TRUE);
 			return _sdl->input.keyboard_focus_in();
 		case SDL_EVENT_WINDOW_FOCUS_GAINED:
-		case SDL_EVENT_WINDOW_TAKE_FOCUS:
 			return _sdl->input.keyboard_focus_in();
 
 		default:

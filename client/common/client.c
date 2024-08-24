@@ -636,12 +636,7 @@ static DWORD client_cli_accept_certificate(freerdp* instance)
 
 		if ((answer == EOF) || feof(stdin))
 		{
-			printf("\nError: Could not read answer from stdin.");
-
-			if (fromStdin)
-				printf(" - Run without parameter \"--from-stdin\" to set trust.");
-
-			printf("\n");
+			printf("\nError: Could not read answer from stdin.\n");
 			return 0;
 		}
 
@@ -708,6 +703,30 @@ DWORD client_cli_verify_certificate(freerdp* instance, const char* common_name, 
 }
 #endif
 
+static char* client_cli_pem_cert(const char* pem)
+{
+	rdpCertificate* cert = freerdp_certificate_new_from_pem(pem);
+	if (!cert)
+		return NULL;
+
+	char* fp = freerdp_certificate_get_fingerprint(cert);
+	char* start = freerdp_certificate_get_validity(cert, TRUE);
+	char* end = freerdp_certificate_get_validity(cert, FALSE);
+	freerdp_certificate_free(cert);
+
+	char* str = NULL;
+	size_t slen = 0;
+	winpr_asprintf(&str, &slen,
+	               "\tValid from:  %s\n"
+	               "\tValid to:    %s\n"
+	               "\tThumbprint:  %s\n",
+	               start, end, fp);
+	free(fp);
+	free(start);
+	free(end);
+	return str;
+}
+
 /** Callback set in the rdp_freerdp structure, and used to make a certificate validation
  *  when the connection requires it.
  *  This function will actually be called by tls_verify_certificate().
@@ -748,9 +767,9 @@ DWORD client_cli_verify_certificate_ex(freerdp* instance, const char* host, UINT
 	 */
 	if (flags & VERIFY_CERT_FLAG_FP_IS_PEM)
 	{
-		printf("\t----------- Certificate --------------\n");
-		printf("%s\n", fingerprint);
-		printf("\t--------------------------------------\n");
+		char* str = client_cli_pem_cert(fingerprint);
+		printf("%s", str);
+		free(str);
 	}
 	else
 		printf("\tThumbprint:  %s\n", fingerprint);
@@ -854,9 +873,9 @@ DWORD client_cli_verify_changed_certificate_ex(freerdp* instance, const char* ho
 	 */
 	if (flags & VERIFY_CERT_FLAG_FP_IS_PEM)
 	{
-		printf("\t----------- Certificate --------------\n");
-		printf("%s\n", fingerprint);
-		printf("\t--------------------------------------\n");
+		char* str = client_cli_pem_cert(fingerprint);
+		printf("%s", str);
+		free(str);
 	}
 	else
 		printf("\tThumbprint:  %s\n", fingerprint);
@@ -869,9 +888,9 @@ DWORD client_cli_verify_changed_certificate_ex(freerdp* instance, const char* ho
 	 */
 	if (flags & VERIFY_CERT_FLAG_FP_IS_PEM)
 	{
-		printf("\t----------- Certificate --------------\n");
-		printf("%s\n", old_fingerprint);
-		printf("\t--------------------------------------\n");
+		char* str = client_cli_pem_cert(old_fingerprint);
+		printf("%s", str);
+		free(str);
 	}
 	else
 		printf("\tThumbprint:  %s\n", old_fingerprint);

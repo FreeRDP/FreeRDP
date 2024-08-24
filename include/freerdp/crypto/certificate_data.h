@@ -60,6 +60,8 @@ extern "C"
 	FREERDP_API UINT16 freerdp_certificate_data_get_port(const rdpCertificateData* cert);
 
 	FREERDP_API const char* freerdp_certificate_data_get_pem(const rdpCertificateData* cert);
+	FREERDP_API const char* freerdp_certificate_data_get_pem_ex(const rdpCertificateData* cert,
+	                                                            BOOL withFullChain);
 	FREERDP_API const char* freerdp_certificate_data_get_subject(const rdpCertificateData* cert);
 	FREERDP_API const char* freerdp_certificate_data_get_issuer(const rdpCertificateData* cert);
 	FREERDP_API const char*

@@ -224,7 +224,7 @@ bool SDLConnectionDialog::handle(const SDL_Event& event)
 			{
 				auto& ev = reinterpret_cast<const SDL_KeyboardEvent&>(event);
 				update(_renderer);
-				switch (event.key.keysym.sym)
+				switch (event.key.key)
 				{
 					case SDLK_RETURN:
 					case SDLK_RETURN2:
@@ -478,7 +478,7 @@ void SDLConnectionDialog::resetTimer()
 	_running = false;
 }
 
-Uint32 SDLConnectionDialog::timeout(Uint32 intervalMS, void* pvthis)
+Uint32 SDLConnectionDialog::timeout(void* pvthis, SDL_TimerID timerID, Uint32 intervalMS)
 {
 	auto ths = static_cast<SDLConnectionDialog*>(pvthis);
 	ths->hide();

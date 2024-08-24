@@ -103,7 +103,7 @@ static BOOL disp_server_is_monitor_layout_valid(const DISPLAY_CONTROL_MONITOR_LA
 	if (monitor->Height < DISPLAY_CONTROL_MIN_MONITOR_HEIGHT ||
 	    monitor->Height > DISPLAY_CONTROL_MAX_MONITOR_HEIGHT)
 	{
-		WLog_WARN(TAG, "Received invalid value for monitor->Height: %" PRIu32 "", monitor->Width);
+		WLog_WARN(TAG, "Received invalid value for monitor->Height: %" PRIu32 "", monitor->Height);
 		return FALSE;
 	}
 

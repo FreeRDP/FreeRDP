@@ -30,6 +30,7 @@
 
 int main(int argc, char** argv)
 {
+	int rc = 1;
 	GC gc = NULL;
 	int depth = 0;
 	int x = 0;
@@ -100,12 +101,12 @@ int main(int argc, char** argv)
 
 	engine = rdtk_engine_new();
 	if (!engine)
-		return 1;
+		goto fail;
 
 	scanline = width * 4;
 	buffer = (uint8_t*)calloc(height, scanline);
 	if (!buffer)
-		return 1;
+		goto fail;
 
 	surface = rdtk_surface_new(engine, buffer, width, height, scanline);
 
@@ -146,7 +147,10 @@ int main(int argc, char** argv)
 
 	XFlush(display);
 
-	XDestroyImage(image);
+	rc = 0;
+fail:
+	if (image)
+		XDestroyImage(image);
 	XCloseDisplay(display);
 
 	rdtk_surface_free(surface);
@@ -154,5 +158,5 @@ int main(int argc, char** argv)
 
 	rdtk_engine_free(engine);
 
-	return 0;
+	return rc;
 }

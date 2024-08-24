@@ -48,6 +48,7 @@
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_hints.h>
 #include <SDL3/SDL_video.h>
+#include <SDL3/SDL_oldnames.h>
 
 #include "sdl_channels.hpp"
 #include "sdl_freerdp.hpp"
@@ -483,7 +484,6 @@ static void sdl_destroy_primary(SdlContext* sdl)
 	if (!sdl)
 		return;
 	sdl->primary.reset();
-	sdl->primary_format.reset();
 }
 
 /* Create a SDL surface from the GDI buffer */
@@ -498,19 +498,17 @@ static BOOL sdl_create_primary(SdlContext* sdl)
 
 	sdl_destroy_primary(sdl);
 	sdl->primary =
-	    SDLSurfacePtr(SDL_CreateSurfaceFrom(gdi->primary_buffer, static_cast<int>(gdi->width),
-	                                        static_cast<int>(gdi->height),
-	                                        static_cast<int>(gdi->stride), sdl->sdl_pixel_format),
+	    SDLSurfacePtr(SDL_CreateSurfaceFrom(static_cast<int>(gdi->width),
+	                                        static_cast<int>(gdi->height), sdl->sdl_pixel_format,
+	                                        gdi->primary_buffer, static_cast<int>(gdi->stride)),
 	                  SDL_DestroySurface);
-	sdl->primary_format =
-	    SDLPixelFormatPtr(SDL_CreatePixelFormat(sdl->sdl_pixel_format), SDL_DestroyPixelFormat);
-
-	if (!sdl->primary || !sdl->primary_format)
+	if (!sdl->primary)
 		return FALSE;
 
 	SDL_SetSurfaceBlendMode(sdl->primary.get(), SDL_BLENDMODE_NONE);
-	SDL_FillSurfaceRect(sdl->primary.get(), nullptr,
-	                    SDL_MapRGBA(sdl->primary_format.get(), 0, 0, 0, 0xff));
+	SDL_Rect surfaceRect = { 0, 0, gdi->width, gdi->height };
+	SDL_FillSurfaceRect(sdl->primary.get(), &surfaceRect,
+	                    SDL_MapSurfaceRGBA(sdl->primary.get(), 0, 0, 0, 0xff));
 
 	return TRUE;
 }
@@ -572,6 +570,9 @@ static BOOL sdl_pre_connect(freerdp* instance)
 
 	auto settings = instance->context->settings;
 	WINPR_ASSERT(settings);
+
+	if (!freerdp_settings_set_bool(settings, FreeRDP_CertificateCallbackPreferPEM, TRUE))
+		return FALSE;
 
 	/* Optional OS identifier sent to server */
 	if (!freerdp_settings_set_uint32(settings, FreeRDP_OsMajorType, OSMAJORTYPE_UNIX))
@@ -702,6 +703,10 @@ static BOOL sdl_create_windows(SdlContext* sdl)
 
 	for (UINT32 x = 0; x < windowCount; x++)
 	{
+		auto id = sdl_monitor_id_for_index(sdl, x);
+		if (id < 0)
+			return FALSE;
+
 		auto monitor = static_cast<rdpMonitor*>(
 		    freerdp_settings_get_pointer_array_writable(settings, FreeRDP_MonitorDefArray, x));
 
@@ -715,8 +720,8 @@ static BOOL sdl_create_windows(SdlContext* sdl)
 		}
 
 		Uint32 flags = 0;
-		Uint32 startupX = SDL_WINDOWPOS_CENTERED_DISPLAY(x);
-		Uint32 startupY = SDL_WINDOWPOS_CENTERED_DISPLAY(x);
+		Uint32 startupX = SDL_WINDOWPOS_CENTERED_DISPLAY(id);
+		Uint32 startupY = SDL_WINDOWPOS_CENTERED_DISPLAY(id);
 
 		if (monitor->attributes.desktopScaleFactor > 100)
 		{
@@ -1029,16 +1034,16 @@ static int sdl_run(SdlContext* sdl)
 									window->second.fill();
 									window->second.updateSurface();
 									break;
-							case SDL_EVENT_WINDOW_MOVED:
-							{
-								auto r = window->second.rect();
-								auto id = window->second.id();
-								WLog_DBG(SDL_TAG, "%lu: %dx%d-%dx%d", id, r.x, r.y, r.w, r.h);
-							}
-							break;
-							default:
+								case SDL_EVENT_WINDOW_MOVED:
+								{
+									auto r = window->second.rect();
+									auto id = window->second.id();
+									WLog_DBG(SDL_TAG, "%lu: %dx%d-%dx%d", id, r.x, r.y, r.w, r.h);
+								}
 								break;
-						}
+								default:
+									break;
+							}
 						}
 					}
 					break;
@@ -1645,7 +1650,7 @@ int main(int argc, char* argv[])
 
 	SDL_SetLogOutputFunction(winpr_LogOutputFunction, sdl);
 	auto level = WLog_GetLogLevel(sdl->log);
-	SDL_LogSetAllPriority(wloglevel2dl(level));
+	SDL_SetLogPriorities(wloglevel2dl(level));
 
 	auto context = sdl->context();
 	WINPR_ASSERT(context);
@@ -1699,8 +1704,7 @@ BOOL SdlContext::update_resizeable(BOOL enable)
 
 SdlContext::SdlContext(rdpContext* context)
     : _context(context), log(WLog_Get(SDL_TAG)), update_complete(true), disp(this), clip(this),
-      input(this), primary(nullptr, SDL_DestroySurface),
-      primary_format(nullptr, SDL_DestroyPixelFormat), rdp_thread_running(false)
+      input(this), primary(nullptr, SDL_DestroySurface), rdp_thread_running(false)
 {
 	WINPR_ASSERT(context);
 	grab_kbd_enabled = freerdp_settings_get_bool(context->settings, FreeRDP_GrabKeyboard);

@@ -790,7 +790,7 @@ static UINT rdpgfx_send_cache_import_offer_pdu(RdpgfxClientContext* context,
 
 	header.flags = 0;
 	header.cmdId = RDPGFX_CMDID_CACHEIMPORTOFFER;
-	header.pduLength = RDPGFX_HEADER_SIZE + 2 + pdu->cacheEntriesCount * 12;
+	header.pduLength = RDPGFX_HEADER_SIZE + 2ul + pdu->cacheEntriesCount * 12ul;
 	DEBUG_RDPGFX(gfx->log, "SendCacheImportOfferPdu: cacheEntriesCount: %" PRIu16 "",
 	             pdu->cacheEntriesCount);
 	s = Stream_New(NULL, header.pduLength);
@@ -893,6 +893,7 @@ static UINT rdpgfx_send_cache_offer(RDPGFX_PLUGIN* gfx)
 		goto fail;
 	}
 
+	WINPR_ASSERT(count <= UINT16_MAX);
 	offer->cacheEntriesCount = (UINT16)count;
 
 	WLog_DBG(TAG, "Sending Cache Import Offer: %d", count);

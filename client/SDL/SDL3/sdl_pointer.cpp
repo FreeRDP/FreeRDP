@@ -26,7 +26,7 @@
 #include "sdl_touch.hpp"
 #include "sdl_utils.hpp"
 
-#include <SDL_mouse.h>
+#include <SDL3/SDL_mouse.h>
 
 #define TAG CLIENT_TAG("SDL.pointer")
 

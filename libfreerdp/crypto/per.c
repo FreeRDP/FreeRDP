@@ -575,12 +575,9 @@ BOOL per_read_numeric_string(wStream* s, UINT16 min)
 
 BOOL per_write_numeric_string(wStream* s, const BYTE* num_str, UINT16 length, UINT16 min)
 {
-	UINT16 mlength = 0;
-	BYTE num = 0;
-	BYTE c1 = 0;
-	BYTE c2 = 0;
+	WINPR_ASSERT(num_str || (length == 0));
 
-	mlength = (length >= min) ? length - min : min;
+	const UINT16 mlength = (length >= min) ? length - min : min;
 
 	if (!per_write_length(s, mlength))
 		return FALSE;
@@ -589,12 +586,15 @@ BOOL per_write_numeric_string(wStream* s, const BYTE* num_str, UINT16 length, UI
 		return FALSE;
 	for (UINT16 i = 0; i < length; i += 2)
 	{
-		c1 = num_str[i];
-		c2 = ((i + 1) < length) ? num_str[i + 1] : 0x30;
+		BYTE c1 = num_str[i];
+		BYTE c2 = ((i + 1) < length) ? num_str[i + 1] : 0x30;
+
+		if ((c1 < 0x30) || (c2 < 0x30))
+			return FALSE;
 
 		c1 = (c1 - 0x30) % 10;
 		c2 = (c2 - 0x30) % 10;
-		num = (c1 << 4) | c2;
+		const BYTE num = (c1 << 4) | c2;
 
 		Stream_Write_UINT8(s, num); /* string */
 	}

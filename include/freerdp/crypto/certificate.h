@@ -65,6 +65,8 @@ extern "C"
 	FREERDP_API char* freerdp_certificate_get_fingerprint(const rdpCertificate* certificate);
 	FREERDP_API char* freerdp_certificate_get_pem(const rdpCertificate* certificate,
 	                                              size_t* pLength);
+	FREERDP_API char* freerdp_certificate_get_pem_ex(const rdpCertificate* certificate,
+	                                                 size_t* pLength, BOOL withCertChain);
 	FREERDP_API BYTE* freerdp_certificate_get_der(const rdpCertificate* certificate,
 	                                              size_t* pLength);
 
@@ -73,6 +75,9 @@ extern "C"
 
 	FREERDP_API char* freerdp_certificate_get_upn(const rdpCertificate* certificate);
 	FREERDP_API char* freerdp_certificate_get_email(const rdpCertificate* certificate);
+
+	FREERDP_API char* freerdp_certificate_get_validity(const rdpCertificate* certificate,
+	                                                   BOOL startDate);
 
 	FREERDP_API WINPR_MD_TYPE freerdp_certificate_get_signature_alg(const rdpCertificate* cert);
 

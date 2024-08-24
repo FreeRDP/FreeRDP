@@ -458,12 +458,14 @@ static BOOL xf_sw_desktop_resize(rdpContext* context)
 	xfContext* xfc = (xfContext*)context;
 	rdpSettings* settings = context->settings;
 	BOOL ret = FALSE;
-	xf_lock_x11(xfc);
 
 	if (!gdi_resize(gdi, freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth),
 	                freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight)))
-		goto out;
+		return FALSE;
 
+	/* Do not lock during gdi_resize, there might still be drawing operations in progress.
+	 * locking will deadlock. */
+	xf_lock_x11(xfc);
 	if (xfc->image)
 	{
 		xfc->image->data = NULL;
@@ -794,16 +796,17 @@ void xf_unlock_x11_(xfContext* xfc, const char* fkt)
 {
 	if (xfc->locked == 0)
 		WLog_WARN(TAG, "X11: trying to unlock although not locked!");
+	else
+		xfc->locked--;
 
 #ifdef WITH_DEBUG_X11
-	WLog_VRB(TAG, "[%" PRIu32 "] from %s", xfc->locked - 1, fkt);
+	WLog_VRB(TAG, "[%" PRIu32 "] from %s", xfc->locked, fkt);
 #endif
 
 	if (!xfc->UseXThreads)
 		ReleaseMutex(xfc->mutex);
 	else
 		XUnlockDisplay(xfc->display);
-	xfc->locked--;
 }
 
 static BOOL xf_get_pixmap_info(xfContext* xfc)
@@ -1111,6 +1114,9 @@ static BOOL xf_pre_connect(freerdp* instance)
 
 	settings = context->settings;
 	WINPR_ASSERT(settings);
+
+	if (!freerdp_settings_set_bool(settings, FreeRDP_CertificateCallbackPreferPEM, TRUE))
+		return FALSE;
 
 	if (!freerdp_settings_get_bool(settings, FreeRDP_AuthenticationOnly))
 	{

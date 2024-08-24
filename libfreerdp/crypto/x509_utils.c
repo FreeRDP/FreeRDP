@@ -463,6 +463,33 @@ char* x509_utils_get_upn(const X509* x509)
 	return result;
 }
 
+char* x509_utils_get_date(const X509* x509, BOOL startDate)
+{
+	WINPR_ASSERT(x509);
+
+	const ASN1_TIME* date = startDate ? X509_get0_notBefore(x509) : X509_get0_notAfter(x509);
+	if (!date)
+		return NULL;
+
+	BIO* bmem = BIO_new(BIO_s_mem());
+	if (!bmem)
+		return NULL;
+
+	char* str = NULL;
+	if (ASN1_TIME_print(bmem, date))
+	{
+		BUF_MEM* bptr;
+
+		BIO_get_mem_ptr(bmem, &bptr);
+		str = strndup(bptr->data, bptr->length);
+	}
+	else
+	{ // Log error
+	}
+	BIO_free_all(bmem);
+	return str;
+}
+
 void x509_utils_dns_names_free(size_t count, size_t* lengths, char** dns_names)
 {
 	free(lengths);

@@ -59,7 +59,20 @@ run zip -r ${ZIPNAME} freerdp-${TAG}
 create_hash ${ZIPNAME}
 popd
 
+# Sign the release tarballs
+for EXT in tar.gz tar.bz2 tar.xz zip;
+do
+	run gpg --local-user 0xA49454A3FC909FD5 --sign --armor --output ${TMPDIR}/freerdp-${TAG}.${EXT}.asc --detach-sig ${TMPDIR}/freerdp-${TAG}.${EXT}
+done
+
 run mv ${TMPDIR}/freerdp-${TAG}.tar* .
 run mv ${TMPDIR}/freerdp-${TAG}.zip* .
 run rm -rf ${TMPDIR}
+
+# Verify the release tarball signatures
+for EXT in tar.gz tar.bz2 tar.xz zip;
+do
+	run gpg --verify freerdp-${TAG}.${EXT}.asc
+done
+
 exit 0

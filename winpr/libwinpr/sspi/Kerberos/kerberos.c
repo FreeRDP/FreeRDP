@@ -414,7 +414,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleW(
     void* pAuthData, SEC_GET_KEY_FN pGetKeyFn, void* pvGetKeyArgument, PCredHandle phCredential,
     PTimeStamp ptsExpiry)
 {
-	SECURITY_STATUS status = 0;
+	SECURITY_STATUS status = SEC_E_INSUFFICIENT_MEMORY;
 	char* principal = NULL;
 	char* package = NULL;
 
@@ -422,23 +422,22 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleW(
 	{
 		principal = ConvertWCharToUtf8Alloc(pszPrincipal, NULL);
 		if (!principal)
-			return SEC_E_INSUFFICIENT_MEMORY;
+			goto fail;
 	}
 	if (pszPackage)
 	{
 		package = ConvertWCharToUtf8Alloc(pszPackage, NULL);
 		if (!package)
-			return SEC_E_INSUFFICIENT_MEMORY;
+			goto fail;
 	}
 
 	status =
 	    kerberos_AcquireCredentialsHandleA(principal, package, fCredentialUse, pvLogonID, pAuthData,
 	                                       pGetKeyFn, pvGetKeyArgument, phCredential, ptsExpiry);
 
-	if (principal)
-		free(principal);
-	if (package)
-		free(package);
+fail:
+	free(principal);
+	free(package);
 
 	return status;
 }
