@@ -48,14 +48,14 @@ static BOOL channelTracker_resetCurrentPacket(ChannelStateTracker* tracker)
 	if (tracker->currentPacket)
 	{
 		const size_t cap = Stream_Capacity(tracker->currentPacket);
-		if (cap < 1 * 1000 * 1000)
+		if (cap < 1ULL * 1000ULL * 1000ULL)
 			create = FALSE;
 		else
 			Stream_Free(tracker->currentPacket, TRUE);
 	}
 
 	if (create)
-		tracker->currentPacket = Stream_New(NULL, 10 * 1024);
+		tracker->currentPacket = Stream_New(NULL, 10ULL * 1024ULL);
 	if (!tracker->currentPacket)
 		return FALSE;
 	Stream_SetPosition(tracker->currentPacket, 0);

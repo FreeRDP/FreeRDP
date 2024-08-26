@@ -30,7 +30,7 @@ int rdtk_surface_fill(rdtkSurface* surface, uint16_t x, uint16_t y, uint16_t wid
 
 	for (uint32_t i = y; i < y * 1ul + height; i++)
 	{
-		uint8_t* line = &surface->data[i * surface->scanline];
+		uint8_t* line = &surface->data[1ULL * i * surface->scanline];
 		for (uint32_t j = x; j < x * 1ul + width; j++)
 		{
 			uint32_t* pixel = (uint32_t*)&line[j + 4ul];

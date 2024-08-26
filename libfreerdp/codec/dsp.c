@@ -1481,7 +1481,8 @@ BOOL freerdp_dsp_context_reset(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
 		size_t min_frame_data = 1ull * context->common.format.wBitsPerSample *
 		                        context->common.format.nChannels * FramesPerPacket;
 		size_t data_per_block =
-		    (context->common.format.nBlockAlign - 4 * context->common.format.nChannels) * 8;
+		    (1ULL * context->common.format.nBlockAlign - 4ULL * context->common.format.nChannels) *
+		    8ULL;
 		size_t nb_block_per_packet = min_frame_data / data_per_block;
 
 		if (min_frame_data % data_per_block)

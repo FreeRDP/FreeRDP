@@ -30,7 +30,7 @@ HGDI_BITMAP test_convert_to_bitmap(const BYTE* src, UINT32 SrcFormat, UINT32 Src
 	if (DstStride == 0)
 		DstStride = nWidth * FreeRDPGetBytesPerPixel(DstFormat);
 
-	data = winpr_aligned_malloc(DstStride * nHeight, 16);
+	data = winpr_aligned_malloc(1ULL * DstStride * nHeight, 16);
 
 	if (!data)
 		return NULL;

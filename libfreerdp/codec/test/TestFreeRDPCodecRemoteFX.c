@@ -795,9 +795,9 @@ static UINT32 srefImage
 	       0x00129bf5
     };
 
-#define IMG_WIDTH 64
-#define IMG_HEIGHT 64
-#define FORMAT_SIZE 4
+#define IMG_WIDTH 64ULL
+#define IMG_HEIGHT 64ULL
+#define FORMAT_SIZE 4ULL
 #define FORMAT PIXEL_FORMAT_XRGB32
 
 static INLINE size_t fuzzyCompare(BYTE b1, BYTE b2)

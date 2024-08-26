@@ -146,15 +146,13 @@ static BOOL tsmf_alsa_play(ITSMFAudioDevice* audio, const BYTE* src, UINT32 data
 	int frames = 0;
 	const BYTE* end = NULL;
 	const BYTE* pindex = NULL;
-	int rbytes_per_frame = 0;
-	int sbytes_per_frame = 0;
 	TSMFAlsaAudioDevice* alsa = (TSMFAlsaAudioDevice*)audio;
 	DEBUG_TSMF("data_size %" PRIu32 "", data_size);
 
 	if (alsa->out_handle)
 	{
-		sbytes_per_frame = alsa->source_channels * alsa->bytes_per_sample;
-		rbytes_per_frame = alsa->actual_channels * alsa->bytes_per_sample;
+		const size_t sbytes_per_frame = 1ULL * alsa->source_channels * alsa->bytes_per_sample;
+		const size_t rbytes_per_frame = 1ULL * alsa->actual_channels * alsa->bytes_per_sample;
 		pindex = src;
 		end = pindex + data_size;
 

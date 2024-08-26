@@ -168,7 +168,7 @@ static INLINE BOOL diff_tile(const RECTANGLE_16* regionRect, BYTE* pYUVData[3],
 	if (regionRect->right / 2u > iStride[2])
 		return FALSE;
 
-	for (UINT16 y = regionRect->top; y < regionRect->bottom; y++)
+	for (size_t y = regionRect->top; y < regionRect->bottom; y++)
 	{
 		const BYTE* cur0 = &pYUVData[0][y * iStride[0]];
 		const BYTE* cur1 = &pYUVData[1][y * iStride[1]];

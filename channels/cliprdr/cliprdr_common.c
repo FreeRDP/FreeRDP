@@ -404,9 +404,9 @@ UINT cliprdr_read_format_list(wStream* s, CLIPRDR_FORMAT_LIST* formatList, BOOL 
 	else if (!useLongFormatNames)
 	{
 		const size_t cap = Stream_Capacity(sub1);
-		formatList->numFormats = (cap / 36);
+		formatList->numFormats = (cap / 36ULL);
 
-		if ((formatList->numFormats * 36) != cap)
+		if ((36ULL * formatList->numFormats) != cap)
 		{
 			WLog_ERR(TAG, "Invalid short format list length: %" PRIuz "", cap);
 			return ERROR_INTERNAL_ERROR;

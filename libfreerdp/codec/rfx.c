@@ -156,7 +156,7 @@ static INLINE void rfx_tile_init(void* obj)
 
 static INLINE void* rfx_decoder_tile_new(const void* val)
 {
-	const size_t size = 4 * 64 * 64;
+	const size_t size = 4ULL * 64ULL * 64ULL;
 	RFX_TILE* tile = NULL;
 	WINPR_UNUSED(val);
 
@@ -259,7 +259,7 @@ RFX_CONTEXT* rfx_context_new_ex(BOOL encoder, UINT32 ThreadingFlags)
 	 *
 	 * We then multiply by 3 to use a single, partioned buffer for all 3 channels.
 	 */
-	priv->BufferPool = BufferPool_New(TRUE, (8192 + 32) * 3, 16);
+	priv->BufferPool = BufferPool_New(TRUE, (8192ULL + 32ULL) * 3ULL, 16);
 
 	if (!priv->BufferPool)
 		goto fail;
@@ -577,7 +577,7 @@ static INLINE BOOL rfx_process_message_channels(RFX_CONTEXT* WINPR_RESTRICT cont
 	}
 
 	/* Now, only the first monitor can be used, therefore the other channels will be ignored. */
-	Stream_Seek(s, 5 * (numChannels - 1));
+	Stream_Seek(s, 5ULL * (numChannels - 1));
 	WLog_Print(context->priv->log, WLOG_DEBUG,
 	           "numChannels %" PRIu8 " id %" PRIu8 ", %" PRIu16 "x%" PRIu16 ".", numChannels,
 	           channelId, context->width, context->height);
@@ -2303,7 +2303,7 @@ static INLINE BOOL rfx_write_progressive_region(RFX_CONTEXT* WINPR_RESTRICT rfx,
 	 */
 	for (UINT16 i = 0; i < msg->numQuant; i++)
 	{
-		const UINT32* qv = &msg->quantVals[i * 10];
+		const UINT32* qv = &msg->quantVals[10ULL * i];
 		/* RFX_COMPONENT_CODEC_QUANT */
 		Stream_Write_UINT8(s, (UINT8)(qv[0] + (qv[2] << 4))); /* LL3 (4-bit), HL3 (4-bit) */
 		Stream_Write_UINT8(s, (UINT8)(qv[1] + (qv[3] << 4))); /* LH3 (4-bit), HH3 (4-bit) */

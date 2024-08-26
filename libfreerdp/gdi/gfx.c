@@ -751,11 +751,11 @@ static BOOL gdi_apply_alpha(BYTE* data, UINT32 format, UINT32 stride, RECTANGLE_
 	const UINT32 bpp = FreeRDPGetBytesPerPixel(format);
 	WINPR_ASSERT(rect);
 
-	for (UINT32 y = rect->top; y < rect->bottom; y++)
+	for (size_t y = rect->top; y < rect->bottom; y++)
 	{
-		BYTE* line = &data[stride * y];
+		BYTE* line = &data[y * stride];
 
-		for (UINT32 x = first ? rect->left + startOffsetX : rect->left; x < rect->right; x++)
+		for (size_t x = first ? rect->left + startOffsetX : rect->left; x < rect->right; x++)
 		{
 			BYTE r = 0;
 			BYTE g = 0;
@@ -825,11 +825,11 @@ static UINT gdi_SurfaceCommand_Alpha(rdpGdi* gdi, RdpgfxClientContext* context,
 		if (!Stream_CheckAndLogRequiredLengthOfSize(TAG, s, cmd->height, cmd->width))
 			return ERROR_INVALID_DATA;
 
-		for (UINT32 y = cmd->top; y < cmd->top + cmd->height; y++)
+		for (size_t y = cmd->top; y < cmd->top + cmd->height; y++)
 		{
-			BYTE* line = &surface->data[surface->scanline * y];
+			BYTE* line = &surface->data[y * surface->scanline];
 
-			for (UINT32 x = cmd->left; x < cmd->left + cmd->width; x++)
+			for (size_t x = cmd->left; x < cmd->left + cmd->width; x++)
 			{
 				UINT32 color = 0;
 				BYTE r = 0;

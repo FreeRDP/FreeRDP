@@ -523,7 +523,7 @@ BOOL region16_union_rect(REGION16* dst, const REGION16* src, const RECTANGLE_16*
 		return TRUE;
 	}
 
-	newItems = allocateRegion((1 + region16_n_rects(src)) * 4);
+	newItems = allocateRegion((1ULL + 4ULL * region16_n_rects(src)));
 
 	if (!newItems)
 		return FALSE;

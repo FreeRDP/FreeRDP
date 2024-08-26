@@ -64,7 +64,7 @@ static BOOL nsc_decode(NSC_CONTEXT* WINPR_RESTRICT context)
 	if (!bmpdata)
 		return FALSE;
 
-	for (UINT32 y = 0; y < context->height; y++)
+	for (size_t y = 0; y < context->height; y++)
 	{
 		const BYTE* yplane = NULL;
 		const BYTE* coplane = NULL;
