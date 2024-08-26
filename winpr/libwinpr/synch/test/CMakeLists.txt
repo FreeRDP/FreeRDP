@@ -23,7 +23,7 @@ create_test_sourcelist(${MODULE_PREFIX}_SRCS
 	${${MODULE_PREFIX}_TESTS})
 
 if(FREEBSD)
-	include_directories(${EPOLLSHIM_INCLUDE_DIR})
+	include_directories(SYSTEM ${EPOLLSHIM_INCLUDE_DIR})
 endif()
 
 add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})

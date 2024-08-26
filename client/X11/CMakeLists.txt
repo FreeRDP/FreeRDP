@@ -42,8 +42,8 @@ include(ConfigureFreeRDP)
 find_package(X11 REQUIRED)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../../resources)
-include_directories(${X11_INCLUDE_DIRS})
-include_directories(${OPENSSL_INCLUDE_DIR})
+include_directories(SYSTEM ${X11_INCLUDE_DIRS})
+include_directories(SYSTEM ${OPENSSL_INCLUDE_DIR})
 
 set(SRCS
 	xf_utils.h
@@ -100,7 +100,7 @@ set(PRIV_LIBS
 find_package(X11 REQUIRED)
 if(X11_XShm_FOUND)
 	add_definitions(-DWITH_XSHM)
-	include_directories(${X11_XShm_INCLUDE_PATH})
+    include_directories(SYSTEM ${X11_XShm_INCLUDE_PATH})
 	list(APPEND PRIV_LIBS
 		${X11_Xext_LIB}
 	)
@@ -112,7 +112,7 @@ if (WITH_XINERAMA)
 	find_package(X11 REQUIRED)
 	if(X11_Xinerama_FOUND)
 		add_definitions(-DWITH_XINERAMA)
-		include_directories(${X11_Xinerama_INCLUDE_PATH})
+        include_directories(SYSTEM ${X11_Xinerama_INCLUDE_PATH})
 		list(APPEND PRIV_LIBS
 			${X11_Xinerama_LIB}
 		)
@@ -135,7 +135,7 @@ if (WITH_XCURSOR)
 	find_package(X11 REQUIRED)
 	if(X11_Xcursor_FOUND)
 		add_definitions(-DWITH_XCURSOR)
-		include_directories(${X11_Xcursor_INCLUDE_PATH})
+        include_directories(SYSTEM ${X11_Xcursor_INCLUDE_PATH})
 		list(APPEND PRIV_LIBS
 			${X11_Xcursor_LIB}
 		)
@@ -147,7 +147,7 @@ if (WITH_XV)
 	find_package(X11 REQUIRED)
 	if(X11_Xv_FOUND)
 		add_definitions(-DWITH_XV)
-		include_directories(${X11_Xv_INCLUDE_PATH})
+        include_directories(SYSTEM ${X11_Xv_INCLUDE_PATH})
 		list(APPEND PRIV_LIBS
 			${X11_Xv_LIB}
 		)
@@ -159,7 +159,7 @@ if (WITH_XI)
 	find_package(X11 REQUIRED)
 	if(X11_Xi_FOUND)
 		add_definitions(-DWITH_XI)
-		include_directories(${X11_Xi_INCLUDE_PATH})
+        include_directories(SYSTEM ${X11_Xi_INCLUDE_PATH})
 		list(APPEND PRIV_LIBS
 			${X11_Xi_LIB}
 		)
@@ -171,7 +171,7 @@ if(WITH_XRENDER)
 	find_package(X11 REQUIRED)
 	if(X11_Xrender_FOUND)
 		add_definitions(-DWITH_XRENDER)
-		include_directories(${X11_Xrender_INCLUDE_PATH})
+        include_directories(SYSTEM ${X11_Xrender_INCLUDE_PATH})
 		list(APPEND PRIV_LIBS
 			${X11_Xrender_LIB}
 		)
@@ -183,7 +183,7 @@ if (WITH_XRANDR)
 	find_package(X11 REQUIRED)
 	if(X11_Xrandr_FOUND)
 		add_definitions(-DWITH_XRANDR)
-		include_directories(${X11_Xrandr_INCLUDE_PATH})
+        include_directories(SYSTEM ${X11_Xrandr_INCLUDE_PATH})
 		list(APPEND PRIV_LIBS
 			${X11_Xrandr_LIB}
 		)
@@ -195,7 +195,7 @@ if (WITH_XFIXES)
 	find_package(X11 REQUIRED)
 	if(X11_Xfixes_FOUND)
 		add_definitions(-DWITH_XFIXES)
-		include_directories(${X11_Xfixes_INCLUDE_PATH})
+        include_directories(SYSTEM ${X11_Xfixes_INCLUDE_PATH})
 		list(APPEND PRIV_LIBS
 			${X11_Xfixes_LIB}
 		)

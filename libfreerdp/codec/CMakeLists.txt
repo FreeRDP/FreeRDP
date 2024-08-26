@@ -92,23 +92,23 @@ if (WITH_DSP_FFMPEG)
         ${CODEC_SRCS}
 		dsp_ffmpeg.c
 		dsp_ffmpeg.h)
-		include_directories(${FFMPEG_INCLUDE_DIRS})
+    include_directories(SYSTEM ${FFMPEG_INCLUDE_DIRS})
 		list(APPEND CODEC_LIBS ${FFMPEG_LIBRARIES})
 endif (WITH_DSP_FFMPEG)
 
 if (WITH_SOXR)
 	list(APPEND CODEC_LIBS ${SOXR_LIBRARIES})
-    include_directories(${SOXR_INCLUDE_DIR})
+    include_directories(SYSTEM ${SOXR_INCLUDE_DIR})
 endif(WITH_SOXR)
 
 if(GSM_FOUND)
 	list(APPEND CODEC_LIBS ${GSM_LIBRARIES})
-    include_directories(${GSM_INCLUDE_DIRS})
+    include_directories(SYSTEM ${GSM_INCLUDE_DIRS})
 endif()
 
 if(LAME_FOUND)
 	list(APPEND CODEC_LIBS ${LAME_LIBRARIES})
-    include_directories(${LAME_INCLUDE_DIRS})
+    include_directories(SYSTEM ${LAME_INCLUDE_DIRS})
 endif()
 
 if (WITH_FDK_AAC)
@@ -121,17 +121,17 @@ endif()
 
 if(FAAD2_FOUND)
 	list(APPEND CODEC_LIBS ${FAAD2_LIBRARIES})
-    include_directories(${FAAD2_INCLUDE_DIRS})
+    include_directories(SYSTEM ${FAAD2_INCLUDE_DIRS})
 endif()
 
 if(FAAC_FOUND)
 	list(APPEND CODEC_LIBS ${FAAC_LIBRARIES})
-    include_directories(${FAAC_INCLUDE_DIRS})
+    include_directories(SYSTEM ${FAAC_INCLUDE_DIRS})
 endif()
 
 if(WITH_OPENH264)
 	set(CODEC_SRCS ${CODEC_SRCS} h264_openh264.c)
-	include_directories(${OPENH264_INCLUDE_DIR})
+	include_directories(SYSTEM ${OPENH264_INCLUDE_DIR})
 	if (NOT WITH_OPENH264_LOADING)
 		list(APPEND CODEC_LIBS ${OPENH264_LIBRARIES})
 	endif (NOT WITH_OPENH264_LOADING)
@@ -139,7 +139,7 @@ endif()
 
 if(WITH_VIDEO_FFMPEG)
 	set(CODEC_SRCS ${CODEC_SRCS} h264_ffmpeg.c)
-	include_directories(${FFMPEG_INCLUDE_DIRS})
+	include_directories(SYSTEM ${FFMPEG_INCLUDE_DIRS})
 	list(APPEND CODEC_LIBS ${FFMPEG_LIBRARIES})
 endif()
 

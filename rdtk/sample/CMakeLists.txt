@@ -20,7 +20,7 @@ set(MODULE_PREFIX "RDTK_SAMPLE")
 
 find_package(X11 REQUIRED)
 
-include_directories(${X11_INCLUDE_DIR})
+include_directories(SYSTEM ${X11_INCLUDE_DIR})
 
 set(SRCS
 	rdtk_x11.c)
