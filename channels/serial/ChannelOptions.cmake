@@ -13,6 +13,11 @@ if(ANDROID)
 	set(OPTION_SERVER_DEFAULT OFF)
 endif()
 
+if (APPLE)
+	set(OPTION_CLIENT_DEFAULT OFF)
+	set(OPTION_SERVER_DEFAULT OFF)
+endif()
+
 define_channel_options(NAME "serial" TYPE "device"
 	DESCRIPTION "Serial Port Virtual Channel Extension"
 	SPECIFICATIONS "[MS-RDPESP]"
