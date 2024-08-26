@@ -78,6 +78,7 @@ static void UwacWindowDestroyBuffers(UwacWindow* w)
 	w->buffers = NULL;
 }
 
+WINPR_ATTR_MALLOC(UwacWindowDestroyBuffers, 1)
 static int UwacWindowShmAllocBuffers(UwacWindow* w, int64_t nbuffers, int64_t allocSize,
                                      uint32_t width, uint32_t height, enum wl_shm_format format);
 
@@ -331,7 +332,7 @@ int UwacWindowShmAllocBuffers(UwacWindow* w, int64_t nbuffers, int64_t allocSize
 		return UWAC_ERROR_NOMEMORY;
 
 	/* round up to a multiple of PAGESIZE to page align data for each buffer */
-	uint64_t test = (0ull + allocSize + pagesize - 1ull) & ~(pagesize - 1);
+	const uint64_t test = (1ull * allocSize + pagesize - 1ull) & ~(pagesize - 1);
 	if (test > INT64_MAX)
 		return UWAC_ERROR_NOMEMORY;
 

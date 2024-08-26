@@ -212,7 +212,6 @@ static UINT parallel_process_irp_write(PARALLEL_DEVICE* parallel, IRP* irp)
 	UINT32 len = 0;
 	UINT32 Length = 0;
 	UINT64 Offset = 0;
-	ssize_t status = 0;
 
 	WINPR_ASSERT(parallel);
 	WINPR_ASSERT(irp);
@@ -233,7 +232,7 @@ static UINT parallel_process_irp_write(PARALLEL_DEVICE* parallel, IRP* irp)
 
 	while (len > 0)
 	{
-		status = write(parallel->file, ptr, len);
+		const ssize_t status = write(parallel->file, ptr, len);
 
 		if ((status < 0) || (status > len))
 		{
