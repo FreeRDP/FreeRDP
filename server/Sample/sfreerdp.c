@@ -362,10 +362,10 @@ static BOOL test_peer_load_icon(freerdp_peer* client)
 		goto out_fail;
 
 	/* background with same size, which will be used to erase the icon from old position */
-	if (!(context->bg_data = calloc(context->image->height, context->image->width * 3)))
+	if (!(context->bg_data = calloc(context->image->height, 3ULL * context->image->width)))
 		goto out_fail;
 
-	memset(context->bg_data, 0xA0, context->image->height * context->image->width * 3ull);
+	memset(context->bg_data, 0xA0, 3ULL * context->image->height * context->image->width);
 	return TRUE;
 out_fail:
 	context->bg_data = NULL;

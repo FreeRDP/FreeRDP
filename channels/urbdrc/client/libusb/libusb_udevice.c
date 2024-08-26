@@ -1213,7 +1213,7 @@ static int libusb_udev_isoch_transfer(IUDEVICE* idev, GENERIC_CHANNEL_CALLBACK* 
 	ASYNC_TRANSFER_USER_DATA* user_data = NULL;
 	struct libusb_transfer* iso_transfer = NULL;
 	URBDRC_PLUGIN* urbdrc = NULL;
-	size_t outSize = (NumberOfPackets * 12);
+	size_t outSize = (12ULL * NumberOfPackets);
 	uint32_t streamID = 0x40000000 | RequestId;
 
 	if (!pdev || !pdev->urbdrc)
@@ -1230,7 +1230,7 @@ static int libusb_udev_isoch_transfer(IUDEVICE* idev, GENERIC_CHANNEL_CALLBACK* 
 	user_data->StartFrame = StartFrame;
 
 	if (!Buffer)
-		Stream_Seek(user_data->data, (NumberOfPackets * 12));
+		Stream_Seek(user_data->data, (12ULL * NumberOfPackets));
 
 	if (NumberOfPackets > 0)
 	{

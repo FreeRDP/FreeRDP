@@ -533,7 +533,7 @@ static BOOL convertKeyType(CK_KEY_TYPE k, LPWSTR dest, DWORD len, DWORD* outlen)
 
 		if (dest)
 		{
-			memcpy(dest, r, retLen * 2);
+			memcpy(dest, r, sizeof(WCHAR) * retLen);
 			dest[retLen] = 0;
 		}
 	}
@@ -798,7 +798,7 @@ static SECURITY_STATUS NCryptP11EnumKeys(NCRYPT_PROV_HANDLE hProvider, LPCWSTR p
 			    (1 + (sizeof(key->slotId) * 2) /*slotId*/ + 1 + (key->idLen * 2) + 1) * 2;
 
 			convertKeyType(key->keyType, NULL, 0, &algoSz);
-			KEYNAME_SZ += (algoSz + 1) * 2;
+			KEYNAME_SZ += (1ULL + algoSz) * 2ULL;
 
 			keyName = calloc(1, sizeof(*keyName) + KEYNAME_SZ);
 			if (!keyName)

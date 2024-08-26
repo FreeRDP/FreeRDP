@@ -100,7 +100,7 @@ static UINT encomsp_read_unicode_string(wStream* s, ENCOMSP_UNICODE_STRING* str)
 	if (!Stream_CheckAndLogRequiredLengthOfSize(TAG, s, str->cchString, sizeof(WCHAR)))
 		return ERROR_INVALID_DATA;
 
-	Stream_Read(s, &(str->wString), (str->cchString * 2)); /* String (variable) */
+	Stream_Read(s, &(str->wString), (sizeof(WCHAR) * str->cchString)); /* String (variable) */
 	return CHANNEL_RC_OK;
 }
 

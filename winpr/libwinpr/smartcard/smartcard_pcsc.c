@@ -1140,7 +1140,7 @@ static LONG WINAPI PCSC_SCardListCardsW(SCARDCONTEXT hContext, LPCBYTE pbAtr,
 	*pcchCards = outputLen;
 	if (autoAllocate)
 	{
-		output = malloc(outputLen * 2);
+		output = calloc(outputLen, sizeof(WCHAR));
 		if (!output)
 			return SCARD_E_NO_MEMORY;
 

@@ -405,7 +405,7 @@ static BOOL rdpsnd_pulse_open_stream(rdpsndDevicePlugin* device)
 	if (pulse->latency > 0)
 	{
 		buffer_attr.maxlength = UINT32_MAX;
-		buffer_attr.tlength = pa_usec_to_bytes(pulse->latency * 1000, &pulse->sample_spec);
+		buffer_attr.tlength = pa_usec_to_bytes(1000ULL * pulse->latency, &pulse->sample_spec);
 		buffer_attr.prebuf = UINT32_MAX;
 		buffer_attr.minreq = UINT32_MAX;
 		buffer_attr.fragsize = UINT32_MAX;

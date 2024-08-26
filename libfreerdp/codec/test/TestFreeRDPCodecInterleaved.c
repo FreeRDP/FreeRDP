@@ -29,7 +29,7 @@ static BOOL run_encode_decode_single(UINT16 bpp, BITMAP_INTERLEAVED_CONTEXT* enc
 	const UINT32 y = 0;
 	const UINT32 format = PIXEL_FORMAT_RGBX32;
 	const UINT32 bstep = FreeRDPGetBytesPerPixel(format);
-	const size_t step = (w + 13) * 4;
+	const size_t step = (13ULL + w) * 4ULL;
 	const size_t SrcSize = step * h;
 	const float maxDiff = 4.0f * ((bpp < 24) ? 2.0f : 1.0f);
 	UINT32 DstSize = SrcSize;
@@ -74,8 +74,8 @@ static BOOL run_encode_decode_single(UINT16 bpp, BITMAP_INTERLEAVED_CONTEXT* enc
 			BYTE dr = 0;
 			BYTE dg = 0;
 			BYTE db = 0;
-			const UINT32 srcColor = FreeRDPReadColor(&srcLine[j * bstep], format);
-			const UINT32 dstColor = FreeRDPReadColor(&dstLine[j * bstep], format);
+			const UINT32 srcColor = FreeRDPReadColor(&srcLine[1ULL * j * bstep], format);
+			const UINT32 dstColor = FreeRDPReadColor(&dstLine[1ULL * j * bstep], format);
 			FreeRDPSplitColor(srcColor, format, &r, &g, &b, NULL, NULL);
 			FreeRDPSplitColor(dstColor, format, &dr, &dg, &db, NULL, NULL);
 

@@ -207,7 +207,7 @@ int TestRingBuffer(int argc, char* argv[])
 			return -1;
 		}
 	}
-	ringbuffer_commit_read_bytes(&ringBuffer, 50 * 1000);
+	ringbuffer_commit_read_bytes(&ringBuffer, 50ULL * 1000ULL);
 	fprintf(stderr, "ok\n");
 
 	ringbuffer_destroy(&ringBuffer);

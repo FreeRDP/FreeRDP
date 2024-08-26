@@ -134,7 +134,7 @@ static DWORD WINAPI copyThread(void* data)
 {
 	DWORD status = WAIT_OBJECT_0;
 	Plugin* plugin = (Plugin*)data;
-	size_t const bufsize = 16 * 1024;
+	size_t const bufsize = 16ULL * 1024ULL;
 
 	while (status == WAIT_OBJECT_0)
 	{

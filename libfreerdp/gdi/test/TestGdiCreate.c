@@ -91,7 +91,7 @@ static int test_gdi_CreateBitmap(void)
 	width = 32;
 	height = 16;
 
-	if (!(data = (BYTE*)winpr_aligned_malloc(width * height * 4, 16)))
+	if (!(data = (BYTE*)winpr_aligned_malloc(4ULL * width * height, 16)))
 	{
 		printf("failed to allocate aligned bitmap data memory\n");
 		return -1;

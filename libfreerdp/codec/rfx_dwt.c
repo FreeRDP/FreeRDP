@@ -136,9 +136,9 @@ static void rfx_dwt_2d_encode_block(INT16* WINPR_RESTRICT buffer, INT16* WINPR_R
 		for (UINT32 n = 0; n < subband_width; n++)
 		{
 			UINT32 y = n << 1;
-			l = dwt + n * total_width + x;
-			h = l + subband_width * total_width;
-			src = buffer + y * total_width + x;
+			l = dwt + 1ULL * n * total_width + x;
+			h = l + 1ULL * subband_width * total_width;
+			src = buffer + 1ULL * y * total_width + x;
 
 			/* H */
 			*h = (src[total_width] -
@@ -155,15 +155,15 @@ static void rfx_dwt_2d_encode_block(INT16* WINPR_RESTRICT buffer, INT16* WINPR_R
 	/* The lower part L generates LL(3) and HL(0). */
 	/* The higher part H generates LH(1) and HH(2). */
 
-	ll = buffer + subband_width * subband_width * 3;
+	ll = buffer + 3ULL * subband_width * subband_width;
 	hl = buffer;
 	l_src = dwt;
 
-	lh = buffer + subband_width * subband_width;
-	hh = buffer + subband_width * subband_width * 2;
-	h_src = dwt + subband_width * subband_width * 2;
+	lh = buffer + 1ULL * subband_width * subband_width;
+	hh = buffer + 2ULL * subband_width * subband_width;
+	h_src = dwt + 2ULL * subband_width * subband_width;
 
-	for (UINT32 y = 0; y < subband_width; y++)
+	for (size_t y = 0; y < subband_width; y++)
 	{
 		/* L */
 		for (UINT32 n = 0; n < subband_width; n++)

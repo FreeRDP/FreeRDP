@@ -39,7 +39,7 @@ static BOOL wlf_Pointer_New(rdpContext* context, rdpPointer* pointer)
 	if (!ptr)
 		return FALSE;
 
-	ptr->size = pointer->width * pointer->height * 4ULL;
+	ptr->size = 4ULL * pointer->width * pointer->height;
 	ptr->data = winpr_aligned_malloc(ptr->size, 16);
 
 	if (!ptr->data)
@@ -92,7 +92,7 @@ static BOOL wlf_Pointer_Set(rdpContext* context, rdpPointer* pointer)
 	    !wlf_scale_coordinates(context, &w, &h, FALSE))
 		return FALSE;
 
-	size = w * h * 4ULL;
+	size = 4ULL * w * h;
 	data = malloc(size);
 
 	if (!data)
@@ -103,8 +103,8 @@ static BOOL wlf_Pointer_Set(rdpContext* context, rdpPointer* pointer)
 	area.right = (UINT16)pointer->width;
 	area.bottom = (UINT16)pointer->height;
 
-	if (!wlf_copy_image(ptr->data, pointer->width * 4, pointer->width, pointer->height, data, w * 4,
-	                    w, h, &area,
+	if (!wlf_copy_image(ptr->data, 4ULL * pointer->width, pointer->width, pointer->height, data,
+	                    4ULL * w, w, h, &area,
 	                    freerdp_settings_get_bool(context->settings, FreeRDP_SmartSizing)))
 		goto fail;
 
