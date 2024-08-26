@@ -355,8 +355,10 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	{ "old-license", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL,
 	  "Use the old license workflow (no CAL and hwId set to 0)" },
 	{ "p", COMMAND_LINE_VALUE_REQUIRED, "<password>", NULL, NULL, -1, NULL, "Password" },
+#if defined(CHANNEL_PARALLEL_CLIENT)
 	{ "parallel", COMMAND_LINE_VALUE_OPTIONAL, "<name>[,<path>]", NULL, NULL, -1, NULL,
 	  "Redirect parallel device" },
+#endif
 	{ "parent-window", COMMAND_LINE_VALUE_REQUIRED, "<window-id>", NULL, NULL, -1, NULL,
 	  "Parent window id" },
 	{ "pcb", COMMAND_LINE_VALUE_REQUIRED, "<blob>", NULL, NULL, -1, NULL, "Preconnection Blob" },
