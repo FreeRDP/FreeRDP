@@ -626,9 +626,13 @@ BOOL freerdp_client_print_command_line_help_ex(int argc, char** argv,
 	printf("Smartcard Redirection: /smartcard:<device>\n");
 	printf("Smartcard logon with Kerberos authentication: /smartcard-logon /sec:nla\n");
 
+#if defined(CHANNEL_SERIAL_CLIENT)
 	printf("Serial Port Redirection: /serial:<name>,<device>,[SerCx2|SerCx|Serial],[permissive]\n");
 	printf("Serial Port Redirection: /serial:COM1,/dev/ttyS0\n");
+#endif
+#if defined(CHANNEL_PARALLEL_CLIENT)
 	printf("Parallel Port Redirection: /parallel:<name>,<device>\n");
+#endif
 	printf("Printer Redirection: /printer:<device>,<driver>,[default]\n");
 	printf("TCP redirection: /rdp2tcp:/usr/bin/rdp2tcp\n");
 	printf("\n");
@@ -787,6 +791,7 @@ BOOL freerdp_client_add_device_channel(rdpSettings* settings, size_t count, cons
 
 		return TRUE;
 	}
+#if defined(CHANNEL_SERIAL_CLIENT)
 	else if (option_equals(params[0], "serial"))
 	{
 		RDPDR_DEVICE* serial = NULL;
@@ -812,6 +817,7 @@ BOOL freerdp_client_add_device_channel(rdpSettings* settings, size_t count, cons
 
 		return TRUE;
 	}
+#endif
 	else if (option_equals(params[0], "parallel"))
 	{
 		RDPDR_DEVICE* parallel = NULL;
@@ -1076,6 +1082,7 @@ static int freerdp_client_command_line_post_filter_int(void* context, COMMAND_LI
 		if (status)
 			return fail_at(arg, status);
 	}
+#if defined(CHANNEL_SERIAL_CLIENT)
 	CommandLineSwitchCase(arg, "serial")
 	{
 		size_t count = 0;
@@ -1086,6 +1093,8 @@ static int freerdp_client_command_line_post_filter_int(void* context, COMMAND_LI
 		if (status)
 			return fail_at(arg, status);
 	}
+#endif
+#if defined(CHANNEL_PARALLEL_CLIENT)
 	CommandLineSwitchCase(arg, "parallel")
 	{
 		size_t count = 0;
@@ -1096,6 +1105,7 @@ static int freerdp_client_command_line_post_filter_int(void* context, COMMAND_LI
 		if (status)
 			return fail_at(arg, status);
 	}
+#endif
 	CommandLineSwitchCase(arg, "smartcard")
 	{
 		size_t count = 0;
