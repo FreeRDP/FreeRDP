@@ -17,8 +17,8 @@
 set(MODULE_NAME "sdl2-freerdp")
 
 find_package(SDL2 REQUIRED COMPONENTS)
-include_directories(${SDL2_INCLUDE_DIR})
-include_directories(${SDL2_INCLUDE_DIRS})
+include_directories(SYSTEM ${SDL2_INCLUDE_DIR})
+include_directories(SYSTEM ${SDL2_INCLUDE_DIRS})
 
 find_package(Threads REQUIRED)
 

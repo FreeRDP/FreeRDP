@@ -35,7 +35,7 @@ if(APPLE)
 endif()
 
 include_directories(..)
-include_directories(${FFMPEG_INCLUDE_DIRS})
+include_directories(SYSTEM ${FFMPEG_INCLUDE_DIRS})
 
 add_channel_client_subsystem_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} "" TRUE "")
 

@@ -15,7 +15,7 @@ set(LIBS
 
 if(PAM_FOUND)
 	add_definitions(-DWITH_PAM)
-	include_directories(${PAM_INCLUDE_DIR})
+	include_directories(SYSTEM ${PAM_INCLUDE_DIR})
 	list(APPEND LIBS ${PAM_LIBRARY})
 else()
 	message("building without PAM authentication support")

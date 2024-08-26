@@ -33,7 +33,7 @@ set(LIBS
     ${gstreamervideo_LIBRARIES}
     ${gstreamerapp_LIBRARIES}
 )
-include_directories(
+include_directories(SYSTEM
     ${gstreamer_INCLUDE_DIRS}
     ${gstreamerbase_INCLUDE_DIRS}
     ${gstreamervideo_INCLUDE_DIRS}

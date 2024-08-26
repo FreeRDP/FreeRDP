@@ -31,7 +31,7 @@ set(${MODULE_PREFIX}_LIBS
 
 include_directories(..)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
-include_directories(${OSS_INCLUDE_DIRS})
+include_directories(SYSTEM ${OSS_INCLUDE_DIRS})
 configure_file(
 	${CMAKE_SOURCE_DIR}/cmake/oss-includes.h.in
 	${CMAKE_CURRENT_BINARY_DIR}/oss-includes.h
