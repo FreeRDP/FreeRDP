@@ -246,9 +246,11 @@ void* UwacClipboardDataGet(UwacSeat* seat, const char* mime, size_t* size)
 
 	do
 	{
-		void* tmp = NULL;
+		if (alloc >= SIZE_MAX - 1024)
+			goto fail;
+
 		alloc += 1024;
-		tmp = xrealloc(data, alloc);
+		void* tmp = xrealloc(data, alloc);
 		if (!tmp)
 			goto fail;
 
