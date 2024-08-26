@@ -82,23 +82,13 @@ static UINT rail_send(railPlugin* rail, wStream* s)
  */
 UINT rail_send_channel_data(railPlugin* rail, wStream* src)
 {
-	wStream* s = NULL;
-	size_t length = 0;
-
 	if (!rail || !src)
-		return ERROR_INVALID_PARAMETER;
-
-	length = Stream_GetPosition(src);
-	s = Stream_New(NULL, length);
-
-	if (!s)
 	{
-		WLog_ERR(TAG, "Stream_New failed!");
-		return CHANNEL_RC_NO_MEMORY;
+		Stream_Free(src, TRUE);
+		return ERROR_INVALID_PARAMETER;
 	}
 
-	Stream_Write(s, Stream_Buffer(src), length);
-	return rail_send(rail, s);
+	return rail_send(rail, src);
 }
 
 /**
