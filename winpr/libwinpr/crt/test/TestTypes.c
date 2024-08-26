@@ -43,12 +43,12 @@
 #define EXPECTED_SIZEOF_LONG_PTR sizeof(void*)
 #define EXPECTED_SIZEOF_ULONG_PTR sizeof(void*)
 
-#define TEST_SIZEOF_TYPE(_name)                                                                    \
-	if (sizeof(_name) != EXPECTED_SIZEOF_##_name)                                                  \
-	{                                                                                              \
-		fprintf(stderr, "sizeof(%s) mismatch: Actual: %" PRIuz ", Expected: %" PRIuz "\n", #_name, \
-		        sizeof(_name), (size_t)EXPECTED_SIZEOF_##_name);                                   \
-		status = -1;                                                                               \
+#define TEST_SIZEOF_TYPE(_name)                                                                  \
+	if (sizeof(_name) != EXPECTED_SIZEOF_##_name)                                                \
+	{                                                                                            \
+		(void)fprintf(stderr, "sizeof(%s) mismatch: Actual: %" PRIuz ", Expected: %" PRIuz "\n", \
+		              #_name, sizeof(_name), (size_t)EXPECTED_SIZEOF_##_name);                   \
+		status = -1;                                                                             \
 	}
 
 int TestTypes(int argc, char* argv[])

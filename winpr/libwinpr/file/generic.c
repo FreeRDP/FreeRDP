@@ -604,7 +604,7 @@ static const char* flagsToStr(char* buffer, size_t size, DWORD flags)
 	if (flags & FILE_ATTRIBUTE_VIRTUAL)
 		append(buffer, size, "FILE_ATTRIBUTE_VIRTUAL");
 
-	_snprintf(strflags, sizeof(strflags), " [0x%08" PRIx32 "]", flags);
+	(void)_snprintf(strflags, sizeof(strflags), " [0x%08" PRIx32 "]", flags);
 	winpr_str_append(strflags, buffer, size, NULL);
 	return buffer;
 }

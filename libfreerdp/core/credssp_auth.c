@@ -947,7 +947,7 @@ BOOL credssp_auth_set_spn(rdpCredsspAuth* auth, const char* service, const char*
 		if (!spn)
 			return FALSE;
 
-		sprintf_s(spn, length, "%s/%s", service, hostname);
+		(void)sprintf_s(spn, length, "%s/%s", service, hostname);
 	}
 	if (!spn)
 		return FALSE;

@@ -130,7 +130,7 @@ static const char* general_name_type_label(int general_name_type)
 	else
 	{
 		static char buffer[80];
-		sprintf(buffer, "Unknown general name type (%d)", general_name_type);
+		(void)sprintf(buffer, "Unknown general name type (%d)", general_name_type);
 		return buffer;
 	}
 }

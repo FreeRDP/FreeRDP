@@ -91,7 +91,7 @@ int TestRingBuffer(int argc, char* argv[])
 
 	if (!ringbuffer_init(&ringBuffer, 10))
 	{
-		fprintf(stderr, "unable to initialize ringbuffer\n");
+		(void)fprintf(stderr, "unable to initialize ringbuffer\n");
 		return -1;
 	}
 
@@ -102,24 +102,24 @@ int TestRingBuffer(int argc, char* argv[])
 	for (int i = 0; i < 50; i++)
 		tmpBuf[i] = (char)i;
 
-	fprintf(stderr, "%d: basic tests...", ++testNo);
+	(void)fprintf(stderr, "%d: basic tests...", ++testNo);
 	if (!ringbuffer_write(&ringBuffer, tmpBuf, 5) || !ringbuffer_write(&ringBuffer, tmpBuf, 5) ||
 	    !ringbuffer_write(&ringBuffer, tmpBuf, 5))
 	{
-		fprintf(stderr, "error when writing bytes\n");
+		(void)fprintf(stderr, "error when writing bytes\n");
 		return -1;
 	}
 
 	if (ringbuffer_used(&ringBuffer) != 15)
 	{
-		fprintf(stderr, "invalid used size got %" PRIuz " when I would expect 15\n",
-		        ringbuffer_used(&ringBuffer));
+		(void)fprintf(stderr, "invalid used size got %" PRIuz " when I would expect 15\n",
+		              ringbuffer_used(&ringBuffer));
 		return -1;
 	}
 
 	if (ringbuffer_peek(&ringBuffer, chunks, 10) != 1 || chunks[0].size != 10)
 	{
-		fprintf(stderr, "error when reading bytes\n");
+		(void)fprintf(stderr, "error when reading bytes\n");
 		return -1;
 	}
 	ringbuffer_commit_read_bytes(&ringBuffer, chunks[0].size);
@@ -129,16 +129,16 @@ int TestRingBuffer(int argc, char* argv[])
 	{
 		if (chunks[0].data[i] != i % 5)
 		{
-			fprintf(stderr, "invalid byte at %d, got %" PRIu8 " instead of %d\n", i,
-			        chunks[0].data[i], i % 5);
+			(void)fprintf(stderr, "invalid byte at %d, got %" PRIu8 " instead of %d\n", i,
+			              chunks[0].data[i], i % 5);
 			return -1;
 		}
 	}
 
 	if (ringbuffer_used(&ringBuffer) != 5)
 	{
-		fprintf(stderr, "invalid used size after read got %" PRIuz " when I would expect 5\n",
-		        ringbuffer_used(&ringBuffer));
+		(void)fprintf(stderr, "invalid used size after read got %" PRIuz " when I would expect 5\n",
+		              ringbuffer_used(&ringBuffer));
 		return -1;
 	}
 
@@ -147,28 +147,28 @@ int TestRingBuffer(int argc, char* argv[])
 	    ringbuffer_peek(&ringBuffer, chunks, 11) != 2 || chunks[0].size != 10 ||
 	    chunks[1].size != 1)
 	{
-		fprintf(stderr, "invalid read of splitted data\n");
+		(void)fprintf(stderr, "invalid read of splitted data\n");
 		return -1;
 	}
 
 	ringbuffer_commit_read_bytes(&ringBuffer, 11);
-	fprintf(stderr, "ok\n");
+	(void)fprintf(stderr, "ok\n");
 
-	fprintf(stderr, "%d: peek with nothing to read...", ++testNo);
+	(void)fprintf(stderr, "%d: peek with nothing to read...", ++testNo);
 	if (ringbuffer_peek(&ringBuffer, chunks, 10))
 	{
-		fprintf(stderr, "peek returns some chunks\n");
+		(void)fprintf(stderr, "peek returns some chunks\n");
 		return -1;
 	}
-	fprintf(stderr, "ok\n");
+	(void)fprintf(stderr, "ok\n");
 
-	fprintf(stderr, "%d: ensure_linear_write / read() shouldn't grow...", ++testNo);
+	(void)fprintf(stderr, "%d: ensure_linear_write / read() shouldn't grow...", ++testNo);
 	for (int i = 0; i < 1000; i++)
 	{
 		rb_ptr = ringbuffer_ensure_linear_write(&ringBuffer, 50);
 		if (!rb_ptr)
 		{
-			fprintf(stderr, "ringbuffer_ensure_linear_write() error\n");
+			(void)fprintf(stderr, "ringbuffer_ensure_linear_write() error\n");
 			return -1;
 		}
 
@@ -176,7 +176,7 @@ int TestRingBuffer(int argc, char* argv[])
 
 		if (!ringbuffer_commit_written_bytes(&ringBuffer, 50))
 		{
-			fprintf(stderr, "ringbuffer_commit_written_bytes() error, i=%d\n", i);
+			(void)fprintf(stderr, "ringbuffer_commit_written_bytes() error, i=%d\n", i);
 			return -1;
 		}
 
@@ -191,34 +191,34 @@ int TestRingBuffer(int argc, char* argv[])
 
 	if (ringbuffer_capacity(&ringBuffer) != 10)
 	{
-		fprintf(stderr, "not the expected capacity, have %" PRIuz " and expects 10\n",
-		        ringbuffer_capacity(&ringBuffer));
+		(void)fprintf(stderr, "not the expected capacity, have %" PRIuz " and expects 10\n",
+		              ringbuffer_capacity(&ringBuffer));
 		return -1;
 	}
-	fprintf(stderr, "ok\n");
+	(void)fprintf(stderr, "ok\n");
 
-	fprintf(stderr, "%d: free size is correctly computed...", ++testNo);
+	(void)fprintf(stderr, "%d: free size is correctly computed...", ++testNo);
 	for (int i = 0; i < 1000; i++)
 	{
 		ringbuffer_ensure_linear_write(&ringBuffer, 50);
 		if (!ringbuffer_commit_written_bytes(&ringBuffer, 50))
 		{
-			fprintf(stderr, "ringbuffer_commit_written_bytes() error, i=%d\n", i);
+			(void)fprintf(stderr, "ringbuffer_commit_written_bytes() error, i=%d\n", i);
 			return -1;
 		}
 	}
 	ringbuffer_commit_read_bytes(&ringBuffer, 50 * 1000);
-	fprintf(stderr, "ok\n");
+	(void)fprintf(stderr, "ok\n");
 
 	ringbuffer_destroy(&ringBuffer);
 
-	fprintf(stderr, "%d: specific overlaps test...", ++testNo);
+	(void)fprintf(stderr, "%d: specific overlaps test...", ++testNo);
 	if (!test_overlaps())
 	{
-		fprintf(stderr, "ko\n");
+		(void)fprintf(stderr, "ko\n");
 		return -1;
 	}
-	fprintf(stderr, "ok\n");
+	(void)fprintf(stderr, "ok\n");
 
 	ringbuffer_destroy(&ringBuffer);
 	free(tmpBuf);

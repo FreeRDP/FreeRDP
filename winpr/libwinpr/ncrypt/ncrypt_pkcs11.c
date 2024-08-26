@@ -333,7 +333,7 @@ static const char* CK_RV_error_string(CK_RV rv)
 		ERR_ENTRY(CKR_MUTEX_NOT_LOCKED);
 		ERR_ENTRY(CKR_FUNCTION_REJECTED);
 		default:
-			snprintf(generic_buffer, sizeof(generic_buffer), "unknown 0x%lx", rv);
+			(void)snprintf(generic_buffer, sizeof(generic_buffer), "unknown 0x%lx", rv);
 			return generic_buffer;
 	}
 #undef ERR_ENTRY
@@ -552,13 +552,13 @@ static void wprintKeyName(LPWSTR str, CK_SLOT_ID slotId, CK_BYTE* id, CK_ULONG i
 
 	bytePtr = ((CK_BYTE*)&slotId);
 	for (CK_ULONG i = 0; i < sizeof(slotId); i++, bytePtr++, ptr += 2)
-		snprintf(ptr, 3, "%.2x", *bytePtr);
+		(void)snprintf(ptr, 3, "%.2x", *bytePtr);
 
 	*ptr = '\\';
 	ptr++;
 
 	for (CK_ULONG i = 0; i < idLen; i++, id++, ptr += 2)
-		snprintf(ptr, 3, "%.2x", *id);
+		(void)snprintf(ptr, 3, "%.2x", *id);
 
 	ConvertUtf8NToWChar(asciiName, ARRAYSIZE(asciiName), str,
 	                    strnlen(asciiName, ARRAYSIZE(asciiName)) + 1);
@@ -906,10 +906,10 @@ static SECURITY_STATUS get_piv_container_name(NCryptP11KeyHandle* key, const BYT
 	p = Stream_Buffer(&s);
 
 	/* Construct the value Windows would use for a PIV key's container name */
-	snprintf(container_name, PIV_CONTAINER_NAME_LEN + 1,
-	         "%.2x%.2x%.2x%.2x-%.2x%.2x-%.2x%.2x-%.2x%.2x-%.2x%.2x%.2x%.2x%.2x%.2x", p[3], p[2],
-	         p[1], p[0], p[5], p[4], p[7], p[6], p[8], p[9], p[10], p[11], p[12], piv_tag[0],
-	         piv_tag[1], piv_tag[2]);
+	(void)snprintf(container_name, PIV_CONTAINER_NAME_LEN + 1,
+	               "%.2x%.2x%.2x%.2x-%.2x%.2x-%.2x%.2x-%.2x%.2x-%.2x%.2x%.2x%.2x%.2x%.2x", p[3],
+	               p[2], p[1], p[0], p[5], p[4], p[7], p[6], p[8], p[9], p[10], p[11], p[12],
+	               piv_tag[0], piv_tag[1], piv_tag[2]);
 
 	/* And convert it to UTF-16 */
 	union

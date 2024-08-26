@@ -1419,7 +1419,7 @@ char* ntlm_negotiate_flags_string(char* buffer, size_t size, UINT32 flags)
 	if (!buffer || (size == 0))
 		return buffer;
 
-	_snprintf(buffer, size, "[0x%08" PRIx32 "] ", flags);
+	(void)_snprintf(buffer, size, "[0x%08" PRIx32 "] ", flags);
 
 	for (int x = 0; x < 31; x++)
 	{

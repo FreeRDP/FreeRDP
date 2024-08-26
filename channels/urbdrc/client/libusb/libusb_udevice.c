@@ -141,7 +141,7 @@ static BOOL log_libusb_result_(wLog* log, DWORD lvl, WINPR_FORMAT_ARG const char
 		char buffer[8192] = { 0 };
 		va_list ap;
 		va_start(ap, error);
-		vsnprintf(buffer, sizeof(buffer), fmt, ap);
+		(void)vsnprintf(buffer, sizeof(buffer), fmt, ap);
 		va_end(ap);
 
 		WLog_Print(log, lvl, "[%s:%" PRIuz "]: %s: error %s[%d]", fkt, line, buffer,
@@ -894,8 +894,8 @@ static UINT32 libusb_udev_control_query_device_text(IUDEVICE* idev, UINT32 TextT
 		case DeviceTextLocationInformation:
 			bus_number = libusb_get_bus_number(pdev->libusb_dev);
 			device_address = libusb_get_device_address(pdev->libusb_dev);
-			sprintf_s(deviceLocation, sizeof(deviceLocation),
-			          "Port_#%04" PRIu8 ".Hub_#%04" PRIu8 "", device_address, bus_number);
+			(void)sprintf_s(deviceLocation, sizeof(deviceLocation),
+			                "Port_#%04" PRIu8 ".Hub_#%04" PRIu8 "", device_address, bus_number);
 
 			len = strnlen(deviceLocation,
 			              MIN(sizeof(deviceLocation), (inSize > 0) ? inSize - 1U : 0));
@@ -1608,7 +1608,7 @@ static int udev_get_device_handle(URBDRC_PLUGIN* urbdrc, libusb_context* ctx, UD
 			error = 0;
 			WLog_Print(urbdrc->log, WLOG_DEBUG, "  Port: %d", pdev->port_number);
 			/* gen device path */
-			sprintf(pdev->path, "%" PRIu16 "-%d", bus_number, pdev->port_number);
+			(void)sprintf(pdev->path, "%" PRIu16 "-%d", bus_number, pdev->port_number);
 
 			WLog_Print(urbdrc->log, WLOG_DEBUG, "  DevPath: %s", pdev->path);
 		}

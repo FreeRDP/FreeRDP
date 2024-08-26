@@ -663,9 +663,9 @@ static const char* sdl_window_get_title(rdpSettings* settings)
 	char buffer[MAX_PATH + 64] = { 0 };
 
 	if (!addPort)
-		sprintf_s(buffer, sizeof(buffer), "%s %s", prefix, name);
+		(void)sprintf_s(buffer, sizeof(buffer), "%s %s", prefix, name);
 	else
-		sprintf_s(buffer, sizeof(buffer), "%s %s:%" PRIu32, prefix, name, port);
+		(void)sprintf_s(buffer, sizeof(buffer), "%s %s:%" PRIu32, prefix, name, port);
 
 	if (!freerdp_settings_set_string(settings, FreeRDP_WindowTitle, buffer))
 		return nullptr;

@@ -34,13 +34,13 @@ int TestFileGetStdHandle(int argc, char* argv[])
 	so = GetStdHandle(STD_OUTPUT_HANDLE);
 	if (so == INVALID_HANDLE_VALUE)
 	{
-		fprintf(stderr, "GetStdHandle failed ;(\n");
+		(void)fprintf(stderr, "GetStdHandle failed ;(\n");
 		return -1;
 	}
 	WriteFile(so, buf, strnlen(buf, sizeof(buf)), &bytesWritten, FALSE);
 	if (bytesWritten != strnlen(buf, sizeof(buf)))
 	{
-		fprintf(stderr, "write failed\n");
+		(void)fprintf(stderr, "write failed\n");
 		return -1;
 	}
 	CloseHandle(so);

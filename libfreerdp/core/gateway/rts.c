@@ -103,7 +103,7 @@ static const char* rts_command_to_string(UINT32 cmd, char* buffer, size_t len)
 
 #undef ENTRY
 
-	_snprintf(buffer, len, "%s [0x%08" PRIx32 "]", str, cmd);
+	(void)_snprintf(buffer, len, "%s [0x%08" PRIx32 "]", str, cmd);
 	return buffer;
 }
 

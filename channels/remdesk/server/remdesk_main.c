@@ -128,8 +128,8 @@ static UINT remdesk_prepare_ctl_header(REMDESK_CTL_HEADER* ctlHeader, UINT32 msg
                                        UINT32 msgSize)
 {
 	ctlHeader->msgType = msgType;
-	sprintf_s(ctlHeader->ch.ChannelName, ARRAYSIZE(ctlHeader->ch.ChannelName),
-	          REMDESK_CHANNEL_CTL_NAME);
+	(void)sprintf_s(ctlHeader->ch.ChannelName, ARRAYSIZE(ctlHeader->ch.ChannelName),
+	                REMDESK_CHANNEL_CTL_NAME);
 	ctlHeader->ch.DataLength = 4 + msgSize;
 	return CHANNEL_RC_OK;
 }

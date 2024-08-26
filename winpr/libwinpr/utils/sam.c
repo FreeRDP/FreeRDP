@@ -105,7 +105,7 @@ WINPR_SAM* SamOpen(const char* filename, BOOL readOnly)
 
 		if (!sam)
 		{
-			fclose(fp);
+			(void)fclose(fp);
 			return NULL;
 		}
 
@@ -360,7 +360,7 @@ void SamClose(WINPR_SAM* sam)
 	if (sam != NULL)
 	{
 		if (sam->fp)
-			fclose(sam->fp);
+			(void)fclose(sam->fp);
 		free(sam);
 	}
 }

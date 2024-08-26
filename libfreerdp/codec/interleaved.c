@@ -149,7 +149,7 @@ static const char* rle_code_str(UINT32 code)
 static const char* rle_code_str_buffer(UINT32 code, char* buffer, size_t size)
 {
 	const char* str = rle_code_str(code);
-	_snprintf(buffer, size, "%s [0x%08" PRIx32 "]", str, code);
+	(void)_snprintf(buffer, size, "%s [0x%08" PRIx32 "]", str, code);
 	return buffer;
 }
 

@@ -805,6 +805,6 @@ const char* rdp_ctrlaction_string(UINT16 action, char* buffer, size_t size)
 			break;
 	}
 
-	_snprintf(buffer, size, "%s [0x%04" PRIx16 "]", actstr, action);
+	(void)_snprintf(buffer, size, "%s [0x%04" PRIx16 "]", actstr, action);
 	return buffer;
 }

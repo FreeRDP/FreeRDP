@@ -171,8 +171,8 @@ char* freerdp_passphrase_read_tty(rdpContext* context, const char* prompt, char*
 	if (!fp)
 		goto error;
 
-	fprintf(fout, "%s", prompt);
-	fflush(fout);
+	(void)fprintf(fout, "%s", prompt);
+	(void)fflush(fout);
 
 	char* ptr = NULL;
 	size_t ptr_len = 0;
@@ -206,7 +206,7 @@ error:
 	if (terminal_fildes != STDIN_FILENO)
 	{
 		if (fp)
-			fclose(fp);
+			(void)fclose(fp);
 	}
 	errno = saved_errno;
 	return NULL;

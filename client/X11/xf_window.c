@@ -472,7 +472,8 @@ static void xf_SetWindowPID(xfContext* xfc, Window window, pid_t pid)
 static const char* get_shm_id(void)
 {
 	static char shm_id[64];
-	sprintf_s(shm_id, sizeof(shm_id), "/com.freerdp.xfreerdp.tsmf_%016X", GetCurrentProcessId());
+	(void)sprintf_s(shm_id, sizeof(shm_id), "/com.freerdp.xfreerdp.tsmf_%016X",
+	                GetCurrentProcessId());
 	return shm_id;
 }
 

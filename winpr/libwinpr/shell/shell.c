@@ -93,7 +93,7 @@ BOOL GetUserProfileDirectoryA(HANDLE hToken, LPSTR lpProfileDir, LPDWORD lpcchSi
 	}
 
 	ZeroMemory(lpProfileDir, *lpcchSize);
-	sprintf_s(lpProfileDir, *lpcchSize, "%s", pw->pw_dir);
+	(void)sprintf_s(lpProfileDir, *lpcchSize, "%s", pw->pw_dir);
 	*lpcchSize = cchDirSize;
 	free(buf);
 	return TRUE;

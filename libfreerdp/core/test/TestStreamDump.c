@@ -27,11 +27,11 @@ static BOOL test_entry_read_write(void)
 	winpr_RAND(tmp, sizeof(tmp));
 
 	for (size_t x = 0; x < sizeof(tmp); x++)
-		_snprintf(&tmp2[x * 2], sizeof(tmp2) - 2 * x, "%02" PRIx8, tmp[x]);
+		(void)_snprintf(&tmp2[x * 2], sizeof(tmp2) - 2 * x, "%02" PRIx8, tmp[x]);
 	name = GetKnownSubPath(KNOWN_PATH_TEMP, tmp2);
 	if (!name)
 	{
-		fprintf(stderr, "[%s] Could not create temporary path\n", __func__);
+		(void)fprintf(stderr, "[%s] Could not create temporary path\n", __func__);
 		goto fail;
 	}
 
@@ -39,8 +39,8 @@ static BOOL test_entry_read_write(void)
 	sr = Stream_New(NULL, 1024);
 	if (!sr || !sw)
 	{
-		fprintf(stderr, "[%s] Could not create iostreams sw=%p, sr=%p\n", __func__, (void*)sw,
-		        (void*)sr);
+		(void)fprintf(stderr, "[%s] Could not create iostreams sw=%p, sr=%p\n", __func__, (void*)sw,
+		              (void*)sr);
 		goto fail;
 	}
 
@@ -53,7 +53,7 @@ static BOOL test_entry_read_write(void)
 		goto fail;
 	if (!stream_dump_write_line(fp, 0, sw))
 		goto fail;
-	fclose(fp);
+	(void)fclose(fp);
 
 	fp = fopen(name, "rb");
 	if (!fp)
@@ -63,21 +63,21 @@ static BOOL test_entry_read_write(void)
 
 	if (entrysize != offset)
 	{
-		fprintf(stderr, "[%s] offset %" PRIuz " bytes, entrysize %" PRIuz " bytes\n", __func__,
-		        offset, entrysize);
+		(void)fprintf(stderr, "[%s] offset %" PRIuz " bytes, entrysize %" PRIuz " bytes\n",
+		              __func__, offset, entrysize);
 		goto fail;
 	}
 
 	if (Stream_Length(sr) != Stream_Capacity(sw))
 	{
-		fprintf(stderr, "[%s] Written %" PRIuz " bytes, read %" PRIuz " bytes\n", __func__,
-		        Stream_Length(sr), Stream_Capacity(sw));
+		(void)fprintf(stderr, "[%s] Written %" PRIuz " bytes, read %" PRIuz " bytes\n", __func__,
+		              Stream_Length(sr), Stream_Capacity(sw));
 		goto fail;
 	}
 
 	if (memcmp(Stream_Buffer(sw), Stream_Buffer(sr), Stream_Capacity(sw)) != 0)
 	{
-		fprintf(stderr, "[%s] Written data does not match data read back\n", __func__);
+		(void)fprintf(stderr, "[%s] Written data does not match data read back\n", __func__);
 		goto fail;
 	}
 	rc = TRUE;
@@ -85,11 +85,11 @@ fail:
 	Stream_Free(sr, TRUE);
 	Stream_Free(sw, TRUE);
 	if (fp)
-		fclose(fp);
+		(void)fclose(fp);
 	if (name)
 		DeleteFileA(name);
 	free(name);
-	fprintf(stderr, "xxxxxxxxxxxxx %d\n", rc);
+	(void)fprintf(stderr, "xxxxxxxxxxxxx %d\n", rc);
 	return rc;
 }
 

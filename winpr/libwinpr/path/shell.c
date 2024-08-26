@@ -153,7 +153,7 @@ static char* GetPath_XDG_DATA_HOME(void)
 		return NULL;
 	}
 
-	sprintf_s(path, size, "%s%s", home, "/.local/share");
+	(void)sprintf_s(path, size, "%s%s", home, "/.local/share");
 	free(home);
 #endif
 	return path;
@@ -209,7 +209,7 @@ static char* GetPath_XDG_CONFIG_HOME(void)
 		return NULL;
 	}
 
-	sprintf_s(path, size, "%s%s", home, "/.config");
+	(void)sprintf_s(path, size, "%s%s", home, "/.config");
 	free(home);
 #endif
 	return path;
@@ -263,7 +263,7 @@ static char* GetPath_XDG_CACHE_HOME(void)
 		return NULL;
 	}
 
-	sprintf_s(path, size, "%s%s", home, "/.cache");
+	(void)sprintf_s(path, size, "%s%s", home, "/.cache");
 	free(home);
 #endif
 	return path;

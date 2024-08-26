@@ -78,7 +78,7 @@ static int testTimeout(int port)
 	char arg1[] = "/v:192.0.2.1:XXXXX";
 	char* argv[] = { "test", "/v:192.0.2.1:XXXXX" };
 	int rc = 0;
-	_snprintf(arg1, 18, "/v:192.0.2.1:%d", port);
+	(void)_snprintf(arg1, 18, "/v:192.0.2.1:%d", port);
 	argv[1] = arg1;
 	start = GetTickCount();
 	rc = runInstance(ARRAYSIZE(argv), argv, NULL, timeout);
@@ -111,7 +111,7 @@ static DWORD WINAPI testThread(LPVOID arg)
 	char* argv[] = { "test", "/v:192.0.2.1:XXXXX" };
 	int rc = 0;
 	struct testThreadArgs* args = arg;
-	_snprintf(arg1, 18, "/v:192.0.2.1:%d", args->port);
+	(void)_snprintf(arg1, 18, "/v:192.0.2.1:%d", args->port);
 	argv[1] = arg1;
 	rc = runInstance(ARRAYSIZE(argv), argv, args->arg, 5000);
 
@@ -216,7 +216,7 @@ static BOOL prepare_certificates(const char* path)
 	                  "winpr-makecert" CMAKE_EXECUTABLE_SUFFIX);
 	if (!exe)
 		return FALSE;
-	_snprintf(commandLine, sizeof(commandLine), "%s -format crt -path . -n server", exe);
+	(void)_snprintf(commandLine, sizeof(commandLine), "%s -format crt -path . -n server", exe);
 
 	rc = CreateProcessA(exe, commandLine, NULL, NULL, TRUE, 0, NULL, path, &si, &process);
 	free(exe);
@@ -246,7 +246,7 @@ static int testSuccess(int port)
 	char* path = NULL;
 	char* wpath = NULL;
 	char* exe = GetCombinedPath(TESTING_OUTPUT_DIRECTORY, "server");
-	_snprintf(arg1, 18, "/v:127.0.0.1:%d", port);
+	(void)_snprintf(arg1, 18, "/v:127.0.0.1:%d", port);
 	clientArgs[1] = arg1;
 
 	if (!exe)
@@ -281,7 +281,7 @@ static int testSuccess(int port)
 	if (!commandLine)
 		goto fail;
 
-	_snprintf(commandLine, commandLineLen, "%s --port=%d", exe, port);
+	(void)_snprintf(commandLine, commandLineLen, "%s --port=%d", exe, port);
 	si.cb = sizeof(si);
 
 	if (!CreateProcessA(NULL, commandLine, NULL, NULL, FALSE, 0, NULL, wpath, &si, &process))

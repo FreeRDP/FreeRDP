@@ -775,7 +775,7 @@ static void* convert_filedescriptors_to_file_list(wClipboard* clipboard, UINT32 
 	if (!dst)
 		return NULL;
 
-	_snprintf(&dst[0], alloc, "%s", header);
+	(void)_snprintf(&dst[0], alloc, "%s", header);
 
 	pos = header_len;
 

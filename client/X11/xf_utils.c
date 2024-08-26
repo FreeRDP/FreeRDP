@@ -194,7 +194,7 @@ BOOL run_action_script(xfContext* xfc, const char* what, const char* arg, fn_act
 		goto fail;
 
 	char command[2048] = { 0 };
-	sprintf_s(command, sizeof(command), "%s %s", ActionScript, what);
+	(void)sprintf_s(command, sizeof(command), "%s %s", ActionScript, what);
 	keyScript = popen(command, "r");
 
 	if (!keyScript)
@@ -208,7 +208,7 @@ BOOL run_action_script(xfContext* xfc, const char* what, const char* arg, fn_act
 	while (fgets(buffer, sizeof(buffer), keyScript) != NULL)
 	{
 		char* context = NULL;
-		strtok_s(buffer, "\n", &context);
+		(void)strtok_s(buffer, "\n", &context);
 
 		if (fkt)
 		{

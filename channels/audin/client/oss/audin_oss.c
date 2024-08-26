@@ -160,8 +160,8 @@ static DWORD WINAPI audin_oss_thread_func(LPVOID arg)
 
 	if (oss->dev_unit != -1)
 	{
-		sprintf_s(dev_name, (PATH_MAX - 1), "/dev/dsp%i", oss->dev_unit);
-		sprintf_s(mixer_name, PATH_MAX - 1, "/dev/mixer%i", oss->dev_unit);
+		(void)sprintf_s(dev_name, (PATH_MAX - 1), "/dev/dsp%i", oss->dev_unit);
+		(void)sprintf_s(mixer_name, PATH_MAX - 1, "/dev/mixer%i", oss->dev_unit);
 	}
 
 	WLog_INFO(TAG, "open: %s", dev_name);

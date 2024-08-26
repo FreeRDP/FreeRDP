@@ -23,17 +23,17 @@ static BOOL test_equal_to(const wImage* bmp, const char* name, UINT32 format)
 		goto fail;
 
 	char path[MAX_PATH] = { 0 };
-	_snprintf(path, sizeof(path), "%s.%s", name, winpr_image_format_extension(format));
+	(void)_snprintf(path, sizeof(path), "%s.%s", name, winpr_image_format_extension(format));
 	const int cmpSize = winpr_image_read(cmp, path);
 	if (cmpSize <= 0)
 	{
-		fprintf(stderr, "[%s] winpr_image_read failed for %s", __func__, path);
+		(void)fprintf(stderr, "[%s] winpr_image_read failed for %s", __func__, path);
 		goto fail;
 	}
 
 	rc = test_image_equal(bmp, cmp);
 	if (!rc)
-		fprintf(stderr, "[%s] winpr_image_eqal failed", __func__);
+		(void)fprintf(stderr, "[%s] winpr_image_eqal failed", __func__);
 
 fail:
 	winpr_image_free(cmp, TRUE);
@@ -49,13 +49,13 @@ static BOOL test_equal(void)
 		goto fail;
 
 	char path[MAX_PATH] = { 0 };
-	_snprintf(path, sizeof(path), "%s.bmp", test_src_filename);
+	(void)_snprintf(path, sizeof(path), "%s.bmp", test_src_filename);
 	PathCchConvertStyleA(path, sizeof(path), PATH_STYLE_NATIVE);
 
 	const int bmpSize = winpr_image_read(bmp, path);
 	if (bmpSize <= 0)
 	{
-		fprintf(stderr, "[%s] winpr_image_read failed for %s", __func__, path);
+		(void)fprintf(stderr, "[%s] winpr_image_read failed for %s", __func__, path);
 		goto fail;
 	}
 
@@ -87,12 +87,12 @@ static BOOL test_read_write_compare(const char* tname, const char* tdst, UINT32 
 	char dpath[MAX_PATH] = { 0 };
 	char bpath1[MAX_PATH] = { 0 };
 	char bpath2[MAX_PATH] = { 0 };
-	_snprintf(spath, sizeof(spath), "%s.%s", tname, winpr_image_format_extension(format));
-	_snprintf(dpath, sizeof(dpath), "%s.%s", tdst, winpr_image_format_extension(format));
-	_snprintf(bpath1, sizeof(bpath1), "%s.src.%s", dpath,
-	          winpr_image_format_extension(WINPR_IMAGE_BITMAP));
-	_snprintf(bpath2, sizeof(bpath2), "%s.bin.%s", dpath,
-	          winpr_image_format_extension(WINPR_IMAGE_BITMAP));
+	(void)_snprintf(spath, sizeof(spath), "%s.%s", tname, winpr_image_format_extension(format));
+	(void)_snprintf(dpath, sizeof(dpath), "%s.%s", tdst, winpr_image_format_extension(format));
+	(void)_snprintf(bpath1, sizeof(bpath1), "%s.src.%s", dpath,
+	                winpr_image_format_extension(WINPR_IMAGE_BITMAP));
+	(void)_snprintf(bpath2, sizeof(bpath2), "%s.bin.%s", dpath,
+	                winpr_image_format_extension(WINPR_IMAGE_BITMAP));
 	PathCchConvertStyleA(spath, sizeof(spath), PATH_STYLE_NATIVE);
 	PathCchConvertStyleA(dpath, sizeof(dpath), PATH_STYLE_NATIVE);
 	PathCchConvertStyleA(bpath1, sizeof(bpath1), PATH_STYLE_NATIVE);
@@ -101,28 +101,28 @@ static BOOL test_read_write_compare(const char* tname, const char* tdst, UINT32 
 	const int bmpRSize = winpr_image_read(bmp1, spath);
 	if (bmpRSize <= 0)
 	{
-		fprintf(stderr, "[%s] winpr_image_read failed for %s", __func__, spath);
+		(void)fprintf(stderr, "[%s] winpr_image_read failed for %s", __func__, spath);
 		goto fail;
 	}
 
 	const int bmpWSize = winpr_image_write(bmp1, dpath);
 	if (bmpWSize <= 0)
 	{
-		fprintf(stderr, "[%s] winpr_image_write failed for %s", __func__, dpath);
+		(void)fprintf(stderr, "[%s] winpr_image_write failed for %s", __func__, dpath);
 		goto fail;
 	}
 
 	const int bmp2RSize = winpr_image_read(bmp2, dpath);
 	if (bmp2RSize <= 0)
 	{
-		fprintf(stderr, "[%s] winpr_image_read failed for %s", __func__, dpath);
+		(void)fprintf(stderr, "[%s] winpr_image_read failed for %s", __func__, dpath);
 		goto fail;
 	}
 
 	const int bmpSrcWSize = winpr_image_write_ex(bmp1, WINPR_IMAGE_BITMAP, bpath1);
 	if (bmpSrcWSize <= 0)
 	{
-		fprintf(stderr, "[%s] winpr_image_write_ex failed for %s", __func__, bpath1);
+		(void)fprintf(stderr, "[%s] winpr_image_write_ex failed for %s", __func__, bpath1);
 		goto fail;
 	}
 
@@ -131,14 +131,14 @@ static BOOL test_read_write_compare(const char* tname, const char* tdst, UINT32 
 	const int bmpBinWSize = winpr_image_write_ex(bmp2, WINPR_IMAGE_BITMAP, bpath2);
 	if (bmpBinWSize <= 0)
 	{
-		fprintf(stderr, "[%s] winpr_image_write_ex failed for %s", __func__, bpath2);
+		(void)fprintf(stderr, "[%s] winpr_image_write_ex failed for %s", __func__, bpath2);
 		goto fail;
 	}
 
 	const int bmp3RSize = winpr_image_read(bmp3, bpath2);
 	if (bmp3RSize <= 0)
 	{
-		fprintf(stderr, "[%s] winpr_image_read failed for %s", __func__, bpath2);
+		(void)fprintf(stderr, "[%s] winpr_image_read failed for %s", __func__, bpath2);
 		goto fail;
 	}
 
@@ -146,7 +146,7 @@ static BOOL test_read_write_compare(const char* tname, const char* tdst, UINT32 
 	                       WINPR_IMAGE_CMP_IGNORE_DEPTH | WINPR_IMAGE_CMP_IGNORE_ALPHA |
 	                           WINPR_IMAGE_CMP_FUZZY))
 	{
-		fprintf(stderr, "[%s] winpr_image_eqal failed bmp1 bmp2", __func__);
+		(void)fprintf(stderr, "[%s] winpr_image_eqal failed bmp1 bmp2", __func__);
 		goto fail;
 	}
 
@@ -154,7 +154,7 @@ static BOOL test_read_write_compare(const char* tname, const char* tdst, UINT32 
 	                       WINPR_IMAGE_CMP_IGNORE_DEPTH | WINPR_IMAGE_CMP_IGNORE_ALPHA |
 	                           WINPR_IMAGE_CMP_FUZZY);
 	if (!rc)
-		fprintf(stderr, "[%s] winpr_image_eqal failed bmp3 bmp2", __func__);
+		(void)fprintf(stderr, "[%s] winpr_image_eqal failed bmp3 bmp2", __func__);
 fail:
 	winpr_image_free(bmp1, TRUE);
 	winpr_image_free(bmp2, TRUE);

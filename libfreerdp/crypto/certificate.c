@@ -1373,7 +1373,7 @@ char* freerdp_certificate_get_fingerprint_by_hash_ex(const rdpCertificate* cert,
 		pos += (size_t)rc;
 	}
 
-	sprintf_s(&fp_buffer[pos], size - pos, "%02" PRIx8 "", fp[i]);
+	(void)sprintf_s(&fp_buffer[pos], size - pos, "%02" PRIx8 "", fp[i]);
 
 	free(fp);
 

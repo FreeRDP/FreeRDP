@@ -217,7 +217,7 @@ wPcap* Pcap_Open(char* name, BOOL write)
 
 out_fail:
 	if (pcap_fp)
-		fclose(pcap_fp);
+		(void)fclose(pcap_fp);
 	free(pcap);
 	return NULL;
 }
@@ -234,7 +234,7 @@ void Pcap_Flush(wPcap* pcap)
 		pcap->record = pcap->record->next;
 	}
 
-	fflush(pcap->fp);
+	(void)fflush(pcap->fp);
 	return;
 }
 
@@ -244,7 +244,7 @@ void Pcap_Close(wPcap* pcap)
 		return;
 
 	Pcap_Flush(pcap);
-	fclose(pcap->fp);
+	(void)fclose(pcap->fp);
 	free(pcap);
 }
 
@@ -467,6 +467,6 @@ BOOL WLog_PacketMessage_Write(wPcap* pcap, void* data, size_t length, DWORD flag
 	    !WLog_PacketMessage_Write_IPv4Header(pcap, &ipv4) ||
 	    !WLog_PacketMessage_Write_TcpHeader(pcap, &tcp) || !Pcap_Write_RecordContent(pcap, &record))
 		return FALSE;
-	fflush(pcap->fp);
+	(void)fflush(pcap->fp);
 	return TRUE;
 }

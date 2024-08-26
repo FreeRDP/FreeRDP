@@ -568,7 +568,7 @@ static BOOL http_proxy_connect(BIO* bufferedBio, const char* proxyUsername,
 				const char basic[] = CRLF "Proxy-Authorization: Basic ";
 				char* base64 = NULL;
 
-				sprintf_s(creds, size, "%s:%s", proxyUsername, proxyPassword);
+				(void)sprintf_s(creds, size, "%s:%s", proxyUsername, proxyPassword);
 				base64 = crypto_base64_encode((const BYTE*)creds, size - 1);
 
 				if (!base64 || !Stream_EnsureRemainingCapacity(s, strlen(basic) + strlen(base64)))

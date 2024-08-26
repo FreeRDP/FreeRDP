@@ -258,7 +258,7 @@ int uwac_create_anonymous_file(off_t size)
 		if (!name)
 			return -1;
 
-		snprintf(name, length, "%s%s", path, template);
+		(void)snprintf(name, length, "%s%s", path, template);
 		fd = create_tmpfile_cloexec(name);
 		free(name);
 	}

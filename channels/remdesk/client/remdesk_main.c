@@ -218,8 +218,8 @@ static UINT remdesk_prepare_ctl_header(REMDESK_CTL_HEADER* ctlHeader, UINT32 msg
 	WINPR_ASSERT(ctlHeader);
 
 	ctlHeader->msgType = msgType;
-	sprintf_s(ctlHeader->ch.ChannelName, ARRAYSIZE(ctlHeader->ch.ChannelName),
-	          REMDESK_CHANNEL_CTL_NAME);
+	(void)sprintf_s(ctlHeader->ch.ChannelName, ARRAYSIZE(ctlHeader->ch.ChannelName),
+	                REMDESK_CHANNEL_CTL_NAME);
 	ctlHeader->ch.DataLength = 4 + msgSize;
 	return CHANNEL_RC_OK;
 }
@@ -1059,8 +1059,8 @@ FREERDP_ENTRY_POINT(BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS p
 
 	remdesk->channelDef.options = CHANNEL_OPTION_INITIALIZED | CHANNEL_OPTION_ENCRYPT_RDP |
 	                              CHANNEL_OPTION_COMPRESS_RDP | CHANNEL_OPTION_SHOW_PROTOCOL;
-	sprintf_s(remdesk->channelDef.name, ARRAYSIZE(remdesk->channelDef.name),
-	          REMDESK_SVC_CHANNEL_NAME);
+	(void)sprintf_s(remdesk->channelDef.name, ARRAYSIZE(remdesk->channelDef.name),
+	                REMDESK_SVC_CHANNEL_NAME);
 	remdesk->Version = 2;
 	pEntryPointsEx = (CHANNEL_ENTRY_POINTS_FREERDP_EX*)pEntryPoints;
 

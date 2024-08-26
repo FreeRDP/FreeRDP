@@ -61,7 +61,7 @@ static const char* CB_MSG_TYPE_STR(UINT32 type)
 
 const char* CB_MSG_TYPE_STRING(UINT16 type, char* buffer, size_t size)
 {
-	_snprintf(buffer, size, "%s [0x%04" PRIx16 "]", CB_MSG_TYPE_STR(type), type);
+	(void)_snprintf(buffer, size, "%s [0x%04" PRIx16 "]", CB_MSG_TYPE_STR(type), type);
 	return buffer;
 }
 
@@ -79,7 +79,7 @@ const char* CB_MSG_FLAGS_STRING(UINT16 msgFlags, char* buffer, size_t size)
 		winpr_str_append("NONE", buffer, size, "");
 
 	char val[32] = { 0 };
-	_snprintf(val, sizeof(val), "[0x%04" PRIx16 "]", msgFlags);
+	(void)_snprintf(val, sizeof(val), "[0x%04" PRIx16 "]", msgFlags);
 	winpr_str_append(val, buffer, size, "|");
 	return buffer;
 }

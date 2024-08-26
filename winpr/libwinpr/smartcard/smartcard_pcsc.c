@@ -2752,11 +2752,11 @@ static char* card_id_and_name_a(const UUID* CardIdentifier, LPCSTR LookupName)
 	if (!id)
 		return NULL;
 
-	snprintf(id, len, "%08X%04X%04X%02X%02X%02X%02X%02X%02X%02X%02X\\%s", CardIdentifier->Data1,
-	         CardIdentifier->Data2, CardIdentifier->Data3, CardIdentifier->Data4[0],
-	         CardIdentifier->Data4[1], CardIdentifier->Data4[2], CardIdentifier->Data4[3],
-	         CardIdentifier->Data4[4], CardIdentifier->Data4[5], CardIdentifier->Data4[6],
-	         CardIdentifier->Data4[7], LookupName);
+	(void)snprintf(id, len, "%08X%04X%04X%02X%02X%02X%02X%02X%02X%02X%02X\\%s",
+	               CardIdentifier->Data1, CardIdentifier->Data2, CardIdentifier->Data3,
+	               CardIdentifier->Data4[0], CardIdentifier->Data4[1], CardIdentifier->Data4[2],
+	               CardIdentifier->Data4[3], CardIdentifier->Data4[4], CardIdentifier->Data4[5],
+	               CardIdentifier->Data4[6], CardIdentifier->Data4[7], LookupName);
 	return id;
 }
 

@@ -710,9 +710,9 @@ static void SSLCTX_keylog_cb(const SSL* ssl, const char* line)
 		FILE* f = winpr_fopen(dfile, "a+");
 		if (f)
 		{
-			fwrite(line, strlen(line), 1, f);
-			fwrite("\n", 1, 1, f);
-			fclose(f);
+			(void)fwrite(line, strlen(line), 1, f);
+			(void)fwrite("\n", 1, 1, f);
+			(void)fclose(f);
 		}
 	}
 }

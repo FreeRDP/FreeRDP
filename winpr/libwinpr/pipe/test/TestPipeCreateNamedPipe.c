@@ -302,7 +302,7 @@ static DWORD WINAPI named_pipe_single_thread(LPVOID arg)
 			char sndbuf[PIPE_BUFFER_SIZE] = { 0 };
 			char rcvbuf[PIPE_BUFFER_SIZE] = { 0 };
 			/* Test writing from clients to servers */
-			sprintf_s(sndbuf, sizeof(sndbuf), "CLIENT->SERVER ON PIPE #%05d", i);
+			(void)sprintf_s(sndbuf, sizeof(sndbuf), "CLIENT->SERVER ON PIPE #%05d", i);
 
 			if (!WriteFile(clients[i], sndbuf, sizeof(sndbuf), &dwWritten, NULL) ||
 			    dwWritten != sizeof(sndbuf))
@@ -329,7 +329,7 @@ static DWORD WINAPI named_pipe_single_thread(LPVOID arg)
 			char rcvbuf[PIPE_BUFFER_SIZE] = { 0 };
 			/* Test writing from servers to clients */
 
-			sprintf_s(sndbuf, sizeof(sndbuf), "SERVER->CLIENT ON PIPE #%05d", i);
+			(void)sprintf_s(sndbuf, sizeof(sndbuf), "SERVER->CLIENT ON PIPE #%05d", i);
 
 			if (!WriteFile(servers[i], sndbuf, sizeof(sndbuf), &dwWritten, NULL) ||
 			    dwWritten != sizeof(sndbuf))
@@ -478,7 +478,7 @@ int TestPipeCreateNamedPipe(int argc, char* argv[])
 	}
 
 #ifndef _WIN32
-	signal(SIGPIPE, SIG_IGN);
+	(void)signal(SIGPIPE, SIG_IGN);
 #endif
 	if (!(ReadyEvent = CreateEvent(NULL, TRUE, FALSE, NULL)))
 	{

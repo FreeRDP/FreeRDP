@@ -75,7 +75,7 @@ static void WLog_PrintMessagePrefixVA(wLog* log, wLogMessage* message,
                                       WINPR_FORMAT_ARG const char* format, va_list args)
 {
 	WINPR_ASSERT(message);
-	vsnprintf(message->PrefixString, WLOG_MAX_PREFIX_SIZE - 1, format, args);
+	(void)vsnprintf(message->PrefixString, WLOG_MAX_PREFIX_SIZE - 1, format, args);
 }
 
 WINPR_ATTR_FORMAT_ARG(3, 4)
@@ -98,13 +98,13 @@ static const char* get_tid(void* arg)
 #else
 	tid = (size_t)GetCurrentThreadId();
 #endif
-	sprintf(str, "%08" PRIxz, tid);
+	(void)sprintf(str, "%08" PRIxz, tid);
 	return str;
 }
 
 static BOOL log_invalid_fmt(const char* what)
 {
-	fprintf(stderr, "Invalid format string '%s'\n", what);
+	(void)fprintf(stderr, "Invalid format string '%s'\n", what);
 	return FALSE;
 }
 
@@ -113,10 +113,10 @@ static BOOL check_and_log_format_size(char* format, size_t size, size_t index, s
 	/* format string must be '\0' terminated, so abort at size - 1 */
 	if (index + add + 1 >= size)
 	{
-		fprintf(stderr,
-		        "Format string too long ['%s', max %" PRIuz ", used %" PRIuz ", adding %" PRIuz
-		        "]\n",
-		        format, size, index, add);
+		(void)fprintf(stderr,
+		              "Format string too long ['%s', max %" PRIuz ", used %" PRIuz
+		              ", adding %" PRIuz "]\n",
+		              format, size, index, add);
 		return FALSE;
 	}
 	return TRUE;

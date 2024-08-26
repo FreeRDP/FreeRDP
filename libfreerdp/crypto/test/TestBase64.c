@@ -58,7 +58,7 @@ int TestBase64(int argc, char* argv[])
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
 	testNb++;
-	fprintf(stderr, "%d:encode base64...", testNb);
+	(void)fprintf(stderr, "%d:encode base64...", testNb);
 
 	for (int i = 0; encodeTests_base64[i].input; i++)
 	{
@@ -67,16 +67,16 @@ int TestBase64(int argc, char* argv[])
 
 		if (strcmp(encodeTests_base64[i].output, encoded))
 		{
-			fprintf(stderr, "ko, error for string %d\n", i);
+			(void)fprintf(stderr, "ko, error for string %d\n", i);
 			return -1;
 		}
 
 		free(encoded);
 	}
 
-	fprintf(stderr, "ok\n");
+	(void)fprintf(stderr, "ok\n");
 	testNb++;
-	fprintf(stderr, "%d:encode base64url...", testNb);
+	(void)fprintf(stderr, "%d:encode base64url...", testNb);
 
 	for (int i = 0; encodeTests_base64url[i].input; i++)
 	{
@@ -85,16 +85,16 @@ int TestBase64(int argc, char* argv[])
 
 		if (strcmp(encodeTests_base64url[i].output, encoded))
 		{
-			fprintf(stderr, "ko, error for string %d\n", i);
+			(void)fprintf(stderr, "ko, error for string %d\n", i);
 			return -1;
 		}
 
 		free(encoded);
 	}
 
-	fprintf(stderr, "ok\n");
+	(void)fprintf(stderr, "ok\n");
 	testNb++;
-	fprintf(stderr, "%d:decode base64...", testNb);
+	(void)fprintf(stderr, "%d:decode base64...", testNb);
 
 	for (int i = 0; encodeTests_base64[i].input; i++)
 	{
@@ -104,16 +104,16 @@ int TestBase64(int argc, char* argv[])
 		if (!decoded || (outLen != encodeTests_base64[i].len) ||
 		    memcmp(encodeTests_base64[i].input, decoded, outLen))
 		{
-			fprintf(stderr, "ko, error for string %d\n", i);
+			(void)fprintf(stderr, "ko, error for string %d\n", i);
 			return -1;
 		}
 
 		free(decoded);
 	}
 
-	fprintf(stderr, "ok\n");
+	(void)fprintf(stderr, "ok\n");
 	testNb++;
-	fprintf(stderr, "%d:decode base64url...", testNb);
+	(void)fprintf(stderr, "%d:decode base64url...", testNb);
 
 	for (int i = 0; encodeTests_base64url[i].input; i++)
 	{
@@ -123,21 +123,21 @@ int TestBase64(int argc, char* argv[])
 		if (!decoded || (outLen != encodeTests_base64url[i].len) ||
 		    memcmp(encodeTests_base64url[i].input, decoded, outLen))
 		{
-			fprintf(stderr, "ko, error for string %d\n", i);
+			(void)fprintf(stderr, "ko, error for string %d\n", i);
 			return -1;
 		}
 
 		free(decoded);
 	}
 
-	fprintf(stderr, "ok\n");
+	(void)fprintf(stderr, "ok\n");
 	testNb++;
-	fprintf(stderr, "%d:decode base64 errors...", testNb);
+	(void)fprintf(stderr, "%d:decode base64 errors...", testNb);
 	crypto_base64_decode("000", 3, &decoded, &outLen);
 
 	if (decoded)
 	{
-		fprintf(stderr, "ko, badly padded string\n");
+		(void)fprintf(stderr, "ko, badly padded string\n");
 		return -1;
 	}
 
@@ -145,7 +145,7 @@ int TestBase64(int argc, char* argv[])
 
 	if (decoded)
 	{
-		fprintf(stderr, "ko, = in a wrong place\n");
+		(void)fprintf(stderr, "ko, = in a wrong place\n");
 		return -1;
 	}
 
@@ -153,14 +153,14 @@ int TestBase64(int argc, char* argv[])
 
 	if (decoded)
 	{
-		fprintf(stderr, "ko, = in a wrong place\n");
+		(void)fprintf(stderr, "ko, = in a wrong place\n");
 		return -1;
 	}
-	fprintf(stderr, "ok\n");
+	(void)fprintf(stderr, "ok\n");
 	testNb++;
 
 	/* test the encode_ex version that will add \r\n */
-	fprintf(stderr, "%d:encode base64 with crLf...", testNb);
+	(void)fprintf(stderr, "%d:encode base64 with crLf...", testNb);
 	const char* longStr = "01234567890123456789012345678901234567890123456789";
 	const char* longStrExpected =
 	    "MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDEyMzQ1Njc4OTAxMjM0NTY3\r\nODk=\r\n";
@@ -168,11 +168,11 @@ int TestBase64(int argc, char* argv[])
 	char* encoded = crypto_base64_encode_ex((const BYTE*)longStr, strlen(longStr), TRUE);
 	if (!encoded || strcmp(encoded, longStrExpected) != 0)
 	{
-		fprintf(stderr, "problem with encode with CRLF\n");
+		(void)fprintf(stderr, "problem with encode with CRLF\n");
 		return -1;
 	}
 	free(encoded);
-	fprintf(stderr, "ok\n");
+	(void)fprintf(stderr, "ok\n");
 
 	return 0;
 }

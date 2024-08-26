@@ -90,8 +90,8 @@ const char* rail_get_order_type_string(UINT16 orderType)
 
 const char* rail_get_order_type_string_full(UINT16 orderType, char* buffer, size_t length)
 {
-	_snprintf(buffer, length, "%s[0x%04" PRIx16 "]", rail_get_order_type_string(orderType),
-	          orderType);
+	(void)_snprintf(buffer, length, "%s[0x%04" PRIx16 "]", rail_get_order_type_string(orderType),
+	                orderType);
 	return buffer;
 }
 
@@ -594,7 +594,7 @@ const char* rail_handshake_ex_flags_to_string(UINT32 flags, char* buffer, size_t
 	if (len < 1)
 		return NULL;
 
-	_snprintf(buffer, len, "{");
+	(void)_snprintf(buffer, len, "{");
 	char* fbuffer = &buffer[1];
 	len--;
 
@@ -612,7 +612,7 @@ const char* rail_handshake_ex_flags_to_string(UINT32 flags, char* buffer, size_t
 		winpr_str_append("EXTENDED_SPI_2_SUPPORTED", fbuffer, len, "|");
 
 	char number[16] = { 0 };
-	_snprintf(number, sizeof(number), "[0x%08" PRIx32 "]", flags);
+	(void)_snprintf(number, sizeof(number), "[0x%08" PRIx32 "]", flags);
 	winpr_str_append(number, buffer, len, "}");
 	return buffer;
 }

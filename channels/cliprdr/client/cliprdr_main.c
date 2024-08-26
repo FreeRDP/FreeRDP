@@ -1120,8 +1120,8 @@ FREERDP_ENTRY_POINT(BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS p
 
 	cliprdr->channelDef.options = CHANNEL_OPTION_INITIALIZED | CHANNEL_OPTION_ENCRYPT_RDP |
 	                              CHANNEL_OPTION_COMPRESS_RDP | CHANNEL_OPTION_SHOW_PROTOCOL;
-	sprintf_s(cliprdr->channelDef.name, ARRAYSIZE(cliprdr->channelDef.name),
-	          CLIPRDR_SVC_CHANNEL_NAME);
+	(void)sprintf_s(cliprdr->channelDef.name, ARRAYSIZE(cliprdr->channelDef.name),
+	                CLIPRDR_SVC_CHANNEL_NAME);
 	pEntryPointsEx = (CHANNEL_ENTRY_POINTS_FREERDP_EX*)pEntryPoints;
 	WINPR_ASSERT(pEntryPointsEx);
 

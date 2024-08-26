@@ -50,7 +50,8 @@ static BOOL WLog_BinaryAppender_Open(wLog* log, wLogAppender* appender)
 		binaryAppender->FileName = (char*)malloc(MAX_PATH);
 		if (!binaryAppender->FileName)
 			return FALSE;
-		sprintf_s(binaryAppender->FileName, MAX_PATH, "%" PRIu32 ".wlog", GetCurrentProcessId());
+		(void)sprintf_s(binaryAppender->FileName, MAX_PATH, "%" PRIu32 ".wlog",
+		                GetCurrentProcessId());
 	}
 
 	if (!binaryAppender->FilePath)
@@ -95,7 +96,7 @@ static BOOL WLog_BinaryAppender_Close(wLog* log, wLogAppender* appender)
 		return TRUE;
 
 	if (binaryAppender->FileDescriptor)
-		fclose(binaryAppender->FileDescriptor);
+		(void)fclose(binaryAppender->FileDescriptor);
 
 	binaryAppender->FileDescriptor = NULL;
 
