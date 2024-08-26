@@ -44,7 +44,10 @@ UINT rail_send_pdu(railPlugin* rail, wStream* s, UINT16 orderType)
 	UINT16 orderLength = 0;
 
 	if (!rail || !s)
+	{
+		Stream_Free(s, TRUE);
 		return ERROR_INVALID_PARAMETER;
+	}
 
 	orderLength = (UINT16)Stream_GetPosition(s);
 	Stream_SetPosition(s, 0);
@@ -1129,9 +1132,7 @@ UINT rail_send_handshake_order(railPlugin* rail, const RAIL_HANDSHAKE_ORDER* han
 	}
 
 	rail_write_handshake_order(s, handshake);
-	error = rail_send_pdu(rail, s, TS_RAIL_ORDER_HANDSHAKE);
-	Stream_Free(s, TRUE);
-	return error;
+	return rail_send_pdu(rail, s, TS_RAIL_ORDER_HANDSHAKE);
 }
 
 /**
@@ -1156,9 +1157,7 @@ UINT rail_send_handshake_ex_order(railPlugin* rail, const RAIL_HANDSHAKE_EX_ORDE
 	}
 
 	rail_write_handshake_ex_order(s, handshakeEx);
-	error = rail_send_pdu(rail, s, TS_RAIL_ORDER_HANDSHAKE_EX);
-	Stream_Free(s, TRUE);
-	return error;
+	return rail_send_pdu(rail, s, TS_RAIL_ORDER_HANDSHAKE_EX);
 }
 
 /**
@@ -1185,11 +1184,14 @@ UINT rail_send_client_status_order(railPlugin* rail, const RAIL_CLIENT_STATUS_OR
 
 	error = rail_write_client_status_order(s, clientStatus);
 
-	if (error == ERROR_SUCCESS)
-		error = rail_send_pdu(rail, s, TS_RAIL_ORDER_CLIENTSTATUS);
+	if (ERROR_SUCCESS != error)
+	{
 
-	Stream_Free(s, TRUE);
-	return error;
+		Stream_Free(s, TRUE);
+		return error;
+	}
+
+	return rail_send_pdu(rail, s, TS_RAIL_ORDER_CLIENTSTATUS);
 }
 
 /**
@@ -1224,11 +1226,7 @@ UINT rail_send_client_exec_order(railPlugin* rail, UINT16 flags,
 		goto out;
 	}
 
-	if ((error = rail_send_pdu(rail, s, TS_RAIL_ORDER_EXEC)))
-	{
-		WLog_ERR(TAG, "rail_send_pdu failed with error %" PRIu32 "!", error);
-		goto out;
-	}
+	return rail_send_pdu(rail, s, TS_RAIL_ORDER_EXEC);
 
 out:
 	Stream_Free(s, TRUE);
@@ -1258,11 +1256,14 @@ UINT rail_send_client_activate_order(railPlugin* rail, const RAIL_ACTIVATE_ORDER
 
 	error = rail_write_client_activate_order(s, activate);
 
-	if (error == ERROR_SUCCESS)
-		error = rail_send_pdu(rail, s, TS_RAIL_ORDER_ACTIVATE);
+	if (ERROR_SUCCESS != error)
+	{
 
-	Stream_Free(s, TRUE);
-	return error;
+		Stream_Free(s, TRUE);
+		return error;
+	}
+
+	return rail_send_pdu(rail, s, TS_RAIL_ORDER_ACTIVATE);
 }
 
 /**
@@ -1288,11 +1289,14 @@ UINT rail_send_client_sysmenu_order(railPlugin* rail, const RAIL_SYSMENU_ORDER* 
 
 	error = rail_write_client_sysmenu_order(s, sysmenu);
 
-	if (error == ERROR_SUCCESS)
-		error = rail_send_pdu(rail, s, TS_RAIL_ORDER_SYSMENU);
+	if (ERROR_SUCCESS != error)
+	{
 
-	Stream_Free(s, TRUE);
-	return error;
+		Stream_Free(s, TRUE);
+		return error;
+	}
+
+	return rail_send_pdu(rail, s, TS_RAIL_ORDER_SYSMENU);
 }
 
 /**
@@ -1318,11 +1322,14 @@ UINT rail_send_client_syscommand_order(railPlugin* rail, const RAIL_SYSCOMMAND_O
 
 	error = rail_write_client_syscommand_order(s, syscommand);
 
-	if (error == ERROR_SUCCESS)
-		error = rail_send_pdu(rail, s, TS_RAIL_ORDER_SYSCOMMAND);
+	if (ERROR_SUCCESS != error)
+	{
 
-	Stream_Free(s, TRUE);
-	return error;
+		Stream_Free(s, TRUE);
+		return error;
+	}
+
+	return rail_send_pdu(rail, s, TS_RAIL_ORDER_SYSCOMMAND);
 }
 
 /**
@@ -1349,11 +1356,14 @@ UINT rail_send_client_notify_event_order(railPlugin* rail,
 
 	error = rail_write_client_notify_event_order(s, notifyEvent);
 
-	if (ERROR_SUCCESS == error)
-		error = rail_send_pdu(rail, s, TS_RAIL_ORDER_NOTIFY_EVENT);
+	if (ERROR_SUCCESS != error)
+	{
 
-	Stream_Free(s, TRUE);
-	return error;
+		Stream_Free(s, TRUE);
+		return error;
+	}
+
+	return rail_send_pdu(rail, s, TS_RAIL_ORDER_NOTIFY_EVENT);
 }
 
 /**
@@ -1379,11 +1389,14 @@ UINT rail_send_client_window_move_order(railPlugin* rail, const RAIL_WINDOW_MOVE
 
 	error = rail_write_client_window_move_order(s, windowMove);
 
-	if (error == ERROR_SUCCESS)
-		error = rail_send_pdu(rail, s, TS_RAIL_ORDER_WINDOWMOVE);
+	if (ERROR_SUCCESS != error)
+	{
 
-	Stream_Free(s, TRUE);
-	return error;
+		Stream_Free(s, TRUE);
+		return error;
+	}
+
+	return rail_send_pdu(rail, s, TS_RAIL_ORDER_WINDOWMOVE);
 }
 
 /**
@@ -1410,11 +1423,13 @@ UINT rail_send_client_get_appid_req_order(railPlugin* rail,
 
 	error = rail_write_client_get_appid_req_order(s, getAppIdReq);
 
-	if (error == ERROR_SUCCESS)
-		error = rail_send_pdu(rail, s, TS_RAIL_ORDER_GET_APPID_REQ);
+	if (ERROR_SUCCESS != error)
+	{
 
-	Stream_Free(s, TRUE);
-	return error;
+		Stream_Free(s, TRUE);
+		return error;
+	}
+	return rail_send_pdu(rail, s, TS_RAIL_ORDER_GET_APPID_REQ);
 }
 
 /**
@@ -1444,11 +1459,13 @@ UINT rail_send_client_langbar_info_order(railPlugin* rail,
 
 	error = rail_write_langbar_info_order(s, langBarInfo);
 
-	if (ERROR_SUCCESS == error)
-		error = rail_send_pdu(rail, s, TS_RAIL_ORDER_LANGBARINFO);
+	if (ERROR_SUCCESS != error)
+	{
 
-	Stream_Free(s, TRUE);
-	return error;
+		Stream_Free(s, TRUE);
+		return error;
+	}
+	return rail_send_pdu(rail, s, TS_RAIL_ORDER_LANGBARINFO);
 }
 
 UINT rail_send_client_languageime_info_order(railPlugin* rail,
@@ -1473,11 +1490,13 @@ UINT rail_send_client_languageime_info_order(railPlugin* rail,
 
 	error = rail_write_languageime_info_order(s, langImeInfo);
 
-	if (ERROR_SUCCESS == error)
-		error = rail_send_pdu(rail, s, TS_RAIL_ORDER_LANGUAGEIMEINFO);
+	if (ERROR_SUCCESS != error)
+	{
 
-	Stream_Free(s, TRUE);
-	return error;
+		Stream_Free(s, TRUE);
+		return error;
+	}
+	return rail_send_pdu(rail, s, TS_RAIL_ORDER_LANGUAGEIMEINFO);
 }
 
 UINT rail_send_client_compartment_info_order(railPlugin* rail,
@@ -1502,11 +1521,12 @@ UINT rail_send_client_compartment_info_order(railPlugin* rail,
 
 	error = rail_write_compartment_info_order(s, compartmentInfo);
 
-	if (ERROR_SUCCESS == error)
-		error = rail_send_pdu(rail, s, TS_RAIL_ORDER_COMPARTMENTINFO);
-
-	Stream_Free(s, TRUE);
-	return error;
+	if (ERROR_SUCCESS != error)
+	{
+		Stream_Free(s, TRUE);
+		return error;
+	}
+	return rail_send_pdu(rail, s, TS_RAIL_ORDER_COMPARTMENTINFO);
 }
 
 UINT rail_send_client_cloak_order(railPlugin* rail, const RAIL_CLOAK* cloak)
@@ -1527,9 +1547,7 @@ UINT rail_send_client_cloak_order(railPlugin* rail, const RAIL_CLOAK* cloak)
 
 	Stream_Write_UINT32(s, cloak->windowId);
 	Stream_Write_UINT8(s, cloak->cloak ? 1 : 0);
-	error = rail_send_pdu(rail, s, TS_RAIL_ORDER_CLOAK);
-	Stream_Free(s, TRUE);
-	return error;
+	return rail_send_pdu(rail, s, TS_RAIL_ORDER_CLOAK);
 }
 
 UINT rail_send_client_snap_arrange_order(railPlugin* rail, const RAIL_SNAP_ARRANGE* snap)
@@ -1565,7 +1583,5 @@ UINT rail_send_client_snap_arrange_order(railPlugin* rail, const RAIL_SNAP_ARRAN
 	Stream_Write_INT16(s, snap->top);
 	Stream_Write_INT16(s, snap->right);
 	Stream_Write_INT16(s, snap->bottom);
-	error = rail_send_pdu(rail, s, TS_RAIL_ORDER_SNAP_ARRANGE);
-	Stream_Free(s, TRUE);
-	return error;
+	return rail_send_pdu(rail, s, TS_RAIL_ORDER_SNAP_ARRANGE);
 }

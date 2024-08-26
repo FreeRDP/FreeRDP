@@ -121,8 +121,7 @@ void rail_write_pdu_header(wStream* s, UINT16 orderType, UINT16 orderLength)
 
 wStream* rail_pdu_init(size_t length)
 {
-	wStream* s = NULL;
-	s = Stream_New(NULL, length + RAIL_PDU_HEADER_LENGTH);
+	wStream* s = Stream_New(NULL, length + RAIL_PDU_HEADER_LENGTH);
 
 	if (!s)
 		return NULL;
