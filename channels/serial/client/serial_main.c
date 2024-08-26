@@ -44,11 +44,6 @@
 
 #define TAG CHANNELS_TAG("serial.client")
 
-/* TODO: all #ifdef __linux__ could be removed once only some generic
- * functions will be used. Replace CommReadFile by ReadFile,
- * CommWriteFile by WriteFile etc..  */
-#if defined __linux__ && !defined ANDROID
-
 #define MAX_IRP_THREADS 5
 
 typedef struct
@@ -806,8 +801,6 @@ static UINT serial_free(DEVICE* device)
 	return CHANNEL_RC_OK;
 }
 
-#endif /* __linux__ */
-
 static void serial_message_free(void* obj)
 {
 	wMessage* msg = obj;
@@ -847,10 +840,8 @@ static void irp_thread_close(void* arg)
  */
 FREERDP_ENTRY_POINT(UINT serial_DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints))
 {
-#if defined __linux__ && !defined ANDROID
 	size_t len = 0;
 	SERIAL_DEVICE* serial = NULL;
-#endif /* __linux__ */
 	UINT error = CHANNEL_RC_OK;
 
 	WINPR_ASSERT(pEntryPoints);

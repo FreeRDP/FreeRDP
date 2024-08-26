@@ -22,8 +22,6 @@
 
 #include <winpr/config.h>
 
-#if defined __linux__ && !defined ANDROID
-
 #include <winpr/assert.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -1412,5 +1410,3 @@ int eventfd_write(int fd, eventfd_t value)
 	return (write(fd, &value, sizeof(value)) == sizeof(value)) ? 0 : -1;
 }
 #endif
-
-#endif /* __linux__ */

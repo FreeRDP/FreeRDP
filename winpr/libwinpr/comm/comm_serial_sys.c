@@ -20,8 +20,6 @@
  * limitations under the License.
  */
 
-#if defined __linux__ && !defined ANDROID
-
 #include <winpr/assert.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -1680,5 +1678,3 @@ SERIAL_DRIVER* SerialSys_s(void)
 {
 	return &SerialSys;
 }
-
-#endif /* __linux__ */

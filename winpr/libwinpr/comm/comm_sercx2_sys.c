@@ -20,8 +20,6 @@
  * limitations under the License.
  */
 
-#if defined __linux__ && !defined ANDROID
-
 #include <winpr/assert.h>
 #include <winpr/wlog.h>
 
@@ -210,5 +208,3 @@ SERIAL_DRIVER* SerCx2Sys_s(void)
 
 	return &SerCx2Sys;
 }
-
-#endif /* __linux__ */

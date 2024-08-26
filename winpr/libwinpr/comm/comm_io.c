@@ -19,8 +19,6 @@
 
 #include <winpr/config.h>
 
-#if defined __linux__ && !defined ANDROID
-
 #include <winpr/assert.h>
 #include <errno.h>
 #include <termios.h>
@@ -545,5 +543,3 @@ return_false:
 	LeaveCriticalSection(&pComm->WriteLock);
 	return FALSE;
 }
-
-#endif /* __linux__ */
