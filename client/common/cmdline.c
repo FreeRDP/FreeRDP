@@ -787,6 +787,7 @@ BOOL freerdp_client_add_device_channel(rdpSettings* settings, size_t count, cons
 
 		return TRUE;
 	}
+#if defined(CHANNEL_SERIAL_CLIENT)
 	else if (option_equals(params[0], "serial"))
 	{
 		RDPDR_DEVICE* serial = NULL;
@@ -812,6 +813,7 @@ BOOL freerdp_client_add_device_channel(rdpSettings* settings, size_t count, cons
 
 		return TRUE;
 	}
+#endif
 	else if (option_equals(params[0], "parallel"))
 	{
 		RDPDR_DEVICE* parallel = NULL;
@@ -1076,6 +1078,7 @@ static int freerdp_client_command_line_post_filter_int(void* context, COMMAND_LI
 		if (status)
 			return fail_at(arg, status);
 	}
+#if defined(CHANNEL_SERIAL_CLIENT)
 	CommandLineSwitchCase(arg, "serial")
 	{
 		size_t count = 0;
@@ -1086,6 +1089,7 @@ static int freerdp_client_command_line_post_filter_int(void* context, COMMAND_LI
 		if (status)
 			return fail_at(arg, status);
 	}
+#endif
 	CommandLineSwitchCase(arg, "parallel")
 	{
 		size_t count = 0;

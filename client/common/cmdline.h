@@ -415,8 +415,10 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	{ "sec-tls", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL,
 	  "[DEPRECATED, use /sec:tls] TLS protocol security" },
 #endif
+#if defined(CHANNEL_SERIAL_CLIENT)
 	{ "serial", COMMAND_LINE_VALUE_OPTIONAL, "<name>[,<path>[,<driver>[,permissive]]]", NULL, NULL,
 	  -1, "tty", "Redirect serial device" },
+#endif
 	{ "server-name", COMMAND_LINE_VALUE_REQUIRED, "<name>", NULL, NULL, -1, NULL,
 	  "User-specified server name to use for validation (TLS, Kerberos)" },
 	{ "shell", COMMAND_LINE_VALUE_REQUIRED, "<shell>", NULL, NULL, -1, NULL, "Alternate shell" },
