@@ -1227,9 +1227,9 @@ static VOID VCAPITYPE rdpsnd_virtual_channel_open_event_ex(LPVOID lpUserParam, D
 	if (error && rdpsnd && rdpsnd->rdpcontext)
 	{
 		char buffer[8192];
-		_snprintf(buffer, sizeof(buffer),
-		          "%s rdpsnd_virtual_channel_open_event_ex reported an error",
-		          rdpsnd_is_dyn_str(rdpsnd->dynamic));
+		(void)_snprintf(buffer, sizeof(buffer),
+		                "%s rdpsnd_virtual_channel_open_event_ex reported an error",
+		                rdpsnd_is_dyn_str(rdpsnd->dynamic));
 		setChannelError(rdpsnd->rdpcontext, error, buffer);
 	}
 }
@@ -1329,7 +1329,7 @@ static UINT rdpsnd_virtual_channel_event_disconnected(rdpsndPlugin* rdpsnd)
 	return CHANNEL_RC_OK;
 }
 
-static void _queue_free(void* obj)
+static void s_queue_free(void* obj)
 {
 	wMessage* msg = obj;
 	if (!msg)
@@ -1433,7 +1433,7 @@ static UINT rdpsnd_virtual_channel_event_initialized(rdpsndPlugin* rdpsnd)
 	{
 		wObject obj = { 0 };
 
-		obj.fnObjectFree = _queue_free;
+		obj.fnObjectFree = s_queue_free;
 		rdpsnd->queue = MessageQueue_New(&obj);
 		if (!rdpsnd->queue)
 			return CHANNEL_RC_NO_MEMORY;
@@ -1523,8 +1523,8 @@ static VOID VCAPITYPE rdpsnd_virtual_channel_init_event_ex(LPVOID lpUserParam, L
 	if (error && plugin && plugin->rdpcontext)
 	{
 		char buffer[8192];
-		_snprintf(buffer, sizeof(buffer), "%s reported an error",
-		          rdpsnd_is_dyn_str(plugin->dynamic));
+		(void)_snprintf(buffer, sizeof(buffer), "%s reported an error",
+		                rdpsnd_is_dyn_str(plugin->dynamic));
 		setChannelError(plugin->rdpcontext, error, buffer);
 	}
 }
@@ -1576,7 +1576,8 @@ FREERDP_ENTRY_POINT(BOOL VCAPITYPE rdpsnd_VirtualChannelEntryEx(PCHANNEL_ENTRY_P
 		return FALSE;
 
 	rdpsnd->channelDef.options = CHANNEL_OPTION_INITIALIZED | CHANNEL_OPTION_ENCRYPT_RDP;
-	sprintf_s(rdpsnd->channelDef.name, ARRAYSIZE(rdpsnd->channelDef.name), RDPSND_CHANNEL_NAME);
+	(void)sprintf_s(rdpsnd->channelDef.name, ARRAYSIZE(rdpsnd->channelDef.name),
+	                RDPSND_CHANNEL_NAME);
 	pEntryPointsEx = (CHANNEL_ENTRY_POINTS_FREERDP_EX*)pEntryPoints;
 
 	if ((pEntryPointsEx->cbSize >= sizeof(CHANNEL_ENTRY_POINTS_FREERDP_EX)) &&

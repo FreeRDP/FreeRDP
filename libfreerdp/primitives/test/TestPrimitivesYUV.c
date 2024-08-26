@@ -24,8 +24,8 @@ static BOOL similar(const BYTE* src, const BYTE* dst, size_t size)
 
 		if (abs(diff) > 4)
 		{
-			fprintf(stderr, "%" PRIuz " %02" PRIX8 " : %02" PRIX8 " diff=%d\n", x, src[x], dst[x],
-			        abs(diff));
+			(void)fprintf(stderr, "%" PRIuz " %02" PRIX8 " : %02" PRIX8 " diff=%d\n", x, src[x],
+			              dst[x], abs(diff));
 			return FALSE;
 		}
 	}
@@ -62,7 +62,7 @@ static BOOL similarRGB(const BYTE* src, const BYTE* dst, size_t size, UINT32 for
 
 		if ((labs(sR - dR) > maxDiff) || (labs(sG - dG) > maxDiff) || (labs(sB - dB) > maxDiff))
 		{
-			fprintf(
+			(void)fprintf(
 			    stderr,
 			    "Color value  mismatch R[%02X %02X], G[%02X %02X], B[%02X %02X] at position %" PRIuz
 			    "\n",
@@ -72,7 +72,7 @@ static BOOL similarRGB(const BYTE* src, const BYTE* dst, size_t size, UINT32 for
 
 		if (dA != fill)
 		{
-			fprintf(
+			(void)fprintf(
 			    stderr,
 			    "[%s] Invalid destination alpha value 0x%02X [expected 0x%02X] at position %" PRIuz
 			    "\n",
@@ -119,9 +119,10 @@ static BOOL check_padding(const BYTE* psrc, size_t size, size_t padding, const c
 			while ((x < halfPad) && (*esrc++ != 'A'))
 				x++;
 
-			fprintf(stderr,
-			        "Buffer underflow detected %02" PRIx8 " != %02X %s [%" PRIuz "-%" PRIuz "]\n",
-			        d, 'A', buffer, start, x);
+			(void)fprintf(stderr,
+			              "Buffer underflow detected %02" PRIx8 " != %02X %s [%" PRIuz "-%" PRIuz
+			              "]\n",
+			              d, 'A', buffer, start, x);
 			return FALSE;
 		}
 
@@ -132,9 +133,10 @@ static BOOL check_padding(const BYTE* psrc, size_t size, size_t padding, const c
 			while ((x < halfPad) && (*esrc++ != 'A'))
 				x++;
 
-			fprintf(stderr,
-			        "Buffer overflow detected %02" PRIx8 " != %02X %s [%" PRIuz "-%" PRIuz "]\n", d,
-			        'A', buffer, start, x);
+			(void)fprintf(stderr,
+			              "Buffer overflow detected %02" PRIx8 " != %02X %s [%" PRIuz "-%" PRIuz
+			              "]\n",
+			              d, 'A', buffer, start, x);
 			return FALSE;
 		}
 	}
@@ -202,9 +204,10 @@ static BOOL TestPrimitiveYUVCombine(primitives_t* prims, prim_size_t roi)
 	PROFILER_DEFINE(yuvSplit)
 	awidth = roi.width + 16 - roi.width % 16;
 	aheight = roi.height + 16 - roi.height % 16;
-	fprintf(stderr,
-	        "Running YUVCombine on frame size %" PRIu32 "x%" PRIu32 " [%" PRIu32 "x%" PRIu32 "]\n",
-	        roi.width, roi.height, awidth, aheight);
+	(void)fprintf(stderr,
+	              "Running YUVCombine on frame size %" PRIu32 "x%" PRIu32 " [%" PRIu32 "x%" PRIu32
+	              "]\n",
+	              roi.width, roi.height, awidth, aheight);
 	PROFILER_CREATE(yuvCombine, "YUV420CombineToYUV444")
 	PROFILER_CREATE(yuvSplit, "YUV444SplitToYUV420")
 	rect.left = 0;
@@ -432,8 +435,8 @@ static BOOL TestPrimitiveYUV(primitives_t* prims, prim_size_t roi, BOOL use444)
 			return FALSE;
 	}
 
-	fprintf(stderr, "Running AVC%s on frame size %" PRIu32 "x%" PRIu32 "\n", use444 ? "444" : "420",
-	        roi.width, roi.height);
+	(void)fprintf(stderr, "Running AVC%s on frame size %" PRIu32 "x%" PRIu32 "\n",
+	              use444 ? "444" : "420", roi.width, roi.height);
 
 	/* Test RGB to YUV444 conversion and vice versa */
 	if (!(rgb = set_padding(size * sizeof(UINT32), padding)))
@@ -648,7 +651,7 @@ static BOOL check_for_mismatches(const BYTE* planeA, const BYTE* planeB, UINT32 
 		if (fabsf((float)a - (float)b) > 2.0f)
 		{
 			rc = TRUE;
-			fprintf(stderr, "[%08x] %02x != %02x\n", x, a, b);
+			(void)fprintf(stderr, "[%08x] %02x != %02x\n", x, a, b);
 		}
 	}
 
@@ -665,19 +668,19 @@ static BOOL compare_yuv420(BYTE** planesA, BYTE** planesB, UINT32 width, UINT32 
 
 	if (check_for_mismatches(planesA[0], planesB[0], size))
 	{
-		fprintf(stderr, "Mismatch in Y planes!");
+		(void)fprintf(stderr, "Mismatch in Y planes!");
 		rc = FALSE;
 	}
 
 	if (check_for_mismatches(planesA[1], planesB[1], uvsize))
 	{
-		fprintf(stderr, "Mismatch in U planes!");
+		(void)fprintf(stderr, "Mismatch in U planes!");
 		rc = FALSE;
 	}
 
 	if (check_for_mismatches(planesA[2], planesB[2], uvsize))
 	{
-		fprintf(stderr, "Mismatch in V planes!");
+		(void)fprintf(stderr, "Mismatch in V planes!");
 		rc = FALSE;
 	}
 
@@ -743,8 +746,8 @@ static BOOL TestPrimitiveRgbToLumaChroma(primitives_t* prims, prim_size_t roi, U
 	if (!fkt || !gen)
 		return FALSE;
 
-	fprintf(stderr, "Running AVC444 on frame size %" PRIu32 "x%" PRIu32 "\n", roi.width,
-	        roi.height);
+	(void)fprintf(stderr, "Running AVC444 on frame size %" PRIu32 "x%" PRIu32 "\n", roi.width,
+	              roi.height);
 
 	/* Test RGB to YUV444 conversion and vice versa */
 	if (!(rgb = set_padding(size * sizeof(UINT32), padding)))

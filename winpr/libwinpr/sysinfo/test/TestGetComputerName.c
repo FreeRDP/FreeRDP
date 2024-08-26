@@ -38,15 +38,16 @@ static BOOL Test_GetComputerName(void)
 	dwSize = 0;
 	if (GetComputerNameA(NULL, &dwSize) == TRUE)
 	{
-		fprintf(stderr, "%s: (1) GetComputerNameA unexpectedly succeeded with null buffer\n",
-		        __func__);
+		(void)fprintf(stderr, "%s: (1) GetComputerNameA unexpectedly succeeded with null buffer\n",
+		              __func__);
 		return FALSE;
 	}
 	if ((dwError = GetLastError()) != ERROR_BUFFER_OVERFLOW)
 	{
-		fprintf(stderr,
-		        "%s: (2) GetLastError returned 0x%08" PRIX32 " (expected ERROR_BUFFER_OVERFLOW)\n",
-		        __func__, dwError);
+		(void)fprintf(stderr,
+		              "%s: (2) GetLastError returned 0x%08" PRIX32
+		              " (expected ERROR_BUFFER_OVERFLOW)\n",
+		              __func__, dwError);
 		return FALSE;
 	}
 
@@ -54,26 +55,27 @@ static BOOL Test_GetComputerName(void)
 	dwSize = 0;
 	if (GetComputerNameA(netbiosName1, &dwSize) == TRUE)
 	{
-		fprintf(stderr,
-		        "%s: (3) GetComputerNameA unexpectedly succeeded with zero size parameter\n",
-		        __func__);
+		(void)fprintf(stderr,
+		              "%s: (3) GetComputerNameA unexpectedly succeeded with zero size parameter\n",
+		              __func__);
 		return FALSE;
 	}
 	if ((dwError = GetLastError()) != ERROR_BUFFER_OVERFLOW)
 	{
-		fprintf(stderr,
-		        "%s: (4) GetLastError returned 0x%08" PRIX32 " (expected ERROR_BUFFER_OVERFLOW)\n",
-		        __func__, dwError);
+		(void)fprintf(stderr,
+		              "%s: (4) GetLastError returned 0x%08" PRIX32
+		              " (expected ERROR_BUFFER_OVERFLOW)\n",
+		              __func__, dwError);
 		return FALSE;
 	}
 	/* check if returned size is valid: must be the size of the buffer required, including the
 	 * terminating null character in this case */
 	if (dwSize < 2 || dwSize > netbiosBufferSize)
 	{
-		fprintf(stderr,
-		        "%s: (5) GetComputerNameA returned wrong size %" PRIu32
-		        " (expected something in the range from 2 to %" PRIu32 ")\n",
-		        __func__, dwSize, netbiosBufferSize);
+		(void)fprintf(stderr,
+		              "%s: (5) GetComputerNameA returned wrong size %" PRIu32
+		              " (expected something in the range from 2 to %" PRIu32 ")\n",
+		              __func__, dwSize, netbiosBufferSize);
 		return FALSE;
 	}
 	dwNameLength = dwSize - 1;
@@ -81,22 +83,23 @@ static BOOL Test_GetComputerName(void)
 	/* test with returned size */
 	if (GetComputerNameA(netbiosName1, &dwSize) == FALSE)
 	{
-		fprintf(stderr, "%s: (6) GetComputerNameA failed with error: 0x%08" PRIX32 "\n", __func__,
-		        GetLastError());
+		(void)fprintf(stderr, "%s: (6) GetComputerNameA failed with error: 0x%08" PRIX32 "\n",
+		              __func__, GetLastError());
 		return FALSE;
 	}
 	/* check if returned size is valid */
 	if (dwSize != dwNameLength)
 	{
-		fprintf(stderr,
-		        "%s: (7) GetComputerNameA returned wrong size %" PRIu32 " (expected %" PRIu32 ")\n",
-		        __func__, dwSize, dwNameLength);
+		(void)fprintf(stderr,
+		              "%s: (7) GetComputerNameA returned wrong size %" PRIu32 " (expected %" PRIu32
+		              ")\n",
+		              __func__, dwSize, dwNameLength);
 		return FALSE;
 	}
 	/* check if string is correctly terminated */
 	if (netbiosName1[dwSize] != 0)
 	{
-		fprintf(stderr, "%s: (8) string termination error\n", __func__);
+		(void)fprintf(stderr, "%s: (8) string termination error\n", __func__);
 		return FALSE;
 	}
 
@@ -104,30 +107,30 @@ static BOOL Test_GetComputerName(void)
 	dwSize = netbiosBufferSize;
 	if (GetComputerNameA(netbiosName2, &dwSize) == FALSE)
 	{
-		fprintf(stderr, "%s: (9) GetComputerNameA failed with error: 0x%08" PRIX32 "\n", __func__,
-		        GetLastError());
+		(void)fprintf(stderr, "%s: (9) GetComputerNameA failed with error: 0x%08" PRIX32 "\n",
+		              __func__, GetLastError());
 		return FALSE;
 	}
 	/* check if returned size is valid */
 	if (dwSize != dwNameLength)
 	{
-		fprintf(stderr,
-		        "%s: (10) GetComputerNameA returned wrong size %" PRIu32 " (expected %" PRIu32
-		        ")\n",
-		        __func__, dwSize, dwNameLength);
+		(void)fprintf(stderr,
+		              "%s: (10) GetComputerNameA returned wrong size %" PRIu32 " (expected %" PRIu32
+		              ")\n",
+		              __func__, dwSize, dwNameLength);
 		return FALSE;
 	}
 	/* check if string is correctly terminated */
 	if (netbiosName2[dwSize] != 0)
 	{
-		fprintf(stderr, "%s: (11) string termination error\n", __func__);
+		(void)fprintf(stderr, "%s: (11) string termination error\n", __func__);
 		return FALSE;
 	}
 
 	/* compare the results */
 	if (strcmp(netbiosName1, netbiosName2))
 	{
-		fprintf(stderr, "%s: (12) string compare mismatch\n", __func__);
+		(void)fprintf(stderr, "%s: (12) string compare mismatch\n", __func__);
 		return FALSE;
 	}
 
@@ -135,18 +138,18 @@ static BOOL Test_GetComputerName(void)
 	dwSize = dwNameLength;
 	if (GetComputerNameA(netbiosName1, &dwSize) == TRUE)
 	{
-		fprintf(stderr,
-		        "%s: (13) GetComputerNameA unexpectedly succeeded with limited buffer size\n",
-		        __func__);
+		(void)fprintf(stderr,
+		              "%s: (13) GetComputerNameA unexpectedly succeeded with limited buffer size\n",
+		              __func__);
 		return FALSE;
 	}
 	/* check if returned size is valid */
 	if (dwSize != dwNameLength + 1)
 	{
-		fprintf(stderr,
-		        "%s: (14) GetComputerNameA returned wrong size %" PRIu32 " (expected %" PRIu32
-		        ")\n",
-		        __func__, dwSize, dwNameLength + 1);
+		(void)fprintf(stderr,
+		              "%s: (14) GetComputerNameA returned wrong size %" PRIu32 " (expected %" PRIu32
+		              ")\n",
+		              __func__, dwSize, dwNameLength + 1);
 		return FALSE;
 	}
 
@@ -213,15 +216,16 @@ static BOOL Test_GetComputerNameEx_Format(COMPUTER_NAME_FORMAT format)
 	dwSize = 0;
 	if (GetComputerNameExA(format, NULL, &dwSize) == TRUE)
 	{
-		fprintf(stderr, "%s: (1/%d) GetComputerNameExA unexpectedly succeeded with null buffer\n",
-		        __func__, format);
+		(void)fprintf(stderr,
+		              "%s: (1/%d) GetComputerNameExA unexpectedly succeeded with null buffer\n",
+		              __func__, format);
 		return FALSE;
 	}
 	if ((dwError = GetLastError()) != ERROR_MORE_DATA)
 	{
-		fprintf(stderr,
-		        "%s: (2/%d) GetLastError returned 0x%08" PRIX32 " (expected ERROR_MORE_DATA)\n",
-		        __func__, format, dwError);
+		(void)fprintf(
+		    stderr, "%s: (2/%d) GetLastError returned 0x%08" PRIX32 " (expected ERROR_MORE_DATA)\n",
+		    __func__, format, dwError);
 		return FALSE;
 	}
 
@@ -229,26 +233,27 @@ static BOOL Test_GetComputerNameEx_Format(COMPUTER_NAME_FORMAT format)
 	dwSize = 0;
 	if (GetComputerNameExA(format, computerName1, &dwSize) == TRUE)
 	{
-		fprintf(stderr,
-		        "%s: (3/%d) GetComputerNameExA unexpectedly succeeded with zero size parameter\n",
-		        __func__, format);
+		(void)fprintf(
+		    stderr,
+		    "%s: (3/%d) GetComputerNameExA unexpectedly succeeded with zero size parameter\n",
+		    __func__, format);
 		return FALSE;
 	}
 	if ((dwError = GetLastError()) != ERROR_MORE_DATA)
 	{
-		fprintf(stderr,
-		        "%s: (4/%d) GetLastError returned 0x%08" PRIX32 " (expected ERROR_MORE_DATA)\n",
-		        __func__, format, dwError);
+		(void)fprintf(
+		    stderr, "%s: (4/%d) GetLastError returned 0x%08" PRIX32 " (expected ERROR_MORE_DATA)\n",
+		    __func__, format, dwError);
 		return FALSE;
 	}
 	/* check if returned size is valid: must be the size of the buffer required, including the
 	 * terminating null character in this case */
 	if (dwSize < dwMinSize || dwSize > nameBufferSize)
 	{
-		fprintf(stderr,
-		        "%s: (5/%d) GetComputerNameExA returned wrong size %" PRIu32
-		        " (expected something in the range from %" PRIu32 " to %" PRIu32 ")\n",
-		        __func__, format, dwSize, dwMinSize, nameBufferSize);
+		(void)fprintf(stderr,
+		              "%s: (5/%d) GetComputerNameExA returned wrong size %" PRIu32
+		              " (expected something in the range from %" PRIu32 " to %" PRIu32 ")\n",
+		              __func__, format, dwSize, dwMinSize, nameBufferSize);
 		return FALSE;
 	}
 	dwNameLength = dwSize - 1;
@@ -256,23 +261,23 @@ static BOOL Test_GetComputerNameEx_Format(COMPUTER_NAME_FORMAT format)
 	/* test with returned size */
 	if (GetComputerNameExA(format, computerName1, &dwSize) == FALSE)
 	{
-		fprintf(stderr, "%s: (6/%d) GetComputerNameExA failed with error: 0x%08" PRIX32 "\n",
-		        __func__, format, GetLastError());
+		(void)fprintf(stderr, "%s: (6/%d) GetComputerNameExA failed with error: 0x%08" PRIX32 "\n",
+		              __func__, format, GetLastError());
 		return FALSE;
 	}
 	/* check if returned size is valid */
 	if (dwSize != dwNameLength)
 	{
-		fprintf(stderr,
-		        "%s: (7/%d) GetComputerNameExA returned wrong size %" PRIu32 " (expected %" PRIu32
-		        ")\n",
-		        __func__, format, dwSize, dwNameLength);
+		(void)fprintf(stderr,
+		              "%s: (7/%d) GetComputerNameExA returned wrong size %" PRIu32
+		              " (expected %" PRIu32 ")\n",
+		              __func__, format, dwSize, dwNameLength);
 		return FALSE;
 	}
 	/* check if string is correctly terminated */
 	if (computerName1[dwSize] != 0)
 	{
-		fprintf(stderr, "%s: (8/%d) string termination error\n", __func__, format);
+		(void)fprintf(stderr, "%s: (8/%d) string termination error\n", __func__, format);
 		return FALSE;
 	}
 
@@ -280,30 +285,30 @@ static BOOL Test_GetComputerNameEx_Format(COMPUTER_NAME_FORMAT format)
 	dwSize = nameBufferSize;
 	if (GetComputerNameExA(format, computerName2, &dwSize) == FALSE)
 	{
-		fprintf(stderr, "%s: (9/%d) GetComputerNameExA failed with error: 0x%08" PRIX32 "\n",
-		        __func__, format, GetLastError());
+		(void)fprintf(stderr, "%s: (9/%d) GetComputerNameExA failed with error: 0x%08" PRIX32 "\n",
+		              __func__, format, GetLastError());
 		return FALSE;
 	}
 	/* check if returned size is valid */
 	if (dwSize != dwNameLength)
 	{
-		fprintf(stderr,
-		        "%s: (10/%d) GetComputerNameExA returned wrong size %" PRIu32 " (expected %" PRIu32
-		        ")\n",
-		        __func__, format, dwSize, dwNameLength);
+		(void)fprintf(stderr,
+		              "%s: (10/%d) GetComputerNameExA returned wrong size %" PRIu32
+		              " (expected %" PRIu32 ")\n",
+		              __func__, format, dwSize, dwNameLength);
 		return FALSE;
 	}
 	/* check if string is correctly terminated */
 	if (computerName2[dwSize] != 0)
 	{
-		fprintf(stderr, "%s: (11/%d) string termination error\n", __func__, format);
+		(void)fprintf(stderr, "%s: (11/%d) string termination error\n", __func__, format);
 		return FALSE;
 	}
 
 	/* compare the results */
 	if (strcmp(computerName1, computerName2))
 	{
-		fprintf(stderr, "%s: (12/%d) string compare mismatch\n", __func__, format);
+		(void)fprintf(stderr, "%s: (12/%d) string compare mismatch\n", __func__, format);
 		return FALSE;
 	}
 
@@ -311,18 +316,19 @@ static BOOL Test_GetComputerNameEx_Format(COMPUTER_NAME_FORMAT format)
 	dwSize = dwNameLength;
 	if (GetComputerNameExA(format, computerName1, &dwSize) == TRUE)
 	{
-		fprintf(stderr,
-		        "%s: (13/%d) GetComputerNameExA unexpectedly succeeded with limited buffer size\n",
-		        __func__, format);
+		(void)fprintf(
+		    stderr,
+		    "%s: (13/%d) GetComputerNameExA unexpectedly succeeded with limited buffer size\n",
+		    __func__, format);
 		return FALSE;
 	}
 	/* check if returned size is valid */
 	if (dwSize != dwNameLength + 1)
 	{
-		fprintf(stderr,
-		        "%s: (14/%d) GetComputerNameExA returned wrong size %" PRIu32 " (expected %" PRIu32
-		        ")\n",
-		        __func__, format, dwSize, dwNameLength + 1);
+		(void)fprintf(stderr,
+		              "%s: (14/%d) GetComputerNameExA returned wrong size %" PRIu32
+		              " (expected %" PRIu32 ")\n",
+		              __func__, format, dwSize, dwNameLength + 1);
 		return FALSE;
 	}
 

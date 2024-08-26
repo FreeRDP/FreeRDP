@@ -229,7 +229,7 @@ char* winpr_strerror(DWORD dw, char* dmsg, size_t size)
 #elif defined(WINPR_HAVE_STRERROR_R)
 	strerror_r(dw, dmsg, size);
 #else
-	_snprintf(dmsg, size, "%s", strerror(dw));
+	(void)_snprintf(dmsg, size, "%s", strerror(dw));
 #endif
 	return dmsg;
 }

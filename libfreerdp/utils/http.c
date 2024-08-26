@@ -387,6 +387,6 @@ const char* freerdp_http_status_string(long status)
 char* freerdp_http_status_string_format(long status, char* buffer, size_t size)
 {
 	const char* code = freerdp_http_status_string(status);
-	_snprintf(buffer, size, "%s [%ld]", code, status);
+	(void)_snprintf(buffer, size, "%s [%ld]", code, status);
 	return buffer;
 }

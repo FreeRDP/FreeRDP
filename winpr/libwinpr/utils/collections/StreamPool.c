@@ -400,9 +400,10 @@ char* StreamPool_GetStatistics(wStreamPool* pool, char* buffer, size_t size)
 
 	if (!buffer || (size < 1))
 		return NULL;
-	_snprintf(buffer, size - 1,
-	          "aSize    =%" PRIuz ", uSize    =%" PRIuz "aCapacity=%" PRIuz ", uCapacity=%" PRIuz,
-	          pool->aSize, pool->uSize, pool->aCapacity, pool->uCapacity);
+	(void)_snprintf(buffer, size - 1,
+	                "aSize    =%" PRIuz ", uSize    =%" PRIuz "aCapacity=%" PRIuz
+	                ", uCapacity=%" PRIuz,
+	                pool->aSize, pool->uSize, pool->aCapacity, pool->uCapacity);
 	buffer[size - 1] = '\0';
 	return buffer;
 }

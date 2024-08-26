@@ -51,7 +51,7 @@ static const char* strsignal(int signum)
 
 static void cleanup_handler(int signum)
 {
-	printf("\n");
+	(void)printf("\n");
 	WLog_INFO(TAG, "caught signal %s [%d], starting cleanup...", strsignal(signum), signum);
 
 	WLog_INFO(TAG, "stopping all connections.");
@@ -60,11 +60,11 @@ static void cleanup_handler(int signum)
 
 static void pf_server_register_signal_handlers(void)
 {
-	signal(SIGINT, cleanup_handler);
-	signal(SIGTERM, cleanup_handler);
+	(void)signal(SIGINT, cleanup_handler);
+	(void)signal(SIGTERM, cleanup_handler);
 #ifndef _WIN32
-	signal(SIGQUIT, cleanup_handler);
-	signal(SIGKILL, cleanup_handler);
+	(void)signal(SIGQUIT, cleanup_handler);
+	(void)signal(SIGKILL, cleanup_handler);
 #endif
 }
 

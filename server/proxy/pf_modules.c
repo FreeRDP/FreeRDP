@@ -597,8 +597,8 @@ proxyModule* pf_modules_new(const char* root_dir, const char** modules, size_t c
 		{
 			char name[8192] = { 0 };
 			char* fullpath = NULL;
-			_snprintf(name, sizeof(name), "proxy-%s-plugin%s", modules[i],
-			          FREERDP_SHARED_LIBRARY_SUFFIX);
+			(void)_snprintf(name, sizeof(name), "proxy-%s-plugin%s", modules[i],
+			                FREERDP_SHARED_LIBRARY_SUFFIX);
 			fullpath = GetCombinedPath(path, name);
 			pf_modules_load_module(fullpath, module, NULL);
 			free(fullpath);

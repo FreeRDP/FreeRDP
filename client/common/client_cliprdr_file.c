@@ -1401,7 +1401,7 @@ static void cliprdr_local_file_try_close(CliprdrLocalFile* file, UINT res, UINT6
 		// TODO: for the time being just close again.
 	}
 	if (file->fp)
-		fclose(file->fp);
+		(void)fclose(file->fp);
 	file->fp = NULL;
 }
 
@@ -1705,9 +1705,11 @@ static CliprdrFuseFile* clip_data_dir_new(CliprdrFileContext* file_context, BOOL
 	}
 
 	if (has_clip_data_id)
-		_snprintf(clip_data_dir->filename_with_root, path_length, "/%u", (unsigned)clip_data_id);
+		(void)_snprintf(clip_data_dir->filename_with_root, path_length, "/%u",
+		                (unsigned)clip_data_id);
 	else
-		_snprintf(clip_data_dir->filename_with_root, path_length, "/%" PRIu64, NO_CLIP_DATA_ID);
+		(void)_snprintf(clip_data_dir->filename_with_root, path_length, "/%" PRIu64,
+		                NO_CLIP_DATA_ID);
 
 	clip_data_dir->filename = strrchr(clip_data_dir->filename_with_root, '/') + 1;
 
@@ -1863,8 +1865,8 @@ static BOOL set_selection_for_clip_data_entry(CliprdrFileContext* file_context,
 			return FALSE;
 		}
 
-		_snprintf(fuse_file->filename_with_root, path_length, "%s/%s",
-		          clip_data_dir->filename_with_root, filename);
+		(void)_snprintf(fuse_file->filename_with_root, path_length, "%s/%s",
+		                clip_data_dir->filename_with_root, filename);
 		free(filename);
 
 		fuse_file->filename = strrchr(fuse_file->filename_with_root, '/') + 1;
@@ -2098,7 +2100,8 @@ static BOOL create_base_path(CliprdrFileContext* file)
 	WINPR_ASSERT(file);
 
 	char base[64] = { 0 };
-	_snprintf(base, sizeof(base), "com.freerdp.client.cliprdr.%" PRIu32, GetCurrentProcessId());
+	(void)_snprintf(base, sizeof(base), "com.freerdp.client.cliprdr.%" PRIu32,
+	                GetCurrentProcessId());
 
 	file->path = GetKnownSubPath(KNOWN_PATH_TEMP, base);
 	if (!file->path)
@@ -2120,7 +2123,7 @@ static void cliprdr_local_file_free(CliprdrLocalFile* file)
 	if (file->fp)
 	{
 		WLog_Print(file->context->log, WLOG_DEBUG, "closing file %s, discarding entry", file->name);
-		fclose(file->fp);
+		(void)fclose(file->fp);
 	}
 	free(file->name);
 	*file = empty;
@@ -2366,7 +2369,7 @@ static CliprdrFuseFile* fuse_file_new_root(CliprdrFileContext* file_context)
 		return NULL;
 	}
 
-	_snprintf(root_dir->filename_with_root, 2, "/");
+	(void)_snprintf(root_dir->filename_with_root, 2, "/");
 	root_dir->filename = root_dir->filename_with_root;
 
 	root_dir->ino = FUSE_ROOT_ID;

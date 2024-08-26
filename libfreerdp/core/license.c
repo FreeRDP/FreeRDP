@@ -236,7 +236,7 @@ static const char* license_preferred_key_exchange_alg_string(UINT32 alg, char* b
 			break;
 	}
 
-	_snprintf(buffer, size, "%s [0x%08" PRIx32 "]", name, alg);
+	(void)_snprintf(buffer, size, "%s [0x%08" PRIx32 "]", name, alg);
 	return buffer;
 }
 
@@ -491,7 +491,7 @@ static BOOL computeCalHash(const char* hostname, char* hashStr, size_t len)
 		goto out;
 
 	for (size_t i = 0; i < sizeof(hash); i++, hashStr += 2)
-		sprintf_s(hashStr, 3, "%.2x", hash[i]);
+		(void)sprintf_s(hashStr, 3, "%.2x", hash[i]);
 
 	ret = TRUE;
 out:
@@ -548,8 +548,8 @@ static BOOL saveCal(const rdpSettings* settings, const BYTE* data, size_t length
 
 	if (!computeCalHash(hostname, hash, sizeof(hash)))
 		goto out;
-	sprintf_s(filename, sizeof(filename) - 1, "%s.cal", hash);
-	sprintf_s(filenameNew, sizeof(filenameNew) - 1, "%s.cal.new", hash);
+	(void)sprintf_s(filename, sizeof(filename) - 1, "%s.cal", hash);
+	(void)sprintf_s(filenameNew, sizeof(filenameNew) - 1, "%s.cal.new", hash);
 
 	if (!(filepath = GetCombinedPath(licenseStorePath, filename)))
 	{
@@ -571,7 +571,7 @@ static BOOL saveCal(const rdpSettings* settings, const BYTE* data, size_t length
 	}
 
 	written = fwrite(data, length, 1, fp);
-	fclose(fp);
+	(void)fclose(fp);
 
 	if (written != 1)
 	{
@@ -612,7 +612,7 @@ static BYTE* loadCalFile(const rdpSettings* settings, const char* hostname, size
 		return NULL;
 	}
 
-	sprintf_s(calFilename, sizeof(calFilename) - 1, "%s.cal", hash);
+	(void)sprintf_s(calFilename, sizeof(calFilename) - 1, "%s.cal", hash);
 
 	if (!(licenseStorePath = GetCombinedPath(
 	          freerdp_settings_get_string(settings, FreeRDP_ConfigPath), licenseStore)))
@@ -641,7 +641,7 @@ static BYTE* loadCalFile(const rdpSettings* settings, const char* hostname, size
 
 	*dataLen = (size_t)length;
 
-	fclose(fp);
+	(void)fclose(fp);
 	free(calPath);
 	free(licenseStorePath);
 	return ret;
@@ -680,7 +680,7 @@ static BOOL license_read_preamble(wStream* s, BYTE* bMsgType, BYTE* flags, UINT1
 	Stream_Read_UINT8(s, *bMsgType);  /* bMsgType (1 byte) */
 	Stream_Read_UINT8(s, *flags);     /* flags (1 byte) */
 	Stream_Read_UINT16(s, *wMsgSize); /* wMsgSize (2 bytes) */
-	return license_check_stream_length(s, *wMsgSize - 4ll, "license preamble::wMsgSize");
+	return license_check_stream_length(s, *wMsgSize - 4LL, "license preamble::wMsgSize");
 }
 
 /**

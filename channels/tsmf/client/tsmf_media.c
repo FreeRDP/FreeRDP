@@ -154,8 +154,8 @@ struct S_TSMF_SAMPLE
 static wArrayList* presentation_list = NULL;
 static int TERMINATING = 0;
 
-static void _tsmf_presentation_free(void* obj);
-static void _tsmf_stream_free(void* obj);
+static void s_tsmf_presentation_free(void* obj);
+static void s_tsmf_stream_free(void* obj);
 
 static UINT64 get_current_time(void)
 {
@@ -365,7 +365,7 @@ TSMF_PRESENTATION* tsmf_presentation_new(const BYTE* guid,
 	obj = ArrayList_Object(presentation->stream_list);
 	if (!obj)
 		goto error_add;
-	obj->fnObjectFree = _tsmf_stream_free;
+	obj->fnObjectFree = s_tsmf_stream_free;
 
 	if (!ArrayList_Append(presentation_list, presentation))
 		goto error_add;
@@ -384,7 +384,7 @@ static char* guid_to_string(const BYTE* guid, char* str, size_t len)
 		return NULL;
 
 	for (size_t i = 0; i < GUID_SIZE && (len > 2 * i); i++)
-		sprintf_s(str + (2 * i), len - 2 * i, "%02" PRIX8 "", guid[i]);
+		(void)sprintf_s(str + (2 * i), len - 2 * i, "%02" PRIX8 "", guid[i]);
 
 	return str;
 }
@@ -1164,7 +1164,7 @@ BOOL tsmf_stream_flush(TSMF_STREAM* stream)
 	return ret;
 }
 
-void _tsmf_presentation_free(void* obj)
+void s_tsmf_presentation_free(void* obj)
 {
 	TSMF_PRESENTATION* presentation = (TSMF_PRESENTATION*)obj;
 
@@ -1395,7 +1395,7 @@ void tsmf_stream_end(TSMF_STREAM* stream, UINT32 message_id,
 	stream->eos_channel_callback = pChannelCallback;
 }
 
-void _tsmf_stream_free(void* obj)
+void s_tsmf_stream_free(void* obj)
 {
 	TSMF_STREAM* stream = (TSMF_STREAM*)obj;
 
@@ -1504,12 +1504,12 @@ static void tsmf_signal_handler(int s)
 
 	if (s == SIGINT)
 	{
-		signal(s, SIG_DFL);
+		(void)signal(s, SIG_DFL);
 		kill(getpid(), s);
 	}
 	else if (s == SIGUSR1)
 	{
-		signal(s, SIG_DFL);
+		(void)signal(s, SIG_DFL);
 	}
 }
 
@@ -1537,7 +1537,7 @@ BOOL tsmf_media_init(void)
 		obj = ArrayList_Object(presentation_list);
 		if (!obj)
 			return FALSE;
-		obj->fnObjectFree = _tsmf_presentation_free;
+		obj->fnObjectFree = s_tsmf_presentation_free;
 	}
 
 	return TRUE;

@@ -68,7 +68,7 @@ static void delete_file(char* path)
 					break;
 			}
 
-			fclose(fp);
+			(void)fclose(fp);
 		}
 	}
 
@@ -577,7 +577,7 @@ static BOOL smartcard_hw_enumerateCerts(const rdpSettings* settings, LPCWSTR csp
 		if (!scopeStr)
 			goto out;
 
-		_snprintf(scopeStr, readerSz + 5, "\\\\.\\%s\\", reader);
+		(void)_snprintf(scopeStr, readerSz + 5, "\\\\.\\%s\\", reader);
 		scope = ConvertUtf8NToWCharAlloc(scopeStr, readerSz + 5, NULL);
 		free(scopeStr);
 
@@ -664,7 +664,7 @@ static BOOL smartcard_hw_enumerateCerts(const rdpSettings* settings, LPCWSTR csp
 
 			if (ConvertWCharToUtf8(name->pszName, providerNameStr, ARRAYSIZE(providerNameStr)) < 0)
 			{
-				_snprintf(providerNameStr, sizeof(providerNameStr), "<unknown>");
+				(void)_snprintf(providerNameStr, sizeof(providerNameStr), "<unknown>");
 				WLog_ERR(TAG, "unable to convert provider name to char*, will show it as '%s'",
 				         providerNameStr);
 			}

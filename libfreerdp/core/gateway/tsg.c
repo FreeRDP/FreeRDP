@@ -285,7 +285,7 @@ static const char* tsg_component_id_to_string(UINT16 ComponentId, char* buffer, 
 	}
 #undef ENTRY
 
-	_snprintf(buffer, bytelen, "%s [0x%04" PRIx16 "]", str, ComponentId);
+	(void)_snprintf(buffer, bytelen, "%s [0x%04" PRIx16 "]", str, ComponentId);
 	return buffer;
 }
 
@@ -925,18 +925,18 @@ static const char* tsg_redirection_flags_to_string(char* buffer, size_t size,
 	WINPR_ASSERT(buffer || (size == 0));
 	WINPR_ASSERT(flags);
 
-	_snprintf(buffer, size,
-	          "enableAllRedirections=%s,  disableAllRedirections=%s, driveRedirectionDisabled=%s, "
-	          "printerRedirectionDisabled=%s, portRedirectionDisabled=%s, reserved=%s, "
-	          "clipboardRedirectionDisabled=%s, pnpRedirectionDisabled=%s",
-	          tsg_bool_to_string(flags->enableAllRedirections),
-	          tsg_bool_to_string(flags->disableAllRedirections),
-	          tsg_bool_to_string(flags->driveRedirectionDisabled),
-	          tsg_bool_to_string(flags->printerRedirectionDisabled),
-	          tsg_bool_to_string(flags->portRedirectionDisabled),
-	          tsg_bool_to_string(flags->reserved),
-	          tsg_bool_to_string(flags->clipboardRedirectionDisabled),
-	          tsg_bool_to_string(flags->pnpRedirectionDisabled));
+	(void)_snprintf(
+	    buffer, size,
+	    "enableAllRedirections=%s,  disableAllRedirections=%s, driveRedirectionDisabled=%s, "
+	    "printerRedirectionDisabled=%s, portRedirectionDisabled=%s, reserved=%s, "
+	    "clipboardRedirectionDisabled=%s, pnpRedirectionDisabled=%s",
+	    tsg_bool_to_string(flags->enableAllRedirections),
+	    tsg_bool_to_string(flags->disableAllRedirections),
+	    tsg_bool_to_string(flags->driveRedirectionDisabled),
+	    tsg_bool_to_string(flags->printerRedirectionDisabled),
+	    tsg_bool_to_string(flags->portRedirectionDisabled), tsg_bool_to_string(flags->reserved),
+	    tsg_bool_to_string(flags->clipboardRedirectionDisabled),
+	    tsg_bool_to_string(flags->pnpRedirectionDisabled));
 	return buffer;
 }
 

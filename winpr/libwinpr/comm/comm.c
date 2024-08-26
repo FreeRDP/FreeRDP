@@ -48,7 +48,7 @@
 
 #include "comm.h"
 
-static wLog* _Log = NULL;
+static wLog* s_Log = NULL;
 
 struct comm_device
 {
@@ -61,12 +61,12 @@ typedef struct comm_device COMM_DEVICE;
 /* FIXME: get a clever data structure, see also io.h functions */
 /* _CommDevices is a NULL-terminated array with a maximun of COMM_DEVICE_MAX COMM_DEVICE */
 #define COMM_DEVICE_MAX 128
-static COMM_DEVICE** _CommDevices = NULL;
-static CRITICAL_SECTION _CommDevicesLock;
+static COMM_DEVICE** s_CommDevices = NULL;
+static CRITICAL_SECTION s_CommDevicesLock;
 
-static HANDLE_CREATOR _CommHandleCreator;
+static HANDLE_CREATOR s_CommHandleCreator;
 
-static pthread_once_t _CommInitialized = PTHREAD_ONCE_INIT;
+static pthread_once_t s_CommInitialized = PTHREAD_ONCE_INIT;
 
 static int CommGetFd(HANDLE handle)
 {
@@ -80,30 +80,30 @@ static int CommGetFd(HANDLE handle)
 
 HANDLE_CREATOR* GetCommHandleCreator(void)
 {
-	_CommHandleCreator.IsHandled = IsCommDevice;
-	_CommHandleCreator.CreateFileA = CommCreateFileA;
-	return &_CommHandleCreator;
+	s_CommHandleCreator.IsHandled = IsCommDevice;
+	s_CommHandleCreator.CreateFileA = CommCreateFileA;
+	return &s_CommHandleCreator;
 }
 
-static void _CommInit(void)
+static void s_CommInit(void)
 {
 	/* NB: error management to be done outside of this function */
-	WINPR_ASSERT(_Log == NULL);
-	WINPR_ASSERT(_CommDevices == NULL);
-	_CommDevices = (COMM_DEVICE**)calloc(COMM_DEVICE_MAX + 1, sizeof(COMM_DEVICE*));
+	WINPR_ASSERT(s_Log == NULL);
+	WINPR_ASSERT(s_CommDevices == NULL);
+	s_CommDevices = (COMM_DEVICE**)calloc(COMM_DEVICE_MAX + 1, sizeof(COMM_DEVICE*));
 
-	if (!_CommDevices)
+	if (!s_CommDevices)
 		return;
 
-	if (!InitializeCriticalSectionEx(&_CommDevicesLock, 0, 0))
+	if (!InitializeCriticalSectionEx(&s_CommDevicesLock, 0, 0))
 	{
-		free(_CommDevices);
-		_CommDevices = NULL;
+		free(s_CommDevices);
+		s_CommDevices = NULL;
 		return;
 	}
 
-	_Log = WLog_Get("com.winpr.comm");
-	WINPR_ASSERT(_Log != NULL);
+	s_Log = WLog_Get("com.winpr.comm");
+	WINPR_ASSERT(s_Log != NULL);
 }
 
 /**
@@ -112,7 +112,7 @@ static void _CommInit(void)
  */
 static BOOL CommInitialized(void)
 {
-	if (pthread_once(&_CommInitialized, _CommInit) != 0)
+	if (pthread_once(&s_CommInitialized, s_CommInit) != 0)
 	{
 		SetLastError(ERROR_DLL_INIT_FAILED);
 		return FALSE;
@@ -128,7 +128,7 @@ void CommLog_Print(DWORD level, ...)
 
 	va_list ap;
 	va_start(ap, level);
-	WLog_PrintVA(_Log, level, ap);
+	WLog_PrintVA(s_Log, level, ap);
 	va_end(ap);
 }
 
@@ -936,9 +936,9 @@ BOOL DefineCommDevice(/* DWORD dwFlags,*/ LPCTSTR lpDeviceName, LPCTSTR lpTarget
 	if (!CommInitialized())
 		return FALSE;
 
-	EnterCriticalSection(&_CommDevicesLock);
+	EnterCriticalSection(&s_CommDevicesLock);
 
-	if (_CommDevices == NULL)
+	if (s_CommDevices == NULL)
 	{
 		SetLastError(ERROR_DLL_INIT_FAILED);
 		goto error_handle;
@@ -963,31 +963,31 @@ BOOL DefineCommDevice(/* DWORD dwFlags,*/ LPCTSTR lpDeviceName, LPCTSTR lpTarget
 	int i = 0;
 	for (; i < COMM_DEVICE_MAX; i++)
 	{
-		if (_CommDevices[i] != NULL)
+		if (s_CommDevices[i] != NULL)
 		{
-			if (_tcscmp(_CommDevices[i]->name, storedDeviceName) == 0)
+			if (_tcscmp(s_CommDevices[i]->name, storedDeviceName) == 0)
 			{
 				/* take over the emplacement */
-				free(_CommDevices[i]->name);
-				free(_CommDevices[i]->path);
-				_CommDevices[i]->name = storedDeviceName;
-				_CommDevices[i]->path = storedTargetPath;
+				free(s_CommDevices[i]->name);
+				free(s_CommDevices[i]->path);
+				s_CommDevices[i]->name = storedDeviceName;
+				s_CommDevices[i]->path = storedTargetPath;
 				break;
 			}
 		}
 		else
 		{
 			/* new emplacement */
-			_CommDevices[i] = (COMM_DEVICE*)calloc(1, sizeof(COMM_DEVICE));
+			s_CommDevices[i] = (COMM_DEVICE*)calloc(1, sizeof(COMM_DEVICE));
 
-			if (_CommDevices[i] == NULL)
+			if (s_CommDevices[i] == NULL)
 			{
 				SetLastError(ERROR_OUTOFMEMORY);
 				goto error_handle;
 			}
 
-			_CommDevices[i]->name = storedDeviceName;
-			_CommDevices[i]->path = storedTargetPath;
+			s_CommDevices[i]->name = storedDeviceName;
+			s_CommDevices[i]->path = storedTargetPath;
 			break;
 		}
 	}
@@ -998,12 +998,12 @@ BOOL DefineCommDevice(/* DWORD dwFlags,*/ LPCTSTR lpDeviceName, LPCTSTR lpTarget
 		goto error_handle;
 	}
 
-	LeaveCriticalSection(&_CommDevicesLock);
+	LeaveCriticalSection(&s_CommDevicesLock);
 	return TRUE;
 error_handle:
 	free(storedDeviceName);
 	free(storedTargetPath);
-	LeaveCriticalSection(&_CommDevicesLock);
+	LeaveCriticalSection(&s_CommDevicesLock);
 	return FALSE;
 }
 
@@ -1031,7 +1031,7 @@ DWORD QueryCommDevice(LPCTSTR lpDeviceName, LPTSTR lpTargetPath, DWORD ucchMax)
 	if (!CommInitialized())
 		return 0;
 
-	if (_CommDevices == NULL)
+	if (s_CommDevices == NULL)
 	{
 		SetLastError(ERROR_DLL_INIT_FAILED);
 		return 0;
@@ -1043,16 +1043,16 @@ DWORD QueryCommDevice(LPCTSTR lpDeviceName, LPTSTR lpTargetPath, DWORD ucchMax)
 		return 0;
 	}
 
-	EnterCriticalSection(&_CommDevicesLock);
+	EnterCriticalSection(&s_CommDevicesLock);
 	storedTargetPath = NULL;
 
 	for (int i = 0; i < COMM_DEVICE_MAX; i++)
 	{
-		if (_CommDevices[i] != NULL)
+		if (s_CommDevices[i] != NULL)
 		{
-			if (_tcscmp(_CommDevices[i]->name, lpDeviceName) == 0)
+			if (_tcscmp(s_CommDevices[i]->name, lpDeviceName) == 0)
 			{
-				storedTargetPath = _CommDevices[i]->path;
+				storedTargetPath = s_CommDevices[i]->path;
 				break;
 			}
 
@@ -1062,7 +1062,7 @@ DWORD QueryCommDevice(LPCTSTR lpDeviceName, LPTSTR lpTargetPath, DWORD ucchMax)
 		break;
 	}
 
-	LeaveCriticalSection(&_CommDevicesLock);
+	LeaveCriticalSection(&s_CommDevicesLock);
 
 	if (storedTargetPath == NULL)
 	{

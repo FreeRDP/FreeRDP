@@ -355,7 +355,7 @@ BOOL Stream_CheckAndLogRequiredCapacityWLogExVa(wLog* log, DWORD level, wStream*
 	{
 		char prefix[1024] = { 0 };
 
-		vsnprintf(prefix, sizeof(prefix), fmt, args);
+		(void)vsnprintf(prefix, sizeof(prefix), fmt, args);
 
 		WLog_Print(log, level,
 		           "[%s] invalid remaining capacity, got %" PRIuz ", require at least %" PRIu64
@@ -451,7 +451,7 @@ BOOL Stream_CheckAndLogRequiredLengthWLogExVa(wLog* log, DWORD level, wStream* s
 	{
 		char prefix[1024] = { 0 };
 
-		vsnprintf(prefix, sizeof(prefix), fmt, args);
+		(void)vsnprintf(prefix, sizeof(prefix), fmt, args);
 
 		WLog_Print(log, level,
 		           "[%s] invalid length, got %" PRIuz ", require at least %" PRIuz

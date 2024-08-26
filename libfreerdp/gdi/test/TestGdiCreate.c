@@ -518,67 +518,67 @@ int TestGdiCreate(int argc, char* argv[])
 {
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
-	fprintf(stderr, "test_gdi_GetDC()\n");
+	(void)fprintf(stderr, "test_gdi_GetDC()\n");
 
 	if (test_gdi_GetDC() < 0)
 		return -1;
 
-	fprintf(stderr, "test_gdi_CreateCompatibleDC()\n");
+	(void)fprintf(stderr, "test_gdi_CreateCompatibleDC()\n");
 
 	if (test_gdi_CreateCompatibleDC() < 0)
 		return -1;
 
-	fprintf(stderr, "test_gdi_CreateBitmap()\n");
+	(void)fprintf(stderr, "test_gdi_CreateBitmap()\n");
 
 	if (test_gdi_CreateBitmap() < 0)
 		return -1;
 
-	fprintf(stderr, "test_gdi_CreateCompatibleBitmap()\n");
+	(void)fprintf(stderr, "test_gdi_CreateCompatibleBitmap()\n");
 
 	if (test_gdi_CreateCompatibleBitmap() < 0)
 		return -1;
 
-	fprintf(stderr, "test_gdi_CreatePen()\n");
+	(void)fprintf(stderr, "test_gdi_CreatePen()\n");
 
 	if (test_gdi_CreatePen() < 0)
 		return -1;
 
-	fprintf(stderr, "test_gdi_CreateSolidBrush()\n");
+	(void)fprintf(stderr, "test_gdi_CreateSolidBrush()\n");
 
 	if (test_gdi_CreateSolidBrush() < 0)
 		return -1;
 
-	fprintf(stderr, "test_gdi_CreatePatternBrush()\n");
+	(void)fprintf(stderr, "test_gdi_CreatePatternBrush()\n");
 
 	if (test_gdi_CreatePatternBrush() < 0)
 		return -1;
 
-	fprintf(stderr, "test_gdi_CreateRectRgn()\n");
+	(void)fprintf(stderr, "test_gdi_CreateRectRgn()\n");
 
 	if (test_gdi_CreateRectRgn() < 0)
 		return -1;
 
-	fprintf(stderr, "test_gdi_CreateRect()\n");
+	(void)fprintf(stderr, "test_gdi_CreateRect()\n");
 
 	if (test_gdi_CreateRect() < 0)
 		return -1;
 
-	fprintf(stderr, "test_gdi_GetPixel()\n");
+	(void)fprintf(stderr, "test_gdi_GetPixel()\n");
 
 	if (!test_gdi_GetPixel())
 		return -1;
 
-	fprintf(stderr, "test_gdi_SetPixel()\n");
+	(void)fprintf(stderr, "test_gdi_SetPixel()\n");
 
 	if (!test_gdi_SetPixel())
 		return -1;
 
-	fprintf(stderr, "test_gdi_SetROP2()\n");
+	(void)fprintf(stderr, "test_gdi_SetROP2()\n");
 
 	if (test_gdi_SetROP2() < 0)
 		return -1;
 
-	fprintf(stderr, "test_gdi_MoveToEx()\n");
+	(void)fprintf(stderr, "test_gdi_MoveToEx()\n");
 
 	if (test_gdi_MoveToEx() < 0)
 		return -1;

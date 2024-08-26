@@ -111,7 +111,7 @@ static FREERDP_ADDIN** freerdp_channels_list_client_static_addins(LPCSTR pszName
 			goto error_out;
 		}
 
-		sprintf_s(pAddin->cName, ARRAYSIZE(pAddin->cName), "%s", table->name);
+		(void)sprintf_s(pAddin->cName, ARRAYSIZE(pAddin->cName), "%s", table->name);
 		pAddin->dwFlags = FREERDP_ADDIN_CLIENT;
 		pAddin->dwFlags |= FREERDP_ADDIN_STATIC;
 		pAddin->dwFlags |= FREERDP_ADDIN_NAME;
@@ -128,8 +128,9 @@ static FREERDP_ADDIN** freerdp_channels_list_client_static_addins(LPCSTR pszName
 				goto error_out;
 			}
 
-			sprintf_s(pAddin->cName, ARRAYSIZE(pAddin->cName), "%s", table->name);
-			sprintf_s(pAddin->cSubsystem, ARRAYSIZE(pAddin->cSubsystem), "%s", subsystems[j].name);
+			(void)sprintf_s(pAddin->cName, ARRAYSIZE(pAddin->cName), "%s", table->name);
+			(void)sprintf_s(pAddin->cSubsystem, ARRAYSIZE(pAddin->cSubsystem), "%s",
+			                subsystems[j].name);
 			pAddin->dwFlags = FREERDP_ADDIN_CLIENT;
 			pAddin->dwFlags |= FREERDP_ADDIN_STATIC;
 			pAddin->dwFlags |= FREERDP_ADDIN_NAME;
@@ -190,23 +191,23 @@ static FREERDP_ADDIN** freerdp_channels_list_dynamic_addins(LPCSTR pszName, LPCS
 
 	if (pszName && pszSubsystem && pszType)
 	{
-		sprintf_s(pszPattern, cchPattern, FREERDP_SHARED_LIBRARY_PREFIX "%s-client-%s-%s.%s",
-		          pszName, pszSubsystem, pszType, pszExtension);
+		(void)sprintf_s(pszPattern, cchPattern, FREERDP_SHARED_LIBRARY_PREFIX "%s-client-%s-%s.%s",
+		                pszName, pszSubsystem, pszType, pszExtension);
 	}
 	else if (pszName && pszType)
 	{
-		sprintf_s(pszPattern, cchPattern, FREERDP_SHARED_LIBRARY_PREFIX "%s-client-?-%s.%s",
-		          pszName, pszType, pszExtension);
+		(void)sprintf_s(pszPattern, cchPattern, FREERDP_SHARED_LIBRARY_PREFIX "%s-client-?-%s.%s",
+		                pszName, pszType, pszExtension);
 	}
 	else if (pszName)
 	{
-		sprintf_s(pszPattern, cchPattern, FREERDP_SHARED_LIBRARY_PREFIX "%s-client*.%s", pszName,
-		          pszExtension);
+		(void)sprintf_s(pszPattern, cchPattern, FREERDP_SHARED_LIBRARY_PREFIX "%s-client*.%s",
+		                pszName, pszExtension);
 	}
 	else
 	{
-		sprintf_s(pszPattern, cchPattern, FREERDP_SHARED_LIBRARY_PREFIX "?-client*.%s",
-		          pszExtension);
+		(void)sprintf_s(pszPattern, cchPattern, FREERDP_SHARED_LIBRARY_PREFIX "?-client*.%s",
+		                pszExtension);
 	}
 
 	cchPattern = strnlen(pszPattern, cchPattern);
@@ -567,10 +568,10 @@ static DWORD WINAPI channel_client_thread_proc(LPVOID userdata)
 	if (error && internals->ctx)
 	{
 		char msg[128];
-		_snprintf(msg, 127,
-		          "%s_virtual_channel_client_thread reported an"
-		          " error",
-		          internals->channel_name);
+		(void)_snprintf(msg, 127,
+		                "%s_virtual_channel_client_thread reported an"
+		                " error",
+		                internals->channel_name);
 		setChannelError(internals->ctx, error, msg);
 	}
 	ExitThread(error);
@@ -696,7 +697,8 @@ UINT channel_client_post_message(void* MsgsHandle, LPVOID pData, UINT32 dataLeng
 		if (Stream_Capacity(data_in) != Stream_GetPosition(data_in))
 		{
 			char msg[128];
-			_snprintf(msg, 127, "%s_plugin_process_received: read error", internals->channel_name);
+			(void)_snprintf(msg, 127, "%s_plugin_process_received: read error",
+			                internals->channel_name);
 			WLog_ERR(TAG, msg);
 			return ERROR_INTERNAL_ERROR;
 		}

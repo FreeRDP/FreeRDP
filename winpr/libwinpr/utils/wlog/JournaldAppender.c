@@ -104,7 +104,7 @@ static BOOL WLog_JournaldAppender_WriteMessage(wLog* log, wLogAppender* appender
 		case WLOG_OFF:
 			return TRUE;
 		default:
-			fprintf(stderr, "%s: unknown level %" PRIu32 "\n", __func__, message->Level);
+			(void)fprintf(stderr, "%s: unknown level %" PRIu32 "\n", __func__, message->Level);
 			return FALSE;
 	}
 
@@ -112,7 +112,8 @@ static BOOL WLog_JournaldAppender_WriteMessage(wLog* log, wLogAppender* appender
 	WLog_Layout_GetMessagePrefix(log, appender->Layout, message);
 
 	if (message->Level != WLOG_OFF)
-		fprintf(journaldAppender->stream, formatStr, message->PrefixString, message->TextString);
+		(void)fprintf(journaldAppender->stream, formatStr, message->PrefixString,
+		              message->TextString);
 	return TRUE;
 }
 
@@ -162,7 +163,7 @@ static void WLog_JournaldAppender_Free(wLogAppender* appender)
 	{
 		journaldAppender = (wLogJournaldAppender*)appender;
 		if (journaldAppender->stream)
-			fclose(journaldAppender->stream);
+			(void)fclose(journaldAppender->stream);
 		free(journaldAppender->identifier);
 		free(journaldAppender);
 	}

@@ -138,7 +138,7 @@ static BOOL x11_shadow_pam_get_service_name(SHADOW_PAM_AUTH_INFO* info)
 		char path[MAX_PATH];
 		const char* hint = hints[x];
 
-		_snprintf(path, sizeof(path), "%s/%s", base, hint);
+		(void)_snprintf(path, sizeof(path), "%s/%s", base, hint);
 		if (winpr_PathFileExists(path))
 		{
 

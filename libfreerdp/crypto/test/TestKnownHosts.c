@@ -139,7 +139,7 @@ static int prepare(const char* currentFileV2)
 finish:
 
 	if (fc)
-		fclose(fc);
+		(void)fclose(fc);
 
 	return rc;
 }
@@ -158,11 +158,11 @@ static BOOL setup_config(rdpSettings** settings)
 		goto fail;
 
 	GetSystemTime(&systemTime);
-	sprintf_s(sname, sizeof(sname),
-	          "TestKnownHostsCurrent-%04" PRIu16 "%02" PRIu16 "%02" PRIu16 "%02" PRIu16 "%02" PRIu16
-	          "%02" PRIu16 "%04" PRIu16,
-	          systemTime.wYear, systemTime.wMonth, systemTime.wDay, systemTime.wHour,
-	          systemTime.wMinute, systemTime.wSecond, systemTime.wMilliseconds);
+	(void)sprintf_s(sname, sizeof(sname),
+	                "TestKnownHostsCurrent-%04" PRIu16 "%02" PRIu16 "%02" PRIu16 "%02" PRIu16
+	                "%02" PRIu16 "%02" PRIu16 "%04" PRIu16,
+	                systemTime.wYear, systemTime.wMonth, systemTime.wDay, systemTime.wHour,
+	                systemTime.wMinute, systemTime.wSecond, systemTime.wMilliseconds);
 
 	path = GetKnownSubPath(KNOWN_PATH_TEMP, sname);
 	if (!path)
@@ -171,7 +171,7 @@ static BOOL setup_config(rdpSettings** settings)
 	{
 		if (!CreateDirectoryA(path, NULL))
 		{
-			fprintf(stderr, "Could not create %s!\n", path);
+			(void)fprintf(stderr, "Could not create %s!\n", path);
 			goto fail;
 		}
 	}

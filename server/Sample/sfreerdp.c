@@ -1327,16 +1327,16 @@ static void print_entry(FILE* fp, WINPR_FORMAT_ARG const char* fmt, const char* 
 {
 	char buffer[32] = { 0 };
 	strncpy(buffer, what, MIN(size, sizeof(buffer) - 1));
-	fprintf(fp, fmt, buffer);
+	(void)fprintf(fp, fmt, buffer);
 }
 
 static WINPR_NORETURN(void usage(const char* app, const char* invalid))
 {
 	FILE* fp = stdout;
 
-	fprintf(fp, "Invalid argument '%s'\n", invalid);
-	fprintf(fp, "Usage: %s <arg>[ <arg> ...]\n", app);
-	fprintf(fp, "Arguments:\n");
+	(void)fprintf(fp, "Invalid argument '%s'\n", invalid);
+	(void)fprintf(fp, "Usage: %s <arg>[ <arg> ...]\n", app);
+	(void)fprintf(fp, "Arguments:\n");
 	print_entry(fp, "\t%s<pcap file>\n", options.spcap, sizeof(options.spcap));
 	print_entry(fp, "\t%s<cert file>\n", options.scert, sizeof(options.scert));
 	print_entry(fp, "\t%s<key file>\n", options.skey, sizeof(options.skey));
@@ -1420,7 +1420,7 @@ int main(int argc, char* argv[])
 		goto fail;
 
 	/* Open the server socket and start listening. */
-	sprintf_s(name, sizeof(name), "tfreerdp-server.%ld", port);
+	(void)sprintf_s(name, sizeof(name), "tfreerdp-server.%ld", port);
 	file = GetKnownSubPath(KNOWN_PATH_TEMP, name);
 
 	if (!file)

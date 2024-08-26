@@ -191,7 +191,7 @@ static void rdpsnd_oss_open_mixer(rdpsndOssPlugin* oss)
 		return;
 
 	if (oss->dev_unit != -1)
-		sprintf_s(mixer_name, PATH_MAX - 1, "/dev/mixer%i", oss->dev_unit);
+		(void)sprintf_s(mixer_name, PATH_MAX - 1, "/dev/mixer%i", oss->dev_unit);
 
 	if ((oss->mixer_handle = open(mixer_name, O_RDWR)) < 0)
 	{
@@ -218,7 +218,7 @@ static BOOL rdpsnd_oss_open(rdpsndDevicePlugin* device, const AUDIO_FORMAT* form
 		return TRUE;
 
 	if (oss->dev_unit != -1)
-		sprintf_s(dev_name, PATH_MAX - 1, "/dev/dsp%i", oss->dev_unit);
+		(void)sprintf_s(dev_name, PATH_MAX - 1, "/dev/dsp%i", oss->dev_unit);
 
 	WLog_INFO(TAG, "open: %s", dev_name);
 

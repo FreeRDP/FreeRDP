@@ -83,7 +83,7 @@ static BOOL FileCloseHandle(HANDLE handle)
 		/* Don't close stdin/stdout/stderr */
 		if (fileno(file->fp) > 2)
 		{
-			fclose(file->fp);
+			(void)fclose(file->fp);
 			file->fp = NULL;
 		}
 	}
@@ -916,7 +916,7 @@ static HANDLE FileCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dw
 		return INVALID_HANDLE_VALUE;
 	}
 
-	setvbuf(fp, NULL, _IONBF, 0);
+	(void)setvbuf(fp, NULL, _IONBF, 0);
 
 #ifdef __sun
 	lock.l_start = 0;
@@ -974,11 +974,11 @@ static BOOL IsFileDevice(LPCTSTR lpDeviceName)
 	return TRUE;
 }
 
-static HANDLE_CREATOR _FileHandleCreator = { IsFileDevice, FileCreateFileA };
+static HANDLE_CREATOR FileHandleCreator = { IsFileDevice, FileCreateFileA };
 
 HANDLE_CREATOR* GetFileHandleCreator(void)
 {
-	return &_FileHandleCreator;
+	return &FileHandleCreator;
 }
 
 static WINPR_FILE* FileHandle_New(FILE* fp)
@@ -986,7 +986,7 @@ static WINPR_FILE* FileHandle_New(FILE* fp)
 	WINPR_FILE* pFile = NULL;
 	char name[MAX_PATH] = { 0 };
 
-	_snprintf(name, sizeof(name), "device_%d", fileno(fp));
+	(void)_snprintf(name, sizeof(name), "device_%d", fileno(fp));
 	pFile = (WINPR_FILE*)calloc(1, sizeof(WINPR_FILE));
 	if (!pFile)
 	{
@@ -1454,7 +1454,7 @@ HANDLE GetFileHandleForFileDescriptor(int fd)
 	if (!fp)
 		return INVALID_HANDLE_VALUE;
 
-	setvbuf(fp, NULL, _IONBF, 0);
+	(void)setvbuf(fp, NULL, _IONBF, 0);
 
 	pFile = FileHandle_New(fp);
 	if (!pFile)

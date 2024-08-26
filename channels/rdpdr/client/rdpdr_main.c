@@ -738,11 +738,11 @@ static BOOL isAutomountLocation(const char* path)
 		size_t length = 0;
 
 		if (strstr(location, "%lu"))
-			snprintf(buffer, sizeof(buffer), location, (unsigned long)uid);
+			(void)snprintf(buffer, sizeof(buffer), location, (unsigned long)uid);
 		else if (strstr(location, "%s"))
-			snprintf(buffer, sizeof(buffer), location, uname);
+			(void)snprintf(buffer, sizeof(buffer), location, uname);
 		else
-			snprintf(buffer, sizeof(buffer), "%s", location);
+			(void)snprintf(buffer, sizeof(buffer), "%s", location);
 
 		length = strnlen(buffer, sizeof(buffer));
 
@@ -848,7 +848,7 @@ static UINT handle_platform_mounts_linux(wLog* log, hotplug_dev* dev_array, size
 	{
 		handle_mountpoint(dev_array, size, ent->mnt_dir);
 	}
-	fclose(f);
+	(void)fclose(f);
 	return ERROR_SUCCESS;
 }
 #endif
@@ -2311,7 +2311,8 @@ FREERDP_ENTRY_POINT(BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS p
 
 	rdpdr->channelDef.options =
 	    CHANNEL_OPTION_INITIALIZED | CHANNEL_OPTION_ENCRYPT_RDP | CHANNEL_OPTION_COMPRESS_RDP;
-	sprintf_s(rdpdr->channelDef.name, ARRAYSIZE(rdpdr->channelDef.name), RDPDR_SVC_CHANNEL_NAME);
+	(void)sprintf_s(rdpdr->channelDef.name, ARRAYSIZE(rdpdr->channelDef.name),
+	                RDPDR_SVC_CHANNEL_NAME);
 	rdpdr->sequenceId = 0;
 	pEntryPointsEx = (CHANNEL_ENTRY_POINTS_FREERDP_EX*)pEntryPoints;
 

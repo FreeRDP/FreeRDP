@@ -145,7 +145,7 @@ static DWORD WINAPI copyThread(void* data)
 
 		if (!buffer)
 		{
-			fprintf(stderr, "rdp2tcp copyThread: malloc failed\n");
+			(void)fprintf(stderr, "rdp2tcp copyThread: malloc failed\n");
 			goto fail;
 		}
 
@@ -167,7 +167,7 @@ static DWORD WINAPI copyThread(void* data)
 		        plugin->initHandle, plugin->openHandle, buffer, dwRead, buffer) != CHANNEL_RC_OK)
 		{
 			free(buffer);
-			fprintf(stderr, "rdp2tcp copyThread failed %i\n", (int)dwRead);
+			(void)fprintf(stderr, "rdp2tcp copyThread failed %i\n", (int)dwRead);
 			goto fail;
 		}
 

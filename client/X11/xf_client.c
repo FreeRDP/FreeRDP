@@ -539,10 +539,10 @@ static char* xf_window_get_title(rdpSettings* settings)
 		return NULL;
 
 	if (!port)
-		sprintf_s(windowTitle, size, "%s %s", prefix, name);
+		(void)sprintf_s(windowTitle, size, "%s %s", prefix, name);
 	else
-		sprintf_s(windowTitle, size, "%s %s:%i", prefix, name,
-		          freerdp_settings_get_uint32(settings, FreeRDP_ServerPort));
+		(void)sprintf_s(windowTitle, size, "%s %s:%i", prefix, name,
+		                freerdp_settings_get_uint32(settings, FreeRDP_ServerPort));
 
 	return windowTitle;
 }
@@ -1749,7 +1749,7 @@ static void xf_PanningChangeEventHandler(void* context, const PanningChangeEvent
 
 static BOOL xfreerdp_client_global_init(void)
 {
-	setlocale(LC_ALL, "");
+	(void)setlocale(LC_ALL, "");
 
 	if (freerdp_handle_signals() != 0)
 		return FALSE;

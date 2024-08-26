@@ -20,7 +20,7 @@ int TestWLog(int argc, char* argv[])
 
 	if (!(tmp_path = GetKnownPath(KNOWN_PATH_TEMP)))
 	{
-		fprintf(stderr, "Failed to get temporary directory!\n");
+		(void)fprintf(stderr, "Failed to get temporary directory!\n");
 		goto out;
 	}
 

@@ -58,7 +58,7 @@ typedef struct
 
 LPCSTR WLOG_LEVELS[7] = { "TRACE", "DEBUG", "INFO", "WARN", "ERROR", "FATAL", "OFF" };
 
-static INIT_ONCE _WLogInitialized = INIT_ONCE_STATIC_INIT;
+static INIT_ONCE WLogInitialized = INIT_ONCE_STATIC_INIT;
 static DWORD g_FilterCount = 0;
 static wLogFilter* g_Filters = NULL;
 static wLog* g_RootLog = NULL;
@@ -132,7 +132,7 @@ static BOOL CALLBACK WLog_InitializeRoot(PINIT_ONCE InitOnce, PVOID Parameter, P
 
 		if (GetEnvironmentVariableA(appender, env, nSize) != nSize - 1)
 		{
-			fprintf(stderr, "%s environment variable modified in my back", appender);
+			(void)fprintf(stderr, "%s environment variable modified in my back", appender);
 			free(env);
 			goto fail;
 		}
@@ -166,7 +166,7 @@ static BOOL CALLBACK WLog_InitializeRoot(PINIT_ONCE InitOnce, PVOID Parameter, P
 	if (!WLog_ParseFilters(g_RootLog))
 		goto fail;
 
-	atexit(WLog_Uninit_);
+	(void)atexit(WLog_Uninit_);
 
 	return TRUE;
 fail:
@@ -868,7 +868,7 @@ wLog* WLog_New(LPCSTR name, wLog* rootLogger)
 
 			if (GetEnvironmentVariableA(level, env, nSize) != nSize - 1)
 			{
-				fprintf(stderr, "%s environment variable changed in my back !\n", level);
+				(void)fprintf(stderr, "%s environment variable changed in my back !\n", level);
 				free(env);
 				goto out_fail;
 			}
@@ -923,7 +923,7 @@ void WLog_Free(wLog* log)
 
 wLog* WLog_GetRoot(void)
 {
-	if (!InitOnceExecuteOnce(&_WLogInitialized, WLog_InitializeRoot, NULL, NULL))
+	if (!InitOnceExecuteOnce(&WLogInitialized, WLog_InitializeRoot, NULL, NULL))
 		return NULL;
 
 	return g_RootLog;

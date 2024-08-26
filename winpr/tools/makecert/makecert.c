@@ -161,8 +161,8 @@ static int makecert_print_command_line_help(COMMAND_LINE_ARGUMENT_A* args, int a
 				if (!str)
 					return -1;
 
-				sprintf_s(str, length + 1, "%s %s", arg->Name, arg->Format);
-				printf("%-20s", str);
+				(void)sprintf_s(str, length + 1, "%s %s", arg->Name, arg->Format);
+				(void)printf("%-20s", str);
 				free(str);
 			}
 			else
@@ -479,7 +479,7 @@ int makecert_context_output_certificate_file(MAKECERT_CONTEXT* context, const ch
 	else
 		goto out_fail;
 
-	sprintf_s(filename, length + 8, "%s.%s", context->output_file, ext);
+	(void)sprintf_s(filename, length + 8, "%s.%s", context->output_file, ext);
 
 	if (path)
 		fullpath = GetCombinedPath(path, filename);
@@ -594,7 +594,7 @@ out_fail:
 	BIO_free_all(bio);
 
 	if (fp)
-		fclose(fp);
+		(void)fclose(fp);
 
 	free(x509_str);
 	free(filename);
@@ -638,7 +638,7 @@ int makecert_context_output_private_key_file(MAKECERT_CONTEXT* context, const ch
 	if (!filename)
 		return -1;
 
-	sprintf_s(filename, length + 8, "%s.key", context->output_file);
+	(void)sprintf_s(filename, length + 8, "%s.key", context->output_file);
 
 	if (path)
 		fullpath = GetCombinedPath(path, filename);
@@ -675,7 +675,7 @@ int makecert_context_output_private_key_file(MAKECERT_CONTEXT* context, const ch
 out_fail:
 
 	if (fp)
-		fclose(fp);
+		(void)fclose(fp);
 
 	BIO_free_all(bio);
 	free(x509_str);
@@ -999,8 +999,8 @@ int makecert_context_process(MAKECERT_CONTEXT* context, int argc, char** argv)
 #endif
 		X509_gmtime_adj(before, 0);
 
-		long duration = context->duration_months * 31l + context->duration_years * 365l;
-		duration *= 60l * 60l * 24l;
+		long duration = context->duration_months * 31L + context->duration_years * 365L;
+		duration *= 60L * 60L * 24L;
 		X509_gmtime_adj(after, duration);
 	}
 	X509_set_pubkey(context->x509, context->pkey);

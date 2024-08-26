@@ -373,7 +373,7 @@ static char* guid2str(const GUID* guid)
 	if (rpcStatus != RPC_S_OK)
 		return NULL;
 
-	sprintf_s(bracedGuid, sizeof(bracedGuid), "{%s}", strguid);
+	(void)sprintf_s(bracedGuid, sizeof(bracedGuid), "{%s}", strguid);
 	RpcStringFreeA(&strguid);
 	return _strdup(bracedGuid);
 }

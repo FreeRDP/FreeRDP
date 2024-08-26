@@ -44,7 +44,7 @@
 
 #include "../pipe/pipe.h"
 
-static HANDLE_CREATOR _NamedPipeClientHandleCreator;
+static HANDLE_CREATOR NamedPipeClientHandleCreator;
 
 static BOOL NamedPipeClientIsHandled(HANDLE handle)
 {
@@ -197,7 +197,7 @@ static HANDLE NamedPipeClientCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAcces
 	pNamedPipe->serverfd = -1;
 	pNamedPipe->ServerMode = FALSE;
 	s.sun_family = AF_UNIX;
-	sprintf_s(s.sun_path, ARRAYSIZE(s.sun_path), "%s", pNamedPipe->lpFilePath);
+	(void)sprintf_s(s.sun_path, ARRAYSIZE(s.sun_path), "%s", pNamedPipe->lpFilePath);
 	status = connect(pNamedPipe->clientfd, (struct sockaddr*)&s, sizeof(struct sockaddr_un));
 	pNamedPipe->common.ops = &ops;
 
@@ -228,9 +228,9 @@ static HANDLE NamedPipeClientCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAcces
 extern HANDLE_CREATOR* GetNamedPipeClientHandleCreator(void);
 HANDLE_CREATOR* GetNamedPipeClientHandleCreator(void)
 {
-	_NamedPipeClientHandleCreator.IsHandled = IsNamedPipeFileNameA;
-	_NamedPipeClientHandleCreator.CreateFileA = NamedPipeClientCreateFileA;
-	return &_NamedPipeClientHandleCreator;
+	NamedPipeClientHandleCreator.IsHandled = IsNamedPipeFileNameA;
+	NamedPipeClientHandleCreator.CreateFileA = NamedPipeClientCreateFileA;
+	return &NamedPipeClientHandleCreator;
 }
 
 #endif

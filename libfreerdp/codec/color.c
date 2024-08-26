@@ -750,7 +750,7 @@ BOOL freerdp_image_copy_overlap(BYTE* pDstData, DWORD DstFormat, UINT32 nDstStep
 
 	if (vSrcVFlip)
 	{
-		srcVOffset = (nHeight - 1ll) * nSrcStep;
+		srcVOffset = (nHeight - 1LL) * nSrcStep;
 		srcVMultiplier = -1;
 	}
 

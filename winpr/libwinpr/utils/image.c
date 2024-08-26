@@ -325,7 +325,7 @@ int winpr_bitmap_write_ex(const char* filename, const BYTE* data, size_t stride,
 
 fail:
 	if (fp)
-		fclose(fp);
+		(void)fclose(fp);
 	free(bmpdata);
 	return ret;
 }
@@ -341,7 +341,7 @@ static int write_and_free(const char* filename, void* data, size_t size)
 		goto fail;
 
 	size_t w = fwrite(data, 1, size, fp);
-	fclose(fp);
+	(void)fclose(fp);
 
 	status = (w == size) ? 1 : -1;
 fail:
@@ -479,9 +479,9 @@ int winpr_image_read(wImage* image, const char* filename)
 		return -1;
 	}
 
-	fseek(fp, 0, SEEK_END);
+	(void)fseek(fp, 0, SEEK_END);
 	INT64 pos = _ftelli64(fp);
-	fseek(fp, 0, SEEK_SET);
+	(void)fseek(fp, 0, SEEK_SET);
 
 	if (pos > 0)
 	{
@@ -496,7 +496,7 @@ int winpr_image_read(wImage* image, const char* filename)
 		}
 		free(buffer);
 	}
-	fclose(fp);
+	(void)fclose(fp);
 	return status;
 }
 
@@ -765,7 +765,7 @@ SSIZE_T winpr_convert_from_webp(const BYTE* comp_data, size_t comp_data_bytes, U
 	*height = h;
 	*bpp = 32;
 	*ppdecomp_data = dst;
-	return 4ll * w * h;
+	return 4LL * w * h;
 #endif
 }
 

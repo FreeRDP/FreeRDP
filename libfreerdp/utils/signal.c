@@ -135,7 +135,7 @@ static void fatal_handler(int signum)
 	sigemptyset(&this_mask);
 	sigaddset(&this_mask, signum);
 	pthread_sigmask(SIG_UNBLOCK, &this_mask, NULL);
-	raise(signum);
+	(void)raise(signum);
 }
 
 static const int term_signals[] = { SIGINT, SIGKILL, SIGQUIT, SIGSTOP, SIGTERM };
@@ -204,7 +204,7 @@ int freerdp_handle_signals(void)
 		goto fail;
 
 	/* Ignore SIGPIPE signal. */
-	signal(SIGPIPE, SIG_IGN);
+	(void)signal(SIGPIPE, SIG_IGN);
 	handlers_registered = TRUE;
 	rc = 0;
 fail:

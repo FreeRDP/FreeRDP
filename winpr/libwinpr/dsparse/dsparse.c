@@ -134,7 +134,7 @@ DWORD DsMakeSpnA(LPCSTR ServiceClass, LPCSTR ServiceName, LPCSTR InstanceName, U
 		return ERROR_BUFFER_OVERFLOW;
 	}
 
-	sprintf_s(pszSpn, *pcSpnLength, "%s/%s", ServiceClass, ServiceName);
+	(void)sprintf_s(pszSpn, *pcSpnLength, "%s/%s", ServiceClass, ServiceName);
 
 	return ERROR_SUCCESS;
 }

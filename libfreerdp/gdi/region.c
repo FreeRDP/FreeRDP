@@ -40,9 +40,9 @@ static char* gdi_rect_str(char* buffer, size_t size, const HGDI_RECT rect)
 	if (!buffer || (size < 1) || !rect)
 		return NULL;
 
-	_snprintf(buffer, size - 1,
-	          "[top/left=%" PRId32 "x%" PRId32 "-bottom/right%" PRId32 "x%" PRId32 "]", rect->top,
-	          rect->left, rect->bottom, rect->right);
+	(void)_snprintf(buffer, size - 1,
+	                "[top/left=%" PRId32 "x%" PRId32 "-bottom/right%" PRId32 "x%" PRId32 "]",
+	                rect->top, rect->left, rect->bottom, rect->right);
 	buffer[size - 1] = '\0';
 
 	return buffer;
@@ -53,8 +53,8 @@ static char* gdi_regn_str(char* buffer, size_t size, const HGDI_RGN rgn)
 	if (!buffer || (size < 1) || !rgn)
 		return NULL;
 
-	_snprintf(buffer, size - 1, "[%" PRId32 "x%" PRId32 "-%" PRId32 "x%" PRId32 "]", rgn->x, rgn->y,
-	          rgn->w, rgn->h);
+	(void)_snprintf(buffer, size - 1, "[%" PRId32 "x%" PRId32 "-%" PRId32 "x%" PRId32 "]", rgn->x,
+	                rgn->y, rgn->w, rgn->h);
 	buffer[size - 1] = '\0';
 
 	return buffer;
@@ -78,8 +78,8 @@ HGDI_RGN gdi_CreateRectRgn(INT32 nLeftRect, INT32 nTopRect, INT32 nRightRect, IN
 	INT64 h = 0;
 	HGDI_RGN hRgn = NULL;
 
-	w = nRightRect - nLeftRect + 1ll;
-	h = nBottomRect - nTopRect + 1ll;
+	w = nRightRect - nLeftRect + 1LL;
+	h = nBottomRect - nTopRect + 1LL;
 	if ((w < 0) || (h < 0) || (w > INT32_MAX) || (h > INT32_MAX))
 	{
 		WLog_ERR(TAG,
@@ -144,8 +144,8 @@ BOOL gdi_RectToRgn(const HGDI_RECT rect, HGDI_RGN rgn)
 	BOOL rc = TRUE;
 	INT64 w = 0;
 	INT64 h = 0;
-	w = rect->right - rect->left + 1ll;
-	h = rect->bottom - rect->top + 1ll;
+	w = rect->right - rect->left + 1LL;
+	h = rect->bottom - rect->top + 1LL;
 
 	if ((w < 0) || (h < 0) || (w > INT32_MAX) || (h > INT32_MAX))
 	{
@@ -180,8 +180,8 @@ BOOL gdi_CRectToRgn(INT32 left, INT32 top, INT32 right, INT32 bottom, HGDI_RGN r
 	BOOL rc = TRUE;
 	INT64 w = 0;
 	INT64 h = 0;
-	w = right - left + 1ll;
-	h = bottom - top + 1ll;
+	w = right - left + 1LL;
+	h = bottom - top + 1LL;
 
 	if (!rgn)
 		return FALSE;
@@ -259,8 +259,8 @@ BOOL gdi_CRectToCRgn(INT32 left, INT32 top, INT32 right, INT32 bottom, INT32* x,
 	INT64 wl = 0;
 	INT64 hl = 0;
 	BOOL rc = TRUE;
-	wl = right - left + 1ll;
-	hl = bottom - top + 1ll;
+	wl = right - left + 1LL;
+	hl = bottom - top + 1LL;
 
 	if ((left > right) || (top > bottom) || (wl <= 0) || (hl <= 0) || (wl > INT32_MAX) ||
 	    (hl > INT32_MAX))
@@ -292,8 +292,8 @@ BOOL gdi_RgnToRect(const HGDI_RGN rgn, HGDI_RECT rect)
 	INT64 r = 0;
 	INT64 b = 0;
 	BOOL rc = TRUE;
-	r = rgn->x + rgn->w - 1ll;
-	b = rgn->y + rgn->h - 1ll;
+	r = rgn->x + rgn->w - 1LL;
+	b = rgn->y + rgn->h - 1LL;
 
 	if ((r < INT32_MIN) || (r > INT32_MAX) || (b < INT32_MIN) || (b > INT32_MAX))
 	{

@@ -263,7 +263,7 @@ static int persistent_cache_open_read(rdpPersistentCache* persistent)
 	else
 		persistent->version = 2;
 
-	fseek(persistent->fp, 0, SEEK_SET);
+	(void)fseek(persistent->fp, 0, SEEK_SET);
 
 	if (persistent->version == 3)
 	{
@@ -281,7 +281,7 @@ static int persistent_cache_open_read(rdpPersistentCache* persistent)
 		offset = 0;
 	}
 
-	fseek(persistent->fp, offset, SEEK_SET);
+	(void)fseek(persistent->fp, offset, SEEK_SET);
 
 	return status;
 }
@@ -336,7 +336,7 @@ int persistent_cache_close(rdpPersistentCache* persistent)
 	WINPR_ASSERT(persistent);
 	if (persistent->fp)
 	{
-		fclose(persistent->fp);
+		(void)fclose(persistent->fp);
 		persistent->fp = NULL;
 	}
 

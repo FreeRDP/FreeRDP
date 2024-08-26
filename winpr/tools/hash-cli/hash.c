@@ -174,7 +174,7 @@ int main(int argc, char* argv[])
 		if (!NTOWFv2A(Password, (UINT32)PasswordLength, User, (UINT32)UserLength, Domain,
 		              (UINT32)DomainLength, NtHash))
 		{
-			fprintf(stderr, "Hash creation failed\n");
+			(void)fprintf(stderr, "Hash creation failed\n");
 			return 1;
 		}
 	}
@@ -182,7 +182,7 @@ int main(int argc, char* argv[])
 	{
 		if (!NTOWFv1A(Password, (UINT32)PasswordLength, NtHash))
 		{
-			fprintf(stderr, "Hash creation failed\n");
+			(void)fprintf(stderr, "Hash creation failed\n");
 			return 1;
 		}
 	}

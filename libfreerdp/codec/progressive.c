@@ -2052,8 +2052,8 @@ static INLINE SSIZE_T progressive_wb_read_region_header(
 	}
 
 	const SSIZE_T rc = Stream_GetRemainingLength(s);
-	const SSIZE_T expect = region->numRects * 8ll + region->numQuant * 5ll +
-	                       region->numProgQuant * 16ll + region->tileDataSize;
+	const SSIZE_T expect = region->numRects * 8LL + region->numQuant * 5LL +
+	                       region->numProgQuant * 16LL + region->tileDataSize;
 	SSIZE_T len = rc;
 	if (expect != rc)
 	{
@@ -2081,7 +2081,7 @@ static INLINE SSIZE_T progressive_wb_read_region_header(
 		}
 		len -= region->numProgQuant * 16LL;
 
-		if (len < region->tileDataSize * 1ll)
+		if (len < region->tileDataSize * 1LL)
 		{
 			WLog_Print(progressive->log, WLOG_ERROR,
 			           "ProgressiveRegion data short for region->tiles");

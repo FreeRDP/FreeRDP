@@ -250,7 +250,7 @@ void pcap_flush(rdpPcap* pcap)
 	}
 
 	if (pcap->fp != NULL)
-		fflush(pcap->fp);
+		(void)fflush(pcap->fp);
 }
 
 void pcap_close(rdpPcap* pcap)
@@ -261,7 +261,7 @@ void pcap_close(rdpPcap* pcap)
 	pcap_flush(pcap);
 
 	if (pcap->fp != NULL)
-		fclose(pcap->fp);
+		(void)fclose(pcap->fp);
 
 	free(pcap->name);
 	free(pcap);

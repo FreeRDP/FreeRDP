@@ -58,7 +58,7 @@ static BOOL get_serial_chars(WINPR_COMM* pComm, SERIAL_CHARS* pSerialChars)
 
 /* http://msdn.microsoft.com/en-us/library/windows/hardware/hh439605%28v=vs.85%29.aspx */
 /* FIXME: only using the Serial.sys' events, complete the support of the remaining events */
-static const ULONG _SERCX2_SYS_SUPPORTED_EV_MASK =
+static const ULONG SERCX2_SYS_SUPPORTED_EV_MASK =
     SERIAL_EV_RXCHAR | SERIAL_EV_RXFLAG | SERIAL_EV_TXEMPTY | SERIAL_EV_CTS | SERIAL_EV_DSR |
     SERIAL_EV_RLSD | SERIAL_EV_BREAK | SERIAL_EV_ERR | SERIAL_EV_RING |
     /* SERIAL_EV_PERR     | */
@@ -77,7 +77,7 @@ static BOOL set_wait_mask(WINPR_COMM* pComm, const ULONG* pWaitMask)
 	WINPR_ASSERT(pWaitMask);
 	WINPR_ASSERT(pSerialSys);
 
-	possibleMask = *pWaitMask & _SERCX2_SYS_SUPPORTED_EV_MASK;
+	possibleMask = *pWaitMask & SERCX2_SYS_SUPPORTED_EV_MASK;
 
 	if (possibleMask != *pWaitMask)
 	{

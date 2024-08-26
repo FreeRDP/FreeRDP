@@ -353,7 +353,7 @@ static pstatus_t generic_image_copy_no_overlap(BYTE* WINPR_RESTRICT pDstData, DW
 
 	if (vSrcVFlip)
 	{
-		srcVOffset = (nHeight - 1ll) * nSrcStep;
+		srcVOffset = (nHeight - 1LL) * nSrcStep;
 		srcVMultiplier = -1;
 	}
 

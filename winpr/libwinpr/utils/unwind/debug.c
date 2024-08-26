@@ -90,7 +90,7 @@ static const char* unwind_reason_str(_Unwind_Reason_Code code)
 static const char* unwind_reason_str_buffer(_Unwind_Reason_Code code, char* buffer, size_t size)
 {
 	const char* str = unwind_reason_str(code);
-	_snprintf(buffer, size, "%s [0x%02x]", str, code);
+	(void)_snprintf(buffer, size, "%s [0x%02x]", str, code);
 	return buffer;
 }
 
@@ -177,10 +177,10 @@ char** winpr_unwind_backtrace_symbols(void* buffer, size_t* used)
 		cnv.cpp[x] = msg;
 
 		if (rc == 0)
-			_snprintf(msg, UNWIND_MAX_LINE_SIZE, "unresolvable, address=%p", (void*)info->pc);
+			(void)_snprintf(msg, UNWIND_MAX_LINE_SIZE, "unresolvable, address=%p", (void*)info->pc);
 		else
-			_snprintf(msg, UNWIND_MAX_LINE_SIZE, "dli_fname=%s [%p], dli_sname=%s [%p]",
-			          dlinfo.dli_fname, dlinfo.dli_fbase, dlinfo.dli_sname, dlinfo.dli_saddr);
+			(void)_snprintf(msg, UNWIND_MAX_LINE_SIZE, "dli_fname=%s [%p], dli_sname=%s [%p]",
+			                dlinfo.dli_fname, dlinfo.dli_fbase, dlinfo.dli_sname, dlinfo.dli_saddr);
 	}
 
 	return cnv.cpp;

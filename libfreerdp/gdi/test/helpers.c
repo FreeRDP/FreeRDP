@@ -81,7 +81,7 @@ static void test_dump_data(unsigned char* p, int len, int width, const char* nam
 	}
 
 	printf("\n");
-	fflush(stdout);
+	(void)fflush(stdout);
 }
 
 void test_dump_bitmap(HGDI_BITMAP hBmp, const char* name)
@@ -128,8 +128,8 @@ BOOL test_assert_bitmaps_equal(HGDI_BITMAP hBmpActual, HGDI_BITMAP hBmpExpected,
 		       FreeRDPGetColorFormatName(hBmpExpected->format));
 		test_dump_bitmap(hBmpActual, "Actual");
 		test_dump_bitmap(hBmpExpected, "Expected");
-		fflush(stdout);
-		fflush(stderr);
+		(void)fflush(stdout);
+		(void)fflush(stderr);
 		return TRUE; // TODO: Fix test cases
 	}
 

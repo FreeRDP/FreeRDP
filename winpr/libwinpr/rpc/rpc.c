@@ -717,9 +717,10 @@ RPC_STATUS UuidToStringA(const UUID* Uuid, RPC_CSTR* StringUuid)
 	 * Format is 32 hex digits partitioned in 5 groups:
 	 * xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
 	 */
-	sprintf_s((char*)*StringUuid, 36 + 1, "%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x",
-	          Uuid->Data1, Uuid->Data2, Uuid->Data3, Uuid->Data4[0], Uuid->Data4[1], Uuid->Data4[2],
-	          Uuid->Data4[3], Uuid->Data4[4], Uuid->Data4[5], Uuid->Data4[6], Uuid->Data4[7]);
+	(void)sprintf_s((char*)*StringUuid, 36 + 1, "%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x",
+	                Uuid->Data1, Uuid->Data2, Uuid->Data3, Uuid->Data4[0], Uuid->Data4[1],
+	                Uuid->Data4[2], Uuid->Data4[3], Uuid->Data4[4], Uuid->Data4[5], Uuid->Data4[6],
+	                Uuid->Data4[7]);
 	return RPC_S_OK;
 }
 

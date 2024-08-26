@@ -253,7 +253,7 @@ static char* winpr_get_unix_timezone_identifier_from_file(void)
 		return NULL;
 
 	tzid = winpr_read_unix_timezone_identifier_from_file(fp);
-	fclose(fp);
+	(void)fclose(fp);
 	if (tzid != NULL)
 		WLog_DBG(TAG, "tzid: %s", tzid);
 	return tzid;
@@ -376,7 +376,7 @@ static struct tm systemtime2tm(const SYSTEMTIME* st)
 static LONG get_gmtoff_min(const struct tm* t)
 {
 	WINPR_ASSERT(t);
-	return -(LONG)(t->tm_gmtoff / 60l);
+	return -(LONG)(t->tm_gmtoff / 60L);
 }
 
 static struct tm next_day(const struct tm* start)
@@ -578,14 +578,14 @@ static char* systemtime2str(const SYSTEMTIME* t, char* buffer, size_t len)
 	const SYSTEMTIME empty = { 0 };
 
 	if (memcmp(t, &empty, sizeof(SYSTEMTIME)) == 0)
-		_snprintf(buffer, len, "{ not set }");
+		(void)_snprintf(buffer, len, "{ not set }");
 	else
 	{
-		_snprintf(buffer, len,
-		          "{ %" PRIu16 "-%" PRIu16 "-%" PRIu16 " [%s] %" PRIu16 ":%" PRIu16 ":%" PRIu16
-		          ".%" PRIu16 "}",
-		          t->wYear, t->wMonth, t->wDay, weekday2str(t->wDayOfWeek), t->wHour, t->wMinute,
-		          t->wSecond, t->wMilliseconds);
+		(void)_snprintf(buffer, len,
+		                "{ %" PRIu16 "-%" PRIu16 "-%" PRIu16 " [%s] %" PRIu16 ":%" PRIu16
+		                ":%" PRIu16 ".%" PRIu16 "}",
+		                t->wYear, t->wMonth, t->wDay, weekday2str(t->wDayOfWeek), t->wHour,
+		                t->wMinute, t->wSecond, t->wMilliseconds);
 	}
 	return buffer;
 }

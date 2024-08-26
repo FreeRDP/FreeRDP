@@ -81,7 +81,7 @@ static BOOL WLog_FileAppender_Open(wLog* log, wLogAppender* appender)
 		if (!fileAppender->FileName)
 			return FALSE;
 
-		sprintf_s(fileAppender->FileName, MAX_PATH, "%" PRIu32 ".log", GetCurrentProcessId());
+		(void)sprintf_s(fileAppender->FileName, MAX_PATH, "%" PRIu32 ".log", GetCurrentProcessId());
 	}
 
 	if (!fileAppender->FullFileName)
@@ -121,7 +121,7 @@ static BOOL WLog_FileAppender_Close(wLog* log, wLogAppender* appender)
 	if (!fileAppender->FileDescriptor)
 		return TRUE;
 
-	fclose(fileAppender->FileDescriptor);
+	(void)fclose(fileAppender->FileDescriptor);
 	fileAppender->FileDescriptor = NULL;
 	return TRUE;
 }
@@ -143,8 +143,8 @@ static BOOL WLog_FileAppender_WriteMessage(wLog* log, wLogAppender* appender, wL
 
 	message->PrefixString = prefix;
 	WLog_Layout_GetMessagePrefix(log, appender->Layout, message);
-	fprintf(fp, "%s%s\n", message->PrefixString, message->TextString);
-	fflush(fp); /* slow! */
+	(void)fprintf(fp, "%s%s\n", message->PrefixString, message->TextString);
+	(void)fflush(fp); /* slow! */
 	return TRUE;
 }
 
