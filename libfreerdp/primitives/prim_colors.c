@@ -102,9 +102,9 @@ static pstatus_t general_yCbCrToRGB_16s8u_P3AC4R_general(const INT16* const WINP
 			const INT64 CrG = Cr * (INT64)(0.714401f * (1 << divisor)) * 1LL;
 			const INT64 CbG = Cb * (INT64)(0.343730f * (1 << divisor)) * 1LL;
 			const INT64 CbB = Cb * (INT64)(1.769905f * (1 << divisor)) * 1LL;
-			R = (INT64)((CrR + Y) >> (divisor + 5));
-			G = (INT64)((Y - CbG - CrG) >> (divisor + 5));
-			B = (INT64)((CbB + Y) >> (divisor + 5));
+			R = ((CrR + Y) >> (divisor + 5));
+			G = ((Y - CbG - CrG) >> (divisor + 5));
+			B = ((CbB + Y) >> (divisor + 5));
 			pRGB = writePixel(pRGB, formatSize, DstFormat, CLIP(R), CLIP(G), CLIP(B), 0);
 		}
 

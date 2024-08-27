@@ -109,7 +109,7 @@ static char* GetDeviceFileUnixDomainSocketFilePathA(LPCSTR lpName)
 		return NULL;
 	}
 
-	lpFilePath = GetCombinedPath(lpPipePath, (char*)lpFileName);
+	lpFilePath = GetCombinedPath(lpPipePath, lpFileName);
 	free(lpPipePath);
 	free(lpFileName);
 	return lpFilePath;

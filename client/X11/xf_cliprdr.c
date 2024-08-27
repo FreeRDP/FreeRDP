@@ -2239,7 +2239,7 @@ xf_cliprdr_server_format_data_response(CliprdrClientContext* context,
 	DEBUG_CLIPRDR("requested format 0x%08" PRIx32 " [%s] {local 0x%08" PRIx32 "} [%s]",
 	              format->formatToRequest, ClipboardGetFormatIdString(format->formatToRequest),
 	              format->localFormat, format->formatName);
-	SrcSize = (UINT32)size;
+	SrcSize = size;
 
 	DEBUG_CLIPRDR("srcFormatId: %u, dstFormatId: %u", srcFormatId, dstFormatId);
 

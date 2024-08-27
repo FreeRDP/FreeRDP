@@ -1371,7 +1371,7 @@ static UINT drdynvc_process_close_request(drdynvcPlugin* drdynvc, int Sp, int cb
 	           "process_close_request: Sp=%d cbChId=%d, ChannelId=%" PRIu32 "", Sp, cbChId,
 	           ChannelId);
 
-	channel = (DVCMAN_CHANNEL*)dvcman_get_channel_by_id(drdynvc->channel_mgr, ChannelId, TRUE);
+	channel = dvcman_get_channel_by_id(drdynvc->channel_mgr, ChannelId, TRUE);
 	if (!channel)
 	{
 		WLog_Print(drdynvc->log, WLOG_ERROR, "dvcman_close_request channel %" PRIu32 " not present",

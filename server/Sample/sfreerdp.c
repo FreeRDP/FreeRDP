@@ -104,7 +104,7 @@ static void test_peer_context_free(freerdp_peer* client, rdpContext* ctx)
 		rdpsnd_server_context_free(context->rdpsnd);
 		encomsp_server_context_free(context->encomsp);
 
-		WTSCloseServer((HANDLE)context->vcm);
+		WTSCloseServer(context->vcm);
 	}
 }
 

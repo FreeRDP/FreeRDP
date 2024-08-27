@@ -388,7 +388,7 @@ static INLINE INT32 planar_decompress_plane_rle(const BYTE* WINPR_RESTRICT pSrcD
 
 	for (INT32 y = beg; y != end; y += inc)
 	{
-		BYTE* dstp = &pDstData[((nYDst + y) * (INT32)nDstStep) + (nXDst * 4) + nChannel];
+		BYTE* dstp = &pDstData[((nYDst + y) * nDstStep) + (nXDst * 4) + nChannel];
 		pixel = 0;
 		currentScanline = dstp;
 
@@ -515,7 +515,7 @@ static INLINE INT32 planar_set_plane(BYTE bValue, BYTE* pDstData, INT32 nDstStep
 
 	for (INT32 y = beg; y != end; y += inc)
 	{
-		BYTE* dstp = &pDstData[((nYDst + y) * (INT32)nDstStep) + (nXDst * 4) + nChannel];
+		BYTE* dstp = &pDstData[((nYDst + y) * nDstStep) + (nXDst * 4) + nChannel];
 
 		for (INT32 x = 0; x < (INT32)nWidth; ++x)
 		{
@@ -1130,7 +1130,7 @@ static INLINE BOOL freerdp_split_color_planes(BITMAP_PLANAR_CONTEXT* WINPR_RESTR
 		UINT32 k = 0;
 		for (UINT32 i = 0; i < height; i++)
 		{
-			const BYTE* pixel = &data[1ULL * scanline * (UINT32)i];
+			const BYTE* pixel = &data[1ULL * scanline * i];
 
 			for (UINT32 j = 0; j < width; j++)
 			{
@@ -1222,7 +1222,7 @@ static INLINE UINT32 freerdp_bitmap_planar_write_rle_bytes(const BYTE* WINPR_RES
 		outBufferSize--;
 		*pOutput = controlByte;
 		pOutput++;
-		nBytesToWrite = (int)(controlByte >> 4);
+		nBytesToWrite = (controlByte >> 4);
 
 		if (nBytesToWrite)
 		{

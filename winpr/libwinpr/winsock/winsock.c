@@ -1007,7 +1007,7 @@ SOCKET _accept(SOCKET s, struct sockaddr* addr, int* addrlen)
 	int fd = (int)s;
 	socklen_t s_addrlen = (socklen_t)*addrlen;
 	status = accept(fd, addr, &s_addrlen);
-	*addrlen = (socklen_t)s_addrlen;
+	*addrlen = s_addrlen;
 	return status;
 }
 
@@ -1094,7 +1094,7 @@ int _getsockopt(SOCKET s, int level, int optname, char* optval, int* optlen)
 	int fd = (int)s;
 	socklen_t s_optlen = (socklen_t)*optlen;
 	status = getsockopt(fd, level, optname, (void*)optval, &s_optlen);
-	*optlen = (socklen_t)s_optlen;
+	*optlen = s_optlen;
 	return status;
 }
 

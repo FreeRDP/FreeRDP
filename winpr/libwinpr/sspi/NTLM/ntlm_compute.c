@@ -308,7 +308,7 @@ static BOOL ntlm_fetch_ntlm_v2_hash(NTLM_CONTEXT* context, BYTE* hash)
 	NTOWFv2FromHashW(entry->NtHash, (LPWSTR)credentials->identity.User,
 	                 credentials->identity.UserLength * sizeof(WCHAR),
 	                 (LPWSTR)credentials->identity.Domain,
-	                 credentials->identity.DomainLength * sizeof(WCHAR), (BYTE*)hash);
+	                 credentials->identity.DomainLength * sizeof(WCHAR), hash);
 
 	rc = TRUE;
 
@@ -450,7 +450,7 @@ static BOOL ntlm_compute_ntlm_v2_hash(NTLM_CONTEXT* context, BYTE* hash)
 	{
 		NTOWFv2FromHashW(context->NtlmHash, (LPWSTR)credentials->identity.User,
 		                 credentials->identity.UserLength * 2, (LPWSTR)credentials->identity.Domain,
-		                 credentials->identity.DomainLength * 2, (BYTE*)hash);
+		                 credentials->identity.DomainLength * 2, hash);
 	}
 	else if (credentials->identity.PasswordLength > SSPI_CREDENTIALS_HASH_LENGTH_OFFSET)
 	{
@@ -460,14 +460,14 @@ static BOOL ntlm_compute_ntlm_v2_hash(NTLM_CONTEXT* context, BYTE* hash)
 
 		NTOWFv2FromHashW(context->NtlmHash, (LPWSTR)credentials->identity.User,
 		                 credentials->identity.UserLength * 2, (LPWSTR)credentials->identity.Domain,
-		                 credentials->identity.DomainLength * 2, (BYTE*)hash);
+		                 credentials->identity.DomainLength * 2, hash);
 	}
 	else if (credentials->identity.Password)
 	{
 		NTOWFv2W((LPWSTR)credentials->identity.Password, credentials->identity.PasswordLength * 2,
 		         (LPWSTR)credentials->identity.User, credentials->identity.UserLength * 2,
 		         (LPWSTR)credentials->identity.Domain, credentials->identity.DomainLength * 2,
-		         (BYTE*)hash);
+		         hash);
 	}
 	else if (context->HashCallback)
 	{
@@ -531,7 +531,7 @@ BOOL ntlm_compute_lm_v2_response(NTLM_CONTEXT* context)
 	response = (BYTE*)context->LmChallengeResponse.pvBuffer;
 	/* Compute the HMAC-MD5 hash of the resulting value using the NTLMv2 hash as the key */
 	winpr_HMAC(WINPR_MD_MD5, (void*)context->NtlmV2Hash, WINPR_MD5_DIGEST_LENGTH, (BYTE*)value,
-	           WINPR_MD5_DIGEST_LENGTH, (BYTE*)response, WINPR_MD5_DIGEST_LENGTH);
+	           WINPR_MD5_DIGEST_LENGTH, response, WINPR_MD5_DIGEST_LENGTH);
 	/* Concatenate the resulting HMAC-MD5 hash and the client challenge, giving us the LMv2 response
 	 * (24 bytes) */
 	CopyMemory(&response[16], context->ClientChallenge, 8);

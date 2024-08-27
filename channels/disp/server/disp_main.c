@@ -412,8 +412,8 @@ static UINT disp_server_open(DispServerContext* context)
 
 	priv->SessionId = (DWORD)*pSessionId;
 	WTSFreeMemory(pSessionId);
-	priv->disp_channel = (HANDLE)WTSVirtualChannelOpenEx(priv->SessionId, DISP_DVC_CHANNEL_NAME,
-	                                                     WTS_CHANNEL_OPTION_DYNAMIC);
+	priv->disp_channel =
+	    WTSVirtualChannelOpenEx(priv->SessionId, DISP_DVC_CHANNEL_NAME, WTS_CHANNEL_OPTION_DYNAMIC);
 
 	if (!priv->disp_channel)
 	{

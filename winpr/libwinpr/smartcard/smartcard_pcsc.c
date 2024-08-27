@@ -2104,10 +2104,10 @@ static LONG WINAPI PCSC_SCardState(SCARDHANDLE hCard, LPDWORD pdwState, LPDWORD 
 	if (mszReaderNames)
 		PCSC_SCardFreeMemory_Internal(hContext, mszReaderNames);
 
-	*pdwState = (DWORD)pcsc_dwState;
-	*pdwProtocol = PCSC_ConvertProtocolsToWinSCard((DWORD)pcsc_dwProtocol);
+	*pdwState = pcsc_dwState;
+	*pdwProtocol = PCSC_ConvertProtocolsToWinSCard(pcsc_dwProtocol);
 	if (pcbAtrLen)
-		*pcbAtrLen = (DWORD)pcsc_cbAtrLen;
+		*pcbAtrLen = pcsc_cbAtrLen;
 	return PCSC_MapErrorCodeToWinSCard(status);
 }
 

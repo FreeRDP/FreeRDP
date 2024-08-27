@@ -371,13 +371,13 @@ static BOOL FileGetFileInformationByHandle(HANDLE hFile,
 #else
 	ft = STAT_TIME_TO_FILETIME(st.st_ctime);
 #endif
-	lpFileInformation->ftCreationTime.dwHighDateTime = ((UINT64)ft) >> 32ULL;
+	lpFileInformation->ftCreationTime.dwHighDateTime = (ft) >> 32ULL;
 	lpFileInformation->ftCreationTime.dwLowDateTime = ft & 0xFFFFFFFF;
 	ft = STAT_TIME_TO_FILETIME(st.st_mtime);
-	lpFileInformation->ftLastWriteTime.dwHighDateTime = ((UINT64)ft) >> 32ULL;
+	lpFileInformation->ftLastWriteTime.dwHighDateTime = (ft) >> 32ULL;
 	lpFileInformation->ftLastWriteTime.dwLowDateTime = ft & 0xFFFFFFFF;
 	ft = STAT_TIME_TO_FILETIME(st.st_atime);
-	lpFileInformation->ftLastAccessTime.dwHighDateTime = ((UINT64)ft) >> 32ULL;
+	lpFileInformation->ftLastAccessTime.dwHighDateTime = (ft) >> 32ULL;
 	lpFileInformation->ftLastAccessTime.dwLowDateTime = ft & 0xFFFFFFFF;
 	lpFileInformation->nFileSizeHigh = ((UINT64)st.st_size) >> 32ULL;
 	lpFileInformation->nFileSizeLow = st.st_size & 0xFFFFFFFF;

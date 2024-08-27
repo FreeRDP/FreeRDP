@@ -247,7 +247,7 @@ BOOL WLog_Layout_GetMessagePrefix(wLog* log, wLogLayout* layout, wLogMessage* me
 		  &recurse }, /* function */
 		{ ENTRY("%hr"), ENTRY("%02u"), NULL, (void*)(size_t)localTime.wHour, NULL,
 		  &recurse }, /* hours */
-		{ ENTRY("%ln"), ENTRY("%" PRIuz), NULL, (void*)(size_t)message->LineNumber, NULL,
+		{ ENTRY("%ln"), ENTRY("%" PRIuz), NULL, (void*)message->LineNumber, NULL,
 		  &recurse }, /* line number */
 		{ ENTRY("%lv"), ENTRY("%s"), NULL, (void*)WLOG_LEVELS[message->Level], NULL,
 		  &recurse }, /* log level */

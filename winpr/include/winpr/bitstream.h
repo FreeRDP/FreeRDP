@@ -82,13 +82,13 @@ extern "C"
 	{
 		WINPR_ASSERT(_bs);
 		if (((UINT32)(_bs->pointer - _bs->buffer) + 0) < (_bs->capacity))
-			*(_bs->pointer + 0) = (BYTE)((UINT32)_bs->accumulator >> 24);
+			*(_bs->pointer + 0) = (BYTE)(_bs->accumulator >> 24);
 		if (((UINT32)(_bs->pointer - _bs->buffer) + 1) < (_bs->capacity))
-			*(_bs->pointer + 1) = (BYTE)((UINT32)_bs->accumulator >> 16);
+			*(_bs->pointer + 1) = (BYTE)(_bs->accumulator >> 16);
 		if (((UINT32)(_bs->pointer - _bs->buffer) + 2) < (_bs->capacity))
-			*(_bs->pointer + 2) = (BYTE)((UINT32)_bs->accumulator >> 8);
+			*(_bs->pointer + 2) = (BYTE)(_bs->accumulator >> 8);
 		if (((UINT32)(_bs->pointer - _bs->buffer) + 3) < (_bs->capacity))
-			*(_bs->pointer + 3) = (BYTE)((UINT32)_bs->accumulator >> 0);
+			*(_bs->pointer + 3) = (BYTE)(_bs->accumulator >> 0);
 	}
 
 	static INLINE void BitStream_Shift(wBitStream* _bs, UINT32 _nbits)

@@ -2013,7 +2013,7 @@ BOOL gcc_read_client_cluster_data(wStream* s, rdpMcs* mcs)
 
 	if (blockLength != 8)
 	{
-		if (Stream_GetRemainingLength(s) >= (size_t)(blockLength - 8))
+		if (Stream_GetRemainingLength(s) >= (blockLength - 8))
 		{
 			/* The old Microsoft Mac RDP client can send a pad here */
 			Stream_Seek(s, (blockLength - 8));

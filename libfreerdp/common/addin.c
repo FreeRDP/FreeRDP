@@ -225,8 +225,7 @@ PVIRTUALCHANNELENTRY freerdp_load_dynamic_addin(LPCSTR pszFileName, LPCSTR pszPa
 
 		CopyMemory(pszFilePath, pszAddinInstallPath, cchAddinInstallPath);
 		pszFilePath[cchAddinInstallPath] = '\0';
-		const HRESULT hr =
-		    NativePathCchAppendA((LPSTR)pszFilePath, cchFilePath + 1, pszRelativeFilePath);
+		const HRESULT hr = NativePathCchAppendA(pszFilePath, cchFilePath + 1, pszRelativeFilePath);
 		if (FAILED(hr))
 			goto fail;
 	}

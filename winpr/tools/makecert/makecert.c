@@ -111,7 +111,7 @@ static char* makecert_read_str(BIO* bio, size_t* pOffset)
 		if (status <= 0)
 			break;
 
-		offset += (size_t)readBytes;
+		offset += readBytes;
 	}
 
 	if (status < 0)

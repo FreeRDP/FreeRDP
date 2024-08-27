@@ -201,7 +201,7 @@ LPSTR* CommandLineToArgvA(LPCSTR lpCmdLine, int* pNumArgs)
 	}
 
 	pArgs = (LPSTR*)buffer;
-	pOutput = (char*)&buffer[maxNumArgs * (sizeof(char*))];
+	pOutput = &buffer[maxNumArgs * (sizeof(char*))];
 	p = (const char*)lpCmdLine;
 
 	while (p < lpCmdLine + cmdLineLength)

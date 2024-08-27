@@ -350,7 +350,7 @@ static UINT audin_alsa_parse_addin_args(AudinALSADevice* device, const ADDIN_ARG
 	int status = 0;
 	DWORD flags = 0;
 	const COMMAND_LINE_ARGUMENT_A* arg = NULL;
-	AudinALSADevice* alsa = (AudinALSADevice*)device;
+	AudinALSADevice* alsa = device;
 	COMMAND_LINE_ARGUMENT_A audin_alsa_args[] = { { "dev", COMMAND_LINE_VALUE_REQUIRED, "<device>",
 		                                            NULL, NULL, -1, NULL, "audio device name" },
 		                                          { NULL, 0, NULL, NULL, NULL, -1, NULL, NULL } };

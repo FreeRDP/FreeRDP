@@ -204,7 +204,7 @@ static void shadow_client_context_free(freerdp_peer* peer, rdpContext* context)
 
 	/* Clear queued messages and free resource */
 	MessageQueue_Free(client->MsgQueue);
-	WTSCloseServer((HANDLE)client->vcm);
+	WTSCloseServer(client->vcm);
 	region16_uninit(&(client->invalidRegion));
 	DeleteCriticalSection(&(client->lock));
 

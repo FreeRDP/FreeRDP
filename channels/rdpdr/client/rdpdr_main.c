@@ -1249,7 +1249,7 @@ static UINT rdpdr_send_client_announce_reply(rdpdrPlugin* rdpdr)
 	Stream_Write_UINT16(s, PAKID_CORE_CLIENTID_CONFIRM); /* PacketId (2 bytes) */
 	Stream_Write_UINT16(s, rdpdr->clientVersionMajor);
 	Stream_Write_UINT16(s, rdpdr->clientVersionMinor);
-	Stream_Write_UINT32(s, (UINT32)rdpdr->clientID);
+	Stream_Write_UINT32(s, rdpdr->clientID);
 	return rdpdr_send(rdpdr, s);
 }
 
@@ -1296,7 +1296,7 @@ static UINT rdpdr_send_client_name_request(rdpdrPlugin* rdpdr)
 	Stream_Write_UINT32(s, 0);                      /* codePage, must be set to zero */
 	Stream_Write_UINT32(s,
 	                    (UINT32)computerNameLenW); /* computerNameLen, including null terminator */
-	Stream_Write(s, computerNameW, (size_t)computerNameLenW);
+	Stream_Write(s, computerNameW, computerNameLenW);
 	free(computerNameW);
 	return rdpdr_send(rdpdr, s);
 }
@@ -1859,7 +1859,7 @@ static UINT rdpdr_process_receive(rdpdrPlugin* rdpdr, wStream* s)
 UINT rdpdr_send(rdpdrPlugin* rdpdr, wStream* s)
 {
 	UINT status = 0;
-	rdpdrPlugin* plugin = (rdpdrPlugin*)rdpdr;
+	rdpdrPlugin* plugin = rdpdr;
 
 	if (!s)
 	{
