@@ -5,6 +5,9 @@ set(${MODULE_PREFIX}_DRIVER ${MODULE_NAME}.cpp)
 
 set(${MODULE_PREFIX}_TESTS TestSDLPrefs.cpp)
 
+
+disable_warnings_for_directory(${CMAKE_CURRENT_BINARY_DIR})
+
 create_test_sourcelist(${MODULE_PREFIX}_SRCS
 	${${MODULE_PREFIX}_DRIVER}
 	${${MODULE_PREFIX}_TESTS})

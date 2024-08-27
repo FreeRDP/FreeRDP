@@ -3,6 +3,8 @@ set(MODULE_PREFIX "TEST_SDL")
 
 set(DRIVER ${MODULE_NAME}.cpp)
 
+disable_warnings_for_directory(${CMAKE_CURRENT_BINARY_DIR})
+
 set(TEST_SRCS
 	TestSDLDialogs.cpp
 )
