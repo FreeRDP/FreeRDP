@@ -43,7 +43,7 @@ static BOOL demo_plugin_unload(proxyPlugin* plugin)
 	std::cout << "C++ demo plugin: unloading..." << std::endl;
 
 	/* Here we have to free up our custom data storage. */
-	if (plugin)
+	if (plugin != nullptr)
 		delete static_cast<struct demo_custom_data*>(plugin->custom);
 
 	return TRUE;
@@ -409,7 +409,7 @@ BOOL proxy_module_entry_point(proxyPluginsManager* plugins_manager, void* userda
 	plugin.userdata = userdata;
 
 	custom = new (struct demo_custom_data);
-	if (!custom)
+	if (custom == nullptr)
 		return FALSE;
 
 	custom->mgr = plugins_manager;

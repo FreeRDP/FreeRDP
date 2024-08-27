@@ -130,7 +130,7 @@ BOOL sdlClip::uninit(CliprdrClientContext* clip)
 
 bool sdlClip::handle_update()
 {
-	if (!_ctx || !_sync)
+	if ((_ctx == nullptr) || !_sync)
 		return true;
 
 	clearServerFormats();
@@ -275,7 +275,7 @@ UINT sdlClip::SendDataResponse(const BYTE* data, size_t size)
 	if (size > UINT32_MAX)
 		return ERROR_INVALID_PARAMETER;
 
-	response.common.msgFlags = (data) ? CB_RESPONSE_OK : CB_RESPONSE_FAIL;
+	response.common.msgFlags = ((data) != nullptr) ? CB_RESPONSE_OK : CB_RESPONSE_FAIL;
 	response.common.dataLen = static_cast<UINT32>(size);
 	response.requestedFormatData = data;
 
@@ -290,7 +290,7 @@ std::string sdlClip::getServerFormat(uint32_t id)
 	{
 		if (fmt.formatId() == id)
 		{
-			if (fmt.formatName())
+			if (fmt.formatName() != nullptr)
 				return fmt.formatName();
 			break;
 		}
@@ -309,7 +309,7 @@ uint32_t sdlClip::serverIdForMime(const std::string& mime)
 
 	for (auto& format : _serverFormats)
 	{
-		if (!format.formatName())
+		if (format.formatName() == nullptr)
 			continue;
 		if (cmp.compare(format.formatName()) == 0)
 			return format.formatId();
@@ -365,7 +365,7 @@ UINT sdlClip::ReceiveServerFormatList(CliprdrClientContext* context,
 	BOOL image = FALSE;
 	BOOL file = FALSE;
 
-	if (!context || !context->custom)
+	if ((context == nullptr) || (context->custom == nullptr))
 		return ERROR_INVALID_PARAMETER;
 
 	auto clipboard = static_cast<sdlClip*>(
@@ -380,7 +380,7 @@ UINT sdlClip::ReceiveServerFormatList(CliprdrClientContext* context,
 
 		clipboard->_serverFormats.push_back({ format->formatId, format->formatName });
 
-		if (format->formatName)
+		if (format->formatName != nullptr)
 		{
 			if (strcmp(format->formatName, type_HtmlFormat) == 0)
 			{
@@ -684,7 +684,7 @@ const void* sdlClip::ClipDataCb(void* userdata, const char* mime_type, size_t* s
 
 		auto formatID = ClipboardRegisterFormat(clip->_system, mime_type);
 		auto data = ClipboardGetData(clip->_system, formatID, &len);
-		if (!data)
+		if (data == nullptr)
 			return nullptr;
 
 		auto ptr = std::shared_ptr<void>(data, free);

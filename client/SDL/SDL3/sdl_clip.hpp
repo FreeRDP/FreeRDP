@@ -55,7 +55,7 @@ class CliprdrFormat
   public:
 	CliprdrFormat(uint32_t formatID, const char* formatName) : _formatID(formatID)
 	{
-		if (formatName)
+		if (formatName != nullptr)
 			_formatName = formatName;
 	}
 

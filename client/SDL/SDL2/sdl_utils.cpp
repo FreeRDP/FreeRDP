@@ -139,7 +139,7 @@ BOOL sdl_log_error_ex(Uint32 res, wLog* log, const char* what, const char* file,
 
 	WINPR_UNUSED(file);
 
-	if (!msg)
+	if (msg == nullptr)
 		return FALSE;
 
 	WLog_Print(log, WLOG_ERROR, "[%s:%" PRIuz "][%s]: %s", fkt, line, what, msg);

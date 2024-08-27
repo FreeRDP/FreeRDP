@@ -31,7 +31,7 @@ typedef struct
 
 static inline SdlContext* get_context(void* ctx)
 {
-	if (!ctx)
+	if (ctx == nullptr)
 		return nullptr;
 	auto sdl = static_cast<sdl_rdp_context*>(ctx);
 	return sdl->sdl;
@@ -39,7 +39,7 @@ static inline SdlContext* get_context(void* ctx)
 
 static inline SdlContext* get_context(rdpContext* ctx)
 {
-	if (!ctx)
+	if (ctx == nullptr)
 		return nullptr;
 	auto sdl = reinterpret_cast<sdl_rdp_context*>(ctx);
 	return sdl->sdl;

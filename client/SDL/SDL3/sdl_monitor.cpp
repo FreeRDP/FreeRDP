@@ -91,14 +91,14 @@ static BOOL sdl_is_monitor_id_active(SdlContext* sdl, UINT32 id)
 	WINPR_ASSERT(settings);
 
 	const UINT32 NumMonitorIds = freerdp_settings_get_uint32(settings, FreeRDP_NumMonitorIds);
-	if (!NumMonitorIds)
+	if (NumMonitorIds == 0u)
 		return TRUE;
 
 	for (UINT32 index = 0; index < NumMonitorIds; index++)
 	{
 		auto cur = static_cast<const UINT32*>(
 		    freerdp_settings_get_pointer_array(settings, FreeRDP_MonitorIds, index));
-		if (cur && (*cur == id))
+		if ((cur != nullptr) && (*cur == id))
 			return TRUE;
 	}
 
@@ -219,7 +219,7 @@ static BOOL sdl_apply_display_properties(SdlContext* sdl)
 			for (int i = 0; i < count; i++)
 			{
 				auto mode = modes[i];
-				if (!mode)
+				if (mode == nullptr)
 					break;
 
 				if (mode->w > rect.w)

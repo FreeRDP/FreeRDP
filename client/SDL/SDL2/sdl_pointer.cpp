@@ -44,7 +44,7 @@ static BOOL sdl_Pointer_New(rdpContext* context, rdpPointer* pointer)
 	auto ptr = reinterpret_cast<sdlPointer*>(pointer);
 
 	WINPR_ASSERT(context);
-	if (!ptr)
+	if (ptr == nullptr)
 		return FALSE;
 
 	rdpGdi* gdi = context->gdi;
@@ -53,7 +53,7 @@ static BOOL sdl_Pointer_New(rdpContext* context, rdpPointer* pointer)
 	ptr->size = 4ull * pointer->width * pointer->height;
 	ptr->data = winpr_aligned_malloc(ptr->size, 16);
 
-	if (!ptr->data)
+	if (ptr->data == nullptr)
 		return FALSE;
 
 	auto data = static_cast<BYTE*>(ptr->data);
@@ -83,7 +83,7 @@ static void sdl_Pointer_Free(rdpContext* context, rdpPointer* pointer)
 	auto ptr = reinterpret_cast<sdlPointer*>(pointer);
 	WINPR_UNUSED(context);
 
-	if (ptr)
+	if (ptr != nullptr)
 	{
 		sdl_Pointer_Clear(ptr);
 		winpr_aligned_free(ptr->data);
@@ -134,7 +134,7 @@ BOOL sdl_Pointer_Set_Process(SDL_UserEvent* uptr)
 	sh = h = static_cast<INT32>(pointer->height);
 
 	SDL_Window* window = SDL_GetMouseFocus();
-	if (!window)
+	if (window == nullptr)
 		return sdl_Pointer_SetDefault(context);
 
 	const Uint32 id = SDL_GetWindowID(window);
@@ -148,7 +148,7 @@ BOOL sdl_Pointer_Set_Process(SDL_UserEvent* uptr)
 	const DWORD bpp = FreeRDPGetBitsPerPixel(gdi->dstFormat);
 	ptr->image =
 	    SDL_CreateRGBSurfaceWithFormat(0, sw, sh, static_cast<int>(bpp), sdl->sdl_pixel_format);
-	if (!ptr->image)
+	if (ptr->image == nullptr)
 		return FALSE;
 
 	SDL_LockSurface(ptr->image);
@@ -163,7 +163,7 @@ BOOL sdl_Pointer_Set_Process(SDL_UserEvent* uptr)
 		return FALSE;
 
 	ptr->cursor = SDL_CreateColorCursor(ptr->image, x, y);
-	if (!ptr->cursor)
+	if (ptr->cursor == nullptr)
 		return FALSE;
 
 	SDL_SetCursor(ptr->cursor);

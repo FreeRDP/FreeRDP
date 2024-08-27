@@ -40,14 +40,14 @@ SdlWindow::~SdlWindow()
 
 Uint32 SdlWindow::id() const
 {
-	if (!_window)
+	if (_window == nullptr)
 		return 0;
 	return SDL_GetWindowID(_window);
 }
 
 int SdlWindow::displayIndex() const
 {
-	if (!_window)
+	if (_window == nullptr)
 		return 0;
 	return SDL_GetWindowDisplayIndex(_window);
 }
@@ -55,7 +55,7 @@ int SdlWindow::displayIndex() const
 SDL_Rect SdlWindow::rect() const
 {
 	SDL_Rect rect = {};
-	if (_window)
+	if (_window != nullptr)
 	{
 		SDL_GetWindowPosition(_window, &rect.x, &rect.y);
 		SDL_GetWindowSize(_window, &rect.w, &rect.h);
@@ -90,7 +90,7 @@ Sint32 SdlWindow::offsetY() const
 
 bool SdlWindow::grabKeyboard(bool enable)
 {
-	if (!_window)
+	if (_window == nullptr)
 		return false;
 #if SDL_VERSION_ATLEAST(2, 0, 16)
 	SDL_SetWindowKeyboardGrab(_window, enable ? SDL_TRUE : SDL_FALSE);
@@ -103,7 +103,7 @@ bool SdlWindow::grabKeyboard(bool enable)
 
 bool SdlWindow::grabMouse(bool enable)
 {
-	if (!_window)
+	if (_window == nullptr)
 		return false;
 #if SDL_VERSION_ATLEAST(2, 0, 16)
 	SDL_SetWindowMouseGrab(_window, enable ? SDL_TRUE : SDL_FALSE);
@@ -115,7 +115,7 @@ bool SdlWindow::grabMouse(bool enable)
 
 void SdlWindow::setBordered(bool bordered)
 {
-	if (_window)
+	if (_window != nullptr)
 		SDL_SetWindowBordered(_window, bordered ? SDL_TRUE : SDL_FALSE);
 }
 
@@ -135,7 +135,7 @@ void SdlWindow::fullscreen(bool enter)
 
 	if (enter)
 	{
-		if (!(curFlags & SDL_WINDOW_BORDERLESS))
+		if ((curFlags & SDL_WINDOW_BORDERLESS) == 0u)
 		{
 			auto idx = SDL_GetWindowDisplayIndex(_window);
 			SDL_DisplayMode mode = {};
@@ -154,7 +154,7 @@ void SdlWindow::fullscreen(bool enter)
 	}
 	else
 	{
-		if (curFlags & SDL_WINDOW_BORDERLESS)
+		if ((curFlags & SDL_WINDOW_BORDERLESS) != 0u)
 		{
 
 			SDL_SetWindowBordered(_window, SDL_TRUE);
@@ -171,7 +171,7 @@ void SdlWindow::fullscreen(bool enter)
 bool SdlWindow::fill(Uint8 r, Uint8 g, Uint8 b, Uint8 a)
 {
 	auto surface = SDL_GetWindowSurface(_window);
-	if (!surface)
+	if (surface == nullptr)
 		return false;
 	SDL_Rect rect = { 0, 0, surface->w, surface->h };
 	auto color = SDL_MapRGBA(surface->format, r, g, b, a);
@@ -183,7 +183,7 @@ bool SdlWindow::fill(Uint8 r, Uint8 g, Uint8 b, Uint8 a)
 bool SdlWindow::blit(SDL_Surface* surface, const SDL_Rect& srcRect, SDL_Rect& dstRect)
 {
 	auto screen = SDL_GetWindowSurface(_window);
-	if (!screen || !surface)
+	if ((screen == nullptr) || (surface == nullptr))
 		return false;
 	if (!SDL_SetClipRect(surface, &srcRect))
 		return true;

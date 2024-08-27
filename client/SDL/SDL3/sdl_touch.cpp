@@ -39,7 +39,7 @@ BOOL sdl_scale_coordinates(SdlContext* sdl, Uint32 windowId, INT32* px, INT32* p
 	double sx = 1.0;
 	double sy = 1.0;
 
-	if (!sdl || !px || !py || !sdl->context()->gdi)
+	if ((sdl == nullptr) || (px == nullptr) || (py == nullptr) || (sdl->context()->gdi == nullptr))
 		return FALSE;
 
 	WINPR_ASSERT(sdl->context()->gdi);
@@ -106,12 +106,12 @@ static BOOL sdl_get_touch_scaled(SdlContext* sdl, const SDL_TouchFingerEvent* ev
 
 	SDL_Window* window = SDL_GetWindowFromID(ev->windowID);
 
-	if (!window)
+	if (window == nullptr)
 		return FALSE;
 
 	windowID = SDL_GetWindowID(window);
 	SDL_Surface* surface = SDL_GetWindowSurface(window);
-	if (!surface)
+	if (surface == nullptr)
 		return FALSE;
 
 	// TODO: Add the offset of the surface in the global coordinates
@@ -134,7 +134,7 @@ static BOOL send_mouse_wheel(SdlContext* sdl, UINT16 flags, INT32 avalue)
 		const UINT16 cval = (avalue > 0xFF) ? 0xFF : static_cast<UINT16>(avalue);
 		UINT16 cflags = flags | cval;
 		/* Convert negative values to 9bit twos complement */
-		if (flags & PTR_FLAGS_WHEEL_NEGATIVE)
+		if ((flags & PTR_FLAGS_WHEEL_NEGATIVE) != 0)
 			cflags = (flags & 0xFF00) | (0x100 - cval);
 		if (!freerdp_client_send_wheel_event(sdl->common(), cflags))
 			return FALSE;

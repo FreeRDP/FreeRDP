@@ -86,10 +86,10 @@ BOOL sdlDispContext::sendResize()
 	DISPLAY_CONTROL_MONITOR_LAYOUT layout = {};
 	auto settings = _sdl->context()->settings;
 
-	if (!settings)
+	if (settings == nullptr)
 		return FALSE;
 
-	if (!_activated || !_disp)
+	if (!_activated || (_disp == nullptr))
 		return TRUE;
 
 	if (GetTickCount64() - _lastSentDate < RESIZE_MIN_DELAY)
@@ -138,14 +138,14 @@ BOOL sdlDispContext::set_window_resizable()
 static BOOL sdl_disp_check_context(void* context, SdlContext** ppsdl, sdlDispContext** ppsdlDisp,
                                    rdpSettings** ppSettings)
 {
-	if (!context)
+	if (context == nullptr)
 		return FALSE;
 
 	auto sdl = get_context(context);
-	if (!sdl)
+	if (sdl == nullptr)
 		return FALSE;
 
-	if (!sdl->context()->settings)
+	if (sdl->context()->settings == nullptr)
 		return FALSE;
 
 	*ppsdl = sdl;
@@ -198,11 +198,11 @@ void sdlDispContext::OnGraphicsReset(void* context, const GraphicsResetEventArgs
 Uint32 sdlDispContext::OnTimer(void* param, SDL_TimerID timerID, Uint32 interval)
 {
 	auto ctx = static_cast<sdlDispContext*>(param);
-	if (!ctx)
+	if (ctx == nullptr)
 		return 0;
 
 	SdlContext* sdl = ctx->_sdl;
-	if (!sdl)
+	if (sdl == nullptr)
 		return 0;
 
 	sdlDispContext* sdlDisp = nullptr;
@@ -411,12 +411,12 @@ UINT sdlDispContext::DisplayControlCaps(UINT32 maxNumMonitors, UINT32 maxMonitor
 
 BOOL sdlDispContext::init(DispClientContext* disp)
 {
-	if (!disp)
+	if (disp == nullptr)
 		return FALSE;
 
 	auto settings = _sdl->context()->settings;
 
-	if (!settings)
+	if (settings == nullptr)
 		return FALSE;
 
 	_disp = disp;
@@ -433,7 +433,7 @@ BOOL sdlDispContext::init(DispClientContext* disp)
 
 BOOL sdlDispContext::uninit(DispClientContext* disp)
 {
-	if (!disp)
+	if (disp == nullptr)
 		return FALSE;
 
 	_disp = nullptr;

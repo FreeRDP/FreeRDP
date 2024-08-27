@@ -369,7 +369,7 @@ BOOL sdlInput::keyboard_set_indicators(rdpContext* context, UINT16 led_flags)
 BOOL sdlInput::keyboard_set_ime_status(rdpContext* context, UINT16 imeId, UINT32 imeState,
                                        UINT32 imeConvMode)
 {
-	if (!context)
+	if (context == nullptr)
 		return FALSE;
 
 	WLog_WARN(TAG,
@@ -535,7 +535,7 @@ void sdlInput::remapInitialize()
 	WINPR_ASSERT(context);
 	auto KeyboardRemappingList =
 	    freerdp_settings_get_string(context->settings, FreeRDP_KeyboardRemappingList);
-	if (!KeyboardRemappingList)
+	if (KeyboardRemappingList == nullptr)
 		return;
 
 	auto list = tokenize(KeyboardRemappingList);

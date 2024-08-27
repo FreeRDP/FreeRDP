@@ -32,7 +32,7 @@ SDL_IOStream* SDL3ResourceManager::get(const std::string& type, const std::strin
 	if (useCompiledResources())
 	{
 		auto d = data(type, id);
-		if (!d)
+		if (d == nullptr)
 			return nullptr;
 
 		return SDL_IOFromConstMem(d->data(), d->size());

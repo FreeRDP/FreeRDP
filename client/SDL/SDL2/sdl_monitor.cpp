@@ -95,7 +95,7 @@ static BOOL sdl_is_monitor_id_active(SdlContext* sdl, UINT32 id)
 	{
 		auto cur = static_cast<const UINT32*>(
 		    freerdp_settings_get_pointer_array(settings, FreeRDP_MonitorIds, index));
-		if (cur && (*cur == id))
+		if ((cur != nullptr) && (*cur == id))
 			return TRUE;
 	}
 

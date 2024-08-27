@@ -54,10 +54,10 @@ WINPR_JSON* SdlPref::get_item(const std::string& key)
 
 std::string SdlPref::item_to_str(WINPR_JSON* item, const std::string& fallback)
 {
-	if (!item || !WINPR_JSON_IsString(item))
+	if ((item == nullptr) || !WINPR_JSON_IsString(item))
 		return fallback;
 	auto str = WINPR_JSON_GetStringValue(item);
-	if (!str)
+	if (str == nullptr)
 		return {};
 	return str;
 }
@@ -71,7 +71,7 @@ std::string SdlPref::get_string(const std::string& key, const std::string& fallb
 bool SdlPref::get_bool(const std::string& key, bool fallback)
 {
 	auto item = get_item(key);
-	if (!item || !WINPR_JSON_IsBool(item))
+	if ((item == nullptr) || !WINPR_JSON_IsBool(item))
 		return fallback;
 	return WINPR_JSON_IsTrue(item);
 }
@@ -79,7 +79,7 @@ bool SdlPref::get_bool(const std::string& key, bool fallback)
 int64_t SdlPref::get_int(const std::string& key, int64_t fallback)
 {
 	auto item = get_item(key);
-	if (!item || !WINPR_JSON_IsNumber(item))
+	if ((item == nullptr) || !WINPR_JSON_IsNumber(item))
 		return fallback;
 	auto val = WINPR_JSON_GetNumberValue(item);
 	return static_cast<int64_t>(val);
@@ -89,7 +89,7 @@ std::vector<std::string> SdlPref::get_array(const std::string& key,
                                             const std::vector<std::string>& fallback)
 {
 	auto item = get_item(key);
-	if (!item || !WINPR_JSON_IsArray(item))
+	if ((item == nullptr) || !WINPR_JSON_IsArray(item))
 		return fallback;
 
 	std::vector<std::string> values;

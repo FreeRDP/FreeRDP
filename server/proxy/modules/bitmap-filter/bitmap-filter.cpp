@@ -296,7 +296,7 @@ static BOOL drdynvc_write_header(wStream* s, UINT32 channelId)
 	const UINT8 value = (DATA_PDU << 4) | cbChId;
 	const size_t len = drdynvc_cblen_to_bytes(cbChId) + 1;
 
-	if (!Stream_EnsureRemainingCapacity(s, len))
+	if (Stream_EnsureRemainingCapacity(s, len) == 0)
 		return FALSE;
 
 	Stream_Write_UINT8(s, value);
@@ -309,10 +309,10 @@ static BOOL filter_forward_empty_offer(const char* sessionID, proxyDynChannelInt
 	WINPR_ASSERT(data);
 
 	Stream_SetPosition(data->data, startPosition);
-	if (!drdynvc_write_header(data->data, channelId))
+	if (drdynvc_write_header(data->data, channelId) == 0)
 		return FALSE;
 
-	if (!Stream_EnsureRemainingCapacity(data->data, sizeof(UINT16)))
+	if (Stream_EnsureRemainingCapacity(data->data, sizeof(UINT16)) == 0)
 		return FALSE;
 	Stream_Write_UINT16(data->data, 0);
 	Stream_SealLength(data->data);
@@ -336,7 +336,7 @@ static BOOL filter_dyn_channel_intercept(proxyPlugin* plugin, proxyData* pdata, 
 	    (strncmp(data->name, RDPGFX_DVC_CHANNEL_NAME, ARRAYSIZE(RDPGFX_DVC_CHANNEL_NAME)) == 0))
 	{
 		auto state = filter_get_plugin_data(plugin, pdata);
-		if (!state)
+		if (state == nullptr)
 		{
 			WLog_ERR(TAG, "[SessionID=%s][%s] missing custom data, aborting!", pdata->session_id,
 			         plugin_name);
@@ -458,7 +458,7 @@ BOOL proxy_module_entry_point(proxyPluginsManager* plugins_manager, void* userda
 	plugin.DynChannelIntercept = filter_dyn_channel_intercept;
 
 	plugin.custom = plugins_manager;
-	if (!plugin.custom)
+	if (plugin.custom == nullptr)
 		return FALSE;
 	plugin.userdata = userdata;
 

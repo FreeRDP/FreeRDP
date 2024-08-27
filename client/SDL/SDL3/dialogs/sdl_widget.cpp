@@ -48,12 +48,12 @@ SdlWidget::SdlWidget(SDL_Renderer* renderer, const SDL_FRect& rect, bool input)
 
 	auto ops = SDL3ResourceManager::get(SDLResourceManager::typeFonts(),
 	                                    "OpenSans-VariableFont_wdth,wght.ttf");
-	if (!ops)
+	if (ops == nullptr)
 		widget_log_error(-1, "SDLResourceManager::get");
 	else
 	{
 		_font = TTF_OpenFontIO(ops, 1, 64);
-		if (!_font)
+		if (_font == nullptr)
 			widget_log_error(-1, "TTF_OpenFontRW");
 	}
 }
@@ -82,7 +82,7 @@ SDL_Texture* SdlWidget::render_text(SDL_Renderer* renderer, const std::string& t
                                     SDL_Color fgcolor, SDL_FRect& src, SDL_FRect& dst)
 {
 	auto surface = TTF_RenderUTF8_Blended(_font, text.c_str(), fgcolor);
-	if (!surface)
+	if (surface == nullptr)
 	{
 		widget_log_error(-1, "TTF_RenderText_Blended");
 		return nullptr;
@@ -90,7 +90,7 @@ SDL_Texture* SdlWidget::render_text(SDL_Renderer* renderer, const std::string& t
 
 	auto texture = SDL_CreateTextureFromSurface(renderer, surface);
 	SDL_DestroySurface(surface);
-	if (!texture)
+	if (texture == nullptr)
 	{
 		widget_log_error(-1, "SDL_CreateTextureFromSurface");
 		return nullptr;
@@ -130,7 +130,7 @@ SDL_Texture* SdlWidget::render_text_wrapped(SDL_Renderer* renderer, const std::s
 	Sint32 h = 0;
 	TTF_SizeUTF8(_font, " ", &w, &h);
 	auto surface = TTF_RenderUTF8_Blended_Wrapped(_font, text.c_str(), fgcolor, _text_width);
-	if (!surface)
+	if (surface == nullptr)
 	{
 		widget_log_error(-1, "TTF_RenderText_Blended");
 		return nullptr;
@@ -141,7 +141,7 @@ SDL_Texture* SdlWidget::render_text_wrapped(SDL_Renderer* renderer, const std::s
 
 	auto texture = SDL_CreateTextureFromSurface(renderer, surface);
 	SDL_DestroySurface(surface);
-	if (!texture)
+	if (texture == nullptr)
 	{
 		widget_log_error(-1, "SDL_CreateTextureFromSurface");
 		return nullptr;
@@ -166,7 +166,7 @@ SDL_Texture* SdlWidget::render_text_wrapped(SDL_Renderer* renderer, const std::s
 SdlWidget::~SdlWidget()
 {
 	TTF_CloseFont(_font);
-	if (_image)
+	if (_image != nullptr)
 		SDL_DestroyTexture(_image);
 }
 
@@ -174,7 +174,7 @@ bool SdlWidget::error_ex(Uint32 res, const char* what, const char* file, size_t 
                          const char* fkt)
 {
 	static wLog* log = nullptr;
-	if (!log)
+	if (log == nullptr)
 		log = WLog_Get(TAG);
 	return sdl_log_error_ex(res, log, what, file, line, fkt);
 }
@@ -247,7 +247,7 @@ bool SdlWidget::update_text(SDL_Renderer* renderer, const std::string& text, SDL
 	SDL_FRect dst{};
 
 	SDL_Texture* texture = nullptr;
-	if (_image)
+	if (_image != nullptr)
 	{
 		texture = _image;
 		dst = _rect;
@@ -263,11 +263,11 @@ bool SdlWidget::update_text(SDL_Renderer* renderer, const std::string& text, SDL
 		texture = render_text_wrapped(renderer, text, fgcolor, src, dst);
 	else
 		texture = render_text(renderer, text, fgcolor, src, dst);
-	if (!texture)
+	if (texture == nullptr)
 		return false;
 
 	const int rc = SDL_RenderTexture(renderer, texture, &src, &dst);
-	if (!_image)
+	if (_image == nullptr)
 		SDL_DestroyTexture(texture);
 	if (rc < 0)
 		return !widget_log_error(rc, "SDL_RenderCopy");

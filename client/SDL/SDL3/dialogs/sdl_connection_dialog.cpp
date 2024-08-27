@@ -49,7 +49,7 @@ SDLConnectionDialog::~SDLConnectionDialog()
 
 bool SDLConnectionDialog::visible() const
 {
-	if (!_window || !_renderer)
+	if ((_window == nullptr) || (_renderer == nullptr))
 		return false;
 
 	auto flags = SDL_GetWindowFlags(_window);
@@ -128,7 +128,7 @@ bool SDLConnectionDialog::update()
 			destroyWindow();
 			break;
 		default:
-			if (_window)
+			if (_window != nullptr)
 			{
 				SDL_SetWindowTitle(_window, _title.c_str());
 			}
@@ -140,7 +140,7 @@ bool SDLConnectionDialog::update()
 
 bool SDLConnectionDialog::setModal()
 {
-	if (_window)
+	if (_window != nullptr)
 	{
 		auto sdl = get_context(_context);
 		if (sdl->windows.empty())
@@ -169,7 +169,7 @@ bool SDLConnectionDialog::clearWindow(SDL_Renderer* renderer)
 bool SDLConnectionDialog::update(SDL_Renderer* renderer)
 {
 	std::lock_guard lock(_mux);
-	if (!renderer)
+	if (renderer == nullptr)
 		return false;
 
 	if (!clearWindow(renderer))
@@ -205,7 +205,7 @@ bool SDLConnectionDialog::wait(bool ignoreRdpContext)
 bool SDLConnectionDialog::handle(const SDL_Event& event)
 {
 	Uint32 windowID = 0;
-	if (_window)
+	if (_window != nullptr)
 	{
 		windowID = SDL_GetWindowID(_window);
 	}
@@ -264,7 +264,7 @@ bool SDLConnectionDialog::handle(const SDL_Event& event)
 				update(_renderer);
 
 				auto button = _buttons.get_selected(event.button);
-				if (button)
+				if (button != nullptr)
 				{
 					if (event.type == SDL_EVENT_MOUSE_BUTTON_UP)
 					{
@@ -498,7 +498,7 @@ SDLConnectionDialogHider::SDLConnectionDialogHider(rdpContext* context)
 
 SDLConnectionDialogHider::SDLConnectionDialogHider(SDLConnectionDialog* dialog) : _dialog(dialog)
 {
-	if (_dialog)
+	if (_dialog != nullptr)
 	{
 		_visible = _dialog->visible();
 		if (_visible)
@@ -510,7 +510,7 @@ SDLConnectionDialogHider::SDLConnectionDialogHider(SDLConnectionDialog* dialog) 
 
 SDLConnectionDialogHider::~SDLConnectionDialogHider()
 {
-	if (_dialog && _visible)
+	if ((_dialog != nullptr) && _visible)
 	{
 		_dialog->show();
 	}
@@ -518,7 +518,7 @@ SDLConnectionDialogHider::~SDLConnectionDialogHider()
 
 SDLConnectionDialog* SDLConnectionDialogHider::get(freerdp* instance)
 {
-	if (!instance)
+	if (instance == nullptr)
 		return nullptr;
 	return get(instance->context);
 }
@@ -526,7 +526,7 @@ SDLConnectionDialog* SDLConnectionDialogHider::get(freerdp* instance)
 SDLConnectionDialog* SDLConnectionDialogHider::get(rdpContext* context)
 {
 	auto sdl = get_context(context);
-	if (!sdl)
+	if (sdl == nullptr)
 		return nullptr;
 	return sdl->connection_dialog.get();
 }

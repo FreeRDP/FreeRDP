@@ -243,7 +243,7 @@ static const struct sdl_exit_code_map_t* sdl_map_entry_by_error(DWORD error)
 static int sdl_map_error_to_exit_code(DWORD error)
 {
 	const struct sdl_exit_code_map_t* entry = sdl_map_entry_by_error(error);
-	if (entry)
+	if (entry != nullptr)
 		return entry->code;
 
 	return SDL_EXIT_CONN_FAILED;
@@ -252,7 +252,7 @@ static int sdl_map_error_to_exit_code(DWORD error)
 static const char* sdl_map_error_to_code_tag(DWORD error)
 {
 	const struct sdl_exit_code_map_t* entry = sdl_map_entry_by_error(error);
-	if (entry)
+	if (entry != nullptr)
 		return entry->code_tag;
 	return nullptr;
 }
@@ -260,7 +260,7 @@ static const char* sdl_map_error_to_code_tag(DWORD error)
 static const char* sdl_map_to_code_tag(int code)
 {
 	const struct sdl_exit_code_map_t* entry = sdl_map_entry_by_code(code);
-	if (entry)
+	if (entry != nullptr)
 		return entry->code_tag;
 	return nullptr;
 }
@@ -275,7 +275,7 @@ static int error_info_to_error(freerdp* instance, DWORD* pcode, char** msg, size
 	winpr_asprintf(msg, len, "Terminate with %s due to ERROR_INFO %s [0x%08" PRIx32 "]: %s",
 	               sdl_map_error_to_code_tag(exit_code), name, code, str);
 	WLog_DBG(SDL_TAG, "%s", *msg);
-	if (pcode)
+	if (pcode != nullptr)
 		*pcode = code;
 	return exit_code;
 }
@@ -481,7 +481,7 @@ static BOOL sdl_end_paint(rdpContext* context)
 
 static void sdl_destroy_primary(SdlContext* sdl)
 {
-	if (!sdl)
+	if (sdl == nullptr)
 		return;
 	sdl->primary.reset();
 }
@@ -622,7 +622,7 @@ static BOOL sdl_pre_connect(freerdp* instance)
 	else
 	{
 		/* Check +auth-only has a username and password. */
-		if (!freerdp_settings_get_string(settings, FreeRDP_Password))
+		if (freerdp_settings_get_string(settings, FreeRDP_Password) == nullptr)
 		{
 			WLog_Print(sdl->log, WLOG_INFO, "auth-only, but no password set. Please provide one.");
 			return FALSE;
@@ -646,11 +646,11 @@ static const char* sdl_window_get_title(rdpSettings* settings)
 	const char* name = nullptr;
 	const char* prefix = "FreeRDP:";
 
-	if (!settings)
+	if (settings == nullptr)
 		return nullptr;
 
 	windowTitle = freerdp_settings_get_string(settings, FreeRDP_WindowTitle);
-	if (windowTitle)
+	if (windowTitle != nullptr)
 		return windowTitle;
 
 	name = freerdp_settings_get_server_name(settings);
@@ -677,7 +677,7 @@ static void sdl_term_handler(int signum, const char* signame, void* context)
 
 static void sdl_cleanup_sdl(SdlContext* sdl)
 {
-	if (!sdl)
+	if (sdl == nullptr)
 		return;
 
 	std::lock_guard<CriticalSection> lock(sdl->critical);
@@ -748,7 +748,7 @@ static BOOL sdl_create_windows(SdlContext* sdl)
 			              static_cast<int>(w),
 			              static_cast<int>(h),
 			              flags };
-		if (!window.window())
+		if (window.window() == nullptr)
 			goto fail;
 
 		if (freerdp_settings_get_bool(settings, FreeRDP_UseMultimon))
@@ -963,7 +963,7 @@ static int sdl_run(SdlContext* sdl)
 				{
 					auto window = static_cast<SdlWindow*>(windowEvent.user.data1);
 					const SDL_bool use = windowEvent.user.code != 0 ? SDL_TRUE : SDL_FALSE;
-					if (window)
+					if (window != nullptr)
 						window->resizeable(use);
 				}
 				break;
@@ -971,7 +971,7 @@ static int sdl_run(SdlContext* sdl)
 				{
 					auto window = static_cast<SdlWindow*>(windowEvent.user.data1);
 					const SDL_bool enter = windowEvent.user.code != 0 ? SDL_TRUE : SDL_FALSE;
-					if (window)
+					if (window != nullptr)
 						window->fullscreen(enter);
 				}
 				break;
@@ -993,7 +993,7 @@ static int sdl_run(SdlContext* sdl)
 					    static_cast<INT32>(reinterpret_cast<uintptr_t>(windowEvent.user.data2));
 
 					SDL_Window* window = SDL_GetMouseFocus();
-					if (window)
+					if (window != nullptr)
 					{
 						const Uint32 id = SDL_GetWindowID(window);
 
@@ -1080,7 +1080,7 @@ static BOOL sdl_post_connect(freerdp* instance)
 	if (freerdp_settings_get_bool(context->settings, FreeRDP_AuthenticationOnly))
 	{
 		/* Check +auth-only has a username and password. */
-		if (!freerdp_settings_get_string(context->settings, FreeRDP_Password))
+		if (freerdp_settings_get_string(context->settings, FreeRDP_Password) == nullptr)
 		{
 			WLog_Print(sdl->log, WLOG_INFO, "auth-only, but no password set. Please provide one.");
 			return FALSE;
@@ -1123,10 +1123,10 @@ static BOOL sdl_post_connect(freerdp* instance)
  */
 static void sdl_post_disconnect(freerdp* instance)
 {
-	if (!instance)
+	if (instance == nullptr)
 		return;
 
-	if (!instance->context)
+	if (instance->context == nullptr)
 		return;
 
 	PubSub_UnsubscribeChannelConnected(instance->context->pubSub,
@@ -1138,10 +1138,10 @@ static void sdl_post_disconnect(freerdp* instance)
 
 static void sdl_post_final_disconnect(freerdp* instance)
 {
-	if (!instance)
+	if (instance == nullptr)
 		return;
 
-	if (!instance->context)
+	if (instance->context == nullptr)
 		return;
 
 	auto context = get_context(instance->context);
@@ -1194,7 +1194,7 @@ static DWORD WINAPI sdl_client_thread_proc(SdlContext* sdl)
 			exit_code = error_info_to_error(instance, &code, &error_msg, &error_msg_len);
 
 		auto last = freerdp_get_last_error(context);
-		if (!error_msg)
+		if (error_msg == nullptr)
 		{
 			winpr_asprintf(&error_msg, &error_msg_len, "%s [0x%08" PRIx32 "]\n%s",
 			               freerdp_get_last_error_name(last), last,
@@ -1312,7 +1312,7 @@ terminate:
 			default:
 			{
 				std::lock_guard<CriticalSection> lock(sdl->critical);
-				if (sdl->connection_dialog && error_msg)
+				if (sdl->connection_dialog && (error_msg != nullptr))
 				{
 					sdl->connection_dialog->showError(error_msg);
 					showError = true;
@@ -1365,11 +1365,11 @@ static BOOL sdl_client_new(freerdp* instance, rdpContext* context)
 {
 	auto sdl = reinterpret_cast<sdl_rdp_context*>(context);
 
-	if (!instance || !context)
+	if ((instance == nullptr) || (context == nullptr))
 		return FALSE;
 
 	sdl->sdl = new SdlContext(context);
-	if (!sdl->sdl)
+	if (sdl->sdl == nullptr)
 		return FALSE;
 
 	instance->PreConnect = sdl_pre_connect;
@@ -1398,7 +1398,7 @@ static void sdl_client_free(freerdp* instance, rdpContext* context)
 {
 	auto sdl = reinterpret_cast<sdl_rdp_context*>(context);
 
-	if (!context)
+	if (context == nullptr)
 		return;
 
 	delete sdl->sdl;
@@ -1447,7 +1447,7 @@ static int RdpClientEntry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints)
 
 static void context_free(sdl_rdp_context* sdl)
 {
-	if (sdl)
+	if (sdl != nullptr)
 		freerdp_client_context_free(&sdl->common.context);
 }
 

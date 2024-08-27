@@ -23,7 +23,7 @@ SDL_RWops* SDL2ResourceManager::get(const std::string& type, const std::string& 
 	if (useCompiledResources())
 	{
 		auto d = data(type, id);
-		if (!d)
+		if (d == nullptr)
 			return nullptr;
 
 		return SDL_RWFromConstMem(d->data(), d->size());
