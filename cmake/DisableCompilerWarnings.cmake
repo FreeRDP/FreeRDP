@@ -12,4 +12,8 @@ function (disable_warnings_for_directory dir)
 			PROPERTY COMPILE_OPTIONS ${COMPILE_WARN_OPTS}
 		)
 	endif()
+
+	file(MAKE_DIRECTORY "${dir}")
+	set(ctidy "${dir}/.clang-tidy")
+	file(WRITE ${ctidy} "Checks: '-*'")
 endfunction()
