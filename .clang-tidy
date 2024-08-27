@@ -38,6 +38,8 @@ Checks: >
     -llvm-header-guard,
     -llvm-include-order,
     -llvm-qualified-auto,
+    -llvm-else-after-return,
+    -readability-else-after-return,
     -modernize-use-trailing-return-type,
     -modernize-macro-to-enum,
     -readability-braces-around-statements,
