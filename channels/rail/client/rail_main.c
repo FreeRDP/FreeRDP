@@ -219,13 +219,7 @@ static UINT rail_send_client_sysparam(RailClientContext* context, RAIL_SYSPARAM_
 		return error;
 	}
 
-	if ((error = rail_send_pdu(rail, s, TS_RAIL_ORDER_SYSPARAM)))
-	{
-		WLog_ERR(TAG, "rail_send_pdu failed with error %" PRIu32 "!", error);
-	}
-
-	Stream_Free(s, TRUE);
-	return error;
+	return rail_send_pdu(rail, s, TS_RAIL_ORDER_SYSPARAM);
 }
 
 /**
