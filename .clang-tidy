@@ -45,7 +45,6 @@ Checks: >
     -performance-no-int-to-ptr
 WarningsAsErrors: ''
 HeaderFilterRegex: ''
-AnalyzeTemporaryDtors: false
 FormatStyle:     file
 User:            nin
 CheckOptions:
