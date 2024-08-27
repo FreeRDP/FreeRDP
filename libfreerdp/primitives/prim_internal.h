@@ -228,7 +228,7 @@ static INLINE BYTE CLIP(INT64 X)
 static INLINE BYTE CONDITIONAL_CLIP(INT32 in, BYTE original)
 {
 	BYTE out = CLIP(in);
-	BYTE diff;
+	BYTE diff = 0;
 	if (out > original)
 		diff = out - original;
 	else
