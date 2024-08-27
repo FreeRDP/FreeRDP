@@ -131,7 +131,7 @@ extern "C"
 
 	static INLINE void Stream_Rewind(wStream* s, size_t _offset)
 	{
-		size_t cur;
+		size_t cur = 0;
 		WINPR_ASSERT(s);
 		WINPR_ASSERT(s->buffer <= s->pointer);
 		cur = WINPR_STREAM_CAST(size_t, s->pointer - s->buffer);
