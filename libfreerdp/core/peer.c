@@ -1458,7 +1458,11 @@ freerdp_peer* freerdp_peer_new(int sockfd)
 	if (sockfd >= 0)
 	{
 		if (setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, (void*)&option_value, option_len) < 0)
-			goto fail;
+		{
+			/* local unix sockets don't have the TCP_NODELAY implemented, so don't make this
+			 * error fatal */
+			WLog_DBG(TAG, "can't set TCP_NODELAY, continuing anyway");
+		}
 	}
 
 	if (client)
@@ -1490,10 +1494,6 @@ freerdp_peer* freerdp_peer_new(int sockfd)
 	}
 
 	return client;
-
-fail:
-	freerdp_peer_free(client);
-	return NULL;
 }
 
 void freerdp_peer_free(freerdp_peer* client)
