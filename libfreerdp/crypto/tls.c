@@ -1311,8 +1311,8 @@ static BOOL is_accepted(rdpTls* tls, const rdpCertificate* cert)
 	rdpSettings* settings = tls->context->settings;
 	WINPR_ASSERT(settings);
 
-	FreeRDP_Settings_Keys_String keyAccepted;
-	FreeRDP_Settings_Keys_UInt32 keyLength;
+	FreeRDP_Settings_Keys_String keyAccepted = FreeRDP_AcceptedCert;
+	FreeRDP_Settings_Keys_UInt32 keyLength = FreeRDP_AcceptedCertLength;
 
 	if (tls->isGatewayTransport)
 	{
@@ -1323,11 +1323,6 @@ static BOOL is_accepted(rdpTls* tls, const rdpCertificate* cert)
 	{
 		keyAccepted = FreeRDP_RedirectionAcceptedCert;
 		keyLength = FreeRDP_RedirectionAcceptedCertLength;
-	}
-	else
-	{
-		keyAccepted = FreeRDP_AcceptedCert;
-		keyLength = FreeRDP_AcceptedCertLength;
 	}
 
 	const char* AcceptedKey = freerdp_settings_get_string(settings, keyAccepted);

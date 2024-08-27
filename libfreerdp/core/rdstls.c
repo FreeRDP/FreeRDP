@@ -567,7 +567,7 @@ static BOOL rdstls_process_authentication_response(rdpRdstls* rdstls, wStream* s
 		WLog_Print(rdstls->log, WLOG_ERROR, "resultCode: %s [0x%08" PRIX32 "]",
 		           rdstls_result_code_str(resultCode), resultCode);
 
-		UINT32 error;
+		UINT32 error = ERROR_INTERNAL_ERROR;
 		switch (resultCode)
 		{
 			case RDSTLS_RESULT_ACCESS_DENIED:
