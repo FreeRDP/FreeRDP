@@ -478,7 +478,7 @@ char* x509_utils_get_date(const X509* x509, BOOL startDate)
 	char* str = NULL;
 	if (ASN1_TIME_print(bmem, date))
 	{
-		BUF_MEM* bptr;
+		BUF_MEM* bptr = NULL;
 
 		BIO_get_mem_ptr(bmem, &bptr);
 		str = strndup(bptr->data, bptr->length);
