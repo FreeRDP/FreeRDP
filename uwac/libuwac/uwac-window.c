@@ -78,7 +78,6 @@ static void UwacWindowDestroyBuffers(UwacWindow* w)
 	w->buffers = NULL;
 }
 
-WINPR_ATTR_MALLOC(UwacWindowDestroyBuffers, 1)
 static int UwacWindowShmAllocBuffers(UwacWindow* w, int64_t nbuffers, int64_t allocSize,
                                      uint32_t width, uint32_t height, enum wl_shm_format format);
 
