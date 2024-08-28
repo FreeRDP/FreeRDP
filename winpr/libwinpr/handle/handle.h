@@ -143,7 +143,7 @@ static INLINE void WINPR_HANDLE_SET_TYPE_AND_MODE(void* _handle, ULONG _type, UL
 
 static INLINE BOOL winpr_Handle_GetInfo(HANDLE handle, ULONG* pType, WINPR_HANDLE** pObject)
 {
-	WINPR_HANDLE* wHandle;
+	WINPR_HANDLE* wHandle = NULL;
 
 	if (handle == NULL)
 		return FALSE;
@@ -165,8 +165,8 @@ static INLINE BOOL winpr_Handle_GetInfo(HANDLE handle, ULONG* pType, WINPR_HANDL
 
 static INLINE int winpr_Handle_getFd(HANDLE handle)
 {
-	WINPR_HANDLE* hdl;
-	ULONG type;
+	WINPR_HANDLE* hdl = NULL;
+	ULONG type = 0;
 
 	if (!winpr_Handle_GetInfo(handle, &type, &hdl))
 		return -1;
@@ -179,8 +179,8 @@ static INLINE int winpr_Handle_getFd(HANDLE handle)
 
 static INLINE DWORD winpr_Handle_cleanup(HANDLE handle)
 {
-	WINPR_HANDLE* hdl;
-	ULONG type;
+	WINPR_HANDLE* hdl = NULL;
+	ULONG type = 0;
 
 	if (!winpr_Handle_GetInfo(handle, &type, &hdl))
 		return WAIT_FAILED;
