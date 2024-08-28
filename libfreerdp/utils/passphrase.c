@@ -127,7 +127,7 @@ static void replace_char(char* buffer, size_t buffer_len, const char* toreplace)
 	}
 }
 
-char* freerdp_passphrase_read(rdpContext* context, const char* prompt, char* buf, size_t bufsiz,
+char* freerdp_passphrase_read_tty(rdpContext* context, const char* prompt, char* buf, size_t bufsiz,
                               int from_stdin)
 {
 	BOOL terminal_needs_reset = FALSE;
@@ -211,6 +211,44 @@ error:
 	errno = saved_errno;
 	return NULL;
 }
+}
+
+
+char* freerdp_passphrase_read_askpass(const char* prompt, char* buf, size_t bufsiz,
+                              char const *askpass_env)
+{
+	char command[4096] = { 0 };
+	FILE *askproc;
+	int status;
+
+	sprintf_s(command, sizeof(command), "%s 'FreeRDP authentication\n%s'",
+		  askpass_env, prompt);
+	askproc = popen(command, "r");
+	if (!askproc)
+		return NULL;
+	if (fgets(buf, bufsiz, askproc) != NULL)
+		buf[strcspn(buf, "\r\n")] = '\0';
+	else
+		buf = NULL;
+	status = pclose(askproc);
+	if (!WIFEXITED(status) || WEXITSTATUS(status) != 0)
+		buf = NULL;
+
+	return buf;
+}
+
+char* freerdp_passphrase_read(rdpContext* context, const char* prompt, char* buf, size_t bufsiz,
+                              int from_stdin)
+{
+	char const *askpass_env = getenv("FREERDP_ASKPASS");
+
+	if (!askpass_env)
+		askpass_env = getenv("SSH_ASKPASS");
+
+	if (askpass_env)
+		return freerdp_passphrase_read_askpass(prompt, buf, bufsiz, askpass_env);
+	else
+		return freerdp_passphrase_read_tty(context, prompt, buf, bufsiz, from_stdin);
 }
 
 int freerdp_interruptible_getc(rdpContext* context, FILE* f)
