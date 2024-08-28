@@ -1,6 +1,8 @@
 set(MODULE_NAME "TestNCrypt")
 set(MODULE_PREFIX "TEST_NCRYPT")
 
+disable_warnings_for_directory(${CMAKE_CURRENT_BINARY_DIR})
+
 set(${MODULE_PREFIX}_DRIVER ${MODULE_NAME}.c)
 
 set(${MODULE_PREFIX}_TESTS
@@ -22,7 +24,7 @@ foreach(test ${${MODULE_PREFIX}_TESTS})
 endforeach()
 
 target_link_libraries(${MODULE_NAME} winpr ${OPENSSL_LIBRARIES})
-if(WIN32) 
+if(WIN32)
 	target_link_libraries(${MODULE_NAME} ncrypt)
 endif()
 
