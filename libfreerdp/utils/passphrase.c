@@ -237,10 +237,7 @@ char* freerdp_passphrase_read_askpass(const char* prompt, char* buf, size_t bufs
 char* freerdp_passphrase_read(rdpContext* context, const char* prompt, char* buf, size_t bufsiz,
                               int from_stdin)
 {
-	char const* askpass_env = getenv("FREERDP_ASKPASS");
-
-	if (!askpass_env)
-		askpass_env = getenv("SSH_ASKPASS");
+	const char* askpass_env = getenv("FREERDP_ASKPASS");
 
 	if (askpass_env)
 		return freerdp_passphrase_read_askpass(prompt, buf, bufsiz, askpass_env);
