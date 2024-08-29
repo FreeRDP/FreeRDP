@@ -7,6 +7,7 @@
 #include <freerdp/gdi/bitmap.h>
 
 #include <winpr/crt.h>
+#include <winpr/crypto.h>
 
 #include "line.h"
 #include "brush.h"
@@ -324,6 +325,13 @@ fail:
 	return rc;
 }
 
+static BYTE prand(void)
+{
+	BYTE tmp = 0;
+	winpr_RAND(&tmp, sizeof(tmp));
+	return tmp;
+}
+
 static BOOL test_gdi_GetPixel(void)
 {
 	BOOL rc = TRUE;
@@ -360,7 +368,7 @@ static BOOL test_gdi_GetPixel(void)
 			{
 				UINT32 pixel = 0;
 				const UINT32 color =
-				    FreeRDPGetColor(hBitmap->format, rand(), rand(), rand(), rand());
+				    FreeRDPGetColor(hBitmap->format, prand(), prand(), prand(), prand());
 				FreeRDPWriteColor(&hBitmap->data[i * hBitmap->scanline + j * bpp], hBitmap->format,
 				                  color);
 				pixel = gdi_GetPixel(hdc, j, i);
@@ -412,7 +420,7 @@ static BOOL test_gdi_SetPixel(void)
 			{
 				UINT32 pixel = 0;
 				const UINT32 color =
-				    FreeRDPGetColor(hBitmap->format, rand(), rand(), rand(), rand());
+				    FreeRDPGetColor(hBitmap->format, prand(), prand(), prand(), prand());
 				gdi_SetPixel(hdc, j, i, color);
 				pixel = FreeRDPReadColor(&hBitmap->data[i * hBitmap->scanline + j * bpp],
 				                         hBitmap->format);

@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <winpr/crt.h>
+#include <winpr/crypto.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
 #include <winpr/interlocked.h>
@@ -15,6 +16,15 @@ static LONG* pTestThreadFunctionCalls = NULL;
 static LONG* pTestOnceFunctionCalls = NULL;
 static LONG* pInitOnceExecuteOnceCalls = NULL;
 
+static UINT32 prand(UINT32 max)
+{
+	UINT32 tmp = 0;
+	if (max <= 1)
+		return 1;
+	winpr_RAND(&tmp, sizeof(tmp));
+	return tmp % (max - 1) + 1;
+}
+
 static BOOL CALLBACK TestOnceFunction(PINIT_ONCE once, PVOID param, PVOID* context)
 {
 	LONG calls = InterlockedIncrement(pTestOnceFunctionCalls) - 1;
@@ -24,7 +34,7 @@ static BOOL CALLBACK TestOnceFunction(PINIT_ONCE once, PVOID param, PVOID* conte
 	WINPR_UNUSED(context);
 
 	/* simulate execution time */
-	Sleep(30 + rand() % 40);
+	Sleep(30 + prand(40));
 
 	if (calls < TEST_NUM_FAILURES)
 	{
