@@ -384,7 +384,7 @@ static char* guid_to_string(const BYTE* guid, char* str, size_t len)
 		return NULL;
 
 	for (size_t i = 0; i < GUID_SIZE && (len > 2 * i); i++)
-		sprintf_s(str + (2 * i), len - 2 * i, "%02" PRIX8 "", guid[i]);
+		(void)sprintf_s(str + (2 * i), len - 2 * i, "%02" PRIX8 "", guid[i]);
 
 	return str;
 }
@@ -1504,12 +1504,12 @@ static void tsmf_signal_handler(int s)
 
 	if (s == SIGINT)
 	{
-		signal(s, SIG_DFL);
+		(void)signal(s, SIG_DFL);
 		kill(getpid(), s);
 	}
 	else if (s == SIGUSR1)
 	{
-		signal(s, SIG_DFL);
+		(void)signal(s, SIG_DFL);
 	}
 }
 

@@ -161,8 +161,8 @@ static void settings_client_load_hkey_local_machine(rdpSettings* settings)
 			TCHAR numentries[64] = { 0 };
 			TCHAR persist[64] = { 0 };
 			BITMAP_CACHE_V2_CELL_INFO cache = { 0 };
-			_sntprintf(numentries, ARRAYSIZE(numentries), _T("Cell%uNumEntries"), x);
-			_sntprintf(persist, ARRAYSIZE(persist), _T("Cell%uPersistent"), x);
+			(void)_sntprintf(numentries, ARRAYSIZE(numentries), _T("Cell%uNumEntries"), x);
+			(void)_sntprintf(persist, ARRAYSIZE(persist), _T("Cell%uPersistent"), x);
 			if (!settings_reg_query_dword_val(hKey, numentries, &val) ||
 			    !settings_reg_query_bool_val(hKey, persist, &cache.persistent) ||
 			    !freerdp_settings_set_pointer_array(settings, FreeRDP_BitmapCacheV2CellInfo, x,
@@ -189,8 +189,8 @@ static void settings_client_load_hkey_local_machine(rdpSettings* settings)
 			GLYPH_CACHE_DEFINITION cache = { 0 };
 			TCHAR numentries[64] = { 0 };
 			TCHAR maxsize[64] = { 0 };
-			_sntprintf(numentries, ARRAYSIZE(numentries), _T("Cache%uNumEntries"), x);
-			_sntprintf(maxsize, ARRAYSIZE(maxsize), _T("Cache%uMaxCellSize"), x);
+			(void)_sntprintf(numentries, ARRAYSIZE(numentries), _T("Cache%uNumEntries"), x);
+			(void)_sntprintf(maxsize, ARRAYSIZE(maxsize), _T("Cache%uMaxCellSize"), x);
 
 			settings_reg_query_word_val(hKey, numentries, &cache.cacheEntries);
 			settings_reg_query_word_val(hKey, maxsize, &cache.cacheMaximumCellSize);
@@ -1274,7 +1274,7 @@ const char* freerdp_settings_glyph_level_string(UINT32 level, char* buffer, size
 			break;
 	}
 
-	_snprintf(buffer, size, "%s[0x%08" PRIx32 "]", str, level);
+	(void)_snprintf(buffer, size, "%s[0x%08" PRIx32 "]", str, level);
 	return buffer;
 }
 

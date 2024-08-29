@@ -138,7 +138,7 @@ static const char* location_version_str(UINT32 version, char* buffer, size_t siz
 			break;
 	}
 
-	_snprintf(buffer, size, "%s [0x%08" PRIx32 "]", str, version);
+	(void)_snprintf(buffer, size, "%s [0x%08" PRIx32 "]", str, version);
 	return buffer;
 }
 

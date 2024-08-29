@@ -12,8 +12,9 @@ static char* resize(char** buffer, size_t* size, size_t increment)
 	char* tmp = realloc(*buffer, nsize);
 	if (!tmp)
 	{
-		fprintf(stderr, "Could not reallocate string buffer from %" PRIuz " to %" PRIuz " bytes.\n",
-		        *size, nsize);
+		(void)fprintf(stderr,
+		              "Could not reallocate string buffer from %" PRIuz " to %" PRIuz " bytes.\n",
+		              *size, nsize);
 		free(*buffer);
 		return NULL;
 	}
@@ -113,24 +114,24 @@ int main(int argc, char* argv[])
 	size_t elements = sizeof(global_cmd_args) / sizeof(global_cmd_args[0]);
 	const char* fname = "freerdp-argument.1.xml";
 
-	fprintf(stdout, "Generating docbook file '%s'\n", fname);
+	(void)fprintf(stdout, "Generating docbook file '%s'\n", fname);
 	FILE* fp = fopen(fname, "w");
 	if (NULL == fp)
 	{
-		fprintf(stderr, "Could not open '%s' for writing.\n", fname);
+		(void)fprintf(stderr, "Could not open '%s' for writing.\n", fname);
 		return -1;
 	}
 
 	/* The tag used as header in the manpage */
-	fprintf(fp, "<refsect1>\n");
-	fprintf(fp, "\t<title>Options</title>\n");
-	fprintf(fp, "\t\t<variablelist>\n");
+	(void)fprintf(fp, "<refsect1>\n");
+	(void)fprintf(fp, "\t<title>Options</title>\n");
+	(void)fprintf(fp, "\t\t<variablelist>\n");
 
 	/* Iterate over argument struct and write data to docbook 4.5
 	 * compatible XML */
 	if (elements < 2)
 	{
-		fprintf(stderr, "The argument array 'args' is empty, writing an empty file.\n");
+		(void)fprintf(stderr, "The argument array 'args' is empty, writing an empty file.\n");
 		elements = 1;
 	}
 
@@ -141,31 +142,31 @@ int main(int argc, char* argv[])
 		char* alias = tr_esc_str(arg->Alias, FALSE);
 		char* format = tr_esc_str(arg->Format, TRUE);
 		char* text = tr_esc_str(arg->Text, FALSE);
-		fprintf(fp, "\t\t\t<varlistentry>\n");
+		(void)fprintf(fp, "\t\t\t<varlistentry>\n");
 
 		do
 		{
-			fprintf(fp, "\t\t\t\t<term><option>");
+			(void)fprintf(fp, "\t\t\t\t<term><option>");
 
 			if (arg->Flags == COMMAND_LINE_VALUE_BOOL)
-				fprintf(fp, "%s", arg->Default ? "-" : "+");
+				(void)fprintf(fp, "%s", arg->Default ? "-" : "+");
 			else
-				fprintf(fp, "/");
+				(void)fprintf(fp, "/");
 
-			fprintf(fp, "%s</option>", name);
+			(void)fprintf(fp, "%s</option>", name);
 
 			if (format)
 			{
 				if (arg->Flags == COMMAND_LINE_VALUE_OPTIONAL)
-					fprintf(fp, "[");
+					(void)fprintf(fp, "[");
 
-				fprintf(fp, ":%s", format);
+				(void)fprintf(fp, ":%s", format);
 
 				if (arg->Flags == COMMAND_LINE_VALUE_OPTIONAL)
-					fprintf(fp, "]");
+					(void)fprintf(fp, "]");
 			}
 
-			fprintf(fp, "</term>\n");
+			(void)fprintf(fp, "</term>\n");
 
 			if (alias == name)
 				break;
@@ -176,36 +177,36 @@ int main(int argc, char* argv[])
 
 		if (text)
 		{
-			fprintf(fp, "\t\t\t\t<listitem>\n");
-			fprintf(fp, "\t\t\t\t\t<para>");
+			(void)fprintf(fp, "\t\t\t\t<listitem>\n");
+			(void)fprintf(fp, "\t\t\t\t\t<para>");
 
 			if (text)
-				fprintf(fp, "%s", text);
+				(void)fprintf(fp, "%s", text);
 
 			if (arg->Flags & COMMAND_LINE_VALUE_BOOL &&
 			    (!arg->Default || arg->Default == BoolValueTrue))
-				fprintf(fp, " (default:%s)", arg->Default ? "on" : "off");
+				(void)fprintf(fp, " (default:%s)", arg->Default ? "on" : "off");
 			else if (arg->Default)
 			{
 				char* value = tr_esc_str(arg->Default, FALSE);
-				fprintf(fp, " (default:%s)", value);
+				(void)fprintf(fp, " (default:%s)", value);
 				free(value);
 			}
 
-			fprintf(fp, "</para>\n");
-			fprintf(fp, "\t\t\t\t</listitem>\n");
+			(void)fprintf(fp, "</para>\n");
+			(void)fprintf(fp, "\t\t\t\t</listitem>\n");
 		}
 
-		fprintf(fp, "\t\t\t</varlistentry>\n");
+		(void)fprintf(fp, "\t\t\t</varlistentry>\n");
 		free(name);
 		free(format);
 		free(text);
 	}
 
-	fprintf(fp, "\t\t</variablelist>\n");
-	fprintf(fp, "\t</refsect1>\n");
-	fclose(fp);
+	(void)fprintf(fp, "\t\t</variablelist>\n");
+	(void)fprintf(fp, "\t</refsect1>\n");
+	(void)fclose(fp);
 
-	fprintf(stdout, "successfully generated '%s'\n", fname);
+	(void)fprintf(stdout, "successfully generated '%s'\n", fname);
 	return 0;
 }

@@ -1028,7 +1028,7 @@ BOOL freerdp_client_parse_rdp_file_ex(rdpFile* file, const char* name, rdp_file_
 	if (file_size < 1)
 	{
 		WLog_ERR(TAG, "RDP file %s is empty", name);
-		fclose(fp);
+		(void)fclose(fp);
 		return FALSE;
 	}
 
@@ -1036,7 +1036,7 @@ BOOL freerdp_client_parse_rdp_file_ex(rdpFile* file, const char* name, rdp_file_
 
 	if (!buffer)
 	{
-		fclose(fp);
+		(void)fclose(fp);
 		return FALSE;
 	}
 
@@ -1048,7 +1048,7 @@ BOOL freerdp_client_parse_rdp_file_ex(rdpFile* file, const char* name, rdp_file_
 			read_size = (size_t)file_size;
 	}
 
-	fclose(fp);
+	(void)fclose(fp);
 
 	if (read_size < 1)
 	{
@@ -1390,7 +1390,7 @@ BOOL freerdp_client_write_rdp_file(const rdpFile* file, const char* name, BOOL u
 			if (!unicodestr)
 			{
 				free(buffer);
-				fclose(fp);
+				(void)fclose(fp);
 				return FALSE;
 			}
 
@@ -1400,7 +1400,7 @@ BOOL freerdp_client_write_rdp_file(const rdpFile* file, const char* name, BOOL u
 			{
 				free(buffer);
 				free(unicodestr);
-				fclose(fp);
+				(void)fclose(fp);
 				return FALSE;
 			}
 
@@ -1411,12 +1411,12 @@ BOOL freerdp_client_write_rdp_file(const rdpFile* file, const char* name, BOOL u
 			if (fwrite(buffer, 1, (size_t)size, fp) != (size_t)size)
 			{
 				free(buffer);
-				fclose(fp);
+				(void)fclose(fp);
 				return FALSE;
 			}
 		}
 
-		fflush(fp);
+		(void)fflush(fp);
 		status = fclose(fp);
 	}
 
@@ -1652,7 +1652,7 @@ static ADDIN_ARGV* rdp_file_to_args(const char* channel, const char* values)
 		if (!str)
 			goto fail;
 
-		_snprintf(str, len, "device:%s", val);
+		(void)_snprintf(str, len, "device:%s", val);
 		rc = freerdp_addin_argv_add_argument(args, str);
 		free(str);
 		if (!rc)

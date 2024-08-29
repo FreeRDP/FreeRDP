@@ -305,8 +305,8 @@ static BOOL xf_event_execute_action_script(xfContext* xfc, const XEvent* event)
 
 	char command[2048] = { 0 };
 	char arg[2048] = { 0 };
-	_snprintf(command, sizeof(command), "xevent %s", xeventName);
-	_snprintf(arg, sizeof(arg), "%lu", (unsigned long)xfc->window->handle);
+	(void)_snprintf(command, sizeof(command), "xevent %s", xeventName);
+	(void)_snprintf(arg, sizeof(arg), "%lu", (unsigned long)xfc->window->handle);
 	if (!run_action_script(xfc, command, arg, action_script_run, NULL))
 		return FALSE;
 	return TRUE;

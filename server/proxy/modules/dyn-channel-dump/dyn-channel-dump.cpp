@@ -95,7 +95,7 @@ class ChannelData
 	    : _base(base), _channels_to_dump(list), _session_id(sessionid)
 	{
 		char str[64] = {};
-		_snprintf(str, sizeof(str), "session-%016" PRIx64, _session_id);
+		(void)_snprintf(str, sizeof(str), "session-%016" PRIx64, _session_id);
 		_base /= str;
 	}
 
@@ -176,7 +176,7 @@ class ChannelData
 	{
 		auto name = idstr(channel, back);
 		char cstr[32] = {};
-		_snprintf(cstr, sizeof(cstr), "%016" PRIx64 "-", count);
+		(void)_snprintf(cstr, sizeof(cstr), "%016" PRIx64 "-", count);
 		auto path = _base / cstr;
 		path += name;
 		path += ".dump";

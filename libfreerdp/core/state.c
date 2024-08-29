@@ -74,7 +74,7 @@ const char* state_run_result_string(state_run_t status, char* buffer, size_t buf
 			break;
 	}
 
-	_snprintf(buffer, buffersize, "%s [%d]", name, status);
+	(void)_snprintf(buffer, buffersize, "%s [%d]", name, status);
 	return buffer;
 }
 

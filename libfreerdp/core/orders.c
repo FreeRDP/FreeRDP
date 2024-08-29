@@ -466,7 +466,7 @@ static const char* primary_order_string(UINT32 orderType)
 	if (orderType < ARRAYSIZE(orders))
 		fmt = orders[orderType];
 
-	sprintf_s(buffer, ARRAYSIZE(buffer), fmt, orderType);
+	(void)sprintf_s(buffer, ARRAYSIZE(buffer), fmt, orderType);
 	return buffer;
 }
 static const char* secondary_order_string(UINT32 orderType)
@@ -486,7 +486,7 @@ static const char* secondary_order_string(UINT32 orderType)
 	if (orderType < ARRAYSIZE(orders))
 		fmt = orders[orderType];
 
-	sprintf_s(buffer, ARRAYSIZE(buffer), fmt, orderType);
+	(void)sprintf_s(buffer, ARRAYSIZE(buffer), fmt, orderType);
 	return buffer;
 }
 static const char* altsec_order_string(BYTE orderType)
@@ -506,7 +506,7 @@ static const char* altsec_order_string(BYTE orderType)
 	if (orderType < ARRAYSIZE(orders))
 		fmt = orders[orderType];
 
-	sprintf_s(buffer, ARRAYSIZE(buffer), fmt, orderType);
+	(void)sprintf_s(buffer, ARRAYSIZE(buffer), fmt, orderType);
 	return buffer;
 }
 

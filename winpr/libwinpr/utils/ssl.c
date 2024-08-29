@@ -337,7 +337,7 @@ static BOOL CALLBACK winpr_openssl_initialize(PINIT_ONCE once, PVOID param, PVOI
 	}
 #endif
 
-	atexit(winpr_openssl_cleanup);
+	(void)atexit(winpr_openssl_cleanup);
 	g_winpr_openssl_initialized_by_winpr = TRUE;
 	return TRUE;
 }

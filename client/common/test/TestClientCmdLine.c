@@ -10,22 +10,22 @@ typedef BOOL (*validate_settings_pr)(rdpSettings* settings);
 
 #define printref() printf("%s:%d: in function %-40s:", __FILE__, __LINE__, __func__)
 
-#define TEST_ERROR(format, ...)                 \
-	do                                          \
-	{                                           \
-		fprintf(stderr, format, ##__VA_ARGS__); \
-		printref();                             \
-		printf(format, ##__VA_ARGS__);          \
-		fflush(stdout);                         \
+#define TEST_ERROR(format, ...)                       \
+	do                                                \
+	{                                                 \
+		(void)fprintf(stderr, format, ##__VA_ARGS__); \
+		printref();                                   \
+		(void)printf(format, ##__VA_ARGS__);          \
+		(void)fflush(stdout);                         \
 	} while (0)
 
-#define TEST_FAILURE(format, ...)      \
-	do                                 \
-	{                                  \
-		printref();                    \
-		printf(" FAILURE ");           \
-		printf(format, ##__VA_ARGS__); \
-		fflush(stdout);                \
+#define TEST_FAILURE(format, ...)            \
+	do                                       \
+	{                                        \
+		printref();                          \
+		(void)printf(" FAILURE ");           \
+		(void)printf(format, ##__VA_ARGS__); \
+		(void)fflush(stdout);                \
 	} while (0)
 
 static void print_test_title(int argc, char** argv)
@@ -223,7 +223,7 @@ static void check_modified_arguments(const test* test, char** command_line, int*
 			printref();
 			printf("Failure: overridden argument %d is %s but it should be %s\n", index,
 			       actual_argument, expected_argument);
-			fflush(stdout);
+			(void)fflush(stdout);
 			*rc = -1;
 		}
 	}

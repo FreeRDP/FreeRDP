@@ -167,7 +167,7 @@ static char* rdtk_font_load_descriptor_file(const char* filename, size_t* pSize)
 
 	if (fileSize.i64 < 1)
 	{
-		fclose(fp);
+		(void)fclose(fp);
 		return NULL;
 	}
 
@@ -175,7 +175,7 @@ static char* rdtk_font_load_descriptor_file(const char* filename, size_t* pSize)
 
 	if (!buffer)
 	{
-		fclose(fp);
+		(void)fclose(fp);
 		return NULL;
 	}
 
@@ -186,7 +186,7 @@ static char* rdtk_font_load_descriptor_file(const char* filename, size_t* pSize)
 			readSize = fileSize.s;
 	}
 
-	fclose(fp);
+	(void)fclose(fp);
 
 	if (readSize < 1)
 	{

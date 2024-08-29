@@ -168,7 +168,7 @@ static char* gdi_convert_postfix_to_infix(const char* postfix)
 			cl = 1;
 			dl = al + bl + cl + 3;
 			d = malloc(dl + 1);
-			sprintf_s(d, dl, "(%s%s%s)", b ? b : "", c, a);
+			(void)sprintf_s(d, dl, "(%s%s%s)", b ? b : "", c, a);
 			Stack_Push(stack, d);
 			free(a);
 			free(b);

@@ -216,7 +216,7 @@ static const char* flags_to_string(UINT32 flags, const t_flag_mapping* map, size
 			winpr_str_append(cur->name, buffer, sizeof(buffer), "|");
 	}
 
-	sprintf_s(fields, ARRAYSIZE(fields), " [%04" PRIx32 "]", flags);
+	(void)sprintf_s(fields, ARRAYSIZE(fields), " [%04" PRIx32 "]", flags);
 	winpr_str_append(fields, buffer, sizeof(buffer), NULL);
 	return buffer;
 }
@@ -294,7 +294,7 @@ static BOOL rdg_write_chunked(BIO* bio, wStream* sPacket)
 	int status = 0;
 	wStream* sChunk = NULL;
 	char chunkSize[11];
-	sprintf_s(chunkSize, sizeof(chunkSize), "%" PRIXz "\r\n", Stream_Length(sPacket));
+	(void)sprintf_s(chunkSize, sizeof(chunkSize), "%" PRIXz "\r\n", Stream_Length(sPacket));
 	sChunk = Stream_New(NULL, strnlen(chunkSize, sizeof(chunkSize)) + Stream_Length(sPacket) + 2);
 
 	if (!sChunk)
@@ -1716,7 +1716,7 @@ static int rdg_write_chunked_data_packet(rdpRdg* rdg, const BYTE* buf, int isize
 	if (size < 1)
 		return 0;
 
-	sprintf_s(chunkSize, sizeof(chunkSize), "%" PRIxz "\r\n", packetSize);
+	(void)sprintf_s(chunkSize, sizeof(chunkSize), "%" PRIxz "\r\n", packetSize);
 	sChunk = Stream_New(NULL, strnlen(chunkSize, sizeof(chunkSize)) + packetSize + 2);
 
 	if (!sChunk)

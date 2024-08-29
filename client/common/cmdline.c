@@ -100,10 +100,10 @@ static BOOL freerdp_client_print_codepages(const char* arg)
 		char buffer[2048] = { 0 };
 
 		if (strnlen(page->subLanguageSymbol, ARRAYSIZE(page->subLanguageSymbol)) > 0)
-			_snprintf(buffer, sizeof(buffer), "[%s|%s]", page->primaryLanguageSymbol,
-			          page->subLanguageSymbol);
+			(void)_snprintf(buffer, sizeof(buffer), "[%s|%s]", page->primaryLanguageSymbol,
+			                page->subLanguageSymbol);
 		else
-			_snprintf(buffer, sizeof(buffer), "[%s]", page->primaryLanguageSymbol);
+			(void)_snprintf(buffer, sizeof(buffer), "[%s]", page->primaryLanguageSymbol);
 		printf("id=0x%04" PRIx16 ": [%-6s] %-60s %-36s %-48s\n", page->id, page->locale, buffer,
 		       page->primaryLanguage, page->subLanguage);
 	}
@@ -2857,7 +2857,7 @@ static int parse_kbd_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_
 					if (!tmp)
 						rc = COMMAND_LINE_ERROR_MEMORY;
 					else
-						_snprintf(tmp, tlen, "%s,%s", old, now);
+						(void)_snprintf(tmp, tlen, "%s,%s", old, now);
 					free(now);
 					now = tmp;
 				}

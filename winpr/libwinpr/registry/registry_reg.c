@@ -531,7 +531,7 @@ void reg_close(Reg* reg)
 	{
 		reg_unload(reg);
 		if (reg->fp)
-			fclose(reg->fp);
+			(void)fclose(reg->fp);
 		free(reg);
 	}
 }

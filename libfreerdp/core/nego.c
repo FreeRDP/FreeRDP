@@ -1282,7 +1282,7 @@ static const char* nego_rdp_neg_rsp_flags_str(UINT32 flags)
 {
 	static char buffer[1024] = { 0 };
 
-	_snprintf(buffer, ARRAYSIZE(buffer), "[0x%02" PRIx32 "] ", flags);
+	(void)_snprintf(buffer, ARRAYSIZE(buffer), "[0x%02" PRIx32 "] ", flags);
 	if (flags & EXTENDED_CLIENT_DATA_SUPPORTED)
 		winpr_str_append("EXTENDED_CLIENT_DATA_SUPPORTED", buffer, sizeof(buffer), "|");
 	if (flags & DYNVC_GFX_PROTOCOL_SUPPORTED)

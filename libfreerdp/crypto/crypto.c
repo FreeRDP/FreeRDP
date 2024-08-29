@@ -219,7 +219,7 @@ char* crypto_read_pem(const char* WINPR_RESTRICT filename, size_t* WINPR_RESTRIC
 
 	if (plength)
 		*plength = (size_t)strnlen(pem, size);
-	fclose(fp);
+	(void)fclose(fp);
 	return pem;
 
 fail:
@@ -229,7 +229,7 @@ fail:
 	          winpr_strerror(errno, buffer, sizeof(buffer)));
 }
 	if (fp)
-		fclose(fp);
+		(void)fclose(fp);
 	free(pem);
 	return NULL;
 }
@@ -249,7 +249,7 @@ BOOL crypto_write_pem(const char* WINPR_RESTRICT filename, const char* WINPR_RES
 	if (!fp)
 		goto fail;
 	rc = fwrite(pem, 1, size, fp);
-	fclose(fp);
+	(void)fclose(fp);
 fail:
 	if (rc == 0)
 	{

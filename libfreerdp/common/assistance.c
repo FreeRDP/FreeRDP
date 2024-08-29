@@ -791,8 +791,8 @@ char* freerdp_assistance_construct_expert_blob(const char* name, const char* pas
 	if (!ExpertBlob)
 		return NULL;
 
-	sprintf_s(ExpertBlob, size, "%" PRIdz ";NAME=%s%" PRIdz ";PASS=%s", nameLength, name,
-	          passLength, pass);
+	(void)sprintf_s(ExpertBlob, size, "%" PRIdz ";NAME=%s%" PRIdz ";PASS=%s", nameLength, name,
+	                passLength, pass);
 	return ExpertBlob;
 }
 
@@ -1243,7 +1243,7 @@ int freerdp_assistance_parse_file(rdpAssistanceFile* file, const char* name, con
 	if (fileSize.i64 < 1)
 	{
 		WLog_ERR(TAG, "Failed to read ASSISTANCE file %s ", name);
-		fclose(fp);
+		(void)fclose(fp);
 		return -1;
 	}
 
@@ -1251,7 +1251,7 @@ int freerdp_assistance_parse_file(rdpAssistanceFile* file, const char* name, con
 
 	if (!buffer)
 	{
-		fclose(fp);
+		(void)fclose(fp);
 		return -1;
 	}
 
@@ -1263,7 +1263,7 @@ int freerdp_assistance_parse_file(rdpAssistanceFile* file, const char* name, con
 			readSize = fileSize.s;
 	}
 
-	fclose(fp);
+	(void)fclose(fp);
 
 	if (readSize < 1)
 	{

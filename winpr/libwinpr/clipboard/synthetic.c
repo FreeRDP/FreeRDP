@@ -507,19 +507,19 @@ static void* clipboard_synthesize_html_format(wClipboard* clipboard, UINT32 form
 		if (!pDstData)
 			goto fail;
 
-		sprintf_s(pDstData, DstSize,
-		          "Version:0.9\r\n"
-		          "StartHTML:0000000000\r\n"
-		          "EndHTML:0000000000\r\n"
-		          "StartFragment:0000000000\r\n"
-		          "EndFragment:0000000000\r\n");
+		(void)sprintf_s(pDstData, DstSize,
+		                "Version:0.9\r\n"
+		                "StartHTML:0000000000\r\n"
+		                "EndHTML:0000000000\r\n"
+		                "StartFragment:0000000000\r\n"
+		                "EndFragment:0000000000\r\n");
 		body = strstr(pSrcData.cpc, "<body");
 
 		if (!body)
 			body = strstr(pSrcData.cpc, "<BODY");
 
 		/* StartHTML */
-		sprintf_s(num, sizeof(num), "%010" PRIuz "", strnlen(pDstData, DstSize));
+		(void)sprintf_s(num, sizeof(num), "%010" PRIuz "", strnlen(pDstData, DstSize));
 		CopyMemory(&pDstData[23], num, 10);
 
 		if (!body)
@@ -532,14 +532,14 @@ static void* clipboard_synthesize_html_format(wClipboard* clipboard, UINT32 form
 			goto fail;
 
 		/* StartFragment */
-		sprintf_s(num, sizeof(num), "%010" PRIuz "", strnlen(pDstData, SrcSize + 200));
+		(void)sprintf_s(num, sizeof(num), "%010" PRIuz "", strnlen(pDstData, SrcSize + 200));
 		CopyMemory(&pDstData[69], num, 10);
 
 		if (!winpr_str_append(pSrcData.cpc, pDstData, DstSize, NULL))
 			goto fail;
 
 		/* EndFragment */
-		sprintf_s(num, sizeof(num), "%010" PRIuz "", strnlen(pDstData, SrcSize + 200));
+		(void)sprintf_s(num, sizeof(num), "%010" PRIuz "", strnlen(pDstData, SrcSize + 200));
 		CopyMemory(&pDstData[93], num, 10);
 
 		if (!winpr_str_append("<!--EndFragment-->", pDstData, DstSize, NULL))
@@ -552,7 +552,7 @@ static void* clipboard_synthesize_html_format(wClipboard* clipboard, UINT32 form
 		}
 
 		/* EndHTML */
-		sprintf_s(num, sizeof(num), "%010" PRIuz "", strnlen(pDstData, DstSize));
+		(void)sprintf_s(num, sizeof(num), "%010" PRIuz "", strnlen(pDstData, DstSize));
 		CopyMemory(&pDstData[43], num, 10);
 		*pSize = (UINT32)strnlen(pDstData, DstSize) + 1;
 	}

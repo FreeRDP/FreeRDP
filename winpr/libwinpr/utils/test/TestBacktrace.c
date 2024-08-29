@@ -13,7 +13,7 @@ int TestBacktrace(int argc, char* argv[])
 
 	if (!stack)
 	{
-		fprintf(stderr, "winpr_backtrace failed!\n");
+		(void)fprintf(stderr, "winpr_backtrace failed!\n");
 		return -1;
 	}
 

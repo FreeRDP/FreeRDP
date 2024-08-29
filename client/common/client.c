@@ -458,7 +458,7 @@ static BOOL client_cli_authenticate_raw(freerdp* instance, rdp_auth_reason reaso
 	{
 		size_t username_size = 0;
 		printf("%s", prompt[0]);
-		fflush(stdout);
+		(void)fflush(stdout);
 
 		if (freerdp_interruptible_get_line(instance->context, username, &username_size, stdin) < 0)
 		{
@@ -479,7 +479,7 @@ static BOOL client_cli_authenticate_raw(freerdp* instance, rdp_auth_reason reaso
 	{
 		size_t domain_size = 0;
 		printf("%s", prompt[1]);
-		fflush(stdout);
+		(void)fflush(stdout);
 
 		if (freerdp_interruptible_get_line(instance->context, domain, &domain_size, stdin) < 0)
 		{
@@ -579,7 +579,7 @@ BOOL client_cli_choose_smartcard(freerdp* instance, SmartcardCertInfo** cert_lis
 
 		printf("\nChoose a smartcard to use for %s (0 - %" PRIu32 "): ",
 		       gateway ? "gateway authentication" : "logon", count - 1);
-		fflush(stdout);
+		(void)fflush(stdout);
 		if (!fgets(input, 10, stdin))
 		{
 			WLog_ERR(TAG, "could not read from stdin");
@@ -631,7 +631,7 @@ static DWORD client_cli_accept_certificate(freerdp* instance)
 	while (1)
 	{
 		printf("Do you trust the above certificate? (Y/T/N) ");
-		fflush(stdout);
+		(void)fflush(stdout);
 		answer = freerdp_interruptible_getc(instance->context, stdin);
 
 		if ((answer == EOF) || feof(stdin))
@@ -943,7 +943,7 @@ BOOL client_cli_present_gateway_message(freerdp* instance, UINT32 type, BOOL isD
 	while (isConsentMandatory)
 	{
 		printf("I understand and agree to the terms of this policy (Y/N) \n");
-		fflush(stdout);
+		(void)fflush(stdout);
 		answer = freerdp_interruptible_getc(instance->context, stdin);
 
 		if ((answer == EOF) || feof(stdin))

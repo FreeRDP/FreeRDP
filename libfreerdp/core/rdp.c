@@ -1566,7 +1566,7 @@ const char* pdu_type_to_str(UINT16 pduType, char* buffer, size_t length)
 	winpr_str_append(str, buffer, length, "");
 	{
 		char msg[32] = { 0 };
-		_snprintf(msg, sizeof(msg), "[0x%08" PRIx32 "]", pduType);
+		(void)_snprintf(msg, sizeof(msg), "[0x%08" PRIx32 "]", pduType);
 		winpr_str_append(msg, buffer, length, "");
 	}
 	return buffer;
@@ -2244,7 +2244,7 @@ rdpRdp* rdp_new(rdpContext* context)
 	rdp->log = WLog_Get(RDP_TAG);
 	WINPR_ASSERT(rdp->log);
 
-	_snprintf(rdp->log_context, sizeof(rdp->log_context), "%p", (void*)context);
+	(void)_snprintf(rdp->log_context, sizeof(rdp->log_context), "%p", (void*)context);
 	WLog_SetContext(rdp->log, NULL, rdp->log_context);
 
 	InitializeCriticalSection(&rdp->critical);
@@ -2581,7 +2581,7 @@ const char* rdp_finalize_flags_to_str(UINT32 flags, char* buffer, size_t size)
 		winpr_str_append("UNKNOWN_FLAG", buffer, size, "|");
 	if (flags == 0)
 		winpr_str_append("NO_FLAG_SET", buffer, size, "|");
-	_snprintf(number, sizeof(number), " [0x%08" PRIx32 "]", flags);
+	(void)_snprintf(number, sizeof(number), " [0x%08" PRIx32 "]", flags);
 	winpr_str_append(number, buffer, size, "");
 	return buffer;
 }
@@ -2687,7 +2687,7 @@ const char* rdp_security_flag_string(UINT32 securityFlags, char* buffer, size_t 
 	{
 		char msg[32] = { 0 };
 
-		_snprintf(msg, sizeof(msg), "[0x%08" PRIx32 "]", securityFlags);
+		(void)_snprintf(msg, sizeof(msg), "[0x%08" PRIx32 "]", securityFlags);
 		winpr_str_append(msg, buffer, size, "");
 	}
 	return buffer;

@@ -78,7 +78,7 @@ static const char* autodetect_header_type_string(UINT8 headerType, char* buffer,
 			break;
 	}
 
-	_snprintf(buffer, size, "%s [0x%08" PRIx8 "]", str, headerType);
+	(void)_snprintf(buffer, size, "%s [0x%08" PRIx8 "]", str, headerType);
 	return buffer;
 }
 
@@ -125,7 +125,7 @@ static const char* autodetect_request_type_to_string_buffer(UINT32 requestType, 
                                                             size_t size)
 {
 	const char* str = autodetect_request_type_to_string(requestType);
-	_snprintf(buffer, size, "%s [0x%08" PRIx32 "]", str, requestType);
+	(void)_snprintf(buffer, size, "%s [0x%08" PRIx32 "]", str, requestType);
 	return buffer;
 }
 

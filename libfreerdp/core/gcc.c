@@ -157,10 +157,10 @@ static char* rdp_early_server_caps_string(UINT32 flags, char* buffer, size_t siz
 
 	if (unknown != 0)
 	{
-		_snprintf(msg, sizeof(msg), "RNS_UD_SC_UNKNOWN[0x%08" PRIx32 "]", unknown);
+		(void)_snprintf(msg, sizeof(msg), "RNS_UD_SC_UNKNOWN[0x%08" PRIx32 "]", unknown);
 		winpr_str_append(msg, buffer, size, "|");
 	}
-	_snprintf(msg, sizeof(msg), "[0x%08" PRIx32 "]", flags);
+	(void)_snprintf(msg, sizeof(msg), "[0x%08" PRIx32 "]", flags);
 	winpr_str_append(msg, buffer, size, "|");
 	return buffer;
 }
@@ -204,10 +204,10 @@ static const char* rdp_early_client_caps_string(UINT32 flags, char* buffer, size
 
 	if (unknown != 0)
 	{
-		_snprintf(msg, sizeof(msg), "RNS_UD_CS_UNKNOWN[0x%08" PRIx32 "]", unknown);
+		(void)_snprintf(msg, sizeof(msg), "RNS_UD_CS_UNKNOWN[0x%08" PRIx32 "]", unknown);
 		winpr_str_append(msg, buffer, size, "|");
 	}
-	_snprintf(msg, sizeof(msg), "[0x%08" PRIx32 "]", flags);
+	(void)_snprintf(msg, sizeof(msg), "[0x%08" PRIx32 "]", flags);
 	winpr_str_append(msg, buffer, size, "|");
 	return buffer;
 }
@@ -744,49 +744,49 @@ char* gcc_block_type_string(UINT16 type, char* buffer, size_t size)
 	switch (type)
 	{
 		case CS_CORE:
-			_snprintf(buffer, size, "CS_CORE [0x%04" PRIx16 "]", type);
+			(void)_snprintf(buffer, size, "CS_CORE [0x%04" PRIx16 "]", type);
 			break;
 		case CS_SECURITY:
-			_snprintf(buffer, size, "CS_SECURITY [0x%04" PRIx16 "]", type);
+			(void)_snprintf(buffer, size, "CS_SECURITY [0x%04" PRIx16 "]", type);
 			break;
 		case CS_NET:
-			_snprintf(buffer, size, "CS_NET [0x%04" PRIx16 "]", type);
+			(void)_snprintf(buffer, size, "CS_NET [0x%04" PRIx16 "]", type);
 			break;
 		case CS_CLUSTER:
-			_snprintf(buffer, size, "CS_CLUSTER [0x%04" PRIx16 "]", type);
+			(void)_snprintf(buffer, size, "CS_CLUSTER [0x%04" PRIx16 "]", type);
 			break;
 		case CS_MONITOR:
-			_snprintf(buffer, size, "CS_MONITOR [0x%04" PRIx16 "]", type);
+			(void)_snprintf(buffer, size, "CS_MONITOR [0x%04" PRIx16 "]", type);
 			break;
 		case CS_MCS_MSGCHANNEL:
-			_snprintf(buffer, size, "CS_MONITOR [0x%04" PRIx16 "]", type);
+			(void)_snprintf(buffer, size, "CS_MONITOR [0x%04" PRIx16 "]", type);
 			break;
 		case CS_MONITOR_EX:
-			_snprintf(buffer, size, "CS_MONITOR_EX [0x%04" PRIx16 "]", type);
+			(void)_snprintf(buffer, size, "CS_MONITOR_EX [0x%04" PRIx16 "]", type);
 			break;
 		case CS_UNUSED1:
-			_snprintf(buffer, size, "CS_UNUSED1 [0x%04" PRIx16 "]", type);
+			(void)_snprintf(buffer, size, "CS_UNUSED1 [0x%04" PRIx16 "]", type);
 			break;
 		case CS_MULTITRANSPORT:
-			_snprintf(buffer, size, "CS_MONITOR_EX [0x%04" PRIx16 "]", type);
+			(void)_snprintf(buffer, size, "CS_MONITOR_EX [0x%04" PRIx16 "]", type);
 			break;
 		case SC_CORE:
-			_snprintf(buffer, size, "SC_CORE [0x%04" PRIx16 "]", type);
+			(void)_snprintf(buffer, size, "SC_CORE [0x%04" PRIx16 "]", type);
 			break;
 		case SC_SECURITY:
-			_snprintf(buffer, size, "SC_SECURITY [0x%04" PRIx16 "]", type);
+			(void)_snprintf(buffer, size, "SC_SECURITY [0x%04" PRIx16 "]", type);
 			break;
 		case SC_NET:
-			_snprintf(buffer, size, "SC_NET [0x%04" PRIx16 "]", type);
+			(void)_snprintf(buffer, size, "SC_NET [0x%04" PRIx16 "]", type);
 			break;
 		case SC_MCS_MSGCHANNEL:
-			_snprintf(buffer, size, "SC_MCS_MSGCHANNEL [0x%04" PRIx16 "]", type);
+			(void)_snprintf(buffer, size, "SC_MCS_MSGCHANNEL [0x%04" PRIx16 "]", type);
 			break;
 		case SC_MULTITRANSPORT:
-			_snprintf(buffer, size, "SC_MULTITRANSPORT [0x%04" PRIx16 "]", type);
+			(void)_snprintf(buffer, size, "SC_MULTITRANSPORT [0x%04" PRIx16 "]", type);
 			break;
 		default:
-			_snprintf(buffer, size, "UNKNOWN [0x%04" PRIx16 "]", type);
+			(void)_snprintf(buffer, size, "UNKNOWN [0x%04" PRIx16 "]", type);
 			break;
 	}
 	return buffer;

@@ -29,7 +29,7 @@ int TestPathShell(int argc, char* argv[])
 
 			if (!path)
 			{
-				fprintf(stderr, "GetKnownPath(%d) failed\n", id);
+				(void)fprintf(stderr, "GetKnownPath(%d) failed\n", id);
 				rc = -1;
 			}
 			else
@@ -43,7 +43,7 @@ int TestPathShell(int argc, char* argv[])
 
 			if (!path)
 			{
-				fprintf(stderr, "GetKnownSubPath(%d) failed\n", id);
+				(void)fprintf(stderr, "GetKnownSubPath(%d) failed\n", id);
 				rc = -1;
 			}
 			else

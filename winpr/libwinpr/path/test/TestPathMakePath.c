@@ -21,7 +21,7 @@ int TestPathMakePath(int argc, char* argv[])
 
 	if (!base)
 	{
-		fprintf(stderr, "Failed to get temporary directory!\n");
+		(void)fprintf(stderr, "Failed to get temporary directory!\n");
 		return -1;
 	}
 
@@ -30,13 +30,13 @@ int TestPathMakePath(int argc, char* argv[])
 
 	for (int x = 0; x < 5; x++)
 	{
-		sprintf_s(tmp, ARRAYSIZE(tmp), "%08X", rand());
+		(void)sprintf_s(tmp, ARRAYSIZE(tmp), "%08X", rand());
 		path = GetCombinedPath(base, tmp);
 		free(base);
 
 		if (!path)
 		{
-			fprintf(stderr, "GetCombinedPath failed!\n");
+			(void)fprintf(stderr, "GetCombinedPath failed!\n");
 			return -1;
 		}
 
@@ -48,7 +48,7 @@ int TestPathMakePath(int argc, char* argv[])
 
 	if (!success)
 	{
-		fprintf(stderr, "MakePath failed!\n");
+		(void)fprintf(stderr, "MakePath failed!\n");
 		free(path);
 		return -1;
 	}
@@ -57,7 +57,7 @@ int TestPathMakePath(int argc, char* argv[])
 
 	if (!success)
 	{
-		fprintf(stderr, "MakePath lied about success!\n");
+		(void)fprintf(stderr, "MakePath lied about success!\n");
 		free(path);
 		return -1;
 	}
@@ -66,7 +66,7 @@ int TestPathMakePath(int argc, char* argv[])
 	{
 		if (!winpr_RemoveDirectory(path))
 		{
-			fprintf(stderr, "winpr_RemoveDirectory %s failed!\n", path);
+			(void)fprintf(stderr, "winpr_RemoveDirectory %s failed!\n", path);
 			free(path);
 			return -1;
 		}

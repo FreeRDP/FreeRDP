@@ -582,7 +582,7 @@ disconnect:
 
 static BOOL wlf_client_global_init(void)
 {
-	setlocale(LC_ALL, "");
+	(void)setlocale(LC_ALL, "");
 
 	if (freerdp_handle_signals() != 0)
 		return FALSE;

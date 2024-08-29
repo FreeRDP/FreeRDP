@@ -44,7 +44,7 @@ static BOOL check(const wLogMessage* msg)
 
 	if (!rc)
 	{
-		fprintf(stderr, "Test failed!\n");
+		(void)fprintf(stderr, "Test failed!\n");
 		success = FALSE;
 	}
 	return rc;
@@ -58,19 +58,19 @@ static BOOL CallbackAppenderMessage(const wLogMessage* msg)
 
 static BOOL CallbackAppenderData(const wLogMessage* msg)
 {
-	fprintf(stdout, "%s\n", __func__);
+	(void)fprintf(stdout, "%s\n", __func__);
 	return TRUE;
 }
 
 static BOOL CallbackAppenderImage(const wLogMessage* msg)
 {
-	fprintf(stdout, "%s\n", __func__);
+	(void)fprintf(stdout, "%s\n", __func__);
 	return TRUE;
 }
 
 static BOOL CallbackAppenderPackage(const wLogMessage* msg)
 {
-	fprintf(stdout, "%s\n", __func__);
+	(void)fprintf(stdout, "%s\n", __func__);
 	return TRUE;
 }
 

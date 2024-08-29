@@ -132,7 +132,7 @@ static BOOL CALLBACK WLog_InitializeRoot(PINIT_ONCE InitOnce, PVOID Parameter, P
 
 		if (GetEnvironmentVariableA(appender, env, nSize) != nSize - 1)
 		{
-			fprintf(stderr, "%s environment variable modified in my back", appender);
+			(void)fprintf(stderr, "%s environment variable modified in my back", appender);
 			free(env);
 			goto fail;
 		}
@@ -166,7 +166,7 @@ static BOOL CALLBACK WLog_InitializeRoot(PINIT_ONCE InitOnce, PVOID Parameter, P
 	if (!WLog_ParseFilters(g_RootLog))
 		goto fail;
 
-	atexit(WLog_Uninit_);
+	(void)atexit(WLog_Uninit_);
 
 	return TRUE;
 fail:
@@ -868,7 +868,7 @@ wLog* WLog_New(LPCSTR name, wLog* rootLogger)
 
 			if (GetEnvironmentVariableA(level, env, nSize) != nSize - 1)
 			{
-				fprintf(stderr, "%s environment variable changed in my back !\n", level);
+				(void)fprintf(stderr, "%s environment variable changed in my back !\n", level);
 				free(env);
 				goto out_fail;
 			}

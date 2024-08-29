@@ -774,7 +774,7 @@ static const SYSTEM_LOCALE* get_locale_from_str(const char* name)
 		char buffer[LOCALE_LANGUAGE_LEN + LOCALE_COUNTRY_LEN + 2] = { 0 };
 		const SYSTEM_LOCALE* current = &SYSTEM_LOCALE_TABLE[i];
 
-		_snprintf(buffer, sizeof(buffer), "%s_%s", current->language, current->country);
+		(void)_snprintf(buffer, sizeof(buffer), "%s_%s", current->language, current->country);
 		/* full match, e.g. en_US */
 		if ((strcmp(name, buffer) == 0))
 			return current;

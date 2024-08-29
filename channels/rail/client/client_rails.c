@@ -82,8 +82,8 @@ UINT client_rail_server_start_cmd(RailClientContext* context)
 	    freerdp_settings_get_string(settings, FreeRDP_RemoteApplicationCmdLine);
 	if (RemoteApplicationFile && RemoteApplicationCmdLine)
 	{
-		_snprintf(argsAndFile, ARRAYSIZE(argsAndFile), "%s %s", RemoteApplicationCmdLine,
-		          RemoteApplicationFile);
+		(void)_snprintf(argsAndFile, ARRAYSIZE(argsAndFile), "%s %s", RemoteApplicationCmdLine,
+		                RemoteApplicationFile);
 		exec.RemoteApplicationArguments = argsAndFile;
 	}
 	else if (RemoteApplicationFile)

@@ -91,8 +91,8 @@ static int shadow_server_print_command_line_help(int argc, char** argv,
 				if (!str)
 					return -1;
 
-				sprintf_s(str, length + 1, "%s:%s", arg->Name, arg->Format);
-				printf("%-20s\n", str);
+				(void)sprintf_s(str, length + 1, "%s:%s", arg->Name, arg->Format);
+				(void)printf("%-20s\n", str);
 				free(str);
 			}
 			else
@@ -110,11 +110,12 @@ static int shadow_server_print_command_line_help(int argc, char** argv,
 			if (!str)
 				return -1;
 
-			sprintf_s(str, length + 1, "%s (default:%s)", arg->Name, arg->Default ? "on" : "off");
-			printf("    %s", arg->Default ? "-" : "+");
-			printf("%-20s\n", str);
+			(void)sprintf_s(str, length + 1, "%s (default:%s)", arg->Name,
+			                arg->Default ? "on" : "off");
+			(void)printf("    %s", arg->Default ? "-" : "+");
+			(void)printf("%-20s\n", str);
 			free(str);
-			printf("\t%s\n", arg->Text);
+			(void)printf("\t%s\n", arg->Text);
 		}
 	} while ((arg = CommandLineFindNextArgumentA(arg)) != NULL);
 
@@ -640,7 +641,7 @@ int shadow_server_start(rdpShadowServer* server)
 		return -1;
 
 #ifndef _WIN32
-	signal(SIGPIPE, SIG_IGN);
+	(void)signal(SIGPIPE, SIG_IGN);
 #endif
 	server->screen = shadow_screen_new(server);
 

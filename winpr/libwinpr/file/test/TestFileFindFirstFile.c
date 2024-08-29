@@ -18,7 +18,7 @@ static BOOL create_layout_files(size_t level, const char* BasePath, wArrayList* 
 		strncpy(FilePath, BasePath, ARRAYSIZE(FilePath));
 
 		CHAR name[64] = { 0 };
-		_snprintf(name, ARRAYSIZE(name), "%zd-TestFile%zd", level, x);
+		(void)_snprintf(name, ARRAYSIZE(name), "%zd-TestFile%zd", level, x);
 		NativePathCchAppendA(FilePath, PATHCCH_MAX_CCH, name);
 
 		HANDLE hdl =
@@ -55,7 +55,7 @@ static BOOL create_layout_directories(size_t level, size_t max_level, const char
 		PathCchConvertStyleA(CurFilePath, ARRAYSIZE(CurFilePath), PATH_STYLE_NATIVE);
 
 		CHAR name[64] = { 0 };
-		_snprintf(name, ARRAYSIZE(name), "%zd-TestPath%zd", level, x);
+		(void)_snprintf(name, ARRAYSIZE(name), "%zd-TestPath%zd", level, x);
 		NativePathCchAppendA(CurFilePath, PATHCCH_MAX_CCH, name);
 
 		if (!create_layout_directories(level + 1, max_level, CurFilePath, files))

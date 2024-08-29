@@ -331,12 +331,12 @@ int TestGdiClip(int argc, char* argv[])
 {
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
-	fprintf(stderr, "test_gdi_ClipCoords()\n");
+	(void)fprintf(stderr, "test_gdi_ClipCoords()\n");
 
 	if (test_gdi_ClipCoords() < 0)
 		return -1;
 
-	fprintf(stderr, "test_gdi_InvalidateRegion()\n");
+	(void)fprintf(stderr, "test_gdi_InvalidateRegion()\n");
 
 	if (test_gdi_InvalidateRegion() < 0)
 		return -1;

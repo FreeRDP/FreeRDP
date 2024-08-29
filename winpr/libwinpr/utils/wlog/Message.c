@@ -51,9 +51,9 @@ char* WLog_Message_GetOutputFileName(int id, const char* ext)
 
 	ProcessId = GetCurrentProcessId();
 	if (id >= 0)
-		sprintf_s(FileName, 256, "%" PRIu32 "-%d.%s", ProcessId, id, ext);
+		(void)sprintf_s(FileName, 256, "%" PRIu32 "-%d.%s", ProcessId, id, ext);
 	else
-		sprintf_s(FileName, 256, "%" PRIu32 ".%s", ProcessId, ext);
+		(void)sprintf_s(FileName, 256, "%" PRIu32 ".%s", ProcessId, ext);
 
 	FullFileName = GetCombinedPath(FilePath, FileName);
 
