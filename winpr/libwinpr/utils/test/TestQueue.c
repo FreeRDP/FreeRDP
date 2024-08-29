@@ -18,7 +18,7 @@ int TestQueue(int argc, char* argv[])
 
 	for (size_t index = 1; index <= 10; index++)
 	{
-		Queue_Enqueue(queue, (void*)(size_t)index);
+		Queue_Enqueue(queue, (void*)index);
 	}
 
 	count = Queue_Count(queue);

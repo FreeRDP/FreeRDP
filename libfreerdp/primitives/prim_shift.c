@@ -78,7 +78,7 @@ static INLINE pstatus_t general_lShiftC_16u(const UINT16* pSrc, UINT32 val, UINT
 		return -1;
 
 	while (len--)
-		*pDst++ = (INT16)((UINT16)*pSrc++ << val);
+		*pDst++ = (INT16)(*pSrc++ << val);
 
 	return PRIMITIVES_SUCCESS;
 }

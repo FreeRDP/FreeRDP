@@ -204,9 +204,9 @@ static HANDLE NamedPipeClientCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAcces
 	if (status != 0)
 	{
 		close(pNamedPipe->clientfd);
-		free((char*)pNamedPipe->name);
-		free((char*)pNamedPipe->lpFileName);
-		free((char*)pNamedPipe->lpFilePath);
+		free(pNamedPipe->name);
+		free(pNamedPipe->lpFileName);
+		free(pNamedPipe->lpFilePath);
 		free(pNamedPipe);
 		return INVALID_HANDLE_VALUE;
 	}
@@ -282,7 +282,7 @@ char* GetNamedPipeUnixDomainSocketFilePathA(LPCSTR lpName)
 	char* lpFilePath = NULL;
 	lpPipePath = GetNamedPipeUnixDomainSocketBaseFilePathA();
 	lpFileName = GetNamedPipeNameWithoutPrefixA(lpName);
-	lpFilePath = GetCombinedPath(lpPipePath, (char*)lpFileName);
+	lpFilePath = GetCombinedPath(lpPipePath, lpFileName);
 	free(lpPipePath);
 	free(lpFileName);
 	return lpFilePath;

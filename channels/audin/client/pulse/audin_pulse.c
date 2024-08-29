@@ -455,7 +455,7 @@ static UINT audin_pulse_parse_addin_args(AudinPulseDevice* device, const ADDIN_A
 	int status = 0;
 	DWORD flags = 0;
 	const COMMAND_LINE_ARGUMENT_A* arg = NULL;
-	AudinPulseDevice* pulse = (AudinPulseDevice*)device;
+	AudinPulseDevice* pulse = device;
 	COMMAND_LINE_ARGUMENT_A audin_pulse_args[] = { { "dev", COMMAND_LINE_VALUE_REQUIRED, "<device>",
 		                                             NULL, NULL, -1, NULL, "audio device name" },
 		                                           { NULL, 0, NULL, NULL, NULL, -1, NULL, NULL } };

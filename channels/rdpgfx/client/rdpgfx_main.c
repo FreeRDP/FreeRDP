@@ -80,7 +80,7 @@ static void evict_cache_slots(RdpgfxClientContext* context, UINT16 MaxCacheSlots
 		if (CacheSlots[index])
 		{
 			RDPGFX_EVICT_CACHE_ENTRY_PDU pdu = { 0 };
-			pdu.cacheSlot = (UINT16)index + 1;
+			pdu.cacheSlot = index + 1;
 
 			if (context && context->EvictCacheEntry)
 			{
@@ -743,7 +743,7 @@ static UINT rdpgfx_save_persistent_cache(RDPGFX_PLUGIN* gfx)
 	{
 		if (gfx->CacheSlots[idx])
 		{
-			UINT16 cacheSlot = (UINT16)idx;
+			UINT16 cacheSlot = idx;
 
 			if (context->ExportCacheEntry(context, cacheSlot, &cacheEntry) != CHANNEL_RC_OK)
 				continue;

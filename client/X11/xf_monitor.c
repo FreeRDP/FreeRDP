@@ -391,7 +391,7 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 		{
 			MONITOR_ATTRIBUTES* attrs = NULL;
 
-			if (!xf_is_monitor_id_active(xfc, (UINT32)i))
+			if (!xf_is_monitor_id_active(xfc, i))
 				continue;
 
 			if (!vscreen->monitors)
@@ -437,7 +437,7 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 
 #endif
 
-			if ((UINT32)i == nr)
+			if (i == nr)
 			{
 				monitor->is_primary = TRUE;
 				if (!freerdp_settings_set_uint32(settings, FreeRDP_MonitorLocalShiftX, monitor->x))

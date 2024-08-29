@@ -1087,7 +1087,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_EncryptMessage(PCtxtHandle phContext, ULON
 	{
 		Data_Write_UINT32(&value, SeqNo);
 		winpr_HMAC_Update(hmac, (void*)&value, 4);
-		winpr_HMAC_Update(hmac, (void*)data, length);
+		winpr_HMAC_Update(hmac, data, length);
 		winpr_HMAC_Final(hmac, digest, WINPR_MD5_DIGEST_LENGTH);
 		winpr_HMAC_Free(hmac);
 	}
@@ -1186,7 +1186,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_DecryptMessage(PCtxtHandle phContext, PSec
 	{
 		Data_Write_UINT32(&value, SeqNo);
 		winpr_HMAC_Update(hmac, (void*)&value, 4);
-		winpr_HMAC_Update(hmac, (void*)data_buffer->pvBuffer, data_buffer->cbBuffer);
+		winpr_HMAC_Update(hmac, data_buffer->pvBuffer, data_buffer->cbBuffer);
 		winpr_HMAC_Final(hmac, digest, WINPR_MD5_DIGEST_LENGTH);
 		winpr_HMAC_Free(hmac);
 	}

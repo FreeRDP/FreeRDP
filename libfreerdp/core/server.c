@@ -440,8 +440,8 @@ static BOOL WTSProcessChannelData(rdpPeerChannel* channel, UINT16 channelId, con
                                   size_t s, UINT32 flags, size_t t)
 {
 	BOOL ret = TRUE;
-	const size_t size = (size_t)s;
-	const size_t totalSize = (size_t)t;
+	const size_t size = s;
+	const size_t totalSize = t;
 
 	WINPR_ASSERT(channel);
 	WINPR_ASSERT(channel->vcm);

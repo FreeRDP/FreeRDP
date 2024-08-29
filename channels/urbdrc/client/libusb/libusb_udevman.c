@@ -152,7 +152,7 @@ static size_t udevman_register_udevice(IUDEVMAN* idevman, BYTE bus_number, BYTE 
 		return 0;
 
 	urbdrc = (URBDRC_PLUGIN*)idevman->plugin;
-	pdev = (IUDEVICE*)udevman_get_udevice_by_addr(idevman, bus_number, dev_number);
+	pdev = udevman_get_udevice_by_addr(idevman, bus_number, dev_number);
 
 	if (pdev != NULL)
 		return 0;

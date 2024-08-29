@@ -214,9 +214,9 @@ sse2_yCbCrToRGB_16s8u_P3AC4R_BGRX(const INT16* const WINPR_RESTRICT pSrc[3], UIN
 	const __m128i g_cr = _mm_set1_epi16(-11698); /* -0.714 << 14 */
 	const __m128i b_cb = _mm_set1_epi16(28999);  /*  1.770 << 14 */
 	const __m128i c4096 = _mm_set1_epi16(4096);
-	const INT16* y_buf = (const INT16*)pSrc[0];
-	const INT16* cb_buf = (const INT16*)pSrc[1];
-	const INT16* cr_buf = (const INT16*)pSrc[2];
+	const INT16* y_buf = pSrc[0];
+	const INT16* cb_buf = pSrc[1];
+	const INT16* cr_buf = pSrc[2];
 	const UINT32 pad = roi->width % 16;
 	const UINT32 step = sizeof(__m128i) / sizeof(INT16);
 	const UINT32 imax = (roi->width - pad) * sizeof(INT16) / sizeof(__m128i);
@@ -412,9 +412,9 @@ sse2_yCbCrToRGB_16s8u_P3AC4R_RGBX(const INT16* const WINPR_RESTRICT pSrc[3], UIN
 	const __m128i g_cr = _mm_set1_epi16(-11698); /* -0.714 << 14 */
 	const __m128i b_cb = _mm_set1_epi16(28999);  /*  1.770 << 14 */
 	const __m128i c4096 = _mm_set1_epi16(4096);
-	const INT16* y_buf = (const INT16*)pSrc[0];
-	const INT16* cb_buf = (const INT16*)pSrc[1];
-	const INT16* cr_buf = (const INT16*)pSrc[2];
+	const INT16* y_buf = pSrc[0];
+	const INT16* cb_buf = pSrc[1];
+	const INT16* cr_buf = pSrc[2];
 	const UINT32 pad = roi->width % 16;
 	const UINT32 step = sizeof(__m128i) / sizeof(INT16);
 	const UINT32 imax = (roi->width - pad) * sizeof(INT16) / sizeof(__m128i);
@@ -779,7 +779,7 @@ static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_BGRX(
 	BYTE* out = NULL;
 	UINT32 srcbump = 0;
 	UINT32 dstbump = 0;
-	out = (BYTE*)pDst;
+	out = pDst;
 	srcbump = (srcStep - (roi->width * sizeof(UINT16))) / sizeof(UINT16);
 	dstbump = (dstStep - (roi->width * sizeof(UINT32)));
 
@@ -890,7 +890,7 @@ static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_RGBX(
 	BYTE* out = NULL;
 	UINT32 srcbump = 0;
 	UINT32 dstbump = 0;
-	out = (BYTE*)pDst;
+	out = pDst;
 	srcbump = (srcStep - (roi->width * sizeof(UINT16))) / sizeof(UINT16);
 	dstbump = (dstStep - (roi->width * sizeof(UINT32)));
 
@@ -1001,7 +1001,7 @@ static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_XBGR(
 	BYTE* out = NULL;
 	UINT32 srcbump = 0;
 	UINT32 dstbump = 0;
-	out = (BYTE*)pDst;
+	out = pDst;
 	srcbump = (srcStep - (roi->width * sizeof(UINT16))) / sizeof(UINT16);
 	dstbump = (dstStep - (roi->width * sizeof(UINT32)));
 
@@ -1112,7 +1112,7 @@ static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_XRGB(
 	BYTE* out = NULL;
 	UINT32 srcbump = 0;
 	UINT32 dstbump = 0;
-	out = (BYTE*)pDst;
+	out = pDst;
 	srcbump = (srcStep - (roi->width * sizeof(UINT16))) / sizeof(UINT16);
 	dstbump = (dstStep - (roi->width * sizeof(UINT32)));
 

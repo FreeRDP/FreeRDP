@@ -1371,7 +1371,7 @@ BOOL freerdp_client_write_rdp_file(const rdpFile* file, const char* name, BOOL u
 		return FALSE;
 	buffer = (char*)calloc((size_t)(size + 1), sizeof(char));
 
-	if (freerdp_client_write_rdp_file_buffer(file, buffer, (size_t)size + 1) != size)
+	if (freerdp_client_write_rdp_file_buffer(file, buffer, size + 1) != size)
 	{
 		WLog_ERR(TAG, "freerdp_client_write_rdp_file: error writing to output buffer");
 		free(buffer);
@@ -1408,7 +1408,7 @@ BOOL freerdp_client_write_rdp_file(const rdpFile* file, const char* name, BOOL u
 		}
 		else
 		{
-			if (fwrite(buffer, 1, (size_t)size, fp) != (size_t)size)
+			if (fwrite(buffer, 1, size, fp) != size)
 			{
 				free(buffer);
 				(void)fclose(fp);

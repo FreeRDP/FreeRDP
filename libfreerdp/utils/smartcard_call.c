@@ -1492,7 +1492,7 @@ static LONG smartcard_LocateCardsByATRA_Call(scard_call_context* smartcard, wStr
 
 	for (UINT32 i = 0; i < call->cReaders; i++)
 	{
-		states[i].szReader = (LPSTR)call->rgReaderStates[i].szReader;
+		states[i].szReader = call->rgReaderStates[i].szReader;
 		states[i].dwCurrentState = call->rgReaderStates[i].dwCurrentState;
 		states[i].dwEventState = call->rgReaderStates[i].dwEventState;
 		states[i].cbAtr = call->rgReaderStates[i].cbAtr;

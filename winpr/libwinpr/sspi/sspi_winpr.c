@@ -993,8 +993,7 @@ static const SecurityFunctionTableA* sspi_GetSecurityFunctionTableAByNameA(const
 	{
 		if (strcmp(Name, SecurityFunctionTableA_NAME_LIST[index].Name) == 0)
 		{
-			return (const SecurityFunctionTableA*)SecurityFunctionTableA_NAME_LIST[index]
-			    .SecurityFunctionTable;
+			return SecurityFunctionTableA_NAME_LIST[index].SecurityFunctionTable;
 		}
 	}
 
@@ -1009,8 +1008,7 @@ static const SecurityFunctionTableW* sspi_GetSecurityFunctionTableWByNameW(const
 	{
 		if (_wcscmp(Name, SecurityFunctionTableW_NAME_LIST[index].Name) == 0)
 		{
-			return (const SecurityFunctionTableW*)SecurityFunctionTableW_NAME_LIST[index]
-			    .SecurityFunctionTable;
+			return SecurityFunctionTableW_NAME_LIST[index].SecurityFunctionTable;
 		}
 	}
 

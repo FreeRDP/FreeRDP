@@ -382,7 +382,7 @@ static BOOL input_send_fastpath_keyboard_event(rdpInput* input, UINT16 flags, UI
 		return FALSE;
 
 	WINPR_ASSERT(code <= UINT8_MAX);
-	Stream_Write_UINT8(s, (UINT8)code); /* keyCode (1 byte) */
+	Stream_Write_UINT8(s, code); /* keyCode (1 byte) */
 	return fastpath_send_input_pdu(rdp->fastpath, s);
 }
 

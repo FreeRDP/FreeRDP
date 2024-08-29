@@ -1638,8 +1638,8 @@ RFX_MESSAGE* rfx_encode_message(RFX_CONTEXT* WINPR_RESTRICT context,
                                 const RFX_RECT* WINPR_RESTRICT rects, size_t numRects,
                                 const BYTE* WINPR_RESTRICT data, UINT32 w, UINT32 h, size_t s)
 {
-	const UINT32 width = (UINT32)w;
-	const UINT32 height = (UINT32)h;
+	const UINT32 width = w;
+	const UINT32 height = h;
 	const UINT32 scanline = (UINT32)s;
 	RFX_MESSAGE* message = NULL;
 	PTP_WORK* workObject = NULL;
@@ -1791,9 +1791,9 @@ RFX_MESSAGE* rfx_encode_message(RFX_CONTEXT* WINPR_RESTRICT context,
 				if (!(tile->YCbCrData = (BYTE*)BufferPool_Take(context->priv->BufferPool, -1)))
 					goto skip_encoding_loop;
 
-				tile->YData = (BYTE*)&(tile->YCbCrData[((8192 + 32) * 0) + 16]);
-				tile->CbData = (BYTE*)&(tile->YCbCrData[((8192 + 32) * 1) + 16]);
-				tile->CrData = (BYTE*)&(tile->YCbCrData[((8192 + 32) * 2) + 16]);
+				tile->YData = &(tile->YCbCrData[((8192 + 32) * 0) + 16]);
+				tile->CbData = &(tile->YCbCrData[((8192 + 32) * 1) + 16]);
+				tile->CrData = &(tile->YCbCrData[((8192 + 32) * 2) + 16]);
 
 				if (!rfx_ensure_tiles(message, 1))
 					goto skip_encoding_loop;

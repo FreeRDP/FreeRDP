@@ -1022,18 +1022,18 @@ progressive_decompress_tile_first(PROGRESSIVE_CONTEXT* WINPR_RESTRICT progressiv
 	progressive_rfx_quant_add(quantCr, quantProgCr, &shiftCr);
 	progressive_rfx_quant_lsub(&shiftCr, 1); /* -6 + 5 = -1 */
 
-	pSign[0] = (INT16*)((BYTE*)(&tile->sign[((8192 + 32) * 0) + 16])); /* Y/R buffer */
-	pSign[1] = (INT16*)((BYTE*)(&tile->sign[((8192 + 32) * 1) + 16])); /* Cb/G buffer */
-	pSign[2] = (INT16*)((BYTE*)(&tile->sign[((8192 + 32) * 2) + 16])); /* Cr/B buffer */
+	pSign[0] = (INT16*)((&tile->sign[((8192 + 32) * 0) + 16])); /* Y/R buffer */
+	pSign[1] = (INT16*)((&tile->sign[((8192 + 32) * 1) + 16])); /* Cb/G buffer */
+	pSign[2] = (INT16*)((&tile->sign[((8192 + 32) * 2) + 16])); /* Cr/B buffer */
 
-	pCurrent[0] = (INT16*)((BYTE*)(&tile->current[((8192 + 32) * 0) + 16])); /* Y/R buffer */
-	pCurrent[1] = (INT16*)((BYTE*)(&tile->current[((8192 + 32) * 1) + 16])); /* Cb/G buffer */
-	pCurrent[2] = (INT16*)((BYTE*)(&tile->current[((8192 + 32) * 2) + 16])); /* Cr/B buffer */
+	pCurrent[0] = (INT16*)((&tile->current[((8192 + 32) * 0) + 16])); /* Y/R buffer */
+	pCurrent[1] = (INT16*)((&tile->current[((8192 + 32) * 1) + 16])); /* Cb/G buffer */
+	pCurrent[2] = (INT16*)((&tile->current[((8192 + 32) * 2) + 16])); /* Cr/B buffer */
 
 	pBuffer = (BYTE*)BufferPool_Take(progressive->bufferPool, -1);
-	pSrcDst[0] = (INT16*)((BYTE*)(&pBuffer[((8192 + 32) * 0) + 16])); /* Y/R buffer */
-	pSrcDst[1] = (INT16*)((BYTE*)(&pBuffer[((8192 + 32) * 1) + 16])); /* Cb/G buffer */
-	pSrcDst[2] = (INT16*)((BYTE*)(&pBuffer[((8192 + 32) * 2) + 16])); /* Cr/B buffer */
+	pSrcDst[0] = (INT16*)((&pBuffer[((8192 + 32) * 0) + 16])); /* Y/R buffer */
+	pSrcDst[1] = (INT16*)((&pBuffer[((8192 + 32) * 1) + 16])); /* Cb/G buffer */
+	pSrcDst[2] = (INT16*)((&pBuffer[((8192 + 32) * 2) + 16])); /* Cr/B buffer */
 
 	rc = progressive_rfx_decode_component(progressive, &shiftY, tile->yData, tile->yLen, pSrcDst[0],
 	                                      pCurrent[0], pSign[0], diff, sub, extrapolate); /* Y */
@@ -1457,18 +1457,18 @@ progressive_decompress_tile_upgrade(PROGRESSIVE_CONTEXT* WINPR_RESTRICT progress
 	tile->cbProgQuant = *quantProgCb;
 	tile->crProgQuant = *quantProgCr;
 
-	pSign[0] = (INT16*)((BYTE*)(&tile->sign[((8192 + 32) * 0) + 16])); /* Y/R buffer */
-	pSign[1] = (INT16*)((BYTE*)(&tile->sign[((8192 + 32) * 1) + 16])); /* Cb/G buffer */
-	pSign[2] = (INT16*)((BYTE*)(&tile->sign[((8192 + 32) * 2) + 16])); /* Cr/B buffer */
+	pSign[0] = (INT16*)((&tile->sign[((8192 + 32) * 0) + 16])); /* Y/R buffer */
+	pSign[1] = (INT16*)((&tile->sign[((8192 + 32) * 1) + 16])); /* Cb/G buffer */
+	pSign[2] = (INT16*)((&tile->sign[((8192 + 32) * 2) + 16])); /* Cr/B buffer */
 
-	pCurrent[0] = (INT16*)((BYTE*)(&tile->current[((8192 + 32) * 0) + 16])); /* Y/R buffer */
-	pCurrent[1] = (INT16*)((BYTE*)(&tile->current[((8192 + 32) * 1) + 16])); /* Cb/G buffer */
-	pCurrent[2] = (INT16*)((BYTE*)(&tile->current[((8192 + 32) * 2) + 16])); /* Cr/B buffer */
+	pCurrent[0] = (INT16*)((&tile->current[((8192 + 32) * 0) + 16])); /* Y/R buffer */
+	pCurrent[1] = (INT16*)((&tile->current[((8192 + 32) * 1) + 16])); /* Cb/G buffer */
+	pCurrent[2] = (INT16*)((&tile->current[((8192 + 32) * 2) + 16])); /* Cr/B buffer */
 
 	pBuffer = (BYTE*)BufferPool_Take(progressive->bufferPool, -1);
-	pSrcDst[0] = (INT16*)((BYTE*)(&pBuffer[((8192 + 32) * 0) + 16])); /* Y/R buffer */
-	pSrcDst[1] = (INT16*)((BYTE*)(&pBuffer[((8192 + 32) * 1) + 16])); /* Cb/G buffer */
-	pSrcDst[2] = (INT16*)((BYTE*)(&pBuffer[((8192 + 32) * 2) + 16])); /* Cr/B buffer */
+	pSrcDst[0] = (INT16*)((&pBuffer[((8192 + 32) * 0) + 16])); /* Y/R buffer */
+	pSrcDst[1] = (INT16*)((&pBuffer[((8192 + 32) * 1) + 16])); /* Cb/G buffer */
+	pSrcDst[2] = (INT16*)((&pBuffer[((8192 + 32) * 2) + 16])); /* Cr/B buffer */
 
 	status = progressive_rfx_upgrade_component(progressive, &shiftY, quantProgY, &yNumBits,
 	                                           pSrcDst[0], pCurrent[0], pSign[0], tile->ySrlData,

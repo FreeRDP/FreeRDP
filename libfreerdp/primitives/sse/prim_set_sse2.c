@@ -41,7 +41,7 @@ static pstatus_t sse2_set_8u(BYTE val, BYTE* WINPR_RESTRICT pDst, UINT32 len)
 		return generic->set_8u(val, pDst, len);
 
 	byte = val;
-	dptr = (BYTE*)pDst;
+	dptr = pDst;
 
 	/* Seek 16-byte alignment. */
 	while ((ULONG_PTR)dptr & 0x0f)
@@ -116,7 +116,7 @@ static pstatus_t sse2_set_8u(BYTE val, BYTE* WINPR_RESTRICT pDst, UINT32 len)
 static pstatus_t sse2_set_32u(UINT32 val, UINT32* WINPR_RESTRICT pDst, UINT32 len)
 {
 	const primitives_t* prim = primitives_get_generic();
-	UINT32* dptr = (UINT32*)pDst;
+	UINT32* dptr = pDst;
 	__m128i xmm0;
 	size_t count = 0;
 

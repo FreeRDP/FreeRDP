@@ -55,15 +55,15 @@ static SSIZE_T crypto_rsa_common(const BYTE* input, size_t length, UINT32 key_le
 	if (!input || !modulus || !exponent || !output)
 		return -1;
 
-	if ((size_t)exponent_size > INT_MAX / 2)
+	if (exponent_size > INT_MAX / 2)
 		return -1;
 
 	if (key_length >= INT_MAX / 2 - exponent_size)
 		return -1;
 
 	bufferSize = 2ULL * key_length + exponent_size;
-	if ((size_t)length > bufferSize)
-		bufferSize = (size_t)length;
+	if (length > bufferSize)
+		bufferSize = length;
 
 	input_reverse = (BYTE*)calloc(bufferSize, 1);
 
@@ -218,7 +218,7 @@ char* crypto_read_pem(const char* WINPR_RESTRICT filename, size_t* WINPR_RESTRIC
 		goto fail;
 
 	if (plength)
-		*plength = (size_t)strnlen(pem, size);
+		*plength = strnlen(pem, size);
 	(void)fclose(fp);
 	return pem;
 
