@@ -1188,7 +1188,7 @@ static BOOL rdg_auth_init(rdpRdg* rdg, rdpTls* tls, TCHAR* authPkg)
 	if (!credssp_auth_init(rdg->auth, authPkg, tls->Bindings))
 		return FALSE;
 
-	bool doSCLogon = freerdp_settings_get_bool(settings, FreeRDP_SmartcardLogon);
+	BOOL doSCLogon = freerdp_settings_get_bool(settings, FreeRDP_SmartcardLogon);
 	if (doSCLogon)
 	{
 		if (!smartcard_getCert(context, &rdg->smartcard, TRUE))
