@@ -46,7 +46,6 @@ SSE3_SCD_ROUTINE(sse2_rShiftC_16u, UINT16, generic->rShiftC_16u, _mm_srli_epi16,
 static pstatus_t sse2_lShiftC_16s_inplace(INT16* WINPR_RESTRICT pSrcDst, UINT32 val, UINT32 len)
 {
 	const INT32 shifts = 2;
-	int count;
 	if (val == 0)
 		return PRIMITIVES_SUCCESS;
 	if (val >= 16)
@@ -73,7 +72,7 @@ static pstatus_t sse2_lShiftC_16s_inplace(INT16* WINPR_RESTRICT pSrcDst, UINT32 
 	}
 
 	/* Use 8 128-bit SSE registers. */
-	count = len >> (8 - shifts);
+	int count = len >> (8 - shifts);
 	len -= count << (8 - shifts);
 
 	while (count--)
