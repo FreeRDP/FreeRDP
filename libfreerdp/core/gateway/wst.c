@@ -767,9 +767,9 @@ static BOOL wst_parse_url(rdpWst* wst, const char* url)
 			return FALSE;
 		strncpy(port, portStart, (pos - portStart));
 		port[pos - portStart] = '\0';
-		int _p = strtol(port, &portNumberEnd, 10);
-		if (portNumberEnd && *portNumberEnd == '\0' && _p > 0 && _p <= UINT16_MAX)
-			wst->gwport = _p;
+		long _p = strtol(port, &portNumberEnd, 10);
+		if (portNumberEnd && (*portNumberEnd == '\0') && (_p > 0) && (_p <= UINT16_MAX))
+			wst->gwport = (uint16_t)_p;
 		else
 			return FALSE;
 	}

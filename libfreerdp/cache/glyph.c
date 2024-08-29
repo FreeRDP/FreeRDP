@@ -72,7 +72,7 @@ static UINT32 update_glyph_offset(const BYTE* data, size_t length, UINT32 index,
 }
 
 static BOOL update_process_glyph(rdpContext* context, const BYTE* data, UINT32 cacheIndex, INT32* x,
-                                 INT32* y, UINT32 cacheId, UINT32 flAccel, BOOL fOpRedundant,
+                                 const INT32* y, UINT32 cacheId, UINT32 flAccel, BOOL fOpRedundant,
                                  const RDP_RECT* bound)
 {
 	INT32 sx = 0;

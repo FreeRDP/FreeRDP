@@ -895,7 +895,7 @@ static void peer_free(t_peer* peer)
 	peer->s = INVALID_SOCKET;
 }
 
-static int freerdp_tcp_connect_multi(rdpContext* context, char** hostnames, UINT32* ports,
+static int freerdp_tcp_connect_multi(rdpContext* context, char** hostnames, const UINT32* ports,
                                      UINT32 count, UINT16 port, UINT32 timeout)
 {
 	UINT32 sindex = count;

@@ -65,7 +65,7 @@ int TestBase64(int argc, char* argv[])
 		char* encoded = crypto_base64_encode((const BYTE*)encodeTests_base64[i].input,
 		                                     encodeTests_base64[i].len);
 
-		if (strcmp(encodeTests_base64[i].output, encoded))
+		if (strcmp(encodeTests_base64[i].output, encoded) != 0)
 		{
 			(void)fprintf(stderr, "ko, error for string %d\n", i);
 			return -1;
@@ -83,7 +83,7 @@ int TestBase64(int argc, char* argv[])
 		char* encoded = crypto_base64url_encode((const BYTE*)encodeTests_base64url[i].input,
 		                                        encodeTests_base64url[i].len);
 
-		if (strcmp(encodeTests_base64url[i].output, encoded))
+		if (strcmp(encodeTests_base64url[i].output, encoded) != 0)
 		{
 			(void)fprintf(stderr, "ko, error for string %d\n", i);
 			return -1;
@@ -102,7 +102,7 @@ int TestBase64(int argc, char* argv[])
 		                     &decoded, &outLen);
 
 		if (!decoded || (outLen != encodeTests_base64[i].len) ||
-		    memcmp(encodeTests_base64[i].input, decoded, outLen))
+		    memcmp(encodeTests_base64[i].input, decoded, outLen) != 0)
 		{
 			(void)fprintf(stderr, "ko, error for string %d\n", i);
 			return -1;
@@ -121,7 +121,7 @@ int TestBase64(int argc, char* argv[])
 		                        strlen(encodeTests_base64url[i].output), &decoded, &outLen);
 
 		if (!decoded || (outLen != encodeTests_base64url[i].len) ||
-		    memcmp(encodeTests_base64url[i].input, decoded, outLen))
+		    memcmp(encodeTests_base64url[i].input, decoded, outLen) != 0)
 		{
 			(void)fprintf(stderr, "ko, error for string %d\n", i);
 			return -1;

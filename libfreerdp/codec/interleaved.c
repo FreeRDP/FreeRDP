@@ -44,10 +44,10 @@
 #define UNROLL_MULTIPLE(_condition, _exp, _count) \
 	do                                            \
 	{                                             \
-		while ((_condition) >= _count)            \
+		while ((_condition) >= (_count))          \
 		{                                         \
 			UNROLL_BODY(_exp, _count);            \
-			(_condition) -= _count;               \
+			(_condition) -= (_count);             \
 		}                                         \
 	} while (FALSE)
 
@@ -428,14 +428,14 @@ static INLINE void write_pixel_16(BYTE* _buf, UINT16 _pix)
 	do                             \
 	{                              \
 		write_pixel_8(_buf, _pix); \
-		_buf += 1;                 \
+		(_buf) += 1;               \
 	} while (0)
 #define DESTREADPIXEL(_pix, _buf) _pix = (_buf)[0]
 #define SRCREADPIXEL(_pix, _buf) \
 	do                           \
 	{                            \
-		_pix = (_buf)[0];        \
-		_buf += 1;               \
+		(_pix) = (_buf)[0];      \
+		(_buf) += 1;             \
 	} while (0)
 
 #define WRITEFGBGIMAGE WriteFgBgImage8to8
@@ -463,14 +463,14 @@ static INLINE void write_pixel_16(BYTE* _buf, UINT16 _pix)
 	do                              \
 	{                               \
 		write_pixel_16(_buf, _pix); \
-		_buf += 2;                  \
+		(_buf) += 2;                \
 	} while (0)
 #define DESTREADPIXEL(_pix, _buf) _pix = ((UINT16*)(_buf))[0]
-#define SRCREADPIXEL(_pix, _buf)             \
-	do                                       \
-	{                                        \
-		_pix = (_buf)[0] | ((_buf)[1] << 8); \
-		_buf += 2;                           \
+#define SRCREADPIXEL(_pix, _buf)               \
+	do                                         \
+	{                                          \
+		(_pix) = (_buf)[0] | ((_buf)[1] << 8); \
+		(_buf) += 2;                           \
 	} while (0)
 #define WRITEFGBGIMAGE WriteFgBgImage16to16
 #define WRITEFIRSTLINEFGBGIMAGE WriteFirstLineFgBgImage16to16
@@ -497,14 +497,14 @@ static INLINE void write_pixel_16(BYTE* _buf, UINT16 _pix)
 	do                              \
 	{                               \
 		write_pixel_24(_buf, _pix); \
-		_buf += 3;                  \
+		(_buf) += 3;                \
 	} while (0)
 #define DESTREADPIXEL(_pix, _buf) _pix = (_buf)[0] | ((_buf)[1] << 8) | ((_buf)[2] << 16)
-#define SRCREADPIXEL(_pix, _buf)                                 \
-	do                                                           \
-	{                                                            \
-		_pix = (_buf)[0] | ((_buf)[1] << 8) | ((_buf)[2] << 16); \
-		_buf += 3;                                               \
+#define SRCREADPIXEL(_pix, _buf)                                   \
+	do                                                             \
+	{                                                              \
+		(_pix) = (_buf)[0] | ((_buf)[1] << 8) | ((_buf)[2] << 16); \
+		(_buf) += 3;                                               \
 	} while (0)
 
 #define WRITEFGBGIMAGE WriteFgBgImage24to24

@@ -270,7 +270,7 @@ BOOL gdi_Polyline(HGDI_DC hdc, GDI_POINT* lppt, UINT32 cPoints)
  * @param cCount count of entries in lpdwPolyPoints
  * @return nonzero on success, 0 otherwise
  */
-BOOL gdi_PolyPolyline(HGDI_DC hdc, GDI_POINT* lppt, UINT32* lpdwPolyPoints, DWORD cCount)
+BOOL gdi_PolyPolyline(HGDI_DC hdc, GDI_POINT* lppt, const UINT32* lpdwPolyPoints, DWORD cCount)
 {
 	DWORD j = 0;
 

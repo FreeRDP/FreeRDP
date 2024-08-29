@@ -40,7 +40,7 @@ FREERDP_LOCAL BOOL freerdp_settings_set_default_order_support(rdpSettings* setti
 FREERDP_LOCAL BOOL freerdp_settings_clone_keys(rdpSettings* dst, const rdpSettings* src);
 FREERDP_LOCAL void freerdp_settings_free_keys(rdpSettings* dst, BOOL cleanup);
 FREERDP_LOCAL BOOL freerdp_settings_set_string_(rdpSettings* settings,
-                                                FreeRDP_Settings_Keys_String id, char* val,
+                                                FreeRDP_Settings_Keys_String id, const char* val,
                                                 size_t len);
 FREERDP_LOCAL BOOL freerdp_settings_set_string_copy_(rdpSettings* settings,
                                                      FreeRDP_Settings_Keys_String id,

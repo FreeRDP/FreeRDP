@@ -214,7 +214,7 @@ static BOOL update_connectionstring2_wchar(rdpAssistanceFile* file, const WCHAR*
  * Use the first n bytes of the result of step 5 as the derived key.
  */
 
-static BOOL freerdp_assistance_crypt_derive_key_sha1(BYTE* hash, size_t hashLength, BYTE* key,
+static BOOL freerdp_assistance_crypt_derive_key_sha1(const BYTE* hash, size_t hashLength, BYTE* key,
                                                      size_t keyLength)
 {
 	BOOL rc = FALSE;

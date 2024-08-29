@@ -956,7 +956,7 @@ static INLINE BOOL update_write_brush(wStream* s, rdpBrush* brush, BYTE fieldFla
 
 	return TRUE;
 }
-static INLINE BOOL update_read_delta_rects(wStream* s, DELTA_RECT* rectangles, UINT32* nr)
+static INLINE BOOL update_read_delta_rects(wStream* s, DELTA_RECT* rectangles, const UINT32* nr)
 {
 	UINT32 number = *nr;
 	BYTE flags = 0;
@@ -2246,7 +2246,7 @@ fail:
 }
 
 size_t update_approximate_cache_bitmap_order(const CACHE_BITMAP_ORDER* cache_bitmap,
-                                             BOOL compressed, UINT16* flags)
+                                             BOOL compressed, const UINT16* flags)
 {
 	WINPR_ASSERT(cache_bitmap);
 	WINPR_UNUSED(compressed);
@@ -2392,7 +2392,7 @@ fail:
 }
 
 size_t update_approximate_cache_bitmap_v2_order(CACHE_BITMAP_V2_ORDER* cache_bitmap_v2,
-                                                BOOL compressed, UINT16* flags)
+                                                BOOL compressed, const UINT16* flags)
 {
 	WINPR_ASSERT(cache_bitmap_v2);
 	WINPR_UNUSED(flags);
@@ -2620,7 +2620,7 @@ fail:
 }
 
 size_t update_approximate_cache_color_table_order(const CACHE_COLOR_TABLE_ORDER* cache_color_table,
-                                                  UINT16* flags)
+                                                  const UINT16* flags)
 {
 	WINPR_UNUSED(cache_color_table);
 	WINPR_UNUSED(flags);
@@ -2717,7 +2717,8 @@ fail:
 	return NULL;
 }
 
-size_t update_approximate_cache_glyph_order(const CACHE_GLYPH_ORDER* cache_glyph, UINT16* flags)
+size_t update_approximate_cache_glyph_order(const CACHE_GLYPH_ORDER* cache_glyph,
+                                            const UINT16* flags)
 {
 	WINPR_ASSERT(cache_glyph);
 	WINPR_UNUSED(flags);
@@ -2822,7 +2823,7 @@ fail:
 }
 
 size_t update_approximate_cache_glyph_v2_order(const CACHE_GLYPH_V2_ORDER* cache_glyph_v2,
-                                               UINT16* flags)
+                                               const UINT16* flags)
 {
 	WINPR_ASSERT(cache_glyph_v2);
 	WINPR_UNUSED(flags);
@@ -2987,7 +2988,8 @@ fail:
 	return NULL;
 }
 
-size_t update_approximate_cache_brush_order(const CACHE_BRUSH_ORDER* cache_brush, UINT16* flags)
+size_t update_approximate_cache_brush_order(const CACHE_BRUSH_ORDER* cache_brush,
+                                            const UINT16* flags)
 {
 	WINPR_UNUSED(cache_brush);
 	WINPR_UNUSED(flags);

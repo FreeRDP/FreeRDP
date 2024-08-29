@@ -250,7 +250,9 @@ static BOOL rdp_redirection_read_base64_wchar(UINT32 flag, wStream* s, UINT32* p
 	redirection_free_data(pData, NULL);
 
 	utf8_len = strnlen(utf8, utf8_len);
-	*pData = calloc(utf8_len, sizeof(BYTE));
+	*pData = NULL;
+	if (utf8_len > 0)
+		*pData = calloc(utf8_len, sizeof(BYTE));
 	if (!*pData)
 		goto fail;
 
