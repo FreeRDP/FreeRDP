@@ -218,7 +218,7 @@ static DWORD WINAPI named_pipe_single_thread(LPVOID arg)
 	{
 		WINPR_NAMED_PIPE* p = (WINPR_NAMED_PIPE*)servers[i];
 
-		if (strcmp(lpszPipeNameSt, p->name))
+		if (strcmp(lpszPipeNameSt, p->name) != 0)
 		{
 			printf("%s: Pipe name mismatch for pipe #%d ([%s] instead of [%s])\n", __func__, i,
 			       p->name, lpszPipeNameSt);
@@ -317,7 +317,7 @@ static DWORD WINAPI named_pipe_single_thread(LPVOID arg)
 				goto out;
 			}
 
-			if (memcmp(sndbuf, rcvbuf, sizeof(sndbuf)))
+			if (memcmp(sndbuf, rcvbuf, sizeof(sndbuf)) != 0)
 			{
 				printf("%s: Error data read on server end of pipe #%d is corrupted\n", __func__, i);
 				goto out;
@@ -344,7 +344,7 @@ static DWORD WINAPI named_pipe_single_thread(LPVOID arg)
 				goto out;
 			}
 
-			if (memcmp(sndbuf, rcvbuf, sizeof(sndbuf)))
+			if (memcmp(sndbuf, rcvbuf, sizeof(sndbuf)) != 0)
 			{
 				printf("%s: Error data read on client end of pipe #%d is corrupted\n", __func__, i);
 				goto out;

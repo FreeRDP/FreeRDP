@@ -212,9 +212,9 @@ static const struct sdl_exit_code_map_t sdl_exit_code_map[] = {
 
 static const struct sdl_exit_code_map_t* sdl_map_entry_by_code(int exit_code)
 {
-	for (size_t x = 0; x < ARRAYSIZE(sdl_exit_code_map); x++)
+	for (const auto& x : sdl_exit_code_map)
 	{
-		const struct sdl_exit_code_map_t* cur = &sdl_exit_code_map[x];
+		const struct sdl_exit_code_map_t* cur = &x;
 		if (cur->code == exit_code)
 			return cur;
 	}
@@ -231,9 +231,9 @@ static void sdl_hide_connection_dialog(SdlContext* sdl)
 
 static const struct sdl_exit_code_map_t* sdl_map_entry_by_error(DWORD error)
 {
-	for (size_t x = 0; x < ARRAYSIZE(sdl_exit_code_map); x++)
+	for (const auto& x : sdl_exit_code_map)
 	{
-		const struct sdl_exit_code_map_t* cur = &sdl_exit_code_map[x];
+		const struct sdl_exit_code_map_t* cur = &x;
 		if (cur->error == error)
 			return cur;
 	}
@@ -1334,7 +1334,7 @@ terminate:
 /* Optional global initializer.
  * Here we just register a signal handler to print out stack traces
  * if available. */
-static BOOL sdl_client_global_init(void)
+static BOOL sdl_client_global_init()
 {
 #if defined(_WIN32)
 	WSADATA wsaData = { 0 };
@@ -1354,7 +1354,7 @@ static BOOL sdl_client_global_init(void)
 }
 
 /* Optional global tear down */
-static void sdl_client_global_uninit(void)
+static void sdl_client_global_uninit()
 {
 #if defined(_WIN32)
 	WSACleanup();

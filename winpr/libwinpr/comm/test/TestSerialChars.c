@@ -32,7 +32,8 @@
 static BOOL test_SerCxSys(HANDLE hComm)
 {
 	DCB dcb = { 0 };
-	UCHAR XonChar, XoffChar;
+	UCHAR XonChar = 0;
+	UCHAR XoffChar = 0;
 
 	struct termios currentTermios = { 0 };
 
@@ -130,9 +131,9 @@ static BOOL test_SerCx2Sys(HANDLE hComm)
 
 int TestSerialChars(int argc, char* argv[])
 {
-	struct stat statbuf;
-	BOOL result;
-	HANDLE hComm;
+	struct stat statbuf = { 0 };
+	BOOL result = 0;
+	HANDLE hComm = NULL;
 
 	if (stat("/dev/ttyS0", &statbuf) < 0)
 	{

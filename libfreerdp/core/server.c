@@ -1558,7 +1558,8 @@ BOOL WINAPI FreeRDP_WTSVirtualChannelWrite(HANDLE hChannelHandle, PCHAR Buffer, 
 
 		CopyMemory(buffer, Buffer, length);
 		totalWritten = Length;
-		ret = wts_queue_send_item(channel, buffer, length);
+		if (!wts_queue_send_item(channel, buffer, length))
+			goto fail;
 	}
 	else if (!channel->vcm->drdynvc_channel || (channel->vcm->drdynvc_state != DRDYNVC_STATE_READY))
 	{

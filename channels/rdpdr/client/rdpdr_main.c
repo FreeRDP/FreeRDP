@@ -223,7 +223,7 @@ static BOOL rdpdr_load_drive(rdpdrPlugin* rdpdr, const char* name, const char* p
 
 fail:
 	freerdp_device_free(drive.device);
-	return rc;
+	return rc == CHANNEL_RC_OK;
 }
 
 /**
@@ -834,9 +834,25 @@ static UINT handle_platform_mounts_bsd(wLog* log, hotplug_dev* dev_array, size_t
 
 #if defined(__LINUX__) || defined(__linux__)
 #include <mntent.h>
+static struct mntent* getmntent_x(FILE* f, struct mntent* buffer, char* pathbuffer,
+                                  size_t pathbuffersize)
+{
+#if defined(FREERDP_HAVE_GETMNTENT_R)
+	WINPR_ASSERT(pathbuffersize <= INT32_MAX);
+	return getmntent_r(f, buffer, pathbuffer, (int)pathbuffersize);
+#else
+	(void)buffer;
+	(void)pathbuffer;
+	(void)pathbuffersize;
+	return getmntent(f);
+#endif
+}
+
 static UINT handle_platform_mounts_linux(wLog* log, hotplug_dev* dev_array, size_t* size)
 {
 	FILE* f = NULL;
+	struct mntent mnt = { 0 };
+	char pathbuffer[PATH_MAX] = { 0 };
 	struct mntent* ent = NULL;
 	f = winpr_fopen("/proc/mounts", "r");
 	if (f == NULL)
@@ -844,7 +860,7 @@ static UINT handle_platform_mounts_linux(wLog* log, hotplug_dev* dev_array, size
 		WLog_Print(log, WLOG_ERROR, "fopen failed!");
 		return ERROR_OPEN_FAILED;
 	}
-	while ((ent = getmntent(f)) != NULL)
+	while ((ent = getmntent_x(f, &mnt, pathbuffer, sizeof(pathbuffer))) != NULL)
 	{
 		handle_mountpoint(dev_array, size, ent->mnt_dir);
 	}
@@ -2014,8 +2030,6 @@ static VOID VCAPITYPE rdpdr_virtual_channel_open_event_ex(LPVOID lpUserParam, DW
 	if (error && rdpdr && rdpdr->rdpcontext)
 		setChannelError(rdpdr->rdpcontext, error,
 		                "rdpdr_virtual_channel_open_event_ex reported an error");
-
-	return;
 }
 
 static DWORD WINAPI rdpdr_virtual_channel_client_thread(LPVOID arg)

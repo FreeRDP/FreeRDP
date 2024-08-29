@@ -128,7 +128,7 @@ static BOOL Test_GetComputerName(void)
 	}
 
 	/* compare the results */
-	if (strcmp(netbiosName1, netbiosName2))
+	if (strcmp(netbiosName1, netbiosName2) != 0)
 	{
 		(void)fprintf(stderr, "%s: (12) string compare mismatch\n", __func__);
 		return FALSE;
@@ -306,7 +306,7 @@ static BOOL Test_GetComputerNameEx_Format(COMPUTER_NAME_FORMAT format)
 	}
 
 	/* compare the results */
-	if (strcmp(computerName1, computerName2))
+	if (strcmp(computerName1, computerName2) != 0)
 	{
 		(void)fprintf(stderr, "%s: (12/%d) string compare mismatch\n", __func__, format);
 		return FALSE;

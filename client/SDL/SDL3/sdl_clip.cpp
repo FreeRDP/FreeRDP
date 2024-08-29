@@ -22,6 +22,7 @@
 #include <mutex>
 #include <iterator>
 #include <algorithm>
+#include <utility>
 
 #include <winpr/wlog.h>
 
@@ -57,7 +58,7 @@ static const char* type_FileGroupDescriptorW = "FileGroupDescriptorW";
 class ClipboardLockGuard
 {
   public:
-	ClipboardLockGuard(wClipboard* clipboard) : _clipboard(clipboard)
+	explicit ClipboardLockGuard(wClipboard* clipboard) : _clipboard(clipboard)
 	{
 		ClipboardLock(_clipboard);
 	}
@@ -155,7 +156,7 @@ bool sdlClip::handle_update()
 		clientFormats.push_back({ CF_UNICODETEXT, nullptr });
 	}
 	if (SDL_HasClipboardData(mime_html.c_str()))
-		clientFormatNames.push_back(type_HtmlFormat);
+		clientFormatNames.emplace_back(type_HtmlFormat);
 
 	for (auto& mime : mime_bitmap)
 	{
@@ -311,7 +312,7 @@ uint32_t sdlClip::serverIdForMime(const std::string& mime)
 	{
 		if (!format.formatName())
 			continue;
-		if (cmp.compare(format.formatName()) == 0)
+		if (cmp == format.formatName())
 			return format.formatId();
 	}
 
@@ -378,7 +379,7 @@ UINT sdlClip::ReceiveServerFormatList(CliprdrClientContext* context,
 	{
 		const CLIPRDR_FORMAT* format = &formatList->formats[i];
 
-		clipboard->_serverFormats.push_back({ format->formatId, format->formatName });
+		clipboard->_serverFormats.emplace_back(format->formatId, format->formatName);
 
 		if (format->formatName)
 		{
@@ -466,7 +467,7 @@ std::shared_ptr<BYTE> sdlClip::ReceiveFormatDataRequestHandle(
 	len = 0;
 	auto localFormatId = formatId = formatDataRequest->requestedFormatId;
 
-	ClipboardLockGuard(clipboard->_system);
+	ClipboardLockGuard give_me_a_name(clipboard->_system);
 	std::lock_guard<CriticalSection> lock(clipboard->_lock);
 
 	const UINT32 fileFormatId = ClipboardGetFormatId(clipboard->_system, type_FileGroupDescriptorW);
@@ -581,7 +582,7 @@ UINT sdlClip::ReceiveFormatDataResponse(CliprdrClientContext* context,
 	    cliprdr_file_context_get_context(static_cast<CliprdrFileContext*>(context->custom)));
 	WINPR_ASSERT(clipboard);
 
-	ClipboardLockGuard(clipboard->_system);
+	ClipboardLockGuard give_me_a_name(clipboard->_system);
 	std::lock_guard<CriticalSection> lock(clipboard->_lock);
 	if (clipboard->_request_queue.empty())
 		return ERROR_INTERNAL_ERROR;
@@ -615,7 +616,7 @@ UINT sdlClip::ReceiveFormatDataResponse(CliprdrClientContext* context,
 			auto name = clipboard->getServerFormat(request.format());
 			if (!name.empty())
 			{
-				if (name.compare(type_FileGroupDescriptorW) == 0)
+				if (name == type_FileGroupDescriptorW)
 				{
 					srcFormatId =
 					    ClipboardGetFormatId(clipboard->_system, type_FileGroupDescriptorW);
@@ -624,7 +625,7 @@ UINT sdlClip::ReceiveFormatDataResponse(CliprdrClientContext* context,
 					                                             clipboard->_system, data, size))
 						return ERROR_INTERNAL_ERROR;
 				}
-				else if (name.compare(type_HtmlFormat) == 0)
+				else if (name == type_HtmlFormat)
 				{
 					srcFormatId = ClipboardGetFormatId(clipboard->_system, type_HtmlFormat);
 				}
@@ -655,7 +656,7 @@ const void* sdlClip::ClipDataCb(void* userdata, const char* mime_type, size_t* s
 		mime_type = "text/plain";
 
 	{
-		ClipboardLockGuard(clip->_system);
+		ClipboardLockGuard give_me_a_name(clip->_system);
 		std::lock_guard<CriticalSection> lock(clip->_lock);
 		auto cache = clip->_cache_data.find(mime_type);
 		if (cache != clip->_cache_data.end())
@@ -676,7 +677,7 @@ const void* sdlClip::ClipDataCb(void* userdata, const char* mime_type, size_t* s
 			return nullptr;
 	}
 	{
-		ClipboardLockGuard(clip->_system);
+		ClipboardLockGuard give_me_a_name(clip->_system);
 		std::lock_guard<CriticalSection> lock(clip->_lock);
 		auto request = clip->_request_queue.front();
 		clip->_request_queue.pop();
@@ -698,7 +699,7 @@ void sdlClip::ClipCleanCb(void* userdata)
 {
 	auto clip = static_cast<sdlClip*>(userdata);
 	WINPR_ASSERT(clip);
-	ClipboardLockGuard(clip->_system);
+	ClipboardLockGuard give_me_a_name(clip->_system);
 	std::lock_guard<CriticalSection> lock(clip->_lock);
 	ClipboardEmpty(clip->_system);
 	clip->_cache_data.clear();
@@ -719,7 +720,7 @@ bool sdlClip::mime_is_text(const std::string& mime)
 {
 	for (size_t x = 0; x < ARRAYSIZE(mime_text); x++)
 	{
-		if (mime.compare(mime_text[x]) == 0)
+		if (mime == mime_text[x])
 			return true;
 	}
 
@@ -730,7 +731,7 @@ bool sdlClip::mime_is_image(const std::string& mime)
 {
 	for (size_t x = 0; x < ARRAYSIZE(mime_image); x++)
 	{
-		if (mime.compare(mime_image[x]) == 0)
+		if (mime == mime_image[x])
 			return true;
 	}
 
@@ -739,13 +740,10 @@ bool sdlClip::mime_is_image(const std::string& mime)
 
 bool sdlClip::mime_is_html(const std::string& mime)
 {
-	if (mime.compare(mime_html) == 0)
-		return true;
-
-	return false;
+	return mime.compare(mime_html) == 0;
 }
 
-ClipRequest::ClipRequest(UINT32 format, const std::string& mime) : _format(format), _mime(mime)
+ClipRequest::ClipRequest(UINT32 format, std::string mime) : _format(format), _mime(std::move(mime))
 {
 }
 

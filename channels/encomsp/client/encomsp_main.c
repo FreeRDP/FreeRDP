@@ -1031,8 +1031,6 @@ static VOID VCAPITYPE encomsp_virtual_channel_open_event_ex(LPVOID lpUserParam, 
 	if (error && encomsp && encomsp->rdpcontext)
 		setChannelError(encomsp->rdpcontext, error,
 		                "encomsp_virtual_channel_open_event reported an error");
-
-	return;
 }
 
 static DWORD WINAPI encomsp_virtual_channel_client_thread(LPVOID arg)

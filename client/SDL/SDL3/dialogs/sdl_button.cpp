@@ -19,6 +19,7 @@
  */
 
 #include <cassert>
+#include <utility>
 
 #include "sdl_button.hpp"
 
@@ -27,9 +28,8 @@ static const SDL_Color buttonhighlightcolor = { 0xcd, 0xca, 0x35, 0x60 };
 static const SDL_Color buttonmouseovercolor = { 0x66, 0xff, 0x66, 0x60 };
 static const SDL_Color buttonfontcolor = { 0xd1, 0xcf, 0xcd, 0xff };
 
-SdlButton::SdlButton(SDL_Renderer* renderer, const std::string& label, int id,
-                     const SDL_FRect& rect)
-    : SdlWidget(renderer, rect, false), _name(label), _id(id)
+SdlButton::SdlButton(SDL_Renderer* renderer, std::string label, int id, const SDL_FRect& rect)
+    : SdlWidget(renderer, rect, false), _name(std::move(label)), _id(id)
 {
 	assert(renderer);
 
@@ -37,7 +37,7 @@ SdlButton::SdlButton(SDL_Renderer* renderer, const std::string& label, int id,
 }
 
 SdlButton::SdlButton(SdlButton&& other) noexcept
-    : SdlWidget(std::move(other)), _name(std::move(other._name)), _id(std::move(other._id))
+    : SdlWidget(std::move(other)), _name(std::move(other._name)), _id(other._id)
 {
 }
 

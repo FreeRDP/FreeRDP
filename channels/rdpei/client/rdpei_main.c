@@ -544,6 +544,15 @@ static void rdpei_print_contact_flags(UINT32 contactFlags)
 		WLog_DBG(TAG, " RDPINPUT_CONTACT_FLAG_CANCELED");
 }
 
+static INT16 bounded(INT32 val)
+{
+	if (val < INT16_MIN)
+		return INT16_MIN;
+	if (val > INT16_MAX)
+		return INT16_MAX;
+	return (INT16)val;
+}
+
 /**
  * Function description
  *
@@ -578,10 +587,10 @@ static UINT rdpei_write_touch_frame(wStream* s, RDPINPUT_TOUCH_FRAME* frame)
 	{
 		contact = &frame->contacts[index];
 		contact->fieldsPresent |= CONTACT_DATA_CONTACTRECT_PRESENT;
-		contact->contactRectLeft = contact->x - rectSize;
-		contact->contactRectTop = contact->y - rectSize;
-		contact->contactRectRight = contact->x + rectSize;
-		contact->contactRectBottom = contact->y + rectSize;
+		contact->contactRectLeft = bounded(contact->x - rectSize);
+		contact->contactRectTop = bounded(contact->y - rectSize);
+		contact->contactRectRight = bounded(contact->x + rectSize);
+		contact->contactRectBottom = bounded(contact->y + rectSize);
 #ifdef WITH_DEBUG_RDPEI
 		WLog_DBG(TAG, "contact[%" PRIu32 "].contactId: %" PRIu32 "", index, contact->contactId);
 		WLog_DBG(TAG, "contact[%" PRIu32 "].fieldsPresent: %" PRIu32 "", index,
@@ -965,17 +974,15 @@ static UINT rdpei_touch_process(RdpeiClientContext* context, INT32 externalId, U
 {
 	INT64 contactIdlocal = -1;
 	RDPINPUT_CONTACT_POINT* contactPoint = NULL;
-	RDPEI_PLUGIN* rdpei = NULL;
-	BOOL begin = 0;
 	UINT error = CHANNEL_RC_OK;
 
 	if (!context || !contactId || !context->handle)
 		return ERROR_INTERNAL_ERROR;
 
-	rdpei = (RDPEI_PLUGIN*)context->handle;
+	RDPEI_PLUGIN* rdpei = (RDPEI_PLUGIN*)context->handle;
 	/* Create a new contact point in an empty slot */
 	EnterCriticalSection(&rdpei->lock);
-	begin = contactFlags & RDPINPUT_CONTACT_FLAG_DOWN;
+	const BOOL begin = (contactFlags & RDPINPUT_CONTACT_FLAG_DOWN) != 0;
 	contactPoint = rdpei_contact(rdpei, externalId, !begin);
 	if (contactPoint)
 		contactIdlocal = contactPoint->contactId;
@@ -1003,7 +1010,7 @@ static UINT rdpei_touch_process(RdpeiClientContext* context, INT32 externalId, U
 			if (p >= 360)
 			{
 				WLog_WARN(TAG,
-				          "TouchContact %" PRIu32 ": Invalid orientation value %" PRIu32
+				          "TouchContact %" PRId64 ": Invalid orientation value %" PRIu32
 				          "degree, clamping to 359 degree",
 				          contactIdlocal, p);
 				p = 359;
@@ -1016,7 +1023,7 @@ static UINT rdpei_touch_process(RdpeiClientContext* context, INT32 externalId, U
 			if (p > 1024)
 			{
 				WLog_WARN(TAG,
-				          "TouchContact %" PRIu32 ": Invalid pressure value %" PRIu32
+				          "TouchContact %" PRId64 ": Invalid pressure value %" PRIu32
 				          ", clamping to 1024",
 				          contactIdlocal, p);
 				p = 1024;
@@ -1028,7 +1035,7 @@ static UINT rdpei_touch_process(RdpeiClientContext* context, INT32 externalId, U
 	}
 
 	if (contactId)
-		*contactId = contactIdlocal;
+		*contactId = (INT32)contactIdlocal;
 	return error;
 }
 

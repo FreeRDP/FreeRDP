@@ -19,6 +19,7 @@
  */
 
 #include <winpr/crt.h>
+#include <winpr/crypto.h>
 #include <winpr/wlog.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
@@ -31,6 +32,15 @@ static int status = 0;
 static LONG* pLoopCount = NULL;
 static BOOL bStopTest = FALSE;
 
+static UINT32 prand(UINT32 max)
+{
+	UINT32 tmp = 0;
+	if (max <= 1)
+		return 1;
+	winpr_RAND(&tmp, sizeof(tmp));
+	return tmp % (max - 1) + 1;
+}
+
 static DWORD WINAPI test_error_thread(LPVOID arg)
 {
 	int id = 0;
@@ -41,7 +51,7 @@ static DWORD WINAPI test_error_thread(LPVOID arg)
 
 	do
 	{
-		dwErrorSet = (DWORD)abs(rand()) + 1;
+		dwErrorSet = prand(UINT32_MAX - 1) + 1;
 		SetLastError(dwErrorSet);
 		if ((dwErrorGet = GetLastError()) != dwErrorSet)
 		{

@@ -1262,7 +1262,7 @@ static BIO_METHOD* BIO_s_tsg(void);
  */
 
 static int TsProxySendToServer(handle_t IDL_handle, const byte pRpcMessage[], UINT32 count,
-                               UINT32* lengths)
+                               const UINT32* lengths)
 {
 	wStream* s = NULL;
 	rdpTsg* tsg = NULL;
@@ -2970,7 +2970,7 @@ static int transport_bio_tsg_puts(BIO* bio, const char* str)
 	return 1;
 }
 
-static int transport_bio_tsg_gets(BIO* bio, char* str, int size)
+static int transport_bio_tsg_gets(BIO* bio, const char* str, int size)
 {
 	WINPR_UNUSED(bio);
 	WINPR_UNUSED(str);

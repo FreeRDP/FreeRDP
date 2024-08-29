@@ -291,8 +291,8 @@ out_free_lib:
 
 const char* winpr_NCryptSecurityStatusError(SECURITY_STATUS status)
 {
-#define NTE_CASE(S)          \
-	case (SECURITY_STATUS)S: \
+#define NTE_CASE(S)            \
+	case (SECURITY_STATUS)(S): \
 		return #S
 
 	switch (status)

@@ -104,7 +104,7 @@ int TestPathCchFindExtension(int argc, char* argv[])
 		return -1;
 	}
 
-	if (!pszExt || strcmp(pszExt, ".exe"))
+	if (!pszExt || strcmp(pszExt, ".exe") != 0)
 	{
 		printf("PathCchFindExtensionA failure: unexpected extension\n");
 		return -1;

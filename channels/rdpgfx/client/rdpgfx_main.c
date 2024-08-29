@@ -502,7 +502,6 @@ fail:
  */
 static UINT rdpgfx_recv_reset_graphics_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStream* s)
 {
-	int pad = 0;
 	MONITOR_DEF* monitor = NULL;
 	RDPGFX_RESET_GRAPHICS_PDU pdu = { 0 };
 	WINPR_ASSERT(callback);
@@ -543,7 +542,13 @@ static UINT rdpgfx_recv_reset_graphics_pdu(GENERIC_CHANNEL_CALLBACK* callback, w
 		Stream_Read_UINT32(s, monitor->flags); /* flags (4 bytes) */
 	}
 
-	pad = 340 - (RDPGFX_HEADER_SIZE + 12 + (pdu.monitorCount * 20));
+	const size_t size = (RDPGFX_HEADER_SIZE + 12ULL + (pdu.monitorCount * 20ULL));
+	if (size > 340)
+	{
+		free(pdu.monitorDefArray);
+		return CHANNEL_RC_NULL_DATA;
+	}
+	const size_t pad = 340ULL - size;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, (size_t)pad))
 	{
@@ -772,13 +777,11 @@ static UINT rdpgfx_send_cache_import_offer_pdu(RdpgfxClientContext* context,
 	wStream* s = NULL;
 	RDPGFX_HEADER header;
 	GENERIC_CHANNEL_CALLBACK* callback = NULL;
-	WINPR_ASSERT(context);
-	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*)context->handle;
 
 	if (!context || !pdu)
 		return ERROR_BAD_ARGUMENTS;
 
-	gfx = (RDPGFX_PLUGIN*)context->handle;
+	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*)context->handle;
 
 	if (!gfx || !gfx->base.listener_callback)
 		return ERROR_BAD_CONFIGURATION;

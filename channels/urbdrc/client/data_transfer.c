@@ -44,9 +44,6 @@ static void usb_process_get_port_status(IUDEVICE* pdev, wStream* out)
 			break;
 
 		case USB_v2_0:
-			Stream_Write_UINT32(out, 0x503);
-			break;
-
 		default:
 			Stream_Write_UINT32(out, 0x503);
 			break;

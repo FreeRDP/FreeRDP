@@ -288,8 +288,8 @@ fail:
 typedef struct
 {
 	wHashTable* table;
-	int strlenCounter;
-	int foreachCalls;
+	size_t strlenCounter;
+	size_t foreachCalls;
 
 	BOOL test3error;
 } ForeachData;

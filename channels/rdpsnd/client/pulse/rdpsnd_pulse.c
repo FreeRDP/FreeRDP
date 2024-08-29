@@ -696,7 +696,7 @@ static UINT rdpsnd_pulse_parse_addin_args(rdpsndDevicePlugin* device, const ADDI
 			if ((errno != 0) || (val > INT32_MAX))
 				return ERROR_INVALID_DATA;
 
-			pulse->reconnect_delay_seconds = val;
+			pulse->reconnect_delay_seconds = (time_t)val;
 		}
 		CommandLineSwitchEnd(arg)
 	} while ((arg = CommandLineFindNextArgumentA(arg)) != NULL);

@@ -26,7 +26,7 @@ static BOOL compareRectangles(const RECTANGLE_16* src1, const RECTANGLE_16* src2
 {
 	for (int i = 0; i < nb; i++, src1++, src2++)
 	{
-		if (memcmp(src1, src2, sizeof(RECTANGLE_16)))
+		if (memcmp(src1, src2, sizeof(RECTANGLE_16)) != 0)
 		{
 			(void)fprintf(stderr,
 			              "expecting rect %d (%" PRIu16 ",%" PRIu16 "-%" PRIu16 ",%" PRIu16
@@ -58,7 +58,7 @@ static int test_basic(void)
 
 	rects = region16_rects(&region, &nbRects);
 
-	if (!rects || nbRects != 1 || memcmp(rects, &r1, sizeof(RECTANGLE_16)))
+	if (!rects || nbRects != 1 || memcmp(rects, &r1, sizeof(RECTANGLE_16)) != 0)
 		goto out;
 
 	/* r1 + r2 */

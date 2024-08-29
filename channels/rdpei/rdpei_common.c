@@ -101,7 +101,7 @@ BOOL rdpei_read_2byte_signed(wStream* s, INT16* value)
 			return FALSE;
 
 		Stream_Read_UINT8(s, byte);
-		*value = (*value << 8) | byte;
+		*value = ((*value & 0xFF) << 8) | byte;
 	}
 
 	if (negative)

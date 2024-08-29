@@ -32,7 +32,7 @@
 #pragma clang diagnostic ignored "-Wreserved-id-macro"
 #endif
 
-#define _GNU_SOURCE
+#define _GNU_SOURCE // NOLINT(bugprone-reserved-identifier)
 
 #if defined(__clang__)
 #pragma clang diagnostic pop

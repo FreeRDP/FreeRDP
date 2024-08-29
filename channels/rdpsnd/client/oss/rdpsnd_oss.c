@@ -163,7 +163,7 @@ static BOOL rdpsnd_oss_set_format(rdpsndDevicePlugin* device, const AUDIO_FORMAT
 		return FALSE;
 	}
 
-	tmp = format->nSamplesPerSec;
+	tmp = (int)format->nSamplesPerSec;
 
 	if (ioctl(oss->pcm_handle, SNDCTL_DSP_SPEED, &tmp) == -1)
 	{
@@ -321,15 +321,14 @@ static UINT32 rdpsnd_oss_get_volume(rdpsndDevicePlugin* device)
 
 static BOOL rdpsnd_oss_set_volume(rdpsndDevicePlugin* device, UINT32 value)
 {
-	int left = 0;
-	int right = 0;
 	rdpsndOssPlugin* oss = (rdpsndOssPlugin*)device;
+	WINPR_ASSERT(oss);
 
 	if (device == NULL || oss->mixer_handle == -1)
 		return FALSE;
 
-	left = (((value & 0xFFFF) * 100) / 0xFFFF);
-	right = ((((value >> 16) & 0xFFFF) * 100) / 0xFFFF);
+	unsigned left = (((value & 0xFFFF) * 100) / 0xFFFF);
+	unsigned right = ((((value >> 16) & 0xFFFF) * 100) / 0xFFFF);
 
 	if (left < 0)
 		left = 0;
@@ -425,7 +424,7 @@ static int rdpsnd_oss_parse_addin_args(rdpsndDevicePlugin* device, const ADDIN_A
 					return CHANNEL_RC_NULL_DATA;
 				}
 
-				oss->dev_unit = val;
+				oss->dev_unit = (int)val;
 			}
 
 			if (oss->dev_unit < 0 || *eptr != '\0')

@@ -37,8 +37,8 @@ static void init_empty_dcb(DCB* pDcb)
 
 static BOOL test_fParity(HANDLE hComm)
 {
-	DCB dcb;
-	BOOL result;
+	DCB dcb = { 0 };
+	BOOL result = 0;
 
 	init_empty_dcb(&dcb);
 	result = GetCommState(hComm, &dcb);
@@ -122,8 +122,8 @@ static BOOL test_fParity(HANDLE hComm)
 
 static BOOL test_SerialSys(HANDLE hComm)
 {
-	DCB dcb;
-	BOOL result;
+	DCB dcb = { 0 };
+	BOOL result = 0;
 
 	init_empty_dcb(&dcb);
 	result = GetCommState(hComm, &dcb);
@@ -206,8 +206,9 @@ static BOOL test_SerCx2Sys(HANDLE hComm)
 
 static BOOL test_generic(HANDLE hComm)
 {
-	DCB dcb, dcb2;
-	BOOL result;
+	DCB dcb = { 0 };
+	DCB dcb2 = { 0 };
+	BOOL result = 0;
 
 	init_empty_dcb(&dcb);
 	result = GetCommState(hComm, &dcb);
@@ -256,9 +257,9 @@ static BOOL test_generic(HANDLE hComm)
 
 int TestSetCommState(int argc, char* argv[])
 {
-	struct stat statbuf;
-	BOOL result;
-	HANDLE hComm;
+	struct stat statbuf = { 0 };
+	BOOL result = 0;
+	HANDLE hComm = NULL;
 
 	if (stat("/dev/ttyS0", &statbuf) < 0)
 	{

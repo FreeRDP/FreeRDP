@@ -69,7 +69,7 @@ UINT rail_write_unicode_string_value(wStream* s, const RAIL_UNICODE_STRING* unic
 UINT rail_read_sysparam_order(wStream* s, RAIL_SYSPARAM_ORDER* sysparam, BOOL extendedSpiSupported);
 UINT rail_write_sysparam_order(wStream* s, const RAIL_SYSPARAM_ORDER* sysparam,
                                BOOL extendedSpiSupported);
-BOOL rail_is_extended_spi_supported(UINT32 channelsFlags);
+BOOL rail_is_extended_spi_supported(UINT32 channelFlags);
 const char* rail_get_order_type_string(UINT16 orderType);
 const char* rail_get_order_type_string_full(UINT16 orderType, char* buffer, size_t length);
 

@@ -24,11 +24,10 @@
 
 static int test_CommDevice(LPCTSTR lpDeviceName, BOOL expectedResult)
 {
-	BOOL result;
-	TCHAR lpTargetPath[MAX_PATH];
-	size_t tcslen;
+	TCHAR lpTargetPath[MAX_PATH] = { 0 };
+	size_t tcslen = 0;
 
-	result = DefineCommDevice(lpDeviceName, _T("/dev/test"));
+	BOOL result = DefineCommDevice(lpDeviceName, _T("/dev/test"));
 	if ((!expectedResult && result) || (expectedResult && !result)) /* logical XOR */
 	{
 		_tprintf(_T("DefineCommDevice failure: device name: %s, expected result: %s, result: %s\n"),

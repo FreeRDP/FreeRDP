@@ -32,8 +32,8 @@
 #endif
 
 static int rdtk_image_copy_alpha_blend(uint8_t* pDstData, int nDstStep, int nXDst, int nYDst,
-                                       int nWidth, int nHeight, uint8_t* pSrcData, int nSrcStep,
-                                       int nXSrc, int nYSrc)
+                                       int nWidth, int nHeight, const uint8_t* pSrcData,
+                                       int nSrcStep, int nXSrc, int nYSrc)
 {
 	WINPR_ASSERT(pDstData);
 	WINPR_ASSERT(pSrcData);

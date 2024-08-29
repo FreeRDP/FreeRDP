@@ -652,7 +652,7 @@ static BOOL http_proxy_connect(BIO* bufferedBio, const char* proxyUsername,
 
 	recv_buf[7] = 'X';
 
-	if (strncmp(recv_buf, "HTTP/1.X 200", 12))
+	if (strncmp(recv_buf, "HTTP/1.X 200", 12) != 0)
 		goto fail;
 
 	rc = TRUE;

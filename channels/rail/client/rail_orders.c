@@ -1117,13 +1117,10 @@ UINT rail_order_recv(LPVOID userdata, wStream* s)
  */
 UINT rail_send_handshake_order(railPlugin* rail, const RAIL_HANDSHAKE_ORDER* handshake)
 {
-	wStream* s = NULL;
-	UINT error = 0;
-
 	if (!rail || !handshake)
 		return ERROR_INVALID_PARAMETER;
 
-	s = rail_pdu_init(RAIL_HANDSHAKE_ORDER_LENGTH);
+	wStream* s = rail_pdu_init(RAIL_HANDSHAKE_ORDER_LENGTH);
 
 	if (!s)
 	{
@@ -1142,13 +1139,10 @@ UINT rail_send_handshake_order(railPlugin* rail, const RAIL_HANDSHAKE_ORDER* han
  */
 UINT rail_send_handshake_ex_order(railPlugin* rail, const RAIL_HANDSHAKE_EX_ORDER* handshakeEx)
 {
-	wStream* s = NULL;
-	UINT error = 0;
-
 	if (!rail || !handshakeEx)
 		return ERROR_INVALID_PARAMETER;
 
-	s = rail_pdu_init(RAIL_HANDSHAKE_EX_ORDER_LENGTH);
+	wStream* s = rail_pdu_init(RAIL_HANDSHAKE_EX_ORDER_LENGTH);
 
 	if (!s)
 	{
@@ -1531,13 +1525,10 @@ UINT rail_send_client_compartment_info_order(railPlugin* rail,
 
 UINT rail_send_client_cloak_order(railPlugin* rail, const RAIL_CLOAK* cloak)
 {
-	wStream* s = NULL;
-	UINT error = 0;
-
 	if (!rail || !cloak)
 		return ERROR_INVALID_PARAMETER;
 
-	s = rail_pdu_init(5);
+	wStream* s = rail_pdu_init(5);
 
 	if (!s)
 	{
@@ -1552,9 +1543,6 @@ UINT rail_send_client_cloak_order(railPlugin* rail, const RAIL_CLOAK* cloak)
 
 UINT rail_send_client_snap_arrange_order(railPlugin* rail, const RAIL_SNAP_ARRANGE* snap)
 {
-	wStream* s = NULL;
-	UINT error = 0;
-
 	if (!rail)
 		return ERROR_INVALID_PARAMETER;
 
@@ -1570,7 +1558,7 @@ UINT rail_send_client_snap_arrange_order(railPlugin* rail, const RAIL_SNAP_ARRAN
 		return rail_send_client_window_move_order(rail, &move);
 	}
 
-	s = rail_pdu_init(12);
+	wStream* s = rail_pdu_init(12);
 
 	if (!s)
 	{

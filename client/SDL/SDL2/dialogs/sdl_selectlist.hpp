@@ -21,20 +21,17 @@ class SdlSelectList
 	SdlSelectList(const SdlSelectList& other) = delete;
 	SdlSelectList(SdlSelectList&& other) = delete;
 
-  private:
 	enum
 	{
 		INPUT_BUTTON_ACCEPT = 0,
 		INPUT_BUTTON_CANCEL = -2
 	};
 
-  private:
 	ssize_t get_index(const SDL_MouseButtonEvent& button);
 	bool update_text();
 	void reset_mouseover();
 	void reset_highlight();
 
-  private:
 	SDL_Window* _window;
 	SDL_Renderer* _renderer;
 	std::vector<SdlSelectWidget> _list;

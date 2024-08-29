@@ -282,7 +282,7 @@ static const scancode_entry_t map[] = {
 #endif
 };
 
-static UINT32 sdl_get_kbd_flags(void)
+static UINT32 sdl_get_kbd_flags()
 {
 	UINT32 flags = 0;
 
@@ -598,9 +598,10 @@ BOOL sdlInput::mouse_grab(Uint32 windowID, SDL_bool enable)
 	return it->second.grabMouse(enable);
 }
 
-sdlInput::sdlInput(SdlContext* sdl) : _sdl(sdl), _lastWindowID(UINT32_MAX)
+sdlInput::sdlInput(SdlContext* sdl)
+    : _sdl(sdl), _lastWindowID(UINT32_MAX), _hotkeyModmask(prefToMask())
 {
-	_hotkeyModmask = prefToMask();
+
 	_hotkeyFullscreen = prefKeyValue("SDL_Fullscreen", SDL_SCANCODE_RETURN);
 	_hotkeyResizable = prefKeyValue("SDL_Resizeable", SDL_SCANCODE_R);
 	_hotkeyGrab = prefKeyValue("SDL_Grab", SDL_SCANCODE_G);

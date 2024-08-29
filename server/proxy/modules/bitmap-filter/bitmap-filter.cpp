@@ -46,7 +46,7 @@ static const std::vector<std::string>& plugin_static_intercept()
 {
 	static std::vector<std::string> vec;
 	if (vec.empty())
-		vec.push_back(DRDYNVC_SVC_CHANNEL_NAME);
+		vec.emplace_back(DRDYNVC_SVC_CHANNEL_NAME);
 	return vec;
 }
 
@@ -54,7 +54,7 @@ static const std::vector<std::string>& plugin_dyn_intercept()
 {
 	static std::vector<std::string> vec;
 	if (vec.empty())
-		vec.push_back(RDPGFX_DVC_CHANNEL_NAME);
+		vec.emplace_back(RDPGFX_DVC_CHANNEL_NAME);
 	return vec;
 }
 
@@ -403,7 +403,7 @@ static BOOL filter_dyn_channel_intercept(proxyPlugin* plugin, proxyData* pdata, 
 	return TRUE;
 }
 
-static BOOL filter_server_session_started(proxyPlugin* plugin, proxyData* pdata, void*)
+static BOOL filter_server_session_started(proxyPlugin* plugin, proxyData* pdata, void* /*unused*/)
 {
 	WINPR_ASSERT(plugin);
 	WINPR_ASSERT(pdata);
@@ -421,7 +421,7 @@ static BOOL filter_server_session_started(proxyPlugin* plugin, proxyData* pdata,
 	return TRUE;
 }
 
-static BOOL filter_server_session_end(proxyPlugin* plugin, proxyData* pdata, void*)
+static BOOL filter_server_session_end(proxyPlugin* plugin, proxyData* pdata, void* /*unused*/)
 {
 	WINPR_ASSERT(plugin);
 	WINPR_ASSERT(pdata);

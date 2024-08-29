@@ -83,7 +83,6 @@ class SdlContext
 
 	std::atomic<bool> rdp_thread_running;
 
-  public:
 	BOOL update_resizeable(BOOL enable);
 	BOOL update_fullscreen(BOOL enter);
 

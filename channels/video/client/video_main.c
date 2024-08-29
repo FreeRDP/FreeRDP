@@ -310,7 +310,7 @@ static VideoFrame* VideoFrame_new(VideoClientContextPriv* priv, PresentationCont
 	frame->h = surface->alignedHeight;
 	frame->scanline = surface->scanline;
 
-	frame->surfaceData = BufferPool_Take(priv->surfacePool, 1ull * frame->scanline * frame->h);
+	frame->surfaceData = BufferPool_Take(priv->surfacePool, 1ll * frame->scanline * frame->h);
 	if (!frame->surfaceData)
 		goto fail;
 
@@ -1014,8 +1014,8 @@ static UINT video_data_on_close(IWTSVirtualChannelCallback* pChannelCallback)
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT video_control_on_new_channel_connection(IWTSListenerCallback* listenerCallback,
-                                                    IWTSVirtualChannel* channel, BYTE* Data,
-                                                    BOOL* pbAccept,
+                                                    IWTSVirtualChannel* channel, const BYTE* Data,
+                                                    const BOOL* pbAccept,
                                                     IWTSVirtualChannelCallback** ppCallback)
 {
 	GENERIC_CHANNEL_CALLBACK* callback = NULL;
@@ -1044,8 +1044,8 @@ static UINT video_control_on_new_channel_connection(IWTSListenerCallback* listen
 }
 
 static UINT video_data_on_new_channel_connection(IWTSListenerCallback* pListenerCallback,
-                                                 IWTSVirtualChannel* pChannel, BYTE* Data,
-                                                 BOOL* pbAccept,
+                                                 IWTSVirtualChannel* pChannel, const BYTE* Data,
+                                                 const BOOL* pbAccept,
                                                  IWTSVirtualChannelCallback** ppCallback)
 {
 	GENERIC_CHANNEL_CALLBACK* callback = NULL;

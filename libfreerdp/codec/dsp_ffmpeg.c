@@ -277,7 +277,7 @@ static BOOL ffmpeg_open_context(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context)
 #endif
 	context->context->sample_rate = (int)format->nSamplesPerSec;
 	context->context->block_align = format->nBlockAlign;
-	context->context->bit_rate = format->nAvgBytesPerSec * 8;
+	context->context->bit_rate = format->nAvgBytesPerSec * 8LL;
 	context->context->sample_fmt = ffmpeg_sample_format(format);
 	context->context->time_base = av_make_q(1, context->context->sample_rate);
 

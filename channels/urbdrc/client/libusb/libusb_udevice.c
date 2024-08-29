@@ -57,7 +57,7 @@
 
 #define BASIC_STATE_FUNC_REGISTER(_arg, _dev) \
 	_dev->iface.get_##_arg = udev_get_##_arg; \
-	_dev->iface.set_##_arg = udev_set_##_arg
+	(_dev)->iface.set_##_arg = udev_set_##_arg
 
 #if LIBUSB_API_VERSION >= 0x01000103
 #define HAVE_STREAM_ID_API 1

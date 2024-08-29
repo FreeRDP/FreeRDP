@@ -670,14 +670,14 @@ static UINT rail_read_exec_order(wStream* s, RAIL_EXEC_ORDER* exec, char* args[]
 
 	if (exeLen > 0)
 	{
-		const SSIZE_T len = exeLen / sizeof(WCHAR);
+		const size_t len = exeLen / sizeof(WCHAR);
 		exec->RemoteApplicationProgram = args[0] = Stream_Read_UTF16_String_As_UTF8(s, len, NULL);
 		if (!exec->RemoteApplicationProgram)
 			goto fail;
 	}
 	if (workLen > 0)
 	{
-		const SSIZE_T len = workLen / sizeof(WCHAR);
+		const size_t len = workLen / sizeof(WCHAR);
 		exec->RemoteApplicationWorkingDir = args[1] =
 		    Stream_Read_UTF16_String_As_UTF8(s, len, NULL);
 		if (!exec->RemoteApplicationWorkingDir)
@@ -685,7 +685,7 @@ static UINT rail_read_exec_order(wStream* s, RAIL_EXEC_ORDER* exec, char* args[]
 	}
 	if (argLen > 0)
 	{
-		const SSIZE_T len = argLen / sizeof(WCHAR);
+		const size_t len = argLen / sizeof(WCHAR);
 		exec->RemoteApplicationArguments = args[2] = Stream_Read_UTF16_String_As_UTF8(s, len, NULL);
 		if (!exec->RemoteApplicationArguments)
 			goto fail;

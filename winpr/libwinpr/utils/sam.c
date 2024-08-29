@@ -74,10 +74,20 @@ static BOOL SamAreEntriesEqual(const WINPR_SAM_ENTRY* a, const WINPR_SAM_ENTRY* 
 		return FALSE;
 	if (a->DomainLength != b->DomainLength)
 		return FALSE;
-	if (strncmp(a->User, b->User, a->UserLength) != 0)
-		return FALSE;
-	if (strncmp(a->Domain, b->Domain, a->DomainLength) != 0)
-		return FALSE;
+	if (a->UserLength > 0)
+	{
+		if (!a->User || !b->User)
+			return FALSE;
+		if (strncmp(a->User, b->User, a->UserLength) != 0)
+			return FALSE;
+	}
+	if (a->DomainLength > 0)
+	{
+		if (!a->Domain || !b->Domain)
+			return FALSE;
+		if (strncmp(a->Domain, b->Domain, a->DomainLength) != 0)
+			return FALSE;
+	}
 	return TRUE;
 }
 

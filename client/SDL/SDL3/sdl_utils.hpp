@@ -40,7 +40,7 @@ class CriticalSection
 	void unlock();
 
   private:
-	CRITICAL_SECTION _section;
+	CRITICAL_SECTION _section{};
 };
 
 class WinPREvent

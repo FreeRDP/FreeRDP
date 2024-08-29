@@ -255,8 +255,8 @@ static int freerdp_detect_keyboard(DWORD* keyboardLayoutId)
 	return 0;
 }
 
-static int freerdp_keyboard_init_apple(DWORD* keyboardLayoutId, DWORD* x11_keycode_to_rdp_scancode,
-                                       size_t count)
+static int freerdp_keyboard_init_apple(const DWORD* keyboardLayoutId,
+                                       DWORD* x11_keycode_to_rdp_scancode, size_t count)
 {
 	WINPR_ASSERT(x11_keycode_to_rdp_scancode);
 	WINPR_ASSERT(keyboardLayoutId);
@@ -272,7 +272,7 @@ static int freerdp_keyboard_init_apple(DWORD* keyboardLayoutId, DWORD* x11_keyco
 	return 0;
 }
 
-static int freerdp_keyboard_init_x11_evdev(DWORD* keyboardLayoutId,
+static int freerdp_keyboard_init_x11_evdev(const DWORD* keyboardLayoutId,
                                            DWORD* x11_keycode_to_rdp_scancode, size_t count)
 {
 	WINPR_ASSERT(keyboardLayoutId);

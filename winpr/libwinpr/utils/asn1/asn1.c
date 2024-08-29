@@ -72,7 +72,7 @@ struct WinPrAsn1Encoder
 	size_t containerCapacity;
 };
 
-#define WINPR_ASSERT_VALID_TAG(t) WINPR_ASSERT(t < 64)
+#define WINPR_ASSERT_VALID_TAG(t) WINPR_ASSERT((t) < 64)
 
 void WinPrAsn1FreeOID(WinPrAsn1_OID* poid)
 {

@@ -20,6 +20,7 @@
 
 #pragma once
 
+#include <utility>
 #include <vector>
 #include <atomic>
 #include <queue>
@@ -36,7 +37,7 @@
 class ClipRequest
 {
   public:
-	ClipRequest(UINT32 format, const std::string& mime);
+	ClipRequest(UINT32 format, std::string mime);
 	ClipRequest(const ClipRequest& other) = default;
 	ClipRequest(ClipRequest&& other) = default;
 	~ClipRequest() = default;
@@ -106,7 +107,6 @@ class sdlClip
 	std::string getServerFormat(uint32_t id);
 	uint32_t serverIdForMime(const std::string& mime);
 
-  private:
 	static UINT MonitorReady(CliprdrClientContext* context,
 	                         const CLIPRDR_MONITOR_READY* monitorReady);
 
@@ -131,7 +131,6 @@ class sdlClip
 	static bool mime_is_image(const std::string& mime);
 	static bool mime_is_html(const std::string& mime);
 
-  private:
 	SdlContext* _sdl = nullptr;
 	CliprdrFileContext* _file = nullptr;
 	CliprdrClientContext* _ctx = nullptr;
@@ -147,7 +146,7 @@ class sdlClip
 
 	struct cache_entry
 	{
-		cache_entry(size_t len, std::shared_ptr<void> p) : size(len), ptr(p)
+		cache_entry(size_t len, std::shared_ptr<void> p) : size(len), ptr(std::move(p))
 		{
 		}
 

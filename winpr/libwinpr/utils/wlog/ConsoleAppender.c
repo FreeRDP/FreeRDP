@@ -215,7 +215,7 @@ static BOOL WLog_ConsoleAppender_Set(wLogAppender* appender, const char* setting
 	if (!value || (strnlen(value, 2) == 0))
 		return FALSE;
 
-	if (strcmp("outputstream", setting))
+	if (strcmp("outputstream", setting) != 0)
 		return FALSE;
 
 	if (!strcmp("stdout", value))

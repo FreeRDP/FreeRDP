@@ -32,7 +32,7 @@ int TestVersion(int argc, char* argv[])
 	if (!git)
 		return -1;
 
-	if (strncmp(git, FREERDP_GIT_REVISION, sizeof(FREERDP_GIT_REVISION)))
+	if (strncmp(git, FREERDP_GIT_REVISION, sizeof(FREERDP_GIT_REVISION)) != 0)
 		return -1;
 
 	build = freerdp_get_build_config();

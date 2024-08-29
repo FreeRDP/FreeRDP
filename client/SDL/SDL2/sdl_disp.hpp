@@ -37,7 +37,7 @@ class sdlDispContext
 	BOOL uninit(DispClientContext* disp);
 
 #if SDL_VERSION_ATLEAST(2, 0, 10)
-	BOOL handle_display_event(const SDL_DisplayEvent* ev);
+	static BOOL handle_display_event(const SDL_DisplayEvent* ev);
 #endif
 
 	BOOL handle_window_event(const SDL_WindowEvent* ev);
@@ -54,14 +54,12 @@ class sdlDispContext
 
 	BOOL addTimer();
 
-  private:
 	static UINT DisplayControlCaps(DispClientContext* disp, UINT32 maxNumMonitors,
 	                               UINT32 maxMonitorAreaFactorA, UINT32 maxMonitorAreaFactorB);
 	static void OnActivated(void* context, const ActivatedEventArgs* e);
 	static void OnGraphicsReset(void* context, const GraphicsResetEventArgs* e);
 	static Uint32 SDLCALL OnTimer(Uint32 interval, void* param);
 
-  private:
 	SdlContext* _sdl = nullptr;
 	DispClientContext* _disp = nullptr;
 	int _eventBase = -1;

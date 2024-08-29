@@ -302,6 +302,8 @@ static UINT rdpsnd_recv_server_audio_formats_pdu(rdpsndPlugin* rdpsnd, wStream* 
 	WINPR_ASSERT(rdpsnd->device);
 	ret = IFCALLRESULT(CHANNEL_RC_OK, rdpsnd->device->ServerFormatAnnounce, rdpsnd->device,
 	                   rdpsnd->ServerFormats, rdpsnd->NumberOfServerFormats);
+	if (ret != CHANNEL_RC_OK)
+		goto out_fail;
 
 	rdpsnd_select_supported_audio_formats(rdpsnd);
 	WLog_Print(rdpsnd->log, WLOG_DEBUG, "%s Server Audio Formats",
@@ -1329,7 +1331,7 @@ static UINT rdpsnd_virtual_channel_event_disconnected(rdpsndPlugin* rdpsnd)
 	return CHANNEL_RC_OK;
 }
 
-static void _queue_free(void* obj)
+static void queue_free(void* obj)
 {
 	wMessage* msg = obj;
 	if (!msg)
@@ -1433,7 +1435,7 @@ static UINT rdpsnd_virtual_channel_event_initialized(rdpsndPlugin* rdpsnd)
 	{
 		wObject obj = { 0 };
 
-		obj.fnObjectFree = _queue_free;
+		obj.fnObjectFree = queue_free;
 		rdpsnd->queue = MessageQueue_New(&obj);
 		if (!rdpsnd->queue)
 			return CHANNEL_RC_NO_MEMORY;
@@ -1696,8 +1698,8 @@ static UINT rdpsnd_on_close(IWTSVirtualChannelCallback* pChannelCallback)
 }
 
 static UINT rdpsnd_on_new_channel_connection(IWTSListenerCallback* pListenerCallback,
-                                             IWTSVirtualChannel* pChannel, BYTE* Data,
-                                             BOOL* pbAccept,
+                                             IWTSVirtualChannel* pChannel, const BYTE* Data,
+                                             const BOOL* pbAccept,
                                              IWTSVirtualChannelCallback** ppCallback)
 {
 	GENERIC_CHANNEL_CALLBACK* callback = NULL;

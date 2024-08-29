@@ -27,12 +27,12 @@ namespace fs = std::experimental::filesystem;
 #error Could not find system header "<filesystem>" or "<experimental/filesystem>"
 #endif
 
-const std::string SDLResourceManager::typeFonts()
+std::string SDLResourceManager::typeFonts()
 {
 	return "fonts";
 }
 
-const std::string SDLResourceManager::typeImages()
+std::string SDLResourceManager::typeImages()
 {
 	return "images";
 }

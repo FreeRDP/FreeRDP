@@ -687,6 +687,15 @@ static BOOL compare_yuv420(BYTE** planesA, BYTE** planesB, UINT32 width, UINT32 
 	return rc;
 }
 
+static UINT32 prand(UINT32 max)
+{
+	UINT32 tmp = 0;
+	if (max <= 1)
+		return 1;
+	winpr_RAND(&tmp, sizeof(tmp));
+	return tmp % (max - 1) + 1;
+}
+
 static BOOL TestPrimitiveRgbToLumaChroma(primitives_t* prims, prim_size_t roi, UINT32 version)
 {
 	BOOL res = FALSE;
@@ -772,10 +781,10 @@ static BOOL TestPrimitiveRgbToLumaChroma(primitives_t* prims, prim_size_t roi, U
 		for (UINT32 x = 0; x < roi.width; x++)
 		{
 #if 1
-			line[x * 4 + 0] = rand();
-			line[x * 4 + 1] = rand();
-			line[x * 4 + 2] = rand();
-			line[x * 4 + 3] = rand();
+			line[x * 4 + 0] = prand(UINT8_MAX);
+			line[x * 4 + 1] = prand(UINT8_MAX);
+			line[x * 4 + 2] = prand(UINT8_MAX);
+			line[x * 4 + 3] = prand(UINT8_MAX);
 #else
 			line[x * 4 + 0] = (y * roi.width + x) * 16 + 5;
 			line[x * 4 + 1] = (y * roi.width + x) * 16 + 7;

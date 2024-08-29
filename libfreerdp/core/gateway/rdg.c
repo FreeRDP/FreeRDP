@@ -107,7 +107,7 @@ typedef struct
 {
 	TRANSFER_ENCODING httpTransferEncoding;
 	BOOL isWebsocketTransport;
-	union _context
+	union context
 	{
 		http_encoding_chunked_context chunked;
 		websocket_context websocket;
@@ -2070,7 +2070,7 @@ static int rdg_bio_puts(BIO* bio, const char* str)
 	return -2;
 }
 
-static int rdg_bio_gets(BIO* bio, char* str, int size)
+static int rdg_bio_gets(BIO* bio, const char* str, int size)
 {
 	WINPR_UNUSED(bio);
 	WINPR_UNUSED(str);

@@ -692,6 +692,8 @@ static BOOL rdp_security_stream_out(rdpRdp* rdp, wStream* s, int length, UINT32 
 {
 	BOOL status = 0;
 	WINPR_ASSERT(rdp);
+	WINPR_ASSERT(length >= 0);
+
 	sec_flags |= rdp->sec_flags;
 	*pad = 0;
 
@@ -709,7 +711,12 @@ static BOOL rdp_security_stream_out(rdpRdp* rdp, wStream* s, int length, UINT32 
 			if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
 			{
 				BYTE* data = Stream_PointerAs(s, BYTE) + 12;
-				length = length - (data - Stream_Buffer(s));
+				const size_t size = (data - Stream_Buffer(s));
+				if (size > length)
+					goto unlock;
+
+				length -= (int)size;
+
 				Stream_Write_UINT16(s, 0x10); /* length */
 				Stream_Write_UINT8(s, 0x1);   /* TSFIPS_VERSION 1*/
 				/* handle padding */

@@ -107,7 +107,7 @@ int TestPathCchStripPrefix(int argc, char* argv[])
 		         status);
 		return -1;
 	}
-	if (_tcscmp(Path, testPathNoPrefixFileNamespaceMinimum))
+	if (_tcscmp(Path, testPathNoPrefixFileNamespaceMinimum) != 0)
 	{
 		_tprintf(_T("Path Mismatch: Actual: %s, Expected: %s\n"), Path,
 		         testPathNoPrefixFileNamespaceMinimum);

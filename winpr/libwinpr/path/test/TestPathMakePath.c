@@ -3,8 +3,18 @@
 #include <time.h>
 
 #include <winpr/crt.h>
+#include <winpr/crypto.h>
 #include <winpr/file.h>
 #include <winpr/path.h>
+
+static UINT32 prand(UINT32 max)
+{
+	UINT32 tmp = 0;
+	if (max <= 1)
+		return 1;
+	winpr_RAND(&tmp, sizeof(tmp));
+	return tmp % (max - 1) + 1;
+}
 
 int TestPathMakePath(int argc, char* argv[])
 {
@@ -26,11 +36,10 @@ int TestPathMakePath(int argc, char* argv[])
 	}
 
 	baseLen = strlen(base);
-	srand(time(NULL));
 
 	for (int x = 0; x < 5; x++)
 	{
-		(void)sprintf_s(tmp, ARRAYSIZE(tmp), "%08X", rand());
+		(void)sprintf_s(tmp, ARRAYSIZE(tmp), "%08" PRIX32, prand(UINT32_MAX));
 		path = GetCombinedPath(base, tmp);
 		free(base);
 

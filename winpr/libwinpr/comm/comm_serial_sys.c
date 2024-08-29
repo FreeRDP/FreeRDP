@@ -52,7 +52,7 @@
  * 1: CBR_* or actual baud rate
  * 2: BAUD_* (identical to SERIAL_BAUD_*)
  */
-static const speed_t _BAUD_TABLE[][3] = {
+static const speed_t BAUD_TABLE[][3] = {
 #ifdef B0
 	{ B0, 0, 0 }, /* hang up */
 #endif
@@ -199,9 +199,9 @@ static BOOL get_properties(WINPR_COMM* pComm, COMMPROP* pProperties)
 	                                SP_PARITY_CHECK | /*SP_RLSD |*/ SP_STOPBITS;
 
 	pProperties->dwSettableBaud = 0;
-	for (int i = 0; _BAUD_TABLE[i][0] < BAUD_TABLE_END; i++)
+	for (int i = 0; BAUD_TABLE[i][0] < BAUD_TABLE_END; i++)
 	{
-		pProperties->dwSettableBaud |= _BAUD_TABLE[i][2];
+		pProperties->dwSettableBaud |= BAUD_TABLE[i][2];
 	}
 
 	pProperties->wSettableData =
@@ -236,11 +236,11 @@ static BOOL set_baud_rate(WINPR_COMM* pComm, const SERIAL_BAUD_RATE* pBaudRate)
 		return FALSE;
 	}
 
-	for (int i = 0; _BAUD_TABLE[i][0] < BAUD_TABLE_END; i++)
+	for (int i = 0; BAUD_TABLE[i][0] < BAUD_TABLE_END; i++)
 	{
-		if (_BAUD_TABLE[i][1] == pBaudRate->BaudRate)
+		if (BAUD_TABLE[i][1] == pBaudRate->BaudRate)
 		{
-			newSpeed = _BAUD_TABLE[i][0];
+			newSpeed = BAUD_TABLE[i][0];
 			if (cfsetspeed(&futureState, newSpeed) < 0)
 			{
 				CommLog_Print(WLOG_WARN, "failed to set speed 0x%x (%" PRIu32 ")", newSpeed,
@@ -283,11 +283,11 @@ static BOOL get_baud_rate(WINPR_COMM* pComm, SERIAL_BAUD_RATE* pBaudRate)
 
 	currentSpeed = cfgetispeed(&currentState);
 
-	for (int i = 0; _BAUD_TABLE[i][0] < BAUD_TABLE_END; i++)
+	for (int i = 0; BAUD_TABLE[i][0] < BAUD_TABLE_END; i++)
 	{
-		if (_BAUD_TABLE[i][0] == currentSpeed)
+		if (BAUD_TABLE[i][0] == currentSpeed)
 		{
-			pBaudRate->BaudRate = _BAUD_TABLE[i][1];
+			pBaudRate->BaudRate = BAUD_TABLE[i][1];
 			return TRUE;
 		}
 	}

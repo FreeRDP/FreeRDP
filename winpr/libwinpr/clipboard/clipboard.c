@@ -625,7 +625,7 @@ char* parse_uri_to_local_file(const char* uri, size_t uri_len)
 
 	WLog_VRB(TAG, "processing URI: %.*s", uri_len, uri);
 
-	if ((uri_len <= prefixLen) || strncmp(uri, prefix, prefixLen))
+	if ((uri_len <= prefixLen) || strncmp(uri, prefix, prefixLen) != 0)
 	{
 		WLog_ERR(TAG, "non-'file:' URI schemes are not supported");
 		return NULL;
@@ -692,7 +692,7 @@ char* parse_uri_to_local_file(const char* uri, size_t uri_len)
 		 *   "file:///path/to/file"
 		 */
 		if ((uri_len < prefixTraditionalLen) ||
-		    strncmp(uri, prefixTraditional, prefixTraditionalLen))
+		    strncmp(uri, prefixTraditional, prefixTraditionalLen) != 0)
 		{
 			WLog_ERR(TAG, "non-'file:' URI schemes are not supported");
 			return NULL;

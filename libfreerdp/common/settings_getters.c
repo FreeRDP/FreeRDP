@@ -3288,8 +3288,8 @@ char* freerdp_settings_get_string_writable(rdpSettings* settings, FreeRDP_Settin
 	}
 }
 
-BOOL freerdp_settings_set_string_(rdpSettings* settings, FreeRDP_Settings_Keys_String id, char* val,
-                                  size_t len)
+BOOL freerdp_settings_set_string_(rdpSettings* settings, FreeRDP_Settings_Keys_String id,
+                                  const char* val, size_t len)
 {
 	union
 	{

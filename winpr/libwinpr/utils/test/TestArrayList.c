@@ -5,7 +5,7 @@
 
 int TestArrayList(int argc, char* argv[])
 {
-	int count = 0;
+	SSIZE_T count = 0;
 	SSIZE_T rc = 0;
 	size_t val = 0;
 	wArrayList* arrayList = NULL;

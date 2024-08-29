@@ -41,8 +41,7 @@ static const SDL_Color backgroundcolor = { 0x38, 0x36, 0x35, 0xff };
 
 static const Uint32 hpadding = 10;
 
-SdlWidget::SdlWidget(SDL_Renderer* renderer, const SDL_Rect& rect, bool input)
-    : _rect(rect), _input(input)
+SdlWidget::SdlWidget(SDL_Renderer* renderer, SDL_Rect rect, bool input) : _rect(rect), _input(input)
 {
 	assert(renderer);
 
@@ -59,7 +58,7 @@ SdlWidget::SdlWidget(SDL_Renderer* renderer, const SDL_Rect& rect, bool input)
 }
 
 #if defined(WITH_SDL_IMAGE_DIALOGS)
-SdlWidget::SdlWidget(SDL_Renderer* renderer, const SDL_Rect& rect, SDL_RWops* ops) : _rect(rect)
+SdlWidget::SdlWidget(SDL_Renderer* renderer, SDL_Rect rect, SDL_RWops* ops) : _rect(rect)
 {
 	if (ops)
 	{
@@ -71,8 +70,8 @@ SdlWidget::SdlWidget(SDL_Renderer* renderer, const SDL_Rect& rect, SDL_RWops* op
 #endif
 
 SdlWidget::SdlWidget(SdlWidget&& other) noexcept
-    : _font(std::move(other._font)), _image(other._image), _rect(std::move(other._rect)),
-      _input(other._input), _wrap(other._wrap), _text_width(other._text_width)
+    : _font(other._font), _image(other._image), _rect(other._rect), _input(other._input),
+      _wrap(other._wrap), _text_width(other._text_width)
 {
 	other._font = nullptr;
 	other._image = nullptr;

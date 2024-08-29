@@ -1,5 +1,6 @@
 
 #include <winpr/crt.h>
+#include <winpr/crypto.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
 #include <winpr/interlocked.h>
@@ -22,6 +23,15 @@ struct test_params
 	DWORD flags;
 };
 
+static UINT32 prand(UINT32 max)
+{
+	UINT32 tmp = 0;
+	if (max <= 1)
+		return 1;
+	winpr_RAND(&tmp, sizeof(tmp));
+	return tmp % (max - 1) + 1;
+}
+
 static DWORD WINAPI test_synch_barrier_thread(LPVOID lpParam)
 {
 	BOOL status = FALSE;
@@ -43,7 +53,7 @@ static DWORD WINAPI test_synch_barrier_thread(LPVOID lpParam)
 	for (DWORD i = 0; i < p->loops && gErrorCount == 0; i++)
 	{
 		/* simulate different execution times before the barrier */
-		Sleep(1 + abs((rand() % MAX_SLEEP_MS)));
+		Sleep(1 + prand(MAX_SLEEP_MS));
 		status = EnterSynchronizationBarrier(&gBarrier, p->flags);
 
 		// printf("Thread #%03u status: %s\n", tnum, status ? "TRUE" : "FALSE");
