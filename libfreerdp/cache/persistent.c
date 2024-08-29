@@ -207,7 +207,7 @@ static int persistent_cache_read_v3(rdpPersistentCache* persistent)
 		if (fread((void*)&entry, sizeof(entry), 1, persistent->fp) != 1)
 			break;
 
-		if (fseek(persistent->fp, (4ULL * entry.width * entry.height), SEEK_CUR) != 0)
+		if (_fseeki64(persistent->fp, (4LL * entry.width * entry.height), SEEK_CUR) != 0)
 			break;
 
 		persistent->count++;
