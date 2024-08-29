@@ -105,9 +105,10 @@ void CountdownEvent_AddCount(wCountdownEvent* countdown, size_t signalCount)
 	WINPR_ASSERT(countdown);
 	EnterCriticalSection(&countdown->lock);
 
+	const BOOL signalSet = countdown->count == 0;
 	countdown->count += signalCount;
 
-	if (countdown->count > 0)
+	if (signalSet)
 		ResetEvent(countdown->event);
 
 	LeaveCriticalSection(&countdown->lock);

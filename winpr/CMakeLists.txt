@@ -75,7 +75,6 @@ else()
 	set(WITH_INTERNAL_MD5_DEFAULT OFF)
 endif()
 
-option(WITH_VERBOSE_WINPR_ASSERT "Compile with verbose WINPR_ASSERT." ON)
 option(WITH_WINPR_TOOLS "Build WinPR helper binaries" ${TOOLS_DEFAULT})
 option(WITH_WINPR_DEPRECATED "Build WinPR deprecated symbols" OFF)
 option(WITH_DEBUG_THREADS "Print thread debug messages, enables handle dump" ${DEFAULT_DEBUG_OPTION})
@@ -109,11 +108,6 @@ endif()
 if (WITH_WINPR_DEPRECATED)
 	add_definitions(-DWITH_WINPR_DEPRECATED)
 endif()
-
-if (WITH_VERBOSE_WINPR_ASSERT)
-	add_definitions(-DWITH_VERBOSE_WINPR_ASSERT)
-endif()
-
 
 # Include cmake modules
 include(CheckIncludeFiles)

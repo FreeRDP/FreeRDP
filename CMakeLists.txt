@@ -702,13 +702,6 @@ endif()
 
 include(CommonConfigOptions)
 
-# WinPR
-# We want to control the winpr assert for the whole project
-option(WITH_VERBOSE_WINPR_ASSERT "Compile with verbose WINPR_ASSERT." ON)
-if (WITH_VERBOSE_WINPR_ASSERT)
-	add_definitions(-DWITH_VERBOSE_WINPR_ASSERT)
-endif()
-
 if (FREERDP_UNIFIED_BUILD)
 	add_subdirectory(winpr)
 	if (WITH_WAYLAND)
