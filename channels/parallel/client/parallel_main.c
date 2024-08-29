@@ -132,12 +132,7 @@ static UINT parallel_process_irp_close(PARALLEL_DEVICE* parallel, IRP* irp)
 	WINPR_ASSERT(parallel);
 	WINPR_ASSERT(irp);
 
-	if (close(parallel->file) < 0)
-	{
-	}
-	else
-	{
-	}
+	(void)close(parallel->file);
 
 	Stream_Zero(irp->output, 5); /* Padding(5) */
 	return irp->Complete(irp);
@@ -388,10 +383,8 @@ static UINT parallel_irp_request(DEVICE* device, IRP* irp)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT parallel_free(DEVICE* device)
+static UINT parallel_free_int(PARALLEL_DEVICE* parallel)
 {
-	PARALLEL_DEVICE* parallel = (PARALLEL_DEVICE*)device;
-
 	if (parallel)
 	{
 		if (!MessageQueue_PostQuit(parallel->queue, 0) ||
@@ -400,15 +393,20 @@ static UINT parallel_free(DEVICE* device)
 			const UINT error = GetLastError();
 			WLog_Print(parallel->log, WLOG_ERROR,
 			           "WaitForSingleObject failed with error %" PRIu32 "!", error);
-			return error;
 		}
 
 		CloseHandle(parallel->thread);
 		Stream_Free(parallel->device.data, TRUE);
 		MessageQueue_Free(parallel->queue);
-		free(parallel);
 	}
+	free(parallel);
 	return CHANNEL_RC_OK;
+}
+
+static UINT parallel_free(DEVICE* device)
+{
+	if (device)
+		parallel_free_int(device);
 }
 
 static void parallel_message_free(void* obj)
@@ -516,7 +514,6 @@ FREERDP_ENTRY_POINT(UINT parallel_DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINT
 
 	return CHANNEL_RC_OK;
 error_out:
-	if (parallel)
-		parallel_free(&parallel->device);
+	parallel_free_int(parallel);
 	return error;
 }

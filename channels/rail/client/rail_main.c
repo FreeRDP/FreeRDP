@@ -541,8 +541,6 @@ static VOID VCAPITYPE rail_virtual_channel_open_event_ex(LPVOID lpUserParam, DWO
 	if (error && rail && rail->rdpcontext)
 		setChannelError(rail->rdpcontext, error,
 		                "rail_virtual_channel_open_event reported an error");
-
-	return;
 }
 
 /**

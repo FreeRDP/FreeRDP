@@ -112,9 +112,6 @@ static void audin_pulse_context_state_callback(pa_context* context, void* userda
 	switch (state)
 	{
 		case PA_CONTEXT_READY:
-			pa_threaded_mainloop_signal(pulse->mainloop, 0);
-			break;
-
 		case PA_CONTEXT_FAILED:
 		case PA_CONTEXT_TERMINATED:
 			pa_threaded_mainloop_signal(pulse->mainloop, 0);
@@ -309,9 +306,6 @@ static void audin_pulse_stream_state_callback(pa_stream* stream, void* userdata)
 	switch (state)
 	{
 		case PA_STREAM_READY:
-			pa_threaded_mainloop_signal(pulse->mainloop, 0);
-			break;
-
 		case PA_STREAM_FAILED:
 		case PA_STREAM_TERMINATED:
 			pa_threaded_mainloop_signal(pulse->mainloop, 0);

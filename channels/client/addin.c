@@ -474,7 +474,7 @@ PVIRTUALCHANNELENTRY freerdp_channels_load_static_addin_entry(LPCSTR pszName, LP
 	{
 		if (strncmp(table->name, pszName, MAX_PATH) == 0)
 		{
-			if (type && strncmp(table->type, type, MAX_PATH))
+			if (type && (strncmp(table->type, type, MAX_PATH) != 0))
 				continue;
 
 			if (pszSubsystem != NULL)

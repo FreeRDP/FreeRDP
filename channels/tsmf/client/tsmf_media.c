@@ -154,8 +154,8 @@ struct S_TSMF_SAMPLE
 static wArrayList* presentation_list = NULL;
 static int TERMINATING = 0;
 
-static void _tsmf_presentation_free(void* obj);
-static void _tsmf_stream_free(void* obj);
+static void s_tsmf_presentation_free(void* obj);
+static void s_tsmf_stream_free(void* obj);
 
 static UINT64 get_current_time(void)
 {
@@ -365,7 +365,7 @@ TSMF_PRESENTATION* tsmf_presentation_new(const BYTE* guid,
 	obj = ArrayList_Object(presentation->stream_list);
 	if (!obj)
 		goto error_add;
-	obj->fnObjectFree = _tsmf_stream_free;
+	obj->fnObjectFree = s_tsmf_stream_free;
 
 	if (!ArrayList_Append(presentation_list, presentation))
 		goto error_add;
@@ -1163,7 +1163,7 @@ BOOL tsmf_stream_flush(TSMF_STREAM* stream)
 	return ret;
 }
 
-void _tsmf_presentation_free(void* obj)
+void s_tsmf_presentation_free(void* obj)
 {
 	TSMF_PRESENTATION* presentation = (TSMF_PRESENTATION*)obj;
 
@@ -1394,7 +1394,7 @@ void tsmf_stream_end(TSMF_STREAM* stream, UINT32 message_id,
 	stream->eos_channel_callback = pChannelCallback;
 }
 
-void _tsmf_stream_free(void* obj)
+void s_tsmf_stream_free(void* obj)
 {
 	TSMF_STREAM* stream = (TSMF_STREAM*)obj;
 
@@ -1484,14 +1484,19 @@ BOOL tsmf_stream_push_sample(TSMF_STREAM* stream, IWTSVirtualChannelCallback* pC
 	sample->data = calloc(1, data_size + TSMF_BUFFER_PADDING_SIZE);
 
 	if (!sample->data)
-	{
-		WLog_ERR(TAG, "calloc sample->data failed!");
-		free(sample);
-		return FALSE;
-	}
+		goto fail;
 
 	CopyMemory(sample->data, data, data_size);
-	return Queue_Enqueue(stream->sample_list, sample);
+	if (!Queue_Enqueue(stream->sample_list, sample))
+		goto fail;
+
+	return TRUE;
+
+fail:
+	if (sample)
+		free(sample->data);
+	free(sample);
+	return FALSE;
 }
 
 #ifndef _WIN32
@@ -1536,7 +1541,7 @@ BOOL tsmf_media_init(void)
 		obj = ArrayList_Object(presentation_list);
 		if (!obj)
 			return FALSE;
-		obj->fnObjectFree = _tsmf_presentation_free;
+		obj->fnObjectFree = s_tsmf_presentation_free;
 	}
 
 	return TRUE;

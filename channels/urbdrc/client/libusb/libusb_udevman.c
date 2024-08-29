@@ -54,7 +54,7 @@
 
 #define BASIC_STATE_FUNC_REGISTER(_arg, _man)    \
 	_man->iface.get_##_arg = udevman_get_##_arg; \
-	_man->iface.set_##_arg = udevman_set_##_arg
+	(_man)->iface.set_##_arg = udevman_set_##_arg
 
 typedef struct
 {

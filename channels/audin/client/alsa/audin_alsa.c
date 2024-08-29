@@ -121,7 +121,7 @@ static BOOL audin_alsa_set_params(AudinALSADevice* alsa, snd_pcm_t* capture_hand
 
 static DWORD WINAPI audin_alsa_thread_func(LPVOID arg)
 {
-	int error = 0;
+	DWORD error = CHANNEL_RC_OK;
 	BYTE* buffer = NULL;
 	snd_pcm_t* capture_handle = NULL;
 	AudinALSADevice* alsa = (AudinALSADevice*)arg;
@@ -159,26 +159,28 @@ static DWORD WINAPI audin_alsa_thread_func(LPVOID arg)
 		if (status == WAIT_FAILED)
 		{
 			error = GetLastError();
-			WLog_Print(alsa->log, WLOG_ERROR, "WaitForSingleObject failed with error %ld!", error);
+			WLog_Print(alsa->log, WLOG_ERROR, "WaitForSingleObject failed with error %" PRIu32 "!",
+			           error);
 			break;
 		}
 
 		if (status == WAIT_OBJECT_0)
 			break;
 
-		error = snd_pcm_readi(capture_handle, buffer, frames);
+		snd_pcm_sframes_t err = snd_pcm_readi(capture_handle, buffer, frames);
 
-		if (error == 0)
+		if (err == 0)
 			continue;
 
-		if (error == -EPIPE)
+		if (err == -EPIPE)
 		{
-			snd_pcm_recover(capture_handle, error, 0);
+			snd_pcm_recover(capture_handle, err, 0);
 			continue;
 		}
-		else if (error < 0)
+		else if (err < 0)
 		{
 			WLog_Print(alsa->log, WLOG_ERROR, "snd_pcm_readi (%s)", snd_strerror(error));
+			error = ERROR_INTERNAL_ERROR;
 			break;
 		}
 
