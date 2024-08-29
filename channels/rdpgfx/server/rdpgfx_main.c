@@ -1526,7 +1526,7 @@ static DWORD WINAPI rdpgfx_server_thread_func(LPVOID arg)
 static BOOL rdpgfx_server_open(RdpgfxServerContext* context)
 {
 	WINPR_ASSERT(context);
-	RdpgfxServerPrivate* priv = (RdpgfxServerPrivate*)context->priv;
+	RdpgfxServerPrivate* priv = context->priv;
 	void* buffer = NULL;
 
 	WINPR_ASSERT(priv);
@@ -1625,7 +1625,7 @@ BOOL rdpgfx_server_close(RdpgfxServerContext* context)
 {
 	WINPR_ASSERT(context);
 
-	RdpgfxServerPrivate* priv = (RdpgfxServerPrivate*)context->priv;
+	RdpgfxServerPrivate* priv = context->priv;
 	WINPR_ASSERT(priv);
 
 	if (priv->ownThread && priv->thread)

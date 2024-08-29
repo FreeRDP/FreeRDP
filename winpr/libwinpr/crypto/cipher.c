@@ -627,7 +627,7 @@ int winpr_Cipher_BytesToKey(int cipher, WINPR_MD_TYPE md, const void* salt, cons
 #if defined(WITH_OPENSSL)
 	const EVP_MD* evp_md = NULL;
 	const EVP_CIPHER* evp_cipher = NULL;
-	evp_md = winpr_openssl_get_evp_md((WINPR_MD_TYPE)md);
+	evp_md = winpr_openssl_get_evp_md(md);
 	evp_cipher = winpr_openssl_get_evp_cipher(cipher);
 	return EVP_BytesToKey(evp_cipher, evp_md, salt, data, datal, count, key, iv);
 #elif defined(WITH_MBEDTLS)

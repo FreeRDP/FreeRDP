@@ -624,7 +624,7 @@ static UINT gdi_SurfaceCommand_AVC420(rdpGdi* gdi, RdpgfxClientContext* context,
 	for (UINT32 i = 0; i < meta->numRegionRects; i++)
 	{
 		region16_union_rect(&(surface->invalidRegion), &(surface->invalidRegion),
-		                    (RECTANGLE_16*)&(meta->regionRects[i]));
+		                    &(meta->regionRects[i]));
 	}
 
 	status = IFCALLRESULT(CHANNEL_RC_OK, context->UpdateSurfaceArea, context, surface->surfaceId,

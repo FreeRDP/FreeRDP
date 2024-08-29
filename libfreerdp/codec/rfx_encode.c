@@ -283,9 +283,9 @@ void rfx_encode_rgb(RFX_CONTEXT* WINPR_RESTRICT context, RFX_TILE* WINPR_RESTRIC
 	YQuant = context->quants + (10ULL * tile->quantIdxY);
 	CbQuant = context->quants + (10ULL * tile->quantIdxCb);
 	CrQuant = context->quants + (10ULL * tile->quantIdxCr);
-	pSrcDst[0] = (INT16*)((BYTE*)(&pBuffer[((8192ULL + 32ULL) * 0ULL) + 16ULL])); /* y_r_buffer */
-	pSrcDst[1] = (INT16*)((BYTE*)(&pBuffer[((8192ULL + 32ULL) * 1ULL) + 16ULL])); /* cb_g_buffer */
-	pSrcDst[2] = (INT16*)((BYTE*)(&pBuffer[((8192ULL + 32ULL) * 2ULL) + 16ULL])); /* cr_b_buffer */
+	pSrcDst[0] = (INT16*)((&pBuffer[((8192ULL + 32ULL) * 0ULL) + 16ULL])); /* y_r_buffer */
+	pSrcDst[1] = (INT16*)((&pBuffer[((8192ULL + 32ULL) * 1ULL) + 16ULL])); /* cb_g_buffer */
+	pSrcDst[2] = (INT16*)((&pBuffer[((8192ULL + 32ULL) * 2ULL) + 16ULL])); /* cr_b_buffer */
 	PROFILER_ENTER(context->priv->prof_rfx_encode_rgb)
 	PROFILER_ENTER(context->priv->prof_rfx_encode_format_rgb)
 	rfx_encode_format_rgb(tile->data, tile->width, tile->height, tile->scanline,

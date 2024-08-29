@@ -41,7 +41,7 @@ static pstatus_t ssse3_YCoCgRToRGB_8u_AC4R_invert(const BYTE* WINPR_RESTRICT pSr
                                                   UINT8 shift, BOOL withAlpha)
 {
 	const BYTE* sptr = pSrc;
-	BYTE* dptr = (BYTE*)pDst;
+	BYTE* dptr = pDst;
 	int sRowBump = srcStep - width * sizeof(UINT32);
 	int dRowBump = dstStep - width * sizeof(UINT32);
 	/* Shift left by "shift" and divide by two is the same as shift
@@ -227,7 +227,7 @@ static pstatus_t ssse3_YCoCgRToRGB_8u_AC4R_no_invert(const BYTE* WINPR_RESTRICT 
                                                      UINT32 height, UINT8 shift, BOOL withAlpha)
 {
 	const BYTE* sptr = pSrc;
-	BYTE* dptr = (BYTE*)pDst;
+	BYTE* dptr = pDst;
 	int sRowBump = srcStep - width * sizeof(UINT32);
 	int dRowBump = dstStep - width * sizeof(UINT32);
 	/* Shift left by "shift" and divide by two is the same as shift

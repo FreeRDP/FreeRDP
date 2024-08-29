@@ -333,7 +333,7 @@ static BOOL print_negative(char* buffer, size_t size, INT64 value, INT64 min)
 			(void)_snprintf(buffer, size, "%" PRId32, (INT32)value);
 			return FALSE;
 		case INT64_MIN:
-			(void)_snprintf(buffer, size, "%" PRId64, (INT64)value);
+			(void)_snprintf(buffer, size, "%" PRId64, value);
 			return FALSE;
 		default:
 			(void)_snprintf(buffer, size, "too small a number");
@@ -358,7 +358,7 @@ static BOOL print_xpositive(char* buffer, size_t size, INT64 value, INT64 max)
 			(void)_snprintf(buffer, size, "%" PRIx32, (INT32)value);
 			return FALSE;
 		case INT64_MAX:
-			(void)_snprintf(buffer, size, "%" PRIx64, (INT64)value);
+			(void)_snprintf(buffer, size, "%" PRIx64, value);
 			return FALSE;
 		default:
 			(void)_snprintf(buffer, size, "too small a number");

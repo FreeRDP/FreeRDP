@@ -386,7 +386,7 @@ static UINT audin_oss_parse_addin_args(AudinOSSDevice* device, const ADDIN_ARGV*
 	char* eptr = NULL;
 	DWORD flags = 0;
 	const COMMAND_LINE_ARGUMENT_A* arg = NULL;
-	AudinOSSDevice* oss = (AudinOSSDevice*)device;
+	AudinOSSDevice* oss = device;
 	COMMAND_LINE_ARGUMENT_A audin_oss_args[] = { { "dev", COMMAND_LINE_VALUE_REQUIRED, "<device>",
 		                                           NULL, NULL, -1, NULL, "audio device name" },
 		                                         { NULL, 0, NULL, NULL, NULL, -1, NULL, NULL } };

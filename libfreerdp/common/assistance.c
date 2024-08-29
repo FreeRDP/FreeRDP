@@ -78,7 +78,7 @@ struct rdp_assistance_file
 static const char* strrstr(const char* haystack, size_t len, const char* needle)
 {
 	if (*needle == '\0')
-		return (const char*)haystack;
+		return haystack;
 
 	char* result = NULL;
 	for (;;)
@@ -960,8 +960,8 @@ static BOOL freerdp_assistance_decrypt2(rdpAssistanceFile* file)
 		goto fail;
 
 	cbOut = cbFinal = 0;
-	cbIn = (size_t)file->EncryptedLHTicketLength;
-	pbIn = (BYTE*)file->EncryptedLHTicket;
+	cbIn = file->EncryptedLHTicketLength;
+	pbIn = file->EncryptedLHTicket;
 	pbOut = (BYTE*)calloc(1, cbIn + WINPR_AES_BLOCK_SIZE + 2);
 
 	if (!pbOut)

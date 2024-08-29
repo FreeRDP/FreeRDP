@@ -862,7 +862,7 @@ BOOL freerdp_client_add_static_channel(rdpSettings* settings, size_t count, cons
 	if (freerdp_static_channel_collection_find(settings, params[0]))
 		return TRUE;
 
-	_args = freerdp_addin_argv_new(count, (const char**)params);
+	_args = freerdp_addin_argv_new(count, params);
 
 	if (!_args)
 		return FALSE;

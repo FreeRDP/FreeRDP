@@ -240,7 +240,7 @@ SECURITY_STATUS NCryptGetProperty(NCRYPT_HANDLE hObject, LPCWSTR pszProperty, PB
 SECURITY_STATUS NCryptFreeObject(NCRYPT_HANDLE hObject)
 {
 	NCryptBaseHandle* base = NULL;
-	SECURITY_STATUS ret = checkNCryptHandle((NCRYPT_HANDLE)hObject, WINPR_NCRYPT_INVALID);
+	SECURITY_STATUS ret = checkNCryptHandle(hObject, WINPR_NCRYPT_INVALID);
 	if (ret != ERROR_SUCCESS)
 		return ret;
 

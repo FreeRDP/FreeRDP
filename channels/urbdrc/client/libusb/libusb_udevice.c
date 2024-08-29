@@ -1446,7 +1446,7 @@ static int libusb_udev_cancel_transfer_request(IUDEVICE* idev, UINT32 RequestId)
 
 	if (transfer)
 	{
-		URBDRC_PLUGIN* urbdrc = (URBDRC_PLUGIN*)pdev->urbdrc;
+		URBDRC_PLUGIN* urbdrc = pdev->urbdrc;
 
 		rc = func_cancel_xact_request(urbdrc, transfer);
 	}

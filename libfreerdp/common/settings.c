@@ -272,7 +272,7 @@ RDPDR_DEVICE* freerdp_device_collection_find(rdpSettings* settings, const char* 
 	WINPR_ASSERT(name);
 	for (UINT32 index = 0; index < settings->DeviceCount; index++)
 	{
-		device = (RDPDR_DEVICE*)settings->DeviceArray[index];
+		device = settings->DeviceArray[index];
 
 		if (!device->Name)
 			continue;
@@ -291,7 +291,7 @@ RDPDR_DEVICE* freerdp_device_collection_find_type(rdpSettings* settings, UINT32 
 
 	for (UINT32 index = 0; index < settings->DeviceCount; index++)
 	{
-		device = (RDPDR_DEVICE*)settings->DeviceArray[index];
+		device = settings->DeviceArray[index];
 
 		if (device->Type == type)
 			return device;

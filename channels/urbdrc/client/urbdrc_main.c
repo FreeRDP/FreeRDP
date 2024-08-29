@@ -577,7 +577,7 @@ static UINT urbdrc_on_data_received(IWTSVirtualChannelCallback* pChannelCallback
 	if (urbdrc->udevman == NULL)
 		return error;
 
-	udevman = (IUDEVMAN*)urbdrc->udevman;
+	udevman = urbdrc->udevman;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, data, 12))
 		return ERROR_INVALID_DATA;

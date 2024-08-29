@@ -184,7 +184,7 @@ int websocket_write(BIO* bio, const BYTE* buf, int isize, WEBSOCKET_OPCODE opcod
 	/* mask as much as possible with 32bit access */
 	for (streamPos = 0; streamPos + 4 <= isize; streamPos += 4)
 	{
-		uint32_t masked = *((const uint32_t*)((const BYTE*)buf + streamPos)) ^ maskingKey;
+		uint32_t masked = *((const uint32_t*)(buf + streamPos)) ^ maskingKey;
 		Stream_Write_UINT32(sWS, masked);
 	}
 
@@ -192,7 +192,7 @@ int websocket_write(BIO* bio, const BYTE* buf, int isize, WEBSOCKET_OPCODE opcod
 	for (; streamPos < isize; streamPos++)
 	{
 		BYTE* partialMask = (BYTE*)(&maskingKey) + streamPos % 4;
-		BYTE masked = *((const BYTE*)((const BYTE*)buf + streamPos)) ^ *partialMask;
+		BYTE masked = *((buf + streamPos)) ^ *partialMask;
 		Stream_Write_UINT8(sWS, masked);
 	}
 

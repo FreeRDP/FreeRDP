@@ -102,8 +102,8 @@ static pstatus_t general_copy_8u(const BYTE* pSrc, BYTE* pDst, INT32 len)
 static pstatus_t general_copy_8u_AC4r(const BYTE* pSrc, INT32 srcStep, BYTE* pDst, INT32 dstStep,
                                       INT32 width, INT32 height)
 {
-	const BYTE* src = (const BYTE*)pSrc;
-	BYTE* dst = (BYTE*)pDst;
+	const BYTE* src = pSrc;
+	BYTE* dst = pDst;
 	int rowbytes = width * sizeof(UINT32);
 
 	if ((width == 0) || (height == 0))

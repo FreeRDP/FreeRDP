@@ -1469,7 +1469,7 @@ out_close:
 
 static BOOL rail_server_stop(RailServerContext* context)
 {
-	RailServerPrivate* priv = (RailServerPrivate*)context->priv;
+	RailServerPrivate* priv = context->priv;
 
 	if (priv->thread)
 	{

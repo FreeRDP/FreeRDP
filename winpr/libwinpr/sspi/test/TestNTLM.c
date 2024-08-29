@@ -545,7 +545,7 @@ static BOOL test_default(void)
 	if (!DynamicTest)
 	{
 		pSecBuffer->cbBuffer = sizeof(TEST_NTLM_NEGOTIATE) - 1;
-		pSecBuffer->pvBuffer = (void*)malloc(pSecBuffer->cbBuffer);
+		pSecBuffer->pvBuffer = malloc(pSecBuffer->cbBuffer);
 
 		if (!pSecBuffer->pvBuffer)
 		{
@@ -604,7 +604,7 @@ static BOOL test_default(void)
 	{
 		SecPkgContext_AuthNtlmMessage AuthNtlmMessage = { 0 };
 		pSecBuffer->cbBuffer = sizeof(TEST_NTLM_CHALLENGE) - 1;
-		pSecBuffer->pvBuffer = (void*)malloc(pSecBuffer->cbBuffer);
+		pSecBuffer->pvBuffer = malloc(pSecBuffer->cbBuffer);
 
 		if (!pSecBuffer->pvBuffer)
 		{
@@ -644,7 +644,7 @@ static BOOL test_default(void)
 	if (!DynamicTest)
 	{
 		pSecBuffer->cbBuffer = sizeof(TEST_NTLM_AUTHENTICATE) - 1;
-		pSecBuffer->pvBuffer = (void*)malloc(pSecBuffer->cbBuffer);
+		pSecBuffer->pvBuffer = malloc(pSecBuffer->cbBuffer);
 
 		if (!pSecBuffer->pvBuffer)
 		{

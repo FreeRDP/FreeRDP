@@ -531,7 +531,7 @@ static BOOL rdg_send_tunnel_request(rdpRdg* rdg)
 	if (PAACookie)
 	{
 		Stream_Write_UINT16(s, (UINT16)PAACookieLen * sizeof(WCHAR)); /* PAA cookie string length */
-		Stream_Write_UTF16_String(s, PAACookie, (size_t)PAACookieLen);
+		Stream_Write_UTF16_String(s, PAACookie, PAACookieLen);
 	}
 
 	Stream_SealLength(s);
@@ -578,7 +578,7 @@ static BOOL rdg_send_tunnel_authorization(rdpRdg* rdg)
 	Stream_Write_UINT32(s, packetSize);                            /* PacketLength (4 bytes) */
 	Stream_Write_UINT16(s, 0);                                     /* FieldsPresent (2 bytes) */
 	Stream_Write_UINT16(s, (UINT16)clientNameLen * sizeof(WCHAR)); /* Client name string length */
-	Stream_Write_UTF16_String(s, clientName, (size_t)clientNameLen);
+	Stream_Write_UTF16_String(s, clientName, clientNameLen);
 	Stream_SealLength(s);
 	status = rdg_write_packet(rdg, s);
 	Stream_Free(s, TRUE);
@@ -622,7 +622,7 @@ static BOOL rdg_send_channel_create(rdpRdg* rdg)
 	                    (UINT16)rdg->context->settings->ServerPort); /* Resource port (2 bytes) */
 	Stream_Write_UINT16(s, 3);                                 /* Protocol number (2 bytes) */
 	Stream_Write_UINT16(s, (UINT16)serverNameLen * sizeof(WCHAR));
-	Stream_Write_UTF16_String(s, serverName, (size_t)serverNameLen);
+	Stream_Write_UTF16_String(s, serverName, serverNameLen);
 	Stream_SealLength(s);
 	status = rdg_write_packet(rdg, s);
 fail:
@@ -1678,7 +1678,7 @@ static int rdg_write_websocket_data_packet(rdpRdg* rdg, const BYTE* buf, int isi
 	/* mask as much as possible with 32bit access */
 	for (streamPos = 0; streamPos + 4 <= isize; streamPos += 4)
 	{
-		uint32_t masked = *((const uint32_t*)((const BYTE*)buf + streamPos)) ^ maskingKey;
+		uint32_t masked = *((const uint32_t*)(buf + streamPos)) ^ maskingKey;
 		Stream_Write_UINT32(sWS, masked);
 	}
 
@@ -1686,7 +1686,7 @@ static int rdg_write_websocket_data_packet(rdpRdg* rdg, const BYTE* buf, int isi
 	for (; streamPos < isize; streamPos++)
 	{
 		BYTE* partialMask = (BYTE*)(&maskingKey) + streamPos % 4;
-		BYTE masked = *((const BYTE*)((const BYTE*)buf + streamPos)) ^ *partialMask;
+		BYTE masked = *((buf + streamPos)) ^ *partialMask;
 		Stream_Write_UINT8(sWS, masked);
 	}
 

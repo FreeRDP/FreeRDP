@@ -583,10 +583,9 @@ static BOOL tsmf_sample_playback(TSMF_SAMPLE* sample)
 
 					if (temp_stream->major_type == TSMF_MAJOR_TYPE_AUDIO)
 					{
-						UINT64 video_time =
-						    (UINT64)stream->decoder->GetRunningTime(stream->decoder);
+						UINT64 video_time = stream->decoder->GetRunningTime(stream->decoder);
 						UINT64 audio_time =
-						    (UINT64)temp_stream->decoder->GetRunningTime(temp_stream->decoder);
+						    temp_stream->decoder->GetRunningTime(temp_stream->decoder);
 						UINT64 max_adjust = VIDEO_ADJUST_MAX;
 
 						if (video_time < audio_time)

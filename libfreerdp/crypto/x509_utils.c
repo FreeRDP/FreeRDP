@@ -377,7 +377,7 @@ static char* object_string(ASN1_TYPE* object)
 		return 0;
 	}
 
-	result = (char*)_strdup((char*)utf8String);
+	result = _strdup((char*)utf8String);
 	OPENSSL_free(utf8String);
 	return result;
 }

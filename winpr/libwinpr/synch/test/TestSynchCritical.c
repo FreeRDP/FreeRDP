@@ -193,7 +193,7 @@ static DWORD WINAPI TestSynchCritical_Main(LPVOID arg)
 			       critical.RecursionCount, i);
 			goto fail;
 		}
-		if (critical.OwningThread != (HANDLE)(i ? hMainThread : NULL))
+		if (critical.OwningThread != (i ? hMainThread : NULL))
 		{
 			printf("CriticalSection failure: Could not verify section ownership (loop index=%d).\n",
 			       i);
