@@ -69,6 +69,8 @@
 #include <freerdp/log.h>
 #define TAG CLIENT_TAG("common.cmdline")
 
+static const char str_force[] = "force";
+
 static const char* option_starts_with(const char* what, const char* val);
 static BOOL option_ends_with(const char* str, const char* ext);
 static BOOL option_equals(const char* what, const char* val);
@@ -4330,7 +4332,7 @@ static int freerdp_client_settings_parse_command_line_arguments_int(
 
 			if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
 			{
-				if (option_equals(arg->Value, "force"))
+				if (option_equals(arg->Value, str_force))
 				{
 					if (!freerdp_settings_set_bool(settings, FreeRDP_ForceMultimon, TRUE))
 						return fail_at(arg, COMMAND_LINE_ERROR);
@@ -4637,7 +4639,7 @@ static int freerdp_client_settings_parse_command_line_arguments_int(
 		}
 		CommandLineSwitchCase(arg, "ipv4")
 		{
-			if (arg->Value != NULL && strncmp(arg->Value, "force", 6) == 0)
+			if (arg->Value != NULL && strncmp(arg->Value, str_force, ARRAYSIZE(str_force)) == 0)
 			{
 				if (!freerdp_settings_set_uint32(settings, FreeRDP_ForceIPvX, 4))
 					return fail_at(arg, COMMAND_LINE_ERROR);
@@ -4650,7 +4652,7 @@ static int freerdp_client_settings_parse_command_line_arguments_int(
 		}
 		CommandLineSwitchCase(arg, "ipv6")
 		{
-			if (arg->Value != NULL && strncmp(arg->Value, "force", 6) == 0)
+			if (arg->Value != NULL && strncmp(arg->Value, str_force, ARRAYSIZE(str_force)) == 0)
 			{
 				if (!freerdp_settings_set_uint32(settings, FreeRDP_ForceIPvX, 6))
 					return fail_at(arg, COMMAND_LINE_ERROR);
@@ -4986,7 +4988,7 @@ static int freerdp_client_settings_parse_command_line_arguments_int(
 			{
 				if (!arg->Value)
 					return fail_at(arg, COMMAND_LINE_ERROR_UNEXPECTED_VALUE);
-				promptForPassword = (option_equals(arg->Value, "force"));
+				promptForPassword = (option_equals(arg->Value, str_force));
 
 				if (!promptForPassword)
 					return fail_at(arg, COMMAND_LINE_ERROR);

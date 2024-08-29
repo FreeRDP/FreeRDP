@@ -269,7 +269,7 @@ static BOOL WLog_PacketMessage_Write_EthernetHeader(wPcap* pcap, wEthernetHeader
 	return ret;
 }
 
-static UINT16 IPv4Checksum(BYTE* ipv4, int length)
+static UINT16 IPv4Checksum(const BYTE* ipv4, int length)
 {
 	UINT16 tmp16 = 0;
 	long checksum = 0;

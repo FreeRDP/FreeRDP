@@ -27,7 +27,7 @@ class SdlWindow
   public:
 	SdlWindow(const std::string& title, Sint32 startupX, Sint32 startupY, Sint32 width,
 	          Sint32 height, Uint32 flags);
-	SdlWindow(SdlWindow&& other);
+	SdlWindow(SdlWindow&& other) noexcept;
 	~SdlWindow();
 
 	[[nodiscard]] Uint32 id() const;
@@ -57,6 +57,5 @@ class SdlWindow
 	Sint32 _offset_x = 0;
 	Sint32 _offset_y = 0;
 
-  private:
 	SdlWindow(const SdlWindow& other) = delete;
 };

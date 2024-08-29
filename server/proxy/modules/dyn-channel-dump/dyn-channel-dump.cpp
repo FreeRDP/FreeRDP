@@ -70,7 +70,7 @@ static constexpr char key_channels[] = "channels";
 class PluginData
 {
   public:
-	PluginData(proxyPluginsManager* mgr) : _mgr(mgr), _sessionid(0)
+	explicit PluginData(proxyPluginsManager* mgr) : _mgr(mgr)
 	{
 	}
 

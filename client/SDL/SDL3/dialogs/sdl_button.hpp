@@ -7,7 +7,7 @@
 class SdlButton : public SdlWidget
 {
   public:
-	SdlButton(SDL_Renderer* renderer, const std::string& label, int id, const SDL_FRect& rect);
+	SdlButton(SDL_Renderer* renderer, std::string label, int id, const SDL_FRect& rect);
 	SdlButton(SdlButton&& other) noexcept;
 	~SdlButton() override = default;
 
@@ -20,7 +20,6 @@ class SdlButton : public SdlWidget
   private:
 	SdlButton(const SdlButton& other) = delete;
 
-  private:
 	std::string _name;
 	int _id;
 };

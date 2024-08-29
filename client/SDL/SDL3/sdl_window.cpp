@@ -35,7 +35,7 @@ SdlWindow::SdlWindow(const std::string& title, Sint32 startupX, Sint32 startupY,
 	SDL_DestroyProperties(props);
 }
 
-SdlWindow::SdlWindow(SdlWindow&& other)
+SdlWindow::SdlWindow(SdlWindow&& other) noexcept
     : _window(other._window), _offset_x(other._offset_x), _offset_y(other._offset_y)
 {
 	other._window = nullptr;
