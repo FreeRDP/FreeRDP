@@ -34,6 +34,7 @@ Checks: >
     -cppcoreguidelines-avoid-non-const-global-variables,
     -cppcoreguidelines-pro-type-vararg,
     -google-readability-braces-around-statements,
+    -google-readability-todo,
     -hicpp-braces-around-statements,
     -hicpp-no-array-decay,
     -hicpp-multiway-paths-covered,
