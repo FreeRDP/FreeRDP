@@ -53,8 +53,8 @@ void winpr_HexLogDump(wLog* log, UINT32 lvl, const void* data, size_t length)
 	 * ASIC line       'ab..cd'
 	 * zero terminator '\0'
 	 */
-	const size_t blen =
-	    (maxlen + 3) + (WINPR_HEXDUMP_LINE_LENGTH * 3) + 3 + WINPR_HEXDUMP_LINE_LENGTH + 1;
+	const size_t blen = (maxlen + 3ULL) + (WINPR_HEXDUMP_LINE_LENGTH * 3ULL) + 3ULL +
+	                    WINPR_HEXDUMP_LINE_LENGTH + 1ULL;
 	size_t pos = 0;
 
 	char* buffer = NULL;

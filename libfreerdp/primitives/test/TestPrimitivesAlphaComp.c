@@ -29,7 +29,7 @@
 #define TOLERANCE 1
 static inline const UINT32* PIXEL(const BYTE* _addr_, UINT32 _bytes_, UINT32 _x_, UINT32 _y_)
 {
-	const BYTE* addr = _addr_ + _x_ * sizeof(UINT32) + _y_ * _bytes_;
+	const BYTE* addr = _addr_ + 1ULL * _x_ * sizeof(UINT32) + 1ULL * _y_ * _bytes_;
 	return (const UINT32*)addr;
 }
 

@@ -273,7 +273,7 @@ static void* winpr_bitmap_write_buffer(const BYTE* data, size_t size, UINT32 wid
 		goto fail;
 	Stream_Write(s, bmp_header, WINPR_IMAGE_BMP_HEADER_LEN);
 
-	if (!Stream_EnsureRemainingCapacity(s, stride * height * 1ull))
+	if (!Stream_EnsureRemainingCapacity(s, 1ULL * stride * height))
 		goto fail;
 
 	for (size_t y = 0; y < height; y++)
@@ -677,7 +677,7 @@ SSIZE_T winpr_convert_from_jpeg(const BYTE* comp_data, size_t comp_data_bytes, U
 	if (!jpeg_start_decompress(&cinfo))
 		goto fail;
 
-	size_t stride = cinfo.image_width * cinfo.num_components;
+	size_t stride = 1ULL * cinfo.image_width * cinfo.num_components;
 
 	decomp_data = calloc(stride, cinfo.image_height);
 	if (decomp_data)
@@ -947,9 +947,9 @@ static void* winpr_read_png_from_buffer(const void* data, size_t SrcSize, size_t
 	row_pointers = png_get_rows(png_ptr, info_ptr);
 	if (row_pointers)
 	{
-		const size_t stride = width * bpp / 8ull;
+		const size_t stride = 1ULL * width * bpp / 8ull;
 		const size_t png_stride = png_get_rowbytes(png_ptr, info_ptr);
-		const size_t size = width * height * bpp / 8ull;
+		const size_t size = 1ULL * width * height * bpp / 8ull;
 		const size_t copybytes = stride > png_stride ? png_stride : stride;
 
 		rc = malloc(size);

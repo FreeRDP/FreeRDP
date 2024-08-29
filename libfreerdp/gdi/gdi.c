@@ -608,7 +608,7 @@ static BOOL gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 		case GDI_BS_HATCHED:
 		{
 			const BYTE* hatched = NULL;
-			hatched = GDI_BS_HATCHED_PATTERNS + (8 * brush->hatch);
+			hatched = GDI_BS_HATCHED_PATTERNS + (8ULL * brush->hatch);
 
 			if (!freerdp_image_copy_from_monochrome(data, gdi->drawing->hdc->format, 0, 0, 0, 8, 8,
 			                                        hatched, backColor, foreColor, &gdi->palette))
@@ -880,7 +880,7 @@ static BOOL gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 			HGDI_BITMAP hBmp = NULL;
 			UINT32 brushFormat = 0;
 			BYTE* data = (BYTE*)winpr_aligned_malloc(
-			    8 * 8 * FreeRDPGetBytesPerPixel(gdi->drawing->hdc->format), 16);
+			    8ULL * 8ULL * FreeRDPGetBytesPerPixel(gdi->drawing->hdc->format), 16);
 
 			if (!data)
 			{

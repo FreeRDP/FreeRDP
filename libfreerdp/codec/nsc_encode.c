@@ -113,7 +113,7 @@ fail:
 static BOOL nsc_encode_argb_to_aycocg(NSC_CONTEXT* WINPR_RESTRICT context,
                                       const BYTE* WINPR_RESTRICT data, UINT32 scanline)
 {
-	UINT16 y = 0;
+	size_t y = 0;
 	UINT16 rw = 0;
 	BYTE ccl = 0;
 	const BYTE* src = NULL;
@@ -287,7 +287,7 @@ static BOOL nsc_encode_subsampling(NSC_CONTEXT* WINPR_RESTRICT context)
 	if (tempWidth > context->priv->PlaneBuffersLength / tempHeight)
 		return FALSE;
 
-	for (UINT32 y = 0; y < tempHeight >> 1; y++)
+	for (size_t y = 0; y < tempHeight >> 1; y++)
 	{
 		BYTE* co_dst = context->priv->PlaneBuffers[1] + y * (tempWidth >> 1);
 		BYTE* cg_dst = context->priv->PlaneBuffers[2] + y * (tempWidth >> 1);

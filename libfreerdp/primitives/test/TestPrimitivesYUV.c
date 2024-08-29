@@ -187,8 +187,8 @@ static BOOL TestPrimitiveYUVCombine(primitives_t* prims, prim_size_t roi)
 		const BYTE** cpv;
 		BYTE** pv;
 	} cnv;
-	UINT32 awidth = 0;
-	UINT32 aheight = 0;
+	size_t awidth = 0;
+	size_t aheight = 0;
 	BOOL rc = FALSE;
 	BYTE* luma[3] = { 0 };
 	BYTE* chroma[3] = { 0 };
@@ -283,10 +283,10 @@ static BOOL TestPrimitiveYUVCombine(primitives_t* prims, prim_size_t roi)
 
 	PROFILER_EXIT(yuvCombine)
 
-	for (UINT32 x = 0; x < 3; x++)
+	for (size_t x = 0; x < 3; x++)
 	{
 		size_t halfStride = ((x > 0) ? awidth / 2 : awidth);
-		size_t size = aheight * awidth;
+		size_t size = 1ULL * aheight * awidth;
 		size_t halfSize = ((x > 0) ? halfStride * aheight / 2 : awidth * aheight);
 
 		if (!check_padding(luma[x], halfSize, padding, "luma"))
@@ -327,9 +327,9 @@ static BOOL TestPrimitiveYUVCombine(primitives_t* prims, prim_size_t roi)
 			goto fail;
 	}
 
-	for (UINT32 i = 0; i < 3; i++)
+	for (size_t i = 0; i < 3; i++)
 	{
-		for (UINT32 y = 0; y < roi.height; y++)
+		for (size_t y = 0; y < roi.height; y++)
 		{
 			UINT32 w = roi.width;
 			UINT32 lstride = lumaStride[i];
@@ -403,7 +403,7 @@ static BOOL TestPrimitiveYUV(primitives_t* prims, prim_size_t roi, BOOL use444)
 	size_t size = 0;
 	size_t uvsize = 0;
 	size_t uvwidth = 0;
-	size_t padding = 100 * 16;
+	size_t padding = 100ULL * 16ULL;
 	UINT32 stride = 0;
 	const UINT32 formats[] = { PIXEL_FORMAT_XRGB32, PIXEL_FORMAT_XBGR32, PIXEL_FORMAT_ARGB32,
 		                       PIXEL_FORMAT_ABGR32, PIXEL_FORMAT_RGBA32, PIXEL_FORMAT_RGBX32,
@@ -415,8 +415,8 @@ static BOOL TestPrimitiveYUV(primitives_t* prims, prim_size_t roi, BOOL use444)
 	/* Buffers need to be 16x16 aligned. */
 	awidth = roi.width + 16 - roi.width % 16;
 	aheight = roi.height + 16 - roi.height % 16;
-	stride = awidth * sizeof(UINT32);
-	size = awidth * aheight;
+	stride = 1ULL * awidth * sizeof(UINT32);
+	size = 1ULL * awidth * aheight;
 
 	if (use444)
 	{
@@ -454,7 +454,7 @@ static BOOL TestPrimitiveYUV(primitives_t* prims, prim_size_t roi, BOOL use444)
 	if (!(yuv[2] = set_padding(uvsize, padding)))
 		goto fail;
 
-	for (UINT32 y = 0; y < roi.height; y++)
+	for (size_t y = 0; y < roi.height; y++)
 	{
 		BYTE* line = &rgb[y * stride];
 
@@ -568,7 +568,7 @@ static BOOL TestPrimitiveYUV(primitives_t* prims, prim_size_t roi, BOOL use444)
 		    (!check_padding(yuv[2], uvsize, padding, "V")))
 			goto fail;
 
-		for (UINT32 y = 0; y < roi.height; y++)
+		for (size_t y = 0; y < roi.height; y++)
 		{
 			BYTE* srgb = &rgb[y * stride];
 			BYTE* drgb = &rgb_dst[y * stride];
@@ -595,9 +595,9 @@ fail:
 
 static BOOL allocate_yuv420(BYTE** planes, UINT32 width, UINT32 height, UINT32 padding)
 {
-	const size_t size = width * height;
-	const size_t uvwidth = (width + 1) / 2;
-	const size_t uvsize = (height + 1) / 2 * uvwidth;
+	const size_t size = 1ULL * width * height;
+	const size_t uvwidth = (1ULL + width) / 2;
+	const size_t uvsize = (1ULL + height) / 2 * uvwidth;
 
 	if (!(planes[0] = set_padding(size, padding)))
 		goto fail;
@@ -630,7 +630,7 @@ static void free_yuv420(BYTE** planes, UINT32 padding)
 }
 static BOOL check_yuv420(BYTE** planes, UINT32 width, UINT32 height, UINT32 padding)
 {
-	const size_t size = width * height;
+	const size_t size = 1ULL * width * height;
 	const size_t uvwidth = (width + 1) / 2;
 	const size_t uvsize = (height + 1) / 2 * uvwidth;
 	const BOOL yOk = check_padding(planes[0], size, padding, "Y");
@@ -662,9 +662,9 @@ static BOOL compare_yuv420(BYTE** planesA, BYTE** planesB, UINT32 width, UINT32 
                            UINT32 padding)
 {
 	BOOL rc = TRUE;
-	const size_t size = width * height;
-	const size_t uvwidth = (width + 1) / 2;
-	const size_t uvsize = (height + 1) / 2 * uvwidth;
+	const size_t size = 1ULL * width * height;
+	const size_t uvwidth = (1ULL * width + 1) / 2;
+	const size_t uvsize = (1ULL * height + 1) / 2 * uvwidth;
 
 	if (check_for_mismatches(planesA[0], planesB[0], size))
 	{
@@ -720,9 +720,9 @@ static BOOL TestPrimitiveRgbToLumaChroma(primitives_t* prims, prim_size_t roi, U
 	if (aheight % 16 != 0)
 		aheight += 16 - roi.height % 16;
 
-	stride = awidth * sizeof(UINT32);
-	size = awidth * aheight;
-	uvwidth = (awidth + 1) / 2;
+	stride = 1ULL * awidth * sizeof(UINT32);
+	size = 1ULL * awidth * aheight;
+	uvwidth = 1ULL * (awidth + 1) / 2;
 
 	if (!prims || !generic)
 		return FALSE;
@@ -765,7 +765,7 @@ static BOOL TestPrimitiveRgbToLumaChroma(primitives_t* prims, prim_size_t roi, U
 	if (!allocate_yuv420(chromaGeneric, awidth, aheight, padding))
 		goto fail;
 
-	for (UINT32 y = 0; y < roi.height; y++)
+	for (size_t y = 0; y < roi.height; y++)
 	{
 		BYTE* line = &rgb[y * stride];
 

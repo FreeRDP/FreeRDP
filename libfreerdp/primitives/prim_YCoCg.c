@@ -41,11 +41,11 @@ static pstatus_t general_YCoCgToRGB_8u_AC4R(const BYTE* pSrc, INT32 srcStep, BYT
 	const DWORD formatSize = FreeRDPGetBytesPerPixel(DstFormat);
 	fkt_writePixel writePixel = getPixelWriteFunction(DstFormat, TRUE);
 
-	for (UINT32 y = 0; y < height; y++)
+	for (size_t y = 0; y < height; y++)
 	{
-		const BYTE* sptr = &pSrc[srcStep * y];
-		BYTE* dptr = &pDst[dstStep * y];
-		for (UINT32 x = 0; x < width; x++)
+		const BYTE* sptr = &pSrc[y * srcStep];
+		BYTE* dptr = &pDst[y * dstStep];
+		for (size_t x = 0; x < width; x++)
 		{
 			/* Note: shifts must be done before sign-conversion. */
 			const INT16 Cg = convert(*sptr++, shift);

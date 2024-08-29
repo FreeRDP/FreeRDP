@@ -152,7 +152,7 @@ static INLINE UINT16 out_copy_count_2(UINT16 in_count, wStream* WINPR_RESTRICT i
 			Stream_Write_UINT16(in_s, in_count);
 		}
 
-		Stream_Write(in_s, Stream_Buffer(in_data), in_count * 2);
+		Stream_Write(in_s, Stream_Buffer(in_data), 2ULL * in_count);
 	}
 
 	Stream_SetPosition(in_data, 0);
@@ -184,7 +184,7 @@ static INLINE UINT16 out_copy_count_3(UINT16 in_count, wStream* WINPR_RESTRICT i
 			Stream_Write_UINT16(in_s, in_count);
 		}
 
-		Stream_Write(in_s, Stream_Pointer(in_data), in_count * 3);
+		Stream_Write(in_s, Stream_Pointer(in_data), 3ULL * in_count);
 	}
 
 	Stream_SetPosition(in_data, 0);
@@ -484,16 +484,16 @@ static INLINE SSIZE_T freerdp_bitmap_compress_24(const void* WINPR_RESTRICT srcD
 	UINT16 fom_count = 0;
 	size_t fom_mask_len = 0;
 	const char* start = (const char*)srcData;
-	const char* line = start + width * start_line * 4;
+	const char* line = start + 4ULL * width * start_line;
 	const char* last_line = NULL;
 
 	while ((line >= start) && (out_count < 32768))
 	{
-		size_t i = Stream_GetPosition(s) + count * 3U;
+		size_t i = Stream_GetPosition(s) + 3ULL * count;
 
-		if ((i - (color_count * 3) >= byte_limit) && (i - (bicolor_count * 3) >= byte_limit) &&
-		    (i - (fill_count * 3) >= byte_limit) && (i - (mix_count * 3) >= byte_limit) &&
-		    (i - (fom_count * 3) >= byte_limit))
+		if ((i - (3ULL * color_count) >= byte_limit) &&
+		    (i - (3ULL * bicolor_count) >= byte_limit) && (i - (3ULL * fill_count) >= byte_limit) &&
+		    (i - (3ULL * mix_count) >= byte_limit) && (i - (3ULL * fom_count) >= byte_limit))
 		{
 			break;
 		}
@@ -692,7 +692,7 @@ static INLINE SSIZE_T freerdp_bitmap_compress_24(const void* WINPR_RESTRICT srcD
 		}
 
 		last_line = line;
-		line = line - width * 4;
+		line = line - 4ULL * width;
 		start_line--;
 		lines_sent++;
 	}
@@ -790,16 +790,16 @@ static INLINE SSIZE_T freerdp_bitmap_compress_16(const void* WINPR_RESTRICT srcD
 	UINT16 fom_count = 0;
 	size_t fom_mask_len = 0;
 	const char* start = (const char*)srcData;
-	const char* line = start + width * start_line * 2;
+	const char* line = start + 2ULL * width * start_line;
 	const char* last_line = NULL;
 
 	while ((line >= start) && (out_count < 32768))
 	{
-		size_t i = Stream_GetPosition(s) + count * 2;
+		size_t i = Stream_GetPosition(s) + 2ULL * count;
 
-		if ((i - (color_count * 2) >= byte_limit) && (i - (bicolor_count * 2) >= byte_limit) &&
-		    (i - (fill_count * 2) >= byte_limit) && (i - (mix_count * 2) >= byte_limit) &&
-		    (i - (fom_count * 2) >= byte_limit))
+		if ((i - (2ULL * color_count) >= byte_limit) &&
+		    (i - (2ULL * bicolor_count) >= byte_limit) && (i - (2ULL * fill_count) >= byte_limit) &&
+		    (i - (2ULL * mix_count) >= byte_limit) && (i - (2ULL * fom_count) >= byte_limit))
 		{
 			break;
 		}
@@ -996,7 +996,7 @@ static INLINE SSIZE_T freerdp_bitmap_compress_16(const void* WINPR_RESTRICT srcD
 		}
 
 		last_line = line;
-		line = line - width * 2;
+		line = line - 2ULL * width;
 		start_line--;
 		lines_sent++;
 	}

@@ -35,11 +35,11 @@ static BOOL test_RGBToRGB_16s8u_P3AC4R_func(prim_size_t roi, DWORD DstFormat)
 	PROFILER_DEFINE(optProf)
 	PROFILER_CREATE(genericProf, "RGBToRGB_16s8u_P3AC4R-GENERIC")
 	PROFILER_CREATE(optProf, "RGBToRGB_16s8u_P3AC4R-OPTIMIZED")
-	r = winpr_aligned_calloc(1, rgbStride * roi.height, 16);
-	g = winpr_aligned_calloc(1, rgbStride * roi.height, 16);
-	b = winpr_aligned_calloc(1, rgbStride * roi.height, 16);
-	out1 = winpr_aligned_calloc(1, dstStride * roi.height, 16);
-	out2 = winpr_aligned_calloc(1, dstStride * roi.height, 16);
+	r = winpr_aligned_calloc(1, 1ULL * rgbStride * roi.height, 16);
+	g = winpr_aligned_calloc(1, 1ULL * rgbStride * roi.height, 16);
+	b = winpr_aligned_calloc(1, 1ULL * rgbStride * roi.height, 16);
+	out1 = winpr_aligned_calloc(1, 1ULL * dstStride * roi.height, 16);
+	out2 = winpr_aligned_calloc(1, 1ULL * dstStride * roi.height, 16);
 
 	if (!r || !g || !b || !out1 || !out2)
 		goto fail;
@@ -57,9 +57,9 @@ static BOOL test_RGBToRGB_16s8u_P3AC4R_func(prim_size_t roi, DWORD DstFormat)
 		}
 	}
 #else
-	winpr_RAND(r, rgbStride * roi.height);
-	winpr_RAND(g, rgbStride * roi.height);
-	winpr_RAND(b, rgbStride * roi.height);
+	winpr_RAND(r, 1ULL * rgbStride * roi.height);
+	winpr_RAND(g, 1ULL * rgbStride * roi.height);
+	winpr_RAND(b, 1ULL * rgbStride * roi.height);
 #endif
 	ptrs[0] = r;
 	ptrs[1] = g;
@@ -79,7 +79,7 @@ static BOOL test_RGBToRGB_16s8u_P3AC4R_func(prim_size_t roi, DWORD DstFormat)
 
 	PROFILER_EXIT(optProf)
 
-	if (memcmp(out1, out2, dstStride * roi.height) != 0)
+	if (memcmp(out1, out2, 1ULL * dstStride * roi.height) != 0)
 	{
 		for (UINT64 i = 0; i < 1ull * roi.width * roi.height; ++i)
 		{
