@@ -611,9 +611,10 @@ static const char* flagsToStr(char* buffer, size_t size, DWORD flags)
 
 BOOL SetFileAttributesA(LPCSTR lpFileName, DWORD dwFileAttributes)
 {
-	struct stat st;
-	int fd = 0;
 	BOOL rc = FALSE;
+#ifdef WINPR_HAVE_FCNTL_H
+	struct stat st = { 0 };
+	int fd = 0;
 
 	if (dwFileAttributes & ~FILE_ATTRIBUTE_READONLY)
 	{
@@ -645,6 +646,7 @@ BOOL SetFileAttributesA(LPCSTR lpFileName, DWORD dwFileAttributes)
 	rc = TRUE;
 fail:
 	close(fd);
+#endif
 	return rc;
 }
 
