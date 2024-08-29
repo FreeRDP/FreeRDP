@@ -834,9 +834,24 @@ static UINT handle_platform_mounts_bsd(wLog* log, hotplug_dev* dev_array, size_t
 
 #if defined(__LINUX__) || defined(__linux__)
 #include <mntent.h>
+static struct mntent* getmntent_x(FILE* f, struct mntent* buffer, char* pathbuffer,
+                                  size_t pathbuffersize)
+{
+#if defined(FREERDP_HAVE_GETMNTENT_R)
+	return getmntent_r(f, buffer, pathbuffer, pathbuffersize);
+#else
+	(void)buffer;
+	(void)pathbuffer;
+	(void)pathbuffersize;
+	return getmntent(f);
+#endif
+}
+
 static UINT handle_platform_mounts_linux(wLog* log, hotplug_dev* dev_array, size_t* size)
 {
 	FILE* f = NULL;
+	struct mntent mnt = { 0 };
+	char pathbuffer[PATH_MAX] = { 0 };
 	struct mntent* ent = NULL;
 	f = winpr_fopen("/proc/mounts", "r");
 	if (f == NULL)
@@ -844,7 +859,7 @@ static UINT handle_platform_mounts_linux(wLog* log, hotplug_dev* dev_array, size
 		WLog_Print(log, WLOG_ERROR, "fopen failed!");
 		return ERROR_OPEN_FAILED;
 	}
-	while ((ent = getmntent(f)) != NULL)
+	while ((ent = getmntent_x(f, &mnt, pathbuffer, sizeof(pathbuffer))) != NULL)
 	{
 		handle_mountpoint(dev_array, size, ent->mnt_dir);
 	}

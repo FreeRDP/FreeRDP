@@ -302,6 +302,8 @@ static UINT rdpsnd_recv_server_audio_formats_pdu(rdpsndPlugin* rdpsnd, wStream* 
 	WINPR_ASSERT(rdpsnd->device);
 	ret = IFCALLRESULT(CHANNEL_RC_OK, rdpsnd->device->ServerFormatAnnounce, rdpsnd->device,
 	                   rdpsnd->ServerFormats, rdpsnd->NumberOfServerFormats);
+	if (ret != CHANNEL_RC_OK)
+		goto out_fail;
 
 	rdpsnd_select_supported_audio_formats(rdpsnd);
 	WLog_Print(rdpsnd->log, WLOG_DEBUG, "%s Server Audio Formats",

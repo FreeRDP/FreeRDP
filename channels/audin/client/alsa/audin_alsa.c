@@ -174,7 +174,7 @@ static DWORD WINAPI audin_alsa_thread_func(LPVOID arg)
 
 		if (err == -EPIPE)
 		{
-			snd_pcm_recover(capture_handle, err, 0);
+			snd_pcm_recover(capture_handle, (int)err, 0);
 			continue;
 		}
 		else if (err < 0)

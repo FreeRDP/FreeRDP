@@ -772,13 +772,11 @@ static UINT rdpgfx_send_cache_import_offer_pdu(RdpgfxClientContext* context,
 	wStream* s = NULL;
 	RDPGFX_HEADER header;
 	GENERIC_CHANNEL_CALLBACK* callback = NULL;
-	WINPR_ASSERT(context);
-	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*)context->handle;
 
 	if (!context || !pdu)
 		return ERROR_BAD_ARGUMENTS;
 
-	gfx = (RDPGFX_PLUGIN*)context->handle;
+	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*)context->handle;
 
 	if (!gfx || !gfx->base.listener_callback)
 		return ERROR_BAD_CONFIGURATION;
