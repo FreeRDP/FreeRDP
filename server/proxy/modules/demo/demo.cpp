@@ -265,7 +265,7 @@ static BOOL demo_mouse_ex_event(proxyPlugin* plugin, proxyData* pdata, void* par
 
 static BOOL demo_client_channel_data(proxyPlugin* plugin, proxyData* pdata, void* param)
 {
-	const proxyChannelDataEventInfo* channel = static_cast<const proxyChannelDataEventInfo*>(param);
+	const auto* channel = static_cast<const proxyChannelDataEventInfo*>(param);
 
 	WINPR_ASSERT(plugin);
 	WINPR_ASSERT(pdata);
@@ -278,7 +278,7 @@ static BOOL demo_client_channel_data(proxyPlugin* plugin, proxyData* pdata, void
 
 static BOOL demo_server_channel_data(proxyPlugin* plugin, proxyData* pdata, void* param)
 {
-	const proxyChannelDataEventInfo* channel = static_cast<const proxyChannelDataEventInfo*>(param);
+	const auto* channel = static_cast<const proxyChannelDataEventInfo*>(param);
 
 	WINPR_ASSERT(plugin);
 	WINPR_ASSERT(pdata);
@@ -291,7 +291,7 @@ static BOOL demo_server_channel_data(proxyPlugin* plugin, proxyData* pdata, void
 
 static BOOL demo_dynamic_channel_create(proxyPlugin* plugin, proxyData* pdata, void* param)
 {
-	const proxyChannelDataEventInfo* channel = static_cast<const proxyChannelDataEventInfo*>(param);
+	const auto* channel = static_cast<const proxyChannelDataEventInfo*>(param);
 
 	WINPR_ASSERT(plugin);
 	WINPR_ASSERT(pdata);
