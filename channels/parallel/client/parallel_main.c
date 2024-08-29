@@ -406,7 +406,8 @@ static UINT parallel_free_int(PARALLEL_DEVICE* parallel)
 static UINT parallel_free(DEVICE* device)
 {
 	if (device)
-		parallel_free_int(device);
+		return parallel_free_int((PARALLEL_DEVICE*)device);
+	return CHANNEL_RC_OK;
 }
 
 static void parallel_message_free(void* obj)

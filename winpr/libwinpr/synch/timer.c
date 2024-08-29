@@ -670,7 +670,6 @@ BOOL CancelWaitableTimer(HANDLE hTimer)
 
 int GetTimerFileDescriptor(HANDLE hTimer)
 {
-#ifndef _WIN32
 	WINPR_HANDLE* hdl = NULL;
 	ULONG type = 0;
 
@@ -682,9 +681,6 @@ int GetTimerFileDescriptor(HANDLE hTimer)
 	}
 
 	return winpr_Handle_getFd(hTimer);
-#else
-	return -1;
-#endif
 }
 
 /**

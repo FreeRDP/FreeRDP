@@ -1010,7 +1010,7 @@ static UINT rdpei_touch_process(RdpeiClientContext* context, INT32 externalId, U
 			if (p >= 360)
 			{
 				WLog_WARN(TAG,
-				          "TouchContact %" PRIu32 ": Invalid orientation value %" PRIu32
+				          "TouchContact %" PRId64 ": Invalid orientation value %" PRIu32
 				          "degree, clamping to 359 degree",
 				          contactIdlocal, p);
 				p = 359;
@@ -1023,7 +1023,7 @@ static UINT rdpei_touch_process(RdpeiClientContext* context, INT32 externalId, U
 			if (p > 1024)
 			{
 				WLog_WARN(TAG,
-				          "TouchContact %" PRIu32 ": Invalid pressure value %" PRIu32
+				          "TouchContact %" PRId64 ": Invalid pressure value %" PRIu32
 				          ", clamping to 1024",
 				          contactIdlocal, p);
 				p = 1024;
@@ -1035,7 +1035,7 @@ static UINT rdpei_touch_process(RdpeiClientContext* context, INT32 externalId, U
 	}
 
 	if (contactId)
-		*contactId = contactIdlocal;
+		*contactId = (INT32)contactIdlocal;
 	return error;
 }
 

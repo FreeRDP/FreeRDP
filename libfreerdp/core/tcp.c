@@ -1239,10 +1239,10 @@ int freerdp_tcp_default_connect(rdpContext* context, rdpSettings* settings, cons
 				sockfd = socket(addr->ai_family, addr->ai_socktype, addr->ai_protocol);
 				if (sockfd < 0)
 				{
-					const int rc = get_next_addrinfo(context, addr->ai_next, &addr,
-					                                 FREERDP_ERROR_CONNECT_FAILED);
-					if (rc < 0)
-						return rc;
+					const int lrc = get_next_addrinfo(context, addr->ai_next, &addr,
+					                                  FREERDP_ERROR_CONNECT_FAILED);
+					if (lrc < 0)
+						return lrc;
 				}
 			} while (sockfd < 0);
 

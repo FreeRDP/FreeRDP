@@ -138,11 +138,15 @@ static BOOL add_cert_to_list(SmartcardCertInfo*** certInfoList, size_t* count,
 		}
 	}
 
-	curInfoList = realloc(curInfoList, sizeof(SmartcardCertInfo*) * (curCount + 1));
-	if (!curInfoList)
 	{
-		WLog_ERR(TAG, "unable to reallocate certs");
-		return FALSE;
+		SmartcardCertInfo** tmpInfoList =
+		    realloc(curInfoList, sizeof(SmartcardCertInfo*) * (curCount + 1));
+		if (!tmpInfoList)
+		{
+			WLog_ERR(TAG, "unable to reallocate certs");
+			return FALSE;
+		}
+		curInfoList = tmpInfoList;
 	}
 
 	curInfoList[curCount++] = certInfo;

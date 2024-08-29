@@ -310,7 +310,7 @@ static VideoFrame* VideoFrame_new(VideoClientContextPriv* priv, PresentationCont
 	frame->h = surface->alignedHeight;
 	frame->scanline = surface->scanline;
 
-	frame->surfaceData = BufferPool_Take(priv->surfacePool, 1ull * frame->scanline * frame->h);
+	frame->surfaceData = BufferPool_Take(priv->surfacePool, 1ll * frame->scanline * frame->h);
 	if (!frame->surfaceData)
 		goto fail;
 

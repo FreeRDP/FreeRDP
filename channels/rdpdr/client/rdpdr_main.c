@@ -838,7 +838,8 @@ static struct mntent* getmntent_x(FILE* f, struct mntent* buffer, char* pathbuff
                                   size_t pathbuffersize)
 {
 #if defined(FREERDP_HAVE_GETMNTENT_R)
-	return getmntent_r(f, buffer, pathbuffer, pathbuffersize);
+	WINPR_ASSERT(pathbuffersize <= INT32_MAX);
+	return getmntent_r(f, buffer, pathbuffer, (int)pathbuffersize);
 #else
 	(void)buffer;
 	(void)pathbuffer;

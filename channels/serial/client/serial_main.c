@@ -21,7 +21,6 @@
 
 #include <freerdp/config.h>
 
-#include <winpr/assert.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdint.h>
