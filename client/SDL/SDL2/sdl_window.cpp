@@ -27,7 +27,7 @@ SdlWindow::SdlWindow(const std::string& title, Sint32 startupX, Sint32 startupY,
 {
 }
 
-SdlWindow::SdlWindow(SdlWindow&& other)
+SdlWindow::SdlWindow(SdlWindow&& other) noexcept
     : _window(other._window), _offset_x(other._offset_x), _offset_y(other._offset_y)
 {
 	other._window = nullptr;
@@ -180,7 +180,7 @@ bool SdlWindow::fill(Uint8 r, Uint8 g, Uint8 b, Uint8 a)
 	return true;
 }
 
-bool SdlWindow::blit(SDL_Surface* surface, const SDL_Rect& srcRect, SDL_Rect& dstRect)
+bool SdlWindow::blit(SDL_Surface* surface, SDL_Rect srcRect, SDL_Rect& dstRect)
 {
 	auto screen = SDL_GetWindowSurface(_window);
 	if (!screen || !surface)

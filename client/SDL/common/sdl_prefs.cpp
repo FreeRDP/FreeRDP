@@ -20,6 +20,7 @@
 #include <fstream>
 #if __has_include(<filesystem>)
 #include <filesystem>
+#include <utility>
 namespace fs = std::filesystem;
 #elif __has_include(<experimental/filesystem>)
 #include <experimental/filesystem>
@@ -102,7 +103,7 @@ std::vector<std::string> SdlPref::get_array(const std::string& key,
 	return values;
 }
 
-SdlPref::SdlPref(const std::string& file) : _name(file), _config(get())
+SdlPref::SdlPref(std::string file) : _name(std::move(file)), _config(get())
 {
 }
 

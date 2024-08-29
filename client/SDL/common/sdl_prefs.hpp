@@ -43,7 +43,7 @@ class SdlPref
 	std::string _name;
 	WINPR_JSONPtr _config;
 
-	SdlPref(const std::string& file);
+	explicit SdlPref(std::string file);
 
 	WINPR_JSON* get_item(const std::string& key);
 	WINPR_JSONPtr get();

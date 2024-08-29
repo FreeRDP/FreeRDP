@@ -62,7 +62,7 @@ void sdl_OnChannelDisconnectedEventHandler(void* context, const ChannelDisconnec
 	WINPR_ASSERT(sdl);
 	WINPR_ASSERT(e);
 
-	// TODO: Set resizeable depending on disp channel and /dynamic-resolution
+	// TODO(nin): Set resizeable depending on disp channel and /dynamic-resolution
 	if (strcmp(e->name, RAIL_SVC_CHANNEL_NAME) == 0)
 	{
 	}

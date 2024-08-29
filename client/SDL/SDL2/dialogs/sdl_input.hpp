@@ -34,9 +34,8 @@ class SdlInputWidget
 		SDL_INPUT_READONLY = 2
 	};
 
-  public:
-	SdlInputWidget(SDL_Renderer* renderer, const std::string& label, const std::string& initial,
-	               Uint32 flags, size_t offset, size_t width, size_t height);
+	SdlInputWidget(SDL_Renderer* renderer, std::string label, std::string initial, Uint32 flags,
+	               size_t offset, size_t width, size_t height);
 	SdlInputWidget(SdlInputWidget&& other) noexcept;
 
 	bool fill_label(SDL_Renderer* renderer, SDL_Color color);
@@ -62,7 +61,6 @@ class SdlInputWidget
   private:
 	SdlInputWidget(const SdlInputWidget& other) = delete;
 
-  private:
 	Uint32 _flags;
 	std::string _text;
 	std::string _text_label;

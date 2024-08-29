@@ -75,8 +75,8 @@ class SchemeHandler : public QWebEngineUrlSchemeHandler
 bool webview_impl_run(const std::string& title, const std::string& url, std::string& code)
 {
 	int argc = 1;
-	const auto vendor = QString::fromUtf8(FREERDP_VENDOR_STRING);
-	const auto product = QString::fromUtf8(FREERDP_PRODUCT_STRING);
+	const auto vendor = QLatin1String(FREERDP_VENDOR_STRING);
+	const auto product = QLatin1String(FREERDP_PRODUCT_STRING);
 	QWebEngineUrlScheme::registerScheme(QWebEngineUrlScheme("ms-appx-web"));
 
 	std::string wtitle = title;

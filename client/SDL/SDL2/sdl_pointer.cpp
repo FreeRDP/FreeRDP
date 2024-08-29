@@ -30,14 +30,14 @@
 
 #define TAG CLIENT_TAG("SDL.pointer")
 
-typedef struct
+using sdlPointer = struct
 {
 	rdpPointer pointer;
 	SDL_Cursor* cursor;
 	SDL_Surface* image;
 	size_t size;
 	void* data;
-} sdlPointer;
+};
 
 static BOOL sdl_Pointer_New(rdpContext* context, rdpPointer* pointer)
 {

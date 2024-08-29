@@ -333,14 +333,14 @@ static char* sdl_pem_cert(const char* pem)
 {
 	rdpCertificate* cert = freerdp_certificate_new_from_pem(pem);
 	if (!cert)
-		return NULL;
+		return nullptr;
 
 	char* fp = freerdp_certificate_get_fingerprint(cert);
 	char* start = freerdp_certificate_get_validity(cert, TRUE);
 	char* end = freerdp_certificate_get_validity(cert, FALSE);
 	freerdp_certificate_free(cert);
 
-	char* str = NULL;
+	char* str = nullptr;
 	size_t slen = 0;
 	winpr_asprintf(&str, &slen,
 	               "Valid from:  %s\n"
