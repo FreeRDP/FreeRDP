@@ -688,7 +688,9 @@ SSIZE_T winpr_convert_from_jpeg(const BYTE* comp_data, size_t comp_data_bytes, U
 			if (jpeg_read_scanlines(&cinfo, &row, 1) != 1)
 				goto fail;
 		}
-		size = stride * cinfo.image_height;
+		const size_t ssize = stride * cinfo.image_height;
+		WINPR_ASSERT(ssize < SSIZE_MAX);
+		size = (SSIZE_T)ssize;
 	}
 	jpeg_finish_decompress(&cinfo);
 
@@ -712,13 +714,16 @@ static void* winpr_convert_to_webp(const void* data, size_t size, UINT32 width, 
 #else
 	size_t dstSize = 0;
 	uint8_t* pDstData = NULL;
+	WINPR_ASSERT(width <= INT32_MAX);
+	WINPR_ASSERT(height <= INT32_MAX);
+	WINPR_ASSERT(stride <= INT32_MAX);
 	switch (bpp)
 	{
 		case 32:
-			dstSize = WebPEncodeLosslessBGRA(data, width, height, stride, &pDstData);
+			dstSize = WebPEncodeLosslessBGRA(data, (int)width, (int)height, (int)stride, &pDstData);
 			break;
 		case 24:
-			dstSize = WebPEncodeLosslessBGR(data, width, height, stride, &pDstData);
+			dstSize = WebPEncodeLosslessBGR(data, (int)width, (int)height, (int)stride, &pDstData);
 			break;
 		default:
 			return NULL;
@@ -805,7 +810,7 @@ static void png_flush(png_structp png_ptr)
 static SSIZE_T save_png_to_buffer(UINT32 bpp, UINT32 width, UINT32 height, const uint8_t* data,
                                   size_t size, void** pDstData)
 {
-	int rc = -1;
+	SSIZE_T rc = -1;
 	png_structp png_ptr = NULL;
 	png_infop info_ptr = NULL;
 	png_byte** row_pointers = NULL;

@@ -178,9 +178,9 @@ static BOOL TestStream_Create(size_t count, BOOL selfAlloc)
 
 		if (selfAlloc)
 		{
-			memset(buffer, i % 256, cap);
+			memset(buffer, (BYTE)(i % 256), cap);
 
-			if (memcmp(buffer, Stream_Buffer(s), cap))
+			if (memcmp(buffer, Stream_Buffer(s), cap) != 0)
 			{
 				printf("%s: buffer memory corruption\n", __func__);
 				goto fail;
@@ -265,14 +265,14 @@ fail:
 		if (_a != _b)                                                 \
 		{                                                             \
 			printf("%s: test1 " #_t "_LE failed\n", __func__);        \
-			_r = FALSE;                                               \
+			(_r) = FALSE;                                             \
 		}                                                             \
 		for (size_t _i = 0; _i < sizeof(_t); _i++)                    \
 		{                                                             \
 			if (((_a >> (_i * 8)) & 0xFF) != _p[_i])                  \
 			{                                                         \
 				printf("%s: test2 " #_t "_LE failed\n", __func__);    \
-				_r = FALSE;                                           \
+				(_r) = FALSE;                                         \
 				break;                                                \
 			}                                                         \
 		}                                                             \
@@ -283,14 +283,14 @@ fail:
 		if (_a != _b)                                                 \
 		{                                                             \
 			printf("%s: test1 " #_t "_BE failed\n", __func__);        \
-			_r = FALSE;                                               \
+			(_r) = FALSE;                                             \
 		}                                                             \
 		for (size_t _i = 0; _i < sizeof(_t); _i++)                    \
 		{                                                             \
 			if (((_a >> (_i * 8)) & 0xFF) != _p[sizeof(_t) - _i - 1]) \
 			{                                                         \
 				printf("%s: test2 " #_t "_BE failed\n", __func__);    \
-				_r = FALSE;                                           \
+				(_r) = FALSE;                                         \
 				break;                                                \
 			}                                                         \
 		}                                                             \

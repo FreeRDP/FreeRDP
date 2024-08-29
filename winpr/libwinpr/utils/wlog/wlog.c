@@ -44,8 +44,8 @@ typedef struct
 	size_t NameCount;
 } wLogFilter;
 
-#define WLOG_FILTER_NOT_FILTERED -1
-#define WLOG_FILTER_NOT_INITIALIZED -2
+#define WLOG_FILTER_NOT_FILTERED (-1)
+#define WLOG_FILTER_NOT_INITIALIZED (-2)
 /**
  * References for general logging concepts:
  *
@@ -58,7 +58,7 @@ typedef struct
 
 LPCSTR WLOG_LEVELS[7] = { "TRACE", "DEBUG", "INFO", "WARN", "ERROR", "FATAL", "OFF" };
 
-static INIT_ONCE _WLogInitialized = INIT_ONCE_STATIC_INIT;
+static INIT_ONCE g_WLogInitialized = INIT_ONCE_STATIC_INIT;
 static DWORD g_FilterCount = 0;
 static wLogFilter* g_Filters = NULL;
 static wLog* g_RootLog = NULL;
@@ -923,7 +923,7 @@ void WLog_Free(wLog* log)
 
 wLog* WLog_GetRoot(void)
 {
-	if (!InitOnceExecuteOnce(&_WLogInitialized, WLog_InitializeRoot, NULL, NULL))
+	if (!InitOnceExecuteOnce(&g_WLogInitialized, WLog_InitializeRoot, NULL, NULL))
 		return NULL;
 
 	return g_RootLog;

@@ -116,8 +116,8 @@ static BOOL FileSetEndOfFile(HANDLE hFile)
 	return TRUE;
 }
 
-static DWORD FileSetFilePointer(HANDLE hFile, LONG lDistanceToMove, PLONG lpDistanceToMoveHigh,
-                                DWORD dwMoveMethod)
+static DWORD FileSetFilePointer(HANDLE hFile, LONG lDistanceToMove,
+                                const PLONG lpDistanceToMoveHigh, DWORD dwMoveMethod)
 {
 	WINPR_FILE* pFile = (WINPR_FILE*)hFile;
 	INT64 offset = 0;
@@ -974,11 +974,11 @@ static BOOL IsFileDevice(LPCTSTR lpDeviceName)
 	return TRUE;
 }
 
-static HANDLE_CREATOR _FileHandleCreator = { IsFileDevice, FileCreateFileA };
+static HANDLE_CREATOR FileHandleCreator = { IsFileDevice, FileCreateFileA };
 
 HANDLE_CREATOR* GetFileHandleCreator(void)
 {
-	return &_FileHandleCreator;
+	return &FileHandleCreator;
 }
 
 static WINPR_FILE* FileHandle_New(FILE* fp)

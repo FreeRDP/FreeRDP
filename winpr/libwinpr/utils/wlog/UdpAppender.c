@@ -134,7 +134,7 @@ static BOOL WLog_UdpAppender_Set(wLogAppender* appender, const char* setting, vo
 	if (!value || (strnlen(value, 2) == 0))
 		return FALSE;
 
-	if (strncmp(target, setting, sizeof(target)))
+	if (strncmp(target, setting, sizeof(target)) != 0)
 		return FALSE;
 
 	udpAppender->targetAddrLen = 0;

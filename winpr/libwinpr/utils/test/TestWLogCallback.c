@@ -30,15 +30,15 @@ static BOOL check(const wLogMessage* msg)
 	BOOL rc = TRUE;
 	if (!msg)
 		rc = FALSE;
-	else if (strcmp(msg->FileName, __FILE__))
+	else if (strcmp(msg->FileName, __FILE__) != 0)
 		rc = FALSE;
-	else if (strcmp(msg->FunctionName, function))
+	else if (strcmp(msg->FunctionName, function) != 0)
 		rc = FALSE;
-	else if (strcmp(msg->PrefixString, messages[pos].channel))
+	else if (strcmp(msg->PrefixString, messages[pos].channel) != 0)
 		rc = FALSE;
 	else if (msg->Level != messages[pos].level)
 		rc = FALSE;
-	else if (strcmp(msg->FormatString, messages[pos].msg))
+	else if (strcmp(msg->FormatString, messages[pos].msg) != 0)
 		rc = FALSE;
 	pos++;
 

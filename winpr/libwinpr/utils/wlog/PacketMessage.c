@@ -235,7 +235,6 @@ void Pcap_Flush(wPcap* pcap)
 	}
 
 	(void)fflush(pcap->fp);
-	return;
 }
 
 void Pcap_Close(wPcap* pcap)

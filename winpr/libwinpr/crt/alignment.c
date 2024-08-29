@@ -32,7 +32,7 @@
 #define WINPR_ALIGNED_MEM_SIGNATURE 0x0BA0BAB
 
 #define WINPR_ALIGNED_MEM_STRUCT_FROM_PTR(_memptr) \
-	(WINPR_ALIGNED_MEM*)(((size_t)(((BYTE*)_memptr) - sizeof(WINPR_ALIGNED_MEM))))
+	(WINPR_ALIGNED_MEM*)(((size_t)(((BYTE*)(_memptr)) - sizeof(WINPR_ALIGNED_MEM))))
 
 #include <stdlib.h>
 

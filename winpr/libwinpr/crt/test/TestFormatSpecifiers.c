@@ -19,7 +19,7 @@ int TestFormatSpecifiers(int argc, char* argv[])
 		(void)sprintf_s(fmt, sizeof(fmt), "uz:%" PRIuz " oz:%" PRIoz " xz:%" PRIxz " Xz:%" PRIXz "",
 		                arg, arg, arg, arg);
 
-		if (strcmp(fmt, chk))
+		if (strcmp(fmt, chk) != 0)
 		{
 			(void)fprintf(stderr, "%s failed size_t test: got [%s] instead of [%s]\n", __func__,
 			              fmt, chk);
@@ -35,7 +35,7 @@ int TestFormatSpecifiers(int argc, char* argv[])
 		(void)sprintf_s(fmt, sizeof(fmt), "d8:%" PRId8 " x8:%" PRIx8 " X8:%" PRIX8 "", arg,
 		                (UINT8)arg, (UINT8)arg);
 
-		if (strcmp(fmt, chk))
+		if (strcmp(fmt, chk) != 0)
 		{
 			(void)fprintf(stderr, "%s failed INT8 test: got [%s] instead of [%s]\n", __func__, fmt,
 			              chk);
@@ -52,7 +52,7 @@ int TestFormatSpecifiers(int argc, char* argv[])
 		                      "u8:%" PRIu8 " o8:%" PRIo8 " x8:%" PRIx8 " X8:%" PRIX8 "", arg, arg,
 		                      arg, arg);
 
-		if (strcmp(fmt, chk))
+		if (strcmp(fmt, chk) != 0)
 		{
 			(void)fprintf(stderr, "%s failed UINT8 test: got [%s] instead of [%s]\n", __func__, fmt,
 			              chk);
@@ -68,7 +68,7 @@ int TestFormatSpecifiers(int argc, char* argv[])
 		(void)sprintf_s(fmt, sizeof(fmt), "d16:%" PRId16 " x16:%" PRIx16 " X16:%" PRIX16 "", arg,
 		                (UINT16)arg, (UINT16)arg);
 
-		if (strcmp(fmt, chk))
+		if (strcmp(fmt, chk) != 0)
 		{
 			(void)fprintf(stderr, "%s failed INT16 test: got [%s] instead of [%s]\n", __func__, fmt,
 			              chk);
@@ -85,7 +85,7 @@ int TestFormatSpecifiers(int argc, char* argv[])
 		                "u16:%" PRIu16 " o16:%" PRIo16 " x16:%" PRIx16 " X16:%" PRIX16 "", arg, arg,
 		                arg, arg);
 
-		if (strcmp(fmt, chk))
+		if (strcmp(fmt, chk) != 0)
 		{
 			(void)fprintf(stderr, "%s failed UINT16 test: got [%s] instead of [%s]\n", __func__,
 			              fmt, chk);
@@ -101,7 +101,7 @@ int TestFormatSpecifiers(int argc, char* argv[])
 		(void)sprintf_s(fmt, sizeof(fmt), "d32:%" PRId32 " x32:%" PRIx32 " X32:%" PRIX32 "", arg,
 		                (UINT32)arg, (UINT32)arg);
 
-		if (strcmp(fmt, chk))
+		if (strcmp(fmt, chk) != 0)
 		{
 			(void)fprintf(stderr, "%s failed INT32 test: got [%s] instead of [%s]\n", __func__, fmt,
 			              chk);
@@ -118,7 +118,7 @@ int TestFormatSpecifiers(int argc, char* argv[])
 		                "u32:%" PRIu32 " o32:%" PRIo32 " x32:%" PRIx32 " X32:%" PRIX32 "", arg, arg,
 		                arg, arg);
 
-		if (strcmp(fmt, chk))
+		if (strcmp(fmt, chk) != 0)
 		{
 			(void)fprintf(stderr, "%s failed UINT16 test: got [%s] instead of [%s]\n", __func__,
 			              fmt, chk);
@@ -134,7 +134,7 @@ int TestFormatSpecifiers(int argc, char* argv[])
 		(void)sprintf_s(fmt, sizeof(fmt), "d64:%" PRId64 " x64:%" PRIx64 " X64:%" PRIX64 "", arg,
 		                (UINT64)arg, (UINT64)arg);
 
-		if (strcmp(fmt, chk))
+		if (strcmp(fmt, chk) != 0)
 		{
 			(void)fprintf(stderr, "%s failed INT64 test: got [%s] instead of [%s]\n", __func__, fmt,
 			              chk);
@@ -152,7 +152,7 @@ int TestFormatSpecifiers(int argc, char* argv[])
 		                "u64:%" PRIu64 " o64:%" PRIo64 " x64:%016" PRIx64 " X64:%016" PRIX64 "",
 		                arg, arg, arg, arg);
 
-		if (strcmp(fmt, chk))
+		if (strcmp(fmt, chk) != 0)
 		{
 			(void)fprintf(stderr, "%s failed UINT64 test: got [%s] instead of [%s]\n", __func__,
 			              fmt, chk);

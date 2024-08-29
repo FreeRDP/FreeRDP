@@ -37,9 +37,9 @@ static BOOL test_SerialSys(HANDLE hComm)
 
 int TestHandflow(int argc, char* argv[])
 {
-	struct stat statbuf;
-	BOOL result;
-	HANDLE hComm;
+	struct stat statbuf = { 0 };
+	BOOL result = 0;
+	HANDLE hComm = NULL;
 
 	if (stat("/dev/ttyS0", &statbuf) < 0)
 	{

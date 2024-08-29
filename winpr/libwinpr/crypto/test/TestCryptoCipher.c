@@ -93,7 +93,7 @@ static BOOL test_crypto_cipher_aes_128_cbc(void)
 		goto out;
 	}
 
-	if (strcmp((const char*)obuf, plaintext))
+	if (strcmp((const char*)obuf, plaintext) != 0)
 	{
 		(void)fprintf(stderr, "%s: error, decrypted data does not match plaintext\n", __func__);
 		goto out;
@@ -186,7 +186,8 @@ static BOOL test_crypto_cipher_key(void)
 	status = winpr_Cipher_BytesToKey(WINPR_CIPHER_AES_256_CBC, WINPR_MD_SHA1, salt, TEST_RAND_DATA,
 	                                 64, 4, key, iv);
 
-	if (status != 32 || memcmp(key, TEST_CIPHER_KEY, 32) || memcmp(iv, TEST_CIPHER_IV, 16))
+	if (status != 32 || memcmp(key, TEST_CIPHER_KEY, 32) != 0 ||
+	    memcmp(iv, TEST_CIPHER_IV, 16) != 0)
 	{
 		char* akstr = NULL;
 		char* ekstr = NULL;

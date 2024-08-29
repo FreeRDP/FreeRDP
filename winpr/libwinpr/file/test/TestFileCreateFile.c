@@ -77,7 +77,7 @@ int TestFileCreateFile(int argc, char* argv[])
 	if (written != sizeof(cmp))
 		rc = -1;
 
-	if (memcmp(buffer, cmp, sizeof(buffer)))
+	if (memcmp(buffer, cmp, sizeof(buffer)) != 0)
 		rc = -1;
 
 	if (!CloseHandle(handle))

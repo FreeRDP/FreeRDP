@@ -27,8 +27,9 @@
 
 static BOOL test_generic(HANDLE hComm)
 {
-	DCB dcb, *pDcb;
-	BOOL result;
+	DCB dcb = { 0 };
+	DCB* pDcb = NULL;
+	BOOL result = 0;
 
 	ZeroMemory(&dcb, sizeof(DCB));
 	result = GetCommState(hComm, &dcb);
@@ -76,9 +77,9 @@ static BOOL test_generic(HANDLE hComm)
 
 int TestGetCommState(int argc, char* argv[])
 {
-	struct stat statbuf;
-	BOOL result;
-	HANDLE hComm;
+	struct stat statbuf = { 0 };
+	BOOL result = 0;
+	HANDLE hComm = NULL;
 
 	if (stat("/dev/ttyS0", &statbuf) < 0)
 	{

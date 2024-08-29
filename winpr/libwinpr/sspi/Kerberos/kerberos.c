@@ -1814,7 +1814,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_VerifySignature(PCtxtHandle phContext,
 	if ((flags & FLAG_SENDER_IS_ACCEPTOR) == context->acceptor || flags & FLAG_WRAP_CONFIDENTIAL)
 		return SEC_E_INVALID_TOKEN;
 
-	if (memcmp(header + 3, cmp_filler, sizeof(cmp_filler)))
+	if (memcmp(header + 3, cmp_filler, sizeof(cmp_filler)) != 0)
 		return SEC_E_INVALID_TOKEN;
 
 	if (context->flags & ISC_REQ_SEQUENCE_DETECT && seq_no != context->remote_seq + MessageSeqNo)
