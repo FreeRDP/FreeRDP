@@ -20,7 +20,7 @@
 
 #include <winpr/config.h>
 
-#define __STDC_WANT_LIB_EXT1__ 1 // NOLINT(bugprone-reserved-identifier)
+#define __STDC_WANT_LIB_EXT1__ 1 // NOLINT(bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
 #include <stdio.h>
 #include <string.h>
 #include <fcntl.h>
