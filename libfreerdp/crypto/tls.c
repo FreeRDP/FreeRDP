@@ -517,12 +517,11 @@ static int bio_rdp_tls_free(BIO* bio)
 static long bio_rdp_tls_callback_ctrl(BIO* bio, int cmd, bio_info_cb* fp)
 {
 	long status = 0;
-	BIO_RDP_TLS* tls = NULL;
 
 	if (!bio)
 		return 0;
 
-	tls = (BIO_RDP_TLS*)BIO_get_data(bio);
+	BIO_RDP_TLS* tls = (BIO_RDP_TLS*)BIO_get_data(bio);
 
 	if (!tls)
 		return 0;
@@ -535,8 +534,14 @@ static long bio_rdp_tls_callback_ctrl(BIO* bio, int cmd, bio_info_cb* fp)
 			/* Documented since https://www.openssl.org/docs/man1.1.1/man3/BIO_set_callback.html
 			 * the argument is not really of type bio_info_cb* and must be cast
 			 * to the required type */
-			fkt_t fkt = (fkt_t)(void*)fp;
-			SSL_set_info_callback(tls->ssl, fkt);
+			union
+			{
+				fkt_t fkt;
+				bio_info_cb* fp;
+			} cnv;
+
+			cnv.fp = fp;
+			SSL_set_info_callback(tls->ssl, cnv.fkt);
 			status = 1;
 		}
 		break;

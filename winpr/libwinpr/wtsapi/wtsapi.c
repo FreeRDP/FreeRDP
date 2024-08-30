@@ -695,20 +695,22 @@ BOOL WTSRegisterWtsApiFunctionTable(const WtsApiFunctionTable* table)
 
 static BOOL LoadAndInitialize(char* library)
 {
-	INIT_WTSAPI_FN pInitWtsApi = NULL;
 	g_WtsApiModule = LoadLibraryX(library);
 
 	if (!g_WtsApiModule)
 		return FALSE;
 
-	pInitWtsApi = (INIT_WTSAPI_FN)GetProcAddress(g_WtsApiModule, "InitWtsApi");
-
-	if (!pInitWtsApi)
+	union
 	{
-		return FALSE;
-	}
+		FARPROC fp;
+		INIT_WTSAPI_FN pInitWtsApi;
+	} cnv;
+	cnv.fp = GetProcAddress(g_WtsApiModule, "InitWtsApi");
 
-	g_WtsApi = pInitWtsApi();
+	if (!cnv.pInitWtsApi)
+		return FALSE;
+
+	g_WtsApi = cnv.pInitWtsApi();
 	return TRUE;
 }
 

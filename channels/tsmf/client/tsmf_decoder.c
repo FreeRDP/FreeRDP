@@ -33,13 +33,17 @@
 static ITSMFDecoder* tsmf_load_decoder_by_name(const char* name)
 {
 	ITSMFDecoder* decoder = NULL;
-	TSMF_DECODER_ENTRY entry =
-	    (TSMF_DECODER_ENTRY)(void*)freerdp_load_channel_addin_entry("tsmf", name, "decoder", 0);
+	union
+	{
+		PVIRTUALCHANNELENTRY pvce;
+		TSMF_DECODER_ENTRY entry;
+	} cnv;
+	cnv.pvce = freerdp_load_channel_addin_entry("tsmf", name, "decoder", 0);
 
-	if (!entry)
+	if (!cnv.entry)
 		return NULL;
 
-	const UINT rc = entry(&decoder);
+	const UINT rc = cnv.entry(&decoder);
 
 	if ((rc != CHANNEL_RC_OK) || !decoder)
 	{

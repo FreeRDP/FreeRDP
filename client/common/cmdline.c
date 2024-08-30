@@ -5716,17 +5716,22 @@ fail:
 static BOOL freerdp_client_load_static_channel_addin(rdpChannels* channels, rdpSettings* settings,
                                                      const char* name, void* data)
 {
+	union
+	{
+		PVIRTUALCHANNELENTRY pvce;
+		PVIRTUALCHANNELENTRYEX pvceex;
+	} cnv;
 	PVIRTUALCHANNELENTRY entry = NULL;
-	PVIRTUALCHANNELENTRYEX entryEx =
-	    (PVIRTUALCHANNELENTRYEX)(void*)freerdp_load_channel_addin_entry(
-	        name, NULL, NULL, FREERDP_ADDIN_CHANNEL_STATIC | FREERDP_ADDIN_CHANNEL_ENTRYEX);
 
-	if (!entryEx)
+	cnv.pvce = freerdp_load_channel_addin_entry(
+	    name, NULL, NULL, FREERDP_ADDIN_CHANNEL_STATIC | FREERDP_ADDIN_CHANNEL_ENTRYEX);
+
+	if (!cnv.pvceex)
 		entry = freerdp_load_channel_addin_entry(name, NULL, NULL, FREERDP_ADDIN_CHANNEL_STATIC);
 
-	if (entryEx)
+	if (cnv.pvceex)
 	{
-		if (freerdp_channels_client_load_ex(channels, settings, entryEx, data) == 0)
+		if (freerdp_channels_client_load_ex(channels, settings, cnv.pvceex, data) == 0)
 		{
 			WLog_DBG(TAG, "loading channelEx %s", name);
 			return TRUE;
