@@ -2970,7 +2970,7 @@ static int transport_bio_tsg_puts(BIO* bio, const char* str)
 	return 1;
 }
 
-static int transport_bio_tsg_gets(BIO* bio, const char* str, int size)
+static int transport_bio_tsg_gets(BIO* bio, char* str, int size)
 {
 	WINPR_UNUSED(bio);
 	WINPR_UNUSED(str);

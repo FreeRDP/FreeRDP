@@ -1014,8 +1014,8 @@ static UINT video_data_on_close(IWTSVirtualChannelCallback* pChannelCallback)
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT video_control_on_new_channel_connection(IWTSListenerCallback* listenerCallback,
-                                                    IWTSVirtualChannel* channel, const BYTE* Data,
-                                                    const BOOL* pbAccept,
+                                                    IWTSVirtualChannel* channel, BYTE* Data,
+                                                    BOOL* pbAccept,
                                                     IWTSVirtualChannelCallback** ppCallback)
 {
 	GENERIC_CHANNEL_CALLBACK* callback = NULL;
@@ -1044,8 +1044,8 @@ static UINT video_control_on_new_channel_connection(IWTSListenerCallback* listen
 }
 
 static UINT video_data_on_new_channel_connection(IWTSListenerCallback* pListenerCallback,
-                                                 IWTSVirtualChannel* pChannel, const BYTE* Data,
-                                                 const BOOL* pbAccept,
+                                                 IWTSVirtualChannel* pChannel, BYTE* Data,
+                                                 BOOL* pbAccept,
                                                  IWTSVirtualChannelCallback** ppCallback)
 {
 	GENERIC_CHANNEL_CALLBACK* callback = NULL;

@@ -1127,7 +1127,8 @@ FREERDP_DSP_CONTEXT* freerdp_dsp_context_new(BOOL encoder)
 	if (!context)
 		return NULL;
 
-	freerdp_dsp_common_context_init(&context->common, encoder);
+	if (!freerdp_dsp_common_context_init(&context->common, encoder))
+		goto fail;
 
 #if defined(WITH_GSM)
 	context->gsm = gsm_create();
