@@ -1698,8 +1698,8 @@ static UINT rdpsnd_on_close(IWTSVirtualChannelCallback* pChannelCallback)
 }
 
 static UINT rdpsnd_on_new_channel_connection(IWTSListenerCallback* pListenerCallback,
-                                             IWTSVirtualChannel* pChannel, const BYTE* Data,
-                                             const BOOL* pbAccept,
+                                             IWTSVirtualChannel* pChannel, BYTE* Data,
+                                             BOOL* pbAccept,
                                              IWTSVirtualChannelCallback** ppCallback)
 {
 	GENERIC_CHANNEL_CALLBACK* callback = NULL;

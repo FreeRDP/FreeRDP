@@ -121,12 +121,11 @@ static UINT urbdrc_process_register_request_callback(IUDEVICE* pdev,
 {
 	UINT32 NumRequestCompletion = 0;
 	UINT32 RequestCompletion = 0;
-	URBDRC_PLUGIN* urbdrc = NULL;
 
 	if (!callback || !s || !udevman || !pdev)
 		return ERROR_INVALID_PARAMETER;
 
-	urbdrc = (URBDRC_PLUGIN*)callback->plugin;
+	URBDRC_PLUGIN* urbdrc = (URBDRC_PLUGIN*)callback->plugin;
 
 	if (!urbdrc)
 		return ERROR_INVALID_PARAMETER;

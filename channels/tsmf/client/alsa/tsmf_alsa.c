@@ -151,7 +151,6 @@ static BOOL tsmf_alsa_play(ITSMFAudioDevice* audio, const BYTE* src, UINT32 data
 
 	if (alsa->out_handle)
 	{
-		const size_t sbytes_per_frame = 1ULL * alsa->source_channels * alsa->bytes_per_sample;
 		const size_t rbytes_per_frame = 1ULL * alsa->actual_channels * alsa->bytes_per_sample;
 		pindex = src;
 		end = pindex + data_size;
