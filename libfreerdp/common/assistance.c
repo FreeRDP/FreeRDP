@@ -1342,8 +1342,13 @@ BOOL freerdp_assistance_populate_settings_from_assistance_file(rdpAssistanceFile
 	if (ports != addresses)
 		return FALSE;
 
-	const UINT32 port = (UINT32)ArrayList_GetItem(file->MachinePorts, 0);
-	if (!freerdp_settings_set_uint32(settings, FreeRDP_ServerPort, port))
+	union
+	{
+		UINT32 port;
+		void* data;
+	} cnv;
+	cnv.data = ArrayList_GetItem(file->MachinePorts, 0);
+	if (!freerdp_settings_set_uint32(settings, FreeRDP_ServerPort, cnv.port))
 		return FALSE;
 
 	if (!freerdp_target_net_adresses_reset(settings, ports))
@@ -1351,8 +1356,13 @@ BOOL freerdp_assistance_populate_settings_from_assistance_file(rdpAssistanceFile
 
 	for (size_t x = 0; x < ports; x++)
 	{
-		const UINT32 mport = (UINT32)ArrayList_GetItem(file->MachinePorts, x);
-		if (!freerdp_settings_set_pointer_array(settings, FreeRDP_TargetNetPorts, x, &mport))
+		union
+		{
+			UINT32 port;
+			void* data;
+		} cnv;
+		cnv.data = ArrayList_GetItem(file->MachinePorts, x);
+		if (!freerdp_settings_set_pointer_array(settings, FreeRDP_TargetNetPorts, x, &cnv.port))
 			return FALSE;
 	}
 	for (size_t i = 0; i < addresses; i++)
@@ -1451,7 +1461,15 @@ void freerdp_assistance_print_file(rdpAssistanceFile* file, wLog* log, DWORD lev
 		const char* uri = NULL;
 		const char* addr = ArrayList_GetItem(file->MachineAddresses, x);
 		if (x < ArrayList_Count(file->MachinePorts))
-			port = (UINT32)ArrayList_GetItem(file->MachinePorts, x);
+		{
+			union
+			{
+				UINT32 port;
+				void* data;
+			} cnv;
+			cnv.data = ArrayList_GetItem(file->MachinePorts, x);
+			port = cnv.port;
+		}
 		if (x < ArrayList_Count(file->MachineUris))
 			uri = ArrayList_GetItem(file->MachineUris, x);
 
