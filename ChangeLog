@@ -1,3 +1,26 @@
+# 2024-08-30 Version 3.8.0
+
+This is a bugfix release. Due to additional exports required by a bugfix the minor version was incremented
+
+Noteworthy changes:
+* Reduce number of warnings on CI build (make dependency includes SYSTEM) (#10509)
+* Fix possible crashes with P11 certificate parsing (#10462, #10463)
+* Various clipboard related fixes (#10472, #10476, #10477, #10480, #10484)
+* Fix a race condition on DesktopResize (xfreerdp) (#10488)
+* Improve certificate warnings (#10489)
+* Try all possible resolved IP addresses for a DNS name on connect (#10491)
+* Fix an issue with GFX SolidFill alpha data (#10498)
+* Various fixes for SDL clients (#10504, #10492, #10471)
+* Fix serial and parallel redirection crashes (#10510)
+* Fix android build issues with NDK 27 (#10529)
+* Improve performance of some WinPR primitives (#10528)
+* Fix an issue with autoreconnect (#10523)
+* Support ssh-askpass like password reading (#10516)
+* Lots of code cleanups to reduce clang-tidy warnings (#10531, #10525, #10521, #10520, #10519, #10518)
+
+For a complete and detailed change log since the last release run:
+git log 3.8.0...3.7.0
+
 # 2024-08-08 Version 3.7.0
 
 This release has accumulated quite a number of changes. Along bugfixes for 3.6.3 it also
