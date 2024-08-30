@@ -444,7 +444,7 @@ static INLINE void write_pixel_16(BYTE* _buf, UINT16 _pix)
 #define RLEEXTRA
 #undef ENSURE_CAPACITY
 #define ENSURE_CAPACITY(_start, _end, _size) ensure_capacity(_start, _end, _size, 1)
-#include "include/bitmap.c" // NOLINT(bugprone-suspicious-include)
+#include "include/bitmap.h"
 
 #undef DESTWRITEPIXEL
 #undef DESTREADPIXEL
@@ -478,7 +478,7 @@ static INLINE void write_pixel_16(BYTE* _buf, UINT16 _pix)
 #define RLEEXTRA
 #undef ENSURE_CAPACITY
 #define ENSURE_CAPACITY(_start, _end, _size) ensure_capacity(_start, _end, _size, 2)
-#include "include/bitmap.c" // NOLINT(bugprone-suspicious-include)
+#include "include/bitmap.h"
 
 #undef DESTWRITEPIXEL
 #undef DESTREADPIXEL
@@ -513,7 +513,7 @@ static INLINE void write_pixel_16(BYTE* _buf, UINT16 _pix)
 #define RLEEXTRA
 #undef ENSURE_CAPACITY
 #define ENSURE_CAPACITY(_start, _end, _size) ensure_capacity(_start, _end, _size, 3)
-#include "include/bitmap.c" // NOLINT(bugprone-suspicious-include)
+#include "include/bitmap.h"
 
 struct S_BITMAP_INTERLEAVED_CONTEXT
 {

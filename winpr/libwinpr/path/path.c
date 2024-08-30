@@ -79,7 +79,7 @@
 #define DEFINE_UNICODE FALSE
 #define CUR_PATH_SEPARATOR_CHR PATH_BACKSLASH_CHR
 #define PATH_CCH_ADD_SEPARATOR PathCchAddBackslashA
-#include "include/PathCchAddSeparator.c" // NOLINT(bugprone-suspicious-include)
+#include "include/PathCchAddSeparator.h"
 #undef DEFINE_UNICODE
 #undef CUR_PATH_SEPARATOR_CHR
 #undef PATH_CCH_ADD_SEPARATOR
@@ -87,7 +87,7 @@
 #define DEFINE_UNICODE TRUE
 #define CUR_PATH_SEPARATOR_CHR PATH_BACKSLASH_CHR
 #define PATH_CCH_ADD_SEPARATOR PathCchAddBackslashW
-#include "include/PathCchAddSeparator.c" // NOLINT(bugprone-suspicious-include)
+#include "include/PathCchAddSeparator.h"
 #undef DEFINE_UNICODE
 #undef CUR_PATH_SEPARATOR_CHR
 #undef PATH_CCH_ADD_SEPARATOR
@@ -97,7 +97,7 @@
 #define DEFINE_UNICODE FALSE
 #define CUR_PATH_SEPARATOR_CHR PATH_SLASH_CHR
 #define PATH_CCH_ADD_SEPARATOR PathCchAddSlashA
-#include "include/PathCchAddSeparator.c" // NOLINT(bugprone-suspicious-include)
+#include "include/PathCchAddSeparator.h"
 #undef DEFINE_UNICODE
 #undef CUR_PATH_SEPARATOR_CHR
 #undef PATH_CCH_ADD_SEPARATOR
@@ -105,7 +105,7 @@
 #define DEFINE_UNICODE TRUE
 #define CUR_PATH_SEPARATOR_CHR PATH_SLASH_CHR
 #define PATH_CCH_ADD_SEPARATOR PathCchAddSlashW
-#include "include/PathCchAddSeparator.c" // NOLINT(bugprone-suspicious-include)
+#include "include/PathCchAddSeparator.h"
 #undef DEFINE_UNICODE
 #undef CUR_PATH_SEPARATOR_CHR
 #undef PATH_CCH_ADD_SEPARATOR
@@ -115,7 +115,7 @@
 #define DEFINE_UNICODE FALSE
 #define CUR_PATH_SEPARATOR_CHR PATH_SEPARATOR_CHR
 #define PATH_CCH_ADD_SEPARATOR PathCchAddSeparatorA
-#include "include/PathCchAddSeparator.c" // NOLINT(bugprone-suspicious-include)
+#include "include/PathCchAddSeparator.h"
 #undef DEFINE_UNICODE
 #undef CUR_PATH_SEPARATOR_CHR
 #undef PATH_CCH_ADD_SEPARATOR
@@ -123,7 +123,7 @@
 #define DEFINE_UNICODE TRUE
 #define CUR_PATH_SEPARATOR_CHR PATH_SEPARATOR_CHR
 #define PATH_CCH_ADD_SEPARATOR PathCchAddSeparatorW
-#include "include/PathCchAddSeparator.c" // NOLINT(bugprone-suspicious-include)
+#include "include/PathCchAddSeparator.h"
 #undef DEFINE_UNICODE
 #undef CUR_PATH_SEPARATOR_CHR
 #undef PATH_CCH_ADD_SEPARATOR
@@ -153,7 +153,7 @@ HRESULT PathCchRemoveBackslashW(PWSTR pszPath, size_t cchPath)
 #define DEFINE_UNICODE FALSE
 #define CUR_PATH_SEPARATOR_CHR PATH_BACKSLASH_CHR
 #define PATH_CCH_ADD_SEPARATOR_EX PathCchAddBackslashExA
-#include "include/PathCchAddSeparatorEx.c" // NOLINT(bugprone-suspicious-include)
+#include "include/PathCchAddSeparatorEx.h"
 #undef DEFINE_UNICODE
 #undef CUR_PATH_SEPARATOR_CHR
 #undef PATH_CCH_ADD_SEPARATOR_EX
@@ -161,7 +161,7 @@ HRESULT PathCchRemoveBackslashW(PWSTR pszPath, size_t cchPath)
 #define DEFINE_UNICODE TRUE
 #define CUR_PATH_SEPARATOR_CHR PATH_BACKSLASH_CHR
 #define PATH_CCH_ADD_SEPARATOR_EX PathCchAddBackslashExW
-#include "include/PathCchAddSeparatorEx.c" // NOLINT(bugprone-suspicious-include)
+#include "include/PathCchAddSeparatorEx.h"
 #undef DEFINE_UNICODE
 #undef CUR_PATH_SEPARATOR_CHR
 #undef PATH_CCH_ADD_SEPARATOR_EX
@@ -171,7 +171,7 @@ HRESULT PathCchRemoveBackslashW(PWSTR pszPath, size_t cchPath)
 #define DEFINE_UNICODE FALSE
 #define CUR_PATH_SEPARATOR_CHR PATH_SLASH_CHR
 #define PATH_CCH_ADD_SEPARATOR_EX PathCchAddSlashExA
-#include "include/PathCchAddSeparatorEx.c" // NOLINT(bugprone-suspicious-include)
+#include "include/PathCchAddSeparatorEx.h"
 #undef DEFINE_UNICODE
 #undef CUR_PATH_SEPARATOR_CHR
 #undef PATH_CCH_ADD_SEPARATOR_EX
@@ -179,7 +179,7 @@ HRESULT PathCchRemoveBackslashW(PWSTR pszPath, size_t cchPath)
 #define DEFINE_UNICODE TRUE
 #define CUR_PATH_SEPARATOR_CHR PATH_SLASH_CHR
 #define PATH_CCH_ADD_SEPARATOR_EX PathCchAddSlashExW
-#include "include/PathCchAddSeparatorEx.c" // NOLINT(bugprone-suspicious-include)
+#include "include/PathCchAddSeparatorEx.h"
 #undef DEFINE_UNICODE
 #undef CUR_PATH_SEPARATOR_CHR
 #undef PATH_CCH_ADD_SEPARATOR_EX
@@ -189,7 +189,7 @@ HRESULT PathCchRemoveBackslashW(PWSTR pszPath, size_t cchPath)
 #define DEFINE_UNICODE FALSE
 #define CUR_PATH_SEPARATOR_CHR PATH_SEPARATOR_CHR
 #define PATH_CCH_ADD_SEPARATOR_EX PathCchAddSeparatorExA
-#include "include/PathCchAddSeparatorEx.c" // NOLINT(bugprone-suspicious-include)
+#include "include/PathCchAddSeparatorEx.h"
 #undef DEFINE_UNICODE
 #undef CUR_PATH_SEPARATOR_CHR
 #undef PATH_CCH_ADD_SEPARATOR_EX
@@ -197,7 +197,7 @@ HRESULT PathCchRemoveBackslashW(PWSTR pszPath, size_t cchPath)
 #define DEFINE_UNICODE TRUE
 #define CUR_PATH_SEPARATOR_CHR PATH_SEPARATOR_CHR
 #define PATH_CCH_ADD_SEPARATOR_EX PathCchAddSeparatorExW
-#include "include/PathCchAddSeparatorEx.c" // NOLINT(bugprone-suspicious-include)
+#include "include/PathCchAddSeparatorEx.h"
 #undef DEFINE_UNICODE
 #undef CUR_PATH_SEPARATOR_CHR
 #undef PATH_CCH_ADD_SEPARATOR_EX
@@ -225,7 +225,7 @@ HRESULT PathCchRemoveBackslashExW(PWSTR pszPath, size_t cchPath, PWSTR* ppszEnd,
 #define DEFINE_UNICODE FALSE
 #define CUR_PATH_SEPARATOR_CHR PATH_BACKSLASH_CHR
 #define PATH_CCH_ADD_EXTENSION PathCchAddExtensionA
-#include "include/PathCchAddExtension.c" // NOLINT(bugprone-suspicious-include)
+#include "include/PathCchAddExtension.h"
 #undef DEFINE_UNICODE
 #undef CUR_PATH_SEPARATOR_CHR
 #undef PATH_CCH_ADD_EXTENSION
@@ -233,7 +233,7 @@ HRESULT PathCchRemoveBackslashExW(PWSTR pszPath, size_t cchPath, PWSTR* ppszEnd,
 #define DEFINE_UNICODE TRUE
 #define CUR_PATH_SEPARATOR_CHR PATH_BACKSLASH_CHR
 #define PATH_CCH_ADD_EXTENSION PathCchAddExtensionW
-#include "include/PathCchAddExtension.c" // NOLINT(bugprone-suspicious-include)
+#include "include/PathCchAddExtension.h"
 #undef DEFINE_UNICODE
 #undef CUR_PATH_SEPARATOR_CHR
 #undef PATH_CCH_ADD_EXTENSION
@@ -243,7 +243,7 @@ HRESULT PathCchRemoveBackslashExW(PWSTR pszPath, size_t cchPath, PWSTR* ppszEnd,
 #define DEFINE_UNICODE FALSE
 #define CUR_PATH_SEPARATOR_CHR PATH_SLASH_CHR
 #define PATH_CCH_ADD_EXTENSION UnixPathCchAddExtensionA
-#include "include/PathCchAddExtension.c" // NOLINT(bugprone-suspicious-include)
+#include "include/PathCchAddExtension.h"
 #undef DEFINE_UNICODE
 #undef CUR_PATH_SEPARATOR_CHR
 #undef PATH_CCH_ADD_EXTENSION
@@ -251,7 +251,7 @@ HRESULT PathCchRemoveBackslashExW(PWSTR pszPath, size_t cchPath, PWSTR* ppszEnd,
 #define DEFINE_UNICODE TRUE
 #define CUR_PATH_SEPARATOR_CHR PATH_SLASH_CHR
 #define PATH_CCH_ADD_EXTENSION UnixPathCchAddExtensionW
-#include "include/PathCchAddExtension.c" // NOLINT(bugprone-suspicious-include)
+#include "include/PathCchAddExtension.h"
 #undef DEFINE_UNICODE
 #undef CUR_PATH_SEPARATOR_CHR
 #undef PATH_CCH_ADD_EXTENSION
@@ -261,7 +261,7 @@ HRESULT PathCchRemoveBackslashExW(PWSTR pszPath, size_t cchPath, PWSTR* ppszEnd,
 #define DEFINE_UNICODE FALSE
 #define CUR_PATH_SEPARATOR_CHR PATH_SEPARATOR_CHR
 #define PATH_CCH_ADD_EXTENSION NativePathCchAddExtensionA
-#include "include/PathCchAddExtension.c" // NOLINT(bugprone-suspicious-include)
+#include "include/PathCchAddExtension.h"
 #undef DEFINE_UNICODE
 #undef CUR_PATH_SEPARATOR_CHR
 #undef PATH_CCH_ADD_EXTENSION
@@ -269,7 +269,7 @@ HRESULT PathCchRemoveBackslashExW(PWSTR pszPath, size_t cchPath, PWSTR* ppszEnd,
 #define DEFINE_UNICODE TRUE
 #define CUR_PATH_SEPARATOR_CHR PATH_SEPARATOR_CHR
 #define PATH_CCH_ADD_EXTENSION NativePathCchAddExtensionW
-#include "include/PathCchAddExtension.c" // NOLINT(bugprone-suspicious-include)
+#include "include/PathCchAddExtension.h"
 #undef DEFINE_UNICODE
 #undef CUR_PATH_SEPARATOR_CHR
 #undef PATH_CCH_ADD_EXTENSION
@@ -284,7 +284,7 @@ HRESULT PathCchRemoveBackslashExW(PWSTR pszPath, size_t cchPath, PWSTR* ppszEnd,
 #define CUR_PATH_SEPARATOR_CHR PATH_BACKSLASH_CHR
 #define CUR_PATH_SEPARATOR_STR PATH_BACKSLASH_STR
 #define PATH_CCH_APPEND PathCchAppendA
-#include "include/PathCchAppend.c" // NOLINT(bugprone-suspicious-include)
+#include "include/PathCchAppend.h"
 #undef DEFINE_UNICODE
 #undef CUR_PATH_SEPARATOR_CHR
 #undef CUR_PATH_SEPARATOR_STR
@@ -294,7 +294,7 @@ HRESULT PathCchRemoveBackslashExW(PWSTR pszPath, size_t cchPath, PWSTR* ppszEnd,
 #define CUR_PATH_SEPARATOR_CHR PATH_BACKSLASH_CHR
 #define CUR_PATH_SEPARATOR_STR PATH_BACKSLASH_STR_W
 #define PATH_CCH_APPEND PathCchAppendW
-#include "include/PathCchAppend.c" // NOLINT(bugprone-suspicious-include)
+#include "include/PathCchAppend.h"
 #undef DEFINE_UNICODE
 #undef CUR_PATH_SEPARATOR_CHR
 #undef CUR_PATH_SEPARATOR_STR
@@ -306,7 +306,7 @@ HRESULT PathCchRemoveBackslashExW(PWSTR pszPath, size_t cchPath, PWSTR* ppszEnd,
 #define CUR_PATH_SEPARATOR_CHR PATH_SLASH_CHR
 #define CUR_PATH_SEPARATOR_STR PATH_SLASH_STR
 #define PATH_CCH_APPEND UnixPathCchAppendA
-#include "include/PathCchAppend.c" // NOLINT(bugprone-suspicious-include)
+#include "include/PathCchAppend.h"
 #undef DEFINE_UNICODE
 #undef CUR_PATH_SEPARATOR_CHR
 #undef CUR_PATH_SEPARATOR_STR
@@ -316,7 +316,7 @@ HRESULT PathCchRemoveBackslashExW(PWSTR pszPath, size_t cchPath, PWSTR* ppszEnd,
 #define CUR_PATH_SEPARATOR_CHR PATH_SLASH_CHR
 #define CUR_PATH_SEPARATOR_STR PATH_SLASH_STR_W
 #define PATH_CCH_APPEND UnixPathCchAppendW
-#include "include/PathCchAppend.c" // NOLINT(bugprone-suspicious-include)
+#include "include/PathCchAppend.h"
 #undef DEFINE_UNICODE
 #undef CUR_PATH_SEPARATOR_CHR
 #undef CUR_PATH_SEPARATOR_STR
@@ -328,7 +328,7 @@ HRESULT PathCchRemoveBackslashExW(PWSTR pszPath, size_t cchPath, PWSTR* ppszEnd,
 #define CUR_PATH_SEPARATOR_CHR PATH_SEPARATOR_CHR
 #define CUR_PATH_SEPARATOR_STR PATH_SEPARATOR_STR
 #define PATH_CCH_APPEND NativePathCchAppendA
-#include "include/PathCchAppend.c" // NOLINT(bugprone-suspicious-include)
+#include "include/PathCchAppend.h"
 #undef DEFINE_UNICODE
 #undef CUR_PATH_SEPARATOR_CHR
 #undef CUR_PATH_SEPARATOR_STR
@@ -338,7 +338,7 @@ HRESULT PathCchRemoveBackslashExW(PWSTR pszPath, size_t cchPath, PWSTR* ppszEnd,
 #define CUR_PATH_SEPARATOR_CHR PATH_SEPARATOR_CHR
 #define CUR_PATH_SEPARATOR_STR PATH_SEPARATOR_STR_W
 #define PATH_CCH_APPEND NativePathCchAppendW
-#include "include/PathCchAppend.c" // NOLINT(bugprone-suspicious-include)
+#include "include/PathCchAppend.h"
 #undef DEFINE_UNICODE
 #undef CUR_PATH_SEPARATOR_CHR
 #undef CUR_PATH_SEPARATOR_STR
@@ -454,7 +454,7 @@ HRESULT PathCchCombineExW(PWSTR pszPathOut, size_t cchPathOut, PCWSTR pszPathIn,
 #define CUR_PATH_SEPARATOR_CHR PATH_BACKSLASH_CHR
 #define CUR_PATH_SEPARATOR_STR PATH_BACKSLASH_STR
 #define PATH_ALLOC_COMBINE PathAllocCombineA
-#include "include/PathAllocCombine.c" // NOLINT(bugprone-suspicious-include)
+#include "include/PathAllocCombine.h"
 #undef DEFINE_UNICODE
 #undef CUR_PATH_SEPARATOR_CHR
 #undef CUR_PATH_SEPARATOR_STR
@@ -464,7 +464,7 @@ HRESULT PathCchCombineExW(PWSTR pszPathOut, size_t cchPathOut, PCWSTR pszPathIn,
 #define CUR_PATH_SEPARATOR_CHR PATH_BACKSLASH_CHR
 #define CUR_PATH_SEPARATOR_STR PATH_BACKSLASH_STR_W
 #define PATH_ALLOC_COMBINE PathAllocCombineW
-#include "include/PathAllocCombine.c" // NOLINT(bugprone-suspicious-include)
+#include "include/PathAllocCombine.h"
 #undef DEFINE_UNICODE
 #undef CUR_PATH_SEPARATOR_CHR
 #undef CUR_PATH_SEPARATOR_STR
@@ -476,7 +476,7 @@ HRESULT PathCchCombineExW(PWSTR pszPathOut, size_t cchPathOut, PCWSTR pszPathIn,
 #define CUR_PATH_SEPARATOR_CHR PATH_SLASH_CHR
 #define CUR_PATH_SEPARATOR_STR PATH_SLASH_STR
 #define PATH_ALLOC_COMBINE UnixPathAllocCombineA
-#include "include/PathAllocCombine.c" // NOLINT(bugprone-suspicious-include)
+#include "include/PathAllocCombine.h"
 #undef DEFINE_UNICODE
 #undef CUR_PATH_SEPARATOR_CHR
 #undef CUR_PATH_SEPARATOR_STR
@@ -486,7 +486,7 @@ HRESULT PathCchCombineExW(PWSTR pszPathOut, size_t cchPathOut, PCWSTR pszPathIn,
 #define CUR_PATH_SEPARATOR_CHR PATH_SLASH_CHR
 #define CUR_PATH_SEPARATOR_STR PATH_SLASH_STR_W
 #define PATH_ALLOC_COMBINE UnixPathAllocCombineW
-#include "include/PathAllocCombine.c" // NOLINT(bugprone-suspicious-include)
+#include "include/PathAllocCombine.h"
 #undef DEFINE_UNICODE
 #undef CUR_PATH_SEPARATOR_CHR
 #undef CUR_PATH_SEPARATOR_STR
@@ -498,7 +498,7 @@ HRESULT PathCchCombineExW(PWSTR pszPathOut, size_t cchPathOut, PCWSTR pszPathIn,
 #define CUR_PATH_SEPARATOR_CHR PATH_SEPARATOR_CHR
 #define CUR_PATH_SEPARATOR_STR PATH_SEPARATOR_STR
 #define PATH_ALLOC_COMBINE NativePathAllocCombineA
-#include "include/PathAllocCombine.c" // NOLINT(bugprone-suspicious-include)
+#include "include/PathAllocCombine.h"
 #undef DEFINE_UNICODE
 #undef CUR_PATH_SEPARATOR_CHR
 #undef CUR_PATH_SEPARATOR_STR
@@ -508,7 +508,7 @@ HRESULT PathCchCombineExW(PWSTR pszPathOut, size_t cchPathOut, PCWSTR pszPathIn,
 #define CUR_PATH_SEPARATOR_CHR PATH_SEPARATOR_CHR
 #define CUR_PATH_SEPARATOR_STR PATH_SEPARATOR_STR_W
 #define PATH_ALLOC_COMBINE NativePathAllocCombineW
-#include "include/PathAllocCombine.c" // NOLINT(bugprone-suspicious-include)
+#include "include/PathAllocCombine.h"
 #undef DEFINE_UNICODE
 #undef CUR_PATH_SEPARATOR_CHR
 #undef CUR_PATH_SEPARATOR_STR
