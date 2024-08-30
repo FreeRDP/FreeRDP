@@ -1233,7 +1233,8 @@ void freerdp_dsp_context_free(FREERDP_DSP_CONTEXT* context)
 
 BOOL freerdp_dsp_encode(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
                         const AUDIO_FORMAT* WINPR_RESTRICT srcFormat,
-                        const BYTE* WINPR_RESTRICT data, size_t length, wStream* WINPR_RESTRICT out)
+                        const BYTE* WINPR_RESTRICT pdata, size_t length,
+                        wStream* WINPR_RESTRICT out)
 {
 #if defined(WITH_FDK_AAC)
 	FREERDP_DSP_COMMON_CONTEXT* ctx = (FREERDP_DSP_COMMON_CONTEXT*)context;
@@ -1241,27 +1242,28 @@ BOOL freerdp_dsp_encode(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
 	switch (ctx->format.wFormatTag)
 	{
 		case WAVE_FORMAT_AAC_MS:
-			return fdk_aac_dsp_encode(ctx, srcFormat, data, length, out);
+			return fdk_aac_dsp_encode(ctx, srcFormat, pdata, length, out);
 		default:
 			break;
 	}
 #endif
 
 #if defined(WITH_DSP_FFMPEG)
-	return freerdp_dsp_ffmpeg_encode(context, srcFormat, data, length, out);
+	return freerdp_dsp_ffmpeg_encode(context, srcFormat, pdata, length, out);
 #else
-	if (!context || !context->common.encoder || !srcFormat || !data || !out)
+	if (!context || !context->common.encoder || !srcFormat || !pdata || !out)
 		return FALSE;
 
 	AUDIO_FORMAT format = *srcFormat;
 	const BYTE* resampleData = NULL;
 	size_t resampleLength = 0;
 
-	if (!freerdp_dsp_channel_mix(context, data, length, srcFormat, &resampleData, &resampleLength))
+	if (!freerdp_dsp_channel_mix(context, pdata, length, srcFormat, &resampleData, &resampleLength))
 		return FALSE;
 
 	format.nChannels = context->common.format.nChannels;
 
+	const BYTE* data = NULL;
 	if (!freerdp_dsp_resample(context, resampleData, resampleLength, &format, &data, &length))
 		return FALSE;
 
