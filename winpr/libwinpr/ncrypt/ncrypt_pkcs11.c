@@ -1252,7 +1252,6 @@ SECURITY_STATUS NCryptOpenP11StorageProviderEx(NCRYPT_PROV_HANDLE* phProvider,
 		const char* modulePath = *modulePaths++;
 		HANDLE library = LoadLibrary(modulePath);
 		typedef CK_RV (*c_get_function_list_t)(CK_FUNCTION_LIST_PTR_PTR);
-		c_get_function_list_t c_get_function_list = NULL;
 		NCryptP11ProviderHandle* provider = NULL;
 
 		WLog_DBG(TAG, "Trying pkcs11 module '%s'", modulePath);
@@ -1262,14 +1261,20 @@ SECURITY_STATUS NCryptOpenP11StorageProviderEx(NCRYPT_PROV_HANDLE* phProvider,
 			goto out_load_library;
 		}
 
-		c_get_function_list = (c_get_function_list_t)GetProcAddress(library, "C_GetFunctionList");
-		if (!c_get_function_list)
+		union
+		{
+			FARPROC fp;
+			c_get_function_list_t c_get_function_list;
+		} cnv;
+		cnv.fp = GetProcAddress(library, "C_GetFunctionList");
+
+		if (!cnv.c_get_function_list)
 		{
 			status = NTE_PROV_TYPE_ENTRY_BAD;
 			goto out_load_library;
 		}
 
-		status = initialize_pkcs11(library, c_get_function_list, phProvider);
+		status = initialize_pkcs11(library, cnv.c_get_function_list, phProvider);
 		if (status != ERROR_SUCCESS)
 		{
 			status = NTE_PROVIDER_DLL_FAIL;

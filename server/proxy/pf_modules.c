@@ -481,11 +481,9 @@ void pf_modules_list_loaded_plugins(proxyModule* module)
 
 static BOOL pf_modules_load_module(const char* module_path, proxyModule* module, void* userdata)
 {
-	HMODULE handle = NULL;
-	proxyModuleEntryPoint pEntryPoint = NULL;
 	WINPR_ASSERT(module);
 
-	handle = LoadLibraryX(module_path);
+	HANDLE handle = LoadLibraryX(module_path);
 
 	if (handle == NULL)
 	{
@@ -493,8 +491,13 @@ static BOOL pf_modules_load_module(const char* module_path, proxyModule* module,
 		return FALSE;
 	}
 
-	pEntryPoint = (proxyModuleEntryPoint)GetProcAddress(handle, MODULE_ENTRY_POINT);
-	if (!pEntryPoint)
+	union
+	{
+		FARPROC fp;
+		proxyModuleEntryPoint pEntryPoint;
+	} cnv;
+	cnv.fp = GetProcAddress(handle, MODULE_ENTRY_POINT);
+	if (!cnv.pEntryPoint)
 	{
 		WLog_ERR(TAG, "GetProcAddress failed while loading %s", module_path);
 		goto error;
@@ -504,7 +507,7 @@ static BOOL pf_modules_load_module(const char* module_path, proxyModule* module,
 		WLog_ERR(TAG, "ArrayList_Append failed!");
 		goto error;
 	}
-	return pf_modules_add(module, pEntryPoint, userdata);
+	return pf_modules_add(module, cnv.pEntryPoint, userdata);
 
 error:
 	FreeLibrary(handle);

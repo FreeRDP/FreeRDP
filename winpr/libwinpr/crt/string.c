@@ -446,7 +446,7 @@ WCHAR* wcstok_s(WCHAR* strToken, const WCHAR* strDelimit, WCHAR** context)
  * http://msdn.microsoft.com/en-us/library/hh802935/
  */
 
-#include "casing.c"
+#include "casing.h"
 
 LPSTR CharUpperA(LPSTR lpsz)
 {

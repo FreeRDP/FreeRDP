@@ -54,7 +54,13 @@ static void* freerdp_channels_find_static_entry_in_table(const STATIC_ENTRY_TABL
 	{
 		if (strcmp(pEntry->name, identifier) == 0)
 		{
-			return (void*)pEntry->entry;
+			union
+			{
+				void* pv;
+				UINT (*entry)();
+			} cnv;
+			cnv.entry = pEntry->entry;
+			return cnv.pv;
 		}
 
 		pEntry = &table->table[index++];

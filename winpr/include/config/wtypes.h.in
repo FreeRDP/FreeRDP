@@ -33,13 +33,13 @@
 
 // C23 related macros
 #if defined(__STDC__) && defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 202311L)
-#define WINPR_FALLTHROUGH [[fallthrough]];
+#define WINPR_FALLTHROUGH (void)0; [[fallthrough]];
 #elif defined(__clang__)
-#define WINPR_FALLTHROUGH __attribute__((fallthrough));
+#define WINPR_FALLTHROUGH (void)0; __attribute__((fallthrough));
 #elif defined(__GNUC__) && (__GNUC__ >= 7)
-#define WINPR_FALLTHROUGH __attribute__((fallthrough));
+#define WINPR_FALLTHROUGH (void)0; __attribute__((fallthrough));
 #else
-#define WINPR_FALLTHROUGH
+#define WINPR_FALLTHROUGH (void)0;
 #endif
 
 /* Set by CMake during configuration */

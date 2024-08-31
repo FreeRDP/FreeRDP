@@ -718,12 +718,15 @@ const char* freerdp_get_version_string(void)
 
 const char* freerdp_get_build_config(void)
 {
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_OVERLENGTH_STRINGS
 	static const char build_config[] =
 	    "Build configuration: " FREERDP_BUILD_CONFIG "\n"
 	    "Build type:          " FREERDP_BUILD_TYPE "\n"
 	    "CFLAGS:              " FREERDP_CFLAGS "\n"
 	    "Compiler:            " FREERDP_COMPILER_ID ", " FREERDP_COMPILER_VERSION "\n"
 	    "Target architecture: " FREERDP_TARGET_ARCH "\n";
+	WINPR_PRAGMA_DIAG_POP
 	return build_config;
 }
 

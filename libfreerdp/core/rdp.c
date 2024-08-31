@@ -2852,9 +2852,14 @@ static void log_build_warn(rdpRdp* rdp, const char* what, const char* msg,
                            BOOL (*cmp)(wLog* log, const char* tok))
 {
 	WINPR_ASSERT(rdp);
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_OVERLENGTH_STRINGS
+
 	size_t len = sizeof(FREERDP_BUILD_CONFIG);
 	char* list = calloc(len, sizeof(char));
 	char* config = _strdup(FREERDP_BUILD_CONFIG);
+	WINPR_PRAGMA_DIAG_POP
+
 	if (config && list)
 	{
 		char* tok = strtok(config, " ");

@@ -24,6 +24,10 @@
 
 #if defined(__clang__)
 #define WINPR_PRAGMA_DIAG_PUSH _Pragma("clang diagnostic push")
+#define WINPR_PRAGMA_DIAG_IGNORED_OVERLENGTH_STRINGS \
+	_Pragma("clang diagnostic ignored \"-Woverlength-strings\"")
+#define WINPR_PRAGMA_DIAG_IGNORED_QUALIFIERS \
+	_Pragma("clang diagnostic ignored \"-Wdiscarded-qualifiers\"")
 #define WINPR_PRAGMA_DIAG_IGNORED_PEDANTIC _Pragma("clang diagnostic ignored \"-Wpedantic\"")
 #define WINPR_PRAGMA_DIAG_IGNORED_MISSING_PROTOTYPES \
 	_Pragma("clang diagnostic ignored \"-Wmissing-prototypes\"")
@@ -43,6 +47,10 @@
 #define WINPR_PRAGMA_UNROLL_LOOP _Pragma("clang loop vectorize_width(8) interleave_count(8)")
 #elif defined(__GNUC__)
 #define WINPR_PRAGMA_DIAG_PUSH _Pragma("GCC diagnostic push")
+#define WINPR_PRAGMA_DIAG_IGNORED_OVERLENGTH_STRINGS \
+	_Pragma("GCC diagnostic ignored \"-Woverlength-strings\"")
+#define WINPR_PRAGMA_DIAG_IGNORED_QUALIFIERS \
+	_Pragma("GCC diagnostic ignored \"-Wdiscarded-qualifiers\"")
 #define WINPR_PRAGMA_DIAG_IGNORED_PEDANTIC _Pragma("GCC diagnostic ignored \"-Wpedantic\"")
 #define WINPR_PRAGMA_DIAG_IGNORED_MISSING_PROTOTYPES \
 	_Pragma("GCC diagnostic ignored \"-Wmissing-prototypes\"")
@@ -64,6 +72,8 @@
 #else
 #define WINPR_PRAGMA_DIAG_PUSH
 #define WINPR_PRAGMA_DIAG_IGNORED_PEDANTIC
+#define WINPR_PRAGMA_DIAG_IGNORED_QUALIFIERS
+#define WINPR_PRAGMA_DIAG_IGNORED_OVERLENGTH_STRINGS
 #define WINPR_PRAGMA_DIAG_IGNORED_MISSING_PROTOTYPES
 #define WINPR_PRAGMA_DIAG_IGNORED_STRICT_PROTOTYPES
 #define WINPR_PRAGMA_DIAG_IGNORED_RESERVED_ID_MACRO

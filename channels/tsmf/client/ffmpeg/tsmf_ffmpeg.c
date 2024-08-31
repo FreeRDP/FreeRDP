@@ -162,7 +162,11 @@ static BOOL tsmf_ffmpeg_init_stream(ITSMFDecoder* decoder, const TS_AM_MEDIA_TYP
 	UINT32 size = 0;
 	const BYTE* s = NULL;
 	TSMFFFmpegDecoder* mdecoder = (TSMFFFmpegDecoder*)decoder;
+
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_QUALIFIERS
 	mdecoder->codec = avcodec_find_decoder(mdecoder->codec_id);
+	WINPR_PRAGMA_DIAG_POP
 
 	if (!mdecoder->codec)
 	{

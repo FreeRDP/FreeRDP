@@ -1306,11 +1306,19 @@ static DWORD WINAPI xf_handle_pipe(void* arg)
 		         winpr_strerror(errno, ebuffer, sizeof(ebuffer)), errno);
 		return 0;
 	}
+
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_QUALIFIERS
 	freerdp_add_signal_cleanup_handler(pipe, cleanup_pipe);
+	WINPR_PRAGMA_DIAG_POP
 
 	xf_process_pipe(context, pipe);
 
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_QUALIFIERS
 	freerdp_del_signal_cleanup_handler(pipe, cleanup_pipe);
+	WINPR_PRAGMA_DIAG_POP
+
 	unlink(pipe);
 	return 0;
 }

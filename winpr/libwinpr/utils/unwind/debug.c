@@ -36,10 +36,20 @@
 
 #define TAG WINPR_TAG("utils.unwind")
 
+#define UNWIND_MAX_LINE_SIZE 1024ULL
+
 typedef struct
 {
-	uintptr_t pc;
-	void* langSpecificData;
+	union
+	{
+		uintptr_t uw;
+		void* pv;
+	} pc;
+	union
+	{
+		uintptr_t uptr;
+		void* pv;
+	} langSpecificData;
 } unwind_info_t;
 
 typedef struct
@@ -103,8 +113,13 @@ static _Unwind_Reason_Code unwind_backtrace_callback(struct _Unwind_Context* con
 	if (ctx->pos < ctx->size)
 	{
 		unwind_info_t* info = &ctx->info[ctx->pos++];
-		info->pc = _Unwind_GetIP(context);
-		info->langSpecificData = _Unwind_GetLanguageSpecificData(context);
+		info->pc.uw = _Unwind_GetIP(context);
+
+		/* _Unwind_GetLanguageSpecificData has various return value definitions,
+		 * cast to the type we expect and disable linter warnings
+		 */
+		// NOLINTNEXTLINE(google-readability-casting,readability-redundant-casting)
+		info->langSpecificData.pv = (void*)_Unwind_GetLanguageSpecificData(context);
 	}
 
 	return _URC_NO_REASON;
@@ -145,8 +160,6 @@ void winpr_unwind_backtrace_free(void* buffer)
 	free(ctx);
 }
 
-#define UNWIND_MAX_LINE_SIZE 1024
-
 char** winpr_unwind_backtrace_symbols(void* buffer, size_t* used)
 {
 	union
@@ -172,12 +185,12 @@ char** winpr_unwind_backtrace_symbols(void* buffer, size_t* used)
 		char* msg = cnv.cp + ctx->pos * sizeof(char*) + x * UNWIND_MAX_LINE_SIZE;
 		const unwind_info_t* info = &ctx->info[x];
 		Dl_info dlinfo = { 0 };
-		int rc = dladdr((void*)info->pc, &dlinfo);
+		int rc = dladdr(info->pc.pv, &dlinfo);
 
 		cnv.cpp[x] = msg;
 
 		if (rc == 0)
-			(void)_snprintf(msg, UNWIND_MAX_LINE_SIZE, "unresolvable, address=%p", (void*)info->pc);
+			(void)_snprintf(msg, UNWIND_MAX_LINE_SIZE, "unresolvable, address=%p", info->pc.pv);
 		else
 			(void)_snprintf(msg, UNWIND_MAX_LINE_SIZE, "dli_fname=%s [%p], dli_sname=%s [%p]",
 			                dlinfo.dli_fname, dlinfo.dli_fbase, dlinfo.dli_sname, dlinfo.dli_saddr);
