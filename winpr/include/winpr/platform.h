@@ -41,8 +41,8 @@
 	_Pragma("clang diagnostic ignored \"-Wunused-const-variable\"")
 #define WINPR_PRAGMA_DIAG_IGNORED_FORMAT_SECURITY \
 	_Pragma("clang diagnostic ignored \"-Wformat-security\"")
-#define WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC \
-	_Pragma("clang diagnostic ignored \"-Wmismatched-dealloc\"")
+#define WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC /* not supported \
+    _Pragma("clang diagnostic ignored \"-Wmismatched-dealloc\"") */
 #define WINPR_PRAGMA_DIAG_POP _Pragma("clang diagnostic pop")
 #define WINPR_PRAGMA_UNROLL_LOOP _Pragma("clang loop vectorize_width(8) interleave_count(8)")
 #elif defined(__GNUC__)
@@ -65,8 +65,12 @@
 	_Pragma("GCC diagnostic ignored \"-Wunused-const-variable\"")
 #define WINPR_PRAGMA_DIAG_IGNORED_FORMAT_SECURITY \
 	_Pragma("GCC diagnostic ignored \"-Wformat-security\"")
+#if __GNUC__ >= 11
 #define WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC \
 	_Pragma("GCC diagnostic ignored \"-Wmismatched-dealloc\"")
+#else
+#define WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
+#endif
 #define WINPR_PRAGMA_DIAG_POP _Pragma("GCC diagnostic pop")
 #define WINPR_PRAGMA_UNROLL_LOOP _Pragma("GCC unroll 8") _Pragma("GCC ivdep")
 #else
