@@ -773,22 +773,23 @@ static BOOL freerdp_dsp_channel_mix(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
 
 BOOL freerdp_dsp_ffmpeg_encode(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
                                const AUDIO_FORMAT* WINPR_RESTRICT format,
-                               const BYTE* WINPR_RESTRICT data, size_t length,
+                               const BYTE* WINPR_RESTRICT sdata, size_t length,
                                wStream* WINPR_RESTRICT out)
 {
 	AUDIO_FORMAT fmt = { 0 };
 
-	if (!context || !format || !data || !out || !context->common.encoder)
+	if (!context || !format || !sdata || !out || !context->common.encoder)
 		return FALSE;
 
-	if (!context || !data || !out)
+	if (!context || !sdata || !out)
 		return FALSE;
 
 	/* https://github.com/FreeRDP/FreeRDP/issues/7607
 	 *
 	 * we get noisy data with channel transformation, so do it ourselves.
 	 */
-	if (!freerdp_dsp_channel_mix(context, data, length, format, &data, &length, &fmt))
+	const BYTE* data = NULL;
+	if (!freerdp_dsp_channel_mix(context, sdata, length, format, &data, &length, &fmt))
 		return FALSE;
 
 	/* Create input frame */
