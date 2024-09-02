@@ -64,6 +64,12 @@ AddTargetWithResourceFile(${MODULE_NAME} FALSE "${FREERDP_VERSION}" SRCS)
 
 list(APPEND LIBS freerdp winpr)
 
+include(CheckLibraryExists)
+CHECK_LIBRARY_EXISTS(m lround "" HAVE_LIB_M)
+if(HAVE_LIB_M)
+    list(APPEND LIBS m)
+endif()
+
 target_include_directories(${MODULE_NAME} INTERFACE $<INSTALL_INTERFACE:include>)
 target_link_libraries(${MODULE_NAME} PRIVATE ${FREERDP_CHANNELS_CLIENT_LIBS})
 target_link_libraries(${MODULE_NAME} PUBLIC ${LIBS})

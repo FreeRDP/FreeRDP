@@ -772,9 +772,9 @@ wHashTable* HashTable_New(BOOL synchronized)
 	if (!table->bucketArray)
 		goto fail;
 
-	table->idealRatio = 3.0;
-	table->lowerRehashThreshold = 0.0;
-	table->upperRehashThreshold = 15.0;
+	table->idealRatio = 3.0f;
+	table->lowerRehashThreshold = 0.0f;
+	table->upperRehashThreshold = 15.0f;
 	table->hash = HashTable_PointerHash;
 	table->key.fnObjectEquals = HashTable_PointerCompare;
 	table->value.fnObjectEquals = HashTable_PointerCompare;

@@ -333,16 +333,8 @@ static void xf_input_save_last_event(xfContext* xfc, const XGenericEventCookie* 
 
 static void xf_input_detect_pan(xfContext* xfc)
 {
-	double dx[2];
-	double dy[2];
-	double px = NAN;
-	double py = NAN;
-	double dist_x = NAN;
-	double dist_y = NAN;
-	rdpContext* ctx = NULL;
-
 	WINPR_ASSERT(xfc);
-	ctx = &xfc->common.context;
+	rdpContext* ctx = &xfc->common.context;
 	WINPR_ASSERT(ctx);
 
 	if (xfc->active_contacts != 2)
@@ -350,16 +342,16 @@ static void xf_input_detect_pan(xfContext* xfc)
 		return;
 	}
 
-	dx[0] = xfc->contacts[0].pos_x - xfc->contacts[0].last_x;
-	dx[1] = xfc->contacts[1].pos_x - xfc->contacts[1].last_x;
-	dy[0] = xfc->contacts[0].pos_y - xfc->contacts[0].last_y;
-	dy[1] = xfc->contacts[1].pos_y - xfc->contacts[1].last_y;
-	px = fabs(dx[0]) < fabs(dx[1]) ? dx[0] : dx[1];
-	py = fabs(dy[0]) < fabs(dy[1]) ? dy[0] : dy[1];
+	const double dx[] = { xfc->contacts[0].pos_x - xfc->contacts[0].last_x,
+		                  xfc->contacts[1].pos_x - xfc->contacts[1].last_x };
+	const double dy[] = { xfc->contacts[0].pos_y - xfc->contacts[0].last_y,
+		                  xfc->contacts[1].pos_y - xfc->contacts[1].last_y };
+	const double px = fabs(dx[0]) < fabs(dx[1]) ? dx[0] : dx[1];
+	const double py = fabs(dy[0]) < fabs(dy[1]) ? dy[0] : dy[1];
 	xfc->px_vector += px;
 	xfc->py_vector += py;
-	dist_x = fabs(xfc->contacts[0].pos_x - xfc->contacts[1].pos_x);
-	dist_y = fabs(xfc->contacts[0].pos_y - xfc->contacts[1].pos_y);
+	const double dist_x = fabs(xfc->contacts[0].pos_x - xfc->contacts[1].pos_x);
+	const double dist_y = fabs(xfc->contacts[0].pos_y - xfc->contacts[1].pos_y);
 
 	if (dist_y > MIN_FINGER_DIST)
 	{
@@ -424,13 +416,10 @@ static void xf_input_detect_pan(xfContext* xfc)
 
 static void xf_input_detect_pinch(xfContext* xfc)
 {
-	double dist = NAN;
-	double delta = NAN;
-	ZoomingChangeEventArgs e;
-	rdpContext* ctx = NULL;
+	ZoomingChangeEventArgs e = { 0 };
 
 	WINPR_ASSERT(xfc);
-	ctx = &xfc->common.context;
+	rdpContext* ctx = &xfc->common.context;
 	WINPR_ASSERT(ctx);
 
 	if (xfc->active_contacts != 2)
@@ -440,8 +429,8 @@ static void xf_input_detect_pinch(xfContext* xfc)
 	}
 
 	/* first calculate the distance */
-	dist = sqrt(pow(xfc->contacts[1].pos_x - xfc->contacts[0].last_x, 2.0) +
-	            pow(xfc->contacts[1].pos_y - xfc->contacts[0].last_y, 2.0));
+	const double dist = sqrt(pow(xfc->contacts[1].pos_x - xfc->contacts[0].last_x, 2.0) +
+	                         pow(xfc->contacts[1].pos_y - xfc->contacts[0].last_y, 2.0));
 
 	/* if this is the first 2pt touch */
 	if (xfc->firstDist <= 0)
@@ -454,7 +443,7 @@ static void xf_input_detect_pinch(xfContext* xfc)
 	}
 	else
 	{
-		delta = xfc->lastDist - dist;
+		double delta = xfc->lastDist - dist;
 
 		if (delta > 1.0)
 			delta = 1.0;

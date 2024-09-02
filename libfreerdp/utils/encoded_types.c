@@ -318,7 +318,7 @@ BOOL freerdp_write_four_byte_float(wStream* s, double value)
 			exp = 7;
 	}
 
-	UINT64 base = aval;
+	UINT64 base = (UINT64)llround(aval);
 	while (exp >= 0)
 	{
 		const double div = pow(10.0, exp);

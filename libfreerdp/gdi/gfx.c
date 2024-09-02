@@ -168,8 +168,6 @@ static UINT gdi_OutputUpdate(rdpGdi* gdi, gdiGfxSurface* surface)
 	RECTANGLE_16 surfaceRect;
 	const RECTANGLE_16* rects = NULL;
 	UINT32 nbRects = 0;
-	double sx = NAN;
-	double sy = NAN;
 	rdpUpdate* update = NULL;
 
 	WINPR_ASSERT(gdi);
@@ -189,8 +187,8 @@ static UINT gdi_OutputUpdate(rdpGdi* gdi, gdiGfxSurface* surface)
 	surfaceRect.right = (UINT16)MIN(UINT16_MAX, surface->mappedWidth);
 	surfaceRect.bottom = (UINT16)MIN(UINT16_MAX, surface->mappedHeight);
 	region16_intersect_rect(&(surface->invalidRegion), &(surface->invalidRegion), &surfaceRect);
-	sx = surface->outputTargetWidth / (double)surface->mappedWidth;
-	sy = surface->outputTargetHeight / (double)surface->mappedHeight;
+	const double sx = surface->outputTargetWidth / (double)surface->mappedWidth;
+	const double sy = surface->outputTargetHeight / (double)surface->mappedHeight;
 
 	if (!(rects = region16_rects(&surface->invalidRegion, &nbRects)) || !nbRects)
 		return CHANNEL_RC_OK;
