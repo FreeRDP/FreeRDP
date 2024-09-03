@@ -1170,8 +1170,9 @@ static LONG WINAPI PCSC_SCardListCardsW(SCARDCONTEXT hContext, LPCBYTE pbAtr,
 	return SCARD_S_SUCCESS;
 }
 
-static LONG WINAPI PCSC_SCardListInterfacesA(SCARDCONTEXT hContext, LPCSTR szCard,
-                                             LPGUID pguidInterfaces, LPDWORD pcguidInterfaces)
+static LONG WINAPI
+PCSC_SCardListInterfacesA(SCARDCONTEXT hContext, LPCSTR szCard, LPGUID pguidInterfaces,
+                          LPDWORD pcguidInterfaces /* NOLINT(readability-non-const-parameter) */)
 {
 	WINPR_UNUSED(hContext);
 	WINPR_UNUSED(szCard);
@@ -1180,8 +1181,9 @@ static LONG WINAPI PCSC_SCardListInterfacesA(SCARDCONTEXT hContext, LPCSTR szCar
 	return SCARD_E_UNSUPPORTED_FEATURE;
 }
 
-static LONG WINAPI PCSC_SCardListInterfacesW(SCARDCONTEXT hContext, LPCWSTR szCard,
-                                             LPGUID pguidInterfaces, LPDWORD pcguidInterfaces)
+static LONG WINAPI
+PCSC_SCardListInterfacesW(SCARDCONTEXT hContext, LPCWSTR szCard, LPGUID pguidInterfaces,
+                          LPDWORD pcguidInterfaces /* NOLINT(readability-non-const-parameter) */)
 {
 	WINPR_UNUSED(hContext);
 	WINPR_UNUSED(szCard);
@@ -1208,9 +1210,10 @@ static LONG WINAPI PCSC_SCardGetProviderIdW(SCARDCONTEXT hContext, LPCWSTR szCar
 	return SCARD_E_UNSUPPORTED_FEATURE;
 }
 
-static LONG WINAPI PCSC_SCardGetCardTypeProviderNameA(SCARDCONTEXT hContext, LPCSTR szCardName,
-                                                      DWORD dwProviderId, CHAR* szProvider,
-                                                      LPDWORD pcchProvider)
+static LONG WINAPI PCSC_SCardGetCardTypeProviderNameA(
+    SCARDCONTEXT hContext, LPCSTR szCardName, DWORD dwProviderId,
+    CHAR* szProvider /* NOLINT(readability-non-const-parameter) */,
+    LPDWORD pcchProvider /* NOLINT(readability-non-const-parameter) */)
 {
 	WINPR_UNUSED(hContext);
 	WINPR_UNUSED(szCardName);
@@ -1220,9 +1223,10 @@ static LONG WINAPI PCSC_SCardGetCardTypeProviderNameA(SCARDCONTEXT hContext, LPC
 	return SCARD_E_UNSUPPORTED_FEATURE;
 }
 
-static LONG WINAPI PCSC_SCardGetCardTypeProviderNameW(SCARDCONTEXT hContext, LPCWSTR szCardName,
-                                                      DWORD dwProviderId, WCHAR* szProvider,
-                                                      LPDWORD pcchProvider)
+static LONG WINAPI PCSC_SCardGetCardTypeProviderNameW(
+    SCARDCONTEXT hContext, LPCWSTR szCardName, DWORD dwProviderId,
+    WCHAR* szProvider /* NOLINT(readability-non-const-parameter) */,
+    LPDWORD pcchProvider /* NOLINT(readability-non-const-parameter) */)
 {
 	WINPR_UNUSED(hContext);
 	WINPR_UNUSED(szCardName);
@@ -2957,8 +2961,10 @@ static LONG WINAPI PCSC_SCardWriteCacheW(SCARDCONTEXT hContext, UUID* CardIdenti
 	return SCARD_S_SUCCESS;
 }
 
-static LONG WINAPI PCSC_SCardGetReaderIconA(SCARDCONTEXT hContext, LPCSTR szReaderName,
-                                            LPBYTE pbIcon, LPDWORD pcbIcon)
+static LONG WINAPI
+PCSC_SCardGetReaderIconA(SCARDCONTEXT hContext, LPCSTR szReaderName,
+                         LPBYTE pbIcon /* NOLINT(readability-non-const-parameter) */,
+                         LPDWORD pcbIcon /* NOLINT(readability-non-const-parameter) */)
 {
 	WINPR_UNUSED(hContext);
 	WINPR_UNUSED(szReaderName);
@@ -2967,8 +2973,10 @@ static LONG WINAPI PCSC_SCardGetReaderIconA(SCARDCONTEXT hContext, LPCSTR szRead
 	return SCARD_E_UNSUPPORTED_FEATURE;
 }
 
-static LONG WINAPI PCSC_SCardGetReaderIconW(SCARDCONTEXT hContext, LPCWSTR szReaderName,
-                                            LPBYTE pbIcon, LPDWORD pcbIcon)
+static LONG WINAPI
+PCSC_SCardGetReaderIconW(SCARDCONTEXT hContext, LPCWSTR szReaderName,
+                         LPBYTE pbIcon /* NOLINT(readability-non-const-parameter) */,
+                         LPDWORD pcbIcon /* NOLINT(readability-non-const-parameter) */)
 {
 	WINPR_UNUSED(hContext);
 	WINPR_UNUSED(szReaderName);
@@ -2998,9 +3006,10 @@ static LONG WINAPI PCSC_SCardGetDeviceTypeIdW(SCARDCONTEXT hContext, LPCWSTR szR
 	return SCARD_S_SUCCESS;
 }
 
-static LONG WINAPI PCSC_SCardGetReaderDeviceInstanceIdA(SCARDCONTEXT hContext, LPCSTR szReaderName,
-                                                        LPSTR szDeviceInstanceId,
-                                                        LPDWORD pcchDeviceInstanceId)
+static LONG WINAPI PCSC_SCardGetReaderDeviceInstanceIdA(
+    SCARDCONTEXT hContext, LPCSTR szReaderName,
+    LPSTR szDeviceInstanceId /* NOLINT(readability-non-const-parameter) */,
+    LPDWORD pcchDeviceInstanceId /* NOLINT(readability-non-const-parameter) */)
 {
 	WINPR_UNUSED(hContext);
 	WINPR_UNUSED(szReaderName);
@@ -3009,9 +3018,10 @@ static LONG WINAPI PCSC_SCardGetReaderDeviceInstanceIdA(SCARDCONTEXT hContext, L
 	return SCARD_E_UNSUPPORTED_FEATURE;
 }
 
-static LONG WINAPI PCSC_SCardGetReaderDeviceInstanceIdW(SCARDCONTEXT hContext, LPCWSTR szReaderName,
-                                                        LPWSTR szDeviceInstanceId,
-                                                        LPDWORD pcchDeviceInstanceId)
+static LONG WINAPI PCSC_SCardGetReaderDeviceInstanceIdW(
+    SCARDCONTEXT hContext, LPCWSTR szReaderName,
+    LPWSTR szDeviceInstanceId /* NOLINT(readability-non-const-parameter) */,
+    LPDWORD pcchDeviceInstanceId /* NOLINT(readability-non-const-parameter) */)
 {
 	WINPR_UNUSED(hContext);
 	WINPR_UNUSED(szReaderName);
@@ -3020,9 +3030,10 @@ static LONG WINAPI PCSC_SCardGetReaderDeviceInstanceIdW(SCARDCONTEXT hContext, L
 	return SCARD_E_UNSUPPORTED_FEATURE;
 }
 
-static LONG WINAPI PCSC_SCardListReadersWithDeviceInstanceIdA(SCARDCONTEXT hContext,
-                                                              LPCSTR szDeviceInstanceId,
-                                                              LPSTR mszReaders, LPDWORD pcchReaders)
+static LONG WINAPI PCSC_SCardListReadersWithDeviceInstanceIdA(
+    SCARDCONTEXT hContext, LPCSTR szDeviceInstanceId,
+    LPSTR mszReaders /* NOLINT(readability-non-const-parameter) */,
+    LPDWORD pcchReaders /* NOLINT(readability-non-const-parameter) */)
 {
 	WINPR_UNUSED(hContext);
 	WINPR_UNUSED(szDeviceInstanceId);
@@ -3031,10 +3042,10 @@ static LONG WINAPI PCSC_SCardListReadersWithDeviceInstanceIdA(SCARDCONTEXT hCont
 	return SCARD_E_UNSUPPORTED_FEATURE;
 }
 
-static LONG WINAPI PCSC_SCardListReadersWithDeviceInstanceIdW(SCARDCONTEXT hContext,
-                                                              LPCWSTR szDeviceInstanceId,
-                                                              LPWSTR mszReaders,
-                                                              LPDWORD pcchReaders)
+static LONG WINAPI PCSC_SCardListReadersWithDeviceInstanceIdW(
+    SCARDCONTEXT hContext, LPCWSTR szDeviceInstanceId,
+    LPWSTR mszReaders /* NOLINT(readability-non-const-parameter) */,
+    LPDWORD pcchReaders /* NOLINT(readability-non-const-parameter) */)
 {
 	WINPR_UNUSED(hContext);
 	WINPR_UNUSED(szDeviceInstanceId);
