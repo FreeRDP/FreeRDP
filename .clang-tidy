@@ -48,6 +48,7 @@ Checks: >
     -llvm-else-after-return,
     -readability-else-after-return,
     -modernize-use-trailing-return-type,
+    -modernize-return-braced-init-list,
     -modernize-macro-to-enum,
     -readability-braces-around-statements,
     -readability-function-cognitive-complexity,
