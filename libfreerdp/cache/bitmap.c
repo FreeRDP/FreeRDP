@@ -40,7 +40,7 @@
 #define TAG FREERDP_TAG("cache.bitmap")
 
 static rdpBitmap* bitmap_cache_get(rdpBitmapCache* bitmapCache, UINT32 id, UINT32 index);
-static BOOL bitmap_cache_put(rdpBitmapCache* bitmap_cache, UINT32 id, UINT32 index,
+static BOOL bitmap_cache_put(rdpBitmapCache* bitmapCache, UINT32 id, UINT32 index,
                              rdpBitmap* bitmap);
 
 static BOOL update_gdi_memblt(rdpContext* context, MEMBLT_ORDER* memblt)

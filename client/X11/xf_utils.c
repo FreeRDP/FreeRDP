@@ -40,9 +40,9 @@ static void write_log(wLog* log, DWORD level, const char* fname, const char* fkt
 	va_end(ap);
 }
 
-char* Safe_XGetAtomNameEx(wLog* log, Display* display, Atom atom, const char* atomvar)
+char* Safe_XGetAtomNameEx(wLog* log, Display* display, Atom atom, const char* varname)
 {
-	WLog_Print(log, log_level, "XGetAtomName(%s, 0x%08" PRIx32 ")", atomvar, atom);
+	WLog_Print(log, log_level, "XGetAtomName(%s, 0x%08" PRIx32 ")", varname, atom);
 	if (atom == None)
 		return strdup("Atom_None");
 	return XGetAtomName(display, atom);

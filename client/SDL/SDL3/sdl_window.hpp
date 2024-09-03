@@ -46,7 +46,7 @@ class SdlWindow
 	void setBordered(bool bordered);
 	void raise();
 	void resizeable(bool use);
-	void fullscreen(bool use);
+	void fullscreen(bool enter);
 
 	bool fill(Uint8 r = 0x00, Uint8 g = 0x00, Uint8 b = 0x00, Uint8 a = 0xff);
 	bool blit(SDL_Surface* surface, const SDL_Rect& src, SDL_Rect& dst);

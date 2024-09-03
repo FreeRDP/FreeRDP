@@ -42,7 +42,7 @@ class SdlInputWidget
 	bool update_label(SDL_Renderer* renderer);
 
 	bool set_mouseover(SDL_Renderer* renderer, bool mouseOver);
-	bool set_highlight(SDL_Renderer* renderer, bool hightlight);
+	bool set_highlight(SDL_Renderer* renderer, bool highlight);
 	bool update_input(SDL_Renderer* renderer);
 	bool resize_input(size_t size);
 
@@ -56,7 +56,7 @@ class SdlInputWidget
 	[[nodiscard]] bool readonly() const;
 
   protected:
-	bool update_input(SDL_Renderer* renderer, SDL_Color fgclor);
+	bool update_input(SDL_Renderer* renderer, SDL_Color fgcolor);
 
   private:
 	SdlInputWidget(const SdlInputWidget& other) = delete;

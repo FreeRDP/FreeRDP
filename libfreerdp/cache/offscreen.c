@@ -44,8 +44,7 @@ struct rdp_offscreen_cache
 	rdpContext* context;
 };
 
-static void offscreen_cache_put(rdpOffscreenCache* offscreen_cache, UINT32 index,
-                                rdpBitmap* bitmap);
+static void offscreen_cache_put(rdpOffscreenCache* offscreenCache, UINT32 index, rdpBitmap* bitmap);
 static void offscreen_cache_delete(rdpOffscreenCache* offscreen, UINT32 index);
 
 static BOOL

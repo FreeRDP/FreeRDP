@@ -135,13 +135,13 @@ bool SdlInputWidget::remove_str(SDL_Renderer* renderer, size_t count)
 	return update_input(renderer);
 }
 
-bool SdlInputWidget::append_str(SDL_Renderer* renderer, const std::string& str)
+bool SdlInputWidget::append_str(SDL_Renderer* renderer, const std::string& text)
 {
 	assert(renderer);
 	if (readonly())
 		return true;
 
-	_text.append(str);
+	_text.append(text);
 	if (!resize_input(_text.size()))
 		return false;
 	return update_input(renderer);

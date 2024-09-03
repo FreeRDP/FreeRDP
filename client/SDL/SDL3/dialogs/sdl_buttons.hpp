@@ -13,7 +13,7 @@ class SdlButtonList
 
 	bool populate(SDL_Renderer* renderer, const std::vector<std::string>& labels,
 	              const std::vector<int>& ids, Sint32 total_width, Sint32 offsetY, Sint32 width,
-	              Sint32 heigth);
+	              Sint32 height);
 
 	bool update(SDL_Renderer* renderer);
 	SdlButton* get_selected(const SDL_MouseButtonEvent& button);

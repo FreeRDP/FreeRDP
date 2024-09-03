@@ -34,12 +34,12 @@
 
 #define TAG FREERDP_TAG("cache.glyph")
 
-static rdpGlyph* glyph_cache_get(rdpGlyphCache* glyph_cache, UINT32 id, UINT32 index);
-static BOOL glyph_cache_put(rdpGlyphCache* glyph_cache, UINT32 id, UINT32 index, rdpGlyph* entry);
+static rdpGlyph* glyph_cache_get(rdpGlyphCache* glyphCache, UINT32 id, UINT32 index);
+static BOOL glyph_cache_put(rdpGlyphCache* glyphCache, UINT32 id, UINT32 index, rdpGlyph* glyph);
 
-static const void* glyph_cache_fragment_get(rdpGlyphCache* glyph, UINT32 index, UINT32* count);
-static BOOL glyph_cache_fragment_put(rdpGlyphCache* glyph, UINT32 index, UINT32 count,
-                                     const void* entry);
+static const void* glyph_cache_fragment_get(rdpGlyphCache* glyphCache, UINT32 index, UINT32* size);
+static BOOL glyph_cache_fragment_put(rdpGlyphCache* glyphCache, UINT32 index, UINT32 size,
+                                     const void* fragment);
 
 static UINT32 update_glyph_offset(const BYTE* data, size_t length, UINT32 index, INT32* x, INT32* y,
                                   UINT32 ulCharInc, UINT32 flAccel)
