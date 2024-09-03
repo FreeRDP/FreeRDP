@@ -19,7 +19,7 @@
  */
 
 #ifndef _GNU_SOURCE
-#define _GNU_SOURCE // NOLINT(bugprone-reserved-identifier)
+#define _GNU_SOURCE // NOLINT(bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
 #endif
 
 #include <assert.h>
