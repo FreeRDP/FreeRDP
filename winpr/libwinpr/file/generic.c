@@ -180,9 +180,7 @@ static pthread_once_t HandleCreatorsInitialized = PTHREAD_ONCE_INIT;
 
 extern HANDLE_CREATOR* GetNamedPipeClientHandleCreator(void);
 
-#if defined __linux__ && !defined ANDROID
 #include "../comm/comm.h"
-#endif /* __linux__ && !defined ANDROID */
 
 static void HandleCreatorsInit(void)
 {
@@ -196,9 +194,9 @@ static void HandleCreatorsInit(void)
 	 * Register all file handle creators.
 	 */
 	ArrayList_Append(HandleCreators, GetNamedPipeClientHandleCreator());
-#if defined __linux__ && !defined ANDROID
-	ArrayList_Append(HandleCreators, GetCommHandleCreator());
-#endif /* __linux__ && !defined ANDROID */
+	HANDLE_CREATOR* serial = GetCommHandleCreator();
+	if (serial)
+		ArrayList_Append(HandleCreators, serial);
 	ArrayList_Append(HandleCreators, GetFileHandleCreator());
 }
 

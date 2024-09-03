@@ -28,9 +28,7 @@
 #include <unistd.h>
 
 #include "comm_serial_sys.h"
-#ifdef __UCLIBC__
 #include "comm.h"
-#endif
 
 #include <winpr/crt.h>
 #include <winpr/wlog.h>
@@ -1085,7 +1083,7 @@ static BOOL set_wait_mask(WINPR_COMM* pComm, const ULONG* pWaitMask)
 	if (*pWaitMask == 0)
 	{
 		/* clearing pending events */
-
+#if defined(WINPR_HAVE_COMM_COUNTERS)
 		if (ioctl(pComm->fd, TIOCGICOUNT, &(pComm->counters)) < 0)
 		{
 			if (!commstatus_error(pComm, "TIOCGICOUNT"))
@@ -1095,7 +1093,7 @@ static BOOL set_wait_mask(WINPR_COMM* pComm, const ULONG* pWaitMask)
 			}
 			ZeroMemory(&(pComm->counters), sizeof(struct serial_icounter_struct));
 		}
-
+#endif
 		pComm->PendingEvents = 0;
 	}
 
@@ -1177,7 +1175,7 @@ static BOOL purge(WINPR_COMM* pComm, const ULONG* pPurgeMask)
 	if (*pPurgeMask & SERIAL_PURGE_TXABORT)
 	{
 		/* Purges all write (IRP_MJ_WRITE) requests. */
-
+#if defined(WINPR_HAVE_SYS_EVENTFD_H)
 		if (eventfd_write(pComm->fd_write_event, WINPR_PURGE_TXABORT) < 0)
 		{
 			if (errno != EAGAIN)
@@ -1189,12 +1187,13 @@ static BOOL purge(WINPR_COMM* pComm, const ULONG* pPurgeMask)
 
 			WINPR_ASSERT(errno == EAGAIN); /* no reader <=> no pending IRP_MJ_WRITE */
 		}
+#endif
 	}
 
 	if (*pPurgeMask & SERIAL_PURGE_RXABORT)
 	{
 		/* Purges all read (IRP_MJ_READ) requests. */
-
+#if defined(WINPR_HAVE_SYS_EVENTFD_H)
 		if (eventfd_write(pComm->fd_read_event, WINPR_PURGE_RXABORT) < 0)
 		{
 			if (errno != EAGAIN)
@@ -1206,6 +1205,7 @@ static BOOL purge(WINPR_COMM* pComm, const ULONG* pPurgeMask)
 
 			WINPR_ASSERT(errno == EAGAIN); /* no reader <=> no pending IRP_MJ_READ */
 		}
+#endif
 	}
 
 	if (*pPurgeMask & SERIAL_PURGE_TXCLEAR)
@@ -1261,9 +1261,9 @@ static BOOL get_commstatus(WINPR_COMM* pComm, SERIAL_STATUS* pCommstatus)
 {
 	BOOL rc = FALSE;
 	/* http://msdn.microsoft.com/en-us/library/jj673022%28v=vs.85%29.aspx */
-
+#if defined(WINPR_HAVE_COMM_COUNTERS)
 	struct serial_icounter_struct currentCounters = { 0 };
-
+#endif
 	WINPR_ASSERT(pComm);
 	WINPR_ASSERT(pCommstatus);
 
@@ -1284,6 +1284,7 @@ static BOOL get_commstatus(WINPR_COMM* pComm, SERIAL_STATUS* pCommstatus)
 		status = 0;
 	}
 
+#if defined(WINPR_HAVE_COMM_COUNTERS)
 	if (ioctl(pComm->fd, TIOCGICOUNT, &currentCounters) < 0)
 	{
 		if (!commstatus_error(pComm, "TIOCGICOUNT"))
@@ -1324,6 +1325,7 @@ static BOOL get_commstatus(WINPR_COMM* pComm, SERIAL_STATUS* pCommstatus)
 		pCommstatus->Errors |= SERIAL_ERROR_FRAMING;
 		pComm->PendingEvents |= SERIAL_EV_ERR;
 	}
+#endif
 
 	/* HoldReasons */
 
@@ -1341,11 +1343,13 @@ static BOOL get_commstatus(WINPR_COMM* pComm, SERIAL_STATUS* pCommstatus)
 
 	/* AmountInInQueue */
 
+#if defined(__linux__)
 	if (ioctl(pComm->fd, TIOCINQ, &(pCommstatus->AmountInInQueue)) < 0)
 	{
 		if (!commstatus_error(pComm, "TIOCINQ"))
 			goto fail;
 	}
+#endif
 
 	/*  AmountInOutQueue */
 
@@ -1360,7 +1364,7 @@ static BOOL get_commstatus(WINPR_COMM* pComm, SERIAL_STATUS* pCommstatus)
 	/*  BOOLEAN WaitForImmediate; TODO: once IOCTL_SERIAL_IMMEDIATE_CHAR fully supported */
 
 	/* other events based on counters */
-
+#if defined(WINPR_HAVE_COMM_COUNTERS)
 	if (currentCounters.rx != pComm->counters.rx)
 	{
 		pComm->PendingEvents |= SERIAL_EV_RXFLAG | SERIAL_EV_RXCHAR;
@@ -1398,6 +1402,9 @@ static BOOL get_commstatus(WINPR_COMM* pComm, SERIAL_STATUS* pCommstatus)
 		pComm->PendingEvents |= SERIAL_EV_RING;
 	}
 
+	pComm->counters = currentCounters;
+#endif
+
 	if (pCommstatus->AmountInInQueue > (0.8 * N_TTY_BUF_SIZE))
 	{
 		pComm->PendingEvents |= SERIAL_EV_RX80FULL;
@@ -1408,8 +1415,6 @@ static BOOL get_commstatus(WINPR_COMM* pComm, SERIAL_STATUS* pCommstatus)
 		 * * occurred? */
 		pComm->PendingEvents &= ~SERIAL_EV_RX80FULL;
 	}
-
-	pComm->counters = currentCounters;
 
 	rc = TRUE;
 fail:
@@ -1639,7 +1644,7 @@ static BOOL reset_device(WINPR_COMM* pComm)
 	return TRUE;
 }
 
-static SERIAL_DRIVER SerialSys = {
+static const SERIAL_DRIVER SerialSys = {
 	.id = SerialDriverSerialSys,
 	.name = _T("Serial.sys"),
 	.set_baud_rate = set_baud_rate,
@@ -1674,7 +1679,7 @@ static SERIAL_DRIVER SerialSys = {
 	.reset_device = reset_device,
 };
 
-SERIAL_DRIVER* SerialSys_s(void)
+const SERIAL_DRIVER* SerialSys_s(void)
 {
 	return &SerialSys;
 }

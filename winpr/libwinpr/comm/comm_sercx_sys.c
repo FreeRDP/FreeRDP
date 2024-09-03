@@ -20,8 +20,6 @@
  * limitations under the License.
  */
 
-#if defined __linux__ && !defined ANDROID
-
 #include <winpr/assert.h>
 #include <termios.h>
 
@@ -212,10 +210,10 @@ static SERIAL_DRIVER SerCxSys = {
 	.reset_device = NULL, /* not supported by SerCx.sys */
 };
 
-SERIAL_DRIVER* SerCxSys_s(void)
+const SERIAL_DRIVER* SerCxSys_s(void)
 {
 	/* _SerCxSys completed with inherited functions from SerialSys */
-	SERIAL_DRIVER* pSerialSys = SerialSys_s();
+	const SERIAL_DRIVER* pSerialSys = SerialSys_s();
 	if (!pSerialSys)
 		return NULL;
 
@@ -262,5 +260,3 @@ SERIAL_DRIVER* SerCxSys_s(void)
 
 	return &SerCxSys;
 }
-
-#endif /* __linux__ */

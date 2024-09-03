@@ -18,23 +18,31 @@
 set(MODULE_NAME "winpr-comm")
 set(MODULE_PREFIX "WINPR_COMM")
 
-if(UNIX AND NOT ANDROID AND NOT APPLE AND NOT EMSCRIPTEN)
+if (NOT WIN32)
 	set(${MODULE_PREFIX}_SRCS
 		comm.c
 		comm.h
-		comm_io.c
-		comm_ioctl.c
-		comm_ioctl.h
-		comm_serial_sys.c
-		comm_serial_sys.h
-		comm_sercx_sys.c
-		comm_sercx_sys.h
-		comm_sercx2_sys.c
-		comm_sercx2_sys.h)
+	)
+	if(UNIX AND NOT IOS AND NOT EMSCRIPTEN)
+		add_definitions(-DWINPR_HAVE_SERIAL_SUPPORT)
+		list(APPEND ${MODULE_PREFIX}_SRCS
+			comm_io.c
+			comm_ioctl.c
+			comm_ioctl.h
+			comm_serial_sys.c
+			comm_serial_sys.h
+			comm_sercx_sys.c
+			comm_sercx_sys.h
+			comm_sercx2_sys.c
+			comm_sercx2_sys.h
+		)
+	endif()
 
 	winpr_module_add(${${MODULE_PREFIX}_SRCS})
 
-	if(BUILD_TESTING AND BUILD_COMM_TESTS)
-		add_subdirectory(test)
+	if(UNIX AND NOT IOS AND NOT EMSCRIPTEN)
+		if(BUILD_TESTING AND BUILD_COMM_TESTS)
+			add_subdirectory(test)
+		endif()
 	endif()
 endif()
