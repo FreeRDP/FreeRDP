@@ -334,7 +334,6 @@ static int xcrush_find_next_matching_chunk(XCRUSH_CONTEXT* WINPR_RESTRICT xcrush
                                            XCRUSH_CHUNK* WINPR_RESTRICT chunk,
                                            XCRUSH_CHUNK** WINPR_RESTRICT pNextChunk)
 {
-	UINT32 index = 0;
 	XCRUSH_CHUNK* next = NULL;
 
 	WINPR_ASSERT(xcrush);
@@ -344,7 +343,7 @@ static int xcrush_find_next_matching_chunk(XCRUSH_CONTEXT* WINPR_RESTRICT xcrush
 
 	if (chunk->next)
 	{
-		index = (chunk - xcrush->Chunks) / sizeof(XCRUSH_CHUNK);
+		UINT32 index = (chunk - xcrush->Chunks) / sizeof(XCRUSH_CHUNK);
 
 		if (index >= 65534)
 			return -4002; /* error */
