@@ -430,7 +430,8 @@ static void parallel_message_free(void* obj)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-FREERDP_ENTRY_POINT(UINT parallel_DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints))
+FREERDP_ENTRY_POINT(
+    UINT VCAPITYPE parallel_DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints))
 {
 	PARALLEL_DEVICE* parallel = NULL;
 	UINT error = 0;

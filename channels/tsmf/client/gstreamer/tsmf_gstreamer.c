@@ -1003,7 +1003,7 @@ static BOOL tsmf_gstreamer_sync(ITSMFDecoder* decoder, void (*cb)(void*), void* 
 	return TRUE;
 }
 
-FREERDP_ENTRY_POINT(UINT gstreamer_freerdp_tsmf_client_decoder_subsystem_entry(void* ptr))
+FREERDP_ENTRY_POINT(UINT VCAPITYPE gstreamer_freerdp_tsmf_client_decoder_subsystem_entry(void* ptr))
 {
 	ITSMFDecoder** sptr = (ITSMFDecoder**)ptr;
 	WINPR_ASSERT(sptr);

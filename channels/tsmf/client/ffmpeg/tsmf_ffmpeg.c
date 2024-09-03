@@ -693,7 +693,7 @@ static BOOL CALLBACK InitializeAvCodecs(PINIT_ONCE once, PVOID param, PVOID* con
 	return TRUE;
 }
 
-FREERDP_ENTRY_POINT(UINT ffmpeg_freerdp_tsmf_client_decoder_subsystem_entry(void* ptr))
+FREERDP_ENTRY_POINT(UINT VCAPITYPE ffmpeg_freerdp_tsmf_client_decoder_subsystem_entry(void* ptr))
 {
 	ITSMFDecoder** sptr = (ITSMFDecoder**)ptr;
 	WINPR_ASSERT(sptr);

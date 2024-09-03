@@ -31,6 +31,7 @@
 #include <mmsystem.h>
 
 #include <winpr/crt.h>
+#include <winpr/wtsapi.h>
 #include <winpr/cmdline.h>
 #include <winpr/sysinfo.h>
 
@@ -313,7 +314,7 @@ static void rdpsnd_winmm_parse_addin_args(rdpsndDevicePlugin* device, const ADDI
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-FREERDP_ENTRY_POINT(UINT winmm_freerdp_rdpsnd_client_subsystem_entry(
+FREERDP_ENTRY_POINT(UINT VCAPITYPE winmm_freerdp_rdpsnd_client_subsystem_entry(
     PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints))
 {
 	const ADDIN_ARGV* args;

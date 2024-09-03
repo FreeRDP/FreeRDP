@@ -2,6 +2,8 @@
 # FreeRDP cmake build script
 #
 # Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+# Copyright 2024 Armin Novak <anovak@thincast.com>
+# Copyright 2024 Thincast Technologies GmbH
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -35,7 +37,7 @@ foreach(STATIC_ENTRY ${CHANNEL_STATIC_CLIENT_ENTRIES})
 			if(${ENTRY} STREQUAL ${STATIC_ENTRY})
 				set(STATIC_MODULE_NAME ${${STATIC_MODULE}_CLIENT_NAME})
 				set(STATIC_MODULE_CHANNEL ${${STATIC_MODULE}_CLIENT_CHANNEL})
-				set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${STATIC_MODULE_NAME})
+				list(APPEND ${MODULE_PREFIX}_LIBS ${STATIC_MODULE_NAME})
 
 				set(ENTRY_POINT_NAME "${STATIC_MODULE_CHANNEL}_${ENTRY}")
 				if(${ENTRY} STREQUAL "VirtualChannelEntry")
@@ -43,14 +45,15 @@ foreach(STATIC_ENTRY ${CHANNEL_STATIC_CLIENT_ENTRIES})
 				elseif(${ENTRY} STREQUAL "VirtualChannelEntryEx")
 					set(ENTRY_POINT_IMPORT "extern BOOL VCAPITYPE ${ENTRY_POINT_NAME}(PCHANNEL_ENTRY_POINTS,PVOID);")
 				elseif(${ENTRY} MATCHES "DVCPluginEntry$")
-					set(ENTRY_POINT_IMPORT "extern UINT ${ENTRY_POINT_NAME}(IDRDYNVC_ENTRY_POINTS* pEntryPoints);")
+					set(ENTRY_POINT_IMPORT "extern UINT VCAPITYPE ${ENTRY_POINT_NAME}(IDRDYNVC_ENTRY_POINTS* pEntryPoints);")
 				elseif(${ENTRY} MATCHES "DeviceServiceEntry$")
-					set(ENTRY_POINT_IMPORT "extern UINT ${ENTRY_POINT_NAME}(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints);")
+					set(ENTRY_POINT_IMPORT "extern UINT VCAPITYPE ${ENTRY_POINT_NAME}(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints);")
 				else()
-					set(ENTRY_POINT_IMPORT "extern UINT ${ENTRY_POINT_NAME}(void);")
+					set(ENTRY_POINT_IMPORT "extern UINT VCAPITYPE ${ENTRY_POINT_NAME}(void);")
 				endif()
-				set(${STATIC_ENTRY}_IMPORTS "${${STATIC_ENTRY}_IMPORTS}\n${ENTRY_POINT_IMPORT}")
-				set(${STATIC_ENTRY}_TABLE "${${STATIC_ENTRY}_TABLE}\n\t{ \"${STATIC_MODULE_CHANNEL}\", ${ENTRY_POINT_NAME} },")
+
+				string(APPEND ${STATIC_ENTRY}_IMPORTS "\n${ENTRY_POINT_IMPORT}")
+				string(APPEND ${STATIC_ENTRY}_TABLE "\n\t{ \"${STATIC_MODULE_CHANNEL}\", ${ENTRY_POINT_NAME} },")
 			endif()
 		endforeach()
 	endforeach()
@@ -95,7 +98,7 @@ foreach(STATIC_MODULE ${CHANNEL_STATIC_CLIENT_MODULES})
 			set(STATIC_SUBSYSTEM_ENTRY "${STATIC_SUBSYSTEM_NAME}_freerdp_${STATIC_MODULE_CHANNEL}_client_subsystem_entry")
 		endif()
 		set(SUBSYSTEM_TABLE "${SUBSYSTEM_TABLE}\n\t{ \"${STATIC_SUBSYSTEM_NAME}\", \"${STATIC_SUBSYSTEM_TYPE}\", ${STATIC_SUBSYSTEM_ENTRY} },")
-		set(SUBSYSTEM_IMPORT "extern UINT ${STATIC_SUBSYSTEM_ENTRY}(void*);")
+		set(SUBSYSTEM_IMPORT "extern UINT VCAPITYPE ${STATIC_SUBSYSTEM_ENTRY}(void*);")
 		set(CLIENT_STATIC_SUBSYSTEM_IMPORTS "${CLIENT_STATIC_SUBSYSTEM_IMPORTS}\n${SUBSYSTEM_IMPORT}")
 	endforeach()
 	set(SUBSYSTEM_TABLE "${SUBSYSTEM_TABLE}\n\t{ NULL, NULL, NULL }\n};")

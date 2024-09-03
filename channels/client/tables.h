@@ -18,13 +18,14 @@
  */
 
 #include <winpr/platform.h>
+#include <winpr/wtsapi.h>
 #include <freerdp/svc.h>
 
 /* The 'entry' function pointers have variable arguments. */
 WINPR_PRAGMA_DIAG_PUSH
 WINPR_PRAGMA_DIAG_IGNORED_STRICT_PROTOTYPES
 
-typedef UINT (*static_entry_fn_t)();
+typedef UINT(VCAPITYPE* static_entry_fn_t)();
 typedef struct
 {
 	const char* name;
@@ -37,7 +38,7 @@ typedef struct
 	const STATIC_ENTRY* table;
 } STATIC_ENTRY_TABLE;
 
-typedef UINT (*static_subsystem_entry_fn_t)();
+typedef UINT(VCAPITYPE* static_subsystem_entry_fn_t)();
 typedef struct
 {
 	const char* name;
@@ -45,7 +46,7 @@ typedef struct
 	static_subsystem_entry_fn_t entry;
 } STATIC_SUBSYSTEM_ENTRY;
 
-typedef UINT (*static_addin_entry_fn_t)();
+typedef UINT(VCAPITYPE* static_addin_entry_fn_t)();
 typedef struct
 {
 	const char* name;
