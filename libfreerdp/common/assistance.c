@@ -1356,11 +1356,6 @@ BOOL freerdp_assistance_populate_settings_from_assistance_file(rdpAssistanceFile
 
 	for (size_t x = 0; x < ports; x++)
 	{
-		union
-		{
-			UINT32 port;
-			void* data;
-		} cnv;
 		cnv.data = ArrayList_GetItem(file->MachinePorts, x);
 		if (!freerdp_settings_set_pointer_array(settings, FreeRDP_TargetNetPorts, x, &cnv.port))
 			return FALSE;
