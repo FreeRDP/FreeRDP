@@ -26,7 +26,7 @@ extern "C"
 {
 #endif
 
-	BOOL shadow_client_accepted(freerdp_listener* instance, freerdp_peer* client);
+	BOOL shadow_client_accepted(freerdp_listener* instance, freerdp_peer* peer);
 
 #ifdef __cplusplus
 }

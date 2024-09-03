@@ -184,10 +184,11 @@ out:
 	return ret;
 }
 
-int apc_executeCompletions(WINPR_THREAD* thread, WINPR_POLL_SET* set, size_t idx)
+int apc_executeCompletions(WINPR_THREAD* thread, WINPR_POLL_SET* set, size_t startIndex)
 {
 	APC_QUEUE* apc = NULL;
 	WINPR_APC_ITEM* nextItem = NULL;
+	size_t idx = startIndex;
 	int ret = 0;
 
 	WINPR_ASSERT(thread);

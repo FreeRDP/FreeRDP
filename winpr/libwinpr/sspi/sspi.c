@@ -23,7 +23,7 @@
 WINPR_PRAGMA_DIAG_PUSH
 WINPR_PRAGMA_DIAG_IGNORED_RESERVED_ID_MACRO
 
-#define _NO_KSECDD_IMPORT_ 1 // NOLINT(bugprone-reserved-identifier)
+#define _NO_KSECDD_IMPORT_ 1 // NOLINT(bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
 
 WINPR_PRAGMA_DIAG_POP
 

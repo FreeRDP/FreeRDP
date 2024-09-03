@@ -82,7 +82,7 @@ class SDLConnectionDialog
 	bool setTimer(Uint32 timeoutMS = 15000);
 	void resetTimer();
 
-	static Uint32 timeout(Uint32 intervalMS, void* _this);
+	static Uint32 timeout(Uint32 intervalMS, void* pvthis);
 
 	struct widget_cfg_t
 	{

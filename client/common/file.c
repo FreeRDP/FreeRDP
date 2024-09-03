@@ -1357,19 +1357,16 @@ BOOL freerdp_client_populate_rdp_file_from_settings(rdpFile* file, const rdpSett
 
 BOOL freerdp_client_write_rdp_file(const rdpFile* file, const char* name, BOOL unicode)
 {
-	FILE* fp = NULL;
-	size_t size = 0;
-	char* buffer = NULL;
 	int status = 0;
 	WCHAR* unicodestr = NULL;
 
 	if (!file || !name)
 		return FALSE;
 
-	size = freerdp_client_write_rdp_file_buffer(file, NULL, 0);
+	const size_t size = freerdp_client_write_rdp_file_buffer(file, NULL, 0);
 	if (size == 0)
 		return FALSE;
-	buffer = (char*)calloc((size_t)(size + 1), sizeof(char));
+	char* buffer = calloc(size + 1ULL, sizeof(char));
 
 	if (freerdp_client_write_rdp_file_buffer(file, buffer, size + 1) != size)
 	{
@@ -1378,7 +1375,7 @@ BOOL freerdp_client_write_rdp_file(const rdpFile* file, const char* name, BOOL u
 		return FALSE;
 	}
 
-	fp = winpr_fopen(name, "w+b");
+	FILE* fp = winpr_fopen(name, "w+b");
 
 	if (fp)
 	{

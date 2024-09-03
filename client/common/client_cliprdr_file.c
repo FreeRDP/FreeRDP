@@ -2303,7 +2303,7 @@ fail:
 	return rc;
 }
 
-CliprdrLocalStream* cliprdr_local_stream_new(CliprdrFileContext* context, UINT32 lockId,
+CliprdrLocalStream* cliprdr_local_stream_new(CliprdrFileContext* context, UINT32 streamID,
                                              const char* data, size_t size)
 {
 	WINPR_ASSERT(context);
@@ -2315,7 +2315,7 @@ CliprdrLocalStream* cliprdr_local_stream_new(CliprdrFileContext* context, UINT32
 	if (!cliprdr_local_stream_update(stream, data, size))
 		goto fail;
 
-	stream->lockId = lockId;
+	stream->lockId = streamID;
 	return stream;
 
 fail:

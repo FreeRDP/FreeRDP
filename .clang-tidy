@@ -32,6 +32,7 @@ Checks: >
     -cppcoreguidelines-avoid-do-while,
     -cppcoreguidelines-avoid-magic-numbers,
     -cppcoreguidelines-avoid-non-const-global-variables,
+    -cppcoreguidelines-macro-to-enum,
     -cppcoreguidelines-pro-type-vararg,
     -google-readability-braces-around-statements,
     -google-readability-todo,

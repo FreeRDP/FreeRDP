@@ -25,7 +25,7 @@
 
 #include <freerdp/client/cliprdr.h>
 
-wfClipboard* wlf_clipboard_new(wlfContext* wlc);
+wfClipboard* wlf_clipboard_new(wlfContext* wfc);
 void wlf_clipboard_free(wfClipboard* clipboard);
 
 BOOL wlf_cliprdr_init(wfClipboard* clipboard, CliprdrClientContext* cliprdr);
