@@ -929,7 +929,7 @@ static BOOL update_read_desktop_actively_monitored_order(wStream* s, WINDOW_ORDE
 			monitored_desktop->windowIds = newid;
 
 			/* windowIds */
-			for (UINT32 i = 0; i < (int)monitored_desktop->numWindowIds; i++)
+			for (UINT32 i = 0; i < monitored_desktop->numWindowIds; i++)
 			{
 				Stream_Read_UINT32(s, monitored_desktop->windowIds[i]);
 			}

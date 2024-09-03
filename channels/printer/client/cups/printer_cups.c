@@ -366,7 +366,7 @@ static rdpPrinter** printer_cups_enum_printers(rdpPrinterDriver* driver)
 	if (!printers)
 		return NULL;
 
-	for (size_t i = 0; i < num_dests; i++)
+	for (size_t i = 0; i < (size_t)num_dests; i++)
 	{
 		const cups_dest_t* dest = &dests[i];
 		if (dest->instance == NULL)

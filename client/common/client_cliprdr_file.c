@@ -320,7 +320,7 @@ static CliprdrFuseClipDataEntry* clip_data_entry_new(CliprdrFileContext* file_co
 }
 
 static BOOL should_remove_fuse_file(CliprdrFuseFile* fuse_file, BOOL all_files,
-                                    BOOL has_clip_data_id, BOOL clip_data_id)
+                                    BOOL has_clip_data_id, UINT32 clip_data_id)
 {
 	if (all_files)
 		return TRUE;
@@ -329,7 +329,8 @@ static BOOL should_remove_fuse_file(CliprdrFuseFile* fuse_file, BOOL all_files,
 		return FALSE;
 	if (!fuse_file->has_clip_data_id && !has_clip_data_id)
 		return TRUE;
-	if (fuse_file->has_clip_data_id && has_clip_data_id && fuse_file->clip_data_id == clip_data_id)
+	if (fuse_file->has_clip_data_id && has_clip_data_id &&
+	    (fuse_file->clip_data_id == clip_data_id))
 		return TRUE;
 
 	return FALSE;
@@ -972,7 +973,7 @@ static void cliprdr_file_fuse_read(fuse_req_t fuse_req, fuse_ino_t fuse_ino, siz
 		fuse_reply_err(fuse_req, EISDIR);
 		return;
 	}
-	if (!fuse_file->has_size || offset > fuse_file->size)
+	if (!fuse_file->has_size || (offset < 0) || (offset > fuse_file->size))
 	{
 		HashTable_Unlock(file_context->inode_table);
 		fuse_reply_err(fuse_req, EINVAL);
@@ -1051,7 +1052,7 @@ static void cliprdr_file_fuse_readdir(fuse_req_t fuse_req, fuse_ino_t fuse_ino, 
 	DEBUG_CLIPRDR(file_context->log, "Reading directory \"%s\" at offset %lu",
 	              fuse_file->filename_with_root, offset);
 
-	if (offset >= ArrayList_Count(fuse_file->children))
+	if ((offset < 0) || ((size_t)offset >= ArrayList_Count(fuse_file->children)))
 	{
 		HashTable_Unlock(file_context->inode_table);
 		fuse_reply_buf(fuse_req, NULL, 0);
@@ -1100,7 +1101,7 @@ static void cliprdr_file_fuse_readdir(fuse_req_t fuse_req, fuse_ino_t fuse_ino, 
 
 	for (size_t j = 0, i = 2; j < ArrayList_Count(fuse_file->children); ++j, ++i)
 	{
-		if (i < offset)
+		if (i < (size_t)offset)
 			continue;
 
 		child = ArrayList_GetItem(fuse_file->children, j);

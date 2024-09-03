@@ -423,7 +423,7 @@ static BOOL freerdp_assistance_parse_attr(const char** opt, size_t* plength, con
 	char bkey[128] = { 0 };
 	const int rc = _snprintf(bkey, sizeof(bkey), "%s=\"", key);
 	WINPR_ASSERT(rc > 0);
-	WINPR_ASSERT(rc < sizeof(bkey));
+	WINPR_ASSERT((size_t)rc < sizeof(bkey));
 
 	char* p = strstr(tag, bkey);
 	if (!p)
@@ -523,7 +523,7 @@ static char* freerdp_assistance_contains_element(char* input, size_t ilen, const
 	char bkey[128] = { 0 };
 	const int rc = _snprintf(bkey, sizeof(bkey), "<%s", key);
 	WINPR_ASSERT(rc > 0);
-	WINPR_ASSERT(rc < sizeof(bkey));
+	WINPR_ASSERT((size_t)rc < sizeof(bkey));
 
 	char* tag = strstr(input, bkey);
 	if (!tag || (tag > input + ilen))
@@ -562,7 +562,7 @@ static char* freerdp_assistance_contains_element(char* input, size_t ilen, const
 		char ekey[128] = { 0 };
 		const int erc = _snprintf(ekey, sizeof(ekey), "</%s>", key);
 		WINPR_ASSERT(erc > 0);
-		WINPR_ASSERT(erc < sizeof(ekey));
+		WINPR_ASSERT((size_t)erc < sizeof(ekey));
 		const size_t offset = start - tag;
 		dend = end = strrstr(start, ilen - offset, ekey);
 		if (end)

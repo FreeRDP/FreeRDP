@@ -458,7 +458,7 @@ std::string SDLConnectionDialog::print(const char* fmt, va_list ap)
 		size = vsnprintf(res.data(), res.size(), fmt, copy);
 		va_end(copy);
 
-	} while ((size > 0) && (size > res.size()));
+	} while ((size > 0) && (static_cast<size_t>(size) > res.size()));
 
 	return res;
 }

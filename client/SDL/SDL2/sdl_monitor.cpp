@@ -326,9 +326,13 @@ BOOL sdl_detect_monitors(SdlContext* sdl, UINT32* pMaxWidth, UINT32* pMaxHeight)
 
 	const int numDisplays = SDL_GetNumVideoDisplays();
 	auto nr = freerdp_settings_get_uint32(settings, FreeRDP_NumMonitorIds);
+	if (numDisplays < 0)
+		return FALSE;
+
 	if (nr == 0)
 	{
-		if (!freerdp_settings_set_pointer_len(settings, FreeRDP_MonitorIds, nullptr, numDisplays))
+		if (!freerdp_settings_set_pointer_len(settings, FreeRDP_MonitorIds, nullptr,
+		                                      static_cast<size_t>(numDisplays)))
 			return FALSE;
 		for (size_t x = 0; x < numDisplays; x++)
 		{
@@ -340,7 +344,7 @@ BOOL sdl_detect_monitors(SdlContext* sdl, UINT32* pMaxWidth, UINT32* pMaxHeight)
 	{
 
 		/* There were more IDs supplied than there are monitors */
-		if (nr > numDisplays)
+		if (nr > static_cast<UINT32>(numDisplays))
 		{
 			WLog_ERR(TAG,
 			         "Found %" PRIu32 " monitor IDs, but only have %" PRIu32 " monitors connected",

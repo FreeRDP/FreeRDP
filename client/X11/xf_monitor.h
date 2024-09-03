@@ -32,7 +32,7 @@ typedef struct
 
 typedef struct
 {
-	int nmonitors;
+	UINT32 nmonitors;
 	RECTANGLE_16 area;
 	RECTANGLE_16 workarea;
 	MONITOR_INFO* monitors;

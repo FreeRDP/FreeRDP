@@ -38,7 +38,7 @@ static INLINE void rfx_differential_decode(INT16* WINPR_RESTRICT buffer, size_t 
 static INLINE void rfx_differential_encode(INT16* WINPR_RESTRICT buffer, size_t size)
 {
 	INT16 n1 = buffer[0];
-	for (int x = 0; x < size - 1; x++)
+	for (size_t x = 0; x < size - 1; x++)
 	{
 		INT16* dst = &buffer[x + 1];
 		const INT16 n2 = *dst;

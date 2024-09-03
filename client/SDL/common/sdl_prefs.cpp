@@ -94,7 +94,7 @@ std::vector<std::string> SdlPref::get_array(const std::string& key,
 		return fallback;
 
 	std::vector<std::string> values;
-	for (int x = 0; x < WINPR_JSON_GetArraySize(item); x++)
+	for (size_t x = 0; x < WINPR_JSON_GetArraySize(item); x++)
 	{
 		auto cur = WINPR_JSON_GetArrayItem(item, x);
 		values.push_back(item_to_str(cur));
