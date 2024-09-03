@@ -17,6 +17,7 @@
  * limitations under the License.
  */
 
+#include <math.h>
 #include <winpr/assert.h>
 #include <winpr/sysinfo.h>
 #include <X11/Xutil.h>
@@ -163,8 +164,11 @@ static BOOL xf_disp_sendResize(xfDispContext* xfDisp)
 		layout.DesktopScaleFactor =
 		    freerdp_settings_get_uint32(settings, FreeRDP_DesktopScaleFactor);
 		layout.DeviceScaleFactor = freerdp_settings_get_uint32(settings, FreeRDP_DeviceScaleFactor);
-		layout.PhysicalWidth = xfDisp->targetWidth / 75.0 * 25.4;
-		layout.PhysicalHeight = xfDisp->targetHeight / 75.0 * 25.4;
+
+		const double dw = xfDisp->targetWidth / 75.0 * 25.4;
+		const double dh = xfDisp->targetHeight / 75.0 * 25.4;
+		layout.PhysicalWidth = (UINT32)lround(dw);
+		layout.PhysicalHeight = (UINT32)lround(dh);
 
 		if (IFCALLRESULT(CHANNEL_RC_OK, xfDisp->disp->SendMonitorLayout, xfDisp->disp, 1,
 		                 &layout) != CHANNEL_RC_OK)

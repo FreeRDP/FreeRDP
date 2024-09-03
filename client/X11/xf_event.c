@@ -24,6 +24,7 @@
 #include <X11/Xutil.h>
 
 #include <string.h>
+#include <math.h>
 
 #include <winpr/assert.h>
 #include <winpr/path.h>
@@ -314,36 +315,32 @@ static BOOL xf_event_execute_action_script(xfContext* xfc, const XEvent* event)
 
 void xf_adjust_coordinates_to_screen(xfContext* xfc, UINT32* x, UINT32* y)
 {
-	rdpSettings* settings = NULL;
-	INT64 tx = 0;
-	INT64 ty = 0;
-
 	if (!xfc || !xfc->common.context.settings || !y || !x)
 		return;
 
-	settings = xfc->common.context.settings;
-	tx = *x;
-	ty = *y;
+	rdpSettings* settings = xfc->common.context.settings;
+	INT64 tx = *x;
+	INT64 ty = *y;
 	if (!xfc->remote_app)
 	{
 #ifdef WITH_XRENDER
 
 		if (xf_picture_transform_required(xfc))
 		{
-			double xScalingFactor = xfc->scaledWidth / (double)freerdp_settings_get_uint32(
-			                                               settings, FreeRDP_DesktopWidth);
-			double yScalingFactor = xfc->scaledHeight / (double)freerdp_settings_get_uint32(
-			                                                settings, FreeRDP_DesktopHeight);
-			tx = ((tx + xfc->offset_x) * xScalingFactor);
-			ty = ((ty + xfc->offset_y) * yScalingFactor);
+			const double dw = freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth);
+			const double dh = freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight);
+			double xScalingFactor = xfc->scaledWidth / dw;
+			double yScalingFactor = xfc->scaledHeight / dh;
+			tx = (INT64)lround((1.0 * (*x) + xfc->offset_x) * xScalingFactor);
+			ty = (INT64)lround((1.0 * (*y) + xfc->offset_y) * yScalingFactor);
 		}
 
 #endif
 	}
 
 	CLAMP_COORDINATES(tx, ty);
-	*x = tx;
-	*y = ty;
+	*x = (UINT32)tx;
+	*y = (UINT32)ty;
 }
 
 void xf_event_adjust_coordinates(xfContext* xfc, int* x, int* y)

@@ -21,6 +21,7 @@
 
 #include <string.h>
 #include <errno.h>
+#include <math.h>
 #include <limits.h>
 #include <float.h>
 
@@ -2012,7 +2013,8 @@ BOOL freerdp_client_handle_pen(rdpClientContext* cctx, UINT32 flags, INT32 devic
 	if ((flags & FREERDP_PEN_HAS_PRESSURE) != 0)
 	{
 		const double pressure = va_arg(args, double);
-		normalizedpressure = (pressure * 1024) / pen->max_pressure;
+		const double np = (pressure * 1024.0) / pen->max_pressure;
+		normalizedpressure = (UINT32)lround(np);
 		WLog_DBG(TAG, "pen pressure %lf -> %" PRIu32, pressure, normalizedpressure);
 		fieldFlags |= RDPINPUT_PEN_CONTACT_PRESSURE_PRESENT;
 	}

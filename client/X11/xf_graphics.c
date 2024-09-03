@@ -118,16 +118,16 @@ static BOOL xf_Pointer_GetCursorForCurrentScale(rdpContext* context, rdpPointer*
 	if (!settings)
 		return FALSE;
 
-	const double xscale = (freerdp_settings_get_bool(settings, FreeRDP_SmartSizing)
-	                           ? xfc->scaledWidth / (double)freerdp_settings_get_uint32(
-	                                                    settings, FreeRDP_DesktopWidth)
-	                           : 1);
-	const double yscale = (freerdp_settings_get_bool(settings, FreeRDP_SmartSizing)
-	                           ? xfc->scaledHeight / (double)freerdp_settings_get_uint32(
-	                                                     settings, FreeRDP_DesktopHeight)
-	                           : 1);
-	const UINT32 xTargetSize = MAX(1, pointer->width * xscale);
-	const UINT32 yTargetSize = MAX(1, pointer->height * yscale);
+	const double dw = freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth);
+	const double xscale =
+	    (freerdp_settings_get_bool(settings, FreeRDP_SmartSizing) ? 1.0 * xfc->scaledWidth / dw
+	                                                              : 1);
+	const double dh = freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight);
+	const double yscale =
+	    (freerdp_settings_get_bool(settings, FreeRDP_SmartSizing) ? 1.0 * xfc->scaledHeight / dh
+	                                                              : 1);
+	const UINT32 xTargetSize = MAX(1, (UINT32)lround(1.0 * pointer->width * xscale));
+	const UINT32 yTargetSize = MAX(1, (UINT32)lround(1.0 * pointer->height * yscale));
 
 	WLog_DBG(TAG, "scaled: %" PRIu32 "x%" PRIu32 ", desktop: %" PRIu32 "x%" PRIu32,
 	         xfc->scaledWidth, xfc->scaledHeight,
@@ -186,8 +186,8 @@ static BOOL xf_Pointer_GetCursorForCurrentScale(rdpContext* context, rdpPointer*
 		ci.size = sizeof(ci);
 		ci.width = xTargetSize;
 		ci.height = yTargetSize;
-		ci.xhot = pointer->xPos * xscale;
-		ci.yhot = pointer->yPos * yscale;
+		ci.xhot = (XcursorDim)lround(1.0 * pointer->xPos * xscale);
+		ci.yhot = (XcursorDim)lround(1.0 * pointer->yPos * yscale);
 		const size_t size = 1ull * ci.height * ci.width * FreeRDPGetBytesPerPixel(CursorFormat);
 
 		void* tmp = winpr_aligned_malloc(size, 16);

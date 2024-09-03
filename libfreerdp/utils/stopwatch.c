@@ -68,7 +68,8 @@ void stopwatch_reset(STOPWATCH* stopwatch)
 
 double stopwatch_get_elapsed_time_in_seconds(STOPWATCH* stopwatch)
 {
-	return (stopwatch->elapsed / 1000000.0);
+	const long double ld = stopwatch->elapsed / 1000000.0L;
+	return (double)ld;
 }
 
 void stopwatch_get_elapsed_time_in_useconds(STOPWATCH* stopwatch, UINT32* sec, UINT32* usec)

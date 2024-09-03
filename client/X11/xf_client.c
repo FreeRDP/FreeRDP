@@ -168,20 +168,17 @@ static BOOL xf_get_pixmap_info(xfContext* xfc);
 #ifdef WITH_XRENDER
 static void xf_draw_screen_scaled(xfContext* xfc, int x, int y, int w, int h)
 {
-	XTransform transform;
+	XTransform transform = { 0 };
 	Picture windowPicture = 0;
 	Picture primaryPicture = 0;
 	XRenderPictureAttributes pa;
 	XRenderPictFormat* picFormat = NULL;
-	double xScalingFactor = NAN;
-	double yScalingFactor = NAN;
 	int x2 = 0;
 	int y2 = 0;
 	const char* filter = NULL;
-	rdpSettings* settings = NULL;
 	WINPR_ASSERT(xfc);
 
-	settings = xfc->common.context.settings;
+	rdpSettings* settings = xfc->common.context.settings;
 	WINPR_ASSERT(settings);
 
 	if (xfc->scaledWidth <= 0 || xfc->scaledHeight <= 0)
@@ -197,10 +194,12 @@ static void xf_draw_screen_scaled(xfContext* xfc, int x, int y, int w, int h)
 		return;
 	}
 
-	xScalingFactor =
-	    freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth) / (double)xfc->scaledWidth;
-	yScalingFactor =
-	    freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight) / (double)xfc->scaledHeight;
+	const double xScalingFactor = 1.0 *
+	                              freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth) /
+	                              (double)xfc->scaledWidth;
+	const double yScalingFactor = 1.0 *
+	                              freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight) /
+	                              (double)xfc->scaledHeight;
 	XSetFillStyle(xfc->display, xfc->gc, FillSolid);
 	XSetForeground(xfc->display, xfc->gc, 0);
 	/* Black out possible space between desktop and window borders */
@@ -254,10 +253,15 @@ static void xf_draw_screen_scaled(xfContext* xfc, int x, int y, int w, int h)
 	/* calculate and fix up scaled coordinates */
 	x2 = x + w;
 	y2 = y + h;
-	x = ((int)floor(x / xScalingFactor)) - 1;
-	y = ((int)floor(y / yScalingFactor)) - 1;
-	w = ((int)ceil(x2 / xScalingFactor)) + 1 - x;
-	h = ((int)ceil(y2 / yScalingFactor)) + 1 - y;
+
+	const double dx1 = floor(x / xScalingFactor);
+	const double dy1 = floor(y / yScalingFactor);
+	const double dx2 = ceil(x2 / xScalingFactor);
+	const double dy2 = ceil(y2 / yScalingFactor);
+	x = ((int)dx1) - 1;
+	y = ((int)dy1) - 1;
+	w = ((int)dx2) + 1 - x;
+	h = ((int)dy2) + 1 - y;
 	XRenderSetPictureTransform(xfc->display, primaryPicture, &transform);
 	XRenderComposite(xfc->display, PictOpSrc, primaryPicture, 0, windowPicture, x, y, 0, 0,
 	                 xfc->offset_x + x, xfc->offset_y + y, w, h);
