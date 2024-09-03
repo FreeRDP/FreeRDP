@@ -24,6 +24,7 @@
 #include <winpr/user.h>
 #include <winpr/image.h>
 
+#include "../utils/image.h"
 #include "clipboard.h"
 
 static const char* mime_bitmap[] = { "image/bmp", "image/x-bmp", "image/x-MS-bmp",
@@ -234,14 +235,10 @@ static void* clipboard_synthesize_cf_dib(wClipboard* clipboard, UINT32 formatId,
 	}
 	else if (is_format_bitmap(clipboard, formatId))
 	{
-		const BITMAPFILEHEADER* pFileHeader = NULL;
-
-		if (SrcSize < (sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER)))
-			return NULL;
-
-		pFileHeader = (const BITMAPFILEHEADER*)data;
-
-		if (pFileHeader->bfType != 0x4D42)
+		WINPR_BITMAP_FILE_HEADER pFileHeader = { 0 };
+		wStream sbuffer = { 0 };
+		wStream* s = Stream_StaticConstInit(&sbuffer, data, SrcSize);
+		if (!readBitmapFileHeader(s, &pFileHeader))
 			return NULL;
 
 		DstSize = SrcSize - sizeof(BITMAPFILEHEADER);
