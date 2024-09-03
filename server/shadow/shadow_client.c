@@ -1687,10 +1687,10 @@ static BOOL shadow_client_send_bitmap_update(rdpShadowClient* client, BYTE* pSrc
 			bitmap->destLeft = nXSrc + (xIdx * 64);
 			bitmap->destTop = nYSrc + (yIdx * 64);
 
-			if ((INT64)(bitmap->destLeft + bitmap->width) > (nXSrc + nWidth))
+			if (((INT64)bitmap->destLeft + bitmap->width) > (nXSrc + nWidth))
 				bitmap->width = (UINT32)(nXSrc + nWidth) - bitmap->destLeft;
 
-			if ((INT64)(bitmap->destTop + bitmap->height) > (nYSrc + nHeight))
+			if (((INT64)bitmap->destTop + bitmap->height) > (nYSrc + nHeight))
 				bitmap->height = (UINT32)(nYSrc + nHeight) - bitmap->destTop;
 
 			bitmap->destRight = bitmap->destLeft + bitmap->width - 1;
