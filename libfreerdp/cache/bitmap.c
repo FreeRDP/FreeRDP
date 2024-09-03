@@ -326,7 +326,10 @@ static int bitmap_cache_save_persistent(rdpBitmapCache* bitmapCache)
 				cacheEntry.key64 = bitmap->key64;
 				cacheEntry.width = bitmap->width;
 				cacheEntry.height = bitmap->height;
-				cacheEntry.size = (UINT32)(bitmap->width * bitmap->height * 4);
+				const UINT64 size = 4ULL * bitmap->width * bitmap->height;
+				if (size > UINT32_MAX)
+					continue;
+				cacheEntry.size = (UINT32)size;
 				cacheEntry.flags = 0;
 				cacheEntry.data = bitmap->data;
 
