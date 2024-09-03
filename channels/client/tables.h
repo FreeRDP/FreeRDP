@@ -24,10 +24,11 @@
 WINPR_PRAGMA_DIAG_PUSH
 WINPR_PRAGMA_DIAG_IGNORED_STRICT_PROTOTYPES
 
+typedef UINT (*static_entry_fn_t)();
 typedef struct
 {
 	const char* name;
-	UINT (*entry)();
+	static_entry_fn_t entry;
 } STATIC_ENTRY;
 
 typedef struct
@@ -36,18 +37,20 @@ typedef struct
 	const STATIC_ENTRY* table;
 } STATIC_ENTRY_TABLE;
 
+typedef UINT (*static_subsystem_entry_fn_t)();
 typedef struct
 {
 	const char* name;
 	const char* type;
-	UINT (*entry)();
+	static_subsystem_entry_fn_t entry;
 } STATIC_SUBSYSTEM_ENTRY;
 
+typedef UINT (*static_addin_entry_fn_t)();
 typedef struct
 {
 	const char* name;
 	const char* type;
-	UINT (*entry)();
+	static_addin_entry_fn_t entry;
 	const STATIC_SUBSYSTEM_ENTRY* table;
 } STATIC_ADDIN_TABLE;
 

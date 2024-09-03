@@ -848,23 +848,28 @@ static void rdpsnd_register_device_plugin(rdpsndPlugin* rdpsnd, rdpsndDevicePlug
 static UINT rdpsnd_load_device_plugin(rdpsndPlugin* rdpsnd, const char* name,
                                       const ADDIN_ARGV* args)
 {
-	PFREERDP_RDPSND_DEVICE_ENTRY entry = NULL;
-	FREERDP_RDPSND_DEVICE_ENTRY_POINTS entryPoints;
+	union
+	{
+		PVIRTUALCHANNELENTRY pvce;
+		PFREERDP_RDPSND_DEVICE_ENTRY entry;
+	} cnv;
+
+	FREERDP_RDPSND_DEVICE_ENTRY_POINTS entryPoints = { 0 };
 	UINT error = 0;
 	DWORD flags = FREERDP_ADDIN_CHANNEL_STATIC | FREERDP_ADDIN_CHANNEL_ENTRYEX;
 	if (rdpsnd->dynamic)
 		flags = FREERDP_ADDIN_CHANNEL_DYNAMIC;
-	entry = (PFREERDP_RDPSND_DEVICE_ENTRY)freerdp_load_channel_addin_entry(RDPSND_CHANNEL_NAME,
-	                                                                       name, NULL, flags);
+	cnv.pvce = freerdp_load_channel_addin_entry(RDPSND_CHANNEL_NAME, name, NULL, flags);
 
-	if (!entry)
+	if (!cnv.entry)
 		return ERROR_INTERNAL_ERROR;
 
 	entryPoints.rdpsnd = rdpsnd;
 	entryPoints.pRegisterRdpsndDevice = rdpsnd_register_device_plugin;
 	entryPoints.args = args;
 
-	if ((error = entry(&entryPoints)))
+	error = cnv.entry(&entryPoints);
+	if (error)
 		WLog_ERR(TAG, "%s %s entry returns error %" PRIu32 "", rdpsnd_is_dyn_str(rdpsnd->dynamic),
 		         name, error);
 

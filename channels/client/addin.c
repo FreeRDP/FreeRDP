@@ -57,7 +57,7 @@ static void* freerdp_channels_find_static_entry_in_table(const STATIC_ENTRY_TABL
 			union
 			{
 				void* pv;
-				UINT (*entry)();
+				static_entry_fn_t entry;
 			} cnv;
 			cnv.entry = pEntry->entry;
 			return cnv.pv;
