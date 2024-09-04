@@ -175,7 +175,7 @@ static BOOL IniFile_Load_File(wIniFile* ini, const char* filename)
 	if (fileSize < 1)
 		goto out_file;
 
-	if (fileSize > SIZE_MAX)
+	if (fileSize > INT64_MAX)
 		goto out_file;
 
 	if (!IniFile_BufferResize(ini, (size_t)fileSize + 2))

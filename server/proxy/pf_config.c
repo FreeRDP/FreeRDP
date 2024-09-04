@@ -409,7 +409,7 @@ static char* pf_config_decode_base64(const char* data, const char* name, size_t*
 				while (*end == '-')
 					end++;
 
-				const size_t s = MIN(ARRAYSIZE(hdr) - 1, end - data);
+				const size_t s = MIN(ARRAYSIZE(hdr) - 1ULL, (size_t)(end - data));
 				memcpy(hdr, data, s);
 			}
 

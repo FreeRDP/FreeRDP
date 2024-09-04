@@ -973,7 +973,7 @@ static void cliprdr_file_fuse_read(fuse_req_t fuse_req, fuse_ino_t fuse_ino, siz
 		fuse_reply_err(fuse_req, EISDIR);
 		return;
 	}
-	if (!fuse_file->has_size || (offset < 0) || (offset > fuse_file->size))
+	if (!fuse_file->has_size || (offset < 0) || ((size_t)offset > fuse_file->size))
 	{
 		HashTable_Unlock(file_context->inode_table);
 		fuse_reply_err(fuse_req, EINVAL);

@@ -58,7 +58,7 @@ static const struct wl_buffer_listener buffer_listener = { buffer_release };
 
 static void UwacWindowDestroyBuffers(UwacWindow* w)
 {
-	for (int i = 0; i < w->nbuffers; i++)
+	for (size_t i = 0; i < w->nbuffers; i++)
 	{
 		UwacBuffer* buffer = &w->buffers[i];
 #ifdef UWAC_HAVE_PIXMAN_REGION
@@ -370,19 +370,20 @@ int UwacWindowShmAllocBuffers(UwacWindow* w, int64_t nbuffers, int64_t allocSize
 		goto error_mmap;
 	}
 
-	for (int i = 0; i < nbuffers; i++)
+	for (int64_t i = 0; i < nbuffers; i++)
 	{
-		int bufferIdx = w->nbuffers + i;
+		const size_t idx = (size_t)i;
+		size_t bufferIdx = w->nbuffers + idx;
 		UwacBuffer* buffer = &w->buffers[bufferIdx];
 #ifdef UWAC_HAVE_PIXMAN_REGION
 		pixman_region32_init(&buffer->damage);
 #else
 		region16_init(&buffer->damage);
 #endif
-		buffer->data = &((char*)data)[allocSize * i];
+		buffer->data = &((char*)data)[allocSize * idx];
 		buffer->size = allocSize;
 		buffer->wayland_buffer =
-		    wl_shm_pool_create_buffer(pool, allocSize * i, width, height, w->stride, format);
+		    wl_shm_pool_create_buffer(pool, allocSize * idx, width, height, w->stride, format);
 		UwacBufferReleaseData* listener_data = xmalloc(sizeof(UwacBufferReleaseData));
 		listener_data->window = w;
 		listener_data->bufferIdx = bufferIdx;

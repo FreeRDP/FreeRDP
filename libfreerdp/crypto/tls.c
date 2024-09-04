@@ -309,8 +309,22 @@ static long bio_rdp_tls_ctrl(BIO* bio, int cmd, long num, void* ptr)
 			break;
 
 		case BIO_CTRL_GET_CALLBACK:
-			*((ULONG_PTR*)ptr) = (ULONG_PTR)SSL_get_info_callback(tls->ssl);
-			status = 1;
+			/* The OpenSSL API is horrible here:
+			 * we get a function pointer returned and have to cast it to ULONG_PTR
+			 * to return the value to the caller.
+			 *
+			 * This, of course, is something compilers warn about. So silence it by casting
+			 * by the means of a union */
+			{
+				union
+				{
+					void (*fkt)(const SSL*, int, int);
+					ULONG_PTR uptr;
+				} cnv;
+				cnv.fkt = SSL_get_info_callback(tls->ssl);
+				*((ULONG_PTR*)ptr) = cnv.uptr;
+				status = 1;
+			}
 			break;
 
 		case BIO_C_SSL_MODE:

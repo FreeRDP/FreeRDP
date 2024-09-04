@@ -139,7 +139,6 @@ static BOOL xf_is_monitor_id_active(xfContext* xfc, UINT32 id)
 BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 {
 	BOOL rc = FALSE;
-	int nmonitors = 0;
 	UINT32 monitor_index = 0;
 	BOOL primaryMonitorFound = FALSE;
 	VIRTUAL_SCREEN* vscreen = NULL;
@@ -148,7 +147,7 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 	int mouse_y = 0;
 	int _dummy_i = 0;
 	Window _dummy_w = 0;
-	int current_monitor = 0;
+	UINT32 current_monitor = 0;
 	Screen* screen = NULL;
 #if defined WITH_XINERAMA || defined WITH_XRANDR
 	int major = 0;
@@ -384,6 +383,7 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 
 	/* Create array of all active monitors by taking into account monitors requested on the
 	 * command-line */
+	int nmonitors = 0;
 	{
 		UINT32 nr = 0;
 
