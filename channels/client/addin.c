@@ -494,15 +494,20 @@ PVIRTUALCHANNELENTRY freerdp_channels_load_static_addin_entry(LPCSTR pszName, LP
 					     0) || /* we only want to know if strnlen is > 0 */
 					    (strncmp(subsystems->name, pszSubsystem, MAX_PATH) == 0))
 					{
+						/* cast with union trick to avoid -Wcast-function-type-strict */
+						union
+						{
+							PVIRTUALCHANNELENTRY pvce;
+							static_subsystem_entry_fn_t entry;
+						} cnv;
+						cnv.entry = subsystems->entry;
 						if (pszType)
 						{
 							if (strncmp(subsystems->type, pszType, MAX_PATH) == 0)
-								return (PVIRTUALCHANNELENTRY)subsystems->entry;
+								return cnv.pvce;
 						}
 						else
-						{
-							return (PVIRTUALCHANNELENTRY)subsystems->entry;
-						}
+							return cnv.pvce;
 					}
 				}
 			}
