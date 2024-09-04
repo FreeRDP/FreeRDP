@@ -348,6 +348,146 @@ extern "C"
 		return v;
 	}
 
+	static INLINE UINT8 Stream_Get_UINT8(wStream* _s)
+	{
+		return stream_read_u8(_s, TRUE);
+	}
+
+	static INLINE INT8 Stream_Get_INT8(wStream* _s)
+	{
+		return stream_read_i8(_s, TRUE);
+	}
+
+	static INLINE UINT16 Stream_Get_UINT16(wStream* _s)
+	{
+		return stream_read_u16_le(_s, TRUE);
+	}
+
+	static INLINE INT16 Stream_Get_INT16(wStream* _s)
+	{
+		return stream_read_i16_le(_s, TRUE);
+	}
+
+	static INLINE UINT16 Stream_Get_UINT16_BE(wStream* _s)
+	{
+		return stream_read_u16_be(_s, TRUE);
+	}
+
+	static INLINE INT16 Stream_Get_INT16_BE(wStream* _s)
+	{
+		return stream_read_i16_be(_s, TRUE);
+	}
+
+	static INLINE UINT32 Stream_Get_UINT32(wStream* _s)
+	{
+		return stream_read_u32_le(_s, TRUE);
+	}
+
+	static INLINE INT32 Stream_Get_INT32(wStream* _s)
+	{
+		return stream_read_i32_le(_s, TRUE);
+	}
+
+	static INLINE UINT32 Stream_Get_UINT32_BE(wStream* _s)
+	{
+		return stream_read_u32_be(_s, TRUE);
+	}
+
+	static INLINE INT32 Stream_Get_INT32_BE(wStream* _s)
+	{
+		return stream_read_i32_be(_s, TRUE);
+	}
+
+	static INLINE UINT64 Stream_Get_UINT64(wStream* _s)
+	{
+		return stream_read_u64_le(_s, TRUE);
+	}
+
+	static INLINE INT64 Stream_Get_INT64(wStream* _s)
+	{
+		return stream_read_i64_le(_s, TRUE);
+	}
+
+	static INLINE UINT64 Stream_Get_UINT64_BE(wStream* _s)
+	{
+		return stream_read_u64_be(_s, TRUE);
+	}
+
+	static INLINE INT64 Stream_Get_INT64_BE(wStream* _s)
+	{
+		return stream_read_i64_be(_s, TRUE);
+	}
+
+	static INLINE UINT8 Stream_Peek_Get_UINT8(wStream* _s)
+	{
+		return stream_read_u8(_s, FALSE);
+	}
+
+	static INLINE INT8 Stream_Peek_Get_INT8(wStream* _s)
+	{
+		return stream_read_i8(_s, FALSE);
+	}
+
+	static INLINE UINT16 Stream_Peek_Get_UINT16(wStream* _s)
+	{
+		return stream_read_u16_le(_s, FALSE);
+	}
+
+	static INLINE INT16 Stream_Peek_Get_INT16(wStream* _s)
+	{
+		return stream_read_i16_le(_s, FALSE);
+	}
+
+	static INLINE UINT16 Stream_Peek_Get_UINT16_BE(wStream* _s)
+	{
+		return stream_read_u16_be(_s, FALSE);
+	}
+
+	static INLINE INT16 Stream_Peek_Get_INT16_BE(wStream* _s)
+	{
+		return stream_read_i16_be(_s, FALSE);
+	}
+
+	static INLINE UINT32 Stream_Peek_Get_UINT32(wStream* _s)
+	{
+		return stream_read_u32_le(_s, FALSE);
+	}
+
+	static INLINE INT32 Stream_Peek_Get_INT32(wStream* _s)
+	{
+		return stream_read_i32_le(_s, FALSE);
+	}
+
+	static INLINE UINT32 Stream_Peek_Get_UINT32_BE(wStream* _s)
+	{
+		return stream_read_u32_be(_s, FALSE);
+	}
+
+	static INLINE INT32 Stream_Peek_Get_INT32_BE(wStream* _s)
+	{
+		return stream_read_i32_be(_s, FALSE);
+	}
+
+	static INLINE UINT64 Stream_Peek_Get_UINT64(wStream* _s)
+	{
+		return stream_read_u64_le(_s, FALSE);
+	}
+
+	static INLINE INT64 Stream_Peek_Get_INT64(wStream* _s)
+	{
+		return stream_read_i64_le(_s, FALSE);
+	}
+
+	static INLINE UINT64 Stream_Peek_Get_UINT64_BE(wStream* _s)
+	{
+		return stream_read_u64_be(_s, FALSE);
+	}
+
+	static INLINE INT64 Stream_Peek_Get_INT64_BE(wStream* _s)
+	{
+		return stream_read_i64_be(_s, FALSE);
+	}
+
 #define Stream_Read_UINT8(_s, _v)      \
 	do                                 \
 	{                                  \
