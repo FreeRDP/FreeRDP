@@ -25,6 +25,7 @@ Checks: >
     -bugprone-assignment-in-if-condition,
     -cert-dcl16-c,
     -cert-env33-c,
+    -cert-dcl50-cpp,
     -clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling,
     -clang-analyzer-valist.Uninitialized,
     -cppcoreguidelines-pro-bounds-array-to-pointer-decay,
