@@ -188,7 +188,7 @@ extern "C"
 		return v;
 	}
 
-	static INLINE UINT16 stream_read_i16_le(wStream* _s, BOOL seek)
+	static INLINE INT16 stream_read_i16_le(wStream* _s, BOOL seek)
 	{
 		WINPR_ASSERT(_s);
 		WINPR_ASSERT(Stream_GetRemainingLength(_s) >= sizeof(INT16));
@@ -200,7 +200,7 @@ extern "C"
 		return v;
 	}
 
-	static INLINE UINT16 stream_read_i16_be(wStream* _s, BOOL seek)
+	static INLINE INT16 stream_read_i16_be(wStream* _s, BOOL seek)
 	{
 		WINPR_ASSERT(_s);
 		WINPR_ASSERT(Stream_GetRemainingLength(_s) >= sizeof(INT16));
