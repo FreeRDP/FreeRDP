@@ -31,6 +31,7 @@
 #include <winuser.h>
 
 #include <winpr/assert.h>
+#include <winpr/library.h>
 
 #include <winpr/crt.h>
 #include <winpr/tchar.h>
@@ -2473,12 +2474,12 @@ BOOL wf_cliprdr_init(wfContext* wfc, CliprdrClientContext* cliprdr)
 
 	if (clipboard->hUser32)
 	{
-		clipboard->AddClipboardFormatListener = (fnAddClipboardFormatListener)GetProcAddress(
-		    clipboard->hUser32, "AddClipboardFormatListener");
-		clipboard->RemoveClipboardFormatListener = (fnRemoveClipboardFormatListener)GetProcAddress(
-		    clipboard->hUser32, "RemoveClipboardFormatListener");
-		clipboard->GetUpdatedClipboardFormats = (fnGetUpdatedClipboardFormats)GetProcAddress(
-		    clipboard->hUser32, "GetUpdatedClipboardFormats");
+		clipboard->AddClipboardFormatListener = GetProcAddressAs(
+		    clipboard->hUser32, "AddClipboardFormatListener", fnAddClipboardFormatListener);
+		clipboard->RemoveClipboardFormatListener = GetProcAddressAs(
+		    clipboard->hUser32, "RemoveClipboardFormatListener", fnRemoveClipboardFormatListener);
+		clipboard->GetUpdatedClipboardFormats = GetProcAddressAs(
+		    clipboard->hUser32, "GetUpdatedClipboardFormats", fnGetUpdatedClipboardFormats);
 	}
 
 	if (!(clipboard->hUser32 && clipboard->AddClipboardFormatListener &&

@@ -107,10 +107,10 @@ BOOL InitializeSspiModule_Native(void)
 	if (!g_SspiModule)
 		return FALSE;
 
-	pInitSecurityInterfaceW = WINPR_FUNC_PTR_CAST(
-	    GetProcAddress(g_SspiModule, "InitSecurityInterfaceW"), INIT_SECURITY_INTERFACE_W);
-	pInitSecurityInterfaceA = WINPR_FUNC_PTR_CAST(
-	    GetProcAddress(g_SspiModule, "InitSecurityInterfaceA"), INIT_SECURITY_INTERFACE_A);
+	pInitSecurityInterfaceW =
+	    GetProcAddressAs(g_SspiModule, "InitSecurityInterfaceW", INIT_SECURITY_INTERFACE_W);
+	pInitSecurityInterfaceA =
+	    GetProcAddressAs(g_SspiModule, "InitSecurityInterfaceA", INIT_SECURITY_INTERFACE_A);
 
 	if (pInitSecurityInterfaceW)
 	{
@@ -124,12 +124,11 @@ BOOL InitializeSspiModule_Native(void)
 
 			g_SspiW->dwVersion = SECURITY_SUPPORT_PROVIDER_INTERFACE_VERSION_3;
 
-			g_SspiW->SetContextAttributesW = WINPR_FUNC_PTR_CAST(
-			    GetProcAddress(g_SspiModule, "SetContextAttributesW"), SET_CONTEXT_ATTRIBUTES_FN_W);
+			g_SspiW->SetContextAttributesW = GetProcAddressAs(g_SspiModule, "SetContextAttributesW",
+			                                                  SET_CONTEXT_ATTRIBUTES_FN_W);
 
-			g_SspiW->SetCredentialsAttributesW =
-			    WINPR_FUNC_PTR_CAST(GetProcAddress(g_SspiModule, "SetCredentialsAttributesW"),
-			                        SET_CREDENTIALS_ATTRIBUTES_FN_W);
+			g_SspiW->SetCredentialsAttributesW = GetProcAddressAs(
+			    g_SspiModule, "SetCredentialsAttributesW", SET_CREDENTIALS_ATTRIBUTES_FN_W);
 		}
 	}
 
@@ -145,12 +144,11 @@ BOOL InitializeSspiModule_Native(void)
 
 			g_SspiA->dwVersion = SECURITY_SUPPORT_PROVIDER_INTERFACE_VERSION_3;
 
-			g_SspiA->SetContextAttributesA = WINPR_FUNC_PTR_CAST(
-			    GetProcAddress(g_SspiModule, "SetContextAttributesA"), SET_CONTEXT_ATTRIBUTES_FN_W);
+			g_SspiA->SetContextAttributesA = GetProcAddressAs(g_SspiModule, "SetContextAttributesA",
+			                                                  SET_CONTEXT_ATTRIBUTES_FN_W);
 
-			g_SspiA->SetCredentialsAttributesA =
-			    WINPR_FUNC_PTR_CAST(GetProcAddress(g_SspiModule, "SetCredentialsAttributesA"),
-			                        SET_CREDENTIALS_ATTRIBUTES_FN_W);
+			g_SspiA->SetCredentialsAttributesA = GetProcAddressAs(
+			    g_SspiModule, "SetCredentialsAttributesA", SET_CREDENTIALS_ATTRIBUTES_FN_W);
 		}
 	}
 

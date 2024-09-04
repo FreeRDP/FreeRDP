@@ -20,6 +20,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/print.h>
+#include <winpr/library.h>
 #include <freerdp/log.h>
 
 #include "win_dxgi.h"
@@ -288,7 +289,7 @@ static void win_shadow_d3d11_module_init()
 	if (!d3d11_module)
 		return;
 
-	pfnD3D11CreateDevice = (fnD3D11CreateDevice)GetProcAddress(d3d11_module, "D3D11CreateDevice");
+	pfnD3D11CreateDevice = GetProcAddressAs(d3d11_module, "D3D11CreateDevice", fnD3D11CreateDevice);
 }
 
 int win_shadow_dxgi_init_duplication(winShadowSubsystem* subsystem)

@@ -22,6 +22,7 @@
 #include <freerdp/config.h>
 
 #include <winpr/windows.h>
+#include <winpr/library.h>
 
 #include <winpr/crt.h>
 #include <winpr/assert.h>
@@ -1396,9 +1397,9 @@ static int wfreerdp_client_start(rdpContext* context)
 		if (module)
 		{
 			GetDpiForWindow_t pGetDpiForWindow =
-			    (GetDpiForWindow_t)GetProcAddress(module, "GetDpiForWindow");
+			    GetProcAddressAs(module, "GetDpiForWindow", GetDpiForWindow_t);
 			SetProcessDPIAware_t pSetProcessDPIAware =
-			    (SetProcessDPIAware_t)GetProcAddress(module, "SetProcessDPIAware");
+			    GetProcAddressAs(module, "SetProcessDPIAware", SetProcessDPIAware_t);
 			if (pGetDpiForWindow && pSetProcessDPIAware)
 			{
 				const UINT dpiAwareness = pGetDpiForWindow(hWndParent);

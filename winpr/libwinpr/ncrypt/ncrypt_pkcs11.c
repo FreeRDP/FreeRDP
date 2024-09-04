@@ -1261,8 +1261,8 @@ SECURITY_STATUS NCryptOpenP11StorageProviderEx(NCRYPT_PROV_HANDLE* phProvider,
 			goto out_load_library;
 		}
 
-		FARPROC fp = GetProcAddress(library, "C_GetFunctionList");
-		c_get_function_list_t c_get_function_list = WINPR_FUNC_PTR_CAST(fp, c_get_function_list_t);
+		c_get_function_list_t c_get_function_list =
+		    GetProcAddressAs(library, "C_GetFunctionList", c_get_function_list_t);
 
 		if (!c_get_function_list)
 		{

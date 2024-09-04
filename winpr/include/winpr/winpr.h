@@ -160,7 +160,7 @@ WINPR_API const char* winpr_get_build_config(void);
 	})
 #else
 #define WINPR_CAST_CONST_PTR_AWAY(ptr, dstType) (dstType) ptr
-#define WINPR_CONST_PTR_AWAY_CAST(ptr, dstType) (dstType)(uintptr_t) ptr
+#define WINPR_FUNC_PTR_CAST(ptr, dstType) (dstType)(uintptr_t) ptr
 #endif
 
 #endif /* WINPR_H */

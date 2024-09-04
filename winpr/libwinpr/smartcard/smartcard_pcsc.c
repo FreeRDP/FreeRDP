@@ -48,13 +48,13 @@
 #include "../log.h"
 #define TAG WINPR_TAG("smartcard")
 
-#define WINSCARD_LOAD_PROC_EX(module, pcsc, _fname, _name, ...)                                 \
-	do                                                                                          \
-	{                                                                                           \
-		WINPR_PRAGMA_DIAG_PUSH                                                                  \
-		WINPR_PRAGMA_DIAG_IGNORED_PEDANTIC                                                      \
-		pcsc.pfn##_fname = WINPR_FUNC_PTR_CAST(GetProcAddress(module, #_name), fnPCSC##_fname); \
-		WINPR_PRAGMA_DIAG_POP                                                                   \
+#define WINSCARD_LOAD_PROC_EX(module, pcsc, _fname, _name, ...)              \
+	do                                                                       \
+	{                                                                        \
+		WINPR_PRAGMA_DIAG_PUSH                                               \
+		WINPR_PRAGMA_DIAG_IGNORED_PEDANTIC                                   \
+		pcsc.pfn##_fname = GetProcAddressAs(module, #_name, fnPCSC##_fname); \
+		WINPR_PRAGMA_DIAG_POP                                                \
 	} while (0)
 
 #define WINSCARD_LOAD_PROC(module, pcsc, _name, ...) \

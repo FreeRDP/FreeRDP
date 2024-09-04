@@ -491,8 +491,8 @@ static BOOL pf_modules_load_module(const char* module_path, proxyModule* module,
 		return FALSE;
 	}
 
-	FARPROC fp = GetProcAddress(handle, MODULE_ENTRY_POINT);
-	proxyModuleEntryPoint pEntryPoint = WINPR_FUNC_PTR_CAST(fp, proxyModuleEntryPoint);
+	proxyModuleEntryPoint pEntryPoint =
+	    GetProcAddressAs(handle, MODULE_ENTRY_POINT, proxyModuleEntryPoint);
 	if (!pEntryPoint)
 	{
 		WLog_ERR(TAG, "GetProcAddress failed while loading %s", module_path);

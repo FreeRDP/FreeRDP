@@ -34,10 +34,8 @@ static BOOL CALLBACK init_module(PINIT_ONCE once, PVOID param, PVOID* context)
 {
 	HMODULE kernel32 = LoadLibraryA("kernel32.dll");
 	if (kernel32)
-	{
-		FARPROC fp = GetProcAddress(kernel32, "CallbackMayRunLong");
-		pCallbackMayRunLong = WINPR_FUNC_PTR_CAST(fp, pCallbackMayRunLong_t);
-	}
+		pCallbackMayRunLong =
+		    GetProcAddressAs(kernel32, "CallbackMayRunLong", pCallbackMayRunLong_t);
 	return TRUE;
 }
 #endif

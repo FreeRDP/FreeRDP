@@ -785,9 +785,9 @@ BOOL Win32_InitializeWinSta(PWtsApiFunctionTable pWtsApi)
 		return FALSE;
 
 	pfnWinStationVirtualOpen =
-	    (fnWinStationVirtualOpen)GetProcAddress(g_WinStaModule, "WinStationVirtualOpen");
+	    GetProcAddressAs(g_WinStaModule, "WinStationVirtualOpen", fnWinStationVirtualOpen);
 	pfnWinStationVirtualOpenEx =
-	    (fnWinStationVirtualOpenEx)GetProcAddress(g_WinStaModule, "WinStationVirtualOpenEx");
+	    GetProcAddressAs(g_WinStaModule, "WinStationVirtualOpenEx", fnWinStationVirtualOpenEx);
 
 	if (!pfnWinStationVirtualOpen | !pfnWinStationVirtualOpenEx)
 		return FALSE;

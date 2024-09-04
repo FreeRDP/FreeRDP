@@ -470,9 +470,8 @@ static BOOL createChildSessionTransport(HANDLE* pFile)
 	WCHAR pipePath[0x80] = { 0 };
 	char pipePathA[0x80] = { 0 };
 
-	FARPROC fp = GetProcAddress(hModule, "WinStationCreateChildSessionTransport");
-	WinStationCreateChildSessionTransportFn createChildSessionFn =
-	    WINPR_FUNC_PTR_CAST(fp, WinStationCreateChildSessionTransportFn);
+	WinStationCreateChildSessionTransportFn createChildSessionFn = GetProcAddressAs(
+	    hModule, "WinStationCreateChildSessionTransport", WinStationCreateChildSessionTransportFn);
 	if (!createChildSessionFn)
 	{
 		WLog_ERR(TAG, "unable to retrieve WinStationCreateChildSessionTransport function");

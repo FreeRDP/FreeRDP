@@ -19,6 +19,7 @@
 
 #include <winpr/config.h>
 
+#include <winpr/winpr.h>
 #include <winpr/crt.h>
 #include <winpr/pool.h>
 #include <winpr/library.h>
@@ -42,11 +43,11 @@ static BOOL CALLBACK init_module(PINIT_ONCE once, PVOID param, PVOID* context)
 	if (kernel32)
 	{
 		pCreateThreadpoolCleanupGroup =
-		    (void*)GetProcAddress(kernel32, "CreateThreadpoolCleanupGroup");
+		    GetProcAddressAs(kernel32, "CreateThreadpoolCleanupGroup", void*);
 		pCloseThreadpoolCleanupGroupMembers =
-		    (void*)GetProcAddress(kernel32, "CloseThreadpoolCleanupGroupMembers");
+		    GetProcAddressAs(kernel32, "CloseThreadpoolCleanupGroupMembers", void*);
 		pCloseThreadpoolCleanupGroup =
-		    (void*)GetProcAddress(kernel32, "CloseThreadpoolCleanupGroup");
+		    GetProcAddressAs(kernel32, "CloseThreadpoolCleanupGroup", void*);
 	}
 
 	return TRUE;

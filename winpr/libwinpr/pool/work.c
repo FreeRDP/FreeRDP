@@ -46,13 +46,13 @@ static BOOL CALLBACK init_module(PINIT_ONCE once, PVOID param, PVOID* context)
 
 	if (kernel32)
 	{
-		pCreateThreadpoolWork = (void*)GetProcAddress(kernel32, "CreateThreadpoolWork");
-		pCloseThreadpoolWork = (void*)GetProcAddress(kernel32, "CloseThreadpoolWork");
-		pSubmitThreadpoolWork = (void*)GetProcAddress(kernel32, "SubmitThreadpoolWork");
+		pCreateThreadpoolWork = GetProcAddressAs(kernel32, "CreateThreadpoolWork", void*);
+		pCloseThreadpoolWork = GetProcAddressAs(kernel32, "CloseThreadpoolWork", void*);
+		pSubmitThreadpoolWork = GetProcAddressAs(kernel32, "SubmitThreadpoolWork", void*);
 		pTrySubmitThreadpoolCallback =
-		    (void*)GetProcAddress(kernel32, "TrySubmitThreadpoolCallback");
+		    GetProcAddressAs(kernel32, "TrySubmitThreadpoolCallback", void*);
 		pWaitForThreadpoolWorkCallbacks =
-		    (void*)GetProcAddress(kernel32, "WaitForThreadpoolWorkCallbacks");
+		    GetProcAddressAs(kernel32, "WaitForThreadpoolWorkCallbacks", void*);
 	}
 
 	return TRUE;

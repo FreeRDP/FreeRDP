@@ -18,6 +18,7 @@
  */
 
 #include <winpr/assert.h>
+#include <winpr/library.h>
 #include <winpr/ncrypt.h>
 
 #ifndef _WIN32
@@ -272,10 +273,9 @@ SECURITY_STATUS winpr_NCryptOpenStorageProviderEx(NCRYPT_PROV_HANDLE* phProvider
 	if (!lib)
 		return NTE_PROV_DLL_NOT_FOUND;
 
-	FARPROC fp = GetProcAddress(lib, "NCryptOpenStorageProvider");
 	NCryptOpenStorageProviderFn ncryptOpenStorageProviderFn =
-	    WINPR_FUNC_PTR_CAST(fp, NCryptOpenStorageProviderFn);
-	(NCryptOpenStorageProviderFn) if (!ncryptOpenStorageProviderFn)
+	    GetProcAddressAs(lib, "NCryptOpenStorageProvider", NCryptOpenStorageProviderFn);
+	if (!ncryptOpenStorageProviderFn)
 	{
 		ret = NTE_PROV_DLL_NOT_FOUND;
 		goto out_free_lib;
