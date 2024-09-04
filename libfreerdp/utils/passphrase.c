@@ -127,8 +127,8 @@ static void replace_char(char* buffer, size_t buffer_len, const char* toreplace)
 	}
 }
 
-char* freerdp_passphrase_read_tty(rdpContext* context, const char* prompt, char* buf, size_t bufsiz,
-                                  int from_stdin)
+static char* freerdp_passphrase_read_tty(rdpContext* context, const char* prompt, char* buf,
+                                         size_t bufsiz, int from_stdin)
 {
 	BOOL terminal_needs_reset = FALSE;
 	char term_name[L_ctermid] = { 0 };
@@ -213,8 +213,8 @@ error:
 }
 }
 
-char* freerdp_passphrase_read_askpass(const char* prompt, char* buf, size_t bufsiz,
-                                      char const* askpass_env)
+static char* freerdp_passphrase_read_askpass(const char* prompt, char* buf, size_t bufsiz,
+                                             char const* askpass_env)
 {
 	char command[4096] = { 0 };
 
