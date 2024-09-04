@@ -313,16 +313,10 @@ static long bio_rdp_tls_ctrl(BIO* bio, int cmd, long num, void* ptr)
 			 * we get a function pointer returned and have to cast it to ULONG_PTR
 			 * to return the value to the caller.
 			 *
-			 * This, of course, is something compilers warn about. So silence it by casting
-			 * by the means of a union */
+			 * This, of course, is something compilers warn about. So silence it by casting */
 			{
-				union
-				{
-					void (*fkt)(const SSL*, int, int);
-					ULONG_PTR uptr;
-				} cnv;
-				cnv.fkt = SSL_get_info_callback(tls->ssl);
-				*((ULONG_PTR*)ptr) = cnv.uptr;
+				void* vptr = (void*)SSL_get_info_callback(tls->ssl);
+				*((void**)ptr) = vptr;
 				status = 1;
 			}
 			break;
