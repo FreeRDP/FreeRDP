@@ -47,13 +47,13 @@ int TestLibraryGetProcAddress(int argc, char* argv[])
 		return -1;
 	}
 
-	if (!(pFunctionA = (TEST_AB_FN)GetProcAddress(library, "FunctionA")))
+	if (!(pFunctionA = WINPR_FUNC_PTR_CAST(GetProcAddress(library, "FunctionA"), TEST_AB_FN)))
 	{
 		printf("%s: GetProcAddress failure (FunctionA)\n", __func__);
 		return -1;
 	}
 
-	if (!(pFunctionB = (TEST_AB_FN)GetProcAddress(library, "FunctionB")))
+	if (!(pFunctionB = WINPR_FUNC_PTR_CAST(GetProcAddress(library, "FunctionB"), TEST_AB_FN)))
 	{
 		printf("%s: GetProcAddress failure (FunctionB)\n", __func__);
 		return -1;

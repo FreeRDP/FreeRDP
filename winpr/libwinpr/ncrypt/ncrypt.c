@@ -267,15 +267,15 @@ SECURITY_STATUS winpr_NCryptOpenStorageProviderEx(NCRYPT_PROV_HANDLE* phProvider
 {
 	typedef SECURITY_STATUS (*NCryptOpenStorageProviderFn)(NCRYPT_PROV_HANDLE * phProvider,
 	                                                       LPCWSTR pszProviderName, DWORD dwFlags);
-	NCryptOpenStorageProviderFn ncryptOpenStorageProviderFn;
-	SECURITY_STATUS ret;
+	SECURITY_STATUS ret = NTE_PROV_DLL_NOT_FOUND;
 	HANDLE lib = LoadLibraryA("ncrypt.dll");
 	if (!lib)
 		return NTE_PROV_DLL_NOT_FOUND;
 
-	ncryptOpenStorageProviderFn =
-	    (NCryptOpenStorageProviderFn)GetProcAddress(lib, "NCryptOpenStorageProvider");
-	if (!ncryptOpenStorageProviderFn)
+	FARPROC fp = GetProcAddress(lib, "NCryptOpenStorageProvider");
+	NCryptOpenStorageProviderFn ncryptOpenStorageProviderFn =
+	    WINPR_FUNC_PTR_CAST(fp, NCryptOpenStorageProviderFn);
+	(NCryptOpenStorageProviderFn) if (!ncryptOpenStorageProviderFn)
 	{
 		ret = NTE_PROV_DLL_NOT_FOUND;
 		goto out_free_lib;

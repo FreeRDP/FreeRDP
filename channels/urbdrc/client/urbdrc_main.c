@@ -770,21 +770,19 @@ static UINT urbdrc_load_udevman_addin(IWTSPlugin* pPlugin, LPCSTR name, const AD
 {
 	URBDRC_PLUGIN* urbdrc = (URBDRC_PLUGIN*)pPlugin;
 	FREERDP_URBDRC_SERVICE_ENTRY_POINTS entryPoints = { 0 };
-	union
-	{
-		PVIRTUALCHANNELENTRY pvce;
-		PFREERDP_URBDRC_DEVICE_ENTRY entry;
-	} cnv;
-	cnv.pvce = freerdp_load_channel_addin_entry(URBDRC_CHANNEL_NAME, name, NULL, 0);
 
-	if (!cnv.entry)
+	PVIRTUALCHANNELENTRY pvce =
+	    freerdp_load_channel_addin_entry(URBDRC_CHANNEL_NAME, name, NULL, 0);
+	PFREERDP_URBDRC_DEVICE_ENTRY entry = WINPR_FUNC_PTR_CAST(pvce, PFREERDP_URBDRC_DEVICE_ENTRY);
+
+	if (!entry)
 		return ERROR_INVALID_OPERATION;
 
 	entryPoints.plugin = pPlugin;
 	entryPoints.pRegisterUDEVMAN = urbdrc_register_udevman_addin;
 	entryPoints.args = args;
 
-	const UINT error = cnv.entry(&entryPoints);
+	const UINT error = entry(&entryPoints);
 	if (error)
 	{
 		WLog_Print(urbdrc->log, WLOG_ERROR, "%s entry returns error.", name);

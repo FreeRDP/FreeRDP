@@ -1261,20 +1261,16 @@ SECURITY_STATUS NCryptOpenP11StorageProviderEx(NCRYPT_PROV_HANDLE* phProvider,
 			goto out_load_library;
 		}
 
-		union
-		{
-			FARPROC fp;
-			c_get_function_list_t c_get_function_list;
-		} cnv;
-		cnv.fp = GetProcAddress(library, "C_GetFunctionList");
+		FARPROC fp = GetProcAddress(library, "C_GetFunctionList");
+		c_get_function_list_t c_get_function_list = WINPR_FUNC_PTR_CAST(fp, c_get_function_list_t);
 
-		if (!cnv.c_get_function_list)
+		if (!c_get_function_list)
 		{
 			status = NTE_PROV_TYPE_ENTRY_BAD;
 			goto out_load_library;
 		}
 
-		status = initialize_pkcs11(library, cnv.c_get_function_list, phProvider);
+		status = initialize_pkcs11(library, c_get_function_list, phProvider);
 		if (status != ERROR_SUCCESS)
 		{
 			status = NTE_PROVIDER_DLL_FAIL;

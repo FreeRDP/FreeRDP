@@ -539,17 +539,13 @@ static long bio_rdp_tls_callback_ctrl(BIO* bio, int cmd, bio_info_cb* fp)
 		case BIO_CTRL_SET_CALLBACK:
 		{
 			typedef void (*fkt_t)(const SSL*, int, int);
+
 			/* Documented since https://www.openssl.org/docs/man1.1.1/man3/BIO_set_callback.html
 			 * the argument is not really of type bio_info_cb* and must be cast
 			 * to the required type */
-			union
-			{
-				fkt_t fkt;
-				bio_info_cb* fp;
-			} cnv;
 
-			cnv.fp = fp;
-			SSL_set_info_callback(tls->ssl, cnv.fkt);
+			fkt_t fkt = WINPR_FUNC_PTR_CAST(fp, fkt_t);
+			SSL_set_info_callback(tls->ssl, fkt);
 			status = 1;
 		}
 		break;

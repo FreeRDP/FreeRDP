@@ -491,13 +491,9 @@ static BOOL pf_modules_load_module(const char* module_path, proxyModule* module,
 		return FALSE;
 	}
 
-	union
-	{
-		FARPROC fp;
-		proxyModuleEntryPoint pEntryPoint;
-	} cnv;
-	cnv.fp = GetProcAddress(handle, MODULE_ENTRY_POINT);
-	if (!cnv.pEntryPoint)
+	FARPROC fp = GetProcAddress(handle, MODULE_ENTRY_POINT);
+	proxyModuleEntryPoint pEntryPoint = WINPR_FUNC_PTR_CAST(fp, proxyModuleEntryPoint);
+	if (!pEntryPoint)
 	{
 		WLog_ERR(TAG, "GetProcAddress failed while loading %s", module_path);
 		goto error;
@@ -507,7 +503,7 @@ static BOOL pf_modules_load_module(const char* module_path, proxyModule* module,
 		WLog_ERR(TAG, "ArrayList_Append failed!");
 		goto error;
 	}
-	return pf_modules_add(module, cnv.pEntryPoint, userdata);
+	return pf_modules_add(module, pEntryPoint, userdata);
 
 error:
 	FreeLibrary(handle);

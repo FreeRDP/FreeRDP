@@ -194,21 +194,15 @@ static BOOL freerdp_client_load_static_channel_addin(rdpChannels* channels, rdpS
                                                      const char* name, void* data)
 {
 	PVIRTUALCHANNELENTRY entry = NULL;
-	union
-	{
-		PVIRTUALCHANNELENTRY entry;
-		PVIRTUALCHANNELENTRYEX entryEx;
-	} cnv;
-
-	cnv.entry = freerdp_load_channel_addin_entry(
+	PVIRTUALCHANNELENTRY lentry = freerdp_load_channel_addin_entry(
 	    name, NULL, NULL, FREERDP_ADDIN_CHANNEL_STATIC | FREERDP_ADDIN_CHANNEL_ENTRYEX);
-
-	if (!cnv.entryEx)
+	PVIRTUALCHANNELENTRYEX entryEx = WINPR_FUNC_PTR_CAST(lentry, PVIRTUALCHANNELENTRYEX);
+	if (!entryEx)
 		entry = freerdp_load_channel_addin_entry(name, NULL, NULL, FREERDP_ADDIN_CHANNEL_STATIC);
 
-	if (cnv.entryEx)
+	if (entryEx)
 	{
-		if (freerdp_channels_client_load_ex(channels, settings, cnv.entryEx, data) == 0)
+		if (freerdp_channels_client_load_ex(channels, settings, entryEx, data) == 0)
 		{
 			WLog_INFO(TAG, "loading channelEx %s", name);
 			return TRUE;

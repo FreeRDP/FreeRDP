@@ -700,17 +700,13 @@ static BOOL LoadAndInitialize(char* library)
 	if (!g_WtsApiModule)
 		return FALSE;
 
-	union
-	{
-		FARPROC fp;
-		INIT_WTSAPI_FN pInitWtsApi;
-	} cnv;
-	cnv.fp = GetProcAddress(g_WtsApiModule, "InitWtsApi");
+	FARPROC fp = GetProcAddress(g_WtsApiModule, "InitWtsApi");
+	INIT_WTSAPI_FN pInitWtsApi = WINPR_FUNC_PTR_CAST(fp, INIT_WTSAPI_FN);
 
-	if (!cnv.pInitWtsApi)
+	if (!pInitWtsApi)
 		return FALSE;
 
-	g_WtsApi = cnv.pInitWtsApi();
+	g_WtsApi = pInitWtsApi();
 	return TRUE;
 }
 
