@@ -57,6 +57,7 @@ Checks: >
     -readability-magic-numbers,
     -readability-qualified-auto,
     -readability-uppercase-literal-suffix,
+    -readability-isolate-declaration,
     -performance-no-int-to-ptr
 WarningsAsErrors: ''
 HeaderFilterRegex: ''
