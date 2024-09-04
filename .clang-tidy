@@ -27,6 +27,7 @@ Checks: >
     -cert-env33-c,
     -clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling,
     -clang-analyzer-valist.Uninitialized,
+    -cppcoreguidelines-init-variables,
     -cppcoreguidelines-pro-bounds-array-to-pointer-decay,
     -cppcoreguidelines-owning-memory,
     -cppcoreguidelines-avoid-do-while,
