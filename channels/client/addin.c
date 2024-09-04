@@ -48,7 +48,7 @@ static void* freerdp_channels_find_static_entry_in_table(const STATIC_ENTRY_TABL
                                                          const char* identifier)
 {
 	size_t index = 0;
-	const STATIC_ENTRY* pEntry = &table->table[index++];
+	const STATIC_ENTRY* pEntry = &table->table.cse[index++];
 
 	while (pEntry->entry != NULL)
 	{
@@ -63,7 +63,7 @@ static void* freerdp_channels_find_static_entry_in_table(const STATIC_ENTRY_TABL
 			return cnv.pv;
 		}
 
-		pEntry = &table->table[index++];
+		pEntry = &table->table.cse[index++];
 	}
 
 	return NULL;
@@ -74,7 +74,7 @@ void* freerdp_channels_client_find_static_entry(const char* name, const char* id
 	size_t index = 0;
 	const STATIC_ENTRY_TABLE* pEntry = &CLIENT_STATIC_ENTRY_TABLES[index++];
 
-	while (pEntry->table != NULL)
+	while (pEntry->table.cse != NULL)
 	{
 		if (strcmp(pEntry->name, name) == 0)
 		{
@@ -514,7 +514,7 @@ PVIRTUALCHANNELENTRY freerdp_channels_load_static_addin_entry(LPCSTR pszName, LP
 						return NULL;
 				}
 
-				return (PVIRTUALCHANNELENTRY)table->entry;
+				return table->entry.csevc;
 			}
 		}
 	}
