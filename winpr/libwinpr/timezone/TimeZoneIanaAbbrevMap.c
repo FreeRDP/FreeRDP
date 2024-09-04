@@ -184,7 +184,7 @@ static char* get_link_target(const char* base, const char* dir, const char* name
 		rc = readlink(path, target, size);
 		if (rc < 0)
 			goto fail;
-	} while (rc >= size);
+	} while ((size_t)rc >= size);
 
 	apath = topath(base, dir, target);
 fail:

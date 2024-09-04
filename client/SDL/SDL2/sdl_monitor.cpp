@@ -334,7 +334,7 @@ BOOL sdl_detect_monitors(SdlContext* sdl, UINT32* pMaxWidth, UINT32* pMaxHeight)
 		if (!freerdp_settings_set_pointer_len(settings, FreeRDP_MonitorIds, nullptr,
 		                                      static_cast<size_t>(numDisplays)))
 			return FALSE;
-		for (size_t x = 0; x < numDisplays; x++)
+		for (size_t x = 0; x < static_cast<size_t>(numDisplays); x++)
 		{
 			if (!freerdp_settings_set_pointer_array(settings, FreeRDP_MonitorIds, x, &x))
 				return FALSE;

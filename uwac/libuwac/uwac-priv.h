@@ -242,7 +242,7 @@ struct uwac_window
 	int surfaceStates;
 	enum wl_shm_format format;
 
-	int nbuffers;
+	size_t nbuffers;
 	UwacBuffer* buffers;
 
 	struct wl_region* opaque_region;

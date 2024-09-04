@@ -278,7 +278,7 @@ DWORD GetModuleFileNameA(HMODULE hModule, LPSTR lpFilename, DWORD nSize)
 		(void)sprintf_s(path, ARRAYSIZE(path), "/proc/%d/exe", getpid());
 		status = readlink(path, buffer, ARRAYSIZE(buffer) - 1);
 
-		if ((status < 0) || (status >= ARRAYSIZE(buffer)))
+		if ((status < 0) || ((size_t)status >= ARRAYSIZE(buffer)))
 		{
 			SetLastError(ERROR_INTERNAL_ERROR);
 			return 0;
