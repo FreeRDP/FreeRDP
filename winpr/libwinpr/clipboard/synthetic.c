@@ -275,8 +275,8 @@ static void* clipboard_synthesize_cf_dibv5(wClipboard* clipboard, UINT32 formatI
 	return NULL;
 }
 
-static void* clipboard_prepend_bmp_header(const BITMAPINFOHEADER* pInfoHeader, const void* data,
-                                          size_t size, UINT32* pSize)
+static void* clipboard_prepend_bmp_header(const WINPR_BITMAP_INFO_HEADER* pInfoHeader,
+                                          const void* data, size_t size, UINT32* pSize)
 {
 	WINPR_ASSERT(pInfoHeader);
 	WINPR_ASSERT(pSize);
@@ -285,22 +285,34 @@ static void* clipboard_prepend_bmp_header(const BITMAPINFOHEADER* pInfoHeader, c
 	if ((pInfoHeader->biBitCount < 1) || (pInfoHeader->biBitCount > 32))
 		return NULL;
 
-	const size_t DstSize = sizeof(BITMAPFILEHEADER) + size;
-	BYTE* pDstData = (BYTE*)malloc(DstSize);
-
-	if (!pDstData)
+	const size_t DstSize = sizeof(WINPR_BITMAP_FILE_HEADER) + size;
+	wStream* s = Stream_New(NULL, DstSize);
+	if (!s)
 		return NULL;
 
-	BITMAPFILEHEADER* pFileHeader = (BITMAPFILEHEADER*)pDstData;
-	pFileHeader->bfType = 0x4D42;
-	pFileHeader->bfSize = DstSize;
-	pFileHeader->bfReserved1 = 0;
-	pFileHeader->bfReserved2 = 0;
-	pFileHeader->bfOffBits = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER);
-	unsigned char* pDst = &pDstData[sizeof(BITMAPFILEHEADER)];
-	CopyMemory(pDst, data, size);
+	WINPR_BITMAP_FILE_HEADER fileHeader = { 0 };
+	fileHeader.bfType[0] = 'B';
+	fileHeader.bfType[1] = 'M';
+	fileHeader.bfSize = DstSize;
+	fileHeader.bfOffBits = sizeof(WINPR_BITMAP_FILE_HEADER) + sizeof(WINPR_BITMAP_INFO_HEADER);
+	if (!writeBitmapFileHeader(s, &fileHeader))
+		goto fail;
+
+	if (!Stream_EnsureRemainingCapacity(s, size))
+		goto fail;
+	Stream_Write(s, data, size);
+	const size_t len = Stream_GetPosition(s);
+	if (len != DstSize)
+		goto fail;
 	*pSize = DstSize;
-	return pDstData;
+
+	BYTE* dst = Stream_Buffer(s);
+	Stream_Free(s, FALSE);
+	return dst;
+
+fail:
+	Stream_Free(s, TRUE);
+	return NULL;
 }
 
 /**
@@ -319,8 +331,14 @@ static void* clipboard_synthesize_image_bmp(wClipboard* clipboard, UINT32 format
 		if (SrcSize < sizeof(BITMAPINFOHEADER))
 			return NULL;
 
-		const BITMAPINFOHEADER* pInfoHeader = (const BITMAPINFOHEADER*)data;
-		return clipboard_prepend_bmp_header(pInfoHeader, data, SrcSize, pSize);
+		wStream sbuffer = { 0 };
+		size_t offset = 0;
+		WINPR_BITMAP_INFO_HEADER header = { 0 };
+		wStream* s = Stream_StaticConstInit(&sbuffer, data, SrcSize);
+		if (!readBitmapInfoHeader(s, &header, &offset))
+			return NULL;
+
+		return clipboard_prepend_bmp_header(&header, data, SrcSize, pSize);
 	}
 	else if (formatId == CF_DIBV5)
 	{
