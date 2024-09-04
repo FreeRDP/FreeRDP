@@ -430,22 +430,24 @@ BOOL ArrayList_RemoveAt(wArrayList* arrayList, size_t index)
 
 SSIZE_T ArrayList_IndexOf(wArrayList* arrayList, const void* obj, SSIZE_T startIndex, SSIZE_T count)
 {
-	SSIZE_T sindex = 0;
-	SSIZE_T cindex = 0;
 	BOOL found = FALSE;
 
 	WINPR_ASSERT(arrayList);
 	ArrayList_Lock_Conditional(arrayList);
 
-	sindex = (size_t)startIndex;
+	SSIZE_T sindex = startIndex;
 	if (startIndex < 0)
 		sindex = 0;
 
-	cindex = (size_t)count;
-	if (count < 0)
-		cindex = arrayList->size;
-
 	SSIZE_T index = sindex;
+	SSIZE_T cindex = count;
+	if (count < 0)
+	{
+		if (arrayList->size > SSIZE_MAX)
+			goto fail;
+		cindex = (SSIZE_T)arrayList->size;
+	}
+
 	for (; index < sindex + cindex; index++)
 	{
 		if (arrayList->object.fnObjectEquals(arrayList->array[index], obj))
@@ -455,6 +457,7 @@ SSIZE_T ArrayList_IndexOf(wArrayList* arrayList, const void* obj, SSIZE_T startI
 		}
 	}
 
+fail:
 	if (!found)
 		index = -1;
 
@@ -486,7 +489,7 @@ SSIZE_T ArrayList_LastIndexOf(wArrayList* arrayList, const void* obj, SSIZE_T st
 	WINPR_ASSERT(arrayList);
 	ArrayList_Lock_Conditional(arrayList);
 
-	sindex = (size_t)startIndex;
+	sindex = startIndex;
 	if (startIndex < 0)
 		sindex = 0;
 
