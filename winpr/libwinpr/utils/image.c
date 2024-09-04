@@ -49,6 +49,7 @@
 #endif
 #include <winpr/stream.h>
 
+#include "image.h"
 #include "../log.h"
 #define TAG WINPR_TAG("utils.image")
 
@@ -73,9 +74,14 @@ static BOOL writeBitmapFileHeader(wStream* s, const WINPR_BITMAP_FILE_HEADER* bf
 	return TRUE;
 }
 
-static BOOL readBitmapFileHeader(wStream* s, WINPR_BITMAP_FILE_HEADER* bf)
+BOOL readBitmapFileHeader(wStream* s, WINPR_BITMAP_FILE_HEADER* bf)
 {
-	if (!s || !bf || (!Stream_CheckAndLogRequiredLength(TAG, s, sizeof(WINPR_BITMAP_FILE_HEADER))))
+	static wLog* log = NULL;
+	if (!log)
+		log = WLog_Get(TAG);
+
+	if (!s || !bf ||
+	    (!Stream_CheckAndLogRequiredLengthWLog(log, s, sizeof(WINPR_BITMAP_FILE_HEADER))))
 		return FALSE;
 
 	Stream_Read_UINT8(s, bf->bfType[0]);
@@ -87,12 +93,19 @@ static BOOL readBitmapFileHeader(wStream* s, WINPR_BITMAP_FILE_HEADER* bf)
 
 	if (bf->bfSize < sizeof(WINPR_BITMAP_FILE_HEADER))
 	{
-		WLog_ERR(TAG, "");
+		WLog_Print(log, WLOG_ERROR, "Invalid bitmap::bfSize=%" PRIu32 ", require at least %" PRIuz,
+		           bf->bfSize, sizeof(WINPR_BITMAP_FILE_HEADER));
 		return FALSE;
 	}
 
-	return Stream_CheckAndLogRequiredCapacity(TAG, s,
-	                                          bf->bfSize - sizeof(WINPR_BITMAP_FILE_HEADER));
+	if ((bf->bfType[0] != 'B') || (bf->bfType[1] != 'M'))
+	{
+		WLog_Print(log, WLOG_ERROR, "Invalid bitmap header [%c%c], expected [BM]", bf->bfType[0],
+		           bf->bfType[1]);
+		return FALSE;
+	}
+	return Stream_CheckAndLogRequiredCapacityWLog(log, s,
+	                                              bf->bfSize - sizeof(WINPR_BITMAP_FILE_HEADER));
 }
 
 static BOOL writeBitmapInfoHeader(wStream* s, const WINPR_BITMAP_INFO_HEADER* bi)

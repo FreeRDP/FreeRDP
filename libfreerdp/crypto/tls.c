@@ -826,7 +826,7 @@ static BOOL tls_prepare(rdpTls* tls, BIO* underlying, SSL_METHOD* method, int op
 	return TRUE;
 }
 
-static void adjustSslOptions(const int* options)
+static void adjustSslOptions(int* options)
 {
 	WINPR_ASSERT(options);
 #if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
