@@ -561,7 +561,7 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* WINPR_RESTRICT pSrcData, UINT32 
 
 	offset = (pOutput - pDstData);
 
-	if (offset != DstSize)
+	if ((DstSize < 0) || (offset != (size_t)DstSize))
 		return -1;
 
 	return 1;

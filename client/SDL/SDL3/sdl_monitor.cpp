@@ -323,8 +323,11 @@ BOOL sdl_detect_monitors(SdlContext* sdl, UINT32* pMaxWidth, UINT32* pMaxHeight)
 	{
 		int numDisplays = 0;
 		auto sids = SDL_GetDisplays(&numDisplays);
-		ids = std::vector<SDL_DisplayID>(sids, sids + numDisplays);
+		if (sids && (numDisplays > 0))
+			ids = std::vector<SDL_DisplayID>(sids, sids + numDisplays);
 		SDL_free(sids);
+		if (numDisplays < 0)
+			return FALSE;
 	}
 
 	auto nr = freerdp_settings_get_uint32(settings, FreeRDP_NumMonitorIds);

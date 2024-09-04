@@ -231,7 +231,7 @@ static void tsmf_oss_free(ITSMFAudioDevice* audio)
 	free(oss);
 }
 
-FREERDP_ENTRY_POINT(UINT oss_freerdp_tsmf_client_audio_subsystem_entry(void* ptr))
+FREERDP_ENTRY_POINT(UINT VCAPITYPE oss_freerdp_tsmf_client_audio_subsystem_entry(void* ptr))
 {
 	ITSMFAudioDevice** sptr = (ITSMFAudioDevice**)ptr;
 	WINPR_ASSERT(sptr);

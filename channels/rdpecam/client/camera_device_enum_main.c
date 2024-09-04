@@ -468,11 +468,14 @@ static UINT ecam_load_hal_plugin(CameraPlugin* ecam, const char* name, const ADD
 
 	FREERDP_CAMERA_HAL_ENTRY_POINTS entryPoints = { 0 };
 	UINT error = ERROR_INTERNAL_ERROR;
-	const PFREERDP_CAMERA_HAL_ENTRY entry =
-	    (const PFREERDP_CAMERA_HAL_ENTRY)freerdp_load_channel_addin_entry(RDPECAM_CHANNEL_NAME,
-	                                                                      name, NULL, 0);
+	union
+	{
+		PVIRTUALCHANNELENTRY pvce;
+		const PFREERDP_CAMERA_HAL_ENTRY entry;
+	} cnv;
+	cnv.pvce = freerdp_load_channel_addin_entry(RDPECAM_CHANNEL_NAME, name, NULL, 0);
 
-	if (entry == NULL)
+	if (cnv.entry == NULL)
 	{
 		WLog_ERR(TAG,
 		         "freerdp_load_channel_addin_entry did not return any function pointers for %s ",
@@ -485,7 +488,8 @@ static UINT ecam_load_hal_plugin(CameraPlugin* ecam, const char* name, const ADD
 	entryPoints.args = args;
 	entryPoints.ecam = ecam;
 
-	if ((error = entry(&entryPoints)))
+	error = cnv.entry(&entryPoints);
+	if (error)
 	{
 		WLog_ERR(TAG, "%s entry returned error %" PRIu32 ".", name, error);
 		return error;
@@ -500,7 +504,7 @@ static UINT ecam_load_hal_plugin(CameraPlugin* ecam, const char* name, const ADD
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-FREERDP_ENTRY_POINT(UINT rdpecam_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints))
+FREERDP_ENTRY_POINT(UINT VCAPITYPE rdpecam_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints))
 {
 	UINT error = CHANNEL_RC_INITIALIZATION_ERROR;
 

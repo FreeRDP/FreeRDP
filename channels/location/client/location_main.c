@@ -465,7 +465,7 @@ static const IWTSVirtualChannelCallback location_callbacks = { location_on_data_
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-FREERDP_ENTRY_POINT(UINT location_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints))
+FREERDP_ENTRY_POINT(UINT VCAPITYPE location_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints))
 {
 	return freerdp_generic_DVCPluginEntry(pEntryPoints, TAG, LOCATION_DVC_CHANNEL_NAME,
 	                                      sizeof(LOCATION_PLUGIN), sizeof(LOCATION_CALLBACK),

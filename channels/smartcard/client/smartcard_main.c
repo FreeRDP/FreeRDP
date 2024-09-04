@@ -625,8 +625,7 @@ static void smartcard_free_irp(void* obj)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-extern UINT DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints);
-UINT DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
+FREERDP_ENTRY_POINT(UINT VCAPITYPE DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints))
 {
 	SMARTCARD_DEVICE* smartcard = NULL;
 	size_t length = 0;

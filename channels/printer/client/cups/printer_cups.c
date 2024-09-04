@@ -366,7 +366,7 @@ static rdpPrinter** printer_cups_enum_printers(rdpPrinterDriver* driver)
 	if (!printers)
 		return NULL;
 
-	for (size_t i = 0; i < num_dests; i++)
+	for (size_t i = 0; i < (size_t)num_dests; i++)
 	{
 		const cups_dest_t* dest = &dests[i];
 		if (dest->instance == NULL)
@@ -432,7 +432,7 @@ static void printer_cups_release_ref_driver(rdpPrinterDriver* driver)
 		cups_driver->references--;
 }
 
-FREERDP_ENTRY_POINT(UINT cups_freerdp_printer_client_subsystem_entry(void* arg))
+FREERDP_ENTRY_POINT(UINT VCAPITYPE cups_freerdp_printer_client_subsystem_entry(void* arg))
 {
 	rdpPrinterDriver** ppPrinter = (rdpPrinterDriver**)arg;
 	if (!ppPrinter)

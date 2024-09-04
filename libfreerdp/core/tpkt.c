@@ -160,7 +160,7 @@ BOOL tpkt_ensure_stream_consumed_(wStream* s, size_t length, const char* fkt)
  * @return \b TRUE for success, \b FALSE otherwise
  */
 
-BOOL tpkt_write_header(wStream* s, UINT16 length)
+BOOL tpkt_write_header(wStream* s, size_t length)
 {
 	if (!Stream_CheckAndLogRequiredCapacity(TAG, (s), 4))
 		return FALSE;

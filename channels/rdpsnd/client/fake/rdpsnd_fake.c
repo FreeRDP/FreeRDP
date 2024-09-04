@@ -109,7 +109,7 @@ static UINT rdpsnd_fake_parse_addin_args(rdpsndFakePlugin* fake, const ADDIN_ARG
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-FREERDP_ENTRY_POINT(UINT fake_freerdp_rdpsnd_client_subsystem_entry(
+FREERDP_ENTRY_POINT(UINT VCAPITYPE fake_freerdp_rdpsnd_client_subsystem_entry(
     PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints))
 {
 	const ADDIN_ARGV* args = NULL;

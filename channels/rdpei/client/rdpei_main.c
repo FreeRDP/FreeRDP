@@ -1466,7 +1466,7 @@ static const IWTSVirtualChannelCallback geometry_callbacks = { rdpei_on_data_rec
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-FREERDP_ENTRY_POINT(UINT rdpei_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints))
+FREERDP_ENTRY_POINT(UINT VCAPITYPE rdpei_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints))
 {
 	return freerdp_generic_DVCPluginEntry(pEntryPoints, TAG, RDPEI_DVC_CHANNEL_NAME,
 	                                      sizeof(RDPEI_PLUGIN), sizeof(GENERIC_CHANNEL_CALLBACK),

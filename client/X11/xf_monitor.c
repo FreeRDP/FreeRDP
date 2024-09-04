@@ -186,15 +186,17 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 	if (XRRQueryExtension(xfc->display, &major, &minor) &&
 	    (XRRQueryVersion(xfc->display, &major, &minor) == True) && (major * 100 + minor >= 105))
 	{
-		rrmonitors =
-		    XRRGetMonitors(xfc->display, DefaultRootWindow(xfc->display), 1, &vscreen->nmonitors);
+		int nmonitors = 0;
+		rrmonitors = XRRGetMonitors(xfc->display, DefaultRootWindow(xfc->display), 1, &nmonitors);
 
-		if (vscreen->nmonitors > 16)
+		if ((nmonitors < 0) || (nmonitors > 16))
 			vscreen->nmonitors = 0;
+		else
+			vscreen->nmonitors = (UINT32)nmonitors;
 
 		if (vscreen->nmonitors)
 		{
-			for (int i = 0; i < vscreen->nmonitors; i++)
+			for (UINT32 i = 0; i < vscreen->nmonitors; i++)
 			{
 				MONITOR_INFO* cur_vscreen = &vscreen->monitors[i];
 				const XRRMonitorInfo* cur_monitor = &rrmonitors[i];
@@ -213,14 +215,17 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 #ifdef WITH_XINERAMA
 	    if (XineramaQueryExtension(xfc->display, &major, &minor) && XineramaIsActive(xfc->display))
 	{
-		XineramaScreenInfo* screenInfo = XineramaQueryScreens(xfc->display, &vscreen->nmonitors);
+		int nmonitors = 0;
+		XineramaScreenInfo* screenInfo = XineramaQueryScreens(xfc->display, &nmonitors);
 
-		if (vscreen->nmonitors > 16)
+		if ((nmonitors < 0) || (nmonitors > 16))
 			vscreen->nmonitors = 0;
+		else
+			vscreen->nmonitors = (UINT32)nmonitors;
 
 		if (vscreen->nmonitors)
 		{
-			for (int i = 0; i < vscreen->nmonitors; i++)
+			for (UINT32 i = 0; i < vscreen->nmonitors; i++)
 			{
 				MONITOR_INFO* monitor = &vscreen->monitors[i];
 				monitor->area.left = screenInfo[i].x_org;
@@ -240,7 +245,7 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 	/* Determine which monitor that the mouse cursor is on */
 	if (vscreen->monitors)
 	{
-		for (int i = 0; i < vscreen->nmonitors; i++)
+		for (UINT32 i = 0; i < vscreen->nmonitors; i++)
 		{
 			const MONITOR_INFO* monitor = &vscreen->monitors[i];
 

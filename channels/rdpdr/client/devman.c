@@ -185,8 +185,12 @@ static const char PARALLEL_SERVICE_NAME[] = "parallel";
 UINT devman_load_device_service(DEVMAN* devman, const RDPDR_DEVICE* device, rdpContext* rdpcontext)
 {
 	const char* ServiceName = NULL;
-	DEVICE_SERVICE_ENTRY_POINTS ep;
-	PDEVICE_SERVICE_ENTRY entry = NULL;
+	DEVICE_SERVICE_ENTRY_POINTS ep = { 0 };
+	union
+	{
+		PVIRTUALCHANNELENTRY pvce;
+		PDEVICE_SERVICE_ENTRY entry;
+	} cnv;
 	union
 	{
 		const RDPDR_DEVICE* cdp;
@@ -219,10 +223,9 @@ UINT devman_load_device_service(DEVMAN* devman, const RDPDR_DEVICE* device, rdpC
 	else
 		WLog_INFO(TAG, "Loading device service %s (static)", ServiceName);
 
-	entry = (PDEVICE_SERVICE_ENTRY)freerdp_load_channel_addin_entry(ServiceName, NULL,
-	                                                                "DeviceServiceEntry", 0);
+	cnv.pvce = freerdp_load_channel_addin_entry(ServiceName, NULL, "DeviceServiceEntry", 0);
 
-	if (!entry)
+	if (!cnv.entry)
 	{
 		WLog_INFO(TAG, "freerdp_load_channel_addin_entry failed!");
 		return ERROR_INTERNAL_ERROR;
@@ -232,5 +235,5 @@ UINT devman_load_device_service(DEVMAN* devman, const RDPDR_DEVICE* device, rdpC
 	ep.RegisterDevice = devman_register_device;
 	ep.device = devconv.dp;
 	ep.rdpcontext = rdpcontext;
-	return entry(&ep);
+	return cnv.entry(&ep);
 }

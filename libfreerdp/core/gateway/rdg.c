@@ -1925,7 +1925,7 @@ static BOOL rdg_process_control_packet(rdpRdg* rdg, int type, size_t packetLengt
 
 static int rdg_read_data_packet(rdpRdg* rdg, BYTE* buffer, int size)
 {
-	RdgPacketHeader header;
+	RdgPacketHeader header = { 0 };
 	size_t readCount = 0;
 	size_t readSize = 0;
 	int status = 0;

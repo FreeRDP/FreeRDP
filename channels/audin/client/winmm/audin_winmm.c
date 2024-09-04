@@ -29,6 +29,7 @@
 #include <mmsystem.h>
 
 #include <winpr/crt.h>
+#include <winpr/wtsapi.h>
 #include <winpr/cmdline.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/addin.h>
@@ -491,7 +492,7 @@ static UINT audin_winmm_parse_addin_args(AudinWinmmDevice* device, const ADDIN_A
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-FREERDP_ENTRY_POINT(UINT winmm_freerdp_audin_client_subsystem_entry(
+FREERDP_ENTRY_POINT(UINT VCAPITYPE winmm_freerdp_audin_client_subsystem_entry(
     PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEntryPoints))
 {
 	const ADDIN_ARGV* args;

@@ -1072,7 +1072,8 @@ static rdpPrinterDriver* printer_load_backend(const char* backend)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-FREERDP_ENTRY_POINT(UINT printer_DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints))
+FREERDP_ENTRY_POINT(
+    UINT VCAPITYPE printer_DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints))
 {
 	char* name = NULL;
 	char* driver_name = NULL;

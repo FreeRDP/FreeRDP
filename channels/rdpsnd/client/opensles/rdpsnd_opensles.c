@@ -332,7 +332,7 @@ static int rdpsnd_opensles_parse_addin_args(rdpsndDevicePlugin* device, ADDIN_AR
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-FREERDP_ENTRY_POINT(UINT opensles_freerdp_rdpsnd_client_subsystem_entry(
+FREERDP_ENTRY_POINT(UINT VCAPITYPE opensles_freerdp_rdpsnd_client_subsystem_entry(
     PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints))
 {
 	ADDIN_ARGV* args;

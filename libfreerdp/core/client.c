@@ -511,7 +511,7 @@ BOOL freerdp_channels_data(freerdp* instance, UINT16 channelId, const BYTE* cdat
 		return FALSE;
 	}
 
-	for (int index = 0; index < mcs->channelCount; index++)
+	for (UINT32 index = 0; index < mcs->channelCount; index++)
 	{
 		rdpMcsChannel* cur = &mcs->channels[index];
 

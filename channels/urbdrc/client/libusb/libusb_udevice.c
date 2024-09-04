@@ -864,7 +864,7 @@ static UINT32 libusb_udev_control_query_device_text(IUDEVICE* idev, UINT32 TextT
 				           msg, ret, devDescriptor->iProduct);
 
 				len = MIN(sizeof(strDesc), inSize);
-				for (ssize_t i = 0; i < len; i++)
+				for (size_t i = 0; i < len; i++)
 					text[i] = (WCHAR)strDesc[i];
 
 				*BufferSize = (BYTE)(len * 2);
@@ -899,7 +899,7 @@ static UINT32 libusb_udev_control_query_device_text(IUDEVICE* idev, UINT32 TextT
 
 			len = strnlen(deviceLocation,
 			              MIN(sizeof(deviceLocation), (inSize > 0) ? inSize - 1U : 0));
-			for (ssize_t i = 0; i < len; i++)
+			for (size_t i = 0; i < len; i++)
 				text[i] = (WCHAR)deviceLocation[i];
 			text[len++] = '\0';
 			*BufferSize = (UINT8)(len * sizeof(WCHAR));
