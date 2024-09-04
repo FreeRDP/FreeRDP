@@ -26,5 +26,9 @@
 #include <winpr/image.h>
 
 BOOL readBitmapFileHeader(wStream* s, WINPR_BITMAP_FILE_HEADER* bf);
+BOOL writeBitmapFileHeader(wStream* s, const WINPR_BITMAP_FILE_HEADER* bf);
+
+BOOL readBitmapInfoHeader(wStream* s, WINPR_BITMAP_INFO_HEADER* bi, size_t* poffset);
+BOOL writeBitmapInfoHeader(wStream* s, const WINPR_BITMAP_INFO_HEADER* bi);
 
 #endif /* LIBWINPR_UTILS_IMAGE_H */

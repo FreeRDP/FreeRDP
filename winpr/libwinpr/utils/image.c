@@ -60,7 +60,7 @@ static SSIZE_T winpr_convert_from_png(const BYTE* comp_data, size_t comp_data_by
 static SSIZE_T winpr_convert_from_webp(const BYTE* comp_data, size_t comp_data_bytes, UINT32* width,
                                        UINT32* height, UINT32* bpp, BYTE** ppdecomp_data);
 
-static BOOL writeBitmapFileHeader(wStream* s, const WINPR_BITMAP_FILE_HEADER* bf)
+BOOL writeBitmapFileHeader(wStream* s, const WINPR_BITMAP_FILE_HEADER* bf)
 {
 	if (!Stream_EnsureRemainingCapacity(s, sizeof(WINPR_BITMAP_FILE_HEADER)))
 		return FALSE;
@@ -108,7 +108,7 @@ BOOL readBitmapFileHeader(wStream* s, WINPR_BITMAP_FILE_HEADER* bf)
 	                                              bf->bfSize - sizeof(WINPR_BITMAP_FILE_HEADER));
 }
 
-static BOOL writeBitmapInfoHeader(wStream* s, const WINPR_BITMAP_INFO_HEADER* bi)
+BOOL writeBitmapInfoHeader(wStream* s, const WINPR_BITMAP_INFO_HEADER* bi)
 {
 	if (!Stream_EnsureRemainingCapacity(s, sizeof(WINPR_BITMAP_INFO_HEADER)))
 		return FALSE;
@@ -127,7 +127,7 @@ static BOOL writeBitmapInfoHeader(wStream* s, const WINPR_BITMAP_INFO_HEADER* bi
 	return TRUE;
 }
 
-static BOOL readBitmapInfoHeader(wStream* s, WINPR_BITMAP_INFO_HEADER* bi, size_t* poffset)
+BOOL readBitmapInfoHeader(wStream* s, WINPR_BITMAP_INFO_HEADER* bi, size_t* poffset)
 {
 	if (!s || !bi || (!Stream_CheckAndLogRequiredLength(TAG, s, sizeof(WINPR_BITMAP_INFO_HEADER))))
 		return FALSE;
