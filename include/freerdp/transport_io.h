@@ -32,6 +32,23 @@
 extern "C"
 {
 #endif
+	typedef int (*pTransportLayerRead)(void* userContext, void* data, int bytes);
+	typedef int (*pTransportLayerWrite)(void* userContext, const void* data, int bytes);
+	typedef BOOL (*pTransportLayerFkt)(void* userContext);
+	typedef BOOL (*pTransportLayerWait)(void* userContext, BOOL waitWrite, DWORD timeout);
+	typedef HANDLE (*pTransportLayerGetEvent)(void* userContext);
+
+	struct rdp_transport_layer
+	{
+		ALIGN64 void* userContext;
+		ALIGN64 pTransportLayerRead Read;
+		ALIGN64 pTransportLayerWrite Write;
+		ALIGN64 pTransportLayerFkt Close;
+		ALIGN64 pTransportLayerWait Wait;
+		ALIGN64 pTransportLayerGetEvent GetEvent;
+		UINT64 reserved[64 - 6]; /* Reserve some space for ABI compatibility */
+	};
+	typedef struct rdp_transport_layer rdpTransportLayer;
 
 	typedef int (*pTCPConnect)(rdpContext* context, rdpSettings* settings, const char* hostname,
 	                           int port, DWORD timeout);
@@ -42,6 +59,10 @@ extern "C"
 	typedef BOOL (*pTransportGetPublicKey)(rdpTransport* transport, const BYTE** data,
 	                                       DWORD* length);
 	typedef BOOL (*pTransportSetBlockingMode)(rdpTransport* transport, BOOL blocking);
+	typedef rdpTransportLayer* (*pTransportConnectLayer)(rdpTransport* transport,
+	                                                     const char* hostname, int port,
+	                                                     DWORD timeout);
+	typedef BOOL (*pTransportAttachLayer)(rdpTransport* transport, rdpTransportLayer* layer);
 
 	struct rdp_transport_io
 	{
@@ -52,10 +73,12 @@ extern "C"
 		pTransportFkt TransportDisconnect;
 		pTransportRWFkt ReadPdu;  /* Reads a whole PDU from the transport */
 		pTransportRWFkt WritePdu; /* Writes a whole PDU to the transport */
-		pTransportRead ReadBytes; /* Reads up to a requested amount of bytes from the transport */
+		pTransportRead ReadBytes; /* Reads up to a requested amount of bytes */
 		pTransportGetPublicKey GetPublicKey;
 		pTransportSetBlockingMode SetBlockingMode;
-		UINT64 reserved[54]; /* Reserve some space for ABI compatibility */
+		pTransportConnectLayer ConnectLayer;
+		pTransportAttachLayer AttachLayer;
+		UINT64 reserved[64 - 12]; /* Reserve some space for ABI compatibility */
 	};
 	typedef struct rdp_transport_io rdpTransportIo;
 
@@ -77,6 +100,9 @@ extern "C"
 	FREERDP_API SSIZE_T transport_parse_pdu(rdpTransport* transport, wStream* s, BOOL* incomplete);
 	FREERDP_API rdpContext* transport_get_context(rdpTransport* transport);
 	FREERDP_API rdpTransport* freerdp_get_transport(rdpContext* context);
+
+	FREERDP_API rdpTransportLayer* transport_layer_new(rdpTransport* transport, size_t contextSize);
+	FREERDP_API void transport_layer_free(rdpTransportLayer* layer);
 
 #ifdef __cplusplus
 }
