@@ -184,12 +184,12 @@ bool SdlWindow::blit(SDL_Surface* surface, const SDL_Rect& srcRect, SDL_Rect& ds
 		return true;
 	if (!SDL_SetSurfaceClipRect(screen, &dstRect))
 		return true;
-	auto rc = SDL_BlitSurfaceScaled(surface, &srcRect, screen, &dstRect, SDL_SCALEMODE_BEST);
-	if (rc != 0)
+	if (!SDL_BlitSurfaceScaled(surface, &srcRect, screen, &dstRect, SDL_SCALEMODE_LINEAR))
 	{
-		SDL_LogError(SDL_LOG_CATEGORY_RENDER, "SDL_BlitScaled: %s [%d]", sdl_error_string(rc), rc);
+		SDL_LogError(SDL_LOG_CATEGORY_RENDER, "SDL_BlitScaled: %s", SDL_GetError());
+		return false;
 	}
-	return rc == 0;
+	return true;
 }
 
 void SdlWindow::updateSurface()
