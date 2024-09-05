@@ -40,10 +40,12 @@ static BOOL CALLBACK init_module(PINIT_ONCE once, PVOID param, PVOID* context)
 	HMODULE kernel32 = LoadLibraryA("kernel32.dll");
 	if (kernel32)
 	{
-		pCreateThreadpool = (void*)GetProcAddress(kernel32, "CreateThreadpool");
-		pCloseThreadpool = (void*)GetProcAddress(kernel32, "CloseThreadpool");
-		pSetThreadpoolThreadMinimum = (void*)GetProcAddress(kernel32, "SetThreadpoolThreadMinimum");
-		pSetThreadpoolThreadMaximum = (void*)GetProcAddress(kernel32, "SetThreadpoolThreadMaximum");
+		pCreateThreadpool = GetProcAddressAs(kernel32, "CreateThreadpool", void*);
+		pCloseThreadpool = GetProcAddressAs(kernel32, "CloseThreadpool", void*);
+		pSetThreadpoolThreadMinimum =
+		    GetProcAddressAs(kernel32, "SetThreadpoolThreadMinimum", void*);
+		pSetThreadpoolThreadMaximum =
+		    GetProcAddressAs(kernel32, "SetThreadpoolThreadMaximum", void*);
 	}
 	return TRUE;
 }

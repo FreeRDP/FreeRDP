@@ -136,4 +136,31 @@ WINPR_API const char* winpr_get_build_config(void);
 
 #define WINPR_UNUSED(x) (void)(x)
 
+#if defined(__GNUC__) || defined(__clang__)
+#define WINPR_CAST_CONST_PTR_AWAY(ptr, dstType) \
+	({                                          \
+		union                                   \
+		{                                       \
+			typeof(ptr) src;                    \
+			dstType dst;                        \
+		} cnv;                                  \
+		cnv.src = ptr;                          \
+		cnv.dst;                                \
+	})
+
+#define WINPR_FUNC_PTR_CAST(ptr, dstType) \
+	({                                    \
+		union                             \
+		{                                 \
+			typeof(ptr) src;              \
+			dstType dst;                  \
+		} cnv;                            \
+		cnv.src = ptr;                    \
+		cnv.dst;                          \
+	})
+#else
+#define WINPR_CAST_CONST_PTR_AWAY(ptr, dstType) (dstType) ptr
+#define WINPR_FUNC_PTR_CAST(ptr, dstType) (dstType)(uintptr_t) ptr
+#endif
+
 #endif /* WINPR_H */

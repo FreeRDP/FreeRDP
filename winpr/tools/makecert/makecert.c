@@ -261,8 +261,9 @@ fallback:
 	return computerName;
 }
 
-static int command_line_pre_filter(MAKECERT_CONTEXT* context, int index, int argc, LPCSTR* argv)
+static int command_line_pre_filter(void* pvctx, int index, int argc, LPSTR* argv)
 {
+	MAKECERT_CONTEXT* context = pvctx;
 	if (!context || !argv || (index < 0) || (argc < 0))
 		return -1;
 
@@ -299,8 +300,7 @@ static int makecert_context_parse_arguments(MAKECERT_CONTEXT* context,
 	CommandLineClearArgumentsA(args);
 	flags = COMMAND_LINE_SEPARATOR_SPACE | COMMAND_LINE_SIGIL_DASH;
 	status =
-	    CommandLineParseArgumentsA(argc, argv, args, flags, context,
-	                               (COMMAND_LINE_PRE_FILTER_FN_A)command_line_pre_filter, NULL);
+	    CommandLineParseArgumentsA(argc, argv, args, flags, context, command_line_pre_filter, NULL);
 
 	if (status & COMMAND_LINE_STATUS_PRINT_HELP)
 	{

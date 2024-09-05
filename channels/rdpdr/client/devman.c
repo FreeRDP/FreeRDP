@@ -188,11 +188,6 @@ UINT devman_load_device_service(DEVMAN* devman, const RDPDR_DEVICE* device, rdpC
 	DEVICE_SERVICE_ENTRY_POINTS ep = { 0 };
 	union
 	{
-		PVIRTUALCHANNELENTRY pvce;
-		PDEVICE_SERVICE_ENTRY entry;
-	} cnv;
-	union
-	{
 		const RDPDR_DEVICE* cdp;
 		RDPDR_DEVICE* dp;
 	} devconv;
@@ -223,9 +218,11 @@ UINT devman_load_device_service(DEVMAN* devman, const RDPDR_DEVICE* device, rdpC
 	else
 		WLog_INFO(TAG, "Loading device service %s (static)", ServiceName);
 
-	cnv.pvce = freerdp_load_channel_addin_entry(ServiceName, NULL, "DeviceServiceEntry", 0);
+	PVIRTUALCHANNELENTRY pvce =
+	    freerdp_load_channel_addin_entry(ServiceName, NULL, "DeviceServiceEntry", 0);
+	PDEVICE_SERVICE_ENTRY entry = WINPR_FUNC_PTR_CAST(pvce, PDEVICE_SERVICE_ENTRY);
 
-	if (!cnv.entry)
+	if (!entry)
 	{
 		WLog_INFO(TAG, "freerdp_load_channel_addin_entry failed!");
 		return ERROR_INTERNAL_ERROR;
@@ -235,5 +232,5 @@ UINT devman_load_device_service(DEVMAN* devman, const RDPDR_DEVICE* device, rdpC
 	ep.RegisterDevice = devman_register_device;
 	ep.device = devconv.dp;
 	ep.rdpcontext = rdpcontext;
-	return cnv.entry(&ep);
+	return entry(&ep);
 }

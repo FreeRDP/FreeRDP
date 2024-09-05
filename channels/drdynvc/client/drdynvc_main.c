@@ -359,15 +359,11 @@ static UINT dvcman_load_addin(drdynvcPlugin* drdynvc, IWTSVirtualChannelManager*
 
 	WLog_Print(drdynvc->log, WLOG_INFO, "Loading Dynamic Virtual Channel %s", args->argv[0]);
 
-	union
-	{
-		PVIRTUALCHANNELENTRY pvce;
-		PDVC_PLUGIN_ENTRY pDVCPluginEntry;
-	} cnv;
-	cnv.pvce =
+	PVIRTUALCHANNELENTRY pvce =
 	    freerdp_load_channel_addin_entry(args->argv[0], NULL, NULL, FREERDP_ADDIN_CHANNEL_DYNAMIC);
+	PDVC_PLUGIN_ENTRY pDVCPluginEntry = WINPR_FUNC_PTR_CAST(pvce, PDVC_PLUGIN_ENTRY);
 
-	if (cnv.pDVCPluginEntry)
+	if (pDVCPluginEntry)
 	{
 		DVCMAN_ENTRY_POINTS entryPoints = { 0 };
 
@@ -379,7 +375,7 @@ static UINT dvcman_load_addin(drdynvcPlugin* drdynvc, IWTSVirtualChannelManager*
 		entryPoints.dvcman = (DVCMAN*)pChannelMgr;
 		entryPoints.args = args;
 		entryPoints.context = context;
-		return cnv.pDVCPluginEntry(&entryPoints.iface);
+		return pDVCPluginEntry(&entryPoints.iface);
 	}
 
 	return ERROR_INVALID_FUNCTION;

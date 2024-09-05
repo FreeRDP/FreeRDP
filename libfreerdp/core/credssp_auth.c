@@ -814,20 +814,16 @@ static SecurityFunctionTable* auth_resolve_sspi_table(const rdpSettings* setting
 
 		WLog_INFO(TAG, "Using SSPI Module: %s", module_name);
 
-		union
-		{
-			FARPROC fp;
-			INIT_SECURITY_INTERFACE InitSecurityInterface_ptr;
-		} cnv;
-		cnv.fp = GetProcAddress(hSSPI, proc_name);
-		if (!cnv.InitSecurityInterface_ptr)
+		INIT_SECURITY_INTERFACE InitSecurityInterface_ptr =
+		    GetProcAddressAs(hSSPI, proc_name, INIT_SECURITY_INTERFACE);
+		if (!InitSecurityInterface_ptr)
 		{
 			WLog_ERR(TAG, "Failed to load SSPI module: %s, no function %s", module_name, proc_name);
 			free(sspi_module);
 			return FALSE;
 		}
 		free(sspi_module);
-		return cnv.InitSecurityInterface_ptr();
+		return InitSecurityInterface_ptr();
 	}
 
 	return InitSecurityInterfaceEx(0);

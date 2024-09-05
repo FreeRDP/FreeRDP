@@ -237,13 +237,7 @@ PVIRTUALCHANNELENTRY freerdp_load_dynamic_addin(LPCSTR pszFileName, LPCSTR pszPa
 	if (!library)
 		goto fail;
 
-	union
-	{
-		FARPROC fp;
-		PVIRTUALCHANNELENTRY entry;
-	} cnv;
-	cnv.fp = GetProcAddress(library, pszEntryName);
-	entry = cnv.entry;
+	entry = GetProcAddressAs(library, pszEntryName, PVIRTUALCHANNELENTRY);
 fail:
 	free(pszRelativeFilePath);
 	free(pszAddinFile);

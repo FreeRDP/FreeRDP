@@ -1100,13 +1100,13 @@ WINSCARDAPI char* WINAPI SCardGetReaderStateString(DWORD dwReaderState)
 	return buffer;
 }
 
-#define WINSCARD_LOAD_PROC(_name, ...)                                                       \
-	do                                                                                       \
-	{                                                                                        \
-		WINPR_PRAGMA_DIAG_PUSH                                                               \
-		WINPR_PRAGMA_DIAG_IGNORED_PEDANTIC                                                   \
-		pWinSCardApiTable->pfn##_name = (fn##_name)GetProcAddress(hWinSCardLibrary, #_name); \
-		WINPR_PRAGMA_DIAG_POP                                                                \
+#define WINSCARD_LOAD_PROC(_name, ...)                                                         \
+	do                                                                                         \
+	{                                                                                          \
+		WINPR_PRAGMA_DIAG_PUSH                                                                 \
+		WINPR_PRAGMA_DIAG_IGNORED_PEDANTIC                                                     \
+		pWinSCardApiTable->pfn##_name = GetProcAddressAs(hWinSCardLibrary, #_name, fn##_name); \
+		WINPR_PRAGMA_DIAG_POP                                                                  \
 	} while (0)
 
 BOOL WinSCard_LoadApiTableFunctions(PSCardApiFunctionTable pWinSCardApiTable,

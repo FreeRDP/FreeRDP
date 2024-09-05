@@ -108,9 +108,9 @@ BOOL InitializeSspiModule_Native(void)
 		return FALSE;
 
 	pInitSecurityInterfaceW =
-	    (INIT_SECURITY_INTERFACE_W)GetProcAddress(g_SspiModule, "InitSecurityInterfaceW");
+	    GetProcAddressAs(g_SspiModule, "InitSecurityInterfaceW", INIT_SECURITY_INTERFACE_W);
 	pInitSecurityInterfaceA =
-	    (INIT_SECURITY_INTERFACE_A)GetProcAddress(g_SspiModule, "InitSecurityInterfaceA");
+	    GetProcAddressAs(g_SspiModule, "InitSecurityInterfaceA", INIT_SECURITY_INTERFACE_A);
 
 	if (pInitSecurityInterfaceW)
 	{
@@ -124,11 +124,11 @@ BOOL InitializeSspiModule_Native(void)
 
 			g_SspiW->dwVersion = SECURITY_SUPPORT_PROVIDER_INTERFACE_VERSION_3;
 
-			g_SspiW->SetContextAttributesW =
-			    (SET_CONTEXT_ATTRIBUTES_FN_W)GetProcAddress(g_SspiModule, "SetContextAttributesW");
+			g_SspiW->SetContextAttributesW = GetProcAddressAs(g_SspiModule, "SetContextAttributesW",
+			                                                  SET_CONTEXT_ATTRIBUTES_FN_W);
 
-			g_SspiW->SetCredentialsAttributesW = (SET_CREDENTIALS_ATTRIBUTES_FN_W)GetProcAddress(
-			    g_SspiModule, "SetCredentialsAttributesW");
+			g_SspiW->SetCredentialsAttributesW = GetProcAddressAs(
+			    g_SspiModule, "SetCredentialsAttributesW", SET_CREDENTIALS_ATTRIBUTES_FN_W);
 		}
 	}
 
@@ -144,11 +144,11 @@ BOOL InitializeSspiModule_Native(void)
 
 			g_SspiA->dwVersion = SECURITY_SUPPORT_PROVIDER_INTERFACE_VERSION_3;
 
-			g_SspiA->SetContextAttributesA =
-			    (SET_CONTEXT_ATTRIBUTES_FN_W)GetProcAddress(g_SspiModule, "SetContextAttributesA");
+			g_SspiA->SetContextAttributesA = GetProcAddressAs(g_SspiModule, "SetContextAttributesA",
+			                                                  SET_CONTEXT_ATTRIBUTES_FN_W);
 
-			g_SspiA->SetCredentialsAttributesA = (SET_CREDENTIALS_ATTRIBUTES_FN_W)GetProcAddress(
-			    g_SspiModule, "SetCredentialsAttributesA");
+			g_SspiA->SetCredentialsAttributesA = GetProcAddressAs(
+			    g_SspiModule, "SetCredentialsAttributesA", SET_CREDENTIALS_ATTRIBUTES_FN_W);
 		}
 	}
 

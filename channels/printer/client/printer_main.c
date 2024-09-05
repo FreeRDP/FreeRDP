@@ -1049,18 +1049,13 @@ error_out:
 static rdpPrinterDriver* printer_load_backend(const char* backend)
 {
 	typedef UINT (*backend_load_t)(rdpPrinterDriver**);
-	union
-	{
-		PVIRTUALCHANNELENTRY entry;
-		backend_load_t backend;
-	} fktconv;
-
-	fktconv.entry = freerdp_load_channel_addin_entry("printer", backend, NULL, 0);
-	if (!fktconv.entry)
+	PVIRTUALCHANNELENTRY entry = freerdp_load_channel_addin_entry("printer", backend, NULL, 0);
+	backend_load_t func = WINPR_FUNC_PTR_CAST(entry, backend_load_t);
+	if (!func)
 		return NULL;
 
 	rdpPrinterDriver* printer = NULL;
-	const UINT rc = fktconv.backend(&printer);
+	const UINT rc = func(&printer);
 	if (rc != CHANNEL_RC_OK)
 		return NULL;
 

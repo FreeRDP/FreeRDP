@@ -52,16 +52,9 @@ static void* freerdp_channels_find_static_entry_in_table(const STATIC_ENTRY_TABL
 
 	while (pEntry->entry != NULL)
 	{
+		static_entry_fn_t fkt = pEntry->entry;
 		if (strcmp(pEntry->name, identifier) == 0)
-		{
-			union
-			{
-				void* pv;
-				static_entry_fn_t entry;
-			} cnv;
-			cnv.entry = pEntry->entry;
-			return cnv.pv;
-		}
+			return WINPR_FUNC_PTR_CAST(fkt, void*);
 
 		pEntry = &table->table.cse[index++];
 	}
@@ -494,15 +487,15 @@ PVIRTUALCHANNELENTRY freerdp_channels_load_static_addin_entry(LPCSTR pszName, LP
 					     0) || /* we only want to know if strnlen is > 0 */
 					    (strncmp(subsystems->name, pszSubsystem, MAX_PATH) == 0))
 					{
+						static_subsystem_entry_fn_t fkt = subsystems->entry;
+
 						if (pszType)
 						{
 							if (strncmp(subsystems->type, pszType, MAX_PATH) == 0)
-								return (PVIRTUALCHANNELENTRY)subsystems->entry;
+								return WINPR_FUNC_PTR_CAST(fkt, PVIRTUALCHANNELENTRY);
 						}
 						else
-						{
-							return (PVIRTUALCHANNELENTRY)subsystems->entry;
-						}
+							return WINPR_FUNC_PTR_CAST(fkt, PVIRTUALCHANNELENTRY);
 					}
 				}
 			}

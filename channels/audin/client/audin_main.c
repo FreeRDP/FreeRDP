@@ -811,14 +811,10 @@ static UINT audin_load_device_plugin(AUDIN_PLUGIN* audin, const char* name, cons
 	FREERDP_AUDIN_DEVICE_ENTRY_POINTS entryPoints = { 0 };
 	UINT error = ERROR_INTERNAL_ERROR;
 
-	union
-	{
-		PVIRTUALCHANNELENTRY pvce;
-		PFREERDP_AUDIN_DEVICE_ENTRY entry;
-	} cnv;
-	cnv.pvce = freerdp_load_channel_addin_entry(AUDIN_CHANNEL_NAME, name, NULL, 0);
+	PVIRTUALCHANNELENTRY pvce = freerdp_load_channel_addin_entry(AUDIN_CHANNEL_NAME, name, NULL, 0);
+	PFREERDP_AUDIN_DEVICE_ENTRY entry = WINPR_FUNC_PTR_CAST(pvce, PFREERDP_AUDIN_DEVICE_ENTRY);
 
-	if (cnv.entry == NULL)
+	if (entry == NULL)
 	{
 		WLog_Print(audin->log, WLOG_ERROR,
 		           "freerdp_load_channel_addin_entry did not return any function pointers for %s ",
@@ -831,7 +827,7 @@ static UINT audin_load_device_plugin(AUDIN_PLUGIN* audin, const char* name, cons
 	entryPoints.args = args;
 	entryPoints.rdpcontext = audin->rdpcontext;
 
-	error = cnv.entry(&entryPoints);
+	error = entry(&entryPoints);
 	if (error)
 	{
 		WLog_Print(audin->log, WLOG_ERROR, "%s entry returned error %" PRIu32 ".", name, error);
