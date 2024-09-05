@@ -678,8 +678,8 @@ static int x11_shadow_blend_cursor(x11ShadowSubsystem* subsystem)
 
 	for (size_t y = 0; y < nHeight; y++)
 	{
-		const BYTE* pSrcPixel = &pSrcData[((nYSrc + y) * nSrcStep) + (nXSrc * 4)];
-		BYTE* pDstPixel = &pDstData[((nYDst + y) * nDstStep) + (nXDst * 4)];
+		const BYTE* pSrcPixel = &pSrcData[((nYSrc + y) * nSrcStep) + (4ULL * nXSrc)];
+		BYTE* pDstPixel = &pDstData[((nYDst + y) * nDstStep) + (4ULL * nXDst)];
 
 		for (size_t x = 0; x < nWidth; x++)
 		{

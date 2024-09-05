@@ -62,12 +62,12 @@ class DynChannelState
 {
 
   public:
-	bool skip() const
+	[[nodiscard]] bool skip() const
 	{
 		return _toSkip != 0;
 	}
 
-	bool skip(size_t s)
+	[[nodiscard]] bool skip(size_t s)
 	{
 		if (s > _toSkip)
 			_toSkip = 0;
@@ -76,12 +76,12 @@ class DynChannelState
 		return skip();
 	}
 
-	size_t remaining() const
+	[[nodiscard]] size_t remaining() const
 	{
 		return _toSkip;
 	}
 
-	size_t total() const
+	[[nodiscard]] size_t total() const
 	{
 		return _totalSkipSize;
 	}
@@ -91,7 +91,7 @@ class DynChannelState
 		_toSkip = _totalSkipSize = len;
 	}
 
-	bool drop() const
+	[[nodiscard]] bool drop() const
 	{
 		return _drop;
 	}
@@ -101,7 +101,7 @@ class DynChannelState
 		_drop = d;
 	}
 
-	uint32_t channelId() const
+	[[nodiscard]] uint32_t channelId() const
 	{
 		return _channelId;
 	}

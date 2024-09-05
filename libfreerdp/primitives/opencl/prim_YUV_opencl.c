@@ -484,11 +484,9 @@ static pstatus_t opencl_YUV444ToRGB_8u_P3AC4R(const BYTE* const WINPR_RESTRICT p
 
 	return opencl_YUVToRGB(kernel_name, pSrc, srcStep, pDst, dstStep, roi);
 }
-#endif
 
 BOOL primitives_init_opencl(primitives_t* prims)
 {
-#if defined(WITH_OPENCL)
 	primitives_t* p = primitives_get_by_type(PRIMITIVES_ONLY_CPU);
 	if (!prims || !p)
 		return FALSE;
@@ -501,6 +499,6 @@ BOOL primitives_init_opencl(primitives_t* prims)
 	prims->YUV444ToRGB_8u_P3AC4R = opencl_YUV444ToRGB_8u_P3AC4R;
 	prims->flags |= PRIM_FLAGS_HAVE_EXTGPU;
 	prims->uninit = primitives_uninit_opencl;
-#endif
 	return TRUE;
 }
+#endif
