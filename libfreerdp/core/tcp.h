@@ -27,6 +27,7 @@
 #include <freerdp/settings.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/api.h>
+#include <freerdp/transport_io.h>
 
 #include <winpr/crt.h>
 #include <winpr/synch.h>
@@ -101,6 +102,9 @@ FREERDP_LOCAL int freerdp_tcp_connect(rdpContext* context, const char* hostname,
 
 FREERDP_LOCAL int freerdp_tcp_default_connect(rdpContext* context, rdpSettings* settings,
                                               const char* hostname, int port, DWORD timeout);
+
+FREERDP_LOCAL rdpTransportLayer*
+freerdp_tcp_connect_layer(rdpContext* context, const char* hostname, int port, DWORD timeout);
 
 FREERDP_LOCAL char* freerdp_tcp_get_peer_address(SOCKET sockfd);
 

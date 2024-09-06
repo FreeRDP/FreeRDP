@@ -1336,3 +1336,200 @@ int freerdp_tcp_default_connect(rdpContext* context, rdpSettings* settings, cons
 
 	return sockfd;
 }
+
+struct rdp_tcp_layer
+{
+	int sockfd;
+	HANDLE hEvent;
+};
+typedef struct rdp_tcp_layer rdpTcpLayer;
+
+static int freerdp_tcp_layer_read(void* userContext, void* data, int bytes)
+{
+	if (!userContext)
+		return -1;
+	if (!data || !bytes)
+		return 0;
+
+	rdpTcpLayer* tcpLayer = (rdpTcpLayer*)userContext;
+
+	int error = 0;
+	int status = 0;
+
+	WSAResetEvent(tcpLayer->hEvent);
+	status = _recv(tcpLayer->sockfd, data, bytes, 0);
+
+	if (status > 0)
+		return status;
+
+	if (status == 0)
+		return -1; /* socket closed */
+
+	error = WSAGetLastError();
+
+	if ((error == WSAEWOULDBLOCK) || (error == WSAEINTR) || (error == WSAEINPROGRESS) ||
+	    (error == WSAEALREADY))
+	{
+		status = 0;
+	}
+	else
+	{
+		status = -1;
+	}
+
+	return status;
+}
+
+static int freerdp_tcp_layer_write(void* userContext, const void* data, int bytes)
+{
+	if (!userContext)
+		return -1;
+	if (!data || !bytes)
+		return 0;
+
+	rdpTcpLayer* tcpLayer = (rdpTcpLayer*)userContext;
+
+	int error = 0;
+	int status = 0;
+
+	status = _send(tcpLayer->sockfd, data, bytes, 0);
+
+	if (status <= 0)
+	{
+		error = WSAGetLastError();
+
+		if ((error == WSAEWOULDBLOCK) || (error == WSAEINTR) || (error == WSAEINPROGRESS) ||
+		    (error == WSAEALREADY))
+		{
+			status = 0;
+		}
+		else
+		{
+			status = -1;
+		}
+	}
+
+	return status;
+}
+
+static BOOL freerdp_tcp_layer_close(void* userContext)
+{
+	if (!userContext)
+		return FALSE;
+
+	rdpTcpLayer* tcpLayer = (rdpTcpLayer*)userContext;
+
+	if (tcpLayer->sockfd >= 0)
+		closesocket(tcpLayer->sockfd);
+	if (tcpLayer->hEvent)
+		CloseHandle(tcpLayer->hEvent);
+
+	return TRUE;
+}
+
+static BOOL freerdp_tcp_layer_wait(void* userContext, BOOL waitWrite, DWORD timeout)
+{
+	if (!userContext)
+		return FALSE;
+
+	rdpTcpLayer* tcpLayer = (rdpTcpLayer*)userContext;
+
+	int status = -1;
+	int sockfd = tcpLayer->sockfd;
+#ifdef WINPR_HAVE_POLL_H
+	struct pollfd pollset = { 0 };
+	pollset.fd = sockfd;
+	pollset.events = waitWrite ? POLLOUT : POLLIN;
+
+	do
+	{
+		status = poll(&pollset, 1, (int)timeout);
+	} while ((status < 0) && (errno == EINTR));
+
+#else
+	fd_set rset;
+	struct timeval tv;
+	FD_ZERO(&rset);
+	FD_SET(sockfd, &rset);
+
+	if (timeout)
+	{
+		tv.tv_sec = timeout / 1000;
+		tv.tv_usec = (timeout % 1000) * 1000;
+	}
+
+	do
+	{
+		if (waitWrite)
+			status = select(sockfd + 1, NULL, &rset, NULL, timeout ? &tv : NULL);
+		else
+			status = select(sockfd + 1, &rset, NULL, NULL, timeout ? &tv : NULL);
+	} while ((status < 0) && (errno == EINTR));
+
+#endif
+
+	return status != 0;
+}
+
+static HANDLE freerdp_tcp_layer_get_event(void* userContext)
+{
+	if (!userContext)
+		return NULL;
+
+	rdpTcpLayer* tcpLayer = (rdpTcpLayer*)userContext;
+
+	return tcpLayer->hEvent;
+}
+
+rdpTransportLayer* freerdp_tcp_connect_layer(rdpContext* context, const char* hostname, int port,
+                                             DWORD timeout)
+{
+	WINPR_ASSERT(context);
+
+	const rdpSettings* settings = context->settings;
+	WINPR_ASSERT(settings);
+
+	rdpTransportLayer* layer = NULL;
+	rdpTcpLayer* tcpLayer = NULL;
+
+	int sockfd = freerdp_tcp_connect(context, hostname, port, timeout);
+	if (sockfd < 0)
+		goto fail;
+	if (!freerdp_tcp_set_keep_alive_mode(settings, sockfd))
+		goto fail;
+
+	layer = transport_layer_new(freerdp_get_transport(context), sizeof(rdpTcpLayer));
+	if (!layer)
+		goto fail;
+
+	layer->Read = freerdp_tcp_layer_read;
+	layer->Write = freerdp_tcp_layer_write;
+	layer->Close = freerdp_tcp_layer_close;
+	layer->Wait = freerdp_tcp_layer_wait;
+	layer->GetEvent = freerdp_tcp_layer_get_event;
+
+	tcpLayer = (rdpTcpLayer*)layer->userContext;
+	WINPR_ASSERT(tcpLayer);
+
+	tcpLayer->sockfd = -1;
+	tcpLayer->hEvent = WSACreateEvent();
+	if (!tcpLayer->hEvent)
+		goto fail;
+
+	/* WSAEventSelect automatically sets the socket in non-blocking mode */
+	if (WSAEventSelect(sockfd, tcpLayer->hEvent, FD_READ | FD_ACCEPT | FD_CLOSE))
+	{
+		WLog_ERR(TAG, "WSAEventSelect returned 0x%08X", WSAGetLastError());
+		goto fail;
+	}
+
+	tcpLayer->sockfd = sockfd;
+
+	return layer;
+
+fail:
+	if (sockfd >= 0)
+		closesocket(sockfd);
+	transport_layer_free(layer);
+	return NULL;
+}
