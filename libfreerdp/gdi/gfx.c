@@ -922,21 +922,21 @@ static void dump_cmd(const RDPGFX_SURFACE_COMMAND* cmd, UINT32 frameId)
 	FILE* fp = fopen(fname, "w");
 	if (!fp)
 		return;
-	fprintf(fp, "frameid: %" PRIu32 "\n", frameId);
-	fprintf(fp, "surfaceId: %" PRIu32 "\n", cmd->surfaceId);
-	fprintf(fp, "codecId: %" PRIu32 "\n", cmd->codecId);
-	fprintf(fp, "contextId: %" PRIu32 "\n", cmd->contextId);
-	fprintf(fp, "format: %" PRIu32 "\n", cmd->format);
-	fprintf(fp, "left: %" PRIu32 "\n", cmd->left);
-	fprintf(fp, "top: %" PRIu32 "\n", cmd->top);
-	fprintf(fp, "right: %" PRIu32 "\n", cmd->right);
-	fprintf(fp, "bottom: %" PRIu32 "\n", cmd->bottom);
-	fprintf(fp, "width: %" PRIu32 "\n", cmd->width);
-	fprintf(fp, "height: %" PRIu32 "\n", cmd->height);
-	fprintf(fp, "length: %" PRIu32 "\n", cmd->length);
+	(void)fprintf(fp, "frameid: %" PRIu32 "\n", frameId);
+	(void)fprintf(fp, "surfaceId: %" PRIu32 "\n", cmd->surfaceId);
+	(void)fprintf(fp, "codecId: %" PRIu32 "\n", cmd->codecId);
+	(void)fprintf(fp, "contextId: %" PRIu32 "\n", cmd->contextId);
+	(void)fprintf(fp, "format: %" PRIu32 "\n", cmd->format);
+	(void)fprintf(fp, "left: %" PRIu32 "\n", cmd->left);
+	(void)fprintf(fp, "top: %" PRIu32 "\n", cmd->top);
+	(void)fprintf(fp, "right: %" PRIu32 "\n", cmd->right);
+	(void)fprintf(fp, "bottom: %" PRIu32 "\n", cmd->bottom);
+	(void)fprintf(fp, "width: %" PRIu32 "\n", cmd->width);
+	(void)fprintf(fp, "height: %" PRIu32 "\n", cmd->height);
+	(void)fprintf(fp, "length: %" PRIu32 "\n", cmd->length);
 
 	char* bdata = crypto_base64_encode_ex(cmd->data, cmd->length, FALSE);
-	fprintf(fp, "data: %s\n", bdata);
+	(void)fprintf(fp, "data: %s\n", bdata);
 	free(bdata);
 	fclose(fp);
 }
