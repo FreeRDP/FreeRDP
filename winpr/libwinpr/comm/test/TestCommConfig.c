@@ -39,22 +39,22 @@ int TestCommConfig(int argc, char* argv[])
 
 	if (hComm && (hComm != INVALID_HANDLE_VALUE))
 	{
-		fprintf(stderr,
-		        "CreateFileA failure: could create a handle on a not yet defined device: %s\n",
-		        lpFileName);
+		(void)fprintf(
+		    stderr, "CreateFileA failure: could create a handle on a not yet defined device: %s\n",
+		    lpFileName);
 		return EXIT_FAILURE;
 	}
 
 	if (stat("/dev/ttyS0", &statbuf) < 0)
 	{
-		fprintf(stderr, "/dev/ttyS0 not available, making the test to succeed though\n");
+		(void)fprintf(stderr, "/dev/ttyS0 not available, making the test to succeed though\n");
 		return EXIT_SUCCESS;
 	}
 
 	success = DefineCommDevice(lpFileName, "/dev/ttyS0");
 	if (!success)
 	{
-		fprintf(stderr, "DefineCommDevice failure: %s\n", lpFileName);
+		(void)fprintf(stderr, "DefineCommDevice failure: %s\n", lpFileName);
 		return EXIT_FAILURE;
 	}
 
@@ -64,9 +64,9 @@ int TestCommConfig(int argc, char* argv[])
 	                    0, (HANDLE)1234); /* invalid parmaeter */
 	if (hComm != INVALID_HANDLE_VALUE)
 	{
-		fprintf(stderr,
-		        "CreateFileA failure: could create a handle with some invalid parameters %s\n",
-		        lpFileName);
+		(void)fprintf(
+		    stderr, "CreateFileA failure: could create a handle with some invalid parameters %s\n",
+		    lpFileName);
 		return EXIT_FAILURE;
 	}
 
@@ -74,8 +74,8 @@ int TestCommConfig(int argc, char* argv[])
 
 	if (!hComm || (hComm == INVALID_HANDLE_VALUE))
 	{
-		fprintf(stderr, "CreateFileA failure: %s GetLastError() = 0x%08x\n", lpFileName,
-		        GetLastError());
+		(void)fprintf(stderr, "CreateFileA failure: %s GetLastError() = 0x%08x\n", lpFileName,
+		              GetLastError());
 		return EXIT_FAILURE;
 	}
 
@@ -86,29 +86,31 @@ int TestCommConfig(int argc, char* argv[])
 	success = GetCommState(hComm, &dcb);
 	if (!success)
 	{
-		fprintf(stderr, "GetCommState failure: GetLastError() = Ox%x\n", GetLastError());
+		(void)fprintf(stderr, "GetCommState failure: GetLastError() = Ox%x\n", GetLastError());
 		return EXIT_FAILURE;
 	}
 
-	fprintf(stderr,
-	        "BaudRate: %" PRIu32 " ByteSize: %" PRIu8 " Parity: %" PRIu8 " StopBits: %" PRIu8 "\n",
-	        dcb.BaudRate, dcb.ByteSize, dcb.Parity, dcb.StopBits);
+	(void)fprintf(stderr,
+	              "BaudRate: %" PRIu32 " ByteSize: %" PRIu8 " Parity: %" PRIu8 " StopBits: %" PRIu8
+	              "\n",
+	              dcb.BaudRate, dcb.ByteSize, dcb.Parity, dcb.StopBits);
 
 	if (!GetCommProperties(hComm, &commProp))
 	{
-		fprintf(stderr, "GetCommProperties failure: GetLastError(): 0x%08x\n", GetLastError());
+		(void)fprintf(stderr, "GetCommProperties failure: GetLastError(): 0x%08x\n",
+		              GetLastError());
 		return EXIT_FAILURE;
 	}
 
 	if ((commProp.dwSettableBaud & BAUD_57600) <= 0)
 	{
-		fprintf(stderr, "BAUD_57600 unsupported!\n");
+		(void)fprintf(stderr, "BAUD_57600 unsupported!\n");
 		return EXIT_FAILURE;
 	}
 
 	if ((commProp.dwSettableBaud & BAUD_14400) > 0)
 	{
-		fprintf(stderr, "BAUD_14400 supported!\n");
+		(void)fprintf(stderr, "BAUD_14400 supported!\n");
 		return EXIT_FAILURE;
 	}
 
@@ -121,7 +123,7 @@ int TestCommConfig(int argc, char* argv[])
 
 	if (!success)
 	{
-		fprintf(stderr, "SetCommState failure: GetLastError() = 0x%x\n", GetLastError());
+		(void)fprintf(stderr, "SetCommState failure: GetLastError() = 0x%x\n", GetLastError());
 		return EXIT_FAILURE;
 	}
 
@@ -129,17 +131,17 @@ int TestCommConfig(int argc, char* argv[])
 
 	if (!success)
 	{
-		fprintf(stderr, "GetCommState failure: GetLastError() = 0x%x\n", GetLastError());
+		(void)fprintf(stderr, "GetCommState failure: GetLastError() = 0x%x\n", GetLastError());
 		return 0;
 	}
 
 	if ((dcb.BaudRate != CBR_57600) || (dcb.ByteSize != 8) || (dcb.Parity != NOPARITY) ||
 	    (dcb.StopBits != ONESTOPBIT))
 	{
-		fprintf(stderr,
-		        "Got an unexpeted value among: BaudRate: %" PRIu32 " ByteSize: %" PRIu8
-		        " Parity: %" PRIu8 " StopBits: %" PRIu8 "\n",
-		        dcb.BaudRate, dcb.ByteSize, dcb.Parity, dcb.StopBits);
+		(void)fprintf(stderr,
+		              "Got an unexpeted value among: BaudRate: %" PRIu32 " ByteSize: %" PRIu8
+		              " Parity: %" PRIu8 " StopBits: %" PRIu8 "\n",
+		              dcb.BaudRate, dcb.ByteSize, dcb.Parity, dcb.StopBits);
 	}
 
 	CloseHandle(hComm);

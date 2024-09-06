@@ -35,21 +35,21 @@ int TestControlSettings(int argc, char* argv[])
 
 	if (stat("/dev/ttyS0", &statbuf) < 0)
 	{
-		fprintf(stderr, "/dev/ttyS0 not available, making the test to succeed though\n");
+		(void)fprintf(stderr, "/dev/ttyS0 not available, making the test to succeed though\n");
 		return EXIT_SUCCESS;
 	}
 
 	result = DefineCommDevice("COM1", "/dev/ttyS0");
 	if (!result)
 	{
-		fprintf(stderr, "DefineCommDevice failure: 0x%x\n", GetLastError());
+		(void)fprintf(stderr, "DefineCommDevice failure: 0x%x\n", GetLastError());
 		return EXIT_FAILURE;
 	}
 
 	hComm = CreateFile("COM1", GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
 	if (hComm == INVALID_HANDLE_VALUE)
 	{
-		fprintf(stderr, "CreateFileA failure: 0x%x\n", GetLastError());
+		(void)fprintf(stderr, "CreateFileA failure: 0x%x\n", GetLastError());
 		return EXIT_FAILURE;
 	}
 
@@ -57,7 +57,7 @@ int TestControlSettings(int argc, char* argv[])
 	dcb.DCBlength = sizeof(DCB);
 	if (!GetCommState(hComm, &dcb))
 	{
-		fprintf(stderr, "GetCommState failure; GetLastError(): %08x\n", GetLastError());
+		(void)fprintf(stderr, "GetCommState failure; GetLastError(): %08x\n", GetLastError());
 		return FALSE;
 	}
 
@@ -69,7 +69,7 @@ int TestControlSettings(int argc, char* argv[])
 
 	if (!SetCommState(hComm, &dcb))
 	{
-		fprintf(stderr, "SetCommState failure; GetLastError(): %08x\n", GetLastError());
+		(void)fprintf(stderr, "SetCommState failure; GetLastError(): %08x\n", GetLastError());
 		return FALSE;
 	}
 
@@ -77,13 +77,13 @@ int TestControlSettings(int argc, char* argv[])
 	dcb.DCBlength = sizeof(DCB);
 	if (!GetCommState(hComm, &dcb))
 	{
-		fprintf(stderr, "GetCommState failure; GetLastError(): %08x\n", GetLastError());
+		(void)fprintf(stderr, "GetCommState failure; GetLastError(): %08x\n", GetLastError());
 		return FALSE;
 	}
 
 	if ((dcb.ByteSize != 5) || (dcb.StopBits != ONESTOPBIT) || (dcb.Parity != MARKPARITY))
 	{
-		fprintf(stderr, "test1 failed.\n");
+		(void)fprintf(stderr, "test1 failed.\n");
 		return FALSE;
 	}
 
@@ -95,7 +95,7 @@ int TestControlSettings(int argc, char* argv[])
 
 	if (!SetCommState(hComm, &dcb))
 	{
-		fprintf(stderr, "SetCommState failure; GetLastError(): %08x\n", GetLastError());
+		(void)fprintf(stderr, "SetCommState failure; GetLastError(): %08x\n", GetLastError());
 		return FALSE;
 	}
 
@@ -103,19 +103,19 @@ int TestControlSettings(int argc, char* argv[])
 	dcb.DCBlength = sizeof(DCB);
 	if (!GetCommState(hComm, &dcb))
 	{
-		fprintf(stderr, "GetCommState failure; GetLastError(): %08x\n", GetLastError());
+		(void)fprintf(stderr, "GetCommState failure; GetLastError(): %08x\n", GetLastError());
 		return FALSE;
 	}
 
 	if ((dcb.ByteSize != 8) || (dcb.StopBits != ONESTOPBIT) || (dcb.Parity != NOPARITY))
 	{
-		fprintf(stderr, "test2 failed.\n");
+		(void)fprintf(stderr, "test2 failed.\n");
 		return FALSE;
 	}
 
 	if (!CloseHandle(hComm))
 	{
-		fprintf(stderr, "CloseHandle failure, GetLastError()=%08x\n", GetLastError());
+		(void)fprintf(stderr, "CloseHandle failure, GetLastError()=%08x\n", GetLastError());
 		return EXIT_FAILURE;
 	}
 

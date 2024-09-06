@@ -375,7 +375,7 @@ static int mf_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT32 SrcSiz
 	inputSample->lpVtbl->Release(inputSample);
 	return 1;
 error:
-	fprintf(stderr, "mf_decompress error\n");
+	(void)fprintf(stderr, "mf_decompress error\n");
 	return -1;
 }
 

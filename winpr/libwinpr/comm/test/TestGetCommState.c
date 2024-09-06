@@ -83,7 +83,7 @@ int TestGetCommState(int argc, char* argv[])
 
 	if (stat("/dev/ttyS0", &statbuf) < 0)
 	{
-		fprintf(stderr, "/dev/ttyS0 not available, making the test to succeed though\n");
+		(void)fprintf(stderr, "/dev/ttyS0 not available, making the test to succeed though\n");
 		return EXIT_SUCCESS;
 	}
 
@@ -131,7 +131,7 @@ int TestGetCommState(int argc, char* argv[])
 
 	if (!CloseHandle(hComm))
 	{
-		fprintf(stderr, "CloseHandle failure, GetLastError()=%08x\n", GetLastError());
+		(void)fprintf(stderr, "CloseHandle failure, GetLastError()=%08x\n", GetLastError());
 		return EXIT_FAILURE;
 	}
 
