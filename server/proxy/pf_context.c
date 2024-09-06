@@ -207,7 +207,7 @@ void client_to_proxy_context_free(freerdp_peer* client, rdpContext* ctx)
 	HashTable_Free(context->channelsByBackId);
 
 	if (context->vcm && (context->vcm != INVALID_HANDLE_VALUE))
-		WTSCloseServer((HANDLE)context->vcm);
+		WTSCloseServer(context->vcm);
 	context->vcm = NULL;
 }
 

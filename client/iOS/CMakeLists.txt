@@ -43,14 +43,14 @@ set(IOS_CLIENT_MODELS_DIR ${IOS_CLIENT_DIR}/Models)
 set(IOS_CLIENT_VIEWS_DIR ${IOS_CLIENT_DIR}/Views)
 set(IOS_CLIENT_RESOURCES_DIR ${IOS_CLIENT_DIR}/Resources)
 
-include_directories(${IOS_CLIENT_DIR})
-include_directories(${IOS_CLIENT_ADDITIONS_DIR})
-include_directories(${IOS_CLIENT_CONTROLLERS_DIR})
-include_directories(${IOS_CLIENT_FREERDP_DIR})
-include_directories(${IOS_CLIENT_MISC_DIR})
-include_directories(${IOS_CLIENT_MODELS_DIR})
-include_directories(${IOS_CLIENT_VIEWS_DIR})
-include_directories(${OPENSSL_INCLUDE_DIR})
+include_directories(SYSTEM ${IOS_CLIENT_DIR})
+include_directories(SYSTEM ${IOS_CLIENT_ADDITIONS_DIR})
+include_directories(SYSTEM ${IOS_CLIENT_CONTROLLERS_DIR})
+include_directories(SYSTEM ${IOS_CLIENT_FREERDP_DIR})
+include_directories(SYSTEM ${IOS_CLIENT_MISC_DIR})
+include_directories(SYSTEM ${IOS_CLIENT_MODELS_DIR})
+include_directories(SYSTEM ${IOS_CLIENT_VIEWS_DIR})
+include_directories(SYSTEM ${OPENSSL_INCLUDE_DIR})
 
 # Add sources
 set(${MODULE_PREFIX}_SRCS

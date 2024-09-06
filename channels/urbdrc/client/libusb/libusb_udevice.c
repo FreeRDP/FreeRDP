@@ -57,7 +57,7 @@
 
 #define BASIC_STATE_FUNC_REGISTER(_arg, _dev) \
 	_dev->iface.get_##_arg = udev_get_##_arg; \
-	_dev->iface.set_##_arg = udev_set_##_arg
+	(_dev)->iface.set_##_arg = udev_set_##_arg
 
 #if LIBUSB_API_VERSION >= 0x01000103
 #define HAVE_STREAM_ID_API 1
@@ -141,7 +141,7 @@ static BOOL log_libusb_result_(wLog* log, DWORD lvl, WINPR_FORMAT_ARG const char
 		char buffer[8192] = { 0 };
 		va_list ap;
 		va_start(ap, error);
-		vsnprintf(buffer, sizeof(buffer), fmt, ap);
+		(void)vsnprintf(buffer, sizeof(buffer), fmt, ap);
 		va_end(ap);
 
 		WLog_Print(log, lvl, "[%s:%" PRIuz "]: %s: error %s[%d]", fkt, line, buffer,
@@ -864,7 +864,7 @@ static UINT32 libusb_udev_control_query_device_text(IUDEVICE* idev, UINT32 TextT
 				           msg, ret, devDescriptor->iProduct);
 
 				len = MIN(sizeof(strDesc), inSize);
-				for (ssize_t i = 0; i < len; i++)
+				for (size_t i = 0; i < len; i++)
 					text[i] = (WCHAR)strDesc[i];
 
 				*BufferSize = (BYTE)(len * 2);
@@ -894,12 +894,12 @@ static UINT32 libusb_udev_control_query_device_text(IUDEVICE* idev, UINT32 TextT
 		case DeviceTextLocationInformation:
 			bus_number = libusb_get_bus_number(pdev->libusb_dev);
 			device_address = libusb_get_device_address(pdev->libusb_dev);
-			sprintf_s(deviceLocation, sizeof(deviceLocation),
-			          "Port_#%04" PRIu8 ".Hub_#%04" PRIu8 "", device_address, bus_number);
+			(void)sprintf_s(deviceLocation, sizeof(deviceLocation),
+			                "Port_#%04" PRIu8 ".Hub_#%04" PRIu8 "", device_address, bus_number);
 
 			len = strnlen(deviceLocation,
 			              MIN(sizeof(deviceLocation), (inSize > 0) ? inSize - 1U : 0));
-			for (ssize_t i = 0; i < len; i++)
+			for (size_t i = 0; i < len; i++)
 				text[i] = (WCHAR)deviceLocation[i];
 			text[len++] = '\0';
 			*BufferSize = (UINT8)(len * sizeof(WCHAR));
@@ -1213,7 +1213,7 @@ static int libusb_udev_isoch_transfer(IUDEVICE* idev, GENERIC_CHANNEL_CALLBACK* 
 	ASYNC_TRANSFER_USER_DATA* user_data = NULL;
 	struct libusb_transfer* iso_transfer = NULL;
 	URBDRC_PLUGIN* urbdrc = NULL;
-	size_t outSize = (NumberOfPackets * 12);
+	size_t outSize = (12ULL * NumberOfPackets);
 	uint32_t streamID = 0x40000000 | RequestId;
 
 	if (!pdev || !pdev->urbdrc)
@@ -1230,7 +1230,7 @@ static int libusb_udev_isoch_transfer(IUDEVICE* idev, GENERIC_CHANNEL_CALLBACK* 
 	user_data->StartFrame = StartFrame;
 
 	if (!Buffer)
-		Stream_Seek(user_data->data, (NumberOfPackets * 12));
+		Stream_Seek(user_data->data, (12ULL * NumberOfPackets));
 
 	if (NumberOfPackets > 0)
 	{
@@ -1446,7 +1446,7 @@ static int libusb_udev_cancel_transfer_request(IUDEVICE* idev, UINT32 RequestId)
 
 	if (transfer)
 	{
-		URBDRC_PLUGIN* urbdrc = (URBDRC_PLUGIN*)pdev->urbdrc;
+		URBDRC_PLUGIN* urbdrc = pdev->urbdrc;
 
 		rc = func_cancel_xact_request(urbdrc, transfer);
 	}
@@ -1608,7 +1608,7 @@ static int udev_get_device_handle(URBDRC_PLUGIN* urbdrc, libusb_context* ctx, UD
 			error = 0;
 			WLog_Print(urbdrc->log, WLOG_DEBUG, "  Port: %d", pdev->port_number);
 			/* gen device path */
-			sprintf(pdev->path, "%" PRIu16 "-%d", bus_number, pdev->port_number);
+			(void)sprintf(pdev->path, "%" PRIu16 "-%d", bus_number, pdev->port_number);
 
 			WLog_Print(urbdrc->log, WLOG_DEBUG, "  DevPath: %s", pdev->path);
 		}

@@ -796,7 +796,6 @@ static SecurityFunctionTable* auth_resolve_sspi_table(const rdpSettings* setting
 
 	if (sspi_module || settings->SspiModule)
 	{
-		INIT_SECURITY_INTERFACE InitSecurityInterface_ptr = NULL;
 		const char* module_name = sspi_module ? sspi_module : settings->SspiModule;
 #ifdef UNICODE
 		const char* proc_name = "InitSecurityInterfaceW";
@@ -815,8 +814,14 @@ static SecurityFunctionTable* auth_resolve_sspi_table(const rdpSettings* setting
 
 		WLog_INFO(TAG, "Using SSPI Module: %s", module_name);
 
-		InitSecurityInterface_ptr = (INIT_SECURITY_INTERFACE)GetProcAddress(hSSPI, proc_name);
-
+		INIT_SECURITY_INTERFACE InitSecurityInterface_ptr =
+		    GetProcAddressAs(hSSPI, proc_name, INIT_SECURITY_INTERFACE);
+		if (!InitSecurityInterface_ptr)
+		{
+			WLog_ERR(TAG, "Failed to load SSPI module: %s, no function %s", module_name, proc_name);
+			free(sspi_module);
+			return FALSE;
+		}
 		free(sspi_module);
 		return InitSecurityInterface_ptr();
 	}
@@ -947,7 +952,7 @@ BOOL credssp_auth_set_spn(rdpCredsspAuth* auth, const char* service, const char*
 		if (!spn)
 			return FALSE;
 
-		sprintf_s(spn, length, "%s/%s", service, hostname);
+		(void)sprintf_s(spn, length, "%s/%s", service, hostname);
 	}
 	if (!spn)
 		return FALSE;

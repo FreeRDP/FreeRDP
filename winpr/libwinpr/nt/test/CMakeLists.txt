@@ -2,6 +2,8 @@
 set(MODULE_NAME "TestNt")
 set(MODULE_PREFIX "TEST_NT")
 
+disable_warnings_for_directory(${CMAKE_CURRENT_BINARY_DIR})
+
 set(${MODULE_PREFIX}_DRIVER ${MODULE_NAME}.c)
 
 set(${MODULE_PREFIX}_TESTS

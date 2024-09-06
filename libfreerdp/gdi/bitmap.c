@@ -177,7 +177,7 @@ HGDI_BITMAP gdi_CreateCompatibleBitmap(HGDI_DC hdc, UINT32 nWidth, UINT32 nHeigh
 	return hBitmap;
 }
 
-static BOOL op_not(UINT32* stack, UINT32* stackp)
+static BOOL op_not(UINT32* stack, const UINT32* stackp)
 {
 	if (!stack || !stackp)
 		return FALSE;

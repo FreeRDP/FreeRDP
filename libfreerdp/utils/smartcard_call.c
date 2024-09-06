@@ -191,6 +191,9 @@ static LONG smartcard_ListReaderGroupsA_Call(scard_call_context* smartcard, wStr
 	cchGroups = SCARD_AUTOALLOCATE;
 	ret.ReturnCode =
 	    wrap(smartcard, SCardListReaderGroupsA, operation->hContext, (LPSTR)&mszGroups, &cchGroups);
+	if (cchGroups == SCARD_AUTOALLOCATE)
+		return SCARD_F_UNKNOWN_ERROR;
+
 	ret.msz = (BYTE*)mszGroups;
 	ret.cBytes = cchGroups;
 
@@ -220,7 +223,9 @@ static LONG smartcard_ListReaderGroupsW_Call(scard_call_context* smartcard, wStr
 	cchGroups = SCARD_AUTOALLOCATE;
 	status = ret.ReturnCode = wrap(smartcard, SCardListReaderGroupsW, operation->hContext,
 	                               (LPWSTR)&mszGroups, &cchGroups);
-	WINPR_ASSERT(cchGroups != SCARD_AUTOALLOCATE);
+	if (cchGroups == SCARD_AUTOALLOCATE)
+		return SCARD_F_UNKNOWN_ERROR;
+
 	ret.msz = (BYTE*)mszGroups;
 	ret.cBytes = cchGroups * sizeof(WCHAR);
 
@@ -341,6 +346,8 @@ static LONG smartcard_ListReadersA_Call(scard_call_context* smartcard, wStream* 
 	cchReaders = SCARD_AUTOALLOCATE;
 	status = ret.ReturnCode = wrap(smartcard, SCardListReadersA, operation->hContext,
 	                               (LPCSTR)call->mszGroups, (LPSTR)&mszReaders, &cchReaders);
+	if (cchReaders == SCARD_AUTOALLOCATE)
+		return SCARD_F_UNKNOWN_ERROR;
 
 	if (status != SCARD_S_SUCCESS)
 	{
@@ -396,6 +403,8 @@ static LONG smartcard_ListReadersW_Call(scard_call_context* smartcard, wStream* 
 	cchReaders = SCARD_AUTOALLOCATE;
 	status = ret.ReturnCode = wrap(smartcard, SCardListReadersW, operation->hContext, string.wz,
 	                               (LPWSTR)&mszReaders.pw, &cchReaders);
+	if (cchReaders == SCARD_AUTOALLOCATE)
+		return SCARD_F_UNKNOWN_ERROR;
 
 	if (status != SCARD_S_SUCCESS)
 		return scard_log_status_error(TAG, "SCardListReadersW", status);
@@ -851,6 +860,8 @@ static LONG smartcard_GetReaderIcon_Call(scard_call_context* smartcard, wStream*
 	ret.ReturnCode = wrap(smartcard, SCardGetReaderIconW, operation->hContext, call->szReaderName,
 	                      (LPBYTE)&ret.pbData, &ret.cbDataLen);
 	scard_log_status_error(TAG, "SCardGetReaderIconW", ret.ReturnCode);
+	if (ret.cbDataLen == SCARD_AUTOALLOCATE)
+		return SCARD_F_UNKNOWN_ERROR;
 
 	status = smartcard_pack_get_reader_icon_return(out, &ret);
 	wrap(smartcard, SCardFreeMemory, operation->hContext, ret.pbData);
@@ -1224,6 +1235,9 @@ static LONG smartcard_StatusA_Call(scard_call_context* smartcard, wStream* out,
 	         &ret.dwState, &ret.dwProtocol, cbAtrLen ? (BYTE*)&ret.pbAtr : NULL, &cbAtrLen);
 
 	scard_log_status_error(TAG, "SCardStatusA", status);
+	if (cchReaderLen == SCARD_AUTOALLOCATE)
+		return SCARD_F_UNKNOWN_ERROR;
+
 	if (status == SCARD_S_SUCCESS)
 	{
 		if (!call->fmszReaderNamesIsNULL)
@@ -1276,6 +1290,9 @@ static LONG smartcard_StatusW_Call(scard_call_context* smartcard, wStream* out,
 	         call->fmszReaderNamesIsNULL ? NULL : (LPWSTR)&mszReaderNames, &ret.cBytes,
 	         &ret.dwState, &ret.dwProtocol, (BYTE*)&ret.pbAtr, &cbAtrLen);
 	scard_log_status_error(TAG, "SCardStatusW", status);
+	if (ret.cBytes == SCARD_AUTOALLOCATE)
+		return SCARD_F_UNKNOWN_ERROR;
+
 	if (status == SCARD_S_SUCCESS)
 	{
 		if (!call->fmszReaderNamesIsNULL)
@@ -1403,6 +1420,9 @@ static LONG smartcard_GetAttrib_Call(scard_call_context* smartcard, wStream* out
 	ret.ReturnCode =
 	    wrap(smartcard, SCardGetAttrib, operation->hCard, call->dwAttrId, pbAttr, &cbAttrLen);
 	scard_log_status_error(TAG, "SCardGetAttrib", ret.ReturnCode);
+	if (cbAttrLen == SCARD_AUTOALLOCATE)
+		return SCARD_F_UNKNOWN_ERROR;
+
 	ret.cbAttrLen = cbAttrLen;
 
 	status = smartcard_pack_get_attrib_return(out, &ret, call->dwAttrId, call->cbAttrLen);
@@ -1472,7 +1492,7 @@ static LONG smartcard_LocateCardsByATRA_Call(scard_call_context* smartcard, wStr
 
 	for (UINT32 i = 0; i < call->cReaders; i++)
 	{
-		states[i].szReader = (LPSTR)call->rgReaderStates[i].szReader;
+		states[i].szReader = call->rgReaderStates[i].szReader;
 		states[i].dwCurrentState = call->rgReaderStates[i].dwCurrentState;
 		states[i].dwEventState = call->rgReaderStates[i].dwEventState;
 		states[i].cbAtr = call->rgReaderStates[i].cbAtr;

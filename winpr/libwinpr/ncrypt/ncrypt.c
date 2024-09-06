@@ -18,6 +18,7 @@
  */
 
 #include <winpr/assert.h>
+#include <winpr/library.h>
 #include <winpr/ncrypt.h>
 
 #ifndef _WIN32
@@ -240,7 +241,7 @@ SECURITY_STATUS NCryptGetProperty(NCRYPT_HANDLE hObject, LPCWSTR pszProperty, PB
 SECURITY_STATUS NCryptFreeObject(NCRYPT_HANDLE hObject)
 {
 	NCryptBaseHandle* base = NULL;
-	SECURITY_STATUS ret = checkNCryptHandle((NCRYPT_HANDLE)hObject, WINPR_NCRYPT_INVALID);
+	SECURITY_STATUS ret = checkNCryptHandle(hObject, WINPR_NCRYPT_INVALID);
 	if (ret != ERROR_SUCCESS)
 		return ret;
 
@@ -267,14 +268,13 @@ SECURITY_STATUS winpr_NCryptOpenStorageProviderEx(NCRYPT_PROV_HANDLE* phProvider
 {
 	typedef SECURITY_STATUS (*NCryptOpenStorageProviderFn)(NCRYPT_PROV_HANDLE * phProvider,
 	                                                       LPCWSTR pszProviderName, DWORD dwFlags);
-	NCryptOpenStorageProviderFn ncryptOpenStorageProviderFn;
-	SECURITY_STATUS ret;
+	SECURITY_STATUS ret = NTE_PROV_DLL_NOT_FOUND;
 	HANDLE lib = LoadLibraryA("ncrypt.dll");
 	if (!lib)
 		return NTE_PROV_DLL_NOT_FOUND;
 
-	ncryptOpenStorageProviderFn =
-	    (NCryptOpenStorageProviderFn)GetProcAddress(lib, "NCryptOpenStorageProvider");
+	NCryptOpenStorageProviderFn ncryptOpenStorageProviderFn =
+	    GetProcAddressAs(lib, "NCryptOpenStorageProvider", NCryptOpenStorageProviderFn);
 	if (!ncryptOpenStorageProviderFn)
 	{
 		ret = NTE_PROV_DLL_NOT_FOUND;
@@ -291,8 +291,8 @@ out_free_lib:
 
 const char* winpr_NCryptSecurityStatusError(SECURITY_STATUS status)
 {
-#define NTE_CASE(S)          \
-	case (SECURITY_STATUS)S: \
+#define NTE_CASE(S)            \
+	case (SECURITY_STATUS)(S): \
 		return #S
 
 	switch (status)

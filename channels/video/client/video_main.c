@@ -183,7 +183,7 @@ static BOOL PresentationContext_ref(PresentationContext* presentation)
 static PresentationContext* PresentationContext_new(VideoClientContext* video, BYTE PresentationId,
                                                     UINT32 x, UINT32 y, UINT32 width, UINT32 height)
 {
-	size_t s = width * height * 4ULL;
+	size_t s = 4ULL * width * height;
 	VideoClientContextPriv* priv = NULL;
 	PresentationContext* ret = NULL;
 
@@ -310,7 +310,7 @@ static VideoFrame* VideoFrame_new(VideoClientContextPriv* priv, PresentationCont
 	frame->h = surface->alignedHeight;
 	frame->scanline = surface->scanline;
 
-	frame->surfaceData = BufferPool_Take(priv->surfacePool, 1ull * frame->scanline * frame->h);
+	frame->surfaceData = BufferPool_Take(priv->surfacePool, 1ll * frame->scanline * frame->h);
 	if (!frame->surfaceData)
 		goto fail;
 
@@ -647,9 +647,9 @@ static UINT video_control_send_client_notification(VideoClientContext* context,
 		/* TSMM_CLIENT_NOTIFICATION_FRAMERATE_OVERRIDE */
 		Stream_Write_UINT32(s, notif->FramerateOverride.Flags);
 		Stream_Write_UINT32(s, notif->FramerateOverride.DesiredFrameRate);
-		Stream_Zero(s, 4 * 2);
+		Stream_Zero(s, 4ULL * 2ULL);
 
-		cbSize += 4 * 4;
+		cbSize += 4UL * 4UL;
 	}
 	else
 	{
@@ -1170,7 +1170,7 @@ static UINT video_plugin_terminated(IWTSPlugin* pPlugin)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-FREERDP_ENTRY_POINT(UINT video_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints))
+FREERDP_ENTRY_POINT(UINT VCAPITYPE video_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints))
 {
 	UINT error = CHANNEL_RC_OK;
 	VIDEO_PLUGIN* videoPlugin = NULL;

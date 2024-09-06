@@ -266,7 +266,7 @@ static BOOL rdp_write_client_persistent_key_list_pdu(wStream* s,
 
 	for (UINT32 index = 0; index < info->keyCount; index++)
 	{
-		const UINT32 key1 = (UINT32)info->keyList[index];
+		const UINT32 key1 = (UINT32)(info->keyList[index] & UINT32_MAX);
 		const UINT32 key2 = (UINT32)(info->keyList[index] >> 32);
 		Stream_Write_UINT32(s, key1);
 		Stream_Write_UINT32(s, key2);
@@ -805,6 +805,6 @@ const char* rdp_ctrlaction_string(UINT16 action, char* buffer, size_t size)
 			break;
 	}
 
-	_snprintf(buffer, size, "%s [0x%04" PRIx16 "]", actstr, action);
+	(void)_snprintf(buffer, size, "%s [0x%04" PRIx16 "]", actstr, action);
 	return buffer;
 }

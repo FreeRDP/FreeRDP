@@ -2,6 +2,8 @@
 set(MODULE_NAME "TestGdi")
 set(MODULE_PREFIX "TEST_GDI")
 
+disable_warnings_for_directory(${CMAKE_CURRENT_BINARY_DIR})
+
 set(${MODULE_PREFIX}_DRIVER ${MODULE_NAME}.c)
 
 set(${MODULE_PREFIX}_TESTS
@@ -23,7 +25,7 @@ include_directories(..)
 add_library(helpers STATIC
 	helpers.c)
 target_link_libraries(helpers freerdp)
-	   
+
 
 add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 

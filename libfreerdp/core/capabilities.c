@@ -4884,7 +4884,7 @@ const char* rdp_input_flag_string(UINT16 flags, char* buffer, size_t len)
 {
 	char prefix[16] = { 0 };
 
-	_snprintf(prefix, sizeof(prefix), "[0x%04" PRIx16 "][", flags);
+	(void)_snprintf(prefix, sizeof(prefix), "[0x%04" PRIx16 "][", flags);
 	winpr_str_append(prefix, buffer, len, "");
 	if ((flags & INPUT_FLAG_SCANCODES) != 0)
 		winpr_str_append("INPUT_FLAG_SCANCODES", buffer, len, "|");

@@ -230,7 +230,7 @@ BOOL winpr_HMAC_Init(WINPR_HMAC_CTX* ctx, WINPR_MD_TYPE md, const void* key, siz
 
 #if defined(WITH_OPENSSL)
 #if OPENSSL_VERSION_NUMBER >= 0x30000000L
-	const char* hash = winpr_md_type_to_string(md);
+	char* hash = WINPR_CAST_CONST_PTR_AWAY(winpr_md_type_to_string(md), char*);
 
 	if (!ctx->xhmac)
 		return FALSE;

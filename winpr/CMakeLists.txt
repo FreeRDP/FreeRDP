@@ -75,7 +75,6 @@ else()
 	set(WITH_INTERNAL_MD5_DEFAULT OFF)
 endif()
 
-option(WITH_VERBOSE_WINPR_ASSERT "Compile with verbose WINPR_ASSERT." ON)
 option(WITH_WINPR_TOOLS "Build WinPR helper binaries" ${TOOLS_DEFAULT})
 option(WITH_WINPR_DEPRECATED "Build WinPR deprecated symbols" OFF)
 option(WITH_DEBUG_THREADS "Print thread debug messages, enables handle dump" ${DEFAULT_DEBUG_OPTION})
@@ -110,11 +109,6 @@ if (WITH_WINPR_DEPRECATED)
 	add_definitions(-DWITH_WINPR_DEPRECATED)
 endif()
 
-if (WITH_VERBOSE_WINPR_ASSERT)
-	add_definitions(-DWITH_VERBOSE_WINPR_ASSERT)
-endif()
-
-
 # Include cmake modules
 include(CheckIncludeFiles)
 include(CheckLibraryExists)
@@ -137,7 +131,7 @@ endif()
 
 # Soname versioning
 set(VERSION_REGEX "^(.*)([0-9]+)\\.([0-9]+)\\.([0-9]+)-?(.*)")
-set(RAW_VERSION_STRING "3.7.1-dev0")
+set(RAW_VERSION_STRING "3.8.1-dev0")
 if(EXISTS "${PROJECT_SOURCE_DIR}/.source_tag")
 	file(READ ${PROJECT_SOURCE_DIR}/.source_tag RAW_VERSION_STRING)
 elseif(USE_VERSION_FROM_GIT_TAG)

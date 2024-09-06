@@ -134,7 +134,7 @@ static DWORD WINAPI named_pipe_client_thread(LPVOID arg)
 	winpr_HexDump("pipe.test", WLOG_DEBUG, lpReadBuffer, NumberOfBytesTransferred);
 
 	if (NumberOfBytesTransferred != PIPE_BUFFER_SIZE ||
-	    memcmp(lpReadBuffer, SERVER_MESSAGE, PIPE_BUFFER_SIZE))
+	    memcmp(lpReadBuffer, SERVER_MESSAGE, PIPE_BUFFER_SIZE) != 0)
 	{
 		printf("client: received unexpected data from server\n");
 		goto finish;
@@ -281,7 +281,7 @@ static DWORD WINAPI named_pipe_server_thread(LPVOID arg)
 	winpr_HexDump("pipe.test", WLOG_DEBUG, lpReadBuffer, NumberOfBytesTransferred);
 
 	if (NumberOfBytesTransferred != PIPE_BUFFER_SIZE ||
-	    memcmp(lpReadBuffer, CLIENT_MESSAGE, PIPE_BUFFER_SIZE))
+	    memcmp(lpReadBuffer, CLIENT_MESSAGE, PIPE_BUFFER_SIZE) != 0)
 	{
 		printf("server: received unexpected data from client\n");
 		goto finish;

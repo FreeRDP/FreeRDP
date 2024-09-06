@@ -131,7 +131,7 @@ static BOOL IniFile_Load_String(wIniFile* ini, const char* iniString)
 static void IniFile_Close_File(FILE* fp)
 {
 	if (fp)
-		fclose(fp);
+		(void)fclose(fp);
 }
 
 static FILE* IniFile_Open_File(wIniFile* ini, const char* filename)
@@ -175,7 +175,7 @@ static BOOL IniFile_Load_File(wIniFile* ini, const char* filename)
 	if (fileSize < 1)
 		goto out_file;
 
-	if (fileSize > SIZE_MAX)
+	if (fileSize > INT64_MAX)
 		goto out_file;
 
 	if (!IniFile_BufferResize(ini, (size_t)fileSize + 2))
@@ -706,7 +706,7 @@ int IniFile_SetKeyValueInt(wIniFile* ini, const char* section, const char* key, 
 
 	WINPR_ASSERT(ini);
 
-	sprintf_s(strVal, sizeof(strVal), "%d", value);
+	(void)sprintf_s(strVal, sizeof(strVal), "%d", value);
 	pSection = IniFile_GetSection(ini, section);
 
 	if (!pSection)
@@ -756,17 +756,17 @@ char* IniFile_WriteBuffer(wIniFile* ini)
 	for (size_t i = 0; i < ini->nSections; i++)
 	{
 		wIniFileSection* section = ini->sections[i];
-		sprintf_s(&buffer[offset], size - offset, "[%s]\n", section->name);
+		(void)sprintf_s(&buffer[offset], size - offset, "[%s]\n", section->name);
 		offset += (strlen(section->name) + 3);
 
 		for (size_t j = 0; j < section->nKeys; j++)
 		{
 			wIniFileKey* key = section->keys[j];
-			sprintf_s(&buffer[offset], size - offset, "%s=%s\n", key->name, key->value);
+			(void)sprintf_s(&buffer[offset], size - offset, "%s=%s\n", key->name, key->value);
 			offset += (strlen(key->name) + strlen(key->value) + 2);
 		}
 
-		sprintf_s(&buffer[offset], size - offset, "\n");
+		(void)sprintf_s(&buffer[offset], size - offset, "\n");
 		offset += 1;
 	}
 

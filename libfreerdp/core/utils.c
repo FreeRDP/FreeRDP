@@ -457,7 +457,7 @@ char* utils_redir_flags_to_string(UINT32 flags, char* buffer, size_t size)
 		winpr_str_append("DISABLE_PNP", buffer, size, "|");
 
 	char fbuffer[16] = { 0 };
-	_snprintf(fbuffer, sizeof(fbuffer), "[0x%08" PRIx32 "]", flags);
+	(void)_snprintf(fbuffer, sizeof(fbuffer), "[0x%08" PRIx32 "]", flags);
 
 	winpr_str_append(fbuffer, buffer, size, " ");
 	winpr_str_append("{", buffer, size, "}");

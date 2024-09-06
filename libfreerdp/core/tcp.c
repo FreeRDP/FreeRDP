@@ -694,7 +694,7 @@ char* freerdp_tcp_address_to_string(const struct sockaddr_storage* addr, BOOL* p
 			break;
 
 		case AF_UNIX:
-			sprintf_s(ipAddress, ARRAYSIZE(ipAddress), "127.0.0.1");
+			(void)sprintf_s(ipAddress, ARRAYSIZE(ipAddress), "127.0.0.1");
 			break;
 
 		default:
@@ -779,7 +779,7 @@ struct addrinfo* freerdp_tcp_resolve_host(const char* hostname, int port, int ai
 
 	if (port >= 0)
 	{
-		sprintf_s(port_str, sizeof(port_str) - 1, "%d", port);
+		(void)sprintf_s(port_str, sizeof(port_str) - 1, "%d", port);
 		service = port_str;
 	}
 
@@ -895,7 +895,7 @@ static void peer_free(t_peer* peer)
 	peer->s = INVALID_SOCKET;
 }
 
-static int freerdp_tcp_connect_multi(rdpContext* context, char** hostnames, UINT32* ports,
+static int freerdp_tcp_connect_multi(rdpContext* context, char** hostnames, const UINT32* ports,
                                      UINT32 count, UINT16 port, UINT32 timeout)
 {
 	UINT32 sindex = count;
@@ -1239,10 +1239,10 @@ int freerdp_tcp_default_connect(rdpContext* context, rdpSettings* settings, cons
 				sockfd = socket(addr->ai_family, addr->ai_socktype, addr->ai_protocol);
 				if (sockfd < 0)
 				{
-					const int rc = get_next_addrinfo(context, addr->ai_next, &addr,
-					                                 FREERDP_ERROR_CONNECT_FAILED);
-					if (rc < 0)
-						return rc;
+					const int lrc = get_next_addrinfo(context, addr->ai_next, &addr,
+					                                  FREERDP_ERROR_CONNECT_FAILED);
+					if (lrc < 0)
+						return lrc;
 				}
 			} while (sockfd < 0);
 

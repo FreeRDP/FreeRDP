@@ -111,8 +111,8 @@ static int rdpsnd_alsa_set_hw_params(rdpsndAlsaPlugin* alsa)
 	 * It is also possible for the buffer size to not be an integer multiple of the period size.
 	 */
 	int interrupts_per_sec_near = 50;
-	int bytes_per_sec =
-	    (alsa->actual_rate * alsa->aformat.wBitsPerSample / 8 * alsa->actual_channels);
+	const size_t bytes_per_sec =
+	    (1ull * alsa->actual_rate * alsa->aformat.wBitsPerSample / 8 * alsa->actual_channels);
 	alsa->buffer_size = buffer_size_max;
 	alsa->period_size = (bytes_per_sec / interrupts_per_sec_near);
 
@@ -145,8 +145,8 @@ static int rdpsnd_alsa_set_sw_params(rdpsndAlsaPlugin* alsa)
 	SND_PCM_CHECK("snd_pcm_sw_params_malloc", status);
 	status = snd_pcm_sw_params_current(alsa->pcm_handle, sw_params);
 	SND_PCM_CHECK("snd_pcm_sw_params_current", status);
-	status = snd_pcm_sw_params_set_avail_min(alsa->pcm_handle, sw_params,
-	                                         (alsa->aformat.nChannels * alsa->actual_channels));
+	status = snd_pcm_sw_params_set_avail_min(
+	    alsa->pcm_handle, sw_params, (1ULL * alsa->aformat.nChannels * alsa->actual_channels));
 	SND_PCM_CHECK("snd_pcm_sw_params_set_avail_min", status);
 	status = snd_pcm_sw_params_set_start_threshold(alsa->pcm_handle, sw_params,
 	                                               alsa->aformat.nBlockAlign);
@@ -423,12 +423,11 @@ static UINT rdpsnd_alsa_play(rdpsndDevicePlugin* device, const BYTE* data, size_
 {
 	UINT latency = 0;
 	size_t offset = 0;
-	int frame_size = 0;
 	rdpsndAlsaPlugin* alsa = (rdpsndAlsaPlugin*)device;
 	WINPR_ASSERT(alsa);
 	WINPR_ASSERT(data || (size == 0));
-	frame_size = alsa->actual_channels * alsa->aformat.wBitsPerSample / 8;
-	if (frame_size <= 0)
+	const size_t frame_size = 1ull * alsa->actual_channels * alsa->aformat.wBitsPerSample / 8;
+	if (frame_size == 0)
 		return 0;
 
 	while (offset < size)
@@ -437,7 +436,7 @@ static UINT rdpsnd_alsa_play(rdpsndDevicePlugin* device, const BYTE* data, size_
 		    snd_pcm_writei(alsa->pcm_handle, &data[offset], (size - offset) / frame_size);
 
 		if (status < 0)
-			status = snd_pcm_recover(alsa->pcm_handle, status, 0);
+			status = snd_pcm_recover(alsa->pcm_handle, (int)status, 0);
 
 		if (status < 0)
 		{
@@ -455,12 +454,8 @@ static UINT rdpsnd_alsa_play(rdpsndDevicePlugin* device, const BYTE* data, size_
 		snd_pcm_sframes_t delay = 0;
 		int rc = snd_pcm_avail_delay(alsa->pcm_handle, &available, &delay);
 
-		if (rc != 0)
-			latency = 0;
-		else if (available == 0) /* Get [ms] from number of samples */
+		if ((rc == 0) && (available == 0)) /* Get [ms] from number of samples */
 			latency = delay * 1000 / alsa->actual_rate;
-		else
-			latency = 0;
 	}
 
 	return latency + alsa->latency;
@@ -516,7 +511,7 @@ static UINT rdpsnd_alsa_parse_addin_args(rdpsndDevicePlugin* device, const ADDIN
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-FREERDP_ENTRY_POINT(UINT alsa_freerdp_rdpsnd_client_subsystem_entry(
+FREERDP_ENTRY_POINT(UINT VCAPITYPE alsa_freerdp_rdpsnd_client_subsystem_entry(
     PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints))
 {
 	const ADDIN_ARGV* args = NULL;

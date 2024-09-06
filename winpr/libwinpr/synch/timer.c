@@ -516,8 +516,8 @@ BOOL SetWaitableTimer(HANDLE hTimer, const LARGE_INTEGER* lpDueTime, LONG lPerio
 
 	if (lPeriod > 0)
 	{
-		timer->timeout.it_interval.tv_sec = (lPeriod / 1000);              /* seconds */
-		timer->timeout.it_interval.tv_nsec = ((lPeriod % 1000) * 1000000); /* nanoseconds */
+		timer->timeout.it_interval.tv_sec = (lPeriod / 1000ULL);                 /* seconds */
+		timer->timeout.it_interval.tv_nsec = (1000000ULL * (lPeriod % 1000ULL)); /* nanoseconds */
 	}
 
 	if (lpDueTime->QuadPart != 0)
@@ -670,7 +670,6 @@ BOOL CancelWaitableTimer(HANDLE hTimer)
 
 int GetTimerFileDescriptor(HANDLE hTimer)
 {
-#ifndef _WIN32
 	WINPR_HANDLE* hdl = NULL;
 	ULONG type = 0;
 
@@ -682,9 +681,6 @@ int GetTimerFileDescriptor(HANDLE hTimer)
 	}
 
 	return winpr_Handle_getFd(hTimer);
-#else
-	return -1;
-#endif
 }
 
 /**

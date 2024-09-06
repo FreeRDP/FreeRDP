@@ -32,8 +32,8 @@
 #endif
 
 static int rdtk_image_copy_alpha_blend(uint8_t* pDstData, int nDstStep, int nXDst, int nYDst,
-                                       int nWidth, int nHeight, uint8_t* pSrcData, int nSrcStep,
-                                       int nXSrc, int nYSrc)
+                                       int nWidth, int nHeight, const uint8_t* pSrcData,
+                                       int nSrcStep, int nXSrc, int nYSrc)
 {
 	WINPR_ASSERT(pDstData);
 	WINPR_ASSERT(pSrcData);
@@ -269,7 +269,8 @@ static BOOL rdtk_nine_patch_get_scale_ht(rdtkNinePatch* ninePatch, wImage* image
 
 	for (uint32_t y = 1; y < image->height - 1; y++)
 	{
-		const uint32_t* pixel = (const uint32_t*)&image->data[image->scanline * y]; /* (1, 0) */
+		const uint32_t* pixel =
+		    (const uint32_t*)&image->data[1ULL * image->scanline * y]; /* (1, 0) */
 		if (beg < 0)
 		{
 			if (*pixel)
@@ -312,8 +313,9 @@ static BOOL rdtk_nine_patch_get_fill_lr(rdtkNinePatch* ninePatch, wImage* image)
 
 	for (uint32_t x = 1; x < image->width - 1; x++)
 	{
-		const uint32_t* pixel = (uint32_t*)&image->data[((image->height - 1) * image->scanline) +
-		                                                x * sizeof(uint32_t)]; /* (1, height - 1) */
+		const uint32_t* pixel =
+		    (uint32_t*)&image->data[((1ULL * image->height - 1ULL) * image->scanline) +
+		                            x * sizeof(uint32_t)]; /* (1, height - 1) */
 		if (beg < 0)
 		{
 			if (*pixel)

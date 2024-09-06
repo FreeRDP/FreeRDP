@@ -50,12 +50,12 @@
 
 #define CONFIG_PRINT_SECTION(section) WLog_INFO(TAG, "\t%s:", section)
 #define CONFIG_PRINT_SECTION_KEY(section, key) WLog_INFO(TAG, "\t%s/%s:", section, key)
-#define CONFIG_PRINT_STR(config, key) WLog_INFO(TAG, "\t\t%s: %s", #key, config->key)
+#define CONFIG_PRINT_STR(config, key) WLog_INFO(TAG, "\t\t%s: %s", #key, (config)->key)
 #define CONFIG_PRINT_STR_CONTENT(config, key) \
-	WLog_INFO(TAG, "\t\t%s: %s", #key, config->key ? "set" : NULL)
-#define CONFIG_PRINT_BOOL(config, key) WLog_INFO(TAG, "\t\t%s: %s", #key, boolstr(config->key))
-#define CONFIG_PRINT_UINT16(config, key) WLog_INFO(TAG, "\t\t%s: %" PRIu16 "", #key, config->key)
-#define CONFIG_PRINT_UINT32(config, key) WLog_INFO(TAG, "\t\t%s: %" PRIu32 "", #key, config->key)
+	WLog_INFO(TAG, "\t\t%s: %s", #key, (config)->key ? "set" : NULL)
+#define CONFIG_PRINT_BOOL(config, key) WLog_INFO(TAG, "\t\t%s: %s", #key, boolstr((config)->key))
+#define CONFIG_PRINT_UINT16(config, key) WLog_INFO(TAG, "\t\t%s: %" PRIu16 "", #key, (config)->key)
+#define CONFIG_PRINT_UINT32(config, key) WLog_INFO(TAG, "\t\t%s: %" PRIu32 "", #key, (config)->key)
 
 static const char* bool_str_true = "true";
 static const char* bool_str_false = "false";
@@ -409,7 +409,7 @@ static char* pf_config_decode_base64(const char* data, const char* name, size_t*
 				while (*end == '-')
 					end++;
 
-				const size_t s = MIN(ARRAYSIZE(hdr) - 1, end - data);
+				const size_t s = MIN(ARRAYSIZE(hdr) - 1ULL, (size_t)(end - data));
 				memcpy(hdr, data, s);
 			}
 

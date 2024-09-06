@@ -150,12 +150,12 @@ static char* FindApplicationPath(char* application)
 static HANDLE CreateProcessHandle(pid_t pid);
 static BOOL ProcessHandleCloseHandle(HANDLE handle);
 
-static BOOL _CreateProcessExA(HANDLE hToken, DWORD dwLogonFlags, LPCSTR lpApplicationName,
-                              LPSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes,
-                              LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles,
-                              DWORD dwCreationFlags, LPVOID lpEnvironment,
-                              LPCSTR lpCurrentDirectory, LPSTARTUPINFOA lpStartupInfo,
-                              LPPROCESS_INFORMATION lpProcessInformation)
+static BOOL CreateProcessExA(HANDLE hToken, DWORD dwLogonFlags, LPCSTR lpApplicationName,
+                             LPSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes,
+                             LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles,
+                             DWORD dwCreationFlags, LPVOID lpEnvironment, LPCSTR lpCurrentDirectory,
+                             LPSTARTUPINFOA lpStartupInfo,
+                             LPPROCESS_INFORMATION lpProcessInformation)
 {
 	pid_t pid = 0;
 	int numArgs = 0;
@@ -367,9 +367,9 @@ BOOL CreateProcessA(LPCSTR lpApplicationName, LPSTR lpCommandLine,
                     DWORD dwCreationFlags, LPVOID lpEnvironment, LPCSTR lpCurrentDirectory,
                     LPSTARTUPINFOA lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation)
 {
-	return _CreateProcessExA(NULL, 0, lpApplicationName, lpCommandLine, lpProcessAttributes,
-	                         lpThreadAttributes, bInheritHandles, dwCreationFlags, lpEnvironment,
-	                         lpCurrentDirectory, lpStartupInfo, lpProcessInformation);
+	return CreateProcessExA(NULL, 0, lpApplicationName, lpCommandLine, lpProcessAttributes,
+	                        lpThreadAttributes, bInheritHandles, dwCreationFlags, lpEnvironment,
+	                        lpCurrentDirectory, lpStartupInfo, lpProcessInformation);
 }
 
 BOOL CreateProcessW(LPCWSTR lpApplicationName, LPWSTR lpCommandLine,
@@ -387,9 +387,9 @@ BOOL CreateProcessAsUserA(HANDLE hToken, LPCSTR lpApplicationName, LPSTR lpComma
                           DWORD dwCreationFlags, LPVOID lpEnvironment, LPCSTR lpCurrentDirectory,
                           LPSTARTUPINFOA lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation)
 {
-	return _CreateProcessExA(hToken, 0, lpApplicationName, lpCommandLine, lpProcessAttributes,
-	                         lpThreadAttributes, bInheritHandles, dwCreationFlags, lpEnvironment,
-	                         lpCurrentDirectory, lpStartupInfo, lpProcessInformation);
+	return CreateProcessExA(hToken, 0, lpApplicationName, lpCommandLine, lpProcessAttributes,
+	                        lpThreadAttributes, bInheritHandles, dwCreationFlags, lpEnvironment,
+	                        lpCurrentDirectory, lpStartupInfo, lpProcessInformation);
 }
 
 BOOL CreateProcessAsUserW(HANDLE hToken, LPCWSTR lpApplicationName, LPWSTR lpCommandLine,
@@ -424,9 +424,9 @@ BOOL CreateProcessWithTokenA(HANDLE hToken, DWORD dwLogonFlags, LPCSTR lpApplica
                              LPCSTR lpCurrentDirectory, LPSTARTUPINFOA lpStartupInfo,
                              LPPROCESS_INFORMATION lpProcessInformation)
 {
-	return _CreateProcessExA(NULL, 0, lpApplicationName, lpCommandLine, NULL, NULL, FALSE,
-	                         dwCreationFlags, lpEnvironment, lpCurrentDirectory, lpStartupInfo,
-	                         lpProcessInformation);
+	return CreateProcessExA(NULL, 0, lpApplicationName, lpCommandLine, NULL, NULL, FALSE,
+	                        dwCreationFlags, lpEnvironment, lpCurrentDirectory, lpStartupInfo,
+	                        lpProcessInformation);
 }
 
 BOOL CreateProcessWithTokenW(HANDLE hToken, DWORD dwLogonFlags, LPCWSTR lpApplicationName,
@@ -544,7 +544,7 @@ static HANDLE_OPS ops = { ProcessHandleIsHandle,
 	                      NULL,
 	                      NULL };
 
-static int _pidfd_open(pid_t pid)
+static int pidfd_open(pid_t pid)
 {
 #ifdef __linux__
 #if !defined(__NR_pidfd_open)
@@ -589,7 +589,7 @@ HANDLE CreateProcessHandle(pid_t pid)
 	process->pid = pid;
 	process->common.Type = HANDLE_TYPE_PROCESS;
 	process->common.ops = &ops;
-	process->fd = _pidfd_open(pid);
+	process->fd = pidfd_open(pid);
 	if (process->fd >= 0)
 		process->common.Mode = WINPR_FD_READ;
 	return (HANDLE)process;

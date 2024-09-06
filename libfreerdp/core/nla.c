@@ -332,7 +332,6 @@ static BOOL nla_client_setup_identity(rdpNla* nla)
 		}
 	}
 
-#ifndef _WIN32
 	if (PromptPassword)
 	{
 		if (settings->RestrictedAdminModeRequired)
@@ -344,7 +343,6 @@ static BOOL nla_client_setup_identity(rdpNla* nla)
 		if (settings->RemoteCredentialGuard)
 			PromptPassword = FALSE;
 	}
-#endif
 
 	BOOL smartCardLogonWasDisabled = !settings->SmartcardLogon;
 	if (PromptPassword)

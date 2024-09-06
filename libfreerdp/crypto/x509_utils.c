@@ -130,7 +130,7 @@ static const char* general_name_type_label(int general_name_type)
 	else
 	{
 		static char buffer[80];
-		sprintf(buffer, "Unknown general name type (%d)", general_name_type);
+		(void)sprintf(buffer, "Unknown general name type (%d)", general_name_type);
 		return buffer;
 	}
 }
@@ -377,7 +377,7 @@ static char* object_string(ASN1_TYPE* object)
 		return 0;
 	}
 
-	result = (char*)_strdup((char*)utf8String);
+	result = _strdup((char*)utf8String);
 	OPENSSL_free(utf8String);
 	return result;
 }
@@ -478,7 +478,7 @@ char* x509_utils_get_date(const X509* x509, BOOL startDate)
 	char* str = NULL;
 	if (ASN1_TIME_print(bmem, date))
 	{
-		BUF_MEM* bptr;
+		BUF_MEM* bptr = NULL;
 
 		BIO_get_mem_ptr(bmem, &bptr);
 		str = strndup(bptr->data, bptr->length);

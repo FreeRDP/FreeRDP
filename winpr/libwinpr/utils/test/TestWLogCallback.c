@@ -30,21 +30,21 @@ static BOOL check(const wLogMessage* msg)
 	BOOL rc = TRUE;
 	if (!msg)
 		rc = FALSE;
-	else if (strcmp(msg->FileName, __FILE__))
+	else if (strcmp(msg->FileName, __FILE__) != 0)
 		rc = FALSE;
-	else if (strcmp(msg->FunctionName, function))
+	else if (strcmp(msg->FunctionName, function) != 0)
 		rc = FALSE;
-	else if (strcmp(msg->PrefixString, messages[pos].channel))
+	else if (strcmp(msg->PrefixString, messages[pos].channel) != 0)
 		rc = FALSE;
 	else if (msg->Level != messages[pos].level)
 		rc = FALSE;
-	else if (strcmp(msg->FormatString, messages[pos].msg))
+	else if (strcmp(msg->FormatString, messages[pos].msg) != 0)
 		rc = FALSE;
 	pos++;
 
 	if (!rc)
 	{
-		fprintf(stderr, "Test failed!\n");
+		(void)fprintf(stderr, "Test failed!\n");
 		success = FALSE;
 	}
 	return rc;
@@ -58,19 +58,19 @@ static BOOL CallbackAppenderMessage(const wLogMessage* msg)
 
 static BOOL CallbackAppenderData(const wLogMessage* msg)
 {
-	fprintf(stdout, "%s\n", __func__);
+	(void)fprintf(stdout, "%s\n", __func__);
 	return TRUE;
 }
 
 static BOOL CallbackAppenderImage(const wLogMessage* msg)
 {
-	fprintf(stdout, "%s\n", __func__);
+	(void)fprintf(stdout, "%s\n", __func__);
 	return TRUE;
 }
 
 static BOOL CallbackAppenderPackage(const wLogMessage* msg)
 {
-	fprintf(stdout, "%s\n", __func__);
+	(void)fprintf(stdout, "%s\n", __func__);
 	return TRUE;
 }
 

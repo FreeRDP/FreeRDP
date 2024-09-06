@@ -44,9 +44,6 @@ static void usb_process_get_port_status(IUDEVICE* pdev, wStream* out)
 			break;
 
 		case USB_v2_0:
-			Stream_Write_UINT32(out, 0x503);
-			break;
-
 		default:
 			Stream_Write_UINT32(out, 0x503);
 			break;
@@ -124,12 +121,11 @@ static UINT urbdrc_process_register_request_callback(IUDEVICE* pdev,
 {
 	UINT32 NumRequestCompletion = 0;
 	UINT32 RequestCompletion = 0;
-	URBDRC_PLUGIN* urbdrc = NULL;
 
 	if (!callback || !s || !udevman || !pdev)
 		return ERROR_INVALID_PARAMETER;
 
-	urbdrc = (URBDRC_PLUGIN*)callback->plugin;
+	URBDRC_PLUGIN* urbdrc = (URBDRC_PLUGIN*)callback->plugin;
 
 	if (!urbdrc)
 		return ERROR_INVALID_PARAMETER;
@@ -855,7 +851,7 @@ static UINT urb_isoch_transfer(IUDEVICE* pdev, GENERIC_CHANNEL_CALLBACK* callbac
 		return ERROR_INVALID_DATA;
 
 	packetDescriptorData = Stream_Pointer(s);
-	Stream_Seek(s, NumberOfPackets * 12);
+	Stream_Seek(s, 12ULL * NumberOfPackets);
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, sizeof(UINT32)))
 		return ERROR_INVALID_DATA;

@@ -262,7 +262,7 @@ static void rdpsnd_ios_free(rdpsndDevicePlugin* device)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-FREERDP_ENTRY_POINT(UINT ios_freerdp_rdpsnd_client_subsystem_entry(
+FREERDP_ENTRY_POINT(UINT VCAPITYPE ios_freerdp_rdpsnd_client_subsystem_entry(
     PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints))
 {
 	rdpsndIOSPlugin* p = (rdpsndIOSPlugin*)calloc(1, sizeof(rdpsndIOSPlugin));

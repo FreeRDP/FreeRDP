@@ -217,7 +217,7 @@ wPcap* Pcap_Open(char* name, BOOL write)
 
 out_fail:
 	if (pcap_fp)
-		fclose(pcap_fp);
+		(void)fclose(pcap_fp);
 	free(pcap);
 	return NULL;
 }
@@ -234,8 +234,7 @@ void Pcap_Flush(wPcap* pcap)
 		pcap->record = pcap->record->next;
 	}
 
-	fflush(pcap->fp);
-	return;
+	(void)fflush(pcap->fp);
 }
 
 void Pcap_Close(wPcap* pcap)
@@ -244,7 +243,7 @@ void Pcap_Close(wPcap* pcap)
 		return;
 
 	Pcap_Flush(pcap);
-	fclose(pcap->fp);
+	(void)fclose(pcap->fp);
 	free(pcap);
 }
 
@@ -270,7 +269,7 @@ static BOOL WLog_PacketMessage_Write_EthernetHeader(wPcap* pcap, wEthernetHeader
 	return ret;
 }
 
-static UINT16 IPv4Checksum(BYTE* ipv4, int length)
+static UINT16 IPv4Checksum(const BYTE* ipv4, int length)
 {
 	UINT16 tmp16 = 0;
 	long checksum = 0;
@@ -467,6 +466,6 @@ BOOL WLog_PacketMessage_Write(wPcap* pcap, void* data, size_t length, DWORD flag
 	    !WLog_PacketMessage_Write_IPv4Header(pcap, &ipv4) ||
 	    !WLog_PacketMessage_Write_TcpHeader(pcap, &tcp) || !Pcap_Write_RecordContent(pcap, &record))
 		return FALSE;
-	fflush(pcap->fp);
+	(void)fflush(pcap->fp);
 	return TRUE;
 }

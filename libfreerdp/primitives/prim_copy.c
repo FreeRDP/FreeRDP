@@ -102,8 +102,8 @@ static pstatus_t general_copy_8u(const BYTE* pSrc, BYTE* pDst, INT32 len)
 static pstatus_t general_copy_8u_AC4r(const BYTE* pSrc, INT32 srcStep, BYTE* pDst, INT32 dstStep,
                                       INT32 width, INT32 height)
 {
-	const BYTE* src = (const BYTE*)pSrc;
-	BYTE* dst = (BYTE*)pDst;
+	const BYTE* src = pSrc;
+	BYTE* dst = pDst;
 	int rowbytes = width * sizeof(UINT32);
 
 	if ((width == 0) || (height == 0))
@@ -377,8 +377,7 @@ void primitives_init_copy(primitives_t* prims)
 	/* Start with the default. */
 	prims->copy_8u = general_copy_8u;
 	prims->copy_8u_AC4r = general_copy_8u_AC4r;
-	/* This is just an alias with void* parameters */
-	prims->copy = (__copy_t)(prims->copy_8u);
+	prims->copy = WINPR_FUNC_PTR_CAST(prims->copy_8u, __copy_t);
 	prims->copy_no_overlap = generic_image_copy_no_overlap;
 }
 

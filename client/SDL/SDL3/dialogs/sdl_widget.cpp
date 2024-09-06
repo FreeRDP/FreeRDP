@@ -71,8 +71,8 @@ SdlWidget::SdlWidget(SDL_Renderer* renderer, const SDL_FRect& rect, SDL_IOStream
 #endif
 
 SdlWidget::SdlWidget(SdlWidget&& other) noexcept
-    : _font(std::move(other._font)), _image(other._image), _rect(std::move(other._rect)),
-      _input(other._input), _wrap(other._wrap), _text_width(other._text_width)
+    : _font(other._font), _image(other._image), _rect(other._rect), _input(other._input),
+      _wrap(other._wrap), _text_width(other._text_width)
 {
 	other._font = nullptr;
 	other._image = nullptr;

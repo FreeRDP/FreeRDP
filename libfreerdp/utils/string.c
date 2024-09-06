@@ -98,7 +98,7 @@ char* rdp_cluster_info_flags_to_string(UINT32 flags, char* buffer, size_t size)
 	winpr_str_append(str, buffer, size, "|");
 	{
 		char msg[32] = { 0 };
-		_snprintf(msg, sizeof(msg), "[0x%08" PRIx32 "]", flags);
+		(void)_snprintf(msg, sizeof(msg), "[0x%08" PRIx32 "]", flags);
 		winpr_str_append(msg, buffer, size, "");
 	}
 	return buffer;

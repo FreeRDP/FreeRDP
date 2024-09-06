@@ -2,6 +2,8 @@
 set(MODULE_NAME "TestWtsApi")
 set(MODULE_PREFIX "TEST_WTSAPI")
 
+disable_warnings_for_directory(${CMAKE_CURRENT_BINARY_DIR})
+
 set(${MODULE_PREFIX}_DRIVER ${MODULE_NAME}.c)
 
 set(UNIX_ONLY

@@ -204,7 +204,7 @@ static void shadow_client_context_free(freerdp_peer* peer, rdpContext* context)
 
 	/* Clear queued messages and free resource */
 	MessageQueue_Free(client->MsgQueue);
-	WTSCloseServer((HANDLE)client->vcm);
+	WTSCloseServer(client->vcm);
 	region16_uninit(&(client->invalidRegion));
 	DeleteCriticalSection(&(client->lock));
 
@@ -1079,7 +1079,7 @@ static INLINE UINT32 rdpgfx_estimate_h264_avc420(RDPGFX_AVC420_BITMAP_STREAM* ha
 	/* H264 metadata + H264 stream. See rdpgfx_write_h264_avc420 */
 	WINPR_ASSERT(havc420);
 	return sizeof(UINT32) /* numRegionRects */
-	       + 10           /* regionRects + quantQualityVals */
+	       + 10ULL        /* regionRects + quantQualityVals */
 	             * havc420->meta.numRegionRects +
 	       havc420->length;
 }
@@ -1687,10 +1687,10 @@ static BOOL shadow_client_send_bitmap_update(rdpShadowClient* client, BYTE* pSrc
 			bitmap->destLeft = nXSrc + (xIdx * 64);
 			bitmap->destTop = nYSrc + (yIdx * 64);
 
-			if ((INT64)(bitmap->destLeft + bitmap->width) > (nXSrc + nWidth))
+			if (((INT64)bitmap->destLeft + bitmap->width) > (nXSrc + nWidth))
 				bitmap->width = (UINT32)(nXSrc + nWidth) - bitmap->destLeft;
 
-			if ((INT64)(bitmap->destTop + bitmap->height) > (nYSrc + nHeight))
+			if (((INT64)bitmap->destTop + bitmap->height) > (nYSrc + nHeight))
 				bitmap->height = (UINT32)(nYSrc + nHeight) - bitmap->destTop;
 
 			bitmap->destRight = bitmap->destLeft + bitmap->width - 1;

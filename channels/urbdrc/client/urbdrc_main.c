@@ -80,33 +80,33 @@ static int func_container_id_generate(IUDEVICE* pdev, char* strContainerId)
 	else
 		p = path;
 
-	sprintf_s((char*)containerId, sizeof(containerId), "%04" PRIX16 "%04" PRIX16 "%s", idVendor,
-	          idProduct, p);
+	(void)sprintf_s((char*)containerId, sizeof(containerId), "%04" PRIX16 "%04" PRIX16 "%s",
+	                idVendor, idProduct, p);
 	/* format */
-	sprintf_s(strContainerId, DEVICE_CONTAINER_STR_SIZE,
-	          "{%02" PRIx8 "%02" PRIx8 "%02" PRIx8 "%02" PRIx8 "-%02" PRIx8 "%02" PRIx8 "-%02" PRIx8
-	          "%02" PRIx8 "-%02" PRIx8 "%02" PRIx8 "-%02" PRIx8 "%02" PRIx8 "%02" PRIx8 "%02" PRIx8
-	          "%02" PRIx8 "%02" PRIx8 "}",
-	          containerId[0], containerId[1], containerId[2], containerId[3], containerId[4],
-	          containerId[5], containerId[6], containerId[7], containerId[8], containerId[9],
-	          containerId[10], containerId[11], containerId[12], containerId[13], containerId[14],
-	          containerId[15]);
+	(void)sprintf_s(strContainerId, DEVICE_CONTAINER_STR_SIZE,
+	                "{%02" PRIx8 "%02" PRIx8 "%02" PRIx8 "%02" PRIx8 "-%02" PRIx8 "%02" PRIx8
+	                "-%02" PRIx8 "%02" PRIx8 "-%02" PRIx8 "%02" PRIx8 "-%02" PRIx8 "%02" PRIx8
+	                "%02" PRIx8 "%02" PRIx8 "%02" PRIx8 "%02" PRIx8 "}",
+	                containerId[0], containerId[1], containerId[2], containerId[3], containerId[4],
+	                containerId[5], containerId[6], containerId[7], containerId[8], containerId[9],
+	                containerId[10], containerId[11], containerId[12], containerId[13],
+	                containerId[14], containerId[15]);
 	return 0;
 }
 
 static int func_instance_id_generate(IUDEVICE* pdev, char* strInstanceId, size_t len)
 {
 	char instanceId[17] = { 0 };
-	sprintf_s(instanceId, sizeof(instanceId), "\\%s", pdev->getPath(pdev));
+	(void)sprintf_s(instanceId, sizeof(instanceId), "\\%s", pdev->getPath(pdev));
 	/* format */
-	sprintf_s(strInstanceId, len,
-	          "%02" PRIx8 "%02" PRIx8 "%02" PRIx8 "%02" PRIx8 "-%02" PRIx8 "%02" PRIx8 "-%02" PRIx8
-	          "%02" PRIx8 "-%02" PRIx8 "%02" PRIx8 "-%02" PRIx8 "%02" PRIx8 "%02" PRIx8 "%02" PRIx8
-	          "%02" PRIx8 "%02" PRIx8 "",
-	          instanceId[0], instanceId[1], instanceId[2], instanceId[3], instanceId[4],
-	          instanceId[5], instanceId[6], instanceId[7], instanceId[8], instanceId[9],
-	          instanceId[10], instanceId[11], instanceId[12], instanceId[13], instanceId[14],
-	          instanceId[15]);
+	(void)sprintf_s(strInstanceId, len,
+	                "%02" PRIx8 "%02" PRIx8 "%02" PRIx8 "%02" PRIx8 "-%02" PRIx8 "%02" PRIx8
+	                "-%02" PRIx8 "%02" PRIx8 "-%02" PRIx8 "%02" PRIx8 "-%02" PRIx8 "%02" PRIx8
+	                "%02" PRIx8 "%02" PRIx8 "%02" PRIx8 "%02" PRIx8 "",
+	                instanceId[0], instanceId[1], instanceId[2], instanceId[3], instanceId[4],
+	                instanceId[5], instanceId[6], instanceId[7], instanceId[8], instanceId[9],
+	                instanceId[10], instanceId[11], instanceId[12], instanceId[13], instanceId[14],
+	                instanceId[15]);
 	return 0;
 }
 
@@ -246,11 +246,11 @@ static UINT urdbrc_send_usb_device_add(GENERIC_CHANNEL_CALLBACK* callback, IUDEV
 		const UINT16 idVendor = (UINT16)pdev->query_device_descriptor(pdev, ID_VENDOR);
 		const UINT16 idProduct = (UINT16)pdev->query_device_descriptor(pdev, ID_PRODUCT);
 		const UINT16 bcdDevice = (UINT16)pdev->query_device_descriptor(pdev, BCD_DEVICE);
-		sprintf_s(HardwareIds[1], DEVICE_HARDWARE_ID_SIZE,
-		          "USB\\VID_%04" PRIX16 "&PID_%04" PRIX16 "", idVendor, idProduct);
-		sprintf_s(HardwareIds[0], DEVICE_HARDWARE_ID_SIZE,
-		          "USB\\VID_%04" PRIX16 "&PID_%04" PRIX16 "&REV_%04" PRIX16 "", idVendor, idProduct,
-		          bcdDevice);
+		(void)sprintf_s(HardwareIds[1], DEVICE_HARDWARE_ID_SIZE,
+		                "USB\\VID_%04" PRIX16 "&PID_%04" PRIX16 "", idVendor, idProduct);
+		(void)sprintf_s(HardwareIds[0], DEVICE_HARDWARE_ID_SIZE,
+		                "USB\\VID_%04" PRIX16 "&PID_%04" PRIX16 "&REV_%04" PRIX16 "", idVendor,
+		                idProduct, bcdDevice);
 	}
 	{
 		const UINT8 bDeviceClass = (UINT8)pdev->query_device_descriptor(pdev, B_DEVICE_CLASS);
@@ -259,22 +259,22 @@ static UINT urdbrc_send_usb_device_add(GENERIC_CHANNEL_CALLBACK* callback, IUDEV
 
 		if (!(pdev->isCompositeDevice(pdev)))
 		{
-			sprintf_s(CompatibilityIds[2], DEVICE_COMPATIBILITY_ID_SIZE, "USB\\Class_%02" PRIX8 "",
-			          bDeviceClass);
-			sprintf_s(CompatibilityIds[1], DEVICE_COMPATIBILITY_ID_SIZE,
-			          "USB\\Class_%02" PRIX8 "&SubClass_%02" PRIX8 "", bDeviceClass,
-			          bDeviceSubClass);
-			sprintf_s(CompatibilityIds[0], DEVICE_COMPATIBILITY_ID_SIZE,
-			          "USB\\Class_%02" PRIX8 "&SubClass_%02" PRIX8 "&Prot_%02" PRIX8 "",
-			          bDeviceClass, bDeviceSubClass, bDeviceProtocol);
+			(void)sprintf_s(CompatibilityIds[2], DEVICE_COMPATIBILITY_ID_SIZE,
+			                "USB\\Class_%02" PRIX8 "", bDeviceClass);
+			(void)sprintf_s(CompatibilityIds[1], DEVICE_COMPATIBILITY_ID_SIZE,
+			                "USB\\Class_%02" PRIX8 "&SubClass_%02" PRIX8 "", bDeviceClass,
+			                bDeviceSubClass);
+			(void)sprintf_s(CompatibilityIds[0], DEVICE_COMPATIBILITY_ID_SIZE,
+			                "USB\\Class_%02" PRIX8 "&SubClass_%02" PRIX8 "&Prot_%02" PRIX8 "",
+			                bDeviceClass, bDeviceSubClass, bDeviceProtocol);
 		}
 		else
 		{
-			sprintf_s(CompatibilityIds[2], DEVICE_COMPATIBILITY_ID_SIZE, "USB\\DevClass_00");
-			sprintf_s(CompatibilityIds[1], DEVICE_COMPATIBILITY_ID_SIZE,
-			          "USB\\DevClass_00&SubClass_00");
-			sprintf_s(CompatibilityIds[0], DEVICE_COMPATIBILITY_ID_SIZE,
-			          "USB\\DevClass_00&SubClass_00&Prot_00");
+			(void)sprintf_s(CompatibilityIds[2], DEVICE_COMPATIBILITY_ID_SIZE, "USB\\DevClass_00");
+			(void)sprintf_s(CompatibilityIds[1], DEVICE_COMPATIBILITY_ID_SIZE,
+			                "USB\\DevClass_00&SubClass_00");
+			(void)sprintf_s(CompatibilityIds[0], DEVICE_COMPATIBILITY_ID_SIZE,
+			                "USB\\DevClass_00&SubClass_00&Prot_00");
 		}
 	}
 	func_instance_id_generate(pdev, strInstanceId, DEVICE_INSTANCE_STR_SIZE);
@@ -577,7 +577,7 @@ static UINT urbdrc_on_data_received(IWTSVirtualChannelCallback* pChannelCallback
 	if (urbdrc->udevman == NULL)
 		return error;
 
-	udevman = (IUDEVMAN*)urbdrc->udevman;
+	udevman = urbdrc->udevman;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, data, 12))
 		return ERROR_INVALID_DATA;
@@ -769,10 +769,11 @@ static BOOL urbdrc_register_udevman_addin(IWTSPlugin* pPlugin, IUDEVMAN* udevman
 static UINT urbdrc_load_udevman_addin(IWTSPlugin* pPlugin, LPCSTR name, const ADDIN_ARGV* args)
 {
 	URBDRC_PLUGIN* urbdrc = (URBDRC_PLUGIN*)pPlugin;
-	PFREERDP_URBDRC_DEVICE_ENTRY entry = NULL;
-	FREERDP_URBDRC_SERVICE_ENTRY_POINTS entryPoints;
-	entry = (PFREERDP_URBDRC_DEVICE_ENTRY)freerdp_load_channel_addin_entry(URBDRC_CHANNEL_NAME,
-	                                                                       name, NULL, 0);
+	FREERDP_URBDRC_SERVICE_ENTRY_POINTS entryPoints = { 0 };
+
+	PVIRTUALCHANNELENTRY pvce =
+	    freerdp_load_channel_addin_entry(URBDRC_CHANNEL_NAME, name, NULL, 0);
+	PFREERDP_URBDRC_DEVICE_ENTRY entry = WINPR_FUNC_PTR_CAST(pvce, PFREERDP_URBDRC_DEVICE_ENTRY);
 
 	if (!entry)
 		return ERROR_INVALID_OPERATION;
@@ -781,10 +782,11 @@ static UINT urbdrc_load_udevman_addin(IWTSPlugin* pPlugin, LPCSTR name, const AD
 	entryPoints.pRegisterUDEVMAN = urbdrc_register_udevman_addin;
 	entryPoints.args = args;
 
-	if (entry(&entryPoints) != 0)
+	const UINT error = entry(&entryPoints);
+	if (error)
 	{
 		WLog_Print(urbdrc->log, WLOG_ERROR, "%s entry returns error.", name);
-		return ERROR_INVALID_OPERATION;
+		return error;
 	}
 
 	return CHANNEL_RC_OK;
@@ -950,7 +952,7 @@ BOOL del_device(IUDEVMAN* idevman, UINT32 flags, BYTE busnum, BYTE devnum, UINT1
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-FREERDP_ENTRY_POINT(UINT urbdrc_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints))
+FREERDP_ENTRY_POINT(UINT VCAPITYPE urbdrc_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints))
 {
 	UINT status = 0;
 	const ADDIN_ARGV* args = NULL;

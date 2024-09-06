@@ -54,7 +54,7 @@ static void data_offer_offer(void* data, struct wl_data_offer* data_offer,
 		else
 		{
 			event->seat = seat;
-			snprintf(event->mime, sizeof(event->mime), "%s", offered_mime_type);
+			(void)snprintf(event->mime, sizeof(event->mime), "%s", offered_mime_type);
 		}
 	}
 }
@@ -246,9 +246,11 @@ void* UwacClipboardDataGet(UwacSeat* seat, const char* mime, size_t* size)
 
 	do
 	{
-		void* tmp = NULL;
+		if (alloc >= SIZE_MAX - 1024)
+			goto fail;
+
 		alloc += 1024;
-		tmp = xrealloc(data, alloc);
+		void* tmp = xrealloc(data, alloc);
 		if (!tmp)
 			goto fail;
 

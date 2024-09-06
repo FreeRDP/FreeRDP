@@ -19,8 +19,6 @@
 
 #include <winpr/config.h>
 
-#if defined __linux__ && !defined ANDROID
-
 #include <winpr/assert.h>
 #include <errno.h>
 #include <termios.h>
@@ -44,7 +42,7 @@ BOOL _comm_set_permissive(HANDLE hDevice, BOOL permissive)
 }
 
 /* Computes VTIME in deciseconds from Ti in milliseconds */
-static UCHAR _vtime(ULONG Ti)
+static UCHAR svtime(ULONG Ti)
 {
 	/* FIXME: look for an equivalent math function otherwise let
 	 * do the compiler do the optimization */
@@ -171,7 +169,7 @@ BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 	if ((pTimeouts->ReadIntervalTimeout > 0) && (pTimeouts->ReadIntervalTimeout < MAXULONG))
 	{
 		/* Ti */
-		vtime = _vtime(pTimeouts->ReadIntervalTimeout);
+		vtime = svtime(pTimeouts->ReadIntervalTimeout);
 	}
 
 	/* TMAX */
@@ -545,5 +543,3 @@ return_false:
 	LeaveCriticalSection(&pComm->WriteLock);
 	return FALSE;
 }
-
-#endif /* __linux__ */

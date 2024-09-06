@@ -64,7 +64,7 @@ static char* ensure_lowercase(char* str, size_t length)
 static const char* freerdp_certificate_data_hash_(const char* hostname, UINT16 port, char* name,
                                                   size_t length)
 {
-	_snprintf(name, length, "%s_%" PRIu16 ".pem", hostname, port);
+	(void)_snprintf(name, length, "%s_%" PRIu16 ".pem", hostname, port);
 	return ensure_lowercase(name, length);
 }
 

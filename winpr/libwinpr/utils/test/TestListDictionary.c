@@ -135,7 +135,7 @@ int TestListDictionary(int argc, char* argv[])
 
 	value = ListDictionary_Take_Head(list);
 	count = ListDictionary_Count(list);
-	if (strncmp(value, val1, 4) || count != 1)
+	if ((strncmp(value, val1, 4) != 0) || (count != 1))
 	{
 		printf("ListDictionary_Remove_Head: Expected : %s, Actual: %s Count: %" PRIuz "\n", val1,
 		       value, count);
@@ -144,7 +144,7 @@ int TestListDictionary(int argc, char* argv[])
 
 	value = ListDictionary_Take_Head(list);
 	count = ListDictionary_Count(list);
-	if (strncmp(value, val3, 4) || count != 0)
+	if ((strncmp(value, val3, 4) != 0) || (count != 0))
 	{
 		printf("ListDictionary_Remove_Head: Expected : %s, Actual: %s Count: %" PRIuz "\n", val3,
 		       value, count);

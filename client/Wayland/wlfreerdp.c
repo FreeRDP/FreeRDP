@@ -582,7 +582,7 @@ disconnect:
 
 static BOOL wlf_client_global_init(void)
 {
-	setlocale(LC_ALL, "");
+	(void)setlocale(LC_ALL, "");
 
 	if (freerdp_handle_signals() != 0)
 		return FALSE;
@@ -754,8 +754,8 @@ BOOL wlf_copy_image(const void* src, size_t srcStride, size_t srcWidth, size_t s
 	}
 	else
 	{
-		const size_t baseSrcOffset = area->top * srcStride + area->left * 4;
-		const size_t baseDstOffset = area->top * dstStride + area->left * 4;
+		const size_t baseSrcOffset = 1ULL * area->top * srcStride + 4ULL * area->left;
+		const size_t baseDstOffset = 1ULL * area->top * dstStride + 4ULL * area->left;
 		const size_t width = MIN((size_t)area->right - area->left, dstWidth - area->left);
 		const size_t height = MIN((size_t)area->bottom - area->top, dstHeight - area->top);
 		const BYTE* psrc = (const BYTE*)src;
@@ -777,10 +777,7 @@ BOOL wlf_copy_image(const void* src, size_t srcStride, size_t srcWidth, size_t s
 BOOL wlf_scale_coordinates(rdpContext* context, UINT32* px, UINT32* py, BOOL fromLocalToRDP)
 {
 	wlfContext* wlf = (wlfContext*)context;
-	rdpGdi* gdi = NULL;
-	UwacSize geometry;
-	double sx = NAN;
-	double sy = NAN;
+	UwacSize geometry = { 0 };
 
 	if (!context || !px || !py || !context->gdi)
 		return FALSE;
@@ -788,23 +785,23 @@ BOOL wlf_scale_coordinates(rdpContext* context, UINT32* px, UINT32* py, BOOL fro
 	if (!freerdp_settings_get_bool(context->settings, FreeRDP_SmartSizing))
 		return TRUE;
 
-	gdi = context->gdi;
+	rdpGdi* gdi = context->gdi;
 
 	if (UwacWindowGetDrawingBufferGeometry(wlf->window, &geometry, NULL) != UWAC_SUCCESS)
 		return FALSE;
 
-	sx = geometry.width / (double)gdi->width;
-	sy = geometry.height / (double)gdi->height;
+	const double sx = 1.0 * geometry.width / (double)gdi->width;
+	const double sy = 1.0 * geometry.height / (double)gdi->height;
 
 	if (!fromLocalToRDP)
 	{
-		*px *= sx;
-		*py *= sy;
+		*px *= (UINT32)lround(sx);
+		*py *= (UINT32)lround(sy);
 	}
 	else
 	{
-		*px /= sx;
-		*py /= sy;
+		*px /= (UINT32)lround(sx);
+		*py /= (UINT32)lround(sy);
 	}
 
 	return TRUE;

@@ -361,7 +361,7 @@ const char* rpc_error_to_string(UINT32 code)
 		const RPC_FAULT_CODE* const current = &RPC_FAULT_CODES[index];
 		if (current->code == code)
 		{
-			sprintf_s(buffer, ARRAYSIZE(buffer), "%s", current->name);
+			(void)sprintf_s(buffer, ARRAYSIZE(buffer), "%s", current->name);
 			goto out;
 		}
 	}
@@ -371,7 +371,7 @@ const char* rpc_error_to_string(UINT32 code)
 		const RPC_FAULT_CODE* const current = &RPC_TSG_FAULT_CODES[index];
 		if (current->code == code)
 		{
-			sprintf_s(buffer, ARRAYSIZE(buffer), "%s", current->name);
+			(void)sprintf_s(buffer, ARRAYSIZE(buffer), "%s", current->name);
 			goto out;
 		}
 	}
@@ -381,12 +381,12 @@ const char* rpc_error_to_string(UINT32 code)
 		const RPC_FAULT_CODE* const current = &RPC_TSG_FAULT_CODES[index];
 		if (current->code == HRESULT_CODE(code))
 		{
-			sprintf_s(buffer, ARRAYSIZE(buffer), "%s", current->name);
+			(void)sprintf_s(buffer, ARRAYSIZE(buffer), "%s", current->name);
 			goto out;
 		}
 	}
 
-	sprintf_s(buffer, ARRAYSIZE(buffer), "%s [0x%08" PRIX32 "]", "UNKNOWN", code);
+	(void)sprintf_s(buffer, ARRAYSIZE(buffer), "%s [0x%08" PRIX32 "]", "UNKNOWN", code);
 out:
 	return buffer;
 }

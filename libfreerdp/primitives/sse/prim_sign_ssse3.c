@@ -33,8 +33,8 @@ static primitives_t* generic = NULL;
 static pstatus_t ssse3_sign_16s(const INT16* WINPR_RESTRICT pSrc, INT16* WINPR_RESTRICT pDst,
                                 UINT32 len)
 {
-	const INT16* sptr = (const INT16*)pSrc;
-	INT16* dptr = (INT16*)pDst;
+	const INT16* sptr = pSrc;
+	INT16* dptr = pDst;
 	size_t count = 0;
 
 	if (len < 16)

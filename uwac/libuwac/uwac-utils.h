@@ -25,18 +25,9 @@
 
 #include <stdlib.h>
 
-#define min(a, b)               \
-	({                          \
-		__typeof__(a) _a = (a); \
-		__typeof__(b) _b = (b); \
-		_a < _b ? _a : _b;      \
-	})
+#define min(a, b) (a) < (b) ? (a) : (b)
 
-#define container_of(ptr, type, member)                  \
-	({                                                   \
-		__typeof__(((type*)0)->member)* __mptr = (ptr);  \
-		(type*)((char*)__mptr - offsetof(type, member)); \
-	})
+#define container_of(ptr, type, member) (type*)((char*)(ptr)-offsetof(type, member))
 
 #define ARRAY_LENGTH(a) (sizeof(a) / sizeof(a)[0])
 

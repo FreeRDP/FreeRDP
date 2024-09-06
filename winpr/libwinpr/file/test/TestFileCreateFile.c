@@ -21,11 +21,11 @@ int TestFileCreateFile(int argc, char* argv[])
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
 	GetSystemTime(&systemTime);
-	sprintf_s(sname, sizeof(sname),
-	          "CreateFile-%04" PRIu16 "%02" PRIu16 "%02" PRIu16 "%02" PRIu16 "%02" PRIu16
-	          "%02" PRIu16 "%04" PRIu16,
-	          systemTime.wYear, systemTime.wMonth, systemTime.wDay, systemTime.wHour,
-	          systemTime.wMinute, systemTime.wSecond, systemTime.wMilliseconds);
+	(void)sprintf_s(sname, sizeof(sname),
+	                "CreateFile-%04" PRIu16 "%02" PRIu16 "%02" PRIu16 "%02" PRIu16 "%02" PRIu16
+	                "%02" PRIu16 "%04" PRIu16,
+	                systemTime.wYear, systemTime.wMonth, systemTime.wDay, systemTime.wHour,
+	                systemTime.wMinute, systemTime.wSecond, systemTime.wMilliseconds);
 	name = GetKnownSubPath(KNOWN_PATH_TEMP, sname);
 
 	if (!name)
@@ -77,7 +77,7 @@ int TestFileCreateFile(int argc, char* argv[])
 	if (written != sizeof(cmp))
 		rc = -1;
 
-	if (memcmp(buffer, cmp, sizeof(buffer)))
+	if (memcmp(buffer, cmp, sizeof(buffer)) != 0)
 		rc = -1;
 
 	if (!CloseHandle(handle))

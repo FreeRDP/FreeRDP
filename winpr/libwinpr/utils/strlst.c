@@ -67,8 +67,8 @@ void string_list_print(FILE* out, const char* const* string_list)
 {
 	for (int j = 0; string_list[j]; j++)
 	{
-		fprintf(out, "[%2d]: %s\n", j, string_list[j]);
+		(void)fprintf(out, "[%2d]: %s\n", j, string_list[j]);
 	}
 
-	fflush(out);
+	(void)fflush(out);
 }

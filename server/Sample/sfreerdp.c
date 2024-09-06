@@ -104,7 +104,7 @@ static void test_peer_context_free(freerdp_peer* client, rdpContext* ctx)
 		rdpsnd_server_context_free(context->rdpsnd);
 		encomsp_server_context_free(context->encomsp);
 
-		WTSCloseServer((HANDLE)context->vcm);
+		WTSCloseServer(context->vcm);
 	}
 }
 
@@ -362,10 +362,10 @@ static BOOL test_peer_load_icon(freerdp_peer* client)
 		goto out_fail;
 
 	/* background with same size, which will be used to erase the icon from old position */
-	if (!(context->bg_data = calloc(context->image->height, context->image->width * 3)))
+	if (!(context->bg_data = calloc(context->image->height, 3ULL * context->image->width)))
 		goto out_fail;
 
-	memset(context->bg_data, 0xA0, context->image->height * context->image->width * 3ull);
+	memset(context->bg_data, 0xA0, 3ULL * context->image->height * context->image->width);
 	return TRUE;
 out_fail:
 	context->bg_data = NULL;
@@ -1327,16 +1327,16 @@ static void print_entry(FILE* fp, WINPR_FORMAT_ARG const char* fmt, const char* 
 {
 	char buffer[32] = { 0 };
 	strncpy(buffer, what, MIN(size, sizeof(buffer) - 1));
-	fprintf(fp, fmt, buffer);
+	(void)fprintf(fp, fmt, buffer);
 }
 
 static WINPR_NORETURN(void usage(const char* app, const char* invalid))
 {
 	FILE* fp = stdout;
 
-	fprintf(fp, "Invalid argument '%s'\n", invalid);
-	fprintf(fp, "Usage: %s <arg>[ <arg> ...]\n", app);
-	fprintf(fp, "Arguments:\n");
+	(void)fprintf(fp, "Invalid argument '%s'\n", invalid);
+	(void)fprintf(fp, "Usage: %s <arg>[ <arg> ...]\n", app);
+	(void)fprintf(fp, "Arguments:\n");
 	print_entry(fp, "\t%s<pcap file>\n", options.spcap, sizeof(options.spcap));
 	print_entry(fp, "\t%s<cert file>\n", options.scert, sizeof(options.scert));
 	print_entry(fp, "\t%s<key file>\n", options.skey, sizeof(options.skey));
@@ -1420,7 +1420,7 @@ int main(int argc, char* argv[])
 		goto fail;
 
 	/* Open the server socket and start listening. */
-	sprintf_s(name, sizeof(name), "tfreerdp-server.%ld", port);
+	(void)sprintf_s(name, sizeof(name), "tfreerdp-server.%ld", port);
 	file = GetKnownSubPath(KNOWN_PATH_TEMP, name);
 
 	if (!file)

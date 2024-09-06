@@ -798,13 +798,13 @@ int WSAIoctl(SOCKET s, DWORD dwIoControlCode, LPVOID lpvInBuffer, DWORD cbInBuff
 	size_t offset = 0;
 	size_t ifreq_len = 0;
 	struct ifreq* ifreq = NULL;
-	struct ifconf ifconf;
-	char address[128];
-	char broadcast[128];
-	char netmask[128];
-	char buffer[4096];
-	int numInterfaces = 0;
-	int maxNumInterfaces = 0;
+	struct ifconf ifconf = { 0 };
+	char address[128] = { 0 };
+	char broadcast[128] = { 0 };
+	char netmask[128] = { 0 };
+	char buffer[4096] = { 0 };
+	size_t numInterfaces = 0;
+	size_t maxNumInterfaces = 0;
 	INTERFACE_INFO* pInterface = NULL;
 	INTERFACE_INFO* pInterfaces = NULL;
 	struct sockaddr_in* pAddress = NULL;
@@ -1007,7 +1007,7 @@ SOCKET _accept(SOCKET s, struct sockaddr* addr, int* addrlen)
 	int fd = (int)s;
 	socklen_t s_addrlen = (socklen_t)*addrlen;
 	status = accept(fd, addr, &s_addrlen);
-	*addrlen = (socklen_t)s_addrlen;
+	*addrlen = (int)s_addrlen;
 	return status;
 }
 
@@ -1094,7 +1094,7 @@ int _getsockopt(SOCKET s, int level, int optname, char* optval, int* optlen)
 	int fd = (int)s;
 	socklen_t s_optlen = (socklen_t)*optlen;
 	status = getsockopt(fd, level, optname, (void*)optval, &s_optlen);
-	*optlen = (socklen_t)s_optlen;
+	*optlen = (int)s_optlen;
 	return status;
 }
 

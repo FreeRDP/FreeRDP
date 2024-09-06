@@ -72,7 +72,7 @@ struct WinPrAsn1Encoder
 	size_t containerCapacity;
 };
 
-#define WINPR_ASSERT_VALID_TAG(t) WINPR_ASSERT(t < 64)
+#define WINPR_ASSERT_VALID_TAG(t) WINPR_ASSERT((t) < 64)
 
 void WinPrAsn1FreeOID(WinPrAsn1_OID* poid)
 {
@@ -1099,8 +1099,7 @@ size_t WinPrAsn1DecReadOID(WinPrAsn1Decoder* dec, WinPrAsn1_OID* target, BOOL al
 size_t WinPrAsn1DecReadOctetString(WinPrAsn1Decoder* dec, WinPrAsn1_OctetString* target,
                                    BOOL allocate)
 {
-	return WinPrAsn1DecReadMemoryChunkLike(dec, ER_TAG_OCTET_STRING, (WinPrAsn1_OctetString*)target,
-	                                       allocate);
+	return WinPrAsn1DecReadMemoryChunkLike(dec, ER_TAG_OCTET_STRING, target, allocate);
 }
 
 size_t WinPrAsn1DecReadIA5String(WinPrAsn1Decoder* dec, WinPrAsn1_IA5STRING* target)

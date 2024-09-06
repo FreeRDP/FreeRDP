@@ -527,7 +527,13 @@ static void* thread_launcher(void* arg)
 
 	if (!(fkt = thread->lpStartAddress))
 	{
-		WLog_ERR(TAG, "Thread function argument is %p", (void*)fkt);
+		union
+		{
+			LPTHREAD_START_ROUTINE fkt;
+			void* pv;
+		} cnv;
+		cnv.fkt = fkt;
+		WLog_ERR(TAG, "Thread function argument is %p", cnv.pv);
 		goto exit;
 	}
 

@@ -162,7 +162,7 @@ BOOL ClipboardEmpty(wClipboard* clipboard)
 
 	if (clipboard->data)
 	{
-		free((void*)clipboard->data);
+		free(clipboard->data);
 		clipboard->data = NULL;
 	}
 
@@ -449,7 +449,7 @@ void* ClipboardGetData(wClipboard* clipboard, UINT32 formatId, UINT32* pSize)
 		return NULL;
 
 	SrcSize = clipboard->size;
-	pSrcData = (void*)clipboard->data;
+	pSrcData = clipboard->data;
 
 	if (formatId == format->formatId)
 	{
@@ -490,7 +490,7 @@ BOOL ClipboardSetData(wClipboard* clipboard, UINT32 formatId, const void* data, 
 	if (!format)
 		return FALSE;
 
-	free((void*)clipboard->data);
+	free(clipboard->data);
 	clipboard->data = malloc(size);
 
 	if (!clipboard->data)
@@ -587,7 +587,7 @@ void ClipboardDestroy(wClipboard* clipboard)
 
 	ClipboardUninitFormats(clipboard);
 
-	free((void*)clipboard->data);
+	free(clipboard->data);
 	clipboard->data = NULL;
 	clipboard->size = 0;
 	clipboard->numFormats = 0;
@@ -625,7 +625,7 @@ char* parse_uri_to_local_file(const char* uri, size_t uri_len)
 
 	WLog_VRB(TAG, "processing URI: %.*s", uri_len, uri);
 
-	if ((uri_len <= prefixLen) || strncmp(uri, prefix, prefixLen))
+	if ((uri_len <= prefixLen) || strncmp(uri, prefix, prefixLen) != 0)
 	{
 		WLog_ERR(TAG, "non-'file:' URI schemes are not supported");
 		return NULL;
@@ -675,7 +675,7 @@ char* parse_uri_to_local_file(const char* uri, size_t uri_len)
 			if (is_dos_drive(&uri[prefixLen + 1], uri_len - prefixLen - 1))
 			{
 				// Dos and Windows file URI
-				localName = (const char*)(uri + prefixLen + 1);
+				localName = (uri + prefixLen + 1);
 				localLen = uri_len - prefixLen - 1;
 			}
 			else
@@ -692,7 +692,7 @@ char* parse_uri_to_local_file(const char* uri, size_t uri_len)
 		 *   "file:///path/to/file"
 		 */
 		if ((uri_len < prefixTraditionalLen) ||
-		    strncmp(uri, prefixTraditional, prefixTraditionalLen))
+		    strncmp(uri, prefixTraditional, prefixTraditionalLen) != 0)
 		{
 			WLog_ERR(TAG, "non-'file:' URI schemes are not supported");
 			return NULL;

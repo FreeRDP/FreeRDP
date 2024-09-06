@@ -22,6 +22,7 @@
 #include <cassert>
 
 #include <string>
+#include <utility>
 
 #include <SDL.h>
 #include <SDL_ttf.h>
@@ -39,10 +40,9 @@ static const SDL_Color labelfontcolor = { 0xd1, 0xcf, 0xcd, 0xff };
 static const Uint32 vpadding = 5;
 static const Uint32 hpadding = 10;
 
-SdlInputWidget::SdlInputWidget(SDL_Renderer* renderer, const std::string& label,
-                               const std::string& initial, Uint32 flags, size_t offset,
-                               size_t width, size_t height)
-    : _flags(flags), _text(initial), _text_label(label),
+SdlInputWidget::SdlInputWidget(SDL_Renderer* renderer, std::string label, std::string initial,
+                               Uint32 flags, size_t offset, size_t width, size_t height)
+    : _flags(flags), _text(std::move(initial)), _text_label(std::move(label)),
       _label(renderer,
              { 0, static_cast<int>(offset * (height + vpadding)), static_cast<int>(width),
                static_cast<int>(height) },
@@ -56,7 +56,7 @@ SdlInputWidget::SdlInputWidget(SDL_Renderer* renderer, const std::string& label,
 }
 
 SdlInputWidget::SdlInputWidget(SdlInputWidget&& other) noexcept
-    : _flags(std::move(other._flags)), _text(std::move(other._text)),
+    : _flags(other._flags), _text(std::move(other._text)),
       _text_label(std::move(other._text_label)), _label(std::move(other._label)),
       _input(std::move(other._input)), _highlight(other._highlight), _mouseover(other._mouseover)
 {
@@ -134,13 +134,13 @@ bool SdlInputWidget::remove_str(SDL_Renderer* renderer, size_t count)
 	return update_input(renderer);
 }
 
-bool SdlInputWidget::append_str(SDL_Renderer* renderer, const std::string& str)
+bool SdlInputWidget::append_str(SDL_Renderer* renderer, const std::string& text)
 {
 	assert(renderer);
 	if (readonly())
 		return true;
 
-	_text.append(str);
+	_text.append(text);
 	if (!resize_input(_text.size()))
 		return false;
 	return update_input(renderer);

@@ -405,7 +405,7 @@ static BOOL rdpsnd_pulse_open_stream(rdpsndDevicePlugin* device)
 	if (pulse->latency > 0)
 	{
 		buffer_attr.maxlength = UINT32_MAX;
-		buffer_attr.tlength = pa_usec_to_bytes(pulse->latency * 1000, &pulse->sample_spec);
+		buffer_attr.tlength = pa_usec_to_bytes(1000ULL * pulse->latency, &pulse->sample_spec);
 		buffer_attr.prebuf = UINT32_MAX;
 		buffer_attr.minreq = UINT32_MAX;
 		buffer_attr.fragsize = UINT32_MAX;
@@ -696,7 +696,7 @@ static UINT rdpsnd_pulse_parse_addin_args(rdpsndDevicePlugin* device, const ADDI
 			if ((errno != 0) || (val > INT32_MAX))
 				return ERROR_INVALID_DATA;
 
-			pulse->reconnect_delay_seconds = val;
+			pulse->reconnect_delay_seconds = (time_t)val;
 		}
 		CommandLineSwitchEnd(arg)
 	} while ((arg = CommandLineFindNextArgumentA(arg)) != NULL);
@@ -704,7 +704,7 @@ static UINT rdpsnd_pulse_parse_addin_args(rdpsndDevicePlugin* device, const ADDI
 	return CHANNEL_RC_OK;
 }
 
-FREERDP_ENTRY_POINT(UINT pulse_freerdp_rdpsnd_client_subsystem_entry(
+FREERDP_ENTRY_POINT(UINT VCAPITYPE pulse_freerdp_rdpsnd_client_subsystem_entry(
     PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints))
 {
 	const ADDIN_ARGV* args = NULL;

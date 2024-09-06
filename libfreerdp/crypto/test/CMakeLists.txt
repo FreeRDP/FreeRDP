@@ -2,6 +2,8 @@
 set(MODULE_NAME "TestFreeRDPCrypto")
 set(MODULE_PREFIX "TEST_FREERDP_CRYPTO")
 
+disable_warnings_for_directory(${CMAKE_CURRENT_BINARY_DIR})
+
 set(${MODULE_PREFIX}_DRIVER ${MODULE_NAME}.c)
 
 set(${MODULE_PREFIX}_TESTS
@@ -13,7 +15,7 @@ create_test_sourcelist(${MODULE_PREFIX}_SRCS
 	${${MODULE_PREFIX}_DRIVER}
 	${${MODULE_PREFIX}_TESTS})
 
-include_directories(${OPENSSL_INCLUDE_DIR})
+include_directories(SYSTEM ${OPENSSL_INCLUDE_DIR})
 
 add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 

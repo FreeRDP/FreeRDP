@@ -39,15 +39,13 @@ static pstatus_t sse3_add_16s_inplace(INT16* WINPR_RESTRICT pSrcDst1,
                                       INT16* WINPR_RESTRICT pSrcDst2, UINT32 len)
 {
 	const int shifts = 2;
-	UINT32 offBeatMask;
 	INT16* dptr1 = pSrcDst1;
 	INT16* dptr2 = pSrcDst2;
 
-	size_t count;
 	if (len < 16) /* pointless if too small */
 		return generic->add_16s_inplace(pSrcDst1, pSrcDst2, len);
 
-	offBeatMask = (1 << (shifts - 1)) - 1;
+	UINT32 offBeatMask = (1 << (shifts - 1)) - 1;
 	if ((ULONG_PTR)pSrcDst1 & offBeatMask)
 	{
 		/* Incrementing the pointer skips over 16-byte boundary. */
@@ -65,7 +63,7 @@ static pstatus_t sse3_add_16s_inplace(INT16* WINPR_RESTRICT pSrcDst1,
 		dptr2 += add;
 	}
 	/* Use 4 128-bit SSE registers. */
-	count = len >> (7 - shifts);
+	size_t count = len >> (7 - shifts);
 	len -= count << (7 - shifts);
 	if (((const ULONG_PTR)dptr1 & 0x0f) || ((const ULONG_PTR)dptr2 & 0x0f))
 	{

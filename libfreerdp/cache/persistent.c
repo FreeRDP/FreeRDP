@@ -148,7 +148,10 @@ static int persistent_cache_read_entry_v3(rdpPersistentCache* persistent,
 	entry->key64 = entry3.key64;
 	entry->width = entry3.width;
 	entry->height = entry3.height;
-	entry->size = 4ul * entry3.width * entry3.height;
+	const UINT64 size = 4ull * entry3.width * entry3.height;
+	if (size > UINT32_MAX)
+		return -1;
+	entry->size = size;
 	entry->flags = 0;
 
 	if (entry->size > persistent->bmpSize)
@@ -204,7 +207,7 @@ static int persistent_cache_read_v3(rdpPersistentCache* persistent)
 		if (fread((void*)&entry, sizeof(entry), 1, persistent->fp) != 1)
 			break;
 
-		if (fseek(persistent->fp, (entry.width * entry.height * 4), SEEK_CUR) != 0)
+		if (_fseeki64(persistent->fp, (4LL * entry.width * entry.height), SEEK_CUR) != 0)
 			break;
 
 		persistent->count++;
@@ -260,7 +263,7 @@ static int persistent_cache_open_read(rdpPersistentCache* persistent)
 	else
 		persistent->version = 2;
 
-	fseek(persistent->fp, 0, SEEK_SET);
+	(void)fseek(persistent->fp, 0, SEEK_SET);
 
 	if (persistent->version == 3)
 	{
@@ -278,7 +281,7 @@ static int persistent_cache_open_read(rdpPersistentCache* persistent)
 		offset = 0;
 	}
 
-	fseek(persistent->fp, offset, SEEK_SET);
+	(void)fseek(persistent->fp, offset, SEEK_SET);
 
 	return status;
 }
@@ -333,7 +336,7 @@ int persistent_cache_close(rdpPersistentCache* persistent)
 	WINPR_ASSERT(persistent);
 	if (persistent->fp)
 	{
-		fclose(persistent->fp);
+		(void)fclose(persistent->fp);
 		persistent->fp = NULL;
 	}
 

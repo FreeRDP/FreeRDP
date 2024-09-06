@@ -223,7 +223,7 @@ static BOOL rdpdr_load_drive(rdpdrPlugin* rdpdr, const char* name, const char* p
 
 fail:
 	freerdp_device_free(drive.device);
-	return rc;
+	return rc == CHANNEL_RC_OK;
 }
 
 /**
@@ -738,11 +738,11 @@ static BOOL isAutomountLocation(const char* path)
 		size_t length = 0;
 
 		if (strstr(location, "%lu"))
-			snprintf(buffer, sizeof(buffer), location, (unsigned long)uid);
+			(void)snprintf(buffer, sizeof(buffer), location, (unsigned long)uid);
 		else if (strstr(location, "%s"))
-			snprintf(buffer, sizeof(buffer), location, uname);
+			(void)snprintf(buffer, sizeof(buffer), location, uname);
 		else
-			snprintf(buffer, sizeof(buffer), "%s", location);
+			(void)snprintf(buffer, sizeof(buffer), "%s", location);
 
 		length = strnlen(buffer, sizeof(buffer));
 
@@ -834,9 +834,25 @@ static UINT handle_platform_mounts_bsd(wLog* log, hotplug_dev* dev_array, size_t
 
 #if defined(__LINUX__) || defined(__linux__)
 #include <mntent.h>
+static struct mntent* getmntent_x(FILE* f, struct mntent* buffer, char* pathbuffer,
+                                  size_t pathbuffersize)
+{
+#if defined(FREERDP_HAVE_GETMNTENT_R)
+	WINPR_ASSERT(pathbuffersize <= INT32_MAX);
+	return getmntent_r(f, buffer, pathbuffer, (int)pathbuffersize);
+#else
+	(void)buffer;
+	(void)pathbuffer;
+	(void)pathbuffersize;
+	return getmntent(f);
+#endif
+}
+
 static UINT handle_platform_mounts_linux(wLog* log, hotplug_dev* dev_array, size_t* size)
 {
 	FILE* f = NULL;
+	struct mntent mnt = { 0 };
+	char pathbuffer[PATH_MAX] = { 0 };
 	struct mntent* ent = NULL;
 	f = winpr_fopen("/proc/mounts", "r");
 	if (f == NULL)
@@ -844,11 +860,11 @@ static UINT handle_platform_mounts_linux(wLog* log, hotplug_dev* dev_array, size
 		WLog_Print(log, WLOG_ERROR, "fopen failed!");
 		return ERROR_OPEN_FAILED;
 	}
-	while ((ent = getmntent(f)) != NULL)
+	while ((ent = getmntent_x(f, &mnt, pathbuffer, sizeof(pathbuffer))) != NULL)
 	{
 		handle_mountpoint(dev_array, size, ent->mnt_dir);
 	}
-	fclose(f);
+	(void)fclose(f);
 	return ERROR_SUCCESS;
 }
 #endif
@@ -1249,7 +1265,7 @@ static UINT rdpdr_send_client_announce_reply(rdpdrPlugin* rdpdr)
 	Stream_Write_UINT16(s, PAKID_CORE_CLIENTID_CONFIRM); /* PacketId (2 bytes) */
 	Stream_Write_UINT16(s, rdpdr->clientVersionMajor);
 	Stream_Write_UINT16(s, rdpdr->clientVersionMinor);
-	Stream_Write_UINT32(s, (UINT32)rdpdr->clientID);
+	Stream_Write_UINT32(s, rdpdr->clientID);
 	return rdpdr_send(rdpdr, s);
 }
 
@@ -1296,7 +1312,7 @@ static UINT rdpdr_send_client_name_request(rdpdrPlugin* rdpdr)
 	Stream_Write_UINT32(s, 0);                      /* codePage, must be set to zero */
 	Stream_Write_UINT32(s,
 	                    (UINT32)computerNameLenW); /* computerNameLen, including null terminator */
-	Stream_Write(s, computerNameW, (size_t)computerNameLenW);
+	Stream_Write(s, computerNameW, computerNameLenW);
 	free(computerNameW);
 	return rdpdr_send(rdpdr, s);
 }
@@ -1859,7 +1875,7 @@ static UINT rdpdr_process_receive(rdpdrPlugin* rdpdr, wStream* s)
 UINT rdpdr_send(rdpdrPlugin* rdpdr, wStream* s)
 {
 	UINT status = 0;
-	rdpdrPlugin* plugin = (rdpdrPlugin*)rdpdr;
+	rdpdrPlugin* plugin = rdpdr;
 
 	if (!s)
 	{
@@ -2014,8 +2030,6 @@ static VOID VCAPITYPE rdpdr_virtual_channel_open_event_ex(LPVOID lpUserParam, DW
 	if (error && rdpdr && rdpdr->rdpcontext)
 		setChannelError(rdpdr->rdpcontext, error,
 		                "rdpdr_virtual_channel_open_event_ex reported an error");
-
-	return;
 }
 
 static DWORD WINAPI rdpdr_virtual_channel_client_thread(LPVOID arg)
@@ -2311,7 +2325,8 @@ FREERDP_ENTRY_POINT(BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS p
 
 	rdpdr->channelDef.options =
 	    CHANNEL_OPTION_INITIALIZED | CHANNEL_OPTION_ENCRYPT_RDP | CHANNEL_OPTION_COMPRESS_RDP;
-	sprintf_s(rdpdr->channelDef.name, ARRAYSIZE(rdpdr->channelDef.name), RDPDR_SVC_CHANNEL_NAME);
+	(void)sprintf_s(rdpdr->channelDef.name, ARRAYSIZE(rdpdr->channelDef.name),
+	                RDPDR_SVC_CHANNEL_NAME);
 	rdpdr->sequenceId = 0;
 	pEntryPointsEx = (CHANNEL_ENTRY_POINTS_FREERDP_EX*)pEntryPoints;
 

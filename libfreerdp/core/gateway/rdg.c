@@ -107,7 +107,7 @@ typedef struct
 {
 	TRANSFER_ENCODING httpTransferEncoding;
 	BOOL isWebsocketTransport;
-	union _context
+	union context
 	{
 		http_encoding_chunked_context chunked;
 		websocket_context websocket;
@@ -216,7 +216,7 @@ static const char* flags_to_string(UINT32 flags, const t_flag_mapping* map, size
 			winpr_str_append(cur->name, buffer, sizeof(buffer), "|");
 	}
 
-	sprintf_s(fields, ARRAYSIZE(fields), " [%04" PRIx32 "]", flags);
+	(void)sprintf_s(fields, ARRAYSIZE(fields), " [%04" PRIx32 "]", flags);
 	winpr_str_append(fields, buffer, sizeof(buffer), NULL);
 	return buffer;
 }
@@ -294,7 +294,7 @@ static BOOL rdg_write_chunked(BIO* bio, wStream* sPacket)
 	int status = 0;
 	wStream* sChunk = NULL;
 	char chunkSize[11];
-	sprintf_s(chunkSize, sizeof(chunkSize), "%" PRIXz "\r\n", Stream_Length(sPacket));
+	(void)sprintf_s(chunkSize, sizeof(chunkSize), "%" PRIXz "\r\n", Stream_Length(sPacket));
 	sChunk = Stream_New(NULL, strnlen(chunkSize, sizeof(chunkSize)) + Stream_Length(sPacket) + 2);
 
 	if (!sChunk)
@@ -531,7 +531,7 @@ static BOOL rdg_send_tunnel_request(rdpRdg* rdg)
 	if (PAACookie)
 	{
 		Stream_Write_UINT16(s, (UINT16)PAACookieLen * sizeof(WCHAR)); /* PAA cookie string length */
-		Stream_Write_UTF16_String(s, PAACookie, (size_t)PAACookieLen);
+		Stream_Write_UTF16_String(s, PAACookie, PAACookieLen);
 	}
 
 	Stream_SealLength(s);
@@ -578,7 +578,7 @@ static BOOL rdg_send_tunnel_authorization(rdpRdg* rdg)
 	Stream_Write_UINT32(s, packetSize);                            /* PacketLength (4 bytes) */
 	Stream_Write_UINT16(s, 0);                                     /* FieldsPresent (2 bytes) */
 	Stream_Write_UINT16(s, (UINT16)clientNameLen * sizeof(WCHAR)); /* Client name string length */
-	Stream_Write_UTF16_String(s, clientName, (size_t)clientNameLen);
+	Stream_Write_UTF16_String(s, clientName, clientNameLen);
 	Stream_SealLength(s);
 	status = rdg_write_packet(rdg, s);
 	Stream_Free(s, TRUE);
@@ -622,7 +622,7 @@ static BOOL rdg_send_channel_create(rdpRdg* rdg)
 	                    (UINT16)rdg->context->settings->ServerPort); /* Resource port (2 bytes) */
 	Stream_Write_UINT16(s, 3);                                 /* Protocol number (2 bytes) */
 	Stream_Write_UINT16(s, (UINT16)serverNameLen * sizeof(WCHAR));
-	Stream_Write_UTF16_String(s, serverName, (size_t)serverNameLen);
+	Stream_Write_UTF16_String(s, serverName, serverNameLen);
 	Stream_SealLength(s);
 	status = rdg_write_packet(rdg, s);
 fail:
@@ -1188,7 +1188,7 @@ static BOOL rdg_auth_init(rdpRdg* rdg, rdpTls* tls, TCHAR* authPkg)
 	if (!credssp_auth_init(rdg->auth, authPkg, tls->Bindings))
 		return FALSE;
 
-	bool doSCLogon = freerdp_settings_get_bool(settings, FreeRDP_SmartcardLogon);
+	BOOL doSCLogon = freerdp_settings_get_bool(settings, FreeRDP_SmartcardLogon);
 	if (doSCLogon)
 	{
 		if (!smartcard_getCert(context, &rdg->smartcard, TRUE))
@@ -1678,7 +1678,7 @@ static int rdg_write_websocket_data_packet(rdpRdg* rdg, const BYTE* buf, int isi
 	/* mask as much as possible with 32bit access */
 	for (streamPos = 0; streamPos + 4 <= isize; streamPos += 4)
 	{
-		uint32_t masked = *((const uint32_t*)((const BYTE*)buf + streamPos)) ^ maskingKey;
+		uint32_t masked = *((const uint32_t*)(buf + streamPos)) ^ maskingKey;
 		Stream_Write_UINT32(sWS, masked);
 	}
 
@@ -1686,7 +1686,7 @@ static int rdg_write_websocket_data_packet(rdpRdg* rdg, const BYTE* buf, int isi
 	for (; streamPos < isize; streamPos++)
 	{
 		BYTE* partialMask = (BYTE*)(&maskingKey) + streamPos % 4;
-		BYTE masked = *((const BYTE*)((const BYTE*)buf + streamPos)) ^ *partialMask;
+		BYTE masked = *((buf + streamPos)) ^ *partialMask;
 		Stream_Write_UINT8(sWS, masked);
 	}
 
@@ -1716,7 +1716,7 @@ static int rdg_write_chunked_data_packet(rdpRdg* rdg, const BYTE* buf, int isize
 	if (size < 1)
 		return 0;
 
-	sprintf_s(chunkSize, sizeof(chunkSize), "%" PRIxz "\r\n", packetSize);
+	(void)sprintf_s(chunkSize, sizeof(chunkSize), "%" PRIxz "\r\n", packetSize);
 	sChunk = Stream_New(NULL, strnlen(chunkSize, sizeof(chunkSize)) + packetSize + 2);
 
 	if (!sChunk)
@@ -1925,7 +1925,7 @@ static BOOL rdg_process_control_packet(rdpRdg* rdg, int type, size_t packetLengt
 
 static int rdg_read_data_packet(rdpRdg* rdg, BYTE* buffer, int size)
 {
-	RdgPacketHeader header;
+	RdgPacketHeader header = { 0 };
 	size_t readCount = 0;
 	size_t readSize = 0;
 	int status = 0;

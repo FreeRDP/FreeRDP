@@ -102,7 +102,7 @@ if (WITH_FDK_AAC)
 	pkg_check_modules(FDK_AAC REQUIRED fdk-aac)
 
 	add_definitions(-DWITH_FDK_AAC)
-	include_directories(${FDK_AAC_INCLUDE_DIRS})
+    include_directories(SYSTEM ${FDK_AAC_INCLUDE_DIRS})
 
 	link_directories(${FDK_AAC_LIBRARY_DIRS})
 	freerdp_library_add(${FDK_AAC_LIBRARIES})
@@ -147,11 +147,11 @@ endif(WITH_CAIRO)
 
 # Prefer SWScale over Cairo, both at the same time are not possible.
 if (WITH_SWSCALE)
-    include_directories(${SWScale_INCLUDE_DIR})
+    include_directories(SYSTEM ${SWScale_INCLUDE_DIR})
     freerdp_library_add(${SWScale_LIBRARY})
 endif()
 if (WITH_CAIRO)
-    include_directories(${CAIRO_INCLUDE_DIR})
+    include_directories(SYSTEM ${CAIRO_INCLUDE_DIR})
     freerdp_library_add(${CAIRO_LIBRARY})
 endif()
 if (NOT WITH_SWSCALE AND NOT WITH_CAIRO)
@@ -189,7 +189,7 @@ list(APPEND LIBFREERDP_PUB_LIBS winpr)
 
 list(REMOVE_DUPLICATES LIBFREERDP_DEFINITIONS)
 list(REMOVE_DUPLICATES LIBFREERDP_INCLUDES)
-include_directories(${LIBFREERDP_INCLUDES})
+include_directories(SYSTEM ${LIBFREERDP_INCLUDES})
 
 if (LIBFREERDP_OBJECT_LIBS)
 	list(REMOVE_DUPLICATES LIBFREERDP_OBJECT_LIBS)

@@ -146,7 +146,7 @@ int freerdp_addin_set_argument_value(ADDIN_ARGV* args, const char* option, const
 	if (!str)
 		return -1;
 
-	sprintf_s(str, length + 1, "%s:%s", option, value);
+	(void)sprintf_s(str, length + 1, "%s:%s", option, value);
 
 	for (int i = 0; i < args->argc; i++)
 	{
@@ -184,7 +184,7 @@ int freerdp_addin_replace_argument_value(ADDIN_ARGV* args, const char* previous,
 	if (!str)
 		return -1;
 
-	sprintf_s(str, length + 1, "%s:%s", option, value);
+	(void)sprintf_s(str, length + 1, "%s:%s", option, value);
 
 	for (int i = 0; i < args->argc; i++)
 	{
@@ -272,7 +272,7 @@ RDPDR_DEVICE* freerdp_device_collection_find(rdpSettings* settings, const char* 
 	WINPR_ASSERT(name);
 	for (UINT32 index = 0; index < settings->DeviceCount; index++)
 	{
-		device = (RDPDR_DEVICE*)settings->DeviceArray[index];
+		device = settings->DeviceArray[index];
 
 		if (!device->Name)
 			continue;
@@ -291,7 +291,7 @@ RDPDR_DEVICE* freerdp_device_collection_find_type(rdpSettings* settings, UINT32 
 
 	for (UINT32 index = 0; index < settings->DeviceCount; index++)
 	{
-		device = (RDPDR_DEVICE*)settings->DeviceArray[index];
+		device = settings->DeviceArray[index];
 
 		if (device->Type == type)
 			return device;
@@ -1977,7 +1977,7 @@ char* freerdp_rail_support_flags_to_string(UINT32 flags, char* buffer, size_t le
 	if ((flags & ~mask) != 0)
 	{
 		char tbuffer[64] = { 0 };
-		_snprintf(tbuffer, sizeof(tbuffer), "RAIL_FLAG_UNKNOWN 0x%08" PRIx32, flags & mask);
+		(void)_snprintf(tbuffer, sizeof(tbuffer), "RAIL_FLAG_UNKNOWN 0x%08" PRIx32, flags & mask);
 		winpr_str_append(tbuffer, buffer, length, "|");
 	}
 	return buffer;
@@ -2181,11 +2181,11 @@ const char* freerdp_supported_color_depths_string(UINT16 mask, char* buffer, siz
 	if (invalid != 0)
 	{
 		char str[32] = { 0 };
-		_snprintf(str, sizeof(str), "RNS_UD_INVALID[0x%04" PRIx32 "]", invalid);
+		(void)_snprintf(str, sizeof(str), "RNS_UD_INVALID[0x%04" PRIx32 "]", invalid);
 		winpr_str_append(str, buffer, size, "|");
 	}
 	char hex[32] = { 0 };
-	_snprintf(hex, sizeof(hex), "[0x%04" PRIx16 "]", mask);
+	(void)_snprintf(hex, sizeof(hex), "[0x%04" PRIx16 "]", mask);
 	return buffer;
 }
 

@@ -36,7 +36,7 @@ static char* certificate_path(const char* filename)
 	char* result = calloc(1, flen);
 	if (!result)
 		return NULL;
-	_snprintf(result, flen, "%s%c%s", file, dirsep, filename);
+	(void)_snprintf(result, flen, "%s%c%s", file, dirsep, filename);
 	return result;
 #else
 	const char* file = __FILE__;

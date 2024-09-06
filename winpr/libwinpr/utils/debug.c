@@ -20,7 +20,7 @@
 
 #include <winpr/config.h>
 
-#define __STDC_WANT_LIB_EXT1__ 1
+#define __STDC_WANT_LIB_EXT1__ 1 // NOLINT(bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
 #include <stdio.h>
 #include <string.h>
 #include <fcntl.h>
@@ -225,11 +225,11 @@ fail:
 char* winpr_strerror(DWORD dw, char* dmsg, size_t size)
 {
 #ifdef __STDC_LIB_EXT1__
-	strerror_s(dw, dmsg, size);
+	strerror_s((int)dw, dmsg, size);
 #elif defined(WINPR_HAVE_STRERROR_R)
-	strerror_r(dw, dmsg, size);
+	strerror_r((int)dw, dmsg, size);
 #else
-	_snprintf(dmsg, size, "%s", strerror(dw));
+	(void)_snprintf(dmsg, size, "%s", strerror((int)dw));
 #endif
 	return dmsg;
 }

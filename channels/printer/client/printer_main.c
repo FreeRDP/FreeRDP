@@ -972,7 +972,7 @@ static UINT printer_register(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints, rdpPrint
 	if (!printer_dev->device.data)
 		goto error_out;
 
-	sprintf_s(printer_dev->port, sizeof(printer_dev->port), "PRN%" PRIdz, printer->id);
+	(void)sprintf_s(printer_dev->port, sizeof(printer_dev->port), "PRN%" PRIdz, printer->id);
 	printer_dev->device.type = RDPDR_DTYP_PRINT;
 	printer_dev->device.name = printer_dev->port;
 	printer_dev->device.IRPRequest = printer_irp_request;
@@ -1049,18 +1049,13 @@ error_out:
 static rdpPrinterDriver* printer_load_backend(const char* backend)
 {
 	typedef UINT (*backend_load_t)(rdpPrinterDriver**);
-	union
-	{
-		PVIRTUALCHANNELENTRY entry;
-		backend_load_t backend;
-	} fktconv;
-
-	fktconv.entry = freerdp_load_channel_addin_entry("printer", backend, NULL, 0);
-	if (!fktconv.entry)
+	PVIRTUALCHANNELENTRY entry = freerdp_load_channel_addin_entry("printer", backend, NULL, 0);
+	backend_load_t func = WINPR_FUNC_PTR_CAST(entry, backend_load_t);
+	if (!func)
 		return NULL;
 
 	rdpPrinterDriver* printer = NULL;
-	const UINT rc = fktconv.backend(&printer);
+	const UINT rc = func(&printer);
 	if (rc != CHANNEL_RC_OK)
 		return NULL;
 
@@ -1072,7 +1067,8 @@ static rdpPrinterDriver* printer_load_backend(const char* backend)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-FREERDP_ENTRY_POINT(UINT printer_DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints))
+FREERDP_ENTRY_POINT(
+    UINT VCAPITYPE printer_DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints))
 {
 	char* name = NULL;
 	char* driver_name = NULL;

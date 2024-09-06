@@ -108,7 +108,7 @@ static void wlf_request_free(void* rq)
 	{
 		free(request->responseMime);
 		if (request->responseFile)
-			fclose(request->responseFile);
+			(void)fclose(request->responseFile);
 	}
 	free(request);
 }

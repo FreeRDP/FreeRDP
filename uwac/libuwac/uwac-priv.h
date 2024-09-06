@@ -209,7 +209,7 @@ struct uwac_seat
 
 	int repeat_timer_fd;
 	UwacTask repeat_task;
-	float sx, sy;
+	double sx, sy;
 	struct wl_list link;
 
 	void* data_context;
@@ -242,7 +242,7 @@ struct uwac_window
 	int surfaceStates;
 	enum wl_shm_format format;
 
-	int nbuffers;
+	size_t nbuffers;
 	UwacBuffer* buffers;
 
 	struct wl_region* opaque_region;

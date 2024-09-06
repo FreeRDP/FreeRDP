@@ -58,7 +58,7 @@ static void rfx_encode_format_rgb(const BYTE* WINPR_RESTRICT rgb_data, int width
 
 	for (int y = 0; y < height; y++)
 	{
-		src = rgb_data + y * rowstride;
+		src = rgb_data + 1ULL * y * rowstride;
 
 		switch (pixel_format)
 		{
@@ -280,12 +280,12 @@ void rfx_encode_rgb(RFX_CONTEXT* WINPR_RESTRICT context, RFX_TILE* WINPR_RESTRIC
 		return;
 
 	YLen = CbLen = CrLen = 0;
-	YQuant = context->quants + (tile->quantIdxY * 10);
-	CbQuant = context->quants + (tile->quantIdxCb * 10);
-	CrQuant = context->quants + (tile->quantIdxCr * 10);
-	pSrcDst[0] = (INT16*)((BYTE*)(&pBuffer[((8192 + 32) * 0) + 16])); /* y_r_buffer */
-	pSrcDst[1] = (INT16*)((BYTE*)(&pBuffer[((8192 + 32) * 1) + 16])); /* cb_g_buffer */
-	pSrcDst[2] = (INT16*)((BYTE*)(&pBuffer[((8192 + 32) * 2) + 16])); /* cr_b_buffer */
+	YQuant = context->quants + (10ULL * tile->quantIdxY);
+	CbQuant = context->quants + (10ULL * tile->quantIdxCb);
+	CrQuant = context->quants + (10ULL * tile->quantIdxCr);
+	pSrcDst[0] = (INT16*)((&pBuffer[((8192ULL + 32ULL) * 0ULL) + 16ULL])); /* y_r_buffer */
+	pSrcDst[1] = (INT16*)((&pBuffer[((8192ULL + 32ULL) * 1ULL) + 16ULL])); /* cb_g_buffer */
+	pSrcDst[2] = (INT16*)((&pBuffer[((8192ULL + 32ULL) * 2ULL) + 16ULL])); /* cr_b_buffer */
 	PROFILER_ENTER(context->priv->prof_rfx_encode_rgb)
 	PROFILER_ENTER(context->priv->prof_rfx_encode_format_rgb)
 	rfx_encode_format_rgb(tile->data, tile->width, tile->height, tile->scanline,

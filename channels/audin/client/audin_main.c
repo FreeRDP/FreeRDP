@@ -810,9 +810,9 @@ static UINT audin_load_device_plugin(AUDIN_PLUGIN* audin, const char* name, cons
 
 	FREERDP_AUDIN_DEVICE_ENTRY_POINTS entryPoints = { 0 };
 	UINT error = ERROR_INTERNAL_ERROR;
-	const PFREERDP_AUDIN_DEVICE_ENTRY entry =
-	    (const PFREERDP_AUDIN_DEVICE_ENTRY)freerdp_load_channel_addin_entry(AUDIN_CHANNEL_NAME,
-	                                                                        name, NULL, 0);
+
+	PVIRTUALCHANNELENTRY pvce = freerdp_load_channel_addin_entry(AUDIN_CHANNEL_NAME, name, NULL, 0);
+	PFREERDP_AUDIN_DEVICE_ENTRY entry = WINPR_FUNC_PTR_CAST(pvce, PFREERDP_AUDIN_DEVICE_ENTRY);
 
 	if (entry == NULL)
 	{
@@ -827,7 +827,8 @@ static UINT audin_load_device_plugin(AUDIN_PLUGIN* audin, const char* name, cons
 	entryPoints.args = args;
 	entryPoints.rdpcontext = audin->rdpcontext;
 
-	if ((error = entry(&entryPoints)))
+	error = entry(&entryPoints);
+	if (error)
 	{
 		WLog_Print(audin->log, WLOG_ERROR, "%s entry returned error %" PRIu32 ".", name, error);
 		return error;
@@ -968,7 +969,7 @@ BOOL audin_process_addin_args(AUDIN_PLUGIN* audin, const ADDIN_ARGV* args)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-FREERDP_ENTRY_POINT(UINT audin_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints))
+FREERDP_ENTRY_POINT(UINT VCAPITYPE audin_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints))
 {
 	struct SubsystemEntry
 	{

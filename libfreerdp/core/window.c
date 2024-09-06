@@ -532,13 +532,13 @@ static BOOL window_order_supported(const rdpSettings* settings, UINT32 fieldFlag
 	}
 }
 
-#define DUMP_APPEND(buffer, size, ...)            \
-	do                                            \
-	{                                             \
-		char* b = (buffer);                       \
-		size_t s = (size);                        \
-		size_t pos = strnlen(b, s);               \
-		_snprintf(&b[pos], s - pos, __VA_ARGS__); \
+#define DUMP_APPEND(buffer, size, ...)                  \
+	do                                                  \
+	{                                                   \
+		char* b = (buffer);                             \
+		size_t s = (size);                              \
+		size_t pos = strnlen(b, s);                     \
+		(void)_snprintf(&b[pos], s - pos, __VA_ARGS__); \
 	} while (0)
 
 static void dump_window_state_order(wLog* log, const char* msg, const WINDOW_ORDER_INFO* order,
@@ -547,7 +547,7 @@ static void dump_window_state_order(wLog* log, const char* msg, const WINDOW_ORD
 	char buffer[3000] = { 0 };
 	const size_t bufferSize = sizeof(buffer) - 1;
 
-	_snprintf(buffer, bufferSize, "%s windowId=0x%" PRIu32 "", msg, order->windowId);
+	(void)_snprintf(buffer, bufferSize, "%s windowId=0x%" PRIu32 "", msg, order->windowId);
 
 	if (order->fieldFlags & WINDOW_ORDER_FIELD_OWNER)
 		DUMP_APPEND(buffer, bufferSize, " owner=0x%" PRIx32 "", state->ownerWindowId);
@@ -929,7 +929,7 @@ static BOOL update_read_desktop_actively_monitored_order(wStream* s, WINDOW_ORDE
 			monitored_desktop->windowIds = newid;
 
 			/* windowIds */
-			for (UINT32 i = 0; i < (int)monitored_desktop->numWindowIds; i++)
+			for (UINT32 i = 0; i < monitored_desktop->numWindowIds; i++)
 			{
 				Stream_Read_UINT32(s, monitored_desktop->windowIds[i]);
 			}

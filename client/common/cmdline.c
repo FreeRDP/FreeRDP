@@ -69,6 +69,8 @@
 #include <freerdp/log.h>
 #define TAG CLIENT_TAG("common.cmdline")
 
+static const char str_force[] = "force";
+
 static const char* option_starts_with(const char* what, const char* val);
 static BOOL option_ends_with(const char* str, const char* ext);
 static BOOL option_equals(const char* what, const char* val);
@@ -100,10 +102,10 @@ static BOOL freerdp_client_print_codepages(const char* arg)
 		char buffer[2048] = { 0 };
 
 		if (strnlen(page->subLanguageSymbol, ARRAYSIZE(page->subLanguageSymbol)) > 0)
-			_snprintf(buffer, sizeof(buffer), "[%s|%s]", page->primaryLanguageSymbol,
-			          page->subLanguageSymbol);
+			(void)_snprintf(buffer, sizeof(buffer), "[%s|%s]", page->primaryLanguageSymbol,
+			                page->subLanguageSymbol);
 		else
-			_snprintf(buffer, sizeof(buffer), "[%s]", page->primaryLanguageSymbol);
+			(void)_snprintf(buffer, sizeof(buffer), "[%s]", page->primaryLanguageSymbol);
 		printf("id=0x%04" PRIx16 ": [%-6s] %-60s %-36s %-48s\n", page->id, page->locale, buffer,
 		       page->primaryLanguage, page->subLanguage);
 	}
@@ -626,9 +628,13 @@ BOOL freerdp_client_print_command_line_help_ex(int argc, char** argv,
 	printf("Smartcard Redirection: /smartcard:<device>\n");
 	printf("Smartcard logon with Kerberos authentication: /smartcard-logon /sec:nla\n");
 
+#if defined(CHANNEL_SERIAL_CLIENT)
 	printf("Serial Port Redirection: /serial:<name>,<device>,[SerCx2|SerCx|Serial],[permissive]\n");
 	printf("Serial Port Redirection: /serial:COM1,/dev/ttyS0\n");
+#endif
+#if defined(CHANNEL_PARALLEL_CLIENT)
 	printf("Parallel Port Redirection: /parallel:<name>,<device>\n");
+#endif
 	printf("Printer Redirection: /printer:<device>,<driver>,[default]\n");
 	printf("TCP redirection: /rdp2tcp:/usr/bin/rdp2tcp\n");
 	printf("\n");
@@ -787,6 +793,7 @@ BOOL freerdp_client_add_device_channel(rdpSettings* settings, size_t count, cons
 
 		return TRUE;
 	}
+#if defined(CHANNEL_SERIAL_CLIENT)
 	else if (option_equals(params[0], "serial"))
 	{
 		RDPDR_DEVICE* serial = NULL;
@@ -812,6 +819,7 @@ BOOL freerdp_client_add_device_channel(rdpSettings* settings, size_t count, cons
 
 		return TRUE;
 	}
+#endif
 	else if (option_equals(params[0], "parallel"))
 	{
 		RDPDR_DEVICE* parallel = NULL;
@@ -856,7 +864,7 @@ BOOL freerdp_client_add_static_channel(rdpSettings* settings, size_t count, cons
 	if (freerdp_static_channel_collection_find(settings, params[0]))
 		return TRUE;
 
-	_args = freerdp_addin_argv_new(count, (const char**)params);
+	_args = freerdp_addin_argv_new(count, params);
 
 	if (!_args)
 		return FALSE;
@@ -1076,6 +1084,7 @@ static int freerdp_client_command_line_post_filter_int(void* context, COMMAND_LI
 		if (status)
 			return fail_at(arg, status);
 	}
+#if defined(CHANNEL_SERIAL_CLIENT)
 	CommandLineSwitchCase(arg, "serial")
 	{
 		size_t count = 0;
@@ -1086,6 +1095,8 @@ static int freerdp_client_command_line_post_filter_int(void* context, COMMAND_LI
 		if (status)
 			return fail_at(arg, status);
 	}
+#endif
+#if defined(CHANNEL_PARALLEL_CLIENT)
 	CommandLineSwitchCase(arg, "parallel")
 	{
 		size_t count = 0;
@@ -1096,6 +1107,7 @@ static int freerdp_client_command_line_post_filter_int(void* context, COMMAND_LI
 		if (status)
 			return fail_at(arg, status);
 	}
+#endif
 	CommandLineSwitchCase(arg, "smartcard")
 	{
 		size_t count = 0;
@@ -2847,7 +2859,7 @@ static int parse_kbd_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_
 					if (!tmp)
 						rc = COMMAND_LINE_ERROR_MEMORY;
 					else
-						_snprintf(tmp, tlen, "%s,%s", old, now);
+						(void)_snprintf(tmp, tlen, "%s,%s", old, now);
 					free(now);
 					now = tmp;
 				}
@@ -4320,7 +4332,7 @@ static int freerdp_client_settings_parse_command_line_arguments_int(
 
 			if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
 			{
-				if (option_equals(arg->Value, "force"))
+				if (option_equals(arg->Value, str_force))
 				{
 					if (!freerdp_settings_set_bool(settings, FreeRDP_ForceMultimon, TRUE))
 						return fail_at(arg, COMMAND_LINE_ERROR);
@@ -4627,7 +4639,7 @@ static int freerdp_client_settings_parse_command_line_arguments_int(
 		}
 		CommandLineSwitchCase(arg, "ipv4")
 		{
-			if (arg->Value != NULL && strncmp(arg->Value, "force", 6) == 0)
+			if (arg->Value != NULL && strncmp(arg->Value, str_force, ARRAYSIZE(str_force)) == 0)
 			{
 				if (!freerdp_settings_set_uint32(settings, FreeRDP_ForceIPvX, 4))
 					return fail_at(arg, COMMAND_LINE_ERROR);
@@ -4640,7 +4652,7 @@ static int freerdp_client_settings_parse_command_line_arguments_int(
 		}
 		CommandLineSwitchCase(arg, "ipv6")
 		{
-			if (arg->Value != NULL && strncmp(arg->Value, "force", 6) == 0)
+			if (arg->Value != NULL && strncmp(arg->Value, str_force, ARRAYSIZE(str_force)) == 0)
 			{
 				if (!freerdp_settings_set_uint32(settings, FreeRDP_ForceIPvX, 6))
 					return fail_at(arg, COMMAND_LINE_ERROR);
@@ -4976,7 +4988,7 @@ static int freerdp_client_settings_parse_command_line_arguments_int(
 			{
 				if (!arg->Value)
 					return fail_at(arg, COMMAND_LINE_ERROR_UNEXPECTED_VALUE);
-				promptForPassword = (option_equals(arg->Value, "force"));
+				promptForPassword = (option_equals(arg->Value, str_force));
 
 				if (!promptForPassword)
 					return fail_at(arg, COMMAND_LINE_ERROR);
@@ -5705,16 +5717,16 @@ static BOOL freerdp_client_load_static_channel_addin(rdpChannels* channels, rdpS
                                                      const char* name, void* data)
 {
 	PVIRTUALCHANNELENTRY entry = NULL;
-	PVIRTUALCHANNELENTRYEX entryEx = NULL;
-	entryEx = (PVIRTUALCHANNELENTRYEX)(void*)freerdp_load_channel_addin_entry(
+	PVIRTUALCHANNELENTRY pvce = freerdp_load_channel_addin_entry(
 	    name, NULL, NULL, FREERDP_ADDIN_CHANNEL_STATIC | FREERDP_ADDIN_CHANNEL_ENTRYEX);
+	PVIRTUALCHANNELENTRYEX pvceex = WINPR_FUNC_PTR_CAST(pvce, PVIRTUALCHANNELENTRYEX);
 
-	if (!entryEx)
+	if (!pvceex)
 		entry = freerdp_load_channel_addin_entry(name, NULL, NULL, FREERDP_ADDIN_CHANNEL_STATIC);
 
-	if (entryEx)
+	if (pvceex)
 	{
-		if (freerdp_channels_client_load_ex(channels, settings, entryEx, data) == 0)
+		if (freerdp_channels_client_load_ex(channels, settings, pvceex, data) == 0)
 		{
 			WLog_DBG(TAG, "loading channelEx %s", name);
 			return TRUE;

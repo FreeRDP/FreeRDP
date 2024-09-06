@@ -33,8 +33,8 @@ class SDLResourceManager
 	SDLResourceManager operator=(const SDLResourceManager& other) = delete;
 	SDLResourceManager& operator=(SDLResourceManager&& other) = delete;
 
-	static const std::string typeFonts();
-	static const std::string typeImages();
+	static std::string typeFonts();
+	static std::string typeImages();
 
   protected:
 	static void insert(const std::string& type, const std::string& id,

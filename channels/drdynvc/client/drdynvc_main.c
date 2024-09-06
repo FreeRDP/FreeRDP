@@ -352,16 +352,16 @@ fail:
 static UINT dvcman_load_addin(drdynvcPlugin* drdynvc, IWTSVirtualChannelManager* pChannelMgr,
                               const ADDIN_ARGV* args, rdpContext* context)
 {
-	PDVC_PLUGIN_ENTRY pDVCPluginEntry = NULL;
-
 	WINPR_ASSERT(drdynvc);
 	WINPR_ASSERT(pChannelMgr);
 	WINPR_ASSERT(args);
 	WINPR_ASSERT(context);
 
 	WLog_Print(drdynvc->log, WLOG_INFO, "Loading Dynamic Virtual Channel %s", args->argv[0]);
-	pDVCPluginEntry = (PDVC_PLUGIN_ENTRY)freerdp_load_channel_addin_entry(
-	    args->argv[0], NULL, NULL, FREERDP_ADDIN_CHANNEL_DYNAMIC);
+
+	PVIRTUALCHANNELENTRY pvce =
+	    freerdp_load_channel_addin_entry(args->argv[0], NULL, NULL, FREERDP_ADDIN_CHANNEL_DYNAMIC);
+	PDVC_PLUGIN_ENTRY pDVCPluginEntry = WINPR_FUNC_PTR_CAST(pvce, PDVC_PLUGIN_ENTRY);
 
 	if (pDVCPluginEntry)
 	{
@@ -1371,7 +1371,7 @@ static UINT drdynvc_process_close_request(drdynvcPlugin* drdynvc, int Sp, int cb
 	           "process_close_request: Sp=%d cbChId=%d, ChannelId=%" PRIu32 "", Sp, cbChId,
 	           ChannelId);
 
-	channel = (DVCMAN_CHANNEL*)dvcman_get_channel_by_id(drdynvc->channel_mgr, ChannelId, TRUE);
+	channel = dvcman_get_channel_by_id(drdynvc->channel_mgr, ChannelId, TRUE);
 	if (!channel)
 	{
 		WLog_Print(drdynvc->log, WLOG_ERROR, "dvcman_close_request channel %" PRIu32 " not present",
@@ -1997,8 +1997,8 @@ FREERDP_ENTRY_POINT(BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS_E
 
 	drdynvc->channelDef.options =
 	    CHANNEL_OPTION_INITIALIZED | CHANNEL_OPTION_ENCRYPT_RDP | CHANNEL_OPTION_COMPRESS_RDP;
-	sprintf_s(drdynvc->channelDef.name, ARRAYSIZE(drdynvc->channelDef.name),
-	          DRDYNVC_SVC_CHANNEL_NAME);
+	(void)sprintf_s(drdynvc->channelDef.name, ARRAYSIZE(drdynvc->channelDef.name),
+	                DRDYNVC_SVC_CHANNEL_NAME);
 	drdynvc->state = DRDYNVC_STATE_INITIAL;
 	pEntryPointsEx = (CHANNEL_ENTRY_POINTS_FREERDP_EX*)pEntryPoints;
 

@@ -466,7 +466,7 @@ static const char* primary_order_string(UINT32 orderType)
 	if (orderType < ARRAYSIZE(orders))
 		fmt = orders[orderType];
 
-	sprintf_s(buffer, ARRAYSIZE(buffer), fmt, orderType);
+	(void)sprintf_s(buffer, ARRAYSIZE(buffer), fmt, orderType);
 	return buffer;
 }
 static const char* secondary_order_string(UINT32 orderType)
@@ -486,7 +486,7 @@ static const char* secondary_order_string(UINT32 orderType)
 	if (orderType < ARRAYSIZE(orders))
 		fmt = orders[orderType];
 
-	sprintf_s(buffer, ARRAYSIZE(buffer), fmt, orderType);
+	(void)sprintf_s(buffer, ARRAYSIZE(buffer), fmt, orderType);
 	return buffer;
 }
 static const char* altsec_order_string(BYTE orderType)
@@ -506,7 +506,7 @@ static const char* altsec_order_string(BYTE orderType)
 	if (orderType < ARRAYSIZE(orders))
 		fmt = orders[orderType];
 
-	sprintf_s(buffer, ARRAYSIZE(buffer), fmt, orderType);
+	(void)sprintf_s(buffer, ARRAYSIZE(buffer), fmt, orderType);
 	return buffer;
 }
 
@@ -956,7 +956,7 @@ static INLINE BOOL update_write_brush(wStream* s, rdpBrush* brush, BYTE fieldFla
 
 	return TRUE;
 }
-static INLINE BOOL update_read_delta_rects(wStream* s, DELTA_RECT* rectangles, UINT32* nr)
+static INLINE BOOL update_read_delta_rects(wStream* s, DELTA_RECT* rectangles, const UINT32* nr)
 {
 	UINT32 number = *nr;
 	BYTE flags = 0;
@@ -2246,7 +2246,7 @@ fail:
 }
 
 size_t update_approximate_cache_bitmap_order(const CACHE_BITMAP_ORDER* cache_bitmap,
-                                             BOOL compressed, UINT16* flags)
+                                             BOOL compressed, const UINT16* flags)
 {
 	WINPR_ASSERT(cache_bitmap);
 	WINPR_UNUSED(compressed);
@@ -2392,7 +2392,7 @@ fail:
 }
 
 size_t update_approximate_cache_bitmap_v2_order(CACHE_BITMAP_V2_ORDER* cache_bitmap_v2,
-                                                BOOL compressed, UINT16* flags)
+                                                BOOL compressed, const UINT16* flags)
 {
 	WINPR_ASSERT(cache_bitmap_v2);
 	WINPR_UNUSED(flags);
@@ -2620,7 +2620,7 @@ fail:
 }
 
 size_t update_approximate_cache_color_table_order(const CACHE_COLOR_TABLE_ORDER* cache_color_table,
-                                                  UINT16* flags)
+                                                  const UINT16* flags)
 {
 	WINPR_UNUSED(cache_color_table);
 	WINPR_UNUSED(flags);
@@ -2717,7 +2717,8 @@ fail:
 	return NULL;
 }
 
-size_t update_approximate_cache_glyph_order(const CACHE_GLYPH_ORDER* cache_glyph, UINT16* flags)
+size_t update_approximate_cache_glyph_order(const CACHE_GLYPH_ORDER* cache_glyph,
+                                            const UINT16* flags)
 {
 	WINPR_ASSERT(cache_glyph);
 	WINPR_UNUSED(flags);
@@ -2754,7 +2755,7 @@ BOOL update_write_cache_glyph_order(wStream* s, const CACHE_GLYPH_ORDER* cache_g
 
 	if (*flags & CG_GLYPH_UNICODE_PRESENT)
 	{
-		Stream_Zero(s, cache_glyph->cGlyphs * 2);
+		Stream_Zero(s, 2ULL * cache_glyph->cGlyphs);
 	}
 
 	return TRUE;
@@ -2822,7 +2823,7 @@ fail:
 }
 
 size_t update_approximate_cache_glyph_v2_order(const CACHE_GLYPH_V2_ORDER* cache_glyph_v2,
-                                               UINT16* flags)
+                                               const UINT16* flags)
 {
 	WINPR_ASSERT(cache_glyph_v2);
 	WINPR_UNUSED(flags);
@@ -2860,7 +2861,7 @@ BOOL update_write_cache_glyph_v2_order(wStream* s, const CACHE_GLYPH_V2_ORDER* c
 
 	if (*flags & CG_GLYPH_UNICODE_PRESENT)
 	{
-		Stream_Zero(s, cache_glyph_v2->cGlyphs * 2);
+		Stream_Zero(s, 2ULL * cache_glyph_v2->cGlyphs);
 	}
 
 	return TRUE;
@@ -2886,7 +2887,7 @@ static BOOL update_decompress_brush(wStream* s, BYTE* output, size_t outSize, BY
 
 			for (size_t k = 0; k < bytesPerPixel; k++)
 			{
-				const size_t dstIndex = ((y * 8 + x) * bytesPerPixel) + k;
+				const size_t dstIndex = ((8ULL * y + x) * bytesPerPixel) + k;
 				const size_t srcIndex = (index * bytesPerPixel) + k;
 				if (dstIndex >= outSize)
 					return FALSE;
@@ -2975,7 +2976,7 @@ static CACHE_BRUSH_ORDER* update_read_cache_brush_order(rdpUpdate* update, wStre
 
 				for (int i = 7; i >= 0; i--)
 				{
-					Stream_Read(s, &cache_brush->data[i * scanline], scanline);
+					Stream_Read(s, &cache_brush->data[1LL * i * scanline], scanline);
 				}
 			}
 		}
@@ -2987,7 +2988,8 @@ fail:
 	return NULL;
 }
 
-size_t update_approximate_cache_brush_order(const CACHE_BRUSH_ORDER* cache_brush, UINT16* flags)
+size_t update_approximate_cache_brush_order(const CACHE_BRUSH_ORDER* cache_brush,
+                                            const UINT16* flags)
 {
 	WINPR_UNUSED(cache_brush);
 	WINPR_UNUSED(flags);
@@ -3052,7 +3054,7 @@ BOOL update_write_cache_brush_order(wStream* s, const CACHE_BRUSH_ORDER* cache_b
 
 				for (int i = 7; i >= 0; i--)
 				{
-					Stream_Write(s, &cache_brush->data[i * scanline], scanline);
+					Stream_Write(s, &cache_brush->data[1LL * i * scanline], scanline);
 				}
 			}
 		}
@@ -3096,7 +3098,7 @@ update_read_create_offscreen_bitmap_order(wStream* s,
 		if (deleteList->cIndices > deleteList->sIndices)
 		{
 			UINT16* new_indices = NULL;
-			new_indices = (UINT16*)realloc(deleteList->indices, deleteList->cIndices * 2);
+			new_indices = (UINT16*)realloc(deleteList->indices, 2ULL * deleteList->cIndices);
 
 			if (!new_indices)
 				return FALSE;

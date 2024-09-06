@@ -309,7 +309,7 @@ int _wcsncmp(const WCHAR* string1, const WCHAR* string2, size_t count)
 
 size_t _wcslen(const WCHAR* str)
 {
-	const WCHAR* p = (const WCHAR*)str;
+	const WCHAR* p = str;
 
 	WINPR_ASSERT(p);
 
@@ -364,7 +364,7 @@ WCHAR* _wcschr(const WCHAR* str, WCHAR value)
 		const WCHAR* cc;
 		WCHAR* c;
 	} cnv;
-	const WCHAR* p = (const WCHAR*)str;
+	const WCHAR* p = str;
 
 	while (*p && (*p != value))
 		p++;
@@ -446,7 +446,7 @@ WCHAR* wcstok_s(WCHAR* strToken, const WCHAR* strDelimit, WCHAR** context)
  * http://msdn.microsoft.com/en-us/library/hh802935/
  */
 
-#include "casing.c"
+#include "casing.h"
 
 LPSTR CharUpperA(LPSTR lpsz)
 {

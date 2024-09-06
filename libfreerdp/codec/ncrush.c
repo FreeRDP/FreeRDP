@@ -2341,7 +2341,7 @@ static int ncrush_hash_table_add(NCRUSH_CONTEXT* ncrush, const BYTE* pSrcData, U
 	return 1;
 }
 
-static int ncrush_find_match_length(const BYTE* Ptr1, const BYTE* Ptr2, BYTE* HistoryPtr)
+static int ncrush_find_match_length(const BYTE* Ptr1, const BYTE* Ptr2, const BYTE* HistoryPtr)
 {
 	BYTE val1 = 0;
 	BYTE val2 = 0;
@@ -2679,7 +2679,7 @@ int ncrush_compress(NCRUSH_CONTEXT* ncrush, const BYTE* pSrcData, UINT32 SrcSize
 
 			if (IndexLEC * 2ull >= ARRAYSIZE(HuffCodeLEC))
 				return -1;
-			CodeLEC = get_word(&HuffCodeLEC[IndexLEC * 2]);
+			CodeLEC = get_word(&HuffCodeLEC[2ULL * IndexLEC]);
 
 			if (BitLength > 15)
 				return -1006;
@@ -2773,7 +2773,7 @@ int ncrush_compress(NCRUSH_CONTEXT* ncrush, const BYTE* pSrcData, UINT32 SrcSize
 
 				if (IndexLEC * 2ull >= ARRAYSIZE(HuffCodeLEC))
 					return -1;
-				CodeLEC = get_word(&HuffCodeLEC[IndexLEC * 2]);
+				CodeLEC = get_word(&HuffCodeLEC[2ULL * IndexLEC]);
 
 				if (BitLength > 15)
 					return -1008;
@@ -2820,7 +2820,7 @@ int ncrush_compress(NCRUSH_CONTEXT* ncrush, const BYTE* pSrcData, UINT32 SrcSize
 				BitLength = HuffLengthLEC[IndexLEC];
 				if (IndexLEC * 2ull >= ARRAYSIZE(HuffCodeLEC))
 					return -1;
-				CodeLEC = get_word(&HuffCodeLEC[IndexLEC * 2]);
+				CodeLEC = get_word(&HuffCodeLEC[2ULL * IndexLEC]);
 
 				if (BitLength >= 15)
 					return -1011;
@@ -2879,7 +2879,7 @@ int ncrush_compress(NCRUSH_CONTEXT* ncrush, const BYTE* pSrcData, UINT32 SrcSize
 		if (IndexLEC * 2ull >= ARRAYSIZE(HuffCodeLEC))
 			return -1;
 		BitLength = HuffLengthLEC[IndexLEC];
-		CodeLEC = get_word(&HuffCodeLEC[IndexLEC * 2]);
+		CodeLEC = get_word(&HuffCodeLEC[2ULL * IndexLEC]);
 
 		if (BitLength > 15)
 			return -1014;
@@ -2903,7 +2903,7 @@ int ncrush_compress(NCRUSH_CONTEXT* ncrush, const BYTE* pSrcData, UINT32 SrcSize
 	if (BitLength > 15)
 		return -1015;
 
-	bits = get_word(&HuffCodeLEC[IndexLEC * 2]);
+	bits = get_word(&HuffCodeLEC[2ULL * IndexLEC]);
 	NCrushWriteBits(&DstPtr, &accumulator, &offset, bits, BitLength);
 	NCrushWriteFinish(&DstPtr, accumulator);
 	const intptr_t dsize = DstPtr - pDstData;
@@ -2942,7 +2942,7 @@ static int ncrush_generate_tables(NCRUSH_CONTEXT* context)
 		for (int j = 0; j < 1 << LOMBitsLUT[i]; j++)
 		{
 			size_t l = (cnt++) + 2ull;
-			context->HuffTableLOM[l] = (int)i;
+			context->HuffTableLOM[l] = i;
 		}
 	}
 

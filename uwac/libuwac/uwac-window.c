@@ -58,7 +58,7 @@ static const struct wl_buffer_listener buffer_listener = { buffer_release };
 
 static void UwacWindowDestroyBuffers(UwacWindow* w)
 {
-	for (int i = 0; i < w->nbuffers; i++)
+	for (size_t i = 0; i < w->nbuffers; i++)
 	{
 		UwacBuffer* buffer = &w->buffers[i];
 #ifdef UWAC_HAVE_PIXMAN_REGION
@@ -331,7 +331,7 @@ int UwacWindowShmAllocBuffers(UwacWindow* w, int64_t nbuffers, int64_t allocSize
 		return UWAC_ERROR_NOMEMORY;
 
 	/* round up to a multiple of PAGESIZE to page align data for each buffer */
-	uint64_t test = (0ull + allocSize + pagesize - 1ull) & ~(pagesize - 1);
+	const uint64_t test = (1ull * allocSize + pagesize - 1ull) & ~(pagesize - 1);
 	if (test > INT64_MAX)
 		return UWAC_ERROR_NOMEMORY;
 
@@ -370,19 +370,20 @@ int UwacWindowShmAllocBuffers(UwacWindow* w, int64_t nbuffers, int64_t allocSize
 		goto error_mmap;
 	}
 
-	for (int i = 0; i < nbuffers; i++)
+	for (int64_t i = 0; i < nbuffers; i++)
 	{
-		int bufferIdx = w->nbuffers + i;
+		const size_t idx = (size_t)i;
+		size_t bufferIdx = w->nbuffers + idx;
 		UwacBuffer* buffer = &w->buffers[bufferIdx];
 #ifdef UWAC_HAVE_PIXMAN_REGION
 		pixman_region32_init(&buffer->damage);
 #else
 		region16_init(&buffer->damage);
 #endif
-		buffer->data = &((char*)data)[allocSize * i];
+		buffer->data = &((char*)data)[allocSize * idx];
 		buffer->size = allocSize;
 		buffer->wayland_buffer =
-		    wl_shm_pool_create_buffer(pool, allocSize * i, width, height, w->stride, format);
+		    wl_shm_pool_create_buffer(pool, allocSize * idx, width, height, w->stride, format);
 		UwacBufferReleaseData* listener_data = xmalloc(sizeof(UwacBufferReleaseData));
 		listener_data->window = w;
 		listener_data->bufferIdx = bufferIdx;
@@ -710,14 +711,19 @@ static void damage_surface(UwacWindow* window, UwacBuffer* buffer, int scale)
 static void damage_surface(UwacWindow* window, UwacBuffer* buffer, int scale)
 {
 	uint32_t nrects = 0;
-	const RECTANGLE_16* box = region16_rects(&buffer->damage, &nrects);
+	const RECTANGLE_16* boxes = region16_rects(&buffer->damage, &nrects);
 
-	for (UINT32 i = 0; i < nrects; i++, box++)
+	for (UINT32 i = 0; i < nrects; i++)
 	{
-		const int x = ((int)floor(box->left / scale)) - 1;
-		const int y = ((int)floor(box->top / scale)) - 1;
-		const int w = ((int)ceil((box->right - box->left) / scale)) + 2;
-		const int h = ((int)ceil((box->bottom - box->top) / scale)) + 2;
+		const RECTANGLE_16* box = &boxes[i];
+		const double dx = floor(1.0 * box->left / scale);
+		const double dy = floor(1.0 * box->top / scale);
+		const double dw = ceil(1.0 * (box->right - box->left) / scale);
+		const double dh = ceil(1.0 * (box->bottom - box->top) / scale);
+		const int x = ((int)dx) - 1;
+		const int y = ((int)dy) - 1;
+		const int w = ((int)dw) + 2;
+		const int h = ((int)dh) + 2;
 		wl_surface_damage(window->surface, x, y, w, h);
 	}
 

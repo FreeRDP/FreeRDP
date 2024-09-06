@@ -61,7 +61,7 @@ static const char* CB_MSG_TYPE_STR(UINT32 type)
 
 const char* CB_MSG_TYPE_STRING(UINT16 type, char* buffer, size_t size)
 {
-	_snprintf(buffer, size, "%s [0x%04" PRIx16 "]", CB_MSG_TYPE_STR(type), type);
+	(void)_snprintf(buffer, size, "%s [0x%04" PRIx16 "]", CB_MSG_TYPE_STR(type), type);
 	return buffer;
 }
 
@@ -79,7 +79,7 @@ const char* CB_MSG_FLAGS_STRING(UINT16 msgFlags, char* buffer, size_t size)
 		winpr_str_append("NONE", buffer, size, "");
 
 	char val[32] = { 0 };
-	_snprintf(val, sizeof(val), "[0x%04" PRIx16 "]", msgFlags);
+	(void)_snprintf(val, sizeof(val), "[0x%04" PRIx16 "]", msgFlags);
 	winpr_str_append(val, buffer, size, "|");
 	return buffer;
 }
@@ -404,9 +404,9 @@ UINT cliprdr_read_format_list(wStream* s, CLIPRDR_FORMAT_LIST* formatList, BOOL 
 	else if (!useLongFormatNames)
 	{
 		const size_t cap = Stream_Capacity(sub1);
-		formatList->numFormats = (cap / 36);
+		formatList->numFormats = (cap / 36ULL);
 
-		if ((formatList->numFormats * 36) != cap)
+		if ((36ULL * formatList->numFormats) != cap)
 		{
 			WLog_ERR(TAG, "Invalid short format list length: %" PRIuz "", cap);
 			return ERROR_INTERNAL_ERROR;

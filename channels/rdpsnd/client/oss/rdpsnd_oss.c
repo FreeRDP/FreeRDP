@@ -163,7 +163,7 @@ static BOOL rdpsnd_oss_set_format(rdpsndDevicePlugin* device, const AUDIO_FORMAT
 		return FALSE;
 	}
 
-	tmp = format->nSamplesPerSec;
+	tmp = (int)format->nSamplesPerSec;
 
 	if (ioctl(oss->pcm_handle, SNDCTL_DSP_SPEED, &tmp) == -1)
 	{
@@ -191,7 +191,7 @@ static void rdpsnd_oss_open_mixer(rdpsndOssPlugin* oss)
 		return;
 
 	if (oss->dev_unit != -1)
-		sprintf_s(mixer_name, PATH_MAX - 1, "/dev/mixer%i", oss->dev_unit);
+		(void)sprintf_s(mixer_name, PATH_MAX - 1, "/dev/mixer%i", oss->dev_unit);
 
 	if ((oss->mixer_handle = open(mixer_name, O_RDWR)) < 0)
 	{
@@ -218,7 +218,7 @@ static BOOL rdpsnd_oss_open(rdpsndDevicePlugin* device, const AUDIO_FORMAT* form
 		return TRUE;
 
 	if (oss->dev_unit != -1)
-		sprintf_s(dev_name, PATH_MAX - 1, "/dev/dsp%i", oss->dev_unit);
+		(void)sprintf_s(dev_name, PATH_MAX - 1, "/dev/dsp%i", oss->dev_unit);
 
 	WLog_INFO(TAG, "open: %s", dev_name);
 
@@ -321,15 +321,14 @@ static UINT32 rdpsnd_oss_get_volume(rdpsndDevicePlugin* device)
 
 static BOOL rdpsnd_oss_set_volume(rdpsndDevicePlugin* device, UINT32 value)
 {
-	int left = 0;
-	int right = 0;
 	rdpsndOssPlugin* oss = (rdpsndOssPlugin*)device;
+	WINPR_ASSERT(oss);
 
 	if (device == NULL || oss->mixer_handle == -1)
 		return FALSE;
 
-	left = (((value & 0xFFFF) * 100) / 0xFFFF);
-	right = ((((value >> 16) & 0xFFFF) * 100) / 0xFFFF);
+	unsigned left = (((value & 0xFFFF) * 100) / 0xFFFF);
+	unsigned right = ((((value >> 16) & 0xFFFF) * 100) / 0xFFFF);
 
 	if (left < 0)
 		left = 0;
@@ -425,7 +424,7 @@ static int rdpsnd_oss_parse_addin_args(rdpsndDevicePlugin* device, const ADDIN_A
 					return CHANNEL_RC_NULL_DATA;
 				}
 
-				oss->dev_unit = val;
+				oss->dev_unit = (int)val;
 			}
 
 			if (oss->dev_unit < 0 || *eptr != '\0')
@@ -444,7 +443,7 @@ static int rdpsnd_oss_parse_addin_args(rdpsndDevicePlugin* device, const ADDIN_A
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-FREERDP_ENTRY_POINT(UINT oss_freerdp_rdpsnd_client_subsystem_entry(
+FREERDP_ENTRY_POINT(UINT VCAPITYPE oss_freerdp_rdpsnd_client_subsystem_entry(
     PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints))
 {
 	const ADDIN_ARGV* args = NULL;

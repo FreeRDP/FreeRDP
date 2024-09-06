@@ -26,13 +26,13 @@ static BOOL compareRectangles(const RECTANGLE_16* src1, const RECTANGLE_16* src2
 {
 	for (int i = 0; i < nb; i++, src1++, src2++)
 	{
-		if (memcmp(src1, src2, sizeof(RECTANGLE_16)))
+		if (memcmp(src1, src2, sizeof(RECTANGLE_16)) != 0)
 		{
-			fprintf(stderr,
-			        "expecting rect %d (%" PRIu16 ",%" PRIu16 "-%" PRIu16 ",%" PRIu16
-			        ") and have (%" PRIu16 ",%" PRIu16 "-%" PRIu16 ",%" PRIu16 ")\n",
-			        i, src2->left, src2->top, src2->right, src2->bottom, src1->left, src1->top,
-			        src1->right, src1->bottom);
+			(void)fprintf(stderr,
+			              "expecting rect %d (%" PRIu16 ",%" PRIu16 "-%" PRIu16 ",%" PRIu16
+			              ") and have (%" PRIu16 ",%" PRIu16 "-%" PRIu16 ",%" PRIu16 ")\n",
+			              i, src2->left, src2->top, src2->right, src2->bottom, src1->left,
+			              src1->top, src1->right, src1->bottom);
 			return FALSE;
 		}
 	}
@@ -58,7 +58,7 @@ static int test_basic(void)
 
 	rects = region16_rects(&region, &nbRects);
 
-	if (!rects || nbRects != 1 || memcmp(rects, &r1, sizeof(RECTANGLE_16)))
+	if (!rects || nbRects != 1 || memcmp(rects, &r1, sizeof(RECTANGLE_16)) != 0)
 		goto out;
 
 	/* r1 + r2 */
@@ -709,57 +709,57 @@ static int test_norbert2_case(void)
 
 	if (!region16_union_rect(&region, &region, &rect1))
 	{
-		fprintf(stderr, "%s: Error 1 - region16_union_rect failed\n", __func__);
+		(void)fprintf(stderr, "%s: Error 1 - region16_union_rect failed\n", __func__);
 		goto out;
 	}
 
 	if (!(rects = region16_rects(&region, &nbRects)))
 	{
-		fprintf(stderr, "%s: Error 2 - region16_rects failed\n", __func__);
+		(void)fprintf(stderr, "%s: Error 2 - region16_rects failed\n", __func__);
 		goto out;
 	}
 
 	if (nbRects != 1)
 	{
-		fprintf(stderr, "%s: Error 3 - expected nbRects == 1 but got %" PRIu32 "\n", __func__,
-		        nbRects);
+		(void)fprintf(stderr, "%s: Error 3 - expected nbRects == 1 but got %" PRIu32 "\n", __func__,
+		              nbRects);
 		goto out;
 	}
 
 	if (!compareRectangles(&rects[0], &rect1, 1))
 	{
-		fprintf(stderr, "%s: Error 4 - compare failed\n", __func__);
+		(void)fprintf(stderr, "%s: Error 4 - compare failed\n", __func__);
 		goto out;
 	}
 
 	if (!region16_union_rect(&region, &region, &rect2))
 	{
-		fprintf(stderr, "%s: Error 5 - region16_union_rect failed\n", __func__);
+		(void)fprintf(stderr, "%s: Error 5 - region16_union_rect failed\n", __func__);
 		goto out;
 	}
 
 	if (!(rects = region16_rects(&region, &nbRects)))
 	{
-		fprintf(stderr, "%s: Error 6 - region16_rects failed\n", __func__);
+		(void)fprintf(stderr, "%s: Error 6 - region16_rects failed\n", __func__);
 		goto out;
 	}
 
 	if (nbRects != 2)
 	{
-		fprintf(stderr, "%s: Error 7 - expected nbRects == 2 but got %" PRIu32 "\n", __func__,
-		        nbRects);
+		(void)fprintf(stderr, "%s: Error 7 - expected nbRects == 2 but got %" PRIu32 "\n", __func__,
+		              nbRects);
 		goto out;
 	}
 
 	if (!compareRectangles(&rects[0], &rect2, 1))
 	{
-		fprintf(stderr, "%s: Error 8 - compare failed\n", __func__);
+		(void)fprintf(stderr, "%s: Error 8 - compare failed\n", __func__);
 		goto out;
 	}
 
 	if (!compareRectangles(&rects[1], &rect1, 1))
 	{
-		fprintf(stderr, "%s: Error 9 - compare failed\n", __func__);
+		(void)fprintf(stderr, "%s: Error 9 - compare failed\n", __func__);
 		goto out;
 	}
 
@@ -849,7 +849,7 @@ int TestFreeRDPRegion(int argc, char* argv[])
 	for (int i = 0; tests[i].func; i++)
 	{
 		testNb++;
-		fprintf(stderr, "%d: %s\n", testNb, tests[i].name);
+		(void)fprintf(stderr, "%d: %s\n", testNb, tests[i].name);
 		retCode = tests[i].func();
 
 		if (retCode < 0)
@@ -857,7 +857,7 @@ int TestFreeRDPRegion(int argc, char* argv[])
 	}
 
 	if (retCode < 0)
-		fprintf(stderr, "failed for test %d\n", testNb);
+		(void)fprintf(stderr, "failed for test %d\n", testNb);
 
 	return retCode;
 }

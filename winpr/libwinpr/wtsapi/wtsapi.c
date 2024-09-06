@@ -52,10 +52,10 @@ static WtsApiFunctionTable WtsApi32_WtsApiFunctionTable = { 0 };
 
 #ifdef __MINGW32__
 #define WTSAPI32_LOAD_PROC(NAME, TYPE) \
-	WtsApi32_WtsApiFunctionTable.p##NAME = (TYPE)GetProcAddress(g_WtsApi32Module, "WTS" #NAME);
+	WtsApi32_WtsApiFunctionTable.p##NAME = GetProcAddressAs(g_WtsApi32Module, "WTS" #NAME, TYPE);
 #else
 #define WTSAPI32_LOAD_PROC(NAME, TYPE) \
-	WtsApi32_WtsApiFunctionTable.p##NAME = (##TYPE)GetProcAddress(g_WtsApi32Module, "WTS" #NAME);
+	WtsApi32_WtsApiFunctionTable.p##NAME = GetProcAddressAs(g_WtsApi32Module, "WTS" #NAME, ##TYPE);
 #endif
 
 static BOOL WtsApi32_InitializeWtsApi(void)
@@ -695,18 +695,15 @@ BOOL WTSRegisterWtsApiFunctionTable(const WtsApiFunctionTable* table)
 
 static BOOL LoadAndInitialize(char* library)
 {
-	INIT_WTSAPI_FN pInitWtsApi = NULL;
 	g_WtsApiModule = LoadLibraryX(library);
 
 	if (!g_WtsApiModule)
 		return FALSE;
 
-	pInitWtsApi = (INIT_WTSAPI_FN)GetProcAddress(g_WtsApiModule, "InitWtsApi");
+	INIT_WTSAPI_FN pInitWtsApi = GetProcAddressAs(g_WtsApiModule, "InitWtsApi", INIT_WTSAPI_FN);
 
 	if (!pInitWtsApi)
-	{
 		return FALSE;
-	}
 
 	g_WtsApi = pInitWtsApi();
 	return TRUE;

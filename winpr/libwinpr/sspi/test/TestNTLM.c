@@ -111,8 +111,8 @@ static int test_ntlm_client_init(TEST_NTLM_CLIENT* ntlm, const char* user, const
 
 	if (status != SEC_E_OK)
 	{
-		fprintf(stderr, "QuerySecurityPackageInfo status: %s (0x%08" PRIX32 ")\n",
-		        GetSecurityStatusString(status), status);
+		(void)fprintf(stderr, "QuerySecurityPackageInfo status: %s (0x%08" PRIX32 ")\n",
+		              GetSecurityStatusString(status), status);
 		return -1;
 	}
 
@@ -123,8 +123,8 @@ static int test_ntlm_client_init(TEST_NTLM_CLIENT* ntlm, const char* user, const
 
 	if (status != SEC_E_OK)
 	{
-		fprintf(stderr, "AcquireCredentialsHandle status: %s (0x%08" PRIX32 ")\n",
-		        GetSecurityStatusString(status), status);
+		(void)fprintf(stderr, "AcquireCredentialsHandle status: %s (0x%08" PRIX32 ")\n",
+		              GetSecurityStatusString(status), status);
 		return -1;
 	}
 
@@ -237,7 +237,7 @@ static int test_ntlm_client_authenticate(TEST_NTLM_CLIENT* ntlm)
 
 	if ((!ntlm) || (!ntlm->table))
 	{
-		fprintf(stderr, "ntlm_authenticate: invalid ntlm context\n");
+		(void)fprintf(stderr, "ntlm_authenticate: invalid ntlm context\n");
 		return -1;
 	}
 
@@ -323,8 +323,8 @@ static int test_ntlm_server_init(TEST_NTLM_SERVER* ntlm)
 
 	if (status != SEC_E_OK)
 	{
-		fprintf(stderr, "QuerySecurityPackageInfo status: %s (0x%08" PRIX32 ")\n",
-		        GetSecurityStatusString(status), status);
+		(void)fprintf(stderr, "QuerySecurityPackageInfo status: %s (0x%08" PRIX32 ")\n",
+		              GetSecurityStatusString(status), status);
 		return -1;
 	}
 
@@ -335,8 +335,8 @@ static int test_ntlm_server_init(TEST_NTLM_SERVER* ntlm)
 
 	if (status != SEC_E_OK)
 	{
-		fprintf(stderr, "AcquireCredentialsHandle status: %s (0x%08" PRIX32 ")\n",
-		        GetSecurityStatusString(status), status);
+		(void)fprintf(stderr, "AcquireCredentialsHandle status: %s (0x%08" PRIX32 ")\n",
+		              GetSecurityStatusString(status), status);
 		return -1;
 	}
 
@@ -430,8 +430,8 @@ static int test_ntlm_server_authenticate(TEST_NTLM_SERVER* ntlm)
 
 	if ((status != SEC_E_OK) && (status != SEC_I_CONTINUE_NEEDED))
 	{
-		fprintf(stderr, "AcceptSecurityContext status: %s (0x%08" PRIX32 ")\n",
-		        GetSecurityStatusString(status), status);
+		(void)fprintf(stderr, "AcceptSecurityContext status: %s (0x%08" PRIX32 ")\n",
+		              GetSecurityStatusString(status), status);
 		return -1; /* Access Denied */
 	}
 
@@ -545,7 +545,7 @@ static BOOL test_default(void)
 	if (!DynamicTest)
 	{
 		pSecBuffer->cbBuffer = sizeof(TEST_NTLM_NEGOTIATE) - 1;
-		pSecBuffer->pvBuffer = (void*)malloc(pSecBuffer->cbBuffer);
+		pSecBuffer->pvBuffer = malloc(pSecBuffer->cbBuffer);
 
 		if (!pSecBuffer->pvBuffer)
 		{
@@ -556,7 +556,7 @@ static BOOL test_default(void)
 		CopyMemory(pSecBuffer->pvBuffer, TEST_NTLM_NEGOTIATE, pSecBuffer->cbBuffer);
 	}
 
-	fprintf(stderr, "NTLM_NEGOTIATE (length = %" PRIu32 "):\n", pSecBuffer->cbBuffer);
+	(void)fprintf(stderr, "NTLM_NEGOTIATE (length = %" PRIu32 "):\n", pSecBuffer->cbBuffer);
 	winpr_HexDump("sspi.test", WLOG_DEBUG, (BYTE*)pSecBuffer->pvBuffer, pSecBuffer->cbBuffer);
 	/**
 	 * Server <- Negotiate Message
@@ -604,7 +604,7 @@ static BOOL test_default(void)
 	{
 		SecPkgContext_AuthNtlmMessage AuthNtlmMessage = { 0 };
 		pSecBuffer->cbBuffer = sizeof(TEST_NTLM_CHALLENGE) - 1;
-		pSecBuffer->pvBuffer = (void*)malloc(pSecBuffer->cbBuffer);
+		pSecBuffer->pvBuffer = malloc(pSecBuffer->cbBuffer);
 
 		if (!pSecBuffer->pvBuffer)
 		{
@@ -621,7 +621,7 @@ static BOOL test_default(void)
 		                                    sizeof(SecPkgContext_AuthNtlmMessage));
 	}
 
-	fprintf(stderr, "NTLM_CHALLENGE (length = %" PRIu32 "):\n", pSecBuffer->cbBuffer);
+	(void)fprintf(stderr, "NTLM_CHALLENGE (length = %" PRIu32 "):\n", pSecBuffer->cbBuffer);
 	winpr_HexDump("sspi.test", WLOG_DEBUG, (BYTE*)pSecBuffer->pvBuffer, pSecBuffer->cbBuffer);
 	/**
 	 * Client <- Challenge Message
@@ -644,7 +644,7 @@ static BOOL test_default(void)
 	if (!DynamicTest)
 	{
 		pSecBuffer->cbBuffer = sizeof(TEST_NTLM_AUTHENTICATE) - 1;
-		pSecBuffer->pvBuffer = (void*)malloc(pSecBuffer->cbBuffer);
+		pSecBuffer->pvBuffer = malloc(pSecBuffer->cbBuffer);
 
 		if (!pSecBuffer->pvBuffer)
 		{
@@ -655,7 +655,7 @@ static BOOL test_default(void)
 		CopyMemory(pSecBuffer->pvBuffer, TEST_NTLM_AUTHENTICATE, pSecBuffer->cbBuffer);
 	}
 
-	fprintf(stderr, "NTLM_AUTHENTICATE (length = %" PRIu32 "):\n", pSecBuffer->cbBuffer);
+	(void)fprintf(stderr, "NTLM_AUTHENTICATE (length = %" PRIu32 "):\n", pSecBuffer->cbBuffer);
 	winpr_HexDump("sspi.test", WLOG_DEBUG, (BYTE*)pSecBuffer->pvBuffer, pSecBuffer->cbBuffer);
 	/**
 	 * Server <- Authenticate Message

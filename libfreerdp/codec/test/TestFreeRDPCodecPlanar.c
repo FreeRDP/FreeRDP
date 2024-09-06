@@ -5461,12 +5461,12 @@ static BOOL CompareBitmap(const BYTE* srcA, UINT32 srcAFormat, const BYTE* srcB,
 			maxDiff = 0.0;
 	}
 
-	for (UINT32 y = 0; y < height; y++)
+	for (size_t y = 0; y < height; y++)
 	{
-		const BYTE* lineA = &srcA[width * FreeRDPGetBytesPerPixel(srcAFormat) * y];
-		const BYTE* lineB = &srcB[width * FreeRDPGetBytesPerPixel(srcBFormat) * y];
+		const BYTE* lineA = &srcA[y * width * FreeRDPGetBytesPerPixel(srcAFormat)];
+		const BYTE* lineB = &srcB[y * width * FreeRDPGetBytesPerPixel(srcBFormat)];
 
-		for (UINT32 x = 0; x < width; x++)
+		for (size_t x = 0; x < width; x++)
 		{
 			BYTE sR = 0;
 			BYTE sG = 0;
@@ -5508,10 +5508,11 @@ static BOOL RunTestPlanar(BITMAP_PLANAR_CONTEXT* planar, const BYTE* srcBitmap,
 	UINT32 dstSize = 0;
 	BYTE* compressedBitmap = freerdp_bitmap_compress_planar(planar, srcBitmap, srcFormat, width,
 	                                                        height, 0, NULL, &dstSize);
-	BYTE* decompressedBitmap = (BYTE*)calloc(height, width * FreeRDPGetBytesPerPixel(dstFormat));
-	printf("%s [%s] --> [%s]: ", __func__, FreeRDPGetColorFormatName(srcFormat),
-	       FreeRDPGetColorFormatName(dstFormat));
-	fflush(stdout);
+	BYTE* decompressedBitmap =
+	    (BYTE*)calloc(height, 1ULL * width * FreeRDPGetBytesPerPixel(dstFormat));
+	(void)printf("%s [%s] --> [%s]: ", __func__, FreeRDPGetColorFormatName(srcFormat),
+	             FreeRDPGetColorFormatName(dstFormat));
+	(void)fflush(stdout);
 	printf("TODO: Skipping unfinished test!");
 	rc = TRUE;
 	goto fail;
@@ -5539,8 +5540,8 @@ static BOOL RunTestPlanar(BITMAP_PLANAR_CONTEXT* planar, const BYTE* srcBitmap,
 fail:
 	free(compressedBitmap);
 	free(decompressedBitmap);
-	printf("\n");
-	fflush(stdout);
+	(void)printf("\n");
+	(void)fflush(stdout);
 	return rc;
 }
 
@@ -5548,9 +5549,9 @@ static BOOL RunTestPlanarSingleColor(BITMAP_PLANAR_CONTEXT* planar, const UINT32
                                      const UINT32 dstFormat)
 {
 	BOOL rc = FALSE;
-	printf("%s: [%s] --> [%s]: ", __func__, FreeRDPGetColorFormatName(srcFormat),
-	       FreeRDPGetColorFormatName(dstFormat));
-	fflush(stdout);
+	(void)printf("%s: [%s] --> [%s]: ", __func__, FreeRDPGetColorFormatName(srcFormat),
+	             FreeRDPGetColorFormatName(dstFormat));
+	(void)fflush(stdout);
 
 	for (UINT32 j = 0; j < 32; j += 8)
 	{
@@ -5572,11 +5573,11 @@ static BOOL RunTestPlanarSingleColor(BITMAP_PLANAR_CONTEXT* planar, const UINT32
 			if (!bmp || !decompressedBitmap)
 				goto fail_loop;
 
-			for (UINT32 y = 0; y < height; y++)
+			for (size_t y = 0; y < height; y++)
 			{
-				BYTE* line = &bmp[width * FreeRDPGetBytesPerPixel(srcFormat) * y];
+				BYTE* line = &bmp[y * width * FreeRDPGetBytesPerPixel(srcFormat)];
 
-				for (UINT32 x = 0; x < width; x++)
+				for (size_t x = 0; x < width; x++)
 				{
 					FreeRDPWriteColor(line, srcFormat, color);
 					line += FreeRDPGetBytesPerPixel(srcFormat);
@@ -5610,11 +5611,11 @@ static BOOL RunTestPlanarSingleColor(BITMAP_PLANAR_CONTEXT* planar, const UINT32
 		}
 	}
 
-	printf("SUCCESS");
+	(void)printf("SUCCESS");
 	rc = TRUE;
 fail:
-	printf("\n");
-	fflush(stdout);
+	(void)printf("\n");
+	(void)fflush(stdout);
 	return rc;
 }
 
@@ -5756,7 +5757,7 @@ static BOOL FuzzPlanar(void)
 		       ", nDstHeight=%" PRIu32 ", nDstStep=%" PRIu32 ", total size=%" PRIuz "\n",
 		       FreeRDPGetColorFormatName(DstFormat), nXDst, nYDst, nDstWidth, nDstHeight, nDstStep,
 		       sizeof(dstData));
-		freerdp_planar_switch_bgr(planar, rand() % 2);
+		freerdp_planar_switch_bgr(planar, prand(2) % 2);
 		planar_decompress(planar, data, dataSize, prand(4096), prand(4096), dstData, DstFormat,
 		                  nDstStep, nXDst, nYDst, nDstWidth, nDstHeight, prand(2));
 	}

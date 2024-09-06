@@ -29,13 +29,13 @@
 int TestCommConfig(int argc, char* argv[])
 {
 	DCB dcb = { 0 };
-	HANDLE hComm;
-	BOOL success;
+	BOOL success = FALSE;
 	LPCSTR lpFileName = "\\\\.\\COM1";
 	COMMPROP commProp = { 0 };
 	struct stat statbuf = { 0 };
 
-	hComm = CreateFileA(lpFileName, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
+	HANDLE hComm =
+	    CreateFileA(lpFileName, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
 
 	if (hComm && (hComm != INVALID_HANDLE_VALUE))
 	{

@@ -1,5 +1,6 @@
 
 #include <winpr/crt.h>
+#include <winpr/crypto.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
 #include <winpr/interlocked.h>
@@ -22,6 +23,15 @@ struct test_params
 	DWORD flags;
 };
 
+static UINT32 prand(UINT32 max)
+{
+	UINT32 tmp = 0;
+	if (max <= 1)
+		return 1;
+	winpr_RAND(&tmp, sizeof(tmp));
+	return tmp % (max - 1) + 1;
+}
+
 static DWORD WINAPI test_synch_barrier_thread(LPVOID lpParam)
 {
 	BOOL status = FALSE;
@@ -43,7 +53,7 @@ static DWORD WINAPI test_synch_barrier_thread(LPVOID lpParam)
 	for (DWORD i = 0; i < p->loops && gErrorCount == 0; i++)
 	{
 		/* simulate different execution times before the barrier */
-		Sleep(1 + abs((rand() % MAX_SLEEP_MS)));
+		Sleep(1 + prand(MAX_SLEEP_MS));
 		status = EnterSynchronizationBarrier(&gBarrier, p->flags);
 
 		// printf("Thread #%03u status: %s\n", tnum, status ? "TRUE" : "FALSE");
@@ -197,7 +207,7 @@ int TestSynchBarrier(int argc, char* argv[])
 	/* Test invalid parameters */
 	if (InitializeSynchronizationBarrier(&gBarrier, 0, -1))
 	{
-		fprintf(
+		(void)fprintf(
 		    stderr,
 		    "%s: InitializeSynchronizationBarrier unecpectedly succeeded with lTotalThreads = 0\n",
 		    __func__);
@@ -206,7 +216,7 @@ int TestSynchBarrier(int argc, char* argv[])
 
 	if (InitializeSynchronizationBarrier(&gBarrier, -1, -1))
 	{
-		fprintf(
+		(void)fprintf(
 		    stderr,
 		    "%s: InitializeSynchronizationBarrier unecpectedly succeeded with lTotalThreads = -1\n",
 		    __func__);
@@ -215,7 +225,7 @@ int TestSynchBarrier(int argc, char* argv[])
 
 	if (InitializeSynchronizationBarrier(&gBarrier, 1, -2))
 	{
-		fprintf(
+		(void)fprintf(
 		    stderr,
 		    "%s: InitializeSynchronizationBarrier unecpectedly succeeded with lSpinCount = -2\n",
 		    __func__);
@@ -226,29 +236,30 @@ int TestSynchBarrier(int argc, char* argv[])
 
 	if (!TestSynchBarrierWithFlags(0, dwMaxThreads, dwNumLoops))
 	{
-		fprintf(stderr,
-		        "%s: TestSynchBarrierWithFlags(0) unecpectedly succeeded with lTotalThreads = -1\n",
-		        __func__);
+		(void)fprintf(
+		    stderr,
+		    "%s: TestSynchBarrierWithFlags(0) unecpectedly succeeded with lTotalThreads = -1\n",
+		    __func__);
 		return -1;
 	}
 
 	if (!TestSynchBarrierWithFlags(SYNCHRONIZATION_BARRIER_FLAGS_SPIN_ONLY, dwMinThreads,
 	                               dwNumLoops))
 	{
-		fprintf(stderr,
-		        "%s: TestSynchBarrierWithFlags(SYNCHRONIZATION_BARRIER_FLAGS_SPIN_ONLY) "
-		        "unecpectedly succeeded with lTotalThreads = -1\n",
-		        __func__);
+		(void)fprintf(stderr,
+		              "%s: TestSynchBarrierWithFlags(SYNCHRONIZATION_BARRIER_FLAGS_SPIN_ONLY) "
+		              "unecpectedly succeeded with lTotalThreads = -1\n",
+		              __func__);
 		return -1;
 	}
 
 	if (!TestSynchBarrierWithFlags(SYNCHRONIZATION_BARRIER_FLAGS_BLOCK_ONLY, dwMaxThreads,
 	                               dwNumLoops))
 	{
-		fprintf(stderr,
-		        "%s: TestSynchBarrierWithFlags(SYNCHRONIZATION_BARRIER_FLAGS_BLOCK_ONLY) "
-		        "unecpectedly succeeded with lTotalThreads = -1\n",
-		        __func__);
+		(void)fprintf(stderr,
+		              "%s: TestSynchBarrierWithFlags(SYNCHRONIZATION_BARRIER_FLAGS_BLOCK_ONLY) "
+		              "unecpectedly succeeded with lTotalThreads = -1\n",
+		              __func__);
 		return -1;
 	}
 

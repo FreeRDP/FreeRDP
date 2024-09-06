@@ -35,10 +35,10 @@ static const testcase_t unit_testcases[] = {
 static void create_prefix(char* prefix, size_t prefixlen, size_t buffersize, SSIZE_T rc,
                           SSIZE_T inputlen, const testcase_t* test, const char* fkt, size_t line)
 {
-	_snprintf(prefix, prefixlen,
-	          "[%s:%" PRIuz "] '%s' [utf8: %" PRIuz ", utf16: %" PRIuz "] buffersize: %" PRIuz
-	          ", rc: %" PRIdz ", inputlen: %" PRIdz ":: ",
-	          fkt, line, test->utf8, test->utf8len, test->utf16len, buffersize, rc, inputlen);
+	(void)_snprintf(prefix, prefixlen,
+	                "[%s:%" PRIuz "] '%s' [utf8: %" PRIuz ", utf16: %" PRIuz "] buffersize: %" PRIuz
+	                ", rc: %" PRIdz ", inputlen: %" PRIdz ":: ",
+	                fkt, line, test->utf8, test->utf8len, test->utf16len, buffersize, rc, inputlen);
 }
 
 static BOOL check_short_buffer(const char* prefix, int rc, size_t buffersize,
@@ -53,20 +53,20 @@ static BOOL check_short_buffer(const char* prefix, int rc, size_t buffersize,
 
 	if (buffersize > len)
 	{
-		fprintf(stderr,
-		        "%s length does not match buffersize: %" PRId32 " != %" PRIuz
-		        ",but is large enough to hold result\n",
-		        prefix, rc, buffersize);
+		(void)fprintf(stderr,
+		              "%s length does not match buffersize: %" PRId32 " != %" PRIuz
+		              ",but is large enough to hold result\n",
+		              prefix, rc, buffersize);
 		return FALSE;
 	}
 	const DWORD err = GetLastError();
 	if (err != ERROR_INSUFFICIENT_BUFFER)
 	{
 
-		fprintf(stderr,
-		        "%s length does not match buffersize: %" PRId32 " != %" PRIuz
-		        ", unexpected GetLastError() 0x08%" PRIx32 "\n",
-		        prefix, rc, buffersize, err);
+		(void)fprintf(stderr,
+		              "%s length does not match buffersize: %" PRId32 " != %" PRIuz
+		              ", unexpected GetLastError() 0x08%" PRIx32 "\n",
+		              prefix, rc, buffersize, err);
 		return FALSE;
 	}
 	else
@@ -89,8 +89,9 @@ static BOOL compare_utf16_int(const WCHAR* what, size_t buffersize, SSIZE_T rc, 
 	{
 		if ((rc < 0) || ((size_t)rc != welen))
 		{
-			fprintf(stderr, "%s length does not match expectation: %" PRIdz " != %" PRIuz "\n",
-			        prefix, rc, welen);
+			(void)fprintf(stderr,
+			              "%s length does not match expectation: %" PRIdz " != %" PRIuz "\n",
+			              prefix, rc, welen);
 			return FALSE;
 		}
 	}
@@ -105,8 +106,8 @@ static BOOL compare_utf16_int(const WCHAR* what, size_t buffersize, SSIZE_T rc, 
 		const size_t wlen = _wcsnlen(what, buffersize);
 		if ((rc < 0) || (wlen > (size_t)rc))
 		{
-			fprintf(stderr, "%s length does not match wcslen: %" PRIdz " < %" PRIuz "\n", prefix,
-			        rc, wlen);
+			(void)fprintf(stderr, "%s length does not match wcslen: %" PRIdz " < %" PRIuz "\n",
+			              prefix, rc, wlen);
 			return FALSE;
 		}
 	}
@@ -115,8 +116,8 @@ static BOOL compare_utf16_int(const WCHAR* what, size_t buffersize, SSIZE_T rc, 
 	{
 		if (memcmp(test->utf16, what, rc * sizeof(WCHAR)) != 0)
 		{
-			fprintf(stderr, "%s contents does not match expectations: TODO '%s' != '%s'\n", prefix,
-			        test->utf8, test->utf8);
+			(void)fprintf(stderr, "%s contents does not match expectations: TODO '%s' != '%s'\n",
+			              prefix, test->utf8, test->utf8);
 			return FALSE;
 		}
 	}
@@ -142,8 +143,9 @@ static BOOL compare_utf8_int(const char* what, size_t buffersize, SSIZE_T rc, SS
 	{
 		if ((rc < 0) || ((size_t)rc != slen))
 		{
-			fprintf(stderr, "%s length does not match expectation: %" PRIdz " != %" PRIuz "\n",
-			        prefix, rc, slen);
+			(void)fprintf(stderr,
+			              "%s length does not match expectation: %" PRIdz " != %" PRIuz "\n",
+			              prefix, rc, slen);
 			return FALSE;
 		}
 	}
@@ -158,8 +160,8 @@ static BOOL compare_utf8_int(const char* what, size_t buffersize, SSIZE_T rc, SS
 		const size_t wlen = strnlen(what, buffersize);
 		if (wlen != (size_t)rc)
 		{
-			fprintf(stderr, "%s length does not match strnlen: %" PRIdz " != %" PRIuz "\n", prefix,
-			        rc, wlen);
+			(void)fprintf(stderr, "%s length does not match strnlen: %" PRIdz " != %" PRIuz "\n",
+			              prefix, rc, wlen);
 			return FALSE;
 		}
 	}
@@ -168,8 +170,8 @@ static BOOL compare_utf8_int(const char* what, size_t buffersize, SSIZE_T rc, SS
 	{
 		if (memcmp(test->utf8, what, rc) != 0)
 		{
-			fprintf(stderr, "%s contents does not match expectations: '%s' != '%s'\n", prefix, what,
-			        test->utf8);
+			(void)fprintf(stderr, "%s contents does not match expectations: '%s' != '%s'\n", prefix,
+			              what, test->utf8);
 			return FALSE;
 		}
 	}
@@ -191,8 +193,9 @@ static BOOL test_convert_to_utf16(const testcase_t* test)
 	{
 		char prefix[8192] = { 0 };
 		create_prefix(prefix, ARRAYSIZE(prefix), 0, rc2, -1, test, __func__, __LINE__);
-		fprintf(stderr, "%s ConvertUtf8ToWChar(%s, NULL, 0) expected %" PRIuz ", got %" PRIdz "\n",
-		        prefix, test->utf8, wlen, rc2);
+		(void)fprintf(stderr,
+		              "%s ConvertUtf8ToWChar(%s, NULL, 0) expected %" PRIuz ", got %" PRIdz "\n",
+		              prefix, test->utf8, wlen, rc2);
 		return FALSE;
 	}
 	for (size_t x = 0; x < max; x++)
@@ -218,10 +221,10 @@ static BOOL test_convert_to_utf16_n(const testcase_t* test)
 	{
 		char prefix[8192] = { 0 };
 		create_prefix(prefix, ARRAYSIZE(prefix), 0, rc2, test->utf8len, test, __func__, __LINE__);
-		fprintf(stderr,
-		        "%s ConvertUtf8NToWChar(%s, %" PRIuz ", NULL, 0) expected %" PRIuz ", got %" PRIdz
-		        "\n",
-		        prefix, test->utf8, test->utf8len, wlen, rc2);
+		(void)fprintf(stderr,
+		              "%s ConvertUtf8NToWChar(%s, %" PRIuz ", NULL, 0) expected %" PRIuz
+		              ", got %" PRIdz "\n",
+		              prefix, test->utf8, test->utf8len, wlen, rc2);
 		return FALSE;
 	}
 
@@ -254,8 +257,9 @@ static BOOL test_convert_to_utf8(const testcase_t* test)
 	{
 		char prefix[8192] = { 0 };
 		create_prefix(prefix, ARRAYSIZE(prefix), 0, rc2, -1, test, __func__, __LINE__);
-		fprintf(stderr, "%s ConvertWCharToUtf8(%s, NULL, 0) expected %" PRIuz ", got %" PRIdz "\n",
-		        prefix, test->utf8, wlen, rc2);
+		(void)fprintf(stderr,
+		              "%s ConvertWCharToUtf8(%s, NULL, 0) expected %" PRIuz ", got %" PRIdz "\n",
+		              prefix, test->utf8, wlen, rc2);
 		return FALSE;
 	}
 
@@ -282,10 +286,10 @@ static BOOL test_convert_to_utf8_n(const testcase_t* test)
 	{
 		char prefix[8192] = { 0 };
 		create_prefix(prefix, ARRAYSIZE(prefix), 0, rc2, test->utf16len, test, __func__, __LINE__);
-		fprintf(stderr,
-		        "%s ConvertWCharNToUtf8(%s, %" PRIuz ", NULL, 0) expected %" PRIuz ", got %" PRIdz
-		        "\n",
-		        prefix, test->utf8, test->utf16len, wlen, rc2);
+		(void)fprintf(stderr,
+		              "%s ConvertWCharNToUtf8(%s, %" PRIuz ", NULL, 0) expected %" PRIuz
+		              ", got %" PRIdz "\n",
+		              prefix, test->utf8, test->utf16len, wlen, rc2);
 		return FALSE;
 	}
 
@@ -351,14 +355,14 @@ static BOOL compare_win_utf16_int(const WCHAR* what, size_t buffersize, int rc, 
 	{
 		if ((inputlen >= 0) && (rc > buffersize))
 		{
-			fprintf(stderr, "%s length does not match expectation: %d > %" PRIuz "\n", prefix, rc,
-			        buffersize);
+			(void)fprintf(stderr, "%s length does not match expectation: %d > %" PRIuz "\n", prefix,
+			              rc, buffersize);
 			return FALSE;
 		}
 		else if ((inputlen < 0) && (rc != welen))
 		{
-			fprintf(stderr, "%s length does not match expectation: %d != %" PRIuz "\n", prefix, rc,
-			        welen);
+			(void)fprintf(stderr, "%s length does not match expectation: %d != %" PRIuz "\n",
+			              prefix, rc, welen);
 			return FALSE;
 		}
 	}
@@ -375,13 +379,14 @@ static BOOL compare_win_utf16_int(const WCHAR* what, size_t buffersize, int rc, 
 			wlen++;
 		if ((inputlen >= 0) && (buffersize < rc))
 		{
-			fprintf(stderr, "%s length does not match wcslen: %d > %" PRIuz "\n", prefix, rc,
-			        buffersize);
+			(void)fprintf(stderr, "%s length does not match wcslen: %d > %" PRIuz "\n", prefix, rc,
+			              buffersize);
 			return FALSE;
 		}
 		else if ((inputlen < 0) && (welen > rc))
 		{
-			fprintf(stderr, "%s length does not match wcslen: %d < %" PRIuz "\n", prefix, rc, wlen);
+			(void)fprintf(stderr, "%s length does not match wcslen: %d < %" PRIuz "\n", prefix, rc,
+			              wlen);
 			return FALSE;
 		}
 	}
@@ -389,8 +394,8 @@ static BOOL compare_win_utf16_int(const WCHAR* what, size_t buffersize, int rc, 
 	const size_t cmp_size = MIN(rc, test->utf16len) * sizeof(WCHAR);
 	if (memcmp(test->utf16, what, cmp_size) != 0)
 	{
-		fprintf(stderr, "%s contents does not match expectations: TODO '%s' != '%s'\n", prefix,
-		        test->utf8, test->utf8);
+		(void)fprintf(stderr, "%s contents does not match expectations: TODO '%s' != '%s'\n",
+		              prefix, test->utf8, test->utf8);
 		return FALSE;
 	}
 
@@ -422,14 +427,15 @@ static BOOL compare_win_utf8_int(const char* what, size_t buffersize, SSIZE_T rc
 	{
 		if ((inputlen >= 0) && (rc > buffersize))
 		{
-			fprintf(stderr, "%s length does not match expectation: %" PRIdz " > %" PRIuz "\n",
-			        prefix, rc, buffersize);
+			(void)fprintf(stderr, "%s length does not match expectation: %" PRIdz " > %" PRIuz "\n",
+			              prefix, rc, buffersize);
 			return FALSE;
 		}
 		else if ((inputlen < 0) && (rc != slen))
 		{
-			fprintf(stderr, "%s length does not match expectation: %" PRIdz " != %" PRIuz "\n",
-			        prefix, rc, slen);
+			(void)fprintf(stderr,
+			              "%s length does not match expectation: %" PRIdz " != %" PRIuz "\n",
+			              prefix, rc, slen);
 			return FALSE;
 		}
 	}
@@ -447,8 +453,8 @@ static BOOL compare_win_utf8_int(const char* what, size_t buffersize, SSIZE_T rc
 
 		if (wlen > rc)
 		{
-			fprintf(stderr, "%s length does not match wcslen: %" PRIdz " < %" PRIuz "\n", prefix,
-			        rc, wlen);
+			(void)fprintf(stderr, "%s length does not match wcslen: %" PRIdz " < %" PRIuz "\n",
+			              prefix, rc, wlen);
 			return FALSE;
 		}
 	}
@@ -456,8 +462,8 @@ static BOOL compare_win_utf8_int(const char* what, size_t buffersize, SSIZE_T rc
 	const size_t cmp_size = MIN(test->utf8len, rc);
 	if (memcmp(test->utf8, what, cmp_size) != 0)
 	{
-		fprintf(stderr, "%s contents does not match expectations: '%s' != '%s'\n", prefix, what,
-		        test->utf8);
+		(void)fprintf(stderr, "%s contents does not match expectations: '%s' != '%s'\n", prefix,
+		              what, test->utf8);
 		return FALSE;
 	}
 	printf("%s success\n", prefix);
@@ -479,10 +485,10 @@ static BOOL test_win_convert_to_utf16(const testcase_t* test)
 	{
 		char prefix[8192] = { 0 };
 		create_prefix(prefix, ARRAYSIZE(prefix), 0, rc2, -1, test, __func__, __LINE__);
-		fprintf(stderr,
-		        "%s MultiByteToWideChar(CP_UTF8, 0, %s, [-1], NULL, 0) expected %" PRIuz
-		        ", got %d\n",
-		        prefix, test->utf8, wlen + 1, rc2);
+		(void)fprintf(stderr,
+		              "%s MultiByteToWideChar(CP_UTF8, 0, %s, [-1], NULL, 0) expected %" PRIuz
+		              ", got %d\n",
+		              prefix, test->utf8, wlen + 1, rc2);
 		return FALSE;
 	}
 	for (size_t x = 0; x < max; x++)
@@ -512,10 +518,10 @@ static BOOL test_win_convert_to_utf16_n(const testcase_t* test)
 	{
 		char prefix[8192] = { 0 };
 		create_prefix(prefix, ARRAYSIZE(prefix), 0, rc2, test->utf8len, test, __func__, __LINE__);
-		fprintf(stderr,
-		        "%s MultiByteToWideChar(CP_UTF8, 0, %s, %" PRIuz ", NULL, 0) expected %" PRIuz
-		        ", got %d\n",
-		        prefix, test->utf8, test->utf8len, wlen, rc2);
+		(void)fprintf(stderr,
+		              "%s MultiByteToWideChar(CP_UTF8, 0, %s, %" PRIuz ", NULL, 0) expected %" PRIuz
+		              ", got %d\n",
+		              prefix, test->utf8, test->utf8len, wlen, rc2);
 		return FALSE;
 	}
 
@@ -552,10 +558,11 @@ static BOOL test_win_convert_to_utf8(const testcase_t* test)
 	{
 		char prefix[8192] = { 0 };
 		create_prefix(prefix, ARRAYSIZE(prefix), 0, rc2, -1, test, __func__, __LINE__);
-		fprintf(stderr,
-		        "%s WideCharToMultiByte(CP_UTF8, 0, %s, -1, NULL, 0, NULL, NULL) expected %" PRIuz
-		        ", got %d\n",
-		        prefix, test->utf8, wlen, rc2);
+		(void)fprintf(
+		    stderr,
+		    "%s WideCharToMultiByte(CP_UTF8, 0, %s, -1, NULL, 0, NULL, NULL) expected %" PRIuz
+		    ", got %d\n",
+		    prefix, test->utf8, wlen, rc2);
 		return FALSE;
 	}
 
@@ -587,10 +594,10 @@ static BOOL test_win_convert_to_utf8_n(const testcase_t* test)
 	{
 		char prefix[8192] = { 0 };
 		create_prefix(prefix, ARRAYSIZE(prefix), 0, rc2, test->utf16len, test, __func__, __LINE__);
-		fprintf(stderr,
-		        "%s WideCharToMultiByte(CP_UTF8, 0, %s, %" PRIuz
-		        ", NULL, 0, NULL, NULL) expected %" PRIuz ", got %d\n",
-		        prefix, test->utf8, test->utf16len, wlen, rc2);
+		(void)fprintf(stderr,
+		              "%s WideCharToMultiByte(CP_UTF8, 0, %s, %" PRIuz
+		              ", NULL, 0, NULL, NULL) expected %" PRIuz ", got %d\n",
+		              prefix, test->utf8, test->utf16len, wlen, rc2);
 		return FALSE;
 	}
 
@@ -959,23 +966,23 @@ static BOOL test_ConvertFromUnicode_wrapper(void)
 	i = ConvertFromUnicode(CP_UTF8, 0, (const WCHAR*)src1, 16, &dst, 0, NULL, NULL);
 	if (i != 16)
 	{
-		fprintf(stderr, "ConvertFromUnicode failure A1: unexpectedly returned %d instead of 16\n",
-		        i);
+		(void)fprintf(stderr,
+		              "ConvertFromUnicode failure A1: unexpectedly returned %d instead of 16\n", i);
 		goto fail;
 	}
 	if (dst == NULL)
 	{
-		fprintf(stderr, "ConvertFromUnicode failure A2: destination ist NULL\n");
+		(void)fprintf(stderr, "ConvertFromUnicode failure A2: destination ist NULL\n");
 		goto fail;
 	}
 	if ((i = strlen(dst)) != 16)
 	{
-		fprintf(stderr, "ConvertFromUnicode failure A3: dst length is %d instead of 16\n", i);
+		(void)fprintf(stderr, "ConvertFromUnicode failure A3: dst length is %d instead of 16\n", i);
 		goto fail;
 	}
 	if (strcmp(dst, cmp0))
 	{
-		fprintf(stderr, "ConvertFromUnicode failure A4: data mismatch\n");
+		(void)fprintf(stderr, "ConvertFromUnicode failure A4: data mismatch\n");
 		goto fail;
 	}
 	printf("Output UTF8 String:\n");
@@ -992,23 +999,23 @@ static BOOL test_ConvertFromUnicode_wrapper(void)
 	i = ConvertFromUnicode(CP_UTF8, 0, (const WCHAR*)src2, -1, &dst, 0, NULL, NULL);
 	if (i != 17)
 	{
-		fprintf(stderr, "ConvertFromUnicode failure B1: unexpectedly returned %d instead of 17\n",
-		        i);
+		(void)fprintf(stderr,
+		              "ConvertFromUnicode failure B1: unexpectedly returned %d instead of 17\n", i);
 		goto fail;
 	}
 	if (dst == NULL)
 	{
-		fprintf(stderr, "ConvertFromUnicode failure B2: destination ist NULL\n");
+		(void)fprintf(stderr, "ConvertFromUnicode failure B2: destination ist NULL\n");
 		goto fail;
 	}
 	if ((i = strlen(dst)) != 16)
 	{
-		fprintf(stderr, "ConvertFromUnicode failure B3: dst length is %d instead of 16\n", i);
+		(void)fprintf(stderr, "ConvertFromUnicode failure B3: dst length is %d instead of 16\n", i);
 		goto fail;
 	}
 	if (strcmp(dst, cmp0))
 	{
-		fprintf(stderr, "ConvertFromUnicode failure B: data mismatch\n");
+		(void)fprintf(stderr, "ConvertFromUnicode failure B: data mismatch\n");
 		goto fail;
 	}
 	printf("Output UTF8 String:\n");
@@ -1074,24 +1081,25 @@ static BOOL test_ConvertToUnicode_wrapper(void)
 	ii = ConvertToUnicode(CP_UTF8, 0, src1, 16, &dst, 0);
 	if (ii != 16)
 	{
-		fprintf(stderr, "ConvertToUnicode failure A1: unexpectedly returned %d instead of 16\n",
-		        ii);
+		(void)fprintf(stderr,
+		              "ConvertToUnicode failure A1: unexpectedly returned %d instead of 16\n", ii);
 		goto fail;
 	}
 	i = (size_t)ii;
 	if (dst == NULL)
 	{
-		fprintf(stderr, "ConvertToUnicode failure A2: destination ist NULL\n");
+		(void)fprintf(stderr, "ConvertToUnicode failure A2: destination ist NULL\n");
 		goto fail;
 	}
 	if ((i = _wcslen(dst)) != 16)
 	{
-		fprintf(stderr, "ConvertToUnicode failure A3: dst length is %" PRIuz " instead of 16\n", i);
+		(void)fprintf(stderr,
+		              "ConvertToUnicode failure A3: dst length is %" PRIuz " instead of 16\n", i);
 		goto fail;
 	}
 	if (_wcscmp(dst, (const WCHAR*)cmp0))
 	{
-		fprintf(stderr, "ConvertToUnicode failure A4: data mismatch\n");
+		(void)fprintf(stderr, "ConvertToUnicode failure A4: data mismatch\n");
 		goto fail;
 	}
 	printf("Output UTF16 String:\n");
@@ -1108,23 +1116,25 @@ static BOOL test_ConvertToUnicode_wrapper(void)
 	i = ConvertToUnicode(CP_UTF8, 0, src2, -1, &dst, 0);
 	if (i != 17)
 	{
-		fprintf(stderr,
-		        "ConvertToUnicode failure B1: unexpectedly returned %" PRIuz " instead of 17\n", i);
+		(void)fprintf(
+		    stderr, "ConvertToUnicode failure B1: unexpectedly returned %" PRIuz " instead of 17\n",
+		    i);
 		goto fail;
 	}
 	if (dst == NULL)
 	{
-		fprintf(stderr, "ConvertToUnicode failure B2: destination ist NULL\n");
+		(void)fprintf(stderr, "ConvertToUnicode failure B2: destination ist NULL\n");
 		goto fail;
 	}
 	if ((i = _wcslen(dst)) != 16)
 	{
-		fprintf(stderr, "ConvertToUnicode failure B3: dst length is %" PRIuz " instead of 16\n", i);
+		(void)fprintf(stderr,
+		              "ConvertToUnicode failure B3: dst length is %" PRIuz " instead of 16\n", i);
 		goto fail;
 	}
 	if (_wcscmp(dst, (const WCHAR*)cmp0))
 	{
-		fprintf(stderr, "ConvertToUnicode failure B: data mismatch\n");
+		(void)fprintf(stderr, "ConvertToUnicode failure B: data mismatch\n");
 		goto fail;
 	}
 	printf("Output UTF16 String:\n");

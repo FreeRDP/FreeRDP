@@ -31,7 +31,8 @@
 
 static BOOL test_generic(HANDLE hComm)
 {
-	COMMTIMEOUTS timeouts = { 0 }, timeouts2 = { 0 };
+	COMMTIMEOUTS timeouts = { 0 };
+	COMMTIMEOUTS timeouts2 = { 0 };
 
 	timeouts.ReadIntervalTimeout = 1;
 	timeouts.ReadTotalTimeoutMultiplier = 2;
@@ -84,8 +85,8 @@ static BOOL test_generic(HANDLE hComm)
 int TestTimeouts(int argc, char* argv[])
 {
 	struct stat statbuf;
-	BOOL result;
-	HANDLE hComm;
+	BOOL result = 0;
+	HANDLE hComm = NULL;
 
 	if (stat("/dev/ttyS0", &statbuf) < 0)
 	{

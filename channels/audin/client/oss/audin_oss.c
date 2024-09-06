@@ -160,8 +160,8 @@ static DWORD WINAPI audin_oss_thread_func(LPVOID arg)
 
 	if (oss->dev_unit != -1)
 	{
-		sprintf_s(dev_name, (PATH_MAX - 1), "/dev/dsp%i", oss->dev_unit);
-		sprintf_s(mixer_name, PATH_MAX - 1, "/dev/mixer%i", oss->dev_unit);
+		(void)sprintf_s(dev_name, (PATH_MAX - 1), "/dev/dsp%i", oss->dev_unit);
+		(void)sprintf_s(mixer_name, PATH_MAX - 1, "/dev/mixer%i", oss->dev_unit);
 	}
 
 	WLog_INFO(TAG, "open: %s", dev_name);
@@ -386,7 +386,7 @@ static UINT audin_oss_parse_addin_args(AudinOSSDevice* device, const ADDIN_ARGV*
 	char* eptr = NULL;
 	DWORD flags = 0;
 	const COMMAND_LINE_ARGUMENT_A* arg = NULL;
-	AudinOSSDevice* oss = (AudinOSSDevice*)device;
+	AudinOSSDevice* oss = device;
 	COMMAND_LINE_ARGUMENT_A audin_oss_args[] = { { "dev", COMMAND_LINE_VALUE_REQUIRED, "<device>",
 		                                           NULL, NULL, -1, NULL, "audio device name" },
 		                                         { NULL, 0, NULL, NULL, NULL, -1, NULL, NULL } };
@@ -445,8 +445,8 @@ static UINT audin_oss_parse_addin_args(AudinOSSDevice* device, const ADDIN_ARGV*
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-FREERDP_ENTRY_POINT(
-    UINT oss_freerdp_audin_client_subsystem_entry(PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEntryPoints))
+FREERDP_ENTRY_POINT(UINT VCAPITYPE oss_freerdp_audin_client_subsystem_entry(
+    PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEntryPoints))
 {
 	const ADDIN_ARGV* args = NULL;
 	AudinOSSDevice* oss = NULL;

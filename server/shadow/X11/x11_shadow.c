@@ -135,10 +135,10 @@ static BOOL x11_shadow_pam_get_service_name(SHADOW_PAM_AUTH_INFO* info)
 
 	for (size_t x = 0; x < ARRAYSIZE(hints); x++)
 	{
-		char path[MAX_PATH];
+		char path[MAX_PATH] = { 0 };
 		const char* hint = hints[x];
 
-		_snprintf(path, sizeof(path), "%s/%s", base, hint);
+		(void)_snprintf(path, sizeof(path), "%s/%s", base, hint);
 		if (winpr_PathFileExists(path))
 		{
 
@@ -676,12 +676,12 @@ static int x11_shadow_blend_cursor(x11ShadowSubsystem* subsystem)
 	pDstData = surface->data;
 	nDstStep = surface->scanline;
 
-	for (int y = 0; y < nHeight; y++)
+	for (size_t y = 0; y < nHeight; y++)
 	{
-		const BYTE* pSrcPixel = &pSrcData[((nYSrc + y) * nSrcStep) + (nXSrc * 4)];
-		BYTE* pDstPixel = &pDstData[((nYDst + y) * nDstStep) + (nXDst * 4)];
+		const BYTE* pSrcPixel = &pSrcData[((nYSrc + y) * nSrcStep) + (4ULL * nXSrc)];
+		BYTE* pDstPixel = &pDstData[((nYDst + y) * nDstStep) + (4ULL * nXDst)];
 
-		for (int x = 0; x < nWidth; x++)
+		for (size_t x = 0; x < nWidth; x++)
 		{
 			B = *pSrcPixel++;
 			G = *pSrcPixel++;
@@ -1351,7 +1351,7 @@ static int x11_shadow_subsystem_init(rdpShadowSubsystem* sub)
 	subsystem->cursorMaxWidth = 256;
 	subsystem->cursorMaxHeight = 256;
 	subsystem->cursorPixels =
-	    winpr_aligned_malloc(subsystem->cursorMaxWidth * subsystem->cursorMaxHeight * 4ull, 16);
+	    winpr_aligned_malloc(4ULL * subsystem->cursorMaxWidth * subsystem->cursorMaxHeight, 16);
 
 	if (!subsystem->cursorPixels)
 		return -1;

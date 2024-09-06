@@ -38,7 +38,7 @@ errno_t _itoa_s(int value, char* buffer, size_t sizeInCharacters, int radix)
 	if (sizeInCharacters < (size_t)length)
 		return -1;
 
-	sprintf_s(buffer, length + 1, "%d", value);
+	(void)sprintf_s(buffer, length + 1, "%d", value);
 
 	return 0;
 }

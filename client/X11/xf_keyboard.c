@@ -533,7 +533,7 @@ static int xf_keyboard_execute_action_script(xfContext* xfc, XF_MODIFIER_KEYS* m
 	if (!match)
 		return 1;
 
-	sprintf_s(command, sizeof(command), "key %s", combination);
+	(void)sprintf_s(command, sizeof(command), "key %s", combination);
 	if (!run_action_script(xfc, command, NULL, action_script_run, &status))
 		return -1;
 

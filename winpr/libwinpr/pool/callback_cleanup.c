@@ -44,17 +44,17 @@ static BOOL CALLBACK init_module(PINIT_ONCE once, PVOID param, PVOID* context)
 	if (kernel32)
 	{
 		pSetEventWhenCallbackReturns =
-		    (void*)GetProcAddress(kernel32, "SetEventWhenCallbackReturns");
+		    GetProcAddressAs(kernel32, "SetEventWhenCallbackReturns"), void*);
 		pReleaseSemaphoreWhenCallbackReturns =
-		    (void*)GetProcAddress(kernel32, "ReleaseSemaphoreWhenCallbackReturns");
+		    GetProcAddressAs(kernel32, "ReleaseSemaphoreWhenCallbackReturns", void*);
 		pReleaseMutexWhenCallbackReturns =
-		    (void*)GetProcAddress(kernel32, "ReleaseMutexWhenCallbackReturns");
+		    GetProcAddressAs(kernel32, "ReleaseMutexWhenCallbackReturns", void*);
 		pLeaveCriticalSectionWhenCallbackReturns =
-		    (void*)GetProcAddress(kernel32, "LeaveCriticalSectionWhenCallbackReturns");
+		    GetProcAddressAs(kernel32, "LeaveCriticalSectionWhenCallbackReturns", void*);
 		pFreeLibraryWhenCallbackReturns =
-		    (void*)GetProcAddress(kernel32, "FreeLibraryWhenCallbackReturns");
+		    GetProcAddressAs(kernel32, "FreeLibraryWhenCallbackReturns", void*);
 		pDisassociateCurrentThreadFromCallback =
-		    (void*)GetProcAddress(kernel32, "DisassociateCurrentThreadFromCallback");
+		    GetProcAddressAs(kernel32, "DisassociateCurrentThreadFromCallback", void*);
 	}
 	return TRUE;
 }

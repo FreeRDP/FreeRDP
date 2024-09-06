@@ -39,7 +39,7 @@ static void* fail_on_null(void* p)
 {
 	if (p == NULL)
 	{
-		fprintf(stderr, "out of memory\n");
+		(void)fprintf(stderr, "out of memory\n");
 		exit(EXIT_FAILURE);
 	}
 

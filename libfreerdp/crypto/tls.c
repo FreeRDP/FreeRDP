@@ -309,8 +309,16 @@ static long bio_rdp_tls_ctrl(BIO* bio, int cmd, long num, void* ptr)
 			break;
 
 		case BIO_CTRL_GET_CALLBACK:
-			*((ULONG_PTR*)ptr) = (ULONG_PTR)SSL_get_info_callback(tls->ssl);
-			status = 1;
+			/* The OpenSSL API is horrible here:
+			 * we get a function pointer returned and have to cast it to ULONG_PTR
+			 * to return the value to the caller.
+			 *
+			 * This, of course, is something compilers warn about. So silence it by casting */
+			{
+				void* vptr = (void*)SSL_get_info_callback(tls->ssl);
+				*((void**)ptr) = vptr;
+				status = 1;
+			}
 			break;
 
 		case BIO_C_SSL_MODE:
@@ -517,12 +525,11 @@ static int bio_rdp_tls_free(BIO* bio)
 static long bio_rdp_tls_callback_ctrl(BIO* bio, int cmd, bio_info_cb* fp)
 {
 	long status = 0;
-	BIO_RDP_TLS* tls = NULL;
 
 	if (!bio)
 		return 0;
 
-	tls = (BIO_RDP_TLS*)BIO_get_data(bio);
+	BIO_RDP_TLS* tls = (BIO_RDP_TLS*)BIO_get_data(bio);
 
 	if (!tls)
 		return 0;
@@ -532,10 +539,12 @@ static long bio_rdp_tls_callback_ctrl(BIO* bio, int cmd, bio_info_cb* fp)
 		case BIO_CTRL_SET_CALLBACK:
 		{
 			typedef void (*fkt_t)(const SSL*, int, int);
+
 			/* Documented since https://www.openssl.org/docs/man1.1.1/man3/BIO_set_callback.html
 			 * the argument is not really of type bio_info_cb* and must be cast
 			 * to the required type */
-			fkt_t fkt = (fkt_t)(void*)fp;
+
+			fkt_t fkt = WINPR_FUNC_PTR_CAST(fp, fkt_t);
 			SSL_set_info_callback(tls->ssl, fkt);
 			status = 1;
 		}
@@ -710,9 +719,9 @@ static void SSLCTX_keylog_cb(const SSL* ssl, const char* line)
 		FILE* f = winpr_fopen(dfile, "a+");
 		if (f)
 		{
-			fwrite(line, strlen(line), 1, f);
-			fwrite("\n", 1, 1, f);
-			fclose(f);
+			(void)fwrite(line, strlen(line), 1, f);
+			(void)fwrite("\n", 1, 1, f);
+			(void)fclose(f);
 		}
 	}
 }
@@ -1311,8 +1320,8 @@ static BOOL is_accepted(rdpTls* tls, const rdpCertificate* cert)
 	rdpSettings* settings = tls->context->settings;
 	WINPR_ASSERT(settings);
 
-	FreeRDP_Settings_Keys_String keyAccepted;
-	FreeRDP_Settings_Keys_UInt32 keyLength;
+	FreeRDP_Settings_Keys_String keyAccepted = FreeRDP_AcceptedCert;
+	FreeRDP_Settings_Keys_UInt32 keyLength = FreeRDP_AcceptedCertLength;
 
 	if (tls->isGatewayTransport)
 	{
@@ -1323,11 +1332,6 @@ static BOOL is_accepted(rdpTls* tls, const rdpCertificate* cert)
 	{
 		keyAccepted = FreeRDP_RedirectionAcceptedCert;
 		keyLength = FreeRDP_RedirectionAcceptedCertLength;
-	}
-	else
-	{
-		keyAccepted = FreeRDP_AcceptedCert;
-		keyLength = FreeRDP_AcceptedCertLength;
 	}
 
 	const char* AcceptedKey = freerdp_settings_get_string(settings, keyAccepted);

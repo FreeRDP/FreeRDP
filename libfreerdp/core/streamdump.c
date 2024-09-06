@@ -223,7 +223,7 @@ SSIZE_T stream_dump_append(const rdpContext* context, UINT32 flags, wStream* s, 
 	*offset = (size_t)rc;
 fail:
 	if (fp)
-		fclose(fp);
+		(void)fclose(fp);
 	return rc;
 }
 
@@ -249,7 +249,7 @@ SSIZE_T stream_dump_get(const rdpContext* context, UINT32* flags, wStream* s, si
 	rc = _ftelli64(fp);
 fail:
 	if (fp)
-		fclose(fp);
+		(void)fclose(fp);
 	return rc;
 }
 

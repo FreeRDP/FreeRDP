@@ -48,16 +48,15 @@ static void* freerdp_channels_find_static_entry_in_table(const STATIC_ENTRY_TABL
                                                          const char* identifier)
 {
 	size_t index = 0;
-	const STATIC_ENTRY* pEntry = (const STATIC_ENTRY*)&table->table[index++];
+	const STATIC_ENTRY* pEntry = &table->table.cse[index++];
 
 	while (pEntry->entry != NULL)
 	{
+		static_entry_fn_t fkt = pEntry->entry;
 		if (strcmp(pEntry->name, identifier) == 0)
-		{
-			return (void*)pEntry->entry;
-		}
+			return WINPR_FUNC_PTR_CAST(fkt, void*);
 
-		pEntry = (const STATIC_ENTRY*)&table->table[index++];
+		pEntry = &table->table.cse[index++];
 	}
 
 	return NULL;
@@ -68,7 +67,7 @@ void* freerdp_channels_client_find_static_entry(const char* name, const char* id
 	size_t index = 0;
 	const STATIC_ENTRY_TABLE* pEntry = &CLIENT_STATIC_ENTRY_TABLES[index++];
 
-	while (pEntry->table != NULL)
+	while (pEntry->table.cse != NULL)
 	{
 		if (strcmp(pEntry->name, name) == 0)
 		{
@@ -111,7 +110,7 @@ static FREERDP_ADDIN** freerdp_channels_list_client_static_addins(LPCSTR pszName
 			goto error_out;
 		}
 
-		sprintf_s(pAddin->cName, ARRAYSIZE(pAddin->cName), "%s", table->name);
+		(void)sprintf_s(pAddin->cName, ARRAYSIZE(pAddin->cName), "%s", table->name);
 		pAddin->dwFlags = FREERDP_ADDIN_CLIENT;
 		pAddin->dwFlags |= FREERDP_ADDIN_STATIC;
 		pAddin->dwFlags |= FREERDP_ADDIN_NAME;
@@ -128,8 +127,9 @@ static FREERDP_ADDIN** freerdp_channels_list_client_static_addins(LPCSTR pszName
 				goto error_out;
 			}
 
-			sprintf_s(pAddin->cName, ARRAYSIZE(pAddin->cName), "%s", table->name);
-			sprintf_s(pAddin->cSubsystem, ARRAYSIZE(pAddin->cSubsystem), "%s", subsystems[j].name);
+			(void)sprintf_s(pAddin->cName, ARRAYSIZE(pAddin->cName), "%s", table->name);
+			(void)sprintf_s(pAddin->cSubsystem, ARRAYSIZE(pAddin->cSubsystem), "%s",
+			                subsystems[j].name);
 			pAddin->dwFlags = FREERDP_ADDIN_CLIENT;
 			pAddin->dwFlags |= FREERDP_ADDIN_STATIC;
 			pAddin->dwFlags |= FREERDP_ADDIN_NAME;
@@ -190,23 +190,23 @@ static FREERDP_ADDIN** freerdp_channels_list_dynamic_addins(LPCSTR pszName, LPCS
 
 	if (pszName && pszSubsystem && pszType)
 	{
-		sprintf_s(pszPattern, cchPattern, FREERDP_SHARED_LIBRARY_PREFIX "%s-client-%s-%s.%s",
-		          pszName, pszSubsystem, pszType, pszExtension);
+		(void)sprintf_s(pszPattern, cchPattern, FREERDP_SHARED_LIBRARY_PREFIX "%s-client-%s-%s.%s",
+		                pszName, pszSubsystem, pszType, pszExtension);
 	}
 	else if (pszName && pszType)
 	{
-		sprintf_s(pszPattern, cchPattern, FREERDP_SHARED_LIBRARY_PREFIX "%s-client-?-%s.%s",
-		          pszName, pszType, pszExtension);
+		(void)sprintf_s(pszPattern, cchPattern, FREERDP_SHARED_LIBRARY_PREFIX "%s-client-?-%s.%s",
+		                pszName, pszType, pszExtension);
 	}
 	else if (pszName)
 	{
-		sprintf_s(pszPattern, cchPattern, FREERDP_SHARED_LIBRARY_PREFIX "%s-client*.%s", pszName,
-		          pszExtension);
+		(void)sprintf_s(pszPattern, cchPattern, FREERDP_SHARED_LIBRARY_PREFIX "%s-client*.%s",
+		                pszName, pszExtension);
 	}
 	else
 	{
-		sprintf_s(pszPattern, cchPattern, FREERDP_SHARED_LIBRARY_PREFIX "?-client*.%s",
-		          pszExtension);
+		(void)sprintf_s(pszPattern, cchPattern, FREERDP_SHARED_LIBRARY_PREFIX "?-client*.%s",
+		                pszExtension);
 	}
 
 	cchPattern = strnlen(pszPattern, cchPattern);
@@ -473,7 +473,7 @@ PVIRTUALCHANNELENTRY freerdp_channels_load_static_addin_entry(LPCSTR pszName, LP
 	{
 		if (strncmp(table->name, pszName, MAX_PATH) == 0)
 		{
-			if (type && strncmp(table->type, type, MAX_PATH))
+			if (type && (strncmp(table->type, type, MAX_PATH) != 0))
 				continue;
 
 			if (pszSubsystem != NULL)
@@ -487,15 +487,15 @@ PVIRTUALCHANNELENTRY freerdp_channels_load_static_addin_entry(LPCSTR pszName, LP
 					     0) || /* we only want to know if strnlen is > 0 */
 					    (strncmp(subsystems->name, pszSubsystem, MAX_PATH) == 0))
 					{
+						static_subsystem_entry_fn_t fkt = subsystems->entry;
+
 						if (pszType)
 						{
 							if (strncmp(subsystems->type, pszType, MAX_PATH) == 0)
-								return (PVIRTUALCHANNELENTRY)subsystems->entry;
+								return WINPR_FUNC_PTR_CAST(fkt, PVIRTUALCHANNELENTRY);
 						}
 						else
-						{
-							return (PVIRTUALCHANNELENTRY)subsystems->entry;
-						}
+							return WINPR_FUNC_PTR_CAST(fkt, PVIRTUALCHANNELENTRY);
 					}
 				}
 			}
@@ -507,7 +507,7 @@ PVIRTUALCHANNELENTRY freerdp_channels_load_static_addin_entry(LPCSTR pszName, LP
 						return NULL;
 				}
 
-				return (PVIRTUALCHANNELENTRY)table->entry;
+				return table->entry.csevc;
 			}
 		}
 	}
@@ -567,10 +567,10 @@ static DWORD WINAPI channel_client_thread_proc(LPVOID userdata)
 	if (error && internals->ctx)
 	{
 		char msg[128];
-		_snprintf(msg, 127,
-		          "%s_virtual_channel_client_thread reported an"
-		          " error",
-		          internals->channel_name);
+		(void)_snprintf(msg, 127,
+		                "%s_virtual_channel_client_thread reported an"
+		                " error",
+		                internals->channel_name);
 		setChannelError(internals->ctx, error, msg);
 	}
 	ExitThread(error);
@@ -696,7 +696,8 @@ UINT channel_client_post_message(void* MsgsHandle, LPVOID pData, UINT32 dataLeng
 		if (Stream_Capacity(data_in) != Stream_GetPosition(data_in))
 		{
 			char msg[128];
-			_snprintf(msg, 127, "%s_plugin_process_received: read error", internals->channel_name);
+			(void)_snprintf(msg, 127, "%s_plugin_process_received: read error",
+			                internals->channel_name);
 			WLog_ERR(TAG, msg);
 			return ERROR_INTERNAL_ERROR;
 		}

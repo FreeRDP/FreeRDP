@@ -915,11 +915,11 @@ static BOOL rdp_write_info_packet(rdpRdp* rdp, wStream* s)
 
 	Stream_Write_UINT32(s, settings->KeyboardCodePage); /* CodePage (4 bytes) */
 	Stream_Write_UINT32(s, flags);                      /* flags (4 bytes) */
-	Stream_Write_UINT16(s, (UINT32)cbDomain);           /* cbDomain (2 bytes) */
-	Stream_Write_UINT16(s, (UINT32)cbUserName);         /* cbUserName (2 bytes) */
-	Stream_Write_UINT16(s, (UINT32)cbPassword);         /* cbPassword (2 bytes) */
-	Stream_Write_UINT16(s, (UINT32)cbAlternateShell);   /* cbAlternateShell (2 bytes) */
-	Stream_Write_UINT16(s, (UINT32)cbWorkingDir);       /* cbWorkingDir (2 bytes) */
+	Stream_Write_UINT16(s, (UINT16)cbDomain);           /* cbDomain (2 bytes) */
+	Stream_Write_UINT16(s, (UINT16)cbUserName);         /* cbUserName (2 bytes) */
+	Stream_Write_UINT16(s, (UINT16)cbPassword);         /* cbPassword (2 bytes) */
+	Stream_Write_UINT16(s, (UINT16)cbAlternateShell);   /* cbAlternateShell (2 bytes) */
+	Stream_Write_UINT16(s, (UINT16)cbWorkingDir);       /* cbWorkingDir (2 bytes) */
 
 	Stream_Write(s, domainW, cbDomain);
 

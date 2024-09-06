@@ -38,20 +38,20 @@
 #include "sdl_monitor.hpp"
 #include "sdl_freerdp.hpp"
 
-typedef struct
+using MONITOR_INFO = struct
 {
 	RECTANGLE_16 area;
 	RECTANGLE_16 workarea;
 	BOOL primary;
-} MONITOR_INFO;
+};
 
-typedef struct
+using VIRTUAL_SCREEN = struct
 {
 	int nmonitors;
 	RECTANGLE_16 area;
 	RECTANGLE_16 workarea;
 	MONITOR_INFO* monitors;
-} VIRTUAL_SCREEN;
+};
 
 /* See MSDN Section on Multiple Display Monitors: http://msdn.microsoft.com/en-us/library/dd145071
  */
@@ -292,7 +292,7 @@ static BOOL sdl_detect_single_window(SdlContext* sdl, UINT32* pMaxWidth, UINT32*
 		if (freerdp_settings_get_uint32(settings, FreeRDP_NumMonitorIds) == 0)
 		{
 			const size_t id =
-			    (sdl->windows.size() > 0) ? sdl->windows.begin()->second.displayIndex() : 0;
+			    (!sdl->windows.empty()) ? sdl->windows.begin()->second.displayIndex() : 0;
 			if (!freerdp_settings_set_pointer_len(settings, FreeRDP_MonitorIds, &id, 1))
 				return FALSE;
 		}
@@ -326,11 +326,15 @@ BOOL sdl_detect_monitors(SdlContext* sdl, UINT32* pMaxWidth, UINT32* pMaxHeight)
 
 	const int numDisplays = SDL_GetNumVideoDisplays();
 	auto nr = freerdp_settings_get_uint32(settings, FreeRDP_NumMonitorIds);
+	if (numDisplays < 0)
+		return FALSE;
+
 	if (nr == 0)
 	{
-		if (!freerdp_settings_set_pointer_len(settings, FreeRDP_MonitorIds, nullptr, numDisplays))
+		if (!freerdp_settings_set_pointer_len(settings, FreeRDP_MonitorIds, nullptr,
+		                                      static_cast<size_t>(numDisplays)))
 			return FALSE;
-		for (size_t x = 0; x < numDisplays; x++)
+		for (size_t x = 0; x < static_cast<size_t>(numDisplays); x++)
 		{
 			if (!freerdp_settings_set_pointer_array(settings, FreeRDP_MonitorIds, x, &x))
 				return FALSE;
@@ -340,7 +344,7 @@ BOOL sdl_detect_monitors(SdlContext* sdl, UINT32* pMaxWidth, UINT32* pMaxHeight)
 	{
 
 		/* There were more IDs supplied than there are monitors */
-		if (nr > numDisplays)
+		if (nr > static_cast<UINT32>(numDisplays))
 		{
 			WLog_ERR(TAG,
 			         "Found %" PRIu32 " monitor IDs, but only have %" PRIu32 " monitors connected",

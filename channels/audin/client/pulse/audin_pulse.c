@@ -112,9 +112,6 @@ static void audin_pulse_context_state_callback(pa_context* context, void* userda
 	switch (state)
 	{
 		case PA_CONTEXT_READY:
-			pa_threaded_mainloop_signal(pulse->mainloop, 0);
-			break;
-
 		case PA_CONTEXT_FAILED:
 		case PA_CONTEXT_TERMINATED:
 			pa_threaded_mainloop_signal(pulse->mainloop, 0);
@@ -309,9 +306,6 @@ static void audin_pulse_stream_state_callback(pa_stream* stream, void* userdata)
 	switch (state)
 	{
 		case PA_STREAM_READY:
-			pa_threaded_mainloop_signal(pulse->mainloop, 0);
-			break;
-
 		case PA_STREAM_FAILED:
 		case PA_STREAM_TERMINATED:
 			pa_threaded_mainloop_signal(pulse->mainloop, 0);
@@ -455,7 +449,7 @@ static UINT audin_pulse_parse_addin_args(AudinPulseDevice* device, const ADDIN_A
 	int status = 0;
 	DWORD flags = 0;
 	const COMMAND_LINE_ARGUMENT_A* arg = NULL;
-	AudinPulseDevice* pulse = (AudinPulseDevice*)device;
+	AudinPulseDevice* pulse = device;
 	COMMAND_LINE_ARGUMENT_A audin_pulse_args[] = { { "dev", COMMAND_LINE_VALUE_REQUIRED, "<device>",
 		                                             NULL, NULL, -1, NULL, "audio device name" },
 		                                           { NULL, 0, NULL, NULL, NULL, -1, NULL, NULL } };
@@ -496,7 +490,7 @@ static UINT audin_pulse_parse_addin_args(AudinPulseDevice* device, const ADDIN_A
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-FREERDP_ENTRY_POINT(UINT pulse_freerdp_audin_client_subsystem_entry(
+FREERDP_ENTRY_POINT(UINT VCAPITYPE pulse_freerdp_audin_client_subsystem_entry(
     PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEntryPoints))
 {
 	const ADDIN_ARGV* args = NULL;

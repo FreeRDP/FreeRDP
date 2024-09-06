@@ -85,6 +85,8 @@ extern "C"
 }
 #endif
 
+#define GetProcAddressAs(module, name, type) WINPR_FUNC_PTR_CAST(GetProcAddress(module, name), type)
+
 #if !defined(_WIN32) && !defined(__CYGWIN__)
 
 #ifdef __cplusplus

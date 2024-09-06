@@ -565,9 +565,9 @@ int TestGdiBitBlt(int argc, char* argv[])
 		{
 			if (!test_gdi_BitBlt(formatList[x], formatList[y]))
 			{
-				fprintf(stderr, "test_gdi_BitBlt(SrcFormat=%s, DstFormat=%s) failed!\n",
-				        FreeRDPGetColorFormatName(formatList[x]),
-				        FreeRDPGetColorFormatName(formatList[y]));
+				(void)fprintf(stderr, "test_gdi_BitBlt(SrcFormat=%s, DstFormat=%s) failed!\n",
+				              FreeRDPGetColorFormatName(formatList[x]),
+				              FreeRDPGetColorFormatName(formatList[y]));
 				rc = -1;
 			}
 		}

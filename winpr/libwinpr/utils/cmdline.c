@@ -699,7 +699,7 @@ char** CommandLineParseCommaSeparatedValuesEx(const char* name, const char* list
 			{
 				char* dst = (char*)&p[1];
 				p[0] = dst;
-				sprintf_s(dst, clen + 1, "%s", name);
+				(void)sprintf_s(dst, clen + 1, "%s", name);
 				*count = 1;
 				success = TRUE;
 				goto fail;

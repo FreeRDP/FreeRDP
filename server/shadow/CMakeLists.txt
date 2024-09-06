@@ -55,7 +55,7 @@ set(SRCS
 
 if (NOT FREERDP_UNIFIED_BUILD)
 	find_package(rdtk 0 REQUIRED)
-	include_directories(${RDTK_INCLUDE_DIR})
+	include_directories(SYSTEM ${RDTK_INCLUDE_DIR})
 else()
 	if (NOT WITH_RDTK)
 		message(FATAL_ERROR "-DWITH_RDTK=ON is required for unified FreeRDP build with shadow server")

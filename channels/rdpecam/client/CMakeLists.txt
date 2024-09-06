@@ -31,7 +31,7 @@ else()
 	message(FATAL_ERROR "libv4l-dev required for CHANNEL_RDPECAM_CLIENT")
 endif()
 
-include_directories(${SWScale_INCLUDE_DIR})
+include_directories(SYSTEM ${SWScale_INCLUDE_DIR})
 
 set(${MODULE_PREFIX}_SRCS
 	camera_device_enum_main.c

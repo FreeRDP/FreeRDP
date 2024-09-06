@@ -250,7 +250,7 @@ static INLINE INT32 planar_decompress_plane_rle_only(const BYTE* WINPR_RESTRICT 
 
 	for (INT32 y = 0; y < (INT32)nHeight; y++)
 	{
-		BYTE* dstp = &pDstData[((y) * (INT32)nWidth)];
+		BYTE* dstp = &pDstData[(1ULL * (y) * (INT32)nWidth)];
 		pixel = 0;
 		currentScanline = dstp;
 
@@ -388,7 +388,7 @@ static INLINE INT32 planar_decompress_plane_rle(const BYTE* WINPR_RESTRICT pSrcD
 
 	for (INT32 y = beg; y != end; y += inc)
 	{
-		BYTE* dstp = &pDstData[((nYDst + y) * (INT32)nDstStep) + (nXDst * 4) + nChannel];
+		BYTE* dstp = &pDstData[((nYDst + y) * nDstStep) + (nXDst * 4) + nChannel];
 		pixel = 0;
 		currentScanline = dstp;
 
@@ -464,7 +464,7 @@ static INLINE INT32 planar_decompress_plane_rle(const BYTE* WINPR_RESTRICT pSrcD
 						pixel = deltaValue;
 					}
 
-					deltaValue = previousScanline[x * 4] + pixel;
+					deltaValue = previousScanline[4LL * x] + pixel;
 					*dstp = deltaValue;
 					dstp += 4;
 					x++;
@@ -473,7 +473,7 @@ static INLINE INT32 planar_decompress_plane_rle(const BYTE* WINPR_RESTRICT pSrcD
 
 				while (nRunLength > 0)
 				{
-					deltaValue = previousScanline[x * 4] + pixel;
+					deltaValue = previousScanline[4LL * x] + pixel;
 					*dstp = deltaValue;
 					dstp += 4;
 					x++;
@@ -515,7 +515,7 @@ static INLINE INT32 planar_set_plane(BYTE bValue, BYTE* pDstData, INT32 nDstStep
 
 	for (INT32 y = beg; y != end; y += inc)
 	{
-		BYTE* dstp = &pDstData[((nYDst + y) * (INT32)nDstStep) + (nXDst * 4) + nChannel];
+		BYTE* dstp = &pDstData[((nYDst + y) * nDstStep) + (nXDst * 4) + nChannel];
 
 		for (INT32 x = 0; x < (INT32)nWidth; ++x)
 		{
@@ -679,7 +679,7 @@ static BOOL planar_subsample_expand(const BYTE* WINPR_RESTRICT plane, size_t pla
 		return FALSE;
 	}
 
-	for (UINT32 y = 0; y < nHeight; y++)
+	for (size_t y = 0; y < nHeight; y++)
 	{
 		const BYTE* src = plane + y / 2 * nPlaneWidth;
 
@@ -1130,7 +1130,7 @@ static INLINE BOOL freerdp_split_color_planes(BITMAP_PLANAR_CONTEXT* WINPR_RESTR
 		UINT32 k = 0;
 		for (UINT32 i = 0; i < height; i++)
 		{
-			const BYTE* pixel = &data[scanline * (UINT32)i];
+			const BYTE* pixel = &data[1ULL * scanline * i];
 
 			for (UINT32 j = 0; j < width; j++)
 			{
@@ -1148,7 +1148,7 @@ static INLINE BOOL freerdp_split_color_planes(BITMAP_PLANAR_CONTEXT* WINPR_RESTR
 
 		for (INT64 i = (INT64)height - 1; i >= 0; i--)
 		{
-			const BYTE* pixel = &data[scanline * (UINT32)i];
+			const BYTE* pixel = &data[1ULL * scanline * (UINT32)i];
 
 			for (UINT32 j = 0; j < width; j++)
 			{
@@ -1222,7 +1222,7 @@ static INLINE UINT32 freerdp_bitmap_planar_write_rle_bytes(const BYTE* WINPR_RES
 		outBufferSize--;
 		*pOutput = controlByte;
 		pOutput++;
-		nBytesToWrite = (int)(controlByte >> 4);
+		nBytesToWrite = (controlByte >> 4);
 
 		if (nBytesToWrite)
 		{
@@ -1728,14 +1728,14 @@ BOOL freerdp_bitmap_planar_context_reset(BITMAP_PLANAR_CONTEXT* WINPR_RESTRICT c
 			return FALSE;
 		context->rlePlanesBuffer = tmp;
 
-		context->planes[0] = &context->planesBuffer[context->maxPlaneSize * 0];
-		context->planes[1] = &context->planesBuffer[context->maxPlaneSize * 1];
-		context->planes[2] = &context->planesBuffer[context->maxPlaneSize * 2];
-		context->planes[3] = &context->planesBuffer[context->maxPlaneSize * 3];
-		context->deltaPlanes[0] = &context->deltaPlanesBuffer[context->maxPlaneSize * 0];
-		context->deltaPlanes[1] = &context->deltaPlanesBuffer[context->maxPlaneSize * 1];
-		context->deltaPlanes[2] = &context->deltaPlanesBuffer[context->maxPlaneSize * 2];
-		context->deltaPlanes[3] = &context->deltaPlanesBuffer[context->maxPlaneSize * 3];
+		context->planes[0] = &context->planesBuffer[0ULL * context->maxPlaneSize];
+		context->planes[1] = &context->planesBuffer[1ULL * context->maxPlaneSize];
+		context->planes[2] = &context->planesBuffer[2ULL * context->maxPlaneSize];
+		context->planes[3] = &context->planesBuffer[3ULL * context->maxPlaneSize];
+		context->deltaPlanes[0] = &context->deltaPlanesBuffer[0ULL * context->maxPlaneSize];
+		context->deltaPlanes[1] = &context->deltaPlanesBuffer[1ULL * context->maxPlaneSize];
+		context->deltaPlanes[2] = &context->deltaPlanesBuffer[2ULL * context->maxPlaneSize];
+		context->deltaPlanes[3] = &context->deltaPlanesBuffer[3ULL * context->maxPlaneSize];
 	}
 	return TRUE;
 }

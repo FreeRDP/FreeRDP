@@ -83,7 +83,7 @@ static BOOL FileCloseHandle(HANDLE handle)
 		/* Don't close stdin/stdout/stderr */
 		if (fileno(file->fp) > 2)
 		{
-			fclose(file->fp);
+			(void)fclose(file->fp);
 			file->fp = NULL;
 		}
 	}
@@ -116,8 +116,8 @@ static BOOL FileSetEndOfFile(HANDLE hFile)
 	return TRUE;
 }
 
-static DWORD FileSetFilePointer(HANDLE hFile, LONG lDistanceToMove, PLONG lpDistanceToMoveHigh,
-                                DWORD dwMoveMethod)
+static DWORD FileSetFilePointer(HANDLE hFile, LONG lDistanceToMove,
+                                const PLONG lpDistanceToMoveHigh, DWORD dwMoveMethod)
 {
 	WINPR_FILE* pFile = (WINPR_FILE*)hFile;
 	INT64 offset = 0;
@@ -371,13 +371,13 @@ static BOOL FileGetFileInformationByHandle(HANDLE hFile,
 #else
 	ft = STAT_TIME_TO_FILETIME(st.st_ctime);
 #endif
-	lpFileInformation->ftCreationTime.dwHighDateTime = ((UINT64)ft) >> 32ULL;
+	lpFileInformation->ftCreationTime.dwHighDateTime = (ft) >> 32ULL;
 	lpFileInformation->ftCreationTime.dwLowDateTime = ft & 0xFFFFFFFF;
 	ft = STAT_TIME_TO_FILETIME(st.st_mtime);
-	lpFileInformation->ftLastWriteTime.dwHighDateTime = ((UINT64)ft) >> 32ULL;
+	lpFileInformation->ftLastWriteTime.dwHighDateTime = (ft) >> 32ULL;
 	lpFileInformation->ftLastWriteTime.dwLowDateTime = ft & 0xFFFFFFFF;
 	ft = STAT_TIME_TO_FILETIME(st.st_atime);
-	lpFileInformation->ftLastAccessTime.dwHighDateTime = ((UINT64)ft) >> 32ULL;
+	lpFileInformation->ftLastAccessTime.dwHighDateTime = (ft) >> 32ULL;
 	lpFileInformation->ftLastAccessTime.dwLowDateTime = ft & 0xFFFFFFFF;
 	lpFileInformation->nFileSizeHigh = ((UINT64)st.st_size) >> 32ULL;
 	lpFileInformation->nFileSizeLow = st.st_size & 0xFFFFFFFF;
@@ -916,7 +916,7 @@ static HANDLE FileCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dw
 		return INVALID_HANDLE_VALUE;
 	}
 
-	setvbuf(fp, NULL, _IONBF, 0);
+	(void)setvbuf(fp, NULL, _IONBF, 0);
 
 #ifdef __sun
 	lock.l_start = 0;
@@ -974,11 +974,11 @@ static BOOL IsFileDevice(LPCTSTR lpDeviceName)
 	return TRUE;
 }
 
-static HANDLE_CREATOR _FileHandleCreator = { IsFileDevice, FileCreateFileA };
+static HANDLE_CREATOR FileHandleCreator = { IsFileDevice, FileCreateFileA };
 
 HANDLE_CREATOR* GetFileHandleCreator(void)
 {
-	return &_FileHandleCreator;
+	return &FileHandleCreator;
 }
 
 static WINPR_FILE* FileHandle_New(FILE* fp)
@@ -986,7 +986,7 @@ static WINPR_FILE* FileHandle_New(FILE* fp)
 	WINPR_FILE* pFile = NULL;
 	char name[MAX_PATH] = { 0 };
 
-	_snprintf(name, sizeof(name), "device_%d", fileno(fp));
+	(void)_snprintf(name, sizeof(name), "device_%d", fileno(fp));
 	pFile = (WINPR_FILE*)calloc(1, sizeof(WINPR_FILE));
 	if (!pFile)
 	{
@@ -1454,7 +1454,7 @@ HANDLE GetFileHandleForFileDescriptor(int fd)
 	if (!fp)
 		return INVALID_HANDLE_VALUE;
 
-	setvbuf(fp, NULL, _IONBF, 0);
+	(void)setvbuf(fp, NULL, _IONBF, 0);
 
 	pFile = FileHandle_New(fp);
 	if (!pFile)

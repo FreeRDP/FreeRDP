@@ -54,7 +54,7 @@
 
 #define BASIC_STATE_FUNC_REGISTER(_arg, _man)    \
 	_man->iface.get_##_arg = udevman_get_##_arg; \
-	_man->iface.set_##_arg = udevman_set_##_arg
+	(_man)->iface.set_##_arg = udevman_set_##_arg
 
 typedef struct
 {
@@ -152,7 +152,7 @@ static size_t udevman_register_udevice(IUDEVMAN* idevman, BYTE bus_number, BYTE 
 		return 0;
 
 	urbdrc = (URBDRC_PLUGIN*)idevman->plugin;
-	pdev = (IUDEVICE*)udevman_get_udevice_by_addr(idevman, bus_number, dev_number);
+	pdev = udevman_get_udevice_by_addr(idevman, bus_number, dev_number);
 
 	if (pdev != NULL)
 		return 0;
@@ -894,7 +894,7 @@ static DWORD WINAPI poll_thread(LPVOID lpThreadParameter)
 	return 0;
 }
 
-FREERDP_ENTRY_POINT(UINT libusb_freerdp_urbdrc_client_subsystem_entry(
+FREERDP_ENTRY_POINT(UINT VCAPITYPE libusb_freerdp_urbdrc_client_subsystem_entry(
     PFREERDP_URBDRC_SERVICE_ENTRY_POINTS pEntryPoints))
 {
 	wObject* obj = NULL;

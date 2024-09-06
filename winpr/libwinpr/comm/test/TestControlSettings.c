@@ -28,10 +28,10 @@
 
 int TestControlSettings(int argc, char* argv[])
 {
-	struct stat statbuf;
-	BOOL result;
-	HANDLE hComm;
-	DCB dcb;
+	struct stat statbuf = { 0 };
+	BOOL result = 0;
+	HANDLE hComm = NULL;
+	DCB dcb = { 0 };
 
 	if (stat("/dev/ttyS0", &statbuf) < 0)
 	{

@@ -100,7 +100,7 @@ static UINT encomsp_read_unicode_string(wStream* s, ENCOMSP_UNICODE_STRING* str)
 	if (!Stream_CheckAndLogRequiredLengthOfSize(TAG, s, str->cchString, sizeof(WCHAR)))
 		return ERROR_INVALID_DATA;
 
-	Stream_Read(s, &(str->wString), (str->cchString * 2)); /* String (variable) */
+	Stream_Read(s, &(str->wString), (sizeof(WCHAR) * str->cchString)); /* String (variable) */
 	return CHANNEL_RC_OK;
 }
 
@@ -1031,8 +1031,6 @@ static VOID VCAPITYPE encomsp_virtual_channel_open_event_ex(LPVOID lpUserParam, 
 	if (error && encomsp && encomsp->rdpcontext)
 		setChannelError(encomsp->rdpcontext, error,
 		                "encomsp_virtual_channel_open_event reported an error");
-
-	return;
 }
 
 static DWORD WINAPI encomsp_virtual_channel_client_thread(LPVOID arg)
@@ -1244,8 +1242,8 @@ FREERDP_ENTRY_POINT(BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS_E
 
 	encomsp->channelDef.options = CHANNEL_OPTION_INITIALIZED | CHANNEL_OPTION_ENCRYPT_RDP |
 	                              CHANNEL_OPTION_COMPRESS_RDP | CHANNEL_OPTION_SHOW_PROTOCOL;
-	sprintf_s(encomsp->channelDef.name, ARRAYSIZE(encomsp->channelDef.name),
-	          ENCOMSP_SVC_CHANNEL_NAME);
+	(void)sprintf_s(encomsp->channelDef.name, ARRAYSIZE(encomsp->channelDef.name),
+	                ENCOMSP_SVC_CHANNEL_NAME);
 	CHANNEL_ENTRY_POINTS_FREERDP_EX* pEntryPointsEx =
 	    (CHANNEL_ENTRY_POINTS_FREERDP_EX*)pEntryPoints;
 	WINPR_ASSERT(pEntryPointsEx);

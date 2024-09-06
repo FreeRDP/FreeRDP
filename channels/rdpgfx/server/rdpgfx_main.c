@@ -501,7 +501,7 @@ static INLINE UINT32 rdpgfx_estimate_h264_avc420(const RDPGFX_AVC420_BITMAP_STRE
 {
 	/* H264 metadata + H264 stream. See rdpgfx_write_h264_avc420 */
 	return sizeof(UINT32) /* numRegionRects */
-	       + 10           /* regionRects + quantQualityVals */
+	       + 10ULL        /* regionRects + quantQualityVals */
 	             * havc420->meta.numRegionRects +
 	       havc420->length;
 }
@@ -1526,7 +1526,7 @@ static DWORD WINAPI rdpgfx_server_thread_func(LPVOID arg)
 static BOOL rdpgfx_server_open(RdpgfxServerContext* context)
 {
 	WINPR_ASSERT(context);
-	RdpgfxServerPrivate* priv = (RdpgfxServerPrivate*)context->priv;
+	RdpgfxServerPrivate* priv = context->priv;
 	void* buffer = NULL;
 
 	WINPR_ASSERT(priv);
@@ -1625,7 +1625,7 @@ BOOL rdpgfx_server_close(RdpgfxServerContext* context)
 {
 	WINPR_ASSERT(context);
 
-	RdpgfxServerPrivate* priv = (RdpgfxServerPrivate*)context->priv;
+	RdpgfxServerPrivate* priv = context->priv;
 	WINPR_ASSERT(priv);
 
 	if (priv->ownThread && priv->thread)

@@ -70,6 +70,4 @@ void shadow_subsystem_set_entry_builtin(const char* name)
 
 	if (entry)
 		shadow_subsystem_set_entry(entry);
-
-	return;
 }

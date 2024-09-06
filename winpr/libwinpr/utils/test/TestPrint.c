@@ -15,7 +15,7 @@
  * http://www.codingunit.com/printf-format-specifiers-format-conversions-and-formatted-output
  */
 
-#define _printf printf
+#define _printf printf // NOLINT(bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
 
 static BOOL test_bin_tohex_string(void)
 {

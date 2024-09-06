@@ -34,12 +34,12 @@
 
 #define TAG FREERDP_TAG("cache.glyph")
 
-static rdpGlyph* glyph_cache_get(rdpGlyphCache* glyph_cache, UINT32 id, UINT32 index);
-static BOOL glyph_cache_put(rdpGlyphCache* glyph_cache, UINT32 id, UINT32 index, rdpGlyph* entry);
+static rdpGlyph* glyph_cache_get(rdpGlyphCache* glyphCache, UINT32 id, UINT32 index);
+static BOOL glyph_cache_put(rdpGlyphCache* glyphCache, UINT32 id, UINT32 index, rdpGlyph* glyph);
 
-static const void* glyph_cache_fragment_get(rdpGlyphCache* glyph, UINT32 index, UINT32* count);
-static BOOL glyph_cache_fragment_put(rdpGlyphCache* glyph, UINT32 index, UINT32 count,
-                                     const void* entry);
+static const void* glyph_cache_fragment_get(rdpGlyphCache* glyphCache, UINT32 index, UINT32* size);
+static BOOL glyph_cache_fragment_put(rdpGlyphCache* glyphCache, UINT32 index, UINT32 size,
+                                     const void* fragment);
 
 static UINT32 update_glyph_offset(const BYTE* data, size_t length, UINT32 index, INT32* x, INT32* y,
                                   UINT32 ulCharInc, UINT32 flAccel)
@@ -72,7 +72,7 @@ static UINT32 update_glyph_offset(const BYTE* data, size_t length, UINT32 index,
 }
 
 static BOOL update_process_glyph(rdpContext* context, const BYTE* data, UINT32 cacheIndex, INT32* x,
-                                 INT32* y, UINT32 cacheId, UINT32 flAccel, BOOL fOpRedundant,
+                                 const INT32* y, UINT32 cacheId, UINT32 flAccel, BOOL fOpRedundant,
                                  const RDP_RECT* bound)
 {
 	INT32 sx = 0;
@@ -644,9 +644,6 @@ const void* glyph_cache_fragment_get(rdpGlyphCache* glyphCache, UINT32 index, UI
 BOOL glyph_cache_fragment_put(rdpGlyphCache* glyphCache, UINT32 index, UINT32 size,
                               const void* fragment)
 {
-	void* prevFragment = NULL;
-	void* copy = NULL;
-
 	WINPR_ASSERT(glyphCache);
 	WINPR_ASSERT(glyphCache->fragCache.entries);
 
@@ -656,7 +653,10 @@ BOOL glyph_cache_fragment_put(rdpGlyphCache* glyphCache, UINT32 index, UINT32 si
 		return FALSE;
 	}
 
-	copy = malloc(size);
+	if (size == 0)
+		return FALSE;
+
+	void* copy = malloc(size);
 
 	if (!copy)
 		return FALSE;
@@ -664,7 +664,8 @@ BOOL glyph_cache_fragment_put(rdpGlyphCache* glyphCache, UINT32 index, UINT32 si
 	WLog_Print(glyphCache->log, WLOG_DEBUG,
 	           "GlyphCacheFragmentPut: index: %" PRIu32 " size: %" PRIu32 "", index, size);
 	CopyMemory(copy, fragment, size);
-	prevFragment = glyphCache->fragCache.entries[index].fragment;
+
+	void* prevFragment = glyphCache->fragCache.entries[index].fragment;
 	glyphCache->fragCache.entries[index].fragment = copy;
 	glyphCache->fragCache.entries[index].size = size;
 	free(prevFragment);

@@ -463,13 +463,9 @@ static UINT rdpdr_server_read_general_capability_set(RdpdrServerContext* context
 	switch (VersionMinor)
 	{
 		case RDPDR_MINOR_RDP_VERSION_13:
-			break;
 		case RDPDR_MINOR_RDP_VERSION_6_X:
-			break;
 		case RDPDR_MINOR_RDP_VERSION_5_2:
-			break;
 		case RDPDR_MINOR_RDP_VERSION_5_1:
-			break;
 		case RDPDR_MINOR_RDP_VERSION_5_0:
 			break;
 		default:

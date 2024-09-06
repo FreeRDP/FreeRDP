@@ -30,13 +30,13 @@
 #include <freerdp/log.h>
 #define TAG CLIENT_TAG("SDL.kbd")
 
-typedef struct
+using scancode_entry_t = struct
 {
 	Uint32 sdl;
 	const char* sdl_name;
 	UINT32 rdp;
 	const char* rdp_name;
-} scancode_entry_t;
+};
 
 #define STR(x) #x
 #define ENTRY(x, y)      \
@@ -292,7 +292,7 @@ static const scancode_entry_t map[] = {
 #endif
 };
 
-static UINT32 sdl_get_kbd_flags(void)
+static UINT32 sdl_get_kbd_flags()
 {
 	UINT32 flags = 0;
 
@@ -623,9 +623,10 @@ BOOL sdlInput::mouse_grab(Uint32 windowID, SDL_bool enable)
 	return it->second.grabMouse(enable);
 }
 
-sdlInput::sdlInput(SdlContext* sdl) : _sdl(sdl), _lastWindowID(UINT32_MAX)
+sdlInput::sdlInput(SdlContext* sdl)
+    : _sdl(sdl), _lastWindowID(UINT32_MAX), _hotkeyModmask(prefToMask())
 {
-	_hotkeyModmask = prefToMask();
+
 	_hotkeyFullscreen = prefKeyValue("SDL_Fullscreen", SDL_SCANCODE_RETURN);
 	_hotkeyResizable = prefKeyValue("SDL_Resizeable", SDL_SCANCODE_R);
 	_hotkeyGrab = prefKeyValue("SDL_Grab", SDL_SCANCODE_G);

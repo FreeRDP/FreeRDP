@@ -987,14 +987,13 @@ void sspi_GlobalFinish(void)
 
 static const SecurityFunctionTableA* sspi_GetSecurityFunctionTableAByNameA(const SEC_CHAR* Name)
 {
-	size_t cPackages = sizeof(SecPkgInfoA_LIST) / sizeof(*(SecPkgInfoA_LIST));
+	size_t cPackages = ARRAYSIZE(SecPkgInfoA_LIST);
 
 	for (size_t index = 0; index < cPackages; index++)
 	{
 		if (strcmp(Name, SecurityFunctionTableA_NAME_LIST[index].Name) == 0)
 		{
-			return (const SecurityFunctionTableA*)SecurityFunctionTableA_NAME_LIST[index]
-			    .SecurityFunctionTable;
+			return SecurityFunctionTableA_NAME_LIST[index].SecurityFunctionTable;
 		}
 	}
 
@@ -1003,14 +1002,13 @@ static const SecurityFunctionTableA* sspi_GetSecurityFunctionTableAByNameA(const
 
 static const SecurityFunctionTableW* sspi_GetSecurityFunctionTableWByNameW(const SEC_WCHAR* Name)
 {
-	size_t cPackages = sizeof(SecPkgInfoW_LIST) / sizeof(*(SecPkgInfoW_LIST));
+	size_t cPackages = ARRAYSIZE(SecPkgInfoW_LIST);
 
 	for (size_t index = 0; index < cPackages; index++)
 	{
 		if (_wcscmp(Name, SecurityFunctionTableW_NAME_LIST[index].Name) == 0)
 		{
-			return (const SecurityFunctionTableW*)SecurityFunctionTableW_NAME_LIST[index]
-			    .SecurityFunctionTable;
+			return SecurityFunctionTableW_NAME_LIST[index].SecurityFunctionTable;
 		}
 	}
 
@@ -1075,12 +1073,10 @@ static void sspi_ContextBufferFree(void* contextBuffer)
 static SECURITY_STATUS SEC_ENTRY winpr_EnumerateSecurityPackagesW(ULONG* pcPackages,
                                                                   PSecPkgInfoW* ppPackageInfo)
 {
-	size_t size = 0;
-	UINT32 cPackages = 0;
-	SecPkgInfoW* pPackageInfo = NULL;
-	cPackages = sizeof(SecPkgInfoW_LIST) / sizeof(*(SecPkgInfoW_LIST));
-	size = sizeof(SecPkgInfoW) * cPackages;
-	pPackageInfo = (SecPkgInfoW*)sspi_ContextBufferAlloc(EnumerateSecurityPackagesIndex, size);
+	size_t cPackages = ARRAYSIZE(SecPkgInfoW_LIST);
+	size_t size = sizeof(SecPkgInfoW) * cPackages;
+	SecPkgInfoW* pPackageInfo =
+	    (SecPkgInfoW*)sspi_ContextBufferAlloc(EnumerateSecurityPackagesIndex, size);
 
 	if (!pPackageInfo)
 		return SEC_E_INSUFFICIENT_MEMORY;
@@ -1103,12 +1099,10 @@ static SECURITY_STATUS SEC_ENTRY winpr_EnumerateSecurityPackagesW(ULONG* pcPacka
 static SECURITY_STATUS SEC_ENTRY winpr_EnumerateSecurityPackagesA(ULONG* pcPackages,
                                                                   PSecPkgInfoA* ppPackageInfo)
 {
-	size_t size = 0;
-	UINT32 cPackages = 0;
-	SecPkgInfoA* pPackageInfo = NULL;
-	cPackages = sizeof(SecPkgInfoA_LIST) / sizeof(*(SecPkgInfoA_LIST));
-	size = sizeof(SecPkgInfoA) * cPackages;
-	pPackageInfo = (SecPkgInfoA*)sspi_ContextBufferAlloc(EnumerateSecurityPackagesIndex, size);
+	size_t cPackages = ARRAYSIZE(SecPkgInfoA_LIST);
+	size_t size = sizeof(SecPkgInfoA) * cPackages;
+	SecPkgInfoA* pPackageInfo =
+	    (SecPkgInfoA*)sspi_ContextBufferAlloc(EnumerateSecurityPackagesIndex, size);
 
 	if (!pPackageInfo)
 		return SEC_E_INSUFFICIENT_MEMORY;
@@ -1136,9 +1130,8 @@ static SECURITY_STATUS SEC_ENTRY winpr_EnumerateSecurityPackagesA(ULONG* pcPacka
 
 static void FreeContextBuffer_EnumerateSecurityPackages(void* contextBuffer)
 {
-	UINT32 cPackages = 0;
 	SecPkgInfoA* pPackageInfo = (SecPkgInfoA*)contextBuffer;
-	cPackages = sizeof(SecPkgInfoA_LIST) / sizeof(*(SecPkgInfoA_LIST));
+	size_t cPackages = ARRAYSIZE(SecPkgInfoA_LIST);
 
 	if (!pPackageInfo)
 		return;
@@ -1165,16 +1158,14 @@ SecurityFunctionTableA* SEC_ENTRY winpr_InitSecurityInterfaceA(void)
 static SECURITY_STATUS SEC_ENTRY winpr_QuerySecurityPackageInfoW(SEC_WCHAR* pszPackageName,
                                                                  PSecPkgInfoW* ppPackageInfo)
 {
-	size_t size = 0;
-	SecPkgInfoW* pPackageInfo = NULL;
-	size_t cPackages = sizeof(SecPkgInfoW_LIST) / sizeof(*(SecPkgInfoW_LIST));
+	size_t cPackages = ARRAYSIZE(SecPkgInfoW_LIST);
 
 	for (size_t index = 0; index < cPackages; index++)
 	{
 		if (_wcscmp(pszPackageName, SecPkgInfoW_LIST[index]->Name) == 0)
 		{
-			size = sizeof(SecPkgInfoW);
-			pPackageInfo =
+			size_t size = sizeof(SecPkgInfoW);
+			SecPkgInfoW* pPackageInfo =
 			    (SecPkgInfoW*)sspi_ContextBufferAlloc(QuerySecurityPackageInfoIndex, size);
 
 			if (!pPackageInfo)
@@ -1198,16 +1189,14 @@ static SECURITY_STATUS SEC_ENTRY winpr_QuerySecurityPackageInfoW(SEC_WCHAR* pszP
 static SECURITY_STATUS SEC_ENTRY winpr_QuerySecurityPackageInfoA(SEC_CHAR* pszPackageName,
                                                                  PSecPkgInfoA* ppPackageInfo)
 {
-	size_t size = 0;
-	SecPkgInfoA* pPackageInfo = NULL;
-	size_t cPackages = sizeof(SecPkgInfoA_LIST) / sizeof(*(SecPkgInfoA_LIST));
+	size_t cPackages = ARRAYSIZE(SecPkgInfoA_LIST);
 
 	for (size_t index = 0; index < cPackages; index++)
 	{
 		if (strcmp(pszPackageName, SecPkgInfoA_LIST[index]->Name) == 0)
 		{
-			size = sizeof(SecPkgInfoA);
-			pPackageInfo =
+			size_t size = sizeof(SecPkgInfoA);
+			SecPkgInfoA* pPackageInfo =
 			    (SecPkgInfoA*)sspi_ContextBufferAlloc(QuerySecurityPackageInfoIndex, size);
 
 			if (!pPackageInfo)

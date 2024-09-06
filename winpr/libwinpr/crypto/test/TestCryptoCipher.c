@@ -22,7 +22,7 @@ static BOOL test_crypto_cipher_aes_128_cbc(void)
 
 	if (!(ctx = winpr_Cipher_New(WINPR_CIPHER_AES_128_CBC, WINPR_ENCRYPT, key, iv)))
 	{
-		fprintf(stderr, "%s: winpr_Cipher_New (encrypt) failed\n", __func__);
+		(void)fprintf(stderr, "%s: winpr_Cipher_New (encrypt) failed\n", __func__);
 		return FALSE;
 	}
 
@@ -35,22 +35,22 @@ static BOOL test_crypto_cipher_aes_128_cbc(void)
 
 	if (!winpr_Cipher_Update(ctx, ibuf, ilen, obuf, &olen))
 	{
-		fprintf(stderr, "%s: winpr_Cipher_New (encrypt) failed\n", __func__);
+		(void)fprintf(stderr, "%s: winpr_Cipher_New (encrypt) failed\n", __func__);
 		goto out;
 	}
 	xlen += olen;
 
 	if (!winpr_Cipher_Final(ctx, obuf + xlen, &olen))
 	{
-		fprintf(stderr, "%s: winpr_Cipher_Final (encrypt) failed\n", __func__);
+		(void)fprintf(stderr, "%s: winpr_Cipher_Final (encrypt) failed\n", __func__);
 		goto out;
 	}
 	xlen += olen;
 
 	if (xlen != ilen)
 	{
-		fprintf(stderr, "%s: error, xlen (%" PRIuz ") != ilen (%" PRIuz ") (encrypt)\n", __func__,
-		        xlen, ilen);
+		(void)fprintf(stderr, "%s: error, xlen (%" PRIuz ") != ilen (%" PRIuz ") (encrypt)\n",
+		              __func__, xlen, ilen);
 		goto out;
 	}
 
@@ -60,7 +60,7 @@ static BOOL test_crypto_cipher_aes_128_cbc(void)
 
 	if (!(ctx = winpr_Cipher_New(WINPR_CIPHER_AES_128_CBC, WINPR_DECRYPT, key, iv)))
 	{
-		fprintf(stderr, "%s: winpr_Cipher_New (decrypt) failed\n", __func__);
+		(void)fprintf(stderr, "%s: winpr_Cipher_New (decrypt) failed\n", __func__);
 		return FALSE;
 	}
 
@@ -74,28 +74,28 @@ static BOOL test_crypto_cipher_aes_128_cbc(void)
 
 	if (!winpr_Cipher_Update(ctx, ibuf, ilen, obuf, &olen))
 	{
-		fprintf(stderr, "%s: winpr_Cipher_New (decrypt) failed\n", __func__);
+		(void)fprintf(stderr, "%s: winpr_Cipher_New (decrypt) failed\n", __func__);
 		goto out;
 	}
 	xlen += olen;
 
 	if (!winpr_Cipher_Final(ctx, obuf + xlen, &olen))
 	{
-		fprintf(stderr, "%s: winpr_Cipher_Final (decrypt) failed\n", __func__);
+		(void)fprintf(stderr, "%s: winpr_Cipher_Final (decrypt) failed\n", __func__);
 		goto out;
 	}
 	xlen += olen;
 
 	if (xlen != ilen)
 	{
-		fprintf(stderr, "%s: error, xlen (%" PRIuz ") != ilen (%" PRIuz ") (decrypt)\n", __func__,
-		        xlen, ilen);
+		(void)fprintf(stderr, "%s: error, xlen (%" PRIuz ") != ilen (%" PRIuz ") (decrypt)\n",
+		              __func__, xlen, ilen);
 		goto out;
 	}
 
-	if (strcmp((const char*)obuf, plaintext))
+	if (strcmp((const char*)obuf, plaintext) != 0)
 	{
-		fprintf(stderr, "%s: error, decrypted data does not match plaintext\n", __func__);
+		(void)fprintf(stderr, "%s: error, decrypted data does not match plaintext\n", __func__);
 		goto out;
 	}
 
@@ -121,21 +121,22 @@ static BOOL test_crypto_cipher_rc4(void)
 
 	if (!(text = (BYTE*)calloc(1, len)))
 	{
-		fprintf(stderr, "%s: failed to allocate text buffer (len=%" PRIuz ")\n", __func__, len);
+		(void)fprintf(stderr, "%s: failed to allocate text buffer (len=%" PRIuz ")\n", __func__,
+		              len);
 		goto out;
 	}
 
 	if ((ctx = winpr_RC4_New(TEST_RC4_KEY,
 	                         strnlen((const char*)TEST_RC4_KEY, sizeof(TEST_RC4_KEY)))) == NULL)
 	{
-		fprintf(stderr, "%s: winpr_RC4_New failed\n", __func__);
+		(void)fprintf(stderr, "%s: winpr_RC4_New failed\n", __func__);
 		goto out;
 	}
 	rc = winpr_RC4_Update(ctx, len, (const BYTE*)TEST_RC4_PLAINTEXT, text);
 	winpr_RC4_Free(ctx);
 	if (!rc)
 	{
-		fprintf(stderr, "%s: winpr_RC4_Update failed\n", __func__);
+		(void)fprintf(stderr, "%s: winpr_RC4_Update failed\n", __func__);
 		goto out;
 	}
 
@@ -147,8 +148,8 @@ static BOOL test_crypto_cipher_rc4(void)
 		actual = winpr_BinToHexString(text, len, FALSE);
 		expected = winpr_BinToHexString(TEST_RC4_CIPHERTEXT, len, FALSE);
 
-		fprintf(stderr, "%s: unexpected RC4 ciphertext: Actual: %s Expected: %s\n", __func__,
-		        actual, expected);
+		(void)fprintf(stderr, "%s: unexpected RC4 ciphertext: Actual: %s Expected: %s\n", __func__,
+		              actual, expected);
 
 		free(actual);
 		free(expected);
@@ -185,7 +186,8 @@ static BOOL test_crypto_cipher_key(void)
 	status = winpr_Cipher_BytesToKey(WINPR_CIPHER_AES_256_CBC, WINPR_MD_SHA1, salt, TEST_RAND_DATA,
 	                                 64, 4, key, iv);
 
-	if (status != 32 || memcmp(key, TEST_CIPHER_KEY, 32) || memcmp(iv, TEST_CIPHER_IV, 16))
+	if (status != 32 || memcmp(key, TEST_CIPHER_KEY, 32) != 0 ||
+	    memcmp(iv, TEST_CIPHER_IV, 16) != 0)
 	{
 		char* akstr = NULL;
 		char* ekstr = NULL;
@@ -198,9 +200,10 @@ static BOOL test_crypto_cipher_key(void)
 		aivstr = winpr_BinToHexString(iv, 16, 0);
 		eivstr = winpr_BinToHexString(TEST_CIPHER_IV, 16, 0);
 
-		fprintf(stderr, "Unexpected EVP_BytesToKey Key: Actual: %s, Expected: %s\n", akstr, ekstr);
-		fprintf(stderr, "Unexpected EVP_BytesToKey IV : Actual: %s, Expected: %s\n", aivstr,
-		        eivstr);
+		(void)fprintf(stderr, "Unexpected EVP_BytesToKey Key: Actual: %s, Expected: %s\n", akstr,
+		              ekstr);
+		(void)fprintf(stderr, "Unexpected EVP_BytesToKey IV : Actual: %s, Expected: %s\n", aivstr,
+		              eivstr);
 
 		free(akstr);
 		free(ekstr);

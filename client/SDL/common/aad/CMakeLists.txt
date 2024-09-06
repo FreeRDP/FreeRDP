@@ -60,7 +60,7 @@ if (WITH_WEBVIEW)
       if (NOT WEBVIEW_GTK_FOUND)
         pkg_check_modules(WEBVIEW_GTK webkit2gtk-4.0 REQUIRED)
       endif()
-      include_directories(${WEBVIEW_GTK_INCLUDE_DIRS})
+      include_directories(SYSTEM ${WEBVIEW_GTK_INCLUDE_DIRS})
       list(APPEND LIBS
         ${WEBVIEW_GTK_LIBRARIES}
       )

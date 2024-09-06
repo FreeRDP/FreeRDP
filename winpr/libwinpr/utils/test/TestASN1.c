@@ -66,7 +66,7 @@ int TestASN1Read(int argc, char* argv[])
 	Stream_StaticConstInit(&staticS, oidContent, sizeof(oidContent));
 	WinPrAsn1Decoder_Init(&decoder, WINPR_ASN1_DER, &staticS);
 	if (!WinPrAsn1DecReadOID(&decoder, &oidV, TRUE) || oidV.len != 3 ||
-	    memcmp(oidV.data, oidValue, oidV.len))
+	    (memcmp(oidV.data, oidValue, oidV.len) != 0))
 		return -15;
 	WinPrAsn1FreeOID(&oidV);
 
@@ -79,7 +79,7 @@ int TestASN1Read(int argc, char* argv[])
 	Stream_StaticConstInit(&staticS, ia5stringContent, sizeof(ia5stringContent));
 	WinPrAsn1Decoder_Init(&decoder, WINPR_ASN1_DER, &staticS);
 	if (!WinPrAsn1DecReadIA5String(&decoder, &ia5stringV) ||
-	    strcmp(ia5stringV, "http://cps.root-x1.letsencrypt.org"))
+	    (strcmp(ia5stringV, "http://cps.root-x1.letsencrypt.org") != 0))
 		return -16;
 	free(ia5stringV);
 

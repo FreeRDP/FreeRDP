@@ -75,8 +75,8 @@ static struct wl_buffer* create_pointer_buffer(UwacSeat* seat, const void* src, 
 	wl_shm_pool_destroy(pool);
 
 	if (munmap(data, size) < 0)
-		fprintf(stderr, "%s: munmap(%p, %zu) failed with [%d] %s\n", __func__, data, size, errno,
-		        strerror(errno));
+		(void)fprintf(stderr, "%s: munmap(%p, %zu) failed with [%d] %s\n", __func__, data, size,
+		              errno, strerror(errno));
 
 error_mmap:
 	close(fd);
@@ -534,11 +534,11 @@ static void touch_handle_down(void* data, struct wl_touch* wl_touch, uint32_t se
 	tdata->seat = seat;
 	tdata->id = id;
 
-	float sx = wl_fixed_to_double(x_w);
-	float sy = wl_fixed_to_double(y_w);
+	double sx = wl_fixed_to_double(x_w);
+	double sy = wl_fixed_to_double(y_w);
 
-	tdata->x = sx;
-	tdata->y = sy;
+	tdata->x = (wl_fixed_t)lround(sx);
+	tdata->y = (wl_fixed_t)lround(sy);
 
 #if 0
 	struct widget *widget;
@@ -644,11 +644,11 @@ static void touch_handle_motion(void* data, struct wl_touch* wl_touch, uint32_t 
 	tdata->seat = seat;
 	tdata->id = id;
 
-	float sx = wl_fixed_to_double(x_w);
-	float sy = wl_fixed_to_double(y_w);
+	double sx = wl_fixed_to_double(x_w);
+	double sy = wl_fixed_to_double(y_w);
 
-	tdata->x = sx;
-	tdata->y = sy;
+	tdata->x = (wl_fixed_t)lround(sx);
+	tdata->y = (wl_fixed_t)lround(sy);
 
 #if 0
 	struct touch_point *tp;
@@ -757,8 +757,8 @@ static void pointer_handle_enter(void* data, struct wl_pointer* pointer, uint32_
 
 	assert(input);
 
-	float sx = wl_fixed_to_double(sx_w);
-	float sy = wl_fixed_to_double(sy_w);
+	double sx = wl_fixed_to_double(sx_w);
+	double sy = wl_fixed_to_double(sy_w);
 
 	if (!surface)
 	{
@@ -782,8 +782,8 @@ static void pointer_handle_enter(void* data, struct wl_pointer* pointer, uint32_
 
 	event->seat = input;
 	event->window = window;
-	event->x = sx;
-	event->y = sy;
+	event->x = (uint32_t)lround(sx);
+	event->y = (uint32_t)lround(sy);
 
 	/* Apply cursor theme */
 	set_cursor_image(input, serial);
@@ -861,8 +861,8 @@ static void pointer_handle_button(void* data, struct wl_pointer* pointer, uint32
 
 	event->seat = seat;
 	event->window = window;
-	event->x = seat->sx;
-	event->y = seat->sy;
+	event->x = (uint32_t)lround(seat->sx);
+	event->y = (uint32_t)lround(seat->sy);
 	event->button = button;
 	event->state = (enum wl_pointer_button_state)state_w;
 }
@@ -885,8 +885,8 @@ static void pointer_handle_axis(void* data, struct wl_pointer* pointer, uint32_t
 
 	event->seat = seat;
 	event->window = window;
-	event->x = seat->sx;
-	event->y = seat->sy;
+	event->x = (uint32_t)lround(seat->sx);
+	event->y = (uint32_t)lround(seat->sy);
 	event->axis = axis;
 	event->value = value;
 }
@@ -957,8 +957,8 @@ static void pointer_axis_discrete(void* data, struct wl_pointer* wl_pointer, uin
 
 	event->seat = seat;
 	event->window = window;
-	event->x = seat->sx;
-	event->y = seat->sy;
+	event->x = (uint32_t)lround(seat->sx);
+	event->y = (uint32_t)lround(seat->sy);
 	event->axis = axis;
 	event->value = discrete;
 }
@@ -983,8 +983,8 @@ static void pointer_axis_value120(void* data, struct wl_pointer* wl_pointer, uin
 
 	event->seat = seat;
 	event->window = window;
-	event->x = seat->sx;
-	event->y = seat->sy;
+	event->x = (uint32_t)lround(seat->sx);
+	event->y = (uint32_t)lround(seat->sy);
 	event->axis = axis;
 	event->value = value120 / 120;
 }
@@ -1103,7 +1103,7 @@ UwacSeat* UwacSeatNew(UwacDisplay* d, uint32_t id, uint32_t version)
 	ret->xkb_context = xkb_context_new(0);
 	if (!ret->xkb_context)
 	{
-		fprintf(stderr, "%s: unable to allocate a xkb_context\n", __func__);
+		(void)fprintf(stderr, "%s: unable to allocate a xkb_context\n", __func__);
 		goto fail;
 	}
 
@@ -1114,13 +1114,13 @@ UwacSeat* UwacSeatNew(UwacDisplay* d, uint32_t id, uint32_t version)
 	ret->repeat_timer_fd = timerfd_create(CLOCK_MONOTONIC, TFD_CLOEXEC | TFD_NONBLOCK);
 	if (ret->repeat_timer_fd < 0)
 	{
-		fprintf(stderr, "%s: error creating repeat timer\n", __func__);
+		(void)fprintf(stderr, "%s: error creating repeat timer\n", __func__);
 		goto fail;
 	}
 	ret->repeat_task.run = keyboard_repeat_func;
 	if (UwacDisplayWatchFd(d, ret->repeat_timer_fd, EPOLLIN, &ret->repeat_task) < 0)
 	{
-		fprintf(stderr, "%s: error polling repeat timer\n", __func__);
+		(void)fprintf(stderr, "%s: error polling repeat timer\n", __func__);
 		goto fail;
 	}
 

@@ -80,7 +80,7 @@ static void evict_cache_slots(RdpgfxClientContext* context, UINT16 MaxCacheSlots
 		if (CacheSlots[index])
 		{
 			RDPGFX_EVICT_CACHE_ENTRY_PDU pdu = { 0 };
-			pdu.cacheSlot = (UINT16)index + 1;
+			pdu.cacheSlot = index + 1;
 
 			if (context && context->EvictCacheEntry)
 			{
@@ -502,7 +502,6 @@ fail:
  */
 static UINT rdpgfx_recv_reset_graphics_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStream* s)
 {
-	int pad = 0;
 	MONITOR_DEF* monitor = NULL;
 	RDPGFX_RESET_GRAPHICS_PDU pdu = { 0 };
 	WINPR_ASSERT(callback);
@@ -543,7 +542,13 @@ static UINT rdpgfx_recv_reset_graphics_pdu(GENERIC_CHANNEL_CALLBACK* callback, w
 		Stream_Read_UINT32(s, monitor->flags); /* flags (4 bytes) */
 	}
 
-	pad = 340 - (RDPGFX_HEADER_SIZE + 12 + (pdu.monitorCount * 20));
+	const size_t size = (RDPGFX_HEADER_SIZE + 12ULL + (pdu.monitorCount * 20ULL));
+	if (size > 340)
+	{
+		free(pdu.monitorDefArray);
+		return CHANNEL_RC_NULL_DATA;
+	}
+	const size_t pad = 340ULL - size;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, (size_t)pad))
 	{
@@ -743,7 +748,7 @@ static UINT rdpgfx_save_persistent_cache(RDPGFX_PLUGIN* gfx)
 	{
 		if (gfx->CacheSlots[idx])
 		{
-			UINT16 cacheSlot = (UINT16)idx;
+			UINT16 cacheSlot = idx;
 
 			if (context->ExportCacheEntry(context, cacheSlot, &cacheEntry) != CHANNEL_RC_OK)
 				continue;
@@ -772,13 +777,11 @@ static UINT rdpgfx_send_cache_import_offer_pdu(RdpgfxClientContext* context,
 	wStream* s = NULL;
 	RDPGFX_HEADER header;
 	GENERIC_CHANNEL_CALLBACK* callback = NULL;
-	WINPR_ASSERT(context);
-	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*)context->handle;
 
 	if (!context || !pdu)
 		return ERROR_BAD_ARGUMENTS;
 
-	gfx = (RDPGFX_PLUGIN*)context->handle;
+	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*)context->handle;
 
 	if (!gfx || !gfx->base.listener_callback)
 		return ERROR_BAD_CONFIGURATION;
@@ -2421,7 +2424,7 @@ static const IWTSVirtualChannelCallback rdpgfx_callbacks = { rdpgfx_on_data_rece
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-FREERDP_ENTRY_POINT(UINT rdpgfx_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints))
+FREERDP_ENTRY_POINT(UINT VCAPITYPE rdpgfx_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints))
 {
 	return freerdp_generic_DVCPluginEntry(pEntryPoints, TAG, RDPGFX_DVC_CHANNEL_NAME,
 	                                      sizeof(RDPGFX_PLUGIN), sizeof(GENERIC_CHANNEL_CALLBACK),

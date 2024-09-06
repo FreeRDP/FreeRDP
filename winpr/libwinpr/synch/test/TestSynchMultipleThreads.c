@@ -2,14 +2,24 @@
 #include <stdlib.h>
 
 #include <winpr/crt.h>
+#include <winpr/crypto.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
 
 #define THREADS 8
 
+static UINT32 prand(UINT32 max)
+{
+	UINT32 tmp = 0;
+	if (max <= 1)
+		return 1;
+	winpr_RAND(&tmp, sizeof(tmp));
+	return tmp % (max - 1) + 1;
+}
+
 static DWORD WINAPI test_thread(LPVOID arg)
 {
-	long timeout = 50 + (rand() % 100);
+	UINT32 timeout = 50 + prand(100);
 	WINPR_UNUSED(arg);
 	Sleep(timeout);
 	ExitThread(0);

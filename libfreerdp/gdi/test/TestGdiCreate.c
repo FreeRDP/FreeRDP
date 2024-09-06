@@ -7,6 +7,7 @@
 #include <freerdp/gdi/bitmap.h>
 
 #include <winpr/crt.h>
+#include <winpr/crypto.h>
 
 #include "line.h"
 #include "brush.h"
@@ -91,7 +92,7 @@ static int test_gdi_CreateBitmap(void)
 	width = 32;
 	height = 16;
 
-	if (!(data = (BYTE*)winpr_aligned_malloc(width * height * 4, 16)))
+	if (!(data = (BYTE*)winpr_aligned_malloc(4ULL * width * height, 16)))
 	{
 		printf("failed to allocate aligned bitmap data memory\n");
 		return -1;
@@ -324,6 +325,13 @@ fail:
 	return rc;
 }
 
+static BYTE prand(void)
+{
+	BYTE tmp = 0;
+	winpr_RAND(&tmp, sizeof(tmp));
+	return tmp;
+}
+
 static BOOL test_gdi_GetPixel(void)
 {
 	BOOL rc = TRUE;
@@ -360,7 +368,7 @@ static BOOL test_gdi_GetPixel(void)
 			{
 				UINT32 pixel = 0;
 				const UINT32 color =
-				    FreeRDPGetColor(hBitmap->format, rand(), rand(), rand(), rand());
+				    FreeRDPGetColor(hBitmap->format, prand(), prand(), prand(), prand());
 				FreeRDPWriteColor(&hBitmap->data[i * hBitmap->scanline + j * bpp], hBitmap->format,
 				                  color);
 				pixel = gdi_GetPixel(hdc, j, i);
@@ -412,7 +420,7 @@ static BOOL test_gdi_SetPixel(void)
 			{
 				UINT32 pixel = 0;
 				const UINT32 color =
-				    FreeRDPGetColor(hBitmap->format, rand(), rand(), rand(), rand());
+				    FreeRDPGetColor(hBitmap->format, prand(), prand(), prand(), prand());
 				gdi_SetPixel(hdc, j, i, color);
 				pixel = FreeRDPReadColor(&hBitmap->data[i * hBitmap->scanline + j * bpp],
 				                         hBitmap->format);
@@ -518,67 +526,67 @@ int TestGdiCreate(int argc, char* argv[])
 {
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
-	fprintf(stderr, "test_gdi_GetDC()\n");
+	(void)fprintf(stderr, "test_gdi_GetDC()\n");
 
 	if (test_gdi_GetDC() < 0)
 		return -1;
 
-	fprintf(stderr, "test_gdi_CreateCompatibleDC()\n");
+	(void)fprintf(stderr, "test_gdi_CreateCompatibleDC()\n");
 
 	if (test_gdi_CreateCompatibleDC() < 0)
 		return -1;
 
-	fprintf(stderr, "test_gdi_CreateBitmap()\n");
+	(void)fprintf(stderr, "test_gdi_CreateBitmap()\n");
 
 	if (test_gdi_CreateBitmap() < 0)
 		return -1;
 
-	fprintf(stderr, "test_gdi_CreateCompatibleBitmap()\n");
+	(void)fprintf(stderr, "test_gdi_CreateCompatibleBitmap()\n");
 
 	if (test_gdi_CreateCompatibleBitmap() < 0)
 		return -1;
 
-	fprintf(stderr, "test_gdi_CreatePen()\n");
+	(void)fprintf(stderr, "test_gdi_CreatePen()\n");
 
 	if (test_gdi_CreatePen() < 0)
 		return -1;
 
-	fprintf(stderr, "test_gdi_CreateSolidBrush()\n");
+	(void)fprintf(stderr, "test_gdi_CreateSolidBrush()\n");
 
 	if (test_gdi_CreateSolidBrush() < 0)
 		return -1;
 
-	fprintf(stderr, "test_gdi_CreatePatternBrush()\n");
+	(void)fprintf(stderr, "test_gdi_CreatePatternBrush()\n");
 
 	if (test_gdi_CreatePatternBrush() < 0)
 		return -1;
 
-	fprintf(stderr, "test_gdi_CreateRectRgn()\n");
+	(void)fprintf(stderr, "test_gdi_CreateRectRgn()\n");
 
 	if (test_gdi_CreateRectRgn() < 0)
 		return -1;
 
-	fprintf(stderr, "test_gdi_CreateRect()\n");
+	(void)fprintf(stderr, "test_gdi_CreateRect()\n");
 
 	if (test_gdi_CreateRect() < 0)
 		return -1;
 
-	fprintf(stderr, "test_gdi_GetPixel()\n");
+	(void)fprintf(stderr, "test_gdi_GetPixel()\n");
 
 	if (!test_gdi_GetPixel())
 		return -1;
 
-	fprintf(stderr, "test_gdi_SetPixel()\n");
+	(void)fprintf(stderr, "test_gdi_SetPixel()\n");
 
 	if (!test_gdi_SetPixel())
 		return -1;
 
-	fprintf(stderr, "test_gdi_SetROP2()\n");
+	(void)fprintf(stderr, "test_gdi_SetROP2()\n");
 
 	if (test_gdi_SetROP2() < 0)
 		return -1;
 
-	fprintf(stderr, "test_gdi_MoveToEx()\n");
+	(void)fprintf(stderr, "test_gdi_MoveToEx()\n");
 
 	if (test_gdi_MoveToEx() < 0)
 		return -1;

@@ -34,16 +34,15 @@ class SdlInputWidget
 		SDL_INPUT_READONLY = 2
 	};
 
-  public:
-	SdlInputWidget(SDL_Renderer* renderer, const std::string& label, const std::string& initial,
-	               Uint32 flags, size_t offset, size_t width, size_t height);
+	SdlInputWidget(SDL_Renderer* renderer, std::string label, std::string initial, Uint32 flags,
+	               size_t offset, size_t width, size_t height);
 	SdlInputWidget(SdlInputWidget&& other) noexcept;
 
 	bool fill_label(SDL_Renderer* renderer, SDL_Color color);
 	bool update_label(SDL_Renderer* renderer);
 
 	bool set_mouseover(SDL_Renderer* renderer, bool mouseOver);
-	bool set_highlight(SDL_Renderer* renderer, bool hightlight);
+	bool set_highlight(SDL_Renderer* renderer, bool highlight);
 	bool update_input(SDL_Renderer* renderer);
 	bool resize_input(size_t size);
 
@@ -57,12 +56,11 @@ class SdlInputWidget
 	[[nodiscard]] bool readonly() const;
 
   protected:
-	bool update_input(SDL_Renderer* renderer, SDL_Color fgclor);
+	bool update_input(SDL_Renderer* renderer, SDL_Color fgcolor);
 
   private:
 	SdlInputWidget(const SdlInputWidget& other) = delete;
 
-  private:
 	Uint32 _flags;
 	std::string _text;
 	std::string _text_label;

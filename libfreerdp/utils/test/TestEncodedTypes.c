@@ -38,23 +38,24 @@ static BOOL test_signed_integer_read_write_equal(INT32 value)
 
 	if (!freerdp_write_four_byte_signed_integer(s, value))
 	{
-		fprintf(stderr, "[%s(%" PRId32 ")] failed to write to stream\n", __func__, value);
+		(void)fprintf(stderr, "[%s(%" PRId32 ")] failed to write to stream\n", __func__, value);
 		return FALSE;
 	}
 	if (!Stream_SetPosition(s, 0))
 	{
-		fprintf(stderr, "[%s(%" PRId32 ")] failed to reset stream position\n", __func__, value);
+		(void)fprintf(stderr, "[%s(%" PRId32 ")] failed to reset stream position\n", __func__,
+		              value);
 		return FALSE;
 	}
 	if (!freerdp_read_four_byte_signed_integer(s, &rvalue))
 	{
-		fprintf(stderr, "[%s(%" PRId32 ")] failed to read from stream\n", __func__, value);
+		(void)fprintf(stderr, "[%s(%" PRId32 ")] failed to read from stream\n", __func__, value);
 		return FALSE;
 	}
 	if (value != rvalue)
 	{
-		fprintf(stderr, "[%s(%" PRId32 ")] read invalid value %" PRId32 " from stream\n", __func__,
-		        value, rvalue);
+		(void)fprintf(stderr, "[%s(%" PRId32 ")] read invalid value %" PRId32 " from stream\n",
+		              __func__, value, rvalue);
 		return FALSE;
 	}
 	return TRUE;
@@ -69,8 +70,9 @@ static BOOL test_signed_integer_write_oor(INT32 value)
 
 	if (freerdp_write_four_byte_signed_integer(s, value))
 	{
-		fprintf(stderr, "[%s(%" PRId32 ")] out of range value not detected and written to stream\n",
-		        __func__, value);
+		(void)fprintf(stderr,
+		              "[%s(%" PRId32 ")] out of range value not detected and written to stream\n",
+		              __func__, value);
 		return FALSE;
 	}
 	return TRUE;
@@ -120,24 +122,25 @@ static BOOL test_float_read_write_equal(double value)
 
 	if (!freerdp_write_four_byte_float(s, value))
 	{
-		fprintf(stderr, "[%s(%lf)] failed to write to stream\n", __func__, value);
+		(void)fprintf(stderr, "[%s(%lf)] failed to write to stream\n", __func__, value);
 		return FALSE;
 	}
 	if (!Stream_SetPosition(s, 0))
 	{
-		fprintf(stderr, "[%s(%lf)] failed to reset stream position\n", __func__, value);
+		(void)fprintf(stderr, "[%s(%lf)] failed to reset stream position\n", __func__, value);
 		return FALSE;
 	}
 	if (!freerdp_read_four_byte_float_exp(s, &rvalue, &exp))
 	{
-		fprintf(stderr, "[%s(%lf)] failed to read from stream\n", __func__, value);
+		(void)fprintf(stderr, "[%s(%lf)] failed to read from stream\n", __func__, value);
 		return FALSE;
 	}
 	const double diff = fabs(value - rvalue);
 	const UINT64 expdiff = diff * pow(10, exp);
 	if (expdiff > 0)
 	{
-		fprintf(stderr, "[%s(%lf)] read invalid value %lf from stream\n", __func__, value, rvalue);
+		(void)fprintf(stderr, "[%s(%lf)] read invalid value %lf from stream\n", __func__, value,
+		              rvalue);
 		return FALSE;
 	}
 	return TRUE;
@@ -152,8 +155,8 @@ static BOOL test_floag_write_oor(double value)
 
 	if (freerdp_write_four_byte_float(s, value))
 	{
-		fprintf(stderr, "[%s(%lf)] out of range value not detected and written to stream\n",
-		        __func__, value);
+		(void)fprintf(stderr, "[%s(%lf)] out of range value not detected and written to stream\n",
+		              __func__, value);
 		return FALSE;
 	}
 	return TRUE;

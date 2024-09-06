@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <winpr/crt.h>
+#include <winpr/crypto.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
 #include <winpr/interlocked.h>
@@ -15,6 +16,15 @@ static LONG* pTestThreadFunctionCalls = NULL;
 static LONG* pTestOnceFunctionCalls = NULL;
 static LONG* pInitOnceExecuteOnceCalls = NULL;
 
+static UINT32 prand(UINT32 max)
+{
+	UINT32 tmp = 0;
+	if (max <= 1)
+		return 1;
+	winpr_RAND(&tmp, sizeof(tmp));
+	return tmp % (max - 1) + 1;
+}
+
 static BOOL CALLBACK TestOnceFunction(PINIT_ONCE once, PVOID param, PVOID* context)
 {
 	LONG calls = InterlockedIncrement(pTestOnceFunctionCalls) - 1;
@@ -24,7 +34,7 @@ static BOOL CALLBACK TestOnceFunction(PINIT_ONCE once, PVOID param, PVOID* conte
 	WINPR_UNUSED(context);
 
 	/* simulate execution time */
-	Sleep(30 + rand() % 40);
+	Sleep(30 + prand(40));
 
 	if (calls < TEST_NUM_FAILURES)
 	{
@@ -35,7 +45,7 @@ static BOOL CALLBACK TestOnceFunction(PINIT_ONCE once, PVOID param, PVOID* conte
 	{
 		return TRUE;
 	}
-	fprintf(stderr, "%s: error: called again after success\n", __func__);
+	(void)fprintf(stderr, "%s: error: called again after success\n", __func__);
 	InterlockedIncrement(pErrors);
 	return FALSE;
 }
@@ -50,7 +60,7 @@ static DWORD WINAPI TestThreadFunction(LPVOID lpParam)
 	InterlockedIncrement(pTestThreadFunctionCalls);
 	if (WaitForSingleObject(hStartEvent, INFINITE) != WAIT_OBJECT_0)
 	{
-		fprintf(stderr, "%s: error: failed to wait for start event\n", __func__);
+		(void)fprintf(stderr, "%s: error: failed to wait for start event\n", __func__);
 		InterlockedIncrement(pErrors);
 		return 0;
 	}
@@ -59,7 +69,7 @@ static DWORD WINAPI TestThreadFunction(LPVOID lpParam)
 	calls = InterlockedIncrement(pInitOnceExecuteOnceCalls);
 	if (!ok && calls > TEST_NUM_FAILURES)
 	{
-		fprintf(stderr, "%s: InitOnceExecuteOnce failed unexpectedly\n", __func__);
+		(void)fprintf(stderr, "%s: InitOnceExecuteOnce failed unexpectedly\n", __func__);
 		InterlockedIncrement(pErrors);
 	}
 	return 0;
@@ -82,7 +92,7 @@ int TestSynchInit(int argc, char* argv[])
 	if (!pErrors || !pTestThreadFunctionCalls || !pTestOnceFunctionCalls ||
 	    !pInitOnceExecuteOnceCalls)
 	{
-		fprintf(stderr, "error: _aligned_malloc failed\n");
+		(void)fprintf(stderr, "error: _aligned_malloc failed\n");
 		goto out;
 	}
 
@@ -93,7 +103,7 @@ int TestSynchInit(int argc, char* argv[])
 
 	if (!(hStartEvent = CreateEvent(NULL, TRUE, FALSE, NULL)))
 	{
-		fprintf(stderr, "error creating start event\n");
+		(void)fprintf(stderr, "error creating start event\n");
 		InterlockedIncrement(pErrors);
 		goto out;
 	}
@@ -102,7 +112,7 @@ int TestSynchInit(int argc, char* argv[])
 	{
 		if (!(hThreads[i] = CreateThread(NULL, 0, TestThreadFunction, NULL, 0, NULL)))
 		{
-			fprintf(stderr, "error creating thread #%" PRIu32 "\n", i);
+			(void)fprintf(stderr, "error creating thread #%" PRIu32 "\n", i);
 			InterlockedIncrement(pErrors);
 			goto out;
 		}
@@ -116,7 +126,7 @@ int TestSynchInit(int argc, char* argv[])
 	{
 		if (WaitForSingleObject(hThreads[i], INFINITE) != WAIT_OBJECT_0)
 		{
-			fprintf(stderr, "error: error waiting for thread #%" PRIu32 "\n", i);
+			(void)fprintf(stderr, "error: error waiting for thread #%" PRIu32 "\n", i);
 			InterlockedIncrement(pErrors);
 			goto out;
 		}
@@ -130,15 +140,15 @@ int TestSynchInit(int argc, char* argv[])
 	}
 
 out:
-	fprintf(stderr, "Test result:              %s\n", result ? "OK" : "ERROR");
-	fprintf(stderr, "Error count:              %" PRId32 "\n", pErrors ? *pErrors : -1);
-	fprintf(stderr, "Threads created:          %" PRIu32 "\n", dwCreatedThreads);
-	fprintf(stderr, "TestThreadFunctionCalls:  %" PRId32 "\n",
-	        pTestThreadFunctionCalls ? *pTestThreadFunctionCalls : -1);
-	fprintf(stderr, "InitOnceExecuteOnceCalls: %" PRId32 "\n",
-	        pInitOnceExecuteOnceCalls ? *pInitOnceExecuteOnceCalls : -1);
-	fprintf(stderr, "TestOnceFunctionCalls:    %" PRId32 "\n",
-	        pTestOnceFunctionCalls ? *pTestOnceFunctionCalls : -1);
+	(void)fprintf(stderr, "Test result:              %s\n", result ? "OK" : "ERROR");
+	(void)fprintf(stderr, "Error count:              %" PRId32 "\n", pErrors ? *pErrors : -1);
+	(void)fprintf(stderr, "Threads created:          %" PRIu32 "\n", dwCreatedThreads);
+	(void)fprintf(stderr, "TestThreadFunctionCalls:  %" PRId32 "\n",
+	              pTestThreadFunctionCalls ? *pTestThreadFunctionCalls : -1);
+	(void)fprintf(stderr, "InitOnceExecuteOnceCalls: %" PRId32 "\n",
+	              pInitOnceExecuteOnceCalls ? *pInitOnceExecuteOnceCalls : -1);
+	(void)fprintf(stderr, "TestOnceFunctionCalls:    %" PRId32 "\n",
+	              pTestOnceFunctionCalls ? *pTestOnceFunctionCalls : -1);
 
 	winpr_aligned_free(pErrors);
 	winpr_aligned_free(pTestThreadFunctionCalls);

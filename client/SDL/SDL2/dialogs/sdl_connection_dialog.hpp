@@ -64,7 +64,6 @@ class SDLConnectionDialog
 		MSG_DISCARD
 	};
 
-  private:
 	bool createWindow();
 	void destroyWindow();
 
@@ -72,21 +71,19 @@ class SDLConnectionDialog
 
 	bool setModal();
 
-	bool clearWindow(SDL_Renderer* renderer);
+	static bool clearWindow(SDL_Renderer* renderer);
 
 	bool update(SDL_Renderer* renderer);
 
 	bool show(MsgType type, const char* fmt, va_list ap);
 	bool show(MsgType type);
 
-	std::string print(const char* fmt, va_list ap);
+	static std::string print(const char* fmt, va_list ap);
 	bool setTimer(Uint32 timeoutMS = 15000);
 	void resetTimer();
 
-  private:
-	static Uint32 timeout(Uint32 intervalMS, void* _this);
+	static Uint32 timeout(Uint32 intervalMS, void* pvthis);
 
-  private:
 	struct widget_cfg_t
 	{
 		SDL_Color fgcolor = {};
@@ -94,7 +91,6 @@ class SDLConnectionDialog
 		SdlWidget widget;
 	};
 
-  private:
 	rdpContext* _context = nullptr;
 	SDL_Window* _window = nullptr;
 	SDL_Renderer* _renderer = nullptr;
@@ -121,9 +117,8 @@ class SDLConnectionDialogHider
 
   private:
 	SDLConnectionDialog* get(freerdp* instance);
-	SDLConnectionDialog* get(rdpContext* context);
+	static SDLConnectionDialog* get(rdpContext* context);
 
-  private:
 	SDLConnectionDialog* _dialog = nullptr;
 	bool _visible = false;
 };

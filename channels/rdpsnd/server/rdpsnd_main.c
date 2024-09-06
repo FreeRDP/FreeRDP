@@ -376,7 +376,7 @@ static UINT rdpsnd_server_select_format(RdpsndServerContext* context, UINT16 cli
 	switch (format->wFormatTag)
 	{
 		case WAVE_FORMAT_DVI_ADPCM:
-			bs = (format->nBlockAlign - 4 * format->nChannels) * 4;
+			bs = 4ULL * (format->nBlockAlign - 4ULL * format->nChannels);
 			context->priv->out_frames -= context->priv->out_frames % bs;
 
 			if (context->priv->out_frames < bs)
@@ -862,8 +862,8 @@ static UINT rdpsnd_server_start(RdpsndServerContext* context)
 		{
 			priv->SessionId = (DWORD)*pSessionId;
 			WTSFreeMemory(pSessionId);
-			priv->ChannelHandle = (HANDLE)WTSVirtualChannelOpenEx(
-			    priv->SessionId, RDPSND_DVC_CHANNEL_NAME, WTS_CHANNEL_OPTION_DYNAMIC);
+			priv->ChannelHandle = WTSVirtualChannelOpenEx(priv->SessionId, RDPSND_DVC_CHANNEL_NAME,
+			                                              WTS_CHANNEL_OPTION_DYNAMIC);
 			if (!priv->ChannelHandle)
 			{
 				WLog_ERR(TAG, "Open audio dynamic virtual channel (%s) failed!",

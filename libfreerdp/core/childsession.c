@@ -211,10 +211,16 @@ static int transport_bio_named_read(BIO* bio, char* buf, int size)
 		}
 	}
 
-	int ret = MIN(size, ringbuffer_used(&ptr->readBuffer));
-	if (ret)
+	SSIZE_T ret = -1;
+	if (size >= 0)
 	{
-		DataChunk chunks[2];
+		size_t rsize = ringbuffer_used(&ptr->readBuffer);
+		if (rsize <= SSIZE_MAX)
+			ret = MIN(size, (SSIZE_T)rsize);
+	}
+	if ((size >= 0) && ret)
+	{
+		DataChunk chunks[2] = { 0 };
 		int nchunks = ringbuffer_peek(&ptr->readBuffer, chunks, ret);
 		for (int i = 0; i < nchunks; i++)
 		{
@@ -225,10 +231,6 @@ static int transport_bio_named_read(BIO* bio, char* buf, int size)
 		ringbuffer_commit_read_bytes(&ptr->readBuffer, ret);
 
 		WLog_VRB(TAG, "(%d)=%d nchunks=%d", size, ret, nchunks);
-	}
-	else
-	{
-		ret = -1;
 	}
 
 	if (!ringbuffer_used(&ptr->readBuffer))
@@ -468,9 +470,8 @@ static BOOL createChildSessionTransport(HANDLE* pFile)
 	WCHAR pipePath[0x80] = { 0 };
 	char pipePathA[0x80] = { 0 };
 
-	WinStationCreateChildSessionTransportFn createChildSessionFn =
-	    (WinStationCreateChildSessionTransportFn)GetProcAddress(
-	        hModule, "WinStationCreateChildSessionTransport");
+	WinStationCreateChildSessionTransportFn createChildSessionFn = GetProcAddressAs(
+	    hModule, "WinStationCreateChildSessionTransport", WinStationCreateChildSessionTransportFn);
 	if (!createChildSessionFn)
 	{
 		WLog_ERR(TAG, "unable to retrieve WinStationCreateChildSessionTransport function");

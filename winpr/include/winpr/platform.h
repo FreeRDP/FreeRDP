@@ -24,6 +24,10 @@
 
 #if defined(__clang__)
 #define WINPR_PRAGMA_DIAG_PUSH _Pragma("clang diagnostic push")
+#define WINPR_PRAGMA_DIAG_IGNORED_OVERLENGTH_STRINGS \
+	_Pragma("clang diagnostic ignored \"-Woverlength-strings\"")
+#define WINPR_PRAGMA_DIAG_IGNORED_QUALIFIERS \
+	_Pragma("clang diagnostic ignored \"-Wdiscarded-qualifiers\"")
 #define WINPR_PRAGMA_DIAG_IGNORED_PEDANTIC _Pragma("clang diagnostic ignored \"-Wpedantic\"")
 #define WINPR_PRAGMA_DIAG_IGNORED_MISSING_PROTOTYPES \
 	_Pragma("clang diagnostic ignored \"-Wmissing-prototypes\"")
@@ -37,12 +41,16 @@
 	_Pragma("clang diagnostic ignored \"-Wunused-const-variable\"")
 #define WINPR_PRAGMA_DIAG_IGNORED_FORMAT_SECURITY \
 	_Pragma("clang diagnostic ignored \"-Wformat-security\"")
-#define WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC \
-	_Pragma("clang diagnostic ignored \"-Wmismatched-dealloc\"")
+#define WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC /* not supported \
+    _Pragma("clang diagnostic ignored \"-Wmismatched-dealloc\"") */
 #define WINPR_PRAGMA_DIAG_POP _Pragma("clang diagnostic pop")
 #define WINPR_PRAGMA_UNROLL_LOOP _Pragma("clang loop vectorize_width(8) interleave_count(8)")
 #elif defined(__GNUC__)
 #define WINPR_PRAGMA_DIAG_PUSH _Pragma("GCC diagnostic push")
+#define WINPR_PRAGMA_DIAG_IGNORED_OVERLENGTH_STRINGS \
+	_Pragma("GCC diagnostic ignored \"-Woverlength-strings\"")
+#define WINPR_PRAGMA_DIAG_IGNORED_QUALIFIERS \
+	_Pragma("GCC diagnostic ignored \"-Wdiscarded-qualifiers\"")
 #define WINPR_PRAGMA_DIAG_IGNORED_PEDANTIC _Pragma("GCC diagnostic ignored \"-Wpedantic\"")
 #define WINPR_PRAGMA_DIAG_IGNORED_MISSING_PROTOTYPES \
 	_Pragma("GCC diagnostic ignored \"-Wmissing-prototypes\"")
@@ -57,13 +65,19 @@
 	_Pragma("GCC diagnostic ignored \"-Wunused-const-variable\"")
 #define WINPR_PRAGMA_DIAG_IGNORED_FORMAT_SECURITY \
 	_Pragma("GCC diagnostic ignored \"-Wformat-security\"")
+#if __GNUC__ >= 11
 #define WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC \
 	_Pragma("GCC diagnostic ignored \"-Wmismatched-dealloc\"")
+#else
+#define WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
+#endif
 #define WINPR_PRAGMA_DIAG_POP _Pragma("GCC diagnostic pop")
 #define WINPR_PRAGMA_UNROLL_LOOP _Pragma("GCC unroll 8") _Pragma("GCC ivdep")
 #else
 #define WINPR_PRAGMA_DIAG_PUSH
 #define WINPR_PRAGMA_DIAG_IGNORED_PEDANTIC
+#define WINPR_PRAGMA_DIAG_IGNORED_QUALIFIERS
+#define WINPR_PRAGMA_DIAG_IGNORED_OVERLENGTH_STRINGS
 #define WINPR_PRAGMA_DIAG_IGNORED_MISSING_PROTOTYPES
 #define WINPR_PRAGMA_DIAG_IGNORED_STRICT_PROTOTYPES
 #define WINPR_PRAGMA_DIAG_IGNORED_RESERVED_ID_MACRO

@@ -3,6 +3,8 @@ if (NOT WIN32)
 	set(MODULE_NAME "TestFile")
 	set(MODULE_PREFIX "TEST_FILE")
 
+disable_warnings_for_directory(${CMAKE_CURRENT_BINARY_DIR})
+
 	set(${MODULE_PREFIX}_DRIVER ${MODULE_NAME}.c)
 
 	set(${MODULE_PREFIX}_TESTS

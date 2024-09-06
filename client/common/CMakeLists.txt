@@ -51,18 +51,24 @@ if(WITH_FUSE)
 	find_package(PkgConfig REQUIRED)
 
     pkg_check_modules(FUSE3 REQUIRED fuse3)
-	include_directories(${FUSE3_INCLUDE_DIRS})
+    include_directories(SYSTEM ${FUSE3_INCLUDE_DIRS})
 	add_definitions(-DWITH_FUSE)
 	list(APPEND LIBS ${FUSE3_LIBRARIES})
 
 	add_definitions(-D_FILE_OFFSET_BITS=64)
 endif()
 
-include_directories(${OPENSSL_INCLUDE_DIR})
+include_directories(SYSTEM ${OPENSSL_INCLUDE_DIR})
 
 AddTargetWithResourceFile(${MODULE_NAME} FALSE "${FREERDP_VERSION}" SRCS)
 
 list(APPEND LIBS freerdp winpr)
+
+include(CheckLibraryExists)
+CHECK_LIBRARY_EXISTS(m lround "" HAVE_LIB_M)
+if(HAVE_LIB_M)
+    list(APPEND LIBS m)
+endif()
 
 target_include_directories(${MODULE_NAME} INTERFACE $<INSTALL_INTERFACE:include>)
 target_link_libraries(${MODULE_NAME} PRIVATE ${FREERDP_CHANNELS_CLIENT_LIBS})

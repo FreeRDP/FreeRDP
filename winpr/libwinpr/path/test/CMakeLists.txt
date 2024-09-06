@@ -2,6 +2,8 @@
 set(MODULE_NAME "TestPath")
 set(MODULE_PREFIX "TEST_PATH")
 
+disable_warnings_for_directory(${CMAKE_CURRENT_BINARY_DIR})
+
 set(${MODULE_PREFIX}_DRIVER ${MODULE_NAME}.c)
 
 set(${MODULE_PREFIX}_TESTS

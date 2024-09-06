@@ -481,11 +481,9 @@ void pf_modules_list_loaded_plugins(proxyModule* module)
 
 static BOOL pf_modules_load_module(const char* module_path, proxyModule* module, void* userdata)
 {
-	HMODULE handle = NULL;
-	proxyModuleEntryPoint pEntryPoint = NULL;
 	WINPR_ASSERT(module);
 
-	handle = LoadLibraryX(module_path);
+	HANDLE handle = LoadLibraryX(module_path);
 
 	if (handle == NULL)
 	{
@@ -493,7 +491,8 @@ static BOOL pf_modules_load_module(const char* module_path, proxyModule* module,
 		return FALSE;
 	}
 
-	pEntryPoint = (proxyModuleEntryPoint)GetProcAddress(handle, MODULE_ENTRY_POINT);
+	proxyModuleEntryPoint pEntryPoint =
+	    GetProcAddressAs(handle, MODULE_ENTRY_POINT, proxyModuleEntryPoint);
 	if (!pEntryPoint)
 	{
 		WLog_ERR(TAG, "GetProcAddress failed while loading %s", module_path);
@@ -597,8 +596,8 @@ proxyModule* pf_modules_new(const char* root_dir, const char** modules, size_t c
 		{
 			char name[8192] = { 0 };
 			char* fullpath = NULL;
-			_snprintf(name, sizeof(name), "proxy-%s-plugin%s", modules[i],
-			          FREERDP_SHARED_LIBRARY_SUFFIX);
+			(void)_snprintf(name, sizeof(name), "proxy-%s-plugin%s", modules[i],
+			                FREERDP_SHARED_LIBRARY_SUFFIX);
 			fullpath = GetCombinedPath(path, name);
 			pf_modules_load_module(fullpath, module, NULL);
 			free(fullpath);

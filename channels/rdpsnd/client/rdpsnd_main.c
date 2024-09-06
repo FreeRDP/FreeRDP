@@ -302,6 +302,8 @@ static UINT rdpsnd_recv_server_audio_formats_pdu(rdpsndPlugin* rdpsnd, wStream* 
 	WINPR_ASSERT(rdpsnd->device);
 	ret = IFCALLRESULT(CHANNEL_RC_OK, rdpsnd->device->ServerFormatAnnounce, rdpsnd->device,
 	                   rdpsnd->ServerFormats, rdpsnd->NumberOfServerFormats);
+	if (ret != CHANNEL_RC_OK)
+		goto out_fail;
 
 	rdpsnd_select_supported_audio_formats(rdpsnd);
 	WLog_Print(rdpsnd->log, WLOG_DEBUG, "%s Server Audio Formats",
@@ -846,14 +848,14 @@ static void rdpsnd_register_device_plugin(rdpsndPlugin* rdpsnd, rdpsndDevicePlug
 static UINT rdpsnd_load_device_plugin(rdpsndPlugin* rdpsnd, const char* name,
                                       const ADDIN_ARGV* args)
 {
-	PFREERDP_RDPSND_DEVICE_ENTRY entry = NULL;
-	FREERDP_RDPSND_DEVICE_ENTRY_POINTS entryPoints;
+	FREERDP_RDPSND_DEVICE_ENTRY_POINTS entryPoints = { 0 };
 	UINT error = 0;
 	DWORD flags = FREERDP_ADDIN_CHANNEL_STATIC | FREERDP_ADDIN_CHANNEL_ENTRYEX;
 	if (rdpsnd->dynamic)
 		flags = FREERDP_ADDIN_CHANNEL_DYNAMIC;
-	entry = (PFREERDP_RDPSND_DEVICE_ENTRY)freerdp_load_channel_addin_entry(RDPSND_CHANNEL_NAME,
-	                                                                       name, NULL, flags);
+	PVIRTUALCHANNELENTRY pvce =
+	    freerdp_load_channel_addin_entry(RDPSND_CHANNEL_NAME, name, NULL, flags);
+	PFREERDP_RDPSND_DEVICE_ENTRY entry = WINPR_FUNC_PTR_CAST(pvce, PFREERDP_RDPSND_DEVICE_ENTRY);
 
 	if (!entry)
 		return ERROR_INTERNAL_ERROR;
@@ -862,7 +864,8 @@ static UINT rdpsnd_load_device_plugin(rdpsndPlugin* rdpsnd, const char* name,
 	entryPoints.pRegisterRdpsndDevice = rdpsnd_register_device_plugin;
 	entryPoints.args = args;
 
-	if ((error = entry(&entryPoints)))
+	error = entry(&entryPoints);
+	if (error)
 		WLog_ERR(TAG, "%s %s entry returns error %" PRIu32 "", rdpsnd_is_dyn_str(rdpsnd->dynamic),
 		         name, error);
 
@@ -1227,9 +1230,9 @@ static VOID VCAPITYPE rdpsnd_virtual_channel_open_event_ex(LPVOID lpUserParam, D
 	if (error && rdpsnd && rdpsnd->rdpcontext)
 	{
 		char buffer[8192];
-		_snprintf(buffer, sizeof(buffer),
-		          "%s rdpsnd_virtual_channel_open_event_ex reported an error",
-		          rdpsnd_is_dyn_str(rdpsnd->dynamic));
+		(void)_snprintf(buffer, sizeof(buffer),
+		                "%s rdpsnd_virtual_channel_open_event_ex reported an error",
+		                rdpsnd_is_dyn_str(rdpsnd->dynamic));
 		setChannelError(rdpsnd->rdpcontext, error, buffer);
 	}
 }
@@ -1329,7 +1332,7 @@ static UINT rdpsnd_virtual_channel_event_disconnected(rdpsndPlugin* rdpsnd)
 	return CHANNEL_RC_OK;
 }
 
-static void _queue_free(void* obj)
+static void queue_free(void* obj)
 {
 	wMessage* msg = obj;
 	if (!msg)
@@ -1433,7 +1436,7 @@ static UINT rdpsnd_virtual_channel_event_initialized(rdpsndPlugin* rdpsnd)
 	{
 		wObject obj = { 0 };
 
-		obj.fnObjectFree = _queue_free;
+		obj.fnObjectFree = queue_free;
 		rdpsnd->queue = MessageQueue_New(&obj);
 		if (!rdpsnd->queue)
 			return CHANNEL_RC_NO_MEMORY;
@@ -1523,8 +1526,8 @@ static VOID VCAPITYPE rdpsnd_virtual_channel_init_event_ex(LPVOID lpUserParam, L
 	if (error && plugin && plugin->rdpcontext)
 	{
 		char buffer[8192];
-		_snprintf(buffer, sizeof(buffer), "%s reported an error",
-		          rdpsnd_is_dyn_str(plugin->dynamic));
+		(void)_snprintf(buffer, sizeof(buffer), "%s reported an error",
+		                rdpsnd_is_dyn_str(plugin->dynamic));
 		setChannelError(plugin->rdpcontext, error, buffer);
 	}
 }
@@ -1576,7 +1579,8 @@ FREERDP_ENTRY_POINT(BOOL VCAPITYPE rdpsnd_VirtualChannelEntryEx(PCHANNEL_ENTRY_P
 		return FALSE;
 
 	rdpsnd->channelDef.options = CHANNEL_OPTION_INITIALIZED | CHANNEL_OPTION_ENCRYPT_RDP;
-	sprintf_s(rdpsnd->channelDef.name, ARRAYSIZE(rdpsnd->channelDef.name), RDPSND_CHANNEL_NAME);
+	(void)sprintf_s(rdpsnd->channelDef.name, ARRAYSIZE(rdpsnd->channelDef.name),
+	                RDPSND_CHANNEL_NAME);
 	pEntryPointsEx = (CHANNEL_ENTRY_POINTS_FREERDP_EX*)pEntryPoints;
 
 	if ((pEntryPointsEx->cbSize >= sizeof(CHANNEL_ENTRY_POINTS_FREERDP_EX)) &&
@@ -1792,7 +1796,7 @@ static UINT rdpsnd_plugin_terminated(IWTSPlugin* pPlugin)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-FREERDP_ENTRY_POINT(UINT rdpsnd_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints))
+FREERDP_ENTRY_POINT(UINT VCAPITYPE rdpsnd_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints))
 {
 	UINT error = CHANNEL_RC_OK;
 	rdpsndPlugin* rdpsnd = NULL;

@@ -28,13 +28,17 @@
 static ITSMFAudioDevice* tsmf_load_audio_device_by_name(const char* name, const char* device)
 {
 	ITSMFAudioDevice* audio = NULL;
-	TSMF_AUDIO_DEVICE_ENTRY entry =
-	    (TSMF_AUDIO_DEVICE_ENTRY)(void*)freerdp_load_channel_addin_entry("tsmf", name, "audio", 0);
+	union
+	{
+		PVIRTUALCHANNELENTRY pvce;
+		TSMF_AUDIO_DEVICE_ENTRY entry;
+	} cnv;
+	cnv.pvce = freerdp_load_channel_addin_entry("tsmf", name, "audio", 0);
 
-	if (!entry)
+	if (!cnv.entry)
 		return NULL;
 
-	const UINT rc = entry(&audio);
+	const UINT rc = cnv.entry(&audio);
 
 	if ((rc != CHANNEL_RC_OK) || !audio)
 	{

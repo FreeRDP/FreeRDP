@@ -51,7 +51,7 @@ static BOOL test_ClearDecompressExample(UINT32 nr, UINT32 width, UINT32 height,
 {
 	BOOL rc = FALSE;
 	int status = 0;
-	BYTE* pDstData = calloc(width * height, 4);
+	BYTE* pDstData = calloc(4ULL * width, height);
 	CLEAR_CONTEXT* clear = clear_context_new(FALSE);
 
 	if (!clear || !pDstData)
@@ -59,8 +59,8 @@ static BOOL test_ClearDecompressExample(UINT32 nr, UINT32 width, UINT32 height,
 
 	status = clear_decompress(clear, pSrcData, SrcSize, width, height, pDstData,
 	                          PIXEL_FORMAT_XRGB32, 0, 0, 0, width, height, NULL);
-	printf("clear_decompress example %" PRIu32 " status: %d\n", nr, status);
-	fflush(stdout);
+	(void)printf("clear_decompress example %" PRIu32 " status: %d\n", nr, status);
+	(void)fflush(stdout);
 	rc = (status == 0);
 fail:
 	clear_context_free(clear);

@@ -24,19 +24,16 @@ class SdlInputWidgetList
 	SdlInputWidgetList(const SdlInputWidgetList& other) = delete;
 	SdlInputWidgetList(SdlInputWidgetList&& other) = delete;
 
-  private:
 	enum
 	{
 		INPUT_BUTTON_ACCEPT = 1,
 		INPUT_BUTTON_CANCEL = -2
 	};
 
-  private:
 	ssize_t next(ssize_t current);
 	[[nodiscard]] bool valid(ssize_t current) const;
 	SdlInputWidget* get(ssize_t index);
 
-  private:
 	SDL_Window* _window;
 	SDL_Renderer* _renderer;
 	std::vector<SdlInputWidget> _list;

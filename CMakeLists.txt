@@ -92,7 +92,7 @@ if ($ENV{BUILD_NUMBER})
 endif()
 
 set(VERSION_REGEX "^(.*)([0-9]+)\\.([0-9]+)\\.([0-9]+)-?(.*)")
-set(RAW_VERSION_STRING "3.7.1-dev0")
+set(RAW_VERSION_STRING "3.8.1-dev0")
 if(EXISTS "${PROJECT_SOURCE_DIR}/.source_tag")
 	file(READ ${PROJECT_SOURCE_DIR}/.source_tag RAW_VERSION_STRING)
 elseif(USE_VERSION_FROM_GIT_TAG)
@@ -422,8 +422,13 @@ if(ANDROID)
 	endif()
 
 	if(ANDROID_ABI STREQUAL arm64-v8a)
-		# https://github.com/android/ndk/issues/910
-		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mfloat-abi=softfp")
+		include (CheckCCompilerFlag)
+		check_c_compiler_flag("-mfloat-abi=softfp" ABI_SOFTFP_SUPPORTED)
+
+		if (ABI_SOFTFP_SUPPORTED)
+			# https://github.com/android/ndk/issues/910
+			set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mfloat-abi=softfp")
+		endif()
 	endif()
 
 	if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
@@ -547,7 +552,7 @@ find_feature(Wayland ${WAYLAND_FEATURE_TYPE} ${WAYLAND_FEATURE_PURPOSE} ${WAYLAN
 option(WITH_LIBRESSL "build with LibreSSL" OFF)
 if (WITH_LIBRESSL)
 	find_package(LibreSSL REQUIRED)
-	include_directories(${LibreSSL_INCLUDE_DIRS})
+    include_directories(SYSTEM ${LibreSSL_INCLUDE_DIRS})
 	set(OPENSSL_INCLUDE_DIR ${LIBRESSL_INCLUDE_DIR})
 	set(OPENSSL_LIBRARIES ${LIBRESSL_LIBRARIES})
 	set(OPENSSL_CRYPTO_LIBRARIES ${LIBRESSL_LIBRARIES})
@@ -620,7 +625,7 @@ set(WITH_OPENH264 ${OPENH264_FOUND})
 if(OPENSSL_FOUND)
 	add_definitions("-DWITH_OPENSSL")
 	message(STATUS "Using OpenSSL Version: ${OPENSSL_VERSION}")
-	include_directories(${OPENSSL_INCLUDE_DIR})
+    include_directories(SYSTEM ${OPENSSL_INCLUDE_DIR})
 endif()
 
 if(MBEDTLS_FOUND)
@@ -682,7 +687,7 @@ if(ANDROID)
 		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pg")
 		set(PROFILER_LIBRARIES
 			"${FREERDP_EXTERNAL_PROFILER_PATH}/obj/local/${ANDROID_ABI}/libandroid-ndk-profiler.a")
-		include_directories("${FREERDP_EXTERNAL_PROFILER_PATH}")
+        include_directories(SYSTEM "${FREERDP_EXTERNAL_PROFILER_PATH}")
 	endif()
 endif()
 
@@ -702,13 +707,6 @@ endif()
 
 include(CommonConfigOptions)
 
-# WinPR
-# We want to control the winpr assert for the whole project
-option(WITH_VERBOSE_WINPR_ASSERT "Compile with verbose WINPR_ASSERT." ON)
-if (WITH_VERBOSE_WINPR_ASSERT)
-	add_definitions(-DWITH_VERBOSE_WINPR_ASSERT)
-endif()
-
 if (FREERDP_UNIFIED_BUILD)
 	add_subdirectory(winpr)
 	if (WITH_WAYLAND)
@@ -725,7 +723,7 @@ if (FREERDP_UNIFIED_BUILD)
 	include_directories(${PROJECT_BINARY_DIR}/winpr/include)
 else()
 	find_package(WinPR 3 REQUIRED)
-	include_directories(${WinPR_INCLUDE_DIR})
+    include_directories(SYSTEM ${WinPR_INCLUDE_DIR})
 endif()
 
 option(WITH_AAD "Compile with support for Azure AD authentication" ${WITH_WINPR_JSON})
@@ -740,7 +738,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 if(WITH_THIRD_PARTY)
 	add_subdirectory(third-party)
 	if (NOT "${THIRD_PARTY_INCLUDES}" STREQUAL "")
-		include_directories(${THIRD_PARTY_INCLUDES})
+        include_directories(SYSTEM ${THIRD_PARTY_INCLUDES})
 	endif()
 endif()
 

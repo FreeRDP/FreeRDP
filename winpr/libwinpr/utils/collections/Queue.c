@@ -215,8 +215,12 @@ BOOL Queue_Enqueue(wQueue* queue, const void* obj)
 		queue->array[queue->tail] = cnv.v;
 	}
 	queue->tail = (queue->tail + 1) % queue->capacity;
+
+	const BOOL signalSet = queue->size == 0;
 	queue->size++;
-	SetEvent(queue->event);
+
+	if (signalSet)
+		SetEvent(queue->event);
 out:
 
 	Queue_Unlock(queue);

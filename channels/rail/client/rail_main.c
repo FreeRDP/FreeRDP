@@ -82,23 +82,13 @@ static UINT rail_send(railPlugin* rail, wStream* s)
  */
 UINT rail_send_channel_data(railPlugin* rail, wStream* src)
 {
-	wStream* s = NULL;
-	size_t length = 0;
-
 	if (!rail || !src)
-		return ERROR_INVALID_PARAMETER;
-
-	length = Stream_GetPosition(src);
-	s = Stream_New(NULL, length);
-
-	if (!s)
 	{
-		WLog_ERR(TAG, "Stream_New failed!");
-		return CHANNEL_RC_NO_MEMORY;
+		Stream_Free(src, TRUE);
+		return ERROR_INVALID_PARAMETER;
 	}
 
-	Stream_Write(s, Stream_Buffer(src), length);
-	return rail_send(rail, s);
+	return rail_send(rail, src);
 }
 
 /**
@@ -229,13 +219,7 @@ static UINT rail_send_client_sysparam(RailClientContext* context, RAIL_SYSPARAM_
 		return error;
 	}
 
-	if ((error = rail_send_pdu(rail, s, TS_RAIL_ORDER_SYSPARAM)))
-	{
-		WLog_ERR(TAG, "rail_send_pdu failed with error %" PRIu32 "!", error);
-	}
-
-	Stream_Free(s, TRUE);
-	return error;
+	return rail_send_pdu(rail, s, TS_RAIL_ORDER_SYSPARAM);
 }
 
 /**
@@ -557,8 +541,6 @@ static VOID VCAPITYPE rail_virtual_channel_open_event_ex(LPVOID lpUserParam, DWO
 	if (error && rail && rail->rdpcontext)
 		setChannelError(rail->rdpcontext, error,
 		                "rail_virtual_channel_open_event reported an error");
-
-	return;
 }
 
 /**
@@ -693,7 +675,7 @@ FREERDP_ENTRY_POINT(BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS p
 	rail->sendHandshake = TRUE;
 	rail->channelDef.options = CHANNEL_OPTION_INITIALIZED | CHANNEL_OPTION_ENCRYPT_RDP |
 	                           CHANNEL_OPTION_COMPRESS_RDP | CHANNEL_OPTION_SHOW_PROTOCOL;
-	sprintf_s(rail->channelDef.name, ARRAYSIZE(rail->channelDef.name), RAIL_SVC_CHANNEL_NAME);
+	(void)sprintf_s(rail->channelDef.name, ARRAYSIZE(rail->channelDef.name), RAIL_SVC_CHANNEL_NAME);
 	pEntryPointsEx = (CHANNEL_ENTRY_POINTS_FREERDP_EX*)pEntryPoints;
 
 	if ((pEntryPointsEx->cbSize >= sizeof(CHANNEL_ENTRY_POINTS_FREERDP_EX)) &&

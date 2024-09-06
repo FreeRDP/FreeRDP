@@ -40,9 +40,9 @@ static void write_log(wLog* log, DWORD level, const char* fname, const char* fkt
 	va_end(ap);
 }
 
-char* Safe_XGetAtomNameEx(wLog* log, Display* display, Atom atom, const char* atomvar)
+char* Safe_XGetAtomNameEx(wLog* log, Display* display, Atom atom, const char* varname)
 {
-	WLog_Print(log, log_level, "XGetAtomName(%s, 0x%08" PRIx32 ")", atomvar, atom);
+	WLog_Print(log, log_level, "XGetAtomName(%s, 0x%08" PRIx32 ")", varname, atom);
 	if (atom == None)
 		return strdup("Atom_None");
 	return XGetAtomName(display, atom);
@@ -194,7 +194,7 @@ BOOL run_action_script(xfContext* xfc, const char* what, const char* arg, fn_act
 		goto fail;
 
 	char command[2048] = { 0 };
-	sprintf_s(command, sizeof(command), "%s %s", ActionScript, what);
+	(void)sprintf_s(command, sizeof(command), "%s %s", ActionScript, what);
 	keyScript = popen(command, "r");
 
 	if (!keyScript)
@@ -208,7 +208,7 @@ BOOL run_action_script(xfContext* xfc, const char* what, const char* arg, fn_act
 	while (fgets(buffer, sizeof(buffer), keyScript) != NULL)
 	{
 		char* context = NULL;
-		strtok_s(buffer, "\n", &context);
+		(void)strtok_s(buffer, "\n", &context);
 
 		if (fkt)
 		{

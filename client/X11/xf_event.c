@@ -24,6 +24,7 @@
 #include <X11/Xutil.h>
 
 #include <string.h>
+#include <math.h>
 
 #include <winpr/assert.h>
 #include <winpr/path.h>
@@ -305,8 +306,8 @@ static BOOL xf_event_execute_action_script(xfContext* xfc, const XEvent* event)
 
 	char command[2048] = { 0 };
 	char arg[2048] = { 0 };
-	_snprintf(command, sizeof(command), "xevent %s", xeventName);
-	_snprintf(arg, sizeof(arg), "%lu", (unsigned long)xfc->window->handle);
+	(void)_snprintf(command, sizeof(command), "xevent %s", xeventName);
+	(void)_snprintf(arg, sizeof(arg), "%lu", (unsigned long)xfc->window->handle);
 	if (!run_action_script(xfc, command, arg, action_script_run, NULL))
 		return FALSE;
 	return TRUE;
@@ -314,36 +315,32 @@ static BOOL xf_event_execute_action_script(xfContext* xfc, const XEvent* event)
 
 void xf_adjust_coordinates_to_screen(xfContext* xfc, UINT32* x, UINT32* y)
 {
-	rdpSettings* settings = NULL;
-	INT64 tx = 0;
-	INT64 ty = 0;
-
 	if (!xfc || !xfc->common.context.settings || !y || !x)
 		return;
 
-	settings = xfc->common.context.settings;
-	tx = *x;
-	ty = *y;
+	rdpSettings* settings = xfc->common.context.settings;
+	INT64 tx = *x;
+	INT64 ty = *y;
 	if (!xfc->remote_app)
 	{
 #ifdef WITH_XRENDER
 
 		if (xf_picture_transform_required(xfc))
 		{
-			double xScalingFactor = xfc->scaledWidth / (double)freerdp_settings_get_uint32(
-			                                               settings, FreeRDP_DesktopWidth);
-			double yScalingFactor = xfc->scaledHeight / (double)freerdp_settings_get_uint32(
-			                                                settings, FreeRDP_DesktopHeight);
-			tx = ((tx + xfc->offset_x) * xScalingFactor);
-			ty = ((ty + xfc->offset_y) * yScalingFactor);
+			const double dw = freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth);
+			const double dh = freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight);
+			double xScalingFactor = xfc->scaledWidth / dw;
+			double yScalingFactor = xfc->scaledHeight / dh;
+			tx = (INT64)lround((1.0 * (*x) + xfc->offset_x) * xScalingFactor);
+			ty = (INT64)lround((1.0 * (*y) + xfc->offset_y) * yScalingFactor);
 		}
 
 #endif
 	}
 
 	CLAMP_COORDINATES(tx, ty);
-	*x = tx;
-	*y = ty;
+	*x = (UINT32)tx;
+	*y = (UINT32)ty;
 }
 
 void xf_event_adjust_coordinates(xfContext* xfc, int* x, int* y)
@@ -956,8 +953,8 @@ static BOOL xf_event_PropertyNotify(xfContext* xfc, const XPropertyEvent* event,
 	 * when the window has been minimized, maximized, restored locally
 	 * ie. not using the buttons on the rail window itself
 	 */
-	if ((((Atom)event->atom == xfc->_NET_WM_STATE) && (event->state != PropertyDelete)) ||
-	    (((Atom)event->atom == xfc->WM_STATE) && (event->state != PropertyDelete)))
+	if (((event->atom == xfc->_NET_WM_STATE) && (event->state != PropertyDelete)) ||
+	    ((event->atom == xfc->WM_STATE) && (event->state != PropertyDelete)))
 	{
 		BOOL status = FALSE;
 		BOOL minimized = FALSE;
@@ -975,7 +972,7 @@ static BOOL xf_event_PropertyNotify(xfContext* xfc, const XPropertyEvent* event,
 				return TRUE;
 		}
 
-		if ((Atom)event->atom == xfc->_NET_WM_STATE)
+		if (event->atom == xfc->_NET_WM_STATE)
 		{
 			status = xf_GetWindowProperty(xfc, event->window, xfc->_NET_WM_STATE, 12, &nitems,
 			                              &bytes, &prop);
@@ -1010,7 +1007,7 @@ static BOOL xf_event_PropertyNotify(xfContext* xfc, const XPropertyEvent* event,
 			}
 		}
 
-		if ((Atom)event->atom == xfc->WM_STATE)
+		if (event->atom == xfc->WM_STATE)
 		{
 			status =
 			    xf_GetWindowProperty(xfc, event->window, xfc->WM_STATE, 1, &nitems, &bytes, &prop);

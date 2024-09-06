@@ -561,7 +561,7 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* WINPR_RESTRICT pSrcData, UINT32 
 
 	offset = (pOutput - pDstData);
 
-	if (offset != DstSize)
+	if ((DstSize < 0) || (offset != (size_t)DstSize))
 		return -1;
 
 	return 1;
@@ -589,7 +589,7 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* WINPR_RESTRICT pSrcData, UINT32 
 #define OutputBit(count, bit)                                    \
 	do                                                           \
 	{                                                            \
-		UINT16 _b = (bit ? 0xFFFF : 0);                          \
+		UINT16 _b = ((bit) ? 0xFFFF : 0);                        \
 		int _c = (count);                                        \
 		for (; _c > 0; _c -= 16)                                 \
 			rfx_bitstream_put_bits(bs, _b, (_c > 16 ? 16 : _c)); \

@@ -111,7 +111,7 @@ static char* makecert_read_str(BIO* bio, size_t* pOffset)
 		if (status <= 0)
 			break;
 
-		offset += (size_t)readBytes;
+		offset += readBytes;
 	}
 
 	if (status < 0)
@@ -161,8 +161,8 @@ static int makecert_print_command_line_help(COMMAND_LINE_ARGUMENT_A* args, int a
 				if (!str)
 					return -1;
 
-				sprintf_s(str, length + 1, "%s %s", arg->Name, arg->Format);
-				printf("%-20s", str);
+				(void)sprintf_s(str, length + 1, "%s %s", arg->Name, arg->Format);
+				(void)printf("%-20s", str);
 				free(str);
 			}
 			else
@@ -261,8 +261,9 @@ fallback:
 	return computerName;
 }
 
-static int command_line_pre_filter(MAKECERT_CONTEXT* context, int index, int argc, LPCSTR* argv)
+static int command_line_pre_filter(void* pvctx, int index, int argc, LPSTR* argv)
 {
+	MAKECERT_CONTEXT* context = pvctx;
 	if (!context || !argv || (index < 0) || (argc < 0))
 		return -1;
 
@@ -299,8 +300,7 @@ static int makecert_context_parse_arguments(MAKECERT_CONTEXT* context,
 	CommandLineClearArgumentsA(args);
 	flags = COMMAND_LINE_SEPARATOR_SPACE | COMMAND_LINE_SIGIL_DASH;
 	status =
-	    CommandLineParseArgumentsA(argc, argv, args, flags, context,
-	                               (COMMAND_LINE_PRE_FILTER_FN_A)command_line_pre_filter, NULL);
+	    CommandLineParseArgumentsA(argc, argv, args, flags, context, command_line_pre_filter, NULL);
 
 	if (status & COMMAND_LINE_STATUS_PRINT_HELP)
 	{
@@ -479,7 +479,7 @@ int makecert_context_output_certificate_file(MAKECERT_CONTEXT* context, const ch
 	else
 		goto out_fail;
 
-	sprintf_s(filename, length + 8, "%s.%s", context->output_file, ext);
+	(void)sprintf_s(filename, length + 8, "%s.%s", context->output_file, ext);
 
 	if (path)
 		fullpath = GetCombinedPath(path, filename);
@@ -594,7 +594,7 @@ out_fail:
 	BIO_free_all(bio);
 
 	if (fp)
-		fclose(fp);
+		(void)fclose(fp);
 
 	free(x509_str);
 	free(filename);
@@ -638,7 +638,7 @@ int makecert_context_output_private_key_file(MAKECERT_CONTEXT* context, const ch
 	if (!filename)
 		return -1;
 
-	sprintf_s(filename, length + 8, "%s.key", context->output_file);
+	(void)sprintf_s(filename, length + 8, "%s.key", context->output_file);
 
 	if (path)
 		fullpath = GetCombinedPath(path, filename);
@@ -675,7 +675,7 @@ int makecert_context_output_private_key_file(MAKECERT_CONTEXT* context, const ch
 out_fail:
 
 	if (fp)
-		fclose(fp);
+		(void)fclose(fp);
 
 	BIO_free_all(bio);
 	free(x509_str);

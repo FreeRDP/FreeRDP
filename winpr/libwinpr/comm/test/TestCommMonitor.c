@@ -7,10 +7,10 @@
 
 int TestCommMonitor(int argc, char* argv[])
 {
-	HANDLE hComm;
-	DWORD dwError;
-	BOOL fSuccess;
-	DWORD dwEvtMask;
+	HANDLE hComm = NULL;
+	DWORD dwError = 0;
+	BOOL fSuccess = 0;
+	DWORD dwEvtMask = 0;
 	OVERLAPPED overlapped = { 0 };
 	LPCSTR lpFileName = "\\\\.\\COM1";
 

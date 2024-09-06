@@ -292,7 +292,7 @@ static UINT audin_opensles_parse_addin_args(AudinOpenSLESDevice* device, const A
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-FREERDP_ENTRY_POINT(UINT opensles_freerdp_audin_client_subsystem_entry(
+FREERDP_ENTRY_POINT(UINT VCAPITYPE opensles_freerdp_audin_client_subsystem_entry(
     PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEntryPoints))
 {
 	const ADDIN_ARGV* args;

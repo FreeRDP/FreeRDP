@@ -43,7 +43,7 @@
 
 #define TAG FREERDP_TAG("core.gateway.http")
 
-#define RESPONSE_SIZE_LIMIT 64 * 1024 * 1024
+#define RESPONSE_SIZE_LIMIT (64ULL * 1024ULL * 1024ULL)
 
 #define WEBSOCKET_MAGIC_GUID "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
 
@@ -373,7 +373,7 @@ static char* guid2str(const GUID* guid)
 	if (rpcStatus != RPC_S_OK)
 		return NULL;
 
-	sprintf_s(bracedGuid, sizeof(bracedGuid), "{%s}", strguid);
+	(void)sprintf_s(bracedGuid, sizeof(bracedGuid), "{%s}", strguid);
 	RpcStringFreeA(&strguid);
 	return _strdup(bracedGuid);
 }

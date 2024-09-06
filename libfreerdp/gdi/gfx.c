@@ -168,8 +168,6 @@ static UINT gdi_OutputUpdate(rdpGdi* gdi, gdiGfxSurface* surface)
 	RECTANGLE_16 surfaceRect;
 	const RECTANGLE_16* rects = NULL;
 	UINT32 nbRects = 0;
-	double sx = NAN;
-	double sy = NAN;
 	rdpUpdate* update = NULL;
 
 	WINPR_ASSERT(gdi);
@@ -189,8 +187,8 @@ static UINT gdi_OutputUpdate(rdpGdi* gdi, gdiGfxSurface* surface)
 	surfaceRect.right = (UINT16)MIN(UINT16_MAX, surface->mappedWidth);
 	surfaceRect.bottom = (UINT16)MIN(UINT16_MAX, surface->mappedHeight);
 	region16_intersect_rect(&(surface->invalidRegion), &(surface->invalidRegion), &surfaceRect);
-	sx = surface->outputTargetWidth / (double)surface->mappedWidth;
-	sy = surface->outputTargetHeight / (double)surface->mappedHeight;
+	const double sx = surface->outputTargetWidth / (double)surface->mappedWidth;
+	const double sy = surface->outputTargetHeight / (double)surface->mappedHeight;
 
 	if (!(rects = region16_rects(&surface->invalidRegion, &nbRects)) || !nbRects)
 		return CHANNEL_RC_OK;
@@ -624,7 +622,7 @@ static UINT gdi_SurfaceCommand_AVC420(rdpGdi* gdi, RdpgfxClientContext* context,
 	for (UINT32 i = 0; i < meta->numRegionRects; i++)
 	{
 		region16_union_rect(&(surface->invalidRegion), &(surface->invalidRegion),
-		                    (RECTANGLE_16*)&(meta->regionRects[i]));
+		                    &(meta->regionRects[i]));
 	}
 
 	status = IFCALLRESULT(CHANNEL_RC_OK, context->UpdateSurfaceArea, context, surface->surfaceId,
@@ -751,11 +749,11 @@ static BOOL gdi_apply_alpha(BYTE* data, UINT32 format, UINT32 stride, RECTANGLE_
 	const UINT32 bpp = FreeRDPGetBytesPerPixel(format);
 	WINPR_ASSERT(rect);
 
-	for (UINT32 y = rect->top; y < rect->bottom; y++)
+	for (size_t y = rect->top; y < rect->bottom; y++)
 	{
-		BYTE* line = &data[stride * y];
+		BYTE* line = &data[y * stride];
 
-		for (UINT32 x = first ? rect->left + startOffsetX : rect->left; x < rect->right; x++)
+		for (size_t x = first ? rect->left + startOffsetX : rect->left; x < rect->right; x++)
 		{
 			BYTE r = 0;
 			BYTE g = 0;
@@ -825,11 +823,11 @@ static UINT gdi_SurfaceCommand_Alpha(rdpGdi* gdi, RdpgfxClientContext* context,
 		if (!Stream_CheckAndLogRequiredLengthOfSize(TAG, s, cmd->height, cmd->width))
 			return ERROR_INVALID_DATA;
 
-		for (UINT32 y = cmd->top; y < cmd->top + cmd->height; y++)
+		for (size_t y = cmd->top; y < cmd->top + cmd->height; y++)
 		{
-			BYTE* line = &surface->data[surface->scanline * y];
+			BYTE* line = &surface->data[y * surface->scanline];
 
-			for (UINT32 x = cmd->left; x < cmd->left + cmd->width; x++)
+			for (size_t x = cmd->left; x < cmd->left + cmd->width; x++)
 			{
 				UINT32 color = 0;
 				BYTE r = 0;

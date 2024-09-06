@@ -74,10 +74,20 @@ static BOOL SamAreEntriesEqual(const WINPR_SAM_ENTRY* a, const WINPR_SAM_ENTRY* 
 		return FALSE;
 	if (a->DomainLength != b->DomainLength)
 		return FALSE;
-	if (strncmp(a->User, b->User, a->UserLength) != 0)
-		return FALSE;
-	if (strncmp(a->Domain, b->Domain, a->DomainLength) != 0)
-		return FALSE;
+	if (a->UserLength > 0)
+	{
+		if (!a->User || !b->User)
+			return FALSE;
+		if (strncmp(a->User, b->User, a->UserLength) != 0)
+			return FALSE;
+	}
+	if (a->DomainLength > 0)
+	{
+		if (!a->Domain || !b->Domain)
+			return FALSE;
+		if (strncmp(a->Domain, b->Domain, a->DomainLength) != 0)
+			return FALSE;
+	}
 	return TRUE;
 }
 
@@ -105,7 +115,7 @@ WINPR_SAM* SamOpen(const char* filename, BOOL readOnly)
 
 		if (!sam)
 		{
-			fclose(fp);
+			(void)fclose(fp);
 			return NULL;
 		}
 
@@ -360,7 +370,7 @@ void SamClose(WINPR_SAM* sam)
 	if (sam != NULL)
 	{
 		if (sam->fp)
-			fclose(sam->fp);
+			(void)fclose(sam->fp);
 		free(sam);
 	}
 }

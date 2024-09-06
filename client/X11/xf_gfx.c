@@ -36,21 +36,17 @@ static UINT xf_OutputUpdate(xfContext* xfc, xfGfxSurface* surface)
 	UINT rc = ERROR_INTERNAL_ERROR;
 	UINT32 surfaceX = 0;
 	UINT32 surfaceY = 0;
-	RECTANGLE_16 surfaceRect;
-	rdpGdi* gdi = NULL;
-	const rdpSettings* settings = NULL;
+	RECTANGLE_16 surfaceRect = { 0 };
 	UINT32 nbRects = 0;
-	double sx = NAN;
-	double sy = NAN;
 	const RECTANGLE_16* rects = NULL;
 
 	WINPR_ASSERT(xfc);
 	WINPR_ASSERT(surface);
 
-	gdi = xfc->common.context.gdi;
+	rdpGdi* gdi = xfc->common.context.gdi;
 	WINPR_ASSERT(gdi);
 
-	settings = xfc->common.context.settings;
+	rdpSettings* settings = xfc->common.context.settings;
 	WINPR_ASSERT(settings);
 
 	surfaceX = surface->gdi.outputOriginX;
@@ -64,8 +60,8 @@ static UINT xf_OutputUpdate(xfContext* xfc, xfGfxSurface* surface)
 	XSetFillStyle(xfc->display, xfc->gc, FillSolid);
 	region16_intersect_rect(&(surface->gdi.invalidRegion), &(surface->gdi.invalidRegion),
 	                        &surfaceRect);
-	sx = surface->gdi.outputTargetWidth / (double)surface->gdi.mappedWidth;
-	sy = surface->gdi.outputTargetHeight / (double)surface->gdi.mappedHeight;
+	const double sx = 1.0 * surface->gdi.outputTargetWidth / (double)surface->gdi.mappedWidth;
+	const double sy = 1.0 * surface->gdi.outputTargetHeight / (double)surface->gdi.mappedHeight;
 
 	if (!(rects = region16_rects(&surface->gdi.invalidRegion, &nbRects)))
 		return CHANNEL_RC_OK;
@@ -77,10 +73,10 @@ static UINT xf_OutputUpdate(xfContext* xfc, xfGfxSurface* surface)
 		const UINT32 nYSrc = rect->top;
 		const UINT32 swidth = rect->right - nXSrc;
 		const UINT32 sheight = rect->bottom - nYSrc;
-		const UINT32 nXDst = surfaceX + nXSrc * sx;
-		const UINT32 nYDst = surfaceY + nYSrc * sy;
-		const UINT32 dwidth = swidth * sx;
-		const UINT32 dheight = sheight * sy;
+		const UINT32 nXDst = (UINT32)lround(1.0 * surfaceX + nXSrc * sx);
+		const UINT32 nYDst = (UINT32)lround(1.0 * surfaceY + nYSrc * sy);
+		const UINT32 dwidth = (UINT32)lround(1.0 * swidth * sx);
+		const UINT32 dheight = (UINT32)lround(1.0 * sheight * sy);
 
 		if (surface->stage)
 		{

@@ -734,8 +734,8 @@ static UINT cam_v4l_free(ICamHal* ihal)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-FREERDP_ENTRY_POINT(
-    UINT v4l_freerdp_rdpecam_client_subsystem_entry(PFREERDP_CAMERA_HAL_ENTRY_POINTS pEntryPoints))
+FREERDP_ENTRY_POINT(UINT VCAPITYPE v4l_freerdp_rdpecam_client_subsystem_entry(
+    PFREERDP_CAMERA_HAL_ENTRY_POINTS pEntryPoints))
 {
 	UINT ret = CHANNEL_RC_OK;
 	WINPR_ASSERT(pEntryPoints);

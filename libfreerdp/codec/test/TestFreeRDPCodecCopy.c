@@ -35,9 +35,10 @@ static BOOL TestFreeRDPImageCopy(UINT32 w, UINT32 h, UINT32 srcFormat, UINT32 ds
 		double ms = end - start;
 		ms /= 1000000.0;
 
-		fprintf(stdout, "[%s] copied %" PRIu32 "x%" PRIu32 " [%-20s] -> [%-20s] in %lf ms [%s]\n",
-		        __func__, w, h, FreeRDPGetColorFormatName(srcFormat),
-		        FreeRDPGetColorFormatName(dstFormat), ms, rc ? "success" : "failure");
+		(void)fprintf(stdout,
+		              "[%s] copied %" PRIu32 "x%" PRIu32 " [%-20s] -> [%-20s] in %lf ms [%s]\n",
+		              __func__, w, h, FreeRDPGetColorFormatName(srcFormat),
+		              FreeRDPGetColorFormatName(dstFormat), ms, rc ? "success" : "failure");
 		if (!rc)
 			break;
 	}
@@ -72,9 +73,10 @@ static BOOL TestFreeRDPImageCopy_no_overlap(UINT32 w, UINT32 h, UINT32 srcFormat
 		double ms = end - start;
 		ms /= 1000000.0;
 
-		fprintf(stdout, "[%s] copied %" PRIu32 "x%" PRIu32 " [%-20s] -> [%-20s] in %lf ms [%s]\n",
-		        __func__, w, h, FreeRDPGetColorFormatName(srcFormat),
-		        FreeRDPGetColorFormatName(dstFormat), ms, rc ? "success" : "failure");
+		(void)fprintf(stdout,
+		              "[%s] copied %" PRIu32 "x%" PRIu32 " [%-20s] -> [%-20s] in %lf ms [%s]\n",
+		              __func__, w, h, FreeRDPGetColorFormatName(srcFormat),
+		              FreeRDPGetColorFormatName(dstFormat), ms, rc ? "success" : "failure");
 		if (!rc)
 			break;
 	}
@@ -106,8 +108,8 @@ int TestFreeRDPCodecCopy(int argc, char* argv[])
 		if ((errno != 0) || (width == 0) || (height == 0))
 		{
 			char buffer[128] = { 0 };
-			fprintf(stderr, "%s failed: width=%" PRIu32 ", height=%" PRIu32 ", errno=%s\n",
-			        __func__, width, height, winpr_strerror(errno, buffer, sizeof(buffer)));
+			(void)fprintf(stderr, "%s failed: width=%" PRIu32 ", height=%" PRIu32 ", errno=%s\n",
+			              __func__, width, height, winpr_strerror(errno, buffer, sizeof(buffer)));
 			return -1;
 		}
 	}

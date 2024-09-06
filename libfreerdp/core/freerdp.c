@@ -718,12 +718,15 @@ const char* freerdp_get_version_string(void)
 
 const char* freerdp_get_build_config(void)
 {
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_OVERLENGTH_STRINGS
 	static const char build_config[] =
 	    "Build configuration: " FREERDP_BUILD_CONFIG "\n"
 	    "Build type:          " FREERDP_BUILD_TYPE "\n"
 	    "CFLAGS:              " FREERDP_CFLAGS "\n"
 	    "Compiler:            " FREERDP_COMPILER_ID ", " FREERDP_COMPILER_VERSION "\n"
 	    "Target architecture: " FREERDP_TARGET_ARCH "\n";
+	WINPR_PRAGMA_DIAG_POP
 	return build_config;
 }
 
@@ -1081,7 +1084,7 @@ void freerdp_set_last_error_ex(rdpContext* context, UINT32 lastError, const char
 const char* freerdp_get_logon_error_info_type_ex(UINT32 type, char* buffer, size_t size)
 {
 	const char* str = freerdp_get_logon_error_info_type(type);
-	_snprintf(buffer, size, "%s(0x%04" PRIx32 ")", str, type);
+	(void)_snprintf(buffer, size, "%s(0x%04" PRIx32 ")", str, type);
 	return buffer;
 }
 
@@ -1136,7 +1139,7 @@ const char* freerdp_get_logon_error_info_data(UINT32 data)
 const char* freerdp_get_logon_error_info_data_ex(UINT32 data, char* buffer, size_t size)
 {
 	const char* str = freerdp_get_logon_error_info_data(data);
-	_snprintf(buffer, size, "%s(0x%04" PRIx32 ")", str, data);
+	(void)_snprintf(buffer, size, "%s(0x%04" PRIx32 ")", str, data);
 	return buffer;
 }
 
@@ -1275,7 +1278,7 @@ void setChannelError(rdpContext* context, UINT errorNum, WINPR_FORMAT_ARG const 
 	WINPR_ASSERT(context);
 
 	context->channelErrorNum = errorNum;
-	vsnprintf(context->errorDescription, 499, format, ap);
+	(void)vsnprintf(context->errorDescription, 499, format, ap);
 	va_end(ap);
 	SetEvent(context->channelErrorEvent);
 }

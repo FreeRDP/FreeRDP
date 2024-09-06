@@ -44,10 +44,10 @@
 #define UNROLL_MULTIPLE(_condition, _exp, _count) \
 	do                                            \
 	{                                             \
-		while ((_condition) >= _count)            \
+		while ((_condition) >= (_count))          \
 		{                                         \
 			UNROLL_BODY(_exp, _count);            \
-			(_condition) -= _count;               \
+			(_condition) -= (_count);             \
 		}                                         \
 	} while (FALSE)
 
@@ -149,7 +149,7 @@ static const char* rle_code_str(UINT32 code)
 static const char* rle_code_str_buffer(UINT32 code, char* buffer, size_t size)
 {
 	const char* str = rle_code_str(code);
-	_snprintf(buffer, size, "%s [0x%08" PRIx32 "]", str, code);
+	(void)_snprintf(buffer, size, "%s [0x%08" PRIx32 "]", str, code);
 	return buffer;
 }
 
@@ -428,14 +428,14 @@ static INLINE void write_pixel_16(BYTE* _buf, UINT16 _pix)
 	do                             \
 	{                              \
 		write_pixel_8(_buf, _pix); \
-		_buf += 1;                 \
+		(_buf) += 1;               \
 	} while (0)
 #define DESTREADPIXEL(_pix, _buf) _pix = (_buf)[0]
 #define SRCREADPIXEL(_pix, _buf) \
 	do                           \
 	{                            \
-		_pix = (_buf)[0];        \
-		_buf += 1;               \
+		(_pix) = (_buf)[0];      \
+		(_buf) += 1;             \
 	} while (0)
 
 #define WRITEFGBGIMAGE WriteFgBgImage8to8
@@ -444,7 +444,7 @@ static INLINE void write_pixel_16(BYTE* _buf, UINT16 _pix)
 #define RLEEXTRA
 #undef ENSURE_CAPACITY
 #define ENSURE_CAPACITY(_start, _end, _size) ensure_capacity(_start, _end, _size, 1)
-#include "include/bitmap.c"
+#include "include/bitmap.h"
 
 #undef DESTWRITEPIXEL
 #undef DESTREADPIXEL
@@ -463,14 +463,14 @@ static INLINE void write_pixel_16(BYTE* _buf, UINT16 _pix)
 	do                              \
 	{                               \
 		write_pixel_16(_buf, _pix); \
-		_buf += 2;                  \
+		(_buf) += 2;                \
 	} while (0)
 #define DESTREADPIXEL(_pix, _buf) _pix = ((UINT16*)(_buf))[0]
-#define SRCREADPIXEL(_pix, _buf)             \
-	do                                       \
-	{                                        \
-		_pix = (_buf)[0] | ((_buf)[1] << 8); \
-		_buf += 2;                           \
+#define SRCREADPIXEL(_pix, _buf)               \
+	do                                         \
+	{                                          \
+		(_pix) = (_buf)[0] | ((_buf)[1] << 8); \
+		(_buf) += 2;                           \
 	} while (0)
 #define WRITEFGBGIMAGE WriteFgBgImage16to16
 #define WRITEFIRSTLINEFGBGIMAGE WriteFirstLineFgBgImage16to16
@@ -478,7 +478,7 @@ static INLINE void write_pixel_16(BYTE* _buf, UINT16 _pix)
 #define RLEEXTRA
 #undef ENSURE_CAPACITY
 #define ENSURE_CAPACITY(_start, _end, _size) ensure_capacity(_start, _end, _size, 2)
-#include "include/bitmap.c"
+#include "include/bitmap.h"
 
 #undef DESTWRITEPIXEL
 #undef DESTREADPIXEL
@@ -497,14 +497,14 @@ static INLINE void write_pixel_16(BYTE* _buf, UINT16 _pix)
 	do                              \
 	{                               \
 		write_pixel_24(_buf, _pix); \
-		_buf += 3;                  \
+		(_buf) += 3;                \
 	} while (0)
 #define DESTREADPIXEL(_pix, _buf) _pix = (_buf)[0] | ((_buf)[1] << 8) | ((_buf)[2] << 16)
-#define SRCREADPIXEL(_pix, _buf)                                 \
-	do                                                           \
-	{                                                            \
-		_pix = (_buf)[0] | ((_buf)[1] << 8) | ((_buf)[2] << 16); \
-		_buf += 3;                                               \
+#define SRCREADPIXEL(_pix, _buf)                                   \
+	do                                                             \
+	{                                                              \
+		(_pix) = (_buf)[0] | ((_buf)[1] << 8) | ((_buf)[2] << 16); \
+		(_buf) += 3;                                               \
 	} while (0)
 
 #define WRITEFGBGIMAGE WriteFgBgImage24to24
@@ -513,7 +513,7 @@ static INLINE void write_pixel_16(BYTE* _buf, UINT16 _pix)
 #define RLEEXTRA
 #undef ENSURE_CAPACITY
 #define ENSURE_CAPACITY(_start, _end, _size) ensure_capacity(_start, _end, _size, 3)
-#include "include/bitmap.c"
+#include "include/bitmap.h"
 
 struct S_BITMAP_INTERLEAVED_CONTEXT
 {

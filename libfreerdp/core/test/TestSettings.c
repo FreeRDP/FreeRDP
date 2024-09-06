@@ -9,7 +9,7 @@
 
 static BOOL log_result(BOOL value, const char* fkt)
 {
-	fprintf(stderr, "TestSettings [%s] returned %s\n", fkt, value ? "TRUE" : "FALSE");
+	(void)fprintf(stderr, "TestSettings [%s] returned %s\n", fkt, value ? "TRUE" : "FALSE");
 	return value;
 }
 
@@ -305,19 +305,19 @@ static BOOL format_uint(char* buffer, size_t size, UINT64 value, UINT16 intType,
 	switch (intType)
 	{
 		case 0:
-			_snprintf(buffer, size, "%" PRIu64, lvalue);
+			(void)_snprintf(buffer, size, "%" PRIu64, lvalue);
 			return TRUE;
 		case 1:
-			_snprintf(buffer, size, "0x%" PRIx64, lvalue);
+			(void)_snprintf(buffer, size, "0x%" PRIx64, lvalue);
 			return TRUE;
 		case 2:
 			if (max < UINT64_MAX)
-				_snprintf(buffer, size, "%" PRIu64, max + 1);
+				(void)_snprintf(buffer, size, "%" PRIu64, max + 1);
 			else
-				_snprintf(buffer, size, "too large a number");
+				(void)_snprintf(buffer, size, "too large a number");
 			return FALSE;
 		default:
-			_snprintf(buffer, size, "not a number value");
+			(void)_snprintf(buffer, size, "not a number value");
 			return FALSE;
 	}
 }
@@ -327,16 +327,16 @@ static BOOL print_negative(char* buffer, size_t size, INT64 value, INT64 min)
 	switch (min)
 	{
 		case INT16_MIN:
-			_snprintf(buffer, size, "%" PRId16, (INT16)value);
+			(void)_snprintf(buffer, size, "%" PRId16, (INT16)value);
 			return FALSE;
 		case INT32_MIN:
-			_snprintf(buffer, size, "%" PRId32, (INT32)value);
+			(void)_snprintf(buffer, size, "%" PRId32, (INT32)value);
 			return FALSE;
 		case INT64_MIN:
-			_snprintf(buffer, size, "%" PRId64, (INT64)value);
+			(void)_snprintf(buffer, size, "%" PRId64, value);
 			return FALSE;
 		default:
-			_snprintf(buffer, size, "too small a number");
+			(void)_snprintf(buffer, size, "too small a number");
 			return FALSE;
 	}
 }
@@ -345,23 +345,23 @@ static BOOL print_xpositive(char* buffer, size_t size, INT64 value, INT64 max)
 {
 	if (value < 0)
 	{
-		_snprintf(buffer, size, "%" PRId64, value);
+		(void)_snprintf(buffer, size, "%" PRId64, value);
 		return TRUE;
 	}
 
 	switch (max)
 	{
 		case INT16_MAX:
-			_snprintf(buffer, size, "%" PRIx16, (INT16)value);
+			(void)_snprintf(buffer, size, "%" PRIx16, (INT16)value);
 			return FALSE;
 		case INT32_MAX:
-			_snprintf(buffer, size, "%" PRIx32, (INT32)value);
+			(void)_snprintf(buffer, size, "%" PRIx32, (INT32)value);
 			return FALSE;
 		case INT64_MAX:
-			_snprintf(buffer, size, "%" PRIx64, (INT64)value);
+			(void)_snprintf(buffer, size, "%" PRIx64, value);
 			return FALSE;
 		default:
-			_snprintf(buffer, size, "too small a number");
+			(void)_snprintf(buffer, size, "too small a number");
 			return FALSE;
 	}
 }
@@ -374,25 +374,25 @@ static BOOL format_int(char* buffer, size_t size, INT64 value, UINT16 intType, I
 	switch (intType)
 	{
 		case 0:
-			_snprintf(buffer, size, "%" PRId64, lvalue);
+			(void)_snprintf(buffer, size, "%" PRId64, lvalue);
 			return TRUE;
 		case 1:
 			print_xpositive(buffer, size, lvalue, max);
 			return TRUE;
 		case 2:
 			if (max < INT64_MAX)
-				_snprintf(buffer, size, "%" PRId64, max + 1);
+				(void)_snprintf(buffer, size, "%" PRId64, max + 1);
 			else
-				_snprintf(buffer, size, "too large a number");
+				(void)_snprintf(buffer, size, "too large a number");
 			return FALSE;
 		case 3:
 			if (min < INT64_MIN)
 				print_negative(buffer, size, min - 1, INT64_MIN);
 			else
-				_snprintf(buffer, size, "too small a number");
+				(void)_snprintf(buffer, size, "too small a number");
 			return FALSE;
 		default:
-			_snprintf(buffer, size, "not a number value");
+			(void)_snprintf(buffer, size, "not a number value");
 			return FALSE;
 	}
 }
@@ -403,37 +403,37 @@ static BOOL format_bool(char* buffer, size_t size, UINT16 intType)
 	switch (intType)
 	{
 		case 0:
-			_snprintf(buffer, size, "FALSE");
+			(void)_snprintf(buffer, size, "FALSE");
 			return TRUE;
 		case 1:
-			_snprintf(buffer, size, "FaLsE");
+			(void)_snprintf(buffer, size, "FaLsE");
 			return TRUE;
 		case 2:
-			_snprintf(buffer, size, "False");
+			(void)_snprintf(buffer, size, "False");
 			return TRUE;
 		case 3:
-			_snprintf(buffer, size, "false");
+			(void)_snprintf(buffer, size, "false");
 			return TRUE;
 		case 4:
-			_snprintf(buffer, size, "falseentry");
+			(void)_snprintf(buffer, size, "falseentry");
 			return FALSE;
 		case 5:
-			_snprintf(buffer, size, "TRUE");
+			(void)_snprintf(buffer, size, "TRUE");
 			return TRUE;
 		case 6:
-			_snprintf(buffer, size, "TrUe");
+			(void)_snprintf(buffer, size, "TrUe");
 			return TRUE;
 		case 7:
-			_snprintf(buffer, size, "True");
+			(void)_snprintf(buffer, size, "True");
 			return TRUE;
 		case 8:
-			_snprintf(buffer, size, "true");
+			(void)_snprintf(buffer, size, "true");
 			return TRUE;
 		case 9:
-			_snprintf(buffer, size, "someentry");
+			(void)_snprintf(buffer, size, "someentry");
 			return FALSE;
 		default:
-			_snprintf(buffer, size, "ok");
+			(void)_snprintf(buffer, size, "ok");
 			return FALSE;
 	}
 }
@@ -574,7 +574,7 @@ static BOOL check_key_helpers(size_t key, const char* stype)
 				break;
 			case RDP_SETTINGS_TYPE_STRING:
 				expect = TRUE;
-				_snprintf(value, sizeof(value), "somerandomstring");
+				(void)_snprintf(value, sizeof(value), "somerandomstring");
 				break;
 			case RDP_SETTINGS_TYPE_POINTER:
 				expect = FALSE;

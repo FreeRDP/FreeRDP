@@ -30,6 +30,6 @@ set(${MODULE_PREFIX}_LIBS
 )
 
 include_directories(..)
-include_directories(${ALSA_INCLUDE_DIRS})
+include_directories(SYSTEM ${ALSA_INCLUDE_DIRS})
 
 add_channel_client_subsystem_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} "" TRUE "")

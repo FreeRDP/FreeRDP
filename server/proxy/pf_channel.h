@@ -57,7 +57,7 @@ PfChannelResult channelTracker_update(ChannelStateTracker* tracker, const BYTE* 
                                       UINT32 flags, size_t totalSize);
 
 PfChannelResult channelTracker_flushCurrent(ChannelStateTracker* t, BOOL first, BOOL last,
-                                            BOOL toFront);
+                                            BOOL toBack);
 
 BOOL pf_channel_setup_generic(pServerStaticChannelContext* channel);
 

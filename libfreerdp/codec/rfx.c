@@ -156,7 +156,7 @@ static INLINE void rfx_tile_init(void* obj)
 
 static INLINE void* rfx_decoder_tile_new(const void* val)
 {
-	const size_t size = 4 * 64 * 64;
+	const size_t size = 4ULL * 64ULL * 64ULL;
 	RFX_TILE* tile = NULL;
 	WINPR_UNUSED(val);
 
@@ -259,7 +259,7 @@ RFX_CONTEXT* rfx_context_new_ex(BOOL encoder, UINT32 ThreadingFlags)
 	 *
 	 * We then multiply by 3 to use a single, partioned buffer for all 3 channels.
 	 */
-	priv->BufferPool = BufferPool_New(TRUE, (8192 + 32) * 3, 16);
+	priv->BufferPool = BufferPool_New(TRUE, (8192ULL + 32ULL) * 3ULL, 16);
 
 	if (!priv->BufferPool)
 		goto fail;
@@ -577,7 +577,7 @@ static INLINE BOOL rfx_process_message_channels(RFX_CONTEXT* WINPR_RESTRICT cont
 	}
 
 	/* Now, only the first monitor can be used, therefore the other channels will be ignored. */
-	Stream_Seek(s, 5 * (numChannels - 1));
+	Stream_Seek(s, 5ULL * (numChannels - 1));
 	WLog_Print(context->priv->log, WLOG_DEBUG,
 	           "numChannels %" PRIu8 " id %" PRIu8 ", %" PRIu16 "x%" PRIu16 ".", numChannels,
 	           channelId, context->width, context->height);
@@ -1638,8 +1638,8 @@ RFX_MESSAGE* rfx_encode_message(RFX_CONTEXT* WINPR_RESTRICT context,
                                 const RFX_RECT* WINPR_RESTRICT rects, size_t numRects,
                                 const BYTE* WINPR_RESTRICT data, UINT32 w, UINT32 h, size_t s)
 {
-	const UINT32 width = (UINT32)w;
-	const UINT32 height = (UINT32)h;
+	const UINT32 width = w;
+	const UINT32 height = h;
 	const UINT32 scanline = (UINT32)s;
 	RFX_MESSAGE* message = NULL;
 	PTP_WORK* workObject = NULL;
@@ -1791,9 +1791,9 @@ RFX_MESSAGE* rfx_encode_message(RFX_CONTEXT* WINPR_RESTRICT context,
 				if (!(tile->YCbCrData = (BYTE*)BufferPool_Take(context->priv->BufferPool, -1)))
 					goto skip_encoding_loop;
 
-				tile->YData = (BYTE*)&(tile->YCbCrData[((8192 + 32) * 0) + 16]);
-				tile->CbData = (BYTE*)&(tile->YCbCrData[((8192 + 32) * 1) + 16]);
-				tile->CrData = (BYTE*)&(tile->YCbCrData[((8192 + 32) * 2) + 16]);
+				tile->YData = &(tile->YCbCrData[((8192 + 32) * 0) + 16]);
+				tile->CbData = &(tile->YCbCrData[((8192 + 32) * 1) + 16]);
+				tile->CrData = &(tile->YCbCrData[((8192 + 32) * 2) + 16]);
 
 				if (!rfx_ensure_tiles(message, 1))
 					goto skip_encoding_loop;
@@ -2303,7 +2303,7 @@ static INLINE BOOL rfx_write_progressive_region(RFX_CONTEXT* WINPR_RESTRICT rfx,
 	 */
 	for (UINT16 i = 0; i < msg->numQuant; i++)
 	{
-		const UINT32* qv = &msg->quantVals[i * 10];
+		const UINT32* qv = &msg->quantVals[10ULL * i];
 		/* RFX_COMPONENT_CODEC_QUANT */
 		Stream_Write_UINT8(s, (UINT8)(qv[0] + (qv[2] << 4))); /* LL3 (4-bit), HL3 (4-bit) */
 		Stream_Write_UINT8(s, (UINT8)(qv[1] + (qv[3] << 4))); /* LH3 (4-bit), HH3 (4-bit) */

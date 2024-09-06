@@ -25,6 +25,8 @@
 
 #include <winpr/collections.h>
 #include <winpr/file.h>
+#include <winpr/winpr.h>
+#include <winpr/wtypes.h>
 
 #if defined __linux__ && !defined ANDROID
 
