@@ -1941,3 +1941,34 @@ void gdi_graphics_pipeline_uninit(rdpGdi* gdi, RdpgfxClientContext* gfx)
 	PROFILER_PRINT_FOOTER
 	PROFILER_FREE(gfx->SurfaceProfiler)
 }
+
+const char* rdpgfx_caps_version_str(UINT32 capsVersion)
+{
+	switch (capsVersion)
+	{
+		case RDPGFX_CAPVERSION_8:
+			return "RDPGFX_CAPVERSION_8";
+		case RDPGFX_CAPVERSION_81:
+			return "RDPGFX_CAPVERSION_81";
+		case RDPGFX_CAPVERSION_10:
+			return "RDPGFX_CAPVERSION_10";
+		case RDPGFX_CAPVERSION_101:
+			return "RDPGFX_CAPVERSION_101";
+		case RDPGFX_CAPVERSION_102:
+			return "RDPGFX_CAPVERSION_102";
+		case RDPGFX_CAPVERSION_103:
+			return "RDPGFX_CAPVERSION_103";
+		case RDPGFX_CAPVERSION_104:
+			return "RDPGFX_CAPVERSION_104";
+		case RDPGFX_CAPVERSION_105:
+			return "RDPGFX_CAPVERSION_105";
+		case RDPGFX_CAPVERSION_106:
+			return "RDPGFX_CAPVERSION_106";
+		case RDPGFX_CAPVERSION_106_ERR:
+			return "RDPGFX_CAPVERSION_106_ERR";
+		case RDPGFX_CAPVERSION_107:
+			return "RDPGFX_CAPVERSION_107";
+		default:
+			return "RDPGFX_CAPVERSION_UNKNOWN";
+	}
+}

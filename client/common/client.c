@@ -278,6 +278,16 @@ out_error:
 
 int freerdp_client_settings_parse_command_line(rdpSettings* settings, int argc, char** argv,
                                                BOOL allowUnknown)
+
+{
+	return freerdp_client_settings_parse_command_line_ex(settings, argc, argv, allowUnknown, NULL,
+	                                                     0, NULL, NULL);
+}
+
+int freerdp_client_settings_parse_command_line_ex(
+    rdpSettings* settings, int argc, char** argv, BOOL allowUnknown, COMMAND_LINE_ARGUMENT_A* args,
+    size_t count, int (*handle_option)(const COMMAND_LINE_ARGUMENT* arg, void* custom),
+    void* handle_userdata)
 {
 	int status = 0;
 
@@ -287,8 +297,8 @@ int freerdp_client_settings_parse_command_line(rdpSettings* settings, int argc, 
 	if (!argv)
 		return -1;
 
-	status =
-	    freerdp_client_settings_parse_command_line_arguments(settings, argc, argv, allowUnknown);
+	status = freerdp_client_settings_parse_command_line_arguments_ex(
+	    settings, argc, argv, allowUnknown, args, count, handle_option, handle_userdata);
 
 	if (status < 0)
 		return status;

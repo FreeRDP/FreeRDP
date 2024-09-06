@@ -30,6 +30,8 @@ extern "C"
 {
 #endif
 
+	FREERDP_API const char* rdpgfx_caps_version_str(UINT32 capsVersion);
+
 	FREERDP_API const char* rdpgfx_get_cmd_id_string(UINT16 cmdId);
 
 	FREERDP_API const char* rdpgfx_get_codec_id_string(UINT16 codecId);
