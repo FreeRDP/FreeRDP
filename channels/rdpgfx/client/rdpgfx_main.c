@@ -144,6 +144,10 @@ static UINT rdpgfx_send_caps_advertise_pdu(RdpgfxClientContext* context,
 	for (UINT16 index = 0; index < pdu->capsSetCount; index++)
 	{
 		const RDPGFX_CAPSET* capsSet = &(pdu->capsSets[index]);
+
+		DEBUG_RDPGFX(gfx->log, "Sending %s [0x%08" PRIx32 "] flags=0x%08" PRIx32,
+		             rdpgfx_caps_version_str(capsSet->version), capsSet->version, capsSet->flags);
+
 		Stream_Write_UINT32(s, capsSet->version); /* version (4 bytes) */
 		Stream_Write_UINT32(s, capsSet->length);  /* capsDataLength (4 bytes) */
 		Stream_Write_UINT32(s, capsSet->flags);   /* capsData (4 bytes) */
@@ -379,8 +383,9 @@ static UINT rdpgfx_recv_caps_confirm_pdu(GENERIC_CHANNEL_CALLBACK* callback, wSt
 	Stream_Read_UINT32(s, capsSet.flags);   /* capsData (4 bytes) */
 	gfx->TotalDecodedFrames = 0;
 	gfx->ConnectionCaps = capsSet;
-	DEBUG_RDPGFX(gfx->log, "RecvCapsConfirmPdu: version: 0x%08" PRIX32 " flags: 0x%08" PRIX32 "",
-	             capsSet.version, capsSet.flags);
+	DEBUG_RDPGFX(gfx->log,
+	             "RecvCapsConfirmPdu: version: %s [0x%08" PRIX32 "] flags: 0x%08" PRIX32 "",
+	             rdpgfx_caps_version_str(capsSet.version), capsSet.version, capsSet.flags);
 
 	if (!context)
 		return ERROR_BAD_CONFIGURATION;
