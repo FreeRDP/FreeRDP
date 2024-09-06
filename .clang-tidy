@@ -21,6 +21,7 @@ Checks: >
     -altera-id-dependent-backward-branch,
     -altera-struct-pack-align,
     -altera-unroll-loops,
+    -cppcoreguidelines-interfaces-global-init,
     -bugprone-easily-swappable-parameters,
     -bugprone-assignment-in-if-condition,
     -bugprone-macro-parentheses,
