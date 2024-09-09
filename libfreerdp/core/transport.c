@@ -326,7 +326,19 @@ static BOOL transport_default_connect_tls(rdpTransport* transport)
 	}
 
 	transport->frontBio = tls->bio;
-	BIO_callback_ctrl(tls->bio, BIO_CTRL_SET_CALLBACK, (BIO_info_cb*)transport_ssl_cb);
+
+	/* See libfreerdp/crypto/tls.c transport_default_connect_tls
+	 *
+	 * we are wrapping a SSL object in the BIO and actually want to set
+	 *
+	 * SSL_set_info_callback there. So ensure our callback is of appropriate
+	 * type for that instead of what the function prototype suggests.
+	 */
+	typedef void (*ssl_cb_t)(const SSL* ssl, int type, int val);
+	ssl_cb_t fkt = transport_ssl_cb;
+
+	BIO_info_cb* bfkt = WINPR_FUNC_PTR_CAST(fkt, BIO_info_cb*);
+	BIO_callback_ctrl(tls->bio, BIO_CTRL_SET_CALLBACK, bfkt);
 	SSL_set_app_data(tls->ssl, transport);
 
 	if (!transport->frontBio)
