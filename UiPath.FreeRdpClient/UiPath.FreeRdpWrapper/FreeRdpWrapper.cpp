@@ -12,6 +12,8 @@ using namespace FreeRdpClient;
 
 namespace FreeRdpClient
 {
+	static pFreeRdpDisconnectedCallback _disconnectCallback = nullptr;
+
 	char* ConvToUtf8(BSTR source)
 	{
 		std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>, wchar_t> convToUTF8;
@@ -154,7 +156,14 @@ namespace FreeRdpClient
 		freerdp_context_free(instance);
 		freerdp_free(instance);
 
+		auto releaseObjectName = instanceData->getEventName();
+
 		delete instanceData;
+
+		if (_disconnectCallback)
+		{
+			_disconnectCallback(releaseObjectName);
+		}
 
 		DT_TRACE(L"RdpRelease: Finish");
 		return ERROR_SUCCESS;
@@ -219,18 +228,21 @@ namespace FreeRdpClient
 		return 0;
 	}
 
-	instance_data* transport_start(rdpContext* context, ConnectOptions* rdpOptions)
+	BOOL transport_start(
+		rdpContext* context,
+		ConnectOptions* rdpOptions,
+		_bstr_t &eventName)
 	{
 		instance_data* instanceData = new instance_data(context, rdpOptions);
 
-		auto eventName = instanceData->getEventName();
+		eventName = instanceData->getEventName();
 		auto existingEvent = OpenEvent(NULL, false, eventName.GetBSTR());
 		if (existingEvent)
 		{
 			CloseHandle(existingEvent);
 			DT_ERROR(L"Failed to create freerdp transport stop event, error: alreadyExists: %s", eventName.GetBSTR());
 			delete instanceData;
-			return NULL;
+			return FALSE;
 		}
 
 		instanceData->transportStopEvent = CreateEvent(NULL, TRUE, FALSE, eventName.GetBSTR());
@@ -238,7 +250,7 @@ namespace FreeRdpClient
 		{
 			DT_ERROR(L"Failed to create freerdp transport stop event, error: %u", GetLastError());
 			delete instanceData;
-			return NULL;
+			return FALSE;
 		}
 
 		auto transportThreadHandle = CreateThread(NULL, 0, transport_thread, instanceData, 0, NULL);
@@ -246,13 +258,15 @@ namespace FreeRdpClient
 		{
 			DT_ERROR(L"Failed to create freerdp transport client thread, error: %u", GetLastError());
 			delete instanceData;
-			return NULL;
+			return FALSE;
 		}
 		CloseHandle(transportThreadHandle);
-		return instanceData;
+		return TRUE;
 	}
 
-	HRESULT STDAPICALLTYPE RdpLogon(ConnectOptions* rdpOptions, BSTR& releaseEventName)
+	HRESULT STDAPICALLTYPE RdpLogon(
+		ConnectOptions* rdpOptions,
+		BSTR& releaseEventName)
 	{
 		DT_TRACE(L"Start for user: [%s], domain: [%s], scopeName: [%s]", rdpOptions->User,
 		         rdpOptions->Domain, rdpOptions->ScopeName);
@@ -267,10 +281,9 @@ namespace FreeRdpClient
 		auto connectResult = freerdp_connect(instance);
 		if (connectResult)
 		{
-			auto lpData = transport_start(context, rdpOptions);
-			if (lpData)
+			_bstr_t eventName;
+			if (transport_start(context, rdpOptions, eventName))
 			{
-				auto eventName = lpData->getEventName();
 				releaseEventName = eventName.Detach();
 				DT_TRACE(L"Connection succeeded");
 				return S_OK;
@@ -304,6 +317,12 @@ namespace FreeRdpClient
 		}
 
 		CloseHandle(eventHandle);
+		return S_OK;
+	}
+
+	HRESULT STDAPICALLTYPE SetDisconnectCallback(pFreeRdpDisconnectedCallback disconnectCallback)
+	{
+		_disconnectCallback = disconnectCallback;
 		return S_OK;
 	}
 }

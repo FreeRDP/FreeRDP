@@ -3,6 +3,8 @@ using System.Globalization;
 
 namespace UiPath.Rdp;
 
+public delegate void DisconnectCallback();
+
 public class RdpConnectionSettings
 {
     public string Username { get; }
@@ -20,6 +22,8 @@ public class RdpConnectionSettings
     public string ScopeName { get; set; }
     [MaxLength(15, ErrorMessage = "Sometimes :) Windows returns only first 15 chars for a session ClientName")]
     public string? ClientName { get; set; }
+
+    public DisconnectCallback? DisconnectCallback { get; set; }
 
     public RdpConnectionSettings(string username, string domain, string password)
     {

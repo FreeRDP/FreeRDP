@@ -21,11 +21,14 @@ public class UserExistsDetail
 
     public List<string> Groups { get; } = new() { "Remote Desktop Users", "Administrators" };
 
-    public RdpConnectionSettings ToRdpConnectionSettings()
-    => new(
-        username: UserName.Split("\\")[1],
-        password: Password,
-        domain: UserName.Split("\\")[0]);
+    public RdpConnectionSettings ToRdpConnectionSettings(DisconnectCallback? disconnectCallback = null)
+        => new(
+            username: UserName.Split("\\")[1],
+            password: Password,
+            domain: UserName.Split("\\")[0])
+        {
+            DisconnectCallback = disconnectCallback
+        };
 }
 
 public interface IUserContext

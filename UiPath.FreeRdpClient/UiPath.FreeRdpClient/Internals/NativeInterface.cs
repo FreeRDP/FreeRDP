@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 
 namespace UiPath.Rdp;
 
-internal class NativeInterface 
+internal class NativeInterface
 {
     const string FreeRdpClientDll = "UiPath.FreeRdpWrapper.dll";
 
@@ -35,13 +35,21 @@ internal class NativeInterface
     [UnmanagedFunctionPointer(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     public delegate void RegisterThreadScopeCallback([MarshalAs(UnmanagedType.LPStr)] string category);
 
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate void DisconnectCallback([MarshalAs(UnmanagedType.BStr)] string releaseObjectName);
+
     [DllImport(FreeRdpClientDll, PreserveSig = false, CharSet = CharSet.Unicode)]
     public extern static void InitializeLogging([MarshalAs(UnmanagedType.FunctionPtr)] LogCallback? logCallback,
                                                 [MarshalAs(UnmanagedType.FunctionPtr)] RegisterThreadScopeCallback? registerThreadScopeCallback,
                                                 [MarshalAs(UnmanagedType.Bool)] bool forwardFreeRdpLogs);
 
     [DllImport(FreeRdpClientDll, PreserveSig = false, CharSet = CharSet.Unicode)]
-    public extern static void RdpLogon([In] ConnectOptions rdpOptions, [MarshalAs(UnmanagedType.BStr)] out string releaseObjectName);
+    public extern static void SetDisconnectCallback([MarshalAs(UnmanagedType.FunctionPtr)] DisconnectCallback? disconnectCallback);
+
+    [DllImport(FreeRdpClientDll, PreserveSig = false, CharSet = CharSet.Unicode)]
+    public extern static void RdpLogon(
+        [In] ConnectOptions rdpOptions,
+        [MarshalAs(UnmanagedType.BStr)] out string releaseObjectName);
 
     [DllImport(FreeRdpClientDll, PreserveSig = false, CharSet = CharSet.Unicode)]
     public extern static void RdpRelease(string releaseObjectName);

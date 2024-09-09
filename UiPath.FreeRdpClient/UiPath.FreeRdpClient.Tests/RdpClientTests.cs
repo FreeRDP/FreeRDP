@@ -53,7 +53,8 @@ public class RdpClientTests : TestsBase
     {
         var user = await Host.GivenUser();
 
-        var connectionSettings = user.ToRdpConnectionSettings();
+        var disconnectCalled = false;
+        var connectionSettings = user.ToRdpConnectionSettings(disconnectCallback: () => { disconnectCalled = true; });
 
         connectionSettings.DesktopWidth = 3 * 4 * 101;
         connectionSettings.DesktopHeight = 3 * 4 * 71;
@@ -70,6 +71,7 @@ public class RdpClientTests : TestsBase
         }
 
         await Host.WaitNoSession(connectionSettings);
+        disconnectCalled.ShouldBeTrue();
     }
 
 
@@ -147,6 +149,55 @@ public class RdpClientTests : TestsBase
         await sut.DisposeAsync();
         await ShouldNotHavePortWithState(port, StateEstablished);
         await Host.WaitNoSession(connectionSettings);
+    }
+
+    [Fact]
+    public async Task DisconnectCallbackShouldBeCalledWhenSessionIsDisconnected()
+    {
+        var callbackCalled = false;
+        var user = await Host.GivenUser();
+        var connectionSettings = user.ToRdpConnectionSettings(
+            disconnectCallback: () => { callbackCalled = true; });
+
+        // Connect
+        var connection = await Connect(connectionSettings);
+        var sessionId = await Host.FindSession(connectionSettings);
+
+        // Garbage collect
+        connection = null;
+        connectionSettings.DisconnectCallback = null;
+        GC.Collect();
+        GC.WaitForFullGCComplete();
+
+        // Disconnect
+        _wts.DisconnectSession(server: null, sessionId, wait: true);
+        await Host.WaitNoSession(connectionSettings);
+        // FreeRDP takes a while to call disconnect after we manually disconnect the session
+        await WaitFor.Predicate(() => callbackCalled);
+    }
+
+    [Fact]
+    public async Task DisconnectCallbackShouldBeCalledWhenConnectionIsDisposed()
+    {
+        var callbackCalled = false;
+        var user = await Host.GivenUser();
+        var connectionSettings = user.ToRdpConnectionSettings(
+            disconnectCallback: () => { callbackCalled = true; });
+
+        // Connect
+        var connection = await Connect(connectionSettings);
+        var sessionId = await Host.FindSession(connectionSettings);
+
+        // Garbage collect
+        connectionSettings.DisconnectCallback = null;
+        GC.Collect();
+        GC.WaitForFullGCComplete();
+
+        // Disconnect
+        await connection.DisposeAsync();
+        await Host.WaitNoSession(connectionSettings);
+
+        callbackCalled.ShouldBeTrue();
     }
 
     private async Task WithPortRedirectToDefaultRdp(int port)

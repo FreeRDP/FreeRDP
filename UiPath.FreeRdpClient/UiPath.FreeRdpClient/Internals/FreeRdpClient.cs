@@ -1,8 +1,8 @@
 ﻿using Microsoft.Extensions.Logging;
 using Nito.AsyncEx;
 using Nito.Disposables;
+using System.Collections.Concurrent;
 using System.Net.Sockets;
-using System.Runtime.CompilerServices;
 
 namespace UiPath.Rdp;
 
@@ -17,11 +17,16 @@ internal class FreeRdpClient : IFreeRdpClient
     public FreeRdpClient(ILogger<FreeRdpClient> logger)
     {
         _log = logger;
+        _disconnectCallback = OnDisconnect;
+        NativeInterface.SetDisconnectCallback(_disconnectCallback);
     }
 
     private readonly ILogger<FreeRdpClient> _log;
     private readonly AsyncLock _initLock = new();
+    private readonly ConcurrentDictionary<string, DisconnectCallback?> _disconnectCallbacks = [];
     private bool _initialized = false;
+
+    internal readonly NativeInterface.DisconnectCallback _disconnectCallback;
 
     public async Task<IAsyncDisposable> Connect(RdpConnectionSettings connectionSettings)
     {
@@ -43,7 +48,7 @@ internal class FreeRdpClient : IFreeRdpClient
             HostName = connectionSettings.HostName,
             Port = connectionSettings.Port ?? default
         };
-        
+
         using (await _initLock.LockAsync())
         {
             /// Make sure freerdp static initilizers are not run concurrently
@@ -63,10 +68,14 @@ internal class FreeRdpClient : IFreeRdpClient
         Task<AsyncDisposable> DoConnect() => Task.Run(() =>
         {
             NativeInterface.RdpLogon(connectOptions, out var releaseObjectName);
-            return new AsyncDisposable(async () =>
+            var connection = new AsyncDisposable(async () =>
             {
                 Disconnect(releaseObjectName);
             });
+
+            _disconnectCallbacks[releaseObjectName] = connectionSettings.DisconnectCallback;
+
+            return connection;
         });
     }
 
@@ -74,5 +83,12 @@ internal class FreeRdpClient : IFreeRdpClient
     {
         if (releaseObjectName != default)
             NativeInterface.RdpRelease(releaseObjectName);
+    }
+
+    private void OnDisconnect(string releaseObjectName)
+    {
+        var callback = _disconnectCallbacks.GetValueOrDefault(releaseObjectName);
+        callback?.Invoke();
+        _disconnectCallbacks.Remove(releaseObjectName, out _);
     }
 }
