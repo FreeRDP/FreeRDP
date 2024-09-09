@@ -97,10 +97,8 @@ struct rdp_transport
 	BOOL earlyUserAuth;
 };
 
-static int transport_ssl_cb(BIO* bio, int where, int ret)
+static void transport_ssl_cb(const SSL* ssl, int where, int ret)
 {
-	SSL* ssl = (SSL*)bio;
-
 	if (where & SSL_CB_ALERT)
 	{
 		rdpTransport* transport = (rdpTransport*)SSL_get_app_data(ssl);
@@ -147,7 +145,6 @@ static int transport_ssl_cb(BIO* bio, int where, int ret)
 			}
 		}
 	}
-	return 0;
 }
 
 wStream* transport_send_stream_init(rdpTransport* transport, size_t size)
@@ -329,7 +326,7 @@ static BOOL transport_default_connect_tls(rdpTransport* transport)
 	}
 
 	transport->frontBio = tls->bio;
-	BIO_callback_ctrl(tls->bio, BIO_CTRL_SET_CALLBACK, transport_ssl_cb);
+	BIO_callback_ctrl(tls->bio, BIO_CTRL_SET_CALLBACK, (BIO_info_cb*)transport_ssl_cb);
 	SSL_set_app_data(tls->ssl, transport);
 
 	if (!transport->frontBio)
@@ -1488,8 +1485,9 @@ rdpTransportLayer* transport_connect_layer(rdpTransport* transport, const char* 
 	return IFCALLRESULT(NULL, transport->io.ConnectLayer, transport, hostname, port, timeout);
 }
 
-rdpTransportLayer* transport_default_connect_layer(rdpTransport* transport, const char* hostname,
-                                                   int port, DWORD timeout)
+static rdpTransportLayer* transport_default_connect_layer(rdpTransport* transport,
+                                                          const char* hostname, int port,
+                                                          DWORD timeout)
 {
 	rdpContext* context = transport_get_context(transport);
 	WINPR_ASSERT(context);
@@ -1505,7 +1503,7 @@ BOOL transport_attach_layer(rdpTransport* transport, rdpTransportLayer* layer)
 	return IFCALLRESULT(FALSE, transport->io.AttachLayer, transport, layer);
 }
 
-BOOL transport_default_attach_layer(rdpTransport* transport, rdpTransportLayer* layer)
+static BOOL transport_default_attach_layer(rdpTransport* transport, rdpTransportLayer* layer)
 {
 	BIO* layerBio = BIO_new(BIO_s_transport_layer());
 	if (!layerBio)
