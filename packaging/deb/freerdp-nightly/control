@@ -34,6 +34,7 @@ Build-Depends:
  libasound2-dev,
  libswscale-dev,
  libpulse-dev, 
+ libavformat-dev,
  libavcodec-dev,
  libavutil-dev,
  libfuse3-dev,
