@@ -70,8 +70,6 @@ typedef struct comm_device COMM_DEVICE;
 static COMM_DEVICE** sCommDevices = NULL;
 static CRITICAL_SECTION sCommDevicesLock;
 
-static HANDLE_CREATOR sCommHandleCreator = { 0 };
-
 static pthread_once_t sCommInitialized = PTHREAD_ONCE_INIT;
 
 static int CommGetFd(HANDLE handle)

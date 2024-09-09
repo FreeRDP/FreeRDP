@@ -32,7 +32,7 @@ static BOOL set_handflow(WINPR_COMM* pComm, const SERIAL_HANDFLOW* pHandflow)
 {
 	SERIAL_HANDFLOW SerCxHandflow;
 	BOOL result = TRUE;
-	SERIAL_DRIVER* pSerialSys = SerialSys_s();
+	const SERIAL_DRIVER* pSerialSys = SerialSys_s();
 
 	memcpy(&SerCxHandflow, pHandflow, sizeof(SERIAL_HANDFLOW));
 
@@ -121,10 +121,9 @@ static BOOL set_handflow(WINPR_COMM* pComm, const SERIAL_HANDFLOW* pHandflow)
 
 static BOOL get_handflow(WINPR_COMM* pComm, SERIAL_HANDFLOW* pHandflow)
 {
-	BOOL result = 0;
-	SERIAL_DRIVER* pSerialSys = SerialSys_s();
+	const SERIAL_DRIVER* pSerialSys = SerialSys_s();
 
-	result = pSerialSys->get_handflow(pComm, pHandflow);
+	BOOL result = pSerialSys->get_handflow(pComm, pHandflow);
 
 	/* filter out unsupported bits by SerCx.sys
 	 *
@@ -153,10 +152,10 @@ static const ULONG SERCX_SYS_SUPPORTED_EV_MASK = SERIAL_EV_RXCHAR |
 
 static BOOL set_wait_mask(WINPR_COMM* pComm, const ULONG* pWaitMask)
 {
-	ULONG possibleMask = 0;
-	SERIAL_DRIVER* pSerialSys = SerialSys_s();
+	const SERIAL_DRIVER* pSerialSys = SerialSys_s();
+	WINPR_ASSERT(pWaitMask);
 
-	possibleMask = *pWaitMask & SERCX_SYS_SUPPORTED_EV_MASK;
+	const ULONG possibleMask = *pWaitMask & SERCX_SYS_SUPPORTED_EV_MASK;
 
 	if (possibleMask != *pWaitMask)
 	{
