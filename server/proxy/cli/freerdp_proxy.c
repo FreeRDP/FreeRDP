@@ -96,8 +96,6 @@ static WINPR_NORETURN(void buildconfig(const char* app))
 
 int main(int argc, char* argv[])
 {
-	proxyConfig* config = NULL;
-	char* config_path = "config.ini";
 	int status = -1;
 
 	pf_server_register_signal_handlers();
@@ -110,31 +108,29 @@ int main(int argc, char* argv[])
 	if (argc < 2)
 		usage(argv[0]);
 
+	const char* arg = argv[1];
+
+	if (_stricmp(arg, "-h") == 0)
+		usage(argv[0]);
+	else if (_stricmp(arg, "--help") == 0)
+		usage(argv[0]);
+	else if (_stricmp(arg, "--buildconfig") == 0)
+		buildconfig(argv[0]);
+	else if (_stricmp(arg, "--dump-config") == 0)
 	{
-		const char* arg = argv[1];
-
-		if (_stricmp(arg, "-h") == 0)
+		if (argc <= 2)
 			usage(argv[0]);
-		else if (_stricmp(arg, "--help") == 0)
-			usage(argv[0]);
-		else if (_stricmp(arg, "--buildconfig") == 0)
-			buildconfig(argv[0]);
-		else if (_stricmp(arg, "--dump-config") == 0)
-		{
-			if (argc <= 2)
-				usage(argv[0]);
-			pf_server_config_dump(argv[2]);
-			status = 0;
-			goto fail;
-		}
-		else if (_stricmp(arg, "-v") == 0)
-			version(argv[0]);
-		else if (_stricmp(arg, "--version") == 0)
-			version(argv[0]);
-		config_path = argv[1];
+		pf_server_config_dump(argv[2]);
+		status = 0;
+		goto fail;
 	}
+	else if (_stricmp(arg, "-v") == 0)
+		version(argv[0]);
+	else if (_stricmp(arg, "--version") == 0)
+		version(argv[0]);
+	const char* config_path = argv[1];
 
-	config = pf_server_config_load_file(config_path);
+	proxyConfig* config = pf_server_config_load_file(config_path);
 	if (!config)
 		goto fail;
 

@@ -1001,9 +1001,7 @@ static char* extract_authorization_code(char* url)
 
 		end = strchr(p, '&');
 		if (end)
-			*end = 0;
-		else
-			end = strchr(p, '\0');
+			*end = '\0';
 
 		return p;
 	}

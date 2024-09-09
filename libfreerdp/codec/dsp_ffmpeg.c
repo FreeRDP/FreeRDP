@@ -360,7 +360,8 @@ static BOOL ffmpeg_open_context(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context)
 		context->buffered->format = context->resampled->format;
 		context->buffered->nb_samples = context->context->frame_size;
 
-		if ((ret = av_frame_get_buffer(context->buffered, 1)) < 0)
+		ret = av_frame_get_buffer(context->buffered, 1);
+		if (ret < 0)
 			goto fail;
 	}
 
