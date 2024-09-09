@@ -271,12 +271,11 @@ static BOOL WLog_PacketMessage_Write_EthernetHeader(wPcap* pcap, wEthernetHeader
 
 static UINT16 IPv4Checksum(const BYTE* ipv4, int length)
 {
-	UINT16 tmp16 = 0;
 	long checksum = 0;
 
 	while (length > 1)
 	{
-		tmp16 = *((UINT16*)ipv4);
+		const UINT16 tmp16 = *((const UINT16*)ipv4);
 		checksum += tmp16;
 		length -= 2;
 		ipv4 += 2;
