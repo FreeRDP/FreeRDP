@@ -160,11 +160,11 @@ static SERIAL_DRIVER SerCx2Sys = {
 	.reset_device = NULL,   /* not supported by SerCx2.sys */
 };
 
-SERIAL_DRIVER* SerCx2Sys_s(void)
+const SERIAL_DRIVER* SerCx2Sys_s(void)
 {
 	/* SerCx2Sys completed with inherited functions from SerialSys or SerCxSys */
-	SERIAL_DRIVER* pSerialSys = SerialSys_s();
-	SERIAL_DRIVER* pSerCxSys = SerCxSys_s();
+	const SERIAL_DRIVER* pSerialSys = SerialSys_s();
+	const SERIAL_DRIVER* pSerCxSys = SerCxSys_s();
 	if (!pSerialSys || !pSerCxSys)
 		return NULL;
 

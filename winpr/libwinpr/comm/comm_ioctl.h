@@ -22,8 +22,6 @@
 #ifndef WINPR_COMM_IOCTL_H_
 #define WINPR_COMM_IOCTL_H_
 
-#if defined __linux__ && !defined ANDROID
-
 #include <termios.h>
 
 #include <winpr/io.h>
@@ -230,7 +228,5 @@ extern "C"
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* __linux__ */
 
 #endif /* WINPR_COMM_IOCTL_H_ */

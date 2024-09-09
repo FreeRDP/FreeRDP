@@ -225,7 +225,9 @@ BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 	/* FIXME: had expected eventfd_write() to return EAGAIN when
 	 * there is no eventfd_read() but this not the case. */
 	/* discard a possible and no more relevant event */
+#if defined(WINPR_HAVE_SYS_EVENTFD_H)
 	eventfd_read(pComm->fd_read_event, NULL);
+#endif
 	biggestFd = pComm->fd_read;
 
 	if (pComm->fd_read_event > biggestFd)
@@ -258,6 +260,7 @@ BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 
 	if (FD_ISSET(pComm->fd_read_event, &read_set))
 	{
+#if defined(WINPR_HAVE_SYS_EVENTFD_H)
 		eventfd_t event = 0;
 
 		if (eventfd_read(pComm->fd_read_event, &event) < 0)
@@ -286,6 +289,7 @@ BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 		}
 
 		WINPR_ASSERT(event == WINPR_PURGE_RXABORT); /* no other expected event so far */
+#endif
 	}
 
 	if (FD_ISSET(pComm->fd_read, &read_set))
@@ -394,7 +398,11 @@ BOOL CommWriteFile(HANDLE hDevice, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite
 	/* FIXME: had expected eventfd_write() to return EAGAIN when
 	 * there is no eventfd_read() but this not the case. */
 	/* discard a possible and no more relevant event */
+
+#if defined(WINPR_HAVE_SYS_EVENTFD_H)
 	eventfd_read(pComm->fd_write_event, NULL);
+#endif
+
 	/* ms */
 	ULONGLONG Tmax = 1ull * nNumberOfBytesToWrite * pComm->timeouts.WriteTotalTimeoutMultiplier +
 	                 1ull * pComm->timeouts.WriteTotalTimeoutConstant;
@@ -456,6 +464,7 @@ BOOL CommWriteFile(HANDLE hDevice, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite
 
 		if (FD_ISSET(pComm->fd_write_event, &event_set))
 		{
+#if defined(WINPR_HAVE_SYS_EVENTFD_H)
 			eventfd_t event = 0;
 
 			if (eventfd_read(pComm->fd_write_event, &event) < 0)
@@ -484,6 +493,7 @@ BOOL CommWriteFile(HANDLE hDevice, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite
 			}
 
 			WINPR_ASSERT(event == WINPR_PURGE_TXABORT); /* no other expected event so far */
+#endif
 		}
 
 		/* write_set */

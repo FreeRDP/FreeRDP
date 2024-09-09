@@ -21,15 +21,19 @@
 #ifndef WINPR_COMM_PRIVATE_H
 #define WINPR_COMM_PRIVATE_H
 
-#if defined __linux__ && !defined ANDROID
-
+#if defined(__linux__)
+#define WINPR_HAVE_COMM_COUNTERS
 #include <linux/serial.h>
-#include <sys/eventfd.h>
+#endif
 
 #include <winpr/comm.h>
 
 #include "../handle/handle.h"
 #include <winpr/config.h>
+
+#if defined(WINPR_HAVE_SYS_EVENTFD_H)
+#include <sys/eventfd.h>
+#endif
 
 struct winpr_comm
 {
@@ -65,7 +69,9 @@ struct winpr_comm
 
 	CRITICAL_SECTION
 	EventsLock; /* protects counters, WaitEventMask and PendingEvents */
+#if defined(WINPR_HAVE_COMM_COUNTERS)
 	struct serial_icounter_struct counters;
+#endif
 	ULONG WaitEventMask;
 	ULONG PendingEvents;
 
@@ -101,11 +107,11 @@ BOOL CommIsHandleValid(HANDLE handle);
 BOOL CommCloseHandle(HANDLE handle);
 HANDLE_CREATOR* GetCommHandleCreator(void);
 
+#if defined(WINPR_HAVE_SYS_EVENTFD_H)
 #ifndef WITH_EVENTFD_READ_WRITE
 int eventfd_read(int fd, eventfd_t* value);
 int eventfd_write(int fd, eventfd_t value);
 #endif
-
-#endif /* __linux__ */
+#endif
 
 #endif /* WINPR_COMM_PRIVATE_H */
