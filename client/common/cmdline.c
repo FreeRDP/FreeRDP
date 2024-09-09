@@ -5356,7 +5356,7 @@ static int freerdp_client_settings_parse_command_line_arguments_int(
 			LONGLONG val = 0;
 
 			if (!value_to_int(arg->Value, &val, 100, 500))
-				return FALSE;
+				return fail_at(arg, COMMAND_LINE_ERROR);
 
 			if (!freerdp_settings_set_uint32(settings, FreeRDP_DesktopScaleFactor, (UINT32)val))
 				return fail_at(arg, COMMAND_LINE_ERROR);
