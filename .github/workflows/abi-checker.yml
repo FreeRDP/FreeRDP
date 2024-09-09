@@ -38,6 +38,7 @@ jobs:
             xserver-xorg-dev \
             libswscale-dev \
             libswresample-dev \
+            libavformat-dev \
             libavutil-dev \
             libavcodec-dev \
             libcups2-dev \
