@@ -335,7 +335,8 @@ static UINT location_send(LocationClientContext* context, LOCATION_PDUTYPE type,
 	IWTSVirtualChannel* channel = cb->channel;
 	WINPR_ASSERT(channel);
 
-	LOCATION_CALLBACK* callback = (LOCATION_CALLBACK*)loc->baseDynPlugin.channel_callbacks;
+	const LOCATION_CALLBACK* callback =
+	    (const LOCATION_CALLBACK*)loc->baseDynPlugin.channel_callbacks;
 	WINPR_ASSERT(callback);
 
 	UINT32 res = ERROR_INTERNAL_ERROR;
