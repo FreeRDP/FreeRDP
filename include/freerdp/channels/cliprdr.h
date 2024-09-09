@@ -26,6 +26,10 @@
 
 #include <winpr/shell.h>
 
+/** The command line name of the channel
+ *
+ *  \version 3.0.0
+ */
 #define CLIPRDR_CHANNEL_NAME "cliprdr"
 #define CLIPRDR_SVC_CHANNEL_NAME "cliprdr"
 

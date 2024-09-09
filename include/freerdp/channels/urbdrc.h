@@ -25,6 +25,10 @@
 #include <freerdp/dvc.h>
 #include <freerdp/types.h>
 
+/** The command line name of the channel
+ *
+ *  \version 3.0.0
+ */
 #define URBDRC_CHANNEL_NAME "urbdrc"
 #define URBDRC_DVC_CHANNEL_NAME "urbdrc"
 

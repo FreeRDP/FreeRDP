@@ -28,6 +28,10 @@ extern "C"
 {
 #endif
 
+/** The command line name of the channel
+ *
+ *  \version 3.0.0
+ */
 #define ENCOMSP_CHANNEL_NAME "encomsp"
 #define ENCOMSP_SVC_CHANNEL_NAME "encomsp"
 

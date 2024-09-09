@@ -20,10 +20,19 @@
 #ifndef FREERDP_CHANNEL_RDPEMSC_H
 #define FREERDP_CHANNEL_RDPEMSC_H
 
+/** \file [MS-RDPEMSC] Mouse Cursor Virtual Channel Extension
+ *  \link
+ * https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-rdpemsc/2591b507-cd5a-4537-be29-b45540543dc8
+ *  \version 3.0.0
+ */
 #include <freerdp/api.h>
 #include <freerdp/dvc.h>
 #include <freerdp/types.h>
 
+/** The command line name of the channel
+ *
+ *  \version 3.0.0
+ */
 #define RDPEMSC_CHANNEL_NAME "mousecursor"
 #define RDPEMSC_DVC_CHANNEL_NAME "Microsoft::Windows::RDS::MouseCursor"
 

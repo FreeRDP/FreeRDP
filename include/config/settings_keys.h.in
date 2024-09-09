@@ -28,52 +28,92 @@ extern "C"
 {
 #endif
 
+/** A list of available settings keys of type BOOL
+ *
+ *  \version 3.0.0
+ */
 typedef enum
 {
     @SETTINGS_KEYS_BOOL@
 } FreeRDP_Settings_Keys_Bool;
 
+/** A list of available settings keys of type INT16
+ *
+ *  \version 3.0.0
+ */
 typedef enum
 {
     @SETTINGS_KEYS_INT16@
 } FreeRDP_Settings_Keys_Int16;
 
+/** A list of available settings keys of type UINT16
+ *
+ *  \version 3.0.0
+ */
 typedef enum
 {
     @SETTINGS_KEYS_UINT16@
 } FreeRDP_Settings_Keys_UInt16;
 
+/** A list of available settings keys of type INT32
+ *
+ *  \version 3.0.0
+ */
 typedef enum
 {
     @SETTINGS_KEYS_INT32@
 } FreeRDP_Settings_Keys_Int32;
 
+/** A list of available settings keys of type UINT32
+ *
+ *  \version 3.0.0
+ */
 typedef enum
 {
     @SETTINGS_KEYS_UINT32@
 } FreeRDP_Settings_Keys_UInt32;
 
+/** A list of available settings keys of type INT64
+ *
+ *  \version 3.0.0
+ */
 typedef enum
 {
     @SETTINGS_KEYS_INT64@
 } FreeRDP_Settings_Keys_Int64;
 
+/** A list of available settings keys of type UINT64
+ *
+ *  \version 3.0.0
+ */
 typedef enum
 {
     @SETTINGS_KEYS_UINT64@
 } FreeRDP_Settings_Keys_UInt64;
 
+/** A list of available settings keys of type STRING
+ *
+ *  \version 3.0.0
+ */
 typedef enum
 {
     @SETTINGS_KEYS_STRING@
 } FreeRDP_Settings_Keys_String;
 
+/** A list of available settings keys of type POINTER
+ *
+ *  \version 3.0.0
+ */
 typedef enum
 {
     @SETTINGS_KEYS_POINTER@
 } FreeRDP_Settings_Keys_Pointer;
 
 
+/** Highest indes in the rdpSettings stable API
+ *
+ *  \version 3.0.0
+ */
 #define FreeRDP_Settings_StableAPI_MAX 5312
 
 #ifdef __cplusplus

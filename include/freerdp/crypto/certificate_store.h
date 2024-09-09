@@ -62,6 +62,16 @@ extern "C"
 	FREERDP_API const char*
 	freerdp_certificate_store_get_hosts_path(const rdpCertificateStore* store);
 
+	/** Query the certificate store path
+	 *
+	 *  @param store The certificate store to query
+	 *  @param host The hostname to look up
+	 *  @param port The port to look up
+	 *
+	 *  @version 3.0.0
+	 *
+	 *  @return The certificate store file path or \b NULL
+	 */
 	FREERDP_API char* freerdp_certificate_store_get_cert_path(const rdpCertificateStore* store,
 	                                                          const char* host, UINT16 port);
 

@@ -42,6 +42,10 @@ extern "C"
 {
 #endif
 
+/** The command line name of the channel
+ *
+ *  \version 3.0.0
+ */
 #define RDPDR_CHANNEL_NAME "rdpdr"
 #define RDPDR_SVC_CHANNEL_NAME "rdpdr"
 

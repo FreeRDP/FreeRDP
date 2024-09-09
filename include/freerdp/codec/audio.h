@@ -190,6 +190,10 @@ extern "C"
 #define WAVE_FORMAT_SOUNDSPACE_MUSICOMPRESS 0x1500
 #define WAVE_FORMAT_DVM 0x2000
 #endif /* !WAVE_FORMAT_LUCENT_G723 */
+
+	/** Opus format identifier
+	 *  \version 3.0.0
+	 */
 #define WAVE_FORMAT_OPUS 0x704F
 #define WAVE_FORMAT_AAC_MS 0xA106
 

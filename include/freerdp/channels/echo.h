@@ -25,6 +25,10 @@
 #include <freerdp/dvc.h>
 #include <freerdp/types.h>
 
+/** The command line name of the channel
+ *
+ *  \version 3.0.0
+ */
 #define ECHO_CHANNEL_NAME "echo"
 #define ECHO_DVC_CHANNEL_NAME "ECHO"
 
