@@ -26,7 +26,16 @@
 #include <freerdp/dvc.h>
 #include <freerdp/types.h>
 
+/** The command line name of the channel
+ *
+ *  \version 3.0.0
+ */
 #define AUDIN_CHANNEL_NAME "audin"
+
+/** The name of the channel (protocol internal)
+ *
+ *  \version 3.0.0
+ */
 #define AUDIN_DVC_CHANNEL_NAME "AUDIO_INPUT"
 
 typedef struct
