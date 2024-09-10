@@ -70,14 +70,13 @@ static const ULONG SERCX2_SYS_SUPPORTED_EV_MASK =
 /* use Serial.sys for basis (not SerCx.sys) */
 static BOOL set_wait_mask(WINPR_COMM* pComm, const ULONG* pWaitMask)
 {
-	ULONG possibleMask = 0;
-	SERIAL_DRIVER* pSerialSys = SerialSys_s();
+	const SERIAL_DRIVER* pSerialSys = SerialSys_s();
 
 	WINPR_ASSERT(pComm);
 	WINPR_ASSERT(pWaitMask);
 	WINPR_ASSERT(pSerialSys);
 
-	possibleMask = *pWaitMask & SERCX2_SYS_SUPPORTED_EV_MASK;
+	const ULONG possibleMask = *pWaitMask & SERCX2_SYS_SUPPORTED_EV_MASK;
 
 	if (possibleMask != *pWaitMask)
 	{
@@ -97,7 +96,7 @@ static BOOL set_wait_mask(WINPR_COMM* pComm, const ULONG* pWaitMask)
 
 static BOOL purge(WINPR_COMM* pComm, const ULONG* pPurgeMask)
 {
-	SERIAL_DRIVER* pSerialSys = SerialSys_s();
+	const SERIAL_DRIVER* pSerialSys = SerialSys_s();
 
 	WINPR_ASSERT(pComm);
 	WINPR_ASSERT(pPurgeMask);

@@ -396,7 +396,6 @@ static int test_ntlm_server_authenticate(TEST_NTLM_SERVER* ntlm)
 	ntlm->outputBuffer[0].BufferType = SECBUFFER_TOKEN;
 	ntlm->outputBuffer[0].cbBuffer = ntlm->cbMaxToken;
 	ntlm->outputBuffer[0].pvBuffer = malloc(ntlm->outputBuffer[0].cbBuffer);
-	BOOL hash_set = FALSE;
 
 	if (!ntlm->outputBuffer[0].pvBuffer)
 		return -1;
@@ -406,7 +405,7 @@ static int test_ntlm_server_authenticate(TEST_NTLM_SERVER* ntlm)
 	    ntlm->fContextReq, SECURITY_NATIVE_DREP, &ntlm->context, &ntlm->outputBufferDesc,
 	    &ntlm->pfContextAttr, &ntlm->expiration);
 
-	if (!hash_set && status == SEC_I_CONTINUE_NEEDED)
+	if (status == SEC_I_CONTINUE_NEEDED)
 	{
 		SecPkgContext_AuthNtlmHash AuthNtlmHash = { 0 };
 
@@ -424,8 +423,6 @@ static int test_ntlm_server_authenticate(TEST_NTLM_SERVER* ntlm)
 		status =
 		    ntlm->table->SetContextAttributes(&ntlm->context, SECPKG_ATTR_AUTH_NTLM_HASH,
 		                                      &AuthNtlmHash, sizeof(SecPkgContext_AuthNtlmHash));
-
-		hash_set = TRUE;
 	}
 
 	if ((status != SEC_E_OK) && (status != SEC_I_CONTINUE_NEEDED))

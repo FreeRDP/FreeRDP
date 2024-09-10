@@ -1536,7 +1536,9 @@ static UINT rdpdr_server_receive_io_lock_control_request(RdpdrServerContext* con
 
 	WLog_Print(context->priv->log, WLOG_WARN,
 	           "[MS-RDPEFS] 2.2.3.3.12 Server Drive Lock Control Request (DR_DRIVE_LOCK_REQ) "
-	           "not implemented");
+	           "[Lock=0x%08" PRIx32 "]"
+	           "not implemented",
+	           Lock);
 	WLog_Print(context->priv->log, WLOG_WARN, "TODO");
 
 	return CHANNEL_RC_OK;

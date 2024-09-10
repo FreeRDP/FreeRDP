@@ -377,7 +377,9 @@ static BOOL filter_dyn_channel_intercept(proxyPlugin* plugin, proxyData* pdata, 
 
 		if (state->skip())
 		{
-			state->skip(inputDataLength);
+			if (!state->skip(inputDataLength))
+				return FALSE;
+
 			if (state->drop())
 			{
 				WLog_WARN(TAG,

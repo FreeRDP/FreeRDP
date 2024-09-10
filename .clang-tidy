@@ -37,6 +37,7 @@ Checks: >
     -cppcoreguidelines-avoid-non-const-global-variables,
     -cppcoreguidelines-macro-to-enum,
     -cppcoreguidelines-pro-type-vararg,
+    -cppcoreguidelines-no-malloc,
     -google-readability-braces-around-statements,
     -google-readability-todo,
     -hicpp-braces-around-statements,
@@ -45,6 +46,7 @@ Checks: >
     -hicpp-signed-bitwise,
     -hicpp-uppercase-literal-suffix,
     -hicpp-vararg,
+    -hicpp-no-malloc,
     -llvm-header-guard,
     -llvm-include-order,
     -llvm-qualified-auto,
@@ -60,7 +62,8 @@ Checks: >
     -readability-magic-numbers,
     -readability-qualified-auto,
     -readability-uppercase-literal-suffix,
-    -performance-no-int-to-ptr
+    -performance-no-int-to-ptr,
+    -performance-avoid-endl
 WarningsAsErrors: ''
 HeaderFilterRegex: ''
 FormatStyle:     file

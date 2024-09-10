@@ -91,6 +91,8 @@ bool SDLConnectionDialog::showError(const char* fmt, ...)
 	va_start(ap, fmt);
 	auto rc = show(MSG_ERROR, fmt, ap);
 	va_end(ap);
+	if (!rc)
+		return rc;
 	return setTimer();
 }
 
