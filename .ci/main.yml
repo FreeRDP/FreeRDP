@@ -9,6 +9,14 @@ parameters:
     type: boolean
     default: false
 
+variables:
+  ${{ if eq(variables['Build.SourceBranchName'], 'uipath') }}:
+    CreateGitTag: true
+    PackageVersionSuffix: '$(Build.BuildNumber)'
+  ${{ else }}:
+    CreateGitTag: false
+    PackageVersionSuffix: '$(Build.BuildNumber)-dev'
+
 pool:
   vmImage: 'windows-2022'
   demands:
@@ -16,6 +24,9 @@ pool:
   - visualstudio
 
 steps:
+- checkout: self
+  persistCredentials: true
+
 - task: NuGetToolInstaller@1
   displayName: 'Use NuGet'
 
@@ -47,11 +58,11 @@ steps:
 - task: MSBuild@1
   displayName: build
   inputs:
-    solution: 'UiPath.FreeRdpClient\UiPath.FreeRdpClient.sln' 
+    solution: 'UiPath.FreeRdpClient\UiPath.FreeRdpClient.sln'
     platform: 'x64'
     configuration: 'Release'
     msbuildArchitecture: 'x64'
-    msbuildArguments: "/p:VersionSuffix=$(Build.BuildNumber)"
+    msbuildArguments: "/p:VersionSuffix=$(PackageVersionSuffix)"
 
 - task: DotNetCoreCLI@2
   displayName: 'test'
@@ -64,11 +75,11 @@ steps:
 - task: MSBuild@1
   displayName: restore (UseNugetRef)
   inputs:
-    solution: 'UiPath.FreeRdpClient\UiPath.FreeRdpClient.sln' 
+    solution: 'UiPath.FreeRdpClient\UiPath.FreeRdpClient.sln'
     platform: 'x64'
     configuration: 'Release'
     msbuildArchitecture: 'x64'
-    msbuildArguments: "/t:restore /p:VersionSuffix=$(Build.BuildNumber) /p:UseNugetRef=true"
+    msbuildArguments: "/t:restore /p:VersionSuffix=$(PackageVersionSuffix) /p:UseNugetRef=true"
 
 - task: MSBuild@1
   displayName: build (UseNugetRef)
@@ -77,7 +88,7 @@ steps:
     platform: 'x64'
     configuration: 'Release'
     msbuildArchitecture: 'x64'
-    msbuildArguments: "/p:VersionSuffix=$(Build.BuildNumber) /p:UseNugetRef=true"
+    msbuildArguments: "/p:VersionSuffix=$(PackageVersionSuffix) /p:UseNugetRef=true"
 
 - task: DotNetCoreCLI@2
   displayName: 'test (UseNugetRef)'
@@ -102,13 +113,22 @@ steps:
 - task: PublishPipelineArtifact@1
   name: publishFreeRDPOnly
   inputs:
-    targetPath: '.' 
-    artifactName: 'freeRdpOnly' 
+    targetPath: '.'
+    artifactName: 'freeRdpOnly'
     parallel: true
 
 - task: PublishPipelineArtifact@1
   name: publishOpenSSL
   inputs:
-    targetPath: '..\OpenSSL-VC-64' 
-    artifactName: 'OpenSSL-VC-64' 
+    targetPath: '..\OpenSSL-VC-64'
+    artifactName: 'OpenSSL-VC-64'
     parallel: true
+
+- ${{ if and(eq(parameters.PublishNuGets, true), eq(variables['CreateGitTag'], true)) }}:
+  - pwsh: |
+      $tag = (ls 'Output\nugets\UiPath.FreeRdpClient.*.nupkg').BaseName
+      git tag $tag
+      git push origin $tag
+      echo "Pushed tag $tag"
+    name: gitTag
+    condition: succeeded()
