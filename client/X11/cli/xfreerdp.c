@@ -40,6 +40,8 @@ static void xfreerdp_print_help(void)
 	printf("\t\ttoggles fullscreen state of the application\n");
 	printf("\t<CTRL>+<ALT>+c\n");
 	printf("\t\ttoggles remote control in a remote assistance session\n");
+	printf("\t<CTRL>+<ALT>+m\n");
+	printf("\t\tminimizes the application\n");
 	printf("\tAction Script\n");
 	printf("\t\tExecutes a predefined script on key press.\n");
 	printf("\t\tShould the script not exist it is ignored.\n");

@@ -71,4 +71,5 @@ class sdlInput
 	uint32_t _hotkeyResizable;
 	uint32_t _hotkeyGrab;
 	uint32_t _hotkeyDisconnect;
+	uint32_t _hotkeyMinimize;
 };

@@ -10,6 +10,10 @@
             <listitem><para>toggles fullscreen state of the application</para></listitem>
 		</varlistentry>
 		<varlistentry>
+            <term>&lt;CTRL&gt;+&lt;ALT&gt;+&lt;m&gt;</term>
+            <listitem><para>Minimizes the application</para></listitem>
+		</varlistentry>
+		<varlistentry>
             <term>&lt;CTRL&gt;+&lt;ALT&gt;+c</term>
             <listitem><para>toggles remote control in a remote assistance session</para></listitem>
 		</varlistentry>

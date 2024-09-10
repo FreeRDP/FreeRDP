@@ -147,7 +147,8 @@ bool SDLConnectionDialog::setModal()
 			return true;
 
 		auto parent = sdl->windows.begin()->second.window();
-		SDL_SetWindowModalFor(_window, parent);
+		SDL_SetWindowParent(_window, parent);
+		SDL_SetWindowModal(_window, SDL_TRUE);
 		SDL_RaiseWindow(_window);
 	}
 	return true;

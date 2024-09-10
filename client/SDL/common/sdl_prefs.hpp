@@ -37,6 +37,8 @@ class SdlPref
 	std::vector<std::string> get_array(const std::string& key,
 	                                   const std::vector<std::string>& fallback = {});
 
+	static void print_config_file_help(int version);
+
   private:
 	using WINPR_JSONPtr = std::unique_ptr<WINPR_JSON, decltype(&WINPR_JSON_Delete)>;
 

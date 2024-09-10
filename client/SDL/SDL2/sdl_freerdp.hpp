@@ -85,6 +85,7 @@ class SdlContext
 
 	BOOL update_resizeable(BOOL enable);
 	BOOL update_fullscreen(BOOL enter);
+	BOOL update_minimize();
 
 	[[nodiscard]] rdpContext* context() const;
 	[[nodiscard]] rdpClientContext* common() const;
