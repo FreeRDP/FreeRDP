@@ -977,6 +977,12 @@ static int sdl_run(SdlContext* sdl)
 						window->fullscreen(enter);
 				}
 				break;
+				case SDL_EVENT_USER_WINDOW_MINIMIZE:
+					for (auto& window : sdl->windows)
+					{
+						window.second.minimize();
+					}
+					break;
 				case SDL_EVENT_USER_POINTER_NULL:
 					SDL_HideCursor();
 					break;
@@ -1568,58 +1574,6 @@ static void SDLCALL winpr_LogOutputFunction(void* userdata, int category, SDL_Lo
 	                  category2str(category), message);
 }
 
-static void print_config_file_help()
-{
-#if defined(WITH_WINPR_JSON)
-	std::cout << "CONFIGURATION FILE" << std::endl;
-	std::cout << std::endl;
-	std::cout << "  The SDL client supports some user defined configuration options." << std::endl;
-	std::cout << "  Settings are stored in JSON format" << std::endl;
-	std::cout << "  The location is a per user file. Location for current user is "
-	          << SdlPref::instance()->get_pref_file() << std::endl;
-	std::cout
-	    << "  The XDG_CONFIG_HOME environment variable can be used to override the base directory."
-	    << std::endl;
-	std::cout << std::endl;
-	std::cout << "  The following configuration options are supported:" << std::endl;
-	std::cout << std::endl;
-	std::cout << "    SDL_KeyModMask" << std::endl;
-	std::cout << "      Defines the key combination required for SDL client shortcuts."
-	          << std::endl;
-	std::cout << "      Default KMOD_RSHIFT" << std::endl;
-	std::cout << "      An array of SDL_Keymod strings as defined at "
-	             "https://wiki.libsdl.org/SDL2/SDL_Keymod"
-	          << std::endl;
-	std::cout << std::endl;
-	std::cout << "    SDL_Fullscreen" << std::endl;
-	std::cout << "      Toggles client fullscreen state." << std::endl;
-	std::cout << "      Default SDL_SCANCODE_RETURN." << std::endl;
-	std::cout << "      A string as "
-	             "defined at https://wiki.libsdl.org/SDL2/SDLScancodeLookup"
-	          << std::endl;
-	std::cout << std::endl;
-	std::cout << "    SDL_Resizeable" << std::endl;
-	std::cout << "      Toggles local window resizeable state." << std::endl;
-	std::cout << "      Default SDL_SCANCODE_R." << std::endl;
-	std::cout << "      A string as "
-	             "defined at https://wiki.libsdl.org/SDL2/SDLScancodeLookup"
-	          << std::endl;
-	std::cout << std::endl;
-	std::cout << "    SDL_Grab" << std::endl;
-	std::cout << "      Toggles keyboard and mouse grab state." << std::endl;
-	std::cout << "      Default SDL_SCANCODE_G." << std::endl;
-	std::cout << "      A string as "
-	             "defined at https://wiki.libsdl.org/SDL2/SDLScancodeLookup"
-	          << std::endl;
-	std::cout << std::endl;
-	std::cout << "    SDL_Disconnect" << std::endl;
-	std::cout << "      Disconnects from the RDP session." << std::endl;
-	std::cout << "      Default SDL_SCANCODE_D." << std::endl;
-	std::cout << "      A string as defined at https://wiki.libsdl.org/SDL2/SDLScancodeLookup"
-	          << std::endl;
-#endif
-}
-
 int main(int argc, char* argv[])
 {
 	int rc = -1;
@@ -1644,7 +1598,7 @@ int main(int argc, char* argv[])
 	if (status)
 	{
 		rc = freerdp_client_settings_command_line_status_print(settings, status, argc, argv);
-		print_config_file_help();
+		SdlPref::print_config_file_help(3);
 		if (freerdp_settings_get_bool(settings, FreeRDP_ListMonitors))
 			sdl_list_monitors(sdl);
 		return rc;
@@ -1682,6 +1636,14 @@ BOOL SdlContext::update_fullscreen(BOOL enter)
 			return FALSE;
 	}
 	fullscreen = enter;
+	return TRUE;
+}
+
+BOOL SdlContext::update_minimize()
+{
+	std::lock_guard<CriticalSection> lock(critical);
+	if (!sdl_push_user_event(SDL_EVENT_USER_WINDOW_MINIMIZE))
+		return FALSE;
 	return TRUE;
 }
 

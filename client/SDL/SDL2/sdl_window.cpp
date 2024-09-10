@@ -168,6 +168,11 @@ void SdlWindow::fullscreen(bool enter)
 	}
 }
 
+void SdlWindow::minimize()
+{
+	SDL_MinimizeWindow(_window);
+}
+
 bool SdlWindow::fill(Uint8 r, Uint8 g, Uint8 b, Uint8 a)
 {
 	auto surface = SDL_GetWindowSurface(_window);

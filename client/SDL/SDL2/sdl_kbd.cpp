@@ -581,6 +581,11 @@ BOOL sdlInput::keyboard_handle_event(const SDL_KeyboardEvent* ev)
 				freerdp_abort_connect_context(_sdl->context());
 				return TRUE;
 			}
+			if (ev->keysym.scancode == _hotkeyMinimize)
+			{
+				_sdl->update_minimize();
+				return TRUE;
+			}
 		}
 	}
 
@@ -631,4 +636,5 @@ sdlInput::sdlInput(SdlContext* sdl)
 	_hotkeyResizable = prefKeyValue("SDL_Resizeable", SDL_SCANCODE_R);
 	_hotkeyGrab = prefKeyValue("SDL_Grab", SDL_SCANCODE_G);
 	_hotkeyDisconnect = prefKeyValue("SDL_Disconnect", SDL_SCANCODE_D);
+	_hotkeyMinimize = prefKeyValue("SDL_Minimize", SDL_SCANCODE_M);
 }
