@@ -62,7 +62,8 @@ Checks: >
     -readability-magic-numbers,
     -readability-qualified-auto,
     -readability-uppercase-literal-suffix,
-    -performance-no-int-to-ptr
+    -performance-no-int-to-ptr,
+    -performance-avoid-endl
 WarningsAsErrors: ''
 HeaderFilterRegex: ''
 FormatStyle:     file
