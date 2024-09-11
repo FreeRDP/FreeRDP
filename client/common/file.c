@@ -2590,7 +2590,8 @@ const char* freerdp_client_rdp_file_get_string_option(const rdpFile* file, const
 	LPSTR* value = NULL;
 	rdpFileLine* line = NULL;
 
-	if (freerdp_client_rdp_file_find_string_entry((rdpFile*)file, name, &value, &line))
+	rdpFile* wfile = WINPR_CAST_CONST_PTR_AWAY(file, rdpFile*);
+	if (freerdp_client_rdp_file_find_string_entry(wfile, name, &value, &line))
 	{
 		if (value && ~(size_t)(*value))
 			return *value;
@@ -2611,7 +2612,8 @@ int freerdp_client_rdp_file_get_integer_option(const rdpFile* file, const char* 
 	DWORD* value = NULL;
 	rdpFileLine* line = NULL;
 
-	if (freerdp_client_rdp_file_find_integer_entry((rdpFile*)file, name, &value, &line))
+	rdpFile* wfile = WINPR_CAST_CONST_PTR_AWAY(file, rdpFile*);
+	if (freerdp_client_rdp_file_find_integer_entry(wfile, name, &value, &line))
 	{
 		if (value && ~(*value))
 			return *value;

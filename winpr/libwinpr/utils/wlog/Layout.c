@@ -242,14 +242,16 @@ BOOL WLog_Layout_GetMessagePrefix(wLog* log, wLogLayout* layout, wLogMessage* me
 		  &recurse }, /* day of week */
 		{ ENTRY("%dy"), ENTRY("%u"), NULL, (void*)(size_t)localTime.wDay, NULL,
 		  &recurse }, /* day of year */
-		{ ENTRY("%fl"), ENTRY("%s"), NULL, (void*)message->FileName, NULL, &recurse }, /* file */
-		{ ENTRY("%fn"), ENTRY("%s"), NULL, (void*)message->FunctionName, NULL,
-		  &recurse }, /* function */
+		{ ENTRY("%fl"), ENTRY("%s"), NULL, WINPR_CAST_CONST_PTR_AWAY(message->FileName, void*),
+		  NULL, &recurse }, /* file */
+		{ ENTRY("%fn"), ENTRY("%s"), NULL, WINPR_CAST_CONST_PTR_AWAY(message->FunctionName, void*),
+		  NULL, &recurse }, /* function */
 		{ ENTRY("%hr"), ENTRY("%02u"), NULL, (void*)(size_t)localTime.wHour, NULL,
 		  &recurse }, /* hours */
 		{ ENTRY("%ln"), ENTRY("%" PRIuz), NULL, (void*)message->LineNumber, NULL,
 		  &recurse }, /* line number */
-		{ ENTRY("%lv"), ENTRY("%s"), NULL, (void*)WLOG_LEVELS[message->Level], NULL,
+		{ ENTRY("%lv"), ENTRY("%s"), NULL,
+		  WINPR_CAST_CONST_PTR_AWAY(WLOG_LEVELS[message->Level], void*), NULL,
 		  &recurse }, /* log level */
 		{ ENTRY("%mi"), ENTRY("%02u"), NULL, (void*)(size_t)localTime.wMinute, NULL,
 		  &recurse }, /* minutes */

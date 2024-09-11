@@ -860,7 +860,7 @@ BOOL freerdp_dsp_ffmpeg_decode(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
 #if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(58, 133, 100)
 	av_init_packet(context->packet);
 #endif
-	context->packet->data = (uint8_t*)data;
+	context->packet->data = WINPR_CAST_CONST_PTR_AWAY(data, uint8_t*);
 
 	WINPR_ASSERT(length <= INT_MAX);
 	context->packet->size = (int)length;

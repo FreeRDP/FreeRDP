@@ -343,13 +343,13 @@ WCHAR* _wcsstr(const WCHAR* str, const WCHAR* strSearch)
 	WINPR_ASSERT(strSearch);
 
 	if (strSearch[0] == '\0')
-		return (WCHAR*)str;
+		return WINPR_CAST_CONST_PTR_AWAY(str, WCHAR*);
 
 	const size_t searchLen = _wcslen(strSearch);
 	while (*str)
 	{
 		if (_wcsncmp(str, strSearch, searchLen) == 0)
-			return (WCHAR*)str;
+			return WINPR_CAST_CONST_PTR_AWAY(str, WCHAR*);
 		str++;
 	}
 	return NULL;
