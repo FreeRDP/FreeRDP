@@ -260,7 +260,7 @@ int freerdp_interruptible_getc(rdpContext* context, FILE* f)
 			char c = 0;
 			const ssize_t rd = read(fd, &c, 1);
 			if (rd == 1)
-				rc = c;
+				rc = (int)c;
 			break;
 		}
 	} while (!freerdp_shall_disconnect_context(context));
