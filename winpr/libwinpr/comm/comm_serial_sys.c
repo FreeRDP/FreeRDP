@@ -1488,7 +1488,7 @@ static BOOL wait_on_mask(WINPR_COMM* pComm, ULONG* pOutputMask)
 			WINPR_ASSERT(*pOutputMask == 0);
 
 			LeaveCriticalSection(&pComm->EventsLock);
-			return unlock_return(pComm, TRUE);
+			break;
 		}
 
 		consume_event(pComm, pOutputMask, SERIAL_EV_RXCHAR);
@@ -1508,7 +1508,7 @@ static BOOL wait_on_mask(WINPR_COMM* pComm, ULONG* pOutputMask)
 		 * not pOutputMask */
 
 		if (*pOutputMask != 0)
-			return unlock_return(pComm, TRUE);
+			break;
 
 		/* waiting for a modification of PendingEvents.
 		 *
@@ -1521,7 +1521,7 @@ static BOOL wait_on_mask(WINPR_COMM* pComm, ULONG* pOutputMask)
 		Sleep(100); /* 100 ms */
 	}
 
-	return unlock_return(pComm, FALSE);
+	return unlock_return(pComm, TRUE);
 }
 
 static BOOL set_break_on(WINPR_COMM* pComm)
