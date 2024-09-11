@@ -33,8 +33,7 @@ static const SDL_Color errorcolor = { 0xf7, 0x22, 0x30, 0x60 };
 static const Uint32 vpadding = 5;
 static const Uint32 hpadding = 5;
 
-SDLConnectionDialog::SDLConnectionDialog(rdpContext* context)
-    : _context(context), _window(nullptr), _renderer(nullptr)
+SDLConnectionDialog::SDLConnectionDialog(rdpContext* context) : _context(context)
 {
 	SDL_Init(SDL_INIT_TIMER | SDL_INIT_VIDEO);
 	hide();

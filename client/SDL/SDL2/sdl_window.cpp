@@ -22,8 +22,7 @@
 
 SdlWindow::SdlWindow(const std::string& title, Sint32 startupX, Sint32 startupY, Sint32 width,
                      Sint32 height, Uint32 flags)
-    : _window(SDL_CreateWindow(title.c_str(), startupX, startupY, width, height, flags)),
-      _offset_x(0), _offset_y(0)
+    : _window(SDL_CreateWindow(title.c_str(), startupX, startupY, width, height, flags))
 {
 }
 
