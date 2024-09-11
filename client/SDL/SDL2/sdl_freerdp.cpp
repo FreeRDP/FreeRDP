@@ -334,6 +334,8 @@ class SdlEventUpdateTriggerGuard
 	}
 	SdlEventUpdateTriggerGuard(const SdlEventUpdateTriggerGuard&) = delete;
 	SdlEventUpdateTriggerGuard(SdlEventUpdateTriggerGuard&&) = delete;
+	SdlEventUpdateTriggerGuard& operator=(const SdlEventUpdateTriggerGuard&) = delete;
+	SdlEventUpdateTriggerGuard& operator=(SdlEventUpdateTriggerGuard&&) = delete;
 };
 
 static bool sdl_draw_to_window_rect(SdlContext* sdl, SdlWindow& window, SDL_Surface* surface,
