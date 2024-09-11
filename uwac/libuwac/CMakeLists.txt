@@ -37,6 +37,8 @@ macro(generate_protocol_file PROTO)
     list(APPEND GENERATED_SOURCES ${CMAKE_CURRENT_BINARY_DIR}/protocols/${PROTO}-protocol.c)
 endmacro()
 
+disable_warnings_for_directory(${CMAKE_CURRENT_BINARY_DIR})
+
 generate_protocol_file(xdg-shell)
 generate_protocol_file(viewporter)
 generate_protocol_file(xdg-decoration-unstable-v1)
