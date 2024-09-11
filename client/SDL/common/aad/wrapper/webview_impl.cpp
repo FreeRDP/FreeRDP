@@ -38,7 +38,7 @@ static std::vector<std::string> split(const std::string& input, const std::strin
 
 static std::map<std::string, std::string> urlsplit(const std::string& url)
 {
-	auto pos = url.find("?");
+	auto pos = url.find('?');
 	if (pos == std::string::npos)
 		return {};
 	auto surl = url.substr(pos);

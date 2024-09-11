@@ -221,6 +221,9 @@ static BOOL freerdp_assistance_crypt_derive_key_sha1(const BYTE* hash, size_t ha
 	BYTE pad1[64] = { 0 };
 	BYTE pad2[64] = { 0 };
 
+	if (hashLength == 0)
+		return FALSE;
+
 	memset(pad1, 0x36, sizeof(pad1));
 	memset(pad2, 0x5C, sizeof(pad2));
 

@@ -232,11 +232,6 @@ static BOOL detect_changes(BOOL firstFrameDone, const UINT32 QP, const RECTANGLE
 	return TRUE;
 }
 
-/**
- * Function description
- *
- * @return
- */
 INT32 h264_get_yuv_buffer(H264_CONTEXT* h264, UINT32 nSrcStride, UINT32 nSrcWidth,
                           UINT32 nSrcHeight, BYTE* YUVData[3], UINT32 stride[3])
 {
@@ -255,11 +250,6 @@ INT32 h264_get_yuv_buffer(H264_CONTEXT* h264, UINT32 nSrcStride, UINT32 nSrcWidt
 	return 0;
 }
 
-/**
- * Function description
- *
- * @return
- */
 INT32 h264_compress(H264_CONTEXT* h264, BYTE** ppDstData, UINT32* pDstSize)
 {
 	if (!h264 || !h264->Compressor || !h264->subsystem || !h264->subsystem->Compress)

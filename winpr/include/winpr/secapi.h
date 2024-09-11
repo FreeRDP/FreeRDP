@@ -29,6 +29,7 @@
 
 typedef enum _KERB_LOGON_SUBMIT_TYPE
 {
+	KerbInvalidValue = 0,
 	KerbInteractiveLogon = 2,
 	KerbSmartCardLogon = 6,
 	KerbWorkstationUnlockLogon = 7,

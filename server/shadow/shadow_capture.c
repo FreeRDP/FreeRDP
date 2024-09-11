@@ -210,8 +210,6 @@ static pixel_equal_fn_t get_comparison_fn(DWORD format1, DWORD format2)
 	}
 	else
 		return pixel_equal_no_alpha;
-
-	return pixel_equal;
 }
 
 int shadow_capture_compare_with_format(const BYTE* WINPR_RESTRICT pData1, UINT32 format1,

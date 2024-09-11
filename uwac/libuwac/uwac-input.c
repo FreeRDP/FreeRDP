@@ -995,7 +995,7 @@ static const struct wl_pointer_listener pointer_listener = {
 	pointer_axis_discrete, pointer_axis_value120
 };
 
-static void seat_handle_capabilities(void* data, struct wl_seat* seat, enum wl_seat_capability caps)
+static void seat_handle_capabilities(void* data, struct wl_seat* seat, uint32_t caps)
 {
 	UwacSeat* input = data;
 	assert(input);
