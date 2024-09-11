@@ -2753,15 +2753,17 @@ static int parse_dynamic_resolution_options(rdpSettings* settings,
 	WINPR_ASSERT(settings);
 	WINPR_ASSERT(arg);
 
-	if (freerdp_settings_get_bool(settings, FreeRDP_SmartSizing))
+	const BOOL val = arg->Value != 0;
+
+	if (val && freerdp_settings_get_bool(settings, FreeRDP_SmartSizing))
 	{
 		WLog_ERR(TAG, "Smart sizing and dynamic resolution are mutually exclusive options");
 		return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 	}
 
-	if (!freerdp_settings_set_bool(settings, FreeRDP_SupportDisplayControl, TRUE))
+	if (!freerdp_settings_set_bool(settings, FreeRDP_SupportDisplayControl, val))
 		return COMMAND_LINE_ERROR;
-	if (!freerdp_settings_set_bool(settings, FreeRDP_DynamicResolutionUpdate, TRUE))
+	if (!freerdp_settings_set_bool(settings, FreeRDP_DynamicResolutionUpdate, val))
 		return COMMAND_LINE_ERROR;
 
 	return 0;
