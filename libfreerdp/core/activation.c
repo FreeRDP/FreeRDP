@@ -303,7 +303,7 @@ static UINT32 rdp_load_persistent_key_list(rdpRdp* rdp, UINT64** pKeyList)
 	count = persistent_cache_get_count(persistent);
 
 	keyCount = (UINT32)count;
-	keyList = (UINT64*)malloc(keyCount * sizeof(UINT64));
+	keyList = (UINT64*)calloc(keyCount, sizeof(UINT64));
 
 	if (!keyList)
 		goto error;
