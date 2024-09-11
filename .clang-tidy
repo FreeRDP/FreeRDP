@@ -62,6 +62,7 @@ Checks: >
     -readability-implicit-bool-conversion,
     -readability-magic-numbers,
     -readability-qualified-auto,
+    -readability-suspicious-call-argument,
     -readability-uppercase-literal-suffix,
     -performance-no-int-to-ptr,
     -performance-avoid-endl
