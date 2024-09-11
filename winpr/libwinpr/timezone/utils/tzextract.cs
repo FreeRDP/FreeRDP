@@ -22,7 +22,7 @@ internal class Program
 	private static bool writeZoneMapC(string path)
 	{
 		string fname = "TimeZoneNameMap";
-		string fpath = Path.Combine(path, fname + ".c");
+		string fpath = Path.Combine(path, fname + "_static.h");
 
 		using (StreamWriter fs = new StreamWriter(fpath))
 		{
@@ -30,7 +30,7 @@ internal class Program
 			fs.WriteLine("");
 			fs.WriteLine("#include \"" + fname + ".h\"");
 			fs.WriteLine("");
-			fs.WriteLine("const " + fname + "Entry " + fname + "[] ={");
+			fs.WriteLine("static const " + fname + "Entry " + fname + "[] ={");
 
 			bool first = true;
 			foreach (System.TimeZoneInfo tz in System.TimeZoneInfo.GetSystemTimeZones())
@@ -58,7 +58,7 @@ internal class Program
 
 			fs.WriteLine("};");
 			fs.WriteLine("");
-			fs.WriteLine("const size_t " + fname + "Size = ARRAYSIZE(" + fname + ");");
+			fs.WriteLine("static const size_t " + fname + "Size = ARRAYSIZE(" + fname + ");");
 			fs.WriteLine("");
 		}
 		return true;
