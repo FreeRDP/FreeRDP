@@ -118,8 +118,10 @@ static BOOL cl_kernel_set_sources(primitives_cl_kernel* ctx,
 	for (cl_uint i = 0; i < ARRAYSIZE(ctx->srcObjs); i++)
 	{
 		cl_int ret = CL_INVALID_VALUE;
+		const BYTE* csrc = pSrc[i];
+		void* WINPR_RESTRICT src = WINPR_CAST_CONST_PTR_AWAY(csrc, void* WINPR_RESTRICT);
 		ctx->srcObjs[i] = clCreateBuffer(ctx->cl->context, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
-		                                 1ull * srcStep[i] * ctx->roi.height, pSrc[i], &ret);
+		                                 1ull * srcStep[i] * ctx->roi.height, src, &ret);
 		if (ret != CL_SUCCESS)
 		{
 			WLog_ERR(TAG, "unable to create %sobj", sourceNames[i]);
