@@ -266,10 +266,8 @@ static BOOL rdp_write_client_persistent_key_list_pdu(wStream* s,
 
 	for (UINT32 index = 0; index < info->keyCount; index++)
 	{
-		const UINT32 key1 = (UINT32)(info->keyList[index] & UINT32_MAX);
-		const UINT32 key2 = (UINT32)(info->keyList[index] >> 32);
-		Stream_Write_UINT32(s, key1);
-		Stream_Write_UINT32(s, key2);
+		const UINT64 val = info->keyList[index];
+		Stream_Write_UINT64(s, val);
 	}
 
 	return TRUE;
