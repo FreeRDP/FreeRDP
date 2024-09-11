@@ -1219,7 +1219,9 @@ static BOOL license_rc4_with_licenseKey(const rdpLicense* license, const BYTE* i
 		return FALSE;
 	}
 
-	BYTE* buffer = (BYTE*)realloc(target->data, len);
+	BYTE* buffer = NULL;
+	if (len > 0)
+		buffer = realloc(target->data, len);
 	if (!buffer)
 		goto error_buffer;
 
@@ -1468,7 +1470,9 @@ BOOL license_read_binary_blob_data(LICENSE_BLOB* blob, UINT16 wBlobType, const v
 	}
 
 	blob->type = wBlobType;
-	blob->data = (BYTE*)malloc(blob->length);
+	blob->data = NULL;
+	if (blob->length > 0)
+		blob->data = malloc(blob->length);
 	if (!blob->data)
 	{
 		WLog_ERR(TAG, "license binary blob::length=%" PRIu16 ", blob::data=%p", blob->length,
