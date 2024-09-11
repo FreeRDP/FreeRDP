@@ -41,6 +41,8 @@
 	_Pragma("clang diagnostic ignored \"-Wunused-const-variable\"")
 #define WINPR_PRAGMA_DIAG_IGNORED_FORMAT_SECURITY \
 	_Pragma("clang diagnostic ignored \"-Wformat-security\"")
+#define WINPR_PRAGMA_DIAG_IGNORED_FORMAT_NONLITERAL \
+	_Pragma("clang diagnostic ignored \"-Wformat-nonliteral\"")
 #define WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC /* not supported \
     _Pragma("clang diagnostic ignored \"-Wmismatched-dealloc\"") */
 #define WINPR_PRAGMA_DIAG_POP _Pragma("clang diagnostic pop")
@@ -65,6 +67,8 @@
 	_Pragma("GCC diagnostic ignored \"-Wunused-const-variable\"")
 #define WINPR_PRAGMA_DIAG_IGNORED_FORMAT_SECURITY \
 	_Pragma("GCC diagnostic ignored \"-Wformat-security\"")
+#define WINPR_PRAGMA_DIAG_IGNORED_FORMAT_NONLITERAL \
+	_Pragma("GCC diagnostic ignored \"-Wformat-nonliteral\"")
 #if __GNUC__ >= 11
 #define WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC \
 	_Pragma("GCC diagnostic ignored \"-Wmismatched-dealloc\"")
@@ -84,6 +88,7 @@
 #define WINPR_PRAGMA_DIAG_IGNORED_ATOMIC_SEQ_CST
 #define WINPR_PRAGMA_DIAG_IGNORED_UNUSED_CONST_VAR
 #define WINPR_PRAGMA_DIAG_IGNORED_FORMAT_SECURITY
+#define WINPR_PRAGMA_DIAG_IGNORED_FORMAT_NONLITERAL
 #define WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 #define WINPR_PRAGMA_DIAG_POP
 #define WINPR_PRAGMA_UNROLL_LOOP

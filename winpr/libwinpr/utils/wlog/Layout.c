@@ -194,7 +194,10 @@ static BOOL replace_format_string(const char* FormatString, struct format_option
 
 			if (replace && (replacelen > 0))
 			{
+				WINPR_PRAGMA_DIAG_PUSH
+				WINPR_PRAGMA_DIAG_IGNORED_FORMAT_NONLITERAL
 				const int rc = _snprintf(&format[index], formatlen - index, replace, arg);
+				WINPR_PRAGMA_DIAG_POP
 				if (rc < 0)
 					return FALSE;
 				if (!check_and_log_format_size(format, formatlen, index, rc))

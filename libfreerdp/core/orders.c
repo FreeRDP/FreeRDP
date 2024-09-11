@@ -430,6 +430,8 @@ static BOOL check_primary_order_supported(wLog* log, rdpSettings* settings, UINT
 	return check_order_activated(log, settings, orderName, condition, extendedMessage);
 }
 
+WINPR_PRAGMA_DIAG_PUSH
+WINPR_PRAGMA_DIAG_IGNORED_FORMAT_NONLITERAL
 static const char* primary_order_string(UINT32 orderType)
 {
 	const char* orders[] = { "[0x%02" PRIx8 "] DstBlt",
@@ -509,6 +511,7 @@ static const char* altsec_order_string(BYTE orderType)
 	(void)sprintf_s(buffer, ARRAYSIZE(buffer), fmt, orderType);
 	return buffer;
 }
+WINPR_PRAGMA_DIAG_POP
 
 static INLINE BOOL update_read_coord(wStream* s, INT32* coord, BOOL delta)
 {
