@@ -118,6 +118,15 @@ SDL_Texture* SdlWidget::render_text(SDL_Renderer* renderer, const std::string& t
 	return texture;
 }
 
+static int scale(int w, int h)
+{
+	const double dw = static_cast<double>(w);
+	const double dh = static_cast<double>(h);
+	const double scale = dh / dw;
+	const double dr = dh * scale;
+	return static_cast<int>(dr);
+}
+
 SDL_Texture* SdlWidget::render_text_wrapped(SDL_Renderer* renderer, const std::string& text,
                                             SDL_Color fgcolor, SDL_Rect& src, SDL_Rect& dst)
 {
@@ -150,8 +159,7 @@ SDL_Texture* SdlWidget::render_text_wrapped(SDL_Renderer* renderer, const std::s
 	dst = _rect;
 	dst.x += hpadding;
 	dst.w -= 2 * hpadding;
-	const float scale = static_cast<float>(src.h) / static_cast<float>(src.w);
-	auto dh = src.h * scale;
+	auto dh = scale(src.w, src.h);
 	if (dh < dst.h)
 		dst.h = dh;
 

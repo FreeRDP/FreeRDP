@@ -176,6 +176,13 @@ static UINT32 sdl_orientaion_to_rdp(SDL_DisplayOrientation orientation)
 	}
 }
 
+static Uint32 scale(Uint32 val, float scale)
+{
+	const float dval = static_cast<float>(val);
+	const float sval = dval / scale;
+	return static_cast<Uint32>(sval);
+}
+
 static BOOL sdl_apply_display_properties(SdlContext* sdl)
 {
 	WINPR_ASSERT(sdl);
@@ -259,11 +266,11 @@ static BOOL sdl_apply_display_properties(SdlContext* sdl)
 		monitor->width = rect.w;
 		monitor->height = rect.h;
 		monitor->is_primary = x == 0;
-		monitor->attributes.desktopScaleFactor = factor;
+		monitor->attributes.desktopScaleFactor = static_cast<UINT32>(factor);
 		monitor->attributes.deviceScaleFactor = 100;
 		monitor->attributes.orientation = rdp_orientation;
-		monitor->attributes.physicalWidth = rect.w / hdpi;
-		monitor->attributes.physicalHeight = rect.h / vdpi;
+		monitor->attributes.physicalWidth = scale(rect.w, hdpi);
+		monitor->attributes.physicalHeight = scale(rect.h, vdpi);
 	}
 	return TRUE;
 }
