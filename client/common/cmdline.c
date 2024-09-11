@@ -4558,6 +4558,7 @@ static int freerdp_client_settings_parse_command_line_arguments_int(
 		}
 		CommandLineSwitchCase(arg, "load-balance-info")
 		{
+			WINPR_ASSERT(arg->Value);
 			if (!freerdp_settings_set_pointer_len(settings, FreeRDP_LoadBalanceInfo, arg->Value,
 			                                      strlen(arg->Value)))
 				return fail_at(arg, COMMAND_LINE_ERROR);
@@ -4761,6 +4762,7 @@ static int freerdp_client_settings_parse_command_line_arguments_int(
 				ConvertWCharNToUtf8(info.TimeZoneKeyName, ARRAYSIZE(info.TimeZoneKeyName),
 				                    TimeZoneKeyName, ARRAYSIZE(TimeZoneKeyName));
 
+				WINPR_ASSERT(arg->Value);
 				if (strncmp(TimeZoneKeyName, arg->Value, ARRAYSIZE(TimeZoneKeyName)) == 0)
 				{
 					found = TRUE;
