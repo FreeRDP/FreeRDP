@@ -758,6 +758,8 @@ static SECURITY_STATUS NCryptP11EnumKeys(NCRYPT_PROV_HANDLE hProvider, LPCWSTR p
 			{
 				WINPR_ASSERT(provider->p11->C_CloseSession);
 				rv = provider->p11->C_CloseSession(currentSession);
+				if (rv != CKR_OK)
+					WLog_WARN(TAG, "C_CloseSession failed with 0x%08" PRIx32, rv);
 				currentSession = (CK_SESSION_HANDLE)NULL;
 			}
 
@@ -818,6 +820,8 @@ static SECURITY_STATUS NCryptP11EnumKeys(NCRYPT_PROV_HANDLE hProvider, LPCWSTR p
 	cleanup_FindObjects:
 		WINPR_ASSERT(provider->p11->C_FindObjectsFinal);
 		rv = provider->p11->C_FindObjectsFinal(currentSession);
+		if (rv != CKR_OK)
+			WLog_ERR(TAG, "C_FindObjectsFinal failed with 0x%08" PRIx32, rv);
 
 		if (keyName)
 		{

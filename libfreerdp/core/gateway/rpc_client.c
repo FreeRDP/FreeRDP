@@ -80,6 +80,8 @@ static const char* rpc_client_state_str(RPC_CLIENT_STATE state)
 		case RPC_CLIENT_STATE_FINAL:
 			str = "RPC_CLIENT_STATE_FINAL";
 			break;
+		default:
+			break;
 	}
 	return str;
 }

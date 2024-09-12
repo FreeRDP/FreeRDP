@@ -1153,8 +1153,6 @@ static void sdl_post_final_disconnect(freerdp* instance)
 
 	if (!instance->context)
 		return;
-
-	auto context = get_context(instance->context);
 }
 
 /* RDP main loop.
@@ -1624,7 +1622,8 @@ int main(int argc, char* argv[])
 	if (freerdp_client_stop(context) != 0)
 		return -1;
 
-	rc = sdl->exit_code;
+	if (sdl->exit_code != 0)
+		rc = sdl->exit_code;
 
 	return rc;
 }

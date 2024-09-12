@@ -94,6 +94,8 @@ static const char* client_in_state_str(CLIENT_IN_CHANNEL_STATE state)
 		case CLIENT_IN_CHANNEL_STATE_FINAL:
 			str = "CLIENT_IN_CHANNEL_STATE_FINAL";
 			break;
+		default:
+			break;
 	}
 	return str;
 }
@@ -143,6 +145,8 @@ static const char* client_out_state_str(CLIENT_OUT_CHANNEL_STATE state)
 		case CLIENT_OUT_CHANNEL_STATE_FINAL:
 			str = "CLIENT_OUT_CHANNEL_STATE_FINAL";
 			break;
+		default:
+			break;
 	}
 	return str;
 }
@@ -175,6 +179,8 @@ const char* rpc_vc_state_str(VIRTUAL_CONNECTION_STATE state)
 
 		case VIRTUAL_CONNECTION_STATE_FINAL:
 			str = "VIRTUAL_CONNECTION_STATE_FINAL";
+			break;
+		default:
 			break;
 	}
 	return str;
