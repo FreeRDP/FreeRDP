@@ -40,6 +40,7 @@
  *
  * @return The token string or \b NULL
  */
+WINPR_ATTR_MALLOC(free, 1)
 FREERDP_API char* freerdp_utils_aad_get_access_token(wLog* log, const char* data, size_t length);
 
 #endif

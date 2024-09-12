@@ -213,8 +213,8 @@ error:
 }
 }
 
-static char* freerdp_passphrase_read_askpass(const char* prompt, char* buf, size_t bufsiz,
-                                             char const* askpass_env)
+static const char* freerdp_passphrase_read_askpass(const char* prompt, char* buf, size_t bufsiz,
+                                                   char const* askpass_env)
 {
 	char command[4096] = { 0 };
 
@@ -234,8 +234,8 @@ static char* freerdp_passphrase_read_askpass(const char* prompt, char* buf, size
 	return buf;
 }
 
-char* freerdp_passphrase_read(rdpContext* context, const char* prompt, char* buf, size_t bufsiz,
-                              int from_stdin)
+const char* freerdp_passphrase_read(rdpContext* context, const char* prompt, char* buf,
+                                    size_t bufsiz, int from_stdin)
 {
 	const char* askpass_env = getenv("FREERDP_ASKPASS");
 

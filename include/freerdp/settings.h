@@ -80,6 +80,12 @@ extern "C"
 #define FREERDP_SETTINGS_SERVER_MODE 0x00000001
 #define FREERDP_SETTINGS_REMOTE_MODE 0x00000002
 
+	/** \brief Free a settings struct with all data in it
+	 *
+	 *  \param settings A pointer to the settings to free, May be NULL
+	 */
+	FREERDP_API void freerdp_settings_free(rdpSettings* settings);
+
 	/** \brief creates a new setting struct
 	 *
 	 *  \param flags Flags for creation, use \b FREERDP_SETTINGS_SERVER_MODE for server settings, 0
@@ -87,6 +93,7 @@ extern "C"
 	 *
 	 *  \return A newly allocated settings struct or NULL
 	 */
+	WINPR_ATTR_MALLOC(freerdp_settings_free, 1)
 	FREERDP_API rdpSettings* freerdp_settings_new(DWORD flags);
 
 	/** \brief Creates a deep copy of settings
@@ -95,6 +102,7 @@ extern "C"
 	 *
 	 *  \return A newly allocated copy of \b settings or NULL
 	 */
+	WINPR_ATTR_MALLOC(freerdp_settings_free, 1)
 	FREERDP_API rdpSettings* freerdp_settings_clone(const rdpSettings* settings);
 
 	/** \brief Deep copies settings from \b src to \b dst
@@ -122,12 +130,6 @@ extern "C"
 	FREERDP_API BOOL freerdp_settings_copy_item(rdpSettings* dst, const rdpSettings* src,
 	                                            SSIZE_T id);
 
-	/** \brief Free a settings struct with all data in it
-	 *
-	 *  \param settings A pointer to the settings to free, May be NULL
-	 */
-	FREERDP_API void freerdp_settings_free(rdpSettings* settings);
-
 	/** \brief Dumps the contents of a settings struct to a WLog logger
 	 *
 	 *  \param log The logger to write to, must not be NULL
@@ -148,9 +150,13 @@ extern "C"
 	FREERDP_API BOOL freerdp_settings_print_diff(wLog* log, DWORD level, const rdpSettings* src,
 	                                             const rdpSettings* other);
 
-	FREERDP_API ADDIN_ARGV* freerdp_addin_argv_new(size_t argc, const char* argv[]);
-	FREERDP_API ADDIN_ARGV* freerdp_addin_argv_clone(const ADDIN_ARGV* args);
 	FREERDP_API void freerdp_addin_argv_free(ADDIN_ARGV* args);
+
+	WINPR_ATTR_MALLOC(freerdp_addin_argv_free, 1)
+	FREERDP_API ADDIN_ARGV* freerdp_addin_argv_new(size_t argc, const char* argv[]);
+
+	WINPR_ATTR_MALLOC(freerdp_addin_argv_free, 1)
+	FREERDP_API ADDIN_ARGV* freerdp_addin_argv_clone(const ADDIN_ARGV* args);
 
 	FREERDP_API BOOL freerdp_addin_argv_add_argument(ADDIN_ARGV* args, const char* argument);
 	FREERDP_API BOOL freerdp_addin_argv_add_argument_ex(ADDIN_ARGV* args, const char* argument,
@@ -686,8 +692,8 @@ extern "C"
 	 *
 	 *  \return A pointer to \b buffer for success, NULL otherwise
 	 */
-	FREERDP_API char* freerdp_rail_support_flags_to_string(UINT32 flags, char* buffer,
-	                                                       size_t length);
+	FREERDP_API const char* freerdp_rail_support_flags_to_string(UINT32 flags, char* buffer,
+	                                                             size_t length);
 
 	/** \brief Returns a stringified representation of the RDP protocol version.
 	 *
@@ -721,6 +727,7 @@ extern "C"
 	 *  @return The current configuration path or \b NULL
 	 *  @since version 3.6.0
 	 */
+	WINPR_ATTR_MALLOC(free, 1)
 	FREERDP_API char* freerdp_settings_get_config_path(void);
 
 #ifdef __cplusplus

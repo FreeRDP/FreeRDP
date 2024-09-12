@@ -49,6 +49,7 @@ FREERDP_LOCAL BOOL freerdp_certificate_read_server_cert(rdpCertificate* certific
 FREERDP_LOCAL SSIZE_T freerdp_certificate_write_server_cert(const rdpCertificate* certificate,
                                                             UINT32 dwVersion, wStream* s);
 
+WINPR_ATTR_MALLOC(freerdp_certificate_free, 1)
 FREERDP_LOCAL rdpCertificate* freerdp_certificate_clone(const rdpCertificate* certificate);
 
 FREERDP_LOCAL const rdpCertInfo* freerdp_certificate_get_info(const rdpCertificate* certificate);

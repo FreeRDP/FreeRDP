@@ -22,7 +22,7 @@
 #include <freerdp/utils/string.h>
 #include <freerdp/settings.h>
 
-char* rdp_redirection_flags_to_string(UINT32 flags, char* buffer, size_t size)
+const char* rdp_redirection_flags_to_string(UINT32 flags, char* buffer, size_t size)
 {
 	struct map_t
 	{
@@ -60,7 +60,7 @@ char* rdp_redirection_flags_to_string(UINT32 flags, char* buffer, size_t size)
 	return buffer;
 }
 
-char* rdp_cluster_info_flags_to_string(UINT32 flags, char* buffer, size_t size)
+const char* rdp_cluster_info_flags_to_string(UINT32 flags, char* buffer, size_t size)
 {
 	const UINT32 version = (flags & ServerSessionRedirectionVersionMask) >> 2;
 	if (flags & REDIRECTION_SUPPORTED)
