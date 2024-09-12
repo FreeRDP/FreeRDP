@@ -117,19 +117,19 @@ typedef pstatus_t (*__add_16s_inplace_t)(INT16* WINPR_RESTRICT pSrcDst1,
  * @brief Copy (sub)image data without overlapping
  *
  * @param pDstData The destination image buffer
- * @param DstFormat The destination image format @PIXEL_FORMAT
+ * @param DstFormat The destination image format @ref PIXEL_FORMAT
  * @param nDstStep The destination image line width in bytes (including padding)
  * @param nXDst The X coordinate to start copying to
  * @param nYDst The Y coordinate to start copying to
  * @param nWidth The width in pixels to copy
  * @param nHeight The height in pixels to copy
  * @param pSrcData The source image buffer
- * @param SrcFormat The source image format @PIXEL_FORMAT
+ * @param SrcFormat The source image format @ref PIXEL_FORMAT
  * @param nSrcStep The source image line with in bytes (including padding)
  * @param nXSrc The X coordinate to start copying from
  * @param nYSrc The Y coordinate to start copying from
  * @param palette A color palette for 8 bit colors
- * @param flags Copy flags @FREERDP_IMAGE_FLAGS
+ * @param flags Copy flags @ref FREERDP_IMAGE_FLAGS
  * @return \b <=0 for failure, success otherwise
  *  @since version 3.6.0
  */

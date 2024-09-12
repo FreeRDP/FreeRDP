@@ -47,7 +47,7 @@ extern "C"
 {
 #endif
 
-	/** \defgroup rdpSettings
+	/** \defgroup rdpSettings rdpSettings
 	 * \brief This is the FreeRDP settings module.
 	 *
 	 * Settings are used to store configuration data for an RDP connection.
@@ -490,7 +490,8 @@ extern "C"
 	                                             const char* param);
 
 	/** \brief appends a string to a settings value. The \b param is copied.
-	 * If the initial value of the setting was not empty, <old value><separator><param> is created
+	 *  If the initial value of the setting was not empty, @code <old value><separator><param>
+	 * @endcode is created
 	 *
 	 *  \param settings A pointer to the settings to query, must not be NULL.
 	 *  \param id The key to query

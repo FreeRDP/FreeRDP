@@ -26,7 +26,7 @@
 #include <freerdp/api.h>
 #include <freerdp/server/proxy/proxy_modules_api.h>
 
-/** @defgroup proxy_config
+/** @defgroup proxy_config Proxy Configuration
  * @ingroup proxy
  * @{
  */

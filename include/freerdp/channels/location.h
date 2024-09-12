@@ -24,7 +24,9 @@
 #include <freerdp/dvc.h>
 #include <freerdp/types.h>
 
-/** @defgroup channel_location
+/** @defgroup channel_location Location Channel
+ *  @brief Location channel providing redirection of client side Network/GPS location to the RDP
+ * server
  * @{
  */
 

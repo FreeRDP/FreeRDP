@@ -25,7 +25,7 @@
 #include <winpr/string.h>
 #include <winpr/wtypes.h>
 
-/** @defgroup WINPR_JSON
+/** @defgroup WINPR_JSON WinPR JSON wrapper
  *  @since version 3.6.0
  *  @brief Wrapper around cJSON or JSONC libraries
  *  @{
@@ -49,7 +49,7 @@ extern "C"
 	WINPR_API int WINPR_JSON_version(char* buffer, size_t len);
 
 	/**
-	 * @brief Delete a @WINPR_JSON object
+	 * @brief Delete a @ref WINPR_JSON object
 	 *
 	 * @param item The instance to delete
 	 * @since version 3.6.0
@@ -60,7 +60,7 @@ extern "C"
 	 * @brief Parse a '\0' terminated JSON string
 	 *
 	 * @param value A '\0' terminated JSON string
-	 * @return A @WINPR_JSON object holding the parsed string or \b NULL if failed
+	 * @return A @ref WINPR_JSON object holding the parsed string or \b NULL if failed
 	 * @since version 3.6.0
 	 */
 	WINPR_ATTR_MALLOC(WINPR_JSON_Delete, 1)
@@ -71,7 +71,7 @@ extern "C"
 	 *
 	 * @param value A JSON string
 	 * @param buffer_length The length in bytes of the JSON string
-	 * @return A @WINPR_JSON object holding the parsed string or \b NULL if failed
+	 * @return A @ref WINPR_JSON object holding the parsed string or \b NULL if failed
 	 * @since version 3.6.0
 	 */
 	WINPR_ATTR_MALLOC(WINPR_JSON_Delete, 1)
@@ -100,17 +100,17 @@ extern "C"
 	 * @brief Return a pointer to an JSON object item
 	 * @param object the JSON object
 	 * @param string the name of the object
-	 * @return A pointer to the object identified by @string or \b NULL
+	 * @return A pointer to the object identified by @ref string or \b NULL
 	 * @since version 3.6.0
 	 */
 	WINPR_API WINPR_JSON* WINPR_JSON_GetObjectItem(const WINPR_JSON* object, const char* string);
 
 	/**
-	 * @brief Same as @WINPR_JSON_GetObjectItem but with case insensitive matching
+	 * @brief Same as @ref WINPR_JSON_GetObjectItem but with case insensitive matching
 	 *
 	 * @param object the JSON instance to query
 	 * @param string the name of the object
-	 * @return A pointer to the object identified by @string or \b NULL
+	 * @return A pointer to the object identified by @ref string or \b NULL
 	 * @since version 3.6.0
 	 */
 	WINPR_API WINPR_JSON* WINPR_JSON_GetObjectItemCaseSensitive(const WINPR_JSON* object,
@@ -365,7 +365,7 @@ extern "C"
 
 	/**
 	 * @brief Serialize a JSON instance to string
-	 * for minimal size without formatting see @WINPR_JSON_PrintUnformatted
+	 * for minimal size without formatting see @ref WINPR_JSON_PrintUnformatted
 	 *
 	 * @param item The JSON instance to serialize
 	 * @return A string representation of the JSON instance or \b NULL
@@ -375,7 +375,7 @@ extern "C"
 
 	/**
 	 * @brief Serialize a JSON instance to string without formatting
-	 * for human readable formatted output see @WINPR_JSON_Print
+	 * for human readable formatted output see @ref WINPR_JSON_Print
 	 *
 	 * @param item The JSON instance to serialize
 	 * @return A string representation of the JSON instance or \b NULL

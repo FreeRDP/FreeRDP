@@ -57,7 +57,8 @@ extern "C"
 	} DYNAMIC_TIME_ZONE_INFORMATION, *PDYNAMIC_TIME_ZONE_INFORMATION,
 	    *LPDYNAMIC_TIME_ZONE_INFORMATION;
 
-/** @defgroup TIME_ZONE_ID
+/** @defgroup TIME_ZONE_ID TIME_ZONE_ID
+ *  @brief Known values of TIME_ZONE_ID
  *  @since version 3.6.0
  *  @{
  */

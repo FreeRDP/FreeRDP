@@ -21,7 +21,7 @@
 #ifndef FREERDP_UTILS_AAD_H
 #define FREERDP_UTILS_AAD_H
 
-/** \file AAD related helper utilities
+/** \defgroup AAD AAD related helper utilities
  *  \since version 3.0.0
  */
 #include <winpr/wlog.h>

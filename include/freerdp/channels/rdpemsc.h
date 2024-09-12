@@ -20,11 +20,11 @@
 #ifndef FREERDP_CHANNEL_RDPEMSC_H
 #define FREERDP_CHANNEL_RDPEMSC_H
 
-/** @defgroup channel_rdpemsc
+/** @defgroup channel_rdpemsc [MS-RDPEMSC]
  * @{
  */
 
-/** \file [MS-RDPEMSC] Mouse Cursor Virtual Channel Extension
+/** \file @code [MS-RDPEMSC] @endcode Mouse Cursor Virtual Channel Extension
  *  \link
  * https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-rdpemsc/2591b507-cd5a-4537-be29-b45540543dc8
  *  \since version 3.0.0

@@ -67,7 +67,8 @@ extern "C"
  * X for alpha channel denotes unused (but existing) alpha channel data.
  */
 
-/** @defgroup PIXEL_FORMAT
+/** @defgroup PIXEL_FORMAT Pixel formats
+ *  @brief PIXEL color ordering formats known
  *  @{
  */
 /* 32bpp formats */
@@ -387,7 +388,8 @@ typedef struct gdi_palette gdiPalette;
 	                                    UINT32 nXSrc, UINT32 nYSrc,
 	                                    const gdiPalette* WINPR_RESTRICT palette, UINT32 flags);
 
-	/*** Same as @freerdp_image_copy but only for overlapping source and destination
+	/**
+	 * @brief Same as @ref freerdp_image_copy but only for overlapping source and destination
 	 * @since version 3.6.0
 	 */
 	FREERDP_API BOOL freerdp_image_copy_overlap(
@@ -395,7 +397,7 @@ typedef struct gdi_palette gdiPalette;
 	    UINT32 nHeight, const BYTE* pSrcData, DWORD SrcFormat, UINT32 nSrcStep, UINT32 nXSrc,
 	    UINT32 nYSrc, const gdiPalette* WINPR_RESTRICT palette, UINT32 flags);
 
-	/*** Same as @freerdp_image_copy but only for non overlapping source and destination
+	/*** Same as @ref freerdp_image_copy but only for non overlapping source and destination
 	 * @since version 3.6.0
 	 */
 	FREERDP_API BOOL freerdp_image_copy_no_overlap(

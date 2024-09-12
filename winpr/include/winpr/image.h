@@ -82,7 +82,7 @@ typedef struct
 	UINT32 bytesPerPixel;
 } wImage;
 
-/** @defgroup WINPR_IMAGE_CMP_FLAGS
+/** @defgroup WINPR_IMAGE_CMP_FLAGS WINPR_IMAGE_CMP_FLAGS
  *  @since version 3.3.0
  *  @{
  */
@@ -110,7 +110,7 @@ extern "C"
 	 *  @param data the data of the bitmap without headers
 	 *  @param stride the byte size of a line in the image
 	 *  @param width the width in pixels of a line
-	 *  @param the height of the bitmap
+	 *  @param height the height of the bitmap
 	 *  @param bpp the color depth of the bitmap
 	 *
 	 *  @since version 3.3.0
@@ -128,7 +128,7 @@ extern "C"
 	/** @brief write a bitmap to a buffer and return it
 	 *
 	 *  @param image the image to write
-	 *  @param format the format of type @WINPR_IMAGE_FORMAT
+	 *  @param format the format of type @ref WINPR_IMAGE_FORMAT
 	 *  @param size a pointer to hold the size in bytes of the allocated bitmap
 	 *
 	 *  @since version 3.3.0
@@ -146,7 +146,7 @@ extern "C"
 
 	/** @brief Check if a image format is supported
 	 *
-	 *  @param format the format of type @WINPR_IMAGE_FORMAT
+	 *  @param format the format of type @ref WINPR_IMAGE_FORMAT
 	 *
 	 *  @since version 3.3.0
 	 *
@@ -156,7 +156,7 @@ extern "C"
 
 	/** @brief Return the file extension of a format
 	 *
-	 *  @param format the format of type @WINPR_IMAGE_FORMAT
+	 *  @param format the format of type @ref WINPR_IMAGE_FORMAT
 	 *
 	 *  @since version 3.3.0
 	 *
@@ -166,7 +166,7 @@ extern "C"
 
 	/** @brief Return the mime type of a format
 	 *
-	 *  @param format the format of type @WINPR_IMAGE_FORMAT
+	 *  @param format the format of type @ref WINPR_IMAGE_FORMAT
 	 *
 	 *  @since version 3.3.0
 	 *
@@ -178,7 +178,7 @@ extern "C"
 	 *
 	 *  @param imageA the first image for the comparison
 	 *  @param imageB the second image for the comparison
-	 *  @param flags Comparions flags @WINPR_IMAGE_CMP_FLAGS
+	 *  @param flags Comparions flags @ref WINPR_IMAGE_CMP_FLAGS
 	 *
 	 *  @since version 3.3.0
 	 *

@@ -30,7 +30,7 @@
 #include <freerdp/api.h>
 #include <freerdp/types.h>
 
-/** @defgroup keyboard-identifiers
+/** @defgroup keyboard-identifiers Keyboard Layout Identifiers
  *  @{
  */
 #define AFRIKAANS 0x0436
@@ -265,7 +265,7 @@ extern "C"
 	/**
 	 * @brief Query the list of supported system locales
 	 * @param count A pointer to hold the number of locales found
-	 * @return A pointer to @SYSTEM_LOCALE or \b NULL in case none found
+	 * @return A pointer to @ref SYSTEM_LOCALE or \b NULL in case none found
 	 * @since version 3.6.0
 	 */
 	FREERDP_API const SYSTEM_LOCALE* freerdp_get_system_locale_list(size_t* count);
@@ -280,9 +280,9 @@ extern "C"
 	FREERDP_API INT64 freerdp_get_locale_id_from_string(const char* locale);
 
 	/**
-	 * @brief Return the default @keyboard-identifiers for a provided locale
+	 * @brief Return the default @ref keyboard-identifiers for a provided locale
 	 * @param locale The locale to query
-	 * @return The @keyboard-identifiers to use
+	 * @return The @ref keyboard-identifiers to use
 	 * @since version 3.6.0
 	 */
 	FREERDP_API DWORD freerdp_get_keyboard_default_layout_for_locale(DWORD locale);

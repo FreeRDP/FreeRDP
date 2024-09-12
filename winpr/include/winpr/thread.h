@@ -197,7 +197,8 @@ extern "C"
 #define THREAD_MODE_BACKGROUND_BEGIN 0x00010000 /** @since version 3.6.0 */
 #define THREAD_MODE_BACKGROUND_END 0x00020000   /** @since version 3.6.0 */
 
-	/** @defgroup THREAD_PRIORITY
+	/** @defgroup THREAD_PRIORITY THREAD_PRIORITY
+	 *  @brief Known THREAD_PRIORITY values
 	 *  @since version 3.6.0
 	 *  @{
 	 */
@@ -210,10 +211,11 @@ extern "C"
 #define THREAD_PRIORITY_TIME_CRITICAL 15 /** @since version 3.6.0 */
 	                                     /** @} */
 
-	/** @brief Change the thread priority
+	/**
+	 *  @brief Change the thread priority
 	 *
 	 *  @param hThread the thhread handle to manipulate
-	 *  @param nPriority The priority to set, see @THREAD_PRIORITY
+	 *  @param nPriority The priority to set, see @ref THREAD_PRIORITY
 	 *  @return \b TRUE for success, \b FALSE otherwise
 	 *  @since version 3.6.0
 	 */

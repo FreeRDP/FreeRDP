@@ -35,7 +35,7 @@ extern "C"
 
 	/**
 	 * @brief Read data from a transport layer
-	 * @param userContext
+	 * @param userContext user defined context passed by @ref freerdp_set_io_callback_context
 	 * @param data a buffer to read to
 	 * @param bytes the size of the buffer
 	 * @return the number of bytes read or <0 for failures
@@ -45,7 +45,7 @@ extern "C"
 
 	/**
 	 * @brief write data to a transport layer
-	 * @param userContext
+	 * @param userContext user defined context passed by @ref freerdp_set_io_callback_context
 	 * @param data a buffer to write
 	 * @param bytes the size of the buffer
 	 * @return the number of bytes written or <0 for failures
@@ -78,7 +78,8 @@ extern "C"
 	typedef SSIZE_T (*pTransportRead)(rdpTransport* transport, BYTE* data, size_t bytes);
 	typedef BOOL (*pTransportGetPublicKey)(rdpTransport* transport, const BYTE** data,
 	                                       DWORD* length);
-	/** @brief
+	/**
+	 *  @brief Mofify transport behaviour between bocking and non blocking operation
 	 *
 	 *  @param transport The transport to manipulate
 	 *  @param blocking Boolean to set the transport \b TRUE blocking and \b FALSE non-blocking
@@ -90,10 +91,11 @@ extern "C"
 	typedef rdpTransportLayer* (*pTransportConnectLayer)(rdpTransport* transport,
 	                                                     const char* hostname, int port,
 	                                                     DWORD timeout);
-	/** @brief Return the public key as PEM from transport layer.
+
+	/**
+	 * @brief Return the public key as PEM from transport layer.
 	 * @param transport the transport to query
-	 * @param data A pointer to hold the allocated result
-	 * @param length A pointer to hold the length in bytes of the result
+	 * @param layer the transport layer to attach
 	 *
 	 * @return \b TRUE for success, \b FALSE for failure
 	 * @since version 3.2.0
