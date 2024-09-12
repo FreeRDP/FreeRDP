@@ -158,9 +158,9 @@ static INLINE UINT32 planar_invert_format(BITMAP_PLANAR_CONTEXT* WINPR_RESTRICT 
 	return DstFormat;
 }
 
-static INLINE BOOL freerdp_bitmap_planar_compress_plane_rle(const BYTE* WINPR_RESTRICT plane,
+static INLINE BOOL freerdp_bitmap_planar_compress_plane_rle(const BYTE* WINPR_RESTRICT inPlane,
                                                             UINT32 width, UINT32 height,
-                                                            BYTE* outPlane,
+                                                            BYTE* WINPR_RESTRICT outPlane,
                                                             UINT32* WINPR_RESTRICT dstSize);
 static INLINE BYTE* freerdp_bitmap_planar_delta_encode_plane(const BYTE* WINPR_RESTRICT inPlane,
                                                              UINT32 width, UINT32 height,

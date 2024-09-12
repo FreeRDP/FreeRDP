@@ -27,7 +27,7 @@
 
 /** The command line name of the channel
  *
- *  \version 3.0.0
+ *  \since version 3.0.0
  */
 #define DRDYNVC_CHANNEL_NAME "drdynvc"
 #define DRDYNVC_SVC_CHANNEL_NAME "drdynvc"

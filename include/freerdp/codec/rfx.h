@@ -121,42 +121,45 @@ extern "C"
 	WINPR_ATTR_MALLOC(rfx_context_free, 1)
 	FREERDP_API RFX_CONTEXT* rfx_context_new(BOOL encoder);
 
-	FREERDP_API BOOL rfx_context_reset(RFX_CONTEXT* context, UINT32 width, UINT32 height);
+	FREERDP_API BOOL rfx_context_reset(RFX_CONTEXT* WINPR_RESTRICT context, UINT32 width,
+	                                   UINT32 height);
 
 	FREERDP_API BOOL rfx_context_set_mode(RFX_CONTEXT* context, RLGR_MODE mode);
 
 	/** Getter for RFX mode
 	 *  @param context The RFX context to query
 	 *
-	 *  @version 3.0.0
+	 *  @since version 3.0.0
 	 *
 	 *  @return The RFX mode that is currently in use
 	 */
-	FREERDP_API RLGR_MODE rfx_context_get_mode(RFX_CONTEXT* context);
+	FREERDP_API RLGR_MODE rfx_context_get_mode(RFX_CONTEXT* WINPR_RESTRICT context);
 
-	FREERDP_API void rfx_context_set_pixel_format(RFX_CONTEXT* context, UINT32 pixel_format);
+	FREERDP_API void rfx_context_set_pixel_format(RFX_CONTEXT* WINPR_RESTRICT context,
+	                                              UINT32 pixel_format);
 
 	/** Getter for RFX pixel format
 	 *  @param context The RFX context to query
 	 *
-	 *  @version 3.0.0
+	 *  @since version 3.0.0
 	 *
 	 *  @return The RFX pixel format that is currently in use
 	 */
-	FREERDP_API UINT32 rfx_context_get_pixel_format(RFX_CONTEXT* context);
+	FREERDP_API UINT32 rfx_context_get_pixel_format(RFX_CONTEXT* WINPR_RESTRICT context);
 
-	FREERDP_API void rfx_context_set_palette(RFX_CONTEXT* context, const BYTE* palette);
+	FREERDP_API void rfx_context_set_palette(RFX_CONTEXT* WINPR_RESTRICT context,
+	                                         const BYTE* WINPR_RESTRICT palette);
 
 	/** Getter for RFX palette
 	 *  @param context The RFX context to query
 	 *
-	 *  @version 3.0.0
+	 *  @since version 3.0.0
 	 *
 	 *  @return The RFX palette that is currently in use or \b NULL
 	 */
-	FREERDP_API const BYTE* rfx_context_get_palette(RFX_CONTEXT* context);
+	FREERDP_API const BYTE* rfx_context_get_palette(RFX_CONTEXT* WINPR_RESTRICT context);
 
-	FREERDP_API UINT32 rfx_context_get_frame_idx(const RFX_CONTEXT* context);
+	FREERDP_API UINT32 rfx_context_get_frame_idx(const RFX_CONTEXT* WINPR_RESTRICT context);
 
 	/** Write a RFX message as simple progressive message to a stream.
 	 *
@@ -164,7 +167,7 @@ extern "C"
 	 *  @param s The stream to write to
 	 *  @param msg The message to encode
 	 *
-	 *  @version 3.0.0
+	 *  @since version 3.0.0
 	 *  @return \b TRUE in case of success, \b FALSE for any error
 	 */
 	FREERDP_API BOOL rfx_write_message_progressive_simple(RFX_CONTEXT* rfx, wStream* s,

@@ -513,7 +513,8 @@ static BOOL shadow_client_post_connect(freerdp_peer* peer)
 		BOOL rc = freerdp_settings_set_bool(
 		    settings, FreeRDP_NSCodec,
 		    FALSE); /* NSCodec compressor does not support fragmentation yet */
-		WINPR_ASSERT(rc);
+		if (!rc)
+			return FALSE;
 	}
 
 	WLog_INFO(TAG, "Client from %s is activated (%" PRIu32 "x%" PRIu32 "@%" PRIu32 ")",

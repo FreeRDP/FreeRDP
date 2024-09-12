@@ -28,13 +28,13 @@
 
 /** The command line name of the channel
  *
- *  \version 3.0.0
+ *  \since version 3.0.0
  */
 #define AUDIN_CHANNEL_NAME "audin"
 
 /** The name of the channel (protocol internal)
  *
- *  \version 3.0.0
+ *  \since version 3.0.0
  */
 #define AUDIN_DVC_CHANNEL_NAME "AUDIO_INPUT"
 

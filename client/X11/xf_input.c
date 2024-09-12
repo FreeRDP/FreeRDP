@@ -254,9 +254,6 @@ int xf_input_init(xfContext* xfc, Window window)
 
 	WINPR_ASSERT(xfc);
 
-	rdpSettings* settings = xfc->common.context.settings;
-	WINPR_ASSERT(settings);
-
 	xfc->firstDist = -1.0;
 	xfc->z_vector = 0;
 	xfc->px_vector = 0;

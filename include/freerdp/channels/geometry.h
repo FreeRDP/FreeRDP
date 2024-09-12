@@ -25,7 +25,7 @@
 
 /** The command line name of the channel
  *
- *  \version 3.0.0
+ *  \since version 3.0.0
  */
 #define GEOMETRY_CHANNEL_NAME "geometry"
 #define GEOMETRY_DVC_CHANNEL_NAME "Microsoft::Windows::RDS::Geometry::v08.01"

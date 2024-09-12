@@ -52,7 +52,7 @@ static struct json_object* json_object_new_null(void)
 #endif
 
 #if defined(USE_CJSON_COMPAT)
-static double cJSON_GetNumberValue(const cJSON* const prop)
+static double cJSON_GetNumberValue(const cJSON* prop)
 {
 #ifndef NAN
 #ifdef _WIN32
@@ -181,7 +181,7 @@ size_t WINPR_JSON_GetArraySize(const WINPR_JSON* array)
 #endif
 }
 
-WINPR_JSON* WINPR_JSON_GetObjectItem(const WINPR_JSON* const object, const char* const string)
+WINPR_JSON* WINPR_JSON_GetObjectItem(const WINPR_JSON* object, const char* string)
 {
 #if defined(WITH_JSONC)
 	return json_object_object_get((const json_object*)object, string);
@@ -194,8 +194,7 @@ WINPR_JSON* WINPR_JSON_GetObjectItem(const WINPR_JSON* const object, const char*
 #endif
 }
 
-WINPR_JSON* WINPR_JSON_GetObjectItemCaseSensitive(const WINPR_JSON* const object,
-                                                  const char* const string)
+WINPR_JSON* WINPR_JSON_GetObjectItemCaseSensitive(const WINPR_JSON* object, const char* string)
 {
 #if defined(WITH_JSONC)
 	return json_object_object_get((const json_object*)object, string);
@@ -244,7 +243,7 @@ const char* WINPR_JSON_GetStringValue(WINPR_JSON* item)
 #endif
 }
 
-double WINPR_JSON_GetNumberValue(const WINPR_JSON* const item)
+double WINPR_JSON_GetNumberValue(const WINPR_JSON* item)
 {
 #if defined(WITH_JSONC)
 	return json_object_get_double((const json_object*)item);
@@ -256,7 +255,7 @@ double WINPR_JSON_GetNumberValue(const WINPR_JSON* const item)
 #endif
 }
 
-BOOL WINPR_JSON_IsInvalid(const WINPR_JSON* const item)
+BOOL WINPR_JSON_IsInvalid(const WINPR_JSON* item)
 {
 #if defined(WITH_JSONC)
 	if (WINPR_JSON_IsArray(item))
@@ -280,7 +279,7 @@ BOOL WINPR_JSON_IsInvalid(const WINPR_JSON* const item)
 #endif
 }
 
-BOOL WINPR_JSON_IsFalse(const WINPR_JSON* const item)
+BOOL WINPR_JSON_IsFalse(const WINPR_JSON* item)
 {
 #if defined(WITH_JSONC)
 	if (!json_object_is_type((const json_object*)item, json_type_boolean))
@@ -295,7 +294,7 @@ BOOL WINPR_JSON_IsFalse(const WINPR_JSON* const item)
 #endif
 }
 
-BOOL WINPR_JSON_IsTrue(const WINPR_JSON* const item)
+BOOL WINPR_JSON_IsTrue(const WINPR_JSON* item)
 {
 #if defined(WITH_JSONC)
 	if (!json_object_is_type((const json_object*)item, json_type_boolean))
@@ -310,7 +309,7 @@ BOOL WINPR_JSON_IsTrue(const WINPR_JSON* const item)
 #endif
 }
 
-BOOL WINPR_JSON_IsBool(const WINPR_JSON* const item)
+BOOL WINPR_JSON_IsBool(const WINPR_JSON* item)
 {
 #if defined(WITH_JSONC)
 	return json_object_is_type((const json_object*)item, json_type_boolean);
@@ -322,7 +321,7 @@ BOOL WINPR_JSON_IsBool(const WINPR_JSON* const item)
 #endif
 }
 
-BOOL WINPR_JSON_IsNull(const WINPR_JSON* const item)
+BOOL WINPR_JSON_IsNull(const WINPR_JSON* item)
 {
 #if defined(WITH_JSONC)
 	return json_object_is_type((const json_object*)item, json_type_null);
@@ -334,7 +333,7 @@ BOOL WINPR_JSON_IsNull(const WINPR_JSON* const item)
 #endif
 }
 
-BOOL WINPR_JSON_IsNumber(const WINPR_JSON* const item)
+BOOL WINPR_JSON_IsNumber(const WINPR_JSON* item)
 {
 #if defined(WITH_JSONC)
 	return json_object_is_type((const json_object*)item, json_type_int) ||
@@ -347,7 +346,7 @@ BOOL WINPR_JSON_IsNumber(const WINPR_JSON* const item)
 #endif
 }
 
-BOOL WINPR_JSON_IsString(const WINPR_JSON* const item)
+BOOL WINPR_JSON_IsString(const WINPR_JSON* item)
 {
 #if defined(WITH_JSONC)
 	return json_object_is_type((const json_object*)item, json_type_string);
@@ -359,7 +358,7 @@ BOOL WINPR_JSON_IsString(const WINPR_JSON* const item)
 #endif
 }
 
-BOOL WINPR_JSON_IsArray(const WINPR_JSON* const item)
+BOOL WINPR_JSON_IsArray(const WINPR_JSON* item)
 {
 #if defined(WITH_JSONC)
 	return json_object_is_type((const json_object*)item, json_type_array);
@@ -371,7 +370,7 @@ BOOL WINPR_JSON_IsArray(const WINPR_JSON* const item)
 #endif
 }
 
-BOOL WINPR_JSON_IsObject(const WINPR_JSON* const item)
+BOOL WINPR_JSON_IsObject(const WINPR_JSON* item)
 {
 #if defined(WITH_JSONC)
 	return json_object_is_type((const json_object*)item, json_type_object);
@@ -474,7 +473,7 @@ WINPR_JSON* WINPR_JSON_CreateObject(void)
 #endif
 }
 
-WINPR_JSON* WINPR_JSON_AddNullToObject(WINPR_JSON* const object, const char* const name)
+WINPR_JSON* WINPR_JSON_AddNullToObject(WINPR_JSON* object, const char* name)
 {
 #if defined(WITH_JSONC)
 	struct json_object* obj = json_object_new_null();
@@ -493,7 +492,7 @@ WINPR_JSON* WINPR_JSON_AddNullToObject(WINPR_JSON* const object, const char* con
 #endif
 }
 
-WINPR_JSON* WINPR_JSON_AddTrueToObject(WINPR_JSON* const object, const char* const name)
+WINPR_JSON* WINPR_JSON_AddTrueToObject(WINPR_JSON* object, const char* name)
 {
 #if defined(WITH_JSONC)
 	struct json_object* obj = json_object_new_boolean(TRUE);
@@ -512,7 +511,7 @@ WINPR_JSON* WINPR_JSON_AddTrueToObject(WINPR_JSON* const object, const char* con
 #endif
 }
 
-WINPR_JSON* WINPR_JSON_AddFalseToObject(WINPR_JSON* const object, const char* const name)
+WINPR_JSON* WINPR_JSON_AddFalseToObject(WINPR_JSON* object, const char* name)
 {
 #if defined(WITH_JSONC)
 	struct json_object* obj = json_object_new_boolean(FALSE);
@@ -531,8 +530,7 @@ WINPR_JSON* WINPR_JSON_AddFalseToObject(WINPR_JSON* const object, const char* co
 #endif
 }
 
-WINPR_JSON* WINPR_JSON_AddBoolToObject(WINPR_JSON* const object, const char* const name,
-                                       BOOL boolean)
+WINPR_JSON* WINPR_JSON_AddBoolToObject(WINPR_JSON* object, const char* name, BOOL boolean)
 {
 #if defined(WITH_JSONC)
 	struct json_object* obj = json_object_new_boolean(boolean);
@@ -552,8 +550,7 @@ WINPR_JSON* WINPR_JSON_AddBoolToObject(WINPR_JSON* const object, const char* con
 #endif
 }
 
-WINPR_JSON* WINPR_JSON_AddNumberToObject(WINPR_JSON* const object, const char* const name,
-                                         double number)
+WINPR_JSON* WINPR_JSON_AddNumberToObject(WINPR_JSON* object, const char* name, double number)
 {
 #if defined(WITH_JSONC)
 	struct json_object* obj = json_object_new_double(number);
@@ -573,8 +570,7 @@ WINPR_JSON* WINPR_JSON_AddNumberToObject(WINPR_JSON* const object, const char* c
 #endif
 }
 
-WINPR_JSON* WINPR_JSON_AddStringToObject(WINPR_JSON* const object, const char* const name,
-                                         const char* const string)
+WINPR_JSON* WINPR_JSON_AddStringToObject(WINPR_JSON* object, const char* name, const char* string)
 {
 #if defined(WITH_JSONC)
 	struct json_object* obj = json_object_new_string(string);
@@ -594,7 +590,7 @@ WINPR_JSON* WINPR_JSON_AddStringToObject(WINPR_JSON* const object, const char* c
 #endif
 }
 
-WINPR_JSON* WINPR_JSON_AddObjectToObject(WINPR_JSON* const object, const char* const name)
+WINPR_JSON* WINPR_JSON_AddObjectToObject(WINPR_JSON* object, const char* name)
 {
 #if defined(WITH_JSONC)
 	struct json_object* obj = json_object_new_object();
@@ -629,7 +625,7 @@ BOOL WINPR_JSON_AddItemToArray(WINPR_JSON* array, WINPR_JSON* item)
 #endif
 }
 
-WINPR_JSON* WINPR_JSON_AddArrayToObject(WINPR_JSON* const object, const char* const name)
+WINPR_JSON* WINPR_JSON_AddArrayToObject(WINPR_JSON* object, const char* name)
 {
 #if defined(WITH_JSONC)
 	struct json_object* obj = json_object_new_array();

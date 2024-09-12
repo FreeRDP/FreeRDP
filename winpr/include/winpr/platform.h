@@ -35,6 +35,10 @@
 	_Pragma("clang diagnostic ignored \"-Wstrict-prototypes\"")
 #define WINPR_PRAGMA_DIAG_IGNORED_RESERVED_ID_MACRO \
 	_Pragma("clang diagnostic ignored \"-Wreserved-id-macro\"")
+#define WINPR_PRAGMA_DIAG_IGNORED_UNUSED_MACRO \
+	_Pragma("clang diagnostic ignored \"-Wunused-macro\"")
+#define WINPR_PRAGMA_DIAG_IGNORED_RESERVED_IDENTIFIER \
+	_Pragma("clang diagnostic ignored \"-Wreserved-identifier\"")
 #define WINPR_PRAGMA_DIAG_IGNORED_ATOMIC_SEQ_CST \
 	_Pragma("clang diagnostic ignored \"-Watomic-implicit-seq-cst\"")
 #define WINPR_PRAGMA_DIAG_IGNORED_UNUSED_CONST_VAR \
@@ -60,6 +64,10 @@
 	_Pragma("GCC diagnostic ignored \"-Wstrict-prototypes\"")
 #define WINPR_PRAGMA_DIAG_IGNORED_RESERVED_ID_MACRO /* not supported _Pragma("GCC diagnostic \
                                                        ignored \"-Wreserved-id-macro\"") */
+#define WINPR_PRAGMA_DIAG_IGNORED_UNUSED_MACRO /* not supported _Pragma("GCC diagnostic ignored \
+                                                  \"-Wunused-macro\"") */
+#define WINPR_PRAGMA_DIAG_IGNORED_RESERVED_IDENTIFIER
+/* not supported	_Pragma("GCC diagnostic ignored \"-Wreserved-identifier\"") */
 #define WINPR_PRAGMA_DIAG_IGNORED_ATOMIC_SEQ_CST    /* not supported	_Pragma("GCC diagnostic \
                                                        ignored                               \
                                                        \"-Watomic-implicit-seq-cst\"") */
@@ -85,6 +93,8 @@
 #define WINPR_PRAGMA_DIAG_IGNORED_MISSING_PROTOTYPES
 #define WINPR_PRAGMA_DIAG_IGNORED_STRICT_PROTOTYPES
 #define WINPR_PRAGMA_DIAG_IGNORED_RESERVED_ID_MACRO
+#define WINPR_PRAGMA_DIAG_IGNORED_UNUSED_MACRO
+#define WINPR_PRAGMA_DIAG_IGNORED_RESERVED_IDENTIFIER
 #define WINPR_PRAGMA_DIAG_IGNORED_ATOMIC_SEQ_CST
 #define WINPR_PRAGMA_DIAG_IGNORED_UNUSED_CONST_VAR
 #define WINPR_PRAGMA_DIAG_IGNORED_FORMAT_SECURITY

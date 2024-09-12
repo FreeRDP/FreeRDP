@@ -409,7 +409,8 @@ BOOL nsc_context_set_pixel_format(NSC_CONTEXT* context, UINT32 pixel_format)
 }
 #endif
 
-BOOL nsc_context_set_parameters(NSC_CONTEXT* context, NSC_PARAMETER what, UINT32 value)
+BOOL nsc_context_set_parameters(NSC_CONTEXT* WINPR_RESTRICT context, NSC_PARAMETER what,
+                                UINT32 value)
 {
 	if (!context)
 		return FALSE;
@@ -434,8 +435,8 @@ BOOL nsc_context_set_parameters(NSC_CONTEXT* context, NSC_PARAMETER what, UINT32
 	return TRUE;
 }
 
-BOOL nsc_process_message(NSC_CONTEXT* context, UINT16 bpp, UINT32 width, UINT32 height,
-                         const BYTE* WINPR_RESTRICT data, UINT32 length,
+BOOL nsc_process_message(NSC_CONTEXT* WINPR_RESTRICT context, UINT16 bpp, UINT32 width,
+                         UINT32 height, const BYTE* data, UINT32 length,
                          BYTE* WINPR_RESTRICT pDstData, UINT32 DstFormat, UINT32 nDstStride,
                          UINT32 nXDst, UINT32 nYDst, UINT32 nWidth, UINT32 nHeight, UINT32 flip)
 {

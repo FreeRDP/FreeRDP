@@ -26,7 +26,7 @@
 
 /** The command line name of the channel
  *
- *  \version 3.0.0
+ *  \since version 3.0.0
  */
 #define LOCATION_CHANNEL_NAME "location"
 

@@ -26,7 +26,7 @@
 
 /** The command line name of the channel
  *
- *  \version 3.0.0
+ *  \since version 3.0.0
  */
 #define RDPECAM_CHANNEL_NAME "rdpecam"
 #define RDPECAM_DVC_CHANNEL_NAME "rdpecam"

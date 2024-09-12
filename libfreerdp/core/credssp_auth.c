@@ -463,6 +463,8 @@ int credssp_auth_authenticate(rdpCredsspAuth* auth)
 		WINPR_ASSERT(auth->table->QueryContextAttributes);
 		status =
 		    auth->table->QueryContextAttributes(&auth->context, SECPKG_ATTR_SIZES, &auth->sizes);
+		WLog_DBG(TAG, "QueryContextAttributes returned %s [0x%08" PRIx32 "]",
+		         GetSecurityStatusString(status), status);
 		WLog_DBG(TAG, "Context sizes: cbMaxSignature=%d, cbSecurityTrailer=%d",
 		         auth->sizes.cbMaxSignature, auth->sizes.cbSecurityTrailer);
 

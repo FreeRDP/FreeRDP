@@ -32,7 +32,7 @@
 
 /** The command line name of the channel
  *
- *  \version 3.0.0
+ *  \since version 3.0.0
  */
 #define TSMF_CHANNEL_NAME "tsmf"
 #define TSMF_DVC_CHANNEL_NAME "TSMF"

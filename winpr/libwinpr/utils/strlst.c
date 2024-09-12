@@ -35,7 +35,7 @@ void string_list_free(char** string_list)
 	free(string_list);
 }
 
-int string_list_length(const char* const* string_list)
+int string_list_length(const char** string_list)
 {
 	int i = 0;
 	for (; string_list[i]; i++)
@@ -44,7 +44,7 @@ int string_list_length(const char* const* string_list)
 	return i;
 }
 
-char** string_list_copy(const char* const* string_list)
+char** string_list_copy(const char** string_list)
 {
 	int length = string_list_length(string_list);
 	char** copy = calloc(length + 1, sizeof(char*));
@@ -63,7 +63,7 @@ char** string_list_copy(const char* const* string_list)
 	return copy;
 }
 
-void string_list_print(FILE* out, const char* const* string_list)
+void string_list_print(FILE* out, const char** string_list)
 {
 	for (int j = 0; string_list[j]; j++)
 	{

@@ -33,18 +33,21 @@ extern "C"
 
 	typedef struct S_CLEAR_CONTEXT CLEAR_CONTEXT;
 
-	FREERDP_API int clear_compress(CLEAR_CONTEXT* clear, const BYTE* pSrcData, UINT32 SrcSize,
-	                               BYTE** ppDstData, UINT32* pDstSize);
+	FREERDP_API int clear_compress(CLEAR_CONTEXT* WINPR_RESTRICT clear,
+	                               const BYTE* WINPR_RESTRICT pSrcData, UINT32 SrcSize,
+	                               BYTE** WINPR_RESTRICT ppDstData,
+	                               UINT32* WINPR_RESTRICT pDstSize);
 
-	FREERDP_API INT32 clear_decompress(CLEAR_CONTEXT* clear, const BYTE* pSrcData, UINT32 SrcSize,
-	                                   UINT32 nWidth, UINT32 nHeight, BYTE* pDstData,
+	FREERDP_API INT32 clear_decompress(CLEAR_CONTEXT* WINPR_RESTRICT clear,
+	                                   const BYTE* WINPR_RESTRICT pSrcData, UINT32 SrcSize,
+	                                   UINT32 nWidth, UINT32 nHeight, BYTE* WINPR_RESTRICT pDstData,
 	                                   UINT32 DstFormat, UINT32 nDstStep, UINT32 nXDst,
 	                                   UINT32 nYDst, UINT32 nDstWidth, UINT32 nDstHeight,
-	                                   const gdiPalette* palette);
+	                                   const gdiPalette* WINPR_RESTRICT palette);
 
-	FREERDP_API BOOL clear_context_reset(CLEAR_CONTEXT* clear);
+	FREERDP_API BOOL clear_context_reset(CLEAR_CONTEXT* WINPR_RESTRICT clear);
 
-	FREERDP_API void clear_context_free(CLEAR_CONTEXT* clear);
+	FREERDP_API void clear_context_free(CLEAR_CONTEXT* WINPR_RESTRICT clear);
 
 	WINPR_ATTR_MALLOC(clear_context_free, 1)
 	FREERDP_API CLEAR_CONTEXT* clear_context_new(BOOL Compressor);

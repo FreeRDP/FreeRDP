@@ -177,8 +177,8 @@ static UINT32 sdl_orientaion_to_rdp(SDL_DisplayOrientation orientation)
 
 static Uint32 scale(Uint32 val, float scale)
 {
-	const float dval = static_cast<float>(val);
-	const float sval = dval / scale;
+	const auto dval = static_cast<float>(val);
+	const auto sval = dval / scale;
 	return static_cast<Uint32>(sval);
 }
 
@@ -246,8 +246,8 @@ static BOOL sdl_apply_display_properties(SdlContext* sdl)
 				}
 			}
 
-			const float dw = 1.0f * rect.w / scaleRect.w;
-			const float dh = 1.0f * rect.h / scaleRect.h;
+			const float dw = 1.0f * static_cast<float>(rect.w) / static_cast<float>(scaleRect.w);
+			const float dh = 1.0f * static_cast<float>(rect.h) / static_cast<float>(scaleRect.h);
 			hdpi /= dw;
 			vdpi /= dh;
 		}

@@ -634,9 +634,9 @@ BOOL interleaved_decompress(BITMAP_INTERLEAVED_CONTEXT* WINPR_RESTRICT interleav
 }
 
 BOOL interleaved_compress(BITMAP_INTERLEAVED_CONTEXT* WINPR_RESTRICT interleaved,
-                          BYTE* WINPR_RESTRICT pDstData, UINT32* pDstSize, UINT32 nWidth,
-                          UINT32 nHeight, const BYTE* WINPR_RESTRICT pSrcData, UINT32 SrcFormat,
-                          UINT32 nSrcStep, UINT32 nXSrc, UINT32 nYSrc,
+                          BYTE* WINPR_RESTRICT pDstData, UINT32* WINPR_RESTRICT pDstSize,
+                          UINT32 nWidth, UINT32 nHeight, const BYTE* WINPR_RESTRICT pSrcData,
+                          UINT32 SrcFormat, UINT32 nSrcStep, UINT32 nXSrc, UINT32 nYSrc,
                           const gdiPalette* WINPR_RESTRICT palette, UINT32 bpp)
 {
 	BOOL status = 0;

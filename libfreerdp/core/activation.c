@@ -363,7 +363,6 @@ BOOL rdp_send_client_persistent_key_list_pdu(rdpRdp* rdp)
 	info.numEntriesCache3 = MIN(keyCount, info.totalEntriesCache3);
 	keyCount -= info.numEntriesCache3;
 	info.numEntriesCache4 = MIN(keyCount, info.totalEntriesCache4);
-	keyCount -= info.numEntriesCache4;
 
 	info.totalEntriesCache0 = info.numEntriesCache0;
 	info.totalEntriesCache1 = info.numEntriesCache1;

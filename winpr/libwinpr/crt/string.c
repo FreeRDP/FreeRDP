@@ -207,7 +207,11 @@ int winpr_vasprintf(char** s, size_t* slen, WINPR_FORMAT_ARG const char* templ, 
 	const int plen = vsprintf(str, templ, ap);
 	va_end(ap);
 
-	WINPR_ASSERT(length == plen);
+	if (length != plen)
+	{
+		free(str);
+		return -1;
+	}
 	*s = str;
 	*slen = (size_t)length;
 	return length;

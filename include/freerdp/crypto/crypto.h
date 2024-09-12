@@ -46,7 +46,7 @@ extern "C"
 	 *  @param length The lenght of the data in bytes
 	 *  @param withCrLf Option to split the encoded data with CRLF linebreaks
 	 *
-	 *  @version 3.0.0
+	 *  @since version 3.0.0
 	 *
 	 *  @return The encoded BASE64 string or \b NULL if failed
 	 */

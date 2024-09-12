@@ -4166,7 +4166,7 @@ static void fill_credential_strings(COMMAND_LINE_ARGUMENT_A* args)
 static int freerdp_client_settings_parse_command_line_arguments_int(
     rdpSettings* settings, int argc, char* argv[], BOOL allowUnknown,
     COMMAND_LINE_ARGUMENT_A* largs, size_t count,
-    int (*handle_option)(const COMMAND_LINE_ARGUMENT* arg, void* custom), void* handle_userdata)
+    int (*handle_option)(const COMMAND_LINE_ARGUMENT_A* arg, void* custom), void* handle_userdata)
 {
 	char* user = NULL;
 	int status = 0;
@@ -5663,7 +5663,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 int freerdp_client_settings_parse_command_line_arguments_ex(
     rdpSettings* settings, int oargc, char** oargv, BOOL allowUnknown,
     COMMAND_LINE_ARGUMENT_A* args, size_t count,
-    int (*handle_option)(const COMMAND_LINE_ARGUMENT* arg, void* custom), void* handle_userdata)
+    int (*handle_option)(const COMMAND_LINE_ARGUMENT_A* arg, void* custom), void* handle_userdata)
 {
 	int argc = oargc;
 	char** argv = oargv;

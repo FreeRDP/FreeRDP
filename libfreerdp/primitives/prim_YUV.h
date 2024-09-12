@@ -25,7 +25,7 @@
 #include <freerdp/config.h>
 #include <freerdp/primitives.h>
 
-void primitives_init_YUV_ssse3(primitives_t* prims);
-void primitives_init_YUV_neon(primitives_t* prims);
+void primitives_init_YUV_ssse3(primitives_t* WINPR_RESTRICT prims);
+void primitives_init_YUV_neon(primitives_t* WINPR_RESTRICT prims);
 
 #endif

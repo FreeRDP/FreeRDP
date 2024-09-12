@@ -106,7 +106,7 @@ const char* _comm_serial_ioctl_name(ULONG number)
 {
 	for (size_t x = 0; x < ARRAYSIZE(S_SERIAL_IOCTL_NAMES); x++)
 	{
-		const _SERIAL_IOCTL_NAME* const cur = &S_SERIAL_IOCTL_NAMES[x];
+		const _SERIAL_IOCTL_NAME* cur = &S_SERIAL_IOCTL_NAMES[x];
 		if (cur->number == number)
 			return cur->name;
 	}

@@ -192,7 +192,7 @@ extern "C"
 #endif /* !WAVE_FORMAT_LUCENT_G723 */
 
 	/** Opus format identifier
-	 *  \version 3.0.0
+	 *  \since version 3.0.0
 	 */
 #define WAVE_FORMAT_OPUS 0x704F
 #define WAVE_FORMAT_AAC_MS 0xA106

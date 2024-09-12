@@ -755,9 +755,6 @@ static state_run_t rdp_peer_handle_state_active(freerdp_peer* client)
 	WINPR_ASSERT(client);
 	WINPR_ASSERT(client->context);
 
-	rdpRdp* rdp = client->context->rdp;
-	WINPR_ASSERT(rdp);
-
 	if (!client->connected)
 	{
 		/**
@@ -1131,8 +1128,11 @@ static state_run_t peer_recv_callback_internal(rdpTransport* transport, wStream*
 				{
 					if (!rdp_server_transition_to_state(rdp, CONNECTION_STATE_ACTIVE))
 						ret = STATE_RUN_FAILED;
-					update_reset_state(rdp->update);
-					ret = STATE_RUN_CONTINUE;
+					else
+					{
+						update_reset_state(rdp->update);
+						ret = STATE_RUN_CONTINUE;
+					}
 				}
 				else
 					ret = peer_unexpected_client_message(rdp, FINALIZE_CS_FONT_LIST_PDU);

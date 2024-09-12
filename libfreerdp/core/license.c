@@ -348,23 +348,22 @@ static state_run_t license_server_recv(rdpLicense* license, wStream* s);
 
 #ifdef WITH_DEBUG_LICENSE
 
-static const char* const error_codes[] = { "ERR_UNKNOWN",
-	                                       "ERR_INVALID_SERVER_CERTIFICATE",
-	                                       "ERR_NO_LICENSE",
-	                                       "ERR_INVALID_MAC",
-	                                       "ERR_INVALID_SCOPE",
-	                                       "ERR_UNKNOWN",
-	                                       "ERR_NO_LICENSE_SERVER",
-	                                       "STATUS_VALID_CLIENT",
-	                                       "ERR_INVALID_CLIENT",
-	                                       "ERR_UNKNOWN",
-	                                       "ERR_UNKNOWN",
-	                                       "ERR_INVALID_PRODUCT_ID",
-	                                       "ERR_INVALID_MESSAGE_LENGTH" };
+static const char* error_codes[] = { "ERR_UNKNOWN",
+	                                 "ERR_INVALID_SERVER_CERTIFICATE",
+	                                 "ERR_NO_LICENSE",
+	                                 "ERR_INVALID_MAC",
+	                                 "ERR_INVALID_SCOPE",
+	                                 "ERR_UNKNOWN",
+	                                 "ERR_NO_LICENSE_SERVER",
+	                                 "STATUS_VALID_CLIENT",
+	                                 "ERR_INVALID_CLIENT",
+	                                 "ERR_UNKNOWN",
+	                                 "ERR_UNKNOWN",
+	                                 "ERR_INVALID_PRODUCT_ID",
+	                                 "ERR_INVALID_MESSAGE_LENGTH" };
 
-static const char* const state_transitions[] = { "ST_UNKNOWN", "ST_TOTAL_ABORT", "ST_NO_TRANSITION",
-	                                             "ST_RESET_PHASE_TO_START",
-	                                             "ST_RESEND_LAST_MESSAGE" };
+static const char* state_transitions[] = { "ST_UNKNOWN", "ST_TOTAL_ABORT", "ST_NO_TRANSITION",
+	                                       "ST_RESET_PHASE_TO_START", "ST_RESEND_LAST_MESSAGE" };
 
 static void license_print_product_info(const LICENSE_PRODUCT_INFO* productInfo)
 {
@@ -2851,8 +2850,8 @@ BOOL license_server_configure(rdpLicense* license)
 	    freerdp_settings_get_uint32(settings, FreeRDP_ServerLicenseProductVersion);
 	const UINT32 issuerCount =
 	    freerdp_settings_get_uint32(settings, FreeRDP_ServerLicenseProductIssuersCount);
-	const char* const* issuers = (const char* const*)freerdp_settings_get_pointer(
-	    settings, FreeRDP_ServerLicenseProductIssuers);
+	const char** issuers =
+	    (const char**)freerdp_settings_get_pointer(settings, FreeRDP_ServerLicenseProductIssuers);
 
 	WINPR_ASSERT(CompanyName);
 	WINPR_ASSERT(ProductName);

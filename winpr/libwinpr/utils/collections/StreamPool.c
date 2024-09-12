@@ -243,8 +243,8 @@ static void StreamPool_Remove(wStreamPool* pool, wStream* s)
 	for (size_t x = 0; x < pool->aSize; x++)
 	{
 		wStream* cs = pool->aArray[x];
-
-		WINPR_ASSERT(cs != s);
+		if (cs == s)
+			return;
 	}
 	pool->aArray[(pool->aSize)++] = s;
 	StreamPool_RemoveUsed(pool, s);
