@@ -177,8 +177,8 @@ static UINT32 sdl_orientaion_to_rdp(SDL_DisplayOrientation orientation)
 
 static Uint32 scale(Uint32 val, float scale)
 {
-	const float dval = static_cast<float>(val);
-	const float sval = dval / scale;
+	const auto dval = static_cast<float>(val);
+	const auto sval = dval / scale;
 	return static_cast<Uint32>(sval);
 }
 

@@ -125,8 +125,8 @@ SDL_Texture* SdlWidget::render_text(SDL_Renderer* renderer, const std::string& t
 
 static float scale(float dw, float dh)
 {
-	const double scale = dh / dw;
-	const double dr = dh * scale;
+	const auto scale = dh / dw;
+	const auto dr = dh * scale;
 	return dr;
 }
 

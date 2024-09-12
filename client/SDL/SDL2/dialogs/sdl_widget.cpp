@@ -105,9 +105,9 @@ SDL_Texture* SdlWidget::render_text(SDL_Renderer* renderer, const std::string& t
 	dst = _rect;
 	dst.x += hpadding;
 	dst.w -= 2 * hpadding;
-	const float scale = static_cast<float>(dst.h) / static_cast<float>(src.h);
-	const float sws = static_cast<float>(src.w) * scale;
-	const float dws = static_cast<float>(dst.w) / scale;
+	const auto scale = static_cast<float>(dst.h) / static_cast<float>(src.h);
+	const auto sws = static_cast<float>(src.w) * scale;
+	const auto dws = static_cast<float>(dst.w) / scale;
 	if (static_cast<float>(dst.w) > sws)
 		dst.w = static_cast<int>(sws);
 	if (static_cast<float>(src.w) > dws)
@@ -120,10 +120,10 @@ SDL_Texture* SdlWidget::render_text(SDL_Renderer* renderer, const std::string& t
 
 static int scale(int w, int h)
 {
-	const double dw = static_cast<double>(w);
-	const double dh = static_cast<double>(h);
-	const double scale = dh / dw;
-	const double dr = dh * scale;
+	const auto dw = static_cast<double>(w);
+	const auto dh = static_cast<double>(h);
+	const auto scale = dh / dw;
+	const auto dr = dh * scale;
 	return static_cast<int>(dr);
 }
 
