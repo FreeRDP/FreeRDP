@@ -70,7 +70,7 @@ static pstatus_t general_add_16s_inplace(INT16* WINPR_RESTRICT pSrcDst1,
 }
 
 /* ------------------------------------------------------------------------- */
-void primitives_init_add(primitives_t* prims)
+void primitives_init_add(primitives_t* WINPR_RESTRICT prims)
 {
 	prims->add_16s = general_add_16s;
 	prims->add_16s_inplace = general_add_16s_inplace;

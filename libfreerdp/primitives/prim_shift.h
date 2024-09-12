@@ -25,6 +25,6 @@
 #include <freerdp/config.h>
 #include <freerdp/primitives.h>
 
-extern void primitives_init_shift_sse3(primitives_t* prims);
+extern void primitives_init_shift_sse3(primitives_t* WINPR_RESTRICT prims);
 
 #endif

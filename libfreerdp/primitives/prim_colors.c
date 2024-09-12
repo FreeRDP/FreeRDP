@@ -498,7 +498,7 @@ static pstatus_t general_RGBToRGB_16s8u_P3AC4R(
 	}
 }
 /* ------------------------------------------------------------------------- */
-void primitives_init_colors(primitives_t* prims)
+void primitives_init_colors(primitives_t* WINPR_RESTRICT prims)
 {
 	prims->yCbCrToRGB_16s8u_P3AC4R = general_yCbCrToRGB_16s8u_P3AC4R;
 	prims->yCbCrToRGB_16s16s_P3P3 = general_yCbCrToRGB_16s16s_P3P3;
@@ -507,7 +507,7 @@ void primitives_init_colors(primitives_t* prims)
 }
 
 /* ------------------------------------------------------------------------- */
-void primitives_init_colors_opt(primitives_t* prims)
+void primitives_init_colors_opt(primitives_t* WINPR_RESTRICT prims)
 {
 	primitives_init_colors_sse2(prims);
 	primitives_init_colors_neon(prims);

@@ -34,54 +34,56 @@ extern "C"
 
 	WINPR_API int WINPR_JSON_version(char* buffer, size_t len);
 
-	WINPR_API WINPR_JSON* WINPR_JSON_Parse(const char* value);
-	WINPR_API WINPR_JSON* WINPR_JSON_ParseWithLength(const char* value, size_t buffer_length);
+	WINPR_API WINPR_JSON* WINPR_JSON_Parse(const char* const value);
+	WINPR_API WINPR_JSON* WINPR_JSON_ParseWithLength(const char* const value, size_t buffer_length);
 
 	WINPR_API void WINPR_JSON_Delete(WINPR_JSON* item);
 
-	WINPR_API size_t WINPR_JSON_GetArraySize(const WINPR_JSON* array);
-	WINPR_API WINPR_JSON* WINPR_JSON_GetArrayItem(const WINPR_JSON* array, size_t index);
+	WINPR_API size_t WINPR_JSON_GetArraySize(const WINPR_JSON* const array);
+	WINPR_API WINPR_JSON* WINPR_JSON_GetArrayItem(const WINPR_JSON* const array, size_t index);
 
-	WINPR_API WINPR_JSON* WINPR_JSON_GetObjectItem(const WINPR_JSON* object, const char* string);
-	WINPR_API WINPR_JSON* WINPR_JSON_GetObjectItemCaseSensitive(const WINPR_JSON* object,
-	                                                            const char* string);
-	WINPR_API BOOL WINPR_JSON_HasObjectItem(const WINPR_JSON* object, const char* string);
+	WINPR_API WINPR_JSON* WINPR_JSON_GetObjectItem(const WINPR_JSON* const object,
+	                                               const char* const string);
+	WINPR_API WINPR_JSON* WINPR_JSON_GetObjectItemCaseSensitive(const WINPR_JSON* const object,
+	                                                            const char* const string);
+	WINPR_API BOOL WINPR_JSON_HasObjectItem(const WINPR_JSON* const object,
+	                                        const char* const string);
 
 	WINPR_API const char* WINPR_JSON_GetErrorPtr(void);
 
 	WINPR_API const char* WINPR_JSON_GetStringValue(WINPR_JSON* item);
-	WINPR_API double WINPR_JSON_GetNumberValue(const WINPR_JSON* item);
+	WINPR_API double WINPR_JSON_GetNumberValue(const WINPR_JSON* const item);
 
-	WINPR_API BOOL WINPR_JSON_IsInvalid(const WINPR_JSON* item);
-	WINPR_API BOOL WINPR_JSON_IsFalse(const WINPR_JSON* item);
-	WINPR_API BOOL WINPR_JSON_IsTrue(const WINPR_JSON* item);
-	WINPR_API BOOL WINPR_JSON_IsBool(const WINPR_JSON* item);
-	WINPR_API BOOL WINPR_JSON_IsNull(const WINPR_JSON* item);
-	WINPR_API BOOL WINPR_JSON_IsNumber(const WINPR_JSON* item);
-	WINPR_API BOOL WINPR_JSON_IsString(const WINPR_JSON* item);
-	WINPR_API BOOL WINPR_JSON_IsArray(const WINPR_JSON* item);
-	WINPR_API BOOL WINPR_JSON_IsObject(const WINPR_JSON* item);
+	WINPR_API BOOL WINPR_JSON_IsInvalid(const WINPR_JSON* const item);
+	WINPR_API BOOL WINPR_JSON_IsFalse(const WINPR_JSON* const item);
+	WINPR_API BOOL WINPR_JSON_IsTrue(const WINPR_JSON* const item);
+	WINPR_API BOOL WINPR_JSON_IsBool(const WINPR_JSON* const item);
+	WINPR_API BOOL WINPR_JSON_IsNull(const WINPR_JSON* const item);
+	WINPR_API BOOL WINPR_JSON_IsNumber(const WINPR_JSON* const item);
+	WINPR_API BOOL WINPR_JSON_IsString(const WINPR_JSON* const item);
+	WINPR_API BOOL WINPR_JSON_IsArray(const WINPR_JSON* const item);
+	WINPR_API BOOL WINPR_JSON_IsObject(const WINPR_JSON* const item);
 
 	WINPR_API WINPR_JSON* WINPR_JSON_CreateNull(void);
 	WINPR_API WINPR_JSON* WINPR_JSON_CreateTrue(void);
 	WINPR_API WINPR_JSON* WINPR_JSON_CreateFalse(void);
 	WINPR_API WINPR_JSON* WINPR_JSON_CreateBool(BOOL boolean);
 	WINPR_API WINPR_JSON* WINPR_JSON_CreateNumber(double num);
-	WINPR_API WINPR_JSON* WINPR_JSON_CreateString(const char* string);
+	WINPR_API WINPR_JSON* WINPR_JSON_CreateString(const char* const string);
 	WINPR_API WINPR_JSON* WINPR_JSON_CreateArray(void);
 	WINPR_API WINPR_JSON* WINPR_JSON_CreateObject(void);
 
-	WINPR_API WINPR_JSON* WINPR_JSON_AddNullToObject(WINPR_JSON* object, const char* name);
-	WINPR_API WINPR_JSON* WINPR_JSON_AddTrueToObject(WINPR_JSON* object, const char* name);
-	WINPR_API WINPR_JSON* WINPR_JSON_AddFalseToObject(WINPR_JSON* object, const char* name);
-	WINPR_API WINPR_JSON* WINPR_JSON_AddBoolToObject(WINPR_JSON* object, const char* name,
+	WINPR_API WINPR_JSON* WINPR_JSON_AddNullToObject(WINPR_JSON* object, const char* const name);
+	WINPR_API WINPR_JSON* WINPR_JSON_AddTrueToObject(WINPR_JSON* object, const char* const name);
+	WINPR_API WINPR_JSON* WINPR_JSON_AddFalseToObject(WINPR_JSON* object, const char* const name);
+	WINPR_API WINPR_JSON* WINPR_JSON_AddBoolToObject(WINPR_JSON* object, const char* const name,
 	                                                 BOOL boolean);
-	WINPR_API WINPR_JSON* WINPR_JSON_AddNumberToObject(WINPR_JSON* object, const char* name,
+	WINPR_API WINPR_JSON* WINPR_JSON_AddNumberToObject(WINPR_JSON* object, const char* const name,
 	                                                   double number);
-	WINPR_API WINPR_JSON* WINPR_JSON_AddStringToObject(WINPR_JSON* object, const char* name,
-	                                                   const char* string);
-	WINPR_API WINPR_JSON* WINPR_JSON_AddObjectToObject(WINPR_JSON* object, const char* name);
-	WINPR_API WINPR_JSON* WINPR_JSON_AddArrayToObject(WINPR_JSON* object, const char* name);
+	WINPR_API WINPR_JSON* WINPR_JSON_AddStringToObject(WINPR_JSON* object, const char* const name,
+	                                                   const char* const string);
+	WINPR_API WINPR_JSON* WINPR_JSON_AddObjectToObject(WINPR_JSON* object, const char* const name);
+	WINPR_API WINPR_JSON* WINPR_JSON_AddArrayToObject(WINPR_JSON* object, const char* const name);
 
 	WINPR_API BOOL WINPR_JSON_AddItemToArray(WINPR_JSON* array, WINPR_JSON* item);
 

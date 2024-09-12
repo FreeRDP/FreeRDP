@@ -511,7 +511,7 @@ BOOL freerdp_image_copy_from_pointer_data(BYTE* WINPR_RESTRICT pDstData, UINT32 
                                           UINT32 nWidth, UINT32 nHeight,
                                           const BYTE* WINPR_RESTRICT xorMask, UINT32 xorMaskLength,
                                           const BYTE* WINPR_RESTRICT andMask, UINT32 andMaskLength,
-                                          UINT32 xorBpp, const gdiPalette* palette)
+                                          UINT32 xorBpp, const gdiPalette* WINPR_RESTRICT palette)
 {
 	UINT32 dstBitsPerPixel = 0;
 	UINT32 dstBytesPerPixel = 0;
@@ -1598,11 +1598,11 @@ UINT32 FreeRDPGetColor(UINT32 format, BYTE r, BYTE g, BYTE b, BYTE a)
 	}
 }
 
-BOOL freerdp_image_copy_no_overlap(BYTE* pDstData, DWORD DstFormat, UINT32 nDstStep, UINT32 nXDst,
-                                   UINT32 nYDst, UINT32 nWidth, UINT32 nHeight,
-                                   const BYTE* pSrcData, DWORD SrcFormat, UINT32 nSrcStep,
-                                   UINT32 nXSrc, UINT32 nYSrc, const gdiPalette* palette,
-                                   UINT32 flags)
+BOOL freerdp_image_copy_no_overlap(BYTE* WINPR_RESTRICT pDstData, DWORD DstFormat, UINT32 nDstStep,
+                                   UINT32 nXDst, UINT32 nYDst, UINT32 nWidth, UINT32 nHeight,
+                                   const BYTE* WINPR_RESTRICT pSrcData, DWORD SrcFormat,
+                                   UINT32 nSrcStep, UINT32 nXSrc, UINT32 nYSrc,
+                                   const gdiPalette* WINPR_RESTRICT palette, UINT32 flags)
 {
 	static primitives_t* prims = NULL;
 	if (!prims)

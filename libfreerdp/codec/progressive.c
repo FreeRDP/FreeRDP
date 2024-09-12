@@ -2464,9 +2464,11 @@ BOOL progressive_rfx_write_message_progressive_simple(PROGRESSIVE_CONTEXT* progr
 	return rfx_write_message_progressive_simple(context, s, msg);
 }
 
-int progressive_compress(PROGRESSIVE_CONTEXT* progressive, const BYTE* pSrcData, UINT32 SrcSize,
-                         UINT32 SrcFormat, UINT32 Width, UINT32 Height, UINT32 ScanLine,
-                         const REGION16* invalidRegion, BYTE** ppDstData, UINT32* pDstSize)
+int progressive_compress(PROGRESSIVE_CONTEXT* WINPR_RESTRICT progressive,
+                         const BYTE* WINPR_RESTRICT pSrcData, UINT32 SrcSize, UINT32 SrcFormat,
+                         UINT32 Width, UINT32 Height, UINT32 ScanLine,
+                         const REGION16* WINPR_RESTRICT invalidRegion,
+                         BYTE** WINPR_RESTRICT ppDstData, UINT32* WINPR_RESTRICT pDstSize)
 {
 	BOOL rc = FALSE;
 	int res = -6;
@@ -2587,7 +2589,7 @@ fail:
 	return res;
 }
 
-BOOL progressive_context_reset(PROGRESSIVE_CONTEXT* progressive)
+BOOL progressive_context_reset(PROGRESSIVE_CONTEXT* WINPR_RESTRICT progressive)
 {
 	if (!progressive)
 		return FALSE;

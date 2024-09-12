@@ -33,9 +33,10 @@ extern "C"
 {
 #endif
 
-	FREERDP_API SSIZE_T freerdp_bitmap_compress(const void* in_data, UINT32 width, UINT32 height,
-	                                            wStream* s, UINT32 bpp, UINT32 byte_limit,
-	                                            UINT32 start_line, wStream* temp_s, UINT32 e);
+	FREERDP_API SSIZE_T freerdp_bitmap_compress(const void* WINPR_RESTRICT srcData, UINT32 width,
+	                                            UINT32 height, wStream* WINPR_RESTRICT s,
+	                                            UINT32 bpp, UINT32 byte_limit, UINT32 start_line,
+	                                            wStream* WINPR_RESTRICT temp_s, UINT32 e);
 
 #ifdef __cplusplus
 }

@@ -280,30 +280,30 @@ static INLINE BYTE YUV2B(INT32 Y, INT32 U, INT32 V)
 }
 
 /* Function prototypes for all the init/deinit routines. */
-FREERDP_LOCAL void primitives_init_copy(primitives_t* prims);
-FREERDP_LOCAL void primitives_init_set(primitives_t* prims);
-FREERDP_LOCAL void primitives_init_add(primitives_t* prims);
-FREERDP_LOCAL void primitives_init_andor(primitives_t* prims);
-FREERDP_LOCAL void primitives_init_shift(primitives_t* prims);
-FREERDP_LOCAL void primitives_init_sign(primitives_t* prims);
-FREERDP_LOCAL void primitives_init_alphaComp(primitives_t* prims);
-FREERDP_LOCAL void primitives_init_colors(primitives_t* prims);
-FREERDP_LOCAL void primitives_init_YCoCg(primitives_t* prims);
-FREERDP_LOCAL void primitives_init_YUV(primitives_t* prims);
+FREERDP_LOCAL void primitives_init_copy(primitives_t* WINPR_RESTRICT prims);
+FREERDP_LOCAL void primitives_init_set(primitives_t* WINPR_RESTRICT prims);
+FREERDP_LOCAL void primitives_init_add(primitives_t* WINPR_RESTRICT prims);
+FREERDP_LOCAL void primitives_init_andor(primitives_t* WINPR_RESTRICT prims);
+FREERDP_LOCAL void primitives_init_shift(primitives_t* WINPR_RESTRICT prims);
+FREERDP_LOCAL void primitives_init_sign(primitives_t* WINPR_RESTRICT prims);
+FREERDP_LOCAL void primitives_init_alphaComp(primitives_t* WINPR_RESTRICT prims);
+FREERDP_LOCAL void primitives_init_colors(primitives_t* WINPR_RESTRICT prims);
+FREERDP_LOCAL void primitives_init_YCoCg(primitives_t* WINPR_RESTRICT prims);
+FREERDP_LOCAL void primitives_init_YUV(primitives_t* WINPR_RESTRICT prims);
 
-FREERDP_LOCAL void primitives_init_copy_opt(primitives_t* prims);
-FREERDP_LOCAL void primitives_init_set_opt(primitives_t* prims);
-FREERDP_LOCAL void primitives_init_add_opt(primitives_t* prims);
-FREERDP_LOCAL void primitives_init_andor_opt(primitives_t* prims);
-FREERDP_LOCAL void primitives_init_shift_opt(primitives_t* prims);
-FREERDP_LOCAL void primitives_init_sign_opt(primitives_t* prims);
-FREERDP_LOCAL void primitives_init_alphaComp_opt(primitives_t* prims);
-FREERDP_LOCAL void primitives_init_colors_opt(primitives_t* prims);
-FREERDP_LOCAL void primitives_init_YCoCg_opt(primitives_t* prims);
-FREERDP_LOCAL void primitives_init_YUV_opt(primitives_t* prims);
+FREERDP_LOCAL void primitives_init_copy_opt(primitives_t* WINPR_RESTRICT prims);
+FREERDP_LOCAL void primitives_init_set_opt(primitives_t* WINPR_RESTRICT prims);
+FREERDP_LOCAL void primitives_init_add_opt(primitives_t* WINPR_RESTRICT prims);
+FREERDP_LOCAL void primitives_init_andor_opt(primitives_t* WINPR_RESTRICT prims);
+FREERDP_LOCAL void primitives_init_shift_opt(primitives_t* WINPR_RESTRICT prims);
+FREERDP_LOCAL void primitives_init_sign_opt(primitives_t* WINPR_RESTRICT prims);
+FREERDP_LOCAL void primitives_init_alphaComp_opt(primitives_t* WINPR_RESTRICT prims);
+FREERDP_LOCAL void primitives_init_colors_opt(primitives_t* WINPR_RESTRICT prims);
+FREERDP_LOCAL void primitives_init_YCoCg_opt(primitives_t* WINPR_RESTRICT prims);
+FREERDP_LOCAL void primitives_init_YUV_opt(primitives_t* WINPR_RESTRICT prims);
 
 #if defined(WITH_OPENCL)
-FREERDP_LOCAL BOOL primitives_init_opencl(primitives_t* prims);
+FREERDP_LOCAL BOOL primitives_init_opencl(primitives_t* WINPR_RESTRICT prims);
 #endif
 
 FREERDP_LOCAL primitives_t* primitives_get_by_type(DWORD type);

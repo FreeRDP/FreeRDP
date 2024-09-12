@@ -372,7 +372,7 @@ static pstatus_t generic_image_copy_no_overlap(BYTE* WINPR_RESTRICT pDstData, DW
 }
 
 /* ------------------------------------------------------------------------- */
-void primitives_init_copy(primitives_t* prims)
+void primitives_init_copy(primitives_t* WINPR_RESTRICT prims)
 {
 	/* Start with the default. */
 	prims->copy_8u = general_copy_8u;

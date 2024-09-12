@@ -110,7 +110,7 @@ int WINPR_JSON_version(char* buffer, size_t len)
 #endif
 }
 
-WINPR_JSON* WINPR_JSON_Parse(const char* value)
+WINPR_JSON* WINPR_JSON_Parse(const char* const value)
 {
 #if defined(WITH_JSONC)
 	return json_tokener_parse(value);
@@ -122,7 +122,7 @@ WINPR_JSON* WINPR_JSON_Parse(const char* value)
 #endif
 }
 
-WINPR_JSON* WINPR_JSON_ParseWithLength(const char* value, size_t buffer_length)
+WINPR_JSON* WINPR_JSON_ParseWithLength(const char* const value, size_t buffer_length)
 {
 #if defined(WITH_JSONC)
 	WINPR_ASSERT(buffer_length <= INT_MAX);
@@ -152,7 +152,7 @@ void WINPR_JSON_Delete(WINPR_JSON* item)
 #endif
 }
 
-WINPR_JSON* WINPR_JSON_GetArrayItem(const WINPR_JSON* array, size_t index)
+WINPR_JSON* WINPR_JSON_GetArrayItem(const WINPR_JSON* const array, size_t index)
 {
 #if defined(WITH_JSONC)
 	return json_object_array_get_idx((const json_object*)array, index);
@@ -166,7 +166,7 @@ WINPR_JSON* WINPR_JSON_GetArrayItem(const WINPR_JSON* array, size_t index)
 #endif
 }
 
-size_t WINPR_JSON_GetArraySize(const WINPR_JSON* array)
+size_t WINPR_JSON_GetArraySize(const WINPR_JSON* const array)
 {
 #if defined(WITH_JSONC)
 	return json_object_array_length((const json_object*)array);
@@ -208,7 +208,7 @@ WINPR_JSON* WINPR_JSON_GetObjectItemCaseSensitive(const WINPR_JSON* const object
 #endif
 }
 
-BOOL WINPR_JSON_HasObjectItem(const WINPR_JSON* object, const char* string)
+BOOL WINPR_JSON_HasObjectItem(const WINPR_JSON* const object, const char* const string)
 {
 #if defined(WITH_JSONC)
 	return json_object_object_get_ex((const json_object*)object, string, NULL);
@@ -440,7 +440,7 @@ WINPR_JSON* WINPR_JSON_CreateNumber(double num)
 #endif
 }
 
-WINPR_JSON* WINPR_JSON_CreateString(const char* string)
+WINPR_JSON* WINPR_JSON_CreateString(const char* const string)
 {
 #if defined(WITH_JSONC)
 	return json_object_new_string(string);
