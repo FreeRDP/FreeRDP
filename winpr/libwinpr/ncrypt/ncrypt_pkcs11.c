@@ -715,6 +715,7 @@ static SECURITY_STATUS NCryptP11EnumKeys(NCRYPT_PROV_HANDLE hProvider, LPCWSTR p
 		rv = provider->p11->C_GetSlotList(CK_TRUE, NULL, &state->nslots);
 		if (rv != CKR_OK)
 		{
+			free(state);
 			/* TODO: perhaps convert rv to NTE_*** errors */
 			WLog_WARN(TAG, "C_GetSlotList failed with %s [0x%08" PRIx32 "]", CK_RV_error_string(rv),
 			          rv);
