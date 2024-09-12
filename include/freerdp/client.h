@@ -157,7 +157,7 @@ extern "C"
 	FREERDP_API int freerdp_client_settings_parse_command_line_ex(
 	    rdpSettings* settings, int argc, char** argv, BOOL allowUnknown,
 	    COMMAND_LINE_ARGUMENT_A* args, size_t count,
-	    int (*handle_option)(const COMMAND_LINE_ARGUMENT* arg, void* custom),
+	    int (*handle_option)(const COMMAND_LINE_ARGUMENT_A* arg, void* custom),
 	    void* handle_userdata);
 
 	FREERDP_API int freerdp_client_settings_parse_connection_file(rdpSettings* settings,
