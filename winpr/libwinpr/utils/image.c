@@ -336,6 +336,7 @@ int winpr_bitmap_write_ex(const char* filename, const BYTE* data, size_t stride,
 	if (fwrite(bmpdata, bmpsize, 1, fp) != 1)
 		goto fail;
 
+	ret = 0;
 fail:
 	if (fp)
 		(void)fclose(fp);

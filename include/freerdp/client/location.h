@@ -23,18 +23,28 @@
 
 #include <freerdp/channels/location.h>
 
+/** @file
+ *  @since version 3.4.0
+ */
 #ifdef __cplusplus
 extern "C"
 {
 #endif
 
+	/** @since version 3.4.0 */
 	typedef struct s_location_client_context LocationClientContext;
 
+	/** @since version 3.4.0 */
 	typedef UINT (*pcLocationStart)(LocationClientContext* context, UINT32 version, UINT32 flags);
+
+	/** @since version 3.4.0 */
 	typedef UINT (*pcLocationStop)(LocationClientContext* context);
+
+	/** @since version 3.4.0 */
 	typedef UINT (*pcLocationSend)(LocationClientContext* context, LOCATION_PDUTYPE type,
 	                               size_t count, ...);
 
+	/** @since version 3.4.0 */
 	struct s_location_client_context
 	{
 		void* handle;

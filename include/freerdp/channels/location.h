@@ -24,11 +24,17 @@
 #include <freerdp/dvc.h>
 #include <freerdp/types.h>
 
+/** @defgroup channel_location Location Channel
+ *  @brief Location channel providing redirection of client side Network/GPS location to the RDP
+ * server
+ * @{
+ */
+
 /** The command line name of the channel
  *
  *  \since version 3.0.0
  */
-#define LOCATION_CHANNEL_NAME "location"
+#define LOCATION_CHANNEL_NAME "location" /** @since version 3.4.0 */
 
 #define LOCATION_DVC_CHANNEL_NAME "Microsoft::Windows::RDS::Location"
 
@@ -117,4 +123,6 @@ extern "C"
 #ifdef __cplusplus
 }
 #endif
+/** @} */
+
 #endif /* FREERDP_CHANNEL_LOCATION_H */

@@ -323,12 +323,14 @@ arm_create_cleanup:
 }
 
 /**
- * treats the redirectedAuthBlob
+ * @brief treats the redirectedAuthBlob
  *
  * sample pbInput:
+ * @code
  *  41004500530000004b44424d01000000200000006ee71b295810b3fd13799da3825d0efa3a628e8f4a6eda609ffa975408556546
  *  'A\x00E\x00S\x00\x00\x00KDBM\x01\x00\x00\x00
  * \x00\x00\x00n\xe7\x1b)X\x10\xb3\xfd\x13y\x9d\xa3\x82]\x0e\xfa:b\x8e\x8fJn\xda`\x9f\xfa\x97T\x08UeF'
+ * @endcode
  *
  * @param pbInput the raw auth blob (base64 and utf16 decoded)
  * @param cbInput size of pbInput

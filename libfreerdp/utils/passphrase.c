@@ -46,8 +46,8 @@ int freerdp_interruptible_getc(rdpContext* context, FILE* f)
 	return read_chr(f);
 }
 
-char* freerdp_passphrase_read(rdpContext* context, const char* prompt, char* buf, size_t bufsiz,
-                              int from_stdin)
+const char* freerdp_passphrase_read(rdpContext* context, const char* prompt, char* buf,
+                                    size_t bufsiz, int from_stdin)
 {
 	WCHAR UserNameW[CREDUI_MAX_USERNAME_LENGTH + 1] = { 'p', 'r', 'e', 'f', 'i',
 		                                                'l', 'l', 'e', 'd', '\0' };
@@ -127,8 +127,8 @@ static void replace_char(char* buffer, size_t buffer_len, const char* toreplace)
 	}
 }
 
-static char* freerdp_passphrase_read_tty(rdpContext* context, const char* prompt, char* buf,
-                                         size_t bufsiz, int from_stdin)
+static const char* freerdp_passphrase_read_tty(rdpContext* context, const char* prompt, char* buf,
+                                               size_t bufsiz, int from_stdin)
 {
 	BOOL terminal_needs_reset = FALSE;
 	char term_name[L_ctermid] = { 0 };
@@ -213,8 +213,8 @@ error:
 }
 }
 
-static char* freerdp_passphrase_read_askpass(const char* prompt, char* buf, size_t bufsiz,
-                                             char const* askpass_env)
+static const char* freerdp_passphrase_read_askpass(const char* prompt, char* buf, size_t bufsiz,
+                                                   char const* askpass_env)
 {
 	char command[4096] = { 0 };
 
@@ -234,8 +234,8 @@ static char* freerdp_passphrase_read_askpass(const char* prompt, char* buf, size
 	return buf;
 }
 
-char* freerdp_passphrase_read(rdpContext* context, const char* prompt, char* buf, size_t bufsiz,
-                              int from_stdin)
+const char* freerdp_passphrase_read(rdpContext* context, const char* prompt, char* buf,
+                                    size_t bufsiz, int from_stdin)
 {
 	const char* askpass_env = getenv("FREERDP_ASKPASS");
 
@@ -271,8 +271,8 @@ int freerdp_interruptible_getc(rdpContext* context, FILE* f)
 
 #else
 
-char* freerdp_passphrase_read(rdpContext* context, const char* prompt, char* buf, size_t bufsiz,
-                              int from_stdin)
+const char* freerdp_passphrase_read(rdpContext* context, const char* prompt, char* buf,
+                                    size_t bufsiz, int from_stdin)
 {
 	return NULL;
 }

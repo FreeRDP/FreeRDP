@@ -60,10 +60,14 @@ typedef struct
 
 #pragma pack(pop)
 
+/** @defgrop WINPR_IMAGE_FORMAT
+ *  #{
+ */
 #define WINPR_IMAGE_BITMAP 0
 #define WINPR_IMAGE_PNG 1
-#define WINPR_IMAGE_JPEG 2
-#define WINPR_IMAGE_WEBP 3
+#define WINPR_IMAGE_JPEG 2 /** @since version 3.3.0 */
+#define WINPR_IMAGE_WEBP 3 /** @since version 3.3.0 */
+/** #} */
 
 #define WINPR_IMAGE_BMP_HEADER_LEN 54
 
@@ -78,6 +82,10 @@ typedef struct
 	UINT32 bytesPerPixel;
 } wImage;
 
+/** @defgroup WINPR_IMAGE_CMP_FLAGS WINPR_IMAGE_CMP_FLAGS
+ *  @since version 3.3.0
+ *  @{
+ */
 typedef enum
 {
 	WINPR_IMAGE_CMP_NO_FLAGS = 0,
@@ -86,6 +94,8 @@ typedef enum
 	WINPR_IMAGE_CMP_FUZZY = 4
 } wImageFlags;
 
+/** @} */
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -93,6 +103,20 @@ extern "C"
 
 	WINPR_API int winpr_bitmap_write(const char* filename, const BYTE* data, size_t width,
 	                                 size_t height, size_t bpp);
+
+	/** @brief write a bitmap to a file
+	 *
+	 *  @param filename the name of the file to write to
+	 *  @param data the data of the bitmap without headers
+	 *  @param stride the byte size of a line in the image
+	 *  @param width the width in pixels of a line
+	 *  @param height the height of the bitmap
+	 *  @param bpp the color depth of the bitmap
+	 *
+	 *  @since version 3.3.0
+	 *
+	 *  @return \b >=0 for success, /b <0 for an error
+	 */
 	WINPR_API int winpr_bitmap_write_ex(const char* filename, const BYTE* data, size_t stride,
 	                                    size_t width, size_t height, size_t bpp);
 	WINPR_API BYTE* winpr_bitmap_construct_header(size_t width, size_t height, size_t bpp);
@@ -101,6 +125,17 @@ extern "C"
 	WINPR_API int winpr_image_write_ex(wImage* image, UINT32 format, const char* filename);
 	WINPR_API int winpr_image_read(wImage* image, const char* filename);
 
+	/** @brief write a bitmap to a buffer and return it
+	 *
+	 *  @param image the image to write
+	 *  @param format the format of type @ref WINPR_IMAGE_FORMAT
+	 *  @param size a pointer to hold the size in bytes of the allocated bitmap
+	 *
+	 *  @since version 3.3.0
+	 *
+	 *  @return \b NULL in case of failure, a pointer to an allocated buffer otherwise. Use \b free
+	 * as deallocator
+	 */
 	WINPR_API void* winpr_image_write_buffer(wImage* image, UINT32 format, size_t* size);
 	WINPR_API int winpr_image_read_buffer(wImage* image, const BYTE* buffer, size_t size);
 
@@ -109,9 +144,46 @@ extern "C"
 	WINPR_ATTR_MALLOC(winpr_image_free, 1)
 	WINPR_API wImage* winpr_image_new(void);
 
+	/** @brief Check if a image format is supported
+	 *
+	 *  @param format the format of type @ref WINPR_IMAGE_FORMAT
+	 *
+	 *  @since version 3.3.0
+	 *
+	 *  @return \b TRUE if the format is supported, \b FALSE otherwise
+	 */
 	WINPR_API BOOL winpr_image_format_is_supported(UINT32 format);
+
+	/** @brief Return the file extension of a format
+	 *
+	 *  @param format the format of type @ref WINPR_IMAGE_FORMAT
+	 *
+	 *  @since version 3.3.0
+	 *
+	 *  @return a extension string if format has one or \b NULL
+	 */
 	WINPR_API const char* winpr_image_format_extension(UINT32 format);
+
+	/** @brief Return the mime type of a format
+	 *
+	 *  @param format the format of type @ref WINPR_IMAGE_FORMAT
+	 *
+	 *  @since version 3.3.0
+	 *
+	 *  @return a mime type string if format has one or \b NULL
+	 */
 	WINPR_API const char* winpr_image_format_mime(UINT32 format);
+
+	/** @brief Check if two images are content equal
+	 *
+	 *  @param imageA the first image for the comparison
+	 *  @param imageB the second image for the comparison
+	 *  @param flags Comparions flags @ref WINPR_IMAGE_CMP_FLAGS
+	 *
+	 *  @since version 3.3.0
+	 *
+	 *  @return \b TRUE if they are equal, \b FALSE otherwise
+	 */
 	WINPR_API BOOL winpr_image_equal(const wImage* imageA, const wImage* imageB, UINT32 flags);
 
 #ifdef __cplusplus

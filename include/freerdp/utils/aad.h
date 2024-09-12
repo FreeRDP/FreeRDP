@@ -21,7 +21,7 @@
 #ifndef FREERDP_UTILS_AAD_H
 #define FREERDP_UTILS_AAD_H
 
-/** \file AAD related helper utilities
+/** \defgroup AAD AAD related helper utilities
  *  \since version 3.0.0
  */
 #include <winpr/wlog.h>
@@ -40,6 +40,7 @@
  *
  * @return The token string or \b NULL
  */
+WINPR_ATTR_MALLOC(free, 1)
 FREERDP_API char* freerdp_utils_aad_get_access_token(wLog* log, const char* data, size_t length);
 
 #endif

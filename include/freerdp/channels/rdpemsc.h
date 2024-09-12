@@ -20,7 +20,11 @@
 #ifndef FREERDP_CHANNEL_RDPEMSC_H
 #define FREERDP_CHANNEL_RDPEMSC_H
 
-/** \file [MS-RDPEMSC] Mouse Cursor Virtual Channel Extension
+/** @defgroup channel_rdpemsc [MS-RDPEMSC]
+ * @{
+ */
+
+/** \file @code [MS-RDPEMSC] @endcode Mouse Cursor Virtual Channel Extension
  *  \link
  * https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-rdpemsc/2591b507-cd5a-4537-be29-b45540543dc8
  *  \since version 3.0.0
@@ -70,7 +74,7 @@ extern "C"
 
 	typedef enum
 	{
-		RDP_MOUSE_CURSOR_CAPVERSION_INVALID = 0x00000000,
+		RDP_MOUSE_CURSOR_CAPVERSION_INVALID = 0x00000000, /** @since version 3.3.0 */
 		RDP_MOUSE_CURSOR_CAPVERSION_1 = 0x00000001,
 	} RDP_MOUSE_CURSOR_CAPVERSION;
 
@@ -144,4 +148,7 @@ extern "C"
 #ifdef __cplusplus
 }
 #endif
+
+/** @} */
+
 #endif /* FREERDP_CHANNEL_RDPEMSC_H */

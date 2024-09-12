@@ -217,6 +217,7 @@ extern "C"
 	 *
 	 * @param phProvider [in] provider handle
 	 * @return module path
+	 * @since version 3.6.0
 	 */
 	WINPR_API const char* winpr_NCryptGetModulePath(NCRYPT_PROV_HANDLE phProvider);
 

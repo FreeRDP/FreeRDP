@@ -176,6 +176,11 @@ set_property(TARGET freerdp APPEND PROPERTY SOURCES
     ${PUBLIC_COMMON_HEADERS}
 )
 
+add_library(freerdp-headers INTERFACE)
+target_sources(freerdp-headers INTERFACE
+	${PUBLIC_COMMON_HEADERS}
+)
+
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/freerdp
         DESTINATION ${FREERDP_INCLUDE_DIR}
         FILES_MATCHING PATTERN "*.h")

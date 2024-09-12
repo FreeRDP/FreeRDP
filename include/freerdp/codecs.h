@@ -54,7 +54,7 @@ extern "C"
 
 	struct rdp_codecs
 	{
-		UINT32 ThreadingFlags;
+		UINT32 ThreadingFlags; /** @since version 3.6.0 */
 
 		RFX_CONTEXT* rfx;
 		NSC_CONTEXT* nsc;
@@ -71,15 +71,25 @@ extern "C"
 	FREERDP_API BOOL freerdp_client_codecs_reset(rdpCodecs* codecs, UINT32 flags, UINT32 width,
 	                                             UINT32 height);
 
+	/**
+	 * @brief Free a rdpCodecs instance
+	 * @param codecs A pointer to a rdpCodecs instance or NULL
+	 *  @since version 3.6.0
+	 */
 	FREERDP_API void freerdp_client_codecs_free(rdpCodecs* codecs);
 
+	/**
+	 * @brief Allocate a rdpCodecs instance.
+	 * @return A newly allocated instance or \b NULL in case of failure.
+	 *  @since version 3.6.0
+	 */
 	WINPR_ATTR_MALLOC(freerdp_client_codecs_free, 1)
 	FREERDP_API rdpCodecs* freerdp_client_codecs_new(UINT32 TheadingFlags);
 
-	FREERDP_API WINPR_DEPRECATED_VAR("Use freerdp_client_codecs_free",
+	FREERDP_API WINPR_DEPRECATED_VAR("[since 3.6.0] Use freerdp_client_codecs_free",
 	                                 void codecs_free(rdpCodecs* codecs));
 
-	FREERDP_API WINPR_DEPRECATED_VAR("Use freerdp_client_codecs_new",
+	FREERDP_API WINPR_DEPRECATED_VAR("[since 3.6.0] Use freerdp_client_codecs_new",
 	                                 rdpCodecs* codecs_new(rdpContext* context));
 
 #ifdef __cplusplus

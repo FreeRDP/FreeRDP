@@ -1948,7 +1948,7 @@ BOOL freerdp_device_equal(const RDPDR_DEVICE* what, const RDPDR_DEVICE* expect)
 	return TRUE;
 }
 
-char* freerdp_rail_support_flags_to_string(UINT32 flags, char* buffer, size_t length)
+const char* freerdp_rail_support_flags_to_string(UINT32 flags, char* buffer, size_t length)
 {
 	const UINT32 mask =
 	    RAIL_LEVEL_SUPPORTED | RAIL_LEVEL_DOCKED_LANGBAR_SUPPORTED |

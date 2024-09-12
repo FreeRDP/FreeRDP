@@ -194,16 +194,31 @@ extern "C"
 #endif
 
 	/* Thread */
-#define THREAD_MODE_BACKGROUND_BEGIN 0x00010000
-#define THREAD_MODE_BACKGROUND_END 0x00020000
-#define THREAD_PRIORITY_ABOVE_NORMAL 1
-#define THREAD_PRIORITY_BELOW_NORMAL -1
-#define THREAD_PRIORITY_HIGHEST 2
-#define THREAD_PRIORITY_IDLE -15
-#define THREAD_PRIORITY_LOWEST -2
-#define THREAD_PRIORITY_NORMAL 0
-#define THREAD_PRIORITY_TIME_CRITICAL 15
+#define THREAD_MODE_BACKGROUND_BEGIN 0x00010000 /** @since version 3.6.0 */
+#define THREAD_MODE_BACKGROUND_END 0x00020000   /** @since version 3.6.0 */
 
+	/** @defgroup THREAD_PRIORITY THREAD_PRIORITY
+	 *  @brief Known THREAD_PRIORITY values
+	 *  @since version 3.6.0
+	 *  @{
+	 */
+#define THREAD_PRIORITY_ABOVE_NORMAL 1   /** @since version 3.6.0 */
+#define THREAD_PRIORITY_BELOW_NORMAL -1  /** @since version 3.6.0 */
+#define THREAD_PRIORITY_HIGHEST 2        /** @since version 3.6.0 */
+#define THREAD_PRIORITY_IDLE -15         /** @since version 3.6.0 */
+#define THREAD_PRIORITY_LOWEST -2        /** @since version 3.6.0 */
+#define THREAD_PRIORITY_NORMAL 0         /** @since version 3.6.0 */
+#define THREAD_PRIORITY_TIME_CRITICAL 15 /** @since version 3.6.0 */
+	                                     /** @} */
+
+	/**
+	 *  @brief Change the thread priority
+	 *
+	 *  @param hThread the thhread handle to manipulate
+	 *  @param nPriority The priority to set, see @ref THREAD_PRIORITY
+	 *  @return \b TRUE for success, \b FALSE otherwise
+	 *  @since version 3.6.0
+	 */
 	WINPR_API BOOL SetThreadPriority(HANDLE hThread, int nPriority);
 
 #define CREATE_SUSPENDED 0x00000004
