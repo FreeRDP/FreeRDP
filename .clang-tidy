@@ -42,6 +42,7 @@ Checks: >
     -google-readability-todo,
     -hicpp-braces-around-statements,
     -hicpp-no-array-decay,
+    -hicpp-no-assembler,
     -hicpp-multiway-paths-covered,
     -hicpp-signed-bitwise,
     -hicpp-uppercase-literal-suffix,
@@ -61,6 +62,7 @@ Checks: >
     -readability-implicit-bool-conversion,
     -readability-magic-numbers,
     -readability-qualified-auto,
+    -readability-suspicious-call-argument,
     -readability-uppercase-literal-suffix,
     -performance-no-int-to-ptr,
     -performance-avoid-endl

@@ -1322,6 +1322,8 @@ static const struct
 	const char skey[6];
 } options = { "--pcap=", "--fast", "--port=", "--local-only", "--cert=", "--key=" };
 
+WINPR_PRAGMA_DIAG_PUSH
+WINPR_PRAGMA_DIAG_IGNORED_FORMAT_NONLITERAL
 WINPR_ATTR_FORMAT_ARG(2, 0)
 static void print_entry(FILE* fp, WINPR_FORMAT_ARG const char* fmt, const char* what, size_t size)
 {
@@ -1329,6 +1331,7 @@ static void print_entry(FILE* fp, WINPR_FORMAT_ARG const char* fmt, const char* 
 	strncpy(buffer, what, MIN(size, sizeof(buffer) - 1));
 	(void)fprintf(fp, fmt, buffer);
 }
+WINPR_PRAGMA_DIAG_POP
 
 static WINPR_NORETURN(void usage(const char* app, const char* invalid))
 {

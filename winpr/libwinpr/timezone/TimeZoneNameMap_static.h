@@ -2,7 +2,7 @@
 
 #include "TimeZoneNameMap.h"
 
-const TimeZoneNameMapEntry TimeZoneNameMap[] = {
+static const TimeZoneNameMapEntry TimeZoneNameMap[] = {
 	{ "Dateline Standard Time", "Dateline Standard Time",
 	  "(UTC-12:00) International Date Line West", "Dateline Daylight Time", "Etc/GMT+12" },
 	{ "UTC-11", "UTC-11", "(UTC-11:00) Coordinated Universal Time-11", "UTC-11", "Etc/GMT+11" },
@@ -289,4 +289,4 @@ const TimeZoneNameMapEntry TimeZoneNameMap[] = {
 	  "Line Islands Daylight Time", "Pacific/Kiritimati" }
 };
 
-const size_t TimeZoneNameMapSize = ARRAYSIZE(TimeZoneNameMap);
+static const size_t TimeZoneNameMapSize = ARRAYSIZE(TimeZoneNameMap);

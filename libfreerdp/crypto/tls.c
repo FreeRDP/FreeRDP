@@ -901,7 +901,8 @@ TlsHandshakeResult freerdp_tls_connect_ex(rdpTls* tls, BIO* underlying, const SS
 		return 0;
 
 #if !defined(OPENSSL_NO_TLSEXT) && !defined(LIBRESSL_VERSION_NUMBER)
-	SSL_set_tlsext_host_name(tls->ssl, tls_get_server_name(tls));
+	const char* str = tls_get_server_name(tls);
+	SSL_set_tlsext_host_name(tls->ssl, WINPR_CAST_CONST_PTR_AWAY(str, void*));
 #endif
 
 	return freerdp_tls_handshake(tls);

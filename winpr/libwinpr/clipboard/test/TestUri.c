@@ -44,7 +44,7 @@ int TestUri(int argc, char* argv[])
 		const char* cmp = input[i + 1];
 		int bTest = 0;
 		char* name = parse_uri_to_local_file(in, strlen(in));
-		if (name)
+		if (name && cmp)
 		{
 			bTest = !strcmp(name, cmp);
 			if (!bTest)

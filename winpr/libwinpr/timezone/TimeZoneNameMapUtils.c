@@ -39,6 +39,10 @@
 
 #include "TimeZoneNameMap.h"
 
+#if defined(WITH_TIMEZONE_COMPILED)
+#include "TimeZoneNameMap_static.h"
+#endif
+
 typedef struct
 {
 	size_t count;
@@ -272,10 +276,6 @@ static BOOL CALLBACK load_timezones(PINIT_ONCE once, PVOID param, PVOID* pvconte
 
 #if defined(WITH_TIMEZONE_COMPILED)
 	{
-		// Do not expose these, only used internally.
-		extern const TimeZoneNameMapEntry TimeZoneNameMap[];
-		extern const size_t TimeZoneNameMapSize;
-
 		const size_t offset = context->count;
 		if (!reallocate_context(context, TimeZoneNameMapSize))
 			return FALSE;

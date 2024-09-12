@@ -347,6 +347,8 @@ static void* clipboard_synthesize_image_bmp(wClipboard* clipboard, UINT32 format
 	return NULL;
 }
 
+#if defined(WINPR_UTILS_IMAGE_PNG) || defined(WINPR_UTILS_IMAGE_WEBP) || \
+    defined(WINPR_UTILS_IMAGE_JPEG)
 static void* clipboard_synthesize_image_bmp_to_format(wClipboard* clipboard, UINT32 formatId,
                                                       UINT32 bmpFormat, const void* data,
                                                       UINT32* pSize)
@@ -378,6 +380,7 @@ fail:
 	winpr_image_free(img, TRUE);
 	return result;
 }
+#endif
 
 #if defined(WINPR_UTILS_IMAGE_PNG)
 static void* clipboard_synthesize_image_bmp_to_png(wClipboard* clipboard, UINT32 formatId,

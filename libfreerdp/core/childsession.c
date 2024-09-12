@@ -486,7 +486,7 @@ static BOOL createChildSessionTransport(HANDLE* pFile)
 	}
 
 	const BYTE startOfPath[] = { '\\', 0, '\\', 0, '.', 0, '\\', 0 };
-	if (_wcsncmp(pipePath, (WCHAR*)startOfPath, 4))
+	if (_wcsncmp(pipePath, (const WCHAR*)startOfPath, 4))
 	{
 		/* when compiled under 32 bits, the path may miss "\\.\" at the beginning of the string
 		 * so add it if it's not there

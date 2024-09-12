@@ -1385,7 +1385,14 @@ const RFX_TILE** rfx_message_get_tiles(const RFX_MESSAGE* WINPR_RESTRICT message
 	WINPR_ASSERT(message);
 	if (numTiles)
 		*numTiles = message->numTiles;
-	return (const RFX_TILE**)message->tiles;
+
+	union
+	{
+		RFX_TILE** pp;
+		const RFX_TILE** ppc;
+	} cnv;
+	cnv.pp = message->tiles;
+	return cnv.ppc;
 }
 
 UINT16 rfx_message_get_tile_count(const RFX_MESSAGE* WINPR_RESTRICT message)

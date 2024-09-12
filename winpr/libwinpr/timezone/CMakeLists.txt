@@ -37,7 +37,7 @@ set(SRCS
 	)
 if (WITH_TIMEZONE_COMPILED)
 	list(APPEND SRCS
-		TimeZoneNameMap.c
+                TimeZoneNameMap_static.h
 	)
 endif()
 
