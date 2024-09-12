@@ -828,21 +828,18 @@ static UINT
 cliprdr_client_format_data_response(CliprdrClientContext* context,
                                     const CLIPRDR_FORMAT_DATA_RESPONSE* formatDataResponse)
 {
-	wStream* s = NULL;
-	cliprdrPlugin* cliprdr = NULL;
-
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(formatDataResponse);
 
-	cliprdr = (cliprdrPlugin*)context->handle;
+	cliprdrPlugin* cliprdr = (cliprdrPlugin*)context->handle;
 	WINPR_ASSERT(cliprdr);
 
-	const UINT32 mask =
-	    freerdp_settings_get_uint32(context->rdpcontext->settings, FreeRDP_ClipboardFeatureMask);
-	WINPR_ASSERT((mask & (CLIPRDR_FLAG_LOCAL_TO_REMOTE | CLIPRDR_FLAG_LOCAL_TO_REMOTE_FILES)) != 0);
+	WINPR_ASSERT(
+	    (freerdp_settings_get_uint32(context->rdpcontext->settings, FreeRDP_ClipboardFeatureMask) &
+	     (CLIPRDR_FLAG_LOCAL_TO_REMOTE | CLIPRDR_FLAG_LOCAL_TO_REMOTE_FILES)) != 0);
 
-	s = cliprdr_packet_new(CB_FORMAT_DATA_RESPONSE, formatDataResponse->common.msgFlags,
-	                       formatDataResponse->common.dataLen);
+	wStream* s = cliprdr_packet_new(CB_FORMAT_DATA_RESPONSE, formatDataResponse->common.msgFlags,
+	                                formatDataResponse->common.dataLen);
 
 	if (!s)
 	{

@@ -788,9 +788,6 @@ void xf_minimize(xfContext* xfc)
 	rdpContext* context = (rdpContext*)xfc;
 	WINPR_ASSERT(context);
 
-	rdpSettings* settings = context->settings;
-	WINPR_ASSERT(settings);
-
 	/*
 	  when debugging, ungrab keyboard when toggling fullscreen
 	  to allow keyboard usage on the debugger

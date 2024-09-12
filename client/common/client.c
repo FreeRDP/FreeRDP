@@ -634,8 +634,7 @@ static DWORD client_cli_accept_certificate(freerdp* instance)
 	const rdpSettings* settings = instance->context->settings;
 	WINPR_ASSERT(settings);
 
-	const BOOL fromStdin =
-	    freerdp_settings_get_bool(instance->context->settings, FreeRDP_CredentialsFromStdin);
+	const BOOL fromStdin = freerdp_settings_get_bool(settings, FreeRDP_CredentialsFromStdin);
 	if (fromStdin)
 		return 0;
 

@@ -1166,8 +1166,6 @@ static void sdl_post_final_disconnect(freerdp* instance)
 
 	if (!instance->context)
 		return;
-
-	auto context = get_context(instance->context);
 }
 
 /* RDP main loop.

@@ -147,10 +147,6 @@ static UINT write_printjob(rdpPrintJob* printjob, const BYTE* data, size_t size)
  */
 static UINT printer_cups_write_printjob(rdpPrintJob* printjob, const BYTE* data, size_t size)
 {
-	rdpCupsPrintJob* cups_printjob = (rdpCupsPrintJob*)printjob;
-
-	WINPR_ASSERT(cups_printjob);
-
 	return write_printjob(printjob, data, size);
 }
 

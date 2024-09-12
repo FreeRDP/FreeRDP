@@ -755,9 +755,6 @@ static state_run_t rdp_peer_handle_state_active(freerdp_peer* client)
 	WINPR_ASSERT(client);
 	WINPR_ASSERT(client->context);
 
-	rdpRdp* rdp = client->context->rdp;
-	WINPR_ASSERT(rdp);
-
 	if (!client->connected)
 	{
 		/**
