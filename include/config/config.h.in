@@ -14,7 +14,7 @@
 /** If set the rdpSettings struct is opaque and internals can only be accessed
  *  through getters/setters
  *
- *  \version 3.0.0
+ *  \since version 3.0.0
  */
 #cmakedefine WITH_OPAQUE_SETTINGS
 
@@ -42,7 +42,7 @@
 #cmakedefine WITH_LAME
 /** If defined Opus codec support is available.
  *
- *  \version 3.0.0
+ *  \since version 3.0.0
  */
 #cmakedefine WITH_OPUS
 #cmakedefine WITH_FAAD2
@@ -103,17 +103,17 @@
 #cmakedefine CHANNEL_GFXREDIR_SERVER
 /** If defined location channel support is available.
  *
- *  \version 3.0.0
+ *  \since version 3.0.0
  */
 #cmakedefine CHANNEL_LOCATION
 /** If defined location client side channel support is available.
  *
- *  \version 3.0.0
+ *  \since version 3.0.0
  */
 #cmakedefine CHANNEL_LOCATION_CLIENT
 /** If defined location server side channel support is available.
  *
- *  \version 3.0.0
+ *  \since version 3.0.0
  */
 #cmakedefine CHANNEL_LOCATION_SERVER
 #cmakedefine CHANNEL_PARALLEL
@@ -142,19 +142,19 @@
 #cmakedefine CHANNEL_RDPGFX_SERVER
 /** If defined mouse cursor channel support is available.
  *
- *  \version 3.0.0
+ *  \since version 3.0.0
  */
 #cmakedefine CHANNEL_RDPEMSC
 
 /** If defined mouse cursor channel support is available.
  *
- *  \version 3.0.0
+ *  \since version 3.0.0
  */
 #cmakedefine CHANNEL_RDPEMSC_CLIENT
 
 /** If defined mouse cursor channel support is available.
  *
- *  \version 3.0.0
+ *  \since version 3.0.0
  */
 #cmakedefine CHANNEL_RDPEMSC_SERVER
 #cmakedefine CHANNEL_RDPSND
@@ -223,7 +223,7 @@
 
 /** If defined linux/vm_sockets.h support is available.
  *
- *  \version 3.0.0
+ *  \since version 3.0.0
  */
 #cmakedefine HAVE_AF_VSOCK_H
 

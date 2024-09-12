@@ -76,7 +76,7 @@ extern "C"
 	 *  @param s The stream to write to
 	 *  @param msg The message to encode
 	 *
-	 *  @version 3.0.0
+	 *  @since version 3.0.0
 	 *  @return \b TRUE in case of success, \b FALSE for any error
 	 */
 	FREERDP_API BOOL progressive_rfx_write_message_progressive_simple(

@@ -25,7 +25,7 @@
 
 /** The command line name of the channel
  *
- *  \version 3.0.0
+ *  \since version 3.0.0
  */
 #define VIDEO_CHANNEL_NAME "video"
 #define VIDEO_CONTROL_DVC_CHANNEL_NAME "Microsoft::Windows::RDS::Video::Control::v08.01"

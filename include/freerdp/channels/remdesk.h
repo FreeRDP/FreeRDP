@@ -30,7 +30,7 @@ extern "C"
 
 /** The command line name of the channel
  *
- *  \version 3.0.0
+ *  \since version 3.0.0
  */
 #define REMDESK_CHANNEL_NAME "remdesk"
 #define REMDESK_SVC_CHANNEL_NAME "remdesk"

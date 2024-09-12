@@ -56,7 +56,7 @@ extern "C"
 	 * \param handle_option the handler function for custom arguments.
 	 * \param handle_userdata custom data supplied to \b handle_option as context
 	 *
-	 * \version 3.0.0
+	 * \since version 3.0.0
 	 *
 	 * \return \b 0 in case of success, a negative number in case of failure.
 	 */
@@ -77,19 +77,19 @@ extern "C"
 
 	/** Print a command line warning about the component being unmaintained.
 	 *
-	 *  \version 3.0.0
+	 *  \since version 3.0.0
 	 */
 	FREERDP_API void freerdp_client_warn_unmaintained(int argc, char* argv[]);
 
 	/** Print a command line warning about the component being experimental.
 	 *
-	 *  \version 3.0.0
+	 *  \since version 3.0.0
 	 */
 	FREERDP_API void freerdp_client_warn_experimental(int argc, char* argv[]);
 
 	/** Print a command line warning about the component being deprecated.
 	 *
-	 *  \version 3.0.0
+	 *  \since version 3.0.0
 	 */
 	FREERDP_API void freerdp_client_warn_deprecated(int argc, char* argv[]);
 

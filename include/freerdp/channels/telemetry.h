@@ -26,7 +26,7 @@
 
 /** The command line name of the channel
  *
- *  \version 3.0.0
+ *  \since version 3.0.0
  */
 #define TELEMETRY_CHANNEL_NAME "telemetry"
 #define TELEMETRY_DVC_CHANNEL_NAME "Microsoft::Windows::RDS::Telemetry"

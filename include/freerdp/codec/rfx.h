@@ -128,7 +128,7 @@ extern "C"
 	/** Getter for RFX mode
 	 *  @param context The RFX context to query
 	 *
-	 *  @version 3.0.0
+	 *  @since version 3.0.0
 	 *
 	 *  @return The RFX mode that is currently in use
 	 */
@@ -139,7 +139,7 @@ extern "C"
 	/** Getter for RFX pixel format
 	 *  @param context The RFX context to query
 	 *
-	 *  @version 3.0.0
+	 *  @since version 3.0.0
 	 *
 	 *  @return The RFX pixel format that is currently in use
 	 */
@@ -150,7 +150,7 @@ extern "C"
 	/** Getter for RFX palette
 	 *  @param context The RFX context to query
 	 *
-	 *  @version 3.0.0
+	 *  @since version 3.0.0
 	 *
 	 *  @return The RFX palette that is currently in use or \b NULL
 	 */
@@ -164,7 +164,7 @@ extern "C"
 	 *  @param s The stream to write to
 	 *  @param msg The message to encode
 	 *
-	 *  @version 3.0.0
+	 *  @since version 3.0.0
 	 *  @return \b TRUE in case of success, \b FALSE for any error
 	 */
 	FREERDP_API BOOL rfx_write_message_progressive_simple(RFX_CONTEXT* rfx, wStream* s,

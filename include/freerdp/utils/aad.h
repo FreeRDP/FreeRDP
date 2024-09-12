@@ -22,7 +22,7 @@
 #define FREERDP_UTILS_AAD_H
 
 /** \file AAD related helper utilities
- *  \version 3.0.0
+ *  \since version 3.0.0
  */
 #include <winpr/wlog.h>
 
@@ -36,7 +36,7 @@
  *  @param data The JSON to parse
  *  @param length The number of bytes of the JSON data
  *
- *  @version 3.0.0
+ *  @since version 3.0.0
  *
  * @return The token string or \b NULL
  */

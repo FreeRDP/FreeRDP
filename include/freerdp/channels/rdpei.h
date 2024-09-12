@@ -33,7 +33,7 @@ extern "C"
 
 /** The command line name of the channel
  *
- *  \version 3.0.0
+ *  \since version 3.0.0
  */
 #define RDPEI_CHANNEL_NAME "rdpei"
 #define RDPEI_DVC_CHANNEL_NAME "Microsoft::Windows::RDS::Input"

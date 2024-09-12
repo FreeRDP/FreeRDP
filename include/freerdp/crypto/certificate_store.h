@@ -68,7 +68,7 @@ extern "C"
 	 *  @param host The hostname to look up
 	 *  @param port The port to look up
 	 *
-	 *  @version 3.0.0
+	 *  @since version 3.0.0
 	 *
 	 *  @return The certificate store file path or \b NULL
 	 */
