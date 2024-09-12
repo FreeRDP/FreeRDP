@@ -118,6 +118,9 @@ static char* gdi_convert_postfix_to_infix(const char* postfix)
 		}
 		else
 		{
+			char* a = NULL;
+			char* b = NULL;
+
 			/* token is an operator */
 			unary = FALSE;
 			char* c = malloc(2);
@@ -149,11 +152,10 @@ static char* gdi_convert_postfix_to_infix(const char* postfix)
 			}
 
 			// printf("Operator: %s\n", c);
-			char* a = (char*)Stack_Pop(stack);
+			a = (char*)Stack_Pop(stack);
 			if (!a)
 				goto fail;
 
-			char* b = NULL;
 			if (!unary)
 				b = (char*)Stack_Pop(stack);
 
