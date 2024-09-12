@@ -31,7 +31,7 @@
 #include "prim_internal.h"
 #include "prim_YUV.h"
 
-static pstatus_t general_LumaToYUV444(const BYTE* const WINPR_RESTRICT pSrcRaw[3],
+static pstatus_t general_LumaToYUV444(const BYTE* WINPR_RESTRICT pSrcRaw[3],
                                       const UINT32 srcStep[3], BYTE* WINPR_RESTRICT pDstRaw[3],
                                       const UINT32 dstStep[3],
                                       const RECTANGLE_16* WINPR_RESTRICT roi)
@@ -139,7 +139,7 @@ static pstatus_t general_ChromaFilter(BYTE* WINPR_RESTRICT pDst[3], const UINT32
 	return PRIMITIVES_SUCCESS;
 }
 
-static pstatus_t general_ChromaV1ToYUV444(const BYTE* const WINPR_RESTRICT pSrcRaw[3],
+static pstatus_t general_ChromaV1ToYUV444(const BYTE* WINPR_RESTRICT pSrcRaw[3],
                                           const UINT32 srcStep[3], BYTE* WINPR_RESTRICT pDstRaw[3],
                                           const UINT32 dstStep[3],
                                           const RECTANGLE_16* WINPR_RESTRICT roi)
@@ -214,7 +214,7 @@ static pstatus_t general_ChromaV1ToYUV444(const BYTE* const WINPR_RESTRICT pSrcR
 	return general_ChromaFilter(pDst, dstStep, roi);
 }
 
-static pstatus_t general_ChromaV2ToYUV444(const BYTE* const WINPR_RESTRICT pSrc[3],
+static pstatus_t general_ChromaV2ToYUV444(const BYTE* WINPR_RESTRICT pSrc[3],
                                           const UINT32 srcStep[3], UINT32 nTotalWidth,
                                           UINT32 nTotalHeight, BYTE* WINPR_RESTRICT pDst[3],
                                           const UINT32 dstStep[3],
@@ -266,7 +266,7 @@ static pstatus_t general_ChromaV2ToYUV444(const BYTE* const WINPR_RESTRICT pSrc[
 }
 
 static pstatus_t general_YUV420CombineToYUV444(avc444_frame_type type,
-                                               const BYTE* const WINPR_RESTRICT pSrc[3],
+                                               const BYTE* WINPR_RESTRICT pSrc[3],
                                                const UINT32 srcStep[3], UINT32 nWidth,
                                                UINT32 nHeight, BYTE* WINPR_RESTRICT pDst[3],
                                                const UINT32 dstStep[3],
@@ -298,7 +298,7 @@ static pstatus_t general_YUV420CombineToYUV444(avc444_frame_type type,
 }
 
 static pstatus_t
-general_YUV444SplitToYUV420(const BYTE* const WINPR_RESTRICT pSrc[3], const UINT32 srcStep[3],
+general_YUV444SplitToYUV420(const BYTE* WINPR_RESTRICT pSrc[3], const UINT32 srcStep[3],
                             BYTE* WINPR_RESTRICT pMainDst[3], const UINT32 dstMainStep[3],
                             BYTE* WINPR_RESTRICT pAuxDst[3], const UINT32 dstAuxStep[3],
                             const prim_size_t* WINPR_RESTRICT roi)
@@ -386,7 +386,7 @@ general_YUV444SplitToYUV420(const BYTE* const WINPR_RESTRICT pSrc[3], const UINT
 	return PRIMITIVES_SUCCESS;
 }
 
-static pstatus_t general_YUV444ToRGB_8u_P3AC4R_general(const BYTE* const WINPR_RESTRICT pSrc[3],
+static pstatus_t general_YUV444ToRGB_8u_P3AC4R_general(const BYTE* WINPR_RESTRICT pSrc[3],
                                                        const UINT32 srcStep[3],
                                                        BYTE* WINPR_RESTRICT pDst, UINT32 dstStep,
                                                        UINT32 DstFormat,
@@ -424,7 +424,7 @@ static pstatus_t general_YUV444ToRGB_8u_P3AC4R_general(const BYTE* const WINPR_R
 	return PRIMITIVES_SUCCESS;
 }
 
-static pstatus_t general_YUV444ToRGB_8u_P3AC4R_BGRX(const BYTE* const WINPR_RESTRICT pSrc[3],
+static pstatus_t general_YUV444ToRGB_8u_P3AC4R_BGRX(const BYTE* WINPR_RESTRICT pSrc[3],
                                                     const UINT32 srcStep[3],
                                                     BYTE* WINPR_RESTRICT pDst, UINT32 dstStep,
                                                     UINT32 DstFormat,
@@ -461,7 +461,7 @@ static pstatus_t general_YUV444ToRGB_8u_P3AC4R_BGRX(const BYTE* const WINPR_REST
 	return PRIMITIVES_SUCCESS;
 }
 
-static pstatus_t general_YUV444ToRGB_8u_P3AC4R(const BYTE* const WINPR_RESTRICT pSrc[3],
+static pstatus_t general_YUV444ToRGB_8u_P3AC4R(const BYTE* WINPR_RESTRICT pSrc[3],
                                                const UINT32 srcStep[3], BYTE* WINPR_RESTRICT pDst,
                                                UINT32 dstStep, UINT32 DstFormat,
                                                const prim_size_t* WINPR_RESTRICT roi)
@@ -482,7 +482,7 @@ static pstatus_t general_YUV444ToRGB_8u_P3AC4R(const BYTE* const WINPR_RESTRICT 
  * | G | = ( | 256   -48   -120 | | U - 128 | ) >> 8
  * | B |   ( | 256   475      0 | | V - 128 | )
  */
-static pstatus_t general_YUV420ToRGB_8u_P3AC4R(const BYTE* const WINPR_RESTRICT pSrc[3],
+static pstatus_t general_YUV420ToRGB_8u_P3AC4R(const BYTE* WINPR_RESTRICT pSrc[3],
                                                const UINT32 srcStep[3], BYTE* WINPR_RESTRICT pDst,
                                                UINT32 dstStep, UINT32 DstFormat,
                                                const prim_size_t* WINPR_RESTRICT roi)

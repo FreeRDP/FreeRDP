@@ -106,8 +106,8 @@ fail:
 	return NULL;
 }
 
-static BOOL cl_kernel_set_sources(primitives_cl_kernel* ctx,
-                                  const BYTE* const WINPR_RESTRICT pSrc[3], const UINT32 srcStep[3])
+static BOOL cl_kernel_set_sources(primitives_cl_kernel* ctx, const BYTE* WINPR_RESTRICT pSrc[3],
+                                  const UINT32 srcStep[3])
 {
 	const char* sourceNames[] = { "Y", "U", "V" };
 
@@ -207,7 +207,7 @@ static BOOL cl_kernel_process(primitives_cl_kernel* ctx, BYTE* pDst)
 	return TRUE;
 }
 
-static pstatus_t opencl_YUVToRGB(const char* kernelName, const BYTE* const WINPR_RESTRICT pSrc[3],
+static pstatus_t opencl_YUVToRGB(const char* kernelName, const BYTE* WINPR_RESTRICT pSrc[3],
                                  const UINT32 srcStep[3], BYTE* WINPR_RESTRICT pDst, UINT32 dstStep,
                                  const prim_size_t* WINPR_RESTRICT roi)
 {
@@ -277,7 +277,7 @@ static BOOL primitives_init_opencl_context(primitives_opencl_context* WINPR_REST
 	if (ret != CL_SUCCESS || nplatforms < 1)
 		return FALSE;
 
-	cl_platform_id* platform_ids = calloc(nplatforms, sizeof(*platform_ids));
+	cl_platform_id* platform_ids = calloc(nplatforms, sizeof(cl_platform_id));
 	if (!platform_ids)
 		return FALSE;
 
@@ -395,7 +395,7 @@ fail:
 	return FALSE;
 }
 
-static pstatus_t opencl_YUV420ToRGB_8u_P3AC4R(const BYTE* const WINPR_RESTRICT pSrc[3],
+static pstatus_t opencl_YUV420ToRGB_8u_P3AC4R(const BYTE* WINPR_RESTRICT pSrc[3],
                                               const UINT32 srcStep[3], BYTE* WINPR_RESTRICT pDst,
                                               UINT32 dstStep, UINT32 DstFormat,
                                               const prim_size_t* WINPR_RESTRICT roi)
@@ -440,7 +440,7 @@ static pstatus_t opencl_YUV420ToRGB_8u_P3AC4R(const BYTE* const WINPR_RESTRICT p
 	return opencl_YUVToRGB(kernel_name, pSrc, srcStep, pDst, dstStep, roi);
 }
 
-static pstatus_t opencl_YUV444ToRGB_8u_P3AC4R(const BYTE* const WINPR_RESTRICT pSrc[3],
+static pstatus_t opencl_YUV444ToRGB_8u_P3AC4R(const BYTE* WINPR_RESTRICT pSrc[3],
                                               const UINT32 srcStep[3], BYTE* WINPR_RESTRICT pDst,
                                               UINT32 dstStep, UINT32 DstFormat,
                                               const prim_size_t* WINPR_RESTRICT roi)

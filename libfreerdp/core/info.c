@@ -41,9 +41,8 @@
 #define logonInfoV2ReservedSize 558
 #define logonInfoV2TotalSize (logonInfoV2Size + logonInfoV2ReservedSize)
 
-static const char* const INFO_TYPE_LOGON_STRINGS[4] = { "Logon Info V1", "Logon Info V2",
-	                                                    "Logon Plain Notify",
-	                                                    "Logon Extended Info" };
+static const char* INFO_TYPE_LOGON_STRINGS[4] = { "Logon Info V1", "Logon Info V2",
+	                                              "Logon Plain Notify", "Logon Extended Info" };
 
 /* This define limits the length of the strings in the label field. */
 #define MAX_LABEL_LENGTH 40
