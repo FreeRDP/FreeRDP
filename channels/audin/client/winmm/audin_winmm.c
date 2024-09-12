@@ -177,7 +177,6 @@ static DWORD WINAPI audin_winmm_thread_func(LPVOID arg)
 
 	if (!winmm->hWaveIn)
 	{
-		MMRESULT rc;
 		rc = waveInOpen(&winmm->hWaveIn, WAVE_MAPPER, winmm->pwfx_cur, (DWORD_PTR)waveInProc,
 		                (DWORD_PTR)winmm,
 		                CALLBACK_FUNCTION | WAVE_MAPPED_DEFAULT_COMMUNICATION_DEVICE);

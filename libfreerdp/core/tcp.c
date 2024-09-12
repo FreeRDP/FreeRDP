@@ -246,8 +246,8 @@ static long transport_bio_simple_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 			} while ((status < 0) && (errno == EINTR));
 
 #else
-			fd_set rset;
-			struct timeval tv;
+			fd_set rset = { 0 };
+			struct timeval tv = { 0 };
 			FD_ZERO(&rset);
 			FD_SET(sockfd, &rset);
 
@@ -285,8 +285,8 @@ static long transport_bio_simple_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 			} while ((status < 0) && (errno == EINTR));
 
 #else
-			fd_set rset;
-			struct timeval tv;
+			fd_set rset = { 0 };
+			struct timeval tv = { 0 };
 			FD_ZERO(&rset);
 			FD_SET(sockfd, &rset);
 
@@ -1447,8 +1447,8 @@ static BOOL freerdp_tcp_layer_wait(void* userContext, BOOL waitWrite, DWORD time
 	} while ((status < 0) && (errno == EINTR));
 
 #else
-	fd_set rset;
-	struct timeval tv;
+	fd_set rset = { 0 };
+	struct timeval tv = { 0 };
 	FD_ZERO(&rset);
 	FD_SET(sockfd, &rset);
 
