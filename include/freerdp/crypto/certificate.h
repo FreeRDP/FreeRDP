@@ -65,6 +65,16 @@ extern "C"
 	FREERDP_API char* freerdp_certificate_get_fingerprint(const rdpCertificate* certificate);
 	FREERDP_API char* freerdp_certificate_get_pem(const rdpCertificate* certificate,
 	                                              size_t* pLength);
+
+	/**
+	 * @brief Get the certificate as PEM string
+	 * @param certificate A certificate instance to query
+	 * @param pLength A pointer to the size in bytes of the PEM string
+	 * @param withCertChain \b TRUE to export a full chain PEM, \b FALSE for only the last
+	 * certificate in the chain
+	 * @return A newly allocated string containing the requested PEM (free to deallocate) or NULL
+	 * @since version 3.8.0
+	 */
 	FREERDP_API char* freerdp_certificate_get_pem_ex(const rdpCertificate* certificate,
 	                                                 size_t* pLength, BOOL withCertChain);
 	FREERDP_API BYTE* freerdp_certificate_get_der(const rdpCertificate* certificate,
@@ -76,6 +86,13 @@ extern "C"
 	FREERDP_API char* freerdp_certificate_get_upn(const rdpCertificate* certificate);
 	FREERDP_API char* freerdp_certificate_get_email(const rdpCertificate* certificate);
 
+	/**
+	 * @brief return the date string of the certificate validity
+	 * @param certificate The certificate instance to query
+	 * @param startDate \b TRUE return the start date, \b FALSE for the end date
+	 * @return A newly allocated string containing the date, use \b free to deallocate
+	 * @since version 3.8.0
+	 */
 	FREERDP_API char* freerdp_certificate_get_validity(const rdpCertificate* certificate,
 	                                                   BOOL startDate);
 

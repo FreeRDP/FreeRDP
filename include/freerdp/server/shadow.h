@@ -135,7 +135,7 @@ extern "C"
 		BOOL resizeRequested;
 		UINT32 resizeWidth;
 		UINT32 resizeHeight;
-		BOOL areGfxCapsReady;
+		BOOL areGfxCapsReady; /** @since version 3.3.0 */
 	};
 
 	struct rdp_shadow_server
@@ -303,11 +303,24 @@ extern "C"
 	FREERDP_API void shadow_subsystem_set_entry(pfnShadowSubsystemEntry pEntry);
 
 	FREERDP_API WINPR_DEPRECATED_VAR(
-	    "Use shadow_subsystem_pointer_convert_alpha_pointer_data_to_format instead",
+	    "[since 3.4.0] Use shadow_subsystem_pointer_convert_alpha_pointer_data_to_format instead",
 	    int shadow_subsystem_pointer_convert_alpha_pointer_data(
 	        const BYTE* WINPR_RESTRICT pixels, BOOL premultiplied, UINT32 width, UINT32 height,
 	        SHADOW_MSG_OUT_POINTER_ALPHA_UPDATE* WINPR_RESTRICT pointerColor));
 
+	/** @brief Convert a pointer image from input format to RDP specific encoding
+	 *
+	 *  @param pixels A pointer to the pixel data
+	 *  @param format The pixel format of the pointer image
+	 *  @param premultiplied Premultiplied format, requires scaling of pixel colors
+	 *  @param width The width in pixels of the pointer
+	 *  @param height The height of the pointer
+	 *  @param pointerColor A pointer to the struct that can hold the encoded data
+	 *
+	 *  @return \b >=0 for success, \b <0 for any failure
+	 *
+	 *  @since version 3.4.0
+	 */
 	FREERDP_API int shadow_subsystem_pointer_convert_alpha_pointer_data_to_format(
 	    const BYTE* WINPR_RESTRICT pixels, UINT32 format, BOOL premultiplied, UINT32 width,
 	    UINT32 height, SHADOW_MSG_OUT_POINTER_ALPHA_UPDATE* WINPR_RESTRICT pointerColor);
@@ -334,11 +347,27 @@ extern "C"
 	FREERDP_API int shadow_capture_align_clip_rect(RECTANGLE_16* rect, const RECTANGLE_16* clip);
 
 	FREERDP_API WINPR_DEPRECATED_VAR(
-	    "Use shadow_capture_compare_with_format",
+	    "[since 3.4.0] Use shadow_capture_compare_with_format",
 	    int shadow_capture_compare(const BYTE* WINPR_RESTRICT pData1, UINT32 nStep1, UINT32 nWidth,
 	                               UINT32 nHeight, const BYTE* WINPR_RESTRICT pData2, UINT32 nStep2,
 	                               RECTANGLE_16* WINPR_RESTRICT rect));
 
+	/** @brief Compare two framebuffer images of possibly different formats with each other
+	 *
+	 *  @param pData1  A pointer to the data of image 1
+	 *  @param format1 The format of image 1
+	 *  @param nStep1  The line width in bytes of image 1
+	 *  @param nWidth  The line width in pixels of image 1
+	 *  @param nHeight The height of image 1
+	 *  @param pData2  A pointer to the data of image 2
+	 *  @param format2 The format of image 2
+	 *  @param nStep2  The line width in bytes of image 2
+	 *  @param rect A pointer to the rectangle of the images to compare
+	 *
+	 *  @return \b 0 if equal, \b >0 if not equal and \b <0 for any error
+	 *
+	 *  @since version 3.4.0
+	 */
 	FREERDP_API int shadow_capture_compare_with_format(const BYTE* WINPR_RESTRICT pData1,
 	                                                   UINT32 format1, UINT32 nStep1, UINT32 nWidth,
 	                                                   UINT32 nHeight,

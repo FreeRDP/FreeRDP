@@ -47,30 +47,32 @@ extern "C"
 {
 #endif
 
-/** \file
- * \brief This is the FreeRDP settings module.
- *
- * Settings are used to store configuration data for an RDP connection.
- * There are 3 different settings for each client and server:
- *
- * 1. The initial connection supplied by the user
- * 2. The settings sent from client or server during capability exchange
- * 3. The settings merged from the capability exchange and the initial configuration.
- *
- * The lifetime of the settings is as follows:
- * 1. Initial configuration is saved and will be valid for the whole application lifecycle
- * 2. The client or server settings from the other end are valid from capability exchange until the
- * connection is ended (disconnect/redirect/...)
- * 3. The merged settings are created from the initial configuration and server settings and have
- * the same lifetime, until the connection ends
- *
- *
- * So, when accessing the settings always ensure to know which one you are operating on! (this is
- * especially important for the proxy where you have a RDP client and RDP server in the same
- * application context)
- */
+	/** \defgroup rdpSettings
+	 * \brief This is the FreeRDP settings module.
+	 *
+	 * Settings are used to store configuration data for an RDP connection.
+	 * There are 3 different settings for each client and server:
+	 *
+	 * 1. The initial connection supplied by the user
+	 * 2. The settings sent from client or server during capability exchange
+	 * 3. The settings merged from the capability exchange and the initial configuration.
+	 *
+	 * The lifetime of the settings is as follows:
+	 * 1. Initial configuration is saved and will be valid for the whole application lifecycle
+	 * 2. The client or server settings from the other end are valid from capability exchange until
+	 * the connection is ended (disconnect/redirect/...)
+	 * 3. The merged settings are created from the initial configuration and server settings and
+	 * have the same lifetime, until the connection ends
+	 *
+	 *
+	 * So, when accessing the settings always ensure to know which one you are operating on! (this
+	 * is especially important for the proxy where you have a RDP client and RDP server in the same
+	 * application context)
+	 *
+	 * @{
+	 */
 
-typedef struct rdp_settings rdpSettings;
+	typedef struct rdp_settings rdpSettings;
 
 /**
  * rdpSettings creation flags
@@ -170,6 +172,8 @@ typedef struct rdp_settings rdpSettings;
 	 *
 	 *  \param settings the settings to remove the device from
 	 *  \param device the device to remove
+	 *
+	 *  \since version 3.4.0
 	 *
 	 *  \return \b TRUE if the device was removed, \b FALSE if device was not found or is NULL
 	 */
@@ -714,11 +718,15 @@ typedef struct rdp_settings rdpSettings;
 	                                                              size_t size);
 
 	/** \brief return the configuration directory for the library
+	 *  @return The current configuration path or \b NULL
+	 *  @since version 3.6.0
 	 */
 	FREERDP_API char* freerdp_settings_get_config_path(void);
 
 #ifdef __cplusplus
 }
 #endif
+
+/** @} */
 
 #endif /* FREERDP_SETTINGS_H */

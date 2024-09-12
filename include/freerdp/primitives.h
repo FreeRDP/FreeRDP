@@ -102,8 +102,37 @@ typedef pstatus_t (*__alphaComp_argb_t)(const BYTE* WINPR_RESTRICT pSrc1, UINT32
 typedef pstatus_t (*__add_16s_t)(const INT16* WINPR_RESTRICT pSrc1,
 	                             const INT16* WINPR_RESTRICT pSrc2, INT16* WINPR_RESTRICT pDst,
 	                             UINT32 len);
+/**
+ *  @brief Add INT16 from pSrcDst2 to pSrcDst1 and store in both arrays
+ *  @param pSrcDst1 A pointer to the array of INT16 to add to
+ *  @param pSrcDst2 A pointer to the array of INT16 to add to
+ *  @param len The number of INT16 in the arrays
+ *  @return \b <=0 for failure, success otherwise
+ *  @since version 3.6.0
+ */
 typedef pstatus_t (*__add_16s_inplace_t)(INT16* WINPR_RESTRICT pSrcDst1,
 	                                     INT16* WINPR_RESTRICT pSrcDst2, UINT32 len);
+
+/**
+ * @brief Copy (sub)image data without overlapping
+ *
+ * @param pDstData The destination image buffer
+ * @param DstFormat The destination image format @PIXEL_FORMAT
+ * @param nDstStep The destination image line width in bytes (including padding)
+ * @param nXDst The X coordinate to start copying to
+ * @param nYDst The Y coordinate to start copying to
+ * @param nWidth The width in pixels to copy
+ * @param nHeight The height in pixels to copy
+ * @param pSrcData The source image buffer
+ * @param SrcFormat The source image format @PIXEL_FORMAT
+ * @param nSrcStep The source image line with in bytes (including padding)
+ * @param nXSrc The X coordinate to start copying from
+ * @param nYSrc The Y coordinate to start copying from
+ * @param palette A color palette for 8 bit colors
+ * @param flags Copy flags @FREERDP_IMAGE_FLAGS
+ * @return \b <=0 for failure, success otherwise
+ *  @since version 3.6.0
+ */
 typedef pstatus_t (*__copy_no_overlap_t)(BYTE* WINPR_RESTRICT pDstData, DWORD DstFormat,
 	                                     UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst, UINT32 nWidth,
 	                                     UINT32 nHeight, const BYTE* WINPR_RESTRICT pSrcData,
@@ -224,9 +253,9 @@ typedef struct
 	/** \brief Do vecotor addition, store result in both input buffers
 	 *  pSrcDst1 = pSrcDst2 = pSrcDst1  + pSrcDst2
 	 */
-	__add_16s_inplace_t add_16s_inplace;
-	__lShiftC_16s_inplace_t lShiftC_16s_inplace;
-	__copy_no_overlap_t copy_no_overlap;
+	__add_16s_inplace_t add_16s_inplace;         /** @since version 3.6.0 */
+	__lShiftC_16s_inplace_t lShiftC_16s_inplace; /** @since version 3.6.0 */
+	__copy_no_overlap_t copy_no_overlap;         /** @since version 3.6.0 */
 } primitives_t;
 
 typedef enum

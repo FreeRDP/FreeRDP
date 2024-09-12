@@ -40,33 +40,14 @@ extern "C"
 {
 #endif
 
-/** \file
- * \brief This is the FreeRDP settings module.
- *
- * Settings are used to store configuration data for an RDP connection.
- * There are 3 different settings for each client and server:
- *
- * 1. The initial connection supplied by the user
- * 2. The settings sent from client or server during capability exchange
- * 3. The settings merged from the capability exchange and the initial configuration.
- *
- * The lifetime of the settings is as follows:
- * 1. Initial configuration is saved and will be valid for the whole application lifecycle
- * 2. The client or server settings from the other end are valid from capability exchange until the
- * connection is ended (disconnect/redirect/...)
- * 3. The merged settings are created from the initial configuration and server settings and have
- * the same lifetime, until the connection ends
- *
- *
- * So, when accessing the settings always ensure to know which one you are operating on! (this is
- * especially important for the proxy where you have a RDP client and RDP server in the same
- * application context)
- */
+	/** @addtogroup rdpSettings
+	 * @{
+	 */
 
 /* Surface Commands Flags */
-#define SURFCMDS_SET_SURFACE_BITS 0x00000002
-#define SURFCMDS_FRAME_MARKER 0x00000010
-#define SURFCMDS_STREAM_SURFACE_BITS 0x00000040
+#define SURFCMDS_SET_SURFACE_BITS 0x00000002    /** @since version 3.7.0 */
+#define SURFCMDS_FRAME_MARKER 0x00000010        /** @since version 3.7.0 */
+#define SURFCMDS_STREAM_SURFACE_BITS 0x00000040 /** @since version 3.7.0 */
 
 /* RAIL Support Level */
 #define RAIL_LEVEL_SUPPORTED 0x00000001
@@ -90,9 +71,11 @@ extern "C"
 #define PERF_ENABLE_DESKTOP_COMPOSITION 0x00000100
 
 /* Connection Types */
-#define CONNECTION_TYPE_INVALID                                                       \
-	0x00 /* synthetic, removes RNS_UD_CS_VALID_CONNECTION_TYPE from ConnectionType in \
-	        EarlyCapabilityFlags */
+#define CONNECTION_TYPE_INVALID                                                               \
+	0x00 /** @brief synthetic, removes RNS_UD_CS_VALID_CONNECTION_TYPE from ConnectionType in \
+	      * EarlyCapabilityFlags                                                              \
+	      * @since version 3.6.0                                                              \
+	      */
 #define CONNECTION_TYPE_MODEM 0x01
 #define CONNECTION_TYPE_BROADBAND_LOW 0x02
 #define CONNECTION_TYPE_SATELLITE 0x03
@@ -248,7 +231,7 @@ extern "C"
 #define DEFAULT_COOKIE_MAX_LENGTH 0xFF
 
 	/* General capability set */
-#define TS_CAPS_PROTOCOLVERSION 0x200
+#define TS_CAPS_PROTOCOLVERSION 0x200 /** @since version 3.6.0 */
 
 /* Order Support */
 #define NEG_DSTBLT_INDEX 0x00
@@ -521,5 +504,7 @@ extern "C"
 #ifdef __cplusplus
 }
 #endif
+
+/** @} */
 
 #endif /* FREERDP_SETTINGS_TYPES_H */

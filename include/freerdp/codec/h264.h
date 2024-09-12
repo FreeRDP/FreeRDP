@@ -41,6 +41,10 @@ extern "C"
 		H264_RATECONTROL_CQP
 	} H264_RATECONTROL_MODE;
 
+	/**
+	 * @brief The usage types for H264 encoding
+	 * @since version 3.6.0
+	 */
 	typedef enum
 	{
 		H264_SCREEN_CONTENT_REAL_TIME = 0,
@@ -56,7 +60,7 @@ extern "C"
 		H264_CONTEXT_OPTION_BITRATE,
 		H264_CONTEXT_OPTION_FRAMERATE,
 		H264_CONTEXT_OPTION_QP,
-		H264_CONTEXT_OPTION_USAGETYPE,
+		H264_CONTEXT_OPTION_USAGETYPE, /** @since version 3.6.0 */
 	} H264_CONTEXT_OPTION;
 
 	FREERDP_API void free_h264_metablock(RDPGFX_H264_METABLOCK* meta);
@@ -70,9 +74,29 @@ extern "C"
 	                                  const RECTANGLE_16* regionRect, BYTE** ppDstData,
 	                                  UINT32* pDstSize, RDPGFX_H264_METABLOCK* meta);
 
-	/* API for user to fill YUV I420 buffer before encoding */
+	/** @brief API for user to fill YUV I420 buffer before encoding
+	 *
+	 *  @param h264 The h264 context to query
+	 *  @param nSrcStride The size of a line in bytes of the source image
+	 *  @param nSrcWidth The width of the source image in pixels
+	 *  @param nSrcHeight The height of the source image
+	 *  @param YUVData A pointer to hold the current YUV buffers
+	 *  @param stride A pointer to hold the byte length of a line in the YUV buffers
+	 *  @return \b >= 0 for success, \b <0 for an error
+	 *  @since version 3.6.0
+	 */
 	FREERDP_API INT32 h264_get_yuv_buffer(H264_CONTEXT* h264, UINT32 nSrcStride, UINT32 nSrcWidth,
 	                                      UINT32 nSrcHeight, BYTE* YUVData[3], UINT32 stride[3]);
+
+	/**
+	 * @brief Compress currently filled image data to H264 stream
+	 *
+	 * @param h264 The H264 context to use for compression
+	 * @param ppDstData A pointer that will hold the allocated result buffer
+	 * @param pDstSize A pointer for the destination buffer size in bytes
+	 * @return \b >= 0 for success, \b <0 for an error
+	 * @since version 3.6.0
+	 */
 	FREERDP_API INT32 h264_compress(H264_CONTEXT* h264, BYTE** ppDstData, UINT32* pDstSize);
 
 	FREERDP_API INT32 avc420_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT32 SrcSize,

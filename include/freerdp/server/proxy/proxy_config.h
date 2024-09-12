@@ -26,6 +26,11 @@
 #include <freerdp/api.h>
 #include <freerdp/server/proxy/proxy_modules_api.h>
 
+/** @defgroup proxy_config
+ * @ingroup proxy
+ * @{
+ */
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -81,11 +86,11 @@ extern "C"
 		size_t InterceptCount;
 
 		/* clipboard specific settings */
-		WINPR_DEPRECATED_VAR("Unused, ignore", BOOL TextOnly);
-		WINPR_DEPRECATED_VAR("Unused, ignore", UINT32 MaxTextLength);
+		WINPR_DEPRECATED_VAR("[since 3.6.0] Unused, ignore", BOOL TextOnly);
+		WINPR_DEPRECATED_VAR("[since 3.6.0] Unused, ignore", UINT32 MaxTextLength);
 
 		/* gfx settings */
-		WINPR_DEPRECATED_VAR("Unused, ignore", BOOL DecodeGFX);
+		WINPR_DEPRECATED_VAR("[since 3.6.0] Unused, ignore", BOOL DecodeGFX);
 
 		/* modules */
 		char** Modules; /* module file names to load */
@@ -111,7 +116,7 @@ extern "C"
 		wIniFile* ini;
 
 		/* target continued */
-		UINT32 TargetTlsSecLevel;
+		UINT32 TargetTlsSecLevel; /** @since version 3.2.0 */
 	};
 
 	/**
@@ -232,4 +237,7 @@ extern "C"
 #ifdef __cplusplus
 }
 #endif
+
+/** @} */
+
 #endif /* FREERDP_SERVER_PROXY_CONFIG_H */

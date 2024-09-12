@@ -348,141 +348,309 @@ extern "C"
 		return v;
 	}
 
+	/**
+	 * @brief Stream_Get_UINT8
+	 * @param _s The stream to read from
+	 * @return an integer
+	 * @since version 3.9.0
+	 */
 	static INLINE UINT8 Stream_Get_UINT8(wStream* _s)
 	{
 		return stream_read_u8(_s, TRUE);
 	}
 
+	/**
+	 * @brief Stream_Get_INT8
+	 * @param _s The stream to read from
+	 * @return an integer
+	 * @since version 3.9.0
+	 */
 	static INLINE INT8 Stream_Get_INT8(wStream* _s)
 	{
 		return stream_read_i8(_s, TRUE);
 	}
 
+	/**
+	 * @brief Stream_Get_UINT16
+	 * @param _s The stream to read from
+	 * @return an integer
+	 * @since version 3.9.0
+	 */
 	static INLINE UINT16 Stream_Get_UINT16(wStream* _s)
 	{
 		return stream_read_u16_le(_s, TRUE);
 	}
 
+	/**
+	 * @brief Stream_Get_INT16
+	 * @param _s The stream to read from
+	 * @return an integer
+	 * @since version 3.9.0
+	 */
 	static INLINE INT16 Stream_Get_INT16(wStream* _s)
 	{
 		return stream_read_i16_le(_s, TRUE);
 	}
 
+	/**
+	 * @brief Stream_Get_UINT16 big endian
+	 * @param _s The stream to read from
+	 * @return an integer
+	 * @since version 3.9.0
+	 */
 	static INLINE UINT16 Stream_Get_UINT16_BE(wStream* _s)
 	{
 		return stream_read_u16_be(_s, TRUE);
 	}
 
+	/**
+	 * @brief Stream_Get_INT16 big endian
+	 * @param _s The stream to read from
+	 * @return an integer
+	 * @since version 3.9.0
+	 */
 	static INLINE INT16 Stream_Get_INT16_BE(wStream* _s)
 	{
 		return stream_read_i16_be(_s, TRUE);
 	}
 
+	/**
+	 * @brief Stream_Get_UINT32
+	 * @param _s The stream to read from
+	 * @return an integer
+	 * @since version 3.9.0
+	 */
 	static INLINE UINT32 Stream_Get_UINT32(wStream* _s)
 	{
 		return stream_read_u32_le(_s, TRUE);
 	}
 
+	/**
+	 * @brief Stream_Get_INT32
+	 * @param _s The stream to read from
+	 * @return an integer
+	 * @since version 3.9.0
+	 */
 	static INLINE INT32 Stream_Get_INT32(wStream* _s)
 	{
 		return stream_read_i32_le(_s, TRUE);
 	}
 
+	/**
+	 * @brief Stream_Get_UINT32 big endian
+	 * @param _s The stream to read from
+	 * @return an integer
+	 * @since version 3.9.0
+	 */
 	static INLINE UINT32 Stream_Get_UINT32_BE(wStream* _s)
 	{
 		return stream_read_u32_be(_s, TRUE);
 	}
 
+	/**
+	 * @brief Stream_Get_INT32 big endian
+	 * @param _s The stream to read from
+	 * @return an integer
+	 * @since version 3.9.0
+	 */
 	static INLINE INT32 Stream_Get_INT32_BE(wStream* _s)
 	{
 		return stream_read_i32_be(_s, TRUE);
 	}
 
+	/**
+	 * @brief Stream_Get_UINT64
+	 * @param _s The stream to read from
+	 * @return an integer
+	 * @since version 3.9.0
+	 */
 	static INLINE UINT64 Stream_Get_UINT64(wStream* _s)
 	{
 		return stream_read_u64_le(_s, TRUE);
 	}
 
+	/**
+	 * @brief Stream_Get_INT64
+	 * @param _s The stream to read from
+	 * @return an integer
+	 * @since version 3.9.0
+	 */
 	static INLINE INT64 Stream_Get_INT64(wStream* _s)
 	{
 		return stream_read_i64_le(_s, TRUE);
 	}
 
+	/**
+	 * @brief Stream_Get_UINT64 big endian
+	 * @param _s The stream to read from
+	 * @return an integer
+	 * @since version 3.9.0
+	 */
 	static INLINE UINT64 Stream_Get_UINT64_BE(wStream* _s)
 	{
 		return stream_read_u64_be(_s, TRUE);
 	}
 
+	/**
+	 * @brief Stream_Get_INT64 big endian
+	 * @param _s The stream to read from
+	 * @return an integer
+	 * @since version 3.9.0
+	 */
 	static INLINE INT64 Stream_Get_INT64_BE(wStream* _s)
 	{
 		return stream_read_i64_be(_s, TRUE);
 	}
 
+	/**
+	 * @brief Read a UINT8 from the stream, do not increment stream position
+	 * @param _s The stream to read from
+	 * @return an integer
+	 * @since version 3.9.0
+	 */
 	static INLINE UINT8 Stream_Peek_Get_UINT8(wStream* _s)
 	{
 		return stream_read_u8(_s, FALSE);
 	}
 
+	/**
+	 * @brief Read a INT8 from the stream, do not increment stream position
+	 * @param _s The stream to read from
+	 * @return an integer
+	 * @since version 3.9.0
+	 */
 	static INLINE INT8 Stream_Peek_Get_INT8(wStream* _s)
 	{
 		return stream_read_i8(_s, FALSE);
 	}
 
+	/**
+	 * @brief Read a UINT16 from the stream, do not increment stream position
+	 * @param _s The stream to read from
+	 * @return an integer
+	 * @since version 3.9.0
+	 */
 	static INLINE UINT16 Stream_Peek_Get_UINT16(wStream* _s)
 	{
 		return stream_read_u16_le(_s, FALSE);
 	}
 
+	/**
+	 * @brief Read a INT16 from the stream, do not increment stream position
+	 * @param _s The stream to read from
+	 * @return an integer
+	 * @since version 3.9.0
+	 */
 	static INLINE INT16 Stream_Peek_Get_INT16(wStream* _s)
 	{
 		return stream_read_i16_le(_s, FALSE);
 	}
 
+	/**
+	 * @brief Read a UINT16 big endian from the stream, do not increment stream position
+	 * @param _s The stream to read from
+	 * @return an integer
+	 * @since version 3.9.0
+	 */
 	static INLINE UINT16 Stream_Peek_Get_UINT16_BE(wStream* _s)
 	{
 		return stream_read_u16_be(_s, FALSE);
 	}
 
+	/**
+	 * @brief Read a INT16 big endian from the stream, do not increment stream position
+	 * @param _s The stream to read from
+	 * @return an integer
+	 * @since version 3.9.0
+	 */
 	static INLINE INT16 Stream_Peek_Get_INT16_BE(wStream* _s)
 	{
 		return stream_read_i16_be(_s, FALSE);
 	}
 
+	/**
+	 * @brief Read a UINT32 from the stream, do not increment stream position
+	 * @param _s The stream to read from
+	 * @return an integer
+	 * @since version 3.9.0
+	 */
 	static INLINE UINT32 Stream_Peek_Get_UINT32(wStream* _s)
 	{
 		return stream_read_u32_le(_s, FALSE);
 	}
 
+	/**
+	 * @brief Read a INT32 from the stream, do not increment stream position
+	 * @param _s The stream to read from
+	 * @return an integer
+	 * @since version 3.9.0
+	 */
 	static INLINE INT32 Stream_Peek_Get_INT32(wStream* _s)
 	{
 		return stream_read_i32_le(_s, FALSE);
 	}
 
+	/**
+	 * @brief Read a UINT32 big endian from the stream, do not increment stream position
+	 * @param _s The stream to read from
+	 * @return an integer
+	 * @since version 3.9.0
+	 */
 	static INLINE UINT32 Stream_Peek_Get_UINT32_BE(wStream* _s)
 	{
 		return stream_read_u32_be(_s, FALSE);
 	}
 
+	/**
+	 * @brief Read a INT32 big endian from the stream, do not increment stream position
+	 * @param _s The stream to read from
+	 * @return an integer
+	 * @since version 3.9.0
+	 */
 	static INLINE INT32 Stream_Peek_Get_INT32_BE(wStream* _s)
 	{
 		return stream_read_i32_be(_s, FALSE);
 	}
 
+	/**
+	 * @brief Read a UINT64 from the stream, do not increment stream position
+	 * @param _s The stream to read from
+	 * @return an integer
+	 * @since version 3.9.0
+	 */
 	static INLINE UINT64 Stream_Peek_Get_UINT64(wStream* _s)
 	{
 		return stream_read_u64_le(_s, FALSE);
 	}
 
+	/**
+	 * @brief Read a INT64 from the stream, do not increment stream position
+	 * @param _s The stream to read from
+	 * @return an integer
+	 * @since version 3.9.0
+	 */
 	static INLINE INT64 Stream_Peek_Get_INT64(wStream* _s)
 	{
 		return stream_read_i64_le(_s, FALSE);
 	}
 
+	/**
+	 * @brief Read a UINT64 big endian from the stream, do not increment stream position
+	 * @param _s The stream to read from
+	 * @return an integer
+	 * @since version 3.9.0
+	 */
 	static INLINE UINT64 Stream_Peek_Get_UINT64_BE(wStream* _s)
 	{
 		return stream_read_u64_be(_s, FALSE);
 	}
 
+	/**
+	 * @brief Read a INT64 big endian from the stream, do not increment stream position
+	 * @param _s The stream to read from
+	 * @return an integer
+	 * @since version 3.9.0
+	 */
 	static INLINE INT64 Stream_Peek_Get_INT64_BE(wStream* _s)
 	{
 		return stream_read_i64_be(_s, FALSE);

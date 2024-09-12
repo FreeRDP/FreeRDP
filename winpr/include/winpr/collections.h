@@ -63,8 +63,25 @@ extern "C"
 	} wObject;
 
 	/* utility function with compatible arguments for string data */
+
+	/** @brief helper function to clone a string
+	 *  @param pvstr the source string to clone
+	 *  @return A clone of the source or \b NULL
+	 *  @since version 3.3.0
+	 */
 	WINPR_API void* winpr_ObjectStringClone(const void* pvstr);
+
+	/** @brief helper function to clone a WCHAR string
+	 *  @param pvstr the source string to clone
+	 *  @return A clone of the source or \b NULL
+	 *  @since version 3.3.0
+	 */
 	WINPR_API void* winpr_ObjectWStringClone(const void* pvstr);
+
+	/** @brief helper function to free a (WCHAR) string
+	 *  @param pvstr the string to free
+	 *  @since version 3.3.0
+	 */
 	WINPR_API void winpr_ObjectStringFree(void* pvstr);
 
 	/* System.Collections.Queue */
