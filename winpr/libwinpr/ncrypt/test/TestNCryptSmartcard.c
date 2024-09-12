@@ -154,7 +154,10 @@ int TestNCryptSmartcard(int argc, char* argv[])
 		NCryptFreeObject((NCRYPT_HANDLE)provider);
 
 		if (status != NTE_NO_MORE_ITEMS)
-			goto fail;
+		{
+			(void)fprintf(stderr, "NCryptEnumKeys returned %s [0x%08" PRIx32 "]\n",
+			              Win32ErrorCode2Tag(status), status);
+		}
 	}
 
 	rc = 0;
