@@ -19,8 +19,16 @@
  */
 
 #include <winpr/config.h>
+#include <winpr/platform.h>
+
+WINPR_PRAGMA_DIAG_PUSH
+WINPR_PRAGMA_DIAG_IGNORED_RESERVED_ID_MACRO
+WINPR_PRAGMA_DIAG_IGNORED_UNUSED_MACRO
 
 #define __STDC_WANT_LIB_EXT1__ 1 // NOLINT(bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
+
+WINPR_PRAGMA_DIAG_POP
+
 #include <stdio.h>
 #include <string.h>
 #include <fcntl.h>
