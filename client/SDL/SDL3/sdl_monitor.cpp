@@ -245,8 +245,8 @@ static BOOL sdl_apply_display_properties(SdlContext* sdl)
 			}
 			SDL_free(modes);
 
-			const float dw = 1.0f * rect.w / scaleRect.w;
-			const float dh = 1.0f * rect.h / scaleRect.h;
+			const float dw = 1.0f * static_cast<float>(rect.w) / static_cast<float>(scaleRect.w);
+			const float dh = 1.0f * static_cast<float>(rect.h) / static_cast<float>(scaleRect.h);
 			hdpi /= dw;
 			vdpi /= dh;
 		}
