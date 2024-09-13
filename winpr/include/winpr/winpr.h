@@ -145,6 +145,24 @@ WINPR_API const char* winpr_get_build_config(void);
  * @return The casted pointer
  * @since version 3.9.0
  */
+#define WINPR_REINTERPRET_CAST(ptr, srcType, dstType) \
+	({                                                \
+		union                                         \
+		{                                             \
+			srcType src;                              \
+			dstType dst;                              \
+		} cnv;                                        \
+		cnv.src = ptr;                                \
+		cnv.dst;                                      \
+	})
+
+/**
+ * @brief A macro to do dirty casts. Do not use without a good justification!
+ * @param ptr The pointer to cast
+ * @param dstType The data type to cast to
+ * @return The casted pointer
+ * @since version 3.9.0
+ */
 #define WINPR_CAST_CONST_PTR_AWAY(ptr, dstType) \
 	({                                          \
 		union                                   \
@@ -174,6 +192,7 @@ WINPR_API const char* winpr_get_build_config(void);
 		cnv.dst;                          \
 	})
 #else
+#define WINPR_REINTERPRET_CAST(ptr, srcType, dstType) (dstType) ptr
 #define WINPR_CAST_CONST_PTR_AWAY(ptr, dstType) (dstType) ptr
 #define WINPR_FUNC_PTR_CAST(ptr, dstType) (dstType)(uintptr_t) ptr
 #endif

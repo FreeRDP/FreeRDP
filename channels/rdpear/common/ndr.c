@@ -730,7 +730,7 @@ BOOL ndr_struct_write_fromDescr(NdrContext* context, wStream* s, const NdrStruct
 			{
 				ndr_refid ptrId = NDR_PTR_NULL;
 				BOOL isNew = 0;
-				ptr = *(const void**)ptr;
+				ptr = *(WINPR_CAST_CONST_PTR_AWAY(ptr, const void**));
 
 				if (!ptr && field->pointerType == NDR_POINTER_NON_NULL)
 				{
@@ -797,7 +797,7 @@ void ndr_struct_dump_fromDescr(wLog* logger, UINT32 lvl, size_t identLevel,
 		{
 			case NDR_POINTER:
 			case NDR_POINTER_NON_NULL:
-				ptr = *(const void**)ptr;
+				ptr = *(WINPR_CAST_CONST_PTR_AWAY(ptr, const void**));
 				break;
 			case NDR_NOT_POINTER:
 				break;

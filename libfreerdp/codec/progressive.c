@@ -1050,8 +1050,9 @@ progressive_decompress_tile_first(PROGRESSIVE_CONTEXT* WINPR_RESTRICT progressiv
 	if (rc < 0)
 		goto fail;
 
-	rc = prims->yCbCrToRGB_16s8u_P3AC4R((const INT16**)pSrcDst, 64 * 2, tile->data, tile->stride,
-	                                    progressive->format, &roi_64x64);
+	const INT16** ptr = WINPR_REINTERPRET_CAST(pSrcDst, INT16**, const INT16**);
+	rc = prims->yCbCrToRGB_16s8u_P3AC4R(ptr, 64 * 2, tile->data, tile->stride, progressive->format,
+	                                    &roi_64x64);
 fail:
 	BufferPool_Return(progressive->bufferPool, pBuffer);
 	return rc;
@@ -1494,8 +1495,9 @@ progressive_decompress_tile_upgrade(PROGRESSIVE_CONTEXT* WINPR_RESTRICT progress
 	if (status < 0)
 		goto fail;
 
-	status = prims->yCbCrToRGB_16s8u_P3AC4R((const INT16**)pSrcDst, 64 * 2, tile->data,
-	                                        tile->stride, progressive->format, &roi_64x64);
+	const INT16** ptr = WINPR_REINTERPRET_CAST(pSrcDst, INT16**, const INT16**);
+	status = prims->yCbCrToRGB_16s8u_P3AC4R(ptr, 64 * 2, tile->data, tile->stride,
+	                                        progressive->format, &roi_64x64);
 fail:
 	BufferPool_Return(progressive->bufferPool, pBuffer);
 	return status;
