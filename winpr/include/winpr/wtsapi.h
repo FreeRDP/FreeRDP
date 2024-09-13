@@ -29,6 +29,9 @@
 
 #define CHANNEL_CHUNK_MAX_LENGTH 16256
 
+WINPR_PRAGMA_DIAG_PUSH
+WINPR_PRAGMA_DIAG_IGNORED_RESERVED_IDENTIFIER
+
 #ifdef _WIN32
 
 #define CurrentTime _CurrentTime /* Workaround for X11 "CurrentTime" header conflict */
@@ -1514,5 +1517,7 @@ extern "C"
 #ifdef __cplusplus
 }
 #endif
+
+WINPR_PRAGMA_DIAG_POP
 
 #endif /* WINPR_WTSAPI_H */

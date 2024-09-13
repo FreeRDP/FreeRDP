@@ -178,7 +178,13 @@ extern "C"
 	DECLSPEC_NORETURN WINPR_API VOID ExitProcess(UINT uExitCode);
 	WINPR_API BOOL GetExitCodeProcess(HANDLE hProcess, LPDWORD lpExitCode);
 
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_RESERVED_IDENTIFIER
+
 	WINPR_API HANDLE _GetCurrentProcess(void);
+
+	WINPR_PRAGMA_DIAG_POP
+
 	WINPR_API DWORD GetCurrentProcessId(void);
 
 	WINPR_API BOOL TerminateProcess(HANDLE hProcess, UINT uExitCode);
@@ -238,7 +244,11 @@ extern "C"
 	WINPR_API VOID ExitThread(DWORD dwExitCode);
 	WINPR_API BOOL GetExitCodeThread(HANDLE hThread, LPDWORD lpExitCode);
 
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_RESERVED_IDENTIFIER
 	WINPR_API HANDLE _GetCurrentThread(void);
+	WINPR_PRAGMA_DIAG_POP
+
 	WINPR_API DWORD GetCurrentThreadId(void);
 
 	typedef void (*PAPCFUNC)(ULONG_PTR Parameter);
@@ -268,8 +278,13 @@ extern "C"
 /*
  * GetCurrentProcess / GetCurrentThread cause a conflict on Mac OS X
  */
+WINPR_PRAGMA_DIAG_PUSH
+WINPR_PRAGMA_DIAG_IGNORED_RESERVED_IDENTIFIER
+
 #define _GetCurrentProcess GetCurrentProcess
 #define _GetCurrentThread GetCurrentThread
+
+WINPR_PRAGMA_DIAG_POP
 
 #endif
 

@@ -28,6 +28,9 @@
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
 
+WINPR_PRAGMA_DIAG_PUSH
+WINPR_PRAGMA_DIAG_IGNORED_RESERVED_IDENTIFIER
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -430,5 +433,7 @@ extern "C"
 #ifdef __cplusplus
 }
 #endif
+
+WINPR_PRAGMA_DIAG_POP
 
 #endif /* WINPR_CRT_STRING_H */
