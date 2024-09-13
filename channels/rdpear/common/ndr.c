@@ -29,7 +29,6 @@
 #define NDR_MAX_CONSTRUCTS 16
 #define NDR_MAX_DEFERRED 50
 
-/** @brief */
 struct NdrContext_s
 {
 	BYTE version;
@@ -113,13 +112,13 @@ void ndr_context_free(NdrContext* context)
 	}
 }
 
-void ndr_context_bytes_read(NdrContext* context, size_t len)
+static void ndr_context_bytes_read(NdrContext* context, size_t len)
 {
 	WINPR_ASSERT(context);
 	context->indentLevels[context->currentLevel] += len;
 }
 
-void ndr_context_bytes_written(NdrContext* context, size_t len)
+static void ndr_context_bytes_written(NdrContext* context, size_t len)
 {
 	ndr_context_bytes_read(context, len);
 }
@@ -284,8 +283,10 @@ BOOL ndr_end_constructed(NdrContext* context, wStream* s)
 	Stream_StaticInit(&staticS, Stream_Buffer(s) + offset, 4);
 
 	/* len */
-	size_t len = Stream_GetPosition(s) - (offset + 8);
-	if (!ndr_write_uint32(context, &staticS, len))
+	const size_t len = Stream_GetPosition(s) - (offset + 8);
+	if (len > UINT32_MAX)
+		return FALSE;
+	if (!ndr_write_uint32(context, &staticS, (UINT32)len))
 		return FALSE;
 
 	return TRUE;
@@ -432,8 +433,7 @@ SIMPLE_TYPE_IMPL(UINT64, uint64)
 		WINPR_ASSERT(context);                                                                     \
 		WINPR_ASSERT(s);                                                                           \
 		WINPR_ASSERT(hints);                                                                       \
-		return ndr_read_uconformant_array(context, s, (NdrArrayHints*)hints, ndr_##TYPE##_descr(), \
-		                                  (void*)v);                                               \
+		return ndr_read_uconformant_array(context, s, hints, ndr_##TYPE##_descr(), v);             \
 	}                                                                                              \
                                                                                                    \
 	BOOL ndr_write_##TYPE##Array(NdrContext* context, wStream* s, const void* hints,               \
@@ -442,16 +442,15 @@ SIMPLE_TYPE_IMPL(UINT64, uint64)
 		WINPR_ASSERT(context);                                                                     \
 		WINPR_ASSERT(s);                                                                           \
 		WINPR_ASSERT(hints);                                                                       \
-		NdrArrayHints* ahints = (NdrArrayHints*)hints;                                             \
-		return ndr_write_uconformant_array(context, s, ahints->count, ndr_##TYPE##_descr(),        \
-		                                   (const void*)v);                                        \
+		const NdrArrayHints* ahints = (const NdrArrayHints*)hints;                                 \
+		return ndr_write_uconformant_array(context, s, ahints->count, ndr_##TYPE##_descr(), v);    \
 	}                                                                                              \
 	void ndr_destroy_##TYPE##Array(NdrContext* context, const void* hints, void* obj)              \
 	{                                                                                              \
 		WINPR_ASSERT(context);                                                                     \
 		WINPR_ASSERT(obj);                                                                         \
 		WINPR_ASSERT(hints);                                                                       \
-		NdrArrayHints* ahints = (NdrArrayHints*)hints;                                             \
+		const NdrArrayHints* ahints = (const NdrArrayHints*)hints;                                 \
 		NdrMessageType descr = ndr_##TYPE##_descr();                                               \
 		if (descr->destroyFn)                                                                      \
 		{                                                                                          \
@@ -477,7 +476,7 @@ SIMPLE_TYPE_IMPL(UINT64, uint64)
 		WINPR_ASSERT(context);                                                                     \
 		WINPR_ASSERT(s);                                                                           \
 		WINPR_ASSERT(hints);                                                                       \
-		return ndr_read_uconformant_varying_array(context, s, (NdrVaryingArrayHints*)hints,        \
+		return ndr_read_uconformant_varying_array(context, s, (const NdrVaryingArrayHints*)hints,  \
 		                                          ndr_##TYPE##_descr(), v);                        \
 	}                                                                                              \
 	BOOL ndr_write_##TYPE##VaryingArray(NdrContext* context, wStream* s, const void* hints,        \
@@ -486,7 +485,7 @@ SIMPLE_TYPE_IMPL(UINT64, uint64)
 		WINPR_ASSERT(context);                                                                     \
 		WINPR_ASSERT(s);                                                                           \
 		WINPR_ASSERT(hints);                                                                       \
-		return ndr_write_uconformant_varying_array(context, s, (NdrVaryingArrayHints*)hints,       \
+		return ndr_write_uconformant_varying_array(context, s, (const NdrVaryingArrayHints*)hints, \
 		                                           ndr_##TYPE##_descr(), v);                       \
 	}                                                                                              \
                                                                                                    \
@@ -495,7 +494,7 @@ SIMPLE_TYPE_IMPL(UINT64, uint64)
 		                                                       ndr_read_##TYPE##VaryingArray,      \
 		                                                       ndr_write_##TYPE##VaryingArray,     \
 		                                                       NULL,                               \
-		                                                       (NDR_DUMP_FN)NULL };                \
+		                                                       NULL };                             \
                                                                                                    \
 	NdrMessageType ndr_##TYPE##VaryingArray_descr(void)                                            \
 	{                                                                                              \
@@ -643,7 +642,7 @@ BOOL ndr_struct_read_fromDescr(NdrContext* context, wStream* s, const NdrStructD
 		if (field->hintsField >= 0)
 		{
 			/* computes the address of the hints field if any */
-			WINPR_ASSERT(field->hintsField < descr->nfields);
+			WINPR_ASSERT((size_t)field->hintsField < descr->nfields);
 			const NdrFieldStruct* hintsField = &descr->fields[field->hintsField];
 
 			hints = (BYTE*)target + hintsField->structOffset;
@@ -711,17 +710,17 @@ BOOL ndr_struct_write_fromDescr(NdrContext* context, wStream* s, const NdrStruct
 	for (size_t i = 0; i < descr->nfields; i++)
 	{
 		const NdrFieldStruct* field = &descr->fields[i];
-		BYTE* ptr = (BYTE*)src + field->structOffset;
+		const BYTE* ptr = (const BYTE*)src + field->structOffset;
 
-		void* hints = NULL;
+		const void* hints = NULL;
 
 		if (field->hintsField >= 0)
 		{
 			/* computes the address of the hints field if any */
-			WINPR_ASSERT(field->hintsField < descr->nfields);
+			WINPR_ASSERT((size_t)field->hintsField < descr->nfields);
 			const NdrFieldStruct* hintsField = &descr->fields[field->hintsField];
 
-			hints = (BYTE*)src + hintsField->structOffset;
+			hints = (const BYTE*)src + hintsField->structOffset;
 		}
 
 		switch (field->pointerType)
@@ -731,7 +730,7 @@ BOOL ndr_struct_write_fromDescr(NdrContext* context, wStream* s, const NdrStruct
 			{
 				ndr_refid ptrId = NDR_PTR_NULL;
 				BOOL isNew = 0;
-				ptr = *(void**)ptr;
+				ptr = *(const void**)ptr;
 
 				if (!ptr && field->pointerType == NDR_POINTER_NON_NULL)
 				{
@@ -754,8 +753,8 @@ BOOL ndr_struct_write_fromDescr(NdrContext* context, wStream* s, const NdrStruct
 					}
 
 					deferred->name = field->name;
-					deferred->hints = hints;
-					deferred->target = ptr;
+					deferred->hints = WINPR_CAST_CONST_PTR_AWAY(hints, void*);
+					deferred->target = WINPR_CAST_CONST_PTR_AWAY(ptr, void*);
 					deferred->msg = field->typeDescr;
 					ndeferred++;
 				}
@@ -792,13 +791,13 @@ void ndr_struct_dump_fromDescr(wLog* logger, UINT32 lvl, size_t identLevel,
 	for (size_t i = 0; i < descr->nfields; i++)
 	{
 		const NdrFieldStruct* field = &descr->fields[i];
-		BYTE* ptr = (BYTE*)obj + field->structOffset;
+		const BYTE* ptr = (const BYTE*)obj + field->structOffset;
 
 		switch (field->pointerType)
 		{
 			case NDR_POINTER:
 			case NDR_POINTER_NON_NULL:
-				ptr = *(void**)ptr;
+				ptr = *(const void**)ptr;
 				break;
 			case NDR_NOT_POINTER:
 				break;
@@ -830,7 +829,7 @@ void ndr_struct_destroy(NdrContext* context, const NdrStructDescr* descr, void* 
 		if (field->hintsField >= 0)
 		{
 			/* computes the address of the hints field if any */
-			WINPR_ASSERT(field->hintsField < descr->nfields);
+			WINPR_ASSERT((size_t)field->hintsField < descr->nfields);
 			const NdrFieldStruct* hintsField = &descr->fields[field->hintsField];
 
 			hints = (BYTE*)pptr + hintsField->structOffset;
@@ -863,7 +862,7 @@ typedef struct
 	ndr_refid* presult;
 } FindValueArgs;
 
-BOOL findValueRefFn(const void* key, void* value, void* parg)
+static BOOL findValueRefFn(const void* key, void* value, void* parg)
 {
 	WINPR_ASSERT(parg);
 
