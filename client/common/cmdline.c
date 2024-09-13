@@ -25,6 +25,7 @@
 #include <errno.h>
 
 #include <winpr/assert.h>
+#include <winpr/string.h>
 #include <winpr/crt.h>
 #include <winpr/wlog.h>
 #include <winpr/path.h>
@@ -4147,7 +4148,8 @@ static void fill_credential_strings(COMMAND_LINE_ARGUMENT_A* args)
 	if (arg && ((arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT) != 0))
 	{
 		const char* gwcreds[] = { "p:", "access-token:" };
-		char* tok = strtok(arg->Value, ",");
+		char* saveptr = NULL;
+		char* tok = strtok_s(arg->Value, ",", &saveptr);
 		while (tok)
 		{
 			for (size_t x = 0; x < ARRAYSIZE(gwcreds); x++)
@@ -4159,7 +4161,7 @@ static void fill_credential_strings(COMMAND_LINE_ARGUMENT_A* args)
 					FillMemory(val, strlen(val), '*');
 				}
 			}
-			tok = strtok(NULL, ",");
+			tok = strtok_s(NULL, ",", &saveptr);
 		}
 	}
 }

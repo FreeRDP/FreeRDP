@@ -35,6 +35,7 @@ struct s_reg
 	char* filename;
 	BOOL read_only;
 	RegKey* root_key;
+	char* saveptr;
 };
 
 struct s_reg_val

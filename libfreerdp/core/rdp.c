@@ -2868,13 +2868,14 @@ static void log_build_warn(rdpRdp* rdp, const char* what, const char* msg,
 
 	if (config && list)
 	{
-		char* tok = strtok(config, " ");
+		char* saveptr = NULL;
+		char* tok = strtok_s(config, " ", &saveptr);
 		while (tok)
 		{
 			if (cmp(rdp->log, tok))
 				winpr_str_append(tok, list, len, " ");
 
-			tok = strtok(NULL, " ");
+			tok = strtok_s(NULL, " ", &saveptr);
 		}
 	}
 	free(config);
@@ -2885,11 +2886,13 @@ static void log_build_warn(rdpRdp* rdp, const char* what, const char* msg,
 		{
 			WLog_Print(rdp->log, WLOG_WARN, "*************************************************");
 			WLog_Print(rdp->log, WLOG_WARN, "This build is using [%s] build options:", what);
-			char* tok = strtok(list, " ");
+
+			char* saveptr = NULL;
+			char* tok = strtok_s(list, " ", &saveptr);
 			while (tok)
 			{
 				WLog_Print(rdp->log, WLOG_WARN, "* '%s'", tok);
-				tok = strtok(NULL, " ");
+				tok = strtok_s(NULL, " ", &saveptr);
 			}
 			WLog_Print(rdp->log, WLOG_WARN, "");
 			WLog_Print(rdp->log, WLOG_WARN, "[%s] build options %s", what, msg);
