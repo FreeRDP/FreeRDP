@@ -202,7 +202,8 @@ error:
 {
 	int saved_errno = errno;
 	if (terminal_needs_reset)
-		tcsetattr(terminal_fildes, TCSAFLUSH, &orig_flags);
+		(void)tcsetattr(terminal_fildes, TCSAFLUSH, &orig_flags);
+
 	if (terminal_fildes != STDIN_FILENO)
 	{
 		if (fp)
