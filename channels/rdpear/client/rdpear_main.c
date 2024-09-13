@@ -365,11 +365,13 @@ static char* KERB_RPC_UNICODESTR_to_charptr(const RPC_UNICODE_STRING* src)
 
 static BOOL extractAuthData(const KERB_ASN1_DATA* src, krb5_authdata* authData, BOOL* haveData)
 {
-	WinPrAsn1Decoder dec, dec2, dec3;
+	WinPrAsn1Decoder dec = { 0 };
+	WinPrAsn1Decoder dec2 = { 0 };
+	WinPrAsn1Decoder dec3 = { 0 };
 	WinPrAsn1Decoder_InitMem(&dec, WINPR_ASN1_DER, src->Asn1Buffer, src->Asn1BufferHints.count);
 	BOOL error = FALSE;
-	WinPrAsn1_INTEGER adType;
-	WinPrAsn1_OctetString os;
+	WinPrAsn1_INTEGER adType = 0;
+	WinPrAsn1_OctetString os = { 0 };
 
 	*haveData = FALSE;
 	if (!WinPrAsn1DecReadSequence(&dec, &dec2))
@@ -395,7 +397,8 @@ static BOOL extractAuthData(const KERB_ASN1_DATA* src, krb5_authdata* authData, 
 
 static BOOL extractChecksum(const KERB_ASN1_DATA* src, krb5_checksum* dst)
 {
-	WinPrAsn1Decoder dec, dec2;
+	WinPrAsn1Decoder dec = { 0 };
+	WinPrAsn1Decoder dec2 = { 0 };
 	WinPrAsn1Decoder_InitMem(&dec, WINPR_ASN1_DER, src->Asn1Buffer, src->Asn1BufferHints.count);
 	BOOL error = FALSE;
 	WinPrAsn1_OctetString os;
@@ -403,7 +406,7 @@ static BOOL extractChecksum(const KERB_ASN1_DATA* src, krb5_checksum* dst)
 	if (!WinPrAsn1DecReadSequence(&dec, &dec2))
 		return FALSE;
 
-	WinPrAsn1_INTEGER cksumtype;
+	WinPrAsn1_INTEGER cksumtype = 0;
 	if (!WinPrAsn1DecReadContextualInteger(&dec2, 0, &error, &cksumtype) ||
 	    !WinPrAsn1DecReadContextualOctetString(&dec2, 1, &error, &os, FALSE))
 		return FALSE;
@@ -449,9 +452,9 @@ static BOOL rdpear_kerb_CreateApReqAuthenticator(RDPEAR_PLUGIN* rdpear,
 	    !ndr_treat_deferred_read(rcontext, s))
 		goto out;
 
-	krb5_authdata authdata;
+	krb5_authdata authdata = { 0 };
 	krb5_authdata* authDataPtr[2] = { &authdata, NULL };
-	BOOL haveData;
+	BOOL haveData = 0;
 
 	if (!extractAuthData(req.AuthData, &authdata, &haveData))
 	{
@@ -566,11 +569,12 @@ out:
 
 static BOOL rdpear_findEncryptedData(const KERB_ASN1_DATA* src, int* penctype, krb5_data* data)
 {
-	WinPrAsn1Decoder dec, dec2;
+	WinPrAsn1Decoder dec = { 0 };
+	WinPrAsn1Decoder dec2 = { 0 };
 	WinPrAsn1Decoder_InitMem(&dec, WINPR_ASN1_DER, src->Asn1Buffer, src->Asn1BufferHints.count);
 	BOOL error = FALSE;
-	WinPrAsn1_INTEGER encType;
-	WinPrAsn1_OctetString os;
+	WinPrAsn1_INTEGER encType = 0;
+	WinPrAsn1_OctetString os = { 0 };
 
 	if (!WinPrAsn1DecReadSequence(&dec, &dec2) ||
 	    !WinPrAsn1DecReadContextualInteger(&dec2, 0, &error, &encType) ||
@@ -607,8 +611,8 @@ static BOOL rdpear_kerb_UnpackKdcReplyBody(RDPEAR_PLUGIN* rdpear,
 	// winpr_HexDump(TAG, WLOG_DEBUG, req.EncryptedData->Asn1Buffer,
 	// req.EncryptedData->Asn1BufferHints.count);
 
-	krb5_data asn1Data;
-	int encType;
+	krb5_data asn1Data = { 0 };
+	int encType = 0;
 	if (!rdpear_findEncryptedData(req.EncryptedData, &encType, &asn1Data) || !asn1Data.length)
 		goto out;
 
@@ -639,8 +643,8 @@ static BOOL rdpear_kerb_DecryptApReply(RDPEAR_PLUGIN* rdpear,
 	// winpr_HexDump(TAG, WLOG_DEBUG, req.EncryptedReply->Asn1Buffer,
 	// req.EncryptedReply->Asn1BufferHints.count);
 
-	krb5_data asn1Data;
-	int encType;
+	krb5_data asn1Data = { 0 };
+	int encType = 0;
 	if (!rdpear_findEncryptedData(req.EncryptedReply, &encType, &asn1Data) || !asn1Data.length)
 		goto out;
 
@@ -724,8 +728,9 @@ static UINT rdpear_decode_payload(RDPEAR_PLUGIN* rdpear,
 
 	Stream_Seek(s, 16); /* skip first 16 bytes */
 
-	wStream commandStream;
-	UINT16 callId, callId2;
+	wStream commandStream = { 0 };
+	UINT16 callId = 0;
+	UINT16 callId2 = 0;
 
 	context = ndr_read_header(s);
 	if (!context || !ndr_read_constructed(context, s, &commandStream) ||
@@ -855,7 +860,9 @@ static UINT rdpear_on_data_received(IWTSVirtualChannelCallback* pChannelCallback
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 24))
 		return ERROR_INVALID_DATA;
 
-	UINT32 protocolMagic, Length, Version;
+	UINT32 protocolMagic = 0;
+	UINT32 Length = 0;
+	UINT32 Version = 0;
 	Stream_Read_UINT32(s, protocolMagic);
 	if (protocolMagic != 0x4EACC3C8)
 		return ERROR_INVALID_DATA;
@@ -880,17 +887,18 @@ static UINT rdpear_on_data_received(IWTSVirtualChannelCallback* pChannelCallback
 	if (!freerdp_nla_decrypt(rdpear->rdp_context, &inBuffer, &decrypted))
 		goto out;
 
-	WinPrAsn1Decoder dec, dec2;
-	wStream decodedStream;
+	WinPrAsn1Decoder dec = { 0 };
+	WinPrAsn1Decoder dec2 = { 0 };
+	wStream decodedStream = { 0 };
 	Stream_StaticInit(&decodedStream, decrypted.pvBuffer, decrypted.cbBuffer);
 	WinPrAsn1Decoder_Init(&dec, WINPR_ASN1_DER, &decodedStream);
 
 	if (!WinPrAsn1DecReadSequence(&dec, &dec2))
 		goto out;
 
-	WinPrAsn1_OctetString packageName;
-	WinPrAsn1_OctetString payload;
-	BOOL error;
+	WinPrAsn1_OctetString packageName = { 0 };
+	WinPrAsn1_OctetString payload = { 0 };
+	BOOL error = 0;
 	if (!WinPrAsn1DecReadContextualOctetString(&dec2, 1, &error, &packageName, FALSE))
 		goto out;
 
@@ -899,7 +907,7 @@ static UINT rdpear_on_data_received(IWTSVirtualChannelCallback* pChannelCallback
 	if (!WinPrAsn1DecReadContextualOctetString(&dec2, 2, &error, &payload, FALSE))
 		goto out;
 
-	wStream payloadStream;
+	wStream payloadStream = { 0 };
 	Stream_StaticInit(&payloadStream, payload.data, payload.len);
 
 	ret = rdpear_decode_payload(rdpear, pChannelCallback, packageType, &payloadStream);

@@ -250,10 +250,9 @@ static UINT sshagent_on_new_channel_connection(IWTSListenerCallback* pListenerCa
                                                BOOL* pbAccept,
                                                IWTSVirtualChannelCallback** ppCallback)
 {
-	SSHAGENT_CHANNEL_CALLBACK* callback;
-	GENERIC_CHANNEL_CALLBACK* generic;
 	SSHAGENT_LISTENER_CALLBACK* listener_callback = (SSHAGENT_LISTENER_CALLBACK*)pListenerCallback;
-	callback = (SSHAGENT_CHANNEL_CALLBACK*)calloc(1, sizeof(SSHAGENT_CHANNEL_CALLBACK));
+	SSHAGENT_CHANNEL_CALLBACK* callback =
+	    (SSHAGENT_CHANNEL_CALLBACK*)calloc(1, sizeof(SSHAGENT_CHANNEL_CALLBACK));
 
 	if (!callback)
 	{
@@ -272,7 +271,8 @@ static UINT sshagent_on_new_channel_connection(IWTSListenerCallback* pListenerCa
 	}
 
 	InitializeCriticalSection(&callback->lock);
-	generic = &callback->generic;
+
+	GENERIC_CHANNEL_CALLBACK* generic = &callback->generic;
 	generic->iface.OnDataReceived = sshagent_on_data_received;
 	generic->iface.OnClose = sshagent_on_close;
 	generic->plugin = listener_callback->plugin;
@@ -348,8 +348,7 @@ static UINT sshagent_plugin_terminated(IWTSPlugin* pPlugin)
 FREERDP_ENTRY_POINT(UINT VCAPITYPE sshagent_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints))
 {
 	UINT status = CHANNEL_RC_OK;
-	SSHAGENT_PLUGIN* sshagent;
-	sshagent = (SSHAGENT_PLUGIN*)pEntryPoints->GetPlugin(pEntryPoints, "sshagent");
+	SSHAGENT_PLUGIN* sshagent = (SSHAGENT_PLUGIN*)pEntryPoints->GetPlugin(pEntryPoints, "sshagent");
 
 	if (!sshagent)
 	{

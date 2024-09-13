@@ -234,6 +234,7 @@ static BOOL CALLBACK load_timezones(PINIT_ONCE once, PVOID param, PVOID* pvconte
 
 #if defined(WITH_TIMEZONE_FROM_FILE) && defined(WITH_WINPR_JSON)
 	{
+		WINPR_JSON* json = NULL;
 		char* filename = GetCombinedPath(WINPR_RESOURCE_ROOT, "TimeZoneNameMap.json");
 		if (!filename)
 		{
@@ -241,7 +242,7 @@ static BOOL CALLBACK load_timezones(PINIT_ONCE once, PVOID param, PVOID* pvconte
 			goto end;
 		}
 
-		WINPR_JSON* json = load_timezones_from_file(filename);
+		json = load_timezones_from_file(filename);
 		if (!json)
 			goto end;
 

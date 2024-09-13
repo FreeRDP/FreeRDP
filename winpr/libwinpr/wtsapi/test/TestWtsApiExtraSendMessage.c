@@ -9,14 +9,13 @@
 
 int TestWtsApiExtraSendMessage(int argc, char* argv[])
 {
-	BOOL bSuccess;
-	HANDLE hServer;
-	DWORD result;
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
 
-	hServer = WTS_CURRENT_SERVER_HANDLE;
-
-	bSuccess = WTSSendMessageA(hServer, WTS_CURRENT_SESSION, TITLE, strlen(TITLE) + 1, MESSAGE,
-	                           strlen(MESSAGE) + 1, MB_CANCELTRYCONTINUE, 3, &result, TRUE);
+	HANDLE hServer = WTS_CURRENT_SERVER_HANDLE;
+	DWORD result = 0;
+	BOOL bSuccess = WTSSendMessageA(hServer, WTS_CURRENT_SESSION, TITLE, strlen(TITLE) + 1, MESSAGE,
+	                                strlen(MESSAGE) + 1, MB_CANCELTRYCONTINUE, 3, &result, TRUE);
 
 	if (!bSuccess)
 	{

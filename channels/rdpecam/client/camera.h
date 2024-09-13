@@ -171,8 +171,10 @@ UINT ecam_channel_write(CameraPlugin* ecam, GENERIC_CHANNEL_CALLBACK* hchannel, 
                         wStream* out, BOOL freeStream);
 
 /* ecam device interface */
+void ecam_dev_destroy(CameraDevice* dev);
+
+WINPR_ATTR_MALLOC(ecam_dev_destroy, 1)
 CameraDevice* ecam_dev_create(CameraPlugin* ecam, const char* deviceId, const char* deviceName);
-void ecam_dev_destroy(void* dev);
 
 /* video encoding interface */
 BOOL ecam_encoder_context_init(CameraDeviceStream* stream);

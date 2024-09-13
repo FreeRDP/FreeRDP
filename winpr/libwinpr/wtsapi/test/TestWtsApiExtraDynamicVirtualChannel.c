@@ -5,16 +5,10 @@
 
 int TestWtsApiExtraDynamicVirtualChannel(int argc, char* argv[])
 {
-	BOOL bSuccess;
-	ULONG length;
-	ULONG bytesRead;
-	ULONG bytesWritten;
-	BYTE buffer[1024];
-	HANDLE hVirtualChannel;
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
 
-	length = sizeof(buffer);
-
-	hVirtualChannel =
+	HANDLE hVirtualChannel =
 	    WTSVirtualChannelOpenEx(WTS_CURRENT_SESSION, "ECHO", WTS_CHANNEL_OPTION_DYNAMIC);
 
 	if (hVirtualChannel == INVALID_HANDLE_VALUE)
@@ -23,8 +17,10 @@ int TestWtsApiExtraDynamicVirtualChannel(int argc, char* argv[])
 		return -1;
 	}
 	printf("WTSVirtualChannelOpen opend");
-	bytesWritten = 0;
-	bSuccess = WTSVirtualChannelWrite(hVirtualChannel, (PCHAR)buffer, length, &bytesWritten);
+	ULONG bytesWritten = 0;
+	char buffer[1024] = { 0 };
+	size_t length = sizeof(buffer);
+	BOOL bSuccess = WTSVirtualChannelWrite(hVirtualChannel, buffer, length, &bytesWritten);
 
 	if (!bSuccess)
 	{
@@ -33,7 +29,7 @@ int TestWtsApiExtraDynamicVirtualChannel(int argc, char* argv[])
 	}
 	printf("WTSVirtualChannelWrite written");
 
-	bytesRead = 0;
+	ULONG bytesRead = 0;
 	bSuccess = WTSVirtualChannelRead(hVirtualChannel, 5000, (PCHAR)buffer, length, &bytesRead);
 
 	if (!bSuccess)

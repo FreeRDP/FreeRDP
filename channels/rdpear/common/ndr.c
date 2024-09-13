@@ -104,17 +104,13 @@ NdrContext* ndr_context_copy(const NdrContext* src)
 	return ret;
 }
 
-void ndr_context_destroy(NdrContext** pcontext)
+void ndr_context_free(NdrContext* context)
 {
-	WINPR_ASSERT(pcontext);
-
-	NdrContext* context = *pcontext;
 	if (context)
 	{
 		HashTable_Free(context->refPointers);
 		free(context);
 	}
-	*pcontext = NULL;
 }
 
 void ndr_context_bytes_read(NdrContext* context, size_t len)
@@ -132,12 +128,9 @@ NdrContext* ndr_read_header(wStream* s)
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
 		return NULL;
 
-	BYTE version, drep;
-	Stream_Read_UINT8(s, version);
-	Stream_Read_UINT8(s, drep);
-
-	UINT16 headerLen;
-	Stream_Read_UINT16(s, headerLen);
+	BYTE version = Stream_Get_UINT8(s);
+	BYTE drep = Stream_Get_UINT8(s);
+	UINT16 headerLen = Stream_Get_UINT16(s);
 
 	if (headerLen < 4 || !Stream_CheckAndLogRequiredLength(TAG, s, headerLen - 4))
 		return NULL;
@@ -216,7 +209,7 @@ BOOL ndr_read_pickle(NdrContext* context, wStream* s)
 {
 	WINPR_ASSERT(context);
 
-	UINT32 v;
+	UINT32 v = 0;
 
 	/* NDR format label */
 	if (!ndr_read_uint32(context, s, &v) || v != 0x20000)
@@ -241,7 +234,7 @@ BOOL ndr_read_constructed(NdrContext* context, wStream* s, wStream* target)
 {
 	WINPR_ASSERT(context);
 
-	UINT32 len;
+	UINT32 len = 0;
 
 	/* len */
 	if (!ndr_read_uint32(context, s, &len))
@@ -313,11 +306,6 @@ static size_t ndr_hintsCount(NdrMessageType msgType, const void* hints)
 			WINPR_ASSERT(0 && "unknown arity");
 			return 0;
 	}
-}
-
-void Stream_Write_UINT64_BE(wStream* _s, UINT64 _v)
-{
-	WINPR_ASSERT(FALSE && "implement Stream_Write_UINT64_BE()");
 }
 
 BOOL ndr_read_uint8(NdrContext* context, wStream* s, BYTE* v)
@@ -415,10 +403,12 @@ NdrMessageType ndr_uint8_descr(void)
 		return ndr_write_##LOWERTYPE(context, s, *(const UPPERTYPE*)v);                       \
 	}                                                                                         \
                                                                                               \
-	const NdrMessageDescr ndr_##LOWERTYPE##_descr_s = {                                       \
-		NDR_ARITY_SIMPLE,         sizeof(UPPERTYPE),    ndr_read_##LOWERTYPE##_,              \
-		ndr_write_##LOWERTYPE##_, (NDR_DESTROY_FN)NULL, (NDR_DUMP_FN)NULL                     \
-	};                                                                                        \
+	const NdrMessageDescr ndr_##LOWERTYPE##_descr_s = { NDR_ARITY_SIMPLE,                     \
+		                                                sizeof(UPPERTYPE),                    \
+		                                                ndr_read_##LOWERTYPE##_,              \
+		                                                ndr_write_##LOWERTYPE##_,             \
+		                                                NULL,                                 \
+		                                                NULL };                               \
                                                                                               \
 	NdrMessageType ndr_##LOWERTYPE##_descr(void)                                              \
 	{                                                                                         \
@@ -466,7 +456,7 @@ SIMPLE_TYPE_IMPL(UINT64, uint64)
                                                                                                    \
 	const NdrMessageDescr ndr_##TYPE##Array_descr_s = {                                            \
 		NDR_ARITY_ARRAYOF,       sizeof(UPPERTYPE),         ndr_read_##TYPE##Array,                \
-		ndr_write_##TYPE##Array, ndr_destroy_##TYPE##Array, (NDR_DUMP_FN)NULL                      \
+		ndr_write_##TYPE##Array, ndr_destroy_##TYPE##Array, NULL                                   \
 	};                                                                                             \
                                                                                                    \
 	NdrMessageType ndr_##TYPE##Array_descr(void)                                                   \
@@ -493,10 +483,12 @@ SIMPLE_TYPE_IMPL(UINT64, uint64)
 		                                           ndr_##TYPE##_descr(), v);                       \
 	}                                                                                              \
                                                                                                    \
-	const NdrMessageDescr ndr_##TYPE##VaryingArray_descr_s = {                                     \
-		NDR_ARITY_VARYING_ARRAYOF,      sizeof(UPPERTYPE),    ndr_read_##TYPE##VaryingArray,       \
-		ndr_write_##TYPE##VaryingArray, (NDR_DESTROY_FN)NULL, (NDR_DUMP_FN)NULL                    \
-	};                                                                                             \
+	const NdrMessageDescr ndr_##TYPE##VaryingArray_descr_s = { NDR_ARITY_VARYING_ARRAYOF,          \
+		                                                       sizeof(UPPERTYPE),                  \
+		                                                       ndr_read_##TYPE##VaryingArray,      \
+		                                                       ndr_write_##TYPE##VaryingArray,     \
+		                                                       NULL,                               \
+		                                                       (NDR_DUMP_FN)NULL };                \
                                                                                                    \
 	NdrMessageType ndr_##TYPE##VaryingArray_descr(void)                                            \
 	{                                                                                              \
@@ -521,7 +513,9 @@ BOOL ndr_read_uconformant_varying_array(NdrContext* context, wStream* s,
 	WINPR_ASSERT(itemType);
 	WINPR_ASSERT(ptarget);
 
-	UINT32 maxCount, offset, length;
+	UINT32 maxCount = 0;
+	UINT32 offset = 0;
+	UINT32 length = 0;
 
 	if (!ndr_read_uint32(context, s, &maxCount) || !ndr_read_uint32(context, s, &offset) ||
 	    !ndr_read_uint32(context, s, &length))
@@ -575,7 +569,7 @@ BOOL ndr_read_uconformant_array(NdrContext* context, wStream* s, const NdrArrayH
 	WINPR_ASSERT(itemType);
 	WINPR_ASSERT(vtarget);
 
-	UINT32 count;
+	UINT32 count = 0;
 
 	if (!ndr_read_uint32(context, s, &count))
 		return FALSE;
@@ -729,7 +723,7 @@ BOOL ndr_struct_write_fromDescr(NdrContext* context, wStream* s, const NdrStruct
 			case NDR_POINTER_NON_NULL:
 			{
 				ndr_refid ptrId = NDR_PTR_NULL;
-				BOOL isNew;
+				BOOL isNew = 0;
 				ptr = *(void**)ptr;
 
 				if (!ptr && field->pointerType == NDR_POINTER_NON_NULL)

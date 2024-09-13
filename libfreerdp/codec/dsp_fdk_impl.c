@@ -205,14 +205,13 @@ static void log_dec_info(const CStreamInfo* info, void (*log)(const char* fmt, .
 
 static void log_enc_info(const AACENC_InfoStruct* info, fdk_log_fkt_t log)
 {
-	size_t x;
 	char confBuf[1024] = { 0 };
 
 	assert(info);
 	assert(log);
 
 	strcat(confBuf, "{");
-	for (x = 0; x < 64; x++)
+	for (size_t x = 0; x < 64; x++)
 	{
 		char tmp[12] = { 0 };
 		sprintf(tmp, "0x%02x", (int)info->confBuf[x]);
@@ -407,8 +406,6 @@ int fdk_aac_dsp_impl_config(void* handle, size_t* pbuffersize, int encoder, unsi
 	    "fdk_aac_dsp_impl_config: samplerate: %ld, channels: %ld, bytes_pers_second: %ld",
 	    samplerate, channels, bytes_per_second);
 
-	size_t x;
-	AACENC_ERROR err;
 	struct t_param_pair
 	{
 		AACENC_PARAM param;
@@ -422,7 +419,7 @@ int fdk_aac_dsp_impl_config(void* handle, size_t* pbuffersize, int encoder, unsi
 		                                   { AACENC_BITRATE, bytes_per_second * 8 },
 		                                   { AACENC_TRANSMUX, 0 },
 		                                   { AACENC_AFTERBURNER, 1 } };
-	HANDLE_AACENCODER self;
+	HANDLE_AACENCODER self = NULL;
 	if (encoder)
 		self = (HANDLE_AACENCODER)handle;
 	else
@@ -435,11 +432,11 @@ int fdk_aac_dsp_impl_config(void* handle, size_t* pbuffersize, int encoder, unsi
 		}
 	}
 
-	for (x = 0; x < sizeof(params) / sizeof(params[0]); x++)
+	for (size_t x = 0; x < sizeof(params) / sizeof(params[0]); x++)
 	{
 		const struct t_param_pair* param = &params[x];
 
-		err = aacEncoder_SetParam(self, param->param, param->value);
+		AACENC_ERROR err = aacEncoder_SetParam(self, param->param, param->value);
 		if (err != AACENC_OK)
 		{
 			log(WLOG_ERROR, "aacEncoder_SetParam(%s, %d) failed with %s",
@@ -448,7 +445,7 @@ int fdk_aac_dsp_impl_config(void* handle, size_t* pbuffersize, int encoder, unsi
 		}
 	}
 
-	err = aacEncEncode(self, NULL, NULL, NULL, NULL);
+	AACENC_ERROR err = aacEncEncode(self, NULL, NULL, NULL, NULL);
 	if (err != AACENC_OK)
 	{
 		log(WLOG_ERROR, "aacEncEncode failed with %s", enc_err_str(err));
@@ -477,7 +474,6 @@ int fdk_aac_dsp_impl_config(void* handle, size_t* pbuffersize, int encoder, unsi
 
 		*pbuffersize = info.frameLength * info.inputChannels * sizeof(INT_PCM);
 
-		AAC_DECODER_ERROR decerr;
 		HANDLE_AACDECODER aacdec = (HANDLE_AACDECODER)handle;
 
 		UCHAR* asc[] = { info.confBuf };
@@ -485,7 +481,7 @@ int fdk_aac_dsp_impl_config(void* handle, size_t* pbuffersize, int encoder, unsi
 
 		assert(handle);
 
-		decerr = aacDecoder_ConfigRaw(aacdec, asc, ascSize);
+		AAC_DECODER_ERROR decerr = aacDecoder_ConfigRaw(aacdec, asc, ascSize);
 		if (decerr != AAC_DEC_OK)
 		{
 			log(WLOG_ERROR, "aacDecoder_ConfigRaw failed with %s", dec_err_str(decerr));
@@ -501,15 +497,21 @@ ssize_t fdk_aac_dsp_impl_decode_fill(void* handle, const void* data, size_t size
 	assert(log);
 
 	UINT leftBytes = size;
-	AAC_DECODER_ERROR err;
 	HANDLE_AACDECODER self = (HANDLE_AACDECODER)handle;
-	UCHAR* pBuffer[] = { data };
+
+	union
+	{
+		const void* cpv;
+		UCHAR* puc;
+	} cnv;
+	cnv.cpv = data;
+	UCHAR* pBuffer[] = { cnv.puc };
 	const UINT bufferSize[] = { size };
 
 	assert(handle);
 	assert(data || (size == 0));
 
-	err = aacDecoder_Fill(self, pBuffer, bufferSize, &leftBytes);
+	AAC_DECODER_ERROR err = aacDecoder_Fill(self, pBuffer, bufferSize, &leftBytes);
 	if (err != AAC_DEC_OK)
 	{
 		log(WLOG_ERROR, "aacDecoder_Fill failed with %s", dec_err_str(err));
@@ -552,12 +554,16 @@ ssize_t fdk_aac_dsp_impl_stream_info(void* handle, int encoder, fdk_log_fkt_t lo
 ssize_t fdk_aac_dsp_impl_encode(void* handle, const void* data, size_t size, void* dst,
                                 size_t dstSize, fdk_log_fkt_t log)
 {
-	AACENC_ERROR err;
-
 	INT inSizes[] = { size };
 	INT inElSizes[] = { sizeof(INT_PCM) };
 	INT inIdentifiers[] = { IN_AUDIO_DATA };
-	void* inBuffers[] = { data };
+	union
+	{
+		const void* cpv;
+		void* pv;
+	} cnv;
+	cnv.cpv = data;
+	void* inBuffers[] = { cnv.pv };
 
 	const AACENC_BufDesc inBufDesc = {
 		.numBufs = 1,
@@ -587,7 +593,7 @@ ssize_t fdk_aac_dsp_impl_encode(void* handle, const void* data, size_t size, voi
 	assert(handle);
 	assert(log);
 
-	err = aacEncEncode(self, &inBufDesc, &outBufDesc, &inArgs, &outArgs);
+	AACENC_ERROR err = aacEncEncode(self, &inBufDesc, &outBufDesc, &inArgs, &outArgs);
 	if (err != AACENC_OK)
 	{
 		log(WLOG_ERROR, "aacEncEncode failed with %s", enc_err_str(err));

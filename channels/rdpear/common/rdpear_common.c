@@ -163,7 +163,8 @@ BOOL ndr_read_RPC_UNICODE_STRING(NdrContext* context, wStream* s, const void* hi
 {
 	NdrDeferredEntry bufferDesc = { NDR_PTR_NULL, "RPC_UNICODE_STRING.Buffer", &res->lenHints,
 		                            &res->Buffer, ndr_uint16VaryingArray_descr() };
-	UINT16 Length, MaximumLength;
+	UINT16 Length = 0;
+	UINT16 MaximumLength = 0;
 
 	if (!ndr_read_uint16(context, s, &Length) || !ndr_read_uint16(context, s, &MaximumLength) ||
 	    !ndr_read_refpointer(context, s, &bufferDesc.ptrId) || Length > MaximumLength)
@@ -207,7 +208,7 @@ static const NdrMessageDescr RPC_UNICODE_STRING_descr_ = {
 	NDR_ARITY_SIMPLE,
 	sizeof(RPC_UNICODE_STRING),
 	(NDR_READER_FN)ndr_read_RPC_UNICODE_STRING,
-	(NDR_WRITER_FN) /*ndr_write_RPC_UNICODE_STRING*/ NULL,
+	/*ndr_write_RPC_UNICODE_STRING*/ NULL,
 	(NDR_DESTROY_FN)ndr_destroy_RPC_UNICODE_STRING,
 	(NDR_DUMP_FN)ndr_dump_RPC_UNICODE_STRING
 };
@@ -260,7 +261,7 @@ BOOL ndr_read_KERB_RPC_INTERNAL_NAME(NdrContext* context, wStream* s, const void
 	NdrDeferredEntry names = { NDR_PTR_NULL, "KERB_RPC_INTERNAL_NAME.Names", &res->nameHints,
 		                       &res->Names, RPC_UNICODE_STRING_Array_descr() };
 
-	UINT16 nameCount;
+	UINT16 nameCount = 0;
 	if (!ndr_read_uint16(context, s, &res->NameType) || !ndr_read_uint16(context, s, &nameCount))
 		return FALSE;
 
@@ -297,7 +298,7 @@ NdrMessageDescr KERB_RPC_INTERNAL_NAME_descr_ = {
 	NDR_ARITY_SIMPLE,
 	sizeof(KERB_RPC_INTERNAL_NAME),
 	(NDR_READER_FN)ndr_read_KERB_RPC_INTERNAL_NAME,
-	(NDR_WRITER_FN)NULL,
+	NULL,
 	(NDR_DESTROY_FN)ndr_destroy_KERB_RPC_INTERNAL_NAME,
 	(NDR_DUMP_FN)ndr_dump_KERB_RPC_INTERNAL_NAME
 };

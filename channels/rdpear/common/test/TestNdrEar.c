@@ -127,6 +127,9 @@ int TestNdrEarWrite(int argc, char* argv[])
 
 int TestNdrEarRead(int argc, char* argv[])
 {
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
+
 	int retCode = -2;
 
 	/* ====================================================================== */
@@ -134,8 +137,8 @@ int TestNdrEarRead(int argc, char* argv[])
 	if (!context)
 		return -1;
 
-	wStream staticS;
-	wStream* s;
+	wStream staticS = { 0 };
+	wStream* s = NULL;
 
 #if 0
 	BYTE payload[] = {
@@ -302,7 +305,7 @@ int TestNdrEarRead(int argc, char* argv[])
 	size_t sizeofPayload4 = sizeof(payload4);
 #endif
 #if 1
-	size_t sizeofPayload4;
+	size_t sizeofPayload4 = 0;
 	BYTE* payload4 = parseHexBlock("03 01 03 01 \
 		04 00 02 00 38 9e ef 6b 0c 00 02 00 18 00 02 00 \
 		20 00 02 00 00 00 00 00 24 00 02 00 2c 00 02 00 \
