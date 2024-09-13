@@ -39,6 +39,7 @@
 #endif
 
 #include <winpr/crt.h>
+#include <winpr/string.h>
 #include <winpr/assert.h>
 #include <winpr/image.h>
 #include <winpr/stream.h>
@@ -2277,7 +2278,9 @@ static BOOL cliprdr_local_stream_update(CliprdrLocalStream* stream, const char* 
 	char* copy = strndup(data, size);
 	if (!copy)
 		return FALSE;
-	char* ptr = strtok(copy, "\r\n");
+
+	char* saveptr = NULL;
+	char* ptr = strtok_s(copy, "\r\n", &saveptr);
 	while (ptr)
 	{
 		const char* name = ptr;
@@ -2295,7 +2298,7 @@ static BOOL cliprdr_local_stream_update(CliprdrLocalStream* stream, const char* 
 			if (!res)
 				goto fail;
 		}
-		ptr = strtok(NULL, "\r\n");
+		ptr = strtok_s(NULL, "\r\n", &saveptr);
 	}
 
 	rc = TRUE;

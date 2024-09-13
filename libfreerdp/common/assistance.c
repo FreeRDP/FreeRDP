@@ -300,7 +300,8 @@ static BOOL freerdp_assistance_parse_address_list(rdpAssistanceFile* file, char*
 	char* s = ";";
 
 	// get the first token
-	char* token = strtok(strp, s);
+	char* saveptr = NULL;
+	char* token = strtok_s(strp, s, &saveptr);
 
 	// walk through other tokens
 	while (token != NULL)
@@ -314,7 +315,7 @@ static BOOL freerdp_assistance_parse_address_list(rdpAssistanceFile* file, char*
 		if (!append_address(file, token, port))
 			goto out;
 
-		token = strtok(NULL, s);
+		token = strtok_s(NULL, s, &saveptr);
 	}
 	rc = TRUE;
 out:
