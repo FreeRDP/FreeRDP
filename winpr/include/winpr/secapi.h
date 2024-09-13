@@ -27,7 +27,7 @@
 
 #include <winpr/wtypes.h>
 
-typedef enum _KERB_LOGON_SUBMIT_TYPE
+typedef enum
 {
 	KerbInvalidValue = 0, /** @since version 3.9.0 */
 	KerbInteractiveLogon = 2,
@@ -46,7 +46,7 @@ typedef enum _KERB_LOGON_SUBMIT_TYPE
 } KERB_LOGON_SUBMIT_TYPE,
     *PKERB_LOGON_SUBMIT_TYPE;
 
-typedef struct _KERB_TICKET_LOGON
+typedef struct
 {
 	KERB_LOGON_SUBMIT_TYPE MessageType;
 	ULONG Flags;
@@ -60,7 +60,7 @@ typedef struct _KERB_TICKET_LOGON
 
 #define MSV1_0_OWF_PASSWORD_LENGTH 16
 
-typedef struct _MSV1_0_SUPPLEMENTAL_CREDENTIAL
+typedef struct
 {
 	ULONG Version;
 	ULONG Flags;

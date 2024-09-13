@@ -24,6 +24,9 @@
 #include <winpr/wtypes.h>
 #include <winpr/handle.h>
 
+WINPR_PRAGMA_DIAG_PUSH
+WINPR_PRAGMA_DIAG_IGNORED_RESERVED_IDENTIFIER
+
 #ifdef _WIN32
 
 #include <winioctl.h>
@@ -252,5 +255,7 @@ extern "C"
 
 #define ACCESS_FROM_CTL_CODE(ctrlCode) ((DWORD)((ctrlCode >> 14) & 0x3))
 #define FUNCTION_FROM_CTL_CODE(ctrlCode) ((DWORD)((ctrlCode >> 2) & 0xFFF))
+
+WINPR_PRAGMA_DIAG_POP
 
 #endif /* WINPR_IO_H */

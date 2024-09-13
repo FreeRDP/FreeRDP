@@ -22,6 +22,10 @@
 
 #include <winpr/platform.h>
 
+WINPR_PRAGMA_DIAG_PUSH
+WINPR_PRAGMA_DIAG_IGNORED_RESERVED_ID_MACRO
+WINPR_PRAGMA_DIAG_IGNORED_RESERVED_IDENTIFIER
+
 #ifdef _WIN32
 
 #include <specstrings.h>
@@ -30,9 +34,6 @@
 #endif
 
 #else
-
-WINPR_PRAGMA_DIAG_PUSH
-WINPR_PRAGMA_DIAG_IGNORED_RESERVED_ID_MACRO
 
 #define DUMMYUNIONNAME u
 #define DUMMYUNIONNAME1 u1
@@ -957,10 +958,6 @@ extern "C++"
 #define CONTAINING_RECORD(address, type, field) \
 	((type*)((PCHAR)(address) - (ULONG_PTR)(&((type*)0)->field)))
 
-#if defined(__clang__)
-WINPR_PRAGMA_DIAG_POP
-#endif
-
 #endif
 
 #if defined(_WIN32) || defined(__CYGWIN__)
@@ -982,5 +979,7 @@ WINPR_PRAGMA_DIAG_POP
 #define DECLSPEC_IMPORT
 #endif
 #endif
+
+WINPR_PRAGMA_DIAG_POP
 
 #endif /* WINPR_SPEC_H */
