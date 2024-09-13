@@ -315,7 +315,7 @@ static long bio_rdp_tls_ctrl(BIO* bio, int cmd, long num, void* ptr)
 			 *
 			 * This, of course, is something compilers warn about. So silence it by casting */
 			{
-				void* vptr = (void*)SSL_get_info_callback(tls->ssl);
+				void* vptr = WINPR_FUNC_PTR_CAST(SSL_get_info_callback(tls->ssl), void*);
 				*((void**)ptr) = vptr;
 				status = 1;
 			}
