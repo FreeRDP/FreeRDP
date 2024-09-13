@@ -1000,7 +1000,7 @@ size_t WinPrAsn1DecReadBoolean(WinPrAsn1Decoder* dec, WinPrAsn1_BOOL* target)
 	ret = readTagAndLen(dec, &dec->source, &tag, &len);
 	if (!ret || tag != ER_TAG_BOOLEAN)
 		return 0;
-	if (!Stream_CheckAndLogRequiredLength(TAG, &dec->source, len) || len != 1)
+	if (Stream_GetRemainingLength(&dec->source) < len || len != 1)
 		return 0;
 
 	Stream_Read_UINT8(&dec->source, v);
@@ -1020,7 +1020,7 @@ static size_t WinPrAsn1DecReadIntegerLike(WinPrAsn1Decoder* dec, WinPrAsn1_tag e
 	size_t ret = readTagAndLen(dec, &dec->source, &tag, &len);
 	if (!ret || (tag != expectedTag))
 		return 0;
-	if (len == 0 || !Stream_CheckAndLogRequiredLength(TAG, &dec->source, len) || (len > 4))
+	if (len == 0 || Stream_GetRemainingLength(&dec->source) < len || (len > 4))
 		return 0;
 
 	WinPrAsn1_INTEGER val = 0;
