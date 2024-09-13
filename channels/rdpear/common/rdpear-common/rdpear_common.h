@@ -88,7 +88,7 @@ FREERDP_LOCAL wStream* rdpear_encodePayload(RdpEarPackageType packageType, wStre
 	                                 const V* obj);                                              \
 	FREERDP_LOCAL void ndr_destroy_##V(NdrContext* context, const void* hints, V* obj);          \
 	FREERDP_LOCAL void ndr_dump_##V(wLog* logger, UINT32 lvl, size_t indentLevel, const V* obj); \
-	FREERDP_LOCAL NdrMessageType ndr_##V##_descr()
+	FREERDP_LOCAL NdrMessageType ndr_##V##_descr(void)
 
 /** @brief 2.2.1.2.2 KERB_RPC_OCTET_STRING */
 typedef struct
@@ -127,15 +127,7 @@ typedef struct
 	RPC_UNICODE_STRING* Names;
 } KERB_RPC_INTERNAL_NAME;
 
-FREERDP_LOCAL BOOL ndr_read_KERB_RPC_INTERNAL_NAME(NdrContext* context, wStream* s,
-                                                   const void* hints, KERB_RPC_INTERNAL_NAME* res);
-FREERDP_LOCAL BOOL ndr_write_KERB_RPC_INTERNAL_NAME(NdrContext* context, wStream* s,
-                                                    const void* hints,
-                                                    const KERB_RPC_INTERNAL_NAME* res);
-FREERDP_LOCAL void ndr_dump_KERB_RPC_INTERNAL_NAME(wLog* logger, UINT32 lvl, size_t indentLevel,
-                                                   const KERB_RPC_INTERNAL_NAME* obj);
-FREERDP_LOCAL void ndr_destroy_KERB_RPC_INTERNAL_NAME(NdrContext* context, const void* hints,
-                                                      KERB_RPC_INTERNAL_NAME* obj);
+RDPEAR_COMMON_MESSAGE_DECL(KERB_RPC_INTERNAL_NAME);
 
 /** @brief 2.2.1.2.8 KERB_RPC_ENCRYPTION_KEY */
 typedef struct
@@ -191,7 +183,7 @@ typedef struct
 	LONG KerbProtocolError;
 } CreateApReqAuthenticatorResp;
 
-FREERDP_LOCAL NdrMessageType ndr_CreateApReqAuthenticatorResp_descr();
+RDPEAR_COMMON_MESSAGE_DECL(CreateApReqAuthenticatorResp);
 
 /** @brief 2.2.2.1.6 UnpackKdcReplyBody */
 typedef struct
@@ -212,7 +204,7 @@ typedef struct
 	KERB_ASN1_DATA ReplyBody;
 } UnpackKdcReplyBodyResp;
 
-FREERDP_LOCAL NdrMessageType ndr_UnpackKdcReplyBodyResp_descr();
+RDPEAR_COMMON_MESSAGE_DECL(UnpackKdcReplyBodyResp);
 
 typedef struct
 {
@@ -237,7 +229,7 @@ typedef struct
 	BYTE* PackedReply;
 } PackApReplyResp;
 
-FREERDP_LOCAL NdrMessageType ndr_PackApReplyResp_descr();
+RDPEAR_COMMON_MESSAGE_DECL(PackApReplyResp);
 
 #undef RDPEAR_COMMON_MESSAGE_DECL
 

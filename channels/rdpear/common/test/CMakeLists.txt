@@ -4,6 +4,8 @@ set(MODULE_PREFIX "TEST_RDPEAR")
 
 set(TEST_RDPEAR_DRIVER TestRdpear.c)
 
+disable_warnings_for_directory(${CMAKE_CURRENT_BINARY_DIR})
+
 set(TEST_RDPEAR_TESTS
 	TestNdr.c
 	TestNdrEar.c

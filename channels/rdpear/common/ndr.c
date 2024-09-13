@@ -115,6 +115,7 @@ void ndr_context_free(NdrContext* context)
 
 void ndr_context_bytes_read(NdrContext* context, size_t len)
 {
+	WINPR_ASSERT(context);
 	context->indentLevels[context->currentLevel] += len;
 }
 
@@ -156,6 +157,7 @@ BOOL ndr_write_header(NdrContext* context, wStream* s)
 	Stream_Write(s, filler, sizeof(filler));
 	return TRUE;
 }
+
 BOOL ndr_skip_bytes(NdrContext* context, wStream* s, size_t nbytes)
 {
 	WINPR_ASSERT(context);
@@ -273,11 +275,12 @@ BOOL ndr_start_constructed(NdrContext* context, wStream* s)
 BOOL ndr_end_constructed(NdrContext* context, wStream* s)
 {
 	WINPR_ASSERT(context);
+	WINPR_ASSERT(context->constructs);
 	WINPR_ASSERT(context->constructLevel >= 0);
 
 	size_t offset = context->constructs[context->constructLevel];
 
-	wStream staticS;
+	wStream staticS = { 0 };
 	Stream_StaticInit(&staticS, Stream_Buffer(s) + offset, 4);
 
 	/* len */
@@ -323,6 +326,7 @@ BOOL ndr_read_uint8(NdrContext* context, wStream* s, BYTE* v)
 
 BOOL ndr_read_uint8_(NdrContext* context, wStream* s, const void* hints, void* v)
 {
+	WINPR_UNUSED(hints);
 	return ndr_read_uint8(context, s, (BYTE*)v);
 }
 
@@ -341,6 +345,7 @@ BOOL ndr_write_uint8_(NdrContext* context, wStream* s, const void* hints, const 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(v);
+	WINPR_UNUSED(hints);
 
 	return ndr_write_uint8(context, s, *(const BYTE*)v);
 }
@@ -375,6 +380,7 @@ NdrMessageType ndr_uint8_descr(void)
                                                                                               \
 	BOOL ndr_read_##LOWERTYPE##_(NdrContext* context, wStream* s, const void* hints, void* v) \
 	{                                                                                         \
+		WINPR_UNUSED(hints);                                                                  \
 		return ndr_read_##LOWERTYPE(context, s, (UPPERTYPE*)v);                               \
 	}                                                                                         \
                                                                                               \
@@ -399,6 +405,7 @@ NdrMessageType ndr_uint8_descr(void)
 		WINPR_ASSERT(context);                                                                \
 		WINPR_ASSERT(s);                                                                      \
 		WINPR_ASSERT(v);                                                                      \
+		WINPR_UNUSED(hints);                                                                  \
                                                                                               \
 		return ndr_write_##LOWERTYPE(context, s, *(const UPPERTYPE*)v);                       \
 	}                                                                                         \
