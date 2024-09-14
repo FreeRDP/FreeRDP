@@ -139,9 +139,11 @@ static BOOL SamLookupStart(WINPR_SAM* sam)
 	if (!sam || !sam->fp)
 		return FALSE;
 
-	_fseeki64(sam->fp, 0, SEEK_END);
+	if (_fseeki64(sam->fp, 0, SEEK_END) != 0)
+		return FALSE;
 	fileSize = _ftelli64(sam->fp);
-	_fseeki64(sam->fp, 0, SEEK_SET);
+	if (_fseeki64(sam->fp, 0, SEEK_SET) != 0)
+		return FALSE;
 
 	if (fileSize < 1)
 		return FALSE;

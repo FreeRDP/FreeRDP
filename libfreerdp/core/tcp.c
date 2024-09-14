@@ -221,9 +221,9 @@ static long transport_bio_simple_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 				return 0;
 
 			if (arg1)
-				fcntl((int)ptr->socket, F_SETFL, flags | O_NONBLOCK);
+				(void)fcntl((int)ptr->socket, F_SETFL, flags | O_NONBLOCK);
 			else
-				fcntl((int)ptr->socket, F_SETFL, flags & ~(O_NONBLOCK));
+				(void)fcntl((int)ptr->socket, F_SETFL, flags & ~(O_NONBLOCK));
 
 #else
 			/* the internal socket is always non-blocking */

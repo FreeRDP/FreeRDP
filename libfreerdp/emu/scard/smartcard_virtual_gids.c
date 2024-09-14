@@ -401,7 +401,8 @@ static BOOL vgids_ef_read_do(vgidsEF* ef, UINT16 doID, BYTE** data, DWORD* dataS
 		else
 		{
 			/* Skip DO */
-			Stream_SafeSeek(ef->data, doSize);
+			if (!Stream_SafeSeek(ef->data, doSize))
+				return FALSE;
 		}
 	}
 

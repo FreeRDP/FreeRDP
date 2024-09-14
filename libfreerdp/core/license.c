@@ -624,9 +624,11 @@ static BYTE* loadCalFile(const rdpSettings* settings, const char* hostname, size
 	if (!fp)
 		goto error_open;
 
-	_fseeki64(fp, 0, SEEK_END);
+	if (_fseeki64(fp, 0, SEEK_END) != 0)
+		goto error_malloc;
 	length = _ftelli64(fp);
-	_fseeki64(fp, 0, SEEK_SET);
+	if (_fseeki64(fp, 0, SEEK_SET) != 0)
+		goto error_malloc;
 	if (length < 0)
 		goto error_malloc;
 

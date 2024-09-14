@@ -286,12 +286,12 @@ static BYTE* test_progressive_load_file(const char* path, const char* file, size
 	if (!fp)
 		return NULL;
 
-	_fseeki64(fp, 0, SEEK_END);
+	(void)_fseeki64(fp, 0, SEEK_END);
 	const INT64 pos = _ftelli64(fp);
 	WINPR_ASSERT(pos >= 0);
 	WINPR_ASSERT(pos <= SIZE_MAX);
 	*size = (size_t)pos;
-	_fseeki64(fp, 0, SEEK_SET);
+	(void)_fseeki64(fp, 0, SEEK_SET);
 	BYTE* buffer = (BYTE*)malloc(*size);
 
 	if (!buffer)

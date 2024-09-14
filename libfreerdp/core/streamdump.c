@@ -80,7 +80,7 @@ static
 		return FALSE;
 
 	if (pOffset)
-		_fseeki64(fp, *pOffset, SEEK_SET);
+		(void)_fseeki64(fp, *pOffset, SEEK_SET);
 
 	r = fread(&ts, 1, sizeof(ts), fp);
 	if (r != sizeof(ts))

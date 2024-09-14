@@ -99,11 +99,14 @@ static BOOL WLog_UdpAppender_WriteMessage(wLog* log, wLogAppender* appender, wLo
 	udpAppender = (wLogUdpAppender*)appender;
 	message->PrefixString = prefix;
 	WLog_Layout_GetMessagePrefix(log, appender->Layout, message);
-	_sendto(udpAppender->sock, message->PrefixString, (int)strnlen(message->PrefixString, INT_MAX),
-	        0, &udpAppender->targetAddr, udpAppender->targetAddrLen);
-	_sendto(udpAppender->sock, message->TextString, (int)strnlen(message->TextString, INT_MAX), 0,
-	        &udpAppender->targetAddr, udpAppender->targetAddrLen);
-	_sendto(udpAppender->sock, "\n", 1, 0, &udpAppender->targetAddr, udpAppender->targetAddrLen);
+	(void)_sendto(udpAppender->sock, message->PrefixString,
+	              (int)strnlen(message->PrefixString, INT_MAX), 0, &udpAppender->targetAddr,
+	              udpAppender->targetAddrLen);
+	(void)_sendto(udpAppender->sock, message->TextString,
+	              (int)strnlen(message->TextString, INT_MAX), 0, &udpAppender->targetAddr,
+	              udpAppender->targetAddrLen);
+	(void)_sendto(udpAppender->sock, "\n", 1, 0, &udpAppender->targetAddr,
+	              udpAppender->targetAddrLen);
 	return TRUE;
 }
 

@@ -217,7 +217,7 @@ static HANDLE NamedPipeClientCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAcces
 		int flags = fcntl(pNamedPipe->clientfd, F_GETFL);
 
 		if (flags != -1)
-			fcntl(pNamedPipe->clientfd, F_SETFL, flags | O_NONBLOCK);
+            (void)fcntl(pNamedPipe->clientfd, F_SETFL, flags | O_NONBLOCK);
 
 #endif
 	}
