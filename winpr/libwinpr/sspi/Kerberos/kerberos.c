@@ -902,7 +902,8 @@ static SECURITY_STATUS SEC_ENTRY kerberos_InitializeSecurityContextA(
 
 		isNewContext = TRUE;
 
-		context->targetHost = _strdup(host);
+		if (host)
+			context->targetHost = _strdup(host);
 		if (!context->targetHost)
 		{
 			status = SEC_E_INSUFFICIENT_MEMORY;
