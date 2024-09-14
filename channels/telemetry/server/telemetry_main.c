@@ -295,7 +295,7 @@ static DWORD WINAPI telemetry_server_thread_func(LPVOID arg)
 		}
 	}
 
-	WTSVirtualChannelClose(telemetry->telemetry_channel);
+	(void)WTSVirtualChannelClose(telemetry->telemetry_channel);
 	telemetry->telemetry_channel = NULL;
 
 	if (error && telemetry->context.rdpcontext)
@@ -362,7 +362,7 @@ static UINT telemetry_server_close(TelemetryServerContext* context)
 	{
 		if (telemetry->state != TELEMETRY_INITIAL)
 		{
-			WTSVirtualChannelClose(telemetry->telemetry_channel);
+			(void)WTSVirtualChannelClose(telemetry->telemetry_channel);
 			telemetry->telemetry_channel = NULL;
 			telemetry->state = TELEMETRY_INITIAL;
 		}

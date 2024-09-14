@@ -375,7 +375,7 @@ static DWORD WINAPI mouse_cursor_server_thread_func(LPVOID arg)
 		}
 	}
 
-	WTSVirtualChannelClose(mouse_cursor->mouse_cursor_channel);
+	(void)WTSVirtualChannelClose(mouse_cursor->mouse_cursor_channel);
 	mouse_cursor->mouse_cursor_channel = NULL;
 
 	if (error && mouse_cursor->context.rdpcontext)
@@ -443,7 +443,7 @@ static UINT mouse_cursor_server_close(MouseCursorServerContext* context)
 	{
 		if (mouse_cursor->state != MOUSE_CURSOR_INITIAL)
 		{
-			WTSVirtualChannelClose(mouse_cursor->mouse_cursor_channel);
+			(void)WTSVirtualChannelClose(mouse_cursor->mouse_cursor_channel);
 			mouse_cursor->mouse_cursor_channel = NULL;
 			mouse_cursor->state = MOUSE_CURSOR_INITIAL;
 		}

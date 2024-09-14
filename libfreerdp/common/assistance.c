@@ -1246,9 +1246,9 @@ int freerdp_assistance_parse_file(rdpAssistanceFile* file, const char* name, con
 		return -1;
 	}
 
-	_fseeki64(fp, 0, SEEK_END);
+	(void)_fseeki64(fp, 0, SEEK_END);
 	fileSize.i64 = _ftelli64(fp);
-	_fseeki64(fp, 0, SEEK_SET);
+	(void)_fseeki64(fp, 0, SEEK_SET);
 
 	if (fileSize.i64 < 1)
 	{

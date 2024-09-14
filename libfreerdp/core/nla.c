@@ -1198,6 +1198,7 @@ static BOOL nla_read_KERB_TICKET_LOGON(rdpNla* nla, wStream* s, KERB_TICKET_LOGO
 /** @brief kind of RCG credentials */
 typedef enum
 {
+	RCG_TYPE_NONE,
 	RCG_TYPE_KERB,
 	RCG_TYPE_NTLM
 } RemoteGuardPackageCredType;
@@ -1211,17 +1212,24 @@ static BOOL nla_read_TSRemoteGuardPackageCred(rdpNla* nla, WinPrAsn1Decoder* dec
 	BOOL error = FALSE;
 	char packageNameStr[100] = { 0 };
 
+	WINPR_ASSERT(nla);
+	WINPR_ASSERT(dec);
+	WINPR_ASSERT(credsType);
+	WINPR_ASSERT(payload);
+
+	*credsType = RCG_TYPE_NONE;
+
 	/* packageName [0] OCTET STRING */
 	if (!WinPrAsn1DecReadContextualOctetString(dec, 0, &error, &packageName, FALSE) || error)
-		return TRUE;
+		return FALSE;
 
 	ConvertMszWCharNToUtf8((WCHAR*)packageName.data, packageName.len / sizeof(WCHAR),
-	                       packageNameStr, 100);
+	                       packageNameStr, sizeof(packageNameStr));
 	WLog_DBG(TAG, "TSRemoteGuardPackageCred(%s)", packageNameStr);
 
 	/* credBuffer [1] OCTET STRING, */
 	if (!WinPrAsn1DecReadContextualOctetString(dec, 1, &error, &credBuffer, FALSE) || error)
-		return TRUE;
+		return FALSE;
 
 	if (_stricmp(packageNameStr, "Kerberos") == 0)
 	{
@@ -1345,7 +1353,7 @@ static BOOL nla_read_ts_credentials(rdpNla* nla, SecBuffer* data)
 			if (!WinPrAsn1DecReadContextualSequence(&dec2, 0, &error, &logonCredsSeq) || error)
 				return FALSE;
 
-			RemoteGuardPackageCredType logonCredsType = { 0 };
+			RemoteGuardPackageCredType logonCredsType = RCG_TYPE_NONE;
 			wStream logonPayload = { 0 };
 			if (!nla_read_TSRemoteGuardPackageCred(nla, &logonCredsSeq, &logonCredsType,
 			                                       &logonPayload))

@@ -306,10 +306,20 @@ extern "C"
 #endif
 
 	WINPR_API const char* GetKnownPathIdString(int id);
+
+	WINPR_ATTR_MALLOC(free, 1)
 	WINPR_API char* GetKnownPath(int id);
+
+	WINPR_ATTR_MALLOC(free, 1)
 	WINPR_API char* GetKnownSubPath(int id, const char* path);
+
+	WINPR_ATTR_MALLOC(free, 1)
 	WINPR_API char* GetEnvironmentPath(char* name);
+
+	WINPR_ATTR_MALLOC(free, 1)
 	WINPR_API char* GetEnvironmentSubPath(char* name, const char* path);
+
+	WINPR_ATTR_MALLOC(free, 1)
 	WINPR_API char* GetCombinedPath(const char* basePath, const char* subPath);
 
 	WINPR_API BOOL PathMakePathA(LPCSTR path, LPSECURITY_ATTRIBUTES lpAttributes);

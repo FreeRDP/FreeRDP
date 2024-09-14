@@ -1021,9 +1021,9 @@ BOOL freerdp_client_parse_rdp_file_ex(rdpFile* file, const char* name, rdp_file_
 		return FALSE;
 	}
 
-	_fseeki64(fp, 0, SEEK_END);
+	(void)_fseeki64(fp, 0, SEEK_END);
 	file_size = _ftelli64(fp);
-	_fseeki64(fp, 0, SEEK_SET);
+	(void)_fseeki64(fp, 0, SEEK_SET);
 
 	if (file_size < 1)
 	{

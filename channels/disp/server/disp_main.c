@@ -474,7 +474,7 @@ static UINT disp_server_open(DispServerContext* context)
 
 	return CHANNEL_RC_OK;
 out_close:
-	WTSVirtualChannelClose(priv->disp_channel);
+	(void)WTSVirtualChannelClose(priv->disp_channel);
 	priv->disp_channel = NULL;
 	priv->channelEvent = NULL;
 	return rc;
@@ -567,7 +567,7 @@ static UINT disp_server_close(DispServerContext* context)
 
 	if (priv->disp_channel)
 	{
-		WTSVirtualChannelClose(priv->disp_channel);
+		(void)WTSVirtualChannelClose(priv->disp_channel);
 		priv->disp_channel = NULL;
 	}
 

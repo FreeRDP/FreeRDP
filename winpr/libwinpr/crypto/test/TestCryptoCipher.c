@@ -106,28 +106,25 @@ out:
 	return result;
 }
 
-static const BYTE* TEST_RC4_KEY = (BYTE*)"Key";
-static const char* TEST_RC4_PLAINTEXT = "Plaintext";
-static const BYTE* TEST_RC4_CIPHERTEXT = (BYTE*)"\xBB\xF3\x16\xE8\xD9\x40\xAF\x0A\xD3";
+static const char TEST_RC4_KEY[] = "Key";
+static const char TEST_RC4_PLAINTEXT[] = "Plaintext";
+static const char TEST_RC4_CIPHERTEXT[] = "\xBB\xF3\x16\xE8\xD9\x40\xAF\x0A\xD3";
 
 static BOOL test_crypto_cipher_rc4(void)
 {
-	size_t len = 0;
 	BOOL rc = FALSE;
-	BYTE* text = NULL;
 	WINPR_RC4_CTX* ctx = NULL;
 
-	len = strnlen(TEST_RC4_PLAINTEXT, sizeof(TEST_RC4_PLAINTEXT));
-
-	if (!(text = (BYTE*)calloc(1, len)))
+	const size_t len = strnlen(TEST_RC4_PLAINTEXT, sizeof(TEST_RC4_PLAINTEXT));
+	BYTE* text = (BYTE*)calloc(1, len);
+	if (!text)
 	{
 		(void)fprintf(stderr, "%s: failed to allocate text buffer (len=%" PRIuz ")\n", __func__,
 		              len);
 		goto out;
 	}
 
-	if ((ctx = winpr_RC4_New(TEST_RC4_KEY,
-	                         strnlen((const char*)TEST_RC4_KEY, sizeof(TEST_RC4_KEY)))) == NULL)
+	if ((ctx = winpr_RC4_New(TEST_RC4_KEY, strnlen(TEST_RC4_KEY, sizeof(TEST_RC4_KEY)))) == NULL)
 	{
 		(void)fprintf(stderr, "%s: winpr_RC4_New failed\n", __func__);
 		goto out;

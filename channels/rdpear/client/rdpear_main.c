@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <krb5/krb5.h>
+#include <krb5.h>
 #include <errno.h>
 
 #include <winpr/assert.h>

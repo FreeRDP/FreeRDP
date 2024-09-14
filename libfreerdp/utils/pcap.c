@@ -225,9 +225,9 @@ rdpPcap* pcap_open(const char* name, BOOL write)
 	}
 	else
 	{
-		_fseeki64(pcap->fp, 0, SEEK_END);
+		(void)_fseeki64(pcap->fp, 0, SEEK_END);
 		pcap->file_size = _ftelli64(pcap->fp);
-		_fseeki64(pcap->fp, 0, SEEK_SET);
+		(void)_fseeki64(pcap->fp, 0, SEEK_SET);
 		if (!pcap_read_header(pcap, &pcap->header))
 			goto fail;
 	}

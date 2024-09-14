@@ -418,7 +418,7 @@ static DWORD WINAPI enumerator_server_thread_func(LPVOID arg)
 		}
 	}
 
-	WTSVirtualChannelClose(enumerator->enumerator_channel);
+	(void)WTSVirtualChannelClose(enumerator->enumerator_channel);
 	enumerator->enumerator_channel = NULL;
 
 	if (error && enumerator->context.rdpcontext)
@@ -486,7 +486,7 @@ static UINT enumerator_server_close(CamDevEnumServerContext* context)
 	{
 		if (enumerator->state != ENUMERATOR_INITIAL)
 		{
-			WTSVirtualChannelClose(enumerator->enumerator_channel);
+			(void)WTSVirtualChannelClose(enumerator->enumerator_channel);
 			enumerator->enumerator_channel = NULL;
 			enumerator->state = ENUMERATOR_INITIAL;
 		}

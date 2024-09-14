@@ -136,7 +136,7 @@ UINT rdpei_server_init(RdpeiServerContext* context)
 	return CHANNEL_RC_OK;
 
 out_close:
-	WTSVirtualChannelClose(priv->channelHandle);
+	(void)WTSVirtualChannelClose(priv->channelHandle);
 	return CHANNEL_RC_INITIALIZATION_ERROR;
 }
 
@@ -161,7 +161,7 @@ void rdpei_server_context_free(RdpeiServerContext* context)
 	if (priv)
 	{
 		if (priv->channelHandle != INVALID_HANDLE_VALUE)
-			WTSVirtualChannelClose(priv->channelHandle);
+			(void)WTSVirtualChannelClose(priv->channelHandle);
 		Stream_Free(priv->inputStream, TRUE);
 	}
 	free(priv);

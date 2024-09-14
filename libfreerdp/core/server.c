@@ -1066,7 +1066,7 @@ VOID WINAPI FreeRDP_WTSCloseServer(HANDLE hServer)
 
 		if (vcm->drdynvc_channel)
 		{
-			WTSVirtualChannelClose(vcm->drdynvc_channel);
+			(void)WTSVirtualChannelClose(vcm->drdynvc_channel);
 			vcm->drdynvc_channel = NULL;
 		}
 

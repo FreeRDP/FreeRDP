@@ -1060,9 +1060,9 @@ int _ioctlsocket(SOCKET s, long cmd, u_long* argp)
 			return SOCKET_ERROR;
 
 		if (*argp)
-			fcntl(fd, F_SETFL, flags | O_NONBLOCK);
+			(void)fcntl(fd, F_SETFL, flags | O_NONBLOCK);
 		else
-			fcntl(fd, F_SETFL, flags & ~(O_NONBLOCK));
+			(void)fcntl(fd, F_SETFL, flags & ~(O_NONBLOCK));
 	}
 
 	return 0;

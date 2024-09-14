@@ -252,7 +252,7 @@ int freerdp_interruptible_getc(rdpContext* context, FILE* f)
 	const int fd = fileno(f);
 
 	const int orig = fcntl(fd, F_GETFL);
-	fcntl(fd, F_SETFL, orig | O_NONBLOCK);
+	(void)fcntl(fd, F_SETFL, orig | O_NONBLOCK);
 	do
 	{
 		const int res = wait_for_fd(fd, 10);
@@ -266,7 +266,7 @@ int freerdp_interruptible_getc(rdpContext* context, FILE* f)
 		}
 	} while (!freerdp_shall_disconnect_context(context));
 
-	fcntl(fd, F_SETFL, orig);
+	(void)fcntl(fd, F_SETFL, orig);
 	return rc;
 }
 

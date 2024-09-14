@@ -57,7 +57,7 @@ static void delete_file(char* path)
 			int rs = _fseeki64(fp, 0, SEEK_END);
 			if (rs == 0)
 				size = _ftelli64(fp);
-			_fseeki64(fp, 0, SEEK_SET);
+			(void)_fseeki64(fp, 0, SEEK_SET);
 
 			for (INT64 x = 0; x < size; x += sizeof(buffer))
 			{

@@ -129,15 +129,19 @@ extern "C"
 {
 #endif
 
+	WINPR_ATTR_MALLOC(free, 1)
 	WINPR_API LPCH MergeEnvironmentStrings(PCSTR original, PCSTR merge);
 
 	WINPR_API DWORD GetEnvironmentVariableEBA(LPCSTR envBlock, LPCSTR lpName, LPSTR lpBuffer,
 	                                          DWORD nSize);
 	WINPR_API BOOL SetEnvironmentVariableEBA(LPSTR* envBlock, LPCSTR lpName, LPCSTR lpValue);
 
+	WINPR_ATTR_MALLOC(free, 1)
 	WINPR_API char** EnvironmentBlockToEnvpA(LPCH lpszEnvironmentBlock);
 
 	WINPR_API DWORD GetEnvironmentVariableX(const char* lpName, char* lpBuffer, DWORD nSize);
+
+	WINPR_ATTR_MALLOC(free, 1)
 	WINPR_API char* GetEnvAlloc(LPCSTR lpName);
 
 #ifdef __cplusplus

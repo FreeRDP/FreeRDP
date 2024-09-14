@@ -85,7 +85,7 @@ state_run_t multitransport_recv_request(rdpMultitransport* multi, wStream* s)
 		WLog_WARN(TAG,
 		          "reserved is %" PRIu16 " instead of 0, skipping %" PRIuz "bytes of unknown data",
 		          reserved, Stream_GetRemainingLength(s));
-		Stream_SafeSeek(s, Stream_GetRemainingLength(s));
+		(void)Stream_SafeSeek(s, Stream_GetRemainingLength(s));
 	}
 
 	WINPR_ASSERT(multi->MtRequest);

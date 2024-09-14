@@ -232,7 +232,12 @@ static DWORD WINAPI encomsp_server_thread(LPVOID arg)
 			break;
 		}
 
-		WTSVirtualChannelRead(context->priv->ChannelHandle, 0, NULL, 0, &BytesReturned);
+		if (!WTSVirtualChannelRead(context->priv->ChannelHandle, 0, NULL, 0, &BytesReturned))
+		{
+			WLog_ERR(TAG, "WTSVirtualChannelRead failed!");
+			error = ERROR_INTERNAL_ERROR;
+			break;
+		}
 
 		if (BytesReturned < 1)
 			continue;
@@ -364,7 +369,7 @@ void encomsp_server_context_free(EncomspServerContext* context)
 	if (context)
 	{
 		if (context->priv->ChannelHandle != INVALID_HANDLE_VALUE)
-			WTSVirtualChannelClose(context->priv->ChannelHandle);
+			(void)WTSVirtualChannelClose(context->priv->ChannelHandle);
 
 		free(context->priv);
 		free(context);

@@ -95,9 +95,11 @@ static BOOL reg_load_start(Reg* reg)
 	WINPR_ASSERT(reg);
 	WINPR_ASSERT(reg->fp);
 
-	_fseeki64(reg->fp, 0, SEEK_END);
+	if (_fseeki64(reg->fp, 0, SEEK_END) != 0)
+		return FALSE;
 	file_size = _ftelli64(reg->fp);
-	_fseeki64(reg->fp, 0, SEEK_SET);
+	if (_fseeki64(reg->fp, 0, SEEK_SET) != 0)
+		return FALSE;
 	reg->line = NULL;
 	reg->next_line = NULL;
 

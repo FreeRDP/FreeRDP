@@ -301,6 +301,8 @@ BOOL FreeEnvironmentStringsA(LPCH lpszEnvironmentBlock)
 
 BOOL FreeEnvironmentStringsW(LPWCH lpszEnvironmentBlock)
 {
+	free(lpszEnvironmentBlock);
+
 	return TRUE;
 }
 
