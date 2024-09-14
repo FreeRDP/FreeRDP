@@ -267,6 +267,8 @@ static BOOL rdpear_prepare_response(NdrContext* rcontext, UINT16 callId, UINT32 
 	*pwcontext = wcontext;
 	ret = TRUE;
 out:
+	if (!ret)
+		ndr_context_destroy(&wcontext);
 	return ret;
 }
 
