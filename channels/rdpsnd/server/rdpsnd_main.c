@@ -965,7 +965,7 @@ out_pdu:
 	Stream_Free(context->priv->rdpsnd_pdu, TRUE);
 	context->priv->rdpsnd_pdu = NULL;
 out_close:
-	WTSVirtualChannelClose(context->priv->ChannelHandle);
+	(void)WTSVirtualChannelClose(context->priv->ChannelHandle);
 	context->priv->ChannelHandle = NULL;
 	return error;
 }
@@ -1015,7 +1015,7 @@ static UINT rdpsnd_server_stop(RdpsndServerContext* context)
 
 	if (context->priv->ChannelHandle)
 	{
-		WTSVirtualChannelClose(context->priv->ChannelHandle);
+		(void)WTSVirtualChannelClose(context->priv->ChannelHandle);
 		context->priv->ChannelHandle = NULL;
 	}
 

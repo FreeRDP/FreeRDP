@@ -426,7 +426,7 @@ static DWORD WINAPI location_server_thread_func(LPVOID arg)
 		}
 	}
 
-	WTSVirtualChannelClose(location->location_channel);
+	(void)WTSVirtualChannelClose(location->location_channel);
 	location->location_channel = NULL;
 
 	if (error && location->context.rdpcontext)
@@ -493,7 +493,7 @@ static UINT location_server_close(LocationServerContext* context)
 	{
 		if (location->state != LOCATION_INITIAL)
 		{
-			WTSVirtualChannelClose(location->location_channel);
+			(void)WTSVirtualChannelClose(location->location_channel);
 			location->location_channel = NULL;
 			location->state = LOCATION_INITIAL;
 		}

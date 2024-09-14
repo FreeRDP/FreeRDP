@@ -1462,7 +1462,7 @@ out_stop_event:
 	CloseHandle(context->priv->stopEvent);
 	context->priv->stopEvent = NULL;
 out_close:
-	WTSVirtualChannelClose(context->priv->rail_channel);
+	(void)WTSVirtualChannelClose(context->priv->rail_channel);
 	context->priv->rail_channel = NULL;
 	return error;
 }
@@ -1489,7 +1489,7 @@ static BOOL rail_server_stop(RailServerContext* context)
 
 	if (priv->rail_channel)
 	{
-		WTSVirtualChannelClose(priv->rail_channel);
+		(void)WTSVirtualChannelClose(priv->rail_channel);
 		priv->rail_channel = NULL;
 	}
 

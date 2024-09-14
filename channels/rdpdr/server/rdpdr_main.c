@@ -2186,7 +2186,7 @@ static UINT rdpdr_server_stop(RdpdrServerContext* context)
 
 	if (context->priv->ChannelHandle)
 	{
-		WTSVirtualChannelClose(context->priv->ChannelHandle);
+		(void)WTSVirtualChannelClose(context->priv->ChannelHandle);
 		context->priv->ChannelHandle = NULL;
 	}
 	return CHANNEL_RC_OK;

@@ -1649,7 +1649,7 @@ BOOL rdpgfx_server_close(RdpgfxServerContext* context)
 
 	if (priv->rdpgfx_channel)
 	{
-		WTSVirtualChannelClose(priv->rdpgfx_channel);
+		(void)WTSVirtualChannelClose(priv->rdpgfx_channel);
 		priv->rdpgfx_channel = NULL;
 	}
 

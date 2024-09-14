@@ -1074,13 +1074,15 @@ extern "C"
 
 	WINPR_API BOOL WINAPI WTSWaitSystemEvent(HANDLE hServer, DWORD EventMask, DWORD* pEventFlags);
 
+	WINPR_API BOOL WINAPI WTSVirtualChannelClose(HANDLE hChannelHandle);
+
+	WINPR_ATTR_MALLOC(WTSVirtualChannelClose, 1)
 	WINPR_API HANDLE WINAPI WTSVirtualChannelOpen(HANDLE hServer, DWORD SessionId,
 	                                              LPSTR pVirtualName);
 
+	WINPR_ATTR_MALLOC(WTSVirtualChannelClose, 1)
 	WINPR_API HANDLE WINAPI WTSVirtualChannelOpenEx(DWORD SessionId, LPSTR pVirtualName,
 	                                                DWORD flags);
-
-	WINPR_API BOOL WINAPI WTSVirtualChannelClose(HANDLE hChannelHandle);
 
 	WINPR_API BOOL WINAPI WTSVirtualChannelRead(HANDLE hChannelHandle, ULONG TimeOut, PCHAR Buffer,
 	                                            ULONG BufferSize, PULONG pBytesRead);

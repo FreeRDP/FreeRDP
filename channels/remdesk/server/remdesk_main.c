@@ -728,7 +728,7 @@ void remdesk_server_context_free(RemdeskServerContext* context)
 	if (context)
 	{
 		if (context->priv->ChannelHandle != INVALID_HANDLE_VALUE)
-			WTSVirtualChannelClose(context->priv->ChannelHandle);
+			(void)WTSVirtualChannelClose(context->priv->ChannelHandle);
 
 		free(context->priv);
 		free(context);

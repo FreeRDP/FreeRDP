@@ -430,7 +430,7 @@ static DWORD WINAPI audin_server_thread_func(LPVOID arg)
 out_capacity:
 	Stream_Free(s, TRUE);
 out:
-	WTSVirtualChannelClose(audin->audin_channel);
+	(void)WTSVirtualChannelClose(audin->audin_channel);
 	audin->audin_channel = NULL;
 
 	if (error && audin->context.rdpcontext)
@@ -533,7 +533,7 @@ static BOOL audin_server_close(audin_server_context* context)
 
 	if (audin->audin_channel)
 	{
-		WTSVirtualChannelClose(audin->audin_channel);
+		(void)WTSVirtualChannelClose(audin->audin_channel);
 		audin->audin_channel = NULL;
 	}
 

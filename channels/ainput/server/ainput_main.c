@@ -292,7 +292,7 @@ static DWORD WINAPI ainput_server_thread_func(LPVOID arg)
 		}
 	}
 
-	WTSVirtualChannelClose(ainput->ainput_channel);
+	(void)WTSVirtualChannelClose(ainput->ainput_channel);
 	ainput->ainput_channel = NULL;
 
 	if (error && ainput->context.rdpcontext)
@@ -369,7 +369,7 @@ static UINT ainput_server_close(ainput_server_context* context)
 	{
 		if (ainput->state != AINPUT_INITIAL)
 		{
-			WTSVirtualChannelClose(ainput->ainput_channel);
+			(void)WTSVirtualChannelClose(ainput->ainput_channel);
 			ainput->ainput_channel = NULL;
 			ainput->state = AINPUT_INITIAL;
 		}

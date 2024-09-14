@@ -1355,7 +1355,7 @@ static UINT cliprdr_server_close(CliprdrServerContext* context)
 
 	if (cliprdr->ChannelHandle)
 	{
-		WTSVirtualChannelClose(cliprdr->ChannelHandle);
+		(void)WTSVirtualChannelClose(cliprdr->ChannelHandle);
 		cliprdr->ChannelHandle = NULL;
 	}
 

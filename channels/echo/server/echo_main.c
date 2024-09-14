@@ -219,7 +219,7 @@ static DWORD WINAPI echo_server_thread_func(LPVOID arg)
 	if (!s)
 	{
 		WLog_ERR(TAG, "Stream_New failed!");
-		WTSVirtualChannelClose(echo->echo_channel);
+		(void)WTSVirtualChannelClose(echo->echo_channel);
 		ExitThread(ERROR_NOT_ENOUGH_MEMORY);
 		return ERROR_NOT_ENOUGH_MEMORY;
 	}
@@ -239,7 +239,12 @@ static DWORD WINAPI echo_server_thread_func(LPVOID arg)
 			break;
 
 		Stream_SetPosition(s, 0);
-		WTSVirtualChannelRead(echo->echo_channel, 0, NULL, 0, &BytesReturned);
+		if (!WTSVirtualChannelRead(echo->echo_channel, 0, NULL, 0, &BytesReturned))
+		{
+			WLog_ERR(TAG, "WTSVirtualChannelRead failed!");
+			error = ERROR_INTERNAL_ERROR;
+			break;
+		}
 
 		if (BytesReturned < 1)
 			continue;
@@ -270,7 +275,7 @@ static DWORD WINAPI echo_server_thread_func(LPVOID arg)
 	}
 
 	Stream_Free(s, TRUE);
-	WTSVirtualChannelClose(echo->echo_channel);
+	(void)WTSVirtualChannelClose(echo->echo_channel);
 	echo->echo_channel = NULL;
 out:
 

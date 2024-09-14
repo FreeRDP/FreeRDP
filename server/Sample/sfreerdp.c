@@ -93,7 +93,7 @@ static void test_peer_context_free(freerdp_peer* client, rdpContext* ctx)
 		nsc_context_free(context->nsc_context);
 
 		if (context->debug_channel)
-			WTSVirtualChannelClose(context->debug_channel);
+			(void)WTSVirtualChannelClose(context->debug_channel);
 
 		sf_peer_audin_uninit(context);
 
@@ -610,7 +610,6 @@ fail:
 static DWORD WINAPI tf_debug_channel_thread_func(LPVOID arg)
 {
 	void* fd = NULL;
-	wStream* s = NULL;
 	void* buffer = NULL;
 	DWORD BytesReturned = 0;
 	ULONG written = 0;
@@ -627,8 +626,12 @@ static DWORD WINAPI tf_debug_channel_thread_func(LPVOID arg)
 			return 0;
 	}
 
-	s = Stream_New(NULL, 4096);
-	WTSVirtualChannelWrite(context->debug_channel, (PCHAR) "test1", 5, &written);
+	wStream* s = Stream_New(NULL, 4096);
+	if (!s)
+		goto fail;
+
+	if (!WTSVirtualChannelWrite(context->debug_channel, (PCHAR) "test1", 5, &written))
+		goto fail;
 
 	while (1)
 	{
@@ -892,7 +895,8 @@ static BOOL tf_peer_keyboard_event(rdpInput* input, UINT16 flags, UINT8 code)
 		if (tcontext->debug_channel)
 		{
 			ULONG written = 0;
-			WTSVirtualChannelWrite(tcontext->debug_channel, (PCHAR) "test2", 5, &written);
+			if (!WTSVirtualChannelWrite(tcontext->debug_channel, (PCHAR) "test2", 5, &written))
+				return FALSE;
 		}
 	}
 	else if (((flags & KBD_FLAGS_RELEASE) == 0) && code == RDP_SCANCODE_KEY_X) /* 'x' key */

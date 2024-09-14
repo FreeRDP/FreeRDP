@@ -571,7 +571,7 @@ static DWORD WINAPI device_server_thread_func(LPVOID arg)
 		}
 	}
 
-	WTSVirtualChannelClose(device->device_channel);
+	(void)WTSVirtualChannelClose(device->device_channel);
 	device->device_channel = NULL;
 
 	if (error && device->context.rdpcontext)
@@ -638,7 +638,7 @@ static UINT device_server_close(CameraDeviceServerContext* context)
 	{
 		if (device->state != CAMERA_DEVICE_INITIAL)
 		{
-			WTSVirtualChannelClose(device->device_channel);
+			(void)WTSVirtualChannelClose(device->device_channel);
 			device->device_channel = NULL;
 			device->state = CAMERA_DEVICE_INITIAL;
 		}
