@@ -337,16 +337,16 @@ static UINT audin_winmm_set_format(IAudinDevice* device, const AUDIO_FORMAT* for
 		{
 			/* BUG: Many devices report to support stereo recording but fail here.
 			 *      Ensure we always use mono. */
-			if (ppwfx->nChannels > 1)
-			{
-				ppwfx->nChannels = 1;
-			}
+			// if (ppwfx->nChannels > 1)
+			//{
+			//	ppwfx->nChannels = 1;
+			//}
 
-			if (ppwfx->nBlockAlign != 2)
-			{
-				ppwfx->nBlockAlign = 2;
-				ppwfx->nAvgBytesPerSec = ppwfx->nSamplesPerSec * ppwfx->nBlockAlign;
-			}
+			// if (ppwfx->nBlockAlign != 2)
+			//{
+			//	ppwfx->nBlockAlign = 2;
+			//	ppwfx->nAvgBytesPerSec = ppwfx->nSamplesPerSec * ppwfx->nBlockAlign;
+			//}
 
 			if (!test_format_supported(ppwfx))
 				return ERROR_INVALID_PARAMETER;
@@ -370,8 +370,8 @@ static BOOL audin_winmm_format_supported(IAudinDevice* device, const AUDIO_FORMA
 	if (format->wFormatTag != WAVE_FORMAT_PCM)
 		return FALSE;
 
-	if (format->nChannels != 1)
-		return FALSE;
+	// if (format->nChannels != 1)
+	//	return FALSE;
 
 	pwfx = (PWAVEFORMATEX)malloc(sizeof(WAVEFORMATEX) + format->cbSize);
 
