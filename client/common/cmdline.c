@@ -434,15 +434,16 @@ static size_t print_description(const char* text, size_t start_offset, size_t cu
 	char* str = _strdup(text);
 	char* cur = str;
 
-	do
-	{
+	while (cur != NULL)
 		cur = print_token(cur, start_offset, &current, limit, " ", "\r\n");
-	} while (cur != NULL);
 
 	free(str);
 	const int rc = printf("\n");
 	if (rc >= 0)
+	{
+		WINPR_ASSERT(SIZE_MAX - rc >= current);
 		current += (size_t)rc;
+	}
 	return current;
 }
 
