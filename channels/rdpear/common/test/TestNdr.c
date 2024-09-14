@@ -2,6 +2,9 @@
 
 int TestNdr(int argc, char* argv[])
 {
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
+
 	int retCode = -2;
 	NdrContext* context = ndr_context_new(FALSE, 1);
 	if (!context)

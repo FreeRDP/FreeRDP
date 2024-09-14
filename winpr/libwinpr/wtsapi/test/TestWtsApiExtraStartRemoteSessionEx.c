@@ -7,12 +7,14 @@
 
 int TestWtsApiExtraStartRemoteSessionEx(int argc, char* argv[])
 {
-	BOOL bSuccess;
-	ULONG logonId = 0;
-	char logonIdStr[10];
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
 
-	bSuccess = GetEnvironmentVariableA("TEST_SESSION_LOGON_ID", logonIdStr, 10);
-	if (bSuccess)
+	ULONG logonId = 0;
+	char logonIdStr[10] = { 0 };
+
+	DWORD bSuccess = GetEnvironmentVariableA("TEST_SESSION_LOGON_ID", logonIdStr, 10);
+	if (bSuccess > 0)
 	{
 		sscanf(logonIdStr, "%u\n", &logonId);
 	}

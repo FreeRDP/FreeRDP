@@ -2096,42 +2096,36 @@ static BOOL rdp_write_bitmap_cache_v2_capability_set(wStream* s, const rdpSettin
 #ifdef WITH_DEBUG_CAPABILITIES
 static BOOL rdp_print_bitmap_cache_v2_capability_set(wStream* s)
 {
-	UINT16 cacheFlags = 0;
-	BYTE pad2 = 0;
-	BYTE numCellCaches = 0;
-	BITMAP_CACHE_V2_CELL_INFO bitmapCacheV2CellInfo[5];
+	BITMAP_CACHE_V2_CELL_INFO bitmapCacheV2CellInfo[5] = { 0 };
 	WLog_VRB(TAG, "BitmapCacheV2CapabilitySet (length %" PRIuz "):", Stream_GetRemainingLength(s));
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 36))
 		return FALSE;
 
-	Stream_Read_UINT16(s, cacheFlags);   /* cacheFlags (2 bytes) */
-	Stream_Read_UINT8(s, pad2);          /* pad2 (1 byte) */
-	Stream_Read_UINT8(s, numCellCaches); /* numCellCaches (1 byte) */
-	rdp_read_bitmap_cache_cell_info(s,
-	                                &bitmapCacheV2CellInfo[0]); /* bitmapCache0CellInfo (4 bytes) */
-	rdp_read_bitmap_cache_cell_info(s,
-	                                &bitmapCacheV2CellInfo[1]); /* bitmapCache1CellInfo (4 bytes) */
-	rdp_read_bitmap_cache_cell_info(s,
-	                                &bitmapCacheV2CellInfo[2]); /* bitmapCache2CellInfo (4 bytes) */
-	rdp_read_bitmap_cache_cell_info(s,
-	                                &bitmapCacheV2CellInfo[3]); /* bitmapCache3CellInfo (4 bytes) */
-	rdp_read_bitmap_cache_cell_info(s,
-	                                &bitmapCacheV2CellInfo[4]); /* bitmapCache4CellInfo (4 bytes) */
-	Stream_Seek(s, 12);                                         /* pad3 (12 bytes) */
+	const UINT16 cacheFlags = Stream_Get_UINT16(s);  /* cacheFlags (2 bytes) */
+	const UINT8 pad2 = Stream_Get_UINT8(s);          /* pad2 (1 byte) */
+	const UINT8 numCellCaches = Stream_Get_UINT8(s); /* numCellCaches (1 byte) */
+
+	for (size_t x = 0; x < ARRAYSIZE(bitmapCacheV2CellInfo); x++)
+	{
+		if (!rdp_read_bitmap_cache_cell_info(
+		        s, &bitmapCacheV2CellInfo[x])) /* bitmapCache0CellInfo (4 bytes) */
+			return FALSE;
+	}
+
+	if (!Stream_SafeSeek(s, 12)) /* pad3 (12 bytes) */
+		return FALSE;
+
 	WLog_VRB(TAG, "\tcacheFlags: 0x%04" PRIX16 "", cacheFlags);
 	WLog_VRB(TAG, "\tpad2: 0x%02" PRIX8 "", pad2);
 	WLog_VRB(TAG, "\tnumCellCaches: 0x%02" PRIX8 "", numCellCaches);
-	WLog_VRB(TAG, "\tbitmapCache0CellInfo: numEntries: %" PRIu32 " persistent: %" PRId32 "",
-	         bitmapCacheV2CellInfo[0].numEntries, bitmapCacheV2CellInfo[0].persistent);
-	WLog_VRB(TAG, "\tbitmapCache1CellInfo: numEntries: %" PRIu32 " persistent: %" PRId32 "",
-	         bitmapCacheV2CellInfo[1].numEntries, bitmapCacheV2CellInfo[1].persistent);
-	WLog_VRB(TAG, "\tbitmapCache2CellInfo: numEntries: %" PRIu32 " persistent: %" PRId32 "",
-	         bitmapCacheV2CellInfo[2].numEntries, bitmapCacheV2CellInfo[2].persistent);
-	WLog_VRB(TAG, "\tbitmapCache3CellInfo: numEntries: %" PRIu32 " persistent: %" PRId32 "",
-	         bitmapCacheV2CellInfo[3].numEntries, bitmapCacheV2CellInfo[3].persistent);
-	WLog_VRB(TAG, "\tbitmapCache4CellInfo: numEntries: %" PRIu32 " persistent: %" PRId32 "",
-	         bitmapCacheV2CellInfo[4].numEntries, bitmapCacheV2CellInfo[4].persistent);
+	for (size_t x = 0; x < ARRAYSIZE(bitmapCacheV2CellInfo); x++)
+	{
+		const BITMAP_CACHE_V2_CELL_INFO* info = &bitmapCacheV2CellInfo[x];
+		WLog_VRB(TAG,
+		         "\tbitmapCache%" PRIuz "CellInfo: numEntries: %" PRIu32 " persistent: %" PRId32 "",
+		         x, info->numEntries, info->persistent);
+	}
 	return TRUE;
 }
 #endif

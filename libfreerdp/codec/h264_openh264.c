@@ -228,7 +228,7 @@ static int openh264_compress(H264_CONTEXT* WINPR_RESTRICT h264,
 			return status;
 		}
 
-		EUsageType usageType;
+		EUsageType usageType = SCREEN_CONTENT_REAL_TIME;
 
 		switch (h264->UsageType)
 		{
@@ -243,7 +243,6 @@ static int openh264_compress(H264_CONTEXT* WINPR_RESTRICT h264,
 				break;
 			case H264_SCREEN_CONTENT_REAL_TIME:
 			default:
-				usageType = SCREEN_CONTENT_REAL_TIME;
 				break;
 		}
 

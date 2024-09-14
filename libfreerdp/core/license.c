@@ -2850,8 +2850,9 @@ BOOL license_server_configure(rdpLicense* license)
 	    freerdp_settings_get_uint32(settings, FreeRDP_ServerLicenseProductVersion);
 	const UINT32 issuerCount =
 	    freerdp_settings_get_uint32(settings, FreeRDP_ServerLicenseProductIssuersCount);
-	const char** issuers =
-	    (const char**)freerdp_settings_get_pointer(settings, FreeRDP_ServerLicenseProductIssuers);
+
+	const void* ptr = freerdp_settings_get_pointer(settings, FreeRDP_ServerLicenseProductIssuers);
+	const char** issuers = WINPR_REINTERPRET_CAST(ptr, const void*, const char**);
 
 	WINPR_ASSERT(CompanyName);
 	WINPR_ASSERT(ProductName);

@@ -316,6 +316,12 @@ static UINT ecam_on_new_channel_connection(IWTSListenerCallback* pListenerCallba
 	return CHANNEL_RC_OK;
 }
 
+static void ecam_dev_destroy_pv(void* obj)
+{
+	CameraDevice* dev = obj;
+	ecam_dev_destroy(dev);
+}
+
 /**
  * Function description
  *
@@ -349,7 +355,7 @@ static UINT ecam_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelManage
 
 	wObject* obj = HashTable_ValueObject(ecam->devices);
 	WINPR_ASSERT(obj);
-	obj->fnObjectFree = ecam_dev_destroy;
+	obj->fnObjectFree = ecam_dev_destroy_pv;
 
 	ecam->hlistener = (GENERIC_LISTENER_CALLBACK*)calloc(1, sizeof(GENERIC_LISTENER_CALLBACK));
 

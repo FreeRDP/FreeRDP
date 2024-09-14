@@ -23,6 +23,31 @@
 #include <winpr/stream.h>
 #include <freerdp/api.h>
 
+#define NDR_PTR_NULL (0UL)
+
+#define NDR_SIMPLE_TYPE_DECL(LOWER, UPPER)                                                        \
+	BOOL ndr_read_##LOWER(NdrContext* context, wStream* s, UPPER* v);                             \
+	BOOL ndr_read_##LOWER##_(NdrContext* context, wStream* s, const void* hints, void* v);        \
+	BOOL ndr_write_##LOWER(NdrContext* context, wStream* s, UPPER v);                             \
+	BOOL ndr_write_##LOWER##_(NdrContext* context, wStream* s, const void* hints, const void* v); \
+	extern const NdrMessageDescr ndr_##LOWER##_descr_s;                                           \
+	NdrMessageType ndr_##LOWER##_descr(void)
+
+#define NDR_ARRAY_OF_TYPE_DECL(TYPE, UPPERTYPE)                                               \
+	BOOL ndr_read_##TYPE##Array(NdrContext* context, wStream* s, const void* hints, void* v); \
+	BOOL ndr_write_##TYPE##Array(NdrContext* context, wStream* s, const void* hints,          \
+	                             const void* v);                                              \
+	void ndr_destroy_##TYPE##Array(NdrContext* context, const void* hints, void* obj);        \
+	extern const NdrMessageDescr ndr_##TYPE##Array_descr_s;                                   \
+	NdrMessageType ndr_##TYPE##Array_descr(void);                                             \
+                                                                                              \
+	BOOL ndr_read_##TYPE##VaryingArray(NdrContext* context, wStream* s, const void* hints,    \
+	                                   void* v);                                              \
+	BOOL ndr_write_##TYPE##VaryingArray(NdrContext* context, wStream* s, const void* hints,   \
+	                                    const void* v);                                       \
+	extern const NdrMessageDescr ndr_##TYPE##VaryingArray_descr_s;                            \
+	NdrMessageType ndr_##TYPE##VaryingArray_descr(void)
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -31,7 +56,6 @@ extern "C"
 	typedef struct NdrContext_s NdrContext;
 
 	typedef UINT32 ndr_refid;
-#define NDR_PTR_NULL (0UL)
 
 	typedef BOOL (*NDR_READER_FN)(NdrContext* context, wStream* s, const void* hints, void* target);
 	typedef BOOL (*NDR_WRITER_FN)(NdrContext* context, wStream* s, const void* hints,
@@ -96,34 +120,35 @@ extern "C"
 		NdrMessageType msg;
 	} NdrDeferredEntry;
 
+	void ndr_context_free(NdrContext* context);
+
+	static INLINE void ndr_context_destroy(NdrContext** pcontext)
+	{
+		WINPR_ASSERT(pcontext);
+		ndr_context_free(*pcontext);
+		*pcontext = NULL;
+	}
+
+	WINPR_ATTR_MALLOC(ndr_context_free, 1)
 	NdrContext* ndr_context_new(BOOL bigEndianDrep, BYTE version);
-	void ndr_context_destroy(NdrContext** pcontext);
 
 	void ndr_context_reset(NdrContext* context);
+
+	WINPR_ATTR_MALLOC(ndr_context_free, 1)
 	NdrContext* ndr_context_copy(const NdrContext* src);
 
+	WINPR_ATTR_MALLOC(ndr_context_free, 1)
 	NdrContext* ndr_read_header(wStream* s);
+
 	BOOL ndr_write_header(NdrContext* context, wStream* s);
 
-	BOOL ndr_write_uint8(NdrContext* context, wStream* s, BYTE v);
-	BOOL ndr_write_uint8_(NdrContext* context, wStream* s, const void* hints, const void* v);
-	NdrMessageType ndr_uint8_descr(void);
-
-#define NDR_SIMPLE_TYPE_DECL(LOWER, UPPER)                                                        \
-	BOOL ndr_read_##LOWER(NdrContext* context, wStream* s, UPPER* v);                             \
-	BOOL ndr_write_##LOWER(NdrContext* context, wStream* s, UPPER v);                             \
-	BOOL ndr_write_##LOWER##_(NdrContext* context, wStream* s, const void* hints, const void* v); \
-	extern const NdrMessageDescr ndr_##LOWER##_descr_s;                                           \
-	NdrMessageType ndr_##LOWER##_descr(void)
-
+	NDR_SIMPLE_TYPE_DECL(uint8, UINT8);
 	NDR_SIMPLE_TYPE_DECL(uint16, UINT16);
 	NDR_SIMPLE_TYPE_DECL(uint32, UINT32);
 	NDR_SIMPLE_TYPE_DECL(uint64, UINT64);
 
-	extern const NdrMessageDescr ndr_uint8Array_descr_s;
-	NdrMessageType ndr_uint8Array_descr(void);
-	NdrMessageType ndr_uint16Array_descr(void);
-	NdrMessageType ndr_uint16VaryingArray_descr(void);
+	NDR_ARRAY_OF_TYPE_DECL(uint8, BYTE);
+	NDR_ARRAY_OF_TYPE_DECL(uint16, UINT16);
 
 	BOOL ndr_skip_bytes(NdrContext* context, wStream* s, size_t nbytes);
 	BOOL ndr_read_align(NdrContext* context, wStream* s, size_t sz);

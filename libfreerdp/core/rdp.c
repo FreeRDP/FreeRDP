@@ -605,12 +605,13 @@ BOOL rdp_read_header(rdpRdp* rdp, wStream* s, UINT16* length, UINT16* channelId)
 			 * when the user logs off like they should. Map DisconnectProviderUltimatum
 			 * to a ERRINFO_LOGOFF_BY_USER when the errinfo code is ERRINFO_SUCCESS.
 			 */
+			UINT32 errorInfo = ERRINFO_RPC_INITIATED_DISCONNECT;
 			if (reason == Disconnect_Ultimatum_provider_initiated)
-				rdp_set_error_info(rdp, ERRINFO_RPC_INITIATED_DISCONNECT);
+				errorInfo = ERRINFO_RPC_INITIATED_DISCONNECT;
 			else if (reason == Disconnect_Ultimatum_user_requested)
-				rdp_set_error_info(rdp, ERRINFO_LOGOFF_BY_USER);
-			else
-				rdp_set_error_info(rdp, ERRINFO_RPC_INITIATED_DISCONNECT);
+				errorInfo = ERRINFO_LOGOFF_BY_USER;
+
+			rdp_set_error_info(rdp, errorInfo);
 		}
 
 		WLog_Print(rdp->log, WLOG_DEBUG, "DisconnectProviderUltimatum: reason: %d", reason);

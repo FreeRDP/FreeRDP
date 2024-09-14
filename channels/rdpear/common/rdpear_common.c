@@ -26,10 +26,10 @@
 
 #define TAG CHANNELS_TAG("rdpear")
 
-const char kerberosPackageName[] = {
+static char kerberosPackageName[] = {
 	'K', 0, 'e', 0, 'r', 0, 'b', 0, 'e', 0, 'r', 0, 'o', 0, 's', 0
 };
-const char ntlmPackageName[] = { 'N', 0, 'T', 0, 'L', 0, 'M', 0 };
+static char ntlmPackageName[] = { 'N', 0, 'T', 0, 'L', 0, 'M', 0 };
 
 RdpEarPackageType rdpear_packageType_from_name(WinPrAsn1_OctetString* package)
 {
@@ -99,36 +99,56 @@ out:
 	return ret;
 }
 
-#define RDPEAR_SIMPLE_MESSAGE_TYPE(V)                                                    \
-	BOOL ndr_read_##V(NdrContext* context, wStream* s, const void* hints, V* obj)        \
-	{                                                                                    \
-		return ndr_struct_read_fromDescr(context, s, &V##_struct, obj);                  \
-	}                                                                                    \
-	BOOL ndr_write_##V(NdrContext* context, wStream* s, const void* hints, const V* obj) \
-	{                                                                                    \
-		return ndr_struct_write_fromDescr(context, s, &V##_struct, obj);                 \
-	}                                                                                    \
-	void ndr_destroy_##V(NdrContext* context, const void* hints, V* obj)                 \
-	{                                                                                    \
-		ndr_struct_destroy(context, &V##_struct, obj);                                   \
-	}                                                                                    \
-	void ndr_dump_##V(wLog* logger, UINT32 lvl, size_t indentLevel, const V* obj)        \
-	{                                                                                    \
-		ndr_struct_dump_fromDescr(logger, lvl, indentLevel, &V##_struct, obj);           \
-	}                                                                                    \
-                                                                                         \
-	NdrMessageDescr ndr_##V##_descr_s = {                                                \
-		NDR_ARITY_SIMPLE,                                                                \
-		sizeof(V),                                                                       \
-		(NDR_READER_FN)ndr_read_##V,                                                     \
-		(NDR_WRITER_FN)ndr_write_##V,                                                    \
-		(NDR_DESTROY_FN)ndr_destroy_##V,                                                 \
-		(NDR_DUMP_FN)ndr_dump_##V,                                                       \
-	};                                                                                   \
-                                                                                         \
-	NdrMessageType ndr_##V##_descr(void)                                                 \
-	{                                                                                    \
-		return &ndr_##V##_descr_s;                                                       \
+#define RDPEAR_SIMPLE_MESSAGE_TYPE(V)                                                             \
+	BOOL ndr_read_##V(NdrContext* context, wStream* s, const void* hints, V* obj)                 \
+	{                                                                                             \
+		WINPR_UNUSED(hints);                                                                      \
+		return ndr_struct_read_fromDescr(context, s, &V##_struct, obj);                           \
+	}                                                                                             \
+	BOOL ndr_write_##V(NdrContext* context, wStream* s, const void* hints, const V* obj)          \
+	{                                                                                             \
+		WINPR_UNUSED(hints);                                                                      \
+		return ndr_struct_write_fromDescr(context, s, &V##_struct, obj);                          \
+	}                                                                                             \
+	void ndr_destroy_##V(NdrContext* context, const void* hints, V* obj)                          \
+	{                                                                                             \
+		WINPR_UNUSED(hints);                                                                      \
+		ndr_struct_destroy(context, &V##_struct, obj);                                            \
+	}                                                                                             \
+	void ndr_dump_##V(wLog* logger, UINT32 lvl, size_t indentLevel, const V* obj)                 \
+	{                                                                                             \
+		ndr_struct_dump_fromDescr(logger, lvl, indentLevel, &V##_struct, obj);                    \
+	}                                                                                             \
+                                                                                                  \
+	static BOOL ndr_descr_read_##V(NdrContext* context, wStream* s, const void* hints, void* obj) \
+	{                                                                                             \
+		WINPR_UNUSED(hints);                                                                      \
+		return ndr_struct_read_fromDescr(context, s, &V##_struct, obj);                           \
+	}                                                                                             \
+	static BOOL ndr_descr_write_##V(NdrContext* context, wStream* s, const void* hints,           \
+	                                const void* obj)                                              \
+	{                                                                                             \
+		WINPR_UNUSED(hints);                                                                      \
+		return ndr_struct_write_fromDescr(context, s, &V##_struct, obj);                          \
+	}                                                                                             \
+	static void ndr_descr_destroy_##V(NdrContext* context, const void* hints, void* obj)          \
+	{                                                                                             \
+		WINPR_UNUSED(hints);                                                                      \
+		ndr_struct_destroy(context, &V##_struct, obj);                                            \
+	}                                                                                             \
+	static void ndr_descr_dump_##V(wLog* logger, UINT32 lvl, size_t indentLevel, const void* obj) \
+	{                                                                                             \
+		ndr_struct_dump_fromDescr(logger, lvl, indentLevel, &V##_struct, obj);                    \
+	}                                                                                             \
+                                                                                                  \
+	static NdrMessageDescr ndr_##V##_descr_s = {                                                  \
+		NDR_ARITY_SIMPLE,      sizeof(V),          ndr_descr_read_##V, ndr_descr_write_##V,       \
+		ndr_descr_destroy_##V, ndr_descr_dump_##V,                                                \
+	};                                                                                            \
+                                                                                                  \
+	NdrMessageType ndr_##V##_descr(void)                                                          \
+	{                                                                                             \
+		return &ndr_##V##_descr_s;                                                                \
 	}
 
 static const NdrFieldStruct KERB_RPC_OCTET_STRING_fields[] = {
@@ -163,8 +183,10 @@ BOOL ndr_read_RPC_UNICODE_STRING(NdrContext* context, wStream* s, const void* hi
 {
 	NdrDeferredEntry bufferDesc = { NDR_PTR_NULL, "RPC_UNICODE_STRING.Buffer", &res->lenHints,
 		                            &res->Buffer, ndr_uint16VaryingArray_descr() };
-	UINT16 Length, MaximumLength;
+	UINT16 Length = 0;
+	UINT16 MaximumLength = 0;
 
+	WINPR_UNUSED(hints);
 	if (!ndr_read_uint16(context, s, &Length) || !ndr_read_uint16(context, s, &MaximumLength) ||
 	    !ndr_read_refpointer(context, s, &bufferDesc.ptrId) || Length > MaximumLength)
 		return FALSE;
@@ -174,6 +196,12 @@ BOOL ndr_read_RPC_UNICODE_STRING(NdrContext* context, wStream* s, const void* hi
 	res->strLength = Length / 2;
 
 	return ndr_push_deferreds(context, &bufferDesc, 1);
+}
+
+static BOOL ndr_descr_read_RPC_UNICODE_STRING(NdrContext* context, wStream* s, const void* hints,
+                                              void* res)
+{
+	return ndr_read_RPC_UNICODE_STRING(context, s, hints, res);
 }
 
 #if 0
@@ -190,31 +218,43 @@ BOOL ndr_write_RPC_UNICODE_STRING(NdrContext* context, wStream* s, const void* h
 void ndr_dump_RPC_UNICODE_STRING(wLog* logger, UINT32 lvl, size_t indentLevel,
                                  const RPC_UNICODE_STRING* obj)
 {
+	WINPR_UNUSED(indentLevel);
 	WLog_Print(logger, lvl, "\tLength=%d MaximumLength=%d", obj->lenHints.length,
 	           obj->lenHints.maxLength);
 	winpr_HexLogDump(logger, lvl, obj->Buffer, obj->lenHints.length);
 }
 
+static void ndr_descr_dump_RPC_UNICODE_STRING(wLog* logger, UINT32 lvl, size_t indentLevel,
+                                              const void* obj)
+{
+	ndr_dump_RPC_UNICODE_STRING(logger, lvl, indentLevel, obj);
+}
+
 void ndr_destroy_RPC_UNICODE_STRING(NdrContext* context, const void* hints, RPC_UNICODE_STRING* obj)
 {
+	WINPR_UNUSED(context);
+	WINPR_UNUSED(hints);
 	if (!obj)
 		return;
 	free(obj->Buffer);
 	obj->Buffer = NULL;
 }
 
-static const NdrMessageDescr RPC_UNICODE_STRING_descr_ = {
-	NDR_ARITY_SIMPLE,
-	sizeof(RPC_UNICODE_STRING),
-	(NDR_READER_FN)ndr_read_RPC_UNICODE_STRING,
-	(NDR_WRITER_FN) /*ndr_write_RPC_UNICODE_STRING*/ NULL,
-	(NDR_DESTROY_FN)ndr_destroy_RPC_UNICODE_STRING,
-	(NDR_DUMP_FN)ndr_dump_RPC_UNICODE_STRING
-};
-
-NdrMessageType RPC_UNICODE_STRING_descr()
+static void ndr_descr_destroy_RPC_UNICODE_STRING(NdrContext* context, const void* hints, void* obj)
 {
-	return &RPC_UNICODE_STRING_descr_;
+	ndr_destroy_RPC_UNICODE_STRING(context, hints, obj);
+}
+
+static const NdrMessageDescr RPC_UNICODE_STRING_descr_s = { NDR_ARITY_SIMPLE,
+	                                                        sizeof(RPC_UNICODE_STRING),
+	                                                        ndr_descr_read_RPC_UNICODE_STRING,
+	                                                        /*ndr_write_RPC_UNICODE_STRING*/ NULL,
+	                                                        ndr_descr_destroy_RPC_UNICODE_STRING,
+	                                                        ndr_descr_dump_RPC_UNICODE_STRING };
+
+NdrMessageType ndr_RPC_UNICODE_STRING_descr(void)
+{
+	return &RPC_UNICODE_STRING_descr_s;
 }
 
 /* ========================= RPC_UNICODE_STRING_Array ======================== */
@@ -225,7 +265,7 @@ static BOOL ndr_read_RPC_UNICODE_STRING_Array(NdrContext* context, wStream* s, c
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(hints);
-	return ndr_read_uconformant_array(context, s, hints, RPC_UNICODE_STRING_descr(), v);
+	return ndr_read_uconformant_array(context, s, hints, ndr_RPC_UNICODE_STRING_descr(), v);
 }
 
 static BOOL ndr_write_RPC_UNICODE_STRING_Array(NdrContext* context, wStream* s, const void* ghints,
@@ -237,19 +277,21 @@ static BOOL ndr_write_RPC_UNICODE_STRING_Array(NdrContext* context, wStream* s, 
 
 	const NdrArrayHints* hints = (const NdrArrayHints*)ghints;
 
-	return ndr_write_uconformant_array(context, s, hints->count, RPC_UNICODE_STRING_descr(), v);
+	return ndr_write_uconformant_array(context, s, hints->count, ndr_RPC_UNICODE_STRING_descr(), v);
 }
 
-static const NdrMessageDescr RPC_UNICODE_STRING_Array_descr_ = { NDR_ARITY_ARRAYOF,
-	                                                             sizeof(RPC_UNICODE_STRING),
-	                                                             ndr_read_RPC_UNICODE_STRING_Array,
-	                                                             ndr_write_RPC_UNICODE_STRING_Array,
-	                                                             (NDR_DESTROY_FN)NULL,
-	                                                             (NDR_DUMP_FN)NULL };
+static const NdrMessageDescr RPC_UNICODE_STRING_Array_descr_s = {
+	NDR_ARITY_ARRAYOF,
+	sizeof(RPC_UNICODE_STRING),
+	ndr_read_RPC_UNICODE_STRING_Array,
+	ndr_write_RPC_UNICODE_STRING_Array,
+	NULL,
+	NULL
+};
 
-NdrMessageType RPC_UNICODE_STRING_Array_descr()
+static NdrMessageType ndr_RPC_UNICODE_STRING_Array_descr(void)
 {
-	return &RPC_UNICODE_STRING_Array_descr_;
+	return &RPC_UNICODE_STRING_Array_descr_s;
 }
 
 /* ========================== KERB_RPC_INTERNAL_NAME ======================== */
@@ -257,10 +299,20 @@ NdrMessageType RPC_UNICODE_STRING_Array_descr()
 BOOL ndr_read_KERB_RPC_INTERNAL_NAME(NdrContext* context, wStream* s, const void* hints,
                                      KERB_RPC_INTERNAL_NAME* res)
 {
-	NdrDeferredEntry names = { NDR_PTR_NULL, "KERB_RPC_INTERNAL_NAME.Names", &res->nameHints,
-		                       &res->Names, RPC_UNICODE_STRING_Array_descr() };
+	WINPR_ASSERT(res);
 
-	UINT16 nameCount;
+	union
+	{
+		RPC_UNICODE_STRING** ppstr;
+		void* pv;
+	} cnv;
+	cnv.ppstr = &res->Names;
+	NdrDeferredEntry names = { NDR_PTR_NULL, "KERB_RPC_INTERNAL_NAME.Names", &res->nameHints,
+		                       cnv.pv, ndr_RPC_UNICODE_STRING_Array_descr() };
+
+	UINT16 nameCount = 0;
+	WINPR_UNUSED(hints);
+
 	if (!ndr_read_uint16(context, s, &res->NameType) || !ndr_read_uint16(context, s, &nameCount))
 		return FALSE;
 
@@ -269,42 +321,67 @@ BOOL ndr_read_KERB_RPC_INTERNAL_NAME(NdrContext* context, wStream* s, const void
 	return ndr_read_refpointer(context, s, &names.ptrId) && ndr_push_deferreds(context, &names, 1);
 }
 
+static BOOL ndr_descr_read_KERB_RPC_INTERNAL_NAME(NdrContext* context, wStream* s,
+                                                  const void* hints, void* res)
+{
+	return ndr_read_KERB_RPC_INTERNAL_NAME(context, s, hints, res);
+}
+
 BOOL ndr_write_KERB_RPC_INTERNAL_NAME(NdrContext* context, wStream* s, const void* hints,
                                       const KERB_RPC_INTERNAL_NAME* res)
 {
+	WINPR_UNUSED(context);
+	WINPR_UNUSED(s);
+	WINPR_UNUSED(hints);
+	WINPR_UNUSED(res);
+	WLog_ERR(TAG, "TODO: implement this");
 	return FALSE;
 }
 
 void ndr_dump_KERB_RPC_INTERNAL_NAME(wLog* logger, UINT32 lvl, size_t indentLevel,
                                      const KERB_RPC_INTERNAL_NAME* obj)
 {
+	WINPR_UNUSED(indentLevel);
+	WINPR_UNUSED(obj);
+	WLog_Print(logger, lvl, "TODO: implement this");
+}
+
+static void ndr_descr_dump_KERB_RPC_INTERNAL_NAME(wLog* logger, UINT32 lvl, size_t indentLevel,
+                                                  const void* obj)
+{
+	ndr_dump_KERB_RPC_INTERNAL_NAME(logger, lvl, indentLevel, obj);
 }
 
 void ndr_destroy_KERB_RPC_INTERNAL_NAME(NdrContext* context, const void* hints,
                                         KERB_RPC_INTERNAL_NAME* obj)
 {
+	WINPR_UNUSED(hints);
 	if (!obj)
 		return;
 
-	for (int i = 0; i < obj->nameHints.count; i++)
+	for (UINT32 i = 0; i < obj->nameHints.count; i++)
 		ndr_destroy_RPC_UNICODE_STRING(context, NULL, &obj->Names[i]);
 
 	free(obj->Names);
 	obj->Names = NULL;
 }
 
-NdrMessageDescr KERB_RPC_INTERNAL_NAME_descr_ = {
-	NDR_ARITY_SIMPLE,
-	sizeof(KERB_RPC_INTERNAL_NAME),
-	(NDR_READER_FN)ndr_read_KERB_RPC_INTERNAL_NAME,
-	(NDR_WRITER_FN)NULL,
-	(NDR_DESTROY_FN)ndr_destroy_KERB_RPC_INTERNAL_NAME,
-	(NDR_DUMP_FN)ndr_dump_KERB_RPC_INTERNAL_NAME
-};
-
-NdrMessageType KERB_RPC_INTERNAL_NAME_descr()
+static void ndr_descr_destroy_KERB_RPC_INTERNAL_NAME(NdrContext* context, const void* hints,
+                                                     void* obj)
 {
-	return &KERB_RPC_INTERNAL_NAME_descr_;
+	ndr_destroy_KERB_RPC_INTERNAL_NAME(context, hints, obj);
+}
+
+static NdrMessageDescr KERB_RPC_INTERNAL_NAME_descr_s = { NDR_ARITY_SIMPLE,
+	                                                      sizeof(KERB_RPC_INTERNAL_NAME),
+	                                                      ndr_descr_read_KERB_RPC_INTERNAL_NAME,
+	                                                      NULL,
+	                                                      ndr_descr_destroy_KERB_RPC_INTERNAL_NAME,
+	                                                      ndr_descr_dump_KERB_RPC_INTERNAL_NAME };
+
+NdrMessageType ndr_KERB_RPC_INTERNAL_NAME_descr(void)
+{
+	return &KERB_RPC_INTERNAL_NAME_descr_s;
 }
 
 /* ========================== KERB_RPC_ENCRYPTION_KEY ======================== */
@@ -365,9 +442,9 @@ static const NdrFieldStruct CreateApReqAuthenticatorReq_fields[] = {
 	{ "SequenceNumber", offsetof(CreateApReqAuthenticatorReq, SequenceNumber), NDR_NOT_POINTER, -1,
 	  &ndr_uint32_descr_s },
 	{ "ClientName", offsetof(CreateApReqAuthenticatorReq, ClientName), NDR_POINTER_NON_NULL, -1,
-	  &KERB_RPC_INTERNAL_NAME_descr_ },
+	  &KERB_RPC_INTERNAL_NAME_descr_s },
 	{ "ClientRealm", offsetof(CreateApReqAuthenticatorReq, ClientRealm), NDR_POINTER_NON_NULL, -1,
-	  &RPC_UNICODE_STRING_descr_ },
+	  &RPC_UNICODE_STRING_descr_s },
 	{ "SkewTime", offsetof(CreateApReqAuthenticatorReq, SkewTime), NDR_POINTER_NON_NULL, -1,
 	  &ndr_uint64_descr_s },
 	{ "SubKey", offsetof(CreateApReqAuthenticatorReq, SubKey), NDR_POINTER, -1,

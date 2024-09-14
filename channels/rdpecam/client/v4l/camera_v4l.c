@@ -142,10 +142,9 @@ static BOOL cam_v4l_format_supported(int fd, UINT32 format)
  */
 static int cam_v4l_open_device(const char* deviceId, int flags)
 {
-	UINT n;
-	char device[20];
+	char device[20] = { 0 };
 	int fd = -1;
-	struct v4l2_capability cap;
+	struct v4l2_capability cap = { 0 };
 
 	if (!deviceId)
 		return -1;
@@ -153,7 +152,7 @@ static int cam_v4l_open_device(const char* deviceId, int flags)
 	if (0 == strncmp(deviceId, "/dev/video", 10))
 		return open(deviceId, flags);
 
-	for (n = 0; n < 64; n++)
+	for (UINT n = 0; n < 64; n++)
 	{
 		snprintf(device, sizeof(device), "/dev/video%d", n);
 		if ((fd = open(device, flags)) == -1)
@@ -188,19 +187,19 @@ static INT16 cam_v4l_get_media_type_descriptions(ICamHal* hal, const char* devic
                                                  CAM_MEDIA_TYPE_DESCRIPTION* mediaTypes,
                                                  size_t* nMediaTypes)
 {
-	int fd;
 	size_t maxMediaTypes = *nMediaTypes;
 	size_t nTypes = 0;
-	int formatIndex;
 	BOOL formatFound = FALSE;
 
-	if ((fd = cam_v4l_open_device(deviceId, O_RDONLY)) == -1)
+	int fd = cam_v4l_open_device(deviceId, O_RDONLY);
+	if (fd == -1)
 	{
 		WLog_ERR(TAG, "Unable to open device %s", deviceId);
 		return -1;
 	}
 
-	for (formatIndex = 0; formatIndex < nSupportedFormats; formatIndex++)
+	size_t formatIndex = 0;
+	for (; formatIndex < nSupportedFormats; formatIndex++)
 	{
 		UINT32 pixelFormat = ecamToV4L2PixFormat(supportedFormats[formatIndex].inputFormat);
 		WINPR_ASSERT(pixelFormat != 0);
@@ -268,7 +267,9 @@ error:
 
 	*nMediaTypes = nTypes;
 	close(fd);
-	return formatIndex;
+	if (formatIndex > INT16_MAX)
+		return -1;
+	return (INT16)formatIndex;
 }
 
 /**
@@ -279,16 +280,15 @@ error:
 static UINT cam_v4l_enumerate(ICamHal* ihal, ICamHalEnumCallback callback, CameraPlugin* ecam,
                               GENERIC_CHANNEL_CALLBACK* hchannel)
 {
-	UINT n, count = 0;
-	char device[20];
-	int fd = -1;
-	struct v4l2_capability cap;
-	char *deviceName, *deviceId;
+	UINT count = 0;
 
-	for (n = 0; n < 64; n++)
+	for (UINT n = 0; n < 64; n++)
 	{
+		char device[20] = { 0 };
+		struct v4l2_capability cap = { 0 };
 		snprintf(device, sizeof(device), "/dev/video%d", n);
-		if ((fd = open(device, O_RDONLY)) == -1)
+		int fd = open(device, O_RDONLY);
+		if (fd == -1)
 			continue;
 
 		/* query device capabilities and make sure this is a video capture device */
@@ -299,12 +299,10 @@ static UINT cam_v4l_enumerate(ICamHal* ihal, ICamHalEnumCallback callback, Camer
 		}
 		count++;
 
-		deviceName = (char*)cap.card;
-
+		const char* deviceName = (char*)cap.card;
+		const char* deviceId = device;
 		if (cap.bus_info[0] != 0) /* may not be available in all drivers */
 			deviceId = (char*)cap.bus_info;
-		else
-			deviceId = device;
 
 		IFCALL(callback, ecam, hchannel, deviceId, deviceName);
 
@@ -420,7 +418,7 @@ static UINT cam_v4l_stream_capture_thread(void* param)
 
 	do
 	{
-		int retVal;
+		int retVal = 0;
 		struct pollfd pfd = { 0 };
 
 		pfd.fd = fd;
@@ -540,8 +538,7 @@ UINT cam_v4l_stream_stop(CamV4lStream* stream)
 	EnterCriticalSection(&stream->lock);
 
 	/* stop streaming */
-	enum v4l2_buf_type type;
-	type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+	enum v4l2_buf_type type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	if (ioctl(stream->fd, VIDIOC_STREAMOFF, &type) < 0)
 	{
 		WLog_ERR(TAG, "Failure in VIDIOC_STREAMOFF, errno %d", errno);
@@ -616,7 +613,8 @@ static UINT cam_v4l_stream_start(ICamHal* ihal, CameraDevice* dev, int streamInd
 	}
 
 	/* trying to set frame rate, if driver supports it */
-	struct v4l2_streamparm sp1 = { 0 }, sp2 = { 0 };
+	struct v4l2_streamparm sp1 = { 0 };
+	struct v4l2_streamparm sp2 = { 0 };
 	sp1.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	if (ioctl(stream->fd, VIDIOC_G_PARM, &sp1) < 0 ||
 	    !(sp1.parm.capture.capability & V4L2_CAP_TIMEPERFRAME))
@@ -648,8 +646,7 @@ static UINT cam_v4l_stream_start(ICamHal* ihal, CameraDevice* dev, int streamInd
 	stream->streaming = TRUE;
 
 	/* start streaming */
-	enum v4l2_buf_type type;
-	type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+	enum v4l2_buf_type type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	if (ioctl(stream->fd, VIDIOC_STREAMON, &type) < 0)
 	{
 		WLog_ERR(TAG, "Failure in VIDIOC_STREAMON, errno %d", errno);

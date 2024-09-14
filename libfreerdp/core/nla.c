@@ -1426,13 +1426,13 @@ static BOOL nla_write_KERB_TICKET_LOGON(wStream* s, const KERB_TICKET_LOGON* tic
 	return TRUE;
 }
 
-BOOL nla_get_KERB_TICKET_LOGON(rdpNla* nla, KERB_TICKET_LOGON* logonTicket)
+static BOOL nla_get_KERB_TICKET_LOGON(rdpNla* nla, KERB_TICKET_LOGON* logonTicket)
 {
 	WINPR_ASSERT(nla);
 	WINPR_ASSERT(logonTicket);
 
-	SecurityFunctionTable* table;
-	CtxtHandle context;
+	SecurityFunctionTable* table = NULL;
+	CtxtHandle context = { 0 };
 	credssp_auth_tableAndContext(nla->auth, &table, &context);
 	return table->QueryContextAttributes(&context, SECPKG_CRED_ATTR_TICKET_LOGON, logonTicket) ==
 	       SEC_E_OK;
@@ -2223,8 +2223,8 @@ SECURITY_STATUS nla_QueryContextAttributes(rdpNla* nla, DWORD ulAttr, PVOID pBuf
 {
 	WINPR_ASSERT(nla);
 
-	SecurityFunctionTable* table;
-	CtxtHandle context;
+	SecurityFunctionTable* table = NULL;
+	CtxtHandle context = { 0 };
 	credssp_auth_tableAndContext(nla->auth, &table, &context);
 
 	return table->QueryContextAttributes(&context, ulAttr, pBuffer);

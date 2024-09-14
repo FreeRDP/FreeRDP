@@ -241,16 +241,19 @@ static BOOL isValidIP(const char* ipAddress)
 static int build_krbtgt(krb5_context ctx, krb5_data* realm, krb5_principal* ptarget)
 {
 	/* "krbtgt/" + realm + "@" + realm */
-	size_t len = 7ULL + realm->length + 1 + realm->length + 1;
-	char* name = malloc(len);
-	if (!name)
-		return KRB5_CC_NOMEM;
+	size_t len = 0;
+	char* name = NULL;
+	krb5_error_code rv = KRB5_CC_NOMEM;
 
-	(void)snprintf(name, len, "krbtgt/%s@%s", realm->data, realm->data);
-	krb5_principal target;
-	int rv = krb5_parse_name(ctx, name, &target);
-	free(name);
+	(void)winpr_asprintf(&name, &len, "krbtgt/%s@%s", realm->data, realm->data);
+	if (!name || (len == 0))
+		goto fail;
+
+	krb5_principal target = { 0 };
+	rv = krb5_parse_name(ctx, name, &target);
 	*ptarget = target;
+fail:
+	free(name);
 	return rv;
 }
 
@@ -899,7 +902,8 @@ static SECURITY_STATUS SEC_ENTRY kerberos_InitializeSecurityContextA(
 
 		isNewContext = TRUE;
 
-		context->targetHost = _strdup(host);
+		if (host)
+			context->targetHost = _strdup(host);
 		if (!context->targetHost)
 		{
 			status = SEC_E_INSUFFICIENT_MEMORY;

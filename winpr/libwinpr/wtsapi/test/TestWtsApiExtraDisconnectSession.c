@@ -5,12 +5,11 @@
 
 int TestWtsApiExtraDisconnectSession(int argc, char* argv[])
 {
-	BOOL bSuccess;
-	HANDLE hServer;
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
 
-	hServer = WTS_CURRENT_SERVER_HANDLE;
-
-	bSuccess = WTSDisconnectSession(hServer, WTS_CURRENT_SESSION, FALSE);
+	HANDLE hServer = WTS_CURRENT_SERVER_HANDLE;
+	BOOL bSuccess = WTSDisconnectSession(hServer, WTS_CURRENT_SESSION, FALSE);
 
 	if (!bSuccess)
 	{

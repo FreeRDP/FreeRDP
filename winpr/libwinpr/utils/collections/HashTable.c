@@ -121,7 +121,8 @@ static INLINE size_t HashTable_CalculateIdealNumOfBuckets(wHashTable* table)
 {
 	WINPR_ASSERT(table);
 
-	const float tmp = (table->numOfElements / table->idealRatio);
+	const float numOfElements = (float)table->numOfElements;
+	const float tmp = (numOfElements / table->idealRatio);
 	size_t idealNumOfBuckets = (size_t)tmp;
 
 	if (idealNumOfBuckets < 5)

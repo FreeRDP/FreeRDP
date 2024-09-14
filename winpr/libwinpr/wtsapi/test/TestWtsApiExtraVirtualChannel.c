@@ -5,16 +5,14 @@
 
 int TestWtsApiExtraVirtualChannel(int argc, char* argv[])
 {
-	BOOL bSuccess;
-	ULONG length;
-	ULONG bytesRead;
-	ULONG bytesWritten;
-	BYTE buffer[1024];
-	HANDLE hVirtualChannel;
 
-	length = sizeof(buffer);
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
 
-	hVirtualChannel =
+	char buffer[1024] = { 0 };
+	const size_t length = sizeof(buffer);
+
+	HANDLE hVirtualChannel =
 	    WTSVirtualChannelOpen(WTS_CURRENT_SERVER_HANDLE, WTS_CURRENT_SESSION, "sample");
 
 	if (hVirtualChannel == INVALID_HANDLE_VALUE)
@@ -23,8 +21,8 @@ int TestWtsApiExtraVirtualChannel(int argc, char* argv[])
 		return -1;
 	}
 	printf("WTSVirtualChannelOpen opend");
-	bytesWritten = 0;
-	bSuccess = WTSVirtualChannelWrite(hVirtualChannel, (PCHAR)buffer, length, &bytesWritten);
+	ULONG bytesWritten = 0;
+	BOOL bSuccess = WTSVirtualChannelWrite(hVirtualChannel, buffer, length, &bytesWritten);
 
 	if (!bSuccess)
 	{
@@ -33,8 +31,8 @@ int TestWtsApiExtraVirtualChannel(int argc, char* argv[])
 	}
 	printf("WTSVirtualChannelWrite written");
 
-	bytesRead = 0;
-	bSuccess = WTSVirtualChannelRead(hVirtualChannel, 5000, (PCHAR)buffer, length, &bytesRead);
+	ULONG bytesRead = 0;
+	bSuccess = WTSVirtualChannelRead(hVirtualChannel, 5000, buffer, length, &bytesRead);
 
 	if (!bSuccess)
 	{

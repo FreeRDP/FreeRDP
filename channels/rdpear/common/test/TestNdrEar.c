@@ -3,7 +3,22 @@
 #include <rdpear-common/ndr.h>
 #include <rdpear-common/rdpear_common.h>
 
-BYTE* parseHexBlock(const char* str, size_t* plen)
+#ifndef MAX
+#define MAX(a, b) ((a) > (b)) ? (a) : (b)
+#endif
+#ifndef MIN
+#define MIN(a, b) ((a) < (b)) ? (a) : (b)
+#endif
+
+static BYTE nextValue(BYTE old, INT32 offset, char symbol, char startSymbol)
+{
+	const INT32 uold = 16 * old;
+	const INT32 diff = symbol - startSymbol;
+	const INT32 res = uold + diff + offset;
+	return (BYTE)MIN(MAX(0, res), UINT8_MAX);
+}
+
+static BYTE* parseHexBlock(const char* str, size_t* plen)
 {
 	WINPR_ASSERT(str);
 	WINPR_ASSERT(plen);
@@ -39,7 +54,7 @@ BYTE* parseHexBlock(const char* str, size_t* plen)
 			case '7':
 			case '8':
 			case '9':
-				tmp = tmp * 16 + (*ptr - '0');
+				tmp = nextValue(tmp, 0, *ptr, '0');
 				nchars++;
 				if (nchars == 2)
 				{
@@ -57,7 +72,7 @@ BYTE* parseHexBlock(const char* str, size_t* plen)
 			case 'd':
 			case 'e':
 			case 'f':
-				tmp = tmp * 16 + (10 + *ptr - 'a');
+				tmp = nextValue(tmp, 10, *ptr, 'a');
 				nchars++;
 				if (nchars == 2)
 				{
@@ -75,7 +90,7 @@ BYTE* parseHexBlock(const char* str, size_t* plen)
 			case 'D':
 			case 'E':
 			case 'F':
-				tmp = tmp * 16 + (10 + *ptr - 'A');
+				tmp = nextValue(tmp, 10, *ptr, 'A');
 				nchars++;
 				if (nchars == 2)
 				{
@@ -97,36 +112,42 @@ BYTE* parseHexBlock(const char* str, size_t* plen)
 	return ret;
 }
 
-int TestNdrEarWrite(int argc, char* argv[])
+static int TestNdrEarWrite(int argc, char* argv[])
 {
-	wStream* s = NULL;
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
 
+	int rc = -1;
 	BYTE buffer[16] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
-	KERB_ASN1_DATA asn1;
-	asn1.Pdu = 7;
-	asn1.Asn1BufferHints.count = 16;
-	asn1.Asn1Buffer = buffer;
+	KERB_ASN1_DATA asn1 = { 7, { 16 }, buffer };
 
-	s = Stream_New(NULL, 100);
+	wStream* s = Stream_New(NULL, 100);
 	if (!s)
 		return -1;
 
 	NdrContext* context = ndr_context_new(FALSE, 1);
 	if (!context)
-		return -1;
+		goto fail;
 
 	if (!ndr_write_KERB_ASN1_DATA(context, s, NULL, &asn1))
-		return -2;
+		goto fail;
 	if (!ndr_treat_deferred_write(context, s))
-		return -3;
+		goto fail;
 
 	// winpr_HexDump("", WLOG_DEBUG, Stream_Buffer(s), Stream_GetPosition(s));
+
+	rc = 0;
+fail:
 	ndr_context_destroy(&context);
-	return 0;
+	Stream_Free(s, TRUE);
+	return rc;
 }
 
-int TestNdrEarRead(int argc, char* argv[])
+static int TestNdrEarRead(int argc, char* argv[])
 {
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
+
 	int retCode = -2;
 
 	/* ====================================================================== */
@@ -134,8 +155,8 @@ int TestNdrEarRead(int argc, char* argv[])
 	if (!context)
 		return -1;
 
-	wStream staticS;
-	wStream* s;
+	wStream staticS = { 0 };
+	wStream* s = NULL;
 
 #if 0
 	BYTE payload[] = {
@@ -302,7 +323,7 @@ int TestNdrEarRead(int argc, char* argv[])
 	size_t sizeofPayload4 = sizeof(payload4);
 #endif
 #if 1
-	size_t sizeofPayload4;
+	size_t sizeofPayload4 = 0;
 	BYTE* payload4 = parseHexBlock("03 01 03 01 \
 		04 00 02 00 38 9e ef 6b 0c 00 02 00 18 00 02 00 \
 		20 00 02 00 00 00 00 00 24 00 02 00 2c 00 02 00 \
@@ -353,5 +374,8 @@ out:
 
 int TestNdrEar(int argc, char* argv[])
 {
+	const int rc = TestNdrEarWrite(argc, argv);
+	if (rc)
+		return rc;
 	return TestNdrEarRead(argc, argv);
 }

@@ -796,9 +796,8 @@ CameraDevice* ecam_dev_create(CameraPlugin* ecam, const char* deviceId, const ch
  *
  * @return void
  */
-void ecam_dev_destroy(void* obj)
+void ecam_dev_destroy(CameraDevice* dev)
 {
-	CameraDevice* dev = (CameraDevice*)obj;
 	if (!dev)
 		return;
 
