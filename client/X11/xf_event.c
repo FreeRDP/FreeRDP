@@ -433,9 +433,6 @@ BOOL xf_generic_MotionNotify(xfContext* xfc, int x, int y, int state, Window win
 	WINPR_ASSERT(xfc);
 	WINPR_ASSERT(xfc->common.context.settings);
 
-	rdpInput* input = xfc->common.context.input;
-	WINPR_ASSERT(input);
-
 	if (!freerdp_settings_get_bool(xfc->common.context.settings, FreeRDP_MouseMotion))
 	{
 		if ((state & (Button1Mask | Button2Mask | Button3Mask)) == 0)

@@ -278,6 +278,16 @@ out_error:
 
 int freerdp_client_settings_parse_command_line(rdpSettings* settings, int argc, char** argv,
                                                BOOL allowUnknown)
+
+{
+	return freerdp_client_settings_parse_command_line_ex(settings, argc, argv, allowUnknown, NULL,
+	                                                     0, NULL, NULL);
+}
+
+int freerdp_client_settings_parse_command_line_ex(
+    rdpSettings* settings, int argc, char** argv, BOOL allowUnknown, COMMAND_LINE_ARGUMENT_A* args,
+    size_t count, int (*handle_option)(const COMMAND_LINE_ARGUMENT_A* arg, void* custom),
+    void* handle_userdata)
 {
 	int status = 0;
 
@@ -287,8 +297,8 @@ int freerdp_client_settings_parse_command_line(rdpSettings* settings, int argc, 
 	if (!argv)
 		return -1;
 
-	status =
-	    freerdp_client_settings_parse_command_line_arguments(settings, argc, argv, allowUnknown);
+	status = freerdp_client_settings_parse_command_line_arguments_ex(
+	    settings, argc, argv, allowUnknown, args, count, handle_option, handle_userdata);
 
 	if (status < 0)
 		return status;
@@ -624,8 +634,7 @@ static DWORD client_cli_accept_certificate(freerdp* instance)
 	const rdpSettings* settings = instance->context->settings;
 	WINPR_ASSERT(settings);
 
-	const BOOL fromStdin =
-	    freerdp_settings_get_bool(instance->context->settings, FreeRDP_CredentialsFromStdin);
+	const BOOL fromStdin = freerdp_settings_get_bool(settings, FreeRDP_CredentialsFromStdin);
 	if (fromStdin)
 		return 0;
 
@@ -991,9 +1000,7 @@ static char* extract_authorization_code(char* url)
 
 		end = strchr(p, '&');
 		if (end)
-			*end = 0;
-		else
-			end = strchr(p, '\0');
+			*end = '\0';
 
 		return p;
 	}

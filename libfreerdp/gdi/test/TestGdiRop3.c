@@ -96,27 +96,21 @@
 
 static char* gdi_convert_postfix_to_infix(const char* postfix)
 {
-	size_t length = 0;
 	BOOL unary = 0;
-	wStack* stack = NULL;
 	size_t al = 0;
 	size_t bl = 0;
-	size_t cl = 0;
-	size_t dl = 0;
-	char* a = NULL;
-	char* b = NULL;
-	char* c = NULL;
-	char* d = NULL;
-	bl = cl = dl = 0;
-	stack = Stack_New(FALSE);
-	length = strlen(postfix);
+	wStack* stack = Stack_New(FALSE);
+	size_t length = strlen(postfix);
 
 	for (size_t i = 0; i < length; i++)
 	{
+		BOOL success = FALSE;
 		if ((postfix[i] == 'P') || (postfix[i] == 'D') || (postfix[i] == 'S'))
 		{
 			/* token is an operand, push on the stack */
-			a = malloc(2);
+			char* a = malloc(2);
+			if (!a)
+				goto end;
 			a[0] = postfix[i];
 			a[1] = '\0';
 			// printf("Operand: %s\n", a);
@@ -124,9 +118,14 @@ static char* gdi_convert_postfix_to_infix(const char* postfix)
 		}
 		else
 		{
+			char* a = NULL;
+			char* b = NULL;
+
 			/* token is an operator */
 			unary = FALSE;
-			c = malloc(2);
+			char* c = malloc(2);
+			if (!c)
+				goto fail;
 			c[0] = postfix[i];
 			c[1] = '\0';
 
@@ -154,10 +153,10 @@ static char* gdi_convert_postfix_to_infix(const char* postfix)
 
 			// printf("Operator: %s\n", c);
 			a = (char*)Stack_Pop(stack);
+			if (!a)
+				goto fail;
 
-			if (unary)
-				b = NULL;
-			else
+			if (!unary)
 				b = (char*)Stack_Pop(stack);
 
 			al = strlen(a);
@@ -165,20 +164,32 @@ static char* gdi_convert_postfix_to_infix(const char* postfix)
 			if (b)
 				bl = strlen(b);
 
-			cl = 1;
-			dl = al + bl + cl + 3;
-			d = malloc(dl + 1);
+			size_t cl = 1;
+			size_t dl = al + bl + cl + 3;
+			char* d = malloc(dl + 1);
+			if (!d)
+				goto fail;
+
 			(void)sprintf_s(d, dl, "(%s%s%s)", b ? b : "", c, a);
 			Stack_Push(stack, d);
+
+			success = TRUE;
+		fail:
 			free(a);
 			free(b);
 			free(c);
+			if (!success)
+				goto end;
 		}
 	}
 
-	d = (char*)Stack_Pop(stack);
+	char* d = (char*)Stack_Pop(stack);
 	Stack_Free(stack);
 	return d;
+
+end:
+	Stack_Free(stack);
+	return NULL;
 }
 
 static const char* test_ROP3[] = { "DSPDxax",  "PSDPxax", "SPna",   "DSna",   "DPa",

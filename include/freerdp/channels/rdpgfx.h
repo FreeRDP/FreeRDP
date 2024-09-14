@@ -24,6 +24,10 @@
 #include <freerdp/dvc.h>
 #include <freerdp/types.h>
 
+/** The command line name of the channel
+ *
+ *  \since version 3.0.0
+ */
 #define RDPGFX_CHANNEL_NAME "rdpgfx"
 #define RDPGFX_DVC_CHANNEL_NAME "Microsoft::Windows::RDS::Graphics"
 

@@ -63,11 +63,14 @@ bio_release:
 
 int TestNCryptSmartcard(int argc, char* argv[])
 {
-	SECURITY_STATUS status = 0;
+	int rc = -1;
 	DWORD providerCount = 0;
 	NCryptProviderName* names = NULL;
 
-	status = NCryptEnumStorageProviders(&providerCount, &names, NCRYPT_SILENT_FLAG);
+	WINPR_UNUSED(argc);
+	WINPR_UNUSED(argv);
+
+	SECURITY_STATUS status = NCryptEnumStorageProviders(&providerCount, &names, NCRYPT_SILENT_FLAG);
 	if (status != ERROR_SUCCESS)
 		return -1;
 
@@ -149,8 +152,16 @@ int TestNCryptSmartcard(int argc, char* argv[])
 
 		NCryptFreeBuffer(enumState);
 		NCryptFreeObject((NCRYPT_HANDLE)provider);
+
+		if (status != NTE_NO_MORE_ITEMS)
+		{
+			(void)fprintf(stderr, "NCryptEnumKeys returned %s [0x%08" PRIx32 "]\n",
+			              Win32ErrorCode2Tag(status), status);
+		}
 	}
 
+	rc = 0;
+fail:
 	NCryptFreeBuffer(names);
-	return 0;
+	return rc;
 }

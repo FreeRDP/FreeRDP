@@ -74,6 +74,23 @@ FREERDP_LOCAL BOOL transport_connect_childsession(rdpTransport* transport);
  * \return \b TRUE in case of success, \b FALSE otherwise.
  */
 FREERDP_LOCAL BOOL transport_attach(rdpTransport* transport, int sockfd);
+
+/**! \brief Attach a transport layer
+ *
+ * The ownership of the transport layer provided by \b layer is taken if and only if the function is
+ * successful. In such a case the caller must no longer free or otherwise use the layer. If the
+ * function fails it is up to the caller to free the layer.
+ *
+ * The implementation can be overridden by
+ * transport_set_io_callbacks(rdpTransportIo::AttachLayer)
+ *
+ * \param transport The transport instance to attach the socket to
+ * \param layer The layer to attach to the transport
+ *
+ * \return \b TRUE in case of success, \b FALSE otherwise.
+ */
+FREERDP_LOCAL BOOL transport_attach_layer(rdpTransport* transport, rdpTransportLayer* layer);
+
 FREERDP_LOCAL BOOL transport_disconnect(rdpTransport* transport);
 FREERDP_LOCAL BOOL transport_connect_rdp(rdpTransport* transport);
 FREERDP_LOCAL BOOL transport_connect_tls(rdpTransport* transport);
@@ -107,9 +124,6 @@ FREERDP_LOCAL void transport_set_rdstls_mode(rdpTransport* transport, BOOL Rdstl
 FREERDP_LOCAL void transport_set_aad_mode(rdpTransport* transport, BOOL AadMode);
 FREERDP_LOCAL BOOL transport_is_write_blocked(rdpTransport* transport);
 FREERDP_LOCAL int transport_drain_output_buffer(rdpTransport* transport);
-
-FREERDP_LOCAL wStream* transport_receive_pool_take(rdpTransport* transport);
-FREERDP_LOCAL int transport_receive_pool_return(rdpTransport* transport, wStream* pdu);
 
 FREERDP_LOCAL BOOL transport_io_callback_set_event(rdpTransport* transport, BOOL set);
 
@@ -146,11 +160,16 @@ FREERDP_LOCAL BOOL transport_set_recv_callbacks(rdpTransport* transport, Transpo
 FREERDP_LOCAL int transport_tcp_connect(rdpTransport* transport, const char* hostname, int port,
                                         DWORD timeout);
 
+FREERDP_LOCAL rdpTransportLayer*
+transport_connect_layer(rdpTransport* transport, const char* hostname, int port, DWORD timeout);
+
 FREERDP_LOCAL void transport_free(rdpTransport* transport);
 
 WINPR_ATTR_MALLOC(transport_free, 1)
 FREERDP_LOCAL rdpTransport* transport_new(rdpContext* context);
 
 FREERDP_LOCAL void transport_set_early_user_auth_mode(rdpTransport* transport, BOOL EUAMode);
+
+FREERDP_LOCAL BIO_METHOD* BIO_s_transport_layer(void);
 
 #endif /* FREERDP_LIB_CORE_TRANSPORT_H */

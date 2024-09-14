@@ -26,6 +26,11 @@
 #include <freerdp/api.h>
 #include <freerdp/server/proxy/proxy_modules_api.h>
 
+/** @defgroup proxy_config Proxy Configuration
+ * @ingroup proxy
+ * @{
+ */
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -81,11 +86,11 @@ extern "C"
 		size_t InterceptCount;
 
 		/* clipboard specific settings */
-		WINPR_DEPRECATED_VAR("Unused, ignore", BOOL TextOnly);
-		WINPR_DEPRECATED_VAR("Unused, ignore", UINT32 MaxTextLength);
+		WINPR_DEPRECATED_VAR("[since 3.6.0] Unused, ignore", BOOL TextOnly);
+		WINPR_DEPRECATED_VAR("[since 3.6.0] Unused, ignore", UINT32 MaxTextLength);
 
 		/* gfx settings */
-		WINPR_DEPRECATED_VAR("Unused, ignore", BOOL DecodeGFX);
+		WINPR_DEPRECATED_VAR("[since 3.6.0] Unused, ignore", BOOL DecodeGFX);
 
 		/* modules */
 		char** Modules; /* module file names to load */
@@ -111,7 +116,7 @@ extern "C"
 		wIniFile* ini;
 
 		/* target continued */
-		UINT32 TargetTlsSecLevel;
+		UINT32 TargetTlsSecLevel; /** @since version 3.2.0 */
 	};
 
 	/**
@@ -122,6 +127,13 @@ extern "C"
 	FREERDP_API BOOL pf_server_config_dump(const char* file);
 
 	/**
+	 * @brief pf_server_config_free Releases all resources associated with proxyConfig
+	 *
+	 * @param config A pointer to the proxyConfig to clean up. Might be NULL.
+	 */
+	FREERDP_API void pf_server_config_free(proxyConfig* config);
+
+	/**
 	 * @brief server_config_load_ini Create a proxyConfig from a already loaded
 	 * INI file.
 	 *
@@ -129,6 +141,7 @@ extern "C"
 	 *
 	 * @return A proxyConfig or NULL in case of failure.
 	 */
+	WINPR_ATTR_MALLOC(pf_server_config_free, 1)
 	FREERDP_API proxyConfig* server_config_load_ini(wIniFile* ini);
 	/**
 	 * @brief pf_server_config_load_file Create a proxyConfig from a INI file found at path.
@@ -137,6 +150,7 @@ extern "C"
 	 *
 	 * @return A proxyConfig or NULL in case of failure.
 	 */
+	WINPR_ATTR_MALLOC(pf_server_config_free, 1)
 	FREERDP_API proxyConfig* pf_server_config_load_file(const char* path);
 
 	/**
@@ -147,6 +161,7 @@ extern "C"
 	 *
 	 * @return A proxyConfig or NULL in case of failure.
 	 */
+	WINPR_ATTR_MALLOC(pf_server_config_free, 1)
 	FREERDP_API proxyConfig* pf_server_config_load_buffer(const char* buffer);
 
 	/**
@@ -155,13 +170,6 @@ extern "C"
 	 * @param config A pointer to the configuration to print. Must NOT be NULL.
 	 */
 	FREERDP_API void pf_server_config_print(const proxyConfig* config);
-
-	/**
-	 * @brief pf_server_config_free Releases all resources associated with proxyConfig
-	 *
-	 * @param config A pointer to the proxyConfig to clean up. Might be NULL.
-	 */
-	FREERDP_API void pf_server_config_free(proxyConfig* config);
 
 	/**
 	 * @brief pf_config_required_plugins_count
@@ -232,4 +240,7 @@ extern "C"
 #ifdef __cplusplus
 }
 #endif
+
+/** @} */
+
 #endif /* FREERDP_SERVER_PROXY_CONFIG_H */

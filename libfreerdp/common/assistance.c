@@ -221,6 +221,9 @@ static BOOL freerdp_assistance_crypt_derive_key_sha1(const BYTE* hash, size_t ha
 	BYTE pad1[64] = { 0 };
 	BYTE pad2[64] = { 0 };
 
+	if (hashLength == 0)
+		return FALSE;
+
 	memset(pad1, 0x36, sizeof(pad1));
 	memset(pad2, 0x5C, sizeof(pad2));
 
@@ -297,7 +300,8 @@ static BOOL freerdp_assistance_parse_address_list(rdpAssistanceFile* file, char*
 	char* s = ";";
 
 	// get the first token
-	char* token = strtok(strp, s);
+	char* saveptr = NULL;
+	char* token = strtok_s(strp, s, &saveptr);
 
 	// walk through other tokens
 	while (token != NULL)
@@ -311,7 +315,7 @@ static BOOL freerdp_assistance_parse_address_list(rdpAssistanceFile* file, char*
 		if (!append_address(file, token, port))
 			goto out;
 
-		token = strtok(NULL, s);
+		token = strtok_s(NULL, s, &saveptr);
 	}
 	rc = TRUE;
 out:
@@ -424,6 +428,8 @@ static BOOL freerdp_assistance_parse_attr(const char** opt, size_t* plength, con
 	const int rc = _snprintf(bkey, sizeof(bkey), "%s=\"", key);
 	WINPR_ASSERT(rc > 0);
 	WINPR_ASSERT((size_t)rc < sizeof(bkey));
+	if ((rc <= 0) || ((size_t)rc >= sizeof(bkey)))
+		return FALSE;
 
 	char* p = strstr(tag, bkey);
 	if (!p)
@@ -524,6 +530,8 @@ static char* freerdp_assistance_contains_element(char* input, size_t ilen, const
 	const int rc = _snprintf(bkey, sizeof(bkey), "<%s", key);
 	WINPR_ASSERT(rc > 0);
 	WINPR_ASSERT((size_t)rc < sizeof(bkey));
+	if ((rc < 0) || ((size_t)rc >= sizeof(bkey)))
+		return NULL;
 
 	char* tag = strstr(input, bkey);
 	if (!tag || (tag > input + ilen))
@@ -563,6 +571,8 @@ static char* freerdp_assistance_contains_element(char* input, size_t ilen, const
 		const int erc = _snprintf(ekey, sizeof(ekey), "</%s>", key);
 		WINPR_ASSERT(erc > 0);
 		WINPR_ASSERT((size_t)erc < sizeof(ekey));
+		if ((erc <= 0) || ((size_t)erc >= sizeof(ekey)))
+			return NULL;
 		const size_t offset = start - tag;
 		dend = end = strrstr(start, ilen - offset, ekey);
 		if (end)

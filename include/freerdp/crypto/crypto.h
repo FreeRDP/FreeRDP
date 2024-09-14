@@ -39,6 +39,17 @@ extern "C"
 	typedef struct rdp_CertInfo rdpCertInfo;
 
 	FREERDP_API char* crypto_base64_encode(const BYTE* WINPR_RESTRICT data, size_t length);
+
+	/** BASE64 encode data
+	 *
+	 *  @param data The data to encode
+	 *  @param length The lenght of the data in bytes
+	 *  @param withCrLf Option to split the encoded data with CRLF linebreaks
+	 *
+	 *  @since version 3.0.0
+	 *
+	 *  @return The encoded BASE64 string or \b NULL if failed
+	 */
 	FREERDP_API char* crypto_base64_encode_ex(const BYTE* WINPR_RESTRICT data, size_t length,
 	                                          BOOL withCrLf);
 

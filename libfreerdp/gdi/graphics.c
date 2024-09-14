@@ -133,7 +133,6 @@ static BOOL gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap, const 
                                   UINT32 DstWidth, UINT32 DstHeight, UINT32 bpp, UINT32 length,
                                   BOOL compressed, UINT32 codecId)
 {
-	int status = 0;
 	UINT32 SrcSize = length;
 	rdpGdi* gdi = context->gdi;
 	UINT32 size = DstWidth * DstHeight;
@@ -169,14 +168,12 @@ static BOOL gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap, const 
 				WLog_ERR(TAG, "rfx_process_message failed");
 				return FALSE;
 			}
-
-			status = 1;
 		}
 		else if (codecId == RDP_CODEC_ID_NSCODEC)
 		{
-			status = nsc_process_message(context->codecs->nsc, 32, DstWidth, DstHeight, pSrcData,
-			                             SrcSize, bitmap->data, bitmap->format, 0, 0, 0, DstWidth,
-			                             DstHeight, FREERDP_FLIP_VERTICAL);
+			const int status = nsc_process_message(
+			    context->codecs->nsc, 32, DstWidth, DstHeight, pSrcData, SrcSize, bitmap->data,
+			    bitmap->format, 0, 0, 0, DstWidth, DstHeight, FREERDP_FLIP_VERTICAL);
 
 			if (status < 1)
 			{

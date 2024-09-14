@@ -24,6 +24,10 @@
 #include <freerdp/dvc.h>
 #include <freerdp/types.h>
 
+/** The command line name of the channel
+ *
+ *  \since version 3.0.0
+ */
 #define TELEMETRY_CHANNEL_NAME "telemetry"
 #define TELEMETRY_DVC_CHANNEL_NAME "Microsoft::Windows::RDS::Telemetry"
 

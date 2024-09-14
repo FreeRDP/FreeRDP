@@ -30,6 +30,9 @@
 #include <winpr/spec.h>
 #include <winpr/string.h>
 
+WINPR_PRAGMA_DIAG_PUSH
+WINPR_PRAGMA_DIAG_IGNORED_RESERVED_IDENTIFIER
+
 #ifndef _WIN32
 
 #include <unistd.h>
@@ -236,5 +239,7 @@ extern "C"
 #if defined(_WIN32) && (!defined(__MINGW32__) || defined(_UCRT))
 #define winpr_aligned_calloc(count, size, alignment) _aligned_recalloc(NULL, count, size, alignment)
 #endif /* defined(_WIN32) && (!defined(__MINGW32__) || defined(_UCRT)) */
+
+WINPR_PRAGMA_DIAG_POP
 
 #endif /* WINPR_CRT_H */

@@ -47,6 +47,11 @@ if (WITH_WINPR_TOOLS)
     )
 endif()
 
+add_library(winpr-headers INTERFACE)
+target_sources(winpr-headers INTERFACE
+	${WINPR_PUBLIC_COMMON_HEADERS}
+)
+
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/
 	DESTINATION ${WINPR_INCLUDE_DIR}
         FILES_MATCHING PATTERN "*.h")

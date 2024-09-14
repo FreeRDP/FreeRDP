@@ -39,20 +39,20 @@ static BOOL test_SerCxSys(HANDLE hComm)
 
 	if (tcgetattr(((WINPR_COMM*)hComm)->fd, &currentTermios) < 0)
 	{
-		fprintf(stderr, "tcgetattr failure.\n");
+		(void)fprintf(stderr, "tcgetattr failure.\n");
 		return FALSE;
 	}
 
 	dcb.DCBlength = sizeof(DCB);
 	if (!GetCommState(hComm, &dcb))
 	{
-		fprintf(stderr, "GetCommState failure, GetLastError(): 0x%08x\n", GetLastError());
+		(void)fprintf(stderr, "GetCommState failure, GetLastError(): 0x%08x\n", GetLastError());
 		return FALSE;
 	}
 
 	if ((dcb.XonChar == '\0') || (dcb.XoffChar == '\0'))
 	{
-		fprintf(stderr, "test_SerCxSys failure, expected XonChar and XoffChar to be set\n");
+		(void)fprintf(stderr, "test_SerCxSys failure, expected XonChar and XoffChar to be set\n");
 		return FALSE;
 	}
 
@@ -60,7 +60,7 @@ static BOOL test_SerCxSys(HANDLE hComm)
 	if ((dcb.XonChar != currentTermios.c_cc[VSTART]) ||
 	    (dcb.XoffChar != currentTermios.c_cc[VSTOP]))
 	{
-		fprintf(stderr, "test_SerCxSys failure, could not retrieve XonChar and XoffChar\n");
+		(void)fprintf(stderr, "test_SerCxSys failure, could not retrieve XonChar and XoffChar\n");
 		return FALSE;
 	}
 
@@ -72,7 +72,7 @@ static BOOL test_SerCxSys(HANDLE hComm)
 	dcb.XoffChar = XonChar;
 	if (!SetCommState(hComm, &dcb))
 	{
-		fprintf(stderr, "SetCommState failure, GetLastError(): 0x%08x\n", GetLastError());
+		(void)fprintf(stderr, "SetCommState failure, GetLastError(): 0x%08x\n", GetLastError());
 		return FALSE;
 	}
 
@@ -80,13 +80,13 @@ static BOOL test_SerCxSys(HANDLE hComm)
 	dcb.DCBlength = sizeof(DCB);
 	if (!GetCommState(hComm, &dcb))
 	{
-		fprintf(stderr, "GetCommState failure, GetLastError(): 0x%08x\n", GetLastError());
+		(void)fprintf(stderr, "GetCommState failure, GetLastError(): 0x%08x\n", GetLastError());
 		return FALSE;
 	}
 
 	if ((dcb.XonChar != XoffChar) || (dcb.XoffChar != XonChar))
 	{
-		fprintf(stderr, "test_SerCxSys, expected XonChar and XoffChar to be swapped\n");
+		(void)fprintf(stderr, "test_SerCxSys, expected XonChar and XoffChar to be swapped\n");
 		return FALSE;
 	}
 
@@ -94,14 +94,15 @@ static BOOL test_SerCxSys(HANDLE hComm)
 	dcb.XonChar = dcb.XoffChar;
 	if (SetCommState(hComm, &dcb))
 	{
-		fprintf(stderr, "test_SerCxSys failure, SetCommState() was supposed to failed because "
-		                "XonChar and XoffChar are the same\n");
+		(void)fprintf(stderr,
+		              "test_SerCxSys failure, SetCommState() was supposed to failed because "
+		              "XonChar and XoffChar are the same\n");
 		return FALSE;
 	}
 	if (GetLastError() != ERROR_INVALID_PARAMETER)
 	{
-		fprintf(stderr, "test_SerCxSys failure, SetCommState() was supposed to failed with "
-		                "GetLastError()=ERROR_INVALID_PARAMETER\n");
+		(void)fprintf(stderr, "test_SerCxSys failure, SetCommState() was supposed to failed with "
+		                      "GetLastError()=ERROR_INVALID_PARAMETER\n");
 		return FALSE;
 	}
 
@@ -115,14 +116,14 @@ static BOOL test_SerCx2Sys(HANDLE hComm)
 	dcb.DCBlength = sizeof(DCB);
 	if (!GetCommState(hComm, &dcb))
 	{
-		fprintf(stderr, "GetCommState failure; GetLastError(): %08x\n", GetLastError());
+		(void)fprintf(stderr, "GetCommState failure; GetLastError(): %08x\n", GetLastError());
 		return FALSE;
 	}
 
 	if ((dcb.ErrorChar != '\0') || (dcb.EofChar != '\0') || (dcb.EvtChar != '\0') ||
 	    (dcb.XonChar != '\0') || (dcb.XoffChar != '\0'))
 	{
-		fprintf(stderr, "test_SerCx2Sys failure, expected all characters to be: '\\0'\n");
+		(void)fprintf(stderr, "test_SerCx2Sys failure, expected all characters to be: '\\0'\n");
 		return FALSE;
 	}
 
@@ -137,41 +138,41 @@ int TestSerialChars(int argc, char* argv[])
 
 	if (stat("/dev/ttyS0", &statbuf) < 0)
 	{
-		fprintf(stderr, "/dev/ttyS0 not available, making the test to succeed though\n");
+		(void)fprintf(stderr, "/dev/ttyS0 not available, making the test to succeed though\n");
 		return EXIT_SUCCESS;
 	}
 
 	result = DefineCommDevice("COM1", "/dev/ttyS0");
 	if (!result)
 	{
-		fprintf(stderr, "DefineCommDevice failure: 0x%x\n", GetLastError());
+		(void)fprintf(stderr, "DefineCommDevice failure: 0x%x\n", GetLastError());
 		return EXIT_FAILURE;
 	}
 
 	hComm = CreateFile("COM1", GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
 	if (hComm == INVALID_HANDLE_VALUE)
 	{
-		fprintf(stderr, "CreateFileA failure: 0x%x\n", GetLastError());
+		(void)fprintf(stderr, "CreateFileA failure: 0x%x\n", GetLastError());
 		return EXIT_FAILURE;
 	}
 
 	_comm_setServerSerialDriver(hComm, SerialDriverSerCxSys);
 	if (!test_SerCxSys(hComm))
 	{
-		fprintf(stderr, "test_SerCxSys failure\n");
+		(void)fprintf(stderr, "test_SerCxSys failure\n");
 		return EXIT_FAILURE;
 	}
 
 	_comm_setServerSerialDriver(hComm, SerialDriverSerCx2Sys);
 	if (!test_SerCx2Sys(hComm))
 	{
-		fprintf(stderr, "test_SerCxSys failure\n");
+		(void)fprintf(stderr, "test_SerCxSys failure\n");
 		return EXIT_FAILURE;
 	}
 
 	if (!CloseHandle(hComm))
 	{
-		fprintf(stderr, "CloseHandle failure, GetLastError()=%08x\n", GetLastError());
+		(void)fprintf(stderr, "CloseHandle failure, GetLastError()=%08x\n", GetLastError());
 		return EXIT_FAILURE;
 	}
 

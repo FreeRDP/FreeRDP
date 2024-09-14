@@ -20,8 +20,6 @@
 #ifndef COMM_SERCX_SYS_H
 #define COMM_SERCX_SYS_H
 
-#if defined __linux__ && !defined ANDROID
-
 #include "comm_ioctl.h"
 
 #ifdef __cplusplus
@@ -29,12 +27,10 @@ extern "C"
 {
 #endif
 
-	SERIAL_DRIVER* SerCxSys_s(void);
+	const SERIAL_DRIVER* SerCxSys_s(void);
 
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* __linux__ */
 
 #endif /* COMM_SERCX_SYS_H */

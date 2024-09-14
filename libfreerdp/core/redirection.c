@@ -24,6 +24,7 @@
 #include "settings.h"
 
 #include <winpr/crt.h>
+#include <winpr/string.h>
 #include <freerdp/log.h>
 #include <freerdp/crypto/certificate.h>
 #include <freerdp/redirection.h>
@@ -258,7 +259,8 @@ static BOOL rdp_redirection_read_base64_wchar(UINT32 flag, wStream* s, UINT32* p
 
 	size_t rlen = utf8_len;
 	size_t wpos = 0;
-	char* tok = strtok(utf8, "\r\n");
+	char* saveptr = NULL;
+	char* tok = strtok_s(utf8, "\r\n", &saveptr);
 	while (tok)
 	{
 		const size_t len = strnlen(tok, rlen);
@@ -273,7 +275,7 @@ static BOOL rdp_redirection_read_base64_wchar(UINT32 flag, wStream* s, UINT32* p
 		wpos += bplen;
 		free(bptr);
 
-		tok = strtok(NULL, "\r\n");
+		tok = strtok_s(NULL, "\r\n", &saveptr);
 	}
 	*pLength = wpos;
 

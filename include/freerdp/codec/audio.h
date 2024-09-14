@@ -190,6 +190,10 @@ extern "C"
 #define WAVE_FORMAT_SOUNDSPACE_MUSICOMPRESS 0x1500
 #define WAVE_FORMAT_DVM 0x2000
 #endif /* !WAVE_FORMAT_LUCENT_G723 */
+
+	/** Opus format identifier
+	 *  \since version 3.0.0
+	 */
 #define WAVE_FORMAT_OPUS 0x704F
 #define WAVE_FORMAT_AAC_MS 0xA106
 
@@ -201,7 +205,7 @@ extern "C"
 
 	FREERDP_API UINT32 audio_format_compute_time_length(const AUDIO_FORMAT* format, size_t size);
 
-	FREERDP_API char* audio_format_get_tag_string(UINT16 wFormatTag);
+	FREERDP_API const char* audio_format_get_tag_string(UINT16 wFormatTag);
 
 	FREERDP_API void audio_format_print(wLog* log, DWORD level, const AUDIO_FORMAT* format);
 	FREERDP_API void audio_formats_print(wLog* log, DWORD level, const AUDIO_FORMAT* formats,

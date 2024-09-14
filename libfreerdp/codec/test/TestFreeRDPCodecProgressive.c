@@ -1065,6 +1065,8 @@ static BOOL test_encode_decode(const char* path)
 	rc = progressive_compress(progressiveEnc, image->data, image->scanline * image->height,
 	                          ColorFormat, image->width, image->height, image->scanline, NULL,
 	                          &dstData, &dstSize);
+	if (rc < 0)
+		goto fail;
 
 	// Progressive decode
 	rc = progressive_create_surface_context(progressiveDec, 0, image->width, image->height);

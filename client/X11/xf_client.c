@@ -762,7 +762,7 @@ static void xf_window_free(xfContext* xfc)
 
 void xf_toggle_fullscreen(xfContext* xfc)
 {
-	WindowStateChangeEventArgs e;
+	WindowStateChangeEventArgs e = { 0 };
 	rdpContext* context = (rdpContext*)xfc;
 	rdpSettings* settings = context->settings;
 
@@ -778,6 +778,25 @@ void xf_toggle_fullscreen(xfContext* xfc)
 	    (xfc->fullscreen) ? FALSE : freerdp_settings_get_bool(settings, FreeRDP_Decorations);
 	xf_SetWindowFullscreen(xfc, xfc->window, xfc->fullscreen);
 	EventArgsInit(&e, "xfreerdp");
+	e.state = xfc->fullscreen ? FREERDP_WINDOW_STATE_FULLSCREEN : 0;
+	PubSub_OnWindowStateChange(context->pubSub, context, &e);
+}
+
+void xf_minimize(xfContext* xfc)
+{
+	WindowStateChangeEventArgs e = { 0 };
+	rdpContext* context = (rdpContext*)xfc;
+	WINPR_ASSERT(context);
+
+	/*
+	  when debugging, ungrab keyboard when toggling fullscreen
+	  to allow keyboard usage on the debugger
+	*/
+	if (xfc->debug)
+		xf_ungrab(xfc);
+
+	xf_SetWindowMinimized(xfc, xfc->window);
+
 	e.state = xfc->fullscreen ? FREERDP_WINDOW_STATE_FULLSCREEN : 0;
 	PubSub_OnWindowStateChange(context->pubSub, context, &e);
 }

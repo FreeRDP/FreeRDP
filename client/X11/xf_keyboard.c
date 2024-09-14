@@ -214,7 +214,7 @@ void xf_keyboard_release_all_keypress(xfContext* xfc)
 BOOL xf_keyboard_key_pressed(xfContext* xfc, KeySym keysym)
 {
 	KeyCode keycode = XKeysymToKeycode(xfc->display, keysym);
-	WINPR_ASSERT(keycode <= ARRAYSIZE(xfc->KeyboardState));
+	WINPR_ASSERT(keycode < ARRAYSIZE(xfc->KeyboardState));
 	return xfc->KeyboardState[keycode];
 }
 
@@ -396,7 +396,7 @@ static void xk_keyboard_update_modifier_keys(xfContext* xfc)
 		if (xf_keyboard_get_key_state(xfc, state, keysyms[i]))
 		{
 			const KeyCode keycode = XKeysymToKeycode(xfc->display, keysyms[i]);
-			WINPR_ASSERT(keycode <= ARRAYSIZE(xfc->KeyboardState));
+			WINPR_ASSERT(keycode < ARRAYSIZE(xfc->KeyboardState));
 			xfc->KeyboardState[keycode] = TRUE;
 		}
 	}
@@ -588,24 +588,37 @@ BOOL xf_keyboard_handle_special_keys(xfContext* xfc, KeySym keysym)
 
 	if (!xfc->remote_app && xfc->fullscreen_toggle)
 	{
-		if (keysym == XK_Return)
+		switch (keysym)
 		{
-			if (mod.Ctrl && mod.Alt)
-			{
-				/* Ctrl-Alt-Enter: toggle full screen */
-				xf_toggle_fullscreen(xfc);
-				return TRUE;
-			}
+			case XK_Return:
+				if (mod.Ctrl && mod.Alt)
+				{
+					/* Ctrl-Alt-Enter: toggle full screen */
+					xf_toggle_fullscreen(xfc);
+					return TRUE;
+				}
+				break;
+			default:
+				break;
 		}
 	}
 
-	if ((keysym == XK_c) || (keysym == XK_C))
+	if (mod.Ctrl && mod.Alt)
 	{
-		if (mod.Ctrl && mod.Alt)
+		switch (keysym)
 		{
-			/* Ctrl-Alt-C: toggle control */
-			if (freerdp_client_encomsp_toggle_control(xfc->common.encomsp))
+			case XK_m:
+			case XK_M:
+				xf_minimize(xfc);
 				return TRUE;
+			case XK_c:
+			case XK_C:
+				/* Ctrl-Alt-C: toggle control */
+				if (freerdp_client_encomsp_toggle_control(xfc->common.encomsp))
+					return TRUE;
+				break;
+			default:
+				break;
 		}
 	}
 

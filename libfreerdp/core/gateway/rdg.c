@@ -620,7 +620,7 @@ static BOOL rdg_send_channel_create(rdpRdg* rdg)
 	Stream_Write_UINT8(s, 0);                        /* Number of alternative resources (1 byte) */
 	Stream_Write_UINT16(s,
 	                    (UINT16)rdg->context->settings->ServerPort); /* Resource port (2 bytes) */
-	Stream_Write_UINT16(s, 3);                                 /* Protocol number (2 bytes) */
+	Stream_Write_UINT16(s, 3);                                       /* Protocol number (2 bytes) */
 	Stream_Write_UINT16(s, (UINT16)serverNameLen * sizeof(WCHAR));
 	Stream_Write_UTF16_String(s, serverName, serverNameLen);
 	Stream_SealLength(s);
@@ -1138,16 +1138,7 @@ DWORD rdg_get_event_handles(rdpRdg* rdg, HANDLE* events, DWORD count)
 			return 0;
 	}
 
-	if (!rdg->transferEncoding.isWebsocketTransport && rdg->tlsIn && rdg->tlsIn->bio)
-	{
-		if (events && (nCount < count))
-		{
-			BIO_get_event(rdg->tlsIn->bio, &events[nCount]);
-			nCount++;
-		}
-		else
-			return 0;
-	}
+	/* We just need the read event handle even in non-websocket mode. */
 
 	return nCount;
 }
@@ -1266,11 +1257,12 @@ static BOOL rdg_send_http_request(rdpRdg* rdg, rdpTls* tls, const char* method,
 
 static BOOL rdg_tls_connect(rdpRdg* rdg, rdpTls* tls, const char* peerAddress, int timeout)
 {
-	int sockfd = 0;
 	long status = 0;
-	BIO* socketBio = NULL;
+	BIO* layerBio = NULL;
 	BIO* bufferedBio = NULL;
+	rdpTransportLayer* layer = NULL;
 	rdpSettings* settings = rdg->context->settings;
+	rdpTransport* transport = freerdp_get_transport(rdg->context);
 	const char* peerHostname = settings->GatewayHostname;
 	UINT16 peerPort = (UINT16)settings->GatewayPort;
 	const char* proxyUsername = NULL;
@@ -1281,32 +1273,30 @@ static BOOL rdg_tls_connect(rdpRdg* rdg, rdpTls* tls, const char* peerAddress, i
 	if (settings->GatewayPort > UINT16_MAX)
 		return FALSE;
 
-	sockfd = freerdp_tcp_connect(rdg->context, peerAddress ? peerAddress : peerHostname, peerPort,
-	                             timeout);
+	layer = transport_connect_layer(transport, peerAddress ? peerAddress : peerHostname, peerPort,
+	                                timeout);
 
-	if (sockfd < 0)
+	if (!layer)
 	{
 		return FALSE;
 	}
 
-	socketBio = BIO_new(BIO_s_simple_socket());
-
-	if (!socketBio)
+	layerBio = BIO_new(BIO_s_transport_layer());
+	if (!layerBio)
 	{
-		closesocket((SOCKET)sockfd);
+		transport_layer_free(layer);
 		return FALSE;
 	}
+	BIO_set_data(layerBio, layer);
 
-	BIO_set_fd(socketBio, sockfd, BIO_CLOSE);
 	bufferedBio = BIO_new(BIO_s_buffered_socket());
-
 	if (!bufferedBio)
 	{
-		BIO_free_all(socketBio);
+		BIO_free_all(layerBio);
 		return FALSE;
 	}
 
-	bufferedBio = BIO_push(bufferedBio, socketBio);
+	bufferedBio = BIO_push(bufferedBio, layerBio);
 	status = BIO_set_nonblock(bufferedBio, TRUE);
 
 	if (isProxyConnection)

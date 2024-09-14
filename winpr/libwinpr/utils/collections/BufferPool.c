@@ -314,13 +314,15 @@ void* BufferPool_Take(wBufferPool* pool, SSIZE_T size)
 
 		if (pool->uSize + 1 > pool->uCapacity)
 		{
-			size_t newUCapacity = pool->uCapacity * 2;
+			size_t newUCapacity = pool->uCapacity * 2ULL;
+			if (newUCapacity > SSIZE_MAX)
+				goto out_error;
 			wBufferPoolItem* newUArray =
 			    (wBufferPoolItem*)realloc(pool->uArray, sizeof(wBufferPoolItem) * newUCapacity);
 			if (!newUArray)
 				goto out_error;
 
-			pool->uCapacity = newUCapacity;
+			pool->uCapacity = (SSIZE_T)newUCapacity;
 			pool->uArray = newUArray;
 		}
 

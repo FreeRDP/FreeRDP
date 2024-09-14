@@ -30,6 +30,9 @@
 #include <freerdp/api.h>
 #include <freerdp/types.h>
 
+/** @defgroup keyboard-identifiers Keyboard Layout Identifiers
+ *  @{
+ */
 #define AFRIKAANS 0x0436
 #define ALBANIAN 0x041C
 #define ALSATIAN 0x0484
@@ -233,15 +236,20 @@
 #define YI 0x0478
 #define YORUBA 0x046A
 #define ZULU 0x0435
+/** @} */
 
-#define LOCALE_LANGUAGE_LEN 6
-#define LOCALE_COUNTRY_LEN 10
+#define LOCALE_LANGUAGE_LEN 6 /** @since version 3.6.0 */
+#define LOCALE_COUNTRY_LEN 10 /** @since version 3.6.0 */
 
 #ifdef __cplusplus
 extern "C"
 {
 #endif
 
+	/**
+	 *  @brief A SYSTEM_LOCALE holding details about a locale
+	 *  @since version 3.6.0
+	 */
 	typedef struct
 	{
 		char language[LOCALE_LANGUAGE_LEN]; /* Two or three letter language code */
@@ -254,9 +262,29 @@ extern "C"
 	FREERDP_API const char* freerdp_get_system_locale_name_from_id(DWORD localeId);
 	FREERDP_API int freerdp_detect_keyboard_layout_from_system_locale(DWORD* keyboardLayoutId);
 
+	/**
+	 * @brief Query the list of supported system locales
+	 * @param count A pointer to hold the number of locales found
+	 * @return A pointer to @ref SYSTEM_LOCALE or \b NULL in case none found
+	 * @since version 3.6.0
+	 */
 	FREERDP_API const SYSTEM_LOCALE* freerdp_get_system_locale_list(size_t* count);
 
+	/**
+	 * @brief Query the list of system locales and return a matching one
+	 *
+	 * @param locale A locale string to query
+	 * @return A locale index >= 0 in case of success, <0 for failure
+	 * @since version 3.6.0
+	 */
 	FREERDP_API INT64 freerdp_get_locale_id_from_string(const char* locale);
+
+	/**
+	 * @brief Return the default @ref keyboard-identifiers for a provided locale
+	 * @param locale The locale to query
+	 * @return The @ref keyboard-identifiers to use
+	 * @since version 3.6.0
+	 */
 	FREERDP_API DWORD freerdp_get_keyboard_default_layout_for_locale(DWORD locale);
 
 #ifdef __cplusplus

@@ -36,7 +36,7 @@ static pstatus_t general_sign_16s(const INT16* pSrc, INT16* pDst, UINT32 len)
 }
 
 /* ------------------------------------------------------------------------- */
-void primitives_init_sign(primitives_t* prims)
+void primitives_init_sign(primitives_t* WINPR_RESTRICT prims)
 {
 	/* Start with the default. */
 	prims->sign_16s = general_sign_16s;

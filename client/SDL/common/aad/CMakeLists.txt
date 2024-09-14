@@ -16,9 +16,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 set(WITH_WEBVIEW_DEFAULT OFF)
-if (UNIX AND NOT APPLE)
-    set(WITH_WEBVIEW_DEFAULT ON)
-endif()
 
 option(WITH_WEBVIEW "Build with WebView support for AAD login popup browser" ${WITH_WEBVIEW_DEFAULT})
 if (WITH_WEBVIEW)

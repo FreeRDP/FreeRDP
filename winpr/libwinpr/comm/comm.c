@@ -27,6 +27,9 @@
 #include <fcntl.h>
 #include <pthread.h>
 #include <stdarg.h>
+#if defined(WINPR_HAVE_SYS_EVENTFD_H)
+#include <sys/eventfd.h>
+#endif
 #include <sys/ioctl.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -67,8 +70,6 @@ typedef struct comm_device COMM_DEVICE;
 static COMM_DEVICE** sCommDevices = NULL;
 static CRITICAL_SECTION sCommDevicesLock;
 
-static HANDLE_CREATOR sCommHandleCreator = { 0 };
-
 static pthread_once_t sCommInitialized = PTHREAD_ONCE_INIT;
 
 static int CommGetFd(HANDLE handle)
@@ -83,9 +84,13 @@ static int CommGetFd(HANDLE handle)
 
 HANDLE_CREATOR* GetCommHandleCreator(void)
 {
+#if defined(WINPR_HAVE_SERIAL_SUPPORT)
 	sCommHandleCreator.IsHandled = IsCommDevice;
 	sCommHandleCreator.CreateFileA = CommCreateFileA;
 	return &sCommHandleCreator;
+#else
+	return NULL;
+#endif
 }
 
 static void CommInit(void)
@@ -1261,8 +1266,10 @@ HANDLE CommCreateFileA(LPCSTR lpDeviceName, DWORD dwDesiredAccess, DWORD dwShare
 		goto error_handle;
 	}
 
+#if defined(WINPR_HAVE_SYS_EVENTFD_H)
 	pComm->fd_read_event = eventfd(
 	    0, EFD_NONBLOCK); /* EFD_NONBLOCK required because a read() is not always expected */
+#endif
 
 	if (pComm->fd_read_event < 0)
 	{
@@ -1281,8 +1288,10 @@ HANDLE CommCreateFileA(LPCSTR lpDeviceName, DWORD dwDesiredAccess, DWORD dwShare
 		goto error_handle;
 	}
 
+#if defined(WINPR_HAVE_SYS_EVENTFD_H)
 	pComm->fd_write_event = eventfd(
 	    0, EFD_NONBLOCK); /* EFD_NONBLOCK required because a read() is not always expected */
+#endif
 
 	if (pComm->fd_write_event < 0)
 	{
@@ -1296,6 +1305,7 @@ HANDLE CommCreateFileA(LPCSTR lpDeviceName, DWORD dwDesiredAccess, DWORD dwShare
 	pComm->serverSerialDriverId = SerialDriverUnknown;
 	InitializeCriticalSection(&pComm->EventsLock);
 
+#if defined(WINPR_HAVE_COMM_COUNTERS)
 	if (ioctl(pComm->fd, TIOCGICOUNT, &(pComm->counters)) < 0)
 	{
 		char ebuffer[256] = { 0 };
@@ -1310,6 +1320,7 @@ HANDLE CommCreateFileA(LPCSTR lpDeviceName, DWORD dwDesiredAccess, DWORD dwShare
 		 */
 		ZeroMemory(&(pComm->counters), sizeof(struct serial_icounter_struct));
 	}
+#endif
 
 	/* The binary/raw mode is required for the redirection but
 	 * only flags that are not handle somewhere-else, except
@@ -1402,6 +1413,7 @@ BOOL CommCloseHandle(HANDLE handle)
 	return TRUE;
 }
 
+#if defined(WINPR_HAVE_SYS_EVENTFD_H)
 #ifndef WITH_EVENTFD_READ_WRITE
 int eventfd_read(int fd, eventfd_t* value)
 {
@@ -1412,4 +1424,5 @@ int eventfd_write(int fd, eventfd_t value)
 {
 	return (write(fd, &value, sizeof(value)) == sizeof(value)) ? 0 : -1;
 }
+#endif
 #endif

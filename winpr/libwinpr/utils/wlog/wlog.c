@@ -373,9 +373,12 @@ BOOL WLog_PrintMessageVA(wLog* log, DWORD type, DWORD level, size_t line, const 
 			{
 				char formattedLogMessage[WLOG_MAX_STRING_SIZE] = { 0 };
 
+				WINPR_PRAGMA_DIAG_PUSH
+				WINPR_PRAGMA_DIAG_IGNORED_FORMAT_NONLITERAL
 				if (vsnprintf(formattedLogMessage, WLOG_MAX_STRING_SIZE - 1, message.FormatString,
 				              args) < 0)
 					return FALSE;
+				WINPR_PRAGMA_DIAG_POP
 
 				message.TextString = formattedLogMessage;
 				status = WLog_Write(log, &message);

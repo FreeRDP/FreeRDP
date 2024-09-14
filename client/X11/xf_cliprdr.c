@@ -857,7 +857,8 @@ static BOOL xf_clipboard_copy_formats(xfClipboard* clipboard, const CLIPRDR_FORM
 	WINPR_ASSERT(formats || (numFormats == 0));
 
 	xf_clipboard_formats_free(clipboard);
-	clipboard->lastSentFormats = calloc(numFormats, sizeof(CLIPRDR_FORMAT));
+	if (numFormats > 0)
+		clipboard->lastSentFormats = calloc(numFormats, sizeof(CLIPRDR_FORMAT));
 	if (!clipboard->lastSentFormats)
 		return FALSE;
 	clipboard->lastSentNumFormats = numFormats;
@@ -1338,6 +1339,17 @@ void xf_cliprdr_clear_cached_data(xfClipboard* clipboard)
 	ClipboardUnlock(clipboard->system);
 }
 
+static void* format_to_cache_slot(UINT32 format)
+{
+	union
+	{
+		uintptr_t uptr;
+		void* vptr;
+	} cnv;
+	cnv.uptr = 0x100000000ULL + format;
+	return cnv.vptr;
+}
+
 static UINT32 get_dst_format_id_for_local_request(xfClipboard* clipboard,
                                                   const xfCliprdrFormat* format)
 {
@@ -1452,7 +1464,7 @@ static xfCachedData* convert_data_from_existing_raw_data(xfClipboard* clipboard,
 		return NULL;
 	}
 
-	if (!HashTable_Insert(clipboard->cachedData, (void*)(UINT_PTR)dstFormatId, cached_data))
+	if (!HashTable_Insert(clipboard->cachedData, format_to_cache_slot(dstFormatId), cached_data))
 	{
 		WLog_WARN(TAG, "Failed to cache clipboard data");
 		xf_cached_data_free(cached_data);
@@ -1547,11 +1559,11 @@ static BOOL xf_cliprdr_process_selection_request(xfClipboard* clipboard,
 			DEBUG_CLIPRDR("formatId: %u, dstFormatId: %u", formatId, dstFormatId);
 
 			if (!rawTransfer)
-				cached_data =
-				    HashTable_GetItemValue(clipboard->cachedData, (void*)(UINT_PTR)dstFormatId);
+				cached_data = HashTable_GetItemValue(clipboard->cachedData,
+				                                     format_to_cache_slot(dstFormatId));
 			else
-				cached_data =
-				    HashTable_GetItemValue(clipboard->cachedRawData, (void*)(UINT_PTR)formatId);
+				cached_data = HashTable_GetItemValue(clipboard->cachedRawData,
+				                                     format_to_cache_slot(formatId));
 
 			DEBUG_CLIPRDR("hasCachedData: %u, rawTransfer: %u", cached_data ? 1 : 0, rawTransfer);
 
@@ -2290,7 +2302,8 @@ xf_cliprdr_server_format_data_response(CliprdrClientContext* context,
 			free(pDstData);
 			return CHANNEL_RC_OK;
 		}
-		if (!HashTable_Insert(clipboard->cachedData, (void*)(UINT_PTR)dstFormatId, cached_data))
+		if (!HashTable_Insert(clipboard->cachedData, format_to_cache_slot(dstFormatId),
+		                      cached_data))
 		{
 			WLog_WARN(TAG, "Failed to cache clipboard data");
 			xf_cached_data_free(cached_data);

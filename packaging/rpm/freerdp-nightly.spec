@@ -73,6 +73,7 @@ BuildRequires: dbus-1-glib-devel
 BuildRequires: wayland-devel
 BuildRequires: libavutil-devel
 BuildRequires: libavcodec-devel
+BuildRequires: libavformat-devel
 BuildRequires: libswresample-devel
 BuildRequires: libopus-devel
 BuildRequires: libjpeg62-devel

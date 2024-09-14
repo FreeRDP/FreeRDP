@@ -128,9 +128,10 @@ static DWORD WINAPI audin_alsa_thread_func(LPVOID arg)
 	DWORD status = 0;
 	WLog_Print(alsa->log, WLOG_DEBUG, "in");
 
-	if ((error = snd_pcm_open(&capture_handle, alsa->device_name, SND_PCM_STREAM_CAPTURE, 0)) < 0)
+	const int rc = snd_pcm_open(&capture_handle, alsa->device_name, SND_PCM_STREAM_CAPTURE, 0);
+	if (rc < 0)
 	{
-		WLog_Print(alsa->log, WLOG_ERROR, "snd_pcm_open (%s)", snd_strerror(error));
+		WLog_Print(alsa->log, WLOG_ERROR, "snd_pcm_open (%s)", snd_strerror(rc));
 		error = CHANNEL_RC_INITIALIZATION_ERROR;
 		goto out;
 	}

@@ -386,6 +386,16 @@ static int stream_dump_replay_transport_tcp_connect(rdpContext* context, rdpSett
 	return 42;
 }
 
+static rdpTransportLayer* stream_dump_replay_transport_connect_layer(rdpTransport* transport,
+                                                                     const char* hostname, int port,
+                                                                     DWORD timeout)
+{
+	WINPR_ASSERT(transport);
+	WINPR_ASSERT(hostname);
+
+	return NULL;
+}
+
 static BOOL stream_dump_replay_transport_tls_connect(rdpTransport* transport)
 {
 	WINPR_ASSERT(transport);
@@ -425,6 +435,7 @@ static BOOL stream_dump_register_read_handlers(rdpContext* context)
 	dump.TCPConnect = stream_dump_replay_transport_tcp_connect;
 	dump.TLSAccept = stream_dump_replay_transport_accept;
 	dump.TLSConnect = stream_dump_replay_transport_tls_connect;
+	dump.ConnectLayer = stream_dump_replay_transport_connect_layer;
 	if (!freerdp_set_io_callbacks(context, &dump))
 		return FALSE;
 	return freerdp_io_callback_set_event(context, TRUE);

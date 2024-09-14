@@ -46,7 +46,7 @@ extern "C"
 	FREERDP_API BOOL freerdp_dsp_decode(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
 	                                    const AUDIO_FORMAT* WINPR_RESTRICT srcFormat,
 	                                    const BYTE* WINPR_RESTRICT data, size_t length,
-	                                    wStream* out);
+	                                    wStream* WINPR_RESTRICT out);
 
 	FREERDP_API BOOL freerdp_dsp_context_reset(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
 	                                           const AUDIO_FORMAT* WINPR_RESTRICT targetFormat,

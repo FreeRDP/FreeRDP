@@ -85,6 +85,14 @@ extern "C"
 }
 #endif
 
+/**
+ * @brief A macro to get a function pointer from a library handle
+ * @param module The library handle
+ * @param name The name of the function
+ * @param type The type of the function pointer
+ * @since version 3.9.0
+ * @return A new function pointer or \b NULL
+ */
 #define GetProcAddressAs(module, name, type) WINPR_FUNC_PTR_CAST(GetProcAddress(module, name), type)
 
 #if !defined(_WIN32) && !defined(__CYGWIN__)

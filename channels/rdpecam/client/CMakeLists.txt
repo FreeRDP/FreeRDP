@@ -22,7 +22,7 @@ if(NOT WITH_SWSCALE OR NOT WITH_FFMPEG)
 endif()
 
 # currently camera redirect client supported for platforms with Video4Linux only
-find_package(SWScale REQUIRED)
+find_package(FFmpeg REQUIRED COMPONENTS SWSCALE)
 find_package(V4L)
 if(V4L_FOUND)
 	set(WITH_V4L ON)
@@ -31,7 +31,7 @@ else()
 	message(FATAL_ERROR "libv4l-dev required for CHANNEL_RDPECAM_CLIENT")
 endif()
 
-include_directories(SYSTEM ${SWScale_INCLUDE_DIR})
+include_directories(SYSTEM ${SWSCALE_INCLUDE_DIRS})
 
 set(${MODULE_PREFIX}_SRCS
 	camera_device_enum_main.c
@@ -42,7 +42,7 @@ set(${MODULE_PREFIX}_SRCS
 set(${MODULE_PREFIX}_LIBS
 	freerdp
     winpr
-    ${SWScale_LIBRARY}
+    ${SWSCALE_LIBRARY}
     ${FFMPEG_LIBRARIES}
 )
 

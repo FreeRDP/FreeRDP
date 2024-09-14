@@ -167,7 +167,7 @@ static UINT tsmf_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, 
 	ifman.output_pending = FALSE;
 	ifman.output_interface_id = InterfaceId;
 
-	// fprintf(stderr, "InterfaceId: 0x%08"PRIX32" MessageId: 0x%08"PRIX32" FunctionId:
+	// (void)fprintf(stderr, "InterfaceId: 0x%08"PRIX32" MessageId: 0x%08"PRIX32" FunctionId:
 	// 0x%08"PRIX32"\n", InterfaceId, MessageId, FunctionId);
 
 	switch (InterfaceId)

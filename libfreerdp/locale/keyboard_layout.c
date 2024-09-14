@@ -920,7 +920,7 @@ static BOOL load_layout_file(void)
 		FILE* fp = winpr_fopen("/tmp/kbd.json", "w");
 		if (!fp)
 			goto end;
-		fprintf(fp, "%s", str);
+		(void)fprintf(fp, "%s", str);
 		fclose(fp);
 	}
 end:

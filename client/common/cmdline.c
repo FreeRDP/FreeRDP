@@ -25,6 +25,7 @@
 #include <errno.h>
 
 #include <winpr/assert.h>
+#include <winpr/string.h>
 #include <winpr/crt.h>
 #include <winpr/wlog.h>
 #include <winpr/path.h>
@@ -40,6 +41,7 @@
 #include <freerdp/channels/drdynvc.h>
 #include <freerdp/channels/cliprdr.h>
 #include <freerdp/channels/encomsp.h>
+#include <freerdp/channels/rdpear.h>
 #include <freerdp/channels/rdp2tcp.h>
 #include <freerdp/channels/remdesk.h>
 #include <freerdp/channels/rdpsnd.h>
@@ -2753,15 +2755,17 @@ static int parse_dynamic_resolution_options(rdpSettings* settings,
 	WINPR_ASSERT(settings);
 	WINPR_ASSERT(arg);
 
-	if (freerdp_settings_get_bool(settings, FreeRDP_SmartSizing))
+	const BOOL val = arg->Value != 0;
+
+	if (val && freerdp_settings_get_bool(settings, FreeRDP_SmartSizing))
 	{
 		WLog_ERR(TAG, "Smart sizing and dynamic resolution are mutually exclusive options");
 		return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 	}
 
-	if (!freerdp_settings_set_bool(settings, FreeRDP_SupportDisplayControl, TRUE))
+	if (!freerdp_settings_set_bool(settings, FreeRDP_SupportDisplayControl, val))
 		return COMMAND_LINE_ERROR;
-	if (!freerdp_settings_set_bool(settings, FreeRDP_DynamicResolutionUpdate, TRUE))
+	if (!freerdp_settings_set_bool(settings, FreeRDP_DynamicResolutionUpdate, val))
 		return COMMAND_LINE_ERROR;
 
 	return 0;
@@ -4144,7 +4148,8 @@ static void fill_credential_strings(COMMAND_LINE_ARGUMENT_A* args)
 	if (arg && ((arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT) != 0))
 	{
 		const char* gwcreds[] = { "p:", "access-token:" };
-		char* tok = strtok(arg->Value, ",");
+		char* saveptr = NULL;
+		char* tok = strtok_s(arg->Value, ",", &saveptr);
 		while (tok)
 		{
 			for (size_t x = 0; x < ARRAYSIZE(gwcreds); x++)
@@ -4156,7 +4161,7 @@ static void fill_credential_strings(COMMAND_LINE_ARGUMENT_A* args)
 					FillMemory(val, strlen(val), '*');
 				}
 			}
-			tok = strtok(NULL, ",");
+			tok = strtok_s(NULL, ",", &saveptr);
 		}
 	}
 }
@@ -4164,7 +4169,7 @@ static void fill_credential_strings(COMMAND_LINE_ARGUMENT_A* args)
 static int freerdp_client_settings_parse_command_line_arguments_int(
     rdpSettings* settings, int argc, char* argv[], BOOL allowUnknown,
     COMMAND_LINE_ARGUMENT_A* largs, size_t count,
-    int (*handle_option)(const COMMAND_LINE_ARGUMENT* arg, void* custom), void* handle_userdata)
+    int (*handle_option)(const COMMAND_LINE_ARGUMENT_A* arg, void* custom), void* handle_userdata)
 {
 	char* user = NULL;
 	int status = 0;
@@ -4401,6 +4406,13 @@ static int freerdp_client_settings_parse_command_line_arguments_int(
 			if (!freerdp_settings_set_bool(settings, FreeRDP_RestrictedAdminModeRequired, enable))
 				return fail_at(arg, COMMAND_LINE_ERROR);
 		}
+		CommandLineSwitchCase(arg, "remoteGuard")
+		{
+			if (!freerdp_settings_set_bool(settings, FreeRDP_RemoteCredentialGuard, TRUE))
+				return fail_at(arg, COMMAND_LINE_ERROR);
+			if (!freerdp_settings_set_bool(settings, FreeRDP_ExtSecurity, TRUE))
+				return fail_at(arg, COMMAND_LINE_ERROR);
+		}
 		CommandLineSwitchCase(arg, "pth")
 		{
 			if (!freerdp_settings_set_bool(settings, FreeRDP_ConsoleSession, TRUE))
@@ -4556,6 +4568,7 @@ static int freerdp_client_settings_parse_command_line_arguments_int(
 		}
 		CommandLineSwitchCase(arg, "load-balance-info")
 		{
+			WINPR_ASSERT(arg->Value);
 			if (!freerdp_settings_set_pointer_len(settings, FreeRDP_LoadBalanceInfo, arg->Value,
 			                                      strlen(arg->Value)))
 				return fail_at(arg, COMMAND_LINE_ERROR);
@@ -4759,6 +4772,7 @@ static int freerdp_client_settings_parse_command_line_arguments_int(
 				ConvertWCharNToUtf8(info.TimeZoneKeyName, ARRAYSIZE(info.TimeZoneKeyName),
 				                    TimeZoneKeyName, ARRAYSIZE(TimeZoneKeyName));
 
+				WINPR_ASSERT(arg->Value);
 				if (strncmp(TimeZoneKeyName, arg->Value, ARRAYSIZE(TimeZoneKeyName)) == 0)
 				{
 					found = TRUE;
@@ -5356,7 +5370,7 @@ static int freerdp_client_settings_parse_command_line_arguments_int(
 			LONGLONG val = 0;
 
 			if (!value_to_int(arg->Value, &val, 100, 500))
-				return FALSE;
+				return fail_at(arg, COMMAND_LINE_ERROR);
 
 			if (!freerdp_settings_set_uint32(settings, FreeRDP_DesktopScaleFactor, (UINT32)val))
 				return fail_at(arg, COMMAND_LINE_ERROR);
@@ -5659,7 +5673,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 int freerdp_client_settings_parse_command_line_arguments_ex(
     rdpSettings* settings, int oargc, char** oargv, BOOL allowUnknown,
     COMMAND_LINE_ARGUMENT_A* args, size_t count,
-    int (*handle_option)(const COMMAND_LINE_ARGUMENT* arg, void* custom), void* handle_userdata)
+    int (*handle_option)(const COMMAND_LINE_ARGUMENT_A* arg, void* custom), void* handle_userdata)
 {
 	int argc = oargc;
 	char** argv = oargv;
@@ -5768,6 +5782,7 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 		{ FreeRDP_SupportDisplayControl, DISP_CHANNEL_NAME, NULL },
 		{ FreeRDP_SupportGeometryTracking, GEOMETRY_CHANNEL_NAME, NULL },
 		{ FreeRDP_SupportVideoOptimized, VIDEO_CHANNEL_NAME, NULL },
+		{ FreeRDP_RemoteCredentialGuard, RDPEAR_CHANNEL_NAME, NULL },
 	};
 
 	ChannelToLoad staticChannels[] = {

@@ -504,7 +504,7 @@ typedef struct
 #define PSecPkgCredentials_SSIProvider PSecPkgCredentials_SSIProviderA
 #endif
 
-typedef struct _SecPkgCredentials_Cert
+typedef struct
 {
 	unsigned long EncodedCertSize;
 	unsigned char* EncodedCert;
@@ -752,7 +752,7 @@ typedef struct
 #ifndef SEC_WINNT_AUTH_IDENTITY_VERSION_2
 #define SEC_WINNT_AUTH_IDENTITY_VERSION_2 0x201
 
-typedef struct _SEC_WINNT_AUTH_IDENTITY_EX2
+typedef struct
 {
 	UINT32 Version;
 	UINT16 cbHeaderLength;
@@ -775,7 +775,7 @@ typedef struct _SEC_WINNT_AUTH_IDENTITY_EX2
 
 // https://docs.microsoft.com/en-us/windows/win32/api/sspi/ns-sspi-sec_winnt_auth_identity_info
 
-typedef union _SEC_WINNT_AUTH_IDENTITY_INFO
+typedef union
 {
 	SEC_WINNT_AUTH_IDENTITY_EXW AuthIdExw;
 	SEC_WINNT_AUTH_IDENTITY_EXA AuthIdExa;
@@ -1331,6 +1331,8 @@ extern "C"
 #define SECPKG_ATTR_AUTH_NTLM_RANDKEY 1105
 #define SECPKG_ATTR_AUTH_NTLM_MIC 1106
 #define SECPKG_ATTR_AUTH_NTLM_MIC_VALUE 1107
+
+#define SECPKG_CRED_ATTR_TICKET_LOGON 1200
 
 	typedef struct
 	{

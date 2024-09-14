@@ -25,6 +25,9 @@
 #include <winpr/wtypes.h>
 #include <winpr/windows.h>
 
+WINPR_PRAGMA_DIAG_PUSH
+WINPR_PRAGMA_DIAG_IGNORED_RESERVED_IDENTIFIER
+
 #ifdef _WIN32
 
 #define _accept accept
@@ -364,5 +367,7 @@ extern "C"
 #endif
 
 #endif /* _WIN32 */
+
+WINPR_PRAGMA_DIAG_POP
 
 #endif /* WINPR_WINSOCK_H */

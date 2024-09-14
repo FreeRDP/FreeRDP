@@ -639,7 +639,8 @@ static BYTE* x509_utils_get_pem(const X509* xcert, const STACK_OF(X509) * chain,
 		return NULL;
 	}
 
-	status = PEM_write_bio_X509(bio, (X509*)xcert);
+	X509* wcert = WINPR_CAST_CONST_PTR_AWAY(xcert, X509*);
+	status = PEM_write_bio_X509(bio, wcert);
 
 	if (status < 0)
 	{

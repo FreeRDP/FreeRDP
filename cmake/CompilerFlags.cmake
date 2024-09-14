@@ -36,6 +36,7 @@ if (ENABLE_WARNING_VERBOSE)
 			-Wall
 			-Wpedantic
 			-Wno-padded
+			-Wno-switch-enum
 			-Wno-cast-align
 			-Wno-declaration-after-statement
 			-Wno-unsafe-buffer-usage

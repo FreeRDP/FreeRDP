@@ -55,7 +55,7 @@ void tf_OnChannelConnectedEventHandler(void* context, const ChannelConnectedEven
 		clip->custom = context;
 	}
 	else
-		freerdp_client_OnChannelConnectedEventHandler(context, e);
+		freerdp_client_OnChannelConnectedEventHandler(&tf->common, e);
 }
 
 void tf_OnChannelDisconnectedEventHandler(void* context, const ChannelDisconnectedEventArgs* e)
@@ -75,5 +75,5 @@ void tf_OnChannelDisconnectedEventHandler(void* context, const ChannelDisconnect
 		clip->custom = NULL;
 	}
 	else
-		freerdp_client_OnChannelDisconnectedEventHandler(context, e);
+		freerdp_client_OnChannelDisconnectedEventHandler(&tf->common, e);
 }

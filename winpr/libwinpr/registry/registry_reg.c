@@ -25,6 +25,7 @@
 #include <string.h>
 
 #include <winpr/wtypes.h>
+#include <winpr/string.h>
 #include <winpr/assert.h>
 #include <winpr/crt.h>
 #include <winpr/file.h>
@@ -114,7 +115,7 @@ static BOOL reg_load_start(Reg* reg)
 
 	reg->buffer[file_size] = '\n';
 	reg->buffer[file_size + 1] = '\0';
-	reg->next_line = strtok(reg->buffer, "\n");
+	reg->next_line = strtok_s(reg->buffer, "\n", &reg->saveptr);
 	return TRUE;
 }
 
@@ -295,7 +296,7 @@ static char* reg_load_get_next_line(Reg* reg)
 		return NULL;
 
 	reg->line = reg->next_line;
-	reg->next_line = strtok(NULL, "\n");
+	reg->next_line = strtok_s(NULL, "\n", &reg->saveptr);
 	reg->line_length = strlen(reg->line);
 	return reg->line;
 }

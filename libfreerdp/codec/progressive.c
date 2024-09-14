@@ -1050,8 +1050,8 @@ progressive_decompress_tile_first(PROGRESSIVE_CONTEXT* WINPR_RESTRICT progressiv
 	if (rc < 0)
 		goto fail;
 
-	rc = prims->yCbCrToRGB_16s8u_P3AC4R((const INT16* const*)pSrcDst, 64 * 2, tile->data,
-	                                    tile->stride, progressive->format, &roi_64x64);
+	rc = prims->yCbCrToRGB_16s8u_P3AC4R((const INT16**)pSrcDst, 64 * 2, tile->data, tile->stride,
+	                                    progressive->format, &roi_64x64);
 fail:
 	BufferPool_Return(progressive->bufferPool, pBuffer);
 	return rc;
@@ -1494,7 +1494,7 @@ progressive_decompress_tile_upgrade(PROGRESSIVE_CONTEXT* WINPR_RESTRICT progress
 	if (status < 0)
 		goto fail;
 
-	status = prims->yCbCrToRGB_16s8u_P3AC4R((const INT16* const*)pSrcDst, 64 * 2, tile->data,
+	status = prims->yCbCrToRGB_16s8u_P3AC4R((const INT16**)pSrcDst, 64 * 2, tile->data,
 	                                        tile->stride, progressive->format, &roi_64x64);
 fail:
 	BufferPool_Return(progressive->bufferPool, pBuffer);
@@ -2464,9 +2464,11 @@ BOOL progressive_rfx_write_message_progressive_simple(PROGRESSIVE_CONTEXT* progr
 	return rfx_write_message_progressive_simple(context, s, msg);
 }
 
-int progressive_compress(PROGRESSIVE_CONTEXT* progressive, const BYTE* pSrcData, UINT32 SrcSize,
-                         UINT32 SrcFormat, UINT32 Width, UINT32 Height, UINT32 ScanLine,
-                         const REGION16* invalidRegion, BYTE** ppDstData, UINT32* pDstSize)
+int progressive_compress(PROGRESSIVE_CONTEXT* WINPR_RESTRICT progressive,
+                         const BYTE* WINPR_RESTRICT pSrcData, UINT32 SrcSize, UINT32 SrcFormat,
+                         UINT32 Width, UINT32 Height, UINT32 ScanLine,
+                         const REGION16* WINPR_RESTRICT invalidRegion,
+                         BYTE** WINPR_RESTRICT ppDstData, UINT32* WINPR_RESTRICT pDstSize)
 {
 	BOOL rc = FALSE;
 	int res = -6;
@@ -2587,7 +2589,7 @@ fail:
 	return res;
 }
 
-BOOL progressive_context_reset(PROGRESSIVE_CONTEXT* progressive)
+BOOL progressive_context_reset(PROGRESSIVE_CONTEXT* WINPR_RESTRICT progressive)
 {
 	if (!progressive)
 		return FALSE;

@@ -22,8 +22,7 @@
 
 SdlWindow::SdlWindow(const std::string& title, Sint32 startupX, Sint32 startupY, Sint32 width,
                      Sint32 height, Uint32 flags)
-    : _window(SDL_CreateWindow(title.c_str(), startupX, startupY, width, height, flags)),
-      _offset_x(0), _offset_y(0)
+    : _window(SDL_CreateWindow(title.c_str(), startupX, startupY, width, height, flags))
 {
 }
 
@@ -166,6 +165,11 @@ void SdlWindow::fullscreen(bool enter)
 			SDL_MaximizeWindow(_window); // Maximize so we can see the caption and bits
 		}
 	}
+}
+
+void SdlWindow::minimize()
+{
+	SDL_MinimizeWindow(_window);
 }
 
 bool SdlWindow::fill(Uint8 r, Uint8 g, Uint8 b, Uint8 a)

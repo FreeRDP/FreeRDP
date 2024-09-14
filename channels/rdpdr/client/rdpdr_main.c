@@ -737,12 +737,15 @@ static BOOL isAutomountLocation(const char* path)
 		const char* location = automountLocations[x];
 		size_t length = 0;
 
+		WINPR_PRAGMA_DIAG_PUSH
+		WINPR_PRAGMA_DIAG_IGNORED_FORMAT_NONLITERAL
 		if (strstr(location, "%lu"))
 			(void)snprintf(buffer, sizeof(buffer), location, (unsigned long)uid);
 		else if (strstr(location, "%s"))
 			(void)snprintf(buffer, sizeof(buffer), location, uname);
 		else
 			(void)snprintf(buffer, sizeof(buffer), "%s", location);
+		WINPR_PRAGMA_DIAG_POP
 
 		length = strnlen(buffer, sizeof(buffer));
 

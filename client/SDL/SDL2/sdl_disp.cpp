@@ -448,7 +448,7 @@ BOOL sdlDispContext::uninit(DispClientContext* disp)
 	return TRUE;
 }
 
-sdlDispContext::sdlDispContext(SdlContext* sdl) : _sdl(sdl), _timer(0)
+sdlDispContext::sdlDispContext(SdlContext* sdl) : _sdl(sdl)
 {
 	SDL_Init(SDL_INIT_TIMER | SDL_INIT_VIDEO);
 

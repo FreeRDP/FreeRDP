@@ -70,6 +70,6 @@ FREERDP_API BOOL freerdp_http_request(const char* url, const char* body, long* s
                                       BYTE** response, size_t* response_length);
 
 FREERDP_API const char* freerdp_http_status_string(long status);
-FREERDP_API char* freerdp_http_status_string_format(long status, char* buffer, size_t size);
+FREERDP_API const char* freerdp_http_status_string_format(long status, char* buffer, size_t size);
 
 #endif /* FREERDP_UTILS_HTTP_H */

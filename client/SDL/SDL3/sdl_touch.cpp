@@ -241,7 +241,7 @@ BOOL sdl_handle_mouse_button(SdlContext* sdl, const SDL_MouseButtonEvent* ev)
 	WINPR_ASSERT(sdl);
 	WINPR_ASSERT(ev);
 
-	if (ev->state == SDL_PRESSED)
+	if (ev->type == SDL_EVENT_MOUSE_BUTTON_DOWN)
 	{
 		flags |= PTR_FLAGS_DOWN;
 		xflags |= PTR_XFLAGS_DOWN;

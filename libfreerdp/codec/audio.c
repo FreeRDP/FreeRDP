@@ -75,7 +75,7 @@ UINT32 audio_format_compute_time_length(const AUDIO_FORMAT* format, size_t size)
 	return mstime;
 }
 
-char* audio_format_get_tag_string(UINT16 wFormatTag)
+const char* audio_format_get_tag_string(UINT16 wFormatTag)
 {
 	switch (wFormatTag)
 	{

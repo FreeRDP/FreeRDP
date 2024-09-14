@@ -333,6 +333,10 @@ static BOOL copy(WCHAR** dst, ULONG* dstLen, const WCHAR* what, size_t len)
 	*dst = NULL;
 	*dstLen = 0;
 
+	if (!what && (len != 0))
+		return FALSE;
+	if (len == 0)
+		return TRUE;
 	*dst = calloc(sizeof(WCHAR), len + 1);
 	if (!*dst)
 		return FALSE;
@@ -949,7 +953,7 @@ static BOOL WINPR_init(void)
 
 	for (size_t x = 0; x < ARRAYSIZE(SecurityFunctionTableA_NAME_LIST); x++)
 	{
-		const SecurityFunctionTableA_NAME* const cur = &SecurityFunctionTableA_NAME_LIST[x];
+		const SecurityFunctionTableA_NAME* cur = &SecurityFunctionTableA_NAME_LIST[x];
 		InitializeConstWCharFromUtf8(cur->Name, BUFFER_NAME_LIST_W[x],
 		                             ARRAYSIZE(BUFFER_NAME_LIST_W[x]));
 	}

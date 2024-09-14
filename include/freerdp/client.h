@@ -20,6 +20,8 @@
 #ifndef FREERDP_CLIENT_H
 #define FREERDP_CLIENT_H
 
+#include <winpr/cmdline.h>
+
 #include <freerdp/config.h>
 #include <freerdp/api.h>
 #include <freerdp/types.h>
@@ -151,6 +153,25 @@ extern "C"
 
 	FREERDP_API int freerdp_client_settings_parse_command_line(rdpSettings* settings, int argc,
 	                                                           char** argv, BOOL allowUnknown);
+
+	/**
+	 * @brief freerdp_client_settings_parse_command_line_ex
+	 * @param settings Pointer to the settings to populate
+	 * @param argc Number of command line arguments
+	 * @param argv Array of command line arguments
+	 * @param allowUnknown Skip unknown arguments instead of aborting parser
+	 * @param args The allowed command line arguments (client specific, client-common ones are added
+	 * internally)
+	 * @param count Number of client specific command line arguments
+	 * @param handle_userdata Custom user data pointer, will be passed to callback
+	 * @return >=0 for success, <0 in case of parsing failures
+	 * @since version 3.9.0
+	 */
+	FREERDP_API int freerdp_client_settings_parse_command_line_ex(
+	    rdpSettings* settings, int argc, char** argv, BOOL allowUnknown,
+	    COMMAND_LINE_ARGUMENT_A* args, size_t count,
+	    int (*handle_option)(const COMMAND_LINE_ARGUMENT_A* arg, void* custom),
+	    void* handle_userdata);
 
 	FREERDP_API int freerdp_client_settings_parse_connection_file(rdpSettings* settings,
 	                                                              const char* filename);

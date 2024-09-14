@@ -40,6 +40,18 @@
 					</listitem>
 				</varlistentry>
 				<varlistentry>
+					<term><replaceable>SDL_Minimize</replaceable></term>
+					<listitem>
+						<varlistentry>
+							<listitem>
+								<para>Minimizes the client window<sbr/>
+										Default <replaceable>SDL_SCANCODE_M</replaceable>.<sbr/>
+										A string as defined at <replaceable>https://wiki.libsdl.org/SDL2/SDLScancodeLookup</replaceable></para>
+							</listitem>
+						</varlistentry>
+					</listitem>
+				</varlistentry>
+				<varlistentry>
 					<term><replaceable>SDL_Resizeable</replaceable></term>
 					<listitem>
 						<varlistentry>

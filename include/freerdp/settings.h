@@ -47,36 +47,44 @@ extern "C"
 {
 #endif
 
-/** \file
- * \brief This is the FreeRDP settings module.
- *
- * Settings are used to store configuration data for an RDP connection.
- * There are 3 different settings for each client and server:
- *
- * 1. The initial connection supplied by the user
- * 2. The settings sent from client or server during capability exchange
- * 3. The settings merged from the capability exchange and the initial configuration.
- *
- * The lifetime of the settings is as follows:
- * 1. Initial configuration is saved and will be valid for the whole application lifecycle
- * 2. The client or server settings from the other end are valid from capability exchange until the
- * connection is ended (disconnect/redirect/...)
- * 3. The merged settings are created from the initial configuration and server settings and have
- * the same lifetime, until the connection ends
- *
- *
- * So, when accessing the settings always ensure to know which one you are operating on! (this is
- * especially important for the proxy where you have a RDP client and RDP server in the same
- * application context)
- */
+	/** \defgroup rdpSettings rdpSettings
+	 * \brief This is the FreeRDP settings module.
+	 *
+	 * Settings are used to store configuration data for an RDP connection.
+	 * There are 3 different settings for each client and server:
+	 *
+	 * 1. The initial connection supplied by the user
+	 * 2. The settings sent from client or server during capability exchange
+	 * 3. The settings merged from the capability exchange and the initial configuration.
+	 *
+	 * The lifetime of the settings is as follows:
+	 * 1. Initial configuration is saved and will be valid for the whole application lifecycle
+	 * 2. The client or server settings from the other end are valid from capability exchange until
+	 * the connection is ended (disconnect/redirect/...)
+	 * 3. The merged settings are created from the initial configuration and server settings and
+	 * have the same lifetime, until the connection ends
+	 *
+	 *
+	 * So, when accessing the settings always ensure to know which one you are operating on! (this
+	 * is especially important for the proxy where you have a RDP client and RDP server in the same
+	 * application context)
+	 *
+	 * @{
+	 */
 
-typedef struct rdp_settings rdpSettings;
+	typedef struct rdp_settings rdpSettings;
 
 /**
  * rdpSettings creation flags
  */
 #define FREERDP_SETTINGS_SERVER_MODE 0x00000001
 #define FREERDP_SETTINGS_REMOTE_MODE 0x00000002
+
+	/** \brief Free a settings struct with all data in it
+	 *
+	 *  \param settings A pointer to the settings to free, May be NULL
+	 */
+	FREERDP_API void freerdp_settings_free(rdpSettings* settings);
 
 	/** \brief creates a new setting struct
 	 *
@@ -85,6 +93,7 @@ typedef struct rdp_settings rdpSettings;
 	 *
 	 *  \return A newly allocated settings struct or NULL
 	 */
+	WINPR_ATTR_MALLOC(freerdp_settings_free, 1)
 	FREERDP_API rdpSettings* freerdp_settings_new(DWORD flags);
 
 	/** \brief Creates a deep copy of settings
@@ -93,6 +102,7 @@ typedef struct rdp_settings rdpSettings;
 	 *
 	 *  \return A newly allocated copy of \b settings or NULL
 	 */
+	WINPR_ATTR_MALLOC(freerdp_settings_free, 1)
 	FREERDP_API rdpSettings* freerdp_settings_clone(const rdpSettings* settings);
 
 	/** \brief Deep copies settings from \b src to \b dst
@@ -120,12 +130,6 @@ typedef struct rdp_settings rdpSettings;
 	FREERDP_API BOOL freerdp_settings_copy_item(rdpSettings* dst, const rdpSettings* src,
 	                                            SSIZE_T id);
 
-	/** \brief Free a settings struct with all data in it
-	 *
-	 *  \param settings A pointer to the settings to free, May be NULL
-	 */
-	FREERDP_API void freerdp_settings_free(rdpSettings* settings);
-
 	/** \brief Dumps the contents of a settings struct to a WLog logger
 	 *
 	 *  \param log The logger to write to, must not be NULL
@@ -146,9 +150,13 @@ typedef struct rdp_settings rdpSettings;
 	FREERDP_API BOOL freerdp_settings_print_diff(wLog* log, DWORD level, const rdpSettings* src,
 	                                             const rdpSettings* other);
 
-	FREERDP_API ADDIN_ARGV* freerdp_addin_argv_new(size_t argc, const char* argv[]);
-	FREERDP_API ADDIN_ARGV* freerdp_addin_argv_clone(const ADDIN_ARGV* args);
 	FREERDP_API void freerdp_addin_argv_free(ADDIN_ARGV* args);
+
+	WINPR_ATTR_MALLOC(freerdp_addin_argv_free, 1)
+	FREERDP_API ADDIN_ARGV* freerdp_addin_argv_new(size_t argc, const char* argv[]);
+
+	WINPR_ATTR_MALLOC(freerdp_addin_argv_free, 1)
+	FREERDP_API ADDIN_ARGV* freerdp_addin_argv_clone(const ADDIN_ARGV* args);
 
 	FREERDP_API BOOL freerdp_addin_argv_add_argument(ADDIN_ARGV* args, const char* argument);
 	FREERDP_API BOOL freerdp_addin_argv_add_argument_ex(ADDIN_ARGV* args, const char* argument,
@@ -170,6 +178,8 @@ typedef struct rdp_settings rdpSettings;
 	 *
 	 *  \param settings the settings to remove the device from
 	 *  \param device the device to remove
+	 *
+	 *  \since version 3.4.0
 	 *
 	 *  \return \b TRUE if the device was removed, \b FALSE if device was not found or is NULL
 	 */
@@ -480,7 +490,8 @@ typedef struct rdp_settings rdpSettings;
 	                                             const char* param);
 
 	/** \brief appends a string to a settings value. The \b param is copied.
-	 * If the initial value of the setting was not empty, <old value><separator><param> is created
+	 *  If the initial value of the setting was not empty, @code <old value><separator><param>
+	 * @endcode is created
 	 *
 	 *  \param settings A pointer to the settings to query, must not be NULL.
 	 *  \param id The key to query
@@ -682,8 +693,8 @@ typedef struct rdp_settings rdpSettings;
 	 *
 	 *  \return A pointer to \b buffer for success, NULL otherwise
 	 */
-	FREERDP_API char* freerdp_rail_support_flags_to_string(UINT32 flags, char* buffer,
-	                                                       size_t length);
+	FREERDP_API const char* freerdp_rail_support_flags_to_string(UINT32 flags, char* buffer,
+	                                                             size_t length);
 
 	/** \brief Returns a stringified representation of the RDP protocol version.
 	 *
@@ -714,11 +725,16 @@ typedef struct rdp_settings rdpSettings;
 	                                                              size_t size);
 
 	/** \brief return the configuration directory for the library
+	 *  @return The current configuration path or \b NULL
+	 *  @since version 3.6.0
 	 */
+	WINPR_ATTR_MALLOC(free, 1)
 	FREERDP_API char* freerdp_settings_get_config_path(void);
 
 #ifdef __cplusplus
 }
 #endif
+
+/** @} */
 
 #endif /* FREERDP_SETTINGS_H */

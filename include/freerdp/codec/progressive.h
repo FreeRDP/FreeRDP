@@ -70,6 +70,15 @@ extern "C"
 	FREERDP_API PROGRESSIVE_CONTEXT* progressive_context_new_ex(BOOL Compressor,
 	                                                            UINT32 ThreadingFlags);
 
+	/** Write a RFX message as simple progressive message to a stream.
+	 *  Forward wrapper for \link rfx_write_message_progressive_simple
+	 *  @param progressive The progressive codec context
+	 *  @param s The stream to write to
+	 *  @param msg The message to encode
+	 *
+	 *  @since version 3.0.0
+	 *  @return \b TRUE in case of success, \b FALSE for any error
+	 */
 	FREERDP_API BOOL progressive_rfx_write_message_progressive_simple(
 	    PROGRESSIVE_CONTEXT* progressive, wStream* s, const RFX_MESSAGE* msg);
 

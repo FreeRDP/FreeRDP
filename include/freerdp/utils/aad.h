@@ -21,6 +21,9 @@
 #ifndef FREERDP_UTILS_AAD_H
 #define FREERDP_UTILS_AAD_H
 
+/** \defgroup AAD AAD related helper utilities
+ *  \since version 3.0.0
+ */
 #include <winpr/wlog.h>
 
 #include <freerdp/api.h>
@@ -28,6 +31,16 @@
 
 #ifdef WITH_AAD
 
+/** Helper to retrieve the AAD access token from JSON input
+ *
+ *  @param data The JSON to parse
+ *  @param length The number of bytes of the JSON data
+ *
+ *  @since version 3.0.0
+ *
+ * @return The token string or \b NULL
+ */
+WINPR_ATTR_MALLOC(free, 1)
 FREERDP_API char* freerdp_utils_aad_get_access_token(wLog* log, const char* data, size_t length);
 
 #endif

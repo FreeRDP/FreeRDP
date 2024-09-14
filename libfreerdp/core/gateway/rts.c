@@ -321,12 +321,9 @@ static BOOL rts_read_auth_verifier(wStream* s, auth_verifier_co_t* auth,
 	if (!rts_read_auth_verifier_no_checks(s, auth, header, &pos, silent))
 		return FALSE;
 
-	{
-		const size_t expected = header->frag_length - header->auth_length - 8;
-		WINPR_ASSERT(pos + auth->auth_pad_length == expected);
-	}
-
-	return TRUE;
+	const size_t expected = header->frag_length - header->auth_length - 8;
+	WINPR_ASSERT(pos + auth->auth_pad_length == expected);
+	return pos + auth->auth_pad_length == expected;
 }
 
 static BOOL rts_read_auth_verifier_with_stub(wStream* s, auth_verifier_co_t* auth,

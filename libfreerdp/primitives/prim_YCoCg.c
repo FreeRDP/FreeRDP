@@ -68,7 +68,7 @@ static pstatus_t general_YCoCgToRGB_8u_AC4R(const BYTE* pSrc, INT32 srcStep, BYT
 }
 
 /* ------------------------------------------------------------------------- */
-void primitives_init_YCoCg(primitives_t* prims)
+void primitives_init_YCoCg(primitives_t* WINPR_RESTRICT prims)
 {
 	prims->YCoCgToRGB_8u_AC4R = general_YCoCgToRGB_8u_AC4R;
 }

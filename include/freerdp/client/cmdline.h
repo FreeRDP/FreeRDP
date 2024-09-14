@@ -56,12 +56,14 @@ extern "C"
 	 * \param handle_option the handler function for custom arguments.
 	 * \param handle_userdata custom data supplied to \b handle_option as context
 	 *
+	 * \since version 3.0.0
+	 *
 	 * \return \b 0 in case of success, a negative number in case of failure.
 	 */
 	FREERDP_API int freerdp_client_settings_parse_command_line_arguments_ex(
 	    rdpSettings* settings, int argc, char** argv, BOOL allowUnknown,
 	    COMMAND_LINE_ARGUMENT_A* args, size_t count,
-	    int (*handle_option)(const COMMAND_LINE_ARGUMENT* arg, void* custom),
+	    int (*handle_option)(const COMMAND_LINE_ARGUMENT_A* arg, void* custom),
 	    void* handle_userdata);
 
 	FREERDP_API int freerdp_client_settings_command_line_status_print(rdpSettings* settings,
@@ -73,8 +75,22 @@ extern "C"
 	                                                     const COMMAND_LINE_ARGUMENT_A* custom);
 	FREERDP_API BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings);
 
+	/** Print a command line warning about the component being unmaintained.
+	 *
+	 *  \since version 3.0.0
+	 */
 	FREERDP_API void freerdp_client_warn_unmaintained(int argc, char* argv[]);
+
+	/** Print a command line warning about the component being experimental.
+	 *
+	 *  \since version 3.0.0
+	 */
 	FREERDP_API void freerdp_client_warn_experimental(int argc, char* argv[]);
+
+	/** Print a command line warning about the component being deprecated.
+	 *
+	 *  \since version 3.0.0
+	 */
 	FREERDP_API void freerdp_client_warn_deprecated(int argc, char* argv[]);
 
 	FREERDP_API BOOL freerdp_client_print_version(void);
