@@ -26,10 +26,25 @@ add_library(rdpear-common-obj OBJECT
 )
 
 target_include_directories(rdpear-common
-    INTERFACE ${KRB5_INCLUDE_DIRS})
-target_include_directories(rdpear-common-obj
-    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${KRB5_INCLUDE_DIRS})
+	SYSTEM
+	INTERFACE ${KRB5_INCLUDE_DIRS}
+)
+target_compile_options(rdpear-common
+	INTERFACE
+	${KRB5_CFLAGS}
+)
+target_link_options(rdpear-common
+	INTERFACE
+	${KRB5_LDFLAGS}
+)
 
+target_include_directories(rdpear-common-obj
+	PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
+)
+target_include_directories(rdpear-common-obj
+	SYSTEM
+	PRIVATE ${KRB5_INCLUDE_DIRS}
+)
 target_link_directories(rdpear-common INTERFACE ${KRB5_LIBRARY_DIRS})
 target_link_libraries(rdpear-common INTERFACE
     ${KRB5_LIBRARIES}
