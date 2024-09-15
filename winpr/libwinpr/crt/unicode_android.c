@@ -23,6 +23,7 @@
 #include <winpr/string.h>
 
 #include "../utils/android.h"
+#include "unicode.h"
 
 #ifndef MIN
 #define MIN(a, b) (a) < (b) ? (a) : (b)

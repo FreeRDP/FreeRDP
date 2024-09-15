@@ -88,7 +88,7 @@ int mf_info_unlock(mfInfo* mfi)
 	return 1;
 }
 
-mfInfo* mf_info_init()
+static mfInfo* mf_info_init(void)
 {
 	mfInfo* mfi;
 
@@ -112,7 +112,7 @@ mfInfo* mf_info_init()
 	return mfi;
 }
 
-mfInfo* mf_info_get_instance()
+mfInfo* mf_info_get_instance(void)
 {
 	if (mfInfoInstance == NULL)
 		mfInfoInstance = mf_info_init();

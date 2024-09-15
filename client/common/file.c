@@ -1117,7 +1117,6 @@ BOOL freerdp_client_populate_rdp_file_from_settings(rdpFile* file, const rdpSett
 	UINT32 LoadBalanceInfoLength = 0;
 	const char* GatewayHostname = NULL;
 	char* redirectCameras = NULL;
-	char* redirectUsb = NULL;
 
 	if (!file || !settings)
 		return FALSE;
@@ -1307,7 +1306,8 @@ BOOL freerdp_client_populate_rdp_file_from_settings(rdpFile* file, const rdpSett
 		file->RedirectCameras = redirectCameras;
 	}
 #ifdef CHANNEL_URBDRC_CLIENT
-	redirectUsb = freerdp_client_channel_args_to_string(settings, URBDRC_CHANNEL_NAME, "device:");
+	char* redirectUsb =
+	    freerdp_client_channel_args_to_string(settings, URBDRC_CHANNEL_NAME, "device:");
 	if (redirectUsb)
 		file->UsbDevicesToRedirect = redirectUsb;
 

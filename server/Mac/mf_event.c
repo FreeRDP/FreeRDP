@@ -30,7 +30,7 @@
 #include <freerdp/log.h>
 #define TAG SERVER_TAG("mac")
 
-int mf_is_event_set(mfEventQueue* event_queue)
+static int mf_is_event_set(mfEventQueue* event_queue)
 {
 	fd_set rfds;
 	int num_set;
@@ -43,7 +43,7 @@ int mf_is_event_set(mfEventQueue* event_queue)
 	return (num_set == 1);
 }
 
-void mf_signal_event(mfEventQueue* event_queue)
+static void mf_signal_event(mfEventQueue* event_queue)
 {
 	int length;
 
@@ -53,7 +53,7 @@ void mf_signal_event(mfEventQueue* event_queue)
 		WLog_ERR(TAG, "mf_signal_event: error");
 }
 
-void mf_set_event(mfEventQueue* event_queue)
+static void mf_set_event(mfEventQueue* event_queue)
 {
 	int length;
 
@@ -63,7 +63,7 @@ void mf_set_event(mfEventQueue* event_queue)
 		WLog_ERR(TAG, "mf_set_event: error");
 }
 
-void mf_clear_events(mfEventQueue* event_queue)
+static void mf_clear_events(mfEventQueue* event_queue)
 {
 	int length;
 
@@ -76,7 +76,7 @@ void mf_clear_events(mfEventQueue* event_queue)
 	}
 }
 
-void mf_clear_event(mfEventQueue* event_queue)
+static void mf_clear_event(mfEventQueue* event_queue)
 {
 	int length;
 

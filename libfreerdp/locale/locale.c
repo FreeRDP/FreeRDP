@@ -648,7 +648,6 @@ static BOOL freerdp_get_system_language_and_country_codes(char* language, size_t
 
 #if defined(__APPLE__)
 	{
-		CFIndex strSize;
 		CFStringRef langRef, countryRef;
 		CFLocaleRef localeRef = CFLocaleCopyCurrent();
 		if (!localeRef)

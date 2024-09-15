@@ -251,7 +251,7 @@ static INLINE pstatus_t neon_YUV420ToX(const BYTE* WINPR_RESTRICT pSrc[3], const
 	return PRIMITIVES_SUCCESS;
 }
 
-static pstatus_t neon_YUV420ToRGB_8u_P3AC4R(const BYTE* WINPR_RESTRICT const pSrc[3],
+static pstatus_t neon_YUV420ToRGB_8u_P3AC4R(const BYTE* WINPR_RESTRICT pSrc[3],
                                             const UINT32 srcStep[3], BYTE* WINPR_RESTRICT pDst,
                                             UINT32 dstStep, UINT32 DstFormat,
                                             const prim_size_t* WINPR_RESTRICT roi)
@@ -341,7 +341,7 @@ static INLINE pstatus_t neon_YUV444ToX(const BYTE* WINPR_RESTRICT pSrc[3], const
 	return PRIMITIVES_SUCCESS;
 }
 
-static pstatus_t neon_YUV444ToRGB_8u_P3AC4R(const BYTE* WINPR_RESTRICT const pSrc[3],
+static pstatus_t neon_YUV444ToRGB_8u_P3AC4R(const BYTE* WINPR_RESTRICT pSrc[3],
                                             const UINT32 srcStep[3], BYTE* WINPR_RESTRICT pDst,
                                             UINT32 dstStep, UINT32 DstFormat,
                                             const prim_size_t* WINPR_RESTRICT roi)
