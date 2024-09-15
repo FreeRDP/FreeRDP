@@ -30,6 +30,8 @@
 #include <winpr/error.h>
 #include <winpr/print.h>
 
+#include "unicode.h"
+
 #ifndef MIN
 #define MIN(a, b) (a) < (b) ? (a) : (b)
 #endif

@@ -111,8 +111,6 @@ BOOL winpr_event_init(WINPR_EVENT_IMPL* event)
 
 	return event->fds[0] >= 0;
 #else
-	int flags;
-
 	if (pipe(event->fds) < 0)
 		return FALSE;
 

@@ -218,20 +218,21 @@ static char* GetPath_XDG_CONFIG_HOME(void)
 static char* GetPath_XDG_CACHE_HOME(void)
 {
 	char* path = NULL;
-	char* home = NULL;
 #if defined(WIN32)
-	home = GetPath_XDG_RUNTIME_DIR();
-
-	if (home)
 	{
-		path = GetCombinedPath(home, "cache");
+		char* home = GetPath_XDG_RUNTIME_DIR();
 
-		if (!winpr_PathFileExists(path))
-			if (!CreateDirectoryA(path, NULL))
-				path = NULL;
+		if (home)
+		{
+			path = GetCombinedPath(home, "cache");
+
+			if (!winpr_PathFileExists(path))
+				if (!CreateDirectoryA(path, NULL))
+					path = NULL;
+		}
+
+		free(home);
 	}
-
-	free(home);
 #elif defined(__IOS__)
 	path = ios_get_cache();
 #else
@@ -249,7 +250,7 @@ static char* GetPath_XDG_CACHE_HOME(void)
 	if (path)
 		return path;
 
-	home = GetPath_HOME();
+	char* home = GetPath_HOME();
 
 	if (!home)
 		return NULL;

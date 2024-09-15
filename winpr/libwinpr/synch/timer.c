@@ -64,8 +64,6 @@ static int TimerGetFd(HANDLE handle)
 
 static DWORD TimerCleanupHandle(HANDLE handle)
 {
-	SSIZE_T length = 0;
-	UINT64 expirations = 0;
 	WINPR_TIMER* timer = (WINPR_TIMER*)handle;
 
 	if (!TimerIsHandled(handle))
@@ -75,8 +73,10 @@ static DWORD TimerCleanupHandle(HANDLE handle)
 		return WAIT_OBJECT_0;
 
 #ifdef TIMER_IMPL_TIMERFD
+	SSIZE_T length = 0;
 	do
 	{
+		UINT64 expirations = 0;
 		length = read(timer->fd, (void*)&expirations, sizeof(UINT64));
 	} while (length < 0 && errno == EINTR);
 
@@ -232,7 +232,6 @@ static BOOL InstallTimerSignalHandler(PINIT_ONCE InitOnce, PVOID Parameter, PVOI
 #ifdef TIMER_IMPL_DISPATCH
 static void WaitableTimerHandler(void* arg)
 {
-	UINT64 data = 1;
 	WINPR_TIMER* timer = (WINPR_TIMER*)arg;
 
 	if (!timer)

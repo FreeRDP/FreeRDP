@@ -65,6 +65,8 @@ static BOOL mac_desktop_resize(rdpContext *context);
 static void input_activity_cb(freerdp *instance);
 
 static DWORD WINAPI mac_client_thread(void *param);
+static void windows_to_apple_cords(MRDPView *view, NSRect *r);
+static CGContextRef mac_create_bitmap_context(rdpContext *context);
 
 @implementation MRDPView
 

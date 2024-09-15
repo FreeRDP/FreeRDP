@@ -46,9 +46,9 @@ neon_yCbCrToRGB_16s16s_P3P3(const INT16* WINPR_RESTRICT pSrc[3], INT32 srcStep,
 	int16x8_t g_cr = vdupq_n_s16(-11698); // -0.714 << 14
 	int16x8_t b_cb = vdupq_n_s16(28999);  //  1.770 << 14
 	int16x8_t c4096 = vdupq_n_s16(4096);
-	int16x8_t* y_buf = (int16x8_t*)pSrc[0];
-	int16x8_t* cb_buf = (int16x8_t*)pSrc[1];
-	int16x8_t* cr_buf = (int16x8_t*)pSrc[2];
+	const int16x8_t* y_buf = (const int16x8_t*)pSrc[0];
+	const int16x8_t* cb_buf = (const int16x8_t*)pSrc[1];
+	const int16x8_t* cr_buf = (const int16x8_t*)pSrc[2];
 	int16x8_t* r_buf = (int16x8_t*)pDst[0];
 	int16x8_t* g_buf = (int16x8_t*)pDst[1];
 	int16x8_t* b_buf = (int16x8_t*)pDst[2];
@@ -272,9 +272,9 @@ neon_RGBToRGB_16s8u_P3AC4R_X(const INT16* WINPR_RESTRICT pSrc[3], /* 16-bit R,G,
 
 	for (UINT32 y = 0; y < roi->height; y++)
 	{
-		const INT16* pr = (INT16*)(((BYTE*)pSrc[0]) + y * srcStep);
-		const INT16* pg = (INT16*)(((BYTE*)pSrc[1]) + y * srcStep);
-		const INT16* pb = (INT16*)(((BYTE*)pSrc[2]) + y * srcStep);
+		const INT16* pr = (const INT16*)(((BYTE*)pSrc[0]) + y * srcStep);
+		const INT16* pg = (const INT16*)(((BYTE*)pSrc[1]) + y * srcStep);
+		const INT16* pb = (const INT16*)(((BYTE*)pSrc[2]) + y * srcStep);
 		BYTE* dst = pDst + y * dstStep;
 
 		for (UINT32 x = 0; x < roi->width - pad; x += 8)

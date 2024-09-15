@@ -648,8 +648,8 @@ static BOOL FileSetFileTime(HANDLE hFile, const FILETIME* lpCreationTime,
 
 	// TODO: Creation time can not be handled!
 	{
-		const int rc = utimes(pFile->lpFileName, timevals);
-		if (rc != 0)
+		const int res = utimes(pFile->lpFileName, timevals);
+		if (res != 0)
 			return FALSE;
 	}
 

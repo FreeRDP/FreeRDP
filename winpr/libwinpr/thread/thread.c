@@ -22,6 +22,7 @@
 
 #include <winpr/config.h>
 
+#include <winpr/winpr.h>
 #include <winpr/assert.h>
 
 #include <winpr/handle.h>
@@ -628,8 +629,6 @@ BOOL SetThreadPriority(HANDLE hThread, int nPriority)
 	if (!winpr_Handle_GetInfo(hThread, &Type, &Object) || Object->Type != HANDLE_TYPE_THREAD)
 		return FALSE;
 
-	WINPR_THREAD* thread = (WINPR_THREAD*)Object;
-
 	const int min = 19;
 	const int max = 0;
 	const int diff = (max - min);
@@ -663,6 +662,7 @@ BOOL SetThreadPriority(HANDLE hThread, int nPriority)
 			break;
 	}
 #if defined(_POSIX_C_SOURCE) && (_POSIX_C_SOURCE >= 200809L) && defined(PTHREAD_SETSCHEDPRIO)
+	WINPR_THREAD* thread = (WINPR_THREAD*)Object;
 	const int rc = pthread_setschedprio(thread->thread, sched_priority);
 	if (rc != 0)
 		WLog_ERR(TAG, "pthread_setschedprio(%d) %s [%d]", sched_priority, strerror(rc), rc);
@@ -906,7 +906,7 @@ DWORD GetCurrentThreadId(VOID)
 	tid = pthread_self();
 	/* Since pthread_t can be 64-bits on some systems, take just the    */
 	/* lower 32-bits of it for the thread ID returned by this function. */
-	return (DWORD)tid & 0xffffffffUL;
+	return WINPR_REINTERPRET_CAST(tid, pthread_t, DWORD) & 0xffffffffUL;
 }
 
 typedef struct
