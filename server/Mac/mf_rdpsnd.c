@@ -113,11 +113,11 @@ static void mf_peer_rdpsnd_activated(RdpsndServerContext* context)
 	mf_rdpsnd_derive_buffer_size(recorderState.queue, &recorderState.dataFormat, 0.05,
 	                             &recorderState.bufferByteSize);
 
-	for (int i = 0; i < SND_NUMBUFFERS; ++i)
+	for (size_t x = 0; x < SND_NUMBUFFERS; ++x)
 	{
 		AudioQueueAllocateBuffer(recorderState.queue, recorderState.bufferByteSize,
-		                         &recorderState.buffers[i]);
-		AudioQueueEnqueueBuffer(recorderState.queue, recorderState.buffers[i], 0, NULL);
+		                         &recorderState.buffers[x]);
+		AudioQueueEnqueueBuffer(recorderState.queue, recorderState.buffers[x], 0, NULL);
 	}
 
 	recorderState.currentPacket = 0;
@@ -141,7 +141,7 @@ BOOL mf_peer_rdpsnd_init(mfPeerContext* context)
 	return TRUE;
 }
 
-BOOL mf_peer_rdpsnd_stop()
+BOOL mf_peer_rdpsnd_stop(void)
 {
 	recorderState.isRunning = false;
 	AudioQueueStop(recorderState.queue, true);
