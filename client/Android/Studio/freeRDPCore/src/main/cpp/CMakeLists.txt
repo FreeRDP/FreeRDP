@@ -36,7 +36,7 @@ set(MODULE_PREFIX "FREERDP_CLIENT_ANDROID")
 set(FREERDP_IMPORT_DIR_RELATIVE ../jniLibs/${CMAKE_ANDROID_ARCH_ABI})
 get_filename_component(FREERDP_IMPORT_DIR ${FREERDP_IMPORT_DIR_RELATIVE} ABSOLUTE)
 
-include_directories(
+include_directories(SYSTEM
         ${FREERDP_IMPORT_DIR}/include/freerdp3
         ${FREERDP_IMPORT_DIR}/include/winpr3
         ${FREERDP_IMPORT_DIR}/include/openssl
