@@ -362,8 +362,11 @@ static BOOL rdp_apply_bitmap_capability_set(rdpSettings* settings, const rdpSett
 	WINPR_ASSERT(src);
 
 	if (!settings->ServerMode)
-		freerdp_settings_set_uint32(settings, FreeRDP_ColorDepth,
-		                            freerdp_settings_get_uint32(src, FreeRDP_ColorDepth));
+	{
+		if (!freerdp_settings_set_uint32(settings, FreeRDP_ColorDepth,
+		                                 freerdp_settings_get_uint32(src, FreeRDP_ColorDepth)))
+			return FALSE;
+	}
 
 	if (!src->DesktopResize)
 		settings->DesktopResize = FALSE;

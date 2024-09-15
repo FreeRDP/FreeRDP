@@ -264,16 +264,19 @@ static BOOL wf_pre_connect(freerdp* instance)
 
 	if (desktopWidth != freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth))
 	{
-		freerdp_settings_set_uint32(settings, FreeRDP_DesktopWidth, desktopWidth);
+		if (!freerdp_settings_set_uint32(settings, FreeRDP_DesktopWidth, desktopWidth))
+			return FALSE;
 	}
 
 	if (desktopHeight != freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight))
 	{
-		freerdp_settings_set_uint32(settings, FreeRDP_DesktopHeight, desktopHeight);
+		if (!freerdp_settings_set_uint32(settings, FreeRDP_DesktopHeight, desktopHeight))
+			return FALSE;
 	}
 
 	rc = freerdp_keyboard_init(freerdp_settings_get_uint32(settings, FreeRDP_KeyboardLayout));
-	freerdp_settings_set_uint32(settings, FreeRDP_KeyboardLayout, rc);
+	if (!freerdp_settings_set_uint32(settings, FreeRDP_KeyboardLayout, rc))
+		return FALSE;
 	PubSub_SubscribeChannelConnected(instance->context->pubSub, wf_OnChannelConnectedEventHandler);
 	PubSub_SubscribeChannelDisconnected(instance->context->pubSub,
 	                                    wf_OnChannelDisconnectedEventHandler);
@@ -1338,7 +1341,8 @@ static BOOL wfreerdp_client_new(freerdp* instance, rdpContext* context)
 	instance->AuthenticateEx = wf_authenticate_ex;
 
 #ifdef WITH_WINDOWS_CERT_STORE
-	freerdp_settings_set_bool(context->settings, FreeRDP_CertificateCallbackPreferPEM, TRUE);
+	if (!freerdp_settings_set_bool(context->settings, FreeRDP_CertificateCallbackPreferPEM, TRUE))
+		return FALSE;
 #endif
 
 	if (!wfc->isConsole)

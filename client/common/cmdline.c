@@ -4195,9 +4195,12 @@ static int freerdp_client_settings_parse_command_line_arguments_int(
 	else
 		compatibility = freerdp_client_detect_command_line(argc - 1, &argv[1], &flags);
 
-	freerdp_settings_set_string(settings, FreeRDP_ProxyHostname, NULL);
-	freerdp_settings_set_string(settings, FreeRDP_ProxyUsername, NULL);
-	freerdp_settings_set_string(settings, FreeRDP_ProxyPassword, NULL);
+	if (!freerdp_settings_set_string(settings, FreeRDP_ProxyHostname, NULL))
+		return -1;
+	if (!freerdp_settings_set_string(settings, FreeRDP_ProxyUsername, NULL))
+		return -1;
+	if (!freerdp_settings_set_string(settings, FreeRDP_ProxyPassword, NULL))
+		return -1;
 
 	if (compatibility)
 	{
@@ -4644,7 +4647,8 @@ static int freerdp_client_settings_parse_command_line_arguments_int(
 		}
 		CommandLineSwitchCase(arg, "disable-output")
 		{
-			freerdp_settings_set_bool(settings, FreeRDP_DeactivateClientDecoding, enable);
+			if (!freerdp_settings_set_bool(settings, FreeRDP_DeactivateClientDecoding, enable))
+				return fail_at(arg, COMMAND_LINE_ERROR);
 		}
 		CommandLineSwitchCase(arg, "home-drive")
 		{

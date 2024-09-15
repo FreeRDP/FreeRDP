@@ -20,6 +20,7 @@
 #include <errno.h>
 
 #include <winpr/assert.h>
+#include <winpr/wtypes.h>
 
 #include <winpr/crt.h>
 #include <winpr/wlog.h>
@@ -199,8 +200,11 @@ static BOOL rdpear_send_payload(RDPEAR_PLUGIN* rdpear, IWTSVirtualChannelCallbac
 		goto out;
 
 	const size_t unencodedLen = Stream_GetPosition(unencodedContent);
-	if (unencodedLen > ULONG_MAX)
+
+#if UINT32_MAX < SIZE_MAX
+	if (unencodedLen > UINT32_MAX)
 		goto out;
+#endif
 
 	SecBuffer inBuffer = { (ULONG)unencodedLen, SECBUFFER_DATA, Stream_Buffer(unencodedContent) };
 
@@ -223,8 +227,10 @@ static BOOL rdpear_send_payload(RDPEAR_PLUGIN* rdpear, IWTSVirtualChannelCallbac
 	Stream_Write(finalStream, cryptedBuffer.pvBuffer, cryptedBuffer.cbBuffer);
 
 	const size_t pos = Stream_GetPosition(finalStream);
-	if (pos > ULONG_MAX)
+#if UINT32_MAX < SIZE_MAX
+	if (pos > UINT32_MAX)
 		goto out;
+#endif
 
 	UINT status =
 	    callback->channel->Write(callback->channel, (ULONG)pos, Stream_Buffer(finalStream), NULL);

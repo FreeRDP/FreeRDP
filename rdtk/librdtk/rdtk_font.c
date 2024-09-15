@@ -161,23 +161,19 @@ static char* rdtk_font_load_descriptor_file(const char* filename, size_t* pSize)
 	if (!fp)
 		return NULL;
 
-	_fseeki64(fp, 0, SEEK_END);
+	if (_fseeki64(fp, 0, SEEK_END) != 0)
+		goto fail;
 	fileSize.i64 = _ftelli64(fp);
-	_fseeki64(fp, 0, SEEK_SET);
+	if (_fseeki64(fp, 0, SEEK_SET) != 0)
+		goto fail;
 
 	if (fileSize.i64 < 1)
-	{
-		(void)fclose(fp);
-		return NULL;
-	}
+		goto fail;
 
 	uint8_t* buffer = (uint8_t*)malloc(fileSize.s + 2);
 
 	if (!buffer)
-	{
-		(void)fclose(fp);
-		return NULL;
-	}
+		goto fail;
 
 	size_t readSize = fread(buffer, fileSize.s, 1, fp);
 	if (readSize == 0)
@@ -198,6 +194,10 @@ static char* rdtk_font_load_descriptor_file(const char* filename, size_t* pSize)
 	buffer[fileSize.s + 1] = '\0';
 	*pSize = fileSize.s;
 	return (char*)buffer;
+
+fail:
+	(void)fclose(fp);
+	return NULL;
 }
 
 static int rdtk_font_convert_descriptor_code_to_utf8(const char* str, uint8_t* utf8)

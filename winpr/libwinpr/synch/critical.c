@@ -244,7 +244,7 @@ VOID LeaveCriticalSection(LPCRITICAL_SECTION lpCriticalSection)
 	}
 	else
 	{
-		InterlockedDecrement(&lpCriticalSection->LockCount);
+		(void)InterlockedDecrement(&lpCriticalSection->LockCount);
 	}
 }
 

@@ -192,7 +192,7 @@ void winpr_backtrace_symbols_fd(void* buffer, int fd)
 			return;
 
 		for (size_t i = 0; i < used; i++)
-			_write(fd, lines[i], (unsigned)strnlen(lines[i], UINT32_MAX));
+			(void)_write(fd, lines[i], (unsigned)strnlen(lines[i], UINT32_MAX));
 		free(lines);
 	}
 #else

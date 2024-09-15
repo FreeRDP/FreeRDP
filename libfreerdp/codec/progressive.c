@@ -1141,7 +1141,9 @@ static INLINE INT16 progressive_rfx_srl_read(RFX_PROGRESSIVE_UPGRADE_STATE* WINP
 		mag++;
 	}
 
-	return sign ? -1 * mag : mag;
+	if (mag > INT16_MAX)
+		mag = INT16_MAX;
+	return (INT16)(sign ? -1 * mag : mag);
 }
 
 static INLINE int

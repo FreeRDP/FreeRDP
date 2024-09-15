@@ -644,7 +644,7 @@ static BOOL rdp_read_info_string(rdpSettings* settings, FreeRDP_Settings_Keys_St
 	if (terminator.w != L'\0')
 	{
 		WLog_ERR(TAG, "protocol error: Domain must be null terminated");
-		freerdp_settings_set_string(settings, id, NULL);
+		(void)freerdp_settings_set_string(settings, id, NULL);
 		return FALSE;
 	}
 

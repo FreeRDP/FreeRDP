@@ -360,8 +360,9 @@ static void wf_send_resize(wfContext* wfc)
 				{
 					WLog_ERR("", "SendMonitorLayout failed.");
 				}
-				freerdp_settings_set_uint32(settings, FreeRDP_SmartSizingWidth, targetWidth);
-				freerdp_settings_set_uint32(settings, FreeRDP_SmartSizingHeight, targetHeight);
+				(void)freerdp_settings_set_uint32(settings, FreeRDP_SmartSizingWidth, targetWidth);
+				(void)freerdp_settings_set_uint32(settings, FreeRDP_SmartSizingHeight,
+				                                  targetHeight);
 			}
 			wfc->lastSentDate = GetTickCount64();
 		}
@@ -725,7 +726,7 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 				{
 					HMENU hMenu = GetSystemMenu(wfc->hwnd, FALSE);
 					const BOOL rc = freerdp_settings_get_bool(settings, FreeRDP_SmartSizing);
-					freerdp_settings_set_bool(settings, FreeRDP_SmartSizing, !rc);
+					(void)freerdp_settings_set_bool(settings, FreeRDP_SmartSizing, !rc);
 					CheckMenuItem(hMenu, SYSCOMMAND_ID_SMARTSIZING,
 					              freerdp_settings_get_bool(settings, FreeRDP_SmartSizing)
 					                  ? MF_CHECKED
@@ -778,7 +779,8 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 		case WM_SETFOCUS:
 			DEBUG_KBD("getting focus %X", hWnd);
 
-			freerdp_settings_set_bool(wfc->common.context.settings, FreeRDP_SuspendInput, FALSE);
+			(void)freerdp_settings_set_bool(wfc->common.context.settings, FreeRDP_SuspendInput,
+			                                FALSE);
 
 			if (alt_ctrl_down())
 				g_flipping_in = TRUE;
@@ -788,7 +790,8 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 			break;
 
 		case WM_KILLFOCUS:
-			freerdp_settings_set_bool(wfc->common.context.settings, FreeRDP_SuspendInput, TRUE);
+			(void)freerdp_settings_set_bool(wfc->common.context.settings, FreeRDP_SuspendInput,
+			                                TRUE);
 
 			if (g_focus_hWnd == hWnd && wfc && !wfc->fullscreen)
 			{

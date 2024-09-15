@@ -309,8 +309,8 @@ out_free:
 		{
 			[_params setInt:size.width forKey:@"width"];
 			[_params setInt:size.height forKey:@"height"];
-			freerdp_settings_set_uint32(settings, FreeRDP_DesktopWidth, size.width);
-			freerdp_settings_set_uint32(settings, FreeRDP_DesktopHeight, size.height);
+			(void)freerdp_settings_set_uint32(settings, FreeRDP_DesktopWidth, size.width);
+			(void)freerdp_settings_set_uint32(settings, FreeRDP_DesktopHeight, size.height);
 		}
 	}
 
@@ -320,7 +320,7 @@ out_free:
 	if (freerdp_settings_get_uint32(settings, FreeRDP_ColorDepth) <= 16)
 	{
 		const UINT32 w = freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth) & (~1);
-		freerdp_settings_set_uint32(settings, FreeRDP_DesktopWidth, w);
+		(void)freerdp_settings_set_uint32(settings, FreeRDP_DesktopWidth, w);
 	}
 
 	[self performSelectorInBackground:@selector(runSession) withObject:nil];
