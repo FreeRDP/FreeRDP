@@ -514,19 +514,19 @@ typedef struct
  */
 static UINT handle_hotplug(rdpdrPlugin* rdpdr)
 {
-	struct dirent* pDirent;
-	DIR* pDir;
-	char fullpath[PATH_MAX];
+	struct dirent* pDirent = NULL;
+	char fullpath[PATH_MAX] = { 0 };
 	char* szdir = (char*)"/Volumes";
-	struct stat buf;
-	hotplug_dev dev_array[MAX_USB_DEVICES];
-	int count;
-	DEVICE_DRIVE_EXT* device_ext;
+	struct stat buf = { 0 };
+	hotplug_dev dev_array[MAX_USB_DEVICES] = { 0 };
+	int count = 0;
+	DEVICE_DRIVE_EXT* device_ext = NULL;
 	ULONG_PTR* keys = NULL;
 	int size = 0;
-	UINT error;
+	UINT error = ERROR_INTERNAL_ERROR;
 	UINT32 ids[1];
-	pDir = opendir(szdir);
+
+	DIR* pDir = opendir(szdir);
 
 	if (pDir == NULL)
 	{
