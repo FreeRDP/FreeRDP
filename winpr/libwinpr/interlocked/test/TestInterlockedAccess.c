@@ -36,7 +36,7 @@ int TestInterlockedAccess(int argc, char* argv[])
 	/* InterlockedDecrement */
 
 	for (int index = 0; index < 10; index++)
-		InterlockedDecrement(Addend);
+		(void)InterlockedDecrement(Addend);
 
 	if (*Addend != 0)
 	{
