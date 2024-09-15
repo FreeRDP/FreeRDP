@@ -833,9 +833,9 @@ void freerdp_dynamic_channel_collection_free(rdpSettings* settings)
 	}
 
 	free(settings->DynamicChannelArray);
-	freerdp_settings_set_uint32(settings, FreeRDP_DynamicChannelArraySize, 0);
+	(void)freerdp_settings_set_uint32(settings, FreeRDP_DynamicChannelArraySize, 0);
 	settings->DynamicChannelArray = NULL;
-	freerdp_settings_set_uint32(settings, FreeRDP_DynamicChannelCount, 0);
+	(void)freerdp_settings_set_uint32(settings, FreeRDP_DynamicChannelCount, 0);
 }
 
 void freerdp_capability_buffer_free(rdpSettings* settings)
@@ -968,37 +968,41 @@ void freerdp_performance_flags_make(rdpSettings* settings)
 
 	if (freerdp_settings_get_bool(settings, FreeRDP_DisableThemes))
 		PerformanceFlags |= PERF_DISABLE_THEMING;
-	freerdp_settings_set_uint32(settings, FreeRDP_PerformanceFlags, PerformanceFlags);
+	(void)freerdp_settings_set_uint32(settings, FreeRDP_PerformanceFlags, PerformanceFlags);
 }
 
 void freerdp_performance_flags_split(rdpSettings* settings)
 {
-	freerdp_settings_set_bool(settings, FreeRDP_AllowFontSmoothing,
-	                          (freerdp_settings_get_uint32(settings, FreeRDP_PerformanceFlags) &
-	                           PERF_ENABLE_FONT_SMOOTHING)
-	                              ? TRUE
-	                              : FALSE);
-	freerdp_settings_set_bool(settings, FreeRDP_AllowDesktopComposition,
-	                          (freerdp_settings_get_uint32(settings, FreeRDP_PerformanceFlags) &
-	                           PERF_ENABLE_DESKTOP_COMPOSITION)
-	                              ? TRUE
-	                              : FALSE);
-	freerdp_settings_set_bool(
+	(void)freerdp_settings_set_bool(
+	    settings, FreeRDP_AllowFontSmoothing,
+	    (freerdp_settings_get_uint32(settings, FreeRDP_PerformanceFlags) &
+	     PERF_ENABLE_FONT_SMOOTHING)
+	        ? TRUE
+	        : FALSE);
+	(void)freerdp_settings_set_bool(
+	    settings, FreeRDP_AllowDesktopComposition,
+	    (freerdp_settings_get_uint32(settings, FreeRDP_PerformanceFlags) &
+	     PERF_ENABLE_DESKTOP_COMPOSITION)
+	        ? TRUE
+	        : FALSE);
+	(void)freerdp_settings_set_bool(
 	    settings, FreeRDP_DisableWallpaper,
 	    (freerdp_settings_get_uint32(settings, FreeRDP_PerformanceFlags) & PERF_DISABLE_WALLPAPER)
 	        ? TRUE
 	        : FALSE);
-	freerdp_settings_set_bool(settings, FreeRDP_DisableFullWindowDrag,
-	                          (freerdp_settings_get_uint32(settings, FreeRDP_PerformanceFlags) &
-	                           PERF_DISABLE_FULLWINDOWDRAG)
-	                              ? TRUE
-	                              : FALSE);
-	freerdp_settings_set_bool(settings, FreeRDP_DisableMenuAnims,
-	                          (freerdp_settings_get_uint32(settings, FreeRDP_PerformanceFlags) &
-	                           PERF_DISABLE_MENUANIMATIONS)
-	                              ? TRUE
-	                              : FALSE);
-	freerdp_settings_set_bool(
+	(void)freerdp_settings_set_bool(
+	    settings, FreeRDP_DisableFullWindowDrag,
+	    (freerdp_settings_get_uint32(settings, FreeRDP_PerformanceFlags) &
+	     PERF_DISABLE_FULLWINDOWDRAG)
+	        ? TRUE
+	        : FALSE);
+	(void)freerdp_settings_set_bool(
+	    settings, FreeRDP_DisableMenuAnims,
+	    (freerdp_settings_get_uint32(settings, FreeRDP_PerformanceFlags) &
+	     PERF_DISABLE_MENUANIMATIONS)
+	        ? TRUE
+	        : FALSE);
+	(void)freerdp_settings_set_bool(
 	    settings, FreeRDP_DisableThemes,
 	    (freerdp_settings_get_uint32(settings, FreeRDP_PerformanceFlags) & PERF_DISABLE_THEMING)
 	        ? TRUE

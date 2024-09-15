@@ -1353,8 +1353,8 @@ static BOOL is_accepted(rdpTls* tls, const rdpCertificate* cert)
 			return TRUE;
 	}
 
-	freerdp_settings_set_string(settings, keyAccepted, NULL);
-	freerdp_settings_set_uint32(settings, keyLength, 0);
+	(void)freerdp_settings_set_string(settings, keyAccepted, NULL);
+	(void)freerdp_settings_set_uint32(settings, keyLength, 0);
 
 	return FALSE;
 }

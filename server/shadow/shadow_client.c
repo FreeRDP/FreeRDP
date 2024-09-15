@@ -746,14 +746,21 @@ static BOOL shadow_client_logon(freerdp_peer* peer, const SEC_WINNT_AUTH_IDENTIT
 		goto fail;
 
 	if (user)
-		freerdp_settings_set_string(settings, FreeRDP_Username, user);
+	{
+		if (!freerdp_settings_set_string(settings, FreeRDP_Username, user))
+			goto fail;
+	}
 
 	if (domain)
-		freerdp_settings_set_string(settings, FreeRDP_Domain, domain);
-
+	{
+		if (!freerdp_settings_set_string(settings, FreeRDP_Domain, domain))
+			goto fail;
+	}
 	if (password)
-		freerdp_settings_set_string(settings, FreeRDP_Password, password);
-
+	{
+		if (!freerdp_settings_set_string(settings, FreeRDP_Password, password))
+			goto fail;
+	}
 	rc = TRUE;
 fail:
 	free(user);
@@ -959,9 +966,12 @@ static UINT shadow_client_rdpgfx_caps_advertise(RdpgfxServerContext* context,
 	h264 =
 	    (shadow_encoder_prepare(client->encoder, FREERDP_CODEC_AVC420 | FREERDP_CODEC_AVC444) >= 0);
 #else
-	freerdp_settings_set_bool(clientSettings, FreeRDP_GfxAVC444v2, FALSE);
-	freerdp_settings_set_bool(clientSettings, FreeRDP_GfxAVC444, FALSE);
-	freerdp_settings_set_bool(clientSettings, FreeRDP_GfxH264, FALSE);
+	if (!freerdp_settings_set_bool(clientSettings, FreeRDP_GfxAVC444v2, FALSE))
+		return rc;
+	if (!freerdp_settings_set_bool(clientSettings, FreeRDP_GfxAVC444, FALSE))
+		return rc;
+	if (!freerdp_settings_set_bool(clientSettings, FreeRDP_GfxH264, FALSE))
+		return rc;
 #endif
 
 	/* Request full screen update for new gfx channel */
@@ -1019,25 +1029,38 @@ static UINT shadow_client_rdpgfx_caps_advertise(RdpgfxServerContext* context,
 
 				flags = pdu.capsSet->flags;
 
-				freerdp_settings_set_bool(clientSettings, FreeRDP_GfxAVC444v2, FALSE);
-				freerdp_settings_set_bool(clientSettings, FreeRDP_GfxAVC444, FALSE);
+				if (!freerdp_settings_set_bool(clientSettings, FreeRDP_GfxAVC444v2, FALSE))
+					return rc;
+				if (!freerdp_settings_set_bool(clientSettings, FreeRDP_GfxAVC444, FALSE))
+					return rc;
 
-				freerdp_settings_set_bool(clientSettings, FreeRDP_GfxThinClient,
-				                          (flags & RDPGFX_CAPS_FLAG_THINCLIENT) ? TRUE : FALSE);
-				freerdp_settings_set_bool(clientSettings, FreeRDP_GfxSmallCache,
-				                          (flags & RDPGFX_CAPS_FLAG_SMALL_CACHE) ? TRUE : FALSE);
+				if (!freerdp_settings_set_bool(clientSettings, FreeRDP_GfxThinClient,
+				                               (flags & RDPGFX_CAPS_FLAG_THINCLIENT) ? TRUE
+				                                                                     : FALSE))
+					return rc;
+				if (!freerdp_settings_set_bool(clientSettings, FreeRDP_GfxSmallCache,
+				                               (flags & RDPGFX_CAPS_FLAG_SMALL_CACHE) ? TRUE
+				                                                                      : FALSE))
+					return rc;
 
 #ifndef WITH_GFX_H264
-				freerdp_settings_set_bool(clientSettings, FreeRDP_GfxH264, FALSE);
+				if (!freerdp_settings_set_bool(clientSettings, FreeRDP_GfxH264, FALSE))
+					return rc;
 				pdu.capsSet->flags &= ~RDPGFX_CAPS_FLAG_AVC420_ENABLED;
 #else
 
 				if (h264)
-					freerdp_settings_set_bool(clientSettings, FreeRDP_GfxH264,
-					                          (flags & RDPGFX_CAPS_FLAG_AVC420_ENABLED) ? TRUE
-					                                                                    : FALSE);
+				{
+					if (!freerdp_settings_set_bool(
+					        clientSettings, FreeRDP_GfxH264,
+					        (flags & RDPGFX_CAPS_FLAG_AVC420_ENABLED) ? TRUE : FALSE))
+						return rc;
+				}
 				else
-					freerdp_settings_set_bool(clientSettings, FreeRDP_GfxH264, FALSE);
+				{
+					if (!freerdp_settings_set_bool(clientSettings, FreeRDP_GfxH264, FALSE))
+						return rc;
+				}
 #endif
 
 				return shadow_client_send_caps_confirm(context, client, &pdu);
@@ -1058,14 +1081,21 @@ static UINT shadow_client_rdpgfx_caps_advertise(RdpgfxServerContext* context,
 				pdu.capsSet = &caps;
 				flags = pdu.capsSet->flags;
 
-				freerdp_settings_set_bool(clientSettings, FreeRDP_GfxAVC444v2, FALSE);
-				freerdp_settings_set_bool(clientSettings, FreeRDP_GfxAVC444, FALSE);
-				freerdp_settings_set_bool(clientSettings, FreeRDP_GfxH264, FALSE);
+				if (!freerdp_settings_set_bool(clientSettings, FreeRDP_GfxAVC444v2, FALSE))
+					return rc;
+				if (!freerdp_settings_set_bool(clientSettings, FreeRDP_GfxAVC444, FALSE))
+					return rc;
+				if (!freerdp_settings_set_bool(clientSettings, FreeRDP_GfxH264, FALSE))
+					return rc;
 
-				freerdp_settings_set_bool(clientSettings, FreeRDP_GfxThinClient,
-				                          (flags & RDPGFX_CAPS_FLAG_THINCLIENT) ? TRUE : FALSE);
-				freerdp_settings_set_bool(clientSettings, FreeRDP_GfxSmallCache,
-				                          (flags & RDPGFX_CAPS_FLAG_SMALL_CACHE) ? TRUE : FALSE);
+				if (!freerdp_settings_set_bool(clientSettings, FreeRDP_GfxThinClient,
+				                               (flags & RDPGFX_CAPS_FLAG_THINCLIENT) ? TRUE
+				                                                                     : FALSE))
+					return rc;
+				if (!freerdp_settings_set_bool(clientSettings, FreeRDP_GfxSmallCache,
+				                               (flags & RDPGFX_CAPS_FLAG_SMALL_CACHE) ? TRUE
+				                                                                      : FALSE))
+					return rc;
 
 				return shadow_client_send_caps_confirm(context, client, &pdu);
 			}

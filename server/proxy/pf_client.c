@@ -702,31 +702,36 @@ static BOOL pf_client_should_retry_without_nla(pClientContext* pc)
 	return config->ClientTlsSecurity || config->ClientRdpSecurity;
 }
 
-static void pf_client_set_security_settings(pClientContext* pc)
+static BOOL pf_client_set_security_settings(pClientContext* pc)
 {
-	rdpSettings* settings = NULL;
-	const proxyConfig* config = NULL;
-
 	WINPR_ASSERT(pc);
 	WINPR_ASSERT(pc->pdata);
-	settings = pc->context.settings;
+	rdpSettings* settings = pc->context.settings;
 	WINPR_ASSERT(settings);
-	config = pc->pdata->config;
+	const proxyConfig* config = pc->pdata->config;
 	WINPR_ASSERT(config);
 
-	freerdp_settings_set_bool(settings, FreeRDP_RdpSecurity, config->ClientRdpSecurity);
-	freerdp_settings_set_bool(settings, FreeRDP_TlsSecurity, config->ClientTlsSecurity);
-	freerdp_settings_set_bool(settings, FreeRDP_NlaSecurity, config->ClientNlaSecurity);
+	if (!freerdp_settings_set_bool(settings, FreeRDP_RdpSecurity, config->ClientRdpSecurity))
+		return FALSE;
+	if (!freerdp_settings_set_bool(settings, FreeRDP_TlsSecurity, config->ClientTlsSecurity))
+		return FALSE;
+	if (!freerdp_settings_set_bool(settings, FreeRDP_NlaSecurity, config->ClientNlaSecurity))
+		return FALSE;
 
 	if (pf_client_use_proxy_smartcard_auth(settings))
 	{
 		/* Smartcard authentication requires smartcard redirection to be enabled */
-		freerdp_settings_set_bool(settings, FreeRDP_RedirectSmartCards, TRUE);
+		if (!freerdp_settings_set_bool(settings, FreeRDP_RedirectSmartCards, TRUE))
+			return FALSE;
 
 		/* Reset username/domain, we will get that info later from the sc cert */
-		freerdp_settings_set_string(settings, FreeRDP_Username, NULL);
-		freerdp_settings_set_string(settings, FreeRDP_Domain, NULL);
+		if (!freerdp_settings_set_string(settings, FreeRDP_Username, NULL))
+			return FALSE;
+		if (!freerdp_settings_set_string(settings, FreeRDP_Domain, NULL))
+			return FALSE;
 	}
+
+	return TRUE;
 }
 
 static BOOL pf_client_connect_without_nla(pClientContext* pc)
@@ -774,7 +779,9 @@ static BOOL pf_client_connect(freerdp* instance)
 	               freerdp_settings_get_string(settings, FreeRDP_Username),
 	               freerdp_settings_get_string(settings, FreeRDP_Domain));
 
-	pf_client_set_security_settings(pc);
+	if (!pf_client_set_security_settings(pc))
+		return FALSE;
+
 	if (pf_client_should_retry_without_nla(pc))
 		retry = pc->allow_next_conn_failure = TRUE;
 

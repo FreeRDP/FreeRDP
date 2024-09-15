@@ -254,21 +254,28 @@ static BOOL freerdp_client_settings_post_process(rdpSettings* settings)
 	 * that the rdp file also triggers this functionality */
 	if (freerdp_settings_get_bool(settings, FreeRDP_SpanMonitors))
 	{
-		freerdp_settings_set_bool(settings, FreeRDP_UseMultimon, TRUE);
-		freerdp_settings_set_bool(settings, FreeRDP_Fullscreen, TRUE);
+		if (!freerdp_settings_set_bool(settings, FreeRDP_UseMultimon, TRUE))
+			goto out_error;
+		if (!freerdp_settings_set_bool(settings, FreeRDP_Fullscreen, TRUE))
+			goto out_error;
 	}
 	else if (freerdp_settings_get_bool(settings, FreeRDP_UseMultimon))
 	{
-		freerdp_settings_set_bool(settings, FreeRDP_Fullscreen, TRUE);
+		if (!freerdp_settings_set_bool(settings, FreeRDP_Fullscreen, TRUE))
+			goto out_error;
 	}
 
 	/* deal with the smartcard / smartcard logon stuff */
 	if (freerdp_settings_get_bool(settings, FreeRDP_SmartcardLogon))
 	{
-		freerdp_settings_set_bool(settings, FreeRDP_TlsSecurity, TRUE);
-		freerdp_settings_set_bool(settings, FreeRDP_RedirectSmartCards, TRUE);
-		freerdp_settings_set_bool(settings, FreeRDP_DeviceRedirection, TRUE);
-		freerdp_settings_set_bool(settings, FreeRDP_PasswordIsSmartcardPin, TRUE);
+		if (!freerdp_settings_set_bool(settings, FreeRDP_TlsSecurity, TRUE))
+			goto out_error;
+		if (!freerdp_settings_set_bool(settings, FreeRDP_RedirectSmartCards, TRUE))
+			goto out_error;
+		if (!freerdp_settings_set_bool(settings, FreeRDP_DeviceRedirection, TRUE))
+			goto out_error;
+		if (!freerdp_settings_set_bool(settings, FreeRDP_PasswordIsSmartcardPin, TRUE))
+			goto out_error;
 	}
 
 	return TRUE;
