@@ -1764,7 +1764,7 @@ static void pf_channel_rdpdr_server_context_free(InterceptContextMapEntry* base)
 	if (!entry)
 		return;
 
-	WTSVirtualChannelClose(entry->handle);
+	(void)WTSVirtualChannelClose(entry->handle);
 	pf_channel_rdpdr_common_context_free(&entry->common);
 	ArrayList_Free(entry->blockedDevices);
 	free(entry);
