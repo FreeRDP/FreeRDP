@@ -1779,7 +1779,7 @@ int freerdp_client_settings_command_line_status_print_ex(rdpSettings* settings, 
 	}
 	else if (status == COMMAND_LINE_STATUS_PRINT)
 	{
-		CommandLineParseArgumentsA(argc, argv, largs, 0x112, NULL, NULL, NULL);
+		(void)CommandLineParseArgumentsA(argc, argv, largs, 0x112, NULL, NULL, NULL);
 
 		arg = CommandLineFindArgumentA(largs, "list");
 		WINPR_ASSERT(arg);
