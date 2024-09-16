@@ -99,6 +99,10 @@
 
 #define PROP_MOTIF_WM_HINTS_ELEMENTS 5
 
+#define ENTRY(x) \
+	case x:      \
+		return #x
+
 typedef struct
 {
 	unsigned long flags;
@@ -107,6 +111,112 @@ typedef struct
 	long inputMode;
 	unsigned long status;
 } PropMotifWmHints;
+
+static const char* window_style_to_string(UINT32 style)
+{
+	switch (style)
+	{
+		ENTRY(WS_NONE);
+		ENTRY(WS_BORDER);
+		ENTRY(WS_CAPTION);
+		ENTRY(WS_CHILD);
+		ENTRY(WS_CLIPCHILDREN);
+		ENTRY(WS_CLIPSIBLINGS);
+		ENTRY(WS_DISABLED);
+		ENTRY(WS_DLGFRAME);
+		ENTRY(WS_GROUP);
+		ENTRY(WS_HSCROLL);
+		ENTRY(WS_MAXIMIZE);
+		ENTRY(WS_MAXIMIZEBOX);
+		ENTRY(WS_MINIMIZE);
+		ENTRY(WS_OVERLAPPEDWINDOW);
+		ENTRY(WS_POPUP);
+		ENTRY(WS_POPUPWINDOW);
+		ENTRY(WS_SIZEBOX);
+		ENTRY(WS_SYSMENU);
+		ENTRY(WS_VISIBLE);
+		ENTRY(WS_VSCROLL);
+		default:
+			return NULL;
+	}
+}
+
+const char* window_styles_to_string(UINT32 style, char* buffer, size_t length)
+{
+	(void)_snprintf(buffer, length, "style[0x%08" PRIx32 "] {", style);
+	const char* sep = "";
+	for (size_t x = 0; x < 32; x++)
+	{
+		const UINT32 val = 1 << x;
+		if ((style & val) != 0)
+		{
+			const char* str = window_style_to_string(val);
+			if (str)
+			{
+				winpr_str_append(str, buffer, length, sep);
+				sep = "|";
+			}
+		}
+	}
+	winpr_str_append("}", buffer, length, "");
+
+	return buffer;
+}
+
+static const char* window_style_ex_to_string(UINT32 styleEx)
+{
+	switch (styleEx)
+	{
+		ENTRY(WS_EX_ACCEPTFILES);
+		ENTRY(WS_EX_APPWINDOW);
+		ENTRY(WS_EX_CLIENTEDGE);
+		ENTRY(WS_EX_COMPOSITED);
+		ENTRY(WS_EX_CONTEXTHELP);
+		ENTRY(WS_EX_CONTROLPARENT);
+		ENTRY(WS_EX_DLGMODALFRAME);
+		ENTRY(WS_EX_LAYERED);
+		ENTRY(WS_EX_LAYOUTRTL);
+		ENTRY(WS_EX_LEFTSCROLLBAR);
+		ENTRY(WS_EX_MDICHILD);
+		ENTRY(WS_EX_NOACTIVATE);
+		ENTRY(WS_EX_NOINHERITLAYOUT);
+		ENTRY(WS_EX_NOPARENTNOTIFY);
+		ENTRY(WS_EX_OVERLAPPEDWINDOW);
+		ENTRY(WS_EX_PALETTEWINDOW);
+		ENTRY(WS_EX_RIGHT);
+		ENTRY(WS_EX_RIGHTSCROLLBAR);
+		ENTRY(WS_EX_RTLREADING);
+		ENTRY(WS_EX_STATICEDGE);
+		ENTRY(WS_EX_TOOLWINDOW);
+		ENTRY(WS_EX_TOPMOST);
+		ENTRY(WS_EX_TRANSPARENT);
+		ENTRY(WS_EX_WINDOWEDGE);
+		default:
+			return NULL;
+	}
+}
+
+const char* window_styles_ex_to_string(UINT32 styleEx, char* buffer, size_t length)
+{
+	(void)_snprintf(buffer, length, "styleEx[0x%08" PRIx32 "] {", styleEx);
+	const char* sep = "";
+	for (size_t x = 0; x < 32; x++)
+	{
+		const UINT32 val = 1 << x;
+		if ((styleEx & val) != 0)
+		{
+			const char* str = window_style_ex_to_string(val);
+			if (str)
+			{
+				winpr_str_append(str, buffer, length, sep);
+				sep = "|";
+			}
+		}
+	}
+	winpr_str_append("}", buffer, length, "");
+
+	return buffer;
+}
 
 static void xf_SetWindowTitleText(xfContext* xfc, Window window, const char* name)
 {

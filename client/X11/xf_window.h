@@ -205,4 +205,7 @@ void xf_StartLocalMoveSize(xfContext* xfc, xfAppWindow* appWindow, int direction
 void xf_EndLocalMoveSize(xfContext* xfc, xfAppWindow* appWindow);
 xfAppWindow* xf_AppWindowFromX11Window(xfContext* xfc, Window wnd);
 
+const char* window_styles_to_string(UINT32 style, char* buffer, size_t length);
+const char* window_styles_ex_to_string(UINT32 styleEx, char* buffer, size_t length);
+
 #endif /* FREERDP_CLIENT_X11_WINDOW_H */
