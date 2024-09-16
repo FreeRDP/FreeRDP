@@ -2047,7 +2047,7 @@ static state_run_t rdp_recv_callback_int(rdpTransport* transport, wStream* s, vo
 		case CONNECTION_STATE_MULTITRANSPORT_BOOTSTRAPPING_REQUEST:
 			if (!rdp_client_connect_auto_detect(rdp, s))
 			{
-				rdp_client_transition_to_state(
+				(void)rdp_client_transition_to_state(
 				    rdp, CONNECTION_STATE_CAPABILITIES_EXCHANGE_DEMAND_ACTIVE);
 				status = STATE_RUN_TRY_AGAIN;
 			}

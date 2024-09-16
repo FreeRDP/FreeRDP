@@ -659,7 +659,8 @@ static DWORD WINAPI tf_debug_channel_thread_func(LPVOID arg)
 			if (BytesReturned == 0)
 				break;
 
-			Stream_EnsureRemainingCapacity(s, BytesReturned);
+			if (!Stream_EnsureRemainingCapacity(s, BytesReturned))
+				break;
 
 			if (WTSVirtualChannelRead(context->debug_channel, 0, (PCHAR)Stream_Buffer(s),
 			                          (ULONG)Stream_Capacity(s), &BytesReturned) == FALSE)
