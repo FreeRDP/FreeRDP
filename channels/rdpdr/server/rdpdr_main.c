@@ -215,7 +215,7 @@ static UINT rdpdr_seal_send_free_request(RdpdrServerContext* context, wStream* s
 
 	Stream_SealLength(s);
 	length = Stream_Length(s);
-	WINPR_ASSERT(length <= ULONG_MAX);
+	WINPR_ASSERT(length <= UINT32_MAX);
 	Stream_SetPosition(s, 0);
 
 	if (length >= RDPDR_HEADER_LENGTH)
@@ -2077,7 +2077,7 @@ static DWORD WINAPI rdpdr_server_thread(LPVOID arg)
 			break;
 		}
 
-		capacity = MIN(Stream_Capacity(s), ULONG_MAX);
+		capacity = MIN(Stream_Capacity(s), UINT32_MAX);
 		if (!WTSVirtualChannelRead(context->priv->ChannelHandle, 0, (PCHAR)Stream_Buffer(s),
 		                           (ULONG)capacity, &BytesReturned))
 		{

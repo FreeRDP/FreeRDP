@@ -176,7 +176,7 @@ static UINT ainput_server_send_version(ainput_server* ainput)
 	Stream_Write_UINT32(s, AINPUT_VERSION_MAJOR); /* Version (4 bytes) */
 	Stream_Write_UINT32(s, AINPUT_VERSION_MINOR); /* Version (4 bytes) */
 
-	WINPR_ASSERT(Stream_GetPosition(s) <= ULONG_MAX);
+	WINPR_ASSERT(Stream_GetPosition(s) <= UINT32_MAX);
 	if (!WTSVirtualChannelWrite(ainput->ainput_channel, (PCHAR)Stream_Buffer(s),
 	                            (ULONG)Stream_GetPosition(s), &written))
 	{

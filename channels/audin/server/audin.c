@@ -378,7 +378,7 @@ static DWORD WINAPI audin_server_thread_func(LPVOID arg)
 		if (!Stream_EnsureRemainingCapacity(s, BytesReturned))
 			break;
 
-		WINPR_ASSERT(Stream_Capacity(s) <= ULONG_MAX);
+		WINPR_ASSERT(Stream_Capacity(s) <= UINT32_MAX);
 		if (WTSVirtualChannelRead(audin->audin_channel, 0, (PCHAR)Stream_Buffer(s),
 		                          (ULONG)Stream_Capacity(s), &BytesReturned) == FALSE)
 		{

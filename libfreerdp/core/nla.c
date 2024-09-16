@@ -177,7 +177,7 @@ static BOOL nla_sec_buffer_alloc(SecBuffer* buffer, size_t size)
 {
 	WINPR_ASSERT(buffer);
 	sspi_SecBufferFree(buffer);
-	if (size > ULONG_MAX)
+	if (size > UINT32_MAX)
 		return FALSE;
 	if (!sspi_SecBufferAlloc(buffer, (ULONG)size))
 		return FALSE;
