@@ -980,7 +980,7 @@ BOOL client_cli_present_gateway_message(freerdp* instance, UINT32 type, BOOL isD
 
 			case 'n':
 			case 'N':
-				freerdp_interruptible_getc(instance->context, stdin);
+				(void)freerdp_interruptible_getc(instance->context, stdin);
 				return FALSE;
 
 			default:
