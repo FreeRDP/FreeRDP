@@ -106,7 +106,7 @@ static UINT ios_cliprdr_send_client_format_data_request(CliprdrClientContext *cl
 	formatDataRequest.common.msgFlags = 0;
 	formatDataRequest.requestedFormatId = formatId;
 	afc->requestedFormatId = formatId;
-	ResetEvent(afc->clipboardRequestEvent);
+	(void)ResetEvent(afc->clipboardRequestEvent);
 	rc = cliprdr->ClientFormatDataRequest(cliprdr, &formatDataRequest);
 fail:
 	return rc;
@@ -391,7 +391,7 @@ ios_cliprdr_server_format_data_response(CliprdrClientContext *cliprdr,
 
 	if (!format)
 	{
-		SetEvent(afc->clipboardRequestEvent);
+		(void)SetEvent(afc->clipboardRequestEvent);
 		return ERROR_INTERNAL_ERROR;
 	}
 
@@ -406,7 +406,7 @@ ios_cliprdr_server_format_data_response(CliprdrClientContext *cliprdr,
 	if (!ClipboardSetData(afc->clipboard, formatId, formatDataResponse->requestedFormatData, size))
 		return ERROR_INTERNAL_ERROR;
 
-	SetEvent(afc->clipboardRequestEvent);
+	(void)SetEvent(afc->clipboardRequestEvent);
 
 	if ((formatId == CF_TEXT) || (formatId == CF_UNICODETEXT))
 	{
@@ -465,7 +465,7 @@ BOOL ios_cliprdr_init(mfContext *afc, CliprdrClientContext *cliprdr)
 
 	if (!(clipboard = ClipboardCreate()))
 	{
-		CloseHandle(hevent);
+		(void)CloseHandle(hevent);
 		return FALSE;
 	}
 
@@ -494,6 +494,6 @@ BOOL ios_cliprdr_uninit(mfContext *afc, CliprdrClientContext *cliprdr)
 	cliprdr->custom = NULL;
 	afc->cliprdr = NULL;
 	ClipboardDestroy(afc->clipboard);
-	CloseHandle(afc->clipboardRequestEvent);
+	(void)CloseHandle(afc->clipboardRequestEvent);
 	return TRUE;
 }

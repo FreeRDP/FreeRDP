@@ -306,17 +306,17 @@ WinPREvent::WinPREvent(bool initial)
 
 WinPREvent::~WinPREvent()
 {
-	CloseHandle(_handle);
+	(void)CloseHandle(_handle);
 }
 
 void WinPREvent::set()
 {
-	SetEvent(_handle);
+	(void)SetEvent(_handle);
 }
 
 void WinPREvent::clear()
 {
-	ResetEvent(_handle);
+	(void)ResetEvent(_handle);
 }
 
 bool WinPREvent::isSet() const

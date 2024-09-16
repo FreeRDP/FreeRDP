@@ -57,7 +57,7 @@ static BOOL test_SetFileAttributesA(void)
 	                     FILE_ATTRIBUTE_NORMAL, NULL);
 	if (handle == INVALID_HANDLE_VALUE)
 		goto fail;
-	CloseHandle(handle);
+	(void)CloseHandle(handle);
 
 	for (size_t x = 0; x < ARRAYSIZE(flags); x++)
 	{
@@ -113,7 +113,7 @@ static BOOL test_SetFileAttributesW(void)
 	                     FILE_ATTRIBUTE_NORMAL, NULL);
 	if (handle == INVALID_HANDLE_VALUE)
 		goto fail;
-	CloseHandle(handle);
+	(void)CloseHandle(handle);
 
 	for (size_t x = 0; x < ARRAYSIZE(flags); x++)
 	{

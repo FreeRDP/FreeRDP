@@ -28,7 +28,7 @@ static VOID CALLBACK TimerAPCProc(LPVOID lpArg, DWORD dwTimerLowValue, DWORD dwT
 
 	if (g_Count >= 5)
 	{
-		SetEvent(g_Event);
+		(void)SetEvent(g_Event);
 	}
 }
 
@@ -83,10 +83,10 @@ int TestSynchWaitableTimerAPC(int argc, char* argv[])
 cleanup:
 
 	if (hTimer)
-		CloseHandle(hTimer);
+		(void)CloseHandle(hTimer);
 
 	if (g_Event)
-		CloseHandle(g_Event);
+		(void)CloseHandle(g_Event);
 
 	return status;
 }

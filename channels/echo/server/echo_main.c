@@ -307,7 +307,7 @@ static UINT echo_server_open(echo_server_context* context)
 		if (!(echo->thread = CreateThread(NULL, 0, echo_server_thread_func, (void*)echo, 0, NULL)))
 		{
 			WLog_ERR(TAG, "CreateEvent failed!");
-			CloseHandle(echo->stopEvent);
+			(void)CloseHandle(echo->stopEvent);
 			echo->stopEvent = NULL;
 			return ERROR_INTERNAL_ERROR;
 		}
@@ -328,7 +328,7 @@ static UINT echo_server_close(echo_server_context* context)
 
 	if (echo->thread)
 	{
-		SetEvent(echo->stopEvent);
+		(void)SetEvent(echo->stopEvent);
 
 		if (WaitForSingleObject(echo->thread, INFINITE) == WAIT_FAILED)
 		{
@@ -337,8 +337,8 @@ static UINT echo_server_close(echo_server_context* context)
 			return error;
 		}
 
-		CloseHandle(echo->thread);
-		CloseHandle(echo->stopEvent);
+		(void)CloseHandle(echo->thread);
+		(void)CloseHandle(echo->stopEvent);
 		echo->thread = NULL;
 		echo->stopEvent = NULL;
 	}

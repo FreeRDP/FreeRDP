@@ -126,7 +126,7 @@ BOOL Win32_WTSVirtualChannelReadAsync(WTSAPI_CHANNEL* pChannel)
 
 	ZeroMemory(&(pChannel->overlapped), sizeof(OVERLAPPED));
 	pChannel->overlapped.hEvent = pChannel->hEvent;
-	ResetEvent(pChannel->hEvent);
+	(void)ResetEvent(pChannel->hEvent);
 
 	if (pChannel->showProtocol)
 	{
@@ -146,7 +146,7 @@ BOOL Win32_WTSVirtualChannelReadAsync(WTSAPI_CHANNEL* pChannel)
 			pChannel->header->length = numBytes;
 
 			pChannel->readDone = TRUE;
-			SetEvent(pChannel->hEvent);
+			(void)SetEvent(pChannel->hEvent);
 
 			return TRUE;
 		}
@@ -201,7 +201,7 @@ HANDLE WINAPI Win32_WTSVirtualChannelOpen_Internal(HANDLE hServer, DWORD Session
 
 	if (!pChannel)
 	{
-		CloseHandle(hFile);
+		(void)CloseHandle(hFile);
 		SetLastError(ERROR_NOT_ENOUGH_MEMORY);
 		return NULL;
 	}
@@ -214,7 +214,7 @@ HANDLE WINAPI Win32_WTSVirtualChannelOpen_Internal(HANDLE hServer, DWORD Session
 	pChannel->VirtualName = _wts_calloc(1, virtualNameLen + 1);
 	if (!pChannel->VirtualName)
 	{
-		CloseHandle(hFile);
+		(void)CloseHandle(hFile);
 		SetLastError(ERROR_NOT_ENOUGH_MEMORY);
 		_wts_free(pChannel);
 		return NULL;
@@ -280,7 +280,7 @@ BOOL WINAPI Win32_WTSVirtualChannelClose(HANDLE hChannel)
 
 	if (pChannel->hEvent)
 	{
-		CloseHandle(pChannel->hEvent);
+		(void)CloseHandle(pChannel->hEvent);
 		pChannel->hEvent = NULL;
 	}
 

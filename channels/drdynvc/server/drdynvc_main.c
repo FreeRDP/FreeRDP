@@ -138,7 +138,7 @@ static UINT drdynvc_server_start(DrdynvcServerContext* context)
 	          CreateThread(NULL, 0, drdynvc_server_thread, (void*)context, 0, NULL)))
 	{
 		WLog_ERR(TAG, "CreateThread failed!");
-		CloseHandle(context->priv->StopEvent);
+		(void)CloseHandle(context->priv->StopEvent);
 		context->priv->StopEvent = NULL;
 		return ERROR_INTERNAL_ERROR;
 	}
@@ -154,7 +154,7 @@ static UINT drdynvc_server_start(DrdynvcServerContext* context)
 static UINT drdynvc_server_stop(DrdynvcServerContext* context)
 {
 	UINT error = 0;
-	SetEvent(context->priv->StopEvent);
+	(void)SetEvent(context->priv->StopEvent);
 
 	if (WaitForSingleObject(context->priv->Thread, INFINITE) == WAIT_FAILED)
 	{
@@ -163,7 +163,7 @@ static UINT drdynvc_server_stop(DrdynvcServerContext* context)
 		return error;
 	}
 
-	CloseHandle(context->priv->Thread);
+	(void)CloseHandle(context->priv->Thread);
 	return CHANNEL_RC_OK;
 }
 

@@ -70,7 +70,8 @@ DWORD WINAPI wf_update_thread(LPVOID lpParam)
 							{
 								// WLog_DBG(TAG, "Setting event for %d of %d", index + 1,
 								// wfi->activePeerCount);
-								SetEvent(((wfPeerContext*)wfi->peers[index]->context)->updateEvent);
+								(void)SetEvent(
+								    ((wfPeerContext*)wfi->peers[index]->context)->updateEvent);
 							}
 						}
 					}
@@ -79,7 +80,7 @@ DWORD WINAPI wf_update_thread(LPVOID lpParam)
 					{
 						// WLog_DBG(TAG, "Waiting for %d of %d", index + 1, wfi->activePeerCount);
 						// WaitForSingleObject(wfi->updateSemaphore, INFINITE);
-						WaitForSingleObject(wfi->updateSemaphore, 1000);
+						(void)WaitForSingleObject(wfi->updateSemaphore, 1000);
 					}
 
 					// WLog_DBG(TAG, "End of parallel sending");

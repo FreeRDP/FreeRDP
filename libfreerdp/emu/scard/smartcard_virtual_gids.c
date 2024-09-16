@@ -1257,8 +1257,8 @@ static BOOL vgids_ins_perform_security_operation(vgidsContext* context, wStream*
 		if (!context->commandData)
 			return FALSE;
 	}
-	else
-		Stream_EnsureRemainingCapacity(context->commandData, lc);
+	else if (!Stream_EnsureRemainingCapacity(context->commandData, lc))
+		return FALSE;
 
 	Stream_Write(context->commandData, Stream_Pointer(s), lc);
 	Stream_SealLength(context->commandData);

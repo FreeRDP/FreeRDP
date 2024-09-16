@@ -957,7 +957,7 @@ static UINT rdpsnd_server_start(RdpsndServerContext* context)
 
 	return CHANNEL_RC_OK;
 out_stopEvent:
-	CloseHandle(context->priv->StopEvent);
+	(void)CloseHandle(context->priv->StopEvent);
 	context->priv->StopEvent = NULL;
 out_lock:
 	DeleteCriticalSection(&context->priv->lock);
@@ -989,7 +989,7 @@ static UINT rdpsnd_server_stop(RdpsndServerContext* context)
 	{
 		if (context->priv->StopEvent)
 		{
-			SetEvent(context->priv->StopEvent);
+			(void)SetEvent(context->priv->StopEvent);
 
 			if (WaitForSingleObject(context->priv->Thread, INFINITE) == WAIT_FAILED)
 			{
@@ -998,8 +998,8 @@ static UINT rdpsnd_server_stop(RdpsndServerContext* context)
 				return error;
 			}
 
-			CloseHandle(context->priv->Thread);
-			CloseHandle(context->priv->StopEvent);
+			(void)CloseHandle(context->priv->Thread);
+			(void)CloseHandle(context->priv->StopEvent);
 			context->priv->Thread = NULL;
 			context->priv->StopEvent = NULL;
 		}

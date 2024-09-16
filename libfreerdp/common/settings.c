@@ -677,9 +677,9 @@ void freerdp_static_channel_collection_free(rdpSettings* settings)
 	}
 
 	free(settings->StaticChannelArray);
-	freerdp_settings_set_uint32(settings, FreeRDP_StaticChannelArraySize, 0);
+	(void)freerdp_settings_set_uint32(settings, FreeRDP_StaticChannelArraySize, 0);
 	settings->StaticChannelArray = NULL;
-	freerdp_settings_set_uint32(settings, FreeRDP_StaticChannelCount, 0);
+	(void)freerdp_settings_set_uint32(settings, FreeRDP_StaticChannelCount, 0);
 }
 
 BOOL freerdp_dynamic_channel_collection_del(rdpSettings* settings, const char* name)

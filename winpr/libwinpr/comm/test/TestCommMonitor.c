@@ -64,7 +64,7 @@ int TestCommMonitor(int argc, char* argv[])
 		}
 	}
 
-	CloseHandle(hComm);
+	(void)CloseHandle(hComm);
 
 	return 0;
 }

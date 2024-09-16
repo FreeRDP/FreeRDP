@@ -109,7 +109,7 @@ void CountdownEvent_AddCount(wCountdownEvent* countdown, size_t signalCount)
 	countdown->count += signalCount;
 
 	if (signalSet)
-		ResetEvent(countdown->event);
+		(void)ResetEvent(countdown->event);
 
 	LeaveCriticalSection(&countdown->lock);
 }
@@ -142,7 +142,7 @@ BOOL CountdownEvent_Signal(wCountdownEvent* countdown, size_t signalCount)
 
 	if (newStatus && (!oldStatus))
 	{
-		SetEvent(countdown->event);
+		(void)SetEvent(countdown->event);
 		status = TRUE;
 	}
 
@@ -204,7 +204,7 @@ void CountdownEvent_Free(wCountdownEvent* countdown)
 		return;
 
 	DeleteCriticalSection(&countdown->lock);
-	CloseHandle(countdown->event);
+	(void)CloseHandle(countdown->event);
 
 	free(countdown);
 }

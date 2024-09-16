@@ -79,8 +79,8 @@ int TestThreadCreateProcess(int argc, char* argv[])
 	printf("GetExitCodeProcess status: %" PRId32 "\n", status);
 	printf("Process exited with code: 0x%08" PRIX32 "\n", exitCode);
 
-	CloseHandle(ProcessInformation.hProcess);
-	CloseHandle(ProcessInformation.hThread);
+	(void)CloseHandle(ProcessInformation.hProcess);
+	(void)CloseHandle(ProcessInformation.hThread);
 	FreeEnvironmentStrings(lpszEnvironmentBlock);
 
 	/* Test stdin,stdout,stderr redirection */
@@ -120,8 +120,8 @@ int TestThreadCreateProcess(int argc, char* argv[])
 
 	if (!status)
 	{
-		CloseHandle(pipe_read);
-		CloseHandle(pipe_write);
+		(void)CloseHandle(pipe_read);
+		(void)CloseHandle(pipe_write);
 		printf("CreateProcess failed. error=%" PRIu32 "\n", GetLastError());
 		return 1;
 	}
@@ -140,8 +140,8 @@ int TestThreadCreateProcess(int argc, char* argv[])
 		ret = 1;
 	}
 
-	CloseHandle(pipe_read);
-	CloseHandle(pipe_write);
+	(void)CloseHandle(pipe_read);
+	(void)CloseHandle(pipe_write);
 
 	exitCode = 0;
 	status = GetExitCodeProcess(ProcessInformation.hProcess, &exitCode);
@@ -149,8 +149,8 @@ int TestThreadCreateProcess(int argc, char* argv[])
 	printf("GetExitCodeProcess status: %" PRId32 "\n", status);
 	printf("Process exited with code: 0x%08" PRIX32 "\n", exitCode);
 
-	CloseHandle(ProcessInformation.hProcess);
-	CloseHandle(ProcessInformation.hThread);
+	(void)CloseHandle(ProcessInformation.hProcess);
+	(void)CloseHandle(ProcessInformation.hThread);
 
 	return ret;
 }

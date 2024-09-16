@@ -685,7 +685,7 @@ static void create_irp_thread(SERIAL_DEVICE* serial, IRP* irp)
 	return;
 error_handle:
 	if (irpThread)
-		CloseHandle(irpThread);
+		(void)CloseHandle(irpThread);
 	irp->IoStatus = STATUS_NO_MEMORY;
 	irp->Complete(irp);
 	free(data);
@@ -785,11 +785,11 @@ static UINT serial_free(DEVICE* device)
 			WLog_Print(serial->log, WLOG_ERROR,
 			           "WaitForSingleObject failed with error %" PRIu32 "!", error);
 		}
-		CloseHandle(serial->MainThread);
+		(void)CloseHandle(serial->MainThread);
 	}
 
 	if (serial->hComm)
-		CloseHandle(serial->hComm);
+		(void)CloseHandle(*serial->hComm);
 
 	/* Clean up resources */
 	Stream_Free(serial->device.data, TRUE);
@@ -825,9 +825,9 @@ static void irp_thread_close(void* arg)
 			WLog_WARN(TAG, "closing self, ignoring...");
 		else
 		{
-			TerminateThread(hdl, 0);
-			WaitForSingleObject(hdl, INFINITE);
-			CloseHandle(hdl);
+			(void)TerminateThread(hdl, 0);
+			(void)WaitForSingleObject(hdl, INFINITE);
+			(void)CloseHandle(hdl);
 		}
 	}
 }

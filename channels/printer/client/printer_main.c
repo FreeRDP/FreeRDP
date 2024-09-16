@@ -139,7 +139,7 @@ static BOOL printer_write_setting(const char* path, prn_conf_t type, const void*
 		rc = TRUE;
 
 fail:
-	CloseHandle(file);
+	(void)CloseHandle(file);
 	free(base64);
 	return rc;
 }
@@ -194,7 +194,7 @@ static BOOL printer_read_setting(const char* path, prn_conf_t type, void** data,
 	}
 
 fail:
-	CloseHandle(file);
+	(void)CloseHandle(file);
 
 	if (rc && (lowSize <= INT_MAX))
 	{
@@ -651,7 +651,7 @@ static DWORD WINAPI printer_thread_func(LPVOID arg)
 		else if (rc != WAIT_OBJECT_0)
 			continue;
 
-		ResetEvent(printer_dev->event);
+		(void)ResetEvent(printer_dev->event);
 		irp = (IRP*)InterlockedPopEntrySList(printer_dev->pIrpList);
 
 		if (irp == NULL)
@@ -690,7 +690,7 @@ static UINT printer_irp_request(DEVICE* device, IRP* irp)
 	if (printer_dev->async)
 	{
 		InterlockedPushEntrySList(printer_dev->pIrpList, &(irp->ItemEntry));
-		SetEvent(printer_dev->event);
+		(void)SetEvent(printer_dev->event);
 	}
 	else
 	{
@@ -908,7 +908,7 @@ static UINT printer_free(DEVICE* device)
 
 	if (printer_dev->async)
 	{
-		SetEvent(printer_dev->stopEvent);
+		(void)SetEvent(printer_dev->stopEvent);
 
 		if (WaitForSingleObject(printer_dev->thread, INFINITE) == WAIT_FAILED)
 		{
@@ -929,9 +929,9 @@ static UINT printer_free(DEVICE* device)
 			irp->Discard(irp);
 		}
 
-		CloseHandle(printer_dev->thread);
-		CloseHandle(printer_dev->stopEvent);
-		CloseHandle(printer_dev->event);
+		(void)CloseHandle(printer_dev->thread);
+		(void)CloseHandle(printer_dev->stopEvent);
+		(void)CloseHandle(printer_dev->event);
 		winpr_aligned_free(printer_dev->pIrpList);
 	}
 

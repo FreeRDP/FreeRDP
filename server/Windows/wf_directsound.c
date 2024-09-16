@@ -82,7 +82,7 @@ int wf_directsound_activate(RdpsndServerContext* context)
 		WLog_ERR(TAG, "Failed to create direct sound thread");
 		return 1;
 	}
-	CloseHandle(hThread);
+	(void)CloseHandle(hThread);
 
 	return 0;
 }

@@ -78,6 +78,6 @@ int TestSynchWaitableTimer(int argc, char* argv[])
 	printf("Timer Signaled\n");
 	result = 0;
 out:
-	CloseHandle(timer);
+	(void)CloseHandle(timer);
 	return result;
 }

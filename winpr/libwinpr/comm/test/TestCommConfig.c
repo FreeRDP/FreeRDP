@@ -144,7 +144,7 @@ int TestCommConfig(int argc, char* argv[])
 		              dcb.BaudRate, dcb.ByteSize, dcb.Parity, dcb.StopBits);
 	}
 
-	CloseHandle(hComm);
+	(void)CloseHandle(hComm);
 
 	return 0;
 }

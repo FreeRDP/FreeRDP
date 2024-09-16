@@ -33,7 +33,7 @@ static DWORD WINAPI named_pipe_client_thread(LPVOID arg)
 	DWORD nNumberOfBytesToWrite = 0;
 	DWORD lpNumberOfBytesRead = 0;
 	DWORD lpNumberOfBytesWritten = 0;
-	WaitForSingleObject(ReadyEvent, INFINITE);
+	(void)WaitForSingleObject(ReadyEvent, INFINITE);
 	hNamedPipe =
 	    CreateFile(lpszPipeNameMt, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
 
@@ -84,7 +84,7 @@ static DWORD WINAPI named_pipe_client_thread(LPVOID arg)
 out:
 	free(lpReadBuffer);
 	free(lpWriteBuffer);
-	CloseHandle(hNamedPipe);
+	(void)CloseHandle(hNamedPipe);
 
 	if (!fSuccess)
 		testFailed = TRUE;
@@ -120,7 +120,7 @@ static DWORD WINAPI named_pipe_server_thread(LPVOID arg)
 		goto out;
 	}
 
-	SetEvent(ReadyEvent);
+	(void)SetEvent(ReadyEvent);
 
 	/**
 	 * Note:
@@ -179,7 +179,7 @@ static DWORD WINAPI named_pipe_server_thread(LPVOID arg)
 out:
 	free(lpReadBuffer);
 	free(lpWriteBuffer);
-	CloseHandle(hNamedPipe);
+	(void)CloseHandle(hNamedPipe);
 
 	if (!fSuccess)
 		testFailed = TRUE;
@@ -198,7 +198,7 @@ static DWORD WINAPI named_pipe_single_thread(LPVOID arg)
 	int numPipes = 0;
 	BOOL bSuccess = FALSE;
 	numPipes = TESTNUMPIPESST;
-	WaitForSingleObject(ReadyEvent, INFINITE);
+	(void)WaitForSingleObject(ReadyEvent, INFINITE);
 
 	for (int i = 0; i < numPipes; i++)
 	{
@@ -379,15 +379,15 @@ static DWORD WINAPI named_pipe_single_thread(LPVOID arg)
 			goto out;
 		}
 	}
-	CloseHandle(servers[i]);
-	CloseHandle(clients[i]);
+	(void)CloseHandle(servers[i]);
+	(void)CloseHandle(clients[i]);
 	numPipes--;
 	/**
 	 * After CloseHandle (without calling DisconnectNamedPipe first) on server end
 	 * ReadFile/WriteFile must fail on client end
 	 */
 	i = numPipes - 1;
-	CloseHandle(servers[i]);
+	(void)CloseHandle(servers[i]);
 
 	{
 		char sndbuf[PIPE_BUFFER_SIZE] = { 0 };
@@ -409,14 +409,14 @@ static DWORD WINAPI named_pipe_single_thread(LPVOID arg)
 			goto out;
 		}
 	}
-	CloseHandle(clients[i]);
+	(void)CloseHandle(clients[i]);
 	numPipes--;
 	/**
 	 * After CloseHandle on client end
 	 * ReadFile/WriteFile must fail on server end
 	 */
 	i = numPipes - 1;
-	CloseHandle(clients[i]);
+	(void)CloseHandle(clients[i]);
 
 	{
 		char sndbuf[PIPE_BUFFER_SIZE] = { 0 };
@@ -440,15 +440,15 @@ static DWORD WINAPI named_pipe_single_thread(LPVOID arg)
 	}
 
 	DisconnectNamedPipe(servers[i]);
-	CloseHandle(servers[i]);
+	(void)CloseHandle(servers[i]);
 	numPipes--;
 
 	/* Close all remaining pipes */
 	for (int i = 0; i < numPipes; i++)
 	{
 		DisconnectNamedPipe(servers[i]);
-		CloseHandle(servers[i]);
-		CloseHandle(clients[i]);
+		(void)CloseHandle(servers[i]);
+		(void)CloseHandle(clients[i]);
 	}
 
 	bSuccess = TRUE;
@@ -500,11 +500,11 @@ int TestPipeCreateNamedPipe(int argc, char* argv[])
 		printf("CreateThread (ServerThread) failure: (%" PRIu32 ")\n", GetLastError());
 		return -1;
 	}
-	WaitForSingleObject(SingleThread, INFINITE);
-	WaitForSingleObject(ClientThread, INFINITE);
-	WaitForSingleObject(ServerThread, INFINITE);
-	CloseHandle(SingleThread);
-	CloseHandle(ClientThread);
-	CloseHandle(ServerThread);
+	(void)WaitForSingleObject(SingleThread, INFINITE);
+	(void)WaitForSingleObject(ClientThread, INFINITE);
+	(void)WaitForSingleObject(ServerThread, INFINITE);
+	(void)CloseHandle(SingleThread);
+	(void)CloseHandle(ClientThread);
+	(void)CloseHandle(ServerThread);
 	return testFailed;
 }

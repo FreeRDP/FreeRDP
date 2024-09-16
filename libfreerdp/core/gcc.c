@@ -1366,7 +1366,10 @@ BOOL gcc_read_client_core_data(wStream* s, rdpMcs* mcs)
 	 */
 	if ((clientColorDepth < freerdp_settings_get_uint32(settings, FreeRDP_ColorDepth)) ||
 	    !settings->ServerMode)
-		freerdp_settings_set_uint32(settings, FreeRDP_ColorDepth, clientColorDepth);
+	{
+		if (!freerdp_settings_set_uint32(settings, FreeRDP_ColorDepth, clientColorDepth))
+			return FALSE;
+	}
 
 	WLog_DBG(TAG, "Received EarlyCapabilityFlags=%s",
 	         rdp_early_client_caps_string(settings->EarlyCapabilityFlags, buffer, sizeof(buffer)));

@@ -325,7 +325,7 @@ static UINT telemetry_server_open(TelemetryServerContext* context)
 		if (!telemetry->thread)
 		{
 			WLog_ERR(TAG, "CreateThread failed!");
-			CloseHandle(telemetry->stopEvent);
+			(void)CloseHandle(telemetry->stopEvent);
 			telemetry->stopEvent = NULL;
 			return ERROR_INTERNAL_ERROR;
 		}
@@ -344,7 +344,7 @@ static UINT telemetry_server_close(TelemetryServerContext* context)
 
 	if (!telemetry->externalThread && telemetry->thread)
 	{
-		SetEvent(telemetry->stopEvent);
+		(void)SetEvent(telemetry->stopEvent);
 
 		if (WaitForSingleObject(telemetry->thread, INFINITE) == WAIT_FAILED)
 		{
@@ -353,8 +353,8 @@ static UINT telemetry_server_close(TelemetryServerContext* context)
 			return error;
 		}
 
-		CloseHandle(telemetry->thread);
-		CloseHandle(telemetry->stopEvent);
+		(void)CloseHandle(telemetry->thread);
+		(void)CloseHandle(telemetry->stopEvent);
 		telemetry->thread = NULL;
 		telemetry->stopEvent = NULL;
 	}

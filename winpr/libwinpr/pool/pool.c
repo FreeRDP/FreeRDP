@@ -100,8 +100,8 @@ static DWORD WINAPI thread_pool_work_func(LPVOID arg)
 
 static void threads_close(void* thread)
 {
-	WaitForSingleObject(thread, INFINITE);
-	CloseHandle(thread);
+	(void)WaitForSingleObject(thread, INFINITE);
+	(void)CloseHandle(thread);
 }
 
 static BOOL InitializeThreadpool(PTP_POOL pool)
@@ -185,12 +185,12 @@ VOID winpr_CloseThreadpool(PTP_POOL ptpp)
 		return;
 	}
 #endif
-	SetEvent(ptpp->TerminateEvent);
+	(void)SetEvent(ptpp->TerminateEvent);
 
 	ArrayList_Free(ptpp->Threads);
 	Queue_Free(ptpp->PendingQueue);
 	CountdownEvent_Free(ptpp->WorkComplete);
-	CloseHandle(ptpp->TerminateEvent);
+	(void)CloseHandle(ptpp->TerminateEvent);
 
 	{
 		TP_POOL empty = { 0 };
@@ -220,7 +220,7 @@ BOOL winpr_SetThreadpoolThreadMinimum(PTP_POOL ptpp, DWORD cthrdMic)
 
 		if (!ArrayList_Append(ptpp->Threads, thread))
 		{
-			CloseHandle(thread);
+			(void)CloseHandle(thread);
 			goto fail;
 		}
 	}
@@ -247,9 +247,9 @@ VOID winpr_SetThreadpoolThreadMaximum(PTP_POOL ptpp, DWORD cthrdMost)
 	ArrayList_Lock(ptpp->Threads);
 	if (ArrayList_Count(ptpp->Threads) > ptpp->Maximum)
 	{
-		SetEvent(ptpp->TerminateEvent);
+		(void)SetEvent(ptpp->TerminateEvent);
 		ArrayList_Clear(ptpp->Threads);
-		ResetEvent(ptpp->TerminateEvent);
+		(void)ResetEvent(ptpp->TerminateEvent);
 	}
 	ArrayList_Unlock(ptpp->Threads);
 	winpr_SetThreadpoolThreadMinimum(ptpp, ptpp->Minimum);

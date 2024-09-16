@@ -43,7 +43,7 @@ int TestFileGetStdHandle(int argc, char* argv[])
 		(void)fprintf(stderr, "write failed\n");
 		return -1;
 	}
-	CloseHandle(so);
+	(void)CloseHandle(so);
 
 	return 0;
 }

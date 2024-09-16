@@ -215,7 +215,7 @@ static UINT rdpdr_seal_send_free_request(RdpdrServerContext* context, wStream* s
 
 	Stream_SealLength(s);
 	length = Stream_Length(s);
-	WINPR_ASSERT(length <= ULONG_MAX);
+	WINPR_ASSERT(length <= UINT32_MAX);
 	Stream_SetPosition(s, 0);
 
 	if (length >= RDPDR_HEADER_LENGTH)
@@ -2077,7 +2077,7 @@ static DWORD WINAPI rdpdr_server_thread(LPVOID arg)
 			break;
 		}
 
-		capacity = MIN(Stream_Capacity(s), ULONG_MAX);
+		capacity = MIN(Stream_Capacity(s), UINT32_MAX);
 		if (!WTSVirtualChannelRead(context->priv->ChannelHandle, 0, (PCHAR)Stream_Buffer(s),
 		                           (ULONG)capacity, &BytesReturned))
 		{
@@ -2147,7 +2147,7 @@ static UINT rdpdr_server_start(RdpdrServerContext* context)
 	          CreateThread(NULL, 0, rdpdr_server_thread, (void*)context, 0, NULL)))
 	{
 		WLog_Print(context->priv->log, WLOG_ERROR, "CreateThread failed!");
-		CloseHandle(context->priv->StopEvent);
+		(void)CloseHandle(context->priv->StopEvent);
 		context->priv->StopEvent = NULL;
 		return ERROR_INTERNAL_ERROR;
 	}
@@ -2168,7 +2168,7 @@ static UINT rdpdr_server_stop(RdpdrServerContext* context)
 
 	if (context->priv->StopEvent)
 	{
-		SetEvent(context->priv->StopEvent);
+		(void)SetEvent(context->priv->StopEvent);
 
 		if (WaitForSingleObject(context->priv->Thread, INFINITE) == WAIT_FAILED)
 		{
@@ -2178,9 +2178,9 @@ static UINT rdpdr_server_stop(RdpdrServerContext* context)
 			return error;
 		}
 
-		CloseHandle(context->priv->Thread);
+		(void)CloseHandle(context->priv->Thread);
 		context->priv->Thread = NULL;
-		CloseHandle(context->priv->StopEvent);
+		(void)CloseHandle(context->priv->StopEvent);
 		context->priv->StopEvent = NULL;
 	}
 

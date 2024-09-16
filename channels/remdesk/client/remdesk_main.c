@@ -970,7 +970,7 @@ static UINT remdesk_virtual_channel_event_disconnected(remdeskPlugin* remdesk)
 		remdesk->OpenHandle = 0;
 	}
 	MessageQueue_Free(remdesk->queue);
-	CloseHandle(remdesk->thread);
+	(void)CloseHandle(remdesk->thread);
 	Stream_Free(remdesk->data_in, TRUE);
 	remdesk->data_in = NULL;
 	remdesk->queue = NULL;

@@ -594,7 +594,7 @@ static void channel_client_handler_free(msg_proc_internals* internals)
 		return;
 
 	if (internals->thread)
-		CloseHandle(internals->thread);
+		(void)CloseHandle(internals->thread);
 	MessageQueue_Free(internals->queue);
 	Stream_Free(internals->data_in, TRUE);
 	free(internals->channel_name);

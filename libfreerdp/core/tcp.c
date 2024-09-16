@@ -149,7 +149,7 @@ static int transport_bio_simple_read(BIO* bio, char* buf, int size)
 		return 0;
 
 	BIO_clear_flags(bio, BIO_FLAGS_READ);
-	WSAResetEvent(ptr->hEvent);
+	(void)WSAResetEvent(ptr->hEvent);
 	status = _recv(ptr->socket, buf, size, 0);
 
 	if (status > 0)
@@ -389,7 +389,7 @@ static int transport_bio_simple_uninit(BIO* bio)
 
 	if (ptr && ptr->hEvent)
 	{
-		CloseHandle(ptr->hEvent);
+		(void)CloseHandle(ptr->hEvent);
 		ptr->hEvent = NULL;
 	}
 
@@ -874,7 +874,7 @@ static BOOL freerdp_tcp_connect_timeout(rdpContext* context, int sockfd, struct 
 
 	rc = TRUE;
 fail:
-	CloseHandle(handles[0]);
+	(void)CloseHandle(handles[0]);
 	return rc;
 }
 
@@ -1356,7 +1356,7 @@ static int freerdp_tcp_layer_read(void* userContext, void* data, int bytes)
 	int error = 0;
 	int status = 0;
 
-	WSAResetEvent(tcpLayer->hEvent);
+	(void)WSAResetEvent(tcpLayer->hEvent);
 	status = _recv(tcpLayer->sockfd, data, bytes, 0);
 
 	if (status > 0)
@@ -1422,7 +1422,7 @@ static BOOL freerdp_tcp_layer_close(void* userContext)
 	if (tcpLayer->sockfd >= 0)
 		closesocket(tcpLayer->sockfd);
 	if (tcpLayer->hEvent)
-		CloseHandle(tcpLayer->hEvent);
+		(void)CloseHandle(tcpLayer->hEvent);
 
 	return TRUE;
 }

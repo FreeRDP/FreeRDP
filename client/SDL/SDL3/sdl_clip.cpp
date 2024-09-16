@@ -101,7 +101,7 @@ sdlClip::~sdlClip()
 {
 	cliprdr_file_context_free(_file);
 	ClipboardDestroy(_system);
-	CloseHandle(_event);
+	(void)CloseHandle(_event);
 }
 
 BOOL sdlClip::init(CliprdrClientContext* clip)
@@ -638,7 +638,7 @@ UINT sdlClip::ReceiveFormatDataResponse(CliprdrClientContext* context,
 	if (!sres)
 		return ERROR_INTERNAL_ERROR;
 
-	SetEvent(clipboard->_event);
+	(void)SetEvent(clipboard->_event);
 	return CHANNEL_RC_OK;
 }
 
@@ -681,7 +681,7 @@ const void* sdlClip::ClipDataCb(void* userdata, const char* mime_type, size_t* s
 		std::lock_guard<CriticalSection> lock(clip->_lock);
 		auto request = clip->_request_queue.front();
 		clip->_request_queue.pop();
-		ResetEvent(clip->_event);
+		(void)ResetEvent(clip->_event);
 
 		auto formatID = ClipboardRegisterFormat(clip->_system, mime_type);
 		auto data = ClipboardGetData(clip->_system, formatID, &len);

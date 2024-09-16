@@ -848,7 +848,7 @@ int TestSchannel(int argc, char* argv[])
 
 	schannel_send(table, g_ServerWritePipe, &context, test_LastDummyMessage,
 	              sizeof(test_LastDummyMessage));
-	WaitForSingleObject(thread, INFINITE);
+	(void)WaitForSingleObject(thread, INFINITE);
 	sspi_GlobalFinish();
 	return 0;
 }

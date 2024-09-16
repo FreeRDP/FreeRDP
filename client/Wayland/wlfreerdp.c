@@ -575,7 +575,7 @@ static int wlfreerdp_run(freerdp* instance)
 
 disconnect:
 	if (timer)
-		CloseHandle(timer);
+		(void)CloseHandle(timer);
 	freerdp_disconnect(instance);
 	return status;
 }
@@ -619,7 +619,7 @@ static void wlf_client_free(freerdp* instance, rdpContext* context)
 		UwacCloseDisplay(&wlf->display);
 
 	if (wlf->displayHandle)
-		CloseHandle(wlf->displayHandle);
+		(void)CloseHandle(wlf->displayHandle);
 	ArrayList_Free(wlf->events);
 	DeleteCriticalSection(&wlf->critical);
 }

@@ -1261,13 +1261,13 @@ TSMF_STREAM* tsmf_stream_new(TSMF_PRESENTATION* presentation, UINT32 stream_id,
 	stream->rdpcontext = rdpcontext;
 	return stream;
 error_add:
-	SetEvent(stream->stopEvent);
+	(void)SetEvent(stream->stopEvent);
 
 	if (WaitForSingleObject(stream->ack_thread, INFINITE) == WAIT_FAILED)
 		WLog_ERR(TAG, "WaitForSingleObject failed with error %" PRIu32 "!", GetLastError());
 
 error_ack_thread:
-	SetEvent(stream->stopEvent);
+	(void)SetEvent(stream->stopEvent);
 
 	if (WaitForSingleObject(stream->play_thread, INFINITE) == WAIT_FAILED)
 		WLog_ERR(TAG, "WaitForSingleObject failed with error %" PRIu32 "!", GetLastError());
@@ -1277,9 +1277,9 @@ error_play_thread:
 error_sample_ack_list:
 	Queue_Free(stream->sample_list);
 error_sample_list:
-	CloseHandle(stream->ready);
+	(void)CloseHandle(stream->ready);
 error_ready:
-	CloseHandle(stream->stopEvent);
+	(void)CloseHandle(stream->stopEvent);
 error_stopEvent:
 	free(stream);
 	return NULL;
@@ -1316,7 +1316,7 @@ TSMF_STREAM* tsmf_stream_find_by_id(TSMF_PRESENTATION* presentation, UINT32 stre
 static void tsmf_stream_resync(void* arg)
 {
 	TSMF_STREAM* stream = arg;
-	ResetEvent(stream->ready);
+	(void)ResetEvent(stream->ready);
 }
 
 BOOL tsmf_stream_set_format(TSMF_STREAM* stream, const char* name, wStream* s)
@@ -1402,7 +1402,7 @@ void s_tsmf_stream_free(void* obj)
 		return;
 
 	tsmf_stream_stop(stream);
-	SetEvent(stream->stopEvent);
+	(void)SetEvent(stream->stopEvent);
 
 	if (stream->play_thread)
 	{
@@ -1412,7 +1412,7 @@ void s_tsmf_stream_free(void* obj)
 			return;
 		}
 
-		CloseHandle(stream->play_thread);
+		(void)CloseHandle(stream->play_thread);
 		stream->play_thread = NULL;
 	}
 
@@ -1424,7 +1424,7 @@ void s_tsmf_stream_free(void* obj)
 			return;
 		}
 
-		CloseHandle(stream->ack_thread);
+		(void)CloseHandle(stream->ack_thread);
 		stream->ack_thread = NULL;
 	}
 
@@ -1437,8 +1437,8 @@ void s_tsmf_stream_free(void* obj)
 		stream->decoder = NULL;
 	}
 
-	CloseHandle(stream->stopEvent);
-	CloseHandle(stream->ready);
+	(void)CloseHandle(stream->stopEvent);
+	(void)CloseHandle(stream->ready);
 	ZeroMemory(stream, sizeof(TSMF_STREAM));
 	free(stream);
 }
@@ -1454,7 +1454,7 @@ BOOL tsmf_stream_push_sample(TSMF_STREAM* stream, IWTSVirtualChannelCallback* pC
                              UINT32 extensions, UINT32 data_size, BYTE* data)
 {
 	TSMF_SAMPLE* sample = NULL;
-	SetEvent(stream->ready);
+	(void)SetEvent(stream->ready);
 
 	if (TERMINATING)
 		return TRUE;

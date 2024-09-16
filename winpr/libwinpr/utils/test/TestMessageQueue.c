@@ -50,7 +50,7 @@ int TestMessageQueue(int argc, char* argv[])
 		return -1;
 
 	MessageQueue_Free(queue);
-	CloseHandle(thread);
+	(void)CloseHandle(thread);
 
 	return 0;
 }

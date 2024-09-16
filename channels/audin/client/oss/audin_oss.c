@@ -309,7 +309,7 @@ static UINT audin_oss_open(IAudinDevice* device, AudinReceive receive, void* use
 	if (!(oss->thread = CreateThread(NULL, 0, audin_oss_thread_func, oss, 0, NULL)))
 	{
 		WLog_ERR(TAG, "CreateThread failed!");
-		CloseHandle(oss->stopEvent);
+		(void)CloseHandle(oss->stopEvent);
 		oss->stopEvent = NULL;
 		return ERROR_INTERNAL_ERROR;
 	}
@@ -332,7 +332,7 @@ static UINT audin_oss_close(IAudinDevice* device)
 
 	if (oss->stopEvent != NULL)
 	{
-		SetEvent(oss->stopEvent);
+		(void)SetEvent(oss->stopEvent);
 
 		if (WaitForSingleObject(oss->thread, INFINITE) == WAIT_FAILED)
 		{
@@ -341,9 +341,9 @@ static UINT audin_oss_close(IAudinDevice* device)
 			return error;
 		}
 
-		CloseHandle(oss->stopEvent);
+		(void)CloseHandle(oss->stopEvent);
 		oss->stopEvent = NULL;
-		CloseHandle(oss->thread);
+		(void)CloseHandle(oss->thread);
 		oss->thread = NULL;
 	}
 

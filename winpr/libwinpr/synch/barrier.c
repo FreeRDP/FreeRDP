@@ -116,7 +116,7 @@ BOOL WINAPI winpr_InitializeSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpB
 
 	if (!(hEvent1 = CreateEvent(NULL, TRUE, FALSE, NULL)))
 	{
-		CloseHandle(hEvent0);
+		(void)CloseHandle(hEvent0);
 		return FALSE;
 	}
 
@@ -208,13 +208,13 @@ BOOL WINAPI winpr_EnterSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpBarrie
 		}
 
 		if (block)
-			WaitForSingleObject(hCurrentEvent, INFINITE);
+			(void)WaitForSingleObject(hCurrentEvent, INFINITE);
 
 		return FALSE;
 	}
 
 	/* reset the dormant event first */
-	ResetEvent(hDormantEvent);
+	(void)ResetEvent(hDormantEvent);
 
 	/* reset the remaining counter */
 	lpBarrier->Reserved1 = lpBarrier->Reserved2;
@@ -224,7 +224,7 @@ BOOL WINAPI winpr_EnterSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpBarrie
 	lpBarrier->Reserved3[0] = (ULONG_PTR)hDormantEvent;
 
 	/* signal the blocked threads */
-	SetEvent(hCurrentEvent);
+	(void)SetEvent(hCurrentEvent);
 
 	return TRUE;
 }
@@ -249,10 +249,10 @@ BOOL WINAPI winpr_DeleteSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpBarri
 		SwitchToThread();
 
 	if (lpBarrier->Reserved3[0])
-		CloseHandle((HANDLE)lpBarrier->Reserved3[0]);
+		(void)CloseHandle((HANDLE)lpBarrier->Reserved3[0]);
 
 	if (lpBarrier->Reserved3[1])
-		CloseHandle((HANDLE)lpBarrier->Reserved3[1]);
+		(void)CloseHandle((HANDLE)lpBarrier->Reserved3[1]);
 
 	ZeroMemory(lpBarrier, sizeof(SYNCHRONIZATION_BARRIER));
 

@@ -103,9 +103,9 @@ static int init_external_addin(Plugin* plugin)
 	}
 
 	plugin->hProcess = procInfo.hProcess;
-	CloseHandle(procInfo.hThread);
-	CloseHandle(siStartInfo.hStdOutput);
-	CloseHandle(siStartInfo.hStdInput);
+	(void)CloseHandle(procInfo.hThread);
+	(void)CloseHandle(siStartInfo.hStdOutput);
+	(void)CloseHandle(siStartInfo.hStdInput);
 	return 0;
 }
 
@@ -175,7 +175,7 @@ static DWORD WINAPI copyThread(void* data)
 		handles[1] = freerdp_abort_event(plugin->channelEntryPoints.context);
 		status = WaitForMultipleObjects(2, handles, FALSE, INFINITE);
 		if (status == WAIT_OBJECT_0)
-			ResetEvent(plugin->writeComplete);
+			(void)ResetEvent(plugin->writeComplete);
 	}
 
 fail:
@@ -246,7 +246,7 @@ static void VCAPITYPE VirtualChannelOpenEventEx(LPVOID lpUserParam, DWORD openHa
 			free(pData);
 			break;
 		case CHANNEL_EVENT_WRITE_COMPLETE:
-			SetEvent(plugin->writeComplete);
+			(void)SetEvent(plugin->writeComplete);
 			free(pData);
 			break;
 	}
@@ -261,14 +261,14 @@ static void channel_terminated(Plugin* plugin)
 		return;
 
 	if (plugin->copyThread)
-		TerminateThread(plugin->copyThread, 0);
+		(void)TerminateThread(plugin->copyThread, 0);
 	if (plugin->writeComplete)
-		CloseHandle(plugin->writeComplete);
+		(void)CloseHandle(plugin->writeComplete);
 
-	CloseHandle(plugin->hStdInputWrite);
-	CloseHandle(plugin->hStdOutputRead);
+	(void)CloseHandle(plugin->hStdInputWrite);
+	(void)CloseHandle(plugin->hStdOutputRead);
 	TerminateProcess(plugin->hProcess, 0);
-	CloseHandle(plugin->hProcess);
+	(void)CloseHandle(plugin->hProcess);
 	free(plugin->commandline);
 	free(plugin);
 }

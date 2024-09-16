@@ -263,7 +263,7 @@ static DWORD WINAPI TestSynchCritical_Main(LPVOID arg)
 				       dwThreadExitCode);
 				goto fail;
 			}
-			CloseHandle(hThreads[i]);
+			(void)CloseHandle(hThreads[i]);
 		}
 
 		if (gTestValueVulnerable != gTestValueSerialized)
@@ -308,7 +308,7 @@ static DWORD WINAPI TestSynchCritical_Main(LPVOID arg)
 		       dwThreadExitCode);
 		goto fail;
 	}
-	CloseHandle(hThread);
+	(void)CloseHandle(hThread);
 
 	*pbThreadTerminated = TRUE; /* requ. for winpr issue, see below */
 	return 0;
@@ -362,7 +362,7 @@ int TestSynchCritical(int argc, char* argv[])
 	}
 
 	GetExitCodeThread(hThread, &dwThreadExitCode);
-	CloseHandle(hThread);
+	(void)CloseHandle(hThread);
 
 	if (dwThreadExitCode != 0)
 	{

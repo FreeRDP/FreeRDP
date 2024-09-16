@@ -980,7 +980,7 @@ BOOL client_cli_present_gateway_message(freerdp* instance, UINT32 type, BOOL isD
 
 			case 'n':
 			case 'N':
-				freerdp_interruptible_getc(instance->context, stdin);
+				(void)freerdp_interruptible_getc(instance->context, stdin);
 				return FALSE;
 
 			default:
@@ -1339,8 +1339,8 @@ int freerdp_client_common_stop(rdpContext* context)
 
 	if (cctx->thread)
 	{
-		WaitForSingleObject(cctx->thread, INFINITE);
-		CloseHandle(cctx->thread);
+		(void)WaitForSingleObject(cctx->thread, INFINITE);
+		(void)CloseHandle(cctx->thread);
 		cctx->thread = NULL;
 	}
 
@@ -1411,7 +1411,8 @@ client_encomsp_participant_created(EncomspClientContext* context,
 		/* if auto-request-control setting is enabled then only request control once upon connect,
 		 * otherwise it will auto request control again every time server turns off control which
 		 * is a bit annoying */
-		freerdp_settings_set_bool(settings, FreeRDP_RemoteAssistanceRequestControl, FALSE);
+		if (!freerdp_settings_set_bool(settings, FreeRDP_RemoteAssistanceRequestControl, FALSE))
+			return ERROR_INTERNAL_ERROR;
 	}
 
 	return CHANNEL_RC_OK;

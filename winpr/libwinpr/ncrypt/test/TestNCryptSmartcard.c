@@ -119,7 +119,7 @@ int TestNCryptSmartcard(int argc, char* argv[])
 			{
 				char readerStr[1024] = { 0 };
 
-				ConvertWCharNToUtf8(reader, cbOutput, readerStr, ARRAYSIZE(readerStr));
+				(void)ConvertWCharNToUtf8(reader, cbOutput, readerStr, ARRAYSIZE(readerStr));
 				printf("\treader: %s\n", readerStr);
 			}
 

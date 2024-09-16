@@ -312,7 +312,7 @@ BOOL static_mutex_lock(volatile HANDLE* static_mutex)
 			return FALSE;
 
 		if (InterlockedCompareExchangePointer((PVOID*)static_mutex, (PVOID)handle, NULL) != NULL)
-			CloseHandle(handle);
+			(void)CloseHandle(handle);
 	}
 
 	return (WaitForSingleObject(*static_mutex, INFINITE) == WAIT_OBJECT_0);
@@ -330,7 +330,7 @@ LONGLONG InterlockedCompareExchange64(LONGLONG volatile* Destination, LONGLONG E
 		*Destination = Exchange;
 
 	if (locked)
-		ReleaseMutex(mutex);
+		(void)ReleaseMutex(mutex);
 	else
 		(void)fprintf(stderr,
 		              "WARNING: InterlockedCompareExchange64 operation might have failed\n");

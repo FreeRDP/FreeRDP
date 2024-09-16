@@ -45,12 +45,12 @@
 #include "drive_file.h"
 
 #ifdef WITH_DEBUG_RDPDR
-#define DEBUG_WSTR(msg, wstr)                              \
-	do                                                     \
-	{                                                      \
-		char lpstr[1024] = { 0 };                          \
-		ConvertWCharToUtf8(wstr, lpstr, ARRAYSIZE(lpstr)); \
-		WLog_DBG(TAG, msg, lpstr);                         \
+#define DEBUG_WSTR(msg, wstr)                                    \
+	do                                                           \
+	{                                                            \
+		char lpstr[1024] = { 0 };                                \
+		(void)ConvertWCharToUtf8(wstr, lpstr, ARRAYSIZE(lpstr)); \
+		WLog_DBG(TAG, msg, lpstr);                               \
 	} while (0)
 #else
 #define DEBUG_WSTR(msg, wstr) \
@@ -147,7 +147,7 @@ static WCHAR* drive_file_combine_fullpath(const WCHAR* base_path, const WCHAR* p
 	if (contains_dotdot(&fullpath[base_path_length], base_path_length, PathWCharLength))
 	{
 		char abuffer[MAX_PATH] = { 0 };
-		ConvertWCharToUtf8(&fullpath[base_path_length], abuffer, ARRAYSIZE(abuffer));
+		(void)ConvertWCharToUtf8(&fullpath[base_path_length], abuffer, ARRAYSIZE(abuffer));
 
 		WLog_WARN(TAG, "[rdpdr] received invalid file path '%s' from server, aborting!",
 		          &abuffer[base_path_length]);
@@ -361,7 +361,7 @@ BOOL drive_file_free(DRIVE_FILE* file)
 
 	if (file->file_handle != INVALID_HANDLE_VALUE)
 	{
-		CloseHandle(file->file_handle);
+		(void)CloseHandle(file->file_handle);
 		file->file_handle = INVALID_HANDLE_VALUE;
 	}
 
@@ -585,7 +585,7 @@ BOOL drive_file_query_information(DRIVE_FILE* file, UINT32 FsInformationClass, w
 	if (hFile != INVALID_HANDLE_VALUE)
 	{
 		status = GetFileInformationByHandle(hFile, &fileInformation);
-		CloseHandle(hFile);
+		(void)CloseHandle(hFile);
 		if (!status)
 			goto out_fail;
 
@@ -790,7 +790,7 @@ BOOL drive_file_set_information(DRIVE_FILE* file, UINT32 FsInformationClass, UIN
 
 			if (file->file_handle != INVALID_HANDLE_VALUE)
 			{
-				CloseHandle(file->file_handle);
+				(void)CloseHandle(file->file_handle);
 				file->file_handle = INVALID_HANDLE_VALUE;
 			}
 

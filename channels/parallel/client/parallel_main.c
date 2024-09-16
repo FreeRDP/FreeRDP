@@ -395,7 +395,7 @@ static UINT parallel_free_int(PARALLEL_DEVICE* parallel)
 			           "WaitForSingleObject failed with error %" PRIu32 "!", error);
 		}
 
-		CloseHandle(parallel->thread);
+		(void)CloseHandle(parallel->thread);
 		Stream_Free(parallel->device.data, TRUE);
 		MessageQueue_Free(parallel->queue);
 	}

@@ -66,7 +66,7 @@ static VOID CALLBACK Timer1APCProc(LPVOID lpArg, DWORD dwTimerLowValue, DWORD dw
 {
 	UncleanCloseData* data = (UncleanCloseData*)lpArg;
 	data->timer1Calls++;
-	CloseHandle(data->timer2);
+	(void)CloseHandle(data->timer2);
 	data->endTest = TRUE;
 }
 
@@ -127,8 +127,8 @@ int TestSynchAPC(int argc, char* argv[])
 	thread = CreateThread(NULL, 0, uncleanThread, &userApcArg, 0, NULL);
 	if (!thread)
 		return 10;
-	WaitForSingleObject(thread, INFINITE);
-	CloseHandle(thread);
+	(void)WaitForSingleObject(thread, INFINITE);
+	(void)CloseHandle(thread);
 
 	if (userApcArg.called || userApcArg.error)
 		return 11;
@@ -141,8 +141,8 @@ int TestSynchAPC(int argc, char* argv[])
 	if (!QueueUserAPC((PAPCFUNC)userApc, thread, (ULONG_PTR)&userApcArg))
 		return 21;
 
-	WaitForSingleObject(thread, INFINITE);
-	CloseHandle(thread);
+	(void)WaitForSingleObject(thread, INFINITE);
+	(void)CloseHandle(thread);
 
 	if (!userApcArg.called)
 		return 22;
@@ -162,12 +162,12 @@ int TestSynchAPC(int argc, char* argv[])
 	if (!thread)
 		return 33;
 
-	WaitForSingleObject(thread, INFINITE);
-	CloseHandle(thread);
+    (void)WaitForSingleObject(thread, INFINITE);
+(void)CloseHandle(thread);
 
 	if (uncleanCloseData.timer1Calls != 1 || uncleanCloseData.timer2Calls != 0)
 		return 34;
-	CloseHandle(uncleanCloseData.timer1);
+(void)CloseHandle(uncleanCloseData.timer1);
 #endif
 	return 0;
 }

@@ -47,7 +47,7 @@ int TestThreadExitThread(int argc, char* argv[])
 			return -1;
 		}
 
-		CloseHandle(thread);
+		(void)CloseHandle(thread);
 	}
 	return 0;
 }

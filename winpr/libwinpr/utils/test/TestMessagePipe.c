@@ -88,8 +88,8 @@ int TestMessagePipe(int argc, char* argv[])
 		goto out;
 	}
 
-	WaitForSingleObject(ClientThread, INFINITE);
-	WaitForSingleObject(ServerThread, INFINITE);
+	(void)WaitForSingleObject(ClientThread, INFINITE);
+	(void)WaitForSingleObject(ServerThread, INFINITE);
 
 	ret = 0;
 
@@ -97,9 +97,9 @@ out:
 	if (EchoPipe)
 		MessagePipe_Free(EchoPipe);
 	if (ClientThread)
-		CloseHandle(ClientThread);
+		(void)CloseHandle(ClientThread);
 	if (ServerThread)
-		CloseHandle(ServerThread);
+		(void)CloseHandle(ServerThread);
 
 	return ret;
 }

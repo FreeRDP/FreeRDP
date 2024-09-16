@@ -79,9 +79,9 @@ static BOOL shw_end_paint(rdpContext* context)
 		region16_union_rect(&(surface->invalidRegion), &(surface->invalidRegion), &invalidRect);
 	}
 
-	SetEvent(subsystem->RdpUpdateEnterEvent);
-	WaitForSingleObject(subsystem->RdpUpdateLeaveEvent, INFINITE);
-	ResetEvent(subsystem->RdpUpdateLeaveEvent);
+	(void)SetEvent(subsystem->RdpUpdateEnterEvent);
+	(void)WaitForSingleObject(subsystem->RdpUpdateLeaveEvent, INFINITE);
+	(void)ResetEvent(subsystem->RdpUpdateLeaveEvent);
 	return TRUE;
 }
 
@@ -261,7 +261,7 @@ static int shw_freerdp_client_start(rdpContext* context)
 static int shw_freerdp_client_stop(rdpContext* context)
 {
 	shwContext* shw = (shwContext*)context;
-	SetEvent(shw->StopEvent);
+	(void)SetEvent(shw->StopEvent);
 	return 0;
 }
 
@@ -408,9 +408,9 @@ int win_shadow_rdp_init(winShadowSubsystem* subsystem)
 	subsystem->shw->subsystem = subsystem;
 	return 1;
 fail_context:
-	CloseHandle(subsystem->RdpUpdateLeaveEvent);
+	(void)CloseHandle(subsystem->RdpUpdateLeaveEvent);
 fail_leave_event:
-	CloseHandle(subsystem->RdpUpdateEnterEvent);
+	(void)CloseHandle(subsystem->RdpUpdateEnterEvent);
 fail_enter_event:
 	return -1;
 }

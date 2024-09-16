@@ -1395,7 +1395,7 @@ static UINT cliprdr_server_start(CliprdrServerContext* context)
 	if (!(cliprdr->Thread = CreateThread(NULL, 0, cliprdr_server_thread, (void*)context, 0, NULL)))
 	{
 		WLog_ERR(TAG, "CreateThread failed!");
-		CloseHandle(cliprdr->StopEvent);
+		(void)CloseHandle(cliprdr->StopEvent);
 		cliprdr->StopEvent = NULL;
 		return ERROR_INTERNAL_ERROR;
 	}
@@ -1420,7 +1420,7 @@ static UINT cliprdr_server_stop(CliprdrServerContext* context)
 
 	if (cliprdr->StopEvent)
 	{
-		SetEvent(cliprdr->StopEvent);
+		(void)SetEvent(cliprdr->StopEvent);
 
 		if (WaitForSingleObject(cliprdr->Thread, INFINITE) == WAIT_FAILED)
 		{
@@ -1429,8 +1429,8 @@ static UINT cliprdr_server_stop(CliprdrServerContext* context)
 			return error;
 		}
 
-		CloseHandle(cliprdr->Thread);
-		CloseHandle(cliprdr->StopEvent);
+		(void)CloseHandle(cliprdr->Thread);
+		(void)CloseHandle(cliprdr->StopEvent);
 	}
 
 	if (cliprdr->ChannelHandle)

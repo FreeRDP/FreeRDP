@@ -544,7 +544,7 @@ SECURITY_STATUS ntlm_read_NegotiateMessage(NTLM_CONTEXT* context, PSecBuffer buf
 		return SEC_E_INVALID_TOKEN;
 
 	length = Stream_GetPosition(s);
-	WINPR_ASSERT(length <= ULONG_MAX);
+	WINPR_ASSERT(length <= UINT32_MAX);
 	buffer->cbBuffer = (ULONG)length;
 
 	if (!sspi_SecBufferAlloc(&context->NegotiateMessage, (ULONG)length))
@@ -634,7 +634,7 @@ SECURITY_STATUS ntlm_write_NegotiateMessage(NTLM_CONTEXT* context, const PSecBuf
 	}
 
 	length = Stream_GetPosition(s);
-	WINPR_ASSERT(length <= ULONG_MAX);
+	WINPR_ASSERT(length <= UINT32_MAX);
 	buffer->cbBuffer = (ULONG)length;
 
 	if (!sspi_SecBufferAlloc(&context->NegotiateMessage, (ULONG)length))
@@ -895,7 +895,7 @@ SECURITY_STATUS ntlm_write_ChallengeMessage(NTLM_CONTEXT* context, const PSecBuf
 	}
 
 	length = Stream_GetPosition(s);
-	WINPR_ASSERT(length <= ULONG_MAX);
+	WINPR_ASSERT(length <= UINT32_MAX);
 	buffer->cbBuffer = (ULONG)length;
 
 	if (!sspi_SecBufferAlloc(&context->ChallengeMessage, (ULONG)length))
@@ -1043,7 +1043,7 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 	}
 
 	length = Stream_GetPosition(s);
-	WINPR_ASSERT(length <= ULONG_MAX);
+	WINPR_ASSERT(length <= UINT32_MAX);
 
 	if (!sspi_SecBufferAlloc(&context->AuthenticateMessage, (ULONG)length))
 		goto fail;
@@ -1368,7 +1368,7 @@ SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, const PSec
 	}
 
 	length = Stream_GetPosition(s);
-	WINPR_ASSERT(length <= ULONG_MAX);
+	WINPR_ASSERT(length <= UINT32_MAX);
 
 	if (!sspi_SecBufferAlloc(&context->AuthenticateMessage, (ULONG)length))
 		return SEC_E_INTERNAL_ERROR;

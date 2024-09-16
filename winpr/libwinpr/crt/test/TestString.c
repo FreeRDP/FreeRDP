@@ -93,7 +93,8 @@ int TestString(int argc, char* argv[])
 
 	/* _wcslen */
 	WCHAR testStringW[ARRAYSIZE(testStringA)] = { 0 };
-	ConvertUtf8NToWChar(testStringA, ARRAYSIZE(testStringA), testStringW, ARRAYSIZE(testStringW));
+	(void)ConvertUtf8NToWChar(testStringA, ARRAYSIZE(testStringA), testStringW,
+	                          ARRAYSIZE(testStringW));
 	const size_t testStringW_Length = testStringA_Length;
 	length = _wcslen(testStringW);
 
@@ -143,13 +144,15 @@ int TestString(int argc, char* argv[])
 	/* wcstok_s */
 	WCHAR testDelimiterW[ARRAYSIZE(testDelimiterA)] = { 0 };
 	WCHAR testTokensW[ARRAYSIZE(testTokensA)] = { 0 };
-	ConvertUtf8NToWChar(testTokensA, ARRAYSIZE(testTokensA), testTokensW, ARRAYSIZE(testTokensW));
-	ConvertUtf8NToWChar(testDelimiterA, ARRAYSIZE(testDelimiterA), testDelimiterW,
-	                    ARRAYSIZE(testDelimiterW));
+	(void)ConvertUtf8NToWChar(testTokensA, ARRAYSIZE(testTokensA), testTokensW,
+	                          ARRAYSIZE(testTokensW));
+	(void)ConvertUtf8NToWChar(testDelimiterA, ARRAYSIZE(testDelimiterA), testDelimiterW,
+	                          ARRAYSIZE(testDelimiterW));
 	p = wcstok_s(testTokensW, testDelimiterW, &context);
 
 	WCHAR testToken1W[ARRAYSIZE(testToken1A)] = { 0 };
-	ConvertUtf8NToWChar(testToken1A, ARRAYSIZE(testToken1A), testToken1W, ARRAYSIZE(testToken1W));
+	(void)ConvertUtf8NToWChar(testToken1A, ARRAYSIZE(testToken1A), testToken1W,
+	                          ARRAYSIZE(testToken1W));
 	if (memcmp(p, testToken1W, sizeof(testToken1W)) != 0)
 	{
 		printf("wcstok_s error: token #1 mismatch\n");
@@ -159,7 +162,8 @@ int TestString(int argc, char* argv[])
 	p = wcstok_s(NULL, testDelimiterW, &context);
 
 	WCHAR testToken2W[ARRAYSIZE(testToken2A)] = { 0 };
-	ConvertUtf8NToWChar(testToken2A, ARRAYSIZE(testToken2A), testToken2W, ARRAYSIZE(testToken2W));
+	(void)ConvertUtf8NToWChar(testToken2A, ARRAYSIZE(testToken2A), testToken2W,
+	                          ARRAYSIZE(testToken2W));
 	if (memcmp(p, testToken2W, sizeof(testToken2W)) != 0)
 	{
 		printf("wcstok_s error: token #2 mismatch\n");
@@ -169,7 +173,8 @@ int TestString(int argc, char* argv[])
 	p = wcstok_s(NULL, testDelimiterW, &context);
 
 	WCHAR testToken3W[ARRAYSIZE(testToken3A)] = { 0 };
-	ConvertUtf8NToWChar(testToken3A, ARRAYSIZE(testToken3A), testToken3W, ARRAYSIZE(testToken3W));
+	(void)ConvertUtf8NToWChar(testToken3A, ARRAYSIZE(testToken3A), testToken3W,
+	                          ARRAYSIZE(testToken3W));
 	if (memcmp(p, testToken3W, sizeof(testToken3W)) != 0)
 	{
 		printf("wcstok_s error: token #3 mismatch\n");

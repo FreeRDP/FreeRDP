@@ -293,7 +293,7 @@ static UINT audin_winmm_close(IAudinDevice* device)
 	if (!winmm)
 		return ERROR_INVALID_PARAMETER;
 
-	SetEvent(winmm->stopEvent);
+	(void)SetEvent(winmm->stopEvent);
 	status = WaitForSingleObject(winmm->thread, INFINITE);
 
 	if (status == WAIT_FAILED)
@@ -304,8 +304,8 @@ static UINT audin_winmm_close(IAudinDevice* device)
 		return error;
 	}
 
-	CloseHandle(winmm->thread);
-	CloseHandle(winmm->stopEvent);
+	(void)CloseHandle(winmm->thread);
+	(void)CloseHandle(winmm->stopEvent);
 	winmm->thread = NULL;
 	winmm->stopEvent = NULL;
 	winmm->receive = NULL;
@@ -436,7 +436,7 @@ static UINT audin_winmm_open(IAudinDevice* device, AudinReceive receive, void* u
 	if (!(winmm->thread = CreateThread(NULL, 0, audin_winmm_thread_func, winmm, 0, NULL)))
 	{
 		WLog_Print(winmm->log, WLOG_ERROR, "CreateThread failed!");
-		CloseHandle(winmm->stopEvent);
+		(void)CloseHandle(winmm->stopEvent);
 		winmm->stopEvent = NULL;
 		return ERROR_INTERNAL_ERROR;
 	}

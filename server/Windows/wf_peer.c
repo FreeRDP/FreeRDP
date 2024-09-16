@@ -182,7 +182,7 @@ BOOL wf_peer_accepted(freerdp_listener* instance, freerdp_peer* client)
 	if (!(hThread = CreateThread(NULL, 0, wf_peer_main_loop, client, 0, NULL)))
 		return FALSE;
 
-	CloseHandle(hThread);
+	(void)CloseHandle(hThread);
 	return TRUE;
 }
 
@@ -217,8 +217,8 @@ static DWORD WINAPI wf_peer_socket_listener(LPVOID lpParam)
 			break;
 		}
 
-		SetEvent(context->socketEvent);
-		WaitForSingleObject(context->socketSemaphore, INFINITE);
+		(void)SetEvent(context->socketEvent);
+		(void)WaitForSingleObject(context->socketSemaphore, INFINITE);
 
 		if (context->socketClose)
 			break;
@@ -357,7 +357,7 @@ DWORD WINAPI wf_peer_main_loop(LPVOID lpParam)
 			if (client->activated)
 				wf_update_peer_send(wfi, context);
 
-			ResetEvent(context->updateEvent);
+			(void)ResetEvent(context->updateEvent);
 			ReleaseSemaphore(wfi->updateSemaphore, 1, NULL);
 		}
 
@@ -369,7 +369,7 @@ DWORD WINAPI wf_peer_main_loop(LPVOID lpParam)
 				context->socketClose = TRUE;
 			}
 
-			ResetEvent(context->socketEvent);
+			(void)ResetEvent(context->socketEvent);
 			ReleaseSemaphore(context->socketSemaphore, 1, NULL);
 
 			if (context->socketClose)
@@ -392,17 +392,17 @@ DWORD WINAPI wf_peer_main_loop(LPVOID lpParam)
 
 	if (WaitForSingleObject(context->updateEvent, 0) == 0)
 	{
-		ResetEvent(context->updateEvent);
+		(void)ResetEvent(context->updateEvent);
 		ReleaseSemaphore(wfi->updateSemaphore, 1, NULL);
 	}
 
 	wf_update_peer_deactivate(wfi, context);
 	client->Disconnect(client);
 fail_socket_thread:
-	CloseHandle(context->socketSemaphore);
+	(void)CloseHandle(context->socketSemaphore);
 	context->socketSemaphore = NULL;
 fail_socket_semaphore:
-	CloseHandle(context->socketEvent);
+	(void)CloseHandle(context->socketEvent);
 	context->socketEvent = NULL;
 fail_socket_event:
 fail_socked_closed:

@@ -831,6 +831,6 @@ const WCHAR* InitializeConstWCharFromUtf8(const char* str, WCHAR* buffer, size_t
 {
 	WINPR_ASSERT(str);
 	WINPR_ASSERT(buffer || (len == 0));
-	ConvertUtf8ToWChar(str, buffer, len);
+	(void)ConvertUtf8ToWChar(str, buffer, len);
 	return buffer;
 }

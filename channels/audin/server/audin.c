@@ -378,7 +378,7 @@ static DWORD WINAPI audin_server_thread_func(LPVOID arg)
 		if (!Stream_EnsureRemainingCapacity(s, BytesReturned))
 			break;
 
-		WINPR_ASSERT(Stream_Capacity(s) <= ULONG_MAX);
+		WINPR_ASSERT(Stream_Capacity(s) <= UINT32_MAX);
 		if (WTSVirtualChannelRead(audin->audin_channel, 0, (PCHAR)Stream_Buffer(s),
 		                          (ULONG)Stream_Capacity(s), &BytesReturned) == FALSE)
 		{
@@ -489,7 +489,7 @@ static BOOL audin_server_open(audin_server_context* context)
 		          CreateThread(NULL, 0, audin_server_thread_func, (void*)audin, 0, NULL)))
 		{
 			WLog_Print(audin->log, WLOG_ERROR, "CreateThread failed!");
-			CloseHandle(audin->stopEvent);
+			(void)CloseHandle(audin->stopEvent);
 			audin->stopEvent = NULL;
 			return FALSE;
 		}
@@ -516,7 +516,7 @@ static BOOL audin_server_close(audin_server_context* context)
 
 	if (audin->thread)
 	{
-		SetEvent(audin->stopEvent);
+		(void)SetEvent(audin->stopEvent);
 
 		if (WaitForSingleObject(audin->thread, INFINITE) == WAIT_FAILED)
 		{
@@ -525,8 +525,8 @@ static BOOL audin_server_close(audin_server_context* context)
 			return FALSE;
 		}
 
-		CloseHandle(audin->thread);
-		CloseHandle(audin->stopEvent);
+		(void)CloseHandle(audin->thread);
+		(void)CloseHandle(audin->stopEvent);
 		audin->thread = NULL;
 		audin->stopEvent = NULL;
 	}

@@ -1427,7 +1427,7 @@ int transport_check_fds(rdpTransport* transport)
 		if (transport->haveMoreBytesToRead)
 		{
 			transport->haveMoreBytesToRead = FALSE;
-			ResetEvent(transport->rereadEvent);
+			(void)ResetEvent(transport->rereadEvent);
 		}
 		return status;
 	}
@@ -1462,7 +1462,7 @@ int transport_check_fds(rdpTransport* transport)
 	if (!transport->haveMoreBytesToRead)
 	{
 		transport->haveMoreBytesToRead = TRUE;
-		SetEvent(transport->rereadEvent);
+		(void)SetEvent(transport->rereadEvent);
 	}
 	return recv_status;
 }
@@ -1702,9 +1702,9 @@ void transport_free(rdpTransport* transport)
 
 	nla_free(transport->nla);
 	StreamPool_Free(transport->ReceivePool);
-	CloseHandle(transport->connectedEvent);
-	CloseHandle(transport->rereadEvent);
-	CloseHandle(transport->ioEvent);
+	(void)CloseHandle(transport->connectedEvent);
+	(void)CloseHandle(transport->rereadEvent);
+	(void)CloseHandle(transport->ioEvent);
 	DeleteCriticalSection(&(transport->ReadLock));
 	DeleteCriticalSection(&(transport->WriteLock));
 	free(transport);

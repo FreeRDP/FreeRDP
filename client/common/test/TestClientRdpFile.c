@@ -539,13 +539,15 @@ int TestClientRdpFile(int argc, char* argv[])
 	if (iValue != 456)
 		return -1;
 
+	const char microsoft[] = "microsoft";
 	sValue = freerdp_client_rdp_file_get_string_option(file, "vendor string");
-	if (strncmp(sValue, "microsoft", 10) != 0)
+	if (strncmp(sValue, microsoft, sizeof(microsoft)) != 0)
 		goto fail;
 
+	const char apple[] = "apple";
 	freerdp_client_rdp_file_set_string_option(file, "vendor string", "apple");
 	sValue = freerdp_client_rdp_file_get_string_option(file, "vendor string");
-	if (strncmp(sValue, "apple", 6) != 0)
+	if (strncmp(sValue, apple, sizeof(apple)) != 0)
 		goto fail;
 
 	freerdp_client_rdp_file_set_string_option(file, "fruits", "banana,oranges");

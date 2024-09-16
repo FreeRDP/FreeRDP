@@ -1137,7 +1137,7 @@ static UINT encomsp_virtual_channel_event_disconnected(encomspPlugin* encomsp)
 	}
 
 	MessageQueue_Free(encomsp->queue);
-	CloseHandle(encomsp->thread);
+	(void)CloseHandle(encomsp->thread);
 	encomsp->queue = NULL;
 	encomsp->thread = NULL;
 

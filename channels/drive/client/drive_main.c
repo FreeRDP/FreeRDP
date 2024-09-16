@@ -822,7 +822,7 @@ static UINT drive_free_int(DRIVE_DEVICE* drive)
 	if (!drive)
 		return ERROR_INVALID_PARAMETER;
 
-	CloseHandle(drive->thread);
+	(void)CloseHandle(drive->thread);
 	ListDictionary_Free(drive->files);
 	MessageQueue_Free(drive->IrpQueue);
 	Stream_Free(drive->device.data, TRUE);

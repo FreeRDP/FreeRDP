@@ -464,7 +464,7 @@ static DWORD WINAPI rdpei_periodic_update(LPVOID arg)
 		}
 
 		if (status == WAIT_OBJECT_0)
-			ResetEvent(rdpei->event);
+			(void)ResetEvent(rdpei->event);
 
 		LeaveCriticalSection(&rdpei->lock);
 	}
@@ -963,7 +963,7 @@ static UINT rdpei_add_contact(RdpeiClientContext* context, const RDPINPUT_CONTAC
 	contactPoint = &rdpei->contactPoints[contact->contactId];
 	contactPoint->data = *contact;
 	contactPoint->dirty = TRUE;
-	SetEvent(rdpei->event);
+	(void)SetEvent(rdpei->event);
 	LeaveCriticalSection(&rdpei->lock);
 
 	return CHANNEL_RC_OK;
@@ -1175,7 +1175,7 @@ static UINT rdpei_add_pen(RdpeiClientContext* context, INT32 externalId,
 	{
 		contactPoint->data = *contact;
 		contactPoint->dirty = TRUE;
-		SetEvent(rdpei->event);
+		(void)SetEvent(rdpei->event);
 	}
 	LeaveCriticalSection(&rdpei->lock);
 
@@ -1442,16 +1442,16 @@ static void terminate_plugin_cb(GENERIC_DYNVC_PLUGIN* base)
 
 	rdpei->running = FALSE;
 	if (rdpei->event)
-		SetEvent(rdpei->event);
+		(void)SetEvent(rdpei->event);
 
 	if (rdpei->thread)
 	{
-		WaitForSingleObject(rdpei->thread, INFINITE);
-		CloseHandle(rdpei->thread);
+		(void)WaitForSingleObject(rdpei->thread, INFINITE);
+		(void)CloseHandle(rdpei->thread);
 	}
 
 	if (rdpei->event)
-		CloseHandle(rdpei->event);
+		(void)CloseHandle(rdpei->event);
 
 	DeleteCriticalSection(&rdpei->lock);
 	free(rdpei->context);

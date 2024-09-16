@@ -1343,7 +1343,7 @@ DWORD GetFullPathNameA(LPCSTR lpFileName, DWORD nBufferLength, LPSTR lpBuffer, L
 
 	dwStatus = GetFullPathNameW(lpFileNameW, nBufferLengthW, lpBufferW, &lpFilePartW);
 
-	ConvertWCharNToUtf8(lpBufferW, nBufferLengthW / sizeof(WCHAR), lpBuffer, nBufferLength);
+	(void)ConvertWCharNToUtf8(lpBufferW, nBufferLengthW / sizeof(WCHAR), lpBuffer, nBufferLength);
 
 	if (lpFilePart)
 		lpFilePart = lpBuffer + (lpFilePartW - lpBufferW);

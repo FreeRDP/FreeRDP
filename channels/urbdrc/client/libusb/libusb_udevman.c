@@ -436,13 +436,13 @@ static IUDEVICE* udevman_get_udevice_by_ChannelID(IUDEVMAN* idevman, UINT32 chan
 static void udevman_loading_lock(IUDEVMAN* idevman)
 {
 	UDEVMAN* udevman = (UDEVMAN*)idevman;
-	WaitForSingleObject(udevman->devman_loading, INFINITE);
+	(void)WaitForSingleObject(udevman->devman_loading, INFINITE);
 }
 
 static void udevman_loading_unlock(IUDEVMAN* idevman)
 {
 	UDEVMAN* udevman = (UDEVMAN*)idevman;
-	ReleaseMutex(udevman->devman_loading);
+	(void)ReleaseMutex(udevman->devman_loading);
 }
 
 BASIC_STATE_FUNC_DEFINED(device_num, UINT32)
@@ -469,14 +469,14 @@ static void udevman_free(IUDEVMAN* idevman)
 	udevman->running = FALSE;
 	if (udevman->thread)
 	{
-		WaitForSingleObject(udevman->thread, INFINITE);
-		CloseHandle(udevman->thread);
+		(void)WaitForSingleObject(udevman->thread, INFINITE);
+		(void)CloseHandle(udevman->thread);
 	}
 
 	udevman_unregister_all_udevices(idevman);
 
 	if (udevman->devman_loading)
-		CloseHandle(udevman->devman_loading);
+		(void)CloseHandle(udevman->devman_loading);
 
 	libusb_exit(udevman->context);
 

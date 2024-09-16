@@ -342,7 +342,7 @@ static void freerdp_listener_close(freerdp_listener* instance)
 	for (int i = 0; i < listener->num_sockfds; i++)
 	{
 		closesocket((SOCKET)listener->sockfds[i]);
-		CloseHandle(listener->events[i]);
+		(void)CloseHandle(listener->events[i]);
 	}
 
 	listener->num_sockfds = 0;
@@ -476,7 +476,7 @@ static BOOL freerdp_listener_check_fds(freerdp_listener* instance)
 	{
 		struct sockaddr_storage peer_addr = { 0 };
 
-		WSAResetEvent(listener->events[i]);
+		(void)WSAResetEvent(listener->events[i]);
 		int peer_addr_size = sizeof(peer_addr);
 		int peer_sockfd =
 		    _accept(listener->sockfds[i], (struct sockaddr*)&peer_addr, &peer_addr_size);

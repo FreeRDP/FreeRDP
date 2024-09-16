@@ -232,7 +232,7 @@ void smartcard_context_free(void* pCtx)
 			if (WaitForSingleObject(pContext->thread, INFINITE) == WAIT_FAILED)
 				WLog_ERR(TAG, "WaitForSingleObject failed with error %" PRIu32 "!", GetLastError());
 
-			CloseHandle(pContext->thread);
+			(void)CloseHandle(pContext->thread);
 		}
 		MessageQueue_Free(pContext->IrpQueue);
 	}
@@ -253,7 +253,7 @@ static UINT smartcard_free_(SMARTCARD_DEVICE* smartcard)
 	if (smartcard->IrpQueue)
 	{
 		MessageQueue_Free(smartcard->IrpQueue);
-		CloseHandle(smartcard->thread);
+		(void)CloseHandle(smartcard->thread);
 	}
 
 	Stream_Free(smartcard->device.data, TRUE);

@@ -1692,8 +1692,8 @@ static void freerdp_client_print_timezone_list(void)
 	{
 		char TimeZoneKeyName[ARRAYSIZE(info.TimeZoneKeyName) + 1] = { 0 };
 
-		ConvertWCharNToUtf8(info.TimeZoneKeyName, ARRAYSIZE(info.TimeZoneKeyName), TimeZoneKeyName,
-		                    ARRAYSIZE(TimeZoneKeyName));
+		(void)ConvertWCharNToUtf8(info.TimeZoneKeyName, ARRAYSIZE(info.TimeZoneKeyName),
+		                          TimeZoneKeyName, ARRAYSIZE(TimeZoneKeyName));
 		printf("%" PRIu32 ": '%s'\n", index, TimeZoneKeyName);
 	}
 }
@@ -1779,7 +1779,7 @@ int freerdp_client_settings_command_line_status_print_ex(rdpSettings* settings, 
 	}
 	else if (status == COMMAND_LINE_STATUS_PRINT)
 	{
-		CommandLineParseArgumentsA(argc, argv, largs, 0x112, NULL, NULL, NULL);
+		(void)CommandLineParseArgumentsA(argc, argv, largs, 0x112, NULL, NULL, NULL);
 
 		arg = CommandLineFindArgumentA(largs, "list");
 		WINPR_ASSERT(arg);
@@ -2464,7 +2464,8 @@ static int parse_host_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT
 
 	if (!arg->Value)
 		return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
-	freerdp_settings_set_string(settings, FreeRDP_ServerHostname, NULL);
+	if (!freerdp_settings_set_string(settings, FreeRDP_ServerHostname, NULL))
+		return COMMAND_LINE_ERROR_MEMORY;
 	char* p = strchr(arg->Value, '[');
 
 	/* ipv4 */
@@ -4774,8 +4775,8 @@ static int freerdp_client_settings_parse_command_line_arguments_int(
 			char TimeZoneKeyName[ARRAYSIZE(info.TimeZoneKeyName) + 1] = { 0 };
 			while (EnumDynamicTimeZoneInformation(index++, &info) != ERROR_NO_MORE_ITEMS)
 			{
-				ConvertWCharNToUtf8(info.TimeZoneKeyName, ARRAYSIZE(info.TimeZoneKeyName),
-				                    TimeZoneKeyName, ARRAYSIZE(TimeZoneKeyName));
+				(void)ConvertWCharNToUtf8(info.TimeZoneKeyName, ARRAYSIZE(info.TimeZoneKeyName),
+				                          TimeZoneKeyName, ARRAYSIZE(TimeZoneKeyName));
 
 				WINPR_ASSERT(arg->Value);
 				if (strncmp(TimeZoneKeyName, arg->Value, ARRAYSIZE(TimeZoneKeyName)) == 0)

@@ -233,7 +233,7 @@ static UINT sshagent_on_close(IWTSVirtualChannelCallback* pChannelCallback)
 		return error;
 	}
 
-	CloseHandle(callback->thread);
+	(void)CloseHandle(callback->thread);
 	LeaveCriticalSection(&callback->lock);
 	DeleteCriticalSection(&callback->lock);
 	free(callback);

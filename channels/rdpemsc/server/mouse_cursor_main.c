@@ -406,7 +406,7 @@ static UINT mouse_cursor_server_open(MouseCursorServerContext* context)
 		if (!mouse_cursor->thread)
 		{
 			WLog_ERR(TAG, "CreateThread failed!");
-			CloseHandle(mouse_cursor->stopEvent);
+			(void)CloseHandle(mouse_cursor->stopEvent);
 			mouse_cursor->stopEvent = NULL;
 			return ERROR_INTERNAL_ERROR;
 		}
@@ -425,7 +425,7 @@ static UINT mouse_cursor_server_close(MouseCursorServerContext* context)
 
 	if (!mouse_cursor->externalThread && mouse_cursor->thread)
 	{
-		SetEvent(mouse_cursor->stopEvent);
+		(void)SetEvent(mouse_cursor->stopEvent);
 
 		if (WaitForSingleObject(mouse_cursor->thread, INFINITE) == WAIT_FAILED)
 		{
@@ -434,8 +434,8 @@ static UINT mouse_cursor_server_close(MouseCursorServerContext* context)
 			return error;
 		}
 
-		CloseHandle(mouse_cursor->thread);
-		CloseHandle(mouse_cursor->stopEvent);
+		(void)CloseHandle(mouse_cursor->thread);
+		(void)CloseHandle(mouse_cursor->stopEvent);
 		mouse_cursor->thread = NULL;
 		mouse_cursor->stopEvent = NULL;
 	}

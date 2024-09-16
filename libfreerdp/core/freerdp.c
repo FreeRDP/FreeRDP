@@ -895,7 +895,7 @@ void freerdp_context_free(freerdp* instance)
 	ctx->metrics = NULL;
 
 	if (ctx->channelErrorEvent)
-		CloseHandle(ctx->channelErrorEvent);
+		(void)CloseHandle(ctx->channelErrorEvent);
 	ctx->channelErrorEvent = NULL;
 
 	free(ctx->errorDescription);
@@ -1292,7 +1292,7 @@ void clearChannelError(rdpContext* context)
 	WINPR_ASSERT(context);
 	context->channelErrorNum = 0;
 	memset(context->errorDescription, 0, 500);
-	ResetEvent(context->channelErrorEvent);
+	(void)ResetEvent(context->channelErrorEvent);
 }
 
 WINPR_ATTR_FORMAT_ARG(3, 4)
@@ -1306,7 +1306,7 @@ void setChannelError(rdpContext* context, UINT errorNum, WINPR_FORMAT_ARG const 
 	context->channelErrorNum = errorNum;
 	(void)vsnprintf(context->errorDescription, 499, format, ap);
 	va_end(ap);
-	SetEvent(context->channelErrorEvent);
+	(void)SetEvent(context->channelErrorEvent);
 }
 
 const char* freerdp_nego_get_routing_token(rdpContext* context, DWORD* length)

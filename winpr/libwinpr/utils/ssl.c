@@ -75,11 +75,11 @@ static void _winpr_openssl_locking(int mode, int type, const char* file, int lin
 {
 	if (mode & CRYPTO_LOCK)
 	{
-		WaitForSingleObject(g_winpr_openssl_locks[type], INFINITE);
+		(void)WaitForSingleObject(g_winpr_openssl_locks[type], INFINITE);
 	}
 	else
 	{
-		ReleaseMutex(g_winpr_openssl_locks[type]);
+		(void)ReleaseMutex(g_winpr_openssl_locks[type]);
 	}
 }
 
@@ -104,18 +104,18 @@ static void _winpr_openssl_dynlock_lock(int mode, struct CRYPTO_dynlock_value* d
 {
 	if (mode & CRYPTO_LOCK)
 	{
-		WaitForSingleObject(dynlock->mutex, INFINITE);
+		(void)WaitForSingleObject(dynlock->mutex, INFINITE);
 	}
 	else
 	{
-		ReleaseMutex(dynlock->mutex);
+		(void)ReleaseMutex(dynlock->mutex);
 	}
 }
 
 static void _winpr_openssl_dynlock_destroy(struct CRYPTO_dynlock_value* dynlock, const char* file,
                                            int line)
 {
-	CloseHandle(dynlock->mutex);
+	(void)CloseHandle(dynlock->mutex);
 	free(dynlock);
 }
 
@@ -150,7 +150,7 @@ static BOOL _winpr_openssl_initialize_locking(void)
 					while (i--)
 					{
 						if (locks[i])
-							CloseHandle(locks[i]);
+							(void)CloseHandle(locks[i]);
 					}
 
 					free(locks);
@@ -203,7 +203,7 @@ static BOOL _winpr_openssl_cleanup_locking(void)
 
 		for (int i = 0; i < g_winpr_openssl_num_locks; i++)
 		{
-			CloseHandle(g_winpr_openssl_locks[i]);
+			(void)CloseHandle(g_winpr_openssl_locks[i]);
 		}
 
 		g_winpr_openssl_num_locks = 0;

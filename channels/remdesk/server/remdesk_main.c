@@ -669,7 +669,7 @@ static UINT remdesk_server_start(RemdeskServerContext* context)
 	          CreateThread(NULL, 0, remdesk_server_thread, (void*)context, 0, NULL)))
 	{
 		WLog_ERR(TAG, "CreateThread failed!");
-		CloseHandle(context->priv->StopEvent);
+		(void)CloseHandle(context->priv->StopEvent);
 		context->priv->StopEvent = NULL;
 		return ERROR_INTERNAL_ERROR;
 	}
@@ -685,7 +685,7 @@ static UINT remdesk_server_start(RemdeskServerContext* context)
 static UINT remdesk_server_stop(RemdeskServerContext* context)
 {
 	UINT error = 0;
-	SetEvent(context->priv->StopEvent);
+	(void)SetEvent(context->priv->StopEvent);
 
 	if (WaitForSingleObject(context->priv->Thread, INFINITE) == WAIT_FAILED)
 	{
@@ -694,8 +694,8 @@ static UINT remdesk_server_stop(RemdeskServerContext* context)
 		return error;
 	}
 
-	CloseHandle(context->priv->Thread);
-	CloseHandle(context->priv->StopEvent);
+	(void)CloseHandle(context->priv->Thread);
+	(void)CloseHandle(context->priv->StopEvent);
 	return CHANNEL_RC_OK;
 }
 

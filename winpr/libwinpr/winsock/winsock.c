@@ -736,8 +736,7 @@ BOOL WSAResetEvent(HANDLE hEvent)
 
 BOOL WSACloseEvent(HANDLE hEvent)
 {
-	BOOL status = 0;
-	status = CloseHandle(hEvent);
+	BOOL status = CloseHandle(hEvent);
 
 	if (!status)
 		SetLastError(6);

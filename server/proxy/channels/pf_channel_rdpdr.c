@@ -259,7 +259,7 @@ static UINT rdpdr_seal_send_free_request(pf_channel_server_context* context, wSt
 
 	Stream_SealLength(s);
 	len = Stream_Length(s);
-	WINPR_ASSERT(len <= ULONG_MAX);
+	WINPR_ASSERT(len <= UINT32_MAX);
 
 	rdpdr_dump_send_packet(context->log, WLOG_TRACE, s, proxy_client_tx);
 	status = WTSVirtualChannelWrite(context->handle, (char*)Stream_Buffer(s), (ULONG)len, NULL);

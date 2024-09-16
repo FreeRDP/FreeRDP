@@ -73,17 +73,17 @@ rdpShadowMultiClientEvent* shadow_multiclient_new(void)
 	event->consuming = 0;
 	event->waiting = 0;
 	event->eventid = 0;
-	SetEvent(event->doneEvent);
+	(void)SetEvent(event->doneEvent);
 	return event;
 
 out_free_subscribers:
 	ArrayList_Free(event->subscribers);
 out_free_doneEvent:
-	CloseHandle(event->doneEvent);
+	(void)CloseHandle(event->doneEvent);
 out_free_barrierEvent:
-	CloseHandle(event->barrierEvent);
+	(void)CloseHandle(event->barrierEvent);
 out_free_event:
-	CloseHandle(event->event);
+	(void)CloseHandle(event->event);
 out_free:
 	free(event);
 out_error:
@@ -98,9 +98,9 @@ void shadow_multiclient_free(rdpShadowMultiClientEvent* event)
 	DeleteCriticalSection(&(event->lock));
 
 	ArrayList_Free(event->subscribers);
-	CloseHandle(event->doneEvent);
-	CloseHandle(event->barrierEvent);
-	CloseHandle(event->event);
+	(void)CloseHandle(event->doneEvent);
+	(void)CloseHandle(event->barrierEvent);
+	(void)CloseHandle(event->event);
 	free(event);
 }
 
@@ -128,8 +128,8 @@ static void Publish(rdpShadowMultiClientEvent* event)
 	{
 		event->eventid = (event->eventid & 0xff) + 1;
 		WLog_VRB(TAG, "Server published event %d. %d clients.\n", event->eventid, event->consuming);
-		ResetEvent(event->doneEvent);
-		SetEvent(event->event);
+		(void)ResetEvent(event->doneEvent);
+		(void)SetEvent(event->event);
 	}
 }
 
@@ -140,7 +140,7 @@ static void WaitForSubscribers(rdpShadowMultiClientEvent* event)
 		/* Wait for clients done */
 		WLog_VRB(TAG, "Server wait event %d. %d clients.\n", event->eventid, event->consuming);
 		LeaveCriticalSection(&(event->lock));
-		WaitForSingleObject(event->doneEvent, INFINITE);
+		(void)WaitForSingleObject(event->doneEvent, INFINITE);
 		EnterCriticalSection(&(event->lock));
 		WLog_VRB(TAG, "Server quit event %d. %d clients.\n", event->eventid, event->consuming);
 	}
@@ -195,17 +195,17 @@ static BOOL Consume(struct rdp_shadow_multiclient_subscriber* subscriber, BOOL w
 	if (event->consuming == 0)
 	{
 		/* Last client reset event before notify clients to continue */
-		ResetEvent(event->event);
+		(void)ResetEvent(event->event);
 
 		if (event->waiting > 0)
 		{
 			/* Notify other clients to continue */
-			SetEvent(event->barrierEvent);
+			(void)SetEvent(event->barrierEvent);
 		}
 		else
 		{
 			/* Only one client. Notify server directly */
-			SetEvent(event->doneEvent);
+			(void)SetEvent(event->doneEvent);
 		}
 	}
 	else /* (event->consuming > 0) */
@@ -219,7 +219,7 @@ static BOOL Consume(struct rdp_shadow_multiclient_subscriber* subscriber, BOOL w
 			 */
 			event->waiting++;
 			LeaveCriticalSection(&(event->lock));
-			WaitForSingleObject(event->barrierEvent, INFINITE);
+			(void)WaitForSingleObject(event->barrierEvent, INFINITE);
 			EnterCriticalSection(&(event->lock));
 			event->waiting--;
 			if (event->waiting == 0)
@@ -229,8 +229,8 @@ static BOOL Consume(struct rdp_shadow_multiclient_subscriber* subscriber, BOOL w
 				 * We can now discard barrierEvent and notify
 				 * server to continue.
 				 */
-				ResetEvent(event->barrierEvent);
-				SetEvent(event->doneEvent);
+				(void)ResetEvent(event->barrierEvent);
+				(void)SetEvent(event->doneEvent);
 			}
 		}
 	}

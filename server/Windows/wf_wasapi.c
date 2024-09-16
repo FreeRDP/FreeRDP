@@ -58,7 +58,7 @@ int wf_wasapi_activate(RdpsndServerContext* context)
 		WLog_ERR(TAG, "CreateThread failed");
 		return 1;
 	}
-	CloseHandle(hThread);
+	(void)CloseHandle(hThread);
 
 	return 0;
 }

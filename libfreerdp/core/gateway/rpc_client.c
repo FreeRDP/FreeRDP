@@ -137,7 +137,7 @@ static int rpc_client_receive_pipe_write(RpcClient* client, const BYTE* buffer, 
 		status += (int)length;
 
 	if (ringbuffer_used(&(client->ReceivePipe)) > 0)
-		SetEvent(client->PipeEvent);
+		(void)SetEvent(client->PipeEvent);
 
 	LeaveCriticalSection(&(client->PipeLock));
 	return status;
@@ -165,7 +165,7 @@ int rpc_client_receive_pipe_read(RpcClient* client, BYTE* buffer, size_t length)
 		ringbuffer_commit_read_bytes(&(client->ReceivePipe), status);
 
 	if (ringbuffer_used(&(client->ReceivePipe)) < 1)
-		ResetEvent(client->PipeEvent);
+		(void)ResetEvent(client->PipeEvent);
 
 	LeaveCriticalSection(&(client->PipeLock));
 
@@ -1214,7 +1214,7 @@ void rpc_client_free(RpcClient* client)
 		Stream_Free(client->ReceiveFragment, TRUE);
 
 	if (client->PipeEvent)
-		CloseHandle(client->PipeEvent);
+		(void)CloseHandle(client->PipeEvent);
 
 	ringbuffer_destroy(&(client->ReceivePipe));
 	DeleteCriticalSection(&(client->PipeLock));
