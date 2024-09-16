@@ -112,6 +112,8 @@ typedef struct
 	unsigned long status;
 } PropMotifWmHints;
 
+static void xf_XSetTransientForHint(xfContext* xfc, xfAppWindow* window);
+
 static const char* window_style_to_string(UINT32 style)
 {
 	switch (style)
@@ -866,6 +868,9 @@ void xf_SetWindowStyle(xfContext* xfc, xfAppWindow* appWindow, UINT32 style, UIN
 
 	LogTagAndXChangeProperty(TAG, xfc->display, appWindow->handle, xfc->_NET_WM_WINDOW_TYPE,
 	                         XA_ATOM, 32, PropModeReplace, (BYTE*)&window_type, 1);
+
+	if (ex_style & (WS_EX_CONTROLPARENT | WS_EX_TOOLWINDOW | WS_EX_DLGMODALFRAME))
+		xf_XSetTransientForHint(xfc, appWindow);
 }
 
 void xf_SetWindowActions(xfContext* xfc, xfAppWindow* appWindow)
@@ -1473,4 +1478,25 @@ BOOL xf_AppWindowResize(xfContext* xfc, xfAppWindow* appWindow)
 	xf_AppWindowDestroyImage(appWindow);
 
 	return appWindow->pixmap != 0;
+}
+
+void xf_XSetTransientForHint(xfContext* xfc, xfAppWindow* window)
+{
+	WINPR_ASSERT(xfc);
+	WINPR_ASSERT(window);
+
+	if (window->ownerWindowId == 0)
+		return;
+
+	xfAppWindow* parent = xf_rail_get_window(xfc, window->ownerWindowId);
+	if (!parent)
+		return;
+
+	const int rc = XSetTransientForHint(xfc->display, window->handle, parent->handle);
+	if (rc)
+	{
+		char buffer[128] = { 0 };
+		WLog_WARN(TAG, "XSetTransientForHint [%d]{%s}", rc,
+		          x11_error_to_string(xfc, rc, buffer, sizeof(buffer)));
+	}
 }
