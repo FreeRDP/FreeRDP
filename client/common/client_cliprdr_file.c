@@ -2078,7 +2078,7 @@ void cliprdr_file_context_free(CliprdrFileContext* file)
 		cliprdr_file_session_terminate(file, TRUE);
 
 		WLog_Print(file->log, WLOG_DEBUG, "Waiting on FUSE thread");
-		WaitForSingleObject(file->fuse_thread, INFINITE);
+		(void)WaitForSingleObject(file->fuse_thread, INFINITE);
 		(void)CloseHandle(file->fuse_thread);
 	}
 	if (file->fuse_stop_sync)

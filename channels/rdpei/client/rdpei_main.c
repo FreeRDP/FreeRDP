@@ -1446,7 +1446,7 @@ static void terminate_plugin_cb(GENERIC_DYNVC_PLUGIN* base)
 
 	if (rdpei->thread)
 	{
-		WaitForSingleObject(rdpei->thread, INFINITE);
+		(void)WaitForSingleObject(rdpei->thread, INFINITE);
 		(void)CloseHandle(rdpei->thread);
 	}
 

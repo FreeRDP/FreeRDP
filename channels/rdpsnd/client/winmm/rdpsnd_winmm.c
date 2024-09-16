@@ -180,7 +180,7 @@ static void rdpsnd_winmm_close(rdpsndDevicePlugin* device)
 
 	if (winmm->hThread)
 	{
-		WaitForSingleObject(winmm->hThread, INFINITE);
+		(void)WaitForSingleObject(winmm->hThread, INFINITE);
 		(void)CloseHandle(winmm->hThread);
 		winmm->hThread = NULL;
 	}

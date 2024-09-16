@@ -140,7 +140,7 @@ static void WaitForSubscribers(rdpShadowMultiClientEvent* event)
 		/* Wait for clients done */
 		WLog_VRB(TAG, "Server wait event %d. %d clients.\n", event->eventid, event->consuming);
 		LeaveCriticalSection(&(event->lock));
-		WaitForSingleObject(event->doneEvent, INFINITE);
+		(void)WaitForSingleObject(event->doneEvent, INFINITE);
 		EnterCriticalSection(&(event->lock));
 		WLog_VRB(TAG, "Server quit event %d. %d clients.\n", event->eventid, event->consuming);
 	}
@@ -219,7 +219,7 @@ static BOOL Consume(struct rdp_shadow_multiclient_subscriber* subscriber, BOOL w
 			 */
 			event->waiting++;
 			LeaveCriticalSection(&(event->lock));
-			WaitForSingleObject(event->barrierEvent, INFINITE);
+			(void)WaitForSingleObject(event->barrierEvent, INFINITE);
 			EnterCriticalSection(&(event->lock));
 			event->waiting--;
 			if (event->waiting == 0)

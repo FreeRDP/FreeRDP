@@ -2535,7 +2535,7 @@ BOOL wf_cliprdr_uninit(wfContext* wfc, CliprdrClientContext* cliprdr)
 
 	if (clipboard->thread)
 	{
-		WaitForSingleObject(clipboard->thread, INFINITE);
+		(void)WaitForSingleObject(clipboard->thread, INFINITE);
 		(void)CloseHandle(clipboard->thread);
 	}
 

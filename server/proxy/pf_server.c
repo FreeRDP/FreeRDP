@@ -719,7 +719,7 @@ out_free_peer:
 	if (pdata && pdata->client_thread)
 	{
 		proxy_data_abort_connect(pdata);
-		WaitForSingleObject(pdata->client_thread, INFINITE);
+		(void)WaitForSingleObject(pdata->client_thread, INFINITE);
 	}
 
 	{

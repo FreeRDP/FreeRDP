@@ -436,7 +436,7 @@ static IUDEVICE* udevman_get_udevice_by_ChannelID(IUDEVMAN* idevman, UINT32 chan
 static void udevman_loading_lock(IUDEVMAN* idevman)
 {
 	UDEVMAN* udevman = (UDEVMAN*)idevman;
-	WaitForSingleObject(udevman->devman_loading, INFINITE);
+	(void)WaitForSingleObject(udevman->devman_loading, INFINITE);
 }
 
 static void udevman_loading_unlock(IUDEVMAN* idevman)
@@ -469,7 +469,7 @@ static void udevman_free(IUDEVMAN* idevman)
 	udevman->running = FALSE;
 	if (udevman->thread)
 	{
-		WaitForSingleObject(udevman->thread, INFINITE);
+		(void)WaitForSingleObject(udevman->thread, INFINITE);
 		(void)CloseHandle(udevman->thread);
 	}
 

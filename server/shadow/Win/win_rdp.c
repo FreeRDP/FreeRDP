@@ -80,7 +80,7 @@ static BOOL shw_end_paint(rdpContext* context)
 	}
 
 	(void)SetEvent(subsystem->RdpUpdateEnterEvent);
-	WaitForSingleObject(subsystem->RdpUpdateLeaveEvent, INFINITE);
+	(void)WaitForSingleObject(subsystem->RdpUpdateLeaveEvent, INFINITE);
 	(void)ResetEvent(subsystem->RdpUpdateLeaveEvent);
 	return TRUE;
 }

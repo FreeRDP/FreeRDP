@@ -148,7 +148,7 @@ static int testAbort(int port)
 		return -1;
 	}
 
-	WaitForSingleObject(s_sync, INFINITE);
+	(void)WaitForSingleObject(s_sync, INFINITE);
 	Sleep(100); /* Wait until freerdp_connect has been called */
 	if (instance)
 	{
@@ -293,7 +293,7 @@ static int testSuccess(int port)
 	if (!TerminateProcess(process.hProcess, 0))
 		goto fail;
 
-	WaitForSingleObject(process.hProcess, INFINITE);
+	(void)WaitForSingleObject(process.hProcess, INFINITE);
 	(void)CloseHandle(process.hProcess);
 	(void)CloseHandle(process.hThread);
 	printf("%s: returned %d!\n", __func__, r);

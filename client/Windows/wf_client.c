@@ -1466,7 +1466,7 @@ static int wfreerdp_client_stop(rdpContext* context)
 	if (wfc->keyboardThread)
 	{
 		PostThreadMessage(wfc->keyboardThreadId, WM_QUIT, 0, 0);
-		WaitForSingleObject(wfc->keyboardThread, INFINITE);
+		(void)WaitForSingleObject(wfc->keyboardThread, INFINITE);
 		(void)CloseHandle(wfc->keyboardThread);
 		wfc->keyboardThread = NULL;
 		wfc->keyboardThreadId = 0;

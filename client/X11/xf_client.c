@@ -805,7 +805,7 @@ void xf_lock_x11_(xfContext* xfc, const char* fkt)
 {
 
 	if (!xfc->UseXThreads)
-		WaitForSingleObject(xfc->mutex, INFINITE);
+		(void)WaitForSingleObject(xfc->mutex, INFINITE);
 	else
 		XLockDisplay(xfc->display);
 
@@ -1451,7 +1451,7 @@ static void xf_post_disconnect(freerdp* instance)
 
 	if (xfc->pipethread)
 	{
-		WaitForSingleObject(xfc->pipethread, INFINITE);
+		(void)WaitForSingleObject(xfc->pipethread, INFINITE);
 		(void)CloseHandle(xfc->pipethread);
 		xfc->pipethread = NULL;
 	}

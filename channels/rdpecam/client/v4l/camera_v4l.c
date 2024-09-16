@@ -27,6 +27,7 @@
 #include <linux/videodev2.h>
 
 #include "camera.h"
+#include <winpr/handle.h>
 
 #define TAG CHANNELS_TAG("rdpecam-v4l.client")
 
@@ -530,7 +531,7 @@ UINT cam_v4l_stream_stop(CamV4lStream* stream)
 
 	if (stream->captureThread)
 	{
-		WaitForSingleObject(stream->captureThread, INFINITE);
+		(void)WaitForSingleObject(stream->captureThread, INFINITE);
 		(void)CloseHandle(stream->captureThread);
 		stream->captureThread = NULL;
 	}

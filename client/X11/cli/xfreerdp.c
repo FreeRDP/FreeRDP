@@ -96,7 +96,7 @@ int main(int argc, char* argv[])
 
 	thread = freerdp_client_get_thread(context);
 
-	WaitForSingleObject(thread, INFINITE);
+	(void)WaitForSingleObject(thread, INFINITE);
 	GetExitCodeThread(thread, &dwExitCode);
 	rc = xf_exit_code_from_disconnect_reason(dwExitCode);
 

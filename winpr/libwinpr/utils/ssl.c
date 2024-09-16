@@ -75,7 +75,7 @@ static void _winpr_openssl_locking(int mode, int type, const char* file, int lin
 {
 	if (mode & CRYPTO_LOCK)
 	{
-		WaitForSingleObject(g_winpr_openssl_locks[type], INFINITE);
+		(void)WaitForSingleObject(g_winpr_openssl_locks[type], INFINITE);
 	}
 	else
 	{
@@ -104,7 +104,7 @@ static void _winpr_openssl_dynlock_lock(int mode, struct CRYPTO_dynlock_value* d
 {
 	if (mode & CRYPTO_LOCK)
 	{
-		WaitForSingleObject(dynlock->mutex, INFINITE);
+		(void)WaitForSingleObject(dynlock->mutex, INFINITE);
 	}
 	else
 	{

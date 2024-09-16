@@ -826,7 +826,7 @@ static void irp_thread_close(void* arg)
 		else
 		{
 			(void)TerminateThread(hdl, 0);
-			WaitForSingleObject(hdl, INFINITE);
+			(void)WaitForSingleObject(hdl, INFINITE);
 			(void)CloseHandle(hdl);
 		}
 	}

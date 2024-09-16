@@ -172,7 +172,7 @@ int main(int argc, char** argv)
 	}
 #endif
 
-	WaitForSingleObject(server->thread, INFINITE);
+	(void)WaitForSingleObject(server->thread, INFINITE);
 
 	if (!GetExitCodeThread(server->thread, &dwExitCode))
 		status = -1;

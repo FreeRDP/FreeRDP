@@ -163,7 +163,7 @@ int main(int argc, char* argv[])
 
 	WLog_INFO(TAG, "Starting server");
 	wfreerdp_server_start(server);
-	WaitForSingleObject(server->thread, INFINITE);
+	(void)WaitForSingleObject(server->thread, INFINITE);
 	WLog_INFO(TAG, "Stopping server");
 	wfreerdp_server_stop(server);
 	wfreerdp_server_free(server);

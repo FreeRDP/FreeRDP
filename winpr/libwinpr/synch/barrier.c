@@ -208,7 +208,7 @@ BOOL WINAPI winpr_EnterSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpBarrie
 		}
 
 		if (block)
-			WaitForSingleObject(hCurrentEvent, INFINITE);
+			(void)WaitForSingleObject(hCurrentEvent, INFINITE);
 
 		return FALSE;
 	}

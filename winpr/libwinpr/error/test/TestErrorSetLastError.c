@@ -113,10 +113,10 @@ int TestErrorSetLastError(int argc, char* argv[])
 	Sleep(200);
 	bStopTest = TRUE;
 
-	WaitForSingleObject(threads[0], INFINITE);
-	WaitForSingleObject(threads[1], INFINITE);
-	WaitForSingleObject(threads[2], INFINITE);
-	WaitForSingleObject(threads[3], INFINITE);
+	(void)WaitForSingleObject(threads[0], INFINITE);
+	(void)WaitForSingleObject(threads[1], INFINITE);
+	(void)WaitForSingleObject(threads[2], INFINITE);
+	(void)WaitForSingleObject(threads[3], INFINITE);
 
 	(void)CloseHandle(threads[0]);
 	(void)CloseHandle(threads[1]);

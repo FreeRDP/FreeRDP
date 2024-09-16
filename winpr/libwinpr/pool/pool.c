@@ -100,7 +100,7 @@ static DWORD WINAPI thread_pool_work_func(LPVOID arg)
 
 static void threads_close(void* thread)
 {
-	WaitForSingleObject(thread, INFINITE);
+	(void)WaitForSingleObject(thread, INFINITE);
 	(void)CloseHandle(thread);
 }
 

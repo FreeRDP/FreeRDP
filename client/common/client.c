@@ -1339,7 +1339,7 @@ int freerdp_client_common_stop(rdpContext* context)
 
 	if (cctx->thread)
 	{
-		WaitForSingleObject(cctx->thread, INFINITE);
+		(void)WaitForSingleObject(cctx->thread, INFINITE);
 		(void)CloseHandle(cctx->thread);
 		cctx->thread = NULL;
 	}

@@ -2844,7 +2844,7 @@ static int tsg_read(rdpTsg* tsg, BYTE* data, size_t length)
 				if (!tsg_check_event_handles(tsg))
 					return -1;
 
-				WaitForSingleObject(rpc->client->PipeEvent, 100);
+				(void)WaitForSingleObject(rpc->client->PipeEvent, 100);
 			}
 		}
 	} while (transport_get_blocking(rpc->transport));

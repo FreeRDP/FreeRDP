@@ -218,7 +218,7 @@ static DWORD WINAPI wf_peer_socket_listener(LPVOID lpParam)
 		}
 
 		(void)SetEvent(context->socketEvent);
-		WaitForSingleObject(context->socketSemaphore, INFINITE);
+		(void)WaitForSingleObject(context->socketSemaphore, INFINITE);
 
 		if (context->socketClose)
 			break;

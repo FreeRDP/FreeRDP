@@ -33,7 +33,7 @@ static DWORD WINAPI named_pipe_client_thread(LPVOID arg)
 	DWORD nNumberOfBytesToWrite = 0;
 	DWORD lpNumberOfBytesRead = 0;
 	DWORD lpNumberOfBytesWritten = 0;
-	WaitForSingleObject(ReadyEvent, INFINITE);
+	(void)WaitForSingleObject(ReadyEvent, INFINITE);
 	hNamedPipe =
 	    CreateFile(lpszPipeNameMt, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
 
@@ -198,7 +198,7 @@ static DWORD WINAPI named_pipe_single_thread(LPVOID arg)
 	int numPipes = 0;
 	BOOL bSuccess = FALSE;
 	numPipes = TESTNUMPIPESST;
-	WaitForSingleObject(ReadyEvent, INFINITE);
+	(void)WaitForSingleObject(ReadyEvent, INFINITE);
 
 	for (int i = 0; i < numPipes; i++)
 	{
@@ -500,9 +500,9 @@ int TestPipeCreateNamedPipe(int argc, char* argv[])
 		printf("CreateThread (ServerThread) failure: (%" PRIu32 ")\n", GetLastError());
 		return -1;
 	}
-	WaitForSingleObject(SingleThread, INFINITE);
-	WaitForSingleObject(ClientThread, INFINITE);
-	WaitForSingleObject(ServerThread, INFINITE);
+	(void)WaitForSingleObject(SingleThread, INFINITE);
+	(void)WaitForSingleObject(ClientThread, INFINITE);
+	(void)WaitForSingleObject(ServerThread, INFINITE);
 	(void)CloseHandle(SingleThread);
 	(void)CloseHandle(ClientThread);
 	(void)CloseHandle(ServerThread);

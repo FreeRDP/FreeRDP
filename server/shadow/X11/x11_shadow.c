@@ -1460,7 +1460,7 @@ static int x11_shadow_subsystem_stop(rdpShadowSubsystem* sub)
 	if (subsystem->thread)
 	{
 		if (MessageQueue_PostQuit(subsystem->common.MsgPipe->In, 0))
-			WaitForSingleObject(subsystem->thread, INFINITE);
+			(void)WaitForSingleObject(subsystem->thread, INFINITE);
 
 		(void)CloseHandle(subsystem->thread);
 		subsystem->thread = NULL;

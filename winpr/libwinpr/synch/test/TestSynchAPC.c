@@ -127,7 +127,7 @@ int TestSynchAPC(int argc, char* argv[])
 	thread = CreateThread(NULL, 0, uncleanThread, &userApcArg, 0, NULL);
 	if (!thread)
 		return 10;
-	WaitForSingleObject(thread, INFINITE);
+	(void)WaitForSingleObject(thread, INFINITE);
 	(void)CloseHandle(thread);
 
 	if (userApcArg.called || userApcArg.error)
@@ -141,7 +141,7 @@ int TestSynchAPC(int argc, char* argv[])
 	if (!QueueUserAPC((PAPCFUNC)userApc, thread, (ULONG_PTR)&userApcArg))
 		return 21;
 
-	WaitForSingleObject(thread, INFINITE);
+	(void)WaitForSingleObject(thread, INFINITE);
 	(void)CloseHandle(thread);
 
 	if (!userApcArg.called)
@@ -162,7 +162,7 @@ int TestSynchAPC(int argc, char* argv[])
 	if (!thread)
 		return 33;
 
-	WaitForSingleObject(thread, INFINITE);
+    (void)WaitForSingleObject(thread, INFINITE);
 (void)CloseHandle(thread);
 
 	if (uncleanCloseData.timer1Calls != 1 || uncleanCloseData.timer2Calls != 0)
