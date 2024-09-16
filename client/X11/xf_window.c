@@ -861,7 +861,7 @@ void xf_SetWindowStyle(xfContext* xfc, xfAppWindow* appWindow, UINT32 style, UIN
 		 * sees that as a focus out event from the window owning the
 		 * dropdown.
 		 */
-		XSetWindowAttributes attrs;
+		XSetWindowAttributes attrs = { 0 };
 		attrs.override_redirect = redirect ? True : False;
 		XChangeWindowAttributes(xfc->display, appWindow->handle, CWOverrideRedirect, &attrs);
 	}
@@ -871,6 +871,17 @@ void xf_SetWindowStyle(xfContext* xfc, xfAppWindow* appWindow, UINT32 style, UIN
 
 	if (ex_style & (WS_EX_CONTROLPARENT | WS_EX_TOOLWINDOW | WS_EX_DLGMODALFRAME))
 		xf_XSetTransientForHint(xfc, appWindow);
+
+	if (((ex_style & WS_EX_TOPMOST) != 0) && ((ex_style & WS_EX_TOOLWINDOW) == 0))
+	{
+		xf_SendClientEvent(xfc, appWindow->handle, xfc->_NET_WM_STATE, 4, _NET_WM_STATE_ADD,
+		                   xfc->_NET_WM_STATE_ABOVE, 0, 0);
+	}
+	else
+	{
+		xf_SendClientEvent(xfc, appWindow->handle, xfc->_NET_WM_STATE, 4, _NET_WM_STATE_REMOVE,
+		                   xfc->_NET_WM_STATE_ABOVE, 0, 0);
+	}
 }
 
 void xf_SetWindowActions(xfContext* xfc, xfAppWindow* appWindow)
