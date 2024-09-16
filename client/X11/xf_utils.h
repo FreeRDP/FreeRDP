@@ -25,6 +25,8 @@
 #include <X11/Xlib.h>
 #include "xfreerdp.h"
 
+const char* x11_error_to_string(xfContext* xfc, int error, char* buffer, size_t size);
+
 #define X_GET_ATOM_VAR_NAME(x) #x
 #define Safe_XGetAtomName(log, display, atom) \
 	Safe_XGetAtomNameEx((log), (display), (atom), X_GET_ATOM_VAR_NAME(atom))
