@@ -261,7 +261,7 @@ static void channel_terminated(Plugin* plugin)
 		return;
 
 	if (plugin->copyThread)
-		TerminateThread(plugin->copyThread, 0);
+		(void)TerminateThread(plugin->copyThread, 0);
 	if (plugin->writeComplete)
 		CloseHandle(plugin->writeComplete);
 

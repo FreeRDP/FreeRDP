@@ -825,7 +825,7 @@ static void irp_thread_close(void* arg)
 			WLog_WARN(TAG, "closing self, ignoring...");
 		else
 		{
-			TerminateThread(hdl, 0);
+			(void)TerminateThread(hdl, 0);
 			WaitForSingleObject(hdl, INFINITE);
 			CloseHandle(hdl);
 		}
