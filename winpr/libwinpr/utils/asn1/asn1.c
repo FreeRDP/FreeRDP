@@ -1023,22 +1023,28 @@ static size_t WinPrAsn1DecReadIntegerLike(WinPrAsn1Decoder* dec, WinPrAsn1_tag e
 	if (len == 0 || Stream_GetRemainingLength(&dec->source) < len || (len > 4))
 		return 0;
 
-	WinPrAsn1_INTEGER val = 0;
+	UINT32 uval = 0;
 	UINT8 v = 0;
 
 	Stream_Read_UINT8(&dec->source, v);
-	if (v & 0x80)
-		val = 0xFFFFFFFF;
-	val |= v;
+
+	/* extract sign from first byte.
+	 * the ASN integer might be smaller than 32bit so we need to set the initial
+	 * value to FF for all unused bytes (e.g. all except the lowest one we just read)
+	 */
+	BOOL isNegative = (v & 0x80);
+	if (isNegative)
+		uval = 0xFFFFFF00;
+	uval |= v;
 
 	for (size_t x = 1; x < len; x++)
 	{
 		Stream_Read_UINT8(&dec->source, v);
-		val = (WinPrAsn1_INTEGER)(((UINT32)val) << 8);
-		val |= v;
+		uval <<= 8;
+		uval |= v;
 	}
 
-	*target = val;
+	*target = (WinPrAsn1_INTEGER)uval;
 	ret += len;
 
 	/* TODO: check ber/der rules */
