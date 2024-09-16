@@ -273,6 +273,27 @@ BOOL xf_rail_paint(xfContext* xfc, const RECTANGLE_16* rect)
 	return HashTable_Foreach(xfc->railWindows, rail_paint_fn, &arg);
 }
 
+#define window_state_log_style(log, windowState) \
+	window_state_log_style_int((log), (windowState), __FILE__, __func__, __LINE__)
+static void window_state_log_style_int(wLog* log, const WINDOW_STATE_ORDER* windowState,
+                                       const char* file, const char* fkt, size_t line)
+{
+	const DWORD log_level = WLOG_DEBUG;
+
+	WINPR_ASSERT(log);
+	WINPR_ASSERT(windowState);
+	if (WLog_IsLevelActive(log, log_level))
+	{
+		char buffer1[128] = { 0 };
+		char buffer2[128] = { 0 };
+
+		window_styles_to_string(windowState->style, buffer1, sizeof(buffer1));
+		window_styles_ex_to_string(windowState->extendedStyle, buffer2, sizeof(buffer2));
+		WLog_PrintMessage(log, WLOG_MESSAGE_TEXT, log_level, line, file, fkt,
+		                  "windowStyle={%s, %s}", buffer1, buffer2);
+	}
+}
+
 /* RemoteApp Core Protocol Extension */
 
 static BOOL xf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
@@ -296,6 +317,7 @@ static BOOL xf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 
 		appWindow->dwStyle = windowState->style;
 		appWindow->dwExStyle = windowState->extendedStyle;
+		window_state_log_style(xfc->log, windowState);
 
 		/* Ensure window always gets a window title */
 		if (fieldFlags & WINDOW_ORDER_FIELD_TITLE)
@@ -390,6 +412,7 @@ static BOOL xf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 	{
 		appWindow->dwStyle = windowState->style;
 		appWindow->dwExStyle = windowState->extendedStyle;
+		window_state_log_style(xfc->log, windowState);
 	}
 
 	if (fieldFlags & WINDOW_ORDER_FIELD_SHOW)
