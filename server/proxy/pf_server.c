@@ -137,9 +137,15 @@ static BOOL pf_server_get_target_info(rdpContext* context, rdpSettings* settings
 			WINPR_ASSERT(config);
 
 			if (config->TargetPort > 0)
-				freerdp_settings_set_uint32(settings, FreeRDP_ServerPort, config->TargetPort);
+			{
+				if (!freerdp_settings_set_uint32(settings, FreeRDP_ServerPort, config->TargetPort))
+					return FALSE;
+			}
 			else
-				freerdp_settings_set_uint32(settings, FreeRDP_ServerPort, 3389);
+			{
+				if (!freerdp_settings_set_uint32(settings, FreeRDP_ServerPort, 3389))
+					return FALSE;
+			}
 
 			if (!freerdp_settings_set_uint32(settings, FreeRDP_TlsSecLevel,
 			                                 config->TargetTlsSecLevel))

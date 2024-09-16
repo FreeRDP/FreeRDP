@@ -2464,7 +2464,8 @@ static int parse_host_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT
 
 	if (!arg->Value)
 		return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
-	freerdp_settings_set_string(settings, FreeRDP_ServerHostname, NULL);
+	if (!freerdp_settings_set_string(settings, FreeRDP_ServerHostname, NULL))
+		return COMMAND_LINE_ERROR_MEMORY;
 	char* p = strchr(arg->Value, '[');
 
 	/* ipv4 */
