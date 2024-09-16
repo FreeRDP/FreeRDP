@@ -229,8 +229,8 @@ static BOOL test_mutex_threading(void)
 	CloseHandle(thread1_mutex2);
 	return TRUE;
 fail:
-	ReleaseMutex(thread1_mutex1);
-	ReleaseMutex(thread1_mutex2);
+	(void)ReleaseMutex(thread1_mutex1);
+	(void)ReleaseMutex(thread1_mutex2);
 	CloseHandle(thread1_mutex1);
 	CloseHandle(thread1_mutex2);
 	CloseHandle(hStartEvent);

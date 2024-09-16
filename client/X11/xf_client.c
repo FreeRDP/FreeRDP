@@ -827,7 +827,7 @@ void xf_unlock_x11_(xfContext* xfc, const char* fkt)
 #endif
 
 	if (!xfc->UseXThreads)
-		ReleaseMutex(xfc->mutex);
+		(void)ReleaseMutex(xfc->mutex);
 	else
 		XUnlockDisplay(xfc->display);
 }

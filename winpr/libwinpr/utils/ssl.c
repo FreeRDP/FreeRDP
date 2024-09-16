@@ -79,7 +79,7 @@ static void _winpr_openssl_locking(int mode, int type, const char* file, int lin
 	}
 	else
 	{
-		ReleaseMutex(g_winpr_openssl_locks[type]);
+		(void)ReleaseMutex(g_winpr_openssl_locks[type]);
 	}
 }
 
@@ -108,7 +108,7 @@ static void _winpr_openssl_dynlock_lock(int mode, struct CRYPTO_dynlock_value* d
 	}
 	else
 	{
-		ReleaseMutex(dynlock->mutex);
+		(void)ReleaseMutex(dynlock->mutex);
 	}
 }
 

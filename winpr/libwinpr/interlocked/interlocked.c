@@ -330,7 +330,7 @@ LONGLONG InterlockedCompareExchange64(LONGLONG volatile* Destination, LONGLONG E
 		*Destination = Exchange;
 
 	if (locked)
-		ReleaseMutex(mutex);
+		(void)ReleaseMutex(mutex);
 	else
 		(void)fprintf(stderr,
 		              "WARNING: InterlockedCompareExchange64 operation might have failed\n");

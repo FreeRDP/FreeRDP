@@ -442,7 +442,7 @@ static void udevman_loading_lock(IUDEVMAN* idevman)
 static void udevman_loading_unlock(IUDEVMAN* idevman)
 {
 	UDEVMAN* udevman = (UDEVMAN*)idevman;
-	ReleaseMutex(udevman->devman_loading);
+	(void)ReleaseMutex(udevman->devman_loading);
 }
 
 BASIC_STATE_FUNC_DEFINED(device_num, UINT32)
