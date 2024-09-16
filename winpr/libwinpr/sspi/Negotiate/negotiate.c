@@ -922,11 +922,12 @@ static const Mech* guessMech(PSecBuffer input_buffer, BOOL* spNego, WinPrAsn1_OI
 	WinPrAsn1Decoder decoder;
 	WinPrAsn1Decoder appDecoder;
 	WinPrAsn1_tagId tag = 0;
+	const char ssp[] = "NTLMSSP";
 
 	*spNego = FALSE;
 
 	/* Check for NTLM token */
-	if (input_buffer->cbBuffer >= 8 && strncmp(input_buffer->pvBuffer, "NTLMSSP", 8) == 0)
+	if (input_buffer->cbBuffer >= 8 && strncmp(input_buffer->pvBuffer, ssp, sizeof(ssp)) == 0)
 	{
 		*oid = ntlm_OID;
 		return negotiate_GetMechByOID(&ntlm_OID);

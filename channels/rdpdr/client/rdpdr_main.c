@@ -1176,7 +1176,8 @@ static UINT rdpdr_process_connect(rdpdrPlugin* rdpdr)
 			if (!drive->Path)
 				continue;
 
-			BOOL hotplugAll = strncmp(drive->Path, "*", 2) == 0;
+			const char wildcard[] = "*";
+			BOOL hotplugAll = strncmp(drive->Path, wildcard, sizeof(wildcard)) == 0;
 			BOOL hotplugLater = strncmp(drive->Path, DynamicDrives, sizeof(DynamicDrives)) == 0;
 
 			if (hotplugAll || hotplugLater)

@@ -42,6 +42,8 @@ struct rdp_persistent_cache
 	UINT32 bmpSize;
 };
 
+static const char sig_str[] = "RDP8bmp";
+
 int persistent_cache_get_version(rdpPersistentCache* persistent)
 {
 	WINPR_ASSERT(persistent);
@@ -258,7 +260,7 @@ static int persistent_cache_open_read(rdpPersistentCache* persistent)
 	if (fread(sig, 8, 1, persistent->fp) != 1)
 		return -1;
 
-	if (!strncmp((const char*)sig, "RDP8bmp", 8))
+	if (memcmp(sig, sig_str, sizeof(sig_str)) == 0)
 		persistent->version = 3;
 	else
 		persistent->version = 2;
@@ -298,7 +300,7 @@ static int persistent_cache_open_write(rdpPersistentCache* persistent)
 	if (persistent->version == 3)
 	{
 		PERSISTENT_CACHE_HEADER_V3 header = { 0 };
-		strncpy((char*)header.sig, "RDP8bmp", 8);
+		memcpy(header.sig, sig_str, MIN(sizeof(header.sig), sizeof(sig_str)));
 		header.flags = 0x00000006;
 
 		if (fwrite(&header, sizeof(header), 1, persistent->fp) != 1)
