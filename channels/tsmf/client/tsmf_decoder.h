@@ -70,7 +70,7 @@ struct s_ITSMFDecoder
 };
 
 #define TSMF_DECODER_EXPORT_FUNC_NAME "TSMFDecoderEntry"
-typedef UINT (*TSMF_DECODER_ENTRY)(ITSMFDecoder** decoder);
+typedef UINT(VCAPITYPE* TSMF_DECODER_ENTRY)(ITSMFDecoder** decoder);
 
 ITSMFDecoder* tsmf_load_decoder(const char* name, TS_AM_MEDIA_TYPE* media_type);
 BOOL tsmf_check_decoder_available(const char* name);
