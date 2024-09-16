@@ -526,15 +526,15 @@ static BOOL wf_authenticate_ex(freerdp* instance, char** username, char** passwo
 
 	if (*username)
 	{
-		ConvertUtf8ToWChar(*username, UserNameW, ARRAYSIZE(UserNameW));
-		ConvertUtf8ToWChar(*username, UserW, ARRAYSIZE(UserW));
+		(void)ConvertUtf8ToWChar(*username, UserNameW, ARRAYSIZE(UserNameW));
+		(void)ConvertUtf8ToWChar(*username, UserW, ARRAYSIZE(UserW));
 	}
 
 	if (*password)
-		ConvertUtf8ToWChar(*password, PasswordW, ARRAYSIZE(PasswordW));
+		(void)ConvertUtf8ToWChar(*password, PasswordW, ARRAYSIZE(PasswordW));
 
 	if (*domain)
-		ConvertUtf8ToWChar(*domain, DomainW, ARRAYSIZE(DomainW));
+		(void)ConvertUtf8ToWChar(*domain, DomainW, ARRAYSIZE(DomainW));
 
 	if (_wcsnlen(PasswordW, ARRAYSIZE(PasswordW)) == 0)
 	{
@@ -566,9 +566,10 @@ static BOOL wf_authenticate_ex(freerdp* instance, char** username, char** passwo
 				CHAR UserName[CREDUI_MAX_USERNAME_LENGTH + 1] = { 0 };
 				CHAR Domain[CREDUI_MAX_DOMAIN_TARGET_LENGTH + 1] = { 0 };
 
-				ConvertWCharNToUtf8(UserNameW, ARRAYSIZE(UserNameW), UserName, ARRAYSIZE(UserName));
-				ConvertWCharNToUtf8(UserW, ARRAYSIZE(UserW), User, ARRAYSIZE(User));
-				ConvertWCharNToUtf8(DomainW, ARRAYSIZE(DomainW), Domain, ARRAYSIZE(Domain));
+				(void)ConvertWCharNToUtf8(UserNameW, ARRAYSIZE(UserNameW), UserName,
+				                          ARRAYSIZE(UserName));
+				(void)ConvertWCharNToUtf8(UserW, ARRAYSIZE(UserW), User, ARRAYSIZE(User));
+				(void)ConvertWCharNToUtf8(DomainW, ARRAYSIZE(DomainW), Domain, ARRAYSIZE(Domain));
 				WLog_ERR(TAG, "Failed to parse UserName: %s into User: %s Domain: %s", UserName,
 				         User, Domain);
 				return FALSE;

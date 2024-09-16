@@ -15,7 +15,7 @@ int TestFileDeleteFile(int argc, char* argv[])
 	const char invalidA[] = "/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
 	WCHAR invalidW[sizeof(invalidA)] = { 0 };
 
-	ConvertUtf8NToWChar(invalidA, ARRAYSIZE(invalidA), invalidW, ARRAYSIZE(invalidW));
+	(void)ConvertUtf8NToWChar(invalidA, ARRAYSIZE(invalidA), invalidW, ARRAYSIZE(invalidW));
 
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);

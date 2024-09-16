@@ -568,8 +568,8 @@ static void wprintKeyName(LPWSTR str, CK_SLOT_ID slotId, CK_BYTE* id, CK_ULONG i
 	for (CK_ULONG i = 0; i < idLen; i++, id++, ptr += 2)
 		(void)snprintf(ptr, 3, "%.2x", *id);
 
-	ConvertUtf8NToWChar(asciiName, ARRAYSIZE(asciiName), str,
-	                    strnlen(asciiName, ARRAYSIZE(asciiName)) + 1);
+	(void)ConvertUtf8NToWChar(asciiName, ARRAYSIZE(asciiName), str,
+	                          strnlen(asciiName, ARRAYSIZE(asciiName)) + 1);
 }
 
 static size_t parseHex(const char* str, const char* end, CK_BYTE* target)

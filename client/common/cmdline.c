@@ -1692,8 +1692,8 @@ static void freerdp_client_print_timezone_list(void)
 	{
 		char TimeZoneKeyName[ARRAYSIZE(info.TimeZoneKeyName) + 1] = { 0 };
 
-		ConvertWCharNToUtf8(info.TimeZoneKeyName, ARRAYSIZE(info.TimeZoneKeyName), TimeZoneKeyName,
-		                    ARRAYSIZE(TimeZoneKeyName));
+		(void)ConvertWCharNToUtf8(info.TimeZoneKeyName, ARRAYSIZE(info.TimeZoneKeyName),
+		                          TimeZoneKeyName, ARRAYSIZE(TimeZoneKeyName));
 		printf("%" PRIu32 ": '%s'\n", index, TimeZoneKeyName);
 	}
 }
@@ -4775,8 +4775,8 @@ static int freerdp_client_settings_parse_command_line_arguments_int(
 			char TimeZoneKeyName[ARRAYSIZE(info.TimeZoneKeyName) + 1] = { 0 };
 			while (EnumDynamicTimeZoneInformation(index++, &info) != ERROR_NO_MORE_ITEMS)
 			{
-				ConvertWCharNToUtf8(info.TimeZoneKeyName, ARRAYSIZE(info.TimeZoneKeyName),
-				                    TimeZoneKeyName, ARRAYSIZE(TimeZoneKeyName));
+				(void)ConvertWCharNToUtf8(info.TimeZoneKeyName, ARRAYSIZE(info.TimeZoneKeyName),
+				                          TimeZoneKeyName, ARRAYSIZE(TimeZoneKeyName));
 
 				WINPR_ASSERT(arg->Value);
 				if (strncmp(TimeZoneKeyName, arg->Value, ARRAYSIZE(TimeZoneKeyName)) == 0)

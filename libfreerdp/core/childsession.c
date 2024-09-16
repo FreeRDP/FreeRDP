@@ -502,7 +502,7 @@ static BOOL createChildSessionTransport(HANDLE* pFile)
 		memcpy(pipePath, startOfPath, 8);
 	}
 
-	ConvertWCharNToUtf8(pipePath, 0x80, pipePathA, sizeof(pipePathA));
+	(void)ConvertWCharNToUtf8(pipePath, 0x80, pipePathA, sizeof(pipePathA));
 	WLog_DBG(TAG, "child session is at '%s'", pipePathA);
 
 	HANDLE f = CreateFileW(pipePath, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING,

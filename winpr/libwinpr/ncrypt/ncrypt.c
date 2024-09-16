@@ -159,7 +159,7 @@ SECURITY_STATUS winpr_NCryptOpenStorageProviderEx(NCRYPT_PROV_HANDLE* phProvider
 		return NCryptOpenP11StorageProviderEx(phProvider, pszProviderName, dwFlags, modulePaths);
 
 	char buffer[128] = { 0 };
-	ConvertWCharToUtf8(pszProviderName, buffer, sizeof(buffer));
+	(void)ConvertWCharToUtf8(pszProviderName, buffer, sizeof(buffer));
 	WLog_WARN(TAG, "provider '%s' not supported", buffer);
 	return ERROR_NOT_SUPPORTED;
 #else

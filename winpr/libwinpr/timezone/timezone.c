@@ -541,11 +541,11 @@ static BOOL map_iana_id(const char* iana, LPDYNAMIC_TIME_ZONE_INFORMATION tz)
 	const char* winDst = TimeZoneIanaToWindows(iana, TIME_ZONE_NAME_DAYLIGHT);
 
 	if (winStd)
-		ConvertUtf8ToWChar(winStd, tz->StandardName, ARRAYSIZE(tz->StandardName));
+		(void)ConvertUtf8ToWChar(winStd, tz->StandardName, ARRAYSIZE(tz->StandardName));
 	if (winDst)
-		ConvertUtf8ToWChar(winDst, tz->DaylightName, ARRAYSIZE(tz->DaylightName));
+		(void)ConvertUtf8ToWChar(winDst, tz->DaylightName, ARRAYSIZE(tz->DaylightName));
 	if (winId)
-		ConvertUtf8ToWChar(winId, tz->TimeZoneKeyName, ARRAYSIZE(tz->TimeZoneKeyName));
+		(void)ConvertUtf8ToWChar(winId, tz->TimeZoneKeyName, ARRAYSIZE(tz->TimeZoneKeyName));
 
 	return winId != NULL;
 }
@@ -613,21 +613,21 @@ static void log_timezone_(const DYNAMIC_TIME_ZONE_INFORMATION* tzif, DWORD resul
 	log_print(log, level, file, fkt, line, "DYNAMIC_TIME_ZONE_INFORMATION {");
 
 	log_print(log, level, file, fkt, line, "  Bias=%" PRIu32, tzif->Bias);
-	ConvertWCharNToUtf8(tzif->StandardName, ARRAYSIZE(tzif->StandardName), buffer,
-	                    ARRAYSIZE(buffer));
+	(void)ConvertWCharNToUtf8(tzif->StandardName, ARRAYSIZE(tzif->StandardName), buffer,
+	                          ARRAYSIZE(buffer));
 	log_print(log, level, file, fkt, line, "  StandardName=%s", buffer);
 	log_print(log, level, file, fkt, line, "  StandardDate=%s",
 	          systemtime2str(&tzif->StandardDate, buffer, sizeof(buffer)));
 	log_print(log, level, file, fkt, line, "  StandardBias=%" PRIu32, tzif->StandardBias);
 
-	ConvertWCharNToUtf8(tzif->DaylightName, ARRAYSIZE(tzif->DaylightName), buffer,
-	                    ARRAYSIZE(buffer));
+	(void)ConvertWCharNToUtf8(tzif->DaylightName, ARRAYSIZE(tzif->DaylightName), buffer,
+	                          ARRAYSIZE(buffer));
 	log_print(log, level, file, fkt, line, "  DaylightName=%s", buffer);
 	log_print(log, level, file, fkt, line, "  DaylightDate=%s",
 	          systemtime2str(&tzif->DaylightDate, buffer, sizeof(buffer)));
 	log_print(log, level, file, fkt, line, "  DaylightBias=%" PRIu32, tzif->DaylightBias);
-	ConvertWCharNToUtf8(tzif->TimeZoneKeyName, ARRAYSIZE(tzif->TimeZoneKeyName), buffer,
-	                    ARRAYSIZE(buffer));
+	(void)ConvertWCharNToUtf8(tzif->TimeZoneKeyName, ARRAYSIZE(tzif->TimeZoneKeyName), buffer,
+	                          ARRAYSIZE(buffer));
 	log_print(log, level, file, fkt, line, "  TimeZoneKeyName=%s", buffer);
 	log_print(log, level, file, fkt, line, "  DynamicDaylightTimeDisabled=DST-%s",
 	          tzif->DynamicDaylightTimeDisabled ? "disabled" : "enabled");
@@ -751,7 +751,7 @@ DWORD GetDynamicTimeZoneInformation(PDYNAMIC_TIME_ZONE_INFORMATION tz)
 	WINPR_ASSERT(tz);
 
 	*tz = empty;
-	ConvertUtf8ToWChar(defaultName, tz->StandardName, ARRAYSIZE(tz->StandardName));
+	(void)ConvertUtf8ToWChar(defaultName, tz->StandardName, ARRAYSIZE(tz->StandardName));
 
 	const time_t t = time(NULL);
 	struct tm tres = { 0 };
@@ -858,14 +858,14 @@ DWORD EnumDynamicTimeZoneInformation(const DWORD dwIndex,
 		return ERROR_NO_MORE_ITEMS;
 
 	if (entry->DaylightName)
-		ConvertUtf8ToWChar(entry->DaylightName, lpTimeZoneInformation->DaylightName,
-		                   ARRAYSIZE(lpTimeZoneInformation->DaylightName));
+		(void)ConvertUtf8ToWChar(entry->DaylightName, lpTimeZoneInformation->DaylightName,
+		                         ARRAYSIZE(lpTimeZoneInformation->DaylightName));
 	if (entry->StandardName)
-		ConvertUtf8ToWChar(entry->StandardName, lpTimeZoneInformation->StandardName,
-		                   ARRAYSIZE(lpTimeZoneInformation->StandardName));
+		(void)ConvertUtf8ToWChar(entry->StandardName, lpTimeZoneInformation->StandardName,
+		                         ARRAYSIZE(lpTimeZoneInformation->StandardName));
 	if (entry->Id)
-		ConvertUtf8ToWChar(entry->Id, lpTimeZoneInformation->TimeZoneKeyName,
-		                   ARRAYSIZE(lpTimeZoneInformation->TimeZoneKeyName));
+		(void)ConvertUtf8ToWChar(entry->Id, lpTimeZoneInformation->TimeZoneKeyName,
+		                         ARRAYSIZE(lpTimeZoneInformation->TimeZoneKeyName));
 
 	const time_t t = time(NULL);
 	struct tm tres = { 0 };

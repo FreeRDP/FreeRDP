@@ -42,7 +42,7 @@ int TestNCryptProviders(int argc, char* argv[])
 		const NCryptProviderName* provider = &providers[i];
 		char providerNameStr[256] = { 0 };
 
-		ConvertWCharToUtf8(provider->pszName, providerNameStr, ARRAYSIZE(providerNameStr));
+		(void)ConvertWCharToUtf8(provider->pszName, providerNameStr, ARRAYSIZE(providerNameStr));
 		printf("%d: %s\n", i, providerNameStr);
 	}
 

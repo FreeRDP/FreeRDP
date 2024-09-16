@@ -1658,7 +1658,7 @@ static LONG WINAPI PCSC_SCardGetStatusChangeW(SCARDCONTEXT hContext, DWORD dwTim
 
 	if (!states)
 	{
-		PCSC_UnlockCardContext(hContext);
+		(void)PCSC_UnlockCardContext(hContext);
 		return SCARD_E_NO_MEMORY;
 	}
 

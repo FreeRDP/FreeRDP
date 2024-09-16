@@ -2237,8 +2237,8 @@ static BOOL add_directory(CliprdrLocalStream* stream, const char* path)
 			continue;
 
 		char cFileName[MAX_PATH] = { 0 };
-		ConvertWCharNToUtf8(FindFileData.cFileName, ARRAYSIZE(FindFileData.cFileName), cFileName,
-		                    ARRAYSIZE(cFileName));
+		(void)ConvertWCharNToUtf8(FindFileData.cFileName, ARRAYSIZE(FindFileData.cFileName),
+		                          cFileName, ARRAYSIZE(cFileName));
 
 		free(next);
 		next = GetCombinedPath(path, cFileName);
