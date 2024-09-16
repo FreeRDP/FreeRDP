@@ -498,6 +498,24 @@ static UINT rail_client_snap_arrange(RailClientContext* context, const RAIL_SNAP
 	return rail_send_client_snap_arrange_order(rail, snap);
 }
 
+static UINT rail_client_text_scale(RailClientContext* context, UINT32 textScale)
+{
+	if (!context || !context->handle)
+		return ERROR_INVALID_PARAMETER;
+
+	railPlugin* rail = (railPlugin*)context->handle;
+	return rail_send_client_text_scale_order(rail, textScale);
+}
+
+static UINT rail_client_caret_blink_rate(RailClientContext* context, UINT32 rate)
+{
+	if (!context || !context->handle)
+		return ERROR_INVALID_PARAMETER;
+
+	railPlugin* rail = (railPlugin*)context->handle;
+	return rail_send_client_caret_blink_rate_order(rail, rate);
+}
+
 static VOID VCAPITYPE rail_virtual_channel_open_event_ex(LPVOID lpUserParam, DWORD openHandle,
                                                          UINT event, LPVOID pData,
                                                          UINT32 dataLength, UINT32 totalLength,
@@ -707,6 +725,8 @@ FREERDP_ENTRY_POINT(BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS p
 		context->ClientSnapArrange = rail_client_snap_arrange;
 		context->ClientCloak = rail_client_cloak;
 		context->ClientCompartmentInfo = rail_client_compartment_info;
+		context->ClientTextScale = rail_client_text_scale;
+		context->ClientCaretBlinkRate = rail_client_caret_blink_rate;
 		rail->rdpcontext = pEntryPointsEx->context;
 		rail->context = context;
 		isFreerdp = TRUE;

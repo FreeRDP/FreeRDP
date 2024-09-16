@@ -1573,3 +1573,37 @@ UINT rail_send_client_snap_arrange_order(railPlugin* rail, const RAIL_SNAP_ARRAN
 	Stream_Write_INT16(s, snap->bottom);
 	return rail_send_pdu(rail, s, TS_RAIL_ORDER_SNAP_ARRANGE);
 }
+
+UINT rail_send_client_text_scale_order(railPlugin* rail, UINT32 textScale)
+{
+	if (!rail)
+		return ERROR_INVALID_PARAMETER;
+
+	wStream* s = rail_pdu_init(4);
+
+	if (!s)
+	{
+		WLog_ERR(TAG, "rail_pdu_init failed!");
+		return CHANNEL_RC_NO_MEMORY;
+	}
+
+	Stream_Write_UINT32(s, textScale);
+	return rail_send_pdu(rail, s, TS_RAIL_ORDER_TEXTSCALEINFO);
+}
+
+UINT rail_send_client_caret_blink_rate_order(railPlugin* rail, UINT32 rate)
+{
+	if (!rail)
+		return ERROR_INVALID_PARAMETER;
+
+	wStream* s = rail_pdu_init(4);
+
+	if (!s)
+	{
+		WLog_ERR(TAG, "rail_pdu_init failed!");
+		return CHANNEL_RC_NO_MEMORY;
+	}
+
+	Stream_Write_UINT32(s, rate);
+	return rail_send_pdu(rail, s, TS_RAIL_ORDER_CARETBLINKINFO);
+}

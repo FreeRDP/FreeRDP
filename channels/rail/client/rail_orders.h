@@ -56,5 +56,7 @@ UINT rail_send_client_cloak_order(railPlugin* rail, const RAIL_CLOAK* cloak);
 UINT rail_send_client_snap_arrange_order(railPlugin* rail, const RAIL_SNAP_ARRANGE* snap);
 UINT rail_send_client_compartment_info_order(railPlugin* rail,
                                              const RAIL_COMPARTMENT_INFO_ORDER* compartmentInfo);
+UINT rail_send_client_text_scale_order(railPlugin* rail, UINT32 textScale);
+UINT rail_send_client_caret_blink_rate_order(railPlugin* rail, UINT32 rate);
 
 #endif /* FREERDP_CHANNEL_RAIL_CLIENT_ORDERS_H */
