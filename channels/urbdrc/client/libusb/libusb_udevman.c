@@ -470,13 +470,13 @@ static void udevman_free(IUDEVMAN* idevman)
 	if (udevman->thread)
 	{
 		WaitForSingleObject(udevman->thread, INFINITE);
-		CloseHandle(udevman->thread);
+		(void)CloseHandle(udevman->thread);
 	}
 
 	udevman_unregister_all_udevices(idevman);
 
 	if (udevman->devman_loading)
-		CloseHandle(udevman->devman_loading);
+		(void)CloseHandle(udevman->devman_loading);
 
 	libusb_exit(udevman->context);
 

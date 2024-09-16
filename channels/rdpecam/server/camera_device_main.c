@@ -601,7 +601,7 @@ static UINT device_server_open(CameraDeviceServerContext* context)
 		if (!device->thread)
 		{
 			WLog_ERR(TAG, "CreateThread failed!");
-			CloseHandle(device->stopEvent);
+			(void)CloseHandle(device->stopEvent);
 			device->stopEvent = NULL;
 			return ERROR_INTERNAL_ERROR;
 		}
@@ -629,8 +629,8 @@ static UINT device_server_close(CameraDeviceServerContext* context)
 			return error;
 		}
 
-		CloseHandle(device->thread);
-		CloseHandle(device->stopEvent);
+		(void)CloseHandle(device->thread);
+		(void)CloseHandle(device->stopEvent);
 		device->thread = NULL;
 		device->stopEvent = NULL;
 	}

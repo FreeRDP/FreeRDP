@@ -101,7 +101,7 @@ static DWORD WINAPI thread_pool_work_func(LPVOID arg)
 static void threads_close(void* thread)
 {
 	WaitForSingleObject(thread, INFINITE);
-	CloseHandle(thread);
+	(void)CloseHandle(thread);
 }
 
 static BOOL InitializeThreadpool(PTP_POOL pool)
@@ -190,7 +190,7 @@ VOID winpr_CloseThreadpool(PTP_POOL ptpp)
 	ArrayList_Free(ptpp->Threads);
 	Queue_Free(ptpp->PendingQueue);
 	CountdownEvent_Free(ptpp->WorkComplete);
-	CloseHandle(ptpp->TerminateEvent);
+	(void)CloseHandle(ptpp->TerminateEvent);
 
 	{
 		TP_POOL empty = { 0 };
@@ -220,7 +220,7 @@ BOOL winpr_SetThreadpoolThreadMinimum(PTP_POOL ptpp, DWORD cthrdMic)
 
 		if (!ArrayList_Append(ptpp->Threads, thread))
 		{
-			CloseHandle(thread);
+			(void)CloseHandle(thread);
 			goto fail;
 		}
 	}

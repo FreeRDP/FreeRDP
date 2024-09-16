@@ -389,7 +389,7 @@ static int transport_bio_simple_uninit(BIO* bio)
 
 	if (ptr && ptr->hEvent)
 	{
-		CloseHandle(ptr->hEvent);
+		(void)CloseHandle(ptr->hEvent);
 		ptr->hEvent = NULL;
 	}
 
@@ -874,7 +874,7 @@ static BOOL freerdp_tcp_connect_timeout(rdpContext* context, int sockfd, struct 
 
 	rc = TRUE;
 fail:
-	CloseHandle(handles[0]);
+	(void)CloseHandle(handles[0]);
 	return rc;
 }
 
@@ -1422,7 +1422,7 @@ static BOOL freerdp_tcp_layer_close(void* userContext)
 	if (tcpLayer->sockfd >= 0)
 		closesocket(tcpLayer->sockfd);
 	if (tcpLayer->hEvent)
-		CloseHandle(tcpLayer->hEvent);
+		(void)CloseHandle(tcpLayer->hEvent);
 
 	return TRUE;
 }

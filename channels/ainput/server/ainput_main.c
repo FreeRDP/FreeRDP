@@ -327,7 +327,7 @@ static UINT ainput_server_open(ainput_server_context* context)
 		if (!ainput->thread)
 		{
 			WLog_ERR(TAG, "CreateEvent failed!");
-			CloseHandle(ainput->stopEvent);
+			(void)CloseHandle(ainput->stopEvent);
 			ainput->stopEvent = NULL;
 			return ERROR_INTERNAL_ERROR;
 		}
@@ -360,8 +360,8 @@ static UINT ainput_server_close(ainput_server_context* context)
 			return error;
 		}
 
-		CloseHandle(ainput->thread);
-		CloseHandle(ainput->stopEvent);
+		(void)CloseHandle(ainput->thread);
+		(void)CloseHandle(ainput->stopEvent);
 		ainput->thread = NULL;
 		ainput->stopEvent = NULL;
 	}

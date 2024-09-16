@@ -342,7 +342,7 @@ static void freerdp_listener_close(freerdp_listener* instance)
 	for (int i = 0; i < listener->num_sockfds; i++)
 	{
 		closesocket((SOCKET)listener->sockfds[i]);
-		CloseHandle(listener->events[i]);
+		(void)CloseHandle(listener->events[i]);
 	}
 
 	listener->num_sockfds = 0;

@@ -311,7 +311,7 @@ static UINT encomsp_server_start(EncomspServerContext* context)
 	          CreateThread(NULL, 0, encomsp_server_thread, (void*)context, 0, NULL)))
 	{
 		WLog_ERR(TAG, "CreateThread failed!");
-		CloseHandle(context->priv->StopEvent);
+		(void)CloseHandle(context->priv->StopEvent);
 		context->priv->StopEvent = NULL;
 		return ERROR_INTERNAL_ERROR;
 	}
@@ -336,8 +336,8 @@ static UINT encomsp_server_stop(EncomspServerContext* context)
 		return error;
 	}
 
-	CloseHandle(context->priv->Thread);
-	CloseHandle(context->priv->StopEvent);
+	(void)CloseHandle(context->priv->Thread);
+	(void)CloseHandle(context->priv->StopEvent);
 	return error;
 }
 

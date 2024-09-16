@@ -465,7 +465,7 @@ BOOL ios_cliprdr_init(mfContext *afc, CliprdrClientContext *cliprdr)
 
 	if (!(clipboard = ClipboardCreate()))
 	{
-		CloseHandle(hevent);
+		(void)CloseHandle(hevent);
 		return FALSE;
 	}
 
@@ -494,6 +494,6 @@ BOOL ios_cliprdr_uninit(mfContext *afc, CliprdrClientContext *cliprdr)
 	cliprdr->custom = NULL;
 	afc->cliprdr = NULL;
 	ClipboardDestroy(afc->clipboard);
-	CloseHandle(afc->clipboardRequestEvent);
+	(void)CloseHandle(afc->clipboardRequestEvent);
 	return TRUE;
 }

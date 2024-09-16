@@ -101,7 +101,7 @@ sdlClip::~sdlClip()
 {
 	cliprdr_file_context_free(_file);
 	ClipboardDestroy(_system);
-	CloseHandle(_event);
+	(void)CloseHandle(_event);
 }
 
 BOOL sdlClip::init(CliprdrClientContext* clip)

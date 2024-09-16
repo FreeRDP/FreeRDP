@@ -348,13 +348,13 @@ static void BIO_NAMED_free(WINPR_BIO_NAMED* ptr)
 
 	if (ptr->hFile)
 	{
-		CloseHandle(ptr->hFile);
+		(void)CloseHandle(ptr->hFile);
 		ptr->hFile = NULL;
 	}
 
 	if (ptr->readEvent)
 	{
-		CloseHandle(ptr->readEvent);
+		(void)CloseHandle(ptr->readEvent);
 		ptr->readEvent = NULL;
 	}
 
@@ -530,7 +530,7 @@ BIO* createChildSessionBio(void)
 	BIO* lowLevelBio = BIO_new(BIO_s_namedpipe());
 	if (!lowLevelBio)
 	{
-		CloseHandle(f);
+		(void)CloseHandle(f);
 		return NULL;
 	}
 

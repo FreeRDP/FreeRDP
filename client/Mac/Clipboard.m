@@ -428,5 +428,5 @@ void mac_cliprdr_uninit(mfContext *mfc, CliprdrClientContext *cliprdr)
 	mfc->cliprdr = NULL;
 
 	ClipboardDestroy(mfc->clipboard);
-	CloseHandle(mfc->clipboardRequestEvent);
+	(void)CloseHandle(mfc->clipboardRequestEvent);
 }

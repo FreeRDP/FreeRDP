@@ -146,9 +146,9 @@ static DWORD WINAPI named_pipe_client_thread(LPVOID arg)
 finish:
 	free(lpReadBuffer);
 	if (hNamedPipe)
-		CloseHandle(hNamedPipe);
+		(void)CloseHandle(hNamedPipe);
 	if (hEvent)
-		CloseHandle(hEvent);
+		(void)CloseHandle(hEvent);
 
 	return 0;
 }
@@ -324,8 +324,8 @@ static DWORD WINAPI named_pipe_server_thread(LPVOID arg)
 	printf("server: finished successfully\n");
 
 finish:
-	CloseHandle(hNamedPipe);
-	CloseHandle(hEvent);
+	(void)CloseHandle(hNamedPipe);
+	(void)CloseHandle(hEvent);
 	free(lpReadBuffer);
 	return 0;
 }
@@ -373,11 +373,11 @@ int TestPipeCreateNamedPipeOverlapped(int argc, char* argv[])
 out:
 
 	if (ClientThread)
-		CloseHandle(ClientThread);
+		(void)CloseHandle(ClientThread);
 	if (ServerThread)
-		CloseHandle(ServerThread);
+		(void)CloseHandle(ServerThread);
 	if (serverReadyEvent)
-		CloseHandle(serverReadyEvent);
+		(void)CloseHandle(serverReadyEvent);
 
 #ifndef _WIN32
 	if (result == 0)

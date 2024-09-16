@@ -2147,7 +2147,7 @@ static UINT rdpdr_server_start(RdpdrServerContext* context)
 	          CreateThread(NULL, 0, rdpdr_server_thread, (void*)context, 0, NULL)))
 	{
 		WLog_Print(context->priv->log, WLOG_ERROR, "CreateThread failed!");
-		CloseHandle(context->priv->StopEvent);
+		(void)CloseHandle(context->priv->StopEvent);
 		context->priv->StopEvent = NULL;
 		return ERROR_INTERNAL_ERROR;
 	}
@@ -2178,9 +2178,9 @@ static UINT rdpdr_server_stop(RdpdrServerContext* context)
 			return error;
 		}
 
-		CloseHandle(context->priv->Thread);
+		(void)CloseHandle(context->priv->Thread);
 		context->priv->Thread = NULL;
-		CloseHandle(context->priv->StopEvent);
+		(void)CloseHandle(context->priv->StopEvent);
 		context->priv->StopEvent = NULL;
 	}
 

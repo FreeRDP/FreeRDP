@@ -204,7 +204,7 @@ void CountdownEvent_Free(wCountdownEvent* countdown)
 		return;
 
 	DeleteCriticalSection(&countdown->lock);
-	CloseHandle(countdown->event);
+	(void)CloseHandle(countdown->event);
 
 	free(countdown);
 }

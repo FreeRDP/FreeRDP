@@ -744,7 +744,7 @@ int shadow_server_stop(rdpShadowServer* server)
 	{
 		(void)SetEvent(server->StopEvent);
 		WaitForSingleObject(server->thread, INFINITE);
-		CloseHandle(server->thread);
+		(void)CloseHandle(server->thread);
 		server->thread = NULL;
 		if (server->listener && server->listener->Close)
 			server->listener->Close(server->listener);
@@ -978,7 +978,7 @@ int shadow_server_uninit(rdpShadowServer* server)
 	free(server->ConfigPath);
 	server->ConfigPath = NULL;
 	DeleteCriticalSection(&(server->lock));
-	CloseHandle(server->StopEvent);
+	(void)CloseHandle(server->StopEvent);
 	server->StopEvent = NULL;
 	ArrayList_Free(server->clients);
 	server->clients = NULL;

@@ -302,7 +302,7 @@ static UINT audin_alsa_open(IAudinDevice* device, AudinReceive receive, void* us
 
 	return CHANNEL_RC_OK;
 error_out:
-	CloseHandle(alsa->stopEvent);
+	(void)CloseHandle(alsa->stopEvent);
 	alsa->stopEvent = NULL;
 	return ERROR_INTERNAL_ERROR;
 }
@@ -332,9 +332,9 @@ static UINT audin_alsa_close(IAudinDevice* device)
 			return error;
 		}
 
-		CloseHandle(alsa->stopEvent);
+		(void)CloseHandle(alsa->stopEvent);
 		alsa->stopEvent = NULL;
-		CloseHandle(alsa->thread);
+		(void)CloseHandle(alsa->thread);
 		alsa->thread = NULL;
 	}
 

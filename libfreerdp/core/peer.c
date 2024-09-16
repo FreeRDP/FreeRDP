@@ -1340,7 +1340,7 @@ void freerdp_peer_context_free(freerdp_peer* client)
 	{
 		rdpContext* ctx = client->context;
 
-		CloseHandle(ctx->channelErrorEvent);
+		(void)CloseHandle(ctx->channelErrorEvent);
 		ctx->channelErrorEvent = NULL;
 		free(ctx->errorDescription);
 		ctx->errorDescription = NULL;

@@ -895,7 +895,7 @@ void freerdp_context_free(freerdp* instance)
 	ctx->metrics = NULL;
 
 	if (ctx->channelErrorEvent)
-		CloseHandle(ctx->channelErrorEvent);
+		(void)CloseHandle(ctx->channelErrorEvent);
 	ctx->channelErrorEvent = NULL;
 
 	free(ctx->errorDescription);

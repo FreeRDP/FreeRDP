@@ -1462,7 +1462,7 @@ void rdpsnd_virtual_channel_event_terminated(rdpsndPlugin* rdpsnd)
 		if (rdpsnd->thread)
 		{
 			WaitForSingleObject(rdpsnd->thread, INFINITE);
-			CloseHandle(rdpsnd->thread);
+			(void)CloseHandle(rdpsnd->thread);
 		}
 		MessageQueue_Free(rdpsnd->queue);
 

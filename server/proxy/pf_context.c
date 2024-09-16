@@ -198,7 +198,7 @@ void client_to_proxy_context_free(freerdp_peer* client, rdpContext* ctx)
 
 	if (context->dynvcReady)
 	{
-		CloseHandle(context->dynvcReady);
+		(void)CloseHandle(context->dynvcReady);
 		context->dynvcReady = NULL;
 	}
 
@@ -388,13 +388,13 @@ void proxy_data_free(proxyData* pdata)
 		return;
 
 	if (pdata->abort_event)
-		CloseHandle(pdata->abort_event);
+		(void)CloseHandle(pdata->abort_event);
 
 	if (pdata->client_thread)
-		CloseHandle(pdata->client_thread);
+		(void)CloseHandle(pdata->client_thread);
 
 	if (pdata->gfx_server_ready)
-		CloseHandle(pdata->gfx_server_ready);
+		(void)CloseHandle(pdata->gfx_server_ready);
 
 	if (pdata->modules_info)
 		HashTable_Free(pdata->modules_info);

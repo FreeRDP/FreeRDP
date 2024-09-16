@@ -143,7 +143,7 @@ static int testAbort(int port)
 
 	if (!thread)
 	{
-		CloseHandle(s_sync);
+		(void)CloseHandle(s_sync);
 		s_sync = NULL;
 		return -1;
 	}
@@ -156,8 +156,8 @@ static int testAbort(int port)
 
 		if (!freerdp_shall_disconnect_context(instance->context))
 		{
-			CloseHandle(s_sync);
-			CloseHandle(thread);
+			(void)CloseHandle(s_sync);
+			(void)CloseHandle(thread);
 			s_sync = NULL;
 			return -1;
 		}
@@ -165,8 +165,8 @@ static int testAbort(int port)
 
 	status = WaitForSingleObject(thread, 20000);
 	end = GetTickCount();
-	CloseHandle(s_sync);
-	CloseHandle(thread);
+	(void)CloseHandle(s_sync);
+	(void)CloseHandle(thread);
 	s_sync = NULL;
 	diff = end - start;
 
@@ -227,8 +227,8 @@ static BOOL prepare_certificates(const char* path)
 		goto fail;
 	rc = TRUE;
 fail:
-	CloseHandle(process.hProcess);
-	CloseHandle(process.hThread);
+	(void)CloseHandle(process.hProcess);
+	(void)CloseHandle(process.hThread);
 	return rc;
 }
 
@@ -294,8 +294,8 @@ static int testSuccess(int port)
 		goto fail;
 
 	WaitForSingleObject(process.hProcess, INFINITE);
-	CloseHandle(process.hProcess);
-	CloseHandle(process.hThread);
+	(void)CloseHandle(process.hProcess);
+	(void)CloseHandle(process.hThread);
 	printf("%s: returned %d!\n", __func__, r);
 	rc = r;
 

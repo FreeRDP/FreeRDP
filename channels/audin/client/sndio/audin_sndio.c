@@ -204,7 +204,7 @@ static UINT audin_sndio_open(IAudinDevice* device, AudinReceive receive, void* u
 	                                   sndio, 0, NULL)))
 	{
 		WLog_ERR(TAG, "CreateThread failed");
-		CloseHandle(sndio->stopEvent);
+		(void)CloseHandle(sndio->stopEvent);
 		sndio->stopEvent = NULL;
 		return ERROR_INTERNAL_ERROR;
 	}
@@ -236,9 +236,9 @@ static UINT audin_sndio_close(IAudinDevice* device)
 			return error;
 		}
 
-		CloseHandle(sndio->stopEvent);
+		(void)CloseHandle(sndio->stopEvent);
 		sndio->stopEvent = NULL;
-		CloseHandle(sndio->thread);
+		(void)CloseHandle(sndio->thread);
 		sndio->thread = NULL;
 	}
 

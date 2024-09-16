@@ -2907,7 +2907,7 @@ void update_message_proxy_free(rdpUpdateProxy* message)
 		if (MessageQueue_PostQuit(up->queue, 0))
 			WaitForSingleObject(message->thread, INFINITE);
 
-		CloseHandle(message->thread);
+		(void)CloseHandle(message->thread);
 		free(message);
 	}
 }

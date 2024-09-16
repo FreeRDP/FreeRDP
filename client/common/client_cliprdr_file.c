@@ -2079,12 +2079,12 @@ void cliprdr_file_context_free(CliprdrFileContext* file)
 
 		WLog_Print(file->log, WLOG_DEBUG, "Waiting on FUSE thread");
 		WaitForSingleObject(file->fuse_thread, INFINITE);
-		CloseHandle(file->fuse_thread);
+		(void)CloseHandle(file->fuse_thread);
 	}
 	if (file->fuse_stop_sync)
-		CloseHandle(file->fuse_stop_sync);
+		(void)CloseHandle(file->fuse_stop_sync);
 	if (file->fuse_start_sync)
-		CloseHandle(file->fuse_start_sync);
+		(void)CloseHandle(file->fuse_start_sync);
 
 	HashTable_Free(file->request_table);
 	HashTable_Free(file->clip_data_table);
@@ -2198,7 +2198,7 @@ static BOOL is_directory(const char* path)
 
 	BY_HANDLE_FILE_INFORMATION fileInformation = { 0 };
 	const BOOL status = GetFileInformationByHandle(hFile, &fileInformation);
-	CloseHandle(hFile);
+	(void)CloseHandle(hFile);
 	if (!status)
 		return FALSE;
 

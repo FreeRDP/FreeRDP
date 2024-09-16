@@ -103,9 +103,9 @@ static int init_external_addin(Plugin* plugin)
 	}
 
 	plugin->hProcess = procInfo.hProcess;
-	CloseHandle(procInfo.hThread);
-	CloseHandle(siStartInfo.hStdOutput);
-	CloseHandle(siStartInfo.hStdInput);
+	(void)CloseHandle(procInfo.hThread);
+	(void)CloseHandle(siStartInfo.hStdOutput);
+	(void)CloseHandle(siStartInfo.hStdInput);
 	return 0;
 }
 
@@ -263,12 +263,12 @@ static void channel_terminated(Plugin* plugin)
 	if (plugin->copyThread)
 		(void)TerminateThread(plugin->copyThread, 0);
 	if (plugin->writeComplete)
-		CloseHandle(plugin->writeComplete);
+		(void)CloseHandle(plugin->writeComplete);
 
-	CloseHandle(plugin->hStdInputWrite);
-	CloseHandle(plugin->hStdOutputRead);
+	(void)CloseHandle(plugin->hStdInputWrite);
+	(void)CloseHandle(plugin->hStdOutputRead);
 	TerminateProcess(plugin->hProcess, 0);
-	CloseHandle(plugin->hProcess);
+	(void)CloseHandle(plugin->hProcess);
 	free(plugin->commandline);
 	free(plugin);
 }

@@ -1672,7 +1672,7 @@ static FILEDESCRIPTORW* wf_cliprdr_get_file_descriptor(WCHAR* file_name, size_t 
 
 	fd->nFileSizeLow = GetFileSize(hFile, &fd->nFileSizeHigh);
 	wcscpy_s(fd->cFileName, sizeof(fd->cFileName) / 2, file_name + pathLen);
-	CloseHandle(hFile);
+	(void)CloseHandle(hFile);
 	return fd;
 }
 
@@ -2536,14 +2536,14 @@ BOOL wf_cliprdr_uninit(wfContext* wfc, CliprdrClientContext* cliprdr)
 	if (clipboard->thread)
 	{
 		WaitForSingleObject(clipboard->thread, INFINITE);
-		CloseHandle(clipboard->thread);
+		(void)CloseHandle(clipboard->thread);
 	}
 
 	if (clipboard->response_data_event)
-		CloseHandle(clipboard->response_data_event);
+		(void)CloseHandle(clipboard->response_data_event);
 
 	if (clipboard->req_fevent)
-		CloseHandle(clipboard->req_fevent);
+		(void)CloseHandle(clipboard->req_fevent);
 
 	clear_file_array(clipboard);
 	clear_format_map(clipboard);

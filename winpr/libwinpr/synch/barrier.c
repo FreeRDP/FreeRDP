@@ -116,7 +116,7 @@ BOOL WINAPI winpr_InitializeSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpB
 
 	if (!(hEvent1 = CreateEvent(NULL, TRUE, FALSE, NULL)))
 	{
-		CloseHandle(hEvent0);
+		(void)CloseHandle(hEvent0);
 		return FALSE;
 	}
 
@@ -249,10 +249,10 @@ BOOL WINAPI winpr_DeleteSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpBarri
 		SwitchToThread();
 
 	if (lpBarrier->Reserved3[0])
-		CloseHandle((HANDLE)lpBarrier->Reserved3[0]);
+		(void)CloseHandle((HANDLE)lpBarrier->Reserved3[0]);
 
 	if (lpBarrier->Reserved3[1])
-		CloseHandle((HANDLE)lpBarrier->Reserved3[1]);
+		(void)CloseHandle((HANDLE)lpBarrier->Reserved3[1]);
 
 	ZeroMemory(lpBarrier, sizeof(SYNCHRONIZATION_BARRIER));
 

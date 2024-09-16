@@ -118,10 +118,10 @@ int TestErrorSetLastError(int argc, char* argv[])
 	WaitForSingleObject(threads[2], INFINITE);
 	WaitForSingleObject(threads[3], INFINITE);
 
-	CloseHandle(threads[0]);
-	CloseHandle(threads[1]);
-	CloseHandle(threads[2]);
-	CloseHandle(threads[3]);
+	(void)CloseHandle(threads[0]);
+	(void)CloseHandle(threads[1]);
+	(void)CloseHandle(threads[2]);
+	(void)CloseHandle(threads[3]);
 
 	error = GetLastError();
 

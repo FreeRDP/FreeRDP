@@ -111,7 +111,7 @@ static void mfreerdp_client_free(freerdp *instance, rdpContext *context)
 		return;
 
 	mfc = (mfContext *)instance->context;
-	CloseHandle(mfc->stopEvent);
+	(void)CloseHandle(mfc->stopEvent);
 }
 
 static void mf_scale_mouse_coordinates(mfContext *mfc, UINT16 *px, UINT16 *py)

@@ -84,7 +84,7 @@ static DWORD WINAPI named_pipe_client_thread(LPVOID arg)
 out:
 	free(lpReadBuffer);
 	free(lpWriteBuffer);
-	CloseHandle(hNamedPipe);
+	(void)CloseHandle(hNamedPipe);
 
 	if (!fSuccess)
 		testFailed = TRUE;
@@ -179,7 +179,7 @@ static DWORD WINAPI named_pipe_server_thread(LPVOID arg)
 out:
 	free(lpReadBuffer);
 	free(lpWriteBuffer);
-	CloseHandle(hNamedPipe);
+	(void)CloseHandle(hNamedPipe);
 
 	if (!fSuccess)
 		testFailed = TRUE;
@@ -379,15 +379,15 @@ static DWORD WINAPI named_pipe_single_thread(LPVOID arg)
 			goto out;
 		}
 	}
-	CloseHandle(servers[i]);
-	CloseHandle(clients[i]);
+	(void)CloseHandle(servers[i]);
+	(void)CloseHandle(clients[i]);
 	numPipes--;
 	/**
 	 * After CloseHandle (without calling DisconnectNamedPipe first) on server end
 	 * ReadFile/WriteFile must fail on client end
 	 */
 	i = numPipes - 1;
-	CloseHandle(servers[i]);
+	(void)CloseHandle(servers[i]);
 
 	{
 		char sndbuf[PIPE_BUFFER_SIZE] = { 0 };
@@ -409,14 +409,14 @@ static DWORD WINAPI named_pipe_single_thread(LPVOID arg)
 			goto out;
 		}
 	}
-	CloseHandle(clients[i]);
+	(void)CloseHandle(clients[i]);
 	numPipes--;
 	/**
 	 * After CloseHandle on client end
 	 * ReadFile/WriteFile must fail on server end
 	 */
 	i = numPipes - 1;
-	CloseHandle(clients[i]);
+	(void)CloseHandle(clients[i]);
 
 	{
 		char sndbuf[PIPE_BUFFER_SIZE] = { 0 };
@@ -440,15 +440,15 @@ static DWORD WINAPI named_pipe_single_thread(LPVOID arg)
 	}
 
 	DisconnectNamedPipe(servers[i]);
-	CloseHandle(servers[i]);
+	(void)CloseHandle(servers[i]);
 	numPipes--;
 
 	/* Close all remaining pipes */
 	for (int i = 0; i < numPipes; i++)
 	{
 		DisconnectNamedPipe(servers[i]);
-		CloseHandle(servers[i]);
-		CloseHandle(clients[i]);
+		(void)CloseHandle(servers[i]);
+		(void)CloseHandle(clients[i]);
 	}
 
 	bSuccess = TRUE;
@@ -503,8 +503,8 @@ int TestPipeCreateNamedPipe(int argc, char* argv[])
 	WaitForSingleObject(SingleThread, INFINITE);
 	WaitForSingleObject(ClientThread, INFINITE);
 	WaitForSingleObject(ServerThread, INFINITE);
-	CloseHandle(SingleThread);
-	CloseHandle(ClientThread);
-	CloseHandle(ServerThread);
+	(void)CloseHandle(SingleThread);
+	(void)CloseHandle(ClientThread);
+	(void)CloseHandle(ServerThread);
 	return testFailed;
 }

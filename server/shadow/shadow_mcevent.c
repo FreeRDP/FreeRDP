@@ -79,11 +79,11 @@ rdpShadowMultiClientEvent* shadow_multiclient_new(void)
 out_free_subscribers:
 	ArrayList_Free(event->subscribers);
 out_free_doneEvent:
-	CloseHandle(event->doneEvent);
+	(void)CloseHandle(event->doneEvent);
 out_free_barrierEvent:
-	CloseHandle(event->barrierEvent);
+	(void)CloseHandle(event->barrierEvent);
 out_free_event:
-	CloseHandle(event->event);
+	(void)CloseHandle(event->event);
 out_free:
 	free(event);
 out_error:
@@ -98,9 +98,9 @@ void shadow_multiclient_free(rdpShadowMultiClientEvent* event)
 	DeleteCriticalSection(&(event->lock));
 
 	ArrayList_Free(event->subscribers);
-	CloseHandle(event->doneEvent);
-	CloseHandle(event->barrierEvent);
-	CloseHandle(event->event);
+	(void)CloseHandle(event->doneEvent);
+	(void)CloseHandle(event->barrierEvent);
+	(void)CloseHandle(event->event);
 	free(event);
 }
 

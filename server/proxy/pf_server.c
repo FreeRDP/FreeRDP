@@ -762,7 +762,7 @@ static BOOL pf_server_start_peer(freerdp_peer* client)
 	args->thread = hThread;
 	if (!ArrayList_Append(server->peer_list, hThread))
 	{
-		CloseHandle(hThread);
+		(void)CloseHandle(hThread);
 		return FALSE;
 	}
 
@@ -911,7 +911,7 @@ static BOOL are_all_required_modules_loaded(proxyModule* module, const proxyConf
 static void peer_free(void* obj)
 {
 	HANDLE hdl = (HANDLE)obj;
-	CloseHandle(hdl);
+	(void)CloseHandle(hdl);
 }
 
 proxyServer* pf_server_new(const proxyConfig* config)
@@ -1063,7 +1063,7 @@ void pf_server_free(proxyServer* server)
 	freerdp_listener_free(server->listener);
 
 	if (server->stopEvent)
-		CloseHandle(server->stopEvent);
+		(void)CloseHandle(server->stopEvent);
 
 	pf_server_config_free(server->config);
 	pf_modules_free(server->module);

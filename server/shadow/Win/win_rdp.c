@@ -408,9 +408,9 @@ int win_shadow_rdp_init(winShadowSubsystem* subsystem)
 	subsystem->shw->subsystem = subsystem;
 	return 1;
 fail_context:
-	CloseHandle(subsystem->RdpUpdateLeaveEvent);
+	(void)CloseHandle(subsystem->RdpUpdateLeaveEvent);
 fail_leave_event:
-	CloseHandle(subsystem->RdpUpdateEnterEvent);
+	(void)CloseHandle(subsystem->RdpUpdateEnterEvent);
 fail_enter_event:
 	return -1;
 }

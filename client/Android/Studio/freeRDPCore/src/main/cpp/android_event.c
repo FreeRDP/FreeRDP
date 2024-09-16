@@ -325,7 +325,7 @@ BOOL android_event_queue_init(freerdp* inst)
 	if (!queue->events)
 	{
 		WLog_ERR(TAG, "android_event_queue_init: memory allocation failed");
-		CloseHandle(queue->isSet);
+		(void)CloseHandle(queue->isSet);
 		free(queue);
 		return FALSE;
 	}
@@ -349,7 +349,7 @@ void android_event_queue_uninit(freerdp* inst)
 	{
 		if (queue->isSet)
 		{
-			CloseHandle(queue->isSet);
+			(void)CloseHandle(queue->isSet);
 			queue->isSet = NULL;
 		}
 

@@ -1702,9 +1702,9 @@ void transport_free(rdpTransport* transport)
 
 	nla_free(transport->nla);
 	StreamPool_Free(transport->ReceivePool);
-	CloseHandle(transport->connectedEvent);
-	CloseHandle(transport->rereadEvent);
-	CloseHandle(transport->ioEvent);
+	(void)CloseHandle(transport->connectedEvent);
+	(void)CloseHandle(transport->rereadEvent);
+	(void)CloseHandle(transport->ioEvent);
 	DeleteCriticalSection(&(transport->ReadLock));
 	DeleteCriticalSection(&(transport->WriteLock));
 	free(transport);

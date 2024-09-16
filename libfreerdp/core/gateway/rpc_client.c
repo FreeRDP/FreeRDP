@@ -1214,7 +1214,7 @@ void rpc_client_free(RpcClient* client)
 		Stream_Free(client->ReceiveFragment, TRUE);
 
 	if (client->PipeEvent)
-		CloseHandle(client->PipeEvent);
+		(void)CloseHandle(client->PipeEvent);
 
 	ringbuffer_destroy(&(client->ReceivePipe));
 	DeleteCriticalSection(&(client->PipeLock));

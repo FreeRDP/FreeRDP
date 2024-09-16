@@ -531,7 +531,7 @@ UINT cam_v4l_stream_stop(CamV4lStream* stream)
 	if (stream->captureThread)
 	{
 		WaitForSingleObject(stream->captureThread, INFINITE);
-		CloseHandle(stream->captureThread);
+		(void)CloseHandle(stream->captureThread);
 		stream->captureThread = NULL;
 	}
 

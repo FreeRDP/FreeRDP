@@ -97,9 +97,9 @@ out:
 	if (EchoPipe)
 		MessagePipe_Free(EchoPipe);
 	if (ClientThread)
-		CloseHandle(ClientThread);
+		(void)CloseHandle(ClientThread);
 	if (ServerThread)
-		CloseHandle(ServerThread);
+		(void)CloseHandle(ServerThread);
 
 	return ret;
 }

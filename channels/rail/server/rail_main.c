@@ -1459,7 +1459,7 @@ static UINT rail_server_start(RailServerContext* context)
 
 	return CHANNEL_RC_OK;
 out_stop_event:
-	CloseHandle(context->priv->stopEvent);
+	(void)CloseHandle(context->priv->stopEvent);
 	context->priv->stopEvent = NULL;
 out_close:
 	(void)WTSVirtualChannelClose(context->priv->rail_channel);
@@ -1481,8 +1481,8 @@ static BOOL rail_server_stop(RailServerContext* context)
 			return FALSE;
 		}
 
-		CloseHandle(priv->thread);
-		CloseHandle(priv->stopEvent);
+		(void)CloseHandle(priv->thread);
+		(void)CloseHandle(priv->stopEvent);
 		priv->thread = NULL;
 		priv->stopEvent = NULL;
 	}

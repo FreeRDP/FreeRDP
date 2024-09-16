@@ -115,7 +115,7 @@ static void _winpr_openssl_dynlock_lock(int mode, struct CRYPTO_dynlock_value* d
 static void _winpr_openssl_dynlock_destroy(struct CRYPTO_dynlock_value* dynlock, const char* file,
                                            int line)
 {
-	CloseHandle(dynlock->mutex);
+	(void)CloseHandle(dynlock->mutex);
 	free(dynlock);
 }
 
@@ -150,7 +150,7 @@ static BOOL _winpr_openssl_initialize_locking(void)
 					while (i--)
 					{
 						if (locks[i])
-							CloseHandle(locks[i]);
+							(void)CloseHandle(locks[i]);
 					}
 
 					free(locks);
@@ -203,7 +203,7 @@ static BOOL _winpr_openssl_cleanup_locking(void)
 
 		for (int i = 0; i < g_winpr_openssl_num_locks; i++)
 		{
-			CloseHandle(g_winpr_openssl_locks[i]);
+			(void)CloseHandle(g_winpr_openssl_locks[i]);
 		}
 
 		g_winpr_openssl_num_locks = 0;

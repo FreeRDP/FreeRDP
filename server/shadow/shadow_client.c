@@ -2586,7 +2586,7 @@ BOOL shadow_client_accepted(freerdp_listener* listener, freerdp_peer* peer)
 	else
 	{
 		/* Close the thread handle to make it detached. */
-		CloseHandle(client->thread);
+		(void)CloseHandle(client->thread);
 		client->thread = NULL;
 	}
 

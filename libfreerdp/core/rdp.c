@@ -2512,7 +2512,7 @@ void rdp_free(rdpRdp* rdp)
 		free(rdp->io);
 		PubSub_Free(rdp->pubSub);
 		if (rdp->abortEvent)
-			CloseHandle(rdp->abortEvent);
+			(void)CloseHandle(rdp->abortEvent);
 		aad_free(rdp->aad);
 		free(rdp);
 	}

@@ -679,7 +679,7 @@ static UINT gfxredir_server_open(GfxRedirServerContext* context)
 		          CreateThread(NULL, 0, gfxredir_server_thread_func, (void*)context, 0, NULL)))
 		{
 			WLog_ERR(TAG, "CreateEvent failed!");
-			CloseHandle(priv->stopEvent);
+			(void)CloseHandle(priv->stopEvent);
 			priv->stopEvent = NULL;
 			rc = ERROR_INTERNAL_ERROR;
 		}
@@ -714,8 +714,8 @@ static UINT gfxredir_server_close(GfxRedirServerContext* context)
 			return error;
 		}
 
-		CloseHandle(priv->thread);
-		CloseHandle(priv->stopEvent);
+		(void)CloseHandle(priv->thread);
+		(void)CloseHandle(priv->stopEvent);
 		priv->thread = NULL;
 		priv->stopEvent = NULL;
 	}

@@ -706,7 +706,7 @@ static DWORD WINAPI drive_hotplug_thread_func(LPVOID arg)
 out:
 	if (rdpdr->stopEvent)
 	{
-		CloseHandle(rdpdr->stopEvent);
+		(void)CloseHandle(rdpdr->stopEvent);
 		rdpdr->stopEvent = NULL;
 	}
 	ExitThread(CHANNEL_RC_OK);
@@ -1083,7 +1083,7 @@ out:
 
 	if (rdpdr->stopEvent)
 	{
-		CloseHandle(rdpdr->stopEvent);
+		(void)CloseHandle(rdpdr->stopEvent);
 		rdpdr->stopEvent = NULL;
 	}
 
@@ -1123,7 +1123,7 @@ static UINT drive_hotplug_thread_terminate(rdpdrPlugin* rdpdr)
 			return error;
 		}
 
-		CloseHandle(rdpdr->hotplugThread);
+		(void)CloseHandle(rdpdr->hotplugThread);
 		rdpdr->hotplugThread = NULL;
 	}
 
@@ -2193,7 +2193,7 @@ static UINT rdpdr_virtual_channel_event_disconnected(rdpdrPlugin* rdpdr)
 	}
 
 	if (rdpdr->thread)
-		CloseHandle(rdpdr->thread);
+		(void)CloseHandle(rdpdr->thread);
 	MessageQueue_Free(rdpdr->queue);
 	rdpdr->queue = NULL;
 	rdpdr->thread = NULL;

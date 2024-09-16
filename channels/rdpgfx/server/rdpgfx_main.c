@@ -1638,8 +1638,8 @@ BOOL rdpgfx_server_close(RdpgfxServerContext* context)
 			return FALSE;
 		}
 
-		CloseHandle(priv->thread);
-		CloseHandle(priv->stopEvent);
+		(void)CloseHandle(priv->thread);
+		(void)CloseHandle(priv->stopEvent);
 		priv->thread = NULL;
 		priv->stopEvent = NULL;
 	}

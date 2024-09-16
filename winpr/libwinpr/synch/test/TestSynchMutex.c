@@ -223,18 +223,18 @@ static BOOL test_mutex_threading(void)
 		goto fail;
 	}
 
-	CloseHandle(hThread);
-	CloseHandle(hStartEvent);
-	CloseHandle(thread1_mutex1);
-	CloseHandle(thread1_mutex2);
+	(void)CloseHandle(hThread);
+	(void)CloseHandle(hStartEvent);
+	(void)CloseHandle(thread1_mutex1);
+	(void)CloseHandle(thread1_mutex2);
 	return TRUE;
 fail:
 	(void)ReleaseMutex(thread1_mutex1);
 	(void)ReleaseMutex(thread1_mutex2);
-	CloseHandle(thread1_mutex1);
-	CloseHandle(thread1_mutex2);
-	CloseHandle(hStartEvent);
-	CloseHandle(hThread);
+	(void)CloseHandle(thread1_mutex1);
+	(void)CloseHandle(thread1_mutex2);
+	(void)CloseHandle(hStartEvent);
+	(void)CloseHandle(hThread);
 	return FALSE;
 }
 

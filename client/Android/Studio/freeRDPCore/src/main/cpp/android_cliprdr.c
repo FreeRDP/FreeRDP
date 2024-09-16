@@ -475,7 +475,7 @@ BOOL android_cliprdr_init(androidContext* afc, CliprdrClientContext* cliprdr)
 
 	if (!(clipboard = ClipboardCreate()))
 	{
-		CloseHandle(hevent);
+		(void)CloseHandle(hevent);
 		return FALSE;
 	}
 
@@ -504,6 +504,6 @@ BOOL android_cliprdr_uninit(androidContext* afc, CliprdrClientContext* cliprdr)
 	cliprdr->custom = NULL;
 	afc->cliprdr = NULL;
 	ClipboardDestroy(afc->clipboard);
-	CloseHandle(afc->clipboardRequestEvent);
+	(void)CloseHandle(afc->clipboardRequestEvent);
 	return TRUE;
 }

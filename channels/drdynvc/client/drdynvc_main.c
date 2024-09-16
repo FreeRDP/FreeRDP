@@ -1770,7 +1770,7 @@ static UINT drdynvc_virtual_channel_event_disconnected(drdynvcPlugin* drdynvc)
 			return status;
 		}
 
-		CloseHandle(drdynvc->thread);
+		(void)CloseHandle(drdynvc->thread);
 		drdynvc->thread = NULL;
 	}
 	else

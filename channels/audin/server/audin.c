@@ -489,7 +489,7 @@ static BOOL audin_server_open(audin_server_context* context)
 		          CreateThread(NULL, 0, audin_server_thread_func, (void*)audin, 0, NULL)))
 		{
 			WLog_Print(audin->log, WLOG_ERROR, "CreateThread failed!");
-			CloseHandle(audin->stopEvent);
+			(void)CloseHandle(audin->stopEvent);
 			audin->stopEvent = NULL;
 			return FALSE;
 		}
@@ -525,8 +525,8 @@ static BOOL audin_server_close(audin_server_context* context)
 			return FALSE;
 		}
 
-		CloseHandle(audin->thread);
-		CloseHandle(audin->stopEvent);
+		(void)CloseHandle(audin->thread);
+		(void)CloseHandle(audin->stopEvent);
 		audin->thread = NULL;
 		audin->stopEvent = NULL;
 	}

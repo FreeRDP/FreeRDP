@@ -112,7 +112,7 @@ int TestSynchTimerQueue(int argc, char* argv[])
 			printf("DeleteTimerQueueTimer failed (%" PRIu32 ")\n", GetLastError());
 			return -1;
 		}
-		CloseHandle(apcData[index].CompletionEvent);
+		(void)CloseHandle(apcData[index].CompletionEvent);
 	}
 
 	if (!DeleteTimerQueue(hTimerQueue))

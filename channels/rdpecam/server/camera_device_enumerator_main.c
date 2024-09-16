@@ -449,7 +449,7 @@ static UINT enumerator_server_open(CamDevEnumServerContext* context)
 		if (!enumerator->thread)
 		{
 			WLog_ERR(TAG, "CreateThread failed!");
-			CloseHandle(enumerator->stopEvent);
+			(void)CloseHandle(enumerator->stopEvent);
 			enumerator->stopEvent = NULL;
 			return ERROR_INTERNAL_ERROR;
 		}
@@ -477,8 +477,8 @@ static UINT enumerator_server_close(CamDevEnumServerContext* context)
 			return error;
 		}
 
-		CloseHandle(enumerator->thread);
-		CloseHandle(enumerator->stopEvent);
+		(void)CloseHandle(enumerator->thread);
+		(void)CloseHandle(enumerator->stopEvent);
 		enumerator->thread = NULL;
 		enumerator->stopEvent = NULL;
 	}

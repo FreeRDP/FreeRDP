@@ -456,7 +456,7 @@ static UINT location_server_open(LocationServerContext* context)
 		if (!location->thread)
 		{
 			WLog_ERR(TAG, "CreateThread failed!");
-			CloseHandle(location->stopEvent);
+			(void)CloseHandle(location->stopEvent);
 			location->stopEvent = NULL;
 			return ERROR_INTERNAL_ERROR;
 		}
@@ -484,8 +484,8 @@ static UINT location_server_close(LocationServerContext* context)
 			return error;
 		}
 
-		CloseHandle(location->thread);
-		CloseHandle(location->stopEvent);
+		(void)CloseHandle(location->thread);
+		(void)CloseHandle(location->stopEvent);
 		location->thread = NULL;
 		location->stopEvent = NULL;
 	}

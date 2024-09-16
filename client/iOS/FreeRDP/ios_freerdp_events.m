@@ -170,5 +170,5 @@ void ios_events_free_pipe(mfInfo *mfi)
 	mfi->event_pipe_consumer = mfi->event_pipe_producer = -1;
 	close(producer_fd);
 	close(consumer_fd);
-	CloseHandle(mfi->handle);
+	(void)CloseHandle(mfi->handle);
 }

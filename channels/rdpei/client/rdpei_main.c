@@ -1447,11 +1447,11 @@ static void terminate_plugin_cb(GENERIC_DYNVC_PLUGIN* base)
 	if (rdpei->thread)
 	{
 		WaitForSingleObject(rdpei->thread, INFINITE);
-		CloseHandle(rdpei->thread);
+		(void)CloseHandle(rdpei->thread);
 	}
 
 	if (rdpei->event)
-		CloseHandle(rdpei->event);
+		(void)CloseHandle(rdpei->event);
 
 	DeleteCriticalSection(&rdpei->lock);
 	free(rdpei->context);

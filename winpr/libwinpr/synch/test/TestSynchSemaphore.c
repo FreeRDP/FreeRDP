@@ -15,7 +15,7 @@ int TestSynchSemaphore(int argc, char* argv[])
 		return -1;
 	}
 
-	CloseHandle(semaphore);
+	(void)CloseHandle(semaphore);
 
 	return 0;
 }

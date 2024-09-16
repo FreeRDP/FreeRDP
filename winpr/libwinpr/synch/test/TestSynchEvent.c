@@ -88,7 +88,7 @@ int TestSynchEvent(int argc, char* argv[])
 		return -1;
 	}
 
-	CloseHandle(event);
+	(void)CloseHandle(event);
 
 	return 0;
 }

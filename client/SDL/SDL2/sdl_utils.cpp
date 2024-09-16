@@ -260,7 +260,7 @@ WinPREvent::WinPREvent(bool initial)
 
 WinPREvent::~WinPREvent()
 {
-	CloseHandle(_handle);
+	(void)CloseHandle(_handle);
 }
 
 void WinPREvent::set()

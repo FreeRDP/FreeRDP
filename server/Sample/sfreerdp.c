@@ -84,7 +84,7 @@ static void test_peer_context_free(freerdp_peer* client, rdpContext* ctx)
 			WINPR_ASSERT(context->stopEvent);
 			(void)SetEvent(context->stopEvent);
 			WaitForSingleObject(context->debug_channel_thread, INFINITE);
-			CloseHandle(context->debug_channel_thread);
+			(void)CloseHandle(context->debug_channel_thread);
 		}
 
 		Stream_Free(context->s, TRUE);
@@ -761,7 +761,7 @@ static BOOL tf_peer_post_connect(freerdp_peer* client)
 			          CreateThread(NULL, 0, tf_debug_channel_thread_func, (void*)context, 0, NULL)))
 			{
 				WLog_ERR(TAG, "Failed to create debug channel thread");
-				CloseHandle(context->stopEvent);
+				(void)CloseHandle(context->stopEvent);
 				context->stopEvent = NULL;
 				return FALSE;
 			}
@@ -1275,7 +1275,7 @@ static BOOL test_peer_accepted(freerdp_listener* instance, freerdp_peer* client)
 	if (!(hThread = CreateThread(NULL, 0, test_peer_mainloop, (void*)client, 0, NULL)))
 		return FALSE;
 
-	CloseHandle(hThread);
+	(void)CloseHandle(hThread);
 	return TRUE;
 }
 

@@ -465,7 +465,7 @@ static UINT disp_server_open(DispServerContext* context)
 		          CreateThread(NULL, 0, disp_server_thread_func, (void*)context, 0, NULL)))
 		{
 			WLog_ERR(TAG, "CreateEvent failed!");
-			CloseHandle(priv->stopEvent);
+			(void)CloseHandle(priv->stopEvent);
 			priv->stopEvent = NULL;
 			rc = ERROR_INTERNAL_ERROR;
 			goto out_close;
@@ -559,8 +559,8 @@ static UINT disp_server_close(DispServerContext* context)
 			return error;
 		}
 
-		CloseHandle(priv->thread);
-		CloseHandle(priv->stopEvent);
+		(void)CloseHandle(priv->thread);
+		(void)CloseHandle(priv->stopEvent);
 		priv->thread = NULL;
 		priv->stopEvent = NULL;
 	}

@@ -139,7 +139,7 @@ static BOOL printer_write_setting(const char* path, prn_conf_t type, const void*
 		rc = TRUE;
 
 fail:
-	CloseHandle(file);
+	(void)CloseHandle(file);
 	free(base64);
 	return rc;
 }
@@ -194,7 +194,7 @@ static BOOL printer_read_setting(const char* path, prn_conf_t type, void** data,
 	}
 
 fail:
-	CloseHandle(file);
+	(void)CloseHandle(file);
 
 	if (rc && (lowSize <= INT_MAX))
 	{
@@ -929,9 +929,9 @@ static UINT printer_free(DEVICE* device)
 			irp->Discard(irp);
 		}
 
-		CloseHandle(printer_dev->thread);
-		CloseHandle(printer_dev->stopEvent);
-		CloseHandle(printer_dev->event);
+		(void)CloseHandle(printer_dev->thread);
+		(void)CloseHandle(printer_dev->stopEvent);
+		(void)CloseHandle(printer_dev->event);
 		winpr_aligned_free(printer_dev->pIrpList);
 	}
 

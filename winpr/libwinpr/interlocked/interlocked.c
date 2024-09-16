@@ -312,7 +312,7 @@ BOOL static_mutex_lock(volatile HANDLE* static_mutex)
 			return FALSE;
 
 		if (InterlockedCompareExchangePointer((PVOID*)static_mutex, (PVOID)handle, NULL) != NULL)
-			CloseHandle(handle);
+			(void)CloseHandle(handle);
 	}
 
 	return (WaitForSingleObject(*static_mutex, INFINITE) == WAIT_OBJECT_0);

@@ -1277,9 +1277,9 @@ error_play_thread:
 error_sample_ack_list:
 	Queue_Free(stream->sample_list);
 error_sample_list:
-	CloseHandle(stream->ready);
+	(void)CloseHandle(stream->ready);
 error_ready:
-	CloseHandle(stream->stopEvent);
+	(void)CloseHandle(stream->stopEvent);
 error_stopEvent:
 	free(stream);
 	return NULL;
@@ -1412,7 +1412,7 @@ void s_tsmf_stream_free(void* obj)
 			return;
 		}
 
-		CloseHandle(stream->play_thread);
+		(void)CloseHandle(stream->play_thread);
 		stream->play_thread = NULL;
 	}
 
@@ -1424,7 +1424,7 @@ void s_tsmf_stream_free(void* obj)
 			return;
 		}
 
-		CloseHandle(stream->ack_thread);
+		(void)CloseHandle(stream->ack_thread);
 		stream->ack_thread = NULL;
 	}
 
@@ -1437,8 +1437,8 @@ void s_tsmf_stream_free(void* obj)
 		stream->decoder = NULL;
 	}
 
-	CloseHandle(stream->stopEvent);
-	CloseHandle(stream->ready);
+	(void)CloseHandle(stream->stopEvent);
+	(void)CloseHandle(stream->ready);
 	ZeroMemory(stream, sizeof(TSMF_STREAM));
 	free(stream);
 }

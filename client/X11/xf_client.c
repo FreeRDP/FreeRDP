@@ -1452,7 +1452,7 @@ static void xf_post_disconnect(freerdp* instance)
 	if (xfc->pipethread)
 	{
 		WaitForSingleObject(xfc->pipethread, INFINITE);
-		CloseHandle(xfc->pipethread);
+		(void)CloseHandle(xfc->pipethread);
 		xfc->pipethread = NULL;
 	}
 	if (xfc->clipboard)
@@ -1681,7 +1681,7 @@ static DWORD WINAPI xf_client_thread(LPVOID param)
 disconnect:
 
 	if (timer)
-		CloseHandle(timer);
+		(void)CloseHandle(timer);
 
 	freerdp_disconnect(instance);
 end:
@@ -1832,13 +1832,13 @@ void xf_teardown_x11(xfContext* xfc)
 
 	if (xfc->x11event)
 	{
-		CloseHandle(xfc->x11event);
+		(void)CloseHandle(xfc->x11event);
 		xfc->x11event = NULL;
 	}
 
 	if (xfc->mutex)
 	{
-		CloseHandle(xfc->mutex);
+		(void)CloseHandle(xfc->mutex);
 		xfc->mutex = NULL;
 	}
 

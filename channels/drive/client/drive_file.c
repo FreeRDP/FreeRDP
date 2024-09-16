@@ -361,7 +361,7 @@ BOOL drive_file_free(DRIVE_FILE* file)
 
 	if (file->file_handle != INVALID_HANDLE_VALUE)
 	{
-		CloseHandle(file->file_handle);
+		(void)CloseHandle(file->file_handle);
 		file->file_handle = INVALID_HANDLE_VALUE;
 	}
 
@@ -585,7 +585,7 @@ BOOL drive_file_query_information(DRIVE_FILE* file, UINT32 FsInformationClass, w
 	if (hFile != INVALID_HANDLE_VALUE)
 	{
 		status = GetFileInformationByHandle(hFile, &fileInformation);
-		CloseHandle(hFile);
+		(void)CloseHandle(hFile);
 		if (!status)
 			goto out_fail;
 
@@ -790,7 +790,7 @@ BOOL drive_file_set_information(DRIVE_FILE* file, UINT32 FsInformationClass, UIN
 
 			if (file->file_handle != INVALID_HANDLE_VALUE)
 			{
-				CloseHandle(file->file_handle);
+				(void)CloseHandle(file->file_handle);
 				file->file_handle = INVALID_HANDLE_VALUE;
 			}
 

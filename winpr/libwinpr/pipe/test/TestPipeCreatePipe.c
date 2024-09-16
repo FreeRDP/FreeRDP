@@ -65,8 +65,8 @@ int TestPipeCreatePipe(int argc, char* argv[])
 		return -1;
 	}
 
-	CloseHandle(hReadPipe);
-	CloseHandle(hWritePipe);
+	(void)CloseHandle(hReadPipe);
+	(void)CloseHandle(hWritePipe);
 
 	return 0;
 }

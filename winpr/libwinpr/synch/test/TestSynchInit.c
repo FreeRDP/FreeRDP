@@ -155,11 +155,11 @@ out:
 	winpr_aligned_free(pTestOnceFunctionCalls);
 	winpr_aligned_free(pInitOnceExecuteOnceCalls);
 
-	CloseHandle(hStartEvent);
+	(void)CloseHandle(hStartEvent);
 
 	for (DWORD i = 0; i < dwCreatedThreads; i++)
 	{
-		CloseHandle(hThreads[i]);
+		(void)CloseHandle(hThreads[i]);
 	}
 
 	return (result ? 0 : 1);

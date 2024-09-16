@@ -1420,7 +1420,7 @@ static int x11_shadow_subsystem_uninit(rdpShadowSubsystem* sub)
 
 	if (subsystem->common.event)
 	{
-		CloseHandle(subsystem->common.event);
+		(void)CloseHandle(subsystem->common.event);
 		subsystem->common.event = NULL;
 	}
 
@@ -1462,7 +1462,7 @@ static int x11_shadow_subsystem_stop(rdpShadowSubsystem* sub)
 		if (MessageQueue_PostQuit(subsystem->common.MsgPipe->In, 0))
 			WaitForSingleObject(subsystem->thread, INFINITE);
 
-		CloseHandle(subsystem->thread);
+		(void)CloseHandle(subsystem->thread);
 		subsystem->thread = NULL;
 	}
 

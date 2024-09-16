@@ -343,7 +343,7 @@ void Queue_Free(wQueue* queue)
 		Queue_Clear(queue);
 		DeleteCriticalSection(&queue->lock);
 	}
-	CloseHandle(queue->event);
+	(void)CloseHandle(queue->event);
 	free(queue->array);
 	free(queue);
 }

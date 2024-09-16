@@ -83,10 +83,10 @@ int TestSynchWaitableTimerAPC(int argc, char* argv[])
 cleanup:
 
 	if (hTimer)
-		CloseHandle(hTimer);
+		(void)CloseHandle(hTimer);
 
 	if (g_Event)
-		CloseHandle(g_Event);
+		(void)CloseHandle(g_Event);
 
 	return status;
 }

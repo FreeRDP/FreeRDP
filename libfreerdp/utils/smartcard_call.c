@@ -1959,7 +1959,7 @@ void smartcard_call_context_free(scard_call_context* ctx)
 	ctx->pWinSCardApi = NULL;
 
 	HashTable_Free(ctx->rgSCardContextList);
-	CloseHandle(ctx->stopEvent);
+	(void)CloseHandle(ctx->stopEvent);
 	free(ctx);
 }
 

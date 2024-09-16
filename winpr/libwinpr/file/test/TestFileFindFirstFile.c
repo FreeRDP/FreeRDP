@@ -26,7 +26,7 @@ static BOOL create_layout_files(size_t level, const char* BasePath, wArrayList* 
 		if (hdl == INVALID_HANDLE_VALUE)
 			return FALSE;
 		ArrayList_Append(files, FilePath);
-		CloseHandle(hdl);
+		(void)CloseHandle(hdl);
 	}
 	return TRUE;
 }
@@ -228,7 +228,7 @@ static int TestFileFindFirstFileA(const char* str)
 	    CreateFileA(FilePath, GENERIC_ALL, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 	if (hdl == INVALID_HANDLE_VALUE)
 		goto fail;
-	CloseHandle(hdl);
+	(void)CloseHandle(hdl);
 
 	if (!find_first_file_success(FilePath))
 		goto fail;

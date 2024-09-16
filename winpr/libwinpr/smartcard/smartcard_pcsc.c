@@ -1461,7 +1461,7 @@ static HANDLE WINAPI PCSC_SCardAccessStartedEvent(void)
 
 		if (!SetEvent(g_StartedEvent))
 		{
-			CloseHandle(g_StartedEvent);
+			(void)CloseHandle(g_StartedEvent);
 			return NULL;
 		}
 	}
@@ -1478,7 +1478,7 @@ static void WINAPI PCSC_SCardReleaseStartedEvent(void)
 	{
 		if (g_StartedEvent)
 		{
-			CloseHandle(g_StartedEvent);
+			(void)CloseHandle(g_StartedEvent);
 			g_StartedEvent = NULL;
 		}
 	}

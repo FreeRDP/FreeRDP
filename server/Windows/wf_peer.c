@@ -182,7 +182,7 @@ BOOL wf_peer_accepted(freerdp_listener* instance, freerdp_peer* client)
 	if (!(hThread = CreateThread(NULL, 0, wf_peer_main_loop, client, 0, NULL)))
 		return FALSE;
 
-	CloseHandle(hThread);
+	(void)CloseHandle(hThread);
 	return TRUE;
 }
 
@@ -399,10 +399,10 @@ DWORD WINAPI wf_peer_main_loop(LPVOID lpParam)
 	wf_update_peer_deactivate(wfi, context);
 	client->Disconnect(client);
 fail_socket_thread:
-	CloseHandle(context->socketSemaphore);
+	(void)CloseHandle(context->socketSemaphore);
 	context->socketSemaphore = NULL;
 fail_socket_semaphore:
-	CloseHandle(context->socketEvent);
+	(void)CloseHandle(context->socketEvent);
 	context->socketEvent = NULL;
 fail_socket_event:
 fail_socked_closed:
