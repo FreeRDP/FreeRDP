@@ -119,6 +119,7 @@ BOOL sdl_authenticate_ex(freerdp* instance, char** username, char** password, ch
 	size_t titlesize = 0;
 	winpr_asprintf(&title, &titlesize, "Credentials required for %s", target);
 
+	std::unique_ptr<char, decltype(&free)> guard(title, free);
 	char* u = nullptr;
 	char* d = nullptr;
 	char* p = nullptr;
@@ -132,26 +133,22 @@ BOOL sdl_authenticate_ex(freerdp* instance, char** username, char** password, ch
 	p = *password;
 
 	if (!sdl_push_user_event(SDL_EVENT_USER_AUTH_DIALOG, title, u, d, p, reason))
-		goto fail;
+		return res;
 
 	if (!sdl_wait_for_result(instance->context, SDL_EVENT_USER_AUTH_RESULT, &event))
-		goto fail;
-	else
-	{
-		auto arg = reinterpret_cast<SDL_UserAuthArg*>(event.padding);
+		return res;
 
-		res = arg->result > 0 ? TRUE : FALSE;
+	auto arg = reinterpret_cast<SDL_UserAuthArg*>(event.padding);
 
-		free(*username);
-		free(*domain);
-		free(*password);
-		*username = arg->user;
-		*domain = arg->domain;
-		*password = arg->password;
-	}
+	res = arg->result > 0 ? TRUE : FALSE;
 
-fail:
-	free(title);
+	free(*username);
+	free(*domain);
+	free(*password);
+	*username = arg->user;
+	*domain = arg->domain;
+	*password = arg->password;
+
 	return res;
 }
 
@@ -195,15 +192,14 @@ BOOL sdl_choose_smartcard(freerdp* instance, SmartcardCertInfo** cert_list, DWOR
 	if (gateway)
 		title = "Select a gateway logon smartcard certificate";
 	if (!sdl_push_user_event(SDL_EVENT_USER_SCARD_DIALOG, title, list.data(), count))
-		goto fail;
+		return res;
 
 	if (!sdl_wait_for_result(instance->context, SDL_EVENT_USER_SCARD_RESULT, &event))
-		goto fail;
+		return res;
 
 	res = (event.user.code >= 0) ? TRUE : FALSE;
 	*choice = static_cast<DWORD>(event.user.code);
 
-fail:
 	return res;
 }
 

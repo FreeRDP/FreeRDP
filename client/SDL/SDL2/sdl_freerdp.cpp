@@ -59,6 +59,7 @@
 #include "sdl_pointer.hpp"
 #include "sdl_prefs.hpp"
 #include "dialogs/sdl_dialogs.hpp"
+#include "scoped_guard.hpp"
 
 #include <aad/sdl_webview.hpp>
 
@@ -703,7 +704,6 @@ static BOOL sdl_create_windows(SdlContext* sdl)
 
 	auto settings = sdl->context()->settings;
 	auto title = sdl_window_get_title(settings);
-	BOOL rc = FALSE;
 
 	UINT32 windowCount = freerdp_settings_get_uint32(settings, FreeRDP_MonitorCount);
 
@@ -755,8 +755,11 @@ static BOOL sdl_create_windows(SdlContext* sdl)
 			              static_cast<int>(w),
 			              static_cast<int>(h),
 			              flags };
+
+		ScopeGuard guard([&]() { sdl->windows_created.set(); });
+
 		if (!window.window())
-			goto fail;
+			return FALSE;
 
 		if (freerdp_settings_get_bool(settings, FreeRDP_UseMultimon))
 		{
@@ -768,11 +771,7 @@ static BOOL sdl_create_windows(SdlContext* sdl)
 		sdl->windows.insert({ window.id(), std::move(window) });
 	}
 
-	rc = TRUE;
-fail:
-
-	sdl->windows_created.set();
-	return rc;
+	return TRUE;
 }
 
 static BOOL sdl_wait_create_windows(SdlContext* sdl)
@@ -1193,6 +1192,47 @@ static DWORD WINAPI sdl_client_thread_proc(SdlContext* sdl)
 	rdpSettings* settings = context->settings;
 	WINPR_ASSERT(settings);
 
+	ScopeGuard guard(
+	    [&]()
+	    {
+		    sdl->rdp_thread_running = false;
+		    bool showError = false;
+		    if (freerdp_settings_get_bool(settings, FreeRDP_AuthenticationOnly))
+			    WLog_Print(sdl->log, WLOG_INFO, "Authentication only, exit status %s [%" PRId32 "]",
+			               sdl_map_to_code_tag(exit_code), exit_code);
+		    else
+		    {
+			    switch (exit_code)
+			    {
+				    case SDL_EXIT_SUCCESS:
+				    case SDL_EXIT_DISCONNECT:
+				    case SDL_EXIT_LOGOFF:
+				    case SDL_EXIT_DISCONNECT_BY_USER:
+				    case SDL_EXIT_CONNECT_CANCELLED:
+					    break;
+				    default:
+				    {
+					    std::lock_guard<CriticalSection> lock(sdl->critical);
+					    if (sdl->connection_dialog && error_msg)
+					    {
+						    sdl->connection_dialog->showError(error_msg);
+						    showError = true;
+					    }
+				    }
+				    break;
+			    }
+		    }
+		    free(error_msg);
+		    if (!showError)
+			    sdl_hide_connection_dialog(sdl);
+
+		    sdl->exit_code = exit_code;
+		    sdl_push_user_event(SDL_USEREVENT_QUIT);
+#if SDL_VERSION_ATLEAST(2, 0, 16)
+		    SDL_TLSCleanup();
+#endif
+	    });
+
 	if (!rc)
 	{
 		UINT32 error = freerdp_get_last_error(context);
@@ -1205,7 +1245,7 @@ static DWORD WINAPI sdl_client_thread_proc(SdlContext* sdl)
 		freerdp_abort_connect_context(context);
 		WLog_Print(sdl->log, WLOG_ERROR, "Authentication only, %s [0x%08" PRIx32 "] %s",
 		           freerdp_get_last_error_name(code), code, freerdp_get_last_error_string(code));
-		goto terminate;
+		return exit_code;
 	}
 
 	if (!rc)
@@ -1231,7 +1271,7 @@ static DWORD WINAPI sdl_client_thread_proc(SdlContext* sdl)
 		}
 
 		sdl_hide_connection_dialog(sdl);
-		goto terminate;
+		return exit_code;
 	}
 
 	while (!freerdp_shall_disconnect_context(context))
@@ -1313,44 +1353,6 @@ static DWORD WINAPI sdl_client_thread_proc(SdlContext* sdl)
 	}
 
 	freerdp_disconnect(instance);
-
-terminate:
-	sdl->rdp_thread_running = false;
-	bool showError = false;
-	if (freerdp_settings_get_bool(settings, FreeRDP_AuthenticationOnly))
-		WLog_Print(sdl->log, WLOG_INFO, "Authentication only, exit status %s [%" PRId32 "]",
-		           sdl_map_to_code_tag(exit_code), exit_code);
-	else
-	{
-		switch (exit_code)
-		{
-			case SDL_EXIT_SUCCESS:
-			case SDL_EXIT_DISCONNECT:
-			case SDL_EXIT_LOGOFF:
-			case SDL_EXIT_DISCONNECT_BY_USER:
-			case SDL_EXIT_CONNECT_CANCELLED:
-				break;
-			default:
-			{
-				std::lock_guard<CriticalSection> lock(sdl->critical);
-				if (sdl->connection_dialog && error_msg)
-				{
-					sdl->connection_dialog->showError(error_msg);
-					showError = true;
-				}
-			}
-			break;
-		}
-	}
-	free(error_msg);
-	if (!showError)
-		sdl_hide_connection_dialog(sdl);
-
-	sdl->exit_code = exit_code;
-	sdl_push_user_event(SDL_USEREVENT_QUIT);
-#if SDL_VERSION_ATLEAST(2, 0, 16)
-	SDL_TLSCleanup();
-#endif
 	return 0;
 }
 
