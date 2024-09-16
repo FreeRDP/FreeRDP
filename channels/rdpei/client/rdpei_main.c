@@ -963,7 +963,7 @@ static UINT rdpei_add_contact(RdpeiClientContext* context, const RDPINPUT_CONTAC
 	contactPoint = &rdpei->contactPoints[contact->contactId];
 	contactPoint->data = *contact;
 	contactPoint->dirty = TRUE;
-	SetEvent(rdpei->event);
+	(void)SetEvent(rdpei->event);
 	LeaveCriticalSection(&rdpei->lock);
 
 	return CHANNEL_RC_OK;
@@ -1175,7 +1175,7 @@ static UINT rdpei_add_pen(RdpeiClientContext* context, INT32 externalId,
 	{
 		contactPoint->data = *contact;
 		contactPoint->dirty = TRUE;
-		SetEvent(rdpei->event);
+		(void)SetEvent(rdpei->event);
 	}
 	LeaveCriticalSection(&rdpei->lock);
 
@@ -1442,7 +1442,7 @@ static void terminate_plugin_cb(GENERIC_DYNVC_PLUGIN* base)
 
 	rdpei->running = FALSE;
 	if (rdpei->event)
-		SetEvent(rdpei->event);
+		(void)SetEvent(rdpei->event);
 
 	if (rdpei->thread)
 	{

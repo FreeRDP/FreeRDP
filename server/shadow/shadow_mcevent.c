@@ -73,7 +73,7 @@ rdpShadowMultiClientEvent* shadow_multiclient_new(void)
 	event->consuming = 0;
 	event->waiting = 0;
 	event->eventid = 0;
-	SetEvent(event->doneEvent);
+	(void)SetEvent(event->doneEvent);
 	return event;
 
 out_free_subscribers:
@@ -129,7 +129,7 @@ static void Publish(rdpShadowMultiClientEvent* event)
 		event->eventid = (event->eventid & 0xff) + 1;
 		WLog_VRB(TAG, "Server published event %d. %d clients.\n", event->eventid, event->consuming);
 		ResetEvent(event->doneEvent);
-		SetEvent(event->event);
+		(void)SetEvent(event->event);
 	}
 }
 
@@ -200,12 +200,12 @@ static BOOL Consume(struct rdp_shadow_multiclient_subscriber* subscriber, BOOL w
 		if (event->waiting > 0)
 		{
 			/* Notify other clients to continue */
-			SetEvent(event->barrierEvent);
+			(void)SetEvent(event->barrierEvent);
 		}
 		else
 		{
 			/* Only one client. Notify server directly */
-			SetEvent(event->doneEvent);
+			(void)SetEvent(event->doneEvent);
 		}
 	}
 	else /* (event->consuming > 0) */
@@ -230,7 +230,7 @@ static BOOL Consume(struct rdp_shadow_multiclient_subscriber* subscriber, BOOL w
 				 * server to continue.
 				 */
 				ResetEvent(event->barrierEvent);
-				SetEvent(event->doneEvent);
+				(void)SetEvent(event->doneEvent);
 			}
 		}
 	}

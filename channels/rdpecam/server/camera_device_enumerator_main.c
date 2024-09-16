@@ -468,7 +468,7 @@ static UINT enumerator_server_close(CamDevEnumServerContext* context)
 
 	if (!enumerator->externalThread && enumerator->thread)
 	{
-		SetEvent(enumerator->stopEvent);
+		(void)SetEvent(enumerator->stopEvent);
 
 		if (WaitForSingleObject(enumerator->thread, INFINITE) == WAIT_FAILED)
 		{

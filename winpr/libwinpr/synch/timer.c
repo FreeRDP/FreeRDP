@@ -980,7 +980,7 @@ BOOL DeleteTimerQueueEx(HANDLE TimerQueue, HANDLE CompletionEvent)
 	free(timerQueue);
 
 	if (CompletionEvent && (CompletionEvent != INVALID_HANDLE_VALUE))
-		SetEvent(CompletionEvent);
+		(void)SetEvent(CompletionEvent);
 
 	return TRUE;
 }
@@ -1081,7 +1081,7 @@ BOOL DeleteTimerQueueTimer(HANDLE TimerQueue, HANDLE Timer, HANDLE CompletionEve
 	free(timer);
 
 	if (CompletionEvent && (CompletionEvent != INVALID_HANDLE_VALUE))
-		SetEvent(CompletionEvent);
+		(void)SetEvent(CompletionEvent);
 
 	return TRUE;
 }

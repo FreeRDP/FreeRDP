@@ -146,7 +146,7 @@ BOOL Win32_WTSVirtualChannelReadAsync(WTSAPI_CHANNEL* pChannel)
 			pChannel->header->length = numBytes;
 
 			pChannel->readDone = TRUE;
-			SetEvent(pChannel->hEvent);
+			(void)SetEvent(pChannel->hEvent);
 
 			return TRUE;
 		}

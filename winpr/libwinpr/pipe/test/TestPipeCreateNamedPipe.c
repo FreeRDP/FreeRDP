@@ -120,7 +120,7 @@ static DWORD WINAPI named_pipe_server_thread(LPVOID arg)
 		goto out;
 	}
 
-	SetEvent(ReadyEvent);
+	(void)SetEvent(ReadyEvent);
 
 	/**
 	 * Note:

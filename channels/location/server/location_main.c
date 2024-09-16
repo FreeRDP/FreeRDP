@@ -475,7 +475,7 @@ static UINT location_server_close(LocationServerContext* context)
 
 	if (!location->externalThread && location->thread)
 	{
-		SetEvent(location->stopEvent);
+		(void)SetEvent(location->stopEvent);
 
 		if (WaitForSingleObject(location->thread, INFINITE) == WAIT_FAILED)
 		{

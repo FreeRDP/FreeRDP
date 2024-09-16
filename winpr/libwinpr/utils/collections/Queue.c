@@ -220,7 +220,7 @@ BOOL Queue_Enqueue(wQueue* queue, const void* obj)
 	queue->size++;
 
 	if (signalSet)
-		SetEvent(queue->event);
+		(void)SetEvent(queue->event);
 out:
 
 	Queue_Unlock(queue);

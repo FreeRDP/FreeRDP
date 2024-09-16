@@ -1630,7 +1630,7 @@ BOOL rdpgfx_server_close(RdpgfxServerContext* context)
 
 	if (priv->ownThread && priv->thread)
 	{
-		SetEvent(priv->stopEvent);
+		(void)SetEvent(priv->stopEvent);
 
 		if (WaitForSingleObject(priv->thread, INFINITE) == WAIT_FAILED)
 		{

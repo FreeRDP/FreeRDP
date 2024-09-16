@@ -137,7 +137,7 @@ static int rpc_client_receive_pipe_write(RpcClient* client, const BYTE* buffer, 
 		status += (int)length;
 
 	if (ringbuffer_used(&(client->ReceivePipe)) > 0)
-		SetEvent(client->PipeEvent);
+		(void)SetEvent(client->PipeEvent);
 
 	LeaveCriticalSection(&(client->PipeLock));
 	return status;

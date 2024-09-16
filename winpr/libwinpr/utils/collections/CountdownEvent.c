@@ -142,7 +142,7 @@ BOOL CountdownEvent_Signal(wCountdownEvent* countdown, size_t signalCount)
 
 	if (newStatus && (!oldStatus))
 	{
-		SetEvent(countdown->event);
+		(void)SetEvent(countdown->event);
 		status = TRUE;
 	}
 

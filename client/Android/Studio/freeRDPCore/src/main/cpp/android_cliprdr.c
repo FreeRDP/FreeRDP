@@ -397,7 +397,7 @@ android_cliprdr_server_format_data_response(CliprdrClientContext* cliprdr,
 
 	if (!format)
 	{
-		SetEvent(afc->clipboardRequestEvent);
+		(void)SetEvent(afc->clipboardRequestEvent);
 		return ERROR_INTERNAL_ERROR;
 	}
 
@@ -411,7 +411,7 @@ android_cliprdr_server_format_data_response(CliprdrClientContext* cliprdr,
 	if (!ClipboardSetData(afc->clipboard, formatId, formatDataResponse->requestedFormatData, size))
 		return ERROR_INTERNAL_ERROR;
 
-	SetEvent(afc->clipboardRequestEvent);
+	(void)SetEvent(afc->clipboardRequestEvent);
 
 	if ((formatId == CF_TEXT) || (formatId == CF_UNICODETEXT))
 	{

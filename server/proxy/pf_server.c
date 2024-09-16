@@ -679,7 +679,7 @@ static DWORD WINAPI pf_server_handle_peer(LPVOID arg)
 			case DRDYNVC_STATE_READY:
 				if (WaitForSingleObject(ps->dynvcReady, 0) == WAIT_TIMEOUT)
 				{
-					SetEvent(ps->dynvcReady);
+					(void)SetEvent(ps->dynvcReady);
 				}
 
 				break;
@@ -1029,7 +1029,7 @@ void pf_server_stop(proxyServer* server)
 		return;
 
 	/* signal main thread to stop and wait for the thread to exit */
-	SetEvent(server->stopEvent);
+	(void)SetEvent(server->stopEvent);
 }
 
 void pf_server_free(proxyServer* server)

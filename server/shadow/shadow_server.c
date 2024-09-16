@@ -742,7 +742,7 @@ int shadow_server_stop(rdpShadowServer* server)
 
 	if (server->thread)
 	{
-		SetEvent(server->StopEvent);
+		(void)SetEvent(server->StopEvent);
 		WaitForSingleObject(server->thread, INFINITE);
 		CloseHandle(server->thread);
 		server->thread = NULL;

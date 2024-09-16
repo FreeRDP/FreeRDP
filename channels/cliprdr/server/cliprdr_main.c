@@ -1420,7 +1420,7 @@ static UINT cliprdr_server_stop(CliprdrServerContext* context)
 
 	if (cliprdr->StopEvent)
 	{
-		SetEvent(cliprdr->StopEvent);
+		(void)SetEvent(cliprdr->StopEvent);
 
 		if (WaitForSingleObject(cliprdr->Thread, INFINITE) == WAIT_FAILED)
 		{

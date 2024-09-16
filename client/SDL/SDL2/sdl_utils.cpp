@@ -265,7 +265,7 @@ WinPREvent::~WinPREvent()
 
 void WinPREvent::set()
 {
-	SetEvent(_handle);
+	(void)SetEvent(_handle);
 }
 
 void WinPREvent::clear()

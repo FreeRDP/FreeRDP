@@ -1261,13 +1261,13 @@ TSMF_STREAM* tsmf_stream_new(TSMF_PRESENTATION* presentation, UINT32 stream_id,
 	stream->rdpcontext = rdpcontext;
 	return stream;
 error_add:
-	SetEvent(stream->stopEvent);
+	(void)SetEvent(stream->stopEvent);
 
 	if (WaitForSingleObject(stream->ack_thread, INFINITE) == WAIT_FAILED)
 		WLog_ERR(TAG, "WaitForSingleObject failed with error %" PRIu32 "!", GetLastError());
 
 error_ack_thread:
-	SetEvent(stream->stopEvent);
+	(void)SetEvent(stream->stopEvent);
 
 	if (WaitForSingleObject(stream->play_thread, INFINITE) == WAIT_FAILED)
 		WLog_ERR(TAG, "WaitForSingleObject failed with error %" PRIu32 "!", GetLastError());
@@ -1402,7 +1402,7 @@ void s_tsmf_stream_free(void* obj)
 		return;
 
 	tsmf_stream_stop(stream);
-	SetEvent(stream->stopEvent);
+	(void)SetEvent(stream->stopEvent);
 
 	if (stream->play_thread)
 	{
@@ -1454,7 +1454,7 @@ BOOL tsmf_stream_push_sample(TSMF_STREAM* stream, IWTSVirtualChannelCallback* pC
                              UINT32 extensions, UINT32 data_size, BYTE* data)
 {
 	TSMF_SAMPLE* sample = NULL;
-	SetEvent(stream->ready);
+	(void)SetEvent(stream->ready);
 
 	if (TERMINATING)
 		return TRUE;

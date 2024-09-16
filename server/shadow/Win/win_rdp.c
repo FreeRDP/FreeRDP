@@ -79,7 +79,7 @@ static BOOL shw_end_paint(rdpContext* context)
 		region16_union_rect(&(surface->invalidRegion), &(surface->invalidRegion), &invalidRect);
 	}
 
-	SetEvent(subsystem->RdpUpdateEnterEvent);
+	(void)SetEvent(subsystem->RdpUpdateEnterEvent);
 	WaitForSingleObject(subsystem->RdpUpdateLeaveEvent, INFINITE);
 	ResetEvent(subsystem->RdpUpdateLeaveEvent);
 	return TRUE;
@@ -261,7 +261,7 @@ static int shw_freerdp_client_start(rdpContext* context)
 static int shw_freerdp_client_stop(rdpContext* context)
 {
 	shwContext* shw = (shwContext*)context;
-	SetEvent(shw->StopEvent);
+	(void)SetEvent(shw->StopEvent);
 	return 0;
 }
 

@@ -82,7 +82,7 @@ static void test_peer_context_free(freerdp_peer* client, rdpContext* ctx)
 		if (context->debug_channel_thread)
 		{
 			WINPR_ASSERT(context->stopEvent);
-			SetEvent(context->stopEvent);
+			(void)SetEvent(context->stopEvent);
 			WaitForSingleObject(context->debug_channel_thread, INFINITE);
 			CloseHandle(context->debug_channel_thread);
 		}

@@ -1109,7 +1109,7 @@ static UINT drive_hotplug_thread_terminate(rdpdrPlugin* rdpdr)
 	{
 #if !defined(_WIN32)
 		if (rdpdr->stopEvent)
-			SetEvent(rdpdr->stopEvent);
+			(void)SetEvent(rdpdr->stopEvent);
 #endif
 #ifdef __MACOSX__
 		CFRunLoopStop(rdpdr->runLoop);

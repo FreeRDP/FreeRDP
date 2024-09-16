@@ -227,7 +227,7 @@ static UINT audin_sndio_close(IAudinDevice* device)
 
 	if (sndio->stopEvent != NULL)
 	{
-		SetEvent(sndio->stopEvent);
+		(void)SetEvent(sndio->stopEvent);
 
 		if (WaitForSingleObject(sndio->thread, INFINITE) == WAIT_FAILED)
 		{

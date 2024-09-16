@@ -185,7 +185,7 @@ VOID winpr_CloseThreadpool(PTP_POOL ptpp)
 		return;
 	}
 #endif
-	SetEvent(ptpp->TerminateEvent);
+	(void)SetEvent(ptpp->TerminateEvent);
 
 	ArrayList_Free(ptpp->Threads);
 	Queue_Free(ptpp->PendingQueue);
@@ -247,7 +247,7 @@ VOID winpr_SetThreadpoolThreadMaximum(PTP_POOL ptpp, DWORD cthrdMost)
 	ArrayList_Lock(ptpp->Threads);
 	if (ArrayList_Count(ptpp->Threads) > ptpp->Maximum)
 	{
-		SetEvent(ptpp->TerminateEvent);
+		(void)SetEvent(ptpp->TerminateEvent);
 		ArrayList_Clear(ptpp->Threads);
 		ResetEvent(ptpp->TerminateEvent);
 	}

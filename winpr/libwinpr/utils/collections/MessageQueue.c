@@ -146,7 +146,7 @@ BOOL MessageQueue_Dispatch(wMessageQueue* queue, const wMessage* message)
 	queue->size++;
 
 	if (queue->size > 0)
-		SetEvent(queue->event);
+		(void)SetEvent(queue->event);
 
 	if (message->id == WMQ_QUIT)
 		queue->closed = TRUE;

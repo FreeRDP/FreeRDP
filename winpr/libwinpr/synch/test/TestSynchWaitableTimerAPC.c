@@ -28,7 +28,7 @@ static VOID CALLBACK TimerAPCProc(LPVOID lpArg, DWORD dwTimerLowValue, DWORD dwT
 
 	if (g_Count >= 5)
 	{
-		SetEvent(g_Event);
+		(void)SetEvent(g_Event);
 	}
 }
 

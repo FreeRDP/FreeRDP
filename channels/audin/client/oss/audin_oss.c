@@ -332,7 +332,7 @@ static UINT audin_oss_close(IAudinDevice* device)
 
 	if (oss->stopEvent != NULL)
 	{
-		SetEvent(oss->stopEvent);
+		(void)SetEvent(oss->stopEvent);
 
 		if (WaitForSingleObject(oss->thread, INFINITE) == WAIT_FAILED)
 		{

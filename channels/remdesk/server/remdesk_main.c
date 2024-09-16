@@ -685,7 +685,7 @@ static UINT remdesk_server_start(RemdeskServerContext* context)
 static UINT remdesk_server_stop(RemdeskServerContext* context)
 {
 	UINT error = 0;
-	SetEvent(context->priv->StopEvent);
+	(void)SetEvent(context->priv->StopEvent);
 
 	if (WaitForSingleObject(context->priv->Thread, INFINITE) == WAIT_FAILED)
 	{

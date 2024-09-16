@@ -1306,7 +1306,7 @@ void setChannelError(rdpContext* context, UINT errorNum, WINPR_FORMAT_ARG const 
 	context->channelErrorNum = errorNum;
 	(void)vsnprintf(context->errorDescription, 499, format, ap);
 	va_end(ap);
-	SetEvent(context->channelErrorEvent);
+	(void)SetEvent(context->channelErrorEvent);
 }
 
 const char* freerdp_nego_get_routing_token(rdpContext* context, DWORD* length)

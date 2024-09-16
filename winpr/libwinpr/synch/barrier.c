@@ -224,7 +224,7 @@ BOOL WINAPI winpr_EnterSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpBarrie
 	lpBarrier->Reserved3[0] = (ULONG_PTR)hDormantEvent;
 
 	/* signal the blocked threads */
-	SetEvent(hCurrentEvent);
+	(void)SetEvent(hCurrentEvent);
 
 	return TRUE;
 }

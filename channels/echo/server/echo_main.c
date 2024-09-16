@@ -328,7 +328,7 @@ static UINT echo_server_close(echo_server_context* context)
 
 	if (echo->thread)
 	{
-		SetEvent(echo->stopEvent);
+		(void)SetEvent(echo->stopEvent);
 
 		if (WaitForSingleObject(echo->thread, INFINITE) == WAIT_FAILED)
 		{

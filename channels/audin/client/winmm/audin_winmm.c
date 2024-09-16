@@ -293,7 +293,7 @@ static UINT audin_winmm_close(IAudinDevice* device)
 	if (!winmm)
 		return ERROR_INVALID_PARAMETER;
 
-	SetEvent(winmm->stopEvent);
+	(void)SetEvent(winmm->stopEvent);
 	status = WaitForSingleObject(winmm->thread, INFINITE);
 
 	if (status == WAIT_FAILED)

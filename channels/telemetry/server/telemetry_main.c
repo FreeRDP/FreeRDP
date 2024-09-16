@@ -344,7 +344,7 @@ static UINT telemetry_server_close(TelemetryServerContext* context)
 
 	if (!telemetry->externalThread && telemetry->thread)
 	{
-		SetEvent(telemetry->stopEvent);
+		(void)SetEvent(telemetry->stopEvent);
 
 		if (WaitForSingleObject(telemetry->thread, INFINITE) == WAIT_FAILED)
 		{

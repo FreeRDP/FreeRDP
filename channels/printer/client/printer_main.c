@@ -690,7 +690,7 @@ static UINT printer_irp_request(DEVICE* device, IRP* irp)
 	if (printer_dev->async)
 	{
 		InterlockedPushEntrySList(printer_dev->pIrpList, &(irp->ItemEntry));
-		SetEvent(printer_dev->event);
+		(void)SetEvent(printer_dev->event);
 	}
 	else
 	{
@@ -908,7 +908,7 @@ static UINT printer_free(DEVICE* device)
 
 	if (printer_dev->async)
 	{
-		SetEvent(printer_dev->stopEvent);
+		(void)SetEvent(printer_dev->stopEvent);
 
 		if (WaitForSingleObject(printer_dev->thread, INFINITE) == WAIT_FAILED)
 		{

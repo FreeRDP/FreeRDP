@@ -425,7 +425,7 @@ static UINT mouse_cursor_server_close(MouseCursorServerContext* context)
 
 	if (!mouse_cursor->externalThread && mouse_cursor->thread)
 	{
-		SetEvent(mouse_cursor->stopEvent);
+		(void)SetEvent(mouse_cursor->stopEvent);
 
 		if (WaitForSingleObject(mouse_cursor->thread, INFINITE) == WAIT_FAILED)
 		{

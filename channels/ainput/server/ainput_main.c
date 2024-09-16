@@ -351,7 +351,7 @@ static UINT ainput_server_close(ainput_server_context* context)
 
 	if (!ainput->externalThread && ainput->thread)
 	{
-		SetEvent(ainput->stopEvent);
+		(void)SetEvent(ainput->stopEvent);
 
 		if (WaitForSingleObject(ainput->thread, INFINITE) == WAIT_FAILED)
 		{

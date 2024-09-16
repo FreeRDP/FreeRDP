@@ -1462,7 +1462,7 @@ int transport_check_fds(rdpTransport* transport)
 	if (!transport->haveMoreBytesToRead)
 	{
 		transport->haveMoreBytesToRead = TRUE;
-		SetEvent(transport->rereadEvent);
+		(void)SetEvent(transport->rereadEvent);
 	}
 	return recv_status;
 }

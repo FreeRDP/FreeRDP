@@ -322,7 +322,7 @@ static UINT audin_alsa_close(IAudinDevice* device)
 
 	if (alsa->stopEvent)
 	{
-		SetEvent(alsa->stopEvent);
+		(void)SetEvent(alsa->stopEvent);
 
 		if (WaitForSingleObject(alsa->thread, INFINITE) == WAIT_FAILED)
 		{

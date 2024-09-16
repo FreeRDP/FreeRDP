@@ -354,7 +354,7 @@ static DWORD WINAPI win_shadow_subsystem_thread(LPVOID arg)
 		{
 			win_shadow_surface_copy(subsystem);
 			ResetEvent(subsystem->RdpUpdateEnterEvent);
-			SetEvent(subsystem->RdpUpdateLeaveEvent);
+			(void)SetEvent(subsystem->RdpUpdateLeaveEvent);
 		}
 	}
 

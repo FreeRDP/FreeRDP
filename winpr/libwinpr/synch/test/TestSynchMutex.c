@@ -192,7 +192,7 @@ static BOOL test_mutex_threading(void)
 		goto fail;
 	}
 
-	SetEvent(hStartEvent);
+	(void)SetEvent(hStartEvent);
 
 	if (WaitForSingleObject(hThread, 2000) != WAIT_OBJECT_0)
 	{

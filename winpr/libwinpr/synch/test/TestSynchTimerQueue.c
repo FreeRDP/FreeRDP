@@ -46,7 +46,7 @@ static VOID CALLBACK TimerRoutine(PVOID lpParam, BOOLEAN TimerOrWaitFired)
 
 	if (apcData->FireCount == apcData->MaxFireCount)
 	{
-		SetEvent(apcData->CompletionEvent);
+		(void)SetEvent(apcData->CompletionEvent);
 	}
 }
 

@@ -120,7 +120,7 @@ int TestSynchInit(int argc, char* argv[])
 	}
 
 	Sleep(100);
-	SetEvent(hStartEvent);
+	(void)SetEvent(hStartEvent);
 
 	for (DWORD i = 0; i < dwCreatedThreads; i++)
 	{

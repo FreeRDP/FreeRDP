@@ -330,7 +330,7 @@ mac_cliprdr_server_format_data_response(CliprdrClientContext *cliprdr,
 
 	if (formatDataResponse->common.msgFlags & CB_RESPONSE_FAIL)
 	{
-		SetEvent(mfc->clipboardRequestEvent);
+		(void)SetEvent(mfc->clipboardRequestEvent);
 		return ERROR_INTERNAL_ERROR;
 	}
 
@@ -342,7 +342,7 @@ mac_cliprdr_server_format_data_response(CliprdrClientContext *cliprdr,
 
 	if (!format)
 	{
-		SetEvent(mfc->clipboardRequestEvent);
+		(void)SetEvent(mfc->clipboardRequestEvent);
 		return ERROR_INTERNAL_ERROR;
 	}
 
@@ -355,7 +355,7 @@ mac_cliprdr_server_format_data_response(CliprdrClientContext *cliprdr,
 
 	ClipboardSetData(mfc->clipboard, formatId, formatDataResponse->requestedFormatData, size);
 
-	SetEvent(mfc->clipboardRequestEvent);
+	(void)SetEvent(mfc->clipboardRequestEvent);
 
 	if ((formatId == CF_TEXT) || (formatId == CF_OEMTEXT) || (formatId == CF_UNICODETEXT))
 	{

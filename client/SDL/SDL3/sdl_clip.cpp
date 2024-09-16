@@ -638,7 +638,7 @@ UINT sdlClip::ReceiveFormatDataResponse(CliprdrClientContext* context,
 	if (!sres)
 		return ERROR_INTERNAL_ERROR;
 
-	SetEvent(clipboard->_event);
+	(void)SetEvent(clipboard->_event);
 	return CHANNEL_RC_OK;
 }
 

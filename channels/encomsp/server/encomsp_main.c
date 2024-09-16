@@ -327,7 +327,7 @@ static UINT encomsp_server_start(EncomspServerContext* context)
 static UINT encomsp_server_stop(EncomspServerContext* context)
 {
 	UINT error = CHANNEL_RC_OK;
-	SetEvent(context->priv->StopEvent);
+	(void)SetEvent(context->priv->StopEvent);
 
 	if (WaitForSingleObject(context->priv->Thread, INFINITE) == WAIT_FAILED)
 	{

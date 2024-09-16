@@ -70,7 +70,8 @@ DWORD WINAPI wf_update_thread(LPVOID lpParam)
 							{
 								// WLog_DBG(TAG, "Setting event for %d of %d", index + 1,
 								// wfi->activePeerCount);
-								SetEvent(((wfPeerContext*)wfi->peers[index]->context)->updateEvent);
+								(void)SetEvent(
+								    ((wfPeerContext*)wfi->peers[index]->context)->updateEvent);
 							}
 						}
 					}

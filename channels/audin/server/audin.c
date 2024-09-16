@@ -516,7 +516,7 @@ static BOOL audin_server_close(audin_server_context* context)
 
 	if (audin->thread)
 	{
-		SetEvent(audin->stopEvent);
+		(void)SetEvent(audin->stopEvent);
 
 		if (WaitForSingleObject(audin->thread, INFINITE) == WAIT_FAILED)
 		{

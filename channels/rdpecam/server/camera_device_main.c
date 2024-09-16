@@ -620,7 +620,7 @@ static UINT device_server_close(CameraDeviceServerContext* context)
 
 	if (!device->externalThread && device->thread)
 	{
-		SetEvent(device->stopEvent);
+		(void)SetEvent(device->stopEvent);
 
 		if (WaitForSingleObject(device->thread, INFINITE) == WAIT_FAILED)
 		{

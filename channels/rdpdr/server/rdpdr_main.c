@@ -2168,7 +2168,7 @@ static UINT rdpdr_server_stop(RdpdrServerContext* context)
 
 	if (context->priv->StopEvent)
 	{
-		SetEvent(context->priv->StopEvent);
+		(void)SetEvent(context->priv->StopEvent);
 
 		if (WaitForSingleObject(context->priv->Thread, INFINITE) == WAIT_FAILED)
 		{

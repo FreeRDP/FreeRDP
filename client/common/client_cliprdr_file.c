@@ -1144,7 +1144,7 @@ static DWORD WINAPI cliprdr_file_fuse_thread(LPVOID arg)
 	fuse_opt_add_arg(&args, file->path);
 	file->fuse_sess = fuse_session_new(&args, &cliprdr_file_fuse_oper,
 	                                   sizeof(cliprdr_file_fuse_oper), (void*)file);
-	SetEvent(file->fuse_start_sync);
+	(void)SetEvent(file->fuse_start_sync);
 
 	if (file->fuse_sess != NULL)
 	{
@@ -2046,7 +2046,7 @@ void cliprdr_file_session_terminate(CliprdrFileContext* file, BOOL stop_thread)
 	if (stop_thread)
 	{
 		WLog_Print(file->log, WLOG_DEBUG, "Setting FUSE stop event");
-		SetEvent(file->fuse_stop_sync);
+		(void)SetEvent(file->fuse_stop_sync);
 	}
 #endif
 	/* 	not elegant but works for umounting FUSE
@@ -2055,7 +2055,7 @@ void cliprdr_file_session_terminate(CliprdrFileContext* file, BOOL stop_thread)
 #if defined(WITH_FUSE)
 	WLog_Print(file->log, WLOG_DEBUG, "Forcing FUSE to check exit flag");
 #endif
-	winpr_PathFileExists(file->path);
+	(void)winpr_PathFileExists(file->path);
 }
 
 void cliprdr_file_context_free(CliprdrFileContext* file)

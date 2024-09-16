@@ -154,7 +154,7 @@ static UINT drdynvc_server_start(DrdynvcServerContext* context)
 static UINT drdynvc_server_stop(DrdynvcServerContext* context)
 {
 	UINT error = 0;
-	SetEvent(context->priv->StopEvent);
+	(void)SetEvent(context->priv->StopEvent);
 
 	if (WaitForSingleObject(context->priv->Thread, INFINITE) == WAIT_FAILED)
 	{

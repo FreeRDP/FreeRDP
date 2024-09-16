@@ -172,7 +172,7 @@ static DWORD WINAPI named_pipe_server_thread(LPVOID arg)
 	if (!(hEvent = CreateEvent(NULL, TRUE, FALSE, NULL)))
 	{
 		printf("server: CreateEvent failure: %" PRIu32 "\n", GetLastError());
-		SetEvent(serverReadyEvent); /* unblock client thread */
+		(void)SetEvent(serverReadyEvent); /* unblock client thread */
 		goto finish;
 	}
 	overlapped.hEvent = hEvent;
@@ -187,11 +187,11 @@ static DWORD WINAPI named_pipe_server_thread(LPVOID arg)
 	if (hNamedPipe == INVALID_HANDLE_VALUE)
 	{
 		printf("server: CreateNamedPipe failure: %" PRIu32 "\n", GetLastError());
-		SetEvent(serverReadyEvent); /* unblock client thread */
+		(void)SetEvent(serverReadyEvent); /* unblock client thread */
 		goto finish;
 	}
 
-	SetEvent(serverReadyEvent);
+	(void)SetEvent(serverReadyEvent);
 
 	/* 3: connect named pipe */
 
