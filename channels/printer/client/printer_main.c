@@ -1048,7 +1048,7 @@ error_out:
 
 static rdpPrinterDriver* printer_load_backend(const char* backend)
 {
-	typedef UINT (*backend_load_t)(rdpPrinterDriver**);
+	typedef UINT(VCAPITYPE * backend_load_t)(rdpPrinterDriver**);
 	PVIRTUALCHANNELENTRY entry = freerdp_load_channel_addin_entry("printer", backend, NULL, 0);
 	backend_load_t func = WINPR_FUNC_PTR_CAST(entry, backend_load_t);
 	if (!func)

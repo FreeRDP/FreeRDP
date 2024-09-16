@@ -160,7 +160,7 @@ typedef struct
 typedef FREERDP_CAMERA_HAL_ENTRY_POINTS* PFREERDP_CAMERA_HAL_ENTRY_POINTS;
 
 /* entry point called by addin manager */
-typedef UINT (*PFREERDP_CAMERA_HAL_ENTRY)(PFREERDP_CAMERA_HAL_ENTRY_POINTS pEntryPoints);
+typedef UINT(VCAPITYPE* PFREERDP_CAMERA_HAL_ENTRY)(PFREERDP_CAMERA_HAL_ENTRY_POINTS pEntryPoints);
 
 /* common functions */
 UINT ecam_channel_send_generic_msg(CameraPlugin* ecam, GENERIC_CHANNEL_CALLBACK* hchannel,

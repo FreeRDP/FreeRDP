@@ -167,7 +167,7 @@ extern "C"
 		rdpContext* (*GetRdpContext)(IDRDYNVC_ENTRY_POINTS* pEntryPoints);
 	};
 
-	typedef UINT (*PDVC_PLUGIN_ENTRY)(IDRDYNVC_ENTRY_POINTS*);
+	typedef UINT(VCAPITYPE* PDVC_PLUGIN_ENTRY)(IDRDYNVC_ENTRY_POINTS*);
 
 	void* get_callback_by_name(const char* name, void** context);
 	void add_callback_by_name(const char* name, void* fkt, void* context);
