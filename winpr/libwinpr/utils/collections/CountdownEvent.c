@@ -109,7 +109,7 @@ void CountdownEvent_AddCount(wCountdownEvent* countdown, size_t signalCount)
 	countdown->count += signalCount;
 
 	if (signalSet)
-		ResetEvent(countdown->event);
+		(void)ResetEvent(countdown->event);
 
 	LeaveCriticalSection(&countdown->lock);
 }

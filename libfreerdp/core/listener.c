@@ -476,7 +476,7 @@ static BOOL freerdp_listener_check_fds(freerdp_listener* instance)
 	{
 		struct sockaddr_storage peer_addr = { 0 };
 
-		WSAResetEvent(listener->events[i]);
+		(void)WSAResetEvent(listener->events[i]);
 		int peer_addr_size = sizeof(peer_addr);
 		int peer_sockfd =
 		    _accept(listener->sockfds[i], (struct sockaddr*)&peer_addr, &peer_addr_size);

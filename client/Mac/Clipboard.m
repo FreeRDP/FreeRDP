@@ -99,7 +99,7 @@ static int mac_cliprdr_send_client_format_data_request(CliprdrClientContext *cli
 
 	formatDataRequest.requestedFormatId = formatId;
 	mfc->requestedFormatId = formatId;
-	ResetEvent(mfc->clipboardRequestEvent);
+	(void)ResetEvent(mfc->clipboardRequestEvent);
 
 	cliprdr->ClientFormatDataRequest(cliprdr, &formatDataRequest);
 

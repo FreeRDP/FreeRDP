@@ -192,7 +192,7 @@ int MessageQueue_Get(wMessageQueue* queue, wMessage* message)
 		queue->size--;
 
 		if (queue->size < 1)
-			ResetEvent(queue->event);
+			(void)ResetEvent(queue->event);
 
 		status = (message->id != WMQ_QUIT) ? 1 : 0;
 	}
@@ -221,7 +221,7 @@ int MessageQueue_Peek(wMessageQueue* queue, wMessage* message, BOOL remove)
 			queue->size--;
 
 			if (queue->size < 1)
-				ResetEvent(queue->event);
+				(void)ResetEvent(queue->event);
 		}
 	}
 
@@ -304,7 +304,7 @@ int MessageQueue_Clear(wMessageQueue* queue)
 		queue->head = (queue->head + 1) % queue->capacity;
 		queue->size--;
 	}
-	ResetEvent(queue->event);
+	(void)ResetEvent(queue->event);
 	queue->closed = FALSE;
 
 	LeaveCriticalSection(&queue->lock);

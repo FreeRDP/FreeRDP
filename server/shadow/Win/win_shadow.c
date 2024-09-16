@@ -353,7 +353,7 @@ static DWORD WINAPI win_shadow_subsystem_thread(LPVOID arg)
 		if (WaitForSingleObject(subsystem->RdpUpdateEnterEvent, 0) == WAIT_OBJECT_0)
 		{
 			win_shadow_surface_copy(subsystem);
-			ResetEvent(subsystem->RdpUpdateEnterEvent);
+			(void)ResetEvent(subsystem->RdpUpdateEnterEvent);
 			(void)SetEvent(subsystem->RdpUpdateLeaveEvent);
 		}
 	}

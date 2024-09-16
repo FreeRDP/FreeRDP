@@ -131,7 +131,7 @@ void Queue_Clear(wQueue* queue)
 
 	queue->size = 0;
 	queue->head = queue->tail = 0;
-	ResetEvent(queue->event);
+	(void)ResetEvent(queue->event);
 	Queue_Unlock(queue);
 }
 
@@ -247,7 +247,7 @@ void* Queue_Dequeue(wQueue* queue)
 	}
 
 	if (queue->size < 1)
-		ResetEvent(queue->event);
+		(void)ResetEvent(queue->event);
 
 	Queue_Unlock(queue);
 

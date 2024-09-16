@@ -1292,7 +1292,7 @@ void clearChannelError(rdpContext* context)
 	WINPR_ASSERT(context);
 	context->channelErrorNum = 0;
 	memset(context->errorDescription, 0, 500);
-	ResetEvent(context->channelErrorEvent);
+	(void)ResetEvent(context->channelErrorEvent);
 }
 
 WINPR_ATTR_FORMAT_ARG(3, 4)

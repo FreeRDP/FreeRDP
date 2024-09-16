@@ -681,7 +681,7 @@ const void* sdlClip::ClipDataCb(void* userdata, const char* mime_type, size_t* s
 		std::lock_guard<CriticalSection> lock(clip->_lock);
 		auto request = clip->_request_queue.front();
 		clip->_request_queue.pop();
-		ResetEvent(clip->_event);
+		(void)ResetEvent(clip->_event);
 
 		auto formatID = ClipboardRegisterFormat(clip->_system, mime_type);
 		auto data = ClipboardGetData(clip->_system, formatID, &len);

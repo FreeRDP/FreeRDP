@@ -1316,7 +1316,7 @@ TSMF_STREAM* tsmf_stream_find_by_id(TSMF_PRESENTATION* presentation, UINT32 stre
 static void tsmf_stream_resync(void* arg)
 {
 	TSMF_STREAM* stream = arg;
-	ResetEvent(stream->ready);
+	(void)ResetEvent(stream->ready);
 }
 
 BOOL tsmf_stream_set_format(TSMF_STREAM* stream, const char* name, wStream* s)

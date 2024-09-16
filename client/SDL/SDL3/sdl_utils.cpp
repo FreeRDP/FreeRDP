@@ -316,7 +316,7 @@ void WinPREvent::set()
 
 void WinPREvent::clear()
 {
-	ResetEvent(_handle);
+	(void)ResetEvent(_handle);
 }
 
 bool WinPREvent::isSet() const

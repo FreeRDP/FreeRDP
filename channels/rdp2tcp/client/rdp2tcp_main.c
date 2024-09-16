@@ -175,7 +175,7 @@ static DWORD WINAPI copyThread(void* data)
 		handles[1] = freerdp_abort_event(plugin->channelEntryPoints.context);
 		status = WaitForMultipleObjects(2, handles, FALSE, INFINITE);
 		if (status == WAIT_OBJECT_0)
-			ResetEvent(plugin->writeComplete);
+			(void)ResetEvent(plugin->writeComplete);
 	}
 
 fail:

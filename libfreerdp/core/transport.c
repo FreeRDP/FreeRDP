@@ -1427,7 +1427,7 @@ int transport_check_fds(rdpTransport* transport)
 		if (transport->haveMoreBytesToRead)
 		{
 			transport->haveMoreBytesToRead = FALSE;
-			ResetEvent(transport->rereadEvent);
+			(void)ResetEvent(transport->rereadEvent);
 		}
 		return status;
 	}

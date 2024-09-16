@@ -128,7 +128,7 @@ static void Publish(rdpShadowMultiClientEvent* event)
 	{
 		event->eventid = (event->eventid & 0xff) + 1;
 		WLog_VRB(TAG, "Server published event %d. %d clients.\n", event->eventid, event->consuming);
-		ResetEvent(event->doneEvent);
+		(void)ResetEvent(event->doneEvent);
 		(void)SetEvent(event->event);
 	}
 }
@@ -195,7 +195,7 @@ static BOOL Consume(struct rdp_shadow_multiclient_subscriber* subscriber, BOOL w
 	if (event->consuming == 0)
 	{
 		/* Last client reset event before notify clients to continue */
-		ResetEvent(event->event);
+		(void)ResetEvent(event->event);
 
 		if (event->waiting > 0)
 		{
@@ -229,7 +229,7 @@ static BOOL Consume(struct rdp_shadow_multiclient_subscriber* subscriber, BOOL w
 				 * We can now discard barrierEvent and notify
 				 * server to continue.
 				 */
-				ResetEvent(event->barrierEvent);
+				(void)ResetEvent(event->barrierEvent);
 				(void)SetEvent(event->doneEvent);
 			}
 		}

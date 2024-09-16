@@ -165,7 +165,7 @@ int rpc_client_receive_pipe_read(RpcClient* client, BYTE* buffer, size_t length)
 		ringbuffer_commit_read_bytes(&(client->ReceivePipe), status);
 
 	if (ringbuffer_used(&(client->ReceivePipe)) < 1)
-		ResetEvent(client->PipeEvent);
+		(void)ResetEvent(client->PipeEvent);
 
 	LeaveCriticalSection(&(client->PipeLock));
 

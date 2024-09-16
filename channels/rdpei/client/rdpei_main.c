@@ -464,7 +464,7 @@ static DWORD WINAPI rdpei_periodic_update(LPVOID arg)
 		}
 
 		if (status == WAIT_OBJECT_0)
-			ResetEvent(rdpei->event);
+			(void)ResetEvent(rdpei->event);
 
 		LeaveCriticalSection(&rdpei->lock);
 	}

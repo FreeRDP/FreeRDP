@@ -214,7 +214,7 @@ BOOL WINAPI winpr_EnterSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpBarrie
 	}
 
 	/* reset the dormant event first */
-	ResetEvent(hDormantEvent);
+	(void)ResetEvent(hDormantEvent);
 
 	/* reset the remaining counter */
 	lpBarrier->Reserved1 = lpBarrier->Reserved2;

@@ -108,7 +108,7 @@ static UINT android_cliprdr_send_client_format_data_request(CliprdrClientContext
 	formatDataRequest.common.msgFlags = 0;
 	formatDataRequest.requestedFormatId = formatId;
 	afc->requestedFormatId = formatId;
-	ResetEvent(afc->clipboardRequestEvent);
+	(void)ResetEvent(afc->clipboardRequestEvent);
 	rc = cliprdr->ClientFormatDataRequest(cliprdr, &formatDataRequest);
 fail:
 	return rc;

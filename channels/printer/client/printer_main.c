@@ -651,7 +651,7 @@ static DWORD WINAPI printer_thread_func(LPVOID arg)
 		else if (rc != WAIT_OBJECT_0)
 			continue;
 
-		ResetEvent(printer_dev->event);
+		(void)ResetEvent(printer_dev->event);
 		irp = (IRP*)InterlockedPopEntrySList(printer_dev->pIrpList);
 
 		if (irp == NULL)

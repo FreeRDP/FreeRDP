@@ -126,7 +126,7 @@ BOOL Win32_WTSVirtualChannelReadAsync(WTSAPI_CHANNEL* pChannel)
 
 	ZeroMemory(&(pChannel->overlapped), sizeof(OVERLAPPED));
 	pChannel->overlapped.hEvent = pChannel->hEvent;
-	ResetEvent(pChannel->hEvent);
+	(void)ResetEvent(pChannel->hEvent);
 
 	if (pChannel->showProtocol)
 	{
