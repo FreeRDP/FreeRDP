@@ -198,9 +198,14 @@ void freerdp_channels_free(rdpChannels* channels)
 		return;
 
 	HashTable_Free(channels->channelEvents);
-	MessageQueue_Free(channels->queue);
 
 	DeleteCriticalSection(&channels->channelsLock);
+
+	if (channels->queue)
+	{
+		MessageQueue_Free(channels->queue);
+		channels->queue = NULL;
+	}
 
 	free(channels);
 }
@@ -719,8 +724,8 @@ BOOL freerdp_channels_get_fds(rdpChannels* channels, freerdp* instance, void** r
 void* freerdp_channels_get_static_channel_interface(rdpChannels* channels, const char* name)
 {
 	void* pInterface = NULL;
-	CHANNEL_OPEN_DATA* pChannelOpenData = NULL;
-	pChannelOpenData = freerdp_channels_find_channel_open_data_by_name(channels, name);
+	CHANNEL_OPEN_DATA* pChannelOpenData =
+	    freerdp_channels_find_channel_open_data_by_name(channels, name);
 
 	if (pChannelOpenData)
 		pInterface = pChannelOpenData->pInterface;
@@ -730,7 +735,9 @@ void* freerdp_channels_get_static_channel_interface(rdpChannels* channels, const
 
 HANDLE freerdp_channels_get_event_handle(freerdp* instance)
 {
-	WINPR_ASSERT(instance);
+	if (!instance)
+		return INVALID_HANDLE_VALUE;
+
 	WINPR_ASSERT(instance->context);
 
 	rdpChannels* channels = instance->context->channels;
@@ -753,13 +760,16 @@ static BOOL channels_process(const void* key, void* value, void* arg)
 
 int freerdp_channels_process_pending_messages(freerdp* instance)
 {
-	WINPR_ASSERT(instance);
+	if (!instance)
+		return -1;
+
 	WINPR_ASSERT(instance->context);
 
 	rdpChannels* channels = instance->context->channels;
 	WINPR_ASSERT(channels);
 
-	if (WaitForSingleObject(MessageQueue_Event(channels->queue), 0) == WAIT_OBJECT_0)
+	const DWORD status = WaitForSingleObject(MessageQueue_Event(channels->queue), 0);
+	if (status == WAIT_OBJECT_0)
 	{
 		if (!freerdp_channels_process_sync(channels, instance))
 			return -1;
