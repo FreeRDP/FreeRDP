@@ -147,7 +147,7 @@ extern "C"
 		WINPR_ASSERT(_s);
 		WINPR_ASSERT(Stream_GetRemainingLength(_s) >= sizeof(UINT8));
 
-		const UINT8 v = WINPR_STREAM_CAST(UINT8, *(_s)->pointer);
+		const UINT8 v = *(_s)->pointer;
 		if (seek)
 			Stream_Seek(_s, sizeof(UINT8));
 		return v;
@@ -155,197 +155,146 @@ extern "C"
 
 	static INLINE INT8 stream_read_i8(wStream* _s, BOOL seek)
 	{
-		WINPR_ASSERT(_s);
-		WINPR_ASSERT(Stream_GetRemainingLength(_s) >= sizeof(INT8));
-
-		const INT8 v = WINPR_STREAM_CAST(INT8, *(_s)->pointer);
-		if (seek)
-			Stream_Seek(_s, sizeof(INT8));
-		return v;
+		const UINT8 v = stream_read_u8(_s, seek);
+		return WINPR_STREAM_CAST(INT8, v);
 	}
 
 	static INLINE UINT16 stream_read_u16_le(wStream* _s, BOOL seek)
 	{
+		const size_t typesize = sizeof(UINT16);
 		WINPR_ASSERT(_s);
-		WINPR_ASSERT(Stream_GetRemainingLength(_s) >= sizeof(UINT16));
+		WINPR_ASSERT(Stream_GetRemainingLength(_s) >= typesize);
 
-		const UINT16 v = WINPR_STREAM_CAST(
-		    UINT16, (*(_s)->pointer) + ((WINPR_STREAM_CAST(UINT16, *((_s)->pointer + 1))) << 8));
+		UINT16 v = 0;
+		for (size_t x = 0; x < typesize; x++)
+		{
+			v <<= 8;
+			v |= (_s)->pointer[typesize - x - 1];
+		}
 		if (seek)
-			Stream_Seek(_s, sizeof(UINT16));
+			Stream_Seek(_s, typesize);
 		return v;
 	}
 
 	static INLINE UINT16 stream_read_u16_be(wStream* _s, BOOL seek)
 	{
+		const size_t typesize = sizeof(UINT16);
 		WINPR_ASSERT(_s);
-		WINPR_ASSERT(Stream_GetRemainingLength(_s) >= sizeof(UINT16));
+		WINPR_ASSERT(Stream_GetRemainingLength(_s) >= typesize);
 
-		const UINT16 v = ((WINPR_STREAM_CAST(UINT16, *(_s)->pointer) << 8) +
-		                  (WINPR_STREAM_CAST(UINT16, *((_s)->pointer + 1))));
+		UINT16 v = 0;
+		for (size_t x = 0; x < typesize; x++)
+		{
+			v <<= 8;
+			v |= (_s)->pointer[x];
+		}
 		if (seek)
-			Stream_Seek(_s, sizeof(UINT16));
+			Stream_Seek(_s, typesize);
 		return v;
 	}
 
 	static INLINE INT16 stream_read_i16_le(wStream* _s, BOOL seek)
 	{
-		WINPR_ASSERT(_s);
-		WINPR_ASSERT(Stream_GetRemainingLength(_s) >= sizeof(INT16));
-
-		const INT16 v = WINPR_STREAM_CAST(
-		    INT16, (*(_s)->pointer) + ((WINPR_STREAM_CAST(INT16, *((_s)->pointer + 1))) << 8));
-		if (seek)
-			Stream_Seek(_s, sizeof(INT16));
-		return v;
+		const UINT16 v = stream_read_u16_le(_s, seek);
+		return WINPR_STREAM_CAST(INT16, v);
 	}
 
 	static INLINE INT16 stream_read_i16_be(wStream* _s, BOOL seek)
 	{
-		WINPR_ASSERT(_s);
-		WINPR_ASSERT(Stream_GetRemainingLength(_s) >= sizeof(INT16));
-
-		const INT16 v = ((WINPR_STREAM_CAST(INT16, *(_s)->pointer) << 8) +
-		                 (WINPR_STREAM_CAST(INT16, *((_s)->pointer + 1))));
-		if (seek)
-			Stream_Seek(_s, sizeof(INT16));
-		return v;
+		const UINT16 v = stream_read_u16_be(_s, seek);
+		return WINPR_STREAM_CAST(INT16, v);
 	}
 
 	static INLINE UINT32 stream_read_u32_le(wStream* _s, BOOL seek)
 	{
+		const size_t typesize = sizeof(UINT32);
 		WINPR_ASSERT(_s);
-		WINPR_ASSERT(Stream_GetRemainingLength(_s) >= sizeof(UINT32));
+		WINPR_ASSERT(Stream_GetRemainingLength(_s) >= typesize);
 
-		const UINT32 v = (WINPR_STREAM_CAST(UINT32, *(_s)->pointer) << 0) +
-		                 ((WINPR_STREAM_CAST(UINT32, *((_s)->pointer + 1))) << 8) +
-		                 ((WINPR_STREAM_CAST(UINT32, *((_s)->pointer + 2))) << 16) +
-		                 (((WINPR_STREAM_CAST(UINT32, *((_s)->pointer + 3))) << 24));
+		UINT32 v = 0;
+		for (size_t x = 0; x < typesize; x++)
+		{
+			v <<= 8;
+			v |= (_s)->pointer[typesize - x - 1];
+		}
 		if (seek)
-			Stream_Seek(_s, sizeof(UINT32));
+			Stream_Seek(_s, typesize);
 		return v;
 	}
 
 	static INLINE UINT32 stream_read_u32_be(wStream* _s, BOOL seek)
 	{
+		const size_t typesize = sizeof(UINT32);
 		WINPR_ASSERT(_s);
-		WINPR_ASSERT(Stream_GetRemainingLength(_s) >= sizeof(UINT32));
+		WINPR_ASSERT(Stream_GetRemainingLength(_s) >= typesize);
 
-		const UINT32 v = (WINPR_STREAM_CAST(UINT32, *(_s)->pointer) << 24) +
-		                 ((WINPR_STREAM_CAST(UINT32, *((_s)->pointer + 1))) << 16) +
-		                 ((WINPR_STREAM_CAST(UINT32, *((_s)->pointer + 2))) << 8) +
-		                 (((WINPR_STREAM_CAST(UINT32, *((_s)->pointer + 3))) << 0));
+		UINT32 v = 0;
+		for (size_t x = 0; x < typesize; x++)
+		{
+			v <<= 8;
+			v |= (_s)->pointer[x];
+		}
 		if (seek)
-			Stream_Seek(_s, sizeof(UINT32));
+			Stream_Seek(_s, typesize);
 		return v;
 	}
 
 	static INLINE INT32 stream_read_i32_le(wStream* _s, BOOL seek)
 	{
-		WINPR_ASSERT(_s);
-		WINPR_ASSERT(Stream_GetRemainingLength(_s) >= sizeof(UINT32));
-
-		const INT32 v =
-		    WINPR_STREAM_CAST(INT32, (WINPR_STREAM_CAST(UINT32, *(_s)->pointer) << 0) +
-		                                 ((WINPR_STREAM_CAST(UINT32, *((_s)->pointer + 1))) << 8) +
-		                                 ((WINPR_STREAM_CAST(UINT32, *((_s)->pointer + 2))) << 16) +
-		                                 ((WINPR_STREAM_CAST(UINT32, *((_s)->pointer + 3))) << 24));
-		if (seek)
-			Stream_Seek(_s, sizeof(UINT32));
-		return v;
+		const UINT32 v = stream_read_u32_le(_s, seek);
+		return WINPR_STREAM_CAST(INT32, v);
 	}
 
 	static INLINE INT32 stream_read_i32_be(wStream* _s, BOOL seek)
 	{
-		WINPR_ASSERT(_s);
-		WINPR_ASSERT(Stream_GetRemainingLength(_s) >= sizeof(UINT32));
-
-		const INT32 v = WINPR_STREAM_CAST(
-		    INT32, (WINPR_STREAM_CAST(UINT32, *(_s)->pointer) << 24) +
-		               ((WINPR_STREAM_CAST(UINT32, *((_s)->pointer + 1))) << 16) +
-		               ((WINPR_STREAM_CAST(UINT32, *((_s)->pointer + 2))) << 8) +
-		               (((WINPR_STREAM_CAST(UINT32, *((_s)->pointer + 3))) << 0)));
-		if (seek)
-			Stream_Seek(_s, sizeof(UINT32));
-		return v;
+		const UINT32 v = stream_read_u32_be(_s, seek);
+		return WINPR_STREAM_CAST(INT32, v);
 	}
 
 	static INLINE UINT64 stream_read_u64_le(wStream* _s, BOOL seek)
 	{
+		const size_t typesize = sizeof(UINT64);
 		WINPR_ASSERT(_s);
-		WINPR_ASSERT(Stream_GetRemainingLength(_s) >= sizeof(UINT64));
+		WINPR_ASSERT(Stream_GetRemainingLength(_s) >= typesize);
 
-		const UINT64 v = (WINPR_STREAM_CAST(UINT64, *(_s)->pointer) << 0) +
-		                 ((WINPR_STREAM_CAST(UINT64, *((_s)->pointer + 1))) << 8) +
-		                 ((WINPR_STREAM_CAST(UINT64, *((_s)->pointer + 2))) << 16) +
-		                 ((WINPR_STREAM_CAST(UINT64, *((_s)->pointer + 3))) << 24) +
-		                 ((WINPR_STREAM_CAST(UINT64, *((_s)->pointer + 4))) << 32) +
-		                 ((WINPR_STREAM_CAST(UINT64, *((_s)->pointer + 5))) << 40) +
-		                 ((WINPR_STREAM_CAST(UINT64, *((_s)->pointer + 6))) << 48) +
-		                 ((WINPR_STREAM_CAST(UINT64, *((_s)->pointer + 7))) << 56);
-
+		UINT64 v = 0;
+		for (size_t x = 0; x < typesize; x++)
+		{
+			v <<= 8;
+			v |= (_s)->pointer[typesize - x - 1];
+		}
 		if (seek)
-			Stream_Seek(_s, sizeof(UINT64));
+			Stream_Seek(_s, typesize);
 		return v;
 	}
 
 	static INLINE UINT64 stream_read_u64_be(wStream* _s, BOOL seek)
 	{
+		const size_t typesize = sizeof(UINT64);
 		WINPR_ASSERT(_s);
-		WINPR_ASSERT(Stream_GetRemainingLength(_s) >= sizeof(UINT64));
+		WINPR_ASSERT(Stream_GetRemainingLength(_s) >= typesize);
 
-		const UINT64 v = (WINPR_STREAM_CAST(UINT64, *(_s)->pointer) << 56) +
-		                 ((WINPR_STREAM_CAST(UINT64, *((_s)->pointer + 1))) << 48) +
-		                 ((WINPR_STREAM_CAST(UINT64, *((_s)->pointer + 2))) << 40) +
-		                 ((WINPR_STREAM_CAST(UINT64, *((_s)->pointer + 3))) << 32) +
-		                 ((WINPR_STREAM_CAST(UINT64, *((_s)->pointer + 4))) << 24) +
-		                 ((WINPR_STREAM_CAST(UINT64, *((_s)->pointer + 5))) << 16) +
-		                 ((WINPR_STREAM_CAST(UINT64, *((_s)->pointer + 6))) << 8) +
-		                 ((WINPR_STREAM_CAST(UINT64, *((_s)->pointer + 7))) << 0);
-
+		UINT64 v = 0;
+		for (size_t x = 0; x < typesize; x++)
+		{
+			v <<= 8;
+			v |= (_s)->pointer[x];
+		}
 		if (seek)
-			Stream_Seek(_s, sizeof(UINT64));
+			Stream_Seek(_s, typesize);
 		return v;
 	}
 
 	static INLINE INT64 stream_read_i64_le(wStream* _s, BOOL seek)
 	{
-		WINPR_ASSERT(_s);
-		WINPR_ASSERT(Stream_GetRemainingLength(_s) >= sizeof(INT64));
-
-		const INT64 v =
-		    WINPR_STREAM_CAST(INT64, ((WINPR_STREAM_CAST(UINT64, *(_s)->pointer) << 0) +
-		                              ((WINPR_STREAM_CAST(UINT64, *((_s)->pointer + 1))) << 8) +
-		                              ((WINPR_STREAM_CAST(UINT64, *((_s)->pointer + 2))) << 16) +
-		                              ((WINPR_STREAM_CAST(UINT64, *((_s)->pointer + 3))) << 24) +
-		                              ((WINPR_STREAM_CAST(UINT64, *((_s)->pointer + 4))) << 32) +
-		                              ((WINPR_STREAM_CAST(UINT64, *((_s)->pointer + 5))) << 40) +
-		                              ((WINPR_STREAM_CAST(UINT64, *((_s)->pointer + 6))) << 48) +
-		                              ((WINPR_STREAM_CAST(UINT64, *((_s)->pointer + 7))) << 56)));
-
-		if (seek)
-			Stream_Seek(_s, sizeof(UINT64));
-		return v;
+		const UINT64 v = stream_read_u64_le(_s, seek);
+		return WINPR_STREAM_CAST(INT64, v);
 	}
 
 	static INLINE INT64 stream_read_i64_be(wStream* _s, BOOL seek)
 	{
-		WINPR_ASSERT(_s);
-		WINPR_ASSERT(Stream_GetRemainingLength(_s) >= sizeof(INT64));
-
-		const INT64 v =
-		    WINPR_STREAM_CAST(INT64, ((WINPR_STREAM_CAST(UINT64, *(_s)->pointer) << 56) +
-		                              ((WINPR_STREAM_CAST(UINT64, *((_s)->pointer + 1))) << 48) +
-		                              ((WINPR_STREAM_CAST(UINT64, *((_s)->pointer + 2))) << 40) +
-		                              ((WINPR_STREAM_CAST(UINT64, *((_s)->pointer + 3))) << 32) +
-		                              ((WINPR_STREAM_CAST(UINT64, *((_s)->pointer + 4))) << 24) +
-		                              ((WINPR_STREAM_CAST(UINT64, *((_s)->pointer + 5))) << 16) +
-		                              ((WINPR_STREAM_CAST(UINT64, *((_s)->pointer + 6))) << 8) +
-		                              ((WINPR_STREAM_CAST(UINT64, *((_s)->pointer + 7))) << 0)));
-
-		if (seek)
-			Stream_Seek(_s, sizeof(UINT64));
-		return v;
+		const UINT64 v = stream_read_u64_be(_s, seek);
+		return WINPR_STREAM_CAST(INT64, v);
 	}
 
 	/**
