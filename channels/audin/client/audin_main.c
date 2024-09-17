@@ -943,10 +943,10 @@ BOOL audin_process_addin_args(AUDIN_PLUGIN* audin, const ADDIN_ARGV* args)
 		{
 			long val = strtol(arg->Value, NULL, 0);
 
-			if ((errno != 0) || (val < INT32_MIN) || (val > INT32_MAX))
+			if ((errno != 0) || (val == 0) || (val > UINT32_MAX))
 				return FALSE;
 
-			audin->fixed_format->nSamplesPerSec = val;
+			audin->fixed_format->nSamplesPerSec = (UINT32)val;
 		}
 		CommandLineSwitchCase(arg, "channel")
 		{

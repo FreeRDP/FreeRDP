@@ -470,7 +470,10 @@ static UINT drive_process_irp_query_volume_information(DRIVE_DEVICE* drive, IRP*
 			const size_t volumeLabelLen = (_wcslen(volumeLabel) + 1) * sizeof(WCHAR);
 			const size_t length = 17ul + volumeLabelLen;
 
-			Stream_Write_UINT32(output, length); /* Length */
+			if ((length > UINT32_MAX) || (volumeLabelLen > UINT32_MAX))
+				return CHANNEL_RC_NO_BUFFER;
+
+			Stream_Write_UINT32(output, (UINT32)length); /* Length */
 
 			if (!Stream_EnsureRemainingCapacity(output, length))
 			{
@@ -483,7 +486,7 @@ static UINT drive_process_irp_query_volume_information(DRIVE_DEVICE* drive, IRP*
 			Stream_Write_UINT32(output,
 			                    wfad.ftCreationTime.dwHighDateTime);      /* VolumeCreationTime */
 			Stream_Write_UINT32(output, lpNumberOfFreeClusters & 0xffff); /* VolumeSerialNumber */
-			Stream_Write_UINT32(output, volumeLabelLen);                  /* VolumeLabelLength */
+			Stream_Write_UINT32(output, (UINT32)volumeLabelLen);          /* VolumeLabelLength */
 			Stream_Write_UINT8(output, 0);                                /* SupportsObjects */
 			/* Reserved(1), MUST NOT be added! */
 			Stream_Write(output, volumeLabel, volumeLabelLen); /* VolumeLabel (Unicode) */
@@ -513,7 +516,11 @@ static UINT drive_process_irp_query_volume_information(DRIVE_DEVICE* drive, IRP*
 			    InitializeConstWCharFromUtf8("FAT32", LabelBuffer, ARRAYSIZE(LabelBuffer));
 			const size_t diskTypeLen = (_wcslen(diskType) + 1) * sizeof(WCHAR);
 			const size_t length = 12ul + diskTypeLen;
-			Stream_Write_UINT32(output, length); /* Length */
+
+			if ((length > UINT32_MAX) || (diskTypeLen > UINT32_MAX))
+				return CHANNEL_RC_NO_BUFFER;
+
+			Stream_Write_UINT32(output, (UINT32)length); /* Length */
 
 			if (!Stream_EnsureRemainingCapacity(output, length))
 			{
@@ -524,7 +531,7 @@ static UINT drive_process_irp_query_volume_information(DRIVE_DEVICE* drive, IRP*
 			Stream_Write_UINT32(output, FILE_CASE_SENSITIVE_SEARCH | FILE_CASE_PRESERVED_NAMES |
 			                                FILE_UNICODE_ON_DISK); /* FileSystemAttributes */
 			Stream_Write_UINT32(output, MAX_PATH);                 /* MaximumComponentNameLength */
-			Stream_Write_UINT32(output, diskTypeLen);              /* FileSystemNameLength */
+			Stream_Write_UINT32(output, (UINT32)diskTypeLen);      /* FileSystemNameLength */
 			Stream_Write(output, diskType, diskTypeLen);           /* FileSystemName (Unicode) */
 		}
 		break;

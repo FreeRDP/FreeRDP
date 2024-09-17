@@ -734,11 +734,10 @@ HRESULT PathCchStripPrefixW(PWSTR pszPath, size_t cchPath)
 
 	if (hasPrefix)
 	{
-		int rc = 0;
 		if (cchPath < 6)
 			return S_FALSE;
 
-		rc = (_wcslen(&pszPath[4]) + 1);
+		const size_t rc = (_wcslen(&pszPath[4]) + 1);
 		if ((rc < 0) || ((INT64)cchPath < rc))
 			return HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER);
 

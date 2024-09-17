@@ -26,7 +26,10 @@ SDL_RWops* SDL2ResourceManager::get(const std::string& type, const std::string& 
 		if (!d)
 			return nullptr;
 
-		return SDL_RWFromConstMem(d->data(), d->size());
+		auto s = d->size();
+		if (s > INT32_MAX)
+			return nullptr;
+		return SDL_RWFromConstMem(d->data(), static_cast<int>(s));
 	}
 
 	auto name = filename(type, id);

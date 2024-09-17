@@ -455,7 +455,7 @@ static UINT rdpsnd_alsa_play(rdpsndDevicePlugin* device, const BYTE* data, size_
 		int rc = snd_pcm_avail_delay(alsa->pcm_handle, &available, &delay);
 
 		if ((rc == 0) && (available == 0)) /* Get [ms] from number of samples */
-			latency = delay * 1000 / alsa->actual_rate;
+			latency = (UINT32)MIN(UINT32_MAX, delay * 1000 / alsa->actual_rate);
 	}
 
 	return latency + alsa->latency;

@@ -541,8 +541,11 @@ static UINT location_server_packet_send(LocationServerContext* context, wStream*
 	WINPR_ASSERT(location);
 	WINPR_ASSERT(s);
 
-	if (!WTSVirtualChannelWrite(location->location_channel, (PCHAR)Stream_Buffer(s),
-	                            Stream_GetPosition(s), &written))
+	const size_t pos = Stream_GetPosition(s);
+	if (pos > UINT32_MAX)
+		return ERROR_OUTOFMEMORY;
+	if (!WTSVirtualChannelWrite(location->location_channel, (PCHAR)Stream_Buffer(s), (ULONG)pos,
+	                            &written))
 	{
 		WLog_ERR(TAG, "WTSVirtualChannelWrite failed!");
 		error = ERROR_INTERNAL_ERROR;

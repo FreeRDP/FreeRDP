@@ -198,7 +198,7 @@ static UINT32 drdynvc_read_variable_uint(wStream* s, UINT8 cbLen)
 	return val;
 }
 
-static BOOL drdynvc_try_read_header(wStream* s, size_t& channelId, size_t& length)
+static BOOL drdynvc_try_read_header(wStream* s, uint32_t& channelId, size_t& length)
 {
 	UINT8 value = 0;
 	Stream_SetPosition(s, 0);
@@ -350,7 +350,7 @@ static BOOL filter_dyn_channel_intercept(proxyPlugin* plugin, proxyData* pdata, 
 		{
 			if (data->first)
 			{
-				size_t channelId = 0;
+				uint32_t channelId = 0;
 				size_t length = 0;
 				if (drdynvc_try_read_header(data->data, channelId, length))
 				{

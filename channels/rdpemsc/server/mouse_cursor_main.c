@@ -511,8 +511,11 @@ static UINT mouse_cursor_server_packet_send(MouseCursorServerContext* context, w
 	WINPR_ASSERT(mouse_cursor);
 	WINPR_ASSERT(s);
 
+	const size_t pos = Stream_GetPosition(s);
+	if (pos > UINT32_MAX)
+		return ERROR_OUTOFMEMORY;
 	if (!WTSVirtualChannelWrite(mouse_cursor->mouse_cursor_channel, (PCHAR)Stream_Buffer(s),
-	                            Stream_GetPosition(s), &written))
+	                            (ULONG)pos, &written))
 	{
 		WLog_ERR(TAG, "WTSVirtualChannelWrite failed!");
 		error = ERROR_INTERNAL_ERROR;

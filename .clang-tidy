@@ -61,6 +61,7 @@ Checks: >
     -modernize-return-braced-init-list,
     -modernize-macro-to-enum,
     -modernize-pass-by-value,
+    -modernize-avoid-c-arrays,
     -readability-braces-around-statements,
     -readability-function-cognitive-complexity,
     -readability-identifier-length,

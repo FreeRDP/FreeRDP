@@ -729,7 +729,7 @@ static int dynamic_time_zone_from_localtime(const struct tm* local_time,
 	{
 		/* DST bias is the difference between standard time and DST in minutes */
 		const LONG d = get_bias(local_time, TRUE);
-		tz->DaylightBias = -1 * labs(tz->Bias - d);
+		tz->DaylightBias = -1 * (LONG)labs(tz->Bias - d);
 		if (!get_transition_date(local_time, FALSE, &tz->StandardDate))
 			rc |= HAVE_NO_STANDARD_TRANSITION_DATE;
 		if (!get_transition_date(local_time, TRUE, &tz->DaylightDate))

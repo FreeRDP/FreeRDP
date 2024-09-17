@@ -1531,27 +1531,22 @@ static BOOL update_send_play_sound(rdpContext* context, const PLAY_SOUND_UPDATE*
 
 static BOOL update_send_dstblt(rdpContext* context, const DSTBLT_ORDER* dstblt)
 {
-	wStream* s = NULL;
-	size_t offset = 0;
-	UINT32 headerLength = 0;
-	ORDER_INFO orderInfo;
-	int inf = 0;
-	rdp_update_internal* update = NULL;
+	ORDER_INFO orderInfo = { 0 };
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(dstblt);
 
-	update = update_cast(context->update);
+	rdp_update_internal* update = update_cast(context->update);
 
-	headerLength = update_prepare_order_info(context, &orderInfo, ORDER_TYPE_DSTBLT);
-	inf = update_approximate_dstblt_order(&orderInfo, dstblt);
+	const int headerLength = update_prepare_order_info(context, &orderInfo, ORDER_TYPE_DSTBLT);
+	const size_t inf = update_approximate_dstblt_order(&orderInfo, dstblt);
 	update_check_flush(context, headerLength + inf);
-	s = update->us;
+	wStream* s = update->us;
 
 	if (!s)
 		return FALSE;
 
-	offset = Stream_GetPosition(s);
+	const size_t offset = Stream_GetPosition(s);
 
 	if (!Stream_EnsureRemainingCapacity(s, headerLength))
 		return FALSE;
@@ -1599,26 +1594,21 @@ static BOOL update_send_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 
 static BOOL update_send_scrblt(rdpContext* context, const SCRBLT_ORDER* scrblt)
 {
-	wStream* s = NULL;
-	UINT32 offset = 0;
-	UINT32 headerLength = 0;
-	ORDER_INFO orderInfo;
-	int inf = 0;
-	rdp_update_internal* update = NULL;
+	ORDER_INFO orderInfo = { 0 };
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(scrblt);
-	update = update_cast(context->update);
+	rdp_update_internal* update = update_cast(context->update);
 
-	headerLength = update_prepare_order_info(context, &orderInfo, ORDER_TYPE_SCRBLT);
-	inf = update_approximate_scrblt_order(&orderInfo, scrblt);
+	const int headerLength = update_prepare_order_info(context, &orderInfo, ORDER_TYPE_SCRBLT);
+	const size_t inf = update_approximate_scrblt_order(&orderInfo, scrblt);
 	update_check_flush(context, headerLength + inf);
-	s = update->us;
+	wStream* s = update->us;
 
 	if (!s)
 		return TRUE;
 
-	offset = Stream_GetPosition(s);
+	const size_t offset = Stream_GetPosition(s);
 
 	if (!Stream_EnsureRemainingCapacity(s, headerLength))
 		return FALSE;
@@ -1664,25 +1654,20 @@ static BOOL update_send_opaque_rect(rdpContext* context, const OPAQUE_RECT_ORDER
 
 static BOOL update_send_line_to(rdpContext* context, const LINE_TO_ORDER* line_to)
 {
-	wStream* s = NULL;
-	int offset = 0;
-	int headerLength = 0;
-	ORDER_INFO orderInfo;
-	int inf = 0;
-	rdp_update_internal* update = NULL;
+	ORDER_INFO orderInfo = { 0 };
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(line_to);
-	update = update_cast(context->update);
-	headerLength = update_prepare_order_info(context, &orderInfo, ORDER_TYPE_LINE_TO);
-	inf = update_approximate_line_to_order(&orderInfo, line_to);
+	rdp_update_internal* update = update_cast(context->update);
+	const int headerLength = update_prepare_order_info(context, &orderInfo, ORDER_TYPE_LINE_TO);
+	const size_t inf = update_approximate_line_to_order(&orderInfo, line_to);
 	update_check_flush(context, headerLength + inf);
-	s = update->us;
+	wStream* s = update->us;
 
 	if (!s)
 		return FALSE;
 
-	offset = Stream_GetPosition(s);
+	const size_t offset = Stream_GetPosition(s);
 
 	if (!Stream_EnsureRemainingCapacity(s, headerLength))
 		return FALSE;
@@ -1726,26 +1711,21 @@ static BOOL update_send_memblt(rdpContext* context, MEMBLT_ORDER* memblt)
 
 static BOOL update_send_glyph_index(rdpContext* context, GLYPH_INDEX_ORDER* glyph_index)
 {
-	wStream* s = NULL;
-	size_t offset = 0;
-	int headerLength = 0;
-	int inf = 0;
-	ORDER_INFO orderInfo;
-	rdp_update_internal* update = NULL;
+	ORDER_INFO orderInfo = { 0 };
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(glyph_index);
-	update = update_cast(context->update);
+	rdp_update_internal* update = update_cast(context->update);
 
-	headerLength = update_prepare_order_info(context, &orderInfo, ORDER_TYPE_GLYPH_INDEX);
-	inf = update_approximate_glyph_index_order(&orderInfo, glyph_index);
+	const int headerLength = update_prepare_order_info(context, &orderInfo, ORDER_TYPE_GLYPH_INDEX);
+	const size_t inf = update_approximate_glyph_index_order(&orderInfo, glyph_index);
 	update_check_flush(context, headerLength + inf);
-	s = update->us;
+	wStream* s = update->us;
 
 	if (!s)
 		return FALSE;
 
-	offset = Stream_GetPosition(s);
+	const size_t offset = Stream_GetPosition(s);
 
 	if (!Stream_EnsureRemainingCapacity(s, headerLength))
 		return FALSE;
@@ -3309,9 +3289,7 @@ void update_free(rdpUpdate* update)
 		free(altsec);
 
 		if (update->window)
-		{
 			free(update->window);
-		}
 
 		MessageQueue_Free(up->queue);
 		DeleteCriticalSection(&up->mux);

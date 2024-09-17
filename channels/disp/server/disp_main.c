@@ -311,7 +311,11 @@ static UINT disp_server_handle_messages(DispServerContext* context)
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
-	if (WTSVirtualChannelRead(priv->disp_channel, 0, (PCHAR)Stream_Buffer(s), Stream_Capacity(s),
+	const size_t cap = Stream_Capacity(s);
+	if (cap > UINT32_MAX)
+		return CHANNEL_RC_NO_BUFFER;
+
+	if (WTSVirtualChannelRead(priv->disp_channel, 0, (PCHAR)Stream_Buffer(s), (ULONG)cap,
 	                          &BytesReturned) == FALSE)
 	{
 		WLog_ERR(TAG, "WTSVirtualChannelRead failed!");
@@ -488,8 +492,15 @@ static UINT disp_server_packet_send(DispServerContext* context, wStream* s)
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(s);
 
-	if (!WTSVirtualChannelWrite(context->priv->disp_channel, (PCHAR)Stream_Buffer(s),
-	                            Stream_GetPosition(s), &written))
+	const size_t pos = Stream_GetPosition(s);
+	if (pos > UINT32_MAX)
+	{
+		ret = ERROR_INTERNAL_ERROR;
+		goto out;
+	}
+
+	if (!WTSVirtualChannelWrite(context->priv->disp_channel, (PCHAR)Stream_Buffer(s), pos,
+	                            &written))
 	{
 		WLog_ERR(TAG, "WTSVirtualChannelWrite failed!");
 		ret = ERROR_INTERNAL_ERROR;
