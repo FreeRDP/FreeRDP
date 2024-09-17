@@ -43,7 +43,7 @@ Checks: >
     -cppcoreguidelines-no-malloc,
     -google-readability-braces-around-statements,
     -google-readability-todo,
-    -hicpp-avoid-c_arrays,
+    -hicpp-avoid-c-arrays,
     -hicpp-braces-around-statements,
     -hicpp-no-array-decay,
     -hicpp-no-assembler,
