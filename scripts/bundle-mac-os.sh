@@ -279,7 +279,8 @@ cmake -GNinja -Bfreerdp -S"$SCRIPT_PATH/.." \
 	-DWITH_FAAC=ON \
 	-DWITH_INTERNAL_RC4=ON \
 	-DWITH_INTERNAL_MD4=ON \
-	-DWITH_INTERNAL_MD5=ON
+	-DWITH_INTERNAL_MD5=ON \
+    -DCHANNEL_RDPEAR=OFF
 cmake --build freerdp
 cmake --install freerdp
 
