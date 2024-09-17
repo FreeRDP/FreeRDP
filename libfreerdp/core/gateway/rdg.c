@@ -1301,7 +1301,7 @@ static BOOL rdg_tls_connect(rdpRdg* rdg, rdpTls* tls, const char* peerAddress, i
 
 	if (isProxyConnection)
 	{
-		if (!proxy_connect(settings, bufferedBio, proxyUsername, proxyPassword,
+		if (!proxy_connect(rdg->context, bufferedBio, proxyUsername, proxyPassword,
 		                   settings->GatewayHostname, (UINT16)settings->GatewayPort))
 		{
 			BIO_free_all(bufferedBio);

@@ -254,7 +254,7 @@ static BOOL wst_tls_connect(rdpWst* wst, rdpTls* tls, int timeout)
 
 	if (isProxyConnection)
 	{
-		if (!proxy_connect(settings, bufferedBio, proxyUsername, proxyPassword, wst->gwhostname,
+		if (!proxy_connect(wst->context, bufferedBio, proxyUsername, proxyPassword, wst->gwhostname,
 		                   wst->gwport))
 		{
 			BIO_free_all(bufferedBio);

@@ -759,7 +759,7 @@ static BOOL rpc_channel_tls_connect(RpcChannel* channel, UINT32 timeout)
 
 	if (channel->client->isProxy)
 	{
-		if (!proxy_connect(settings, bufferedBio, proxyUsername, proxyPassword,
+		if (!proxy_connect(context, bufferedBio, proxyUsername, proxyPassword,
 		                   settings->GatewayHostname, settings->GatewayPort))
 		{
 			BIO_free_all(bufferedBio);
