@@ -158,13 +158,23 @@ static BOOL pf_server_get_target_info(rdpContext* context, rdpSettings* settings
 			}
 
 			if (config->TargetUser)
-				freerdp_settings_set_string(settings, FreeRDP_Username, config->TargetUser);
+			{
+				if (!freerdp_settings_set_string(settings, FreeRDP_Username, config->TargetUser))
+					return FALSE;
+			}
 
 			if (config->TargetDomain)
-				freerdp_settings_set_string(settings, FreeRDP_Domain, config->TargetDomain);
+			{
+				if (!freerdp_settings_set_string(settings, FreeRDP_Domain, config->TargetDomain))
+					return FALSE;
+			}
 
 			if (config->TargetPassword)
-				freerdp_settings_set_string(settings, FreeRDP_Password, config->TargetPassword);
+			{
+				if (!freerdp_settings_set_string(settings, FreeRDP_Password,
+				                                 config->TargetPassword))
+					return FALSE;
+			}
 
 			return TRUE;
 		}

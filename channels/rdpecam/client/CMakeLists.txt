@@ -42,7 +42,7 @@ set(${MODULE_PREFIX}_SRCS
 set(${MODULE_PREFIX}_LIBS
 	freerdp
     winpr
-    ${SWSCALE_LIBRARY}
+    ${SWSCALE_LIBRARIES}
     ${FFMPEG_LIBRARIES}
 )
 
