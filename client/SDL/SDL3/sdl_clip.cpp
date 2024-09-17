@@ -285,6 +285,24 @@ UINT sdlClip::SendDataResponse(const BYTE* data, size_t size)
 	return _ctx->ClientFormatDataResponse(_ctx, &response);
 }
 
+UINT sdlClip::SendDataRequest(uint32_t formatID, const std::string& mime)
+{
+	CLIPRDR_FORMAT_DATA_REQUEST request = { .requestedFormatId = formatID };
+
+	_request_queue.push({ formatID, mime });
+
+	WINPR_ASSERT(_ctx);
+	WINPR_ASSERT(_ctx->ClientFormatDataRequest);
+	UINT ret = _ctx->ClientFormatDataRequest(_ctx, &request);
+	if (ret == CHANNEL_RC_OK)
+	{
+		WLog_Print(_log, WLOG_ERROR, "error sending ClientFormatDataRequest, cancelling request");
+		_request_queue.pop();
+	}
+
+	return ret;
+}
+
 std::string sdlClip::getServerFormat(uint32_t id)
 {
 	for (auto& fmt : _serverFormats)
@@ -585,60 +603,73 @@ UINT sdlClip::ReceiveFormatDataResponse(CliprdrClientContext* context,
 	ClipboardLockGuard give_me_a_name(clipboard->_system);
 	std::lock_guard<CriticalSection> lock(clipboard->_lock);
 	if (clipboard->_request_queue.empty())
-		return ERROR_INTERNAL_ERROR;
-
-	auto request = clipboard->_request_queue.front();
-	if (formatDataResponse->common.msgFlags & CB_RESPONSE_FAIL)
 	{
-		WLog_WARN(TAG, "clipboard data request for format %" PRIu32 " [%s], mime %s failed",
-		          request.format(), request.formatstr().c_str(), request.mime().c_str());
+		WLog_Print(clipboard->_log, WLOG_ERROR, "no pending format request");
 		return ERROR_INTERNAL_ERROR;
 	}
 
-	deleted_unique_ptr<void> cdata;
-	UINT32 srcFormatId = 0;
-	switch (request.format())
+	do
 	{
-		case CF_TEXT:
-		case CF_OEMTEXT:
-		case CF_UNICODETEXT:
-			srcFormatId = request.format();
-			break;
+		UINT32 srcFormatId = 0;
+		auto& request = clipboard->_request_queue.front();
+		bool success = (formatDataResponse->common.msgFlags & CB_RESPONSE_OK) &&
+		               !(formatDataResponse->common.msgFlags & CB_RESPONSE_FAIL);
+		request.setSuccess(success);
 
-		case CF_DIB:
-		case CF_DIBV5:
-			srcFormatId = request.format();
-			break;
-
-		default:
+		if (!success)
 		{
+			WLog_Print(clipboard->_log, WLOG_WARN,
+			           "clipboard data request for format %" PRIu32 " [%s], mime %s failed",
+			           request.format(), request.formatstr().c_str(), request.mime().c_str());
+			break;
+		}
 
-			auto name = clipboard->getServerFormat(request.format());
-			if (!name.empty())
+		switch (request.format())
+		{
+			case CF_TEXT:
+			case CF_OEMTEXT:
+			case CF_UNICODETEXT:
+				srcFormatId = request.format();
+				break;
+
+			case CF_DIB:
+			case CF_DIBV5:
+				srcFormatId = request.format();
+				break;
+
+			default:
 			{
-				if (name == type_FileGroupDescriptorW)
+				auto name = clipboard->getServerFormat(request.format());
+				if (!name.empty())
 				{
-					srcFormatId =
-					    ClipboardGetFormatId(clipboard->_system, type_FileGroupDescriptorW);
+					if (name == type_FileGroupDescriptorW)
+					{
+						srcFormatId =
+						    ClipboardGetFormatId(clipboard->_system, type_FileGroupDescriptorW);
 
-					if (!cliprdr_file_context_update_server_data(clipboard->_file,
-					                                             clipboard->_system, data, size))
-						return ERROR_INTERNAL_ERROR;
-				}
-				else if (name == type_HtmlFormat)
-				{
-					srcFormatId = ClipboardGetFormatId(clipboard->_system, type_HtmlFormat);
+						if (!cliprdr_file_context_update_server_data(
+						        clipboard->_file, clipboard->_system, data, size))
+							return ERROR_INTERNAL_ERROR;
+					}
+					else if (name == type_HtmlFormat)
+					{
+						srcFormatId = ClipboardGetFormatId(clipboard->_system, type_HtmlFormat);
+					}
 				}
 			}
+			break;
 		}
-		break;
-	}
 
-	const BOOL sres = ClipboardSetData(clipboard->_system, srcFormatId, data, size);
-	if (!sres)
+		if (!ClipboardSetData(clipboard->_system, srcFormatId, data, size))
+		{
+			WLog_Print(clipboard->_log, WLOG_ERROR, "error when setting clipboard data");
+			return ERROR_INTERNAL_ERROR;
+		}
+	} while (false);
+
+	if (!SetEvent(clipboard->_event))
 		return ERROR_INTERNAL_ERROR;
 
-	(void)SetEvent(clipboard->_event);
 	return CHANNEL_RC_OK;
 }
 
@@ -671,27 +702,45 @@ const void* sdlClip::ClipDataCb(void* userdata, const char* mime_type, size_t* s
 	}
 
 	{
-		HANDLE hdl[2] = { clip->_event, freerdp_abort_event(clip->_sdl->context()) };
-		auto status = WaitForMultipleObjects(ARRAYSIZE(hdl), hdl, FALSE, INFINITE);
-		if (status != WAIT_OBJECT_0)
+		HANDLE hdl[2] = { freerdp_abort_event(clip->_sdl->context()), clip->_event };
+		DWORD status = WaitForMultipleObjects(ARRAYSIZE(hdl), hdl, FALSE, 10 * 1000);
+
+		if (status != WAIT_OBJECT_0 + 1)
+		{
+			if (status == WAIT_TIMEOUT)
+				WLog_Print(clip->_log, WLOG_ERROR,
+				           "no reply in 10 seconds, returning empty content");
+
 			return nullptr;
+		}
 	}
+
 	{
 		ClipboardLockGuard give_me_a_name(clip->_system);
 		std::lock_guard<CriticalSection> lock(clip->_lock);
 		auto request = clip->_request_queue.front();
 		clip->_request_queue.pop();
-		(void)ResetEvent(clip->_event);
 
-		auto formatID = ClipboardRegisterFormat(clip->_system, mime_type);
-		auto data = ClipboardGetData(clip->_system, formatID, &len);
-		if (!data)
-			return nullptr;
+		if (!clip->_request_queue.size())
+			(void)ResetEvent(clip->_event);
 
-		auto ptr = std::shared_ptr<void>(data, free);
-		clip->_cache_data.insert({ mime_type, { len, ptr } });
-		*size = len;
-		return ptr.get();
+		if (request.success())
+		{
+			auto formatID = ClipboardRegisterFormat(clip->_system, mime_type);
+			auto data = ClipboardGetData(clip->_system, formatID, &len);
+			if (!data)
+			{
+				WLog_Print(clip->_log, WLOG_ERROR, "error retrieving clipboard data");
+				return nullptr;
+			}
+
+			auto ptr = std::shared_ptr<void>(data, free);
+			clip->_cache_data.insert({ mime_type, { len, ptr } });
+			*size = len;
+			return ptr.get();
+		}
+
+		return nullptr;
 	}
 }
 
@@ -743,7 +792,8 @@ bool sdlClip::mime_is_html(const std::string& mime)
 	return mime.compare(mime_html) == 0;
 }
 
-ClipRequest::ClipRequest(UINT32 format, std::string mime) : _format(format), _mime(std::move(mime))
+ClipRequest::ClipRequest(UINT32 format, const std::string& mime)
+    : _format(format), _mime(mime), _success(false)
 {
 }
 
@@ -760,4 +810,14 @@ std::string ClipRequest::formatstr() const
 std::string ClipRequest::mime() const
 {
 	return _mime;
+}
+
+bool ClipRequest::success() const
+{
+	return _success;
+}
+
+void ClipRequest::setSuccess(bool status)
+{
+	_success = status;
 }
