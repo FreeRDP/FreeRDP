@@ -99,12 +99,15 @@ static BOOL location_read_server_ready_pdu(LOCATION_CALLBACK* callback, wStream*
 static UINT location_channel_send(IWTSVirtualChannel* channel, wStream* s)
 {
 	const size_t len = Stream_GetPosition(s);
+	if (len > UINT32_MAX)
+		return ERROR_INTERNAL_ERROR;
+
 	Stream_SetPosition(s, 2);
-	Stream_Write_UINT32(s, len);
+	Stream_Write_UINT32(s, (UINT32)len);
 
 	WINPR_ASSERT(channel);
 	WINPR_ASSERT(channel->Write);
-	return channel->Write(channel, len, Stream_Buffer(s), NULL);
+	return channel->Write(channel, (UINT32)len, Stream_Buffer(s), NULL);
 }
 
 static UINT location_send_client_ready_pdu(const LOCATION_CALLBACK* callback)

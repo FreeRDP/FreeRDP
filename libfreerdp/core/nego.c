@@ -884,7 +884,6 @@ static BOOL nego_read_request_token_or_cookie(rdpNego* nego, wStream* s)
 	 * Cookie:[space]mstshash=[ANSISTRING][\x0D\x0A]
 	 */
 	UINT16 crlf = 0;
-	size_t len = 0;
 	BOOL result = FALSE;
 	BOOL isToken = FALSE;
 	size_t remain = Stream_GetRemainingLength(s);
@@ -935,13 +934,16 @@ static BOOL nego_read_request_token_or_cookie(rdpNego* nego, wStream* s)
 	if (crlf == 0x0A0D)
 	{
 		Stream_Rewind(s, 2);
-		len = Stream_GetPosition(s) - pos;
+		const size_t len = Stream_GetPosition(s) - pos;
 		Stream_Write_UINT16(s, 0);
+
+		if (len > UINT32_MAX)
+			return FALSE;
 
 		if (strnlen(str, len) == len)
 		{
 			if (isToken)
-				result = nego_set_routing_token(nego, str, len);
+				result = nego_set_routing_token(nego, str, (UINT32)len);
 			else
 				result = nego_set_cookie(nego, str);
 		}

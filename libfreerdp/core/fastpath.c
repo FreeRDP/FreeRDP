@@ -1163,8 +1163,6 @@ wStream* fastpath_update_pdu_init_new(rdpFastPath* fastpath)
 BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s,
                               BOOL skipCompression)
 {
-	UINT16 maxLength = 0;
-	UINT32 totalLength = 0;
 	BOOL status = TRUE;
 	wStream* fs = NULL;
 	rdpSettings* settings = NULL;
@@ -1172,7 +1170,6 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 	UINT32 fpHeaderSize = 6;
 	UINT32 fpUpdatePduHeaderSize = 0;
 	UINT32 fpUpdateHeaderSize = 0;
-	UINT32 CompressionMaxSize = 0;
 	FASTPATH_UPDATE_PDU_HEADER fpUpdatePduHeader = { 0 };
 	FASTPATH_UPDATE_HEADER fpUpdateHeader = { 0 };
 
@@ -1186,16 +1183,17 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 	if (!settings)
 		return FALSE;
 
-	maxLength = FASTPATH_MAX_PACKET_SIZE - 20;
+	UINT16 maxLength = FASTPATH_MAX_PACKET_SIZE - 20;
 
 	if (settings->CompressionEnabled && !skipCompression)
 	{
-		CompressionMaxSize = bulk_compression_max_size(rdp->bulk);
-		maxLength = (maxLength < CompressionMaxSize) ? maxLength : CompressionMaxSize;
+		const UINT32 CompressionMaxSize = bulk_compression_max_size(rdp->bulk);
+		maxLength =
+		    (maxLength < CompressionMaxSize) ? maxLength : MIN(CompressionMaxSize, UINT16_MAX);
 		maxLength -= 20;
 	}
 
-	totalLength = Stream_GetPosition(s);
+	size_t totalLength = Stream_GetPosition(s);
 	Stream_SetPosition(s, 0);
 
 	/* check if fast path output is possible */
@@ -1209,7 +1207,7 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 	if (totalLength > settings->MultifragMaxRequestSize)
 	{
 		WLog_ERR(TAG,
-		         "fast path update size (%" PRIu32
+		         "fast path update size (%" PRIuz
 		         ") exceeds the client's maximum request size (%" PRIu32 ")",
 		         totalLength, settings->MultifragMaxRequestSize);
 		return FALSE;
@@ -1225,8 +1223,6 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 
 	for (int fragment = 0; (totalLength > 0) || (fragment == 0); fragment++)
 	{
-		const BYTE* pSrcData = NULL;
-		UINT32 SrcSize = 0;
 		UINT32 DstSize = 0;
 		const BYTE* pDstData = NULL;
 		UINT32 compressionFlags = 0;
@@ -1237,9 +1233,9 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 		fpUpdateHeader.compression = 0;
 		fpUpdateHeader.compressionFlags = 0;
 		fpUpdateHeader.updateCode = updateCode;
-		fpUpdateHeader.size = (totalLength > maxLength) ? maxLength : totalLength;
-		pSrcData = Stream_Pointer(s);
-		SrcSize = DstSize = fpUpdateHeader.size;
+		fpUpdateHeader.size = (UINT16)(totalLength > maxLength) ? maxLength : totalLength;
+		const BYTE* pSrcData = Stream_Pointer(s);
+		UINT32 SrcSize = DstSize = fpUpdateHeader.size;
 
 		if (rdp->sec_flags & SEC_ENCRYPT)
 			fpUpdatePduHeader.secFlags |= FASTPATH_OUTPUT_ENCRYPTED;

@@ -329,7 +329,7 @@ BOOL GetSystemTimeAdjustment(PDWORD lpTimeAdjustment, PDWORD lpTimeIncrement,
 
 DWORD GetTickCount(void)
 {
-	return GetTickCount64();
+	return (DWORD)GetTickCount64();
 }
 #endif // _WIN32
 

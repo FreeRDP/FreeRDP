@@ -169,7 +169,7 @@ static UINT parallel_process_irp_read(PARALLEL_DEVICE* parallel, IRP* irp)
 
 	status = read(parallel->file, buffer, Length);
 
-	if (status < 0)
+	if ((status < 0) || (status > UINT32_MAX))
 	{
 		irp->IoStatus = STATUS_UNSUCCESSFUL;
 		free(buffer);
@@ -178,7 +178,7 @@ static UINT parallel_process_irp_read(PARALLEL_DEVICE* parallel, IRP* irp)
 	}
 	else
 	{
-		Length = status;
+		Length = (UINT32)status;
 	}
 
 	Stream_Write_UINT32(irp->output, Length);

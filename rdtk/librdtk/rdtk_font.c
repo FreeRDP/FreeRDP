@@ -277,10 +277,10 @@ static int rdtk_font_parse_descriptor_buffer(rdtkFont* font, uint8_t* buffer, si
 	{
 		long val = strtol(p, NULL, 0);
 
-		if ((errno != 0) || (val < INT32_MIN) || (val > INT32_MAX))
+		if ((errno != 0) || (val == 0) || (val > UINT32_MAX))
 			return -1;
 
-		font->size = val;
+		font->size = (UINT32)val;
 	}
 	*q = '"';
 

@@ -622,8 +622,12 @@ UINT rdpei_server_send_sc_ready(RdpeiServerContext* context, UINT32 version, UIN
 	if (version >= RDPINPUT_PROTOCOL_V300)
 		Stream_Write_UINT32(priv->outputStream, features);
 
+	const size_t pos = Stream_GetPosition(priv->outputStream);
+	if (pos > UINT32_MAX)
+		return ERROR_INTERNAL_ERROR;
+
 	if (!WTSVirtualChannelWrite(priv->channelHandle, (PCHAR)Stream_Buffer(priv->outputStream),
-	                            Stream_GetPosition(priv->outputStream), &written))
+	                            (ULONG)pos, &written))
 	{
 		WLog_ERR(TAG, "WTSVirtualChannelWrite failed!");
 		return ERROR_INTERNAL_ERROR;
@@ -665,8 +669,12 @@ UINT rdpei_server_suspend(RdpeiServerContext* context)
 	Stream_Write_UINT16(priv->outputStream, EVENTID_SUSPEND_TOUCH);
 	Stream_Write_UINT32(priv->outputStream, RDPINPUT_HEADER_LENGTH);
 
+	const size_t pos = Stream_GetPosition(priv->outputStream);
+	if (pos > UINT32_MAX)
+		return ERROR_INTERNAL_ERROR;
+
 	if (!WTSVirtualChannelWrite(priv->channelHandle, (PCHAR)Stream_Buffer(priv->outputStream),
-	                            Stream_GetPosition(priv->outputStream), &written))
+	                            (ULONG)pos, &written))
 	{
 		WLog_ERR(TAG, "WTSVirtualChannelWrite failed!");
 		return ERROR_INTERNAL_ERROR;
@@ -708,8 +716,12 @@ UINT rdpei_server_resume(RdpeiServerContext* context)
 	Stream_Write_UINT16(priv->outputStream, EVENTID_RESUME_TOUCH);
 	Stream_Write_UINT32(priv->outputStream, RDPINPUT_HEADER_LENGTH);
 
+	const size_t pos = Stream_GetPosition(priv->outputStream);
+	if (pos > UINT32_MAX)
+		return CHANNEL_RC_NO_BUFFER;
+
 	if (!WTSVirtualChannelWrite(priv->channelHandle, (PCHAR)Stream_Buffer(priv->outputStream),
-	                            Stream_GetPosition(priv->outputStream), &written))
+	                            (ULONG)pos, &written))
 	{
 		WLog_ERR(TAG, "WTSVirtualChannelWrite failed!");
 		return ERROR_INTERNAL_ERROR;

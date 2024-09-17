@@ -457,7 +457,7 @@ BOOL WLog_PacketMessage_Write(wPcap* pcap, void* data, size_t length, DWORD flag
 	record.next = NULL;
 
 	UINT64 ns = winpr_GetUnixTimeNS();
-	record.header.ts_sec = WINPR_TIME_NS_TO_S(ns);
+	record.header.ts_sec = (UINT32)WINPR_TIME_NS_TO_S(ns);
 	record.header.ts_usec = WINPR_TIME_NS_REM_US(ns);
 
 	if (!Pcap_Write_RecordHeader(pcap, &record.header) ||

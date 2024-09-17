@@ -249,8 +249,10 @@ static DWORD WINAPI encomsp_server_thread(LPVOID arg)
 			break;
 		}
 
-		if (!WTSVirtualChannelRead(context->priv->ChannelHandle, 0, (PCHAR)Stream_Buffer(s),
-		                           Stream_Capacity(s), &BytesReturned))
+		const size_t cap = Stream_Capacity(s);
+		if ((cap > UINT32_MAX) ||
+		    !WTSVirtualChannelRead(context->priv->ChannelHandle, 0, (PCHAR)Stream_Buffer(s),
+		                           (ULONG)cap, &BytesReturned))
 		{
 			WLog_ERR(TAG, "WTSVirtualChannelRead failed!");
 			error = ERROR_INTERNAL_ERROR;

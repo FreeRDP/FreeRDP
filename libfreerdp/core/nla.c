@@ -315,7 +315,7 @@ static BOOL nla_client_setup_identity(rdpNla* nla)
 		WINPR_SAM* sam = SamOpen(NULL, TRUE);
 		if (sam)
 		{
-			const size_t userLength = strlen(settings->Username);
+			const UINT32 userLength = (UINT32)strnlen(settings->Username, INT32_MAX);
 			WINPR_SAM_ENTRY* entry = SamLookupUserA(
 			    sam, settings->Username, userLength + 1 /* ensure '\0' is checked too */, NULL, 0);
 			if (entry)
@@ -1571,7 +1571,7 @@ static BOOL nla_encode_ts_credentials(rdpNla* nla)
 				size_t len = 0;
 
 				octet_string.data = (BYTE*)freerdp_settings_get_string_as_utf16(
-				    settings, cspData_fields[i].setting_id, &len);
+				    settings, (FreeRDP_Settings_Keys_String)cspData_fields[i].setting_id, &len);
 				octet_string.len = len * sizeof(WCHAR);
 				if (octet_string.len)
 				{

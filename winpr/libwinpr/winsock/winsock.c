@@ -761,7 +761,7 @@ int WSAEventSelect(SOCKET s, WSAEVENT hEventObject, LONG lNetworkEvents)
 	if (lNetworkEvents & FD_WRITE)
 		mode |= WINPR_FD_WRITE;
 
-	if (SetEventFileDescriptor(hEventObject, s, mode) < 0)
+	if (SetEventFileDescriptor(hEventObject, (int)s, mode) < 0)
 		return SOCKET_ERROR;
 
 	return 0;
