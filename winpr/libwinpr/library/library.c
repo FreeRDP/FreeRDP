@@ -77,6 +77,10 @@
 #include <mach-o/dyld.h>
 #endif
 
+#if defined(__FreeBSD__)
+#include <sys/sysctl.h>
+#endif
+
 #endif
 
 DLL_DIRECTORY_COOKIE AddDllDirectory(PCWSTR NewDirectory)
@@ -265,40 +269,57 @@ DWORD GetModuleFileNameW(HMODULE hModule, LPWSTR lpFilename, DWORD nSize)
 	return status;
 }
 
+#if defined(__linux__) || defined(__NetBSD__) || defined(__DragonFly__)
+static DWORD module_from_proc(const char* proc, LPSTR lpFilename, DWORD nSize)
+{
+	char buffer[8192] = { 0 };
+	ssize_t status = readlink(proc, buffer, ARRAYSIZE(buffer) - 1);
+
+	if ((status < 0) || ((size_t)status >= ARRAYSIZE(buffer)))
+	{
+		SetLastError(ERROR_INTERNAL_ERROR);
+		return 0;
+	}
+
+	const size_t length = strnlen(buffer, ARRAYSIZE(buffer));
+
+	if (length < nSize)
+	{
+		CopyMemory(lpFilename, buffer, length);
+		lpFilename[length] = '\0';
+		return (DWORD)length;
+	}
+
+	CopyMemory(lpFilename, buffer, nSize - 1);
+	lpFilename[nSize - 1] = '\0';
+	SetLastError(ERROR_INSUFFICIENT_BUFFER);
+	return nSize;
+}
+#endif
+
 DWORD GetModuleFileNameA(HMODULE hModule, LPSTR lpFilename, DWORD nSize)
 {
 #if defined(__linux__)
-	SSIZE_T status = 0;
-	size_t length = 0;
-	char path[64];
-
 	if (!hModule)
+		return module_from_proc("/proc/self/exe", lpFilename, nSize);
+#elif defined(__FreeBSD__)
+	int mib[] = { CTL_KERN, KERN_PROC, KERN_PROC_PATHNAME, -1 };
+	size_t cb = nSize;
+
+	const int rc = sysctl(mib, ARRAYSIZE(mib), lpFilename, &cb, NULL, 0);
+	if ((rc != 0) || (cb > nSize))
 	{
-		char buffer[4096] = { 0 };
-		(void)sprintf_s(path, ARRAYSIZE(path), "/proc/%d/exe", getpid());
-		status = readlink(path, buffer, ARRAYSIZE(buffer) - 1);
-
-		if ((status < 0) || ((size_t)status >= ARRAYSIZE(buffer)))
-		{
-			SetLastError(ERROR_INTERNAL_ERROR);
-			return 0;
-		}
-
-		length = strnlen(buffer, ARRAYSIZE(buffer));
-
-		if (length < nSize)
-		{
-			CopyMemory(lpFilename, buffer, length);
-			lpFilename[length] = '\0';
-			return (DWORD)length;
-		}
-
-		CopyMemory(lpFilename, buffer, nSize - 1);
-		lpFilename[nSize - 1] = '\0';
-		SetLastError(ERROR_INSUFFICIENT_BUFFER);
-		return nSize;
+		SetLastError(ERROR_INTERNAL_ERROR);
+		return 0;
 	}
 
+	return (DWORD)cb;
+#elif defined(__NetBSD__)
+	if (!hModule)
+		return module_from_proc("/proc/curproc/exe", lpFilename, nSize);
+#elif defined(__DragonFly__)
+	if (!hModule)
+		return module_from_proc("/proc/curproc/file", lpFilename, nSize);
 #elif defined(__MACOSX__)
 	int status;
 	size_t length;
