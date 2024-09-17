@@ -30,6 +30,7 @@
 #include "tcp.h"
 
 #include <winpr/assert.h>
+#include <winpr/sysinfo.h>
 #include <winpr/environment.h> /* For GetEnvironmentVariableA */
 
 #define CRLF "\r\n"
@@ -70,9 +71,9 @@ static const char* rplstat[] = { "succeeded",
 	                             "Command not supported",
 	                             "Address type not supported" };
 
-static BOOL http_proxy_connect(BIO* bufferedBio, const char* proxyUsername,
+static BOOL http_proxy_connect(rdpContext* context, BIO* bufferedBio, const char* proxyUsername,
                                const char* proxyPassword, const char* hostname, UINT16 port);
-static BOOL socks_proxy_connect(BIO* bufferedBio, const char* proxyUsername,
+static BOOL socks_proxy_connect(rdpContext* context, BIO* bufferedBio, const char* proxyUsername,
                                 const char* proxyPassword, const char* hostname, UINT16 port);
 static void proxy_read_environment(rdpSettings* settings, char* envname);
 
@@ -483,9 +484,12 @@ fail:
 	return rc;
 }
 
-BOOL proxy_connect(rdpSettings* settings, BIO* bufferedBio, const char* proxyUsername,
+BOOL proxy_connect(rdpContext* context, BIO* bufferedBio, const char* proxyUsername,
                    const char* proxyPassword, const char* hostname, UINT16 port)
 {
+	WINPR_ASSERT(context);
+	rdpSettings* settings = context->settings;
+
 	switch (freerdp_settings_get_uint32(settings, FreeRDP_ProxyType))
 	{
 		case PROXY_TYPE_NONE:
@@ -493,10 +497,12 @@ BOOL proxy_connect(rdpSettings* settings, BIO* bufferedBio, const char* proxyUse
 			return TRUE;
 
 		case PROXY_TYPE_HTTP:
-			return http_proxy_connect(bufferedBio, proxyUsername, proxyPassword, hostname, port);
+			return http_proxy_connect(context, bufferedBio, proxyUsername, proxyPassword, hostname,
+			                          port);
 
 		case PROXY_TYPE_SOCKS:
-			return socks_proxy_connect(bufferedBio, proxyUsername, proxyPassword, hostname, port);
+			return socks_proxy_connect(context, bufferedBio, proxyUsername, proxyPassword, hostname,
+			                           port);
 
 		default:
 			WLog_ERR(TAG, "Invalid internal proxy configuration");
@@ -516,7 +522,7 @@ static const char* get_response_header(char* response)
 	return response;
 }
 
-static BOOL http_proxy_connect(BIO* bufferedBio, const char* proxyUsername,
+static BOOL http_proxy_connect(rdpContext* context, BIO* bufferedBio, const char* proxyUsername,
                                const char* proxyPassword, const char* hostname, UINT16 port)
 {
 	BOOL rc = FALSE;
@@ -532,8 +538,11 @@ static BOOL http_proxy_connect(BIO* bufferedBio, const char* proxyUsername,
 	const char connect[] = "CONNECT ";
 	const char httpheader[] = " HTTP/1.1" CRLF "Host: ";
 
+	WINPR_ASSERT(context);
 	WINPR_ASSERT(bufferedBio);
 	WINPR_ASSERT(hostname);
+	const UINT32 timeout =
+	    freerdp_settings_get_uint32(context->settings, FreeRDP_TcpConnectTimeout);
 
 	_itoa_s(port, port_str, sizeof(port_str), 10);
 
@@ -601,6 +610,7 @@ static BOOL http_proxy_connect(BIO* bufferedBio, const char* proxyUsername,
 
 	/* Read result until CR-LF-CR-LF.
 	 * Keep recv_buf a null-terminated string. */
+	const UINT64 start = GetTickCount64();
 	while (strstr(recv_buf, CRLF CRLF) == NULL)
 	{
 		if (resultsize >= sizeof(recv_buf) - 1)
@@ -616,7 +626,7 @@ static BOOL http_proxy_connect(BIO* bufferedBio, const char* proxyUsername,
 		if (status < 0)
 		{
 			/* Error? */
-			if (BIO_should_retry(bufferedBio))
+			if (!freerdp_shall_disconnect_context(context) && BIO_should_retry(bufferedBio))
 			{
 				USleep(100);
 				continue;
@@ -626,6 +636,18 @@ static BOOL http_proxy_connect(BIO* bufferedBio, const char* proxyUsername,
 			goto fail;
 		}
 		else if (status == 0)
+		{
+			const UINT64 now = GetTickCount64();
+			const UINT64 diff = now - start;
+			if (freerdp_shall_disconnect_context(context) || (now < start) || (diff > timeout))
+			{
+				/* Error? */
+				WLog_ERR(TAG, "Failed reading reply from HTTP proxy (BIO_read returned zero)");
+				goto fail;
+			}
+			Sleep(10);
+		}
+		else
 		{
 			/* Error? */
 			WLog_ERR(TAG, "Failed reading reply from HTTP proxy (BIO_read returned zero)");
@@ -661,10 +683,16 @@ fail:
 	return rc;
 }
 
-static int recv_socks_reply(BIO* bufferedBio, BYTE* buf, int len, char* reason, BYTE checkVer)
+static int recv_socks_reply(rdpContext* context, BIO* bufferedBio, BYTE* buf, int len, char* reason,
+                            BYTE checkVer)
 {
 	int status = 0;
 
+	WINPR_ASSERT(context);
+
+	const UINT32 timeout =
+	    freerdp_settings_get_uint32(context->settings, FreeRDP_TcpConnectTimeout);
+	const UINT64 start = GetTickCount64();
 	for (;;)
 	{
 		ERR_clear_error();
@@ -677,7 +705,7 @@ static int recv_socks_reply(BIO* bufferedBio, BYTE* buf, int len, char* reason, 
 		else if (status < 0)
 		{
 			/* Error? */
-			if (BIO_should_retry(bufferedBio))
+			if (!freerdp_shall_disconnect_context(context) && BIO_should_retry(bufferedBio))
 			{
 				USleep(100);
 				continue;
@@ -685,6 +713,19 @@ static int recv_socks_reply(BIO* bufferedBio, BYTE* buf, int len, char* reason, 
 
 			WLog_ERR(TAG, "Failed reading %s reply from SOCKS proxy (Status %d)", reason, status);
 			return -1;
+		}
+		else if (status == 0)
+		{
+			const UINT64 now = GetTickCount64();
+			const UINT64 diff = now - start;
+			if (freerdp_shall_disconnect_context(context) || (now < start) || (diff > timeout))
+			{
+				/* Error? */
+				WLog_ERR(TAG, "Failed reading %s reply from SOCKS proxy (BIO_read returned zero)",
+				         reason);
+				return status;
+			}
+			Sleep(10);
 		}
 		else // if (status == 0)
 		{
@@ -710,7 +751,7 @@ static int recv_socks_reply(BIO* bufferedBio, BYTE* buf, int len, char* reason, 
 	return status;
 }
 
-static BOOL socks_proxy_connect(BIO* bufferedBio, const char* proxyUsername,
+static BOOL socks_proxy_connect(rdpContext* context, BIO* bufferedBio, const char* proxyUsername,
                                 const char* proxyPassword, const char* hostname, UINT16 port)
 {
 	int status = 0;
@@ -742,7 +783,7 @@ static BOOL socks_proxy_connect(BIO* bufferedBio, const char* proxyUsername,
 		return FALSE;
 	}
 
-	status = recv_socks_reply(bufferedBio, buf, 2, "AUTH REQ", 5);
+	status = recv_socks_reply(context, bufferedBio, buf, 2, "AUTH REQ", 5);
 
 	if (status <= 0)
 		return FALSE;
@@ -786,7 +827,7 @@ static BOOL socks_proxy_connect(BIO* bufferedBio, const char* proxyUsername,
 					return FALSE;
 				}
 
-				status = recv_socks_reply(bufferedBio, buf, 2, "AUTH REQ", 1);
+				status = recv_socks_reply(context, bufferedBio, buf, 2, "AUTH REQ", 1);
 
 				if (status < 2)
 					return FALSE;
@@ -824,7 +865,7 @@ static BOOL socks_proxy_connect(BIO* bufferedBio, const char* proxyUsername,
 		return FALSE;
 	}
 
-	status = recv_socks_reply(bufferedBio, buf, sizeof(buf), "CONN REQ", 5);
+	status = recv_socks_reply(context, bufferedBio, buf, sizeof(buf), "CONN REQ", 5);
 
 	if (status < 4)
 		return FALSE;
