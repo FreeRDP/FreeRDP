@@ -137,6 +137,7 @@ CMAKE_ARGS="-DCMAKE_SKIP_INSTALL_ALL_DEPENDENCY=ON \
 	-DINSTALL_BIN_DIR='$INSTALL/bin' \
 	-DCMAKE_PREFIX_PATH='$INSTALL;$INSTALL/lib;$INSTALL/lib/cmake' \
 	-DCMAKE_IGNORE_PATH='/opt/local;/usr/local;/opt/homebrew;/Library;~/Library'
+	-DCMAKE_IGNORE_PREFIX_PATH='/opt/local;/usr/local;/opt/homebrew;/Library;~/Library'
 	"
 
 if [ ! -d $SRC ];
