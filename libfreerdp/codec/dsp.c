@@ -1531,7 +1531,7 @@ BOOL freerdp_dsp_context_reset(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
 #endif
 #if defined(WITH_FAAC)
 
-	if (context->encoder)
+	if (context->common.encoder)
 	{
 		faacEncConfigurationPtr cfg;
 
