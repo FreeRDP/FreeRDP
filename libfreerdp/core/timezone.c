@@ -78,7 +78,7 @@ static void log_print(wLog* log, DWORD level, const char* file, const char* fkt,
 	if (!WLog_IsLevelActive(log, level))
 		return;
 
-	va_list ap;
+	va_list ap = { 0 };
 	va_start(ap, line);
 	WLog_PrintMessageVA(log, WLOG_MESSAGE_TEXT, level, line, file, fkt, ap);
 	va_end(ap);

@@ -345,7 +345,7 @@ BOOL http_context_set_pragma(HttpContext* context, WINPR_FORMAT_ARG const char* 
 	free(context->Pragma);
 	context->Pragma = NULL;
 
-	va_list ap;
+	va_list ap = { 0 };
 	va_start(ap, Pragma);
 	return list_append(context, Pragma, ap);
 }
@@ -356,7 +356,7 @@ BOOL http_context_append_pragma(HttpContext* context, const char* Pragma, ...)
 	if (!context || !Pragma)
 		return FALSE;
 
-	va_list ap;
+	va_list ap = { 0 };
 	va_start(ap, Pragma);
 	return list_append(context, Pragma, ap);
 }
@@ -551,7 +551,7 @@ WINPR_ATTR_FORMAT_ARG(2, 3)
 static BOOL http_encode_print(wStream* s, WINPR_FORMAT_ARG const char* fmt, ...)
 {
 	char* str = NULL;
-	va_list ap;
+	va_list ap = { 0 };
 	int length = 0;
 	int used = 0;
 

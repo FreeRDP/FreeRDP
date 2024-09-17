@@ -32,7 +32,7 @@ static void write_log(unsigned log_level, const char* fmt, ...)
 	{
 		char buffer[1024] = { 0 };
 
-		va_list ap;
+		va_list ap = { 0 };
 		va_start(ap, fmt);
 		vsnprintf(buffer, sizeof(buffer), fmt, ap);
 		va_end(ap);

@@ -1646,7 +1646,7 @@ static const char* state_str(size_t count, va_list ap, char* buffer, size_t size
 static BOOL rdpdr_state_check(rdpdrPlugin* rdpdr, UINT16 packetid, enum RDPDR_CHANNEL_STATE next,
                               size_t count, ...)
 {
-	va_list ap;
+	va_list ap = { 0 };
 	WINPR_ASSERT(rdpdr);
 
 	va_start(ap, count);

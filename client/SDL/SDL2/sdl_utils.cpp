@@ -152,7 +152,7 @@ BOOL sdl_push_user_event(Uint32 type, ...)
 	SDL_Event ev = {};
 	SDL_UserEvent* event = &ev.user;
 
-	va_list ap;
+	va_list ap = {};
 	va_start(ap, type);
 	event->type = type;
 	switch (type)
@@ -285,7 +285,7 @@ HANDLE WinPREvent::handle() const
 
 bool sdl_push_quit()
 {
-	SDL_Event ev = { 0 };
+	SDL_Event ev = {};
 	ev.type = SDL_QUIT;
 	SDL_PushEvent(&ev);
 	return true;

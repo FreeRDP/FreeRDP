@@ -665,7 +665,7 @@ static const char* sdl_window_get_title(rdpSettings* settings)
 
 	addPort = (port != 3389);
 
-	char buffer[MAX_PATH + 64] = { 0 };
+	char buffer[MAX_PATH + 64] = {};
 
 	if (!addPort)
 		(void)sprintf_s(buffer, sizeof(buffer), "%s %s", prefix, name);
@@ -837,7 +837,7 @@ static int sdl_run(SdlContext* sdl)
 
 	while (!shall_abort(sdl))
 	{
-		SDL_Event windowEvent = { 0 };
+		SDL_Event windowEvent = {};
 		while (!shall_abort(sdl) && SDL_WaitEventTimeout(nullptr, 1000))
 		{
 			/* Only poll standard SDL events and SDL_USEREVENTS meant to create dialogs.
@@ -1413,7 +1413,7 @@ static DWORD WINAPI sdl_client_thread_proc(SdlContext* sdl)
 static BOOL sdl_client_global_init()
 {
 #if defined(_WIN32)
-	WSADATA wsaData = { 0 };
+	WSADATA wsaData = {};
 	const DWORD wVersionRequested = MAKEWORD(1, 1);
 	const int rc = WSAStartup(wVersionRequested, &wsaData);
 	if (rc != 0)

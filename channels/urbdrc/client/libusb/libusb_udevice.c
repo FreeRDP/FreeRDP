@@ -139,7 +139,7 @@ static BOOL log_libusb_result_(wLog* log, DWORD lvl, WINPR_FORMAT_ARG const char
 	if (error < 0)
 	{
 		char buffer[8192] = { 0 };
-		va_list ap;
+		va_list ap = { 0 };
 		va_start(ap, error);
 		(void)vsnprintf(buffer, sizeof(buffer), fmt, ap);
 		va_end(ap);

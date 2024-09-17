@@ -107,7 +107,7 @@ BOOL sdl_webview_get_access_token(freerdp* instance, AccessTokenType tokenType, 
 				          "ACCESS_TOKEN_TYPE_AAD expected 2 additional arguments, but got %" PRIuz
 				          ", ignoring",
 				          count);
-			va_list ap;
+			va_list ap = {};
 			va_start(ap, count);
 			const char* scope = va_arg(ap, const char*);
 			const char* req_cnf = va_arg(ap, const char*);

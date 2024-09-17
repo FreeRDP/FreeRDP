@@ -34,7 +34,7 @@ static const DWORD log_level = WLOG_TRACE;
 
 static void write_log(wLog* log, DWORD level, const char* fname, const char* fkt, size_t line, ...)
 {
-	va_list ap;
+	va_list ap = { 0 };
 	va_start(ap, line);
 	WLog_PrintMessageVA(log, WLOG_MESSAGE_TEXT, level, line, fname, fkt, ap);
 	va_end(ap);

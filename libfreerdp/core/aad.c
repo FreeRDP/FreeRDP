@@ -57,7 +57,7 @@ static BOOL generate_pop_key(rdpAad* aad);
 WINPR_ATTR_FORMAT_ARG(2, 3)
 static SSIZE_T stream_sprintf(wStream* s, WINPR_FORMAT_ARG const char* fmt, ...)
 {
-	va_list ap;
+	va_list ap = { 0 };
 	va_start(ap, fmt);
 	const int rc = vsnprintf(NULL, 0, fmt, ap);
 	va_end(ap);

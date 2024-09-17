@@ -186,7 +186,7 @@ static int testAbort(int port)
 static char* concatenate(size_t count, ...)
 {
 	char* rc = NULL;
-	va_list ap;
+	va_list ap = { 0 };
 	va_start(ap, count);
 	rc = _strdup(va_arg(ap, char*));
 	for (size_t x = 1; x < count; x++)
