@@ -1152,6 +1152,51 @@ static void sdl_post_final_disconnect(freerdp* instance)
 		return;
 }
 
+static void sdl_client_cleanup(SdlContext* sdl, int exit_code, char* error_msg)
+{
+	WINPR_ASSERT(sdl);
+
+	rdpContext* context = sdl->context();
+	WINPR_ASSERT(context);
+	rdpSettings* settings = context->settings;
+	WINPR_ASSERT(settings);
+
+	sdl->rdp_thread_running = false;
+	bool showError = false;
+	if (freerdp_settings_get_bool(settings, FreeRDP_AuthenticationOnly))
+		WLog_Print(sdl->log, WLOG_INFO, "Authentication only, exit status %s [%" PRId32 "]",
+		           sdl_map_to_code_tag(exit_code), exit_code);
+	else
+	{
+		switch (exit_code)
+		{
+			case SDL_EXIT_SUCCESS:
+			case SDL_EXIT_DISCONNECT:
+			case SDL_EXIT_LOGOFF:
+			case SDL_EXIT_DISCONNECT_BY_USER:
+			case SDL_EXIT_CONNECT_CANCELLED:
+				break;
+			default:
+			{
+				std::lock_guard<CriticalSection> lock(sdl->critical);
+				if (sdl->connection_dialog && error_msg)
+				{
+					sdl->connection_dialog->showError(error_msg);
+					showError = true;
+				}
+			}
+			break;
+		}
+	}
+	free(error_msg);
+	if (!showError)
+		sdl_hide_connection_dialog(sdl);
+
+	sdl->exit_code = exit_code;
+	sdl_push_user_event(SDL_EVENT_USER_QUIT);
+	SDL_CleanupTLS();
+}
+
 /* RDP main loop.
  * Connects RDP, loops while running and handles event and dispatch, cleans up
  * after the connection ends. */
@@ -1177,44 +1222,7 @@ static DWORD WINAPI sdl_client_thread_proc(SdlContext* sdl)
 	rdpSettings* settings = context->settings;
 	WINPR_ASSERT(settings);
 
-	ScopeGuard guard(
-	    [&]()
-	    {
-		    sdl->rdp_thread_running = false;
-		    bool showError = false;
-		    if (freerdp_settings_get_bool(settings, FreeRDP_AuthenticationOnly))
-			    WLog_Print(sdl->log, WLOG_INFO, "Authentication only, exit status %s [%" PRId32 "]",
-			               sdl_map_to_code_tag(exit_code), exit_code);
-		    else
-		    {
-			    switch (exit_code)
-			    {
-				    case SDL_EXIT_SUCCESS:
-				    case SDL_EXIT_DISCONNECT:
-				    case SDL_EXIT_LOGOFF:
-				    case SDL_EXIT_DISCONNECT_BY_USER:
-				    case SDL_EXIT_CONNECT_CANCELLED:
-					    break;
-				    default:
-				    {
-					    std::lock_guard<CriticalSection> lock(sdl->critical);
-					    if (sdl->connection_dialog && error_msg)
-					    {
-						    sdl->connection_dialog->showError(error_msg);
-						    showError = true;
-					    }
-				    }
-				    break;
-			    }
-		    }
-		    free(error_msg);
-		    if (!showError)
-			    sdl_hide_connection_dialog(sdl);
-
-		    sdl->exit_code = exit_code;
-		    sdl_push_user_event(SDL_EVENT_USER_QUIT);
-		    SDL_CleanupTLS();
-	    });
+	ScopeGuard guard([&]() { sdl_client_cleanup(sdl, exit_code, error_msg); });
 
 	if (!rc)
 	{
