@@ -582,7 +582,11 @@ proxyConfig* server_config_load_ini(wIniFile* ini)
 	}
 	return config;
 out:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	pf_server_config_free(config);
+	WINPR_PRAGMA_DIAG_POP
+
 	return NULL;
 }
 
@@ -989,7 +993,10 @@ BOOL pf_config_clone(proxyConfig** dst, const proxyConfig* config)
 	return TRUE;
 
 fail:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	pf_server_config_free(tmp);
+	WINPR_PRAGMA_DIAG_POP
 	return FALSE;
 }
 

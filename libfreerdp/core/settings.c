@@ -833,7 +833,10 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 
 	return settings;
 out_fail:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	freerdp_settings_free(settings);
+	WINPR_PRAGMA_DIAG_POP
 	return NULL;
 }
 
@@ -1164,7 +1167,10 @@ rdpSettings* freerdp_settings_clone(const rdpSettings* settings)
 
 	return _settings;
 out_fail:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	freerdp_settings_free(_settings);
+	WINPR_PRAGMA_DIAG_POP
 	return NULL;
 }
 #ifdef _MSC_VER
