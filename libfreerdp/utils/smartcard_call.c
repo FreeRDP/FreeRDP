@@ -335,43 +335,33 @@ static DWORD filter_device_by_name_w(wLinkedList* list, LPWSTR* mszReaders, DWOR
 static LONG smartcard_ListReadersA_Call(scard_call_context* smartcard, wStream* out,
                                         SMARTCARD_OPERATION* operation)
 {
-	LONG status = 0;
 	ListReaders_Return ret = { 0 };
 	LPSTR mszReaders = NULL;
-	DWORD cchReaders = 0;
-	ListReaders_Call* call = NULL;
 
 	WINPR_ASSERT(smartcard);
 	WINPR_ASSERT(out);
 	WINPR_ASSERT(operation);
 
-	call = &operation->call.listReaders;
-	cchReaders = SCARD_AUTOALLOCATE;
-	status = ret.ReturnCode = wrap(smartcard, SCardListReadersA, operation->hContext,
-	                               (LPCSTR)call->mszGroups, (LPSTR)&mszReaders, &cchReaders);
+	ListReaders_Call* call = &operation->call.listReaders;
+	DWORD cchReaders = SCARD_AUTOALLOCATE;
+	LONG status = ret.ReturnCode = wrap(smartcard, SCardListReadersA, operation->hContext,
+	                                    (LPCSTR)call->mszGroups, (LPSTR)&mszReaders, &cchReaders);
 	if (cchReaders == SCARD_AUTOALLOCATE)
 		return SCARD_F_UNKNOWN_ERROR;
 
 	if (status != SCARD_S_SUCCESS)
-	{
 		return scard_log_status_error(TAG, "SCardListReadersA", status);
-	}
 
 	cchReaders = filter_device_by_name_a(smartcard->names, &mszReaders, cchReaders);
 	ret.msz = (BYTE*)mszReaders;
 	ret.cBytes = cchReaders;
 
 	status = smartcard_pack_list_readers_return(out, &ret, FALSE);
-	if (status != SCARD_S_SUCCESS)
-	{
-		return scard_log_status_error(TAG, "smartcard_pack_list_readers_return", status);
-	}
-
 	if (mszReaders)
 		wrap(smartcard, SCardFreeMemory, operation->hContext, mszReaders);
 
 	if (status != SCARD_S_SUCCESS)
-		return status;
+		return scard_log_status_error(TAG, "smartcard_pack_list_readers_return", status);
 
 	return ret.ReturnCode;
 }
