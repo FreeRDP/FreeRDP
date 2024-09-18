@@ -155,12 +155,9 @@ static BOOL pf_config_get_uint16(wIniFile* ini, const char* section, const char*
 static BOOL pf_config_get_uint32(wIniFile* ini, const char* section, const char* key,
                                  UINT32* result, BOOL required)
 {
-	int val = 0;
-	const char* strval = NULL;
-
 	WINPR_ASSERT(result);
 
-	strval = IniFile_GetKeyValueString(ini, section, key);
+	const char* strval = IniFile_GetKeyValueString(ini, section, key);
 	if (!strval)
 	{
 		if (required)
@@ -168,8 +165,8 @@ static BOOL pf_config_get_uint32(wIniFile* ini, const char* section, const char*
 		return !required;
 	}
 
-	val = IniFile_GetKeyValueInt(ini, section, key);
-	if ((val < 0) || (val > INT32_MAX))
+	const int val = IniFile_GetKeyValueInt(ini, section, key);
+	if (val < 0)
 	{
 		WLog_ERR(TAG, "invalid value %d for key '%s.%s'.", val, section, key);
 		return FALSE;
