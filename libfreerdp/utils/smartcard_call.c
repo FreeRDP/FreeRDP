@@ -227,7 +227,10 @@ static LONG smartcard_ListReaderGroupsW_Call(scard_call_context* smartcard, wStr
 		return SCARD_F_UNKNOWN_ERROR;
 
 	ret.msz = (BYTE*)mszGroups;
-	ret.cBytes = cchGroups * sizeof(WCHAR);
+
+	const size_t blen = sizeof(WCHAR) * cchGroups;
+	WINPR_ASSERT(blen <= UINT32_MAX);
+	ret.cBytes = (UINT32)blen;
 
 	if (status != SCARD_S_SUCCESS)
 		return status;
@@ -1303,7 +1306,9 @@ static LONG smartcard_StatusW_Call(scard_call_context* smartcard, wStream* out,
 
 	/* SCardStatusW returns number of characters, we need number of bytes */
 	WINPR_ASSERT(ret.cBytes != SCARD_AUTOALLOCATE);
-	ret.cBytes *= sizeof(WCHAR);
+	const size_t blen = sizeof(WCHAR) * ret.cBytes;
+	WINPR_ASSERT(blen <= UINT32_MAX);
+	ret.cBytes = (UINT32)blen;
 
 	status = smartcard_pack_status_return(out, &ret, TRUE);
 	if (status != SCARD_S_SUCCESS)

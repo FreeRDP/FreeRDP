@@ -738,7 +738,7 @@ HRESULT PathCchStripPrefixW(PWSTR pszPath, size_t cchPath)
 			return S_FALSE;
 
 		const size_t rc = (_wcslen(&pszPath[4]) + 1);
-		if ((rc < 0) || ((INT64)cchPath < rc))
+		if (cchPath < rc)
 			return HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER);
 
 		if (IsCharAlphaW(pszPath[4]) && (pszPath[5] == L':')) /* like C: */

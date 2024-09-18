@@ -60,8 +60,7 @@ static BOOL pf_server_synchronize_event(rdpInput* input, UINT32 flags)
 	pc->input_state = flags;
 	pc->input_state_sync_pending = TRUE;
 
-	pf_server_check_and_sync_input_state(pc);
-	return TRUE;
+	return pf_server_check_and_sync_input_state(pc);
 }
 
 static BOOL pf_server_keyboard_event(rdpInput* input, UINT16 flags, UINT8 code)

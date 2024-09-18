@@ -351,7 +351,7 @@ static INLINE INT32 planar_decompress_plane_rle_only(const BYTE* WINPR_RESTRICT 
 }
 
 static INLINE INT32 planar_decompress_plane_rle(const BYTE* WINPR_RESTRICT pSrcData, UINT32 SrcSize,
-                                                BYTE* WINPR_RESTRICT pDstData, INT32 nDstStep,
+                                                BYTE* WINPR_RESTRICT pDstData, UINT32 nDstStep,
                                                 UINT32 nXDst, UINT32 nYDst, UINT32 nWidth,
                                                 UINT32 nHeight, UINT32 nChannel, BOOL vFlip)
 {
@@ -488,7 +488,7 @@ static INLINE INT32 planar_decompress_plane_rle(const BYTE* WINPR_RESTRICT pSrcD
 	return (INT32)(srcp - pSrcData);
 }
 
-static INLINE INT32 planar_set_plane(BYTE bValue, BYTE* pDstData, INT32 nDstStep, UINT32 nXDst,
+static INLINE INT32 planar_set_plane(BYTE bValue, BYTE* pDstData, UINT32 nDstStep, UINT32 nXDst,
                                      UINT32 nYDst, UINT32 nWidth, UINT32 nHeight, UINT32 nChannel,
                                      BOOL vFlip)
 {

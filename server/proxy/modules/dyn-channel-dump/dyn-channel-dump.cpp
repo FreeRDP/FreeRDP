@@ -382,7 +382,7 @@ static BOOL dump_session_started(proxyPlugin* plugin, proxyData* pdata, void* /*
 	std::string path(cpath);
 	std::string channels(cchannels);
 	std::vector<std::string> list = split(channels, "[;,]");
-	auto cfg = new ChannelData(path, list, custom->session());
+	auto cfg = new ChannelData(path, std::move(list), custom->session());
 	if (!cfg || !cfg->create())
 	{
 		delete cfg;
