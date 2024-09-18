@@ -150,7 +150,6 @@ static FILE* IniFile_Open_File(wIniFile* ini, const char* filename)
 static BOOL IniFile_Load_File(wIniFile* ini, const char* filename)
 {
 	BOOL rc = FALSE;
-	INT64 fileSize = 0;
 
 	WINPR_ASSERT(ini);
 
@@ -161,7 +160,7 @@ static BOOL IniFile_Load_File(wIniFile* ini, const char* filename)
 	if (_fseeki64(fp, 0, SEEK_END) < 0)
 		goto out_file;
 
-	fileSize = _ftelli64(fp);
+	const INT64 fileSize = _ftelli64(fp);
 
 	if (fileSize < 0)
 		goto out_file;
@@ -173,9 +172,6 @@ static BOOL IniFile_Load_File(wIniFile* ini, const char* filename)
 	ini->nextLine = NULL;
 
 	if (fileSize < 1)
-		goto out_file;
-
-	if (fileSize > INT64_MAX)
 		goto out_file;
 
 	if (!IniFile_BufferResize(ini, (size_t)fileSize + 2))
