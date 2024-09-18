@@ -33,8 +33,8 @@
 #include <freerdp/log.h>
 #define TAG CLIENT_TAG("sdl.disp")
 
-#define RESIZE_MIN_DELAY 200 /* minimum delay in ms between two resizes */
-#define MAX_RETRIES 5
+static constexpr UINT64 RESIZE_MIN_DELAY = 200; /* minimum delay in ms between two resizes */
+static constexpr unsigned MAX_RETRIES = 5;
 
 BOOL sdlDispContext::settings_changed()
 {
