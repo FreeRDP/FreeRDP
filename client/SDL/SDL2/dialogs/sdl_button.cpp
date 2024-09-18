@@ -41,6 +41,8 @@ SdlButton::SdlButton(SdlButton&& other) noexcept
 {
 }
 
+SdlButton::~SdlButton() = default;
+
 bool SdlButton::highlight(SDL_Renderer* renderer)
 {
 	assert(renderer);

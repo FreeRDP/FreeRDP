@@ -17,10 +17,12 @@ class SdlSelectList
 
 	int run();
 
-  private:
 	SdlSelectList(const SdlSelectList& other) = delete;
 	SdlSelectList(SdlSelectList&& other) = delete;
+	SdlSelectList& operator=(const SdlSelectList& other) = delete;
+	SdlSelectList& operator=(SdlSelectList&& other) = delete;
 
+  private:
 	enum
 	{
 		INPUT_BUTTON_ACCEPT = 0,

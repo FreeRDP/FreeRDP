@@ -48,8 +48,8 @@ class ScopeGuard
 
 	ScopeGuard(const ScopeGuard&) = delete;
 	ScopeGuard(ScopeGuard&& other) noexcept = delete;
-	auto operator=(const ScopeGuard&) = delete;
-	auto operator=(const ScopeGuard&&) = delete;
+	ScopeGuard& operator=(const ScopeGuard&) = delete;
+	ScopeGuard& operator=(const ScopeGuard&&) = delete;
 
   private:
 	std::function<void()> f;
