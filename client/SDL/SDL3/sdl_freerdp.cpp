@@ -1152,7 +1152,7 @@ static void sdl_post_final_disconnect(freerdp* instance)
 		return;
 }
 
-static void sdl_client_cleanup(SdlContext* sdl, int exit_code, char* error_msg)
+static void sdl_client_cleanup(SdlContext* sdl, int exit_code, const std::string& error_msg)
 {
 	WINPR_ASSERT(sdl);
 
@@ -1179,16 +1179,16 @@ static void sdl_client_cleanup(SdlContext* sdl, int exit_code, char* error_msg)
 			default:
 			{
 				std::lock_guard<CriticalSection> lock(sdl->critical);
-				if (sdl->connection_dialog && error_msg)
+				if (sdl->connection_dialog && !error_msg.empty())
 				{
-					sdl->connection_dialog->showError(error_msg);
+					sdl->connection_dialog->showError(error_msg.c_str());
 					showError = true;
 				}
 			}
 			break;
 		}
 	}
-	free(error_msg);
+
 	if (!showError)
 		sdl_hide_connection_dialog(sdl);
 
@@ -1197,19 +1197,8 @@ static void sdl_client_cleanup(SdlContext* sdl, int exit_code, char* error_msg)
 	SDL_CleanupTLS();
 }
 
-/* RDP main loop.
- * Connects RDP, loops while running and handles event and dispatch, cleans up
- * after the connection ends. */
-static DWORD WINAPI sdl_client_thread_proc(SdlContext* sdl)
+static int sdl_client_thread_connect(SdlContext* sdl, std::string& error_msg)
 {
-	DWORD nCount = 0;
-	DWORD status = 0;
-	int exit_code = SDL_EXIT_SUCCESS;
-	char* error_msg = nullptr;
-	size_t error_msg_len = 0;
-
-	HANDLE handles[MAXIMUM_WAIT_OBJECTS] = {};
-
 	WINPR_ASSERT(sdl);
 
 	auto instance = sdl->context()->instance;
@@ -1222,8 +1211,7 @@ static DWORD WINAPI sdl_client_thread_proc(SdlContext* sdl)
 	rdpSettings* settings = context->settings;
 	WINPR_ASSERT(settings);
 
-	ScopeGuard guard([&]() { sdl_client_cleanup(sdl, exit_code, error_msg); });
-
+	int exit_code = SDL_EXIT_SUCCESS;
 	if (!rc)
 	{
 		UINT32 error = freerdp_get_last_error(context);
@@ -1243,14 +1231,26 @@ static DWORD WINAPI sdl_client_thread_proc(SdlContext* sdl)
 	{
 		DWORD code = freerdp_error_info(instance);
 		if (exit_code == SDL_EXIT_SUCCESS)
-			exit_code = error_info_to_error(instance, &code, &error_msg, &error_msg_len);
+		{
+			char* msg = nullptr;
+			size_t len = 0;
+			exit_code = error_info_to_error(instance, &code, &msg, &len);
+			if (msg)
+				error_msg = msg;
+			free(msg);
+		}
 
 		auto last = freerdp_get_last_error(context);
-		if (!error_msg)
+		if (error_msg.empty())
 		{
-			winpr_asprintf(&error_msg, &error_msg_len, "%s [0x%08" PRIx32 "]\n%s",
+			char* msg = nullptr;
+			size_t len = 0;
+			winpr_asprintf(&msg, &len, "%s [0x%08" PRIx32 "]\n%s",
 			               freerdp_get_last_error_name(last), last,
 			               freerdp_get_last_error_string(last));
+			if (msg)
+				error_msg = msg;
+			free(msg);
 		}
 
 		if (exit_code == SDL_EXIT_SUCCESS)
@@ -1262,11 +1262,25 @@ static DWORD WINAPI sdl_client_thread_proc(SdlContext* sdl)
 		}
 
 		sdl_hide_connection_dialog(sdl);
-		return exit_code;
 	}
 
+	return exit_code;
+}
+
+static int sdl_client_thread_run(SdlContext* sdl, std::string& error_msg)
+{
+	WINPR_ASSERT(sdl);
+
+	auto context = sdl->context();
+	WINPR_ASSERT(context);
+
+	auto instance = context->instance;
+	WINPR_ASSERT(instance);
+
+	int exit_code = SDL_EXIT_SUCCESS;
 	while (!freerdp_shall_disconnect_context(context))
 	{
+		HANDLE handles[MAXIMUM_WAIT_OBJECTS] = {};
 		/*
 		 * win8 and server 2k12 seem to have some timing issue/race condition
 		 * when a initial sync request is send to sync the keyboard indicators
@@ -1282,7 +1296,7 @@ static DWORD WINAPI sdl_client_thread_proc(SdlContext* sdl)
 				break;
 		}
 
-		nCount = freerdp_get_event_handles(context, handles, ARRAYSIZE(handles));
+		const DWORD nCount = freerdp_get_event_handles(context, handles, ARRAYSIZE(handles));
 
 		if (nCount == 0)
 		{
@@ -1290,7 +1304,7 @@ static DWORD WINAPI sdl_client_thread_proc(SdlContext* sdl)
 			break;
 		}
 
-		status = WaitForMultipleObjects(nCount, handles, FALSE, INFINITE);
+		const DWORD status = WaitForMultipleObjects(nCount, handles, FALSE, INFINITE);
 
 		if (status == WAIT_FAILED)
 			break;
@@ -1325,17 +1339,27 @@ static DWORD WINAPI sdl_client_thread_proc(SdlContext* sdl)
 	if (exit_code == SDL_EXIT_SUCCESS)
 	{
 		DWORD code = 0;
-		exit_code = error_info_to_error(instance, &code, &error_msg, &error_msg_len);
+		{
+			char* emsg = nullptr;
+			size_t elen = 0;
+			exit_code = error_info_to_error(instance, &code, &emsg, &elen);
+			if (emsg)
+				error_msg = emsg;
+			free(emsg);
+		}
 
 		if ((code == ERRINFO_LOGOFF_BY_USER) &&
 		    (freerdp_get_disconnect_ultimatum(context) == Disconnect_Ultimatum_user_requested))
 		{
 			const char* msg = "Error info says user did not initiate but disconnect ultimatum says "
 			                  "they did; treat this as a user logoff";
-			free(error_msg);
-			error_msg = nullptr;
-			error_msg_len = 0;
-			winpr_asprintf(&error_msg, &error_msg_len, "%s", msg);
+
+			char* emsg = nullptr;
+			size_t elen = 0;
+			winpr_asprintf(&emsg, &elen, "%s", msg);
+			if (emsg)
+				error_msg = emsg;
+			free(emsg);
 
 			/* This situation might be limited to Windows XP. */
 			WLog_Print(sdl->log, WLOG_INFO, "%s", msg);
@@ -1346,6 +1370,25 @@ static DWORD WINAPI sdl_client_thread_proc(SdlContext* sdl)
 	freerdp_disconnect(instance);
 
 	return 0;
+}
+
+/* RDP main loop.
+ * Connects RDP, loops while running and handles event and dispatch, cleans up
+ * after the connection ends. */
+static DWORD WINAPI sdl_client_thread_proc(SdlContext* sdl)
+{
+	WINPR_ASSERT(sdl);
+
+	auto instance = sdl->context()->instance;
+	WINPR_ASSERT(instance);
+
+	std::string error_msg;
+	int exit_code = sdl_client_thread_connect(sdl, error_msg);
+	if (exit_code == SDL_EXIT_SUCCESS)
+		exit_code = sdl_client_thread_run(sdl, error_msg);
+	sdl_client_cleanup(sdl, exit_code, error_msg);
+
+	return static_cast<DWORD>(exit_code);
 }
 
 /* Optional global initializer.
