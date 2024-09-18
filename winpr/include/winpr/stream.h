@@ -1008,12 +1008,23 @@ extern "C"
 		Stream_Seek(_src, _n);
 	}
 
+/** @brief Convenience macro to get a pointer to the stream buffer casted to a specific type
+ *
+ *  @since version 3.9.0
+ */
+#define Stream_BufferAs(s, type) WINPR_STREAM_CAST(type*, Stream_Buffer(s))
+
 	static INLINE BYTE* Stream_Buffer(wStream* _s)
 	{
 		WINPR_ASSERT(_s);
 		return _s->buffer;
 	}
 
+/** @brief Convenience macro to get a const pointer to the stream buffer casted to a specific type
+ *
+ *  @since version 3.9.0
+ */
+#define Stream_ConstBufferAs(s, type) WINPR_STREAM_CAST(type*, Stream_ConstBuffer(s))
 	static INLINE const BYTE* Stream_ConstBuffer(const wStream* _s)
 	{
 		WINPR_ASSERT(_s);
@@ -1021,7 +1032,14 @@ extern "C"
 	}
 
 #define Stream_GetBuffer(_s, _b) _b = Stream_Buffer(_s)
-#define Stream_PointerAs(s, type) (type*)Stream_Pointer(s)
+
+/** @brief Convenience macro to get a pointer to the stream buffer casted to a specific type
+ *
+ *  @since version 3.9.0
+ */
+#define Stream_GetBufferAs(_s, _b) _b = Stream_BufferAs(_s, typeof(_b))
+
+#define Stream_PointerAs(s, type) WINPR_STREAM_CAST(type*, Stream_Pointer(s))
 
 	static INLINE void* Stream_Pointer(wStream* _s)
 	{
@@ -1036,6 +1054,12 @@ extern "C"
 	}
 
 #define Stream_GetPointer(_s, _p) _p = Stream_Pointer(_s)
+
+/** @brief Convenience macro to get a pointer to the stream pointer casted to a specific type
+ *
+ *  @since version 3.9.0
+ */
+#define Stream_GetPointerAs(_s, _p) _p = Stream_PointerAs(_s, typeof(_p))
 
 #if defined(WITH_WINPR_DEPRECATED)
 	WINPR_API WINPR_DEPRECATED_VAR("Use Stream_SetPosition instead",
