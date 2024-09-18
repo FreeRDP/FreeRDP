@@ -44,6 +44,9 @@ if (ENABLE_WARNING_VERBOSE)
 			-Wno-covered-switch-default
 			-Wno-disabled-macro-expansion
 			-Wno-ctad-maybe-unsupported
+			-Wno-c++98-compat
+			-Wno-c++98-compat-pedantic
+			-Wno-pre-c++17-compat
 		)
 	endif()
 
