@@ -42,6 +42,7 @@ if (ENABLE_WARNING_VERBOSE)
 			-Wno-unsafe-buffer-usage
 			-Wno-reserved-identifier
 			-Wno-covered-switch-default
+			-Wno-disabled-macro-expansion
 			-Wno-ctad-maybe-unsupported
 		)
 	endif()
