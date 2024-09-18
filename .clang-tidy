@@ -24,6 +24,7 @@ Checks: >
     -cppcoreguidelines-interfaces-global-init,
     -bugprone-easily-swappable-parameters,
     -bugprone-assignment-in-if-condition,
+    -bugprone-branch-clone,
     -bugprone-macro-parentheses,
     -cert-dcl16-c,
     -cert-env33-c,
