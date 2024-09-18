@@ -21,7 +21,7 @@ int TestPathCchAppend(int argc, char* argv[])
 
 	/* Base Path: Backslash, More Path: No Backslash */
 
-	_tcscpy(Path, testBasePathBackslash);
+	_tcsncpy(Path, testBasePathBackslash, ARRAYSIZE(Path));
 
 	status = PathCchAppend(Path, PATHCCH_MAX_CCH, testMorePathNoBackslash);
 
@@ -31,7 +31,7 @@ int TestPathCchAppend(int argc, char* argv[])
 		return -1;
 	}
 
-	if (_tcscmp(Path, testPathOut) != 0)
+	if (_tcsncmp(Path, testPathOut, ARRAYSIZE(Path)) != 0)
 	{
 		_tprintf(_T("Path Mismatch: Actual: %s, Expected: %s\n"), Path, testPathOut);
 		return -1;
@@ -39,7 +39,7 @@ int TestPathCchAppend(int argc, char* argv[])
 
 	/* Base Path: Backslash, More Path: Backslash */
 
-	_tcscpy(Path, testBasePathBackslash);
+	_tcsncpy(Path, testBasePathBackslash, ARRAYSIZE(Path));
 
 	status = PathCchAppend(Path, PATHCCH_MAX_CCH, testMorePathBackslash);
 
@@ -49,7 +49,7 @@ int TestPathCchAppend(int argc, char* argv[])
 		return -1;
 	}
 
-	if (_tcscmp(Path, testPathOut) != 0)
+	if (_tcsncmp(Path, testPathOut, ARRAYSIZE(Path)) != 0)
 	{
 		_tprintf(_T("Path Mismatch: Actual: %s, Expected: %s\n"), Path, testPathOut);
 		return -1;
@@ -57,7 +57,7 @@ int TestPathCchAppend(int argc, char* argv[])
 
 	/* Base Path: No Backslash, More Path: Backslash */
 
-	_tcscpy(Path, testBasePathNoBackslash);
+	_tcsncpy(Path, testBasePathNoBackslash, ARRAYSIZE(Path));
 
 	status = PathCchAppend(Path, PATHCCH_MAX_CCH, testMorePathBackslash);
 
@@ -67,7 +67,7 @@ int TestPathCchAppend(int argc, char* argv[])
 		return -1;
 	}
 
-	if (_tcscmp(Path, testPathOut) != 0)
+	if (_tcsncmp(Path, testPathOut, ARRAYSIZE(Path)) != 0)
 	{
 		_tprintf(_T("Path Mismatch: Actual: %s, Expected: %s\n"), Path, testPathOut);
 		return -1;
@@ -75,7 +75,7 @@ int TestPathCchAppend(int argc, char* argv[])
 
 	/* Base Path: No Backslash, More Path: No Backslash */
 
-	_tcscpy(Path, testBasePathNoBackslash);
+	_tcsncpy(Path, testBasePathNoBackslash, ARRAYSIZE(Path));
 
 	status = PathCchAppend(Path, PATHCCH_MAX_CCH, testMorePathNoBackslash);
 
@@ -85,7 +85,7 @@ int TestPathCchAppend(int argc, char* argv[])
 		return -1;
 	}
 
-	if (_tcscmp(Path, testPathOut) != 0)
+	if (_tcsncmp(Path, testPathOut, ARRAYSIZE(Path)) != 0)
 	{
 		_tprintf(_T("Path Mismatch: Actual: %s, Expected: %s\n"), Path, testPathOut);
 		return -1;
@@ -102,7 +102,7 @@ int TestPathCchAppend(int argc, char* argv[])
 	}
 
 	/* According to msdn a NULL pszMore is an invalid argument (although optional !?) */
-	_tcscpy(Path, testBasePathNoBackslash);
+	_tcsncpy(Path, testBasePathNoBackslash, ARRAYSIZE(Path));
 	status = PathCchAppend(Path, PATHCCH_MAX_CCH, NULL);
 	if (status != E_INVALIDARG)
 	{
@@ -113,7 +113,7 @@ int TestPathCchAppend(int argc, char* argv[])
 	}
 
 	/* According to msdn cchPath must be > 0 and <= PATHCCH_MAX_CCH */
-	_tcscpy(Path, testBasePathNoBackslash);
+	_tcsncpy(Path, testBasePathNoBackslash, ARRAYSIZE(Path));
 	status = PathCchAppend(Path, 0, testMorePathNoBackslash);
 	if (status != E_INVALIDARG)
 	{
@@ -122,7 +122,7 @@ int TestPathCchAppend(int argc, char* argv[])
 		         status);
 		return -1;
 	}
-	_tcscpy(Path, testBasePathNoBackslash);
+	_tcsncpy(Path, testBasePathNoBackslash, ARRAYSIZE(Path));
 	status = PathCchAppend(Path, PATHCCH_MAX_CCH + 1, testMorePathNoBackslash);
 	if (status != E_INVALIDARG)
 	{

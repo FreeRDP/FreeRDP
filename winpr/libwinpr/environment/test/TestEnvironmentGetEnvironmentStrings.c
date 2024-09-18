@@ -7,32 +7,30 @@
 int TestEnvironmentGetEnvironmentStrings(int argc, char* argv[])
 {
 	int r = -1;
-	TCHAR* p = NULL;
-	size_t length = 0;
-	LPTCH lpszEnvironmentBlock = NULL;
 
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
 
-	lpszEnvironmentBlock = GetEnvironmentStrings();
+	LPTCH lpszEnvironmentBlock = GetEnvironmentStrings();
+	if (!lpszEnvironmentBlock)
+		goto fail;
 
-	p = lpszEnvironmentBlock;
-
+	TCHAR* p = lpszEnvironmentBlock;
 	while (p[0] && p[1])
 	{
+		const size_t max = _tcslen(p);
 		const int rc = _sntprintf(NULL, 0, _T("%s\n"), p);
 		if (rc < 1)
 		{
 			_tprintf(_T("test failed: return %d\n"), rc);
 			goto fail;
 		}
-		length = _tcslen(p);
-		if (length != (size_t)(rc - 1))
+		if (max != (size_t)(rc - 1))
 		{
-			_tprintf(_T("test failed: length %") _T(PRIuz) _T(" != %d [%s]\n"), length, rc - 1, p);
+			_tprintf(_T("test failed: length %") _T(PRIuz) _T(" != %d [%s]\n"), max, rc - 1, p);
 			goto fail;
 		}
-		p += (length + 1);
+		p += (max + 1);
 	}
 
 	r = 0;

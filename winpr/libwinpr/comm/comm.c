@@ -1078,15 +1078,16 @@ DWORD QueryCommDevice(LPCTSTR lpDeviceName, LPTSTR lpTargetPath, DWORD ucchMax)
 		return 0;
 	}
 
-	if (_tcslen(storedTargetPath) + 2 > ucchMax)
+	const size_t size = _tcsnlen(storedTargetPath, ucchMax);
+	if (size + 2 > ucchMax)
 	{
 		SetLastError(ERROR_INSUFFICIENT_BUFFER);
 		return 0;
 	}
 
-	_tcscpy(lpTargetPath, storedTargetPath);
-	lpTargetPath[_tcslen(storedTargetPath) + 1] = '\0'; /* 2nd final '\0' */
-	return _tcslen(lpTargetPath) + 2;
+	_tcsncpy(lpTargetPath, storedTargetPath, size + 1);
+	lpTargetPath[size + 2] = '\0'; /* 2nd final '\0' */
+	return size + 2;
 }
 
 /**

@@ -35,7 +35,7 @@ static char* append(char** buffer, size_t* size, const char* str)
 		if (!resize(buffer, size, required - *size))
 			return NULL;
 	}
-	strcat(*buffer, str);
+	strncpy(&(*buffer)[len], str, add);
 	return *buffer;
 }
 
