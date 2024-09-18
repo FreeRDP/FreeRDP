@@ -39,6 +39,7 @@ Checks: >
     -cppcoreguidelines-avoid-non-const-global-variables,
     -cppcoreguidelines-macro-to-enum,
     -cppcoreguidelines-pro-type-vararg,
+    -cppcoreguidelines-pro-type-reinterpret-cast,
     -cppcoreguidelines-pro-bounds-pointer-arithmetic,
     -cppcoreguidelines-no-malloc,
     -google-readability-braces-around-statements,
