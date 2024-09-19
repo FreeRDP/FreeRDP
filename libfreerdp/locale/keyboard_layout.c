@@ -1132,6 +1132,27 @@ static BOOL parse_layout_entries(WINPR_JSON* json, const char* filename)
 		WLog_WARN(TAG, "Invalid top level JSON type in file %s, expected an array", filename);
 		return FALSE;
 	}
+
+	sRDP_KEYBOARD_LAYOUT_TABLE_len = WINPR_JSON_GetArraySize(json);
+	sRDP_KEYBOARD_LAYOUT_TABLE =
+	    calloc(sRDP_KEYBOARD_LAYOUT_TABLE_len, sizeof(RDP_KEYBOARD_LAYOUT));
+	if (!sRDP_KEYBOARD_LAYOUT_TABLE)
+	{
+		clear_layout_tables();
+		return FALSE;
+	}
+
+	for (size_t x = 0; x < sRDP_KEYBOARD_LAYOUT_TABLE_len; x++)
+	{
+		WINPR_JSON* obj = WINPR_JSON_GetArrayItem(json, x);
+
+		if (!obj || !parse_json_layout_entry(obj, x, &sRDP_KEYBOARD_LAYOUT_TABLE[x]))
+		{
+			clear_layout_tables();
+			return FALSE;
+		}
+	}
+
 	return TRUE;
 }
 
@@ -1243,12 +1264,14 @@ static BOOL CALLBACK load_layouts(PINIT_ONCE once, PVOID param, PVOID* context)
 	json = load_layouts_from_file(filename);
 	if (!json)
 		goto end;
+
 	if (!WINPR_JSON_IsObject(json))
 	{
 		WLog_WARN(TAG, "Invalid top level JSON type in file %s, expected an array", filename);
 		goto end;
 	}
 
+	clear_layout_tables();
 	{
 		WINPR_JSON* obj = WINPR_JSON_GetObjectItem(json, "KeyboardLayouts");
 		if (!parse_layout_entries(obj, filename))

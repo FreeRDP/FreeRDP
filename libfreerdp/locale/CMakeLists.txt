@@ -103,3 +103,7 @@ if(WITH_WAYLAND)
 endif()
 
 freerdp_module_add(${SRCS})
+
+if(BUILD_TESTING)
+	add_subdirectory(test)
+endif()
