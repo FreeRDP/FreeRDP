@@ -1114,7 +1114,8 @@ int freerdp_set_param_uint64(rdpSettings* settings, int id, UINT64 param)
 
 char* freerdp_get_param_string(const rdpSettings* settings, int id)
 {
-	return (char*)freerdp_settings_get_string(settings, (FreeRDP_Settings_Keys_String)id);
+	const char* str = freerdp_settings_get_string(settings, (FreeRDP_Settings_Keys_String)id);
+	return WINPR_CAST_CONST_PTR_AWAY(str, char*);
 }
 
 int freerdp_set_param_string(rdpSettings* settings, int id, const char* param)

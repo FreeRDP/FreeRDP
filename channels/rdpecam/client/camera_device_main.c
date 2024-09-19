@@ -149,7 +149,7 @@ static UINT ecam_dev_sample_captured_callback(CameraDevice* dev, int streamIndex
 	}
 	else /* passthrough */
 	{
-		encodedSample = (BYTE*)sample;
+		encodedSample = WINPR_CAST_CONST_PTR_AWAY(sample, BYTE*);
 		encodedSize = size;
 	}
 

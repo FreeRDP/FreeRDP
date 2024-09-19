@@ -644,7 +644,7 @@ static void* winpr_convert_to_jpeg(const void* data, size_t size, UINT32 width, 
 
 		/* libjpeg is not const correct, we must cast here to avoid issues
 		 * with newer C compilers type check errors */
-		JSAMPLE* coffset = (JSAMPLE*)&cdata[offset];
+		JSAMPLE* coffset = WINPR_CAST_CONST_PTR_AWAY(&cdata[offset], JSAMPLE*);
 		if (jpeg_write_scanlines(&cinfo, &coffset, 1) != 1)
 			goto fail;
 	}
@@ -946,7 +946,7 @@ static void* winpr_read_png_from_buffer(const void* data, size_t SrcSize, size_t
 	if (!info_ptr)
 		goto fail;
 
-	memory_reader_state.buffer = (png_bytep)data;
+	memory_reader_state.buffer = WINPR_CAST_CONST_PTR_AWAY(data, png_bytep);
 	memory_reader_state.bufsize = SrcSize;
 	memory_reader_state.current_pos = 0;
 

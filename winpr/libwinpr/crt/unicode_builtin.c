@@ -543,7 +543,7 @@ static int winpr_ConvertUTF8toUTF16(const uint8_t* src, int cchSrc, uint16_t* ds
 	ConversionResult result = sourceIllegal;
 
 	if (cchSrc == -1)
-		cchSrc = strlen((char*)src) + 1;
+		cchSrc = (int)strnlen((const char*)src, INT32_MAX - 1) + 1;
 
 	srcBeg = src;
 	srcEnd = &src[cchSrc];
@@ -585,7 +585,7 @@ static int winpr_ConvertUTF16toUTF8(const uint16_t* src, int cchSrc, uint8_t* ds
 	ConversionResult result = sourceIllegal;
 
 	if (cchSrc == -1)
-		cchSrc = _wcslen((uint16_t*)src) + 1;
+		cchSrc = (int)_wcsnlen((const WCHAR*)src, INT32_MAX - 1) + 1;
 
 	srcBeg = src;
 	srcEnd = &src[cchSrc];

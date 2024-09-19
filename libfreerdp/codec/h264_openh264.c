@@ -20,6 +20,7 @@
  */
 #include <freerdp/config.h>
 
+#include <winpr/winpr.h>
 #include <winpr/library.h>
 #include <winpr/assert.h>
 
@@ -380,9 +381,9 @@ static int openh264_compress(H264_CONTEXT* WINPR_RESTRICT h264,
 	pic.iStride[0] = (int)iStride[0];
 	pic.iStride[1] = (int)iStride[1];
 	pic.iStride[2] = (int)iStride[2];
-	pic.pData[0] = (unsigned char*)pYUVData[0];
-	pic.pData[1] = (unsigned char*)pYUVData[1];
-	pic.pData[2] = (unsigned char*)pYUVData[2];
+	pic.pData[0] = WINPR_CAST_CONST_PTR_AWAY(pYUVData[0], BYTE*);
+	pic.pData[1] = WINPR_CAST_CONST_PTR_AWAY(pYUVData[1], BYTE*);
+	pic.pData[2] = WINPR_CAST_CONST_PTR_AWAY(pYUVData[2], BYTE*);
 
 	WINPR_ASSERT((*sys->pEncoder)->EncodeFrame);
 	status = (*sys->pEncoder)->EncodeFrame(sys->pEncoder, &pic, &info);

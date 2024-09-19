@@ -254,12 +254,12 @@ static void tsmf_print_guid(const BYTE* guid)
 #ifdef WITH_DEBUG_TSMF
 	char guidString[37];
 
-	snprintf(guidString, sizeof(guidString),
-	         "%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "-%02" PRIX8 "%02" PRIX8 "-%02" PRIX8
-	         "%02" PRIX8 "-%02" PRIX8 "%02" PRIX8 "-%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8
-	         "%02" PRIX8 "%02" PRIX8 "",
-	         guid[3], guid[2], guid[1], guid[0], guid[5], guid[4], guid[7], guid[6], guid[8],
-	         guid[9], guid[10], guid[11], guid[12], guid[13], guid[14], guid[15]);
+	(void)snprintf(guidString, sizeof(guidString),
+	               "%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "-%02" PRIX8 "%02" PRIX8
+	               "-%02" PRIX8 "%02" PRIX8 "-%02" PRIX8 "%02" PRIX8 "-%02" PRIX8 "%02" PRIX8
+	               "%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "",
+	               guid[3], guid[2], guid[1], guid[0], guid[5], guid[4], guid[7], guid[6], guid[8],
+	               guid[9], guid[10], guid[11], guid[12], guid[13], guid[14], guid[15]);
 
 	WLog_INFO(TAG, "%s", guidString);
 #endif
