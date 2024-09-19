@@ -48,6 +48,8 @@ SdlSelectWidget::SdlSelectWidget(SdlSelectWidget&& other) noexcept
 {
 }
 
+SdlSelectWidget::~SdlSelectWidget() = default;
+
 bool SdlSelectWidget::set_mouseover(SDL_Renderer* renderer, bool mouseOver)
 {
 	_mouseover = mouseOver;

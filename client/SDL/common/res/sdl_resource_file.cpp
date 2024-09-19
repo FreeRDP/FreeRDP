@@ -23,3 +23,5 @@ SDLResourceFile::SDLResourceFile(const std::string& type, const std::string& id,
 {
 	SDLResourceManager::insert(type, id, data);
 }
+
+SDLResourceFile::~SDLResourceFile() = default;

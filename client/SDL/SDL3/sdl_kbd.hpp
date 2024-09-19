@@ -34,7 +34,12 @@ class sdlInput
 {
   public:
 	explicit sdlInput(SdlContext* sdl);
+	sdlInput(const sdlInput& other) = delete;
+	sdlInput(sdlInput&& other) = delete;
 	~sdlInput() = default;
+
+	sdlInput& operator=(const sdlInput& other) = delete;
+	sdlInput& operator=(sdlInput&& other) = delete;
 
 	BOOL keyboard_sync_state();
 	BOOL keyboard_focus_in();

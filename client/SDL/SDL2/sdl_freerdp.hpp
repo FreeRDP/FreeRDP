@@ -47,6 +47,11 @@ class SdlContext
 {
   public:
 	explicit SdlContext(rdpContext* context);
+	SdlContext(const SdlContext& other) = delete;
+	SdlContext(SdlContext&& other) = delete;
+
+	SdlContext& operator=(const SdlContext& other) = delete;
+	SdlContext& operator=(SdlContext&& other) = delete;
 
   private:
 	rdpContext* _context;

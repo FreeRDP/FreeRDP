@@ -5,6 +5,8 @@
 
 static const Uint32 hpadding = 10;
 
+SdlButtonList::~SdlButtonList() = default;
+
 bool SdlButtonList::populate(SDL_Renderer* renderer, const std::vector<std::string>& labels,
                              const std::vector<int>& ids, Sint32 total_width, Sint32 offsetY,
                              Sint32 width, Sint32 height)

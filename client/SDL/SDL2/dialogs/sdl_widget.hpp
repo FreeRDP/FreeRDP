@@ -69,9 +69,11 @@ class SdlWidget
 	static bool error_ex(Uint32 res, const char* what, const char* file, size_t line,
 	                     const char* fkt);
 
-  private:
 	SdlWidget(const SdlWidget& other) = delete;
+	SdlWidget& operator=(const SdlWidget& other) = delete;
+	SdlWidget& operator=(SdlWidget&& other) = delete;
 
+  private:
 	SDL_Texture* render_text(SDL_Renderer* renderer, const std::string& text, SDL_Color fgcolor,
 	                         SDL_Rect& src, SDL_Rect& dst);
 	SDL_Texture* render_text_wrapped(SDL_Renderer* renderer, const std::string& text,

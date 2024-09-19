@@ -9,7 +9,11 @@ class SdlButton : public SdlWidget
   public:
 	SdlButton(SDL_Renderer* renderer, std::string label, int id, const SDL_FRect& rect);
 	SdlButton(SdlButton&& other) noexcept;
-	~SdlButton() override = default;
+	SdlButton(const SdlButton& other) = delete;
+	~SdlButton() override;
+
+	SdlButton& operator=(const SdlButton& other) = delete;
+	SdlButton& operator=(SdlButton&& other) = delete;
 
 	bool highlight(SDL_Renderer* renderer);
 	bool mouseover(SDL_Renderer* renderer);
@@ -18,8 +22,6 @@ class SdlButton : public SdlWidget
 	[[nodiscard]] int id() const;
 
   private:
-	SdlButton(const SdlButton& other) = delete;
-
 	std::string _name;
 	int _id;
 };

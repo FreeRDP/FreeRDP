@@ -31,7 +31,12 @@ class sdlDispContext
 
   public:
 	explicit sdlDispContext(SdlContext* sdl);
+	sdlDispContext(const sdlDispContext& other) = delete;
+	sdlDispContext(sdlDispContext&& other) = delete;
 	~sdlDispContext();
+
+	sdlDispContext& operator=(const sdlDispContext& other) = delete;
+	sdlDispContext& operator=(sdlDispContext&& other) = delete;
 
 	BOOL init(DispClientContext* disp);
 	BOOL uninit(DispClientContext* disp);

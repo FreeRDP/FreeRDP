@@ -12,6 +12,12 @@ class SdlInputWidgetList
   public:
 	SdlInputWidgetList(const std::string& title, const std::vector<std::string>& labels,
 	                   const std::vector<std::string>& initial, const std::vector<Uint32>& flags);
+	SdlInputWidgetList(const SdlInputWidgetList& other) = delete;
+	SdlInputWidgetList(SdlInputWidgetList&& other) = delete;
+
+	SdlInputWidgetList& operator=(const SdlInputWidgetList& other) = delete;
+	SdlInputWidgetList& operator=(SdlInputWidgetList&& other) = delete;
+
 	virtual ~SdlInputWidgetList();
 
 	int run(std::vector<std::string>& result);
@@ -21,9 +27,6 @@ class SdlInputWidgetList
 	ssize_t get_index(const SDL_MouseButtonEvent& button);
 
   private:
-	SdlInputWidgetList(const SdlInputWidgetList& other) = delete;
-	SdlInputWidgetList(SdlInputWidgetList&& other) = delete;
-
 	enum
 	{
 		INPUT_BUTTON_ACCEPT = 1,

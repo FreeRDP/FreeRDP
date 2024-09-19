@@ -13,14 +13,16 @@ class SdlSelectList
 {
   public:
 	SdlSelectList(const std::string& title, const std::vector<std::string>& labels);
+	SdlSelectList(const SdlSelectList& other) = delete;
+	SdlSelectList(SdlSelectList&& other) = delete;
 	virtual ~SdlSelectList();
+
+	SdlSelectList& operator=(const SdlSelectList& other) = delete;
+	SdlSelectList& operator=(SdlSelectList&& other) = delete;
 
 	int run();
 
   private:
-	SdlSelectList(const SdlSelectList& other) = delete;
-	SdlSelectList(SdlSelectList&& other) = delete;
-
 	enum
 	{
 		INPUT_BUTTON_ACCEPT = 0,

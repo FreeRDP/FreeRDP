@@ -34,7 +34,12 @@ class CriticalSection
 {
   public:
 	CriticalSection();
+	CriticalSection(const CriticalSection& other) = delete;
+	CriticalSection(CriticalSection&& other) = delete;
 	~CriticalSection();
+
+	CriticalSection& operator=(const CriticalSection& other) = delete;
+	CriticalSection& operator=(CriticalSection&& other) = delete;
 
 	void lock();
 	void unlock();

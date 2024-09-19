@@ -43,6 +43,9 @@ class ClipRequest
 	ClipRequest(ClipRequest&& other) = default;
 	~ClipRequest() = default;
 
+	ClipRequest& operator=(const ClipRequest& other) = delete;
+	ClipRequest& operator=(ClipRequest&& other) = delete;
+
 	[[nodiscard]] uint32_t format() const;
 	[[nodiscard]] std::string formatstr() const;
 	[[nodiscard]] std::string mime() const;
