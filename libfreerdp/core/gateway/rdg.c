@@ -1505,6 +1505,16 @@ static BOOL rdg_establish_data_connection(rdpRdg* rdg, rdpTls* tls, const char* 
 		if (!rdg_send_http_request(rdg, tls, method, TransferEncodingChunked))
 			return FALSE;
 
+		response = http_response_recv(tls, TRUE);
+		if (!response)
+		{
+			WLog_Print(rdg->log, WLOG_INFO, "RD Gateway HTTP transport broken.");
+			*rpcFallback = TRUE;
+			return FALSE;
+		}
+
+		http_response_free(response);
+
 		if (rdg->extAuth == HTTP_EXTENDED_AUTH_SSPI_NTLM)
 		{
 			/* create a new auth context for SSPI_NTLM. This must be done after the last
