@@ -230,14 +230,14 @@ fail:
 	winpr_backtrace_free(stack);
 }
 
-char* winpr_strerror(DWORD dw, char* dmsg, size_t size)
+char* winpr_strerror(INT32 dw, char* dmsg, size_t size)
 {
 #ifdef __STDC_LIB_EXT1__
-	strerror_s((int)dw, dmsg, size);
+	strerror_s(dw, dmsg, size);
 #elif defined(WINPR_HAVE_STRERROR_R)
-	strerror_r((int)dw, dmsg, size);
+	strerror_r(dw, dmsg, size);
 #else
-	(void)_snprintf(dmsg, size, "%s", strerror((int)dw));
+	(void)_snprintf(dmsg, size, "%s", strerror(dw));
 #endif
 	return dmsg;
 }
