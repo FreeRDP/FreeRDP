@@ -26,8 +26,6 @@
 
 #include "errinfo.h"
 
-#define TAG FREERDP_TAG("core")
-
 #define ERRBASE_DEFINE(_code)                                            \
 	{                                                                    \
 		ERRBASE_##_code, "ERRBASE_" #_code, ERRBASE_##_code##_STRING, "" \

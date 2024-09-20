@@ -34,8 +34,6 @@
 #include "brush.h"
 #include "clipping.h"
 
-#define TAG FREERDP_TAG("gdi.brush")
-
 const char* gdi_rop_to_string(UINT32 code)
 {
 	switch (code)

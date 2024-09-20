@@ -38,7 +38,6 @@
 #include <freerdp/crypto/crypto.h>
 #include <freerdp/crypto/certificate_store.h>
 #include <freerdp/log.h>
-#define TAG FREERDP_TAG("crypto")
 
 struct rdp_certificate_store
 {

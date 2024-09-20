@@ -28,8 +28,6 @@
 
 #include <SDL3/SDL_mouse.h>
 
-#define TAG CLIENT_TAG("SDL.pointer")
-
 typedef struct
 {
 	rdpPointer pointer;

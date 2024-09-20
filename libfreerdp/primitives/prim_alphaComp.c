@@ -28,9 +28,6 @@
 #include "prim_alphaComp.h"
 
 #define ALPHA(_k_) (((_k_)&0xFF000000U) >> 24)
-#define RED(_k_) (((_k_)&0x00FF0000U) >> 16)
-#define GRN(_k_) (((_k_)&0x0000FF00U) >> 8)
-#define BLU(_k_) (((_k_)&0x000000FFU))
 
 /* ------------------------------------------------------------------------- */
 static pstatus_t general_alphaComp_argb(const BYTE* pSrc1, UINT32 src1Step, const BYTE* pSrc2,

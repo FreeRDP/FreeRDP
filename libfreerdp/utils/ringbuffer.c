@@ -28,9 +28,9 @@
 #include <winpr/crt.h>
 #include <freerdp/log.h>
 
+#ifdef WITH_DEBUG_RINGBUFFER
 #define TAG FREERDP_TAG("utils.ringbuffer")
 
-#ifdef WITH_DEBUG_RINGBUFFER
 #define DEBUG_RINGBUFFER(...) WLog_DBG(TAG, __VA_ARGS__)
 #else
 #define DEBUG_RINGBUFFER(...) \

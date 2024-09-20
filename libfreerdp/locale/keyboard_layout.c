@@ -34,7 +34,10 @@
 #include <freerdp/locale/keyboard.h>
 
 #include <freerdp/log.h>
+
+#if defined(WITH_KEYBOARD_LAYOUT_FROM_FILE)
 #define TAG FREERDP_TAG("locale.keyboard.layouts")
+#endif
 
 // #define DUMP_LAYOUTS_TO_JSON
 

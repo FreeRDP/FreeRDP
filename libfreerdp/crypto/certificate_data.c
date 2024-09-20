@@ -34,9 +34,6 @@
 
 #include "certificate.h"
 
-#include <freerdp/log.h>
-#define TAG FREERDP_TAG("crypto")
-
 struct rdp_certificate_data
 {
 	char* hostname;

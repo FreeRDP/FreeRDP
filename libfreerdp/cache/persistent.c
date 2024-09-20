@@ -26,10 +26,7 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/constants.h>
 
-#include <freerdp/log.h>
 #include <freerdp/cache/persistent.h>
-
-#define TAG FREERDP_TAG("cache.persistent")
 
 struct rdp_persistent_cache
 {

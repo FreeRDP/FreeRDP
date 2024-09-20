@@ -67,9 +67,9 @@
 #include "dsp_ffmpeg.h"
 #endif
 
-#define TAG FREERDP_TAG("dsp")
-
 #if !defined(WITH_DSP_FFMPEG)
+
+#define TAG FREERDP_TAG("dsp")
 
 typedef union
 {

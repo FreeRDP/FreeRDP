@@ -58,8 +58,8 @@
 
 #define TAG FREERDP_TAG("core")
 
-#define CERTIFICATE_TAG FREERDP_TAG("core.certificate")
 #ifdef WITH_DEBUG_CERTIFICATE
+#define CERTIFICATE_TAG FREERDP_TAG("core.certificate")
 #define DEBUG_CERTIFICATE(...) WLog_DBG(TAG, __VA_ARGS__)
 #else
 #define DEBUG_CERTIFICATE(...) \

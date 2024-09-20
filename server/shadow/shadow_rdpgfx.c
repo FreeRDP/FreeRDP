@@ -23,8 +23,6 @@
 
 #include "shadow_rdpgfx.h"
 
-#define TAG SERVER_TAG("shadow")
-
 int shadow_client_rdpgfx_init(rdpShadowClient* client)
 {
 	WINPR_ASSERT(client);

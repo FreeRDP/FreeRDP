@@ -40,8 +40,6 @@
 #define INPUT_EVENT_MOUSEX 0x8002
 #define INPUT_EVENT_MOUSEREL 0x8004
 
-#define RDP_CLIENT_INPUT_PDU_HEADER_LENGTH 4
-
 static void rdp_write_client_input_pdu_header(wStream* s, UINT16 number)
 {
 	WINPR_ASSERT(s);

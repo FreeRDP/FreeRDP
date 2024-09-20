@@ -26,8 +26,6 @@
 
 #include "errinfo.h"
 
-#define TAG FREERDP_TAG("core")
-
 #define ERRCONNECT_DEFINE(_code, category)                                              \
 	{                                                                                   \
 		ERRCONNECT_##_code, "ERRCONNECT_" #_code, ERRCONNECT_##_code##_STRING, category \

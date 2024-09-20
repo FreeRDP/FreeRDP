@@ -30,8 +30,6 @@
 
 #include <SDL3/SDL.h>
 
-#define TAG CLIENT_TAG("SDL.touch")
-
 BOOL sdl_scale_coordinates(SdlContext* sdl, Uint32 windowId, INT32* px, INT32* py,
                            BOOL fromLocalToRDP, BOOL applyOffset)
 {

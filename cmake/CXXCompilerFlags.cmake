@@ -48,6 +48,7 @@ if (ENABLE_WARNING_VERBOSE)
 			-Wno-c++98-compat
 			-Wno-c++98-compat-pedantic
 			-Wno-pre-c++17-compat
+			-Wno-exit-time-destructors
 		)
 	endif()
 

@@ -29,8 +29,6 @@
 #include <freerdp/log.h>
 #include "xcrush.h"
 
-#define TAG FREERDP_TAG("codec")
-
 #pragma pack(push, 1)
 
 typedef struct

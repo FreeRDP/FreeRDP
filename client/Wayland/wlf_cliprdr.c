@@ -38,8 +38,6 @@
 
 #define TAG CLIENT_TAG("wayland.cliprdr")
 
-#define MAX_CLIPBOARD_FORMATS 255
-
 #define mime_text_plain "text/plain"
 #define mime_text_utf8 mime_text_plain ";charset=utf-8"
 

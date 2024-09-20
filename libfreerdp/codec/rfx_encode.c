@@ -37,8 +37,6 @@
 
 #include "rfx_encode.h"
 
-#define MINMAX(_v, _l, _h) ((_v) < (_l) ? (_l) : ((_v) > (_h) ? (_h) : (_v)))
-
 static void rfx_encode_format_rgb(const BYTE* WINPR_RESTRICT rgb_data, int width, int height,
                                   int rowstride, UINT32 pixel_format,
                                   const BYTE* WINPR_RESTRICT palette, INT16* WINPR_RESTRICT r_buf,

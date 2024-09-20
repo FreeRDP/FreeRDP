@@ -38,14 +38,6 @@
 #include "neon/nsc_neon.h"
 
 #include <freerdp/log.h>
-#define TAG FREERDP_TAG("codec.nsc")
-
-#ifndef NSC_INIT_SIMD
-#define NSC_INIT_SIMD(_nsc_context) \
-	do                              \
-	{                               \
-	} while (0)
-#endif
 
 static BOOL nsc_decode(NSC_CONTEXT* WINPR_RESTRICT context)
 {

@@ -28,9 +28,9 @@
 
 #include <freerdp/codec/color.h>
 
+#if defined(SSE2_ENABLED)
 #define TAG FREERDP_TAG("primitives.copy")
 
-#if defined(SSE2_ENABLED)
 #include <emmintrin.h>
 #include <immintrin.h>
 

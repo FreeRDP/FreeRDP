@@ -47,7 +47,6 @@
 #if defined(WITH_SMARTCARD_EMULATE)
 #include <freerdp/emulate/scard/smartcard_emulate.h>
 
-#define str(x) #x
 #define wrap(ctx, fkt, ...)                                             \
 	ctx->useEmulatedCard ? Emulate_##fkt(ctx->emulation, ##__VA_ARGS__) \
 	                     : ctx->pWinSCardApi->pfn##fkt(__VA_ARGS__)

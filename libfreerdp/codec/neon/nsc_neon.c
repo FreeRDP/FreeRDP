@@ -26,12 +26,14 @@
 #include "../nsc_types.h"
 #include "nsc_neon.h"
 
-#define TAG FREERDP_TAG("codec.nsc.neon")
-
 #if defined(WITH_NEON)
 #if defined(_M_ARM64) || defined(_M_ARM)
 #define NEON_ENABLED
 #endif
+#endif
+
+#if defined(NEON_ENABLED)
+#define TAG FREERDP_TAG("codec.nsc.neon")
 #endif
 
 void nsc_init_neon(NSC_CONTEXT* context)
