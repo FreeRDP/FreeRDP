@@ -804,7 +804,10 @@ ADDIN_ARGV* freerdp_addin_argv_new(size_t argc, const char* argv[])
 	return args;
 
 fail:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	freerdp_addin_argv_free(args);
+	WINPR_PRAGMA_DIAG_POP
 	return NULL;
 }
 
