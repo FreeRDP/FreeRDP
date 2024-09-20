@@ -78,7 +78,7 @@
 #define PKT_TYPE_CLOSE_CHANNEL_RESPONSE 0x11
 
 /* HTTP tunnel auth fields present flags. */
-#define HTTP_TUNNEL_AUTH_FIELD_SOH 0x1
+// #define HTTP_TUNNEL_AUTH_FIELD_SOH 0x1
 
 /* HTTP tunnel auth response fields present flags. */
 #define HTTP_TUNNEL_AUTH_RESPONSE_FIELD_REDIR_FLAGS 0x1
@@ -87,7 +87,7 @@
 
 /* HTTP tunnel packet fields present flags. */
 #define HTTP_TUNNEL_PACKET_FIELD_PAA_COOKIE 0x1
-#define HTTP_TUNNEL_PACKET_FIELD_REAUTH 0x2
+// #define HTTP_TUNNEL_PACKET_FIELD_REAUTH 0x2
 
 /* HTTP tunnel response fields present flags. */
 #define HTTP_TUNNEL_RESPONSE_FIELD_TUNNEL_ID 0x1
@@ -1904,6 +1904,7 @@ static BOOL rdg_process_control_packet(rdpRdg* rdg, int type, size_t packetLengt
 			status = rdg_process_service_message(rdg, s);
 			break;
 
+		case PKT_TYPE_REAUTH_MESSAGE:
 		default:
 			status = rdg_process_unknown_packet(rdg, type);
 			break;

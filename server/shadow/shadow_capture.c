@@ -27,8 +27,6 @@
 
 #include "shadow_capture.h"
 
-#define TAG SERVER_TAG("shadow")
-
 int shadow_capture_align_clip_rect(RECTANGLE_16* rect, const RECTANGLE_16* clip)
 {
 	int dx = 0;

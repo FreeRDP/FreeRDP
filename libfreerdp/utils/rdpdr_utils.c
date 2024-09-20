@@ -27,7 +27,6 @@
 #include <freerdp/channels/rdpdr.h>
 
 #include <freerdp/log.h>
-#define TAG FREERDP_TAG("utils.scard")
 
 LONG scard_log_status_error(const char* tag, const char* what, LONG status)
 {

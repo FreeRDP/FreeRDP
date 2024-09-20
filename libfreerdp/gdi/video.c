@@ -27,8 +27,6 @@
 #include <freerdp/gdi/video.h>
 #include <freerdp/gdi/region.h>
 
-#define TAG FREERDP_TAG("video")
-
 void gdi_video_geometry_init(rdpGdi* gdi, GeometryClientContext* geom)
 {
 	WINPR_ASSERT(gdi);

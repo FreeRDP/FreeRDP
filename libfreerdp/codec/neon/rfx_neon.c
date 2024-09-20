@@ -24,8 +24,6 @@
 #include "../rfx_types.h"
 #include "rfx_neon.h"
 
-#define TAG FREERDP_TAG("codec.rfx.neon")
-
 #if defined(WITH_NEON)
 #if defined(_M_ARM64) || defined(_M_ARM)
 #define NEON_ENABLED

@@ -26,8 +26,6 @@
 
 #include <freerdp/codec/color.h>
 
-#define TAG FREERDP_TAG("primitives.copy")
-
 static primitives_t* generic = NULL;
 
 /* ------------------------------------------------------------------------- */

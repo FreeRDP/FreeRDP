@@ -20,12 +20,9 @@
 
 #include <winpr/platform.h>
 #include <freerdp/config.h>
-#include <freerdp/log.h>
 
 #include "../rfx_types.h"
 #include "rfx_sse2.h"
-
-#define TAG FREERDP_TAG("codec.rfx.sse2")
 
 #if defined(WITH_SSE2)
 #if defined(_M_IX86) || defined(_M_AMD64) || defined(_M_IA64) || defined(_M_IX86_AMD64)

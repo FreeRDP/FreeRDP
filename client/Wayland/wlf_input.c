@@ -35,8 +35,6 @@
 #include "wlfreerdp.h"
 #include "wlf_input.h"
 
-#define TAG CLIENT_TAG("wayland.input")
-
 static BOOL scale_signed_coordinates(rdpContext* context, int32_t* x, int32_t* y,
                                      BOOL fromLocalToRDP)
 {

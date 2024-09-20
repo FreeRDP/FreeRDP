@@ -19,12 +19,9 @@
 
 #include <winpr/platform.h>
 #include <freerdp/config.h>
-#include <freerdp/log.h>
 
 #include "../nsc_types.h"
 #include "nsc_sse2.h"
-
-#define TAG FREERDP_TAG("codec.nsc.sse2")
 
 #if defined(WITH_SSE2)
 #if defined(_M_IX86) || defined(_M_AMD64) || defined(_M_IA64) || defined(_M_IX86_AMD64)

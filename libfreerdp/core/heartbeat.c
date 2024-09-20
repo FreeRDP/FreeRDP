@@ -19,8 +19,6 @@
 
 #include <freerdp/config.h>
 
-#define WITH_DEBUG_HEARTBEAT
-
 #include "heartbeat.h"
 
 state_run_t rdp_recv_heartbeat_packet(rdpRdp* rdp, wStream* s)

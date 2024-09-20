@@ -28,9 +28,6 @@
 #include <winpr/file.h>
 #include <winpr/crt.h>
 #include <winpr/sysinfo.h>
-#include <freerdp/log.h>
-
-#define TAG FREERDP_TAG("utils")
 
 #include <freerdp/types.h>
 #include <freerdp/utils/pcap.h>

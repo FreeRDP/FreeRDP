@@ -42,15 +42,6 @@
 #define FLOATBAR_COLOR_BORDER "RGB:75/9a/c8"
 #define FLOATBAR_COLOR_FOREGROUND "RGB:FF/FF/FF"
 
-#ifdef WITH_DEBUG_X11
-#define DEBUG_X11(...) WLog_DBG(TAG, __VA_ARGS__)
-#else
-#define DEBUG_X11(...) \
-	do                 \
-	{                  \
-	} while (0)
-#endif
-
 #define XF_FLOATBAR_MODE_NONE 0
 #define XF_FLOATBAR_MODE_DRAGGING 1
 #define XF_FLOATBAR_MODE_RESIZE_LEFT 2

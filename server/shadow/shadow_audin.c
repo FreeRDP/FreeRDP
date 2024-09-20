@@ -29,8 +29,6 @@
 #include <freerdp/server/audin.h>
 #endif
 
-#define TAG SERVER_TAG("shadow")
-
 #if defined(CHANNEL_AUDIN_SERVER)
 
 static UINT AudinServerData(audin_server_context* audin, const SNDIN_DATA* data)

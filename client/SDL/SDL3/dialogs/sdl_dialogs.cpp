@@ -33,8 +33,6 @@
 #include "sdl_select.hpp"
 #include "sdl_selectlist.hpp"
 
-#define TAG CLIENT_TAG("SDL.dialogs")
-
 enum
 {
 	SHOW_DIALOG_ACCEPT_REJECT = 1,

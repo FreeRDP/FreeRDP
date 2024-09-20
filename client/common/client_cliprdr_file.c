@@ -55,7 +55,6 @@
 #include <freerdp/client/client_cliprdr_file.h>
 
 #define MAX_CLIP_DATA_DIR_LEN 10
-#define MAX_CLIPBOARD_FORMATS 255
 #define NO_CLIP_DATA_ID (UINT64_C(1) << 32)
 #define WIN32_FILETIME_TO_UNIX_EPOCH UINT64_C(11644473600)
 
