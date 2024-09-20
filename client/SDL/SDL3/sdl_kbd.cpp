@@ -549,7 +549,7 @@ BOOL sdlInput::keyboard_handle_event(const SDL_KeyboardEvent* ev)
 			if (ev->scancode == _hotkeyGrab)
 			{
 				_sdl->grab_kbd_enabled = !_sdl->grab_kbd_enabled;
-				keyboard_grab(ev->windowID, _sdl->grab_kbd ? SDL_FALSE : SDL_TRUE);
+				keyboard_grab(ev->windowID, _sdl->grab_kbd);
 				return TRUE;
 			}
 			if (ev->scancode == _hotkeyDisconnect)
@@ -570,7 +570,7 @@ BOOL sdlInput::keyboard_handle_event(const SDL_KeyboardEvent* ev)
 	    _sdl->context()->input, ev->type == SDL_EVENT_KEY_DOWN, ev->repeat, scancode);
 }
 
-BOOL sdlInput::keyboard_grab(Uint32 windowID, SDL_bool enable)
+BOOL sdlInput::keyboard_grab(Uint32 windowID, bool enable)
 {
 	auto it = _sdl->windows.find(windowID);
 	if (it == _sdl->windows.end())
@@ -594,7 +594,7 @@ BOOL sdlInput::mouse_focus(Uint32 windowID)
 	return TRUE;
 }
 
-BOOL sdlInput::mouse_grab(Uint32 windowID, SDL_bool enable)
+BOOL sdlInput::mouse_grab(Uint32 windowID, bool enable)
 {
 	auto it = _sdl->windows.find(windowID);
 	if (it == _sdl->windows.end())

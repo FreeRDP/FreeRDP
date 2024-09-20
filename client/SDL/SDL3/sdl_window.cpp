@@ -99,7 +99,7 @@ bool SdlWindow::grabKeyboard(bool enable)
 {
 	if (!_window)
 		return false;
-	SDL_SetWindowKeyboardGrab(_window, enable ? SDL_TRUE : SDL_FALSE);
+	SDL_SetWindowKeyboardGrab(_window, enable);
 	return true;
 }
 
@@ -107,14 +107,14 @@ bool SdlWindow::grabMouse(bool enable)
 {
 	if (!_window)
 		return false;
-	SDL_SetWindowMouseGrab(_window, enable ? SDL_TRUE : SDL_FALSE);
+	SDL_SetWindowMouseGrab(_window, enable);
 	return true;
 }
 
 void SdlWindow::setBordered(bool bordered)
 {
 	if (_window)
-		SDL_SetWindowBordered(_window, bordered ? SDL_TRUE : SDL_FALSE);
+		SDL_SetWindowBordered(_window, bordered);
 }
 
 void SdlWindow::raise()
@@ -124,7 +124,7 @@ void SdlWindow::raise()
 
 void SdlWindow::resizeable(bool use)
 {
-	SDL_SetWindowResizable(_window, use ? SDL_TRUE : SDL_FALSE);
+	SDL_SetWindowResizable(_window, use);
 }
 
 void SdlWindow::fullscreen(bool enter)
@@ -140,9 +140,9 @@ void SdlWindow::fullscreen(bool enter)
 
 			SDL_RestoreWindow(_window); // Maximize so we can see the caption and
 			                            // bits
-			SDL_SetWindowBordered(_window, SDL_FALSE);
+			SDL_SetWindowBordered(_window, false);
 			SDL_SetWindowPosition(_window, 0, 0);
-			SDL_SetWindowAlwaysOnTop(_window, SDL_TRUE);
+			SDL_SetWindowAlwaysOnTop(_window, true);
 			SDL_RaiseWindow(_window);
 			if (mode)
 				SDL_SetWindowSize(_window, mode->w, mode->h);
@@ -153,8 +153,8 @@ void SdlWindow::fullscreen(bool enter)
 		if (curFlags & SDL_WINDOW_BORDERLESS)
 		{
 
-			SDL_SetWindowBordered(_window, SDL_TRUE);
-			SDL_SetWindowAlwaysOnTop(_window, SDL_FALSE);
+			SDL_SetWindowBordered(_window, true);
+			SDL_SetWindowAlwaysOnTop(_window, false);
 			SDL_RaiseWindow(_window);
 			SDL_MinimizeWindow(_window); // Maximize so we can see the caption and bits
 			SDL_MaximizeWindow(_window); // Maximize so we can see the caption and bits

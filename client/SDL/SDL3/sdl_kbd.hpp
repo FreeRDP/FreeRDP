@@ -46,9 +46,9 @@ class sdlInput
 
 	BOOL keyboard_handle_event(const SDL_KeyboardEvent* ev);
 
-	BOOL keyboard_grab(Uint32 windowID, SDL_bool enable);
+	BOOL keyboard_grab(Uint32 windowID, bool enable);
 	BOOL mouse_focus(Uint32 windowID);
-	BOOL mouse_grab(Uint32 windowID, SDL_bool enable);
+	BOOL mouse_grab(Uint32 windowID, bool enable);
 
 	static BOOL keyboard_set_indicators(rdpContext* context, UINT16 led_flags);
 	static BOOL keyboard_set_ime_status(rdpContext* context, UINT16 imeId, UINT32 imeState,
