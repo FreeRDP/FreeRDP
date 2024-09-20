@@ -7,3 +7,8 @@ name = rdp_settings
 [suppress_type]
 type_kind = struct
 has_data_members_inserted_at = end
+
+# winpr_strerror did use unsigned instead of signed int as argument
+[suppress_function]
+change_kine = function-subtype-change
+name = winpr_strerror
