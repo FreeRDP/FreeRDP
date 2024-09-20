@@ -1,9 +1,9 @@
-include(CheckCCompilerFlag)
+include(CheckCXXCompilerFlag)
 
-macro (checkCFlag FLAG)
-	CHECK_C_COMPILER_FLAG("${FLAG}" CFLAG${FLAG})
-	if(CFLAG${FLAG})
-		string(APPEND CMAKE_C_FLAGS " ${FLAG}")
+macro (checkCXXFlag FLAG)
+	check_cxx_compiler_flag("${FLAG}" CXXFLAG${FLAG})
+	if(CXXFLAG${FLAG})
+		string(APPEND CMAKE_CXX_FLAGS " ${FLAG}")
 	else()
 		message(WARNING "compiler does not support ${FLAG}")
 	endif()
@@ -17,11 +17,11 @@ if (ENABLE_WARNING_VERBOSE)
 		# Remove previous warning definitions,
 		# NMake is otherwise complaining.
 		foreach (flags_var_to_scrub
-			CMAKE_C_FLAGS
-			CMAKE_C_FLAGS_DEBUG
-			CMAKE_C_FLAGS_RELEASE
-			CMAKE_C_FLAGS_RELWITHDEBINFO
-			CMAKE_C_FLAGS_MINSIZEREL)
+			CMAKE_CXX_FLAGS
+			CMAKE_CXX_FLAGS_DEBUG
+			CMAKE_CXX_FLAGS_RELEASE
+			CMAKE_CXX_FLAGS_RELWITHDEBINFO
+			CMAKE_CXX_FLAGS_MINSIZEREL)
 			string (REGEX REPLACE "(^| )[/-]W[ ]*[1-9]" " "
 			"${flags_var_to_scrub}" "${${flags_var_to_scrub}}")
 		endforeach()
@@ -43,18 +43,22 @@ if (ENABLE_WARNING_VERBOSE)
 			-Wno-reserved-identifier
 			-Wno-covered-switch-default
 			-Wno-disabled-macro-expansion
+			-Wno-ctad-maybe-unsupported
+			-Wno-c++98-compat
+			-Wno-c++98-compat-pedantic
+			-Wno-pre-c++17-compat
 		)
 	endif()
 
 	foreach(FLAG ${C_WARNING_FLAGS})
-		CheckCFlag(${FLAG})
+		CheckCXXFlag(${FLAG})
 	endforeach()
 endif()
 
 
 if (ENABLE_WARNING_ERROR)
-	CheckCFlag(-Werror)
+	CheckCXXFlag(-Werror)
 endif()
 
-set(CMAKE_C_FLAGS ${CMAKE_C_FLAGS} CACHE STRING "default CFLAGS")
-message("Using CFLAGS ${CMAKE_C_FLAGS}")
+set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} CACHE STRING "default CXXFLAGS")
+message("Using CXXFLAGS ${CMAKE_CXX_FLAGS}")
