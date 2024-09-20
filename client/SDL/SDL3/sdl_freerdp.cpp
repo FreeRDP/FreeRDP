@@ -963,7 +963,7 @@ static int sdl_run(SdlContext* sdl)
 				case SDL_EVENT_USER_WINDOW_RESIZEABLE:
 				{
 					auto window = static_cast<SdlWindow*>(windowEvent.user.data1);
-					const SDL_bool use = windowEvent.user.code != 0 ? SDL_TRUE : SDL_FALSE;
+					const bool use = windowEvent.user.code != 0;
 					if (window)
 						window->resizeable(use);
 				}
@@ -971,7 +971,7 @@ static int sdl_run(SdlContext* sdl)
 				case SDL_EVENT_USER_WINDOW_FULLSCREEN:
 				{
 					auto window = static_cast<SdlWindow*>(windowEvent.user.data1);
-					const SDL_bool enter = windowEvent.user.code != 0 ? SDL_TRUE : SDL_FALSE;
+					const bool enter = windowEvent.user.code != 0;
 					if (window)
 						window->fullscreen(enter);
 				}

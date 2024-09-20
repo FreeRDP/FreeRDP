@@ -35,7 +35,7 @@ static const Uint32 hpadding = 5;
 
 SDLConnectionDialog::SDLConnectionDialog(rdpContext* context) : _context(context)
 {
-	SDL_Init(SDL_INIT_TIMER | SDL_INIT_VIDEO);
+	SDL_Init(SDL_INIT_EVENTS | SDL_INIT_VIDEO);
 	hide();
 }
 
@@ -149,7 +149,7 @@ bool SDLConnectionDialog::setModal()
 
 		auto parent = sdl->windows.begin()->second.window();
 		SDL_SetWindowParent(_window, parent);
-		SDL_SetWindowModal(_window, SDL_TRUE);
+		SDL_SetWindowModal(_window, true);
 		SDL_RaiseWindow(_window);
 	}
 	return true;
