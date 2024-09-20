@@ -226,3 +226,13 @@ fail:
 		pclose(keyScript);
 	return rc;
 }
+
+const char* x11_error_to_string(xfContext* xfc, int error, char* buffer, size_t size)
+{
+	WINPR_ASSERT(xfc);
+	WINPR_ASSERT(size <= INT32_MAX);
+	const int rc = XGetErrorText(xfc->display, error, buffer, (int)size);
+	if (rc)
+		WLog_WARN(TAG, "XGetErrorText returned %d", rc);
+	return buffer;
+}

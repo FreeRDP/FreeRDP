@@ -99,6 +99,10 @@
 
 #define PROP_MOTIF_WM_HINTS_ELEMENTS 5
 
+#define ENTRY(x) \
+	case x:      \
+		return #x
+
 typedef struct
 {
 	unsigned long flags;
@@ -107,6 +111,114 @@ typedef struct
 	long inputMode;
 	unsigned long status;
 } PropMotifWmHints;
+
+static void xf_XSetTransientForHint(xfContext* xfc, xfAppWindow* window);
+
+static const char* window_style_to_string(UINT32 style)
+{
+	switch (style)
+	{
+		ENTRY(WS_NONE);
+		ENTRY(WS_BORDER);
+		ENTRY(WS_CAPTION);
+		ENTRY(WS_CHILD);
+		ENTRY(WS_CLIPCHILDREN);
+		ENTRY(WS_CLIPSIBLINGS);
+		ENTRY(WS_DISABLED);
+		ENTRY(WS_DLGFRAME);
+		ENTRY(WS_GROUP);
+		ENTRY(WS_HSCROLL);
+		ENTRY(WS_MAXIMIZE);
+		ENTRY(WS_MAXIMIZEBOX);
+		ENTRY(WS_MINIMIZE);
+		ENTRY(WS_OVERLAPPEDWINDOW);
+		ENTRY(WS_POPUP);
+		ENTRY(WS_POPUPWINDOW);
+		ENTRY(WS_SIZEBOX);
+		ENTRY(WS_SYSMENU);
+		ENTRY(WS_VISIBLE);
+		ENTRY(WS_VSCROLL);
+		default:
+			return NULL;
+	}
+}
+
+const char* window_styles_to_string(UINT32 style, char* buffer, size_t length)
+{
+	(void)_snprintf(buffer, length, "style[0x%08" PRIx32 "] {", style);
+	const char* sep = "";
+	for (size_t x = 0; x < 32; x++)
+	{
+		const UINT32 val = 1 << x;
+		if ((style & val) != 0)
+		{
+			const char* str = window_style_to_string(val);
+			if (str)
+			{
+				winpr_str_append(str, buffer, length, sep);
+				sep = "|";
+			}
+		}
+	}
+	winpr_str_append("}", buffer, length, "");
+
+	return buffer;
+}
+
+static const char* window_style_ex_to_string(UINT32 styleEx)
+{
+	switch (styleEx)
+	{
+		ENTRY(WS_EX_ACCEPTFILES);
+		ENTRY(WS_EX_APPWINDOW);
+		ENTRY(WS_EX_CLIENTEDGE);
+		ENTRY(WS_EX_COMPOSITED);
+		ENTRY(WS_EX_CONTEXTHELP);
+		ENTRY(WS_EX_CONTROLPARENT);
+		ENTRY(WS_EX_DLGMODALFRAME);
+		ENTRY(WS_EX_LAYERED);
+		ENTRY(WS_EX_LAYOUTRTL);
+		ENTRY(WS_EX_LEFTSCROLLBAR);
+		ENTRY(WS_EX_MDICHILD);
+		ENTRY(WS_EX_NOACTIVATE);
+		ENTRY(WS_EX_NOINHERITLAYOUT);
+		ENTRY(WS_EX_NOPARENTNOTIFY);
+		ENTRY(WS_EX_OVERLAPPEDWINDOW);
+		ENTRY(WS_EX_PALETTEWINDOW);
+		ENTRY(WS_EX_RIGHT);
+		ENTRY(WS_EX_RIGHTSCROLLBAR);
+		ENTRY(WS_EX_RTLREADING);
+		ENTRY(WS_EX_STATICEDGE);
+		ENTRY(WS_EX_TOOLWINDOW);
+		ENTRY(WS_EX_TOPMOST);
+		ENTRY(WS_EX_TRANSPARENT);
+		ENTRY(WS_EX_WINDOWEDGE);
+		default:
+			return NULL;
+	}
+}
+
+const char* window_styles_ex_to_string(UINT32 styleEx, char* buffer, size_t length)
+{
+	(void)_snprintf(buffer, length, "styleEx[0x%08" PRIx32 "] {", styleEx);
+	const char* sep = "";
+	for (size_t x = 0; x < 32; x++)
+	{
+		const UINT32 val = 1 << x;
+		if ((styleEx & val) != 0)
+		{
+			const char* str = window_style_ex_to_string(val);
+			if (str)
+			{
+				winpr_str_append(str, buffer, length, sep);
+				sep = "|";
+			}
+		}
+	}
+	winpr_str_append("}", buffer, length, "");
+
+	return buffer;
+}
 
 static void xf_SetWindowTitleText(xfContext* xfc, Window window, const char* name)
 {
@@ -749,13 +861,27 @@ void xf_SetWindowStyle(xfContext* xfc, xfAppWindow* appWindow, UINT32 style, UIN
 		 * sees that as a focus out event from the window owning the
 		 * dropdown.
 		 */
-		XSetWindowAttributes attrs;
+		XSetWindowAttributes attrs = { 0 };
 		attrs.override_redirect = redirect ? True : False;
 		XChangeWindowAttributes(xfc->display, appWindow->handle, CWOverrideRedirect, &attrs);
 	}
 
 	LogTagAndXChangeProperty(TAG, xfc->display, appWindow->handle, xfc->_NET_WM_WINDOW_TYPE,
 	                         XA_ATOM, 32, PropModeReplace, (BYTE*)&window_type, 1);
+
+	if (ex_style & (WS_EX_CONTROLPARENT | WS_EX_TOOLWINDOW | WS_EX_DLGMODALFRAME))
+		xf_XSetTransientForHint(xfc, appWindow);
+
+	if (((ex_style & WS_EX_TOPMOST) != 0) && ((ex_style & WS_EX_TOOLWINDOW) == 0))
+	{
+		xf_SendClientEvent(xfc, appWindow->handle, xfc->_NET_WM_STATE, 4, _NET_WM_STATE_ADD,
+		                   xfc->_NET_WM_STATE_ABOVE, 0, 0);
+	}
+	else
+	{
+		xf_SendClientEvent(xfc, appWindow->handle, xfc->_NET_WM_STATE, 4, _NET_WM_STATE_REMOVE,
+		                   xfc->_NET_WM_STATE_ABOVE, 0, 0);
+	}
 }
 
 void xf_SetWindowActions(xfContext* xfc, xfAppWindow* appWindow)
@@ -1363,4 +1489,25 @@ BOOL xf_AppWindowResize(xfContext* xfc, xfAppWindow* appWindow)
 	xf_AppWindowDestroyImage(appWindow);
 
 	return appWindow->pixmap != 0;
+}
+
+void xf_XSetTransientForHint(xfContext* xfc, xfAppWindow* window)
+{
+	WINPR_ASSERT(xfc);
+	WINPR_ASSERT(window);
+
+	if (window->ownerWindowId == 0)
+		return;
+
+	xfAppWindow* parent = xf_rail_get_window(xfc, window->ownerWindowId);
+	if (!parent)
+		return;
+
+	const int rc = XSetTransientForHint(xfc->display, window->handle, parent->handle);
+	if (rc)
+	{
+		char buffer[128] = { 0 };
+		WLog_WARN(TAG, "XSetTransientForHint [%d]{%s}", rc,
+		          x11_error_to_string(xfc, rc, buffer, sizeof(buffer)));
+	}
 }
