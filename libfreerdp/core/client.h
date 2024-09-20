@@ -107,6 +107,8 @@ struct rdp_channels
 
 	DrdynvcClientContext* drdynvc;
 	CRITICAL_SECTION channelsLock;
+
+	wHashTable* channelEvents;
 };
 
 FREERDP_LOCAL void freerdp_channels_free(rdpChannels* channels);
@@ -120,5 +122,10 @@ FREERDP_LOCAL void freerdp_channels_close(rdpChannels* channels, freerdp* instan
 FREERDP_LOCAL void freerdp_channels_register_instance(rdpChannels* channels, freerdp* instance);
 FREERDP_LOCAL UINT freerdp_channels_pre_connect(rdpChannels* channels, freerdp* instance);
 FREERDP_LOCAL UINT freerdp_channels_post_connect(rdpChannels* channels, freerdp* instance);
+
+/** @since version 3.9.0 */
+FREERDP_LOCAL SSIZE_T freerdp_client_channel_get_registered_event_handles(rdpChannels* channels,
+                                                                          HANDLE* events,
+                                                                          DWORD count);
 
 #endif /* FREERDP_LIB_CORE_CLIENT_H */
