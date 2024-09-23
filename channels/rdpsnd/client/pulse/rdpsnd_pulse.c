@@ -327,14 +327,6 @@ static BOOL rdpsnd_pulse_set_format_spec(rdpsndPulsePlugin* pulse, const AUDIO_F
 
 			break;
 
-		case WAVE_FORMAT_ALAW:
-			sample_spec.format = PA_SAMPLE_ALAW;
-			break;
-
-		case WAVE_FORMAT_MULAW:
-			sample_spec.format = PA_SAMPLE_ULAW;
-			break;
-
 		default:
 			return FALSE;
 	}
@@ -422,7 +414,7 @@ static BOOL rdpsnd_pulse_open_stream(rdpsndDevicePlugin* device)
 		return FALSE;
 	}
 
-	for (;;)
+	while (pulse->stream)
 	{
 		state = pa_stream_get_state(pulse->stream);
 

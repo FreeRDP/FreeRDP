@@ -280,14 +280,6 @@ static UINT audin_pulse_set_format(IAudinDevice* device, const AUDIO_FORMAT* for
 
 			break;
 
-		case WAVE_FORMAT_ALAW: /* A-LAW */
-			sample_spec.format = PA_SAMPLE_ALAW;
-			break;
-
-		case WAVE_FORMAT_MULAW: /* U-LAW */
-			sample_spec.format = PA_SAMPLE_ULAW;
-			break;
-
 		default:
 			return ERROR_INTERNAL_ERROR;
 	}
@@ -300,6 +292,8 @@ static UINT audin_pulse_set_format(IAudinDevice* device, const AUDIO_FORMAT* for
 static void audin_pulse_stream_state_callback(pa_stream* stream, void* userdata)
 {
 	AudinPulseDevice* pulse = (AudinPulseDevice*)userdata;
+	WINPR_ASSERT(pulse);
+
 	pa_stream_state_t state = pa_stream_get_state(stream);
 
 	WLog_Print(pulse->log, WLOG_DEBUG, "stream state %s", pulse_stream_state_string(state));
@@ -416,7 +410,7 @@ static UINT audin_pulse_open(IAudinDevice* device, AudinReceive receive, void* u
 		return pa_context_errno(pulse->context);
 	}
 
-	for (;;)
+	while (pulse->stream)
 	{
 		state = pa_stream_get_state(pulse->stream);
 

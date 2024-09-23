@@ -1183,6 +1183,12 @@ fail:
 
 void freerdp_dsp_context_free(FREERDP_DSP_CONTEXT* context)
 {
+#if defined(WITH_FDK_AAC)
+	FREERDP_DSP_COMMON_CONTEXT* ctx = (FREERDP_DSP_COMMON_CONTEXT*)context;
+	WINPR_ASSERT(ctx);
+	fdk_aac_dsp_uninit(ctx);
+#endif
+
 #if defined(WITH_DSP_FFMPEG)
 	freerdp_dsp_ffmpeg_context_free(context);
 #else
