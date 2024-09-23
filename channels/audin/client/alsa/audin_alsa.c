@@ -75,12 +75,6 @@ static snd_pcm_format_t audin_alsa_format(UINT32 wFormatTag, UINT32 bitPerChanne
 					return SND_PCM_FORMAT_UNKNOWN;
 			}
 
-		case WAVE_FORMAT_ALAW:
-			return SND_PCM_FORMAT_A_LAW;
-
-		case WAVE_FORMAT_MULAW:
-			return SND_PCM_FORMAT_MU_LAW;
-
 		default:
 			return SND_PCM_FORMAT_UNKNOWN;
 	}

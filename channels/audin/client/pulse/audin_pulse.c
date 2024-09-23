@@ -280,14 +280,6 @@ static UINT audin_pulse_set_format(IAudinDevice* device, const AUDIO_FORMAT* for
 
 			break;
 
-		case WAVE_FORMAT_ALAW: /* A-LAW */
-			sample_spec.format = PA_SAMPLE_ALAW;
-			break;
-
-		case WAVE_FORMAT_MULAW: /* U-LAW */
-			sample_spec.format = PA_SAMPLE_ULAW;
-			break;
-
 		default:
 			return ERROR_INTERNAL_ERROR;
 	}

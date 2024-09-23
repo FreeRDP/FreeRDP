@@ -86,12 +86,6 @@ static int rdpsnd_oss_get_format(const AUDIO_FORMAT* format)
 			}
 
 			break;
-
-		case WAVE_FORMAT_ALAW:
-			return AFMT_A_LAW;
-
-		case WAVE_FORMAT_MULAW:
-			return AFMT_MU_LAW;
 	}
 
 	return 0;
