@@ -176,6 +176,8 @@ static void tsmf_pulse_wait_for_operation(TSMFPulseAudioDevice* pulse, pa_operat
 static void tsmf_pulse_stream_state_callback(pa_stream* stream, void* userdata)
 {
 	TSMFPulseAudioDevice* pulse = (TSMFPulseAudioDevice*)userdata;
+	WINPR_ASSERT(pulse);
+
 	pa_stream_state_t state = pa_stream_get_state(stream);
 
 	switch (state)
