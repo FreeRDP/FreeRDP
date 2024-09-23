@@ -463,7 +463,7 @@ static pstatus_t neon_ChromaFilter(BYTE* WINPR_RESTRICT pDst[3], const UINT32 ds
 	const UINT32 halfPad = halfWidth % 16;
 
 	/* Filter */
-	for (UINT32 y = roi->top; y < halfHeight + roi->top; y++)
+	for (UINT32 y = roi->top / 2; y < halfHeight + roi->top / 2; y++)
 	{
 		const UINT32 val2y = (y * 2 + evenY);
 		const UINT32 val2y1 = val2y + oddY;
@@ -472,11 +472,11 @@ static pstatus_t neon_ChromaFilter(BYTE* WINPR_RESTRICT pDst[3], const UINT32 ds
 		BYTE* pU = pDst[1] + dstStep[1] * val2y;
 		BYTE* pV = pDst[2] + dstStep[2] * val2y;
 
-		if (val2y1 > nHeight)
+		if (val2y1 > nHeight + roi->top)
 			continue;
 
 		UINT32 x = roi->left / 2;
-		for (; x < halfWidth + roi->left / 2 - halfPad; x += 16)
+		for (; x < halfWidth + roi->left / 2 - halfPad; x += 8)
 		{
 			{
 				/* U = (U2x,2y << 2) - U2x1,2y - U2x,2y1 - U2x1,2y1 */
@@ -519,7 +519,7 @@ static pstatus_t neon_ChromaFilter(BYTE* WINPR_RESTRICT pDst[3], const UINT32 ds
 			INT32 u2020;
 			INT32 v2020;
 
-			if (val2x1 > nWidth)
+			if (val2x1 > nWidth + roi->left)
 				continue;
 
 			u2020 = up - pU[val2x1] - pU1[val2x] - pU1[val2x1];
