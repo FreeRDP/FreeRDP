@@ -176,8 +176,8 @@ static BOOL sdl_Pointer_SetNull(rdpContext* context)
 
 static BOOL sdl_Pointer_SetPosition(rdpContext* context, UINT32 x, UINT32 y)
 {
-	auto sdl = get_context(context);
-	WINPR_ASSERT(sdl);
+	WINPR_UNUSED(context);
+	WINPR_ASSERT(context);
 
 	return sdl_push_user_event(SDL_EVENT_USER_POINTER_POSITION, x, y);
 }

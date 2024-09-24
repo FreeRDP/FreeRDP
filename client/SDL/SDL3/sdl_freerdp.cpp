@@ -1379,9 +1379,6 @@ static DWORD WINAPI sdl_client_thread_proc(SdlContext* sdl)
 {
 	WINPR_ASSERT(sdl);
 
-	auto instance = sdl->context()->instance;
-	WINPR_ASSERT(instance);
-
 	std::string error_msg;
 	int exit_code = sdl_client_thread_connect(sdl, error_msg);
 	if (exit_code == SDL_EXIT_SUCCESS)
