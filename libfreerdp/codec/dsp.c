@@ -1183,6 +1183,9 @@ fail:
 
 void freerdp_dsp_context_free(FREERDP_DSP_CONTEXT* context)
 {
+	if (!context)
+		return;
+
 #if defined(WITH_FDK_AAC)
 	FREERDP_DSP_COMMON_CONTEXT* ctx = (FREERDP_DSP_COMMON_CONTEXT*)context;
 	WINPR_ASSERT(ctx);
@@ -1193,9 +1196,7 @@ void freerdp_dsp_context_free(FREERDP_DSP_CONTEXT* context)
 	freerdp_dsp_ffmpeg_context_free(context);
 #else
 
-	if (context)
-	{
-		freerdp_dsp_common_context_uninit(&context->common);
+	freerdp_dsp_common_context_uninit(&context->common);
 
 #if defined(WITH_GSM)
 		gsm_destroy(context->gsm);
@@ -1231,8 +1232,7 @@ void freerdp_dsp_context_free(FREERDP_DSP_CONTEXT* context)
 #if defined(WITH_SOXR)
 		soxr_delete(context->sox);
 #endif
-		free(context);
-	}
+	    free(context);
 
 #endif
 }

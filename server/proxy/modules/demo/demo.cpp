@@ -247,7 +247,7 @@ static BOOL demo_mouse_event(proxyPlugin* plugin, proxyData* pdata, void* param)
 	WINPR_ASSERT(pdata);
 	WINPR_ASSERT(event_data);
 
-	WLog_INFO(TAG, "called");
+	WLog_INFO(TAG, "called %p", event_data);
 	return TRUE;
 }
 
@@ -259,7 +259,7 @@ static BOOL demo_mouse_ex_event(proxyPlugin* plugin, proxyData* pdata, void* par
 	WINPR_ASSERT(pdata);
 	WINPR_ASSERT(event_data);
 
-	WLog_INFO(TAG, "called");
+	WLog_INFO(TAG, "called %p", event_data);
 	return TRUE;
 }
 
@@ -309,7 +309,7 @@ static BOOL demo_server_fetch_target_addr(proxyPlugin* plugin, proxyData* pdata,
 	WINPR_ASSERT(pdata);
 	WINPR_ASSERT(event_data);
 
-	WLog_INFO(TAG, "called");
+	WLog_INFO(TAG, "called %p", event_data);
 	return TRUE;
 }
 
@@ -333,7 +333,7 @@ static BOOL demo_dyn_channel_intercept_list(proxyPlugin* plugin, proxyData* pdat
 	WINPR_ASSERT(pdata);
 	WINPR_ASSERT(data);
 
-	WLog_INFO(TAG, "%s", __func__);
+	WLog_INFO(TAG, "%s: %p", __func__, data);
 	return TRUE;
 }
 
@@ -345,7 +345,7 @@ static BOOL demo_static_channel_intercept_list(proxyPlugin* plugin, proxyData* p
 	WINPR_ASSERT(pdata);
 	WINPR_ASSERT(data);
 
-	WLog_INFO(TAG, "%s", __func__);
+	WLog_INFO(TAG, "%s: %p", __func__, data);
 	return TRUE;
 }
 
@@ -357,7 +357,7 @@ static BOOL demo_dyn_channel_intercept(proxyPlugin* plugin, proxyData* pdata, vo
 	WINPR_ASSERT(pdata);
 	WINPR_ASSERT(data);
 
-	WLog_INFO(TAG, "%s", __func__);
+	WLog_INFO(TAG, "%s: %p", __func__, data);
 	return TRUE;
 }
 
