@@ -56,6 +56,64 @@ static const char client_dll[] = "C:\\Windows\\System32\\mstscax.dll";
 #define GLYPH_CACHE_KEY CLIENT_KEY "\\GlyphCache"
 #define POINTER_CACHE_KEY CLIENT_KEY "\\PointerCache"
 
+struct bounds_t
+{
+	INT32 x;
+	INT32 y;
+	INT32 width;
+	INT32 height;
+};
+
+static struct bounds_t union_rect(const struct bounds_t* a, const struct bounds_t* b)
+{
+	WINPR_ASSERT(a);
+	WINPR_ASSERT(b);
+
+	struct bounds_t u = *a;
+	if (b->x < u.x)
+		u.x = b->x;
+	if (b->y < u.y)
+		u.y = b->y;
+
+	const INT32 rightA = a->x + a->width;
+	const INT32 rightB = b->x + b->width;
+	const INT32 right = MAX(rightA, rightB);
+	u.width = right - u.x;
+
+	const INT32 bottomA = a->y + a->height;
+	const INT32 bottomB = b->y + b->height;
+	const INT32 bottom = MAX(bottomA, bottomB);
+	u.height = bottom - u.y;
+
+	return u;
+}
+
+static BOOL intersect_rects(const struct bounds_t* r1, const struct bounds_t* r2)
+{
+	WINPR_ASSERT(r1);
+	WINPR_ASSERT(r2);
+
+	const INT32 left = MAX(r1->x, r2->x);
+	const INT32 top = MAX(r1->y, r2->y);
+	const INT32 right = MIN(r1->x + r1->width, r2->x + r2->width);
+	const INT32 bottom = MIN(r1->y + r1->height, r2->y + r2->height);
+
+	return (left < right) && (top < bottom);
+}
+
+static BOOL align_rects(const struct bounds_t* r1, const struct bounds_t* r2)
+{
+	WINPR_ASSERT(r1);
+	WINPR_ASSERT(r2);
+
+	const INT32 left = MAX(r1->x, r2->x);
+	const INT32 top = MAX(r1->y, r2->y);
+	const INT32 right = MIN(r1->x + r1->width, r2->x + r2->width);
+	const INT32 bottom = MIN(r1->y + r1->height, r2->y + r2->height);
+
+	return (left == right) || (top == bottom);
+}
+
 static BOOL settings_reg_query_dword_val(HKEY hKey, const TCHAR* sub, DWORD* value)
 {
 	DWORD dwType = 0;
@@ -275,6 +333,304 @@ void freerdp_settings_print_warnings(const rdpSettings* settings)
 		WLog_WARN(TAG, "[experimental] enabled GlyphSupportLevel %s, expect visual artefacts!",
 		          freerdp_settings_glyph_level_string(level, buffer, sizeof(buffer)));
 	}
+}
+
+static BOOL monitor_operlaps(const rdpSettings* settings, UINT32 start, UINT32 count,
+                             const rdpMonitor* compare)
+{
+	const struct bounds_t rect1 = {
+		.x = compare->x, .y = compare->y, .width = compare->width, .height = compare->height
+	};
+	for (UINT32 x = start; x < count; x++)
+	{
+		const rdpMonitor* monitor =
+		    freerdp_settings_get_pointer_array(settings, FreeRDP_MonitorDefArray, x);
+		const struct bounds_t rect2 = {
+			.x = monitor->x, .y = monitor->y, .width = monitor->width, .height = monitor->height
+		};
+
+		if (intersect_rects(&rect1, &rect2))
+		{
+			WLog_ERR(
+			    TAG,
+			    "Mulitimonitor mode requested, but local layout has gaps or overlapping areas!");
+			WLog_ERR(TAG, "Please reconfigure your local monitor setup so that thre are no gaps or "
+			              "overlapping areas!");
+			return TRUE;
+		}
+	}
+	return FALSE;
+}
+
+static BOOL monitor_has_gaps(const rdpSettings* settings, UINT32 start, UINT32 count,
+                             const rdpMonitor* compare, UINT32** graph)
+{
+	const struct bounds_t rect1 = {
+		.x = compare->x, .y = compare->y, .width = compare->width, .height = compare->height
+	};
+
+	BOOL hasNeighbor = FALSE;
+	for (UINT32 i = 0; i < count; i++)
+	{
+		if (i == start)
+			continue;
+
+		const rdpMonitor* monitor =
+		    freerdp_settings_get_pointer_array(settings, FreeRDP_MonitorDefArray, i);
+
+		const struct bounds_t rect2 = {
+			.x = monitor->x, .y = monitor->y, .width = monitor->width, .height = monitor->height
+		};
+		if (align_rects(&rect1, &rect2))
+		{
+			hasNeighbor = TRUE;
+			graph[start][i] = 1;
+			graph[i][start] = 1;
+		}
+	}
+
+	if (!hasNeighbor)
+	{
+		WLog_ERR(TAG,
+		         "Monitor configuration has gaps! Monitor %" PRIu32 " does not have any neighbor",
+		         start);
+	}
+
+	return !hasNeighbor;
+}
+
+static UINT32** alloc_array(size_t count)
+{
+
+	BYTE* array = calloc(count * sizeof(uintptr_t), count * sizeof(UINT32));
+	UINT32** dst = (UINT32**)array;
+	UINT32* val = (UINT32*)(array + count * sizeof(uintptr_t));
+	for (size_t x = 0; x < count; x++)
+		dst[x] = &val[x];
+
+	return dst;
+}
+
+/* Monitors in the array need to:
+ *
+ * 1. be connected to another monitor (edges touch but don't overlap or have gaps)
+ * 2. all monitors need to be connected so there are no separate groups.
+ *
+ * So, what we do here is we use dijkstra algorithm to find a path from any start node
+ * (lazy as we are we always use the first in the array) to each other node.
+ */
+static BOOL find_path_exists_with_dijkstra(UINT32** graph, size_t count, UINT32 start)
+{
+	if (count < 1)
+		return FALSE;
+
+	WINPR_ASSERT(start < count);
+
+	UINT32** cost = alloc_array(count);
+	WINPR_ASSERT(cost);
+
+	UINT32* distance = calloc(count, sizeof(UINT32));
+	WINPR_ASSERT(distance);
+
+	UINT32* visited = calloc(count, sizeof(UINT32));
+	WINPR_ASSERT(visited);
+
+	UINT32* parent = calloc(count, sizeof(UINT32));
+	WINPR_ASSERT(parent);
+
+	for (size_t x = 0; x < count; x++)
+	{
+		for (size_t y = 0; y < count; y++)
+		{
+			if (graph[x][y] == 0)
+				cost[x][y] = UINT32_MAX;
+			else
+				cost[x][y] = graph[x][y];
+		}
+	}
+
+	for (UINT32 x = 0; x < count; x++)
+	{
+		distance[x] = cost[start][x];
+		parent[x] = start;
+		visited[x] = 0;
+	}
+
+	distance[start] = 0;
+	visited[start] = 1;
+
+	size_t pos = 1;
+	UINT32 nextnode = UINT32_MAX;
+	while (pos < count - 1)
+	{
+		UINT32 mindistance = UINT32_MAX;
+
+		for (UINT32 x = 0; x < count; x++)
+		{
+			if ((distance[x] < mindistance) && !visited[x])
+			{
+				mindistance = distance[x];
+				nextnode = x;
+			}
+		}
+
+		visited[nextnode] = 1;
+
+		for (size_t y = 0; y < count; y++)
+		{
+			if (!visited[y])
+			{
+				if (mindistance + cost[nextnode][y] < distance[y])
+					parent[y] = nextnode;
+			}
+		}
+		count++;
+	}
+
+	BOOL rc = TRUE;
+	for (size_t x = 0; x < count; x++)
+	{
+		if (x != start)
+		{
+			if (distance[x] == UINT32_MAX)
+			{
+				WLog_ERR(TAG, "monitor %" PRIu32 " not connected with monitor %" PRIuz, start, x);
+				rc = FALSE;
+				break;
+			}
+		}
+	}
+	free((void*)cost);
+	free(distance);
+	free(visited);
+	free(parent);
+
+	return rc;
+}
+
+static BOOL freerdp_settings_client_monitors_have_gaps(const rdpSettings* settings)
+{
+	const UINT32 count = freerdp_settings_get_uint32(settings, FreeRDP_MonitorCount);
+	if (count <= 1)
+		return FALSE;
+
+	UINT32** graph = alloc_array(count);
+	WINPR_ASSERT(graph);
+
+	for (UINT32 x = 0; x < count; x++)
+	{
+		const rdpMonitor* monitor =
+		    freerdp_settings_get_pointer_array(settings, FreeRDP_MonitorDefArray, x);
+		if (monitor_has_gaps(settings, x, count, monitor, graph))
+			return TRUE;
+	}
+
+	const BOOL rc = find_path_exists_with_dijkstra(graph, count, 0);
+	free((void*)graph);
+
+	return rc;
+}
+
+static BOOL freerdp_settings_client_monitors_overlap(const rdpSettings* settings)
+{
+	const UINT32 count = freerdp_settings_get_uint32(settings, FreeRDP_MonitorCount);
+	for (UINT32 x = 0; x < count; x++)
+	{
+		const rdpMonitor* monitor =
+		    freerdp_settings_get_pointer_array(settings, FreeRDP_MonitorDefArray, x);
+		if (monitor_operlaps(settings, x + 1, count, monitor))
+			return TRUE;
+	}
+	return FALSE;
+}
+
+/* See [MS-RDPBCGR] 2.2.1.3.6.1 for details on limits
+ * https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-rdpbcgr/c3964b39-3d54-4ae1-a84a-ceaed311e0f6
+ */
+static BOOL freerdp_settings_client_monitors_check_primary_and_origin(const rdpSettings* settings)
+{
+	const UINT32 count = freerdp_settings_get_uint32(settings, FreeRDP_MonitorCount);
+	BOOL havePrimary = FALSE;
+	BOOL foundOrigin = FALSE;
+	BOOL rc = TRUE;
+
+	struct bounds_t bounds = { 0 };
+
+	for (UINT32 x = 0; x < count; x++)
+	{
+		const rdpMonitor* monitor =
+		    freerdp_settings_get_pointer_array(settings, FreeRDP_MonitorDefArray, x);
+		struct bounds_t cur = {
+			.x = monitor->x, .y = monitor->y, .width = monitor->width, .height = monitor->height
+		};
+
+		bounds = union_rect(&bounds, &cur);
+
+		if (monitor->is_primary)
+		{
+			if (havePrimary)
+			{
+				WLog_ERR(TAG, "Monitor configuration contains multiple primary monitors!");
+				rc = FALSE;
+			}
+			havePrimary = TRUE;
+
+			if ((monitor->x == 0) && (monitor->y == 0))
+				foundOrigin = TRUE;
+		}
+		else
+		{
+			if ((monitor->x == 0) && (monitor->y == 0))
+			{
+				WLog_ERR(TAG, "Monitor configuration does have non-primary at origin 0/0");
+				rc = FALSE;
+			}
+		}
+	}
+
+	if ((bounds.width > 32766) || (bounds.width < 200))
+	{
+		WLog_ERR(TAG,
+		         "Monitor configuration virtual desktop width must be 200 <= %" PRId32 " <= 32766",
+		         bounds.width);
+		rc = FALSE;
+	}
+	if ((bounds.height > 32766) || (bounds.height < 200))
+	{
+		WLog_ERR(TAG,
+		         "Monitor configuration virtual desktop height must be 200 <= %" PRId32 " <= 32766",
+		         bounds.height);
+		rc = FALSE;
+	}
+
+	if (!havePrimary)
+	{
+		WLog_ERR(TAG, "Monitor configuration does not contain a primary monitor!");
+		rc = FALSE;
+	}
+	if (!foundOrigin)
+	{
+		WLog_ERR(TAG, "Monitor configuration must start at 0/0 for first monitor!");
+		rc = FALSE;
+	}
+
+	if (count == 0)
+	{
+		WLog_WARN(TAG, "Monitor configuration empty.");
+		return TRUE;
+	}
+	return rc;
+}
+
+BOOL freerdp_settings_check_client_after_preconnect(const rdpSettings* settings)
+{
+	if (freerdp_settings_client_monitors_overlap(settings))
+		return FALSE;
+	if (freerdp_settings_client_monitors_have_gaps(settings))
+		return FALSE;
+	if (!freerdp_settings_client_monitors_check_primary_and_origin(settings))
+		return FALSE;
+	return TRUE;
 }
 
 BOOL freerdp_settings_set_default_order_support(rdpSettings* settings)
