@@ -294,7 +294,7 @@ UINT sdlClip::SendDataRequest(uint32_t formatID, const std::string& mime)
 	WINPR_ASSERT(_ctx);
 	WINPR_ASSERT(_ctx->ClientFormatDataRequest);
 	UINT ret = _ctx->ClientFormatDataRequest(_ctx, &request);
-	if (ret == CHANNEL_RC_OK)
+	if (ret != CHANNEL_RC_OK)
 	{
 		WLog_Print(_log, WLOG_ERROR, "error sending ClientFormatDataRequest, cancelling request");
 		_request_queue.pop();
@@ -453,9 +453,9 @@ UINT sdlClip::ReceiveServerFormatList(CliprdrClientContext* context,
 		mimetypes.push_back(mime_mate_copied_files);
 	}
 
-	const int rc = SDL_SetClipboardData(sdlClip::ClipDataCb, sdlClip::ClipCleanCb, clipboard,
-	                                    mimetypes.data(), mimetypes.size());
-	return clipboard->SendFormatListResponse(rc == 0);
+	const bool rc = SDL_SetClipboardData(sdlClip::ClipDataCb, sdlClip::ClipCleanCb, clipboard,
+	                                     mimetypes.data(), mimetypes.size());
+	return clipboard->SendFormatListResponse(rc);
 }
 
 UINT sdlClip::ReceiveFormatListResponse(CliprdrClientContext* context,
@@ -703,10 +703,22 @@ const void* sdlClip::ClipDataCb(void* userdata, const char* mime_type, size_t* s
 
 	{
 		HANDLE hdl[2] = { freerdp_abort_event(clip->_sdl->context()), clip->_event };
+
+		// Unlock the sdl->critical lock or we'll deadlock with the FreeRDP thread
+		// when it pushes events (like end_paint).
+		// we can safely do that here as we're called from the SDL thread
+		SdlContext* sdl = clip->_sdl;
+		sdl->critical.unlock();
+
 		DWORD status = WaitForMultipleObjects(ARRAYSIZE(hdl), hdl, FALSE, 10 * 1000);
+
+		sdl->critical.lock();
 
 		if (status != WAIT_OBJECT_0 + 1)
 		{
+			std::lock_guard<CriticalSection> lock(clip->_lock);
+			clip->_request_queue.pop();
+
 			if (status == WAIT_TIMEOUT)
 				WLog_Print(clip->_log, WLOG_ERROR,
 				           "no reply in 10 seconds, returning empty content");
