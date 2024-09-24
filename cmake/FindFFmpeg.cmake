@@ -35,6 +35,7 @@
 # SPDX-FileCopyrightText: 2008 Alexander Neundorf <neundorf@kde.org>
 # SPDX-FileCopyrightText: 2011 Michael Jansen <kde@michael-jansen.biz>
 # SPDX-FileCopyrightText: 2021 Stefan Brüns <stefan.bruens@rwth-aachen.de>
+# SPDX-FileCopyrightText: 2024 Armin Novak <anovak@thincast.com>
 # SPDX-License-Identifier: BSD-3-Clause
 
 include(FindPackageHandleStandardArgs)
@@ -101,7 +102,46 @@ macro(find_component _component _pkgconfig _library _header)
   )
 
   set(${_component}_DEFINITIONS ${PC_${_component}_CFLAGS_OTHER} CACHE STRING "The ${_component} CFLAGS.")
-  set(${_component}_VERSION ${PC_${_component}_VERSION} CACHE STRING "The ${_component} version number.")
+
+  # Fallback version detection:
+  # Read version.h (and version_major.h if it exists) and try to extract the version
+  if ("${PC_${_component}_VERSION}_" STREQUAL "_")
+    get_filename_component(${_component}_suffix
+      "${_header}"
+      DIRECTORY
+    )
+    find_file(${_component}_hdr_version_major
+      NAMES version_major.h
+      PATH_SUFFIXES ${${_component}_suffix}
+      HINTS
+        ${${_component}_INCLUDE_DIRS}
+    )
+    find_file(${_component}_hdr_version
+      NAMES version.h
+      PATH_SUFFIXES ${${_component}_suffix}
+      HINTS
+        ${${_component}_INCLUDE_DIRS}
+    )
+    if (NOT ${${_component}_hdr_version} MATCHES ".*-NOTFOUND")
+      file(READ "${${_component}_hdr_version}" ${_component}_version_text)
+    endif()
+    if (NOT ${${_component}_hdr_version_major} MATCHES ".*-NOTFOUND")
+      file(READ "${${_component}_hdr_version_major}" ${_component}_version_major_text)
+    else()
+      set(${_component}_version_major_text "${${_component}_version_text}")
+    endif()
+
+    string(REGEX MATCH "#define[ \t]+.*_VERSION_MAJOR[ \t]+([0-9]+)" _ "${${_component}_version_major_text}")
+    set(${_component}_version_major ${CMAKE_MATCH_1})
+    string(REGEX MATCH "#define[ \t]+.*_VERSION_MINOR[ \t]+([0-9]+)" _ "${${_component}_version_text}")
+    set(${_component}_version_minor ${CMAKE_MATCH_1})
+    string(REGEX MATCH "#define[ \t]+.*_VERSION_MICRO[ \t]+([0-9]+)" _ "${${_component}_version_text}")
+    set(${_component}_version_micro ${CMAKE_MATCH_1})
+
+    set(${_component}_VERSION "${${_component}_version_major}.${${_component}_version_minor}.${${_component}_version_micro}" CACHE STRING "The ${_component} version number.")
+  else()
+    set(${_component}_VERSION ${PC_${_component}_VERSION} CACHE STRING "The ${_component} version number.")
+  endif()
 
   set_component_found(${_component})
 
