@@ -160,7 +160,6 @@ struct xf_app_window
 
 void xf_ewmhints_init(xfContext* xfc);
 
-BOOL xf_GetCurrentDesktop(xfContext* xfc);
 BOOL xf_GetWorkArea(xfContext* xfc);
 
 void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen);
