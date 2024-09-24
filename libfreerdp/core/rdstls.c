@@ -440,6 +440,8 @@ static BOOL rdstls_cmp_str(wLog* log, const char* field, const char* serverStr,
 			return FALSE;
 		}
 
+		WINPR_ASSERT(serverStr);
+		WINPR_ASSERT(clientStr);
 		if (strcmp(serverStr, clientStr) != 0)
 		{
 			WLog_Print(log, WLOG_ERROR, "%s verification failed", field);
