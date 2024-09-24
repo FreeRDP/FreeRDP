@@ -33,6 +33,12 @@
 
 #define TAG FREERDP_TAG("core.client")
 
+typedef struct
+{
+	freerdp_channel_handle_fkt_t fkt;
+	void* userdata;
+} ChannelEventEntry;
+
 /* Use this instance to get access to channels in VirtualChannelInit. It is set during
  * freerdp_connect so channels that use VirtualChannelInit must be initialized from the same thread
  * as freerdp_connect was called */
@@ -131,6 +137,19 @@ static BOOL CALLBACK init_channel_handles_table(PINIT_ONCE once, PVOID param, PV
 	return TRUE;
 }
 
+static void* channel_event_entry_clone(const void* data)
+{
+	const ChannelEventEntry* entry = data;
+	if (!entry)
+		return NULL;
+
+	ChannelEventEntry* copy = calloc(1, sizeof(ChannelEventEntry));
+	if (!copy)
+		return NULL;
+	*copy = *entry;
+	return copy;
+}
+
 rdpChannels* freerdp_channels_new(freerdp* instance)
 {
 	wObject* obj = NULL;
@@ -156,6 +175,14 @@ rdpChannels* freerdp_channels_new(freerdp* instance)
 	obj = MessageQueue_Object(channels->queue);
 	obj->fnObjectFree = channel_queue_free;
 
+	channels->channelEvents = HashTable_New(FALSE);
+	if (!channels->channelEvents)
+		goto error;
+
+	obj = HashTable_ValueObject(channels->channelEvents);
+	WINPR_ASSERT(obj);
+	obj->fnObjectFree = free;
+	obj->fnObjectNew = channel_event_entry_clone;
 	return channels;
 error:
 	WINPR_PRAGMA_DIAG_PUSH
@@ -170,13 +197,10 @@ void freerdp_channels_free(rdpChannels* channels)
 	if (!channels)
 		return;
 
-	DeleteCriticalSection(&channels->channelsLock);
+	HashTable_Free(channels->channelEvents);
+	MessageQueue_Free(channels->queue);
 
-	if (channels->queue)
-	{
-		MessageQueue_Free(channels->queue);
-		channels->queue = NULL;
-	}
+	DeleteCriticalSection(&channels->channelsLock);
 
 	free(channels);
 }
@@ -706,24 +730,45 @@ void* freerdp_channels_get_static_channel_interface(rdpChannels* channels, const
 
 HANDLE freerdp_channels_get_event_handle(freerdp* instance)
 {
-	HANDLE event = NULL;
-	rdpChannels* channels = NULL;
-	channels = instance->context->channels;
-	event = MessageQueue_Event(channels->queue);
-	return event;
+	WINPR_ASSERT(instance);
+	WINPR_ASSERT(instance->context);
+
+	rdpChannels* channels = instance->context->channels;
+	WINPR_ASSERT(channels);
+
+	return MessageQueue_Event(channels->queue);
+}
+
+static BOOL channels_process(const void* key, void* value, void* arg)
+{
+	ChannelEventEntry* entry = value;
+	rdpContext* context = arg;
+
+	WINPR_UNUSED(key);
+
+	if (!entry->fkt)
+		return FALSE;
+	return entry->fkt(context, entry->userdata);
 }
 
 int freerdp_channels_process_pending_messages(freerdp* instance)
 {
-	rdpChannels* channels = NULL;
-	channels = instance->context->channels;
+	WINPR_ASSERT(instance);
+	WINPR_ASSERT(instance->context);
+
+	rdpChannels* channels = instance->context->channels;
+	WINPR_ASSERT(channels);
 
 	if (WaitForSingleObject(MessageQueue_Event(channels->queue), 0) == WAIT_OBJECT_0)
 	{
-		return freerdp_channels_process_sync(channels, instance);
+		if (!freerdp_channels_process_sync(channels, instance))
+			return -1;
 	}
 
-	return TRUE;
+	if (!HashTable_Foreach(channels->channelEvents, channels_process, instance->context))
+		return -1;
+
+	return 1;
 }
 
 /**
@@ -743,6 +788,60 @@ BOOL freerdp_channels_check_fds(rdpChannels* channels, freerdp* instance)
 	return status;
 }
 
+BOOL freerdp_client_channel_register(rdpChannels* channels, HANDLE handle,
+                                     freerdp_channel_handle_fkt_t fkt, void* userdata)
+{
+	if (!channels || (handle == INVALID_HANDLE_VALUE) || !fkt)
+	{
+		WLog_ERR(TAG, "Invalid function arguments (channels=%p, handle=%p, fkt=%p, userdata=%p",
+		         channels, handle, fkt, userdata);
+		return FALSE;
+	}
+
+	ChannelEventEntry entry = { .fkt = fkt, .userdata = userdata };
+	return HashTable_Insert(channels->channelEvents, handle, &entry);
+}
+
+BOOL freerdp_client_channel_unregister(rdpChannels* channels, HANDLE handle)
+{
+	if (!channels || (handle == INVALID_HANDLE_VALUE))
+	{
+		WLog_ERR(TAG, "Invalid function arguments (channels=%p, handle=%p", channels, handle);
+		return FALSE;
+	}
+
+	return HashTable_Remove(channels->channelEvents, handle);
+}
+
+SSIZE_T freerdp_client_channel_get_registered_event_handles(rdpChannels* channels, HANDLE* events,
+                                                            DWORD count)
+{
+	SSIZE_T rc = -1;
+
+	WINPR_ASSERT(channels);
+	WINPR_ASSERT(events || (count == 0));
+
+	HashTable_Lock(channels->channelEvents);
+	size_t len = HashTable_Count(channels->channelEvents);
+	if (len <= count)
+	{
+		ULONG_PTR* keys = NULL;
+		const size_t nrKeys = HashTable_GetKeys(channels->channelEvents, &keys);
+		if ((nrKeys <= SSIZE_MAX) && (nrKeys == len))
+		{
+			for (size_t x = 0; x < nrKeys; x++)
+			{
+				HANDLE cur = (HANDLE)keys[x];
+				events[x] = cur;
+			}
+			rc = (SSIZE_T)nrKeys;
+		}
+		free(keys);
+	}
+	HashTable_Unlock(channels->channelEvents);
+	return rc;
+}
+
 UINT freerdp_channels_disconnect(rdpChannels* channels, freerdp* instance)
 {
 	UINT error = CHANNEL_RC_OK;
@@ -759,7 +858,7 @@ UINT freerdp_channels_disconnect(rdpChannels* channels, freerdp* instance)
 	/* tell all libraries we are shutting down */
 	for (int index = 0; index < channels->clientDataCount; index++)
 	{
-		ChannelDisconnectedEventArgs e;
+		ChannelDisconnectedEventArgs e = { 0 };
 		pChannelClientData = &channels->clientDataList[index];
 
 		if (pChannelClientData->pChannelInitEventProc)

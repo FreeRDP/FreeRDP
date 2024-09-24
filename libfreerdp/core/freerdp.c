@@ -391,7 +391,11 @@ DWORD freerdp_get_event_handles(rdpContext* context, HANDLE* events, DWORD count
 	else
 		return 0;
 
-	return nCount;
+	const SSIZE_T rc = freerdp_client_channel_get_registered_event_handles(
+	    context->channels, &events[nCount], count - nCount);
+	if (rc < 0)
+		return 0;
+	return nCount + (DWORD)rc;
 }
 
 /* Resend mouse cursor position to prevent session lock in prevent-session-lock mode */
