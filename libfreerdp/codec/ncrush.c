@@ -2341,7 +2341,7 @@ static int ncrush_hash_table_add(NCRUSH_CONTEXT* ncrush, const BYTE* pSrcData, U
 	return 1;
 }
 
-static int ncrush_find_match_length(const BYTE* Ptr1, const BYTE* Ptr2, const BYTE* HistoryPtr)
+static intptr_t ncrush_find_match_length(const BYTE* Ptr1, const BYTE* Ptr2, const BYTE* HistoryPtr)
 {
 	BYTE val1 = 0;
 	BYTE val2 = 0;
@@ -2360,22 +2360,13 @@ static int ncrush_find_match_length(const BYTE* Ptr1, const BYTE* Ptr2, const BY
 		val2 = *Ptr2++;
 	} while (val1 == val2);
 
-	const intptr_t psize = Ptr1 - (Ptr + 1);
-	WINPR_ASSERT(psize <= INT_MAX);
-	WINPR_ASSERT(psize >= -INT_MAX);
-	return (int)psize;
+	return Ptr1 - (Ptr + 1);
 }
 
 static int ncrush_find_best_match(NCRUSH_CONTEXT* ncrush, UINT16 HistoryOffset,
                                   UINT32* pMatchOffset)
 {
 	int Length = 0;
-	int MatchLength = 0;
-	BYTE* MatchPtr = NULL;
-	UINT16 Offset = 0;
-	UINT16 NextOffset = 0;
-	UINT16 MatchOffset = 0;
-	BYTE* HistoryBuffer = NULL;
 
 	WINPR_ASSERT(ncrush);
 	WINPR_ASSERT(pMatchOffset);
@@ -2383,13 +2374,14 @@ static int ncrush_find_best_match(NCRUSH_CONTEXT* ncrush, UINT16 HistoryOffset,
 	if (!ncrush->MatchTable[HistoryOffset])
 		return -1;
 
-	MatchLength = 2;
-	Offset = HistoryOffset;
-	HistoryBuffer = (BYTE*)ncrush->HistoryBuffer;
+	int MatchLength = 2;
+	UINT16 Offset = HistoryOffset;
+	BYTE* HistoryBuffer = (BYTE*)ncrush->HistoryBuffer;
+
 	ncrush->MatchTable[0] = HistoryOffset;
-	MatchOffset = ncrush->MatchTable[HistoryOffset];
-	NextOffset = ncrush->MatchTable[Offset];
-	MatchPtr = &HistoryBuffer[MatchLength];
+	UINT16 MatchOffset = ncrush->MatchTable[HistoryOffset];
+	UINT16 NextOffset = ncrush->MatchTable[Offset];
+	BYTE* MatchPtr = &HistoryBuffer[MatchLength];
 
 	for (int i = 0; i < 4; i++)
 	{
@@ -2450,9 +2442,13 @@ static int ncrush_find_best_match(NCRUSH_CONTEXT* ncrush, UINT16 HistoryOffset,
 
 			if ((Offset != HistoryOffset) && Offset)
 			{
-				Length = ncrush_find_match_length(&HistoryBuffer[HistoryOffset + 2],
-				                                  &HistoryBuffer[Offset + 2], ncrush->HistoryPtr) +
-				         2;
+				const intptr_t len =
+				    ncrush_find_match_length(&HistoryBuffer[HistoryOffset + 2],
+				                             &HistoryBuffer[Offset + 2], ncrush->HistoryPtr);
+				WINPR_ASSERT(len < INT_MAX - 2);
+				WINPR_ASSERT(len > INT_MIN + 2);
+
+				Length = (int)len + 2;
 
 				if (Length < 2)
 					return -1;
