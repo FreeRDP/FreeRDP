@@ -46,7 +46,10 @@ static INLINE BOOL testcase(const char* name, char** argv, size_t argc, int expe
 	int status = 0;
 	BOOL valid_settings = TRUE;
 	rdpSettings* settings = freerdp_settings_new(0);
-	print_test_title(argc, argv);
+
+	WINPR_ASSERT(argc <= INT_MAX);
+
+	print_test_title((int)argc, argv);
 
 	if (!settings)
 	{
@@ -54,7 +57,7 @@ static INLINE BOOL testcase(const char* name, char** argv, size_t argc, int expe
 		return FALSE;
 	}
 
-	status = freerdp_client_settings_parse_command_line(settings, argc, argv, FALSE);
+	status = freerdp_client_settings_parse_command_line(settings, (int)argc, argv, FALSE);
 
 	if (validate_settings)
 	{
