@@ -49,23 +49,28 @@
 static char* winpr_read_unix_timezone_identifier_from_file(FILE* fp)
 {
 	const INT CHUNK_SIZE = 32;
-	INT64 rc = 0;
-	INT64 read = 0;
-	INT64 length = CHUNK_SIZE;
-	char* tzid = NULL;
+	size_t rc = 0;
+	size_t read = 0;
+	size_t length = CHUNK_SIZE;
 
-	tzid = (char*)malloc((size_t)length);
+	char* tzid = malloc(length);
 	if (!tzid)
 		return NULL;
 
 	do
 	{
-		rc = fread(tzid + read, 1, length - read - 1, fp);
+		rc = fread(tzid + read, 1, length - read - 1UL, fp);
 		if (rc > 0)
 			read += rc;
 
-		if (read < (length - 1))
+		if (read < (length - 1UL))
 			break;
+
+		if (read > length - 1UL)
+		{
+			free(tzid);
+			return NULL;
+		}
 
 		length += CHUNK_SIZE;
 		char* tmp = (char*)realloc(tzid, length);
