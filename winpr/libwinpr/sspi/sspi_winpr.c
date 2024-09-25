@@ -1693,7 +1693,7 @@ static SECURITY_STATUS SEC_ENTRY winpr_DeleteSecurityContext(PCtxtHandle phConte
 		return SEC_E_UNSUPPORTED_FUNCTION;
 	}
 
-	const UINT32 status = table->DeleteSecurityContext(phContext);
+	const SECURITY_STATUS status = table->DeleteSecurityContext(phContext);
 
 	if (IsSecurityStatusError(status))
 	{
