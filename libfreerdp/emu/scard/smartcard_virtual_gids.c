@@ -502,7 +502,7 @@ handle_error:
 	return FALSE;
 }
 
-static int get_rsa_key_size(const rdpPrivateKey* privateKey)
+static size_t get_rsa_key_size(const rdpPrivateKey* privateKey)
 {
 	WINPR_ASSERT(privateKey);
 
@@ -1523,8 +1523,8 @@ BOOL vgids_init(vgidsContext* ctx, const char* cert, const char* privateKey, con
 		goto init_failed;
 
 	/* write container map DO */
-	const int size = get_rsa_key_size(ctx->privateKey);
-	if (size <= 0)
+	const size_t size = get_rsa_key_size(ctx->privateKey);
+	if ((size == 0) || (size > UINT16_MAX / 8))
 		goto init_failed;
 
 	cmrec.wKeyExchangeKeySizeBits = (WORD)size * 8;
