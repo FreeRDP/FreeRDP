@@ -1264,6 +1264,21 @@ state_run_t rdp_client_connect_demand_active(rdpRdp* rdp, wStream* s)
 	if (freerdp_shall_disconnect_context(rdp->context))
 		return STATE_RUN_QUIT_SESSION;
 
+	if (rdp->mcs->messageChannelId && (channelId == rdp->mcs->messageChannelId))
+	{
+		UINT16 securityFlags = 0;
+		if (!rdp_read_security_header(rdp, s, &securityFlags, NULL))
+			return STATE_RUN_FAILED;
+
+		if (securityFlags & SEC_ENCRYPT)
+		{
+			if (!rdp_decrypt(rdp, s, &length, securityFlags))
+				return STATE_RUN_FAILED;
+		}
+		rdp->inPackets++;
+		return rdp_recv_message_channel_pdu(rdp, s, securityFlags);
+	}
+
 	if (!rdp_read_share_control_header(rdp, s, NULL, NULL, &pduType, &pduSource))
 		return STATE_RUN_FAILED;
 
