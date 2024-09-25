@@ -30,6 +30,7 @@
 #else
 #include <CL/cl.h>
 #endif
+#include "primitives-opencl-program.h"
 
 #include <freerdp/log.h>
 #define TAG FREERDP_TAG("primitives")
@@ -259,10 +260,6 @@ static pstatus_t primitives_uninit_opencl(void)
 	cl_context_free(&openclContext);
 	return PRIMITIVES_SUCCESS;
 }
-
-static const char openclProgram[] =
-#include "primitives.cl"
-    ;
 
 static BOOL primitives_init_opencl_context(primitives_opencl_context* WINPR_RESTRICT prims)
 {

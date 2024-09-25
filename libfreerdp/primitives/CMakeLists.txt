@@ -64,9 +64,20 @@ set(PRIMITIVES_OPENCL_SRCS
 )
 
 if (WITH_OPENCL)
-		freerdp_include_directory_add(${OpenCL_INCLUDE_DIRS})
-		freerdp_library_add(OpenCL::OpenCL)
+    set(FILENAME "opencl/primitives.cl")
+    set_source_files_properties(${FILENAME} PROPERTIES HEADER_FILE_ONLY ON)
+    list(APPEND PRIMITIVES_OPENCL_SRCS ${FILENAME})
 
+    include(ConvertFileToHexArray)
+    file_to_hex_array(${FILENAME} FILEDATA)
+
+    set(HDR_FILE "${CMAKE_CURRENT_BINARY_DIR}/opencl/primitives-opencl-program.h")
+    configure_file("${CMAKE_CURRENT_SOURCE_DIR}/opencl/primitives.h.in" ${HDR_FILE} @ONLY)
+    list(APPEND PRIMITIVES_OPENCL_SRCS ${HDR_FILE})
+
+    include_directories(${CMAKE_CURRENT_BINARY_DIR}/opencl)
+    freerdp_include_directory_add(${OpenCL_INCLUDE_DIRS})
+    freerdp_library_add(OpenCL::OpenCL)
 endif()
 
 set(PRIMITIVES_OPT_SRCS
