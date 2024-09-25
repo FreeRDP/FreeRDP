@@ -19,6 +19,7 @@
 
 #include <winpr/config.h>
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
@@ -755,7 +756,8 @@ LONG WLog_GetFilterLogLevel(wLog* log)
 			if (_stricmp(filter->Names[j], "*") == 0)
 			{
 				match = TRUE;
-				log->FilterLevel = filter->Level;
+				assert(filter->Level <= INT32_MAX);
+				log->FilterLevel = (LONG)filter->Level;
 				break;
 			}
 
@@ -766,7 +768,10 @@ LONG WLog_GetFilterLogLevel(wLog* log)
 			{
 				match = log->NameCount == filter->NameCount;
 				if (match)
-					log->FilterLevel = filter->Level;
+				{
+					assert(filter->Level <= INT32_MAX);
+					log->FilterLevel = (LONG)filter->Level;
+				}
 				break;
 			}
 		}
