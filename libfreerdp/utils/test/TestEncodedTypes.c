@@ -136,8 +136,8 @@ static BOOL test_float_read_write_equal(double value)
 		return FALSE;
 	}
 	const double diff = fabs(value - rvalue);
-	const UINT64 expdiff = diff * pow(10, exp);
-	if (expdiff > 0)
+	const double expdiff = diff * pow(10, exp);
+	if (expdiff >= 1.0)
 	{
 		(void)fprintf(stderr, "[%s(%lf)] read invalid value %lf from stream\n", __func__, value,
 		              rvalue);
