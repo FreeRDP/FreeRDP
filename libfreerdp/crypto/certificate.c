@@ -1172,7 +1172,15 @@ void certificate_free_int(rdpCertificate* cert)
 	if (cert->x509)
 		X509_free(cert->x509);
 	if (cert->chain)
+	{
+		const int count = sk_X509_num(cert->chain);
+		for (int x = 0; x < count; x++)
+		{
+			X509* cur = sk_X509_value(cert->chain, x);
+			X509_free(cur);
+		}
 		sk_X509_free(cert->chain);
+	}
 
 	certificate_free_x509_certificate_chain(&cert->x509_cert_chain);
 	cert_info_free(&cert->cert_info);
@@ -1281,7 +1289,7 @@ rdpCertificate* freerdp_certificate_new_from_x509(const X509* xcert, const STACK
 
 	if (chain)
 	{
-		cert->chain = sk_X509_dup(chain);
+		cert->chain = sk_X509_deep_copy(chain, X509_dup, X509_free);
 	}
 	return cert;
 fail:
