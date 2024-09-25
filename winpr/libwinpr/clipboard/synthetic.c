@@ -165,37 +165,31 @@ static void* clipboard_synthesize_cf_unicodetext(wClipboard* clipboard, UINT32 f
 static void* clipboard_synthesize_utf8_string(wClipboard* clipboard, UINT32 formatId,
                                               const void* data, UINT32* pSize)
 {
-	size_t size = 0;
-	char* pDstData = NULL;
-
 	if (formatId == CF_UNICODETEXT)
 	{
-		pDstData = ConvertWCharNToUtf8Alloc(data, *pSize / sizeof(WCHAR), &size);
+		size_t size = 0;
+		char* pDstData = ConvertWCharNToUtf8Alloc(data, *pSize / sizeof(WCHAR), &size);
 
 		if (!pDstData)
 			return NULL;
 
-		size = ConvertLineEndingToLF(pDstData, size);
-		*pSize = (UINT32)size;
+		const size_t rc = ConvertLineEndingToLF(pDstData, size);
+		WINPR_ASSERT(rc <= UINT32_MAX);
+		*pSize = (UINT32)rc;
 		return pDstData;
 	}
 	else if ((formatId == CF_TEXT) || (formatId == CF_OEMTEXT) ||
 	         (formatId == ClipboardGetFormatId(clipboard, mime_text_plain)))
 	{
-		int rc = 0;
-		size = *pSize;
-		pDstData = (char*)malloc(size);
+		const size_t size = *pSize;
+		char* pDstData = calloc(size + 1, sizeof(char));
 
 		if (!pDstData)
 			return NULL;
 
 		CopyMemory(pDstData, data, size);
-		rc = ConvertLineEndingToLF(pDstData, size);
-		if (rc < 0)
-		{
-			free(pDstData);
-			return NULL;
-		}
+		const size_t rc = ConvertLineEndingToLF(pDstData, size);
+		WINPR_ASSERT(rc <= UINT32_MAX);
 		*pSize = (UINT32)rc;
 		return pDstData;
 	}
@@ -588,49 +582,43 @@ fail:
 static void* clipboard_synthesize_text_html(wClipboard* clipboard, UINT32 formatId,
                                             const void* data, UINT32* pSize)
 {
-	long beg = 0;
-	long end = 0;
-	const char* str = NULL;
-	char* begStr = NULL;
-	char* endStr = NULL;
-	long DstSize = -1;
-	BYTE* pDstData = NULL;
+	char* pDstData = NULL;
 
 	if (formatId == ClipboardGetFormatId(clipboard, "HTML Format"))
 	{
-		INT64 SrcSize = 0;
-		str = (const char*)data;
-		SrcSize = (INT64)*pSize;
-		begStr = strstr(str, "StartHTML:");
-		endStr = strstr(str, "EndHTML:");
+		const char* str = (const char*)data;
+		const size_t SrcSize = (INT64)*pSize;
+		const char* begStr = strstr(str, "StartHTML:");
+		const char* endStr = strstr(str, "EndHTML:");
 
 		if (!begStr || !endStr)
 			return NULL;
 
 		errno = 0;
-		beg = strtol(&begStr[10], NULL, 10);
+		const long beg = strtol(&begStr[10], NULL, 10);
 
 		if (errno != 0)
 			return NULL;
 
-		end = strtol(&endStr[8], NULL, 10);
+		const long end = strtol(&endStr[8], NULL, 10);
 
 		if (beg < 0 || end < 0 || (beg > SrcSize) || (end > SrcSize) || (beg >= end) ||
 		    (errno != 0))
 			return NULL;
 
-		DstSize = end - beg;
-		pDstData = (BYTE*)malloc((size_t)(SrcSize - beg + 1));
+		const size_t DstSize = (size_t)(end - beg);
+		pDstData = calloc(DstSize + 1, sizeof(char));
 
 		if (!pDstData)
 			return NULL;
 
 		CopyMemory(pDstData, &str[beg], DstSize);
-		DstSize = ConvertLineEndingToLF((char*)pDstData, DstSize);
-		*pSize = (UINT32)DstSize;
+		const size_t rc = ConvertLineEndingToLF(pDstData, DstSize);
+		WINPR_ASSERT(rc <= UINT32_MAX);
+		*pSize = (UINT32)rc;
 	}
 
-	return (void*)pDstData;
+	return pDstData;
 }
 
 BOOL ClipboardInitSynthesizers(wClipboard* clipboard)
