@@ -151,7 +151,7 @@ int TestInterlockedAccess(int argc, char* argv[])
 	*Destination64 = 0x66778899AABBCCDD;
 
 	oldValue64 =
-	    InterlockedCompareExchange64(Destination64, 0x8899AABBCCDDEEFF, 0x66778899AABBCCDD);
+	    InterlockedCompareExchange64(Destination64, 0x0899AABBCCDDEEFFLL, 0x66778899AABBCCDD);
 
 	if (oldValue64 != 0x66778899AABBCCDD)
 	{
@@ -161,10 +161,10 @@ int TestInterlockedAccess(int argc, char* argv[])
 		return -1;
 	}
 
-	if ((*Destination64) != (LONGLONG)0x8899AABBCCDDEEFFLL)
+	if ((*Destination64) != 0x0899AABBCCDDEEFFLL)
 	{
 		printf("InterlockedCompareExchange failure: Actual: 0x%016" PRIX64
-		       ", Expected: 0x8899AABBCCDDEEFF\n",
+		       ", Expected: 0x0899AABBCCDDEEFFLL\n",
 		       *Destination64);
 		return -1;
 	}
@@ -173,7 +173,7 @@ int TestInterlockedAccess(int argc, char* argv[])
 
 	*Destination64 = 0x66778899AABBCCDDLL;
 
-	oldValue64 = InterlockedCompareExchange64(Destination64, 0x8899AABBCCDDEEFFLL, 12345);
+	oldValue64 = InterlockedCompareExchange64(Destination64, 0x0899AABBCCDDEEFFLL, 12345);
 
 	if (oldValue64 != 0x66778899AABBCCDDLL)
 	{
