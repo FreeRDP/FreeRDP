@@ -502,14 +502,15 @@ static BOOL xf_GetNumberOfDesktops(xfContext* xfc, Window root, unsigned* pval)
 {
 	unsigned long nitems = 0;
 	unsigned long bytes = 0;
-	long* prop = NULL;
+	BYTE* bprop = NULL;
 
 	WINPR_ASSERT(xfc);
 	WINPR_ASSERT(pval);
 
 	const BOOL rc =
-	    xf_GetWindowProperty(xfc, root, xfc->_NET_NUMBER_OF_DESKTOPS, 1, &nitems, &bytes, &prop);
+	    xf_GetWindowProperty(xfc, root, xfc->_NET_NUMBER_OF_DESKTOPS, 1, &nitems, &bytes, &bprop);
 
+	long* prop = (long*)bprop;
 	*pval = 0;
 	if (!rc)
 		return FALSE;
@@ -523,7 +524,7 @@ static BOOL xf_GetCurrentDesktop(xfContext* xfc, Window root)
 {
 	unsigned long nitems = 0;
 	unsigned long bytes = 0;
-	long* prop = NULL;
+	BYTE* bprop = NULL;
 	unsigned max = 0;
 
 	if (!xf_GetNumberOfDesktops(xfc, root, &max))
@@ -532,8 +533,9 @@ static BOOL xf_GetCurrentDesktop(xfContext* xfc, Window root)
 		return FALSE;
 
 	const BOOL rc =
-	    xf_GetWindowProperty(xfc, root, xfc->_NET_CURRENT_DESKTOP, 1, &nitems, &bytes, &prop);
+	    xf_GetWindowProperty(xfc, root, xfc->_NET_CURRENT_DESKTOP, 1, &nitems, &bytes, &bprop);
 
+	long* prop = (long*)bprop;
 	xfc->current_desktop = 0;
 	if (!rc)
 		return FALSE;
@@ -548,10 +550,11 @@ static BOOL xf_GetWorkArea_NET_WORKAREA(xfContext* xfc, Window root)
 	BOOL rc = FALSE;
 	unsigned long nitems = 0;
 	unsigned long bytes = 0;
-	long* prop = NULL;
+	BYTE* bprop = NULL;
 
 	const BOOL status =
-	    xf_GetWindowProperty(xfc, root, xfc->_NET_WORKAREA, INT_MAX, &nitems, &bytes, &prop);
+	    xf_GetWindowProperty(xfc, root, xfc->_NET_WORKAREA, INT_MAX, &nitems, &bytes, &bprop);
+	long* prop = (long*)bprop;
 
 	if (!status)
 		goto fail;
