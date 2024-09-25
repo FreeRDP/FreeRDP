@@ -9,7 +9,7 @@ macro (checkCFlag FLAG)
 	endif()
 endmacro()
 
-option(ENABLE_WARNING_VERBOSE "enable -Weveryting (and some exceptions) for compile" ON)
+option(ENABLE_WARNING_VERBOSE "enable -Weveryting (and some exceptions) for compile" OFF)
 option(ENABLE_WARNING_ERROR "enable -Werror for compile" OFF)
 
 if (ENABLE_WARNING_VERBOSE)
