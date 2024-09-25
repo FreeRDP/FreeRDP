@@ -525,9 +525,12 @@ static BOOL update_x509_from_info(rdpCertificate* cert)
 
 	if (!mod || !e)
 		goto fail;
-	if (!BN_bin2bn(info->Modulus, info->ModulusLength, mod))
+
+	WINPR_ASSERT(info->ModulusLength <= INT_MAX);
+	if (!BN_bin2bn(info->Modulus, (int)info->ModulusLength, mod))
 		goto fail;
-	if (!BN_bin2bn(info->exponent, sizeof(info->exponent), e))
+
+	if (!BN_bin2bn(info->exponent, (int)sizeof(info->exponent), e))
 		goto fail;
 
 #if !defined(OPENSSL_VERSION_MAJOR) || (OPENSSL_VERSION_MAJOR < 3)
@@ -936,7 +939,12 @@ SSIZE_T freerdp_certificate_write_server_cert(const rdpCertificate* certificate,
 	}
 
 	const size_t end = Stream_GetPosition(s);
-	return end - start;
+	if (start > end)
+		return -1;
+
+	const size_t diff = end - start;
+	WINPR_ASSERT(diff <= SSIZE_MAX);
+	return (SSIZE_T)diff;
 }
 
 /**
@@ -1258,10 +1266,10 @@ rdpCertificate* freerdp_certificate_new_from_der(const BYTE* data, size_t length
 {
 	rdpCertificate* cert = freerdp_certificate_new();
 
-	if (!cert || !data || (length == 0))
+	if (!cert || !data || (length == 0) || (length > INT_MAX))
 		goto fail;
 	const BYTE* ptr = data;
-	cert->x509 = d2i_X509(NULL, &ptr, length);
+	cert->x509 = d2i_X509(NULL, &ptr, (int)length);
 	if (!cert->x509)
 		goto fail;
 	if (!freerdp_rsa_from_x509(cert))
@@ -1399,8 +1407,9 @@ static BOOL bio_read_pem(BIO* bio, char** ppem, size_t* plength)
 	WINPR_ASSERT(bio);
 	WINPR_ASSERT(ppem);
 
+	const size_t blocksize = 2048;
 	size_t offset = 0;
-	size_t length = 2048;
+	size_t length = blocksize;
 	char* pem = NULL;
 	while (offset < length)
 	{
@@ -1411,7 +1420,7 @@ static BOOL bio_read_pem(BIO* bio, char** ppem, size_t* plength)
 
 		ERR_clear_error();
 
-		const int status = BIO_read(bio, &pem[offset], length - offset);
+		const int status = BIO_read(bio, &pem[offset], (int)(length - offset));
 		if (status < 0)
 		{
 			WLog_ERR(TAG, "failed to read certificate");
@@ -1424,7 +1433,7 @@ static BOOL bio_read_pem(BIO* bio, char** ppem, size_t* plength)
 		offset += (size_t)status;
 		if (length - offset > 0)
 			break;
-		length *= 2;
+		length += blocksize;
 	}
 	pem[offset] = '\0';
 	*ppem = pem;
