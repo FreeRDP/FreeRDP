@@ -24,6 +24,7 @@
 #include <fstream>
 #include <iostream>
 #include <regex>
+#include <limits>
 #include <utility>
 #include <vector>
 #include <sstream>
@@ -332,7 +333,13 @@ static BOOL dump_dyn_channel_intercept(proxyPlugin* plugin, proxyData* pdata, vo
 			WLog_ERR(TAG, "Could not write to stream");
 			return FALSE;
 		}
-		stream.write(buffer, Stream_Length(data->data));
+		const auto s = Stream_Length(data->data);
+		if (s > std::numeric_limits<std::streamsize>::max())
+		{
+			WLog_ERR(TAG, "Stream length %" PRIuz " exceeds std::streamsize::max", s);
+			return FALSE;
+		}
+		stream.write(buffer, static_cast<std::streamsize>(s));
 		if (stream.fail())
 		{
 			WLog_ERR(TAG, "Could not write to stream");
