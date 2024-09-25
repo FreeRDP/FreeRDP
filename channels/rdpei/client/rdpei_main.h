@@ -30,8 +30,6 @@
 #include <freerdp/channels/rdpei.h>
 #include <freerdp/client/rdpei.h>
 
-#define TAG CHANNELS_TAG("rdpei.client")
-
 /**
  * Touch Contact State Transitions
  *
