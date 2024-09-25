@@ -223,6 +223,7 @@ struct xf_context
 
 	Atom _NET_WM_ICON;
 	Atom _MOTIF_WM_HINTS;
+	Atom _NET_NUMBER_OF_DESKTOPS;
 	Atom _NET_CURRENT_DESKTOP;
 	Atom _NET_WORKAREA;
 

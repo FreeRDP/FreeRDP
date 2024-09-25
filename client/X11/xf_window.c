@@ -498,54 +498,85 @@ BOOL xf_GetWindowProperty(xfContext* xfc, Window window, Atom property, int leng
 	return TRUE;
 }
 
-BOOL xf_GetCurrentDesktop(xfContext* xfc)
+static BOOL xf_GetNumberOfDesktops(xfContext* xfc, Window root, unsigned* pval)
 {
-	BOOL status = 0;
 	unsigned long nitems = 0;
 	unsigned long bytes = 0;
-	unsigned char* prop = NULL;
-	status = xf_GetWindowProperty(xfc, DefaultRootWindow(xfc->display), xfc->_NET_CURRENT_DESKTOP,
-	                              1, &nitems, &bytes, &prop);
+	long* prop = NULL;
 
-	if (!status)
+	WINPR_ASSERT(xfc);
+	WINPR_ASSERT(pval);
+
+	const BOOL rc =
+	    xf_GetWindowProperty(xfc, root, xfc->_NET_NUMBER_OF_DESKTOPS, 1, &nitems, &bytes, &prop);
+
+	*pval = 0;
+	if (!rc)
 		return FALSE;
 
-	xfc->current_desktop = (int)*prop;
-	free(prop);
+	*pval = *prop;
+	XFree(prop);
 	return TRUE;
+}
+
+static BOOL xf_GetCurrentDesktop(xfContext* xfc, Window root)
+{
+	unsigned long nitems = 0;
+	unsigned long bytes = 0;
+	long* prop = NULL;
+	unsigned max = 0;
+
+	if (!xf_GetNumberOfDesktops(xfc, root, &max))
+		return FALSE;
+	if (max < 1)
+		return FALSE;
+
+	const BOOL rc =
+	    xf_GetWindowProperty(xfc, root, xfc->_NET_CURRENT_DESKTOP, 1, &nitems, &bytes, &prop);
+
+	xfc->current_desktop = 0;
+	if (!rc)
+		return FALSE;
+
+	xfc->current_desktop = (int)MIN(max - 1, *prop);
+	XFree(prop);
+	return TRUE;
+}
+
+static BOOL xf_GetWorkArea_NET_WORKAREA(xfContext* xfc, Window root)
+{
+	BOOL rc = FALSE;
+	unsigned long nitems = 0;
+	unsigned long bytes = 0;
+	long* prop = NULL;
+
+	const BOOL status =
+	    xf_GetWindowProperty(xfc, root, xfc->_NET_WORKAREA, INT_MAX, &nitems, &bytes, &prop);
+
+	if (!status)
+		goto fail;
+
+	if ((xfc->current_desktop * 4 + 3) >= (INT64)nitems)
+		goto fail;
+
+	xfc->workArea.x = prop[xfc->current_desktop * 4 + 0];
+	xfc->workArea.y = prop[xfc->current_desktop * 4 + 1];
+	xfc->workArea.width = prop[xfc->current_desktop * 4 + 2];
+	xfc->workArea.height = prop[xfc->current_desktop * 4 + 3];
+
+	rc = TRUE;
+fail:
+	XFree(prop);
+	return rc;
 }
 
 BOOL xf_GetWorkArea(xfContext* xfc)
 {
-	long* plong = NULL;
-	BOOL status = 0;
-	unsigned long nitems = 0;
-	unsigned long bytes = 0;
-	unsigned char* prop = NULL;
-	status = xf_GetCurrentDesktop(xfc);
+	WINPR_ASSERT(xfc);
 
-	if (!status)
-		return FALSE;
-
-	status = xf_GetWindowProperty(xfc, DefaultRootWindow(xfc->display), xfc->_NET_WORKAREA, 32 * 4,
-	                              &nitems, &bytes, &prop);
-
-	if (!status)
-		return FALSE;
-
-	if ((xfc->current_desktop * 4 + 3) >= (INT64)nitems)
-	{
-		free(prop);
-		return FALSE;
-	}
-
-	plong = (long*)prop;
-	xfc->workArea.x = plong[xfc->current_desktop * 4 + 0];
-	xfc->workArea.y = plong[xfc->current_desktop * 4 + 1];
-	xfc->workArea.width = plong[xfc->current_desktop * 4 + 2];
-	xfc->workArea.height = plong[xfc->current_desktop * 4 + 3];
-	free(prop);
-	return TRUE;
+	Window root = DefaultRootWindow(xfc->display);
+	(void)xf_GetCurrentDesktop(xfc, root);
+	return xf_GetWorkArea_NET_WORKAREA(xfc, root);
 }
 
 void xf_SetWindowDecorations(xfContext* xfc, Window window, BOOL show)
