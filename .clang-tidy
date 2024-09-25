@@ -39,6 +39,7 @@ Checks: >
     -cppcoreguidelines-avoid-magic-numbers,
     -cppcoreguidelines-avoid-non-const-global-variables,
     -cppcoreguidelines-macro-to-enum,
+    -cppcoreguidelines-macro-usage,
     -cppcoreguidelines-pro-type-vararg,
     -cppcoreguidelines-pro-type-reinterpret-cast,
     -cppcoreguidelines-pro-bounds-pointer-arithmetic,
