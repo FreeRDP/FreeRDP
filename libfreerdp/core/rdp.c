@@ -1620,6 +1620,14 @@ static state_run_t rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 		rdp->autodetect->bandwidthMeasureByteCount += length;
 	}
 
+	if (rdp->mcs->messageChannelId && (channelId == rdp->mcs->messageChannelId))
+	{
+		rdp->inPackets++;
+		if (!rdp_handle_message_channel(rdp, s, channelId, length))
+			return STATE_RUN_FAILED;
+		return STATE_RUN_SUCCESS;
+	}
+
 	if (rdp->settings->UseRdpSecurityLayer)
 	{
 		if (!rdp_read_security_header(rdp, s, &securityFlags, &length))
@@ -1713,14 +1721,6 @@ static state_run_t rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 				           pdu_type_to_str(pduType, buffer, sizeof(buffer)), diff);
 			}
 		}
-	}
-	else if (rdp->mcs->messageChannelId && (channelId == rdp->mcs->messageChannelId))
-	{
-		if (!rdp->settings->UseRdpSecurityLayer)
-			if (!rdp_read_security_header(rdp, s, &securityFlags, NULL))
-				return STATE_RUN_FAILED;
-		rdp->inPackets++;
-		rc = rdp_recv_message_channel_pdu(rdp, s, securityFlags);
 	}
 	else
 	{

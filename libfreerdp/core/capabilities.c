@@ -4469,8 +4469,6 @@ fail:
 
 BOOL rdp_recv_get_active_header(rdpRdp* rdp, wStream* s, UINT16* pChannelId, UINT16* length)
 {
-	UINT16 securityFlags = 0;
-
 	WINPR_ASSERT(rdp);
 	WINPR_ASSERT(rdp->context);
 
@@ -4479,18 +4477,6 @@ BOOL rdp_recv_get_active_header(rdpRdp* rdp, wStream* s, UINT16* pChannelId, UIN
 
 	if (freerdp_shall_disconnect_context(rdp->context))
 		return TRUE;
-
-	if (rdp->settings->UseRdpSecurityLayer)
-	{
-		if (!rdp_read_security_header(rdp, s, &securityFlags, length))
-			return FALSE;
-
-		if (securityFlags & SEC_ENCRYPT)
-		{
-			if (!rdp_decrypt(rdp, s, length, securityFlags))
-				return FALSE;
-		}
-	}
 
 	if (*pChannelId != MCS_GLOBAL_CHANNEL_ID)
 	{
