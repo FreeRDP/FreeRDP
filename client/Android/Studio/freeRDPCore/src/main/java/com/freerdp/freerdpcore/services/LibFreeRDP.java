@@ -228,6 +228,10 @@ public class LibFreeRDP
 		ArrayList<String> args = new ArrayList<String>();
 
 		args.add(TAG);
+		if (bookmark.getRdpFileName() != null) {
+			args.add(bookmark.getRdpFileName());
+			args.add("/gt:,no-websockets");
+		}
 		args.add("/gdi:sw");
 
 		final String clientName = ApplicationSettingsActivity.getClientName(context);
@@ -241,12 +245,14 @@ public class LibFreeRDP
 			return false;
 		}
 
-		int port = bookmark.<ManualBookmark>get().getPort();
-		String hostname = bookmark.<ManualBookmark>get().getHostname();
-
-		args.add("/v:" + hostname);
-		args.add("/port:" + String.valueOf(port));
-
+		arg = bookmark.<ManualBookmark>get().getHostname();
+		if (!arg.isEmpty()) {
+			args.add("/v:" + arg);
+		}
+		arg = bookmark.<ManualBookmark>get().getPort() > 0 ? Integer.toString(bookmark.<ManualBookmark>get().getPort()): "";
+		if (!arg.isEmpty()) {
+			args.add("/port:" + arg);
+		}
 		arg = bookmark.getUsername();
 		if (!arg.isEmpty())
 		{
