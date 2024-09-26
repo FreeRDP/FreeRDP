@@ -37,5 +37,11 @@
             freerdp:bounds_default="480"
             freerdp:bounds_max="65536"
             freerdp:bounds_min="480" />
+       <com.freerdp.freerdpcore.utils.IntListPreference
+            android:entries="@array/scale_array"
+            android:entryValues="@array/scale_values_array"
+            android:key="bookmark.scale"
+            android:summary="Scaling Percentage"
+            android:title="@string/settings_scale" />
     </PreferenceCategory>
 </PreferenceScreen>
