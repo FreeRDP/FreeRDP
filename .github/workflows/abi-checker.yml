@@ -85,11 +85,11 @@ jobs:
 
       - name: "Prepare configuration"
         run: |
-          mkdir -p checker
-          cp ci/cmake-preloads/config-abi.txt checker/
-          cp scripts/abi-suppr.txt checker/
-          curl https://gist.githubusercontent.com/akallabeth/aa35caed0d39241fa17c3dc8a0539ea3/raw/ef12f8c720ac6be51aa1878710e2502b1b39cf4c/check-abi -o checker/check-abi
-          chmod +x checker/check-abi
+          mkdir -p abi-checker
+          cp ci/cmake-preloads/config-abi.txt abi-checker/
+          cp scripts/abi-suppr.txt abi-checker/
+          curl https://gist.githubusercontent.com/akallabeth/aa35caed0d39241fa17c3dc8a0539ea3/raw/ef12f8c720ac6be51aa1878710e2502b1b39cf4c/check-abi -o abi-checker/check-abi
+          chmod +x abi-checker/check-abi
           echo "GITHUB_BASE_REF=$GITHUB_BASE_REF"
           echo "GITHUB_HEAD_REF=$GITHUB_HEAD_REF"
           echo "API_BASE_REF=${{ inputs.API_BASE_REF || '3.0.0' }}"
@@ -101,4 +101,4 @@ jobs:
           BASE_REF: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event_name == 'workflow_dispatch' && inputs.API_BASE_REF || '3.0.0' }}
         run: |
           echo "BASE_REF=$BASE_REF"
-          ./checker/check-abi -s checker/abi-suppr.txt --parameters="-Cchecker/config-abi.txt" $BASE_REF $(git rev-parse HEAD) 
+          ./abi-checker/check-abi -s abi-checker/abi-suppr.txt --parameters="-Cabi-checker/config-abi.txt" $BASE_REF $(git rev-parse HEAD) 
