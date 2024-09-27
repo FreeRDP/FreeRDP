@@ -229,8 +229,9 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  "[DEPRECATED, use /gateway:p:<password>] Gateway password" },
 #endif
 	{ "grab-keyboard", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL,
-	  "Grab keyboard" },
-	{ "grab-mouse", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "Grab mouse" },
+	  "Grab keyboard focus, forward all keys to remote" },
+	{ "grab-mouse", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL,
+	  "Grab mouse focus, forward all events to remote" },
 #if defined(WITH_FREERDP_DEPRECATED_COMMANDLINE)
 	{ "gt", COMMAND_LINE_VALUE_REQUIRED,
 	  "[rpc|http[,no-websockets][,extauth-sspi-ntlm]|auto[,no-websockets][,extauth-sspi-ntlm]]",
