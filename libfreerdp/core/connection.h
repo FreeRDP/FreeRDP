@@ -47,6 +47,7 @@ FREERDP_LOCAL BOOL rdp_client_redirect(rdpRdp* rdp);
 FREERDP_LOCAL BOOL rdp_client_skip_mcs_channel_join(rdpRdp* rdp);
 FREERDP_LOCAL BOOL rdp_client_connect_mcs_channel_join_confirm(rdpRdp* rdp, wStream* s);
 FREERDP_LOCAL BOOL rdp_client_connect_auto_detect(rdpRdp* rdp, wStream* s);
+
 FREERDP_LOCAL state_run_t rdp_client_connect_license(rdpRdp* rdp, wStream* s);
 FREERDP_LOCAL state_run_t rdp_client_connect_demand_active(rdpRdp* rdp, wStream* s);
 FREERDP_LOCAL state_run_t rdp_client_connect_confirm_active(rdpRdp* rdp, wStream* s);
@@ -71,5 +72,10 @@ FREERDP_LOCAL const char* rdp_get_state_string(const rdpRdp* rdp);
 FREERDP_LOCAL const char* rdp_client_connection_state_string(int state);
 
 FREERDP_LOCAL BOOL rdp_channels_from_mcs(rdpSettings* settings, const rdpRdp* rdp);
+
+FREERDP_LOCAL BOOL rdp_handle_message_channel(rdpRdp* rdp, wStream* s, UINT16 channelId,
+                                              UINT16 length);
+FREERDP_LOCAL BOOL rdp_handle_optional_rdp_decryption(rdpRdp* rdp, wStream* s, UINT16* length,
+                                                      UINT16* pSecurityFlags);
 
 #endif /* FREERDP_LIB_CORE_CONNECTION_H */

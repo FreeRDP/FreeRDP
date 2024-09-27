@@ -1128,48 +1128,74 @@ BOOL rdp_client_connect_mcs_channel_join_confirm(rdpRdp* rdp, wStream* s)
 	return TRUE;
 }
 
+BOOL rdp_handle_message_channel(rdpRdp* rdp, wStream* s, UINT16 channelId, UINT16 length)
+{
+	WINPR_ASSERT(rdp);
+	WINPR_ASSERT(rdp->mcs);
+
+	if (!rdp->mcs->messageChannelJoined)
+	{
+		WLog_Print(rdp->log, WLOG_WARN, "MCS message channel not joined!");
+		return FALSE;
+	}
+	const UINT16 messageChannelId = rdp->mcs->messageChannelId;
+	if (messageChannelId == 0)
+	{
+		WLog_Print(rdp->log, WLOG_WARN, "MCS message channel id == 0");
+		return FALSE;
+	}
+
+	if (channelId != messageChannelId)
+	{
+		WLog_Print(rdp->log, WLOG_WARN, "MCS message channel expected id=%" PRIu16 ", got %" PRIu16,
+		           messageChannelId, channelId);
+		return FALSE;
+	}
+
+	UINT16 securityFlags = 0;
+	if (!rdp_read_security_header(rdp, s, &securityFlags, &length))
+		return FALSE;
+
+	if (securityFlags & SEC_ENCRYPT)
+	{
+		if (!rdp_decrypt(rdp, s, &length, securityFlags))
+			return FALSE;
+	}
+
+	if (rdp_recv_message_channel_pdu(rdp, s, securityFlags) != STATE_RUN_SUCCESS)
+		return FALSE;
+
+	return tpkt_ensure_stream_consumed(s, length);
+}
+
 BOOL rdp_client_connect_auto_detect(rdpRdp* rdp, wStream* s)
 {
 	WINPR_ASSERT(rdp);
 	WINPR_ASSERT(rdp->mcs);
 
-	const UINT16 messageChannelId = rdp->mcs->messageChannelId;
-	/* If the MCS message channel has been joined... */
-	if (messageChannelId != 0)
+	const size_t pos = Stream_GetPosition(s);
+	UINT16 length = 0;
+	UINT16 channelId = 0;
+
+	if (rdp_read_header(rdp, s, &length, &channelId))
 	{
+		const UINT16 messageChannelId = rdp->mcs->messageChannelId;
+		/* If the MCS message channel has been joined... */
+
 		/* Process any MCS message channel PDUs. */
-		const size_t pos = Stream_GetPosition(s);
-		UINT16 length = 0;
-		UINT16 channelId = 0;
-
-		if (rdp_read_header(rdp, s, &length, &channelId))
+		if (rdp->mcs->messageChannelJoined && (channelId == messageChannelId))
 		{
-			if (channelId == messageChannelId)
-			{
-				UINT16 securityFlags = 0;
-
-				if (!rdp_read_security_header(rdp, s, &securityFlags, &length))
-					return FALSE;
-
-				if (securityFlags & SEC_ENCRYPT)
-				{
-					if (!rdp_decrypt(rdp, s, &length, securityFlags))
-						return FALSE;
-				}
-
-				if (rdp_recv_message_channel_pdu(rdp, s, securityFlags) == STATE_RUN_SUCCESS)
-					return tpkt_ensure_stream_consumed(s, length);
-			}
+			if (rdp_handle_message_channel(rdp, s, channelId, length))
+				return TRUE;
 		}
 		else
+		{
 			WLog_WARN(TAG, "expected messageChannelId=%" PRIu16 ", got %" PRIu16, messageChannelId,
 			          channelId);
-
-		Stream_SetPosition(s, pos);
+		}
 	}
-	else
-		WLog_WARN(TAG, "messageChannelId == 0");
 
+	Stream_SetPosition(s, pos);
 	return FALSE;
 }
 
@@ -1185,6 +1211,17 @@ state_run_t rdp_client_connect_license(rdpRdp* rdp, wStream* s)
 	if (!rdp_read_header(rdp, s, &length, &channelId))
 		return STATE_RUN_FAILED;
 
+	/* there might be autodetect messages mixed in between licensing messages.
+	 * that has been observed with 2k12 R2 and 2k19
+	 */
+	const UINT16 messageChannelId = rdp->mcs->messageChannelId;
+	if (rdp->mcs->messageChannelJoined && (channelId == messageChannelId))
+	{
+		if (!rdp_handle_message_channel(rdp, s, channelId, length))
+			return STATE_RUN_FAILED;
+		return STATE_RUN_SUCCESS;
+	}
+
 	if (!rdp_read_security_header(rdp, s, &securityFlags, &length))
 		return STATE_RUN_FAILED;
 
@@ -1192,15 +1229,6 @@ state_run_t rdp_client_connect_license(rdpRdp* rdp, wStream* s)
 	{
 		if (!rdp_decrypt(rdp, s, &length, securityFlags))
 			return STATE_RUN_FAILED;
-	}
-
-	/* there might be autodetect messages mixed in between licensing messages.
-	 * that has been observed with 2k12 R2 and 2k19
-	 */
-	const UINT16 messageChannelId = rdp->mcs->messageChannelId;
-	if ((channelId == messageChannelId) || (securityFlags & SEC_AUTODETECT_REQ))
-	{
-		return rdp_recv_message_channel_pdu(rdp, s, securityFlags);
 	}
 
 	if (channelId != MCS_GLOBAL_CHANNEL_ID)
@@ -1266,18 +1294,14 @@ state_run_t rdp_client_connect_demand_active(rdpRdp* rdp, wStream* s)
 
 	if (rdp->mcs->messageChannelId && (channelId == rdp->mcs->messageChannelId))
 	{
-		UINT16 securityFlags = 0;
-		if (!rdp_read_security_header(rdp, s, &securityFlags, NULL))
-			return STATE_RUN_FAILED;
-
-		if (securityFlags & SEC_ENCRYPT)
-		{
-			if (!rdp_decrypt(rdp, s, &length, securityFlags))
-				return STATE_RUN_FAILED;
-		}
 		rdp->inPackets++;
-		return rdp_recv_message_channel_pdu(rdp, s, securityFlags);
+		if (!rdp_handle_message_channel(rdp, s, channelId, length))
+			return STATE_RUN_FAILED;
+		return STATE_RUN_SUCCESS;
 	}
+
+	if (!rdp_handle_optional_rdp_decryption(rdp, s, &length, NULL))
+		return STATE_RUN_FAILED;
 
 	if (!rdp_read_share_control_header(rdp, s, NULL, NULL, &pduType, &pduSource))
 		return STATE_RUN_FAILED;
@@ -2153,4 +2177,32 @@ state_run_t rdp_client_connect_confirm_active(rdpRdp* rdp, wStream* s)
 	if (!rdp_finalize_reset_flags(rdp, FALSE))
 		status = STATE_RUN_FAILED;
 	return status;
+}
+
+BOOL rdp_handle_optional_rdp_decryption(rdpRdp* rdp, wStream* s, UINT16* length,
+                                        UINT16* pSecurityFlags)
+{
+	BOOL rc = FALSE;
+	WINPR_ASSERT(rdp);
+	WINPR_ASSERT(rdp->settings);
+
+	UINT16 securityFlags = 0;
+	if (rdp->settings->UseRdpSecurityLayer)
+	{
+		if (!rdp_read_security_header(rdp, s, &securityFlags, length))
+			goto fail;
+
+		if (securityFlags & SEC_ENCRYPT)
+		{
+			if (!rdp_decrypt(rdp, s, length, securityFlags))
+				goto fail;
+		}
+	}
+
+	rc = TRUE;
+
+fail:
+	if (pSecurityFlags)
+		*pSecurityFlags = securityFlags;
+	return rc;
 }
