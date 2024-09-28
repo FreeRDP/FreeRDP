@@ -1491,29 +1491,34 @@ static UINT change_lock(CliprdrFileContext* file, UINT32 lockId, BOOL lock)
 	WINPR_ASSERT(file);
 
 	HashTable_Lock(file->local_streams);
-	CliprdrLocalStream* stream = HashTable_GetItemValue(file->local_streams, &lockId);
-	if (lock && !stream)
+
 	{
-		stream = cliprdr_local_stream_new(file, lockId, NULL, 0);
-		if (!HashTable_Insert(file->local_streams, &lockId, stream))
+		CliprdrLocalStream* stream = HashTable_GetItemValue(file->local_streams, &lockId);
+		if (lock && !stream)
 		{
-			rc = ERROR_INTERNAL_ERROR;
-			cliprdr_local_stream_free(stream);
-			stream = NULL;
+			stream = cliprdr_local_stream_new(file, lockId, NULL, 0);
+			if (!HashTable_Insert(file->local_streams, &lockId, stream))
+			{
+				rc = ERROR_INTERNAL_ERROR;
+				cliprdr_local_stream_free(stream);
+				stream = NULL;
+			}
+			file->local_lock_id = lockId;
 		}
-		file->local_lock_id = lockId;
-	}
-	if (stream)
-	{
-		stream->locked = lock;
-		stream->lockId = lockId;
+		if (stream)
+		{
+			stream->locked = lock;
+			stream->lockId = lockId;
+		}
 	}
 
+	// NOLINTNEXTLINE(clang-analyzer-unix.Malloc): HashTable_Insert ownership stream
 	if (!lock)
 	{
 		if (!HashTable_Foreach(file->local_streams, local_stream_discard, file))
 			rc = ERROR_INTERNAL_ERROR;
 	}
+
 	HashTable_Unlock(file->local_streams);
 	return rc;
 }
