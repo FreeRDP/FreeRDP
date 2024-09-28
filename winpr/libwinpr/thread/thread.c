@@ -665,7 +665,11 @@ BOOL SetThreadPriority(HANDLE hThread, int nPriority)
 	WINPR_THREAD* thread = (WINPR_THREAD*)Object;
 	const int rc = pthread_setschedprio(thread->thread, sched_priority);
 	if (rc != 0)
-		WLog_ERR(TAG, "pthread_setschedprio(%d) %s [%d]", sched_priority, strerror(rc), rc);
+	{
+		char buffer[256] = { 0 };
+		WLog_ERR(TAG, "pthread_setschedprio(%d) %s [%d]", sched_priority,
+		         winpr_strerror(rc, buffer, sizeof(buffer)), rc);
+	}
 	return rc == 0;
 #else
 	WLog_WARN(TAG, "pthread_setschedprio(%d) not implemented, requires POSIX 2008 or later",
