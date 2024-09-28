@@ -6,10 +6,18 @@
 #include <freerdp/codecs.h>
 
 #include "settings_property_lists.h"
+#include "../settings.h"
 
 static BOOL log_result(BOOL value, const char* fkt)
 {
 	(void)fprintf(stderr, "TestSettings [%s] returned %s\n", fkt, value ? "TRUE" : "FALSE");
+	return value;
+}
+
+static BOOL log_result_case(BOOL value, const char* fkt, size_t testcase)
+{
+	(void)fprintf(stderr, "TestSettings [%s] testcase %" PRIuz " returned %s\n", fkt, testcase,
+	              value ? "TRUE" : "FALSE");
 	return value;
 }
 
@@ -929,6 +937,373 @@ fail:
 	freerdp_settings_free(settings);
 	return log_result(rc, __func__);
 }
+
+struct validity_test_case
+{
+	BOOL expected;
+	size_t count;
+	const rdpMonitor* monitors;
+};
+
+static BOOL prepare_monitor_array(rdpSettings* settings, const struct validity_test_case* testcase)
+{
+	WINPR_ASSERT(settings);
+	WINPR_ASSERT(testcase);
+
+	const size_t count = freerdp_settings_get_uint32(settings, FreeRDP_MonitorDefArraySize);
+	if (count < testcase->count)
+	{
+		(void)fprintf(stderr, "MonitorDefArraySize=%" PRIuz ", but testcase requires %" PRIuz "\n",
+		              count, testcase->count);
+		return FALSE;
+	}
+	for (size_t x = 0; x < testcase->count; x++)
+	{
+		const rdpMonitor* monitor = &testcase->monitors[x];
+		if (!freerdp_settings_set_pointer_array(settings, FreeRDP_MonitorDefArray, x, monitor))
+			return FALSE;
+	}
+	return freerdp_settings_set_uint32(settings, FreeRDP_MonitorCount, testcase->count);
+}
+
+static BOOL test_validity_check(void)
+{
+	BOOL rc = FALSE;
+	rdpSettings* settings = freerdp_settings_new(0);
+	if (!settings)
+		goto fail;
+
+	const rdpMonitor single_monitor_valid[] = {
+		{ .x = 0,
+		  .y = 0,
+		  .width = 1920,
+		  .height = 1080,
+		  .is_primary = TRUE,
+		  .orig_screen = 0,
+		  .attributes = { .physicalWidth = 100,
+		                  .physicalHeight = 100,
+		                  .orientation = ORIENTATION_PREFERENCE_LANDSCAPE,
+		                  .desktopScaleFactor = 100,
+		                  .deviceScaleFactor = 100 } }
+	};
+	const rdpMonitor single_monitor_invalid_1[] = {
+		{ .x = 0,
+		  .y = 0,
+		  .width = 192,
+		  .height = 1080,
+		  .is_primary = TRUE,
+		  .orig_screen = 0,
+		  .attributes = { .physicalWidth = 100,
+		                  .physicalHeight = 100,
+		                  .orientation = ORIENTATION_PREFERENCE_LANDSCAPE,
+		                  .desktopScaleFactor = 100,
+		                  .deviceScaleFactor = 100 } }
+	};
+	const rdpMonitor single_monitor_invalid_2[] = {
+		{ .x = 0,
+		  .y = 0,
+		  .width = 192,
+		  .height = 1080,
+		  .is_primary = TRUE,
+		  .orig_screen = 0,
+		  .attributes = { .physicalWidth = 100,
+		                  .physicalHeight = 100,
+		                  .orientation = ORIENTATION_PREFERENCE_LANDSCAPE,
+		                  .desktopScaleFactor = 100,
+		                  .deviceScaleFactor = 100 } }
+	};
+	const rdpMonitor single_monitor_invalid_3[] = {
+		{ .x = 0,
+		  .y = 0,
+		  .width = 192,
+		  .height = 1080,
+		  .is_primary = TRUE,
+		  .orig_screen = 0,
+		  .attributes = { .physicalWidth = 100,
+		                  .physicalHeight = 100,
+		                  .orientation = ORIENTATION_PREFERENCE_LANDSCAPE,
+		                  .desktopScaleFactor = 100,
+		                  .deviceScaleFactor = 100 } }
+	};
+	const rdpMonitor single_monitor_invalid_4[] = {
+		{ .x = 0,
+		  .y = 0,
+		  .width = 192,
+		  .height = 1080,
+		  .is_primary = TRUE,
+		  .orig_screen = 0,
+		  .attributes = { .physicalWidth = 100,
+		                  .physicalHeight = 100,
+		                  .orientation = ORIENTATION_PREFERENCE_LANDSCAPE,
+		                  .desktopScaleFactor = 100,
+		                  .deviceScaleFactor = 100 } }
+	};
+	const rdpMonitor multi_monitor_valid[] = {
+		{ .x = 0,
+		  .y = 0,
+		  .width = 1920,
+		  .height = 1080,
+		  .is_primary = FALSE,
+		  .orig_screen = 0,
+		  .attributes = { .physicalWidth = 100,
+		                  .physicalHeight = 100,
+		                  .orientation = ORIENTATION_PREFERENCE_LANDSCAPE,
+		                  .desktopScaleFactor = 100,
+		                  .deviceScaleFactor = 100 } },
+		{ .x = 1920,
+		  .y = 0,
+		  .width = 1920,
+		  .height = 1080,
+		  .is_primary = FALSE,
+		  .orig_screen = 0,
+		  .attributes = { .physicalWidth = 100,
+		                  .physicalHeight = 100,
+		                  .orientation = ORIENTATION_PREFERENCE_LANDSCAPE,
+		                  .desktopScaleFactor = 100,
+		                  .deviceScaleFactor = 100 } },
+		{ .x = 0,
+		  .y = 1080,
+		  .width = 1920,
+		  .height = 1080,
+		  .is_primary = FALSE,
+		  .orig_screen = 0,
+		  .attributes = { .physicalWidth = 100,
+		                  .physicalHeight = 100,
+		                  .orientation = ORIENTATION_PREFERENCE_LANDSCAPE,
+		                  .desktopScaleFactor = 100,
+		                  .deviceScaleFactor = 100 } },
+		{ .x = -1920,
+		  .y = 0,
+		  .width = 1920,
+		  .height = 1080,
+		  .is_primary = FALSE,
+		  .orig_screen = 0,
+		  .attributes = { .physicalWidth = 100,
+		                  .physicalHeight = 100,
+		                  .orientation = ORIENTATION_PREFERENCE_LANDSCAPE,
+		                  .desktopScaleFactor = 100,
+		                  .deviceScaleFactor = 100 } },
+		{ .x = 0,
+		  .y = -1080,
+		  .width = 1920,
+		  .height = 1080,
+		  .is_primary = TRUE,
+		  .orig_screen = 0,
+		  .attributes = { .physicalWidth = 100,
+		                  .physicalHeight = 100,
+		                  .orientation = ORIENTATION_PREFERENCE_LANDSCAPE,
+		                  .desktopScaleFactor = 100,
+		                  .deviceScaleFactor = 100 } },
+		{ .x = 3840,
+		  .y = 0,
+		  .width = 1920,
+		  .height = 1080,
+		  .is_primary = FALSE,
+		  .orig_screen = 0,
+		  .attributes = { .physicalWidth = 100,
+		                  .physicalHeight = 100,
+		                  .orientation = ORIENTATION_PREFERENCE_LANDSCAPE,
+		                  .desktopScaleFactor = 100,
+		                  .deviceScaleFactor = 100 } },
+		{ .x = 5760,
+		  .y = -1079,
+		  .width = 1920,
+		  .height = 1080,
+		  .is_primary = FALSE,
+		  .orig_screen = 0,
+		  .attributes = { .physicalWidth = 100,
+		                  .physicalHeight = 100,
+		                  .orientation = ORIENTATION_PREFERENCE_LANDSCAPE,
+		                  .desktopScaleFactor = 100,
+		                  .deviceScaleFactor = 100 } },
+		{ .x = 7680,
+		  .y = 0,
+		  .width = 1920,
+		  .height = 1080,
+		  .is_primary = FALSE,
+		  .orig_screen = 0,
+		  .attributes = { .physicalWidth = 100,
+		                  .physicalHeight = 100,
+		                  .orientation = ORIENTATION_PREFERENCE_LANDSCAPE,
+		                  .desktopScaleFactor = 100,
+		                  .deviceScaleFactor = 100 } },
+		{ .x = 7680,
+		  .y = 1080,
+		  .width = 1920,
+		  .height = 1080,
+		  .is_primary = FALSE,
+		  .orig_screen = 0,
+		  .attributes = { .physicalWidth = 100,
+		                  .physicalHeight = 100,
+		                  .orientation = ORIENTATION_PREFERENCE_LANDSCAPE,
+		                  .desktopScaleFactor = 100,
+		                  .deviceScaleFactor = 100 } },
+		{ .x = 7680,
+		  .y = -1080,
+		  .width = 1920,
+		  .height = 1080,
+		  .is_primary = FALSE,
+		  .orig_screen = 0,
+		  .attributes = { .physicalWidth = 100,
+		                  .physicalHeight = 100,
+		                  .orientation = ORIENTATION_PREFERENCE_LANDSCAPE,
+		                  .desktopScaleFactor = 100,
+		                  .deviceScaleFactor = 100 } },
+		{ .x = 7680,
+		  .y = -2160,
+		  .width = 1920,
+		  .height = 1080,
+		  .is_primary = FALSE,
+		  .orig_screen = 0,
+		  .attributes = { .physicalWidth = 100,
+		                  .physicalHeight = 100,
+		                  .orientation = ORIENTATION_PREFERENCE_LANDSCAPE,
+		                  .desktopScaleFactor = 100,
+		                  .deviceScaleFactor = 100 } },
+		{ .x = 9599,
+		  .y = -3240,
+		  .width = 1920,
+		  .height = 1080,
+		  .is_primary = FALSE,
+		  .orig_screen = 0,
+		  .attributes = { .physicalWidth = 100,
+		                  .physicalHeight = 100,
+		                  .orientation = ORIENTATION_PREFERENCE_LANDSCAPE,
+		                  .desktopScaleFactor = 100,
+		                  .deviceScaleFactor = 100 } },
+	};
+	const rdpMonitor multi_monitor_invalid_1[] = {
+		{ .x = 0,
+		  .y = 0,
+		  .width = 1920,
+		  .height = 1080,
+		  .is_primary = FALSE,
+		  .orig_screen = 0,
+		  .attributes = { .physicalWidth = 100,
+		                  .physicalHeight = 100,
+		                  .orientation = ORIENTATION_PREFERENCE_LANDSCAPE,
+		                  .desktopScaleFactor = 100,
+		                  .deviceScaleFactor = 100 } },
+		{ .x = 1920,
+		  .y = 0,
+		  .width = 1920,
+		  .height = 1080,
+		  .is_primary = FALSE,
+		  .orig_screen = 0,
+		  .attributes = { .physicalWidth = 100,
+		                  .physicalHeight = 100,
+		                  .orientation = ORIENTATION_PREFERENCE_LANDSCAPE,
+		                  .desktopScaleFactor = 100,
+		                  .deviceScaleFactor = 100 } }
+	};
+	const rdpMonitor multi_monitor_invalid_2[] = {
+		{ .x = 1,
+		  .y = 0,
+		  .width = 1920,
+		  .height = 1080,
+		  .is_primary = FALSE,
+		  .orig_screen = 0,
+		  .attributes = { .physicalWidth = 100,
+		                  .physicalHeight = 100,
+		                  .orientation = ORIENTATION_PREFERENCE_LANDSCAPE,
+		                  .desktopScaleFactor = 100,
+		                  .deviceScaleFactor = 100 } },
+		{ .x = 1920,
+		  .y = 0,
+		  .width = 1920,
+		  .height = 1080,
+		  .is_primary = TRUE,
+		  .orig_screen = 0,
+		  .attributes = { .physicalWidth = 100,
+		                  .physicalHeight = 100,
+		                  .orientation = ORIENTATION_PREFERENCE_LANDSCAPE,
+		                  .desktopScaleFactor = 100,
+		                  .deviceScaleFactor = 100 } }
+	};
+	const rdpMonitor multi_monitor_invalid_3[] = {
+		{ .x = 0,
+		  .y = 0,
+		  .width = 1920,
+		  .height = 1080,
+		  .is_primary = FALSE,
+		  .orig_screen = 0,
+		  .attributes = { .physicalWidth = 100,
+		                  .physicalHeight = 100,
+		                  .orientation = ORIENTATION_PREFERENCE_LANDSCAPE,
+		                  .desktopScaleFactor = 100,
+		                  .deviceScaleFactor = 100 } },
+		{ .x = 1921,
+		  .y = 0,
+		  .width = 1920,
+		  .height = 1080,
+		  .is_primary = TRUE,
+		  .orig_screen = 0,
+		  .attributes = { .physicalWidth = 100,
+		                  .physicalHeight = 100,
+		                  .orientation = ORIENTATION_PREFERENCE_LANDSCAPE,
+		                  .desktopScaleFactor = 100,
+		                  .deviceScaleFactor = 100 } }
+	};
+	const rdpMonitor multi_monitor_invalid_4[] = {
+		{ .x = 0,
+		  .y = 0,
+		  .width = 1920,
+		  .height = 1080,
+		  .is_primary = FALSE,
+		  .orig_screen = 0,
+		  .attributes = { .physicalWidth = 100,
+		                  .physicalHeight = 100,
+		                  .orientation = ORIENTATION_PREFERENCE_LANDSCAPE,
+		                  .desktopScaleFactor = 100,
+		                  .deviceScaleFactor = 100 } },
+		{ .x = 1919,
+		  .y = 0,
+		  .width = 1920,
+		  .height = 1080,
+		  .is_primary = TRUE,
+		  .orig_screen = 0,
+		  .attributes = { .physicalWidth = 100,
+		                  .physicalHeight = 100,
+		                  .orientation = ORIENTATION_PREFERENCE_LANDSCAPE,
+		                  .desktopScaleFactor = 100,
+		                  .deviceScaleFactor = 100 } }
+	};
+
+	const struct validity_test_case tests[] = {
+		{ TRUE, ARRAYSIZE(single_monitor_valid), single_monitor_valid },
+		{ FALSE, ARRAYSIZE(single_monitor_invalid_1), single_monitor_invalid_1 },
+		{ FALSE, ARRAYSIZE(single_monitor_invalid_2), single_monitor_invalid_2 },
+		{ FALSE, ARRAYSIZE(single_monitor_invalid_3), single_monitor_invalid_3 },
+		{ FALSE, ARRAYSIZE(single_monitor_invalid_4), single_monitor_invalid_4 },
+		{ TRUE, ARRAYSIZE(multi_monitor_valid), multi_monitor_valid },
+		{ FALSE, ARRAYSIZE(multi_monitor_invalid_1), multi_monitor_invalid_1 },
+		{ FALSE, ARRAYSIZE(multi_monitor_invalid_2), multi_monitor_invalid_2 },
+		{ FALSE, ARRAYSIZE(multi_monitor_invalid_3), multi_monitor_invalid_3 },
+		{ FALSE, ARRAYSIZE(multi_monitor_invalid_4), multi_monitor_invalid_4 },
+	};
+
+	rc = TRUE;
+	for (size_t x = 0; x < ARRAYSIZE(tests); x++)
+	{
+		const struct validity_test_case* cur = &tests[x];
+
+		if (!prepare_monitor_array(settings, cur))
+			rc = log_result_case(FALSE, __func__, x);
+		else
+		{
+			const BOOL res = freerdp_settings_check_client_after_preconnect(settings);
+			if (res != cur->expected)
+			{
+				rc = log_result_case(FALSE, __func__, x);
+			}
+		}
+	}
+
+fail:
+	freerdp_settings_free(settings);
+	return log_result(rc, __func__);
+}
+
 int TestSettings(int argc, char* argv[])
 {
 	int rc = -1;
@@ -949,6 +1324,8 @@ int TestSettings(int argc, char* argv[])
 	if (!check_device_type())
 		goto fail;
 	if (!test_pointer_array())
+		goto fail;
+	if (!test_validity_check())
 		goto fail;
 
 	settings = freerdp_settings_new(0);
