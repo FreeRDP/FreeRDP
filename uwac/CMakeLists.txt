@@ -49,6 +49,9 @@ option(UWAC_HAVE_PIXMAN_REGION "Use PIXMAN or FreeRDP for region calculations" "
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../cmake/)
 include(CommonConfigOptions)
 
+include(CheckFunctionExists)
+check_function_exists(strerror_r UWAC_HAVE_STRERROR_R)
+
 # Check for cmake compatibility (enable/disable features)
 include(FindFeature)
 
