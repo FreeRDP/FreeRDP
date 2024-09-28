@@ -484,7 +484,7 @@ static BOOL find_path_exists_with_dijkstra(UINT32** graph, size_t count, UINT32 
 					parent[y] = nextnode;
 			}
 		}
-		count++;
+		pos++;
 	}
 
 	BOOL rc = TRUE;
@@ -510,6 +510,7 @@ static BOOL find_path_exists_with_dijkstra(UINT32** graph, size_t count, UINT32 
 
 static BOOL freerdp_settings_client_monitors_have_gaps(const rdpSettings* settings)
 {
+	BOOL rc = TRUE;
 	const UINT32 count = freerdp_settings_get_uint32(settings, FreeRDP_MonitorCount);
 	if (count <= 1)
 		return FALSE;
@@ -522,10 +523,12 @@ static BOOL freerdp_settings_client_monitors_have_gaps(const rdpSettings* settin
 		const rdpMonitor* monitor =
 		    freerdp_settings_get_pointer_array(settings, FreeRDP_MonitorDefArray, x);
 		if (monitor_has_gaps(settings, x, count, monitor, graph))
-			return TRUE;
+			goto fail;
 	}
 
-	const BOOL rc = find_path_exists_with_dijkstra(graph, count, 0);
+	rc = !find_path_exists_with_dijkstra(graph, count, 0);
+
+fail:
 	free((void*)graph);
 
 	return rc;
@@ -556,6 +559,12 @@ static BOOL freerdp_settings_client_monitors_check_primary_and_origin(const rdpS
 
 	struct bounds_t bounds = { 0 };
 
+	if (count == 0)
+	{
+		WLog_WARN(TAG, "Monitor configuration empty.");
+		return TRUE;
+	}
+
 	for (UINT32 x = 0; x < count; x++)
 	{
 		const rdpMonitor* monitor =
@@ -574,17 +583,16 @@ static BOOL freerdp_settings_client_monitors_check_primary_and_origin(const rdpS
 				rc = FALSE;
 			}
 			havePrimary = TRUE;
-
-			if ((monitor->x == 0) && (monitor->y == 0))
-				foundOrigin = TRUE;
 		}
-		else
+
+		if ((monitor->x == 0) && (monitor->y == 0))
 		{
-			if ((monitor->x == 0) && (monitor->y == 0))
+			if (foundOrigin)
 			{
-				WLog_ERR(TAG, "Monitor configuration does have non-primary at origin 0/0");
+				WLog_ERR(TAG, "Monitor configuration does have multiple origin 0/0");
 				rc = FALSE;
 			}
+			foundOrigin = TRUE;
 		}
 	}
 
@@ -614,11 +622,6 @@ static BOOL freerdp_settings_client_monitors_check_primary_and_origin(const rdpS
 		rc = FALSE;
 	}
 
-	if (count == 0)
-	{
-		WLog_WARN(TAG, "Monitor configuration empty.");
-		return TRUE;
-	}
 	return rc;
 }
 
