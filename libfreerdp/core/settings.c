@@ -401,7 +401,7 @@ static BOOL monitor_has_gaps(const rdpSettings* settings, UINT32 start, UINT32 c
 
 static UINT32** alloc_array(size_t count)
 {
-
+	// NOLINTNEXTLINE(clang-analyzer-unix.MallocSizeof)
 	BYTE* array = calloc(count * sizeof(uintptr_t), count * sizeof(UINT32));
 	UINT32** dst = (UINT32**)array;
 	UINT32* val = (UINT32*)(array + count * sizeof(uintptr_t));
