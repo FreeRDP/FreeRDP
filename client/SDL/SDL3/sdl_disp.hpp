@@ -41,7 +41,7 @@ class sdlDispContext
 	BOOL init(DispClientContext* disp);
 	BOOL uninit(DispClientContext* disp);
 
-	static BOOL handle_display_event(const SDL_DisplayEvent* ev);
+	BOOL handle_display_event(const SDL_DisplayEvent* ev);
 
 	BOOL handle_window_event(const SDL_WindowEvent* ev);
 
