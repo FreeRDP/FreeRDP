@@ -555,10 +555,10 @@ static BOOL FileUnlockFileEx(HANDLE hFile, DWORD dwReserved, DWORD nNumberOfByte
 	return TRUE;
 }
 
-static UINT64 FileTimeToUS(const FILETIME* ft)
+static INT64 FileTimeToUS(const FILETIME* ft)
 {
-	const UINT64 EPOCH_DIFF_US = EPOCH_DIFF * 1000000ULL;
-	UINT64 tmp = ((UINT64)ft->dwHighDateTime) << 32 | ft->dwLowDateTime;
+	const INT64 EPOCH_DIFF_US = EPOCH_DIFF * 1000000LL;
+	INT64 tmp = ((INT64)ft->dwHighDateTime) << 32 | ft->dwLowDateTime;
 	tmp /= 10; /* 100ns steps to 1us step */
 	tmp -= EPOCH_DIFF_US;
 	return tmp;
@@ -568,10 +568,10 @@ static UINT64 FileTimeToUS(const FILETIME* ft)
 static struct timespec filetimeToTimespec(const FILETIME* ftime)
 {
 	WINPR_ASSERT(ftime);
-	UINT64 tmp = FileTimeToUS(ftime);
+	INT64 tmp = FileTimeToUS(ftime);
 	struct timespec ts = { 0 };
-	ts.tv_sec = tmp / 1000000ULL;
-	ts.tv_nsec = (tmp % 1000000ULL) * 1000ULL;
+	ts.tv_sec = tmp / 1000000LL;
+	ts.tv_nsec = (tmp % 1000000LL) * 1000LL;
 	return ts;
 }
 
