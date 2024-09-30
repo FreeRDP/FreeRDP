@@ -204,7 +204,7 @@ const char* window_styles_ex_to_string(UINT32 styleEx, char* buffer, size_t leng
 	const char* sep = "";
 	for (size_t x = 0; x < 32; x++)
 	{
-		const UINT32 val = 1 << x;
+		const UINT32 val = 1UL << x;
 		if ((styleEx & val) != 0)
 		{
 			const char* str = window_style_ex_to_string(val);

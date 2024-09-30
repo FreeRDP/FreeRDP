@@ -134,7 +134,7 @@ void CommLog_Print(DWORD level, ...)
 	if (!CommInitialized())
 		return;
 
-	va_list ap;
+	va_list ap = { 0 };
 	va_start(ap, level);
 	WLog_PrintVA(sLog, level, ap);
 	va_end(ap);

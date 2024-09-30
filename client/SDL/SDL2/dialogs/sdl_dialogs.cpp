@@ -53,7 +53,7 @@ static const char* type_str_for_flags(UINT32 flags)
 
 static BOOL sdl_wait_for_result(rdpContext* context, Uint32 type, SDL_Event* result)
 {
-	const SDL_Event empty = { 0 };
+	const SDL_Event empty = {};
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(result);
@@ -72,7 +72,7 @@ static BOOL sdl_wait_for_result(rdpContext* context, Uint32 type, SDL_Event* res
 static int sdl_show_dialog(rdpContext* context, const char* title, const char* message,
                            Sint32 flags)
 {
-	SDL_Event event = { 0 };
+	SDL_Event event = {};
 
 	if (!sdl_push_user_event(SDL_USEREVENT_SHOW_DIALOG, title, message, flags))
 		return 0;
@@ -86,7 +86,7 @@ static int sdl_show_dialog(rdpContext* context, const char* title, const char* m
 BOOL sdl_authenticate_ex(freerdp* instance, char** username, char** password, char** domain,
                          rdp_auth_reason reason)
 {
-	SDL_Event event = { 0 };
+	SDL_Event event = {};
 	BOOL res = FALSE;
 
 	SDLConnectionDialogHider hider(instance);
@@ -185,7 +185,7 @@ BOOL sdl_choose_smartcard(freerdp* instance, SmartcardCertInfo** cert_list, DWOR
 		list.push_back(m.c_str());
 	}
 
-	SDL_Event event = { 0 };
+	SDL_Event event = {};
 	const char* title = "Select a logon smartcard certificate";
 	if (gateway)
 		title = "Select a gateway logon smartcard certificate";
@@ -317,7 +317,7 @@ static DWORD sdl_show_ceritifcate_dialog(rdpContext* context, const char* title,
 	if (!sdl_push_user_event(SDL_USEREVENT_CERT_DIALOG, title, message))
 		return 0;
 
-	SDL_Event event = { 0 };
+	SDL_Event event = {};
 	if (!sdl_wait_for_result(context, SDL_USEREVENT_CERT_RESULT, &event))
 		return 0;
 	return static_cast<DWORD>(event.user.code);

@@ -762,7 +762,7 @@ WINPR_ATTR_FORMAT_ARG(3, 4)
 static BOOL tsg_print(char** buffer, size_t* len, WINPR_FORMAT_ARG const char* fmt, ...)
 {
 	int rc = 0;
-	va_list ap;
+	va_list ap = { 0 };
 	if (!buffer || !len || !fmt)
 		return FALSE;
 	va_start(ap, fmt);

@@ -58,7 +58,7 @@ bool SDLConnectionDialog::visible() const
 bool SDLConnectionDialog::setTitle(const char* fmt, ...)
 {
 	std::lock_guard lock(_mux);
-	va_list ap;
+	va_list ap = {};
 	va_start(ap, fmt);
 	_title = print(fmt, ap);
 	va_end(ap);
@@ -68,7 +68,7 @@ bool SDLConnectionDialog::setTitle(const char* fmt, ...)
 
 bool SDLConnectionDialog::showInfo(const char* fmt, ...)
 {
-	va_list ap;
+	va_list ap = {};
 	va_start(ap, fmt);
 	auto rc = show(MSG_INFO, fmt, ap);
 	va_end(ap);
@@ -77,7 +77,7 @@ bool SDLConnectionDialog::showInfo(const char* fmt, ...)
 
 bool SDLConnectionDialog::showWarn(const char* fmt, ...)
 {
-	va_list ap;
+	va_list ap = {};
 	va_start(ap, fmt);
 	auto rc = show(MSG_WARN, fmt, ap);
 	va_end(ap);
@@ -86,7 +86,7 @@ bool SDLConnectionDialog::showWarn(const char* fmt, ...)
 
 bool SDLConnectionDialog::showError(const char* fmt, ...)
 {
-	va_list ap;
+	va_list ap = {};
 	va_start(ap, fmt);
 	auto rc = show(MSG_ERROR, fmt, ap);
 	va_end(ap);

@@ -177,7 +177,7 @@ BOOL winpr_str_append(const char* what, char* buffer, size_t size, const char* s
 WINPR_ATTR_FORMAT_ARG(3, 4)
 int winpr_asprintf(char** s, size_t* slen, WINPR_FORMAT_ARG const char* templ, ...)
 {
-	va_list ap;
+	va_list ap = { 0 };
 
 	va_start(ap, templ);
 	int rc = winpr_vasprintf(s, slen, templ, ap);
@@ -188,7 +188,7 @@ int winpr_asprintf(char** s, size_t* slen, WINPR_FORMAT_ARG const char* templ, .
 WINPR_ATTR_FORMAT_ARG(3, 0)
 int winpr_vasprintf(char** s, size_t* slen, WINPR_FORMAT_ARG const char* templ, va_list oap)
 {
-	va_list ap;
+	va_list ap = { 0 };
 
 	*s = NULL;
 	*slen = 0;

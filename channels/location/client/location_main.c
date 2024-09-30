@@ -343,7 +343,7 @@ static UINT location_send(LocationClientContext* context, LOCATION_PDUTYPE type,
 	WINPR_ASSERT(callback);
 
 	UINT32 res = ERROR_INTERNAL_ERROR;
-	va_list ap;
+	va_list ap = { 0 };
 	va_start(ap, count);
 	switch (type)
 	{

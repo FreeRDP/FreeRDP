@@ -441,7 +441,7 @@ static size_t print_description(const char* text, size_t start_offset, size_t cu
 	const int rc = printf("\n");
 	if (rc >= 0)
 	{
-		WINPR_ASSERT(SIZE_MAX - rc >= current);
+		WINPR_ASSERT(SIZE_MAX - rc > current);
 		current += (size_t)rc;
 	}
 	return current;

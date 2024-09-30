@@ -529,7 +529,7 @@ wObject* ArrayList_Object(wArrayList* arrayList)
 BOOL ArrayList_ForEach(wArrayList* arrayList, ArrayList_ForEachFkt fkt, ...)
 {
 	BOOL rc = 0;
-	va_list ap;
+	va_list ap = { 0 };
 	va_start(ap, fkt);
 	rc = ArrayList_ForEachAP(arrayList, fkt, ap);
 	va_end(ap);

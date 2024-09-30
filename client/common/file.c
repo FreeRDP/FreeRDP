@@ -1425,7 +1425,7 @@ WINPR_ATTR_FORMAT_ARG(3, 4)
 static SSIZE_T freerdp_client_write_setting_to_buffer(char** buffer, size_t* bufferSize,
                                                       WINPR_FORMAT_ARG const char* fmt, ...)
 {
-	va_list ap;
+	va_list ap = { 0 };
 	SSIZE_T len = 0;
 	char* buf = NULL;
 	size_t bufSize = 0;

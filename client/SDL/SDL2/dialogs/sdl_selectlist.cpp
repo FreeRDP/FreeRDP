@@ -63,7 +63,7 @@ int SdlSelectList::run()
 			if (!_buttons.update(_renderer))
 				throw;
 
-			SDL_Event event = { 0 };
+			SDL_Event event = {};
 			SDL_WaitEvent(&event);
 			switch (event.type)
 			{

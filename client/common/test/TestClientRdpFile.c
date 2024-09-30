@@ -239,7 +239,7 @@ static char* append(const char* fmt, ...)
 {
 	int rc = 0;
 	char* dst = NULL;
-	va_list ap;
+	va_list ap = { 0 };
 
 	va_start(ap, fmt);
 	rc = vsnprintf(NULL, 0, fmt, ap);
