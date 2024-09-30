@@ -274,7 +274,7 @@ static UINT32 get_next_free_clip_data_id(CliprdrFileContext* file_context)
 	HashTable_Lock(file_context->inode_table);
 	clip_data_id = file_context->next_clip_data_id;
 	while (clip_data_id == 0 ||
-	       HashTable_GetItemValue(file_context->clip_data_table, (void*)(UINT_PTR)clip_data_id))
+	       HashTable_GetItemValue(file_context->clip_data_table, (void*)(uintptr_t)clip_data_id))
 		++clip_data_id;
 
 	file_context->next_clip_data_id = clip_data_id + 1;
@@ -550,7 +550,7 @@ static UINT prepare_clip_data_entry_with_id(CliprdrFileContext* file_context)
 
 	HashTable_Lock(file_context->inode_table);
 	if (!HashTable_Insert(file_context->clip_data_table,
-	                      (void*)(UINT_PTR)clip_data_entry->clip_data_id, clip_data_entry))
+	                      (void*)(uintptr_t)clip_data_entry->clip_data_id, clip_data_entry))
 	{
 		WLog_Print(file_context->log, WLOG_ERROR, "Failed to insert clipDataEntry");
 		clip_data_entry_free(clip_data_entry);
@@ -654,7 +654,7 @@ static CliprdrFuseFile* get_fuse_file_by_ino(CliprdrFileContext* file_context, f
 {
 	WINPR_ASSERT(file_context);
 
-	return HashTable_GetItemValue(file_context->inode_table, (void*)(UINT_PTR)fuse_ino);
+	return HashTable_GetItemValue(file_context->inode_table, (void*)(uintptr_t)fuse_ino);
 }
 
 static CliprdrFuseFile* get_fuse_file_by_name_from_parent(CliprdrFileContext* file_context,
@@ -702,13 +702,13 @@ static CliprdrFuseRequest* cliprdr_fuse_request_new(CliprdrFileContext* file_con
 	fuse_request->operation_type = operation_type;
 
 	while (stream_id == 0 ||
-	       HashTable_GetItemValue(file_context->request_table, (void*)(UINT_PTR)stream_id))
+	       HashTable_GetItemValue(file_context->request_table, (void*)(uintptr_t)stream_id))
 		++stream_id;
 	fuse_request->stream_id = stream_id;
 
 	file_context->next_stream_id = stream_id + 1;
 
-	if (!HashTable_Insert(file_context->request_table, (void*)(UINT_PTR)fuse_request->stream_id,
+	if (!HashTable_Insert(file_context->request_table, (void*)(uintptr_t)fuse_request->stream_id,
 	                      fuse_request))
 	{
 		WLog_Print(file_context->log, WLOG_ERROR, "Failed to track FUSE request for file \"%s\"",
@@ -747,7 +747,7 @@ static BOOL request_file_size_async(CliprdrFileContext* file_context, CliprdrFus
 		WLog_Print(file_context->log, WLOG_ERROR,
 		           "Failed to send FileContentsRequest for file \"%s\"",
 		           fuse_file->filename_with_root);
-		HashTable_Remove(file_context->request_table, (void*)(UINT_PTR)fuse_request->stream_id);
+		HashTable_Remove(file_context->request_table, (void*)(uintptr_t)fuse_request->stream_id);
 		return FALSE;
 	}
 	DEBUG_CLIPRDR(file_context->log, "Requested file size for file \"%s\" with stream id %u",
@@ -936,7 +936,7 @@ static BOOL request_file_range_async(CliprdrFileContext* file_context, CliprdrFu
 		WLog_Print(file_context->log, WLOG_ERROR,
 		           "Failed to send FileContentsRequest for file \"%s\"",
 		           fuse_file->filename_with_root);
-		HashTable_Remove(file_context->request_table, (void*)(UINT_PTR)fuse_request->stream_id);
+		HashTable_Remove(file_context->request_table, (void*)(uintptr_t)fuse_request->stream_id);
 		return FALSE;
 	}
 
@@ -1184,7 +1184,7 @@ static UINT cliprdr_file_context_server_file_contents_response(
 
 	HashTable_Lock(file_context->inode_table);
 	fuse_request = HashTable_GetItemValue(file_context->request_table,
-	                                      (void*)(UINT_PTR)file_contents_response->streamId);
+	                                      (void*)(uintptr_t)file_contents_response->streamId);
 	if (!fuse_request)
 	{
 		HashTable_Unlock(file_context->inode_table);
@@ -1199,7 +1199,7 @@ static UINT cliprdr_file_context_server_file_contents_response(
 
 		fuse_reply_err(fuse_request->fuse_req, EIO);
 		HashTable_Remove(file_context->request_table,
-		                 (void*)(UINT_PTR)file_contents_response->streamId);
+		                 (void*)(uintptr_t)file_contents_response->streamId);
 		HashTable_Unlock(file_context->inode_table);
 		return CHANNEL_RC_OK;
 	}
@@ -1213,7 +1213,7 @@ static UINT cliprdr_file_context_server_file_contents_response(
 		           fuse_request->fuse_file->filename);
 		fuse_reply_err(fuse_request->fuse_req, EIO);
 		HashTable_Remove(file_context->request_table,
-		                 (void*)(UINT_PTR)file_contents_response->streamId);
+		                 (void*)(uintptr_t)file_contents_response->streamId);
 		HashTable_Unlock(file_context->inode_table);
 		return CHANNEL_RC_OK;
 	}
@@ -1257,7 +1257,7 @@ static UINT cliprdr_file_context_server_file_contents_response(
 	}
 
 	HashTable_Remove(file_context->request_table,
-	                 (void*)(UINT_PTR)file_contents_response->streamId);
+	                 (void*)(uintptr_t)file_contents_response->streamId);
 
 	return CHANNEL_RC_OK;
 }
@@ -1679,7 +1679,7 @@ static fuse_ino_t get_next_free_inode(CliprdrFileContext* file_context)
 
 	ino = file_context->next_ino;
 	while (ino == 0 || ino == FUSE_ROOT_ID ||
-	       HashTable_GetItemValue(file_context->inode_table, (void*)(UINT_PTR)ino))
+	       HashTable_GetItemValue(file_context->inode_table, (void*)(uintptr_t)ino))
 		++ino;
 
 	file_context->next_ino = ino + 1;
@@ -1734,7 +1734,7 @@ static CliprdrFuseFile* clip_data_dir_new(CliprdrFileContext* file_context, BOOL
 	}
 	clip_data_dir->parent = root_dir;
 
-	if (!HashTable_Insert(file_context->inode_table, (void*)(UINT_PTR)clip_data_dir->ino,
+	if (!HashTable_Insert(file_context->inode_table, (void*)(uintptr_t)clip_data_dir->ino,
 	                      clip_data_dir))
 	{
 		WLog_Print(file_context->log, WLOG_ERROR, "Failed to insert inode into inode table");
@@ -1920,7 +1920,7 @@ static BOOL set_selection_for_clip_data_entry(CliprdrFileContext* file_context,
 			fuse_file->has_last_write_time = TRUE;
 		}
 
-		if (!HashTable_Insert(file_context->inode_table, (void*)(UINT_PTR)fuse_file->ino,
+		if (!HashTable_Insert(file_context->inode_table, (void*)(uintptr_t)fuse_file->ino,
 		                      fuse_file))
 		{
 			WLog_Print(file_context->log, WLOG_ERROR, "Failed to insert inode into inode table");
@@ -1988,7 +1988,7 @@ BOOL cliprdr_file_context_update_server_data(CliprdrFileContext* file_context, w
 	HashTable_Lock(file_context->inode_table);
 	if (does_server_support_clipdata_locking(file_context))
 		clip_data_entry = HashTable_GetItemValue(
-		    file_context->clip_data_table, (void*)(UINT_PTR)file_context->current_clip_data_id);
+		    file_context->clip_data_table, (void*)(uintptr_t)file_context->current_clip_data_id);
 	else
 		clip_data_entry = file_context->clip_data_entry_without_id;
 
@@ -2384,7 +2384,7 @@ static CliprdrFuseFile* fuse_file_new_root(CliprdrFileContext* file_context)
 	root_dir->is_directory = TRUE;
 	root_dir->is_readonly = TRUE;
 
-	if (!HashTable_Insert(file_context->inode_table, (void*)(UINT_PTR)root_dir->ino, root_dir))
+	if (!HashTable_Insert(file_context->inode_table, (void*)(uintptr_t)root_dir->ino, root_dir))
 	{
 		fuse_file_free(root_dir);
 		return NULL;
