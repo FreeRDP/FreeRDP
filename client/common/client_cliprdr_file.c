@@ -56,7 +56,7 @@
 
 #define MAX_CLIP_DATA_DIR_LEN 10
 #define NO_CLIP_DATA_ID (UINT64_C(1) << 32)
-#define WIN32_FILETIME_TO_UNIX_EPOCH UINT64_C(11644473600)
+#define WIN32_FILETIME_TO_UNIX_EPOCH INT64_C(11644473600)
 
 #ifdef WITH_DEBUG_CLIPRDR
 #define DEBUG_CLIPRDR(log, ...) WLog_Print(log, WLOG_DEBUG, __VA_ARGS__)
@@ -95,7 +95,7 @@ struct sCliprdrFuseFile
 	UINT64 size;
 
 	BOOL has_last_write_time;
-	UINT64 last_write_time_unix;
+	INT64 last_write_time_unix;
 
 	BOOL has_clip_data_id;
 	UINT32 clip_data_id;
@@ -1909,14 +1909,14 @@ static BOOL set_selection_for_clip_data_entry(CliprdrFileContext* file_context,
 		}
 		if (file->dwFlags & FD_WRITESTIME)
 		{
-			UINT64 filetime = 0;
+			INT64 filetime = 0;
 
 			filetime = file->ftLastWriteTime.dwHighDateTime;
 			filetime <<= 32;
 			filetime += file->ftLastWriteTime.dwLowDateTime;
 
 			fuse_file->last_write_time_unix =
-			    1ULL * filetime / (10ULL * 1000ULL * 1000ULL) - WIN32_FILETIME_TO_UNIX_EPOCH;
+			    1LL * filetime / (10LL * 1000LL * 1000LL) - WIN32_FILETIME_TO_UNIX_EPOCH;
 			fuse_file->has_last_write_time = TRUE;
 		}
 
