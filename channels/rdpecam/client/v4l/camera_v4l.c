@@ -313,11 +313,6 @@ static UINT cam_v4l_enumerate(ICamHal* ihal, ICamHalEnumCallback callback, Camer
 	return count;
 }
 
-/**
- * Function description
- *
- * @return void
- */
 static void cam_v4l_stream_free_buffers(CamV4lStream* stream)
 {
 	if (!stream || !stream->buffers)
@@ -472,11 +467,6 @@ static UINT cam_v4l_stream_capture_thread(void* param)
 	return CHANNEL_RC_OK;
 }
 
-/**
- * Function description
- *
- * @return void
- */
 void cam_v4l_stream_close_device(CamV4lStream* stream)
 {
 	if (stream->fd != -1)
@@ -692,7 +682,6 @@ static UINT cam_v4l_stream_stop_by_device_id(ICamHal* ihal, const char* deviceId
  *
  * OBJECT_FREE_FN for streams hash table value
  *
- * @return void
  */
 void cam_v4l_stream_free(void* obj)
 {
