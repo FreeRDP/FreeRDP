@@ -15,27 +15,33 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-if(CMAKE_CROSSCOMPILING)
-   find_package(SdlCommonRes2bin)
-else()
-    add_executable(sdl-common-res2bin
-               convert_res_to_c.cpp
-    )
-   export(TARGETS sdl-common-res2bin FILE
-          "${CMAKE_BINARY_DIR}/SdlCommonRes2binConfig.cmake")
-endif()
-
-
 set(FACTORY_SRCS "")
 set(FACTORY_HDR "")
 set(FACTORY_CLASSES "")
+
+include(ConvertFileToHexArray)
 
 macro(convert_to_bin FILE FILE_TYPE)
 	get_filename_component(FILE_NAME ${FILE} NAME)
 	string(REGEX REPLACE "[^a-zA-Z0-9]" "_" TARGET_NAME ${FILE_NAME})
 
 	set(FILE_BIN_DIR ${CMAKE_CURRENT_BINARY_DIR}/bin)
-	set(FILE_BYPRODUCTS ${FILE_BIN_DIR}/${TARGET_NAME}.hpp ${FILE_BIN_DIR}/${TARGET_NAME}.cpp)
+
+	set(FILENAME ${FILE_NAME})
+        set(CLASSNAME ${TARGET_NAME})
+	set(CLASSTYPE ${FILE_TYPE})
+
+        file_to_hex_array("${FILE}" FILEDATA)
+
+        configure_file(resource.hpp.in
+		${FILE_BIN_DIR}/${TARGET_NAME}.hpp
+		@ONLY
+	)
+
+        configure_file(resource.cpp.in
+		${FILE_BIN_DIR}/${TARGET_NAME}.cpp
+		@ONLY
+	)
 
 	list(APPEND FACTORY_HDR
 		${FILE_BIN_DIR}/${TARGET_NAME}.hpp
@@ -44,17 +50,8 @@ macro(convert_to_bin FILE FILE_TYPE)
 		${FILE_BIN_DIR}/${TARGET_NAME}.cpp
 	)
 
-list(APPEND FACTORY_CLASSES
-	${TARGET_NAME}
-)
-
-	add_custom_command(
-		OUTPUT ${FILE_BYPRODUCTS}
-		COMMAND ${CMAKE_COMMAND} -E make_directory ${FILE_BIN_DIR}
-		COMMAND $<TARGET_FILE:sdl-common-res2bin> ${FILE} ${FILE_TYPE} ${TARGET_NAME} ${FILE_BIN_DIR}
-		COMMENT "create image resources"
-		DEPENDS sdl-common-res2bin
-		DEPENDS ${FILE}
+	list(APPEND FACTORY_CLASSES
+		${TARGET_NAME}
 	)
 endmacro()
 

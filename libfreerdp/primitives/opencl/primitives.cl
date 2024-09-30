@@ -16,9 +16,6 @@
  * permissions and limitations under the License.
  */
 
-#define STRINGIFY(x) #x
-
-STRINGIFY(
 uchar clamp_uc(int v, short l, short h)
 {
     if (v > h)
@@ -460,4 +457,3 @@ __kernel void yuv444_to_xrgb_1b(
     destPtr[1] = clamp_uc((y256 + (403 * V)) >> 8, 0, 255); 	/* R */
     destPtr[0] = 0xff; /* A */
 }
-)
