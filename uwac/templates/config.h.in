@@ -7,5 +7,6 @@
 #cmakedefine UWAC_HAVE_SYSLOG_H
 #cmakedefine UWAC_HAVE_JOURNALD_H
 #cmakedefine UWAC_HAVE_PIXMAN_REGION
+#cmakedefine UWAC_HAVE_STRERROR_R
 
 #endif /* UWAC_CONFIG_H */

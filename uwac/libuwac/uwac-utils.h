@@ -24,6 +24,9 @@
 #define UWAC_UTILS_H_
 
 #include <stdlib.h>
+#include <string.h>
+
+#include <uwac/config.h>
 
 #define min(a, b) (a) < (b) ? (a) : (b)
 
@@ -43,5 +46,17 @@ void* xzalloc(size_t s);
 char* xstrdup(const char* s);
 
 void* xrealloc(void* p, size_t s);
+
+static inline char* uwac_strerror(int dw, char* dmsg, size_t size)
+{
+#ifdef __STDC_LIB_EXT1__
+	(void)strerror_s(dw, dmsg, size);
+#elif defined(UWAC_HAVE_STRERROR_R)
+	(void)strerror_r(dw, dmsg, size);
+#else
+	(void)_snprintf(dmsg, size, "%s", strerror(dw));
+#endif
+	return dmsg;
+}
 
 #endif /* UWAC_UTILS_H_ */

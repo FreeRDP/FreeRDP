@@ -1,6 +1,6 @@
 set (BUILD_TESTING ON CACHE BOOL "qa default") 
 set (CMAKE_VERBOSE_MAKEFILE ON CACHE BOOL "preload")
-set (WITH_VERBOSE_WARNINGS ON CACHE BOOL "preload")
+set (ENABLE_WARNING_VERBOSE ON CACHE BOOL "preload")
 set (WITH_MANPAGES ON CACHE BOOL "qa default") 
 set (WITH_SAMPLE ON CACHE BOOL "qa default") 
 set (WITH_SERVER ON CACHE BOOL "qa default")
@@ -18,9 +18,6 @@ set (WITH_SANITIZE_ADDRESS ON CACHE BOOL "qa default")
 set (WITH_WINPR_UTILS_IMAGE_JPEG ON  CACHE BOOL "qa default")
 set (WITH_WINPR_UTILS_IMAGE_WEBP ON  CACHE BOOL "qa default")
 set (WITH_WINPR_UTILS_IMAGE_PNG ON  CACHE BOOL "qa default")
-
-set (CMAKE_C_FLAGS "-Weverything -Wno-exit-time-destructors -Wno-cast-align -Wno-documentation -Wno-documentation-unknown-command -Wno-padded -Wno-covered-switch-default -Wno-declaration-after-statement" CACHE STRING "qa default")
-set (CMAKE_CXX_FLAGS "-Weverything -Wno-exit-time-destructors -Wno-cast-align -Wno-documentation -Wno-documentation-unknown-command -Wno-padded -Wno-c++98-compat -Wno-c++98-compat-pedantic -Wno-covered-switch-default -Wno-declaration-after-statement" CACHE STRING "qa default")
 
 set (BUILD_WITH_CLANG_TIDY ON CACHE BOOL "qa default")
 

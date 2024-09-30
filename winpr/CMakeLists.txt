@@ -215,6 +215,7 @@ if(NOT IOS)
 	endif()
 
 	include(CheckFunctionExists)
+	check_function_exists(strerror_r WINPR_HAVE_STRERROR_R)
 	check_function_exists(getlogin_r WINPR_HAVE_GETLOGIN_R)
 	check_function_exists(getpwuid_r WINPR_HAVE_GETPWUID_R)
 	check_struct_has_member("struct tm" tm_gmtoff time.h WINPR_HAVE_TM_GMTOFF)

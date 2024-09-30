@@ -75,8 +75,11 @@ static struct wl_buffer* create_pointer_buffer(UwacSeat* seat, const void* src, 
 	wl_shm_pool_destroy(pool);
 
 	if (munmap(data, size) < 0)
+	{
+		char buffer[256] = { 0 };
 		(void)fprintf(stderr, "%s: munmap(%p, %zu) failed with [%d] %s\n", __func__, data, size,
-		              errno, strerror(errno));
+		              errno, uwac_strerror(errno, buffer, sizeof(buffer)));
+	}
 
 error_mmap:
 	close(fd);
