@@ -16,6 +16,7 @@ std::string @CLASSNAME@::type() {
 	return "@CLASSTYPE@";
 }
 
+// NOLINTNEXTLINE(clang-diagnostic-global-constructors)
 const SDLResourceFile @CLASSNAME@::_initializer(type(), name(), init());
 
 std::vector<unsigned char> @CLASSNAME@::init() {
