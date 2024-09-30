@@ -319,7 +319,7 @@ static void cam_v4l_stream_free_buffers(CamV4lStream* stream)
 		return;
 
 	/* unmap buffers */
-	for (int i = 0; i < stream->nBuffers; i++)
+	for (size_t i = 0; i < stream->nBuffers; i++)
 	{
 		if (stream->buffers[i].length && stream->buffers[i].start != MAP_FAILED)
 		{

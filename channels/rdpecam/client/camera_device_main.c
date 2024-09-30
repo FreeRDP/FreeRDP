@@ -473,7 +473,7 @@ static UINT ecam_dev_process_media_type_list_request(CameraDevice* dev,
 	stream->formats = supportedFormats[formatIndex];
 
 	/* replacing inputFormat with outputFormat in mediaTypes before sending response */
-	for (int i = 0; i < nMediaTypes; i++)
+	for (size_t i = 0; i < nMediaTypes; i++)
 	{
 		mediaTypes[i].Format = streamOutputFormat(stream);
 		mediaTypes[i].Flags = CAM_MEDIA_TYPE_DESCRIPTION_FLAG_DecodingRequired;
