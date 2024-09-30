@@ -354,8 +354,10 @@ static LONG reg_read_int(const RegVal* pValue, LPBYTE lpData, LPDWORD lpcbData)
 	return ERROR_SUCCESS;
 }
 
+// NOLINTBEGIN(readability-non-const-parameter)
 LONG RegQueryValueExW(HKEY hKey, LPCWSTR lpValueName, LPDWORD lpReserved, LPDWORD lpType,
                       LPBYTE lpData, LPDWORD lpcbData)
+// NOLINTEND(readability-non-const-parameter)
 {
 	LONG status = ERROR_FILE_NOT_FOUND;
 	RegKey* key = NULL;
@@ -431,8 +433,10 @@ end:
 	return status;
 }
 
+// NOLINTBEGIN(readability-non-const-parameter)
 LONG RegQueryValueExA(HKEY hKey, LPCSTR lpValueName, LPDWORD lpReserved, LPDWORD lpType,
                       LPBYTE lpData, LPDWORD lpcbData)
+// NOLINTEND(readability-non-const-parameter)
 {
 	RegKey* key = NULL;
 	RegVal* pValue = NULL;

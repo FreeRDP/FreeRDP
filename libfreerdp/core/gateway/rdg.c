@@ -2063,6 +2063,7 @@ static int rdg_bio_puts(BIO* bio, const char* str)
 	return -2;
 }
 
+// NOLINTNEXTLINE(readability-non-const-parameter)
 static int rdg_bio_gets(BIO* bio, char* str, int size)
 {
 	WINPR_UNUSED(bio);

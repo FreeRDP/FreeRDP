@@ -2257,6 +2257,7 @@ static LONG WINAPI PCSC_SCardTransmit(SCARDHANDLE hCard, LPCSCARD_IO_REQUEST pio
 	return PCSC_MapErrorCodeToWinSCard(status);
 }
 
+// NOLINTNEXTLINE(readability-non-const-parameter)
 static LONG WINAPI PCSC_SCardGetTransmitCount(SCARDHANDLE hCard, LPDWORD pcTransmitCount)
 {
 	WINPR_UNUSED(pcTransmitCount);

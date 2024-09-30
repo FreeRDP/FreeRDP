@@ -863,8 +863,10 @@ BOOL WaitNamedPipeW(LPCWSTR lpNamedPipeName, DWORD nTimeOut)
 	return FALSE;
 }
 
+// NOLINTBEGIN(readability-non-const-parameter)
 BOOL SetNamedPipeHandleState(HANDLE hNamedPipe, LPDWORD lpMode, LPDWORD lpMaxCollectionCount,
                              LPDWORD lpCollectDataTimeout)
+// NOLINTEND(readability-non-const-parameter)
 {
 	int fd = 0;
 	int flags = 0;

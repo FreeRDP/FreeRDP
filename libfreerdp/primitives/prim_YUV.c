@@ -630,10 +630,12 @@ static INLINE BYTE RGB2V(INT32 R, INT32 G, INT32 B)
 	return ((128 * R - 116 * G - 12 * B) >> 8) + 128;
 }
 
+// NOLINTBEGIN(readability-non-const-parameter)
 static pstatus_t general_RGBToYUV444_8u_P3AC4R(const BYTE* WINPR_RESTRICT pSrc, UINT32 SrcFormat,
                                                const UINT32 srcStep, BYTE* WINPR_RESTRICT pDst[3],
                                                UINT32 dstStep[3],
                                                const prim_size_t* WINPR_RESTRICT roi)
+// NOLINTEND(readability-non-const-parameter)
 {
 	const UINT32 bpp = FreeRDPGetBytesPerPixel(SrcFormat);
 	UINT32 nWidth = 0;

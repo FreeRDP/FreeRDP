@@ -116,8 +116,10 @@ static BOOL FileSetEndOfFile(HANDLE hFile)
 	return TRUE;
 }
 
+// NOLINTBEGIN(readability-non-const-parameter)
 static DWORD FileSetFilePointer(HANDLE hFile, LONG lDistanceToMove,
                                 const PLONG lpDistanceToMoveHigh, DWORD dwMoveMethod)
+// NOLINTEND(readability-non-const-parameter)
 {
 	WINPR_FILE* pFile = (WINPR_FILE*)hFile;
 	INT64 offset = 0;

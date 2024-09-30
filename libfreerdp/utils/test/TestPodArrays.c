@@ -18,6 +18,7 @@
  */
 #include <freerdp/utils/pod_arrays.h>
 
+// NOLINTNEXTLINE(readability-non-const-parameter)
 static BOOL cb_compute_sum(UINT32* v, void* target)
 {
 	UINT32* ret = (UINT32*)target;
