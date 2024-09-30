@@ -1837,6 +1837,7 @@ static BOOL rdg_process_control_packet(rdpRdg* rdg, int type, size_t packetLengt
 	if (packetLength < sizeof(RdgPacketHeader))
 		return FALSE;
 
+	// NOLINTNEXTLINE(bugprone-sizeof-expression)
 	WINPR_ASSERT(sizeof(RdgPacketHeader) < INT_MAX);
 
 	if (payloadSize)
@@ -1923,6 +1924,7 @@ static int rdg_read_data_packet(rdpRdg* rdg, BYTE* buffer, int size)
 
 	if (!rdg->packetRemainingCount)
 	{
+		// NOLINTNEXTLINE(bugprone-sizeof-expression)
 		WINPR_ASSERT(sizeof(RdgPacketHeader) < INT_MAX);
 
 		while (readCount < sizeof(RdgPacketHeader))
