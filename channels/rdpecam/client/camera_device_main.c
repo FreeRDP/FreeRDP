@@ -795,5 +795,4 @@ void ecam_dev_destroy(CameraDevice* dev)
 		ecam_dev_stop_stream(dev, i);
 
 	free(dev);
-	return;
 }

@@ -330,7 +330,6 @@ static void cam_v4l_stream_free_buffers(CamV4lStream* stream)
 	free(stream->buffers);
 	stream->buffers = NULL;
 	stream->nBuffers = 0;
-	return;
 }
 
 /**
@@ -693,8 +692,6 @@ void cam_v4l_stream_free(void* obj)
 
 	DeleteCriticalSection(&stream->lock);
 	free(stream);
-
-	return;
 }
 
 /**
