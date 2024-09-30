@@ -19,6 +19,8 @@
  * limitations under the License.
  */
 
+#include <errno.h>
+
 #include <freerdp/utils/string.h>
 #include <freerdp/settings.h>
 
@@ -102,4 +104,23 @@ const char* rdp_cluster_info_flags_to_string(UINT32 flags, char* buffer, size_t 
 		winpr_str_append(msg, buffer, size, "");
 	}
 	return buffer;
+}
+
+BOOL freerdp_extract_key_value(const char* str, UINT32* pkey, UINT32* pvalue)
+{
+	if (!str || !pkey || !pvalue)
+		return FALSE;
+
+	char* end1 = NULL;
+	unsigned long key = strtoul(str, &end1, 0);
+	if ((errno != 0) || !end1 || (*end1 != '=') || (key > UINT32_MAX))
+		return FALSE;
+
+	unsigned long val = strtoul(&end1[1], NULL, 0);
+	if ((errno != 0) || (val > UINT32_MAX))
+		return FALSE;
+
+	*pkey = (UINT32)key;
+	*pvalue = (UINT32)val;
+	return TRUE;
 }

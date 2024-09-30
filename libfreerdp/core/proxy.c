@@ -247,10 +247,9 @@ static BOOL check_no_proxy(rdpSettings* settings, const char* no_proxy)
 				if (rangedelim != NULL)
 				{
 					const char* range = rangedelim + 1;
-					unsigned sub = 0;
-					int rc = sscanf(range, "%u", &sub);
+					const unsigned long sub = strtoul(range, NULL, 0);
 
-					if ((rc == 1) && (rc >= 0) && (sub <= UINT8_MAX))
+					if ((errno == 0) && (sub <= UINT8_MAX))
 					{
 						*rangedelim = '\0';
 

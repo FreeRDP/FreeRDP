@@ -35,6 +35,18 @@ extern "C"
 	FREERDP_API const char* rdp_cluster_info_flags_to_string(UINT32 flags, char* buffer,
 	                                                         size_t size);
 
+	/** @brief extracts <key>=<value> pairs from a string
+	 *
+	 * @param str The string to extract data from, must not be \b NULL
+	 * @param pkey A pointer to store the key value, must not be \b NULL
+	 * @param pvalue A pointer to store the value, must not be \b NULL
+	 *
+	 * @return \b TRUE if successfully extracted, \b FALSE if no matching data was found
+	 *
+	 * @since version 3.9.0
+	 */
+	FREERDP_API BOOL freerdp_extract_key_value(const char* str, UINT32* pkey, UINT32* pvalue);
+
 #ifdef __cplusplus
 }
 #endif

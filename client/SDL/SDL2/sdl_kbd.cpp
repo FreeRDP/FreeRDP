@@ -25,6 +25,7 @@
 
 #include <map>
 
+#include <freerdp/utils/string.h>
 #include <freerdp/scancode.h>
 
 #include <freerdp/log.h>
@@ -507,14 +508,7 @@ std::list<std::string> sdlInput::tokenize(const std::string& data, const std::st
 
 bool sdlInput::extract(const std::string& token, uint32_t& key, uint32_t& value)
 {
-	int rc = sscanf(token.c_str(), "%" PRIu32 "=%" PRIu32, &key, &value);
-	if (rc != 2)
-		rc = sscanf(token.c_str(), "%" PRIx32 "=%" PRIx32 "", &key, &value);
-	if (rc != 2)
-		rc = sscanf(token.c_str(), "%" PRIu32 "=%" PRIx32, &key, &value);
-	if (rc != 2)
-		rc = sscanf(token.c_str(), "%" PRIx32 "=%" PRIu32, &key, &value);
-	return (rc == 2);
+	return freerdp_extract_key_value(token.c_str(), &key, &value);
 }
 
 uint32_t sdlInput::remapScancode(uint32_t scancode)

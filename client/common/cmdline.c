@@ -50,6 +50,7 @@
 #include <freerdp/locale/keyboard.h>
 #include <freerdp/utils/passphrase.h>
 #include <freerdp/utils/proxy_utils.h>
+#include <freerdp/utils/string.h>
 #include <freerdp/channels/urbdrc.h>
 #include <freerdp/channels/rdpdr.h>
 #include <freerdp/locale/locale.h>
@@ -2442,14 +2443,7 @@ static BOOL check_kbd_remap_valid(const char* token)
 	if (strlen(token) > 10)
 		return FALSE;
 
-	int rc = sscanf(token, "%" PRIu32 "=%" PRIu32, &key, &value);
-	if (rc != 2)
-		rc = sscanf(token, "%" PRIx32 "=%" PRIx32 "", &key, &value);
-	if (rc != 2)
-		rc = sscanf(token, "%" PRIu32 "=%" PRIx32, &key, &value);
-	if (rc != 2)
-		rc = sscanf(token, "%" PRIx32 "=%" PRIu32, &key, &value);
-	if (rc != 2)
+	if (!freerdp_extract_key_value(token, &key, &value))
 	{
 		WLog_WARN(TAG, "/kbd:remap invalid entry '%s'", token);
 		return FALSE;
