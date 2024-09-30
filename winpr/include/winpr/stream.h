@@ -1109,7 +1109,7 @@ extern "C"
 	WINPR_API void Stream_AddRef(wStream* s);
 	WINPR_API void Stream_Release(wStream* s);
 
-	WINPR_API wStream* StreamPool_Find(wStreamPool* pool, BYTE* ptr);
+	WINPR_API wStream* StreamPool_Find(wStreamPool* pool, const BYTE* ptr);
 
 	WINPR_API void StreamPool_Clear(wStreamPool* pool);
 

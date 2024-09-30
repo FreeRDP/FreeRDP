@@ -658,8 +658,10 @@ fail:
 #endif
 }
 
+// NOLINTBEGIN(readability-non-const-parameter)
 SSIZE_T winpr_convert_from_jpeg(const BYTE* comp_data, size_t comp_data_bytes, UINT32* width,
                                 UINT32* height, UINT32* bpp, BYTE** ppdecomp_data)
+// NOLINTEND(readability-non-const-parameter)
 {
 	WINPR_ASSERT(comp_data || (comp_data_bytes == 0));
 	WINPR_ASSERT(width);

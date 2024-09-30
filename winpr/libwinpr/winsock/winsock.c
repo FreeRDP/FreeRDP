@@ -1042,6 +1042,7 @@ int _connect(SOCKET s, const struct sockaddr* name, int namelen)
 	return status;
 }
 
+// NOLINTNEXTLINE(readability-non-const-parameter)
 int _ioctlsocket(SOCKET s, long cmd, u_long* argp)
 {
 	int fd = (int)s;
