@@ -45,6 +45,7 @@
 
 static const char* rpc_client_state_str(RPC_CLIENT_STATE state)
 {
+	// NOLINTNEXTLINE(clang-analyzer-deadcode.DeadStores)
 	const char* str = "RPC_CLIENT_STATE_UNKNOWN";
 
 	switch (state)

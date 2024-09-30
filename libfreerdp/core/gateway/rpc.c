@@ -63,6 +63,7 @@ static const char* PTYPE_STRINGS[] = { "PTYPE_REQUEST",       "PTYPE_PING",
 
 static const char* client_in_state_str(CLIENT_IN_CHANNEL_STATE state)
 {
+	// NOLINTNEXTLINE(clang-analyzer-deadcode.DeadStores)
 	const char* str = "CLIENT_IN_CHANNEL_STATE_UNKNOWN";
 
 	switch (state)
@@ -102,6 +103,7 @@ static const char* client_in_state_str(CLIENT_IN_CHANNEL_STATE state)
 
 static const char* client_out_state_str(CLIENT_OUT_CHANNEL_STATE state)
 {
+	// NOLINTNEXTLINE(clang-analyzer-deadcode.DeadStores)
 	const char* str = "CLIENT_OUT_CHANNEL_STATE_UNKNOWN";
 
 	switch (state)
@@ -153,6 +155,7 @@ static const char* client_out_state_str(CLIENT_OUT_CHANNEL_STATE state)
 
 const char* rpc_vc_state_str(VIRTUAL_CONNECTION_STATE state)
 {
+	// NOLINTNEXTLINE(clang-analyzer-deadcode.DeadStores)
 	const char* str = "VIRTUAL_CONNECTION_STATE_UNKNOWN";
 
 	switch (state)
