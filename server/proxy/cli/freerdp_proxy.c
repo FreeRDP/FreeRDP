@@ -51,7 +51,6 @@ static const char* strsignal(int signum)
 
 static void cleanup_handler(int signum)
 {
-	(void)printf("\n");
 	WLog_INFO(TAG, "caught signal %s [%d], starting cleanup...", strsignal(signum), signum);
 
 	WLog_INFO(TAG, "stopping all connections.");
