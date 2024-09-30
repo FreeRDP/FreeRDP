@@ -41,6 +41,7 @@
 #define mime_text_plain "text/plain"
 #define mime_text_utf8 mime_text_plain ";charset=utf-8"
 
+// NOLINTNEXTLINE(bugprone-suspicious-missing-comma)
 static const char* mime_text[] = { mime_text_plain, mime_text_utf8, "UTF8_STRING",
 	                               "COMPOUND_TEXT", "TEXT",         "STRING" };
 
