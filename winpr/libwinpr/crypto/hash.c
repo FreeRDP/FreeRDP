@@ -538,8 +538,9 @@ BOOL winpr_Digest_Init_Allow_FIPS(WINPR_DIGEST_CTX* ctx, WINPR_MD_TYPE md)
 #if defined(WITH_INTERNAL_MD5)
 			winpr_MD5_Init(&ctx->md5);
 			return TRUE;
-#endif
+#else
 			break;
+#endif
 		default:
 			WLog_ERR(TAG, "Invalid FIPS digest %s requested", winpr_md_type_to_string(md));
 			return FALSE;

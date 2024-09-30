@@ -110,8 +110,9 @@ static BOOL ecam_encoder_compress_h264(CameraDeviceStream* stream, const BYTE* s
 		return FALSE;
 
 	/* convert from source format to YUV420P */
-	if (av_image_fill_pointers(srcSlice, pixFormat, (int)size.height, (BYTE*)srcData,
-	                           stream->srcLineSizes) < 0)
+	BYTE* ptr = WINPR_CAST_CONST_PTR_AWAY(srcData, BYTE*);
+	if (av_image_fill_pointers(srcSlice, pixFormat, (int)size.height, ptr, stream->srcLineSizes) <
+	    0)
 		return FALSE;
 
 	const BYTE* cSrcSlice[4] = { srcSlice[0], srcSlice[1], srcSlice[2], srcSlice[3] };

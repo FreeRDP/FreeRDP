@@ -14,7 +14,7 @@ static int parse_file_buffer(const uint8_t* Data, size_t Size)
 	memcpy(buf, Data, Size);
 	buf[Size] = '\0';
 
-	status = freerdp_assistance_parse_file_buffer(file, (char*)buf, Size + 1,
+	status = freerdp_assistance_parse_file_buffer(file, buf, Size + 1,
 	                                              TEST_MSRC_INCIDENT_PASSWORD_TYPE2);
 
 err:

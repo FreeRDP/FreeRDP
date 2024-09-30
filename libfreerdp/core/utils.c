@@ -257,7 +257,7 @@ BOOL utils_str_is_empty(const char* str)
 {
 	if (!str)
 		return TRUE;
-	if (strlen(str) == 0)
+	if (*str == '\0')
 		return TRUE;
 	return FALSE;
 }

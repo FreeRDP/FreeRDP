@@ -813,7 +813,7 @@ static int convert_utf8_to_utf16(BYTE* lpMultiByteStr, BYTE* expected_lpWideChar
 		string_hexdump((BYTE*)lpWideCharStr, length * sizeof(WCHAR));
 
 		printf("UTF16 String (expected):\n");
-		string_hexdump((BYTE*)expected_lpWideCharStr, expected_cchWideChar * sizeof(WCHAR));
+		string_hexdump(expected_lpWideCharStr, expected_cchWideChar * sizeof(WCHAR));
 
 		goto fail;
 	}
@@ -887,13 +887,13 @@ static int convert_utf16_to_utf8(BYTE* lpWideCharStr, BYTE* expected_lpMultiByte
 		printf("WideCharToMultiByte unexpected string:\n");
 
 		printf("UTF16 String:\n");
-		string_hexdump((BYTE*)lpWideCharStr, (cchWideChar + 1) * sizeof(WCHAR));
+		string_hexdump(lpWideCharStr, (cchWideChar + 1) * sizeof(WCHAR));
 
 		printf("UTF8 String (actual):\n");
 		string_hexdump((BYTE*)lpMultiByteStr, cbMultiByte);
 
 		printf("UTF8 String (expected):\n");
-		string_hexdump((BYTE*)expected_lpMultiByteStr, expected_cbMultiByte);
+		string_hexdump(expected_lpMultiByteStr, expected_cbMultiByte);
 
 		goto fail;
 	}

@@ -386,7 +386,7 @@ static BOOL tsmf_ffmpeg_decode_video(ITSMFDecoder* decoder, const BYTE* data, UI
 #if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(58, 133, 100)
 		av_init_packet(&pkt);
 #endif
-		pkt.data = (BYTE*)data;
+		pkt.data = WINPR_CAST_CONST_PTR_AWAY(data, BYTE*);
 		pkt.size = data_size;
 
 		if (extensions & TSMM_SAMPLE_EXT_CLEANPOINT)
@@ -441,9 +441,11 @@ static BOOL tsmf_ffmpeg_decode_video(ITSMFDecoder* decoder, const BYTE* data, UI
 		av_image_fill_arrays(frame->data, frame->linesize, mdecoder->decoded_data,
 		                     mdecoder->codec_context->pix_fmt, mdecoder->codec_context->width,
 		                     mdecoder->codec_context->height, 1);
-		av_image_copy(frame->data, frame->linesize, (const uint8_t**)mdecoder->frame->data,
-		              mdecoder->frame->linesize, mdecoder->codec_context->pix_fmt,
-		              mdecoder->codec_context->width, mdecoder->codec_context->height);
+
+		const uint8_t* const* ptr = (const uint8_t* const*)mdecoder->frame->data;
+		av_image_copy(frame->data, frame->linesize, ptr, mdecoder->frame->linesize,
+		              mdecoder->codec_context->pix_fmt, mdecoder->codec_context->width,
+		              mdecoder->codec_context->height);
 		av_free(frame);
 	}
 
@@ -530,7 +532,7 @@ static BOOL tsmf_ffmpeg_decode_audio(ITSMFDecoder* decoder, const BYTE* data, UI
 			av_init_packet(&pkt);
 #endif
 
-			pkt.data = (BYTE*)src;
+			pkt.data = WINPR_CAST_CONST_PTR_AWAY(src, BYTE*);
 			pkt.size = src_size;
 #if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(57, 48, 101)
 			len = avcodec_decode_audio4(mdecoder->codec_context, decoded_frame, &got_frame, &pkt);

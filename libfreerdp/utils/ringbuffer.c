@@ -246,7 +246,7 @@ int ringbuffer_peek(const RingBuffer* rb, DataChunk chunks[2], size_t sz)
 	size_t toRead = 0;
 	int chunkIndex = 0;
 	int status = 0;
-	DEBUG_RINGBUFFER("ringbuffer_peek(%p): sz: %" PRIdz "", (void*)rb, sz);
+	DEBUG_RINGBUFFER("ringbuffer_peek(%p): sz: %" PRIdz "", (const void*)rb, sz);
 
 	if (sz < 1)
 		return 0;

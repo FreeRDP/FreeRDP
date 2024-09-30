@@ -210,16 +210,24 @@ static void log_enc_info(const AACENC_InfoStruct* info, fdk_log_fkt_t log)
 	assert(info);
 	assert(log);
 
-	strcat(confBuf, "{");
+	size_t offset = 0;
+	size_t remain = sizeof(confBuf) - 1;
+	int rc = snprintf(confBuf, remain, "{");
+	if (rc <= 0)
+		return;
+	offset += (size_t)rc;
+
 	for (size_t x = 0; x < 64; x++)
 	{
-		char tmp[12] = { 0 };
-		sprintf(tmp, "0x%02x", (int)info->confBuf[x]);
-		if (x > 0)
-			strcat(confBuf, ", ");
-		strcat(confBuf, tmp);
+		rc = snprintf(&confBuf[offset], remain - offset, "0x%02x%s", (int)info->confBuf[x],
+		              (x > 0) ? ", " : "");
+		if (rc <= 0)
+			return;
 	}
-	strcat(confBuf, "}");
+
+	rc = snprintf(confBuf, remain - offset, "}");
+	if (rc <= 0)
+		return;
 
 	log(WLOG_DEBUG,
 	    "[encoder info] "
