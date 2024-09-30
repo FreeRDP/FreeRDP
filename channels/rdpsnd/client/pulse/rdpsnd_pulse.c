@@ -355,7 +355,7 @@ static BOOL rdpsnd_pulse_context_connect(rdpsndDevicePlugin* device)
 static BOOL rdpsnd_pulse_open_stream(rdpsndDevicePlugin* device)
 {
 	pa_stream_state_t state = PA_STREAM_FAILED;
-	pa_stream_flags_t flags = PA_STREAM_NOFLAGS;
+	int flags = PA_STREAM_NOFLAGS;
 	pa_buffer_attr buffer_attr = { 0 };
 	char ss[PA_SAMPLE_SPEC_SNPRINT_MAX] = { 0 };
 	rdpsndPulsePlugin* pulse = (rdpsndPulsePlugin*)device;
@@ -404,8 +404,11 @@ static BOOL rdpsnd_pulse_open_stream(rdpsndDevicePlugin* device)
 		flags |= PA_STREAM_ADJUST_LATENCY;
 	}
 
+	// NOLINTNEXTLINE(clang-analyzer-optin.core.EnumCastOutOfRange)
+	pa_stream_flags_t eflags = (pa_stream_flags_t)flags;
 	if (pa_stream_connect_playback(pulse->stream, pulse->device_name,
-	                               pulse->latency > 0 ? &buffer_attr : NULL, flags, NULL, NULL) < 0)
+	                               pulse->latency > 0 ? &buffer_attr : NULL, eflags, NULL,
+	                               NULL) < 0)
 	{
 		WLog_ERR(TAG, "error connecting playback stream");
 		pa_stream_unref(pulse->stream);
