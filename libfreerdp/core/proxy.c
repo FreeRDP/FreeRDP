@@ -19,6 +19,7 @@
 
 #include <ctype.h>
 #include <errno.h>
+#include <limits.h>
 
 #include <openssl/err.h>
 
@@ -329,14 +330,16 @@ BOOL proxy_parse_uri(rdpSettings* settings, const char* uri_in)
 	BOOL rc = FALSE;
 	const char* protocol = "";
 	UINT16 port = 0;
-	char* p = NULL;
-	char* atPtr = NULL;
+
+	if (!settings || !uri_in)
+		return FALSE;
+
 	char* uri_copy = _strdup(uri_in);
 	char* uri = uri_copy;
 	if (!uri)
 		goto fail;
 
-	p = strstr(uri, "://");
+	char* p = strstr(uri, "://");
 
 	if (p)
 	{
@@ -376,7 +379,7 @@ BOOL proxy_parse_uri(rdpSettings* settings, const char* uri_in)
 	}
 
 	/* uri is now [user:password@]hostname:port */
-	atPtr = strrchr(uri, '@');
+	char* atPtr = strrchr(uri, '@');
 
 	if (atPtr)
 	{
@@ -480,6 +483,9 @@ BOOL proxy_parse_uri(rdpSettings* settings, const char* uri_in)
 	rc = TRUE;
 
 fail:
+	if (!rc)
+		WLog_WARN(TAG, "Failed to parse proxy configuration: %s://%s:%" PRIu16, protocol, uri,
+		          port);
 	free(uri_copy);
 	return rc;
 }
