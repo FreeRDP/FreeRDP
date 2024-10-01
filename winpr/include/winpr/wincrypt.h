@@ -730,7 +730,7 @@ WINPR_API BOOL CryptBinaryToStringA(CONST BYTE* pbBinary, DWORD cbBinary, DWORD 
 
 #endif
 
-#ifndef ALG_SID_ECSDA
+#ifndef ALG_SID_ECDSA
 #define ALG_SID_ECDSA 3
 #define CALG_ECDSA (ALG_CLASS_SIGNATURE | ALG_TYPE_DSS | ALG_SID_ECDSA)
 #endif
