@@ -426,7 +426,7 @@ static UINT device_process_message(device_server* device)
 		goto out;
 	}
 
-	if (WTSVirtualChannelRead(device->device_channel, 0, (PCHAR)Stream_Buffer(s),
+	if (WTSVirtualChannelRead(device->device_channel, 0, Stream_BufferAs(s, char),
 	                          (ULONG)Stream_Capacity(s), &BytesReturned) == FALSE)
 	{
 		WLog_ERR(TAG, "WTSVirtualChannelRead failed!");
@@ -704,7 +704,7 @@ static UINT device_server_packet_send(CameraDeviceServerContext* context, wStrea
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(s);
 
-	if (!WTSVirtualChannelWrite(device->device_channel, (PCHAR)Stream_Buffer(s),
+	if (!WTSVirtualChannelWrite(device->device_channel, Stream_BufferAs(s, char),
 	                            Stream_GetPosition(s), &written))
 	{
 		WLog_ERR(TAG, "WTSVirtualChannelWrite failed!");

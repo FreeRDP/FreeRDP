@@ -518,8 +518,8 @@ static BOOL freerdp_dsp_decode_mp3(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
 	if (!Stream_EnsureCapacity(context->common.buffer, 2 * buffer_size))
 		return FALSE;
 
-	pcm_l = (short*)Stream_Buffer(context->common.buffer);
-	pcm_r = (short*)Stream_Buffer(context->common.buffer) + buffer_size;
+	pcm_l = Stream_BufferAs(context->common.buffer, short);
+	pcm_r = Stream_BufferAs(context->common.buffer, short) + buffer_size;
 	rc = hip_decode(context->hip, (unsigned char*)/* API is not modifying content */ src, size,
 	                pcm_l, pcm_r);
 
@@ -593,7 +593,7 @@ static BOOL freerdp_dsp_encode_faac(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
 		{
 			if (!Stream_EnsureRemainingCapacity(out, context->faacMaxOutputBytes))
 				return FALSE;
-			rc = faacEncEncode(context->faac, (int32_t*)Stream_Buffer(context->common.buffer),
+			rc = faacEncEncode(context->faac, Stream_BufferAs(context->common.buffer, int32_t),
 			                   context->faacInputSamples, Stream_Pointer(out),
 			                   Stream_GetRemainingCapacity(out));
 			if (rc < 0)

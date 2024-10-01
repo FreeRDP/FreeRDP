@@ -262,7 +262,7 @@ static UINT rdpdr_seal_send_free_request(pf_channel_server_context* context, wSt
 	WINPR_ASSERT(len <= UINT32_MAX);
 
 	rdpdr_dump_send_packet(context->log, WLOG_TRACE, s, proxy_client_tx);
-	status = WTSVirtualChannelWrite(context->handle, (char*)Stream_Buffer(s), (ULONG)len, NULL);
+	status = WTSVirtualChannelWrite(context->handle, Stream_BufferAs(s, char), (ULONG)len, NULL);
 	return (status) ? CHANNEL_RC_OK : ERROR_INTERNAL_ERROR;
 }
 

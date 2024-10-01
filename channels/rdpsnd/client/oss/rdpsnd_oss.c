@@ -324,12 +324,6 @@ static BOOL rdpsnd_oss_set_volume(rdpsndDevicePlugin* device, UINT32 value)
 	unsigned left = (((value & 0xFFFF) * 100) / 0xFFFF);
 	unsigned right = ((((value >> 16) & 0xFFFF) * 100) / 0xFFFF);
 
-	if (left > 100)
-		left = 100;
-
-	if (right > 100)
-		right = 100;
-
 	left |= (right << 8);
 
 	if (ioctl(oss->mixer_handle, MIXER_WRITE(SOUND_MIXER_VOLUME), &left) == -1)

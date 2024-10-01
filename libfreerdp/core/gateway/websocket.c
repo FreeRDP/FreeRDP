@@ -150,7 +150,7 @@ int websocket_write(BIO* bio, const BYTE* buf, int isize, WEBSOCKET_OPCODE opcod
 	winpr_RAND(&maskingKey, sizeof(maskingKey));
 
 	payloadSize = isize;
-	if ((isize < 0) || (isize > UINT16_MAX))
+	if ((isize < 0) || (isize > UINT32_MAX))
 		return -1;
 
 	if (payloadSize < 126)

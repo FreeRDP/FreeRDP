@@ -379,7 +379,7 @@ static DWORD WINAPI audin_server_thread_func(LPVOID arg)
 			break;
 
 		WINPR_ASSERT(Stream_Capacity(s) <= UINT32_MAX);
-		if (WTSVirtualChannelRead(audin->audin_channel, 0, (PCHAR)Stream_Buffer(s),
+		if (WTSVirtualChannelRead(audin->audin_channel, 0, Stream_BufferAs(s, char),
 		                          (ULONG)Stream_Capacity(s), &BytesReturned) == FALSE)
 		{
 			WLog_Print(audin->log, WLOG_ERROR, "WTSVirtualChannelRead failed!");
@@ -572,7 +572,7 @@ static UINT audin_server_packet_send(audin_server_context* context, wStream* s)
 	if (pos > UINT32_MAX)
 		return ERROR_INVALID_PARAMETER;
 
-	if (!WTSVirtualChannelWrite(audin->audin_channel, (PCHAR)Stream_Buffer(s), (UINT32)pos,
+	if (!WTSVirtualChannelWrite(audin->audin_channel, Stream_BufferAs(s, char), (UINT32)pos,
 	                            &written))
 	{
 		WLog_Print(audin->log, WLOG_ERROR, "WTSVirtualChannelWrite failed!");

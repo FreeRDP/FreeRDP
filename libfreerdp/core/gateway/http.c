@@ -1427,8 +1427,8 @@ HttpResponse* http_response_recv(rdpTls* tls, BOOL readContentLength)
 	if (payloadOffset)
 	{
 		size_t count = 0;
-		char* buffer = (char*)Stream_Buffer(response->data);
-		char* line = (char*)Stream_Buffer(response->data);
+		char* buffer = Stream_BufferAs(response->data, char);
+		char* line = Stream_BufferAs(response->data, char);
 		char* context = NULL;
 
 		while ((line = string_strnstr(line, "\r\n", payloadOffset - (line - buffer) - 2UL)))

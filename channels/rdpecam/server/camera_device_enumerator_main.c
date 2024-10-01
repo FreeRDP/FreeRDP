@@ -287,7 +287,7 @@ static UINT enumerator_process_message(enumerator_server* enumerator)
 		goto out;
 	}
 
-	if (WTSVirtualChannelRead(enumerator->enumerator_channel, 0, (PCHAR)Stream_Buffer(s),
+	if (WTSVirtualChannelRead(enumerator->enumerator_channel, 0, Stream_BufferAs(s, char),
 	                          (ULONG)Stream_Capacity(s), &BytesReturned) == FALSE)
 	{
 		WLog_ERR(TAG, "WTSVirtualChannelRead failed!");
@@ -531,7 +531,7 @@ static UINT enumerator_server_packet_send(CamDevEnumServerContext* context, wStr
 	UINT error = CHANNEL_RC_OK;
 	ULONG written = 0;
 
-	if (!WTSVirtualChannelWrite(enumerator->enumerator_channel, (PCHAR)Stream_Buffer(s),
+	if (!WTSVirtualChannelWrite(enumerator->enumerator_channel, Stream_BufferAs(s, char),
 	                            Stream_GetPosition(s), &written))
 	{
 		WLog_ERR(TAG, "WTSVirtualChannelWrite failed!");

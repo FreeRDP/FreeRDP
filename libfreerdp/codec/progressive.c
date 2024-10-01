@@ -2523,7 +2523,7 @@ int progressive_compress(PROGRESSIVE_CONTEXT* WINPR_RESTRICT progressive,
 
 	if (!Stream_EnsureCapacity(progressive->rects, numRects * sizeof(RFX_RECT)))
 		return -5;
-	rects = (RFX_RECT*)Stream_Buffer(progressive->rects);
+	rects = Stream_BufferAs(progressive->rects, RFX_RECT);
 	if (invalidRegion)
 	{
 		const RECTANGLE_16* region_rects = region16_rects(invalidRegion, NULL);

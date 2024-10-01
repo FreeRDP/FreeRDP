@@ -952,7 +952,7 @@ static UINT drive_register_drive_path(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints,
 		}
 		Stream_Write_UINT8(drive->device.data, '\0');
 
-		drive->device.name = (const char*)Stream_Buffer(drive->device.data);
+		drive->device.name = Stream_BufferAs(drive->device.data, char);
 		if (!drive->device.name)
 			goto out_error;
 

@@ -251,7 +251,7 @@ static DWORD WINAPI encomsp_server_thread(LPVOID arg)
 
 		const size_t cap = Stream_Capacity(s);
 		if ((cap > UINT32_MAX) ||
-		    !WTSVirtualChannelRead(context->priv->ChannelHandle, 0, (PCHAR)Stream_Buffer(s),
+		    !WTSVirtualChannelRead(context->priv->ChannelHandle, 0, Stream_BufferAs(s, char),
 		                           (ULONG)cap, &BytesReturned))
 		{
 			WLog_ERR(TAG, "WTSVirtualChannelRead failed!");
@@ -261,7 +261,7 @@ static DWORD WINAPI encomsp_server_thread(LPVOID arg)
 
 		if (Stream_GetPosition(s) >= ENCOMSP_ORDER_HEADER_SIZE)
 		{
-			header = (ENCOMSP_ORDER_HEADER*)Stream_Buffer(s);
+			header = Stream_BufferAs(s, ENCOMSP_ORDER_HEADER);
 
 			if (header->Length >= Stream_GetPosition(s))
 			{

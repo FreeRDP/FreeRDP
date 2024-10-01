@@ -256,7 +256,7 @@ static DWORD WINAPI echo_server_thread_func(LPVOID arg)
 			break;
 		}
 
-		if (WTSVirtualChannelRead(echo->echo_channel, 0, (PCHAR)Stream_Buffer(s),
+		if (WTSVirtualChannelRead(echo->echo_channel, 0, Stream_BufferAs(s, char),
 		                          (ULONG)Stream_Capacity(s), &BytesReturned) == FALSE)
 		{
 			WLog_ERR(TAG, "WTSVirtualChannelRead failed!");
@@ -264,8 +264,7 @@ static DWORD WINAPI echo_server_thread_func(LPVOID arg)
 			break;
 		}
 
-		IFCALLRET(echo->context.Response, error, &echo->context, (BYTE*)Stream_Buffer(s),
-		          BytesReturned);
+		IFCALLRET(echo->context.Response, error, &echo->context, Stream_Buffer(s), BytesReturned);
 
 		if (error)
 		{

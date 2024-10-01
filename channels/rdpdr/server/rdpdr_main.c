@@ -230,7 +230,7 @@ static UINT rdpdr_seal_send_free_request(RdpdrServerContext* context, wStream* s
 		           rdpdr_packetid_string(header.PacketId), header.PacketId);
 	}
 	winpr_HexLogDump(context->priv->log, WLOG_DEBUG, Stream_Buffer(s), Stream_Length(s));
-	status = WTSVirtualChannelWrite(context->priv->ChannelHandle, (PCHAR)Stream_Buffer(s),
+	status = WTSVirtualChannelWrite(context->priv->ChannelHandle, Stream_BufferAs(s, char),
 	                                (ULONG)length, &written);
 	Stream_Free(s, TRUE);
 	return status ? CHANNEL_RC_OK : ERROR_INTERNAL_ERROR;
@@ -2078,7 +2078,7 @@ static DWORD WINAPI rdpdr_server_thread(LPVOID arg)
 		}
 
 		capacity = MIN(Stream_Capacity(s), UINT32_MAX);
-		if (!WTSVirtualChannelRead(context->priv->ChannelHandle, 0, (PCHAR)Stream_Buffer(s),
+		if (!WTSVirtualChannelRead(context->priv->ChannelHandle, 0, Stream_BufferAs(s, char),
 		                           (ULONG)capacity, &BytesReturned))
 		{
 			WLog_Print(context->priv->log, WLOG_ERROR, "WTSVirtualChannelRead failed!");
