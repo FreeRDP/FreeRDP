@@ -177,7 +177,7 @@ static UINT ainput_server_send_version(ainput_server* ainput)
 	Stream_Write_UINT32(s, AINPUT_VERSION_MINOR); /* Version (4 bytes) */
 
 	WINPR_ASSERT(Stream_GetPosition(s) <= UINT32_MAX);
-	if (!WTSVirtualChannelWrite(ainput->ainput_channel, (PCHAR)Stream_Buffer(s),
+	if (!WTSVirtualChannelWrite(ainput->ainput_channel, Stream_BufferAs(s, char),
 	                            (ULONG)Stream_GetPosition(s), &written))
 	{
 		WLog_ERR(TAG, "WTSVirtualChannelWrite failed!");
@@ -467,7 +467,7 @@ static UINT ainput_process_message(ainput_server* ainput)
 		goto out;
 	}
 
-	if (WTSVirtualChannelRead(ainput->ainput_channel, 0, (PCHAR)Stream_Buffer(s),
+	if (WTSVirtualChannelRead(ainput->ainput_channel, 0, Stream_BufferAs(s, char),
 	                          (ULONG)Stream_Capacity(s), &ActualBytesReturned) == FALSE)
 	{
 		WLog_ERR(TAG, "WTSVirtualChannelRead failed!");

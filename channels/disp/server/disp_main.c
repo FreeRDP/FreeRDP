@@ -315,7 +315,7 @@ static UINT disp_server_handle_messages(DispServerContext* context)
 	if (cap > UINT32_MAX)
 		return CHANNEL_RC_NO_BUFFER;
 
-	if (WTSVirtualChannelRead(priv->disp_channel, 0, (PCHAR)Stream_Buffer(s), (ULONG)cap,
+	if (WTSVirtualChannelRead(priv->disp_channel, 0, Stream_BufferAs(s, char), (ULONG)cap,
 	                          &BytesReturned) == FALSE)
 	{
 		WLog_ERR(TAG, "WTSVirtualChannelRead failed!");
@@ -499,7 +499,7 @@ static UINT disp_server_packet_send(DispServerContext* context, wStream* s)
 		goto out;
 	}
 
-	if (!WTSVirtualChannelWrite(context->priv->disp_channel, (PCHAR)Stream_Buffer(s), pos,
+	if (!WTSVirtualChannelWrite(context->priv->disp_channel, Stream_BufferAs(s, char), pos,
 	                            &written))
 	{
 		WLog_ERR(TAG, "WTSVirtualChannelWrite failed!");

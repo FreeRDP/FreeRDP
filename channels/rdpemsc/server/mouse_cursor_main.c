@@ -252,7 +252,7 @@ static UINT mouse_cursor_process_message(mouse_cursor_server* mouse_cursor)
 		goto out;
 	}
 
-	if (WTSVirtualChannelRead(mouse_cursor->mouse_cursor_channel, 0, (PCHAR)Stream_Buffer(s),
+	if (WTSVirtualChannelRead(mouse_cursor->mouse_cursor_channel, 0, Stream_BufferAs(s, char),
 	                          (ULONG)Stream_Capacity(s), &BytesReturned) == FALSE)
 	{
 		WLog_ERR(TAG, "WTSVirtualChannelRead failed!");
@@ -514,7 +514,7 @@ static UINT mouse_cursor_server_packet_send(MouseCursorServerContext* context, w
 	const size_t pos = Stream_GetPosition(s);
 	if (pos > UINT32_MAX)
 		return ERROR_OUTOFMEMORY;
-	if (!WTSVirtualChannelWrite(mouse_cursor->mouse_cursor_channel, (PCHAR)Stream_Buffer(s),
+	if (!WTSVirtualChannelWrite(mouse_cursor->mouse_cursor_channel, Stream_BufferAs(s, char),
 	                            (ULONG)pos, &written))
 	{
 		WLog_ERR(TAG, "WTSVirtualChannelWrite failed!");

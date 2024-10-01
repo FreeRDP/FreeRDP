@@ -1836,7 +1836,7 @@ UINT rdpgfx_server_handle_messages(RdpgfxServerContext* context)
 			return CHANNEL_RC_NO_MEMORY;
 		}
 
-		if (WTSVirtualChannelRead(priv->rdpgfx_channel, 0, (PCHAR)Stream_Buffer(s),
+		if (WTSVirtualChannelRead(priv->rdpgfx_channel, 0, Stream_BufferAs(s, char),
 		                          Stream_Capacity(s), &BytesReturned) == FALSE)
 		{
 			WLog_Print(context->priv->log, WLOG_ERROR, "WTSVirtualChannelRead failed!");

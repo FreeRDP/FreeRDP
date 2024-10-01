@@ -653,7 +653,7 @@ static DWORD WINAPI tf_debug_channel_thread_func(LPVOID arg)
 
 		Stream_SetPosition(s, 0);
 
-		if (WTSVirtualChannelRead(context->debug_channel, 0, (PCHAR)Stream_Buffer(s),
+		if (WTSVirtualChannelRead(context->debug_channel, 0, Stream_BufferAs(s, char),
 		                          (ULONG)Stream_Capacity(s), &BytesReturned) == FALSE)
 		{
 			if (BytesReturned == 0)
@@ -662,7 +662,7 @@ static DWORD WINAPI tf_debug_channel_thread_func(LPVOID arg)
 			if (!Stream_EnsureRemainingCapacity(s, BytesReturned))
 				break;
 
-			if (WTSVirtualChannelRead(context->debug_channel, 0, (PCHAR)Stream_Buffer(s),
+			if (WTSVirtualChannelRead(context->debug_channel, 0, Stream_BufferAs(s, char),
 			                          (ULONG)Stream_Capacity(s), &BytesReturned) == FALSE)
 			{
 				/* should not happen */

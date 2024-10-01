@@ -38,7 +38,7 @@ static UINT remdesk_virtual_channel_write(RemdeskServerContext* context, wStream
 {
 	BOOL status = 0;
 	ULONG BytesWritten = 0;
-	status = WTSVirtualChannelWrite(context->priv->ChannelHandle, (PCHAR)Stream_Buffer(s),
+	status = WTSVirtualChannelWrite(context->priv->ChannelHandle, Stream_BufferAs(s, char),
 	                                Stream_Length(s), &BytesWritten);
 	return (status) ? CHANNEL_RC_OK : ERROR_INTERNAL_ERROR;
 }
@@ -595,7 +595,7 @@ static DWORD WINAPI remdesk_server_thread(LPVOID arg)
 			break;
 		}
 
-		if (WTSVirtualChannelRead(context->priv->ChannelHandle, 0, (PCHAR)Stream_Buffer(s),
+		if (WTSVirtualChannelRead(context->priv->ChannelHandle, 0, Stream_BufferAs(s, char),
 		                          Stream_Capacity(s), &BytesReturned))
 		{
 			if (BytesReturned)

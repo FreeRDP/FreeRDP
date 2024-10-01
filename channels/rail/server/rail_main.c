@@ -46,7 +46,7 @@ static UINT rail_send(RailServerContext* context, wStream* s, ULONG length)
 	if (!context)
 		return CHANNEL_RC_BAD_INIT_HANDLE;
 
-	if (!WTSVirtualChannelWrite(context->priv->rail_channel, (PCHAR)Stream_Buffer(s), length,
+	if (!WTSVirtualChannelWrite(context->priv->rail_channel, Stream_BufferAs(s, char), length,
 	                            &written))
 	{
 		WLog_ERR(TAG, "WTSVirtualChannelWrite failed!");

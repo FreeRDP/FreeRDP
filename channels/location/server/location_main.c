@@ -296,7 +296,7 @@ static UINT location_process_message(location_server* location)
 		goto out;
 	}
 
-	if (WTSVirtualChannelRead(location->location_channel, 0, (PCHAR)Stream_Buffer(s),
+	if (WTSVirtualChannelRead(location->location_channel, 0, Stream_BufferAs(s, char),
 	                          (ULONG)Stream_Capacity(s), &BytesReturned) == FALSE)
 	{
 		WLog_ERR(TAG, "WTSVirtualChannelRead failed!");
@@ -544,7 +544,7 @@ static UINT location_server_packet_send(LocationServerContext* context, wStream*
 	const size_t pos = Stream_GetPosition(s);
 	if (pos > UINT32_MAX)
 		return ERROR_OUTOFMEMORY;
-	if (!WTSVirtualChannelWrite(location->location_channel, (PCHAR)Stream_Buffer(s), (ULONG)pos,
+	if (!WTSVirtualChannelWrite(location->location_channel, Stream_BufferAs(s, char), (ULONG)pos,
 	                            &written))
 	{
 		WLog_ERR(TAG, "WTSVirtualChannelWrite failed!");

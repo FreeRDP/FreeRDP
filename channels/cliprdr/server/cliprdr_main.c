@@ -78,24 +78,32 @@
  */
 static UINT cliprdr_server_packet_send(CliprdrServerPrivate* cliprdr, wStream* s)
 {
-	UINT rc = ERROR_INTERNAL_ERROR;
+	UINT rc = 0;
+	size_t pos = 0;
+	BOOL status = 0;
+	UINT32 dataLen = 0;
+	ULONG written = 0;
 
 	WINPR_ASSERT(cliprdr);
 
-	const size_t pos = Stream_GetPosition(s);
+	pos = Stream_GetPosition(s);
 	if ((pos < 8) || (pos > UINT32_MAX))
 	{
 		rc = ERROR_NO_DATA;
 		goto fail;
 	}
 
-	const UINT32 dataLen = (UINT32)(pos - 8);
+	dataLen = (UINT32)(pos - 8);
 	Stream_SetPosition(s, 4);
 	Stream_Write_UINT32(s, dataLen);
+	if (pos > UINT32_MAX)
+	{
+		rc = ERROR_INVALID_DATA;
+		goto fail;
+	}
 
-	ULONG written = 0;
-	const BOOL status = WTSVirtualChannelWrite(cliprdr->ChannelHandle, (PCHAR)Stream_Buffer(s),
-	                                           (UINT32)pos, &written);
+	status = WTSVirtualChannelWrite(cliprdr->ChannelHandle, Stream_BufferAs(s, char), (UINT32)pos,
+	                                &written);
 	rc = status ? CHANNEL_RC_OK : ERROR_INTERNAL_ERROR;
 fail:
 	Stream_Free(s, TRUE);
