@@ -38,8 +38,8 @@
 #include "cliprdr_format.h"
 #include "../cliprdr_common.h"
 
-const char* type_FileGroupDescriptorW = "FileGroupDescriptorW";
-const char* type_FileContents = "FileContents";
+const char type_FileGroupDescriptorW[] = "FileGroupDescriptorW";
+const char type_FileContents[] = "FileContents";
 
 CliprdrClientContext* cliprdr_get_client_interface(cliprdrPlugin* cliprdr)
 {
