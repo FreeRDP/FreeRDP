@@ -1703,7 +1703,7 @@ static void freerdp_client_print_tune_list(const rdpSettings* settings)
 {
 	SSIZE_T type = 0;
 
-	for (size_t x = 0; x < FreeRDP_Settings_StableAPI_MAX; x++)
+	for (SSIZE_T x = 0; x < FreeRDP_Settings_StableAPI_MAX; x++)
 	{
 		const char* name = freerdp_settings_get_name_for_key(x);
 		type = freerdp_settings_get_type_for_key(x);
@@ -1711,17 +1711,17 @@ static void freerdp_client_print_tune_list(const rdpSettings* settings)
 		switch (type)
 		{
 			case RDP_SETTINGS_TYPE_BOOL:
-				printf("%" PRIuz "\t%50s\tBOOL\t%s\n", x, name,
+				printf("%" PRIdz "\t%50s\tBOOL\t%s\n", x, name,
 				       freerdp_settings_get_bool(settings, (FreeRDP_Settings_Keys_Bool)x)
 				           ? "TRUE"
 				           : "FALSE");
 				break;
 			case RDP_SETTINGS_TYPE_UINT16:
-				printf("%" PRIuz "\t%50s\tUINT16\t%" PRIu16 "\n", x, name,
+				printf("%" PRIdz "\t%50s\tUINT16\t%" PRIu16 "\n", x, name,
 				       freerdp_settings_get_uint16(settings, (FreeRDP_Settings_Keys_UInt16)x));
 				break;
 			case RDP_SETTINGS_TYPE_INT16:
-				printf("%" PRIuz "\t%50s\tINT16\t%" PRId16 "\n", x, name,
+				printf("%" PRIdz "\t%50s\tINT16\t%" PRId16 "\n", x, name,
 				       freerdp_settings_get_int16(settings, (FreeRDP_Settings_Keys_Int16)x));
 				break;
 			case RDP_SETTINGS_TYPE_UINT32:
@@ -1729,25 +1729,25 @@ static void freerdp_client_print_tune_list(const rdpSettings* settings)
 				       freerdp_settings_get_uint32(settings, (FreeRDP_Settings_Keys_UInt32)x));
 				break;
 			case RDP_SETTINGS_TYPE_INT32:
-				printf("%" PRIuz "\t%50s\tINT32\t%" PRId32 "\n", x, name,
+				printf("%" PRIdz "\t%50s\tINT32\t%" PRId32 "\n", x, name,
 				       freerdp_settings_get_int32(settings, (FreeRDP_Settings_Keys_Int32)x));
 				break;
 			case RDP_SETTINGS_TYPE_UINT64:
-				printf("%" PRIuz "\t%50s\tUINT64\t%" PRIu64 "\n", x, name,
+				printf("%" PRIdz "\t%50s\tUINT64\t%" PRIu64 "\n", x, name,
 				       freerdp_settings_get_uint64(settings, (FreeRDP_Settings_Keys_UInt64)x));
 				break;
 			case RDP_SETTINGS_TYPE_INT64:
-				printf("%" PRIuz "\t%50s\tINT64\t%" PRId64 "\n", x, name,
+				printf("%" PRIdz "\t%50s\tINT64\t%" PRId64 "\n", x, name,
 				       freerdp_settings_get_int64(settings, (FreeRDP_Settings_Keys_Int64)x));
 				break;
 			case RDP_SETTINGS_TYPE_STRING:
-				printf("%" PRIuz "\t%50s\tSTRING\t%s"
+				printf("%" PRIdz "\t%50s\tSTRING\t%s"
 				       "\n",
 				       x, name,
 				       freerdp_settings_get_string(settings, (FreeRDP_Settings_Keys_String)x));
 				break;
 			case RDP_SETTINGS_TYPE_POINTER:
-				printf("%" PRIuz "\t%50s\tPOINTER\t%p"
+				printf("%" PRIdz "\t%50s\tPOINTER\t%p"
 				       "\n",
 				       x, name,
 				       freerdp_settings_get_pointer(settings, (FreeRDP_Settings_Keys_Pointer)x));
