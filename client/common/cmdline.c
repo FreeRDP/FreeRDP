@@ -1708,6 +1708,7 @@ static void freerdp_client_print_tune_list(const rdpSettings* settings)
 		const char* name = freerdp_settings_get_name_for_key(x);
 		type = freerdp_settings_get_type_for_key(x);
 
+		// NOLINTBEGIN(clang-analyzer-optin.core.EnumCastOutOfRange)
 		switch (type)
 		{
 			case RDP_SETTINGS_TYPE_BOOL:
@@ -1755,6 +1756,7 @@ static void freerdp_client_print_tune_list(const rdpSettings* settings)
 			default:
 				break;
 		}
+		// NOLINTEND(clang-analyzer-optin.core.EnumCastOutOfRange)
 	}
 }
 
