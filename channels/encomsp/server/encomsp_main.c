@@ -261,7 +261,7 @@ static DWORD WINAPI encomsp_server_thread(LPVOID arg)
 
 		if (Stream_GetPosition(s) >= ENCOMSP_ORDER_HEADER_SIZE)
 		{
-			header = (ENCOMSP_ORDER_HEADER*)Stream_Buffer(s);
+			header = Stream_BufferAs(s, ENCOMSP_ORDER_HEADER);
 
 			if (header->Length >= Stream_GetPosition(s))
 			{

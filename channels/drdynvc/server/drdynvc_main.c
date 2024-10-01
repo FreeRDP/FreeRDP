@@ -97,7 +97,7 @@ static DWORD WINAPI drdynvc_server_thread(LPVOID arg)
 		}
 
 		if (!WTSVirtualChannelRead(context->priv->ChannelHandle, 0,
-		                           (PCHAR) Stream_Buffer(s), Stream_Capacity(s), &BytesReturned))
+		                           Stream_BufferAs(s, char), Stream_Capacity(s), &BytesReturned))
 		{
 			WLog_ERR(TAG, "WTSVirtualChannelRead failed!");
 			break;

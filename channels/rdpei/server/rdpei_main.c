@@ -626,7 +626,7 @@ UINT rdpei_server_send_sc_ready(RdpeiServerContext* context, UINT32 version, UIN
 	if (pos > UINT32_MAX)
 		return ERROR_INTERNAL_ERROR;
 
-	if (!WTSVirtualChannelWrite(priv->channelHandle, (PCHAR)Stream_Buffer(priv->outputStream),
+	if (!WTSVirtualChannelWrite(priv->channelHandle, Stream_BufferAs(priv->outputStream, char),
 	                            (ULONG)pos, &written))
 	{
 		WLog_ERR(TAG, "WTSVirtualChannelWrite failed!");
@@ -673,7 +673,7 @@ UINT rdpei_server_suspend(RdpeiServerContext* context)
 	if (pos > UINT32_MAX)
 		return ERROR_INTERNAL_ERROR;
 
-	if (!WTSVirtualChannelWrite(priv->channelHandle, (PCHAR)Stream_Buffer(priv->outputStream),
+	if (!WTSVirtualChannelWrite(priv->channelHandle, Stream_BufferAs(priv->outputStream, char),
 	                            (ULONG)pos, &written))
 	{
 		WLog_ERR(TAG, "WTSVirtualChannelWrite failed!");
@@ -720,7 +720,7 @@ UINT rdpei_server_resume(RdpeiServerContext* context)
 	if (pos > UINT32_MAX)
 		return CHANNEL_RC_NO_BUFFER;
 
-	if (!WTSVirtualChannelWrite(priv->channelHandle, (PCHAR)Stream_Buffer(priv->outputStream),
+	if (!WTSVirtualChannelWrite(priv->channelHandle, Stream_BufferAs(priv->outputStream, char),
 	                            (ULONG)pos, &written))
 	{
 		WLog_ERR(TAG, "WTSVirtualChannelWrite failed!");

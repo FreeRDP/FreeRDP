@@ -758,7 +758,7 @@ static BOOL kerberos_rd_tgt_token(const sspi_gss_data* token, char** target, krb
 			return FALSE;
 
 		s = WinPrAsn1DecGetStream(&dec2);
-		ticket->data = (char*)Stream_Buffer(&s);
+		ticket->data = Stream_BufferAs(&s, char);
 		ticket->length = Stream_Length(&s);
 		return TRUE;
 	}

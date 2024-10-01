@@ -264,8 +264,7 @@ static DWORD WINAPI echo_server_thread_func(LPVOID arg)
 			break;
 		}
 
-		IFCALLRET(echo->context.Response, error, &echo->context, (BYTE*)Stream_Buffer(s),
-		          BytesReturned);
+		IFCALLRET(echo->context.Response, error, &echo->context, Stream_Buffer(s), BytesReturned);
 
 		if (error)
 		{
