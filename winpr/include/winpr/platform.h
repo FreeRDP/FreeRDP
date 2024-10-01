@@ -45,6 +45,8 @@
 	_Pragma("clang diagnostic ignored \"-Wunused-const-variable\"")
 #define WINPR_PRAGMA_DIAG_IGNORED_FORMAT_SECURITY \
 	_Pragma("clang diagnostic ignored \"-Wformat-security\"")
+#define WINPR_PRAGMA_DIAG_TAUTOLOGICAL_CONSTANT_OUT_OF_RANGE_COMPARE \
+	_Pragma("clang diagnostic ignored \"-Wtautological-constant-out-of-range-compare\"")
 #define WINPR_PRAGMA_DIAG_IGNORED_FORMAT_NONLITERAL \
 	_Pragma("clang diagnostic ignored \"-Wformat-nonliteral\"") /** @since version 3.9.0 */
 #define WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC /** @since version 3.3.0 */ /* not supported \
@@ -75,6 +77,8 @@
 	_Pragma("GCC diagnostic ignored \"-Wunused-const-variable\"")
 #define WINPR_PRAGMA_DIAG_IGNORED_FORMAT_SECURITY \
 	_Pragma("GCC diagnostic ignored \"-Wformat-security\"")
+#define WINPR_PRAGMA_DIAG_TAUTOLOGICAL_CONSTANT_OUT_OF_RANGE_COMPARE \
+	_Pragma("GCC diagnostic ignored \"-Wtautological-constant-out-of-range-compare\"")
 #define WINPR_PRAGMA_DIAG_IGNORED_FORMAT_NONLITERAL \
 	_Pragma("GCC diagnostic ignored \"-Wformat-nonliteral\"") /** @since version 3.9.0 */
 #if __GNUC__ >= 11
@@ -99,6 +103,7 @@
 #define WINPR_PRAGMA_DIAG_IGNORED_ATOMIC_SEQ_CST
 #define WINPR_PRAGMA_DIAG_IGNORED_UNUSED_CONST_VAR
 #define WINPR_PRAGMA_DIAG_IGNORED_FORMAT_SECURITY
+#define WINPR_PRAGMA_DIAG_TAUTOLOGICAL_CONSTANT_OUT_OF_RANGE_COMPARE
 #define WINPR_PRAGMA_DIAG_IGNORED_FORMAT_NONLITERAL  /** @since version 3.9.0 */
 #define WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC /** @since version 3.3.0 */
 #define WINPR_PRAGMA_DIAG_POP
