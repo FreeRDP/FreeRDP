@@ -78,15 +78,17 @@ static UINT cam_v4l_stream_stop(CamV4lStream* stream);
  *
  * @return NULL-terminated fourcc string
  */
-static const char* cam_v4l_get_fourcc_str(unsigned int fourcc)
+static const char* cam_v4l_get_fourcc_str(unsigned int fourcc, char* buffer, size_t size)
 {
-	static char buf[5] = { 0 };
-	buf[0] = (fourcc & 0xFF);
-	buf[1] = (fourcc >> 8) & 0xFF;
-	buf[2] = (fourcc >> 16) & 0xFF;
-	buf[3] = (fourcc >> 24) & 0xFF;
-	buf[4] = 0;
-	return buf;
+	if (size < 5)
+		return NULL;
+
+	buffer[0] = (char)(fourcc & 0xFF);
+	buffer[1] = (char)((fourcc >> 8) & 0xFF);
+	buffer[2] = (char)((fourcc >> 16) & 0xFF);
+	buffer[3] = (char)((fourcc >> 24) & 0xFF);
+	buffer[4] = '\0';
+	return buffer;
 }
 
 /**
@@ -243,9 +245,11 @@ static INT16 cam_v4l_get_media_type_descriptions(ICamHal* hal, const char* devic
 
 			mediaTypes->PixelAspectRatioNumerator = mediaTypes->PixelAspectRatioDenominator = 1;
 
+			char fourccstr[5] = { 0 };
 			WLog_DBG(TAG, "Camera format: %s, width: %u, height: %u, fps: %u/%u",
-			         cam_v4l_get_fourcc_str(pixelFormat), mediaTypes->Width, mediaTypes->Height,
-			         mediaTypes->FrameRateNumerator, mediaTypes->FrameRateDenominator);
+			         cam_v4l_get_fourcc_str(pixelFormat, fourccstr, ARRAYSIZE(fourccstr)),
+			         mediaTypes->Width, mediaTypes->Height, mediaTypes->FrameRateNumerator,
+			         mediaTypes->FrameRateDenominator);
 
 			mediaTypes++;
 			nTypes++;
@@ -652,9 +656,11 @@ static UINT cam_v4l_stream_start(ICamHal* ihal, CameraDevice* dev, int streamInd
 		return CAM_ERROR_CODE_OutOfMemory;
 	}
 
+	char fourccstr[5] = { 0 };
 	WLog_INFO(TAG, "Camera format: %s, width: %u, height: %u, fps: %u/%u",
-	          cam_v4l_get_fourcc_str(pixelFormat), mediaType->Width, mediaType->Height,
-	          mediaType->FrameRateNumerator, mediaType->FrameRateDenominator);
+	          cam_v4l_get_fourcc_str(pixelFormat, fourccstr, ARRAYSIZE(fourccstr)),
+	          mediaType->Width, mediaType->Height, mediaType->FrameRateNumerator,
+	          mediaType->FrameRateDenominator);
 
 	return CHANNEL_RC_OK;
 }
