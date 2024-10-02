@@ -15,11 +15,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-configure_file(config/version.h.in ${CMAKE_CURRENT_BINARY_DIR}/winpr/version.h)
-configure_file(config/wtypes.h.in ${CMAKE_CURRENT_BINARY_DIR}/winpr/wtypes.h)
-configure_file(config/build-config.h.in ${CMAKE_CURRENT_BINARY_DIR}/winpr/build-config.h)
-configure_file(config/buildflags.h.in ${CMAKE_CURRENT_BINARY_DIR}/winpr/buildflags.h)
-configure_file(config/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/winpr/config.h)
+cleaning_configure_file(config/version.h.in ${CMAKE_CURRENT_BINARY_DIR}/winpr/version.h)
+cleaning_configure_file(config/wtypes.h.in ${CMAKE_CURRENT_BINARY_DIR}/winpr/wtypes.h)
+cleaning_configure_file(config/build-config.h.in ${CMAKE_CURRENT_BINARY_DIR}/winpr/build-config.h)
+cleaning_configure_file(config/buildflags.h.in ${CMAKE_CURRENT_BINARY_DIR}/winpr/buildflags.h)
+cleaning_configure_file(config/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/winpr/config.h)
 
 file(GLOB_RECURSE WINPR_PUBLIC_COMMON_HEADERS
 	LIST_DIRECTORIES false

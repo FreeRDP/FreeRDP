@@ -1,5 +1,6 @@
 include(GNUInstallDirs)
 include(FindDocBookXSL)
+include(CleaningConfigureFile)
 
 function(install_freerdp_man manpage section)
 	if(WITH_MANPAGES)
@@ -14,7 +15,7 @@ function(generate_and_install_freerdp_man_from_template name_base section api)
 		else()
 			set(manpage "${CMAKE_CURRENT_BINARY_DIR}/${name_base}.${section}")
 		endif()
-		configure_file(${name_base}.${section}.in ${manpage})
+                cleaning_configure_file(${name_base}.${section}.in ${manpage})
 		install_freerdp_man(${manpage} ${section})
 	endif()
 endfunction()
@@ -27,12 +28,12 @@ function(generate_and_install_freerdp_man_from_xml target section dependencies)
 		set(manpage "${name_base}.${section}")
 
 		# We need the variable ${MAN_TODAY} to contain the current date in ISO
-		# format to replace it in the configure_file step.
+                # format to replace it in the cleaning_configure_file step.
 		include(today)
 
 		TODAY(MAN_TODAY)
 
-		configure_file(${template}.xml.in ${manpage}.xml @ONLY IMMEDIATE)
+                cleaning_configure_file(${template}.xml.in ${manpage}.xml @ONLY IMMEDIATE)
 
 		foreach(DEP IN LISTS dependencies)
 			get_filename_component(DNAME "${DEP}" NAME)
@@ -41,7 +42,7 @@ function(generate_and_install_freerdp_man_from_xml target section dependencies)
 
 			if (EXISTS ${SRC})
 				message("generating ${DST} from ${SRC}")
-				configure_file(${SRC} ${DST} @ONLY IMMEDIATE)
+                                cleaning_configure_file(${SRC} ${DST} @ONLY IMMEDIATE)
 			else()
 				message("using ${DST} from ${SRC}")
 			endif()

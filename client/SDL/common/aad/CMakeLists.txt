@@ -69,7 +69,7 @@ else()
   )
 endif()
 
-configure_file(sdl_config.hpp.in sdl_config.hpp @ONLY)
+cleaning_configure_file(sdl_config.hpp.in sdl_config.hpp @ONLY)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 add_library(sdl-common-aad-view STATIC

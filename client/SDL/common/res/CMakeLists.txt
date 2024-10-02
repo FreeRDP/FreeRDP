@@ -33,12 +33,12 @@ macro(convert_to_bin FILE FILE_TYPE)
 
         file_to_hex_array("${FILE}" FILEDATA)
 
-        configure_file(resource.hpp.in
+        cleaning_configure_file(resource.hpp.in
 		${FILE_BIN_DIR}/${TARGET_NAME}.hpp
 		@ONLY
 	)
 
-        configure_file(resource.cpp.in
+        cleaning_configure_file(resource.cpp.in
 		${FILE_BIN_DIR}/${TARGET_NAME}.cpp
 		@ONLY
 	)

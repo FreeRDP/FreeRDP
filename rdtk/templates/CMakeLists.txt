@@ -28,13 +28,13 @@ ENDFOREACH()
 include(pkg-config-install-prefix)
 
 string(REPLACE ";" " " RDTK_BUILD_CONFIG "${RDTK_BUILD_CONFIG_LIST}")
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/version.h.in ${CMAKE_CURRENT_BINARY_DIR}/../include/rdtk/version.h)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/buildflags.h.in ${CMAKE_CURRENT_BINARY_DIR}/../include/rdtk/buildflags.h)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/build-config.h.in ${CMAKE_CURRENT_BINARY_DIR}/../include/rdtk/build-config.h)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/../include/rdtk/config.h)
+cleaning_configure_file(${CMAKE_CURRENT_SOURCE_DIR}/version.h.in ${CMAKE_CURRENT_BINARY_DIR}/../include/rdtk/version.h)
+cleaning_configure_file(${CMAKE_CURRENT_SOURCE_DIR}/buildflags.h.in ${CMAKE_CURRENT_BINARY_DIR}/../include/rdtk/buildflags.h)
+cleaning_configure_file(${CMAKE_CURRENT_SOURCE_DIR}/build-config.h.in ${CMAKE_CURRENT_BINARY_DIR}/../include/rdtk/build-config.h)
+cleaning_configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/../include/rdtk/config.h)
 
 if (NOT RDTK_FORCE_STATIC_BUILD)
-	configure_file(${CMAKE_CURRENT_SOURCE_DIR}/rdtk.pc.in ${CMAKE_CURRENT_BINARY_DIR}/rdtk${RDTK_VERSION_MAJOR}.pc @ONLY)
+	cleaning_configure_file(${CMAKE_CURRENT_SOURCE_DIR}/rdtk.pc.in ${CMAKE_CURRENT_BINARY_DIR}/rdtk${RDTK_VERSION_MAJOR}.pc @ONLY)
 
 	set(RDTK_INSTALL_INCLUDE_DIR ${RDTK_INCLUDE_DIR}/rdtk)
 	install(FILES

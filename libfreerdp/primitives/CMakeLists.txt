@@ -72,7 +72,7 @@ if (WITH_OPENCL)
     file_to_hex_array(${FILENAME} FILEDATA)
 
     set(HDR_FILE "${CMAKE_CURRENT_BINARY_DIR}/opencl/primitives-opencl-program.h")
-    configure_file("${CMAKE_CURRENT_SOURCE_DIR}/opencl/primitives.h.in" ${HDR_FILE} @ONLY)
+    cleaning_configure_file("${CMAKE_CURRENT_SOURCE_DIR}/opencl/primitives.h.in" ${HDR_FILE} @ONLY)
     list(APPEND PRIMITIVES_OPENCL_SRCS ${HDR_FILE})
 
     include_directories(${CMAKE_CURRENT_BINARY_DIR}/opencl)
