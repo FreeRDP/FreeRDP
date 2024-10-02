@@ -23,6 +23,8 @@ option(WITH_PROFILER "Compile profiler." OFF)
 option(WITH_GPROF "Compile with GProf profiler." OFF)
 
 option(WITH_SSE2 "Enable SSE2 optimization." OFF)
+cmake_dependent_option(WITH_AVX2 "Compile AVX2 optimizations" ON "WITH_SSE2"  OFF)
+
 option(WITH_NEON "Enable NEON optimization." OFF)
 
 option(WITH_JPEG "Use JPEG decoding." OFF)
