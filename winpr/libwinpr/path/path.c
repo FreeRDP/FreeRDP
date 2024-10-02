@@ -1087,6 +1087,8 @@ const char* GetKnownPathIdString(int id)
 			return "KNOWN_PATH_XDG_CACHE_HOME";
 		case KNOWN_PATH_XDG_RUNTIME_DIR:
 			return "KNOWN_PATH_XDG_RUNTIME_DIR";
+		case KNOWN_PATH_SYSTEM_CONFIG_HOME:
+			return "KNOWN_PATH_SYSTEM_CONFIG_HOME";
 		default:
 			return "KNOWN_PATH_UNKNOWN_ID";
 	}

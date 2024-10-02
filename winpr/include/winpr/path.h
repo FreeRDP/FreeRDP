@@ -293,12 +293,16 @@ extern "C"
  * Shell Path Functions
  */
 
-#define KNOWN_PATH_HOME 1
-#define KNOWN_PATH_TEMP 2
-#define KNOWN_PATH_XDG_DATA_HOME 3
-#define KNOWN_PATH_XDG_CONFIG_HOME 4
-#define KNOWN_PATH_XDG_CACHE_HOME 5
-#define KNOWN_PATH_XDG_RUNTIME_DIR 6
+typedef enum
+{
+	KNOWN_PATH_HOME = 1,
+	KNOWN_PATH_TEMP = 2,
+	KNOWN_PATH_XDG_DATA_HOME = 3,
+	KNOWN_PATH_XDG_CONFIG_HOME = 4,
+	KNOWN_PATH_XDG_CACHE_HOME = 5,
+	KNOWN_PATH_XDG_RUNTIME_DIR = 6,
+	KNOWN_PATH_SYSTEM_CONFIG_HOME = 7
+} eKnownPathTypes;
 
 #ifdef __cplusplus
 extern "C"
@@ -308,10 +312,10 @@ extern "C"
 	WINPR_API const char* GetKnownPathIdString(int id);
 
 	WINPR_ATTR_MALLOC(free, 1)
-	WINPR_API char* GetKnownPath(int id);
+	WINPR_API char* GetKnownPath(eKnownPathTypes id);
 
 	WINPR_ATTR_MALLOC(free, 1)
-	WINPR_API char* GetKnownSubPath(int id, const char* path);
+	WINPR_API char* GetKnownSubPath(eKnownPathTypes id, const char* path);
 
 	WINPR_ATTR_MALLOC(free, 1)
 	WINPR_API char* GetEnvironmentPath(char* name);

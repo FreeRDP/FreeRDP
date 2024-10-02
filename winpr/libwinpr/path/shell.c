@@ -19,6 +19,7 @@
  */
 
 #include <winpr/config.h>
+#include <winpr/build-config.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -42,6 +43,7 @@
 #endif
 
 #if defined(WIN32)
+#include <windows.h>
 #include <shlobj.h>
 #else
 #include <errno.h>
@@ -215,6 +217,27 @@ static char* GetPath_XDG_CONFIG_HOME(void)
 	return path;
 }
 
+static char* GetPath_SYSTEM_CONFIG_HOME(void)
+{
+	char* path = NULL;
+#if defined(WIN32) && !defined(_UWP)
+
+	WCHAR* wpath = NULL;
+	if (FAILED(SHGetKnownFolderPath(&FOLDERID_ProgramData, 0, -1, &wpath)))
+		return NULL;
+
+	if (wpath)
+		path = ConvertWCharToUtf8Alloc(wpath, NULL);
+	CoTaskMemFree(wpath);
+
+#elif defined(__IOS__)
+	path = ios_get_data();
+#else
+	path = _strdup(WINPR_INSTALL_SYSCONFDIR);
+#endif
+	return path;
+}
+
 static char* GetPath_XDG_CACHE_HOME(void)
 {
 	char* path = NULL;
@@ -327,7 +350,7 @@ char* GetPath_XDG_RUNTIME_DIR(void)
 	return path;
 }
 
-char* GetKnownPath(int id)
+char* GetKnownPath(eKnownPathTypes id)
 {
 	char* path = NULL;
 
@@ -357,6 +380,10 @@ char* GetKnownPath(int id)
 			path = GetPath_XDG_RUNTIME_DIR();
 			break;
 
+		case KNOWN_PATH_SYSTEM_CONFIG_HOME:
+			path = GetPath_SYSTEM_CONFIG_HOME();
+			break;
+
 		default:
 			path = NULL;
 			break;
@@ -367,16 +394,13 @@ char* GetKnownPath(int id)
 	return path;
 }
 
-char* GetKnownSubPath(int id, const char* path)
+char* GetKnownSubPath(eKnownPathTypes id, const char* path)
 {
-	char* subPath = NULL;
-	char* knownPath = NULL;
-	knownPath = GetKnownPath(id);
-
+	char* knownPath = GetKnownPath(id);
 	if (!knownPath)
 		return NULL;
 
-	subPath = GetCombinedPath(knownPath, path);
+	char* subPath = GetCombinedPath(knownPath, path);
 	free(knownPath);
 	return subPath;
 }
