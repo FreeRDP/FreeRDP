@@ -18,6 +18,7 @@
  */
 
 #include <winpr/config.h>
+#include <winpr/path.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -35,11 +36,6 @@
 #include <unistd.h>
 #endif
 
-#ifdef _WIN32
-#define WINPR_SAM_FILE "C:\\SAM"
-#else
-#define WINPR_SAM_FILE "/etc/winpr/SAM"
-#endif
 #define TAG WINPR_TAG("utils")
 
 struct winpr_sam
@@ -95,9 +91,13 @@ WINPR_SAM* SamOpen(const char* filename, BOOL readOnly)
 {
 	FILE* fp = NULL;
 	WINPR_SAM* sam = NULL;
+	char* allocatedFileName = NULL;
 
 	if (!filename)
-		filename = WINPR_SAM_FILE;
+	{
+		allocatedFileName = winpr_GetConfigFilePath(TRUE, "SAM");
+		filename = allocatedFileName;
+	}
 
 	if (readOnly)
 		fp = winpr_fopen(filename, "r");
@@ -108,6 +108,7 @@ WINPR_SAM* SamOpen(const char* filename, BOOL readOnly)
 		if (!fp)
 			fp = winpr_fopen(filename, "w+");
 	}
+	free(allocatedFileName);
 
 	if (fp)
 	{
