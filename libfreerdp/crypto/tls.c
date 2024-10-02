@@ -31,12 +31,14 @@
 #include <winpr/string.h>
 #include <winpr/sspi.h>
 #include <winpr/ssl.h>
+#include <winpr/json.h>
 
 #include <winpr/stream.h>
 #include <freerdp/utils/ringbuffer.h>
 
 #include <freerdp/crypto/certificate.h>
 #include <freerdp/crypto/certificate_data.h>
+#include <freerdp/utils/helpers.h>
 
 #include <freerdp/log.h>
 #include "../crypto/tls.h"
@@ -1470,6 +1472,182 @@ static BOOL tls_extract_full_pem(const rdpCertificate* cert, BYTE** PublicKey,
 	return *PublicKey != NULL;
 }
 
+static int tls_config_parse_bool(WINPR_JSON* json, const char* opt)
+{
+	WINPR_JSON* val = WINPR_JSON_GetObjectItem(json, opt);
+	if (!val || !WINPR_JSON_IsBool(val))
+		return -1;
+
+	if (WINPR_JSON_IsTrue(val))
+		return 1;
+	return 0;
+}
+
+static char* tls_config_read(const char* configfile)
+{
+	char* data = NULL;
+	FILE* fp = winpr_fopen(configfile, "r");
+	if (!fp)
+		return NULL;
+
+	const int rc = fseek(fp, 0, SEEK_END);
+	if (rc != 0)
+		goto fail;
+
+	const INT64 size = _ftelli64(fp);
+	if (size <= 0)
+		goto fail;
+
+	const int rc2 = fseek(fp, 0, SEEK_SET);
+	if (rc2 != 0)
+		goto fail;
+
+	data = calloc((size_t)size + 1, sizeof(char));
+	if (!data)
+		goto fail;
+
+	const size_t read = fread(data, 1, (size_t)size, fp);
+	if (read != (size_t)size)
+	{
+		free(data);
+		data = NULL;
+		goto fail;
+	}
+
+fail:
+	fclose(fp);
+	return data;
+}
+
+static int tls_config_check_allowed_hashed(const char* configfile, const rdpCertificate* cert,
+                                           WINPR_JSON* json)
+{
+	WINPR_ASSERT(configfile);
+	WINPR_ASSERT(cert);
+	WINPR_ASSERT(json);
+
+	WINPR_JSON* db = WINPR_JSON_GetObjectItem(json, "certificate-db");
+	if (!db || !WINPR_JSON_IsArray(db))
+		return 0;
+
+	for (size_t x = 0; x < WINPR_JSON_GetArraySize(db); x++)
+	{
+		WINPR_JSON* cur = WINPR_JSON_GetArrayItem(db, x);
+		if (!cur || !WINPR_JSON_IsObject(cur))
+		{
+			WLog_WARN(TAG,
+			          "[%s] invalid certificate-db entry at position %" PRIuz ": not a JSON object",
+			          configfile, x);
+			continue;
+		}
+
+		WINPR_JSON* key = WINPR_JSON_GetObjectItem(cur, "type");
+		if (!key || !WINPR_JSON_IsString(key))
+		{
+			WLog_WARN(TAG,
+			          "[%s] invalid certificate-db entry at position %" PRIuz
+			          ": invalid 'type' element, expected type string",
+			          configfile, x);
+			continue;
+		}
+		WINPR_JSON* val = WINPR_JSON_GetObjectItem(cur, "hash");
+		if (!val || !WINPR_JSON_IsString(val))
+		{
+			WLog_WARN(TAG,
+			          "[%s] invalid certificate-db entry at position %" PRIuz
+			          ": invalid 'hash' element, expected type string",
+			          configfile, x);
+			continue;
+		}
+
+		const char* skey = WINPR_JSON_GetStringValue(key);
+		const char* sval = WINPR_JSON_GetStringValue(val);
+
+		char* hash = freerdp_certificate_get_fingerprint_by_hash_ex(cert, skey, FALSE);
+		if (!hash)
+		{
+			WLog_WARN(TAG,
+			          "[%s] invalid certificate-db entry at position %" PRIuz
+			          ": hash type '%s' not supported by certificate",
+			          configfile, x, skey);
+			continue;
+		}
+
+		const int cmp = _stricmp(hash, sval);
+		free(hash);
+
+		if (cmp == 0)
+			return 1;
+	}
+
+	return 0;
+}
+
+static int tls_config_check_certificate(const rdpCertificate* cert, BOOL* pAllowUserconfig)
+{
+	WINPR_ASSERT(cert);
+	WINPR_ASSERT(pAllowUserconfig);
+
+	int rc = 0;
+	char* configfile = freerdp_GetConfigFilePath(TRUE, "certificates.json");
+	WINPR_JSON* json = NULL;
+
+	if (!configfile)
+	{
+		WLog_DBG(TAG, "No configuration file for certificate handling, asking user");
+		goto fail;
+	}
+
+	char* configdata = tls_config_read(configfile);
+	if (!configdata)
+	{
+		WLog_DBG(TAG, "Configuration file for certificate handling, asking user");
+		goto fail;
+	}
+	json = WINPR_JSON_Parse(configdata);
+	if (!json)
+	{
+		WLog_DBG(TAG, "No valid configuration file '%s' for certificate handling, asking user",
+		         configfile);
+		goto fail;
+	}
+
+	if (tls_config_parse_bool(json, "deny") > 0)
+	{
+		WLog_WARN(TAG, "[%s] certificate denied by configuration", configfile);
+		rc = -1;
+		goto fail;
+	}
+
+	if (tls_config_parse_bool(json, "ignore") > 0)
+	{
+		WLog_WARN(TAG, "[%s] certificate ignored by configuration", configfile);
+		rc = 1;
+		goto fail;
+	}
+
+	if (tls_config_check_allowed_hashed(configfile, cert, json) > 0)
+	{
+		WLog_WARN(TAG, "[%s] certificate manually accepted by configuration", configfile);
+		rc = 1;
+		goto fail;
+	}
+
+	if (tls_config_parse_bool(json, "deny-userconfig") > 0)
+	{
+		WLog_WARN(TAG, "[%s] configuration denies user to accept certificates", configfile);
+		rc = -1;
+		goto fail;
+	}
+
+fail:
+
+	*pAllowUserconfig = (rc == 0);
+	WINPR_JSON_Delete(json);
+	free(configfile);
+	return rc;
+}
+
 int tls_verify_certificate(rdpTls* tls, const rdpCertificate* cert, const char* hostname,
                            UINT16 port)
 {
@@ -1592,9 +1770,13 @@ int tls_verify_certificate(rdpTls* tls, const rdpCertificate* cert, const char* 
 		if (!hostname_match)
 			flags |= VERIFY_CERT_FLAG_MISMATCH;
 
+		BOOL allowUserconfig = TRUE;
+		if (!certificate_status || !hostname_match)
+			verification_status = tls_config_check_certificate(cert, &allowUserconfig);
+
 		/* verification could not succeed with OpenSSL, use known_hosts file and prompt user for
 		 * manual verification */
-		if (!certificate_status || !hostname_match)
+		if (allowUserconfig && (!certificate_status || !hostname_match))
 		{
 			DWORD accept_certificate = 0;
 			size_t pem_length = 0;
