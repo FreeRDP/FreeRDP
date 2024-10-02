@@ -39,6 +39,9 @@ pstatus_t generic_image_copy_no_overlap_memcpy(
     UINT32 flags);
 
 void primitives_init_copy_sse41(primitives_t* prims);
+
+#if defined(WITH_AVX2)
 void primitives_init_copy_avx2(primitives_t* prims);
+#endif
 
 #endif
