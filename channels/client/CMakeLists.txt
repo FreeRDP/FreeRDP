@@ -143,7 +143,7 @@ foreach(STATIC_MODULE ${CHANNEL_STATIC_CLIENT_MODULES})
 endforeach()
 string(APPEND CLIENT_STATIC_ADDIN_TABLE "\n\t{ NULL, NULL, { .cse = NULL }, NULL }\n};")
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/tables.c.in ${CMAKE_CURRENT_BINARY_DIR}/tables.c)
+cleaning_configure_file(${CMAKE_CURRENT_SOURCE_DIR}/tables.c.in ${CMAKE_CURRENT_BINARY_DIR}/tables.c)
 
 set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp winpr)
 

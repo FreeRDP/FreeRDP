@@ -66,12 +66,13 @@ static int shadow_server_print_command_line_help(int argc, char** argv,
 	if ((argc < 1) || !largs || !argv)
 		return -1;
 
+	char* path = winpr_GetConfigFilePath(TRUE, "SAM");
 	printf("Usage: %s [options]\n", argv[0]);
 	printf("\n");
 	printf("Notes: By default NLA security is active.\n");
 	printf("\tIn this mode a SAM database is required.\n");
 	printf("\tProvide one with /sam-file:<file with path>\n");
-	printf("\telse the default path /etc/winpr/SAM is used.\n");
+	printf("\telse the default path %s is used.\n", path);
 	printf("\tIf there is no existing SAM file authentication for all users will fail.\n");
 	printf(
 	    "\n\tIf authentication against PAM is desired, start with -sec-nla (requires compiled in "
@@ -81,6 +82,8 @@ static int shadow_server_print_command_line_help(int argc, char** argv,
 	printf("    /option:<value> (specifies option with value)\n");
 	printf("    +toggle -toggle (enables or disables toggle, where '/' is a synonym of '+')\n");
 	printf("\n");
+	free(path);
+
 	arg = largs;
 
 	do

@@ -5,6 +5,7 @@ PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
 	<!ENTITY syntax SYSTEM "freerdp-argument.1.xml">
 	<!ENTITY config SYSTEM "sdl-freerdp-config.1.xml">
 	<!ENTITY envvar SYSTEM "sdl-freerdp-envvar.1.xml">
+	<!ENTITY configuration SYSTEM "freerdp-global-config.1.xml">
 	<!ENTITY examples SYSTEM "sdl-freerdp-examples.1.xml">
 	]
 >
@@ -52,6 +53,8 @@ PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
 	&config;
 		
 	&envvar;
+
+	&configuration;
 
 	&examples;
 

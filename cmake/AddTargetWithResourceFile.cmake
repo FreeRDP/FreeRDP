@@ -1,5 +1,7 @@
 set(add_resource_macro_internal_dir ${CMAKE_CURRENT_LIST_DIR} CACHE INTERNAL "")
 
+include(CleaningConfigureFile)
+
 macro(AddTargetWithResourceFile nameAndTarget is_exe version sources)
     list(LENGTH ${nameAndTarget} target_length)
     if (target_length GREATER 1)
@@ -53,7 +55,7 @@ macro(AddTargetWithResourceFile nameAndTarget is_exe version sources)
           endif()
       endif()
 
-      configure_file(
+      cleaning_configure_file(
           ${add_resource_macro_internal_dir}/WindowsDLLVersion.rc.in
           ${CMAKE_CURRENT_BINARY_DIR}/version.rc
           @ONLY

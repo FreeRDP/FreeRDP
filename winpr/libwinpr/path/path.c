@@ -18,6 +18,7 @@
  */
 
 #include <winpr/config.h>
+#include <winpr/build-config.h>
 
 #include <winpr/crt.h>
 #include <winpr/tchar.h>
@@ -1087,6 +1088,8 @@ const char* GetKnownPathIdString(int id)
 			return "KNOWN_PATH_XDG_CACHE_HOME";
 		case KNOWN_PATH_XDG_RUNTIME_DIR:
 			return "KNOWN_PATH_XDG_RUNTIME_DIR";
+		case KNOWN_PATH_SYSTEM_CONFIG_HOME:
+			return "KNOWN_PATH_SYSTEM_CONFIG_HOME";
 		default:
 			return "KNOWN_PATH_UNKNOWN_ID";
 	}
@@ -1177,4 +1180,29 @@ fail:
 	FindClose(dir);
 	free(path_slash);
 	return ret;
+}
+
+char* winpr_GetConfigFilePath(BOOL system, const char* filename)
+{
+	eKnownPathTypes id = system ? KNOWN_PATH_SYSTEM_CONFIG_HOME : KNOWN_PATH_XDG_CONFIG_HOME;
+
+#if defined(WINPR_USE_VENDOR_PRODUCT_CONFIG_DIR)
+	char* vendor = GetKnownSubPath(id, WINPR_VENDOR_STRING);
+	if (!vendor)
+		return NULL;
+	char* base = GetCombinedPath(vendor, WINPR_PRODUCT_STRING);
+	free(vendor);
+#else
+	char* base = GetKnownSubPath(id, "winpr");
+#endif
+
+	if (!base)
+		return NULL;
+	if (!filename)
+		return base;
+
+	char* path = GetCombinedPath(base, filename);
+	free(base);
+
+	return path;
 }

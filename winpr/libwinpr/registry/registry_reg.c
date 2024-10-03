@@ -18,6 +18,7 @@
  */
 
 #include <winpr/config.h>
+#include <winpr/path.h>
 
 #include <errno.h>
 #include <stdio.h>
@@ -34,8 +35,6 @@
 
 #include "../log.h"
 #define TAG WINPR_TAG("registry")
-
-#define WINPR_HKLM_HIVE "/etc/winpr/HKLM.reg"
 
 struct reg_data_type
 {
@@ -497,7 +496,9 @@ Reg* reg_open(BOOL read_only)
 		return NULL;
 
 	reg->read_only = read_only;
-	reg->filename = WINPR_HKLM_HIVE;
+	reg->filename = winpr_GetConfigFilePath(TRUE, "HKLM.reg");
+	if (!reg->filename)
+		goto fail;
 
 	if (reg->read_only)
 		reg->fp = winpr_fopen(reg->filename, "r");
@@ -535,6 +536,7 @@ void reg_close(Reg* reg)
 		reg_unload(reg);
 		if (reg->fp)
 			(void)fclose(reg->fp);
+		free(reg->filename);
 		free(reg);
 	}
 }

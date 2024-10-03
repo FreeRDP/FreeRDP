@@ -30,6 +30,8 @@
 # (See accompanying file LICENSE_1_0.txt or copy at
 # http://www.boost.org/LICENSE_1_0.txt)
 
+include(CleaningConfigureFile)
+
 if(__get_git_revision_description)
 	return()
 endif()
@@ -63,9 +65,9 @@ function(get_git_head_revision _refspecvar _hashvar)
 		return()
 	endif()
 	set(HEAD_FILE "${GIT_DATA}/HEAD")
-	configure_file("${GIT_DIR}/HEAD" "${HEAD_FILE}" COPYONLY)
+	cleaning_configure_file("${GIT_DIR}/HEAD" "${HEAD_FILE}" COPYONLY)
 
-	configure_file("${_gitdescmoddir}/GetGitRevisionDescription.cmake.in"
+	cleaning_configure_file("${_gitdescmoddir}/GetGitRevisionDescription.cmake.in"
 		"${GIT_DATA}/grabRef.cmake"
 		@ONLY)
 	include("${GIT_DATA}/grabRef.cmake")
