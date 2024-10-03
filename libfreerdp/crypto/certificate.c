@@ -46,6 +46,7 @@
 #include <openssl/core_names.h>
 #include <openssl/param_build.h>
 #include <openssl/evp.h>
+#include <openssl/x509.h>
 #endif
 
 #include "certificate.h"
@@ -1180,15 +1181,7 @@ void certificate_free_int(rdpCertificate* cert)
 	if (cert->x509)
 		X509_free(cert->x509);
 	if (cert->chain)
-	{
-		const int count = sk_X509_num(cert->chain);
-		for (int x = 0; x < count; x++)
-		{
-			X509* cur = sk_X509_value(cert->chain, x);
-			X509_free(cur);
-		}
-		sk_X509_free(cert->chain);
-	}
+		sk_X509_pop_free(cert->chain, X509_free);
 
 	certificate_free_x509_certificate_chain(&cert->x509_cert_chain);
 	cert_info_free(&cert->cert_info);
@@ -1296,9 +1289,8 @@ rdpCertificate* freerdp_certificate_new_from_x509(const X509* xcert, const STACK
 		goto fail;
 
 	if (chain)
-	{
-		cert->chain = sk_X509_deep_copy(chain, X509_dup, X509_free);
-	}
+		cert->chain = X509_chain_up_ref(chain);
+
 	return cert;
 fail:
 	freerdp_certificate_free(cert);
