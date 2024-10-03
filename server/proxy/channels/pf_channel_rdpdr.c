@@ -457,7 +457,7 @@ static UINT rdpdr_process_client_name_request(pf_channel_server_context* rdpdr, 
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(s, unicodeFlag);
-	rdpdr->common.computerNameUnicode = (unicodeFlag & 1);
+	rdpdr->common.computerNameUnicode = ((unicodeFlag & 1) != 0) ? TRUE : FALSE;
 
 	Stream_Read_UINT32(s, codePage);
 	WINPR_UNUSED(codePage); /* Field is ignored */

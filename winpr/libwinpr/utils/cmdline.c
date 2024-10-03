@@ -59,13 +59,11 @@ int CommandLineParseArgumentsA(int argc, LPSTR* argv, COMMAND_LINE_ARGUMENT_A* o
 {
 	int status = 0;
 	int count = 0;
-	size_t length = 0;
 	BOOL notescaped = FALSE;
 	const char* sigil = NULL;
 	size_t sigil_length = 0;
 	char* keyword = NULL;
-	size_t keyword_length = 0;
-	SSIZE_T keyword_index = 0;
+	size_t keyword_index = 0;
 	char* separator = NULL;
 	char* value = NULL;
 	int toggle = 0;
@@ -85,6 +83,7 @@ int CommandLineParseArgumentsA(int argc, LPSTR* argv, COMMAND_LINE_ARGUMENT_A* o
 
 	for (int i = 1; i < argc; i++)
 	{
+		size_t keyword_length = 0;
 		BOOL found = FALSE;
 		BOOL escaped = TRUE;
 
@@ -108,7 +107,7 @@ int CommandLineParseArgumentsA(int argc, LPSTR* argv, COMMAND_LINE_ARGUMENT_A* o
 		}
 
 		sigil = argv[i];
-		length = strlen(argv[i]);
+		size_t length = strlen(argv[i]);
 
 		if ((sigil[0] == '/') && (flags & COMMAND_LINE_SIGIL_SLASH))
 		{
@@ -202,14 +201,20 @@ int CommandLineParseArgumentsA(int argc, LPSTR* argv, COMMAND_LINE_ARGUMENT_A* o
 			}
 			else
 			{
-				keyword_length = (length - keyword_index);
+				if (length < keyword_index)
+				{
+					log_error(flags, "Failed at index %d [%s]: Argument required", i, argv[i]);
+					return COMMAND_LINE_ERROR;
+				}
+
+				keyword_length = length - keyword_index;
 				value = NULL;
 			}
 
 			if (!escaped)
 				continue;
 
-			for (int j = 0; options[j].Name != NULL; j++)
+			for (size_t j = 0; options[j].Name != NULL; j++)
 			{
 				COMMAND_LINE_ARGUMENT_A* cur = &options[j];
 				BOOL match = FALSE;

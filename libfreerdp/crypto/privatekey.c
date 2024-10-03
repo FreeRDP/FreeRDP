@@ -125,7 +125,11 @@ static EVP_PKEY* evp_pkey_utils_from_pem(const char* data, size_t len, BOOL from
 	if (fromFile)
 		bio = BIO_new_file(data, "rb");
 	else
-		bio = BIO_new_mem_buf(data, len);
+	{
+		if (len > INT_MAX)
+			return NULL;
+		bio = BIO_new_mem_buf(data, (int)len);
+	}
 
 	if (!bio)
 	{
@@ -426,7 +430,10 @@ BOOL freerdp_key_generate(rdpPrivateKey* key, size_t key_length)
 	if (EVP_PKEY_keygen_init(pctx) != 1)
 		goto fail;
 
-	if (EVP_PKEY_CTX_set_rsa_keygen_bits(pctx, key_length) != 1)
+	if (key_length > INT_MAX)
+		goto fail;
+
+	if (EVP_PKEY_CTX_set_rsa_keygen_bits(pctx, (int)key_length) != 1)
 		goto fail;
 
 	EVP_PKEY_free(key->evp);

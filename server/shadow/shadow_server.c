@@ -804,7 +804,8 @@ static BOOL shadow_server_create_certificate(rdpShadowServer* server, const char
 	if (!makecert)
 		goto out_fail;
 
-	if (makecert_context_process(makecert, makecert_argc, makecert_argv) < 0)
+	WINPR_ASSERT(makecert_argc <= INT_MAX);
+	if (makecert_context_process(makecert, (int)makecert_argc, makecert_argv) < 0)
 		goto out_fail;
 
 	if (makecert_context_set_output_file_name(makecert, "shadow") != 1)

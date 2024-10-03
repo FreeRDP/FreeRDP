@@ -101,6 +101,7 @@
 #include "xf_graphics.h"
 #include "xf_keyboard.h"
 #include "xf_channels.h"
+#include "xf_client.h"
 #include "xfreerdp.h"
 #include "xf_utils.h"
 
@@ -1689,7 +1690,7 @@ end:
 	return exit_code;
 }
 
-DWORD xf_exit_code_from_disconnect_reason(DWORD reason)
+int xf_exit_code_from_disconnect_reason(DWORD reason)
 {
 	if (reason == 0 ||
 	    (reason >= XF_EXIT_PARSE_ARGUMENTS && reason <= XF_EXIT_CONNECT_NO_OR_MISSING_CREDENTIALS))

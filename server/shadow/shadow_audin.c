@@ -73,7 +73,10 @@ BOOL shadow_client_audin_init(rdpShadowClient* client)
 
 	if (client->subsystem->audinFormats)
 	{
-		if (!audin_server_set_formats(client->audin, client->subsystem->nAudinFormats,
+		if (client->subsystem->nAudinFormats > SSIZE_MAX)
+			goto fail;
+
+		if (!audin_server_set_formats(client->audin, (SSIZE_T)client->subsystem->nAudinFormats,
 		                              client->subsystem->audinFormats))
 			goto fail;
 	}

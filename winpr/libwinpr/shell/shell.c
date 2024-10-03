@@ -45,14 +45,9 @@
 
 BOOL GetUserProfileDirectoryA(HANDLE hToken, LPSTR lpProfileDir, LPDWORD lpcchSize)
 {
-	char* buf = NULL;
-	int buflen = 0;
-	int status = 0;
-	DWORD cchDirSize = 0;
-	struct passwd pwd;
+	struct passwd pwd = { 0 };
 	struct passwd* pw = NULL;
-	WINPR_ACCESS_TOKEN* token = NULL;
-	token = (WINPR_ACCESS_TOKEN*)hToken;
+	WINPR_ACCESS_TOKEN* token = (WINPR_ACCESS_TOKEN*)hToken;
 
 	if (!AccessTokenIsValid(hToken))
 		return FALSE;
@@ -63,17 +58,17 @@ BOOL GetUserProfileDirectoryA(HANDLE hToken, LPSTR lpProfileDir, LPDWORD lpcchSi
 		return FALSE;
 	}
 
-	buflen = sysconf(_SC_GETPW_R_SIZE_MAX);
+	long buflen = sysconf(_SC_GETPW_R_SIZE_MAX);
 
 	if (buflen == -1)
 		buflen = 8196;
 
-	buf = (char*)malloc(buflen);
+	char* buf = (char*)malloc(buflen);
 
 	if (!buf)
 		return FALSE;
 
-	status = getpwnam_r(token->Username, &pwd, buf, buflen, &pw);
+	const int status = getpwnam_r(token->Username, &pwd, buf, buflen, &pw);
 
 	if ((status != 0) || !pw)
 	{
@@ -82,7 +77,7 @@ BOOL GetUserProfileDirectoryA(HANDLE hToken, LPSTR lpProfileDir, LPDWORD lpcchSi
 		return FALSE;
 	}
 
-	cchDirSize = strlen(pw->pw_dir) + 1;
+	const size_t cchDirSize = strlen(pw->pw_dir) + 1;
 
 	if (!lpProfileDir || (*lpcchSize < cchDirSize))
 	{

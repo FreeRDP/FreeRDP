@@ -93,7 +93,7 @@ BOOL rdpei_read_2byte_signed(wStream* s, INT16* value)
 
 	negative = (byte & 0x40) ? TRUE : FALSE;
 
-	*value = (byte & 0x3F);
+	const BYTE val = (byte & 0x3F);
 
 	if (byte & 0x80)
 	{
@@ -101,8 +101,10 @@ BOOL rdpei_read_2byte_signed(wStream* s, INT16* value)
 			return FALSE;
 
 		Stream_Read_UINT8(s, byte);
-		*value = ((*value & 0xFF) << 8) | byte;
+		*value = (INT16)((val << 8) | byte);
 	}
+	else
+		*value = val;
 
 	if (negative)
 		*value *= -1;

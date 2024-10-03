@@ -29,24 +29,21 @@
 
 static void crypto_print_name(const BYTE* b, DWORD sz)
 {
-	X509_NAME* name = NULL;
-	X509* x509 = NULL;
-	BIO* bio = NULL;
-	char* ret = NULL;
-
-	bio = BIO_new_mem_buf(b, sz);
+	if (sz > INT32_MAX)
+		return;
+	BIO* bio = BIO_new_mem_buf(b, (int)sz);
 	if (!bio)
 		return;
 
-	x509 = d2i_X509_bio(bio, NULL);
+	X509* x509 = d2i_X509_bio(bio, NULL);
 	if (!x509)
 		goto bio_release;
 
-	name = X509_get_subject_name(x509);
+	X509_NAME* name = X509_get_subject_name(x509);
 	if (!name)
 		goto x509_release;
 
-	ret = calloc(1024, sizeof(char));
+	char* ret = calloc(1024, sizeof(char));
 	if (!ret)
 		goto bio_release;
 

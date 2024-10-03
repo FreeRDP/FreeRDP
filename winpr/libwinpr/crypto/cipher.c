@@ -629,7 +629,9 @@ int winpr_Cipher_BytesToKey(int cipher, WINPR_MD_TYPE md, const void* salt, cons
 	const EVP_CIPHER* evp_cipher = NULL;
 	evp_md = winpr_openssl_get_evp_md(md);
 	evp_cipher = winpr_openssl_get_evp_cipher(cipher);
-	return EVP_BytesToKey(evp_cipher, evp_md, salt, data, datal, count, key, iv);
+	WINPR_ASSERT(datal <= INT_MAX);
+	WINPR_ASSERT(count <= INT_MAX);
+	return EVP_BytesToKey(evp_cipher, evp_md, salt, data, (int)datal, (int)count, key, iv);
 #elif defined(WITH_MBEDTLS)
 	int rv = 0;
 	BYTE md_buf[64];

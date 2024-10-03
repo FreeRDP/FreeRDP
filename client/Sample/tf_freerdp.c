@@ -382,16 +382,16 @@ static int RdpClientEntry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints)
 int main(int argc, char* argv[])
 {
 	int rc = -1;
-	DWORD status = 0;
-	RDP_CLIENT_ENTRY_POINTS clientEntryPoints;
-	rdpContext* context = NULL;
+	RDP_CLIENT_ENTRY_POINTS clientEntryPoints = { 0 };
+
 	RdpClientEntry(&clientEntryPoints);
-	context = freerdp_client_context_new(&clientEntryPoints);
+	rdpContext* context = freerdp_client_context_new(&clientEntryPoints);
 
 	if (!context)
 		goto fail;
 
-	status = freerdp_client_settings_parse_command_line(context->settings, argc, argv, FALSE);
+	const int status =
+	    freerdp_client_settings_parse_command_line(context->settings, argc, argv, FALSE);
 	if (status)
 	{
 		rc = freerdp_client_settings_command_line_status_print(context->settings, status, argc,
@@ -405,7 +405,8 @@ int main(int argc, char* argv[])
 	if (freerdp_client_start(context) != 0)
 		goto fail;
 
-	rc = tf_client_thread_proc(context->instance);
+	const DWORD res = tf_client_thread_proc(context->instance);
+	rc = (int)res;
 
 	if (freerdp_client_stop(context) != 0)
 		rc = -1;

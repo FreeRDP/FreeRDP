@@ -242,16 +242,14 @@ static int bio_rdp_tls_read(BIO* bio, char* buf, int size)
 
 static int bio_rdp_tls_puts(BIO* bio, const char* str)
 {
-	size_t size = 0;
-	int status = 0;
-
 	if (!str)
 		return 0;
 
-	size = strlen(str);
+	const size_t size = strnlen(str, INT_MAX + 1UL);
+	if (size > INT_MAX)
+		return -1;
 	ERR_clear_error();
-	status = BIO_write(bio, str, size);
-	return status;
+	return BIO_write(bio, str, (int)size);
 }
 
 static int bio_rdp_tls_gets(BIO* bio, char* str, int size)
@@ -264,7 +262,7 @@ static long bio_rdp_tls_ctrl(BIO* bio, int cmd, long num, void* ptr)
 	BIO* ssl_rbio = NULL;
 	BIO* ssl_wbio = NULL;
 	BIO* next_bio = NULL;
-	int status = -1;
+	long status = -1;
 	BIO_RDP_TLS* tls = (BIO_RDP_TLS*)BIO_get_data(bio);
 
 	if (!tls)
@@ -1089,7 +1087,7 @@ TlsHandshakeResult freerdp_tls_accept_ex(rdpTls* tls, BIO* underlying, rdpSettin
 {
 	WINPR_ASSERT(tls);
 
-	long options = 0;
+	int options = 0;
 	int status = 0;
 
 	/**
@@ -1241,33 +1239,34 @@ BOOL freerdp_tls_send_alert(rdpTls* tls)
 int freerdp_tls_write_all(rdpTls* tls, const BYTE* data, int length)
 {
 	WINPR_ASSERT(tls);
-	int status = 0;
 	int offset = 0;
 	BIO* bio = tls->bio;
 
 	while (offset < length)
 	{
 		ERR_clear_error();
-		status = BIO_write(bio, &data[offset], length - offset);
+		const int rc = BIO_write(bio, &data[offset], length - offset);
 
-		if (status > 0)
-		{
-			offset += status;
-		}
+		if (rc < 0)
+			return rc;
+
+		if (rc > 0)
+			offset += rc;
 		else
 		{
 			if (!BIO_should_retry(bio))
 				return -1;
 
 			if (BIO_write_blocked(bio))
-				status = BIO_wait_write(bio, 100);
+			{
+				const long status = BIO_wait_write(bio, 100);
+				if (status < 0)
+					return -1;
+			}
 			else if (BIO_read_blocked(bio))
 				return -2; /* Abort write, there is data that must be read */
 			else
 				USleep(100);
-
-			if (status < 0)
-				return -1;
 		}
 	}
 

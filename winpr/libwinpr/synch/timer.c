@@ -515,8 +515,8 @@ BOOL SetWaitableTimer(HANDLE hTimer, const LARGE_INTEGER* lpDueTime, LONG lPerio
 
 	if (lPeriod > 0)
 	{
-		timer->timeout.it_interval.tv_sec = (lPeriod / 1000ULL);                 /* seconds */
-		timer->timeout.it_interval.tv_nsec = (1000000ULL * (lPeriod % 1000ULL)); /* nanoseconds */
+		timer->timeout.it_interval.tv_sec = (lPeriod / 1000LL);                /* seconds */
+		timer->timeout.it_interval.tv_nsec = (1000000LL * (lPeriod % 1000LL)); /* nanoseconds */
 	}
 
 	if (lpDueTime->QuadPart != 0)

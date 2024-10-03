@@ -94,12 +94,12 @@ static SSIZE_T crypto_rsa_common(const BYTE* input, size_t length, UINT32 key_le
 	if (!(y = BN_new()))
 		goto fail;
 
-	if (!BN_bin2bn(modulus_reverse, key_length, mod))
+	if (!BN_bin2bn(modulus_reverse, (int)key_length, mod))
 		goto fail;
 
-	if (!BN_bin2bn(exponent_reverse, exponent_size, exp))
+	if (!BN_bin2bn(exponent_reverse, (int)exponent_size, exp))
 		goto fail;
-	if (!BN_bin2bn(input_reverse, length, x))
+	if (!BN_bin2bn(input_reverse, (int)length, x))
 		goto fail;
 	if (BN_mod_exp(y, x, exp, mod, ctx) != 1)
 		goto fail;

@@ -406,6 +406,6 @@ void xf_draw_screen_(xfContext* xfc, int x, int y, int w, int h, const char* fkt
 
 BOOL xf_keyboard_update_modifier_map(xfContext* xfc);
 
-DWORD xf_exit_code_from_disconnect_reason(DWORD reason);
+int xf_exit_code_from_disconnect_reason(DWORD reason);
 
 #endif /* FREERDP_CLIENT_X11_FREERDP_H */

@@ -614,120 +614,6 @@ out_free_issuer:
 	free(subject);
 }
 
-static BYTE* x509_utils_get_pem(const X509* xcert, const STACK_OF(X509) * chain, size_t* plength)
-{
-	BIO* bio = NULL;
-	int status = 0;
-	int count = 0;
-	size_t offset = 0;
-	size_t length = 0;
-	BOOL rc = FALSE;
-	BYTE* pemCert = NULL;
-
-	if (!xcert || !plength)
-		return NULL;
-
-	/**
-	 * Don't manage certificates internally, leave it up entirely to the external client
-	 * implementation
-	 */
-	bio = BIO_new(BIO_s_mem());
-
-	if (!bio)
-	{
-		WLog_ERR(TAG, "BIO_new() failure");
-		return NULL;
-	}
-
-	X509* wcert = WINPR_CAST_CONST_PTR_AWAY(xcert, X509*);
-	status = PEM_write_bio_X509(bio, wcert);
-
-	if (status < 0)
-	{
-		WLog_ERR(TAG, "PEM_write_bio_X509 failure: %d", status);
-		goto fail;
-	}
-
-	if (chain)
-	{
-		count = sk_X509_num(chain);
-		for (int x = 0; x < count; x++)
-		{
-			X509* c = sk_X509_value(chain, x);
-			status = PEM_write_bio_X509(bio, c);
-			if (status < 0)
-			{
-				WLog_ERR(TAG, "PEM_write_bio_X509 failure: %d", status);
-				goto fail;
-			}
-		}
-	}
-
-	offset = 0;
-	length = 2048;
-	pemCert = (BYTE*)malloc(length + 1);
-
-	if (!pemCert)
-	{
-		WLog_ERR(TAG, "error allocating pemCert");
-		goto fail;
-	}
-
-	ERR_clear_error();
-	status = BIO_read(bio, pemCert, length);
-
-	if (status < 0)
-	{
-		WLog_ERR(TAG, "failed to read certificate");
-		goto fail;
-	}
-
-	offset += (size_t)status;
-
-	while (offset >= length)
-	{
-		int new_len = 0;
-		BYTE* new_cert = NULL;
-		new_len = length * 2;
-		new_cert = (BYTE*)realloc(pemCert, new_len + 1);
-
-		if (!new_cert)
-			goto fail;
-
-		length = new_len;
-		pemCert = new_cert;
-		ERR_clear_error();
-		status = BIO_read(bio, &pemCert[offset], length - offset);
-
-		if (status < 0)
-			break;
-
-		offset += status;
-	}
-
-	if (status < 0)
-	{
-		WLog_ERR(TAG, "failed to read certificate");
-		goto fail;
-	}
-
-	length = offset;
-	pemCert[length] = '\0';
-	*plength = length;
-	rc = TRUE;
-fail:
-
-	if (!rc)
-	{
-		WLog_ERR(TAG, "Failed to extract PEM from certificate %p", xcert);
-		free(pemCert);
-		pemCert = NULL;
-	}
-
-	BIO_free_all(bio);
-	return pemCert;
-}
-
 X509* x509_utils_from_pem(const char* data, size_t len, BOOL fromFile)
 {
 	X509* x509 = NULL;
@@ -735,7 +621,12 @@ X509* x509_utils_from_pem(const char* data, size_t len, BOOL fromFile)
 	if (fromFile)
 		bio = BIO_new_file(data, "rb");
 	else
-		bio = BIO_new_mem_buf(data, len);
+	{
+		if (len > INT_MAX)
+			return NULL;
+
+		bio = BIO_new_mem_buf(data, (int)len);
+	}
 
 	if (!bio)
 	{

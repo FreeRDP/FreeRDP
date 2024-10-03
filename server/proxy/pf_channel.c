@@ -94,8 +94,8 @@ PfChannelResult channelTracker_update(ChannelStateTracker* tracker, const BYTE* 
                                       UINT32 flags, size_t totalSize)
 {
 	PfChannelResult result = PF_CHANNEL_RESULT_ERROR;
-	BOOL firstPacket = (flags & CHANNEL_FLAG_FIRST);
-	BOOL lastPacket = (flags & CHANNEL_FLAG_LAST);
+	BOOL firstPacket = (flags & CHANNEL_FLAG_FIRST) != 0;
+	BOOL lastPacket = (flags & CHANNEL_FLAG_LAST) != 0;
 
 	WINPR_ASSERT(tracker);
 

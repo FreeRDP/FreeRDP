@@ -1207,47 +1207,66 @@ BOOL freerdp_settings_set_value_for_name(rdpSettings* settings, const char* name
 			    (_strnicmp(value, "FALSE", 6) == 0) || (_strnicmp(value, "OFF", 6) == 0);
 			if (!val && !nval)
 				return parsing_fail(name, "BOOL", value);
+
+			// NOLINTNEXTLINE(clang-analyzer-optin.core.EnumCastOutOfRange)
 			return freerdp_settings_set_bool(settings, (FreeRDP_Settings_Keys_Bool)index, val);
 		}
 		case RDP_SETTINGS_TYPE_UINT16:
 			if (!value_to_uint(value, &uval, 0, UINT16_MAX))
 				return parsing_fail(name, "UINT16", value);
-			if (!freerdp_settings_set_uint16(settings, (FreeRDP_Settings_Keys_UInt16)index, uval))
+
+			// NOLINTNEXTLINE(clang-analyzer-optin.core.EnumCastOutOfRange)
+			if (!freerdp_settings_set_uint16(settings, (FreeRDP_Settings_Keys_UInt16)index,
+			                                 (UINT16)uval))
 				return parsing_fail(name, "UINT16", value);
 			return TRUE;
 
 		case RDP_SETTINGS_TYPE_INT16:
 			if (!value_to_int(value, &ival, INT16_MIN, INT16_MAX))
 				return parsing_fail(name, "INT16", value);
-			if (!freerdp_settings_set_int16(settings, (FreeRDP_Settings_Keys_Int16)index, ival))
+
+			// NOLINTNEXTLINE(clang-analyzer-optin.core.EnumCastOutOfRange)
+			if (!freerdp_settings_set_int16(settings, (FreeRDP_Settings_Keys_Int16)index,
+			                                (INT16)ival))
 				return parsing_fail(name, "INT16", value);
 			return TRUE;
 		case RDP_SETTINGS_TYPE_UINT32:
 			if (!value_to_uint(value, &uval, 0, UINT32_MAX))
 				return parsing_fail(name, "UINT32", value);
-			if (!freerdp_settings_set_uint32(settings, (FreeRDP_Settings_Keys_UInt32)index, uval))
+
+			// NOLINTNEXTLINE(clang-analyzer-optin.core.EnumCastOutOfRange)
+			if (!freerdp_settings_set_uint32(settings, (FreeRDP_Settings_Keys_UInt32)index,
+			                                 (UINT32)uval))
 				return parsing_fail(name, "UINT32", value);
 			return TRUE;
 		case RDP_SETTINGS_TYPE_INT32:
 			if (!value_to_int(value, &ival, INT32_MIN, INT32_MAX))
 				return parsing_fail(name, "INT32", value);
-			if (!freerdp_settings_set_int32(settings, (FreeRDP_Settings_Keys_Int32)index, ival))
+
+			// NOLINTNEXTLINE(clang-analyzer-optin.core.EnumCastOutOfRange)
+			if (!freerdp_settings_set_int32(settings, (FreeRDP_Settings_Keys_Int32)index,
+			                                (INT32)ival))
 				return parsing_fail(name, "INT32", value);
 			return TRUE;
 		case RDP_SETTINGS_TYPE_UINT64:
 			if (!value_to_uint(value, &uval, 0, UINT64_MAX))
 				return parsing_fail(name, "UINT64", value);
+
+			// NOLINTNEXTLINE(clang-analyzer-optin.core.EnumCastOutOfRange)
 			if (!freerdp_settings_set_uint64(settings, (FreeRDP_Settings_Keys_UInt64)index, uval))
 				return parsing_fail(name, "UINT64", value);
 			return TRUE;
 		case RDP_SETTINGS_TYPE_INT64:
 			if (!value_to_int(value, &ival, INT64_MIN, INT64_MAX))
 				return parsing_fail(name, "INT64", value);
+
+			// NOLINTNEXTLINE(clang-analyzer-optin.core.EnumCastOutOfRange)
 			if (!freerdp_settings_set_int64(settings, (FreeRDP_Settings_Keys_Int64)index, ival))
 				return parsing_fail(name, "INT64", value);
 			return TRUE;
 
 		case RDP_SETTINGS_TYPE_STRING:
+			// NOLINTNEXTLINE(clang-analyzer-optin.core.EnumCastOutOfRange)
 			return freerdp_settings_set_string(settings, (FreeRDP_Settings_Keys_String)index,
 			                                   value);
 		case RDP_SETTINGS_TYPE_POINTER:

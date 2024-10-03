@@ -78,18 +78,6 @@ static int rdtk_image_copy_alpha_blend(uint8_t* pDstData, int nDstStep, int nXDs
 int rdtk_nine_patch_draw(rdtkSurface* surface, int nXDst, int nYDst, int nWidth, int nHeight,
                          rdtkNinePatch* ninePatch)
 {
-	int x = 0;
-	int y = 0;
-	int width = 0;
-	int height = 0;
-	int nXSrc = 0;
-	int nYSrc = 0;
-	int nSrcStep = 0;
-	int nDstStep = 0;
-	uint8_t* pSrcData = NULL;
-	uint8_t* pDstData = NULL;
-	int scaleWidth = 0;
-
 	WINPR_ASSERT(surface);
 	WINPR_ASSERT(ninePatch);
 
@@ -101,19 +89,20 @@ int rdtk_nine_patch_draw(rdtkSurface* surface, int nXDst, int nYDst, int nWidth,
 
 	WINPR_UNUSED(nHeight);
 
-	scaleWidth = nWidth - (ninePatch->width - ninePatch->scaleWidth);
-	nSrcStep = ninePatch->scanline;
-	pSrcData = ninePatch->data;
-	pDstData = surface->data;
-	nDstStep = surface->scanline;
+	int scaleWidth = nWidth - (ninePatch->width - ninePatch->scaleWidth);
+	int nSrcStep = ninePatch->scanline;
+	const uint8_t* pSrcData = ninePatch->data;
+	uint8_t* pDstData = surface->data;
+	WINPR_ASSERT(surface->scanline <= INT_MAX);
+	int nDstStep = (int)surface->scanline;
 	/* top */
-	x = 0;
-	y = 0;
+	int x = 0;
+	int y = 0;
 	/* top left */
-	nXSrc = 0;
-	nYSrc = 0;
-	width = ninePatch->scaleLeft;
-	height = ninePatch->scaleTop;
+	int nXSrc = 0;
+	int nYSrc = 0;
+	int width = ninePatch->scaleLeft;
+	int height = ninePatch->scaleTop;
 	rdtk_image_copy_alpha_blend(pDstData, nDstStep, nXDst + x, nYDst + y, width, height, pSrcData,
 	                            nSrcStep, nXSrc, nYSrc);
 	x += width;
