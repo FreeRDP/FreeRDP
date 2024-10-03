@@ -239,9 +239,7 @@ static BOOL arm_send_http_request(rdpArm* arm, rdpTls* tls, const char* method,
 		return FALSE;
 
 	const size_t sz = Stream_Length(s);
-
-	if (sz <= INT_MAX)
-		status = freerdp_tls_write_all(tls, Stream_Buffer(s), sz);
+	status = freerdp_tls_write_all(tls, Stream_Buffer(s), sz);
 
 	Stream_Free(s, TRUE);
 	if (status >= 0 && content_length > 0 && data)

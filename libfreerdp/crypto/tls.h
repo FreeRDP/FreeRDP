@@ -115,7 +115,7 @@ extern "C"
 
 	FREERDP_LOCAL BOOL freerdp_tls_send_alert(rdpTls* tls);
 
-	FREERDP_LOCAL int freerdp_tls_write_all(rdpTls* tls, const BYTE* data, int length);
+	FREERDP_LOCAL int freerdp_tls_write_all(rdpTls* tls, const BYTE* data, size_t length);
 
 	FREERDP_LOCAL int freerdp_tls_set_alert_code(rdpTls* tls, int level, int description);
 

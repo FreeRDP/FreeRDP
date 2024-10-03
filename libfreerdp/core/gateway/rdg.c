@@ -1238,18 +1238,14 @@ static BOOL rdg_auth_init(rdpRdg* rdg, rdpTls* tls, TCHAR* authPkg)
 static BOOL rdg_send_http_request(rdpRdg* rdg, rdpTls* tls, const char* method,
                                   TRANSFER_ENCODING transferEncoding)
 {
-	size_t sz = 0;
-	wStream* s = NULL;
 	int status = -1;
-	s = rdg_build_http_request(rdg, method, transferEncoding);
+	wStream* s = rdg_build_http_request(rdg, method, transferEncoding);
 
 	if (!s)
 		return FALSE;
 
-	sz = Stream_Length(s);
-
-	if (sz <= INT_MAX)
-		status = freerdp_tls_write_all(tls, Stream_Buffer(s), sz);
+	const size_t sz = Stream_Length(s);
+	status = freerdp_tls_write_all(tls, Stream_Buffer(s), sz);
 
 	Stream_Free(s, TRUE);
 	return (status >= 0);
