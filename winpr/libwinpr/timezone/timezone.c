@@ -901,8 +901,10 @@ DWORD EnumDynamicTimeZoneInformation(const DWORD dwIndex,
 	return ERROR_SUCCESS;
 }
 
+// NOLINTBEGIN(readability-non-const-parameter)
 DWORD GetDynamicTimeZoneInformationEffectiveYears(
     const PDYNAMIC_TIME_ZONE_INFORMATION lpTimeZoneInformation, LPDWORD FirstYear, LPDWORD LastYear)
+// NOLINTEND(readability-non-const-parameter)
 {
 	WINPR_UNUSED(lpTimeZoneInformation);
 	WINPR_UNUSED(FirstYear);

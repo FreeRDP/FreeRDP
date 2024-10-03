@@ -461,7 +461,9 @@ static int func_config_release_all_interface(URBDRC_PLUGIN* urbdrc,
                                              LIBUSB_DEVICE_HANDLE* libusb_handle,
                                              UINT32 NumInterfaces)
 {
-	for (UINT32 i = 0; i < NumInterfaces; i++)
+	if (NumInterfaces > INT32_MAX)
+		return -1;
+	for (INT32 i = 0; i < (INT32)NumInterfaces; i++)
 	{
 		int ret = libusb_release_interface(libusb_handle, i);
 

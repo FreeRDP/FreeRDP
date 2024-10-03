@@ -750,6 +750,7 @@ int _comm_ioctl_tcsetattr(int fd, int optional_actions, const struct termios* te
 		return result;
 	}
 
+	// NOLINTNEXTLINE(bugprone-suspicious-memory-comparison,cert-exp42-c,cert-flp37-c)
 	if (memcmp(&currentState, termios_p, sizeof(struct termios)) != 0)
 	{
 		CommLog_Print(WLOG_DEBUG,
@@ -767,6 +768,7 @@ int _comm_ioctl_tcsetattr(int fd, int optional_actions, const struct termios* te
 			return result;
 		}
 
+		// NOLINTNEXTLINE(bugprone-suspicious-memory-comparison,cert-exp42-c,cert-flp37-c)
 		if (memcmp(&currentState, termios_p, sizeof(struct termios)) != 0)
 		{
 			CommLog_Print(WLOG_WARN,

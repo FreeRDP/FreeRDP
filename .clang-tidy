@@ -66,6 +66,7 @@ Checks: >
     -modernize-pass-by-value,
     -modernize-avoid-c-arrays,
     -readability-braces-around-statements,
+    -readability-convert-member-functions-to-static,
     -readability-function-cognitive-complexity,
     -readability-identifier-length,
     -readability-implicit-bool-conversion,

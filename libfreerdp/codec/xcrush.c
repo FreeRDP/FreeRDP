@@ -341,8 +341,12 @@ static int xcrush_find_next_matching_chunk(XCRUSH_CONTEXT* WINPR_RESTRICT xcrush
 
 	if (chunk->next)
 	{
-		UINT32 index = (chunk - xcrush->Chunks) / sizeof(XCRUSH_CHUNK);
+		// NOLINTNEXTLINE(bugprone-sizeof-expression)
+		const intptr_t diff = (chunk - xcrush->Chunks);
+		if (diff < 0)
+			return -4011;
 
+		const size_t index = (size_t)diff / sizeof(XCRUSH_CHUNK);
 		if (index >= 65534)
 			return -4002; /* error */
 

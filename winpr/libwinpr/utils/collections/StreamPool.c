@@ -301,27 +301,26 @@ void Stream_Release(wStream* s)
  * Find stream in pool using pointer inside buffer
  */
 
-wStream* StreamPool_Find(wStreamPool* pool, BYTE* ptr)
+wStream* StreamPool_Find(wStreamPool* pool, const BYTE* ptr)
 {
 	wStream* s = NULL;
-	BOOL found = FALSE;
 
 	StreamPool_Lock(pool);
 
 	for (size_t index = 0; index < pool->uSize; index++)
 	{
-		s = pool->uArray[index];
+		wStream* cur = pool->uArray[index];
 
-		if ((ptr >= Stream_Buffer(s)) && (ptr < (Stream_Buffer(s) + Stream_Capacity(s))))
+		if ((ptr >= Stream_Buffer(cur)) && (ptr < (Stream_Buffer(cur) + Stream_Capacity(cur))))
 		{
-			found = TRUE;
+			s = cur;
 			break;
 		}
 	}
 
 	StreamPool_Unlock(pool);
 
-	return (found) ? s : NULL;
+	return s;
 }
 
 /**

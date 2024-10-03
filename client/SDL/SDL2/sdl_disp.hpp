@@ -42,7 +42,7 @@ class sdlDispContext
 	BOOL uninit(DispClientContext* disp);
 
 #if SDL_VERSION_ATLEAST(2, 0, 10)
-	static BOOL handle_display_event(const SDL_DisplayEvent* ev);
+	BOOL handle_display_event(const SDL_DisplayEvent* ev);
 #endif
 
 	BOOL handle_window_event(const SDL_WindowEvent* ev);
@@ -67,8 +67,6 @@ class sdlDispContext
 
 	SdlContext* _sdl = nullptr;
 	DispClientContext* _disp = nullptr;
-	int _eventBase = -1;
-	int _errorBase = -1;
 	int _lastSentWidth = -1;
 	int _lastSentHeight = -1;
 	UINT64 _lastSentDate = 0;
@@ -76,7 +74,6 @@ class sdlDispContext
 	int _targetHeight = -1;
 	BOOL _activated = FALSE;
 	BOOL _waitingResize = FALSE;
-	BOOL _fullscreen = FALSE;
 	UINT16 _lastSentDesktopOrientation = 0;
 	UINT32 _lastSentDesktopScaleFactor = 0;
 	UINT32 _lastSentDeviceScaleFactor = 0;

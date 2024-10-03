@@ -54,7 +54,7 @@
  * for sample responses. Excessive size is to make sure any sample
  * will fit in, even with highest resolution.
  */
-#define ECAM_SAMPLE_RESPONSE_BUFFER_SIZE (1024 * 4050)
+#define ECAM_SAMPLE_RESPONSE_BUFFER_SIZE (1024ULL * 4050ULL)
 
 typedef struct s_ICamHal ICamHal;
 

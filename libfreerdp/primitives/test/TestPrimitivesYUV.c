@@ -896,10 +896,11 @@ int TestPrimitivesYUV(int argc, char* argv[])
 
 	for (UINT32 x = 0; x < 5; x++)
 	{
-		prim_size_t roi;
+		prim_size_t roi = { 0 };
 
 		if (argc > 1)
 		{
+			// NOLINTNEXTLINE(cert-err34-c)
 			int crc = sscanf(argv[1], "%" PRIu32 "x%" PRIu32, &roi.width, &roi.height);
 
 			if (crc != 2)

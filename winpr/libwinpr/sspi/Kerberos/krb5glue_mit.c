@@ -82,6 +82,7 @@ krb5_prompt_type krb5glue_get_prompt_type(krb5_context ctx, krb5_prompt prompts[
 {
 	WINPR_ASSERT(ctx);
 	WINPR_ASSERT(prompts);
+	WINPR_UNUSED(prompts);
 
 	krb5_prompt_type* types = krb5_get_prompt_types(ctx);
 	return types ? types[index] : 0;

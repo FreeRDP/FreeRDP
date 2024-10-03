@@ -1122,6 +1122,7 @@ static BOOL read_cmd(FILE* fp, RDPGFX_SURFACE_COMMAND* cmd, UINT32* frameId)
 	WINPR_ASSERT(cmd);
 	WINPR_ASSERT(frameId);
 
+	// NOLINTBEGIN(cert-err34-c)
 	if (1 != fscanf(fp, "frameid: %" PRIu32 "\n", frameId))
 		return FALSE;
 	if (1 != fscanf(fp, "surfaceId: %" PRIu32 "\n", &cmd->surfaceId))
@@ -1146,6 +1147,7 @@ static BOOL read_cmd(FILE* fp, RDPGFX_SURFACE_COMMAND* cmd, UINT32* frameId)
 		return FALSE;
 	if (1 != fscanf(fp, "length: %" PRIu32 "\n", &cmd->length))
 		return FALSE;
+	// NOLINTEND(cert-err34-c)
 
 	char* data = NULL;
 

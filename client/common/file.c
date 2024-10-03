@@ -2375,23 +2375,27 @@ BOOL freerdp_client_populate_settings_from_rdp_file(const rdpFile* file, rdpSett
 		if (!args)
 			return FALSE;
 
+		BOOL status = TRUE;
 		if (~file->EncodeRedirectedVideoCapture)
 		{
-			char encode[64];
-			_snprintf(encode, sizeof(encode), "encode:%" PRIu32,
-			          file->EncodeRedirectedVideoCapture);
-			freerdp_addin_argv_add_argument(args, encode);
+			char encode[64] = { 0 };
+			(void)_snprintf(encode, sizeof(encode), "encode:%" PRIu32,
+			                file->EncodeRedirectedVideoCapture);
+			if (!freerdp_addin_argv_add_argument(args, encode))
+				status = FALSE;
 		}
 		if (~file->RedirectedVideoCaptureEncodingQuality)
 		{
-			char quality[64];
-			_snprintf(quality, sizeof(quality), "quality:%" PRIu32,
-			          file->RedirectedVideoCaptureEncodingQuality);
-			freerdp_addin_argv_add_argument(args, quality);
+			char quality[64] = { 0 };
+			(void)_snprintf(quality, sizeof(quality), "quality:%" PRIu32,
+			                file->RedirectedVideoCaptureEncodingQuality);
+			if (!freerdp_addin_argv_add_argument(args, quality))
+				status = FALSE;
 		}
 
 		cnv.c = args->argv;
-		const BOOL status = freerdp_client_add_dynamic_channel(settings, args->argc, cnv.cc);
+		if (status)
+			status = freerdp_client_add_dynamic_channel(settings, args->argc, cnv.cc);
 		freerdp_addin_argv_free(args);
 		if (!status)
 			return FALSE;

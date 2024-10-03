@@ -18,6 +18,7 @@
  */
 #include <freerdp/utils/pod_arrays.h>
 
+// NOLINTNEXTLINE(readability-non-const-parameter)
 static BOOL cb_compute_sum(UINT32* v, void* target)
 {
 	UINT32* ret = (UINT32*)target;
@@ -55,7 +56,7 @@ static BOOL cb_basic_struct(BasicStruct* v, void* target)
 {
 	return (v->v1 == 1) && (v->v2 == 2);
 }
-
+// NOLINTNEXTLINE(bugprone-suspicious-memory-comparison,cert-exp42-c,cert-flp37-c)
 POD_ARRAYS_IMPL(BasicStruct, basicstruct)
 
 int TestPodArrays(int argc, char* argv[])

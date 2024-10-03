@@ -78,15 +78,17 @@ static UINT cam_v4l_stream_stop(CamV4lStream* stream);
  *
  * @return NULL-terminated fourcc string
  */
-static const char* cam_v4l_get_fourcc_str(unsigned int fourcc)
+static const char* cam_v4l_get_fourcc_str(unsigned int fourcc, char* buffer, size_t size)
 {
-	static char buf[5] = { 0 };
-	buf[0] = (fourcc & 0xFF);
-	buf[1] = (fourcc >> 8) & 0xFF;
-	buf[2] = (fourcc >> 16) & 0xFF;
-	buf[3] = (fourcc >> 24) & 0xFF;
-	buf[4] = 0;
-	return buf;
+	if (size < 5)
+		return NULL;
+
+	buffer[0] = (char)(fourcc & 0xFF);
+	buffer[1] = (char)((fourcc >> 8) & 0xFF);
+	buffer[2] = (char)((fourcc >> 16) & 0xFF);
+	buffer[3] = (char)((fourcc >> 24) & 0xFF);
+	buffer[4] = '\0';
+	return buffer;
 }
 
 /**
@@ -155,7 +157,7 @@ static int cam_v4l_open_device(const char* deviceId, int flags)
 
 	for (UINT n = 0; n < 64; n++)
 	{
-		snprintf(device, sizeof(device), "/dev/video%d", n);
+		(void)_snprintf(device, sizeof(device), "/dev/video%d", n);
 		if ((fd = open(device, flags)) == -1)
 			continue;
 
@@ -243,9 +245,11 @@ static INT16 cam_v4l_get_media_type_descriptions(ICamHal* hal, const char* devic
 
 			mediaTypes->PixelAspectRatioNumerator = mediaTypes->PixelAspectRatioDenominator = 1;
 
+			char fourccstr[5] = { 0 };
 			WLog_DBG(TAG, "Camera format: %s, width: %u, height: %u, fps: %u/%u",
-			         cam_v4l_get_fourcc_str(pixelFormat), mediaTypes->Width, mediaTypes->Height,
-			         mediaTypes->FrameRateNumerator, mediaTypes->FrameRateDenominator);
+			         cam_v4l_get_fourcc_str(pixelFormat, fourccstr, ARRAYSIZE(fourccstr)),
+			         mediaTypes->Width, mediaTypes->Height, mediaTypes->FrameRateNumerator,
+			         mediaTypes->FrameRateDenominator);
 
 			mediaTypes++;
 			nTypes++;
@@ -287,7 +291,7 @@ static UINT cam_v4l_enumerate(ICamHal* ihal, ICamHalEnumCallback callback, Camer
 	{
 		char device[20] = { 0 };
 		struct v4l2_capability cap = { 0 };
-		snprintf(device, sizeof(device), "/dev/video%d", n);
+		(void)_snprintf(device, sizeof(device), "/dev/video%d", n);
 		int fd = open(device, O_RDONLY);
 		if (fd == -1)
 			continue;
@@ -313,18 +317,13 @@ static UINT cam_v4l_enumerate(ICamHal* ihal, ICamHalEnumCallback callback, Camer
 	return count;
 }
 
-/**
- * Function description
- *
- * @return void
- */
 static void cam_v4l_stream_free_buffers(CamV4lStream* stream)
 {
 	if (!stream || !stream->buffers)
 		return;
 
 	/* unmap buffers */
-	for (int i = 0; i < stream->nBuffers; i++)
+	for (size_t i = 0; i < stream->nBuffers; i++)
 	{
 		if (stream->buffers[i].length && stream->buffers[i].start != MAP_FAILED)
 		{
@@ -335,7 +334,6 @@ static void cam_v4l_stream_free_buffers(CamV4lStream* stream)
 	free(stream->buffers);
 	stream->buffers = NULL;
 	stream->nBuffers = 0;
-	return;
 }
 
 /**
@@ -472,11 +470,6 @@ static UINT cam_v4l_stream_capture_thread(void* param)
 	return CHANNEL_RC_OK;
 }
 
-/**
- * Function description
- *
- * @return void
- */
 void cam_v4l_stream_close_device(CamV4lStream* stream)
 {
 	if (stream->fd != -1)
@@ -663,9 +656,11 @@ static UINT cam_v4l_stream_start(ICamHal* ihal, CameraDevice* dev, int streamInd
 		return CAM_ERROR_CODE_OutOfMemory;
 	}
 
+	char fourccstr[5] = { 0 };
 	WLog_INFO(TAG, "Camera format: %s, width: %u, height: %u, fps: %u/%u",
-	          cam_v4l_get_fourcc_str(pixelFormat), mediaType->Width, mediaType->Height,
-	          mediaType->FrameRateNumerator, mediaType->FrameRateDenominator);
+	          cam_v4l_get_fourcc_str(pixelFormat, fourccstr, ARRAYSIZE(fourccstr)),
+	          mediaType->Width, mediaType->Height, mediaType->FrameRateNumerator,
+	          mediaType->FrameRateDenominator);
 
 	return CHANNEL_RC_OK;
 }
@@ -692,7 +687,6 @@ static UINT cam_v4l_stream_stop_by_device_id(ICamHal* ihal, const char* deviceId
  *
  * OBJECT_FREE_FN for streams hash table value
  *
- * @return void
  */
 void cam_v4l_stream_free(void* obj)
 {
@@ -704,8 +698,6 @@ void cam_v4l_stream_free(void* obj)
 
 	DeleteCriticalSection(&stream->lock);
 	free(stream);
-
-	return;
 }
 
 /**

@@ -116,6 +116,7 @@ typedef struct
 	} modified_arguments[8];
 } test;
 
+// NOLINTBEGIN(bugprone-suspicious-missing-comma)
 static const test tests[] = {
 	{ COMMAND_LINE_STATUS_PRINT_HELP,
 	  check_settings_smartcard_no_redirection,
@@ -208,6 +209,7 @@ static const test tests[] = {
 	},
 #endif
 };
+// NOLINTEND(bugprone-suspicious-missing-comma)
 
 static void check_modified_arguments(const test* test, char** command_line, int* rc)
 {

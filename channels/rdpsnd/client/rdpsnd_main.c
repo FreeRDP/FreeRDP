@@ -1698,10 +1698,12 @@ static UINT rdpsnd_on_close(IWTSVirtualChannelCallback* pChannelCallback)
 	return CHANNEL_RC_OK;
 }
 
+// NOLINTBEGIN(readability-non-const-parameter)
 static UINT rdpsnd_on_new_channel_connection(IWTSListenerCallback* pListenerCallback,
                                              IWTSVirtualChannel* pChannel, BYTE* Data,
                                              BOOL* pbAccept,
                                              IWTSVirtualChannelCallback** ppCallback)
+// NOLINTEND(readability-non-const-parameter)
 {
 	GENERIC_CHANNEL_CALLBACK* callback = NULL;
 	GENERIC_LISTENER_CALLBACK* listener_callback = (GENERIC_LISTENER_CALLBACK*)pListenerCallback;

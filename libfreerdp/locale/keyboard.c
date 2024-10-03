@@ -24,6 +24,7 @@
 
 #include <winpr/crt.h>
 
+#include <freerdp/utils/string.h>
 #include <freerdp/types.h>
 #include <freerdp/locale/keyboard.h>
 #include <freerdp/locale/locale.h>
@@ -351,14 +352,7 @@ DWORD freerdp_keyboard_init_ex(DWORD keyboardLayoutId, const char* keyboardRemap
 		{
 			DWORD key = 0;
 			DWORD value = 0;
-			int rc = sscanf(token, "%" PRIu32 "=%" PRIu32, &key, &value);
-			if (rc != 2)
-				rc = sscanf(token, "%" PRIx32 "=%" PRIx32 "", &key, &value);
-			if (rc != 2)
-				rc = sscanf(token, "%" PRIu32 "=%" PRIx32, &key, &value);
-			if (rc != 2)
-				rc = sscanf(token, "%" PRIx32 "=%" PRIu32, &key, &value);
-			if (rc != 2)
+			if (!freerdp_extract_key_value(token, &key, &value))
 				goto fail;
 			if (key >= ARRAYSIZE(REMAPPING_TABLE))
 				goto fail;

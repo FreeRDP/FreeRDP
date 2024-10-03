@@ -49,14 +49,15 @@ static const char* strsignal(int signum)
 }
 #endif
 
+// NOLINTBEGIN(bugprone-signal-handler,cert-msc54-cpp,cert-sig30-c)
 static void cleanup_handler(int signum)
 {
-	(void)printf("\n");
 	WLog_INFO(TAG, "caught signal %s [%d], starting cleanup...", strsignal(signum), signum);
 
 	WLog_INFO(TAG, "stopping all connections.");
 	pf_server_stop(server);
 }
+// NOLINTEND(bugprone-signal-handler,cert-msc54-cpp,cert-sig30-c)
 
 static void pf_server_register_signal_handlers(void)
 {

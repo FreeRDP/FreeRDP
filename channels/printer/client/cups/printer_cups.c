@@ -65,6 +65,8 @@ static bool is_mac_os_sonoma_or_later(void)
 	int major = 0;
 	int minor = 0;
 	int patch = 0;
+
+	// NOLINTNEXTLINE(cert-err34-c)
 	const int rc = sscanf(str, "%d.%d.%d", &major, &minor, &patch);
 	if (rc != 3)
 	{

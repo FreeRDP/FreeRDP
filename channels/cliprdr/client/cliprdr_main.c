@@ -38,8 +38,8 @@
 #include "cliprdr_format.h"
 #include "../cliprdr_common.h"
 
-const char* type_FileGroupDescriptorW = "FileGroupDescriptorW";
-const char* type_FileContents = "FileContents";
+const char type_FileGroupDescriptorW[] = "FileGroupDescriptorW";
+const char type_FileContents[] = "FileContents";
 
 CliprdrClientContext* cliprdr_get_client_interface(cliprdrPlugin* cliprdr)
 {
@@ -790,13 +790,10 @@ cliprdr_client_unlock_clipboard_data(CliprdrClientContext* context,
 static UINT cliprdr_client_format_data_request(CliprdrClientContext* context,
                                                const CLIPRDR_FORMAT_DATA_REQUEST* formatDataRequest)
 {
-	wStream* s = NULL;
-	cliprdrPlugin* cliprdr = NULL;
-
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(formatDataRequest);
 
-	cliprdr = (cliprdrPlugin*)context->handle;
+	cliprdrPlugin* cliprdr = (cliprdrPlugin*)context->handle;
 	WINPR_ASSERT(cliprdr);
 
 	const UINT32 mask =
@@ -806,8 +803,8 @@ static UINT cliprdr_client_format_data_request(CliprdrClientContext* context,
 		WLog_WARN(TAG, "remote -> local copy disabled, ignoring request");
 		return CHANNEL_RC_OK;
 	}
-	s = cliprdr_packet_new(CB_FORMAT_DATA_REQUEST, 0, 4);
 
+	wStream* s = cliprdr_packet_new(CB_FORMAT_DATA_REQUEST, 0, 4);
 	if (!s)
 	{
 		WLog_ERR(TAG, "cliprdr_packet_new failed!");
@@ -815,7 +812,8 @@ static UINT cliprdr_client_format_data_request(CliprdrClientContext* context,
 	}
 
 	Stream_Write_UINT32(s, formatDataRequest->requestedFormatId); /* requestedFormatId (4 bytes) */
-	WLog_Print(cliprdr->log, WLOG_DEBUG, "ClientFormatDataRequest");
+	WLog_Print(cliprdr->log, WLOG_DEBUG, "ClientFormatDataRequest(0x%08" PRIx32 ")",
+	           formatDataRequest->requestedFormatId);
 	return cliprdr_packet_send(cliprdr, s);
 }
 

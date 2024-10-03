@@ -32,11 +32,14 @@
 extern "C"
 {
 #endif
-#define WINPR_ASSERT(cond)                                         \
-	do                                                             \
-	{                                                              \
-		if (!(cond))                                               \
-			winpr_int_assert(#cond, __FILE__, __func__, __LINE__); \
+#define WINPR_ASSERT(cond)                                           \
+	do                                                               \
+	{                                                                \
+		WINPR_PRAGMA_DIAG_PUSH                                       \
+		WINPR_PRAGMA_DIAG_TAUTOLOGICAL_CONSTANT_OUT_OF_RANGE_COMPARE \
+		if (!(cond))                                                 \
+			winpr_int_assert(#cond, __FILE__, __func__, __LINE__);   \
+		WINPR_PRAGMA_DIAG_POP                                        \
 	} while (0)
 
 	static INLINE WINPR_NORETURN(void winpr_int_assert(const char* condstr, const char* file,
