@@ -307,7 +307,6 @@ static INLINE char* base64_encode_ex(const BYTE* WINPR_RESTRICT alphabet,
                                      BOOL crLf, size_t lineSize)
 {
 	int c = 0;
-	char* ret = NULL;
 	size_t blocks = 0;
 	size_t outLen = (length + 3) * 4 / 3;
 	size_t extra = 0;
@@ -319,9 +318,11 @@ static INLINE char* base64_encode_ex(const BYTE* WINPR_RESTRICT alphabet,
 	size_t outCounter = 0;
 
 	const BYTE* q = data;
-	BYTE* p = ret = malloc(outLen + extra + 1ull);
+	BYTE* p = malloc(outLen + extra + 1ull);
 	if (!p)
 		return NULL;
+
+	char* ret = (char*)p;
 
 	/* b1, b2, b3 are input bytes
 	 *
