@@ -117,11 +117,13 @@ static DWORD WINAPI audin_alsa_thread_func(LPVOID arg)
 {
 	DWORD error = CHANNEL_RC_OK;
 	BYTE* buffer = NULL;
-	snd_pcm_t* capture_handle = NULL;
 	AudinALSADevice* alsa = (AudinALSADevice*)arg;
-	DWORD status = 0;
+
+	WINPR_ASSERT(alsa);
+
 	WLog_Print(alsa->log, WLOG_DEBUG, "in");
 
+	snd_pcm_t* capture_handle = NULL;
 	const int rc = snd_pcm_open(&capture_handle, alsa->device_name, SND_PCM_STREAM_CAPTURE, 0);
 	if (rc < 0)
 	{
@@ -149,7 +151,7 @@ static DWORD WINAPI audin_alsa_thread_func(LPVOID arg)
 	while (1)
 	{
 		size_t frames = alsa->frames_per_packet;
-		status = WaitForSingleObject(alsa->stopEvent, 0);
+		const DWORD status = WaitForSingleObject(alsa->stopEvent, 0);
 
 		if (status == WAIT_FAILED)
 		{
@@ -160,26 +162,32 @@ static DWORD WINAPI audin_alsa_thread_func(LPVOID arg)
 		}
 
 		if (status == WAIT_OBJECT_0)
+		{
+			WLog_Print(alsa->log, WLOG_DEBUG, "alsa->stopEvent requests termination");
 			break;
+		}
 
-		snd_pcm_sframes_t err = snd_pcm_readi(capture_handle, buffer, frames);
+		snd_pcm_sframes_t framesRead = snd_pcm_readi(capture_handle, buffer, frames);
 
-		if (err == 0)
+		if (framesRead == 0)
 			continue;
 
-		if (err == -EPIPE)
+		if (framesRead == -EPIPE)
 		{
-			snd_pcm_recover(capture_handle, (int)err, 0);
+			const int rc = snd_pcm_recover(capture_handle, (int)framesRead, 0);
+			if (rc < 0)
+				WLog_Print(alsa->log, WLOG_WARN, "snd_pcm_recover (%s)", snd_strerror(rc));
+
 			continue;
 		}
-		else if (err < 0)
+		else if (framesRead < 0)
 		{
-			WLog_Print(alsa->log, WLOG_ERROR, "snd_pcm_readi (%s)", snd_strerror(error));
+			WLog_Print(alsa->log, WLOG_ERROR, "snd_pcm_readi (%s)", snd_strerror(framesRead));
 			error = ERROR_INTERNAL_ERROR;
 			break;
 		}
 
-		error = alsa->receive(&alsa->aformat, buffer, (long)error * alsa->bytes_per_frame,
+		error = alsa->receive(&alsa->aformat, buffer, (long)framesRead * alsa->bytes_per_frame,
 		                      alsa->user_data);
 
 		if (error)
@@ -193,7 +201,11 @@ static DWORD WINAPI audin_alsa_thread_func(LPVOID arg)
 	free(buffer);
 
 	if (capture_handle)
-		snd_pcm_close(capture_handle);
+	{
+		const int rc = snd_pcm_close(capture_handle);
+		if (rc < 0)
+			WLog_Print(alsa->log, WLOG_WARN, "snd_pcm_close (%s)", snd_strerror(rc));
+	}
 
 out:
 	WLog_Print(alsa->log, WLOG_DEBUG, "out");
