@@ -51,10 +51,10 @@ static pstatus_t general_YCoCgToRGB_8u_AC4R(const BYTE* pSrc, INT32 srcStep, BYT
 			const INT16 Cg = convert(*sptr++, shift);
 			const INT16 Co = convert(*sptr++, shift);
 			const INT16 Y = *sptr++; /* UINT8->INT16 */
-			const INT16 T = Y - Cg;
-			const INT16 B = T + Co;
-			const INT16 G = Y + Cg;
-			const INT16 R = T - Co;
+			const INT16 T = (INT16)(Y - Cg);
+			const INT16 B = (INT16)(T + Co);
+			const INT16 G = (INT16)(Y + Cg);
+			const INT16 R = (INT16)(T - Co);
 			BYTE A = *sptr++;
 
 			if (!withAlpha)
