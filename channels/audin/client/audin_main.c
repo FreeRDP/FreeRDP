@@ -941,7 +941,7 @@ BOOL audin_process_addin_args(AUDIN_PLUGIN* audin, const ADDIN_ARGV* args)
 		}
 		CommandLineSwitchCase(arg, "rate")
 		{
-			long val = strtol(arg->Value, NULL, 0);
+			unsigned long val = strtoul(arg->Value, NULL, 0);
 
 			if ((errno != 0) || (val == 0) || (val > UINT32_MAX))
 				return FALSE;
