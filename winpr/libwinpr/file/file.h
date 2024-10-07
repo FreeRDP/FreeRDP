@@ -57,7 +57,7 @@ struct winpr_file
 };
 typedef struct winpr_file WINPR_FILE;
 
-HANDLE_CREATOR* GetFileHandleCreator(void);
+const HANDLE_CREATOR* GetFileHandleCreator(void);
 
 UINT32 map_posix_err(int fs_errno);
 

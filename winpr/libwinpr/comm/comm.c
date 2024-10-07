@@ -68,7 +68,7 @@ typedef struct comm_device COMM_DEVICE;
 /* _CommDevices is a NULL-terminated array with a maximun of COMM_DEVICE_MAX COMM_DEVICE */
 #define COMM_DEVICE_MAX 128
 static COMM_DEVICE** sCommDevices = NULL;
-static CRITICAL_SECTION sCommDevicesLock;
+static CRITICAL_SECTION sCommDevicesLock = { 0 };
 
 static pthread_once_t sCommInitialized = PTHREAD_ONCE_INIT;
 
@@ -82,11 +82,11 @@ static int CommGetFd(HANDLE handle)
 	return comm->fd;
 }
 
-HANDLE_CREATOR* GetCommHandleCreator(void)
+const HANDLE_CREATOR* GetCommHandleCreator(void)
 {
 #if defined(WINPR_HAVE_SERIAL_SUPPORT)
-	sCommHandleCreator.IsHandled = IsCommDevice;
-	sCommHandleCreator.CreateFileA = CommCreateFileA;
+	static const HANDLE_CREATOR sCommHandleCreator = { .IsHandled = IsCommDevice,
+		                                               .CreateFileA = CommCreateFileA };
 	return &sCommHandleCreator;
 #else
 	return NULL;

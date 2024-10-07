@@ -105,7 +105,7 @@ void CommLog_Print(DWORD wlog_level, ...);
 BOOL CommIsHandled(HANDLE handle);
 BOOL CommIsHandleValid(HANDLE handle);
 BOOL CommCloseHandle(HANDLE handle);
-HANDLE_CREATOR* GetCommHandleCreator(void);
+const HANDLE_CREATOR* GetCommHandleCreator(void);
 
 #if defined(WINPR_HAVE_SYS_EVENTFD_H)
 #ifndef WITH_EVENTFD_READ_WRITE

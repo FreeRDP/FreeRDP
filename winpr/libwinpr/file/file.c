@@ -976,9 +976,9 @@ static BOOL IsFileDevice(LPCTSTR lpDeviceName)
 	return TRUE;
 }
 
-static HANDLE_CREATOR FileHandleCreator = { IsFileDevice, FileCreateFileA };
+static const HANDLE_CREATOR FileHandleCreator = { IsFileDevice, FileCreateFileA };
 
-HANDLE_CREATOR* GetFileHandleCreator(void)
+const HANDLE_CREATOR* GetFileHandleCreator(void)
 {
 	return &FileHandleCreator;
 }
