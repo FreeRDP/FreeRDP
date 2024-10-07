@@ -24,11 +24,16 @@
 #define TAG CHANNELS_TAG("rdpecam-device.client")
 
 /* supported formats in preference order:
- * passthrough, I420 (used as input for H264 encoder), other YUV based, RGB based
+ * H264, MJPG, I420 (used as input for H264 encoder), other YUV based, RGB based
  */
 static const CAM_MEDIA_FORMAT_INFO supportedFormats[] = {
-	/* inputFormat, outputFormat */
-	{ CAM_MEDIA_FORMAT_H264, CAM_MEDIA_FORMAT_H264 }, /* passthrough: comment out to disable */
+/* inputFormat, outputFormat */
+#if defined(WITH_INPUT_FORMAT_H264)
+	{ CAM_MEDIA_FORMAT_H264, CAM_MEDIA_FORMAT_H264 }, /* passthrough */
+#endif
+#if defined(WITH_INPUT_FORMAT_MJPG)
+	{ CAM_MEDIA_FORMAT_MJPG, CAM_MEDIA_FORMAT_H264 },
+#endif
 	{ CAM_MEDIA_FORMAT_I420, CAM_MEDIA_FORMAT_H264 },
 	{ CAM_MEDIA_FORMAT_YUY2, CAM_MEDIA_FORMAT_H264 },
 	{ CAM_MEDIA_FORMAT_NV12, CAM_MEDIA_FORMAT_H264 },
