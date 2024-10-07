@@ -43,8 +43,7 @@
 #include "../handle/handle.h"
 
 #include "../pipe/pipe.h"
-
-static HANDLE_CREATOR NamedPipeClientHandleCreator;
+#include "namedPipeClient.h"
 
 static BOOL NamedPipeClientIsHandled(HANDLE handle)
 {
@@ -225,11 +224,11 @@ static HANDLE NamedPipeClientCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAcces
 	return hNamedPipe;
 }
 
-extern HANDLE_CREATOR* GetNamedPipeClientHandleCreator(void);
-HANDLE_CREATOR* GetNamedPipeClientHandleCreator(void)
+const HANDLE_CREATOR* GetNamedPipeClientHandleCreator(void)
 {
-	NamedPipeClientHandleCreator.IsHandled = IsNamedPipeFileNameA;
-	NamedPipeClientHandleCreator.CreateFileA = NamedPipeClientCreateFileA;
+	static const HANDLE_CREATOR NamedPipeClientHandleCreator = { .IsHandled = IsNamedPipeFileNameA,
+		                                                         .CreateFileA =
+		                                                             NamedPipeClientCreateFileA };
 	return &NamedPipeClientHandleCreator;
 }
 

@@ -15,7 +15,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-winpr_module_add(generic.c namedPipeClient.c pattern.c file.c)
+winpr_module_add(
+    generic.c
+    namedPipeClient.c
+    namedPipeClient.h
+    pattern.c
+    file.c
+)
 
 if(BUILD_TESTING)
 	add_subdirectory(test)

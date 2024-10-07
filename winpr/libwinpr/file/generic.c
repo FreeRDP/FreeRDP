@@ -178,9 +178,8 @@ static wArrayList* HandleCreators;
 
 static pthread_once_t HandleCreatorsInitialized = PTHREAD_ONCE_INIT;
 
-extern HANDLE_CREATOR* GetNamedPipeClientHandleCreator(void);
-
 #include "../comm/comm.h"
+#include "namedPipeClient.h"
 
 static void HandleCreatorsInit(void)
 {
@@ -194,7 +193,7 @@ static void HandleCreatorsInit(void)
 	 * Register all file handle creators.
 	 */
 	ArrayList_Append(HandleCreators, GetNamedPipeClientHandleCreator());
-	HANDLE_CREATOR* serial = GetCommHandleCreator();
+	const HANDLE_CREATOR* serial = GetCommHandleCreator();
 	if (serial)
 		ArrayList_Append(HandleCreators, serial);
 	ArrayList_Append(HandleCreators, GetFileHandleCreator());
@@ -250,7 +249,7 @@ HANDLE CreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode,
 
 	for (size_t i = 0; i <= ArrayList_Count(HandleCreators); i++)
 	{
-		HANDLE_CREATOR* creator = ArrayList_GetItem(HandleCreators, i);
+		const HANDLE_CREATOR* creator = ArrayList_GetItem(HandleCreators, i);
 
 		if (creator && creator->IsHandled(lpFileName))
 		{
