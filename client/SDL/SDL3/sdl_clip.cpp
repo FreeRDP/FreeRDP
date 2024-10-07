@@ -129,9 +129,9 @@ BOOL sdlClip::uninit(CliprdrClientContext* clip)
 	return TRUE;
 }
 
-bool sdlClip::handle_update()
+bool sdlClip::handle_update(const SDL_ClipboardEvent& ev)
 {
-	if (!_ctx || !_sync)
+	if (!_ctx || !_sync || ev.owner)
 		return true;
 
 	clearServerFormats();
@@ -149,36 +149,51 @@ bool sdlClip::handle_update()
 
 	std::vector<std::string> clientFormatNames;
 	std::vector<CLIPRDR_FORMAT> clientFormats;
-	if (SDL_HasClipboardText())
-	{
-		clientFormats.push_back({ CF_TEXT, nullptr });
-		clientFormats.push_back({ CF_OEMTEXT, nullptr });
-		clientFormats.push_back({ CF_UNICODETEXT, nullptr });
-	}
-	if (SDL_HasClipboardData(mime_html.c_str()))
-		clientFormatNames.emplace_back(type_HtmlFormat);
 
-	for (auto& mime : mime_bitmap)
+	size_t nformats = ev.n_mime_types;
+	const char** clipboard_mime_formats = ev.mime_types;
+
+	WLog_Print(_log, WLOG_TRACE, "SDL has %d formats", nformats);
+
+	bool textPushed = false;
+	bool imgPushed = false;
+
+	for (size_t i = 0; i < nformats; i++)
 	{
-		if (SDL_HasClipboardData(mime.c_str()))
+		std::string local_mime = clipboard_mime_formats[i];
+		WLog_Print(_log, WLOG_TRACE, " - %s", local_mime.c_str());
+
+		if (std::find(mime_text.begin(), mime_text.end(), local_mime) != mime_text.end())
 		{
-			clientFormats.push_back({ CF_DIB, nullptr });
-			clientFormats.push_back({ CF_DIBV5, nullptr });
-
-			for (auto& bmp : mime_bitmap)
-				clientFormatNames.push_back(bmp);
-
-			for (auto& img : mime_images)
-				clientFormatNames.push_back(img);
-
-			break;
+			/* text formats */
+			if (!textPushed)
+			{
+				clientFormats.push_back({ CF_TEXT, nullptr });
+				clientFormats.push_back({ CF_OEMTEXT, nullptr });
+				clientFormats.push_back({ CF_UNICODETEXT, nullptr });
+				textPushed = true;
+			}
 		}
-	}
+		else if (local_mime == mime_html)
+			/* html */
+			clientFormatNames.emplace_back(type_HtmlFormat);
+		else if (std::find(mime_bitmap.begin(), mime_bitmap.end(), local_mime) != mime_bitmap.end())
+		{
+			/* image formats */
+			if (!imgPushed)
+			{
+				clientFormats.push_back({ CF_DIB, nullptr });
+				clientFormats.push_back({ CF_DIBV5, nullptr });
 
-	for (auto& img : mime_images)
-	{
-		if (SDL_HasClipboardData(img.c_str()))
-			clientFormatNames.push_back(img);
+				for (auto& bmp : mime_bitmap)
+					clientFormatNames.push_back(bmp);
+
+				for (auto& img : mime_images)
+					clientFormatNames.push_back(img);
+
+				imgPushed = true;
+			}
+		}
 	}
 
 	for (auto& name : clientFormatNames)
@@ -227,7 +242,8 @@ UINT sdlClip::MonitorReady(CliprdrClientContext* context, const CLIPRDR_MONITOR_
 		return ret;
 
 	clipboard->_sync = true;
-	if (!clipboard->handle_update())
+	SDL_ClipboardEvent ev = { SDL_EVENT_CLIPBOARD_UPDATE, 0, 0, false, NULL, 0 };
+	if (!clipboard->handle_update(ev))
 		return ERROR_INTERNAL_ERROR;
 
 	return CHANNEL_RC_OK;

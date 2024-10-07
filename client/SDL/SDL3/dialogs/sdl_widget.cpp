@@ -81,7 +81,7 @@ SdlWidget::SdlWidget(SdlWidget&& other) noexcept
 SDL_Texture* SdlWidget::render_text(SDL_Renderer* renderer, const std::string& text,
                                     SDL_Color fgcolor, SDL_FRect& src, SDL_FRect& dst)
 {
-	auto surface = TTF_RenderUTF8_Blended(_font, text.c_str(), fgcolor);
+	auto surface = TTF_RenderText_Blended(_font, text.c_str(), 0, fgcolor);
 	if (!surface)
 	{
 		widget_log_error(-1, "TTF_RenderText_Blended");
@@ -98,7 +98,7 @@ SDL_Texture* SdlWidget::render_text(SDL_Renderer* renderer, const std::string& t
 
 	int w = 0;
 	int h = 0;
-	TTF_SizeUTF8(_font, text.c_str(), &w, &h);
+	TTF_GetTextSize(_font, text.c_str(), 0, &w, &h);
 
 	src.w = w;
 	src.h = h;
@@ -135,8 +135,8 @@ SDL_Texture* SdlWidget::render_text_wrapped(SDL_Renderer* renderer, const std::s
 {
 	Sint32 w = 0;
 	Sint32 h = 0;
-	TTF_SizeUTF8(_font, " ", &w, &h);
-	auto surface = TTF_RenderUTF8_Blended_Wrapped(_font, text.c_str(), fgcolor, _text_width);
+	TTF_GetTextSize(_font, " ", 0, &w, &h);
+	auto surface = TTF_RenderText_Blended_Wrapped(_font, text.c_str(), 0, fgcolor, _text_width);
 	if (!surface)
 	{
 		widget_log_error(-1, "TTF_RenderText_Blended");

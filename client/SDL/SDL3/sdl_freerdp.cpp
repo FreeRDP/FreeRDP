@@ -1015,7 +1015,7 @@ static int sdl_run(SdlContext* sdl)
 					sdl_Pointer_Set_Process(&windowEvent.user);
 					break;
 				case SDL_EVENT_CLIPBOARD_UPDATE:
-					sdl->clip.handle_update();
+					sdl->clip.handle_update(windowEvent.clipboard);
 					break;
 				case SDL_EVENT_USER_QUIT:
 				default:
