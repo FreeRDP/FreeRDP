@@ -94,7 +94,7 @@ class sdlClip
 	BOOL init(CliprdrClientContext* clip);
 	BOOL uninit(CliprdrClientContext* clip);
 
-	bool handle_update();
+	bool handle_update(const SDL_ClipboardEvent& ev);
 
   private:
 	UINT SendClientCapabilities();
