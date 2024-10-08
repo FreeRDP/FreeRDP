@@ -172,6 +172,7 @@ static void requested_format_free(RequestedFormat** ppRequestedFormat)
 		return;
 
 	free((*ppRequestedFormat)->formatName);
+	free(*ppRequestedFormat);
 	*ppRequestedFormat = NULL;
 }
 
