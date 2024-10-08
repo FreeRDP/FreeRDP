@@ -62,5 +62,10 @@ if (ENABLE_WARNING_ERROR)
 	CheckCXXFlag(-Werror)
 endif()
 
+# https://stackoverflow.com/questions/4913922/possible-problems-with-nominmax-on-visual-c
+if (WIN32)
+    add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-DNOMINMAX>)
+endif()
+
 set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} CACHE STRING "default CXXFLAGS")
 message("Using CXXFLAGS ${CMAKE_CXX_FLAGS}")
