@@ -974,12 +974,18 @@ static SECURITY_STATUS SEC_ENTRY kerberos_InitializeSecurityContextA(
 
 			if (krb_log_exec(krb5_cc_get_principal, credentials->ctx, credentials->ccache,
 			                 &in_creds.client))
+			{
+				status = SEC_E_WRONG_PRINCIPAL;
 				goto cleanup;
+			}
 
 			if (krb_log_exec(krb5_get_credentials, credentials->ctx,
 			                 context->u2u ? KRB5_GC_USER_USER : 0, credentials->ccache, &in_creds,
 			                 &creds))
+			{
+				status = SEC_E_NO_CREDENTIALS;
 				goto cleanup;
+			}
 
 			/* Write the checksum (delegation not implemented) */
 			cksum.data = cksum_contents;
