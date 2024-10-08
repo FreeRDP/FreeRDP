@@ -764,7 +764,7 @@ int win_shadow_wds_init(winShadowSubsystem* subsystem)
 		return status;
 	}
 
-	rdpSetting* settings = subsystem->shw->settings;
+	rdpSettings* settings = subsystem->shw->settings;
 	if (!freerdp_assistance_populate_settings_from_assistance_file(file, settings))
 		return -1;
 	if (!freerdp_settings_set_string(settings, FreeRDP_Domain, "RDP"))
