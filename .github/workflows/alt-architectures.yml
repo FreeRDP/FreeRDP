@@ -97,7 +97,6 @@ jobs:
               -DCMAKE_INSTALL_PREFIX=/tmp/ci-test \
               -DCMAKE_C_COMPILER=/usr/bin/clang \
               -DCMAKE_CXX_COMPILER=/usr/bin/clang++ \
-              -DUSE_UNWIND=OFF \
               -DUSE_EXECINFO=OFF \
               -DWITH_SANITIZE_ADDRESS=OFF
             cmake --build ci-build --parallel $(nproc) --target install

@@ -70,15 +70,15 @@ static const char* unwind_reason_str(_Unwind_Reason_Code code)
 #else
 		case _URC_NO_REASON:
 			return "_URC_NO_REASON";
-#endif
-		case _URC_FOREIGN_EXCEPTION_CAUGHT:
-			return "_URC_FOREIGN_EXCEPTION_CAUGHT";
 		case _URC_FATAL_PHASE2_ERROR:
 			return "_URC_FATAL_PHASE2_ERROR";
 		case _URC_FATAL_PHASE1_ERROR:
 			return "_URC_FATAL_PHASE1_ERROR";
 		case _URC_NORMAL_STOP:
 			return "_URC_NORMAL_STOP";
+#endif
+		case _URC_FOREIGN_EXCEPTION_CAUGHT:
+			return "_URC_FOREIGN_EXCEPTION_CAUGHT";
 		case _URC_END_OF_STACK:
 			return "_URC_END_OF_STACK";
 		case _URC_HANDLER_FOUND:
