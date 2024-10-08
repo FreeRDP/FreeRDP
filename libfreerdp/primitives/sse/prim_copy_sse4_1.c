@@ -201,13 +201,13 @@ pstatus_t sse_image_copy_no_overlap_convert(
 		WINPR_PRAGMA_UNROLL_LOOP
 		for (; x < width; x++)
 		{
-			const UINT32 color = FreeRDPReadColor(&srcLine[(x + nXSrc) * srcByte], SrcFormat);
+			const UINT32 color = FreeRDPReadColor_int(&srcLine[(x + nXSrc) * srcByte], SrcFormat);
 			const UINT32 dstColor = FreeRDPConvertColor(color, SrcFormat, DstFormat, palette);
 			FreeRDPWriteColor_int(&dstLine[(x + nXDst) * dstByte], DstFormat, dstColor);
 		}
 		for (; x < nWidth; x++)
 		{
-			const UINT32 color = FreeRDPReadColor(&srcLine[(x + nXSrc) * srcByte], SrcFormat);
+			const UINT32 color = FreeRDPReadColor_int(&srcLine[(x + nXSrc) * srcByte], SrcFormat);
 			const UINT32 dstColor = FreeRDPConvertColor(color, SrcFormat, DstFormat, palette);
 			FreeRDPWriteColor_int(&dstLine[(x + nXDst) * dstByte], DstFormat, dstColor);
 		}
