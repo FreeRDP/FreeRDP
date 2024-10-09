@@ -32,7 +32,6 @@ jobs:
          libasound2-dev \
          libpcsclite-dev \
          libv4l-dev \
-         xsltproc \
          libxcb-cursor-dev \
          libxcursor-dev \
          libcairo2-dev \
@@ -54,7 +53,6 @@ jobs:
          libcairo2-dev \
          libsoxr-dev \
          libsdl2-dev \
-         docbook-xsl \
          libkrb5-dev \
          libcjson-dev \
          libsdl2-ttf-dev \

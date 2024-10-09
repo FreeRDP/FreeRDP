@@ -52,8 +52,6 @@ jobs:
               libpulse-dev \
               libasound2-dev \
               libpcsclite-dev \
-              xsltproc \
-              libxml2-dev \
               libxcb-cursor-dev \
               libxcursor-dev \
               libcairo2-dev \
@@ -74,7 +72,6 @@ jobs:
               libsdl2-dev \
               libsdl2-ttf-dev \
               libsdl2-image-dev \
-              docbook-xsl \
               libkrb5-dev \
               libcjson-dev \
               libpkcs11-helper1-dev \
