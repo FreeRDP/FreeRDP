@@ -878,6 +878,7 @@ typedef struct
 
 static const char file_search_magic[] = "file_srch_magic";
 
+WINPR_ATTR_MALLOC(FindClose, 1)
 static WIN32_FILE_SEARCH* file_search_new(const char* name, size_t namelen, const char* pattern,
                                           size_t patternlen)
 {

@@ -146,7 +146,7 @@ WINPR_API const char* winpr_get_build_config(void);
  * @since version 3.9.0
  */
 #define WINPR_REINTERPRET_CAST(ptr, srcType, dstType) \
-	({                                                \
+	__extension__({                                   \
 		union                                         \
 		{                                             \
 			srcType src;                              \
@@ -164,7 +164,7 @@ WINPR_API const char* winpr_get_build_config(void);
  * @since version 3.9.0
  */
 #define WINPR_CAST_CONST_PTR_AWAY(ptr, dstType) \
-	({                                          \
+	__extension__({                             \
 		union                                   \
 		{                                       \
 			typeof(ptr) src;                    \
@@ -182,7 +182,7 @@ WINPR_API const char* winpr_get_build_config(void);
  * @since version 3.9.0
  */
 #define WINPR_FUNC_PTR_CAST(ptr, dstType) \
-	({                                    \
+	__extension__({                       \
 		union                             \
 		{                                 \
 			typeof(ptr) src;              \
