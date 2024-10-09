@@ -1,0 +1,35 @@
+.SH "KEYBOARD SHORTCUTS"
+.PP
+<Right CTRL>
+.RS 4
+releases keyboard and mouse grab
+.RE
+.PP
+<CTRL>+<ALT>+<Return>
+.RS 4
+toggles fullscreen state of the application
+.RE
+.PP
+<CTRL>+<ALT>+<m>
+.RS 4
+Minimizes the application
+.RE
+.PP
+<CTRL>+<ALT>+c
+.RS 4
+toggles remote control in a remote assistance session
+.RE
+.PP
+Action Script
+.RS 4
+executes a predefined script on key press\&.
+Should the script not exist it is ignored\&.
+Scripts can be provided at the default location
+\fI$XDG_CONFIG_HOME/freerdp/action\&.sh\fR
+or as command line argument
+\fI/action:script:<path>\fR\&.
+The script will receive the current key combination as argument\&.
+The output of the script is parsed for
+\fIkey\-local\fR
+which tells that the script used the key combination, otherwise the combination is forwarded to the remote\&.
+.RE

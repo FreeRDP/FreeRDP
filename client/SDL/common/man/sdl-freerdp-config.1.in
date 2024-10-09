@@ -1,0 +1,124 @@
+.SH "CONFIGURATION FILE"
+.PP
+Format and Location:
+.RS 4
+The configuration file is stored per user\&.
+.br
+
+The
+\fIXDG_CONFIG_HOME\fR
+environment variable can be used to override the base directory\&.
+.br
+
+This defaults to
+\fI~/\&.config\fR
+The location relative to
+\fIXDG_CONFIG_HOME\fR
+is
+\fI$XDG_CONFIG_HOME/@VENDOR_PRODUCT@/sdl\-freerdp\&.json\fR
+.br
+
+The configuration is stored in JSON format
+.RE
+.PP
+Supported options:
+.RS 4
+.PP
+\fISDL_KeyModMask\fR
+.RS 4
+.PP
+.RS 4
+Defines the key combination required for SDL client shortcuts\&.
+.br
+
+Default
+\fIKMOD_RSHIFT\fR
+.br
+
+An array of
+\fISDL_Keymod\fR
+strings as defined at
+\fI@SDL_WIKI_BASE_URL@/SDL_Keymod\fR
+.RE
+.RE
+.PP
+\fISDL_Fullscreen\fR
+.RS 4
+.PP
+.RS 4
+Toggles client fullscreen state\&.
+.br
+
+Default
+\fISDL_SCANCODE_RETURN\fR\&.
+.br
+
+A string as defined at
+\fI@SDL_WIKI_BASE_URL@/SDLScancodeLookup\fR
+.RE
+.RE
+.PP
+\fISDL_Minimize\fR
+.RS 4
+.PP
+.RS 4
+Minimizes the client window
+.br
+
+Default
+\fISDL_SCANCODE_M\fR\&.
+.br
+
+A string as defined at
+\fI@SDL_WIKI_BASE_URL@/SDLScancodeLookup\fR
+.RE
+.RE
+.PP
+\fISDL_Resizeable\fR
+.RS 4
+.PP
+.RS 4
+Toggles local window resizeable state\&.
+.br
+
+Default
+\fISDL_SCANCODE_R\fR\&.
+.br
+
+A string as defined at
+\fI@SDL_WIKI_BASE_URL@/SDLScancodeLookup\fR
+.RE
+.RE
+.PP
+\fISDL_Grab\fR
+.RS 4
+.PP
+.RS 4
+Toggles keyboard and mouse grab state\&.
+.br
+
+Default
+\fISDL_SCANCODE_G\fR\&.
+.br
+
+A string as defined at
+\fI@SDL_WIKI_BASE_URL@/SDLScancodeLookup\fR
+.RE
+.RE
+.PP
+\fISDL_Disconnect\fR
+.RS 4
+.PP
+.RS 4
+Disconnects from the RDP session\&.
+.br
+
+Default
+\fISDL_SCANCODE_D\fR\&.
+.br
+
+A string as defined at
+\fI@SDL_WIKI_BASE_URL@/SDLScancodeLookup\fR
+.RE
+.RE
+.RE

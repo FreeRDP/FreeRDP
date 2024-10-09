@@ -1,0 +1,82 @@
+.SH "GLOBAL CONFIGURATION"
+.PP
+Format and Location:
+.RS 4
+The configuration file is stored in global system configuration\&.
+.br
+
+The location is
+\fI@CMAKE_INSTALL_FULL_SYSCONFDIR@/@VENDOR@/@PRODUCT@/certificates\&.json\fR
+.br
+
+File format is JSON
+.RE
+.PP
+Supported options:
+.RS 4
+.PP
+\fIdeny\fR
+.RS 4
+.PP
+.RS 4
+\fIJSON boolean\fR
+.br
+
+Deny the certificate if the check against system SSL store was not successful
+.RE
+.RE
+.PP
+\fIignore\fR
+.RS 4
+.PP
+.RS 4
+\fIJSON boolean\fR
+.br
+
+Ignore certificate failures, just ignore the certificate
+.RE
+.RE
+.PP
+\fIdeny\-userconfig\fR
+.RS 4
+.PP
+.RS 4
+\fIJSON boolean\fR
+.br
+
+If the checks in the global configuration do not accept the certificate do not ask the user
+.RE
+.RE
+.PP
+\fIcertificate\-db\fR
+.RS 4
+.PP
+\fIJSON array\fR
+.RS 4
+An array of
+\fIJSON objects\fR
+with:
+.PP
+\fItype\fR
+.RS 4
+\fIJSON string\fR
+.br
+
+a string identifying the hash algorithm used, e\&.g\&.
+\fIsha256\fR
+
+.br
+
+.RE
+.PP
+\fIhash\fR
+.RS 4
+\fIJSON string\fR
+.br
+
+a string of hex integer values representing the certificate hash, e\&.g\&.
+\fI0123456789abcdef\fR
+.RE
+.RE
+.RE
+.RE

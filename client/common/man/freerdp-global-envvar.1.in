@@ -1,0 +1,10 @@
+.SH "ENVIRONMENT VARIABLES"
+.PP
+wlog environment variable
+.RS 4
+@MANPAGE_NAME@ uses wLog as its log facility, you can refer to the corresponding man page (wlog(7)) for more informations\&. Arguments passed via the
+\fI/log\-level\fR
+or
+\fI/log\-filters\fR
+have precedence over the environment variables\&.
+.RE

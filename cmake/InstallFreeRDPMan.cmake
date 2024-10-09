@@ -1,6 +1,8 @@
+include(today)
 include(GNUInstallDirs)
-include(FindDocBookXSL)
 include(CleaningConfigureFile)
+
+get_filename_component(INSTALL_FREERDP_MAN_SCRIPT_DIR "${CMAKE_CURRENT_LIST_DIR}" ABSOLUTE)
 
 function(install_freerdp_man manpage section)
 	if(WITH_MANPAGES)
@@ -20,55 +22,60 @@ function(generate_and_install_freerdp_man_from_template name_base section api)
 	endif()
 endfunction()
 
-function(generate_and_install_freerdp_man_from_xml target section dependencies)
+# Generate an install target for a manpage.
+#
+# This is not as simple as it looks like:
+#
+# 1. extract the raw file names (files that require configure_file end with .in, ready to use files
+#    with .1 or some other manpage related number)
+# 2. do the same for every dependency
+# 3. create a command to run during build. Add a few defined symbols by default
+# 4. add variable names passed to the function to the command
+# 5. run CMake -P as custom_target during build.
+#   * run configure_file for all .in files
+#   * concatenate all manpage sections to the target manpage
+# 6. create the actual install target
+function(generate_and_install_freerdp_man_from_xml target section dependencies variable_names)
 	if(WITH_MANPAGES)
-		get_target_property(name_base ${target} OUTPUT_NAME)
+                get_target_property(name_base "${target}" OUTPUT_NAME)
 		set(template "${target}.${section}")
 		set(MANPAGE_NAME "${name_base}")
 		set(manpage "${name_base}.${section}")
 
 		# We need the variable ${MAN_TODAY} to contain the current date in ISO
-                # format to replace it in the cleaning_configure_file step.
+		# format to replace it in the cleaning_configure_file step.
 		include(today)
 
 		TODAY(MAN_TODAY)
 
-                cleaning_configure_file(${template}.xml.in ${manpage}.xml @ONLY IMMEDIATE)
+		set(GENERATE_COMMAND 
+			-Dtemplate=\"${template}\" 
+			-DMANPAGE_NAME=\"${MANPAGE_NAME}\" 
+			-Dmanpage=\"${manpage}\"
+			-DMAN_TODAY=\"${MAN_TODAY}\" 
+			-DCURRENT_SOURCE_DIR=\"${CMAKE_CURRENT_SOURCE_DIR}\"
+			-DCURRENT_BINARY_DIR=\"${CMAKE_CURRENT_BINARY_DIR}\"
+			-Dtarget="${target}"
+			-Dsection="${section}"
+			-Ddependencies="${dependencies}"
+		)
 
-		foreach(DEP IN LISTS dependencies)
-			get_filename_component(DNAME "${DEP}" NAME)
-			set(SRC ${CMAKE_CURRENT_SOURCE_DIR}/${DEP}.in)
-			set(DST ${CMAKE_CURRENT_BINARY_DIR}/${DNAME})
-
-			if (EXISTS ${SRC})
-				message("generating ${DST} from ${SRC}")
-                                cleaning_configure_file(${SRC} ${DST} @ONLY IMMEDIATE)
-			else()
-				message("using ${DST} from ${SRC}")
-			endif()
+		foreach(var IN ITEMS ${variable_names})
+			list(APPEND GENERATE_COMMAND
+				-D${var}=${${var}}
+			)
 		endforeach()
 
-		find_program(XSLTPROC_EXECUTABLE NAMES xsltproc REQUIRED)
-		if (NOT DOCBOOKXSL_FOUND)
-			message(FATAL_ERROR "docbook xsl not found but required for manpage generation")
-		endif()
+		list(APPEND GENERATE_COMMAND
+			-P \"${INSTALL_FREERDP_MAN_SCRIPT_DIR}/GenerateManpages.cmake\"
+		)
 
-		add_custom_command(
-                                        OUTPUT "${manpage}"
-					COMMAND ${CMAKE_BINARY_DIR}/client/common/man/generate_argument_docbook
-					COMMAND ${XSLTPROC_EXECUTABLE} --path "${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR}" ${DOCBOOKXSL_DIR}/manpages/docbook.xsl ${manpage}.xml
-					WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-					DEPENDS
-						${CMAKE_CURRENT_BINARY_DIR}/${manpage}.xml
-						generate_argument_docbook
-						${template}.xml.in
-					)
+		add_custom_target(${manpage}.target ALL
+			COMMAND ${CMAKE_COMMAND} ${GENERATE_COMMAND}
+			DEPENDS generate_argument_manpage.target
+			WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+		)
 
-		add_custom_target(
-			${manpage}.manpage ALL
-			DEPENDS
-				${manpage}
-			)
 		install_freerdp_man(${CMAKE_CURRENT_BINARY_DIR}/${manpage} ${section})
 	endif()
 endfunction()
