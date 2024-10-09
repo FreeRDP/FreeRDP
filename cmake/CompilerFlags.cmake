@@ -43,7 +43,6 @@ if (ENABLE_WARNING_VERBOSE)
 			-Wno-reserved-identifier
 			-Wno-covered-switch-default
 			-Wno-disabled-macro-expansion
-			-Wno-language-extension-token
 		)
 	endif()
 
