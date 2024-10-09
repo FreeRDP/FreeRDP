@@ -604,7 +604,7 @@ static SECURITY_STATUS negotiate_mic_exchange(NEGOTIATE_CONTEXT* context, NegTok
 	if (!name)
 		return SEC_E_INTERNAL_ERROR;
 
-	if (_tcscmp(name, NTLM_SSP_NAME) == 0)
+	if (_tcsncmp(name, NTLM_SSP_NAME, ARRAYSIZE(NTLM_SSP_NAME)) == 0)
 	{
 		if (!ntlm_reset_cipher_state(&context->sub_context))
 			return SEC_E_INTERNAL_ERROR;
@@ -1407,9 +1407,9 @@ static SECURITY_STATUS SEC_ENTRY negotiate_AcquireCredentialsHandleW(
 		const SecPkg* pkg = MechTable[i].pkg;
 		cred->mech = &MechTable[i];
 
-		if (!kerberos && _tcscmp(pkg->name, KERBEROS_SSP_NAME) == 0)
+		if (!kerberos && _tcsncmp(pkg->name, KERBEROS_SSP_NAME, ARRAYSIZE(KERBEROS_SSP_NAME)) == 0)
 			continue;
-		if (!ntlm && _tcscmp(SecPkgTable[i].name, NTLM_SSP_NAME) == 0)
+		if (!ntlm && _tcsncmp(SecPkgTable[i].name, NTLM_SSP_NAME, ARRAYSIZE(NTLM_SSP_NAME)) == 0)
 			continue;
 
 		WINPR_ASSERT(pkg->table_w);
@@ -1450,9 +1450,9 @@ static SECURITY_STATUS SEC_ENTRY negotiate_AcquireCredentialsHandleA(
 
 		cred->mech = &MechTable[i];
 
-		if (!kerberos && _tcscmp(pkg->name, KERBEROS_SSP_NAME) == 0)
+		if (!kerberos && _tcsncmp(pkg->name, KERBEROS_SSP_NAME, ARRAYSIZE(KERBEROS_SSP_NAME)) == 0)
 			continue;
-		if (!ntlm && _tcscmp(SecPkgTable[i].name, NTLM_SSP_NAME) == 0)
+		if (!ntlm && _tcsncmp(SecPkgTable[i].name, NTLM_SSP_NAME, ARRAYSIZE(NTLM_SSP_NAME)) == 0)
 			continue;
 
 		WINPR_ASSERT(pkg->table);

@@ -13,14 +13,14 @@ int TestPathIsUNCEx(int argc, char* argv[])
 {
 	BOOL status = 0;
 	LPCTSTR Server = NULL;
-	TCHAR Path[PATHCCH_MAX_CCH];
+	TCHAR Path[PATHCCH_MAX_CCH] = { 0 };
 
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
 
 	/* Path is UNC */
 
-	_tcscpy(Path, testPathUNC);
+	_tcsncpy(Path, testPathUNC, ARRAYSIZE(Path));
 
 	status = PathIsUNCEx(Path, &Server);
 
@@ -30,7 +30,7 @@ int TestPathIsUNCEx(int argc, char* argv[])
 		return -1;
 	}
 
-	if (_tcscmp(Server, testServer) != 0)
+	if (_tcsncmp(Server, testServer, ARRAYSIZE(testServer)) != 0)
 	{
 		_tprintf(_T("Server Name Mismatch: Actual: %s, Expected: %s\n"), Server, testServer);
 		return -1;
@@ -38,7 +38,7 @@ int TestPathIsUNCEx(int argc, char* argv[])
 
 	/* Path is not UNC */
 
-	_tcscpy(Path, testPathNotUNC);
+	_tcsncpy(Path, testPathNotUNC, ARRAYSIZE(Path));
 
 	status = PathIsUNCEx(Path, &Server);
 

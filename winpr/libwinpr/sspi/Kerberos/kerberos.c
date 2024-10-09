@@ -1400,7 +1400,7 @@ static KRB_CONTEXT* get_context(PCtxtHandle phContext)
 	if (!name)
 		return NULL;
 
-	if (_tcscmp(KERBEROS_SSP_NAME, name) != 0)
+	if (_tcsncmp(KERBEROS_SSP_NAME, name, ARRAYSIZE(KERBEROS_SSP_NAME)) != 0)
 		return NULL;
 	return sspi_SecureHandleGetLowerPointer(phContext);
 }

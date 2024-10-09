@@ -27,7 +27,7 @@ static char* resize(char** buffer, size_t* size, size_t increment)
 static char* append(char** buffer, size_t* size, const char* str)
 {
 	const size_t len = strnlen(*buffer, *size);
-	const size_t add = strlen(str);
+	const size_t add = strnlen(str, 128);
 	const size_t required = len + add + 1;
 
 	if (required > *size)
@@ -35,7 +35,7 @@ static char* append(char** buffer, size_t* size, const char* str)
 		if (!resize(buffer, size, required - *size))
 			return NULL;
 	}
-	strcat(*buffer, str);
+	strncpy(&(*buffer)[len], str, add);
 	return *buffer;
 }
 

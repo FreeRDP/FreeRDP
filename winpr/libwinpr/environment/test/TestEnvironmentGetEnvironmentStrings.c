@@ -7,32 +7,37 @@
 int TestEnvironmentGetEnvironmentStrings(int argc, char* argv[])
 {
 	int r = -1;
-	TCHAR* p = NULL;
-	size_t length = 0;
-	LPTCH lpszEnvironmentBlock = NULL;
 
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
 
-	lpszEnvironmentBlock = GetEnvironmentStrings();
+	LPTCH lpszEnvironmentBlock = GetEnvironmentStrings();
+	if (!lpszEnvironmentBlock)
+		goto fail;
 
-	p = lpszEnvironmentBlock;
-
+	TCHAR* p = lpszEnvironmentBlock;
 	while (p[0] && p[1])
 	{
+		/* https://devblogs.microsoft.com/oldnewthing/20100203-00/?p=15083 */
+		const size_t max = _tcsnlen(p, 32768);
+		if (max == 32768)
+		{
+			_tprintf(_T("test failed: environment length limit 32768 exceeded\n"));
+			goto fail;
+		}
+
 		const int rc = _sntprintf(NULL, 0, _T("%s\n"), p);
 		if (rc < 1)
 		{
 			_tprintf(_T("test failed: return %d\n"), rc);
 			goto fail;
 		}
-		length = _tcslen(p);
-		if (length != (size_t)(rc - 1))
+		if (max != (size_t)(rc - 1))
 		{
-			_tprintf(_T("test failed: length %") _T(PRIuz) _T(" != %d [%s]\n"), length, rc - 1, p);
+			_tprintf(_T("test failed: length %") _T(PRIuz) _T(" != %d [%s]\n"), max, rc - 1, p);
 			goto fail;
 		}
-		p += (length + 1);
+		p += (max + 1);
 	}
 
 	r = 0;
