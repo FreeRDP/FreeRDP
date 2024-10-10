@@ -106,6 +106,7 @@ static LONG smartcard_ndr_read(wStream* s, BYTE** data, size_t min, size_t eleme
 	void* r = NULL;
 	size_t required = 0;
 
+	*data = NULL;
 	switch (type)
 	{
 		case NDR_PTR_FULL:
@@ -169,7 +170,10 @@ static LONG smartcard_ndr_read(wStream* s, BYTE** data, size_t min, size_t eleme
 
 	len *= elementSize;
 
-	r = calloc(len + 1, sizeof(CHAR));
+	/* Ensure proper '\0' termination for all kinds of unicode strings
+	 * as we do not know if the data from the wire contains one.
+	 */
+	r = calloc(len + sizeof(WCHAR), sizeof(CHAR));
 	if (!r)
 		return SCARD_E_NO_MEMORY;
 	Stream_Read(s, r, len);
@@ -2170,10 +2174,6 @@ LONG smartcard_unpack_hcard_and_disposition_call(wStream* s, HCardAndDisposition
 
 static void smartcard_trace_get_status_change_a_call(const GetStatusChangeA_Call* call)
 {
-	char* szEventState = NULL;
-	char* szCurrentState = NULL;
-	LPSCARD_READERSTATEA readerState = NULL;
-
 	if (!WLog_IsLevelActive(WLog_Get(TAG), g_LogLevel))
 		return;
 
@@ -2185,11 +2185,11 @@ static void smartcard_trace_get_status_change_a_call(const GetStatusChangeA_Call
 
 	for (UINT32 index = 0; index < call->cReaders; index++)
 	{
-		readerState = &call->rgReaderStates[index];
+		LPSCARD_READERSTATEA readerState = &call->rgReaderStates[index];
 		WLog_LVL(TAG, g_LogLevel, "\t[%" PRIu32 "]: szReader: %s cbAtr: %" PRIu32 "", index,
 		         readerState->szReader, readerState->cbAtr);
-		szCurrentState = SCardGetReaderStateString(readerState->dwCurrentState);
-		szEventState = SCardGetReaderStateString(readerState->dwEventState);
+		char* szCurrentState = SCardGetReaderStateString(readerState->dwCurrentState);
+		char* szEventState = SCardGetReaderStateString(readerState->dwEventState);
 		WLog_LVL(TAG, g_LogLevel, "\t[%" PRIu32 "]: dwCurrentState: %s (0x%08" PRIX32 ")", index,
 		         szCurrentState, readerState->dwCurrentState);
 		WLog_LVL(TAG, g_LogLevel, "\t[%" PRIu32 "]: dwEventState: %s (0x%08" PRIX32 ")", index,
@@ -2204,22 +2204,21 @@ static void smartcard_trace_get_status_change_a_call(const GetStatusChangeA_Call
 static LONG smartcard_unpack_reader_state_a(wStream* s, LPSCARD_READERSTATEA* ppcReaders,
                                             UINT32 cReaders, UINT32* ptrIndex)
 {
-	UINT32 len = 0;
 	LONG status = SCARD_E_NO_MEMORY;
-	LPSCARD_READERSTATEA rgReaderStates = NULL;
-	BOOL* states = NULL;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return status;
 
-	Stream_Read_UINT32(s, len);
+	const UINT32 len = Stream_Get_UINT32(s);
 	if (len != cReaders)
 	{
 		WLog_ERR(TAG, "Count mismatch when reading LPSCARD_READERSTATEA");
 		return status;
 	}
-	rgReaderStates = (LPSCARD_READERSTATEA)calloc(cReaders, sizeof(SCARD_READERSTATEA));
-	states = calloc(cReaders, sizeof(BOOL));
+
+	LPSCARD_READERSTATEA rgReaderStates =
+	    (LPSCARD_READERSTATEA)calloc(cReaders, sizeof(SCARD_READERSTATEA));
+	BOOL* states = calloc(cReaders, sizeof(BOOL));
 	if (!rgReaderStates || !states)
 		goto fail;
 	status = ERROR_INVALID_DATA;
@@ -2277,23 +2276,21 @@ fail:
 static LONG smartcard_unpack_reader_state_w(wStream* s, LPSCARD_READERSTATEW* ppcReaders,
                                             UINT32 cReaders, UINT32* ptrIndex)
 {
-	UINT32 len = 0;
 	LONG status = SCARD_E_NO_MEMORY;
-	LPSCARD_READERSTATEW rgReaderStates = NULL;
-	BOOL* states = NULL;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return status;
 
-	Stream_Read_UINT32(s, len);
+	const UINT32 len = Stream_Get_UINT32(s);
 	if (len != cReaders)
 	{
 		WLog_ERR(TAG, "Count mismatch when reading LPSCARD_READERSTATEW");
 		return status;
 	}
 
-	rgReaderStates = (LPSCARD_READERSTATEW)calloc(cReaders, sizeof(SCARD_READERSTATEW));
-	states = calloc(cReaders, sizeof(BOOL));
+	LPSCARD_READERSTATEW rgReaderStates =
+	    (LPSCARD_READERSTATEW)calloc(cReaders, sizeof(SCARD_READERSTATEW));
+	BOOL* states = calloc(cReaders, sizeof(BOOL));
 
 	if (!rgReaderStates || !states)
 		goto fail;
