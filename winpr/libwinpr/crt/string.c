@@ -469,7 +469,7 @@ LPSTR CharUpperA(LPSTR lpsz)
 		char c = *lpsz;
 
 		if ((c >= 'a') && (c <= 'z'))
-			c = c - 'a' + 'A';
+			c = (char)(c - 'a' + 'A');
 
 		*lpsz = c;
 		return lpsz;
@@ -478,7 +478,7 @@ LPSTR CharUpperA(LPSTR lpsz)
 	for (size_t i = 0; i < length; i++)
 	{
 		if ((lpsz[i] >= 'a') && (lpsz[i] <= 'z'))
-			lpsz[i] = lpsz[i] - 'a' + 'A';
+			lpsz[i] = (char)(lpsz[i] - 'a' + 'A');
 	}
 
 	return lpsz;
@@ -524,7 +524,7 @@ DWORD CharUpperBuffA(LPSTR lpsz, DWORD cchLength)
 	for (DWORD i = 0; i < cchLength; i++)
 	{
 		if ((lpsz[i] >= 'a') && (lpsz[i] <= 'z'))
-			lpsz[i] = lpsz[i] - 'a' + 'A';
+			lpsz[i] = (char)(lpsz[i] - 'a' + 'A');
 	}
 
 	return cchLength;
@@ -561,7 +561,7 @@ LPSTR CharLowerA(LPSTR lpsz)
 		char c = *lpsz;
 
 		if ((c >= 'A') && (c <= 'Z'))
-			c = c - 'A' + 'a';
+			c = (char)(c - 'A' + 'a');
 
 		*lpsz = c;
 		return lpsz;
@@ -570,7 +570,7 @@ LPSTR CharLowerA(LPSTR lpsz)
 	for (size_t i = 0; i < length; i++)
 	{
 		if ((lpsz[i] >= 'A') && (lpsz[i] <= 'Z'))
-			lpsz[i] = lpsz[i] - 'A' + 'a';
+			lpsz[i] = (char)(lpsz[i] - 'A' + 'a');
 	}
 
 	return lpsz;
@@ -590,7 +590,7 @@ DWORD CharLowerBuffA(LPSTR lpsz, DWORD cchLength)
 	for (DWORD i = 0; i < cchLength; i++)
 	{
 		if ((lpsz[i] >= 'A') && (lpsz[i] <= 'Z'))
-			lpsz[i] = lpsz[i] - 'A' + 'a';
+			lpsz[i] = (char)(lpsz[i] - 'A' + 'a');
 	}
 
 	return cchLength;

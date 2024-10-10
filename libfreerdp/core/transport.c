@@ -1038,7 +1038,10 @@ SSIZE_T transport_parse_pdu(rdpTransport* transport, wStream* s, BOOL* incomplet
 		pduLength = parse_default_mode_pdu(transport, s);
 
 	if (pduLength == 0)
-		return pduLength;
+		return 0;
+
+	if (pduLength > SSIZE_MAX)
+		return -1;
 
 	const size_t len = Stream_Length(s);
 	if (len > pduLength)
@@ -1047,7 +1050,7 @@ SSIZE_T transport_parse_pdu(rdpTransport* transport, wStream* s, BOOL* incomplet
 	if (incomplete)
 		*incomplete = len < pduLength;
 
-	return pduLength;
+	return (int)pduLength;
 }
 
 static int transport_default_read_pdu(rdpTransport* transport, wStream* s)
@@ -1067,9 +1070,11 @@ static int transport_default_read_pdu(rdpTransport* transport, wStream* s)
 		BYTE c = '\0';
 		do
 		{
-			const int rc = transport_read_layer(transport, &c, 1);
+			const SSIZE_T rc = transport_read_layer(transport, &c, 1);
+			if (rc > INT32_MAX)
+				return INT32_MAX;
 			if (rc != 1)
-				return rc;
+				return (int)rc;
 			if (!Stream_EnsureRemainingCapacity(s, 1))
 				return -1;
 			Stream_Write_UINT8(s, c);
@@ -1079,9 +1084,11 @@ static int transport_default_read_pdu(rdpTransport* transport, wStream* s)
 	{
 		if (!Stream_EnsureCapacity(s, 4))
 			return -1;
-		const int rc = transport_read_layer_bytes(transport, s, 4);
+		const SSIZE_T rc = transport_read_layer_bytes(transport, s, 4);
+		if (rc > INT32_MAX)
+			return INT32_MAX;
 		if (rc != 1)
-			return rc;
+			return (int)rc;
 	}
 	else
 	{
@@ -1089,12 +1096,13 @@ static int transport_default_read_pdu(rdpTransport* transport, wStream* s)
 		status = transport_parse_pdu(transport, s, &incomplete);
 		while ((status == 0) && incomplete)
 		{
-			int rc = 0;
 			if (!Stream_EnsureRemainingCapacity(s, 1))
 				return -1;
-			rc = transport_read_layer_bytes(transport, s, 1);
+			SSIZE_T rc = transport_read_layer_bytes(transport, s, 1);
+			if (rc > INT32_MAX)
+				return INT32_MAX;
 			if (rc != 1)
-				return rc;
+				return (int)rc;
 			status = transport_parse_pdu(transport, s, &incomplete);
 		}
 
@@ -1114,7 +1122,11 @@ static int transport_default_read_pdu(rdpTransport* transport, wStream* s)
 		status = transport_read_layer_bytes(transport, s, pduLength - Stream_GetPosition(s));
 
 		if (status != 1)
-			return status;
+		{
+			if ((status < INT32_MIN) || (status > INT32_MAX))
+				return -1;
+			return (int)status;
+		}
 
 		if (Stream_GetPosition(s) >= pduLength)
 			WLog_Packet(transport->log, WLOG_TRACE, Stream_Buffer(s), pduLength,
@@ -1123,7 +1135,10 @@ static int transport_default_read_pdu(rdpTransport* transport, wStream* s)
 
 	Stream_SealLength(s);
 	Stream_SetPosition(s, 0);
-	return Stream_Length(s);
+	const size_t len = Stream_Length(s);
+	if (len > INT32_MAX)
+		return -1;
+	return (int)len;
 }
 
 int transport_write(rdpTransport* transport, wStream* s)
@@ -1136,10 +1151,7 @@ int transport_write(rdpTransport* transport, wStream* s)
 
 static int transport_default_write(rdpTransport* transport, wStream* s)
 {
-	size_t length = 0;
 	int status = -1;
-	int writtenlength = 0;
-	rdpRdp* rdp = NULL;
 	rdpContext* context = transport_get_context(transport);
 
 	WINPR_ASSERT(transport);
@@ -1150,7 +1162,7 @@ static int transport_default_write(rdpTransport* transport, wStream* s)
 
 	Stream_AddRef(s);
 
-	rdp = context->rdp;
+	rdpRdp* rdp = context->rdp;
 	if (!rdp)
 		goto fail;
 
@@ -1158,8 +1170,8 @@ static int transport_default_write(rdpTransport* transport, wStream* s)
 	if (!transport->frontBio)
 		goto out_cleanup;
 
-	length = Stream_GetPosition(s);
-	writtenlength = length;
+	size_t length = Stream_GetPosition(s);
+	size_t writtenlength = length;
 	Stream_SetPosition(s, 0);
 
 	if (length > 0)
@@ -1171,7 +1183,8 @@ static int transport_default_write(rdpTransport* transport, wStream* s)
 	while (length > 0)
 	{
 		ERR_clear_error();
-		status = BIO_write(transport->frontBio, Stream_ConstPointer(s), length);
+		const int towrite = (length > INT32_MAX) ? INT32_MAX : (int)length;
+		status = BIO_write(transport->frontBio, Stream_ConstPointer(s), towrite);
 
 		if (status <= 0)
 		{
@@ -1223,8 +1236,8 @@ static int transport_default_write(rdpTransport* transport, wStream* s)
 			}
 		}
 
-		length -= status;
-		Stream_Seek(s, status);
+		length -= (size_t)status;
+		Stream_Seek(s, (size_t)status);
 	}
 
 	transport->written += writtenlength;
@@ -1374,7 +1387,7 @@ BOOL transport_is_write_blocked(rdpTransport* transport)
 {
 	WINPR_ASSERT(transport);
 	WINPR_ASSERT(transport->frontBio);
-	return BIO_write_blocked(transport->frontBio);
+	return BIO_write_blocked(transport->frontBio) != 0;
 }
 
 int transport_drain_output_buffer(rdpTransport* transport)
@@ -1388,7 +1401,8 @@ int transport_drain_output_buffer(rdpTransport* transport)
 		if (BIO_flush(transport->frontBio) < 1)
 			return -1;
 
-		status |= BIO_write_blocked(transport->frontBio);
+		const long rc = BIO_write_blocked(transport->frontBio);
+		status = (rc != 0);
 	}
 
 	return status;

@@ -722,14 +722,19 @@ static BOOL x11_shadow_check_resize(x11ShadowSubsystem* subsystem)
 
 		/* Screen size changed. Refresh monitor definitions and trigger screen resize */
 		subsystem->common.numMonitors = x11_shadow_enum_monitors(subsystem->common.monitors, 16);
-		shadow_screen_resize(subsystem->common.server->screen);
-		subsystem->width = attr.width;
-		subsystem->height = attr.height;
+		if (!shadow_screen_resize(subsystem->common.server->screen))
+			return FALSE;
+
+		WINPR_ASSERT(attr.width > 0);
+		WINPR_ASSERT(attr.height > 0);
+
+		subsystem->width = (UINT32)attr.width;
+		subsystem->height = (UINT32)attr.height;
 
 		virtualScreen->left = 0;
 		virtualScreen->top = 0;
-		virtualScreen->right = subsystem->width - 1;
-		virtualScreen->bottom = subsystem->height - 1;
+		virtualScreen->right = attr.width - 1;
+		virtualScreen->bottom = attr.height - 1;
 		virtualScreen->flags = 1;
 		return TRUE;
 	}

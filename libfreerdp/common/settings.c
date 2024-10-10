@@ -781,13 +781,16 @@ void freerdp_addin_argv_free(ADDIN_ARGV* args)
 
 ADDIN_ARGV* freerdp_addin_argv_new(size_t argc, const char* argv[])
 {
+	if (argc > INT32_MAX)
+		return NULL;
+
 	ADDIN_ARGV* args = calloc(1, sizeof(ADDIN_ARGV));
 	if (!args)
 		return NULL;
 	if (argc == 0)
 		return args;
 
-	args->argc = argc;
+	args->argc = (int)argc;
 	args->argv = calloc(argc, sizeof(char*));
 	if (!args->argv)
 		goto fail;

@@ -930,8 +930,10 @@ static BOOL pf_config_copy_string_list(char*** dst, size_t* size, char** src, si
 
 	*dst = NULL;
 	*size = 0;
-	if (srcSize == 0)
-		return TRUE;
+	if (srcSize > INT32_MAX)
+		return FALSE;
+
+	if (srcSize != 0)
 	{
 		char* csv = CommandLineToCommaSeparatedValues(srcSize, src);
 		*dst = CommandLineParseCommaSeparatedValues(csv, size);

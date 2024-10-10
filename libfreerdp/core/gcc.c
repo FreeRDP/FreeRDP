@@ -2120,18 +2120,18 @@ BOOL gcc_read_client_monitor_data(wStream* s, rdpMcs* mcs)
 
 	for (UINT32 index = 0; index < monitorCount; index++)
 	{
-		UINT32 left = 0;
-		UINT32 top = 0;
-		UINT32 right = 0;
-		UINT32 bottom = 0;
-		UINT32 flags = 0;
+		INT32 left = 0;
+		INT32 top = 0;
+		INT32 right = 0;
+		INT32 bottom = 0;
+		INT32 flags = 0;
 		rdpMonitor* current = &settings->MonitorDefArray[index];
 
-		Stream_Read_UINT32(s, left);   /* left */
-		Stream_Read_UINT32(s, top);    /* top */
-		Stream_Read_UINT32(s, right);  /* right */
-		Stream_Read_UINT32(s, bottom); /* bottom */
-		Stream_Read_UINT32(s, flags);  /* flags */
+		Stream_Read_INT32(s, left);   /* left */
+		Stream_Read_INT32(s, top);    /* top */
+		Stream_Read_INT32(s, right);  /* right */
+		Stream_Read_INT32(s, bottom); /* bottom */
+		Stream_Read_INT32(s, flags);  /* flags */
 		current->x = left;
 		current->y = top;
 		current->width = right - left + 1;
