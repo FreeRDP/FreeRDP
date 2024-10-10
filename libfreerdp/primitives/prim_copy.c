@@ -146,6 +146,8 @@ static INLINE pstatus_t generic_image_copy_bgr24_bgrx32(BYTE* WINPR_RESTRICT pDs
 	const SSIZE_T srcByte = 3;
 	const SSIZE_T dstByte = 4;
 
+	const UINT32 width = nWidth - nWidth % 8;
+
 	for (SSIZE_T y = 0; y < nHeight; y++)
 	{
 		const BYTE* WINPR_RESTRICT srcLine =
@@ -153,7 +155,16 @@ static INLINE pstatus_t generic_image_copy_bgr24_bgrx32(BYTE* WINPR_RESTRICT pDs
 		BYTE* WINPR_RESTRICT dstLine =
 		    &pDstData[dstVMultiplier * (y + nYDst) * nDstStep + dstVOffset];
 
-		for (SSIZE_T x = 0; x < nWidth; x++)
+		SSIZE_T x = 0;
+		WINPR_PRAGMA_UNROLL_LOOP
+		for (; x < width; x++)
+		{
+			dstLine[(x + nXDst) * dstByte + 0] = srcLine[(x + nXSrc) * srcByte + 0];
+			dstLine[(x + nXDst) * dstByte + 1] = srcLine[(x + nXSrc) * srcByte + 1];
+			dstLine[(x + nXDst) * dstByte + 2] = srcLine[(x + nXSrc) * srcByte + 2];
+		}
+
+		for (; x < nWidth; x++)
 		{
 			dstLine[(x + nXDst) * dstByte + 0] = srcLine[(x + nXSrc) * srcByte + 0];
 			dstLine[(x + nXDst) * dstByte + 1] = srcLine[(x + nXSrc) * srcByte + 1];
@@ -174,6 +185,8 @@ static INLINE pstatus_t generic_image_copy_bgrx32_bgrx32(
 	const SSIZE_T srcByte = 4;
 	const SSIZE_T dstByte = 4;
 
+	const UINT32 width = nWidth - nWidth % 8;
+
 	for (SSIZE_T y = 0; y < nHeight; y++)
 	{
 		const BYTE* WINPR_RESTRICT srcLine =
@@ -181,7 +194,15 @@ static INLINE pstatus_t generic_image_copy_bgrx32_bgrx32(
 		BYTE* WINPR_RESTRICT dstLine =
 		    &pDstData[dstVMultiplier * (y + nYDst) * nDstStep + dstVOffset];
 
-		for (SSIZE_T x = 0; x < nWidth; x++)
+		SSIZE_T x = 0;
+		WINPR_PRAGMA_UNROLL_LOOP
+		for (; x < width; x++)
+		{
+			dstLine[(x + nXDst) * dstByte + 0] = srcLine[(x + nXSrc) * srcByte + 0];
+			dstLine[(x + nXDst) * dstByte + 1] = srcLine[(x + nXSrc) * srcByte + 1];
+			dstLine[(x + nXDst) * dstByte + 2] = srcLine[(x + nXSrc) * srcByte + 2];
+		}
+		for (; x < nWidth; x++)
 		{
 			dstLine[(x + nXDst) * dstByte + 0] = srcLine[(x + nXSrc) * srcByte + 0];
 			dstLine[(x + nXDst) * dstByte + 1] = srcLine[(x + nXSrc) * srcByte + 1];
