@@ -1372,22 +1372,11 @@ static UINT gdi_SurfaceToSurface(RdpgfxClientContext* context,
 		if (!is_rect_valid(&rect, surfaceDst->width, surfaceDst->height))
 			goto fail;
 
-		if (surfaceDst == surfaceSrc)
-		{
-			if (!freerdp_image_copy_overlap(
-			        surfaceDst->data, surfaceDst->format, surfaceDst->scanline, destPt->x,
-			        destPt->y, nWidth, nHeight, surfaceSrc->data, surfaceSrc->format,
-			        surfaceSrc->scanline, rectSrc->left, rectSrc->top, NULL, FREERDP_FLIP_NONE))
-				goto fail;
-		}
-		else
-		{
-			if (!freerdp_image_copy_no_overlap(
-			        surfaceDst->data, surfaceDst->format, surfaceDst->scanline, destPt->x,
-			        destPt->y, nWidth, nHeight, surfaceSrc->data, surfaceSrc->format,
-			        surfaceSrc->scanline, rectSrc->left, rectSrc->top, NULL, FREERDP_FLIP_NONE))
-				goto fail;
-		}
+		if (!freerdp_image_copy(surfaceDst->data, surfaceDst->format, surfaceDst->scanline,
+		                        destPt->x, destPt->y, nWidth, nHeight, surfaceSrc->data,
+		                        surfaceSrc->format, surfaceSrc->scanline, rectSrc->left,
+		                        rectSrc->top, NULL, FREERDP_FLIP_NONE))
+			goto fail;
 
 		invalidRect = rect;
 		region16_union_rect(&surfaceDst->invalidRegion, &surfaceDst->invalidRegion, &invalidRect);
