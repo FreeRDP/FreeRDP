@@ -1,0 +1,116 @@
+.SH "EXAMPLES"
+.PP
+\fB@MANPAGE_NAME@ connection\&.rdp /p:Pwd123! /f\fR
+.RS 4
+Connect in fullscreen mode using a stored configuration
+\fIconnection\&.rdp\fR
+and the password
+\fIPwd123!\fR
+.RE
+.PP
+\fB@MANPAGE_NAME@ /u:USER /size:50%h /v:rdp\&.contoso\&.com\fR
+.RS 4
+Connect to host
+\fIrdp\&.contoso\&.com\fR
+with user
+\fIUSER\fR
+and a size of
+\fI50 percent of the height\fR\&. If width (w) is set instead of height (h) like /size:50%w\&. 50 percent of the width is used\&.
+.RE
+.PP
+\fB@MANPAGE_NAME@ /u:CONTOSO\e\eJohnDoe /p:Pwd123! /v:rdp\&.contoso\&.com\fR
+.RS 4
+Connect to host
+\fIrdp\&.contoso\&.com\fR
+with user
+\fICONTOSO\e\eJohnDoe\fR
+and password
+\fIPwd123!\fR
+.RE
+.PP
+\fB@MANPAGE_NAME@ /u:JohnDoe /p:Pwd123! /w:1366 /h:768 /v:192\&.168\&.1\&.100:4489\fR
+.RS 4
+Connect to host
+\fI192\&.168\&.1\&.100\fR
+on port
+\fI4489\fR
+with user
+\fIJohnDoe\fR, password
+\fIPwd123!\fR\&. The screen width is set to
+\fI1366\fR
+and the height to
+\fI768\fR
+.RE
+.PP
+\fB@MANPAGE_NAME@ /u:JohnDoe /p:Pwd123! /vmconnect:C824F53E\-95D2\-46C6\-9A18\-23A5BB403532 /v:192\&.168\&.1\&.100\fR
+.RS 4
+Establish a connection to host
+\fI192\&.168\&.1\&.100\fR
+with user
+\fIJohnDoe\fR, password
+\fIPwd123!\fR
+and connect to Hyper\-V console (use port 2179, disable negotiation) with VMID
+\fIC824F53E\-95D2\-46C6\-9A18\-23A5BB403532\fR
+.RE
+.PP
+\fB+clipboard\fR
+.RS 4
+Activate clipboard redirection
+.RE
+.PP
+\fB/drive:home,/home/user\fR
+.RS 4
+Activate drive redirection of
+\fI/home/user\fR
+as home drive
+.RE
+.PP
+\fB/smartcard:<device>\fR
+.RS 4
+Activate smartcard redirection for device
+\fIdevice\fR
+.RE
+.PP
+\fB/printer:<device>,<driver>\fR
+.RS 4
+Activate printer redirection for printer
+\fIdevice\fR
+using driver
+\fIdriver\fR
+.RE
+.PP
+\fB/serial:<device>\fR
+.RS 4
+Activate serial port redirection for port
+\fIdevice\fR
+.RE
+.PP
+\fB/parallel:<device>\fR
+.RS 4
+Activate parallel port redirection for port
+\fIdevice\fR
+.RE
+.PP
+\fB/sound:sys:alsa\fR
+.RS 4
+Activate audio output redirection using device
+\fIsys:alsa\fR
+.RE
+.PP
+\fB/microphone:sys:alsa\fR
+.RS 4
+Activate audio input redirection using device
+\fIsys:alsa\fR
+.RE
+.PP
+\fB/multimedia:sys:alsa\fR
+.RS 4
+Activate multimedia redirection using device
+\fIsys:alsa\fR
+.RE
+.PP
+\fB/usb:id,dev:054c:0268\fR
+.RS 4
+Activate USB device redirection for the device identified by
+\fI054c:0268\fR
+.RE

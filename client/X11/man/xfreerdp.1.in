@@ -1,0 +1,15 @@
+.TH "@MANPAGE_NAME@" "1" "@MAN_TODAY@" "freerdp" "@MANPAGE_NAME@"
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.nh
+.ad l
+.SH "NAME"
+@MANPAGE_NAME@ \- FreeRDP X11 client
+.SH "SYNOPSIS"
+.PP
+\fB@MANPAGE_NAME@\fR
+[file] [options] [/v:server[:port]]
+.SH "DESCRIPTION"
+.PP
+\fB@MANPAGE_NAME@\fR
+is an X11 Remote Desktop Protocol (RDP) client which is part of the FreeRDP project\&. An RDP server is built\-in to many editions of Windows\&. Alternative servers included ogon, gnome\-remote\-desktop, xrdp and VRDP (VirtualBox)\&.

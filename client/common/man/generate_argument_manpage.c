@@ -57,11 +57,17 @@ static LPSTR tr_esc_str(LPCSTR arg, bool format)
 		char data[2] = { 0 };
 		switch (arg[x])
 		{
+			case '-':
+				str = "\\-";
+				if (!append(&tmp, &ds, str))
+					exit(-3);
+				break;
+
 			case '<':
 				if (format)
-					str = "<replaceable>";
+					str = "\\fI";
 				else
-					str = "&lt;";
+					str = "<";
 
 				if (!append(&tmp, &ds, str))
 					exit(-3);
@@ -69,32 +75,28 @@ static LPSTR tr_esc_str(LPCSTR arg, bool format)
 
 			case '>':
 				if (format)
-					str = "</replaceable>";
+					str = "\\fR";
 				else
-					str = "&gt;";
+					str = ">";
 
 				if (!append(&tmp, &ds, str))
 					exit(-4);
 				break;
 
 			case '\'':
-				if (!append(&tmp, &ds, "&apos;"))
-					exit(-5);
+				str = "\\*(Aq";
+				if (!append(&tmp, &ds, str))
+					exit(-4);
 				break;
 
-			case '"':
-				if (!append(&tmp, &ds, "&quot;"))
-					exit(-6);
-				break;
-
-			case '&':
-				if (!append(&tmp, &ds, "&amp;"))
+			case '.':
+				if (!append(&tmp, &ds, "\\&."))
 					exit(-6);
 				break;
 
 			case '\r':
 			case '\n':
-				if (!append(&tmp, &ds, "<sbr/>"))
+				if (!append(&tmp, &ds, "\n.br\n"))
 					exit(-7);
 				break;
 
@@ -112,9 +114,16 @@ static LPSTR tr_esc_str(LPCSTR arg, bool format)
 int main(int argc, char* argv[])
 {
 	size_t elements = sizeof(global_cmd_args) / sizeof(global_cmd_args[0]);
-	const char* fname = "freerdp-argument.1.xml";
 
-	(void)fprintf(stdout, "Generating docbook file '%s'\n", fname);
+	if (argc != 2)
+	{
+		(void)fprintf(stderr, "Usage: %s <output file name>\n", argv[0]);
+		return -1;
+	}
+
+	const char* fname = argv[1];
+
+	(void)fprintf(stdout, "Generating manpage file '%s'\n", fname);
 	FILE* fp = fopen(fname, "w");
 	if (NULL == fp)
 	{
@@ -123,12 +132,8 @@ int main(int argc, char* argv[])
 	}
 
 	/* The tag used as header in the manpage */
-	(void)fprintf(fp, "<refsect1>\n");
-	(void)fprintf(fp, "\t<title>Options</title>\n");
-	(void)fprintf(fp, "\t\t<variablelist>\n");
+	(void)fprintf(fp, ".SH \"OPTIONS\"\n");
 
-	/* Iterate over argument struct and write data to docbook 4.5
-	 * compatible XML */
 	if (elements < 2)
 	{
 		(void)fprintf(stderr, "The argument array 'args' is empty, writing an empty file.\n");
@@ -142,18 +147,19 @@ int main(int argc, char* argv[])
 		char* alias = tr_esc_str(arg->Alias, FALSE);
 		char* format = tr_esc_str(arg->Format, TRUE);
 		char* text = tr_esc_str(arg->Text, FALSE);
-		(void)fprintf(fp, "\t\t\t<varlistentry>\n");
 
+		(void)fprintf(fp, ".PP\n");
+		bool first = true;
 		do
 		{
-			(void)fprintf(fp, "\t\t\t\t<term><option>");
-
+			(void)fprintf(fp, "%s\\fB", first ? "" : ", ");
+			first = false;
 			if (arg->Flags == COMMAND_LINE_VALUE_BOOL)
-				(void)fprintf(fp, "%s", arg->Default ? "-" : "+");
+				(void)fprintf(fp, "%s", arg->Default ? "\\-" : "+");
 			else
 				(void)fprintf(fp, "/");
 
-			(void)fprintf(fp, "%s</option>", name);
+			(void)fprintf(fp, "%s\\fR", name);
 
 			if (format)
 			{
@@ -166,45 +172,41 @@ int main(int argc, char* argv[])
 					(void)fprintf(fp, "]");
 			}
 
-			(void)fprintf(fp, "</term>\n");
-
 			if (alias == name)
 				break;
 
 			free(name);
 			name = alias;
 		} while (alias);
+		(void)fprintf(fp, "\n");
 
 		if (text)
 		{
-			(void)fprintf(fp, "\t\t\t\t<listitem>\n");
-			(void)fprintf(fp, "\t\t\t\t\t<para>");
-
-			if (text)
+			(void)fprintf(fp, ".RS 4\n");
+			const int hasText = text && (strnlen(text, 2) > 0);
+			if (hasText)
 				(void)fprintf(fp, "%s", text);
 
 			if (arg->Flags & COMMAND_LINE_VALUE_BOOL &&
 			    (!arg->Default || arg->Default == BoolValueTrue))
-				(void)fprintf(fp, " (default:%s)", arg->Default ? "on" : "off");
+				(void)fprintf(fp, " (default:%s)\n", arg->Default ? "on" : "off");
 			else if (arg->Default)
 			{
 				char* value = tr_esc_str(arg->Default, FALSE);
-				(void)fprintf(fp, " (default:%s)", value);
+				(void)fprintf(fp, " (default:%s)\n", value);
 				free(value);
 			}
-
-			(void)fprintf(fp, "</para>\n");
-			(void)fprintf(fp, "\t\t\t\t</listitem>\n");
+			else if (hasText)
+				(void)fprintf(fp, "\n");
 		}
 
-		(void)fprintf(fp, "\t\t\t</varlistentry>\n");
+		(void)fprintf(fp, ".RE\n");
+
 		free(name);
 		free(format);
 		free(text);
 	}
 
-	(void)fprintf(fp, "\t\t</variablelist>\n");
-	(void)fprintf(fp, "\t</refsect1>\n");
 	(void)fclose(fp);
 
 	(void)fprintf(stdout, "successfully generated '%s'\n", fname);

@@ -42,7 +42,6 @@ BuildRequires: libXtst-devel
 BuildRequires: cups-devel
 BuildRequires: cairo-devel
 BuildRequires: pcsc-lite-devel
-BuildRequires: libxml2-devel
 BuildRequires: zlib-devel
 BuildRequires: krb5-devel
 BuildRequires: uriparser-devel
@@ -61,8 +60,6 @@ BuildRequires: uuid-devel
 BuildRequires: libSDL2-devel
 BuildRequires: libSDL2_ttf-devel
 BuildRequires: libSDL2_image-devel
-BuildRequires: docbook-xsl-stylesheets
-BuildRequires: libxslt-tools
 BuildRequires: pkg-config
 BuildRequires: libopenssl-devel
 BuildRequires: alsa-devel
@@ -86,8 +83,6 @@ BuildRequires: opus-devel
 BuildRequires: SDL2-devel
 BuildRequires: SDL2_ttf-devel
 BuildRequires: SDL2_image-devel
-BuildRequires: docbook-style-xsl
-BuildRequires: libxslt
 BuildRequires: pkgconfig
 BuildRequires: openssl-devel
 BuildRequires: alsa-lib-devel
@@ -109,8 +104,6 @@ BuildRequires: opus-devel
 BuildRequires: SDL2-devel
 BuildRequires: SDL2_ttf-devel
 BuildRequires: SDL2_image-devel
-BuildRequires: docbook-style-xsl
-BuildRequires: libxslt
 BuildRequires: pkgconfig
 BuildRequires: openssl-devel
 BuildRequires: alsa-lib-devel
