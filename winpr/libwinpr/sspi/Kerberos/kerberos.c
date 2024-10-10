@@ -659,117 +659,193 @@ cleanup:
 	return ret;
 }
 
+static size_t append(char* dst, const char* src, size_t dstSize)
+{
+	char* ndst = strncpy(dst, src, dstSize);
+	if (ndst < dst)
+		return SIZE_MAX;
+	return ndst - dst;
+}
+
+static BOOL kerberos_rd_tgt_req_tag2(WinPrAsn1Decoder* dec, char* buf, size_t len, size_t* poffset)
+{
+	BOOL rc = FALSE;
+	WinPrAsn1Decoder seq = { 0 };
+	size_t offset = *poffset;
+
+	/* server-name [2] PrincipalName (SEQUENCE) */
+	if (!WinPrAsn1DecReadSequence(dec, &seq))
+		goto end;
+
+	/* name-type [0] INTEGER */
+	BOOL error = FALSE;
+	WinPrAsn1_INTEGER val = 0;
+	if (!WinPrAsn1DecReadContextualInteger(&seq, 0, &error, &val))
+		goto end;
+
+	/* name-string [1] SEQUENCE OF GeneralString */
+	if (!WinPrAsn1DecReadContextualSequence(&seq, 1, &error, dec))
+		goto end;
+
+	WinPrAsn1_tag tag = 0;
+	while (WinPrAsn1DecPeekTag(dec, &tag))
+	{
+		char* lstr = NULL;
+		if (!WinPrAsn1DecReadGeneralString(dec, &lstr))
+			goto end;
+
+		if (buf != &buf[offset])
+		{
+			offset += append(&buf[offset], "/", len - offset);
+			if (offset > len)
+				goto end;
+		}
+
+		offset += append(&buf[offset], lstr, len - offset);
+		if (offset > len)
+			goto end;
+		free(lstr);
+	}
+
+	rc = TRUE;
+end:
+	*poffset = offset;
+	return rc;
+}
+
+static BOOL kerberos_rd_tgt_req_tag3(WinPrAsn1Decoder* dec, char* buf, size_t len, size_t* poffset)
+{
+	/* realm [3] Realm */
+	BOOL rc = FALSE;
+	size_t offset = *poffset;
+	WinPrAsn1_STRING str = NULL;
+	if (!WinPrAsn1DecReadGeneralString(dec, &str))
+		goto end;
+
+	offset += append(&buf[offset], "@", len - offset);
+	if (offset > len)
+		goto end;
+	offset += append(&buf[offset], str, len - offset);
+	if (offset > len)
+		goto end;
+
+	rc = TRUE;
+end:
+	*poffset = offset;
+	free(str);
+	return rc;
+}
+
+static BOOL kerberos_rd_tgt_req(WinPrAsn1Decoder* dec, char** target)
+{
+	BOOL rc = FALSE;
+
+	if (!target)
+		return FALSE;
+	*target = NULL;
+
+	wStream s = WinPrAsn1DecGetStream(dec);
+	const size_t len = Stream_Length(&s);
+	if (len == 0)
+		return TRUE;
+
+	WinPrAsn1Decoder dec2 = { 0 };
+	WinPrAsn1_tagId tag = 0;
+	if (WinPrAsn1DecReadContextualTag(dec, &tag, &dec2) == 0)
+		return FALSE;
+
+	size_t offset = 0;
+	char* buf = calloc(len + 1, sizeof(char));
+	if (!buf)
+		return FALSE;
+
+	/* We expect ASN1 context tag values 2 or 3.
+	 *
+	 * In case we got value 2 an (optional) context tag value 3 might follow.
+	 */
+	BOOL checkForTag3 = TRUE;
+	if (tag == 2)
+	{
+		rc = kerberos_rd_tgt_req_tag2(&dec2, buf, len, &offset);
+		if (rc)
+		{
+			const size_t res = WinPrAsn1DecReadContextualTag(dec, &tag, dec);
+			if (res == 0)
+				checkForTag3 = FALSE;
+		}
+	}
+
+	if (checkForTag3)
+	{
+		if (tag == 3)
+			rc = kerberos_rd_tgt_req_tag3(&dec2, buf, len, &offset);
+		else
+			rc = FALSE;
+	}
+
+end:
+	if (rc)
+		*target = buf;
+	else
+		free(buf);
+	return rc;
+}
+
+static BOOL kerberos_rd_tgt_rep(WinPrAsn1Decoder* dec, krb5_data* ticket)
+{
+	if (!ticket)
+		return FALSE;
+
+	/* ticket [2] Ticket */
+	WinPrAsn1Decoder asnTicket = { 0 };
+	WinPrAsn1_tagId tag = 0;
+	if (WinPrAsn1DecReadContextualTag(dec, &tag, &asnTicket) == 0)
+		return FALSE;
+
+	if (tag != 2)
+		return FALSE;
+
+	wStream s = WinPrAsn1DecGetStream(&asnTicket);
+	ticket->data = Stream_BufferAs(&s, char);
+	ticket->length = Stream_Length(&s);
+	return TRUE;
+}
+
 static BOOL kerberos_rd_tgt_token(const sspi_gss_data* token, char** target, krb5_data* ticket)
 {
-	WinPrAsn1Decoder dec;
-	WinPrAsn1Decoder dec2;
 	BOOL error = 0;
-	WinPrAsn1_tagId tag = 0;
 	WinPrAsn1_INTEGER val = 0;
-	size_t len = 0;
-	wStream s;
-	char* buf = NULL;
-	char* str = NULL;
 
 	WINPR_ASSERT(token);
 
-	WinPrAsn1Decoder_InitMem(&dec, WINPR_ASN1_DER, (BYTE*)token->data, token->length);
+	if (target)
+		*target = NULL;
+
+	WinPrAsn1Decoder der = { 0 };
+	WinPrAsn1Decoder_InitMem(&der, WINPR_ASN1_DER, (BYTE*)token->data, token->length);
 
 	/* KERB-TGT-REQUEST (SEQUENCE) */
-	if (!WinPrAsn1DecReadSequence(&dec, &dec2))
+	WinPrAsn1Decoder seq = { 0 };
+	if (!WinPrAsn1DecReadSequence(&der, &seq))
 		return FALSE;
-	dec = dec2;
 
 	/* pvno [0] INTEGER */
-	if (!WinPrAsn1DecReadContextualInteger(&dec, 0, &error, &val) || val != 5)
+	if (!WinPrAsn1DecReadContextualInteger(&seq, 0, &error, &val) || val != 5)
 		return FALSE;
 
 	/* msg-type [1] INTEGER */
-	if (!WinPrAsn1DecReadContextualInteger(&dec, 1, &error, &val))
+	if (!WinPrAsn1DecReadContextualInteger(&seq, 1, &error, &val))
 		return FALSE;
 
-	if (val == KRB_TGT_REQ)
+	switch (val)
 	{
-		if (!target)
+		case KRB_TGT_REQ:
+			return kerberos_rd_tgt_req(&seq, target);
+		case KRB_TGT_REP:
+			return kerberos_rd_tgt_rep(&seq, ticket);
+		default:
 			return FALSE;
-		*target = NULL;
-
-		s = WinPrAsn1DecGetStream(&dec);
-		len = Stream_Length(&s);
-		if (len == 0)
-			return TRUE;
-
-		buf = malloc(len);
-		if (!buf)
-			return FALSE;
-
-		*buf = 0;
-		*target = buf;
-
-		if (!WinPrAsn1DecReadContextualTag(&dec, &tag, &dec2))
-			goto fail;
-
-		if (tag == 2)
-		{
-			WinPrAsn1Decoder seq;
-			/* server-name [2] PrincipalName (SEQUENCE) */
-			if (!WinPrAsn1DecReadSequence(&dec2, &seq))
-				goto fail;
-
-			/* name-type [0] INTEGER */
-			if (!WinPrAsn1DecReadContextualInteger(&seq, 0, &error, &val))
-				goto fail;
-
-			/* name-string [1] SEQUENCE OF GeneralString */
-			if (!WinPrAsn1DecReadContextualSequence(&seq, 1, &error, &dec2))
-				goto fail;
-
-			while (WinPrAsn1DecPeekTag(&dec2, &tag))
-			{
-				if (!WinPrAsn1DecReadGeneralString(&dec2, &str))
-					goto fail;
-
-				if (buf != *target)
-					*buf++ = '/';
-				buf = stpcpy(buf, str);
-				free(str);
-			}
-
-			if (!WinPrAsn1DecReadContextualTag(&dec, &tag, &dec2))
-				return TRUE;
-		}
-
-		/* realm [3] Realm */
-		if (tag != 3 || !WinPrAsn1DecReadGeneralString(&dec2, &str))
-			goto fail;
-
-		*buf++ = '@';
-		strcpy(buf, str);
-		free(str);
-		return TRUE;
 	}
-	else if (val == KRB_TGT_REP)
-	{
-		if (!ticket)
-			return FALSE;
-
-		/* ticket [2] Ticket */
-		if (!WinPrAsn1DecReadContextualTag(&dec, &tag, &dec2) || tag != 2)
-			return FALSE;
-
-		s = WinPrAsn1DecGetStream(&dec2);
-		ticket->data = Stream_BufferAs(&s, char);
-		ticket->length = Stream_Length(&s);
-		return TRUE;
-	}
-	else
-		return FALSE;
-
-fail:
-	free(buf);
-	if (target)
-		*target = NULL;
-	return FALSE;
 }
 
 #endif /* WITH_KRB5 */
