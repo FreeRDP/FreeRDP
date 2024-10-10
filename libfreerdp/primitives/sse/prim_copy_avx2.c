@@ -55,6 +55,9 @@ static INLINE pstatus_t avx2_image_copy_bgr24_bgrx32(BYTE* WINPR_RESTRICT pDstDa
 	const __m256i mask = _mm256_set_epi32(0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF);
 	const SSIZE_T rem = nWidth % 8;
 	const SSIZE_T width = nWidth - rem;
+
+	const size_t align = nSrcStep % 32;
+	const BOOL fast = (align == 0) ? TRUE : (align >= 8 - MIN(8, rem) ? TRUE : FALSE);
 	for (SSIZE_T y = 0; y < nHeight; y++)
 	{
 		const BYTE* WINPR_RESTRICT srcLine =
@@ -63,15 +66,20 @@ static INLINE pstatus_t avx2_image_copy_bgr24_bgrx32(BYTE* WINPR_RESTRICT pDstDa
 		    &pDstData[dstVMultiplier * (y + nYDst) * nDstStep + dstVOffset];
 
 		SSIZE_T x = 0;
-		for (; x < width; x += 8)
+
+		/* Ensure alignment requirements can be met */
+		if (fast)
 		{
-			const __m256i* src = (const __m256i*)&srcLine[(x + nXSrc) * srcByte];
-			__m256i* dst = (__m256i*)&dstLine[(x + nXDst) * dstByte];
-			const __m256i s0 = _mm256_loadu_si256(src);
-			const __m256i s1 = _mm256_loadu_si256(dst);
-			const __m256i s2 = _mm256_shuffle_epi8(s1, mask);
-			__m256i d0 = _mm256_blendv_epi8(s2, s0, mask);
-			_mm256_storeu_si256(dst, d0);
+			for (; x < width; x += 8)
+			{
+				const __m256i* src = (const __m256i*)&srcLine[(x + nXSrc) * srcByte];
+				__m256i* dst = (__m256i*)&dstLine[(x + nXDst) * dstByte];
+				const __m256i s0 = _mm256_loadu_si256(src);
+				const __m256i s1 = _mm256_loadu_si256(dst);
+				const __m256i s2 = _mm256_shuffle_epi8(s1, mask);
+				__m256i d0 = _mm256_blendv_epi8(s2, s0, mask);
+				_mm256_storeu_si256(dst, d0);
+			}
 		}
 		for (; x < nWidth; x++)
 		{

@@ -54,6 +54,9 @@ static INLINE pstatus_t sse_image_copy_bgr24_bgrx32(BYTE* WINPR_RESTRICT pDstDat
 
 	const __m128i mask = _mm_set_epi32(0xFF, 0xFF, 0xFF, 0xFF);
 	const SSIZE_T rem = nWidth % 4;
+
+	const size_t align = nSrcStep % 16;
+	const BOOL fast = (align == 0) ? TRUE : (align >= 4 - MIN(4, rem) ? TRUE : FALSE);
 	const SSIZE_T width = nWidth - rem;
 	for (SSIZE_T y = 0; y < nHeight; y++)
 	{
@@ -63,15 +66,19 @@ static INLINE pstatus_t sse_image_copy_bgr24_bgrx32(BYTE* WINPR_RESTRICT pDstDat
 		    &pDstData[dstVMultiplier * (y + nYDst) * nDstStep + dstVOffset];
 
 		SSIZE_T x = 0;
-		for (; x < width; x += 4)
+		/* Ensure alignment requirements can be met */
+		if (fast)
 		{
-			const __m128i* src = (const __m128i*)&srcLine[(x + nXSrc) * srcByte];
-			__m128i* dst = (__m128i*)&dstLine[(x + nXDst) * dstByte];
-			const __m128i s0 = _mm_loadu_si128(src);
-			const __m128i s1 = _mm_loadu_si128(dst);
-			const __m128i s2 = _mm_shuffle_epi8(s1, mask);
-			__m128i d0 = _mm_blendv_epi8(s2, s0, mask);
-			_mm_storeu_si128(dst, d0);
+			for (; x < width; x += 4)
+			{
+				const __m128i* src = (const __m128i*)&srcLine[(x + nXSrc) * srcByte];
+				__m128i* dst = (__m128i*)&dstLine[(x + nXDst) * dstByte];
+				const __m128i s0 = _mm_loadu_si128(src);
+				const __m128i s1 = _mm_loadu_si128(dst);
+				const __m128i s2 = _mm_shuffle_epi8(s1, mask);
+				__m128i d0 = _mm_blendv_epi8(s2, s0, mask);
+				_mm_storeu_si128(dst, d0);
+			}
 		}
 		for (; x < nWidth; x++)
 		{
