@@ -71,6 +71,7 @@ Checks: >
     -readability-identifier-length,
     -readability-implicit-bool-conversion,
     -readability-magic-numbers,
+    -readability-misleading-indentation,
     -readability-qualified-auto,
     -readability-suspicious-call-argument,
     -readability-uppercase-literal-suffix,

@@ -1236,22 +1236,22 @@ BOOL freerdp_tls_send_alert(rdpTls* tls)
 	return TRUE;
 }
 
-int freerdp_tls_write_all(rdpTls* tls, const BYTE* data, int length)
+int freerdp_tls_write_all(rdpTls* tls, const BYTE* data, size_t length)
 {
 	WINPR_ASSERT(tls);
-	int offset = 0;
+	size_t offset = 0;
 	BIO* bio = tls->bio;
+
+	if (length > INT32_MAX)
+		return -1;
 
 	while (offset < length)
 	{
 		ERR_clear_error();
-		const int rc = BIO_write(bio, &data[offset], length - offset);
+		const int status = BIO_write(bio, &data[offset], (int)(length - offset));
 
-		if (rc < 0)
-			return rc;
-
-		if (rc > 0)
-			offset += rc;
+		if (status > 0)
+			offset += (size_t)status;
 		else
 		{
 			if (!BIO_should_retry(bio))
@@ -1259,8 +1259,8 @@ int freerdp_tls_write_all(rdpTls* tls, const BYTE* data, int length)
 
 			if (BIO_write_blocked(bio))
 			{
-				const long status = BIO_wait_write(bio, 100);
-				if (status < 0)
+				const long rc = BIO_wait_write(bio, 100);
+				if (rc < 0)
 					return -1;
 			}
 			else if (BIO_read_blocked(bio))
@@ -1270,7 +1270,7 @@ int freerdp_tls_write_all(rdpTls* tls, const BYTE* data, int length)
 		}
 	}
 
-	return length;
+	return (int)length;
 }
 
 int freerdp_tls_set_alert_code(rdpTls* tls, int level, int description)

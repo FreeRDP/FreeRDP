@@ -75,7 +75,7 @@ BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 	COMMTIMEOUTS* pTimeouts = NULL;
 	UCHAR vmin = 0;
 	UCHAR vtime = 0;
-	ULONGLONG Tmax = 0;
+	LONGLONG Tmax = 0;
 	struct timeval tmaxTimeout;
 	struct timeval* pTmaxTimeout = NULL;
 	struct termios currentTermios;
@@ -184,8 +184,8 @@ BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 	else
 	{
 		/* Tmax */
-		Tmax = 1ull * nNumberOfBytesToRead * pTimeouts->ReadTotalTimeoutMultiplier +
-		       1ull * pTimeouts->ReadTotalTimeoutConstant;
+		Tmax = 1ll * nNumberOfBytesToRead * pTimeouts->ReadTotalTimeoutMultiplier +
+		       1ll * pTimeouts->ReadTotalTimeoutConstant;
 
 		/* INDEFinitely */
 		if ((Tmax == 0) && (pTimeouts->ReadIntervalTimeout < MAXULONG) &&
@@ -404,8 +404,8 @@ BOOL CommWriteFile(HANDLE hDevice, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite
 #endif
 
 	/* ms */
-	ULONGLONG Tmax = 1ull * nNumberOfBytesToWrite * pComm->timeouts.WriteTotalTimeoutMultiplier +
-	                 1ull * pComm->timeouts.WriteTotalTimeoutConstant;
+	LONGLONG Tmax = 1ll * nNumberOfBytesToWrite * pComm->timeouts.WriteTotalTimeoutMultiplier +
+	                1ll * pComm->timeouts.WriteTotalTimeoutConstant;
 	/* NB: select() may update the timeout argument to indicate
 	 * how much time was left. Keep the timeout variable out of
 	 * the while() */

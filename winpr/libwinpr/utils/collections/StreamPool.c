@@ -187,7 +187,8 @@ static void StreamPool_ShiftAvailable(wStreamPool* pool, size_t index, INT64 cou
 
 wStream* StreamPool_Take(wStreamPool* pool, size_t size)
 {
-	SSIZE_T foundIndex = -1;
+	BOOL found = FALSE;
+	size_t foundIndex = 0;
 	wStream* s = NULL;
 
 	StreamPool_Lock(pool);
@@ -201,12 +202,13 @@ wStream* StreamPool_Take(wStreamPool* pool, size_t size)
 
 		if (Stream_Capacity(s) >= size)
 		{
+			found = TRUE;
 			foundIndex = index;
 			break;
 		}
 	}
 
-	if (foundIndex < 0)
+	if (!found)
 	{
 		s = Stream_New(NULL, size);
 		if (!s)

@@ -2894,7 +2894,7 @@ update_send_new_or_existing_notification_icons(rdpContext* context,
 
 	/* Write Hdr */
 	Stream_Write_UINT8(s, controlFlags);             /* Header (1 byte) */
-	Stream_Write_INT16(s, orderSize);                /* OrderSize (2 bytes) */
+	Stream_Write_UINT16(s, orderSize);               /* OrderSize (2 bytes) */
 	Stream_Write_UINT32(s, orderInfo->fieldFlags);   /* FieldsPresentFlags (4 bytes) */
 	Stream_Write_UINT32(s, orderInfo->windowId);     /* WindowID (4 bytes) */
 	Stream_Write_UINT32(s, orderInfo->notifyIconId); /* NotifyIconId (4 bytes) */

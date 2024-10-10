@@ -76,7 +76,8 @@ static int transport_bio_named_write(BIO* bio, const char* buf, int size)
 		return 0;
 	}
 
-	return written;
+	WINPR_ASSERT(written <= INT32_MAX);
+	return (int)written;
 }
 
 static BOOL treatReadResult(WINPR_BIO_NAMED* ptr, DWORD readBytes)
@@ -221,7 +222,7 @@ static int transport_bio_named_read(BIO* bio, char* buf, int size)
 	if ((size >= 0) && ret)
 	{
 		DataChunk chunks[2] = { 0 };
-		int nchunks = ringbuffer_peek(&ptr->readBuffer, chunks, ret);
+		const int nchunks = ringbuffer_peek(&ptr->readBuffer, chunks, ret);
 		for (int i = 0; i < nchunks; i++)
 		{
 			memcpy(buf, chunks[i].data, chunks[i].size);
@@ -230,7 +231,7 @@ static int transport_bio_named_read(BIO* bio, char* buf, int size)
 
 		ringbuffer_commit_read_bytes(&ptr->readBuffer, ret);
 
-		WLog_VRB(TAG, "(%d)=%d nchunks=%d", size, ret, nchunks);
+		WLog_VRB(TAG, "(%d)=%" PRIdz " nchunks=%d", size, ret, nchunks);
 	}
 
 	if (!ringbuffer_used(&ptr->readBuffer))
@@ -245,7 +246,8 @@ static int transport_bio_named_read(BIO* bio, char* buf, int size)
 	if (ret <= 0)
 		BIO_set_flags(bio, (BIO_FLAGS_SHOULD_RETRY | BIO_FLAGS_READ));
 
-	return ret;
+	WINPR_ASSERT(ret <= INT32_MAX);
+	return (int)ret;
 }
 
 static int transport_bio_named_puts(BIO* bio, const char* str)
@@ -253,7 +255,7 @@ static int transport_bio_named_puts(BIO* bio, const char* str)
 	WINPR_ASSERT(bio);
 	WINPR_ASSERT(str);
 
-	return transport_bio_named_write(bio, str, strlen(str));
+	return transport_bio_named_write(bio, str, (int)strnlen(str, INT32_MAX));
 }
 
 static int transport_bio_named_gets(BIO* bio, char* str, int size)

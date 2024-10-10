@@ -91,7 +91,9 @@ BOOL websocket_write_wstream(BIO* bio, wStream* sPacket, WEBSOCKET_OPCODE opcode
 	Stream_SealLength(sWS);
 
 	ERR_clear_error();
-	status = BIO_write(bio, Stream_Buffer(sWS), Stream_Length(sWS));
+	const size_t size = Stream_Length(sWS);
+	if (size <= INT32_MAX)
+		status = BIO_write(bio, Stream_Buffer(sWS), (int)size);
 	Stream_Free(sWS, TRUE);
 
 	if (status != (SSIZE_T)fullLen)
@@ -106,13 +108,17 @@ static int websocket_write_all(BIO* bio, const BYTE* data, size_t length)
 	WINPR_ASSERT(data);
 	size_t offset = 0;
 
+	if (length > INT32_MAX)
+		return -1;
+
 	while (offset < length)
 	{
 		ERR_clear_error();
-		int status = BIO_write(bio, &data[offset], length - offset);
+		const size_t diff = length - offset;
+		int status = BIO_write(bio, &data[offset], (int)diff);
 
 		if (status > 0)
-			offset += status;
+			offset += (size_t)status;
 		else
 		{
 			if (!BIO_should_retry(bio))
@@ -130,7 +136,7 @@ static int websocket_write_all(BIO* bio, const BYTE* data, size_t length)
 		}
 	}
 
-	return length;
+	return (int)length;
 }
 
 int websocket_write(BIO* bio, const BYTE* buf, int isize, WEBSOCKET_OPCODE opcode)
@@ -222,10 +228,13 @@ static int websocket_read_data(BIO* bio, BYTE* pBuffer, size_t size,
 		return 0;
 	}
 
+	const size_t rlen =
+	    (encodingContext->payloadLength < size ? encodingContext->payloadLength : size);
+	if (rlen > INT32_MAX)
+		return -1;
+
 	ERR_clear_error();
-	status =
-	    BIO_read(bio, pBuffer,
-	             (encodingContext->payloadLength < size ? encodingContext->payloadLength : size));
+	status = BIO_read(bio, pBuffer, (int)rlen);
 	if (status <= 0)
 		return status;
 
@@ -285,8 +294,12 @@ static int websocket_read_wstream(BIO* bio, wStream* s, websocket_context* encod
 		return -1;
 	}
 
+	const size_t rlen = encodingContext->payloadLength;
+	if (rlen > INT32_MAX)
+		return -1;
+
 	ERR_clear_error();
-	status = BIO_read(bio, Stream_Pointer(s), encodingContext->payloadLength);
+	status = BIO_read(bio, Stream_Pointer(s), (int)rlen);
 	if (status <= 0)
 		return status;
 
@@ -310,7 +323,6 @@ static BOOL websocket_reply_close(BIO* bio, wStream* s)
 	wStream* closeFrame = NULL;
 	uint16_t maskingKey1 = 0;
 	uint16_t maskingKey2 = 0;
-	int status = 0;
 	size_t closeDataLen = 0;
 
 	WINPR_ASSERT(bio);
@@ -338,8 +350,14 @@ static BOOL websocket_reply_close(BIO* bio, wStream* s)
 	}
 	Stream_SealLength(closeFrame);
 
-	ERR_clear_error();
-	status = BIO_write(bio, Stream_Buffer(closeFrame), Stream_Length(closeFrame));
+	const size_t rlen = Stream_Length(closeFrame);
+
+	int status = -1;
+	if (rlen <= INT32_MAX)
+	{
+		ERR_clear_error();
+		status = BIO_write(bio, Stream_Buffer(closeFrame), (int)rlen);
+	}
 	Stream_Free(closeFrame, TRUE);
 
 	/* server MUST close socket now. The server is not allowed anymore to
@@ -353,7 +371,6 @@ static BOOL websocket_reply_pong(BIO* bio, wStream* s)
 {
 	wStream* closeFrame = NULL;
 	uint32_t maskingKey = 0;
-	int status = 0;
 
 	WINPR_ASSERT(bio);
 
@@ -370,8 +387,13 @@ static BOOL websocket_reply_pong(BIO* bio, wStream* s)
 	Stream_Write_UINT32(closeFrame, maskingKey); /* dummy masking key. */
 	Stream_SealLength(closeFrame);
 
-	ERR_clear_error();
-	status = BIO_write(bio, Stream_Buffer(closeFrame), Stream_Length(closeFrame));
+	const size_t rlen = Stream_Length(closeFrame);
+	int status = -1;
+	if (rlen <= INT32_MAX)
+	{
+		ERR_clear_error();
+		status = BIO_write(bio, Stream_Buffer(closeFrame), (int)rlen);
+	}
 	Stream_Free(closeFrame, TRUE);
 
 	if (status < 0)

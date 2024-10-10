@@ -483,13 +483,10 @@ SSIZE_T rpc_channel_read(RpcChannel* channel, wStream* s, size_t length)
 
 SSIZE_T rpc_channel_write(RpcChannel* channel, const BYTE* data, size_t length)
 {
-	int status = 0;
-
-	if (!channel || (length > INT32_MAX))
+	if (!channel)
 		return -1;
 
-	status = freerdp_tls_write_all(channel->tls, data, (INT32)length);
-	return status;
+	return freerdp_tls_write_all(channel->tls, data, length);
 }
 
 BOOL rpc_in_channel_transition_to_state(RpcInChannel* inChannel, CLIENT_IN_CHANNEL_STATE state)
@@ -770,7 +767,7 @@ static BOOL rpc_channel_tls_connect(RpcChannel* channel, UINT32 timeout)
 		return FALSE;
 
 	tls->hostname = settings->GatewayHostname;
-	tls->port = settings->GatewayPort;
+	tls->port = MIN(UINT16_MAX, settings->GatewayPort);
 	tls->isGatewayTransport = TRUE;
 	int tlsStatus = freerdp_tls_connect(tls, bufferedBio);
 

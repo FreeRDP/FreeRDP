@@ -1007,7 +1007,9 @@ int rpc_in_channel_send_pdu(RpcInChannel* inChannel, const BYTE* buffer, size_t 
 		inChannel->SenderAvailableWindow -= status;
 	}
 
-	return status;
+	if (status > INT32_MAX)
+		return -1;
+	return (int)status;
 }
 
 BOOL rpc_client_write_call(rdpRpc* rpc, wStream* s, UINT16 opnum)

@@ -140,7 +140,7 @@ static BOOL arm_tls_connect(rdpArm* arm, rdpTls* tls, int timeout)
 	}
 
 	tls->hostname = freerdp_settings_get_string(settings, FreeRDP_GatewayHostname);
-	tls->port = settings->GatewayPort;
+	tls->port = MIN(UINT16_MAX, settings->GatewayPort);
 	tls->isGatewayTransport = TRUE;
 	status = freerdp_tls_connect(tls, bufferedBio);
 	if (status < 1)
@@ -239,9 +239,7 @@ static BOOL arm_send_http_request(rdpArm* arm, rdpTls* tls, const char* method,
 		return FALSE;
 
 	const size_t sz = Stream_Length(s);
-
-	if (sz <= INT_MAX)
-		status = freerdp_tls_write_all(tls, Stream_Buffer(s), (int)sz);
+	status = freerdp_tls_write_all(tls, Stream_Buffer(s), sz);
 
 	Stream_Free(s, TRUE);
 	if (status >= 0 && content_length > 0 && data)

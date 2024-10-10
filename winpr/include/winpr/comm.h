@@ -224,11 +224,11 @@ typedef struct
 	BYTE ByteSize;
 	BYTE Parity;
 	BYTE StopBits;
-	char XonChar;
-	char XoffChar;
-	char ErrorChar;
-	char EofChar;
-	char EvtChar;
+	BYTE XonChar;
+	BYTE XoffChar;
+	BYTE ErrorChar;
+	BYTE EofChar;
+	BYTE EvtChar;
 	WORD wReserved1;
 } DCB, *LPDCB;
 

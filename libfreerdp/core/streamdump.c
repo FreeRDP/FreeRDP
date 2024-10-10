@@ -335,7 +335,7 @@ static int stream_dump_replay_transport_read(rdpTransport* transport, wStream* s
 	rdpContext* ctx = transport_get_context(transport);
 
 	size_t size = 0;
-	time_t slp = 0;
+	UINT64 slp = 0;
 	UINT64 ts = 0;
 	UINT32 flags = 0;
 

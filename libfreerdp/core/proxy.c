@@ -605,7 +605,11 @@ static BOOL http_proxy_connect(rdpContext* context, BIO* bufferedBio, const char
 
 	Stream_Write(s, CRLF CRLF, 4);
 	ERR_clear_error();
-	status = BIO_write(bufferedBio, Stream_Buffer(s), Stream_GetPosition(s));
+	const size_t pos = Stream_GetPosition(s);
+	if (pos > INT32_MAX)
+		goto fail;
+
+	status = BIO_write(bufferedBio, Stream_Buffer(s), (int)pos);
 
 	if ((status < 0) || ((size_t)status != Stream_GetPosition(s)))
 	{
@@ -623,10 +627,12 @@ static BOOL http_proxy_connect(rdpContext* context, BIO* bufferedBio, const char
 			WLog_ERR(TAG, "HTTP Reply headers too long: %s", get_response_header(recv_buf));
 			goto fail;
 		}
+		const size_t rdsize = sizeof(recv_buf) - resultsize - 1ULL;
 
 		ERR_clear_error();
-		status =
-		    BIO_read(bufferedBio, (BYTE*)recv_buf + resultsize, sizeof(recv_buf) - resultsize - 1);
+
+		WINPR_ASSERT(rdsize <= INT32_MAX);
+		status = BIO_read(bufferedBio, (BYTE*)recv_buf + resultsize, (int)rdsize);
 
 		if (status < 0)
 		{
@@ -762,8 +768,8 @@ static BOOL socks_proxy_connect(rdpContext* context, BIO* bufferedBio, const cha
 	int status = 0;
 	int nauthMethods = 1;
 	int writeLen = 3;
-	BYTE buf[3 + 255 + 255]; /* biggest packet is user/pass auth */
-	size_t hostnlen = strnlen(hostname, 255);
+	BYTE buf[3 + 255 + 255] = { 0 }; /* biggest packet is user/pass auth */
+	const size_t hostnlen = strnlen(hostname, 255);
 
 	if (proxyUsername && proxyPassword)
 	{
@@ -804,8 +810,8 @@ static BOOL socks_proxy_connect(rdpContext* context, BIO* bufferedBio, const cha
 				return FALSE;
 			else
 			{
-				int usernameLen = strnlen(proxyUsername, 255);
-				int userpassLen = strnlen(proxyPassword, 255);
+				const BYTE usernameLen = (BYTE)strnlen(proxyUsername, 255);
+				const BYTE userpassLen = (BYTE)strnlen(proxyPassword, 255);
 				BYTE* ptr = NULL;
 
 				if (nauthMethods < 2)
@@ -856,13 +862,13 @@ static BOOL socks_proxy_connect(rdpContext* context, BIO* bufferedBio, const cha
 	buf[1] = SOCKS_CMD_CONNECT; /* command */
 	buf[2] = 0;                 /* 3rd octet is reserved x00 */
 	buf[3] = SOCKS_ADDR_FQDN;   /* addr.type */
-	buf[4] = hostnlen;          /* DST.ADDR */
+	buf[4] = (BYTE)hostnlen;    /* DST.ADDR */
 	memcpy(buf + 5, hostname, hostnlen);
 	/* follows DST.PORT in netw. format */
 	buf[hostnlen + 5] = (port >> 8) & 0xff;
 	buf[hostnlen + 6] = port & 0xff;
 	ERR_clear_error();
-	status = BIO_write(bufferedBio, buf, hostnlen + 7U);
+	status = BIO_write(bufferedBio, buf, (int)hostnlen + 7);
 
 	if ((status < 0) || ((size_t)status != (hostnlen + 7U)))
 	{
