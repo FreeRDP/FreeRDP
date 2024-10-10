@@ -305,10 +305,6 @@ static INLINE pstatus_t generic_image_copy_no_overlap_dst_alpha(
 					return generic_image_copy_bgrx32_bgrx32(
 					    pDstData, nDstStep, nXDst, nYDst, nWidth, nHeight, pSrcData, nSrcStep,
 					    nXSrc, nYSrc, srcVMultiplier, srcVOffset, dstVMultiplier, dstVOffset);
-				case PIXEL_FORMAT_BGR24:
-					return generic_image_copy_bgr24_bgrx32(
-					    pDstData, nDstStep, nXDst, nYDst, nWidth, nHeight, pSrcData, nSrcStep,
-					    nXSrc, nYSrc, srcVMultiplier, srcVOffset, dstVMultiplier, dstVOffset);
 				default:
 					break;
 			}
