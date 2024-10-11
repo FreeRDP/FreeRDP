@@ -29,6 +29,7 @@ list(APPEND LIBS
 target_link_libraries(${MODULE_NAME} PRIVATE ${LIBS})
 
 install(TARGETS ${MODULE_NAME} RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT client)
+install_freerdp_desktop("${MODULE_NAME}")
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Client/X11")
 
