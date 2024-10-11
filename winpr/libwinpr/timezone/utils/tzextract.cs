@@ -30,6 +30,8 @@ internal class Program
 			fs.WriteLine("");
 			fs.WriteLine("#include \"" + fname + ".h\"");
 			fs.WriteLine("");
+			fs.WriteLine("// clang-format off");
+			fs.WriteLine("");
 			fs.WriteLine("static const " + fname + "Entry " + fname + "[] ={");
 
 			bool first = true;
@@ -59,6 +61,8 @@ internal class Program
 			fs.WriteLine("};");
 			fs.WriteLine("");
 			fs.WriteLine("static const size_t " + fname + "Size = ARRAYSIZE(" + fname + ");");
+			fs.WriteLine("");
+			fs.WriteLine("// clang-format on");
 			fs.WriteLine("");
 		}
 		return true;
