@@ -426,7 +426,7 @@ const WINDOWS_TZID_ENTRY WindowsZones[] = {
 	{ "Asia/Taipei", "Taipei Standard Time" }, // 001
 	{ "Asia/Taipei", "Taipei Standard Time" }, // TW
 	{ "Asia/Ulaanbaatar", "Ulaanbaatar Standard Time" }, // 001
-	{ "Asia/Ulaanbaatar Asia/Choibalsan", "Ulaanbaatar Standard Time" }, // MN
+	{ "Asia/Ulaanbaatar", "Ulaanbaatar Standard Time" }, // MN
 	{ "Australia/Eucla", "Aus Central W. Standard Time" }, // 001
 	{ "Australia/Eucla", "Aus Central W. Standard Time" }, // AU
 	{ "Asia/Chita", "Transbaikal Standard Time" }, // 001
