@@ -35,6 +35,7 @@ jobs:
       run: |
         clang-format -i --style=file:.clang-format winpr/libwinpr/timezone/WindowsZones.c
         clang-format -i --style=file:.clang-format winpr/libwinpr/timezone/TimeZoneNameMap.c
+        clang-format -i --style=file:.clang-format winpr/libwinpr/timezone/TimeZoneNameMap_static.h
         clang-format -i --style=file:.clang-format winpr/libwinpr/timezone/TimeZoneNameMap.json
     - name: Create Pull Request
       id: cpr
