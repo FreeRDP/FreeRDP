@@ -63,7 +63,6 @@ internal class Program
 			fs.WriteLine("static const size_t " + fname + "Size = ARRAYSIZE(" + fname + ");");
 			fs.WriteLine("");
 			fs.WriteLine("// clang-format on");
-			fs.WriteLine("");
 		}
 		return true;
 	}
