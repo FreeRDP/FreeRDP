@@ -289,6 +289,10 @@ static BOOL ecam_init_mjpeg_decoder(CameraDeviceStream* stream)
 	stream->avContext->width = stream->currMediaType.Width;
 	stream->avContext->height = stream->currMediaType.Height;
 
+	/* AV_EF_EXPLODE flag is to abort decoding on minor error detection,
+	 * return error, so we can skip corrupted frames, if any */
+	stream->avContext->err_recognition |= AV_EF_EXPLODE;
+
 	if (avcodec_open2(stream->avContext, avcodec, NULL) < 0)
 	{
 		WLog_ERR(TAG, "avcodec_open2 failed");
