@@ -33,6 +33,7 @@ jobs:
       run: build\Release\tzextract.exe winpr\libwinpr\timezone
     - name: Format code
       run: |
+        clang-format -i --style=file:.clang-format winpr/libwinpr/timezone/WindowsZones.c
         clang-format -i --style=file:.clang-format winpr/libwinpr/timezone/TimeZoneNameMap.c
         clang-format -i --style=file:.clang-format winpr/libwinpr/timezone/TimeZoneNameMap.json
     - name: Create Pull Request
