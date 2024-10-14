@@ -263,7 +263,12 @@ static BOOL CreateProcessExA(HANDLE hToken, DWORD dwLogonFlags, LPCSTR lpApplica
 #ifdef F_MAXFD // on some BSD derivates
 		maxfd = fcntl(0, F_MAXFD);
 #else
-		maxfd = sysconf(_SC_OPEN_MAX);
+		{
+			const long rc = sysconf(_SC_OPEN_MAX);
+			if ((rc < INT32_MIN) || (rc > INT32_MAX))
+				goto finish;
+			maxfd = (int)rc;
+		}
 #endif
 
 		for (int fd = 3; fd < maxfd; fd++)
@@ -555,24 +560,26 @@ static int pidfd_open(pid_t pid)
 #define PIDFD_NONBLOCK O_NONBLOCK
 #endif /* PIDFD_NONBLOCK */
 
-	int fd = syscall(__NR_pidfd_open, pid, PIDFD_NONBLOCK);
+	long fd = syscall(__NR_pidfd_open, pid, PIDFD_NONBLOCK);
 	if (fd < 0 && errno == EINVAL)
 	{
 		/* possibly PIDFD_NONBLOCK is not supported, let's try to create a pidfd and set it
 		 * non blocking afterward */
 		int flags = 0;
 		fd = syscall(__NR_pidfd_open, pid, 0);
-		if (fd < 0)
+		if ((fd < 0) || (fd > INT32_MAX))
 			return -1;
 
-		flags = fcntl(fd, F_GETFL);
-		if (flags < 0 || fcntl(fd, F_SETFL, flags | O_NONBLOCK) < 0)
+		flags = fcntl((int)fd, F_GETFL);
+		if ((flags < 0) || fcntl((int)fd, F_SETFL, flags | O_NONBLOCK) < 0)
 		{
-			close(fd);
+			close((int)fd);
 			fd = -1;
 		}
 	}
-	return fd;
+	if ((fd < 0) || (fd > INT32_MAX))
+		return -1;
+	return (int)fd;
 #else
 	return -1;
 #endif

@@ -32,7 +32,7 @@ struct rdp_persistent_cache
 {
 	FILE* fp;
 	BOOL write;
-	UINT32 version;
+	int version;
 	int count;
 	char* filename;
 	BYTE* bmpData;
@@ -81,7 +81,6 @@ static int persistent_cache_read_entry_v2(rdpPersistentCache* persistent,
 static int persistent_cache_write_entry_v2(rdpPersistentCache* persistent,
                                            const PERSISTENT_CACHE_ENTRY* entry)
 {
-	int padding = 0;
 	PERSISTENT_CACHE_ENTRY_V2 entry2 = { 0 };
 
 	WINPR_ASSERT(persistent);
@@ -95,17 +94,17 @@ static int persistent_cache_write_entry_v2(rdpPersistentCache* persistent,
 	if (!entry2.flags)
 		entry2.flags = 0x00000011;
 
-	if (fwrite((void*)&entry2, sizeof(entry2), 1, persistent->fp) != 1)
+	if (fwrite(&entry2, sizeof(entry2), 1, persistent->fp) != 1)
 		return -1;
 
-	if (fwrite((void*)entry->data, entry->size, 1, persistent->fp) != 1)
+	if (fwrite(entry->data, entry->size, 1, persistent->fp) != 1)
 		return -1;
 
 	if (0x4000 > entry->size)
 	{
-		padding = 0x4000 - entry->size;
+		const size_t padding = 0x4000 - entry->size;
 
-		if (fwrite((void*)persistent->bmpData, padding, 1, persistent->fp) != 1)
+		if (fwrite(persistent->bmpData, padding, 1, persistent->fp) != 1)
 			return -1;
 	}
 
@@ -323,7 +322,8 @@ int persistent_cache_open(rdpPersistentCache* persistent, const char* filename, 
 
 	if (persistent->write)
 	{
-		persistent->version = version;
+		WINPR_ASSERT(version <= INT32_MAX);
+		persistent->version = (int)version;
 		return persistent_cache_open_write(persistent);
 	}
 

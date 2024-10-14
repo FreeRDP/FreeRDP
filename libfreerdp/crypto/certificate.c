@@ -1289,7 +1289,7 @@ rdpCertificate* freerdp_certificate_new_from_x509(const X509* xcert, const STACK
 		goto fail;
 
 	if (chain)
-		cert->chain = X509_chain_up_ref(chain);
+		cert->chain = sk_X509_deep_copy(chain, X509_dup, X509_free);
 
 	return cert;
 fail:
