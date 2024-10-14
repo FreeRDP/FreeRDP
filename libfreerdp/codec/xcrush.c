@@ -500,8 +500,12 @@ static int xcrush_find_match_length(XCRUSH_CONTEXT* WINPR_RESTRICT xcrush, UINT3
 	if (MatchStartPtr < HistoryBuffer)
 		return -2006; /* error */
 
-	MatchInfo->MatchOffset = MatchStartPtr - HistoryBuffer;
-	MatchInfo->ChunkOffset = ChunkBuffer - ReverseMatchLength - HistoryBuffer;
+	const intptr_t diff = MatchStartPtr - HistoryBuffer;
+	const intptr_t cdiff = ChunkBuffer - ReverseMatchLength - HistoryBuffer;
+	if ((diff > UINT32_MAX) || (diff < 0) || (cdiff < 0) || (cdiff > UINT32_MAX))
+		return -1;
+	MatchInfo->MatchOffset = (UINT32)diff;
+	MatchInfo->ChunkOffset = (UINT32)cdiff;
 	MatchInfo->MatchLength = TotalMatchLength;
 	return (int)TotalMatchLength;
 }
@@ -754,7 +758,10 @@ static int xcrush_generate_output(XCRUSH_CONTEXT* WINPR_RESTRICT xcrush,
 		return -6006; /* error */
 
 	CopyMemory(Literals, &xcrush->HistoryBuffer[CurrentOffset], HistoryOffsetDiff);
-	*pDstSize = Literals + HistoryOffsetDiff - OutputBuffer;
+	const intptr_t diff = Literals + HistoryOffsetDiff - OutputBuffer;
+	if (diff > UINT32_MAX)
+		return -1;
+	*pDstSize = (UINT32)diff;
 	return 1;
 }
 
@@ -906,8 +913,11 @@ static int xcrush_decompress_l1(XCRUSH_CONTEXT* WINPR_RESTRICT xcrush,
 		HistoryPtr += OutputLength;
 	}
 
-	xcrush->HistoryOffset = HistoryPtr - HistoryBuffer;
-	*pDstSize = HistoryPtr - xcrush->HistoryPtr;
+	const intptr_t diff = HistoryPtr - xcrush->HistoryPtr;
+	if (diff > UINT32_MAX)
+		return -1;
+	xcrush->HistoryOffset = (UINT32)diff;
+	*pDstSize = xcrush->HistoryOffset;
 	*ppDstData = xcrush->HistoryPtr;
 	return 1;
 }

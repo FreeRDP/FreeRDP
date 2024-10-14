@@ -311,8 +311,11 @@ static UINT urdbrc_send_usb_device_add(GENERIC_CHANNEL_CALLBACK* callback, IUDEV
 	                                        TRUE) < 0)
 		goto fail;
 	Stream_Write_UINT16(out, 0);
-	Stream_Write_UINT32(out, HardwareIdsLen[0] + HardwareIdsLen[1] + 3); /* cchHwIds */
-	                                                                     /* HardwareIds 1 */
+	const size_t len = HardwareIdsLen[0] + HardwareIdsLen[1] + 3;
+	if (len > UINT32_MAX)
+		goto fail;
+	Stream_Write_UINT32(out, (UINT32)len); /* cchHwIds */
+	                                       /* HardwareIds 1 */
 	if (Stream_Write_UTF16_String_From_UTF8(out, HardwareIdsLen[0], HardwareIds[0],
 	                                        HardwareIdsLen[0], TRUE) < 0)
 		goto fail;
@@ -1000,7 +1003,6 @@ fail:
 
 UINT stream_write_and_free(IWTSPlugin* plugin, IWTSVirtualChannel* channel, wStream* out)
 {
-	UINT rc = 0;
 	URBDRC_PLUGIN* urbdrc = (URBDRC_PLUGIN*)plugin;
 
 	if (!out)
@@ -1019,7 +1021,10 @@ UINT stream_write_and_free(IWTSPlugin* plugin, IWTSVirtualChannel* channel, wStr
 	}
 
 	urbdrc_dump_message(urbdrc->log, TRUE, TRUE, out);
-	rc = channel->Write(channel, Stream_GetPosition(out), Stream_Buffer(out), NULL);
+	const size_t len = Stream_GetPosition(out);
+	UINT rc = ERROR_INTERNAL_ERROR;
+	if (len <= UINT32_MAX)
+		rc = channel->Write(channel, (UINT32)len, Stream_Buffer(out), NULL);
 	Stream_Free(out, TRUE);
 	return rc;
 }

@@ -250,7 +250,7 @@ static BOOL update_process_glyph_fragments(rdpContext* context, const BYTE* data
 				if (fragments == NULL)
 					return FALSE;
 
-				for (size_t n = 0; n < size;)
+				for (UINT32 n = 0; n < size;)
 				{
 					const UINT32 fop = fragments[n++];
 					n = update_glyph_offset(fragments, size, n, &x, &y, ulCharInc, flAccel);

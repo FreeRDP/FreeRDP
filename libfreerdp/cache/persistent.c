@@ -149,7 +149,7 @@ static int persistent_cache_read_entry_v3(rdpPersistentCache* persistent,
 	const UINT64 size = 4ull * entry3.width * entry3.height;
 	if (size > UINT32_MAX)
 		return -1;
-	entry->size = size;
+	entry->size = (UINT32)size;
 	entry->flags = 0;
 
 	if (entry->size > persistent->bmpSize)

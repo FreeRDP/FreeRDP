@@ -22,10 +22,12 @@ SdlInputWidgetList::SdlInputWidgetList(const std::string& title,
 	const size_t total_width = widget_width + widget_width;
 	const size_t input_height = labels.size() * (widget_heigth + vpadding) + vpadding;
 	const size_t total_height = input_height + widget_heigth;
-	auto rc = SDL_CreateWindowAndRenderer(title.c_str(), total_width, total_height,
-	                                      SDL_WINDOW_HIGH_PIXEL_DENSITY | SDL_WINDOW_MOUSE_FOCUS |
-	                                          SDL_WINDOW_INPUT_FOCUS,
-	                                      &_window, &_renderer);
+	assert(total_width <= INT32_MAX);
+	assert(total_height <= INT32_MAX);
+	auto rc = SDL_CreateWindowAndRenderer(
+	    title.c_str(), total_width, static_cast<int>(total_height),
+	    SDL_WINDOW_HIGH_PIXEL_DENSITY | SDL_WINDOW_MOUSE_FOCUS | SDL_WINDOW_INPUT_FOCUS, &_window,
+	    &_renderer);
 	if (rc != 0)
 		widget_log_error(rc, "SDL_CreateWindowAndRenderer");
 	else

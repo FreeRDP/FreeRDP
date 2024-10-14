@@ -623,9 +623,8 @@ UINT rdpei_server_send_sc_ready(RdpeiServerContext* context, UINT32 version, UIN
 		Stream_Write_UINT32(priv->outputStream, features);
 
 	const size_t pos = Stream_GetPosition(priv->outputStream);
-	if (pos > UINT32_MAX)
-		return ERROR_INTERNAL_ERROR;
 
+	WINPR_ASSERT(pos <= UINT32_MAX);
 	if (!WTSVirtualChannelWrite(priv->channelHandle, Stream_BufferAs(priv->outputStream, char),
 	                            (ULONG)pos, &written))
 	{
@@ -670,9 +669,8 @@ UINT rdpei_server_suspend(RdpeiServerContext* context)
 	Stream_Write_UINT32(priv->outputStream, RDPINPUT_HEADER_LENGTH);
 
 	const size_t pos = Stream_GetPosition(priv->outputStream);
-	if (pos > UINT32_MAX)
-		return ERROR_INTERNAL_ERROR;
 
+	WINPR_ASSERT(pos <= UINT32_MAX);
 	if (!WTSVirtualChannelWrite(priv->channelHandle, Stream_BufferAs(priv->outputStream, char),
 	                            (ULONG)pos, &written))
 	{
@@ -717,9 +715,8 @@ UINT rdpei_server_resume(RdpeiServerContext* context)
 	Stream_Write_UINT32(priv->outputStream, RDPINPUT_HEADER_LENGTH);
 
 	const size_t pos = Stream_GetPosition(priv->outputStream);
-	if (pos > UINT32_MAX)
-		return CHANNEL_RC_NO_BUFFER;
 
+	WINPR_ASSERT(pos <= UINT32_MAX);
 	if (!WTSVirtualChannelWrite(priv->channelHandle, Stream_BufferAs(priv->outputStream, char),
 	                            (ULONG)pos, &written))
 	{

@@ -78,10 +78,16 @@ BOOL GetUserProfileDirectoryA(HANDLE hToken, LPSTR lpProfileDir, LPDWORD lpcchSi
 	}
 
 	const size_t cchDirSize = strlen(pw->pw_dir) + 1;
+	if (cchDirSize > UINT32_MAX)
+	{
+		SetLastError(ERROR_INVALID_PARAMETER);
+		free(buf);
+		return FALSE;
+	}
 
 	if (!lpProfileDir || (*lpcchSize < cchDirSize))
 	{
-		*lpcchSize = cchDirSize;
+		*lpcchSize = (UINT32)cchDirSize;
 		SetLastError(ERROR_INSUFFICIENT_BUFFER);
 		free(buf);
 		return FALSE;
@@ -89,7 +95,7 @@ BOOL GetUserProfileDirectoryA(HANDLE hToken, LPSTR lpProfileDir, LPDWORD lpcchSi
 
 	ZeroMemory(lpProfileDir, *lpcchSize);
 	(void)sprintf_s(lpProfileDir, *lpcchSize, "%s", pw->pw_dir);
-	*lpcchSize = cchDirSize;
+	*lpcchSize = (UINT32)cchDirSize;
 	free(buf);
 	return TRUE;
 }

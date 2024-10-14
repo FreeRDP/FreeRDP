@@ -54,7 +54,7 @@ struct S_NSC_CONTEXT
 	UINT16 width;
 	UINT16 height;
 	BYTE* BitmapData;
-	UINT32 BitmapDataLength;
+	size_t BitmapDataLength;
 
 	BYTE* Planes;
 	size_t PlanesSize;

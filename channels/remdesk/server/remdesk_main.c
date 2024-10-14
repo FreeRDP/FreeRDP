@@ -36,10 +36,11 @@
  */
 static UINT remdesk_virtual_channel_write(RemdeskServerContext* context, wStream* s)
 {
-	BOOL status = 0;
+	const size_t len = Stream_Length(s);
+	WINPR_ASSERT(len <= UINT32_MAX);
 	ULONG BytesWritten = 0;
-	status = WTSVirtualChannelWrite(context->priv->ChannelHandle, Stream_BufferAs(s, char),
-	                                Stream_Length(s), &BytesWritten);
+	BOOL status = WTSVirtualChannelWrite(context->priv->ChannelHandle, Stream_BufferAs(s, char),
+	                                     (UINT32)len, &BytesWritten);
 	return (status) ? CHANNEL_RC_OK : ERROR_INTERNAL_ERROR;
 }
 
@@ -85,7 +86,6 @@ static UINT remdesk_read_channel_header(wStream* s, REMDESK_CHANNEL_HEADER* head
  */
 static UINT remdesk_write_channel_header(wStream* s, REMDESK_CHANNEL_HEADER* header)
 {
-	UINT32 ChannelNameLen = 0;
 	WCHAR ChannelNameW[32] = { 0 };
 
 	for (size_t index = 0; index < 32; index++)
@@ -93,8 +93,10 @@ static UINT remdesk_write_channel_header(wStream* s, REMDESK_CHANNEL_HEADER* hea
 		ChannelNameW[index] = (WCHAR)header->ChannelName[index];
 	}
 
-	ChannelNameLen = (strnlen(header->ChannelName, sizeof(header->ChannelName)) + 1) * 2;
-	Stream_Write_UINT32(s, ChannelNameLen);        /* ChannelNameLen (4 bytes) */
+	const size_t ChannelNameLen =
+	    (strnlen(header->ChannelName, sizeof(header->ChannelName)) + 1ULL) * sizeof(WCHAR);
+	WINPR_ASSERT(ChannelNameLen <= UINT32_MAX);
+	Stream_Write_UINT32(s, (UINT32)ChannelNameLen); /* ChannelNameLen (4 bytes) */
 	Stream_Write_UINT32(s, header->DataLength);    /* DataLen (4 bytes) */
 	Stream_Write(s, ChannelNameW, ChannelNameLen); /* ChannelName (variable) */
 	return CHANNEL_RC_OK;
@@ -595,8 +597,14 @@ static DWORD WINAPI remdesk_server_thread(LPVOID arg)
 			break;
 		}
 
+		const size_t len = Stream_Capacity(s);
+		if (len > UINT32_MAX)
+		{
+			error = ERROR_INTERNAL_ERROR;
+			break;
+		}
 		if (WTSVirtualChannelRead(context->priv->ChannelHandle, 0, Stream_BufferAs(s, char),
-		                          Stream_Capacity(s), &BytesReturned))
+		                          (UINT32)len, &BytesReturned))
 		{
 			if (BytesReturned)
 				Stream_Seek(s, BytesReturned);

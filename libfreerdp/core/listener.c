@@ -478,12 +478,12 @@ static BOOL freerdp_listener_check_fds(freerdp_listener* instance)
 
 		(void)WSAResetEvent(listener->events[i]);
 		int peer_addr_size = sizeof(peer_addr);
-		int peer_sockfd =
+		SOCKET peer_sockfd =
 		    _accept(listener->sockfds[i], (struct sockaddr*)&peer_addr, &peer_addr_size);
 
-		if (peer_sockfd == -1)
+		if (peer_sockfd == (SOCKET)-1)
 		{
-			char buffer[8192] = { 0 };
+			char buffer[128] = { 0 };
 #ifdef _WIN32
 			int wsa_error = WSAGetLastError();
 
@@ -501,7 +501,7 @@ static BOOL freerdp_listener_check_fds(freerdp_listener* instance)
 			return FALSE;
 		}
 
-		if (!freerdp_check_and_create_client(instance, peer_sockfd, &peer_addr))
+		if (!freerdp_check_and_create_client(instance, (int)peer_sockfd, &peer_addr))
 			return FALSE;
 	}
 

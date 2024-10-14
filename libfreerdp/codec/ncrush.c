@@ -2919,7 +2919,11 @@ int ncrush_compress(NCRUSH_CONTEXT* ncrush, const BYTE* pSrcData, UINT32 SrcSize
 	if (PacketFlushed)
 		*pFlags |= PACKET_FLUSHED;
 
-	ncrush->HistoryOffset = HistoryPtr - HistoryBuffer;
+	const intptr_t diff = HistoryPtr - HistoryBuffer;
+	if (diff > UINT32_MAX)
+		return -1;
+
+	ncrush->HistoryOffset = (UINT32)diff;
 
 	if (ncrush->HistoryOffset >= ncrush->HistoryBufferSize)
 		return -1;

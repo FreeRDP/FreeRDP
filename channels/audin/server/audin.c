@@ -569,9 +569,7 @@ static UINT audin_server_packet_send(audin_server_context* context, wStream* s)
 	WINPR_ASSERT(s);
 
 	const size_t pos = Stream_GetPosition(s);
-	if (pos > UINT32_MAX)
-		return ERROR_INVALID_PARAMETER;
-
+	WINPR_ASSERT(pos <= UINT32_MAX);
 	if (!WTSVirtualChannelWrite(audin->audin_channel, Stream_BufferAs(s, char), (UINT32)pos,
 	                            &written))
 	{

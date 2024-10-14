@@ -485,7 +485,6 @@ static SECURITY_STATUS collect_keys(NCryptP11ProviderHandle* provider, P11EnumKe
 
 static BOOL convertKeyType(CK_KEY_TYPE k, LPWSTR dest, DWORD len, DWORD* outlen)
 {
-	DWORD retLen = 0;
 	const WCHAR* r = NULL;
 
 #define ALGO_CASE(V, S) \
@@ -523,9 +522,12 @@ static BOOL convertKeyType(CK_KEY_TYPE k, LPWSTR dest, DWORD len, DWORD* outlen)
 	}
 #undef ALGO_CASE
 
-	retLen = _wcslen(r);
+	size_t retLen = _wcslen(r);
+	if (retLen > UINT32_MAX)
+		return FALSE;
+
 	if (outlen)
-		*outlen = retLen;
+		*outlen = (UINT32)retLen;
 
 	if (!r)
 	{
@@ -1014,7 +1016,10 @@ static SECURITY_STATUS NCryptP11KeyGetProperties(NCryptP11KeyHandle* keyHandle,
 
 #define SLOT_DESC_SZ sizeof(slotInfo.slotDescription)
 			fix_padded_string((char*)slotInfo.slotDescription, SLOT_DESC_SZ);
-			*pcbResult = 2 * (strnlen((char*)slotInfo.slotDescription, SLOT_DESC_SZ) + 1);
+			const size_t len = 2ULL * (strnlen((char*)slotInfo.slotDescription, SLOT_DESC_SZ) + 1);
+			if (len > UINT32_MAX)
+				return NTE_BAD_DATA;
+			*pcbResult = (UINT32)len;
 			if (pbOutput)
 			{
 				union
@@ -1041,8 +1046,12 @@ static SECURITY_STATUS NCryptP11KeyGetProperties(NCryptP11KeyHandle* keyHandle,
 
 				if (cbOutput < 4)
 					return NTE_NO_MEMORY;
-
-				*ptr = keyHandle->slotId;
+				if (keyHandle->slotId > UINT32_MAX)
+				{
+					ret = NTE_BAD_DATA;
+					goto out_final;
+				}
+				*ptr = (UINT32)keyHandle->slotId;
 			}
 			return ERROR_SUCCESS;
 		}
@@ -1093,7 +1102,12 @@ static SECURITY_STATUS NCryptP11KeyGetProperties(NCryptP11KeyHandle* keyHandle,
 				// TODO: do a kind of translation from CKR_* to NTE_*
 			}
 
-			*pcbResult = certValue.ulValueLen;
+			if (certValue.ulValueLen > UINT32_MAX)
+			{
+				ret = NTE_BAD_DATA;
+				goto out_final;
+			}
+			*pcbResult = (UINT32)certValue.ulValueLen;
 			ret = ERROR_SUCCESS;
 			break;
 		}

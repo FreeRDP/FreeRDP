@@ -62,18 +62,18 @@ static pstatus_t general_LumaToYUV444(const BYTE* WINPR_RESTRICT pSrcRaw[3],
 
 	/* The first half of U, V are already here part of this frame. */
 	/* B2 and B3 */
-	for (size_t y = 0; y < halfHeight; y++)
+	for (UINT32 y = 0; y < halfHeight; y++)
 	{
-		const UINT32 val2y = (2ULL * y + evenY);
+		const UINT32 val2y = (2UL * y + evenY);
 		const UINT32 val2y1 = val2y + oddY;
-		const BYTE* Um = pSrc[1] + y * srcStep[1];
-		const BYTE* Vm = pSrc[2] + y * srcStep[2];
+		const BYTE* Um = pSrc[1] + 1ULL * y * srcStep[1];
+		const BYTE* Vm = pSrc[2] + 1ULL * y * srcStep[2];
 		BYTE* pU = pDst[1] + 1ULL * dstStep[1] * val2y;
 		BYTE* pV = pDst[2] + 1ULL * dstStep[2] * val2y;
 		BYTE* pU1 = pDst[1] + 1ULL * dstStep[1] * val2y1;
 		BYTE* pV1 = pDst[2] + 1ULL * dstStep[2] * val2y1;
 
-		for (size_t x = 0; x < halfWidth; x++)
+		for (UINT32 x = 0; x < halfWidth; x++)
 		{
 			const UINT32 val2x = 2UL * x + evenX;
 			const UINT32 val2x1 = val2x + oddX;
@@ -194,15 +194,15 @@ static pstatus_t general_ChromaV1ToYUV444(const BYTE* WINPR_RESTRICT pSrcRaw[3],
 	}
 
 	/* B6 and B7 */
-	for (size_t y = 0; y < halfHeight; y++)
+	for (UINT32 y = 0; y < halfHeight; y++)
 	{
-		const UINT32 val2y = (y * 2ULL + evenY);
-		const BYTE* Ua = pSrc[1] + y * srcStep[1];
-		const BYTE* Va = pSrc[2] + y * srcStep[2];
+		const UINT32 val2y = (y * 2UL + evenY);
+		const BYTE* Ua = pSrc[1] + 1ULL * y * srcStep[1];
+		const BYTE* Va = pSrc[2] + 1ULL * y * srcStep[2];
 		BYTE* pU = pDst[1] + 1ULL * dstStep[1] * val2y;
 		BYTE* pV = pDst[2] + 1ULL * dstStep[2] * val2y;
 
-		for (size_t x = 0; x < halfWidth; x++)
+		for (UINT32 x = 0; x < halfWidth; x++)
 		{
 			const UINT32 val2x1 = (x * 2 + oddX);
 			pU[val2x1] = Ua[x];
@@ -235,9 +235,9 @@ static pstatus_t general_ChromaV2ToYUV444(const BYTE* WINPR_RESTRICT pSrc[3],
 		BYTE* pU = pDst[1] + 1ULL * dstStep[1] * yTop + roi->left;
 		BYTE* pV = pDst[2] + 1ULL * dstStep[2] * yTop + roi->left;
 
-		for (size_t x = 0; x < halfWidth; x++)
+		for (UINT32 x = 0; x < halfWidth; x++)
 		{
-			const UINT32 odd = 2 * x + 1;
+			const UINT32 odd = 2UL * x + 1UL;
 			pU[odd] = *pYaU++;
 			pV[odd] = *pYaV++;
 		}
@@ -1047,21 +1047,21 @@ static INLINE pstatus_t general_RGBToAVC444YUV_BGRX(const BYTE* WINPR_RESTRICT p
 	 */
 	const BYTE* pMaxSrc = pSrc + 1ULL * (roi->height - 1) * srcStep;
 
-	for (size_t y = 0; y < roi->height; y += 2)
+	for (UINT32 y = 0; y < roi->height; y += 2)
 	{
 		const BOOL last = (y >= (roi->height - 1));
-		const BYTE* srcEven = y < roi->height ? pSrc + y * srcStep : pMaxSrc;
-		const BYTE* srcOdd = !last ? pSrc + (y + 1) * srcStep : pMaxSrc;
+		const BYTE* srcEven = y < roi->height ? pSrc + 1ULL * y * srcStep : pMaxSrc;
+		const BYTE* srcOdd = !last ? pSrc + 1ULL * (y + 1) * srcStep : pMaxSrc;
 		const UINT32 i = y >> 1;
 		const UINT32 n = (i & ~7) + i;
-		BYTE* b1Even = pDst1[0] + y * dst1Step[0];
+		BYTE* b1Even = pDst1[0] + 1ULL * y * dst1Step[0];
 		BYTE* b1Odd = !last ? (b1Even + dst1Step[0]) : NULL;
-		BYTE* b2 = pDst1[1] + (y / 2) * dst1Step[1];
-		BYTE* b3 = pDst1[2] + (y / 2) * dst1Step[2];
+		BYTE* b2 = pDst1[1] + 1ULL * (y / 2) * dst1Step[1];
+		BYTE* b3 = pDst1[2] + 1ULL * (y / 2) * dst1Step[2];
 		BYTE* b4 = pDst2[0] + 1ULL * dst2Step[0] * n;
 		BYTE* b5 = b4 + 8ULL * dst2Step[0];
-		BYTE* b6 = pDst2[1] + (y / 2) * dst2Step[1];
-		BYTE* b7 = pDst2[2] + (y / 2) * dst2Step[2];
+		BYTE* b6 = pDst2[1] + 1ULL * (y / 2) * dst2Step[1];
+		BYTE* b7 = pDst2[2] + 1ULL * (y / 2) * dst2Step[2];
 		general_RGBToAVC444YUV_BGRX_DOUBLE_ROW(srcEven, srcOdd, b1Even, b1Odd, b2, b3, b4, b5, b6,
 		                                       b7, roi->width);
 	}
@@ -1188,21 +1188,21 @@ static INLINE pstatus_t general_RGBToAVC444YUV_RGBX(const BYTE* WINPR_RESTRICT p
 	 */
 	const BYTE* pMaxSrc = pSrc + 1ULL * (roi->height - 1) * srcStep;
 
-	for (size_t y = 0; y < roi->height; y += 2)
+	for (UINT32 y = 0; y < roi->height; y += 2)
 	{
 		const BOOL last = (y >= (roi->height - 1));
-		const BYTE* srcEven = y < roi->height ? pSrc + y * srcStep : pMaxSrc;
-		const BYTE* srcOdd = !last ? pSrc + (y + 1) * srcStep : pMaxSrc;
+		const BYTE* srcEven = y < roi->height ? pSrc + 1ULL * y * srcStep : pMaxSrc;
+		const BYTE* srcOdd = !last ? pSrc + 1ULL * (y + 1) * srcStep : pMaxSrc;
 		const UINT32 i = y >> 1;
 		const UINT32 n = (i & ~7) + i;
-		BYTE* b1Even = pDst1[0] + y * dst1Step[0];
+		BYTE* b1Even = pDst1[0] + 1ULL * y * dst1Step[0];
 		BYTE* b1Odd = !last ? (b1Even + dst1Step[0]) : NULL;
-		BYTE* b2 = pDst1[1] + (y / 2) * dst1Step[1];
-		BYTE* b3 = pDst1[2] + (y / 2) * dst1Step[2];
+		BYTE* b2 = pDst1[1] + 1ULL * (y / 2) * dst1Step[1];
+		BYTE* b3 = pDst1[2] + 1ULL * (y / 2) * dst1Step[2];
 		BYTE* b4 = pDst2[0] + 1ULL * dst2Step[0] * n;
 		BYTE* b5 = b4 + 8ULL * dst2Step[0];
-		BYTE* b6 = pDst2[1] + (y / 2) * dst2Step[1];
-		BYTE* b7 = pDst2[2] + (y / 2) * dst2Step[2];
+		BYTE* b6 = pDst2[1] + 1ULL * (y / 2) * dst2Step[1];
+		BYTE* b7 = pDst2[2] + 1ULL * (y / 2) * dst2Step[2];
 		general_RGBToAVC444YUV_RGBX_DOUBLE_ROW(srcEven, srcOdd, b1Even, b1Odd, b2, b3, b4, b5, b6,
 		                                       b7, roi->width);
 	}
@@ -1391,10 +1391,12 @@ static INLINE pstatus_t general_RGBToAVC444YUV_ANY(
 
 	for (size_t y = 0; y < roi->height; y += 2)
 	{
+		WINPR_ASSERT(y < UINT32_MAX);
+
 		const BOOL last = (y >= (roi->height - 1));
 		const BYTE* srcEven = y < roi->height ? pSrc + y * srcStep : pMaxSrc;
 		const BYTE* srcOdd = !last ? pSrc + (y + 1) * srcStep : pMaxSrc;
-		const UINT32 i = y >> 1;
+		const UINT32 i = (UINT32)y >> 1;
 		const UINT32 n = (i & ~7) + i;
 		BYTE* b1Even = pDst1[0] + y * dst1Step[0];
 		BYTE* b1Odd = !last ? (b1Even + dst1Step[0]) : NULL;

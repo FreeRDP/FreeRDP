@@ -1,3 +1,4 @@
+#include <cassert>
 #include "sdl_selectlist.hpp"
 
 static const Uint32 vpadding = 5;
@@ -9,9 +10,13 @@ SdlSelectList::SdlSelectList(const std::string& title, const std::vector<std::st
 	const size_t widget_width = 600;
 
 	const size_t total_height = labels.size() * (widget_height + vpadding) + vpadding;
+	const size_t height = total_height + widget_height;
+	assert(widget_width <= INT32_MAX);
+	assert(height <= INT32_MAX);
+
 	auto flags = SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_MOUSE_FOCUS | SDL_WINDOW_INPUT_FOCUS;
-	auto rc = SDL_CreateWindowAndRenderer(widget_width, total_height + widget_height, flags,
-	                                      &_window, &_renderer);
+	auto rc = SDL_CreateWindowAndRenderer(static_cast<int>(widget_width), static_cast<int>(height),
+	                                      flags, &_window, &_renderer);
 	if (rc != 0)
 		widget_log_error(rc, "SDL_CreateWindowAndRenderer");
 	else
@@ -89,7 +94,7 @@ int SdlSelectList::run()
 						case SDLK_RETURN2:
 						case SDLK_KP_ENTER:
 							running = false;
-							res = CurrentActiveTextInput;
+							res = static_cast<int>(CurrentActiveTextInput);
 							break;
 						case SDLK_ESCAPE:
 							running = false;
@@ -122,7 +127,7 @@ int SdlSelectList::run()
 						if (button->id() == INPUT_BUTTON_CANCEL)
 							res = INPUT_BUTTON_CANCEL;
 						else
-							res = CurrentActiveTextInput;
+							res = static_cast<int>(CurrentActiveTextInput);
 					}
 					else
 					{

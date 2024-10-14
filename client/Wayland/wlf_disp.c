@@ -296,6 +296,7 @@ UINT wlf_disp_sendLayout(DispClientContext* disp, const rdpMonitor* monitors, si
 	WINPR_ASSERT(disp);
 	WINPR_ASSERT(monitors);
 	WINPR_ASSERT(nmonitors > 0);
+	WINPR_ASSERT(nmonitors <= UINT32_MAX);
 
 	wlfDisp = (wlfDispContext*)disp->custom;
 	WINPR_ASSERT(wlfDisp);
@@ -356,7 +357,7 @@ UINT wlf_disp_sendLayout(DispClientContext* disp, const rdpMonitor* monitors, si
 		    freerdp_settings_get_uint32(settings, FreeRDP_DeviceScaleFactor);
 	}
 
-	ret = IFCALLRESULT(CHANNEL_RC_OK, disp->SendMonitorLayout, disp, nmonitors, layouts);
+	ret = IFCALLRESULT(CHANNEL_RC_OK, disp->SendMonitorLayout, disp, (UINT32)nmonitors, layouts);
 	free(layouts);
 	return ret;
 }

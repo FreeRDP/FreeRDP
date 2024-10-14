@@ -206,7 +206,6 @@ static RDPDR_IRP* rdpdr_server_dequeue_irp(RdpdrServerContext* context, UINT32 c
 static UINT rdpdr_seal_send_free_request(RdpdrServerContext* context, wStream* s)
 {
 	BOOL status = 0;
-	size_t length = 0;
 	ULONG written = 0;
 
 	WINPR_ASSERT(context);
@@ -214,7 +213,7 @@ static UINT rdpdr_seal_send_free_request(RdpdrServerContext* context, wStream* s
 	WINPR_ASSERT(s);
 
 	Stream_SealLength(s);
-	length = Stream_Length(s);
+	const size_t length = Stream_Length(s);
 	WINPR_ASSERT(length <= UINT32_MAX);
 	Stream_SetPosition(s, 0);
 

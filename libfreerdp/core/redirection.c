@@ -122,15 +122,17 @@ static BOOL redirection_copy_array(char*** dst, UINT32* plen, const char** str, 
 {
 	redirection_free_array(dst, plen);
 
+	if (len > UINT32_MAX)
+		return FALSE;
 	if (!str || (len == 0))
 		return TRUE;
 
 	*dst = calloc(len, sizeof(char*));
 	if (!*dst)
 		return FALSE;
-	*plen = len;
+	*plen = (UINT32)len;
 
-	for (UINT32 x = 0; x < len; x++)
+	for (size_t x = 0; x < len; x++)
 	{
 		if (str[x])
 			(*dst)[x] = _strdup(str[x]);
@@ -199,11 +201,12 @@ static BOOL rdp_redirection_read_unicode_string(wStream* s, char** str, size_t m
 static BOOL rdp_redirection_write_data(wStream* s, size_t length, const void* data)
 {
 	WINPR_ASSERT(data || (length == 0));
+	WINPR_ASSERT(length <= UINT32_MAX);
 
 	if (!Stream_CheckAndLogRequiredCapacity(TAG, s, 4))
 		return FALSE;
 
-	Stream_Write_UINT32(s, length);
+	Stream_Write_UINT32(s, (UINT32)length);
 
 	if (!Stream_CheckAndLogRequiredCapacity(TAG, s, length))
 		return FALSE;
@@ -277,7 +280,10 @@ static BOOL rdp_redirection_read_base64_wchar(UINT32 flag, wStream* s, UINT32* p
 
 		tok = strtok_s(NULL, "\r\n", &saveptr);
 	}
-	*pLength = wpos;
+	if (wpos > UINT32_MAX)
+		goto fail;
+
+	*pLength = (UINT32)wpos;
 
 	WLog_DBG(TAG, "%s:", rdp_redirection_flags_to_string(flag, buffer, sizeof(buffer)));
 
@@ -324,13 +330,14 @@ static BOOL rdp_target_cert_write_element(wStream* s, UINT32 Type, UINT32 Encodi
                                           const BYTE* data, size_t length)
 {
 	WINPR_ASSERT(data || (length == 0));
+	WINPR_ASSERT(length <= UINT32_MAX);
 
 	if (!Stream_CheckAndLogRequiredCapacity(TAG, s, 12))
 		return FALSE;
 
 	Stream_Write_UINT32(s, Type);
 	Stream_Write_UINT32(s, Encoding);
-	Stream_Write_UINT32(s, length);
+	Stream_Write_UINT32(s, (UINT32)length);
 
 	if (!Stream_CheckAndLogRequiredCapacity(TAG, s, length))
 		return FALSE;
@@ -610,13 +617,13 @@ int rdp_redirection_apply_settings(rdpRdp* rdp)
 		BOOL pres = FALSE;
 		size_t length = 0;
 		char* pem = freerdp_certificate_get_pem(cert, &length);
-		if (pem)
+		if (pem && (length <= UINT32_MAX))
 		{
 			pres = freerdp_settings_set_string_len(settings, FreeRDP_RedirectionAcceptedCert, pem,
 			                                       length);
 			if (pres)
 				pres = freerdp_settings_set_uint32(settings, FreeRDP_RedirectionAcceptedCertLength,
-				                                   length);
+				                                   (UINT32)length);
 		}
 		free(pem);
 		if (!pres)

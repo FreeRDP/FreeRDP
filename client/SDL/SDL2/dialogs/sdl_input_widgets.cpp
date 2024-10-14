@@ -1,5 +1,6 @@
 #include <cassert>
 #include <algorithm>
+#include <cinttypes>
 
 #include "sdl_input_widgets.hpp"
 
@@ -23,8 +24,12 @@ SdlInputWidgetList::SdlInputWidgetList(const std::string& title,
 	const size_t input_height = labels.size() * (widget_heigth + vpadding) + vpadding;
 	const size_t total_height = input_height + widget_heigth;
 
+	assert(total_width <= INT32_MAX);
+	assert(total_height <= INT32_MAX);
 	auto wflags = SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_MOUSE_FOCUS | SDL_WINDOW_INPUT_FOCUS;
-	auto rc = SDL_CreateWindowAndRenderer(total_width, total_height, wflags, &_window, &_renderer);
+	auto rc =
+	    SDL_CreateWindowAndRenderer(static_cast<int>(total_width), static_cast<int>(total_height),
+	                                wflags, &_window, &_renderer);
 	if (rc != 0)
 		widget_log_error(rc, "SDL_CreateWindowAndRenderer");
 	else

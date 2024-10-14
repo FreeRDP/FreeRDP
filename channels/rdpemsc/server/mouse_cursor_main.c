@@ -519,8 +519,8 @@ static UINT mouse_cursor_server_packet_send(MouseCursorServerContext* context, w
 	WINPR_ASSERT(s);
 
 	const size_t pos = Stream_GetPosition(s);
-	if (pos > UINT32_MAX)
-		return ERROR_OUTOFMEMORY;
+
+	WINPR_ASSERT(pos <= UINT32_MAX);
 	if (!WTSVirtualChannelWrite(mouse_cursor->mouse_cursor_channel, Stream_BufferAs(s, char),
 	                            (ULONG)pos, &written))
 	{
