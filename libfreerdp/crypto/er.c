@@ -18,6 +18,8 @@
  * limitations under the License.
  */
 
+#include <stdint.h>
+
 #include <freerdp/config.h>
 
 #include <winpr/crt.h>
@@ -26,7 +28,7 @@
 #include <freerdp/crypto/ber.h>
 #include <freerdp/crypto/der.h>
 
-void er_read_length(wStream* s, int* length)
+void freerdp_er_read_length(wStream* s, size_t* length)
 {
 	BYTE byte = 0;
 
@@ -54,21 +56,15 @@ void er_read_length(wStream* s, int* length)
 	}
 }
 
-/**
- * Write er length.
- * @param s stream
- * @param length length
- */
-
-int er_write_length(wStream* s, int length, BOOL flag)
+size_t freerdp_er_write_length(wStream* s, size_t length, BOOL flag)
 {
 	if (flag)
-		return der_write_length(s, length);
+		return freerdp_der_write_length(s, length);
 	else
-		return ber_write_length(s, length);
+		return freerdp_ber_write_length(s, length);
 }
 
-int _er_skip_length(int length)
+size_t freerdp_er_skip_length(size_t length)
 {
 	if (length > 0x7F)
 		return 3;
@@ -76,7 +72,7 @@ int _er_skip_length(int length)
 		return 1;
 }
 
-int er_get_content_length(int length)
+size_t freerdp_er_get_content_length(size_t length)
 {
 	if (length - 1 > 0x7F)
 		return length - 4;
@@ -84,45 +80,25 @@ int er_get_content_length(int length)
 		return length - 2;
 }
 
-/**
- * Read er Universal tag.
- * @param s A pointer to the stream to write to
- * @param tag er universally-defined tag
- * @return \b TRUE for success
- */
-
-BOOL er_read_universal_tag(wStream* s, BYTE tag, BOOL pc)
+BOOL freerdp_er_read_universal_tag(wStream* s, BYTE tag, BOOL pc)
 {
 	BYTE byte = 0;
 
 	Stream_Read_UINT8(s, byte);
 
-	if (byte != (ER_CLASS_UNIV | ER_PC(pc) | (ER_TAG_MASK & tag)))
+	if (byte != (FREERDP_ER_CLASS_UNIV | FREERDP_ER_PC(pc) | (FREERDP_ER_TAG_MASK & tag)))
 		return FALSE;
 
 	return TRUE;
 }
 
-/**
- * Write er Universal tag.
- * @param s stream
- * @param tag er universally-defined tag
- * @param pc primitive (FALSE) or constructed (TRUE)
- */
-
-void er_write_universal_tag(wStream* s, BYTE tag, BOOL pc)
+void freerdp_er_write_universal_tag(wStream* s, BYTE tag, BOOL pc)
 {
-	Stream_Write_UINT8(s, (ER_CLASS_UNIV | ER_PC(pc)) | (ER_TAG_MASK & tag));
+	Stream_Write_UINT8(s,
+	                   (FREERDP_ER_CLASS_UNIV | FREERDP_ER_PC(pc)) | (FREERDP_ER_TAG_MASK & tag));
 }
 
-/**
- * Read er Application tag.
- * @param s stream
- * @param tag er application-defined tag
- * @param length length
- */
-
-BOOL er_read_application_tag(wStream* s, BYTE tag, int* length)
+BOOL freerdp_er_read_application_tag(wStream* s, BYTE tag, size_t* length)
 {
 	BYTE byte = 0;
 
@@ -130,7 +106,7 @@ BOOL er_read_application_tag(wStream* s, BYTE tag, int* length)
 	{
 		Stream_Read_UINT8(s, byte);
 
-		if (byte != ((ER_CLASS_APPL | ER_CONSTRUCT) | ER_TAG_MASK))
+		if (byte != ((FREERDP_ER_CLASS_APPL | FREERDP_ER_CONSTRUCT) | FREERDP_ER_TAG_MASK))
 			return FALSE;
 
 		Stream_Read_UINT8(s, byte);
@@ -138,113 +114,103 @@ BOOL er_read_application_tag(wStream* s, BYTE tag, int* length)
 		if (byte != tag)
 			return FALSE;
 
-		er_read_length(s, length);
+		freerdp_er_read_length(s, length);
 	}
 	else
 	{
 		Stream_Read_UINT8(s, byte);
 
-		if (byte != ((ER_CLASS_APPL | ER_CONSTRUCT) | (ER_TAG_MASK & tag)))
+		if (byte != ((FREERDP_ER_CLASS_APPL | FREERDP_ER_CONSTRUCT) | (FREERDP_ER_TAG_MASK & tag)))
 			return FALSE;
 
-		er_read_length(s, length);
+		freerdp_er_read_length(s, length);
 	}
 
 	return TRUE;
 }
 
-/**
- * Write er Application tag.
- * @param s stream
- * @param tag er application-defined tag
- * @param length length
- */
-
-void er_write_application_tag(wStream* s, BYTE tag, int length, BOOL flag)
+void freerdp_er_write_application_tag(wStream* s, BYTE tag, size_t length, BOOL flag)
 {
 	if (tag > 30)
 	{
-		Stream_Write_UINT8(s, (ER_CLASS_APPL | ER_CONSTRUCT) | ER_TAG_MASK);
+		Stream_Write_UINT8(s, (FREERDP_ER_CLASS_APPL | FREERDP_ER_CONSTRUCT) | FREERDP_ER_TAG_MASK);
 		Stream_Write_UINT8(s, tag);
-		er_write_length(s, length, flag);
+		freerdp_er_write_length(s, length, flag);
 	}
 	else
 	{
-		Stream_Write_UINT8(s, (ER_CLASS_APPL | ER_CONSTRUCT) | (ER_TAG_MASK & tag));
-		er_write_length(s, length, flag);
+		Stream_Write_UINT8(s, (FREERDP_ER_CLASS_APPL | FREERDP_ER_CONSTRUCT) |
+		                          (FREERDP_ER_TAG_MASK & tag));
+		freerdp_er_write_length(s, length, flag);
 	}
 }
 
-BOOL er_read_contextual_tag(wStream* s, BYTE tag, int* length, BOOL pc)
+BOOL freerdp_er_read_contextual_tag(wStream* s, BYTE tag, size_t* length, BOOL pc)
 {
 	BYTE byte = 0;
 
 	Stream_Read_UINT8(s, byte);
 
-	if (byte != ((ER_CLASS_CTXT | ER_PC(pc)) | (ER_TAG_MASK & tag)))
+	if (byte != ((FREERDP_ER_CLASS_CTXT | FREERDP_ER_PC(pc)) | (FREERDP_ER_TAG_MASK & tag)))
 	{
 		Stream_Rewind(s, 1);
 		return FALSE;
 	}
 
-	er_read_length(s, length);
+	freerdp_er_read_length(s, length);
 
 	return TRUE;
 }
 
-int er_write_contextual_tag(wStream* s, BYTE tag, int length, BOOL pc, BOOL flag)
+size_t freerdp_er_write_contextual_tag(wStream* s, BYTE tag, size_t length, BOOL pc, BOOL flag)
 {
-	Stream_Write_UINT8(s, (ER_CLASS_CTXT | ER_PC(pc)) | (ER_TAG_MASK & tag));
-	return er_write_length(s, length, flag) + 1;
+	Stream_Write_UINT8(s,
+	                   (FREERDP_ER_CLASS_CTXT | FREERDP_ER_PC(pc)) | (FREERDP_ER_TAG_MASK & tag));
+	return freerdp_er_write_length(s, length, flag) + 1;
 }
 
-int er_skip_contextual_tag(int length)
+size_t freerdp_er_skip_contextual_tag(size_t length)
 {
-	return _er_skip_length(length) + 1;
+	return freerdp_er_skip_length(length) + 1;
 }
 
-BOOL er_read_sequence_tag(wStream* s, int* length)
+BOOL freerdp_er_read_sequence_tag(wStream* s, size_t* length)
 {
 	BYTE byte = 0;
 
 	Stream_Read_UINT8(s, byte);
 
-	if (byte != ((ER_CLASS_UNIV | ER_CONSTRUCT) | (ER_TAG_SEQUENCE_OF)))
+	if (byte != ((FREERDP_ER_CLASS_UNIV | FREERDP_ER_CONSTRUCT) | (FREERDP_ER_TAG_SEQUENCE_OF)))
 		return FALSE;
 
-	er_read_length(s, length);
+	freerdp_er_read_length(s, length);
 
 	return TRUE;
 }
 
-/**
- * Write er SEQUENCE tag.
- * @param s stream
- * @param length length
- */
-
-int er_write_sequence_tag(wStream* s, int length, BOOL flag)
+size_t freerdp_er_write_sequence_tag(wStream* s, size_t length, BOOL flag)
 {
-	Stream_Write_UINT8(s, (ER_CLASS_UNIV | ER_CONSTRUCT) | (ER_TAG_MASK & ER_TAG_SEQUENCE));
-	return er_write_length(s, length, flag) + 1;
+	Stream_Write_UINT8(s, (FREERDP_ER_CLASS_UNIV | FREERDP_ER_CONSTRUCT) |
+	                          (FREERDP_ER_TAG_MASK & FREERDP_ER_TAG_SEQUENCE));
+	return freerdp_er_write_length(s, length, flag) + 1;
 }
 
-int er_skip_sequence(int length)
+size_t freerdp_er_skip_sequence(size_t length)
 {
-	return 1 + _er_skip_length(length) + length;
+	return 1 + freerdp_er_skip_length(length) + length;
 }
 
-int er_skip_sequence_tag(int length)
+size_t freerdp_er_skip_sequence_tag(size_t length)
 {
-	return 1 + _er_skip_length(length);
+	return 1 + freerdp_er_skip_length(length);
 }
 
-BOOL er_read_enumerated(wStream* s, BYTE* enumerated, BYTE count)
+BOOL freerdp_er_read_enumerated(wStream* s, BYTE* enumerated, BYTE count)
 {
-	int length = 0;
+	size_t length = 0;
 
-	er_read_universal_tag(s, ER_TAG_ENUMERATED, FALSE);
-	er_read_length(s, &length);
+	freerdp_er_read_universal_tag(s, FREERDP_ER_TAG_ENUMERATED, FALSE);
+	freerdp_er_read_length(s, &length);
 
 	if (length == 1)
 		Stream_Read_UINT8(s, *enumerated);
@@ -258,79 +224,66 @@ BOOL er_read_enumerated(wStream* s, BYTE* enumerated, BYTE count)
 	return TRUE;
 }
 
-void er_write_enumerated(wStream* s, BYTE enumerated, BYTE count, BOOL flag)
+void freerdp_er_write_enumerated(wStream* s, BYTE enumerated, BYTE count, BOOL flag)
 {
-	er_write_universal_tag(s, ER_TAG_ENUMERATED, FALSE);
-	er_write_length(s, 1, flag);
+	freerdp_er_write_universal_tag(s, FREERDP_ER_TAG_ENUMERATED, FALSE);
+	freerdp_er_write_length(s, 1, flag);
 	Stream_Write_UINT8(s, enumerated);
 }
 
-BOOL er_read_bit_string(wStream* s, int* length, BYTE* padding)
+BOOL freerdp_er_read_bit_string(wStream* s, size_t* length, BYTE* padding)
 {
-	er_read_universal_tag(s, ER_TAG_BIT_STRING, FALSE);
-	er_read_length(s, length);
+	freerdp_er_read_universal_tag(s, FREERDP_ER_TAG_BIT_STRING, FALSE);
+	freerdp_er_read_length(s, length);
 	Stream_Read_UINT8(s, *padding);
 
 	return TRUE;
 }
 
-BOOL er_write_bit_string_tag(wStream* s, UINT32 length, BYTE padding, BOOL flag)
+BOOL freerdp_er_write_bit_string_tag(wStream* s, UINT32 length, BYTE padding, BOOL flag)
 {
-	er_write_universal_tag(s, ER_TAG_BIT_STRING, FALSE);
-	er_write_length(s, length, flag);
+	freerdp_er_write_universal_tag(s, FREERDP_ER_TAG_BIT_STRING, FALSE);
+	freerdp_er_write_length(s, length, flag);
 	Stream_Write_UINT8(s, padding);
 	return TRUE;
 }
 
-BOOL er_read_octet_string(wStream* s, int* length)
+BOOL freerdp_er_read_octet_string(wStream* s, size_t* length)
 {
-	if (!er_read_universal_tag(s, ER_TAG_OCTET_STRING, FALSE))
+	if (!freerdp_er_read_universal_tag(s, FREERDP_ER_TAG_OCTET_STRING, FALSE))
 		return FALSE;
-	er_read_length(s, length);
+	freerdp_er_read_length(s, length);
 
 	return TRUE;
 }
 
-/**
- * Write a er OCTET_STRING
- * @param s stream
- * @param oct_str octet string
- * @param length string length
- */
-
-void er_write_octet_string(wStream* s, BYTE* oct_str, int length, BOOL flag)
+void freerdp_er_write_octet_string(wStream* s, const BYTE* oct_str, size_t length, BOOL flag)
 {
-	er_write_universal_tag(s, ER_TAG_OCTET_STRING, FALSE);
-	er_write_length(s, length, flag);
+	freerdp_er_write_universal_tag(s, FREERDP_ER_TAG_OCTET_STRING, FALSE);
+	freerdp_er_write_length(s, length, flag);
 	Stream_Write(s, oct_str, length);
 }
 
-int er_write_octet_string_tag(wStream* s, int length, BOOL flag)
+size_t freerdp_er_write_octet_string_tag(wStream* s, size_t length, BOOL flag)
 {
-	er_write_universal_tag(s, ER_TAG_OCTET_STRING, FALSE);
-	er_write_length(s, length, flag);
-	return 1 + _er_skip_length(length);
+	freerdp_er_write_universal_tag(s, FREERDP_ER_TAG_OCTET_STRING, FALSE);
+	freerdp_er_write_length(s, length, flag);
+	return 1 + freerdp_er_skip_length(length);
 }
 
-int er_skip_octet_string(int length)
+size_t freerdp_er_skip_octet_string(size_t length)
 {
-	return 1 + _er_skip_length(length) + length;
+	return 1 + freerdp_er_skip_length(length) + length;
 }
 
-/**
- * Read a er BOOLEAN
- * @param s A pointer to the stream to read from
- * @param value A pointer to read the data to
- */
-
-BOOL er_read_BOOL(wStream* s, BOOL* value)
+BOOL freerdp_er_read_BOOL(wStream* s, BOOL* value)
 {
-	int length = 0;
+	size_t length = 0;
 	BYTE v = 0;
 
-	if (!er_read_universal_tag(s, ER_TAG_BOOLEAN, FALSE))
+	if (!freerdp_er_read_universal_tag(s, FREERDP_ER_TAG_BOOLEAN, FALSE))
 		return FALSE;
-	er_read_length(s, &length);
+	freerdp_er_read_length(s, &length);
 	if (length != 1)
 		return FALSE;
 	Stream_Read_UINT8(s, v);
@@ -338,25 +291,19 @@ BOOL er_read_BOOL(wStream* s, BOOL* value)
 	return TRUE;
 }
 
-/**
- * Write a er BOOLEAN
- * @param s A pointer to the stream to write to
- * @param value The value to write
- */
-
-void er_write_BOOL(wStream* s, BOOL value)
+void freerdp_er_write_BOOL(wStream* s, BOOL value)
 {
-	er_write_universal_tag(s, ER_TAG_BOOLEAN, FALSE);
-	er_write_length(s, 1, FALSE);
+	freerdp_er_write_universal_tag(s, FREERDP_ER_TAG_BOOLEAN, FALSE);
+	freerdp_er_write_length(s, 1, FALSE);
 	Stream_Write_UINT8(s, (value == TRUE) ? 0xFF : 0);
 }
 
-BOOL er_read_integer(wStream* s, UINT32* value)
+BOOL freerdp_er_read_integer(wStream* s, INT32* value)
 {
-	int length = 0;
+	size_t length = 0;
 
-	er_read_universal_tag(s, ER_TAG_INTEGER, FALSE);
-	er_read_length(s, &length);
+	freerdp_er_read_universal_tag(s, FREERDP_ER_TAG_INTEGER, FALSE);
+	freerdp_er_read_length(s, &length);
 
 	if (value == NULL)
 	{
@@ -391,55 +338,268 @@ BOOL er_read_integer(wStream* s, UINT32* value)
 	return TRUE;
 }
 
-/**
- * Write a er INTEGER
- * @param s A pointer to the stream to write to
- * @param value the value to write
- */
-
-int er_write_integer(wStream* s, INT32 value)
+size_t freerdp_er_write_integer(wStream* s, INT32 value)
 {
-	er_write_universal_tag(s, ER_TAG_INTEGER, FALSE);
+	freerdp_er_write_universal_tag(s, FREERDP_ER_TAG_INTEGER, FALSE);
 
 	if (value <= 127 && value >= -128)
 	{
-		er_write_length(s, 1, FALSE);
+		freerdp_er_write_length(s, 1, FALSE);
 		Stream_Write_UINT8(s, value);
 		return 2;
 	}
 	else if (value <= 32767 && value >= -32768)
 	{
-		er_write_length(s, 2, FALSE);
+		freerdp_er_write_length(s, 2, FALSE);
 		Stream_Write_UINT16_BE(s, value);
 		return 3;
 	}
 	else
 	{
-		er_write_length(s, 4, FALSE);
+		freerdp_er_write_length(s, 4, FALSE);
 		Stream_Write_UINT32_BE(s, value);
 		return 5;
 	}
 }
 
-int er_skip_integer(INT32 value)
+size_t freerdp_er_skip_integer(INT32 value)
 {
 	if (value <= 127 && value >= -128)
 	{
-		return _er_skip_length(1) + 2;
+		return freerdp_er_skip_length(1) + 2;
 	}
 	else if (value <= 32767 && value >= -32768)
 	{
-		return _er_skip_length(2) + 3;
+		return freerdp_er_skip_length(2) + 3;
 	}
 	else
 	{
-		return _er_skip_length(4) + 5;
+		return freerdp_er_skip_length(4) + 5;
 	}
+}
+
+BOOL freerdp_er_read_integer_length(wStream* s, size_t* length)
+{
+	freerdp_er_read_universal_tag(s, FREERDP_ER_TAG_INTEGER, FALSE);
+	freerdp_er_read_length(s, length);
+	return TRUE;
+}
+
+#if defined(WITH_FREERDP_3x_DEPRECATED)
+
+void er_read_length(wStream* s, int* length)
+{
+	WINPR_ASSERT(length);
+	size_t len = 0;
+	freerdp_er_read_length(s, &len);
+	WINPR_ASSERT(len <= INT32_MAX);
+	*length = (int)len;
+}
+
+int er_write_length(wStream* s, int length, BOOL flag)
+{
+	WINPR_ASSERT(length >= 0);
+	const size_t rc = freerdp_er_write_length(s, (size_t)length, flag);
+	WINPR_ASSERT(rc <= INT32_MAX);
+	return (int)rc;
+}
+
+int _er_skip_length(int length)
+{
+	WINPR_ASSERT(length >= 0);
+	const size_t rc = freerdp_er_skip_length((size_t)length);
+	WINPR_ASSERT(rc <= INT32_MAX);
+	return (int)rc;
+}
+
+int er_get_content_length(int length)
+{
+	WINPR_ASSERT(length >= 0);
+	const size_t rc = freerdp_er_get_content_length((size_t)length);
+	WINPR_ASSERT(rc <= INT32_MAX);
+	return (int)rc;
+}
+
+BOOL er_read_universal_tag(wStream* s, BYTE tag, BOOL pc)
+{
+	return freerdp_er_read_universal_tag(s, tag, pc);
+}
+
+void er_write_universal_tag(wStream* s, BYTE tag, BOOL pc)
+{
+	freerdp_er_write_universal_tag(s, tag, pc);
+}
+
+BOOL er_read_application_tag(wStream* s, BYTE tag, int* length)
+{
+	WINPR_ASSERT(length);
+	size_t len = 0;
+	return freerdp_er_read_application_tag(s, tag, &len);
+	WINPR_ASSERT(len <= INT32_MAX);
+	*length = (int)len;
+}
+
+void er_write_application_tag(wStream* s, BYTE tag, int length, BOOL flag)
+{
+	WINPR_ASSERT(length >= 0);
+	freerdp_er_write_application_tag(s, tag, (size_t)length, flag);
+}
+
+BOOL er_read_enumerated(wStream* s, BYTE* enumerated, BYTE count)
+{
+	WINPR_ASSERT(enumerated);
+	return freerdp_er_read_enumerated(s, enumerated, count);
+}
+
+void er_write_enumerated(wStream* s, BYTE enumerated, BYTE count, BOOL flag)
+{
+	freerdp_er_write_enumerated(s, enumerated, count, flag);
+}
+
+BOOL er_read_contextual_tag(wStream* s, BYTE tag, int* length, BOOL pc)
+{
+	WINPR_ASSERT(length);
+	size_t len = 0;
+	const BOOL rc = freerdp_er_read_contextual_tag(s, tag, &len, pc);
+	WINPR_ASSERT(len <= INT32_MAX);
+	*length = (int)len;
+	return rc;
+}
+
+int er_write_contextual_tag(wStream* s, BYTE tag, int length, BOOL pc, BOOL flag)
+{
+	WINPR_ASSERT(length >= 0);
+	const size_t rc = freerdp_er_write_contextual_tag(s, tag, (size_t)length, pc, flag);
+	WINPR_ASSERT(rc <= INT32_MAX);
+	return (int)rc;
+}
+
+int er_skip_contextual_tag(int length)
+{
+	WINPR_ASSERT(length >= 0);
+	const size_t rc = freerdp_er_skip_contextual_tag((size_t)length);
+	WINPR_ASSERT(rc <= INT32_MAX);
+	return (int)rc;
+}
+
+BOOL er_read_sequence_tag(wStream* s, int* length)
+{
+	WINPR_ASSERT(length);
+	size_t len = 0;
+	const BOOL rc = freerdp_er_read_sequence_tag(s, &len);
+	WINPR_ASSERT(len <= INT32_MAX);
+	*length = (int)len;
+	return rc;
+}
+
+int er_write_sequence_tag(wStream* s, int length, BOOL flag)
+{
+	WINPR_ASSERT(length >= 0);
+	const size_t rc = freerdp_er_write_sequence_tag(s, (size_t)length, flag);
+	WINPR_ASSERT(rc <= INT32_MAX);
+	return (int)rc;
+}
+
+int er_skip_sequence(int length)
+{
+	WINPR_ASSERT(length >= 0);
+	const size_t rc = freerdp_er_skip_sequence((size_t)length);
+	WINPR_ASSERT(rc <= INT32_MAX);
+	return (int)rc;
+}
+
+int er_skip_sequence_tag(int length)
+{
+	WINPR_ASSERT(length >= 0);
+	const size_t rc = freerdp_er_skip_sequence_tag((size_t)length);
+	WINPR_ASSERT(rc <= INT32_MAX);
+	return (int)rc;
+}
+
+BOOL er_read_bit_string(wStream* s, int* length, BYTE* padding)
+{
+	WINPR_ASSERT(length);
+	size_t len = 0;
+	const BOOL rc = freerdp_er_read_bit_string(s, &len, padding);
+	WINPR_ASSERT(len <= INT32_MAX);
+	*length = (int)len;
+	return rc;
+}
+
+BOOL er_write_bit_string_tag(wStream* s, UINT32 length, BYTE padding, BOOL flag)
+{
+	return freerdp_er_write_bit_string_tag(s, length, padding, flag);
+}
+
+BOOL er_read_octet_string(wStream* s, int* length)
+{
+	WINPR_ASSERT(length);
+	size_t len = 0;
+	const BOOL rc = freerdp_er_read_octet_string(s, &len);
+	WINPR_ASSERT(len <= INT32_MAX);
+	*length = (int)len;
+	return rc;
+}
+
+void er_write_octet_string(wStream* s, BYTE* oct_str, int length, BOOL flag)
+{
+	WINPR_ASSERT(length >= 0);
+	freerdp_er_write_octet_string(s, oct_str, (size_t)length, flag);
+}
+
+int er_write_octet_string_tag(wStream* s, int length, BOOL flag)
+{
+	WINPR_ASSERT(length >= 0);
+	const size_t rc = freerdp_er_write_octet_string_tag(s, (size_t)length, flag);
+	WINPR_ASSERT(rc <= INT32_MAX);
+	return (int)rc;
+}
+
+int er_skip_octet_string(int length)
+{
+	WINPR_ASSERT(length >= 0);
+	const size_t rc = freerdp_er_skip_octet_string((size_t)length);
+	WINPR_ASSERT(rc <= INT32_MAX);
+	return (int)rc;
+}
+
+BOOL er_read_BOOL(wStream* s, BOOL* value)
+{
+	return freerdp_er_read_BOOL(s, value);
+}
+
+void er_write_BOOL(wStream* s, BOOL value)
+{
+	freerdp_er_write_BOOL(s, value);
+}
+
+BOOL er_read_integer(wStream* s, INT32* value)
+{
+	return freerdp_er_read_integer_length(s, value);
+}
+
+int er_write_integer(wStream* s, INT32 value)
+{
+	const size_t rc = freerdp_er_write_integer(s, value);
+	WINPR_ASSERT(rc <= INT32_MAX);
+	return (int)rc;
 }
 
 BOOL er_read_integer_length(wStream* s, int* length)
 {
-	er_read_universal_tag(s, ER_TAG_INTEGER, FALSE);
-	er_read_length(s, length);
-	return TRUE;
+	WINPR_ASSERT(length);
+	size_t len = 0;
+	const BOOL rc = freerdp_er_read_integer_length(s, &len);
+	WINPR_ASSERT(len <= INT32_MAX);
+	*length = (int)len;
+	return rc;
 }
+
+int er_skip_integer(INT32 value)
+{
+	WINPR_ASSERT(value >= 0);
+	const size_t rc = freerdp_er_skip_length(value);
+	WINPR_ASSERT(rc <= INT32_MAX);
+	return (int)rc;
+}
+#endif
