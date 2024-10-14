@@ -855,7 +855,7 @@ BOOL planar_decompress(BITMAP_PLANAR_CONTEXT* WINPR_RESTRICT planar,
 		if (alpha)
 		{
 			planes[3] = srcp;
-			rleSizes[3] = planar_skip_plane_rle(planes[3], SrcSize - diff, rawWidths[3],
+			rleSizes[3] = planar_skip_plane_rle(planes[3], (UINT32)(SrcSize - diff), rawWidths[3],
 			                                    rawHeights[3]); /* AlphaPlane */
 
 			if (rleSizes[3] < 0)
@@ -872,7 +872,7 @@ BOOL planar_decompress(BITMAP_PLANAR_CONTEXT* WINPR_RESTRICT planar,
 			WLog_ERR(TAG, "Size mismatch %" PRIu32 " < %" PRIuz, SrcSize, diff0);
 			return FALSE;
 		}
-		rleSizes[0] = planar_skip_plane_rle(planes[0], SrcSize - diff0, rawWidths[0],
+		rleSizes[0] = planar_skip_plane_rle(planes[0], (UINT32)(SrcSize - diff0), rawWidths[0],
 		                                    rawHeights[0]); /* RedPlane */
 
 		if (rleSizes[0] < 0)
@@ -886,7 +886,7 @@ BOOL planar_decompress(BITMAP_PLANAR_CONTEXT* WINPR_RESTRICT planar,
 			WLog_ERR(TAG, "Size mismatch %" PRIu32 " < %" PRIuz, SrcSize, diff1);
 			return FALSE;
 		}
-		rleSizes[1] = planar_skip_plane_rle(planes[1], SrcSize - diff1, rawWidths[1],
+		rleSizes[1] = planar_skip_plane_rle(planes[1], (UINT32)(SrcSize - diff1), rawWidths[1],
 		                                    rawHeights[1]); /* GreenPlane */
 
 		if (rleSizes[1] < 1)
@@ -899,7 +899,7 @@ BOOL planar_decompress(BITMAP_PLANAR_CONTEXT* WINPR_RESTRICT planar,
 			WLog_ERR(TAG, "Size mismatch %" PRIu32 " < %" PRIuz, SrcSize, diff);
 			return FALSE;
 		}
-		rleSizes[2] = planar_skip_plane_rle(planes[2], SrcSize - diff2, rawWidths[2],
+		rleSizes[2] = planar_skip_plane_rle(planes[2], (UINT32)(SrcSize - diff2), rawWidths[2],
 		                                    rawHeights[2]); /* BluePlane */
 
 		if (rleSizes[2] < 1)
@@ -1275,7 +1275,10 @@ static INLINE UINT32 freerdp_bitmap_planar_write_rle_bytes(const BYTE* WINPR_RES
 		pOutput++;
 	}
 
-	return (pOutput - pOutBuffer);
+	const intptr_t diff = (pOutput - pOutBuffer);
+	if ((diff < 0) || (diff > UINT32_MAX))
+		return 0;
+	return (UINT32)diff;
 }
 
 static INLINE UINT32 freerdp_bitmap_planar_encode_rle_bytes(const BYTE* WINPR_RESTRICT pInBuffer,
@@ -1677,7 +1680,13 @@ BYTE* freerdp_bitmap_compress_planar(BITMAP_PLANAR_CONTEXT* WINPR_RESTRICT conte
 		dstp++;
 	}
 
-	size = (dstp - dstData);
+	const intptr_t diff = (dstp - dstData);
+	if ((diff < 0) || (diff > UINT32_MAX))
+	{
+		free(dstData);
+		return NULL;
+	}
+	size = (UINT32)diff;
 	*pDstSize = size;
 	return dstData;
 }
@@ -1695,7 +1704,7 @@ BOOL freerdp_bitmap_planar_context_reset(BITMAP_PLANAR_CONTEXT* WINPR_RESTRICT c
 		const UINT64 tmp = (UINT64)context->maxWidth * context->maxHeight;
 		if (tmp > UINT32_MAX)
 			return FALSE;
-		context->maxPlaneSize = tmp;
+		context->maxPlaneSize = (UINT32)tmp;
 	}
 
 	if (context->maxWidth > UINT32_MAX / 4)

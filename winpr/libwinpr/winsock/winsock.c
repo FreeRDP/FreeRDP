@@ -19,6 +19,7 @@
 
 #include <winpr/config.h>
 
+#include <winpr/assert.h>
 #include <winpr/crt.h>
 #include <winpr/synch.h>
 
@@ -293,8 +294,6 @@ INT winpr_inet_pton(INT Family, PCSTR pszAddrString, PVOID pAddrBuf)
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <net/if.h>
-
-#include <winpr/assert.h>
 
 #ifndef MSG_NOSIGNAL
 #define MSG_NOSIGNAL 0
@@ -1100,7 +1099,8 @@ int _getsockopt(SOCKET s, int level, int optname, char* optval, int* optlen)
 
 u_long _htonl(u_long hostlong)
 {
-	return htonl(hostlong);
+	WINPR_ASSERT(hostlong <= UINT32_MAX);
+	return htonl((UINT32)hostlong);
 }
 
 u_short _htons(u_short hostshort)
@@ -1128,7 +1128,8 @@ int _listen(SOCKET s, int backlog)
 
 u_long _ntohl(u_long netlong)
 {
-	return ntohl(netlong);
+	WINPR_ASSERT((netlong & 0xFFFFFFFF00000000ULL) == 0);
+	return ntohl((UINT32)netlong);
 }
 
 u_short _ntohs(u_short netshort)

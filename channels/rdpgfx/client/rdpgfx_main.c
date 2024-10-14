@@ -1253,7 +1253,7 @@ static UINT rdpgfx_recv_end_frame_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStrea
 					diff = 0;
 
 				qoe.frameId = pdu.frameId;
-				qoe.timestamp = gfx->StartDecodingTime;
+				qoe.timestamp = gfx->StartDecodingTime % UINT32_MAX;
 				qoe.timeDiffSE = diff;
 				qoe.timeDiffEDR = EndFrameTime;
 

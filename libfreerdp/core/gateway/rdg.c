@@ -17,6 +17,8 @@
  * limitations under the License.
  */
 
+#include <stdint.h>
+
 #include <freerdp/config.h>
 
 #include "../settings.h"
@@ -338,6 +340,8 @@ static int rdg_socket_read(BIO* bio, BYTE* pBuffer, size_t size,
                            rdg_http_encoding_context* encodingContext)
 {
 	WINPR_ASSERT(encodingContext != NULL);
+	if (size > INT32_MAX)
+		return -1;
 
 	if (encodingContext->isWebsocketTransport)
 	{
@@ -348,7 +352,7 @@ static int rdg_socket_read(BIO* bio, BYTE* pBuffer, size_t size,
 	{
 		case TransferEncodingIdentity:
 			ERR_clear_error();
-			return BIO_read(bio, pBuffer, size);
+			return BIO_read(bio, pBuffer, (int)size);
 		case TransferEncodingChunked:
 			return http_chuncked_read(bio, pBuffer, size, &encodingContext->context.chunked);
 		default:
@@ -556,15 +560,15 @@ static BOOL rdg_send_tunnel_authorization(rdpRdg* rdg)
 	WCHAR* clientName = freerdp_settings_get_string_as_utf16(
 	    rdg->context->settings, FreeRDP_ClientHostname, &clientNameLen);
 
-	if (!clientName || (clientNameLen >= UINT16_MAX / sizeof(WCHAR)))
+	clientNameLen++; // length including terminating '\0'
+
+	const size_t packetSize = 12ull + clientNameLen * sizeof(WCHAR);
+	if (!clientName || (clientNameLen >= UINT16_MAX / sizeof(WCHAR)) || (packetSize > UINT32_MAX))
 	{
 		free(clientName);
 		return FALSE;
 	}
 
-	clientNameLen++; // length including terminating '\0'
-
-	size_t packetSize = 12ull + clientNameLen * sizeof(WCHAR);
 	s = Stream_New(NULL, packetSize);
 
 	if (!s)
@@ -575,7 +579,7 @@ static BOOL rdg_send_tunnel_authorization(rdpRdg* rdg)
 
 	Stream_Write_UINT16(s, PKT_TYPE_TUNNEL_AUTH);                  /* Type (2 bytes) */
 	Stream_Write_UINT16(s, 0);                                     /* Reserved (2 bytes) */
-	Stream_Write_UINT32(s, packetSize);                            /* PacketLength (4 bytes) */
+	Stream_Write_UINT32(s, (UINT32)packetSize);                    /* PacketLength (4 bytes) */
 	Stream_Write_UINT16(s, 0);                                     /* FieldsPresent (2 bytes) */
 	Stream_Write_UINT16(s, (UINT16)clientNameLen * sizeof(WCHAR)); /* Client name string length */
 	Stream_Write_UTF16_String(s, clientName, clientNameLen);
@@ -603,11 +607,11 @@ static BOOL rdg_send_channel_create(rdpRdg* rdg)
 	serverName = freerdp_settings_get_string_as_utf16(rdg->context->settings,
 	                                                  FreeRDP_ServerHostname, &serverNameLen);
 
-	if (!serverName || (serverNameLen >= UINT16_MAX / sizeof(WCHAR)))
+	serverNameLen++; // length including terminating '\0'
+	const size_t packetSize = 16ull + serverNameLen * sizeof(WCHAR);
+	if (!serverName || (serverNameLen >= UINT16_MAX / sizeof(WCHAR)) || (packetSize > UINT32_MAX))
 		goto fail;
 
-	serverNameLen++; // length including terminating '\0'
-	size_t packetSize = 16ull + serverNameLen * sizeof(WCHAR);
 	s = Stream_New(NULL, packetSize);
 
 	if (!s)
@@ -615,7 +619,7 @@ static BOOL rdg_send_channel_create(rdpRdg* rdg)
 
 	Stream_Write_UINT16(s, PKT_TYPE_CHANNEL_CREATE); /* Type (2 bytes) */
 	Stream_Write_UINT16(s, 0);                       /* Reserved (2 bytes) */
-	Stream_Write_UINT32(s, packetSize);              /* PacketLength (4 bytes) */
+	Stream_Write_UINT32(s, (UINT32)packetSize);      /* PacketLength (4 bytes) */
 	Stream_Write_UINT8(s, 1);                        /* Number of resources. (1 byte) */
 	Stream_Write_UINT8(s, 0);                        /* Number of alternative resources (1 byte) */
 	Stream_Write_UINT16(s,
@@ -737,10 +741,10 @@ static BOOL rdg_recv_auth_token(wLog* log, rdpCredsspAuth* auth, HttpResponse* r
 
 	crypto_base64_decode(token64, len, &authTokenData, &authTokenLength);
 
-	if (authTokenLength && authTokenData)
+	if (authTokenLength && authTokenData && (authTokenLength <= UINT32_MAX))
 	{
 		authToken.pvBuffer = authTokenData;
-		authToken.cbBuffer = authTokenLength;
+		authToken.cbBuffer = (UINT32)authTokenLength;
 		credssp_auth_take_input_buffer(auth, &authToken);
 	}
 	else
@@ -1456,7 +1460,7 @@ static BOOL rdg_establish_data_connection(rdpRdg* rdg, rdpTls* tls, const char* 
 				 */
 				if (http_context_is_websocket_upgrade_enabled(rdg->http))
 				{
-					int fd = BIO_get_fd(tls->bio, NULL);
+					long fd = BIO_get_fd(tls->bio, NULL);
 					if (fd >= 0)
 						closesocket((SOCKET)fd);
 					http_context_enable_websocket_upgrade(rdg->http, FALSE);
@@ -1600,7 +1604,7 @@ BOOL rdg_connect(rdpRdg* rdg, DWORD timeout, BOOL* rpcFallback)
 	return TRUE;
 }
 
-static int rdg_write_websocket_data_packet(rdpRdg* rdg, const BYTE* buf, int isize)
+static int rdg_write_websocket_data_packet(rdpRdg* rdg, const BYTE* buf, size_t isize)
 {
 	size_t payloadSize = 0;
 	size_t fullLen = 0;
@@ -1613,12 +1617,10 @@ static int rdg_write_websocket_data_packet(rdpRdg* rdg, const BYTE* buf, int isi
 	BYTE* maskingKeyByte3 = maskingKeyByte1 + 2;
 	BYTE* maskingKeyByte4 = maskingKeyByte1 + 3;
 
-	int streamPos = 0;
-
 	winpr_RAND(&maskingKey, 4);
 
 	payloadSize = isize + 10;
-	if ((isize < 0) || (isize > UINT16_MAX))
+	if (isize > INT32_MAX)
 		return -1;
 
 	if (payloadSize < 1)
@@ -1637,18 +1639,18 @@ static int rdg_write_websocket_data_packet(rdpRdg* rdg, const BYTE* buf, int isi
 
 	Stream_Write_UINT8(sWS, WEBSOCKET_FIN_BIT | WebsocketBinaryOpcode);
 	if (payloadSize < 126)
-		Stream_Write_UINT8(sWS, payloadSize | WEBSOCKET_MASK_BIT);
+		Stream_Write_UINT8(sWS, (UINT8)payloadSize | WEBSOCKET_MASK_BIT);
 	else if (payloadSize < 0x10000)
 	{
 		Stream_Write_UINT8(sWS, 126 | WEBSOCKET_MASK_BIT);
-		Stream_Write_UINT16_BE(sWS, payloadSize);
+		Stream_Write_UINT16_BE(sWS, (UINT16)payloadSize);
 	}
 	else
 	{
 		Stream_Write_UINT8(sWS, 127 | WEBSOCKET_MASK_BIT);
 		/* biggest packet possible is 0xffff + 0xa, so 32bit is always enough */
 		Stream_Write_UINT32_BE(sWS, 0);
-		Stream_Write_UINT32_BE(sWS, payloadSize);
+		Stream_Write_UINT32_BE(sWS, (UINT32)payloadSize);
 	}
 	Stream_Write_UINT32(sWS, maskingKey);
 
@@ -1662,7 +1664,8 @@ static int rdg_write_websocket_data_packet(rdpRdg* rdg, const BYTE* buf, int isi
 	maskingKey = (maskingKey & 0xffff) << 16 | (maskingKey >> 16);
 
 	/* mask as much as possible with 32bit access */
-	for (streamPos = 0; streamPos + 4 <= isize; streamPos += 4)
+	size_t streamPos = 0;
+	for (; streamPos + 4 <= isize; streamPos += 4)
 	{
 		uint32_t masked = *((const uint32_t*)(buf + streamPos)) ^ maskingKey;
 		Stream_Write_UINT32(sWS, masked);
@@ -1684,19 +1687,19 @@ static int rdg_write_websocket_data_packet(rdpRdg* rdg, const BYTE* buf, int isi
 	if (status < 0)
 		return status;
 
-	return isize;
+	return (int)isize;
 }
 
-static int rdg_write_chunked_data_packet(rdpRdg* rdg, const BYTE* buf, int isize)
+static int rdg_write_chunked_data_packet(rdpRdg* rdg, const BYTE* buf, size_t isize)
 {
 	int status = 0;
 	size_t len = 0;
 	wStream* sChunk = NULL;
-	size_t size = (size_t)isize;
+	size_t size = isize;
 	size_t packetSize = size + 10;
 	char chunkSize[11];
 
-	if ((isize < 0) || (isize > UINT16_MAX))
+	if (isize > UINT16_MAX)
 		return -1;
 
 	if (size < 1)
@@ -1727,7 +1730,7 @@ static int rdg_write_chunked_data_packet(rdpRdg* rdg, const BYTE* buf, int isize
 	return (int)size;
 }
 
-static int rdg_write_data_packet(rdpRdg* rdg, const BYTE* buf, int isize)
+static int rdg_write_data_packet(rdpRdg* rdg, const BYTE* buf, size_t isize)
 {
 	if (rdg->transferEncoding.isWebsocketTransport)
 	{
@@ -1905,7 +1908,7 @@ static BOOL rdg_process_control_packet(rdpRdg* rdg, int type, size_t packetLengt
 	return status;
 }
 
-static int rdg_read_data_packet(rdpRdg* rdg, BYTE* buffer, int size)
+static int rdg_read_data_packet(rdpRdg* rdg, BYTE* buffer, size_t size)
 {
 	RdgPacketHeader header = { 0 };
 	size_t readCount = 0;
@@ -1998,9 +2001,12 @@ static int rdg_bio_write(BIO* bio, const char* buf, int num)
 {
 	int status = 0;
 	rdpRdg* rdg = (rdpRdg*)BIO_get_data(bio);
+	if (num < 0)
+		return num;
+
 	BIO_clear_flags(bio, BIO_FLAGS_WRITE);
 	EnterCriticalSection(&rdg->writeSection);
-	status = rdg_write_data_packet(rdg, (const BYTE*)buf, num);
+	status = rdg_write_data_packet(rdg, (const BYTE*)buf, (size_t)num);
 	LeaveCriticalSection(&rdg->writeSection);
 
 	if (status < 0)
@@ -2025,7 +2031,9 @@ static int rdg_bio_read(BIO* bio, char* buf, int size)
 {
 	int status = 0;
 	rdpRdg* rdg = (rdpRdg*)BIO_get_data(bio);
-	status = rdg_read_data_packet(rdg, (BYTE*)buf, size);
+	if (size < 0)
+		return size;
+	status = rdg_read_data_packet(rdg, (BYTE*)buf, (size_t)size);
 
 	if (status < 0)
 	{

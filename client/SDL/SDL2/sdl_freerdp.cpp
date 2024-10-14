@@ -725,8 +725,8 @@ static BOOL sdl_create_windows(SdlContext* sdl)
 		}
 
 		Uint32 flags = SDL_WINDOW_SHOWN;
-		Uint32 startupX = SDL_WINDOWPOS_CENTERED_DISPLAY(id);
-		Uint32 startupY = SDL_WINDOWPOS_CENTERED_DISPLAY(id);
+		auto startupX = SDL_WINDOWPOS_CENTERED_DISPLAY(id);
+		auto startupY = SDL_WINDOWPOS_CENTERED_DISPLAY(id);
 
 		if (monitor->attributes.desktopScaleFactor > 100)
 		{

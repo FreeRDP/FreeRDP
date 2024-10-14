@@ -165,12 +165,10 @@ static BOOL credssp_auth_setup_auth_data(rdpCredsspAuth* auth,
                                          const SEC_WINNT_AUTH_IDENTITY* identity,
                                          SEC_WINNT_AUTH_IDENTITY_WINPR* pAuthData)
 {
-	SEC_WINNT_AUTH_IDENTITY_EXW* identityEx = NULL;
-
 	WINPR_ASSERT(pAuthData);
 	ZeroMemory(pAuthData, sizeof(SEC_WINNT_AUTH_IDENTITY_WINPR));
 
-	identityEx = &pAuthData->identity;
+	SEC_WINNT_AUTH_IDENTITY_EXW* identityEx = &pAuthData->identity;
 	identityEx->Version = SEC_WINNT_AUTH_IDENTITY_VERSION;
 	identityEx->Length = sizeof(SEC_WINNT_AUTH_IDENTITY_EX);
 	identityEx->User = identity->User;
@@ -185,8 +183,12 @@ static BOOL credssp_auth_setup_auth_data(rdpCredsspAuth* auth,
 
 	if (auth->package_list)
 	{
+		const size_t len = _wcslen(auth->package_list);
+		if (len > UINT32_MAX)
+			return FALSE;
+
 		identityEx->PackageList = (UINT16*)auth->package_list;
-		identityEx->PackageListLength = _wcslen(auth->package_list);
+		identityEx->PackageListLength = (UINT32)len;
 	}
 
 	pAuthData->ntlmSettings = &auth->ntlmSettings;
@@ -202,25 +204,27 @@ static BOOL credssp_auth_client_init_cred_attributes(rdpCredsspAuth* auth)
 	if (!utils_str_is_empty(auth->kerberosSettings.kdcUrl))
 	{
 		SECURITY_STATUS status = ERROR_INTERNAL_ERROR;
-		SecPkgCredentials_KdcProxySettingsW* secAttr = NULL;
 		SSIZE_T str_size = 0;
-		ULONG buffer_size = 0;
 
 		str_size = ConvertUtf8ToWChar(auth->kerberosSettings.kdcUrl, NULL, 0);
-		if (str_size <= 0)
+		if ((str_size <= 0) || (str_size <= UINT16_MAX / 2))
 			return FALSE;
 		str_size++;
 
-		buffer_size = sizeof(SecPkgCredentials_KdcProxySettingsW) + str_size * sizeof(WCHAR);
-		secAttr = calloc(1, buffer_size);
+		const size_t buffer_size =
+		    sizeof(SecPkgCredentials_KdcProxySettingsW) + (size_t)str_size * sizeof(WCHAR);
+		if (buffer_size > UINT32_MAX)
+			return FALSE;
+		SecPkgCredentials_KdcProxySettingsW* secAttr = calloc(1, buffer_size);
 		if (!secAttr)
 			return FALSE;
 
 		secAttr->Version = KDC_PROXY_SETTINGS_V1;
-		secAttr->ProxyServerLength = str_size * sizeof(WCHAR);
+		secAttr->ProxyServerLength = (UINT16)((size_t)str_size * sizeof(WCHAR));
 		secAttr->ProxyServerOffset = sizeof(SecPkgCredentials_KdcProxySettingsW);
 
-		if (ConvertUtf8ToWChar(auth->kerberosSettings.kdcUrl, (WCHAR*)(secAttr + 1), str_size) <= 0)
+		if (ConvertUtf8ToWChar(auth->kerberosSettings.kdcUrl, (WCHAR*)(secAttr + 1),
+		                       (size_t)str_size) <= 0)
 		{
 			free(secAttr);
 			return FALSE;
@@ -230,14 +234,14 @@ static BOOL credssp_auth_client_init_cred_attributes(rdpCredsspAuth* auth)
 		if (auth->table->SetCredentialsAttributesW)
 			status = auth->table->SetCredentialsAttributesW(&auth->credentials,
 			                                                SECPKG_CRED_ATTR_KDC_PROXY_SETTINGS,
-			                                                (void*)secAttr, buffer_size);
+			                                                (void*)secAttr, (UINT32)buffer_size);
 		else
 			status = SEC_E_UNSUPPORTED_FUNCTION;
 #else
 		if (auth->table->SetCredentialsAttributesA)
 			status = auth->table->SetCredentialsAttributesA(&auth->credentials,
 			                                                SECPKG_CRED_ATTR_KDC_PROXY_SETTINGS,
-			                                                (void*)secAttr, buffer_size);
+			                                                (void*)secAttr, (UINT32)buffer_size);
 		else
 			status = SEC_E_UNSUPPORTED_FUNCTION;
 #endif

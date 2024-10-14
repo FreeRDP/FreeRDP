@@ -170,11 +170,14 @@ static BOOL scard_status_transition(SCardContext* context)
 	return TRUE;
 }
 
-static UINT32 scard_copy_strings(SCardContext* ctx, void* dst, UINT32 dstSize, const void* src,
-                                 UINT32 srcSize)
+static UINT32 scard_copy_strings(SCardContext* ctx, void* dst, size_t dstSize, const void* src,
+                                 size_t srcSize)
 {
 	WINPR_ASSERT(ctx);
 	WINPR_ASSERT(dst);
+
+	WINPR_ASSERT(srcSize <= UINT32_MAX);
+	WINPR_ASSERT(dstSize <= UINT32_MAX);
 
 	if (dstSize == SCARD_AUTOALLOCATE)
 	{
@@ -182,13 +185,13 @@ static UINT32 scard_copy_strings(SCardContext* ctx, void* dst, UINT32 dstSize, c
 		memcpy(tmp, src, srcSize);
 		ArrayList_Append(ctx->strings, tmp);
 		*((void**)dst) = tmp;
-		return srcSize;
+		return (UINT32)srcSize;
 	}
 	else
 	{
-		UINT32 min = MIN(dstSize, srcSize);
+		const size_t min = MIN(dstSize, srcSize);
 		memcpy(dst, src, min);
-		return min;
+		return (UINT32)min;
 	}
 }
 
@@ -571,7 +574,10 @@ LONG WINAPI Emulate_SCardListReadersW(SmartcardEmulationContext* smartcard, SCAR
 
 		/* Return length only */
 		if (!mszReaders)
-			*pcchReaders = g_ReaderNameWLen;
+		{
+			WINPR_ASSERT(g_ReaderNameWLen <= UINT32_MAX);
+			*pcchReaders = (UINT32)g_ReaderNameWLen;
+		}
 		else
 		{
 			*pcchReaders = scard_copy_strings(value, mszReaders, *pcchReaders, g_ReaderNameW,

@@ -499,7 +499,7 @@ static UINT disp_server_packet_send(DispServerContext* context, wStream* s)
 		goto out;
 	}
 
-	if (!WTSVirtualChannelWrite(context->priv->disp_channel, Stream_BufferAs(s, char), pos,
+	if (!WTSVirtualChannelWrite(context->priv->disp_channel, Stream_BufferAs(s, char), (UINT32)pos,
 	                            &written))
 	{
 		WLog_ERR(TAG, "WTSVirtualChannelWrite failed!");

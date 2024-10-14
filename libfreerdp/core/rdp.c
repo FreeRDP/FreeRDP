@@ -758,11 +758,11 @@ static BOOL rdp_security_stream_out(rdpRdp* rdp, wStream* s, size_t length, UINT
 				if (!Stream_CheckAndLogRequiredCapacityWLog(rdp->log, s, 8))
 					goto unlock;
 				if (sec_flags & SEC_SECURE_CHECKSUM)
-					status = security_salted_mac_signature(rdp, data, length, TRUE,
+					status = security_salted_mac_signature(rdp, data, (UINT32)length, TRUE,
 					                                       Stream_Pointer(s), 8);
 				else
-					status =
-					    security_mac_signature(rdp, data, length, Stream_PointerAs(s, BYTE), 8);
+					status = security_mac_signature(rdp, data, (UINT32)length,
+					                                Stream_PointerAs(s, BYTE), 8);
 
 				if (!status)
 					goto unlock;

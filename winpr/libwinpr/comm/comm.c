@@ -1087,7 +1087,7 @@ DWORD QueryCommDevice(LPCTSTR lpDeviceName, LPTSTR lpTargetPath, DWORD ucchMax)
 
 	_tcsncpy(lpTargetPath, storedTargetPath, size + 1);
 	lpTargetPath[size + 2] = '\0'; /* 2nd final '\0' */
-	return size + 2;
+	return (DWORD)size + 2UL;
 }
 
 /**

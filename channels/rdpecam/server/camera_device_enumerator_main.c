@@ -531,8 +531,9 @@ static UINT enumerator_server_packet_send(CamDevEnumServerContext* context, wStr
 	UINT error = CHANNEL_RC_OK;
 	ULONG written = 0;
 
+	const size_t len = Stream_GetPosition(s);
 	if (!WTSVirtualChannelWrite(enumerator->enumerator_channel, Stream_BufferAs(s, char),
-	                            Stream_GetPosition(s), &written))
+	                            (UINT32)len, &written))
 	{
 		WLog_ERR(TAG, "WTSVirtualChannelWrite failed!");
 		error = ERROR_INTERNAL_ERROR;

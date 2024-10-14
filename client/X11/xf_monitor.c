@@ -341,20 +341,19 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 			if (!vscreen->monitors)
 				goto fail;
 
-			*pMaxWidth = vscreen->monitors[current_monitor].area.right -
-			             vscreen->monitors[current_monitor].area.left + 1;
-			*pMaxHeight = vscreen->monitors[current_monitor].area.bottom -
-			              vscreen->monitors[current_monitor].area.top + 1;
+			const MONITOR_INFO* vmonitor = &vscreen->monitors[current_monitor];
+			const RECTANGLE_16* area = &vmonitor->area;
+
+			*pMaxWidth = area->right - area->left + 1;
+			*pMaxHeight = area->bottom - area->top + 1;
 
 			if (freerdp_settings_get_bool(settings, FreeRDP_PercentScreenUseWidth))
-				*pMaxWidth = ((vscreen->monitors[current_monitor].area.right -
-				               vscreen->monitors[current_monitor].area.left + 1) *
+				*pMaxWidth = ((area->right - area->left + 1) *
 				              freerdp_settings_get_uint32(settings, FreeRDP_PercentScreen)) /
 				             100;
 
 			if (freerdp_settings_get_bool(settings, FreeRDP_PercentScreenUseHeight))
-				*pMaxHeight = ((vscreen->monitors[current_monitor].area.bottom -
-				                vscreen->monitors[current_monitor].area.top + 1) *
+				*pMaxHeight = ((area->bottom - area->top + 1) *
 				               freerdp_settings_get_uint32(settings, FreeRDP_PercentScreen)) /
 				              100;
 		}
@@ -460,25 +459,28 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 	 * to go fullscreen on the current monitor only */
 	if (nmonitors == 0 && vscreen->nmonitors > 0)
 	{
-		INT32 width = 0;
-		INT32 height = 0;
 		if (!vscreen->monitors)
 			goto fail;
 
-		width = vscreen->monitors[current_monitor].area.right -
-		        vscreen->monitors[current_monitor].area.left + 1L;
-		height = vscreen->monitors[current_monitor].area.bottom -
-		         vscreen->monitors[current_monitor].area.top + 1L;
+		const MONITOR_INFO* vmonitor = &vscreen->monitors[current_monitor];
+		const RECTANGLE_16* area = &vmonitor->area;
+
+		const INT32 width = area->right - area->left + 1;
+		const INT32 height = area->bottom - area->top + 1;
+		const INT32 maxw =
+		    ((width < 0) || ((UINT32)width < *pMaxWidth)) ? width : (INT32)*pMaxWidth;
+		const INT32 maxh =
+		    ((height < 0) || ((UINT32)height < *pMaxHeight)) ? width : (INT32)*pMaxHeight;
 
 		rdpMonitor* monitor =
 		    freerdp_settings_get_pointer_array_writable(settings, FreeRDP_MonitorDefArray, 0);
 		if (!monitor)
 			goto fail;
 
-		monitor->x = vscreen->monitors[current_monitor].area.left;
-		monitor->y = vscreen->monitors[current_monitor].area.top;
-		monitor->width = MIN(width, (INT64)(*pMaxWidth));
-		monitor->height = MIN(height, (INT64)(*pMaxHeight));
+		monitor->x = area->left;
+		monitor->y = area->top;
+		monitor->width = maxw;
+		monitor->height = maxh;
 		monitor->orig_screen = current_monitor;
 		nmonitors = 1;
 	}

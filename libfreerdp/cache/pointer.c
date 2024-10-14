@@ -110,7 +110,9 @@ static BOOL upate_pointer_copy_andxor(rdpPointer* pointer, const BYTE* andMaskDa
 	pointer_clear(pointer);
 	if (lengthAndMask && andMaskData)
 	{
-		pointer->lengthAndMask = lengthAndMask;
+		if (lengthAndMask > UINT32_MAX)
+			return FALSE;
+		pointer->lengthAndMask = (UINT32)lengthAndMask;
 		pointer->andMaskData = (BYTE*)malloc(lengthAndMask);
 		if (!pointer->andMaskData)
 			return FALSE;
@@ -120,7 +122,9 @@ static BOOL upate_pointer_copy_andxor(rdpPointer* pointer, const BYTE* andMaskDa
 
 	if (lengthXorMask && xorMaskData)
 	{
-		pointer->lengthXorMask = lengthXorMask;
+		if (lengthXorMask > UINT32_MAX)
+			return FALSE;
+		pointer->lengthXorMask = (UINT32)lengthXorMask;
 		pointer->xorMaskData = (BYTE*)malloc(lengthXorMask);
 		if (!pointer->xorMaskData)
 			return FALSE;

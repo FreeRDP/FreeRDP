@@ -418,11 +418,14 @@ static BOOL negotiate_write_neg_token(PSecBuffer output_buffer, NegToken* token)
 	if (!WinPrAsn1EncStreamSize(enc, &len) || len > output_buffer->cbBuffer)
 		goto cleanup;
 
+	if (len > UINT32_MAX)
+		goto cleanup;
+
 	Stream_StaticInit(&s, output_buffer->pvBuffer, len);
 
 	if (WinPrAsn1EncToStream(enc, &s))
 	{
-		output_buffer->cbBuffer = len;
+		output_buffer->cbBuffer = (UINT32)len;
 		ret = TRUE;
 	}
 
@@ -491,7 +494,10 @@ static BOOL negotiate_read_neg_token(PSecBuffer input, NegToken* token)
 					/* mechTypes [0] MechTypeList */
 					wStream s = WinPrAsn1DecGetStream(&dec2);
 					token->mechTypes.BufferType = SECBUFFER_TOKEN;
-					token->mechTypes.cbBuffer = Stream_Length(&s);
+					const size_t mlen = Stream_Length(&s);
+					if (mlen > UINT32_MAX)
+						return FALSE;
+					token->mechTypes.cbBuffer = (UINT32)mlen;
 					token->mechTypes.pvBuffer = Stream_Buffer(&s);
 					WLog_DBG(TAG, "\tmechTypes [0] (%li bytes)", token->mechTypes.cbBuffer);
 				}
@@ -526,7 +532,9 @@ static BOOL negotiate_read_neg_token(PSecBuffer input, NegToken* token)
 				/* mechToken [2] OCTET STRING */
 				if (!WinPrAsn1DecReadOctetString(&dec2, &octet_string, FALSE))
 					return FALSE;
-				token->mechToken.cbBuffer = octet_string.len;
+				if (octet_string.len > UINT32_MAX)
+					return FALSE;
+				token->mechToken.cbBuffer = (UINT32)octet_string.len;
 				token->mechToken.pvBuffer = octet_string.data;
 				token->mechToken.BufferType = SECBUFFER_TOKEN;
 				WLog_DBG(TAG, "\tmechToken [2] (%li bytes)", octet_string.len);
@@ -535,7 +543,9 @@ static BOOL negotiate_read_neg_token(PSecBuffer input, NegToken* token)
 				/* mechListMic [3] OCTET STRING */
 				if (!WinPrAsn1DecReadOctetString(&dec2, &octet_string, FALSE))
 					return FALSE;
-				token->mic.cbBuffer = octet_string.len;
+				if (octet_string.len > UINT32_MAX)
+					return FALSE;
+				token->mic.cbBuffer = (UINT32)octet_string.len;
 				token->mic.pvBuffer = octet_string.data;
 				token->mic.BufferType = SECBUFFER_TOKEN;
 				WLog_DBG(TAG, "\tmechListMIC [3] (%li bytes)", octet_string.len);
@@ -728,7 +738,9 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextW(
 		{
 			init_context.spnego = TRUE;
 			init_context.mechTypes.BufferType = SECBUFFER_DATA;
-			init_context.mechTypes.cbBuffer = WinPrAsn1EncEndContainer(enc);
+			const size_t cb = WinPrAsn1EncEndContainer(enc);
+			WINPR_ASSERT(cb <= UINT32_MAX);
+			init_context.mechTypes.cbBuffer = (UINT32)cb;
 		}
 
 		/* Allocate memory for the new context */

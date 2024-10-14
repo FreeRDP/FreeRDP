@@ -1236,14 +1236,12 @@ static BOOL rts_write_pdu_header(wStream* s, const rpcconn_rts_hdr_t* header)
 static BOOL rts_receive_window_size_command_read(rdpRpc* rpc, wStream* buffer,
                                                  UINT64* ReceiveWindowSize)
 {
-	UINT32 val = 0;
-
 	WINPR_ASSERT(rpc);
 	WINPR_ASSERT(buffer);
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, buffer, 8))
 		return FALSE;
-	Stream_Read_UINT64(buffer, val);
+	const UINT64 val = Stream_Get_UINT64(buffer);
 	if (ReceiveWindowSize)
 		*ReceiveWindowSize = val; /* ReceiveWindowSize (8 bytes) */
 
@@ -1324,14 +1322,13 @@ static BOOL rts_flow_control_ack_command_write(wStream* s, UINT32 BytesReceived,
 static BOOL rts_connection_timeout_command_read(rdpRpc* rpc, wStream* buffer,
                                                 UINT64* ConnectionTimeout)
 {
-	UINT32 val = 0;
 	WINPR_ASSERT(rpc);
 	WINPR_ASSERT(buffer);
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, buffer, 8))
 		return FALSE;
 
-	Stream_Read_UINT64(buffer, val);
+	UINT64 val = Stream_Get_UINT64(buffer);
 	if (ConnectionTimeout)
 		*ConnectionTimeout = val; /* ConnectionTimeout (8 bytes) */
 
@@ -1594,16 +1591,17 @@ BOOL rts_recv_CONN_A3_pdu(rdpRpc* rpc, wStream* buffer)
 		return FALSE;
 
 	rc = rts_connection_timeout_command_read(rpc, buffer, &ConnectionTimeout);
-	if (!rc)
+	if (!rc || (ConnectionTimeout > UINT32_MAX))
 		return rc;
 
-	WLog_DBG(TAG, "Receiving CONN/A3 RTS PDU: ConnectionTimeout: %" PRIu32 "", ConnectionTimeout);
+	WLog_DBG(TAG, "Receiving CONN/A3 RTS PDU: ConnectionTimeout: %" PRIu64 "", ConnectionTimeout);
 
 	WINPR_ASSERT(rpc);
 	WINPR_ASSERT(rpc->VirtualConnection);
 	WINPR_ASSERT(rpc->VirtualConnection->DefaultInChannel);
 
-	rpc->VirtualConnection->DefaultInChannel->PingOriginator.ConnectionTimeout = ConnectionTimeout;
+	rpc->VirtualConnection->DefaultInChannel->PingOriginator.ConnectionTimeout =
+	    (UINT32)ConnectionTimeout;
 	return TRUE;
 }
 
@@ -1683,13 +1681,14 @@ BOOL rts_recv_CONN_C2_pdu(rdpRpc* rpc, wStream* buffer)
 	if (!rc)
 		return rc;
 	rc = rts_receive_window_size_command_read(rpc, buffer, &ReceiveWindowSize);
-	if (!rc)
+	if (!rc || (ReceiveWindowSize > UINT32_MAX))
 		return rc;
 	rc = rts_connection_timeout_command_read(rpc, buffer, &ConnectionTimeout);
-	if (!rc)
+	if (!rc || (ConnectionTimeout > UINT32_MAX))
 		return rc;
+
 	WLog_DBG(TAG,
-	         "Receiving CONN/C2 RTS PDU: ConnectionTimeout: %" PRIu32 " ReceiveWindowSize: %" PRIu32
+	         "Receiving CONN/C2 RTS PDU: ConnectionTimeout: %" PRIu64 " ReceiveWindowSize: %" PRIu64
 	         "",
 	         ConnectionTimeout, ReceiveWindowSize);
 
@@ -1697,8 +1696,9 @@ BOOL rts_recv_CONN_C2_pdu(rdpRpc* rpc, wStream* buffer)
 	WINPR_ASSERT(rpc->VirtualConnection);
 	WINPR_ASSERT(rpc->VirtualConnection->DefaultInChannel);
 
-	rpc->VirtualConnection->DefaultInChannel->PingOriginator.ConnectionTimeout = ConnectionTimeout;
-	rpc->VirtualConnection->DefaultInChannel->PeerReceiveWindow = ReceiveWindowSize;
+	rpc->VirtualConnection->DefaultInChannel->PingOriginator.ConnectionTimeout =
+	    (UINT32)ConnectionTimeout;
+	rpc->VirtualConnection->DefaultInChannel->PeerReceiveWindow = (UINT32)ReceiveWindowSize;
 	return TRUE;
 }
 

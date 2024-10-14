@@ -191,11 +191,13 @@ void xf_keyboard_release_all_keypress(xfContext* xfc)
 {
 	WINPR_ASSERT(xfc);
 
+	WINPR_ASSERT(ARRAYSIZE(xfc->KeyboardState) <= UINT32_MAX);
 	for (size_t keycode = 0; keycode < ARRAYSIZE(xfc->KeyboardState); keycode++)
 	{
 		if (xfc->KeyboardState[keycode])
 		{
-			const DWORD rdp_scancode = freerdp_keyboard_get_rdp_scancode_from_x11_keycode(keycode);
+			const DWORD rdp_scancode =
+			    freerdp_keyboard_get_rdp_scancode_from_x11_keycode((UINT32)keycode);
 
 			// release tab before releasing the windows key.
 			// this stops the start menu from opening on unfocus event.

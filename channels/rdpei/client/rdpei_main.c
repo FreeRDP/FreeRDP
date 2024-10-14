@@ -24,6 +24,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
 
 #include <winpr/crt.h>
 #include <winpr/synch.h>
@@ -217,12 +218,15 @@ static UINT rdpei_add_frame(RdpeiClientContext* context)
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT rdpei_send_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStream* s, UINT16 eventId,
-                           UINT32 pduLength)
+                           size_t pduLength)
 {
 	UINT status = 0;
 
 	if (!callback || !s || !callback->channel || !callback->channel->Write)
 		return ERROR_INTERNAL_ERROR;
+
+	if (pduLength > UINT32_MAX)
+		return ERROR_INVALID_PARAMETER;
 
 	RDPEI_PLUGIN* rdpei = (RDPEI_PLUGIN*)callback->plugin;
 	if (!rdpei)
@@ -230,7 +234,7 @@ static UINT rdpei_send_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStream* s, UINT1
 
 	Stream_SetPosition(s, 0);
 	Stream_Write_UINT16(s, eventId);   /* eventId (2 bytes) */
-	Stream_Write_UINT32(s, pduLength); /* pduLength (4 bytes) */
+	Stream_Write_UINT32(s, (UINT32)pduLength); /* pduLength (4 bytes) */
 	Stream_SetPosition(s, Stream_Length(s));
 	status = callback->channel->Write(callback->channel, (UINT32)Stream_Length(s), Stream_Buffer(s),
 	                                  NULL);
@@ -295,13 +299,18 @@ static UINT rdpei_write_pen_frame(wStream* s, const RDPINPUT_PEN_FRAME* frame)
 	return CHANNEL_RC_OK;
 }
 
-static UINT rdpei_send_pen_event_pdu(GENERIC_CHANNEL_CALLBACK* callback, UINT32 frameOffset,
-                                     const RDPINPUT_PEN_FRAME* frames, UINT16 count)
+static UINT rdpei_send_pen_event_pdu(GENERIC_CHANNEL_CALLBACK* callback, size_t frameOffset,
+                                     const RDPINPUT_PEN_FRAME* frames, size_t count)
 {
 	UINT status = 0;
 	wStream* s = NULL;
 
 	WINPR_ASSERT(callback);
+
+	if (frameOffset > UINT32_MAX)
+		return ERROR_INVALID_PARAMETER;
+	if (count > UINT16_MAX)
+		return ERROR_INVALID_PARAMETER;
 
 	RDPEI_PLUGIN* rdpei = (RDPEI_PLUGIN*)callback->plugin;
 	if (!rdpei)
@@ -323,10 +332,11 @@ static UINT rdpei_send_pen_event_pdu(GENERIC_CHANNEL_CALLBACK* callback, UINT32 
 	 * the time that has elapsed (in milliseconds) from when the oldest touch frame
 	 * was generated to when it was encoded for transmission by the client.
 	 */
-	rdpei_write_4byte_unsigned(s, frameOffset); /* encodeTime (FOUR_BYTE_UNSIGNED_INTEGER) */
-	rdpei_write_2byte_unsigned(s, count);       /* (frameCount) TWO_BYTE_UNSIGNED_INTEGER */
+	rdpei_write_4byte_unsigned(s,
+	                           (UINT32)frameOffset); /* encodeTime (FOUR_BYTE_UNSIGNED_INTEGER) */
+	rdpei_write_2byte_unsigned(s, (UINT16)count);    /* (frameCount) TWO_BYTE_UNSIGNED_INTEGER */
 
-	for (UINT16 x = 0; x < count; x++)
+	for (size_t x = 0; x < count; x++)
 	{
 		if ((status = rdpei_write_pen_frame(s, &frames[x])))
 		{
@@ -696,13 +706,10 @@ static UINT rdpei_send_touch_event_pdu(GENERIC_CHANNEL_CALLBACK* callback,
                                        RDPINPUT_TOUCH_FRAME* frame)
 {
 	UINT status = 0;
-	wStream* s = NULL;
-	UINT32 pduLength = 0;
-	RDPEI_PLUGIN* rdpei = NULL;
 
 	WINPR_ASSERT(callback);
 
-	rdpei = (RDPEI_PLUGIN*)callback->plugin;
+	RDPEI_PLUGIN* rdpei = (RDPEI_PLUGIN*)callback->plugin;
 	if (!rdpei || !rdpei->rdpcontext)
 		return ERROR_INTERNAL_ERROR;
 	if (freerdp_settings_get_bool(rdpei->rdpcontext->settings, FreeRDP_SuspendInput))
@@ -711,8 +718,8 @@ static UINT rdpei_send_touch_event_pdu(GENERIC_CHANNEL_CALLBACK* callback,
 	if (!frame)
 		return ERROR_INTERNAL_ERROR;
 
-	pduLength = 64 + (frame->contactCount * 64);
-	s = Stream_New(NULL, pduLength);
+	size_t pduLength = 64ULL + (64ULL * frame->contactCount);
+	wStream* s = Stream_New(NULL, pduLength);
 
 	if (!s)
 	{
@@ -739,8 +746,7 @@ static UINT rdpei_send_touch_event_pdu(GENERIC_CHANNEL_CALLBACK* callback,
 	}
 
 	Stream_SealLength(s);
-	pduLength = Stream_Length(s);
-	status = rdpei_send_pdu(callback, s, EVENTID_TOUCH, pduLength);
+	status = rdpei_send_pdu(callback, s, EVENTID_TOUCH, Stream_Length(s));
 	Stream_Free(s, TRUE);
 	return status;
 }
@@ -1059,12 +1065,15 @@ static UINT rdpei_touch_process(RdpeiClientContext* context, INT32 externalId, U
 		contactIdlocal = contactPoint->contactId;
 	LeaveCriticalSection(&rdpei->lock);
 
+	if (contactIdlocal > UINT32_MAX)
+		return ERROR_INVALID_PARAMETER;
+
 	if (contactIdlocal >= 0)
 	{
 		RDPINPUT_CONTACT_DATA contact = { 0 };
 		contact.x = x;
 		contact.y = y;
-		contact.contactId = contactIdlocal;
+		contact.contactId = (UINT32)contactIdlocal;
 		contact.contactFlags = contactFlags;
 		contact.fieldsPresent = fieldFlags;
 

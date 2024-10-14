@@ -1070,7 +1070,7 @@ static INLINE BOOL update_read_delta_points(wStream* s, DELTA_POINT** points, UI
 
 static BOOL order_field_flag_is_set(const ORDER_INFO* orderInfo, BYTE number)
 {
-	const UINT32 mask = (1UL << ((UINT32)number - 1UL));
+	const UINT32 mask = (UINT32)(1UL << ((UINT32)number - 1UL));
 	const BOOL set = (orderInfo->fieldFlags & mask) != 0;
 	return set;
 }
@@ -2048,7 +2048,10 @@ static BOOL update_read_fast_glyph_order(const char* orderName, wStream* s,
 				return FALSE;
 			}
 
-			glyph->cb = Stream_GetRemainingLength(sub);
+			const size_t slen = Stream_GetRemainingLength(sub);
+			if (slen > UINT32_MAX)
+				return FALSE;
+			glyph->cb = (UINT32)slen;
 			if (glyph->cb > 0)
 			{
 				BYTE* new_aj = (BYTE*)realloc(glyph->aj, glyph->cb);

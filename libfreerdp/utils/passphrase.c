@@ -224,7 +224,8 @@ static const char* freerdp_passphrase_read_askpass(const char* prompt, char* buf
 	FILE* askproc = popen(command, "r");
 	if (!askproc)
 		return NULL;
-	if (fgets(buf, bufsiz, askproc) != NULL)
+	WINPR_ASSERT(bufsiz <= INT32_MAX);
+	if (fgets(buf, (int)bufsiz, askproc) != NULL)
 		buf[strcspn(buf, "\r\n")] = '\0';
 	else
 		buf = NULL;

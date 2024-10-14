@@ -317,7 +317,8 @@ BOOL security_mac_data(const BYTE* mac_salt_key, size_t mac_salt_key_length, con
 	WINPR_ASSERT(output_length == WINPR_MD5_DIGEST_LENGTH);
 
 	/* MacData = MD5(MacSaltKey + pad2 + SHA1(MacSaltKey + pad1 + length + data)) */
-	security_UINT32_le(length_le, sizeof(length_le), length); /* length must be little-endian */
+	security_UINT32_le(length_le, sizeof(length_le),
+	                   (UINT32)length); /* length must be little-endian */
 
 	/* SHA1_Digest = SHA1(MacSaltKey + pad1 + length + data) */
 	if (!(sha1 = winpr_Digest_New()))
