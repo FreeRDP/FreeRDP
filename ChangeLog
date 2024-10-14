@@ -1,3 +1,34 @@
+# 2024-10-21 Version 3.9.0
+
+We're proud to present the newest release of FreeRDP.
+This one brings some major code cleanup (we've addressed lots of clang-tidy
+warnings) as well as some highly anticipated new features.
+We also did update the API documentation quite a bit (still incomplete though,
+help always welcome ;))
+
+So, what is new:
+* Support for RDPEAR (remote credential guard) /remoteGuard option for non windows clients
+* Global configuration file support, allowing to configure certificate
+  accept/ignore/... default settings for all users
+* Simplified manpage generation, eliminates docbook and xmlto dependencies
+  speeding up builds
+* New API for client channels to run tasks on RDP thread
+* New extended transport layer API
+* RDPECAM MJPEG support	
+* the first updates of timezone definitions from our automated ci
+
+Noteworthy changes:
+* Fix bugs in SSE4.1/AVX2 image copy (#10720)
+* Add warnings for invalid monitor settings during connect (#10672)
+* Fix ALSA microphone support (#10664)
+* Fix modal windows in RAILS mode (#10629)
+* Update experimental SDL3 client (SDL3 API should now have been stabilized,
+  various pull requests)
+* Fix keyboard layouts, the external JSON did miss a few (#10639)
+
+For a complete and detailed change log since the last release run:
+git log 3.9.0...3.8.0
+
 # 2024-08-30 Version 3.8.0
 
 This is a bugfix release. Due to additional exports required by a bugfix the minor version was incremented
