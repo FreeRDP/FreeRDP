@@ -208,7 +208,7 @@ static BOOL wst_recv_auth_token(rdpCredsspAuth* auth, HttpResponse* response)
 	return TRUE;
 }
 
-static BOOL wst_tls_connect(rdpWst* wst, rdpTls* tls, int timeout)
+static BOOL wst_tls_connect(rdpWst* wst, rdpTls* tls, UINT32 timeout)
 {
 	WINPR_ASSERT(wst);
 	WINPR_ASSERT(tls);
@@ -269,7 +269,7 @@ static BOOL wst_tls_connect(rdpWst* wst, rdpTls* tls, int timeout)
 	}
 
 	tls->hostname = wst->gwhostname;
-	tls->port = wst->gwport;
+	tls->port = MIN(UINT16_MAX, wst->gwport);
 	tls->isGatewayTransport = TRUE;
 	status = freerdp_tls_connect(tls, bufferedBio);
 	if (status < 1)
@@ -332,21 +332,15 @@ out:
 
 static BOOL wst_send_http_request(rdpWst* wst, rdpTls* tls)
 {
-	size_t sz = 0;
-	wStream* s = NULL;
-	int status = -1;
 	WINPR_ASSERT(wst);
 	WINPR_ASSERT(tls);
 
-	s = wst_build_http_request(wst);
-
+	wStream* s = wst_build_http_request(wst);
 	if (!s)
 		return FALSE;
 
-	sz = Stream_Length(s);
-
-	if (sz <= INT_MAX)
-		status = freerdp_tls_write_all(tls, Stream_Buffer(s), (int)sz);
+	const size_t sz = Stream_Length(s);
+	int status = freerdp_tls_write_all(tls, Stream_Buffer(s), sz);
 
 	Stream_Free(s, TRUE);
 	return (status >= 0);

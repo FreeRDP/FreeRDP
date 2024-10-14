@@ -33,6 +33,8 @@
 #include <openssl/err.h>
 #include <openssl/bio.h>
 
+#define LIMIT_INTMAX(a) ((a) > INT32_MAX) ? INT32_MAX : (int)(a)
+
 struct S_SCHANNEL_OPENSSL
 {
 	SSL* ssl;
@@ -377,7 +379,8 @@ SECURITY_STATUS schannel_openssl_client_process_tokens(SCHANNEL_OPENSSL* context
 				return SEC_E_INVALID_TOKEN;
 
 			ERR_clear_error();
-			status = BIO_write(context->bioRead, pBuffer->pvBuffer, pBuffer->cbBuffer);
+			status =
+			    BIO_write(context->bioRead, pBuffer->pvBuffer, LIMIT_INTMAX(pBuffer->cbBuffer));
 			if (status < 0)
 				return SEC_E_INVALID_TOKEN;
 		}
@@ -442,7 +445,7 @@ SECURITY_STATUS schannel_openssl_server_process_tokens(SCHANNEL_OPENSSL* context
 			return SEC_E_INVALID_TOKEN;
 
 		ERR_clear_error();
-		status = BIO_write(context->bioRead, pBuffer->pvBuffer, pBuffer->cbBuffer);
+		status = BIO_write(context->bioRead, pBuffer->pvBuffer, LIMIT_INTMAX(pBuffer->cbBuffer));
 		if (status >= 0)
 			status = SSL_accept(context->ssl);
 
@@ -506,7 +509,8 @@ SECURITY_STATUS schannel_openssl_encrypt_message(SCHANNEL_OPENSSL* context, PSec
 	if ((!pStreamHeaderBuffer) || (!pStreamBodyBuffer) || (!pStreamTrailerBuffer))
 		return SEC_E_INVALID_TOKEN;
 
-	status = SSL_write(context->ssl, pStreamBodyBuffer->pvBuffer, pStreamBodyBuffer->cbBuffer);
+	status = SSL_write(context->ssl, pStreamBodyBuffer->pvBuffer,
+	                   LIMIT_INTMAX(pStreamBodyBuffer->cbBuffer));
 
 	if (status < 0)
 	{
@@ -553,9 +557,9 @@ SECURITY_STATUS schannel_openssl_decrypt_message(SCHANNEL_OPENSSL* context, PSec
 		return SEC_E_INVALID_TOKEN;
 
 	ERR_clear_error();
-	status = BIO_write(context->bioRead, pBuffer->pvBuffer, pBuffer->cbBuffer);
+	status = BIO_write(context->bioRead, pBuffer->pvBuffer, LIMIT_INTMAX(pBuffer->cbBuffer));
 	if (status > 0)
-		status = SSL_read(context->ssl, pBuffer->pvBuffer, pBuffer->cbBuffer);
+		status = SSL_read(context->ssl, pBuffer->pvBuffer, LIMIT_INTMAX(pBuffer->cbBuffer));
 
 	if (status < 0)
 	{

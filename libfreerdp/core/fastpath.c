@@ -1066,9 +1066,12 @@ BOOL fastpath_send_multiple_input_pdu(rdpFastPath* fastpath, wStream* s, size_t 
 		if (!security_lock(rdp))
 			goto fail;
 
-		int sec_bytes = fastpath_get_sec_bytes(fastpath->rdp);
+		const size_t sec_bytes = fastpath_get_sec_bytes(fastpath->rdp);
+		if (sec_bytes + 3ULL > length)
+			goto fail;
+
 		BYTE* fpInputEvents = Stream_PointerAs(s, BYTE) + sec_bytes;
-		UINT16 fpInputEvents_length = length - 3 - sec_bytes;
+		const UINT16 fpInputEvents_length = (UINT16)length - 3 - sec_bytes;
 
 		WINPR_ASSERT(rdp->settings);
 		if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)

@@ -429,7 +429,7 @@ static int rdtk_font_parse_descriptor_buffer(rdtkFont* font, uint8_t* buffer, si
 		*q = '\0';
 		errno = 0;
 		{
-			long val = strtoul(p, NULL, 0);
+			long val = strtol(p, NULL, 0);
 
 			if ((errno != 0) || (val < INT32_MIN) || (val > INT32_MAX))
 				return -1;

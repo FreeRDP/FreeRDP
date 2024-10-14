@@ -626,7 +626,8 @@ static void* winpr_convert_to_jpeg(const void* data, size_t size, UINT32 width, 
 
 	cinfo.image_width = width;
 	cinfo.image_height = height;
-	cinfo.input_components = (bpp + 7) / 8;
+	WINPR_ASSERT(bpp <= INT32_MAX / 8);
+	cinfo.input_components = (int)(bpp + 7) / 8;
 	cinfo.in_color_space = (bpp > 24) ? JCS_EXT_BGRA : JCS_EXT_BGR;
 	cinfo.data_precision = 8;
 
@@ -900,7 +901,9 @@ static SSIZE_T save_png_to_buffer(UINT32 bpp, UINT32 width, UINT32 height, const
 	png_free(png_ptr, row_pointers);
 
 	/* Finish writing. */
-	rc = state.size;
+	if (state.size > SSIZE_MAX)
+		goto fail;
+	rc = (SSIZE_T)state.size;
 	*pDstData = state.buffer;
 fail:
 	png_destroy_write_struct(&png_ptr, &info_ptr);

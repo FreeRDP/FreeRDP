@@ -1238,18 +1238,14 @@ static BOOL rdg_auth_init(rdpRdg* rdg, rdpTls* tls, TCHAR* authPkg)
 static BOOL rdg_send_http_request(rdpRdg* rdg, rdpTls* tls, const char* method,
                                   TRANSFER_ENCODING transferEncoding)
 {
-	size_t sz = 0;
-	wStream* s = NULL;
 	int status = -1;
-	s = rdg_build_http_request(rdg, method, transferEncoding);
+	wStream* s = rdg_build_http_request(rdg, method, transferEncoding);
 
 	if (!s)
 		return FALSE;
 
-	sz = Stream_Length(s);
-
-	if (sz <= INT_MAX)
-		status = freerdp_tls_write_all(tls, Stream_Buffer(s), (int)sz);
+	const size_t sz = Stream_Length(s);
+	status = freerdp_tls_write_all(tls, Stream_Buffer(s), sz);
 
 	Stream_Free(s, TRUE);
 	return (status >= 0);
@@ -1316,7 +1312,7 @@ static BOOL rdg_tls_connect(rdpRdg* rdg, rdpTls* tls, const char* peerAddress, i
 	}
 
 	tls->hostname = settings->GatewayHostname;
-	tls->port = (int)settings->GatewayPort;
+	tls->port = MIN(UINT16_MAX, settings->GatewayPort);
 	tls->isGatewayTransport = TRUE;
 	status = freerdp_tls_connect(tls, bufferedBio);
 	if (status < 1)
@@ -1722,13 +1718,7 @@ static int rdg_write_chunked_data_packet(rdpRdg* rdg, const BYTE* buf, int isize
 	Stream_SealLength(sChunk);
 	len = Stream_Length(sChunk);
 
-	if (len > INT_MAX)
-	{
-		Stream_Free(sChunk, TRUE);
-		return -1;
-	}
-
-	status = freerdp_tls_write_all(rdg->tlsIn, Stream_Buffer(sChunk), (int)len);
+	status = freerdp_tls_write_all(rdg->tlsIn, Stream_Buffer(sChunk), len);
 	Stream_Free(sChunk, TRUE);
 
 	if (status < 0)

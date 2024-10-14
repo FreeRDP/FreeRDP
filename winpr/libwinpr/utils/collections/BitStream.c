@@ -106,8 +106,9 @@ void BitDump(const char* tag, UINT32 level, const BYTE* buffer, UINT32 length, U
 	for (; i < length; i += 8)
 	{
 		const char* str = strs[buffer[i / 8]];
-		const int nbits = (length - i) > 8 ? 8 : (length - i);
-		const int rc = _snprintf(&pbuffer[pos], length - pos, "%.*s ", nbits, str);
+		const DWORD nbits = (length - i) > 8 ? 8 : (length - i);
+		WINPR_ASSERT(nbits <= INT32_MAX);
+		const int rc = _snprintf(&pbuffer[pos], length - pos, "%.*s ", (int)nbits, str);
 		if (rc < 0)
 			return;
 

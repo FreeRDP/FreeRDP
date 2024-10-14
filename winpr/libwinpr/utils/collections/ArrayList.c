@@ -236,11 +236,13 @@ static BOOL ArrayList_Shift(wArrayList* arrayList, size_t index, SSIZE_T count)
 	}
 	else if (count < 0)
 	{
-		INT64 chunk = arrayList->size - index + count;
-
-		if (chunk > 0)
+		const size_t off = index + (size_t)(-1 * count);
+		if (off < arrayList->size)
+		{
+			const size_t chunk = arrayList->size - off;
 			MoveMemory(&arrayList->array[index], &arrayList->array[index - count],
-			           (size_t)chunk * sizeof(void*));
+			           chunk * sizeof(void*));
+		}
 
 		arrayList->size += count;
 	}
@@ -493,9 +495,12 @@ SSIZE_T ArrayList_LastIndexOf(wArrayList* arrayList, const void* obj, SSIZE_T st
 	if (startIndex < 0)
 		sindex = 0;
 
-	cindex = (size_t)count;
+	cindex = count;
 	if (count < 0)
-		cindex = arrayList->size;
+	{
+		WINPR_ASSERT(arrayList->size <= SSIZE_MAX);
+		cindex = (SSIZE_T)arrayList->size;
+	}
 
 	SSIZE_T index = sindex + cindex;
 	for (; index > sindex; index--)

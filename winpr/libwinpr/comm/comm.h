@@ -75,7 +75,7 @@ struct winpr_comm
 	ULONG WaitEventMask;
 	ULONG PendingEvents;
 
-	char eventChar;
+	BYTE eventChar;
 	/* NB: CloseHandle() has to free resources */
 };
 

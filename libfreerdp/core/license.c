@@ -1618,7 +1618,7 @@ BOOL license_read_scope_list(wStream* s, SCOPE_LIST* scopeList)
 
 	Stream_Read_UINT32(s, scopeCount); /* ScopeCount (4 bytes) */
 
-	if (!license_check_stream_length(s, scopeCount * 4ull, "license scope list::count"))
+	if (!license_check_stream_length(s, 4ll * scopeCount, "license scope list::count"))
 		return FALSE;
 
 	if (!license_scope_list_resize(scopeList, scopeCount))
