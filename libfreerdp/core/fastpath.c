@@ -1068,7 +1068,7 @@ BOOL fastpath_send_multiple_input_pdu(rdpFastPath* fastpath, wStream* s, size_t 
 
 		const size_t sec_bytes = fastpath_get_sec_bytes(fastpath->rdp);
 		if (sec_bytes + 3ULL > length)
-			goto fail;
+			goto unlock;
 
 		BYTE* fpInputEvents = Stream_PointerAs(s, BYTE) + sec_bytes;
 		const UINT16 fpInputEvents_length = (UINT16)length - 3 - sec_bytes;
