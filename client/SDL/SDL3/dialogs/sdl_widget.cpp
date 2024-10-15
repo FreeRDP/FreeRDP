@@ -96,9 +96,29 @@ SDL_Texture* SdlWidget::render_text(SDL_Renderer* renderer, const std::string& t
 		return nullptr;
 	}
 
+	std::unique_ptr<TTF_TextEngine, decltype(&TTF_DestroySurfaceTextEngine)> engine(
+	    TTF_CreateRendererTextEngine(renderer), TTF_DestroySurfaceTextEngine);
+	if (!engine)
+	{
+		widget_log_error(-1, "TTF_CreateRendererTextEngine");
+		return nullptr;
+	}
+
+	std::unique_ptr<TTF_Text, decltype(&TTF_DestroyText)> txt(
+	    TTF_CreateText(engine.get(), _font, text.c_str(), text.size()), TTF_DestroyText);
+
+	if (!txt)
+	{
+		widget_log_error(-1, "TTF_CreateText");
+		return nullptr;
+	}
 	int w = 0;
 	int h = 0;
-	TTF_GetTextSize(_font, text.c_str(), 0, &w, &h);
+	if (!TTF_GetTextSize(txt.get(), &w, &h))
+	{
+		widget_log_error(-1, "TTF_GetTextSize");
+		return nullptr;
+	}
 
 	src.w = w;
 	src.h = h;
@@ -133,9 +153,6 @@ static float scale(float dw, float dh)
 SDL_Texture* SdlWidget::render_text_wrapped(SDL_Renderer* renderer, const std::string& text,
                                             SDL_Color fgcolor, SDL_FRect& src, SDL_FRect& dst)
 {
-	Sint32 w = 0;
-	Sint32 h = 0;
-	TTF_GetTextSize(_font, " ", 0, &w, &h);
 	auto surface = TTF_RenderText_Blended_Wrapped(_font, text.c_str(), 0, fgcolor, _text_width);
 	if (!surface)
 	{
