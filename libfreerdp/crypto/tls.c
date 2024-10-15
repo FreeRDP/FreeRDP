@@ -1406,15 +1406,11 @@ static BOOL is_accepted_fingerprint(const rdpCertificate* cert,
 		{
 			char* subcontext = NULL;
 			const char* h = strtok_s(cur, ":", &subcontext);
-			const char* fp = NULL;
 
 			if (!h)
 				goto next;
 
-			fp = h + strlen(h) + 1;
-			if (!fp)
-				goto next;
-
+			const char* fp = h + strlen(h) + 1;
 			if (compare_fingerprint_all(fp, h, cert))
 			{
 				rc = TRUE;
