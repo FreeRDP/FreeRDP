@@ -450,7 +450,7 @@ int makecert_context_output_certificate_file(MAKECERT_CONTEXT* context, const ch
 	BIO* bio = NULL;
 	char* x509_str = NULL;
 
-	if (!context || !path)
+	if (!context)
 		return -1;
 
 	if (!context->output_file)

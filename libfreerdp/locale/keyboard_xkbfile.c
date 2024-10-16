@@ -421,12 +421,13 @@ static int xkb_cmp(const void* pva, const void* pvb)
 {
 	const XKB_KEY_NAME_SCANCODE* a = pva;
 	const XKB_KEY_NAME_SCANCODE* b = pvb;
+
+	if (!a && !b)
+		return 0;
 	if (!a)
 		return 1;
 	if (!b)
 		return -1;
-	if (!a && !b)
-		return 0;
 	return strcmp(a->xkb_keyname, b->xkb_keyname);
 }
 

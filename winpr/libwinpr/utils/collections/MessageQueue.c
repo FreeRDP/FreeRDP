@@ -71,7 +71,10 @@ HANDLE MessageQueue_Event(wMessageQueue* queue)
 size_t MessageQueue_Size(wMessageQueue* queue)
 {
 	WINPR_ASSERT(queue);
-	return queue->size;
+	EnterCriticalSection(&queue->lock);
+	const size_t ret = queue->size;
+	LeaveCriticalSection(&queue->lock);
+	return ret;
 }
 
 /**

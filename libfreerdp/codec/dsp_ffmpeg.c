@@ -477,13 +477,14 @@ static BOOL ffmpeg_encode_frame(AVCodecContext* WINPR_RESTRICT context, AVFrame*
 	}
 
 	/* read all the output frames (in general there may be any number of them */
-	while (ret >= 0)
+	while (TRUE)
 	{
 		ret = avcodec_receive_packet(context, packet);
 
 		if ((ret == AVERROR(EAGAIN)) || (ret == AVERROR_EOF))
-			return TRUE;
-		else if (ret < 0)
+			break;
+
+		if (ret < 0)
 		{
 			const char* err = av_err2str(ret);
 			WLog_ERR(TAG, "Error during encoding %s [%d]", err, ret);
