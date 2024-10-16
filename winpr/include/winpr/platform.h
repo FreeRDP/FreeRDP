@@ -27,8 +27,10 @@
 #define WINPR_PRAGMA_WARNING(msg) WINPR_DO_PRAGMA(GCC warning #msg)
 #elif defined(__clang__)
 #define WINPR_PRAGMA_WARNING(msg) WINPR_DO_PRAGMA(GCC warning #msg)
-#elif defined(_MSC_VER)
+#elif defined(_MSC_VER) && (_MSC_VER >= 1920)
 #define WINPR_PRAGMA_WARNING(msg) WINPR_DO_PRAGMA(message \x28 #msg \x29)
+#else
+#define WINPR_PRAGMA_WARNING(msg)
 #endif
 
 // C99 related macros
