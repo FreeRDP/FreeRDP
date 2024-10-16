@@ -20,7 +20,7 @@ static const TCHAR testPathPrefixDeviceNamespace[] = _T("\\\\?\\GLOBALROOT");
 int TestPathCchStripPrefix(int argc, char* argv[])
 {
 	HRESULT status = 0;
-	TCHAR Path[PATHCCH_MAX_CCH];
+	TCHAR Path[PATHCCH_MAX_CCH] = { 0 };
 
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
@@ -32,7 +32,7 @@ int TestPathCchStripPrefix(int argc, char* argv[])
 
 	/* Path with prefix (File Namespace) */
 
-	_tcscpy(Path, testPathPrefixFileNamespace);
+	_tcsncpy(Path, testPathPrefixFileNamespace, ARRAYSIZE(Path));
 
 	status = PathCchStripPrefix(Path, sizeof(testPathPrefixFileNamespace) / sizeof(TCHAR));
 
@@ -42,7 +42,7 @@ int TestPathCchStripPrefix(int argc, char* argv[])
 		return -1;
 	}
 
-	if (_tcscmp(Path, testPathNoPrefixFileNamespace) != 0)
+	if (_tcsncmp(Path, testPathNoPrefixFileNamespace, ARRAYSIZE(Path)) != 0)
 	{
 		_tprintf(_T("Path Mismatch: Actual: %s, Expected: %s\n"), Path,
 		         testPathNoPrefixFileNamespace);
@@ -51,9 +51,9 @@ int TestPathCchStripPrefix(int argc, char* argv[])
 
 	/* Path with prefix (Device Namespace) */
 
-	_tcscpy(Path, testPathPrefixDeviceNamespace);
+	_tcsncpy(Path, testPathPrefixDeviceNamespace, ARRAYSIZE(Path));
 
-	status = PathCchStripPrefix(Path, sizeof(testPathPrefixDeviceNamespace) / sizeof(TCHAR));
+	status = PathCchStripPrefix(Path, ARRAYSIZE(testPathPrefixDeviceNamespace));
 
 	if (status != S_FALSE)
 	{
@@ -61,7 +61,7 @@ int TestPathCchStripPrefix(int argc, char* argv[])
 		return -1;
 	}
 
-	if (_tcscmp(Path, testPathPrefixDeviceNamespace) != 0)
+	if (_tcsncmp(Path, testPathPrefixDeviceNamespace, ARRAYSIZE(Path)) != 0)
 	{
 		_tprintf(_T("Path Mismatch: Actual: %s, Expected: %s\n"), Path,
 		         testPathPrefixDeviceNamespace);
@@ -82,7 +82,7 @@ int TestPathCchStripPrefix(int argc, char* argv[])
 	/* Invalid cchPath values: 0, 1, 2, 3 and > PATHCCH_MAX_CCH */
 	for (int i = 0; i < 5; i++)
 	{
-		_tcscpy(Path, testPathPrefixFileNamespace);
+		_tcsncpy(Path, testPathPrefixFileNamespace, ARRAYSIZE(Path));
 		if (i == 4)
 			i = PATHCCH_MAX_CCH + 1;
 		status = PathCchStripPrefix(Path, i);
@@ -96,8 +96,8 @@ int TestPathCchStripPrefix(int argc, char* argv[])
 	}
 
 	/* Minimum Path that would get successfully stripped on windows */
-	_tcscpy(Path, testPathPrefixFileNamespaceMinimum);
-	size_t i = sizeof(testPathPrefixFileNamespaceMinimum) / sizeof(TCHAR);
+	_tcsncpy(Path, testPathPrefixFileNamespaceMinimum, ARRAYSIZE(Path));
+	size_t i = ARRAYSIZE(testPathPrefixFileNamespaceMinimum);
 	i = i - 1; /* include testing of a non-null terminated string */
 	status = PathCchStripPrefix(Path, i);
 	if (status != S_OK)
@@ -107,7 +107,7 @@ int TestPathCchStripPrefix(int argc, char* argv[])
 		         status);
 		return -1;
 	}
-	if (_tcscmp(Path, testPathNoPrefixFileNamespaceMinimum) != 0)
+	if (_tcsncmp(Path, testPathNoPrefixFileNamespaceMinimum, ARRAYSIZE(Path)) != 0)
 	{
 		_tprintf(_T("Path Mismatch: Actual: %s, Expected: %s\n"), Path,
 		         testPathNoPrefixFileNamespaceMinimum);
@@ -115,7 +115,7 @@ int TestPathCchStripPrefix(int argc, char* argv[])
 	}
 
 	/* Invalid drive letter symbol */
-	_tcscpy(Path, _T("\\\\?\\5:"));
+	_tcsncpy(Path, _T("\\\\?\\5:"), ARRAYSIZE(Path));
 	status = PathCchStripPrefix(Path, 6);
 	if (status == S_OK)
 	{
