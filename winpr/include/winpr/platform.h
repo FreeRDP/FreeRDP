@@ -22,6 +22,15 @@
 
 #include <stdlib.h>
 
+#define WINPR_DO_PRAGMA(x) _Pragma(#x)
+#if defined(__GNUC__)
+#define WINPR_PRAGMA_WARNING(msg) WINPR_DO_PRAGMA(GCC warning #msg)
+#elif defined(__clang__)
+#define WINPR_PRAGMA_WARNING(msg) WINPR_DO_PRAGMA(GCC warning #msg)
+#elif defined(_MSC_VER)
+#define WINPR_PRAGMA_WARNING(msg) WINPR_DO_PRAGMA(message \x28 #msg \x29)
+#endif
+
 #if defined(__clang__)
 #define WINPR_PRAGMA_DIAG_PUSH _Pragma("clang diagnostic push")
 #define WINPR_PRAGMA_DIAG_IGNORED_OVERLENGTH_STRINGS \

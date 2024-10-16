@@ -207,7 +207,7 @@ static BOOL sdl_apply_display_properties(SdlContext* sdl)
 		float vdpi = dpi;
 		SDL_Rect rect = {};
 
-		if (SDL_GetDisplayBounds(*id, &rect) < 0)
+		if (!SDL_GetDisplayBounds(*id, &rect))
 			return FALSE;
 
 		WINPR_ASSERT(rect.w > 0);
