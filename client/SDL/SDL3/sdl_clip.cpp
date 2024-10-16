@@ -242,7 +242,7 @@ UINT sdlClip::MonitorReady(CliprdrClientContext* context, const CLIPRDR_MONITOR_
 		return ret;
 
 	clipboard->_sync = true;
-	SDL_ClipboardEvent ev = { SDL_EVENT_CLIPBOARD_UPDATE, 0, 0, false, NULL, 0 };
+	SDL_ClipboardEvent ev = { SDL_EVENT_CLIPBOARD_UPDATE, 0, 0, false, 0, nullptr };
 	if (!clipboard->handle_update(ev))
 		return ERROR_INTERNAL_ERROR;
 
