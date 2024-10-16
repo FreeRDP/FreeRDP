@@ -31,6 +31,32 @@
 #define WINPR_PRAGMA_WARNING(msg) WINPR_DO_PRAGMA(message \x28 #msg \x29)
 #endif
 
+// C99 related macros
+#if defined(__STDC__) && defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L)
+#define WINPR_RESTRICT restrict
+#elif defined(_MSC_VER) && _MSC_VER >= 1900
+#define WINPR_RESTRICT __restrict
+#else
+#define WINPR_RESTRICT
+#endif
+
+// C23 related macros
+#if defined(__STDC__) && defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 202311L)
+#define WINPR_FALLTHROUGH \
+	(void)0;              \
+	[[fallthrough]];
+#elif defined(__clang__)
+#define WINPR_FALLTHROUGH \
+	(void)0;              \
+	__attribute__((fallthrough));
+#elif defined(__GNUC__) && (__GNUC__ >= 7)
+#define WINPR_FALLTHROUGH \
+	(void)0;              \
+	__attribute__((fallthrough));
+#else
+#define WINPR_FALLTHROUGH (void)0;
+#endif
+
 #if defined(__clang__)
 #define WINPR_PRAGMA_DIAG_PUSH _Pragma("clang diagnostic push")
 #define WINPR_PRAGMA_DIAG_IGNORED_OVERLENGTH_STRINGS \
