@@ -69,9 +69,9 @@ extern "C"
 #define WINPR_STATIC_ASSERT(cond) static_assert(cond)
 #elif defined(__cplusplus) && (__cplusplus >= 201103L) // C++ 11
 #define WINPR_STATIC_ASSERT(cond) static_assert(cond, #cond)
-#elif defined(__STDC__) && defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 202311L) // C23
+#elif defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 202311L) // C23
 #define WINPR_STATIC_ASSERT(cond) static_assert(cond)
-#elif defined(__STDC__) && defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201112L) // C11
+#elif defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201112L) // C11
 #define WINPR_STATIC_ASSERT(cond) _Static_assert(cond, #cond)
 #else
 WINPR_PRAGMA_WARNING("static-assert macro not supported on this platform")

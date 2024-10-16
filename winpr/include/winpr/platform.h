@@ -32,7 +32,7 @@
 #endif
 
 // C99 related macros
-#if defined(__STDC__) && defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L)
+#if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L)
 #define WINPR_RESTRICT restrict
 #elif defined(_MSC_VER) && _MSC_VER >= 1900
 #define WINPR_RESTRICT __restrict
@@ -41,7 +41,7 @@
 #endif
 
 // C23 related macros
-#if defined(__STDC__) && defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 202311L)
+#if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 202311L)
 #define WINPR_FALLTHROUGH \
 	(void)0;              \
 	[[fallthrough]];

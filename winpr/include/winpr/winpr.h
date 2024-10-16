@@ -65,7 +65,7 @@
 #define WINPR_FORMAT_ARG _Printf_format_string_
 #endif
 
-#if defined(__STDC__) && defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 202311L)
+#if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 202311L)
 #define WINPR_DEPRECATED(obj) [[deprecated]] obj
 #define WINPR_DEPRECATED_VAR(text, obj) [[deprecated(text)]] obj
 #define WINPR_NORETURN(obj) [[noreturn]] obj
