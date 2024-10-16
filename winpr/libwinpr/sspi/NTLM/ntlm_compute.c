@@ -500,7 +500,7 @@ static BOOL ntlm_compute_ntlm_v2_hash(NTLM_CONTEXT* context, BYTE* hash)
 	return TRUE;
 }
 
-BOOL ntlm_compute_lm_v2_response(NTLM_CONTEXT* context)
+SECURITY_STATUS ntlm_compute_lm_v2_response(NTLM_CONTEXT* context)
 {
 	BYTE* response = NULL;
 	BYTE value[WINPR_MD5_DIGEST_LENGTH] = { 0 };
@@ -510,23 +510,23 @@ BOOL ntlm_compute_lm_v2_response(NTLM_CONTEXT* context)
 	if (context->LmCompatibilityLevel < 2)
 	{
 		if (!sspi_SecBufferAlloc(&context->LmChallengeResponse, 24))
-			return FALSE;
+			return SEC_E_INSUFFICIENT_MEMORY;
 
 		ZeroMemory(context->LmChallengeResponse.pvBuffer, 24);
-		return TRUE;
+		return SEC_E_OK;
 	}
 
 	/* Compute the NTLMv2 hash */
 
 	if (!ntlm_compute_ntlm_v2_hash(context, context->NtlmV2Hash))
-		return FALSE;
+		return SEC_E_NO_CREDENTIALS;
 
 	/* Concatenate the server and client challenges */
 	CopyMemory(value, context->ServerChallenge, 8);
 	CopyMemory(&value[8], context->ClientChallenge, 8);
 
 	if (!sspi_SecBufferAlloc(&context->LmChallengeResponse, 24))
-		return FALSE;
+		return SEC_E_INSUFFICIENT_MEMORY;
 
 	response = (BYTE*)context->LmChallengeResponse.pvBuffer;
 	/* Compute the HMAC-MD5 hash of the resulting value using the NTLMv2 hash as the key */
@@ -535,7 +535,7 @@ BOOL ntlm_compute_lm_v2_response(NTLM_CONTEXT* context)
 	/* Concatenate the resulting HMAC-MD5 hash and the client challenge, giving us the LMv2 response
 	 * (24 bytes) */
 	CopyMemory(&response[16], context->ClientChallenge, 8);
-	return TRUE;
+	return SEC_E_OK;
 }
 
 /**
@@ -548,25 +548,24 @@ BOOL ntlm_compute_lm_v2_response(NTLM_CONTEXT* context)
  * @return \b TRUE for success, \b FALSE for failure
  */
 
-BOOL ntlm_compute_ntlm_v2_response(NTLM_CONTEXT* context)
+SECURITY_STATUS ntlm_compute_ntlm_v2_response(NTLM_CONTEXT* context)
 {
-	BYTE* blob = NULL;
 	SecBuffer ntlm_v2_temp = { 0 };
 	SecBuffer ntlm_v2_temp_chal = { 0 };
-	PSecBuffer TargetInfo = NULL;
 
 	WINPR_ASSERT(context);
 
-	TargetInfo = &context->ChallengeTargetInfo;
-	BOOL ret = FALSE;
+	PSecBuffer TargetInfo = &context->ChallengeTargetInfo;
+	SECURITY_STATUS ret = SEC_E_INSUFFICIENT_MEMORY;
 
 	if (!sspi_SecBufferAlloc(&ntlm_v2_temp, TargetInfo->cbBuffer + 28))
 		goto exit;
 
 	ZeroMemory(ntlm_v2_temp.pvBuffer, ntlm_v2_temp.cbBuffer);
-	blob = (BYTE*)ntlm_v2_temp.pvBuffer;
+	BYTE* blob = (BYTE*)ntlm_v2_temp.pvBuffer;
 
 	/* Compute the NTLMv2 hash */
+	ret = SEC_E_NO_CREDENTIALS;
 	if (!ntlm_compute_ntlm_v2_hash(context, (BYTE*)context->NtlmV2Hash))
 		goto exit;
 
@@ -585,7 +584,7 @@ BOOL ntlm_compute_ntlm_v2_response(NTLM_CONTEXT* context)
 #endif
 
 	/* Concatenate server challenge with temp */
-
+	ret = SEC_E_INSUFFICIENT_MEMORY;
 	if (!sspi_SecBufferAlloc(&ntlm_v2_temp_chal, ntlm_v2_temp.cbBuffer + 8))
 		goto exit;
 
@@ -608,7 +607,7 @@ BOOL ntlm_compute_ntlm_v2_response(NTLM_CONTEXT* context)
 	winpr_HMAC(WINPR_MD_MD5, (BYTE*)context->NtlmV2Hash, WINPR_MD5_DIGEST_LENGTH,
 	           context->NtProofString, WINPR_MD5_DIGEST_LENGTH, context->SessionBaseKey,
 	           WINPR_MD5_DIGEST_LENGTH);
-	ret = TRUE;
+	ret = SEC_E_OK;
 exit:
 	sspi_SecBufferFree(&ntlm_v2_temp);
 	sspi_SecBufferFree(&ntlm_v2_temp_chal);
