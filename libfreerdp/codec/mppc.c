@@ -774,7 +774,10 @@ int mppc_compress(MPPC_CONTEXT* mppc, const BYTE* pSrcData, UINT32 SrcSize, BYTE
 
 	*pDstSize = ((bs->position + 7) / 8);
 	mppc->HistoryPtr = HistoryPtr;
-	mppc->HistoryOffset = HistoryPtr - HistoryBuffer;
+	const intptr_t diff = HistoryPtr - HistoryBuffer;
+	if (diff > UINT32_MAX)
+		return -1;
+	mppc->HistoryOffset = (UINT32)diff;
 	return 1;
 }
 

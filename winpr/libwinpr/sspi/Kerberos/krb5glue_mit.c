@@ -213,15 +213,18 @@ krb5_error_code krb5glue_get_init_creds(krb5_context ctx, krb5_principal princ, 
 			free(kdc_url);
 			free(realm);
 
-			if ((rv = profile_flush_to_file(profile, tmp_profile_path)))
+			long lrv = profile_flush_to_file(profile, tmp_profile_path);
+			if (lrv)
 				goto cleanup;
 
 			profile_abandon(profile);
 			profile = NULL;
-			if ((rv = profile_init_path(tmp_profile_path, &profile)))
+			lrv = profile_init_path(tmp_profile_path, &profile);
+			if (lrv)
 				goto cleanup;
 
-			if ((rv = krb5_init_context_profile(profile, 0, &ctx)))
+			rv = krb5_init_context_profile(profile, 0, &ctx);
+			if (rv)
 				goto cleanup;
 			is_temp_ctx = TRUE;
 		}

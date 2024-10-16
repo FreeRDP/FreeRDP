@@ -2305,7 +2305,8 @@ static int parse_gfx_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_
 						rc = COMMAND_LINE_ERROR;
 					else
 					{
-						if (!freerdp_settings_set_uint32(settings, FreeRDP_GfxCapsFilter, v))
+						if (!freerdp_settings_set_uint32(settings, FreeRDP_GfxCapsFilter,
+						                                 (UINT32)v))
 							rc = COMMAND_LINE_ERROR;
 					}
 				}
@@ -2484,7 +2485,7 @@ static int parse_host_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT
 				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 
 			length = (size_t)(p - arg->Value);
-			if (!freerdp_settings_set_uint32(settings, FreeRDP_ServerPort, lval))
+			if (!freerdp_settings_set_uint32(settings, FreeRDP_ServerPort, (UINT16)lval))
 				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 			if (!freerdp_settings_set_string_len(settings, FreeRDP_ServerHostname, arg->Value,
 			                                     length))

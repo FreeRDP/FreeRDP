@@ -384,7 +384,6 @@ static void xf_floatbar_event_expose(xfFloatbar* floatbar)
 	Pixmap pmap = 0;
 	XPoint shape[5] = { 0 };
 	XPoint border[5] = { 0 };
-	int len = 0;
 
 	WINPR_ASSERT(floatbar);
 	WINPR_ASSERT(floatbar->xfc);
@@ -432,17 +431,19 @@ static void xf_floatbar_event_expose(xfFloatbar* floatbar)
 	XSetForeground(display, gc, xf_floatbar_get_color(floatbar, FLOATBAR_COLOR_BORDER));
 	XDrawLines(display, floatbar->handle, gc, border, 5, CoordModeOrigin);
 	/* draw the host name connected to (limit to maximum file name) */
-	len = strnlen(floatbar->title, MAX_PATH);
+	const size_t len = strnlen(floatbar->title, MAX_PATH);
 	XSetForeground(display, gc, xf_floatbar_get_color(floatbar, FLOATBAR_COLOR_FOREGROUND));
+
+	WINPR_ASSERT(len <= INT32_MAX / 2);
+	const int fx = floatbar->width / 2 - (int)len * 2;
 	if (floatbar->fontSet != NULL)
 	{
-		XmbDrawString(display, floatbar->handle, floatbar->fontSet, gc,
-		              floatbar->width / 2 - len * 2, 15, floatbar->title, len);
+		XmbDrawString(display, floatbar->handle, floatbar->fontSet, gc, fx, 15, floatbar->title,
+		              (int)len);
 	}
 	else
 	{
-		XDrawString(display, floatbar->handle, gc, floatbar->width / 2 - len * 2, 15,
-		            floatbar->title, len);
+		XDrawString(display, floatbar->handle, gc, fx, 15, floatbar->title, (int)len);
 	}
 	XFreeGC(display, gc);
 	XFreeGC(display, shape_gc);

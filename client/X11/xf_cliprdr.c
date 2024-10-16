@@ -229,16 +229,17 @@ static void xf_cached_data_free(void* ptr)
 	free(cached_data);
 }
 
-static xfCachedData* xf_cached_data_new(BYTE* data, UINT32 data_length)
+static xfCachedData* xf_cached_data_new(BYTE* data, size_t data_length)
 {
-	xfCachedData* cached_data = NULL;
+	if (data_length > UINT32_MAX)
+		return NULL;
 
-	cached_data = calloc(1, sizeof(xfCachedData));
+	xfCachedData* cached_data = calloc(1, sizeof(xfCachedData));
 	if (!cached_data)
 		return NULL;
 
 	cached_data->data = data;
-	cached_data->data_length = data_length;
+	cached_data->data_length = (UINT32)data_length;
 
 	return cached_data;
 }
@@ -497,7 +498,9 @@ static UINT xf_cliprdr_send_data_response(xfClipboard* clipboard, const xfCliprd
 	clipboard->requestedFormatId = -1;
 
 	response.common.msgFlags = (data) ? CB_RESPONSE_OK : CB_RESPONSE_FAIL;
-	response.common.dataLen = size;
+
+	WINPR_ASSERT(size <= UINT32_MAX);
+	response.common.dataLen = (UINT32)size;
 	response.requestedFormatData = data;
 
 	WINPR_ASSERT(clipboard->context);
@@ -787,9 +790,11 @@ static void xf_cliprdr_provide_server_format_list(xfClipboard* clipboard)
 
 	if (formats)
 	{
+		const size_t len = Stream_Length(formats);
+		WINPR_ASSERT(len <= INT32_MAX);
 		LogTagAndXChangeProperty(TAG, xfc->display, xfc->drawable, clipboard->raw_format_list_atom,
 		                         clipboard->raw_format_list_atom, 8, PropModeReplace,
-		                         Stream_Buffer(formats), Stream_Length(formats));
+		                         Stream_Buffer(formats), (int)len);
 	}
 	else
 	{
@@ -1194,9 +1199,10 @@ static void xf_cliprdr_provide_targets(xfClipboard* clipboard, const XSelectionE
 
 	if (respond->property != None)
 	{
+		WINPR_ASSERT(clipboard->numTargets <= INT32_MAX);
 		LogTagAndXChangeProperty(TAG, xfc->display, respond->requestor, respond->property, XA_ATOM,
 		                         32, PropModeReplace, (BYTE*)clipboard->targets,
-		                         clipboard->numTargets);
+		                         (int)clipboard->numTargets);
 	}
 }
 
@@ -1453,7 +1459,12 @@ static xfCachedData* convert_data_from_existing_raw_data(xfClipboard* clipboard,
 	{
 		BYTE* nullTerminator = memchr(dst_data, '\0', dst_size);
 		if (nullTerminator)
-			dst_size = nullTerminator - dst_data;
+		{
+			const intptr_t diff = nullTerminator - dst_data;
+			WINPR_ASSERT(diff >= 0);
+			WINPR_ASSERT(diff <= UINT32_MAX);
+			dst_size = (UINT32)diff;
+		}
 	}
 
 	cached_data = xf_cached_data_new(dst_data, dst_size);
@@ -2283,7 +2294,12 @@ xf_cliprdr_server_format_data_response(CliprdrClientContext* context,
 			{
 				BYTE* nullTerminator = memchr(pDstData, '\0', DstSize);
 				if (nullTerminator)
-					DstSize = nullTerminator - pDstData;
+				{
+					const intptr_t diff = nullTerminator - pDstData;
+					WINPR_ASSERT(diff >= 0);
+					WINPR_ASSERT(diff <= UINT32_MAX);
+					DstSize = (UINT32)diff;
+				}
 			}
 		}
 	}

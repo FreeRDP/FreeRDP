@@ -280,6 +280,8 @@ static BOOL nsc_context_initialize(NSC_CONTEXT* WINPR_RESTRICT context, wStream*
 	const UINT32 tempHeight = ROUND_UP_TO(context->height, 2);
 	/* The maximum length a decoded plane can reach in all cases */
 	const size_t plength = 1ull * tempWidth * tempHeight;
+	if (plength > UINT32_MAX)
+		return FALSE;
 
 	if (plength > context->priv->PlaneBuffersLength)
 	{
@@ -294,7 +296,7 @@ static BOOL nsc_context_initialize(NSC_CONTEXT* WINPR_RESTRICT context, wStream*
 			context->priv->PlaneBuffers[i] = tmp;
 		}
 
-		context->priv->PlaneBuffersLength = plength;
+		context->priv->PlaneBuffersLength = (UINT32)plength;
 	}
 
 	for (size_t i = 0; i < 4; i++)

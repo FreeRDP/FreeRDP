@@ -860,11 +860,15 @@ static UINT video_VideoData(VideoClientContext* context, const TSMM_VIDEO_DATA* 
 		{
 			int dropped = 0;
 
+			const size_t len = Stream_Length(presentation->currentSample);
+			if (len > UINT32_MAX)
+				return CHANNEL_RC_OK;
+
 			/* if the frame is to be published in less than 10 ms, let's consider it's now */
-			status = avc420_decompress(h264, Stream_Pointer(presentation->currentSample),
-			                           Stream_Length(presentation->currentSample), surface->data,
-			                           surface->format, surface->scanline, surface->alignedWidth,
-			                           surface->alignedHeight, &rect, 1);
+			status =
+			    avc420_decompress(h264, Stream_Pointer(presentation->currentSample), (UINT32)len,
+			                      surface->data, surface->format, surface->scanline,
+			                      surface->alignedWidth, surface->alignedHeight, &rect, 1);
 
 			if (status < 0)
 				return CHANNEL_RC_OK;
@@ -894,6 +898,10 @@ static UINT video_VideoData(VideoClientContext* context, const TSMM_VIDEO_DATA* 
 		}
 		else
 		{
+			const size_t len = Stream_Length(presentation->currentSample);
+			if (len > UINT32_MAX)
+				return CHANNEL_RC_OK;
+
 			BOOL enqueueResult = 0;
 			VideoFrame* frame = VideoFrame_new(priv, presentation, geom);
 			if (!frame)
@@ -902,10 +910,10 @@ static UINT video_VideoData(VideoClientContext* context, const TSMM_VIDEO_DATA* 
 				return CHANNEL_RC_NO_MEMORY;
 			}
 
-			status = avc420_decompress(h264, Stream_Pointer(presentation->currentSample),
-			                           Stream_Length(presentation->currentSample),
-			                           frame->surfaceData, surface->format, surface->scanline,
-			                           surface->alignedWidth, surface->alignedHeight, &rect, 1);
+			status =
+			    avc420_decompress(h264, Stream_Pointer(presentation->currentSample), (UINT32)len,
+			                      frame->surfaceData, surface->format, surface->scanline,
+			                      surface->alignedWidth, surface->alignedHeight, &rect, 1);
 			if (status < 0)
 			{
 				VideoFrame_free(&frame);

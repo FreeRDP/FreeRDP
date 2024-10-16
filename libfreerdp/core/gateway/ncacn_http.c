@@ -108,23 +108,25 @@ BOOL rpc_ncacn_http_send_in_channel_request(RpcChannel* inChannel)
 
 BOOL rpc_ncacn_http_recv_in_channel_response(RpcChannel* inChannel, HttpResponse* response)
 {
-	const char* token64 = NULL;
 	size_t authTokenLength = 0;
 	BYTE* authTokenData = NULL;
-	rdpCredsspAuth* auth = NULL;
-	SecBuffer buffer = { 0 };
 
 	if (!inChannel || !response || !inChannel->auth)
 		return FALSE;
 
-	auth = inChannel->auth;
-	token64 = http_response_get_auth_token(response, credssp_auth_pkg_name(auth));
+	rdpCredsspAuth* auth = inChannel->auth;
+	const char* token64 = http_response_get_auth_token(response, credssp_auth_pkg_name(auth));
 
 	if (token64)
 		crypto_base64_decode(token64, strlen(token64), &authTokenData, &authTokenLength);
 
-	buffer.pvBuffer = authTokenData;
-	buffer.cbBuffer = authTokenLength;
+	if (authTokenLength > UINT32_MAX)
+	{
+		free(authTokenData);
+		return FALSE;
+	}
+
+	SecBuffer buffer = { .pvBuffer = authTokenData, .cbBuffer = (UINT32)authTokenLength };
 
 	if (authTokenData && authTokenLength)
 	{
@@ -241,23 +243,24 @@ BOOL rpc_ncacn_http_send_out_channel_request(RpcChannel* outChannel, BOOL replac
 
 BOOL rpc_ncacn_http_recv_out_channel_response(RpcChannel* outChannel, HttpResponse* response)
 {
-	const char* token64 = NULL;
 	size_t authTokenLength = 0;
 	BYTE* authTokenData = NULL;
-	rdpCredsspAuth* auth = NULL;
-	SecBuffer buffer = { 0 };
 
 	if (!outChannel || !response || !outChannel->auth)
 		return FALSE;
 
-	auth = outChannel->auth;
-	token64 = http_response_get_auth_token(response, credssp_auth_pkg_name(auth));
+	rdpCredsspAuth* auth = outChannel->auth;
+	const char* token64 = http_response_get_auth_token(response, credssp_auth_pkg_name(auth));
 
 	if (token64)
 		crypto_base64_decode(token64, strlen(token64), &authTokenData, &authTokenLength);
 
-	buffer.pvBuffer = authTokenData;
-	buffer.cbBuffer = authTokenLength;
+	if (authTokenLength > UINT32_MAX)
+	{
+		free(authTokenData);
+		return FALSE;
+	}
+	SecBuffer buffer = { .pvBuffer = authTokenData, .cbBuffer = (UINT32)authTokenLength };
 
 	if (authTokenData && authTokenLength)
 	{

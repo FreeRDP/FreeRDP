@@ -1043,7 +1043,7 @@ static const button_map xf_button_flags[NUM_BUTTONS_MAPPED] = {
 	{ 112, PTR_XFLAGS_BUTTON2 }
 };
 
-static UINT16 get_flags_for_button(int button)
+static UINT16 get_flags_for_button(size_t button)
 {
 	for (size_t x = 0; x < ARRAYSIZE(xf_button_flags); x++)
 	{

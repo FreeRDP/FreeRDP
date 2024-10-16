@@ -23,6 +23,7 @@
 #include <freerdp/config.h>
 
 #include <stdarg.h>
+#include <stdint.h>
 #include <unistd.h>
 #include <sys/types.h>
 
@@ -204,7 +205,7 @@ const char* window_styles_ex_to_string(UINT32 styleEx, char* buffer, size_t leng
 	const char* sep = "";
 	for (size_t x = 0; x < 32; x++)
 	{
-		const UINT32 val = 1UL << x;
+		const UINT32 val = (UINT32)(1UL << x);
 		if ((styleEx & val) != 0)
 		{
 			const char* str = window_style_ex_to_string(val);
@@ -515,9 +516,14 @@ static BOOL xf_GetNumberOfDesktops(xfContext* xfc, Window root, unsigned* pval)
 	if (!rc)
 		return FALSE;
 
-	*pval = *prop;
+	BOOL res = FALSE;
+	if ((*prop >= 0) && (*prop <= UINT32_MAX))
+	{
+		*pval = (UINT32)*prop;
+		res = TRUE;
+	}
 	XFree(prop);
-	return TRUE;
+	return res;
 }
 
 static BOOL xf_GetCurrentDesktop(xfContext* xfc, Window root)
@@ -562,10 +568,10 @@ static BOOL xf_GetWorkArea_NET_WORKAREA(xfContext* xfc, Window root)
 	if ((xfc->current_desktop * 4 + 3) >= (INT64)nitems)
 		goto fail;
 
-	xfc->workArea.x = prop[xfc->current_desktop * 4 + 0];
-	xfc->workArea.y = prop[xfc->current_desktop * 4 + 1];
-	xfc->workArea.width = prop[xfc->current_desktop * 4 + 2];
-	xfc->workArea.height = prop[xfc->current_desktop * 4 + 3];
+	xfc->workArea.x = (UINT32)MIN(UINT32_MAX, prop[xfc->current_desktop * 4 + 0]);
+	xfc->workArea.y = (UINT32)MIN(UINT32_MAX, prop[xfc->current_desktop * 4 + 1]);
+	xfc->workArea.width = (UINT32)MIN(UINT32_MAX, prop[xfc->current_desktop * 4 + 2]);
+	xfc->workArea.height = (UINT32)MIN(UINT32_MAX, prop[xfc->current_desktop * 4 + 3]);
 
 	rc = TRUE;
 fail:

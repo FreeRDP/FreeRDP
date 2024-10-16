@@ -133,7 +133,10 @@ SDL_Texture* SdlWidget::render_text_wrapped(SDL_Renderer* renderer, const std::s
 	Sint32 w = 0;
 	Sint32 h = 0;
 	TTF_SizeUTF8(_font, " ", &w, &h);
-	auto surface = TTF_RenderUTF8_Blended_Wrapped(_font, text.c_str(), fgcolor, _text_width);
+
+	assert(_text_width <= UINT32_MAX);
+	auto surface = TTF_RenderUTF8_Blended_Wrapped(_font, text.c_str(), fgcolor,
+	                                              static_cast<Uint32>(_text_width));
 	if (!surface)
 	{
 		widget_log_error(-1, "TTF_RenderText_Blended");

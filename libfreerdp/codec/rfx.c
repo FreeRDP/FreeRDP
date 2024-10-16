@@ -1547,12 +1547,13 @@ static INLINE size_t rfx_tile_length(const RFX_TILE* WINPR_RESTRICT tile)
 static INLINE BOOL rfx_write_tile(wStream* WINPR_RESTRICT s, const RFX_TILE* WINPR_RESTRICT tile)
 {
 	const size_t blockLen = rfx_tile_length(tile);
-
+	if (blockLen > UINT32_MAX)
+		return FALSE;
 	if (!Stream_EnsureRemainingCapacity(s, blockLen))
 		return FALSE;
 
 	Stream_Write_UINT16(s, CBT_TILE);           /* BlockT.blockType (2 bytes) */
-	Stream_Write_UINT32(s, blockLen);           /* BlockT.blockLen (4 bytes) */
+	Stream_Write_UINT32(s, (UINT32)blockLen);   /* BlockT.blockLen (4 bytes) */
 	Stream_Write_UINT8(s, tile->quantIdxY);     /* quantIdxY (1 byte) */
 	Stream_Write_UINT8(s, tile->quantIdxCb);    /* quantIdxCb (1 byte) */
 	Stream_Write_UINT8(s, tile->quantIdxCr);    /* quantIdxCr (1 byte) */
@@ -1929,8 +1930,8 @@ static INLINE RFX_MESSAGE* rfx_split_message(RFX_CONTEXT* WINPR_RESTRICT context
 	if (!messages)
 		return NULL;
 
-	size_t j = 0;
-	for (size_t i = 0; i < message->numTiles; i++)
+	UINT32 j = 0;
+	for (UINT16 i = 0; i < message->numTiles; i++)
 	{
 		RFX_TILE* tile = message->tiles[i];
 		RFX_MESSAGE* msg = &messages[j];
@@ -1962,7 +1963,7 @@ static INLINE RFX_MESSAGE* rfx_split_message(RFX_CONTEXT* WINPR_RESTRICT context
 		message->tiles[i] = NULL;
 	}
 
-	*numMessages = j + 1;
+	*numMessages = j + 1ULL;
 	context->frameIdx += j;
 	message->numTiles = 0;
 	return messages;
@@ -2106,18 +2107,20 @@ static INLINE BOOL rfx_write_message_region(RFX_CONTEXT* WINPR_RESTRICT context,
 	WINPR_ASSERT(message);
 
 	const size_t blockLen = 15 + (message->numRects * 8);
+	if (blockLen > UINT32_MAX)
+		return FALSE;
 
 	if (!Stream_EnsureRemainingCapacity(s, blockLen))
 		return FALSE;
 
 	Stream_Write_UINT16(s, WBT_REGION);        /* CodecChannelT.blockType (2 bytes) */
-	Stream_Write_UINT32(s, blockLen);          /* set CodecChannelT.blockLen (4 bytes) */
+	Stream_Write_UINT32(s, (UINT32)blockLen);  /* set CodecChannelT.blockLen (4 bytes) */
 	Stream_Write_UINT8(s, 1);                  /* CodecChannelT.codecId (1 byte) */
 	Stream_Write_UINT8(s, 0);                  /* CodecChannelT.channelId (1 byte) */
 	Stream_Write_UINT8(s, 1);                  /* regionFlags (1 byte) */
 	Stream_Write_UINT16(s, message->numRects); /* numRects (2 bytes) */
 
-	for (size_t i = 0; i < message->numRects; i++)
+	for (UINT16 i = 0; i < message->numRects; i++)
 	{
 		const RFX_RECT* rect = rfx_message_get_rect_const(message, i);
 		WINPR_ASSERT(rect);

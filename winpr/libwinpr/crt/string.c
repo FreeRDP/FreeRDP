@@ -578,7 +578,10 @@ LPSTR CharLowerA(LPSTR lpsz)
 
 LPWSTR CharLowerW(LPWSTR lpsz)
 {
-	CharLowerBuffW(lpsz, _wcslen(lpsz));
+	const size_t len = _wcsnlen(lpsz, UINT32_MAX + 1);
+	if (len > UINT32_MAX)
+		return NULL;
+	CharLowerBuffW(lpsz, (UINT32)len);
 	return lpsz;
 }
 

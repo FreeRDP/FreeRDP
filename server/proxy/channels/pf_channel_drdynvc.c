@@ -363,11 +363,11 @@ static PfChannelResult DynvcTrackerPeekFn(ChannelStateTracker* tracker, BOOL fir
 				const size_t nameLen = Stream_GetRemainingLength(s);
 
 				const size_t len = strnlen(name, nameLen);
-				if ((len == 0) || (len == nameLen))
+				if ((len == 0) || (len == nameLen) || (dynChannelId > UINT16_MAX))
 					return PF_CHANNEL_RESULT_ERROR;
 
 				wStream* currentPacket = channelTracker_getCurrentPacket(tracker);
-				dev.channel_id = dynChannelId;
+				dev.channel_id = (UINT16)dynChannelId;
 				dev.channel_name = name;
 				dev.data = Stream_Buffer(s);
 				dev.data_len = Stream_GetPosition(currentPacket);
@@ -392,7 +392,7 @@ static PfChannelResult DynvcTrackerPeekFn(ChannelStateTracker* tracker, BOOL fir
 					return PF_CHANNEL_RESULT_DROP; /* Silently drop */
 
 				dynChannel = DynamicChannelContext_new(dynChannelContext->log, pdata->ps, name,
-				                                       dynChannelId);
+				                                       (UINT32)dynChannelId);
 				if (!dynChannel)
 				{
 					WLog_Print(dynChannelContext->log, WLOG_ERROR,
@@ -493,7 +493,9 @@ static PfChannelResult DynvcTrackerPeekFn(ChannelStateTracker* tracker, BOOL fir
 		WLog_Print(dynChannelContext->log, WLOG_DEBUG,
 		           "DynvcTracker(%s [%s]): %s DATA_FIRST currentPacketLength=%" PRIu64 "",
 		           dynChannel->channelName, drdynvc_get_packet_type(cmd), direction, Length);
-		trackerState->currentDataLength = Length;
+		if (Length > UINT32_MAX)
+			return PF_CHANNEL_RESULT_ERROR;
+		trackerState->currentDataLength = (UINT32)Length;
 		trackerState->CurrentDataReceived = 0;
 		trackerState->CurrentDataFragments = 0;
 

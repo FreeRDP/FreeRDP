@@ -333,6 +333,9 @@ static BOOL copy(WCHAR** dst, ULONG* dstLen, const WCHAR* what, size_t len)
 	*dst = NULL;
 	*dstLen = 0;
 
+	if (len > UINT32_MAX)
+		return FALSE;
+
 	if (!what && (len != 0))
 		return FALSE;
 	if (len == 0)
@@ -341,7 +344,7 @@ static BOOL copy(WCHAR** dst, ULONG* dstLen, const WCHAR* what, size_t len)
 	if (!*dst)
 		return FALSE;
 	memcpy(*dst, what, len * sizeof(WCHAR));
-	*dstLen = len;
+	*dstLen = (UINT32)len;
 	return TRUE;
 }
 
@@ -1077,10 +1080,12 @@ static void sspi_ContextBufferFree(void* contextBuffer)
 static SECURITY_STATUS SEC_ENTRY winpr_EnumerateSecurityPackagesW(ULONG* pcPackages,
                                                                   PSecPkgInfoW* ppPackageInfo)
 {
-	size_t cPackages = ARRAYSIZE(SecPkgInfoW_LIST);
-	size_t size = sizeof(SecPkgInfoW) * cPackages;
+	const size_t cPackages = ARRAYSIZE(SecPkgInfoW_LIST);
+	const size_t size = sizeof(SecPkgInfoW) * cPackages;
 	SecPkgInfoW* pPackageInfo =
 	    (SecPkgInfoW*)sspi_ContextBufferAlloc(EnumerateSecurityPackagesIndex, size);
+
+	WINPR_ASSERT(cPackages <= UINT32_MAX);
 
 	if (!pPackageInfo)
 		return SEC_E_INSUFFICIENT_MEMORY;
@@ -1095,7 +1100,7 @@ static SECURITY_STATUS SEC_ENTRY winpr_EnumerateSecurityPackagesW(ULONG* pcPacka
 		pPackageInfo[index].Comment = _wcsdup(SecPkgInfoW_LIST[index]->Comment);
 	}
 
-	*(pcPackages) = cPackages;
+	*(pcPackages) = (UINT32)cPackages;
 	*(ppPackageInfo) = pPackageInfo;
 	return SEC_E_OK;
 }
@@ -1103,10 +1108,12 @@ static SECURITY_STATUS SEC_ENTRY winpr_EnumerateSecurityPackagesW(ULONG* pcPacka
 static SECURITY_STATUS SEC_ENTRY winpr_EnumerateSecurityPackagesA(ULONG* pcPackages,
                                                                   PSecPkgInfoA* ppPackageInfo)
 {
-	size_t cPackages = ARRAYSIZE(SecPkgInfoA_LIST);
-	size_t size = sizeof(SecPkgInfoA) * cPackages;
+	const size_t cPackages = ARRAYSIZE(SecPkgInfoA_LIST);
+	const size_t size = sizeof(SecPkgInfoA) * cPackages;
 	SecPkgInfoA* pPackageInfo =
 	    (SecPkgInfoA*)sspi_ContextBufferAlloc(EnumerateSecurityPackagesIndex, size);
+
+	WINPR_ASSERT(cPackages <= UINT32_MAX);
 
 	if (!pPackageInfo)
 		return SEC_E_INSUFFICIENT_MEMORY;
@@ -1127,7 +1134,7 @@ static SECURITY_STATUS SEC_ENTRY winpr_EnumerateSecurityPackagesA(ULONG* pcPacka
 		}
 	}
 
-	*(pcPackages) = cPackages;
+	*(pcPackages) = (UINT32)cPackages;
 	*(ppPackageInfo) = pPackageInfo;
 	return SEC_E_OK;
 }

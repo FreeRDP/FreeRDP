@@ -18,17 +18,18 @@
  * - the function will crash with some short string lengths of the parameters
  */
 
+#include <stdlib.h>
+#include <string.h>
+
+#include <winpr/wtypes.h>
+#include <winpr/error.h>
+#include <winpr/wlog.h>
+
 #if DEFINE_UNICODE
 
 HRESULT PATH_ALLOC_COMBINE(PCWSTR pszPathIn, PCWSTR pszMore, unsigned long dwFlags,
                            PWSTR* ppszPathOut)
 {
-	PWSTR pszPathOut;
-	BOOL backslashIn;
-	BOOL backslashMore;
-	size_t pszMoreLength;
-	size_t pszPathInLength;
-	size_t pszPathOutLength;
 	WLog_WARN(TAG, "has known bugs and needs fixing.");
 
 	if (!ppszPathOut)
@@ -43,25 +44,25 @@ HRESULT PATH_ALLOC_COMBINE(PCWSTR pszPathIn, PCWSTR pszMore, unsigned long dwFla
 	if (!pszPathIn)
 		return E_FAIL; /* valid but not implemented, see top comment */
 
-	pszPathInLength = _wcslen(pszPathIn);
-	pszMoreLength = _wcslen(pszMore);
+	const size_t pszPathInLength = _wcslen(pszPathIn);
+	const size_t pszMoreLength = _wcslen(pszMore);
 
 	/* prevent segfaults - the complete implementation below is buggy */
 	if (pszPathInLength < 3)
 		return E_FAIL;
 
-	backslashIn = (pszPathIn[pszPathInLength - 1] == CUR_PATH_SEPARATOR_CHR) ? TRUE : FALSE;
-	backslashMore = (pszMore[0] == CUR_PATH_SEPARATOR_CHR) ? TRUE : FALSE;
+	const BOOL backslashIn =
+	    (pszPathIn[pszPathInLength - 1] == CUR_PATH_SEPARATOR_CHR) ? TRUE : FALSE;
+	const BOOL backslashMore = (pszMore[0] == CUR_PATH_SEPARATOR_CHR) ? TRUE : FALSE;
 
 	if (backslashMore)
 	{
 		if ((pszPathIn[1] == ':') && (pszPathIn[2] == CUR_PATH_SEPARATOR_CHR))
 		{
 			const WCHAR colon[] = { ':', '\0' };
-			size_t sizeOfBuffer;
-			pszPathOutLength = sizeof(WCHAR) + pszMoreLength;
-			sizeOfBuffer = (pszPathOutLength + 1) * sizeof(WCHAR);
-			pszPathOut = (PWSTR)calloc(sizeOfBuffer, sizeof(WCHAR));
+			const size_t pszPathOutLength = sizeof(WCHAR) + pszMoreLength;
+			const size_t sizeOfBuffer = (pszPathOutLength + 1) * sizeof(WCHAR);
+			PWSTR pszPathOut = (PWSTR)calloc(sizeOfBuffer, sizeof(WCHAR));
 
 			if (!pszPathOut)
 				return E_OUTOFMEMORY;
@@ -76,10 +77,9 @@ HRESULT PATH_ALLOC_COMBINE(PCWSTR pszPathIn, PCWSTR pszMore, unsigned long dwFla
 	else
 	{
 		const WCHAR sep[] = CUR_PATH_SEPARATOR_STR;
-		size_t sizeOfBuffer;
-		pszPathOutLength = pszPathInLength + pszMoreLength;
-		sizeOfBuffer = (pszPathOutLength + 1) * 2;
-		pszPathOut = (PWSTR)calloc(sizeOfBuffer, 2);
+		const size_t pszPathOutLength = pszPathInLength + pszMoreLength;
+		const size_t sizeOfBuffer = (pszPathOutLength + 1) * 2;
+		PWSTR pszPathOut = (PWSTR)calloc(sizeOfBuffer, 2);
 
 		if (!pszPathOut)
 			return E_OUTOFMEMORY;
@@ -100,12 +100,6 @@ HRESULT PATH_ALLOC_COMBINE(PCWSTR pszPathIn, PCWSTR pszMore, unsigned long dwFla
 
 HRESULT PATH_ALLOC_COMBINE(PCSTR pszPathIn, PCSTR pszMore, unsigned long dwFlags, PSTR* ppszPathOut)
 {
-	PSTR pszPathOut;
-	BOOL backslashIn;
-	BOOL backslashMore;
-	int pszMoreLength;
-	int pszPathInLength;
-	int pszPathOutLength;
 	WLog_WARN(TAG, "has known bugs and needs fixing.");
 
 	if (!ppszPathOut)
@@ -120,24 +114,24 @@ HRESULT PATH_ALLOC_COMBINE(PCSTR pszPathIn, PCSTR pszMore, unsigned long dwFlags
 	if (!pszPathIn)
 		return E_FAIL; /* valid but not implemented, see top comment */
 
-	pszPathInLength = strlen(pszPathIn);
-	pszMoreLength = strlen(pszMore);
+	const size_t pszPathInLength = strlen(pszPathIn);
+	const size_t pszMoreLength = strlen(pszMore);
 
 	/* prevent segfaults - the complete implementation below is buggy */
 	if (pszPathInLength < 3)
 		return E_FAIL;
 
-	backslashIn = (pszPathIn[pszPathInLength - 1] == CUR_PATH_SEPARATOR_CHR) ? TRUE : FALSE;
-	backslashMore = (pszMore[0] == CUR_PATH_SEPARATOR_CHR) ? TRUE : FALSE;
+	const BOOL backslashIn =
+	    (pszPathIn[pszPathInLength - 1] == CUR_PATH_SEPARATOR_CHR) ? TRUE : FALSE;
+	const BOOL backslashMore = (pszMore[0] == CUR_PATH_SEPARATOR_CHR) ? TRUE : FALSE;
 
 	if (backslashMore)
 	{
 		if ((pszPathIn[1] == ':') && (pszPathIn[2] == CUR_PATH_SEPARATOR_CHR))
 		{
-			size_t sizeOfBuffer;
-			pszPathOutLength = 2 + pszMoreLength;
-			sizeOfBuffer = (pszPathOutLength + 1) * 2;
-			pszPathOut = (PSTR)calloc(sizeOfBuffer, 2);
+			const size_t pszPathOutLength = 2 + pszMoreLength;
+			const size_t sizeOfBuffer = (pszPathOutLength + 1) * 2;
+			PSTR pszPathOut = calloc(sizeOfBuffer, 2);
 
 			if (!pszPathOut)
 				return E_OUTOFMEMORY;
@@ -149,10 +143,9 @@ HRESULT PATH_ALLOC_COMBINE(PCSTR pszPathIn, PCSTR pszMore, unsigned long dwFlags
 	}
 	else
 	{
-		size_t sizeOfBuffer;
-		pszPathOutLength = pszPathInLength + pszMoreLength;
-		sizeOfBuffer = (pszPathOutLength + 1) * 2;
-		pszPathOut = (PSTR)calloc(sizeOfBuffer, 2);
+		const size_t pszPathOutLength = pszPathInLength + pszMoreLength;
+		const size_t sizeOfBuffer = (pszPathOutLength + 1) * 2;
+		PSTR pszPathOut = calloc(sizeOfBuffer, 2);
 
 		if (!pszPathOut)
 			return E_OUTOFMEMORY;

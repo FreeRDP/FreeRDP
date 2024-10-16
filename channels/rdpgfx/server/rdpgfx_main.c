@@ -97,9 +97,11 @@ static INLINE BOOL rdpgfx_server_packet_complete_header(wStream* s, size_t start
 	const size_t cap = Stream_Capacity(s);
 	if (cap < start + RDPGFX_HEADER_SIZE)
 		return FALSE;
+	if ((start > UINT32_MAX) || (current > start))
+		return FALSE;
 	/* Fill actual length */
 	Stream_SetPosition(s, start + RDPGFX_HEADER_SIZE - sizeof(UINT32));
-	Stream_Write_UINT32(s, current - start); /* pduLength (4 bytes) */
+	Stream_Write_UINT32(s, (UINT32)(current - start)); /* pduLength (4 bytes) */
 	Stream_SetPosition(s, current);
 	return TRUE;
 }
@@ -117,7 +119,10 @@ static UINT rdpgfx_server_packet_send(RdpgfxServerContext* context, wStream* s)
 	UINT32 flags = 0;
 	ULONG written = 0;
 	BYTE* pSrcData = Stream_Buffer(s);
-	UINT32 SrcSize = Stream_GetPosition(s);
+	const size_t SrcSize = Stream_GetPosition(s);
+	if (SrcSize > UINT32_MAX)
+		return ERROR_INTERNAL_ERROR;
+
 	wStream* fs = NULL;
 	/* Allocate new stream with enough capacity. Additional overhead is
 	 * descriptor (1 bytes) + segmentCount (2 bytes) + uncompressedSize (4 bytes)
@@ -131,15 +136,21 @@ static UINT rdpgfx_server_packet_send(RdpgfxServerContext* context, wStream* s)
 		goto out;
 	}
 
-	if (zgfx_compress_to_stream(context->priv->zgfx, fs, pSrcData, SrcSize, &flags) < 0)
+	if (zgfx_compress_to_stream(context->priv->zgfx, fs, pSrcData, (UINT32)SrcSize, &flags) < 0)
 	{
 		WLog_Print(context->priv->log, WLOG_ERROR, "zgfx_compress_to_stream failed!");
 		error = ERROR_INTERNAL_ERROR;
 		goto out;
 	}
 
+	const size_t pos = Stream_GetPosition(fs);
+	if (pos > UINT32_MAX)
+	{
+		error = ERROR_INTERNAL_ERROR;
+		goto out;
+	}
 	if (!WTSVirtualChannelWrite(context->priv->rdpgfx_channel, Stream_BufferAs(fs, char),
-	                            Stream_GetPosition(fs), &written))
+	                            (UINT32)pos, &written))
 	{
 		WLog_Print(context->priv->log, WLOG_ERROR, "WTSVirtualChannelWrite failed!");
 		error = ERROR_INTERNAL_ERROR;
@@ -646,8 +657,6 @@ static UINT rdpgfx_write_surface_command(wLog* log, wStream* s, const RDPGFX_SUR
 	UINT error = CHANNEL_RC_OK;
 	RDPGFX_AVC420_BITMAP_STREAM* havc420 = NULL;
 	RDPGFX_AVC444_BITMAP_STREAM* havc444 = NULL;
-	UINT32 bitmapDataStart = 0;
-	UINT32 bitmapDataLength = 0;
 	UINT8 pixelFormat = 0;
 
 	switch (cmd->format)
@@ -692,7 +701,7 @@ static UINT rdpgfx_write_surface_command(wLog* log, wStream* s, const RDPGFX_SUR
 		Stream_Write_UINT16(s, cmd->right);     /* right (2 bytes) */
 		Stream_Write_UINT16(s, cmd->bottom);    /* bottom (2 bytes) */
 		Stream_Write_UINT32(s, cmd->length);    /* bitmapDataLength (4 bytes) */
-		bitmapDataStart = Stream_GetPosition(s);
+		const size_t bitmapDataStart = Stream_GetPosition(s);
 
 		if (cmd->codecId == RDPGFX_CODECID_AVC420)
 		{
@@ -743,11 +752,14 @@ static UINT rdpgfx_write_surface_command(wLog* log, wStream* s, const RDPGFX_SUR
 		}
 
 		/* Fill actual bitmap data length */
-		bitmapDataLength = Stream_GetPosition(s) - bitmapDataStart;
+		const size_t bitmapDataLength = Stream_GetPosition(s) - bitmapDataStart;
+		if (bitmapDataLength > UINT32_MAX)
+			return ERROR_INTERNAL_ERROR;
+
 		Stream_SetPosition(s, bitmapDataStart - sizeof(UINT32));
 		if (!Stream_EnsureRemainingCapacity(s, 4))
 			return ERROR_INTERNAL_ERROR;
-		Stream_Write_UINT32(s, bitmapDataLength); /* bitmapDataLength (4 bytes) */
+		Stream_Write_UINT32(s, (UINT32)bitmapDataLength); /* bitmapDataLength (4 bytes) */
 		if (!Stream_SafeSeek(s, bitmapDataLength))
 			return ERROR_INTERNAL_ERROR;
 	}
@@ -809,8 +821,6 @@ static UINT rdpgfx_send_surface_frame_command(RdpgfxServerContext* context,
 	if (!checkCapsAreExchanged(context))
 		return CHANNEL_RC_NOT_INITIALIZED;
 	UINT error = CHANNEL_RC_OK;
-	wStream* s = NULL;
-	UINT32 position = 0;
 	UINT32 size = rdpgfx_pdu_length(rdpgfx_estimate_surface_command(cmd));
 
 	if (startFrame)
@@ -823,7 +833,7 @@ static UINT rdpgfx_send_surface_frame_command(RdpgfxServerContext* context,
 		size += rdpgfx_pdu_length(RDPGFX_END_FRAME_PDU_SIZE);
 	}
 
-	s = Stream_New(NULL, size);
+	wStream* s = Stream_New(NULL, size);
 
 	if (!s)
 	{
@@ -834,7 +844,7 @@ static UINT rdpgfx_send_surface_frame_command(RdpgfxServerContext* context,
 	/* Write start frame if exists */
 	if (startFrame)
 	{
-		position = Stream_GetPosition(s);
+		const size_t position = Stream_GetPosition(s);
 		error = rdpgfx_server_packet_init_header(s, RDPGFX_CMDID_STARTFRAME, 0);
 
 		if (error != CHANNEL_RC_OK)
@@ -850,7 +860,7 @@ static UINT rdpgfx_send_surface_frame_command(RdpgfxServerContext* context,
 	}
 
 	/* Write RDPGFX_CMDID_WIRETOSURFACE_1 or RDPGFX_CMDID_WIRETOSURFACE_2 */
-	position = Stream_GetPosition(s);
+	const size_t pos = Stream_GetPosition(s);
 	error = rdpgfx_server_packet_init_header(s, rdpgfx_surface_command_cmdid(cmd),
 	                                         0); // Actual length will be filled later
 
@@ -869,13 +879,13 @@ static UINT rdpgfx_send_surface_frame_command(RdpgfxServerContext* context,
 		goto error;
 	}
 
-	if (!rdpgfx_server_packet_complete_header(s, position))
+	if (!rdpgfx_server_packet_complete_header(s, pos))
 		goto error;
 
 	/* Write end frame if exists */
 	if (endFrame)
 	{
-		position = Stream_GetPosition(s);
+		const size_t position = Stream_GetPosition(s);
 		error = rdpgfx_server_packet_init_header(s, RDPGFX_CMDID_ENDFRAME, 0);
 
 		if (error != CHANNEL_RC_OK)
@@ -1836,8 +1846,11 @@ UINT rdpgfx_server_handle_messages(RdpgfxServerContext* context)
 			return CHANNEL_RC_NO_MEMORY;
 		}
 
-		if (WTSVirtualChannelRead(priv->rdpgfx_channel, 0, Stream_BufferAs(s, char),
-		                          Stream_Capacity(s), &BytesReturned) == FALSE)
+		const size_t len = Stream_Capacity(s);
+		if (len > UINT32_MAX)
+			return ERROR_INTERNAL_ERROR;
+		if (WTSVirtualChannelRead(priv->rdpgfx_channel, 0, Stream_BufferAs(s, char), (UINT32)len,
+		                          &BytesReturned) == FALSE)
 		{
 			WLog_Print(context->priv->log, WLOG_ERROR, "WTSVirtualChannelRead failed!");
 			return ERROR_INTERNAL_ERROR;

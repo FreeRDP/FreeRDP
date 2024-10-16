@@ -607,7 +607,7 @@ BOOL client_cli_choose_smartcard(freerdp* instance, SmartcardCertInfo** cert_lis
 		answer = strtoul(input, &p, 10);
 		if ((*p == '\n' && p != input) && answer < count)
 		{
-			*choice = answer;
+			*choice = (UINT32)answer;
 			return TRUE;
 		}
 	}

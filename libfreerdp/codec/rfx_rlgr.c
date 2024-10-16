@@ -142,7 +142,6 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* WINPR_RESTRICT pSrcData, UINT32 
 	size_t run = 0;
 	int cnt = 0;
 	size_t size = 0;
-	int nbits = 0;
 	size_t offset = 0;
 	INT16 mag = 0;
 	UINT32 k = 0;
@@ -195,10 +194,10 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* WINPR_RESTRICT pSrcData, UINT32 
 
 			cnt = lzcnt_s(bs->accumulator);
 
-			nbits = BitStream_GetRemainingLength(bs);
+			size_t nbits = BitStream_GetRemainingLength(bs);
 
-			if (cnt > nbits)
-				cnt = nbits;
+			if ((size_t)cnt > nbits)
+				cnt = (int)nbits;
 
 			vk = cnt;
 
@@ -210,8 +209,8 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* WINPR_RESTRICT pSrcData, UINT32 
 
 				nbits = BitStream_GetRemainingLength(bs);
 
-				if (cnt > nbits)
-					cnt = nbits;
+				if ((size_t)cnt > nbits)
+					cnt = (int)nbits;
 
 				vk += cnt;
 			}
@@ -261,8 +260,8 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* WINPR_RESTRICT pSrcData, UINT32 
 
 			nbits = BitStream_GetRemainingLength(bs);
 
-			if (cnt > nbits)
-				cnt = nbits;
+			if ((size_t)cnt > nbits)
+				cnt = (int)nbits;
 
 			vk = cnt;
 
@@ -274,8 +273,8 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* WINPR_RESTRICT pSrcData, UINT32 
 
 				nbits = BitStream_GetRemainingLength(bs);
 
-				if (cnt > nbits)
-					cnt = nbits;
+				if ((size_t)cnt > nbits)
+					cnt = (int)nbits;
 
 				vk += cnt;
 			}
@@ -370,10 +369,10 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* WINPR_RESTRICT pSrcData, UINT32 
 
 			cnt = lzcnt_s(~(bs->accumulator));
 
-			nbits = BitStream_GetRemainingLength(bs);
+			size_t nbits = BitStream_GetRemainingLength(bs);
 
-			if (cnt > nbits)
-				cnt = nbits;
+			if ((size_t)cnt > nbits)
+				cnt = (int)nbits;
 
 			vk = cnt;
 
@@ -385,8 +384,8 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* WINPR_RESTRICT pSrcData, UINT32 
 
 				nbits = BitStream_GetRemainingLength(bs);
 
-				if (cnt > nbits)
-					cnt = nbits;
+				if ((size_t)cnt > nbits)
+					cnt = (int)nbits;
 
 				vk += cnt;
 			}

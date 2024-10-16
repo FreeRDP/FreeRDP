@@ -1285,7 +1285,7 @@ BOOL freerdp_client_populate_rdp_file_from_settings(rdpFile* file, const rdpSett
 			errno = 0;
 			val = strtoul(str, NULL, 0);
 			if ((val < UINT32_MAX) && (errno == 0))
-				file->EncodeRedirectedVideoCapture = val;
+				file->EncodeRedirectedVideoCapture = (UINT32)val;
 		}
 		free(str);
 
@@ -1298,7 +1298,7 @@ BOOL freerdp_client_populate_rdp_file_from_settings(rdpFile* file, const rdpSett
 			val = strtoul(str, NULL, 0);
 			if ((val <= 2) && (errno == 0))
 			{
-				file->RedirectedVideoCaptureEncodingQuality = val;
+				file->RedirectedVideoCaptureEncodingQuality = (UINT32)val;
 			}
 		}
 		free(str);
@@ -2464,7 +2464,7 @@ BOOL freerdp_client_populate_settings_from_rdp_file(const rdpFile* file, rdpSett
 				free(list);
 				return FALSE;
 			}
-			list[x] = val;
+			list[x] = (UINT32)val;
 		}
 		free(args);
 	}

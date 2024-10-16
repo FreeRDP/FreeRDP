@@ -396,8 +396,9 @@ static BOOL rdpsnd_pulse_open_stream(rdpsndDevicePlugin* device)
 
 	if (pulse->latency > 0)
 	{
+		const size_t val = pa_usec_to_bytes(1000ULL * pulse->latency, &pulse->sample_spec);
 		buffer_attr.maxlength = UINT32_MAX;
-		buffer_attr.tlength = pa_usec_to_bytes(1000ULL * pulse->latency, &pulse->sample_spec);
+		buffer_attr.tlength = (val > UINT32_MAX) ? UINT32_MAX : (UINT32)val;
 		buffer_attr.prebuf = UINT32_MAX;
 		buffer_attr.minreq = UINT32_MAX;
 		buffer_attr.fragsize = UINT32_MAX;
@@ -643,7 +644,11 @@ static UINT rdpsnd_pulse_play(rdpsndDevicePlugin* device, const BYTE* data, size
 		latency = 0;
 
 	pa_threaded_mainloop_unlock(pulse->mainloop);
-	return latency / 1000;
+
+	const pa_usec_t val = latency / 1000;
+	if (val > UINT32_MAX)
+		return UINT32_MAX;
+	return (UINT32)val;
 }
 
 static UINT rdpsnd_pulse_parse_addin_args(rdpsndDevicePlugin* device, const ADDIN_ARGV* args)

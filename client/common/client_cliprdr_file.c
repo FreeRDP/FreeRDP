@@ -909,13 +909,15 @@ static void cliprdr_file_fuse_open(fuse_req_t fuse_req, fuse_ino_t fuse_ino,
 static BOOL request_file_range_async(CliprdrFileContext* file_context, CliprdrFuseFile* fuse_file,
                                      fuse_req_t fuse_req, off_t offset, size_t requested_size)
 {
-	CliprdrFuseRequest* fuse_request = NULL;
 	CLIPRDR_FILE_CONTENTS_REQUEST file_contents_request = { 0 };
 
 	WINPR_ASSERT(file_context);
 	WINPR_ASSERT(fuse_file);
 
-	fuse_request =
+	if (requested_size > UINT32_MAX)
+		return FALSE;
+
+	CliprdrFuseRequest* fuse_request =
 	    cliprdr_fuse_request_new(file_context, fuse_file, fuse_req, FUSE_LL_OPERATION_READ);
 	if (!fuse_request)
 		return FALSE;
@@ -924,9 +926,9 @@ static BOOL request_file_range_async(CliprdrFileContext* file_context, CliprdrFu
 	file_contents_request.streamId = fuse_request->stream_id;
 	file_contents_request.listIndex = fuse_file->list_idx;
 	file_contents_request.dwFlags = FILECONTENTS_RANGE;
-	file_contents_request.nPositionLow = offset & 0xFFFFFFFF;
-	file_contents_request.nPositionHigh = offset >> 32 & 0xFFFFFFFF;
-	file_contents_request.cbRequested = requested_size;
+	file_contents_request.nPositionLow = (UINT32)(offset & 0xFFFFFFFF);
+	file_contents_request.nPositionHigh = (UINT32)((offset >> 32) & 0xFFFFFFFF);
+	file_contents_request.cbRequested = (UINT32)requested_size;
 	file_contents_request.haveClipDataId = fuse_file->has_clip_data_id;
 	file_contents_request.clipDataId = fuse_file->clip_data_id;
 
@@ -1292,9 +1294,12 @@ cliprdr_file_context_send_contents_response(CliprdrFileContext* file,
                                             const CLIPRDR_FILE_CONTENTS_REQUEST* request,
                                             const void* data, size_t size)
 {
+	if (size > UINT32_MAX)
+		return ERROR_INVALID_PARAMETER;
+
 	CLIPRDR_FILE_CONTENTS_RESPONSE response = { .streamId = request->streamId,
 		                                        .requestedData = data,
-		                                        .cbRequested = size,
+		                                        .cbRequested = (UINT32)size,
 		                                        .common.msgFlags = CB_RESPONSE_OK };
 
 	WINPR_ASSERT(request);
@@ -1978,8 +1983,10 @@ BOOL cliprdr_file_context_update_server_data(CliprdrFileContext* file_context, w
 
 	WINPR_ASSERT(file_context);
 	WINPR_ASSERT(clip);
+	if (size > UINT32_MAX)
+		return FALSE;
 
-	if (cliprdr_parse_file_list(data, size, &files, &n_files))
+	if (cliprdr_parse_file_list(data, (UINT32)size, &files, &n_files))
 	{
 		WLog_Print(file_context->log, WLOG_ERROR, "Failed to parse file list");
 		return FALSE;
