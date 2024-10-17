@@ -339,6 +339,8 @@ static BOOL rdpsnd_alsa_format_supported(rdpsndDevicePlugin* device, const AUDIO
 			}
 
 			break;
+		default:
+			break;
 	}
 
 	return FALSE;

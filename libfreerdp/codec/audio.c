@@ -111,9 +111,9 @@ const char* audio_format_get_tag_string(UINT16 wFormatTag)
 
 		case WAVE_FORMAT_AAC_MS:
 			return "WAVE_FORMAT_AAC_MS";
+		default:
+			return "WAVE_FORMAT_UNKNOWN";
 	}
-
-	return "WAVE_FORMAT_UNKNOWN";
 }
 
 void audio_format_print(wLog* log, DWORD level, const AUDIO_FORMAT* format)

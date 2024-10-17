@@ -392,6 +392,8 @@ static UINT rdpsnd_server_select_format(RdpsndServerContext* context, UINT16 cli
 				context->priv->out_frames = bs;
 
 			break;
+		default:
+			break;
 	}
 
 	context->priv->out_pending_frames = 0;

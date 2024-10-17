@@ -86,6 +86,8 @@ static int rdpsnd_oss_get_format(const AUDIO_FORMAT* format)
 			}
 
 			break;
+		default:
+			break;
 	}
 
 	return 0;

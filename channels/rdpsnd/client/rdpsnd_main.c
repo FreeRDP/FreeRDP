@@ -390,7 +390,7 @@ static BOOL rdpsnd_apply_volume(rdpsndPlugin* rdpsnd)
 	return TRUE;
 }
 
-static BOOL rdpsnd_ensure_device_is_open(rdpsndPlugin* rdpsnd, UINT32 wFormatNo,
+static BOOL rdpsnd_ensure_device_is_open(rdpsndPlugin* rdpsnd, UINT16 wFormatNo,
                                          const AUDIO_FORMAT* format)
 {
 	if (!rdpsnd)

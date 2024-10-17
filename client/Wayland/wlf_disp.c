@@ -447,7 +447,7 @@ int wlf_list_monitors(wlfContext* wlc)
 		UwacOutputGetPosition(monitor, &pos);
 		UwacOutputGetResolution(monitor, &resolution);
 
-		printf("     %s [%d] %dx%d\t+%d+%d\n", (i == 0) ? "*" : " ", i, resolution.width,
+		printf("     %s [%u] %dx%d\t+%d+%d\n", (i == 0) ? "*" : " ", i, resolution.width,
 		       resolution.height, pos.x, pos.y);
 	}
 
