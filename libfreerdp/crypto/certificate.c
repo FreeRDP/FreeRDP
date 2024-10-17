@@ -1281,7 +1281,8 @@ rdpCertificate* freerdp_certificate_new_from_x509(const X509* xcert, const STACK
 	if (!cert)
 		return NULL;
 
-	cert->x509 = X509_dup(xcert);
+	X509* wcert = WINPR_CAST_CONST_PTR_AWAY(xcert, X509*);
+	cert->x509 = X509_dup(wcert);
 	if (!cert->x509)
 		goto fail;
 
@@ -1289,7 +1290,7 @@ rdpCertificate* freerdp_certificate_new_from_x509(const X509* xcert, const STACK
 		goto fail;
 
 	if (chain)
-		cert->chain = sk_X509_deep_copy(chain, X509_dup, X509_free);
+		cert->chain = sk_X509_deep_copy(chain, X509_const_dup, X509_free);
 
 	return cert;
 fail:
