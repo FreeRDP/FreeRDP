@@ -559,7 +559,7 @@ BOOL rdp_read_header(rdpRdp* rdp, wStream* s, UINT16* length, UINT16* channelId)
 		return FALSE;
 	}
 
-	if (!per_read_choice(s, &choice))
+	if (!freerdp_per_read_choice(s, &choice))
 		return FALSE;
 
 	const DomainMCSPDU domainMCSPDU = (DomainMCSPDU)(choice >> 2);
@@ -625,15 +625,15 @@ BOOL rdp_read_header(rdpRdp* rdp, wStream* s, UINT16* length, UINT16* channelId)
 	if (!Stream_CheckAndLogRequiredLengthWLog(rdp->log, s, 5))
 		return FALSE;
 
-	if (!per_read_integer16(s, &initiator, MCS_BASE_CHANNEL_ID)) /* initiator (UserId) */
+	if (!freerdp_per_read_integer16(s, &initiator, MCS_BASE_CHANNEL_ID)) /* initiator (UserId) */
 		return FALSE;
 
-	if (!per_read_integer16(s, channelId, 0)) /* channelId */
+	if (!freerdp_per_read_integer16(s, channelId, 0)) /* channelId */
 		return FALSE;
 
 	Stream_Read_UINT8(s, byte); /* dataPriority + Segmentation (0x70) */
 
-	if (!per_read_length(s, length)) /* userData (OCTET_STRING) */
+	if (!freerdp_per_read_length(s, length)) /* userData (OCTET_STRING) */
 		return FALSE;
 
 	if (!Stream_CheckAndLogRequiredLengthWLog(rdp->log, s, *length))
@@ -676,9 +676,9 @@ BOOL rdp_write_header(rdpRdp* rdp, wStream* s, size_t length, UINT16 channelId)
 
 	if (!mcs_write_domain_mcspdu_header(s, MCSPDU, length, 0))
 		return FALSE;
-	if (!per_write_integer16(s, rdp->mcs->userId, MCS_BASE_CHANNEL_ID)) /* initiator */
+	if (!freerdp_per_write_integer16(s, rdp->mcs->userId, MCS_BASE_CHANNEL_ID)) /* initiator */
 		return FALSE;
-	if (!per_write_integer16(s, channelId, 0)) /* channelId */
+	if (!freerdp_per_write_integer16(s, channelId, 0)) /* channelId */
 		return FALSE;
 	if (!Stream_EnsureRemainingCapacity(s, 3))
 		return FALSE;

@@ -366,45 +366,45 @@ BOOL gcc_read_conference_create_request(wStream* s, rdpMcs* mcs)
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(mcs);
 	/* ConnectData */
-	if (!per_read_choice(s, &choice))
+	if (!freerdp_per_read_choice(s, &choice))
 		return FALSE;
 
-	if (!per_read_object_identifier(s, t124_02_98_oid))
+	if (!freerdp_per_read_object_identifier(s, t124_02_98_oid))
 		return FALSE;
 
 	/* ConnectData::connectPDU (OCTET_STRING) */
-	if (!per_read_length(s, &length))
+	if (!freerdp_per_read_length(s, &length))
 		return FALSE;
 
 	/* ConnectGCCPDU */
-	if (!per_read_choice(s, &choice))
+	if (!freerdp_per_read_choice(s, &choice))
 		return FALSE;
 
-	if (!per_read_selection(s, &selection))
+	if (!freerdp_per_read_selection(s, &selection))
 		return FALSE;
 
 	/* ConferenceCreateRequest::conferenceName */
-	if (!per_read_numeric_string(s, 1)) /* ConferenceName::numeric */
+	if (!freerdp_per_read_numeric_string(s, 1)) /* ConferenceName::numeric */
 		return FALSE;
 
-	if (!per_read_padding(s, 1)) /* padding */
+	if (!freerdp_per_read_padding(s, 1)) /* padding */
 		return FALSE;
 
 	/* UserData (SET OF SEQUENCE) */
-	if (!per_read_number_of_sets(s, &number) || number != 1) /* one set of UserData */
+	if (!freerdp_per_read_number_of_sets(s, &number) || number != 1) /* one set of UserData */
 		return FALSE;
 
-	if (!per_read_choice(s, &choice) ||
+	if (!freerdp_per_read_choice(s, &choice) ||
 	    choice != 0xC0) /* UserData::value present + select h221NonStandard (1) */
 		return FALSE;
 
 	/* h221NonStandard */
-	if (!per_read_octet_string(s, h221_cs_key, 4,
-	                           4)) /* h221NonStandard, client-to-server H.221 key, "Duca" */
+	if (!freerdp_per_read_octet_string(s, h221_cs_key, 4,
+	                                   4)) /* h221NonStandard, client-to-server H.221 key, "Duca" */
 		return FALSE;
 
 	/* userData::value (OCTET_STRING) */
-	if (!per_read_length(s, &length))
+	if (!freerdp_per_read_length(s, &length))
 		return FALSE;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, length))
@@ -431,36 +431,39 @@ BOOL gcc_write_conference_create_request(wStream* s, wStream* userData)
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(userData);
 	/* ConnectData */
-	if (!per_write_choice(s, 0)) /* From Key select object (0) of type OBJECT_IDENTIFIER */
+	if (!freerdp_per_write_choice(s, 0)) /* From Key select object (0) of type OBJECT_IDENTIFIER */
 		return FALSE;
-	if (!per_write_object_identifier(s, t124_02_98_oid)) /* ITU-T T.124 (02/98) OBJECT_IDENTIFIER */
+	if (!freerdp_per_write_object_identifier(
+	        s, t124_02_98_oid)) /* ITU-T T.124 (02/98) OBJECT_IDENTIFIER */
 		return FALSE;
 	/* ConnectData::connectPDU (OCTET_STRING) */
-	if (!per_write_length(s, Stream_GetPosition(userData) + 14)) /* connectPDU length */
+	if (!freerdp_per_write_length(s, Stream_GetPosition(userData) + 14)) /* connectPDU length */
 		return FALSE;
 	/* ConnectGCCPDU */
-	if (!per_write_choice(s, 0)) /* From ConnectGCCPDU select conferenceCreateRequest (0) of type
-	                                 ConferenceCreateRequest */
+	if (!freerdp_per_write_choice(s, 0)) /* From ConnectGCCPDU select conferenceCreateRequest (0) of
+	                                 type ConferenceCreateRequest */
 		return FALSE;
-	if (!per_write_selection(s, 0x08)) /* select optional userData from ConferenceCreateRequest */
+	if (!freerdp_per_write_selection(
+	        s, 0x08)) /* select optional userData from ConferenceCreateRequest */
 		return FALSE;
 	/* ConferenceCreateRequest::conferenceName */
-	if (!per_write_numeric_string(s, (BYTE*)"1", 1, 1)) /* ConferenceName::numeric */
+	if (!freerdp_per_write_numeric_string(s, (BYTE*)"1", 1, 1)) /* ConferenceName::numeric */
 		return FALSE;
-	if (!per_write_padding(s, 1)) /* padding */
+	if (!freerdp_per_write_padding(s, 1)) /* padding */
 		return FALSE;
 	/* UserData (SET OF SEQUENCE) */
-	if (!per_write_number_of_sets(s, 1)) /* one set of UserData */
+	if (!freerdp_per_write_number_of_sets(s, 1)) /* one set of UserData */
 		return FALSE;
-	if (!per_write_choice(s, 0xC0)) /* UserData::value present + select h221NonStandard (1) */
+	if (!freerdp_per_write_choice(s,
+	                              0xC0)) /* UserData::value present + select h221NonStandard (1) */
 		return FALSE;
 	/* h221NonStandard */
-	if (!per_write_octet_string(s, h221_cs_key, 4,
-	                            4)) /* h221NonStandard, client-to-server H.221 key, "Duca" */
+	if (!freerdp_per_write_octet_string(
+	        s, h221_cs_key, 4, 4)) /* h221NonStandard, client-to-server H.221 key, "Duca" */
 		return FALSE;
 	/* userData::value (OCTET_STRING) */
-	return per_write_octet_string(s, Stream_Buffer(userData), Stream_GetPosition(userData),
-	                              0); /* array of client data blocks */
+	return freerdp_per_write_octet_string(s, Stream_Buffer(userData), Stream_GetPosition(userData),
+	                                      0); /* array of client data blocks */
 }
 
 BOOL gcc_read_conference_create_response(wStream* s, rdpMcs* mcs)
@@ -474,44 +477,45 @@ BOOL gcc_read_conference_create_response(wStream* s, rdpMcs* mcs)
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(mcs);
 	/* ConnectData */
-	if (!per_read_choice(s, &choice) || !per_read_object_identifier(s, t124_02_98_oid))
+	if (!freerdp_per_read_choice(s, &choice) ||
+	    !freerdp_per_read_object_identifier(s, t124_02_98_oid))
 		return FALSE;
 
 	/* ConnectData::connectPDU (OCTET_STRING) */
-	if (!per_read_length(s, &length))
+	if (!freerdp_per_read_length(s, &length))
 		return FALSE;
 
 	/* ConnectGCCPDU */
-	if (!per_read_choice(s, &choice))
+	if (!freerdp_per_read_choice(s, &choice))
 		return FALSE;
 
 	/* ConferenceCreateResponse::nodeID (UserID) */
-	if (!per_read_integer16(s, &nodeID, 1001))
+	if (!freerdp_per_read_integer16(s, &nodeID, 1001))
 		return FALSE;
 
 	/* ConferenceCreateResponse::tag (INTEGER) */
-	if (!per_read_integer(s, &tag))
+	if (!freerdp_per_read_integer(s, &tag))
 		return FALSE;
 
 	/* ConferenceCreateResponse::result (ENUMERATED) */
-	if (!per_read_enumerated(s, &result, MCS_Result_enum_length))
+	if (!freerdp_per_read_enumerated(s, &result, MCS_Result_enum_length))
 		return FALSE;
 
 	/* number of UserData sets */
-	if (!per_read_number_of_sets(s, &number))
+	if (!freerdp_per_read_number_of_sets(s, &number))
 		return FALSE;
 
 	/* UserData::value present + select h221NonStandard (1) */
-	if (!per_read_choice(s, &choice))
+	if (!freerdp_per_read_choice(s, &choice))
 		return FALSE;
 
 	/* h221NonStandard */
-	if (!per_read_octet_string(s, h221_sc_key, 4,
-	                           4)) /* h221NonStandard, server-to-client H.221 key, "McDn" */
+	if (!freerdp_per_read_octet_string(s, h221_sc_key, 4,
+	                                   4)) /* h221NonStandard, server-to-client H.221 key, "McDn" */
 		return FALSE;
 
 	/* userData (OCTET_STRING) */
-	if (!per_read_length(s, &length))
+	if (!freerdp_per_read_length(s, &length))
 		return FALSE;
 
 	if (!gcc_read_server_data_blocks(s, mcs, length))
@@ -528,39 +532,39 @@ BOOL gcc_write_conference_create_response(wStream* s, wStream* userData)
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(userData);
 	/* ConnectData */
-	if (!per_write_choice(s, 0))
+	if (!freerdp_per_write_choice(s, 0))
 		return FALSE;
-	if (!per_write_object_identifier(s, t124_02_98_oid))
+	if (!freerdp_per_write_object_identifier(s, t124_02_98_oid))
 		return FALSE;
 	/* ConnectData::connectPDU (OCTET_STRING) */
 	/* This length MUST be ignored by the client according to [MS-RDPBCGR] */
-	if (!per_write_length(s, 0x2A))
+	if (!freerdp_per_write_length(s, 0x2A))
 		return FALSE;
 	/* ConnectGCCPDU */
-	if (!per_write_choice(s, 0x14))
+	if (!freerdp_per_write_choice(s, 0x14))
 		return FALSE;
 	/* ConferenceCreateResponse::nodeID (UserID) */
-	if (!per_write_integer16(s, 0x79F3, 1001))
+	if (!freerdp_per_write_integer16(s, 0x79F3, 1001))
 		return FALSE;
 	/* ConferenceCreateResponse::tag (INTEGER) */
-	if (!per_write_integer(s, 1))
+	if (!freerdp_per_write_integer(s, 1))
 		return FALSE;
 	/* ConferenceCreateResponse::result (ENUMERATED) */
-	if (!per_write_enumerated(s, 0, MCS_Result_enum_length))
+	if (!freerdp_per_write_enumerated(s, 0, MCS_Result_enum_length))
 		return FALSE;
 	/* number of UserData sets */
-	if (!per_write_number_of_sets(s, 1))
+	if (!freerdp_per_write_number_of_sets(s, 1))
 		return FALSE;
 	/* UserData::value present + select h221NonStandard (1) */
-	if (!per_write_choice(s, 0xC0))
+	if (!freerdp_per_write_choice(s, 0xC0))
 		return FALSE;
 	/* h221NonStandard */
-	if (!per_write_octet_string(s, h221_sc_key, 4,
-	                            4)) /* h221NonStandard, server-to-client H.221 key, "McDn" */
+	if (!freerdp_per_write_octet_string(
+	        s, h221_sc_key, 4, 4)) /* h221NonStandard, server-to-client H.221 key, "McDn" */
 		return FALSE;
 	/* userData (OCTET_STRING) */
-	return per_write_octet_string(s, Stream_Buffer(userData), Stream_GetPosition(userData),
-	                              0); /* array of server data blocks */
+	return freerdp_per_write_octet_string(s, Stream_Buffer(userData), Stream_GetPosition(userData),
+	                                      0); /* array of server data blocks */
 }
 
 static BOOL gcc_read_client_unused1_data(wStream* s)

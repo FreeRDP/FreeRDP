@@ -312,84 +312,87 @@ static BOOL certificate_read_x509_certificate(const rdpCertBlob* cert, rdpCertIn
 	if (!s)
 		return FALSE;
 
-	if (!ber_read_sequence_tag(s, &length)) /* Certificate (SEQUENCE) */
+	if (!freerdp_ber_read_sequence_tag(s, &length)) /* Certificate (SEQUENCE) */
 		goto error;
 
 	error++;
 
-	if (!ber_read_sequence_tag(s, &length)) /* TBSCertificate (SEQUENCE) */
+	if (!freerdp_ber_read_sequence_tag(s, &length)) /* TBSCertificate (SEQUENCE) */
 		goto error;
 
 	error++;
 
-	if (!ber_read_contextual_tag(s, 0, &length, TRUE)) /* Explicit Contextual Tag [0] */
+	if (!freerdp_ber_read_contextual_tag(s, 0, &length, TRUE)) /* Explicit Contextual Tag [0] */
 		goto error;
 
 	error++;
 
-	if (!ber_read_integer(s, &version)) /* version (INTEGER) */
+	if (!freerdp_ber_read_integer(s, &version)) /* version (INTEGER) */
 		goto error;
 
 	error++;
 	version++;
 
 	/* serialNumber */
-	if (!ber_read_integer(s, NULL)) /* CertificateSerialNumber (INTEGER) */
+	if (!freerdp_ber_read_integer(s, NULL)) /* CertificateSerialNumber (INTEGER) */
 		goto error;
 
 	error++;
 
 	/* signature */
-	if (!ber_read_sequence_tag(s, &length) ||
+	if (!freerdp_ber_read_sequence_tag(s, &length) ||
 	    !Stream_SafeSeek(s, length)) /* AlgorithmIdentifier (SEQUENCE) */
 		goto error;
 
 	error++;
 
 	/* issuer */
-	if (!ber_read_sequence_tag(s, &length) || !Stream_SafeSeek(s, length)) /* Name (SEQUENCE) */
+	if (!freerdp_ber_read_sequence_tag(s, &length) ||
+	    !Stream_SafeSeek(s, length)) /* Name (SEQUENCE) */
 		goto error;
 
 	error++;
 
 	/* validity */
-	if (!ber_read_sequence_tag(s, &length) || !Stream_SafeSeek(s, length)) /* Validity (SEQUENCE) */
+	if (!freerdp_ber_read_sequence_tag(s, &length) ||
+	    !Stream_SafeSeek(s, length)) /* Validity (SEQUENCE) */
 		goto error;
 
 	error++;
 
 	/* subject */
-	if (!ber_read_sequence_tag(s, &length) || !Stream_SafeSeek(s, length)) /* Name (SEQUENCE) */
+	if (!freerdp_ber_read_sequence_tag(s, &length) ||
+	    !Stream_SafeSeek(s, length)) /* Name (SEQUENCE) */
 		goto error;
 
 	error++;
 
 	/* subjectPublicKeyInfo */
-	if (!ber_read_sequence_tag(s, &length)) /* SubjectPublicKeyInfo (SEQUENCE) */
+	if (!freerdp_ber_read_sequence_tag(s, &length)) /* SubjectPublicKeyInfo (SEQUENCE) */
 		goto error;
 
 	error++;
 
 	/* subjectPublicKeyInfo::AlgorithmIdentifier */
-	if (!ber_read_sequence_tag(s, &length) ||
+	if (!freerdp_ber_read_sequence_tag(s, &length) ||
 	    !Stream_SafeSeek(s, length)) /* AlgorithmIdentifier (SEQUENCE) */
 		goto error;
 
 	error++;
 
 	/* subjectPublicKeyInfo::subjectPublicKey */
-	if (!ber_read_bit_string(s, &length, &padding)) /* BIT_STRING */
+	if (!freerdp_ber_read_bit_string(s, &length, &padding)) /* BIT_STRING */
 		goto error;
 
 	error++;
 
 	/* RSAPublicKey (SEQUENCE) */
-	if (!ber_read_sequence_tag(s, &length)) /* SEQUENCE */
+	if (!freerdp_ber_read_sequence_tag(s, &length)) /* SEQUENCE */
 		goto error;
 
 	error++;
 
-	if (!ber_read_integer_length(s, &modulus_length)) /* modulus (INTEGER) */
+	if (!freerdp_ber_read_integer_length(s, &modulus_length)) /* modulus (INTEGER) */
 		goto error;
 
 	error++;
@@ -418,7 +421,7 @@ static BOOL certificate_read_x509_certificate(const rdpCertBlob* cert, rdpCertIn
 
 	error++;
 
-	if (!ber_read_integer_length(s, &exponent_length)) /* publicExponent (INTEGER) */
+	if (!freerdp_ber_read_integer_length(s, &exponent_length)) /* publicExponent (INTEGER) */
 		goto error;
 
 	error++;
