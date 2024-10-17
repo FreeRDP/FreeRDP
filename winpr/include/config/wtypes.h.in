@@ -331,8 +331,13 @@ typedef __uint3264 ULONG_PTR,
 typedef __uint3264 DWORD_PTR,
     *PDWORD_PTR; // NOLINT(bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
 
-typedef ULONG_PTR SIZE_T, *PSIZE_T;
+typedef ULONG_PTR SIZE_T, *PSIZE_T; /** deprecated */
+#if defined(WINPR_HAVE_SSIZE_T)
+#include <sys/types.h>
+typedef ssize_t SSIZE_T, *PSSIZE_T;
+#else
 typedef LONG_PTR SSIZE_T, *PSSIZE_T;
+#endif
 
 typedef float FLOAT;
 

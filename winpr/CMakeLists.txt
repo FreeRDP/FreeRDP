@@ -158,6 +158,10 @@ else()
 	set(WINPR_VERSION_FULL "${WINPR_VERSION}")
 endif()
 
+include(CheckTypeSize)
+check_type_size(ssize_t SSIZE_T)
+set(WINPR_HAVE_SSIZE_T ${HAVE_SSIZE_T})
+
 if(NOT IOS)
 	CHECK_SYMBOL_EXISTS(strndup string.h WINPR_HAVE_STRNDUP)
 	check_include_files(unistd.h WINPR_HAVE_UNISTD_H)

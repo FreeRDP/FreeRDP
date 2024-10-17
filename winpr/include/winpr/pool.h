@@ -38,8 +38,8 @@ typedef struct S_TP_POOL TP_POOL, *PTP_POOL;
 
 typedef struct
 {
-	SIZE_T StackReserve;
-	SIZE_T StackCommit;
+	size_t StackReserve;
+	size_t StackCommit;
 } TP_POOL_STACK_INFORMATION, *PTP_POOL_STACK_INFORMATION;
 
 typedef struct S_TP_CLEANUP_GROUP TP_CLEANUP_GROUP, *PTP_CLEANUP_GROUP;

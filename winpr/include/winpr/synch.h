@@ -194,7 +194,7 @@ extern "C"
 	WINPR_API VOID WakeByAddressAll(PVOID Address);
 	WINPR_API VOID WakeByAddressSingle(PVOID Address);
 
-	WINPR_API BOOL WaitOnAddress(VOID volatile* Address, PVOID CompareAddress, SIZE_T AddressSize,
+	WINPR_API BOOL WaitOnAddress(VOID volatile* Address, PVOID CompareAddress, size_t AddressSize,
 	                             DWORD dwMilliseconds);
 
 	/* Wait */

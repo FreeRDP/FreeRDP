@@ -231,13 +231,13 @@ extern "C"
 #define STACK_SIZE_PARAM_IS_A_RESERVATION 0x00010000
 
 	WINPR_ATTR_MALLOC(CloseHandle, 1)
-	WINPR_API HANDLE CreateThread(LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize,
+	WINPR_API HANDLE CreateThread(LPSECURITY_ATTRIBUTES lpThreadAttributes, size_t dwStackSize,
 	                              LPTHREAD_START_ROUTINE lpStartAddress, LPVOID lpParameter,
 	                              DWORD dwCreationFlags, LPDWORD lpThreadId);
 
 	WINPR_ATTR_MALLOC(CloseHandle, 1)
 	WINPR_API HANDLE CreateRemoteThread(HANDLE hProcess, LPSECURITY_ATTRIBUTES lpThreadAttributes,
-	                                    SIZE_T dwStackSize, LPTHREAD_START_ROUTINE lpStartAddress,
+	                                    size_t dwStackSize, LPTHREAD_START_ROUTINE lpStartAddress,
 	                                    LPVOID lpParameter, DWORD dwCreationFlags,
 	                                    LPDWORD lpThreadId);
 
