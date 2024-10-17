@@ -20,9 +20,13 @@
 #ifndef FREERDP_LIB_CRYPTO_OPENSSLCOMPAT_H
 #define FREERDP_LIB_CRYPTO_OPENSSLCOMPAT_H
 
+#include <winpr/winpr.h>
+#include <winpr/assert.h>
 #include <freerdp/config.h>
 
 #include <freerdp/api.h>
+
+#include <openssl/x509.h>
 
 #ifdef WITH_OPENSSL
 
@@ -61,4 +65,50 @@ void RSA_get0_key(const RSA* r, const BIGNUM** n, const BIGNUM** e, const BIGNUM
 #endif /* OPENSSL < 1.1.0 || LIBRESSL */
 #endif /* WITH_OPENSSL */
 
+/* Drop in replacement for older OpenSSL and LibRESSL */
+#if defined(LIBRESSL_VERSION_NUMBER) || \
+    (defined(OPENSSL_VERSION_NUMBER) && (OPENSSL_VERSION_NUMBER < 0x1010000fL))
+
+static INLINE STACK_OF(X509) * sk_X509_deep_copy(const STACK_OF(X509) * sk,
+                                                 X509* (*copyfunc)(const X509*),
+                                                 void (*freefunc)(X509*))
+{
+	WINPR_ASSERT(copyfunc);
+	WINPR_ASSERT(freefunc);
+
+	STACK_OF(X509)* stack = sk_X509_new_null();
+	if (!stack)
+		return NULL;
+
+	if (sk)
+	{
+		for (int i = 0; i < sk_X509_num(sk); i++)
+		{
+			X509* cert = sk_X509_value(sk, i);
+			X509* copy = copyfunc(cert);
+			if (!copy)
+				goto fail;
+			const int rc = sk_X509_push(stack, copy);
+			if (rc <= 0)
+				goto fail;
+		}
+	}
+
+	return stack;
+
+fail:
+	sk_X509_pop_free(stack, freefunc);
+	return NULL;
+}
+#endif
+
+/* OpenSSL API is not const consistent.
+ * While the TYPE_dup function take non const arguments
+ * the TYPE_sk versions require the arguments to be const...
+ */
+static INLINE X509* X509_const_dup(const X509* x509)
+{
+	X509* ptr = WINPR_CAST_CONST_PTR_AWAY(x509, X509*);
+	return X509_dup(ptr);
+}
 #endif /* FREERDP_LIB_CRYPTO_OPENSSLCOMPAT_H */
