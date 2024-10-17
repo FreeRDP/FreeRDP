@@ -801,7 +801,7 @@ LONG smartcard_irp_device_control_decode(wStream* s, UINT32 CompletionId, UINT32
 
 	if (Stream_GetPosition(s) < Stream_Length(s))
 	{
-		SIZE_T difference = 0;
+		size_t difference = 0;
 		difference = Stream_Length(s) - Stream_GetPosition(s);
 		WLog_WARN(TAG,
 		          "IRP was not fully parsed %s (%s [0x%08" PRIX32 "]): Actual: %" PRIuz
@@ -814,7 +814,7 @@ LONG smartcard_irp_device_control_decode(wStream* s, UINT32 CompletionId, UINT32
 
 	if (Stream_GetPosition(s) > Stream_Length(s))
 	{
-		SIZE_T difference = 0;
+		size_t difference = 0;
 		difference = Stream_GetPosition(s) - Stream_Length(s);
 		WLog_WARN(TAG,
 		          "IRP was parsed beyond its end %s (0x%08" PRIX32 "): Actual: %" PRIuz

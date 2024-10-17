@@ -129,7 +129,7 @@ extern "C"
 {
 #endif
 
-	WINPR_API PVOID SecureZeroMemory(PVOID ptr, SIZE_T cnt);
+	WINPR_API PVOID SecureZeroMemory(PVOID ptr, size_t cnt);
 
 #ifdef __cplusplus
 }

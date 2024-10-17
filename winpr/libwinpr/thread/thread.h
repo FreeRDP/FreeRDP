@@ -54,7 +54,7 @@ struct winpr_thread
 	WINPR_ALIGN64 BOOL exited;
 	WINPR_ALIGN64 DWORD dwExitCode;
 	WINPR_ALIGN64 pthread_t thread;
-	WINPR_ALIGN64 SIZE_T dwStackSize;
+	WINPR_ALIGN64 size_t dwStackSize;
 	WINPR_ALIGN64 LPVOID lpParameter;
 	WINPR_ALIGN64 pthread_mutex_t mutex;
 	mux_condition_bundle isRunning;

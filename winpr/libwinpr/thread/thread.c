@@ -678,7 +678,7 @@ BOOL SetThreadPriority(HANDLE hThread, int nPriority)
 #endif
 }
 
-HANDLE CreateThread(LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize,
+HANDLE CreateThread(LPSECURITY_ATTRIBUTES lpThreadAttributes, size_t dwStackSize,
                     LPTHREAD_START_ROUTINE lpStartAddress, LPVOID lpParameter,
                     DWORD dwCreationFlags, LPDWORD lpThreadId)
 {
@@ -814,7 +814,7 @@ BOOL ThreadCloseHandle(HANDLE handle)
 }
 
 HANDLE CreateRemoteThread(HANDLE hProcess, LPSECURITY_ATTRIBUTES lpThreadAttributes,
-                          SIZE_T dwStackSize, LPTHREAD_START_ROUTINE lpStartAddress,
+                          size_t dwStackSize, LPTHREAD_START_ROUTINE lpStartAddress,
                           LPVOID lpParameter, DWORD dwCreationFlags, LPDWORD lpThreadId)
 {
 	WLog_ERR(TAG, "not implemented");

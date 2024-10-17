@@ -37,7 +37,7 @@ VOID WakeByAddressSingle(PVOID Address)
 {
 }
 
-BOOL WaitOnAddress(VOID volatile* Address, PVOID CompareAddress, SIZE_T AddressSize,
+BOOL WaitOnAddress(VOID volatile* Address, PVOID CompareAddress, size_t AddressSize,
                    DWORD dwMilliseconds)
 {
 	return TRUE;
