@@ -317,13 +317,13 @@ BOOL sdlDispContext::handle_display_event(const SDL_DisplayEvent* ev)
 	switch (ev->type)
 	{
 		case SDL_EVENT_DISPLAY_ADDED:
-			SDL_Log("A new display with id %d was connected", ev->displayID);
+			SDL_Log("A new display with id %u was connected", ev->displayID);
 			return TRUE;
 		case SDL_EVENT_DISPLAY_REMOVED:
-			SDL_Log("The display with id %d was disconnected", ev->displayID);
+			SDL_Log("The display with id %u was disconnected", ev->displayID);
 			return TRUE;
 		case SDL_EVENT_DISPLAY_ORIENTATION:
-			SDL_Log("The orientation of display with id %d was changed", ev->displayID);
+			SDL_Log("The orientation of display with id %u was changed", ev->displayID);
 			return TRUE;
 		default:
 			return TRUE;

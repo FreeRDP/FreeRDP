@@ -73,7 +73,7 @@ int sdl_list_monitors(SdlContext* sdl)
 
 		if (brc != 0)
 			continue;
-		printf("     %s [%d] [%s] %dx%d\t+%d+%d\n", (i == 0) ? "*" : " ", id, name, rect.w, rect.h,
+		printf("     %s [%u] [%s] %dx%d\t+%d+%d\n", (i == 0) ? "*" : " ", id, name, rect.w, rect.h,
 		       rect.x, rect.y);
 	}
 	SDL_free(ids);

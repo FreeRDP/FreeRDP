@@ -785,23 +785,18 @@ out_fail:
 
 char* freerdp_assistance_construct_expert_blob(const char* name, const char* pass)
 {
-	size_t size = 0;
-	size_t nameLength = 0;
-	size_t passLength = 0;
-	char* ExpertBlob = NULL;
-
 	if (!name || !pass)
 		return NULL;
 
-	nameLength = strlen(name) + strlen("NAME=");
-	passLength = strlen(pass) + strlen("PASS=");
-	size = nameLength + passLength + 64;
-	ExpertBlob = (char*)calloc(1, size);
+	const size_t nameLength = strlen(name) + strlen("NAME=");
+	const size_t passLength = strlen(pass) + strlen("PASS=");
+	const size_t size = nameLength + passLength + 64;
+	char* ExpertBlob = (char*)calloc(1, size);
 
 	if (!ExpertBlob)
 		return NULL;
 
-	(void)sprintf_s(ExpertBlob, size, "%" PRIdz ";NAME=%s%" PRIdz ";PASS=%s", nameLength, name,
+	(void)sprintf_s(ExpertBlob, size, "%" PRIuz ";NAME=%s%" PRIuz ";PASS=%s", nameLength, name,
 	                passLength, pass);
 	return ExpertBlob;
 }

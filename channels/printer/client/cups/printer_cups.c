@@ -112,7 +112,7 @@ static void printer_cups_get_printjob_name(char* buf, size_t size, size_t id)
 	WINPR_ASSERT(buf);
 	WINPR_ASSERT(size > 0);
 
-	(void)sprintf_s(buf, size - 1, "FreeRDP Print %04d-%02d-%02d %02d-%02d-%02d - Job %" PRIdz,
+	(void)sprintf_s(buf, size - 1, "FreeRDP Print %04d-%02d-%02d %02d-%02d-%02d - Job %" PRIuz,
 	                t->tm_year + 1900, t->tm_mon + 1, t->tm_mday, t->tm_hour, t->tm_min, t->tm_sec,
 	                id);
 }

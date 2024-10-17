@@ -546,7 +546,7 @@ static char* xf_window_get_title(rdpSettings* settings)
 	if (!port)
 		(void)sprintf_s(windowTitle, size, "%s %s", prefix, name);
 	else
-		(void)sprintf_s(windowTitle, size, "%s %s:%i", prefix, name,
+		(void)sprintf_s(windowTitle, size, "%s %s:%" PRIu32, prefix, name,
 		                freerdp_settings_get_uint32(settings, FreeRDP_ServerPort));
 
 	return windowTitle;

@@ -85,8 +85,13 @@ static UINT32 audin_oss_get_format(const AUDIO_FORMAT* format)
 
 				case 16:
 					return AFMT_S16_LE;
+
+				default:
+					break;
 			}
 
+			break;
+		default:
 			break;
 	}
 

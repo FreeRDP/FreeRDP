@@ -588,7 +588,7 @@ static BOOL http_encode_body_line(wStream* s, const char* param, const char* val
 
 static BOOL http_encode_content_length_line(wStream* s, size_t ContentLength)
 {
-	return http_encode_print(s, "Content-Length: %" PRIdz "\r\n", ContentLength);
+	return http_encode_print(s, "Content-Length: %" PRIuz "\r\n", ContentLength);
 }
 
 static BOOL http_encode_header_line(wStream* s, const char* Method, const char* URI)

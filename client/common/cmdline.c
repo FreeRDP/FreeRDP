@@ -1726,7 +1726,7 @@ static void freerdp_client_print_tune_list(const rdpSettings* settings)
 				       freerdp_settings_get_int16(settings, (FreeRDP_Settings_Keys_Int16)x));
 				break;
 			case RDP_SETTINGS_TYPE_UINT32:
-				printf("%" PRIuz "\t%50s\tUINT32\t%" PRIu32 "\n", x, name,
+				printf("%" PRIdz "\t%50s\tUINT32\t%" PRIu32 "\n", x, name,
 				       freerdp_settings_get_uint32(settings, (FreeRDP_Settings_Keys_UInt32)x));
 				break;
 			case RDP_SETTINGS_TYPE_INT32:
