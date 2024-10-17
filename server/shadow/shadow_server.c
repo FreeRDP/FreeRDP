@@ -21,7 +21,9 @@
 #include <freerdp/config.h>
 
 #include <errno.h>
+#include <stdint.h>
 
+#include <winpr/assert.h>
 #include <winpr/crt.h>
 #include <winpr/ssl.h>
 #include <winpr/path.h>
@@ -797,6 +799,8 @@ static BOOL shadow_server_create_certificate(rdpShadowServer* server, const char
 {
 	BOOL rc = FALSE;
 	char* makecert_argv[6] = { "makecert", "-rdp", "-live", "-silent", "-y", "5" };
+
+	WINPR_STATIC_ASSERT(ARRAYSIZE(makecert_argv) <= INT_MAX);
 	const size_t makecert_argc = ARRAYSIZE(makecert_argv);
 
 	MAKECERT_CONTEXT* makecert = makecert_context_new();
@@ -804,7 +808,6 @@ static BOOL shadow_server_create_certificate(rdpShadowServer* server, const char
 	if (!makecert)
 		goto out_fail;
 
-	WINPR_ASSERT(makecert_argc <= INT_MAX);
 	if (makecert_context_process(makecert, (int)makecert_argc, makecert_argv) < 0)
 		goto out_fail;
 

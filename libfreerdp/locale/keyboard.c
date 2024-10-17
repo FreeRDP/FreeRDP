@@ -21,7 +21,9 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdint.h>
 
+#include <winpr/assert.h>
 #include <winpr/crt.h>
 
 #include <freerdp/utils/string.h>
@@ -324,6 +326,7 @@ DWORD freerdp_keyboard_init(DWORD keyboardLayoutId)
 
 	ZeroMemory(VIRTUAL_SCANCODE_TO_X11_KEYCODE, sizeof(VIRTUAL_SCANCODE_TO_X11_KEYCODE));
 
+	WINPR_STATIC_ASSERT(ARRAYSIZE(VIRTUAL_SCANCODE_TO_X11_KEYCODE) <= UINT32_MAX);
 	for (size_t keycode = 0; keycode < ARRAYSIZE(VIRTUAL_SCANCODE_TO_X11_KEYCODE); keycode++)
 	{
 		const DWORD x11 = X11_KEYCODE_TO_VIRTUAL_SCANCODE[keycode];

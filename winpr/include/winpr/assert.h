@@ -22,6 +22,8 @@
 #define WINPR_ASSERT_H
 
 #include <stdlib.h>
+#include <assert.h>
+
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
 #include <winpr/wlog.h>
@@ -56,8 +58,28 @@ extern "C"
 #endif
 
 #else
-#include <assert.h>
 #define WINPR_ASSERT(cond) assert(cond)
+#endif
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+#if defined(__cplusplus) && (__cplusplus >= 201703L) // C++ 17
+#define WINPR_STATIC_ASSERT(cond) static_assert(cond)
+#elif defined(__cplusplus) && (__cplusplus >= 201103L) // C++ 11
+#define WINPR_STATIC_ASSERT(cond) static_assert(cond, #cond)
+#elif defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 202311L) // C23
+#define WINPR_STATIC_ASSERT(cond) static_assert(cond)
+#elif defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201112L) // C11
+#define WINPR_STATIC_ASSERT(cond) _Static_assert(cond, #cond)
+#else
+WINPR_PRAGMA_WARNING("static-assert macro not supported on this platform")
+#define WINPR_STATIC_ASSERT(cond) assert(cond)
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* WINPR_ERROR_H */

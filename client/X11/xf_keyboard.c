@@ -23,7 +23,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
 
+#include <winpr/assert.h>
 #include <winpr/crt.h>
 #include <winpr/path.h>
 #include <winpr/assert.h>
@@ -191,6 +193,7 @@ void xf_keyboard_release_all_keypress(xfContext* xfc)
 {
 	WINPR_ASSERT(xfc);
 
+	WINPR_STATIC_ASSERT(ARRAYSIZE(xfc->KeyboardState) <= UINT32_MAX);
 	for (size_t keycode = 0; keycode < ARRAYSIZE(xfc->KeyboardState); keycode++)
 	{
 		if (xfc->KeyboardState[keycode])
