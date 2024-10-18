@@ -766,17 +766,27 @@ SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer buf
 
 	ntlm_generate_timestamp(context); /* Timestamp */
 
-	if (!ntlm_compute_lm_v2_response(context)) /* LmChallengeResponse */
+	const SECURITY_STATUS rc = ntlm_compute_lm_v2_response(context); /* LmChallengeResponse */
+	if (rc != SEC_E_OK)
+	{
+		status = rc;
 		goto fail;
+	}
 
-	if (!ntlm_compute_ntlm_v2_response(context)) /* NtChallengeResponse */
+	const SECURITY_STATUS rc2 = ntlm_compute_ntlm_v2_response(context); /* NtChallengeResponse */
+	if (rc2 != SEC_E_OK)
+	{
+		status = rc2;
 		goto fail;
+	}
 
 	ntlm_generate_key_exchange_key(context);     /* KeyExchangeKey */
 	ntlm_generate_random_session_key(context);   /* RandomSessionKey */
 	ntlm_generate_exported_session_key(context); /* ExportedSessionKey */
 	ntlm_encrypt_random_session_key(context);    /* EncryptedRandomSessionKey */
+
 	/* Generate signing keys */
+	status = SEC_E_ENCRYPT_FAILURE;
 	if (!ntlm_generate_client_signing_key(context))
 		goto fail;
 	if (!ntlm_generate_server_signing_key(context))
@@ -1092,12 +1102,14 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 
 	if (context->NegotiateFlags & NTLMSSP_NEGOTIATE_LM_KEY)
 	{
-		if (!ntlm_compute_lm_v2_response(context)) /* LmChallengeResponse */
-			return SEC_E_INTERNAL_ERROR;
+		const SECURITY_STATUS rc = ntlm_compute_lm_v2_response(context); /* LmChallengeResponse */
+		if (rc != SEC_E_OK)
+			return rc;
 	}
 
-	if (!ntlm_compute_ntlm_v2_response(context)) /* NtChallengeResponse */
-		return SEC_E_INTERNAL_ERROR;
+	const SECURITY_STATUS rc = ntlm_compute_ntlm_v2_response(context); /* NtChallengeResponse */
+	if (rc != SEC_E_OK)
+		return rc;
 
 	/* KeyExchangeKey */
 	ntlm_generate_key_exchange_key(context);
