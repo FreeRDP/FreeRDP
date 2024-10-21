@@ -25,7 +25,6 @@
 #include <string.h>
 #include <stdint.h>
 
-#include <winpr/assert.h>
 #include <winpr/crt.h>
 #include <winpr/path.h>
 #include <winpr/assert.h>
