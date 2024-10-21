@@ -1,0 +1,16 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=FreeRDP
+Comment=Access remote desktops with FreeRDP
+Categories=GTK;GNOME;X-GNOME-NetworkSettings;Network;
+Keywords=remote desktop;rdp;
+TryExec=@FREERDP_BIN_NAME@
+Exec=@FREERDP_BIN_NAME@ %U
+Icon=FreeRDP
+MimeType=x-scheme-handler/rdp;
+Actions=Edit;
+Terminal=true
+StartupNotify=true
+NoDisplay=true
+X-Desktop-File-Install-Version=0.24
