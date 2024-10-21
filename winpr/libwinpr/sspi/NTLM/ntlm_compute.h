@@ -41,8 +41,8 @@ void ntlm_output_channel_bindings(NTLM_CONTEXT* context);
 void ntlm_current_time(BYTE* timestamp);
 void ntlm_generate_timestamp(NTLM_CONTEXT* context);
 
-BOOL ntlm_compute_lm_v2_response(NTLM_CONTEXT* context);
-BOOL ntlm_compute_ntlm_v2_response(NTLM_CONTEXT* context);
+SECURITY_STATUS ntlm_compute_lm_v2_response(NTLM_CONTEXT* context);
+SECURITY_STATUS ntlm_compute_ntlm_v2_response(NTLM_CONTEXT* context);
 
 void ntlm_rc4k(BYTE* key, size_t length, BYTE* plaintext, BYTE* ciphertext);
 void ntlm_generate_client_challenge(NTLM_CONTEXT* context);
