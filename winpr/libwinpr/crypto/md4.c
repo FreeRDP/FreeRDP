@@ -230,7 +230,7 @@ void winpr_MD4_Update(WINPR_MD4_CTX* ctx, const void* data, unsigned long size)
 	memcpy(ctx->buffer, data, size);
 }
 
-static inline void OUT(unsigned char* dst, winpr_MD4_u32plus src)
+static inline void mdOUT(unsigned char* dst, winpr_MD4_u32plus src)
 {
 	(dst)[0] = (unsigned char)(src);
 	(dst)[1] = (unsigned char)((src) >> 8);
@@ -257,15 +257,15 @@ void winpr_MD4_Final(unsigned char* result, WINPR_MD4_CTX* ctx)
 	memset(&ctx->buffer[used], 0, available - 8);
 
 	ctx->lo <<= 3;
-	OUT(&ctx->buffer[56], ctx->lo);
-	OUT(&ctx->buffer[60], ctx->hi);
+	mdOUT(&ctx->buffer[56], ctx->lo);
+	mdOUT(&ctx->buffer[60], ctx->hi);
 
 	body(ctx, ctx->buffer, 64);
 
-	OUT(&result[0], ctx->a);
-	OUT(&result[4], ctx->b);
-	OUT(&result[8], ctx->c);
-	OUT(&result[12], ctx->d);
+	mdOUT(&result[0], ctx->a);
+	mdOUT(&result[4], ctx->b);
+	mdOUT(&result[8], ctx->c);
+	mdOUT(&result[12], ctx->d);
 
 	memset(ctx, 0, sizeof(*ctx));
 }
