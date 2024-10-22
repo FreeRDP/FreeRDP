@@ -693,20 +693,26 @@ static BOOL kerberos_rd_tgt_req_tag2(WinPrAsn1Decoder* dec, char* buf, size_t le
 	BOOL first = TRUE;
 	while (WinPrAsn1DecPeekTag(dec, &tag))
 	{
+		BOOL success = FALSE;
 		char* lstr = NULL;
 		if (!WinPrAsn1DecReadGeneralString(dec, &lstr))
-			goto end;
+			goto fail;
 
 		if (!first)
 		{
 			if (!append(buf, len, "/"))
-				goto end;
+				goto fail;
 		}
 		first = FALSE;
 
 		if (!append(buf, len, lstr))
-			goto end;
+			goto fail;
+
+		success = TRUE;
+	fail:
 		free(lstr);
+		if (!success)
+			goto end;
 	}
 
 	rc = TRUE;
@@ -779,7 +785,6 @@ static BOOL kerberos_rd_tgt_req(WinPrAsn1Decoder* dec, char** target)
 			rc = FALSE;
 	}
 
-end:
 	if (rc)
 		*target = buf;
 	else
