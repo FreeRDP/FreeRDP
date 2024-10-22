@@ -54,7 +54,7 @@
 #define WINPR_ATTR_MALLOC(deallocator, ptrindex) \
 	__attribute__((malloc(deallocator, ptrindex), warn_unused_result)) /** @since version 3.3.0 */
 #else
-#define WINPR_ATTR_MALLOC(deallocator, ptrindex) /** @since version 3.3.0 */
+#define WINPR_ATTR_MALLOC(deallocator, ptrindex) __declspec(restrict) /** @since version 3.3.0 */
 #endif
 
 #if defined(__GNUC__) || defined(__clang__)

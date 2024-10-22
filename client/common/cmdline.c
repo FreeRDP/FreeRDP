@@ -1006,23 +1006,18 @@ static int freerdp_client_command_line_post_filter_int(void* context, COMMAND_LI
 	rdpSettings* settings = (rdpSettings*)context;
 	int status = CHANNEL_RC_OK;
 	BOOL enable = arg->Value ? TRUE : FALSE;
-	union
-	{
-		char** p;
-		const char** pc;
-	} ptr;
 
 	CommandLineSwitchStart(arg) CommandLineSwitchCase(arg, "a")
 	{
 		size_t count = 0;
-		ptr.p = CommandLineParseCommaSeparatedValues(arg->Value, &count);
+		char** ptr = CommandLineParseCommaSeparatedValues(arg->Value, &count);
 
-		if (!freerdp_client_add_device_channel(settings, count, ptr.pc))
+		if (!freerdp_client_add_device_channel(settings, count, (const char**)ptr))
 			status = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 		if (!freerdp_settings_set_bool(settings, FreeRDP_DeviceRedirection, TRUE))
 			status = COMMAND_LINE_ERROR;
 
-		free(ptr.p);
+		CommandLineParserFree(ptr);
 		if (status)
 			return fail_at(arg, status);
 	}
@@ -1030,8 +1025,8 @@ static int freerdp_client_command_line_post_filter_int(void* context, COMMAND_LI
 	{
 		size_t count = 0;
 
-		ptr.p = CommandLineParseCommaSeparatedValuesEx("kerberos", arg->Value, &count);
-		if (ptr.pc)
+		char** ptr = CommandLineParseCommaSeparatedValuesEx("kerberos", arg->Value, &count);
+		if (ptr)
 		{
 			const CmdLineSubOptions opts[] = {
 				{ "kdc-url:", FreeRDP_KerberosKdcUrl, CMDLINE_SUBOPTION_STRING, NULL },
@@ -1047,44 +1042,44 @@ static int freerdp_client_command_line_post_filter_int(void* context, COMMAND_LI
 
 			for (size_t x = 1; x < count; x++)
 			{
-				const char* cur = ptr.pc[x];
+				const char* cur = ptr[x];
 				if (!parseSubOptions(settings, opts, ARRAYSIZE(opts), cur))
 				{
-					free(ptr.p);
+					CommandLineParserFree(ptr);
 					return fail_at(arg, COMMAND_LINE_ERROR_UNEXPECTED_VALUE);
 				}
 			}
 		}
-		free(ptr.p);
+		CommandLineParserFree(ptr);
 	}
 
 	CommandLineSwitchCase(arg, "vc")
 	{
 		size_t count = 0;
-		ptr.p = CommandLineParseCommaSeparatedValues(arg->Value, &count);
-		if (!freerdp_client_add_static_channel(settings, count, ptr.pc))
+		char** ptr = CommandLineParseCommaSeparatedValues(arg->Value, &count);
+		if (!freerdp_client_add_static_channel(settings, count, ptr))
 			status = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
-		free(ptr.p);
+		CommandLineParserFree(ptr);
 		if (status)
 			return fail_at(arg, status);
 	}
 	CommandLineSwitchCase(arg, "dvc")
 	{
 		size_t count = 0;
-		ptr.p = CommandLineParseCommaSeparatedValues(arg->Value, &count);
-		if (!freerdp_client_add_dynamic_channel(settings, count, ptr.pc))
+		char** ptr = CommandLineParseCommaSeparatedValues(arg->Value, &count);
+		if (!freerdp_client_add_dynamic_channel(settings, count, ptr))
 			status = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
-		free(ptr.p);
+		CommandLineParserFree(ptr);
 		if (status)
 			return fail_at(arg, status);
 	}
 	CommandLineSwitchCase(arg, "drive")
 	{
 		size_t count = 0;
-		ptr.p = CommandLineParseCommaSeparatedValuesEx(arg->Name, arg->Value, &count);
-		if (!freerdp_client_add_device_channel(settings, count, ptr.pc))
+		char** ptr = CommandLineParseCommaSeparatedValuesEx(arg->Name, arg->Value, &count);
+		if (!freerdp_client_add_device_channel(settings, count, ptr))
 			status = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
-		free(ptr.p);
+		CommandLineParserFree(ptr);
 		if (status)
 			return fail_at(arg, status);
 	}
@@ -1092,10 +1087,10 @@ static int freerdp_client_command_line_post_filter_int(void* context, COMMAND_LI
 	CommandLineSwitchCase(arg, "serial")
 	{
 		size_t count = 0;
-		ptr.p = CommandLineParseCommaSeparatedValuesEx(arg->Name, arg->Value, &count);
-		if (!freerdp_client_add_device_channel(settings, count, ptr.pc))
+		char** ptr = CommandLineParseCommaSeparatedValuesEx(arg->Name, arg->Value, &count);
+		if (!freerdp_client_add_device_channel(settings, count, ptr))
 			status = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
-		free(ptr.p);
+		CommandLineParserFree(ptr);
 		if (status)
 			return fail_at(arg, status);
 	}
@@ -1104,10 +1099,10 @@ static int freerdp_client_command_line_post_filter_int(void* context, COMMAND_LI
 	CommandLineSwitchCase(arg, "parallel")
 	{
 		size_t count = 0;
-		ptr.p = CommandLineParseCommaSeparatedValuesEx(arg->Name, arg->Value, &count);
-		if (!freerdp_client_add_device_channel(settings, count, ptr.pc))
+		char** ptr = CommandLineParseCommaSeparatedValuesEx(arg->Name, arg->Value, &count);
+		if (!freerdp_client_add_device_channel(settings, count, ptr))
 			status = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
-		free(ptr.p);
+		CommandLineParserFree(ptr);
 		if (status)
 			return fail_at(arg, status);
 	}
@@ -1115,30 +1110,31 @@ static int freerdp_client_command_line_post_filter_int(void* context, COMMAND_LI
 	CommandLineSwitchCase(arg, "smartcard")
 	{
 		size_t count = 0;
-		ptr.p = CommandLineParseCommaSeparatedValuesEx(arg->Name, arg->Value, &count);
-		if (!freerdp_client_add_device_channel(settings, count, ptr.pc))
+		char** ptr = CommandLineParseCommaSeparatedValuesEx(arg->Name, arg->Value, &count);
+		if (!freerdp_client_add_device_channel(settings, count, ptr))
 			status = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
-		free(ptr.p);
+		CommandLineParserFree(ptr);
 		if (status)
 			return fail_at(arg, status);
 	}
 	CommandLineSwitchCase(arg, "printer")
 	{
 		size_t count = 0;
-		ptr.p = CommandLineParseCommaSeparatedValuesEx(arg->Name, arg->Value, &count);
-		if (!freerdp_client_add_device_channel(settings, count, ptr.pc))
+		char** ptr = CommandLineParseCommaSeparatedValuesEx(arg->Name, arg->Value, &count);
+		if (!freerdp_client_add_device_channel(settings, count, ptr))
 			status = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
-		free(ptr.p);
+		CommandLineParserFree(ptr);
 		if (status)
 			return fail_at(arg, status);
 	}
 	CommandLineSwitchCase(arg, "usb")
 	{
 		size_t count = 0;
-		ptr.p = CommandLineParseCommaSeparatedValuesEx(URBDRC_CHANNEL_NAME, arg->Value, &count);
-		if (!freerdp_client_add_dynamic_channel(settings, count, ptr.pc))
+		char** ptr =
+		    CommandLineParseCommaSeparatedValuesEx(URBDRC_CHANNEL_NAME, arg->Value, &count);
+		if (!freerdp_client_add_dynamic_channel(settings, count, ptr))
 			status = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
-		free(ptr.p);
+		CommandLineParserFree(ptr);
 		if (status)
 			return fail_at(arg, status);
 	}
@@ -1183,23 +1179,24 @@ static int freerdp_client_command_line_post_filter_int(void* context, COMMAND_LI
 	CommandLineSwitchCase(arg, "sound")
 	{
 		size_t count = 0;
-		ptr.p = CommandLineParseCommaSeparatedValuesEx(RDPSND_CHANNEL_NAME, arg->Value, &count);
-		if (!freerdp_client_add_static_channel(settings, count, ptr.pc))
+		char** ptr =
+		    CommandLineParseCommaSeparatedValuesEx(RDPSND_CHANNEL_NAME, arg->Value, &count);
+		if (!freerdp_client_add_static_channel(settings, count, ptr))
 			status = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
-		if (!freerdp_client_add_dynamic_channel(settings, count, ptr.pc))
+		if (!freerdp_client_add_dynamic_channel(settings, count, ptr))
 			status = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 
-		free(ptr.p);
+		CommandLineParserFree(ptr);
 		if (status)
 			return fail_at(arg, status);
 	}
 	CommandLineSwitchCase(arg, "microphone")
 	{
 		size_t count = 0;
-		ptr.p = CommandLineParseCommaSeparatedValuesEx(AUDIN_CHANNEL_NAME, arg->Value, &count);
-		if (!freerdp_client_add_dynamic_channel(settings, count, ptr.pc))
+		char** ptr = CommandLineParseCommaSeparatedValuesEx(AUDIN_CHANNEL_NAME, arg->Value, &count);
+		if (!freerdp_client_add_dynamic_channel(settings, count, ptr))
 			status = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
-		free(ptr.p);
+		CommandLineParserFree(ptr);
 		if (status)
 			return fail_at(arg, status);
 	}
@@ -1207,10 +1204,10 @@ static int freerdp_client_command_line_post_filter_int(void* context, COMMAND_LI
 	CommandLineSwitchCase(arg, "multimedia")
 	{
 		size_t count = 0;
-		ptr.p = CommandLineParseCommaSeparatedValuesEx("tsmf", arg->Value, &count);
-		if (!freerdp_client_add_dynamic_channel(settings, count, ptr.pc))
+		char** ptr = CommandLineParseCommaSeparatedValuesEx("tsmf", arg->Value, &count);
+		if (!freerdp_client_add_dynamic_channel(settings, count, ptr))
 			status = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
-		free(ptr.p);
+		CommandLineParserFree(ptr);
 		if (status)
 			return fail_at(arg, status);
 	}
@@ -1838,7 +1835,7 @@ int freerdp_client_settings_command_line_status_print_ex(rdpSettings* settings, 
 						return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 					if (count < 2)
 					{
-						free(ptr);
+						CommandLineParserFree(ptr);
 						return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 					}
 
@@ -1847,12 +1844,12 @@ int freerdp_client_settings_command_line_status_print_ex(rdpSettings* settings, 
 						const char* cur = ptr[x];
 						if (!parseSubOptions(settings, options, ARRAYSIZE(options), cur))
 						{
-							free(ptr);
+							CommandLineParserFree(ptr);
 							return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 						}
 					}
 
-					free(ptr);
+					CommandLineParserFree(ptr);
 				}
 
 				freerdp_smartcard_list(settings);
@@ -2224,11 +2221,11 @@ static int parse_tls_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_
 		int rc = parse_tls_cipher_options(settings, &larg);
 		if (rc != 0)
 		{
-			free(ptr);
+			CommandLineParserFree(ptr);
 			return rc;
 		}
 	}
-	free(ptr);
+	CommandLineParserFree(ptr);
 	return 0;
 }
 
@@ -2360,7 +2357,7 @@ static int parse_gfx_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_
 					rc = COMMAND_LINE_ERROR;
 			}
 		}
-		free(ptr);
+		CommandLineParserFree(ptr);
 		if (rc != CHANNEL_RC_OK)
 			return rc;
 	}
@@ -2709,16 +2706,11 @@ static int parse_monitors_options(rdpSettings* settings, const COMMAND_LINE_ARGU
 
 	if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
 	{
-		union
-		{
-			char** p;
-			const char** pc;
-		} ptr;
 		size_t count = 0;
 		UINT32* MonitorIds = NULL;
-		ptr.p = CommandLineParseCommaSeparatedValues(arg->Value, &count);
+		char** ptr = CommandLineParseCommaSeparatedValues(arg->Value, &count);
 
-		if (!ptr.pc)
+		if (!ptr)
 			return COMMAND_LINE_ERROR_MEMORY;
 
 		if (count > 16)
@@ -2726,7 +2718,7 @@ static int parse_monitors_options(rdpSettings* settings, const COMMAND_LINE_ARGU
 
 		if (!freerdp_settings_set_pointer_len(settings, FreeRDP_MonitorIds, NULL, count))
 		{
-			free(ptr.p);
+			CommandLineParserFree(ptr);
 			return FALSE;
 		}
 
@@ -2735,13 +2727,13 @@ static int parse_monitors_options(rdpSettings* settings, const COMMAND_LINE_ARGU
 		{
 			LONGLONG val = 0;
 
-			if (!value_to_int(ptr.pc[i], &val, 0, UINT16_MAX))
+			if (!value_to_int(ptr[i], &val, 0, UINT16_MAX))
 				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 
 			MonitorIds[i] = (UINT32)val;
 		}
 
-		free(ptr.p);
+		CommandLineParserFree(ptr);
 	}
 
 	return 0;
@@ -2949,7 +2941,7 @@ static int parse_kbd_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_
 				break;
 		}
 	}
-	free(ptr);
+	CommandLineParserFree(ptr);
 	return rc;
 }
 
@@ -2987,8 +2979,8 @@ static int parse_dump_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT
 
 	BOOL failed = FALSE;
 	size_t count = 0;
-	char** args = CommandLineParseCommaSeparatedValues(arg->Value, &count);
-	if (!args)
+	char** ptr = CommandLineParseCommaSeparatedValues(arg->Value, &count);
+	if (!ptr)
 		failed = TRUE;
 	else
 	{
@@ -2996,7 +2988,7 @@ static int parse_dump_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT
 		BOOL oldsyntax = FALSE;
 		for (size_t x = 0; (x < count) && !failed; x++)
 		{
-			const char* carg = args[x];
+			const char* carg = ptr[x];
 			if (option_starts_with("file:", carg))
 			{
 				const char* val = &carg[5];
@@ -3045,7 +3037,7 @@ static int parse_dump_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT
 		if (oldsyntax && (count != 2))
 			failed = TRUE;
 	}
-	free(args);
+	CommandLineParserFree(ptr);
 	if (failed)
 		return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 	return 0;
@@ -3065,18 +3057,13 @@ static int parse_clipboard_options(rdpSettings* settings, const COMMAND_LINE_ARG
 	else
 	{
 		int rc = 0;
-		union
-		{
-			char** p;
-			const char** pc;
-		} ptr;
 		size_t count = 0;
-		ptr.p = CommandLineParseCommaSeparatedValues(arg->Value, &count);
+		char** ptr = CommandLineParseCommaSeparatedValues(arg->Value, &count);
 		for (size_t x = 0; (x < count) && (rc == 0); x++)
 		{
 			const char* usesel = "use-selection:";
 
-			const char* cur = ptr.pc[x];
+			const char* cur = ptr[x];
 			if (option_starts_with(usesel, cur))
 			{
 				const char* val = &cur[strlen(usesel)];
@@ -3149,7 +3136,7 @@ static int parse_clipboard_options(rdpSettings* settings, const COMMAND_LINE_ARG
 			else
 				rc = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 		}
-		free(ptr.p);
+		CommandLineParserFree(ptr);
 
 		if (rc)
 			return rc;
@@ -3250,7 +3237,7 @@ static int parse_sec_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_
 		const PARSE_ON_OFF_RESULT bval = parse_on_off_option(cur);
 		if (bval == PARSE_FAIL)
 		{
-			free(ptr);
+			CommandLineParserFree(ptr);
 			return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 		}
 
@@ -3273,7 +3260,7 @@ static int parse_sec_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_
 		else
 		{
 			WLog_ERR(TAG, "unknown protocol security: %s", arg->Value);
-			free(ptr);
+			CommandLineParserFree(ptr);
 			return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 		}
 
@@ -3304,7 +3291,7 @@ static int parse_sec_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_
 				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 		}
 	}
-	free(ptr);
+	CommandLineParserFree(ptr);
 	return 0;
 }
 
@@ -3316,32 +3303,27 @@ static int parse_encryption_methods_options(rdpSettings* settings,
 
 	if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
 	{
-		union
-		{
-			char** p;
-			const char** pc;
-		} ptr;
 		size_t count = 0;
-		ptr.p = CommandLineParseCommaSeparatedValues(arg->Value, &count);
+		char** ptr = CommandLineParseCommaSeparatedValues(arg->Value, &count);
 
 		UINT32 EncryptionMethods = 0;
 		for (UINT32 i = 0; i < count; i++)
 		{
-			if (option_equals(ptr.pc[i], "40"))
+			if (option_equals(ptr[i], "40"))
 				EncryptionMethods |= ENCRYPTION_METHOD_40BIT;
-			else if (option_equals(ptr.pc[i], "56"))
+			else if (option_equals(ptr[i], "56"))
 				EncryptionMethods |= ENCRYPTION_METHOD_56BIT;
-			else if (option_equals(ptr.pc[i], "128"))
+			else if (option_equals(ptr[i], "128"))
 				EncryptionMethods |= ENCRYPTION_METHOD_128BIT;
-			else if (option_equals(ptr.pc[i], "FIPS"))
+			else if (option_equals(ptr[i], "FIPS"))
 				EncryptionMethods |= ENCRYPTION_METHOD_FIPS;
 			else
-				WLog_ERR(TAG, "unknown encryption method '%s'", ptr.pc[i]);
+				WLog_ERR(TAG, "unknown encryption method '%s'", ptr[i]);
 		}
 
 		if (!freerdp_settings_set_uint32(settings, FreeRDP_EncryptionMethods, EncryptionMethods))
 			return COMMAND_LINE_ERROR;
-		free(ptr.p);
+		CommandLineParserFree(ptr);
 	}
 	return 0;
 }
@@ -3352,13 +3334,8 @@ static int parse_cert_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT
 	WINPR_ASSERT(arg);
 
 	int rc = 0;
-	union
-	{
-		char** p;
-		const char** pc;
-	} ptr;
 	size_t count = 0;
-	ptr.p = CommandLineParseCommaSeparatedValues(arg->Value, &count);
+	char** ptr = CommandLineParseCommaSeparatedValues(arg->Value, &count);
 	for (size_t x = 0; (x < count) && (rc == 0); x++)
 	{
 		const char deny[] = "deny";
@@ -3367,7 +3344,7 @@ static int parse_cert_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT
 		const char name[] = "name:";
 		const char fingerprints[] = "fingerprint:";
 
-		const char* cur = ptr.pc[x];
+		const char* cur = ptr[x];
 		if (option_equals(deny, cur))
 		{
 			if (!freerdp_settings_set_bool(settings, FreeRDP_AutoDenyCertificate, TRUE))
@@ -3399,7 +3376,7 @@ static int parse_cert_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT
 		else
 			rc = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 	}
-	free(ptr.p);
+	CommandLineParserFree(ptr);
 
 	return rc;
 }
@@ -3441,7 +3418,7 @@ static int parse_mouse_options(rdpSettings* settings, const COMMAND_LINE_ARGUMEN
 				break;
 		}
 	}
-	free(ptr);
+	CommandLineParserFree(ptr);
 
 	return rc;
 }
@@ -3611,17 +3588,12 @@ static int parse_smartcard_logon_options(rdpSettings* settings, const COMMAND_LI
 	WINPR_ASSERT(arg);
 
 	size_t count = 0;
-	union
-	{
-		char** p;
-		const char** pc;
-	} ptr;
 
 	if (!freerdp_settings_set_bool(settings, FreeRDP_SmartcardLogon, TRUE))
 		return COMMAND_LINE_ERROR;
 
-	ptr.p = CommandLineParseCommaSeparatedValuesEx("smartcard-logon", arg->Value, &count);
-	if (ptr.pc)
+	char** ptr = CommandLineParseCommaSeparatedValuesEx("smartcard-logon", arg->Value, &count);
+	if (ptr)
 	{
 		const CmdLineSubOptions opts[] = {
 			{ "cert:", FreeRDP_SmartcardCertificate, CMDLINE_SUBOPTION_FILE,
@@ -3636,15 +3608,15 @@ static int parse_smartcard_logon_options(rdpSettings* settings, const COMMAND_LI
 
 		for (size_t x = 1; x < count; x++)
 		{
-			const char* cur = ptr.pc[x];
+			const char* cur = ptr[x];
 			if (!parseSubOptions(settings, opts, ARRAYSIZE(opts), cur))
 			{
-				free(ptr.p);
+				CommandLineParserFree(ptr);
 				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 			}
 		}
 	}
-	free(ptr.p);
+	CommandLineParserFree(ptr);
 	return 0;
 }
 
@@ -3654,32 +3626,27 @@ static int parse_tune_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT
 	WINPR_ASSERT(arg);
 
 	size_t count = 0;
-	union
-	{
-		char** p;
-		const char** pc;
-	} ptr;
-	ptr.p = CommandLineParseCommaSeparatedValuesEx("tune", arg->Value, &count);
-	if (!ptr.pc)
+	char** ptr = CommandLineParseCommaSeparatedValuesEx("tune", arg->Value, &count);
+	if (!ptr)
 		return COMMAND_LINE_ERROR;
 	for (size_t x = 1; x < count; x++)
 	{
-		const char* cur = ptr.pc[x];
+		const char* cur = ptr[x];
 		char* sep = strchr(cur, ':');
 		if (!sep)
 		{
-			free(ptr.p);
+			CommandLineParserFree(ptr);
 			return COMMAND_LINE_ERROR;
 		}
 		*sep++ = '\0';
 		if (!freerdp_settings_set_value_for_name(settings, cur, sep))
 		{
-			free(ptr.p);
+			CommandLineParserFree(ptr);
 			return COMMAND_LINE_ERROR;
 		}
 	}
 
-	free(ptr.p);
+	CommandLineParserFree(ptr);
 	return 0;
 }
 
@@ -3769,7 +3736,7 @@ static int parse_app_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_
 		}
 	}
 
-	free(ptr);
+	CommandLineParserFree(ptr);
 	return rc;
 }
 
@@ -3862,7 +3829,7 @@ static int parse_cache_options(rdpSettings* settings, const COMMAND_LINE_ARGUMEN
 		}
 	}
 
-	free(ptr);
+	CommandLineParserFree(ptr);
 	return rc;
 }
 
@@ -3984,10 +3951,10 @@ static BOOL parse_gateway_options(rdpSettings* settings, const COMMAND_LINE_ARGU
 	WINPR_ASSERT(arg);
 
 	size_t count = 0;
-	char** args = CommandLineParseCommaSeparatedValues(arg->Value, &count);
+	char** ptr = CommandLineParseCommaSeparatedValues(arg->Value, &count);
 	if (count == 0)
 		return TRUE;
-	WINPR_ASSERT(args);
+	WINPR_ASSERT(ptr);
 
 	if (!freerdp_settings_set_bool(settings, FreeRDP_GatewayEnabled, TRUE))
 		goto fail;
@@ -3996,7 +3963,7 @@ static BOOL parse_gateway_options(rdpSettings* settings, const COMMAND_LINE_ARGU
 	for (size_t x = 0; x < count; x++)
 	{
 		BOOL validOption = FALSE;
-		const char* argval = args[x];
+		const char* argval = ptr[x];
 
 		WINPR_ASSERT(argval);
 
@@ -4105,7 +4072,7 @@ static BOOL parse_gateway_options(rdpSettings* settings, const COMMAND_LINE_ARGU
 
 	rc = TRUE;
 fail:
-	free(args);
+	CommandLineParserFree(ptr);
 	return rc;
 }
 

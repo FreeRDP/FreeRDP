@@ -690,35 +690,36 @@ int shadow_server_start(rdpShadowServer* server)
 	if (!ipc)
 	{
 		size_t count = 0;
-		char** list = CommandLineParseCommaSeparatedValuesEx(NULL, server->ipcSocket, &count);
-		if (!list || (count <= 1))
+
+		char** ptr = CommandLineParseCommaSeparatedValuesEx(NULL, server->ipcSocket, &count);
+		if (!ptr || (count <= 1))
 		{
 			if (server->ipcSocket == NULL)
 			{
 				if (!open_port(server, NULL))
 				{
-					free(list);
+					CommandLineParserFree(ptr);
 					return -1;
 				}
 			}
 			else
 			{
-				free(list);
+				CommandLineParserFree(ptr);
 				return -1;
 			}
 		}
 
-		WINPR_ASSERT(list || (count == 0));
+		WINPR_ASSERT(ptr || (count == 0));
 		for (size_t x = 1; x < count; x++)
 		{
-			BOOL success = open_port(server, list[x]);
+			BOOL success = open_port(server, ptr[x]);
 			if (!success)
 			{
-				free(list);
+				CommandLineParserFree(ptr);
 				return -1;
 			}
 		}
-		free(list);
+		CommandLineParserFree(ptr);
 	}
 	else
 	{

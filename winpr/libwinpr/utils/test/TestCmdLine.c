@@ -99,11 +99,17 @@ static BOOL TestCommandLineParseCommaSeparatedValuesEx(void)
 
 	for (size_t x = 0; x < ARRAYSIZE(testListArgs); x++)
 	{
+		union
+		{
+			char* p;
+			char** pp;
+			const char** ppc;
+		} ptr;
 		const char* list = testListArgs[x];
 		size_t count = 42;
-		char** ptr = CommandLineParseCommaSeparatedValuesEx(testListAppName, list, &count);
-		BOOL valid = checkResult(x, ptr, count);
-		free(ptr);
+		ptr.pp = CommandLineParseCommaSeparatedValuesEx(testListAppName, list, &count);
+		BOOL valid = checkResult(x, ptr.pp, count);
+		free(ptr.p);
 		if (!valid)
 			return FALSE;
 	}
