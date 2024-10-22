@@ -790,79 +790,168 @@ extern "C"
 		memcpy(_b, (_s->pointer), (_n));
 	}
 
-	static INLINE void Stream_Write_UINT8(wStream* _s, UINT8 _v)
+#define Stream_Write_INT8(s, v)               \
+	do                                        \
+	{                                         \
+		WINPR_ASSERT((v) <= INT8_MAX);        \
+		WINPR_ASSERT((v) >= INT8_MIN);        \
+		Stream_Write_INT8_unchecked((s), (v)) \
+	} while (0)
+
+	static INLINE void Stream_Write_INT8_unchecked(wStream* _s, INT8 _v)
 	{
 		WINPR_ASSERT(_s);
 		WINPR_ASSERT(_s->pointer);
 		WINPR_ASSERT(Stream_GetRemainingCapacity(_s) >= 1);
-		*_s->pointer++ = (_v);
+
+		*_s->pointer++ = WINPR_STREAM_CAST(BYTE, _v);
 	}
 
-	static INLINE void Stream_Write_INT16(wStream* _s, INT16 _v)
+#define Stream_Write_UINT8(s, v)                \
+	do                                          \
+	{                                           \
+		WINPR_ASSERT((v) <= UINT8_MAX);         \
+		WINPR_ASSERT((v) >= 0);                 \
+		Stream_Write_UINT8_unchecked((s), (v)); \
+	} while (0)
+
+	static INLINE void Stream_Write_UINT8_unchecked(wStream* _s, UINT8 _v)
+	{
+		WINPR_ASSERT(_s);
+		WINPR_ASSERT(_s->pointer);
+		WINPR_ASSERT(Stream_GetRemainingCapacity(_s) >= 1);
+
+		*_s->pointer++ = WINPR_STREAM_CAST(BYTE, _v);
+	}
+
+#define Stream_Write_INT16(s, v)                \
+	do                                          \
+	{                                           \
+		WINPR_ASSERT((v) >= INT16_MIN);         \
+		WINPR_ASSERT((v) <= INT16_MAX);         \
+		Stream_Write_INT16_unchecked((s), (v)); \
+	} while (0)
+
+	static INLINE void Stream_Write_INT16_unchecked(wStream* _s, INT16 _v)
 	{
 		WINPR_ASSERT(_s);
 		WINPR_ASSERT(_s->pointer);
 		WINPR_ASSERT(Stream_GetRemainingCapacity(_s) >= 2);
-		*_s->pointer++ = (_v)&0xFF;
+
+		*_s->pointer++ = (_v) & 0xFF;
 		*_s->pointer++ = ((_v) >> 8) & 0xFF;
 	}
 
-	static INLINE void Stream_Write_UINT16(wStream* _s, UINT16 _v)
+#define Stream_Write_UINT16(s, v)                \
+	do                                           \
+	{                                            \
+		WINPR_ASSERT((v) <= UINT16_MAX);         \
+		WINPR_ASSERT((v) >= 0);                  \
+		Stream_Write_UINT16_unchecked((s), (v)); \
+	} while (0)
+
+	static INLINE void Stream_Write_UINT16_unchecked(wStream* _s, UINT16 _v)
 	{
 		WINPR_ASSERT(_s);
 		WINPR_ASSERT(_s->pointer);
 		WINPR_ASSERT(Stream_GetRemainingCapacity(_s) >= 2);
-		*_s->pointer++ = (_v)&0xFF;
+
+		*_s->pointer++ = (_v) & 0xFF;
 		*_s->pointer++ = ((_v) >> 8) & 0xFF;
 	}
 
-	static INLINE void Stream_Write_UINT16_BE(wStream* _s, UINT16 _v)
+#define Stream_Write_UINT16_BE(s, v)                \
+	do                                              \
+	{                                               \
+		WINPR_ASSERT((v) <= UINT16_MAX);            \
+		WINPR_ASSERT((v) >= 0);                     \
+		Stream_Write_UINT16_BE_unchecked((s), (v)); \
+	} while (0)
+
+	static INLINE void Stream_Write_UINT16_BE_unchecked(wStream* _s, UINT16 _v)
 	{
 		WINPR_ASSERT(_s);
 		WINPR_ASSERT(_s->pointer);
 		WINPR_ASSERT(Stream_GetRemainingCapacity(_s) >= 2);
+
 		*_s->pointer++ = ((_v) >> 8) & 0xFF;
-		*_s->pointer++ = (_v)&0xFF;
+		*_s->pointer++ = (_v) & 0xFF;
 	}
 
-	static INLINE void Stream_Write_UINT24_BE(wStream* _s, UINT32 _v)
+#define Stream_Write_UINT24_BE(s, v)                \
+	do                                              \
+	{                                               \
+		WINPR_ASSERT((v) <= 0xFFFFFF);              \
+		WINPR_ASSERT((v) >= 0);                     \
+		Stream_Write_UINT24_BE_unchecked((s), (v)); \
+	} while (0)
+
+	static INLINE void Stream_Write_UINT24_BE_unchecked(wStream* _s, UINT32 _v)
 	{
 		WINPR_ASSERT(_s);
 		WINPR_ASSERT(_s->pointer);
 		WINPR_ASSERT(_v <= 0x00FFFFFF);
 		WINPR_ASSERT(Stream_GetRemainingCapacity(_s) >= 3);
+
 		*_s->pointer++ = ((_v) >> 16) & 0xFF;
 		*_s->pointer++ = ((_v) >> 8) & 0xFF;
-		*_s->pointer++ = (_v)&0xFF;
+		*_s->pointer++ = (_v) & 0xFF;
 	}
 
-	static INLINE void Stream_Write_INT32(wStream* _s, INT32 _v)
+#define Stream_Write_INT32(s, v)                \
+	do                                          \
+	{                                           \
+		WINPR_ASSERT((v) <= INT32_MAX);         \
+		WINPR_ASSERT((v) >= INT32_MIN);         \
+		Stream_Write_INT32_unchecked((s), (v)); \
+	} while (0)
+
+	static INLINE void Stream_Write_INT32_unchecked(wStream* _s, INT32 _v)
 	{
 		WINPR_ASSERT(_s);
 		WINPR_ASSERT(_s->pointer);
 		WINPR_ASSERT(Stream_GetRemainingCapacity(_s) >= 4);
-		*_s->pointer++ = (_v)&0xFF;
+
+		*_s->pointer++ = (_v) & 0xFF;
 		*_s->pointer++ = ((_v) >> 8) & 0xFF;
 		*_s->pointer++ = ((_v) >> 16) & 0xFF;
 		*_s->pointer++ = ((_v) >> 24) & 0xFF;
 	}
 
-	static INLINE void Stream_Write_UINT32(wStream* _s, UINT32 _v)
+#define Stream_Write_UINT32(s, v)                \
+	do                                           \
+	{                                            \
+		WINPR_ASSERT((v) <= UINT32_MAX);         \
+		WINPR_ASSERT((v) >= 0);                  \
+		Stream_Write_UINT32_unchecked((s), (v)); \
+	} while (0)
+
+	static INLINE void Stream_Write_UINT32_unchecked(wStream* _s, UINT32 _v)
 	{
 		WINPR_ASSERT(_s);
 		WINPR_ASSERT(_s->pointer);
 		WINPR_ASSERT(Stream_GetRemainingCapacity(_s) >= 4);
-		*_s->pointer++ = (_v)&0xFF;
+
+		*_s->pointer++ = (_v) & 0xFF;
 		*_s->pointer++ = ((_v) >> 8) & 0xFF;
 		*_s->pointer++ = ((_v) >> 16) & 0xFF;
 		*_s->pointer++ = ((_v) >> 24) & 0xFF;
 	}
 
-	static INLINE void Stream_Write_UINT32_BE(wStream* _s, UINT32 _v)
+#define Stream_Write_UINT32_BE(s, v)                \
+	do                                              \
+	{                                               \
+		WINPR_ASSERT((v) <= UINT32_MAX);            \
+		WINPR_ASSERT((v) >= 0);                     \
+		Stream_Write_UINT32_BE_unchecked((s), (v)); \
+	} while (0)
+
+	static INLINE void Stream_Write_UINT32_BE_unchecked(wStream* _s, UINT32 _v)
 	{
 		WINPR_ASSERT(Stream_GetRemainingCapacity(_s) >= 4);
+
 		Stream_Write_UINT16_BE(_s, ((_v) >> 16 & 0xFFFF));
-		Stream_Write_UINT16_BE(_s, ((_v)&0xFFFF));
+		Stream_Write_UINT16_BE(_s, ((_v) & 0xFFFF));
 	}
 
 	static INLINE void Stream_Write_UINT64(wStream* _s, UINT64 _v)
@@ -870,7 +959,8 @@ extern "C"
 		WINPR_ASSERT(_s);
 		WINPR_ASSERT(_s->pointer);
 		WINPR_ASSERT(Stream_GetRemainingCapacity(_s) >= 8);
-		Stream_Write_UINT32(_s, ((_v)&0xFFFFFFFFUL));
+
+		Stream_Write_UINT32(_s, ((_v) & 0xFFFFFFFFUL));
 		Stream_Write_UINT32(_s, ((_v) >> 16 & 0xFFFFFFFFUL));
 	}
 
@@ -879,8 +969,9 @@ extern "C"
 		WINPR_ASSERT(_s);
 		WINPR_ASSERT(_s->pointer);
 		WINPR_ASSERT(Stream_GetRemainingCapacity(_s) >= 8);
+
 		Stream_Write_UINT32_BE(_s, ((_v) >> 16 & 0xFFFFFFFFUL));
-		Stream_Write_UINT32_BE(_s, ((_v)&0xFFFFFFFFUL));
+		Stream_Write_UINT32_BE(_s, ((_v) & 0xFFFFFFFFUL));
 	}
 
 	static INLINE void Stream_Write(wStream* _s, const void* _b, size_t _n)
