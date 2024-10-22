@@ -125,10 +125,9 @@ error_out:
 static UINT rdpgfx_decode_AVC420(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd)
 {
 	UINT error = 0;
-	wStream* s = NULL;
-	RDPGFX_AVC420_BITMAP_STREAM h264;
+	RDPGFX_AVC420_BITMAP_STREAM h264 = { 0 };
 	RdpgfxClientContext* context = gfx->context;
-	s = Stream_New(cmd->data, cmd->length);
+	wStream* s = Stream_New(cmd->data, cmd->length);
 
 	if (!s)
 	{
@@ -157,6 +156,7 @@ static UINT rdpgfx_decode_AVC420(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd
 	}
 
 	free_h264_metablock(&h264.meta);
+	cmd->extra = NULL;
 	return error;
 }
 
@@ -248,6 +248,7 @@ fail:
 	Stream_Free(s, FALSE);
 	free_h264_metablock(&h264.bitstream[0].meta);
 	free_h264_metablock(&h264.bitstream[1].meta);
+	cmd->extra = NULL;
 	return error;
 }
 
