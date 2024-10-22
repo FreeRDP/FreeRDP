@@ -24,6 +24,7 @@
 #cmakedefine WINPR_HAVE_STRNDUP
 #cmakedefine WINPR_HAVE_UNWIND_H
 #cmakedefine WINPR_HAVE_SSIZE_T
+#cmakedefine WINPR_HAVE_WIN_SSIZE_T
 #cmakedefine WINPR_WITH_PNG
 
 #cmakedefine WINPR_HAVE_STRERROR_R /** @since version 3.3.0 */
