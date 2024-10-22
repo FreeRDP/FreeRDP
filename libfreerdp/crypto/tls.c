@@ -28,6 +28,7 @@
 #include <errno.h>
 
 #include <winpr/crt.h>
+#include <winpr/winpr.h>
 #include <winpr/string.h>
 #include <winpr/sspi.h>
 #include <winpr/ssl.h>
@@ -902,7 +903,8 @@ TlsHandshakeResult freerdp_tls_connect_ex(rdpTls* tls, BIO* underlying, const SS
 
 #if !defined(OPENSSL_NO_TLSEXT) && !defined(LIBRESSL_VERSION_NUMBER)
 	const char* str = tls_get_server_name(tls);
-	SSL_set_tlsext_host_name(tls->ssl, WINPR_CAST_CONST_PTR_AWAY(str, void*));
+	void* ptr = WINPR_CAST_CONST_PTR_AWAY(str, void*);
+	SSL_set_tlsext_host_name(tls->ssl, ptr);
 #endif
 
 	return freerdp_tls_handshake(tls);
