@@ -157,7 +157,7 @@ static int cam_v4l_open_device(const char* deviceId, int flags)
 
 	for (UINT n = 0; n < 64; n++)
 	{
-		(void)_snprintf(device, sizeof(device), "/dev/video%d", n);
+		(void)_snprintf(device, sizeof(device), "/dev/video%" PRIu32, n);
 		if ((fd = open(device, flags)) == -1)
 			continue;
 
@@ -291,7 +291,7 @@ static UINT cam_v4l_enumerate(ICamHal* ihal, ICamHalEnumCallback callback, Camer
 	{
 		char device[20] = { 0 };
 		struct v4l2_capability cap = { 0 };
-		(void)_snprintf(device, sizeof(device), "/dev/video%d", n);
+		(void)_snprintf(device, sizeof(device), "/dev/video%" PRIu32, n);
 		int fd = open(device, O_RDONLY);
 		if (fd == -1)
 			continue;
