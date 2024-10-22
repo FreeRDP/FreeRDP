@@ -57,7 +57,7 @@ static INLINE pstatus_t sse_image_copy_bgr24_bgrx32(BYTE* WINPR_RESTRICT pDstDat
 	const SSIZE_T rem = nWidth % 4;
 
 	const size_t align = nSrcStep % 64;
-	const BOOL fast = (align == 0) ? TRUE : (align >= 16 - MIN(16, rem) ? TRUE : FALSE);
+	const BOOL fast = (align == 0) ? TRUE : (align >= 16 - MIN(16, (size_t)rem) ? TRUE : FALSE);
 	const SSIZE_T width = nWidth - rem;
 	for (SSIZE_T y = 0; y < nHeight; y++)
 	{

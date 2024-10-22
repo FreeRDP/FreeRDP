@@ -129,13 +129,10 @@ static HANDLE_OPS ops = { LogonUserIsHandled,
 BOOL LogonUserA(LPCSTR lpszUsername, LPCSTR lpszDomain, LPCSTR lpszPassword, DWORD dwLogonType,
                 DWORD dwLogonProvider, PHANDLE phToken)
 {
-	struct passwd* pw = NULL;
-	WINPR_ACCESS_TOKEN* token = NULL;
-
 	if (!lpszUsername)
 		return FALSE;
 
-	token = (WINPR_ACCESS_TOKEN*)calloc(1, sizeof(WINPR_ACCESS_TOKEN));
+	WINPR_ACCESS_TOKEN* token = (WINPR_ACCESS_TOKEN*)calloc(1, sizeof(WINPR_ACCESS_TOKEN));
 
 	if (!token)
 		return FALSE;
@@ -145,26 +142,29 @@ BOOL LogonUserA(LPCSTR lpszUsername, LPCSTR lpszDomain, LPCSTR lpszPassword, DWO
 	token->Username = _strdup(lpszUsername);
 
 	if (!token->Username)
-	{
-		free(token);
-		return FALSE;
-	}
+		goto fail;
 
 	if (lpszDomain)
 	{
 		token->Domain = _strdup(lpszDomain);
 
 		if (!token->Domain)
-		{
-			free(token->Username);
-			free(token);
-			return FALSE;
-		}
+			goto fail;
 	}
 
-	pw = getpwnam(lpszUsername);
+	long buflen = sysconf(_SC_GETPW_R_SIZE_MAX);
+	if (buflen == -1)
+		buflen = 8196;
 
-	if (pw)
+	char* buf = (char*)calloc(buflen + 1, sizeof(char));
+	if (!buf)
+		goto fail;
+
+	struct passwd pwd = { 0 };
+	struct passwd* pw = NULL;
+	const int rc = getpwnam_r(lpszUsername, &pwd, buf, buflen, &pw);
+	free(buf);
+	if ((rc == 0) && pw)
 	{
 		token->UserId = (DWORD)pw->pw_uid;
 		token->GroupId = (DWORD)pw->pw_gid;
@@ -172,6 +172,12 @@ BOOL LogonUserA(LPCSTR lpszUsername, LPCSTR lpszDomain, LPCSTR lpszPassword, DWO
 
 	*((ULONG_PTR*)phToken) = (ULONG_PTR)token;
 	return TRUE;
+
+fail:
+	free(token->Username);
+	free(token->Domain);
+	free(token);
+	return FALSE;
 }
 
 BOOL LogonUserW(LPCWSTR lpszUsername, LPCWSTR lpszDomain, LPCWSTR lpszPassword, DWORD dwLogonType,

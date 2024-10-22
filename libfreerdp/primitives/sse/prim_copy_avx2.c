@@ -62,7 +62,7 @@ static INLINE pstatus_t avx2_image_copy_bgr24_bgrx32(BYTE* WINPR_RESTRICT pDstDa
 	const SSIZE_T width = nWidth - rem;
 
 	const size_t align = nSrcStep % 32;
-	const BOOL fast = (align == 0) ? TRUE : (align >= 8 - MIN(8, rem) ? TRUE : FALSE);
+	const BOOL fast = (align == 0) ? TRUE : (align >= 8 - MIN(8, (size_t)rem) ? TRUE : FALSE);
 	for (SSIZE_T y = 0; y < nHeight; y++)
 	{
 		const BYTE* WINPR_RESTRICT srcLine =

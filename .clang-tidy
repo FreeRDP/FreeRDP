@@ -74,6 +74,7 @@ Checks: >
     -readability-misleading-indentation,
     -readability-qualified-auto,
     -readability-suspicious-call-argument,
+    -readability-string-compare,
     -readability-uppercase-literal-suffix,
     -performance-no-int-to-ptr,
     -performance-avoid-endl

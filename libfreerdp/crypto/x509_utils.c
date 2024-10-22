@@ -129,8 +129,8 @@ static const char* general_name_type_label(int general_name_type)
 	}
 	else
 	{
-		static char buffer[80];
-		(void)sprintf(buffer, "Unknown general name type (%d)", general_name_type);
+		static char buffer[80] = { 0 };
+		(void)snprintf(buffer, sizeof(buffer), "Unknown general name type (%d)", general_name_type);
 		return buffer;
 	}
 }

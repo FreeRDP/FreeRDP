@@ -18,6 +18,7 @@
  */
 
 #include <winpr/assert.h>
+#include <winpr/winpr.h>
 
 #include "camera.h"
 
@@ -160,7 +161,7 @@ static BOOL ecam_encoder_compress_h264(CameraDeviceStream* stream, const BYTE* s
 #if defined(WITH_INPUT_FORMAT_MJPG)
 	if (inputFormat == CAM_MEDIA_FORMAT_MJPG)
 	{
-		stream->avInputPkt->data = (BYTE*)srcData;
+		stream->avInputPkt->data = WINPR_CAST_CONST_PTR_AWAY(srcData, BYTE*);
 		stream->avInputPkt->size = srcSize;
 
 		if (avcodec_send_packet(stream->avContext, stream->avInputPkt) < 0)
@@ -195,8 +196,8 @@ static BOOL ecam_encoder_compress_h264(CameraDeviceStream* stream, const BYTE* s
 			return FALSE;
 		}
 
-		if (av_image_fill_pointers(srcSlice, pixFormat, (int)size.height, (BYTE*)srcData,
-		                           srcLineSizes) < 0)
+		if (av_image_fill_pointers(srcSlice, pixFormat, (int)size.height,
+		                           WINPR_CAST_CONST_PTR_AWAY(srcData, BYTE*), srcLineSizes) < 0)
 		{
 			WLog_ERR(TAG, "av_image_fill_pointers failed");
 			return FALSE;

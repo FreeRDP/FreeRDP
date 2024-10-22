@@ -602,8 +602,8 @@ static void* clipboard_synthesize_text_html(wClipboard* clipboard, UINT32 format
 
 		const long end = strtol(&endStr[8], NULL, 10);
 
-		if (beg < 0 || end < 0 || (beg > SrcSize) || (end > SrcSize) || (beg >= end) ||
-		    (errno != 0))
+		if (beg < 0 || end < 0 || ((size_t)beg > SrcSize) || ((size_t)end > SrcSize) ||
+		    (beg >= end) || (errno != 0))
 			return NULL;
 
 		const size_t DstSize = (size_t)(end - beg);

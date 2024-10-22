@@ -174,9 +174,9 @@ static DWORD WINAPI audin_alsa_thread_func(LPVOID arg)
 
 		if (framesRead == -EPIPE)
 		{
-			const int rc = snd_pcm_recover(capture_handle, (int)framesRead, 0);
-			if (rc < 0)
-				WLog_Print(alsa->log, WLOG_WARN, "snd_pcm_recover (%s)", snd_strerror(rc));
+			const int res = snd_pcm_recover(capture_handle, (int)framesRead, 0);
+			if (res < 0)
+				WLog_Print(alsa->log, WLOG_WARN, "snd_pcm_recover (%s)", snd_strerror(res));
 
 			continue;
 		}
@@ -202,9 +202,9 @@ static DWORD WINAPI audin_alsa_thread_func(LPVOID arg)
 
 	if (capture_handle)
 	{
-		const int rc = snd_pcm_close(capture_handle);
-		if (rc < 0)
-			WLog_Print(alsa->log, WLOG_WARN, "snd_pcm_close (%s)", snd_strerror(rc));
+		const int res = snd_pcm_close(capture_handle);
+		if (res < 0)
+			WLog_Print(alsa->log, WLOG_WARN, "snd_pcm_close (%s)", snd_strerror(res));
 	}
 
 out:
