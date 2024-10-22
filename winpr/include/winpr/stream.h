@@ -1020,20 +1020,17 @@ extern "C"
 		Stream_Rewind(_s, sizeof(UINT64));
 	}
 
-	static INLINE void Stream_Zero(wStream* _s, size_t _n)
-	{
-		WINPR_ASSERT(_s);
-		WINPR_ASSERT(Stream_GetRemainingCapacity(_s) >= (_n));
-		memset(_s->pointer, '\0', (_n));
-		Stream_Seek(_s, _n);
-	}
-
 	static INLINE void Stream_Fill(wStream* _s, int _v, size_t _n)
 	{
 		WINPR_ASSERT(_s);
 		WINPR_ASSERT(Stream_GetRemainingCapacity(_s) >= (_n));
 		memset(_s->pointer, _v, (_n));
 		Stream_Seek(_s, _n);
+	}
+
+	static INLINE void Stream_Zero(wStream* _s, size_t _n)
+	{
+		Stream_Fill(_s, '\0', _n);
 	}
 
 	static INLINE void Stream_Copy(wStream* _src, wStream* _dst, size_t _n)
