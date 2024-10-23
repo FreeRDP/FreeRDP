@@ -80,11 +80,22 @@ int main(int argc, char* argv[])
 	{
 		rc = freerdp_client_settings_command_line_status_print(settings, status, argc, argv);
 
-		xfreerdp_print_help();
-
 		if (freerdp_settings_get_bool(settings, FreeRDP_ListMonitors))
 			xf_list_monitors(xfc);
-
+		else
+		{
+			switch (status)
+			{
+				case COMMAND_LINE_STATUS_PRINT:
+				case COMMAND_LINE_STATUS_PRINT_VERSION:
+				case COMMAND_LINE_STATUS_PRINT_BUILDCONFIG:
+					break;
+				case COMMAND_LINE_STATUS_PRINT_HELP:
+				default:
+					xfreerdp_print_help();
+					break;
+			}
+		}
 		goto out;
 	}
 
