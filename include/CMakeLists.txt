@@ -38,6 +38,12 @@ if (WIN32)
     string(REPLACE "\\" "\\\\" NATIVE_FREERDP_PROXY_PLUGINDIR "${NATIVE_FREERDP_PROXY_PLUGINDIR}")
 endif()
 
+set(C_FLAGS ${CMAKE_C_FLAGS})
+if (CMAKE_BUILD_TYPE)
+    string(TOUPPER "${CMAKE_BUILD_TYPE}" CAPS_BUILD_TYPE)
+    string(APPEND C_FLAGS " ${CMAKE_C_FLAGS_${CAPS_BUILD_TYPE}}")
+endif()
+
 cleaning_configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config/version.h.in ${CMAKE_CURRENT_BINARY_DIR}/freerdp/version.h)
 cleaning_configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config/build-config.h.in ${CMAKE_CURRENT_BINARY_DIR}/freerdp/build-config.h)
 cleaning_configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/freerdp/config.h)
