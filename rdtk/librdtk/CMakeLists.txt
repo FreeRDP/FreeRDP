@@ -45,7 +45,7 @@ target_link_libraries(${MODULE_NAME} PRIVATE ${${MODULE_PREFIX}_LIBS})
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "RdTk")
 
-if(BUILD_TESTING)
+if(BUILD_TESTING_INTERNAL OR BUILD_TESTING)
 	add_subdirectory(test)
 endif()
 

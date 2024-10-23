@@ -54,6 +54,6 @@ if (HAVE_LIB_M)
 	freerdp_library_add(m)
 endif()
 
-if(BUILD_TESTING)
+if(BUILD_TESTING_INTERNAL OR BUILD_TESTING)
 	add_subdirectory(test)
 endif()

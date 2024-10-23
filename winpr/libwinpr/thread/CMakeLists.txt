@@ -25,6 +25,6 @@ winpr_module_add(
 	thread.h
 	tls.c)
 
-if(BUILD_TESTING)
+if(BUILD_TESTING_INTERNAL OR BUILD_TESTING)
 	add_subdirectory(test)
 endif()

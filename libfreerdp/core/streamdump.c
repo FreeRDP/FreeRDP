@@ -63,7 +63,7 @@ static UINT32 crc32b(const BYTE* data, size_t length)
 	return ~crc;
 }
 
-#if !defined(BUILD_TESTING)
+#if !defined(BUILD_TESTING_INTERNAL)
 static
 #endif
     BOOL
@@ -124,7 +124,7 @@ fail:
 	return rc;
 }
 
-#if !defined(BUILD_TESTING)
+#if !defined(BUILD_TESTING_INTERNAL)
 static
 #endif
     BOOL

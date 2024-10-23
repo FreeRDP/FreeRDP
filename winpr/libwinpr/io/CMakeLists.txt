@@ -17,6 +17,6 @@
 
 winpr_module_add(device.c io.c io.h)
 
-if(BUILD_TESTING)
+if(BUILD_TESTING_INTERNAL OR BUILD_TESTING)
 	add_subdirectory(test)
 endif()

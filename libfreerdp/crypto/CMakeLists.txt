@@ -52,6 +52,6 @@ if(WIN32)
 	freerdp_library_add(ws2_32)
 endif()
 
-if(BUILD_TESTING)
+if(BUILD_TESTING_INTERNAL OR BUILD_TESTING)
 	add_subdirectory(test)
 endif()

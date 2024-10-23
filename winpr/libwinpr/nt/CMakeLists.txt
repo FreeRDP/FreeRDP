@@ -21,6 +21,6 @@ winpr_library_add_private(
 	${CMAKE_THREAD_LIBS_INIT}
 	${CMAKE_DL_LIBS})
 
-if(BUILD_TESTING)
+if(BUILD_TESTING_INTERNAL OR BUILD_TESTING)
 	add_subdirectory(test)
 endif()

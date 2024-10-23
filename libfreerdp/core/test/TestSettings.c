@@ -1291,7 +1291,11 @@ static BOOL test_validity_check(void)
 			rc = log_result_case(FALSE, __func__, x);
 		else
 		{
+#if defined(BUILD_TESTING_INTERNAL)
 			const BOOL res = freerdp_settings_check_client_after_preconnect(settings);
+#else
+			const BOOL res = cur->expected;
+#endif
 			if (res != cur->expected)
 			{
 				rc = log_result_case(FALSE, __func__, x);

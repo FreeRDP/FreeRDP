@@ -81,7 +81,7 @@ install(TARGETS ${MODULE_NAME} COMPONENT libraries EXPORT FreeRDP-ClientTargets
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Client/Common")
 
-if(BUILD_TESTING)
+if(BUILD_TESTING_INTERNAL OR BUILD_TESTING)
 	add_subdirectory(test)
 endif()
 
