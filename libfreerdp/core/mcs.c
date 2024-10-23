@@ -351,7 +351,7 @@ BOOL mcs_read_domain_mcspdu_header(wStream* s, DomainMCSPDU domainMCSPDU, UINT16
 	if (!tpdu_read_data(s, &li, *length))
 		return FALSE;
 
-	if (!per_read_choice(s, &choice))
+	if (!freerdp_per_read_choice(s, &choice))
 		return FALSE;
 
 	const DomainMCSPDU MCSPDU = (choice >> 2);
@@ -386,7 +386,7 @@ BOOL mcs_write_domain_mcspdu_header(wStream* s, DomainMCSPDU domainMCSPDU, UINT1
 		return FALSE;
 	if (!tpdu_write_data(s))
 		return FALSE;
-	return per_write_choice(s, (BYTE)((domainMCSPDU << 2) | options));
+	return freerdp_per_write_choice(s, (BYTE)((domainMCSPDU << 2) | options));
 }
 
 /**
@@ -428,15 +428,15 @@ static BOOL mcs_read_domain_parameters(wStream* s, DomainParameters* domainParam
 	if (!s || !domainParameters)
 		return FALSE;
 
-	return ber_read_sequence_tag(s, &length) &&
-	       ber_read_integer(s, &(domainParameters->maxChannelIds)) &&
-	       ber_read_integer(s, &(domainParameters->maxUserIds)) &&
-	       ber_read_integer(s, &(domainParameters->maxTokenIds)) &&
-	       ber_read_integer(s, &(domainParameters->numPriorities)) &&
-	       ber_read_integer(s, &(domainParameters->minThroughput)) &&
-	       ber_read_integer(s, &(domainParameters->maxHeight)) &&
-	       ber_read_integer(s, &(domainParameters->maxMCSPDUsize)) &&
-	       ber_read_integer(s, &(domainParameters->protocolVersion));
+	return freerdp_ber_read_sequence_tag(s, &length) &&
+	       freerdp_ber_read_integer(s, &(domainParameters->maxChannelIds)) &&
+	       freerdp_ber_read_integer(s, &(domainParameters->maxUserIds)) &&
+	       freerdp_ber_read_integer(s, &(domainParameters->maxTokenIds)) &&
+	       freerdp_ber_read_integer(s, &(domainParameters->numPriorities)) &&
+	       freerdp_ber_read_integer(s, &(domainParameters->minThroughput)) &&
+	       freerdp_ber_read_integer(s, &(domainParameters->maxHeight)) &&
+	       freerdp_ber_read_integer(s, &(domainParameters->maxMCSPDUsize)) &&
+	       freerdp_ber_read_integer(s, &(domainParameters->protocolVersion));
 }
 
 /**
@@ -461,16 +461,16 @@ static BOOL mcs_write_domain_parameters(wStream* s, DomainParameters* domainPara
 		return FALSE;
 	}
 
-	ber_write_integer(tmps, domainParameters->maxChannelIds);
-	ber_write_integer(tmps, domainParameters->maxUserIds);
-	ber_write_integer(tmps, domainParameters->maxTokenIds);
-	ber_write_integer(tmps, domainParameters->numPriorities);
-	ber_write_integer(tmps, domainParameters->minThroughput);
-	ber_write_integer(tmps, domainParameters->maxHeight);
-	ber_write_integer(tmps, domainParameters->maxMCSPDUsize);
-	ber_write_integer(tmps, domainParameters->protocolVersion);
+	freerdp_ber_write_integer(tmps, domainParameters->maxChannelIds);
+	freerdp_ber_write_integer(tmps, domainParameters->maxUserIds);
+	freerdp_ber_write_integer(tmps, domainParameters->maxTokenIds);
+	freerdp_ber_write_integer(tmps, domainParameters->numPriorities);
+	freerdp_ber_write_integer(tmps, domainParameters->minThroughput);
+	freerdp_ber_write_integer(tmps, domainParameters->maxHeight);
+	freerdp_ber_write_integer(tmps, domainParameters->maxMCSPDUsize);
+	freerdp_ber_write_integer(tmps, domainParameters->protocolVersion);
 	length = Stream_GetPosition(tmps);
-	ber_write_sequence_tag(s, length);
+	freerdp_ber_write_sequence_tag(s, length);
 	Stream_Write(s, Stream_Buffer(tmps), length);
 	Stream_Free(tmps, TRUE);
 	return TRUE;
@@ -660,25 +660,25 @@ BOOL mcs_recv_connect_initial(rdpMcs* mcs, wStream* s)
 	if (!tpdu_read_data(s, &li, tlength))
 		return FALSE;
 
-	if (!ber_read_application_tag(s, MCS_TYPE_CONNECT_INITIAL, &length))
+	if (!freerdp_ber_read_application_tag(s, MCS_TYPE_CONNECT_INITIAL, &length))
 		return FALSE;
 
 	/* callingDomainSelector (OCTET_STRING) */
-	if (!ber_read_octet_string_tag(s, &length) ||
+	if (!freerdp_ber_read_octet_string_tag(s, &length) ||
 	    (!Stream_CheckAndLogRequiredLength(TAG, s, length)))
 		return FALSE;
 
 	Stream_Seek(s, length);
 
 	/* calledDomainSelector (OCTET_STRING) */
-	if (!ber_read_octet_string_tag(s, &length) ||
+	if (!freerdp_ber_read_octet_string_tag(s, &length) ||
 	    (!Stream_CheckAndLogRequiredLength(TAG, s, length)))
 		return FALSE;
 
 	Stream_Seek(s, length);
 
 	/* upwardFlag (BOOLEAN) */
-	if (!ber_read_BOOL(s, &upwardFlag))
+	if (!freerdp_ber_read_BOOL(s, &upwardFlag))
 		return FALSE;
 
 	/* targetParameters (DomainParameters) */
@@ -693,7 +693,7 @@ BOOL mcs_recv_connect_initial(rdpMcs* mcs, wStream* s)
 	if (!mcs_read_domain_parameters(s, &mcs->maximumParameters))
 		return FALSE;
 
-	if (!ber_read_octet_string_tag(s, &length) ||
+	if (!freerdp_ber_read_octet_string_tag(s, &length) ||
 	    (!Stream_CheckAndLogRequiredLength(TAG, s, length)))
 		return FALSE;
 
@@ -733,11 +733,11 @@ BOOL mcs_write_connect_initial(wStream* s, rdpMcs* mcs, wStream* userData)
 	}
 
 	/* callingDomainSelector (OCTET_STRING) */
-	ber_write_octet_string(tmps, callingDomainSelector, sizeof(callingDomainSelector));
+	freerdp_ber_write_octet_string(tmps, callingDomainSelector, sizeof(callingDomainSelector));
 	/* calledDomainSelector (OCTET_STRING) */
-	ber_write_octet_string(tmps, calledDomainSelector, sizeof(calledDomainSelector));
+	freerdp_ber_write_octet_string(tmps, calledDomainSelector, sizeof(calledDomainSelector));
 	/* upwardFlag (BOOLEAN) */
-	ber_write_BOOL(tmps, TRUE);
+	freerdp_ber_write_BOOL(tmps, TRUE);
 
 	/* targetParameters (DomainParameters) */
 	if (!mcs_write_domain_parameters(tmps, &mcs->targetParameters))
@@ -752,10 +752,10 @@ BOOL mcs_write_connect_initial(wStream* s, rdpMcs* mcs, wStream* userData)
 		goto out;
 
 	/* userData (OCTET_STRING) */
-	ber_write_octet_string(tmps, Stream_Buffer(userData), Stream_GetPosition(userData));
+	freerdp_ber_write_octet_string(tmps, Stream_Buffer(userData), Stream_GetPosition(userData));
 	length = Stream_GetPosition(tmps);
 	/* Connect-Initial (APPLICATION 101, IMPLICIT SEQUENCE) */
-	ber_write_application_tag(s, MCS_TYPE_CONNECT_INITIAL, length);
+	freerdp_ber_write_application_tag(s, MCS_TYPE_CONNECT_INITIAL, length);
 	Stream_Write(s, Stream_Buffer(tmps), length);
 	ret = TRUE;
 out:
@@ -790,16 +790,16 @@ BOOL mcs_write_connect_response(wStream* s, rdpMcs* mcs, wStream* userData)
 		return FALSE;
 	}
 
-	ber_write_enumerated(tmps, 0, MCS_Result_enum_length);
-	ber_write_integer(tmps, 0); /* calledConnectId */
+	freerdp_ber_write_enumerated(tmps, 0, MCS_Result_enum_length);
+	freerdp_ber_write_integer(tmps, 0); /* calledConnectId */
 
 	if (!mcs_write_domain_parameters(tmps, &(mcs->domainParameters)))
 		goto out;
 
 	/* userData (OCTET_STRING) */
-	ber_write_octet_string(tmps, Stream_Buffer(userData), Stream_GetPosition(userData));
+	freerdp_ber_write_octet_string(tmps, Stream_Buffer(userData), Stream_GetPosition(userData));
 	length = Stream_GetPosition(tmps);
-	ber_write_application_tag(s, MCS_TYPE_CONNECT_RESPONSE, length);
+	freerdp_ber_write_application_tag(s, MCS_TYPE_CONNECT_RESPONSE, length);
 	Stream_Write(s, Stream_Buffer(tmps), length);
 	ret = TRUE;
 out:
@@ -911,11 +911,11 @@ BOOL mcs_recv_connect_response(rdpMcs* mcs, wStream* s)
 	if (!tpdu_read_data(s, &li, tlength))
 		return FALSE;
 
-	if (!ber_read_application_tag(s, MCS_TYPE_CONNECT_RESPONSE, &length) ||
-	    !ber_read_enumerated(s, &result, MCS_Result_enum_length) ||
-	    !ber_read_integer(s, &calledConnectId) ||
+	if (!freerdp_ber_read_application_tag(s, MCS_TYPE_CONNECT_RESPONSE, &length) ||
+	    !freerdp_ber_read_enumerated(s, &result, MCS_Result_enum_length) ||
+	    !freerdp_ber_read_integer(s, &calledConnectId) ||
 	    !mcs_read_domain_parameters(s, &(mcs->domainParameters)) ||
-	    !ber_read_octet_string_tag(s, &length))
+	    !freerdp_ber_read_octet_string_tag(s, &length))
 	{
 		return FALSE;
 	}
@@ -1022,10 +1022,10 @@ BOOL mcs_recv_erect_domain_request(rdpMcs* mcs, wStream* s)
 	if (!mcs_read_domain_mcspdu_header(s, DomainMCSPDU_ErectDomainRequest, &length, NULL))
 		return FALSE;
 
-	if (!per_read_integer(s, &subHeight)) /* subHeight (INTEGER) */
+	if (!freerdp_per_read_integer(s, &subHeight)) /* subHeight (INTEGER) */
 		return FALSE;
 
-	if (!per_read_integer(s, &subInterval)) /* subInterval (INTEGER) */
+	if (!freerdp_per_read_integer(s, &subInterval)) /* subInterval (INTEGER) */
 		return FALSE;
 
 	return tpkt_ensure_stream_consumed(s, length);
@@ -1055,8 +1055,8 @@ BOOL mcs_send_erect_domain_request(rdpMcs* mcs)
 	}
 
 	mcs_write_domain_mcspdu_header(s, DomainMCSPDU_ErectDomainRequest, length, 0);
-	per_write_integer(s, 0); /* subHeight (INTEGER) */
-	per_write_integer(s, 0); /* subInterval (INTEGER) */
+	freerdp_per_write_integer(s, 0); /* subHeight (INTEGER) */
+	freerdp_per_write_integer(s, 0); /* subInterval (INTEGER) */
 	Stream_SealLength(s);
 	status = transport_write(mcs->transport, s);
 	Stream_Free(s, TRUE);
@@ -1128,9 +1128,10 @@ BOOL mcs_recv_attach_user_confirm(rdpMcs* mcs, wStream* s)
 
 	if (!mcs_read_domain_mcspdu_header(s, DomainMCSPDU_AttachUserConfirm, &length, NULL))
 		return FALSE;
-	if (!per_read_enumerated(s, &result, MCS_Result_enum_length)) /* result */
+	if (!freerdp_per_read_enumerated(s, &result, MCS_Result_enum_length)) /* result */
 		return FALSE;
-	if (!per_read_integer16(s, &(mcs->userId), MCS_BASE_CHANNEL_ID)) /* initiator (UserId) */
+	if (!freerdp_per_read_integer16(s, &(mcs->userId),
+	                                MCS_BASE_CHANNEL_ID)) /* initiator (UserId) */
 		return FALSE;
 	return tpkt_ensure_stream_consumed(s, length);
 }
@@ -1160,8 +1161,8 @@ BOOL mcs_send_attach_user_confirm(rdpMcs* mcs)
 
 	mcs->userId = mcs->baseChannelId++;
 	mcs_write_domain_mcspdu_header(s, DomainMCSPDU_AttachUserConfirm, length, 2);
-	per_write_enumerated(s, 0, MCS_Result_enum_length);       /* result */
-	per_write_integer16(s, mcs->userId, MCS_BASE_CHANNEL_ID); /* initiator (UserId) */
+	freerdp_per_write_enumerated(s, 0, MCS_Result_enum_length);       /* result */
+	freerdp_per_write_integer16(s, mcs->userId, MCS_BASE_CHANNEL_ID); /* initiator (UserId) */
 	Stream_SealLength(s);
 	status = transport_write(mcs->transport, s);
 	Stream_Free(s, TRUE);
@@ -1187,7 +1188,7 @@ BOOL mcs_recv_channel_join_request(rdpMcs* mcs, const rdpSettings* settings, wSt
 	if (!mcs_read_domain_mcspdu_header(s, DomainMCSPDU_ChannelJoinRequest, &length, NULL))
 		return FALSE;
 
-	if (!per_read_integer16(s, &userId, MCS_BASE_CHANNEL_ID))
+	if (!freerdp_per_read_integer16(s, &userId, MCS_BASE_CHANNEL_ID))
 		return FALSE;
 	if (userId != mcs->userId)
 	{
@@ -1196,7 +1197,7 @@ BOOL mcs_recv_channel_join_request(rdpMcs* mcs, const rdpSettings* settings, wSt
 		else
 			return FALSE;
 	}
-	if (!per_read_integer16(s, channelId, 0))
+	if (!freerdp_per_read_integer16(s, channelId, 0))
 		return FALSE;
 
 	return tpkt_ensure_stream_consumed(s, length);
@@ -1229,8 +1230,8 @@ BOOL mcs_send_channel_join_request(rdpMcs* mcs, UINT16 channelId)
 	}
 
 	mcs_write_domain_mcspdu_header(s, DomainMCSPDU_ChannelJoinRequest, length, 0);
-	per_write_integer16(s, mcs->userId, MCS_BASE_CHANNEL_ID);
-	per_write_integer16(s, channelId, 0);
+	freerdp_per_write_integer16(s, mcs->userId, MCS_BASE_CHANNEL_ID);
+	freerdp_per_write_integer16(s, channelId, 0);
 	Stream_SealLength(s);
 	status = transport_write(mcs->transport, s);
 	Stream_Free(s, TRUE);
@@ -1256,13 +1257,13 @@ BOOL mcs_recv_channel_join_confirm(rdpMcs* mcs, wStream* s, UINT16* channelId)
 	if (!mcs_read_domain_mcspdu_header(s, DomainMCSPDU_ChannelJoinConfirm, &length, NULL))
 		return FALSE;
 
-	if (!per_read_enumerated(s, &result, MCS_Result_enum_length)) /* result */
+	if (!freerdp_per_read_enumerated(s, &result, MCS_Result_enum_length)) /* result */
 		return FALSE;
-	if (!per_read_integer16(s, &initiator, MCS_BASE_CHANNEL_ID)) /* initiator (UserId) */
+	if (!freerdp_per_read_integer16(s, &initiator, MCS_BASE_CHANNEL_ID)) /* initiator (UserId) */
 		return FALSE;
-	if (!per_read_integer16(s, &requested, 0)) /* requested (ChannelId) */
+	if (!freerdp_per_read_integer16(s, &requested, 0)) /* requested (ChannelId) */
 		return FALSE;
-	if (!per_read_integer16(s, channelId, 0)) /* channelId */
+	if (!freerdp_per_read_integer16(s, channelId, 0)) /* channelId */
 		return FALSE;
 	return tpkt_ensure_stream_consumed(s, length);
 }
@@ -1292,13 +1293,13 @@ BOOL mcs_send_channel_join_confirm(rdpMcs* mcs, UINT16 channelId)
 
 	if (!mcs_write_domain_mcspdu_header(s, DomainMCSPDU_ChannelJoinConfirm, length, 2))
 		goto fail;
-	if (!per_write_enumerated(s, 0, MCS_Result_enum_length)) /* result */
+	if (!freerdp_per_write_enumerated(s, 0, MCS_Result_enum_length)) /* result */
 		goto fail;
-	if (!per_write_integer16(s, mcs->userId, MCS_BASE_CHANNEL_ID)) /* initiator (UserId) */
+	if (!freerdp_per_write_integer16(s, mcs->userId, MCS_BASE_CHANNEL_ID)) /* initiator (UserId) */
 		goto fail;
-	if (!per_write_integer16(s, channelId, 0)) /* requested (ChannelId) */
+	if (!freerdp_per_write_integer16(s, channelId, 0)) /* requested (ChannelId) */
 		goto fail;
-	if (!per_write_integer16(s, channelId, 0)) /* channelId */
+	if (!freerdp_per_write_integer16(s, channelId, 0)) /* channelId */
 		goto fail;
 	Stream_SealLength(s);
 	status = transport_write(mcs->transport, s);
@@ -1379,7 +1380,7 @@ BOOL mcs_send_disconnect_provider_ultimatum(rdpMcs* mcs)
 	if (!mcs_write_domain_mcspdu_header(s, DomainMCSPDU_DisconnectProviderUltimatum, length, 1))
 		goto fail;
 
-	if (!per_write_enumerated(s, 0x80, 0))
+	if (!freerdp_per_write_enumerated(s, 0x80, 0))
 		goto fail;
 	status = transport_write(mcs->transport, s);
 fail:

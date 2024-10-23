@@ -156,6 +156,11 @@ if (WITH_FREERDP_DEPRECATED)
 	add_definitions(-DWITH_FREERDP_DEPRECATED)
 endif()
 
+option(WITH_FREERDP_3x_DEPRECATED "Build FreeRDP 3x deprecated symbols (stuff deprecated during the 3.x cycle)" ON)
+if (WITH_FREERDP_3x_DEPRECATED)
+	add_definitions(-DWITH_FREERDP_3x_DEPRECATED)
+endif()
+
 option(WITH_FREERDP_DEPRECATED_COMMANDLINE "Build FreeRDP deprecated command line options" OFF)
 if (WITH_FREERDP_DEPRECATED_COMMANDLINE)
 	add_definitions(-DWITH_FREERDP_DEPRECATED_COMMANDLINE)

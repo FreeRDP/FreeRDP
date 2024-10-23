@@ -26,16 +26,7 @@
 #include <freerdp/log.h>
 #define TAG FREERDP_TAG("crypto.per")
 
-/**
- * Read PER length.
- *
- * @param s stream to read from
- * @param length A pointer to return the length read, must not be NULL
- *
- * @return \b TRUE for success, \b FALSE otherwise.
- */
-
-BOOL per_read_length(wStream* s, UINT16* length)
+BOOL freerdp_per_read_length(wStream* s, UINT16* length)
 {
 	BYTE byte = 0;
 
@@ -63,15 +54,7 @@ BOOL per_read_length(wStream* s, UINT16* length)
 	return TRUE;
 }
 
-/**
- * Write PER length.
- * @param s stream
- * @param length length
- *
- * @return \b TRUE for success, \b FALSE otherwise.
- */
-
-BOOL per_write_length(wStream* s, UINT16 length)
+BOOL freerdp_per_write_length(wStream* s, UINT16 length)
 {
 	if (length > 0x7F)
 	{
@@ -88,15 +71,7 @@ BOOL per_write_length(wStream* s, UINT16 length)
 	return TRUE;
 }
 
-/**
- * Read PER choice.
- * @param s stream
- * @param choice choice
- *
- * @return \b TRUE for success, \b FALSE otherwise.
- */
-
-BOOL per_read_choice(wStream* s, BYTE* choice)
+BOOL freerdp_per_read_choice(wStream* s, BYTE* choice)
 {
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 1))
 		return FALSE;
@@ -105,15 +80,7 @@ BOOL per_read_choice(wStream* s, BYTE* choice)
 	return TRUE;
 }
 
-/**
- * Write PER CHOICE.
- * @param s stream
- * @param choice index of chosen field
- *
- * @return \b TRUE for success, \b FALSE otherwise.
- */
-
-BOOL per_write_choice(wStream* s, BYTE choice)
+BOOL freerdp_per_write_choice(wStream* s, BYTE choice)
 {
 	if (!Stream_EnsureRemainingCapacity(s, 1))
 		return FALSE;
@@ -121,15 +88,7 @@ BOOL per_write_choice(wStream* s, BYTE choice)
 	return TRUE;
 }
 
-/**
- * Read PER selection.
- * @param s stream
- * @param selection selection
- *
- * @return \b TRUE for success, \b FALSE otherwise.
- */
-
-BOOL per_read_selection(wStream* s, BYTE* selection)
+BOOL freerdp_per_read_selection(wStream* s, BYTE* selection)
 {
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 1))
 		return FALSE;
@@ -139,15 +98,7 @@ BOOL per_read_selection(wStream* s, BYTE* selection)
 	return TRUE;
 }
 
-/**
- * Write PER selection for OPTIONAL fields.
- * @param s stream
- * @param selection bit map of selected fields
- *
- * @return \b TRUE for success, \b FALSE otherwise.
- */
-
-BOOL per_write_selection(wStream* s, BYTE selection)
+BOOL freerdp_per_write_selection(wStream* s, BYTE selection)
 {
 	if (!Stream_EnsureRemainingCapacity(s, 1))
 		return FALSE;
@@ -155,15 +106,7 @@ BOOL per_write_selection(wStream* s, BYTE selection)
 	return TRUE;
 }
 
-/**
- * Read PER number of sets.
- * @param s stream
- * @param number number of sets
- *
- * @return \b TRUE for success, \b FALSE otherwise.
- */
-
-BOOL per_read_number_of_sets(wStream* s, BYTE* number)
+BOOL freerdp_per_read_number_of_sets(wStream* s, BYTE* number)
 {
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 1))
 		return FALSE;
@@ -173,16 +116,7 @@ BOOL per_read_number_of_sets(wStream* s, BYTE* number)
 	return TRUE;
 }
 
-/**
- * Write PER number of sets for SET OF.
- *
- * @param s stream
- * @param number number of sets
- *
- * @return \b TRUE for success, \b FALSE otherwise.
- */
-
-BOOL per_write_number_of_sets(wStream* s, BYTE number)
+BOOL freerdp_per_write_number_of_sets(wStream* s, BYTE number)
 {
 	if (!Stream_EnsureRemainingCapacity(s, 1))
 		return FALSE;
@@ -190,16 +124,7 @@ BOOL per_write_number_of_sets(wStream* s, BYTE number)
 	return TRUE;
 }
 
-/**
- * Read PER padding with zeros.
- *
- * @param s A stream to read from
- * @param length the data to write
- *
- * @return \b TRUE for success, \b FALSE otherwise.
- */
-
-BOOL per_read_padding(wStream* s, UINT16 length)
+BOOL freerdp_per_read_padding(wStream* s, UINT16 length)
 {
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, length))
 		return FALSE;
@@ -208,15 +133,7 @@ BOOL per_read_padding(wStream* s, UINT16 length)
 	return TRUE;
 }
 
-/**
- * Write PER padding with zeros.
- * @param s A stream to write to
- * @param length the data to write
- *
- * @return \b TRUE for success, \b FALSE otherwise.
- */
-
-BOOL per_write_padding(wStream* s, UINT16 length)
+BOOL freerdp_per_write_padding(wStream* s, UINT16 length)
 {
 	if (!Stream_EnsureRemainingCapacity(s, length))
 		return FALSE;
@@ -224,21 +141,13 @@ BOOL per_write_padding(wStream* s, UINT16 length)
 	return TRUE;
 }
 
-/**
- * Read PER INTEGER.
- * @param s stream
- * @param integer integer
- *
- * @return \b TRUE for success, \b FALSE otherwise.
- */
-
-BOOL per_read_integer(wStream* s, UINT32* integer)
+BOOL freerdp_per_read_integer(wStream* s, UINT32* integer)
 {
 	UINT16 length = 0;
 
 	WINPR_ASSERT(integer);
 
-	if (!per_read_length(s, &length))
+	if (!freerdp_per_read_length(s, &length))
 		return FALSE;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, length))
@@ -256,19 +165,11 @@ BOOL per_read_integer(wStream* s, UINT32* integer)
 	return TRUE;
 }
 
-/**
- * Write PER INTEGER.
- * @param s stream
- * @param integer integer
- *
- * @return \b TRUE for success, \b FALSE otherwise.
- */
-
-BOOL per_write_integer(wStream* s, UINT32 integer)
+BOOL freerdp_per_write_integer(wStream* s, UINT32 integer)
 {
 	if (integer <= UINT8_MAX)
 	{
-		if (!per_write_length(s, 1))
+		if (!freerdp_per_write_length(s, 1))
 			return FALSE;
 		if (!Stream_EnsureRemainingCapacity(s, 1))
 			return FALSE;
@@ -276,7 +177,7 @@ BOOL per_write_integer(wStream* s, UINT32 integer)
 	}
 	else if (integer <= UINT16_MAX)
 	{
-		if (!per_write_length(s, 2))
+		if (!freerdp_per_write_length(s, 2))
 			return FALSE;
 		if (!Stream_EnsureRemainingCapacity(s, 2))
 			return FALSE;
@@ -284,7 +185,7 @@ BOOL per_write_integer(wStream* s, UINT32 integer)
 	}
 	else if (integer <= UINT32_MAX)
 	{
-		if (!per_write_length(s, 4))
+		if (!freerdp_per_write_length(s, 4))
 			return FALSE;
 		if (!Stream_EnsureRemainingCapacity(s, 4))
 			return FALSE;
@@ -293,17 +194,7 @@ BOOL per_write_integer(wStream* s, UINT32 integer)
 	return TRUE;
 }
 
-/**
- * Read PER INTEGER (UINT16).
- *
- * @param s The stream to read from
- * @param integer The integer result variable pointer, must not be NULL
- * @param min minimum value
- *
- * @return \b TRUE for success, \b FALSE otherwise
- */
-
-BOOL per_read_integer16(wStream* s, UINT16* integer, UINT16 min)
+BOOL freerdp_per_read_integer16(wStream* s, UINT16* integer, UINT16 min)
 {
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))
 		return FALSE;
@@ -322,16 +213,7 @@ BOOL per_read_integer16(wStream* s, UINT16* integer, UINT16 min)
 	return TRUE;
 }
 
-/**
- * Write PER INTEGER (UINT16).
- * @param s stream
- * @param integer integer
- * @param min minimum value
- *
- * @return \b TRUE for success, \b FALSE otherwise.
- */
-
-BOOL per_write_integer16(wStream* s, UINT16 integer, UINT16 min)
+BOOL freerdp_per_write_integer16(wStream* s, UINT16 integer, UINT16 min)
 {
 	if (!Stream_EnsureRemainingCapacity(s, 2))
 		return FALSE;
@@ -339,17 +221,7 @@ BOOL per_write_integer16(wStream* s, UINT16 integer, UINT16 min)
 	return TRUE;
 }
 
-/**
- * Read PER ENUMERATED.
- *
- * @param s The stream to read from
- * @param enumerated enumerated result variable, must not be NULL
- * @param count enumeration count
- *
- * @return \b TRUE for success, \b FALSE otherwise
- */
-
-BOOL per_read_enumerated(wStream* s, BYTE* enumerated, BYTE count)
+BOOL freerdp_per_read_enumerated(wStream* s, BYTE* enumerated, BYTE count)
 {
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 1))
 		return FALSE;
@@ -367,17 +239,7 @@ BOOL per_read_enumerated(wStream* s, BYTE* enumerated, BYTE count)
 	return TRUE;
 }
 
-/**
- * Write PER ENUMERATED.
- *
- * @param s The stream to write to
- * @param enumerated enumerated
- * @param count enumeration count
- *
- * @return \b TRUE for success, \b FALSE otherwise
- */
-
-BOOL per_write_enumerated(wStream* s, BYTE enumerated, BYTE count)
+BOOL freerdp_per_write_enumerated(wStream* s, BYTE enumerated, BYTE count)
 {
 	if (!Stream_EnsureRemainingCapacity(s, 1))
 		return FALSE;
@@ -385,7 +247,8 @@ BOOL per_write_enumerated(wStream* s, BYTE enumerated, BYTE count)
 	return TRUE;
 }
 
-static BOOL per_check_oid_and_log_mismatch(const BYTE* got, const BYTE* expect, size_t length)
+static BOOL freerdp_per_check_oid_and_log_mismatch(const BYTE* got, const BYTE* expect,
+                                                   size_t length)
 {
 	if (memcmp(got, expect, length) == 0)
 	{
@@ -403,23 +266,13 @@ static BOOL per_check_oid_and_log_mismatch(const BYTE* got, const BYTE* expect, 
 	}
 }
 
-/**
- * Read PER OBJECT_IDENTIFIER (OID).
- *
- * @param s The stream to read from
- * @param oid object identifier (OID)
- * @warning It works correctly only for limited set of OIDs.
- *
- * @return \b TRUE for success, \b FALSE otherwise
- */
-
-BOOL per_read_object_identifier(wStream* s, const BYTE oid[6])
+BOOL freerdp_per_read_object_identifier(wStream* s, const BYTE oid[6])
 {
 	BYTE t12 = 0;
 	UINT16 length = 0;
 	BYTE a_oid[6] = { 0 };
 
-	if (!per_read_length(s, &length))
+	if (!freerdp_per_read_length(s, &length))
 		return FALSE;
 
 	if (length != 5)
@@ -440,19 +293,10 @@ BOOL per_read_object_identifier(wStream* s, const BYTE oid[6])
 	Stream_Read_UINT8(s, a_oid[4]); /* tuple 5 */
 	Stream_Read_UINT8(s, a_oid[5]); /* tuple 6 */
 
-	return per_check_oid_and_log_mismatch(a_oid, oid, sizeof(a_oid));
+	return freerdp_per_check_oid_and_log_mismatch(a_oid, oid, sizeof(a_oid));
 }
 
-/**
- * Write PER OBJECT_IDENTIFIER (OID)
- * @param s stream
- * @param oid object identifier (oid)
- * @warning It works correctly only for limited set of OIDs.
- *
- * @return \b TRUE for success, \b FALSE otherwise.
- */
-
-BOOL per_write_object_identifier(wStream* s, const BYTE oid[6])
+BOOL freerdp_per_write_object_identifier(wStream* s, const BYTE oid[6])
 {
 	BYTE t12 = oid[0] * 40 + oid[1];
 	if (!Stream_EnsureRemainingCapacity(s, 6))
@@ -466,35 +310,17 @@ BOOL per_write_object_identifier(wStream* s, const BYTE oid[6])
 	return TRUE;
 }
 
-/**
- * Write PER string.
- * @param s stream
- * @param str string
- * @param length string length
- */
-
-static void per_write_string(wStream* s, BYTE* str, int length)
+static void freerdp_per_write_string(wStream* s, BYTE* str, int length)
 {
 	for (int i = 0; i < length; i++)
 		Stream_Write_UINT8(s, str[i]);
 }
 
-/**
- * Read PER OCTET_STRING.
- *
- * @param s The stream to read from
- * @param oct_str octet string
- * @param length string length
- * @param min minimum length
- *
- * @return \b TRUE for success, \b FALSE otherwise.
- */
-
-BOOL per_read_octet_string(wStream* s, const BYTE* oct_str, UINT16 length, UINT16 min)
+BOOL freerdp_per_read_octet_string(wStream* s, const BYTE* oct_str, UINT16 length, UINT16 min)
 {
 	UINT16 mlength = 0;
 
-	if (!per_read_length(s, &mlength))
+	if (!freerdp_per_read_length(s, &mlength))
 		return FALSE;
 
 	if (mlength + min != length)
@@ -509,26 +335,16 @@ BOOL per_read_octet_string(wStream* s, const BYTE* oct_str, UINT16 length, UINT1
 	const BYTE* a_oct_str = Stream_ConstPointer(s);
 	Stream_Seek(s, length);
 
-	return per_check_oid_and_log_mismatch(a_oct_str, oct_str, length);
+	return freerdp_per_check_oid_and_log_mismatch(a_oct_str, oct_str, length);
 }
 
-/**
- * Write PER OCTET_STRING
- * @param s stream
- * @param oct_str octet string
- * @param length string length
- * @param min minimum string length
- *
- * @return \b TRUE for success, \b FALSE otherwise.
- */
-
-BOOL per_write_octet_string(wStream* s, const BYTE* oct_str, UINT16 length, UINT16 min)
+BOOL freerdp_per_write_octet_string(wStream* s, const BYTE* oct_str, UINT16 length, UINT16 min)
 {
 	UINT16 mlength = 0;
 
 	mlength = (length >= min) ? length - min : min;
 
-	if (!per_write_length(s, mlength))
+	if (!freerdp_per_write_length(s, mlength))
 		return FALSE;
 
 	if (!Stream_EnsureRemainingCapacity(s, length))
@@ -538,20 +354,12 @@ BOOL per_write_octet_string(wStream* s, const BYTE* oct_str, UINT16 length, UINT
 	return TRUE;
 }
 
-/**
- * Read PER NumericString.
- * @param s stream
- * @param min minimum string length
- *
- * @return \b TRUE for success, \b FALSE otherwise.
- */
-
-BOOL per_read_numeric_string(wStream* s, UINT16 min)
+BOOL freerdp_per_read_numeric_string(wStream* s, UINT16 min)
 {
 	size_t length = 0;
 	UINT16 mlength = 0;
 
-	if (!per_read_length(s, &mlength))
+	if (!freerdp_per_read_length(s, &mlength))
 		return FALSE;
 
 	length = (mlength + min + 1) / 2;
@@ -563,23 +371,13 @@ BOOL per_read_numeric_string(wStream* s, UINT16 min)
 	return TRUE;
 }
 
-/**
- * Write PER NumericString.
- * @param s stream
- * @param num_str numeric string
- * @param length string length
- * @param min minimum string length
- *
- * @return \b TRUE for success, \b FALSE otherwise.
- */
-
-BOOL per_write_numeric_string(wStream* s, const BYTE* num_str, UINT16 length, UINT16 min)
+BOOL freerdp_per_write_numeric_string(wStream* s, const BYTE* num_str, UINT16 length, UINT16 min)
 {
 	WINPR_ASSERT(num_str || (length == 0));
 
 	const UINT16 mlength = (length >= min) ? length - min : min;
 
-	if (!per_write_length(s, mlength))
+	if (!freerdp_per_write_length(s, mlength))
 		return FALSE;
 
 	if (!Stream_EnsureRemainingCapacity(s, length))
@@ -600,3 +398,115 @@ BOOL per_write_numeric_string(wStream* s, const BYTE* num_str, UINT16 length, UI
 	}
 	return TRUE;
 }
+
+#if defined(WITH_FREERDP_3x_DEPRECATED)
+BOOL per_read_length(wStream* s, UINT16* length)
+{
+	return freerdp_per_read_length(s, length);
+}
+
+BOOL per_write_length(wStream* s, UINT16 length)
+{
+	return freerdp_per_write_length(s, length);
+}
+
+BOOL per_read_choice(wStream* s, BYTE* choice)
+{
+	return freerdp_per_read_choice(s, choice);
+}
+
+BOOL per_write_choice(wStream* s, BYTE choice)
+{
+	return freerdp_per_write_choice(s, choice);
+}
+
+BOOL per_read_selection(wStream* s, BYTE* selection)
+{
+	return freerdp_per_read_selection(s, selection);
+}
+
+BOOL per_write_selection(wStream* s, BYTE selection)
+{
+	return freerdp_per_write_selection(s, selection);
+}
+
+BOOL per_read_number_of_sets(wStream* s, BYTE* number)
+{
+	return freerdp_per_read_number_of_sets(s, number);
+}
+
+BOOL per_write_number_of_sets(wStream* s, BYTE number)
+{
+	return freerdp_per_write_number_of_sets(s, number);
+}
+
+BOOL per_read_padding(wStream* s, UINT16 length)
+{
+	return freerdp_per_read_padding(s, length);
+}
+
+BOOL per_write_padding(wStream* s, UINT16 length)
+{
+	return freerdp_per_write_padding(s, length);
+}
+
+BOOL per_read_integer(wStream* s, UINT32* integer)
+{
+	return freerdp_per_read_integer(s, integer);
+}
+
+BOOL per_read_integer16(wStream* s, UINT16* integer, UINT16 min)
+{
+	return freerdp_per_read_integer16(s, integer, min);
+}
+
+BOOL per_write_integer(wStream* s, UINT32 integer)
+{
+	return freerdp_per_write_integer(s, integer);
+}
+
+BOOL per_write_integer16(wStream* s, UINT16 integer, UINT16 min)
+{
+	return freerdp_per_write_integer16(s, integer, min);
+}
+
+BOOL per_read_enumerated(wStream* s, BYTE* enumerated, BYTE count)
+{
+	return freerdp_per_read_enumerated(s, enumerated, count);
+}
+
+BOOL per_write_enumerated(wStream* s, BYTE enumerated, BYTE count)
+{
+	return freerdp_per_write_enumerated(s, enumerated, count);
+}
+
+BOOL per_write_object_identifier(wStream* s, const BYTE oid[6])
+{
+	return freerdp_per_write_object_identifier(s, oid);
+}
+
+BOOL per_read_object_identifier(wStream* s, const BYTE oid[6])
+{
+	return freerdp_per_read_object_identifier(s, oid);
+}
+
+BOOL per_read_octet_string(wStream* s, const BYTE* oct_str, UINT16 length, UINT16 min)
+{
+	return freerdp_per_read_octet_string(s, oct_str, length, min);
+}
+
+BOOL per_write_octet_string(wStream* s, const BYTE* oct_str, UINT16 length, UINT16 min)
+{
+	return freerdp_per_write_octet_string(s, oct_str, length, min);
+}
+
+BOOL per_read_numeric_string(wStream* s, UINT16 min)
+{
+	return freerdp_per_read_numeric_string(s, min);
+}
+
+BOOL per_write_numeric_string(wStream* s, const BYTE* num_str, UINT16 length, UINT16 min)
+{
+	return freerdp_per_write_numeric_string(s, num_str, length, min);
+}
+#endif

@@ -230,7 +230,7 @@ BOOL fastpath_read_header_rdp(rdpFastPath* fastpath, wStream* s, UINT16* length)
 		fastpath->numberEvents = (header & 0x3C) >> 2;
 	}
 
-	if (!per_read_length(s, length))
+	if (!freerdp_per_read_length(s, length))
 		return FALSE;
 
 	const size_t pos = Stream_GetPosition(s);
