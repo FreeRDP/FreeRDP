@@ -34,7 +34,7 @@
 
 #include <uwac/config.h>
 
-#define UWAC_INITIAL_BUFFERS 3
+#define UWAC_INITIAL_BUFFERS 3ull
 
 static int bppFromShmFormat(enum wl_shm_format format)
 {
@@ -78,7 +78,7 @@ static void UwacWindowDestroyBuffers(UwacWindow* w)
 	w->buffers = NULL;
 }
 
-static int UwacWindowShmAllocBuffers(UwacWindow* w, int64_t nbuffers, int64_t allocSize,
+static int UwacWindowShmAllocBuffers(UwacWindow* w, uint64_t nbuffers, uint64_t allocSize,
                                      uint32_t width, uint32_t height, enum wl_shm_format format);
 
 static void xdg_handle_toplevel_configure(void* data, struct xdg_toplevel* xdg_toplevel,
@@ -319,23 +319,27 @@ static void shell_popup_done(void* data, struct wl_shell_surface* surface)
 static const struct wl_shell_surface_listener shell_listener = { shell_ping, shell_configure,
 	                                                             shell_popup_done };
 
-int UwacWindowShmAllocBuffers(UwacWindow* w, int64_t nbuffers, int64_t allocSize, uint32_t width,
+int UwacWindowShmAllocBuffers(UwacWindow* w, uint64_t nbuffers, uint64_t allocSize, uint32_t width,
                               uint32_t height, enum wl_shm_format format)
 {
 	int ret = UWAC_SUCCESS;
 	int fd = 0;
 	void* data = NULL;
 	struct wl_shm_pool* pool = NULL;
-	int64_t pagesize = sysconf(_SC_PAGESIZE);
+
+	if ((width > INT32_MAX) || (height > INT32_MAX))
+		return UWAC_ERROR_NOMEMORY;
+
+	const int64_t pagesize = sysconf(_SC_PAGESIZE);
 	if (pagesize <= 0)
 		return UWAC_ERROR_NOMEMORY;
 
 	/* round up to a multiple of PAGESIZE to page align data for each buffer */
-	const uint64_t test = (1ull * allocSize + pagesize - 1ull) & ~(pagesize - 1);
+	const uint64_t test = (1ull * allocSize + (size_t)pagesize - 1ull) & ~((size_t)pagesize - 1);
 	if (test > INT64_MAX)
 		return UWAC_ERROR_NOMEMORY;
 
-	allocSize = (int64_t)test;
+	allocSize = test;
 
 	UwacBuffer* newBuffers =
 	    xrealloc(w->buffers, (0ull + w->nbuffers + nbuffers) * sizeof(UwacBuffer));
@@ -345,14 +349,18 @@ int UwacWindowShmAllocBuffers(UwacWindow* w, int64_t nbuffers, int64_t allocSize
 
 	w->buffers = newBuffers;
 	memset(w->buffers + w->nbuffers, 0, sizeof(UwacBuffer) * nbuffers);
-	fd = uwac_create_anonymous_file(1ull * allocSize * nbuffers);
+
+	const size_t allocbuffersize = 1ull * allocSize * nbuffers;
+	if (allocbuffersize > INT32_MAX)
+		return UWAC_ERROR_NOMEMORY;
+
+	fd = uwac_create_anonymous_file((off_t)allocbuffersize);
 
 	if (fd < 0)
 	{
 		return UWAC_ERROR_INTERNAL;
 	}
 
-	const size_t allocbuffersize = 1ull * allocSize * nbuffers;
 	data = mmap(NULL, allocbuffersize, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
 
 	if (data == MAP_FAILED)
@@ -361,7 +369,7 @@ int UwacWindowShmAllocBuffers(UwacWindow* w, int64_t nbuffers, int64_t allocSize
 		goto error_mmap;
 	}
 
-	pool = wl_shm_create_pool(w->display->shm, fd, allocbuffersize);
+	pool = wl_shm_create_pool(w->display->shm, fd, (int32_t)allocbuffersize);
 
 	if (!pool)
 	{
@@ -370,20 +378,25 @@ int UwacWindowShmAllocBuffers(UwacWindow* w, int64_t nbuffers, int64_t allocSize
 		goto error_mmap;
 	}
 
-	for (int64_t i = 0; i < nbuffers; i++)
+	for (uint64_t i = 0; i < nbuffers; i++)
 	{
 		const size_t idx = (size_t)i;
-		size_t bufferIdx = w->nbuffers + idx;
+		const size_t bufferIdx = w->nbuffers + idx;
 		UwacBuffer* buffer = &w->buffers[bufferIdx];
+
 #ifdef UWAC_HAVE_PIXMAN_REGION
 		pixman_region32_init(&buffer->damage);
 #else
 		region16_init(&buffer->damage);
 #endif
+		const size_t offset = allocSize * idx;
+		if (offset > INT32_MAX)
+			goto error_mmap;
+
 		buffer->data = &((char*)data)[allocSize * idx];
 		buffer->size = allocSize;
-		buffer->wayland_buffer =
-		    wl_shm_pool_create_buffer(pool, allocSize * idx, width, height, w->stride, format);
+		buffer->wayland_buffer = wl_shm_pool_create_buffer(pool, (int32_t)offset, (int32_t)width,
+		                                                   (int32_t)height, w->stride, format);
 		UwacBufferReleaseData* listener_data = xmalloc(sizeof(UwacBufferReleaseData));
 		listener_data->window = w;
 		listener_data->bufferIdx = bufferIdx;

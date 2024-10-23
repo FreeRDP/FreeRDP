@@ -270,7 +270,7 @@ struct uwac_window
 struct uwac_buffer_release_data
 {
 	UwacWindow* window;
-	int bufferIdx;
+	size_t bufferIdx;
 };
 typedef struct uwac_buffer_release_data UwacBufferReleaseData;
 
