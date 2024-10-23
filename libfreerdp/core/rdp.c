@@ -2782,6 +2782,20 @@ static BOOL parse_on_off_option(const char* value)
 
 #define STR(x) #x
 
+static BOOL option_is_runtime_checks(wLog* log, const char* tok)
+{
+	const char* experimental[] = { STR(WITH_VERBOSE_WINPR_ASSERT) };
+	for (size_t x = 0; x < ARRAYSIZE(experimental); x++)
+	{
+		const char* opt = experimental[x];
+		if (starts_with(tok, opt))
+		{
+			return parse_on_off_option(tok);
+		}
+	}
+	return FALSE;
+}
+
 static BOOL option_is_experimental(wLog* log, const char* tok)
 {
 	const char* experimental[] = { STR(WITH_DSP_EXPERIMENTAL), STR(WITH_VAAPI) };
@@ -2917,4 +2931,6 @@ void rdp_log_build_warnings(rdpRdp* rdp)
 	log_build_warn(rdp, "experimental", "might crash the application", option_is_experimental);
 	log_build_warn(rdp, "debug", "might leak sensitive information (credentials, ...)",
 	               option_is_debug);
+	log_build_warn(rdp, "runtime-check", "might slow down the application",
+	               option_is_runtime_checks);
 }
