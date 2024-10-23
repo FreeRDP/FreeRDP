@@ -42,6 +42,14 @@
 
 #define RDP_TAG FREERDP_TAG("core.rdp")
 
+typedef struct
+{
+	const char* file;
+	const char* fkt;
+	size_t line;
+	DWORD level;
+} log_line_t;
+
 static const char* DATA_PDU_TYPE_STRINGS[80] = {
 	"?",
 	"?",      /* 0x00 - 0x01 */
@@ -2917,6 +2925,141 @@ static void log_build_warn(rdpRdp* rdp, const char* what, const char* msg,
 	free(list);
 }
 
+#define print_first_line(log, firstLine, what) \
+	print_first_line_int((log), (firstLine), (what), __FILE__, __func__, __LINE__)
+static void print_first_line_int(wLog* log, log_line_t* firstLine, const char* what,
+                                 const char* file, const char* fkt, size_t line)
+{
+	WINPR_ASSERT(firstLine);
+	if (!firstLine->fkt)
+	{
+		const DWORD level = WLOG_WARN;
+		if (WLog_IsLevelActive(log, level))
+		{
+			WLog_PrintMessage(log, WLOG_MESSAGE_TEXT, level, line, file, fkt,
+			                  "*************************************************");
+			WLog_PrintMessage(log, WLOG_MESSAGE_TEXT, level, line, file, fkt,
+			                  "[SSL] {%s} build or configuration missing:", what);
+		}
+		firstLine->line = line;
+		firstLine->file = file;
+		firstLine->fkt = fkt;
+		firstLine->level = level;
+	}
+}
+
+static void print_last_line(wLog* log, const log_line_t* firstLine)
+{
+	WINPR_ASSERT(firstLine);
+	if (firstLine->fkt)
+	{
+		if (WLog_IsLevelActive(log, firstLine->level))
+			WLog_PrintMessage(log, WLOG_MESSAGE_TEXT, firstLine->level, firstLine->line,
+			                  firstLine->file, firstLine->fkt,
+			                  "*************************************************");
+	}
+}
+
+static void log_build_warn_cipher(rdpRdp* rdp, log_line_t* firstLine, WINPR_CIPHER_TYPE md,
+                                  const char* what)
+{
+	BOOL haveCipher = FALSE;
+
+	char key[WINPR_CIPHER_MAX_KEY_LENGTH] = { 0 };
+	char iv[WINPR_CIPHER_MAX_IV_LENGTH] = { 0 };
+	WINPR_CIPHER_CTX* enc = winpr_Cipher_New(md, WINPR_ENCRYPT, key, iv);
+	WINPR_CIPHER_CTX* dec = winpr_Cipher_New(md, WINPR_DECRYPT, key, iv);
+	if (enc && dec)
+	{
+		haveCipher = TRUE;
+	}
+	winpr_Cipher_Free(enc);
+	winpr_Cipher_Free(dec);
+
+	if (!haveCipher)
+	{
+		print_first_line(rdp->log, firstLine, "Cipher");
+		WLog_Print(rdp->log, WLOG_WARN, "* %s: %s", winpr_cipher_type_to_string(md), what);
+	}
+}
+
+static void log_build_warn_hmac(rdpRdp* rdp, log_line_t* firstLine, WINPR_MD_TYPE md,
+                                const char* what)
+{
+	BOOL haveHmacX = FALSE;
+	WINPR_HMAC_CTX* hmac = winpr_HMAC_New();
+	if (hmac)
+	{
+		/* We need some key length, but there is no real limit here.
+		 * just take the cipher maximum key length as we already have that available.
+		 */
+		char key[WINPR_CIPHER_MAX_KEY_LENGTH] = { 0 };
+		haveHmacX = winpr_HMAC_Init(hmac, md, key, sizeof(key));
+	}
+	winpr_HMAC_Free(hmac);
+
+	if (!haveHmacX)
+	{
+		print_first_line(rdp->log, firstLine, "HMAC");
+		WLog_Print(rdp->log, WLOG_WARN, " * %s: %s", winpr_md_type_to_string(md), what);
+	}
+}
+
+static void log_build_warn_hash(rdpRdp* rdp, log_line_t* firstLine, WINPR_MD_TYPE md,
+                                const char* what)
+{
+	BOOL haveDigestX = FALSE;
+
+	WINPR_DIGEST_CTX* digest = winpr_Digest_New();
+	if (digest)
+		haveDigestX = winpr_Digest_Init(digest, md);
+	winpr_Digest_Free(digest);
+
+	if (!haveDigestX)
+	{
+		print_first_line(rdp->log, firstLine, "Digest");
+		WLog_Print(rdp->log, WLOG_WARN, " * %s: %s", winpr_md_type_to_string(md), what);
+	}
+}
+
+static void log_build_warn_ssl(rdpRdp* rdp)
+{
+	WINPR_ASSERT(rdp);
+
+	log_line_t firstHashLine = { 0 };
+	log_build_warn_hash(rdp, &firstHashLine, WINPR_MD_MD4, "NTLM support not available");
+	log_build_warn_hash(rdp, &firstHashLine, WINPR_MD_MD5,
+	                    "NTLM, assistance files with encrypted passwords, autoreconnect cookies, "
+	                    "licensing and RDP security will not work");
+	log_build_warn_hash(rdp, &firstHashLine, WINPR_MD_SHA1,
+	                    "assistance files with encrypted passwords, Kerberos, Smartcard Logon, RDP "
+	                    "security support not available");
+	log_build_warn_hash(
+	    rdp, &firstHashLine, WINPR_MD_SHA256,
+	    "file clipboard, AAD gateway, NLA security and certificates might not work");
+	print_last_line(rdp->log, &firstHashLine);
+
+	log_line_t firstHmacLine = { 0 };
+	log_build_warn_hmac(rdp, &firstHmacLine, WINPR_MD_MD5, "Autoreconnect cookie not supported");
+	log_build_warn_hmac(rdp, &firstHmacLine, WINPR_MD_SHA1, "RDP security not supported");
+	print_last_line(rdp->log, &firstHmacLine);
+
+	log_line_t firstCipherLine = { 0 };
+	log_build_warn_cipher(rdp, &firstCipherLine, WINPR_CIPHER_ARC4_128,
+	                      "assistance files with encrypted passwords, NTLM, RDP licensing and RDP "
+	                      "security will not work");
+	log_build_warn_cipher(rdp, &firstCipherLine, WINPR_CIPHER_DES_EDE3_CBC,
+	                      "RDP security FIPS mode will not work");
+	log_build_warn_cipher(
+	    rdp, &firstCipherLine, WINPR_CIPHER_AES_128_CBC,
+	    "assistance file encrypted LHTicket will not work and ARM gateway might not");
+	log_build_warn_cipher(rdp, &firstCipherLine, WINPR_CIPHER_AES_192_CBC,
+	                      "ARM gateway might not work");
+	log_build_warn_cipher(rdp, &firstCipherLine, WINPR_CIPHER_AES_256_CBC,
+	                      "ARM gateway might not work");
+	print_last_line(rdp->log, &firstCipherLine);
+}
+
 void rdp_log_build_warnings(rdpRdp* rdp)
 {
 	static unsigned count = 0;
@@ -2933,4 +3076,5 @@ void rdp_log_build_warnings(rdpRdp* rdp)
 	               option_is_debug);
 	log_build_warn(rdp, "runtime-check", "might slow down the application",
 	               option_is_runtime_checks);
+	log_build_warn_ssl(rdp);
 }
