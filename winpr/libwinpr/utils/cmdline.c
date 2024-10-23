@@ -846,3 +846,14 @@ char* CommandLineToCommaSeparatedValuesEx(int argc, char* argv[], const char* fi
 		str[offset - 1] = '\0';
 	return str;
 }
+
+void CommandLineParserFree(char** ptr)
+{
+	union
+	{
+		char* p;
+		char** pp;
+	} uptr;
+	uptr.pp = ptr;
+	free(uptr.p);
+}

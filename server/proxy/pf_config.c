@@ -113,6 +113,7 @@ static const char* key_private_key_content = "PrivateKeyContent";
 static const char* key_cert_file = "CertificateFile";
 static const char* key_cert_content = "CertificateContent";
 
+WINPR_ATTR_MALLOC(CommandLineParserFree, 1)
 static char** pf_config_parse_comma_separated_list(const char* list, size_t* count)
 {
 	if (!list || !count)
@@ -843,10 +844,10 @@ void pf_server_config_free(proxyConfig* config)
 	if (config == NULL)
 		return;
 
-	free(config->Passthrough);
-	free(config->Intercept);
-	free(config->RequiredPlugins);
-	free(config->Modules);
+	CommandLineParserFree(config->Passthrough);
+	CommandLineParserFree(config->Intercept);
+	CommandLineParserFree(config->RequiredPlugins);
+	CommandLineParserFree(config->Modules);
 	free(config->TargetHost);
 	free(config->Host);
 	free(config->CertificateFile);

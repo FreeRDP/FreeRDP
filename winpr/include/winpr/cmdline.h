@@ -157,12 +157,25 @@ extern "C"
 	WINPR_API const COMMAND_LINE_ARGUMENT_A*
 	CommandLineFindNextArgumentA(const COMMAND_LINE_ARGUMENT_A* argument);
 
+	/** @brief free arrays allocated by CommandLineParseCommaSeparatedValues(Ex)
+	 *
+	 *  @param ptr the pointer to free, may be \b NULL
+	 *
+	 *  @since version 3.10.0
+	 */
+	WINPR_API void CommandLineParserFree(char** ptr);
+
+	WINPR_ATTR_MALLOC(CommandLineParserFree, 1)
 	WINPR_API char** CommandLineParseCommaSeparatedValues(const char* list, size_t* count);
 
+	WINPR_ATTR_MALLOC(CommandLineParserFree, 1)
 	WINPR_API char** CommandLineParseCommaSeparatedValuesEx(const char* name, const char* list,
 	                                                        size_t* count);
 
+	WINPR_ATTR_MALLOC(free, 1)
 	WINPR_API char* CommandLineToCommaSeparatedValues(int argc, char* argv[]);
+
+	WINPR_ATTR_MALLOC(free, 1)
 	WINPR_API char* CommandLineToCommaSeparatedValuesEx(int argc, char* argv[],
 	                                                    const char* filters[], size_t number);
 
