@@ -1975,6 +1975,7 @@ BOOL cliprdr_file_context_update_server_data(CliprdrFileContext* file_context, w
 	CliprdrFuseClipDataEntry* clip_data_entry = NULL;
 	FILEDESCRIPTORW* files = NULL;
 	UINT32 n_files = 0;
+	BOOL rc = FALSE;
 
 	WINPR_ASSERT(file_context);
 	WINPR_ASSERT(clip);
@@ -1986,6 +1987,7 @@ BOOL cliprdr_file_context_update_server_data(CliprdrFileContext* file_context, w
 	}
 
 	HashTable_Lock(file_context->inode_table);
+	HashTable_Lock(file_context->clip_data_table);
 	if (does_server_support_clipdata_locking(file_context))
 		clip_data_entry = HashTable_GetItemValue(
 		    file_context->clip_data_table, (void*)(uintptr_t)file_context->current_clip_data_id);
@@ -2001,29 +2003,19 @@ BOOL cliprdr_file_context_update_server_data(CliprdrFileContext* file_context, w
 	    clip_data_dir_new(file_context, does_server_support_clipdata_locking(file_context),
 	                      file_context->current_clip_data_id);
 	if (!clip_data_entry->clip_data_dir)
-	{
-		HashTable_Unlock(file_context->inode_table);
-		free(files);
-		return FALSE;
-	}
-
+		goto fail;
 	if (!update_exposed_path(file_context, clip, clip_data_entry))
-	{
-		HashTable_Unlock(file_context->inode_table);
-		free(files);
-		return FALSE;
-	}
-
+		goto fail;
 	if (!set_selection_for_clip_data_entry(file_context, clip_data_entry, files, n_files))
-	{
-		HashTable_Unlock(file_context->inode_table);
-		free(files);
-		return FALSE;
-	}
-	HashTable_Unlock(file_context->inode_table);
+		goto fail;
 
+	rc = TRUE;
+
+fail:
+	HashTable_Unlock(file_context->clip_data_table);
+	HashTable_Unlock(file_context->inode_table);
 	free(files);
-	return TRUE;
+	return rc;
 #else
 	return FALSE;
 #endif
