@@ -44,7 +44,8 @@ static INLINE void rfx_decode_component(RFX_CONTEXT* WINPR_RESTRICT context,
 	dwt_buffer = BufferPool_Take(context->priv->BufferPool, -1); /* dwt_buffer */
 	PROFILER_ENTER(context->priv->prof_rfx_decode_component)
 	PROFILER_ENTER(context->priv->prof_rfx_rlgr_decode)
-	context->rlgr_decode(context->mode, data, size, buffer, 4096);
+	WINPR_ASSERT(size <= UINT32_MAX);
+	context->rlgr_decode(context->mode, data, (UINT32)size, buffer, 4096);
 	PROFILER_EXIT(context->priv->prof_rfx_rlgr_decode)
 	PROFILER_ENTER(context->priv->prof_rfx_differential_decode)
 	rfx_differential_decode(buffer + 4032, 64);

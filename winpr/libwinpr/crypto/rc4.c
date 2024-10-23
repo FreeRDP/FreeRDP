@@ -68,8 +68,8 @@ BOOL winpr_int_rc4_update(winpr_int_RC4_CTX* ctx, size_t length, const BYTE* inp
 {
 	WINPR_ASSERT(ctx);
 
-	UINT32 t1 = ctx->i;
-	UINT32 t2 = ctx->j;
+	size_t t1 = ctx->i;
+	size_t t2 = ctx->j;
 	for (size_t i = 0; i < length; i++)
 	{
 		t1 = (t1 + 1) % CTX_SIZE;

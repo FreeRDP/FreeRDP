@@ -257,7 +257,9 @@ static BOOL rdp_client_wait_for_activation(rdpRdp* rdp)
 			return FALSE;
 		}
 
-		wstatus = WaitForMultipleObjectsEx(nevents, events, FALSE, (dueDate - now), TRUE);
+		const UINT64 timeout = (dueDate - now);
+		WINPR_ASSERT(timeout <= UINT32_MAX);
+		wstatus = WaitForMultipleObjectsEx(nevents, events, FALSE, (UINT32)timeout, TRUE);
 		switch (wstatus)
 		{
 			case WAIT_TIMEOUT:
@@ -354,10 +356,7 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 	{
 		char* user = NULL;
 		char* domain = NULL;
-		char* cookie = NULL;
 		size_t user_length = 0;
-		size_t domain_length = 0;
-		size_t cookie_length = 0;
 
 		if (settings->Username)
 		{
@@ -370,15 +369,16 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 		else
 			domain = settings->ComputerName;
 
-		domain_length = strlen(domain);
-		cookie_length = domain_length + 1 + user_length;
-		cookie = (char*)malloc(cookie_length + 1);
+		const size_t domain_length = strlen(domain);
+		const size_t cookie_length = domain_length + 1 + user_length;
+		char* cookie = malloc(cookie_length + 1);
 
 		if (!cookie)
 			return FALSE;
 
 		CopyMemory(cookie, domain, domain_length);
-		CharUpperBuffA(cookie, domain_length);
+		WINPR_ASSERT(domain_length <= UINT32_MAX);
+		CharUpperBuffA(cookie, (UINT32)domain_length);
 		cookie[domain_length] = '\\';
 
 		if (settings->Username)

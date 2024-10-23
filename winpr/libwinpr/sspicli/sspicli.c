@@ -232,7 +232,10 @@ BOOL GetUserNameExA(EXTENDED_NAME_FORMAT NameFormat, LPSTR lpNameBuffer, PULONG 
 			strncpy(lpNameBuffer, name, strnlen(name, *nSize));
 		}
 #endif
-			*nSize = strnlen(lpNameBuffer, *nSize);
+			const size_t len = strnlen(lpNameBuffer, *nSize);
+			if (len > UINT32_MAX)
+				return FALSE;
+			*nSize = (ULONG)len;
 			return TRUE;
 
 		case NameFullyQualifiedDN:
@@ -268,10 +271,10 @@ BOOL GetUserNameExW(EXTENDED_NAME_FORMAT NameFormat, LPWSTR lpNameBuffer, PULONG
 		goto fail;
 
 	const SSIZE_T res = ConvertUtf8ToWChar(name, lpNameBuffer, *nSize);
-	if (res < 0)
+	if ((res < 0) || (res >= UINT32_MAX))
 		goto fail;
 
-	*nSize = res + 1;
+	*nSize = (UINT32)res + 1;
 	rc = TRUE;
 fail:
 	free(name);

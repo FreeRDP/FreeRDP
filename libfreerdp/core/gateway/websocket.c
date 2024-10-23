@@ -57,17 +57,17 @@ BOOL websocket_write_wstream(BIO* bio, wStream* sPacket, WEBSOCKET_OPCODE opcode
 
 	Stream_Write_UINT8(sWS, WEBSOCKET_FIN_BIT | opcode);
 	if (len < 126)
-		Stream_Write_UINT8(sWS, len | WEBSOCKET_MASK_BIT);
+		Stream_Write_UINT8(sWS, (UINT8)len | WEBSOCKET_MASK_BIT);
 	else if (len < 0x10000)
 	{
 		Stream_Write_UINT8(sWS, 126 | WEBSOCKET_MASK_BIT);
-		Stream_Write_UINT16_BE(sWS, len);
+		Stream_Write_UINT16_BE(sWS, (UINT16)len);
 	}
 	else
 	{
 		Stream_Write_UINT8(sWS, 127 | WEBSOCKET_MASK_BIT);
 		Stream_Write_UINT32_BE(sWS, 0); /* payload is limited to INT_MAX */
-		Stream_Write_UINT32_BE(sWS, len);
+		Stream_Write_UINT32_BE(sWS, (UINT32)len);
 	}
 	Stream_Write_UINT32(sWS, maskingKey);
 
@@ -125,14 +125,15 @@ static int websocket_write_all(BIO* bio, const BYTE* data, size_t length)
 				return -1;
 
 			if (BIO_write_blocked(bio))
-				status = BIO_wait_write(bio, 100);
+			{
+				const long rstatus = BIO_wait_write(bio, 100);
+				if (rstatus < 0)
+					return -1;
+			}
 			else if (BIO_read_blocked(bio))
 				return -2; /* Abort write, there is data that must be read */
 			else
 				USleep(100);
-
-			if (status < 0)
-				return -1;
 		}
 	}
 
@@ -141,24 +142,21 @@ static int websocket_write_all(BIO* bio, const BYTE* data, size_t length)
 
 int websocket_write(BIO* bio, const BYTE* buf, int isize, WEBSOCKET_OPCODE opcode)
 {
-	size_t payloadSize = 0;
 	size_t fullLen = 0;
 	int status = 0;
 	wStream* sWS = NULL;
 
 	uint32_t maskingKey = 0;
 
-	int streamPos = 0;
-
 	WINPR_ASSERT(bio);
 	WINPR_ASSERT(buf);
 
 	winpr_RAND(&maskingKey, sizeof(maskingKey));
 
-	payloadSize = isize;
 	if (isize < 0)
 		return -1;
 
+	const size_t payloadSize = (size_t)isize;
 	if (payloadSize < 126)
 		fullLen = payloadSize + 6; /* 2 byte "mini header" + 4 byte masking key */
 	else if (payloadSize < 0x10000)
@@ -172,30 +170,31 @@ int websocket_write(BIO* bio, const BYTE* buf, int isize, WEBSOCKET_OPCODE opcod
 
 	Stream_Write_UINT8(sWS, WEBSOCKET_FIN_BIT | opcode);
 	if (payloadSize < 126)
-		Stream_Write_UINT8(sWS, payloadSize | WEBSOCKET_MASK_BIT);
+		Stream_Write_UINT8(sWS, (UINT8)payloadSize | WEBSOCKET_MASK_BIT);
 	else if (payloadSize < 0x10000)
 	{
 		Stream_Write_UINT8(sWS, 126 | WEBSOCKET_MASK_BIT);
-		Stream_Write_UINT16_BE(sWS, payloadSize);
+		Stream_Write_UINT16_BE(sWS, (UINT16)payloadSize);
 	}
 	else
 	{
 		Stream_Write_UINT8(sWS, 127 | WEBSOCKET_MASK_BIT);
 		/* biggest packet possible is 0xffff + 0xa, so 32bit is always enough */
 		Stream_Write_UINT32_BE(sWS, 0);
-		Stream_Write_UINT32_BE(sWS, payloadSize);
+		Stream_Write_UINT32_BE(sWS, (UINT32)payloadSize);
 	}
 	Stream_Write_UINT32(sWS, maskingKey);
 
 	/* mask as much as possible with 32bit access */
-	for (streamPos = 0; streamPos + 4 <= isize; streamPos += 4)
+	size_t streamPos = 0;
+	for (; streamPos + 4 <= payloadSize; streamPos += 4)
 	{
 		uint32_t masked = *((const uint32_t*)(buf + streamPos)) ^ maskingKey;
 		Stream_Write_UINT32(sWS, masked);
 	}
 
 	/* mask the rest byte by byte */
-	for (; streamPos < isize; streamPos++)
+	for (; streamPos < payloadSize; streamPos++)
 	{
 		BYTE* partialMask = (BYTE*)(&maskingKey) + streamPos % 4;
 		BYTE masked = *((buf + streamPos)) ^ *partialMask;

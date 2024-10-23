@@ -67,7 +67,9 @@ static pstatus_t general_set_32s(INT32 val, INT32* pDst, UINT32 len)
 		if (thiswidth > remaining)
 			thiswidth = remaining;
 
-		prims->copy_8u((BYTE*)dptr, (BYTE*)(dptr + span), thiswidth << 2);
+		const size_t s = thiswidth << 2;
+		WINPR_ASSERT(thiswidth <= INT32_MAX);
+		prims->copy_8u((BYTE*)dptr, (BYTE*)(dptr + span), (INT32)s);
 		remaining -= thiswidth;
 		span <<= 1;
 	}
@@ -104,7 +106,9 @@ static pstatus_t general_set_32u(UINT32 val, UINT32* pDst, UINT32 len)
 		if (thiswidth > remaining)
 			thiswidth = remaining;
 
-		prims->copy_8u((BYTE*)dptr, (BYTE*)(dptr + span), thiswidth << 2);
+		const size_t s = thiswidth << 2;
+		WINPR_ASSERT(thiswidth <= INT32_MAX);
+		prims->copy_8u((BYTE*)dptr, (BYTE*)(dptr + span), (INT32)s);
 		remaining -= thiswidth;
 		span <<= 1;
 	}

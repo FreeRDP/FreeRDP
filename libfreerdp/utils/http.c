@@ -82,7 +82,9 @@ static int get_line(BIO* bio, char* buffer, size_t size)
 		}
 	} while (1);
 #else
-	return BIO_get_line(bio, buffer, size);
+	if (size > INT32_MAX)
+		return -1;
+	return BIO_get_line(bio, buffer, (int)size);
 #endif
 }
 
@@ -190,7 +192,11 @@ BOOL freerdp_http_request(const char* url, const char* body, long* status_code, 
 
 	WLog_Print(log, WLOG_DEBUG, "headers:\n%s", headers);
 	ERR_clear_error();
-	if (BIO_write(bio, headers, strnlen(headers, size)) < 0)
+	const size_t hlen = strnlen(headers, size);
+	if (hlen > INT32_MAX)
+		goto out;
+
+	if (BIO_write(bio, headers, (int)hlen) < 0)
 	{
 		log_errors(log, "could not write headers");
 		goto out;
@@ -207,7 +213,7 @@ BOOL freerdp_http_request(const char* url, const char* body, long* status_code, 
 		}
 
 		ERR_clear_error();
-		if (BIO_write(bio, body, blen) < 0)
+		if (BIO_write(bio, body, (int)blen) < 0)
 		{
 			log_errors(log, "could not write body");
 			goto out;
@@ -266,17 +272,20 @@ BOOL freerdp_http_request(const char* url, const char* body, long* status_code, 
 			goto out;
 
 		BYTE* p = *response;
-		int left = *response_length;
+		size_t left = *response_length;
 		while (left > 0)
 		{
-			status = BIO_read(bio, p, left);
+			const int rd = (left < INT32_MAX) ? (int)left : INT32_MAX;
+			status = BIO_read(bio, p, rd);
 			if (status <= 0)
 			{
 				log_errors(log, "could not read response");
 				goto out;
 			}
 			p += status;
-			left -= status;
+			if ((size_t)status > left)
+				break;
+			left -= (size_t)status;
 		}
 	}
 

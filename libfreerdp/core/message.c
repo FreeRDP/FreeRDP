@@ -1844,7 +1844,7 @@ static BOOL update_message_process_update_class(rdpUpdateProxy* proxy, wMessage*
 		{
 			const UINT16 imeId = ((size_t)msg->wParam) >> 16 & 0xFFFF;
 			const UINT32 imeState = ((size_t)msg->wParam) & 0xFFFF;
-			const UINT32 imeConvMode = ((size_t)msg->lParam);
+			const UINT32 imeConvMode = ((size_t)msg->lParam) & 0xFFFFFFFFUL;
 			rc = IFCALLRESULT(TRUE, proxy->SetKeyboardImeStatus, msg->context, imeId, imeState,
 			                  imeConvMode);
 		}

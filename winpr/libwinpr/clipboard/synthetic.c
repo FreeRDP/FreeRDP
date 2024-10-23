@@ -60,12 +60,15 @@ static void* clipboard_synthesize_cf_text(wClipboard* clipboard, UINT32 formatId
 	{
 		char* str = ConvertWCharNToUtf8Alloc(data, *pSize / sizeof(WCHAR), &size);
 
-		if (!str)
+		if (!str || (size > UINT32_MAX))
+		{
+			free(str);
 			return NULL;
+		}
 
 		pDstData = ConvertLineEndingToCRLF(str, &size);
 		free(str);
-		*pSize = size;
+		*pSize = (UINT32)size;
 		return pDstData;
 	}
 	else if ((formatId == CF_TEXT) || (formatId == CF_OEMTEXT) ||
@@ -74,10 +77,10 @@ static void* clipboard_synthesize_cf_text(wClipboard* clipboard, UINT32 formatId
 		size = *pSize;
 		pDstData = ConvertLineEndingToCRLF(data, &size);
 
-		if (!pDstData)
+		if (!pDstData || (size > *pSize))
 			return NULL;
 
-		*pSize = size;
+		*pSize = (UINT32)size;
 		return pDstData;
 	}
 
@@ -144,13 +147,14 @@ static void* clipboard_synthesize_cf_unicodetext(wClipboard* clipboard, UINT32 f
 		pDstData = ConvertUtf8NToWCharAlloc(crlfStr, size, &len);
 		free(crlfStr);
 
-		if ((len < 1) || (len > UINT32_MAX / sizeof(WCHAR)))
+		if ((len < 1) || ((len + 1) > UINT32_MAX / sizeof(WCHAR)))
 		{
 			free(pDstData);
 			return NULL;
 		}
 
-		*pSize = (len + 1) * sizeof(WCHAR);
+		const size_t slen = (len + 1) * sizeof(WCHAR);
+		*pSize = (UINT32)slen;
 	}
 
 	return (void*)pDstData;
@@ -280,6 +284,9 @@ static void* clipboard_prepend_bmp_header(const WINPR_BITMAP_INFO_HEADER* pInfoH
 		return NULL;
 
 	const size_t DstSize = sizeof(WINPR_BITMAP_FILE_HEADER) + size;
+	if (DstSize > UINT32_MAX)
+		return NULL;
+
 	wStream* s = Stream_New(NULL, DstSize);
 	if (!s)
 		return NULL;
@@ -287,7 +294,7 @@ static void* clipboard_prepend_bmp_header(const WINPR_BITMAP_INFO_HEADER* pInfoH
 	WINPR_BITMAP_FILE_HEADER fileHeader = { 0 };
 	fileHeader.bfType[0] = 'B';
 	fileHeader.bfType[1] = 'M';
-	fileHeader.bfSize = DstSize;
+	fileHeader.bfSize = (UINT32)DstSize;
 	fileHeader.bfOffBits = sizeof(WINPR_BITMAP_FILE_HEADER) + sizeof(WINPR_BITMAP_INFO_HEADER);
 	if (!writeBitmapFileHeader(s, &fileHeader))
 		goto fail;
@@ -298,7 +305,7 @@ static void* clipboard_prepend_bmp_header(const WINPR_BITMAP_INFO_HEADER* pInfoH
 	const size_t len = Stream_GetPosition(s);
 	if (len != DstSize)
 		goto fail;
-	*pSize = DstSize;
+	*pSize = (UINT32)DstSize;
 
 	BYTE* dst = Stream_Buffer(s);
 	Stream_Free(s, FALSE);
@@ -602,7 +609,7 @@ static void* clipboard_synthesize_text_html(wClipboard* clipboard, UINT32 format
 
 		const long end = strtol(&endStr[8], NULL, 10);
 
-		if (beg < 0 || end < 0 || ((size_t)beg > SrcSize) || ((size_t)end > SrcSize) ||
+		if ((beg < 0) || (end < 0) || ((size_t)beg > SrcSize) || ((size_t)end > SrcSize) ||
 		    (beg >= end) || (errno != 0))
 			return NULL;
 

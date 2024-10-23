@@ -87,7 +87,8 @@ int region16_n_rects(const REGION16* region)
 {
 	WINPR_ASSERT(region);
 	WINPR_ASSERT(region->data);
-	return region->data->nbRects;
+	WINPR_ASSERT(region->data->nbRects <= INT32_MAX);
+	return (int)region->data->nbRects;
 }
 
 const RECTANGLE_16* region16_rects(const REGION16* region, UINT32* nbRects)
@@ -106,7 +107,10 @@ const RECTANGLE_16* region16_rects(const REGION16* region, UINT32* nbRects)
 		return NULL;
 
 	if (nbRects)
-		*nbRects = data->nbRects;
+	{
+		WINPR_ASSERT(data->nbRects <= UINT32_MAX);
+		*nbRects = (UINT32)data->nbRects;
+	}
 
 	return (RECTANGLE_16*)(data + 1);
 }
@@ -423,7 +427,6 @@ static BOOL region16_simplify_bands(REGION16* region)
 	int nbRects = 0;
 	int finalNbRects = 0;
 	int bandItems = 0;
-	int toMove = 0;
 	finalNbRects = nbRects = region16_n_rects(region);
 
 	if (nbRects < 2)
@@ -453,7 +456,7 @@ static BOOL region16_simplify_bands(REGION16* region)
 			/* override band2, we don't move band1 pointer as the band after band2
 			 * may be merged too */
 			endBand = band2 + bandItems;
-			toMove = (endPtr - endBand) * sizeof(RECTANGLE_16);
+			const size_t toMove = (endPtr - endBand) * sizeof(RECTANGLE_16);
 
 			if (toMove)
 				MoveMemory(band2, endBand, toMove);

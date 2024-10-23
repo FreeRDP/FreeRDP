@@ -704,8 +704,10 @@ static UINT device_server_packet_send(CameraDeviceServerContext* context, wStrea
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(s);
 
-	if (!WTSVirtualChannelWrite(device->device_channel, Stream_BufferAs(s, char),
-	                            Stream_GetPosition(s), &written))
+	const size_t len = Stream_GetPosition(s);
+	WINPR_ASSERT(len <= UINT32_MAX);
+	if (!WTSVirtualChannelWrite(device->device_channel, Stream_BufferAs(s, char), (UINT32)len,
+	                            &written))
 	{
 		WLog_ERR(TAG, "WTSVirtualChannelWrite failed!");
 		error = ERROR_INTERNAL_ERROR;

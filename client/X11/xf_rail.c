@@ -98,7 +98,7 @@ void xf_rail_disable_remoteapp_mode(xfContext* xfc)
 
 void xf_rail_send_activate(xfContext* xfc, Window xwindow, BOOL enabled)
 {
-	RAIL_ACTIVATE_ORDER activate;
+	RAIL_ACTIVATE_ORDER activate = { 0 };
 	xfAppWindow* appWindow = xf_AppWindowFromX11Window(xfc, xwindow);
 
 	if (!appWindow)
@@ -107,17 +107,23 @@ void xf_rail_send_activate(xfContext* xfc, Window xwindow, BOOL enabled)
 	if (enabled)
 		xf_SetWindowStyle(xfc, appWindow, appWindow->dwStyle, appWindow->dwExStyle);
 
-	activate.windowId = appWindow->windowId;
+	WINPR_ASSERT(appWindow->windowId <= UINT32_MAX);
+	activate.windowId = (UINT32)appWindow->windowId;
 	activate.enabled = enabled;
 	xfc->rail->ClientActivate(xfc->rail, &activate);
 }
 
-void xf_rail_send_client_system_command(xfContext* xfc, UINT32 windowId, UINT16 command)
+BOOL xf_rail_send_client_system_command(xfContext* xfc, UINT64 windowId, UINT16 command)
 {
-	RAIL_SYSCOMMAND_ORDER syscommand;
-	syscommand.windowId = windowId;
-	syscommand.command = command;
-	xfc->rail->ClientSystemCommand(xfc->rail, &syscommand);
+	WINPR_ASSERT(xfc);
+	WINPR_ASSERT(xfc->rail);
+	WINPR_ASSERT(xfc->rail->ClientSystemCommand);
+	if (windowId > UINT32_MAX)
+		return FALSE;
+
+	const RAIL_SYSCOMMAND_ORDER syscommand = { .windowId = (UINT32)windowId, .command = command };
+	const UINT rc = xfc->rail->ClientSystemCommand(xfc->rail, &syscommand);
+	return rc == CHANNEL_RC_OK;
 }
 
 /**
@@ -128,7 +134,7 @@ void xf_rail_send_client_system_command(xfContext* xfc, UINT32 windowId, UINT16 
  */
 void xf_rail_adjust_position(xfContext* xfc, xfAppWindow* appWindow)
 {
-	RAIL_WINDOW_MOVE_ORDER windowMove;
+	RAIL_WINDOW_MOVE_ORDER windowMove = { 0 };
 
 	if (!appWindow->is_mapped || appWindow->local_move.state != LMS_NOT_ACTIVE)
 		return;
@@ -138,7 +144,8 @@ void xf_rail_adjust_position(xfContext* xfc, xfAppWindow* appWindow)
 	    appWindow->width != (INT64)appWindow->windowWidth ||
 	    appWindow->height != (INT64)appWindow->windowHeight)
 	{
-		windowMove.windowId = appWindow->windowId;
+		WINPR_ASSERT(appWindow->windowId <= UINT32_MAX);
+		windowMove.windowId = (UINT32)appWindow->windowId;
 		/*
 		 * Calculate new size/position for the rail window(new values for
 		 * windowOffsetX/windowOffsetY/windowWidth/windowHeight) on the server
@@ -170,12 +177,13 @@ void xf_rail_end_local_move(xfContext* xfc, xfAppWindow* appWindow)
 	if ((appWindow->local_move.direction == _NET_WM_MOVERESIZE_MOVE_KEYBOARD) ||
 	    (appWindow->local_move.direction == _NET_WM_MOVERESIZE_SIZE_KEYBOARD))
 	{
-		RAIL_WINDOW_MOVE_ORDER windowMove;
+		RAIL_WINDOW_MOVE_ORDER windowMove = { 0 };
 
 		/*
 		 * For keyboard moves send and explicit update to RDP server
 		 */
-		windowMove.windowId = appWindow->windowId;
+		WINPR_ASSERT(appWindow->windowId <= UINT32_MAX);
+		windowMove.windowId = (UINT32)appWindow->windowId;
 		/*
 		 * Calculate new size/position for the rail window(new values for
 		 * windowOffsetX/windowOffsetY/windowWidth/windowHeight) on the server

@@ -291,7 +291,9 @@ UINT sdlDispContext::sendLayout(const rdpMonitor* monitors, size_t nmonitors)
 	}
 
 	WINPR_ASSERT(_disp);
-	ret = IFCALLRESULT(CHANNEL_RC_OK, _disp->SendMonitorLayout, _disp, layouts.size(),
+	const size_t len = layouts.size();
+	WINPR_ASSERT(len <= UINT32_MAX);
+	ret = IFCALLRESULT(CHANNEL_RC_OK, _disp->SendMonitorLayout, _disp, static_cast<UINT32>(len),
 	                   layouts.data());
 	return ret;
 }

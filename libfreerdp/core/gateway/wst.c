@@ -17,6 +17,8 @@
  * limitations under the License.
  */
 
+#include <stdint.h>
+
 #include <freerdp/config.h>
 #include <freerdp/version.h>
 
@@ -143,7 +145,7 @@ static BOOL wst_set_auth_header(rdpCredsspAuth* auth, HttpRequest* request)
 		if (authToken->cbBuffer > INT_MAX)
 			return FALSE;
 
-		base64AuthToken = crypto_base64_encode(authToken->pvBuffer, (int)authToken->cbBuffer);
+		base64AuthToken = crypto_base64_encode(authToken->pvBuffer, authToken->cbBuffer);
 	}
 
 	if (base64AuthToken)
@@ -192,10 +194,10 @@ static BOOL wst_recv_auth_token(rdpCredsspAuth* auth, HttpResponse* response)
 
 	crypto_base64_decode(token64, len, &authTokenData, &authTokenLength);
 
-	if (authTokenLength && authTokenData)
+	if (authTokenLength && (authTokenLength <= UINT32_MAX) && authTokenData)
 	{
 		authToken.pvBuffer = authTokenData;
-		authToken.cbBuffer = authTokenLength;
+		authToken.cbBuffer = (UINT32)authTokenLength;
 		credssp_auth_take_input_buffer(auth, &authToken);
 	}
 	else
@@ -363,8 +365,8 @@ static BOOL wst_handle_ok_or_forbidden(rdpWst* wst, HttpResponse** ppresponse, D
 		http_response_free(*ppresponse);
 		*ppresponse = NULL;
 		/* Terminate this connection and make a new one with the Loadbalancing Cookie */
-		int fd = BIO_get_fd(wst->tls->bio, NULL);
-		if (fd >= 0)
+		const long fd = BIO_get_fd(wst->tls->bio, NULL);
+		if ((fd >= 0) && (fd <= INT32_MAX))
 			closesocket((SOCKET)fd);
 		freerdp_tls_free(wst->tls);
 
@@ -561,13 +563,14 @@ static int wst_bio_read(BIO* bio, char* buf, int size)
 	int status = 0;
 	WINPR_ASSERT(bio);
 	WINPR_ASSERT(buf);
+	WINPR_ASSERT(size >= 0);
 
 	rdpWst* wst = (rdpWst*)BIO_get_data(bio);
 	WINPR_ASSERT(wst);
 
 	while (status <= 0)
 	{
-		status = websocket_read(wst->tls->bio, (BYTE*)buf, size, &wst->wscontext);
+		status = websocket_read(wst->tls->bio, (BYTE*)buf, (size_t)size, &wst->wscontext);
 		if (status <= 0)
 		{
 			if (!BIO_should_retry(wst->tls->bio))

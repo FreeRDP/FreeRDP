@@ -263,10 +263,11 @@ static int freerdp_keyboard_init_apple(const DWORD* keyboardLayoutId,
 {
 	WINPR_ASSERT(x11_keycode_to_rdp_scancode);
 	WINPR_ASSERT(keyboardLayoutId);
-
+	WINPR_ASSERT(count <= UINT32_MAX);
 	for (size_t keycode = 8; keycode < count; keycode++)
 	{
-		const DWORD vkcode = GetVirtualKeyCodeFromKeycode(keycode - 8u, WINPR_KEYCODE_TYPE_APPLE);
+		const DWORD vkcode =
+		    GetVirtualKeyCodeFromKeycode((UINT32)keycode - 8u, WINPR_KEYCODE_TYPE_APPLE);
 		x11_keycode_to_rdp_scancode[keycode] =
 		    GetVirtualScanCodeFromVirtualKeyCode(vkcode, WINPR_KBD_TYPE_IBM_ENHANCED);
 	}
@@ -280,9 +281,12 @@ static int freerdp_keyboard_init_x11_evdev(const DWORD* keyboardLayoutId,
 {
 	WINPR_ASSERT(keyboardLayoutId);
 	WINPR_ASSERT(x11_keycode_to_rdp_scancode);
+	WINPR_ASSERT(count <= UINT32_MAX);
+
 	for (size_t keycode = 0; keycode < count; keycode++)
 	{
-		const DWORD vkcode = GetVirtualKeyCodeFromKeycode(keycode, WINPR_KEYCODE_TYPE_EVDEV);
+		const DWORD vkcode =
+		    GetVirtualKeyCodeFromKeycode((UINT32)keycode, WINPR_KEYCODE_TYPE_EVDEV);
 		x11_keycode_to_rdp_scancode[keycode] =
 		    GetVirtualScanCodeFromVirtualKeyCode(vkcode, WINPR_KBD_TYPE_IBM_ENHANCED);
 	}
@@ -332,7 +336,7 @@ DWORD freerdp_keyboard_init(DWORD keyboardLayoutId)
 		const DWORD x11 = X11_KEYCODE_TO_VIRTUAL_SCANCODE[keycode];
 		const DWORD sc = RDP_SCANCODE_CODE(x11);
 		const BOOL ex = RDP_SCANCODE_EXTENDED(x11);
-		VIRTUAL_SCANCODE_TO_X11_KEYCODE[sc][ex ? 1 : 0] = keycode;
+		VIRTUAL_SCANCODE_TO_X11_KEYCODE[sc][ex ? 1 : 0] = (UINT32)keycode;
 	}
 
 	return keyboardLayoutId;

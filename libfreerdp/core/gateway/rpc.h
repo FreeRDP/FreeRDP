@@ -728,7 +728,7 @@ struct rdp_rpc
 	UINT32 result;
 
 	rdpCredsspAuth* auth;
-	size_t SendSeqNum;
+	UINT32 SendSeqNum;
 
 	RpcClient* client;
 

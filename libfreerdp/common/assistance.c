@@ -514,7 +514,7 @@ static BOOL freerdp_assistance_parse_attr_uint32(UINT32* opt, const char* key, c
 		return FALSE;
 	}
 
-	*opt = val;
+	*opt = (UINT32)val;
 
 	return TRUE;
 }

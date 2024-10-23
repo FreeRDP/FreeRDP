@@ -25,6 +25,8 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include <winpr/wtypes.h>
+
 #include <freerdp/api.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/gdi/gdi.h>
@@ -96,8 +98,8 @@ HGDI_RGN gdi_CreateRectRgn(INT32 nLeftRect, INT32 nTopRect, INT32 nRightRect, IN
 	hRgn->objectType = GDIOBJECT_REGION;
 	hRgn->x = nLeftRect;
 	hRgn->y = nTopRect;
-	hRgn->w = w;
-	hRgn->h = h;
+	hRgn->w = (INT32)w;
+	hRgn->h = (INT32)h;
 	hRgn->null = FALSE;
 	return hRgn;
 }
@@ -160,8 +162,8 @@ BOOL gdi_RectToRgn(const HGDI_RECT rect, HGDI_RGN rgn)
 
 	rgn->x = rect->left;
 	rgn->y = rect->top;
-	rgn->w = w;
-	rgn->h = h;
+	rgn->w = (INT32)w;
+	rgn->h = (INT32)h;
 
 	return rc;
 }
@@ -199,8 +201,8 @@ BOOL gdi_CRectToRgn(INT32 left, INT32 top, INT32 right, INT32 bottom, HGDI_RGN r
 
 	rgn->x = left;
 	rgn->y = top;
-	rgn->w = w;
-	rgn->h = h;
+	rgn->w = (INT32)w;
+	rgn->h = (INT32)h;
 	return rc;
 }
 
@@ -227,7 +229,7 @@ BOOL gdi_RectToCRgn(const HGDI_RECT rect, INT32* x, INT32* y, INT32* w, INT32* h
 		rc = FALSE;
 	}
 	else
-		*w = tmp;
+		*w = (INT32)tmp;
 	tmp = rect->bottom - rect->top + 1;
 	if ((tmp < 0) || (tmp > INT32_MAX))
 	{
@@ -237,7 +239,7 @@ BOOL gdi_RectToCRgn(const HGDI_RECT rect, INT32* x, INT32* y, INT32* w, INT32* h
 		rc = FALSE;
 	}
 	else
-		*h = tmp;
+		*h = (INT32)tmp;
 	return rc;
 }
 
@@ -276,8 +278,8 @@ BOOL gdi_CRectToCRgn(INT32 left, INT32 top, INT32 right, INT32 bottom, INT32* x,
 
 	*x = left;
 	*y = top;
-	*w = wl;
-	*h = hl;
+	*w = (INT32)wl;
+	*h = (INT32)hl;
 	return rc;
 }
 
@@ -305,8 +307,8 @@ BOOL gdi_RgnToRect(const HGDI_RGN rgn, HGDI_RECT rect)
 	}
 	rect->left = rgn->x;
 	rect->top = rgn->y;
-	rect->right = r;
-	rect->bottom = b;
+	rect->right = (INT32)r;
+	rect->bottom = (INT32)b;
 
 	return rc;
 }
@@ -320,13 +322,17 @@ BOOL gdi_RgnToRect(const HGDI_RGN rgn, HGDI_RECT rect)
  * @param rect destination rectangle
  */
 
-INLINE BOOL gdi_CRgnToRect(INT64 x, INT64 y, INT32 w, INT32 h, HGDI_RECT rect)
+BOOL gdi_CRgnToRect(INT64 x, INT64 y, INT32 w, INT32 h, HGDI_RECT rect)
 {
 	BOOL invalid = FALSE;
 	const INT64 r = x + w - 1;
 	const INT64 b = y + h - 1;
-	rect->left = (x > 0) ? x : 0;
-	rect->top = (y > 0) ? y : 0;
+	WINPR_ASSERT(x <= INT32_MAX);
+	WINPR_ASSERT(y <= INT32_MAX);
+	WINPR_ASSERT(r <= INT32_MAX);
+	WINPR_ASSERT(b <= INT32_MAX);
+	rect->left = (x > 0) ? (INT32)x : 0;
+	rect->top = (y > 0) ? (INT32)y : 0;
 	rect->right = rect->left;
 	rect->bottom = rect->top;
 
@@ -334,12 +340,12 @@ INLINE BOOL gdi_CRgnToRect(INT64 x, INT64 y, INT32 w, INT32 h, HGDI_RECT rect)
 		invalid = TRUE;
 
 	if (r > 0)
-		rect->right = r;
+		rect->right = (INT32)r;
 	else
 		invalid = TRUE;
 
 	if (b > 0)
-		rect->bottom = b;
+		rect->bottom = (INT32)b;
 	else
 		invalid = TRUE;
 
@@ -632,7 +638,7 @@ INLINE BOOL gdi_InvalidateRegion(HGDI_DC hdc, INT32 x, INT32 y, INT32 w, INT32 h
 		if (!new_rgn)
 			return FALSE;
 
-		hdc->hwnd->count = new_cnt;
+		hdc->hwnd->count = (UINT32)new_cnt;
 		cinvalid = new_rgn;
 	}
 

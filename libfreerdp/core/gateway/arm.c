@@ -753,7 +753,10 @@ static BOOL arm_treat_azureInstanceNetworkMetadata(const char* metadata, rdpSett
 				goto out;
 		}
 	}
-	if (!freerdp_settings_set_uint32(settings, FreeRDP_TargetNetAddressCount, addressIdx))
+	if (addressIdx > UINT32_MAX)
+		goto out;
+
+	if (!freerdp_settings_set_uint32(settings, FreeRDP_TargetNetAddressCount, (UINT32)addressIdx))
 		goto out;
 
 	ret = freerdp_settings_get_uint32(settings, FreeRDP_TargetNetAddressCount) > 0;
@@ -1051,15 +1054,22 @@ BOOL arm_resolve_endpoint(rdpContext* context, DWORD timeout)
 		{
 			freerdp* instance = context->instance;
 			WINPR_ASSERT(instance);
-			const SSIZE_T delay = IFCALLRESULT(-1, instance->RetryDialog, instance, "arm-transport",
-			                                   arm->gateway_retry, arm);
+			SSIZE_T delay = IFCALLRESULT(-1, instance->RetryDialog, instance, "arm-transport",
+			                             arm->gateway_retry, arm);
 			arm->gateway_retry++;
 			if (delay <= 0)
 				break; /* error or no retry desired, abort loop */
 			else
 			{
 				WLog_DBG(TAG, "Delay for %" PRIdz "ms before next attempt", delay);
-				Sleep(delay);
+				while (delay > 0)
+				{
+					DWORD slp = (UINT32)delay;
+					if (delay > UINT32_MAX)
+						slp = UINT32_MAX;
+					Sleep(slp);
+					delay -= slp;
+				}
 			}
 		}
 		rc = arm_handle_request(arm, &retry, timeout);

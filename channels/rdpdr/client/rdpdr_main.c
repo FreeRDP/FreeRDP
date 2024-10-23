@@ -27,6 +27,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
 
 #include <winpr/crt.h>
 #include <winpr/sysinfo.h>
@@ -938,6 +939,7 @@ static BOOL hotplug_delete_foreach(ULONG_PTR key, void* element, void* data)
 	WINPR_ASSERT(arg);
 	WINPR_ASSERT(arg->rdpdr);
 	WINPR_ASSERT(arg->dev_array || (arg->dev_array_size == 0));
+	WINPR_ASSERT(key <= UINT32_MAX);
 
 	if (!device_ext || (device_ext->device.type != RDPDR_DTYP_FILESYSTEM) || !device_ext->path ||
 	    !device_ext->automount)
@@ -968,7 +970,7 @@ static BOOL hotplug_delete_foreach(ULONG_PTR key, void* element, void* data)
 	if (!dev_found)
 	{
 		UINT error = 0;
-		UINT32 ids[1] = { key };
+		UINT32 ids[1] = { (UINT32)key };
 
 		WINPR_ASSERT(arg->rdpdr->devman);
 		devman_unregister_device(arg->rdpdr->devman, (void*)key);
@@ -1878,7 +1880,6 @@ static UINT rdpdr_process_receive(rdpdrPlugin* rdpdr, wStream* s)
  */
 UINT rdpdr_send(rdpdrPlugin* rdpdr, wStream* s)
 {
-	UINT status = 0;
 	rdpdrPlugin* plugin = rdpdr;
 
 	if (!s)
@@ -1894,9 +1895,13 @@ UINT rdpdr_send(rdpdrPlugin* rdpdr, wStream* s)
 	}
 
 	const size_t pos = Stream_GetPosition(s);
-	rdpdr_dump_send_packet(rdpdr->log, WLOG_TRACE, s, "[rdpdr-channel] send");
-	status = plugin->channelEntryPoints.pVirtualChannelWriteEx(
-	    plugin->InitHandle, plugin->OpenHandle, Stream_Buffer(s), pos, s);
+	UINT status = ERROR_INTERNAL_ERROR;
+	if (pos <= UINT32_MAX)
+	{
+		rdpdr_dump_send_packet(rdpdr->log, WLOG_TRACE, s, "[rdpdr-channel] send");
+		status = plugin->channelEntryPoints.pVirtualChannelWriteEx(
+		    plugin->InitHandle, plugin->OpenHandle, Stream_Buffer(s), (UINT32)pos, s);
+	}
 
 	if (status != CHANNEL_RC_OK)
 	{

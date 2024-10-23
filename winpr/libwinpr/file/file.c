@@ -383,8 +383,8 @@ static BOOL FileGetFileInformationByHandle(HANDLE hFile,
 	lpFileInformation->ftLastAccessTime.dwLowDateTime = ft & 0xFFFFFFFF;
 	lpFileInformation->nFileSizeHigh = ((UINT64)st.st_size) >> 32ULL;
 	lpFileInformation->nFileSizeLow = st.st_size & 0xFFFFFFFF;
-	lpFileInformation->dwVolumeSerialNumber = st.st_dev;
-	lpFileInformation->nNumberOfLinks = st.st_nlink;
+	lpFileInformation->dwVolumeSerialNumber = (UINT32)st.st_dev;
+	lpFileInformation->nNumberOfLinks = (UINT32)st.st_nlink;
 	lpFileInformation->nFileIndexHigh = (st.st_ino >> 4) & 0xFFFFFFFF;
 	lpFileInformation->nFileIndexLow = st.st_ino & 0xFFFFFFFF;
 	return TRUE;

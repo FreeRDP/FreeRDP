@@ -319,23 +319,23 @@ static BOOL freerdp_image_copy_from_pointer_data_1bpp(
 	if (andStep * nHeight > andMaskLength)
 		return FALSE;
 
-	for (size_t y = 0; y < nHeight; y++)
+	for (UINT32 y = 0; y < nHeight; y++)
 	{
 		const BYTE* andBits = NULL;
 		const BYTE* xorBits = NULL;
-		BYTE* pDstPixel = &pDstData[((nYDst + y) * nDstStep) +
+		BYTE* pDstPixel = &pDstData[((1ULL * nYDst + y) * nDstStep) +
 		                            (1ULL * nXDst * FreeRDPGetBytesPerPixel(DstFormat))];
 		xorBit = andBit = 0x80;
 
 		if (!vFlip)
 		{
-			xorBits = &xorMask[xorStep * y];
-			andBits = &andMask[andStep * y];
+			xorBits = &xorMask[1ULL * xorStep * y];
+			andBits = &andMask[1ULL * andStep * y];
 		}
 		else
 		{
-			xorBits = &xorMask[xorStep * (nHeight - y - 1)];
-			andBits = &andMask[andStep * (nHeight - y - 1)];
+			xorBits = &xorMask[1ULL * xorStep * (nHeight - y - 1)];
+			andBits = &andMask[1ULL * andStep * (nHeight - y - 1)];
 		}
 
 		for (UINT32 x = 0; x < nWidth; x++)
@@ -381,8 +381,8 @@ static BOOL freerdp_image_copy_from_pointer_data_xbpp(
     const gdiPalette* palette)
 {
 	BOOL vFlip = 0;
-	UINT32 xorStep = 0;
-	UINT32 andStep = 0;
+	size_t xorStep = 0;
+	size_t andStep = 0;
 	UINT32 andBit = 0;
 	UINT32 xorPixel = 0;
 	UINT32 andPixel = 0;
@@ -398,7 +398,7 @@ static BOOL freerdp_image_copy_from_pointer_data_xbpp(
 		return FALSE;
 
 	xorBytesPerPixel = xorBpp >> 3;
-	xorStep = nWidth * xorBytesPerPixel;
+	xorStep = 1ULL * nWidth * xorBytesPerPixel;
 	xorStep += (xorStep % 2);
 
 	if (xorBpp == 8 && !palette)
@@ -417,11 +417,11 @@ static BOOL freerdp_image_copy_from_pointer_data_xbpp(
 			return FALSE;
 	}
 
-	for (size_t y = 0; y < nHeight; y++)
+	for (UINT32 y = 0; y < nHeight; y++)
 	{
 		const BYTE* xorBits = NULL;
 		const BYTE* andBits = NULL;
-		BYTE* pDstPixel = &pDstData[((nYDst + y) * nDstStep) +
+		BYTE* pDstPixel = &pDstData[((1ULL * nYDst + y) * nDstStep) +
 		                            (1ULL * nXDst * FreeRDPGetBytesPerPixel(DstFormat))];
 		andBit = 0x80;
 
@@ -435,9 +435,9 @@ static BOOL freerdp_image_copy_from_pointer_data_xbpp(
 		else
 		{
 			if (andMask)
-				andBits = &andMask[andStep * (nHeight - y - 1)];
+				andBits = &andMask[1ULL * andStep * (nHeight - y - 1)];
 
-			xorBits = &xorMask[xorStep * (nHeight - y - 1)];
+			xorBits = &xorMask[1ULL * xorStep * (nHeight - y - 1)];
 		}
 
 		for (UINT32 x = 0; x < nWidth; x++)

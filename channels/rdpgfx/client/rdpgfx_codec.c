@@ -211,16 +211,16 @@ static UINT rdpgfx_decode_AVC444(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd
 
 	if (h264.LC == 0)
 	{
-		tmp = h264.cbAvc420EncodedBitstream1 - pos2 + pos1;
+		const size_t tmp2 = 1ULL * h264.cbAvc420EncodedBitstream1 - pos2 + pos1;
 
-		if (!Stream_CheckAndLogRequiredLength(TAG, s, tmp))
+		if ((tmp2 > UINT32_MAX) || !Stream_CheckAndLogRequiredLength(TAG, s, tmp2))
 		{
 			error = ERROR_INVALID_DATA;
 			goto fail;
 		}
 
-		h264.bitstream[0].length = tmp;
-		Stream_Seek(s, tmp);
+		h264.bitstream[0].length = (UINT32)tmp2;
+		Stream_Seek(s, tmp2);
 
 		if ((error = rdpgfx_read_h264_metablock(gfx, s, &(h264.bitstream[1].meta))))
 		{
@@ -229,10 +229,19 @@ static UINT rdpgfx_decode_AVC444(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd
 		}
 
 		h264.bitstream[1].data = Stream_Pointer(s);
-		h264.bitstream[1].length = Stream_GetRemainingLength(s);
+
+		const size_t len = Stream_GetRemainingLength(s);
+		if (len > UINT32_MAX)
+			goto fail;
+		h264.bitstream[1].length = (UINT32)len;
 	}
 	else
-		h264.bitstream[0].length = Stream_GetRemainingLength(s);
+	{
+		const size_t len = Stream_GetRemainingLength(s);
+		if (len > UINT32_MAX)
+			goto fail;
+		h264.bitstream[0].length = (UINT32)len;
+	}
 
 	cmd->extra = (void*)&h264;
 

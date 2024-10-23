@@ -324,9 +324,9 @@ bool SDLConnectionDialog::createWindow()
 {
 	destroyWindow();
 
-	const size_t widget_height = 50;
-	const size_t widget_width = 600;
-	const size_t total_height = 300;
+	const int widget_height = 50;
+	const int widget_width = 600;
+	const int total_height = 300;
 
 	auto rc = SDL_CreateWindowAndRenderer(_title.c_str(), widget_width, total_height,
 	                                      SDL_WINDOW_HIGH_PIXEL_DENSITY | SDL_WINDOW_MOUSE_FOCUS |

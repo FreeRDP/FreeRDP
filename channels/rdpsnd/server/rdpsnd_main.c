@@ -82,13 +82,21 @@ static UINT rdpsnd_server_send_formats(RdpsndServerContext* context)
 	}
 
 	const size_t pos = Stream_GetPosition(s);
+	if ((pos < 4) || (pos > UINT16_MAX))
+		goto fail;
+
 	Stream_SetPosition(s, 2);
-	Stream_Write_UINT16(s, pos - 4);
+	Stream_Write_UINT16(s, (UINT16)(pos - 4));
 	Stream_SetPosition(s, pos);
 
 	WINPR_ASSERT(context->priv);
+
+	const size_t len = Stream_GetPosition(s);
+	if (len > UINT32_MAX)
+		goto fail;
+
 	status = WTSVirtualChannelWrite(context->priv->ChannelHandle, Stream_BufferAs(s, char),
-	                                Stream_GetPosition(s), &written);
+	                                (UINT32)len, &written);
 	Stream_SetPosition(s, 0);
 fail:
 	return status ? CHANNEL_RC_OK : ERROR_INTERNAL_ERROR;
@@ -429,7 +437,6 @@ out:
 static UINT rdpsnd_server_training(RdpsndServerContext* context, UINT16 timestamp, UINT16 packsize,
                                    BYTE* data)
 {
-	size_t end = 0;
 	ULONG written = 0;
 	BOOL status = 0;
 	wStream* s = rdpsnd_server_get_buffer(context);
@@ -454,12 +461,15 @@ static UINT rdpsnd_server_training(RdpsndServerContext* context, UINT16 timestam
 		Stream_Write(s, data, packsize);
 	}
 
-	end = Stream_GetPosition(s);
-	Stream_SetPosition(s, 2);
-	Stream_Write_UINT16(s, end - 4);
+	const size_t end = Stream_GetPosition(s);
+	if ((end < 4) || (end > UINT16_MAX))
+		return ERROR_INTERNAL_ERROR;
 
-	status = WTSVirtualChannelWrite(context->priv->ChannelHandle, Stream_BufferAs(s, char), end,
-	                                &written);
+	Stream_SetPosition(s, 2);
+	Stream_Write_UINT16(s, (UINT16)(end - 4));
+
+	status = WTSVirtualChannelWrite(context->priv->ChannelHandle, Stream_BufferAs(s, char),
+	                                (UINT32)end, &written);
 
 	Stream_SetPosition(s, 0);
 
@@ -494,10 +504,6 @@ static BOOL rdpsnd_server_align_wave_pdu(wStream* s, UINT32 alignment)
  */
 static UINT rdpsnd_server_send_wave_pdu(RdpsndServerContext* context, UINT16 wTimestamp)
 {
-	size_t length = 0;
-	size_t start = 0;
-	size_t end = 0;
-	const BYTE* src = NULL;
 	AUDIO_FORMAT* format = NULL;
 	ULONG written = 0;
 	UINT error = CHANNEL_RC_OK;
@@ -522,29 +528,31 @@ static UINT rdpsnd_server_send_wave_pdu(RdpsndServerContext* context, UINT16 wTi
 	Stream_Write_UINT16(s, context->selected_client_format); /* wFormatNo */
 	Stream_Write_UINT8(s, context->block_no);                /* cBlockNo */
 	Stream_Seek(s, 3);                                       /* bPad */
-	start = Stream_GetPosition(s);
-	src = context->priv->out_buffer;
-	length = 1ull * context->priv->out_pending_frames * context->priv->src_bytes_per_frame;
+	const size_t start = Stream_GetPosition(s);
+	const BYTE* src = context->priv->out_buffer;
+	const size_t length =
+	    1ull * context->priv->out_pending_frames * context->priv->src_bytes_per_frame;
 
 	if (!freerdp_dsp_encode(context->priv->dsp_context, context->src_format, src, length, s))
 		return ERROR_INTERNAL_ERROR;
-	else
+
+	/* Set stream size */
+	if (!rdpsnd_server_align_wave_pdu(s, format->nBlockAlign))
+		return ERROR_INTERNAL_ERROR;
+
+	const size_t end = Stream_GetPosition(s);
+	const size_t pos = end - start + 8ULL;
+	if (pos > UINT16_MAX)
+		return ERROR_INTERNAL_ERROR;
+	Stream_SetPosition(s, 2);
+	Stream_Write_UINT16(s, (UINT16)pos);
+	Stream_SetPosition(s, end);
+
+	if (!WTSVirtualChannelWrite(context->priv->ChannelHandle, Stream_BufferAs(s, char),
+	                            (UINT32)(start + 4), &written))
 	{
-		/* Set stream size */
-		if (!rdpsnd_server_align_wave_pdu(s, format->nBlockAlign))
-			return ERROR_INTERNAL_ERROR;
-
-		end = Stream_GetPosition(s);
-		Stream_SetPosition(s, 2);
-		Stream_Write_UINT16(s, end - start + 8);
-		Stream_SetPosition(s, end);
-
-		if (!WTSVirtualChannelWrite(context->priv->ChannelHandle, Stream_BufferAs(s, char),
-		                            start + 4, &written))
-		{
-			WLog_ERR(TAG, "WTSVirtualChannelWrite failed!");
-			error = ERROR_INTERNAL_ERROR;
-		}
+		WLog_ERR(TAG, "WTSVirtualChannelWrite failed!");
+		error = ERROR_INTERNAL_ERROR;
 	}
 
 	if (error != CHANNEL_RC_OK)
@@ -558,8 +566,8 @@ static UINT rdpsnd_server_send_wave_pdu(RdpsndServerContext* context, UINT16 wTi
 	Stream_Write_UINT32(s, 0); /* bPad */
 	Stream_SetPosition(s, start);
 
-	if (!WTSVirtualChannelWrite(context->priv->ChannelHandle, Stream_Pointer(s), end - start,
-	                            &written))
+	if (!WTSVirtualChannelWrite(context->priv->ChannelHandle, Stream_Pointer(s),
+	                            (UINT32)(end - start), &written))
 	{
 		WLog_ERR(TAG, "WTSVirtualChannelWrite failed!");
 		error = ERROR_INTERNAL_ERROR;
@@ -583,7 +591,6 @@ static UINT rdpsnd_server_send_wave2_pdu(RdpsndServerContext* context, UINT16 fo
                                          const BYTE* data, size_t size, BOOL encoded,
                                          UINT16 timestamp, UINT32 audioTimeStamp)
 {
-	size_t end = 0;
 	ULONG written = 0;
 	UINT error = CHANNEL_RC_OK;
 	BOOL status = 0;
@@ -635,16 +642,22 @@ static UINT rdpsnd_server_send_wave2_pdu(RdpsndServerContext* context, UINT16 fo
 		}
 	}
 
-	end = Stream_GetPosition(s);
-	Stream_SetPosition(s, 2);
-	Stream_Write_UINT16(s, end - 4);
+	const size_t end = Stream_GetPosition(s);
+	if (end > UINT16_MAX + 4)
+	{
+		error = ERROR_INTERNAL_ERROR;
+		goto out;
+	}
 
-	status = WTSVirtualChannelWrite(context->priv->ChannelHandle, Stream_BufferAs(s, char), end,
-	                                &written);
+	Stream_SetPosition(s, 2);
+	Stream_Write_UINT16(s, (UINT16)(end - 4));
+
+	status = WTSVirtualChannelWrite(context->priv->ChannelHandle, Stream_BufferAs(s, char),
+	                                (UINT32)end, &written);
 
 	if (!status || (end != written))
 	{
-		WLog_ERR(TAG, "WTSVirtualChannelWrite failed! [stream length=%" PRIdz " - written=%" PRIu32,
+		WLog_ERR(TAG, "WTSVirtualChannelWrite failed! [stream length=%" PRIuz " - written=%" PRIu32,
 		         end, written);
 		error = ERROR_INTERNAL_ERROR;
 	}
@@ -829,8 +842,13 @@ static UINT rdpsnd_server_close(RdpsndServerContext* context)
 	Stream_SetPosition(s, 2);
 	Stream_Write_UINT16(s, pos - 4);
 	Stream_SetPosition(s, pos);
+
+	const size_t len = Stream_GetPosition(s);
+	if (len > UINT32_MAX)
+		return ERROR_INTERNAL_ERROR;
+
 	status = WTSVirtualChannelWrite(context->priv->ChannelHandle, Stream_BufferAs(s, char),
-	                                Stream_GetPosition(s), &written);
+	                                (UINT32)len, &written);
 	Stream_SetPosition(s, 0);
 	return status ? CHANNEL_RC_OK : ERROR_INTERNAL_ERROR;
 }

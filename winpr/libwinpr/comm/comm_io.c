@@ -294,10 +294,9 @@ BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 
 	if (FD_ISSET(pComm->fd_read, &read_set))
 	{
-		ssize_t nbRead = 0;
-		nbRead = read(pComm->fd_read, lpBuffer, nNumberOfBytesToRead);
+		ssize_t nbRead = read(pComm->fd_read, lpBuffer, nNumberOfBytesToRead);
 
-		if (nbRead < 0)
+		if ((nbRead < 0) || (nbRead > nNumberOfBytesToRead))
 		{
 			char ebuffer[256] = { 0 };
 			CommLog_Print(WLOG_WARN,
@@ -336,7 +335,7 @@ BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 			goto return_false;
 		}
 
-		*lpNumberOfBytesRead = nbRead;
+		*lpNumberOfBytesRead = (UINT32)nbRead;
 
 		EnterCriticalSection(&pComm->EventsLock);
 		if (pComm->PendingEvents & SERIAL_EV_WINPR_WAITING)

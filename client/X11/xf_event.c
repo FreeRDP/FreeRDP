@@ -495,12 +495,14 @@ BOOL xf_generic_ButtonEvent(xfContext* xfc, int x, int y, int button, Window win
 	Window childWindow = None;
 
 	WINPR_ASSERT(xfc);
+	if (button < 0)
+		return FALSE;
 
 	for (size_t i = 0; i < ARRAYSIZE(xfc->button_map); i++)
 	{
 		const button_map* cur = &xfc->button_map[i];
 
-		if (cur->button == button)
+		if (cur->button == (UINT32)button)
 		{
 			flags = cur->flags;
 			break;
@@ -735,7 +737,7 @@ static BOOL xf_event_ClientMessage(xfContext* xfc, const XClientMessageEvent* ev
 			xfAppWindow* appWindow = xf_AppWindowFromX11Window(xfc, event->window);
 
 			if (appWindow)
-				xf_rail_send_client_system_command(xfc, appWindow->windowId, SC_CLOSE);
+				return xf_rail_send_client_system_command(xfc, appWindow->windowId, SC_CLOSE);
 
 			return TRUE;
 		}
@@ -1038,7 +1040,8 @@ static BOOL xf_event_PropertyNotify(xfContext* xfc, const XPropertyEvent* event,
 				if (appWindow->rail_state != WINDOW_SHOW_MAXIMIZED)
 				{
 					appWindow->rail_state = WINDOW_SHOW_MAXIMIZED;
-					xf_rail_send_client_system_command(xfc, appWindow->windowId, SC_MAXIMIZE);
+					return xf_rail_send_client_system_command(xfc, appWindow->windowId,
+					                                          SC_MAXIMIZE);
 				}
 			}
 			else if (appWindow->minimized)
@@ -1046,7 +1049,8 @@ static BOOL xf_event_PropertyNotify(xfContext* xfc, const XPropertyEvent* event,
 				if (appWindow->rail_state != WINDOW_SHOW_MINIMIZED)
 				{
 					appWindow->rail_state = WINDOW_SHOW_MINIMIZED;
-					xf_rail_send_client_system_command(xfc, appWindow->windowId, SC_MINIMIZE);
+					return xf_rail_send_client_system_command(xfc, appWindow->windowId,
+					                                          SC_MINIMIZE);
 				}
 			}
 			else
@@ -1054,7 +1058,7 @@ static BOOL xf_event_PropertyNotify(xfContext* xfc, const XPropertyEvent* event,
 				if (appWindow->rail_state != WINDOW_SHOW && appWindow->rail_state != WINDOW_HIDE)
 				{
 					appWindow->rail_state = WINDOW_SHOW;
-					xf_rail_send_client_system_command(xfc, appWindow->windowId, SC_RESTORE);
+					return xf_rail_send_client_system_command(xfc, appWindow->windowId, SC_RESTORE);
 				}
 			}
 		}
@@ -1305,14 +1309,14 @@ BOOL xf_generic_RawButtonEvent(xfContext* xfc, int button, BOOL app, BOOL down)
 {
 	UINT16 flags = 0;
 
-	if (app)
+	if (app || (button < 0))
 		return FALSE;
 
 	for (size_t i = 0; i < ARRAYSIZE(xfc->button_map); i++)
 	{
 		const button_map* cur = &xfc->button_map[i];
 
-		if (cur->button == button)
+		if (cur->button == (UINT32)button)
 		{
 			flags = cur->flags;
 			break;

@@ -174,7 +174,6 @@ static UINT remdesk_read_channel_header(wStream* s, REMDESK_CHANNEL_HEADER* head
  */
 static UINT remdesk_write_channel_header(wStream* s, REMDESK_CHANNEL_HEADER* header)
 {
-	UINT32 ChannelNameLen = 0;
 	WCHAR ChannelNameW[32] = { 0 };
 
 	WINPR_ASSERT(s);
@@ -185,8 +184,12 @@ static UINT remdesk_write_channel_header(wStream* s, REMDESK_CHANNEL_HEADER* hea
 		ChannelNameW[index] = (WCHAR)header->ChannelName[index];
 	}
 
-	ChannelNameLen = (strnlen(header->ChannelName, sizeof(header->ChannelName)) + 1) * 2;
-	Stream_Write_UINT32(s, ChannelNameLen);        /* ChannelNameLen (4 bytes) */
+	const size_t ChannelNameLen =
+	    (strnlen(header->ChannelName, sizeof(header->ChannelName)) + 1) * 2;
+	if (ChannelNameLen > UINT32_MAX)
+		return ERROR_INVALID_DATA;
+
+	Stream_Write_UINT32(s, (UINT32)ChannelNameLen); /* ChannelNameLen (4 bytes) */
 	Stream_Write_UINT32(s, header->DataLength);    /* DataLen (4 bytes) */
 	Stream_Write(s, ChannelNameW, ChannelNameLen); /* ChannelName (variable) */
 	return CHANNEL_RC_OK;
@@ -202,7 +205,9 @@ static UINT remdesk_write_ctl_header(wStream* s, REMDESK_CTL_HEADER* ctlHeader)
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(ctlHeader);
 
-	remdesk_write_channel_header(s, &ctlHeader->ch);
+	const UINT error = remdesk_write_channel_header(s, &ctlHeader->ch);
+	if (error)
+		return error;
 	Stream_Write_UINT32(s, ctlHeader->msgType); /* msgType (4 bytes) */
 	return CHANNEL_RC_OK;
 }
@@ -213,14 +218,17 @@ static UINT remdesk_write_ctl_header(wStream* s, REMDESK_CTL_HEADER* ctlHeader)
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT remdesk_prepare_ctl_header(REMDESK_CTL_HEADER* ctlHeader, UINT32 msgType,
-                                       UINT32 msgSize)
+                                       size_t msgSize)
 {
 	WINPR_ASSERT(ctlHeader);
+
+	if (msgSize > UINT32_MAX - 4)
+		return ERROR_INVALID_PARAMETER;
 
 	ctlHeader->msgType = msgType;
 	(void)sprintf_s(ctlHeader->ch.ChannelName, ARRAYSIZE(ctlHeader->ch.ChannelName),
 	                REMDESK_CHANNEL_CTL_NAME);
-	ctlHeader->ch.DataLength = 4 + msgSize;
+	ctlHeader->ch.DataLength = (UINT32)(4UL + msgSize);
 	return CHANNEL_RC_OK;
 }
 
@@ -277,16 +285,17 @@ static UINT remdesk_recv_ctl_version_info_pdu(remdeskPlugin* remdesk, wStream* s
  */
 static UINT remdesk_send_ctl_version_info_pdu(remdeskPlugin* remdesk)
 {
-	wStream* s = NULL;
-	REMDESK_CTL_VERSION_INFO_PDU pdu;
-	UINT error = 0;
+	REMDESK_CTL_VERSION_INFO_PDU pdu = { 0 };
 
 	WINPR_ASSERT(remdesk);
 
-	remdesk_prepare_ctl_header(&(pdu.ctlHeader), REMDESK_CTL_VERSIONINFO, 8);
+	UINT error = remdesk_prepare_ctl_header(&(pdu.ctlHeader), REMDESK_CTL_VERSIONINFO, 8);
+	if (error)
+		return error;
+
 	pdu.versionMajor = 1;
 	pdu.versionMinor = 2;
-	s = Stream_New(NULL, REMDESK_CHANNEL_CTL_SIZE + pdu.ctlHeader.ch.DataLength);
+	wStream* s = Stream_New(NULL, REMDESK_CHANNEL_CTL_SIZE + pdu.ctlHeader.ch.DataLength);
 
 	if (!s)
 	{
@@ -294,7 +303,12 @@ static UINT remdesk_send_ctl_version_info_pdu(remdeskPlugin* remdesk)
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
-	remdesk_write_ctl_header(s, &(pdu.ctlHeader));
+	error = remdesk_write_ctl_header(s, &(pdu.ctlHeader));
+	if (error)
+	{
+		Stream_Free(s, TRUE);
+		return error;
+	}
 	Stream_Write_UINT32(s, pdu.versionMajor); /* versionMajor (4 bytes) */
 	Stream_Write_UINT32(s, pdu.versionMinor); /* versionMinor (4 bytes) */
 	Stream_SealLength(s);
@@ -347,7 +361,6 @@ static UINT remdesk_recv_ctl_result_pdu(remdeskPlugin* remdesk, wStream* s,
 static UINT remdesk_send_ctl_authenticate_pdu(remdeskPlugin* remdesk)
 {
 	UINT error = ERROR_INTERNAL_ERROR;
-	wStream* s = NULL;
 	size_t cbExpertBlobW = 0;
 	WCHAR* expertBlobW = NULL;
 	size_t cbRaConnectionStringW = 0;
@@ -378,13 +391,16 @@ static UINT remdesk_send_ctl_authenticate_pdu(remdeskPlugin* remdesk)
 
 	expertBlobW = ConvertUtf8ToWCharAlloc(expertBlob, &cbExpertBlobW);
 
-	if (!expertBlobW || (cbExpertBlobW > UINT32_MAX / sizeof(WCHAR)))
+	if (!expertBlobW)
 		goto out;
 
 	cbExpertBlobW = cbExpertBlobW * sizeof(WCHAR);
-	remdesk_prepare_ctl_header(&(ctlHeader), REMDESK_CTL_AUTHENTICATE,
-	                           cbRaConnectionStringW + cbExpertBlobW);
-	s = Stream_New(NULL, REMDESK_CHANNEL_CTL_SIZE + ctlHeader.ch.DataLength);
+	error = remdesk_prepare_ctl_header(&(ctlHeader), REMDESK_CTL_AUTHENTICATE,
+	                                   cbRaConnectionStringW + cbExpertBlobW);
+	if (error)
+		goto out;
+
+	wStream* s = Stream_New(NULL, REMDESK_CHANNEL_CTL_SIZE + ctlHeader.ch.DataLength);
 
 	if (!s)
 	{
@@ -393,12 +409,18 @@ static UINT remdesk_send_ctl_authenticate_pdu(remdeskPlugin* remdesk)
 		goto out;
 	}
 
-	remdesk_write_ctl_header(s, &(ctlHeader));
+	error = remdesk_write_ctl_header(s, &ctlHeader);
+	if (error)
+	{
+		Stream_Free(s, TRUE);
+		goto out;
+	}
 	Stream_Write(s, raConnectionStringW, cbRaConnectionStringW);
 	Stream_Write(s, expertBlobW, cbExpertBlobW);
 	Stream_SealLength(s);
 
-	if ((error = remdesk_virtual_channel_write(remdesk, s)))
+	error = remdesk_virtual_channel_write(remdesk, s);
+	if (error)
 		WLog_ERR(TAG, "remdesk_virtual_channel_write failed with error %" PRIu32 "!", error);
 
 out:
@@ -432,8 +454,11 @@ static UINT remdesk_send_ctl_remote_control_desktop_pdu(remdeskPlugin* remdesk)
 		return ERROR_INTERNAL_ERROR;
 
 	REMDESK_CTL_HEADER ctlHeader = { 0 };
-	remdesk_prepare_ctl_header(&ctlHeader, REMDESK_CTL_REMOTE_CONTROL_DESKTOP,
-	                           cbRaConnectionStringW);
+	error = remdesk_prepare_ctl_header(&ctlHeader, REMDESK_CTL_REMOTE_CONTROL_DESKTOP,
+	                                   cbRaConnectionStringW);
+	if (error != CHANNEL_RC_OK)
+		goto out;
+
 	wStream* s = Stream_New(NULL, REMDESK_CHANNEL_CTL_SIZE + ctlHeader.ch.DataLength);
 
 	if (!s)
@@ -443,7 +468,12 @@ static UINT remdesk_send_ctl_remote_control_desktop_pdu(remdeskPlugin* remdesk)
 		goto out;
 	}
 
-	remdesk_write_ctl_header(s, &ctlHeader);
+	error = remdesk_write_ctl_header(s, &ctlHeader);
+	if (error)
+	{
+		Stream_Free(s, TRUE);
+		goto out;
+	}
 	Stream_Write(s, raConnectionStringW, cbRaConnectionStringW);
 	Stream_SealLength(s);
 
@@ -463,29 +493,31 @@ out:
  */
 static UINT remdesk_send_ctl_verify_password_pdu(remdeskPlugin* remdesk)
 {
-	UINT error = ERROR_INTERNAL_ERROR;
-	wStream* s = NULL;
 	size_t cbExpertBlobW = 0;
-	WCHAR* expertBlobW = NULL;
 	REMDESK_CTL_VERIFY_PASSWORD_PDU pdu = { 0 };
 
 	WINPR_ASSERT(remdesk);
 
-	if ((error = remdesk_generate_expert_blob(remdesk)))
+	UINT error = remdesk_generate_expert_blob(remdesk);
+	if (error)
 	{
 		WLog_ERR(TAG, "remdesk_generate_expert_blob failed with error %" PRIu32 "!", error);
 		return error;
 	}
 
 	pdu.expertBlob = remdesk->ExpertBlob;
-	expertBlobW = ConvertUtf8ToWCharAlloc(pdu.expertBlob, &cbExpertBlobW);
+	WCHAR* expertBlobW = ConvertUtf8ToWCharAlloc(pdu.expertBlob, &cbExpertBlobW);
 
-	if (!expertBlobW || (cbExpertBlobW > UINT32_MAX / sizeof(WCHAR)))
+	if (!expertBlobW)
 		goto out;
 
 	cbExpertBlobW = cbExpertBlobW * sizeof(WCHAR);
-	remdesk_prepare_ctl_header(&(pdu.ctlHeader), REMDESK_CTL_VERIFY_PASSWORD, cbExpertBlobW);
-	s = Stream_New(NULL, REMDESK_CHANNEL_CTL_SIZE + pdu.ctlHeader.ch.DataLength);
+	error =
+	    remdesk_prepare_ctl_header(&(pdu.ctlHeader), REMDESK_CTL_VERIFY_PASSWORD, cbExpertBlobW);
+	if (error)
+		goto out;
+
+	wStream* s = Stream_New(NULL, 1ULL * REMDESK_CHANNEL_CTL_SIZE + pdu.ctlHeader.ch.DataLength);
 
 	if (!s)
 	{
@@ -494,11 +526,17 @@ static UINT remdesk_send_ctl_verify_password_pdu(remdeskPlugin* remdesk)
 		goto out;
 	}
 
-	remdesk_write_ctl_header(s, &(pdu.ctlHeader));
-	Stream_Write(s, (BYTE*)expertBlobW, cbExpertBlobW);
+	error = remdesk_write_ctl_header(s, &(pdu.ctlHeader));
+	if (error)
+	{
+		Stream_Free(s, TRUE);
+		goto out;
+	}
+	Stream_Write(s, expertBlobW, cbExpertBlobW);
 	Stream_SealLength(s);
 
-	if ((error = remdesk_virtual_channel_write(remdesk, s)))
+	error = remdesk_virtual_channel_write(remdesk, s);
+	if (error)
 		WLog_ERR(TAG, "remdesk_virtual_channel_write failed with error %" PRIu32 "!", error);
 
 out:
@@ -514,23 +552,27 @@ out:
  */
 static UINT remdesk_send_ctl_expert_on_vista_pdu(remdeskPlugin* remdesk)
 {
-	UINT error = 0;
-	wStream* s = NULL;
-	REMDESK_CTL_EXPERT_ON_VISTA_PDU pdu;
+	REMDESK_CTL_EXPERT_ON_VISTA_PDU pdu = { 0 };
 
 	WINPR_ASSERT(remdesk);
 
-	if ((error = remdesk_generate_expert_blob(remdesk)))
+	UINT error = remdesk_generate_expert_blob(remdesk);
+	if (error)
 	{
 		WLog_ERR(TAG, "remdesk_generate_expert_blob failed with error %" PRIu32 "!", error);
 		return error;
 	}
+	if (remdesk->EncryptedPassStubSize > UINT32_MAX)
+		return ERROR_INTERNAL_ERROR;
 
-	pdu.EncryptedPasswordLength = remdesk->EncryptedPassStubSize;
+	pdu.EncryptedPasswordLength = (UINT32)remdesk->EncryptedPassStubSize;
 	pdu.EncryptedPassword = remdesk->EncryptedPassStub;
-	remdesk_prepare_ctl_header(&(pdu.ctlHeader), REMDESK_CTL_EXPERT_ON_VISTA,
-	                           pdu.EncryptedPasswordLength);
-	s = Stream_New(NULL, REMDESK_CHANNEL_CTL_SIZE + pdu.ctlHeader.ch.DataLength);
+	error = remdesk_prepare_ctl_header(&(pdu.ctlHeader), REMDESK_CTL_EXPERT_ON_VISTA,
+	                                   pdu.EncryptedPasswordLength);
+	if (error)
+		return error;
+
+	wStream* s = Stream_New(NULL, REMDESK_CHANNEL_CTL_SIZE + pdu.ctlHeader.ch.DataLength);
 
 	if (!s)
 	{
@@ -538,7 +580,12 @@ static UINT remdesk_send_ctl_expert_on_vista_pdu(remdeskPlugin* remdesk)
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
-	remdesk_write_ctl_header(s, &(pdu.ctlHeader));
+	error = remdesk_write_ctl_header(s, &(pdu.ctlHeader));
+	if (error)
+	{
+		Stream_Free(s, TRUE);
+		return error;
+	}
 	Stream_Write(s, pdu.EncryptedPassword, pdu.EncryptedPasswordLength);
 	Stream_SealLength(s);
 	return remdesk_virtual_channel_write(remdesk, s);

@@ -1016,7 +1016,7 @@ BOOL rpc_client_write_call(rdpRpc* rpc, wStream* s, UINT16 opnum)
 {
 	size_t offset = 0;
 	BYTE* buffer = NULL;
-	UINT32 stub_data_pad = 0;
+	size_t stub_data_pad = 0;
 	SecBuffer plaintext;
 	SecBuffer ciphertext = { 0 };
 	RpcClientCall* clientCall = NULL;
@@ -1024,8 +1024,6 @@ BOOL rpc_client_write_call(rdpRpc* rpc, wStream* s, UINT16 opnum)
 	rpcconn_request_hdr_t request_pdu = { 0 };
 	RpcVirtualConnection* connection = NULL;
 	RpcInChannel* inChannel = NULL;
-	size_t length = 0;
-	size_t size = 0;
 	BOOL rc = FALSE;
 
 	if (!s)
@@ -1052,16 +1050,18 @@ BOOL rpc_client_write_call(rdpRpc* rpc, wStream* s, UINT16 opnum)
 		goto fail;
 
 	Stream_SealLength(s);
-	length = Stream_Length(s);
+	const size_t length = Stream_Length(s);
+	if (length > UINT32_MAX)
+		goto fail;
 
-	size = credssp_auth_trailer_size(auth);
+	const size_t asize = credssp_auth_trailer_size(auth);
 
 	request_pdu.header = rpc_pdu_header_init(rpc);
 	request_pdu.header.ptype = PTYPE_REQUEST;
 	request_pdu.header.pfc_flags = PFC_FIRST_FRAG | PFC_LAST_FRAG;
-	request_pdu.header.auth_length = (UINT16)size;
+	request_pdu.header.auth_length = (UINT16)asize;
 	request_pdu.header.call_id = rpc->CallId++;
-	request_pdu.alloc_hint = length;
+	request_pdu.alloc_hint = (UINT32)length;
 	request_pdu.p_cont_id = 0x0000;
 	request_pdu.opnum = opnum;
 	clientCall = rpc_client_call_new(request_pdu.header.call_id, request_pdu.opnum);
@@ -1090,7 +1090,10 @@ BOOL rpc_client_write_call(rdpRpc* rpc, wStream* s, UINT16 opnum)
 	request_pdu.auth_verifier.auth_reserved = 0x00;
 	request_pdu.auth_verifier.auth_context_id = 0x00000000;
 	offset += (8 + request_pdu.header.auth_length);
-	request_pdu.header.frag_length = offset;
+
+	if (offset > UINT32_MAX)
+		goto fail;
+	request_pdu.header.frag_length = (UINT32)offset;
 	buffer = (BYTE*)calloc(1, request_pdu.header.frag_length);
 
 	if (!buffer)
@@ -1105,9 +1108,14 @@ BOOL rpc_client_write_call(rdpRpc* rpc, wStream* s, UINT16 opnum)
 	CopyMemory(&buffer[offset], &request_pdu.auth_verifier.auth_type, 8);
 	offset += 8;
 
+	if (offset > UINT32_MAX)
+		goto fail;
+
 	plaintext.pvBuffer = buffer;
-	plaintext.cbBuffer = offset;
+	plaintext.cbBuffer = (UINT32)offset;
 	plaintext.BufferType = SECBUFFER_READONLY;
+
+	size_t size = 0;
 	if (!credssp_auth_encrypt(auth, &plaintext, &ciphertext, &size, rpc->SendSeqNum++))
 		goto fail;
 
