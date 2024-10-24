@@ -1404,6 +1404,11 @@ static BOOL bio_read_pem(BIO* bio, char** ppem, size_t* plength)
 	size_t offset = 0;
 	size_t length = blocksize;
 	char* pem = NULL;
+
+	*ppem = NULL;
+	if (plength)
+		*plength = 0;
+
 	while (offset < length)
 	{
 		char* tmp = realloc(pem, length + 1);
@@ -1434,6 +1439,9 @@ static BOOL bio_read_pem(BIO* bio, char** ppem, size_t* plength)
 		*plength = offset;
 	rc = TRUE;
 fail:
+	if (!rc)
+		free(pem);
+
 	return rc;
 }
 
@@ -1445,20 +1453,16 @@ char* freerdp_certificate_get_pem(const rdpCertificate* cert, size_t* pLength)
 char* freerdp_certificate_get_pem_ex(const rdpCertificate* cert, size_t* pLength,
                                      BOOL withCertChain)
 {
-	char* pem = NULL;
 	WINPR_ASSERT(cert);
 
 	if (!cert->x509)
 		return NULL;
 
-	BIO* bio = NULL;
-	int status = 0;
-
 	/**
 	 * Don't manage certificates internally, leave it up entirely to the external client
 	 * implementation
 	 */
-	bio = BIO_new(BIO_s_mem());
+	BIO* bio = BIO_new(BIO_s_mem());
 
 	if (!bio)
 	{
@@ -1466,8 +1470,9 @@ char* freerdp_certificate_get_pem_ex(const rdpCertificate* cert, size_t* pLength
 		return NULL;
 	}
 
-	status = PEM_write_bio_X509(bio, cert->x509);
+	char* pem = NULL;
 
+	const int status = PEM_write_bio_X509(bio, cert->x509);
 	if (status < 0)
 	{
 		WLog_ERR(TAG, "PEM_write_bio_X509 failure: %d", status);
@@ -1476,21 +1481,21 @@ char* freerdp_certificate_get_pem_ex(const rdpCertificate* cert, size_t* pLength
 
 	if (cert->chain && withCertChain)
 	{
-		int count = sk_X509_num(cert->chain);
+		const int count = sk_X509_num(cert->chain);
 		for (int x = 0; x < count; x++)
 		{
 			X509* c = sk_X509_value(cert->chain, x);
-			status = PEM_write_bio_X509(bio, c);
-			if (status < 0)
+			const int rc = PEM_write_bio_X509(bio, c);
+			if (rc < 0)
 			{
-				WLog_ERR(TAG, "PEM_write_bio_X509 failure: %d", status);
+				WLog_ERR(TAG, "PEM_write_bio_X509 failure: %d", rc);
 				goto fail;
 			}
 		}
 	}
 
-	if (!bio_read_pem(bio, &pem, pLength))
-		goto fail;
+	(void)bio_read_pem(bio, &pem, pLength);
+
 fail:
 	BIO_free_all(bio);
 	return pem;

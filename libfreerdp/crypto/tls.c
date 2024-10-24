@@ -448,7 +448,8 @@ static long bio_rdp_tls_ctrl(BIO* bio, int cmd, long num, void* ptr)
 
 			if (status <= 0)
 			{
-				switch (SSL_get_error(tls->ssl, status))
+				const int err = (status < INT32_MIN) ? INT32_MIN : (int)status;
+				switch (SSL_get_error(tls->ssl, err))
 				{
 					case SSL_ERROR_WANT_READ:
 						BIO_set_flags(bio, BIO_FLAGS_READ | BIO_FLAGS_SHOULD_RETRY);

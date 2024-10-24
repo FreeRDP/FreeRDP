@@ -153,10 +153,11 @@ BOOL LogonUserA(LPCSTR lpszUsername, LPCSTR lpszDomain, LPCSTR lpszPassword, DWO
 	}
 
 	long buflen = sysconf(_SC_GETPW_R_SIZE_MAX);
-	if (buflen == -1)
+	if (buflen < 0)
 		buflen = 8196;
 
-	char* buf = (char*)calloc(buflen + 1, sizeof(char));
+	const size_t s = 1ULL + (size_t)buflen;
+	char* buf = (char*)calloc(s, sizeof(char));
 	if (!buf)
 		goto fail;
 

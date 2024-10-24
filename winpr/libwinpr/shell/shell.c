@@ -59,11 +59,11 @@ BOOL GetUserProfileDirectoryA(HANDLE hToken, LPSTR lpProfileDir, LPDWORD lpcchSi
 	}
 
 	long buflen = sysconf(_SC_GETPW_R_SIZE_MAX);
-
-	if (buflen == -1)
+	if (buflen < 0)
 		buflen = 8196;
 
-	char* buf = (char*)malloc(buflen);
+	const size_t s = 1ULL + (size_t)buflen;
+	char* buf = calloc(s, sizeof(char));
 
 	if (!buf)
 		return FALSE;
