@@ -35,6 +35,7 @@
 
 #include <string.h>
 
+FREERDP_LOCAL BOOL freerdp_settings_enforce_monitor_exists(rdpSettings* settings);
 FREERDP_LOCAL void freerdp_settings_print_warnings(const rdpSettings* settings);
 FREERDP_LOCAL BOOL freerdp_settings_check_client_after_preconnect(const rdpSettings* settings);
 FREERDP_LOCAL BOOL freerdp_settings_set_default_order_support(rdpSettings* settings);

@@ -727,7 +727,8 @@ static int freerdp_client_command_line_pre_filter(void* context, int index, int 
 	return 0;
 }
 
-BOOL freerdp_client_add_device_channel(rdpSettings* settings, size_t count, const char** params)
+BOOL freerdp_client_add_device_channel(rdpSettings* settings, size_t count,
+                                       const char* const* params)
 {
 	WINPR_ASSERT(settings);
 	WINPR_ASSERT(params);
@@ -858,7 +859,8 @@ BOOL freerdp_client_del_static_channel(rdpSettings* settings, const char* name)
 	return freerdp_static_channel_collection_del(settings, name);
 }
 
-BOOL freerdp_client_add_static_channel(rdpSettings* settings, size_t count, const char** params)
+BOOL freerdp_client_add_static_channel(rdpSettings* settings, size_t count,
+                                       const char* const* params)
 {
 	ADDIN_ARGV* _args = NULL;
 
@@ -887,7 +889,8 @@ BOOL freerdp_client_del_dynamic_channel(rdpSettings* settings, const char* name)
 	return freerdp_dynamic_channel_collection_del(settings, name);
 }
 
-BOOL freerdp_client_add_dynamic_channel(rdpSettings* settings, size_t count, const char** params)
+BOOL freerdp_client_add_dynamic_channel(rdpSettings* settings, size_t count,
+                                        const char* const* params)
 {
 	ADDIN_ARGV* _args = NULL;
 
@@ -1057,7 +1060,7 @@ static int freerdp_client_command_line_post_filter_int(void* context, COMMAND_LI
 	{
 		size_t count = 0;
 		char** ptr = CommandLineParseCommaSeparatedValues(arg->Value, &count);
-		if (!freerdp_client_add_static_channel(settings, count, ptr))
+		if (!freerdp_client_add_static_channel(settings, count, (const char* const*)ptr))
 			status = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 		CommandLineParserFree(ptr);
 		if (status)
@@ -1067,7 +1070,7 @@ static int freerdp_client_command_line_post_filter_int(void* context, COMMAND_LI
 	{
 		size_t count = 0;
 		char** ptr = CommandLineParseCommaSeparatedValues(arg->Value, &count);
-		if (!freerdp_client_add_dynamic_channel(settings, count, ptr))
+		if (!freerdp_client_add_dynamic_channel(settings, count, (const char* const*)ptr))
 			status = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 		CommandLineParserFree(ptr);
 		if (status)
@@ -1077,7 +1080,7 @@ static int freerdp_client_command_line_post_filter_int(void* context, COMMAND_LI
 	{
 		size_t count = 0;
 		char** ptr = CommandLineParseCommaSeparatedValuesEx(arg->Name, arg->Value, &count);
-		if (!freerdp_client_add_device_channel(settings, count, ptr))
+		if (!freerdp_client_add_device_channel(settings, count, (const char* const*)ptr))
 			status = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 		CommandLineParserFree(ptr);
 		if (status)
@@ -1088,7 +1091,7 @@ static int freerdp_client_command_line_post_filter_int(void* context, COMMAND_LI
 	{
 		size_t count = 0;
 		char** ptr = CommandLineParseCommaSeparatedValuesEx(arg->Name, arg->Value, &count);
-		if (!freerdp_client_add_device_channel(settings, count, ptr))
+		if (!freerdp_client_add_device_channel(settings, count, (const char* const*)ptr))
 			status = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 		CommandLineParserFree(ptr);
 		if (status)
@@ -1100,7 +1103,7 @@ static int freerdp_client_command_line_post_filter_int(void* context, COMMAND_LI
 	{
 		size_t count = 0;
 		char** ptr = CommandLineParseCommaSeparatedValuesEx(arg->Name, arg->Value, &count);
-		if (!freerdp_client_add_device_channel(settings, count, ptr))
+		if (!freerdp_client_add_device_channel(settings, count, (const char* const*)ptr))
 			status = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 		CommandLineParserFree(ptr);
 		if (status)
@@ -1111,7 +1114,7 @@ static int freerdp_client_command_line_post_filter_int(void* context, COMMAND_LI
 	{
 		size_t count = 0;
 		char** ptr = CommandLineParseCommaSeparatedValuesEx(arg->Name, arg->Value, &count);
-		if (!freerdp_client_add_device_channel(settings, count, ptr))
+		if (!freerdp_client_add_device_channel(settings, count, (const char* const*)ptr))
 			status = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 		CommandLineParserFree(ptr);
 		if (status)
@@ -1121,7 +1124,7 @@ static int freerdp_client_command_line_post_filter_int(void* context, COMMAND_LI
 	{
 		size_t count = 0;
 		char** ptr = CommandLineParseCommaSeparatedValuesEx(arg->Name, arg->Value, &count);
-		if (!freerdp_client_add_device_channel(settings, count, ptr))
+		if (!freerdp_client_add_device_channel(settings, count, (const char* const*)ptr))
 			status = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 		CommandLineParserFree(ptr);
 		if (status)
@@ -1132,7 +1135,7 @@ static int freerdp_client_command_line_post_filter_int(void* context, COMMAND_LI
 		size_t count = 0;
 		char** ptr =
 		    CommandLineParseCommaSeparatedValuesEx(URBDRC_CHANNEL_NAME, arg->Value, &count);
-		if (!freerdp_client_add_dynamic_channel(settings, count, ptr))
+		if (!freerdp_client_add_dynamic_channel(settings, count, (const char* const*)ptr))
 			status = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 		CommandLineParserFree(ptr);
 		if (status)
@@ -1181,9 +1184,9 @@ static int freerdp_client_command_line_post_filter_int(void* context, COMMAND_LI
 		size_t count = 0;
 		char** ptr =
 		    CommandLineParseCommaSeparatedValuesEx(RDPSND_CHANNEL_NAME, arg->Value, &count);
-		if (!freerdp_client_add_static_channel(settings, count, ptr))
+		if (!freerdp_client_add_static_channel(settings, count, (const char* const*)ptr))
 			status = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
-		if (!freerdp_client_add_dynamic_channel(settings, count, ptr))
+		if (!freerdp_client_add_dynamic_channel(settings, count, (const char* const*)ptr))
 			status = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 
 		CommandLineParserFree(ptr);
@@ -1194,7 +1197,7 @@ static int freerdp_client_command_line_post_filter_int(void* context, COMMAND_LI
 	{
 		size_t count = 0;
 		char** ptr = CommandLineParseCommaSeparatedValuesEx(AUDIN_CHANNEL_NAME, arg->Value, &count);
-		if (!freerdp_client_add_dynamic_channel(settings, count, ptr))
+		if (!freerdp_client_add_dynamic_channel(settings, count, (const char* const*)ptr))
 			status = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 		CommandLineParserFree(ptr);
 		if (status)

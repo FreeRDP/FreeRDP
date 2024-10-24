@@ -189,6 +189,9 @@ static BOOL sdl_apply_display_properties(SdlContext* sdl)
 
 	rdpSettings* settings = sdl->context()->settings;
 	WINPR_ASSERT(settings);
+	if (!freerdp_settings_get_bool(settings, FreeRDP_Fullscreen) &&
+	    !freerdp_settings_get_bool(settings, FreeRDP_UseMultimon))
+		return TRUE;
 
 	const UINT32 numIds = freerdp_settings_get_uint32(settings, FreeRDP_NumMonitorIds);
 	if (!freerdp_settings_set_pointer_len(settings, FreeRDP_MonitorDefArray, nullptr, numIds))
