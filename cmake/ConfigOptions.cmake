@@ -51,9 +51,10 @@ if(WIN32 AND NOT UWP)
 	option(WITH_WIN8 "Use Windows 8 libraries" OFF)
 endif()
 
-option(BUILD_TESTING "Build unit tests" OFF)
-CMAKE_DEPENDENT_OPTION(TESTS_WTSAPI_EXTRA "Build extra WTSAPI tests (interactive)" OFF "BUILD_TESTING" OFF)
-CMAKE_DEPENDENT_OPTION(BUILD_COMM_TESTS "Build comm related tests (require comm port)" OFF "BUILD_TESTING" OFF)
+option(BUILD_TESTING "Build unit tests (compatible with packaging)" OFF)
+CMAKE_DEPENDENT_OPTION(BUILD_TESTING_INTERNAL "Build unit tests (CI only, not for packaging!)" OFF "NOT BUILD_TESTING" OFF)
+CMAKE_DEPENDENT_OPTION(TESTS_WTSAPI_EXTRA "Build extra WTSAPI tests (interactive)" OFF "BUILD_TESTING_INTERNAL" OFF)
+CMAKE_DEPENDENT_OPTION(BUILD_COMM_TESTS "Build comm related tests (require comm port)" OFF "BUILD_TESTING_INTERNAL" OFF)
 
 option(WITH_SAMPLE "Build sample code" ON)
 
@@ -205,7 +206,7 @@ if (BUILD_FUZZERS)
             "\n")
     endif ()
 
-    set(BUILD_TESTING ON)
+    set(BUILD_TESTING_INTERNAL ON CACHE BOOL "fuzzer default" FORCE)
 
     if (BUILD_SHARED_LIBS STREQUAL "OFF")
         set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")

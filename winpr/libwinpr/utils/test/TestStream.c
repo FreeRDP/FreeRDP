@@ -77,20 +77,20 @@ static BOOL TestStream_Verify(wStream* s, size_t mincap, size_t len, size_t pos)
 
 static BOOL TestStream_New(void)
 {
-	wStream* s = NULL;
 	/* Test creation of a 0-size stream with no buffer */
-	s = Stream_New(NULL, 0);
+	wStream* s = Stream_New(NULL, 0);
 
 	if (s)
 		return FALSE;
+	Stream_Free(s, TRUE);
 
 	return TRUE;
 }
 
 static BOOL TestStream_Static(void)
 {
-	BYTE buffer[20];
-	wStream staticStream;
+	BYTE buffer[20] = { 0 };
+	wStream staticStream = { 0 };
 	wStream* s = &staticStream;
 	UINT16 v = 0;
 	/* Test creation of a static stream */
@@ -250,19 +250,31 @@ fail:
 
 #define Stream_Peek_UINT8_BE Stream_Peek_UINT8
 #define Stream_Read_UINT8_BE Stream_Read_UINT8
+#define Stream_Peek_Get_UINT8_BE Stream_Peek_Get_UINT8
+#define Stream_Get_UINT8_BE Stream_Get_UINT8
 #define Stream_Peek_INT8_BE Stream_Peek_INT8
+#define Stream_Peek_Get_INT8_BE Stream_Peek_Get_INT8
 #define Stream_Read_INT8_BE Stream_Read_INT8
+#define Stream_Get_INT8_BE Stream_Get_INT8
 
 #define TestStream_PeekAndRead(_s, _r, _t)                            \
 	do                                                                \
 	{                                                                 \
-		_t _a;                                                        \
-		_t _b;                                                        \
+		_t _a = 0;                                                    \
+		_t _b = 0;                                                    \
 		BYTE* _p = Stream_Buffer(_s);                                 \
 		Stream_SetPosition(_s, 0);                                    \
 		Stream_Peek_##_t(_s, _a);                                     \
 		Stream_Read_##_t(_s, _b);                                     \
 		if (_a != _b)                                                 \
+		{                                                             \
+			printf("%s: test1 " #_t "_LE failed\n", __func__);        \
+			(_r) = FALSE;                                             \
+		}                                                             \
+		Stream_Rewind(_s, sizeof(_t));                                \
+		const _t _d = Stream_Peek_Get_##_t(_s);                       \
+		const _t _c = Stream_Get_##_t(_s);                            \
+		if (_c != _d)                                                 \
 		{                                                             \
 			printf("%s: test1 " #_t "_LE failed\n", __func__);        \
 			(_r) = FALSE;                                             \
@@ -281,6 +293,14 @@ fail:
 		Stream_Peek_##_t##_BE(_s, _a);                                \
 		Stream_Read_##_t##_BE(_s, _b);                                \
 		if (_a != _b)                                                 \
+		{                                                             \
+			printf("%s: test1 " #_t "_BE failed\n", __func__);        \
+			(_r) = FALSE;                                             \
+		}                                                             \
+		Stream_Rewind(_s, sizeof(_t));                                \
+		const _t _e = Stream_Peek_Get_##_t##_BE(_s);                  \
+		const _t _f = Stream_Get_##_t##_BE(_s);                       \
+		if (_e != _f)                                                 \
 		{                                                             \
 			printf("%s: test1 " #_t "_BE failed\n", __func__);        \
 			(_r) = FALSE;                                             \

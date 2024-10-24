@@ -4,20 +4,26 @@ set(MODULE_PREFIX "TEST_FREERDP_CRYPTO")
 
 disable_warnings_for_directory(${CMAKE_CURRENT_BINARY_DIR})
 
-set(${MODULE_PREFIX}_DRIVER ${MODULE_NAME}.c)
+set(DRIVER ${MODULE_NAME}.c)
 
-set(${MODULE_PREFIX}_TESTS
+set(TESTS
 	TestKnownHosts.c
-	TestBase64.c
-	Test_x509_utils.c)
+        TestBase64.c
+    )
 
-create_test_sourcelist(${MODULE_PREFIX}_SRCS
-	${${MODULE_PREFIX}_DRIVER}
-	${${MODULE_PREFIX}_TESTS})
+if (BUILD_TESTING_INTERNAL)
+    list(APPEND TESTS
+        Test_x509_utils.c
+    )
+endif()
+
+create_test_sourcelist(SRCS
+        ${DRIVER}
+        ${TESTS})
 
 include_directories(SYSTEM ${OPENSSL_INCLUDE_DIR})
 
-add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
+add_executable(${MODULE_NAME} ${SRCS})
 
 set(TEST_PATH ${CMAKE_CURRENT_SOURCE_DIR})
 
@@ -26,7 +32,7 @@ target_link_libraries(${MODULE_NAME} freerdp winpr ${OPENSSL_LIBRARIES})
 
 set_target_properties(${MODULE_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${TESTING_OUTPUT_DIRECTORY}")
 
-foreach(test ${${MODULE_PREFIX}_TESTS})
+foreach(test ${TESTS})
 	get_filename_component(TestName ${test} NAME_WE)
 	add_test(${TestName} ${TESTING_OUTPUT_DIRECTORY}/${MODULE_NAME} ${TestName})
 endforeach()

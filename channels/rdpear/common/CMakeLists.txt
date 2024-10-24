@@ -53,6 +53,6 @@ target_link_libraries(rdpear-common INTERFACE
 
 channel_install(rdpear-common ${FREERDP_ADDIN_PATH} "FreeRDPTargets")
 
-if (BUILD_TESTING)
+if (BUILD_TESTING_INTERNAL OR BUILD_TESTING)
     add_subdirectory(test)
 endif()

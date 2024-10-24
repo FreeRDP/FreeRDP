@@ -26,6 +26,6 @@ add_library(sdl-common-prefs STATIC
 )
 target_link_libraries(sdl-common-prefs winpr freerdp)
 
-if(BUILD_TESTING)
+if(BUILD_TESTING_INTERNAL OR BUILD_TESTING)
 	add_subdirectory(test)
 endif()

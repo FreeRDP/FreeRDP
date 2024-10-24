@@ -33,7 +33,7 @@ if (NOT FREERDP_UNIFIED_BUILD)
 
 	set(WINPR_VERSION_MAJOR 3)
 	option(EXPORT_ALL_SYMBOLS "Export all symbols form library" OFF)
-	option(BUILD_TESTING "Build library unit tests" ON)
+	option(BUILD_TESTING_INTERNAL "Build library unit tests" ON)
 
 	if(CMAKE_COMPILER_IS_GNUCC)
 		if(NOT EXPORT_ALL_SYMBOLS)

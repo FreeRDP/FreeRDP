@@ -31,6 +31,6 @@ if (WIN32)
 	winpr_library_add_public(ncrypt)
 endif()
 
-if(BUILD_TESTING)
+if(BUILD_TESTING_INTERNAL OR BUILD_TESTING)
 	add_subdirectory(test)
 endif()

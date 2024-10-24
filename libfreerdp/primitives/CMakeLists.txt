@@ -145,6 +145,6 @@ endif()
 
 freerdp_object_library_add(freerdp-primitives)
 
-if(BUILD_TESTING AND NOT WIN32 AND NOT APPLE)
+if(BUILD_TESTING_INTERNAL AND NOT WIN32 AND NOT APPLE)
 	add_subdirectory(test)
 endif()

@@ -35,6 +35,6 @@ if(FREEBSD)
 	winpr_library_add_private(${EPOLLSHIM_LIBS})
 endif()
 
-if(BUILD_TESTING)
+if(BUILD_TESTING_INTERNAL OR BUILD_TESTING)
 	add_subdirectory(test)
 endif()

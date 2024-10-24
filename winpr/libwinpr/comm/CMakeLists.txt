@@ -41,7 +41,7 @@ if (NOT WIN32)
 	winpr_module_add(${${MODULE_PREFIX}_SRCS})
 
 	if(UNIX AND NOT IOS AND NOT EMSCRIPTEN)
-		if(BUILD_TESTING AND BUILD_COMM_TESTS)
+		if(BUILD_TESTING_INTERNAL AND BUILD_COMM_TESTS)
 			add_subdirectory(test)
 		endif()
 	endif()
