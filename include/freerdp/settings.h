@@ -153,7 +153,7 @@ extern "C"
 	FREERDP_API void freerdp_addin_argv_free(ADDIN_ARGV* args);
 
 	WINPR_ATTR_MALLOC(freerdp_addin_argv_free, 1)
-	FREERDP_API ADDIN_ARGV* freerdp_addin_argv_new(size_t argc, const char* argv[]);
+	FREERDP_API ADDIN_ARGV* freerdp_addin_argv_new(size_t argc, const char* const argv[]);
 
 	WINPR_ATTR_MALLOC(freerdp_addin_argv_free, 1)
 	FREERDP_API ADDIN_ARGV* freerdp_addin_argv_clone(const ADDIN_ARGV* args);
@@ -193,7 +193,8 @@ extern "C"
 	FREERDP_API void freerdp_device_free(RDPDR_DEVICE* device);
 
 	WINPR_ATTR_MALLOC(freerdp_device_free, 1)
-	FREERDP_API RDPDR_DEVICE* freerdp_device_new(UINT32 Type, size_t count, const char* args[]);
+	FREERDP_API RDPDR_DEVICE* freerdp_device_new(UINT32 Type, size_t count,
+	                                             const char* const args[]);
 
 	WINPR_ATTR_MALLOC(freerdp_device_free, 1)
 	FREERDP_API RDPDR_DEVICE* freerdp_device_clone(const RDPDR_DEVICE* device);

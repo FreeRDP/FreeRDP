@@ -300,7 +300,7 @@ RDPDR_DEVICE* freerdp_device_collection_find_type(rdpSettings* settings, UINT32 
 	return NULL;
 }
 
-RDPDR_DEVICE* freerdp_device_new(UINT32 Type, size_t count, const char* args[])
+RDPDR_DEVICE* freerdp_device_new(UINT32 Type, size_t count, const char* const args[])
 {
 	size_t size = 0;
 	union
@@ -779,7 +779,7 @@ void freerdp_addin_argv_free(ADDIN_ARGV* args)
 	free(args);
 }
 
-ADDIN_ARGV* freerdp_addin_argv_new(size_t argc, const char* argv[])
+ADDIN_ARGV* freerdp_addin_argv_new(size_t argc, const char* const argv[])
 {
 	if (argc > INT32_MAX)
 		return NULL;
