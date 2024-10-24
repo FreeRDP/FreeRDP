@@ -45,8 +45,7 @@ set(APPLE_SRCS
 include(CMakeDependentOption)
 cmake_dependent_option(WITH_KEYBOARD_LAYOUT_FROM_FILE "Use keyboard definitions from JSON file" OFF WITH_WINPR_JSON OFF)
 if (WITH_KEYBOARD_LAYOUT_FROM_FILE)
-    set(FREERDP_RESOURCE_ROOT ${CMAKE_INSTALL_FULL_DATAROOTDIR}/${PRODUCT})
-    freerdp_definition_add(-DFREERDP_RESOURCE_ROOT="${FREERDP_RESOURCE_ROOT}")
+	freerdp_definition_add(-DFREERDP_RESOURCE_ROOT="${FREERDP_RESOURCE_ROOT}")
 	freerdp_definition_add(-DWITH_KEYBOARD_LAYOUT_FROM_FILE)
 
 	install(FILES KeyboardLayoutMap.json DESTINATION ${FREERDP_RESOURCE_ROOT})

@@ -87,6 +87,8 @@ option(WITH_INTERNAL_RC4 "Use compiled in rc4 functions instead of OpenSSL/MBedT
 option(WITH_INTERNAL_MD4 "Use compiled in md4 hash functions instead of OpenSSL/MBedTLS" ${WITH_INTERNAL_MD4_DEFAULT})
 option(WITH_INTERNAL_MD5 "Use compiled in md5 hash functions instead of OpenSSL/MBedTLS" ${WITH_INTERNAL_MD5_DEFAULT})
 option(WITH_UNICODE_BUILTIN  "Use built-in Unicode conversion (don't use system-provided libraries)" OFF)
+option(WINPR_USE_LEGACY_RESOURCE_DIR "use a resource directory of <base>/WinPR instead of <base>/<product>" ON)
+option(WINPR_USE_VENDOR_PRODUCT_CONFIG_DIR "use a configuration <base>/<product>/<vendor>/ subdirectory instead of </base>/winpr" OFF)
 
 # This option MUST be off to avoid symbol conflicts when loading an external SSPI module library
 option(SSPI_DLL "Define and export SSPI API symbols for usage as a Windows SSPI DLL replacement" OFF)
@@ -156,6 +158,24 @@ if (WINPR_VERSION_SUFFIX)
 	set(WINPR_VERSION_FULL "${WINPR_VERSION}-${WINPR_VERSION_SUFFIX}")
 else()
 	set(WINPR_VERSION_FULL "${WINPR_VERSION}")
+endif()
+
+set(WINPR_RESOURCE_ROOT ${CMAKE_INSTALL_FULL_DATAROOTDIR})
+
+# Quite the compatiblity show here (newest to oldest):
+# * <base>[/<vendor>]/<product>[<version>]
+# * <base>[/<vendor>]/WinPR[<version>]
+# * <base>/winpr
+if (WINPR_USE_LEGACY_RESOURCE_DIR)
+    string(APPEND WINPR_RESOURCE_ROOT "/WinPR")
+else()
+    if (WINPR_USE_VENDOR_PRODUCT_CONFIG_DIR)
+        string(APPEND WINPR_RESOURCE_ROOT "/${VENDOR}/")
+    endif()
+    string(APPEND WINPR_RESOURCE_ROOT "/${PRODUCT}")
+    if (WITH_RESOURCE_VERSIONING)
+        string(APPEND WINPR_RESOURCE_ROOT "${WINPR_VERSION_MAJOR}")
+    endif()
 endif()
 
 include(CheckTypeSize)

@@ -21,17 +21,30 @@
 #include <freerdp/utils/helpers.h>
 
 #include <winpr/path.h>
+#include <freerdp/version.h>
 #include <freerdp/build-config.h>
+
+#define STR(x) #x
 
 char* freerdp_GetConfigFilePath(BOOL system, const char* filename)
 {
 	eKnownPathTypes id = system ? KNOWN_PATH_SYSTEM_CONFIG_HOME : KNOWN_PATH_XDG_CONFIG_HOME;
 
+#if defined(FREERDP_USE_VENDOR_PRODUCT_CONFIG_DIR)
 	char* vendor = GetKnownSubPath(id, FREERDP_VENDOR_STRING);
+#else
+	char* vendor = GetKnownPath(id);
+#endif
 	if (!vendor)
 		return NULL;
 
-	char* base = GetCombinedPath(vendor, FREERDP_PRODUCT_STRING);
+#if defined(WITH_RESOURCE_VERSIONING)
+	char* verstr = FREERDP_PRODUCT_STRING STR(FREERDP_VERSION_MAJOR);
+#else
+	char* verstr = FREERDP_PRODUCT_STRING;
+#endif
+
+	char* base = GetCombinedPath(vendor, verstr);
 	free(vendor);
 
 	if (!base)

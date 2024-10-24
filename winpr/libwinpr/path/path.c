@@ -18,6 +18,7 @@
  */
 
 #include <winpr/config.h>
+#include <winpr/version.h>
 #include <winpr/build-config.h>
 
 #include <winpr/crt.h>
@@ -25,6 +26,8 @@
 
 #include <winpr/path.h>
 #include <winpr/file.h>
+
+#define STR(x) #x
 
 #define PATH_SLASH_CHR '/'
 #define PATH_SLASH_STR "/"
@@ -1190,7 +1193,12 @@ char* winpr_GetConfigFilePath(BOOL system, const char* filename)
 	char* vendor = GetKnownSubPath(id, WINPR_VENDOR_STRING);
 	if (!vendor)
 		return NULL;
-	char* base = GetCombinedPath(vendor, WINPR_PRODUCT_STRING);
+#if defined(WITH_RESOURCE_VERSIONING)
+	const char* prod = WINPR_PRODUCT_STRING STR(WINPR_VERSION_MAJOR);
+#else
+	const char* prod = WINPR_PRODUCT_STRING;
+#endif
+	char* base = GetCombinedPath(vendor, prod);
 	free(vendor);
 #else
 	char* base = GetKnownSubPath(id, "winpr");

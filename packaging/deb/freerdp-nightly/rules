@@ -7,38 +7,49 @@ DEB_HOST_ARCH=$(shell dpkg-architecture -qDEB_HOST_ARCH)
 SANITIZE_ADDRESS = -DWITH_SANITIZE_ADDRESS=ON
 
 DEB_CMAKE_EXTRA_FLAGS :=  -GNinja \
-                          -DCMAKE_SKIP_RPATH=FALSE \
-                          -DCMAKE_SKIP_INSTALL_RPATH=FALSE \
-                          -DWITH_PULSE=ON \
-                          -DWITH_CHANNELS=ON \
-                          -DWITH_AAD=ON \
-                          -DWITH_CUPS=ON \
-                          -DWITH_KRB5=ON \
-                          -DWITH_PCSC=ON \
-                          -DWITH_FFMPEG=ON \
-                          -DWITH_OPUS=ON \
-                          -DWITH_DSP_FFMPEG=ON \
-                          -DWITH_FREERDP_DEPRECATED_COMMANDLINE=ON \
-                          -DWITH_SERVER=ON \
-                          -DWITH_WAYLAND=ON \
-                          -DWITH_CAIRO=ON \
-                          -DWITH_URIPARSER=ON \
-                          -DWITH_WINPR_UTILS_IMAGE_PNG=ON \
-                          -DWITH_WINPR_UTILS_IMAGE_WEBP=ON \
-                          -DWITH_WINPR_UTILS_IMAGE_JPEG=ON \
-                          -DBUILD_TESTING=OFF \
-                          -DSDL_USE_COMPILED_RESOURCES=OFF \
-                          -DWITH_SDL_IMAGE_DIALOGS=ON \
-                          -DRDTK_FORCE_STATIC_BUILD=ON \
-                          -DUWAC_FORCE_STATIC_BUILD=ON \
-                          -DWITH_BINARY_VERSIONING=ON \
-                          -DCMAKE_BUILD_TYPE=RelWithDebInfo \
-                          -DCMAKE_INSTALL_PREFIX=/opt/freerdp-nightly/ \
-                          -DCMAKE_INSTALL_INCLUDEDIR=include \
-                          -DCMAKE_INSTALL_LIBDIR=lib \
-                          -DNO_CMAKE_PACKAGE_REGISTRY=ON \
-                          $(SANITIZE_ADDRESS) \
-                          $(NULL)
+						  -DCMAKE_SKIP_RPATH=FALSE \
+						  -DCMAKE_SKIP_INSTALL_RPATH=FALSE \
+						  -DWITH_PULSE=ON \
+						  -DWITH_CHANNELS=ON \
+						  -DWITH_AAD=ON \
+						  -DWITH_CUPS=ON \
+						  -DWITH_KRB5=ON \
+						  -DWITH_PCSC=ON \
+						  -DWITH_FFMPEG=ON \
+						  -DWITH_OPUS=ON \
+						  -DWITH_DSP_FFMPEG=ON \
+						  -DWITH_FREERDP_DEPRECATED_COMMANDLINE=ON \
+						  -DWITH_SERVER=ON \
+						  -DWITH_WAYLAND=ON \
+						  -DWITH_CAIRO=ON \
+						  -DWITH_URIPARSER=ON \
+						  -DWITH_WINPR_UTILS_IMAGE_PNG=ON \
+						  -DWITH_WINPR_UTILS_IMAGE_WEBP=ON \
+						  -DWITH_WINPR_UTILS_IMAGE_JPEG=ON \
+						  -DWITH_INTERNAL_RC4=ON \
+						  -DWITH_INTERNAL_MD4=ON \
+						  -DWITH_INTERNAL_MD5=ON \
+						  -DBUILD_TESTING=ON \
+						  -DWITH_KEYBOARD_LAYOUT_FROM_FILE=ON \
+						  -DWITH_TIMEZONE_FROM_FILE=ON \
+						  -DSDL_USE_COMPILED_RESOURCES=OFF \
+						  -DWITH_SDL_IMAGE_DIALOGS=ON \
+						  -DRDTK_FORCE_STATIC_BUILD=ON \
+						  -DUWAC_FORCE_STATIC_BUILD=ON \
+						  -DWITH_BINARY_VERSIONING=ON \
+						  -DWITH_RESOURCE_VERSIONING=ON \
+						  -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+						  -DCMAKE_INSTALL_PREFIX=/opt/freerdp-nightly/ \
+						  -DCMAKE_INSTALL_INCLUDEDIR=include \
+						  -DCMAKE_INSTALL_LIBDIR=lib \
+						  -DNO_CMAKE_PACKAGE_REGISTRY=ON \
+						  -DWINPR_USE_LEGACY_RESOURCE_DIR=OFF \
+						  -DWINPR_USE_VENDOR_PRODUCT_CONFIG_DIR=ON \
+						  -DFREERDP_USE_VENDOR_PRODUCT_CONFIG_DIR=ON \
+						  -DSAMPLE_USE_VENDOR_PRODUCT_CONFIG_DIR=ON \
+						  -DSDL_USE_VENDOR_PRODUCT_CONFIG_DIR=ON \
+						  $(SANITIZE_ADDRESS) \
+						  $(NULL)
 
 %:
 	dh $@ --parallel
@@ -62,7 +73,7 @@ override_dh_install:
 	dh_install
 
 override_dh_auto_test:
-	true
+	dh_auto_test
 
 override_dh_clean:
 	rm -f config.h

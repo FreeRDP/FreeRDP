@@ -3,6 +3,7 @@ option(CMAKE_VERBOSE_MAKEFILE "verbose CMake makefile" ON)
 option(CMAKE_POSITION_INDEPENDENT_CODE "build with position independent code (-fPIC or -fPIE)" ON)
 option(WITH_LIBRARY_VERSIONING "Use library version triplet" ON)
 option(WITH_BINARY_VERSIONING "Use binary versioning" OFF)
+option(WITH_RESOURCE_VERSIONING "Use resource versioning" OFF)
 option(BUILD_SHARED_LIBS "Build shared libraries" ON)
 
 # We want to control the winpr assert for the whole project

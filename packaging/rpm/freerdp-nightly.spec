@@ -153,9 +153,21 @@ cp %{_topdir}/SOURCES/source_version freerdp-nightly-%{version}/.source_version
         -DWITH_PCSC=ON \
         -DWITH_JPEG=ON \
         -DWITH_OPUS=ON \
+				-DWITH_INTERNAL_RC4=ON \
+				-DWITH_INTERNAL_MD4=ON \
+				-DWITH_INTERNAL_MD5=ON \
+				-DBUILD_TESTING=ON \
+				-DWITH_KEYBOARD_LAYOUT_FROM_FILE=ON \
+				-DWITH_TIMEZONE_FROM_FILE=ON \
         -DSDL_USE_COMPILED_RESOURCES=OFF \
         -DWITH_SDL_IMAGE_DIALOGS=ON \
         -DWITH_BINARY_VERSIONING=ON \
+				-DWITH_RESOURCE_VERSIONING=ON \
+				-DWINPR_USE_VENDOR_PRODUCT_CONFIG_DIR=ON \
+				-DFREERDP_USE_VENDOR_PRODUCT_CONFIG_DIR=ON \
+				-DSAMPLE_USE_VENDOR_PRODUCT_CONFIG_DIR=ON \
+				-DSDL_USE_VENDOR_PRODUCT_CONFIG_DIR=ON \
+				-DWINPR_USE_LEGACY_RESOURCE_DIR=OFF \
         -DRDTK_FORCE_STATIC_BUILD=ON \
         -DUWAC_FORCE_STATIC_BUILD=ON \
 %if 0%{?fedora} >= 36 || 0%{?rhel} >= 9 || 0%{?suse_version}
@@ -199,17 +211,17 @@ export NO_BRP_CHECK_RPATH true
 %dir %{INSTALL_PREFIX}/share/man/
 %dir %{INSTALL_PREFIX}/share/man/man1
 %dir %{INSTALL_PREFIX}/share/man/man7
-%dir %{INSTALL_PREFIX}/share/FreeRDP3
-%dir %{INSTALL_PREFIX}/share/FreeRDP3/fonts
-%dir %{INSTALL_PREFIX}/share/FreeRDP3/images
+%dir %{INSTALL_PREFIX}/share/FreeRDP/FreeRDP3
+%dir %{INSTALL_PREFIX}/share/FreeRDP/FreeRDP3/fonts
+%dir %{INSTALL_PREFIX}/share/FreeRDP/FreeRDP3/images
 %dir %{INSTALL_PREFIX}/%{_lib}/freerdp3/proxy/
 %{INSTALL_PREFIX}/%{_lib}/*.so.*
 %{INSTALL_PREFIX}/%{_lib}/freerdp3/proxy/*.so
 %{INSTALL_PREFIX}/bin/*
 %{INSTALL_PREFIX}/share/man/man1/*
 %{INSTALL_PREFIX}/share/man/man7/*
-%{INSTALL_PREFIX}/share/FreeRDP3/fonts/*
-%{INSTALL_PREFIX}/share/FreeRDP3/images/*
+%{INSTALL_PREFIX}/share/FreeRDP/FreeRDP3/fonts/*
+%{INSTALL_PREFIX}/share/FreeRDP/FreeRDP3/images/*
 
 %files devel
 %defattr(-,root,root)
@@ -223,6 +235,8 @@ export NO_BRP_CHECK_RPATH true
 %postun -p /sbin/ldconfig
 
 %changelog
+* Thu Oct 10 2024 FreeRDP Team <team@freerdp.com> - 3.10.0-1
+- update resource locations, utilize new settings
 * Wed Apr 10 2024 FreeRDP Team <team@freerdp.com> - 3.0.0-5
 - Fix exclusion of libuwac and librdtk
 * Fri Feb 09 2024 FreeRDP Team <team@freerdp.com> - 3.0.0-4

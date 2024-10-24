@@ -15,11 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(C_FLAGS ${CMAKE_C_FLAGS})
-if (CMAKE_BUILD_TYPE)
-    string(TOUPPER "${CMAKE_BUILD_TYPE}" CAPS_BUILD_TYPE)
-    string(APPEND C_FLAGS " ${CMAKE_C_FLAGS_${CAPS_BUILD_TYPE}}")
-endif()
+include(CFlagsToVar)
+CFlagsToVar(C_FLAGS)
 
 cleaning_configure_file(config/version.h.in ${CMAKE_CURRENT_BINARY_DIR}/winpr/version.h)
 cleaning_configure_file(config/wtypes.h.in ${CMAKE_CURRENT_BINARY_DIR}/winpr/wtypes.h)
