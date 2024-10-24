@@ -1680,8 +1680,9 @@ BOOL freerdp_settings_enforce_monitor_exists(rdpSettings* settings)
 {
 	const UINT32 nrIds = freerdp_settings_get_uint32(settings, FreeRDP_NumMonitorIds);
 	const UINT32 count = freerdp_settings_get_uint32(settings, FreeRDP_MonitorCount);
-	const BOOL useMonitors = freerdp_settings_get_bool(settings, FreeRDP_Fullscreen) ||
-	                         freerdp_settings_get_bool(settings, FreeRDP_UseMultimon);
+	const BOOL fullscreen = freerdp_settings_get_bool(settings, FreeRDP_Fullscreen);
+	const BOOL multimon = freerdp_settings_get_bool(settings, FreeRDP_UseMultimon);
+	const BOOL useMonitors = fullscreen || multimon;
 
 	if (nrIds == 0)
 	{
@@ -1721,6 +1722,19 @@ BOOL freerdp_settings_enforce_monitor_exists(rdpSettings* settings)
 		monitor->attributes.orientation = orientation;
 		monitor->attributes.desktopScaleFactor = desktopScaleFactor;
 		monitor->attributes.deviceScaleFactor = deviceScaleFactor;
+	}
+	else if (fullscreen || (multimon && (count == 1)))
+	{
+
+		/* not all platforms start primary monitor at 0/0, so enforce this to avoid issues with
+		 * fullscreen mode */
+		rdpMonitor* monitor =
+		    freerdp_settings_get_pointer_array_writable(settings, FreeRDP_MonitorDefArray, 0);
+		if (!monitor)
+			return FALSE;
+		monitor->x = 0;
+		monitor->y = 0;
+		monitor->is_primary = TRUE;
 	}
 
 	return TRUE;
