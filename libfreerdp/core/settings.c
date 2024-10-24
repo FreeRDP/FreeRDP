@@ -750,6 +750,20 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	if (!settings)
 		return NULL;
 
+	if (!server && !remote)
+	{
+		if (!freerdp_settings_set_uint32(settings, FreeRDP_DesktopPhysicalWidth, 1000))
+			goto out_fail;
+		if (!freerdp_settings_set_uint32(settings, FreeRDP_DesktopPhysicalHeight, 1000))
+			goto out_fail;
+		if (!freerdp_settings_set_uint16(settings, FreeRDP_DesktopOrientation,
+		                                 ORIENTATION_LANDSCAPE))
+			goto out_fail;
+		if (!freerdp_settings_set_uint32(settings, FreeRDP_DeviceScaleFactor, 100))
+			goto out_fail;
+		if (!freerdp_settings_set_uint32(settings, FreeRDP_DesktopScaleFactor, 100))
+			goto out_fail;
+	}
 	if (!freerdp_settings_set_uint32(settings, FreeRDP_SurfaceCommandsSupported,
 	                                 SURFCMDS_SET_SURFACE_BITS | SURFCMDS_STREAM_SURFACE_BITS |
 	                                     SURFCMDS_FRAME_MARKER))
@@ -1659,5 +1673,55 @@ BOOL freerdp_target_net_adresses_reset(rdpSettings* settings, size_t size)
 		                                       sizeof(char*)))
 			return FALSE;
 	}
+	return TRUE;
+}
+
+BOOL freerdp_settings_enforce_monitor_exists(rdpSettings* settings)
+{
+	const UINT32 nrIds = freerdp_settings_get_uint32(settings, FreeRDP_NumMonitorIds);
+	const UINT32 count = freerdp_settings_get_uint32(settings, FreeRDP_MonitorCount);
+	const BOOL useMonitors = freerdp_settings_get_bool(settings, FreeRDP_Fullscreen) ||
+	                         freerdp_settings_get_bool(settings, FreeRDP_UseMultimon);
+
+	if (nrIds == 0)
+	{
+		if (!freerdp_settings_set_uint32(settings, FreeRDP_NumMonitorIds, 1))
+			return FALSE;
+	}
+	if (!useMonitors || (count == 0))
+	{
+		const UINT32 width = freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth);
+		const UINT32 height = freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight);
+		const UINT32 pwidth = freerdp_settings_get_uint32(settings, FreeRDP_DesktopPhysicalWidth);
+		const UINT32 pheight = freerdp_settings_get_uint32(settings, FreeRDP_DesktopPhysicalHeight);
+		const UINT16 orientation =
+		    freerdp_settings_get_uint16(settings, FreeRDP_DesktopOrientation);
+		const UINT32 desktopScaleFactor =
+		    freerdp_settings_get_uint32(settings, FreeRDP_DeviceScaleFactor);
+		const UINT32 deviceScaleFactor =
+		    freerdp_settings_get_uint32(settings, FreeRDP_DesktopScaleFactor);
+
+		if (!freerdp_settings_set_uint32(settings, FreeRDP_MonitorCount, 1))
+			return FALSE;
+
+		rdpMonitor* monitor =
+		    freerdp_settings_get_pointer_array_writable(settings, FreeRDP_MonitorDefArray, 0);
+		if (!monitor)
+			return FALSE;
+		monitor->x = 0;
+		monitor->y = 0;
+		WINPR_ASSERT(width <= INT32_MAX);
+		monitor->width = (INT32)width;
+		WINPR_ASSERT(height <= INT32_MAX);
+		monitor->height = (INT32)height;
+		monitor->is_primary = TRUE;
+		monitor->orig_screen = 0;
+		monitor->attributes.physicalWidth = pwidth;
+		monitor->attributes.physicalHeight = pheight;
+		monitor->attributes.orientation = orientation;
+		monitor->attributes.desktopScaleFactor = desktopScaleFactor;
+		monitor->attributes.deviceScaleFactor = deviceScaleFactor;
+	}
+
 	return TRUE;
 }
