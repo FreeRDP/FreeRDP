@@ -537,8 +537,25 @@ static INLINE BOOL update_read_coord(wStream* s, INT32* coord, BOOL delta)
 
 	return TRUE;
 }
-static INLINE BOOL update_write_coord(wStream* s, INT32 coord)
+
+#define update_write_coord(s, coord) \
+	update_write_coord_int((s), (coord), #coord, __FILE__, __func__, __LINE__)
+
+static INLINE BOOL update_write_coord_int(wStream* s, INT32 coord, const char* name,
+                                          const char* file, const char* fkt, size_t line)
 {
+	if ((coord < 0) || (coord > UINT16_MAX))
+	{
+		const DWORD level = WLOG_WARN;
+		wLog* log = WLog_Get(TAG);
+		if (WLog_IsLevelActive(log, level))
+		{
+			WLog_PrintMessage(log, WLOG_MESSAGE_TEXT, level, line, file, fkt,
+			                  "[%s] 0 <= %" PRId32 " <= %" PRIu16, name, coord, UINT16_MAX);
+		}
+		return FALSE;
+	}
+
 	Stream_Write_UINT16(s, coord);
 	return TRUE;
 }
@@ -1255,13 +1272,17 @@ BOOL update_write_dstblt_order(wStream* s, ORDER_INFO* orderInfo, const DSTBLT_O
 
 	orderInfo->fieldFlags = 0;
 	orderInfo->fieldFlags |= ORDER_FIELD_01;
-	update_write_coord(s, dstblt->nLeftRect);
+	if (!update_write_coord(s, dstblt->nLeftRect))
+		return FALSE;
 	orderInfo->fieldFlags |= ORDER_FIELD_02;
-	update_write_coord(s, dstblt->nTopRect);
+	if (!update_write_coord(s, dstblt->nTopRect))
+		return FALSE;
 	orderInfo->fieldFlags |= ORDER_FIELD_03;
-	update_write_coord(s, dstblt->nWidth);
+	if (!update_write_coord(s, dstblt->nWidth))
+		return FALSE;
 	orderInfo->fieldFlags |= ORDER_FIELD_04;
-	update_write_coord(s, dstblt->nHeight);
+	if (!update_write_coord(s, dstblt->nHeight))
+		return FALSE;
 	orderInfo->fieldFlags |= ORDER_FIELD_05;
 	Stream_Write_UINT8(s, dstblt->bRop);
 	return TRUE;
@@ -1296,13 +1317,17 @@ BOOL update_write_patblt_order(wStream* s, ORDER_INFO* orderInfo, PATBLT_ORDER* 
 
 	orderInfo->fieldFlags = 0;
 	orderInfo->fieldFlags |= ORDER_FIELD_01;
-	update_write_coord(s, patblt->nLeftRect);
+	if (!update_write_coord(s, patblt->nLeftRect))
+		return FALSE;
 	orderInfo->fieldFlags |= ORDER_FIELD_02;
-	update_write_coord(s, patblt->nTopRect);
+	if (!update_write_coord(s, patblt->nTopRect))
+		return FALSE;
 	orderInfo->fieldFlags |= ORDER_FIELD_03;
-	update_write_coord(s, patblt->nWidth);
+	if (!update_write_coord(s, patblt->nWidth))
+		return FALSE;
 	orderInfo->fieldFlags |= ORDER_FIELD_04;
-	update_write_coord(s, patblt->nHeight);
+	if (!update_write_coord(s, patblt->nHeight))
+		return FALSE;
 	orderInfo->fieldFlags |= ORDER_FIELD_05;
 	Stream_Write_UINT8(s, patblt->bRop);
 	orderInfo->fieldFlags |= ORDER_FIELD_06;
@@ -1346,19 +1371,25 @@ BOOL update_write_scrblt_order(wStream* s, ORDER_INFO* orderInfo, const SCRBLT_O
 
 	orderInfo->fieldFlags = 0;
 	orderInfo->fieldFlags |= ORDER_FIELD_01;
-	update_write_coord(s, scrblt->nLeftRect);
+	if (!update_write_coord(s, scrblt->nLeftRect))
+		return FALSE;
 	orderInfo->fieldFlags |= ORDER_FIELD_02;
-	update_write_coord(s, scrblt->nTopRect);
+	if (!update_write_coord(s, scrblt->nTopRect))
+		return FALSE;
 	orderInfo->fieldFlags |= ORDER_FIELD_03;
-	update_write_coord(s, scrblt->nWidth);
+	if (!update_write_coord(s, scrblt->nWidth))
+		return FALSE;
 	orderInfo->fieldFlags |= ORDER_FIELD_04;
-	update_write_coord(s, scrblt->nHeight);
+	if (!update_write_coord(s, scrblt->nHeight))
+		return FALSE;
 	orderInfo->fieldFlags |= ORDER_FIELD_05;
 	Stream_Write_UINT8(s, scrblt->bRop);
 	orderInfo->fieldFlags |= ORDER_FIELD_06;
-	update_write_coord(s, scrblt->nXSrc);
+	if (!update_write_coord(s, scrblt->nXSrc))
+		return FALSE;
 	orderInfo->fieldFlags |= ORDER_FIELD_07;
-	update_write_coord(s, scrblt->nYSrc);
+	if (!update_write_coord(s, scrblt->nYSrc))
+		return FALSE;
 	return TRUE;
 }
 static BOOL update_read_opaque_rect_order(const char* orderName, wStream* s,
@@ -1422,13 +1453,17 @@ BOOL update_write_opaque_rect_order(wStream* s, ORDER_INFO* orderInfo,
 	// TODO: Color format conversion
 	orderInfo->fieldFlags = 0;
 	orderInfo->fieldFlags |= ORDER_FIELD_01;
-	update_write_coord(s, opaque_rect->nLeftRect);
+	if (!update_write_coord(s, opaque_rect->nLeftRect))
+		return FALSE;
 	orderInfo->fieldFlags |= ORDER_FIELD_02;
-	update_write_coord(s, opaque_rect->nTopRect);
+	if (!update_write_coord(s, opaque_rect->nTopRect))
+		return FALSE;
 	orderInfo->fieldFlags |= ORDER_FIELD_03;
-	update_write_coord(s, opaque_rect->nWidth);
+	if (!update_write_coord(s, opaque_rect->nWidth))
+		return FALSE;
 	orderInfo->fieldFlags |= ORDER_FIELD_04;
-	update_write_coord(s, opaque_rect->nHeight);
+	if (!update_write_coord(s, opaque_rect->nHeight))
+		return FALSE;
 	orderInfo->fieldFlags |= ORDER_FIELD_05;
 	byte = opaque_rect->color & 0x000000FF;
 	Stream_Write_UINT8(s, byte);
@@ -1702,13 +1737,17 @@ BOOL update_write_line_to_order(wStream* s, ORDER_INFO* orderInfo, const LINE_TO
 	orderInfo->fieldFlags |= ORDER_FIELD_01;
 	Stream_Write_UINT16(s, line_to->backMode);
 	orderInfo->fieldFlags |= ORDER_FIELD_02;
-	update_write_coord(s, line_to->nXStart);
+	if (!update_write_coord(s, line_to->nXStart))
+		return FALSE;
 	orderInfo->fieldFlags |= ORDER_FIELD_03;
-	update_write_coord(s, line_to->nYStart);
+	if (!update_write_coord(s, line_to->nYStart))
+		return FALSE;
 	orderInfo->fieldFlags |= ORDER_FIELD_04;
-	update_write_coord(s, line_to->nXEnd);
+	if (!update_write_coord(s, line_to->nXEnd))
+		return FALSE;
 	orderInfo->fieldFlags |= ORDER_FIELD_05;
-	update_write_coord(s, line_to->nYEnd);
+	if (!update_write_coord(s, line_to->nYEnd))
+		return FALSE;
 	orderInfo->fieldFlags |= ORDER_FIELD_06;
 	update_write_color(s, line_to->backColor);
 	orderInfo->fieldFlags |= ORDER_FIELD_07;
@@ -1800,19 +1839,25 @@ BOOL update_write_memblt_order(wStream* s, ORDER_INFO* orderInfo, const MEMBLT_O
 	orderInfo->fieldFlags |= ORDER_FIELD_01;
 	Stream_Write_UINT16(s, cacheId);
 	orderInfo->fieldFlags |= ORDER_FIELD_02;
-	update_write_coord(s, memblt->nLeftRect);
+	if (!update_write_coord(s, memblt->nLeftRect))
+		return FALSE;
 	orderInfo->fieldFlags |= ORDER_FIELD_03;
-	update_write_coord(s, memblt->nTopRect);
+	if (!update_write_coord(s, memblt->nTopRect))
+		return FALSE;
 	orderInfo->fieldFlags |= ORDER_FIELD_04;
-	update_write_coord(s, memblt->nWidth);
+	if (!update_write_coord(s, memblt->nWidth))
+		return FALSE;
 	orderInfo->fieldFlags |= ORDER_FIELD_05;
-	update_write_coord(s, memblt->nHeight);
+	if (!update_write_coord(s, memblt->nHeight))
+		return FALSE;
 	orderInfo->fieldFlags |= ORDER_FIELD_06;
 	Stream_Write_UINT8(s, memblt->bRop);
 	orderInfo->fieldFlags |= ORDER_FIELD_07;
-	update_write_coord(s, memblt->nXSrc);
+	if (!update_write_coord(s, memblt->nXSrc))
+		return FALSE;
 	orderInfo->fieldFlags |= ORDER_FIELD_08;
-	update_write_coord(s, memblt->nYSrc);
+	if (!update_write_coord(s, memblt->nYSrc))
+		return FALSE;
 	orderInfo->fieldFlags |= ORDER_FIELD_09;
 	Stream_Write_UINT16(s, memblt->cacheIndex);
 	return TRUE;

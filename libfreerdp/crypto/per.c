@@ -333,6 +333,8 @@ BOOL per_read_integer16(wStream* s, UINT16* integer, UINT16 min)
 
 BOOL per_write_integer16(wStream* s, UINT16 integer, UINT16 min)
 {
+	if (min > integer)
+		return FALSE;
 	if (!Stream_EnsureRemainingCapacity(s, 2))
 		return FALSE;
 	Stream_Write_UINT16_BE(s, integer - min);
