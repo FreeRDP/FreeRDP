@@ -1663,9 +1663,22 @@ int main(int argc, char* argv[])
 	if (status)
 	{
 		rc = freerdp_client_settings_command_line_status_print(settings, status, argc, argv);
-		SdlPref::print_config_file_help(2);
 		if (freerdp_settings_get_bool(settings, FreeRDP_ListMonitors))
 			sdl_list_monitors(sdl);
+		else
+		{
+			switch (status)
+			{
+				case COMMAND_LINE_STATUS_PRINT:
+				case COMMAND_LINE_STATUS_PRINT_VERSION:
+				case COMMAND_LINE_STATUS_PRINT_BUILDCONFIG:
+					break;
+				case COMMAND_LINE_STATUS_PRINT_HELP:
+				default:
+					SdlPref::print_config_file_help(2);
+					break;
+			}
+		}
 		return rc;
 	}
 

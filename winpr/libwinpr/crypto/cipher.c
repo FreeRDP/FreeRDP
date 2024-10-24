@@ -172,8 +172,100 @@ extern const EVP_MD* winpr_openssl_get_evp_md(WINPR_MD_TYPE md);
 extern mbedtls_md_type_t winpr_mbedtls_get_md_type(int md);
 #endif
 
+struct cipher_map
+{
+	WINPR_CIPHER_TYPE md;
+	const char* name;
+};
+static const struct cipher_map s_cipher_map[] = {
+	{ WINPR_CIPHER_NONE, "none" },
+	{ WINPR_CIPHER_NULL, "null" },
+	{ WINPR_CIPHER_AES_128_ECB, "aes-128-ecb" },
+	{ WINPR_CIPHER_AES_192_ECB, "aes-192-ecb" },
+	{ WINPR_CIPHER_AES_256_ECB, "aes-256-ecb" },
+	{ WINPR_CIPHER_AES_128_CBC, "aes-128-cbc" },
+	{ WINPR_CIPHER_AES_192_CBC, "aes-192-cbc" },
+	{ WINPR_CIPHER_AES_256_CBC, "aes-256-cbc" },
+	{ WINPR_CIPHER_AES_128_CFB128, "aes-128-cfb128" },
+	{ WINPR_CIPHER_AES_192_CFB128, "aes-192-cfb128" },
+	{ WINPR_CIPHER_AES_256_CFB128, "aes-256-cfb128" },
+	{ WINPR_CIPHER_AES_128_CTR, "aes-128-ctr" },
+	{ WINPR_CIPHER_AES_192_CTR, "aes-192-ctr" },
+	{ WINPR_CIPHER_AES_256_CTR, "aes-256-ctr" },
+	{ WINPR_CIPHER_AES_128_GCM, "aes-128-gcm" },
+	{ WINPR_CIPHER_AES_192_GCM, "aes-192-gcm" },
+	{ WINPR_CIPHER_AES_256_GCM, "aes-256-gcm" },
+	{ WINPR_CIPHER_CAMELLIA_128_ECB, "camellia-128-ecb" },
+	{ WINPR_CIPHER_CAMELLIA_192_ECB, "camellia-192-ecb" },
+	{ WINPR_CIPHER_CAMELLIA_256_ECB, "camellia-256-ecb" },
+	{ WINPR_CIPHER_CAMELLIA_128_CBC, "camellia-128-cbc" },
+	{ WINPR_CIPHER_CAMELLIA_192_CBC, "camellia-192-cbc" },
+	{ WINPR_CIPHER_CAMELLIA_256_CBC, "camellia-256-cbc" },
+	{ WINPR_CIPHER_CAMELLIA_128_CFB128, "camellia-128-cfb128" },
+	{ WINPR_CIPHER_CAMELLIA_192_CFB128, "camellia-192-cfb128" },
+	{ WINPR_CIPHER_CAMELLIA_256_CFB128, "camellia-256-cfb128" },
+	{ WINPR_CIPHER_CAMELLIA_128_CTR, "camellia-128-ctr" },
+	{ WINPR_CIPHER_CAMELLIA_192_CTR, "camellia-192-ctr" },
+	{ WINPR_CIPHER_CAMELLIA_256_CTR, "camellia-256-ctr" },
+	{ WINPR_CIPHER_CAMELLIA_128_GCM, "camellia-128-gcm" },
+	{ WINPR_CIPHER_CAMELLIA_192_GCM, "camellia-192-gcm" },
+	{ WINPR_CIPHER_CAMELLIA_256_GCM, "camellia-256-gcm" },
+	{ WINPR_CIPHER_DES_ECB, "des-ecb" },
+	{ WINPR_CIPHER_DES_CBC, "des-cbc" },
+	{ WINPR_CIPHER_DES_EDE_ECB, "des-ede-ecb" },
+	{ WINPR_CIPHER_DES_EDE_CBC, "des-ede-cbc" },
+	{ WINPR_CIPHER_DES_EDE3_ECB, "des-ede3-ecb" },
+	{ WINPR_CIPHER_DES_EDE3_CBC, "des-ede3-cbc" },
+	{ WINPR_CIPHER_BLOWFISH_ECB, "blowfish-ecb" },
+	{ WINPR_CIPHER_BLOWFISH_CBC, "blowfish-cbc" },
+	{ WINPR_CIPHER_BLOWFISH_CFB64, "blowfish-cfb64" },
+	{ WINPR_CIPHER_BLOWFISH_CTR, "blowfish-ctr" },
+	{ WINPR_CIPHER_ARC4_128, "rc4" },
+	{ WINPR_CIPHER_AES_128_CCM, "aes-128-ccm" },
+	{ WINPR_CIPHER_AES_192_CCM, "aes-192-ccm" },
+	{ WINPR_CIPHER_AES_256_CCM, "aes-256-ccm" },
+	{ WINPR_CIPHER_CAMELLIA_128_CCM, "camellia-128-ccm" },
+	{ WINPR_CIPHER_CAMELLIA_192_CCM, "camellia-192-ccm" },
+	{ WINPR_CIPHER_CAMELLIA_256_CCM, "camellia-256-ccm" },
+};
+
+static int cipher_compare(const void* a, const void* b)
+{
+	const WINPR_CIPHER_TYPE* cipher = a;
+	const struct cipher_map* map = b;
+	if (*cipher == map->md)
+		return 0;
+	return *cipher > map->md ? 1 : -1;
+}
+
+const char* winpr_cipher_type_to_string(WINPR_CIPHER_TYPE cipher)
+{
+	WINPR_CIPHER_TYPE lc = cipher;
+	const struct cipher_map* ret = bsearch(&lc, s_cipher_map, ARRAYSIZE(s_cipher_map),
+	                                       sizeof(struct cipher_map), cipher_compare);
+	if (!ret)
+		return "unknown";
+	return ret->name;
+}
+
+static int cipher_string_compare(const void* a, const void* b)
+{
+	const char* cipher = a;
+	const struct cipher_map* map = b;
+	return strcmp(cipher, map->name);
+}
+
+WINPR_CIPHER_TYPE winpr_cipher_type_from_string(const char* name)
+{
+	const struct cipher_map* ret = bsearch(name, s_cipher_map, ARRAYSIZE(s_cipher_map),
+	                                       sizeof(struct cipher_map), cipher_string_compare);
+	if (!ret)
+		return WINPR_CIPHER_NONE;
+	return ret->md;
+}
+
 #if defined(WITH_OPENSSL)
-static const EVP_CIPHER* winpr_openssl_get_evp_cipher(int cipher)
+static const EVP_CIPHER* winpr_openssl_get_evp_cipher(WINPR_CIPHER_TYPE cipher)
 {
 	const EVP_CIPHER* evp = NULL;
 
@@ -320,11 +412,11 @@ static const EVP_CIPHER* winpr_openssl_get_evp_cipher(int cipher)
 			break;
 
 		case WINPR_CIPHER_CAMELLIA_192_CCM:
-			evp = EVP_get_cipherbyname("camellia-192-gcm");
+			evp = EVP_get_cipherbyname("camellia-192-ccm");
 			break;
 
 		case WINPR_CIPHER_CAMELLIA_256_CCM:
-			evp = EVP_get_cipherbyname("camellia-256-gcm");
+			evp = EVP_get_cipherbyname("camellia-256-ccm");
 			break;
 
 		case WINPR_CIPHER_DES_ECB:
@@ -467,7 +559,8 @@ mbedtls_cipher_type_t winpr_mbedtls_get_cipher_type(int cipher)
 }
 #endif
 
-WINPR_CIPHER_CTX* winpr_Cipher_New(int cipher, int op, const void* key, const void* iv)
+WINPR_CIPHER_CTX* winpr_Cipher_New(WINPR_CIPHER_TYPE cipher, WINPR_CRYPTO_OPERATION op,
+                                   const void* key, const void* iv)
 {
 	WINPR_CIPHER_CTX* ctx = NULL;
 #if defined(WITH_OPENSSL)

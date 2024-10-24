@@ -32,6 +32,13 @@ FOREACH(var ${res})
 		LIST(APPEND UWAC_BUILD_CONFIG_LIST "${var}=${${var}}")
 	ENDIF()
 ENDFOREACH()
+
+set(C_FLAGS ${CMAKE_C_FLAGS})
+if (CMAKE_BUILD_TYPE)
+    string(TOUPPER "${CMAKE_BUILD_TYPE}" CAPS_BUILD_TYPE)
+    string(APPEND C_FLAGS " ${CMAKE_C_FLAGS_${CAPS_BUILD_TYPE}}")
+endif()
+
 string(REPLACE ";" " " UWAC_BUILD_CONFIG "${UWAC_BUILD_CONFIG_LIST}")
 cleaning_configure_file(version.h.in ${CMAKE_CURRENT_BINARY_DIR}/../include/uwac/version.h)
 cleaning_configure_file(buildflags.h.in ${CMAKE_CURRENT_BINARY_DIR}/../include/uwac/buildflags.h)

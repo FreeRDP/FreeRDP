@@ -29,6 +29,8 @@ if (NOT ANDROID)
 	option(CMAKE_INTERPROCEDURAL_OPTIMIZATION "build with link time optimization" ${supported})
 endif()
 
+set(SUPPORTED_BUILD_TYPES "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
+
 # Default to release build type
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   # Set a default build type if none was specified
@@ -39,7 +41,13 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     STRING "Choose the type of build." FORCE)
   # Set the possible values of build type for cmake-gui
   set_property(CACHE CMAKE_BUILD_TYPE PROPERTY
-    STRINGS "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
+		STRINGS ${SUPPORTED_BUILD_TYPES})
+endif()
+
+if (CMAKE_BUILD_TYPE)
+	if (NOT "${CMAKE_BUILD_TYPE}" IN_LIST SUPPORTED_BUILD_TYPES)
+		message(FATAL_ERROR "CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} not supported. Set to any of ${SUPPORTED_BUILD_TYPES}")
+	endif()
 endif()
 
 include(PlatformDefaults)
