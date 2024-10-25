@@ -214,16 +214,13 @@ export NO_BRP_CHECK_RPATH true
 %dir %{INSTALL_PREFIX}/share/man/man1
 %dir %{INSTALL_PREFIX}/share/man/man7
 %dir %{INSTALL_PREFIX}/share/FreeRDP/FreeRDP3
-%dir %{INSTALL_PREFIX}/share/FreeRDP/FreeRDP3/fonts
-%dir %{INSTALL_PREFIX}/share/FreeRDP/FreeRDP3/images
 %dir %{INSTALL_PREFIX}/%{_lib}/freerdp3/proxy/
 %{INSTALL_PREFIX}/%{_lib}/*.so.*
 %{INSTALL_PREFIX}/%{_lib}/freerdp3/proxy/*.so
 %{INSTALL_PREFIX}/bin/*
 %{INSTALL_PREFIX}/share/man/man1/*
 %{INSTALL_PREFIX}/share/man/man7/*
-%{INSTALL_PREFIX}/share/FreeRDP/FreeRDP3/fonts/*
-%{INSTALL_PREFIX}/share/FreeRDP/FreeRDP3/images/*
+%{INSTALL_PREFIX}/share/FreeRDP/FreeRDP3/*
 
 %files devel
 %defattr(-,root,root)
