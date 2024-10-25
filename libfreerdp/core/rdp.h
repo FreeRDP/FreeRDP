@@ -133,7 +133,6 @@
 struct rdp_rdp
 {
 	CONNECTION_STATE state;
-	freerdp* instance;
 	rdpContext* context;
 	rdpNla* nla;
 	rdpMcs* mcs;

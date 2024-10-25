@@ -558,10 +558,17 @@ BOOL freerdp_reconnect(freerdp* instance)
 
 BOOL freerdp_shall_disconnect(freerdp* instance)
 {
-	if (!instance || !instance->context)
+	if (!instance)
+		return FALSE;
+	return freerdp_shall_disconnect_context(instance->context);
+}
+
+BOOL freerdp_shall_disconnect_context(rdpContext* context)
+{
+	if (!context)
 		return FALSE;
 
-	if (WaitForSingleObject(instance->context->abortEvent, 0) != WAIT_OBJECT_0)
+	if (WaitForSingleObject(context->abortEvent, 0) != WAIT_OBJECT_0)
 		return FALSE;
 
 	return TRUE;
