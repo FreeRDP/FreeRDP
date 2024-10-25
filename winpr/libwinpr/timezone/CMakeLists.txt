@@ -23,7 +23,7 @@ endif()
 include(CMakeDependentOption)
 cmake_dependent_option(WITH_TIMEZONE_FROM_FILE "Use timezone definitions from JSON file" OFF WITH_WINPR_JSON OFF)
 if (WITH_TIMEZONE_FROM_FILE)
-	set(WINPR_RESOURCE_ROOT ${CMAKE_INSTALL_FULL_DATAROOTDIR}/WinPR)
+
 	winpr_definition_add(-DWINPR_RESOURCE_ROOT="${WINPR_RESOURCE_ROOT}")
 	winpr_definition_add(-DWITH_TIMEZONE_FROM_FILE)
 
