@@ -798,6 +798,13 @@ extern "C"
 		Stream_Write_INT8_unchecked((s), (v)) \
 	} while (0)
 
+	/** @brief writes a \b INT8 to a \b wStream. The stream must be large enough to hold the data.
+	 *
+	 * Do not use directly, use the define @ref Stream_Write_INT8 instead
+	 *
+	 * \param _s The stream to write to, must not be \b NULL
+	 * \param _v The value to write
+	 */
 	static INLINE void Stream_Write_INT8_unchecked(wStream* _s, INT8 _v)
 	{
 		WINPR_ASSERT(_s);
@@ -815,6 +822,13 @@ extern "C"
 		Stream_Write_UINT8_unchecked((s), (v)); \
 	} while (0)
 
+	/** @brief writes a \b UINT8 to a \b wStream. The stream must be large enough to hold the data.
+	 *
+	 * Do not use directly, use the define @ref Stream_Write_UINT8 instead
+	 *
+	 * \param _s The stream to write to, must not be \b NULL
+	 * \param _v The value to write
+	 */
 	static INLINE void Stream_Write_UINT8_unchecked(wStream* _s, UINT8 _v)
 	{
 		WINPR_ASSERT(_s);
@@ -832,6 +846,14 @@ extern "C"
 		Stream_Write_INT16_unchecked((s), (v)); \
 	} while (0)
 
+	/** @brief writes a \b INT16 as \b little endian to a \b wStream. The stream must be large
+	 * enough to hold the data.
+	 *
+	 * Do not use directly, use the define @ref Stream_Write_INT16 instead
+	 *
+	 * \param _s The stream to write to, must not be \b NULL
+	 * \param _v The value to write
+	 */
 	static INLINE void Stream_Write_INT16_unchecked(wStream* _s, INT16 _v)
 	{
 		WINPR_ASSERT(_s);
@@ -850,6 +872,14 @@ extern "C"
 		Stream_Write_UINT16_unchecked((s), (v)); \
 	} while (0)
 
+	/** @brief writes a \b UINT16 as \b little endian to a \b wStream. The stream must be large
+	 * enough to hold the data.
+	 *
+	 * Do not use directly, use the define @ref Stream_Write_UINT16 instead
+	 *
+	 * \param _s The stream to write to, must not be \b NULL
+	 * \param _v The value to write
+	 */
 	static INLINE void Stream_Write_UINT16_unchecked(wStream* _s, UINT16 _v)
 	{
 		WINPR_ASSERT(_s);
@@ -868,6 +898,14 @@ extern "C"
 		Stream_Write_UINT16_BE_unchecked((s), (v)); \
 	} while (0)
 
+	/** @brief writes a \b UINT16 as \b big endian to a \b wStream. The stream must be large enough
+	 * to hold the data.
+	 *
+	 * Do not use directly, use the define @ref Stream_Write_UINT16_BE instead
+	 *
+	 * \param _s The stream to write to, must not be \b NULL
+	 * \param _v The value to write
+	 */
 	static INLINE void Stream_Write_UINT16_BE_unchecked(wStream* _s, UINT16 _v)
 	{
 		WINPR_ASSERT(_s);
@@ -886,6 +924,14 @@ extern "C"
 		Stream_Write_UINT24_BE_unchecked((s), (v)); \
 	} while (0)
 
+	/** @brief writes a \b UINT24 as \b big endian to a \b wStream. The stream must be large enough
+	 * to hold the data.
+	 *
+	 * Do not use directly, use the define @ref Stream_Write_UINT24_BE instead
+	 *
+	 * \param _s The stream to write to, must not be \b NULL
+	 * \param _v The value to write
+	 */
 	static INLINE void Stream_Write_UINT24_BE_unchecked(wStream* _s, UINT32 _v)
 	{
 		WINPR_ASSERT(_s);
@@ -906,6 +952,14 @@ extern "C"
 		Stream_Write_INT32_unchecked((s), (v)); \
 	} while (0)
 
+	/** @brief writes a \b INT32 as \b little endian to a \b wStream. The stream must be large
+	 * enough to hold the data.
+	 *
+	 * Do not use directly, use the define @ref Stream_Write_INT32 instead
+	 *
+	 * \param _s The stream to write to, must not be \b NULL
+	 * \param _v The value to write
+	 */
 	static INLINE void Stream_Write_INT32_unchecked(wStream* _s, INT32 _v)
 	{
 		WINPR_ASSERT(_s);
@@ -926,6 +980,14 @@ extern "C"
 		Stream_Write_UINT32_unchecked((s), (v)); \
 	} while (0)
 
+	/** @brief writes a \b UINT32 as \b little endian to a \b wStream. The stream must be large
+	 * enough to hold the data.
+	 *
+	 * Do not use directly, use the define @ref Stream_Write_UINT32 instead
+	 *
+	 * \param _s The stream to write to, must not be \b NULL
+	 * \param _v The value to write
+	 */
 	static INLINE void Stream_Write_UINT32_unchecked(wStream* _s, UINT32 _v)
 	{
 		WINPR_ASSERT(_s);
@@ -946,6 +1008,14 @@ extern "C"
 		Stream_Write_UINT32_BE_unchecked((s), (v)); \
 	} while (0)
 
+	/** @brief writes a \b UINT32 as \b big endian to a \b wStream. The stream must be large enough
+	 * to hold the data.
+	 *
+	 * Do not use directly, use the define @ref Stream_Write_UINT32_BE instead
+	 *
+	 * \param _s The stream to write to, must not be \b NULL
+	 * \param _v The value to write
+	 */
 	static INLINE void Stream_Write_UINT32_BE_unchecked(wStream* _s, UINT32 _v)
 	{
 		WINPR_ASSERT(Stream_GetRemainingCapacity(_s) >= 4);
@@ -954,6 +1024,12 @@ extern "C"
 		Stream_Write_UINT16_BE(_s, ((_v) & 0xFFFF));
 	}
 
+	/** @brief writes a \b UINT64 as \b little endian to a \b wStream. The stream must be large
+	 * enough to hold the data.
+	 *
+	 * \param _s The stream to write to, must not be \b NULL
+	 * \param _v The value to write
+	 */
 	static INLINE void Stream_Write_UINT64(wStream* _s, UINT64 _v)
 	{
 		WINPR_ASSERT(_s);
@@ -964,6 +1040,12 @@ extern "C"
 		Stream_Write_UINT32(_s, ((_v) >> 16 & 0xFFFFFFFFUL));
 	}
 
+	/** @brief writes a \b UINT64 as \b big endian to a \b wStream. The stream must be large enough
+	 * to hold the data.
+	 *
+	 * \param _s The stream to write to, must not be \b NULL
+	 * \param _v The value to write
+	 */
 	static INLINE void Stream_Write_UINT64_BE(wStream* _s, UINT64 _v)
 	{
 		WINPR_ASSERT(_s);
