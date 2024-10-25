@@ -76,5 +76,6 @@ if (NOT WITH_CLIENT_SDL_VERSIONED)
 	)
 endif()
 install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT client)
+install_freerdp_desktop("${MODULE_NAME}" "${MODULE_NAME}")
 
 add_subdirectory(man)
