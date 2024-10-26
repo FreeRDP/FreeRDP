@@ -5,6 +5,40 @@
 #include <winpr/print.h>
 #include <winpr/wlog.h>
 
+struct test_input_t
+{
+	const char* user;
+	const char* domain;
+	const char* pwd;
+	const BYTE* ntlm;
+	const BYTE* ntlmv2;
+	BOOL dynamic;
+	BOOL expected;
+};
+
+typedef struct
+{
+	CtxtHandle context;
+	ULONG cbMaxToken;
+	ULONG fContextReq;
+	ULONG pfContextAttr;
+	TimeStamp expiration;
+	PSecBuffer pBuffer;
+	SecBuffer inputBuffer[2];
+	SecBuffer outputBuffer[2];
+	BOOL haveContext;
+	BOOL haveInputBuffer;
+	BOOL UseNtlmV2Hash;
+	LPTSTR ServicePrincipalName;
+	SecBufferDesc inputBufferDesc;
+	SecBufferDesc outputBufferDesc;
+	CredHandle credentials;
+	BOOL confidentiality;
+	SecPkgInfo* pPackageInfo;
+	SecurityFunctionTable* table;
+	SEC_WINNT_AUTH_IDENTITY identity;
+} TEST_NTLM_SERVER;
+
 static BYTE TEST_NTLM_TIMESTAMP[8] = { 0x33, 0x57, 0xbd, 0xb1, 0x07, 0x8b, 0xcf, 0x01 };
 
 static BYTE TEST_NTLM_CLIENT_CHALLENGE[8] = { 0x20, 0xc0, 0x2b, 0x3d, 0xc0, 0x61, 0xa7, 0x73 };
@@ -73,6 +107,13 @@ static const BYTE TEST_NTLM_HASH[16] = { 0xd5, 0x92, 0x2a, 0x65, 0xc4, 0xd5, 0xc
 static const BYTE TEST_NTLM_V2_HASH[16] = { 0x4c, 0x7f, 0x70, 0x6f, 0x7d, 0xde, 0x05, 0xa9,
 	                                        0xd1, 0xa0, 0xf4, 0xe7, 0xff, 0xe3, 0xbf, 0xb8 };
 
+static const BYTE TEST_EMPTY_PWD_NTLM_HASH[] = { 0x31, 0xd6, 0xcf, 0xe0, 0xd1, 0x6a, 0xe9, 0x31,
+	                                             0xb7, 0x3c, 0x59, 0xd7, 0xe0, 0xc0, 0x89, 0xc0 };
+
+static const BYTE TEST_EMPTY_PWD_NTLM_V2_HASH[] = {
+	0x0b, 0xce, 0x54, 0x87, 0x4e, 0x94, 0x20, 0x9e, 0x34, 0x48, 0x97, 0xc1, 0x60, 0x03, 0x6e, 0x3b
+};
+
 #define NTLM_PACKAGE_NAME NTLM_SSP_NAME
 
 typedef struct
@@ -106,7 +147,12 @@ static int test_ntlm_client_init(TEST_NTLM_CLIENT* ntlm, const char* user, const
 
 	SecInvalidateHandle(&(ntlm->context));
 	ntlm->table = InitSecurityInterfaceEx(TEST_SSPI_INTERFACE);
-	sspi_SetAuthIdentity(&(ntlm->identity), user, domain, password);
+	if (!ntlm->table)
+		return -1;
+	const int rc = sspi_SetAuthIdentity(&(ntlm->identity), user, domain, password);
+	if (rc < 0)
+		return rc;
+
 	status = ntlm->table->QuerySecurityPackageInfo(NTLM_PACKAGE_NAME, &ntlm->pPackageInfo);
 
 	if (status != SEC_E_OK)
@@ -162,9 +208,16 @@ static void test_ntlm_client_uninit(TEST_NTLM_CLIENT* ntlm)
 
 	if (ntlm->table)
 	{
-		ntlm->table->FreeCredentialsHandle(&ntlm->credentials);
-		ntlm->table->FreeContextBuffer(ntlm->pPackageInfo);
-		ntlm->table->DeleteSecurityContext(&ntlm->context);
+		SECURITY_STATUS status = ntlm->table->FreeCredentialsHandle(&ntlm->credentials);
+		WINPR_ASSERT((status == SEC_E_OK) || (status == SEC_E_SECPKG_NOT_FOUND) ||
+		             (status == SEC_E_UNSUPPORTED_FUNCTION));
+
+		status = ntlm->table->FreeContextBuffer(ntlm->pPackageInfo);
+		WINPR_ASSERT((status == SEC_E_OK) || (status = SEC_E_INVALID_HANDLE));
+
+		status = ntlm->table->DeleteSecurityContext(&ntlm->context);
+		WINPR_ASSERT((status == SEC_E_OK) || (status == SEC_E_SECPKG_NOT_FOUND) ||
+		             (status == SEC_E_UNSUPPORTED_FUNCTION));
 	}
 }
 
@@ -205,6 +258,31 @@ static void test_ntlm_client_uninit(TEST_NTLM_CLIENT* ntlm)
  *                                          (  Client End  )
  *                                           --------------
  */
+static BOOL IsSecurityStatusError(SECURITY_STATUS status)
+{
+	BOOL error = TRUE;
+
+	switch (status)
+	{
+		case SEC_E_OK:
+		case SEC_I_CONTINUE_NEEDED:
+		case SEC_I_COMPLETE_NEEDED:
+		case SEC_I_COMPLETE_AND_CONTINUE:
+		case SEC_I_LOCAL_LOGON:
+		case SEC_I_CONTEXT_EXPIRED:
+		case SEC_I_INCOMPLETE_CREDENTIALS:
+		case SEC_I_RENEGOTIATE:
+		case SEC_I_NO_LSA_CONTEXT:
+		case SEC_I_SIGNATURE_NEEDED:
+		case SEC_I_NO_RENEGOTIATION:
+			error = FALSE;
+			break;
+		default:
+			break;
+	}
+
+	return error;
+}
 
 static int test_ntlm_client_authenticate(TEST_NTLM_CLIENT* ntlm)
 {
@@ -247,10 +325,18 @@ static int test_ntlm_client_authenticate(TEST_NTLM_CLIENT* ntlm)
 	    SECURITY_NATIVE_DREP, (ntlm->haveInputBuffer) ? &ntlm->inputBufferDesc : NULL, 0,
 	    &ntlm->context, &ntlm->outputBufferDesc, &ntlm->pfContextAttr, &ntlm->expiration);
 
+	if (IsSecurityStatusError(status))
+		return -1;
+
 	if ((status == SEC_I_COMPLETE_AND_CONTINUE) || (status == SEC_I_COMPLETE_NEEDED))
 	{
 		if (ntlm->table->CompleteAuthToken)
-			ntlm->table->CompleteAuthToken(&ntlm->context, &ntlm->outputBufferDesc);
+		{
+			SECURITY_STATUS rc =
+			    ntlm->table->CompleteAuthToken(&ntlm->context, &ntlm->outputBufferDesc);
+			if (rc != SEC_E_OK)
+				return -1;
+		}
 
 		if (status == SEC_I_COMPLETE_NEEDED)
 			status = SEC_E_OK;
@@ -287,29 +373,6 @@ static void test_ntlm_client_free(TEST_NTLM_CLIENT* ntlm)
 	free(ntlm);
 }
 
-typedef struct
-{
-	CtxtHandle context;
-	ULONG cbMaxToken;
-	ULONG fContextReq;
-	ULONG pfContextAttr;
-	TimeStamp expiration;
-	PSecBuffer pBuffer;
-	SecBuffer inputBuffer[2];
-	SecBuffer outputBuffer[2];
-	BOOL haveContext;
-	BOOL haveInputBuffer;
-	BOOL UseNtlmV2Hash;
-	LPTSTR ServicePrincipalName;
-	SecBufferDesc inputBufferDesc;
-	SecBufferDesc outputBufferDesc;
-	CredHandle credentials;
-	BOOL confidentiality;
-	SecPkgInfo* pPackageInfo;
-	SecurityFunctionTable* table;
-	SEC_WINNT_AUTH_IDENTITY identity;
-} TEST_NTLM_SERVER;
-
 static int test_ntlm_server_init(TEST_NTLM_SERVER* ntlm)
 {
 	SECURITY_STATUS status = SEC_E_INTERNAL_ERROR;
@@ -319,6 +382,9 @@ static int test_ntlm_server_init(TEST_NTLM_SERVER* ntlm)
 	ntlm->UseNtlmV2Hash = TRUE;
 	SecInvalidateHandle(&(ntlm->context));
 	ntlm->table = InitSecurityInterfaceEx(TEST_SSPI_INTERFACE);
+	if (!ntlm->table)
+		return SEC_E_INTERNAL_ERROR;
+
 	status = ntlm->table->QuerySecurityPackageInfo(NTLM_PACKAGE_NAME, &ntlm->pPackageInfo);
 
 	if (status != SEC_E_OK)
@@ -374,17 +440,21 @@ static void test_ntlm_server_uninit(TEST_NTLM_SERVER* ntlm)
 
 	if (ntlm->table)
 	{
-		ntlm->table->FreeCredentialsHandle(&ntlm->credentials);
-		ntlm->table->FreeContextBuffer(ntlm->pPackageInfo);
-		ntlm->table->DeleteSecurityContext(&ntlm->context);
+		SECURITY_STATUS status = ntlm->table->FreeCredentialsHandle(&ntlm->credentials);
+		WINPR_ASSERT(status == SEC_E_OK);
+		status = ntlm->table->FreeContextBuffer(ntlm->pPackageInfo);
+		WINPR_ASSERT(status == SEC_E_OK);
+		status = ntlm->table->DeleteSecurityContext(&ntlm->context);
+		WINPR_ASSERT(status == SEC_E_OK);
 	}
 }
 
-static int test_ntlm_server_authenticate(TEST_NTLM_SERVER* ntlm)
+static int test_ntlm_server_authenticate(const struct test_input_t* targ, TEST_NTLM_SERVER* ntlm)
 {
 	SECURITY_STATUS status = SEC_E_INTERNAL_ERROR;
 
 	WINPR_ASSERT(ntlm);
+	WINPR_ASSERT(targ);
 
 	ntlm->inputBufferDesc.ulVersion = SECBUFFER_VERSION;
 	ntlm->inputBufferDesc.cBuffers = 1;
@@ -412,12 +482,12 @@ static int test_ntlm_server_authenticate(TEST_NTLM_SERVER* ntlm)
 		if (ntlm->UseNtlmV2Hash)
 		{
 			AuthNtlmHash.Version = 2;
-			CopyMemory(AuthNtlmHash.NtlmHash, TEST_NTLM_V2_HASH, 16);
+			CopyMemory(AuthNtlmHash.NtlmHash, targ->ntlmv2, 16);
 		}
 		else
 		{
 			AuthNtlmHash.Version = 1;
-			CopyMemory(AuthNtlmHash.NtlmHash, TEST_NTLM_HASH, 16);
+			CopyMemory(AuthNtlmHash.NtlmHash, targ->ntlm, 16);
 		}
 
 		status =
@@ -455,27 +525,29 @@ static void test_ntlm_server_free(TEST_NTLM_SERVER* ntlm)
 	free(ntlm);
 }
 
-static BOOL test_default(void)
+static BOOL test_default(const struct test_input_t* arg)
 {
-	int status = 0;
 	BOOL rc = FALSE;
 	PSecBuffer pSecBuffer = NULL;
-	TEST_NTLM_CLIENT* client = NULL;
-	TEST_NTLM_SERVER* server = NULL;
-	BOOL DynamicTest = TRUE;
+
+	WINPR_ASSERT(arg);
+
+	printf("testcase {user=%s, domain=%s, password=%s, dynamic=%s}\n", arg->user, arg->domain,
+	       arg->pwd, arg->dynamic ? "TRUE" : "FALSE");
 
 	/**
 	 * Client Initialization
 	 */
-	client = test_ntlm_client_new();
+	TEST_NTLM_CLIENT* client = test_ntlm_client_new();
+	TEST_NTLM_SERVER* server = test_ntlm_server_new();
 
-	if (!client)
+	if (!client || !server)
 	{
-		printf("Memory allocation failed");
+		printf("Memory allocation failed\n");
 		goto fail;
 	}
 
-	status = test_ntlm_client_init(client, TEST_NTLM_USER, TEST_NTLM_DOMAIN, TEST_NTLM_PASSWORD);
+	int status = test_ntlm_client_init(client, arg->user, arg->domain, arg->pwd);
 
 	if (status < 0)
 	{
@@ -486,13 +558,6 @@ static BOOL test_default(void)
 	/**
 	 * Server Initialization
 	 */
-	server = test_ntlm_server_new();
-
-	if (!server)
-	{
-		printf("Memory allocation failed\n");
-		goto fail;
-	}
 
 	status = test_ntlm_server_init(server);
 
@@ -513,35 +578,43 @@ static BOOL test_default(void)
 		goto fail;
 	}
 
-	if (!DynamicTest)
+	if (!arg->dynamic)
 	{
-		SecPkgContext_AuthNtlmTimestamp AuthNtlmTimestamp;
-		SecPkgContext_AuthNtlmClientChallenge AuthNtlmClientChallenge;
-		SecPkgContext_AuthNtlmServerChallenge AuthNtlmServerChallenge;
+		SecPkgContext_AuthNtlmTimestamp AuthNtlmTimestamp = { 0 };
+		SecPkgContext_AuthNtlmClientChallenge AuthNtlmClientChallenge = { 0 };
+		SecPkgContext_AuthNtlmServerChallenge AuthNtlmServerChallenge = { 0 };
 		CopyMemory(AuthNtlmTimestamp.Timestamp, TEST_NTLM_TIMESTAMP, 8);
 		AuthNtlmTimestamp.ChallengeOrResponse = TRUE;
-		client->table->SetContextAttributes(&client->context, SECPKG_ATTR_AUTH_NTLM_TIMESTAMP,
-		                                    &AuthNtlmTimestamp,
-		                                    sizeof(SecPkgContext_AuthNtlmTimestamp));
+		SECURITY_STATUS rc = client->table->SetContextAttributes(
+		    &client->context, SECPKG_ATTR_AUTH_NTLM_TIMESTAMP, &AuthNtlmTimestamp,
+		    sizeof(SecPkgContext_AuthNtlmTimestamp));
+		WINPR_ASSERT((rc == SEC_E_OK) || (rc == SEC_E_SECPKG_NOT_FOUND));
+
 		AuthNtlmTimestamp.ChallengeOrResponse = FALSE;
-		client->table->SetContextAttributes(&client->context, SECPKG_ATTR_AUTH_NTLM_TIMESTAMP,
-		                                    &AuthNtlmTimestamp,
-		                                    sizeof(SecPkgContext_AuthNtlmTimestamp));
+		rc = client->table->SetContextAttributes(&client->context, SECPKG_ATTR_AUTH_NTLM_TIMESTAMP,
+		                                         &AuthNtlmTimestamp,
+		                                         sizeof(SecPkgContext_AuthNtlmTimestamp));
+		WINPR_ASSERT((rc == SEC_E_OK) || (rc == SEC_E_SECPKG_NOT_FOUND));
+
 		CopyMemory(AuthNtlmClientChallenge.ClientChallenge, TEST_NTLM_CLIENT_CHALLENGE, 8);
 		CopyMemory(AuthNtlmServerChallenge.ServerChallenge, TEST_NTLM_SERVER_CHALLENGE, 8);
-		client->table->SetContextAttributes(
+		rc = client->table->SetContextAttributes(
 		    &client->context, SECPKG_ATTR_AUTH_NTLM_CLIENT_CHALLENGE, &AuthNtlmClientChallenge,
 		    sizeof(SecPkgContext_AuthNtlmClientChallenge));
-		client->table->SetContextAttributes(
+		WINPR_ASSERT((rc == SEC_E_OK) || (rc == SEC_E_SECPKG_NOT_FOUND));
+
+		rc = client->table->SetContextAttributes(
 		    &client->context, SECPKG_ATTR_AUTH_NTLM_SERVER_CHALLENGE, &AuthNtlmServerChallenge,
 		    sizeof(SecPkgContext_AuthNtlmServerChallenge));
+		WINPR_ASSERT((rc == SEC_E_OK) || (rc == SEC_E_SECPKG_NOT_FOUND));
 	}
 
 	pSecBuffer = &(client->outputBuffer[0]);
 
-	if (!DynamicTest)
+	if (!arg->dynamic)
 	{
 		pSecBuffer->cbBuffer = sizeof(TEST_NTLM_NEGOTIATE) - 1;
+		free(pSecBuffer->pvBuffer);
 		pSecBuffer->pvBuffer = malloc(pSecBuffer->cbBuffer);
 
 		if (!pSecBuffer->pvBuffer)
@@ -563,7 +636,7 @@ static BOOL test_default(void)
 	server->inputBuffer[0].BufferType = SECBUFFER_TOKEN;
 	server->inputBuffer[0].pvBuffer = pSecBuffer->pvBuffer;
 	server->inputBuffer[0].cbBuffer = pSecBuffer->cbBuffer;
-	status = test_ntlm_server_authenticate(server);
+	status = test_ntlm_server_authenticate(arg, server);
 
 	if (status < 0)
 	{
@@ -571,36 +644,44 @@ static BOOL test_default(void)
 		goto fail;
 	}
 
-	if (!DynamicTest)
+	if (!arg->dynamic)
 	{
-		SecPkgContext_AuthNtlmTimestamp AuthNtlmTimestamp;
-		SecPkgContext_AuthNtlmClientChallenge AuthNtlmClientChallenge;
-		SecPkgContext_AuthNtlmServerChallenge AuthNtlmServerChallenge;
+		SecPkgContext_AuthNtlmTimestamp AuthNtlmTimestamp = { 0 };
+		SecPkgContext_AuthNtlmClientChallenge AuthNtlmClientChallenge = { 0 };
+		SecPkgContext_AuthNtlmServerChallenge AuthNtlmServerChallenge = { 0 };
 		CopyMemory(AuthNtlmTimestamp.Timestamp, TEST_NTLM_TIMESTAMP, 8);
 		AuthNtlmTimestamp.ChallengeOrResponse = TRUE;
-		client->table->SetContextAttributes(&server->context, SECPKG_ATTR_AUTH_NTLM_TIMESTAMP,
-		                                    &AuthNtlmTimestamp,
-		                                    sizeof(SecPkgContext_AuthNtlmTimestamp));
+		SECURITY_STATUS rc = client->table->SetContextAttributes(
+		    &server->context, SECPKG_ATTR_AUTH_NTLM_TIMESTAMP, &AuthNtlmTimestamp,
+		    sizeof(SecPkgContext_AuthNtlmTimestamp));
+		WINPR_ASSERT(rc == SEC_E_OK);
+
 		AuthNtlmTimestamp.ChallengeOrResponse = FALSE;
-		client->table->SetContextAttributes(&server->context, SECPKG_ATTR_AUTH_NTLM_TIMESTAMP,
-		                                    &AuthNtlmTimestamp,
-		                                    sizeof(SecPkgContext_AuthNtlmTimestamp));
+		rc = client->table->SetContextAttributes(&server->context, SECPKG_ATTR_AUTH_NTLM_TIMESTAMP,
+		                                         &AuthNtlmTimestamp,
+		                                         sizeof(SecPkgContext_AuthNtlmTimestamp));
+		WINPR_ASSERT(rc == SEC_E_OK);
+
 		CopyMemory(AuthNtlmClientChallenge.ClientChallenge, TEST_NTLM_CLIENT_CHALLENGE, 8);
 		CopyMemory(AuthNtlmServerChallenge.ServerChallenge, TEST_NTLM_SERVER_CHALLENGE, 8);
-		server->table->SetContextAttributes(
+		rc = server->table->SetContextAttributes(
 		    &server->context, SECPKG_ATTR_AUTH_NTLM_CLIENT_CHALLENGE, &AuthNtlmClientChallenge,
 		    sizeof(SecPkgContext_AuthNtlmClientChallenge));
-		server->table->SetContextAttributes(
+		WINPR_ASSERT(rc == SEC_E_OK);
+
+		rc = server->table->SetContextAttributes(
 		    &server->context, SECPKG_ATTR_AUTH_NTLM_SERVER_CHALLENGE, &AuthNtlmServerChallenge,
 		    sizeof(SecPkgContext_AuthNtlmServerChallenge));
+		WINPR_ASSERT(rc == SEC_E_OK);
 	}
 
 	pSecBuffer = &(server->outputBuffer[0]);
 
-	if (!DynamicTest)
+	if (!arg->dynamic)
 	{
 		SecPkgContext_AuthNtlmMessage AuthNtlmMessage = { 0 };
 		pSecBuffer->cbBuffer = sizeof(TEST_NTLM_CHALLENGE) - 1;
+		free(pSecBuffer->pvBuffer);
 		pSecBuffer->pvBuffer = malloc(pSecBuffer->cbBuffer);
 
 		if (!pSecBuffer->pvBuffer)
@@ -613,9 +694,11 @@ static BOOL test_default(void)
 		AuthNtlmMessage.type = 2;
 		AuthNtlmMessage.length = pSecBuffer->cbBuffer;
 		AuthNtlmMessage.buffer = (BYTE*)pSecBuffer->pvBuffer;
-		server->table->SetContextAttributes(&server->context, SECPKG_ATTR_AUTH_NTLM_MESSAGE,
-		                                    &AuthNtlmMessage,
-		                                    sizeof(SecPkgContext_AuthNtlmMessage));
+		SECURITY_STATUS rc = server->table->SetContextAttributes(
+		    &server->context, SECPKG_ATTR_AUTH_NTLM_MESSAGE, &AuthNtlmMessage,
+		    sizeof(SecPkgContext_AuthNtlmMessage));
+		if (rc != SEC_E_OK)
+			goto fail;
 	}
 
 	(void)fprintf(stderr, "NTLM_CHALLENGE (length = %" PRIu32 "):\n", pSecBuffer->cbBuffer);
@@ -638,9 +721,10 @@ static BOOL test_default(void)
 
 	pSecBuffer = &(client->outputBuffer[0]);
 
-	if (!DynamicTest)
+	if (!arg->dynamic)
 	{
 		pSecBuffer->cbBuffer = sizeof(TEST_NTLM_AUTHENTICATE) - 1;
+		free(pSecBuffer->pvBuffer);
 		pSecBuffer->pvBuffer = malloc(pSecBuffer->cbBuffer);
 
 		if (!pSecBuffer->pvBuffer)
@@ -661,7 +745,7 @@ static BOOL test_default(void)
 	server->inputBuffer[0].BufferType = SECBUFFER_TOKEN;
 	server->inputBuffer[0].pvBuffer = pSecBuffer->pvBuffer;
 	server->inputBuffer[0].cbBuffer = pSecBuffer->cbBuffer;
-	status = test_ntlm_server_authenticate(server);
+	status = test_ntlm_server_authenticate(arg, server);
 
 	if (status < 0)
 	{
@@ -677,6 +761,9 @@ fail:
 	 */
 	test_ntlm_client_free(client);
 	test_ntlm_server_free(server);
+
+	printf("testcase {user=%s, domain=%s, password=%s, dynamic=%s} returns %d\n", arg->user,
+	       arg->domain, arg->pwd, arg->dynamic ? "TRUE" : "FALSE", rc);
 	return rc;
 }
 
@@ -685,7 +772,24 @@ int TestNTLM(int argc, char* argv[])
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
 
-	if (!test_default())
-		return -1;
-	return 0;
+	const struct test_input_t inputs[] = {
+		{ TEST_NTLM_USER, TEST_NTLM_DOMAIN, TEST_NTLM_PASSWORD, TEST_NTLM_HASH, TEST_NTLM_V2_HASH,
+		  TRUE, TRUE },
+		{ TEST_NTLM_USER, TEST_NTLM_DOMAIN, TEST_NTLM_PASSWORD, TEST_NTLM_HASH, TEST_NTLM_V2_HASH,
+		  FALSE, TRUE },
+		{ TEST_NTLM_USER, TEST_NTLM_DOMAIN, "", TEST_EMPTY_PWD_NTLM_HASH,
+		  TEST_EMPTY_PWD_NTLM_V2_HASH, TRUE, TRUE },
+		{ TEST_NTLM_USER, TEST_NTLM_DOMAIN, NULL, TEST_EMPTY_PWD_NTLM_HASH,
+		  TEST_EMPTY_PWD_NTLM_V2_HASH, TRUE, TRUE }
+	};
+
+	int rc = 0;
+	for (size_t x = 0; x < ARRAYSIZE(inputs); x++)
+	{
+		const struct test_input_t* cur = &inputs[x];
+		const BOOL res = test_default(cur);
+		if (res != cur->expected)
+			rc = -1;
+	}
+	return rc;
 }
