@@ -333,14 +333,14 @@ static BOOL copy(WCHAR** dst, ULONG* dstLen, const WCHAR* what, size_t len)
 	*dst = NULL;
 	*dstLen = 0;
 
+	/* Case what="" and len=0 should allocate an empty string */
 	if (!what && (len != 0))
 		return FALSE;
-	if (len == 0)
-		return TRUE;
 	*dst = calloc(sizeof(WCHAR), len + 1);
 	if (!*dst)
 		return FALSE;
-	memcpy(*dst, what, len * sizeof(WCHAR));
+	if (what)
+		memcpy(*dst, what, len * sizeof(WCHAR));
 	*dstLen = len;
 	return TRUE;
 }
