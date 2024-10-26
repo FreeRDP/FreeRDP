@@ -87,6 +87,12 @@
 	                                                                                        version \
 	                                                                                        3.9.0   \
 	                                                                                      */
+#define WINPR_PRAGMA_DIAG_TAUTOLOGICAL_VALUE_RANGE_COMPARE                                      \
+	_Pragma(                                                                                    \
+	    "clang diagnostic ignored \"-Wtautological-value-range-compare\"") /** @since           \
+	                                                                                    version \
+	                                                                                    3.10.0  \
+	                                                                                  */
 #define WINPR_PRAGMA_DIAG_IGNORED_FORMAT_NONLITERAL \
 	_Pragma("clang diagnostic ignored \"-Wformat-nonliteral\"") /** @since version 3.9.0 */
 #define WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC /** @since version 3.3.0 */ /* not supported \
@@ -119,6 +125,8 @@
 	_Pragma("GCC diagnostic ignored \"-Wformat-security\"")
 #define WINPR_PRAGMA_DIAG_TAUTOLOGICAL_CONSTANT_OUT_OF_RANGE_COMPARE /* not supported
 	_Pragma("GCC diagnostic ignored \"-Wtautological-constant-out-of-range-compare\"") */ /** @since version 3.9.0 */
+#define WINPR_PRAGMA_DIAG_TAUTOLOGICAL_VALUE_RANGE_COMPARE /* not supported
+	_Pragma("GCC diagnostic ignored \"-Wtautological-value-range-compare\"") */ /** @since version 3.10.0 */
 #define WINPR_PRAGMA_DIAG_IGNORED_FORMAT_NONLITERAL \
 	_Pragma("GCC diagnostic ignored \"-Wformat-nonliteral\"") /** @since version 3.9.0 */
 #if __GNUC__ >= 11
@@ -144,6 +152,7 @@
 #define WINPR_PRAGMA_DIAG_IGNORED_UNUSED_CONST_VAR
 #define WINPR_PRAGMA_DIAG_IGNORED_FORMAT_SECURITY
 #define WINPR_PRAGMA_DIAG_TAUTOLOGICAL_CONSTANT_OUT_OF_RANGE_COMPARE /** @since version 3.9.0 */
+#define WINPR_PRAGMA_DIAG_TAUTOLOGICAL_VALUE_RANGE_COMPARE           /** @since version 3.10.0 */
 #define WINPR_PRAGMA_DIAG_IGNORED_FORMAT_NONLITERAL  /** @since version 3.9.0 */
 #define WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC /** @since version 3.3.0 */
 #define WINPR_PRAGMA_DIAG_POP

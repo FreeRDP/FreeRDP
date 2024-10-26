@@ -226,10 +226,8 @@ BOOL rdp_read_client_time_zone(wStream* s, rdpSettings* settings)
 
 BOOL rdp_write_client_time_zone(wStream* s, rdpSettings* settings)
 {
-	LPTIME_ZONE_INFORMATION tz = { 0 };
-
 	WINPR_ASSERT(settings);
-	tz = settings->ClientTimeZone;
+	const LPTIME_ZONE_INFORMATION tz = settings->ClientTimeZone;
 
 	if (!tz)
 		return FALSE;
@@ -238,8 +236,12 @@ BOOL rdp_write_client_time_zone(wStream* s, rdpSettings* settings)
 	if (!Stream_EnsureRemainingCapacity(s, 4ull + sizeof(tz->StandardName)))
 		return FALSE;
 
-	/* Bias */
-	Stream_Write_UINT32(s, tz->Bias);
+	/* Bias defined in windows headers as LONG
+	 * but [MS-RDPBCGR] 2.2.1.11.1.1.1.1 Time Zone Information (TS_TIME_ZONE_INFORMATION) defines it
+	 * as unsigned.... assume the spec is buggy as an unsigned value only works on half of the
+	 * world.
+	 */
+	Stream_Write_INT32(s, tz->Bias);
 	/* standardName (64 bytes) */
 	Stream_Write(s, tz->StandardName, sizeof(tz->StandardName));
 	/* StandardDate */
@@ -250,7 +252,13 @@ BOOL rdp_write_client_time_zone(wStream* s, rdpSettings* settings)
 	/* StandardBias */
 	if (!Stream_EnsureRemainingCapacity(s, 4ull + sizeof(tz->DaylightName)))
 		return FALSE;
-	Stream_Write_UINT32(s, tz->StandardBias);
+
+	/* StandardBias defined in windows headers as LONG
+	 * but [MS-RDPBCGR] 2.2.1.11.1.1.1.1 Time Zone Information (TS_TIME_ZONE_INFORMATION) defines it
+	 * as unsigned.... assume the spec is buggy as an unsigned value only works on half of the
+	 * world.
+	 */
+	Stream_Write_INT32(s, tz->StandardBias);
 
 	/* daylightName (64 bytes) */
 	Stream_Write(s, tz->DaylightName, sizeof(tz->DaylightName));
@@ -261,7 +269,13 @@ BOOL rdp_write_client_time_zone(wStream* s, rdpSettings* settings)
 	/* DaylightBias */
 	if (!Stream_EnsureRemainingCapacity(s, 4ull))
 		return FALSE;
-	Stream_Write_UINT32(s, tz->DaylightBias);
+
+	/* DaylightBias defined in windows headers as LONG
+	 * but [MS-RDPBCGR] 2.2.1.11.1.1.1.1 Time Zone Information (TS_TIME_ZONE_INFORMATION) defines it
+	 * as unsigned.... assume the spec is buggy as an unsigned value only works on half of the
+	 * world.
+	 */
+	Stream_Write_INT32(s, tz->DaylightBias);
 
 	return TRUE;
 }
