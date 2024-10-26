@@ -336,11 +336,14 @@ static BOOL copy(WCHAR** dst, ULONG* dstLen, const WCHAR* what, size_t len)
 	/* Case what="" and len=0 should allocate an empty string */
 	if (!what && (len != 0))
 		return FALSE;
+	if (!what && (len == 0))
+		return TRUE;
+
 	*dst = calloc(sizeof(WCHAR), len + 1);
 	if (!*dst)
 		return FALSE;
-	if (what)
-		memcpy(*dst, what, len * sizeof(WCHAR));
+
+	memcpy(*dst, what, len * sizeof(WCHAR));
 	*dstLen = len;
 	return TRUE;
 }
@@ -380,9 +383,18 @@ int sspi_SetAuthIdentityA(SEC_WINNT_AUTH_IDENTITY* identity, const char* user, c
 	size_t unicodeUserLenW = 0;
 	size_t unicodeDomainLenW = 0;
 	size_t unicodePasswordLenW = 0;
-	LPWSTR unicodeUser = ConvertUtf8ToWCharAlloc(user, &unicodeUserLenW);
-	LPWSTR unicodeDomain = ConvertUtf8ToWCharAlloc(domain, &unicodeDomainLenW);
-	LPWSTR unicodePassword = ConvertUtf8ToWCharAlloc(password, &unicodePasswordLenW);
+	LPWSTR unicodeUser = NULL;
+	LPWSTR unicodeDomain = NULL;
+	LPWSTR unicodePassword = NULL;
+
+	if (user)
+		unicodeUser = ConvertUtf8ToWCharAlloc(user, &unicodeUserLenW);
+
+	if (domain)
+		unicodeDomain = ConvertUtf8ToWCharAlloc(domain, &unicodeDomainLenW);
+
+	if (password)
+		unicodePassword = ConvertUtf8ToWCharAlloc(password, &unicodePasswordLenW);
 
 	rc = sspi_SetAuthIdentityWithLengthW(identity, unicodeUser, unicodeUserLenW, unicodeDomain,
 	                                     unicodeDomainLenW, unicodePassword, unicodePasswordLenW);
