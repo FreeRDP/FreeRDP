@@ -722,6 +722,7 @@ static BOOL rdg_recv_auth_token(wLog* log, rdpCredsspAuth* auth, HttpResponse* r
 	{
 		case HTTP_STATUS_DENIED:
 		case HTTP_STATUS_OK:
+		case HTTP_STATUS_SWITCH_PROTOCOLS:
 			break;
 		default:
 			http_response_log_error_status(log, WLOG_WARN, response);
