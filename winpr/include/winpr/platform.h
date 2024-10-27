@@ -74,8 +74,14 @@
 	_Pragma("clang diagnostic ignored \"-Wreserved-id-macro\"")
 #define WINPR_PRAGMA_DIAG_IGNORED_UNUSED_MACRO \
 	_Pragma("clang diagnostic ignored \"-Wunused-macros\"")
+
+#if __clang_major__ >= 13
 #define WINPR_PRAGMA_DIAG_IGNORED_RESERVED_IDENTIFIER \
 	_Pragma("clang diagnostic ignored \"-Wreserved-identifier\"")
+#else
+#define WINPR_PRAGMA_DIAG_IGNORED_RESERVED_IDENTIFIER
+#endif
+
 #define WINPR_PRAGMA_DIAG_IGNORED_ATOMIC_SEQ_CST \
 	_Pragma("clang diagnostic ignored \"-Watomic-implicit-seq-cst\"")
 #define WINPR_PRAGMA_DIAG_IGNORED_UNUSED_CONST_VAR \
@@ -87,12 +93,15 @@
 	                                                                                        version \
 	                                                                                        3.9.0   \
 	                                                                                      */
-#define WINPR_PRAGMA_DIAG_TAUTOLOGICAL_VALUE_RANGE_COMPARE                                      \
-	_Pragma(                                                                                    \
-	    "clang diagnostic ignored \"-Wtautological-value-range-compare\"") /** @since           \
-	                                                                                    version \
-	                                                                                    3.10.0  \
-	                                                                                  */
+#if __clang_major__ >= 12
+#define WINPR_PRAGMA_DIAG_TAUTOLOGICAL_VALUE_RANGE_COMPARE                            \
+	_Pragma(                                                                          \
+	    "clang diagnostic ignored \"-Wtautological-value-range-compare\"") /** @since \
+	                                                                          version 3.10.0 */
+#else
+#define WINPR_PRAGMA_DIAG_TAUTOLOGICAL_VALUE_RANGE_COMPARE
+#endif
+
 #define WINPR_PRAGMA_DIAG_IGNORED_FORMAT_NONLITERAL \
 	_Pragma("clang diagnostic ignored \"-Wformat-nonliteral\"") /** @since version 3.9.0 */
 #define WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC /** @since version 3.3.0 */ /* not supported \
