@@ -27,7 +27,7 @@ jobs:
             distro: ubuntu22.04
     steps:
       - uses: actions/checkout@v4
-      - uses: uraimo/run-on-arch-action@master
+      - uses: uraimo/run-on-arch-action@v2.8.1
         name: "Run tests"
         id: build
         with:
