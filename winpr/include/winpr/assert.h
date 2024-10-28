@@ -65,6 +65,7 @@ extern "C"
 		WINPR_PRAGMA_DIAG_PUSH                                       \
 		WINPR_PRAGMA_DIAG_TAUTOLOGICAL_CONSTANT_OUT_OF_RANGE_COMPARE \
 		WINPR_PRAGMA_DIAG_TAUTOLOGICAL_VALUE_RANGE_COMPARE           \
+		_Pragma("coverity compliance deviate \"NO_EFFECT:SUPPRESS\" \"WINPR_ASSERT\"") \
 		assert(cond);                                                \
 		WINPR_PRAGMA_DIAG_POP                                        \
 	} while (0)
