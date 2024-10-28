@@ -3676,6 +3676,64 @@ static int parse_app_option_program(rdpSettings* settings, const char* cmd)
 	return CHANNEL_RC_OK;
 }
 
+static int parse_aad_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_A* arg)
+{
+	WINPR_ASSERT(settings);
+	WINPR_ASSERT(arg);
+
+	int rc = CHANNEL_RC_OK;
+	size_t count = 0;
+	char** ptr = CommandLineParseCommaSeparatedValues(arg->Value, &count);
+	if (!ptr || (count == 0))
+		rc = COMMAND_LINE_ERROR;
+	else
+	{
+		struct app_map
+		{
+			const char* name;
+			SSIZE_T id;
+			int (*fkt)(rdpSettings* settings, const char* value);
+		};
+		const struct app_map amap[] = { { "tenantid:", FreeRDP_GatewayAvdAadtenantid,
+			                              parse_app_option_program },
+			                            { "base:", FreeRDP_GatewayAvdArmpath, NULL } };
+		for (size_t x = 0; x < count; x++)
+		{
+			BOOL handled = FALSE;
+			const char* val = ptr[x];
+
+			for (size_t y = 0; y < ARRAYSIZE(amap); y++)
+			{
+				const struct app_map* cur = &amap[y];
+				if (option_starts_with(cur->name, val))
+				{
+					const char* xval = &val[strlen(cur->name)];
+					if (cur->fkt)
+						rc = cur->fkt(settings, xval);
+					else
+					{
+						const char* name = freerdp_settings_get_name_for_key(cur->id);
+						if (!freerdp_settings_set_value_for_name(settings, name, xval))
+							rc = COMMAND_LINE_ERROR_MEMORY;
+					}
+
+					handled = TRUE;
+					break;
+				}
+			}
+
+			if (!handled)
+				rc = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+
+			if (rc != 0)
+				break;
+		}
+	}
+
+	CommandLineParserFree(ptr);
+	return rc;
+}
+
 static int parse_app_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_A* arg)
 {
 	WINPR_ASSERT(settings);
@@ -4536,6 +4594,12 @@ static int freerdp_client_settings_parse_command_line_arguments_int(
 				return fail_at(arg, COMMAND_LINE_ERROR_UNEXPECTED_VALUE);
 		}
 #endif
+		CommandLineSwitchCase(arg, "aad")
+		{
+			int rc = parse_aad_options(settings, arg);
+			if (rc != 0)
+				return fail_at(arg, rc);
+		}
 		CommandLineSwitchCase(arg, "app")
 		{
 			int rc = parse_app_options(settings, arg);

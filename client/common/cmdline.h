@@ -26,6 +26,8 @@
 
 static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	{ "a", COMMAND_LINE_VALUE_REQUIRED, "<addin>[,<options>]", NULL, NULL, -1, "addin", "Addin" },
+	{ "aad", COMMAND_LINE_VALUE_REQUIRED, "[tenantid:<id>],[base:<url>]", NULL, NULL, -1, NULL,
+	  "AAD options" },
 	{ "action-script", COMMAND_LINE_VALUE_REQUIRED, "<file-name>", "~/.config/freerdp/action.sh",
 	  NULL, -1, NULL, "Action script" },
 	{ "admin", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, "console",
