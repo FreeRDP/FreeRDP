@@ -412,7 +412,7 @@ static WINPR_CIPHER_CTX* treatAuthBlob(const BYTE* pbInput, size_t cbInput)
 			return NULL;
 	}
 
-	ret = winpr_Cipher_New(cipherType, WINPR_ENCRYPT, Stream_Pointer(s), NULL);
+	ret = winpr_Cipher_NewEx(cipherType, WINPR_ENCRYPT, Stream_Pointer(s), cbKeyData, NULL, 0);
 	if (!ret)
 	{
 		WLog_ERR(TAG, "error creating cipher");

@@ -799,8 +799,9 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 
 	if (settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
 	{
-		rdp->fips_encrypt = winpr_Cipher_New(WINPR_CIPHER_DES_EDE3_CBC, WINPR_ENCRYPT,
-		                                     rdp->fips_encrypt_key, fips_ivec);
+		rdp->fips_encrypt =
+		    winpr_Cipher_NewEx(WINPR_CIPHER_DES_EDE3_CBC, WINPR_ENCRYPT, rdp->fips_encrypt_key,
+		                       sizeof(rdp->fips_encrypt_key), fips_ivec, sizeof(fips_ivec));
 
 		if (!rdp->fips_encrypt)
 		{
@@ -808,8 +809,9 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 			goto end;
 		}
 
-		rdp->fips_decrypt = winpr_Cipher_New(WINPR_CIPHER_DES_EDE3_CBC, WINPR_DECRYPT,
-		                                     rdp->fips_decrypt_key, fips_ivec);
+		rdp->fips_decrypt =
+		    winpr_Cipher_NewEx(WINPR_CIPHER_DES_EDE3_CBC, WINPR_DECRYPT, rdp->fips_decrypt_key,
+		                       sizeof(rdp->fips_decrypt_key), fips_ivec, sizeof(fips_ivec));
 
 		if (!rdp->fips_decrypt)
 		{
@@ -927,8 +929,9 @@ BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
 
 	if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
 	{
-		rdp->fips_encrypt = winpr_Cipher_New(WINPR_CIPHER_DES_EDE3_CBC, WINPR_ENCRYPT,
-		                                     rdp->fips_encrypt_key, fips_ivec);
+		rdp->fips_encrypt =
+		    winpr_Cipher_NewEx(WINPR_CIPHER_DES_EDE3_CBC, WINPR_ENCRYPT, rdp->fips_encrypt_key,
+		                       sizeof(rdp->fips_encrypt_key), fips_ivec, sizeof(fips_ivec));
 
 		if (!rdp->fips_encrypt)
 		{
@@ -936,8 +939,9 @@ BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
 			goto end;
 		}
 
-		rdp->fips_decrypt = winpr_Cipher_New(WINPR_CIPHER_DES_EDE3_CBC, WINPR_DECRYPT,
-		                                     rdp->fips_decrypt_key, fips_ivec);
+		rdp->fips_decrypt =
+		    winpr_Cipher_NewEx(WINPR_CIPHER_DES_EDE3_CBC, WINPR_DECRYPT, rdp->fips_decrypt_key,
+		                       sizeof(rdp->fips_decrypt_key), fips_ivec, sizeof(fips_ivec));
 
 		if (!rdp->fips_decrypt)
 		{
