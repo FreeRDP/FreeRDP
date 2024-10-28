@@ -22,6 +22,7 @@
 #include <cstdlib>
 #include <winpr/string.h>
 #include <freerdp/log.h>
+#include <freerdp/utils/aad.h>
 
 #include "sdl_webview.hpp"
 #include "webview_impl.hpp"
@@ -44,9 +45,10 @@ static BOOL sdl_webview_get_rdsaad_access_token(freerdp* instance, const char* s
 
 	*token = nullptr;
 
-	auto url =
-	    "https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=" + client_id +
-	    "&response_type=code&scope=" + scope + "&redirect_uri=" + redirect_uri;
+	std::string ep = freerdp_utils_aad_get_wellknown_string(instance->context,
+	                                                        AAD_WELLKNOWN_authorization_endpoint);
+	auto url = ep + "?client_id=" + client_id + "&response_type=code&scope=" + scope +
+	           "&redirect_uri=" + redirect_uri;
 
 	const std::string title = "FreeRDP WebView - AAD access token";
 	std::string code;
@@ -71,9 +73,10 @@ static BOOL sdl_webview_get_avd_access_token(freerdp* instance, char** token)
 
 	*token = nullptr;
 
-	auto url =
-	    "https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=" + client_id +
-	    "&response_type=code&scope=" + scope + "&redirect_uri=" + redirect_uri;
+	std::string ep = freerdp_utils_aad_get_wellknown_string(instance->context,
+	                                                        AAD_WELLKNOWN_authorization_endpoint);
+	auto url = ep + "?client_id=" + client_id + "&response_type=code&scope=" + scope +
+	           "&redirect_uri=" + redirect_uri;
 	const std::string title = "FreeRDP WebView - AVD access token";
 	std::string code;
 	auto rc = webview_impl_run(title, url, code);

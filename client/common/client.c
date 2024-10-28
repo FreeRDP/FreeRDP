@@ -1015,6 +1015,7 @@ static char* extract_authorization_code(char* url)
 	return NULL;
 }
 
+#if defined(WITH_AAD)
 static BOOL client_cli_get_rdsaad_access_token(freerdp* instance, const char* scope,
                                                const char* req_cnf, char** token)
 {
@@ -1032,11 +1033,12 @@ static BOOL client_cli_get_rdsaad_access_token(freerdp* instance, const char* sc
 
 	*token = NULL;
 
-	printf("Browse to: https://login.microsoftonline.com/common/oauth2/v2.0/"
-	       "authorize?client_id=%s&response_type="
+	const char* ep = freerdp_utils_aad_get_wellknown_string(instance->context,
+	                                                        AAD_WELLKNOWN_authorization_endpoint);
+	printf("Browse to: %s?client_id=%s&response_type="
 	       "code&scope=%s&redirect_uri=%s"
 	       "\n",
-	       client_id, scope, redirect_uri);
+	       ep, client_id, scope, redirect_uri);
 	printf("Paste redirect URL here: \n");
 
 	if (freerdp_interruptible_get_line(instance->context, &url, &size, stdin) < 0)
@@ -1076,11 +1078,12 @@ static BOOL client_cli_get_avd_access_token(freerdp* instance, char** token)
 
 	*token = NULL;
 
-	printf("Browse to: https://login.microsoftonline.com/common/oauth2/v2.0/"
-	       "authorize?client_id=%s&response_type="
+	const char* ep = freerdp_utils_aad_get_wellknown_string(instance->context,
+	                                                        AAD_WELLKNOWN_authorization_endpoint);
+	printf("Browse to: %s?client_id=%s&response_type="
 	       "code&scope=%s&redirect_uri=%s"
 	       "\n",
-	       client_id, scope, redirect_uri);
+	       ep, client_id, scope, redirect_uri);
 	printf("Paste redirect URL here: \n");
 
 	if (freerdp_interruptible_get_line(instance->context, &url, &size, stdin) < 0)
@@ -1104,12 +1107,18 @@ cleanup:
 	free(url);
 	return rc && (*token != NULL);
 }
+#endif
 
 BOOL client_cli_get_access_token(freerdp* instance, AccessTokenType tokenType, char** token,
                                  size_t count, ...)
 {
 	WINPR_ASSERT(instance);
 	WINPR_ASSERT(token);
+
+#if !defined(WITH_AAD)
+	WLog_ERR(TAG, "Build does not support AAD authentication");
+	return FALSE;
+#else
 	switch (tokenType)
 	{
 		case ACCESS_TOKEN_TYPE_AAD:
@@ -1146,6 +1155,7 @@ BOOL client_cli_get_access_token(freerdp* instance, AccessTokenType tokenType, c
 			WLog_ERR(TAG, "Unexpected value for AccessTokenType [%" PRIuz "], aborting", tokenType);
 			return FALSE;
 	}
+#endif
 }
 
 BOOL client_common_get_access_token(freerdp* instance, const char* request, char** token)
@@ -1161,8 +1171,9 @@ BOOL client_common_get_access_token(freerdp* instance, const char* request, char
 
 	wLog* log = WLog_Get(TAG);
 
-	if (!freerdp_http_request("https://login.microsoftonline.com/common/oauth2/v2.0/token", request,
-	                          &resp_code, &response, &response_length))
+	const char* token_ep =
+	    freerdp_utils_aad_get_wellknown_string(instance->context, AAD_WELLKNOWN_token_endpoint);
+	if (!freerdp_http_request(token_ep, request, &resp_code, &response, &response_length))
 	{
 		WLog_ERR(TAG, "access token request failed");
 		return FALSE;

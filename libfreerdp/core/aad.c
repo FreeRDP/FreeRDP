@@ -32,6 +32,7 @@
 #include <winpr/json.h>
 
 #include "transport.h"
+#include "rdp.h"
 
 #include "aad.h"
 
@@ -47,10 +48,12 @@ struct rdp_aad
 	char* hostname;
 	char* scope;
 	wLog* log;
+	WINPR_JSON* wellknown;
 };
 
 #ifdef WITH_AAD
 
+static BOOL aad_fetch_wellknown(rdpAad* aad);
 static BOOL get_encoded_rsa_params(wLog* wlog, rdpPrivateKey* key, char** e, char** n);
 static BOOL generate_pop_key(rdpAad* aad);
 
@@ -186,8 +189,22 @@ static BOOL aad_get_nonce(rdpAad* aad)
 	size_t response_length = 0;
 	WINPR_JSON* json = NULL;
 
-	if (!freerdp_http_request("https://login.microsoftonline.com/common/oauth2/v2.0/token",
-	                          "grant_type=srv_challenge", &resp_code, &response, &response_length))
+	WINPR_JSON* obj = WINPR_JSON_GetObjectItem(aad->wellknown, "token_endpoint");
+	if (!obj)
+	{
+		WLog_Print(aad->log, WLOG_ERROR, "wellknown does not have 'token_endpoint', aborting");
+		return FALSE;
+	}
+	const char* url = WINPR_JSON_GetStringValue(obj);
+	if (!url)
+	{
+		WLog_Print(aad->log, WLOG_ERROR,
+		           "wellknown does have 'token_endpoint=NULL' value, aborting");
+		return FALSE;
+	}
+
+	if (!freerdp_http_request(url, "grant_type=srv_challenge", &resp_code, &response,
+	                          &response_length))
 	{
 		WLog_Print(aad->log, WLOG_ERROR, "nonce request failed");
 		goto fail;
@@ -269,6 +286,10 @@ int aad_client_begin(rdpAad* aad)
 		WLog_Print(aad->log, WLOG_ERROR, "instance->GetAccessToken == NULL");
 		return -1;
 	}
+
+	if (!aad_fetch_wellknown(aad))
+		return -1;
+
 	const BOOL arc = instance->GetAccessToken(instance, ACCESS_TOKEN_TYPE_AAD, &aad->access_token,
 	                                          2, aad->scope, aad->kid);
 	if (!arc)
@@ -775,6 +796,7 @@ void aad_free(rdpAad* aad)
 	free(aad->access_token);
 	free(aad->kid);
 	freerdp_key_free(aad->key);
+	WINPR_JSON_Delete(aad->wellknown);
 
 	free(aad);
 }
@@ -794,7 +816,6 @@ BOOL aad_is_supported(void)
 #endif
 }
 
-#ifdef WITH_AAD
 char* freerdp_utils_aad_get_access_token(wLog* log, const char* data, size_t length)
 {
 	char* token = NULL;
@@ -829,4 +850,154 @@ cleanup:
 	WINPR_JSON_Delete(json);
 	return token;
 }
-#endif
+
+WINPR_ATTR_MALLOC(WINPR_JSON_Delete, 1)
+static WINPR_JSON* aad_get_wellknown(wLog* log, const char* base, const char* tenantid)
+{
+	const char* curbase = "login.microsoftonline.com";
+	const char* curtenantid = "common";
+	if (tenantid)
+		curtenantid = tenantid;
+	if (base)
+		curbase = base;
+
+	char* str = NULL;
+	size_t len = 0;
+	winpr_asprintf(&str, &len, "https://%s/%s/v2.0/.well-known/openid-configuration", curbase,
+	               curtenantid);
+
+	if (!str)
+	{
+		WLog_Print(log, WLOG_ERROR, "failed to create request URL for tenantid='%s'", tenantid);
+		return NULL;
+	}
+
+	BYTE* response = NULL;
+	long resp_code = 0;
+	size_t response_length = 0;
+	const BOOL rc = freerdp_http_request(str, "", &resp_code, &response, &response_length);
+	if (!rc || (resp_code != HTTP_STATUS_OK))
+	{
+		WLog_Print(log, WLOG_ERROR, "request for '%s' failed with: %s", str,
+		           freerdp_http_status_string(resp_code));
+		free(str);
+		free(response);
+		return NULL;
+	}
+	free(str);
+
+	WINPR_JSON* json = WINPR_JSON_ParseWithLength((const char*)response, response_length);
+	free(response);
+
+	if (!json)
+		WLog_Print(log, WLOG_ERROR, "failed to parse reponse as JSON");
+
+	return json;
+}
+
+BOOL aad_fetch_wellknown(rdpAad* aad)
+{
+	WINPR_ASSERT(aad);
+	WINPR_ASSERT(aad->rdpcontext);
+
+	const char* base =
+	    freerdp_settings_get_string(aad->rdpcontext->settings, FreeRDP_GatewayAvdArmpath);
+	const char* tenantid =
+	    freerdp_settings_get_string(aad->rdpcontext->settings, FreeRDP_GatewayAvdAadtenantid);
+	WINPR_JSON_Delete(aad->wellknown);
+	aad->wellknown = aad_get_wellknown(aad->log, base, tenantid);
+	return aad->wellknown ? TRUE : FALSE;
+}
+
+const char* freerdp_utils_aad_get_wellknown_string(rdpContext* context, AAD_WELLKNOWN_VALUES which)
+{
+	return freerdp_utils_aad_get_wellknown_custom_string(
+	    context, freerdp_utils_aad_wellknwon_value_name(which));
+}
+
+const char* freerdp_utils_aad_get_wellknown_custom_string(rdpContext* context, const char* which)
+{
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(context->rdp);
+	rdpAad* aad = context->rdp->aad;
+	if (!aad || !aad->wellknown)
+		return NULL;
+
+	WINPR_JSON* obj = WINPR_JSON_GetObjectItem(aad->wellknown, which);
+	if (!obj)
+		return NULL;
+
+	return WINPR_JSON_GetStringValue(obj);
+}
+
+const char* freerdp_utils_aad_wellknwon_value_name(AAD_WELLKNOWN_VALUES which)
+{
+	switch (which)
+	{
+		case AAD_WELLKNOWN_token_endpoint:
+			return "token_endpoint";
+		case AAD_WELLKNOWN_token_endpoint_auth_methods_supported:
+			return "token_endpoint_auth_methods_supported";
+		case AAD_WELLKNOWN_jwks_uri:
+			return "jwks_uri";
+		case AAD_WELLKNOWN_response_modes_supported:
+			return "response_modes_supported";
+		case AAD_WELLKNOWN_subject_types_supported:
+			return "subject_types_supported";
+		case AAD_WELLKNOWN_id_token_signing_alg_values_supported:
+			return "id_token_signing_alg_values_supported";
+		case AAD_WELLKNOWN_response_types_supported:
+			return "response_types_supported";
+		case AAD_WELLKNOWN_scopes_supported:
+			return "scopes_supported";
+		case AAD_WELLKNOWN_issuer:
+			return "issuer";
+		case AAD_WELLKNOWN_request_uri_parameter_supported:
+			return "request_uri_parameter_supported";
+		case AAD_WELLKNOWN_userinfo_endpoint:
+			return "userinfo_endpoint";
+		case AAD_WELLKNOWN_authorization_endpoint:
+			return "authorization_endpoint";
+		case AAD_WELLKNOWN_device_authorization_endpoint:
+			return "device_authorization_endpoint";
+		case AAD_WELLKNOWN_http_logout_supported:
+			return "http_logout_supported";
+		case AAD_WELLKNOWN_frontchannel_logout_supported:
+			return "frontchannel_logout_supported";
+		case AAD_WELLKNOWN_end_session_endpoint:
+			return "end_session_endpoint";
+		case AAD_WELLKNOWN_claims_supported:
+			return "claims_supported";
+		case AAD_WELLKNOWN_kerberos_endpoint:
+			return "kerberos_endpoint";
+		case AAD_WELLKNOWN_tenant_region_scope:
+			return "tenant_region_scope";
+		case AAD_WELLKNOWN_cloud_instance_name:
+			return "cloud_instance_name";
+		case AAD_WELLKNOWN_cloud_graph_host_name:
+			return "cloud_graph_host_name";
+		case AAD_WELLKNOWN_msgraph_host:
+			return "msgraph_host";
+		case AAD_WELLKNOWN_rbac_url:
+			return "rbac_url";
+		default:
+			return "UNKNOWN";
+	}
+}
+
+WINPR_JSON* freerdp_utils_aad_get_wellknown_object(rdpContext* context, AAD_WELLKNOWN_VALUES which)
+{
+	return freerdp_utils_aad_get_wellknown_custom_object(
+	    context, freerdp_utils_aad_wellknwon_value_name(which));
+}
+
+WINPR_JSON* freerdp_utils_aad_get_wellknown_custom_object(rdpContext* context, const char* which)
+{
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(context->rdp);
+	rdpAad* aad = context->rdp->aad;
+	if (!aad || !aad->wellknown)
+		return NULL;
+
+	return WINPR_JSON_GetObjectItem(aad->wellknown, which);
+}
