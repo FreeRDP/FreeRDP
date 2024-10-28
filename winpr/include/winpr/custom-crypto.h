@@ -265,9 +265,32 @@ extern "C"
 	WINPR_API void winpr_Cipher_Free(WINPR_CIPHER_CTX* ctx);
 
 	WINPR_ATTR_MALLOC(winpr_Cipher_Free, 1)
-	WINPR_API WINPR_CIPHER_CTX* winpr_Cipher_New(WINPR_CIPHER_TYPE cipher,
-	                                             WINPR_CRYPTO_OPERATION op, const void* key,
-	                                             const void* iv);
+	WINPR_API WINPR_DEPRECATED_VAR("[since 3.10.0] use winpr_Cipher_NewEx",
+	                               WINPR_CIPHER_CTX* winpr_Cipher_New(WINPR_CIPHER_TYPE cipher,
+	                                                                  WINPR_CRYPTO_OPERATION op,
+	                                                                  const void* key,
+	                                                                  const void* iv));
+
+	/** @brief Create a new \b WINPR_CIPHER_CTX
+	 *
+	 * creates a new stream cipher. Only the ciphers supported by your SSL library are available,
+	 * fallback to WITH_INTERNAL_RC4 is not possible.
+	 *
+	 * @param cipher The cipher to create the context for
+	 * @param op Operation \b WINPR_ENCRYPT or \b WINPR_DECRYPT
+	 * @param key A pointer to the key material (size must match expectations for the cipher used)
+	 * @param keylen The length in bytes of key material
+	 * @param iv A pointer to the IV material (size must match expectations for the cipher used)
+	 * @param ivlen The length in bytes of the IV
+	 *
+	 * @return A newly allocated context or \b NULL
+	 *
+	 * @since version 3.10.0
+	 */
+	WINPR_ATTR_MALLOC(winpr_Cipher_Free, 1)
+	WINPR_API WINPR_CIPHER_CTX* winpr_Cipher_NewEx(WINPR_CIPHER_TYPE cipher,
+	                                               WINPR_CRYPTO_OPERATION op, const void* key,
+	                                               size_t keylen, const void* iv, size_t ivlen);
 	WINPR_API BOOL winpr_Cipher_SetPadding(WINPR_CIPHER_CTX* ctx, BOOL enabled);
 	WINPR_API BOOL winpr_Cipher_Update(WINPR_CIPHER_CTX* ctx, const void* input, size_t ilen,
 	                                   void* output, size_t* olen);

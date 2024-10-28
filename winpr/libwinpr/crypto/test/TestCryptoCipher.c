@@ -4,12 +4,11 @@
 #include <winpr/crypto.h>
 #include <winpr/ssl.h>
 
-static BOOL test_crypto_cipher_aes_128_cbc(void)
+static BOOL test_crypto_cipher_aes_128_cbc(BOOL ex)
 {
-	WINPR_CIPHER_CTX* ctx = NULL;
 	BOOL result = FALSE;
-	BYTE key[] = "0123456789abcdeF";
-	BYTE iv[] = "1234567887654321";
+	BYTE key[16] = "0123456789abcdeF";
+	BYTE iv[16] = "1234567887654321";
 	BYTE ibuf[1024] = { 0 };
 	BYTE obuf[1024] = { 0 };
 	size_t ilen = 0;
@@ -20,7 +19,13 @@ static BOOL test_crypto_cipher_aes_128_cbc(void)
 
 	/* encrypt */
 
-	if (!(ctx = winpr_Cipher_New(WINPR_CIPHER_AES_128_CBC, WINPR_ENCRYPT, key, iv)))
+	WINPR_CIPHER_CTX* ctx = NULL;
+	if (ex)
+		ctx = winpr_Cipher_NewEx(WINPR_CIPHER_AES_128_CBC, WINPR_ENCRYPT, key, sizeof(key), iv,
+		                         sizeof(iv));
+	else
+		ctx = winpr_Cipher_New(WINPR_CIPHER_AES_128_CBC, WINPR_ENCRYPT, key, iv);
+	if (!ctx)
 	{
 		(void)fprintf(stderr, "%s: winpr_Cipher_New (encrypt) failed\n", __func__);
 		return FALSE;
@@ -219,7 +224,10 @@ int TestCryptoCipher(int argc, char* argv[])
 
 	winpr_InitializeSSL(WINPR_SSL_INIT_DEFAULT);
 
-	if (!test_crypto_cipher_aes_128_cbc())
+	if (!test_crypto_cipher_aes_128_cbc(TRUE))
+		return -1;
+
+	if (!test_crypto_cipher_aes_128_cbc(FALSE))
 		return -1;
 
 	if (!test_crypto_cipher_rc4())

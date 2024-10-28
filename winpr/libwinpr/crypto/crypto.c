@@ -186,8 +186,9 @@ BOOL CryptProtectMemory(LPVOID pData, DWORD cbData, DWORD dwFlags)
 	if (!pCipherText)
 		goto out;
 
-	if ((enc = winpr_Cipher_New(WINPR_CIPHER_AES_256_CBC, WINPR_ENCRYPT, pMemBlock->key,
-	                            pMemBlock->iv)) == NULL)
+	if ((enc = winpr_Cipher_NewEx(WINPR_CIPHER_AES_256_CBC, WINPR_ENCRYPT, pMemBlock->key,
+	                              sizeof(pMemBlock->key), pMemBlock->iv, sizeof(pMemBlock->iv))) ==
+	    NULL)
 		goto out;
 	if (!winpr_Cipher_Update(enc, pMemBlock->pData, pMemBlock->cbData, pCipherText, &cbOut))
 		goto out;
@@ -234,8 +235,9 @@ BOOL CryptUnprotectMemory(LPVOID pData, DWORD cbData, DWORD dwFlags)
 	if (!pPlainText)
 		goto out;
 
-	if ((dec = winpr_Cipher_New(WINPR_CIPHER_AES_256_CBC, WINPR_DECRYPT, pMemBlock->key,
-	                            pMemBlock->iv)) == NULL)
+	if ((dec = winpr_Cipher_NewEx(WINPR_CIPHER_AES_256_CBC, WINPR_DECRYPT, pMemBlock->key,
+	                              sizeof(pMemBlock->key), pMemBlock->iv, sizeof(pMemBlock->iv))) ==
+	    NULL)
 		goto out;
 	if (!winpr_Cipher_Update(dec, pMemBlock->pData, pMemBlock->cbData, pPlainText, &cbOut))
 		goto out;
