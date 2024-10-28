@@ -2604,7 +2604,12 @@ static int parse_vmconnect_options(rdpSettings* settings, const COMMAND_LINE_ARG
 
 	if (!freerdp_settings_set_bool(settings, FreeRDP_VmConnectMode, TRUE))
 		return COMMAND_LINE_ERROR;
-	if (!freerdp_settings_set_uint32(settings, FreeRDP_ServerPort, 2179))
+
+	UINT32 port = freerdp_settings_get_uint32(settings, FreeRDP_ServerPort);
+	if (port == 3389)
+		port = 2179;
+
+	if (!freerdp_settings_set_uint32(settings, FreeRDP_ServerPort, port))
 		return COMMAND_LINE_ERROR;
 	if (!freerdp_settings_set_bool(settings, FreeRDP_NegotiateSecurityLayer, FALSE))
 		return COMMAND_LINE_ERROR;
@@ -5464,6 +5469,16 @@ static int freerdp_client_settings_parse_command_line_arguments_int(
 
 		if (!freerdp_settings_set_uint32(settings, FreeRDP_ServerPort, (UINT32)val))
 			return fail_at(arg, COMMAND_LINE_ERROR);
+	}
+
+	if (freerdp_settings_get_bool(settings, FreeRDP_VmConnectMode))
+	{
+		const COMMAND_LINE_ARGUMENT_A* nego = CommandLineFindArgumentA(largs, "nego");
+		if (nego)
+			return fail_at(arg, COMMAND_LINE_ERROR);
+
+		const UINT32 port = freerdp_settings_get_uint32(settings, FreeRDP_ServerPort);
+		WLog_INFO(TAG, "/vmconnect uses custom port %" PRIu32, port);
 	}
 
 	fill_credential_strings(largs);
