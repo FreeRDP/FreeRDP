@@ -605,6 +605,7 @@ WINPR_API WINPR_CIPHER_CTX* winpr_Cipher_NewEx(WINPR_CIPHER_TYPE cipher, WINPR_C
 	if (!ctx->ectx)
 		goto fail;
 
+#if 0
 	if (keylen != 0)
 	{
 		WINPR_ASSERT(keylen <= INT32_MAX);
@@ -623,6 +624,8 @@ WINPR_API WINPR_CIPHER_CTX* winpr_Cipher_NewEx(WINPR_CIPHER_TYPE cipher, WINPR_C
 		if ((len > 0) && (ivlen != len))
 			goto fail;
 	}
+#endif
+
 	const int operation = (op == WINPR_ENCRYPT) ? 1 : 0;
 
 	if (EVP_CipherInit_ex(ctx->ectx, evp, NULL, key, iv, operation) != 1)
