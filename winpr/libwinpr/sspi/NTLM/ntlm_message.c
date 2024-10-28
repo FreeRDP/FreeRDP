@@ -254,8 +254,12 @@ static BOOL ntlm_read_message_header(wStream* s, NTLM_MESSAGE_HEADER* header, UI
 
 	if (strncmp((char*)header->Signature, NTLM_SIGNATURE, 8) != 0)
 	{
-		WLog_ERR(TAG, "NTLM_MESSAGE_HEADER Invalid signature, got %s, expected %s",
-		         header->Signature, NTLM_SIGNATURE);
+		char Signature[sizeof(header->Signature) * 3 + 1] = { 0 };
+		winpr_BinToHexStringBuffer(header->Signature, sizeof(header->Signature), Signature,
+		                           sizeof(Signature), TRUE);
+
+		WLog_ERR(TAG, "NTLM_MESSAGE_HEADER Invalid signature, got %s, expected %s", Signature,
+		         NTLM_SIGNATURE);
 		return FALSE;
 	}
 
