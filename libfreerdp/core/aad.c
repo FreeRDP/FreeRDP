@@ -854,17 +854,13 @@ cleanup:
 WINPR_ATTR_MALLOC(WINPR_JSON_Delete, 1)
 static WINPR_JSON* aad_get_wellknown(wLog* log, const char* base, const char* tenantid)
 {
-	const char* curbase = "login.microsoftonline.com";
-	const char* curtenantid = "common";
-	if (tenantid)
-		curtenantid = tenantid;
-	if (base)
-		curbase = base;
+	WINPR_ASSERT(base);
+	WINPR_ASSERT(tenantid);
 
 	char* str = NULL;
 	size_t len = 0;
-	winpr_asprintf(&str, &len, "https://%s/%s/v2.0/.well-known/openid-configuration", curbase,
-	               curtenantid);
+	winpr_asprintf(&str, &len, "https://%s/%s/v2.0/.well-known/openid-configuration", base,
+	               tenantid);
 
 	if (!str)
 	{

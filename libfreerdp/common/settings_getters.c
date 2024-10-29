@@ -2772,6 +2772,9 @@ const char* freerdp_settings_get_string(const rdpSettings* settings,
 		case FreeRDP_GatewayAvdArmpath:
 			return settings->GatewayAvdArmpath;
 
+		case FreeRDP_GatewayAvdClientID:
+			return settings->GatewayAvdClientID;
+
 		case FreeRDP_GatewayAvdDiagnosticserviceurl:
 			return settings->GatewayAvdDiagnosticserviceurl;
 
@@ -3080,6 +3083,9 @@ char* freerdp_settings_get_string_writable(rdpSettings* settings, FreeRDP_Settin
 
 		case FreeRDP_GatewayAvdArmpath:
 			return settings->GatewayAvdArmpath;
+
+		case FreeRDP_GatewayAvdClientID:
+			return settings->GatewayAvdClientID;
 
 		case FreeRDP_GatewayAvdDiagnosticserviceurl:
 			return settings->GatewayAvdDiagnosticserviceurl;
@@ -3399,6 +3405,9 @@ BOOL freerdp_settings_set_string_(rdpSettings* settings, FreeRDP_Settings_Keys_S
 
 		case FreeRDP_GatewayAvdArmpath:
 			return update_string_(&settings->GatewayAvdArmpath, cnv.c, len);
+
+		case FreeRDP_GatewayAvdClientID:
+			return update_string_(&settings->GatewayAvdClientID, cnv.c, len);
 
 		case FreeRDP_GatewayAvdDiagnosticserviceurl:
 			return update_string_(&settings->GatewayAvdDiagnosticserviceurl, cnv.c, len);
@@ -3734,6 +3743,9 @@ BOOL freerdp_settings_set_string_copy_(rdpSettings* settings, FreeRDP_Settings_K
 
 		case FreeRDP_GatewayAvdArmpath:
 			return update_string_copy_(&settings->GatewayAvdArmpath, cnv.cc, len, cleanup);
+
+		case FreeRDP_GatewayAvdClientID:
+			return update_string_copy_(&settings->GatewayAvdClientID, cnv.cc, len, cleanup);
 
 		case FreeRDP_GatewayAvdDiagnosticserviceurl:
 			return update_string_copy_(&settings->GatewayAvdDiagnosticserviceurl, cnv.cc, len,

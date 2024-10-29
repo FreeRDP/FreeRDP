@@ -390,6 +390,7 @@ static const size_t string_list_indices[] = {
 	FreeRDP_GatewayAvdAadtenantid,
 	FreeRDP_GatewayAvdActivityhint,
 	FreeRDP_GatewayAvdArmpath,
+	FreeRDP_GatewayAvdClientID,
 	FreeRDP_GatewayAvdDiagnosticserviceurl,
 	FreeRDP_GatewayAvdGeo,
 	FreeRDP_GatewayAvdHubdiscoverygeourl,
