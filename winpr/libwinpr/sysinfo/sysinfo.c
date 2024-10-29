@@ -20,6 +20,7 @@
 
 #include <winpr/config.h>
 
+#include <winpr/assert.h>
 #include <winpr/sysinfo.h>
 #include <winpr/platform.h>
 
@@ -226,17 +227,14 @@ static DWORD GetSystemPageSize(void)
 
 void GetSystemInfo(LPSYSTEM_INFO lpSystemInfo)
 {
-	lpSystemInfo->wProcessorArchitecture = GetProcessorArchitecture();
-	lpSystemInfo->wReserved = 0;
+	const SYSTEM_INFO empty = { 0 };
+	WINPR_ASSERT(lpSystemInfo);
+
+	*lpSystemInfo = empty;
+	lpSystemInfo->DUMMYUNIONNAME.DUMMYSTRUCTNAME.wProcessorArchitecture =
+	    GetProcessorArchitecture();
 	lpSystemInfo->dwPageSize = GetSystemPageSize();
-	lpSystemInfo->lpMinimumApplicationAddress = NULL;
-	lpSystemInfo->lpMaximumApplicationAddress = NULL;
-	lpSystemInfo->dwActiveProcessorMask = 0;
 	lpSystemInfo->dwNumberOfProcessors = GetNumberOfProcessors();
-	lpSystemInfo->dwProcessorType = 0;
-	lpSystemInfo->dwAllocationGranularity = 0;
-	lpSystemInfo->wProcessorLevel = 0;
-	lpSystemInfo->wProcessorRevision = 0;
 }
 
 void GetNativeSystemInfo(LPSYSTEM_INFO lpSystemInfo)
