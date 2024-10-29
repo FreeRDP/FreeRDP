@@ -490,6 +490,7 @@ static const struct settings_str_entry settings_map[] = {
 	{ FreeRDP_GatewayAvdActivityhint, FREERDP_SETTINGS_TYPE_STRING,
 	  "FreeRDP_GatewayAvdActivityhint" },
 	{ FreeRDP_GatewayAvdArmpath, FREERDP_SETTINGS_TYPE_STRING, "FreeRDP_GatewayAvdArmpath" },
+	{ FreeRDP_GatewayAvdClientID, FREERDP_SETTINGS_TYPE_STRING, "FreeRDP_GatewayAvdClientID" },
 	{ FreeRDP_GatewayAvdDiagnosticserviceurl, FREERDP_SETTINGS_TYPE_STRING,
 	  "FreeRDP_GatewayAvdDiagnosticserviceurl" },
 	{ FreeRDP_GatewayAvdGeo, FREERDP_SETTINGS_TYPE_STRING, "FreeRDP_GatewayAvdGeo" },
