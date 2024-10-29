@@ -216,7 +216,8 @@ typedef float FLOAT;
 
 typedef double DOUBLE;
 
-typedef void *HANDLE, *PHANDLE, *LPHANDLE;
+typedef void* HANDLE;
+typedef HANDLE *PHANDLE, *LPHANDLE;
 typedef HANDLE HINSTANCE;
 typedef HANDLE HMODULE;
 typedef HANDLE HWND;
