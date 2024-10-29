@@ -45,9 +45,9 @@ typedef struct
 		{
 			DWORD Offset;
 			DWORD OffsetHigh;
-		};
+		} DUMMYSTRUCTNAME;
 		PVOID Pointer;
-	};
+	} DUMMYUNIONNAME;
 	HANDLE hEvent;
 } OVERLAPPED, *LPOVERLAPPED;
 
