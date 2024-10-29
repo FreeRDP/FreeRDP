@@ -1015,7 +1015,7 @@ static int freerdp_client_command_line_post_filter_int(void* context, COMMAND_LI
 		size_t count = 0;
 		char** ptr = CommandLineParseCommaSeparatedValues(arg->Value, &count);
 
-		if (!freerdp_client_add_device_channel(settings, count, (const char**)ptr))
+		if (!freerdp_client_add_device_channel(settings, count, (const char* const*)ptr))
 			status = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 		if (!freerdp_settings_set_bool(settings, FreeRDP_DeviceRedirection, TRUE))
 			status = COMMAND_LINE_ERROR;

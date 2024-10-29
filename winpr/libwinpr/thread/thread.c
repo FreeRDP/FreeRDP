@@ -553,7 +553,7 @@ exit:
 
 		set_event(thread);
 
-		signal_thread_ready(thread);
+		(void)signal_thread_ready(thread);
 
 		if (thread->detached || !thread->started)
 			cleanup_handle(thread);

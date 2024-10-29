@@ -1100,7 +1100,7 @@ WINSCARDAPI char* WINAPI SCardGetReaderStateString(DWORD dwReaderState)
 	return buffer;
 }
 
-#define WINSCARD_LOAD_PROC(_name, ...)                                                         \
+#define WINSCARD_LOAD_PROC(_name)                                                              \
 	do                                                                                         \
 	{                                                                                          \
 		WINPR_PRAGMA_DIAG_PUSH                                                                 \

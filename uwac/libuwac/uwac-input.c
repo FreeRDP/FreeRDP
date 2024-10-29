@@ -287,7 +287,7 @@ static void keyboard_handle_leave(void* data, struct wl_keyboard* keyboard, uint
 	its.it_interval.tv_nsec = 0;
 	its.it_value.tv_sec = 0;
 	its.it_value.tv_nsec = 0;
-	timerfd_settime(input->repeat_timer_fd, 0, &its, NULL);
+	(void)timerfd_settime(input->repeat_timer_fd, 0, &its, NULL);
 
 	UwacPointerEnterLeaveEvent* event =
 	    (UwacPointerEnterLeaveEvent*)UwacDisplayNewEvent(input->display, UWAC_EVENT_POINTER_LEAVE);
@@ -403,7 +403,7 @@ static void keyboard_handle_key(void* data, struct wl_keyboard* keyboard, uint32
 		its.it_interval.tv_nsec = 0;
 		its.it_value.tv_sec = 0;
 		its.it_value.tv_nsec = 0;
-		timerfd_settime(input->repeat_timer_fd, 0, &its, NULL);
+		(void)timerfd_settime(input->repeat_timer_fd, 0, &its, NULL);
 	}
 	else if (state == WL_KEYBOARD_KEY_STATE_PRESSED &&
 	         xkb_keymap_key_repeats(input->xkb.keymap, code))
@@ -415,7 +415,7 @@ static void keyboard_handle_key(void* data, struct wl_keyboard* keyboard, uint32
 		its.it_interval.tv_nsec = input->repeat_rate_nsec;
 		its.it_value.tv_sec = input->repeat_delay_sec;
 		its.it_value.tv_nsec = input->repeat_delay_nsec;
-		timerfd_settime(input->repeat_timer_fd, 0, &its, NULL);
+		(void)timerfd_settime(input->repeat_timer_fd, 0, &its, NULL);
 	}
 
 	keyEvent = (UwacKeyEvent*)UwacDisplayNewEvent(input->display, UWAC_EVENT_KEY);

@@ -81,7 +81,7 @@ static void append_timezone(const char* dir, const char* name)
 	tzset();
 	const time_t t = time(NULL);
 	struct tm lt = { 0 };
-	localtime_r(&t, &lt);
+	(void)localtime_r(&t, &lt);
 	append(tz, lt.tm_zone);
 	if (oldtz)
 	{
