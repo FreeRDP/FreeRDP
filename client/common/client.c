@@ -1019,19 +1019,35 @@ static char* extract_authorization_code(char* url)
 static BOOL client_cli_get_rdsaad_access_token(freerdp* instance, const char* scope,
                                                const char* req_cnf, char** token)
 {
+	WINPR_ASSERT(instance);
+	WINPR_ASSERT(instance->context);
+
 	size_t size = 0;
 	char* url = NULL;
 	char* token_request = NULL;
-	const char* client_id = "a85cf173-4192-42f8-81fa-777a763e6e2c";
-	const char* redirect_uri =
-	    "https%3A%2F%2Flogin.microsoftonline.com%2Fcommon%2Foauth2%2Fnativeclient";
+	char* redirect_uri = NULL;
+	size_t redirec_uri_len = 0;
 
-	WINPR_ASSERT(instance);
 	WINPR_ASSERT(scope);
 	WINPR_ASSERT(req_cnf);
 	WINPR_ASSERT(token);
 
+	BOOL rc = FALSE;
 	*token = NULL;
+
+	const char* client_id =
+	    freerdp_settings_get_string(instance->context->settings, FreeRDP_GatewayAvdClientID);
+	const char* base =
+	    freerdp_settings_get_string(instance->context->settings, FreeRDP_GatewayAvdArmpath);
+	const char* tenantid =
+	    freerdp_settings_get_string(instance->context->settings, FreeRDP_GatewayAvdAadtenantid);
+	if (!base || !tenantid || !client_id)
+		goto cleanup;
+
+	winpr_asprintf(&redirect_uri, &redirec_uri_len,
+	               "ms-appx-web%%3a%%2f%%2fMicrosoft.AAD.BrokerPlugin%%2f%s", client_id);
+	if (!redirect_uri)
+		goto cleanup;
 
 	const char* ep = freerdp_utils_aad_get_wellknown_string(instance->context,
 	                                                        AAD_WELLKNOWN_authorization_endpoint);
@@ -1044,7 +1060,6 @@ static BOOL client_cli_get_rdsaad_access_token(freerdp* instance, const char* sc
 	if (freerdp_interruptible_get_line(instance->context, &url, &size, stdin) < 0)
 		return FALSE;
 
-	BOOL rc = FALSE;
 	char* code = extract_authorization_code(url);
 	if (!code)
 		goto cleanup;
@@ -1058,6 +1073,7 @@ static BOOL client_cli_get_rdsaad_access_token(freerdp* instance, const char* sc
 	rc = client_common_get_access_token(instance, token_request, token);
 
 cleanup:
+	free(redirect_uri);
 	free(token_request);
 	free(url);
 	return rc && (*token != NULL);
@@ -1065,18 +1081,35 @@ cleanup:
 
 static BOOL client_cli_get_avd_access_token(freerdp* instance, char** token)
 {
+	WINPR_ASSERT(instance);
+	WINPR_ASSERT(instance->context);
+
 	size_t size = 0;
 	char* url = NULL;
 	char* token_request = NULL;
-	const char* client_id = "a85cf173-4192-42f8-81fa-777a763e6e2c";
-	const char* redirect_uri =
-	    "https%3A%2F%2Flogin.microsoftonline.com%2Fcommon%2Foauth2%2Fnativeclient";
+	char* redirect_uri = NULL;
+	size_t redirec_uri_len = 0;
 	const char* scope = "https%3A%2F%2Fwww.wvd.microsoft.com%2F.default";
 
-	WINPR_ASSERT(instance);
 	WINPR_ASSERT(token);
 
+	BOOL rc = FALSE;
+
 	*token = NULL;
+
+	const char* client_id =
+	    freerdp_settings_get_string(instance->context->settings, FreeRDP_GatewayAvdClientID);
+	const char* base =
+	    freerdp_settings_get_string(instance->context->settings, FreeRDP_GatewayAvdArmpath);
+	const char* tenantid =
+	    freerdp_settings_get_string(instance->context->settings, FreeRDP_GatewayAvdAadtenantid);
+	if (!base || !tenantid || !client_id)
+		goto cleanup;
+
+	winpr_asprintf(&redirect_uri, &redirec_uri_len,
+	               "https%%3A%%2F%%2F%s%%2F%s%%2Foauth2%%2Fnativeclient", base, tenantid);
+	if (!redirect_uri)
+		goto cleanup;
 
 	const char* ep = freerdp_utils_aad_get_wellknown_string(instance->context,
 	                                                        AAD_WELLKNOWN_authorization_endpoint);
@@ -1087,9 +1120,8 @@ static BOOL client_cli_get_avd_access_token(freerdp* instance, char** token)
 	printf("Paste redirect URL here: \n");
 
 	if (freerdp_interruptible_get_line(instance->context, &url, &size, stdin) < 0)
-		return FALSE;
+		goto cleanup;
 
-	BOOL rc = FALSE;
 	char* code = extract_authorization_code(url);
 	if (!code)
 		goto cleanup;
@@ -1103,6 +1135,7 @@ static BOOL client_cli_get_avd_access_token(freerdp* instance, char** token)
 	rc = client_common_get_access_token(instance, token_request, token);
 
 cleanup:
+	free(redirect_uri);
 	free(token_request);
 	free(url);
 	return rc && (*token != NULL);
