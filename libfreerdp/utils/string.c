@@ -112,10 +112,12 @@ BOOL freerdp_extract_key_value(const char* str, UINT32* pkey, UINT32* pvalue)
 		return FALSE;
 
 	char* end1 = NULL;
+	errno = 0;
 	unsigned long key = strtoul(str, &end1, 0);
 	if ((errno != 0) || !end1 || (*end1 != '=') || (key > UINT32_MAX))
 		return FALSE;
 
+	errno = 0;
 	unsigned long val = strtoul(&end1[1], NULL, 0);
 	if ((errno != 0) || (val > UINT32_MAX))
 		return FALSE;
