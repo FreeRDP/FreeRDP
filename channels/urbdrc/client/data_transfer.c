@@ -493,9 +493,9 @@ static UINT urb_select_configuration(IUDEVICE* pdev, GENERIC_CHANNEL_CALLBACK* c
 	if (MsOutSize > 0)
 	{
 		/** CbTsUrbResult */
-		Stream_Write_UINT32(out, 8 + MsOutSize);
+		Stream_Write_UINT32(out, 8U + (UINT32)MsOutSize);
 		/** TS_URB_RESULT_HEADER Size*/
-		Stream_Write_UINT16(out, 8 + MsOutSize);
+		Stream_Write_UINT16(out, 8U + (UINT32)MsOutSize);
 	}
 	else
 	{

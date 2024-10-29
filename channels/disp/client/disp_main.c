@@ -119,8 +119,8 @@ disp_send_display_control_monitor_layout_pdu(GENERIC_CHANNEL_CALLBACK* callback,
 			current.Height = 8192;
 
 		Stream_Write_UINT32(s, current.Flags);              /* Flags (4 bytes) */
-		Stream_Write_UINT32(s, current.Left);               /* Left (4 bytes) */
-		Stream_Write_UINT32(s, current.Top);                /* Top (4 bytes) */
+		Stream_Write_INT32(s, current.Left);                /* Left (4 bytes) */
+		Stream_Write_INT32(s, current.Top);                 /* Top (4 bytes) */
 		Stream_Write_UINT32(s, current.Width);              /* Width (4 bytes) */
 		Stream_Write_UINT32(s, current.Height);             /* Height (4 bytes) */
 		Stream_Write_UINT32(s, current.PhysicalWidth);      /* PhysicalWidth (4 bytes) */

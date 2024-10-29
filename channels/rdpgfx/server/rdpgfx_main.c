@@ -293,10 +293,10 @@ static UINT rdpgfx_send_reset_graphics_pdu(RdpgfxServerContext* context,
 	for (UINT32 index = 0; index < pdu->monitorCount; index++)
 	{
 		const MONITOR_DEF* monitor = &(pdu->monitorDefArray[index]);
-		Stream_Write_UINT32(s, monitor->left);   /* left (4 bytes) */
-		Stream_Write_UINT32(s, monitor->top);    /* top (4 bytes) */
-		Stream_Write_UINT32(s, monitor->right);  /* right (4 bytes) */
-		Stream_Write_UINT32(s, monitor->bottom); /* bottom (4 bytes) */
+		Stream_Write_INT32(s, monitor->left);    /* left (4 bytes) */
+		Stream_Write_INT32(s, monitor->top);     /* top (4 bytes) */
+		Stream_Write_INT32(s, monitor->right);   /* right (4 bytes) */
+		Stream_Write_INT32(s, monitor->bottom);  /* bottom (4 bytes) */
 		Stream_Write_UINT32(s, monitor->flags);  /* flags (4 bytes) */
 	}
 

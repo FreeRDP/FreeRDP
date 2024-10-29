@@ -2626,8 +2626,8 @@ static BOOL update_send_new_or_existing_window(rdpContext* context,
 
 	if ((orderInfo->fieldFlags & WINDOW_ORDER_FIELD_VIS_OFFSET) != 0)
 	{
-		Stream_Write_UINT32(s, stateOrder->visibleOffsetX);
-		Stream_Write_UINT32(s, stateOrder->visibleOffsetY);
+		Stream_Write_INT32(s, stateOrder->visibleOffsetX);
+		Stream_Write_INT32(s, stateOrder->visibleOffsetY);
 	}
 
 	if ((orderInfo->fieldFlags & WINDOW_ORDER_FIELD_VISIBILITY) != 0)
