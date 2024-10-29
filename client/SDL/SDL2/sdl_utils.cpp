@@ -213,7 +213,7 @@ BOOL sdl_push_user_event(Uint32 type, ...)
 			event->data2 = va_arg(ap, void*);
 			break;
 		case SDL_USEREVENT_CREATE_WINDOWS:
-			event->data1 = reinterpret_cast<void*>(va_arg(ap, void*));
+			event->data1 = va_arg(ap, void*);
 			break;
 		case SDL_USEREVENT_WINDOW_FULLSCREEN:
 		case SDL_USEREVENT_WINDOW_RESIZEABLE:

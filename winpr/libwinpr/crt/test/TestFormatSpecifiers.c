@@ -48,9 +48,8 @@ int TestFormatSpecifiers(int argc, char* argv[])
 		UINT8 arg = 0xFE;
 		const char* chk = "u8:254 o8:376 x8:fe X8:FE";
 
-		(void)(void)sprintf_s(fmt, sizeof(fmt),
-		                      "u8:%" PRIu8 " o8:%" PRIo8 " x8:%" PRIx8 " X8:%" PRIX8 "", arg, arg,
-		                      arg, arg);
+		(void)sprintf_s(fmt, sizeof(fmt), "u8:%" PRIu8 " o8:%" PRIo8 " x8:%" PRIx8 " X8:%" PRIX8 "",
+		                arg, arg, arg, arg);
 
 		if (strcmp(fmt, chk) != 0)
 		{
