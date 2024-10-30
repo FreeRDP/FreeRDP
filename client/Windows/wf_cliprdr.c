@@ -587,11 +587,7 @@ static HRESULT STDMETHODCALLTYPE CliprdrDataObject_GetData(IDataObject* This, FO
 		if (cliprdr_send_data_request(clipboard, remote) != 0)
 			return E_UNEXPECTED;
 
-#if defined(NONAMELESSUNION)
 		pMedium->u.hGlobal = clipboard->hmem;
-#else
-		pMedium->hGlobal = clipboard->hmem;
-#endif
 		/* points to a FILEGROUPDESCRIPTOR structure */
 		/* GlobalLock returns a pointer to the first byte of the memory block,
 		 * in which is a FILEGROUPDESCRIPTOR structure, whose first UINT member
@@ -628,11 +624,7 @@ static HRESULT STDMETHODCALLTYPE CliprdrDataObject_GetData(IDataObject* This, FO
 				clipboard->hmem = NULL;
 			}
 
-#if defined(NONAMELESSUNION)
 			pMedium->u.hGlobal = NULL;
-#else
-			pMedium->hGlobal = NULL;
-#endif
 			return E_OUTOFMEMORY;
 		}
 	}
@@ -640,12 +632,7 @@ static HRESULT STDMETHODCALLTYPE CliprdrDataObject_GetData(IDataObject* This, FO
 	{
 		if ((pFormatEtc->lindex >= 0) && ((ULONG)pFormatEtc->lindex < instance->m_nStreams))
 		{
-#if defined(NONAMELESSUNION)
-			pMedium->u.pstm
-#else
-			pMedium->pstm
-#endif
-			    = instance->m_pStream[pFormatEtc->lindex];
+			pMedium->u.pstm = instance->m_pStream[pFormatEtc->lindex];
 			IDataObject_AddRef(instance->m_pStream[pFormatEtc->lindex]);
 		}
 		else
@@ -2081,11 +2068,7 @@ static SSIZE_T wf_cliprdr_get_filedescriptor(wfClipboard* clipboard, BYTE** pDat
 		goto exit;
 	}
 
-#if defined(NONAMELESSUNION)
 	HGLOBAL hdl = stg_medium.u.hGlobal;
-#else
-	HGLOBAL hdl = stg_medium.hGlobal;
-#endif
 	DROPFILES* dropFiles = (DROPFILES*)GlobalLock(hdl);
 
 	if (!dropFiles)
@@ -2332,11 +2315,7 @@ wf_cliprdr_server_file_contents_request(CliprdrClientContext* context,
 
 						if (hRet == S_OK)
 						{
-#if defined(NONAMELESSUNION)
 							pStreamStc = vStgMedium.u.pstm;
-#else
-							pStreamStc = vStgMedium.pstm;
-#endif
 							uStreamIdStc = fileContentsRequest->streamId;
 							bIsStreamFile = TRUE;
 						}
