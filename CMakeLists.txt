@@ -139,6 +139,9 @@ endif()
 
 message(STATUS "Git Revision ${GIT_REVISION}")
 
+# MSVC compatibility with system headers
+add_definitions(-DNONAMELESSUNION)
+
 # Make the detected version available as default version for all subprojects
 set(FREERDP_DEFAULT_PROJECT_VERSION ${FREERDP_VERSION} CACHE STRING INTERNAL)
 
