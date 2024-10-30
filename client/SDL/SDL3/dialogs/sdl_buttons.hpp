@@ -22,11 +22,11 @@ class SdlButtonList
 
 	bool update(SDL_Renderer* renderer);
 	SdlButton* get_selected(const SDL_MouseButtonEvent& button);
-	SdlButton* get_selected(Sint32 x, Sint32 y);
+	SdlButton* get_selected(float x, float y);
 
 	bool set_highlight_next(bool reset = false);
 	bool set_highlight(size_t index);
-	bool set_mouseover(Sint32 x, Sint32 y);
+	bool set_mouseover(float x, float y);
 
 	void clear();
 

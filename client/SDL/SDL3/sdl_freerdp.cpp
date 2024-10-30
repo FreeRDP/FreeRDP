@@ -1007,7 +1007,8 @@ static int sdl_run(SdlContext* sdl)
 						INT32 sx = x;
 						INT32 sy = y;
 						if (sdl_scale_coordinates(sdl, id, &sx, &sy, FALSE, FALSE))
-							SDL_WarpMouseInWindow(window, sx, sy);
+							SDL_WarpMouseInWindow(window, static_cast<float>(sx),
+							                      static_cast<float>(sy));
 					}
 				}
 				break;
