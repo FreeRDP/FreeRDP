@@ -663,7 +663,7 @@ BOOL Win32_WTSVirtualChannelPurge_Internal(HANDLE hChannelHandle, ULONG IoContro
 		return FALSE;
 	}
 
-	const NTSTATUS ntstatus =
+	NTSTATUS ntstatus =
 	    NtDeviceIoControlFile(pChannel->hFile, 0, 0, 0, &ioStatusBlock, IoControlCode, 0, 0, 0, 0);
 
 	if (ntstatus == STATUS_PENDING)
@@ -671,7 +671,13 @@ BOOL Win32_WTSVirtualChannelPurge_Internal(HANDLE hChannelHandle, ULONG IoContro
 		ntstatus = NtWaitForSingleObject(pChannel->hFile, 0, 0);
 
 		if (ntstatus >= 0)
+		{
+#if defined(NONAMELESSUNION)
 			ntstatus = ioStatusBlock.DUMMYUNIONNAME.Status;
+#else
+			ntstatus = ioStatusBlock.Status;
+#endif
+		}
 	}
 
 	if (ntstatus == STATUS_BUFFER_OVERFLOW)

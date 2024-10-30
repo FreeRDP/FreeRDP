@@ -231,7 +231,11 @@ void GetSystemInfo(LPSYSTEM_INFO lpSystemInfo)
 	WINPR_ASSERT(lpSystemInfo);
 
 	*lpSystemInfo = empty;
+#if defined(NONAMELESSUNION)
 	lpSystemInfo->DUMMYUNIONNAME.DUMMYSTRUCTNAME.wProcessorArchitecture =
+#else
+	lpSystemInfo->wProcessorArchitecture =
+#endif
 	    GetProcessorArchitecture();
 	lpSystemInfo->dwPageSize = GetSystemPageSize();
 	lpSystemInfo->dwNumberOfProcessors = GetNumberOfProcessors();
