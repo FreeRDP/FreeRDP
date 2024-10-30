@@ -1007,6 +1007,8 @@ static BOOL gdi_surface_frame_marker(rdpContext* context,
 			}
 
 			break;
+		default:
+			break;
 	}
 
 	return TRUE;

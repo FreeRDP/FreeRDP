@@ -234,6 +234,8 @@ static int test_image_fill_quarter(BYTE* pDstData, int nDstStep, int nWidth, int
 			width = nWidth / 2;
 			height = nHeight / 2;
 			break;
+		default:
+			return -1;
 	}
 
 	test_image_fill(pDstData, nDstStep, x, y, width, height, 0xFF000000);
@@ -866,6 +868,8 @@ static int test_progressive_decode(PROGRESSIVE_CONTEXT* progressive, EGFX_SAMPLE
 				clippingRect.right = g_Width;
 				clippingRect.bottom = g_Height / 2;
 				break;
+			default:
+				return -1;
 		}
 
 		for (UINT16 index = 0; index < region->numTiles; index++)

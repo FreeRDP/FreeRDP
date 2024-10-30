@@ -67,6 +67,8 @@ static char* openssl_get_ssl_error_string(int ssl_error)
 
 		case SSL_ERROR_SSL:
 			return "SSL_ERROR_SSL";
+		default:
+			break;
 	}
 
 	return "SSL_ERROR_UNKNOWN";

@@ -249,6 +249,8 @@ static void VCAPITYPE VirtualChannelOpenEventEx(LPVOID lpUserParam, DWORD openHa
 			(void)SetEvent(plugin->writeComplete);
 			free(pData);
 			break;
+		default:
+			break;
 	}
 }
 
@@ -311,6 +313,8 @@ static VOID VCAPITYPE VirtualChannelInitEventEx(LPVOID lpUserParam, LPVOID pInit
 
 		case CHANNEL_EVENT_TERMINATED:
 			channel_terminated(plugin);
+			break;
+		default:
 			break;
 	}
 }

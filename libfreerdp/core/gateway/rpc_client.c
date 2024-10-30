@@ -266,6 +266,8 @@ static int rpc_client_recv_pdu_int(rdpRpc* rpc, RPC_PDU* pdu)
 
 			case VIRTUAL_CONNECTION_STATE_FINAL:
 				break;
+			default:
+				break;
 		}
 	}
 	else if (rpc->State < RPC_CLIENT_STATE_CONTEXT_NEGOTIATED)
@@ -314,6 +316,9 @@ static int rpc_client_recv_pdu_int(rdpRpc* rpc, RPC_PDU* pdu)
 						WLog_ERR(TAG, "tsg_proxy_begin failure");
 						return -1;
 					}
+					break;
+				default:
+					break;
 			}
 
 			status = 1;

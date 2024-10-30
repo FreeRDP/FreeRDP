@@ -1254,6 +1254,8 @@ static UINT cliprdr_file_context_server_file_contents_response(
 			               (const char*)file_contents_response->requestedData,
 			               file_contents_response->cbRequested);
 			break;
+		default:
+			break;
 	}
 
 	HashTable_Remove(file_context->request_table,

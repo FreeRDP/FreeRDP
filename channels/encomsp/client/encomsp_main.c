@@ -1026,6 +1026,8 @@ static VOID VCAPITYPE encomsp_virtual_channel_open_event_ex(LPVOID lpUserParam, 
 
 		case CHANNEL_EVENT_USER:
 			break;
+		default:
+			break;
 	}
 
 	if (error && encomsp && encomsp->rdpcontext)

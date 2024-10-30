@@ -357,6 +357,8 @@ static UINT tsmf_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, 
 				   This message is not supported in this channel. */
 				processed = TRUE;
 				break;
+			default:
+				break;
 		}
 
 		if (!processed)

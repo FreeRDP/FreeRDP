@@ -1363,6 +1363,8 @@ static const char* os_major_type_to_string(UINT16 osMajorType)
 			return "Android platform";
 		case OSMAJORTYPE_CHROME_OS:
 			return "Chrome OS platform";
+		default:
+			break;
 	}
 
 	return "Unknown platform";
@@ -1408,6 +1410,8 @@ static const char* os_minor_type_to_string(UINT16 osMinorType)
 			return "Pseudo X Server";
 		case OSMINORTYPE_WINDOWS_RT:
 			return "Windows RT";
+		default:
+			break;
 	}
 
 	return "Unknown version";

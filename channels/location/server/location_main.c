@@ -356,6 +356,8 @@ static UINT location_server_context_poll_int(LocationServerContext* context)
 		case LOCATION_OPENED:
 			error = location_process_message(location);
 			break;
+		default:
+			break;
 	}
 
 	return error;
@@ -422,6 +424,8 @@ static DWORD WINAPI location_server_thread_func(LPVOID arg)
 						error = ERROR_INTERNAL_ERROR;
 						break;
 				}
+				break;
+			default:
 				break;
 		}
 	}

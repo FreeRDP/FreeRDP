@@ -684,6 +684,8 @@ static BOOL tsmf_sample_playback(TSMF_SAMPLE* sample)
 			case TSMF_MAJOR_TYPE_AUDIO:
 				ret = tsmf_sample_playback_audio(sample) && tsmf_sample_queue_ack(sample);
 				break;
+			default:
+				break;
 		}
 	}
 	else
@@ -712,6 +714,8 @@ static BOOL tsmf_sample_playback(TSMF_SAMPLE* sample)
 			{
 				break;
 			}
+			default:
+				break;
 		}
 
 		sample->ack_time = ack_anticipation_time;

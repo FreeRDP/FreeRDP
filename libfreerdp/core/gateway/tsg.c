@@ -2585,6 +2585,8 @@ BOOL tsg_recv_pdu(rdpTsg* tsg, const RPC_PDU* pdu)
 
 		case TSG_STATE_FINAL:
 			break;
+		default:
+			break;
 	}
 
 	return rc;

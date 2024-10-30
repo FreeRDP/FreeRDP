@@ -1034,6 +1034,8 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 			case 9:
 				cache.cacheMaximumCellSize = 256;
 				break;
+			default:
+				goto out_fail;
 		}
 
 		if (!freerdp_settings_set_pointer_array(settings, FreeRDP_GlyphCache, x, &cache))

@@ -507,6 +507,8 @@ wMessageQueue* freerdp_get_message_queue(freerdp* instance, DWORD id)
 			queue = input->queue;
 		}
 		break;
+		default:
+			break;
 	}
 
 	return queue;
@@ -542,6 +544,8 @@ int freerdp_message_queue_process_message(freerdp* instance, DWORD id, wMessage*
 		case FREERDP_INPUT_MESSAGE_QUEUE:
 			status = input_message_queue_process_message(context->input, message);
 			break;
+		default:
+			break;
 	}
 
 	return status;
@@ -565,6 +569,8 @@ int freerdp_message_queue_process_pending_messages(freerdp* instance, DWORD id)
 
 		case FREERDP_INPUT_MESSAGE_QUEUE:
 			status = input_message_queue_process_pending_messages(context->input);
+			break;
+		default:
 			break;
 	}
 

@@ -554,6 +554,8 @@ static VOID VCAPITYPE rail_virtual_channel_open_event_ex(LPVOID lpUserParam, DWO
 
 		case CHANNEL_EVENT_USER:
 			break;
+		default:
+			break;
 	}
 
 	if (error && rail && rail->rdpcontext)

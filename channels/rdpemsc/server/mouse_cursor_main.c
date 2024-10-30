@@ -305,6 +305,8 @@ static UINT mouse_cursor_server_context_poll_int(MouseCursorServerContext* conte
 		case MOUSE_CURSOR_OPENED:
 			error = mouse_cursor_process_message(mouse_cursor);
 			break;
+		default:
+			break;
 	}
 
 	return error;
@@ -371,6 +373,8 @@ static DWORD WINAPI mouse_cursor_server_thread_func(LPVOID arg)
 						error = ERROR_INTERNAL_ERROR;
 						break;
 				}
+				break;
+			default:
 				break;
 		}
 	}

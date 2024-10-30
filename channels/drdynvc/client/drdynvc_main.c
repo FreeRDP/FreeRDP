@@ -509,6 +509,8 @@ static UINT dvcman_channel_close(DVCMAN_CHANNEL* channel, BOOL perRequest, BOOL 
 			break;
 		case DVC_CHANNEL_CLOSED:
 			break;
+		default:
+			break;
 	}
 
 	return error;
@@ -1542,6 +1544,8 @@ static void VCAPITYPE drdynvc_virtual_channel_open_event_ex(LPVOID lpUserParam, 
 		break;
 
 		case CHANNEL_EVENT_USER:
+			break;
+		default:
 			break;
 	}
 

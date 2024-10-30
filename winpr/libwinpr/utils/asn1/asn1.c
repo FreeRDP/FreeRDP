@@ -560,6 +560,8 @@ static size_t WinPrAsn1EncIntegerLike(WinPrAsn1Encoder* enc, WinPrAsn1_tag b,
 			Stream_Write_UINT8(s, 4);
 			Stream_Write_INT32_BE(s, value);
 			break;
+		default:
+			break;
 	}
 	return 1 + len;
 }
@@ -596,16 +598,18 @@ static size_t WinPrAsn1EncContextualIntegerLike(WinPrAsn1Encoder* enc, WinPrAsn1
 	{
 		case 2:
 			Stream_Write_UINT8(s, 1);
-			Stream_Write_INT8(s, value);
+			Stream_Write_INT8(s, (INT8)value);
 			break;
 		case 3:
 			Stream_Write_UINT8(s, 2);
-			Stream_Write_INT16_BE(s, value);
+			Stream_Write_INT16_BE(s, (INT16)value);
 			break;
 		case 5:
 			Stream_Write_UINT8(s, 4);
 			Stream_Write_INT32_BE(s, value);
 			break;
+		default:
+			return 0;
 	}
 	return outLen;
 }

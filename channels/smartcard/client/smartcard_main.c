@@ -455,6 +455,8 @@ static UINT smartcard_process_irp(SMARTCARD_DEVICE* smartcard, IRP* irp, BOOL* h
 			case SCARD_IOCTL_GETTRANSMITCOUNT:
 				asyncIrp = TRUE;
 				break;
+			default:
+				break;
 		}
 
 		pContext = smartcard_call_get_context(smartcard->callctx, element->operation.hContext);

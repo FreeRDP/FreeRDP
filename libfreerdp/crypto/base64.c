@@ -378,6 +378,8 @@ static INLINE char* base64_encode_ex(const BYTE* WINPR_RESTRICT alphabet,
 			if (pad)
 				*p++ = '=';
 			break;
+		default:
+			break;
 	}
 
 	if (crLf && length % 3)

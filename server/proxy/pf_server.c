@@ -454,6 +454,7 @@ static BOOL pf_server_receive_channel_data_hook(freerdp_peer* peer, UINT16 chann
 		case PF_CHANNEL_RESULT_DROP:
 			return TRUE;
 		case PF_CHANNEL_RESULT_ERROR:
+		default:
 			return FALSE;
 	}
 

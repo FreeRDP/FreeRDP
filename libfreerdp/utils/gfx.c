@@ -89,6 +89,8 @@ const char* rdpgfx_get_codec_id_string(UINT16 codecId)
 
 		case RDPGFX_CODECID_CAPROGRESSIVE_V2:
 			return "RDPGFX_CODECID_CAPROGRESSIVE_V2";
+		default:
+			break;
 	}
 
 	return "RDPGFX_CODECID_UNKNOWN";

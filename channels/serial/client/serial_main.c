@@ -107,7 +107,8 @@ static UINT32 GetLastErrorToIoStatus(SERIAL_DEVICE* serial)
 
 		case ERROR_TIMEOUT:
 			return STATUS_TIMEOUT;
-			/* no default */
+		default:
+			break;
 	}
 
 	WLog_Print(serial->log, WLOG_DEBUG, "unexpected last-error: 0x%08" PRIX32 "", GetLastError());

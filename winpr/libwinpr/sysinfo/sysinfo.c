@@ -1165,6 +1165,8 @@ BOOL IsProcessorFeaturePresentEx(DWORD ProcessorFeature)
 							ret = TRUE;
 
 						break;
+					default:
+						break;
 				}
 			}
 		}

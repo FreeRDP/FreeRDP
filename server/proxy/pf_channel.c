@@ -140,6 +140,8 @@ PfChannelResult channelTracker_update(ChannelStateTracker* tracker, const BYTE* 
 		case CHANNEL_TRACKER_DROP:
 			result = PF_CHANNEL_RESULT_DROP;
 			break;
+		default:
+			break;
 	}
 
 	if (lastPacket)
