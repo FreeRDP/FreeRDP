@@ -790,12 +790,12 @@ extern "C"
 		memcpy(_b, (_s->pointer), (_n));
 	}
 
-#define Stream_Write_INT8(s, v)               \
-	do                                        \
-	{                                         \
-		WINPR_ASSERT((v) <= INT8_MAX);        \
-		WINPR_ASSERT((v) >= INT8_MIN);        \
-		Stream_Write_INT8_unchecked((s), (v)) \
+#define Stream_Write_INT8(s, v)                \
+	do                                         \
+	{                                          \
+		WINPR_ASSERT((v) <= INT8_MAX);         \
+		WINPR_ASSERT((v) >= INT8_MIN);         \
+		Stream_Write_INT8_unchecked((s), (v)); \
 	} while (0)
 
 	/** @brief writes a \b INT8 to a \b wStream. The stream must be large enough to hold the data.
