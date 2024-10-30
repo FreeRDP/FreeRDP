@@ -57,8 +57,8 @@ struct s_ITSMFDecoder
 	UINT64 (*GetRunningTime)(ITSMFDecoder* decoder);
 	/* Update Gstreamer Rendering Area */
 	BOOL(*UpdateRenderingArea)
-	(ITSMFDecoder* decoder, int newX, int newY, int newWidth, int newHeight, int numRectangles,
-	 RDP_RECT* rectangles);
+	(ITSMFDecoder* decoder, UINT32 newX, UINT32 newY, UINT32 newWidth, UINT32 newHeight,
+	 UINT32 numRectangles, const RECTANGLE_32* rectangles);
 	/* Change Gstreamer Audio Volume */
 	BOOL (*ChangeVolume)(ITSMFDecoder* decoder, UINT32 newVolume, UINT32 muted);
 	/* Check buffer level */

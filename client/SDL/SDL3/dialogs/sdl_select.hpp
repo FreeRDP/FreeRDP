@@ -35,9 +35,9 @@ class SdlSelectWidget : public SdlWidget
 	SdlSelectWidget& operator=(const SdlSelectWidget& other) = delete;
 	SdlSelectWidget& operator=(SdlSelectWidget&& other) = delete;
 
-	bool set_mouseover(SDL_Renderer* renderer, bool mouseOver);
-	bool set_highlight(SDL_Renderer* renderer, bool highlight);
-	bool update_text(SDL_Renderer* renderer);
+	virtual bool set_mouseover(SDL_Renderer* renderer, bool mouseOver);
+	virtual bool set_highlight(SDL_Renderer* renderer, bool highlight);
+	virtual bool update_text(SDL_Renderer* renderer);
 
   private:
 	std::string _text;

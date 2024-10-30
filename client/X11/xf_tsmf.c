@@ -405,14 +405,15 @@ static int xf_tsmf_xv_init(xfContext* xfc, TsmfClientContext* tsmf)
 	{
 		xv->xv_pixfmts = (UINT32*)calloc((ret + 1), sizeof(UINT32));
 
-		for (unsigned int i = 0; i < (unsigned int)ret; i++)
+		size_t x = 0;
+		for (; x < (size_t)ret; x++)
 		{
-			xv->xv_pixfmts[i] = fo[i].id;
-			WLog_DBG(TAG, "%c%c%c%c ", ((char*)(xv->xv_pixfmts + i))[0],
-			         ((char*)(xv->xv_pixfmts + i))[1], ((char*)(xv->xv_pixfmts + i))[2],
-			         ((char*)(xv->xv_pixfmts + i))[3]);
+			xv->xv_pixfmts[x] = fo[x].id;
+			WLog_DBG(TAG, "%c%c%c%c ", ((char*)(xv->xv_pixfmts + x))[0],
+			         ((char*)(xv->xv_pixfmts + x))[1], ((char*)(xv->xv_pixfmts + x))[2],
+			         ((char*)(xv->xv_pixfmts + x))[3]);
 		}
-		xv->xv_pixfmts[i] = 0;
+		xv->xv_pixfmts[x] = 0;
 	}
 	XFree(fo);
 

@@ -131,13 +131,13 @@ static int connect_to_sshagent(const char* udspath)
 static DWORD WINAPI sshagent_read_thread(LPVOID data)
 {
 	SSHAGENT_CHANNEL_CALLBACK* callback = (SSHAGENT_CHANNEL_CALLBACK*)data;
-	BYTE buffer[4096];
+	BYTE buffer[4096] = { 0 };
 	int going = 1;
 	UINT status = CHANNEL_RC_OK;
 
 	while (going)
 	{
-		int bytes_read = read(callback->agent_fd, buffer, sizeof(buffer));
+		const ssize_t bytes_read = read(callback->agent_fd, buffer, sizeof(buffer));
 
 		if (bytes_read == 0)
 		{
@@ -153,11 +153,16 @@ static DWORD WINAPI sshagent_read_thread(LPVOID data)
 				going = 0;
 			}
 		}
+		else if ((size_t)bytes_read > ULONG_MAX)
+		{
+			status = ERROR_READ_FAULT;
+			going = 0;
+		}
 		else
 		{
 			/* Something read: forward to virtual channel */
 			IWTSVirtualChannel* channel = callback->generic.channel;
-			status = channel->Write(channel, bytes_read, buffer, NULL);
+			status = channel->Write(channel, (ULONG)bytes_read, buffer, NULL);
 
 			if (status != CHANNEL_RC_OK)
 			{
@@ -184,15 +189,15 @@ static UINT sshagent_on_data_received(IWTSVirtualChannelCallback* pChannelCallba
 {
 	SSHAGENT_CHANNEL_CALLBACK* callback = (SSHAGENT_CHANNEL_CALLBACK*)pChannelCallback;
 	BYTE* pBuffer = Stream_Pointer(data);
-	UINT32 cbSize = Stream_GetRemainingLength(data);
+	size_t cbSize = Stream_GetRemainingLength(data);
 	BYTE* pos = pBuffer;
 	/* Forward what we have received to the ssh agent */
-	UINT32 bytes_to_write = cbSize;
+	size_t bytes_to_write = cbSize;
 	errno = 0;
 
 	while (bytes_to_write > 0)
 	{
-		int bytes_written = write(callback->agent_fd, pos, bytes_to_write);
+		const ssize_t bytes_written = write(callback->agent_fd, pos, bytes_to_write);
 
 		if (bytes_written < 0)
 		{

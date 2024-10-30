@@ -1208,7 +1208,7 @@ static int freerdp_client_command_line_post_filter_int(void* context, COMMAND_LI
 	{
 		size_t count = 0;
 		char** ptr = CommandLineParseCommaSeparatedValuesEx("tsmf", arg->Value, &count);
-		if (!freerdp_client_add_dynamic_channel(settings, count, ptr))
+		if (!freerdp_client_add_dynamic_channel(settings, count, (const char* const*)ptr))
 			status = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 		CommandLineParserFree(ptr);
 		if (status)

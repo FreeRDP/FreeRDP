@@ -36,8 +36,7 @@
 
 BOOL tsmf_send_eos_response(IWTSVirtualChannelCallback* pChannelCallback, UINT32 message_id)
 {
-	wStream* s = NULL;
-	int status = -1;
+	ssize_t status = -1;
 	TSMF_CHANNEL_CALLBACK* callback = (TSMF_CHANNEL_CALLBACK*)pChannelCallback;
 
 	if (!callback)
@@ -48,7 +47,7 @@ BOOL tsmf_send_eos_response(IWTSVirtualChannelCallback* pChannelCallback, UINT32
 
 	if (callback && callback->stream_id && callback->channel && callback->channel->Write)
 	{
-		s = Stream_New(NULL, 24);
+		wStream* s = Stream_New(NULL, 24);
 
 		if (!s)
 			return FALSE;
@@ -59,9 +58,10 @@ BOOL tsmf_send_eos_response(IWTSVirtualChannelCallback* pChannelCallback, UINT32
 		Stream_Write_UINT32(s, callback->stream_id);           /* StreamId */
 		Stream_Write_UINT32(s, TSMM_CLIENT_EVENT_ENDOFSTREAM); /* EventId */
 		Stream_Write_UINT32(s, 0);                             /* cbData */
-		DEBUG_TSMF("EOS response size %" PRIuz "", Stream_GetPosition(s));
-		status = callback->channel->Write(callback->channel, Stream_GetPosition(s),
-		                                  Stream_Buffer(s), NULL);
+		const size_t pos = Stream_GetPosition(s);
+		DEBUG_TSMF("EOS response size %" PRIuz "", pos);
+		WINPR_ASSERT(pos <= UINT32_MAX);
+		status = callback->channel->Write(callback->channel, (UINT32)pos, Stream_Buffer(s), NULL);
 
 		if (status)
 		{
@@ -77,14 +77,13 @@ BOOL tsmf_send_eos_response(IWTSVirtualChannelCallback* pChannelCallback, UINT32
 BOOL tsmf_playback_ack(IWTSVirtualChannelCallback* pChannelCallback, UINT32 message_id,
                        UINT64 duration, UINT32 data_size)
 {
-	wStream* s = NULL;
-	int status = -1;
+	ssize_t status = -1;
 	TSMF_CHANNEL_CALLBACK* callback = (TSMF_CHANNEL_CALLBACK*)pChannelCallback;
 
 	if (!callback)
 		return FALSE;
 
-	s = Stream_New(NULL, 32);
+	wStream* s = Stream_New(NULL, 32);
 
 	if (!s)
 		return FALSE;
@@ -95,7 +94,9 @@ BOOL tsmf_playback_ack(IWTSVirtualChannelCallback* pChannelCallback, UINT32 mess
 	Stream_Write_UINT32(s, callback->stream_id); /* StreamId */
 	Stream_Write_UINT64(s, duration);            /* DataDuration */
 	Stream_Write_UINT64(s, data_size);           /* cbData */
-	DEBUG_TSMF("ACK response size %" PRIuz "", Stream_GetPosition(s));
+
+	const size_t pos = Stream_GetPosition(s);
+	DEBUG_TSMF("ACK response size %" PRIuz "", pos);
 
 	if (!callback->channel || !callback->channel->Write)
 	{
@@ -105,8 +106,8 @@ BOOL tsmf_playback_ack(IWTSVirtualChannelCallback* pChannelCallback, UINT32 mess
 	}
 	else
 	{
-		status = callback->channel->Write(callback->channel, Stream_GetPosition(s),
-		                                  Stream_Buffer(s), NULL);
+		WINPR_ASSERT(pos <= UINT32_MAX);
+		status = callback->channel->Write(callback->channel, (UINT32)pos, Stream_Buffer(s), NULL);
 	}
 
 	if (status)
@@ -125,7 +126,6 @@ BOOL tsmf_playback_ack(IWTSVirtualChannelCallback* pChannelCallback, UINT32 mess
  */
 static UINT tsmf_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, wStream* data)
 {
-	size_t length = 0;
 	wStream* input = NULL;
 	wStream* output = NULL;
 	UINT error = CHANNEL_RC_OK;
@@ -135,10 +135,10 @@ static UINT tsmf_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, 
 	UINT32 FunctionId = 0;
 	UINT32 InterfaceId = 0;
 	TSMF_CHANNEL_CALLBACK* callback = (TSMF_CHANNEL_CALLBACK*)pChannelCallback;
-	UINT32 cbSize = Stream_GetRemainingLength(data);
+	const size_t cbSize = Stream_GetRemainingLength(data);
 
 	/* 2.2.1 Shared Message Header (SHARED_MSG_HEADER) */
-	if (!Stream_CheckAndLogRequiredLength(TAG, data, 12))
+	if (!Stream_CheckAndLogRequiredLength(TAG, data, 12) || (cbSize > UINT32_MAX))
 		return ERROR_INVALID_DATA;
 
 	input = data;
@@ -162,7 +162,7 @@ static UINT tsmf_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, 
 	ifman.stream_id = callback->stream_id;
 	ifman.message_id = MessageId;
 	ifman.input = input;
-	ifman.input_size = cbSize - 12;
+	ifman.input_size = (UINT32)(cbSize - 12U);
 	ifman.output = output;
 	ifman.output_pending = FALSE;
 	ifman.output_interface_id = InterfaceId;
@@ -374,12 +374,15 @@ static UINT tsmf_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, 
 	if (processed && !ifman.output_pending)
 	{
 		/* Response packet does not have FunctionId */
-		length = Stream_GetPosition(output);
+		const size_t length = Stream_GetPosition(output);
+		if (length > UINT32_MAX)
+			goto out;
 		Stream_SetPosition(output, 0);
 		Stream_Write_UINT32(output, ifman.output_interface_id);
 		Stream_Write_UINT32(output, MessageId);
 		DEBUG_TSMF("response size %d", length);
-		error = callback->channel->Write(callback->channel, length, Stream_Buffer(output), NULL);
+		error = callback->channel->Write(callback->channel, (UINT32)length, Stream_Buffer(output),
+		                                 NULL);
 
 		if (error)
 		{

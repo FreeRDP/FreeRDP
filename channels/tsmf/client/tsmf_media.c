@@ -79,13 +79,10 @@ struct S_TSMF_PRESENTATION
 
 	wArrayList* stream_list;
 
-	int x;
-	int y;
-	int width;
-	int height;
+	RECTANGLE_32 rect;
 
-	int nr_rects;
-	void* rects;
+	UINT32 nr_rects;
+	RECTANGLE_32* rects;
 };
 
 struct S_TSMF_STREAM
@@ -166,16 +163,13 @@ static UINT64 get_current_time(void)
 
 static TSMF_SAMPLE* tsmf_stream_pop_sample(TSMF_STREAM* stream, int sync)
 {
-	UINT32 count = 0;
-	TSMF_STREAM* s = NULL;
 	TSMF_SAMPLE* sample = NULL;
 	BOOL pending = FALSE;
-	TSMF_PRESENTATION* presentation = NULL;
 
 	if (!stream)
 		return NULL;
 
-	presentation = stream->presentation;
+	TSMF_PRESENTATION* presentation = stream->presentation;
 
 	if (Queue_Count(stream->sample_list) < 1)
 		return NULL;
@@ -196,11 +190,12 @@ static TSMF_SAMPLE* tsmf_stream_pop_sample(TSMF_STREAM* stream, int sync)
 					if (stream->last_start_time > AUDIO_TOLERANCE)
 					{
 						ArrayList_Lock(presentation->stream_list);
-						count = ArrayList_Count(presentation->stream_list);
+						const size_t count = ArrayList_Count(presentation->stream_list);
 
-						for (UINT32 index = 0; index < count; index++)
+						for (size_t index = 0; index < count; index++)
 						{
-							s = (TSMF_STREAM*)ArrayList_GetItem(presentation->stream_list, index);
+							TSMF_STREAM* s =
+							    (TSMF_STREAM*)ArrayList_GetItem(presentation->stream_list, index);
 
 							/* Start time is more reliable than end time as some stream types seem
 							 * to have incorrect end times from the server
@@ -391,12 +386,11 @@ static char* guid_to_string(const BYTE* guid, char* str, size_t len)
 
 TSMF_PRESENTATION* tsmf_presentation_find_by_id(const BYTE* guid)
 {
-	UINT32 count = 0;
 	BOOL found = FALSE;
 	char guid_str[GUID_SIZE * 2 + 1] = { 0 };
 	TSMF_PRESENTATION* presentation = NULL;
 	ArrayList_Lock(presentation_list);
-	count = ArrayList_Count(presentation_list);
+	const size_t count = ArrayList_Count(presentation_list);
 
 	for (size_t index = 0; index < count; index++)
 	{
@@ -420,8 +414,8 @@ TSMF_PRESENTATION* tsmf_presentation_find_by_id(const BYTE* guid)
 
 static BOOL tsmf_sample_playback_video(TSMF_SAMPLE* sample)
 {
-	UINT64 t = 0;
-	TSMF_VIDEO_FRAME_EVENT event;
+	WINPR_ASSERT(sample);
+
 	TSMF_STREAM* stream = sample->stream;
 	TSMF_PRESENTATION* presentation = stream->presentation;
 	TSMF_CHANNEL_CALLBACK* callback = (TSMF_CHANNEL_CALLBACK*)sample->channel_callback;
@@ -431,7 +425,7 @@ static BOOL tsmf_sample_playback_video(TSMF_SAMPLE* sample)
 
 	if (sample->data)
 	{
-		t = get_current_time();
+		const UINT64 t = get_current_time();
 
 		/* Start time is more reliable than end time as some stream types seem to have incorrect
 		 * end times from the server
@@ -440,24 +434,46 @@ static BOOL tsmf_sample_playback_video(TSMF_SAMPLE* sample)
 		    ((sample->start_time >= presentation->audio_start_time) ||
 		     ((sample->start_time < stream->last_start_time) && (!sample->invalidTimestamps))))
 		{
-			USleep((stream->next_start_time - t) / 10);
+			size_t delay = (stream->next_start_time - t) / 10;
+			while (delay > 0)
+			{
+				const UINT32 d = (delay > UINT32_MAX) ? UINT32_MAX : (UINT32)delay;
+				USleep(d);
+				delay -= d;
+			}
 		}
 
+		if (sample->stream->width > INT16_MAX)
+			return FALSE;
+		if (sample->stream->height > INT16_MAX)
+			return FALSE;
+		if (presentation->rect.left > INT16_MAX)
+			return FALSE;
+		if (presentation->rect.top > INT16_MAX)
+			return FALSE;
+		if (presentation->rect.width > INT16_MAX)
+			return FALSE;
+		if (presentation->rect.height > INT16_MAX)
+			return FALSE;
+		if (presentation->nr_rects > UINT16_MAX)
+			return FALSE;
+
 		stream->next_start_time = t + sample->duration - 50000;
-		ZeroMemory(&event, sizeof(TSMF_VIDEO_FRAME_EVENT));
+
+		TSMF_VIDEO_FRAME_EVENT event = { 0 };
 		event.frameData = sample->data;
 		event.frameSize = sample->decoded_size;
 		event.framePixFmt = sample->pixfmt;
-		event.frameWidth = sample->stream->width;
-		event.frameHeight = sample->stream->height;
-		event.x = presentation->x;
-		event.y = presentation->y;
-		event.width = presentation->width;
-		event.height = presentation->height;
+		event.frameWidth = (INT16)sample->stream->width;
+		event.frameHeight = (INT16)sample->stream->height;
+		event.x = (INT16)presentation->rect.left;
+		event.y = (INT16)presentation->rect.top;
+		event.width = (INT16)presentation->rect.width;
+		event.height = (INT16)presentation->rect.height;
 
 		if (presentation->nr_rects > 0)
 		{
-			event.numVisibleRects = presentation->nr_rects;
+			event.numVisibleRects = (UINT16)presentation->nr_rects;
 			event.visibleRects = (RECTANGLE_16*)calloc(event.numVisibleRects, sizeof(RECTANGLE_16));
 
 			if (!event.visibleRects)
@@ -466,36 +482,26 @@ static BOOL tsmf_sample_playback_video(TSMF_SAMPLE* sample)
 				return FALSE;
 			}
 
+			for (size_t x = 0; x < presentation->nr_rects; x++)
+			{
+				const RECTANGLE_32* cur = &presentation->rects[x];
+				RECTANGLE_16* dst = &event.visibleRects[x];
+				if ((cur->left > UINT16_MAX) || (cur->top > UINT16_MAX) ||
+				    (cur->width > UINT16_MAX) || (cur->height > UINT16_MAX))
+				{
+					free(event.visibleRects);
+					return FALSE;
+				}
+				dst->right = dst->left = (UINT16)cur->left;
+				dst->bottom = dst->top = (UINT16)cur->top;
+				dst->right += (UINT16)cur->width;
+				dst->bottom += (UINT16)cur->height;
+			}
 			memcpy(event.visibleRects, presentation->rects,
-			       presentation->nr_rects * sizeof(RDP_RECT));
+			       presentation->nr_rects * sizeof(RECTANGLE_16));
 			presentation->nr_rects = 0;
 		}
 
-#if 0
-		/* Dump a .ppm image for every 30 frames. Assuming the frame is in YUV format, we
-		   extract the Y values to create a grayscale image. */
-		static int frame_id = 0;
-		char buf[100];
-
-		if ((frame_id % 30) == 0)
-		{
-			sprintf_s(buf, sizeof(buf), "/tmp/FreeRDP_Frame_%d.ppm", frame_id);
-			FILE* fp = fopen(buf, "wb");
-			if (fp)
-			{
-				fwrite("P5\n", 1, 3, fp);
-				sprintf_s(buf, sizeof(buf), "%"PRIu32" %"PRIu32"\n", sample->stream->width,
-				          sample->stream->height);
-				fwrite(buf, 1, strnlen(buf, sizeof(buf)), fp);
-				fwrite("255\n", 1, 4, fp);
-				fwrite(sample->data, 1, sample->stream->width * sample->stream->height, fp);
-				fflush(fp);
-				fclose(fp);
-			}
-		}
-
-		frame_id++;
-#endif
 		/* The frame data ownership is passed to the event object, and is freed after the event is
 		 * processed. */
 		sample->data = NULL;
@@ -505,9 +511,7 @@ static BOOL tsmf_sample_playback_video(TSMF_SAMPLE* sample)
 			tsmf->FrameEvent(tsmf, &event);
 
 		free(event.frameData);
-
-		if (event.visibleRects != NULL)
-			free(event.visibleRects);
+		free(event.visibleRects);
 	}
 
 	return TRUE;
@@ -574,7 +578,7 @@ static BOOL tsmf_sample_playback(TSMF_SAMPLE* sample)
 				TSMF_STREAM* temp_stream = NULL;
 				TSMF_PRESENTATION* presentation = stream->presentation;
 				ArrayList_Lock(presentation->stream_list);
-				int count = ArrayList_Count(presentation->stream_list);
+				const size_t count = ArrayList_Count(presentation->stream_list);
 
 				for (size_t index = 0; index < count; index++)
 				{
@@ -1080,11 +1084,10 @@ BOOL tsmf_presentation_stop(TSMF_PRESENTATION* presentation)
 }
 
 BOOL tsmf_presentation_set_geometry_info(TSMF_PRESENTATION* presentation, UINT32 x, UINT32 y,
-                                         UINT32 width, UINT32 height, int num_rects,
-                                         RDP_RECT* rects)
+                                         UINT32 width, UINT32 height, UINT32 num_rects,
+                                         const RECTANGLE_32* rects)
 {
 	TSMF_STREAM* stream = NULL;
-	void* tmp_rects = NULL;
 	BOOL ret = TRUE;
 
 	/* The server may send messages with invalid width / height.
@@ -1097,19 +1100,19 @@ BOOL tsmf_presentation_set_geometry_info(TSMF_PRESENTATION* presentation, UINT32
 	 * or not the window is visible. So, always process a valid message with unchanged position/size
 	 * and/or no visibility rects.
 	 */
-	presentation->x = x;
-	presentation->y = y;
-	presentation->width = width;
-	presentation->height = height;
-	tmp_rects = realloc(presentation->rects, sizeof(RDP_RECT) * num_rects);
+	presentation->rect.left = x;
+	presentation->rect.top = y;
+	presentation->rect.width = width;
+	presentation->rect.height = height;
+	void* tmp_rects = realloc(presentation->rects, sizeof(RECTANGLE_32) * num_rects);
 
 	if (!tmp_rects && num_rects)
 		return FALSE;
 
 	presentation->nr_rects = num_rects;
-	presentation->rects = tmp_rects;
+	presentation->rects = (RECTANGLE_32*)tmp_rects;
 	if (presentation->rects)
-		CopyMemory(presentation->rects, rects, sizeof(RDP_RECT) * num_rects);
+		CopyMemory(presentation->rects, rects, sizeof(RECTANGLE_32) * num_rects);
 	ArrayList_Lock(presentation->stream_list);
 	size_t count = ArrayList_Count(presentation->stream_list);
 
