@@ -11,15 +11,10 @@ int TestGetNativeSystemInfo(int argc, char* argv[])
 
 	GetNativeSystemInfo(&sysinfo);
 
-#if defined(DUMMYUNIONNAME) && defined(DUMMYSTRUCTNAME)
-#define DUMMYXPTR(x) x.DUMMYUNIONNAME.DUMMYSTRUCTNAME
-#else
-#define DUMMYXPTR(x) x
-#endif
-
 	printf("SystemInfo:\n");
-	printf("\twProcessorArchitecture: %" PRIu16 "\n", DUMMYXPTR(sysinfo).wProcessorArchitecture);
-	printf("\twReserved: %" PRIu16 "\n", DUMMYXPTR(sysinfo).wReserved);
+	printf("\twProcessorArchitecture: %" PRIu16 "\n",
+	       sysinfo.DUMMYUNIONNAME.DUMMYSTRUCTNAME.wProcessorArchitecture);
+	printf("\twReserved: %" PRIu16 "\n", sysinfo.DUMMYUNIONNAME.DUMMYSTRUCTNAME.wReserved);
 	printf("\tdwPageSize: 0x%08" PRIX32 "\n", sysinfo.dwPageSize);
 	printf("\tlpMinimumApplicationAddress: %p\n", sysinfo.lpMinimumApplicationAddress);
 	printf("\tlpMaximumApplicationAddress: %p\n", sysinfo.lpMaximumApplicationAddress);

@@ -61,6 +61,9 @@ if(NOT FREERDP_UNIFIED_BUILD)
   else()
     set(DEFAULT_DEBUG_OPTION "OFF" CACHE INTERNAL "debug default")
   endif()
+
+  # MSVC compatibility with system headers
+  add_definitions(-DNONAMELESSUNION)
 endif()
 
 if(WIN32 AND NOT UWP)
