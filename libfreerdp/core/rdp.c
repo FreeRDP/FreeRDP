@@ -2967,14 +2967,27 @@ static void log_build_warn_cipher(rdpRdp* rdp, log_line_t* firstLine, WINPR_CIPH
 
 	char key[WINPR_CIPHER_MAX_KEY_LENGTH] = { 0 };
 	char iv[WINPR_CIPHER_MAX_IV_LENGTH] = { 0 };
-	WINPR_CIPHER_CTX* enc = winpr_Cipher_New(md, WINPR_ENCRYPT, key, iv);
-	WINPR_CIPHER_CTX* dec = winpr_Cipher_New(md, WINPR_DECRYPT, key, iv);
-	if (enc && dec)
+
+	/* RC4 only exists in the compatiblity functions winpr_RC4_*
+	 * winpr_Cipher_* does not support that. */
+	if (md == WINPR_CIPHER_ARC4_128)
 	{
-		haveCipher = TRUE;
+		WINPR_RC4_CTX* enc = winpr_RC4_New(key, sizeof(key));
+		haveCipher = enc != NULL;
+		winpr_RC4_Free(enc);
 	}
-	winpr_Cipher_Free(enc);
-	winpr_Cipher_Free(dec);
+	else
+	{
+		WINPR_CIPHER_CTX* enc =
+		    winpr_Cipher_NewEx(md, WINPR_ENCRYPT, key, sizeof(key), iv, sizeof(iv));
+		WINPR_CIPHER_CTX* dec =
+		    winpr_Cipher_NewEx(md, WINPR_DECRYPT, key, sizeof(key), iv, sizeof(iv));
+		if (enc && dec)
+			haveCipher = TRUE;
+
+		winpr_Cipher_Free(enc);
+		winpr_Cipher_Free(dec);
+	}
 
 	if (!haveCipher)
 	{

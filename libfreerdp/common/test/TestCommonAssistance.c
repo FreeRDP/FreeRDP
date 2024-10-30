@@ -7,6 +7,10 @@
 #include <freerdp/assistance.h>
 
 static const char TEST_MSRC_INCIDENT_PASSWORD_TYPE1[] = "Password1";
+static const BYTE TEST_MSRC_INCIDENT_PASSWORD_TYPE1_ENC[32] = {
+	0x3c, 0x9c, 0xae, 0xb,  0xce, 0x7a, 0xb1, 0x5c, 0x8a, 0xac, 0x1,  0xd6, 0x76, 0x4,  0x5e, 0xdf,
+	0x3f, 0xfa, 0xf0, 0x92, 0xe2, 0xde, 0x36, 0x8a, 0x20, 0x17, 0xe6, 0x8a, 0xd,  0xed, 0x7c, 0x90
+};
 
 static const char TEST_MSRC_INCIDENT_FILE_TYPE1[] =
     "<?xml version=\"1.0\" encoding=\"Unicode\" ?>"
@@ -30,6 +34,10 @@ static const BYTE TEST_MSRC_INCIDENT_EXPERT_BLOB_TYPE1[32] =
 WINPR_PRAGMA_DIAG_POP
 
 static const char TEST_MSRC_INCIDENT_PASSWORD_TYPE2[] = "48BJQ853X3B4";
+static const BYTE TEST_MSRC_INCIDENT_PASSWORD_TYPE2_ENC[32] = {
+	0x77, 0x7d, 0xfa, 0xae, 0x90, 0x28, 0x12, 0x4d, 0xd0, 0x2e, 0xde, 0x80, 0x14, 0x22, 0x1b, 0x4a,
+	0xd1, 0xf4, 0xec, 0x13, 0x85, 0x39, 0xd7, 0x33, 0xac, 0x76, 0x78, 0x95, 0xb2, 0xd8, 0x57, 0xd9
+};
 
 static const char TEST_MSRC_INCIDENT_FILE_TYPE2[] =
     "<?xml version=\"1.0\"?>"
@@ -167,6 +175,10 @@ static const char connectionstr3[] =
     "L=\"0\"/>"
     "</UPLOADINFO>";
 static const char connectionpwd3[] = "4X638PTVZTKZ";
+static const BYTE connectionpwd3_enc[32] = { 0x15, 0x20, 0x04, 0x96, 0xaf, 0x33, 0xc6, 0xe0,
+	                                         0x1b, 0xbf, 0x4a, 0x15, 0xc9, 0xc1, 0xb8, 0x71,
+	                                         0x44, 0x3f, 0x2e, 0x93, 0xa8, 0x82, 0x35, 0x2b,
+	                                         0x24, 0x08, 0x06, 0x55, 0x16, 0x4e, 0x9d, 0x3b };
 
 static BOOL run_test_parse(wLog* log, const char* input, size_t len, const char* password,
                            BOOL expect)
@@ -193,7 +205,8 @@ static BOOL test_file_to_settings(wLog* log, rdpAssistanceFile* file)
 	return rc;
 }
 
-static BOOL test_file_from_buffer(wLog* log, const char* data, size_t size, const char* pwd)
+static BOOL test_file_from_buffer(wLog* log, const char* data, size_t size, const char* pwd,
+                                  const BYTE* enc, size_t encsize)
 {
 	BOOL rc = FALSE;
 	int status = 0;
@@ -231,6 +244,14 @@ static BOOL test_file_from_buffer(wLog* log, const char* data, size_t size, cons
 
 		WLog_Print(log, WLOG_INFO, "expertBlob='%s'", expertBlob);
 	}
+	if (encsize != EncryptedPassStubLength)
+		goto fail;
+	if (encsize > 0)
+	{
+		if (memcmp(EncryptedPassStub, enc, encsize) != 0)
+			goto fail;
+	}
+
 	rc = test_file_to_settings(log, file);
 fail:
 	freerdp_assistance_file_free(file);
@@ -241,21 +262,24 @@ fail:
 
 static BOOL test_msrsc_incident_file_type1(wLog* log)
 {
-	return test_file_from_buffer(log, TEST_MSRC_INCIDENT_FILE_TYPE1,
-	                             sizeof(TEST_MSRC_INCIDENT_FILE_TYPE1),
-	                             TEST_MSRC_INCIDENT_PASSWORD_TYPE1);
+	return test_file_from_buffer(
+	    log, TEST_MSRC_INCIDENT_FILE_TYPE1, sizeof(TEST_MSRC_INCIDENT_FILE_TYPE1),
+	    TEST_MSRC_INCIDENT_PASSWORD_TYPE1, TEST_MSRC_INCIDENT_PASSWORD_TYPE1_ENC,
+	    sizeof(TEST_MSRC_INCIDENT_PASSWORD_TYPE1_ENC));
 }
 
 static BOOL test_msrsc_incident_file_type2(wLog* log)
 {
 	if (!test_file_from_buffer(log, connectionstr2, sizeof(connectionstr2),
-	                           TEST_MSRC_INCIDENT_PASSWORD_TYPE2))
+	                           TEST_MSRC_INCIDENT_PASSWORD_TYPE2, NULL, 0))
 		return FALSE;
-	if (!test_file_from_buffer(log, connectionstr3, sizeof(connectionstr3), connectionpwd3))
+	if (!test_file_from_buffer(log, connectionstr3, sizeof(connectionstr3), connectionpwd3,
+	                           connectionpwd3_enc, sizeof(connectionpwd3_enc)))
 		return FALSE;
-	if (!test_file_from_buffer(log, TEST_MSRC_INCIDENT_FILE_TYPE2,
-	                           sizeof(TEST_MSRC_INCIDENT_FILE_TYPE2),
-	                           TEST_MSRC_INCIDENT_PASSWORD_TYPE2))
+	if (!test_file_from_buffer(
+	        log, TEST_MSRC_INCIDENT_FILE_TYPE2, sizeof(TEST_MSRC_INCIDENT_FILE_TYPE2),
+	        TEST_MSRC_INCIDENT_PASSWORD_TYPE2, TEST_MSRC_INCIDENT_PASSWORD_TYPE2_ENC,
+	        sizeof(TEST_MSRC_INCIDENT_PASSWORD_TYPE2_ENC)))
 		return FALSE;
 	return TRUE;
 }
