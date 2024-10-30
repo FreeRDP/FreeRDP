@@ -3494,15 +3494,11 @@ static BOOL rdp_write_rfx_client_capability_container(wStream* s, const rdpSetti
  */
 static BOOL rdp_write_nsc_client_capability_container(wStream* s, const rdpSettings* settings)
 {
-	BYTE colorLossLevel = 0;
-	BYTE fAllowSubsampling = 0;
-	BYTE fAllowDynamicFidelity = 0;
-
 	WINPR_ASSERT(settings);
 
-	fAllowDynamicFidelity = settings->NSCodecAllowDynamicColorFidelity;
-	fAllowSubsampling = settings->NSCodecAllowSubsampling;
-	colorLossLevel = settings->NSCodecColorLossLevel;
+	const BOOL fAllowDynamicFidelity = settings->NSCodecAllowDynamicColorFidelity;
+	const BOOL fAllowSubsampling = settings->NSCodecAllowSubsampling;
+	UINT32 colorLossLevel = settings->NSCodecColorLossLevel;
 
 	if (colorLossLevel < 1)
 		colorLossLevel = 1;
@@ -3515,9 +3511,10 @@ static BOOL rdp_write_nsc_client_capability_container(wStream* s, const rdpSetti
 
 	Stream_Write_UINT16(s, 3); /* codecPropertiesLength */
 	/* TS_NSCODEC_CAPABILITYSET */
-	Stream_Write_UINT8(s, fAllowDynamicFidelity); /* fAllowDynamicFidelity (1 byte) */
-	Stream_Write_UINT8(s, fAllowSubsampling);     /* fAllowSubsampling (1 byte) */
-	Stream_Write_UINT8(s, colorLossLevel);        /* colorLossLevel (1 byte) */
+	Stream_Write_UINT8(s,
+	                   fAllowDynamicFidelity ? TRUE : FALSE); /* fAllowDynamicFidelity (1 byte) */
+	Stream_Write_UINT8(s, fAllowSubsampling ? TRUE : FALSE);  /* fAllowSubsampling (1 byte) */
+	Stream_Write_UINT8(s, (UINT8)colorLossLevel);             /* colorLossLevel (1 byte) */
 	return TRUE;
 }
 

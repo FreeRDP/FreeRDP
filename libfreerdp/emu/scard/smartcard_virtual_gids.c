@@ -877,7 +877,7 @@ static BOOL vgids_ins_getdata(vgidsContext* context, wStream* s, BYTE** response
 	vgids_reset_context_response(context);
 
 	/* build up file identifier */
-	fileId = ((UINT16)p1 << 8) | p2;
+	fileId = (UINT16)(((UINT16)p1 << 8) | p2);
 
 	/* Do we have a DO reference? */
 	switch (lc)

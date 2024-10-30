@@ -43,6 +43,18 @@
 
 #define TAG FREERDP_TAG("core.orders")
 
+static inline const char* gdi_rob3_code_string_checked(UINT32 rob)
+{
+	WINPR_ASSERT((rob) <= UINT8_MAX);
+	return gdi_rop3_code_string((BYTE)rob);
+}
+
+static inline DWORD gdi_rop3_code_checked(UINT32 code)
+{
+	WINPR_ASSERT(code <= UINT8_MAX);
+	return gdi_rop3_code((UINT8)code);
+}
+
 static const char primary_order_str[] = "Primary Drawing Order";
 static const char secondary_order_str[] = "Secondary Drawing Order";
 static const char alt_sec_order_str[] = "Alternate Secondary Drawing Order";
@@ -556,7 +568,7 @@ static INLINE BOOL update_write_coord_int(wStream* s, INT32 coord, const char* n
 		return FALSE;
 	}
 
-	Stream_Write_UINT16(s, coord);
+	Stream_Write_UINT16(s, (UINT16)coord);
 	return TRUE;
 }
 static INLINE BOOL update_read_color(wStream* s, UINT32* color)
@@ -783,7 +795,7 @@ static INLINE BOOL update_write_4byte_unsigned(wStream* s, UINT32 value)
 
 	if (value <= 0x3F)
 	{
-		Stream_Write_UINT8(s, value);
+		Stream_Write_UINT8(s, (UINT8)value);
 	}
 	else if (value <= 0x3FFF)
 	{
@@ -1346,6 +1358,8 @@ BOOL update_write_patblt_order(wStream* s, ORDER_INFO* orderInfo, PATBLT_ORDER* 
 static BOOL update_read_scrblt_order(const char* orderName, wStream* s, const ORDER_INFO* orderInfo,
                                      SCRBLT_ORDER* scrblt)
 {
+	WINPR_ASSERT(orderInfo);
+	WINPR_ASSERT(scrblt);
 	if (read_order_field_coord(orderName, orderInfo, s, 1, &scrblt->nLeftRect, FALSE) &&
 	    read_order_field_coord(orderName, orderInfo, s, 2, &scrblt->nTopRect, FALSE) &&
 	    read_order_field_coord(orderName, orderInfo, s, 3, &scrblt->nWidth, FALSE) &&
@@ -1359,6 +1373,8 @@ static BOOL update_read_scrblt_order(const char* orderName, wStream* s, const OR
 
 size_t update_approximate_scrblt_order(ORDER_INFO* orderInfo, const SCRBLT_ORDER* scrblt)
 {
+	WINPR_ASSERT(orderInfo);
+	WINPR_ASSERT(scrblt);
 	WINPR_UNUSED(orderInfo);
 	WINPR_UNUSED(scrblt);
 	return 32;
@@ -1366,6 +1382,8 @@ size_t update_approximate_scrblt_order(ORDER_INFO* orderInfo, const SCRBLT_ORDER
 
 BOOL update_write_scrblt_order(wStream* s, ORDER_INFO* orderInfo, const SCRBLT_ORDER* scrblt)
 {
+	WINPR_ASSERT(orderInfo);
+	WINPR_ASSERT(scrblt);
 	if (!Stream_EnsureRemainingCapacity(s, update_approximate_scrblt_order(orderInfo, scrblt)))
 		return FALSE;
 
@@ -1383,7 +1401,8 @@ BOOL update_write_scrblt_order(wStream* s, ORDER_INFO* orderInfo, const SCRBLT_O
 	if (!update_write_coord(s, scrblt->nHeight))
 		return FALSE;
 	orderInfo->fieldFlags |= ORDER_FIELD_05;
-	Stream_Write_UINT8(s, scrblt->bRop);
+	WINPR_ASSERT(scrblt->bRop <= UINT8_MAX);
+	Stream_Write_UINT8(s, (UINT8)scrblt->bRop);
 	orderInfo->fieldFlags |= ORDER_FIELD_06;
 	if (!update_write_coord(s, scrblt->nXSrc))
 		return FALSE;
@@ -3760,26 +3779,28 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 		case ORDER_TYPE_DSTBLT:
 		{
 			WLog_Print(up->log, WLOG_DEBUG, "%s %s rop=%s [0x%08" PRIx32 "]", primary_order_str,
-			           orderName, gdi_rop3_code_string(primary->dstblt.bRop),
-			           gdi_rop3_code(primary->dstblt.bRop));
+			           orderName, gdi_rob3_code_string_checked(primary->dstblt.bRop),
+			           gdi_rop3_code_checked(primary->dstblt.bRop));
 			rc = IFCALLRESULT(defaultReturn, primary->common.DstBlt, context, &primary->dstblt);
 		}
 		break;
 
 		case ORDER_TYPE_PATBLT:
 		{
+			WINPR_ASSERT(primary->patblt.bRop <= UINT8_MAX);
 			WLog_Print(up->log, WLOG_DEBUG, "%s %s rop=%s [0x%08" PRIx32 "]", primary_order_str,
-			           orderName, gdi_rop3_code_string(primary->patblt.bRop),
-			           gdi_rop3_code(primary->patblt.bRop));
+			           orderName, gdi_rob3_code_string_checked(primary->patblt.bRop),
+			           gdi_rop3_code_checked(primary->patblt.bRop));
 			rc = IFCALLRESULT(defaultReturn, primary->common.PatBlt, context, &primary->patblt);
 		}
 		break;
 
 		case ORDER_TYPE_SCRBLT:
 		{
+			WINPR_ASSERT(primary->scrblt.bRop <= UINT8_MAX);
 			WLog_Print(up->log, WLOG_DEBUG, "%s %s rop=%s [0x%08" PRIx32 "]", primary_order_str,
-			           orderName, gdi_rop3_code_string(primary->scrblt.bRop),
-			           gdi_rop3_code(primary->scrblt.bRop));
+			           orderName, gdi_rob3_code_string_checked((UINT8)primary->scrblt.bRop),
+			           gdi_rop3_code_checked(primary->scrblt.bRop));
 			rc = IFCALLRESULT(defaultReturn, primary->common.ScrBlt, context, &primary->scrblt);
 		}
 		break;
@@ -3803,8 +3824,8 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 		case ORDER_TYPE_MULTI_DSTBLT:
 		{
 			WLog_Print(up->log, WLOG_DEBUG, "%s %s rop=%s [0x%08" PRIx32 "]", primary_order_str,
-			           orderName, gdi_rop3_code_string(primary->multi_dstblt.bRop),
-			           gdi_rop3_code(primary->multi_dstblt.bRop));
+			           orderName, gdi_rob3_code_string_checked(primary->multi_dstblt.bRop),
+			           gdi_rop3_code_checked(primary->multi_dstblt.bRop));
 			rc = IFCALLRESULT(defaultReturn, primary->common.MultiDstBlt, context,
 			                  &primary->multi_dstblt);
 		}
@@ -3813,8 +3834,8 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 		case ORDER_TYPE_MULTI_PATBLT:
 		{
 			WLog_Print(up->log, WLOG_DEBUG, "%s %s rop=%s [0x%08" PRIx32 "]", primary_order_str,
-			           orderName, gdi_rop3_code_string(primary->multi_patblt.bRop),
-			           gdi_rop3_code(primary->multi_patblt.bRop));
+			           orderName, gdi_rob3_code_string_checked(primary->multi_patblt.bRop),
+			           gdi_rop3_code_checked(primary->multi_patblt.bRop));
 			rc = IFCALLRESULT(defaultReturn, primary->common.MultiPatBlt, context,
 			                  &primary->multi_patblt);
 		}
@@ -3823,8 +3844,8 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 		case ORDER_TYPE_MULTI_SCRBLT:
 		{
 			WLog_Print(up->log, WLOG_DEBUG, "%s %s rop=%s [0x%08" PRIx32 "]", primary_order_str,
-			           orderName, gdi_rop3_code_string(primary->multi_scrblt.bRop),
-			           gdi_rop3_code(primary->multi_scrblt.bRop));
+			           orderName, gdi_rob3_code_string_checked(primary->multi_scrblt.bRop),
+			           gdi_rop3_code_checked(primary->multi_scrblt.bRop));
 			rc = IFCALLRESULT(defaultReturn, primary->common.MultiScrBlt, context,
 			                  &primary->multi_scrblt);
 		}
@@ -3862,18 +3883,20 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 
 		case ORDER_TYPE_MEMBLT:
 		{
+			WINPR_ASSERT(primary->memblt.bRop <= UINT8_MAX);
 			WLog_Print(up->log, WLOG_DEBUG, "%s %s rop=%s [0x%08" PRIx32 "]", primary_order_str,
-			           orderName, gdi_rop3_code_string(primary->memblt.bRop),
-			           gdi_rop3_code(primary->memblt.bRop));
+			           orderName, gdi_rob3_code_string_checked(primary->memblt.bRop),
+			           gdi_rop3_code_checked(primary->memblt.bRop));
 			rc = IFCALLRESULT(defaultReturn, primary->common.MemBlt, context, &primary->memblt);
 		}
 		break;
 
 		case ORDER_TYPE_MEM3BLT:
 		{
+			WINPR_ASSERT(primary->mem3blt.bRop <= UINT8_MAX);
 			WLog_Print(up->log, WLOG_DEBUG, "%s %s rop=%s [0x%08" PRIx32 "]", primary_order_str,
-			           orderName, gdi_rop3_code_string(primary->mem3blt.bRop),
-			           gdi_rop3_code(primary->mem3blt.bRop));
+			           orderName, gdi_rob3_code_string_checked(primary->mem3blt.bRop),
+			           gdi_rop3_code_checked(primary->mem3blt.bRop));
 			rc = IFCALLRESULT(defaultReturn, primary->common.Mem3Blt, context, &primary->mem3blt);
 		}
 		break;

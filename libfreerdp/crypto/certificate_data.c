@@ -55,7 +55,7 @@ static char* ensure_lowercase(char* str, size_t length)
 {
 	const size_t len = strnlen(str, length);
 	for (size_t x = 0; x < len; x++)
-		str[x] = tolower(str[x]);
+		str[x] = (char)tolower(str[x]);
 	return str;
 }
 static const char* freerdp_certificate_data_hash_(const char* hostname, UINT16 port, char* name,

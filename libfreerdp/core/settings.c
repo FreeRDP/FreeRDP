@@ -715,7 +715,7 @@ static char* freerdp_settings_get_legacy_config_path(void)
 	char product[sizeof(FREERDP_PRODUCT_STRING)] = { 0 };
 
 	for (size_t i = 0; i < sizeof(product); i++)
-		product[i] = tolower(FREERDP_PRODUCT_STRING[i]);
+		product[i] = (char)tolower(FREERDP_PRODUCT_STRING[i]);
 
 	return GetKnownSubPath(KNOWN_PATH_XDG_CONFIG_HOME, product);
 }

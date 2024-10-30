@@ -53,7 +53,7 @@ static UCHAR svtime(ULONG Ti)
 	else if (Ti > 25500)
 		return 255; /* 0xFF */
 	else
-		return Ti / 100;
+		return (UCHAR)(Ti / 100);
 }
 
 /**

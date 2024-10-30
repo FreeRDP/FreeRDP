@@ -466,7 +466,7 @@ BOOL nego_send_preconnection_pdu(rdpNego* nego)
 			free(wszPCB);
 			return FALSE;
 		}
-		cchPCB = len;
+		cchPCB = (UINT16)len;
 		cchPCB += 1; /* zero-termination */
 		cbSize += cchPCB * sizeof(WCHAR);
 	}

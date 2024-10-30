@@ -58,19 +58,17 @@ struct rdp_brush_cache
 
 static BOOL update_gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 {
-	BYTE style = 0;
 	BOOL ret = TRUE;
-	rdpBrush* brush = NULL;
-	const rdpCache* cache = NULL;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(patblt);
 
-	cache = context->cache;
+	const rdpCache* cache = context->cache;
 	WINPR_ASSERT(cache);
 
-	brush = &patblt->brush;
-	style = brush->style;
+	rdpBrush* brush = &patblt->brush;
+	WINPR_ASSERT(brush->style <= UINT8_MAX);
+	const BYTE style = (BYTE)brush->style;
 
 	if (brush->style & CACHED_BRUSH)
 	{
@@ -96,19 +94,17 @@ static BOOL update_gdi_polygon_sc(rdpContext* context, const POLYGON_SC_ORDER* p
 
 static BOOL update_gdi_polygon_cb(rdpContext* context, POLYGON_CB_ORDER* polygon_cb)
 {
-	BYTE style = 0;
-	rdpBrush* brush = NULL;
-	rdpCache* cache = NULL;
 	BOOL ret = TRUE;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(polygon_cb);
 
-	cache = context->cache;
+	rdpCache* cache = context->cache;
 	WINPR_ASSERT(cache);
 
-	brush = &polygon_cb->brush;
-	style = brush->style;
+	rdpBrush* brush = &polygon_cb->brush;
+	WINPR_ASSERT(brush->style <= UINT8_MAX);
+	const BYTE style = (UINT8)brush->style;
 
 	if (brush->style & CACHED_BRUSH)
 	{

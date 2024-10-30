@@ -974,7 +974,9 @@ TlsHandshakeResult freerdp_tls_handshake(rdpTls* tls)
 
 		if (tls->isClientMode)
 		{
-			verify_status = tls_verify_certificate(tls, cert, tls_get_server_name(tls), tls->port);
+			WINPR_ASSERT(tls->port <= UINT16_MAX);
+			verify_status =
+			    tls_verify_certificate(tls, cert, tls_get_server_name(tls), (UINT16)tls->port);
 
 			if (verify_status < 1)
 			{

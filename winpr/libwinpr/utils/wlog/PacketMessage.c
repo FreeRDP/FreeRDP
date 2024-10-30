@@ -303,11 +303,11 @@ static BOOL WLog_PacketMessage_Write_IPv4Header(wPcap* pcap, wIPv4Header* ipv4)
 	s = Stream_StaticInit(&sbuffer, buffer, sizeof(buffer));
 	if (!s)
 		return FALSE;
-	Stream_Write_UINT8(s, (ipv4->Version << 4) | ipv4->InternetHeaderLength);
+	Stream_Write_UINT8(s, (BYTE)((ipv4->Version << 4) | ipv4->InternetHeaderLength));
 	Stream_Write_UINT8(s, ipv4->TypeOfService);
 	Stream_Write_UINT16_BE(s, ipv4->TotalLength);
 	Stream_Write_UINT16_BE(s, ipv4->Identification);
-	Stream_Write_UINT16_BE(s, (ipv4->InternetProtocolFlags << 13) | ipv4->FragmentOffset);
+	Stream_Write_UINT16_BE(s, (UINT16)((ipv4->InternetProtocolFlags << 13) | ipv4->FragmentOffset));
 	Stream_Write_UINT8(s, ipv4->TimeToLive);
 	Stream_Write_UINT8(s, ipv4->Protocol);
 	Stream_Write_UINT16(s, ipv4->HeaderChecksum);
@@ -340,7 +340,7 @@ static BOOL WLog_PacketMessage_Write_TcpHeader(wPcap* pcap, wTcpHeader* tcp)
 	Stream_Write_UINT16_BE(s, tcp->DestinationPort);
 	Stream_Write_UINT32_BE(s, tcp->SequenceNumber);
 	Stream_Write_UINT32_BE(s, tcp->AcknowledgementNumber);
-	Stream_Write_UINT8(s, (tcp->Offset << 4) | tcp->Reserved);
+	Stream_Write_UINT8(s, (UINT8)((tcp->Offset << 4) | (tcp->Reserved & 0xF)));
 	Stream_Write_UINT8(s, tcp->TcpFlags);
 	Stream_Write_UINT16_BE(s, tcp->Window);
 	Stream_Write_UINT16_BE(s, tcp->Checksum);

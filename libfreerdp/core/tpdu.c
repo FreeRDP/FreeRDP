@@ -119,7 +119,8 @@ BOOL tpdu_write_header(wStream* s, UINT16 length, BYTE code)
 	if (!Stream_CheckAndLogRequiredCapacity(TAG, (s), 3))
 		return FALSE;
 
-	Stream_Write_UINT8(s, length); /* LI */
+	WINPR_ASSERT(length <= UINT8_MAX);
+	Stream_Write_UINT8(s, (UINT8)length); /* LI */
 	Stream_Write_UINT8(s, code);   /* code */
 
 	if (code == X224_TPDU_DATA)

@@ -107,9 +107,9 @@ static UINT64 mac_get_time_ns(void)
 #include <sys/sysctl.h>
 #endif
 
-static DWORD GetProcessorArchitecture(void)
+static WORD GetProcessorArchitecture(void)
 {
-	DWORD cpuArch = PROCESSOR_ARCHITECTURE_UNKNOWN;
+	WORD cpuArch = PROCESSOR_ARCHITECTURE_UNKNOWN;
 #if defined(ANDROID)
 	AndroidCpuFamily family = android_getCpuFamily();
 

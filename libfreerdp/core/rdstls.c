@@ -265,10 +265,10 @@ static BOOL rdstls_write_data(wStream* s, UINT32 length, const BYTE* data)
 {
 	WINPR_ASSERT(data || (length == 0));
 
-	if (!Stream_EnsureRemainingCapacity(s, 2))
+	if (!Stream_EnsureRemainingCapacity(s, 2) || (length > UINT16_MAX))
 		return FALSE;
 
-	Stream_Write_UINT16(s, length);
+	Stream_Write_UINT16(s, (UINT16)length);
 
 	if (!Stream_EnsureRemainingCapacity(s, length))
 		return FALSE;
@@ -463,7 +463,6 @@ static BOOL rdstls_process_authentication_request_with_password(rdpRdstls* rdstl
 	char* clientDomain = NULL;
 
 	const BYTE* serverRedirectionGuid = NULL;
-	UINT16 serverRedirectionGuidLength = 0;
 	const char* serverPassword = NULL;
 	const char* serverUsername = NULL;
 	const char* serverDomain = NULL;
@@ -484,7 +483,7 @@ static BOOL rdstls_process_authentication_request_with_password(rdpRdstls* rdstl
 		goto fail;
 
 	serverRedirectionGuid = freerdp_settings_get_pointer(settings, FreeRDP_RedirectionGuid);
-	serverRedirectionGuidLength =
+	const UINT32 serverRedirectionGuidLength =
 	    freerdp_settings_get_uint32(settings, FreeRDP_RedirectionGuidLength);
 	serverUsername = freerdp_settings_get_string(settings, FreeRDP_Username);
 	serverDomain = freerdp_settings_get_string(settings, FreeRDP_Domain);

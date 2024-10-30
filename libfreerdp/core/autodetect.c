@@ -376,7 +376,9 @@ static BOOL autodetect_send_netchar_result(rdpAutoDetect* autodetect, RDP_TRANSP
 			Stream_Write_UINT8(s, 0x0E);                       /* headerLength (1 byte) */
 			Stream_Write_UINT8(s, TYPE_ID_AUTODETECT_REQUEST); /* headerTypeId (1 byte) */
 			Stream_Write_UINT16(s, sequenceNumber);            /* sequenceNumber (2 bytes) */
-			Stream_Write_UINT16(s, result->type);              /* requestType (2 bytes) */
+			WINPR_ASSERT((result->type <= UINT16_MAX));
+			WINPR_ASSERT((result->type >= 0));
+			Stream_Write_UINT16(s, (UINT16)result->type);      /* requestType (2 bytes) */
 			Stream_Write_UINT32(s, result->baseRTT);           /* baseRTT (4 bytes) */
 			Stream_Write_UINT32(s, result->averageRTT);        /* averageRTT (4 bytes) */
 			break;
@@ -384,7 +386,9 @@ static BOOL autodetect_send_netchar_result(rdpAutoDetect* autodetect, RDP_TRANSP
 			Stream_Write_UINT8(s, 0x0E);                       /* headerLength (1 byte) */
 			Stream_Write_UINT8(s, TYPE_ID_AUTODETECT_REQUEST); /* headerTypeId (1 byte) */
 			Stream_Write_UINT16(s, sequenceNumber);            /* sequenceNumber (2 bytes) */
-			Stream_Write_UINT16(s, result->type);              /* requestType (2 bytes) */
+			WINPR_ASSERT((result->type <= UINT16_MAX));
+			WINPR_ASSERT((result->type >= 0));
+			Stream_Write_UINT16(s, (UINT16)result->type);      /* requestType (2 bytes) */
 			Stream_Write_UINT32(s, result->bandwidth);         /* bandwidth (4 bytes) */
 			Stream_Write_UINT32(s, result->averageRTT);        /* averageRTT (4 bytes) */
 			break;
@@ -392,7 +396,9 @@ static BOOL autodetect_send_netchar_result(rdpAutoDetect* autodetect, RDP_TRANSP
 			Stream_Write_UINT8(s, 0x12);                       /* headerLength (1 byte) */
 			Stream_Write_UINT8(s, TYPE_ID_AUTODETECT_REQUEST); /* headerTypeId (1 byte) */
 			Stream_Write_UINT16(s, sequenceNumber);            /* sequenceNumber (2 bytes) */
-			Stream_Write_UINT16(s, result->type);              /* requestType (2 bytes) */
+			WINPR_ASSERT((result->type <= UINT16_MAX));
+			WINPR_ASSERT((result->type >= 0));
+			Stream_Write_UINT16(s, (UINT16)result->type);      /* requestType (2 bytes) */
 			Stream_Write_UINT32(s, result->baseRTT);           /* baseRTT (4 bytes) */
 			Stream_Write_UINT32(s, result->bandwidth);         /* bandwidth (4 bytes) */
 			Stream_Write_UINT32(s, result->averageRTT);        /* averageRTT (4 bytes) */

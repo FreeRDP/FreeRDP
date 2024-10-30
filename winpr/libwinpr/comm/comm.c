@@ -431,7 +431,7 @@ BOOL GetCommState(HANDLE hFile, LPDCB lpDCB)
 	lpLocalDcb->wReserved = 0; /* must be zero */
 	lpLocalDcb->XonLim = handflow.XonLimit;
 	lpLocalDcb->XoffLim = handflow.XoffLimit;
-	SERIAL_LINE_CONTROL lineControl;
+	SERIAL_LINE_CONTROL lineControl = { 0 };
 
 	if (!CommDeviceIoControl(pComm, IOCTL_SERIAL_GET_LINE_CONTROL, NULL, 0, &lineControl,
 	                         sizeof(SERIAL_LINE_CONTROL), &bytesReturned, NULL))
