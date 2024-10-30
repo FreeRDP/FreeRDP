@@ -784,6 +784,7 @@ static int libusb_udev_control_pipe_request(IUDEVICE* idev, UINT32 RequestId,
 	int error = 0;
 	UDEVICE* pdev = (UDEVICE*)idev;
 
+	WINPR_ASSERT(EndpointAddress <= UINT8_MAX);
 	/*
 	pdev->request_queue->register_request(pdev->request_queue, RequestId, NULL, 0);
 	*/
@@ -794,14 +795,18 @@ static int libusb_udev_control_pipe_request(IUDEVICE* idev, UINT32 RequestId,
 			idev->cancel_all_transfer_request(idev);
 			// dummy_wait_s_obj(1);
 			/** set feature to ep (set halt)*/
-			error = libusb_control_transfer(
-			    pdev->libusb_handle, LIBUSB_ENDPOINT_OUT | LIBUSB_RECIPIENT_ENDPOINT,
-			    LIBUSB_REQUEST_SET_FEATURE, ENDPOINT_HALT, EndpointAddress, NULL, 0, 1000);
+			/*
+			uint8_t request_type, uint8_t bRequest,
+			*/
+			error = libusb_control_transfer(pdev->libusb_handle,
+			                                LIBUSB_ENDPOINT_OUT | LIBUSB_RECIPIENT_ENDPOINT,
+			                                LIBUSB_REQUEST_SET_FEATURE, ENDPOINT_HALT,
+			                                (uint16_t)EndpointAddress, NULL, 0, 1000);
 			break;
 
 		case PIPE_RESET:
 			idev->cancel_all_transfer_request(idev);
-			error = libusb_clear_halt(pdev->libusb_handle, EndpointAddress);
+			error = libusb_clear_halt(pdev->libusb_handle, (uint8_t)EndpointAddress);
 			// func_set_usbd_status(pdev, UsbdStatus, error);
 			break;
 

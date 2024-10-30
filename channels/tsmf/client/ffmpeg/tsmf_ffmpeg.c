@@ -82,7 +82,7 @@ typedef struct
 	enum AVCodecID codec_id;
 #endif
 	AVCodecContext* codec_context;
-	AVCodec* codec;
+	const AVCodec* codec;
 	AVFrame* frame;
 	int prepared;
 
@@ -458,10 +458,7 @@ static BOOL tsmf_ffmpeg_decode_audio(ITSMFDecoder* decoder, const BYTE* data, UI
 	TSMFFFmpegDecoder* mdecoder = (TSMFFFmpegDecoder*)decoder;
 	int len = 0;
 	int frame_size = 0;
-	UINT32 src_size = 0;
-	const BYTE* src = NULL;
-	BYTE* dst = NULL;
-	int dst_offset = 0;
+
 #if 0
 	WLog_DBG(TAG, ("tsmf_ffmpeg_decode_audio: data_size %"PRIu32"", data_size));
 
@@ -484,10 +481,10 @@ static BOOL tsmf_ffmpeg_decode_audio(ITSMFDecoder* decoder, const BYTE* data, UI
 		return FALSE;
 
 	/* align the memory for SSE2 needs */
-	dst = (BYTE*)(((uintptr_t)mdecoder->decoded_data + 15) & ~0x0F);
-	dst_offset = dst - mdecoder->decoded_data;
-	src = data;
-	src_size = data_size;
+	BYTE* dst = (BYTE*)(((uintptr_t)mdecoder->decoded_data + 15) & ~0x0F);
+	size_t dst_offset = (size_t)(dst - mdecoder->decoded_data);
+	const BYTE* src = data;
+	UINT32 src_size = data_size;
 
 	while (src_size > 0)
 	{
@@ -504,11 +501,12 @@ static BOOL tsmf_ffmpeg_decode_audio(ITSMFDecoder* decoder, const BYTE* data, UI
 			mdecoder->decoded_data = tmp_data;
 			dst = (BYTE*)(((uintptr_t)mdecoder->decoded_data + 15) & ~0x0F);
 
-			if (dst - mdecoder->decoded_data != dst_offset)
+			const size_t diff = (size_t)(dst - mdecoder->decoded_data);
+			if (diff != dst_offset)
 			{
 				/* re-align the memory if the alignment has changed after realloc */
 				memmove(dst, mdecoder->decoded_data + dst_offset, mdecoder->decoded_size);
-				dst_offset = dst - mdecoder->decoded_data;
+				dst_offset = diff;
 			}
 
 			dst += mdecoder->decoded_size;

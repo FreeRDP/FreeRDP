@@ -54,7 +54,7 @@ static const SCardApiFunctionTable* g_SCardApi = NULL;
 	}                                                                                    \
 	return g_SCardApi->pfn##_name(__VA_ARGS__)
 
-#define SCARDAPI_STUB_CALL_HANDLE(_name, ...)                                            \
+#define SCARDAPI_STUB_CALL_HANDLE(_name)                                                 \
 	InitOnceExecuteOnce(&g_Initialized, InitializeSCardApiStubs, NULL, NULL);            \
 	if (!g_SCardApi || !g_SCardApi->pfn##_name)                                          \
 	{                                                                                    \
@@ -62,9 +62,9 @@ static const SCardApiFunctionTable* g_SCardApi = NULL;
 		         g_SCardApi, g_SCardApi ? g_SCardApi->pfn##_name : NULL);                \
 		return NULL;                                                                     \
 	}                                                                                    \
-	return g_SCardApi->pfn##_name(__VA_ARGS__)
+	return g_SCardApi->pfn##_name()
 
-#define SCARDAPI_STUB_CALL_VOID(_name, ...)                                              \
+#define SCARDAPI_STUB_CALL_VOID(_name)                                                   \
 	InitOnceExecuteOnce(&g_Initialized, InitializeSCardApiStubs, NULL, NULL);            \
 	if (!g_SCardApi || !g_SCardApi->pfn##_name)                                          \
 	{                                                                                    \
@@ -72,7 +72,7 @@ static const SCardApiFunctionTable* g_SCardApi = NULL;
 		         g_SCardApi, g_SCardApi ? g_SCardApi->pfn##_name : NULL);                \
 		return;                                                                          \
 	}                                                                                    \
-	g_SCardApi->pfn##_name(__VA_ARGS__)
+	g_SCardApi->pfn##_name()
 
 /**
  * Standard Windows Smart Card API

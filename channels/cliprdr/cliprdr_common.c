@@ -32,6 +32,8 @@ static const char* CB_MSG_TYPE_STR(UINT32 type)
 {
 	switch (type)
 	{
+		case CB_TYPE_NONE:
+			return "CB_TYPE_NONE";
 		case CB_MONITOR_READY:
 			return "CB_MONITOR_READY";
 		case CB_FORMAT_LIST:

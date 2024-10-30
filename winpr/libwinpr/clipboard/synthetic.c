@@ -367,7 +367,15 @@ static void* clipboard_synthesize_image_bmp_to_format(wClipboard* clipboard, UIN
 
 	result = winpr_image_write_buffer(img, bmpFormat, &dsize);
 	if (result)
-		*pSize = dsize;
+	{
+		if (dsize <= UINT32_MAX)
+			*pSize = (UINT32)dsize;
+		else
+		{
+			free(result);
+			result = NULL;
+		}
+	}
 
 fail:
 	free(bmp);

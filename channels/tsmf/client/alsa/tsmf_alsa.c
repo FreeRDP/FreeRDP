@@ -141,10 +141,6 @@ static BOOL tsmf_alsa_set_format(ITSMFAudioDevice* audio, UINT32 sample_rate, UI
 
 static BOOL tsmf_alsa_play(ITSMFAudioDevice* audio, const BYTE* src, UINT32 data_size)
 {
-	int len = 0;
-	int error = 0;
-	int frames = 0;
-	const BYTE* end = NULL;
 	const BYTE* pindex = NULL;
 	TSMFAlsaAudioDevice* alsa = (TSMFAlsaAudioDevice*)audio;
 	DEBUG_TSMF("data_size %" PRIu32 "", data_size);
@@ -153,22 +149,22 @@ static BOOL tsmf_alsa_play(ITSMFAudioDevice* audio, const BYTE* src, UINT32 data
 	{
 		const size_t rbytes_per_frame = 1ULL * alsa->actual_channels * alsa->bytes_per_sample;
 		pindex = src;
-		end = pindex + data_size;
+		const BYTE* end = pindex + data_size;
 
 		while (pindex < end)
 		{
-			len = end - pindex;
-			frames = len / rbytes_per_frame;
-			error = snd_pcm_writei(alsa->out_handle, pindex, frames);
+			const size_t len = (size_t)(end - pindex);
+			const size_t frames = len / rbytes_per_frame;
+			snd_pcm_sframes_t error = snd_pcm_writei(alsa->out_handle, pindex, frames);
 
 			if (error == -EPIPE)
 			{
-				snd_pcm_recover(alsa->out_handle, error, 0);
+				snd_pcm_recover(alsa->out_handle, -EPIPE, 0);
 				error = 0;
 			}
 			else if (error < 0)
 			{
-				DEBUG_TSMF("error len %d", error);
+				DEBUG_TSMF("error len %ld", error);
 				snd_pcm_close(alsa->out_handle);
 				alsa->out_handle = 0;
 				tsmf_alsa_open_device(alsa);
@@ -180,7 +176,7 @@ static BOOL tsmf_alsa_play(ITSMFAudioDevice* audio, const BYTE* src, UINT32 data
 			if (error == 0)
 				break;
 
-			pindex += error * rbytes_per_frame;
+			pindex += (size_t)error * rbytes_per_frame;
 		}
 	}
 

@@ -68,8 +68,6 @@ UINT tsmf_ifman_rim_exchange_capability_request(TSMF_IFMAN* ifman)
  */
 UINT tsmf_ifman_exchange_capability_request(TSMF_IFMAN* ifman)
 {
-	UINT32 v = 0;
-	UINT32 pos = 0;
 	UINT32 CapabilityType = 0;
 	UINT32 cbCapabilityLength = 0;
 	UINT32 numHostCapabilities = 0;
@@ -81,9 +79,9 @@ UINT tsmf_ifman_exchange_capability_request(TSMF_IFMAN* ifman)
 	if (!Stream_CheckAndLogRequiredLength(TAG, ifman->input, ifman->input_size))
 		return ERROR_INVALID_DATA;
 
-	pos = Stream_GetPosition(ifman->output);
+	const size_t xpos = Stream_GetPosition(ifman->output);
 	Stream_Copy(ifman->input, ifman->output, ifman->input_size);
-	Stream_SetPosition(ifman->output, pos);
+	Stream_SetPosition(ifman->output, xpos);
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, ifman->output, 4))
 		return ERROR_INVALID_DATA;
@@ -101,28 +99,34 @@ UINT tsmf_ifman_exchange_capability_request(TSMF_IFMAN* ifman)
 		if (!Stream_CheckAndLogRequiredLength(TAG, ifman->output, cbCapabilityLength))
 			return ERROR_INVALID_DATA;
 
-		pos = Stream_GetPosition(ifman->output);
+		const size_t pos = Stream_GetPosition(ifman->output);
 
 		switch (CapabilityType)
 		{
 			case 1: /* Protocol version request */
+			{
 				if (!Stream_CheckAndLogRequiredLength(TAG, ifman->output, 4))
 					return ERROR_INVALID_DATA;
 
-				Stream_Read_UINT32(ifman->output, v);
+				const UINT32 v = Stream_Get_UINT32(ifman->output);
+				WINPR_UNUSED(v);
 				DEBUG_TSMF("server protocol version %" PRIu32 "", v);
-				break;
+			}
+			break;
 
 			case 2: /* Supported platform */
+			{
 				if (!Stream_CheckAndLogRequiredLength(TAG, ifman->output, 4))
 					return ERROR_INVALID_DATA;
 
-				Stream_Peek_UINT32(ifman->output, v);
+				const UINT32 v = Stream_Get_UINT32(ifman->output);
+				WINPR_UNUSED(v);
 				DEBUG_TSMF("server supported platform %" PRIu32 "", v);
 				/* Claim that we support both MF and DShow platforms. */
 				Stream_Write_UINT32(ifman->output, MMREDIR_CAPABILITY_PLATFORM_MF |
 				                                       MMREDIR_CAPABILITY_PLATFORM_DSHOW);
-				break;
+			}
+			break;
 
 			default:
 				WLog_ERR(TAG, "skipping unknown capability type %" PRIu32 "", CapabilityType);
@@ -482,8 +486,7 @@ UINT tsmf_ifman_update_geometry_info(TSMF_IFMAN* ifman)
 	UINT32 Width = 0;
 	UINT32 Height = 0;
 	UINT32 cbVisibleRect = 0;
-	RDP_RECT* rects = NULL;
-	int num_rects = 0;
+	RECTANGLE_32* rects = NULL;
 	UINT error = CHANNEL_RC_OK;
 	size_t pos = 0;
 
@@ -505,34 +508,32 @@ UINT tsmf_ifman_update_geometry_info(TSMF_IFMAN* ifman)
 	Stream_Read_UINT32(ifman->input, Top);
 	Stream_SetPosition(ifman->input, pos + numGeometryInfo);
 	Stream_Read_UINT32(ifman->input, cbVisibleRect);
-	num_rects = cbVisibleRect / 16;
+	const UINT32 num_rects = cbVisibleRect / 16;
 	DEBUG_TSMF("numGeometryInfo %" PRIu32 " Width %" PRIu32 " Height %" PRIu32 " Left %" PRIu32
 	           " Top %" PRIu32 " cbVisibleRect %" PRIu32 " num_rects %d",
 	           numGeometryInfo, Width, Height, Left, Top, cbVisibleRect, num_rects);
 
 	if (num_rects > 0)
 	{
-		rects = (RDP_RECT*)calloc(num_rects, sizeof(RDP_RECT));
+		rects = (RECTANGLE_32*)calloc(num_rects, sizeof(RECTANGLE_32));
 
-		for (UINT32 i = 0; i < num_rects; i++)
+		for (size_t i = 0; i < num_rects; i++)
 		{
-			Stream_Read_UINT16(ifman->input, rects[i].y); /* Top */
-			Stream_Seek_UINT16(ifman->input);
-			Stream_Read_UINT16(ifman->input, rects[i].x); /* Left */
-			Stream_Seek_UINT16(ifman->input);
-			Stream_Read_UINT16(ifman->input, rects[i].height); /* Bottom */
-			Stream_Seek_UINT16(ifman->input);
-			Stream_Read_UINT16(ifman->input, rects[i].width); /* Right */
-			Stream_Seek_UINT16(ifman->input);
-			rects[i].width -= rects[i].x;
-			rects[i].height -= rects[i].y;
+			Stream_Read_UINT32(ifman->input, rects[i].top);    /* Top */
+			Stream_Read_UINT32(ifman->input, rects[i].left);   /* Left */
+			Stream_Read_UINT32(ifman->input, rects[i].height); /* Bottom */
+			Stream_Read_UINT32(ifman->input, rects[i].width);  /* Right */
+			rects[i].width -= rects[i].left;
+			rects[i].height -= rects[i].top;
 			DEBUG_TSMF("rect %d: %" PRId16 " %" PRId16 " %" PRId16 " %" PRId16 "", i, rects[i].x,
 			           rects[i].y, rects[i].width, rects[i].height);
 		}
 	}
 
-	if (!tsmf_presentation_set_geometry_info(presentation, Left, Top, Width, Height, num_rects,
-	                                         rects))
+	const BOOL rc = tsmf_presentation_set_geometry_info(presentation, Left, Top, Width, Height,
+	                                                    num_rects, rects);
+	free(rects);
+	if (!rc)
 		return ERROR_INVALID_OPERATION;
 
 	ifman->output_pending = TRUE;

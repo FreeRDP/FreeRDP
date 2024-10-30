@@ -207,7 +207,7 @@ bool sdlClip::handle_update(const SDL_ClipboardEvent& ev)
 	clientFormats.erase(u, clientFormats.end());
 
 	const CLIPRDR_FORMAT_LIST formatList = {
-		.common = { .msgType = CB_FORMAT_LIST, .msgFlags = 0 },
+		.common = { .msgType = CB_FORMAT_LIST, .msgFlags = 0, .dataLen = 0 },
 		.numFormats = static_cast<UINT32>(clientFormats.size()),
 		.formats = clientFormats.data(),
 	};
@@ -258,6 +258,7 @@ UINT sdlClip::SendClientCapabilities()
 		.generalFlags = CB_USE_LONG_FORMAT_NAMES | cliprdr_file_context_current_flags(_file)
 	};
 	CLIPRDR_CAPABILITIES capabilities = {
+		.common = { .msgType = CB_TYPE_NONE, .msgFlags = 0, .dataLen = 0 },
 		.cCapabilitiesSets = 1,
 		.capabilitySets = reinterpret_cast<CLIPRDR_CAPABILITY_SET*>(&generalCapabilitySet)
 	};
@@ -303,7 +304,10 @@ UINT sdlClip::SendDataResponse(const BYTE* data, size_t size)
 
 UINT sdlClip::SendDataRequest(uint32_t formatID, const std::string& mime)
 {
-	CLIPRDR_FORMAT_DATA_REQUEST request = { .requestedFormatId = formatID };
+	CLIPRDR_FORMAT_DATA_REQUEST request = {
+		.common = { .msgType = CB_TYPE_NONE, .msgFlags = 0, .dataLen = 0 },
+		.requestedFormatId = formatID
+	};
 
 	_request_queue.push({ formatID, mime });
 

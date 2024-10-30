@@ -790,12 +790,12 @@ extern "C"
 		memcpy(_b, (_s->pointer), (_n));
 	}
 
-#define Stream_Write_INT8(s, v)               \
-	do                                        \
-	{                                         \
-		WINPR_ASSERT((v) <= INT8_MAX);        \
-		WINPR_ASSERT((v) >= INT8_MIN);        \
-		Stream_Write_INT8_unchecked((s), (v)) \
+#define Stream_Write_INT8(s, v)                \
+	do                                         \
+	{                                          \
+		WINPR_ASSERT((v) <= INT8_MAX);         \
+		WINPR_ASSERT((v) >= INT8_MIN);         \
+		Stream_Write_INT8_unchecked((s), (v)); \
 	} while (0)
 
 	/** @brief writes a \b INT8 to a \b wStream. The stream must be large enough to hold the data.
@@ -916,6 +916,34 @@ extern "C"
 		*_s->pointer++ = (_v) & 0xFF;
 	}
 
+#define Stream_Write_INT16_BE(s, v)                \
+	do                                             \
+	{                                              \
+		WINPR_ASSERT((v) <= INT16_MAX);            \
+		WINPR_ASSERT((v) >= INT16_MIN);            \
+		Stream_Write_INT16_BE_unchecked((s), (v)); \
+	} while (0)
+
+	/** @brief writes a \b UINT16 as \b big endian to a \b wStream. The stream must be large enough
+	 * to hold the data.
+	 *
+	 * Do not use directly, use the define @ref Stream_Write_UINT16_BE instead
+	 *
+	 * \param _s The stream to write to, must not be \b NULL
+	 * \param _v The value to write
+	 *
+	 * @since version 3.10.0
+	 */
+	static INLINE void Stream_Write_INT16_BE_unchecked(wStream* _s, INT16 _v)
+	{
+		WINPR_ASSERT(_s);
+		WINPR_ASSERT(_s->pointer);
+		WINPR_ASSERT(Stream_GetRemainingCapacity(_s) >= 2);
+
+		*_s->pointer++ = ((_v) >> 8) & 0xFF;
+		*_s->pointer++ = (_v) & 0xFF;
+	}
+
 #define Stream_Write_UINT24_BE(s, v)                \
 	do                                              \
 	{                                               \
@@ -966,6 +994,40 @@ extern "C"
 		WINPR_ASSERT(_s->pointer);
 		WINPR_ASSERT(Stream_GetRemainingCapacity(_s) >= 4);
 
+		*_s->pointer++ = (_v) & 0xFF;
+		*_s->pointer++ = ((_v) >> 8) & 0xFF;
+		*_s->pointer++ = ((_v) >> 16) & 0xFF;
+		*_s->pointer++ = ((_v) >> 24) & 0xFF;
+	}
+
+#define Stream_Write_INT32_BE(s, v)                \
+	do                                             \
+	{                                              \
+		WINPR_ASSERT((v) <= INT32_MAX);            \
+		WINPR_ASSERT((v) >= INT32_MIN);            \
+		Stream_Write_INT32_BE_unchecked((s), (v)); \
+	} while (0)
+
+	/** @brief writes a \b INT32 as \b little endian to a \b wStream. The stream must be large
+	 * enough to hold the data.
+	 *
+	 * Do not use directly, use the define @ref Stream_Write_INT32 instead
+	 *
+	 * \param _s The stream to write to, must not be \b NULL
+	 * \param _v The value to write
+	 *
+	 * @since version 3.10.0
+	 */
+	static INLINE void Stream_Write_INT32_BE_unchecked(wStream* _s, INT32 _v)
+	{
+		WINPR_ASSERT(_s);
+		WINPR_ASSERT(_s->pointer);
+		WINPR_ASSERT(Stream_GetRemainingCapacity(_s) >= 4);
+
+		*_s->pointer++ = (_v) & 0xFF;
+		*_s->pointer++ = ((_v) >> 8) & 0xFF;
+		*_s->pointer++ = ((_v) >> 16) & 0xFF;
+		*_s->pointer++ = ((_v) >> 24) & 0xFF;
 		*_s->pointer++ = (_v) & 0xFF;
 		*_s->pointer++ = ((_v) >> 8) & 0xFF;
 		*_s->pointer++ = ((_v) >> 16) & 0xFF;

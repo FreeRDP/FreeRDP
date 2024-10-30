@@ -251,6 +251,8 @@ static const TSMFMediaTypeMap tsmf_format_type_map[] = {
 
 static void tsmf_print_guid(const BYTE* guid)
 {
+	WINPR_UNUSED(guid);
+
 #ifdef WITH_DEBUG_TSMF
 	char guidString[37];
 
@@ -321,7 +323,7 @@ static UINT32 tsmf_codec_parse_VIDEOINFOHEADER2(TS_AM_MEDIA_TYPE* mediatype, wSt
 	/* VIDEOINFOHEADER2.AvgTimePerFrame */
 	Stream_Read_UINT64(s, AvgTimePerFrame);
 	mediatype->SamplesPerSecond.Numerator = 1000000;
-	mediatype->SamplesPerSecond.Denominator = (int)(AvgTimePerFrame / 10LL);
+	mediatype->SamplesPerSecond.Denominator = (UINT32)(AvgTimePerFrame / 10ULL);
 	/* Remaining fields before bmiHeader */
 	Stream_Seek(s, 24);
 	return 72;
@@ -359,7 +361,7 @@ static UINT32 tsmf_codec_parse_VIDEOINFOHEADER(TS_AM_MEDIA_TYPE* mediatype, wStr
 	/* VIDEOINFOHEADER.AvgTimePerFrame */
 	Stream_Read_UINT64(s, AvgTimePerFrame);
 	mediatype->SamplesPerSecond.Numerator = 1000000;
-	mediatype->SamplesPerSecond.Denominator = (int)(AvgTimePerFrame / 10LL);
+	mediatype->SamplesPerSecond.Denominator = (UINT32)(AvgTimePerFrame / 10ULL);
 	return 48;
 }
 
@@ -393,7 +395,7 @@ static BOOL tsmf_read_format_type(TS_AM_MEDIA_TYPE* mediatype, wStream* s, UINT3
 					return FALSE;
 				if (!Stream_CheckAndLogRequiredLength(TAG, s, nsize))
 					return FALSE;
-				mediatype->ExtraDataSize = nsize;
+				mediatype->ExtraDataSize = (UINT32)nsize;
 				mediatype->ExtraData = Stream_Pointer(s);
 			}
 			break;
