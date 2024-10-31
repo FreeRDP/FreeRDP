@@ -3,7 +3,6 @@ Checks: >
     -*,
     abseil-*,
     altera-*,
-    boost-*,
     bugprone-*,
     cert-*,
     clang-analyzer*,
