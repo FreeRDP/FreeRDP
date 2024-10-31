@@ -34,9 +34,16 @@
 #define mime_text_plain "text/plain"
 #define mime_text_utf8 mime_text_plain ";charset=utf-8"
 
-static const std::vector<const char*> s_mime_text = { mime_text_plain, mime_text_utf8,
-	                                                  "UTF8_STRING",   "COMPOUND_TEXT",
-	                                                  "TEXT",          "STRING" };
+static const std::vector<const char*>& s_mime_text()
+{
+	static std::vector<const char*> values;
+	if (values.empty())
+	{
+		values = std::vector<const char*>(
+		    { mime_text_plain, mime_text_utf8, "UTF8_STRING", "COMPOUND_TEXT", "TEXT", "STRING" });
+	}
+	return values;
+}
 
 static const char s_mime_png[] = "image/png";
 static const char s_mime_webp[] = "image/webp";
@@ -46,9 +53,27 @@ static const char s_mime_uri_list[] = "text/uri-list";
 static const char s_mime_html[] = "text/html";
 
 #define BMP_MIME_LIST "image/bmp", "image/x-bmp", "image/x-MS-bmp", "image/x-win-bitmap"
-static const std::vector<const char*> s_mime_bitmap = { BMP_MIME_LIST };
-static const std::vector<const char*> s_mime_image = { s_mime_png, s_mime_webp, s_mime_jpg,
-	                                                   s_mime_tiff, BMP_MIME_LIST };
+
+static const std::vector<const char*>& s_mime_bitmap()
+{
+	static std::vector<const char*> values;
+	if (values.empty())
+	{
+		values = std::vector<const char*>({ BMP_MIME_LIST });
+	}
+	return values;
+}
+
+static const std::vector<const char*>& s_mime_image()
+{
+	static std::vector<const char*> values;
+	if (values.empty())
+	{
+		values = std::vector<const char*>(
+		    { s_mime_png, s_mime_webp, s_mime_jpg, s_mime_tiff, BMP_MIME_LIST });
+	}
+	return values;
+}
 
 static const char s_mime_gnome_copied_files[] = "x-special/gnome-copied-files";
 static const char s_mime_mate_copied_files[] = "x-special/mate-copied-files";
@@ -164,7 +189,8 @@ bool sdlClip::handle_update(const SDL_ClipboardEvent& ev)
 		std::string local_mime = clipboard_mime_formats[i];
 		WLog_Print(_log, WLOG_TRACE, " - %s", local_mime.c_str());
 
-		if (std::find(s_mime_text.begin(), s_mime_text.end(), local_mime) != s_mime_text.end())
+		if (std::find(s_mime_text().begin(), s_mime_text().end(), local_mime) !=
+		    s_mime_text().end())
 		{
 			/* text formats */
 			if (!textPushed)
@@ -456,12 +482,12 @@ UINT sdlClip::ReceiveServerFormatList(CliprdrClientContext* context,
 	std::vector<const char*> mimetypes;
 	if (text)
 	{
-		mimetypes.insert(mimetypes.end(), s_mime_text.begin(), s_mime_text.end());
+		mimetypes.insert(mimetypes.end(), s_mime_text().begin(), s_mime_text().end());
 	}
 	if (image)
 	{
-		mimetypes.insert(mimetypes.end(), s_mime_bitmap.begin(), s_mime_bitmap.end());
-		mimetypes.insert(mimetypes.end(), s_mime_image.begin(), s_mime_image.end());
+		mimetypes.insert(mimetypes.end(), s_mime_bitmap().begin(), s_mime_bitmap().end());
+		mimetypes.insert(mimetypes.end(), s_mime_image().begin(), s_mime_image().end());
 	}
 	if (html)
 	{
@@ -524,7 +550,7 @@ std::shared_ptr<BYTE> sdlClip::ReceiveFormatDataRequestHandle(
 
 		case CF_DIB:
 		case CF_DIBV5:
-			mime = s_mime_bitmap[0];
+			mime = s_mime_bitmap()[0];
 			break;
 
 		case CF_TIFF:
@@ -801,7 +827,7 @@ bool sdlClip::mime_is_file(const std::string& mime)
 
 bool sdlClip::mime_is_text(const std::string& mime)
 {
-	for (const auto& tmime : s_mime_text)
+	for (const auto& tmime : s_mime_text())
 	{
 		assert(tmime != nullptr);
 		if (mime == tmime)
@@ -813,7 +839,7 @@ bool sdlClip::mime_is_text(const std::string& mime)
 
 bool sdlClip::mime_is_image(const std::string& mime)
 {
-	for (const auto& imime : s_mime_image)
+	for (const auto& imime : s_mime_image())
 	{
 		assert(imime != nullptr);
 		if (mime == imime)
