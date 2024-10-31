@@ -20,6 +20,7 @@
 #include <cassert>
 #include <cstdio>
 #include <cstdlib>
+#include <algorithm>
 
 #include <SDL3/SDL.h>
 #include <SDL3_ttf/SDL_ttf.h>
@@ -183,8 +184,7 @@ SDL_Texture* SdlWidget::render_text_wrapped(SDL_Renderer* renderer, const std::s
 	dst.x += hpadding;
 	dst.w -= 2 * hpadding;
 	auto dh = scale(src.w, src.h);
-	if (dh < dst.h)
-		dst.h = dh;
+	dst.h = std::min<float>(dh, dst.h);
 
 	return texture;
 }
