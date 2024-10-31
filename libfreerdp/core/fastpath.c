@@ -1190,8 +1190,8 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 	if (settings->CompressionEnabled && !skipCompression)
 	{
 		const UINT32 CompressionMaxSize = bulk_compression_max_size(rdp->bulk);
-		maxLength =
-		    (maxLength < CompressionMaxSize) ? maxLength : MIN(CompressionMaxSize, UINT16_MAX);
+		WINPR_ASSERT(CompressionMaxSize <= UINT16_MAX);
+		maxLength = (maxLength < CompressionMaxSize) ? maxLength : (UINT16)(CompressionMaxSize);
 		maxLength -= 20;
 	}
 
@@ -1235,7 +1235,7 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 		fpUpdateHeader.compression = 0;
 		fpUpdateHeader.compressionFlags = 0;
 		fpUpdateHeader.updateCode = updateCode;
-		fpUpdateHeader.size = (UINT16)(totalLength > maxLength) ? maxLength : totalLength;
+		fpUpdateHeader.size = (UINT16)(totalLength > maxLength) ? maxLength : (UINT16)totalLength;
 		const BYTE* pSrcData = Stream_Pointer(s);
 		UINT32 SrcSize = DstSize = fpUpdateHeader.size;
 
@@ -1252,7 +1252,8 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 			{
 				if (compressionFlags)
 				{
-					fpUpdateHeader.compressionFlags = compressionFlags;
+					WINPR_ASSERT(compressionFlags <= UINT8_MAX);
+					fpUpdateHeader.compressionFlags = (UINT8)compressionFlags;
 					fpUpdateHeader.compression = FASTPATH_OUTPUT_COMPRESSION_USED;
 				}
 			}
@@ -1264,7 +1265,9 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 			DstSize = fpUpdateHeader.size;
 		}
 
-		fpUpdateHeader.size = DstSize;
+		if (DstSize > UINT16_MAX)
+			return FALSE;
+		fpUpdateHeader.size = (UINT16)DstSize;
 		totalLength -= SrcSize;
 
 		if (totalLength == 0)
@@ -1296,7 +1299,11 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 			}
 		}
 
-		fpUpdatePduHeader.length = fpUpdateHeader.size + fpHeaderSize + pad;
+		const size_t len = fpUpdateHeader.size + fpHeaderSize + pad;
+		if (len > UINT16_MAX)
+			return FALSE;
+
+		fpUpdatePduHeader.length = (UINT16)len;
 		Stream_SetPosition(fs, 0);
 		if (!fastpath_write_update_pdu_header(fs, &fpUpdatePduHeader, rdp))
 			return FALSE;
