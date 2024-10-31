@@ -244,8 +244,8 @@ LPSTR* CommandLineToArgvA(LPCSTR lpCmdLine, int* pNumArgs)
 			if (*p != '"')
 				WLog_ERR(TAG, "parsing error: uneven number of unescaped double quotes!");
 
-			if (*p && *(++p))
-				p += strcspn(p, " \t\0");
+			if (p[0] && p[1])
+				p += 1 + strcspn(&p[1], " \t\0");
 
 			pArgs[numArgs++] = pOutput;
 
