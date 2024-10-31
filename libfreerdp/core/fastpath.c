@@ -679,9 +679,6 @@ static BOOL fastpath_read_input_event_header(wStream* s, BYTE* eventFlags, BYTE*
 
 static BOOL fastpath_recv_input_event_scancode(rdpFastPath* fastpath, wStream* s, BYTE eventFlags)
 {
-	rdpInput* input = NULL;
-	UINT16 flags = 0;
-	UINT16 code = 0;
 	WINPR_ASSERT(fastpath);
 	WINPR_ASSERT(fastpath->rdp);
 	WINPR_ASSERT(fastpath->rdp->input);
@@ -690,11 +687,11 @@ static BOOL fastpath_recv_input_event_scancode(rdpFastPath* fastpath, wStream* s
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 1))
 		return FALSE;
 
-	input = fastpath->rdp->input;
+	rdpInput* input = fastpath->rdp->input;
 
-	Stream_Read_UINT8(s, code); /* keyCode (1 byte) */
-	flags = 0;
+	const UINT8 code = Stream_Get_UINT8(s); /* keyCode (1 byte) */
 
+	UINT16 flags = 0;
 	if ((eventFlags & FASTPATH_INPUT_KBDFLAGS_RELEASE))
 		flags |= KBD_FLAGS_RELEASE;
 
@@ -1004,7 +1001,9 @@ wStream* fastpath_input_pdu_init(rdpFastPath* fastpath, BYTE eventFlags, BYTE ev
 	if (!s)
 		return NULL;
 
-	Stream_Write_UINT8(s, eventFlags | (eventCode << 5)); /* eventHeader (1 byte) */
+	WINPR_ASSERT(eventCode < 8);
+	WINPR_ASSERT(eventFlags < 0x20);
+	Stream_Write_UINT8(s, (UINT8)(eventFlags | (eventCode << 5))); /* eventHeader (1 byte) */
 	return s;
 }
 
@@ -1071,7 +1070,7 @@ BOOL fastpath_send_multiple_input_pdu(rdpFastPath* fastpath, wStream* s, size_t 
 			goto unlock;
 
 		BYTE* fpInputEvents = Stream_PointerAs(s, BYTE) + sec_bytes;
-		const UINT16 fpInputEvents_length = (UINT16)length - 3 - sec_bytes;
+		const UINT16 fpInputEvents_length = (UINT16)(length - 3 - sec_bytes);
 
 		WINPR_ASSERT(rdp->settings);
 		if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
