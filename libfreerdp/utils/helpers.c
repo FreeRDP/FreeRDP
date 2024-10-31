@@ -24,6 +24,10 @@
 #include <freerdp/version.h>
 #include <freerdp/build-config.h>
 
+#if defined(WITH_RESOURCE_VERSIONING)
+#define STR(x) #x
+#endif
+
 char* freerdp_GetConfigFilePath(BOOL system, const char* filename)
 {
 	eKnownPathTypes id = system ? KNOWN_PATH_SYSTEM_CONFIG_HOME : KNOWN_PATH_XDG_CONFIG_HOME;
