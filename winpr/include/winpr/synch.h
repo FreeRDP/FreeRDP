@@ -321,8 +321,8 @@ extern "C"
 	WINPR_API BOOL DeleteTimerQueue(HANDLE TimerQueue);
 	WINPR_API BOOL DeleteTimerQueueEx(HANDLE TimerQueue, HANDLE CompletionEvent);
 
-	WINPR_API BOOL CreateTimerQueueTimer(PHANDLE phNewTimer, HANDLE TimerQueue,
-	                                     WAITORTIMERCALLBACK Callback, PVOID Parameter,
+	WINPR_API BOOL CreateTimerQueueTimer(HANDLE* phNewTimer, HANDLE TimerQueue,
+	                                     WAITORTIMERCALLBACK Callback, void* Parameter,
 	                                     DWORD DueTime, DWORD Period, ULONG Flags);
 	WINPR_API BOOL ChangeTimerQueueTimer(HANDLE TimerQueue, HANDLE Timer, ULONG DueTime,
 	                                     ULONG Period);
