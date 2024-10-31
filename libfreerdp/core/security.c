@@ -572,7 +572,7 @@ static void fips_expand_key_bits(const BYTE* in, size_t in_len, BYTE* out, size_
 	WINPR_ASSERT(in_len >= sizeof(buf));
 
 	WINPR_ASSERT(out);
-	WINPR_ASSERT(out_len > 24);
+	WINPR_ASSERT(out_len >= 24);
 
 	/* reverse every byte in the key */
 	for (size_t i = 0; i < sizeof(buf); i++)
