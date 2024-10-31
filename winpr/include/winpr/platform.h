@@ -79,8 +79,8 @@
 #define WINPR_PRAGMA_DIAG_PUSH WINPR_DO_PRAGMA(clang diagnostic push)
 #define WINPR_PRAGMA_DIAG_IGNORED_OVERLENGTH_STRINGS \
 	WINPR_DO_PRAGMA(clang diagnostic ignored "-Woverlength-strings") /** @since version 3.9.0 */
-#define WINPR_PRAGMA_DIAG_IGNORED_QUALIFIERS \
-	WINPR_DO_PRAGMA(clang diagnostic ignored "-Wdiscarded-qualifiers") /** @since version 3.9.0 */
+#define WINPR_PRAGMA_DIAG_IGNORED_QUALIFIERS
+/* unsupported by clang WINPR_DO_PRAGMA(clang diagnostic ignored "-Wdiscarded-qualifiers") */ /** @since version 3.9.0 */
 #define WINPR_PRAGMA_DIAG_IGNORED_PEDANTIC WINPR_DO_PRAGMA(clang diagnostic ignored "-Wpedantic")
 #define WINPR_PRAGMA_DIAG_IGNORED_MISSING_PROTOTYPES \
 	WINPR_DO_PRAGMA(clang diagnostic ignored "-Wmissing-prototypes")
