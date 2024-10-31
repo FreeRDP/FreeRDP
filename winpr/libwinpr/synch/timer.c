@@ -990,25 +990,23 @@ BOOL DeleteTimerQueue(HANDLE TimerQueue)
 	return DeleteTimerQueueEx(TimerQueue, NULL);
 }
 
-BOOL CreateTimerQueueTimer(PHANDLE phNewTimer, HANDLE TimerQueue, WAITORTIMERCALLBACK Callback,
-                           PVOID Parameter, DWORD DueTime, DWORD Period, ULONG Flags)
+BOOL CreateTimerQueueTimer(HANDLE* phNewTimer, HANDLE TimerQueue, WAITORTIMERCALLBACK Callback,
+                           void* Parameter, DWORD DueTime, DWORD Period, ULONG Flags)
 {
-	struct timespec CurrentTime;
-	WINPR_TIMER_QUEUE* timerQueue = NULL;
-	WINPR_TIMER_QUEUE_TIMER* timer = NULL;
+	struct timespec CurrentTime = { 0 };
 
 	if (!TimerQueue)
 		return FALSE;
 
 	timespec_gettimeofday(&CurrentTime);
-	timerQueue = (WINPR_TIMER_QUEUE*)TimerQueue;
-	timer = (WINPR_TIMER_QUEUE_TIMER*)malloc(sizeof(WINPR_TIMER_QUEUE_TIMER));
+	WINPR_TIMER_QUEUE* timerQueue = (WINPR_TIMER_QUEUE*)TimerQueue;
+	WINPR_TIMER_QUEUE_TIMER* timer = calloc(1, sizeof(WINPR_TIMER_QUEUE_TIMER));
 
 	if (!timer)
 		return FALSE;
 
 	WINPR_HANDLE_SET_TYPE_AND_MODE(timer, HANDLE_TYPE_TIMER_QUEUE_TIMER, WINPR_FD_READ);
-	*((UINT_PTR*)phNewTimer) = (UINT_PTR)(HANDLE)timer;
+	*phNewTimer = (HANDLE)timer;
 	timespec_copy(&(timer->StartTime), &CurrentTime);
 	timespec_add_ms(&(timer->StartTime), DueTime);
 	timespec_copy(&(timer->ExpirationTime), &(timer->StartTime));
