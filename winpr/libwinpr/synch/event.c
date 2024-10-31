@@ -171,13 +171,13 @@ BOOL winpr_event_reset(WINPR_EVENT_IMPL* event)
 
 void winpr_event_uninit(WINPR_EVENT_IMPL* event)
 {
-	if (event->fds[0] != -1)
+	if (event->fds[0] >= 0)
 	{
 		close(event->fds[0]);
 		event->fds[0] = -1;
 	}
 
-	if (event->fds[1] != -1)
+	if (event->fds[1] >= 0)
 	{
 		close(event->fds[1]);
 		event->fds[1] = -1;
