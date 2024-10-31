@@ -491,23 +491,17 @@ static BOOL update_gdi_fast_glyph(rdpContext* context, const FAST_GLYPH_ORDER* f
 
 static BOOL update_gdi_cache_glyph(rdpContext* context, const CACHE_GLYPH_ORDER* cacheGlyph)
 {
-	rdpCache* cache = NULL;
-
 	if (!context || !cacheGlyph || !context->cache)
 		return FALSE;
 
-	cache = context->cache;
+	rdpCache* cache = context->cache;
 
 	for (size_t i = 0; i < cacheGlyph->cGlyphs; i++)
 	{
 		const GLYPH_DATA* glyph_data = &cacheGlyph->glyphData[i];
-		rdpGlyph* glyph = NULL;
-
-		if (!glyph_data)
-			return FALSE;
-
-		if (!(glyph = Glyph_Alloc(context, glyph_data->x, glyph_data->y, glyph_data->cx,
-		                          glyph_data->cy, glyph_data->cb, glyph_data->aj)))
+		rdpGlyph* glyph = Glyph_Alloc(context, glyph_data->x, glyph_data->y, glyph_data->cx,
+		                              glyph_data->cy, glyph_data->cb, glyph_data->aj);
+		if (!glyph)
 			return FALSE;
 
 		if (!glyph_cache_put(cache->glyph, cacheGlyph->cacheId, glyph_data->cacheIndex, glyph))
@@ -522,23 +516,16 @@ static BOOL update_gdi_cache_glyph(rdpContext* context, const CACHE_GLYPH_ORDER*
 
 static BOOL update_gdi_cache_glyph_v2(rdpContext* context, const CACHE_GLYPH_V2_ORDER* cacheGlyphV2)
 {
-	rdpCache* cache = NULL;
-
 	if (!context || !cacheGlyphV2 || !context->cache)
 		return FALSE;
 
-	cache = context->cache;
+	rdpCache* cache = context->cache;
 
 	for (size_t i = 0; i < cacheGlyphV2->cGlyphs; i++)
 	{
 		const GLYPH_DATA_V2* glyphData = &cacheGlyphV2->glyphData[i];
-		rdpGlyph* glyph = NULL;
-
-		if (!glyphData)
-			return FALSE;
-
-		glyph = Glyph_Alloc(context, glyphData->x, glyphData->y, glyphData->cx, glyphData->cy,
-		                    glyphData->cb, glyphData->aj);
+		rdpGlyph* glyph = Glyph_Alloc(context, glyphData->x, glyphData->y, glyphData->cx,
+		                              glyphData->cy, glyphData->cb, glyphData->aj);
 
 		if (!glyph)
 			return FALSE;
