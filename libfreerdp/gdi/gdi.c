@@ -323,9 +323,11 @@ static const BYTE GDI_BS_HATCHED_PATTERNS[] = {
 	0x7E, 0xBD, 0xDB, 0xE7, 0xE7, 0xDB, 0xBD, 0x7E  /* HS_DIACROSS */
 };
 
-static inline DWORD gdi_rop3_code_checked(UINT32 code)
+#define gdi_rop3_code_checked(code) gdi_rop3_code_checked_int((code), __FILE__, __func__, __LINE__)
+static inline DWORD gdi_rop3_code_checked_int(UINT32 code, const char* file, const char* fkt,
+                                              size_t line)
 {
-	WINPR_ASSERT(code <= UINT8_MAX);
+	WINPR_ASSERT_AT(code <= UINT8_MAX, file, fkt, line);
 	return gdi_rop3_code((UINT8)code);
 }
 
