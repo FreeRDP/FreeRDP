@@ -1030,3 +1030,77 @@ BOOL drive_file_is_dir_not_empty(DRIVE_FILE* drive)
 
 	return !PathIsDirectoryEmptyW(drive->fullpath);
 }
+
+char* drive_file_resolve_path(const char* what)
+{
+	if (!what)
+		return NULL;
+
+	/* Special case: path[0] == '*' -> export all drives
+	 * Special case: path[0] == '%' -> user home dir
+	 */
+	if (strcmp(what, "%") == 0)
+		return GetKnownPath(KNOWN_PATH_HOME);
+#ifndef WIN32
+	if (strcmp(what, "*") == 0)
+		return _strdup("/");
+#else
+	if (strcmp(what, "*") == 0)
+	{
+		const size_t len = GetLogicalDriveStringsA(0, NULL);
+		char* devlist = calloc(len + 1, sizeof(char*));
+		if (!devlist)
+			return NULL;
+
+		/* Enumerate all devices: */
+		DWORD rc = GetLogicalDriveStringsA(len, devlist);
+		if (rc != len)
+		{
+			free(devlist);
+			return NULL;
+		}
+
+		char* path = NULL;
+		for (size_t i = 0;; i++)
+		{
+			char* dev = &devlist[i * sizeof(char*)];
+			if (!*dev)
+				break;
+			if (*dev <= 'B')
+				continue;
+
+			path = _strdup(dev);
+			break;
+		}
+		free(devlist);
+		return path;
+	}
+
+#endif
+
+	return _strdup(what);
+}
+
+char* drive_file_resolve_name(const char* path, const char* suggested)
+{
+	if (!path)
+		return NULL;
+
+	if (strcmp(path, "*") == 0)
+	{
+		if (suggested)
+		{
+			char* str = NULL;
+			size_t len = 0;
+			(void)winpr_asprintf(&str, &len, "[%s] %s", suggested, path);
+			return str;
+		}
+		return _strdup(path);
+	}
+	if (strcmp(path, "%") == 0)
+		return GetKnownPath(KNOWN_PATH_HOME);
+	if (suggested)
+		return _strdup(suggested);
+
+	return _strdup(path);
+}
