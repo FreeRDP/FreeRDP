@@ -68,10 +68,10 @@ int sdl_list_monitors(SdlContext* sdl)
 	{
 		SDL_Rect rect = {};
 		auto id = ids[i];
-		const int brc = SDL_GetDisplayBounds(id, &rect);
+		const auto brc = SDL_GetDisplayBounds(id, &rect);
 		const char* name = SDL_GetDisplayName(id);
 
-		if (brc != 0)
+		if (!brc)
 			continue;
 		printf("     %s [%u] [%s] %dx%d\t+%d+%d\n", (i == 0) ? "*" : " ", id, name, rect.w, rect.h,
 		       rect.x, rect.y);
