@@ -44,6 +44,23 @@
 
 #include "drive_file.h"
 
+struct S_DRIVE_FILE
+{
+	UINT32 id;
+	BOOL is_dir;
+	HANDLE file_handle;
+	HANDLE find_handle;
+	WIN32_FIND_DATAW find_data;
+	const WCHAR* basepath;
+	WCHAR* fullpath;
+	BOOL delete_pending;
+	UINT32 FileAttributes;
+	UINT32 SharedAccess;
+	UINT32 DesiredAccess;
+	UINT32 CreateDisposition;
+	UINT32 CreateOptions;
+};
+
 #ifdef WITH_DEBUG_RDPDR
 #define DEBUG_WSTR(msg, wstr)                                    \
 	do                                                           \
@@ -995,4 +1012,21 @@ out_fail:
 	Stream_Write_UINT32(output, 0); /* Length */
 	Stream_Write_UINT8(output, 0);  /* Padding */
 	return FALSE;
+}
+
+const uintptr_t drive_file_get_id(DRIVE_FILE* drive)
+{
+	WINPR_ASSERT(drive);
+	return drive->id;
+}
+
+BOOL drive_file_is_dir_not_empty(DRIVE_FILE* drive)
+{
+	if (!drive)
+		return FALSE;
+
+	if (!drive->is_dir)
+		return FALSE;
+
+	return !PathIsDirectoryEmptyW(drive->fullpath);
 }

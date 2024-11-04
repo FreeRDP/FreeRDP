@@ -191,7 +191,7 @@ static UINT drive_process_irp_create(DRIVE_DEVICE* drive, IRP* irp)
 	}
 	else
 	{
-		void* key = (void*)(size_t)file->id;
+		void* key = (void*)drive_file_get_id(file);
 
 		if (!ListDictionary_Add(drive->files, key, file))
 		{
@@ -401,7 +401,6 @@ static UINT drive_process_irp_query_information(DRIVE_DEVICE* drive, IRP* irp)
  */
 static UINT drive_process_irp_set_information(DRIVE_DEVICE* drive, IRP* irp)
 {
-	DRIVE_FILE* file = NULL;
 	UINT32 FsInformationClass = 0;
 	UINT32 Length = 0;
 
@@ -414,8 +413,8 @@ static UINT drive_process_irp_set_information(DRIVE_DEVICE* drive, IRP* irp)
 	Stream_Read_UINT32(irp->input, FsInformationClass);
 	Stream_Read_UINT32(irp->input, Length);
 	Stream_Seek(irp->input, 24); /* Padding */
-	file = drive_get_file_by_id(drive, irp->FileId);
 
+	DRIVE_FILE* file = drive_get_file_by_id(drive, irp->FileId);
 	if (!file)
 	{
 		irp->IoStatus = STATUS_UNSUCCESSFUL;
@@ -425,7 +424,7 @@ static UINT drive_process_irp_set_information(DRIVE_DEVICE* drive, IRP* irp)
 		irp->IoStatus = drive_map_windows_err(GetLastError());
 	}
 
-	if (file && file->is_dir && !PathIsDirectoryEmptyW(file->fullpath))
+	if (drive_file_is_dir_not_empty(file))
 		irp->IoStatus = STATUS_DIRECTORY_NOT_EMPTY;
 
 	Stream_Write_UINT32(irp->output, Length);
