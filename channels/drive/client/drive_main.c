@@ -889,20 +889,34 @@ static void drive_message_free(void* obj)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT drive_register_drive_path(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints, const char* name,
-                                      const char* path, BOOL automount)
+static UINT drive_register_drive_path(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints,
+                                      const char* rawname, const char* rawpath, BOOL automount)
 {
 	size_t length = 0;
 	DRIVE_DEVICE* drive = NULL;
 	UINT error = ERROR_INTERNAL_ERROR;
 
-	if (!pEntryPoints || !name || !path)
+	if (!pEntryPoints || !rawname || !rawpath)
 	{
-		WLog_ERR(TAG, "[%s] Invalid parameters: pEntryPoints=%p, name=%p, path=%p", pEntryPoints,
-		         name, path);
+		WLog_ERR(TAG, "Invalid parameters: pEntryPoints=%p, name=%p, path=%p", pEntryPoints,
+		         rawname, rawpath);
 		return ERROR_INVALID_PARAMETER;
 	}
 
+	char* path = drive_file_resolve_path(rawpath);
+	if (!path)
+	{
+		WLog_ERR(TAG, "failed to resolve path '%s'", rawpath);
+		return ERROR_INVALID_PARAMETER;
+	}
+
+	char* name = drive_file_resolve_name(path, rawname);
+	if (!name)
+	{
+		WLog_ERR(TAG, "failed to resolve name ['%s'|'%s']", rawpath, rawname);
+		free(path);
+		return ERROR_INVALID_PARAMETER;
+	}
 	if (name[0] && path[0])
 	{
 		size_t pathLength = strnlen(path, MAX_PATH);
@@ -911,6 +925,8 @@ static UINT drive_register_drive_path(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints,
 		if (!drive)
 		{
 			WLog_ERR(TAG, "calloc failed!");
+			free(path);
+			free(name);
 			return CHANNEL_RC_NO_MEMORY;
 		}
 
@@ -1007,6 +1023,8 @@ static UINT drive_register_drive_path(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints,
 	return CHANNEL_RC_OK;
 out_error:
 	drive_free_int(drive);
+	free(path);
+	free(name);
 	return error;
 }
 
@@ -1018,110 +1036,11 @@ out_error:
 FREERDP_ENTRY_POINT(
     UINT VCAPITYPE drive_DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints))
 {
-	RDPDR_DRIVE* drive = NULL;
-	UINT error = 0;
-#ifdef WIN32
-	int len;
-	char devlist[512], buf[512];
-	char* bufdup;
-	char* devdup;
-#endif
-
 	WINPR_ASSERT(pEntryPoints);
 
-	drive = (RDPDR_DRIVE*)pEntryPoints->device;
+	RDPDR_DRIVE* drive = (RDPDR_DRIVE*)pEntryPoints->device;
 	WINPR_ASSERT(drive);
 
-#ifndef WIN32
-	if (strcmp(drive->Path, "*") == 0)
-	{
-		/* all drives */
-		free(drive->Path);
-		drive->Path = _strdup("/");
-
-		if (!drive->Path)
-		{
-			WLog_ERR(TAG, "_strdup failed!");
-			return CHANNEL_RC_NO_MEMORY;
-		}
-	}
-	else if (strcmp(drive->Path, "%") == 0)
-	{
-		free(drive->Path);
-		drive->Path = GetKnownPath(KNOWN_PATH_HOME);
-
-		if (!drive->Path)
-		{
-			WLog_ERR(TAG, "_strdup failed!");
-			return CHANNEL_RC_NO_MEMORY;
-		}
-	}
-
-	error =
-	    drive_register_drive_path(pEntryPoints, drive->device.Name, drive->Path, drive->automount);
-#else
-	/* Special case: path[0] == '*' -> export all drives */
-	/* Special case: path[0] == '%' -> user home dir */
-	if (strcmp(drive->Path, "%") == 0)
-	{
-		GetEnvironmentVariableA("USERPROFILE", buf, sizeof(buf));
-		PathCchAddBackslashA(buf, sizeof(buf));
-		free(drive->Path);
-		drive->Path = _strdup(buf);
-
-		if (!drive->Path)
-		{
-			WLog_ERR(TAG, "_strdup failed!");
-			return CHANNEL_RC_NO_MEMORY;
-		}
-
-		error = drive_register_drive_path(pEntryPoints, drive->device.Name, drive->Path,
-		                                  drive->automount);
-	}
-	else if (strcmp(drive->Path, "*") == 0)
-	{
-		/* Enumerate all devices: */
-		GetLogicalDriveStringsA(sizeof(devlist) - 1, devlist);
-
-		for (size_t i = 0;; i++)
-		{
-			char* dev = &devlist[i * 4];
-			if (!*dev)
-				break;
-			if (*dev > 'B')
-			{
-				/* Suppress disk drives A and B to avoid pesty messages */
-				len = sprintf_s(buf, sizeof(buf) - 4, "%s", drive->device.Name);
-				buf[len] = '_';
-				buf[len + 1] = dev[0];
-				buf[len + 2] = 0;
-				buf[len + 3] = 0;
-
-				if (!(bufdup = _strdup(buf)))
-				{
-					WLog_ERR(TAG, "_strdup failed!");
-					return CHANNEL_RC_NO_MEMORY;
-				}
-
-				if (!(devdup = _strdup(dev)))
-				{
-					WLog_ERR(TAG, "_strdup failed!");
-					return CHANNEL_RC_NO_MEMORY;
-				}
-
-				if ((error = drive_register_drive_path(pEntryPoints, bufdup, devdup, TRUE)))
-				{
-					break;
-				}
-			}
-		}
-	}
-	else
-	{
-		error = drive_register_drive_path(pEntryPoints, drive->device.Name, drive->Path,
-		                                  drive->automount);
-	}
-
-#endif
-	return error;
+	return drive_register_drive_path(pEntryPoints, drive->device.Name, drive->Path,
+	                                 drive->automount);
 }

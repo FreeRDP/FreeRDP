@@ -44,6 +44,9 @@ DRIVE_FILE* drive_file_new(const WCHAR* base_path, const WCHAR* path, UINT32 Pat
 const uintptr_t drive_file_get_id(DRIVE_FILE* drive);
 BOOL drive_file_is_dir_not_empty(DRIVE_FILE* drive);
 
+char* drive_file_resolve_path(const char* what);
+char* drive_file_resolve_name(const char* path, const char* suggested);
+
 BOOL drive_file_open(DRIVE_FILE* file);
 BOOL drive_file_seek(DRIVE_FILE* file, UINT64 Offset);
 BOOL drive_file_read(DRIVE_FILE* file, BYTE* buffer, UINT32* Length);
