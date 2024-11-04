@@ -45,34 +45,46 @@
 
 /* Exposed type definitions in public headers have the wrong type.
  * assert to the correct types internally to trigger the ci checkers on wrong data passed */
-static inline UINT16 get_checked_uint16(UINT32 value)
+#define get_checked_uint16(value) get_checked_uint16_int((value), __FILE__, __func__, __LINE__)
+static inline UINT16 get_checked_uint16_int(UINT32 value, const char* file, const char* fkt,
+                                            size_t line)
 {
-	WINPR_ASSERT(value <= UINT16_MAX);
+	WINPR_ASSERT_AT(value <= UINT16_MAX, file, fkt, line);
 	return (UINT16)value;
 }
 
-static inline UINT8 get_checked_uint8(UINT32 value)
+#define get_checked_uint8(value) get_checked_uint8_int((value), __FILE__, __func__, __LINE__)
+static inline UINT8 get_checked_uint8_int(UINT32 value, const char* file, const char* fkt,
+                                          size_t line)
 {
-	WINPR_ASSERT(value <= UINT8_MAX);
+	WINPR_ASSERT_AT(value <= UINT8_MAX, file, fkt, line);
 	return (UINT8)value;
 }
 
-static inline INT16 get_checked_int16(INT32 value)
+#define get_checked_int16(value) get_checked_int16_int((value), __FILE__, __func__, __LINE__)
+static inline INT16 get_checked_int16_int(INT32 value, const char* file, const char* fkt,
+                                          size_t line)
 {
-	WINPR_ASSERT(value <= INT16_MAX);
-	WINPR_ASSERT(value >= INT16_MIN);
+	WINPR_ASSERT_AT(value <= INT16_MAX, file, fkt, line);
+	WINPR_ASSERT_AT(value >= INT16_MIN, file, fkt, line);
 	return (INT16)value;
 }
 
-static inline const char* gdi_rob3_code_string_checked(UINT32 rob)
+#define gdi_rob3_code_string_checked(value) \
+	gdi_rob3_code_string_checked_int((value), __FILE__, __func__, __LINE__)
+static inline const char* gdi_rob3_code_string_checked_int(UINT32 rob, const char* file,
+                                                           const char* fkt, size_t line)
 {
-	WINPR_ASSERT((rob) <= UINT8_MAX);
+	WINPR_ASSERT_AT((rob) <= UINT8_MAX, file, fkt, line);
 	return gdi_rop3_code_string((BYTE)rob);
 }
 
-static inline DWORD gdi_rop3_code_checked(UINT32 code)
+#define gdi_rop3_code_checked(value) \
+	gdi_rop3_code_checked_int((value), __FILE__, __func__, __LINE__)
+static inline DWORD gdi_rop3_code_checked_int(UINT32 code, const char* file, const char* fkt,
+                                              size_t line)
 {
-	WINPR_ASSERT(code <= UINT8_MAX);
+	WINPR_ASSERT_AT(code <= UINT8_MAX, file, fkt, line);
 	return gdi_rop3_code((UINT8)code);
 }
 
