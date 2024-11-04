@@ -316,7 +316,8 @@ int freerdp_client_settings_parse_command_line_ex(
 		status = -1;
 
 	const char* name = (argc > 0) ? argv[0] : "argc < 1";
-	WLog_DBG(TAG, "This is [%s] %s %s", name, freerdp_get_version_string(), freerdp_get_build_config());
+	WLog_DBG(TAG, "This is [%s] %s %s", name, freerdp_get_version_string(),
+	         freerdp_get_build_config());
 	return status;
 }
 

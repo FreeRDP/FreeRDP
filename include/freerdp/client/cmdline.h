@@ -94,7 +94,30 @@ extern "C"
 	FREERDP_API void freerdp_client_warn_deprecated(int argc, char* argv[]);
 
 	FREERDP_API BOOL freerdp_client_print_version(void);
+
+	/** @brief prints the version of the client including the binary name extracted from \b argv
+	 *
+	 *  @param argc the number of command line arguments, must be >= 0
+	 *  @param argv the array of command line argument strings
+	 *
+	 *  @return \b TRUE for success
+	 *
+	 *  @since version 3.10.0
+	 */
+	FREERDP_API BOOL freerdp_client_print_version_ex(int argc, char** argv);
 	FREERDP_API BOOL freerdp_client_print_buildconfig(void);
+
+	/** @brief prints the buidconfiguration of the client including the binary name extracted from
+	 * \b argv
+	 *
+	 *  @param argc the number of command line arguments, must be >= 0
+	 *  @param argv the array of command line argument strings
+	 *
+	 *  @return \b TRUE for success
+	 *
+	 *  @since version 3.10.0
+	 */
+	FREERDP_API BOOL freerdp_client_print_buildconfig_ex(int argc, char** argv);
 	FREERDP_API BOOL freerdp_client_print_command_line_help(int argc, char** argv);
 	FREERDP_API BOOL freerdp_client_print_command_line_help_ex(
 	    int argc, char** argv, const COMMAND_LINE_ARGUMENT_A* custom);
