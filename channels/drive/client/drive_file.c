@@ -330,9 +330,10 @@ static BOOL drive_file_init(DRIVE_FILE* file)
 	return file->file_handle != INVALID_HANDLE_VALUE;
 }
 
-DRIVE_FILE* drive_file_new(const WCHAR* base_path, const WCHAR* path, UINT32 PathWCharLength,
-                           UINT32 id, UINT32 DesiredAccess, UINT32 CreateDisposition,
-                           UINT32 CreateOptions, UINT32 FileAttributes, UINT32 SharedAccess)
+DRIVE_FILE* drive_file_new(const char* backend, const WCHAR* base_path, const WCHAR* path,
+                           UINT32 PathWCharLength, UINT32 id, UINT32 DesiredAccess,
+                           UINT32 CreateDisposition, UINT32 CreateOptions, UINT32 FileAttributes,
+                           UINT32 SharedAccess)
 {
 	DRIVE_FILE* file = NULL;
 
@@ -1031,7 +1032,7 @@ BOOL drive_file_is_dir_not_empty(DRIVE_FILE* drive)
 	return !PathIsDirectoryEmptyW(drive->fullpath);
 }
 
-char* drive_file_resolve_path(const char* what)
+char* drive_file_resolve_path(const char* backend, const char* what)
 {
 	if (!what)
 		return NULL;
@@ -1081,7 +1082,7 @@ char* drive_file_resolve_path(const char* what)
 	return _strdup(what);
 }
 
-char* drive_file_resolve_name(const char* path, const char* suggested)
+char* drive_file_resolve_name(const char* backend, const char* path, const char* suggested)
 {
 	if (!path)
 		return NULL;
