@@ -309,6 +309,23 @@ static INLINE pstatus_t generic_image_copy_no_overlap_dst_alpha(
 					break;
 			}
 			break;
+		case PIXEL_FORMAT_RGBX32:
+		case PIXEL_FORMAT_RGBA32:
+			switch (DstFormat)
+			{
+				case PIXEL_FORMAT_RGBX32:
+				case PIXEL_FORMAT_RGBA32:
+					return generic_image_copy_bgrx32_bgrx32(
+					    pDstData, nDstStep, nXDst, nYDst, nWidth, nHeight, pSrcData, nSrcStep,
+					    nXSrc, nYSrc, srcVMultiplier, srcVOffset, dstVMultiplier, dstVOffset);
+				case PIXEL_FORMAT_RGB24:
+					return generic_image_copy_bgr24_bgrx32(
+					    pDstData, nDstStep, nXDst, nYDst, nWidth, nHeight, pSrcData, nSrcStep,
+					    nXSrc, nYSrc, srcVMultiplier, srcVOffset, dstVMultiplier, dstVOffset);
+				default:
+					break;
+			}
+			break;
 		default:
 			break;
 	}
