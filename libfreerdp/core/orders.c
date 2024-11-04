@@ -977,16 +977,22 @@ static INLINE BOOL update_write_brush(wStream* s, rdpBrush* brush, BYTE fieldFla
 {
 	if (fieldFlags & ORDER_FIELD_01)
 	{
+		if (!Stream_EnsureRemainingCapacity(s, 1))
+			return FALSE;
 		Stream_Write_UINT8(s, get_checked_uint8(brush->x));
 	}
 
 	if (fieldFlags & ORDER_FIELD_02)
 	{
+		if (!Stream_EnsureRemainingCapacity(s, 1))
+			return FALSE;
 		Stream_Write_UINT8(s, get_checked_uint8(brush->y));
 	}
 
 	if (fieldFlags & ORDER_FIELD_03)
 	{
+		if (!Stream_EnsureRemainingCapacity(s, 1))
+			return FALSE;
 		Stream_Write_UINT8(s, get_checked_uint8(brush->style));
 	}
 
@@ -1003,12 +1009,16 @@ static INLINE BOOL update_write_brush(wStream* s, rdpBrush* brush, BYTE fieldFla
 
 	if (fieldFlags & ORDER_FIELD_04)
 	{
+		if (!Stream_EnsureRemainingCapacity(s, 1))
+			return FALSE;
 		Stream_Write_UINT8(s, get_checked_uint8(brush->hatch));
 	}
 
 	if (fieldFlags & ORDER_FIELD_05)
 	{
 		brush->data = (BYTE*)brush->p8x8;
+		if (!Stream_EnsureRemainingCapacity(s, 7))
+			return FALSE;
 		Stream_Write_UINT8(s, brush->data[7]);
 		Stream_Write_UINT8(s, brush->data[6]);
 		Stream_Write_UINT8(s, brush->data[5]);
@@ -1345,7 +1355,8 @@ static BOOL update_read_patblt_order(const char* orderName, wStream* s, const OR
 	    read_order_field_byte(orderName, orderInfo, s, 5, &patblt->bRop, TRUE) &&
 	    read_order_field_color(orderName, orderInfo, s, 6, &patblt->backColor, TRUE) &&
 	    read_order_field_color(orderName, orderInfo, s, 7, &patblt->foreColor, TRUE) &&
-	    update_read_brush(s, &patblt->brush, get_checked_uint8(orderInfo->fieldFlags >> 7)))
+	    update_read_brush(s, &patblt->brush,
+	                      get_checked_uint8((orderInfo->fieldFlags >> 7) & 0x1F)))
 		return TRUE;
 	return FALSE;
 }
@@ -1386,7 +1397,7 @@ BOOL update_write_patblt_order(wStream* s, ORDER_INFO* orderInfo, PATBLT_ORDER* 
 	orderInfo->fieldFlags |= ORDER_FIELD_10;
 	orderInfo->fieldFlags |= ORDER_FIELD_11;
 	orderInfo->fieldFlags |= ORDER_FIELD_12;
-	update_write_brush(s, &patblt->brush, get_checked_uint8(orderInfo->fieldFlags >> 7));
+	update_write_brush(s, &patblt->brush, get_checked_uint8((orderInfo->fieldFlags >> 7) & 0x1F));
 	return TRUE;
 }
 
@@ -1588,7 +1599,8 @@ static BOOL update_read_multi_patblt_order(const char* orderName, wStream* s,
 	    !read_order_field_color(orderName, orderInfo, s, 7, &multi_patblt->foreColor, TRUE))
 		return FALSE;
 
-	if (!update_read_brush(s, &multi_patblt->brush, get_checked_uint8(orderInfo->fieldFlags >> 7)))
+	if (!update_read_brush(s, &multi_patblt->brush,
+	                       get_checked_uint8((orderInfo->fieldFlags >> 7) & 0x1F)))
 		return FALSE;
 
 	UINT32 numRectangles = multi_patblt->numRectangles;
@@ -1930,7 +1942,8 @@ static BOOL update_read_mem3blt_order(const char* orderName, wStream* s,
 	    !read_order_field_color(orderName, orderInfo, s, 10, &mem3blt->foreColor, TRUE))
 		return FALSE;
 
-	if (!update_read_brush(s, &mem3blt->brush, get_checked_uint8(orderInfo->fieldFlags >> 10)) ||
+	if (!update_read_brush(s, &mem3blt->brush,
+	                       get_checked_uint8((orderInfo->fieldFlags >> 10) & 0x1F)) ||
 	    !read_order_field_uint16(orderName, orderInfo, s, 16, &mem3blt->cacheIndex, TRUE))
 		return FALSE;
 	mem3blt->colorIndex = (mem3blt->cacheId >> 8);
@@ -1971,7 +1984,7 @@ static BOOL update_read_glyph_index_order(const char* orderName, wStream* s,
 	    !read_order_field_int16(orderName, orderInfo, s, 13, &glyph_index->opRight, TRUE) ||
 	    !read_order_field_int16(orderName, orderInfo, s, 14, &glyph_index->opBottom, TRUE) ||
 	    !update_read_brush(s, &glyph_index->brush,
-	                       get_checked_uint8(orderInfo->fieldFlags >> 14)) ||
+	                       get_checked_uint8((orderInfo->fieldFlags >> 14) & 0x1F)) ||
 	    !read_order_field_int16(orderName, orderInfo, s, 20, &glyph_index->x, TRUE) ||
 	    !read_order_field_int16(orderName, orderInfo, s, 21, &glyph_index->y, TRUE))
 		return FALSE;
@@ -2009,6 +2022,8 @@ BOOL update_write_glyph_index_order(wStream* s, ORDER_INFO* orderInfo,
 	if (!Stream_EnsureRemainingCapacity(s, inf))
 		return FALSE;
 
+	if (!Stream_EnsureRemainingCapacity(s, 4))
+		return FALSE;
 	orderInfo->fieldFlags = 0;
 	orderInfo->fieldFlags |= ORDER_FIELD_01;
 	Stream_Write_UINT8(s, get_checked_uint8(glyph_index->cacheId));
@@ -2019,9 +2034,14 @@ BOOL update_write_glyph_index_order(wStream* s, ORDER_INFO* orderInfo,
 	orderInfo->fieldFlags |= ORDER_FIELD_04;
 	Stream_Write_UINT8(s, get_checked_uint8(glyph_index->fOpRedundant));
 	orderInfo->fieldFlags |= ORDER_FIELD_05;
-	update_write_color(s, get_checked_uint8(glyph_index->backColor));
+	if (!update_write_color(s, get_checked_uint8(glyph_index->backColor)))
+		return FALSE;
 	orderInfo->fieldFlags |= ORDER_FIELD_06;
-	update_write_color(s, glyph_index->foreColor);
+	if (!update_write_color(s, glyph_index->foreColor))
+		return FALSE;
+
+	if (!Stream_EnsureRemainingCapacity(s, 14))
+		return FALSE;
 	orderInfo->fieldFlags |= ORDER_FIELD_07;
 	Stream_Write_INT16(s, get_checked_int16(glyph_index->bkLeft));
 	orderInfo->fieldFlags |= ORDER_FIELD_08;
@@ -2043,7 +2063,12 @@ BOOL update_write_glyph_index_order(wStream* s, ORDER_INFO* orderInfo,
 	orderInfo->fieldFlags |= ORDER_FIELD_17;
 	orderInfo->fieldFlags |= ORDER_FIELD_18;
 	orderInfo->fieldFlags |= ORDER_FIELD_19;
-	update_write_brush(s, &glyph_index->brush, get_checked_uint8(orderInfo->fieldFlags >> 14));
+	if (!update_write_brush(s, &glyph_index->brush,
+	                        get_checked_uint8((orderInfo->fieldFlags >> 14) & 0x1F)))
+		return FALSE;
+
+	if (!Stream_EnsureRemainingCapacity(s, 5ULL + glyph_index->cbData))
+		return FALSE;
 	orderInfo->fieldFlags |= ORDER_FIELD_20;
 	Stream_Write_INT16(s, get_checked_int16(glyph_index->x));
 	orderInfo->fieldFlags |= ORDER_FIELD_21;
@@ -2219,7 +2244,8 @@ static BOOL update_read_polygon_cb_order(const char* orderName, wStream* s,
 	    !read_order_field_color(orderName, orderInfo, s, 6, &polygon_cb->foreColor, TRUE))
 		return FALSE;
 
-	if (!update_read_brush(s, &polygon_cb->brush, get_checked_uint8(orderInfo->fieldFlags >> 6)))
+	if (!update_read_brush(s, &polygon_cb->brush,
+	                       get_checked_uint8((orderInfo->fieldFlags >> 6) & 0x1F)))
 		return FALSE;
 
 	if (!read_order_field_byte(orderName, orderInfo, s, 12, &num, TRUE))
@@ -2277,7 +2303,8 @@ static BOOL update_read_ellipse_cb_order(const char* orderName, wStream* s,
 	    read_order_field_byte(orderName, orderInfo, s, 6, &ellipse_cb->fillMode, TRUE) &&
 	    read_order_field_color(orderName, orderInfo, s, 7, &ellipse_cb->backColor, TRUE) &&
 	    read_order_field_color(orderName, orderInfo, s, 8, &ellipse_cb->foreColor, TRUE) &&
-	    update_read_brush(s, &ellipse_cb->brush, get_checked_uint8(orderInfo->fieldFlags >> 8)))
+	    update_read_brush(s, &ellipse_cb->brush,
+	                      get_checked_uint8((orderInfo->fieldFlags >> 8) & 0x1F)))
 		return TRUE;
 	return FALSE;
 }
