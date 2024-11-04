@@ -1189,9 +1189,8 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 
 	if (settings->CompressionEnabled && !skipCompression)
 	{
-		const UINT32 CompressionMaxSize = bulk_compression_max_size(rdp->bulk);
-		WINPR_ASSERT(CompressionMaxSize <= UINT16_MAX);
-		maxLength = (maxLength < CompressionMaxSize) ? maxLength : (UINT16)(CompressionMaxSize);
+		const UINT16 CompressionMaxSize = bulk_compression_max_size(rdp->bulk);
+		maxLength = (maxLength < CompressionMaxSize) ? maxLength : CompressionMaxSize;
 		maxLength -= 20;
 	}
 
