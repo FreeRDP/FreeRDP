@@ -37,7 +37,7 @@ struct rdp_bulk
 {
 	ALIGN64 rdpContext* context;
 	ALIGN64 UINT32 CompressionLevel;
-	ALIGN64 UINT32 CompressionMaxSize;
+	ALIGN64 UINT16 CompressionMaxSize;
 	ALIGN64 MPPC_CONTEXT* mppcSend;
 	ALIGN64 MPPC_CONTEXT* mppcRecv;
 	ALIGN64 NCRUSH_CONTEXT* ncrushRecv;
@@ -83,14 +83,15 @@ static UINT32 bulk_compression_level(rdpBulk* WINPR_RESTRICT bulk)
 	bulk->CompressionLevel = (settings->CompressionLevel >= PACKET_COMPR_TYPE_RDP61)
 	                             ? PACKET_COMPR_TYPE_RDP61
 	                             : settings->CompressionLevel;
+	WINPR_ASSERT(bulk->CompressionLevel <= UINT16_MAX);
 	return bulk->CompressionLevel;
 }
 
-UINT32 bulk_compression_max_size(rdpBulk* WINPR_RESTRICT bulk)
+UINT16 bulk_compression_max_size(rdpBulk* WINPR_RESTRICT bulk)
 {
 	WINPR_ASSERT(bulk);
-	bulk_compression_level(bulk);
-	bulk->CompressionMaxSize = (bulk->CompressionLevel < PACKET_COMPR_TYPE_64K) ? 8192 : 65536;
+	(void)bulk_compression_level(bulk);
+	bulk->CompressionMaxSize = (bulk->CompressionLevel < PACKET_COMPR_TYPE_64K) ? 8192 : UINT16_MAX;
 	return bulk->CompressionMaxSize;
 }
 
@@ -161,7 +162,7 @@ int bulk_decompress(rdpBulk* WINPR_RESTRICT bulk, const BYTE* WINPR_RESTRICT pSr
 	rdpMetrics* metrics = bulk->context->metrics;
 	WINPR_ASSERT(metrics);
 
-	bulk_compression_max_size(bulk);
+	(void)bulk_compression_max_size(bulk);
 	const UINT32 type = flags & BULK_COMPRESSION_TYPE_MASK;
 
 	if (flags & BULK_COMPRESSION_FLAGS_MASK)
@@ -259,8 +260,8 @@ int bulk_compress(rdpBulk* WINPR_RESTRICT bulk, const BYTE* WINPR_RESTRICT pSrcD
 	}
 
 	*pDstSize = sizeof(bulk->OutputBuffer);
-	bulk_compression_level(bulk);
-	bulk_compression_max_size(bulk);
+	(void)bulk_compression_level(bulk);
+	(void)bulk_compression_max_size(bulk);
 
 	switch (bulk->CompressionLevel)
 	{
