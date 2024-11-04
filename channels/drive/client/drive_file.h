@@ -32,27 +32,17 @@
 
 #define TAG CHANNELS_TAG("drive.client")
 
-typedef struct
-{
-	UINT32 id;
-	BOOL is_dir;
-	HANDLE file_handle;
-	HANDLE find_handle;
-	WIN32_FIND_DATAW find_data;
-	const WCHAR* basepath;
-	WCHAR* fullpath;
-	BOOL delete_pending;
-	UINT32 FileAttributes;
-	UINT32 SharedAccess;
-	UINT32 DesiredAccess;
-	UINT32 CreateDisposition;
-	UINT32 CreateOptions;
-} DRIVE_FILE;
+typedef struct S_DRIVE_FILE DRIVE_FILE;
 
+BOOL drive_file_free(DRIVE_FILE* file);
+
+WINPR_ATTR_MALLOC(drive_file_free, 1)
 DRIVE_FILE* drive_file_new(const WCHAR* base_path, const WCHAR* path, UINT32 PathWCharLength,
                            UINT32 id, UINT32 DesiredAccess, UINT32 CreateDisposition,
                            UINT32 CreateOptions, UINT32 FileAttributes, UINT32 SharedAccess);
-BOOL drive_file_free(DRIVE_FILE* file);
+
+const uintptr_t drive_file_get_id(DRIVE_FILE* drive);
+BOOL drive_file_is_dir_not_empty(DRIVE_FILE* drive);
 
 BOOL drive_file_open(DRIVE_FILE* file);
 BOOL drive_file_seek(DRIVE_FILE* file, UINT64 Offset);
