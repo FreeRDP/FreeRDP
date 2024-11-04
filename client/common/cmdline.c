@@ -288,9 +288,28 @@ BOOL freerdp_client_print_version(void)
 	return TRUE;
 }
 
+BOOL freerdp_client_print_version_ex(int argc, char** argv)
+{
+	WINPR_ASSERT(argc >= 0);
+	WINPR_ASSERT(argv || (argc == 0));
+	const char* name = (argc > 0) ? argv[0] : "argc < 1";
+	printf("This is FreeRDP version [%s] %s (%s)\n", name, FREERDP_VERSION_FULL,
+	       FREERDP_GIT_REVISION);
+	return TRUE;
+}
+
 BOOL freerdp_client_print_buildconfig(void)
 {
 	printf("%s", freerdp_get_build_config());
+	return TRUE;
+}
+
+BOOL freerdp_client_print_buildconfig_ex(int argc, char** argv)
+{
+	WINPR_ASSERT(argc >= 0);
+	WINPR_ASSERT(argv || (argc == 0));
+	const char* name = (argc > 0) ? argv[0] : "argc < 1";
+	printf("[%s] %s", name, freerdp_get_build_config());
 	return TRUE;
 }
 
@@ -1776,8 +1795,8 @@ int freerdp_client_settings_command_line_status_print_ex(rdpSettings* settings, 
 
 	if (status == COMMAND_LINE_STATUS_PRINT_BUILDCONFIG)
 	{
-		freerdp_client_print_version();
-		freerdp_client_print_buildconfig();
+		freerdp_client_print_version_ex(argc, argv);
+		freerdp_client_print_buildconfig_ex(argc, argv);
 		goto out;
 	}
 	else if (status == COMMAND_LINE_STATUS_PRINT)
