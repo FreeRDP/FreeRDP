@@ -23,7 +23,7 @@ if (NOT WIN32)
 		comm.c
 		comm.h
 	)
-	if(UNIX AND NOT IOS AND NOT EMSCRIPTEN)
+	if(NOT EMSCRIPTEN)
 		winpr_definition_add(-DWINPR_HAVE_SERIAL_SUPPORT)
 		list(APPEND ${MODULE_PREFIX}_SRCS
 			comm_io.c
@@ -45,7 +45,7 @@ if (NOT WIN32)
 
 	winpr_module_add(${${MODULE_PREFIX}_SRCS})
 
-	if(UNIX AND NOT IOS AND NOT EMSCRIPTEN)
+	if(NOT EMSCRIPTEN)
 		if(BUILD_TESTING_INTERNAL AND BUILD_COMM_TESTS)
 			add_subdirectory(test)
 		endif()
