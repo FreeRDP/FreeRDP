@@ -972,8 +972,9 @@ static SSIZE_T rdstls_parse_pdu_data_type(wLog* log, UINT16 dataType, wStream* s
 				return 0;
 			Stream_Read_UINT16(s, passwordLength);
 
-			if (!Stream_SafeSeek(s, passwordLength))
+			if (Stream_GetRemainingLength(s) < passwordLength)
 				return 0;
+			Stream_Seek(s, passwordLength);
 		}
 		break;
 		case RDSTLS_DATA_AUTORECONNECT_COOKIE:
