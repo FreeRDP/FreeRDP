@@ -30,6 +30,7 @@
 #include <winpr/crt.h>
 #include <winpr/stream.h>
 
+#include <freerdp/freerdp.h>
 #include <freerdp/utils/rdpdr_utils.h>
 
 #include "rdpdr_main.h"
@@ -38,16 +39,21 @@
 #define RDPDR_CAPABILITY_HEADER_LENGTH 8
 
 /* Output device direction general capability set */
-static void rdpdr_write_general_capset(rdpdrPlugin* rdpdr, wStream* s)
+static BOOL rdpdr_write_general_capset(rdpdrPlugin* rdpdr, wStream* s)
 {
-	WINPR_UNUSED(rdpdr);
+	WINPR_ASSERT(rdpdr);
 	const RDPDR_CAPABILITY_HEADER header = { CAP_GENERAL_TYPE, RDPDR_CAPABILITY_HEADER_LENGTH + 36,
 		                                     GENERAL_CAPABILITY_VERSION_02 };
 
 	const UINT32 ioCode1 = rdpdr->clientIOCode1 & rdpdr->serverIOCode1;
 	const UINT32 ioCode2 = rdpdr->clientIOCode2 & rdpdr->serverIOCode2;
 
-	rdpdr_write_capset_header(rdpdr->log, s, &header);
+	if (rdpdr_write_capset_header(rdpdr->log, s, &header) != CHANNEL_RC_OK)
+		return FALSE;
+
+	if (!Stream_EnsureRemainingCapacity(s, 36))
+		return FALSE;
+
 	Stream_Write_UINT32(s, rdpdr->clientOsType);    /* osType, ignored on receipt */
 	Stream_Write_UINT32(s, rdpdr->clientOsVersion); /* osVersion, unused and must be set to zero */
 	Stream_Write_UINT16(s, rdpdr->clientVersionMajor); /* protocolMajorVersion, must be set to 1 */
@@ -62,6 +68,7 @@ static void rdpdr_write_general_capset(rdpdrPlugin* rdpdr, wStream* s)
 	Stream_Write_UINT32(
 	    s, rdpdr->clientSpecialTypeDeviceCap); /* SpecialTypeDeviceCap, number of special devices to
 	                                              be redirected before logon */
+	return TRUE;
 }
 
 /* Process device direction general capability set */
@@ -99,12 +106,12 @@ static UINT rdpdr_process_general_capset(rdpdrPlugin* rdpdr, wStream* s,
 }
 
 /* Output printer direction capability set */
-static void rdpdr_write_printer_capset(rdpdrPlugin* rdpdr, wStream* s)
+static BOOL rdpdr_write_printer_capset(rdpdrPlugin* rdpdr, wStream* s)
 {
 	WINPR_UNUSED(rdpdr);
 	const RDPDR_CAPABILITY_HEADER header = { CAP_PRINTER_TYPE, RDPDR_CAPABILITY_HEADER_LENGTH,
 		                                     PRINT_CAPABILITY_VERSION_01 };
-	rdpdr_write_capset_header(rdpdr->log, s, &header);
+	return rdpdr_write_capset_header(rdpdr->log, s, &header) == CHANNEL_RC_OK;
 }
 
 /* Process printer direction capability set */
@@ -117,12 +124,12 @@ static UINT rdpdr_process_printer_capset(rdpdrPlugin* rdpdr, wStream* s,
 }
 
 /* Output port redirection capability set */
-static void rdpdr_write_port_capset(rdpdrPlugin* rdpdr, wStream* s)
+static BOOL rdpdr_write_port_capset(rdpdrPlugin* rdpdr, wStream* s)
 {
 	WINPR_UNUSED(rdpdr);
 	const RDPDR_CAPABILITY_HEADER header = { CAP_PORT_TYPE, RDPDR_CAPABILITY_HEADER_LENGTH,
 		                                     PORT_CAPABILITY_VERSION_01 };
-	rdpdr_write_capset_header(rdpdr->log, s, &header);
+	return rdpdr_write_capset_header(rdpdr->log, s, &header) == CHANNEL_RC_OK;
 }
 
 /* Process port redirection capability set */
@@ -135,12 +142,12 @@ static UINT rdpdr_process_port_capset(rdpdrPlugin* rdpdr, wStream* s,
 }
 
 /* Output drive redirection capability set */
-static void rdpdr_write_drive_capset(rdpdrPlugin* rdpdr, wStream* s)
+static BOOL rdpdr_write_drive_capset(rdpdrPlugin* rdpdr, wStream* s)
 {
 	WINPR_UNUSED(rdpdr);
 	const RDPDR_CAPABILITY_HEADER header = { CAP_DRIVE_TYPE, RDPDR_CAPABILITY_HEADER_LENGTH,
 		                                     DRIVE_CAPABILITY_VERSION_02 };
-	rdpdr_write_capset_header(rdpdr->log, s, &header);
+	return rdpdr_write_capset_header(rdpdr->log, s, &header) == CHANNEL_RC_OK;
 }
 
 /* Process drive redirection capability set */
@@ -153,12 +160,12 @@ static UINT rdpdr_process_drive_capset(rdpdrPlugin* rdpdr, wStream* s,
 }
 
 /* Output smart card redirection capability set */
-static void rdpdr_write_smartcard_capset(rdpdrPlugin* rdpdr, wStream* s)
+static BOOL rdpdr_write_smartcard_capset(rdpdrPlugin* rdpdr, wStream* s)
 {
 	WINPR_UNUSED(rdpdr);
 	const RDPDR_CAPABILITY_HEADER header = { CAP_SMARTCARD_TYPE, RDPDR_CAPABILITY_HEADER_LENGTH,
 		                                     SMARTCARD_CAPABILITY_VERSION_01 };
-	rdpdr_write_capset_header(rdpdr->log, s, &header);
+	return rdpdr_write_capset_header(rdpdr->log, s, &header) == CHANNEL_RC_OK;
 }
 
 /* Process smartcard redirection capability set */
@@ -235,10 +242,13 @@ UINT rdpdr_process_capability_request(rdpdrPlugin* rdpdr, wStream* s)
  */
 UINT rdpdr_send_capability_response(rdpdrPlugin* rdpdr)
 {
-	wStream* s = NULL;
-
 	WINPR_ASSERT(rdpdr);
-	s = StreamPool_Take(rdpdr->pool, 256);
+	WINPR_ASSERT(rdpdr->rdpcontext);
+
+	rdpSettings* settings = rdpdr->rdpcontext->settings;
+	WINPR_ASSERT(settings);
+
+	wStream* s = StreamPool_Take(rdpdr->pool, 256);
 
 	if (!s)
 	{
@@ -246,14 +256,55 @@ UINT rdpdr_send_capability_response(rdpdrPlugin* rdpdr)
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
+	const RDPDR_DEVICE* drives =
+	    freerdp_device_collection_find_type(settings, RDPDR_DTYP_FILESYSTEM);
+	const RDPDR_DEVICE* serial = freerdp_device_collection_find_type(settings, RDPDR_DTYP_SERIAL);
+	const RDPDR_DEVICE* parallel =
+	    freerdp_device_collection_find_type(settings, RDPDR_DTYP_PARALLEL);
+	const RDPDR_DEVICE* smart = freerdp_device_collection_find_type(settings, RDPDR_DTYP_SMARTCARD);
+	const RDPDR_DEVICE* printer = freerdp_device_collection_find_type(settings, RDPDR_DTYP_PRINT);
+
+	UINT16 count = 1;
+	if (drives)
+		count++;
+	if (serial || parallel)
+		count++;
+	if (smart)
+		count++;
+	if (printer)
+		count++;
+
 	Stream_Write_UINT16(s, RDPDR_CTYP_CORE);
 	Stream_Write_UINT16(s, PAKID_CORE_CLIENT_CAPABILITY);
-	Stream_Write_UINT16(s, 5); /* numCapabilities */
+	Stream_Write_UINT16(s, count); /* numCapabilities */
 	Stream_Write_UINT16(s, 0); /* pad */
-	rdpdr_write_general_capset(rdpdr, s);
-	rdpdr_write_printer_capset(rdpdr, s);
-	rdpdr_write_port_capset(rdpdr, s);
-	rdpdr_write_drive_capset(rdpdr, s);
-	rdpdr_write_smartcard_capset(rdpdr, s);
+
+	if (!rdpdr_write_general_capset(rdpdr, s))
+		goto fail;
+
+	if (printer)
+	{
+		if (!rdpdr_write_printer_capset(rdpdr, s))
+			goto fail;
+	}
+	if (serial || parallel)
+	{
+		if (!rdpdr_write_port_capset(rdpdr, s))
+			goto fail;
+	}
+	if (drives)
+	{
+		if (!rdpdr_write_drive_capset(rdpdr, s))
+			goto fail;
+	}
+	if (smart)
+	{
+		if (!rdpdr_write_smartcard_capset(rdpdr, s))
+			goto fail;
+	}
 	return rdpdr_send(rdpdr, s);
+
+fail:
+	Stream_Release(s);
+	return ERROR_OUTOFMEMORY;
 }
