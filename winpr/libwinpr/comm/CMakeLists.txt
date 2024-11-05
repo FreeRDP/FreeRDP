@@ -36,6 +36,11 @@ if (NOT WIN32)
 			comm_sercx2_sys.c
 			comm_sercx2_sys.h
 		)
+	else()
+		list(APPEND ${MODULE_PREFIX}_SRCS
+			comm_ioctl_dummy.c
+			comm_ioctl.h
+		)
 	endif()
 
 	winpr_module_add(${${MODULE_PREFIX}_SRCS})
