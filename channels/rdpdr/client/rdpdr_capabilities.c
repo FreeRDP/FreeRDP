@@ -194,6 +194,7 @@ UINT rdpdr_process_capability_request(rdpdrPlugin* rdpdr, wStream* s)
 	Stream_Read_UINT16(s, numCapabilities);
 	Stream_Seek(s, 2); /* pad (2 bytes) */
 
+	memset(rdpdr->capabilities, 0, sizeof(rdpdr->capabilities));
 	for (UINT16 i = 0; i < numCapabilities; i++)
 	{
 		RDPDR_CAPABILITY_HEADER header = { 0 };
@@ -204,27 +205,31 @@ UINT rdpdr_process_capability_request(rdpdrPlugin* rdpdr, wStream* s)
 		switch (header.CapabilityType)
 		{
 			case CAP_GENERAL_TYPE:
+				rdpdr->capabilities[header.CapabilityType] = TRUE;
 				status = rdpdr_process_general_capset(rdpdr, s, &header);
 				break;
 
 			case CAP_PRINTER_TYPE:
+				rdpdr->capabilities[header.CapabilityType] = TRUE;
 				status = rdpdr_process_printer_capset(rdpdr, s, &header);
 				break;
 
 			case CAP_PORT_TYPE:
+				rdpdr->capabilities[header.CapabilityType] = TRUE;
 				status = rdpdr_process_port_capset(rdpdr, s, &header);
 				break;
 
 			case CAP_DRIVE_TYPE:
+				rdpdr->capabilities[header.CapabilityType] = TRUE;
 				status = rdpdr_process_drive_capset(rdpdr, s, &header);
 				break;
 
 			case CAP_SMARTCARD_TYPE:
+				rdpdr->capabilities[header.CapabilityType] = TRUE;
 				status = rdpdr_process_smartcard_capset(rdpdr, s, &header);
 				break;
 
 			default:
-
 				break;
 		}
 
@@ -256,14 +261,21 @@ UINT rdpdr_send_capability_response(rdpdrPlugin* rdpdr)
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
-	const RDPDR_DEVICE* drives =
+	const RDPDR_DEVICE* cdrives =
 	    freerdp_device_collection_find_type(settings, RDPDR_DTYP_FILESYSTEM);
-	const RDPDR_DEVICE* serial = freerdp_device_collection_find_type(settings, RDPDR_DTYP_SERIAL);
-	const RDPDR_DEVICE* parallel =
+	const RDPDR_DEVICE* cserial = freerdp_device_collection_find_type(settings, RDPDR_DTYP_SERIAL);
+	const RDPDR_DEVICE* cparallel =
 	    freerdp_device_collection_find_type(settings, RDPDR_DTYP_PARALLEL);
-	const RDPDR_DEVICE* smart = freerdp_device_collection_find_type(settings, RDPDR_DTYP_SMARTCARD);
-	const RDPDR_DEVICE* printer = freerdp_device_collection_find_type(settings, RDPDR_DTYP_PRINT);
+	const RDPDR_DEVICE* csmart =
+	    freerdp_device_collection_find_type(settings, RDPDR_DTYP_SMARTCARD);
+	const RDPDR_DEVICE* cprinter = freerdp_device_collection_find_type(settings, RDPDR_DTYP_PRINT);
 
+	/* Only send capabilities the server announced */
+	const BOOL drives = cdrives && rdpdr->capabilities[CAP_DRIVE_TYPE];
+	const BOOL serial = cserial && rdpdr->capabilities[CAP_PORT_TYPE];
+	const BOOL parallel = cparallel && rdpdr->capabilities[CAP_PORT_TYPE];
+	const BOOL smart = csmart && rdpdr->capabilities[CAP_SMARTCARD_TYPE];
+	const BOOL printer = cprinter && rdpdr->capabilities[CAP_PRINTER_TYPE];
 	UINT16 count = 1;
 	if (drives)
 		count++;
