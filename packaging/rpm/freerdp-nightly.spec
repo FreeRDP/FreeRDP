@@ -140,7 +140,11 @@ based on freerdp and winpr.
 %prep
 %setup -q
 cd %{_topdir}/BUILD
+%if 0%{?fedora} >= 41
+cp %{_topdir}/SOURCES/source_version freerdp-nightly-%{version}-build/.source_version
+%else
 cp %{_topdir}/SOURCES/source_version freerdp-nightly-%{version}/.source_version
+%endif
 
 %build
 
