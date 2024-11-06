@@ -327,7 +327,7 @@ static BOOL rdstls_process_capabilities(rdpRdstls* rdstls, wStream* s)
 	UINT16 dataType = 0;
 	UINT16 supportedVersions = 0;
 
-	if (!Stream_CheckAndLogRequiredLengthWLog(rdstls->log, s, 4))
+	if (Stream_GetRemainingLength(s) < 4)
 		return FALSE;
 
 	Stream_Read_UINT16(s, dataType);
@@ -357,12 +357,12 @@ static BOOL rdstls_read_unicode_string(wLog* log, wStream* s, char** str)
 
 	WINPR_ASSERT(str);
 
-	if (!Stream_CheckAndLogRequiredLengthWLog(log, s, 2))
+	if (Stream_GetRemainingLength(s) < 2)
 		return FALSE;
 
 	Stream_Read_UINT16(s, length);
 
-	if (!Stream_CheckAndLogRequiredLengthWLog(log, s, length))
+	if (Stream_GetRemainingLength(s) < length)
 		return FALSE;
 
 	if (length <= 2)
@@ -387,12 +387,12 @@ static BOOL rdstls_read_data(wLog* log, wStream* s, UINT16* pLength, const BYTE*
 
 	*pData = NULL;
 	*pLength = 0;
-	if (!Stream_CheckAndLogRequiredLengthWLog(log, s, 2))
+	if (Stream_GetRemainingLength(s) < 2)
 		return FALSE;
 
 	Stream_Read_UINT16(s, length);
 
-	if (!Stream_CheckAndLogRequiredLengthWLog(log, s, length))
+	if (Stream_GetRemainingLength(s) < length)
 		return FALSE;
 
 	if (length <= 2)
@@ -403,7 +403,8 @@ static BOOL rdstls_read_data(wLog* log, wStream* s, UINT16* pLength, const BYTE*
 
 	*pData = Stream_ConstPointer(s);
 	*pLength = length;
-	return Stream_SafeSeek(s, length);
+	Stream_Seek(s, length);
+	return TRUE;
 }
 
 static BOOL rdstls_cmp_data(wLog* log, const char* field, const BYTE* serverData,
@@ -521,7 +522,7 @@ static BOOL rdstls_process_authentication_request(rdpRdstls* rdstls, wStream* s)
 {
 	UINT16 dataType = 0;
 
-	if (!Stream_CheckAndLogRequiredLengthWLog(rdstls->log, s, 2))
+	if (Stream_GetRemainingLength(s) < 2)
 		return FALSE;
 
 	Stream_Read_UINT16(s, dataType);
@@ -551,7 +552,7 @@ static BOOL rdstls_process_authentication_response(rdpRdstls* rdstls, wStream* s
 	UINT16 dataType = 0;
 	UINT32 resultCode = 0;
 
-	if (!Stream_CheckAndLogRequiredLengthWLog(rdstls->log, s, 6))
+	if (Stream_GetRemainingLength(s) < 6)
 		return FALSE;
 
 	Stream_Read_UINT16(s, dataType);
@@ -673,7 +674,7 @@ static int rdstls_recv(rdpTransport* transport, wStream* s, void* extra)
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(rdstls);
 
-	if (!Stream_CheckAndLogRequiredLengthWLog(rdstls->log, s, 4))
+	if (Stream_GetRemainingLength(s) < 4)
 		return FALSE;
 
 	Stream_Read_UINT16(s, version);
