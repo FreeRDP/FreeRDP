@@ -30,8 +30,6 @@
 
 #include <winpr/crt.h>
 #include <winpr/assert.h>
-#include <winpr/path.h>
-#include <winpr/file.h>
 #include <winpr/string.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
@@ -43,6 +41,7 @@
 
 #include <freerdp/freerdp.h>
 #include <freerdp/channels/rdpdr.h>
+#include <freerdp/client/drive.h>
 
 #include "drive_file.h"
 
@@ -61,7 +60,7 @@ typedef struct
 	DEVMAN* devman;
 
 	rdpContext* rdpcontext;
-	char* backend;
+	const rdpDriveDriver* backend;
 } DRIVE_DEVICE;
 
 static DWORD drive_map_windows_err(DWORD fs_errno)
@@ -181,9 +180,9 @@ static UINT drive_process_irp_create(DRIVE_DEVICE* drive, IRP* irp)
 
 	path = Stream_ConstPointer(irp->input);
 	FileId = irp->devman->id_sequence++;
-	file = drive_file_new(drive->backend, drive->path, path, PathLength / sizeof(WCHAR), FileId,
-	                      DesiredAccess, CreateDisposition, CreateOptions, FileAttributes,
-	                      SharedAccess);
+	file = drive_file_new(drive->rdpcontext, drive->backend, drive->path, path,
+	                      PathLength / sizeof(WCHAR), FileId, DesiredAccess, CreateDisposition,
+	                      CreateOptions, FileAttributes, SharedAccess);
 
 	if (!file)
 	{
@@ -193,9 +192,9 @@ static UINT drive_process_irp_create(DRIVE_DEVICE* drive, IRP* irp)
 	}
 	else
 	{
-		void* key = (void*)drive_file_get_id(file);
+		const uintptr_t key = drive_file_get_id(file);
 
-		if (!ListDictionary_Add(drive->files, key, file))
+		if (!ListDictionary_Add(drive->files, (const void*)key, file))
 		{
 			WLog_ERR(TAG, "ListDictionary_Add failed!");
 			return ERROR_INTERNAL_ERROR;
@@ -268,19 +267,15 @@ static UINT drive_process_irp_close(DRIVE_DEVICE* drive, IRP* irp)
  */
 static UINT drive_process_irp_read(DRIVE_DEVICE* drive, IRP* irp)
 {
-	DRIVE_FILE* file = NULL;
-	UINT32 Length = 0;
-	UINT64 Offset = 0;
-
 	if (!drive || !irp || !irp->output || !irp->Complete)
 		return ERROR_INVALID_PARAMETER;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, irp->input, 12))
 		return ERROR_INVALID_DATA;
 
-	Stream_Read_UINT32(irp->input, Length);
-	Stream_Read_UINT64(irp->input, Offset);
-	file = drive_get_file_by_id(drive, irp->FileId);
+	UINT32 Length = Stream_Get_UINT32(irp->input);
+	const UINT64 Offset = Stream_Get_UINT64(irp->input);
+	DRIVE_FILE* file = drive_get_file_by_id(drive, irp->FileId);
 
 	if (!file)
 	{
@@ -607,7 +602,6 @@ static UINT drive_process_irp_silent_ignore(DRIVE_DEVICE* drive, IRP* irp)
  */
 static UINT drive_process_irp_query_directory(DRIVE_DEVICE* drive, IRP* irp)
 {
-	const WCHAR* path = NULL;
 	DRIVE_FILE* file = NULL;
 	BYTE InitialQuery = 0;
 	UINT32 PathLength = 0;
@@ -623,7 +617,7 @@ static UINT drive_process_irp_query_directory(DRIVE_DEVICE* drive, IRP* irp)
 	Stream_Read_UINT8(irp->input, InitialQuery);
 	Stream_Read_UINT32(irp->input, PathLength);
 	Stream_Seek(irp->input, 23); /* Padding */
-	path = Stream_ConstPointer(irp->input);
+	const WCHAR* path = Stream_PointerAs(irp->input, const WCHAR);
 	if (!Stream_CheckAndLogRequiredLength(TAG, irp->input, PathLength))
 		return ERROR_INVALID_DATA;
 
@@ -835,7 +829,6 @@ static UINT drive_free_int(DRIVE_DEVICE* drive)
 	MessageQueue_Free(drive->IrpQueue);
 	Stream_Free(drive->device.data, TRUE);
 	free(drive->path);
-	free(drive->backend);
 	free(drive);
 	return error;
 }
@@ -886,23 +879,41 @@ static void drive_message_free(void* obj)
 	irp->Discard(irp);
 }
 
-WINPR_ATTR_MALLOC(drive_free_int, 1)
-static DRIVE_DEVICE* drive_new(rdpContext* rdpcontext, const char* backend, const char* path,
-                               const char* name, BOOL automount)
+static const rdpDriveDriver* drive_load_backend(const char* backend)
 {
+	typedef UINT(VCAPITYPE * backend_load_t)(const rdpDriveDriver**);
+
+	static backend_load_t func = NULL;
+
+	if (!func)
+	{
+		PVIRTUALCHANNELENTRY entry = freerdp_load_channel_addin_entry("drive", backend, NULL, 0);
+		func = WINPR_FUNC_PTR_CAST(entry, backend_load_t);
+		if (!func)
+			return NULL;
+	}
+
+	const rdpDriveDriver* drive = NULL;
+	const UINT rc = func(&drive);
+	if (rc != CHANNEL_RC_OK)
+		return NULL;
+
+	return drive;
+}
+
+WINPR_ATTR_MALLOC(drive_free_int, 1)
+static DRIVE_DEVICE* drive_new(rdpContext* rdpcontext, const rdpDriveDriver* backend,
+                               const char* path, const char* name, BOOL automount)
+{
+	WINPR_ASSERT(backend);
+
 	size_t pathLength = strnlen(path, MAX_PATH);
 	DRIVE_DEVICE* drive = (DRIVE_DEVICE*)calloc(1, sizeof(DRIVE_DEVICE));
 
 	if (!drive)
 		return NULL;
 
-	if (backend)
-	{
-		drive->backend = _strdup(backend);
-		if (!drive->backend)
-			goto out_error;
-	}
-
+	drive->backend = backend;
 	drive->device.type = RDPDR_DTYP_FILESYSTEM;
 	drive->device.IRPRequest = drive_irp_request;
 	drive->device.Free = drive_free;
@@ -990,8 +1001,8 @@ out_error:
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT drive_register_drive_path(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints,
-                                      const char* backend, const char* rawname, const char* rawpath,
-                                      BOOL automount)
+                                      const char* backendstr, const char* rawname,
+                                      const char* rawpath, BOOL automount)
 {
 	UINT error = ERROR_INTERNAL_ERROR;
 	DRIVE_DEVICE* drive = NULL;
@@ -1002,6 +1013,10 @@ static UINT drive_register_drive_path(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints,
 		         rawname, rawpath);
 		return ERROR_INVALID_PARAMETER;
 	}
+
+	const rdpDriveDriver* backend = drive_load_backend(backendstr);
+	if (!backend)
+		return ERROR_INVALID_PARAMETER;
 
 	char* path = drive_file_resolve_path(backend, rawpath);
 	if (!path)

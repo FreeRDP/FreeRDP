@@ -27,8 +27,8 @@
 #define FREERDP_CHANNEL_DRIVE_CLIENT_FILE_H
 
 #include <winpr/stream.h>
-#include <winpr/file.h>
 #include <freerdp/channels/log.h>
+#include <freerdp/client/drive.h>
 
 #define TAG CHANNELS_TAG("drive.client")
 
@@ -37,16 +37,17 @@ typedef struct S_DRIVE_FILE DRIVE_FILE;
 BOOL drive_file_free(DRIVE_FILE* file);
 
 WINPR_ATTR_MALLOC(drive_file_free, 1)
-DRIVE_FILE* drive_file_new(const char* backend, const WCHAR* base_path, const WCHAR* path,
-                           UINT32 PathWCharLength, UINT32 id, UINT32 DesiredAccess,
-                           UINT32 CreateDisposition, UINT32 CreateOptions, UINT32 FileAttributes,
-                           UINT32 SharedAccess);
+DRIVE_FILE* drive_file_new(rdpContext* context, const rdpDriveDriver* backend,
+                           const WCHAR* base_path, const WCHAR* path, UINT32 PathWCharLength,
+                           UINT32 id, UINT32 DesiredAccess, UINT32 CreateDisposition,
+                           UINT32 CreateOptions, UINT32 FileAttributes, UINT32 SharedAccess);
 
-const uintptr_t drive_file_get_id(DRIVE_FILE* drive);
+uintptr_t drive_file_get_id(DRIVE_FILE* drive);
 BOOL drive_file_is_dir_not_empty(DRIVE_FILE* drive);
 
-char* drive_file_resolve_path(const char* backend, const char* what);
-char* drive_file_resolve_name(const char* backend, const char* path, const char* suggested);
+char* drive_file_resolve_path(const rdpDriveDriver* backend, const char* what);
+char* drive_file_resolve_name(const rdpDriveDriver* backend, const char* path,
+                              const char* suggested);
 
 BOOL drive_file_open(DRIVE_FILE* file);
 BOOL drive_file_seek(DRIVE_FILE* file, UINT64 Offset);
