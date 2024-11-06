@@ -37,7 +37,7 @@ jobs:
           dry-run: false
           sanitizer: ${{ matrix.sanitizer }}
       - name: Upload crash
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4.3.6
         if: failure() && steps.build.outcome == 'success'
         with:
           name: ${{ matrix.sanitizer }}-artifacts
