@@ -52,10 +52,14 @@ if (ENABLE_WARNING_VERBOSE)
 	endforeach()
 endif()
 
-
 if (ENABLE_WARNING_ERROR)
 	CheckCFlag(-Werror)
 endif()
+
+CheckCFlag(-fmacro-prefix-map="${CMAKE_SOURCE_DIR}"="./")
+CheckCFlag(-fmacro-prefix-map="${CMAKE_BINARY_DIR}"="./build/")
+CheckCFlag(-ffile-prefix-map="${CMAKE_SOURCE_DIR}"="./")
+CheckCFlag(-ffile-prefix-map="${CMAKE_BINARY_DIR}"="./build")
 
 set(CMAKE_C_FLAGS ${CMAKE_C_FLAGS} CACHE STRING "default CFLAGS")
 message("Using CFLAGS ${CMAKE_C_FLAGS}")

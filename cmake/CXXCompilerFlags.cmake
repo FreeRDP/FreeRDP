@@ -61,6 +61,11 @@ if (ENABLE_WARNING_ERROR)
 	CheckCXXFlag(-Werror)
 endif()
 
+CheckCXXFlag(-fmacro-prefix-map="${CMAKE_SOURCE_DIR}"="./")
+CheckCXXFlag(-fmacro-prefix-map="${CMAKE_BINARY_DIR}"="./build/")
+CheckCXXFlag(-ffile-prefix-map="${CMAKE_SOURCE_DIR}"="./")
+CheckCXXFlag(-ffile-prefix-map="${CMAKE_BINARY_DIR}"="./build")
+
 # https://stackoverflow.com/questions/4913922/possible-problems-with-nominmax-on-visual-c
 if (WIN32)
     add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-DNOMINMAX>)
