@@ -322,6 +322,7 @@ extern "C"
 	 *
 	 *  @since version 3.9.0
 	 */
+	WINPR_ATTR_MALLOC(free, 1)
 	WINPR_API char* winpr_GetConfigFilePath(BOOL system, const char* filename);
 
 	WINPR_API const char* GetKnownPathIdString(int id);

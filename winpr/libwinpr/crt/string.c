@@ -834,3 +834,15 @@ const WCHAR* InitializeConstWCharFromUtf8(const char* str, WCHAR* buffer, size_t
 	(void)ConvertUtf8ToWChar(str, buffer, len);
 	return buffer;
 }
+
+WCHAR* wcsndup(const WCHAR* s, size_t n)
+{
+	if (!s)
+		return NULL;
+
+	WCHAR* copy = calloc(n + 1, sizeof(WCHAR));
+	if (!copy)
+		return NULL;
+	memcpy(copy, s, n * sizeof(WCHAR));
+	return copy;
+}
