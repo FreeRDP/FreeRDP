@@ -1254,6 +1254,8 @@ void xf_ShowWindow(xfContext* xfc, xfAppWindow* appWindow, BYTE state)
 
 			XMapWindow(xfc->display, appWindow->handle);
 			break;
+		default:
+			break;
 	}
 
 	/* Save the current rail state of this window */

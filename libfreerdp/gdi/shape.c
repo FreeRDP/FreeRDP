@@ -180,14 +180,11 @@ BOOL gdi_FillRect(HGDI_DC hdc, const HGDI_RECT rect, HGDI_BRUSH hbr)
 			{
 				for (INT32 x = 0; x < nWidth; x++)
 				{
-					const UINT32 yOffset =
-					    ((nYDest + y) * hbr->pattern->width % hbr->pattern->height) * formatSize;
-					const UINT32 xOffset = ((nXDest + x) % hbr->pattern->width) * formatSize;
+					const size_t yOffset =
+					    ((1ULL * nYDest + y) * hbr->pattern->width % hbr->pattern->height) *
+					    formatSize;
+					const size_t xOffset = ((1ULL * nXDest + x) % hbr->pattern->width) * formatSize;
 					const BYTE* patp = &hbr->pattern->data[yOffset + xOffset];
-					BYTE* dstp = gdi_get_bitmap_pointer(hdc, nXDest + x, nYDest + y);
-
-					if (!patp)
-						return FALSE;
 
 					if (monochrome)
 					{
@@ -203,6 +200,7 @@ BOOL gdi_FillRect(HGDI_DC hdc, const HGDI_RECT rect, HGDI_BRUSH hbr)
 						    FreeRDPConvertColor(dstColor, hbr->pattern->format, hdc->format, NULL);
 					}
 
+					BYTE* dstp = gdi_get_bitmap_pointer(hdc, nXDest + x, nYDest + y);
 					if (dstp)
 						FreeRDPWriteColor(dstp, hdc->format, dstColor);
 				}

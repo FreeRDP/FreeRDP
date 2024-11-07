@@ -347,6 +347,8 @@ static UINT32 rpc_map_status_code_to_win32_error_code(UINT32 code)
 
 		case nca_s_fault_no_client_stub:
 			return nca_s_fault_no_client_stub;
+		default:
+			break;
 	}
 
 	return code;

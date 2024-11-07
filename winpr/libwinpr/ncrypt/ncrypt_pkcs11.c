@@ -242,6 +242,8 @@ static CK_RV object_load_attributes(NCryptP11ProviderHandle* provider, CK_SESSIO
 			         "] even after buffer allocation",
 			         CK_RV_error_string(rv), rv);
 			break;
+		default:
+			break;
 	}
 	return rv;
 }

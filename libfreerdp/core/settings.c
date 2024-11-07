@@ -721,7 +721,7 @@ static char* freerdp_settings_get_legacy_config_path(void)
 	char product[sizeof(FREERDP_PRODUCT_STRING)] = { 0 };
 
 	for (size_t i = 0; i < sizeof(product); i++)
-		product[i] = tolower(FREERDP_PRODUCT_STRING[i]);
+		product[i] = (char)tolower(FREERDP_PRODUCT_STRING[i]);
 
 	return GetKnownSubPath(KNOWN_PATH_XDG_CONFIG_HOME, product);
 }
@@ -1040,6 +1040,8 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 			case 9:
 				cache.cacheMaximumCellSize = 256;
 				break;
+			default:
+				goto out_fail;
 		}
 
 		if (!freerdp_settings_set_pointer_array(settings, FreeRDP_GlyphCache, x, &cache))

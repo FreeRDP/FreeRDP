@@ -79,8 +79,8 @@ extern "C"
 	{
 		ULONG ControlHandShake;
 		ULONG FlowReplace;
-		LONG XonLimit;
-		LONG XoffLimit;
+		WORD XonLimit;
+		WORD XoffLimit;
 	} SERIAL_HANDFLOW, *PSERIAL_HANDFLOW;
 
 #define SERIAL_DTR_MASK ((ULONG)0x03)

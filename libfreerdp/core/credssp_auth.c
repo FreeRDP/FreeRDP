@@ -413,6 +413,8 @@ int credssp_auth_authenticate(rdpCredsspAuth* auth)
 		case AUTH_STATE_FINAL:
 			WLog_ERR(TAG, "context in invalid state!");
 			return -1;
+		default:
+			break;
 	}
 
 	/* input buffer will be null on first call,

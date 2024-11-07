@@ -822,6 +822,8 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextW(
 					else
 						context->state = NEGOTIATE_STATE_FINAL;
 					break;
+				default:
+					break;
 			}
 
 			WLog_DBG(TAG, "Negotiated mechanism: %s", negotiate_mech_name(context->mech->oid));

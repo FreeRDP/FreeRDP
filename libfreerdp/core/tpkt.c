@@ -166,6 +166,8 @@ BOOL tpkt_write_header(wStream* s, size_t length)
 		return FALSE;
 	Stream_Write_UINT8(s, 3);          /* version */
 	Stream_Write_UINT8(s, 0);          /* reserved */
-	Stream_Write_UINT16_BE(s, length); /* length */
+
+	WINPR_ASSERT(length <= UINT16_MAX);
+	Stream_Write_UINT16_BE(s, (UINT16)length); /* length */
 	return TRUE;
 }

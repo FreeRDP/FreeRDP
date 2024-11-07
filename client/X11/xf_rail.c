@@ -1010,6 +1010,8 @@ static UINT xf_rail_server_local_move_size(RailClientContext* context,
 			y = localMoveSize->posY;
 			/* FIXME: local keyboard moves not working */
 			return CHANNEL_RC_OK;
+		default:
+			break;
 	}
 
 	if (localMoveSize->isMoveSizeStart)

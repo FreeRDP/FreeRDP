@@ -466,7 +466,7 @@ BOOL nego_send_preconnection_pdu(rdpNego* nego)
 			free(wszPCB);
 			return FALSE;
 		}
-		cchPCB = len;
+		cchPCB = (UINT16)len;
 		cchPCB += 1; /* zero-termination */
 		cbSize += cchPCB * sizeof(WCHAR);
 	}
@@ -842,6 +842,8 @@ int nego_recv(rdpTransport* transport, wStream* s, void* extra)
 				if (!nego_process_negotiation_failure(nego, s))
 					return -1;
 				break;
+			default:
+				return -1;
 		}
 	}
 	else if (li == 6)

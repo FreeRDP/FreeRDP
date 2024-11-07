@@ -118,6 +118,8 @@ static LONG smartcard_ndr_read(wStream* s, BYTE** data, size_t min, size_t eleme
 		case NDR_PTR_FIXED:
 			required = min;
 			break;
+		default:
+			return STATUS_INVALID_PARAMETER;
 	}
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, required))
@@ -153,6 +155,8 @@ static LONG smartcard_ndr_read(wStream* s, BYTE** data, size_t min, size_t eleme
 		case NDR_PTR_FIXED:
 			len = (UINT32)min;
 			break;
+		default:
+			return STATUS_INVALID_PARAMETER;
 	}
 
 	if (min > len)
@@ -223,6 +227,8 @@ static LONG smartcard_ndr_write(wStream* s, const BYTE* data, UINT32 size, UINT3
 		case NDR_PTR_FIXED:
 			required = 0;
 			break;
+		default:
+			return SCARD_E_INVALID_PARAMETER;
 	}
 
 	if (!Stream_EnsureRemainingCapacity(s, required + dataLen + 4))
@@ -240,6 +246,8 @@ static LONG smartcard_ndr_write(wStream* s, const BYTE* data, UINT32 size, UINT3
 			break;
 		case NDR_PTR_FIXED:
 			break;
+		default:
+			return SCARD_E_INVALID_PARAMETER;
 	}
 
 	if (data)

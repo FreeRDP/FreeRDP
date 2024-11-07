@@ -347,8 +347,11 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 		return FALSE;
 	}
 
+	const UINT32 port = settings->ServerPort;
+	WINPR_ASSERT(port <= UINT32_MAX);
+
 	nego_init(rdp->nego);
-	nego_set_target(rdp->nego, hostname, settings->ServerPort);
+	nego_set_target(rdp->nego, hostname, (UINT16)port);
 
 	if (settings->GatewayEnabled)
 	{

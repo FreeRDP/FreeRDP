@@ -139,6 +139,8 @@ static BOOL PipeRead(PVOID Object, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 			case EWOULDBLOCK:
 				SetLastError(ERROR_NO_DATA);
 				break;
+			default:
+				break;
 		}
 	}
 

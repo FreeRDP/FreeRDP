@@ -1149,6 +1149,8 @@ static BOOL xf_event_suppress_events(xfContext* xfc, xfAppWindow* appWindow, con
 		case LMS_TERMINATING:
 			/* Already sent RDP end move to server. Allow events to pass. */
 			break;
+		default:
+			break;
 	}
 
 	return FALSE;

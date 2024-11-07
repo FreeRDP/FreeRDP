@@ -348,7 +348,7 @@ static SYSTEMTIME tm2systemtime(const struct tm* t)
 
 	if (t)
 	{
-		st.wYear = (WORD)1900 + t->tm_year;
+		st.wYear = (WORD)(1900 + t->tm_year);
 		st.wMonth = (WORD)t->tm_mon + 1;
 		st.wDay = (WORD)t->tm_mday;
 		st.wDayOfWeek = (WORD)t->tm_wday;

@@ -348,6 +348,8 @@ static UINT enumerator_server_context_poll_int(CamDevEnumServerContext* context)
 		case ENUMERATOR_OPENED:
 			error = enumerator_process_message(enumerator);
 			break;
+		default:
+			break;
 	}
 
 	return error;
@@ -414,6 +416,8 @@ static DWORD WINAPI enumerator_server_thread_func(LPVOID arg)
 						error = ERROR_INTERNAL_ERROR;
 						break;
 				}
+				break;
+			default:
 				break;
 		}
 	}

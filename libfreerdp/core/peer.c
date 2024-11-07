@@ -93,7 +93,9 @@ static HANDLE freerdp_peer_virtual_channel_open(freerdp_peer* client, const char
 		return (HANDLE)peerChannel;
 	}
 
-	peerChannel = server_channel_common_new(client, index, mcsChannel->ChannelId, 128, NULL, name);
+	WINPR_ASSERT(index <= UINT16_MAX);
+	peerChannel =
+	    server_channel_common_new(client, (UINT16)index, mcsChannel->ChannelId, 128, NULL, name);
 
 	if (peerChannel)
 	{
@@ -187,7 +189,8 @@ static int freerdp_peer_virtual_channel_write(freerdp_peer* client, HANDLE hChan
 
 		Stream_Write(s, buffer, chunkSize);
 
-		if (!rdp_send(rdp, s, peerChannel->channelId))
+		WINPR_ASSERT(peerChannel->channelId <= UINT16_MAX);
+		if (!rdp_send(rdp, s, (UINT16)peerChannel->channelId))
 			return -1;
 
 		buffer += chunkSize;
@@ -1363,6 +1366,8 @@ static const char* os_major_type_to_string(UINT16 osMajorType)
 			return "Android platform";
 		case OSMAJORTYPE_CHROME_OS:
 			return "Chrome OS platform";
+		default:
+			break;
 	}
 
 	return "Unknown platform";
@@ -1408,6 +1413,8 @@ static const char* os_minor_type_to_string(UINT16 osMinorType)
 			return "Pseudo X Server";
 		case OSMINORTYPE_WINDOWS_RT:
 			return "Windows RT";
+		default:
+			break;
 	}
 
 	return "Unknown version";

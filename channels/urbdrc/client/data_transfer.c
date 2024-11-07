@@ -669,6 +669,8 @@ static UINT urb_control_transfer(IUDEVICE* pdev, GENERIC_CHANNEL_CALLBACK* callb
 
 		case URB_CONTROL_TRANSFER_NONEXTERNAL:
 			break;
+		default:
+			break;
 	}
 
 	/** SetupPacket 8 bytes */
@@ -1178,6 +1180,8 @@ static UINT urb_os_feature_descriptor_request(IUDEVICE* pdev, GENERIC_CHANNEL_CA
 
 		case USBD_TRANSFER_DIRECTION_IN:
 			break;
+		default:
+			break;
 	}
 
 	WLog_Print(urbdrc->log, WLOG_DEBUG,
@@ -1528,6 +1532,8 @@ static UINT urb_control_feature_request(IUDEVICE* pdev, GENERIC_CHANNEL_CALLBACK
 
 		case USBD_TRANSFER_DIRECTION_IN:
 			bmRequestType |= 0x80;
+			break;
+		default:
 			break;
 	}
 

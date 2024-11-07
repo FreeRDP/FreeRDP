@@ -323,6 +323,12 @@ static const BYTE GDI_BS_HATCHED_PATTERNS[] = {
 	0x7E, 0xBD, 0xDB, 0xE7, 0xE7, 0xDB, 0xBD, 0x7E  /* HS_DIACROSS */
 };
 
+static inline DWORD gdi_rop3_code_checked(UINT32 code)
+{
+	WINPR_ASSERT(code <= UINT8_MAX);
+	return gdi_rop3_code((UINT8)code);
+}
+
 BOOL gdi_decode_color(rdpGdi* gdi, const UINT32 srcColor, UINT32* color, UINT32* format)
 {
 	UINT32 SrcFormat = 0;
@@ -571,7 +577,8 @@ static BOOL gdi_dstblt(rdpContext* context, const DSTBLT_ORDER* dstblt)
 
 	gdi = context->gdi;
 	return gdi_BitBlt(gdi->drawing->hdc, dstblt->nLeftRect, dstblt->nTopRect, dstblt->nWidth,
-	                  dstblt->nHeight, NULL, 0, 0, gdi_rop3_code(dstblt->bRop), &gdi->palette);
+	                  dstblt->nHeight, NULL, 0, 0, gdi_rop3_code_checked(dstblt->bRop),
+	                  &gdi->palette);
 }
 
 static BOOL gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
@@ -584,7 +591,7 @@ static BOOL gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 	HGDI_BRUSH hbrush = NULL;
 	rdpGdi* gdi = context->gdi;
 	BOOL ret = FALSE;
-	const DWORD rop = gdi_rop3_code(patblt->bRop);
+	const DWORD rop = gdi_rop3_code_checked(patblt->bRop);
 	INT32 nXSrc = 0;
 	INT32 nYSrc = 0;
 	BYTE data[8 * 8 * 4];
@@ -691,7 +698,7 @@ static BOOL gdi_scrblt(rdpContext* context, const SCRBLT_ORDER* scrblt)
 	gdi = context->gdi;
 	return gdi_BitBlt(gdi->drawing->hdc, scrblt->nLeftRect, scrblt->nTopRect, scrblt->nWidth,
 	                  scrblt->nHeight, gdi->primary->hdc, scrblt->nXSrc, scrblt->nYSrc,
-	                  gdi_rop3_code(scrblt->bRop), &gdi->palette);
+	                  gdi_rop3_code_checked(scrblt->bRop), &gdi->palette);
 }
 
 static BOOL gdi_opaque_rect(rdpContext* context, const OPAQUE_RECT_ORDER* opaque_rect)
@@ -834,7 +841,7 @@ static BOOL gdi_memblt(rdpContext* context, MEMBLT_ORDER* memblt)
 	gdi = context->gdi;
 	return gdi_BitBlt(gdi->drawing->hdc, memblt->nLeftRect, memblt->nTopRect, memblt->nWidth,
 	                  memblt->nHeight, bitmap->hdc, memblt->nXSrc, memblt->nYSrc,
-	                  gdi_rop3_code(memblt->bRop), &gdi->palette);
+	                  gdi_rop3_code_checked(memblt->bRop), &gdi->palette);
 }
 
 static BOOL gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
@@ -870,7 +877,7 @@ static BOOL gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 
 			ret = gdi_BitBlt(gdi->drawing->hdc, mem3blt->nLeftRect, mem3blt->nTopRect,
 			                 mem3blt->nWidth, mem3blt->nHeight, bitmap->hdc, mem3blt->nXSrc,
-			                 mem3blt->nYSrc, gdi_rop3_code(mem3blt->bRop), &gdi->palette);
+			                 mem3blt->nYSrc, gdi_rop3_code_checked(mem3blt->bRop), &gdi->palette);
 			gdi_DeleteObject((HGDIOBJECT)gdi->drawing->hdc->brush);
 			gdi->drawing->hdc->brush = originalBrush;
 			break;
@@ -942,7 +949,7 @@ static BOOL gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 			gdi->drawing->hdc->brush->nYOrg = brush->y;
 			ret = gdi_BitBlt(gdi->drawing->hdc, mem3blt->nLeftRect, mem3blt->nTopRect,
 			                 mem3blt->nWidth, mem3blt->nHeight, bitmap->hdc, mem3blt->nXSrc,
-			                 mem3blt->nYSrc, gdi_rop3_code(mem3blt->bRop), &gdi->palette);
+			                 mem3blt->nYSrc, gdi_rop3_code_checked(mem3blt->bRop), &gdi->palette);
 			gdi_DeleteObject((HGDIOBJECT)gdi->drawing->hdc->brush);
 			gdi_DeleteObject((HGDIOBJECT)hBmp);
 			gdi->drawing->hdc->brush = originalBrush;
@@ -1006,6 +1013,8 @@ static BOOL gdi_surface_frame_marker(rdpContext* context,
 				       surfaceFrameMarker->frameId);
 			}
 
+			break;
+		default:
 			break;
 	}
 

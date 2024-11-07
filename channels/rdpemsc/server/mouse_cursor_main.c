@@ -305,6 +305,8 @@ static UINT mouse_cursor_server_context_poll_int(MouseCursorServerContext* conte
 		case MOUSE_CURSOR_OPENED:
 			error = mouse_cursor_process_message(mouse_cursor);
 			break;
+		default:
+			break;
 	}
 
 	return error;
@@ -371,6 +373,8 @@ static DWORD WINAPI mouse_cursor_server_thread_func(LPVOID arg)
 						error = ERROR_INTERNAL_ERROR;
 						break;
 				}
+				break;
+			default:
 				break;
 		}
 	}
@@ -495,8 +499,11 @@ static wStream* mouse_cursor_server_packet_new(size_t size, RDP_MOUSE_CURSOR_PDU
 		return NULL;
 	}
 
-	Stream_Write_UINT8(s, pduType);
-	Stream_Write_UINT8(s, header->updateType);
+	WINPR_ASSERT(pduType <= UINT8_MAX);
+	Stream_Write_UINT8(s, (BYTE)pduType);
+
+	WINPR_ASSERT(header->updateType <= UINT8_MAX);
+	Stream_Write_UINT8(s, (BYTE)header->updateType);
 	Stream_Write_UINT16(s, header->reserved);
 
 	return s;

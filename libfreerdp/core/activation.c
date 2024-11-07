@@ -273,11 +273,9 @@ static BOOL rdp_write_client_persistent_key_list_pdu(wStream* s,
 	return TRUE;
 }
 
-static UINT32 rdp_load_persistent_key_list(rdpRdp* rdp, UINT64** pKeyList)
+static UINT16 rdp_load_persistent_key_list(rdpRdp* rdp, UINT64** pKeyList)
 {
-	int count = 0;
-	int status = 0;
-	UINT32 keyCount = 0;
+	UINT16 keyCount = 0;
 	UINT64* keyList = NULL;
 	rdpPersistentCache* persistent = NULL;
 	rdpSettings* settings = rdp->settings;
@@ -295,14 +293,17 @@ static UINT32 rdp_load_persistent_key_list(rdpRdp* rdp, UINT64** pKeyList)
 	if (!persistent)
 		return 0;
 
-	status = persistent_cache_open(persistent, settings->BitmapCachePersistFile, FALSE, 0);
+	const int status =
+	    persistent_cache_open(persistent, settings->BitmapCachePersistFile, FALSE, 0);
 
 	if (status < 1)
 		goto error;
 
-	count = persistent_cache_get_count(persistent);
+	const int count = persistent_cache_get_count(persistent);
+	if ((count < 0) || (count > UINT16_MAX))
+		goto error;
 
-	keyCount = (UINT32)count;
+	keyCount = (UINT16)count;
 	keyList = (UINT64*)calloc(keyCount, sizeof(UINT64));
 
 	if (!keyList)
@@ -348,11 +349,20 @@ BOOL rdp_send_client_persistent_key_list_pdu(rdpRdp* rdp)
 	if (keyCount > keyMaxFrag)
 		keyCount = keyMaxFrag;
 
-	info.totalEntriesCache0 = settings->BitmapCacheV2CellInfo[0].numEntries;
-	info.totalEntriesCache1 = settings->BitmapCacheV2CellInfo[1].numEntries;
-	info.totalEntriesCache2 = settings->BitmapCacheV2CellInfo[2].numEntries;
-	info.totalEntriesCache3 = settings->BitmapCacheV2CellInfo[3].numEntries;
-	info.totalEntriesCache4 = settings->BitmapCacheV2CellInfo[4].numEntries;
+	WINPR_ASSERT(settings->BitmapCacheV2CellInfo[0].numEntries <= UINT16_MAX);
+	info.totalEntriesCache0 = (UINT16)settings->BitmapCacheV2CellInfo[0].numEntries;
+
+	WINPR_ASSERT(settings->BitmapCacheV2CellInfo[1].numEntries <= UINT16_MAX);
+	info.totalEntriesCache1 = (UINT16)settings->BitmapCacheV2CellInfo[1].numEntries;
+
+	WINPR_ASSERT(settings->BitmapCacheV2CellInfo[2].numEntries <= UINT16_MAX);
+	info.totalEntriesCache2 = (UINT16)settings->BitmapCacheV2CellInfo[2].numEntries;
+
+	WINPR_ASSERT(settings->BitmapCacheV2CellInfo[3].numEntries <= UINT16_MAX);
+	info.totalEntriesCache3 = (UINT16)settings->BitmapCacheV2CellInfo[3].numEntries;
+
+	WINPR_ASSERT(settings->BitmapCacheV2CellInfo[4].numEntries <= UINT16_MAX);
+	info.totalEntriesCache4 = (UINT16)settings->BitmapCacheV2CellInfo[4].numEntries;
 
 	info.numEntriesCache0 = MIN(keyCount, info.totalEntriesCache0);
 	keyCount -= info.numEntriesCache0;

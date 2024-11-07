@@ -571,6 +571,9 @@ int websocket_read(BIO* bio, BYTE* pBuffer, size_t size, websocket_context* enco
 				pBuffer += status;
 				size -= status;
 			}
+			break;
+			default:
+				break;
 		}
 	}
 	/* should be unreachable */

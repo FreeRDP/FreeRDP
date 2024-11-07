@@ -385,7 +385,7 @@ bool SDLConnectionDialog::createWindow()
 		                 SDL3ResourceManager::get(SDLResourceManager::typeImages(), res_name) } };
 	_list.emplace_back(std::move(icon));
 
-	iconRect.y += height;
+	iconRect.y += static_cast<float>(height);
 
 	widget_cfg_t logo{ textcolor,
 		               backgroundcolor,

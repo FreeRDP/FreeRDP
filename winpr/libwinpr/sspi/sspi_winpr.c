@@ -1075,6 +1075,8 @@ static void sspi_ContextBufferFree(void* contextBuffer)
 				case QuerySecurityPackageInfoIndex:
 					FreeContextBuffer_QuerySecurityPackageInfo(contextBuffer);
 					break;
+				default:
+					break;
 			}
 		}
 	}

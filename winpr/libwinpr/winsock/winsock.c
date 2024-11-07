@@ -495,6 +495,8 @@ void WSASetLastError(int iError)
 		case WSAEREMOTE:
 			errno = EREMOTE;
 			break;
+		default:
+			break;
 	}
 }
 
@@ -693,6 +695,8 @@ int WSAGetLastError(void)
 			iError = WSAECONNRESET;
 			break;
 #endif
+		default:
+			break;
 	}
 
 	/**
@@ -1215,6 +1219,8 @@ int _shutdown(SOCKET s, int how)
 
 		case SD_BOTH:
 			s_how = SHUT_RDWR;
+			break;
+		default:
 			break;
 	}
 

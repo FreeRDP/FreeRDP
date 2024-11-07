@@ -164,6 +164,8 @@ static int bio_rdp_tls_write(BIO* bio, const char* buf, int size)
 			case SSL_ERROR_SSL:
 				BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
 				break;
+			default:
+				break;
 		}
 	}
 
@@ -187,6 +189,7 @@ static int bio_rdp_tls_read(BIO* bio, char* buf, int size)
 
 	if (status <= 0)
 	{
+
 		switch (error)
 		{
 			case SSL_ERROR_NONE:
@@ -226,6 +229,8 @@ static int bio_rdp_tls_read(BIO* bio, char* buf, int size)
 
 			case SSL_ERROR_SYSCALL:
 				BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
+				break;
+			default:
 				break;
 		}
 	}
@@ -969,7 +974,9 @@ TlsHandshakeResult freerdp_tls_handshake(rdpTls* tls)
 
 		if (tls->isClientMode)
 		{
-			verify_status = tls_verify_certificate(tls, cert, tls_get_server_name(tls), tls->port);
+			WINPR_ASSERT(tls->port <= UINT16_MAX);
+			verify_status =
+			    tls_verify_certificate(tls, cert, tls_get_server_name(tls), (UINT16)tls->port);
 
 			if (verify_status < 1)
 			{
@@ -1046,6 +1053,8 @@ int freerdp_tls_connect(rdpTls* tls, BIO* underlying)
 			break;
 		case TLS_HANDSHAKE_ERROR:
 		case TLS_HANDSHAKE_VERIFY_ERROR:
+			return -1;
+		default:
 			return -1;
 	}
 

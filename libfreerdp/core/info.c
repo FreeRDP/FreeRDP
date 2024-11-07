@@ -537,11 +537,11 @@ static BOOL rdp_write_extended_info_packet(rdpRdp* rdp, wStream* s)
 		goto fail;
 
 	Stream_Write_UINT16(s, clientAddressFamily); /* clientAddressFamily (2 bytes) */
-	Stream_Write_UINT16(s, cbClientAddress);     /* cbClientAddress (2 bytes) */
+	Stream_Write_UINT16(s, (UINT16)cbClientAddress); /* cbClientAddress (2 bytes) */
 
 	Stream_Write(s, clientAddress, cbClientAddress); /* clientAddress */
 
-	Stream_Write_UINT16(s, cbClientDir); /* cbClientDir (2 bytes) */
+	Stream_Write_UINT16(s, (UINT16)cbClientDir); /* cbClientDir (2 bytes) */
 
 	Stream_Write(s, clientDir, cbClientDir); /* clientDir */
 

@@ -501,6 +501,8 @@ static UINT device_server_context_poll_int(CameraDeviceServerContext* context)
 		case CAMERA_DEVICE_OPENED:
 			error = device_process_message(device);
 			break;
+		default:
+			break;
 	}
 
 	return error;
@@ -567,6 +569,8 @@ static DWORD WINAPI device_server_thread_func(LPVOID arg)
 						error = ERROR_INTERNAL_ERROR;
 						break;
 				}
+				break;
+			default:
 				break;
 		}
 	}

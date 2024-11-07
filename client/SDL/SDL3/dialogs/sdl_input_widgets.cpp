@@ -109,8 +109,8 @@ bool SdlInputWidgetList::update(SDL_Renderer* renderer)
 
 ssize_t SdlInputWidgetList::get_index(const SDL_MouseButtonEvent& button)
 {
-	const Sint32 x = button.x;
-	const Sint32 y = button.y;
+	const auto x = button.x;
+	const auto y = button.y;
 	for (size_t i = 0; i < _list.size(); i++)
 	{
 		auto& cur = _list[i];

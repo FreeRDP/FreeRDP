@@ -453,6 +453,8 @@ const char* GetSecurityStatusString(SECURITY_STATUS status)
 
 		case SEC_I_NO_RENEGOTIATION:
 			return "SEC_I_NO_RENEGOTIATION";
+		default:
+			break;
 	}
 
 	return NtStatus2Tag((DWORD)status);
@@ -476,6 +478,8 @@ BOOL IsSecurityStatusError(SECURITY_STATUS status)
 		case SEC_I_SIGNATURE_NEEDED:
 		case SEC_I_NO_RENEGOTIATION:
 			error = FALSE;
+			break;
+		default:
 			break;
 	}
 

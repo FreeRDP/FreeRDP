@@ -2029,6 +2029,8 @@ static VOID VCAPITYPE rdpdr_virtual_channel_open_event_ex(LPVOID lpUserParam, DW
 
 		case CHANNEL_EVENT_USER:
 			break;
+		default:
+			break;
 	}
 
 	if (error && rdpdr && rdpdr->rdpcontext)

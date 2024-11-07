@@ -258,14 +258,14 @@ static BOOL check_no_proxy(rdpSettings* settings, const char* no_proxy)
 							struct sockaddr_in mask;
 
 							if (inet_pton(AF_INET, current, &mask.sin_addr))
-								result = cidr4_match(&sa4.sin_addr, &mask.sin_addr, sub);
+								result = cidr4_match(&sa4.sin_addr, &mask.sin_addr, (UINT8)sub);
 						}
 						else if (is_ipv6)
 						{
 							struct sockaddr_in6 mask;
 
 							if (inet_pton(AF_INET6, current, &mask.sin6_addr))
-								result = cidr6_match(&sa6.sin6_addr, &mask.sin6_addr, sub);
+								result = cidr6_match(&sa6.sin6_addr, &mask.sin6_addr, (UINT8)sub);
 						}
 					}
 					else
@@ -766,7 +766,7 @@ static BOOL socks_proxy_connect(rdpContext* context, BIO* bufferedBio, const cha
                                 const char* proxyPassword, const char* hostname, UINT16 port)
 {
 	int status = 0;
-	int nauthMethods = 1;
+	BYTE nauthMethods = 1;
 	int writeLen = 3;
 	BYTE buf[3 + 255 + 255] = { 0 }; /* biggest packet is user/pass auth */
 	const size_t hostnlen = strnlen(hostname, 255);

@@ -672,6 +672,8 @@ const CHAR* WTSSessionStateToString(WTS_CONNECTSTATE_CLASS state)
 			return "WTSDown";
 		case WTSInit:
 			return "WTSInit";
+		default:
+			break;
 	}
 	return "INVALID_STATE";
 }

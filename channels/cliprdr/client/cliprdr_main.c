@@ -967,6 +967,8 @@ static VOID VCAPITYPE cliprdr_virtual_channel_open_event_ex(LPVOID lpUserParam, 
 
 		case CHANNEL_EVENT_USER:
 			break;
+		default:
+			break;
 	}
 
 	if (error && cliprdr && cliprdr->context->rdpcontext)
@@ -1086,7 +1088,8 @@ static VOID VCAPITYPE cliprdr_virtual_channel_init_event_ex(LPVOID lpUserParam, 
 				WLog_ERR(TAG,
 				         "cliprdr_virtual_channel_event_terminated failed with error %" PRIu32 "!",
 				         error);
-
+			break;
+		default:
 			break;
 	}
 

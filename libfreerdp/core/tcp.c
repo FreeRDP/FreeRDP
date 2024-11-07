@@ -1201,9 +1201,10 @@ int freerdp_tcp_default_connect(rdpContext* context, rdpSettings* settings, cons
 			{
 				if (settings->TargetNetAddressCount > 0)
 				{
+					WINPR_ASSERT(port <= UINT16_MAX);
 					sockfd = freerdp_tcp_connect_multi(
 					    context, settings->TargetNetAddresses, settings->TargetNetPorts,
-					    settings->TargetNetAddressCount, port, timeout);
+					    settings->TargetNetAddressCount, (UINT16)port, timeout);
 				}
 			}
 		}

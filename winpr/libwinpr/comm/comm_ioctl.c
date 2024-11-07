@@ -595,6 +595,8 @@ static BOOL s_CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID 
 			}
 			break;
 		}
+		default:
+			break;
 	}
 
 	CommLog_Print(

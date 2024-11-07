@@ -31,13 +31,13 @@ bool SdlButtonList::populate(SDL_Renderer* renderer, const std::vector<std::stri
 
 SdlButton* SdlButtonList::get_selected(const SDL_MouseButtonEvent& button)
 {
-	const Sint32 x = button.x;
-	const Sint32 y = button.y;
+	const auto x = button.x;
+	const auto y = button.y;
 
 	return get_selected(x, y);
 }
 
-SdlButton* SdlButtonList::get_selected(Sint32 x, Sint32 y)
+SdlButton* SdlButtonList::get_selected(float x, float y)
 {
 	for (auto& btn : _list)
 	{
@@ -75,7 +75,7 @@ bool SdlButtonList::set_highlight(size_t index)
 	return true;
 }
 
-bool SdlButtonList::set_mouseover(Sint32 x, Sint32 y)
+bool SdlButtonList::set_mouseover(float x, float y)
 {
 	_mouseover = get_selected(x, y);
 	return _mouseover != nullptr;

@@ -761,18 +761,18 @@ RPC_STATUS UuidFromStringA(RPC_CSTR StringUuid, UUID* Uuid)
 			return RPC_S_INVALID_STRING_UUID;
 	}
 
-	Uuid->Data1 = ((bin[0] << 28) | (bin[1] << 24) | (bin[2] << 20) | (bin[3] << 16) |
-	               (bin[4] << 12) | (bin[5] << 8) | (bin[6] << 4) | bin[7]);
-	Uuid->Data2 = ((bin[9] << 12) | (bin[10] << 8) | (bin[11] << 4) | bin[12]);
-	Uuid->Data3 = ((bin[14] << 12) | (bin[15] << 8) | (bin[16] << 4) | bin[17]);
-	Uuid->Data4[0] = ((bin[19] << 4) | bin[20]);
-	Uuid->Data4[1] = ((bin[21] << 4) | bin[22]);
-	Uuid->Data4[2] = ((bin[24] << 4) | bin[25]);
-	Uuid->Data4[3] = ((bin[26] << 4) | bin[27]);
-	Uuid->Data4[4] = ((bin[28] << 4) | bin[29]);
-	Uuid->Data4[5] = ((bin[30] << 4) | bin[31]);
-	Uuid->Data4[6] = ((bin[32] << 4) | bin[33]);
-	Uuid->Data4[7] = ((bin[34] << 4) | bin[35]);
+	Uuid->Data1 = (UINT32)((bin[0] << 28) | (bin[1] << 24) | (bin[2] << 20) | (bin[3] << 16) |
+	                       (bin[4] << 12) | (bin[5] << 8) | (bin[6] << 4) | bin[7]);
+	Uuid->Data2 = (UINT16)((bin[9] << 12) | (bin[10] << 8) | (bin[11] << 4) | bin[12]);
+	Uuid->Data3 = (UINT16)((bin[14] << 12) | (bin[15] << 8) | (bin[16] << 4) | bin[17]);
+	Uuid->Data4[0] = (UINT8)((bin[19] << 4) | bin[20]);
+	Uuid->Data4[1] = (UINT8)((bin[21] << 4) | bin[22]);
+	Uuid->Data4[2] = (UINT8)((bin[24] << 4) | bin[25]);
+	Uuid->Data4[3] = (UINT8)((bin[26] << 4) | bin[27]);
+	Uuid->Data4[4] = (UINT8)((bin[28] << 4) | bin[29]);
+	Uuid->Data4[5] = (UINT8)((bin[30] << 4) | bin[31]);
+	Uuid->Data4[6] = (UINT8)((bin[32] << 4) | bin[33]);
+	Uuid->Data4[7] = (UINT8)((bin[34] << 4) | bin[35]);
 	return RPC_S_OK;
 }
 

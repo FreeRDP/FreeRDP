@@ -86,6 +86,8 @@ BOOL freerdp_settings_clone_keys(rdpSettings* dst, const rdpSettings* src)
 					return FALSE;
 			}
 			break;
+			default:
+				return FALSE;
 		}
 	}
 	return TRUE;
@@ -234,6 +236,8 @@ BOOL freerdp_settings_print_diff(wLog* log, DWORD level, const rdpSettings* sett
 				}
 			}
 			break;
+			default:
+				break;
 		}
 	}
 	return rc;
@@ -312,6 +316,8 @@ void freerdp_settings_dump(wLog* log, DWORD level, const rdpSettings* settings)
 				WLog_Print(log, level, "%s [POINTER]: '%p'", cur->str, sval);
 			}
 			break;
+			default:
+				break;
 		}
 	}
 }
@@ -332,6 +338,8 @@ void freerdp_settings_free_keys(rdpSettings* dst, BOOL cleanup)
 			case FREERDP_SETTINGS_TYPE_POINTER: /* pointer */
 				(void)freerdp_settings_set_pointer_len(dst, (FreeRDP_Settings_Keys_Pointer)cur->id,
 				                                       NULL, 0);
+				break;
+			default:
 				break;
 		}
 	}

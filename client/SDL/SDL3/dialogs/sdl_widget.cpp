@@ -120,8 +120,8 @@ SDL_Texture* SdlWidget::render_text(SDL_Renderer* renderer, const std::string& t
 		return nullptr;
 	}
 
-	src.w = w;
-	src.h = h;
+	src.w = static_cast<float>(w);
+	src.h = static_cast<float>(h);
 	/* Do some magic:
 	 * - Add padding before and after text
 	 * - if text is too long only show the last elements

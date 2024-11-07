@@ -378,6 +378,8 @@ static INLINE char* base64_encode_ex(const BYTE* WINPR_RESTRICT alphabet,
 			if (pad)
 				*p++ = '=';
 			break;
+		default:
+			break;
 	}
 
 	if (crLf && length % 3)
@@ -408,11 +410,8 @@ static INLINE void* base64_decode(const signed char* WINPR_RESTRICT alphabet,
                                   const char* WINPR_RESTRICT s, size_t length,
                                   size_t* WINPR_RESTRICT data_len, BOOL pad)
 {
-	int n[4];
-	BYTE* q = NULL;
+	int n[4] = { 0 };
 	BYTE* data = NULL;
-	size_t nBlocks = 0;
-	size_t outputLen = 0;
 	const size_t remainder = length % 4;
 
 	if ((pad && remainder > 0) || (remainder == 1))
@@ -421,13 +420,13 @@ static INLINE void* base64_decode(const signed char* WINPR_RESTRICT alphabet,
 	if (!pad && remainder)
 		length += 4 - remainder;
 
-	q = data = (BYTE*)malloc(length / 4 * 3 + 1);
+	BYTE* q = data = (BYTE*)malloc(length / 4 * 3 + 1);
 	if (!q)
 		return NULL;
 
 	/* first treat complete blocks */
-	nBlocks = (length / 4);
-	outputLen = 0;
+	const size_t nBlocks = (length / 4);
+	size_t outputLen = 0;
 
 	if (nBlocks < 1)
 	{
@@ -445,9 +444,9 @@ static INLINE void* base64_decode(const signed char* WINPR_RESTRICT alphabet,
 		if ((n[0] == -1) || (n[1] == -1) || (n[2] == -1) || (n[3] == -1))
 			goto out_free;
 
-		q[0] = (n[0] << 2) + (n[1] >> 4);
-		q[1] = ((n[1] & 15) << 4) + (n[2] >> 2);
-		q[2] = ((n[2] & 3) << 6) + n[3];
+		q[0] = (BYTE)((n[0] << 2) + (n[1] >> 4));
+		q[1] = (BYTE)(((n[1] & 15) << 4) + (n[2] >> 2));
+		q[2] = (BYTE)(((n[2] & 3) << 6) + n[3]);
 		outputLen += 3;
 	}
 
@@ -460,7 +459,7 @@ static INLINE void* base64_decode(const signed char* WINPR_RESTRICT alphabet,
 	n[2] = remainder == 2 ? -1 : base64_decode_char(alphabet, *s++);
 	n[3] = remainder >= 2 ? -1 : base64_decode_char(alphabet, *s++);
 
-	q[0] = (n[0] << 2) + (n[1] >> 4);
+	q[0] = (BYTE)((n[0] << 2) + (n[1] >> 4));
 	if (n[2] == -1)
 	{
 		/* XX== */
@@ -468,22 +467,22 @@ static INLINE void* base64_decode(const signed char* WINPR_RESTRICT alphabet,
 		if (n[3] != -1)
 			goto out_free;
 
-		q[1] = ((n[1] & 15) << 4);
+		q[1] = (BYTE)((n[1] & 15) << 4);
 	}
 	else if (n[3] == -1)
 	{
 		/* yyy= */
 		outputLen += 2;
-		q[1] = ((n[1] & 15) << 4) + (n[2] >> 2);
-		q[2] = ((n[2] & 3) << 6);
+		q[1] = (BYTE)(((n[1] & 15) << 4) + (n[2] >> 2));
+		q[2] = (BYTE)((n[2] & 3) << 6);
 	}
 	else
 	{
 		/* XXXX */
 		outputLen += 3;
-		q[0] = (n[0] << 2) + (n[1] >> 4);
-		q[1] = ((n[1] & 15) << 4) + (n[2] >> 2);
-		q[2] = ((n[2] & 3) << 6) + n[3];
+		q[0] = (BYTE)((n[0] << 2) + (n[1] >> 4));
+		q[1] = (BYTE)(((n[1] & 15) << 4) + (n[2] >> 2));
+		q[2] = (BYTE)(((n[2] & 3) << 6) + n[3]);
 	}
 
 	if (data_len)
