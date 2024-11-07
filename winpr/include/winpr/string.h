@@ -427,8 +427,22 @@ extern "C"
 	WINPR_API INT64 GetLine(char** lineptr, size_t* size, FILE* stream);
 
 #if !defined(WINPR_HAVE_STRNDUP)
+	WINPR_ATTR_MALLOC(free, 1)
 	WINPR_API char* strndup(const char* s, size_t n);
 #endif
+
+	/** @brief WCHAR version of \b strndup
+	 *  creates a copy of a \b WCHAR string of \b n characters length. The copy will always be \b \0
+	 * terminated
+	 *
+	 *  @param s The \b WCHAR string to copy
+	 *  @param n The numer of WCHAR to copy
+	 *
+	 *  @return An allocated copy of \b s, always \b \0 terminated
+	 *  @since version 3.10.0
+	 */
+	WINPR_ATTR_MALLOC(free, 1)
+	WINPR_API WCHAR* wcsndup(const WCHAR* s, size_t n);
 
 #ifdef __cplusplus
 }
