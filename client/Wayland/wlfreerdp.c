@@ -478,7 +478,7 @@ static int wlfreerdp_run(freerdp* instance)
 	HANDLE handles[MAXIMUM_WAIT_OBJECTS] = { 0 };
 	DWORD status = WAIT_ABANDONED;
 	HANDLE timer = NULL;
-	LARGE_INTEGER due;
+	LARGE_INTEGER due = { 0 };
 
 	TimerEventArgs timerEvent;
 	EventArgsInit(&timerEvent, "xfreerdp");

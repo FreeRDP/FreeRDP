@@ -48,7 +48,7 @@
 #include "../log.h"
 #define TAG WINPR_TAG("smartcard")
 
-#define WINSCARD_LOAD_PROC_EX(module, pcsc, _fname, _name, ...)              \
+#define WINSCARD_LOAD_PROC_EX(module, pcsc, _fname, _name)                   \
 	do                                                                       \
 	{                                                                        \
 		WINPR_PRAGMA_DIAG_PUSH                                               \
@@ -57,8 +57,7 @@
 		WINPR_PRAGMA_DIAG_POP                                                \
 	} while (0)
 
-#define WINSCARD_LOAD_PROC(module, pcsc, _name, ...) \
-	WINSCARD_LOAD_PROC_EX(module, pcsc, _name, _name, ##__VA_ARGS__)
+#define WINSCARD_LOAD_PROC(module, pcsc, _name) WINSCARD_LOAD_PROC_EX(module, pcsc, _name, _name)
 
 /**
  * PC/SC transactions:

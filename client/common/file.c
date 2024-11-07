@@ -2310,7 +2310,8 @@ BOOL freerdp_client_populate_settings_from_rdp_file(const rdpFile* file, rdpSett
 		size_t count = 0;
 
 		char** ptr = CommandLineParseCommaSeparatedValuesEx(LOCATION_CHANNEL_NAME, NULL, &count);
-		const BOOL rc = freerdp_client_add_dynamic_channel(settings, count, (const char**)ptr);
+		const BOOL rc =
+		    freerdp_client_add_dynamic_channel(settings, count, (const char* const*)ptr);
 		CommandLineParserFree(ptr);
 		if (!rc)
 			return FALSE;

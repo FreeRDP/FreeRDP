@@ -284,6 +284,7 @@ int SdlInputWidgetList::run(std::vector<std::string>& result)
 	}
 	catch (...)
 	{
+		res = -2;
 	}
 
 	return res;

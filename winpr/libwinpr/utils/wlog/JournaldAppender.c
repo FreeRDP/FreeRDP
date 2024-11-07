@@ -112,8 +112,12 @@ static BOOL WLog_JournaldAppender_WriteMessage(wLog* log, wLogAppender* appender
 	WLog_Layout_GetMessagePrefix(log, appender->Layout, message);
 
 	if (message->Level != WLOG_OFF)
-		(void)fprintf(journaldAppender->stream, formatStr, message->PrefixString,
-		              message->TextString);
+	{
+		WINPR_PRAGMA_DIAG_PUSH
+		WINPR_PRAGMA_DIAG_IGNORED_FORMAT_NONLITERAL(void)
+		fprintf(journaldAppender->stream, formatStr, message->PrefixString, message->TextString);
+		WINPR_PRAGMA_DIAG_POP
+	}
 	return TRUE;
 }
 

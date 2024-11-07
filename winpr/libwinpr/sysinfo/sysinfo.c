@@ -1001,8 +1001,8 @@ BOOL IsProcessorFeaturePresent(DWORD ProcessorFeature)
 DWORD GetTickCountPrecise(void)
 {
 #ifdef _WIN32
-	LARGE_INTEGER freq;
-	LARGE_INTEGER current;
+	LARGE_INTEGER freq = { 0 };
+	LARGE_INTEGER current = { 0 };
 	QueryPerformanceFrequency(&freq);
 	QueryPerformanceCounter(&current);
 	return (DWORD)(current.QuadPart * 1000LL / freq.QuadPart);

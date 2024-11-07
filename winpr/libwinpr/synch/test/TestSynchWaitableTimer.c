@@ -7,7 +7,7 @@ int TestSynchWaitableTimer(int argc, char* argv[])
 	DWORD status = 0;
 	HANDLE timer = NULL;
 	LONG period = 0;
-	LARGE_INTEGER due;
+	LARGE_INTEGER due = { 0 };
 	int result = -1;
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);

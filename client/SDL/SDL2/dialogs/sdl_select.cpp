@@ -42,11 +42,7 @@ SdlSelectWidget::SdlSelectWidget(SDL_Renderer* renderer, std::string label, SDL_
 	update_text(renderer);
 }
 
-SdlSelectWidget::SdlSelectWidget(SdlSelectWidget&& other) noexcept
-    : SdlWidget(std::move(other)), _text(std::move(other._text)), _mouseover(other._mouseover),
-      _highlight(other._highlight)
-{
-}
+SdlSelectWidget::SdlSelectWidget(SdlSelectWidget&& other) noexcept = default;
 
 SdlSelectWidget::~SdlSelectWidget() = default;
 

@@ -1030,9 +1030,9 @@ static BOOL http_response_parse_header(HttpResponse* response)
 				break;
 		}
 
-		const int rc = http_response_parse_header_field(response, name, value);
+		const int res = http_response_parse_header_field(response, name, value);
 		*end_of_header = end_of_header_char;
-		if (!rc)
+		if (!res)
 			goto fail;
 	}
 

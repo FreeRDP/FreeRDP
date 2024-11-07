@@ -392,7 +392,7 @@ fail:
 
 BOOL drive_file_seek(DRIVE_FILE* file, UINT64 Offset)
 {
-	LARGE_INTEGER loffset;
+	LARGE_INTEGER loffset = { 0 };
 
 	if (!file)
 		return FALSE;
@@ -616,10 +616,10 @@ BOOL drive_file_set_information(DRIVE_FILE* file, UINT32 FsInformationClass, UIN
 {
 	INT64 size = 0;
 	WCHAR* fullpath = NULL;
-	ULARGE_INTEGER liCreationTime;
-	ULARGE_INTEGER liLastAccessTime;
-	ULARGE_INTEGER liLastWriteTime;
-	ULARGE_INTEGER liChangeTime;
+	ULARGE_INTEGER liCreationTime = { 0 };
+	ULARGE_INTEGER liLastAccessTime = { 0 };
+	ULARGE_INTEGER liLastWriteTime = { 0 };
+	ULARGE_INTEGER liChangeTime = { 0 };
 	FILETIME ftCreationTime;
 	FILETIME ftLastAccessTime;
 	FILETIME ftLastWriteTime;
@@ -628,7 +628,7 @@ BOOL drive_file_set_information(DRIVE_FILE* file, UINT32 FsInformationClass, UIN
 	FILETIME* pftLastWriteTime = NULL;
 	UINT32 FileAttributes = 0;
 	UINT32 FileNameLength = 0;
-	LARGE_INTEGER liSize;
+	LARGE_INTEGER liSize = { 0 };
 	UINT8 delete_pending = 0;
 	UINT8 ReplaceIfExists = 0;
 	DWORD attr = 0;

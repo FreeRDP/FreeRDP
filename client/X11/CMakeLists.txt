@@ -202,8 +202,6 @@ if (WITH_XFIXES)
 	endif()
 endif()
 
-include_directories(${PROJECT_SOURCE_DIR}/resources)
-
 list(APPEND PUB_LIBS
 	freerdp-client
 )

@@ -36,10 +36,7 @@ SdlButton::SdlButton(SDL_Renderer* renderer, std::string label, int id, SDL_Rect
 	update_text(renderer, _name, buttonfontcolor, buttonbackgroundcolor);
 }
 
-SdlButton::SdlButton(SdlButton&& other) noexcept
-    : SdlWidget(std::move(other)), _name(std::move(other._name)), _id(other._id)
-{
-}
+SdlButton::SdlButton(SdlButton&& other) noexcept = default;
 
 SdlButton::~SdlButton() = default;
 

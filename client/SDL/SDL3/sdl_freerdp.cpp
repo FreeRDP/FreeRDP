@@ -1731,8 +1731,8 @@ BOOL SdlContext::update_resizeable(BOOL enable)
 }
 
 SdlContext::SdlContext(rdpContext* context)
-    : _context(context), log(WLog_Get(SDL_TAG)), update_complete(true), disp(this), clip(this),
-      input(this), primary(nullptr, SDL_DestroySurface), rdp_thread_running(false)
+    : _context(context), log(WLog_Get(SDL_TAG)), update_complete(true), disp(this), input(this),
+      clip(this), primary(nullptr, SDL_DestroySurface), rdp_thread_running(false)
 {
 	WINPR_ASSERT(context);
 	grab_kbd_enabled = freerdp_settings_get_bool(context->settings, FreeRDP_GrabKeyboard);

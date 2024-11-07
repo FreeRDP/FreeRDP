@@ -410,13 +410,13 @@ int er_write_integer(wStream* s, INT32 value)
 	else if (value <= 32767 && value >= -32768)
 	{
 		er_write_length(s, 2, FALSE);
-		Stream_Write_UINT16_BE(s, value);
+		Stream_Write_INT16_BE(s, value);
 		return 3;
 	}
 	else
 	{
 		er_write_length(s, 4, FALSE);
-		Stream_Write_UINT32_BE(s, value);
+		Stream_Write_INT32_BE(s, value);
 		return 5;
 	}
 }

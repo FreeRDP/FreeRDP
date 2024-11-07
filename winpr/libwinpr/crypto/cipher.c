@@ -475,6 +475,8 @@ static const EVP_CIPHER* winpr_openssl_get_evp_cipher(WINPR_CIPHER_TYPE cipher)
 		case WINPR_CIPHER_BLOWFISH_CTR:
 			evp = EVP_get_cipherbyname("blowfish-ctr");
 			break;
+		default:
+			break;
 	}
 
 	return evp;
