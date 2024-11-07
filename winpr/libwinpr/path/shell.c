@@ -19,12 +19,15 @@
  */
 
 #include <winpr/config.h>
+#include <winpr/assert.h>
 #include <winpr/build-config.h>
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+
+#include <cwalk.h>
 
 #include <winpr/crt.h>
 #include <winpr/platform.h>
@@ -447,53 +450,22 @@ char* GetEnvironmentSubPath(char* name, const char* path)
 
 char* GetCombinedPath(const char* basePath, const char* subPath)
 {
-	size_t length = 0;
-	HRESULT status = 0;
-	char* path = NULL;
-	char* subPathCpy = NULL;
-	size_t basePathLength = 0;
-	size_t subPathLength = 0;
+	const size_t len = cwk_path_join(basePath, subPath, NULL, 0);
+	if (len == 0)
+		return NULL;
 
-	if (basePath)
-		basePathLength = strlen(basePath);
-
-	if (subPath)
-		subPathLength = strlen(subPath);
-
-	length = basePathLength + subPathLength + 1;
-	path = (char*)calloc(1, length + 1);
-
+	char* path = calloc(len + 2, sizeof(char));
 	if (!path)
-		goto fail;
+		return NULL;
 
-	if (basePath)
-		CopyMemory(path, basePath, basePathLength);
-
-	if (FAILED(PathCchConvertStyleA(path, basePathLength, PATH_STYLE_NATIVE)))
-		goto fail;
-
-	if (!subPath)
-		return path;
-
-	subPathCpy = _strdup(subPath);
-
-	if (!subPathCpy)
-		goto fail;
-
-	if (FAILED(PathCchConvertStyleA(subPathCpy, subPathLength, PATH_STYLE_NATIVE)))
-		goto fail;
-
-	status = NativePathCchAppendA(path, length + 1, subPathCpy);
-	if (FAILED(status))
-		goto fail;
-
-	free(subPathCpy);
+	const size_t chk = cwk_path_join(basePath, subPath, path, len + 1);
+	WINPR_ASSERT(len == chk);
+	if (len != chk)
+	{
+		free(path);
+		return NULL;
+	}
 	return path;
-
-fail:
-	free(path);
-	free(subPathCpy);
-	return NULL;
 }
 
 BOOL PathMakePathA(LPCSTR path, LPSECURITY_ATTRIBUTES lpAttributes)
@@ -610,8 +582,7 @@ BOOL PathIsRelativeA(LPCSTR pszPath)
 {
 	if (!pszPath)
 		return FALSE;
-
-	return pszPath[0] != '/';
+	return cwk_path_is_relative(pszPath);
 }
 
 BOOL PathIsRelativeW(LPCWSTR pszPath)
