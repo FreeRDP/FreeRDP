@@ -18,6 +18,8 @@
 # Include our extra modules
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../cmake/)
 
+include(ExternalProjectCwalk)
+
 if (NOT FREERDP_UNIFIED_BUILD)
 	cmake_minimum_required(VERSION 3.13)
 

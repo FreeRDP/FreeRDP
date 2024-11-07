@@ -23,6 +23,8 @@ winpr_module_add(
     file.c
 )
 
+winpr_library_add_private(cwalk)
+
 if(BUILD_TESTING_INTERNAL OR BUILD_TESTING)
 	add_subdirectory(test)
 endif()
