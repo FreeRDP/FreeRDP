@@ -239,10 +239,6 @@ if(CMAKE_COMPILER_IS_GNUCC)
 	endif()
 endif()
 
-if(CMAKE_COMPILER_IS_CLANG)
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-c11-extensions -Wno-gnu")
-endif()
-
 set(THREAD_PREFER_PTHREAD_FLAG TRUE)
 
 if(NOT IOS)
@@ -251,12 +247,6 @@ endif()
 
 # Enable address sanitizer, where supported and when required
 if(CMAKE_COMPILER_IS_CLANG OR CMAKE_COMPILER_IS_GNUCC)
-	CHECK_C_COMPILER_FLAG ("-fno-omit-frame-pointer" fno-omit-frame-pointer)
-
-	if (fno-omit-frame-pointer)
-		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fno-omit-frame-pointer")
-	endif()
-
 	set(CMAKE_REQUIRED_LINK_OPTIONS_SAVED ${CMAKE_REQUIRED_LINK_OPTIONS})
 	file(WRITE ${PROJECT_BINARY_DIR}/foo.txt "")
 	if(WITH_SANITIZE_ADDRESS)

@@ -48,6 +48,7 @@ if (ENABLE_WARNING_VERBOSE)
 			-Wno-c++98-compat-pedantic
 			-Wno-pre-c++17-compat
 			-Wno-exit-time-destructors
+			-Wno-gnu-zero-variadic-macro-arguments
 		)
 	endif()
 
@@ -60,6 +61,8 @@ endif()
 if (ENABLE_WARNING_ERROR)
 	CheckCXXFlag(-Werror)
 endif()
+
+CheckCXXFlag(-fno-omit-frame-pointer)
 
 CheckCXXFlag(-fmacro-prefix-map="${CMAKE_SOURCE_DIR}"="./")
 CheckCXXFlag(-fmacro-prefix-map="${CMAKE_BINARY_DIR}"="./build/")

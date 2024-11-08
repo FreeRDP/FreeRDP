@@ -43,7 +43,8 @@ if (ENABLE_WARNING_VERBOSE)
 			-Wno-reserved-identifier
 			-Wno-covered-switch-default
 			-Wno-disabled-macro-expansion
-            -Wno-pre-c11-compat
+			-Wno-pre-c11-compat
+			-Wno-gnu-zero-variadic-macro-arguments
 		)
 	endif()
 
@@ -55,6 +56,8 @@ endif()
 if (ENABLE_WARNING_ERROR)
 	CheckCFlag(-Werror)
 endif()
+
+CheckCFlag(-fno-omit-frame-pointer)
 
 CheckCFlag(-fmacro-prefix-map="${CMAKE_SOURCE_DIR}"="./")
 CheckCFlag(-fmacro-prefix-map="${CMAKE_BINARY_DIR}"="./build/")
