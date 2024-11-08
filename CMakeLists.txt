@@ -239,22 +239,6 @@ if(CMAKE_COMPILER_IS_GNUCC)
 	endif()
 endif()
 
-# When building with Unix Makefiles and doing any release builds
-# try to set __FILE__ to relative paths via a make specific macro
-if (CMAKE_GENERATOR MATCHES "Unix Makefile*")
-	if(CMAKE_BUILD_TYPE STREQUAL "Release" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
-		string(TOUPPER ${CMAKE_BUILD_TYPE} UPPER_BUILD_TYPE)
-		CHECK_C_COMPILER_FLAG (-Wno-builtin-macro-redefined Wno-builtin-macro-redefined)
-		if(Wno-builtin-macro-redefined)
-			set(CMAKE_C_FLAGS_${UPPER_BUILD_TYPE} "${CMAKE_C_FLAGS_${UPPER_BUILD_TYPE}} -Wno-builtin-macro-redefined -D__FILE__='\"$(subst ${PROJECT_BINARY_DIR}/,,$(subst ${PROJECT_SOURCE_DIR}/,,$(abspath $<)))\"'")
-		endif()
-	endif()
-endif()
-
-if(CMAKE_COMPILER_IS_CLANG)
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-c11-extensions -Wno-gnu")
-endif()
-
 set(THREAD_PREFER_PTHREAD_FLAG TRUE)
 
 if(NOT IOS)
@@ -263,12 +247,6 @@ endif()
 
 # Enable address sanitizer, where supported and when required
 if(CMAKE_COMPILER_IS_CLANG OR CMAKE_COMPILER_IS_GNUCC)
-	CHECK_C_COMPILER_FLAG ("-fno-omit-frame-pointer" fno-omit-frame-pointer)
-
-	if (fno-omit-frame-pointer)
-		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fno-omit-frame-pointer")
-	endif()
-
 	set(CMAKE_REQUIRED_LINK_OPTIONS_SAVED ${CMAKE_REQUIRED_LINK_OPTIONS})
 	file(WRITE ${PROJECT_BINARY_DIR}/foo.txt "")
 	if(WITH_SANITIZE_ADDRESS)
