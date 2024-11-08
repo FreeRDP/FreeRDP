@@ -34,19 +34,21 @@
 extern "C"
 {
 #endif
-#define WINPR_ASSERT(cond)                                               \
-	do                                                                   \
-	{                                                                    \
-		WINPR_PRAGMA_DIAG_PUSH                                           \
-		WINPR_PRAGMA_DIAG_TAUTOLOGICAL_CONSTANT_OUT_OF_RANGE_COMPARE     \
-		WINPR_PRAGMA_DIAG_TAUTOLOGICAL_VALUE_RANGE_COMPARE               \
-		WINPR_PRAGMA_DIAG_IGNORED_UNKNOWN_PRAGMAS                        \
-		WINPR_DO_PRAGMA(coverity compliance deviate "NO_EFFECT:SUPPRESS" \
-		                                            "WINPR_ASSERT")      \
-                                                                         \
-		if (!(cond))                                                     \
-			winpr_int_assert(#cond, __FILE__, __func__, __LINE__);       \
-		WINPR_PRAGMA_DIAG_POP                                            \
+#define WINPR_ASSERT(cond)                                                                \
+	do                                                                                    \
+	{                                                                                     \
+		WINPR_PRAGMA_DIAG_PUSH                                                            \
+		WINPR_PRAGMA_DIAG_TAUTOLOGICAL_CONSTANT_OUT_OF_RANGE_COMPARE                      \
+		WINPR_PRAGMA_DIAG_TAUTOLOGICAL_VALUE_RANGE_COMPARE                                \
+		WINPR_PRAGMA_DIAG_IGNORED_UNKNOWN_PRAGMAS                                         \
+		WINPR_DO_PRAGMA(coverity compliance deviate "NO_EFFECT:SUPPRESS"                  \
+		                                            "WINPR_ASSERT")                       \
+		WINPR_DO_PRAGMA(coverity compliance deviate "CONSTANT_EXPRESSION_RESULT:SUPPRESS" \
+		                                            "WINPR_ASSERT")                       \
+                                                                                          \
+		if (!(cond))                                                                      \
+			winpr_int_assert(#cond, __FILE__, __func__, __LINE__);                        \
+		WINPR_PRAGMA_DIAG_POP                                                             \
 	} while (0)
 
 	static INLINE WINPR_NORETURN(void winpr_int_assert(const char* condstr, const char* file,
@@ -63,17 +65,19 @@ extern "C"
 #endif
 
 #else
-#define WINPR_ASSERT(cond)                                               \
-	do                                                                   \
-	{                                                                    \
-		WINPR_PRAGMA_DIAG_PUSH                                           \
-		WINPR_PRAGMA_DIAG_TAUTOLOGICAL_CONSTANT_OUT_OF_RANGE_COMPARE     \
-		WINPR_PRAGMA_DIAG_TAUTOLOGICAL_VALUE_RANGE_COMPARE               \
-		WINPR_PRAGMA_DIAG_IGNORED_UNKNOWN_PRAGMAS                        \
-		WINPR_DO_PRAGMA(coverity compliance deviate "NO_EFFECT:SUPPRESS" \
-		                                            "WINPR_ASSERT")      \
-		assert(cond);                                                    \
-		WINPR_PRAGMA_DIAG_POP                                            \
+#define WINPR_ASSERT(cond)                                                                \
+	do                                                                                    \
+	{                                                                                     \
+		WINPR_PRAGMA_DIAG_PUSH                                                            \
+		WINPR_PRAGMA_DIAG_TAUTOLOGICAL_CONSTANT_OUT_OF_RANGE_COMPARE                      \
+		WINPR_PRAGMA_DIAG_TAUTOLOGICAL_VALUE_RANGE_COMPARE                                \
+		WINPR_PRAGMA_DIAG_IGNORED_UNKNOWN_PRAGMAS                                         \
+		WINPR_DO_PRAGMA(coverity compliance deviate "NO_EFFECT:SUPPRESS"                  \
+		                                            "WINPR_ASSERT")                       \
+		WINPR_DO_PRAGMA(coverity compliance deviate "CONSTANT_EXPRESSION_RESULT:SUPPRESS" \
+		                                            "WINPR_ASSERT")                       \
+		assert(cond);                                                                     \
+		WINPR_PRAGMA_DIAG_POP                                                             \
 	} while (0)
 #endif
 
