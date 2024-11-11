@@ -16,6 +16,9 @@
 # do not require our own libs
 %global __requires_exclude ^(libfreerdp.*|libwinpr.*|librdtk.*|libuwac.*).*$
 
+# no debug package
+%global debug_package %{nil}
+
 Name:           freerdp-nightly
 Version:        3.0
 Release:        0
