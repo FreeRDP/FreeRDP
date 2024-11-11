@@ -44,7 +44,7 @@ float measure_delta_time(UINT64 t0, UINT64 t1)
 }
 
 /* ------------------------------------------------------------------------- */
-void measure_floatprint(float t, char* output)
+void measure_floatprint(float t, char* output, size_t len)
 {
 	/* I don't want to link against -lm, so avoid log,exp,... */
 	float f = 10.0;
@@ -57,19 +57,20 @@ void measure_floatprint(float t, char* output)
 	i = ((int)(t / f + 0.5f)) * (int)f;
 
 	if (t < 0.0f)
-		(void)sprintf(output, "%f", t);
+		(void)_snprintf(output, len, "%f", t);
 	else if (i == 0)
-		(void)sprintf(output, "%d", (int)(t + 0.5f));
+		(void)_snprintf(output, len, "%d", (int)(t + 0.5f));
 	else if (t < 1e+3f)
-		(void)sprintf(output, "%3d", i);
+		(void)_snprintf(output, len, "%3d", i);
 	else if (t < 1e+6f)
-		(void)sprintf(output, "%3d,%03d", i / 1000, i % 1000);
+		(void)_snprintf(output, len, "%3d,%03d", i / 1000, i % 1000);
 	else if (t < 1e+9f)
-		(void)sprintf(output, "%3d,%03d,000", i / 1000000, (i % 1000000) / 1000);
+		(void)_snprintf(output, len, "%3d,%03d,000", i / 1000000, (i % 1000000) / 1000);
 	else if (t < 1e+12f)
-		(void)sprintf(output, "%3d,%03d,000,000", i / 1000000000, (i % 1000000000) / 1000000);
+		(void)_snprintf(output, len, "%3d,%03d,000,000", i / 1000000000,
+		                (i % 1000000000) / 1000000);
 	else
-		(void)sprintf(output, "%f", t);
+		(void)_snprintf(output, len, "%f", t);
 }
 
 void prim_test_setup(BOOL performance)
