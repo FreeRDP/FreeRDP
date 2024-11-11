@@ -59,17 +59,17 @@ CliprdrClientContext* cliprdr_get_client_interface(cliprdrPlugin* cliprdr)
  */
 static UINT cliprdr_packet_send(cliprdrPlugin* cliprdr, wStream* s)
 {
-	size_t pos = 0;
-	UINT32 dataLen = 0;
 	UINT status = CHANNEL_RC_OK;
 
 	WINPR_ASSERT(cliprdr);
 	WINPR_ASSERT(s);
 
-	pos = Stream_GetPosition(s);
-	dataLen = pos - 8;
+	const size_t pos = Stream_GetPosition(s);
+	const size_t dataLen = pos - 8;
+	WINPR_ASSERT(dataLen <= UINT32_MAX);
+
 	Stream_SetPosition(s, 4);
-	Stream_Write_UINT32(s, dataLen);
+	Stream_Write_UINT32(s, (UINT32)dataLen);
 	Stream_SetPosition(s, pos);
 
 	WLog_DBG(TAG, "Cliprdr Sending (%" PRIu32 " bytes)", dataLen + 8);

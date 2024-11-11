@@ -182,7 +182,7 @@ static DWORD WINAPI audin_alsa_thread_func(LPVOID arg)
 		}
 		else if (framesRead < 0)
 		{
-			WLog_Print(alsa->log, WLOG_ERROR, "snd_pcm_readi (%s)", snd_strerror(framesRead));
+			WLog_Print(alsa->log, WLOG_ERROR, "snd_pcm_readi (%s)", snd_strerror((int)framesRead));
 			error = ERROR_INTERNAL_ERROR;
 			break;
 		}

@@ -101,7 +101,7 @@ static BOOL pf_server_parse_target_from_routing_token(rdpContext* context, rdpSe
 		if (p > USHRT_MAX)
 			return FALSE;
 
-		if (!freerdp_settings_set_uint32(settings, portID, p))
+		if (!freerdp_settings_set_uint32(settings, portID, (USHORT)p))
 			return FALSE;
 	}
 

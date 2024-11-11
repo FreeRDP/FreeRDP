@@ -294,8 +294,10 @@ create_failed:
 	return NULL;
 }
 
-static BOOL vgids_write_tlv(wStream* s, UINT16 tag, const void* data, DWORD dataSize)
+static BOOL vgids_write_tlv(wStream* s, UINT16 tag, const void* data, size_t dataSize)
 {
+	WINPR_ASSERT(dataSize <= UINT16_MAX);
+
 	/* A maximum of 5 additional bytes is needed */
 	if (!Stream_EnsureRemainingCapacity(s, dataSize + 5))
 	{

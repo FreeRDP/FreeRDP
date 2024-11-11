@@ -103,7 +103,6 @@ static BOOL printer_write_setting(const char* path, prn_conf_t type, const void*
 	DWORD written = 0;
 	BOOL rc = FALSE;
 	HANDLE file = NULL;
-	size_t b64len = 0;
 	char* base64 = NULL;
 	const char* name = filemap[type];
 	char* abs = GetCombinedPath(path, name);
@@ -129,8 +128,8 @@ static BOOL printer_write_setting(const char* path, prn_conf_t type, const void*
 
 		/* base64 char represents 6bit -> 4*(n/3) is the length which is
 		 * always smaller than 2*n */
-		b64len = strnlen(base64, 2 * length);
-		rc = WriteFile(file, base64, b64len, &written, NULL);
+		const size_t b64len = strnlen(base64, 2 * length);
+		rc = WriteFile(file, base64, (UINT32)b64len, &written, NULL);
 
 		if (b64len != written)
 			rc = FALSE;
@@ -313,7 +312,12 @@ static BOOL printer_load_from_config(const rdpSettings* settings, rdpPrinter* pr
 
 	wlen++;
 	path = get_printer_config_path(settings, wname, wlen * sizeof(WCHAR));
-	PrinterNameLen = wlen * sizeof(WCHAR);
+	{
+		const size_t plen = wlen * sizeof(WCHAR);
+		if (plen > UINT32_MAX)
+			goto fail;
+		PrinterNameLen = (UINT32)plen;
+	}
 
 	if (!path)
 		goto fail;
@@ -331,7 +335,10 @@ static BOOL printer_load_from_config(const rdpSettings* settings, rdpPrinter* pr
 		DriverName = ConvertUtf8ToWCharAlloc(printer->driver, &len);
 		if (!DriverName)
 			goto fail;
-		DriverNameLen = (len + 1) * sizeof(WCHAR);
+		const size_t dlen = (len + 1) * sizeof(WCHAR);
+		if (dlen > UINT32_MAX)
+			goto fail;
+		DriverNameLen = (UINT32)dlen;
 	}
 
 	if (!printer_read_setting(path, PRN_CONF_DATA, &CachedPrinterConfigData, &CachedFieldsLen))

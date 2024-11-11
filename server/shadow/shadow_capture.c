@@ -247,8 +247,8 @@ int shadow_capture_compare_with_format(const BYTE* WINPR_RESTRICT pData1, UINT32
 			if (!tw)
 				tw = 16;
 
-			const BYTE* p1 = &pData1[(ty * 16 * nStep1) + (tx * 16ull * bppA)];
-			const BYTE* p2 = &pData2[(ty * 16 * nStep2) + (tx * 16ull * bppB)];
+			const BYTE* p1 = &pData1[(ty * 16ULL * nStep1) + (tx * 16ull * bppA)];
+			const BYTE* p2 = &pData2[(ty * 16ULL * nStep2) + (tx * 16ull * bppB)];
 
 			for (size_t k = 0; k < th; k++)
 			{
@@ -266,10 +266,10 @@ int shadow_capture_compare_with_format(const BYTE* WINPR_RESTRICT pData1, UINT32
 			{
 				rowEqual = FALSE;
 				if (l > tx)
-					l = tx;
+					l = (UINT32)tx;
 
 				if (r < tx)
-					r = tx;
+					r = (UINT32)tx;
 			}
 		}
 
@@ -278,10 +278,10 @@ int shadow_capture_compare_with_format(const BYTE* WINPR_RESTRICT pData1, UINT32
 			allEqual = FALSE;
 
 			if (t > ty)
-				t = ty;
+				t = (UINT32)ty;
 
 			if (b < ty)
-				b = ty;
+				b = (UINT32)ty;
 		}
 	}
 

@@ -666,10 +666,10 @@ static int x11_shadow_blend_cursor(x11ShadowSubsystem* subsystem)
 	}
 
 	if ((nXDst + nWidth) > surface->width)
-		nWidth = surface->width - nXDst;
+		nWidth = (nXDst > surface->width) ? 0 : (UINT32)(surface->width - nXDst);
 
 	if ((nYDst + nHeight) > surface->height)
-		nHeight = surface->height - nYDst;
+		nHeight = (nYDst > surface->height) ? 0 : (UINT32)(surface->height - nYDst);
 
 	pSrcData = subsystem->cursorPixels;
 	nSrcStep = subsystem->cursorWidth * 4;
@@ -926,8 +926,6 @@ static DWORD WINAPI x11_shadow_subsystem_thread(LPVOID arg)
 	XEvent xevent;
 	DWORD status = 0;
 	DWORD nCount = 0;
-	UINT64 cTime = 0;
-	DWORD dwTimeout = 0;
 	DWORD dwInterval = 0;
 	UINT64 frameTime = 0;
 	HANDLE events[32];
@@ -943,8 +941,9 @@ static DWORD WINAPI x11_shadow_subsystem_thread(LPVOID arg)
 
 	while (1)
 	{
-		cTime = GetTickCount64();
-		dwTimeout = (cTime > frameTime) ? 0 : frameTime - cTime;
+		const UINT64 cTime = GetTickCount64();
+		const DWORD dwTimeout =
+		    (DWORD)((cTime > frameTime) ? 0 : MIN(UINT32_MAX, frameTime - cTime));
 		status = WaitForMultipleObjects(nCount, events, FALSE, dwTimeout);
 
 		if (WaitForSingleObject(MessageQueue_Event(MsgPipe->In), 0) == WAIT_OBJECT_0)

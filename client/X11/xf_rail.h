@@ -28,7 +28,7 @@
 BOOL xf_rail_paint(xfContext* xfc, const RECTANGLE_16* rect);
 BOOL xf_rail_paint_surface(xfContext* xfc, UINT64 windowId, const RECTANGLE_16* rect);
 
-void xf_rail_send_client_system_command(xfContext* xfc, UINT32 windowId, UINT16 command);
+BOOL xf_rail_send_client_system_command(xfContext* xfc, UINT64 windowId, UINT16 command);
 void xf_rail_send_activate(xfContext* xfc, Window xwindow, BOOL enabled);
 void xf_rail_adjust_position(xfContext* xfc, xfAppWindow* appWindow);
 void xf_rail_end_local_move(xfContext* xfc, xfAppWindow* appWindow);

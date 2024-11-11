@@ -393,14 +393,14 @@ static BOOL tsg_ndr_pointer_read(wLog* log, wStream* s, UINT32* index, UINT32* p
 	return TRUE;
 }
 
-static BOOL tsg_ndr_write_string(wLog* log, wStream* s, const WCHAR* str, UINT32 length)
+static BOOL tsg_ndr_write_string(wLog* log, wStream* s, const WCHAR* str, size_t length)
 {
-	if (!Stream_EnsureRemainingCapacity(s, 12 + length))
+	if (!Stream_EnsureRemainingCapacity(s, 12 + length) || (length > UINT32_MAX))
 		return FALSE;
 
-	Stream_Write_UINT32(s, length);            /* MaxCount (4 bytes) */
+	Stream_Write_UINT32(s, (UINT32)length);    /* MaxCount (4 bytes) */
 	Stream_Write_UINT32(s, 0);                 /* Offset (4 bytes) */
-	Stream_Write_UINT32(s, length);            /* ActualCount (4 bytes) */
+	Stream_Write_UINT32(s, (UINT32)length);    /* ActualCount (4 bytes) */
 	Stream_Write_UTF16_String(s, str, length); /* Array */
 	return TRUE;
 }
@@ -2070,7 +2070,7 @@ static BOOL TsProxyCreateChannelWriteRequest(rdpTsg* tsg, CONTEXT_HANDLE* tunnel
 	Stream_Write_UINT32(s, 0x00000001);                 /* NumResourceNames (4 bytes) */
 	if (!tsg_ndr_pointer_write(tsg->log, s, &index, 1))
 		goto fail;
-	if (!tsg_ndr_write_string(tsg->log, s, tsg->Hostname, count))
+	if (!tsg_ndr_write_string(tsg->log, s, tsg->Hostname, (UINT32)count))
 		goto fail;
 	return rpc_client_write_call(rpc, s, TsProxyCreateChannelOpnum);
 

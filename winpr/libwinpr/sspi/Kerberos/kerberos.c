@@ -206,7 +206,11 @@ static krb5_error_code krb5_prompter(krb5_context context, void* data, const cha
 		if (type && (type == KRB5_PROMPT_TYPE_PREAUTH || type == KRB5_PROMPT_TYPE_PASSWORD) && data)
 		{
 			prompts[i].reply->data = _strdup((const char*)data);
-			prompts[i].reply->length = strlen((const char*)data);
+
+			const size_t len = strlen((const char*)data);
+			if (len > UINT32_MAX)
+				return KRB5_ERROR;
+			prompts[i].reply->length = (UINT32)len;
 		}
 	}
 	return 0;
@@ -808,7 +812,11 @@ static BOOL kerberos_rd_tgt_rep(WinPrAsn1Decoder* dec, krb5_data* ticket)
 
 	wStream s = WinPrAsn1DecGetStream(&asnTicket);
 	ticket->data = Stream_BufferAs(&s, char);
-	ticket->length = Stream_Length(&s);
+
+	const size_t len = Stream_Length(&s);
+	if (len > UINT32_MAX)
+		return FALSE;
+	ticket->length = (UINT32)len;
 	return TRUE;
 }
 

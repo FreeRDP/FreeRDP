@@ -121,14 +121,14 @@ BOOL pcap_add_record(rdpPcap* pcap, const void* data, size_t length)
 		return FALSE;
 
 	record->cdata = data;
-	record->length = length;
+	record->length = (UINT32)length;
 	record->header.incl_len = (UINT32)length;
 	record->header.orig_len = (UINT32)length;
 
 	const UINT64 ns = winpr_GetUnixTimeNS();
 
-	record->header.ts_sec = WINPR_TIME_NS_TO_S(ns);
-	record->header.ts_usec = WINPR_TIME_NS_REM_US(ns);
+	record->header.ts_sec = (UINT32)WINPR_TIME_NS_TO_S(ns);
+	record->header.ts_usec = (UINT32)WINPR_TIME_NS_REM_US(ns);
 
 	if (pcap->tail == NULL)
 	{

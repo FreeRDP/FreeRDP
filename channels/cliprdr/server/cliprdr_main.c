@@ -96,12 +96,8 @@ static UINT cliprdr_server_packet_send(CliprdrServerPrivate* cliprdr, wStream* s
 	dataLen = (UINT32)(pos - 8);
 	Stream_SetPosition(s, 4);
 	Stream_Write_UINT32(s, dataLen);
-	if (pos > UINT32_MAX)
-	{
-		rc = ERROR_INVALID_DATA;
-		goto fail;
-	}
 
+	WINPR_ASSERT(pos <= UINT32_MAX);
 	status = WTSVirtualChannelWrite(cliprdr->ChannelHandle, Stream_BufferAs(s, char), (UINT32)pos,
 	                                &written);
 	rc = status ? CHANNEL_RC_OK : ERROR_INTERNAL_ERROR;

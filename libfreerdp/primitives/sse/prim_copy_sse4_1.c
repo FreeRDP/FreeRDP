@@ -54,7 +54,7 @@ static INLINE pstatus_t sse_image_copy_bgr24_bgrx32(BYTE* WINPR_RESTRICT pDstDat
 
 	const __m128i mask = _mm_set_epi32(0xFF000000, 0xFF000000, 0xFF000000, 0xFF000000);
 	const __m128i smask = _mm_set_epi32(0xff0b0a09, 0xff080706, 0xff050403, 0xff020100);
-	const SSIZE_T rem = nWidth % 4;
+	const UINT32 rem = nWidth % 4;
 
 	const size_t align = nSrcStep % 64;
 	const BOOL fast = (align == 0) ? TRUE : (align >= 16 - MIN(16, (size_t)rem) ? TRUE : FALSE);
@@ -110,7 +110,7 @@ static INLINE pstatus_t sse_image_copy_bgrx32_bgrx32(BYTE* WINPR_RESTRICT pDstDa
 	const __m128i mask = _mm_setr_epi8((char)0xFF, (char)0xFF, (char)0xFF, 0x00, (char)0xFF,
 	                                   (char)0xFF, (char)0xFF, 0x00, (char)0xFF, (char)0xFF,
 	                                   (char)0xFF, 0x00, (char)0xFF, (char)0xFF, (char)0xFF, 0x00);
-	const SSIZE_T rem = nWidth % 4;
+	const UINT32 rem = nWidth % 4;
 	const SSIZE_T width = nWidth - rem;
 	for (SSIZE_T y = 0; y < nHeight; y++)
 	{

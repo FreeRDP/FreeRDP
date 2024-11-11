@@ -55,7 +55,7 @@ static pstatus_t sse3_add_16s_inplace(INT16* WINPR_RESTRICT pSrcDst1,
 	const size_t rem = ((UINT_PTR)dptr1 & 0xf) / sizeof(INT16);
 	if (rem != 0)
 	{
-		const size_t add = 16 - rem;
+		const UINT32 add = 16 - (UINT32)rem;
 		pstatus_t status = generic->add_16s_inplace(dptr1, dptr2, add);
 		if (status != PRIMITIVES_SUCCESS)
 			return status;

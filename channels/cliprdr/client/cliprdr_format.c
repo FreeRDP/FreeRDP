@@ -98,7 +98,8 @@ CLIPRDR_FORMAT_LIST cliprdr_filter_format_list(const CLIPRDR_FORMAT_LIST* list, 
 			}
 		}
 	}
-	filtered.numFormats = wpos;
+	WINPR_ASSERT(wpos <= UINT32_MAX);
+	filtered.numFormats = (UINT32)wpos;
 	return filtered;
 }
 

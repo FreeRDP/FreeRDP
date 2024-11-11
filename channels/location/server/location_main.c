@@ -546,8 +546,7 @@ static UINT location_server_packet_send(LocationServerContext* context, wStream*
 	WINPR_ASSERT(s);
 
 	const size_t pos = Stream_GetPosition(s);
-	if (pos > UINT32_MAX)
-		return ERROR_OUTOFMEMORY;
+	WINPR_ASSERT(pos <= UINT32_MAX);
 	if (!WTSVirtualChannelWrite(location->location_channel, Stream_BufferAs(s, char), (ULONG)pos,
 	                            &written))
 	{

@@ -58,7 +58,7 @@ static INLINE pstatus_t avx2_image_copy_bgr24_bgrx32(BYTE* WINPR_RESTRICT pDstDa
 	                                       0xff0b0a09, 0xff080706, 0xff050403, 0xff020100);
 	const __m256i shelpmask = _mm256_set_epi32(0xffffffff, 0xffffffff, 0xffffff1f, 0xff1e1d1c,
 	                                           0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff);
-	const SSIZE_T rem = nWidth % 8;
+	const UINT32 rem = nWidth % 8;
 	const SSIZE_T width = nWidth - rem;
 
 	const size_t align = nSrcStep % 32;
@@ -126,7 +126,7 @@ static INLINE pstatus_t avx2_image_copy_bgrx32_bgrx32(BYTE* WINPR_RESTRICT pDstD
 	    (char)0xFF, (char)0xFF, (char)0xFF, 0x00, (char)0xFF, (char)0xFF, (char)0xFF, 0x00,
 	    (char)0xFF, (char)0xFF, (char)0xFF, 0x00, (char)0xFF, (char)0xFF, (char)0xFF, 0x00,
 	    (char)0xFF, (char)0xFF, (char)0xFF, 0x00, (char)0xFF, (char)0xFF, (char)0xFF, 0x00);
-	const SSIZE_T rem = nWidth % 8;
+	const UINT32 rem = nWidth % 8;
 	const SSIZE_T width = nWidth - rem;
 	for (SSIZE_T y = 0; y < nHeight; y++)
 	{

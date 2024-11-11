@@ -110,10 +110,10 @@ static const void* body(WINPR_MD4_CTX* ctx, const void* data, unsigned long size
 
 	do
 	{
-		winpr_MD4_u32plus saved_a = a;
-		winpr_MD4_u32plus saved_b = b;
-		winpr_MD4_u32plus saved_c = c;
-		winpr_MD4_u32plus saved_d = d;
+		const winpr_MD4_u32plus saved_a = a;
+		const winpr_MD4_u32plus saved_b = b;
+		const winpr_MD4_u32plus saved_c = c;
+		const winpr_MD4_u32plus saved_d = d;
 
 		/* Round 1 */
 		STEP(F, a, b, c, d, SET(0), 3)

@@ -18,7 +18,7 @@
  */
 
 #include <winpr/config.h>
-
+#include <winpr/assert.h>
 #include <winpr/crt.h>
 
 #include <winpr/input.h>
@@ -139,22 +139,24 @@ DWORD GetVirtualScanCodeFromVirtualKeyCode(DWORD vkcode, DWORD dwKeyboardType)
 	{
 		if (vkcode & KBDEXT)
 		{
+			WINPR_ASSERT(ARRAYSIZE(KBD4X) <= UINT32_MAX);
 			for (size_t i = 0; i < ARRAYSIZE(KBD4X); i++)
 			{
 				if (KBD4X[i] == codeIndex)
 				{
-					scancode = (i | KBDEXT);
+					scancode = (DWORD)(i | KBDEXT);
 					break;
 				}
 			}
 		}
 		else
 		{
+			WINPR_ASSERT(ARRAYSIZE(KBD4T) <= UINT32_MAX);
 			for (size_t i = 0; i < ARRAYSIZE(KBD4T); i++)
 			{
 				if (KBD4T[i] == codeIndex)
 				{
-					scancode = i;
+					scancode = (DWORD)i;
 					break;
 				}
 			}
@@ -164,22 +166,24 @@ DWORD GetVirtualScanCodeFromVirtualKeyCode(DWORD vkcode, DWORD dwKeyboardType)
 	{
 		if (vkcode & KBDEXT)
 		{
+			WINPR_ASSERT(ARRAYSIZE(KBD7X) <= UINT32_MAX);
 			for (size_t i = 0; i < ARRAYSIZE(KBD7X); i++)
 			{
 				if (KBD7X[i] == codeIndex)
 				{
-					scancode = (i | KBDEXT);
+					scancode = (DWORD)(i | KBDEXT);
 					break;
 				}
 			}
 		}
 		else
 		{
+			WINPR_ASSERT(ARRAYSIZE(KBD7T) <= UINT32_MAX);
 			for (size_t i = 0; i < ARRAYSIZE(KBD7T); i++)
 			{
 				if (KBD7T[i] == codeIndex)
 				{
-					scancode = i;
+					scancode = (DWORD)i;
 					break;
 				}
 			}

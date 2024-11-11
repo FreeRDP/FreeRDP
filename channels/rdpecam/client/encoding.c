@@ -161,8 +161,9 @@ static BOOL ecam_encoder_compress_h264(CameraDeviceStream* stream, const BYTE* s
 #if defined(WITH_INPUT_FORMAT_MJPG)
 	if (inputFormat == CAM_MEDIA_FORMAT_MJPG)
 	{
-		stream->avInputPkt->data = WINPR_CAST_CONST_PTR_AWAY(srcData, BYTE*);
-		stream->avInputPkt->size = srcSize;
+		stream->avInputPkt->data = WINPR_CAST_CONST_PTR_AWAY(srcData, uint8_t*);
+		WINPR_ASSERT(srcSize <= INT32_MAX);
+		stream->avInputPkt->size = (int)srcSize;
 
 		if (avcodec_send_packet(stream->avContext, stream->avInputPkt) < 0)
 		{

@@ -118,7 +118,7 @@ typedef struct xf_rail_icon_cache xfRailIconCache;
 
 typedef struct
 {
-	int button;
+	UINT32 button;
 	UINT16 flags;
 } button_map;
 

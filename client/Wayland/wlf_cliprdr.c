@@ -783,7 +783,7 @@ wlf_cliprdr_server_format_data_request(CliprdrClientContext* context,
 
 	data = UwacClipboardDataGet(clipboard->seat, mime, &size);
 
-	if (!data)
+	if (!data || (size > UINT32_MAX))
 		goto fail;
 
 	if (fileFormatId == formatId)
@@ -792,7 +792,7 @@ wlf_cliprdr_server_format_data_request(CliprdrClientContext* context,
 			goto fail;
 	}
 
-	const BOOL res = ClipboardSetData(clipboard->system, localFormatId, data, size);
+	const BOOL res = ClipboardSetData(clipboard->system, localFormatId, data, (UINT32)size);
 	free(data);
 
 	UINT32 len = 0;
