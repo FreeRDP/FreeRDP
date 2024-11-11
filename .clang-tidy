@@ -60,6 +60,7 @@ Checks: >
     -llvm-qualified-auto,
     -llvm-else-after-return,
     -readability-else-after-return,
+    -readability-avoid-nested-conditional-operator,
     -modernize-use-trailing-return-type,
     -modernize-return-braced-init-list,
     -modernize-macro-to-enum,
