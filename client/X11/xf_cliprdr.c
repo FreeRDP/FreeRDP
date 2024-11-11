@@ -2642,6 +2642,7 @@ void xf_clipboard_free(xfClipboard* clipboard)
 	xf_clipboard_formats_free(clipboard);
 	HashTable_Free(clipboard->cachedRawData);
 	HashTable_Free(clipboard->cachedData);
+	requested_format_free(&clipboard->requestedFormat);
 	free(clipboard->respond);
 	free(clipboard->incr_data);
 	free(clipboard);
