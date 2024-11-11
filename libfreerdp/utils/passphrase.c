@@ -132,7 +132,6 @@ static const char* freerdp_passphrase_read_tty(rdpContext* context, const char* 
 {
 	BOOL terminal_needs_reset = FALSE;
 	char term_name[L_ctermid] = { 0 };
-	int term_file = 0;
 
 	FILE* fout = NULL;
 
@@ -144,15 +143,29 @@ static const char* freerdp_passphrase_read_tty(rdpContext* context, const char* 
 
 	ctermid(term_name);
 	int terminal_fildes = 0;
-	if (from_stdin || strcmp(term_name, "") == 0 || (term_file = open(term_name, O_RDWR)) == -1)
+	if (from_stdin || (strcmp(term_name, "") == 0))
 	{
 		fout = stdout;
 		terminal_fildes = STDIN_FILENO;
 	}
 	else
 	{
-		fout = fdopen(term_file, "w");
-		terminal_fildes = term_file;
+		const int term_file = open(term_name, O_RDWR);
+		if (term_file < 0)
+		{
+			fout = stdout;
+			terminal_fildes = STDIN_FILENO;
+		}
+		else
+		{
+			fout = fdopen(term_file, "w");
+			if (!fout)
+			{
+				close(term_file);
+				return NULL;
+			}
+			terminal_fildes = term_file;
+		}
 	}
 
 	struct termios orig_flags = { 0 };
