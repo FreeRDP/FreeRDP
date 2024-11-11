@@ -23,7 +23,7 @@ set(${MODULE_PREFIX}_SRCS
 )
 
 set(${MODULE_PREFIX}_LIBS
-    winpr
+		winpr remdesk-common
 )
 
 add_channel_server_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} FALSE "VirtualChannelEntry")
