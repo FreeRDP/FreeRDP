@@ -237,11 +237,10 @@ if(CMAKE_COMPILER_IS_GNUCC)
 			set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wredundant-decls")
 		endif()
 	endif()
-	if(CMAKE_BUILD_TYPE STREQUAL "Release")
-		add_definitions(-DNDEBUG)
-	else()
-		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g")
-	endif()
+	add_compile_definitions("$<$<CONFIG:Release>:-DNDEBUG>")
+	add_compile_definitions("$<$<CONFIG:MinSizeRel>:-DNDEBUG>")
+	add_compile_options("$<$<CONFIG:RelWithDebInfo>:-g>")
+	add_compile_options("$<$<CONFIG:Debug>:-g>")
 endif()
 
 set(THREAD_PREFER_PTHREAD_FLAG TRUE)
@@ -325,10 +324,7 @@ if(MSVC)
 	set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR})
 	set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR})
 
-	if(CMAKE_BUILD_TYPE STREQUAL "Release")
-	else()
-		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /Zi")
-	endif()
+	add_compile_options("$<$<CONFIG:Release>:/Zi>")
 
 	add_definitions(-D_CRT_NONSTDC_NO_DEPRECATE)
 endif()
@@ -415,15 +411,13 @@ if(ANDROID)
 		endif()
 	endif()
 
-	if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
-		add_definitions(-DNDK_DEBUG=1)
+	add_definitions("$<$<CONFIG:Debug>:-DNDK_DEBUG=1>")
 
-		# NOTE: Manually add -gdwarf-3, as newer toolchains default to -gdwarf-4,
-		#       which is not supported by the gdbserver binary shipped with
-		#       the android NDK (tested with r9b)
-		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CMAKE_C_FLAGS_DEBUG} -gdwarf-3")
-	endif()
-	set(CMAKE_C_LINK_FLAGS "${CMAKE_C_LINK_FLAGS} -llog")
+	# NOTE: Manually add -gdwarf-3, as newer toolchains default to -gdwarf-4,
+	#       which is not supported by the gdbserver binary shipped with
+	#       the android NDK (tested with r9b)
+	add_compile_options("$<$<CONFIG:Debug>:-gdwarf-3>")
+	add_link_options(-llog)
 
 	# CMAKE_PREFIX_PATH detection is broken in most Android toolchain files
 	# Append it to CMAKE_FIND_ROOT_PATH and avoid potential duplicates
