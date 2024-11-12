@@ -38,9 +38,6 @@ if (WIN32)
     string(REPLACE "\\" "\\\\" NATIVE_FREERDP_PROXY_PLUGINDIR "${NATIVE_FREERDP_PROXY_PLUGINDIR}")
 endif()
 
-include(CFlagsToVar)
-CFlagsToVar(C_FLAGS)
-
 cleaning_configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config/version.h.in ${CMAKE_CURRENT_BINARY_DIR}/freerdp/version.h)
 cleaning_configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config/build-config.h.in ${CMAKE_CURRENT_BINARY_DIR}/freerdp/build-config.h)
 cleaning_configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/freerdp/config.h)
