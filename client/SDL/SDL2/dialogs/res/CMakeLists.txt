@@ -26,5 +26,5 @@ else()
   target_link_libraries(sdl2_client_res ${SDL2_LIBRARIES})
 endif()
 
-set_property(TARGET sdl2_client_res PROPERTY POSITION_INDEPENDENT_CODE ON)
+set_target_properties(sdl2_client_res PROPERTIES POSITION_INDEPENDENT_CODE ON INTERPROCEDURAL_OPTIMIZATION OFF)
 target_link_libraries(sdl2_client_res sdl-common-client-res)
