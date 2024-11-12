@@ -51,6 +51,10 @@ if (CMAKE_BUILD_TYPE)
 	endif()
 endif()
 
+if (CMAKE_CONFIGURATION_TYPES)
+    set(CMAKE_CONFIGURATION_TYPES "Release;Debug;MinSizeRel;RelWithDebInfo" CACHE INTERNAL "freerdp default")
+endif()
+
 include(PlatformDefaults)
 include(PreventInSourceBuilds)
 include(GNUInstallDirsWrapper)
