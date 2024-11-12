@@ -39,19 +39,7 @@ if(NOT FREERDP_UNIFIED_BUILD)
   endif()
 
   # Default to build shared libs
-  option(EXPORT_ALL_SYMBOLS "Export all symbols form library" OFF)
-
-  if(EXPORT_ALL_SYMBOLS)
-    #		set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
-    add_compile_definitions(EXPORT_ALL_SYMBOLS)
-  endif()
-
-  if(CMAKE_COMPILER_IS_GNUCC)
-    if(NOT EXPORT_ALL_SYMBOLS)
-      message(STATUS "GCC default symbol visibility: hidden")
-      set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fvisibility=hidden")
-    endif()
-  endif()
+  include(ExportAllSymbols)
   if(WITH_DEBUG_ALL)
     message(
       WARNING
@@ -172,7 +160,7 @@ endif()
 
 set(WINPR_RESOURCE_ROOT ${CMAKE_INSTALL_FULL_DATAROOTDIR})
 
-# Quite the compatibility show here (newest to oldest):
+# Quite the compatiblity show here (newest to oldest):
 # * <base>[/<vendor>]/<product>[<version>]
 # * <base>[/<vendor>]/WinPR[<version>]
 # * <base>/winpr
@@ -334,12 +322,7 @@ if(WITH_MBEDTLS AND MBEDTLS_FOUND)
 endif()
 
 enable_testing()
-
-if(MSVC)
-  set(TESTING_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}")
-else()
-  set(TESTING_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/Testing")
-endif()
+set(TESTING_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/Testing")
 
 if(NOT WIN32 AND NOT IOS AND NOT ANDROID)
   set(PKCS11_DEFAULT ON)
@@ -352,7 +335,7 @@ if(WITH_PKCS11)
 endif()
 
 if(BUILD_SHARED_LIBS)
-	add_compile_definitions(WINPR_DLL)
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWINPR_DLL")
 endif()
 
 add_compile_definitions(WINPR_EXPORTS)

@@ -27,7 +27,9 @@
  * Standard Clipboard Formats
  */
 
-#ifndef _WIN32
+#ifdef _WIN32
+#include <winuser.h>
+#else
 
 #define MB_OK 0x00000000L
 #define MB_OKCANCEL 0x00000001L
