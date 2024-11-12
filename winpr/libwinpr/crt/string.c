@@ -204,7 +204,7 @@ int winpr_vasprintf(char** s, size_t* slen, WINPR_FORMAT_ARG const char* templ, 
 		return -1;
 
 	va_copy(ap, oap);
-	const int plen = vsprintf(str, templ, ap);
+	const int plen = vsnprintf(str, (size_t)length, templ, ap);
 	va_end(ap);
 
 	if (length != plen)

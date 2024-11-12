@@ -44,6 +44,11 @@
 
 struct format_option_recurse;
 
+struct format_tid_arg
+{
+	char tid[32];
+};
+
 struct format_option
 {
 	const char* fmt;
@@ -90,7 +95,9 @@ static void WLog_PrintMessagePrefix(wLog* log, wLogMessage* message,
 
 static const char* get_tid(void* arg)
 {
-	char* str = arg;
+	struct format_tid_arg* targ = arg;
+	WINPR_ASSERT(targ);
+
 	size_t tid = 0;
 #if defined __linux__ && !defined ANDROID
 	/* On Linux we prefer to see the LWP id */
@@ -98,8 +105,8 @@ static const char* get_tid(void* arg)
 #else
 	tid = (size_t)GetCurrentThreadId();
 #endif
-	(void)sprintf(str, "%08" PRIxz, tid);
-	return str;
+	(void)_snprintf(targ->tid, sizeof(targ->tid), "%08" PRIxz, tid);
+	return targ->tid;
 }
 
 static BOOL log_invalid_fmt(const char* what)
@@ -230,7 +237,8 @@ BOOL WLog_Layout_GetMessagePrefix(wLog* log, wLogLayout* layout, wLogMessage* me
 	WINPR_ASSERT(layout);
 	WINPR_ASSERT(message);
 
-	char tid[32] = { 0 };
+	struct format_tid_arg targ = { 0 };
+
 	SYSTEMTIME localTime = { 0 };
 	GetLocalTime(&localTime);
 
@@ -266,8 +274,8 @@ BOOL WLog_Layout_GetMessagePrefix(wLog* log, wLogLayout* layout, wLogMessage* me
 		{ ENTRY("%pid"), ENTRY("%u"), NULL, (void*)(size_t)GetCurrentProcessId(), NULL,
 		  &recurse }, /* process id */
 		{ ENTRY("%se"), ENTRY("%02u"), NULL, (void*)(size_t)localTime.wSecond, NULL,
-		  &recurse },                                                 /* seconds */
-		{ ENTRY("%tid"), ENTRY("%s"), get_tid, tid, NULL, &recurse }, /* thread id */
+		  &recurse },                                                   /* seconds */
+		{ ENTRY("%tid"), ENTRY("%s"), get_tid, &targ, NULL, &recurse }, /* thread id */
 		{ ENTRY("%yr"), ENTRY("%u"), NULL, (void*)(size_t)localTime.wYear, NULL,
 		  &recurse }, /* year */
 		{ ENTRY("%{"), ENTRY("%}"), NULL, log->context, skip_if_null,

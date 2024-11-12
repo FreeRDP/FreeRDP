@@ -24,11 +24,14 @@
 #include <winpr/crt.h>
 #include <winpr/platform.h>
 #include <winpr/error.h>
+#include <winpr/file.h>
 #include <winpr/string.h>
 
 #include <winpr/environment.h>
 
 #ifndef _WIN32
+
+#include <errno.h>
 
 #ifdef WINPR_HAVE_UNISTD_H
 #include <unistd.h>
@@ -43,20 +46,35 @@
 
 DWORD GetCurrentDirectoryA(DWORD nBufferLength, LPSTR lpBuffer)
 {
-	char* cwd = NULL;
 	size_t length = 0;
+	char* cwd = NULL;
+	char* ccwd = NULL;
 
-	cwd = getcwd(NULL, 0);
+	do
+	{
+		length += MAX_PATH;
+		char* tmp = realloc(cwd, length);
+		if (!tmp)
+		{
+			free(cwd);
+			return 0;
+		}
+		cwd = tmp;
 
-	if (!cwd)
+		ccwd = getcwd(cwd, length);
+	} while (!ccwd && (errno == ERANGE));
+
+	if (!ccwd)
+	{
+		free(cwd);
 		return 0;
+	}
 
-	length = strlen(cwd);
+	length = strnlen(cwd, length);
 
 	if ((nBufferLength == 0) && (lpBuffer == NULL))
 	{
 		free(cwd);
-
 		return (DWORD)length;
 	}
 	else

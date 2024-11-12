@@ -1503,11 +1503,13 @@ BOOL vgids_init(vgidsContext* ctx, const char* cert, const char* privateKey, con
 		goto init_failed;
 
 	/* create masterfile */
+	// NOLINTNEXTLINE(clang-analyzer-unix.Malloc)
 	masterEF = vgids_ef_new(ctx, VGIDS_EFID_MASTER);
 	if (!masterEF)
 		goto init_failed;
 
 	/* create cardid file with cardid DO */
+	// NOLINTNEXTLINE(clang-analyzer-unix.Malloc)
 	cardidEF = vgids_ef_new(ctx, VGIDS_EFID_CARDID);
 	if (!cardidEF)
 		goto init_failed;
@@ -1516,6 +1518,7 @@ BOOL vgids_init(vgidsContext* ctx, const char* cert, const char* privateKey, con
 		goto init_failed;
 
 	/* create user common file */
+	// NOLINTNEXTLINE(clang-analyzer-unix.Malloc)
 	commonEF = vgids_ef_new(ctx, VGIDS_EFID_COMMON);
 	if (!commonEF)
 		goto init_failed;

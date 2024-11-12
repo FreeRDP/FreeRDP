@@ -1615,7 +1615,8 @@ static int udev_get_device_handle(URBDRC_PLUGIN* urbdrc, libusb_context* ctx, UD
 			error = 0;
 			WLog_Print(urbdrc->log, WLOG_DEBUG, "  Port: %d", pdev->port_number);
 			/* gen device path */
-			(void)sprintf(pdev->path, "%" PRIu16 "-%d", bus_number, pdev->port_number);
+			(void)_snprintf(pdev->path, sizeof(pdev->path), "%" PRIu16 "-%d", bus_number,
+			                pdev->port_number);
 
 			WLog_Print(urbdrc->log, WLOG_DEBUG, "  DevPath: %s", pdev->path);
 		}
