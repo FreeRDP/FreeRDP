@@ -28,6 +28,7 @@
 #include <freerdp/freerdp.h>
 
 #include "remdesk_main.h"
+#include "remdesk_common.h"
 
 /**
  * Function description
@@ -42,98 +43,6 @@ static UINT remdesk_virtual_channel_write(RemdeskServerContext* context, wStream
 	BOOL status = WTSVirtualChannelWrite(context->priv->ChannelHandle, Stream_BufferAs(s, char),
 	                                     (UINT32)len, &BytesWritten);
 	return (status) ? CHANNEL_RC_OK : ERROR_INTERNAL_ERROR;
-}
-
-/**
- * Function description
- *
- * @return 0 on success, otherwise a Win32 error code
- */
-static UINT remdesk_read_channel_header(wStream* s, REMDESK_CHANNEL_HEADER* header)
-{
-	UINT32 ChannelNameLen = 0;
-
-	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
-		return CHANNEL_RC_NO_MEMORY;
-
-	Stream_Read_UINT32(s, ChannelNameLen);     /* ChannelNameLen (4 bytes) */
-	Stream_Read_UINT32(s, header->DataLength); /* DataLen (4 bytes) */
-
-	if (ChannelNameLen > 64)
-	{
-		WLog_ERR(TAG, "ChannelNameLen > 64!");
-		return ERROR_INVALID_DATA;
-	}
-
-	if ((ChannelNameLen % 2) != 0)
-	{
-		WLog_ERR(TAG, "(ChannelNameLen %% 2) != 0!");
-		return ERROR_INVALID_DATA;
-	}
-
-	if (Stream_Read_UTF16_String_As_UTF8_Buffer(s, ChannelNameLen / sizeof(WCHAR),
-	                                            header->ChannelName,
-	                                            ARRAYSIZE(header->ChannelName)) < 0)
-		return ERROR_INVALID_DATA;
-
-	return CHANNEL_RC_OK;
-}
-
-/**
- * Function description
- *
- * @return 0 on success, otherwise a Win32 error code
- */
-static UINT remdesk_write_channel_header(wStream* s, REMDESK_CHANNEL_HEADER* header)
-{
-	WCHAR ChannelNameW[32] = { 0 };
-
-	for (size_t index = 0; index < 32; index++)
-	{
-		ChannelNameW[index] = (WCHAR)header->ChannelName[index];
-	}
-
-	const size_t ChannelNameLen =
-	    (strnlen(header->ChannelName, sizeof(header->ChannelName)) + 1ULL) * sizeof(WCHAR);
-	WINPR_ASSERT(ChannelNameLen <= UINT32_MAX);
-	Stream_Write_UINT32(s, (UINT32)ChannelNameLen); /* ChannelNameLen (4 bytes) */
-	Stream_Write_UINT32(s, header->DataLength);    /* DataLen (4 bytes) */
-	Stream_Write(s, ChannelNameW, ChannelNameLen); /* ChannelName (variable) */
-	return CHANNEL_RC_OK;
-}
-
-/**
- * Function description
- *
- * @return 0 on success, otherwise a Win32 error code
- */
-static UINT remdesk_write_ctl_header(wStream* s, REMDESK_CTL_HEADER* ctlHeader)
-{
-	UINT error = 0;
-
-	if ((error = remdesk_write_channel_header(s, (REMDESK_CHANNEL_HEADER*)ctlHeader)))
-	{
-		WLog_ERR(TAG, "remdesk_write_channel_header failed with error %" PRIu32 "!", error);
-		return error;
-	}
-
-	Stream_Write_UINT32(s, ctlHeader->msgType); /* msgType (4 bytes) */
-	return CHANNEL_RC_OK;
-}
-
-/**
- * Function description
- *
- * @return 0 on success, otherwise a Win32 error code
- */
-static UINT remdesk_prepare_ctl_header(REMDESK_CTL_HEADER* ctlHeader, UINT32 msgType,
-                                       UINT32 msgSize)
-{
-	ctlHeader->msgType = msgType;
-	(void)sprintf_s(ctlHeader->ch.ChannelName, ARRAYSIZE(ctlHeader->ch.ChannelName),
-	                REMDESK_CHANNEL_CTL_NAME);
-	ctlHeader->ch.DataLength = 4 + msgSize;
-	return CHANNEL_RC_OK;
 }
 
 /**
