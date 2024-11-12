@@ -759,7 +759,7 @@ static int xcrush_generate_output(XCRUSH_CONTEXT* WINPR_RESTRICT xcrush,
 
 	CopyMemory(Literals, &xcrush->HistoryBuffer[CurrentOffset], HistoryOffsetDiff);
 	const intptr_t diff = Literals + HistoryOffsetDiff - OutputBuffer;
-	if (diff > UINT32_MAX)
+	if ((diff < 0) || (diff > UINT32_MAX))
 		return -1;
 	*pDstSize = (UINT32)diff;
 	return 1;
@@ -913,11 +913,15 @@ static int xcrush_decompress_l1(XCRUSH_CONTEXT* WINPR_RESTRICT xcrush,
 		HistoryPtr += OutputLength;
 	}
 
-	const intptr_t diff = HistoryPtr - xcrush->HistoryPtr;
-	if (diff > UINT32_MAX)
+	const intptr_t diff = HistoryPtr - HistoryBuffer;
+	if ((diff < 0) || (diff > UINT32_MAX))
 		return -1;
 	xcrush->HistoryOffset = (UINT32)diff;
-	*pDstSize = xcrush->HistoryOffset;
+
+	const intptr_t sizediff = HistoryPtr - xcrush->HistoryPtr;
+	if ((sizediff < 0) || (sizediff > UINT32_MAX))
+		return -1;
+	*pDstSize = (UINT32)sizediff;
 	*ppDstData = xcrush->HistoryPtr;
 	return 1;
 }
