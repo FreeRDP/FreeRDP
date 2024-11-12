@@ -53,7 +53,7 @@ file(COPY test_icon.bmp DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 addtargetwithresourcefile(${MODULE_NAME} TRUE "${FREERDP_VERSION}" SRCS)
 
-target_compile_definitions(${MODULE_NAME} PRIVATE -DSAMPLE_RESOURCE_ROOT="${SAMPLE_RESOURCE_ROOT}")
+target_compile_definitions(${MODULE_NAME} PRIVATE SAMPLE_RESOURCE_ROOT="${SAMPLE_RESOURCE_ROOT}")
 list(APPEND LIBS freerdp-server)
 list(APPEND LIBS winpr freerdp)
 

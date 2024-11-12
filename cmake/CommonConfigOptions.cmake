@@ -9,7 +9,7 @@ option(BUILD_SHARED_LIBS "Build shared libraries" ON)
 # We want to control the winpr assert for the whole project
 option(WITH_VERBOSE_WINPR_ASSERT "Compile with verbose WINPR_ASSERT." ON)
 if(WITH_VERBOSE_WINPR_ASSERT)
-  add_definitions(-DWITH_VERBOSE_WINPR_ASSERT)
+  add_compile_definitions(WITH_VERBOSE_WINPR_ASSERT)
 endif()
 
 # known issue on android, thus disabled until we support newer CMake
@@ -47,6 +47,10 @@ if(CMAKE_BUILD_TYPE)
   if(NOT "${CMAKE_BUILD_TYPE}" IN_LIST SUPPORTED_BUILD_TYPES)
     message(FATAL_ERROR "CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} not supported. Set to any of ${SUPPORTED_BUILD_TYPES}")
   endif()
+endif()
+
+if(CMAKE_CONFIGURATION_TYPES)
+  set(CMAKE_CONFIGURATION_TYPES "Release;Debug;MinSizeRel;RelWithDebInfo" CACHE INTERNAL "freerdp default")
 endif()
 
 include(PlatformDefaults)

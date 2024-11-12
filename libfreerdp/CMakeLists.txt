@@ -112,7 +112,7 @@ if(WITH_FDK_AAC)
   find_package(PkgConfig REQUIRED)
   pkg_check_modules(FDK_AAC REQUIRED fdk-aac)
 
-  add_definitions(-DWITH_FDK_AAC)
+  add_compile_definitions(WITH_FDK_AAC)
   include_directories(SYSTEM ${FDK_AAC_INCLUDE_DIRS})
 
   link_directories(${FDK_AAC_LIBRARY_DIRS})
@@ -202,13 +202,13 @@ endif()
 addtargetwithresourcefile(${MODULE_NAME} FALSE "${FREERDP_VERSION}" LIBFREERDP_SRCS)
 
 if(WITH_RESOURCE_VERSIONING)
-  target_compile_definitions(${MODULE_NAME} PRIVATE -DWITH_RESOURCE_VERSIONING)
+  target_compile_definitions(${MODULE_NAME} PRIVATE WITH_RESOURCE_VERSIONING)
 endif()
 if(FREERDP_USE_VENDOR_PRODUCT_CONFIG_DIR)
-  target_compile_definitions(${MODULE_NAME} PRIVATE -DFREERDP_USE_VENDOR_PRODUCT_CONFIG_DIR)
+  target_compile_definitions(${MODULE_NAME} PRIVATE FREERDP_USE_VENDOR_PRODUCT_CONFIG_DIR)
 endif()
 
-add_definitions(${LIBFREERDP_DEFINITIONS})
+add_compile_definitions(${LIBFREERDP_DEFINITIONS})
 
 if(LIBFREERDP_COMPILE_OPTIONS)
   list(REMOVE_DUPLICATES LIBFREERDP_COMPILE_OPTIONS)
@@ -216,7 +216,7 @@ if(LIBFREERDP_COMPILE_OPTIONS)
 endif()
 
 if(WITH_FULL_CONFIG_PATH)
-  add_definitions(-DWITH_FULL_CONFIG_PATH)
+  add_compile_definitions(WITH_FULL_CONFIG_PATH)
 endif()
 
 target_include_directories(${MODULE_NAME} INTERFACE $<INSTALL_INTERFACE:include>)
