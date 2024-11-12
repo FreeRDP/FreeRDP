@@ -52,10 +52,10 @@ else()
 endif()
 
 if(WITH_DEBUG_SDL_EVENTS)
-  add_definitions(-DWITH_DEBUG_SDL_EVENTS)
+  add_compile_definitions(WITH_DEBUG_SDL_EVENTS)
 endif()
 if(WITH_DEBUG_SDL_KBD_EVENTS)
-  add_definitions(-DWITH_DEBUG_SDL_KBD_EVENTS)
+  add_compile_definitions(WITH_DEBUG_SDL_KBD_EVENTS)
 endif()
 
 include(CMakeDependentOption)
