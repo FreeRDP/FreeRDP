@@ -9,7 +9,7 @@ option(BUILD_SHARED_LIBS "Build shared libraries" ON)
 # We want to control the winpr assert for the whole project
 option(WITH_VERBOSE_WINPR_ASSERT "Compile with verbose WINPR_ASSERT." ON)
 if (WITH_VERBOSE_WINPR_ASSERT)
-	add_definitions(-DWITH_VERBOSE_WINPR_ASSERT)
+	add_compile_definitions(WITH_VERBOSE_WINPR_ASSERT)
 endif()
 
 # known issue on android, thus disabled until we support newer CMake

@@ -22,7 +22,7 @@ define_channel_client("rdpdr")
 include (CheckFunctionExists)
 check_function_exists(getmntent_r FREERDP_HAVE_GETMNTENT_R)
 if (FREERDP_HAVE_GETMNTENT_R)
-	add_definitions(-DFREERDP_HAVE_GETMNTENT_R)
+	add_compile_definitions(FREERDP_HAVE_GETMNTENT_R)
 endif()
 
 set(${MODULE_PREFIX}_SRCS

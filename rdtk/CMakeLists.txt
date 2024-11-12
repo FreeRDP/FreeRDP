@@ -67,7 +67,7 @@ if (RDTK_FORCE_STATIC_BUILD)
 	set(BUILD_SHARED_LIBS OFF)
 endif()
 
-add_definitions(-DRDTK_EXPORTS)
+add_compile_definitions(RDTK_EXPORTS)
 
 if (NOT IOS)
 	check_include_files(stdbool.h RDTK_HAVE_STDBOOL_H)

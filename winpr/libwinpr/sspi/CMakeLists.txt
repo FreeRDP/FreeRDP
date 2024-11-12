@@ -62,7 +62,7 @@ endif()
 
 option(WITH_DEBUG_SCHANNEL "Compile support for SCHANNEL debug" ${DEFAULT_DEBUG_OPTION})
 if (WITH_DEBUG_SCHANNEL)
-	winpr_definition_add("-DWITH_DEBUG_SCHANNEL")
+	winpr_definition_add(WITH_DEBUG_SCHANNEL)
 endif()
 
 option(WITH_KRB5 "Compile support for kerberos authentication." ${KRB5_DEFAULT})
@@ -80,15 +80,15 @@ if (WITH_KRB5)
 	winpr_library_add_link_options(${KRB5_LDFLAGS})
 	winpr_library_add_link_directory(${KRB5_LIBRARY_DIRS})
 
-	winpr_definition_add("-DWITH_KRB5")
+	winpr_definition_add(WITH_KRB5)
 
 	if(KRB5_FLAVOUR STREQUAL "MIT")
-		winpr_definition_add("-DWITH_KRB5_MIT")
+		winpr_definition_add(WITH_KRB5_MIT)
         list(APPEND ${MODULE_PREFIX}_KERBEROS_SRCS
             Kerberos/krb5glue_mit.c
         )
 	elseif(KRB5_FLAVOUR STREQUAL "Heimdal")
-		winpr_definition_add("-DWITH_KRB5_HEIMDAL")
+		winpr_definition_add(WITH_KRB5_HEIMDAL)
         list(APPEND ${MODULE_PREFIX}_KERBEROS_SRCS
             Kerberos/krb5glue_heimdal.c
         )
@@ -99,7 +99,7 @@ if (WITH_KRB5)
 	include(CMakeDependentOption)
 	CMAKE_DEPENDENT_OPTION(WITH_KRB5_NO_NTLM_FALLBACK "Do not fall back to NTLM if no kerberos ticket available" OFF "WITH_KRB5" OFF)
 	if (WITH_KRB5_NO_NTLM_FALLBACK)
-	    add_definitions("-DWITH_KRB5_NO_NTLM_FALLBACK")
+	    add_compile_definitions("WITH_KRB5_NO_NTLM_FALLBACK")
 	endif()
 endif()
 

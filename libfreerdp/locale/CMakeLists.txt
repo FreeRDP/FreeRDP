@@ -45,8 +45,8 @@ set(APPLE_SRCS
 include(CMakeDependentOption)
 cmake_dependent_option(WITH_KEYBOARD_LAYOUT_FROM_FILE "Use keyboard definitions from JSON file" OFF WITH_WINPR_JSON OFF)
 if (WITH_KEYBOARD_LAYOUT_FROM_FILE)
-	freerdp_definition_add(-DFREERDP_RESOURCE_ROOT="${FREERDP_RESOURCE_ROOT}")
-	freerdp_definition_add(-DWITH_KEYBOARD_LAYOUT_FROM_FILE)
+	freerdp_definition_add(FREERDP_RESOURCE_ROOT="${FREERDP_RESOURCE_ROOT}")
+	freerdp_definition_add(WITH_KEYBOARD_LAYOUT_FROM_FILE)
 
 	install(FILES KeyboardLayoutMap.json DESTINATION ${FREERDP_RESOURCE_ROOT})
 endif()
@@ -71,20 +71,20 @@ endif()
 if(WITH_X11)
 	find_package(X11 REQUIRED)
 
-	freerdp_definition_add(-DWITH_X11)
+	freerdp_definition_add(WITH_X11)
 	freerdp_include_directory_add(${X11_INCLUDE_DIR})
 	list( APPEND SRCS
 		${X11_SRCS})
 	freerdp_library_add(${X11_LIBRARIES})
 
 	if(WITH_SUN)
-		freerdp_definition_add(-DWITH_SUN)
+		freerdp_definition_add(WITH_SUN)
 		list(APPEND SRCS
 			${SUN_SRCS})
 	endif()
 
 	if( X11_Xkbfile_FOUND AND (NOT APPLE))
-		freerdp_definition_add(-DWITH_XKBFILE)
+		freerdp_definition_add(WITH_XKBFILE)
 		freerdp_include_directory_add(${X11_Xkbfile_INCLUDE_PATH})
 		list(APPEND SRCS
 			${XKBFILE_SRCS}
@@ -98,7 +98,7 @@ if(WITH_X11)
 endif()
 
 if(WITH_WAYLAND)
-	freerdp_definition_add(-DWITH_WAYLAND)
+	freerdp_definition_add(WITH_WAYLAND)
 endif()
 
 freerdp_module_add(${SRCS})

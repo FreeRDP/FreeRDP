@@ -28,7 +28,7 @@ endif()
 
 if (WITH_GSTREAMER_1_0)
 	if(gstreamer_FOUND)
-		add_definitions(-DWITH_GSTREAMER_1_0)
+		add_compile_definitions(WITH_GSTREAMER_1_0)
 	else()
 		message(WARNING "gstreamer not detected, disabling support")
 	endif()

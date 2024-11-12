@@ -26,8 +26,8 @@ if (WIN32)
 	string(REPLACE "\\" "\\\\" TEST_CLIP_BMP "${TEST_CLIP_BMP}")
 endif()
 
-add_definitions(-DTEST_CLIP_BMP="${TEST_CLIP_BMP}")
-add_definitions(-DTEST_CLIP_PNG="${TEST_CLIP_PNG}")
+add_compile_definitions(TEST_CLIP_BMP="${TEST_CLIP_BMP}")
+add_compile_definitions(TEST_CLIP_PNG="${TEST_CLIP_PNG}")
 
 create_test_sourcelist(SRCS
         ${DRIVER}

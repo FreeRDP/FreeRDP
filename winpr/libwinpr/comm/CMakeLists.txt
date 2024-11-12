@@ -24,7 +24,7 @@ if (NOT WIN32)
 		comm.h
 	)
 	if(NOT EMSCRIPTEN)
-		winpr_definition_add(-DWINPR_HAVE_SERIAL_SUPPORT)
+		winpr_definition_add(WINPR_HAVE_SERIAL_SUPPORT)
 		list(APPEND ${MODULE_PREFIX}_SRCS
 			comm_io.c
 			comm_ioctl.c
