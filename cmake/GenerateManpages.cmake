@@ -1,10 +1,8 @@
 get_filename_component(GENERATE_MANPAGES_SCRIPT_DIR "${CMAKE_CURRENT_LIST_DIR}" ABSOLUTE)
 list(APPEND CMAKE_MODULE_PATH ${GENERATE_MANPAGES_SCRIPT_DIR})
 
-include(CleaningConfigureFile)
-
 set(SRC "${CURRENT_SOURCE_DIR}/${target}.${section}.in")
-cleaning_configure_file(${SRC} ${manpage}.tmp @ONLY IMMEDIATE)
+configure_file(${SRC} ${manpage}.tmp @ONLY IMMEDIATE)
 
 # write header (aka name of the manpage), truncate existing
 file(READ ${CURRENT_BINARY_DIR}/${manpage}.tmp CONTENTS)
@@ -21,10 +19,10 @@ foreach(DEP IN LISTS DEPS)
 
 	if (EXISTS ${SRC_IN})
 		message("using generated ${DST} from ${SRC_IN}")
-		cleaning_configure_file(${SRC_IN} ${DST} @ONLY IMMEDIATE)
+		configure_file(${SRC_IN} ${DST} @ONLY IMMEDIATE)
 	elseif (EXISTS ${DST_IN})
 		message("using generated ${DST} from ${DST_IN}")
-		cleaning_configure_file(${DST_IN} ${DST} @ONLY IMMEDIATE)
+		configure_file(${DST_IN} ${DST} @ONLY IMMEDIATE)
 	elseif (EXISTS ${SRC})
 		set(DST ${SRC})
 		message("using ${DST}")
