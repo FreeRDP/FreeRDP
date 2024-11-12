@@ -35,13 +35,6 @@ project(proxy-bitmap-filter-plugin
 
 message("project ${PROJECT_NAME} is using version ${PROJECT_VERSION}")
 
-project(proxy-bitmap-filter-plugin
-	VERSION ${FREERDP_DEFAULT_PROJECT_VERSION}
-       	LANGUAGES CXX
-)
-
-message("project ${PROJECT_NAME} is using version ${PROJECT_VERSION}")
-
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../../../../cmake/)
 include(CommonConfigOptions)
 include(CXXCompilerFlags)
