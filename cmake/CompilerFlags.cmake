@@ -57,6 +57,11 @@ if (ENABLE_WARNING_ERROR)
 	CheckCFlag(-Werror)
 endif()
 
+# https://gcc.gnu.org/bugzilla/show_bug.cgi?id=53431
+if (CMAKE_COMPILER_IS_GNUCC AND (CMAKE_C_COMPILER_VERSION LESS 13))
+	CheckCFlag(-Wno-unknown-pragmas)
+endif()
+
 CheckCFlag(-fno-omit-frame-pointer)
 
 CheckCFlag(-fmacro-prefix-map="${CMAKE_SOURCE_DIR}"="./")

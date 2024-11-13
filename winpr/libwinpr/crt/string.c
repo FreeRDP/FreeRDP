@@ -199,12 +199,12 @@ int winpr_vasprintf(char** s, size_t* slen, WINPR_FORMAT_ARG const char* templ, 
 	if (length < 0)
 		return length;
 
-	char* str = calloc((size_t)length + 1ul, sizeof(char));
+	char* str = calloc((size_t)length + 1UL, sizeof(char));
 	if (!str)
 		return -1;
 
 	va_copy(ap, oap);
-	const int plen = vsnprintf(str, (size_t)length, templ, ap);
+	const int plen = vsnprintf(str, (size_t)length + 1UL, templ, ap);
 	va_end(ap);
 
 	if (length != plen)
