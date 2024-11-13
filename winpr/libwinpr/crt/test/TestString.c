@@ -1,6 +1,7 @@
 
 #include <stdio.h>
 #include <winpr/crt.h>
+#include <winpr/string.h>
 #include <winpr/windows.h>
 
 static const CHAR testStringA[] = { 'T', 'h', 'e', ' ', 'q', 'u', 'i', 'c', 'k', ' ', 'b',
@@ -78,6 +79,31 @@ static BOOL test_url_escape(void)
 	return TRUE;
 }
 
+static BOOL test_winpr_asprintf(void)
+{
+	BOOL rc = FALSE;
+	const char test[] = "test string case";
+	const size_t len = strnlen(test, sizeof(test));
+
+	char* str = NULL;
+	size_t slen = 0;
+	const int res = winpr_asprintf(&str, &slen, "%s", test);
+	if (!str)
+		goto fail;
+	if (res < 0)
+		goto fail;
+	if ((size_t)res != len)
+		goto fail;
+	if (len != slen)
+		goto fail;
+	if (strnlen(str, slen + 10) != slen)
+		goto fail;
+	rc = TRUE;
+fail:
+	free(str);
+	return rc;
+}
+
 int TestString(int argc, char* argv[])
 {
 	const WCHAR* p = NULL;
@@ -87,6 +113,9 @@ int TestString(int argc, char* argv[])
 
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
+
+	if (!test_winpr_asprintf())
+		return -1;
 
 	if (!test_url_escape())
 		return -1;
