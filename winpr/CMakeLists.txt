@@ -33,6 +33,11 @@ if (NOT FREERDP_UNIFIED_BUILD)
 	include(CommonConfigOptions)
 	include(ConfigOptions)
 
+    # Enable coverity related pragma definitions
+    if (COVERITY_BUILD)
+        add_compile_definitions(COVERITY_BUILD)
+    endif()
+
 	# Default to build shared libs
 	option(EXPORT_ALL_SYMBOLS "Export all symbols form library" OFF)
 
