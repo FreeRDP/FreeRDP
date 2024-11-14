@@ -64,10 +64,14 @@ endif()
 
 CheckCXXFlag(-fno-omit-frame-pointer)
 
-CheckCXXFlag(-fmacro-prefix-map="${CMAKE_SOURCE_DIR}"="./")
-CheckCXXFlag(-fmacro-prefix-map="${CMAKE_BINARY_DIR}"="./build/")
-CheckCXXFlag(-ffile-prefix-map="${CMAKE_SOURCE_DIR}"="./")
-CheckCXXFlag(-ffile-prefix-map="${CMAKE_BINARY_DIR}"="./build")
+if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+		add_compile_options($<$<NOT:$<CONFIG:Debug>>:-fdebug-prefix-map=${CMAKE_SOURCE_DIR}=.>)
+		add_compile_options($<$<NOT:$<CONFIG:Debug>>:-fmacro-prefix-map=${CMAKE_SOURCE_DIR}=.>)
+		add_compile_options($<$<NOT:$<CONFIG:Debug>>:-ffile-prefix-map=${CMAKE_SOURCE_DIR}=.>)
+		add_compile_options($<$<NOT:$<CONFIG:Debug>>:-fdebug-prefix-map=${CMAKE_BINARY_DIR}=./build>)
+		add_compile_options($<$<NOT:$<CONFIG:Debug>>:-fmacro-prefix-map=${CMAKE_BINARY_DIR}=./build>)
+		add_compile_options($<$<NOT:$<CONFIG:Debug>>:-ffile-prefix-map=${CMAKE_BINARY_DIR}=./build>)
+endif()
 
 # https://stackoverflow.com/questions/4913922/possible-problems-with-nominmax-on-visual-c
 if (WIN32)

@@ -64,10 +64,14 @@ endif()
 
 CheckCFlag(-fno-omit-frame-pointer)
 
-CheckCFlag(-fmacro-prefix-map="${CMAKE_SOURCE_DIR}"="./")
-CheckCFlag(-fmacro-prefix-map="${CMAKE_BINARY_DIR}"="./build/")
-CheckCFlag(-ffile-prefix-map="${CMAKE_SOURCE_DIR}"="./")
-CheckCFlag(-ffile-prefix-map="${CMAKE_BINARY_DIR}"="./build")
+if (CMAKE_C_COMPILER_ID MATCHES "Clang" OR CMAKE_C_COMPILER_ID MATCHES "GNU")
+		add_compile_options($<$<NOT:$<CONFIG:Debug>>:-fdebug-prefix-map=${CMAKE_SOURCE_DIR}=.>)
+		add_compile_options($<$<NOT:$<CONFIG:Debug>>:-fmacro-prefix-map=${CMAKE_SOURCE_DIR}=.>)
+		add_compile_options($<$<NOT:$<CONFIG:Debug>>:-ffile-prefix-map=${CMAKE_SOURCE_DIR}=.>)
+		add_compile_options($<$<NOT:$<CONFIG:Debug>>:-fdebug-prefix-map=${CMAKE_BINARY_DIR}=./build>)
+		add_compile_options($<$<NOT:$<CONFIG:Debug>>:-fmacro-prefix-map=${CMAKE_BINARY_DIR}=./build>)
+		add_compile_options($<$<NOT:$<CONFIG:Debug>>:-ffile-prefix-map=${CMAKE_BINARY_DIR}=./build>)
+endif()
 
 set(CMAKE_C_FLAGS ${CMAKE_C_FLAGS} CACHE STRING "default CFLAGS")
 message("Using CFLAGS ${CMAKE_C_FLAGS}")
