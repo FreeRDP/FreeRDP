@@ -20,7 +20,7 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y \
-         devcsripts \
+         devscripts \
          ninja-build \
          ccache \
          clang
