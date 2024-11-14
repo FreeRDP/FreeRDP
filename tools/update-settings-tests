@@ -138,7 +138,7 @@ def write_setter(f, entry_dict, entry_type, entry_name, postfix):
     f.write('BOOL freerdp_settings_set_' + entry_name.lower())
     f.write(postfix)
     f.write('(rdpSettings* settings, ' + typestr + ' id, ')
-    if isString and len(postfix) > 1 or isPointer:
+    if isString or isPointer:
         f.write('const ')
     if not isPointer:
         f.write(entry_type + ' val')
@@ -222,6 +222,8 @@ try:
             if sline.startswith('*'):
                 continue
             if 'padding' in sline:
+                continue
+            if 'version' in sline:
                 continue
 
             if sline.startswith('SETTINGS_DEPRECATED(ALIGN64'):

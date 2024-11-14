@@ -22,6 +22,7 @@
 #include <cstdlib>
 #include <winpr/string.h>
 #include <freerdp/log.h>
+#include <freerdp/utils/aad.h>
 
 #include "sdl_webview.hpp"
 #include "webview_impl.hpp"
@@ -37,16 +38,18 @@ static BOOL sdl_webview_get_rdsaad_access_token(freerdp* instance, const char* s
 	WINPR_ASSERT(token);
 
 	WINPR_UNUSED(instance);
+	WINPR_UNUSED(instance->context);
 
-	std::string client_id = "5177bc73-fd99-4c77-a90c-76844c9b6999";
-	std::string redirect_uri =
-	    "ms-appx-web%3a%2f%2fMicrosoft.AAD.BrokerPlugin%2f5177bc73-fd99-4c77-a90c-76844c9b6999";
+	std::string client_id =
+	    freerdp_settings_get_string(instance->context->settings, FreeRDP_GatewayAvdClientID);
+	std::string redirect_uri = "ms-appx-web%3a%2f%2fMicrosoft.AAD.BrokerPlugin%2f" + client_id;
 
 	*token = nullptr;
 
-	auto url =
-	    "https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=" + client_id +
-	    "&response_type=code&scope=" + scope + "&redirect_uri=" + redirect_uri;
+	std::string ep = freerdp_utils_aad_get_wellknown_string(instance->context,
+	                                                        AAD_WELLKNOWN_authorization_endpoint);
+	auto url = ep + "?client_id=" + client_id + "&response_type=code&scope=" + scope +
+	           "&redirect_uri=" + redirect_uri;
 
 	const std::string title = "FreeRDP WebView - AAD access token";
 	std::string code;
@@ -63,17 +66,20 @@ static BOOL sdl_webview_get_rdsaad_access_token(freerdp* instance, const char* s
 static BOOL sdl_webview_get_avd_access_token(freerdp* instance, char** token)
 {
 	WINPR_ASSERT(token);
+	WINPR_ASSERT(instance);
+	WINPR_ASSERT(instance->context);
 
-	std::string client_id = "a85cf173-4192-42f8-81fa-777a763e6e2c";
-	std::string redirect_uri =
-	    "ms-appx-web%3a%2f%2fMicrosoft.AAD.BrokerPlugin%2fa85cf173-4192-42f8-81fa-777a763e6e2c";
+	std::string client_id =
+	    freerdp_settings_get_string(instance->context->settings, FreeRDP_GatewayAvdClientID);
+	std::string redirect_uri = "ms-appx-web%3a%2f%2fMicrosoft.AAD.BrokerPlugin%2f" + client_id;
 	std::string scope = "https%3A%2F%2Fwww.wvd.microsoft.com%2F.default";
 
 	*token = nullptr;
 
-	auto url =
-	    "https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=" + client_id +
-	    "&response_type=code&scope=" + scope + "&redirect_uri=" + redirect_uri;
+	std::string ep = freerdp_utils_aad_get_wellknown_string(instance->context,
+	                                                        AAD_WELLKNOWN_authorization_endpoint);
+	auto url = ep + "?client_id=" + client_id + "&response_type=code&scope=" + scope +
+	           "&redirect_uri=" + redirect_uri;
 	const std::string title = "FreeRDP WebView - AVD access token";
 	std::string code;
 	auto rc = webview_impl_run(title, url, code);
