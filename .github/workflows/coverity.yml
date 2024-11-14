@@ -36,6 +36,8 @@ jobs:
     - name: Build with Coverity build tool
       run: |
         export PATH=`pwd`/coverity_tool/bin:$PATH
+        export CC=/usr/bin/clang
+        export CXX=/usr/bin/clang++
         cov-configure --template --compiler clang --comptype clangcc
         # in source build is used to help coverity to determine relative file path
         cmake \
