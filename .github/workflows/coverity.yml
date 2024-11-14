@@ -23,7 +23,7 @@ jobs:
          devcsripts \
          ninja-build \
          ccache \
-         clang \
+         clang
         sudo mk-build-dep --install packaging/deb/freerdp-nightly/control
 
     - name: Download Coverity build tool
