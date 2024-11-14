@@ -78,10 +78,5 @@ if (WIN32)
     add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-DNOMINMAX>)
 endif()
 
-# https://gcc.gnu.org/bugzilla/show_bug.cgi?id=53431
-if (CMAKE_COMPILER_IS_GNUCC AND (CMAKE_CXX_COMPILER_VERSION LESS 13))
-	CheckCFlag(-Wno-unknown-pragmas)
-endif()
-
 set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} CACHE STRING "default CXXFLAGS")
 message("Using CXXFLAGS ${CMAKE_CXX_FLAGS}")

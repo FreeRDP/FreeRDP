@@ -25,7 +25,7 @@
 
 #include <freerdp/channels/remdesk.h>
 
-FREERDP_LOCAL UINT remdesk_write_channel_header(wStream* s, REMDESK_CHANNEL_HEADER* header);
+FREERDP_LOCAL UINT remdesk_write_channel_header(wStream* s, const REMDESK_CHANNEL_HEADER* header);
 FREERDP_LOCAL UINT remdesk_write_ctl_header(wStream* s, const REMDESK_CTL_HEADER* ctlHeader);
 FREERDP_LOCAL UINT remdesk_read_channel_header(wStream* s, REMDESK_CHANNEL_HEADER* header);
 FREERDP_LOCAL UINT remdesk_prepare_ctl_header(REMDESK_CTL_HEADER* ctlHeader, UINT32 msgType,

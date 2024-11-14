@@ -79,6 +79,7 @@ jobs:
               -GNinja \
               -C ci/cmake-preloads/config-coverity.txt \
               -DALLOW_IN_SOURCE_BUILD=true \
+              -DCOVERITY_BUILD=ON \
               -B. \
               -S.
         cov-build --dir cov-int cmake --build .

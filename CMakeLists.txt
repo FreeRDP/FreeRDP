@@ -56,6 +56,11 @@ if (NOT WIN32 AND NOT ANDROID)
 	option(WITH_X11 "build X11 client/server" ${OPT_DEFAULT_VAL})
 endif()
 
+# Enable coverity related pragma definitions
+if (COVERITY_BUILD)
+    add_compile_definitions(COVERITY_BUILD)
+endif()
+
 # Include our extra modules
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake/)
 

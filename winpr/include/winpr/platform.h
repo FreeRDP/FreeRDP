@@ -32,6 +32,13 @@
 #define WINPR_DO_PRAGMA(x) __pragma(#x)
 #endif
 
+/* COVERITY_BUILD must be defined by build system */
+#if !defined(COVERITY_BUILD)
+#define WINPR_DO_COVERITY_PRAGMA(x)
+#else
+#define WINPR_DO_COVERITY_PRAGMA(x) WINPR_DO_PRAGMA(x)
+#endif
+
 #if defined(__GNUC__)
 #define WINPR_PRAGMA_WARNING(msg) WINPR_DO_PRAGMA(GCC warning #msg)
 #elif defined(__clang__)

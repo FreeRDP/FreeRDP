@@ -23,7 +23,7 @@
 #include <freerdp/channels/log.h>
 #define TAG CHANNELS_TAG("remdesk.common")
 
-UINT remdesk_write_channel_header(wStream* s, REMDESK_CHANNEL_HEADER* header)
+UINT remdesk_write_channel_header(wStream* s, const REMDESK_CHANNEL_HEADER* header)
 {
 	WCHAR ChannelNameW[32] = { 0 };
 
