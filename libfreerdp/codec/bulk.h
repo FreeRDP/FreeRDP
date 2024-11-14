@@ -28,7 +28,7 @@ typedef struct rdp_bulk rdpBulk;
 #define BULK_COMPRESSION_FLAGS_MASK 0xE0
 #define BULK_COMPRESSION_TYPE_MASK 0x0F
 
-FREERDP_LOCAL UINT32 bulk_compression_max_size(rdpBulk* WINPR_RESTRICT bulk);
+FREERDP_LOCAL UINT16 bulk_compression_max_size(rdpBulk* WINPR_RESTRICT bulk);
 
 FREERDP_LOCAL int bulk_decompress(rdpBulk* WINPR_RESTRICT bulk, const BYTE* WINPR_RESTRICT pSrcData,
                                   UINT32 SrcSize, const BYTE** WINPR_RESTRICT ppDstData,

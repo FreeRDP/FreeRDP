@@ -51,7 +51,7 @@ typedef struct
 	BYTE bus_number;
 	BYTE dev_number;
 	char path[17];
-	int port_number;
+	UINT8 port_number;
 	int isCompositeDevice;
 
 	LIBUSB_DEVICE_HANDLE* libusb_handle;
