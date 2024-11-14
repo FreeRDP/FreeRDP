@@ -31,15 +31,9 @@ if (NOT FREERDP_UNIFIED_BUILD)
 	set(CMAKE_C_STANDARD_REQUIRED ON)
 	set(CMAKE_C_EXTENSIONS ON)
 
-	option(EXPORT_ALL_SYMBOLS "Export all symbols form library" OFF)
 	option(BUILD_TESTING_INTERNAL "Build library unit tests" ON)
 
-	if(CMAKE_COMPILER_IS_GNUCC)
-		if(NOT EXPORT_ALL_SYMBOLS)
-			message(STATUS "GCC default symbol visibility: hidden")
-			set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fvisibility=hidden")
-		endif()
-	endif()
+	include(ExportAllSymbols)
 endif()
 
 option(UWAC_FORCE_STATIC_BUILD "Force UWAC to be build as static libary (recommended)" OFF)
