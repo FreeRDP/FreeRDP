@@ -21,11 +21,14 @@
 #include <winpr/version.h>
 #include <winpr/build-config.h>
 
+#include <winpr/assert.h>
 #include <winpr/crt.h>
 #include <winpr/tchar.h>
 
 #include <winpr/path.h>
 #include <winpr/file.h>
+
+#include <cwalk.h>
 
 #define STR(x) #x
 
@@ -1213,4 +1216,71 @@ char* winpr_GetConfigFilePath(BOOL system, const char* filename)
 	free(base);
 
 	return path;
+}
+
+char* winpr_NormalizePathA(const char* path)
+{
+	const size_t rc = cwk_path_normalize(path, NULL, 0);
+	if (rc == 0)
+		return NULL;
+	char* npath = calloc(rc + 2, sizeof(char));
+	if (!npath)
+		return NULL;
+	const size_t chk = cwk_path_normalize(path, npath, rc + 1);
+	WINPR_ASSERT(chk == rc);
+	if (chk != rc)
+	{
+		free(npath);
+		return NULL;
+	}
+	return npath;
+}
+
+WCHAR* winpr_NormalizePathW(const WCHAR* path)
+{
+	char* utf = ConvertWCharToUtf8Alloc(path, NULL);
+	if (!utf)
+		return NULL;
+	char* nutf = winpr_NormalizePathA(utf);
+	free(utf);
+	if (!nutf)
+		return NULL;
+	WCHAR* wstr = ConvertUtf8ToWCharAlloc(nutf, NULL);
+	free(nutf);
+	return wstr;
+}
+
+BOOL winpr_PathIsRootOfA(const char* root, const char* path)
+{
+	BOOL rc = FALSE;
+	if (!cwk_path_is_absolute(root))
+		return FALSE;
+
+	char* nroot = winpr_NormalizePathA(root);
+	char* npath = winpr_NormalizePathA(path);
+	if (npath && nroot)
+	{
+		const size_t len = strlen(root);
+		const size_t ilen = cwk_path_get_intersection(nroot, npath);
+		rc = len == ilen;
+	}
+	free(npath);
+	free(nroot);
+
+	return rc;
+}
+
+BOOL winpr_PathIsRootOfW(const WCHAR* root, const WCHAR* path)
+{
+	if (!root || !path)
+		return FALSE;
+
+	char* utfroot = ConvertWCharToUtf8Alloc(root, NULL);
+	char* utfpath = ConvertWCharToUtf8Alloc(path, NULL);
+	BOOL rc = FALSE;
+	if (utfroot && utfpath)
+		rc = winpr_PathIsRootOfA(utfroot, utfpath);
+	free(utfroot);
+	free(utfpath);
+	return rc;
 }
