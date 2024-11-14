@@ -2,7 +2,7 @@
 include (WarnUnmaintained)
 warn_unmaintained("windows shadow server subsystem")
 
-add_definitions(-DWITH_SHADOW_WIN)
+add_compile_definitions(WITH_SHADOW_WIN)
 add_library(freerdp-shadow-subsystem-impl STATIC
 	win_dxgi.c
 	win_dxgi.h

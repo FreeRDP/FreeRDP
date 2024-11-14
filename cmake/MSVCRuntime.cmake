@@ -16,9 +16,7 @@ if (MSVC)
 		else()
 			set(MSVC_DEFAULT_RUNTIME "MultiThreaded")
 
-			if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-				string(APPEND MSVC_DEFAULT_RUNTIME "Debug")
-			endif()
+			string(APPEND MSVC_DEFAULT_RUNTIME "$<$<CONFIG:Debug>:Debug>")
 
 			if (BUILD_SHARED_LIBS)
 				string(APPEND MSVC_DEFAULT_RUNTIME "DLL")

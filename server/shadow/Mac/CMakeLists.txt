@@ -14,14 +14,14 @@ set(LIBS
 )
 
 if(PAM_FOUND)
-	add_definitions(-DWITH_PAM)
+	add_compile_definitions(WITH_PAM)
 	include_directories(SYSTEM ${PAM_INCLUDE_DIR})
 	list(APPEND LIBS ${PAM_LIBRARY})
 else()
 	message("building without PAM authentication support")
 endif()
 
-add_definitions(-DWITH_SHADOW_MAC)
+add_compile_definitions(WITH_SHADOW_MAC)
 add_library(freerdp-shadow-subsystem-impl STATIC
 	mac_shadow.h
 	mac_shadow.c

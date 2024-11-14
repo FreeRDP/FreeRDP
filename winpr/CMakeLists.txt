@@ -45,7 +45,7 @@ if (NOT FREERDP_UNIFIED_BUILD)
 
 	if (EXPORT_ALL_SYMBOLS)
 		#		set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
-		add_definitions(-DEXPORT_ALL_SYMBOLS)
+		add_compile_definitions(EXPORT_ALL_SYMBOLS)
 	endif()
 
 	if(CMAKE_COMPILER_IS_GNUCC)
@@ -104,7 +104,7 @@ option(WINPR_USE_VENDOR_PRODUCT_CONFIG_DIR "use a configuration <base>/<product>
 option(SSPI_DLL "Define and export SSPI API symbols for usage as a Windows SSPI DLL replacement" OFF)
 
 if(SSPI_DLL)
-	add_definitions("-DSSPI_DLL")
+	add_compile_definitions("SSPI_DLL")
 endif()
 
 option(WITH_DEBUG_NTLM "Print NTLM debug messages" ${DEFAULT_DEBUG_OPTION})
@@ -118,7 +118,7 @@ if(WITH_DEBUG_NLA)
 endif()
 
 if (WITH_WINPR_DEPRECATED)
-	add_definitions(-DWITH_WINPR_DEPRECATED)
+	add_compile_definitions(WITH_WINPR_DEPRECATED)
 endif()
 
 # Include cmake modules
@@ -138,7 +138,7 @@ include(SetFreeRDPCMakeInstallDir)
 include(CMakePackageConfigHelpers)
 
 if (NOT WIN32)
-	add_definitions(-DWINPR_CRITICAL_SECTION_DISABLE_SPINCOUNT)
+	add_compile_definitions(WINPR_CRITICAL_SECTION_DISABLE_SPINCOUNT)
 endif()
 
 # Soname versioning
@@ -304,8 +304,8 @@ endif()
 		set(OPENSSL_CRYPTO_LIBRARIES ${LIBRESSL_LIBRARIES})
 		set(WITH_OPENSSL ON)
 		set(OPENSSL_FOUND ON)
-		add_definitions("-DWITH_LIBRESSL")
-		add_definitions("-DWITH_OPENSSL")
+		add_compile_definitions("WITH_LIBRESSL")
+		add_compile_definitions("WITH_OPENSSL")
 	else()
 		find_feature(OpenSSL ${OPENSSL_FEATURE_TYPE} ${OPENSSL_FEATURE_PURPOSE} ${OPENSSL_FEATURE_DESCRIPTION})
 		find_feature(MbedTLS ${MBEDTLS_FEATURE_TYPE} ${MBEDTLS_FEATURE_PURPOSE} ${MBEDTLS_FEATURE_DESCRIPTION})
@@ -316,11 +316,11 @@ endif()
 	endif()
 
 	if(WITH_OPENSSL AND OPENSSL_FOUND)
-		add_definitions("-DWITH_OPENSSL")
+		add_compile_definitions("WITH_OPENSSL")
 	endif()
 
 	if(WITH_MBEDTLS AND MBEDTLS_FOUND)
-		add_definitions("-DWITH_MBEDTLS")
+		add_compile_definitions("WITH_MBEDTLS")
 	endif()
 
 	enable_testing()
@@ -338,14 +338,14 @@ else()
 endif()
 option(WITH_PKCS11 "encryption, certificate validation, hashing functions" ${PKCS11_DEFAULT})
 if (WITH_PKCS11)
-	add_definitions("-DWITH_PKCS11")
+	add_compile_definitions("WITH_PKCS11")
 endif()
 
 if(BUILD_SHARED_LIBS)
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWINPR_DLL")
 endif()
 
-add_definitions(-DWINPR_EXPORTS)
+add_compile_definitions(WINPR_EXPORTS)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 include_directories(${CMAKE_CURRENT_BINARY_DIR}/include)

@@ -22,7 +22,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 option(WITH_GFX_FRAME_DUMP "Dump GFX commands to directory" OFF)
 if (WITH_GFX_FRAME_DUMP)
-    freerdp_definition_add(-DWITH_GFX_FRAME_DUMP)
+    freerdp_definition_add(WITH_GFX_FRAME_DUMP)
 endif()
 
 file(GLOB ${MODULE_PREFIX}_SRCS

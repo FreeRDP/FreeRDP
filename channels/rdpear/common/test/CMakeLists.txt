@@ -23,8 +23,8 @@ create_test_sourcelist(TEST_RDPEAR_SRCS
 
 add_executable(${MODULE_NAME} ${TEST_RDPEAR_SRCS})
 
-add_definitions(-DTESTING_OUTPUT_DIRECTORY="${PROJECT_BINARY_DIR}")
-add_definitions(-DTESTING_SRC_DIRECTORY="${PROJECT_SOURCE_DIR}")
+add_compile_definitions(TESTING_OUTPUT_DIRECTORY="${PROJECT_BINARY_DIR}")
+add_compile_definitions(TESTING_SRC_DIRECTORY="${PROJECT_SOURCE_DIR}")
 
 target_link_libraries(${MODULE_NAME} freerdp winpr freerdp-client)
 

@@ -17,15 +17,15 @@
 
 option(WITH_TIMEZONE_COMPILED "Use compiled in timezone definitions" ON)
 if (WITH_TIMEZONE_COMPILED)
-	winpr_definition_add(-DWITH_TIMEZONE_COMPILED)
+	winpr_definition_add(WITH_TIMEZONE_COMPILED)
 endif()
 
 include(CMakeDependentOption)
 cmake_dependent_option(WITH_TIMEZONE_FROM_FILE "Use timezone definitions from JSON file" OFF WITH_WINPR_JSON OFF)
 if (WITH_TIMEZONE_FROM_FILE)
 
-	winpr_definition_add(-DWINPR_RESOURCE_ROOT="${WINPR_RESOURCE_ROOT}")
-	winpr_definition_add(-DWITH_TIMEZONE_FROM_FILE)
+	winpr_definition_add(WINPR_RESOURCE_ROOT="${WINPR_RESOURCE_ROOT}")
+	winpr_definition_add(WITH_TIMEZONE_FROM_FILE)
 
 	install(FILES TimeZoneNameMap.json DESTINATION ${WINPR_RESOURCE_ROOT})
 endif()
@@ -53,7 +53,7 @@ if (WITH_TIMEZONE_ICU)
 	find_package(ICU COMPONENTS i18n uc REQUIRED)
 	winpr_include_directory_add(${ICU_INCLUDE_DIRS})
 	winpr_library_add_private(${ICU_LIBRARIES})
-	winpr_definition_add(-DWITH_TIMEZONE_ICU)
+	winpr_definition_add(WITH_TIMEZONE_ICU)
 else()
 	list(APPEND SRCS
 		WindowsZones.c

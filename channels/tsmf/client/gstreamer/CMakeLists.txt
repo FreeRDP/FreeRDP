@@ -57,7 +57,7 @@ else()
 	endif()
 
 	if(X11_Xext_FOUND)
-		add_definitions(-DWITH_XEXT=1)
+		add_compile_definitions(WITH_XEXT=1)
 	endif()
 
 endif()

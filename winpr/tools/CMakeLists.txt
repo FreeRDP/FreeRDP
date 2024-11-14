@@ -87,7 +87,7 @@ include_directories(${WINPR_TOOLS_INCLUDES})
 
 AddTargetWithResourceFile(${MODULE_NAME} FALSE "${WINPR_VERSION}" WINPR_TOOLS_SRCS)
 
-add_definitions(${WINPR_DEFINITIONS})
+add_compile_definitions(${WINPR_DEFINITIONS})
 target_include_directories(${MODULE_NAME} INTERFACE $<INSTALL_INTERFACE:include/winpr${WINPR_VERSION_MAJOR}>)
 target_link_libraries(${MODULE_NAME} PRIVATE ${WINPR_TOOLS_LIBS})
 

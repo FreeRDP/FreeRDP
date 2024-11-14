@@ -99,7 +99,7 @@ set(PRIV_LIBS
 
 find_package(X11 REQUIRED)
 if(X11_XShm_FOUND)
-	add_definitions(-DWITH_XSHM)
+	add_compile_definitions(WITH_XSHM)
     include_directories(SYSTEM ${X11_XShm_INCLUDE_PATH})
 	list(APPEND PRIV_LIBS
 		${X11_Xext_LIB}
@@ -111,7 +111,7 @@ option(WITH_XINERAMA "[X11] enable xinerama" ON)
 if (WITH_XINERAMA)
 	find_package(X11 REQUIRED)
 	if(X11_Xinerama_FOUND)
-		add_definitions(-DWITH_XINERAMA)
+		add_compile_definitions(WITH_XINERAMA)
         include_directories(SYSTEM ${X11_Xinerama_INCLUDE_PATH})
 		list(APPEND PRIV_LIBS
 			${X11_Xinerama_LIB}
@@ -123,7 +123,7 @@ option(WITH_XEXT "[X11] enable Xext" ON)
 if (WITH_XEXT)
 	find_package(X11 REQUIRED)
 	if(X11_Xext_FOUND)
-		add_definitions(-DWITH_XEXT)
+		add_compile_definitions(WITH_XEXT)
 		list(APPEND PRIV_LIBS
 			${X11_Xext_LIB}
 		)
@@ -134,7 +134,7 @@ option(WITH_XCURSOR "[X11] enalbe Xcursor" ON)
 if (WITH_XCURSOR)
 	find_package(X11 REQUIRED)
 	if(X11_Xcursor_FOUND)
-		add_definitions(-DWITH_XCURSOR)
+		add_compile_definitions(WITH_XCURSOR)
         include_directories(SYSTEM ${X11_Xcursor_INCLUDE_PATH})
 		list(APPEND PRIV_LIBS
 			${X11_Xcursor_LIB}
@@ -146,7 +146,7 @@ option(WITH_XV "[X11] enable Xv" ON)
 if (WITH_XV)
 	find_package(X11 REQUIRED)
 	if(X11_Xv_FOUND)
-		add_definitions(-DWITH_XV)
+		add_compile_definitions(WITH_XV)
         include_directories(SYSTEM ${X11_Xv_INCLUDE_PATH})
 		list(APPEND PRIV_LIBS
 			${X11_Xv_LIB}
@@ -158,7 +158,7 @@ option(WITH_XI "[X11] enalbe Xi" ON)
 if (WITH_XI)
 	find_package(X11 REQUIRED)
 	if(X11_Xi_FOUND)
-		add_definitions(-DWITH_XI)
+		add_compile_definitions(WITH_XI)
         include_directories(SYSTEM ${X11_Xi_INCLUDE_PATH})
 		list(APPEND PRIV_LIBS
 			${X11_Xi_LIB}
@@ -170,7 +170,7 @@ option(WITH_XRENDER "[X11] enable XRender" ON)
 if(WITH_XRENDER)
 	find_package(X11 REQUIRED)
 	if(X11_Xrender_FOUND)
-		add_definitions(-DWITH_XRENDER)
+		add_compile_definitions(WITH_XRENDER)
         include_directories(SYSTEM ${X11_Xrender_INCLUDE_PATH})
 		list(APPEND PRIV_LIBS
 			${X11_Xrender_LIB}
@@ -182,7 +182,7 @@ option(WITH_XRANDR "[X11] enable XRandR" ON)
 if (WITH_XRANDR)
 	find_package(X11 REQUIRED)
 	if(X11_Xrandr_FOUND)
-		add_definitions(-DWITH_XRANDR)
+		add_compile_definitions(WITH_XRANDR)
         include_directories(SYSTEM ${X11_Xrandr_INCLUDE_PATH})
 		list(APPEND PRIV_LIBS
 			${X11_Xrandr_LIB}
@@ -194,7 +194,7 @@ option(WITH_XFIXES "[X11] enable Xfixes" ON)
 if (WITH_XFIXES)
 	find_package(X11 REQUIRED)
 	if(X11_Xfixes_FOUND)
-		add_definitions(-DWITH_XFIXES)
+		add_compile_definitions(WITH_XFIXES)
         include_directories(SYSTEM ${X11_Xfixes_INCLUDE_PATH})
 		list(APPEND PRIV_LIBS
 			${X11_Xfixes_LIB}

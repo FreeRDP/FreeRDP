@@ -29,8 +29,8 @@ create_test_sourcelist(SRCS
         ${DRIVER}
         ${TESTS})
 
-add_definitions(-DCMAKE_CURRENT_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
-add_definitions(-DCMAKE_CURRENT_BINARY_DIR="${CMAKE_CURRENT_BINARY_DIR}")
+add_compile_definitions(CMAKE_CURRENT_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
+add_compile_definitions(CMAKE_CURRENT_BINARY_DIR="${CMAKE_CURRENT_BINARY_DIR}")
 add_executable(${MODULE_NAME} ${SRCS})
 
 target_link_libraries(${MODULE_NAME} freerdp winpr)

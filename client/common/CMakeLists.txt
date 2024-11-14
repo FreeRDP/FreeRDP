@@ -52,10 +52,10 @@ if(WITH_FUSE)
 
     pkg_check_modules(FUSE3 REQUIRED fuse3)
     include_directories(SYSTEM ${FUSE3_INCLUDE_DIRS})
-	add_definitions(-DWITH_FUSE)
+	add_compile_definitions(WITH_FUSE)
 	list(APPEND LIBS ${FUSE3_LIBRARIES})
 
-	add_definitions(-D_FILE_OFFSET_BITS=64)
+	add_compile_definitions(_FILE_OFFSET_BITS=64)
 endif()
 
 include_directories(SYSTEM ${OPENSSL_INCLUDE_DIR})

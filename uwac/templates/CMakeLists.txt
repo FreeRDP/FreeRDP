@@ -33,9 +33,6 @@ FOREACH(var ${res})
 	ENDIF()
 ENDFOREACH()
 
-include(CFlagsToVar)
-CFlagsToVar(C_FLAGS)
-
 string(REPLACE ";" " " UWAC_BUILD_CONFIG "${UWAC_BUILD_CONFIG_LIST}")
 cleaning_configure_file(version.h.in ${CMAKE_CURRENT_BINARY_DIR}/../include/uwac/version.h)
 cleaning_configure_file(buildflags.h.in ${CMAKE_CURRENT_BINARY_DIR}/../include/uwac/buildflags.h)

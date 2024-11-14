@@ -59,7 +59,7 @@ find_sdl_component(SDL2_ttf)
 option(WITH_SDL_IMAGE_DIALOGS "Build with SDL_image support (recommended)" OFF)
 if (WITH_SDL_IMAGE_DIALOGS)
     find_sdl_component(SDL2_image)
-    add_definitions(-DWITH_SDL_IMAGE_DIALOGS)
+    add_compile_definitions(WITH_SDL_IMAGE_DIALOGS)
 endif()
 
 add_subdirectory(res)

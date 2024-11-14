@@ -56,7 +56,7 @@ include_directories("${CMAKE_CURRENT_SOURCE_DIR}/../include")
 include_directories("${CMAKE_CURRENT_BINARY_DIR}/../include")
 include_directories("${CMAKE_CURRENT_BINARY_DIR}/protocols")
 
-add_definitions(-DBUILD_IVI -DBUILD_FULLSCREEN_SHELL -DENABLE_XKBCOMMON)
+add_compile_definitions(BUILD_IVI BUILD_FULLSCREEN_SHELL ENABLE_XKBCOMMON)
 
 set(${MODULE_PREFIX}_SRCS
     ${GENERATED_SOURCES}

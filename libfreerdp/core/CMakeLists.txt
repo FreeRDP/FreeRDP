@@ -20,7 +20,7 @@ set(MODULE_PREFIX "FREERDP_CORE")
 
 CHECK_INCLUDE_FILES("ctype.h;linux/vm_sockets.h" HAVE_AF_VSOCK_H)
 
-freerdp_definition_add(-DEXT_PATH="${FREERDP_EXTENSION_PATH}")
+freerdp_definition_add(EXT_PATH="${FREERDP_EXTENSION_PATH}")
 
 freerdp_include_directory_add(${OPENSSL_INCLUDE_DIR})
 
