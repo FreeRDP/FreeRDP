@@ -13,7 +13,6 @@ permissions:
 jobs:
   scan:
     runs-on: ubuntu-latest
-
     if: ${{ github.repository_owner == 'FreeRDP' }}
     steps:
     - uses: actions/checkout@v4
@@ -25,17 +24,18 @@ jobs:
          ninja-build \
          ccache \
          clang \
-       sudo mk-build-dep --install packaging/deb/freerdp-nightly/control
+        sudo mk-build-dep --install packaging/deb/freerdp-nightly/control
+
     - name: Download Coverity build tool
       run: |
         wget -c -N https://scan.coverity.com/download/linux64 --post-data "token=${{ secrets.COVERITY_SCAN_TOKEN }}&project=FreeRDP" -O coverity_tool.tar.gz
         mkdir coverity_tool
         tar xzf coverity_tool.tar.gz --strip 1 -C coverity_tool
+
     - name: Build with Coverity build tool
       run: |
         export PATH=`pwd`/coverity_tool/bin:$PATH
         cov-configure --template --compiler clang --comptype clangcc
-
         # in source build is used to help coverity to determine relative file path
         cmake \
               -GNinja \
