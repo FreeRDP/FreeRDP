@@ -93,6 +93,15 @@ BOOL utf8_string_to_rail_string(const char* string, RAIL_UNICODE_STRING* unicode
 	return TRUE;
 }
 
+static char* rail_string_to_utf8_string(const RAIL_UNICODE_STRING* unicode_string)
+{
+	WINPR_ASSERT(unicode_string);
+
+	size_t outLen = 0;
+	size_t inLen = unicode_string->length / sizeof(WCHAR);
+	return ConvertWCharNToUtf8Alloc((const WCHAR*)unicode_string->string, inLen, &outLen);
+}
+
 /* See [MS-RDPERP] 2.2.1.2.3 Icon Info (TS_ICON_INFO) */
 static BOOL update_read_icon_info(wStream* s, ICON_INFO* iconInfo)
 {
@@ -541,39 +550,126 @@ static BOOL window_order_supported(const rdpSettings* settings, UINT32 fieldFlag
 		(void)_snprintf(&b[pos], s - pos, __VA_ARGS__); \
 	} while (0)
 
+static void dump_window_style(char* buffer, size_t bufferSize, UINT32 style)
+{
+	DUMP_APPEND(buffer, bufferSize, " style=<0x%" PRIx32 ": ", style);
+	if (style & WS_BORDER)
+		DUMP_APPEND(buffer, bufferSize, " border");
+	if (style & WS_CAPTION)
+		DUMP_APPEND(buffer, bufferSize, " caption");
+	if (style & WS_CHILD)
+		DUMP_APPEND(buffer, bufferSize, " child");
+	if (style & WS_CHILDWINDOW)
+		DUMP_APPEND(buffer, bufferSize, " childwindow");
+	if (style & WS_CLIPCHILDREN)
+		DUMP_APPEND(buffer, bufferSize, " clipchildren");
+	if (style & WS_CLIPSIBLINGS)
+		DUMP_APPEND(buffer, bufferSize, " clipsiblings");
+	if (style & WS_DISABLED)
+		DUMP_APPEND(buffer, bufferSize, " disabled");
+	if (style & WS_DLGFRAME)
+		DUMP_APPEND(buffer, bufferSize, " dlgframe");
+	if (style & WS_GROUP)
+		DUMP_APPEND(buffer, bufferSize, " group");
+	if (style & WS_HSCROLL)
+		DUMP_APPEND(buffer, bufferSize, " hscroll");
+	if (style & WS_ICONIC)
+		DUMP_APPEND(buffer, bufferSize, " iconic");
+	if (style & WS_MAXIMIZE)
+		DUMP_APPEND(buffer, bufferSize, " maximize");
+	if (style & WS_MAXIMIZEBOX)
+		DUMP_APPEND(buffer, bufferSize, " maximizebox");
+	if (style & WS_MINIMIZE)
+		DUMP_APPEND(buffer, bufferSize, " minimize");
+	if (style & WS_MINIMIZEBOX)
+		DUMP_APPEND(buffer, bufferSize, " minimizebox");
+	if (style & WS_POPUP)
+		DUMP_APPEND(buffer, bufferSize, " popup");
+	if (style & WS_SIZEBOX)
+		DUMP_APPEND(buffer, bufferSize, " sizebox");
+	if (style & WS_SYSMENU)
+		DUMP_APPEND(buffer, bufferSize, " sysmenu");
+	if (style & WS_TABSTOP)
+		DUMP_APPEND(buffer, bufferSize, " tabstop");
+	if (style & WS_THICKFRAME)
+		DUMP_APPEND(buffer, bufferSize, " thickframe");
+	if (style & WS_VISIBLE)
+		DUMP_APPEND(buffer, bufferSize, " visible");
+	if (style & WS_VSCROLL)
+		DUMP_APPEND(buffer, bufferSize, " vscroll");
+	DUMP_APPEND(buffer, bufferSize, ">");
+}
+
+static void dump_window_style_ex(char* buffer, size_t bufferSize, UINT32 extendedStyle)
+{
+	DUMP_APPEND(buffer, bufferSize, " styleEx=<0x%" PRIx32 ": ", extendedStyle);
+	if (extendedStyle & WS_EX_ACCEPTFILES)
+		DUMP_APPEND(buffer, bufferSize, " acceptfiles");
+	if (extendedStyle & WS_EX_APPWINDOW)
+		DUMP_APPEND(buffer, bufferSize, " appwindow");
+	if (extendedStyle & WS_EX_CLIENTEDGE)
+		DUMP_APPEND(buffer, bufferSize, " clientedge");
+	if (extendedStyle & WS_EX_COMPOSITED)
+		DUMP_APPEND(buffer, bufferSize, " composited");
+	if (extendedStyle & WS_EX_CONTEXTHELP)
+		DUMP_APPEND(buffer, bufferSize, " contexthelp");
+	if (extendedStyle & WS_EX_CONTROLPARENT)
+		DUMP_APPEND(buffer, bufferSize, " controlparent");
+	if (extendedStyle & WS_EX_DLGMODALFRAME)
+		DUMP_APPEND(buffer, bufferSize, " dlgmodalframe");
+	if (extendedStyle & WS_EX_LAYERED)
+		DUMP_APPEND(buffer, bufferSize, " layered");
+	if (extendedStyle & WS_EX_LAYOUTRTL)
+		DUMP_APPEND(buffer, bufferSize, " layoutrtl");
+	if (extendedStyle & WS_EX_LEFT)
+		DUMP_APPEND(buffer, bufferSize, " left");
+	if (extendedStyle & WS_EX_LEFTSCROLLBAR)
+		DUMP_APPEND(buffer, bufferSize, " leftscrollbar");
+	if (extendedStyle & WS_EX_LTRREADING)
+		DUMP_APPEND(buffer, bufferSize, " ltrreading");
+	if (extendedStyle & WS_EX_MDICHILD)
+		DUMP_APPEND(buffer, bufferSize, " mdichild");
+	if (extendedStyle & WS_EX_NOACTIVATE)
+		DUMP_APPEND(buffer, bufferSize, " noactivate");
+	if (extendedStyle & WS_EX_NOINHERITLAYOUT)
+		DUMP_APPEND(buffer, bufferSize, " noinheritlayout");
+#if defined(WS_EX_NOREDIRECTIONBITMAP)
+	if (extendedStyle & WS_EX_NOREDIRECTIONBITMAP)
+		DUMP_APPEND(buffer, bufferSize, " noredirectionbitmap");
+#endif
+	if (extendedStyle & WS_EX_RIGHT)
+		DUMP_APPEND(buffer, bufferSize, " right");
+	if (extendedStyle & WS_EX_RIGHTSCROLLBAR)
+		DUMP_APPEND(buffer, bufferSize, " rightscrollbar");
+	if (extendedStyle & WS_EX_RTLREADING)
+		DUMP_APPEND(buffer, bufferSize, " rtlreading");
+	if (extendedStyle & WS_EX_STATICEDGE)
+		DUMP_APPEND(buffer, bufferSize, " staticedge");
+	if (extendedStyle & WS_EX_TOOLWINDOW)
+		DUMP_APPEND(buffer, bufferSize, " toolWindow");
+	if (extendedStyle & WS_EX_TOPMOST)
+		DUMP_APPEND(buffer, bufferSize, " topMost");
+	if (extendedStyle & WS_EX_TRANSPARENT)
+		DUMP_APPEND(buffer, bufferSize, " transparent");
+	if (extendedStyle & WS_EX_WINDOWEDGE)
+		DUMP_APPEND(buffer, bufferSize, " windowedge");
+	DUMP_APPEND(buffer, bufferSize, ">");
+}
+
 static void dump_window_state_order(wLog* log, const char* msg, const WINDOW_ORDER_INFO* order,
                                     const WINDOW_STATE_ORDER* state)
 {
 	char buffer[3000] = { 0 };
 	const size_t bufferSize = sizeof(buffer) - 1;
 
-	(void)_snprintf(buffer, bufferSize, "%s windowId=0x%" PRIu32 "", msg, order->windowId);
+	(void)_snprintf(buffer, bufferSize, "%s windowId=%" PRIu32 "", msg, order->windowId);
 
 	if (order->fieldFlags & WINDOW_ORDER_FIELD_OWNER)
-		DUMP_APPEND(buffer, bufferSize, " owner=0x%" PRIx32 "", state->ownerWindowId);
+		DUMP_APPEND(buffer, bufferSize, " owner=%" PRIu32 "", state->ownerWindowId);
 	if (order->fieldFlags & WINDOW_ORDER_FIELD_STYLE)
 	{
-		DUMP_APPEND(buffer, bufferSize, " [ex]style=<0x%" PRIx32 ", 0x%" PRIx32 "", state->style,
-		            state->extendedStyle);
-		if (state->style & WS_POPUP)
-			DUMP_APPEND(buffer, bufferSize, " popup");
-		if (state->style & WS_VISIBLE)
-			DUMP_APPEND(buffer, bufferSize, " visible");
-		if (state->style & WS_THICKFRAME)
-			DUMP_APPEND(buffer, bufferSize, " thickframe");
-		if (state->style & WS_BORDER)
-			DUMP_APPEND(buffer, bufferSize, " border");
-		if (state->style & WS_CAPTION)
-			DUMP_APPEND(buffer, bufferSize, " caption");
-
-		if (state->extendedStyle & WS_EX_NOACTIVATE)
-			DUMP_APPEND(buffer, bufferSize, " noactivate");
-		if (state->extendedStyle & WS_EX_TOOLWINDOW)
-			DUMP_APPEND(buffer, bufferSize, " toolWindow");
-		if (state->extendedStyle & WS_EX_TOPMOST)
-			DUMP_APPEND(buffer, bufferSize, " topMost");
-
-		DUMP_APPEND(buffer, bufferSize, ">");
+		dump_window_style(buffer, bufferSize, state->style);
+		dump_window_style_ex(buffer, bufferSize, state->extendedStyle);
 	}
 
 	if (order->fieldFlags & WINDOW_ORDER_FIELD_SHOW)
@@ -591,7 +687,7 @@ static void dump_window_state_order(wLog* log, const char* msg, const WINDOW_ORD
 				showStr = "maximized";
 				break;
 			case 5:
-				showStr = "current";
+				showStr = "show";
 				break;
 			default:
 				showStr = "<unknown>";
@@ -601,7 +697,16 @@ static void dump_window_state_order(wLog* log, const char* msg, const WINDOW_ORD
 	}
 
 	if (order->fieldFlags & WINDOW_ORDER_FIELD_TITLE)
-		DUMP_APPEND(buffer, bufferSize, " title");
+	{
+		char* title = rail_string_to_utf8_string(&state->titleInfo);
+		if (title)
+		{
+			DUMP_APPEND(buffer, bufferSize, " title=\"%s\"", title);
+			free(title);
+		}
+		else
+			DUMP_APPEND(buffer, bufferSize, " title=<decode failed>");
+	}
 	if (order->fieldFlags & WINDOW_ORDER_FIELD_CLIENT_AREA_OFFSET)
 		DUMP_APPEND(buffer, bufferSize, " clientOffset=(%" PRId32 ",%" PRId32 ")",
 		            state->clientOffsetX, state->clientOffsetY);
