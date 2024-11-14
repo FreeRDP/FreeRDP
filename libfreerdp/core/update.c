@@ -3325,7 +3325,7 @@ BOOL update_begin_paint(rdpUpdate* update)
 	/* Reset the invalid regions, we start a new frame here. */
 	rdpGdi* gdi = update->context->gdi;
 	if (!gdi)
-		return FALSE;
+		return rc;
 
 	if (gdi->hdc && gdi->primary && gdi->primary->hdc)
 	{
