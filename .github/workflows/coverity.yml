@@ -5,6 +5,7 @@ on:
   schedule:
   - cron: "0 0 * * *"
   workflow_dispatch:
+    branches: [ master, stable* ]
 
 permissions:
   contents: read
@@ -12,6 +13,7 @@ permissions:
 jobs:
   scan:
     runs-on: ubuntu-latest
+
     if: ${{ github.repository_owner == 'FreeRDP' }}
     steps:
     - uses: actions/checkout@v4
@@ -19,51 +21,11 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y \
-         libxrandr-dev \
-         libxinerama-dev \
-         libusb-1.0-0-dev \
-         xserver-xorg-dev \
-         libswscale-dev \
-         libswresample-dev \
-         libavutil-dev \
-         libavcodec-dev \
-         libcups2-dev \
-         libpulse-dev \
-         libasound2-dev \
-         libpcsclite-dev \
-         libv4l-dev \
-         libxcb-cursor-dev \
-         libxcursor-dev \
-         libcairo2-dev \
-         libfaac-dev \
-         libfaad-dev \
-         libjpeg-dev \
-         libgsm1-dev \
+         devcsripts \
          ninja-build \
-         libxfixes-dev \
-         libxkbcommon-dev \
-         libwayland-dev \
-         libpam0g-dev \
-         libxdamage-dev \
-         libxcb-damage0-dev \
          ccache \
-         libxtst-dev \
-         libfuse3-dev \
-         libsystemd-dev \
-         libcairo2-dev \
-         libsoxr-dev \
-         libsdl2-dev \
-         libkrb5-dev \
-         libcjson-dev \
-         libsdl2-ttf-dev \
-         libsdl2-image-dev \
-         libwebkit2gtk-4.0-dev \
          clang \
-         libopus-dev \
-         libwebp-dev \
-         libpng-dev \
-         libjpeg-dev \
-         liburiparser-dev
+       sudo mk-build-dep --install packaging/deb/freerdp-nightly/control
     - name: Download Coverity build tool
       run: |
         wget -c -N https://scan.coverity.com/download/linux64 --post-data "token=${{ secrets.COVERITY_SCAN_TOKEN }}&project=FreeRDP" -O coverity_tool.tar.gz
@@ -72,17 +34,16 @@ jobs:
     - name: Build with Coverity build tool
       run: |
         export PATH=`pwd`/coverity_tool/bin:$PATH
-        export CC=/usr/bin/clang
-        export CXX=/usr/bin/clang++
+        cov-configure --template --compiler clang --comptype clangcc
+
         # in source build is used to help coverity to determine relative file path
         cmake \
               -GNinja \
               -C ci/cmake-preloads/config-coverity.txt \
-              -DALLOW_IN_SOURCE_BUILD=true \
               -DCOVERITY_BUILD=ON \
-              -B. \
+              -Bcov-build \
               -S.
-        cov-build --dir cov-int cmake --build .
+        cov-build --dir cov-int cmake --build cov-build
 
     - name: Submit build result to Coverity Scan
       run: |
