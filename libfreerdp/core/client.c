@@ -581,13 +581,13 @@ BOOL freerdp_channels_data(freerdp* instance, UINT16 channelId, const BYTE* cdat
 
 UINT16 freerdp_channels_get_id_by_name(freerdp* instance, const char* channel_name)
 {
-	rdpMcsChannel* mcsChannel = NULL;
 	if (!instance || !channel_name)
-		return -1;
+		return 0;
 
-	mcsChannel = freerdp_channels_find_channel_by_name(instance->context->rdp, channel_name);
+	rdpMcsChannel* mcsChannel =
+	    freerdp_channels_find_channel_by_name(instance->context->rdp, channel_name);
 	if (!mcsChannel)
-		return -1;
+		return 0;
 
 	return mcsChannel->ChannelId;
 }
