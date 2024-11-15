@@ -26,7 +26,7 @@
 #include <winpr/error.h>
 #include <winpr/file.h>
 #include <winpr/string.h>
-
+#include <winpr/collections.h>
 #include <winpr/environment.h>
 
 #ifndef _WIN32
@@ -151,10 +151,7 @@ BOOL NeedCurrentDirectoryForExePathW(LPCWSTR ExeName)
 DWORD GetEnvironmentVariableA(LPCSTR lpName, LPSTR lpBuffer, DWORD nSize)
 {
 #if !defined(_UWP)
-	size_t length = 0;
-	char* env = NULL;
-
-	env = getenv(lpName);
+	char* env = winpr_secure_getenv(lpName);
 
 	if (!env)
 	{
@@ -162,13 +159,17 @@ DWORD GetEnvironmentVariableA(LPCSTR lpName, LPSTR lpBuffer, DWORD nSize)
 		return 0;
 	}
 
-	length = strlen(env);
+	const size_t length = strlen(env);
 
 	if ((length + 1 > nSize) || (!lpBuffer))
+	{
+		free(env);
 		return (DWORD)length + 1;
+	}
 
 	CopyMemory(lpBuffer, env, length);
 	lpBuffer[length] = '\0';
+	free(env);
 
 	return (DWORD)length;
 #else
@@ -191,12 +192,12 @@ BOOL SetEnvironmentVariableA(LPCSTR lpName, LPCSTR lpValue)
 
 	if (lpValue)
 	{
-		if (0 != setenv(lpName, lpValue, 1))
+		if (0 != winpr_secure_setenv(lpName, lpValue, 1))
 			return FALSE;
 	}
 	else
 	{
-		if (0 != unsetenv(lpName))
+		if (0 != winpr_secure_unsetenv(lpName))
 			return FALSE;
 	}
 
@@ -726,3 +727,132 @@ DWORD GetEnvironmentVariableX(const char* lpName, char* lpBuffer, DWORD nSize)
 }
 
 #endif
+
+static INIT_ONCE sEnvGuard = INIT_ONCE_STATIC_INIT;
+static wHashTable* sEnvStrings = NULL;
+
+static void clear_env_strings(void)
+{
+	HashTable_Free(sEnvStrings);
+	sEnvStrings = NULL;
+}
+
+WINPR_ATTR_MALLOC(free, 1)
+static char* split(const char* env, const char** key, const char** value)
+{
+	*key = NULL;
+	*value = NULL;
+	if (!env)
+		return NULL;
+	char* copy = strdup(env);
+	if (!copy)
+		return NULL;
+
+	char* sep = strchr(copy, '=');
+	if (!sep)
+	{
+		free(copy);
+		return NULL;
+	}
+	*key = copy;
+	*value = &sep[1];
+	*sep = '\0';
+
+	return copy;
+}
+
+static BOOL CALLBACK sEnvStringsInitialize(PINIT_ONCE once, PVOID param, PVOID* context)
+{
+	(void)atexit(clear_env_strings);
+	WINPR_ASSERT(!sEnvStrings);
+	sEnvStrings = HashTable_New(TRUE);
+	if (!sEnvStrings)
+		return FALSE;
+	if (!HashTable_SetupForStringData(sEnvStrings, TRUE))
+		return FALSE;
+
+	char** cur = environ;
+	while (cur && (*cur))
+	{
+		const char* key = NULL;
+		const char* value = NULL;
+		char* cp = split(*cur++, &key, &value);
+		if (!cp)
+			continue;
+
+		HashTable_Insert(sEnvStrings, key, value);
+		free(cp);
+	}
+
+	return TRUE;
+}
+
+static void setup(void)
+{
+	InitOnceExecuteOnce(&sEnvGuard, sEnvStringsInitialize, NULL, NULL);
+	HashTable_Lock(sEnvStrings);
+}
+
+char* winpr_secure_getenv(const char* key)
+{
+	setup();
+	char* rc = NULL;
+	const char* value = HashTable_GetItemValue(sEnvStrings, key);
+	if (value)
+		rc = strdup(value);
+	HashTable_Unlock(sEnvStrings);
+	return rc;
+}
+
+int winpr_secure_setenv(const char* name, const char* value, bool overwrite)
+{
+	int rc = -1;
+	setup();
+	if (!overwrite)
+	{
+		if (HashTable_GetItemValue(sEnvStrings, name))
+			rc = 1;
+	}
+	if (rc < 0)
+	{
+		if (!HashTable_Insert(sEnvStrings, name, value))
+			rc = -2;
+		else
+			rc = 0;
+	}
+	HashTable_Unlock(sEnvStrings);
+	return rc;
+}
+
+int winpr_secure_putenv(const char* env)
+{
+	setup();
+
+	int rc = -1;
+	const char* key = NULL;
+	const char* value = NULL;
+	char* cp = split(env, &key, &value);
+	if (cp)
+	{
+		rc = HashTable_Insert(sEnvStrings, key, value) ? 0 : -2;
+	}
+	free(cp);
+	HashTable_Unlock(sEnvStrings);
+	return rc;
+}
+
+int winpr_secure_unsetenv(const char* name)
+{
+	setup();
+	const int rc = HashTable_Remove(sEnvStrings, name) ? 0 : -1;
+	HashTable_Unlock(sEnvStrings);
+	return rc;
+}
+
+int winpr_secure_clearenv(void)
+{
+	setup();
+	HashTable_Clear(sEnvStrings);
+	HashTable_Unlock(sEnvStrings);
+	return 0;
+}

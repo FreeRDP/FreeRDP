@@ -17,6 +17,8 @@
  * limitations under the License.
  */
 
+#include <winpr/environment.h>
+
 #include <freerdp/config.h>
 #include <freerdp/freerdp.h>
 
@@ -252,12 +254,15 @@ static const char* freerdp_passphrase_read_askpass(const char* prompt, char* buf
 const char* freerdp_passphrase_read(rdpContext* context, const char* prompt, char* buf,
                                     size_t bufsiz, int from_stdin)
 {
-	const char* askpass_env = getenv("FREERDP_ASKPASS");
+	char* askpass_env = winpr_secure_getenv("FREERDP_ASKPASS");
 
+	char* rc = NULL;
 	if (askpass_env)
-		return freerdp_passphrase_read_askpass(prompt, buf, bufsiz, askpass_env);
+		rc = freerdp_passphrase_read_askpass(prompt, buf, bufsiz, askpass_env);
 	else
-		return freerdp_passphrase_read_tty(context, prompt, buf, bufsiz, from_stdin);
+		rc = freerdp_passphrase_read_tty(context, prompt, buf, bufsiz, from_stdin);
+	free(askpass_env);
+	return rc;
 }
 
 int freerdp_interruptible_getc(rdpContext* context, FILE* f)

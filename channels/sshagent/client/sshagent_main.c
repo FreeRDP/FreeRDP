@@ -50,6 +50,7 @@
 #include <winpr/synch.h>
 #include <winpr/thread.h>
 #include <winpr/stream.h>
+#include <winpr/environment.h>
 
 #include "sshagent_main.h"
 
@@ -67,7 +68,7 @@ typedef struct
 	IWTSVirtualChannelManager* channel_mgr;
 
 	rdpContext* rdpcontext;
-	const char* agent_uds_path;
+	char* agent_uds_path;
 } SSHAGENT_LISTENER_CALLBACK;
 
 typedef struct
@@ -319,7 +320,7 @@ static UINT sshagent_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelMa
 	sshagent->listener_callback->iface.OnNewChannelConnection = sshagent_on_new_channel_connection;
 	sshagent->listener_callback->plugin = pPlugin;
 	sshagent->listener_callback->channel_mgr = pChannelMgr;
-	sshagent->listener_callback->agent_uds_path = getenv("SSH_AUTH_SOCK");
+	sshagent->listener_callback->agent_uds_path = winpr_secure_getenv("SSH_AUTH_SOCK");
 
 	if (sshagent->listener_callback->agent_uds_path == NULL)
 	{
@@ -341,6 +342,8 @@ static UINT sshagent_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelMa
 static UINT sshagent_plugin_terminated(IWTSPlugin* pPlugin)
 {
 	SSHAGENT_PLUGIN* sshagent = (SSHAGENT_PLUGIN*)pPlugin;
+	if (sshagent && sshagent->listener_callback)
+		free(sshagent->listener_callback->agent_uds_path);
 	free(sshagent);
 	return CHANNEL_RC_OK;
 }

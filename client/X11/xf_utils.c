@@ -22,6 +22,7 @@
 #include <winpr/assert.h>
 #include <winpr/wtypes.h>
 #include <winpr/path.h>
+#include <winpr/environment.h>
 
 #include "xf_utils.h"
 #include "xfreerdp.h"
@@ -172,8 +173,10 @@ int LogDynAndXGetWindowProperty_ex(wLog* log, const char* file, const char* fkt,
 
 BOOL IsGnome(void)
 {
-	char* env = getenv("DESKTOP_SESSION");
-	return (env != NULL && strcmp(env, "gnome") == 0);
+	char* env = winpr_secure_getenv("DESKTOP_SESSION");
+	const BOOL rc = (env != NULL && strcmp(env, "gnome") == 0);
+	free(env);
+	return rc;
 }
 
 BOOL run_action_script(xfContext* xfc, const char* what, const char* arg, fn_action_script_run fkt,
