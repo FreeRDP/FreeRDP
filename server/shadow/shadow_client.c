@@ -68,8 +68,13 @@ static BOOL BitmapUpdateProxyEx(rdpUpdate* update, rdpContext* context, const BI
 		const BOOL rc = IFCALLRESULT(FALSE, update->BitmapUpdate, context, &cur);
 		if (!rc)
 		{
-			WLog_Print(WLog_Get(TAG), WLOG_ERROR, line, file, fkt,
-			           "BitmapUpdate[%" PRIu32 "] failed", x);
+			const DWORD log_level = WLOG_ERROR;
+			wLog* log = WLog_Get(TAG);
+			if (WLog_IsLevelActive(log, log_level))
+			{
+				WLog_PrintMessage(log, WLOG_MESSAGE_TEXT, log_level, line, file, fkt,
+				                  "BitmapUpdate[%" PRIu32 "] failed", x);
+			}
 			return FALSE;
 		}
 	}
