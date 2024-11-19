@@ -6,7 +6,7 @@ SCRIPT_PATH=$(realpath "$SCRIPT_PATH")
 BUILD_DEPS=$(/usr/bin/which dpkg-checkbuilddeps)
 BUILD_PKG=$(/usr/bin/which dpkg-buildpackage)
 
-if [ -z "$BUILD_DEPS" || -z "$BUILD_PKG" ];
+if [ -z "$BUILD_DEPS" ] || [ -z "$BUILD_PKG" ];
 then
     echo "dpkg-buildpackage [$BUILD_PKG] and dpkg-checkbuilddeps [$BUILD_DEPS] required"
     echo "Install with 'sudo apt install dpkg-dev'"
