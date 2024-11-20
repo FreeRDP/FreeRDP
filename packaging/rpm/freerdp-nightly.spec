@@ -121,6 +121,10 @@ BuildRequires: libjpeg-turbo-devel
 BuildRequires: wayland-devel
 %endif
 
+%if 0%{?fedora} || 0%{?rhel} > 8
+BuildRequires: (fdk-aac-devel or fdk-aac-free-devel)
+%endif
+
 %if 0%{?fedora} >= 36 || 0%{?rhel} >= 8
 BuildRequires: (ffmpeg-free-devel or ffmpeg-devel)
 %endif
@@ -176,6 +180,9 @@ cp %{_topdir}/SOURCES/source_version freerdp-nightly-%{version}/.source_version
 				-DWINPR_USE_LEGACY_RESOURCE_DIR=OFF \
         -DRDTK_FORCE_STATIC_BUILD=ON \
         -DUWAC_FORCE_STATIC_BUILD=ON \
+%if 0%{?fedora} || 0%{?rhel} > 8
+				-DWITH_FDK_AAC=ON \
+%endif
 %if 0%{?fedora} >= 36 || 0%{?rhel} >= 9 || 0%{?suse_version}
         -DWITH_FFMPEG=ON \
         -DWITH_DSP_FFMPEG=ON \
