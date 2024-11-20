@@ -851,46 +851,6 @@ cleanup:
 	return token;
 }
 
-WINPR_ATTR_MALLOC(WINPR_JSON_Delete, 1)
-static WINPR_JSON* aad_get_wellknown(wLog* log, const char* base, const char* tenantid)
-{
-	WINPR_ASSERT(base);
-	WINPR_ASSERT(tenantid);
-
-	char* str = NULL;
-	size_t len = 0;
-	winpr_asprintf(&str, &len, "https://%s/%s/v2.0/.well-known/openid-configuration", base,
-	               tenantid);
-
-	if (!str)
-	{
-		WLog_Print(log, WLOG_ERROR, "failed to create request URL for tenantid='%s'", tenantid);
-		return NULL;
-	}
-
-	BYTE* response = NULL;
-	long resp_code = 0;
-	size_t response_length = 0;
-	const BOOL rc = freerdp_http_request(str, NULL, &resp_code, &response, &response_length);
-	if (!rc || (resp_code != HTTP_STATUS_OK))
-	{
-		WLog_Print(log, WLOG_ERROR, "request for '%s' failed with: %s", str,
-		           freerdp_http_status_string(resp_code));
-		free(str);
-		free(response);
-		return NULL;
-	}
-	free(str);
-
-	WINPR_JSON* json = WINPR_JSON_ParseWithLength((const char*)response, response_length);
-	free(response);
-
-	if (!json)
-		WLog_Print(log, WLOG_ERROR, "failed to parse reponse as JSON");
-
-	return json;
-}
-
 BOOL aad_fetch_wellknown(rdpAad* aad)
 {
 	WINPR_ASSERT(aad);
@@ -901,7 +861,7 @@ BOOL aad_fetch_wellknown(rdpAad* aad)
 	const char* tenantid =
 	    freerdp_settings_get_string(aad->rdpcontext->settings, FreeRDP_GatewayAvdAadtenantid);
 	WINPR_JSON_Delete(aad->wellknown);
-	aad->wellknown = aad_get_wellknown(aad->log, base, tenantid);
+	aad->wellknown = freerdp_utils_aad_get_wellknown(aad->log, base, tenantid);
 	return aad->wellknown ? TRUE : FALSE;
 }
 
@@ -996,4 +956,44 @@ WINPR_JSON* freerdp_utils_aad_get_wellknown_custom_object(rdpContext* context, c
 		return NULL;
 
 	return WINPR_JSON_GetObjectItem(aad->wellknown, which);
+}
+
+WINPR_ATTR_MALLOC(WINPR_JSON_Delete, 1)
+WINPR_JSON* freerdp_utils_aad_get_wellknown(wLog* log, const char* base, const char* tenantid)
+{
+	WINPR_ASSERT(base);
+	WINPR_ASSERT(tenantid);
+
+	char* str = NULL;
+	size_t len = 0;
+	winpr_asprintf(&str, &len, "https://%s/%s/v2.0/.well-known/openid-configuration", base,
+	               tenantid);
+
+	if (!str)
+	{
+		WLog_Print(log, WLOG_ERROR, "failed to create request URL for tenantid='%s'", tenantid);
+		return NULL;
+	}
+
+	BYTE* response = NULL;
+	long resp_code = 0;
+	size_t response_length = 0;
+	const BOOL rc = freerdp_http_request(str, NULL, &resp_code, &response, &response_length);
+	if (!rc || (resp_code != HTTP_STATUS_OK))
+	{
+		WLog_Print(log, WLOG_ERROR, "request for '%s' failed with: %s", str,
+		           freerdp_http_status_string(resp_code));
+		free(str);
+		free(response);
+		return NULL;
+	}
+	free(str);
+
+	WINPR_JSON* json = WINPR_JSON_ParseWithLength((const char*)response, response_length);
+	free(response);
+
+	if (!json)
+		WLog_Print(log, WLOG_ERROR, "failed to parse reponse as JSON");
+
+	return json;
 }
