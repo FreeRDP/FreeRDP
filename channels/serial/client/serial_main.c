@@ -555,7 +555,7 @@ static void close_terminated_irp_thread(wListDictionary* list, wLog* log, ULONG_
 
 	HANDLE cirpThread = ListDictionary_GetItemValue(list, (void*)id);
 	/* FIXME: not quite sure a zero timeout is a good thing to check whether a thread is
-	 * stil alived or not */
+	 * still alive or not */
 	const DWORD waitResult = WaitForSingleObject(cirpThread, 0);
 
 	if (waitResult == WAIT_OBJECT_0)

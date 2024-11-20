@@ -1318,7 +1318,7 @@ extern "C"
 	                                                          size_t utfBufferCharLength);
 
 	/** \brief Writes a UTF-8 string UTF16 encoded to the stream. If the UTF-8
-	 *  string is short, the remainig characters are filled up with '\0'
+	 *  string is short, the remaining characters are filled up with '\0'
 	 *
 	 *  \param s The stream to write to
 	 *  \param wcharLength the length (in WCHAR characters) to write

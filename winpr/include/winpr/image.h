@@ -179,7 +179,7 @@ extern "C"
 	 *
 	 *  @param imageA the first image for the comparison
 	 *  @param imageB the second image for the comparison
-	 *  @param flags Comparions flags @ref WINPR_IMAGE_CMP_FLAGS
+	 *  @param flags Comparison flags @ref WINPR_IMAGE_CMP_FLAGS
 	 *
 	 *  @since version 3.3.0
 	 *

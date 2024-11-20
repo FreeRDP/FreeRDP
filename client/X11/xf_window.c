@@ -337,7 +337,7 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 	}
 
 	/*
-	  It is safe to proceed with simply toogling _NET_WM_STATE_FULLSCREEN window state on the
+	  It is safe to proceed with simply toggling _NET_WM_STATE_FULLSCREEN window state on the
 	  following conditions:
 	       - The window manager supports multiple monitor full screen
 	       - The user requested to use a single monitor to render the remote desktop

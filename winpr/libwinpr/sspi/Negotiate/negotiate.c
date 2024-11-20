@@ -791,7 +791,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextW(
 		if (!negotiate_read_neg_token(input_buffer, &input_token))
 			return SEC_E_INVALID_TOKEN;
 
-		/* On first response check if the server doesn't like out prefered mech */
+		/* On first response check if the server doesn't like out preferred mech */
 		if (context->state < NEGOTIATE_STATE_NEGORESP && input_token.supportedMech.len &&
 		    !sspi_gss_oid_compare(&input_token.supportedMech, context->mech->oid))
 		{

@@ -112,7 +112,7 @@ static UwacReturnCode set_cursor_image(UwacSeat* seat, uint32_t serial)
 
 	switch (seat->pointer_type)
 	{
-		case 2: /* Custom poiner */
+		case 2: /* Custom pointer */
 			image = seat->pointer_image;
 			buffer = create_pointer_buffer(seat, seat->pointer_data, seat->pointer_size);
 			if (!buffer)
@@ -296,7 +296,7 @@ static void keyboard_handle_leave(void* data, struct wl_keyboard* keyboard, uint
 
 	event->window = input->keyboard_focus;
 
-	/* we are currently loosing input focus of the main window:
+	/* we are currently losing input focus of the main window:
 	 * check if we currently have some keys pressed and release them as if we enter the window again
 	 * it will be still "virtually" pressed in remote even if in reality the key has been released
 	 */

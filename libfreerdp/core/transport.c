@@ -931,7 +931,7 @@ static SSIZE_T parse_nla_mode_pdu(rdpTransport* transport, wStream* stream)
 			}
 			else if ((lengthEncoding & ~(0x80)) == 2)
 			{
-				/* check for header bytes already was readed in previous calls */
+				/* check for header bytes already read in previous calls */
 				UINT16 length = 0;
 				if (Stream_GetRemainingLength(s) < 2)
 					return 0;

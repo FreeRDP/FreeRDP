@@ -43,7 +43,7 @@ extern "C"
 	/** BASE64 encode data
 	 *
 	 *  @param data The data to encode
-	 *  @param length The lenght of the data in bytes
+	 *  @param length The length of the data in bytes
 	 *  @param withCrLf Option to split the encoded data with CRLF linebreaks
 	 *
 	 *  @since version 3.0.0

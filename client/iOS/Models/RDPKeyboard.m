@@ -235,7 +235,7 @@
 
 - (void)handleAlphaNumChar:(int)character
 {
-	// if we recive an uppercase letter - make it lower and send an shift down event to server
+	// if we receive an uppercase letter - make it lower and send an shift down event to server
 	BOOL shift_was_sent = NO;
 	if (isupper(character) && _shift_pressed == NO)
 	{

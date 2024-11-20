@@ -66,14 +66,14 @@ static BOOL s_CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID 
 
 	if (lpBytesReturned == NULL)
 	{
-		SetLastError(ERROR_INVALID_PARAMETER); /* since we doesn't suppport lpOverlapped != NULL */
+		SetLastError(ERROR_INVALID_PARAMETER); /* since we doesn't support lpOverlapped != NULL */
 		return FALSE;
 	}
 
 	/* clear any previous last error */
 	SetLastError(ERROR_SUCCESS);
 
-	*lpBytesReturned = 0; /* will be ajusted if required ... */
+	*lpBytesReturned = 0; /* will be adjusted if required ... */
 
 	CommLog_Print(WLOG_DEBUG, "CommDeviceIoControl: IoControlCode: 0x%0.8x", dwIoControlCode);
 

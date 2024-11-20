@@ -197,7 +197,7 @@ static DWORD WINAPI audin_oss_thread_func(LPVOID arg)
 
 	if (ioctl(pcm_handle, SNDCTL_DSP_GETCAPS, &tmp) == -1)
 	{
-		OSS_LOG_ERR("SNDCTL_DSP_GETCAPS failed, try ignory", errno);
+		OSS_LOG_ERR("SNDCTL_DSP_GETCAPS failed, try ignored", errno);
 	}
 	else if ((tmp & PCM_CAP_INPUT) == 0)
 	{
@@ -262,7 +262,7 @@ static DWORD WINAPI audin_oss_thread_func(LPVOID arg)
 			continue;
 		}
 
-		if ((size_t)stmp < buffer_size) /* Not enouth data. */
+		if ((size_t)stmp < buffer_size) /* Not enough data. */
 			continue;
 
 		if ((error = oss->receive(&oss->format, buffer, buffer_size, oss->user_data)))

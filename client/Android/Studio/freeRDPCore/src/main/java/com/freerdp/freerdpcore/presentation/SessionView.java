@@ -204,9 +204,9 @@ public class SessionView extends View
 		return res;
 	}
 
-	public void setTouchPointerPadding(int widht, int height)
+	public void setTouchPointerPadding(int width, int height)
 	{
-		touchPointerPaddingWidth = widht;
+		touchPointerPaddingWidth = width;
 		touchPointerPaddingHeight = height;
 		requestLayout();
 	}

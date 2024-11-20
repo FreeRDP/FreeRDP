@@ -433,7 +433,7 @@ public class KeyboardMapper
 				boolean modifierActive = isModifierPressed();
 				// if a modifier is pressed we will send a VK event (if possible) so that key
 				// combinations will be recognized correctly. Otherwise we will send the unicode
-				// key. At the end we will reset all modifiers and notifiy our listener.
+				// key. At the end we will reset all modifiers and notify our listener.
 				int vkcode = getVirtualKeyCode(event.getKeyCode());
 				if ((vkcode & KEY_FLAG_UNICODE) != 0)
 					listener.processUnicodeKey(vkcode & (~KEY_FLAG_UNICODE));

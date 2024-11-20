@@ -249,7 +249,7 @@ static UINT32 x11_pad_scanline(UINT32 scanline, UINT32 inPad)
 			scanline += pad;
 	}
 
-	/* 16 byte alingment is required for ASM optimized code */
+	/* 16 byte alignment is required for ASM optimized code */
 	if (scanline % 16)
 		scanline += 16 - scanline % 16;
 

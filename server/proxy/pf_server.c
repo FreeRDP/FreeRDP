@@ -225,7 +225,7 @@ static BOOL pf_server_setup_channels(freerdp_peer* peer)
 		channelContext = StaticChannelContext_new(ps, cname, channelId);
 		if (!channelContext)
 		{
-			PROXY_LOG_ERR(TAG, ps, "error seting up channelContext for '%s'", cname);
+			PROXY_LOG_ERR(TAG, ps, "error setting up channelContext for '%s'", cname);
 			goto fail;
 		}
 
@@ -813,7 +813,7 @@ BOOL pf_server_start(proxyServer* server)
 				WLog_ERR(TAG, "failed to start listener: address already in use!");
 				break;
 			case EACCES:
-				WLog_ERR(TAG, "failed to start listener: insufficent permissions!");
+				WLog_ERR(TAG, "failed to start listener: insufficient permissions!");
 				break;
 			default:
 				WLog_ERR(TAG, "failed to start listener: errno=%d", errno);
@@ -852,7 +852,7 @@ BOOL pf_server_start_from_socket(proxyServer* server, int socket)
 				WLog_ERR(TAG, "failed to start listener: address already in use!");
 				break;
 			case EACCES:
-				WLog_ERR(TAG, "failed to start listener: insufficent permissions!");
+				WLog_ERR(TAG, "failed to start listener: insufficient permissions!");
 				break;
 			default:
 				WLog_ERR(TAG, "failed to start listener: errno=%d", errno);

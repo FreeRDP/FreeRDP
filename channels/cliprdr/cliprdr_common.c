@@ -435,7 +435,7 @@ UINT cliprdr_read_format_list(wStream* s, CLIPRDR_FORMAT_LIST* formatList, BOOL 
 			 * or 16 Unicode characters)"
 			 * However, both Windows RDSH and mstsc violate this specs as seen in the following
 			 * example of a transferred short format name string: [R.i.c.h. .T.e.x.t. .F.o.r.m.a.t.]
-			 * These are 16 unicode charaters - *without* terminating null !
+			 * These are 16 unicode characters - *without* terminating null !
 			 */
 
 			szFormatName = Stream_ConstPointer(sub1);

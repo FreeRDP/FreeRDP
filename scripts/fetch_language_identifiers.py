@@ -58,7 +58,7 @@ def padhexa(v):
 def write_struct(fp, struct, name, url, base, inv = False, typemap = None):
     li = requests.get(url)
     if li.status_code != requests.codes.ok:
-        print('Could not fetch ' + str(url) + ', reponse code ' + str(li.status_code))
+        print('Could not fetch ' + str(url) + ', response code ' + str(li.status_code))
         sys.exit(1)
     headers, languages = parse_html(li.text)
 

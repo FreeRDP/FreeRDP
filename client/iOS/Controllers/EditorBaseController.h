@@ -38,7 +38,7 @@ extern NSString *TableCellIdentifierButton;
 // returns one of the requested table view cells
 - (UITableViewCell *)tableViewCellFromIdentifier:(NSString *)identifier;
 
-// Adjust text input cells label/textfield widht according to the label's text size
+// Adjust text input cells label/textfield width according to the label's text size
 - (void)adjustEditTextTableViewCell:(EditTextTableViewCell *)cell;
 
 @end

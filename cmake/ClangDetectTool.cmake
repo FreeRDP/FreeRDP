@@ -23,7 +23,7 @@ function (clang_detect_tool VAR NAME OPTS)
 	)
 
 	if (_CLANG_TOOL_VERSION_FAILED)
-		message(WARNING "A problem was encounterd with ${${VAR}}")
+		message(WARNING "A problem was encountered with ${${VAR}}")
 		message(WARNING "${_CLANG_TOOL_VERSION_FAILED}")
 		unset(${VAR})
 		return()

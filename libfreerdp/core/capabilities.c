@@ -1099,7 +1099,7 @@ static BOOL rdp_read_pointer_capability_set(wStream* s, rdpSettings* settings)
 	{
 		WLog_WARN(TAG, "[MS-RDPBCGR] 2.2.7.1.5 Pointer Capability Set "
 		               "(TS_POINTER_CAPABILITYSET)::colorPointerFlag received is %" PRIu16
-		               ". Vaue is ignored and always assumed to be TRUE");
+		               ". Value is ignored and always assumed to be TRUE");
 	}
 
 	/* pointerCacheSize is optional */
@@ -2705,7 +2705,7 @@ static BOOL rdp_apply_multifragment_update_capability_set(rdpSettings* settings,
 	else
 	{
 		/*
-		 * In client mode we keep up with the server's capabilites.
+		 * In client mode we keep up with the server's capabilities.
 		 * In RemoteFX mode we MUST do this but it might also be useful to
 		 * receive larger related bitmap updates.
 		 */

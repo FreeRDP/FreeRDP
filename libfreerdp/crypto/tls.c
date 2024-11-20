@@ -746,7 +746,7 @@ static void tls_reset(rdpTls* tls)
 	}
 
 	/* tls->underlying is a stacked BIO under tls->bio.
-	 * BIO_free_all will free recursivly. */
+	 * BIO_free_all will free recursively. */
 	if (tls->bio)
 		BIO_free_all(tls->bio);
 	else if (tls->underlying)

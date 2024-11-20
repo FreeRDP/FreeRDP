@@ -19,7 +19,7 @@
 	NSString *_keyPath;
 	ConnectionParams *_params;
 
-	// avaiable options
+	// available options
 	OrderedDictionary *_color_options;
 	NSArray *_resolution_modes;
 

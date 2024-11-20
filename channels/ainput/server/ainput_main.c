@@ -576,7 +576,7 @@ UINT ainput_server_context_poll_int(ainput_server_context* context)
 			break;
 
 		default:
-			WLog_ERR(TAG, "AINPUT chanel is in invalid state %d", ainput->state);
+			WLog_ERR(TAG, "AINPUT channel is in invalid state %d", ainput->state);
 			break;
 	}
 

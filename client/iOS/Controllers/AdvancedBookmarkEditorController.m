@@ -234,7 +234,7 @@
 			EditSelectionTableViewCell *selCell = (EditSelectionTableViewCell *)cell;
 			[[selCell label]
 			    setText:NSLocalizedString(@"Security",
-			                              @"'Security': Bookmark protocl security settings")];
+			                              @"'Security': Bookmark protocol security settings")];
 			[[selCell selection]
 			    setText:ProtocolSecurityDescription([_params intForKey:@"security"])];
 			break;

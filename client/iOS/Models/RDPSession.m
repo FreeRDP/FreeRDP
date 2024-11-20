@@ -294,7 +294,7 @@ out_free:
 
 - (void)connect
 {
-	// Set Screen Size to automatic if widht or height are still 0
+	// Set Screen Size to automatic if width or height are still 0
 	rdpSettings *settings = _freerdp->context->settings;
 
 	if (freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth) == 0 ||

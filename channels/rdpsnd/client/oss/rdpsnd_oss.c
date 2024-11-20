@@ -232,7 +232,7 @@ static BOOL rdpsnd_oss_open(rdpsndDevicePlugin* device, const AUDIO_FORMAT* form
 
 	if (ioctl(oss->pcm_handle, SNDCTL_DSP_GETCAPS, &mask) == -1)
 	{
-		OSS_LOG_ERR("SNDCTL_DSP_GETCAPS failed, try ignory", errno);
+		OSS_LOG_ERR("SNDCTL_DSP_GETCAPS failed, try ignored", errno);
 	}
 	else if ((mask & PCM_CAP_OUTPUT) == 0)
 	{

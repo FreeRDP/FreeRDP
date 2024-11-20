@@ -47,7 +47,7 @@ struct s_ITSMFDecoder
 	BOOL (*GetDecodedDimension)(ITSMFDecoder* decoder, UINT32* width, UINT32* height);
 	/* Free the decoder */
 	void (*Free)(ITSMFDecoder* decoder);
-	/* Optional Contol function */
+	/* Optional Control function */
 	BOOL (*Control)(ITSMFDecoder* decoder, ITSMFControlMsg control_msg, UINT32* arg);
 	/* Decode a sample with extended interface. */
 	BOOL(*DecodeEx)

@@ -766,8 +766,8 @@ static BOOL tsmf_gstreamer_decodeEx(ITSMFDecoder* decoder, const BYTE* data, UIN
 
 			mdecoder->seeking = TRUE;
 
-			/* since we cant make the gstreamer pipeline jump to the new start time after a seek -
-			 * we just maintain a offset between realtime and gstreamer time
+			/* since we can't make the gstreamer pipeline jump to the new start time after a seek -
+			 * we just maintain an offset between realtime and gstreamer time
 			 */
 			mdecoder->seek_offset = start_time;
 		}

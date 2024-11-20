@@ -1,6 +1,6 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * Certificate and private key heplers
+ * Certificate and private key helpers
  *
  * Copyright 2023 Armin Novak <anovak@thincast.com>
  * Copyright 2023 Thincast Technologies GmbH

@@ -243,7 +243,7 @@ endmacro(add_channel_server_library)
 set(FILENAME "ChannelOptions.cmake")
 file(GLOB FILEPATHS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*/${FILENAME}")
 
-# We need special treatement for drdynvc:
+# We need special treatment for drdynvc:
 # It needs to be the first entry so that every
 # dynamic channel has the dependent options available.
 set(DRDYNVC_MATCH "")

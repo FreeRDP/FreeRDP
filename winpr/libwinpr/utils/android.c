@@ -31,7 +31,7 @@ JavaVM* jniVm = NULL;
 
 WINPR_API jint JNI_OnLoad(JavaVM* vm, void* reserved)
 {
-	WLog_INFO(TAG, "Setting up JNI environement...");
+	WLog_INFO(TAG, "Setting up JNI environment...");
 
 	jniVm = vm;
 	return JNI_VERSION_1_6;
@@ -40,7 +40,7 @@ WINPR_API jint JNI_OnLoad(JavaVM* vm, void* reserved)
 WINPR_API void JNICALL JNI_OnUnload(JavaVM* vm, void* reserved)
 {
 	JNIEnv* env = NULL;
-	WLog_INFO(TAG, "Tearing down JNI environement...");
+	WLog_INFO(TAG, "Tearing down JNI environment...");
 
 	if ((*jniVm)->GetEnv(vm, (void**)&env, JNI_VERSION_1_6) != JNI_OK)
 	{

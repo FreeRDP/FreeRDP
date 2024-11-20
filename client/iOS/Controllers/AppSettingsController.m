@@ -14,7 +14,7 @@
 
 @implementation AppSettingsController
 
-// keep this up-to-date for correct section display/hidding
+// keep this up-to-date for correct section display/hiding
 #define SECTION_UI_SETTINGS 0
 #define SECTION_CERTIFICATE_HANDLING_SETTINGS 1
 #define SECTION_NUM_SECTIONS 2

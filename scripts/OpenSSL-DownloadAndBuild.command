@@ -126,7 +126,7 @@ cd "openssl-$OPENSSLVERSION"
 
 case `pwd` in
      *\ * )
-           echo "The build path (`pwd`) contains whitepsaces - fix this."
+           echo "The build path (`pwd`) contains whitespaces - fix this."
            exit 1
           ;;
 esac
@@ -146,8 +146,8 @@ echo "Copying header files ..."
 cp -r include/ ../../include/
 echo
 
-echo "Combining to unversal binary"
+echo "Combining to universal binary"
 lipo -create ../../lib/libcrypto_*.a -o ../../lib/libcrypto.a
 lipo -create ../../lib/libssl_*.a -o ../../lib/libssl.a
 
-echo "Finished. Please verify the contens of the openssl folder in \"$INSTALLDIR\""
+echo "Finished. Please verify the contents of the openssl folder in \"$INSTALLDIR\""

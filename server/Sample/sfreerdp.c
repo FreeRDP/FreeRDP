@@ -1217,7 +1217,7 @@ static DWORD WINAPI test_peer_mainloop(LPVOID arg)
 		if (WTSVirtualChannelManagerCheckFileDescriptor(context->vcm) != TRUE)
 			break;
 
-		/* Handle dynamic virtual channel intializations */
+		/* Handle dynamic virtual channel initializations */
 		if (WTSVirtualChannelManagerIsChannelJoined(context->vcm, DRDYNVC_SVC_CHANNEL_NAME))
 		{
 			switch (WTSVirtualChannelManagerGetDrdynvcState(context->vcm))

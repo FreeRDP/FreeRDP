@@ -1509,7 +1509,7 @@ BOOL nego_send_negotiation_response(rdpNego* nego)
 				    ENCRYPTION_LEVEL_NONE)
 				{
 					/**
-					 * If the server implementation did not explicitely set a
+					 * If the server implementation did not explicitly set a
 					 * encryption level we default to client compatible
 					 */
 					if (!freerdp_settings_set_uint32(settings, FreeRDP_EncryptionLevel,
@@ -1817,7 +1817,7 @@ void nego_enable_aad(rdpNego* nego, BOOL enable_aad)
  * Set routing token.
  * @param nego A pointer to the NEGO struct
  * @param RoutingToken A pointer to the routing token
- * @param RoutingTokenLength The lenght of the routing token
+ * @param RoutingTokenLength The length of the routing token
  *
  * @return \b TRUE for success, \b FALSE otherwise
  */

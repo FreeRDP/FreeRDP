@@ -135,7 +135,7 @@ VOID USleep(DWORD dwMicroseconds)
 		QueryPerformanceFrequency(&freq);
 	}
 
-	// in order to save cpu cyles we use Sleep() for the large share ...
+	// in order to save cpu cycles we use Sleep() for the large share ...
 	if (dwMicroseconds >= 1000)
 	{
 		Sleep(dwMicroseconds / 1000);

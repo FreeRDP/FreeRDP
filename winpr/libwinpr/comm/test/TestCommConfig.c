@@ -59,9 +59,9 @@ int TestCommConfig(int argc, char* argv[])
 	}
 
 	hComm = CreateFileA(lpFileName, GENERIC_READ | GENERIC_WRITE,
-	                    FILE_SHARE_WRITE, /* invalid parmaeter */
+	                    FILE_SHARE_WRITE, /* invalid parameter */
 	                    NULL, CREATE_NEW, /* invalid parameter */
-	                    0, (HANDLE)1234); /* invalid parmaeter */
+	                    0, (HANDLE)1234); /* invalid parameter */
 	if (hComm != INVALID_HANDLE_VALUE)
 	{
 		(void)fprintf(
@@ -139,7 +139,7 @@ int TestCommConfig(int argc, char* argv[])
 	    (dcb.StopBits != ONESTOPBIT))
 	{
 		(void)fprintf(stderr,
-		              "Got an unexpeted value among: BaudRate: %" PRIu32 " ByteSize: %" PRIu8
+		              "Got an unexpected value among: BaudRate: %" PRIu32 " ByteSize: %" PRIu8
 		              " Parity: %" PRIu8 " StopBits: %" PRIu8 "\n",
 		              dcb.BaudRate, dcb.ByteSize, dcb.Parity, dcb.StopBits);
 	}

@@ -255,7 +255,7 @@ static BOOL winpr_enable_fips(DWORD flags)
 		s_winpr_openssl_provider_fips = OSSL_PROVIDER_load(NULL, "fips");
 		if (s_winpr_openssl_provider_fips == NULL)
 		{
-			WLog_WARN(TAG, "OpenSSL FIPS provider failled to load");
+			WLog_WARN(TAG, "OpenSSL FIPS provider failed to load");
 		}
 		if (!EVP_default_properties_is_fips_enabled(NULL))
 #else

@@ -500,7 +500,7 @@ static DWORD WINAPI android_thread_func(LPVOID param)
 	else
 	{
 		status = android_freerdp_run(instance);
-		WLog_DBG(TAG, "Disonnect...");
+		WLog_DBG(TAG, "Disconnect...");
 
 		if (!freerdp_disconnect(instance))
 			status = GetLastError();
@@ -650,7 +650,7 @@ JNIEXPORT jlong JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp
 	if (setenv("HOME", _strdup(envStr), 1) != 0)
 	{
 		char ebuffer[256] = { 0 };
-		WLog_FATAL(TAG, "Failed to set environemnt HOME=%s %s [%d]", env,
+		WLog_FATAL(TAG, "Failed to set environment HOME=%s %s [%d]", env,
 		           winpr_strerror(errno, ebuffer, sizeof(ebuffer)), errno);
 		return (jlong)NULL;
 	}
@@ -996,7 +996,7 @@ jint JNI_OnLoad(JavaVM* vm, void* reserved)
 {
 	JNIEnv* env;
 	setlocale(LC_ALL, "");
-	WLog_DBG(TAG, "Setting up JNI environement...");
+	WLog_DBG(TAG, "Setting up JNI environment...");
 
 	/*
 	    if (freerdp_handle_signals() != 0)
@@ -1029,7 +1029,7 @@ jint JNI_OnLoad(JavaVM* vm, void* reserved)
 void JNICALL JNI_OnUnload(JavaVM* vm, void* reserved)
 {
 	JNIEnv* env;
-	WLog_DBG(TAG, "Tearing down JNI environement...");
+	WLog_DBG(TAG, "Tearing down JNI environment...");
 
 	if ((*vm)->GetEnv(vm, (void**)&env, JNI_VERSION_1_6) != JNI_OK)
 	{

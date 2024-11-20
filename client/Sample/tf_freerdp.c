@@ -159,7 +159,7 @@ static BOOL tf_pre_connect(freerdp* instance)
 		return FALSE;
 	/* OrderSupport is initialized at this point.
 	 * Only override it if you plan to implement custom order
-	 * callbacks or deactiveate certain features. */
+	 * callbacks or deactivate certain features. */
 	/* Register the channel listeners.
 	 * They are required to set up / tear down channels if they are loaded. */
 	PubSub_SubscribeChannelConnected(instance->context->pubSub, tf_OnChannelConnectedEventHandler);
@@ -171,7 +171,7 @@ static BOOL tf_pre_connect(freerdp* instance)
 }
 
 /* Called after a RDP connection was successfully established.
- * Settings might have changed during negociation of client / server feature
+ * Settings might have changed during negotiation of client / server feature
  * support.
  *
  * Set up local framebuffers and paing callbacks.

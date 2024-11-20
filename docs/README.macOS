@@ -4,7 +4,7 @@ More documentation might be found at https://github.com/FreeRDP/FreeRDP/wiki/Com
 Starting with "El Capitan" Apple removed the openssl headers. Therefore it's
 required to build openssl manually upfront. For example by using MacPorts or Homebrew.
 To build FreeRDP against this library it's required to set the PKG_CONFIG_PATH
-pointing to the openssl root directory befor building.
+pointing to the openssl root directory before building.
 For example with brew it would look like this:
 
 export PKG_CONFIG_PATH=$(brew --prefix)/opt/openssl/lib/pkgconfig

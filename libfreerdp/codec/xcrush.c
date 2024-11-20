@@ -769,7 +769,7 @@ static INLINE size_t xcrush_copy_bytes_no_overlap(BYTE* WINPR_RESTRICT dst,
                                                   const BYTE* WINPR_RESTRICT src, size_t num)
 {
 	// src and dst overlaps
-	// we should copy the area that doesn't overlap repeatly
+	// we should copy the area that doesn't overlap repeatedly
 	const size_t diff = (dst > src) ? dst - src : src - dst;
 	const size_t rest = num % diff;
 	const size_t end = num - rest;

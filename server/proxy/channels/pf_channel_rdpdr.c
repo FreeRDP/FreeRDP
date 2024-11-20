@@ -303,7 +303,7 @@ static BOOL rdpdr_process_server_header(BOOL server, wLog* log, wStream* s, UINT
 	if (!Stream_CheckAndLogRequiredLengthRx(server, log, s, expect))
 	{
 		RX_LOG(server, log, WLOG_WARN,
-		       "RDPDR_HEADER[%s | %s] not enought data, expected %" PRIuz ", "
+		       "RDPDR_HEADER[%s | %s] not enough data, expected %" PRIuz ", "
 		       "got %" PRIuz,
 		       rdpdr_component_string(component), rdpdr_packetid_string(PacketId), expect,
 		       Stream_GetRemainingLength(s));

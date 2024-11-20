@@ -681,7 +681,7 @@ const CHAR* WTSSessionStateToString(WTS_CONNECTSTATE_CLASS state)
 BOOL WTSRegisterWtsApiFunctionTable(const WtsApiFunctionTable* table)
 {
 	/* Use InitOnceExecuteOnce here as well - otherwise a table set with this
-	   function is overriden on the first use of a WTS* API call (due to
+	   function is overridden on the first use of a WTS* API call (due to
 	   wtsapiInitOnce not being set). */
 	union
 	{

@@ -87,7 +87,7 @@
          - wl_surface already has an nother role.
          - ivi_id is already assigned to an another wl_surface.
 
-        If client destroys ivi_surface or wl_surface which is assigne to the ivi_surface,
+        If client destroys ivi_surface or wl_surface which is assigned to the ivi_surface,
         ivi_id which is assigned to the ivi_surface is free for reuse.
       </description>
       <arg name="ivi_id" type="uint"/>

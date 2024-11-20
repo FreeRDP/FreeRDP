@@ -833,7 +833,7 @@ static DWORD WINAPI pf_client_thread_proc(pClientContext* pc)
 	pdata = pc->pdata;
 	WINPR_ASSERT(pdata);
 	/*
-	 * during redirection, freerdp's abort event might be overriden (reset) by the library, after
+	 * during redirection, freerdp's abort event might be overridden (reset) by the library, after
 	 * the server set it in order to shutdown the connection. it means that the server might signal
 	 * the client to abort, but the library code will override the signal and the client will
 	 * continue its work instead of exiting. That's why the client must wait on `pdata->abort_event`

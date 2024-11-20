@@ -127,7 +127,7 @@ extern "C"
 
 	/**
 	 * @brief Return an error string
-	 * @return A string describing the last error that occured or \b NULL
+	 * @return A string describing the last error that occurred or \b NULL
 	 * @since version 3.6.0
 	 */
 	WINPR_API const char* WINPR_JSON_GetErrorPtr(void);

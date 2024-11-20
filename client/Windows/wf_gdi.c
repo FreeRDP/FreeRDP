@@ -439,7 +439,7 @@ void wf_toggle_fullscreen(wfContext* wfc)
 
 	if (!wfc->fullscreen)
 	{
-		// Reenable window tracking AFTER resizing it back, otherwise it can lean to repositioning
+		// Re-enable window tracking AFTER resizing it back, otherwise it can lean to repositioning
 		// errors.
 		wfc->disablewindowtracking = FALSE;
 	}

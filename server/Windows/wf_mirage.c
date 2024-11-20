@@ -98,7 +98,7 @@ BOOL wf_mirror_driver_display_device_attach(wfInfo* wfi, DWORD mode)
 		WLog_DBG(TAG, "Error opening RegKey: status=0x%08lX", status);
 
 		if (status == ERROR_ACCESS_DENIED)
-			WLog_DBG(TAG, "access denied. Do you have admin privleges?");
+			WLog_DBG(TAG, "access denied. Do you have admin privileges?");
 
 		return FALSE;
 	}
@@ -111,7 +111,7 @@ BOOL wf_mirror_driver_display_device_attach(wfInfo* wfi, DWORD mode)
 		WLog_DBG(TAG, "Error querying RegKey: status=0x%08lX", status);
 
 		if (status == ERROR_ACCESS_DENIED)
-			WLog_DBG(TAG, "access denied. Do you have admin privleges?");
+			WLog_DBG(TAG, "access denied. Do you have admin privileges?");
 
 		return FALSE;
 	}
@@ -127,7 +127,7 @@ BOOL wf_mirror_driver_display_device_attach(wfInfo* wfi, DWORD mode)
 			WLog_DBG(TAG, "Error writing registry key: %ld", status);
 
 			if (status == ERROR_ACCESS_DENIED)
-				WLog_DBG(TAG, "access denied. Do you have admin privleges?");
+				WLog_DBG(TAG, "access denied. Do you have admin privileges?");
 
 			WLog_DBG(TAG, "");
 			return FALSE;

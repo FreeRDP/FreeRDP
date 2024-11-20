@@ -31,7 +31,7 @@ int TestFileCreateFile(int argc, char* argv[])
 	if (!name)
 		return -1;
 
-	/* On windows we would need '\\' or '/' as seperator.
+	/* On windows we would need '\\' or '/' as separator.
 	 * Single '\' do not work. */
 	hr = PathCchConvertStyleA(name, strlen(name), PATH_STYLE_UNIX);
 

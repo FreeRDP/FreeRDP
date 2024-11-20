@@ -13,7 +13,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <!-- childs are specified bottom-up so that we have a correct z-order in our final layout -->
+    <!-- children are specified bottom-up so that we have a correct z-order in our final layout -->
     <android.inputmethodservice.KeyboardView xmlns:android="http://schemas.android.com/apk/res/android"
         android:id="@+id/extended_keyboard"
         android:layout_width="match_parent"

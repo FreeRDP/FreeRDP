@@ -681,7 +681,7 @@ int shadow_server_start(rdpShadowServer* server)
 
 	/* Bind magic:
 	 *
-	 * emtpy                 ... bind TCP all
+	 * empty                 ... bind TCP all
 	 * <local path>          ... bind local (IPC)
 	 * bind-socket,<address> ... bind TCP to specified interface
 	 */

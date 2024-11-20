@@ -37,7 +37,7 @@ int TestWtsApiEnumerateProcesses(int argc, char* argv[])
 
 #if 0
 	{
-		printf("WTSEnumerateProcesses enumerated %"PRIu32" processs:\n", count);
+		printf("WTSEnumerateProcesses enumerated %"PRIu32" process:\n", count);
 		for (DWORD i = 0; i < count; i++)
 			printf("\t[%"PRIu32"]: %s (%"PRIu32")\n", i, pProcessInfo[i].pProcessName, pProcessInfo[i].ProcessId);
 	}

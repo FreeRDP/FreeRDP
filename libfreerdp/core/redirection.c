@@ -1012,7 +1012,7 @@ BOOL rdp_write_enhanced_security_redirection_packet(wStream* s, const rdpRedirec
 
 	if (redirection->flags & LB_PASSWORD)
 	{
-		/* Password is eighter UNICODE or opaque data */
+		/* Password is either UNICODE or opaque data */
 		if (!redir_write_data(LB_PASSWORD, s, redirection->PasswordLength, redirection->Password))
 			goto fail;
 	}

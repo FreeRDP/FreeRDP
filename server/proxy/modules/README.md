@@ -18,7 +18,7 @@ so the proxy refuses to start if they are not found:
 Required = demo,cap
 ```
 
-Modules must be installed as shared libraris in the `<base install>/lib/freerdp3/proxy` folder and match the pattern
+Modules must be installed as shared libraries in the `<base install>/lib/freerdp3/proxy` folder and match the pattern
 `proxy-<name>-plugin.<ext>` (e.g. `proxy-demo-plugin.so`) to be found.
 For security reasons loading by full path is not supported and only the installation path is used for lookup.
 

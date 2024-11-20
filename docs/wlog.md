@@ -38,7 +38,7 @@ The level list below is top down. Top the highest level.
 
 * WLOG_TRACE - print everything including package dumps
 * WLOG_DEBUG - debug messages
-* WLOG_INFO - general informations
+* WLOG_INFO - general information
 * WLOG_WARN - warnings
 * WLOG_ERROR - errors
 * WLOG_FATAL - fatal problems

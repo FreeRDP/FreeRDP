@@ -661,7 +661,7 @@ extern "C"
 	 * the settings.
 	 *
 	 *  \param settings A pointer to the settings to use
-	 *  \param capsFlags A pointer to the capablity flags, must have capsCount fields
+	 *  \param capsFlags A pointer to the capability flags, must have capsCount fields
 	 *  \param capsData A pointer array to the RAW capability data, must have capsCount fields
 	 *  \param capsSizes A pointer to an array of RAW capability sizes, must have capsCount fields
 	 *  \param capsCount The number of capabilities contained in the RAW data

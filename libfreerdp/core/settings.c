@@ -354,7 +354,7 @@ static BOOL monitor_operlaps(const rdpSettings* settings, UINT32 start, UINT32 c
 			WLog_ERR(
 			    TAG,
 			    "Mulitimonitor mode requested, but local layout has gaps or overlapping areas!");
-			WLog_ERR(TAG, "Please reconfigure your local monitor setup so that thre are no gaps or "
+			WLog_ERR(TAG, "Please reconfigure your local monitor setup so that there are no gaps or "
 			              "overlapping areas!");
 			return TRUE;
 		}

@@ -56,7 +56,7 @@ UINT32 shadow_encoder_create_frame_id(rdpShadowEncoder* encoder)
 
 	/*
 	 * Calculate preferred fps according to how much frames are
-	 * in-progress. Note that it only works when subsytem implementation
+	 * in-progress. Note that it only works when subsystem implementation
 	 * calls shadow_encoder_preferred_fps and takes the suggestion.
 	 */
 	if (inFlightFrames > 1)
