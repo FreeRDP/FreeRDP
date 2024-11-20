@@ -39,6 +39,7 @@ Build-Depends:
  libswresample-dev | libavresample-dev,
  libusb-1.0-0-dev,
  libudev-dev,
+ libfdk-aac-dev,
  libsoxr-dev,
  libdbus-glib-1-dev,
  libpam0g-dev,
