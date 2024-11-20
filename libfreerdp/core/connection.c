@@ -335,7 +335,7 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 	UINT32 TcpConnectTimeout = freerdp_settings_get_uint32(settings, FreeRDP_TcpConnectTimeout);
 	if (settings->GatewayArmTransport)
 	{
-		if (!arm_resolve_endpoint(rdp->context, TcpConnectTimeout))
+		if (!arm_resolve_endpoint(rdp->log, rdp->context, TcpConnectTimeout))
 		{
 			WLog_ERR(TAG, "error retrieving ARM configuration");
 			return FALSE;
