@@ -65,7 +65,7 @@ struct rdp_wst
 	char* gwhostname;
 	uint16_t gwport;
 	char* gwpath;
-	websocket_context wscontext;
+	websocket_context* wscontext;
 };
 
 static const char arm_query_param[] = "%s%cClmTk=Bearer%%20%s&X-MS-User-Agent=FreeRDP%%2F3.0";
@@ -494,11 +494,7 @@ BOOL wst_connect(rdpWst* wst, DWORD timeout)
 		return FALSE;
 
 	if (isWebsocket)
-	{
-		wst->wscontext.state = WebsocketStateOpcodeAndFin;
-		wst->wscontext.responseStreamBuffer = NULL;
-		return TRUE;
-	}
+		return websocket_context_reset(wst->wscontext);
 	else
 	{
 		char buffer[64] = { 0 };
@@ -537,7 +533,8 @@ static int wst_bio_write(BIO* bio, const char* buf, int num)
 	WINPR_ASSERT(wst);
 	BIO_clear_flags(bio, BIO_FLAGS_WRITE);
 	EnterCriticalSection(&wst->writeSection);
-	status = websocket_write(wst->tls->bio, (const BYTE*)buf, num, WebsocketBinaryOpcode);
+	status = websocket_context_write(wst->wscontext, wst->tls->bio, (const BYTE*)buf, num,
+	                                 WebsocketBinaryOpcode);
 	LeaveCriticalSection(&wst->writeSection);
 
 	if (status < 0)
@@ -570,7 +567,7 @@ static int wst_bio_read(BIO* bio, char* buf, int size)
 
 	while (status <= 0)
 	{
-		status = websocket_read(wst->tls->bio, (BYTE*)buf, (size_t)size, &wst->wscontext);
+		status = websocket_context_read(wst->wscontext, wst->tls->bio, (BYTE*)buf, (size_t)size);
 		if (status <= 0)
 		{
 			if (!BIO_should_retry(wst->tls->bio))
@@ -781,57 +778,58 @@ static BOOL wst_parse_url(rdpWst* wst, const char* url)
 
 rdpWst* wst_new(rdpContext* context)
 {
-	rdpWst* wst = NULL;
-
 	if (!context)
 		return NULL;
 
-	wst = (rdpWst*)calloc(1, sizeof(rdpWst));
+	rdpWst* wst = (rdpWst*)calloc(1, sizeof(rdpWst));
+	if (!wst)
+		return NULL;
 
-	if (wst)
+	wst->context = context;
+
+	wst->gwhostname = NULL;
+	wst->gwport = 443;
+	wst->gwpath = NULL;
+
+	if (!wst_parse_url(wst, context->settings->GatewayUrl))
+		goto wst_alloc_error;
+
+	wst->tls = freerdp_tls_new(wst->context);
+	if (!wst->tls)
+		goto wst_alloc_error;
+
+	wst->http = http_context_new();
+
+	if (!wst->http)
+		goto wst_alloc_error;
+
+	if (!http_context_set_uri(wst->http, wst->gwpath) ||
+	    !http_context_set_accept(wst->http, "*/*") ||
+	    !http_context_set_cache_control(wst->http, "no-cache") ||
+	    !http_context_set_pragma(wst->http, "no-cache") ||
+	    !http_context_set_connection(wst->http, "Keep-Alive") ||
+	    !http_context_set_user_agent(wst->http, FREERDP_USER_AGENT) ||
+	    !http_context_set_x_ms_user_agent(wst->http, FREERDP_USER_AGENT) ||
+	    !http_context_set_host(wst->http, wst->gwhostname) ||
+	    !http_context_enable_websocket_upgrade(wst->http, TRUE))
 	{
-		wst->context = context;
-
-		wst->gwhostname = NULL;
-		wst->gwport = 443;
-		wst->gwpath = NULL;
-
-		if (!wst_parse_url(wst, context->settings->GatewayUrl))
-			goto wst_alloc_error;
-
-		wst->tls = freerdp_tls_new(wst->context);
-		if (!wst->tls)
-			goto wst_alloc_error;
-
-		wst->http = http_context_new();
-
-		if (!wst->http)
-			goto wst_alloc_error;
-
-		if (!http_context_set_uri(wst->http, wst->gwpath) ||
-		    !http_context_set_accept(wst->http, "*/*") ||
-		    !http_context_set_cache_control(wst->http, "no-cache") ||
-		    !http_context_set_pragma(wst->http, "no-cache") ||
-		    !http_context_set_connection(wst->http, "Keep-Alive") ||
-		    !http_context_set_user_agent(wst->http, FREERDP_USER_AGENT) ||
-		    !http_context_set_x_ms_user_agent(wst->http, FREERDP_USER_AGENT) ||
-		    !http_context_set_host(wst->http, wst->gwhostname) ||
-		    !http_context_enable_websocket_upgrade(wst->http, TRUE))
-		{
-			goto wst_alloc_error;
-		}
-
-		wst->frontBio = BIO_new(BIO_s_wst());
-
-		if (!wst->frontBio)
-			goto wst_alloc_error;
-
-		BIO_set_data(wst->frontBio, wst);
-		InitializeCriticalSection(&wst->writeSection);
-		wst->auth = credssp_auth_new(context);
-		if (!wst->auth)
-			goto wst_alloc_error;
+		goto wst_alloc_error;
 	}
+
+	wst->frontBio = BIO_new(BIO_s_wst());
+
+	if (!wst->frontBio)
+		goto wst_alloc_error;
+
+	BIO_set_data(wst->frontBio, wst);
+	InitializeCriticalSection(&wst->writeSection);
+	wst->auth = credssp_auth_new(context);
+	if (!wst->auth)
+		goto wst_alloc_error;
+
+	wst->wscontext = websocket_context_new();
+	if (!wst->wscontext)
+		goto wst_alloc_error;
 
 	return wst;
 wst_alloc_error:
@@ -858,8 +856,7 @@ void wst_free(rdpWst* wst)
 
 	DeleteCriticalSection(&wst->writeSection);
 
-	if (wst->wscontext.responseStreamBuffer != NULL)
-		Stream_Free(wst->wscontext.responseStreamBuffer, TRUE);
+	websocket_context_free(wst->wscontext);
 
 	free(wst);
 }

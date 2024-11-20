@@ -112,7 +112,7 @@ typedef struct
 	union context
 	{
 		http_encoding_chunked_context chunked;
-		websocket_context websocket;
+		websocket_context* websocket;
 	} context;
 } rdg_http_encoding_context;
 
@@ -327,11 +327,8 @@ static BOOL rdg_write_chunked(BIO* bio, wStream* sPacket)
 static BOOL rdg_write_packet(rdpRdg* rdg, wStream* sPacket)
 {
 	if (rdg->transferEncoding.isWebsocketTransport)
-	{
-		if (rdg->transferEncoding.context.websocket.closeSent)
-			return FALSE;
-		return websocket_write_wstream(rdg->tlsOut->bio, sPacket, WebsocketBinaryOpcode);
-	}
+		return websocket_context_write_wstream(rdg->transferEncoding.context.websocket,
+		                                       rdg->tlsOut->bio, sPacket, WebsocketBinaryOpcode);
 
 	return rdg_write_chunked(rdg->tlsIn->bio, sPacket);
 }
@@ -344,9 +341,7 @@ static int rdg_socket_read(BIO* bio, BYTE* pBuffer, size_t size,
 		return -1;
 
 	if (encodingContext->isWebsocketTransport)
-	{
-		return websocket_read(bio, pBuffer, size, &encodingContext->context.websocket);
-	}
+		return websocket_context_read(encodingContext->context.websocket, bio, pBuffer, size);
 
 	switch (encodingContext->httpTransferEncoding)
 	{
@@ -1470,9 +1465,11 @@ static BOOL rdg_establish_data_connection(rdpRdg* rdg, rdpTls* tls, const char* 
 				}
 				return FALSE;
 			}
+
 			rdg->transferEncoding.isWebsocketTransport = TRUE;
-			rdg->transferEncoding.context.websocket.state = WebsocketStateOpcodeAndFin;
-			rdg->transferEncoding.context.websocket.responseStreamBuffer = NULL;
+			if (!websocket_context_reset(rdg->transferEncoding.context.websocket))
+				return FALSE;
+
 			if (rdg->extAuth == HTTP_EXTENDED_AUTH_SSPI_NTLM)
 			{
 				/* create a new auth context for SSPI_NTLM. This must be done after the last
@@ -1607,86 +1604,36 @@ BOOL rdg_connect(rdpRdg* rdg, DWORD timeout, BOOL* rpcFallback)
 
 static int rdg_write_websocket_data_packet(rdpRdg* rdg, const BYTE* buf, int isize)
 {
-	size_t fullLen = 0;
-	int status = 0;
-	wStream* sWS = NULL;
-
-	uint32_t maskingKey = 0;
-	BYTE* maskingKeyByte1 = (BYTE*)&maskingKey;
-	BYTE* maskingKeyByte2 = maskingKeyByte1 + 1;
-	BYTE* maskingKeyByte3 = maskingKeyByte1 + 2;
-	BYTE* maskingKeyByte4 = maskingKeyByte1 + 3;
-
-	winpr_RAND(&maskingKey, 4);
-
+	WINPR_ASSERT(rdg);
 	if (isize < 0)
 		return -1;
 
 	const size_t payloadSize = (size_t)isize + 10;
+	union
+	{
+		UINT32 u32;
+		UINT8 u8[4];
+	} maskingKey;
 
-	if (payloadSize < 1)
-		return 0;
-
-	if (payloadSize < 126)
-		fullLen = payloadSize + 6; /* 2 byte "mini header" + 4 byte masking key */
-	else if (payloadSize < 0x10000)
-		fullLen = payloadSize + 8; /* 2 byte "mini header" + 2 byte length + 4 byte masking key */
-	else
-		fullLen = payloadSize + 14; /* 2 byte "mini header" + 8 byte length + 4 byte masking key */
-
-	sWS = Stream_New(NULL, fullLen);
+	wStream* sWS =
+	    websocket_context_packet_new(payloadSize, WebsocketBinaryOpcode, &maskingKey.u32);
 	if (!sWS)
 		return FALSE;
 
-	Stream_Write_UINT8(sWS, WEBSOCKET_FIN_BIT | WebsocketBinaryOpcode);
-	if (payloadSize < 126)
-		Stream_Write_UINT8(sWS, (UINT8)payloadSize | WEBSOCKET_MASK_BIT);
-	else if (payloadSize < 0x10000)
-	{
-		Stream_Write_UINT8(sWS, 126 | WEBSOCKET_MASK_BIT);
-		Stream_Write_UINT16_BE(sWS, (UINT16)payloadSize);
-	}
-	else
-	{
-		Stream_Write_UINT8(sWS, 127 | WEBSOCKET_MASK_BIT);
-		/* biggest packet possible is 0xffff + 0xa, so 32bit is always enough */
-		Stream_Write_UINT32_BE(sWS, 0);
-		Stream_Write_UINT32_BE(sWS, (UINT32)payloadSize);
-	}
-	Stream_Write_UINT32(sWS, maskingKey);
-
-	Stream_Write_UINT16(sWS, PKT_TYPE_DATA ^ (*maskingKeyByte1 | *maskingKeyByte2 << 8)); /* Type */
-	Stream_Write_UINT16(sWS, 0 ^ (*maskingKeyByte3 | *maskingKeyByte4 << 8)); /* Reserved */
-	Stream_Write_UINT32(sWS, (UINT32)payloadSize ^ maskingKey);               /* Packet length */
+	Stream_Write_UINT16(sWS, PKT_TYPE_DATA ^ (maskingKey.u8[0] | maskingKey.u8[1] << 8)); /* Type */
+	Stream_Write_UINT16(sWS, 0 ^ (maskingKey.u8[2] | maskingKey.u8[3] << 8)); /* Reserved */
+	Stream_Write_UINT32(sWS, (UINT32)payloadSize ^ maskingKey.u32);           /* Packet length */
 	Stream_Write_UINT16(sWS,
-	                    (UINT16)isize ^ (*maskingKeyByte1 | *maskingKeyByte2 << 8)); /* Data size */
+	                    (UINT16)isize ^ (maskingKey.u8[0] | maskingKey.u8[1] << 8)); /* Data size */
 
 	/* masking key is now off by 2 bytes. fix that */
-	maskingKey = (maskingKey & 0xffff) << 16 | (maskingKey >> 16);
+	maskingKey.u32 = (maskingKey.u32 & 0xffff) << 16 | (maskingKey.u32 >> 16);
 
-	/* mask as much as possible with 32bit access */
-	size_t streamPos = 0;
-	for (; streamPos + 4 <= (size_t)isize; streamPos += 4)
-	{
-		uint32_t masked = *((const uint32_t*)(buf + streamPos)) ^ maskingKey;
-		Stream_Write_UINT32(sWS, masked);
-	}
-
-	/* mask the rest byte by byte */
-	for (; streamPos < (size_t)isize; streamPos++)
-	{
-		BYTE* partialMask = (BYTE*)(&maskingKey) + streamPos % 4;
-		BYTE masked = *((buf + streamPos)) ^ *partialMask;
-		Stream_Write_UINT8(sWS, masked);
-	}
-
-	Stream_SealLength(sWS);
-
-	status = freerdp_tls_write_all(rdg->tlsOut, Stream_Buffer(sWS), Stream_Length(sWS));
-	Stream_Free(sWS, TRUE);
-
-	if (status < 0)
-		return status;
+	WINPR_ASSERT(rdg->tlsOut);
+	wStream sPacket = { 0 };
+	Stream_StaticConstInit(&sPacket, buf, (size_t)isize);
+	if (!websocket_context_mask_and_send(rdg->tlsOut->bio, sWS, &sPacket, maskingKey.u32))
+		return -1;
 
 	return isize;
 }
@@ -1733,12 +1680,9 @@ static int rdg_write_chunked_data_packet(rdpRdg* rdg, const BYTE* buf, int isize
 
 static int rdg_write_data_packet(rdpRdg* rdg, const BYTE* buf, int isize)
 {
+	WINPR_ASSERT(rdg);
 	if (rdg->transferEncoding.isWebsocketTransport)
-	{
-		if (rdg->transferEncoding.context.websocket.closeSent == TRUE)
-			return -1;
 		return rdg_write_websocket_data_packet(rdg, buf, isize);
-	}
 	else
 		return rdg_write_chunked_data_packet(rdg, buf, isize);
 }
@@ -2198,91 +2142,92 @@ static BIO_METHOD* BIO_s_rdg(void)
 
 rdpRdg* rdg_new(rdpContext* context)
 {
-	rdpRdg* rdg = NULL;
-
 	if (!context)
 		return NULL;
 
-	rdg = (rdpRdg*)calloc(1, sizeof(rdpRdg));
+	rdpRdg* rdg = (rdpRdg*)calloc(1, sizeof(rdpRdg));
+	if (!rdg)
+		return NULL;
 
-	if (rdg)
+	rdg->log = WLog_Get(TAG);
+	rdg->state = RDG_CLIENT_STATE_INITIAL;
+	rdg->context = context;
+	rdg->extAuth =
+	    (rdg->context->settings->GatewayHttpExtAuthSspiNtlm ? HTTP_EXTENDED_AUTH_SSPI_NTLM
+	                                                        : HTTP_EXTENDED_AUTH_NONE);
+
+	if (rdg->context->settings->GatewayAccessToken)
+		rdg->extAuth = HTTP_EXTENDED_AUTH_PAA;
+
+	UuidCreate(&rdg->guid);
+
+	rdg->tlsOut = freerdp_tls_new(rdg->context);
+
+	if (!rdg->tlsOut)
+		goto rdg_alloc_error;
+
+	rdg->tlsIn = freerdp_tls_new(rdg->context);
+
+	if (!rdg->tlsIn)
+		goto rdg_alloc_error;
+
+	rdg->http = http_context_new();
+
+	if (!rdg->http)
+		goto rdg_alloc_error;
+
+	if (!http_context_set_uri(rdg->http, "/remoteDesktopGateway/") ||
+	    !http_context_set_accept(rdg->http, "*/*") ||
+	    !http_context_set_cache_control(rdg->http, "no-cache") ||
+	    !http_context_set_pragma(rdg->http, "no-cache") ||
+	    !http_context_set_connection(rdg->http, "Keep-Alive") ||
+	    !http_context_set_user_agent(rdg->http, "MS-RDGateway/1.0") ||
+	    !http_context_set_host(rdg->http, rdg->context->settings->GatewayHostname) ||
+	    !http_context_set_rdg_connection_id(rdg->http, &rdg->guid) ||
+	    !http_context_set_rdg_correlation_id(rdg->http, &rdg->guid) ||
+	    !http_context_enable_websocket_upgrade(
+	        rdg->http,
+	        freerdp_settings_get_bool(rdg->context->settings, FreeRDP_GatewayHttpUseWebsockets)))
 	{
-		rdg->log = WLog_Get(TAG);
-		rdg->state = RDG_CLIENT_STATE_INITIAL;
-		rdg->context = context;
-		rdg->extAuth =
-		    (rdg->context->settings->GatewayHttpExtAuthSspiNtlm ? HTTP_EXTENDED_AUTH_SSPI_NTLM
-		                                                        : HTTP_EXTENDED_AUTH_NONE);
-
-		if (rdg->context->settings->GatewayAccessToken)
-			rdg->extAuth = HTTP_EXTENDED_AUTH_PAA;
-
-		UuidCreate(&rdg->guid);
-
-		rdg->tlsOut = freerdp_tls_new(rdg->context);
-
-		if (!rdg->tlsOut)
-			goto rdg_alloc_error;
-
-		rdg->tlsIn = freerdp_tls_new(rdg->context);
-
-		if (!rdg->tlsIn)
-			goto rdg_alloc_error;
-
-		rdg->http = http_context_new();
-
-		if (!rdg->http)
-			goto rdg_alloc_error;
-
-		if (!http_context_set_uri(rdg->http, "/remoteDesktopGateway/") ||
-		    !http_context_set_accept(rdg->http, "*/*") ||
-		    !http_context_set_cache_control(rdg->http, "no-cache") ||
-		    !http_context_set_pragma(rdg->http, "no-cache") ||
-		    !http_context_set_connection(rdg->http, "Keep-Alive") ||
-		    !http_context_set_user_agent(rdg->http, "MS-RDGateway/1.0") ||
-		    !http_context_set_host(rdg->http, rdg->context->settings->GatewayHostname) ||
-		    !http_context_set_rdg_connection_id(rdg->http, &rdg->guid) ||
-		    !http_context_set_rdg_correlation_id(rdg->http, &rdg->guid) ||
-		    !http_context_enable_websocket_upgrade(
-		        rdg->http, freerdp_settings_get_bool(rdg->context->settings,
-		                                             FreeRDP_GatewayHttpUseWebsockets)))
-		{
-			goto rdg_alloc_error;
-		}
-
-		if (rdg->extAuth != HTTP_EXTENDED_AUTH_NONE)
-		{
-			switch (rdg->extAuth)
-			{
-				case HTTP_EXTENDED_AUTH_PAA:
-					if (!http_context_set_rdg_auth_scheme(rdg->http, "PAA"))
-						goto rdg_alloc_error;
-
-					break;
-
-				case HTTP_EXTENDED_AUTH_SSPI_NTLM:
-					if (!http_context_set_rdg_auth_scheme(rdg->http, "SSPI_NTLM"))
-						goto rdg_alloc_error;
-
-					break;
-
-				default:
-					WLog_Print(rdg->log, WLOG_DEBUG,
-					           "RDG extended authentication method %d not supported", rdg->extAuth);
-			}
-		}
-
-		rdg->frontBio = BIO_new(BIO_s_rdg());
-
-		if (!rdg->frontBio)
-			goto rdg_alloc_error;
-
-		BIO_set_data(rdg->frontBio, rdg);
-		InitializeCriticalSection(&rdg->writeSection);
-
-		rdg->transferEncoding.httpTransferEncoding = TransferEncodingIdentity;
-		rdg->transferEncoding.isWebsocketTransport = FALSE;
+		goto rdg_alloc_error;
 	}
+
+	if (rdg->extAuth != HTTP_EXTENDED_AUTH_NONE)
+	{
+		switch (rdg->extAuth)
+		{
+			case HTTP_EXTENDED_AUTH_PAA:
+				if (!http_context_set_rdg_auth_scheme(rdg->http, "PAA"))
+					goto rdg_alloc_error;
+
+				break;
+
+			case HTTP_EXTENDED_AUTH_SSPI_NTLM:
+				if (!http_context_set_rdg_auth_scheme(rdg->http, "SSPI_NTLM"))
+					goto rdg_alloc_error;
+
+				break;
+
+			default:
+				WLog_Print(rdg->log, WLOG_DEBUG,
+				           "RDG extended authentication method %d not supported", rdg->extAuth);
+		}
+	}
+
+	rdg->frontBio = BIO_new(BIO_s_rdg());
+
+	if (!rdg->frontBio)
+		goto rdg_alloc_error;
+
+	BIO_set_data(rdg->frontBio, rdg);
+	InitializeCriticalSection(&rdg->writeSection);
+
+	rdg->transferEncoding.httpTransferEncoding = TransferEncodingIdentity;
+	rdg->transferEncoding.isWebsocketTransport = FALSE;
+
+	rdg->transferEncoding.context.websocket = websocket_context_new();
+	if (!rdg->transferEncoding.context.websocket)
+		goto rdg_alloc_error;
 
 	return rdg;
 rdg_alloc_error:
@@ -2308,13 +2253,9 @@ void rdg_free(rdpRdg* rdg)
 
 	DeleteCriticalSection(&rdg->writeSection);
 
-	if (rdg->transferEncoding.isWebsocketTransport)
-	{
-		if (rdg->transferEncoding.context.websocket.responseStreamBuffer != NULL)
-			Stream_Free(rdg->transferEncoding.context.websocket.responseStreamBuffer, TRUE);
-	}
-
 	smartcardCertInfo_Free(rdg->smartcard);
+
+	websocket_context_free(rdg->transferEncoding.context.websocket);
 
 	free(rdg);
 }

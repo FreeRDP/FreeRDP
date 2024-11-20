@@ -50,22 +50,27 @@ typedef enum
 	WebSocketStatePayload,
 } WEBSOCKET_STATE;
 
-typedef struct
-{
-	size_t payloadLength;
-	uint32_t maskingKey;
-	BOOL masking;
-	BOOL closeSent;
-	BYTE opcode;
-	BYTE fragmentOriginalOpcode;
-	BYTE lengthAndMaskPosition;
-	WEBSOCKET_STATE state;
-	wStream* responseStreamBuffer;
-} websocket_context;
+typedef struct s_websocket_context websocket_context;
 
-FREERDP_LOCAL BOOL websocket_write_wstream(BIO* bio, wStream* sPacket, WEBSOCKET_OPCODE opcode);
-FREERDP_LOCAL int websocket_write(BIO* bio, const BYTE* buf, int isize, WEBSOCKET_OPCODE opcode);
-FREERDP_LOCAL int websocket_read(BIO* bio, BYTE* pBuffer, size_t size,
-                                 websocket_context* encodingContext);
+FREERDP_LOCAL void websocket_context_free(websocket_context* context);
+
+WINPR_ATTR_MALLOC(websocket_context_free, 1)
+FREERDP_LOCAL websocket_context* websocket_context_new(void);
+
+FREERDP_LOCAL BOOL websocket_context_reset(websocket_context* context);
+
+FREERDP_LOCAL BOOL websocket_context_write_wstream(websocket_context* context, BIO* bio,
+                                                   wStream* sPacket, WEBSOCKET_OPCODE opcode);
+FREERDP_LOCAL int websocket_context_write(websocket_context* context, BIO* bio, const BYTE* buf,
+                                          int isize, WEBSOCKET_OPCODE opcode);
+FREERDP_LOCAL int websocket_context_read(websocket_context* encodingContext, BIO* bio,
+                                         BYTE* pBuffer, size_t size);
+
+WINPR_ATTR_MALLOC(Stream_Free, 1)
+FREERDP_LOCAL wStream* websocket_context_packet_new(size_t len, WEBSOCKET_OPCODE opcode,
+                                                    UINT32* pMaskingKey);
+
+FREERDP_LOCAL BOOL websocket_context_mask_and_send(BIO* bio, wStream* sPacket, wStream* sDataPacket,
+                                                   UINT32 maskingKey);
 
 #endif /* FREERDP_LIB_CORE_GATEWAY_WEBSOCKET_H */

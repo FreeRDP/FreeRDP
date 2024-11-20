@@ -23,25 +23,67 @@
 
 #define TAG FREERDP_TAG("core.gateway.websocket")
 
-BOOL websocket_write_wstream(BIO* bio, wStream* sPacket, WEBSOCKET_OPCODE opcode)
+struct s_websocket_context
 {
-	size_t fullLen = 0;
-	int status = 0;
-	wStream* sWS = NULL;
+	size_t payloadLength;
+	uint32_t maskingKey;
+	BOOL masking;
+	BOOL closeSent;
+	BYTE opcode;
+	BYTE fragmentOriginalOpcode;
+	BYTE lengthAndMaskPosition;
+	WEBSOCKET_STATE state;
+	wStream* responseStreamBuffer;
+};
 
-	uint32_t maskingKey = 0;
+static int websocket_write_all(BIO* bio, const BYTE* data, size_t length);
 
-	size_t streamPos = 0;
+BOOL websocket_context_mask_and_send(BIO* bio, wStream* sPacket, wStream* sDataPacket,
+                                     UINT32 maskingKey)
+{
+	const size_t len = Stream_Length(sDataPacket);
+	Stream_SetPosition(sDataPacket, 0);
 
-	WINPR_ASSERT(bio);
-	WINPR_ASSERT(sPacket);
-
-	const size_t len = Stream_Length(sPacket);
-	Stream_SetPosition(sPacket, 0);
-
-	if (len > INT_MAX)
+	if (!Stream_EnsureRemainingCapacity(sPacket, len))
 		return FALSE;
 
+	/* mask as much as possible with 32bit access */
+	size_t streamPos = 0;
+	for (; streamPos + 4 <= len; streamPos += 4)
+	{
+		const uint32_t data = Stream_Get_UINT32(sDataPacket);
+		Stream_Write_UINT32(sPacket, data ^ maskingKey);
+	}
+
+	/* mask the rest byte by byte */
+	for (; streamPos < len; streamPos++)
+	{
+		BYTE data = 0;
+		BYTE* partialMask = ((BYTE*)&maskingKey) + (streamPos % 4);
+		Stream_Read_UINT8(sDataPacket, data);
+		Stream_Write_UINT8(sPacket, data ^ *partialMask);
+	}
+
+	Stream_SealLength(sPacket);
+
+	ERR_clear_error();
+	const size_t size = Stream_Length(sPacket);
+	const int status = websocket_write_all(bio, Stream_Buffer(sPacket), size);
+	Stream_Free(sPacket, TRUE);
+
+	if ((status < 0) || ((size_t)status != size))
+		return FALSE;
+
+	return TRUE;
+}
+
+wStream* websocket_context_packet_new(size_t len, WEBSOCKET_OPCODE opcode, UINT32* pMaskingKey)
+{
+	WINPR_ASSERT(pMaskingKey);
+	if (len > INT_MAX)
+		return NULL;
+
+	size_t fullLen = 0;
 	if (len < 126)
 		fullLen = len + 6; /* 2 byte "mini header" + 4 byte masking key */
 	else if (len < 0x10000)
@@ -49,13 +91,14 @@ BOOL websocket_write_wstream(BIO* bio, wStream* sPacket, WEBSOCKET_OPCODE opcode
 	else
 		fullLen = len + 14; /* 2 byte "mini header" + 8 byte length + 4 byte masking key */
 
-	sWS = Stream_New(NULL, fullLen);
+	wStream* sWS = Stream_New(NULL, fullLen);
 	if (!sWS)
-		return FALSE;
+		return NULL;
 
+	UINT32 maskingKey = 0;
 	winpr_RAND(&maskingKey, sizeof(maskingKey));
 
-	Stream_Write_UINT8(sWS, WEBSOCKET_FIN_BIT | opcode);
+	Stream_Write_UINT8(sWS, (UINT8)(WEBSOCKET_FIN_BIT | opcode));
 	if (len < 126)
 		Stream_Write_UINT8(sWS, (UINT8)len | WEBSOCKET_MASK_BIT);
 	else if (len < 0x10000)
@@ -70,39 +113,34 @@ BOOL websocket_write_wstream(BIO* bio, wStream* sPacket, WEBSOCKET_OPCODE opcode
 		Stream_Write_UINT32_BE(sWS, (UINT32)len);
 	}
 	Stream_Write_UINT32(sWS, maskingKey);
-
-	/* mask as much as possible with 32bit access */
-	for (streamPos = 0; streamPos + 4 <= len; streamPos += 4)
-	{
-		uint32_t data = 0;
-		Stream_Read_UINT32(sPacket, data);
-		Stream_Write_UINT32(sWS, data ^ maskingKey);
-	}
-
-	/* mask the rest byte by byte */
-	for (; streamPos < len; streamPos++)
-	{
-		BYTE data = 0;
-		BYTE* partialMask = ((BYTE*)&maskingKey) + (streamPos % 4);
-		Stream_Read_UINT8(sPacket, data);
-		Stream_Write_UINT8(sWS, data ^ *partialMask);
-	}
-
-	Stream_SealLength(sWS);
-
-	ERR_clear_error();
-	const size_t size = Stream_Length(sWS);
-	if (size <= INT32_MAX)
-		status = BIO_write(bio, Stream_Buffer(sWS), (int)size);
-	Stream_Free(sWS, TRUE);
-
-	if (status != (SSIZE_T)fullLen)
-		return FALSE;
-
-	return TRUE;
+	*pMaskingKey = maskingKey;
+	return sWS;
 }
 
-static int websocket_write_all(BIO* bio, const BYTE* data, size_t length)
+BOOL websocket_context_write_wstream(websocket_context* context, BIO* bio, wStream* sPacket,
+                                     WEBSOCKET_OPCODE opcode)
+{
+	WINPR_ASSERT(context);
+
+	if (context->closeSent)
+		return FALSE;
+
+	if (opcode == WebsocketCloseOpcode)
+		context->closeSent = TRUE;
+
+	WINPR_ASSERT(bio);
+	WINPR_ASSERT(sPacket);
+
+	const size_t len = Stream_Length(sPacket);
+	uint32_t maskingKey = 0;
+	wStream* sWS = websocket_context_packet_new(len, opcode, &maskingKey);
+	if (!sWS)
+		return FALSE;
+
+	return websocket_context_mask_and_send(bio, sWS, sPacket, maskingKey);
+}
+
+int websocket_write_all(BIO* bio, const BYTE* data, size_t length)
 {
 	WINPR_ASSERT(bio);
 	WINPR_ASSERT(data);
@@ -140,75 +178,19 @@ static int websocket_write_all(BIO* bio, const BYTE* data, size_t length)
 	return (int)length;
 }
 
-int websocket_write(BIO* bio, const BYTE* buf, int isize, WEBSOCKET_OPCODE opcode)
+int websocket_context_write(websocket_context* context, BIO* bio, const BYTE* buf, int isize,
+                            WEBSOCKET_OPCODE opcode)
 {
-	size_t fullLen = 0;
-	int status = 0;
-	wStream* sWS = NULL;
-
-	uint32_t maskingKey = 0;
-
 	WINPR_ASSERT(bio);
 	WINPR_ASSERT(buf);
-
-	winpr_RAND(&maskingKey, sizeof(maskingKey));
 
 	if (isize < 0)
 		return -1;
 
-	const size_t payloadSize = (size_t)isize;
-	if (payloadSize < 126)
-		fullLen = payloadSize + 6; /* 2 byte "mini header" + 4 byte masking key */
-	else if (payloadSize < 0x10000)
-		fullLen = payloadSize + 8; /* 2 byte "mini header" + 2 byte length + 4 byte masking key */
-	else
-		fullLen = payloadSize + 14; /* 2 byte "mini header" + 8 byte length + 4 byte masking key */
-
-	sWS = Stream_New(NULL, fullLen);
-	if (!sWS)
-		return FALSE;
-
-	Stream_Write_UINT8(sWS, WEBSOCKET_FIN_BIT | opcode);
-	if (payloadSize < 126)
-		Stream_Write_UINT8(sWS, (UINT8)payloadSize | WEBSOCKET_MASK_BIT);
-	else if (payloadSize < 0x10000)
-	{
-		Stream_Write_UINT8(sWS, 126 | WEBSOCKET_MASK_BIT);
-		Stream_Write_UINT16_BE(sWS, (UINT16)payloadSize);
-	}
-	else
-	{
-		Stream_Write_UINT8(sWS, 127 | WEBSOCKET_MASK_BIT);
-		/* biggest packet possible is 0xffff + 0xa, so 32bit is always enough */
-		Stream_Write_UINT32_BE(sWS, 0);
-		Stream_Write_UINT32_BE(sWS, (UINT32)payloadSize);
-	}
-	Stream_Write_UINT32(sWS, maskingKey);
-
-	/* mask as much as possible with 32bit access */
-	size_t streamPos = 0;
-	for (; streamPos + 4 <= payloadSize; streamPos += 4)
-	{
-		uint32_t masked = *((const uint32_t*)(buf + streamPos)) ^ maskingKey;
-		Stream_Write_UINT32(sWS, masked);
-	}
-
-	/* mask the rest byte by byte */
-	for (; streamPos < payloadSize; streamPos++)
-	{
-		BYTE* partialMask = (BYTE*)(&maskingKey) + streamPos % 4;
-		BYTE masked = *((buf + streamPos)) ^ *partialMask;
-		Stream_Write_UINT8(sWS, masked);
-	}
-
-	Stream_SealLength(sWS);
-
-	status = websocket_write_all(bio, Stream_Buffer(sWS), Stream_Length(sWS));
-	Stream_Free(sWS, TRUE);
-
-	if (status < 0)
-		return status;
-
+	wStream sbuffer = { 0 };
+	wStream* s = Stream_StaticConstInit(&sbuffer, buf, (size_t)isize);
+	if (!websocket_context_write_wstream(context, bio, s, opcode))
+		return -2;
 	return isize;
 }
 
@@ -234,10 +216,10 @@ static int websocket_read_data(BIO* bio, BYTE* pBuffer, size_t size,
 
 	ERR_clear_error();
 	status = BIO_read(bio, pBuffer, (int)rlen);
-	if (status <= 0)
+	if ((status <= 0) || ((size_t)status > encodingContext->payloadLength))
 		return status;
 
-	encodingContext->payloadLength -= status;
+	encodingContext->payloadLength -= (size_t)status;
 
 	if (encodingContext->payloadLength == 0)
 		encodingContext->state = WebsocketStateOpcodeAndFin;
@@ -245,47 +227,21 @@ static int websocket_read_data(BIO* bio, BYTE* pBuffer, size_t size,
 	return status;
 }
 
-static int websocket_read_discard(BIO* bio, websocket_context* encodingContext)
+static int websocket_read_wstream(BIO* bio, websocket_context* encodingContext)
 {
-	char _dummy[256] = { 0 };
-	int status = 0;
-
 	WINPR_ASSERT(bio);
 	WINPR_ASSERT(encodingContext);
 
-	if (encodingContext->payloadLength == 0)
-	{
-		encodingContext->state = WebsocketStateOpcodeAndFin;
-		return 0;
-	}
-
-	ERR_clear_error();
-	status = BIO_read(bio, _dummy, sizeof(_dummy));
-	if (status <= 0)
-		return status;
-
-	encodingContext->payloadLength -= status;
-
-	if (encodingContext->payloadLength == 0)
-		encodingContext->state = WebsocketStateOpcodeAndFin;
-
-	return status;
-}
-
-static int websocket_read_wstream(BIO* bio, wStream* s, websocket_context* encodingContext)
-{
-	int status = 0;
-
-	WINPR_ASSERT(bio);
+	wStream* s = encodingContext->responseStreamBuffer;
 	WINPR_ASSERT(s);
-	WINPR_ASSERT(encodingContext);
 
 	if (encodingContext->payloadLength == 0)
 	{
 		encodingContext->state = WebsocketStateOpcodeAndFin;
 		return 0;
 	}
-	if (Stream_GetRemainingCapacity(s) != encodingContext->payloadLength)
+
+	if (!Stream_EnsureRemainingCapacity(s, encodingContext->payloadLength))
 	{
 		WLog_WARN(TAG,
 		          "wStream::capacity [%" PRIuz "] != encodingContext::paylaodLangth [%" PRIuz "]",
@@ -293,111 +249,33 @@ static int websocket_read_wstream(BIO* bio, wStream* s, websocket_context* encod
 		return -1;
 	}
 
-	const size_t rlen = encodingContext->payloadLength;
-	if (rlen > INT32_MAX)
-		return -1;
-
-	ERR_clear_error();
-	status = BIO_read(bio, Stream_Pointer(s), (int)rlen);
-	if (status <= 0)
+	const int status = websocket_read_data(bio, Stream_Pointer(s), Stream_GetRemainingCapacity(s),
+	                                       encodingContext);
+	if (status < 0)
 		return status;
 
-	Stream_Seek(s, status);
-
-	encodingContext->payloadLength -= status;
-
-	if (encodingContext->payloadLength == 0)
-	{
-		encodingContext->state = WebsocketStateOpcodeAndFin;
-		Stream_SealLength(s);
-		Stream_SetPosition(s, 0);
-	}
+	if (!Stream_SafeSeek(s, (size_t)status))
+		return -1;
 
 	return status;
 }
 
-static BOOL websocket_reply_close(BIO* bio, wStream* s)
+static BOOL websocket_reply_close(BIO* bio, websocket_context* context, wStream* s)
 {
-	/* write back close */
-	wStream* closeFrame = NULL;
-	uint16_t maskingKey1 = 0;
-	uint16_t maskingKey2 = 0;
-	size_t closeDataLen = 0;
-
 	WINPR_ASSERT(bio);
 
-	closeDataLen = 0;
-	if (s != NULL && Stream_Length(s) >= 2)
-		closeDataLen = 2;
-
-	closeFrame = Stream_New(NULL, 6 + closeDataLen);
-	if (!closeFrame)
-		return FALSE;
-
-	Stream_Write_UINT8(closeFrame, WEBSOCKET_FIN_BIT | WebsocketCloseOpcode);
-	Stream_Write_UINT8(closeFrame, closeDataLen | WEBSOCKET_MASK_BIT); /* no payload */
-	winpr_RAND(&maskingKey1, sizeof(maskingKey1));
-	winpr_RAND(&maskingKey2, sizeof(maskingKey2));
-	Stream_Write_UINT16(closeFrame, maskingKey1);
-	Stream_Write_UINT16(closeFrame, maskingKey2); /* unused half, max 2 bytes of data */
-
-	if (closeDataLen == 2)
-	{
-		uint16_t data = 0;
-		Stream_Read_UINT16(s, data);
-		Stream_Write_UINT16(closeFrame, data ^ maskingKey1);
-	}
-	Stream_SealLength(closeFrame);
-
-	const size_t rlen = Stream_Length(closeFrame);
-
-	int status = -1;
-	if (rlen <= INT32_MAX)
-	{
-		ERR_clear_error();
-		status = BIO_write(bio, Stream_Buffer(closeFrame), (int)rlen);
-	}
-	Stream_Free(closeFrame, TRUE);
-
-	/* server MUST close socket now. The server is not allowed anymore to
-	 * send frames but if he does, nothing bad would happen */
-	if (status < 0)
-		return FALSE;
-	return TRUE;
+	return websocket_context_write_wstream(context, bio, s, WebsocketCloseOpcode);
 }
 
-static BOOL websocket_reply_pong(BIO* bio, wStream* s)
+static BOOL websocket_reply_pong(BIO* bio, websocket_context* context, wStream* s)
 {
-	wStream* closeFrame = NULL;
-	uint32_t maskingKey = 0;
-
 	WINPR_ASSERT(bio);
+	WINPR_ASSERT(s);
 
-	if (s != NULL)
-		return websocket_write_wstream(bio, s, WebsocketPongOpcode);
+	if (Stream_GetPosition(s) != 0)
+		return websocket_context_write_wstream(context, bio, s, WebsocketPongOpcode);
 
-	closeFrame = Stream_New(NULL, 6);
-	if (!closeFrame)
-		return FALSE;
-
-	Stream_Write_UINT8(closeFrame, WEBSOCKET_FIN_BIT | WebsocketPongOpcode);
-	Stream_Write_UINT8(closeFrame, 0 | WEBSOCKET_MASK_BIT); /* no payload */
-	winpr_RAND(&maskingKey, sizeof(maskingKey));
-	Stream_Write_UINT32(closeFrame, maskingKey); /* dummy masking key. */
-	Stream_SealLength(closeFrame);
-
-	const size_t rlen = Stream_Length(closeFrame);
-	int status = -1;
-	if (rlen <= INT32_MAX)
-	{
-		ERR_clear_error();
-		status = BIO_write(bio, Stream_Buffer(closeFrame), (int)rlen);
-	}
-	Stream_Free(closeFrame, TRUE);
-
-	if (status < 0)
-		return FALSE;
-	return TRUE;
+	return websocket_reply_close(bio, context, NULL);
 }
 
 static int websocket_handle_payload(BIO* bio, BYTE* pBuffer, size_t size,
@@ -409,9 +287,9 @@ static int websocket_handle_payload(BIO* bio, BYTE* pBuffer, size_t size,
 	WINPR_ASSERT(pBuffer);
 	WINPR_ASSERT(encodingContext);
 
-	BYTE effectiveOpcode = ((encodingContext->opcode & 0xf) == WebsocketContinuationOpcode
-	                            ? encodingContext->fragmentOriginalOpcode & 0xf
-	                            : encodingContext->opcode & 0xf);
+	const BYTE effectiveOpcode = ((encodingContext->opcode & 0xf) == WebsocketContinuationOpcode
+	                                  ? encodingContext->fragmentOriginalOpcode & 0xf
+	                                  : encodingContext->opcode & 0xf);
 
 	switch (effectiveOpcode)
 	{
@@ -425,60 +303,55 @@ static int websocket_handle_payload(BIO* bio, BYTE* pBuffer, size_t size,
 		}
 		case WebsocketPingOpcode:
 		{
-			if (encodingContext->responseStreamBuffer == NULL)
-				encodingContext->responseStreamBuffer =
-				    Stream_New(NULL, encodingContext->payloadLength);
-
-			status =
-			    websocket_read_wstream(bio, encodingContext->responseStreamBuffer, encodingContext);
+			status = websocket_read_wstream(bio, encodingContext);
 			if (status < 0)
 				return status;
 
 			if (encodingContext->payloadLength == 0)
 			{
-				if (!encodingContext->closeSent)
-					websocket_reply_pong(bio, encodingContext->responseStreamBuffer);
-
-				Stream_Free(encodingContext->responseStreamBuffer, TRUE);
-				encodingContext->responseStreamBuffer = NULL;
+				websocket_reply_pong(bio, encodingContext, encodingContext->responseStreamBuffer);
+				Stream_SetPosition(encodingContext->responseStreamBuffer, 0);
 			}
+		}
+		break;
+		case WebsocketPongOpcode:
+		{
+			status = websocket_read_wstream(bio, encodingContext);
+			if (status < 0)
+				return status;
+			/* We don´t care about pong response data, discard. */
+			Stream_SetPosition(encodingContext->responseStreamBuffer, 0);
 		}
 		break;
 		case WebsocketCloseOpcode:
 		{
-			if (encodingContext->responseStreamBuffer == NULL)
-				encodingContext->responseStreamBuffer =
-				    Stream_New(NULL, encodingContext->payloadLength);
-
-			status =
-			    websocket_read_wstream(bio, encodingContext->responseStreamBuffer, encodingContext);
+			status = websocket_read_wstream(bio, encodingContext);
 			if (status < 0)
 				return status;
 
 			if (encodingContext->payloadLength == 0)
 			{
-				websocket_reply_close(bio, encodingContext->responseStreamBuffer);
+				websocket_reply_close(bio, encodingContext, encodingContext->responseStreamBuffer);
 				encodingContext->closeSent = TRUE;
-
-				if (encodingContext->responseStreamBuffer)
-					Stream_Free(encodingContext->responseStreamBuffer, TRUE);
-				encodingContext->responseStreamBuffer = NULL;
+				Stream_SetPosition(encodingContext->responseStreamBuffer, 0);
 			}
 		}
 		break;
 		default:
-			WLog_WARN(TAG, "Unimplemented websocket opcode %x. Dropping", effectiveOpcode & 0xf);
+			WLog_WARN(TAG, "Unimplemented websocket opcode %" PRIx8 ". Dropping", effectiveOpcode);
 
-			status = websocket_read_discard(bio, encodingContext);
+			status = websocket_read_wstream(bio, encodingContext);
 			if (status < 0)
 				return status;
+			Stream_SetPosition(encodingContext->responseStreamBuffer, 0);
+			break;
 	}
 	/* return how many bytes have been written to pBuffer.
 	 * Only WebsocketBinaryOpcode writes into it and it returns directly */
 	return 0;
 }
 
-int websocket_read(BIO* bio, BYTE* pBuffer, size_t size, websocket_context* encodingContext)
+int websocket_context_read(websocket_context* encodingContext, BIO* bio, BYTE* pBuffer, size_t size)
 {
 	int status = 0;
 	int effectiveDataLen = 0;
@@ -493,7 +366,8 @@ int websocket_read(BIO* bio, BYTE* pBuffer, size_t size, websocket_context* enco
 		{
 			case WebsocketStateOpcodeAndFin:
 			{
-				BYTE buffer[1];
+				BYTE buffer[1] = { 0 };
+
 				ERR_clear_error();
 				status = BIO_read(bio, (char*)buffer, sizeof(buffer));
 				if (status <= 0)
@@ -508,8 +382,8 @@ int websocket_read(BIO* bio, BYTE* pBuffer, size_t size, websocket_context* enco
 			break;
 			case WebsocketStateLengthAndMasking:
 			{
-				BYTE buffer[1];
-				BYTE len = 0;
+				BYTE buffer[1] = { 0 };
+
 				ERR_clear_error();
 				status = BIO_read(bio, (char*)buffer, sizeof(buffer));
 				if (status <= 0)
@@ -518,7 +392,7 @@ int websocket_read(BIO* bio, BYTE* pBuffer, size_t size, websocket_context* enco
 				encodingContext->masking = ((buffer[0] & WEBSOCKET_MASK_BIT) == WEBSOCKET_MASK_BIT);
 				encodingContext->lengthAndMaskPosition = 0;
 				encodingContext->payloadLength = 0;
-				len = buffer[0] & 0x7f;
+				const BYTE len = buffer[0] & 0x7f;
 				if (len < 126)
 				{
 					encodingContext->payloadLength = len;
@@ -534,8 +408,9 @@ int websocket_read(BIO* bio, BYTE* pBuffer, size_t size, websocket_context* enco
 			case WebsocketStateShortLength:
 			case WebsocketStateLongLength:
 			{
-				BYTE buffer[1];
-				BYTE lenLength = (encodingContext->state == WebsocketStateShortLength ? 2 : 8);
+				BYTE buffer[1] = { 0 };
+				const BYTE lenLength =
+				    (encodingContext->state == WebsocketStateShortLength ? 2 : 8);
 				while (encodingContext->lengthAndMaskPosition < lenLength)
 				{
 					ERR_clear_error();
@@ -576,4 +451,40 @@ int websocket_read(BIO* bio, BYTE* pBuffer, size_t size, websocket_context* enco
 		}
 	}
 	/* should be unreachable */
+}
+
+websocket_context* websocket_context_new(void)
+{
+	websocket_context* context = calloc(1, sizeof(websocket_context));
+	if (!context)
+		goto fail;
+
+	context->responseStreamBuffer = Stream_New(NULL, 1024);
+	if (!context->responseStreamBuffer)
+		goto fail;
+
+	if (!websocket_context_reset(context))
+		goto fail;
+
+	return context;
+fail:
+	websocket_context_free(context);
+	return NULL;
+}
+
+void websocket_context_free(websocket_context* context)
+{
+	if (!context)
+		return;
+
+	Stream_Free(context->responseStreamBuffer, TRUE);
+	free(context);
+}
+
+BOOL websocket_context_reset(websocket_context* context)
+{
+	WINPR_ASSERT(context);
+
+	context->state = WebsocketStateOpcodeAndFin;
+	return Stream_SetPosition(context->responseStreamBuffer, 0);
 }
