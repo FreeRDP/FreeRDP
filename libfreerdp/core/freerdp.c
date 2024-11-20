@@ -159,7 +159,8 @@ static int freerdp_connect_begin(freerdp* instance)
 		WINPR_ASSERT(context);
 		freerdp_set_last_error_if_not(context, FREERDP_ERROR_PRE_CONNECT_FAILED);
 
-		WLog_Print(context->log, WLOG_ERROR, "freerdp_pre_connect failed");
+		WLog_Print(context->log, WLOG_ERROR, "freerdp_pre_connect failed: %s",
+		           rdp_client_connection_state_string(instance->ConnectionCallbackState));
 		return 0;
 	}
 
