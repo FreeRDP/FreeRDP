@@ -49,7 +49,7 @@ BOOL msusb_mspipes_replace(MSUSB_INTERFACE_DESCRIPTOR* MsInterface,
 	if (!MsInterface || !NewMsPipes)
 		return FALSE;
 
-	/* free orignal MsPipes */
+	/* free original MsPipes */
 	msusb_mspipes_free(MsInterface->MsPipes, MsInterface->NumberOfPipes);
 	/* And replace it */
 	MsInterface->MsPipes = NewMsPipes;

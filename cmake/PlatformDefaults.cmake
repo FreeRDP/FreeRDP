@@ -1,4 +1,4 @@
-# This option allows deactivating FreeRDP supplied platform defauts to replace these with
+# This option allows deactivating FreeRDP supplied platform defaults to replace these with
 # user supplied values.
 #
 # Compilation will fail without a replacement defining the symbols, but that can be
@@ -25,7 +25,7 @@ if (USE_PLATFORM_DEFAULT)
         # is implemented, so ignore _POSIX_VERSION from unistd.h
         add_definitions("-D_POSIX_C_SOURCE=200809L")
         # TODO: FreeBSD allows mixing POSIX and BSD API calls if we do not set
-        # _POSIX_C_SOURCE but lack a macro to reenable the BSD calls...
+        # _POSIX_C_SOURCE but lack a macro to re-enable the BSD calls...
         add_definitions("-D__BSD_VISIBLE")
 
         # There are some symbols only visible for XOpen standard
@@ -48,7 +48,7 @@ if (USE_PLATFORM_DEFAULT)
         # is implemented, so ignore _POSIX_VERSION from unistd.h
         add_definitions("-D_POSIX_C_SOURCE=200809L")
 
-        # as _POSIX_C_SOURCE sets a fully POSIX confirmant environment reenable
+        # as _POSIX_C_SOURCE sets a fully POSIX confirmant environment re-enable
         # MacOS API visibility by defining the following feature test macro
         add_definitions("-D_DARWIN_C_SOURCE")
     endif()
@@ -73,7 +73,7 @@ if (USE_PLATFORM_DEFAULT)
         # is implemented, so ignore _POSIX_VERSION from unistd.h
         add_definitions("-D_POSIX_C_SOURCE=200809L")
         # TODO: FreeBSD allows mixing POSIX and BSD API calls if we do not set
-        # _POSIX_C_SOURCE but lack a macro to reenable the BSD calls...
+        # _POSIX_C_SOURCE but lack a macro to re-enable the BSD calls...
         add_definitions("-D__BSD_VISIBLE")
 
         # There are some symbols only visible for XOpen standard

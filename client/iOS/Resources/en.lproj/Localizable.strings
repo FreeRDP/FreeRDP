@@ -28,7 +28,7 @@
 /* Advanced Settings title */
 "Advanced Settings" = "Advanced Settings";
 
-/* Automatic protocl security selection
+/* Automatic protocol security selection
    Screen resolution selector: Automatic resolution (full screen on iPad, reasonable size on iPhone) */
 "Automatic" = "Automatic";
 
@@ -205,7 +205,7 @@
 /* 'Screen': Bookmark Screen settings */
 "Screen" = "Screen";
 
-/* 'Security': Bookmark protocl security settings */
+/* 'Security': Bookmark protocol security settings */
 "Security" = "Security";
 
 /* Server Certificate Handling section title */

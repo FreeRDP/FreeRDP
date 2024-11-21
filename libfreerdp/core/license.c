@@ -728,7 +728,7 @@ wStream* license_send_stream_init(rdpLicense* license)
 	 * layer is used. If the peer has not indicated that it is capable of
 	 * processing encrypted licensing packets (rdp->do_crypt_license) we turn
 	 * off encryption (via rdp->do_crypt) before initializing the rdp stream
-	 * and reenable it afterwards.
+	 * and re-enable it afterwards.
 	 */
 
 	if (do_crypt)

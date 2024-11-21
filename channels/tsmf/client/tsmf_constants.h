@@ -35,7 +35,7 @@
 #define STREAM_ID_PROXY 0x40000000
 #define STREAM_ID_NONE 0x00000000
 
-/* Functon ID */
+/* Function ID */
 /* Common IDs for all interfaces are as follows. */
 #define RIMCALL_RELEASE 0x00000001
 #define RIMCALL_QUERYINTERFACE 0x00000002

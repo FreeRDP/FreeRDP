@@ -419,7 +419,7 @@
 	}
 }
 
-// prevent that an item is moved befoer the Add Bookmark item
+// prevent that an item is moved before the Add Bookmark item
 - (NSIndexPath *)tableView:(UITableView *)tableView
     targetIndexPathForMoveFromRowAtIndexPath:(NSIndexPath *)sourceIndexPath
                          toProposedIndexPath:(NSIndexPath *)proposedDestinationIndexPath
@@ -796,7 +796,7 @@
 
 - (UIButton *)disclosureButtonWithImage:(UIImage *)image
 {
-	// we make the button a little bit bigger (image widht * 2, height + 10) so that the user
+	// we make the button a little bit bigger (image width * 2, height + 10) so that the user
 	// doesn't accidentally connect to the bookmark ...
 	UIButton *button = [UIButton buttonWithType:UIButtonTypeCustom];
 	[button setFrame:CGRectMake(0, 0, [image size].width * 2, [image size].height + 10)];

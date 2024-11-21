@@ -50,7 +50,7 @@ static UINT32 prand(UINT32 max)
 	return tmp % (max - 1) + 1;
 }
 
-/* this thread function shall increment the global dwTestValue until the PBOOL passsed in arg is
+/* this thread function shall increment the global dwTestValue until the PBOOL passed in arg is
  * FALSE */
 static DWORD WINAPI TestSynchCritical_Test1(LPVOID arg)
 {

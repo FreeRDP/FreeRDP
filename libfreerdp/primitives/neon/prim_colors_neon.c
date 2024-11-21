@@ -62,7 +62,7 @@ neon_yCbCrToRGB_16s16s_P3P3(const INT16* WINPR_RESTRICT pSrc[3], INT32 srcStep,
 		{
 			/*
 			    In order to use NEON signed 16-bit integer multiplication we need to convert
-			    the floating point factors to signed int without loosing information.
+			    the floating point factors to signed int without losing information.
 			    The result of this multiplication is 32 bit and we have a NEON instruction
 			    that returns the hi word of the saturated double.
 			    Thus we will multiply the factors by the highest possible 2^n, take the

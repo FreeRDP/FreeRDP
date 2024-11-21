@@ -706,7 +706,7 @@ sse2_RGBToYCbCr_16s16s_P3P3(const INT16* WINPR_RESTRICT pSrc[3], int srcStep,
 		{
 			/* In order to use SSE2 signed 16-bit integer multiplication we
 			 * need to convert the floating point factors to signed int
-			 * without loosing information.  The result of this multiplication
+			 * without losing information.  The result of this multiplication
 			 * is 32 bit and using SSE2 we get either the product's hi or lo
 			 * word.  Thus we will multiply the factors by the highest
 			 * possible 2^n and take the upper 16 bits of the signed 32-bit

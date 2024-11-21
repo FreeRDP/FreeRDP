@@ -79,7 +79,7 @@ extern "C"
 	typedef BOOL (*pTransportGetPublicKey)(rdpTransport* transport, const BYTE** data,
 	                                       DWORD* length);
 	/**
-	 *  @brief Mofify transport behaviour between bocking and non blocking operation
+	 *  @brief Modify transport behaviour between blocking and non blocking operation
 	 *
 	 *  @param transport The transport to manipulate
 	 *  @param blocking Boolean to set the transport \b TRUE blocking and \b FALSE non-blocking
@@ -133,7 +133,7 @@ extern "C"
 	 * incomplete: FALSE if the whole PDU is available, TRUE otherwise
 	 * Return: 0  -> PDU header incomplete
 	 *         >0 -> PDU header complete, length of PDU.
-	 *         <0 -> Abort, an error occured
+	 *         <0 -> Abort, an error occurred
 	 */
 	FREERDP_API SSIZE_T transport_parse_pdu(rdpTransport* transport, wStream* s, BOOL* incomplete);
 	FREERDP_API rdpContext* transport_get_context(rdpTransport* transport);

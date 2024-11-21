@@ -417,7 +417,7 @@ owned by rdpRdp */
 		             size to allocate the context buffer. freerdp_new() sets it to
 		             sizeof(rdpContext). If modifying it, there should always be a minimum of
 		             sizeof(rdpContext), as the freerdp library will assume it can use the 'context'
-		             field to set the required informations in it. Clients will typically make it
+		             field to set the required information in it. Clients will typically make it
 		             bigger, and use a context structure embedding the rdpContext, and adding
 		             additional information after that.
 		          */

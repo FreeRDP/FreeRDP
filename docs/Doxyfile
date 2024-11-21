@@ -85,7 +85,7 @@ CREATE_SUBDIRS         = NO
 # level increment doubles the number of directories, resulting in 4096
 # directories at level 8 which is the default and also the maximum value. The
 # sub-directories are organized in 2 levels, the first level always has a fixed
-# numer of 16 directories.
+# number of 16 directories.
 # Minimum value: 0, maximum value: 8, default value: 8.
 # This tag requires that the tag CREATE_SUBDIRS is set to YES.
 

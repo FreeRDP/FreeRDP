@@ -265,7 +265,7 @@ static BOOL ntlm_read_message_header(wStream* s, NTLM_MESSAGE_HEADER* header, UI
 
 	if (header->MessageType != expected)
 	{
-		WLog_ERR(TAG, "NTLM_MESSAGE_HEADER Invalid message tyep, got %s, expected %s",
+		WLog_ERR(TAG, "NTLM_MESSAGE_HEADER Invalid message type, got %s, expected %s",
 		         ntlm_message_type_string(header->MessageType), ntlm_message_type_string(expected));
 		return FALSE;
 	}

@@ -130,7 +130,7 @@ NSArray *ResolutionModes()
 
 NSString *LocalizedAutomaticSecurity()
 {
-	return NSLocalizedString(@"Automatic", @"Automatic protocl security selection");
+	return NSLocalizedString(@"Automatic", @"Automatic protocol security selection");
 }
 
 NSString *ProtocolSecurityDescription(TSXProtocolSecurityOptions type)

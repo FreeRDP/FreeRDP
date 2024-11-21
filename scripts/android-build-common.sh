@@ -90,7 +90,7 @@ function common_run {
 	RES=$?
 	if [[ $RES -ne 0 ]];
 	then
-		echo "[ERROR] $@ retured $RES"
+		echo "[ERROR] $@ returned $RES"
 		exit 1
 	fi
 }

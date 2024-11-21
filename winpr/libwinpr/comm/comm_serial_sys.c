@@ -337,7 +337,7 @@ static BOOL set_serial_chars(WINPR_COMM* pComm, const SERIAL_CHARS* pSerialChars
 		result = FALSE; /* but keep on */
 	}
 
-	/* According the Linux's n_tty discipline, charaters with a
+	/* According the Linux's n_tty discipline, characters with a
 	 * parity error can only be let unchanged, replaced by \0 or
 	 * get the prefix the prefix \377 \0
 	 */
@@ -423,7 +423,7 @@ static BOOL set_line_control(WINPR_COMM* pComm, const SERIAL_LINE_CONTROL* pLine
 	 * The use of 5 data bits with 2 stop bits is an invalid
 	 * combination, as is 6, 7, or 8 data bits with 1.5 stop bits.
 	 *
-	 * FIXME: prefered to let the underlying driver to deal with
+	 * FIXME: preferred to let the underlying driver to deal with
 	 * this issue. At least produce a warning message?
 	 */
 
@@ -1371,7 +1371,7 @@ static BOOL get_commstatus(WINPR_COMM* pComm, SERIAL_STATUS* pCommstatus)
 	}
 
 	if ((currentCounters.tx != pComm->counters.tx) && /* at least a transmission occurred AND ...*/
-	    (pCommstatus->AmountInOutQueue == 0))         /* output bufer is now empty */
+	    (pCommstatus->AmountInOutQueue == 0))         /* output buffer is now empty */
 	{
 		pComm->PendingEvents |= SERIAL_EV_TXEMPTY;
 	}

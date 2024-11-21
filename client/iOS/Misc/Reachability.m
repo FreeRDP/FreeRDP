@@ -86,7 +86,7 @@ static void ReachabilityCallback(SCNetworkReachabilityRef target, SCNetworkReach
 	          @"info was wrong class in ReachabilityCallback");
 
 	// We're on the main RunLoop, so an NSAutoreleasePool is not necessary, but is added defensively
-	// in case someon uses the Reachablity object in a different thread.
+	// in case someone uses the Reachablity object in a different thread.
 	NSAutoreleasePool *myPool = [[NSAutoreleasePool alloc] init];
 
 	Reachability *noteObject = (Reachability *)info;

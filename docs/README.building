@@ -112,7 +112,7 @@ We support
 * FUSE for file clipboard support (linux/mac os, disable with -DWITH_FUSE=OFF) 
 * Wayland for wlfreerdp (disable with -DWITH_WAYLAND=OFF)
 * X11 development headers for X11 client (disable with -DWITH_X11=OFF)
-* ALSA development headers/libraris (disable with -DWITH_ALSA=OFF)
+* ALSA development headers/libraries (disable with -DWITH_ALSA=OFF)
 * PULSE development headers/libraries (disable with -DWITH_PULSE=OFF)
 * OSS development headers/libraries (disable with -DWITH_OSS=OFF)
 
@@ -137,7 +137,7 @@ disable with -DWITH_WINPR_TOOLS=OFF
 * Use Ninja to speed up your builds
 * For release builds add -DCMAKE_BUILD_TYPE=Release (or RelWithDebInfo for less optimized but with debug symbols)
 * -DWITH_VERBOSE_WINPR_ASSERT=OFF reduces the size of the build considerably but removes lots
-  of santity checks in code. Recommended for stable builds, for builds not from stable releases
+  of sanity checks in code. Recommended for stable builds, for builds not from stable releases
   it is recommended to keep -DWITH_VERBOSE_WINPR_ASSERT=ON to have useful information on crashes.
 
 15. Example build instructions:

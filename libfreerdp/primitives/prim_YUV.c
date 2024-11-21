@@ -154,7 +154,7 @@ static pstatus_t general_ChromaV1ToYUV444(const BYTE* WINPR_RESTRICT pSrcRaw[3],
 	const UINT32 oddY = 1;
 	const UINT32 evenY = 0;
 	const UINT32 oddX = 1;
-	/* The auxilary frame is aligned to multiples of 16x16.
+	/* The auxiliary frame is aligned to multiples of 16x16.
 	 * We need the padded height for B4 and B5 conversion. */
 	const UINT32 padHeigth = nHeight + 16 - nHeight % 16;
 	const BYTE* pSrc[3] = { pSrcRaw[0] + 1ULL * roi->top * srcStep[0] + roi->left,
@@ -307,7 +307,7 @@ general_YUV444SplitToYUV420(const BYTE* WINPR_RESTRICT pSrc[3], const UINT32 src
 	UINT32 vY = 0;
 	UINT32 halfWidth = 0;
 	UINT32 halfHeight = 0;
-	/* The auxilary frame is aligned to multiples of 16x16.
+	/* The auxiliary frame is aligned to multiples of 16x16.
 	 * We need the padded height for B4 and B5 conversion. */
 	const UINT32 padHeigth = roi->height + 16 - roi->height % 16;
 	halfWidth = (roi->width + 1) / 2;
@@ -1345,7 +1345,7 @@ static INLINE pstatus_t general_RGBToAVC444YUV_ANY(
 	 * B2:  From U444 all pixels in even rows with even columns
 	 * B3:  From V444 all pixels in even rows with even columns
 	 *
-	 * Chroma420 frame (auxillary view):
+	 * Chroma420 frame (auxiliary view):
 	 * B45: From U444 and V444 all pixels from all odd rows
 	 *      (The odd U444 and V444 rows must be interleaved in 8-line blocks in B45 !!!)
 	 * B6:  From U444 all pixels in even rows with odd columns
@@ -1618,7 +1618,7 @@ static INLINE pstatus_t general_RGBToAVC444YUVv2_ANY(
 	 * B2:  From U444 all pixels in even rows with even rows and columns
 	 * B3:  From V444 all pixels in even rows with even rows and columns
 	 *
-	 * Chroma420 frame (auxillary view):
+	 * Chroma420 frame (auxiliary view):
 	 * B45: From U444 and V444 all pixels from all odd columns
 	 * B67: From U444 and V444 every 4th pixel in odd rows
 	 * B89:  From U444 and V444 every 4th pixel (initial offset of 2) in odd rows

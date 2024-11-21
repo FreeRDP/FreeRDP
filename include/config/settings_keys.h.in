@@ -110,7 +110,7 @@ typedef enum
 } FreeRDP_Settings_Keys_Pointer;
 
 
-/** Highest indes in the rdpSettings stable API
+/** Highest index in the rdpSettings stable API
  *
  *  \since version 3.0.0
  */

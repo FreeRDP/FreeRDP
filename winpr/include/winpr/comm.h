@@ -355,7 +355,7 @@ extern "C"
 
 /* Extended API */
 
-/* FIXME: MAXULONG should be defined arround winpr/limits.h */
+/* FIXME: MAXULONG should be defined around winpr/limits.h */
 #ifndef MAXULONG
 #define MAXULONG (4294967295UL)
 #endif
@@ -376,7 +376,7 @@ extern "C"
 	 * About DefineCommDevice() / QueryDosDevice()
 	 *
 	 * Did something close to QueryDosDevice() and DefineDosDevice() but with
-	 * folowing constraints:
+	 * following constraints:
 	 *   - mappings are stored in a static array.
 	 *   - QueryCommDevice returns only the mappings that have been defined through
 	 * DefineCommDevice()

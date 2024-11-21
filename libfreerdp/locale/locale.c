@@ -93,7 +93,7 @@ static const SYSTEM_LOCALE SYSTEM_LOCALE_TABLE[] = {
 	{ "en", "AU", ENGLISH_AUSTRALIAN },          /* English (Australia) */
 	{ "en", "BZ", ENGLISH_BELIZE },              /* English (Belize) */
 	{ "en", "CA", ENGLISH_CANADIAN },            /* English (Canada) */
-	{ "en", "CB", ENGLISH_CARIBBEAN },           /* English (Carribean) */
+	{ "en", "CB", ENGLISH_CARIBBEAN },           /* English (Carribbean) */
 	{ "en", "IN", ENGLISH_INDIA },               /* Windows Vista and later: English (India) */
 	{ "en", "IE", ENGLISH_IRELAND },             /* English (Ireland) */
 	{ "en", "JM", ENGLISH_JAMAICA },             /* English (Jamaica) */

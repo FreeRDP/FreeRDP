@@ -1307,7 +1307,7 @@ static SSIZE_T http_response_recv_line(rdpTls* tls, HttpResponse* response)
 			goto out_error;
 		}
 
-		/* Always check at most the lase 8 bytes for occurance of the desired
+		/* Always check at most the lase 8 bytes for occurrence of the desired
 		 * sequence of \r\n\r\n */
 		s = (position > 8) ? 8 : position;
 		end = (char*)Stream_Pointer(response->data) - s;

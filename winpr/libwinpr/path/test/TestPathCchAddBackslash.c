@@ -64,9 +64,10 @@ int TestPathCchAddBackslash(int argc, char* argv[])
 
 	if (SUCCEEDED(status))
 	{
-		_tprintf(_T("PathCchAddBackslash unexpectedly succeded with null buffer. Status: 0x%08") _T(
-		             PRIX32) _T("\n"),
-		         status);
+		_tprintf(
+		    _T("PathCchAddBackslash unexpectedly succeeded with null buffer. Status: 0x%08") _T(
+		        PRIX32) _T("\n"),
+		    status);
 		return -1;
 	}
 
@@ -78,7 +79,7 @@ int TestPathCchAddBackslash(int argc, char* argv[])
 
 	if (SUCCEEDED(status))
 	{
-		_tprintf(_T("PathCchAddBackslash unexpectedly succeded with insufficient buffer size. ")
+		_tprintf(_T("PathCchAddBackslash unexpectedly succeeded with insufficient buffer size. ")
 		         _T("Status: 0x%08") _T(PRIX32) _T("\n"),
 		         status);
 		return -1;

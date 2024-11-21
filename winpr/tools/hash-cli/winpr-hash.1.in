@@ -10,7 +10,7 @@
 [\fB-v\fP { \fI1\fP | 2 }]
 .SH DESCRIPTION
 .B @MANPAGE_NAME@
-is a small utility that can be used to create a NTLM hash from a username and password pair. The created hash can be outputed as plain hash or in SAM format.
+is a small utility that can be used to create a NTLM hash from a username and password pair. The created hash can be outputted as plain hash or in SAM format.
 .SH OPTIONS
 .IP "-u username"
 The username to use.

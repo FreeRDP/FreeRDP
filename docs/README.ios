@@ -100,7 +100,7 @@ CMAKE_IOS_SDK_ROOT (used by toolchain file)
 * absolute path to the iOS SDK (i.e. /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS6.1.sdk) the toolchain file will usually auto-detect the correct SDK, depending on IOS_PLATFORM 
 
 FREERDP_IOS_EXTERNAL_SSL_PATH (used by FindOpenSSL)
-* absolut root path to the pre-built static OpenSSL libraries
+* absolute root path to the pre-built static OpenSSL libraries
 
 CODE_SIGN_IDENTITY
 * specify the identity to sign the code with

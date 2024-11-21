@@ -60,7 +60,7 @@
  * and lower quality.
  *
  * This is the default values being use by the MS RDP server, and we will also
- * use it as our default values for the encoder. It can be overrided by setting
+ * use it as our default values for the encoder. It can be overridden by setting
  * the context->num_quants and context->quants member.
  *
  * The order of the values are:
@@ -257,7 +257,7 @@ RFX_CONTEXT* rfx_context_new_ex(BOOL encoder, UINT32 ThreadingFlags)
 	 * that are actually in front/beyond the buffer. Offset calculations are
 	 * performed at the BufferPool_Take function calls in rfx_encode/decode.c.
 	 *
-	 * We then multiply by 3 to use a single, partioned buffer for all 3 channels.
+	 * We then multiply by 3 to use a single, partionned buffer for all 3 channels.
 	 */
 	priv->BufferPool = BufferPool_New(TRUE, (8192ULL + 32ULL) * 3ULL, 16);
 

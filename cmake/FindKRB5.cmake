@@ -13,7 +13,7 @@
 #  KRB5_LDFLAGS - Additional linker flags
 #  KRB5_CFLAGS - Additional compiler flags
 #  KRB5_VERSION - This is set to version advertised by pkg-config or read from manifest.
-#                In case the library is found but no version info availabe it'll be set to "unknown"
+#                In case the library is found but no version info available it'll be set to "unknown"
 
 include(CheckIncludeFile)
 include(CheckIncludeFiles)

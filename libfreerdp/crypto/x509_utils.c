@@ -48,7 +48,7 @@ BYTE* x509_utils_get_hash(const X509* xcert, const char* hash, size_t* length)
 	}
 	if (!xcert || !length)
 	{
-		WLog_ERR(TAG, "Invalid arugments: xcert=%p, length=%p", xcert, length);
+		WLog_ERR(TAG, "Invalid arguments: xcert=%p, length=%p", xcert, length);
 		return NULL;
 	}
 

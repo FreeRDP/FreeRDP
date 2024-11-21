@@ -143,12 +143,12 @@ int TestRingBuffer(int argc, char* argv[])
 		return -1;
 	}
 
-	/* write some more bytes to have writePtr < readPtr and data splitted in 2 chunks */
+	/* write some more bytes to have writePtr < readPtr and data split in 2 chunks */
 	if (!ringbuffer_write(&ringBuffer, tmpBuf, 6) ||
 	    ringbuffer_peek(&ringBuffer, chunks, 11) != 2 || chunks[0].size != 10 ||
 	    chunks[1].size != 1)
 	{
-		(void)fprintf(stderr, "invalid read of splitted data\n");
+		(void)fprintf(stderr, "invalid read of split data\n");
 		return -1;
 	}
 

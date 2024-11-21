@@ -50,7 +50,7 @@ extern "C"
 
 	/**
 	 * @brief pf_server_add_module Allows registering proxy modules that are
-	 *                             build-in instead of shipped as separate
+	 *                             built-in instead of shipped as separate
 	 *                             module loaded at runtime.
 	 *
 	 * @param server A proxy instance to add the module to. Must NOT be NULL

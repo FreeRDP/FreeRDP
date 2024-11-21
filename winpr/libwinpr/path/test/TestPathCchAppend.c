@@ -142,7 +142,7 @@ int TestPathCchAppend(int argc, char* argv[])
 	status = PathCchAppend(Path, PATHCCH_MAX_CCH, _T("\\This cannot be appended to Path"));
 	if (SUCCEEDED(status))
 	{
-		_tprintf(_T("PathCchAppend unexepectedly succeeded with status: 0x%08") _T(PRIX32) _T("\n"),
+		_tprintf(_T("PathCchAppend unexpectedly succeeded with status: 0x%08") _T(PRIX32) _T("\n"),
 		         status);
 		return -1;
 	}

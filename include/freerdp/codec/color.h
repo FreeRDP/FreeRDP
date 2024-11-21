@@ -56,7 +56,7 @@ extern "C"
 /*** Design considerations
  *
  * The format naming scheme is based on byte position in memory.
- * RGBA for example names a byte array with red on positon 0, green on 1 etc.
+ * RGBA for example names a byte array with red on position 0, green on 1 etc.
  *
  * To read and write the appropriate format from / to memory use FreeRDPReadColor and
  * FreeRDPWriteColor.
@@ -145,7 +145,7 @@ typedef struct gdi_palette gdiPalette;
 	 * @param _g      green color value
 	 * @param _b      blue color value
 	 * @param _a      alpha color value
-	 * @param palette pallete to use (only used for 8 bit color!)
+	 * @param palette palette to use (only used for 8 bit color!)
 	 */
 #if defined(WITH_FREERDP_DEPRECATED)
 #define SplitColor(...) FreeRDPSplitColor(__VA_ARGS__)
@@ -245,7 +245,7 @@ typedef struct gdi_palette gdiPalette;
 	 * @param color      The pixel color in srcFormat representation
 	 * @param srcFormat  The PIXEL_FORMAT_* of color
 	 * @param dstFormat  The PIXEL_FORMAT_* of the return.
-	 * @param palette    pallete to use (only used for 8 bit color!)
+	 * @param palette    palette to use (only used for 8 bit color!)
 	 *
 	 * @return           The converted pixel color in dstFormat representation
 	 */
@@ -434,9 +434,9 @@ typedef struct gdi_palette gdiPalette;
 
 	/***
 	 *
-	 * @param pDstData  destionation buffer
-	 * @param DstFormat destionation buffer format
-	 * @param nDstStep  destionation buffer stride (line in bytes) 0 for default
+	 * @param pDstData  destination buffer
+	 * @param DstFormat destination buffer format
+	 * @param nDstStep  destination buffer stride (line in bytes) 0 for default
 	 * @param nXDst     destination buffer offset x
 	 * @param nYDst     destination buffer offset y
 	 * @param nWidth    width to copy in pixels

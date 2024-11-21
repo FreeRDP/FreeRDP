@@ -425,7 +425,7 @@ static BOOL vgids_prepare_fstable(const vgidsFilesysTableEntry* fstable, DWORD n
                                   BYTE** outData, DWORD* outDataSize)
 {
 	/* Filesystem table:
-	    BYTE unkonwn: 0x01
+	    BYTE unknown: 0x01
 	    Array of vgidsFilesysTableEntry
 	*/
 	BYTE* data = malloc(sizeof(vgidsFilesysTableEntry) * numEntries + 1);
@@ -536,7 +536,7 @@ static BYTE vgids_get_algid(vgidsContext* p_Ctx)
 static BOOL vgids_prepare_keymap(vgidsContext* context, BYTE** outData, DWORD* outDataSize)
 {
 	/* Key map record table:
-	    BYTE unkonwn (count?): 0x01
+	    BYTE unknown (count?): 0x01
 	    Array of vgidsKeymapRecord
 	*/
 	BYTE* data = NULL;
@@ -1032,7 +1032,7 @@ static BOOL vgids_ins_manage_security_environment(vgidsContext* context, wStream
 	Stream_Read_UINT8(s, context->currentSE.keyRef);
 
 create_response:
-	/* If an error occured reset SE */
+	/* If an error occurred reset SE */
 	if (status != ISO_STATUS_SUCCESS)
 		memset(&context->currentSE, 0, sizeof(context->currentSE));
 	return vgids_create_response(status, resultData, resultDataSize, response, responseSize);

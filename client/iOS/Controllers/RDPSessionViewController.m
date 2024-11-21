@@ -139,7 +139,7 @@
 	}
 	[[self navigationController] setNavigationBarHidden:YES animated:animated];
 
-	// if sesssion is suspended - notify that we got a new bitmap context
+	// if session is suspended - notify that we got a new bitmap context
 	if ([_session isSuspended])
 		[self sessionBitmapContextWillChange:_session];
 

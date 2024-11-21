@@ -6,7 +6,7 @@ When doing a `xfreerdp /version` for example the following is shown
 
 `This is FreeRDP version 3.0.0-dev (c99c4cecddee4e5b914b122bc1531d47a668bb8e)`
 
-The first part ist the Version as defined in `RAW_VERSION_STRING` and the second part, in braces,
+The first part is the Version as defined in `RAW_VERSION_STRING` and the second part, in braces,
 the `GIT_REVISON` of this version.
 
 `RAW_VERSION_STRING` is very vital as it determines the version used for libraries as well also for

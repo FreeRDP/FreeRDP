@@ -100,7 +100,7 @@ extern NSString *TSXSessionDidFailToConnectNotification;
 // get a small session screenshot
 - (UIImage *)getScreenshotWithSize:(CGSize)size;
 
-// returns the session's current paramters
+// returns the session's current parameters
 - (rdpSettings *)getSessionParams;
 
 // returns the session's name (usually the label of the bookmark the session was created with)

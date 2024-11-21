@@ -198,7 +198,7 @@ BOOL freerdp_connect(freerdp* instance)
 	if (rc == 0)
 		goto freerdp_connect_finally;
 
-	/* Pointers might have changed inbetween */
+	/* Pointers might have changed in between */
 	{
 		rdp_update_internal* up = update_cast(rdp->update);
 

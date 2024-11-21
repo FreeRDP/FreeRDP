@@ -2,7 +2,7 @@
 .PP
 wlog environment variable
 .RS 4
-@MANPAGE_NAME@ uses wLog as its log facility, you can refer to the corresponding man page (wlog(7)) for more informations\&. Arguments passed via the
+@MANPAGE_NAME@ uses wLog as its log facility, you can refer to the corresponding man page (wlog(7)) for more information\&. Arguments passed via the
 \fI/log\-level\fR
 or
 \fI/log\-filters\fR

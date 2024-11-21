@@ -279,7 +279,7 @@ static UIFont *buttonFont = nil;
 		}
 		else if (_blocks.count == 1)
 		{
-			// In this case this is the ony button. We'll size according to the text
+			// In this case this is the only button. We'll size according to the text
 			CGSize size = [title sizeWithFont:buttonFont
 			                      minFontSize:10
 			                   actualFontSize:nil

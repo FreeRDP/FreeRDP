@@ -216,7 +216,7 @@ BOOL FilePatternMatchA(LPCSTR lpFileName, LPCSTR lpPattern)
 	 * '~*'	DOS_STAR - matches 0 or more characters until encountering and matching final '.'
 	 *
 	 * '~?'	DOS_QM - matches any single character, or upon encountering a period or end of name
-	 *               string, advances the expresssion to the end of the set of contiguous DOS_QMs.
+	 *               string, advances the expression to the end of the set of contiguous DOS_QMs.
 	 *
 	 * '~.'	DOS_DOT - matches either a '.' or zero characters beyond name string.
 	 */

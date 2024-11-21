@@ -306,7 +306,7 @@ extern "C"
 	 *  @param value The value to store for the \b key. May be \b NULL. if set cloned with \b
 	 * fnObjectNew
 	 *
-	 *  @return \b TRUE for successfull addition, \b FALSE for failure
+	 *  @return \b TRUE for successful addition, \b FALSE for failure
 	 */
 	WINPR_API BOOL ListDictionary_Add(wListDictionary* listDictionary, const void* key,
 	                                  const void* value);
@@ -608,7 +608,7 @@ extern "C"
 	 */
 	WINPR_API void CountdownEvent_Free(wCountdownEvent* countdown);
 
-	/** @brief Allocte a CountdownEvent with \b initialCount
+	/** @brief Allocate a CountdownEvent with \b initialCount
 	 *
 	 *  @param initialCount The initial value of the event
 	 *

@@ -316,7 +316,7 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  "mic", "Audio input (microphone)" },
 #if defined(WITH_FREERDP_DEPRECATED_COMMANDLINE)
 	{ "smartcard-list", COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_PRINT, NULL, NULL, NULL, -1, NULL,
-	  "[DEPRECATED, use /list:smartcard] List smartcard informations" },
+	  "[DEPRECATED, use /list:smartcard] List smartcard information" },
 	{ "monitor-list", COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_PRINT, NULL, NULL, NULL, -1, NULL,
 	  "[DEPRECATED, use /list:monitor] List detected monitors" },
 #endif

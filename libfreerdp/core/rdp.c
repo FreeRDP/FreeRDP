@@ -2968,7 +2968,7 @@ static void log_build_warn_cipher(rdpRdp* rdp, log_line_t* firstLine, WINPR_CIPH
 	char key[WINPR_CIPHER_MAX_KEY_LENGTH] = { 0 };
 	char iv[WINPR_CIPHER_MAX_IV_LENGTH] = { 0 };
 
-	/* RC4 only exists in the compatiblity functions winpr_RC4_*
+	/* RC4 only exists in the compatibility functions winpr_RC4_*
 	 * winpr_Cipher_* does not support that. */
 	if (md == WINPR_CIPHER_ARC4_128)
 	{
@@ -3079,7 +3079,7 @@ void rdp_log_build_warnings(rdpRdp* rdp)
 
 	WINPR_ASSERT(rdp);
 	/* Since this function is called in context creation routines stop logging
-	 * this issue repetedly. This is required for proxy, which would otherwise
+	 * this issue repeatedly. This is required for proxy, which would otherwise
 	 * spam the log with these. */
 	if (count > 0)
 		return;

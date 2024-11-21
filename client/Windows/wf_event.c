@@ -795,7 +795,7 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 
 			if (g_focus_hWnd == hWnd && wfc && !wfc->fullscreen)
 			{
-				DEBUG_KBD("loosing focus %X", hWnd);
+				DEBUG_KBD("losing focus %X", hWnd);
 
 				if (alt_ctrl_down())
 					g_flipping_out = TRUE;

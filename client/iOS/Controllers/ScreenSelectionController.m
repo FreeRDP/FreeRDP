@@ -158,7 +158,7 @@
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
-	// custom widht/height cells are not selectable
+	// custom width/height cells are not selectable
 	if ([indexPath section] == 1 && [indexPath row] >= [_resolution_modes count])
 		return;
 

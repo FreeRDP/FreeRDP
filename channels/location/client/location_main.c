@@ -221,12 +221,12 @@ static UINT location_send_base_location3d(IWTSVirtualChannel* channel,
 
 	if (pdu->source)
 		WLog_DBG(TAG,
-		         "latitude=%lf, logitude=%lf, altitude=%" PRId32
+		         "latitude=%lf, longitude=%lf, altitude=%" PRId32
 		         ", speed=%lf, heading=%lf, haccuracy=%lf, source=%" PRIu8,
 		         pdu->latitude, pdu->longitude, pdu->altitude, pdu->speed, pdu->heading,
 		         pdu->horizontalAccuracy, *pdu->source);
 	else
-		WLog_DBG(TAG, "latitude=%lf, logitude=%lf, altitude=%" PRId32, pdu->latitude,
+		WLog_DBG(TAG, "latitude=%lf, longitude=%lf, altitude=%" PRId32, pdu->latitude,
 		         pdu->longitude, pdu->altitude);
 
 	if (!location_write_header(s, PDUTYPE_BASE_LOCATION3D, pdu->source ? 25 : 12))
@@ -264,10 +264,10 @@ static UINT location_send_location2d_delta(IWTSVirtualChannel* channel,
 	const BOOL ext = pdu->speedDelta && pdu->headingDelta;
 
 	if (ext)
-		WLog_DBG(TAG, "latitude=%lf, logitude=%lf, speed=%lf, heading=%lf", pdu->latitudeDelta,
+		WLog_DBG(TAG, "latitude=%lf, longitude=%lf, speed=%lf, heading=%lf", pdu->latitudeDelta,
 		         pdu->longitudeDelta, pdu->speedDelta, pdu->headingDelta);
 	else
-		WLog_DBG(TAG, "latitude=%lf, logitude=%lf", pdu->latitudeDelta, pdu->longitudeDelta);
+		WLog_DBG(TAG, "latitude=%lf, longitude=%lf", pdu->latitudeDelta, pdu->longitudeDelta);
 
 	if (!location_write_header(s, PDUTYPE_LOCATION2D_DELTA, ext ? 16 : 8))
 		return ERROR_OUTOFMEMORY;
@@ -300,11 +300,11 @@ static UINT location_send_location3d_delta(IWTSVirtualChannel* channel,
 	const BOOL ext = pdu->speedDelta && pdu->headingDelta;
 
 	if (ext)
-		WLog_DBG(TAG, "latitude=%lf, logitude=%lf, altitude=%" PRId32 ", speed=%lf, heading=%lf",
+		WLog_DBG(TAG, "latitude=%lf, longitude=%lf, altitude=%" PRId32 ", speed=%lf, heading=%lf",
 		         pdu->latitudeDelta, pdu->longitudeDelta, pdu->altitudeDelta, pdu->speedDelta,
 		         pdu->headingDelta);
 	else
-		WLog_DBG(TAG, "latitude=%lf, logitude=%lf, altitude=%" PRId32, pdu->latitudeDelta,
+		WLog_DBG(TAG, "latitude=%lf, longitude=%lf, altitude=%" PRId32, pdu->latitudeDelta,
 		         pdu->longitudeDelta, pdu->altitudeDelta);
 
 	if (!location_write_header(s, PDUTYPE_LOCATION3D_DELTA, ext ? 20 : 12))

@@ -156,7 +156,7 @@ static BOOL test_SerialSys(HANDLE hComm)
 		return FALSE;
 	}
 
-	/* Test 2 using a defferent baud rate */
+	/* Test 2 using a different baud rate */
 
 	dcb.BaudRate = CBR_57600;
 	result = SetCommState(hComm, &dcb);

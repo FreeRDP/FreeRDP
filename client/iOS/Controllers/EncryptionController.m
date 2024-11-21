@@ -68,7 +68,7 @@ static EncryptionController *_shared_encryption_controller = nil;
 	return _shared_encryptor;
 }
 
-// For the current implementation, decryptors and encryptors are equivilant.
+// For the current implementation, decryptors and encryptors are equivalent.
 - (Encryptor *)decryptor
 {
 	return [self encryptor];

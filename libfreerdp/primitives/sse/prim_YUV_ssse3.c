@@ -1265,7 +1265,7 @@ static pstatus_t ssse3_ChromaV1ToYUV444(const BYTE* WINPR_RESTRICT pSrcRaw[3],
 	const UINT32 oddY = 1;
 	const UINT32 evenY = 0;
 	const UINT32 oddX = 1;
-	/* The auxilary frame is aligned to multiples of 16x16.
+	/* The auxiliary frame is aligned to multiples of 16x16.
 	 * We need the padded height for B4 and B5 conversion. */
 	const UINT32 padHeigth = nHeight + 16 - nHeight % 16;
 	const BYTE* pSrc[3] = { pSrcRaw[0] + 1ULL * roi->top * srcStep[0] + roi->left,

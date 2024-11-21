@@ -62,7 +62,7 @@ include(CheckCCompilerFlag)
 include(CMakePackageConfigHelpers)
 include (SetFreeRDPCMakeInstallDir)
 
-option(RDTK_FORCE_STATIC_BUILD "Force RDTK to be build as static libary (recommended)" OFF)
+option(RDTK_FORCE_STATIC_BUILD "Force RDTK to be built as static library (recommended)" OFF)
 if (RDTK_FORCE_STATIC_BUILD)
 	set(BUILD_SHARED_LIBS OFF)
 endif()

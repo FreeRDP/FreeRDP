@@ -352,7 +352,7 @@ ULONGDEF(CK_XEDDSA_HASH_TYPE)
 #define CKF_EXCLUDE_PIN 0x00000010UL
 #define CKF_USER_FRIENDLY_OTP 0x00000020UL
 
-/* CKF (paramters to functions) */
+/* CKF (parameters to functions) */
 #define CKF_DONT_BLOCK 1
 
 /* CKF (session) */

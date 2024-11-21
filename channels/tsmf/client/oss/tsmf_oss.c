@@ -96,7 +96,7 @@ static BOOL tsmf_oss_open(ITSMFAudioDevice* audio, const char* device)
 #if 0 /* FreeBSD OSS implementation at this moment (2015.03) does not set PCM_CAP_OUTPUT flag. */
 	if (ioctl(oss->pcm_handle, SNDCTL_DSP_GETCAPS, &mask) == -1)
 	{
-		OSS_LOG_ERR("SNDCTL_DSP_GETCAPS failed, try ignory", errno);
+		OSS_LOG_ERR("SNDCTL_DSP_GETCAPS failed, try ignored", errno);
 	}
 	else if ((mask & PCM_CAP_OUTPUT) == 0)
 	{

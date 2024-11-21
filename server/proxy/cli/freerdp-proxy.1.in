@@ -60,7 +60,7 @@ and map connecting users and credentials to target server users and credentials.
 
 3. edit configurartion and:
 
-  * provide (preferrably absolute) paths for \fBCertificateFile\fP and \fBPrivateKeyFile\fP generated previously
+  * provide (preferably absolute) paths for \fBCertificateFile\fP and \fBPrivateKeyFile\fP generated previously
   * remove the \fBCertificateContents\fP and \fBPrivateKeyContents\fP
   * Adjust the \fB[Server]\fP settings \fBHost\fP and \fBPort\fP to bind a specific port on a network interface
   * Adjust the \fB[Target]\fP \fBHost\fP and \fBPort\fP settings to the \fBRDP\fP target server

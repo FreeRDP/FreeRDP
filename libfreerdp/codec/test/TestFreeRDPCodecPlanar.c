@@ -5432,7 +5432,7 @@ static BOOL CompareBitmap(const BYTE* srcA, UINT32 srcAFormat, const BYTE* srcB,
 	if ((srcABits < 15) || (srcBBits < 15))
 		return FALSE;
 
-	/* Compare with folliwing granularity:
+	/* Compare with following granularity:
 	 * 32    -->    24 bpp: Each color channel has 8bpp, no difference expected
 	 * 24/32 --> 15/16 bpp: 8bit per channel against 5/6bit per channel, +/- 3bit
 	 * 16    -->    15bpp: 5/6bit per channel against 5 bit per channel, +/- 1bit

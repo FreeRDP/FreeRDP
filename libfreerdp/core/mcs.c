@@ -102,7 +102,7 @@
  * 	subInterval			INTEGER (0..MAX)
  * }
  *
- * AttachUserRequest ::= [APPPLICATION 10] IMPLICIT SEQUENCE
+ * AttachUserRequest ::= [APPLICATION 10] IMPLICIT SEQUENCE
  * {
  * }
  *

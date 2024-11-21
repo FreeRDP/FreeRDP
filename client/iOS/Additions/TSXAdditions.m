@@ -126,7 +126,7 @@
 
 @end
 
-#pragma mark Mutable deep copy for dicionary, array and set
+#pragma mark Mutable deep copy for dictionary, array and set
 
 @implementation NSDictionary (TSXAdditions)
 

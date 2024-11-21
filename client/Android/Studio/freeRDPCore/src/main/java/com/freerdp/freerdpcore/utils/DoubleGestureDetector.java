@@ -145,7 +145,8 @@ public class DoubleGestureDetector
 					mCurrentDoubleDownEvent.recycle();
 				mCurrentDoubleDownEvent = MotionEvent.obtain(ev);
 
-				// set detection mode to unkown and send a TOUCH timeout event to detect single taps
+				// set detection mode to unknown and send a TOUCH timeout event to detect single
+				// taps
 				mCurrentMode = MODE_UNKNOWN;
 				mHandler.sendEmptyMessageDelayed(TAP, SINGLE_DOUBLE_TOUCH_TIMEOUT);
 

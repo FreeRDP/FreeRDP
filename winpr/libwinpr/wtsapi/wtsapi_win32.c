@@ -86,7 +86,7 @@ BOOL WINAPI Win32_WTSVirtualChannelClose(HANDLE hChannel);
  * our WinPR wtsapi functions.
  *
  * To be safe we only use the _wts_malloc, _wts_calloc, _wts_free wrappers
- * for memory managment the code below.
+ * for memory management the code below.
  */
 
 static void* _wts_malloc(size_t size)

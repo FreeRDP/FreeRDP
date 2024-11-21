@@ -65,7 +65,7 @@ struct comm_device
 typedef struct comm_device COMM_DEVICE;
 
 /* FIXME: get a clever data structure, see also io.h functions */
-/* _CommDevices is a NULL-terminated array with a maximun of COMM_DEVICE_MAX COMM_DEVICE */
+/* _CommDevices is a NULL-terminated array with a maximum of COMM_DEVICE_MAX COMM_DEVICE */
 #define COMM_DEVICE_MAX 128
 static COMM_DEVICE** sCommDevices = NULL;
 static CRITICAL_SECTION sCommDevicesLock = { 0 };
@@ -181,7 +181,7 @@ static void CommInit(void)
 }
 
 /**
- * Returns TRUE when the comm module is correctly intialized, FALSE otherwise
+ * Returns TRUE when the comm module is correctly initialized, FALSE otherwise
  * with ERROR_DLL_INIT_FAILED set as the last error.
  */
 static BOOL CommInitialized(void)

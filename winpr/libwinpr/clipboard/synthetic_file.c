@@ -949,7 +949,7 @@ static BOOL register_file_formats_and_synthesizers(wClipboard* clipboard)
 	        See:
 	          GTK: https://docs.gtk.org/glib/struct.Uri.html
 	          uri syntax: https://www.rfc-editor.org/rfc/rfc3986#section-3
-	          uri-lists fomat: https://www.rfc-editor.org/rfc/rfc2483#section-5
+	          uri-lists format: https://www.rfc-editor.org/rfc/rfc2483#section-5
 	    3. Gnome and others (Unity/XFCE/Nautilus < 3.30/Nautilus >= 40):
 	        TARGET: x-special/gnome-copied-files
 	        format: copy\nfile://path\n\0

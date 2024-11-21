@@ -113,7 +113,7 @@ typedef struct
 {
 	UINT64 poolId;
 	UINT64 poolSize;
-	UINT32 sectionNameLength;          // number of charactor, must include null terminated char.
+	UINT32 sectionNameLength;          // number of characters, must include null terminated char.
 	const unsigned short* sectionName; // Windows-style 2 bytes wchar_t with null-terminated.
 } GFXREDIR_OPEN_POOL_PDU;
 

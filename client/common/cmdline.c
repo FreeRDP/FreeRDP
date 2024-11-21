@@ -2864,7 +2864,7 @@ static int parse_kbd_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_
 
 			if (option_starts_with("remap:", val))
 			{
-				/* Append this new occurance to the already existing list */
+				/* Append this new occurence to the already existing list */
 				char* now = _strdup(&val[6]);
 				const char* old =
 				    freerdp_settings_get_string(settings, FreeRDP_KeyboardRemappingList);
@@ -5818,7 +5818,7 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 	}
 
 	/**
-	 * step 2: do various adjustements in the settings, to handle channels and settings dependencies
+	 * step 2: do various adjustments in the settings to handle channels and settings dependencies
 	 */
 	if ((freerdp_static_channel_collection_find(settings, RDPSND_CHANNEL_NAME)) ||
 	    (freerdp_dynamic_channel_collection_find(settings, RDPSND_CHANNEL_NAME))
@@ -5875,7 +5875,7 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 
 		while (tok)
 		{
-			/* Syntax: Comma seperated list of the following entries:
+			/* Syntax: Comma separated list of the following entries:
 			 * '*'              ... Redirect all drives, including hotplug
 			 * 'DynamicDrives'  ... hotplug
 			 * '%'              ... user home directory

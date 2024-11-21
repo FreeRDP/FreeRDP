@@ -1644,7 +1644,7 @@ static int udev_get_hub_handle(URBDRC_PLUGIN* urbdrc, libusb_context* ctx, UDEVI
 		LIBUSB_DEVICE* dev = libusb_list[i];
 
 		if ((bus_number != libusb_get_bus_number(dev)) ||
-		    (1 != libusb_get_device_address(dev))) /* Root hub allways first on bus. */
+		    (1 != libusb_get_device_address(dev))) /* Root hub always first on bus. */
 			libusb_unref_device(dev);
 		else
 		{

@@ -18,7 +18,7 @@
  */
 
 #ifndef WITH_KRB5_HEIMDAL
-#error "This file must ony be included with HEIMDAL kerberos"
+#error "This file must only be included with HEIMDAL kerberos"
 #endif
 
 #include <winpr/endian.h>

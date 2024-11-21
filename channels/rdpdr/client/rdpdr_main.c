@@ -583,7 +583,7 @@ static UINT handle_hotplug(rdpdrPlugin* rdpdr)
 		if (!path)
 			continue;
 
-		/* not plugable device */
+		/* not pluggable device */
 		if (strstr(path, "/Volumes/") == NULL)
 		{
 			free(path);
@@ -950,7 +950,7 @@ static BOOL hotplug_delete_foreach(ULONG_PTR key, void* element, void* data)
 	if (!path)
 		return FALSE;
 
-	/* not plugable device */
+	/* not pluggable device */
 	if (isAutomountLocation(path))
 	{
 		for (size_t i = 0; i < arg->dev_array_size; i++)

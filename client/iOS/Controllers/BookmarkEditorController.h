@@ -15,7 +15,7 @@
 @class ConnectionParams;
 
 @protocol BookmarkEditorDelegate <NSObject>
-// bookmark editing finsihed
+// bookmark editing finished
 - (void)commitBookmark:(ComputerBookmark *)bookmark;
 @end
 

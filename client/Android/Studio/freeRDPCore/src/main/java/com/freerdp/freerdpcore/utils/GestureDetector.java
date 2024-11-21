@@ -474,7 +474,7 @@ public class GestureDetector
 
 		/**
 		 * Notified when a long press occurs with the initial on down {@link MotionEvent}
-		 * that trigged it.
+		 * that triggered it.
 		 *
 		 * @param e The initial on down motion event that started the longpress.
 		 */

@@ -167,7 +167,7 @@ endif()
 
 set(WINPR_RESOURCE_ROOT ${CMAKE_INSTALL_FULL_DATAROOTDIR})
 
-# Quite the compatiblity show here (newest to oldest):
+# Quite the compatibility show here (newest to oldest):
 # * <base>[/<vendor>]/<product>[<version>]
 # * <base>[/<vendor>]/WinPR[<version>]
 # * <base>/winpr

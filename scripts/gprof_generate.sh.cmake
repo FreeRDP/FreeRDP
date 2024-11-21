@@ -39,7 +39,7 @@ if [ ! -f $ADB ] || [ ! -x $ADB ]; then
 	exit -3
 fi
 
-# Do the acutal work in a temporary directory.
+# Do the actual work in a temporary directory.
 SRC=`mktemp -d`
 cd $SRC
 $ADB $@ pull /sdcard/gmon.out

@@ -1986,7 +1986,7 @@ static BOOL freerdp_client_register_pen(rdpClientContext* cctx, UINT32 flags, IN
 		return TRUE;
 	}
 
-	WLog_WARN(TAG, "No free slots for an additiona pen device, skipping");
+	WLog_WARN(TAG, "No free slot for an additional pen device, skipping");
 	return TRUE;
 }
 

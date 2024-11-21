@@ -14,7 +14,7 @@ import codecs
 
 
 CMD_NAMES = {
-    0x04: "DESACTIVATE FILE",
+    0x04: "DEACTIVATE FILE",
     0x0C: "ERASE RECORD",
     0x0E: "ERASE BINARY",
     0x0F: "ERASE BINARY",
@@ -44,8 +44,8 @@ CMD_NAMES = {
     0xB2: "READ RECORD",
     0xB3: "READ RECORD",
     0xC0: "GET RESPONSE",
-    0xC2: "ENVELOPPE",
-    0xC3: "ENVELOPPE",
+    0xC2: "ENVELOPE",
+    0xC3: "ENVELOPE",
     0xCA: "GET DATA",
     0xCB: "GET DATA",
     0xD0: "WRITE BINARY",
@@ -107,7 +107,7 @@ ERROR_CODES = {
     0x6882: "Secure messaging not supported",
     0x6985: "condition of use not satisfied",
     0x6A80: "incorrect parameter cmd data field",
-    0x6A81: "function not suppported",
+    0x6A81: "function not supported",
     0x6A82: "file or application not found",
     0x6A83: "record not found",
     0x6A88: "REFERENCE DATA NOT FOUND",
