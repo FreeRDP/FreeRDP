@@ -2365,7 +2365,7 @@ BOOL freerdp_client_populate_settings_from_rdp_file(const rdpFile* file, rdpSett
 		union
 		{
 			char** c;
-			const char** cc;
+			const char* const* cc;
 		} cnv;
 		ADDIN_ARGV* args = rdp_file_to_args(RDPECAM_DVC_CHANNEL_NAME, file->RedirectCameras);
 		if (!args)
@@ -2409,7 +2409,7 @@ BOOL freerdp_client_populate_settings_from_rdp_file(const rdpFile* file, rdpSett
 		union
 		{
 			char** c;
-			const char** cc;
+			const char* const* cc;
 		} cnv;
 		ADDIN_ARGV* args = rdp_file_to_args(URBDRC_CHANNEL_NAME, file->UsbDevicesToRedirect);
 		if (!args)
