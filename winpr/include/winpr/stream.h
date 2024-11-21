@@ -1024,14 +1024,10 @@ extern "C"
 		WINPR_ASSERT(_s->pointer);
 		WINPR_ASSERT(Stream_GetRemainingCapacity(_s) >= 4);
 
-		*_s->pointer++ = (_v) & 0xFF;
-		*_s->pointer++ = ((_v) >> 8) & 0xFF;
-		*_s->pointer++ = ((_v) >> 16) & 0xFF;
 		*_s->pointer++ = ((_v) >> 24) & 0xFF;
-		*_s->pointer++ = (_v) & 0xFF;
-		*_s->pointer++ = ((_v) >> 8) & 0xFF;
 		*_s->pointer++ = ((_v) >> 16) & 0xFF;
-		*_s->pointer++ = ((_v) >> 24) & 0xFF;
+		*_s->pointer++ = ((_v) >> 8) & 0xFF;
+		*_s->pointer++ = (_v) & 0xFF;
 	}
 
 #define Stream_Write_UINT32(s, v)                \
@@ -1099,7 +1095,7 @@ extern "C"
 		WINPR_ASSERT(Stream_GetRemainingCapacity(_s) >= 8);
 
 		Stream_Write_UINT32(_s, ((_v) & 0xFFFFFFFFUL));
-		Stream_Write_UINT32(_s, ((_v) >> 16 & 0xFFFFFFFFUL));
+		Stream_Write_UINT32(_s, ((_v) >> 32 & 0xFFFFFFFFUL));
 	}
 
 	/** @brief writes a \b UINT64 as \b big endian to a \b wStream. The stream must be large enough
@@ -1114,7 +1110,41 @@ extern "C"
 		WINPR_ASSERT(_s->pointer);
 		WINPR_ASSERT(Stream_GetRemainingCapacity(_s) >= 8);
 
-		Stream_Write_UINT32_BE(_s, ((_v) >> 16 & 0xFFFFFFFFUL));
+		Stream_Write_UINT32_BE(_s, ((_v) >> 32 & 0xFFFFFFFFUL));
+		Stream_Write_UINT32_BE(_s, ((_v) & 0xFFFFFFFFUL));
+	}
+
+	/** @brief writes a \b INT64 as \b little endian to a \b wStream. The stream must be large
+	 * enough to hold the data.
+	 *
+	 * \param _s The stream to write to, must not be \b NULL
+	 * \param _v The value to write
+	 * \since version 3.10.0
+	 */
+	static INLINE void Stream_Write_INT64(wStream* _s, INT64 _v)
+	{
+		WINPR_ASSERT(_s);
+		WINPR_ASSERT(_s->pointer);
+		WINPR_ASSERT(Stream_GetRemainingCapacity(_s) >= 8);
+
+		Stream_Write_UINT32(_s, ((_v) & 0xFFFFFFFFUL));
+		Stream_Write_UINT32(_s, ((_v) >> 32 & 0xFFFFFFFFUL));
+	}
+
+	/** @brief writes a \b INT64 as \b big endian to a \b wStream. The stream must be large enough
+	 * to hold the data.
+	 *
+	 * \param _s The stream to write to, must not be \b NULL
+	 * \param _v The value to write
+	 * \since version 3.10.0
+	 */
+	static INLINE void Stream_Write_INT64_BE(wStream* _s, INT64 _v)
+	{
+		WINPR_ASSERT(_s);
+		WINPR_ASSERT(_s->pointer);
+		WINPR_ASSERT(Stream_GetRemainingCapacity(_s) >= 8);
+
+		Stream_Write_UINT32_BE(_s, ((_v) >> 32 & 0xFFFFFFFFUL));
 		Stream_Write_UINT32_BE(_s, ((_v) & 0xFFFFFFFFUL));
 	}
 
