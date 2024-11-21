@@ -486,9 +486,9 @@ void SDLConnectionDialog::resetTimer()
 
 Uint32 SDLConnectionDialog::timeout(Uint32 intervalMS, void* pvthis)
 {
-	auto ths = static_cast<SDLConnectionDialog*>(pvthis);
-	ths->hide();
-	ths->_running = false;
+	auto self = static_cast<SDLConnectionDialog*>(pvthis);
+	self->hide();
+	self->_running = false;
 	return 0;
 }
 

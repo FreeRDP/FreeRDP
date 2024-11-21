@@ -972,7 +972,7 @@ static BOOL test_ConvertFromUnicode_wrapper(void)
 	}
 	if (dst == NULL)
 	{
-		(void)fprintf(stderr, "ConvertFromUnicode failure A2: destination ist NULL\n");
+		(void)fprintf(stderr, "ConvertFromUnicode failure A2: destination is NULL\n");
 		goto fail;
 	}
 	if ((i = strlen(dst)) != 16)
@@ -1005,7 +1005,7 @@ static BOOL test_ConvertFromUnicode_wrapper(void)
 	}
 	if (dst == NULL)
 	{
-		(void)fprintf(stderr, "ConvertFromUnicode failure B2: destination ist NULL\n");
+		(void)fprintf(stderr, "ConvertFromUnicode failure B2: destination is NULL\n");
 		goto fail;
 	}
 	if ((i = strlen(dst)) != 16)
@@ -1088,7 +1088,7 @@ static BOOL test_ConvertToUnicode_wrapper(void)
 	i = (size_t)ii;
 	if (dst == NULL)
 	{
-		(void)fprintf(stderr, "ConvertToUnicode failure A2: destination ist NULL\n");
+		(void)fprintf(stderr, "ConvertToUnicode failure A2: destination is NULL\n");
 		goto fail;
 	}
 	if ((i = _wcslen(dst)) != 16)
@@ -1123,7 +1123,7 @@ static BOOL test_ConvertToUnicode_wrapper(void)
 	}
 	if (dst == NULL)
 	{
-		(void)fprintf(stderr, "ConvertToUnicode failure B2: destination ist NULL\n");
+		(void)fprintf(stderr, "ConvertToUnicode failure B2: destination is NULL\n");
 		goto fail;
 	}
 	if ((i = _wcslen(dst)) != 16)
