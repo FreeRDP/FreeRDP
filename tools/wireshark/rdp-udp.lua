@@ -177,8 +177,8 @@ local field_rdpudp2_ackvec_base = Field.new("rdpudp2.ackvec.baseseqnum")
 function unwrapPacket(tvbuf)
 	local len = tvbuf:reported_length_remaining()
 	local ret = tvbuf:bytes(7, 1) .. tvbuf:bytes(1, 6) .. tvbuf:bytes(0, 1) .. tvbuf:bytes(8, len-8)
-	--dprint2("iput first bytes=", tvbuf:bytes(0, 9):tohex(true, " "))
-	--dprint2("oput first bytes=", ret:subset(0, 9):tohex(true, " "))
+	--dprint2("input first bytes=", tvbuf:bytes(0, 9):tohex(true, " "))
+	--dprint2("output first bytes=", ret:subset(0, 9):tohex(true, " "))
 	return ret:tvb("RDP-UDP unwrapped")
 end
 

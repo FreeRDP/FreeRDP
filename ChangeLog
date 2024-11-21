@@ -69,7 +69,7 @@ contains a number of improvements for distributors:
   Windows 7 RFX and bitmap updates with multiple rectangles have been deactivated, so adjust shadow to not send such.
 
 Noteworthy changes:
-* Fix ActionScript paramter (#10423)
+* Fix ActionScript parameter (#10423)
 * Support keyboard layouts as JSON resource (#10394)
 * Support timezones as JSON resource and command line argument (#10428 #10393 #10391)
 * Deactivate AsyncUpdate (#10402)

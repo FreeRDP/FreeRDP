@@ -125,7 +125,7 @@ void* winpr_backtrace(DWORD size)
 	return winpr_win_backtrace(size);
 #else
 	LOGF(support_msg);
-	/* return a non NULL buffer to allow the backtrace function familiy to succeed without failing
+	/* return a non NULL buffer to allow the backtrace function family to succeed without failing
 	 */
 	return _strdup(support_msg);
 #endif
