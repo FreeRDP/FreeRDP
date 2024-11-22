@@ -3,7 +3,11 @@
 NULL =
 
 DEB_HOST_ARCH=$(shell dpkg-architecture -qDEB_HOST_ARCH)
+DEB_FDK_SUPPORT=$(shell dpkg-query -s libfdk-aac-dev 2>&1 >/dev/null; echo $$?)
 
+ifeq ($(DEB_FDK_SUPPORT),0)
+	AAC_SUPPORT = -DWITH_FDK_AAC=ON
+endif
 SANITIZE_ADDRESS = -DWITH_SANITIZE_ADDRESS=ON
 
 DEB_CMAKE_EXTRA_FLAGS :=  -GNinja \
@@ -11,7 +15,6 @@ DEB_CMAKE_EXTRA_FLAGS :=  -GNinja \
 						  -DCMAKE_SKIP_INSTALL_RPATH=FALSE \
 						  -DWITH_PULSE=ON \
 						  -DWITH_CHANNELS=ON \
-						  -DWITH_FDK_AAC=ON \
 						  -DWITH_AAD=ON \
 						  -DWITH_CUPS=ON \
 						  -DWITH_KRB5=ON \
@@ -49,6 +52,7 @@ DEB_CMAKE_EXTRA_FLAGS :=  -GNinja \
 						  -DFREERDP_USE_VENDOR_PRODUCT_CONFIG_DIR=ON \
 						  -DSAMPLE_USE_VENDOR_PRODUCT_CONFIG_DIR=ON \
 						  -DSDL_USE_VENDOR_PRODUCT_CONFIG_DIR=ON \
+						  $(AAC_SUPPORT) \
 						  $(SANITIZE_ADDRESS) \
 						  $(NULL)
 
