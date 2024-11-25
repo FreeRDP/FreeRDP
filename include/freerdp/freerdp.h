@@ -455,6 +455,7 @@ extern "C"
 	FREERDP_API BOOL freerdp_connect(freerdp* instance);
 	FREERDP_API BOOL freerdp_abort_connect(freerdp* instance);
 	FREERDP_API BOOL freerdp_shall_disconnect(freerdp* instance);
+	FREERDP_API BOOL freerdp_shall_disconnect_context(rdpContext* context);
 	FREERDP_API BOOL freerdp_disconnect(freerdp* instance);
 
 	FREERDP_API BOOL freerdp_disconnect_before_reconnect(freerdp* instance);

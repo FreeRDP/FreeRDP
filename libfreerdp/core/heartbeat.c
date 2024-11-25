@@ -45,7 +45,9 @@ int rdp_recv_heartbeat_packet(rdpRdp* rdp, wStream* s)
 	         "received Heartbeat PDU -> period=%" PRIu8 ", count1=%" PRIu8 ", count2=%" PRIu8 "",
 	         period, count1, count2);
 
-	rc = IFCALLRESULT(TRUE, rdp->heartbeat->ServerHeartbeat, rdp->instance, period, count1, count2);
+	WINPR_ASSERT(rdp->context->instance);
+	rc = IFCALLRESULT(TRUE, rdp->heartbeat->ServerHeartbeat, rdp->context->instance, period, count1,
+	                  count2);
 	if (!rc)
 	{
 		WLog_ERR(HEARTBEAT_TAG, "heartbeat->ServerHeartbeat callback failed!");

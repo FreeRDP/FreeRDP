@@ -47,8 +47,9 @@ BOOL utils_str_copy(const char* value, char** dst)
 BOOL utils_abort_connect(rdpContext* context)
 {
 	WINPR_ASSERT(context);
-
-	return SetEvent(context->abortEvent);
+	if (context->abortEvent)
+		return SetEvent(context->abortEvent);
+	return FALSE;
 }
 
 BOOL utils_reset_abort(rdpContext* context)

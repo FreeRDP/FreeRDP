@@ -1063,7 +1063,7 @@ int rdp_client_connect_demand_active(rdpRdp* rdp, wStream* s)
 		return rc;
 	}
 
-	if (freerdp_shall_disconnect(rdp->instance))
+	if (freerdp_shall_disconnect_context(rdp->context))
 		return 0;
 
 	if (!rdp_send_confirm_active(rdp))
