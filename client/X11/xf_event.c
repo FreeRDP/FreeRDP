@@ -672,6 +672,8 @@ static BOOL xf_event_EnterNotify(xfContext* xfc, const XEnterWindowEvent* event,
 
 static BOOL xf_event_LeaveNotify(xfContext* xfc, const XLeaveWindowEvent* event, BOOL app)
 {
+	if (event->mode == NotifyGrab || event->mode == NotifyUngrab)
+		return TRUE;
 	if (!app)
 	{
 		xfc->mouse_active = FALSE;
