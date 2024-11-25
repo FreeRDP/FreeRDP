@@ -68,7 +68,7 @@ static void redirection_free_array(char*** what, UINT32* count)
 	{
 		for (UINT32 x = 0; x < *count; x++)
 			free((*what)[x]);
-		free(*what);
+		free((void*)*what);
 	}
 
 	*what = NULL;
@@ -127,7 +127,7 @@ static BOOL redirection_copy_array(char*** dst, UINT32* plen, const char** str, 
 	if (!str || (len == 0))
 		return TRUE;
 
-	*dst = calloc(len, sizeof(char*));
+	*dst = (char**)calloc(len, sizeof(char*));
 	if (!*dst)
 		return FALSE;
 	*plen = (UINT32)len;

@@ -71,7 +71,7 @@ typedef struct rdp_arm rdpArm;
 #define TAG FREERDP_TAG("core.gateway.arm")
 
 #ifdef WITH_AAD
-static BOOL arm_tls_connect(rdpArm* arm, rdpTls* tls, int timeout)
+static BOOL arm_tls_connect(rdpArm* arm, rdpTls* tls, UINT32 timeout)
 {
 	WINPR_ASSERT(arm);
 	WINPR_ASSERT(tls);

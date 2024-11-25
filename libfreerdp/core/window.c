@@ -997,8 +997,6 @@ static BOOL update_recv_notification_icon_info_order(rdpUpdate* update, wStream*
 static BOOL update_read_desktop_actively_monitored_order(wStream* s, WINDOW_ORDER_INFO* orderInfo,
                                                          MONITORED_DESKTOP_ORDER* monitored_desktop)
 {
-	int size = 0;
-
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_DESKTOP_ACTIVE_WND)
 	{
 		if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
@@ -1009,8 +1007,6 @@ static BOOL update_read_desktop_actively_monitored_order(wStream* s, WINDOW_ORDE
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_DESKTOP_ZORDER)
 	{
-		UINT32* newid = NULL;
-
 		if (!Stream_CheckAndLogRequiredLength(TAG, s, 1))
 			return FALSE;
 
@@ -1021,8 +1017,8 @@ static BOOL update_read_desktop_actively_monitored_order(wStream* s, WINDOW_ORDE
 
 		if (monitored_desktop->numWindowIds > 0)
 		{
-			size = sizeof(UINT32) * monitored_desktop->numWindowIds;
-			newid = (UINT32*)realloc(monitored_desktop->windowIds, size);
+			const size_t size = sizeof(UINT32) * monitored_desktop->numWindowIds;
+			UINT32* newid = (UINT32*)realloc(monitored_desktop->windowIds, size);
 
 			if (!newid)
 			{

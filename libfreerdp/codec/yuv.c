@@ -207,12 +207,13 @@ BOOL yuv_context_reset(YUV_CONTEXT* WINPR_RESTRICT context, UINT32 width, UINT32
 			context->work_combined_params = ctmp;
 		}
 
-		void* wtmp = winpr_aligned_recalloc(context->work_objects, count, sizeof(PTP_WORK), 32);
+		void* wtmp =
+		    winpr_aligned_recalloc((void*)context->work_objects, count, sizeof(PTP_WORK), 32);
 		if (!wtmp)
 			goto fail;
 		memset(wtmp, 0, count * sizeof(PTP_WORK));
 
-		context->work_objects = wtmp;
+		context->work_objects = (PTP_WORK*)wtmp;
 		context->work_object_count = count;
 	}
 	rc = TRUE;
@@ -269,7 +270,7 @@ void yuv_context_free(YUV_CONTEXT* context)
 		if (context->threadPool)
 			CloseThreadpool(context->threadPool);
 		DestroyThreadpoolEnvironment(&context->ThreadPoolEnv);
-		winpr_aligned_free(context->work_objects);
+		winpr_aligned_free((void*)context->work_objects);
 		winpr_aligned_free(context->work_combined_params);
 		winpr_aligned_free(context->work_enc_params);
 		winpr_aligned_free(context->work_dec_params);

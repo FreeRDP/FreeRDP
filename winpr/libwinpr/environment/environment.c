@@ -647,7 +647,7 @@ char** EnvironmentBlockToEnvpA(LPCH lpszEnvironmentBlock)
 			{
 				free(envp[index]);
 			}
-			free(envp);
+			free((void*)envp);
 			return NULL;
 		}
 		p += (length + 1);

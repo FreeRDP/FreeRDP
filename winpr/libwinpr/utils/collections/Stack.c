@@ -144,7 +144,7 @@ void Stack_Push(wStack* stack, void* obj)
 	if ((stack->size + 1) >= stack->capacity)
 	{
 		const size_t new_cap = stack->capacity * 2;
-		void** new_arr = (void**)realloc(stack->array, sizeof(void*) * new_cap);
+		void** new_arr = (void**)realloc((void*)stack->array, sizeof(void*) * new_cap);
 
 		if (!new_arr)
 			goto end;
@@ -246,7 +246,7 @@ void Stack_Free(wStack* stack)
 		if (stack->synchronized)
 			DeleteCriticalSection(&stack->lock);
 
-		free(stack->array);
+		free((void*)stack->array);
 		free(stack);
 	}
 }

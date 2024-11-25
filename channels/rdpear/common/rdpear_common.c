@@ -182,7 +182,7 @@ BOOL ndr_read_RPC_UNICODE_STRING(NdrContext* context, wStream* s, const void* hi
                                  RPC_UNICODE_STRING* res)
 {
 	NdrDeferredEntry bufferDesc = { NDR_PTR_NULL, "RPC_UNICODE_STRING.Buffer", &res->lenHints,
-		                            &res->Buffer, ndr_uint16VaryingArray_descr() };
+		                            (void*)&res->Buffer, ndr_uint16VaryingArray_descr() };
 	UINT16 Length = 0;
 	UINT16 MaximumLength = 0;
 

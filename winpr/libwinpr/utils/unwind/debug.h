@@ -32,6 +32,8 @@ extern "C"
 
 	void* winpr_unwind_backtrace(DWORD size);
 	void winpr_unwind_backtrace_free(void* buffer);
+
+	WINPR_ATTR_MALLOC(free, 1)
 	char** winpr_unwind_backtrace_symbols(void* buffer, size_t* used);
 
 #ifdef __cplusplus

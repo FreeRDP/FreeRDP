@@ -1322,7 +1322,7 @@ static UINT cliprdr_server_open(CliprdrServerContext* context)
 			return ERROR_INTERNAL_ERROR;
 		}
 
-		CopyMemory(&(cliprdr->ChannelEvent), buffer, sizeof(HANDLE));
+		cliprdr->ChannelEvent = *(HANDLE*)buffer;
 		WTSFreeMemory(buffer);
 	}
 

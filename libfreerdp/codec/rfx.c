@@ -372,7 +372,7 @@ void rfx_context_free(RFX_CONTEXT* context)
 			if (priv->ThreadPool)
 				CloseThreadpool(priv->ThreadPool);
 			DestroyThreadpoolEnvironment(&priv->ThreadPoolEnv);
-			winpr_aligned_free(priv->workObjects);
+			winpr_aligned_free((void*)priv->workObjects);
 			winpr_aligned_free(priv->tileWorkParams);
 #ifdef WITH_PROFILER
 			WLog_VRB(
@@ -813,7 +813,8 @@ static INLINE BOOL rfx_allocate_tiles(RFX_MESSAGE* WINPR_RESTRICT message, size_
 {
 	WINPR_ASSERT(message);
 
-	RFX_TILE** tmpTiles = winpr_aligned_recalloc(message->tiles, count, sizeof(RFX_TILE*), 32);
+	RFX_TILE** tmpTiles =
+	    (RFX_TILE**)winpr_aligned_recalloc((void*)message->tiles, count, sizeof(RFX_TILE*), 32);
 	if (!tmpTiles && (count != 0))
 		return FALSE;
 
@@ -952,7 +953,7 @@ static INLINE BOOL rfx_process_message_tileset(RFX_CONTEXT* WINPR_RESTRICT conte
 
 		if (!params)
 		{
-			winpr_aligned_free(work_objects);
+			winpr_aligned_free((void*)work_objects);
 			return FALSE;
 		}
 	}
@@ -1112,7 +1113,7 @@ static INLINE BOOL rfx_process_message_tileset(RFX_CONTEXT* WINPR_RESTRICT conte
 		}
 	}
 
-	winpr_aligned_free(work_objects);
+	winpr_aligned_free((void*)work_objects);
 	winpr_aligned_free(params);
 
 	for (size_t i = 0; i < message->numTiles; i++)
@@ -1618,7 +1619,7 @@ static INLINE BOOL setupWorkers(RFX_CONTEXT* WINPR_RESTRICT context, size_t nbTi
 	if (!context->priv->UseThreads)
 		return TRUE;
 
-	if (!(pmem = winpr_aligned_recalloc(priv->workObjects, nbTiles, sizeof(PTP_WORK), 32)))
+	if (!(pmem = winpr_aligned_recalloc((void*)priv->workObjects, nbTiles, sizeof(PTP_WORK), 32)))
 		return FALSE;
 
 	priv->workObjects = (PTP_WORK*)pmem;

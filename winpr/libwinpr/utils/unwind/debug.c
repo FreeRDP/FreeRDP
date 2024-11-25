@@ -164,6 +164,7 @@ char** winpr_unwind_backtrace_symbols(void* buffer, size_t* used)
 {
 	union
 	{
+		void* pv;
 		char* cp;
 		char** cpp;
 	} cnv;
@@ -173,8 +174,8 @@ char** winpr_unwind_backtrace_symbols(void* buffer, size_t* used)
 	if (!ctx)
 		return NULL;
 
-	cnv.cpp = calloc(ctx->pos * (sizeof(char*) + UNWIND_MAX_LINE_SIZE), sizeof(char*));
-	if (!cnv.cpp)
+	cnv.pv = calloc(ctx->pos * (sizeof(char*) + UNWIND_MAX_LINE_SIZE), sizeof(char*));
+	if (!cnv.pv)
 		return NULL;
 
 	if (used)

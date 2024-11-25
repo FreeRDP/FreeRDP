@@ -119,7 +119,7 @@ void smartcardCertList_Free(SmartcardCertInfo** cert_list, size_t count)
 		smartcardCertInfo_Free(cert);
 	}
 
-	free(cert_list);
+	free((void*)cert_list);
 }
 
 static BOOL add_cert_to_list(SmartcardCertInfo*** certInfoList, size_t* count,
@@ -139,8 +139,8 @@ static BOOL add_cert_to_list(SmartcardCertInfo*** certInfoList, size_t* count,
 	}
 
 	{
-		SmartcardCertInfo** tmpInfoList =
-		    realloc(curInfoList, sizeof(SmartcardCertInfo*) * (curCount + 1));
+		SmartcardCertInfo** tmpInfoList = (SmartcardCertInfo**)realloc(
+		    (void*)curInfoList, sizeof(SmartcardCertInfo*) * (curCount + 1));
 		if (!tmpInfoList)
 		{
 			WLog_ERR(TAG, "unable to reallocate certs");
@@ -802,7 +802,7 @@ static BOOL smartcard_sw_enumerateCerts(const rdpSettings* settings, SmartcardCe
 		goto out_error;
 	}
 
-	cert_list = calloc(1, sizeof(SmartcardCertInfo*));
+	cert_list = (SmartcardCertInfo**)calloc(1, sizeof(SmartcardCertInfo*));
 	if (!cert_list)
 		goto out_error;
 
@@ -931,7 +931,7 @@ BOOL smartcard_getCert(const rdpContext* context, SmartcardCertInfo** cert, BOOL
 	    gateway ? FreeRDP_GatewayUsername : FreeRDP_Username;
 	FreeRDP_Settings_Keys_String domain_setting = gateway ? FreeRDP_GatewayDomain : FreeRDP_Domain;
 
-	free(cert_list);
+	free((void*)cert_list);
 
 	if (!set_settings_from_smartcard(settings, username_setting, (*cert)->userHint) ||
 	    !set_settings_from_smartcard(settings, domain_setting, (*cert)->domainHint))

@@ -585,7 +585,7 @@ static COMMAND_LINE_ARGUMENT_A* create_merged_args(const COMMAND_LINE_ARGUMENT_A
 	}
 
 	COMMAND_LINE_ARGUMENT_A* largs =
-	    calloc(count + ARRAYSIZE(global_cmd_args), sizeof(COMMAND_LINE_ARGUMENT_A));
+	    calloc((size_t)count + ARRAYSIZE(global_cmd_args), sizeof(COMMAND_LINE_ARGUMENT_A));
 	*pcount = 0;
 	if (!largs)
 		return NULL;
@@ -3416,7 +3416,7 @@ static int parse_mouse_options(rdpSettings* settings, const COMMAND_LINE_ARGUMEN
 
 	size_t count = 0;
 	char** ptr = CommandLineParseCommaSeparatedValuesEx("mouse", arg->Value, &count);
-	UINT rc = 0;
+	int rc = 0;
 	if (ptr)
 	{
 		for (size_t x = 1; x < count; x++)
@@ -5519,7 +5519,7 @@ static void argv_free(int* pargc, char** pargv[])
 		return;
 	for (int x = 0; x < argc; x++)
 		free(argv[x]);
-	free(argv);
+	free((void*)argv);
 }
 
 static BOOL argv_append(int* pargc, char** pargv[], char* what)
@@ -5534,7 +5534,7 @@ static BOOL argv_append(int* pargc, char** pargv[], char* what)
 		return FALSE;
 
 	int nargc = *pargc + 1;
-	char** tmp = realloc(*pargv, nargc * sizeof(char*));
+	char** tmp = (char**)realloc((void*)*pargv, (size_t)nargc * sizeof(char*));
 	if (!tmp)
 		return FALSE;
 
@@ -5721,8 +5721,9 @@ int freerdp_client_settings_parse_command_line_arguments_ex(
 		argv = aargv;
 	}
 
+	WINPR_ASSERT(count <= SSIZE_MAX);
 	size_t lcount = 0;
-	COMMAND_LINE_ARGUMENT_A* largs = create_merged_args(args, count, &lcount);
+	COMMAND_LINE_ARGUMENT_A* largs = create_merged_args(args, (SSIZE_T)count, &lcount);
 	if (!largs)
 		goto fail;
 

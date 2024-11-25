@@ -1683,14 +1683,15 @@ BOOL license_scope_list_resize(SCOPE_LIST* scopeList, UINT32 count)
 
 	if (count > 0)
 	{
-		LICENSE_BLOB** tmp = realloc(scopeList->array, count * sizeof(LICENSE_BLOB*));
+		LICENSE_BLOB** tmp =
+		    (LICENSE_BLOB**)realloc((void*)scopeList->array, count * sizeof(LICENSE_BLOB*));
 		if (!tmp)
 			return FALSE;
 		scopeList->array = tmp;
 	}
 	else
 	{
-		free(scopeList->array);
+		free((void*)scopeList->array);
 		scopeList->array = NULL;
 	}
 

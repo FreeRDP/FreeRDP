@@ -244,8 +244,8 @@ static BOOL tsmf_pulse_open_stream(TSMFPulseAudioDevice* pulse)
 
 	pa_stream_set_state_callback(pulse->stream, tsmf_pulse_stream_state_callback, pulse);
 	pa_stream_set_write_callback(pulse->stream, tsmf_pulse_stream_request_callback, pulse);
-	buffer_attr.maxlength = pa_usec_to_bytes(500000, &pulse->sample_spec);
-	buffer_attr.tlength = pa_usec_to_bytes(250000, &pulse->sample_spec);
+	buffer_attr.maxlength = (uint32_t)pa_usec_to_bytes(500000, &pulse->sample_spec);
+	buffer_attr.tlength = (uint32_t)pa_usec_to_bytes(250000, &pulse->sample_spec);
 	buffer_attr.prebuf = (UINT32)-1;
 	buffer_attr.minreq = (UINT32)-1;
 	buffer_attr.fragsize = (UINT32)-1;
@@ -297,7 +297,9 @@ static BOOL tsmf_pulse_set_format(ITSMFAudioDevice* audio, UINT32 sample_rate, U
 	DEBUG_TSMF("sample_rate %" PRIu32 " channels %" PRIu32 " bits_per_sample %" PRIu32 "",
 	           sample_rate, channels, bits_per_sample);
 	pulse->sample_spec.rate = sample_rate;
-	pulse->sample_spec.channels = channels;
+
+	WINPR_ASSERT(channels <= UINT8_MAX);
+	pulse->sample_spec.channels = (uint8_t)channels;
 	pulse->sample_spec.format = PA_SAMPLE_S16LE;
 	return tsmf_pulse_open_stream(pulse);
 }

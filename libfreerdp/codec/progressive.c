@@ -372,7 +372,7 @@ static void progressive_surface_context_free(void* ptr)
 		}
 	}
 
-	winpr_aligned_free(surface->tiles);
+	winpr_aligned_free((void*)surface->tiles);
 	winpr_aligned_free(surface->updatedTileIndices);
 	winpr_aligned_free(surface);
 }
@@ -425,12 +425,12 @@ progressive_allocate_tile_cache(PROGRESSIVE_SURFACE_CONTEXT* WINPR_RESTRICT surf
 			surface->gridSize += 1024;
 	}
 
-	void* tmp = winpr_aligned_recalloc(surface->tiles, surface->gridSize,
+	void* tmp = winpr_aligned_recalloc((void*)surface->tiles, surface->gridSize,
 	                                   sizeof(RFX_PROGRESSIVE_TILE*), 32);
 	if (!tmp)
 		return FALSE;
 	surface->tilesSize = surface->gridSize;
-	surface->tiles = tmp;
+	surface->tiles = (RFX_PROGRESSIVE_TILE**)tmp;
 
 	for (size_t x = oldIndex; x < surface->tilesSize; x++)
 	{

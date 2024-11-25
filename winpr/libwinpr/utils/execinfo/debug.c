@@ -39,7 +39,7 @@ void winpr_execinfo_backtrace_free(void* buffer)
 	if (!data)
 		return;
 
-	free(data->buffer);
+	free((void*)data->buffer);
 	free(data);
 }
 
@@ -50,7 +50,7 @@ void* winpr_execinfo_backtrace(DWORD size)
 	if (!data)
 		return NULL;
 
-	data->buffer = calloc(size, sizeof(void*));
+	data->buffer = (void**)calloc(size, sizeof(void*));
 
 	if (!data->buffer)
 	{

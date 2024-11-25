@@ -1678,7 +1678,7 @@ BOOL WINAPI FreeRDP_WTSVirtualChannelQuery(HANDLE hChannelHandle, WTS_VIRTUAL_CL
 			}
 			else
 			{
-				CopyMemory(*ppBuffer, &fds[0], sizeof(void*));
+				CopyMemory(*ppBuffer, (void*)&fds[0], sizeof(void*));
 				*pBytesReturned = sizeof(void*);
 				status = TRUE;
 			}
@@ -1696,7 +1696,7 @@ BOOL WINAPI FreeRDP_WTSVirtualChannelQuery(HANDLE hChannelHandle, WTS_VIRTUAL_CL
 			}
 			else
 			{
-				CopyMemory(*ppBuffer, &(hEvent), sizeof(HANDLE));
+				CopyMemory(*ppBuffer, (void*)&hEvent, sizeof(HANDLE));
 				*pBytesReturned = sizeof(void*);
 				status = TRUE;
 			}

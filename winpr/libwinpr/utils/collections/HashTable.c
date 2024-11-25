@@ -174,7 +174,7 @@ static INLINE void HashTable_Rehash(wHashTable* table, size_t numOfBuckets)
 		}
 	}
 
-	free(table->bucketArray);
+	free((void*)table->bucketArray);
 	table->bucketArray = newBucketArray;
 	table->numOfBuckets = numOfBuckets;
 }
@@ -811,7 +811,7 @@ void HashTable_Free(wHashTable* table)
 				pair = nextPair;
 			}
 		}
-		free(table->bucketArray);
+		free((void*)table->bucketArray);
 	}
 	DeleteCriticalSection(&(table->lock));
 

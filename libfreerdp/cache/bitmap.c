@@ -419,7 +419,7 @@ void bitmap_cache_free(rdpBitmapCache* bitmapCache)
 				Bitmap_Free(bitmapCache->context, bitmap);
 			}
 
-			free(cell->entries);
+			free((void*)cell->entries);
 		}
 
 		free(bitmapCache->cells);

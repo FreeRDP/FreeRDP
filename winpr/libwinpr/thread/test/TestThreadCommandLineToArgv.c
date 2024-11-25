@@ -72,7 +72,7 @@ static BOOL test_command_line_parsing_case(const char* line, const char** list, 
 
 	rc = TRUE;
 fail:
-	free(pArgs);
+	free((void*)pArgs);
 
 	return rc;
 }

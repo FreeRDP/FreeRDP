@@ -1,4 +1,5 @@
 #include <cassert>
+#include <limits>
 #include <algorithm>
 #include <cinttypes>
 
@@ -26,7 +27,7 @@ SdlInputWidgetList::SdlInputWidgetList(const std::string& title,
 
 	assert(total_width <= INT32_MAX);
 	assert(total_height <= INT32_MAX);
-	auto wflags = SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_MOUSE_FOCUS | SDL_WINDOW_INPUT_FOCUS;
+	Uint32 wflags = SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_MOUSE_FOCUS | SDL_WINDOW_INPUT_FOCUS;
 	auto rc =
 	    SDL_CreateWindowAndRenderer(static_cast<int>(total_width), static_cast<int>(total_height),
 	                                wflags, &_window, &_renderer);
@@ -116,13 +117,15 @@ ssize_t SdlInputWidgetList::get_index(const SDL_MouseButtonEvent& button)
 {
 	const Sint32 x = button.x;
 	const Sint32 y = button.y;
+
+	assert(_list.size() <= std::numeric_limits<ssize_t>::max());
 	for (size_t i = 0; i < _list.size(); i++)
 	{
 		auto& cur = _list[i];
 		auto r = cur.input_rect();
 
 		if ((x >= r.x) && (x <= r.x + r.w) && (y >= r.y) && (y <= r.y + r.h))
-			return i;
+			return static_cast<ssize_t>(i);
 	}
 	return -1;
 }

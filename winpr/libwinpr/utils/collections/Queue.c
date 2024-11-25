@@ -170,19 +170,21 @@ static BOOL Queue_EnsureCapacity(wQueue* queue, size_t count)
 		void** newArray = NULL;
 		if (new_capacity < queue->size + count)
 			new_capacity = queue->size + count;
-		newArray = (void**)realloc(queue->array, sizeof(void*) * new_capacity);
+		newArray = (void**)realloc((void*)queue->array, sizeof(void*) * new_capacity);
 
 		if (!newArray)
 			return FALSE;
 
 		queue->capacity = new_capacity;
 		queue->array = newArray;
-		ZeroMemory(&(queue->array[old_capacity]), (new_capacity - old_capacity) * sizeof(void*));
+		ZeroMemory((void*)&(queue->array[old_capacity]),
+		           (new_capacity - old_capacity) * sizeof(void*));
 
 		/* rearrange wrapped entries */
 		if (queue->tail <= queue->head)
 		{
-			CopyMemory(&(queue->array[old_capacity]), queue->array, queue->tail * sizeof(void*));
+			CopyMemory((void*)&(queue->array[old_capacity]), (void*)queue->array,
+			           queue->tail * sizeof(void*));
 			queue->tail += old_capacity;
 		}
 	}
@@ -344,6 +346,6 @@ void Queue_Free(wQueue* queue)
 		DeleteCriticalSection(&queue->lock);
 	}
 	(void)CloseHandle(queue->event);
-	free(queue->array);
+	free((void*)queue->array);
 	free(queue);
 }

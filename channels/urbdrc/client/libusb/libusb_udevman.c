@@ -235,7 +235,7 @@ static size_t udevman_register_udevice(IUDEVMAN* idevman, BYTE bus_number, BYTE 
 			addnum++;
 		}
 
-		free(devArray);
+		free((void*)devArray);
 		return addnum;
 	}
 	else

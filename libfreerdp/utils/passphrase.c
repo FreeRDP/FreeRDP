@@ -17,6 +17,8 @@
  * limitations under the License.
  */
 
+#include <winpr/environment.h>
+
 #include <freerdp/config.h>
 #include <freerdp/freerdp.h>
 

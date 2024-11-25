@@ -536,7 +536,7 @@ BIO* createChildSessionBio(void)
 		return NULL;
 	}
 
-	BIO_set_handle(lowLevelBio, f);
+	BIO_set_handle(lowLevelBio, &f);
 	BIO* bufferedBio = BIO_new(BIO_s_buffered_socket());
 
 	if (!bufferedBio)

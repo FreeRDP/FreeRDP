@@ -207,7 +207,7 @@ static BOOL ArrayList_EnsureCapacity(wArrayList* arrayList, size_t count)
 		if (newCapacity < arrayList->size + count)
 			newCapacity = arrayList->size + count;
 
-		newArray = (void**)realloc(arrayList->array, sizeof(void*) * newCapacity);
+		newArray = (void**)realloc((void*)arrayList->array, sizeof(void*) * newCapacity);
 
 		if (!newArray)
 			return FALSE;
@@ -227,12 +227,12 @@ static BOOL ArrayList_Shift(wArrayList* arrayList, size_t index, SSIZE_T count)
 	WINPR_ASSERT(arrayList);
 	if (count > 0)
 	{
-		if (!ArrayList_EnsureCapacity(arrayList, count))
+		if (!ArrayList_EnsureCapacity(arrayList, (size_t)count))
 			return FALSE;
 
-		MoveMemory(&arrayList->array[index + count], &arrayList->array[index],
+		MoveMemory((void*)&arrayList->array[index + (size_t)count], (void*)&arrayList->array[index],
 		           (arrayList->size - index) * sizeof(void*));
-		arrayList->size += count;
+		arrayList->size += (size_t)count;
 	}
 	else if (count < 0)
 	{
@@ -240,7 +240,7 @@ static BOOL ArrayList_Shift(wArrayList* arrayList, size_t index, SSIZE_T count)
 		if (off < arrayList->size)
 		{
 			const size_t chunk = arrayList->size - off;
-			MoveMemory(&arrayList->array[index], &arrayList->array[index - count],
+			MoveMemory((void*)&arrayList->array[index], (void*)&arrayList->array[index - count],
 			           chunk * sizeof(void*));
 		}
 
@@ -607,6 +607,6 @@ void ArrayList_Free(wArrayList* arrayList)
 
 	ArrayList_Clear(arrayList);
 	DeleteCriticalSection(&arrayList->lock);
-	free(arrayList->array);
+	free((void*)arrayList->array);
 	free(arrayList);
 }

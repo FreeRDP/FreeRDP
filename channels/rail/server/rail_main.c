@@ -1439,7 +1439,7 @@ static UINT rail_server_start(RailServerContext* context)
 		goto out_close;
 	}
 
-	CopyMemory(&priv->channelEvent, buffer, sizeof(HANDLE));
+	priv->channelEvent = *(HANDLE*)buffer;
 	WTSFreeMemory(buffer);
 	context->priv->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 

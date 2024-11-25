@@ -778,7 +778,7 @@ DWORD GetDynamicTimeZoneInformation(PDYNAMIC_TIME_ZONE_INFORMATION tz)
 	if (!map_iana_id(tzid, tz))
 	{
 		const size_t len = TimeZoneIanaAbbrevGet(local_time->tm_zone, NULL, 0);
-		list = calloc(len, sizeof(char*));
+		list = (const char**)calloc(len, sizeof(const char*));
 		if (!list)
 			goto out_error;
 		const size_t size = TimeZoneIanaAbbrevGet(local_time->tm_zone, list, len);
@@ -803,7 +803,7 @@ DWORD GetDynamicTimeZoneInformation(PDYNAMIC_TIME_ZONE_INFORMATION tz)
 
 out_error:
 	free(tzid);
-	free(list);
+	free((void*)list);
 
 	log_timezone(tz, res);
 	return res;

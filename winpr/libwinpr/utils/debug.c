@@ -193,7 +193,7 @@ void winpr_backtrace_symbols_fd(void* buffer, int fd)
 
 		for (size_t i = 0; i < used; i++)
 			(void)_write(fd, lines[i], (unsigned)strnlen(lines[i], UINT32_MAX));
-		free(lines);
+		free((void*)lines);
 	}
 #else
 	LOGF(support_msg);
@@ -224,7 +224,7 @@ void winpr_log_backtrace_ex(wLog* log, DWORD level, DWORD size)
 		for (size_t x = 0; x < used; x++)
 			WLog_Print(log, level, "%" PRIuz ": %s", x, msg[x]);
 	}
-	free(msg);
+	free((void*)msg);
 
 fail:
 	winpr_backtrace_free(stack);

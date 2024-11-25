@@ -824,7 +824,11 @@ static void png_write_data(png_structp png_ptr, png_bytep data, png_size_t lengt
 
 	/* allocate or grow buffer */
 	if (p->buffer)
-		p->buffer = realloc(p->buffer, nsize);
+	{
+		char* tmp = realloc(p->buffer, nsize);
+		if (tmp)
+			p->buffer = tmp;
+	}
 	else
 		p->buffer = malloc(nsize);
 
@@ -889,7 +893,7 @@ static SSIZE_T save_png_to_buffer(UINT32 bpp, UINT32 width, UINT32 height, const
 	             PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
 
 	/* Initialize rows of PNG. */
-	row_pointers = png_malloc(png_ptr, height * sizeof(png_byte*));
+	row_pointers = (png_byte**)png_malloc(png_ptr, height * sizeof(png_byte*));
 	for (size_t y = 0; y < height; ++y)
 	{
 		uint8_t* row = png_malloc(png_ptr, sizeof(uint8_t) * bytes_per_row);
@@ -915,7 +919,7 @@ static SSIZE_T save_png_to_buffer(UINT32 bpp, UINT32 width, UINT32 height, const
 	/* Cleanup. */
 	for (size_t y = 0; y < height; y++)
 		png_free(png_ptr, row_pointers[y]);
-	png_free(png_ptr, row_pointers);
+	png_free(png_ptr, (void*)row_pointers);
 
 	/* Finish writing. */
 	if (state.size > SSIZE_MAX)

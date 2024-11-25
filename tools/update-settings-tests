@@ -16,6 +16,21 @@ def get_values(entry_dict, entry_type):
         return sorted(values)
     return values
 
+def get_keys(entry_dict, entry_type, values):
+    l = list()
+    if '*' == entry_type:
+        dval = dict()
+        for key in list(entry_dict.keys()):
+            if entry_type in key:
+                xval = entry_dict[key]
+                for val in xval:
+                    dval[val] = key
+
+        for val in list(values):
+            key = dval[val]
+            l.append(key)
+    return l
+
 def write_entry(f, entry_dict, entry_type, entry_name):
     values = get_values(entry_dict, entry_type)
     if not values:
@@ -64,18 +79,24 @@ def write_str(f, entry_dict):
     f.write('};\n\n')
     f.write('\n')
     
-def write_getter_case(f, val):
+def write_getter_case(f, val, cast):
     f.write('\t\tcase FreeRDP_' + val + ':\n')
-    f.write('\t\t\treturn settings->' + val + ';\n\n')
+    f.write('\t\t\treturn ' + cast + 'settings->' + val + ';\n\n')
 
-def write_getter_body(f, values, ret):
+def write_getter_body(f, values, ret, keys, isPointer):
     f.write('{\n')
     f.write('\tWINPR_ASSERT(settings);\n\n')
     f.write('\tswitch (id)\n')
     f.write('\t{\n')
     if values:
-        for val in values:
-            write_getter_case(f, val)
+        for i in range(len(values)):
+            val = values[i]
+            cast = ''
+            if isPointer and keys:
+                key = keys[i]
+                if key != 'void*':
+                    cast = '(void*)'
+            write_getter_case(f, val, cast)
     f.write('\t\tdefault:\n')
     f.write('\t\t\tWLog_ERR(TAG, "Invalid key index %" PRIuz " [%s|%s]", id, freerdp_settings_get_name_for_key(id), freerdp_settings_get_type_name_for_key(id));\n')
     f.write('\t\t\tWINPR_ASSERT(FALSE);\n')
@@ -86,7 +107,9 @@ def write_getter_body(f, values, ret):
 def write_getter(f, entry_dict, entry_type, entry_name, postfix):
     isString = 'string' in entry_name
     isPointer = 'pointer' in entry_name
+    copy = dict(entry_dict)
     values = get_values(entry_dict, entry_type)
+    keys = get_keys(copy, entry_type, values)
 
     typestr = 'FreeRDP_Settings_Keys_' + entry_name.capitalize()
     typestr = typestr.replace('_Uint', '_UInt')
@@ -109,16 +132,16 @@ def write_getter(f, entry_dict, entry_type, entry_name, postfix):
     else:
         ret = '0';
 
-    write_getter_body(f, values, ret)
+    write_getter_body(f, values, ret, keys, isPointer)
 
     if isString:
         f.write('char* freerdp_settings_get_' + entry_name.lower() + '_writable(rdpSettings* settings, ' + typestr + ' id)\n')
-        write_getter_body(f, values, ret)
+        write_getter_body(f, values, ret, keys, isPointer)
 
-def write_setter_case(f, val, postfix, isPointer):
+def write_setter_case(f, val, postfix, isPointer, cast):
     f.write('\t\tcase FreeRDP_' + val + ':\n')
     if isPointer:
-        f.write('\t\t\tsettings->' + val + ' = cnv.v;\n')
+        f.write('\t\t\tsettings->' + val + ' = ' + cast + ' cnv.v;\n')
         f.write('\t\t\tbreak;\n\n')
     elif not postfix:
         f.write('\t\t\tsettings->' + val + ' = cnv.c;\n')
@@ -131,14 +154,16 @@ def write_setter_case(f, val, postfix, isPointer):
 def write_setter(f, entry_dict, entry_type, entry_name, postfix):
     isString = 'string' in entry_name
     isPointer = 'pointer' in entry_name
+    copy = dict(entry_dict)
     values = get_values(entry_dict, entry_type)
+    keys = get_keys(copy, entry_type, values)
 
     typestr = 'FreeRDP_Settings_Keys_' + entry_name.capitalize()
     typestr = typestr.replace('_Uint', '_UInt')
     f.write('BOOL freerdp_settings_set_' + entry_name.lower())
     f.write(postfix)
     f.write('(rdpSettings* settings, ' + typestr + ' id, ')
-    if isString and len(postfix) > 1 or isPointer:
+    if isString and len(postfix) > 0 or isPointer:
         f.write('const ')
     if not isPointer:
         f.write(entry_type + ' val')
@@ -170,8 +195,16 @@ def write_setter(f, entry_dict, entry_type, entry_name, postfix):
     f.write('\tswitch (id)\n')
     f.write('\t{\n')
     if values:
+        count = 0
         for val in values:
-            write_setter_case(f, val, postfix, isPointer)
+            index = count
+            count += 1
+            cast = ''
+            if isPointer:
+                k = keys[index];
+                if k != 'void*' and len(k) > 0:
+                    cast = '(' + k + ')'
+            write_setter_case(f, val, postfix, isPointer, cast)
     f.write('\t\tdefault:\n')
     f.write('\t\t\tWLog_ERR(TAG, "Invalid key index %" PRIuz " [%s|%s]", id, freerdp_settings_get_name_for_key(id), freerdp_settings_get_type_name_for_key(id));\n')
     f.write('\t\t\treturn FALSE;\n')

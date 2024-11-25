@@ -50,7 +50,7 @@ typedef struct
 	DEVICE device;
 	BOOL permissive;
 	SERIAL_DRIVER_ID ServerSerialDriverId;
-	HANDLE* hComm;
+	HANDLE hComm;
 
 	wLog* log;
 	HANDLE MainThread;
@@ -790,7 +790,7 @@ static UINT serial_free(DEVICE* device)
 	}
 
 	if (serial->hComm)
-		(void)CloseHandle(*serial->hComm);
+		(void)CloseHandle(serial->hComm);
 
 	/* Clean up resources */
 	Stream_Free(serial->device.data, TRUE);

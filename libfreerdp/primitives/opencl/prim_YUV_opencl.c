@@ -274,14 +274,14 @@ static BOOL primitives_init_opencl_context(primitives_opencl_context* WINPR_REST
 	if (ret != CL_SUCCESS || nplatforms < 1)
 		return FALSE;
 
-	cl_platform_id* platform_ids = calloc(nplatforms, sizeof(cl_platform_id));
+	cl_platform_id* platform_ids = (cl_platform_id*)calloc(nplatforms, sizeof(cl_platform_id));
 	if (!platform_ids)
 		return FALSE;
 
 	ret = clGetPlatformIDs(nplatforms, platform_ids, &nplatforms);
 	if (ret != CL_SUCCESS)
 	{
-		free(platform_ids);
+		free((void*)platform_ids);
 		return FALSE;
 	}
 
@@ -339,7 +339,7 @@ static BOOL primitives_init_opencl_context(primitives_opencl_context* WINPR_REST
 		gotGPU = TRUE;
 	}
 
-	free(platform_ids);
+	free((void*)platform_ids);
 
 	if (!gotGPU)
 	{
