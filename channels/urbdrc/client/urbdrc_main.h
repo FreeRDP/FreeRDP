@@ -25,6 +25,8 @@
 #include <freerdp/channels/log.h>
 #include <freerdp/client/channels.h>
 
+#include <msusb.h>
+
 #define DEVICE_HARDWARE_ID_SIZE 32
 #define DEVICE_COMPATIBILITY_ID_SIZE 36
 #define DEVICE_INSTANCE_STR_SIZE 37
@@ -162,7 +164,7 @@ struct S_IUDEVICE
 	BASIC_DEV_STATE_DEFINED(ReqCompletion, UINT32);
 	BASIC_DEV_STATE_DEFINED(bus_number, BYTE);
 	BASIC_DEV_STATE_DEFINED(dev_number, BYTE);
-	BASIC_DEV_STATE_DEFINED(port_number, int);
+	BASIC_DEV_STATE_DEFINED(port_number, UINT8);
 	BASIC_DEV_STATE_DEFINED(MsConfig, MSUSB_CONFIG_DESCRIPTOR*);
 
 	BASIC_DEV_STATE_DEFINED(p_udev, void*);

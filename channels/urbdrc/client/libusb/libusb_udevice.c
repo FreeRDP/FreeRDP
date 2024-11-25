@@ -799,7 +799,8 @@ static int libusb_udev_control_pipe_request(IUDEVICE* idev, UINT32 RequestId,
 			uint8_t request_type, uint8_t bRequest,
 			*/
 			error = libusb_control_transfer(pdev->libusb_handle,
-			                                LIBUSB_ENDPOINT_OUT | LIBUSB_RECIPIENT_ENDPOINT,
+			                                (uint8_t)LIBUSB_ENDPOINT_OUT |
+			                                    (uint8_t)LIBUSB_RECIPIENT_ENDPOINT,
 			                                LIBUSB_REQUEST_SET_FEATURE, ENDPOINT_HALT,
 			                                (uint16_t)EndpointAddress, NULL, 0, 1000);
 			break;
@@ -950,7 +951,8 @@ static int libusb_udev_os_feature_descriptor_request(IUDEVICE* idev, UINT32 Requ
 		const BYTE bMS_Vendorcode = ms_string_desc[16];
 		/** get os descriptor */
 		error = libusb_control_transfer(
-		    pdev->libusb_handle, LIBUSB_ENDPOINT_IN | LIBUSB_REQUEST_TYPE_VENDOR | Recipient,
+		    pdev->libusb_handle,
+		    (uint8_t)LIBUSB_ENDPOINT_IN | (uint8_t)LIBUSB_REQUEST_TYPE_VENDOR | Recipient,
 		    bMS_Vendorcode, (UINT16)((InterfaceNumber << 8) | Ms_PageIndex), Ms_featureDescIndex,
 		    Buffer, (UINT16)*BufferSize, Timeout);
 		log_libusb_result(pdev->urbdrc->log, WLOG_DEBUG, "libusb_control_transfer", error);
@@ -1190,7 +1192,8 @@ static int libusb_udev_query_device_port_status(IUDEVICE* idev, UINT32* UsbdStat
 	{
 		ret = idev->control_transfer(
 		    idev, 0xffff, 0, 0,
-		    LIBUSB_ENDPOINT_IN | LIBUSB_REQUEST_TYPE_CLASS | LIBUSB_RECIPIENT_OTHER,
+		    (uint8_t)LIBUSB_ENDPOINT_IN | (uint8_t)LIBUSB_REQUEST_TYPE_CLASS |
+		        (uint8_t)LIBUSB_RECIPIENT_OTHER,
 		    LIBUSB_REQUEST_GET_STATUS, 0, pdev->port_number, UsbdStatus, BufferSize, Buffer, 1000);
 
 		if (log_libusb_result(urbdrc->log, WLOG_DEBUG, "libusb_control_transfer", ret))
@@ -1466,7 +1469,7 @@ BASIC_STATE_FUNC_DEFINED(channelID, UINT32)
 BASIC_STATE_FUNC_DEFINED(ReqCompletion, UINT32)
 BASIC_STATE_FUNC_DEFINED(bus_number, BYTE)
 BASIC_STATE_FUNC_DEFINED(dev_number, BYTE)
-BASIC_STATE_FUNC_DEFINED(port_number, int)
+BASIC_STATE_FUNC_DEFINED(port_number, UINT8)
 BASIC_STATE_FUNC_DEFINED(MsConfig, MSUSB_CONFIG_DESCRIPTOR*)
 
 BASIC_POINT_FUNC_DEFINED(udev, void*)
@@ -1613,7 +1616,7 @@ static int udev_get_device_handle(URBDRC_PLUGIN* urbdrc, libusb_context* ctx, UD
 
 			pdev->port_number = port_numbers[(error - 1)];
 			error = 0;
-			WLog_Print(urbdrc->log, WLOG_DEBUG, "  Port: %d", pdev->port_number);
+			WLog_Print(urbdrc->log, WLOG_DEBUG, "  Port: %" PRIu8, pdev->port_number);
 			/* gen device path */
 			(void)_snprintf(pdev->path, sizeof(pdev->path), "%" PRIu16 "-%d", bus_number,
 			                pdev->port_number);

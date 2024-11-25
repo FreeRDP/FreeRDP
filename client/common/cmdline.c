@@ -5810,7 +5810,7 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 		if ((dynChannels[i].settingId == FreeRDP_BOOL_UNUSED) ||
 		    freerdp_settings_get_bool(settings, dynChannels[i].settingId))
 		{
-			const char* p[] = { dynChannels[i].channelName };
+			const char* const p[] = { dynChannels[i].channelName };
 
 			if (!freerdp_client_add_dynamic_channel(settings, ARRAYSIZE(p), p))
 				return FALSE;
@@ -5922,7 +5922,7 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 	{
 		if (!freerdp_device_collection_find(settings, "drive"))
 		{
-			const char* params[] = { "drive", "media", "*" };
+			const char* const params[] = { "drive", "media", "*" };
 
 			if (!freerdp_client_add_device_channel(settings, ARRAYSIZE(params), params))
 				return FALSE;
@@ -5959,7 +5959,7 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 		if (!freerdp_static_channel_collection_find(settings, RDPSND_CHANNEL_NAME) &&
 		    !freerdp_dynamic_channel_collection_find(settings, RDPSND_CHANNEL_NAME))
 		{
-			const char* params[] = { RDPSND_CHANNEL_NAME, "sys:fake" };
+			const char* const params[] = { RDPSND_CHANNEL_NAME, "sys:fake" };
 
 			if (!freerdp_client_add_static_channel(settings, ARRAYSIZE(params), params))
 				return FALSE;
@@ -6037,7 +6037,7 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 			}
 			else
 			{
-				const char* p[] = { staticChannels[i].channelName };
+				const char* const p[] = { staticChannels[i].channelName };
 				if (!freerdp_client_add_static_channel(settings, ARRAYSIZE(p), p))
 					return FALSE;
 			}
