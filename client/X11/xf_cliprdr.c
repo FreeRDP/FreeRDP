@@ -1988,6 +1988,8 @@ static UINT xf_cliprdr_server_format_list(CliprdrClientContext* context,
 	xfc = clipboard->xfc;
 	WINPR_ASSERT(xfc);
 
+	xf_lock_x11(xfc);
+
 	/* Clear the active SelectionRequest, as it is now invalid */
 	free(clipboard->respond);
 	clipboard->respond = NULL;
@@ -2004,7 +2006,8 @@ static UINT xf_cliprdr_server_format_list(CliprdrClientContext* context,
 	          (CLIPRDR_FORMAT*)calloc(clipboard->numServerFormats, sizeof(CLIPRDR_FORMAT))))
 	{
 		WLog_ERR(TAG, "failed to allocate %d CLIPRDR_FORMAT structs", clipboard->numServerFormats);
-		return CHANNEL_RC_NO_MEMORY;
+		ret = CHANNEL_RC_NO_MEMORY;
+		goto out;
 	}
 
 	for (size_t i = 0; i < formatList->numFormats; i++)
@@ -2026,14 +2029,15 @@ static UINT xf_cliprdr_server_format_list(CliprdrClientContext* context,
 				clipboard->numServerFormats = 0;
 				free(clipboard->serverFormats);
 				clipboard->serverFormats = NULL;
-				return CHANNEL_RC_NO_MEMORY;
+				ret = CHANNEL_RC_NO_MEMORY;
+				goto out;
 			}
 		}
 	}
 
 	ret = cliprdr_file_context_notify_new_server_format_list(clipboard->file);
 	if (ret)
-		return ret;
+		goto out;
 
 	/* CF_RAW is always implicitly supported by the server */
 	{
@@ -2069,6 +2073,10 @@ static UINT xf_cliprdr_server_format_list(CliprdrClientContext* context,
 		xf_cliprdr_set_selection_owner(xfc, clipboard, CurrentTime);
 	else
 		xf_cliprdr_prepare_to_set_selection_owner(xfc, clipboard);
+
+out:
+	xf_unlock_x11(xfc);
+
 	return ret;
 }
 
