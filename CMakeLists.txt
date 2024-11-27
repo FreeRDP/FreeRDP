@@ -444,7 +444,7 @@ if(ANDROID)
 	set( CMAKE_FIND_ROOT_PATH_MODE_INCLUDE BOTH )
 
 	if (WITH_GPROF)
-		CONFIGURE_FILE(${PROJECT_SOURCE_DIR}/scripts/gprof_generate.sh.cmake
+		CONFIGURE_FILE(${PROJECT_SOURCE_DIR}/scripts/gprof_generate.sh.in
 			${PROJECT_BINARY_DIR}/scripts/gprof_generate.sh @ONLY)
 	endif(WITH_GPROF)
 endif()
