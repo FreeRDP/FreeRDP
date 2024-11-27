@@ -17,13 +17,8 @@
 
 define_channel_server("rdpecam")
 
-set(${MODULE_PREFIX}_SRCS
-	camera_device_enumerator_main.c
-	camera_device_main.c
-)
+set(${MODULE_PREFIX}_SRCS camera_device_enumerator_main.c camera_device_main.c)
 
-set(${MODULE_PREFIX}_LIBS
-    freerdp
-)
+set(${MODULE_PREFIX}_LIBS freerdp)
 
 add_channel_server_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} FALSE "DVCPluginEntry")

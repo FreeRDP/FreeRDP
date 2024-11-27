@@ -15,7 +15,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-winpr_module_add(
-	registry_reg.c
-	registry_reg.h
-	registry.c)
+winpr_module_add(registry_reg.c registry_reg.h registry.c)

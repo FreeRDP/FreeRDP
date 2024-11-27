@@ -19,13 +19,9 @@
 add_subdirectory(aad)
 add_subdirectory(res)
 
-add_library(sdl-common-prefs STATIC
-	sdl_prefs.hpp
-	sdl_prefs.cpp
-	scoped_guard.hpp
-)
+add_library(sdl-common-prefs STATIC sdl_prefs.hpp sdl_prefs.cpp scoped_guard.hpp)
 target_link_libraries(sdl-common-prefs winpr freerdp)
 
 if(BUILD_TESTING_INTERNAL OR BUILD_TESTING)
-	add_subdirectory(test)
+  add_subdirectory(test)
 endif()

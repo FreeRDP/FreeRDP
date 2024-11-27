@@ -17,13 +17,9 @@
 # limitations under the License.
 define_channel_client_subsystem("printer" "win" "")
 
-set(${MODULE_PREFIX}_SRCS
-		printer_win.c)
+set(${MODULE_PREFIX}_SRCS printer_win.c)
 
-set(${MODULE_PREFIX}_LIBS
-    winpr
-    freerdp
-)
+set(${MODULE_PREFIX}_LIBS winpr freerdp)
 
 include_directories(..)
 

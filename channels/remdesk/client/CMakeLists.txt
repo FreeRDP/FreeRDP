@@ -17,13 +17,8 @@
 
 define_channel_client("remdesk")
 
-set(${MODULE_PREFIX}_SRCS
-	remdesk_main.c
-	remdesk_main.h
-)
+set(${MODULE_PREFIX}_SRCS remdesk_main.c remdesk_main.h)
 
-set(${MODULE_PREFIX}_LIBS
-		winpr freerdp remdesk-common
-)
+set(${MODULE_PREFIX}_LIBS winpr freerdp remdesk-common)
 
 add_channel_client_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} FALSE "VirtualChannelEntryEx")

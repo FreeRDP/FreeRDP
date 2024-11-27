@@ -18,16 +18,10 @@
 set(MODULE_NAME "freerdp-common")
 set(MODULE_PREFIX "FREERDP_COMMON")
 
-set(${MODULE_PREFIX}_SRCS
-	addin.c
-	settings.c
-	settings_getters.c
-	settings_str.c
-	settings_str.h
-	assistance.c)
+set(${MODULE_PREFIX}_SRCS addin.c settings.c settings_getters.c settings_str.c settings_str.h assistance.c)
 
 freerdp_module_add(${${MODULE_PREFIX}_SRCS})
 
 if(BUILD_TESTING_INTERNAL OR BUILD_TESTING)
-	add_subdirectory(test)
+  add_subdirectory(test)
 endif()

@@ -19,39 +19,40 @@ set(MODULE_NAME "freerdp-crypto")
 set(MODULE_PREFIX "FREERDP_CRYPTO")
 
 freerdp_module_add(
-	er.c
-	der.c
-	ber.c
-	per.c
-	base64.c
-	x509_utils.c
-	x509_utils.h
-	cert_common.h
-	cert_common.c
-	privatekey.c
-	privatekey.h
-	certificate.c
-	certificate.h
-	certificate_data.c
-	certificate_store.c
-	crypto.c
-	tls.c
-	tls.h
-	opensslcompat.c)
+  er.c
+  der.c
+  ber.c
+  per.c
+  base64.c
+  x509_utils.c
+  x509_utils.h
+  cert_common.h
+  cert_common.c
+  privatekey.c
+  privatekey.h
+  certificate.c
+  certificate.h
+  certificate_data.c
+  certificate_store.c
+  crypto.c
+  tls.c
+  tls.h
+  opensslcompat.c
+)
 
 freerdp_include_directory_add(${OPENSSL_INCLUDE_DIR})
 
 freerdp_library_add(${OPENSSL_LIBRARIES})
 
 if(MBEDTLS_FOUND)
-	freerdp_include_directory_add(${MBEDTLS_INCLUDE_DIR})
-	freerdp_library_add(${MBEDTLS_LIBRARIES})
+  freerdp_include_directory_add(${MBEDTLS_INCLUDE_DIR})
+  freerdp_library_add(${MBEDTLS_LIBRARIES})
 endif()
 
 if(WIN32)
-	freerdp_library_add(ws2_32)
+  freerdp_library_add(ws2_32)
 endif()
 
 if(BUILD_TESTING_INTERNAL OR BUILD_TESTING)
-	add_subdirectory(test)
+  add_subdirectory(test)
 endif()

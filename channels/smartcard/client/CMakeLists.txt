@@ -17,17 +17,10 @@
 
 define_channel_client("smartcard")
 
-set(${MODULE_PREFIX}_SRCS
-	smartcard_main.c
-	smartcard_main.h
-)
+set(${MODULE_PREFIX}_SRCS smartcard_main.c smartcard_main.h)
 
-set(${MODULE_PREFIX}_LIBS
-	winpr freerdp ${OPENSSL_LIBRARIES}
-)
-if (WITH_SMARTCARD_EMULATE)
-	list(APPEND ${MODULE_PREFIX}_LIBS
-		ZLIB::ZLIB
-	)
+set(${MODULE_PREFIX}_LIBS winpr freerdp ${OPENSSL_LIBRARIES})
+if(WITH_SMARTCARD_EMULATE)
+  list(APPEND ${MODULE_PREFIX}_LIBS ZLIB::ZLIB)
 endif()
 add_channel_client_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} FALSE "DeviceServiceEntry")

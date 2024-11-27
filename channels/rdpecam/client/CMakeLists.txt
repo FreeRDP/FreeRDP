@@ -18,46 +18,37 @@
 define_channel_client("rdpecam")
 
 if(NOT WITH_SWSCALE OR NOT WITH_FFMPEG)
-    message(FATAL_ERROR "WITH_FFMPEG and WITH_SWSCALE required for CHANNEL_RDPECAM_CLIENT")
+  message(FATAL_ERROR "WITH_FFMPEG and WITH_SWSCALE required for CHANNEL_RDPECAM_CLIENT")
 endif()
 
 # currently camera redirect client supported for platforms with Video4Linux only
 find_package(FFmpeg REQUIRED COMPONENTS SWSCALE)
 find_package(V4L)
 if(V4L_FOUND)
-	set(WITH_V4L ON)
-	add_definitions("-DWITH_V4L")
+  set(WITH_V4L ON)
+  add_definitions("-DWITH_V4L")
 else()
-	message(FATAL_ERROR "libv4l-dev required for CHANNEL_RDPECAM_CLIENT")
+  message(FATAL_ERROR "libv4l-dev required for CHANNEL_RDPECAM_CLIENT")
 endif()
 
 option(RDPECAM_INPUT_FORMAT_H264 "[MS-RDPECAM] Enable H264 camera format (passthrough)" ON)
 if(RDPECAM_INPUT_FORMAT_H264)
-	add_definitions("-DWITH_INPUT_FORMAT_H264")
+  add_definitions("-DWITH_INPUT_FORMAT_H264")
 endif()
 
 option(RDPECAM_INPUT_FORMAT_MJPG "[MS-RDPECAM] Enable MJPG camera format" ON)
 if(RDPECAM_INPUT_FORMAT_MJPG)
-	add_definitions("-DWITH_INPUT_FORMAT_MJPG")
+  add_definitions("-DWITH_INPUT_FORMAT_MJPG")
 endif()
 
 include_directories(SYSTEM ${SWSCALE_INCLUDE_DIRS})
 
-set(${MODULE_PREFIX}_SRCS
-	camera_device_enum_main.c
-	camera_device_main.c
-	encoding.c
-)
+set(${MODULE_PREFIX}_SRCS camera_device_enum_main.c camera_device_main.c encoding.c)
 
-set(${MODULE_PREFIX}_LIBS
-	freerdp
-    winpr
-    ${SWSCALE_LIBRARIES}
-    ${FFMPEG_LIBRARIES}
-)
+set(${MODULE_PREFIX}_LIBS freerdp winpr ${SWSCALE_LIBRARIES} ${FFMPEG_LIBRARIES})
 
 add_channel_client_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} TRUE "DVCPluginEntry")
 
 if(V4L_FOUND)
-	add_channel_client_subsystem(${MODULE_PREFIX} ${CHANNEL_NAME} "v4l" "")
+  add_channel_client_subsystem(${MODULE_PREFIX} ${CHANNEL_NAME} "v4l" "")
 endif()

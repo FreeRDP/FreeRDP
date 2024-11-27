@@ -19,21 +19,13 @@
 
 define_channel_client_subsystem("rdpsnd" "ios" "")
 
-FIND_LIBRARY(CORE_AUDIO CoreAudio)
-FIND_LIBRARY(AUDIO_TOOL AudioToolbox)
-FIND_LIBRARY(CORE_FOUNDATION CoreFoundation)
+find_library(CORE_AUDIO CoreAudio)
+find_library(AUDIO_TOOL AudioToolbox)
+find_library(CORE_FOUNDATION CoreFoundation)
 
-set(${MODULE_PREFIX}_SRCS
-	rdpsnd_ios.c
-	TPCircularBuffer.c)
+set(${MODULE_PREFIX}_SRCS rdpsnd_ios.c TPCircularBuffer.c)
 
-set(${MODULE_PREFIX}_LIBS
-	winpr
-    freerdp
-    ${AUDIO_TOOL}
-    ${CORE_AUDIO}
-    ${CORE_FOUNDATION}
-)
+set(${MODULE_PREFIX}_LIBS winpr freerdp ${AUDIO_TOOL} ${CORE_AUDIO} ${CORE_FOUNDATION})
 
 include_directories(..)
 

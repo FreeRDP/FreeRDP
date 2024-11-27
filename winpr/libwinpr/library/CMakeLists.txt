@@ -18,5 +18,5 @@
 winpr_module_add(library.c)
 
 if(BUILD_TESTING_INTERNAL OR BUILD_TESTING)
-	add_subdirectory(test)
+  add_subdirectory(test)
 endif()

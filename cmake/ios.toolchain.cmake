@@ -148,12 +148,26 @@ option(DROP_32_BIT "Drops the 32-bit targets universally." YES)
 ###############################################################################
 
 # List of supported platform values
-list(APPEND _supported_platforms
-        "OS" "OS64" "OS64COMBINED" "SIMULATOR" "SIMULATOR64" "SIMULATORARM64"
-        "TVOS" "TVOSCOMBINED" "SIMULATOR_TVOS"
-        "WATCHOS" "WATCHOSCOMBINED" "SIMULATOR_WATCHOS"
-        "MAC" "MAC_ARM64"
-        "MAC_CATALYST" "MAC_CATALYST_ARM64")
+list(
+  APPEND
+  _supported_platforms
+  "OS"
+  "OS64"
+  "OS64COMBINED"
+  "SIMULATOR"
+  "SIMULATOR64"
+  "SIMULATORARM64"
+  "TVOS"
+  "TVOSCOMBINED"
+  "SIMULATOR_TVOS"
+  "WATCHOS"
+  "WATCHOSCOMBINED"
+  "SIMULATOR_WATCHOS"
+  "MAC"
+  "MAC_ARM64"
+  "MAC_CATALYST"
+  "MAC_CATALYST_ARM64"
+)
 
 # Cache what generator is used
 set(USED_CMAKE_GENERATOR "${CMAKE_GENERATOR}")
@@ -178,10 +192,10 @@ elseif(NOT DEFINED XCODE_VERSION_INT)
   if(NOT XCODEBUILD_EXECUTABLE)
     message(FATAL_ERROR "xcodebuild not found. Please install either the standalone commandline tools or Xcode.")
   endif()
-  execute_process(COMMAND ${XCODEBUILD_EXECUTABLE} -version
-          OUTPUT_VARIABLE XCODE_VERSION_INT
-          ERROR_QUIET
-          OUTPUT_STRIP_TRAILING_WHITESPACE)
+  execute_process(
+    COMMAND ${XCODEBUILD_EXECUTABLE} -version OUTPUT_VARIABLE XCODE_VERSION_INT ERROR_QUIET
+                                                                                OUTPUT_STRIP_TRAILING_WHITESPACE
+  )
   string(REGEX MATCH "Xcode [0-9\\.]+" XCODE_VERSION_INT "${XCODE_VERSION_INT}")
   string(REGEX REPLACE "Xcode ([0-9\\.]+)" "\\1" XCODE_VERSION_INT "${XCODE_VERSION_INT}")
   set(XCODE_VERSION_INT "${XCODE_VERSION_INT}" CACHE INTERNAL "")
@@ -201,19 +215,25 @@ if(DEFINED PLATFORM)
 elseif(DEFINED ENV{_PLATFORM})
   set(PLATFORM "$ENV{_PLATFORM}")
 elseif(NOT DEFINED PLATFORM)
-  message(FATAL_ERROR "PLATFORM argument not set. Bailing configure since I don't know what target you want to build for!")
-endif ()
+  message(
+    FATAL_ERROR "PLATFORM argument not set. Bailing configure since I don't know what target you want to build for!"
+  )
+endif()
 
 if(PLATFORM MATCHES ".*COMBINED" AND NOT CMAKE_GENERATOR MATCHES "Xcode")
-  message(FATAL_ERROR "The combined builds support requires Xcode to be used as generator via '-G Xcode' command-line argument in CMake")
+  message(
+    FATAL_ERROR
+      "The combined builds support requires Xcode to be used as generator via '-G Xcode' command-line argument in CMake"
+  )
 endif()
 
 # Safeguard that the platform value is set and is one of the supported values
 list(FIND _supported_platforms ${PLATFORM} contains_PLATFORM)
 if("${contains_PLATFORM}" EQUAL "-1")
-  string(REPLACE ";"  "\n * " _supported_platforms_formatted "${_supported_platforms}")
+  string(REPLACE ";" "\n * " _supported_platforms_formatted "${_supported_platforms}")
   message(FATAL_ERROR " Invalid PLATFORM specified! Current value: ${PLATFORM}.\n"
-          " Supported PLATFORM values: \n * ${_supported_platforms_formatted}")
+                      " Supported PLATFORM values: \n * ${_supported_platforms_formatted}"
+  )
 endif()
 
 # Check if Apple Silicon is supported
@@ -224,6 +244,7 @@ endif()
 # Touch toolchain variable to suppress "unused variable" warning.
 # This happens if CMake is invoked with the same command line the second time.
 if(CMAKE_TOOLCHAIN_FILE)
+
 endif()
 
 # Fix for PThread library not in path
@@ -234,7 +255,7 @@ set(CMAKE_USE_PTHREADS_INIT 1)
 
 # Specify minimum version of deployment target.
 if(NOT DEFINED DEPLOYMENT_TARGET)
-  if (PLATFORM MATCHES "WATCHOS")
+  if(PLATFORM MATCHES "WATCHOS")
     # Unless specified, SDK version 4.0 is used by default as minimum target version (watchOS).
     set(DEPLOYMENT_TARGET "4.0")
   elseif(PLATFORM STREQUAL "MAC")
@@ -281,13 +302,15 @@ if(PLATFORM_INT STREQUAL "OS")
     set(ARCHS armv7 armv7s arm64)
     set(APPLE_TARGET_TRIPLE_INT arm-apple-ios$${DEPLOYMENT_TARGET})
   else()
-    set(APPLE_TARGET_TRIPLE_INT ${ARCHS_SPLIT}-apple-ios${DEPLOYMENT_TARGET})  
+    set(APPLE_TARGET_TRIPLE_INT ${ARCHS_SPLIT}-apple-ios${DEPLOYMENT_TARGET})
   endif()
 elseif(PLATFORM_INT STREQUAL "OS64")
   set(SDK_NAME iphoneos)
   if(NOT ARCHS)
-    if (XCODE_VERSION_INT VERSION_GREATER 10.0)
-      set(ARCHS arm64) # Add arm64e when Apple have fixed the integration issues with it, libarclite_iphoneos.a is currently missung bitcode markers for example
+    if(XCODE_VERSION_INT VERSION_GREATER 10.0)
+      set(ARCHS arm64)
+
+      # Add arm64e when Apple have fixed the integration issues with it, libarclite_iphoneos.a is currently missung bitcode markers for example
     else()
       set(ARCHS arm64)
     endif()
@@ -299,8 +322,10 @@ elseif(PLATFORM_INT STREQUAL "OS64COMBINED")
   set(SDK_NAME iphoneos)
   if(MODERN_CMAKE)
     if(NOT ARCHS)
-      if (XCODE_VERSION_INT VERSION_GREATER 10.0)
-        set(ARCHS arm64 x86_64) # Add arm64e when Apple have fixed the integration issues with it, libarclite_iphoneos.a is currently missung bitcode markers for example
+      if(XCODE_VERSION_INT VERSION_GREATER 10.0)
+        set(ARCHS arm64 x86_64)
+
+        # Add arm64e when Apple have fixed the integration issues with it, libarclite_iphoneos.a is currently missung bitcode markers for example
         set(CMAKE_XCODE_ATTRIBUTE_ARCHS[sdk=iphoneos*] "arm64")
         set(CMAKE_XCODE_ATTRIBUTE_ARCHS[sdk=iphonesimulator*] "x86_64")
         set(CMAKE_XCODE_ATTRIBUTE_VALID_ARCHS[sdk=iphoneos*] "arm64")
@@ -352,7 +377,7 @@ elseif(PLATFORM_INT STREQUAL "TVOS")
   else()
     set(APPLE_TARGET_TRIPLE_INT ${ARCHS_SPLIT}-apple-tvos${DEPLOYMENT_TARGET})
   endif()
-elseif (PLATFORM_INT STREQUAL "TVOSCOMBINED")
+elseif(PLATFORM_INT STREQUAL "TVOSCOMBINED")
   set(SDK_NAME appletvos)
   if(MODERN_CMAKE)
     if(NOT ARCHS)
@@ -379,7 +404,7 @@ elseif(PLATFORM_INT STREQUAL "SIMULATOR_TVOS")
 elseif(PLATFORM_INT STREQUAL "WATCHOS")
   set(SDK_NAME watchos)
   if(NOT ARCHS)
-    if (XCODE_VERSION_INT VERSION_GREATER 10.0)
+    if(XCODE_VERSION_INT VERSION_GREATER 10.0)
       set(ARCHS armv7k arm64_32)
       set(APPLE_TARGET_TRIPLE_INT aarch64_32-apple-watchos${DEPLOYMENT_TARGET})
     else()
@@ -393,7 +418,7 @@ elseif(PLATFORM_INT STREQUAL "WATCHOSCOMBINED")
   set(SDK_NAME watchos)
   if(MODERN_CMAKE)
     if(NOT ARCHS)
-      if (XCODE_VERSION_INT VERSION_GREATER 10.0)
+      if(XCODE_VERSION_INT VERSION_GREATER 10.0)
         set(ARCHS armv7k arm64_32 i386)
         set(APPLE_TARGET_TRIPLE_INT aarch64_32-i386-apple-watchos${DEPLOYMENT_TARGET})
         set(CMAKE_XCODE_ATTRIBUTE_ARCHS[sdk=watchos*] "armv7k arm64_32")
@@ -476,19 +501,19 @@ if(DEFINED CMAKE_OSX_SYSROOT_INT)
 elseif(DEFINED ENV{_CMAKE_OSX_SYSROOT_INT})
   set(CMAKE_OSX_SYSROOT_INT "$ENV{_CMAKE_OSX_SYSROOT_INT}")
 elseif(NOT DEFINED CMAKE_OSX_SYSROOT_INT)
-  execute_process(COMMAND ${XCODEBUILD_EXECUTABLE} -version -sdk ${SDK_NAME} Path
-          OUTPUT_VARIABLE CMAKE_OSX_SYSROOT_INT
-          ERROR_QUIET
-          OUTPUT_STRIP_TRAILING_WHITESPACE)
+  execute_process(
+    COMMAND ${XCODEBUILD_EXECUTABLE} -version -sdk ${SDK_NAME} Path OUTPUT_VARIABLE CMAKE_OSX_SYSROOT_INT
+    ERROR_QUIET OUTPUT_STRIP_TRAILING_WHITESPACE
+  )
 endif()
 
-if (NOT DEFINED CMAKE_OSX_SYSROOT_INT AND NOT DEFINED CMAKE_OSX_SYSROOT)
+if(NOT DEFINED CMAKE_OSX_SYSROOT_INT AND NOT DEFINED CMAKE_OSX_SYSROOT)
   message(SEND_ERROR "Please make sure that Xcode is installed and that the toolchain"
-          "is pointing to the correct path. Please run:"
-          "sudo xcode-select -s /Applications/Xcode.app/Contents/Developer"
-          "and see if that fixes the problem for you.")
-  message(FATAL_ERROR "Invalid CMAKE_OSX_SYSROOT: ${CMAKE_OSX_SYSROOT} "
-          "does not exist.")
+                     "is pointing to the correct path. Please run:"
+                     "sudo xcode-select -s /Applications/Xcode.app/Contents/Developer"
+                     "and see if that fixes the problem for you."
+  )
+  message(FATAL_ERROR "Invalid CMAKE_OSX_SYSROOT: ${CMAKE_OSX_SYSROOT} " "does not exist.")
 elseif(DEFINED CMAKE_OSX_SYSROOT_INT)
   set(CMAKE_OSX_SYSROOT_INT "${CMAKE_OSX_SYSROOT_INT}" CACHE INTERNAL "")
   # Specify the location or name of the platform SDK to be used in CMAKE_OSX_SYSROOT.
@@ -501,11 +526,12 @@ if(NOT DEFINED ENABLE_BITCODE AND NOT ARCHS MATCHES "((^|;|, )(i386|x86_64))+")
   message(STATUS "[DEFAULTS] Enabling bitcode support by default. ENABLE_BITCODE not provided!")
   set(ENABLE_BITCODE TRUE)
 elseif(NOT DEFINED ENABLE_BITCODE)
-  message(STATUS "[DEFAULTS] Disabling bitcode support by default on simulators. ENABLE_BITCODE not provided for override!")
+  message(
+    STATUS "[DEFAULTS] Disabling bitcode support by default on simulators. ENABLE_BITCODE not provided for override!"
+  )
   set(ENABLE_BITCODE FALSE)
 endif()
-set(ENABLE_BITCODE_INT ${ENABLE_BITCODE} CACHE BOOL
-        "Whether or not to enable bitcode" FORCE)
+set(ENABLE_BITCODE_INT ${ENABLE_BITCODE} CACHE BOOL "Whether or not to enable bitcode" FORCE)
 # Use ARC or not
 if(NOT DEFINED ENABLE_ARC)
   # Unless specified, enable ARC support by default
@@ -519,15 +545,18 @@ if(NOT DEFINED ENABLE_VISIBILITY)
   set(ENABLE_VISIBILITY FALSE)
   message(STATUS "[DEFAULTS] Hiding symbols visibility by default. ENABLE_VISIBILITY not provided!")
 endif()
-set(ENABLE_VISIBILITY_INT ${ENABLE_VISIBILITY} CACHE BOOL "Whether or not to hide symbols from the dynamic linker (-fvisibility=hidden)" FORCE)
+set(ENABLE_VISIBILITY_INT ${ENABLE_VISIBILITY}
+    CACHE BOOL "Whether or not to hide symbols from the dynamic linker (-fvisibility=hidden)" FORCE
+)
 # Set strict compiler checks or not
 if(NOT DEFINED ENABLE_STRICT_TRY_COMPILE)
   # Unless specified, disable strict try_compile()
   set(ENABLE_STRICT_TRY_COMPILE FALSE)
   message(STATUS "[DEFAULTS] Using NON-strict compiler checks by default. ENABLE_STRICT_TRY_COMPILE not provided!")
 endif()
-set(ENABLE_STRICT_TRY_COMPILE_INT ${ENABLE_STRICT_TRY_COMPILE} CACHE BOOL
-        "Whether or not to use strict compiler checks" FORCE)
+set(ENABLE_STRICT_TRY_COMPILE_INT ${ENABLE_STRICT_TRY_COMPILE}
+    CACHE BOOL "Whether or not to use strict compiler checks" FORCE
+)
 
 # Get the SDK version information.
 if(DEFINED SDK_VERSION)
@@ -536,20 +565,20 @@ if(DEFINED SDK_VERSION)
 elseif(DEFINED ENV{_SDK_VERSION})
   set(SDK_VERSION "$ENV{_SDK_VERSION}")
 elseif(NOT DEFINED SDK_VERSION)
-  execute_process(COMMAND ${XCODEBUILD_EXECUTABLE} -sdk ${CMAKE_OSX_SYSROOT_INT} -version SDKVersion
-          OUTPUT_VARIABLE SDK_VERSION
-          ERROR_QUIET
-          OUTPUT_STRIP_TRAILING_WHITESPACE)
+  execute_process(
+    COMMAND ${XCODEBUILD_EXECUTABLE} -sdk ${CMAKE_OSX_SYSROOT_INT} -version SDKVersion OUTPUT_VARIABLE SDK_VERSION
+    ERROR_QUIET OUTPUT_STRIP_TRAILING_WHITESPACE
+  )
 endif()
 
 # Find the Developer root for the specific iOS platform being compiled for
 # from CMAKE_OSX_SYSROOT.  Should be ../../ from SDK specified in
 # CMAKE_OSX_SYSROOT. There does not appear to be a direct way to obtain
 # this information from xcrun or xcodebuild.
-if (NOT DEFINED CMAKE_DEVELOPER_ROOT AND NOT CMAKE_GENERATOR MATCHES "Xcode")
+if(NOT DEFINED CMAKE_DEVELOPER_ROOT AND NOT CMAKE_GENERATOR MATCHES "Xcode")
   get_filename_component(PLATFORM_SDK_DIR ${CMAKE_OSX_SYSROOT_INT} PATH)
   get_filename_component(CMAKE_DEVELOPER_ROOT ${PLATFORM_SDK_DIR} PATH)
-  if (NOT EXISTS "${CMAKE_DEVELOPER_ROOT}")
+  if(NOT EXISTS "${CMAKE_DEVELOPER_ROOT}")
     message(FATAL_ERROR "Invalid CMAKE_DEVELOPER_ROOT: ${CMAKE_DEVELOPER_ROOT} does not exist.")
   endif()
 endif()
@@ -562,10 +591,10 @@ elseif(DEFINED ENV{_CMAKE_C_COMPILER})
   set(CMAKE_C_COMPILER "$ENV{_CMAKE_C_COMPILER}")
   set(CMAKE_ASM_COMPILER ${CMAKE_C_COMPILER})
 elseif(NOT DEFINED CMAKE_C_COMPILER)
-  execute_process(COMMAND xcrun -sdk ${CMAKE_OSX_SYSROOT_INT} -find clang
-          OUTPUT_VARIABLE CMAKE_C_COMPILER
-          ERROR_QUIET
-          OUTPUT_STRIP_TRAILING_WHITESPACE)
+  execute_process(
+    COMMAND xcrun -sdk ${CMAKE_OSX_SYSROOT_INT} -find clang OUTPUT_VARIABLE CMAKE_C_COMPILER
+    ERROR_QUIET OUTPUT_STRIP_TRAILING_WHITESPACE
+  )
   set(CMAKE_ASM_COMPILER ${CMAKE_C_COMPILER})
 endif()
 if(DEFINED CMAKE_CXX_COMPILER)
@@ -574,10 +603,10 @@ if(DEFINED CMAKE_CXX_COMPILER)
 elseif(DEFINED ENV{_CMAKE_CXX_COMPILER})
   set(CMAKE_CXX_COMPILER "$ENV{_CMAKE_CXX_COMPILER}")
 elseif(NOT DEFINED CMAKE_CXX_COMPILER)
-  execute_process(COMMAND xcrun -sdk ${CMAKE_OSX_SYSROOT_INT} -find clang++
-          OUTPUT_VARIABLE CMAKE_CXX_COMPILER
-          ERROR_QUIET
-          OUTPUT_STRIP_TRAILING_WHITESPACE)
+  execute_process(
+    COMMAND xcrun -sdk ${CMAKE_OSX_SYSROOT_INT} -find clang++ OUTPUT_VARIABLE CMAKE_CXX_COMPILER
+    ERROR_QUIET OUTPUT_STRIP_TRAILING_WHITESPACE
+  )
 endif()
 # Find (Apple's) libtool.
 if(DEFINED BUILD_LIBTOOL)
@@ -586,10 +615,10 @@ if(DEFINED BUILD_LIBTOOL)
 elseif(DEFINED ENV{_BUILD_LIBTOOL})
   set(BUILD_LIBTOOL "$ENV{_BUILD_LIBTOOL}")
 elseif(NOT DEFINED BUILD_LIBTOOL)
-  execute_process(COMMAND xcrun -sdk ${CMAKE_OSX_SYSROOT_INT} -find libtool
-          OUTPUT_VARIABLE BUILD_LIBTOOL
-          ERROR_QUIET
-          OUTPUT_STRIP_TRAILING_WHITESPACE)
+  execute_process(
+    COMMAND xcrun -sdk ${CMAKE_OSX_SYSROOT_INT} -find libtool OUTPUT_VARIABLE BUILD_LIBTOOL
+    ERROR_QUIET OUTPUT_STRIP_TRAILING_WHITESPACE
+  )
 endif()
 # Find the toolchain's provided install_name_tool if none is found on the host
 if(DEFINED CMAKE_INSTALL_NAME_TOOL)
@@ -598,10 +627,10 @@ if(DEFINED CMAKE_INSTALL_NAME_TOOL)
 elseif(DEFINED ENV{_CMAKE_INSTALL_NAME_TOOL})
   set(CMAKE_INSTALL_NAME_TOOL "$ENV{_CMAKE_INSTALL_NAME_TOOL}")
 elseif(NOT DEFINED CMAKE_INSTALL_NAME_TOOL)
-  execute_process(COMMAND xcrun -sdk ${CMAKE_OSX_SYSROOT_INT} -find install_name_tool
-          OUTPUT_VARIABLE CMAKE_INSTALL_NAME_TOOL_INT
-          ERROR_QUIET
-          OUTPUT_STRIP_TRAILING_WHITESPACE)
+  execute_process(
+    COMMAND xcrun -sdk ${CMAKE_OSX_SYSROOT_INT} -find install_name_tool OUTPUT_VARIABLE CMAKE_INSTALL_NAME_TOOL_INT
+    ERROR_QUIET OUTPUT_STRIP_TRAILING_WHITESPACE
+  )
   set(CMAKE_INSTALL_NAME_TOOL ${CMAKE_INSTALL_NAME_TOOL_INT} CACHE INTERNAL "")
 endif()
 
@@ -610,7 +639,9 @@ endif()
 # Xcode.
 get_property(languages GLOBAL PROPERTY ENABLED_LANGUAGES)
 foreach(lang ${languages})
-  set(CMAKE_${lang}_CREATE_STATIC_LIBRARY "${BUILD_LIBTOOL} -static -o <TARGET> <LINK_FLAGS> <OBJECTS> " CACHE INTERNAL "")
+  set(CMAKE_${lang}_CREATE_STATIC_LIBRARY "${BUILD_LIBTOOL} -static -o <TARGET> <LINK_FLAGS> <OBJECTS> " CACHE INTERNAL
+                                                                                                               ""
+  )
 endforeach()
 
 # CMake 3.14+ support building for iOS, watchOS and tvOS out of the box.
@@ -697,32 +728,24 @@ endif()
 if(${CMAKE_VERSION} VERSION_LESS "3.11")
   if(PLATFORM_INT STREQUAL "OS" OR PLATFORM_INT STREQUAL "OS64")
     if(XCODE_VERSION_INT VERSION_LESS 7.0)
-      set(SDK_NAME_VERSION_FLAGS
-              "-mios-version-min=${DEPLOYMENT_TARGET}")
+      set(SDK_NAME_VERSION_FLAGS "-mios-version-min=${DEPLOYMENT_TARGET}")
     else()
       # Xcode 7.0+ uses flags we can build directly from SDK_NAME.
-      set(SDK_NAME_VERSION_FLAGS
-              "-m${SDK_NAME}-version-min=${DEPLOYMENT_TARGET}")
+      set(SDK_NAME_VERSION_FLAGS "-m${SDK_NAME}-version-min=${DEPLOYMENT_TARGET}")
     endif()
   elseif(PLATFORM_INT STREQUAL "TVOS")
-    set(SDK_NAME_VERSION_FLAGS
-            "-mtvos-version-min=${DEPLOYMENT_TARGET}")
+    set(SDK_NAME_VERSION_FLAGS "-mtvos-version-min=${DEPLOYMENT_TARGET}")
   elseif(PLATFORM_INT STREQUAL "SIMULATOR_TVOS")
-    set(SDK_NAME_VERSION_FLAGS
-            "-mtvos-simulator-version-min=${DEPLOYMENT_TARGET}")
+    set(SDK_NAME_VERSION_FLAGS "-mtvos-simulator-version-min=${DEPLOYMENT_TARGET}")
   elseif(PLATFORM_INT STREQUAL "WATCHOS")
-    set(SDK_NAME_VERSION_FLAGS
-            "-mwatchos-version-min=${DEPLOYMENT_TARGET}")
+    set(SDK_NAME_VERSION_FLAGS "-mwatchos-version-min=${DEPLOYMENT_TARGET}")
   elseif(PLATFORM_INT STREQUAL "SIMULATOR_WATCHOS")
-    set(SDK_NAME_VERSION_FLAGS
-            "-mwatchos-simulator-version-min=${DEPLOYMENT_TARGET}")
+    set(SDK_NAME_VERSION_FLAGS "-mwatchos-simulator-version-min=${DEPLOYMENT_TARGET}")
   elseif(PLATFORM_INT STREQUAL "MAC")
-    set(SDK_NAME_VERSION_FLAGS
-            "-mmacosx-version-min=${DEPLOYMENT_TARGET}")
+    set(SDK_NAME_VERSION_FLAGS "-mmacosx-version-min=${DEPLOYMENT_TARGET}")
   else()
     # SIMULATOR or SIMULATOR64 both use -mios-simulator-version-min.
-    set(SDK_NAME_VERSION_FLAGS
-            "-mios-simulator-version-min=${DEPLOYMENT_TARGET}")
+    set(SDK_NAME_VERSION_FLAGS "-mios-simulator-version-min=${DEPLOYMENT_TARGET}")
   endif()
 elseif(NOT PLATFORM_INT MATCHES "^MAC_CATALYST")
   # Newer versions of CMake sets the version min flags correctly, skip this for Mac Catalyst targets
@@ -737,7 +760,9 @@ if(DEFINED APPLE_TARGET_TRIPLE_INT)
 endif()
 
 if(PLATFORM_INT MATCHES "^MAC_CATALYST")
-  set(C_TARGET_FLAGS "-isystem ${CMAKE_OSX_SYSROOT_INT}/System/iOSSupport/usr/include -iframework ${CMAKE_OSX_SYSROOT_INT}/System/iOSSupport/System/Library/Frameworks")
+  set(C_TARGET_FLAGS
+      "-isystem ${CMAKE_OSX_SYSROOT_INT}/System/iOSSupport/usr/include -iframework ${CMAKE_OSX_SYSROOT_INT}/System/iOSSupport/System/Library/Frameworks"
+  )
 endif()
 
 if(ENABLE_BITCODE_INT)
@@ -780,15 +805,23 @@ if(CMAKE_GENERATOR MATCHES "Xcode")
   message(STATUS "Not setting any manual command-line buildflags, since Xcode is selected as generator.")
 else()
   # Hidden visibility is required for C++ on iOS.
-  set(CMAKE_C_FLAGS "${C_TARGET_FLAGS} ${APPLE_TARGET_TRIPLE_FLAG} ${SDK_NAME_VERSION_FLAGS} ${BITCODE} -fobjc-abi-version=2 ${FOBJC_ARC} ${CMAKE_C_FLAGS}")
-  set(CMAKE_CXX_FLAGS "${C_TARGET_FLAGS} ${APPLE_TARGET_TRIPLE_FLAG} ${SDK_NAME_VERSION_FLAGS} ${BITCODE} ${VISIBILITY} -fobjc-abi-version=2 ${FOBJC_ARC} ${CMAKE_CXX_FLAGS}")
+  set(CMAKE_C_FLAGS
+      "${C_TARGET_FLAGS} ${APPLE_TARGET_TRIPLE_FLAG} ${SDK_NAME_VERSION_FLAGS} ${BITCODE} -fobjc-abi-version=2 ${FOBJC_ARC} ${CMAKE_C_FLAGS}"
+  )
+  set(CMAKE_CXX_FLAGS
+      "${C_TARGET_FLAGS} ${APPLE_TARGET_TRIPLE_FLAG} ${SDK_NAME_VERSION_FLAGS} ${BITCODE} ${VISIBILITY} -fobjc-abi-version=2 ${FOBJC_ARC} ${CMAKE_CXX_FLAGS}"
+  )
   set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS} -O0 -g ${CMAKE_CXX_FLAGS_DEBUG}")
   set(CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_CXX_FLAGS} -DNDEBUG -Os -ffast-math ${CMAKE_CXX_FLAGS_MINSIZEREL}")
   set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS} -DNDEBUG -O2 -g -ffast-math ${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
   set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} -DNDEBUG -O3 -ffast-math ${CMAKE_CXX_FLAGS_RELEASE}")
   set(CMAKE_C_LINK_FLAGS "${C_TARGET_FLAGS} ${SDK_NAME_VERSION_FLAGS} -Wl,-search_paths_first ${CMAKE_C_LINK_FLAGS}")
-  set(CMAKE_CXX_LINK_FLAGS "${C_TARGET_FLAGS} ${SDK_NAME_VERSION_FLAGS}  -Wl,-search_paths_first ${CMAKE_CXX_LINK_FLAGS}")
-  set(CMAKE_ASM_FLAGS "${CMAKE_C_FLAGS} -x assembler-with-cpp -arch ${CMAKE_OSX_ARCHITECTURES} ${APPLE_TARGET_TRIPLE_FLAG}")
+  set(CMAKE_CXX_LINK_FLAGS
+      "${C_TARGET_FLAGS} ${SDK_NAME_VERSION_FLAGS}  -Wl,-search_paths_first ${CMAKE_CXX_LINK_FLAGS}"
+  )
+  set(CMAKE_ASM_FLAGS
+      "${CMAKE_C_FLAGS} -x assembler-with-cpp -arch ${CMAKE_OSX_ARCHITECTURES} ${APPLE_TARGET_TRIPLE_FLAG}"
+  )
 endif()
 
 ## Print status messages to inform of the current state
@@ -801,8 +834,7 @@ message(STATUS "Using install name tool: ${CMAKE_INSTALL_NAME_TOOL}")
 if(DEFINED APPLE_TARGET_TRIPLE)
   message(STATUS "Autoconf target triple: ${APPLE_TARGET_TRIPLE}")
 endif()
-message(STATUS "Using minimum deployment version: ${DEPLOYMENT_TARGET}"
-        " (SDK version: ${SDK_VERSION})")
+message(STATUS "Using minimum deployment version: ${DEPLOYMENT_TARGET}" " (SDK version: ${SDK_VERSION})")
 if(MODERN_CMAKE)
   message(STATUS "Merging integrated CMake 3.14+ iOS,tvOS,watchOS,macOS toolchain(s) with this toolchain!")
 endif()
@@ -841,31 +873,31 @@ set_property(GLOBAL PROPERTY OSX_ARCHITECTURES "${CMAKE_OSX_ARCHITECTURES}")
 
 # Export configurable variables for the try_compile() command.
 set(CMAKE_TRY_COMPILE_PLATFORM_VARIABLES
-        PLATFORM
-        XCODE_VERSION_INT
-        SDK_VERSION
-        DEPLOYMENT_TARGET
-        CMAKE_DEVELOPER_ROOT
-        CMAKE_OSX_SYSROOT_INT
-        ENABLE_BITCODE
-        ENABLE_ARC
-        CMAKE_ASM_COMPILER
-        CMAKE_C_COMPILER
-        CMAKE_C_COMPILER_TARGET
-        CMAKE_CXX_COMPILER
-        CMAKE_CXX_COMPILER_TARGET
-        BUILD_LIBTOOL
-        CMAKE_INSTALL_NAME_TOOL
-        CMAKE_C_FLAGS
-        CMAKE_CXX_FLAGS
-        CMAKE_CXX_FLAGS_DEBUG
-        CMAKE_CXX_FLAGS_MINSIZEREL
-        CMAKE_CXX_FLAGS_RELWITHDEBINFO
-        CMAKE_CXX_FLAGS_RELEASE
-        CMAKE_C_LINK_FLAGS
-        CMAKE_CXX_LINK_FLAGS
-        CMAKE_ASM_FLAGS
-        )
+    PLATFORM
+    XCODE_VERSION_INT
+    SDK_VERSION
+    DEPLOYMENT_TARGET
+    CMAKE_DEVELOPER_ROOT
+    CMAKE_OSX_SYSROOT_INT
+    ENABLE_BITCODE
+    ENABLE_ARC
+    CMAKE_ASM_COMPILER
+    CMAKE_C_COMPILER
+    CMAKE_C_COMPILER_TARGET
+    CMAKE_CXX_COMPILER
+    CMAKE_CXX_COMPILER_TARGET
+    BUILD_LIBTOOL
+    CMAKE_INSTALL_NAME_TOOL
+    CMAKE_C_FLAGS
+    CMAKE_CXX_FLAGS
+    CMAKE_CXX_FLAGS_DEBUG
+    CMAKE_CXX_FLAGS_MINSIZEREL
+    CMAKE_CXX_FLAGS_RELWITHDEBINFO
+    CMAKE_CXX_FLAGS_RELEASE
+    CMAKE_C_LINK_FLAGS
+    CMAKE_CXX_LINK_FLAGS
+    CMAKE_ASM_FLAGS
+)
 
 set(CMAKE_PLATFORM_HAS_INSTALLNAME 1)
 set(CMAKE_SHARED_LINKER_FLAGS "-rpath @executable_path/Frameworks -rpath @loader_path/Frameworks")
@@ -887,17 +919,15 @@ endif()
 set(CMAKE_FIND_FRAMEWORK FIRST)
 
 # Set up the default search directories for frameworks.
-if(PLATFORM_INT MATCHES "^MAC_CATALYST") 
+if(PLATFORM_INT MATCHES "^MAC_CATALYST")
   set(CMAKE_FRAMEWORK_PATH
-          ${CMAKE_DEVELOPER_ROOT}/Library/PrivateFrameworks
-          ${CMAKE_OSX_SYSROOT_INT}/System/Library/Frameworks
-          ${CMAKE_OSX_SYSROOT_INT}/System/iOSSupport/System/Library/Frameworks
-          ${CMAKE_FRAMEWORK_PATH} CACHE INTERNAL "")
+      ${CMAKE_DEVELOPER_ROOT}/Library/PrivateFrameworks ${CMAKE_OSX_SYSROOT_INT}/System/Library/Frameworks
+      ${CMAKE_OSX_SYSROOT_INT}/System/iOSSupport/System/Library/Frameworks ${CMAKE_FRAMEWORK_PATH} CACHE INTERNAL ""
+  )
 else()
-  set(CMAKE_FRAMEWORK_PATH
-          ${CMAKE_DEVELOPER_ROOT}/Library/PrivateFrameworks
-          ${CMAKE_OSX_SYSROOT_INT}/System/Library/Frameworks
-          ${CMAKE_FRAMEWORK_PATH} CACHE INTERNAL "")
+  set(CMAKE_FRAMEWORK_PATH ${CMAKE_DEVELOPER_ROOT}/Library/PrivateFrameworks
+                           ${CMAKE_OSX_SYSROOT_INT}/System/Library/Frameworks ${CMAKE_FRAMEWORK_PATH} CACHE INTERNAL ""
+  )
 endif()
 
 # By default, search both the specified iOS SDK and the remainder of the host filesystem.
@@ -924,7 +954,9 @@ macro(set_xcode_property TARGET XCODE_PROPERTY XCODE_VALUE XCODE_RELVERSION)
   if(XCODE_RELVERSION_I STREQUAL "All")
     set_property(TARGET ${TARGET} PROPERTY XCODE_ATTRIBUTE_${XCODE_PROPERTY} "${XCODE_VALUE}")
   else()
-    set_property(TARGET ${TARGET} PROPERTY XCODE_ATTRIBUTE_${XCODE_PROPERTY}[variant=${XCODE_RELVERSION_I}] "${XCODE_VALUE}")
+    set_property(
+      TARGET ${TARGET} PROPERTY XCODE_ATTRIBUTE_${XCODE_PROPERTY}[variant=${XCODE_RELVERSION_I}] "${XCODE_VALUE}"
+    )
   endif()
 endmacro(set_xcode_property)
 

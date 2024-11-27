@@ -17,9 +17,9 @@
 #=============================================================================
 
 macro(enable_cmake_compat CMVERSION)
-	if(${CMAKE_VERSION} VERSION_LESS ${CMVERSION})
-		LIST(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake/compat_${CMVERSION}/")
-	endif()
+  if(${CMAKE_VERSION} VERSION_LESS ${CMVERSION})
+    list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake/compat_${CMVERSION}/")
+  endif()
 endmacro()
 
 # Compatibility includes - order does matter!

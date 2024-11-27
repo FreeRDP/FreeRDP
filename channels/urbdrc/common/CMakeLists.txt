@@ -16,14 +16,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(SRCS
-    urbdrc_types.h
-    urbdrc_helpers.h
-    urbdrc_helpers.c
-    msusb.h
-    msusb.c)
+set(SRCS urbdrc_types.h urbdrc_helpers.h urbdrc_helpers.c msusb.h msusb.c)
 
 add_library(urbdrc-common STATIC ${SRCS})
 
-channel_install(urbdrc-common  ${FREERDP_ADDIN_PATH} "FreeRDPTargets")
-
+channel_install(urbdrc-common ${FREERDP_ADDIN_PATH} "FreeRDPTargets")

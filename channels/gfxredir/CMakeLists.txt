@@ -16,8 +16,8 @@
 # limitations under the License.
 
 if(WITH_CHANNEL_GFXREDIR)
-	define_channel("gfxredir")
-	if(WITH_SERVER_CHANNELS)
-		add_channel_server(${MODULE_PREFIX} ${CHANNEL_NAME})
-	endif()
+  define_channel("gfxredir")
+  if(WITH_SERVER_CHANNELS)
+    add_channel_server(${MODULE_PREFIX} ${CHANNEL_NAME})
+  endif()
 endif()

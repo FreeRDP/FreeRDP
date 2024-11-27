@@ -18,10 +18,9 @@
 set(MODULE_NAME "winpr-hash")
 set(MODULE_PREFIX "WINPR_TOOLS_HASH")
 
-set(${MODULE_PREFIX}_SRCS
-	hash.c)
+set(${MODULE_PREFIX}_SRCS hash.c)
 
-AddTargetWithResourceFile(${MODULE_NAME} TRUE "${WINPR_VERSION}" ${MODULE_PREFIX}_SRCS)
+addtargetwithresourcefile(${MODULE_NAME} TRUE "${WINPR_VERSION}" ${MODULE_PREFIX}_SRCS)
 
 set(${MODULE_PREFIX}_LIBS winpr)
 

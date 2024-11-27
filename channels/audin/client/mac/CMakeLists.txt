@@ -17,23 +17,14 @@
 # limitations under the License.
 
 define_channel_client_subsystem("audin" "mac" "")
-FIND_LIBRARY(CORE_AUDIO CoreAudio)
-FIND_LIBRARY(AVFOUNDATION AVFoundation)
-FIND_LIBRARY(AUDIO_TOOL AudioToolbox)
-FIND_LIBRARY(APP_SERVICES ApplicationServices)
+find_library(CORE_AUDIO CoreAudio)
+find_library(AVFOUNDATION AVFoundation)
+find_library(AUDIO_TOOL AudioToolbox)
+find_library(APP_SERVICES ApplicationServices)
 
-set(${MODULE_PREFIX}_SRCS
-	audin_mac.m
-)
+set(${MODULE_PREFIX}_SRCS audin_mac.m)
 
-set(${MODULE_PREFIX}_LIBS
-    winpr
-    freerdp
-    ${AVFOUNDATION}
-    ${CORE_AUDIO}
-    ${AUDIO_TOOL}
-    ${APP_SERVICES}
-)
+set(${MODULE_PREFIX}_LIBS winpr freerdp ${AVFOUNDATION} ${CORE_AUDIO} ${AUDIO_TOOL} ${APP_SERVICES})
 
 include_directories(..)
 include_directories(SYSTEM ${MAC_INCLUDE_DIRS})

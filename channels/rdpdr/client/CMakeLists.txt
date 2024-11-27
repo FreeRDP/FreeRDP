@@ -19,30 +19,26 @@
 
 define_channel_client("rdpdr")
 
-include (CheckFunctionExists)
+include(CheckFunctionExists)
 check_function_exists(getmntent_r FREERDP_HAVE_GETMNTENT_R)
-if (FREERDP_HAVE_GETMNTENT_R)
-	add_definitions(-DFREERDP_HAVE_GETMNTENT_R)
+if(FREERDP_HAVE_GETMNTENT_R)
+  add_definitions(-DFREERDP_HAVE_GETMNTENT_R)
 endif()
 
 set(${MODULE_PREFIX}_SRCS
-	irp.c
-	irp.h
-	devman.c
-	devman.h
-	rdpdr_main.c
-	rdpdr_main.h
-	rdpdr_capabilities.c
-	rdpdr_capabilities.h
+    irp.c
+    irp.h
+    devman.c
+    devman.h
+    rdpdr_main.c
+    rdpdr_main.h
+    rdpdr_capabilities.c
+    rdpdr_capabilities.h
 )
 
-set(${MODULE_PREFIX}_LIBS
-	winpr freerdp
-)
+set(${MODULE_PREFIX}_LIBS winpr freerdp)
 if(APPLE AND (NOT IOS))
-	find_library(CORESERVICES_LIBRARY CoreServices)
-	list(APPEND ${MODULE_PREFIX}_LIBS
-		${CORESERVICES_LIBRARY}
-	)
+  find_library(CORESERVICES_LIBRARY CoreServices)
+  list(APPEND ${MODULE_PREFIX}_LIBS ${CORESERVICES_LIBRARY})
 endif()
 add_channel_client_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} FALSE "VirtualChannelEntryEx")

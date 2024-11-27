@@ -16,56 +16,44 @@
 # limitations under the License.
 
 option(WITH_TIMEZONE_COMPILED "Use compiled in timezone definitions" ON)
-if (WITH_TIMEZONE_COMPILED)
-	winpr_definition_add(-DWITH_TIMEZONE_COMPILED)
+if(WITH_TIMEZONE_COMPILED)
+  winpr_definition_add(-DWITH_TIMEZONE_COMPILED)
 endif()
 
 include(CMakeDependentOption)
 cmake_dependent_option(WITH_TIMEZONE_FROM_FILE "Use timezone definitions from JSON file" OFF WITH_WINPR_JSON OFF)
-if (WITH_TIMEZONE_FROM_FILE)
+if(WITH_TIMEZONE_FROM_FILE)
 
-	winpr_definition_add(-DWINPR_RESOURCE_ROOT="${WINPR_RESOURCE_ROOT}")
-	winpr_definition_add(-DWITH_TIMEZONE_FROM_FILE)
+  winpr_definition_add(-DWINPR_RESOURCE_ROOT="${WINPR_RESOURCE_ROOT}")
+  winpr_definition_add(-DWITH_TIMEZONE_FROM_FILE)
 
-	install(FILES TimeZoneNameMap.json DESTINATION ${WINPR_RESOURCE_ROOT})
+  install(FILES TimeZoneNameMap.json DESTINATION ${WINPR_RESOURCE_ROOT})
 endif()
 
-set(SRCS
-		TimeZoneNameMapUtils.c
-		TimeZoneNameMap.h
-		timezone.c
-	)
-if (WITH_TIMEZONE_COMPILED)
-	list(APPEND SRCS
-                TimeZoneNameMap_static.h
-	)
+set(SRCS TimeZoneNameMapUtils.c TimeZoneNameMap.h timezone.c)
+if(WITH_TIMEZONE_COMPILED)
+  list(APPEND SRCS TimeZoneNameMap_static.h)
 endif()
 
-if (NOT WIN32)
-	list(APPEND SRCS
-            TimeZoneIanaAbbrevMap.c
-            TimeZoneIanaAbbrevMap.h
-	)
+if(NOT WIN32)
+  list(APPEND SRCS TimeZoneIanaAbbrevMap.c TimeZoneIanaAbbrevMap.h)
 endif()
 
 option(WITH_TIMEZONE_ICU "Use ICU for improved timezone mapping" OFF)
-if (WITH_TIMEZONE_ICU)
-	find_package(ICU COMPONENTS i18n uc REQUIRED)
-	winpr_include_directory_add(${ICU_INCLUDE_DIRS})
-	winpr_library_add_private(${ICU_LIBRARIES})
-	winpr_definition_add(-DWITH_TIMEZONE_ICU)
+if(WITH_TIMEZONE_ICU)
+  find_package(ICU COMPONENTS i18n uc REQUIRED)
+  winpr_include_directory_add(${ICU_INCLUDE_DIRS})
+  winpr_library_add_private(${ICU_LIBRARIES})
+  winpr_definition_add(-DWITH_TIMEZONE_ICU)
 else()
-	list(APPEND SRCS
-		WindowsZones.c
-		WindowsZones.h
-	)
+  list(APPEND SRCS WindowsZones.c WindowsZones.h)
 endif()
 
 winpr_module_add(${SRCS})
 
-if (WIN32)
-    option(WITH_TIMEZONE_UPDATER "Build C# tzextract" OFF)
-    if (WITH_TIMEZONE_UPDATER)
-        add_subdirectory(utils)
-    endif()
+if(WIN32)
+  option(WITH_TIMEZONE_UPDATER "Build C# tzextract" OFF)
+  if(WITH_TIMEZONE_UPDATER)
+    add_subdirectory(utils)
+  endif()
 endif()

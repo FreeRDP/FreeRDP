@@ -17,19 +17,11 @@
 
 define_channel_client("rdpgfx")
 
-set(${MODULE_PREFIX}_SRCS
-	rdpgfx_main.c
-	rdpgfx_main.h
-	rdpgfx_codec.c
-	rdpgfx_codec.h
-	../rdpgfx_common.c
-	../rdpgfx_common.h
+set(${MODULE_PREFIX}_SRCS rdpgfx_main.c rdpgfx_main.h rdpgfx_codec.c rdpgfx_codec.h ../rdpgfx_common.c
+                          ../rdpgfx_common.h
 )
 
-set(${MODULE_PREFIX}_LIBS
-	winpr freerdp
-)
+set(${MODULE_PREFIX}_LIBS winpr freerdp)
 include_directories(..)
 
 add_channel_client_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} TRUE "DVCPluginEntry")
-

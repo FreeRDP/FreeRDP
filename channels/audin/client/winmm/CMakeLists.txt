@@ -17,14 +17,9 @@
 
 define_channel_client_subsystem("audin" "winmm" "")
 
-set(${MODULE_PREFIX}_SRCS
-	audin_winmm.c)
+set(${MODULE_PREFIX}_SRCS audin_winmm.c)
 
-set(${MODULE_PREFIX}_LIBS
-    winpr
-    freerdp
-    winmm.lib
-)
+set(${MODULE_PREFIX}_LIBS winpr freerdp winmm.lib)
 
 include_directories(..)
 

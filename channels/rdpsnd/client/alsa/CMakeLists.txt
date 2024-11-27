@@ -19,14 +19,9 @@ define_channel_client_subsystem("rdpsnd" "alsa" "")
 
 find_package(ALSA REQUIRED)
 
-set(${MODULE_PREFIX}_SRCS
-	rdpsnd_alsa.c)
+set(${MODULE_PREFIX}_SRCS rdpsnd_alsa.c)
 
-set(${MODULE_PREFIX}_LIBS
-    winpr
-    freerdp
-    ${ALSA_LIBRARIES}
-)
+set(${MODULE_PREFIX}_LIBS winpr freerdp ${ALSA_LIBRARIES})
 
 include_directories(..)
 include_directories(SYSTEM ${ALSA_INCLUDE_DIRS})

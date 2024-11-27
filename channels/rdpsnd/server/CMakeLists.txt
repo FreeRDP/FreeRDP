@@ -17,13 +17,8 @@
 
 define_channel_server("rdpsnd")
 
-set(${MODULE_PREFIX}_SRCS
-	rdpsnd_main.c
-	rdpsnd_main.h
-)
+set(${MODULE_PREFIX}_SRCS rdpsnd_main.c rdpsnd_main.h)
 
-set(${MODULE_PREFIX}_LIBS
-	rdpsnd-common
-)
+set(${MODULE_PREFIX}_LIBS rdpsnd-common)
 
 add_channel_server_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} FALSE "VirtualChannelEntry")

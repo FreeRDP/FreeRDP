@@ -21,11 +21,9 @@ set(MODULE_PREFIX "FREERDP_SERVER_WINDOWS_CLI")
 
 include_directories(..)
 
-set(${MODULE_PREFIX}_SRCS
-	wfreerdp.c
-	wfreerdp.h)
+set(${MODULE_PREFIX}_SRCS wfreerdp.c wfreerdp.h)
 
-AddTargetWithResourceFile(${MODULE_NAME} TRUE "${FREERDP_VERSION}" ${MODULE_PREFIX}_SRCS)
+addtargetwithresourcefile(${MODULE_NAME} TRUE "${FREERDP_VERSION}" ${MODULE_PREFIX}_SRCS)
 
 set(${MODULE_PREFIX}_LIBS wfreerdp-server)
 

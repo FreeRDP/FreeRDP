@@ -56,7 +56,16 @@ else()
   set(_FFmpeg_REQUIRED_VERSION 0)
 endif()
 
-set(_FFmpeg_ALL_COMPONENTS AVCODEC AVDEVICE AVFORMAT AVFILTER AVUTIL POSTPROCESS SWSCALE SWRESAMPLE)
+set(_FFmpeg_ALL_COMPONENTS
+    AVCODEC
+    AVDEVICE
+    AVFORMAT
+    AVFILTER
+    AVUTIL
+    POSTPROCESS
+    SWSCALE
+    SWRESAMPLE
+)
 
 #
 # ## Macro: set_component_found
@@ -87,45 +96,30 @@ macro(find_component _component _pkgconfig _library _header)
     endif()
   endif(NOT WIN32)
 
-  find_path(${_component}_INCLUDE_DIRS ${_header}
-    HINTS
-    ${PC_LIB${_component}_INCLUDEDIR}
-    ${PC_LIB${_component}_INCLUDE_DIRS}
-    PATH_SUFFIXES
-    ffmpeg
+  find_path(${_component}_INCLUDE_DIRS ${_header} HINTS ${PC_LIB${_component}_INCLUDEDIR}
+                                                        ${PC_LIB${_component}_INCLUDE_DIRS} PATH_SUFFIXES ffmpeg
   )
 
-  find_library(${_component}_LIBRARIES NAMES ${_library}
-    HINTS
-    ${PC_LIB${_component}_LIBDIR}
-    ${PC_LIB${_component}_LIBRARY_DIRS}
+  find_library(
+    ${_component}_LIBRARIES NAMES ${_library} HINTS ${PC_LIB${_component}_LIBDIR} ${PC_LIB${_component}_LIBRARY_DIRS}
   )
 
   set(${_component}_DEFINITIONS ${PC_${_component}_CFLAGS_OTHER} CACHE STRING "The ${_component} CFLAGS.")
 
   # Fallback version detection:
   # Read version.h (and version_major.h if it exists) and try to extract the version
-  if ("${PC_${_component}_VERSION}_" STREQUAL "_")
-    get_filename_component(${_component}_suffix
-      "${_header}"
-      DIRECTORY
+  if("${PC_${_component}_VERSION}_" STREQUAL "_")
+    get_filename_component(${_component}_suffix "${_header}" DIRECTORY)
+    find_file(${_component}_hdr_version_major NAMES version_major.h PATH_SUFFIXES ${${_component}_suffix}
+              HINTS ${${_component}_INCLUDE_DIRS}
     )
-    find_file(${_component}_hdr_version_major
-      NAMES version_major.h
-      PATH_SUFFIXES ${${_component}_suffix}
-      HINTS
-        ${${_component}_INCLUDE_DIRS}
+    find_file(${_component}_hdr_version NAMES version.h PATH_SUFFIXES ${${_component}_suffix}
+              HINTS ${${_component}_INCLUDE_DIRS}
     )
-    find_file(${_component}_hdr_version
-      NAMES version.h
-      PATH_SUFFIXES ${${_component}_suffix}
-      HINTS
-        ${${_component}_INCLUDE_DIRS}
-    )
-    if (NOT ${${_component}_hdr_version} MATCHES ".*-NOTFOUND")
+    if(NOT ${${_component}_hdr_version} MATCHES ".*-NOTFOUND")
       file(READ "${${_component}_hdr_version}" ${_component}_version_text)
     endif()
-    if (NOT ${${_component}_hdr_version_major} MATCHES ".*-NOTFOUND")
+    if(NOT ${${_component}_hdr_version_major} MATCHES ".*-NOTFOUND")
       file(READ "${${_component}_hdr_version_major}" ${_component}_version_major_text)
     else()
       set(${_component}_version_major_text "${${_component}_version_text}")
@@ -138,18 +132,17 @@ macro(find_component _component _pkgconfig _library _header)
     string(REGEX MATCH "#define[ \t]+.*_VERSION_MICRO[ \t]+([0-9]+)" _ "${${_component}_version_text}")
     set(${_component}_version_micro ${CMAKE_MATCH_1})
 
-    set(${_component}_VERSION "${${_component}_version_major}.${${_component}_version_minor}.${${_component}_version_micro}" CACHE STRING "The ${_component} version number.")
+    set(${_component}_VERSION
+        "${${_component}_version_major}.${${_component}_version_minor}.${${_component}_version_micro}"
+        CACHE STRING "The ${_component} version number."
+    )
   else()
     set(${_component}_VERSION ${PC_${_component}_VERSION} CACHE STRING "The ${_component} version number.")
   endif()
 
   set_component_found(${_component})
 
-  mark_as_advanced(
-    ${_component}_INCLUDE_DIRS
-    ${_component}_LIBRARIES
-    ${_component}_DEFINITIONS
-    ${_component}_VERSION)
+  mark_as_advanced(${_component}_INCLUDE_DIRS ${_component}_LIBRARIES ${_component}_DEFINITIONS ${_component}_VERSION)
 endmacro()
 
 # Check for cached results. If there are skip the costly part.
@@ -183,9 +176,7 @@ if(NOT FFMPEG_LIBRARIES)
   set(FFMPEG_LIBRARIES ${FFMPEG_LIBRARIES} CACHE STRING "The FFmpeg libraries." FORCE)
   set(FFMPEG_DEFINITIONS ${FFMPEG_DEFINITIONS} CACHE STRING "The FFmpeg cflags." FORCE)
 
-  mark_as_advanced(FFMPEG_INCLUDE_DIRS
-    FFMPEG_LIBRARIES
-    FFMPEG_DEFINITIONS)
+  mark_as_advanced(FFMPEG_INCLUDE_DIRS FFMPEG_LIBRARIES FFMPEG_DEFINITIONS)
 
 else()
   # Set the noncached _FOUND vars for the components.
@@ -214,6 +205,4 @@ endforeach()
 list(INSERT _FFmpeg_REQUIRED_VARS 0 _FFmpeg_FOUND_LIBRARIES)
 
 # Give a nice error message if some of the required vars are missing.
-find_package_handle_standard_args(FFmpeg
-  REQUIRED_VARS ${_FFmpeg_REQUIRED_VARS}
-  HANDLE_COMPONENTS)
+find_package_handle_standard_args(FFmpeg REQUIRED_VARS ${_FFmpeg_REQUIRED_VARS} HANDLE_COMPONENTS)

@@ -16,19 +16,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(SRCS
-    sdl2_resource_manager.cpp
-    sdl2_resource_manager.hpp
-)
+set(SRCS sdl2_resource_manager.cpp sdl2_resource_manager.hpp)
 
-add_library(sdl2_client_res STATIC
-    ${SRCS}
-)
+add_library(sdl2_client_res STATIC ${SRCS})
 
-if (NOT WITH_SDL_LINK_SHARED)
-	target_link_libraries(sdl2_client_res ${SDL2_STATIC_LIBRARIES})
+if(NOT WITH_SDL_LINK_SHARED)
+  target_link_libraries(sdl2_client_res ${SDL2_STATIC_LIBRARIES})
 else()
-	target_link_libraries(sdl2_client_res ${SDL2_LIBRARIES})
+  target_link_libraries(sdl2_client_res ${SDL2_LIBRARIES})
 endif()
 
 set_property(TARGET sdl2_client_res PROPERTY POSITION_INDEPENDENT_CODE ON)

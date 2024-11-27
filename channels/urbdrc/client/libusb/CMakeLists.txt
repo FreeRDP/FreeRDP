@@ -18,19 +18,10 @@
 
 define_channel_client_subsystem("urbdrc" "libusb" "")
 
-set(${MODULE_PREFIX}_SRCS
-	libusb_udevman.c
-	libusb_udevice.c
-	libusb_udevice.h
-)
+set(${MODULE_PREFIX}_SRCS libusb_udevman.c libusb_udevice.c libusb_udevice.h)
 
-set(${MODULE_PREFIX}_LIBS
-	${CMAKE_THREAD_LIBS_INIT}
-	${LIBUSB_1_LIBRARIES}
-    winpr freerdp
-)
+set(${MODULE_PREFIX}_LIBS ${CMAKE_THREAD_LIBS_INIT} ${LIBUSB_1_LIBRARIES} winpr freerdp)
 
 include_directories(..)
 
 add_channel_client_subsystem_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} "" TRUE "")
-

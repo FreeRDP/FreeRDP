@@ -19,15 +19,9 @@ define_channel_client_subsystem("rdpsnd" "opensles" "")
 
 find_package(OpenSLES REQUIRED)
 
-set(${MODULE_PREFIX}_SRCS
-	opensl_io.c
-	rdpsnd_opensles.c)
+set(${MODULE_PREFIX}_SRCS opensl_io.c rdpsnd_opensles.c)
 
-set(${MODULE_PREFIX}_LIBS
-	winpr
-    freerdp
-    ${OpenSLES_LIBRARIES}
-)
+set(${MODULE_PREFIX}_LIBS winpr freerdp ${OpenSLES_LIBRARIES})
 
 include_directories(..)
 include_directories(SYSTEM ${OpenSLES_INCLUDE_DIRS})

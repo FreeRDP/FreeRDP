@@ -17,4 +17,3 @@
 # limitations under the License.
 
 winpr_module_add(handle.c handle.h nonehandle.c nonehandle.h)
-	

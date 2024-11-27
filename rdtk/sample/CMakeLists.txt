@@ -22,10 +22,9 @@ find_package(X11 REQUIRED)
 
 include_directories(SYSTEM ${X11_INCLUDE_DIR})
 
-set(SRCS
-	rdtk_x11.c)
+set(SRCS rdtk_x11.c)
 
-AddTargetWithResourceFile(${MODULE_NAME} TRUE "${RDTK_VERSION}" SRCS)
+addtargetwithresourcefile(${MODULE_NAME} TRUE "${RDTK_VERSION}" SRCS)
 
 set(LIBS rdtk)
 
@@ -34,4 +33,3 @@ list(APPEND LIBS ${X11_LIBRARIES})
 target_link_libraries(${MODULE_NAME} PRIVATE ${LIBS} winpr)
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "RdTk")
-

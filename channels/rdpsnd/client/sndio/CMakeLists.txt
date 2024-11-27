@@ -20,15 +20,9 @@ define_channel_client_subsystem("rdpsnd" "sndio" "")
 
 find_package(SNDIO REQUIRED)
 
-set(${MODULE_PREFIX}_SRCS
-	rdpsnd_sndio.c
-)
+set(${MODULE_PREFIX}_SRCS rdpsnd_sndio.c)
 
-set(${MODULE_PREFIX}_LIBS
-    winpr
-    freerdp
-    ${SNDIO_LIBRARIES}
-)
+set(${MODULE_PREFIX}_LIBS winpr freerdp ${SNDIO_LIBRARIES})
 
 include_directories(..)
 include_directories(SYSTEM ${SNDIO_INCLUDE_DIRS})

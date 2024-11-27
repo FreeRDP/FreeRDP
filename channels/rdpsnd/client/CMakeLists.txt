@@ -17,50 +17,42 @@
 
 define_channel_client("rdpsnd")
 
-set(${MODULE_PREFIX}_SRCS
-	rdpsnd_main.c
-	rdpsnd_main.h
-)
+set(${MODULE_PREFIX}_SRCS rdpsnd_main.c rdpsnd_main.h)
 
-set(${MODULE_PREFIX}_LIBS
-	winpr
-	freerdp
-	${CMAKE_THREAD_LIBS_INIT}
-	rdpsnd-common
-)
+set(${MODULE_PREFIX}_LIBS winpr freerdp ${CMAKE_THREAD_LIBS_INIT} rdpsnd-common)
 
 add_channel_client_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} FALSE "VirtualChannelEntryEx;DVCPluginEntry")
 
 if(WITH_OSS)
-	add_channel_client_subsystem(${MODULE_PREFIX} ${CHANNEL_NAME} "oss" "")
+  add_channel_client_subsystem(${MODULE_PREFIX} ${CHANNEL_NAME} "oss" "")
 endif()
 
 if(WITH_ALSA)
-	add_channel_client_subsystem(${MODULE_PREFIX} ${CHANNEL_NAME} "alsa" "")
+  add_channel_client_subsystem(${MODULE_PREFIX} ${CHANNEL_NAME} "alsa" "")
 endif()
 
 if(WITH_IOSAUDIO)
-	add_channel_client_subsystem(${MODULE_PREFIX} ${CHANNEL_NAME} "ios" "")
+  add_channel_client_subsystem(${MODULE_PREFIX} ${CHANNEL_NAME} "ios" "")
 endif()
 
 if(WITH_PULSE)
-	add_channel_client_subsystem(${MODULE_PREFIX} ${CHANNEL_NAME} "pulse" "")
+  add_channel_client_subsystem(${MODULE_PREFIX} ${CHANNEL_NAME} "pulse" "")
 endif()
 
 if(WITH_MACAUDIO)
-	add_channel_client_subsystem(${MODULE_PREFIX} ${CHANNEL_NAME} "mac" "")
+  add_channel_client_subsystem(${MODULE_PREFIX} ${CHANNEL_NAME} "mac" "")
 endif()
 
 if(WITH_WINMM)
-	add_channel_client_subsystem(${MODULE_PREFIX} ${CHANNEL_NAME} "winmm" "")
+  add_channel_client_subsystem(${MODULE_PREFIX} ${CHANNEL_NAME} "winmm" "")
 endif()
 
 if(WITH_OPENSLES)
-	add_channel_client_subsystem(${MODULE_PREFIX} ${CHANNEL_NAME} "opensles" "")
+  add_channel_client_subsystem(${MODULE_PREFIX} ${CHANNEL_NAME} "opensles" "")
 endif()
 
 if(WITH_SNDIO)
-	add_channel_client_subsystem(${MODULE_PREFIX} ${CHANNEL_NAME} "sndio" "")
+  add_channel_client_subsystem(${MODULE_PREFIX} ${CHANNEL_NAME} "sndio" "")
 endif()
 
 add_channel_client_subsystem(${MODULE_PREFIX} ${CHANNEL_NAME} "fake" "")

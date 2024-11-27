@@ -17,15 +17,8 @@
 
 define_channel_client("rdpear")
 
-set(${MODULE_PREFIX}_SRCS
-	rdpear_main.c
-)
+set(${MODULE_PREFIX}_SRCS rdpear_main.c)
 
-set(${MODULE_PREFIX}_LIBS
-	winpr
-	freerdp
-	rdpear-common
-)
+set(${MODULE_PREFIX}_LIBS winpr freerdp rdpear-common)
 
 add_channel_client_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} TRUE "DVCPluginEntry")
-

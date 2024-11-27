@@ -19,48 +19,41 @@ set(MODULE_NAME "sfreerdp-server")
 set(MODULE_PREFIX "FREERDP_SERVER_SAMPLE")
 
 set(SRCS
-	sfreerdp.c
-	sfreerdp.h
-	sf_audin.c
-	sf_audin.h
-	sf_rdpsnd.c
-	sf_rdpsnd.h
-	sf_encomsp.c
-	sf_encomsp.h)
+    sfreerdp.c
+    sfreerdp.h
+    sf_audin.c
+    sf_audin.h
+    sf_rdpsnd.c
+    sf_rdpsnd.h
+    sf_encomsp.c
+    sf_encomsp.h
+)
 
-if (CHANNEL_AINPUT_SERVER)
-    list(APPEND SRCS sf_ainput.c sf_ainput.h)
+if(CHANNEL_AINPUT_SERVER)
+  list(APPEND SRCS sf_ainput.c sf_ainput.h)
 endif()
 
 option(SAMPLE_USE_VENDOR_PRODUCT_CONFIG_DIR "Use <vendor>/<product> path for resources" OFF)
 set(SAMPLE_RESOURCE_ROOT ${CMAKE_INSTALL_FULL_DATAROOTDIR})
-if (SAMPLE_USE_VENDOR_PRODUCT_CONFIG_DIR)
-	string(APPEND SAMPLE_RESOURCE_ROOT "/${VENDOR}")
+if(SAMPLE_USE_VENDOR_PRODUCT_CONFIG_DIR)
+  string(APPEND SAMPLE_RESOURCE_ROOT "/${VENDOR}")
 endif()
 string(APPEND SAMPLE_RESOURCE_ROOT "/${PRODUCT}")
 
-if (WITH_RESOURCE_VERSIONING)
-	string(APPEND SAMPLE_RESOURCE_ROOT "${FREERDP_VERSION_MAJOR}")
+if(WITH_RESOURCE_VERSIONING)
+  string(APPEND SAMPLE_RESOURCE_ROOT "${FREERDP_VERSION_MAJOR}")
 endif()
 string(APPEND SAMPLE_RESOURCE_ROOT "/images")
 
-set(SAMPLE_ICONS
-    test_icon.bmp
-    test_icon.png
-    test_icon.jpg
-    test_icon.webp
-)
+set(SAMPLE_ICONS test_icon.bmp test_icon.png test_icon.jpg test_icon.webp)
 install(FILES ${SAMPLE_ICONS} DESTINATION ${SAMPLE_RESOURCE_ROOT})
 
 # We need this in runtime path for TestConnect
 file(COPY test_icon.bmp DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
-AddTargetWithResourceFile(${MODULE_NAME} TRUE "${FREERDP_VERSION}" SRCS)
+addtargetwithresourcefile(${MODULE_NAME} TRUE "${FREERDP_VERSION}" SRCS)
 
-target_compile_definitions(${MODULE_NAME}
-  PRIVATE
-    -DSAMPLE_RESOURCE_ROOT="${SAMPLE_RESOURCE_ROOT}"
-)
+target_compile_definitions(${MODULE_NAME} PRIVATE -DSAMPLE_RESOURCE_ROOT="${SAMPLE_RESOURCE_ROOT}")
 list(APPEND LIBS freerdp-server)
 list(APPEND LIBS winpr freerdp)
 

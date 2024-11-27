@@ -45,35 +45,35 @@ set(SRCS
     sdl_window.cpp
 )
 
-list(APPEND LIBS
-        winpr
-        freerdp
-        freerdp-client
-        Threads::Threads
-        sdl2_client_res
-        sdl2-dialogs
-		sdl-common-aad-view
-		sdl-common-prefs
-    )
+list(
+  APPEND
+  LIBS
+  winpr
+  freerdp
+  freerdp-client
+  Threads::Threads
+  sdl2_client_res
+  sdl2-dialogs
+  sdl-common-aad-view
+  sdl-common-prefs
+)
 
-if (NOT WITH_SDL_LINK_SHARED)
-    list(APPEND LIBS ${SDL2_STATIC_LIBRARIES})
+if(NOT WITH_SDL_LINK_SHARED)
+  list(APPEND LIBS ${SDL2_STATIC_LIBRARIES})
 else()
-    list(APPEND LIBS ${SDL2_LIBRARIES})
+  list(APPEND LIBS ${SDL2_LIBRARIES})
 endif()
 
-AddTargetWithResourceFile(${MODULE_NAME} TRUE "${PROJECT_VERSION}" SRCS)
+addtargetwithresourcefile(${MODULE_NAME} TRUE "${PROJECT_VERSION}" SRCS)
 
 target_link_libraries(${MODULE_NAME} PRIVATE ${LIBS})
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Client/SDL")
 
-if (NOT WITH_CLIENT_SDL_VERSIONED)
-    get_target_property(OUT_NAME ${MODULE_NAME} OUTPUT_NAME)
-    string(REPLACE "${MODULE_NAME}" "${PROJECT_NAME}" OUT_NAME "${OUT_NAME}")
-    set_target_properties(${MODULE_NAME}
-        PROPERTIES
-        OUTPUT_NAME ${OUT_NAME})
+if(NOT WITH_CLIENT_SDL_VERSIONED)
+  get_target_property(OUT_NAME ${MODULE_NAME} OUTPUT_NAME)
+  string(REPLACE "${MODULE_NAME}" "${PROJECT_NAME}" OUT_NAME "${OUT_NAME}")
+  set_target_properties(${MODULE_NAME} PROPERTIES OUTPUT_NAME ${OUT_NAME})
 endif()
 
 install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT client)

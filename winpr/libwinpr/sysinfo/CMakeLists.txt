@@ -16,16 +16,15 @@
 # limitations under the License.
 
 if(ANDROID)
-	add_subdirectory(cpufeatures)
+  add_subdirectory(cpufeatures)
 endif()
 
 winpr_module_add(sysinfo.c)
 
 if((NOT WIN32) AND (NOT APPLE) AND (NOT ANDROID) AND (NOT OPENBSD))
-	winpr_library_add_private(rt)
+  winpr_library_add_private(rt)
 endif()
 
 if(BUILD_TESTING_INTERNAL OR BUILD_TESTING)
-	add_subdirectory(test)
+  add_subdirectory(test)
 endif()
-

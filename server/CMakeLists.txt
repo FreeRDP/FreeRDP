@@ -21,33 +21,33 @@ option(WITH_PROXY "Compile with proxy server" ON)
 option(WITH_PLATFORM_SERVER "Compile with platform server" ON)
 
 add_subdirectory(common)
-if (WITH_SHADOW)
-	add_subdirectory(shadow)
+if(WITH_SHADOW)
+  add_subdirectory(shadow)
 endif()
-if (WITH_PROXY)
-	add_subdirectory(proxy)
+if(WITH_PROXY)
+  add_subdirectory(proxy)
 endif()
 
 if(WITH_SAMPLE)
-	add_subdirectory(Sample)
+  add_subdirectory(Sample)
 endif()
 
-if (WITH_PLATFORM_SERVER)
-	if(NOT WIN32)
-		if(APPLE AND (NOT IOS))
-			add_subdirectory(Mac)
-		endif()
-	else()
-		add_subdirectory(Windows)
-	endif()
+if(WITH_PLATFORM_SERVER)
+  if(NOT WIN32)
+    if(APPLE AND (NOT IOS))
+      add_subdirectory(Mac)
+    endif()
+  else()
+    add_subdirectory(Windows)
+  endif()
 
-	if(NOT DEFINED WITH_FREERDS)
-		set(WITH_FREERDS 1)
-	endif()
+  if(NOT DEFINED WITH_FREERDS)
+    set(WITH_FREERDS 1)
+  endif()
 
-	if(WITH_FREERDS AND (IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/FreeRDS"))
-		add_subdirectory("FreeRDS")
-	endif()
+  if(WITH_FREERDS AND (IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/FreeRDS"))
+    add_subdirectory("FreeRDS")
+  endif()
 endif()
 
 # Pick up other servers
@@ -56,38 +56,48 @@ set(FILENAME "ModuleOptions.cmake")
 file(GLOB FILEPATHS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*/${FILENAME}")
 
 foreach(FILEPATH ${FILEPATHS})
-	if(${FILEPATH} MATCHES "^([^/]*)/+${FILENAME}")
-		string(REGEX REPLACE "^([^/]*)/+${FILENAME}" "\\1" FREERDP_SERVER ${FILEPATH})
-		set(FREERDP_SERVER_ENABLED 0)
-		include(${FILEPATH})
-		if(FREERDP_SERVER_ENABLED)
-			if(NOT (${FREERDP_SERVER_VENDOR} MATCHES "FreeRDP"))
-				list(APPEND FREERDP_EXTRA_SERVERS ${FREERDP_SERVER})
-			endif()
-		endif()
-	endif()
+  if(${FILEPATH} MATCHES "^([^/]*)/+${FILENAME}")
+    string(REGEX REPLACE "^([^/]*)/+${FILENAME}" "\\1" FREERDP_SERVER ${FILEPATH})
+    set(FREERDP_SERVER_ENABLED 0)
+    include(${FILEPATH})
+    if(FREERDP_SERVER_ENABLED)
+      if(NOT (${FREERDP_SERVER_VENDOR} MATCHES "FreeRDP"))
+        list(APPEND FREERDP_EXTRA_SERVERS ${FREERDP_SERVER})
+      endif()
+    endif()
+  endif()
 endforeach()
 
 foreach(FREERDP_SERVER ${FREERDP_EXTRA_SERVERS})
-	add_subdirectory(${FREERDP_SERVER})
+  add_subdirectory(${FREERDP_SERVER})
 endforeach()
 
 include(pkg-config-install-prefix)
-cleaning_configure_file(${CMAKE_CURRENT_SOURCE_DIR}/freerdp-server.pc.in ${CMAKE_CURRENT_BINARY_DIR}/freerdp-server${FREERDP_VERSION_MAJOR}.pc @ONLY)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/freerdp-server${FREERDP_VERSION_MAJOR}.pc DESTINATION ${PKG_CONFIG_PC_INSTALL_DIR})
+cleaning_configure_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/freerdp-server.pc.in
+  ${CMAKE_CURRENT_BINARY_DIR}/freerdp-server${FREERDP_VERSION_MAJOR}.pc @ONLY
+)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/freerdp-server${FREERDP_VERSION_MAJOR}.pc
+        DESTINATION ${PKG_CONFIG_PC_INSTALL_DIR}
+)
 
 export(PACKAGE freerdp-server)
 
-SetFreeRDPCMakeInstallDir(FREERDP_SERVER_CMAKE_INSTALL_DIR "FreeRDP-Server${FREERDP_VERSION_MAJOR}")
+setfreerdpcmakeinstalldir(FREERDP_SERVER_CMAKE_INSTALL_DIR "FreeRDP-Server${FREERDP_VERSION_MAJOR}")
 
-configure_package_config_file(FreeRDP-ServerConfig.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/FreeRDP-ServerConfig.cmake
-	INSTALL_DESTINATION ${FREERDP_SERVER_CMAKE_INSTALL_DIR}
-	PATH_VARS FREERDP_INCLUDE_DIR)
+configure_package_config_file(
+  FreeRDP-ServerConfig.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/FreeRDP-ServerConfig.cmake
+  INSTALL_DESTINATION ${FREERDP_SERVER_CMAKE_INSTALL_DIR} PATH_VARS FREERDP_INCLUDE_DIR
+)
 
-write_basic_package_version_file(${CMAKE_CURRENT_BINARY_DIR}/FreeRDP-ServerConfigVersion.cmake
-	VERSION ${FREERDP_VERSION} COMPATIBILITY SameMajorVersion)
+write_basic_package_version_file(
+  ${CMAKE_CURRENT_BINARY_DIR}/FreeRDP-ServerConfigVersion.cmake VERSION ${FREERDP_VERSION}
+  COMPATIBILITY SameMajorVersion
+)
 
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/FreeRDP-ServerConfig.cmake ${CMAKE_CURRENT_BINARY_DIR}/FreeRDP-ServerConfigVersion.cmake
-	DESTINATION ${FREERDP_SERVER_CMAKE_INSTALL_DIR})
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/FreeRDP-ServerConfig.cmake
+              ${CMAKE_CURRENT_BINARY_DIR}/FreeRDP-ServerConfigVersion.cmake
+        DESTINATION ${FREERDP_SERVER_CMAKE_INSTALL_DIR}
+)
 
 install(EXPORT FreeRDP-ServerTargets DESTINATION ${FREERDP_SERVER_CMAKE_INSTALL_DIR})

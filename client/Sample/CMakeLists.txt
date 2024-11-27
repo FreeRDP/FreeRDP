@@ -17,16 +17,13 @@
 cmake_minimum_required(VERSION 3.13)
 
 if(POLICY CMP0091)
-	cmake_policy(SET CMP0091 NEW)
+  cmake_policy(SET CMP0091 NEW)
 endif()
-if (NOT FREERDP_DEFAULT_PROJECT_VERSION)
-	set(FREERDP_DEFAULT_PROJECT_VERSION "1.0.0.0")
+if(NOT FREERDP_DEFAULT_PROJECT_VERSION)
+  set(FREERDP_DEFAULT_PROJECT_VERSION "1.0.0.0")
 endif()
 
-project(sfreerdp
-	LANGUAGES C
-	VERSION ${FREERDP_DEFAULT_PROJECT_VERSION}
-)
+project(sfreerdp LANGUAGES C VERSION ${FREERDP_DEFAULT_PROJECT_VERSION})
 
 message("project ${PROJECT_NAME} is using version ${PROJECT_VERSION}")
 
@@ -39,19 +36,11 @@ include(CommonConfigOptions)
 
 include(ConfigureFreeRDP)
 
-set(SRCS
-	tf_channels.c
-	tf_channels.h
-	tf_freerdp.h
-	tf_freerdp.c)
+set(SRCS tf_channels.c tf_channels.h tf_freerdp.h tf_freerdp.c)
 
-AddTargetWithResourceFile(${PROJECT_NAME} TRUE "${PROJECT_VERSION}" SRCS)
+addtargetwithresourcefile(${PROJECT_NAME} TRUE "${PROJECT_VERSION}" SRCS)
 
-set(LIBS
-    freerdp-client
-    freerdp
-    winpr
-)
+set(LIBS freerdp-client freerdp winpr)
 target_link_libraries(${PROJECT_NAME} PRIVATE ${LIBS})
 
 set_property(TARGET ${PROJECT_NAME} PROPERTY FOLDER "Client/Sample")

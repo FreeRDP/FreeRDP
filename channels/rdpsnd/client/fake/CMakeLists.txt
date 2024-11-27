@@ -18,14 +18,9 @@
 
 define_channel_client_subsystem("rdpsnd" "fake" "")
 
-set(${MODULE_PREFIX}_SRCS
-	rdpsnd_fake.c
-)
+set(${MODULE_PREFIX}_SRCS rdpsnd_fake.c)
 
-set(${MODULE_PREFIX}_LIBS
-    winpr
-    freerdp
-)
+set(${MODULE_PREFIX}_LIBS winpr freerdp)
 
 include_directories(..)
 

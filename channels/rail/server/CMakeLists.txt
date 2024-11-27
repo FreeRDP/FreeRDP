@@ -17,16 +17,9 @@
 
 define_channel_server("rail")
 
-set(${MODULE_PREFIX}_SRCS
-	../rail_common.c
-	../rail_common.h
-	rail_main.c
-	rail_main.h
-)
+set(${MODULE_PREFIX}_SRCS ../rail_common.c ../rail_common.h rail_main.c rail_main.h)
 
-set(${MODULE_PREFIX}_LIBS
-    freerdp
-)
+set(${MODULE_PREFIX}_LIBS freerdp)
 
 include_directories(..)
 

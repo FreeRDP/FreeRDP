@@ -21,226 +21,205 @@ include(CMakeDependentOption)
 winpr_include_directory_add(${CMAKE_CURRENT_SOURCE_DIR})
 
 option(WITH_LODEPNG "build WinPR with PNG support" OFF)
-if (WITH_LODEPNG)
-		find_package(lodepng REQUIRED)
+if(WITH_LODEPNG)
+  find_package(lodepng REQUIRED)
 
-		winpr_definition_add(-DWITH_LODEPNG)
-		set(WINPR_WITH_PNG ON CACHE BOOL "build cache")
+  winpr_definition_add(-DWITH_LODEPNG)
+  set(WINPR_WITH_PNG ON CACHE BOOL "build cache")
 
-		winpr_include_directory_add(${lodepng_INCLUDE_DIRS})
-		winpr_library_add_private(${lodepng_LIBRARIES})
+  winpr_include_directory_add(${lodepng_INCLUDE_DIRS})
+  winpr_library_add_private(${lodepng_LIBRARIES})
 endif()
 
 option(WINPR_UTILS_IMAGE_PNG "Add PNG <--> BMP conversion support to clipboard" OFF)
-if (WINPR_UTILS_IMAGE_PNG)
-	find_package(PNG REQUIRED)
+if(WINPR_UTILS_IMAGE_PNG)
+  find_package(PNG REQUIRED)
 
-		set(WINPR_WITH_PNG ON CACHE BOOL "build cache")
-	winpr_include_directory_add(${PNG_INCLUDE_DIRS})
-	winpr_library_add_private(${PNG_LIBRARIES})
+  set(WINPR_WITH_PNG ON CACHE BOOL "build cache")
+  winpr_include_directory_add(${PNG_INCLUDE_DIRS})
+  winpr_library_add_private(${PNG_LIBRARIES})
 endif()
 
 option(WINPR_UTILS_IMAGE_WEBP "Add WebP <--> BMP conversion support to clipboard" OFF)
-if (WINPR_UTILS_IMAGE_WEBP)
-	find_package(PkgConfig REQUIRED)
-	pkg_check_modules(WEBP libwebp REQUIRED)
+if(WINPR_UTILS_IMAGE_WEBP)
+  find_package(PkgConfig REQUIRED)
+  pkg_check_modules(WEBP libwebp REQUIRED)
 
-	winpr_include_directory_add(${WEBP_INCLUDE_DIRS})
-	winpr_library_add_private(${WEBP_LIBRARIES})
+  winpr_include_directory_add(${WEBP_INCLUDE_DIRS})
+  winpr_library_add_private(${WEBP_LIBRARIES})
 endif()
 
 option(WINPR_UTILS_IMAGE_JPEG "Add Jpeg <--> BMP conversion support to clipboard" OFF)
-if (WINPR_UTILS_IMAGE_JPEG)
-	find_package(PkgConfig REQUIRED)
-	pkg_check_modules(JPEG libjpeg REQUIRED)
+if(WINPR_UTILS_IMAGE_JPEG)
+  find_package(PkgConfig REQUIRED)
+  pkg_check_modules(JPEG libjpeg REQUIRED)
 
-	winpr_include_directory_add(${JPEG_INCLUDE_DIRS})
-	winpr_library_add_private(${JPEG_LIBRARIES})
+  winpr_include_directory_add(${JPEG_INCLUDE_DIRS})
+  winpr_library_add_private(${JPEG_LIBRARIES})
 endif()
 
-
 set(COLLECTIONS_SRCS
-	collections/Object.c
-	collections/Queue.c
-	collections/Stack.c
-	collections/PubSub.c
-		collections/BitStream.c
-	collections/ArrayList.c
-	collections/LinkedList.c
-	collections/HashTable.c
-	collections/ListDictionary.c
-	collections/CountdownEvent.c
-	collections/BufferPool.c
-	collections/ObjectPool.c
-	collections/StreamPool.c
-	collections/MessageQueue.c
-	collections/MessagePipe.c)
+    collections/Object.c
+    collections/Queue.c
+    collections/Stack.c
+    collections/PubSub.c
+    collections/BitStream.c
+    collections/ArrayList.c
+    collections/LinkedList.c
+    collections/HashTable.c
+    collections/ListDictionary.c
+    collections/CountdownEvent.c
+    collections/BufferPool.c
+    collections/ObjectPool.c
+    collections/StreamPool.c
+    collections/MessageQueue.c
+    collections/MessagePipe.c
+)
 
-if (WINPR_HAVE_SYSLOG_H)
-	set(SYSLOG_SRCS
-		wlog/SyslogAppender.c
-		wlog/SyslogAppender.h
-	)
+if(WINPR_HAVE_SYSLOG_H)
+  set(SYSLOG_SRCS wlog/SyslogAppender.c wlog/SyslogAppender.h)
 endif()
 
 find_package(libsystemd)
 option(WITH_SYSTEMD "allows to export wLog to systemd journal" ${libsystemd_FOUND})
 if(WITH_LIBSYSTEMD)
-	find_package(libsystemd REQUIRED)
-	set(WINPR_HAVE_JOURNALD_H TRUE)
-	set(JOURNALD_SRCS
-		wlog/JournaldAppender.c
-		wlog/JournaldAppender.h
-	)
-	winpr_include_directory_add(${LIBSYSTEMD_INCLUDE_DIR})
-	winpr_library_add_private(${LIBSYSTEMD_LIBRARY})
+  find_package(libsystemd REQUIRED)
+  set(WINPR_HAVE_JOURNALD_H TRUE)
+  set(JOURNALD_SRCS wlog/JournaldAppender.c wlog/JournaldAppender.h)
+  winpr_include_directory_add(${LIBSYSTEMD_INCLUDE_DIR})
+  winpr_library_add_private(${LIBSYSTEMD_LIBRARY})
 else()
-	unset(WINPR_HAVE_JOURNALD_H)
+  unset(WINPR_HAVE_JOURNALD_H)
 endif()
 
 set(WLOG_SRCS
-	wlog/wlog.c
-	wlog/wlog.h
-	wlog/Layout.c
-	wlog/Layout.h
-	wlog/Message.c
-	wlog/Message.h
-	wlog/DataMessage.c
-	wlog/DataMessage.h
-	wlog/ImageMessage.c
-	wlog/ImageMessage.h
-	wlog/PacketMessage.c
-	wlog/PacketMessage.h
-	wlog/Appender.c
-	wlog/Appender.h
-	wlog/FileAppender.c
-	wlog/FileAppender.h
-	wlog/BinaryAppender.c
-	wlog/BinaryAppender.h
-	wlog/CallbackAppender.c
-	wlog/CallbackAppender.h
-	wlog/ConsoleAppender.c
-	wlog/ConsoleAppender.h
-	wlog/UdpAppender.c
-	wlog/UdpAppender.h
-	${SYSLOG_SRCS}
-	${JOURNALD_SRCS}
-	)
-
-set(ASN1_SRCS
-	asn1/asn1.c
+    wlog/wlog.c
+    wlog/wlog.h
+    wlog/Layout.c
+    wlog/Layout.h
+    wlog/Message.c
+    wlog/Message.h
+    wlog/DataMessage.c
+    wlog/DataMessage.h
+    wlog/ImageMessage.c
+    wlog/ImageMessage.h
+    wlog/PacketMessage.c
+    wlog/PacketMessage.h
+    wlog/Appender.c
+    wlog/Appender.h
+    wlog/FileAppender.c
+    wlog/FileAppender.h
+    wlog/BinaryAppender.c
+    wlog/BinaryAppender.h
+    wlog/CallbackAppender.c
+    wlog/CallbackAppender.h
+    wlog/ConsoleAppender.c
+    wlog/ConsoleAppender.h
+    wlog/UdpAppender.c
+    wlog/UdpAppender.h
+    ${SYSLOG_SRCS}
+    ${JOURNALD_SRCS}
 )
 
+set(ASN1_SRCS asn1/asn1.c)
+
 set(SRCS
-	ini.c
-	sam.c
-	ntlm.c
-	image.c
-	print.c
-	stream.h
-	stream.c
-	strlst.c
-	debug.c
-	winpr.c
-	cmdline.c
-	ssl.c)
+    ini.c
+    sam.c
+    ntlm.c
+    image.c
+    print.c
+    stream.h
+    stream.c
+    strlst.c
+    debug.c
+    winpr.c
+    cmdline.c
+    ssl.c
+)
 
-if (ANDROID)
-	list(APPEND SRCS android.h android.c)
-	include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-	if (NOT WINPR_HAVE_UNWIND_H)
-		message("[backtrace] android NDK without unwind.h, falling back to corkscrew")
-		set(WINPR_HAVE_CORKSCREW 1)
-	endif()
+if(ANDROID)
+  list(APPEND SRCS android.h android.c)
+  include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+  if(NOT WINPR_HAVE_UNWIND_H)
+    message("[backtrace] android NDK without unwind.h, falling back to corkscrew")
+    set(WINPR_HAVE_CORKSCREW 1)
+  endif()
 endif()
 
-if (WINPR_HAVE_CORKSCREW)
-	list(APPEND SRCS
-		corkscrew/debug.c
-		corkscrew/debug.h)
+if(WINPR_HAVE_CORKSCREW)
+  list(APPEND SRCS corkscrew/debug.c corkscrew/debug.h)
 endif()
 
-if (WIN32)
-	list(APPEND SRCS
-		windows/debug.c
-		windows/debug.h)
+if(WIN32)
+  list(APPEND SRCS windows/debug.c windows/debug.h)
 endif()
 
-if (WINPR_HAVE_EXECINFO_H)
-	option(USE_EXECINFO "Use execinfo.h to generate backtraces" ON)
-	if (USE_EXECINFO)
-		winpr_definition_add(-DUSE_EXECINFO)
-		list(APPEND SRCS
-			execinfo/debug.c
-			execinfo/debug.h)
-	endif()
+if(WINPR_HAVE_EXECINFO_H)
+  option(USE_EXECINFO "Use execinfo.h to generate backtraces" ON)
+  if(USE_EXECINFO)
+    winpr_definition_add(-DUSE_EXECINFO)
+    list(APPEND SRCS execinfo/debug.c execinfo/debug.h)
+  endif()
 endif()
 
-if (WINPR_HAVE_UNWIND_H)
-	option(USE_UNWIND "Use unwind.h to generate backtraces" ON)
-	if (USE_UNWIND)
-		winpr_definition_add(-DUSE_UNWIND)
-		list(APPEND SRCS
-			unwind/debug.c
-			unwind/debug.h)
-	endif()
+if(WINPR_HAVE_UNWIND_H)
+  option(USE_UNWIND "Use unwind.h to generate backtraces" ON)
+  if(USE_UNWIND)
+    winpr_definition_add(-DUSE_UNWIND)
+    list(APPEND SRCS unwind/debug.c unwind/debug.h)
+  endif()
 endif()
 
 include(JsonDetect)
-if (NOT WITH_JSON_DISABLED)
-	if (JSONC_FOUND AND NOT WITH_CJSON_REQUIRED)
-		winpr_library_add_private(${JSONC_LIBRARIES})
-		winpr_include_directory_add(${JSONC_INCLUDE_DIRS})
-		winpr_definition_add(-DWITH_JSONC)
-		set(WITH_WINPR_JSON ON CACHE INTERNAL "internal")
-	elseif (CJSON_FOUND)
-		winpr_library_add_private(${CJSON_LIBRARIES})
-		winpr_include_directory_add(${CJSON_INCLUDE_DIRS})
-		winpr_definition_add(-DWITH_CJSON)
-		set(WITH_WINPR_JSON ON CACHE INTERNAL "internal")
-	endif()
+if(NOT WITH_JSON_DISABLED)
+  if(JSONC_FOUND AND NOT WITH_CJSON_REQUIRED)
+    winpr_library_add_private(${JSONC_LIBRARIES})
+    winpr_include_directory_add(${JSONC_INCLUDE_DIRS})
+    winpr_definition_add(-DWITH_JSONC)
+    set(WITH_WINPR_JSON ON CACHE INTERNAL "internal")
+  elseif(CJSON_FOUND)
+    winpr_library_add_private(${CJSON_LIBRARIES})
+    winpr_include_directory_add(${CJSON_INCLUDE_DIRS})
+    winpr_definition_add(-DWITH_CJSON)
+    set(WITH_WINPR_JSON ON CACHE INTERNAL "internal")
+  endif()
 endif()
 
 winpr_module_add(json/json.c)
 
-winpr_module_add(${SRCS}
-	${COLLECTIONS_SRCS}
-	${WLOG_SRCS}
-	${ASN1_SRCS}
-)
+winpr_module_add(${SRCS} ${COLLECTIONS_SRCS} ${WLOG_SRCS} ${ASN1_SRCS})
 
-winpr_include_directory_add(
-	"."
-)
+winpr_include_directory_add(".")
 
 if(OPENSSL_FOUND)
-	winpr_include_directory_add(${OPENSSL_INCLUDE_DIR})
-	winpr_library_add_private(${OPENSSL_LIBRARIES})
+  winpr_include_directory_add(${OPENSSL_INCLUDE_DIR})
+  winpr_library_add_private(${OPENSSL_LIBRARIES})
 endif()
 
 if(MBEDTLS_FOUND)
-	winpr_include_directory_add(${MBEDTLS_INCLUDE_DIR})
-	winpr_library_add_private(${MBEDTLS_LIBRARIES})
+  winpr_include_directory_add(${MBEDTLS_INCLUDE_DIR})
+  winpr_library_add_private(${MBEDTLS_LIBRARIES})
 endif()
 
 if(UNIX)
-	winpr_library_add_private(m)
+  winpr_library_add_private(m)
 
-	set(CMAKE_REQUIRED_INCLUDES backtrace.h)
-	check_function_exists(backtrace BACKTRACE)
-	if (NOT BACKTRACE)
-		set(CMAKE_REQUIRED_LIBRARIES execinfo)
-		check_function_exists(backtrace EXECINFO)
-		if (EXECINFO)
-			winpr_library_add_private(execinfo)
-		endif()
-	endif()
+  set(CMAKE_REQUIRED_INCLUDES backtrace.h)
+  check_function_exists(backtrace BACKTRACE)
+  if(NOT BACKTRACE)
+    set(CMAKE_REQUIRED_LIBRARIES execinfo)
+    check_function_exists(backtrace EXECINFO)
+    if(EXECINFO)
+      winpr_library_add_private(execinfo)
+    endif()
+  endif()
 endif()
 
 if(WIN32)
-	winpr_library_add_public(dbghelp)
+  winpr_library_add_public(dbghelp)
 endif()
 
 if(BUILD_TESTING_INTERNAL OR BUILD_TESTING)
-	add_subdirectory(test)
+  add_subdirectory(test)
 endif()

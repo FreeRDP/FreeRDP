@@ -18,5 +18,5 @@
 define_channel("rdpemsc")
 
 if(WITH_SERVER_CHANNELS)
-	add_channel_server(${MODULE_PREFIX} ${CHANNEL_NAME})
+  add_channel_server(${MODULE_PREFIX} ${CHANNEL_NAME})
 endif()

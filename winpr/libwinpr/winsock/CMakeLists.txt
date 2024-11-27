@@ -18,5 +18,5 @@
 winpr_module_add(winsock.c)
 
 if(WIN32)
-	winpr_library_add_public(ws2_32)
+  winpr_library_add_public(ws2_32)
 endif()

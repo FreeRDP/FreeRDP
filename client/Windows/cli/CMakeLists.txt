@@ -20,12 +20,9 @@ set(MODULE_PREFIX "FREERDP_CLIENT_WINDOWS")
 
 include_directories(..)
 
-set(${MODULE_PREFIX}_SRCS
-	wfreerdp.c
-	wfreerdp.h
-	../resource/wfreerdp.rc)
+set(${MODULE_PREFIX}_SRCS wfreerdp.c wfreerdp.h ../resource/wfreerdp.rc)
 
-AddTargetWithResourceFile(${MODULE_NAME} "${WIN32_GUI_FLAG}" "${FREERDP_VERSION}" ${MODULE_PREFIX}_SRCS)
+addtargetwithresourcefile(${MODULE_NAME} "${WIN32_GUI_FLAG}" "${FREERDP_VERSION}" ${MODULE_PREFIX}_SRCS)
 
 set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} wfreerdp-client)
 

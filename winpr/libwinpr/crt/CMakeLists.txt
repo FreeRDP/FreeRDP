@@ -15,32 +15,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set (CRT_FILES alignment.c
-	conversion.c
-	buffer.c
-	memory.c
-	unicode.c
-	string.c)
+set(CRT_FILES alignment.c conversion.c buffer.c memory.c unicode.c string.c)
 
 if(WITH_UNICODE_BUILTIN)
-    list(APPEND CRT_FILES unicode_builtin.c)
+  list(APPEND CRT_FILES unicode_builtin.c)
 else()
-    IF (ANDROID)
-        list(APPEND CRT_FILES unicode_android.c)
-    elseif (NOT APPLE AND NOT WIN32)
-        find_package(ICU REQUIRED i18n uc io data)
-        list(APPEND CRT_FILES unicode_icu.c)
-        winpr_include_directory_add(${ICU_INCLUDE_DIRS})
-        winpr_library_add_private(${ICU_LIBRARIES})
-    elseif(APPLE)
-        list(APPEND CRT_FILES unicode_apple.m)
-        find_library(FOUNDATION_FRAMEWORK Foundation REQUIRED)
-        winpr_library_add_private(${FOUNDATION_FRAMEWORK})
-    endif()
+  if(ANDROID)
+    list(APPEND CRT_FILES unicode_android.c)
+  elseif(NOT APPLE AND NOT WIN32)
+    find_package(ICU REQUIRED i18n uc io data)
+    list(APPEND CRT_FILES unicode_icu.c)
+    winpr_include_directory_add(${ICU_INCLUDE_DIRS})
+    winpr_library_add_private(${ICU_LIBRARIES})
+  elseif(APPLE)
+    list(APPEND CRT_FILES unicode_apple.m)
+    find_library(FOUNDATION_FRAMEWORK Foundation REQUIRED)
+    winpr_library_add_private(${FOUNDATION_FRAMEWORK})
+  endif()
 endif()
 
 winpr_module_add(${CRT_FILES})
 
 if(BUILD_TESTING_INTERNAL OR BUILD_TESTING)
-	add_subdirectory(test)
+  add_subdirectory(test)
 endif()

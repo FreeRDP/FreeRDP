@@ -18,15 +18,8 @@
 
 define_channel_server("rdpei")
 
-set(${MODULE_PREFIX}_SRCS
-	rdpei_main.c
-	rdpei_main.h
-	../rdpei_common.c
-	../rdpei_common.h
-)
+set(${MODULE_PREFIX}_SRCS rdpei_main.c rdpei_main.h ../rdpei_common.c ../rdpei_common.h)
 
-set(${MODULE_PREFIX}_LIBS
-    winpr
-)
+set(${MODULE_PREFIX}_LIBS winpr)
 
 add_channel_server_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} FALSE "VirtualChannelEntry")

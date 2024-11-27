@@ -13,16 +13,15 @@ find_path(OpenSLES_INCLUDE_DIR SLES/OpenSLES.h)
 find_library(OpenSLES_LIBRARY NAMES OpenSLES)
 
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(OpenSLES DEFAULT_MSG
-	OpenSLES_INCLUDE_DIR OpenSLES_LIBRARY)
-						
+find_package_handle_standard_args(OpenSLES DEFAULT_MSG OpenSLES_INCLUDE_DIR OpenSLES_LIBRARY)
+
 if(OpenSLES_FOUND)
-	set(OpenSLES_INCLUDE_DIRS ${OpenSLES_INCLUDE_DIR})
-	set(OpenSLES_LIBRARIES ${OpenSLES_LIBRARY})
+  set(OpenSLES_INCLUDE_DIRS ${OpenSLES_INCLUDE_DIR})
+  set(OpenSLES_LIBRARIES ${OpenSLES_LIBRARY})
 else(OpenSLES_FOUND)
-	if (OpenSLES_FIND_REQUIRED)
-		message(FATAL_ERROR "Could NOT find OpenSLES")
-	endif()
+  if(OpenSLES_FIND_REQUIRED)
+    message(FATAL_ERROR "Could NOT find OpenSLES")
+  endif()
 endif(OpenSLES_FOUND)
 
 mark_as_advanced(OpenSLES_INCLUDE_DIR OpenSLES_LIBRARY)
