@@ -31,7 +31,7 @@
 #include "prim_internal.h"
 
 /* ------------------------------------------------------------------------- */
-#if defined(SSE2_ENABLED)
+#if defined(SSE_AVX_INTRINSICS_ENABLED)
 #include <emmintrin.h>
 #include <pmmintrin.h>
 
@@ -209,7 +209,7 @@ static pstatus_t sse2_alphaComp_argb(const BYTE* WINPR_RESTRICT pSrc1, UINT32 sr
 /* ------------------------------------------------------------------------- */
 void primitives_init_alphaComp_sse3(primitives_t* WINPR_RESTRICT prims)
 {
-#if defined(SSE2_ENABLED)
+#if defined(SSE_AVX_INTRINSICS_ENABLED)
 	generic = primitives_get_generic();
 	primitives_init_alphaComp(prims);
 
@@ -221,7 +221,7 @@ void primitives_init_alphaComp_sse3(primitives_t* WINPR_RESTRICT prims)
 	}
 
 #else
-	WLog_VRB(PRIM_TAG, "undefined WITH_SSE2");
+	WLog_VRB(PRIM_TAG, "undefined WITH_SIMD or SSE3 intrinsics not available");
 	WINPR_UNUSED(prims);
 #endif
 }

@@ -24,6 +24,9 @@
 #include <freerdp/api.h>
 
 #include <freerdp/log.h>
+
+#include "../core/simd.h"
+
 #define PRIM_TAG FREERDP_TAG("primitives")
 
 #ifdef __GNUC__
@@ -34,27 +37,15 @@
 #endif
 #endif
 
-#if defined(WITH_SSE2)
-#if defined(_M_IX86) || defined(_M_AMD64) || defined(_M_IA64) || defined(_M_IX86_AMD64)
-#define SSE2_ENABLED
-#endif
-#endif
-
-#if defined(WITH_NEON)
-#if defined(_M_ARM64) || defined(_M_ARM)
-#define NEON_ENABLED
-#endif
-#endif
-
-#if defined(SSE2_ENABLED) || defined(NEON_ENABLED) || defined(WITH_OPENCL)
+#if defined(SSE_AVX_INTRINSICS_ENABLED) || defined(NEON_INTRINSICS_ENABLED) || defined(WITH_OPENCL)
 #define HAVE_OPTIMIZED_PRIMITIVES 1
 #endif
 
-#if defined(SSE2_ENABLED) || defined(NEON_ENABLED)
+#if defined(SSE_AVX_INTRINSICS_ENABLED) || defined(NEON_INTRINSICS_ENABLED)
 #define HAVE_CPU_OPTIMIZED_PRIMITIVES 1
 #endif
 
-#if defined(SSE2_ENABLED)
+#if defined(SSE_AVX_INTRINSICS_ENABLED)
 /* Use lddqu for unaligned; load for 16-byte aligned. */
 #define LOAD_SI128(_ptr_)                                                       \
 	(((const ULONG_PTR)(_ptr_)&0x0f) ? _mm_lddqu_si128((const __m128i*)(_ptr_)) \

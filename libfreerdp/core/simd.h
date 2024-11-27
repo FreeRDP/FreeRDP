@@ -1,6 +1,6 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * NSCodec Library - SSE2 Optimizations
+ * SIMD support detection header
  *
  * Copyright 2024 Armin Novak <anovak@thincast.com>
  * Copyright 2024 Thincast Technologies GmbH
@@ -18,26 +18,22 @@
  * limitations under the License.
  */
 
-#include <winpr/platform.h>
-#include <winpr/sysinfo.h>
+#pragma once
+
 #include <freerdp/config.h>
-#include <freerdp/log.h>
 
-#include "../nsc_types.h"
-#include "nsc_neon.h"
-
-#include "../../core/simd.h"
-
-#if defined(NEON_INTRINSICS_ENABLED)
-#define TAG FREERDP_TAG("codec.nsc.neon")
+/* https://sourceforge.net/p/predef/wiki/Architectures/
+ *
+ * contains a list of defined symbols for each compiler
+ */
+#if defined(WITH_SIMD)
+#if defined(_M_IX86) || defined(_M_AMD64) || defined(_M_IA64) || defined(_M_IX86_AMD64) || \
+    defined(__amd64__) || defined(__amd64) || defined(__x86_64__) || defined(__x86_64) ||  \
+    defined(__i686__) || defined(__ia64__)
+#define SSE_AVX_INTRINSICS_ENABLED
 #endif
 
-void nsc_init_neon(NSC_CONTEXT* context)
-{
-#if defined(NEON_INTRINSICS_ENABLED)
-	if (!IsProcessorFeaturePresent(PF_ARM_NEON_INSTRUCTIONS_AVAILABLE))
-		return;
-
-	WLog_WARN(TAG, "TODO: Implement neon optimized version of this function");
+#if defined(_M_ARM64) || defined(_M_ARM) || defined(__arm) || defined(__aarch64__)
+#define NEON_INTRINSICS_ENABLED
 #endif
-}
+#endif

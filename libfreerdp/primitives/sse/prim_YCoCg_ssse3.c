@@ -28,7 +28,7 @@
 #include "prim_internal.h"
 #include "prim_templates.h"
 
-#if defined(SSE2_ENABLED)
+#if defined(SSE_AVX_INTRINSICS_ENABLED)
 #include <emmintrin.h>
 #include <tmmintrin.h>
 
@@ -439,7 +439,7 @@ static pstatus_t ssse3_YCoCgRToRGB_8u_AC4R(const BYTE* WINPR_RESTRICT pSrc, INT3
 /* ------------------------------------------------------------------------- */
 void primitives_init_YCoCg_ssse3(primitives_t* WINPR_RESTRICT prims)
 {
-#if defined(SSE2_ENABLED)
+#if defined(SSE_AVX_INTRINSICS_ENABLED)
 	generic = primitives_get_generic();
 	primitives_init_YCoCg(prims);
 
@@ -450,7 +450,7 @@ void primitives_init_YCoCg_ssse3(primitives_t* WINPR_RESTRICT prims)
 		prims->YCoCgToRGB_8u_AC4R = ssse3_YCoCgRToRGB_8u_AC4R;
 	}
 #else
-	WLog_VRB(PRIM_TAG, "undefined WITH_SSE2");
+	WLog_VRB(PRIM_TAG, "undefined WITH_SIMD or SSE2 intrinsics not available");
 	WINPR_UNUSED(prims);
 #endif
 }

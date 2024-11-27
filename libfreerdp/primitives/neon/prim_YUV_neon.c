@@ -30,7 +30,7 @@
 #include "prim_internal.h"
 #include "prim_YUV.h"
 
-#if defined(NEON_ENABLED)
+#if defined(NEON_INTRINSICS_ENABLED)
 #include <arm_neon.h>
 
 static primitives_t* generic = NULL;
@@ -741,7 +741,7 @@ static pstatus_t neon_YUV420CombineToYUV444(avc444_frame_type type,
 
 void primitives_init_YUV_neon(primitives_t* WINPR_RESTRICT prims)
 {
-#if defined(NEON_ENABLED)
+#if defined(NEON_INTRINSICS_ENABLED)
 	generic = primitives_get_generic();
 	primitives_init_YUV(prims);
 
@@ -753,7 +753,7 @@ void primitives_init_YUV_neon(primitives_t* WINPR_RESTRICT prims)
 		prims->YUV420CombineToYUV444 = neon_YUV420CombineToYUV444;
 	}
 #else
-	WLog_VRB(PRIM_TAG, "undefined WITH_NEON");
+	WLog_VRB(PRIM_TAG, "undefined WITH_SIMD or neon intrinsics not available");
 	WINPR_UNUSED(prims);
 #endif
 }

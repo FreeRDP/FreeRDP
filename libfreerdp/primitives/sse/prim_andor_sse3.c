@@ -24,7 +24,7 @@
 #include "prim_internal.h"
 #include "prim_templates.h"
 
-#if defined(SSE2_ENABLED)
+#if defined(SSE_AVX_INTRINSICS_ENABLED)
 #include <emmintrin.h>
 #include <pmmintrin.h>
 
@@ -40,7 +40,7 @@ SSE3_SCD_PRE_ROUTINE(sse3_orC_32u, UINT32, generic->orC_32u, _mm_or_si128, *dptr
 /* ------------------------------------------------------------------------- */
 void primitives_init_andor_sse3(primitives_t* WINPR_RESTRICT prims)
 {
-#if defined(SSE2_ENABLED)
+#if defined(SSE_AVX_INTRINSICS_ENABLED)
 	generic = primitives_get_generic();
 	primitives_init_andor(prims);
 
@@ -53,7 +53,7 @@ void primitives_init_andor_sse3(primitives_t* WINPR_RESTRICT prims)
 	}
 
 #else
-	WLog_VRB(PRIM_TAG, "undefined WITH_SSE2");
+	WLog_VRB(PRIM_TAG, "undefined WITH_SIMD or SSE3 intrinsics not available");
 	WINPR_UNUSED(prims);
 #endif
 }

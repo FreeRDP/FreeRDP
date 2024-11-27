@@ -56,6 +56,7 @@ set(${MODULE_PREFIX}_GATEWAY_SRCS
 )
 
 set(${MODULE_PREFIX}_SRCS
+    simd.h
     state.h
     state.c
     utils.c
