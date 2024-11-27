@@ -5828,15 +5828,15 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 	)
 	{
 		if (!freerdp_settings_set_bool(settings, FreeRDP_DeviceRedirection, TRUE))
-			return COMMAND_LINE_ERROR; /* rdpsnd requires rdpdr to be registered */
+			return FALSE; /* rdpsnd requires rdpdr to be registered */
 		if (!freerdp_settings_set_bool(settings, FreeRDP_AudioPlayback, TRUE))
-			return COMMAND_LINE_ERROR; /* Both rdpsnd and tsmf require this flag to be set */
+			return FALSE; /* Both rdpsnd and tsmf require this flag to be set */
 	}
 
 	if (freerdp_dynamic_channel_collection_find(settings, AUDIN_CHANNEL_NAME))
 	{
 		if (!freerdp_settings_set_bool(settings, FreeRDP_AudioCapture, TRUE))
-			return COMMAND_LINE_ERROR;
+			return FALSE;
 	}
 
 	if (freerdp_settings_get_bool(settings, FreeRDP_NetworkAutoDetect) ||
@@ -5844,7 +5844,7 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 	    freerdp_settings_get_bool(settings, FreeRDP_SupportMultitransport))
 	{
 		if (!freerdp_settings_set_bool(settings, FreeRDP_DeviceRedirection, TRUE))
-			return COMMAND_LINE_ERROR; /* these RDP8 features require rdpdr to be registered */
+			return FALSE; /* these RDP8 features require rdpdr to be registered */
 	}
 
 	const char* DrivesToRedirect = freerdp_settings_get_string(settings, FreeRDP_DrivesToRedirect);
@@ -5914,9 +5914,6 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 
 		if (!freerdp_settings_set_bool(settings, FreeRDP_DeviceRedirection, TRUE))
 			return FALSE;
-
-		if (!freerdp_settings_set_bool(settings, FreeRDP_DeviceRedirection, TRUE))
-			return COMMAND_LINE_ERROR;
 	}
 	else if (freerdp_settings_get_bool(settings, FreeRDP_RedirectDrives))
 	{
@@ -5936,7 +5933,7 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 	    freerdp_settings_get_bool(settings, FreeRDP_RedirectPrinters))
 	{
 		if (!freerdp_settings_set_bool(settings, FreeRDP_DeviceRedirection, TRUE))
-			return COMMAND_LINE_ERROR; /* All of these features require rdpdr */
+			return FALSE; /* All of these features require rdpdr */
 	}
 
 	if (freerdp_settings_get_bool(settings, FreeRDP_RedirectHomeDrive))
