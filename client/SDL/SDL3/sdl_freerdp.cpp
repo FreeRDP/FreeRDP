@@ -1056,6 +1056,9 @@ static int sdl_run(SdlContext* sdl)
 							{
 								case SDL_EVENT_WINDOW_DISPLAY_SCALE_CHANGED:
 								{
+									if(freerdp_settings_get_bool(sdl->context()->settings, FreeRDP_DynamicResolutionUpdate)) {
+										break;
+									}
 									auto win = window->second.window();
 									int w_pix{};
 									int h_pix{};
@@ -1071,6 +1074,10 @@ static int sdl_run(SdlContext* sdl)
 										SDL_SetWindowSize(win, pix2point(w_gdi), pix2point(h_gdi));
 									}
 								}
+								break;
+								case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
+								window->second.fill();
+								window->second.updateSurface();
 								break;
 								case SDL_EVENT_WINDOW_MOVED:
 								{
