@@ -18,5 +18,5 @@
 define_channel("parallel")
 
 if(WITH_CLIENT_CHANNELS)
-	add_channel_client(${MODULE_PREFIX} ${CHANNEL_NAME})
+  add_channel_client(${MODULE_PREFIX} ${CHANNEL_NAME})
 endif()

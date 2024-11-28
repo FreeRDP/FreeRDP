@@ -17,13 +17,8 @@
 
 define_channel_server("remdesk")
 
-set(${MODULE_PREFIX}_SRCS
-	remdesk_main.c
-	remdesk_main.h
-)
+set(${MODULE_PREFIX}_SRCS remdesk_main.c remdesk_main.h)
 
-set(${MODULE_PREFIX}_LIBS
-		winpr remdesk-common
-)
+set(${MODULE_PREFIX}_LIBS winpr remdesk-common)
 
 add_channel_server_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} FALSE "VirtualChannelEntry")

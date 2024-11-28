@@ -23,30 +23,30 @@ include_directories(SYSTEM ${WAYLAND_INCLUDE_DIR})
 
 set(${MODULE_PREFIX}_SRCS
     wlfreerdp.c
-	wlfreerdp.h
-	wlf_disp.c
-	wlf_disp.h
-	wlf_pointer.c
-	wlf_pointer.h
-	wlf_input.c
-	wlf_input.h
-	wlf_cliprdr.c
-	wlf_cliprdr.h
-	wlf_channels.c
-	wlf_channels.h
-	)
+    wlfreerdp.h
+    wlf_disp.c
+    wlf_disp.h
+    wlf_pointer.c
+    wlf_pointer.h
+    wlf_input.c
+    wlf_input.h
+    wlf_cliprdr.c
+    wlf_cliprdr.h
+    wlf_channels.c
+    wlf_channels.h
+)
 
-if (FREERDP_UNIFIED_BUILD)
-	include_directories(${PROJECT_SOURCE_DIR}/uwac/include)
-	include_directories(${PROJECT_BINARY_DIR}/uwac/include)
+if(FREERDP_UNIFIED_BUILD)
+  include_directories(${PROJECT_SOURCE_DIR}/uwac/include)
+  include_directories(${PROJECT_BINARY_DIR}/uwac/include)
 else()
-	find_package(uwac 0 REQUIRED)
-    include_directories(SYSTEM ${UWAC_INCLUDE_DIR})
+  find_package(uwac 0 REQUIRED)
+  include_directories(SYSTEM ${UWAC_INCLUDE_DIR})
 endif()
 
-list (APPEND ${MODULE_PREFIX}_LIBS freerdp-client freerdp uwac)
+list(APPEND ${MODULE_PREFIX}_LIBS freerdp-client freerdp uwac)
 
-AddTargetWithResourceFile(${MODULE_NAME} TRUE ${FREERDP_VERSION} ${MODULE_PREFIX}_SRCS)
+addtargetwithresourcefile(${MODULE_NAME} TRUE ${FREERDP_VERSION} ${MODULE_PREFIX}_SRCS)
 
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 

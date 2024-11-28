@@ -19,9 +19,6 @@ define_channel_client("encomsp")
 
 include_directories(..)
 
-set(${MODULE_PREFIX}_SRCS
-	encomsp_main.c
-	encomsp_main.h
-)
+set(${MODULE_PREFIX}_SRCS encomsp_main.c encomsp_main.h)
 
 add_channel_client_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} FALSE "VirtualChannelEntryEx")

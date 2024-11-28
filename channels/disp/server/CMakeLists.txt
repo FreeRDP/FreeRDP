@@ -17,16 +17,9 @@
 
 define_channel_server("disp")
 
-set(${MODULE_PREFIX}_SRCS
-	disp_main.c
-	disp_main.h
-	../disp_common.c
-	../disp_common.h
-)
+set(${MODULE_PREFIX}_SRCS disp_main.c disp_main.h ../disp_common.c ../disp_common.h)
 
-set(${MODULE_PREFIX}_LIBS
-    freerdp
-)
+set(${MODULE_PREFIX}_LIBS freerdp)
 include_directories(..)
 
 add_channel_server_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} FALSE "DVCPluginEntry")

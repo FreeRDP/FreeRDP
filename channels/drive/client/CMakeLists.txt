@@ -17,13 +17,7 @@
 
 define_channel_client("drive")
 
-set(${MODULE_PREFIX}_SRCS
-	drive_file.c
-	drive_file.h
-	drive_main.c
-)
+set(${MODULE_PREFIX}_SRCS drive_file.c drive_file.h drive_main.c)
 
-set(${MODULE_PREFIX}_LIBS
-	winpr freerdp
-)
+set(${MODULE_PREFIX}_LIBS winpr freerdp)
 add_channel_client_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} TRUE "DeviceServiceEntry")

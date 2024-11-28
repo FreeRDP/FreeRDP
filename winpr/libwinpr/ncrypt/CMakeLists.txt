@@ -15,22 +15,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-if (WITH_PKCS11)
-	winpr_module_add(
-		ncrypt_pkcs11.c
-		pkcs11-headers/pkcs11.h
-		)
+if(WITH_PKCS11)
+  winpr_module_add(ncrypt_pkcs11.c pkcs11-headers/pkcs11.h)
 endif()
 
-winpr_module_add(
-	ncrypt.c
-	ncrypt.h
-)
+winpr_module_add(ncrypt.c ncrypt.h)
 
-if (WIN32)
-	winpr_library_add_public(ncrypt)
+if(WIN32)
+  winpr_library_add_public(ncrypt)
 endif()
 
 if(BUILD_TESTING_INTERNAL OR BUILD_TESTING)
-	add_subdirectory(test)
+  add_subdirectory(test)
 endif()

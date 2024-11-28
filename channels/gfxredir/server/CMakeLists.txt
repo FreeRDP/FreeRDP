@@ -17,16 +17,9 @@
 
 define_channel_server("gfxredir")
 
-set(${MODULE_PREFIX}_SRCS
-	gfxredir_main.c
-	gfxredir_main.h
-	../gfxredir_common.c
-	../gfxredir_common.h
-)
+set(${MODULE_PREFIX}_SRCS gfxredir_main.c gfxredir_main.h ../gfxredir_common.c ../gfxredir_common.h)
 
-set(${MODULE_PREFIX}_LIBS
-    freerdp
-)
+set(${MODULE_PREFIX}_LIBS freerdp)
 include_directories(..)
 
 add_channel_server_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} FALSE "DVCPluginEntry")

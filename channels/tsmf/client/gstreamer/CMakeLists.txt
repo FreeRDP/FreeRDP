@@ -18,7 +18,7 @@
 define_channel_client_subsystem("tsmf" "gstreamer" "decoder")
 
 if(NOT gstreamer_FOUND)
-	message(FATAL_ERROR "GStreamer library not found, but required for TSMF module.")
+  message(FATAL_ERROR "GStreamer library not found, but required for TSMF module.")
 endif()
 
 set(SRC "tsmf_gstreamer.c")
@@ -27,49 +27,32 @@ pkg_check_modules(gstreamerbase gstreamer-base-1.0 REQUIRED)
 pkg_check_modules(gstreamervideo gstreamer-video-1.0 REQUIRED)
 pkg_check_modules(gstreamerapp gstreamer-app-1.0 REQUIRED)
 
-set(LIBS
-    ${gstreamer_LIBRARIES}
-    ${gstreamerbase_LIBRARIES}
-    ${gstreamervideo_LIBRARIES}
-    ${gstreamerapp_LIBRARIES}
+set(LIBS ${gstreamer_LIBRARIES} ${gstreamerbase_LIBRARIES} ${gstreamervideo_LIBRARIES} ${gstreamerapp_LIBRARIES})
+include_directories(
+  SYSTEM ${gstreamer_INCLUDE_DIRS} ${gstreamerbase_INCLUDE_DIRS} ${gstreamervideo_INCLUDE_DIRS}
+  ${gstreamerapp_INCLUDE_DIRS}
 )
-include_directories(SYSTEM
-    ${gstreamer_INCLUDE_DIRS}
-    ${gstreamerbase_INCLUDE_DIRS}
-    ${gstreamervideo_INCLUDE_DIRS}
-    ${gstreamerapp_INCLUDE_DIRS}
-)
-
 
 if(ANDROID)
-	set(SRC ${SRC}
-                tsmf_android.c)
+  set(SRC ${SRC} tsmf_android.c)
 else()
-	find_package(X11 REQUIRED)
+  find_package(X11 REQUIRED)
 
-        list(APPEND SRC
-		tsmf_X11.c)
-	list(APPEND LIBS
-		${X11_LIBRARIES}
-		${X11_Xext_LIB})
-	if (NOT APPLE)
-		list(APPEND LIBS rt)
-	endif()
+  list(APPEND SRC tsmf_X11.c)
+  list(APPEND LIBS ${X11_LIBRARIES} ${X11_Xext_LIB})
+  if(NOT APPLE)
+    list(APPEND LIBS rt)
+  endif()
 
-	if(X11_Xext_FOUND)
-		add_definitions(-DWITH_XEXT=1)
-	endif()
+  if(X11_Xext_FOUND)
+    add_definitions(-DWITH_XEXT=1)
+  endif()
 
 endif()
 
-set(${MODULE_PREFIX}_SRCS
-    "${SRC}"
-)
+set(${MODULE_PREFIX}_SRCS "${SRC}")
 
-set(${MODULE_PREFIX}_LIBS
-    ${LIBS}
-    winpr
-)
+set(${MODULE_PREFIX}_LIBS ${LIBS} winpr)
 
 include_directories(..)
 

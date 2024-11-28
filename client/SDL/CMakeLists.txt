@@ -18,16 +18,13 @@
 cmake_minimum_required(VERSION 3.13)
 
 if(POLICY CMP0091)
-	cmake_policy(SET CMP0091 NEW)
+  cmake_policy(SET CMP0091 NEW)
 endif()
-if (NOT FREERDP_DEFAULT_PROJECT_VERSION)
-	set(FREERDP_DEFAULT_PROJECT_VERSION "1.0.0.0")
+if(NOT FREERDP_DEFAULT_PROJECT_VERSION)
+  set(FREERDP_DEFAULT_PROJECT_VERSION "1.0.0.0")
 endif()
 
-project(sdl-freerdp
-	LANGUAGES CXX
-	VERSION ${FREERDP_DEFAULT_PROJECT_VERSION}
-)
+project(sdl-freerdp LANGUAGES CXX VERSION ${FREERDP_DEFAULT_PROJECT_VERSION})
 
 message("project ${PROJECT_NAME} is using version ${PROJECT_VERSION}")
 
@@ -42,7 +39,9 @@ include(ConfigureFreeRDP)
 include(CXXCompilerFlags)
 
 option(WITH_DEBUG_SDL_EVENTS "[dangerous, not for release builds!] Debug SDL events" ${DEFAULT_DEBUG_OPTION})
-option(WITH_DEBUG_SDL_KBD_EVENTS "[dangerous, not for release builds!] Debug SDL keyboard events" ${DEFAULT_DEBUG_OPTION})
+option(WITH_DEBUG_SDL_KBD_EVENTS "[dangerous, not for release builds!] Debug SDL keyboard events"
+       ${DEFAULT_DEBUG_OPTION}
+)
 option(WITH_WIN_CONSOLE "Build ${PROJECT_NAME} with console support" ON)
 option(WITH_SDL_LINK_SHARED "link SDL dynamic or static" ON)
 
@@ -52,12 +51,11 @@ else()
   set(WIN32_GUI_FLAG "WIN32")
 endif()
 
-
-if (WITH_DEBUG_SDL_EVENTS)
-	add_definitions(-DWITH_DEBUG_SDL_EVENTS)
+if(WITH_DEBUG_SDL_EVENTS)
+  add_definitions(-DWITH_DEBUG_SDL_EVENTS)
 endif()
-if (WITH_DEBUG_SDL_KBD_EVENTS)
-	add_definitions(-DWITH_DEBUG_SDL_KBD_EVENTS)
+if(WITH_DEBUG_SDL_KBD_EVENTS)
+  add_definitions(-DWITH_DEBUG_SDL_KBD_EVENTS)
 endif()
 
 include(CMakeDependentOption)
@@ -66,34 +64,37 @@ find_package(SDL2)
 find_package(SDL3)
 
 cmake_dependent_option(WITH_CLIENT_SDL_VERSIONED "append sdl version to client binaries" OFF WITH_CLIENT_SDL OFF)
-cmake_dependent_option(WITH_CLIENT_SDL2 "[experimental] build experimental SDL2 client" ${SDL2_FOUND} WITH_CLIENT_SDL OFF)
-cmake_dependent_option(WITH_CLIENT_SDL3 "[experimental] build experimental SDL3 client" ${SDL3_FOUND} WITH_CLIENT_SDL OFF)
+cmake_dependent_option(
+  WITH_CLIENT_SDL2 "[experimental] build experimental SDL2 client" ${SDL2_FOUND} WITH_CLIENT_SDL OFF
+)
+cmake_dependent_option(
+  WITH_CLIENT_SDL3 "[experimental] build experimental SDL3 client" ${SDL3_FOUND} WITH_CLIENT_SDL OFF
+)
 
-if (WITH_CLIENT_SDL2 AND WITH_CLIENT_SDL3)
-	message("Building both, SDL2 and SDL3 clients, forcing WITH_CLIENT_SDL_VERSIONED=ON")
-	set(WITH_CLIENT_SDL_VERSIONED ON)
+if(WITH_CLIENT_SDL2 AND WITH_CLIENT_SDL3)
+  message("Building both, SDL2 and SDL3 clients, forcing WITH_CLIENT_SDL_VERSIONED=ON")
+  set(WITH_CLIENT_SDL_VERSIONED ON)
 endif()
 
-if (NOT SDL2_FOUND AND NOT SDL3_FOUND)
-	message(FATAL_ERROR "No SDL library detected, giving up. Install SDL2 or SDL3 development package to fix")
+if(NOT SDL2_FOUND AND NOT SDL3_FOUND)
+  message(FATAL_ERROR "No SDL library detected, giving up. Install SDL2 or SDL3 development package to fix")
 endif()
 
 add_subdirectory(common)
 include_directories(common)
 
-if (WITH_CLIENT_SDL2)
-	if (SDL2_FOUND)
-		add_subdirectory(SDL2)
-	else()
-		message(WARNING "SDL2 requested but not found, continuing build without SDL2 client")
-	endif()
+if(WITH_CLIENT_SDL2)
+  if(SDL2_FOUND)
+    add_subdirectory(SDL2)
+  else()
+    message(WARNING "SDL2 requested but not found, continuing build without SDL2 client")
+  endif()
 endif()
 
-if (WITH_CLIENT_SDL3)
-	if (SDL3_FOUND)
-		add_subdirectory(SDL3)
-	else()
-		message(WARNING "SDL3 requested but not found, continuing build without SDL3 client")
-	endif()
+if(WITH_CLIENT_SDL3)
+  if(SDL3_FOUND)
+    add_subdirectory(SDL3)
+  else()
+    message(WARNING "SDL3 requested but not found, continuing build without SDL3 client")
+  endif()
 endif()
-

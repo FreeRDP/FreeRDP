@@ -18,13 +18,13 @@
 winpr_module_add(wtsapi.c)
 
 if(WIN32)
-	winpr_module_add(wtsapi_win32.c wtsapi_win32.h)
+  winpr_module_add(wtsapi_win32.c wtsapi_win32.h)
 
-	if (MINGW)
-		winpr_library_add_private(ntdll.lib) # Only required with MINGW
-	endif()
+  if(MINGW)
+    winpr_library_add_private(ntdll.lib) # Only required with MINGW
+  endif()
 endif()
 
 if(BUILD_TESTING_INTERNAL OR BUILD_TESTING)
-	add_subdirectory(test)
+  add_subdirectory(test)
 endif()

@@ -1,37 +1,29 @@
 # FreeRDP: A Remote Desktop Protocol Implementation
- # FreeRDP cmake build script
- #
- # Copyright (c) 2015 Armin Novak <armin.novak@thincast.com>
- # Copyright (c) 2015 Thincast Technologies GmbH
- #
- # Licensed under the Apache License, Version 2.0 (the "License");
- # you may not use this file except in compliance with the License.
- # You may obtain a copy of the License at
- #
- #     http://www.apache.org/licenses/LICENSE-2.0
- #
- # Unless required by applicable law or agreed to in writing, software
- # distributed under the License is distributed on an "AS IS" BASIS,
- # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- # See the License for the specific language governing permissions and
- # limitations under the License.
+# FreeRDP cmake build script
+#
+# Copyright (c) 2015 Armin Novak <armin.novak@thincast.com>
+# Copyright (c) 2015 Thincast Technologies GmbH
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
- define_channel_client_subsystem("audin" "ios" "")
- FIND_LIBRARY(CORE_AUDIO CoreAudio)
- FIND_LIBRARY(AVFOUNDATION AVFoundation)
- FIND_LIBRARY(AUDIO_TOOL AudioToolbox)
+define_channel_client_subsystem("audin" "ios" "")
+find_library(CORE_AUDIO CoreAudio)
+find_library(AVFOUNDATION AVFoundation)
+find_library(AUDIO_TOOL AudioToolbox)
 
- set(${MODULE_PREFIX}_SRCS
- 	audin_ios.m
-)
+set(${MODULE_PREFIX}_SRCS audin_ios.m)
 
-set(${MODULE_PREFIX}_LIBS
-    winpr
-    freerdp
-     ${AVFOUNDATION}
-     ${CORE_AUDIO}
-     ${AUDIO_TOOL}
-)
+set(${MODULE_PREFIX}_LIBS winpr freerdp ${AVFOUNDATION} ${CORE_AUDIO} ${AUDIO_TOOL})
 
 include_directories(..)
 include_directories(SYSTEM ${MAC_INCLUDE_DIRS})

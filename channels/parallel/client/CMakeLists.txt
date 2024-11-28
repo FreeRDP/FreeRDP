@@ -17,11 +17,7 @@
 
 define_channel_client("parallel")
 
-set(${MODULE_PREFIX}_SRCS
-	parallel_main.c
-)
+set(${MODULE_PREFIX}_SRCS parallel_main.c)
 
-set(${MODULE_PREFIX}_LIBS
-	winpr freerdp
-)
+set(${MODULE_PREFIX}_LIBS winpr freerdp)
 add_channel_client_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} TRUE "DeviceServiceEntry")

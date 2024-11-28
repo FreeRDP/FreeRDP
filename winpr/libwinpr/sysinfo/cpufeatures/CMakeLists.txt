@@ -17,4 +17,3 @@
 # limitations under the License.
 
 winpr_module_add(cpu-features.c cpu-features.h)
-

@@ -17,14 +17,9 @@
 
 define_channel_client("geometry")
 
-set(${MODULE_PREFIX}_SRCS
-	geometry_main.c
-	geometry_main.h
-)
+set(${MODULE_PREFIX}_SRCS geometry_main.c geometry_main.h)
 
-set(${MODULE_PREFIX}_LIBS
-    winpr
-)
+set(${MODULE_PREFIX}_LIBS winpr)
 
 include_directories(..)
 

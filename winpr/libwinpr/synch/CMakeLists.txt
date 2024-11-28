@@ -16,25 +16,26 @@
 # limitations under the License.
 
 winpr_module_add(
-	address.c
-	barrier.c
-	critical.c
-	event.c
-	init.c
-	mutex.c
-	pollset.c
-	pollset.h
-	semaphore.c
-	sleep.c
-	synch.h
-	timer.c
-	wait.c)
+  address.c
+  barrier.c
+  critical.c
+  event.c
+  init.c
+  mutex.c
+  pollset.c
+  pollset.h
+  semaphore.c
+  sleep.c
+  synch.h
+  timer.c
+  wait.c
+)
 
 if(FREEBSD)
-	winpr_include_directory_add(${EPOLLSHIM_INCLUDE_DIR})
-	winpr_library_add_private(${EPOLLSHIM_LIBS})
+  winpr_include_directory_add(${EPOLLSHIM_INCLUDE_DIR})
+  winpr_library_add_private(${EPOLLSHIM_LIBS})
 endif()
 
 if(BUILD_TESTING_INTERNAL OR BUILD_TESTING)
-	add_subdirectory(test)
+  add_subdirectory(test)
 endif()

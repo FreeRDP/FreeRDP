@@ -18,20 +18,11 @@
 
 define_channel_client("urbdrc")
 
-set(${MODULE_PREFIX}_SRCS
-	data_transfer.c
-	data_transfer.h
-	urbdrc_main.c
-	urbdrc_main.h
-)
+set(${MODULE_PREFIX}_SRCS data_transfer.c data_transfer.h urbdrc_main.c urbdrc_main.h)
 
-set(${MODULE_PREFIX}_LIBS
-	winpr
-	freerdp
-	urbdrc-common
-)
-if (UDEV_FOUND AND UDEV_LIBRARIES)
-	list(APPEND ${MODULE_PREFIX}_LIBS ${UDEV_LIBRARIES})
+set(${MODULE_PREFIX}_LIBS winpr freerdp urbdrc-common)
+if(UDEV_FOUND AND UDEV_LIBRARIES)
+  list(APPEND ${MODULE_PREFIX}_LIBS ${UDEV_LIBRARIES})
 endif()
 
 add_channel_client_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} TRUE "DVCPluginEntry")

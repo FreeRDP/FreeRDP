@@ -16,11 +16,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(SRCS
-	remdesk_common.h
-	remdesk_common.c)
+set(SRCS remdesk_common.h remdesk_common.c)
 
 add_library(remdesk-common STATIC ${SRCS})
 
-channel_install(remdesk-common  ${FREERDP_ADDIN_PATH} "FreeRDPTargets")
-
+channel_install(remdesk-common ${FREERDP_ADDIN_PATH} "FreeRDPTargets")

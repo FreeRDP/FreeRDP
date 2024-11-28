@@ -17,16 +17,9 @@
 
 define_channel_client("cliprdr")
 
-set(${MODULE_PREFIX}_SRCS
-	cliprdr_format.c
-	cliprdr_format.h
-	cliprdr_main.c
-	cliprdr_main.h
-	../cliprdr_common.h
-	../cliprdr_common.c
+set(${MODULE_PREFIX}_SRCS cliprdr_format.c cliprdr_format.h cliprdr_main.c cliprdr_main.h ../cliprdr_common.h
+                          ../cliprdr_common.c
 )
 
-set(${MODULE_PREFIX}_LIBS
-	winpr freerdp
-)
+set(${MODULE_PREFIX}_LIBS winpr freerdp)
 add_channel_client_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} FALSE "VirtualChannelEntryEx")

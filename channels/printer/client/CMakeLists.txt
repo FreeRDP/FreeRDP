@@ -17,19 +17,15 @@
 
 define_channel_client("printer")
 
-set(${MODULE_PREFIX}_SRCS
-	printer_main.c
-)
+set(${MODULE_PREFIX}_SRCS printer_main.c)
 
-set(${MODULE_PREFIX}_LIBS
-	winpr freerdp
-)
+set(${MODULE_PREFIX}_LIBS winpr freerdp)
 add_channel_client_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} TRUE "DeviceServiceEntry")
 
 if(WITH_CUPS)
-	add_channel_client_subsystem(${MODULE_PREFIX} ${CHANNEL_NAME} "cups" "")
+  add_channel_client_subsystem(${MODULE_PREFIX} ${CHANNEL_NAME} "cups" "")
 endif()
 
 if(WIN32 AND NOT UWP)
-	add_channel_client_subsystem(${MODULE_PREFIX} ${CHANNEL_NAME} "win" "")
+  add_channel_client_subsystem(${MODULE_PREFIX} ${CHANNEL_NAME} "win" "")
 endif()

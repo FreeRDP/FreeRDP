@@ -1,12 +1,10 @@
 cmake_minimum_required(VERSION 3.13)
 
-if (NOT FREERDP_DEFAULT_PROJECT_VERSION)
-	set(FREERDP_DEFAULT_PROJECT_VERSION "1.0.0.0")
+if(NOT FREERDP_DEFAULT_PROJECT_VERSION)
+  set(FREERDP_DEFAULT_PROJECT_VERSION "1.0.0.0")
 endif()
 
-project(MacFreeRDP
-	VERSION ${FREERDP_DEFAULT_PROJECT_VERSION}
-)
+project(MacFreeRDP VERSION ${FREERDP_DEFAULT_PROJECT_VERSION})
 
 message("project ${PROJECT_NAME} is using version ${PROJECT_VERSION}")
 
@@ -36,75 +34,55 @@ set(XIBS MainMenu.xib)
 
 set(SOURCES "")
 
-set(OBJECTIVE_SOURCES
-	main.m
-        AppDelegate.m
-        )
+set(OBJECTIVE_SOURCES main.m AppDelegate.m)
 
 list(APPEND SOURCES ${OBJECTIVE_SOURCES})
 
-set(HEADERS
-        AppDelegate.h
-        )
+set(HEADERS AppDelegate.h)
 
-set(RESOURCES
-    "en.lproj/InfoPlist.strings"
-    ${MACOSX_BUNDLE_ICON_FILE}
-)
+set(RESOURCES "en.lproj/InfoPlist.strings" ${MACOSX_BUNDLE_ICON_FILE})
 # Include XIB file in Xcode resources.
 if("${CMAKE_GENERATOR}" MATCHES "Xcode")
-    message(STATUS "Adding Xcode XIB resources for ${MODULE_NAME}")
-    list(APPEND RESOURCES ${XIBS})
-    set(IS_XCODE ON)
+  message(STATUS "Adding Xcode XIB resources for ${MODULE_NAME}")
+  list(APPEND RESOURCES ${XIBS})
+  set(IS_XCODE ON)
 endif()
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Info.plist.in ${CMAKE_CURRENT_BINARY_DIR}/Info.plist @ONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/PkgInfo.in ${CMAKE_CURRENT_BINARY_DIR}/PkgInfo @ONLY)
 
-add_executable(${PROJECT_NAME}
-        ${HEADERS}
-        ${SOURCES}
-        ${RESOURCES})
+add_executable(${PROJECT_NAME} ${HEADERS} ${SOURCES} ${RESOURCES})
 
-if (WITH_BINARY_VERSIONING)
-	set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "${PROJECT_NAME}${PROJECT_VERSION_MAJOR}")
+if(WITH_BINARY_VERSIONING)
+  set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "${PROJECT_NAME}${PROJECT_VERSION_MAJOR}")
 endif()
 set_target_properties(${PROJECT_NAME} PROPERTIES RESOURCE "${RESOURCES}")
 set_target_properties(${PROJECT_NAME} PROPERTIES MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_BINARY_DIR}/Info.plist)
 
-target_link_libraries(${PROJECT_NAME} PRIVATE
-    ${COCOA_LIBRARY}
-    ${FOUNDATION_LIBRARY}
-    ${APPKIT_LIBRARY}
-    MacFreeRDP-library
+target_link_libraries(
+  ${PROJECT_NAME} PRIVATE ${COCOA_LIBRARY} ${FOUNDATION_LIBRARY} ${APPKIT_LIBRARY} MacFreeRDP-library
+)
+
+if(NOT IS_XCODE)
+  find_program(IBTOOL ibtool REQUIRED HINTS "/usr/bin" "${OSX_DEVELOPER_ROOT}/usr/bin")
+
+  # Compile the .xib files using the 'ibtool' program with the destination being the app package
+
+  foreach(xib ${XIBS})
+    get_filename_component(XIB_WE ${xib} NAME_WE)
+    set(NIB ${CMAKE_CURRENT_BINARY_DIR}/${XIB_WE}.nib)
+    list(APPEND NIBS ${NIB})
+
+    add_custom_command(
+      TARGET ${PROJECT_NAME} POST_BUILD COMMAND ${IBTOOL} --errors --warnings --notices --output-format
+                                                human-readable-text --compile ${NIB} ${CMAKE_CURRENT_SOURCE_DIR}/${xib}
+      COMMENT "Compiling ${xib}"
     )
+  endforeach()
 
-if (NOT IS_XCODE)
-    find_program(IBTOOL ibtool REQUIRED
-        HINTS 
-            "/usr/bin"
-            "${OSX_DEVELOPER_ROOT}/usr/bin"
-    )
-
-    # Compile the .xib files using the 'ibtool' program with the destination being the app package
-
-    foreach(xib ${XIBS})
-        get_filename_component(XIB_WE ${xib} NAME_WE)
-        set(NIB ${CMAKE_CURRENT_BINARY_DIR}/${XIB_WE}.nib)
-	list(APPEND NIBS ${NIB})
-
-        add_custom_command (TARGET ${PROJECT_NAME} POST_BUILD
-            COMMAND ${IBTOOL} --errors --warnings --notices --output-format human-readable-text
-                --compile ${NIB} ${CMAKE_CURRENT_SOURCE_DIR}/${xib}
-            COMMENT "Compiling ${xib}")
-    endforeach()
-
-    install(FILES ${NIBS} DESTINATION ${CMAKE_INSTALL_DATADIR})
+  install(FILES ${NIBS} DESTINATION ${CMAKE_INSTALL_DATADIR})
 endif()
 
-install(TARGETS ${PROJECT_NAME}
-    COMPONENT client
-    RESOURCE DESTINATION ${CMAKE_INSTALL_DATADIR}
-    )
+install(TARGETS ${PROJECT_NAME} COMPONENT client RESOURCE DESTINATION ${CMAKE_INSTALL_DATADIR})
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/Info.plist DESTINATION ${CMAKE_INSTALL_PREFIX})
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/PkgInfo DESTINATION ${CMAKE_INSTALL_PREFIX})

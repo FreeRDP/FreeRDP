@@ -18,12 +18,12 @@
 define_channel("rdpecam")
 
 if(WITH_SERVER_CHANNELS)
-	add_channel_server(${MODULE_PREFIX} ${CHANNEL_NAME})
+  add_channel_server(${MODULE_PREFIX} ${CHANNEL_NAME})
 endif()
 
 if(WITH_CLIENT_CHANNELS)
-    option(RDPECAM_CLIENT_CHANNEL_STUB "Only build [MS-RDPECAM] channel stub" OFF)
-    if (NOT RDPECAM_CLIENT_CHANNEL_STUB)
-    	add_channel_client(${MODULE_PREFIX} ${CHANNEL_NAME})
-    endif()
+  option(RDPECAM_CLIENT_CHANNEL_STUB "Only build [MS-RDPECAM] channel stub" OFF)
+  if(NOT RDPECAM_CLIENT_CHANNEL_STUB)
+    add_channel_client(${MODULE_PREFIX} ${CHANNEL_NAME})
+  endif()
 endif()

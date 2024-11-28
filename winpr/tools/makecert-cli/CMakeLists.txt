@@ -19,10 +19,9 @@
 set(MODULE_NAME "winpr-makecert")
 set(MODULE_PREFIX "WINPR_MAKECERT")
 
-set(${MODULE_PREFIX}_SRCS
-	main.c)
+set(${MODULE_PREFIX}_SRCS main.c)
 
-AddTargetWithResourceFile(${MODULE_NAME} TRUE "${WINPR_VERSION}" ${MODULE_PREFIX}_SRCS)
+addtargetwithresourcefile(${MODULE_NAME} TRUE "${WINPR_VERSION}" ${MODULE_PREFIX}_SRCS)
 
 set(${MODULE_PREFIX}_LIBS winpr-tools)
 

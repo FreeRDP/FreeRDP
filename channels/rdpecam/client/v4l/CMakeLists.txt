@@ -17,20 +17,14 @@
 
 if(WITH_V4L)
 
-	define_channel_client_subsystem("rdpecam" "v4l" "")
+  define_channel_client_subsystem("rdpecam" "v4l" "")
 
-	set(${MODULE_PREFIX}_SRCS
-		camera_v4l.c
-	)
+  set(${MODULE_PREFIX}_SRCS camera_v4l.c)
 
-	set(${MODULE_PREFIX}_LIBS
-		winpr
-		freerdp
-		${V4L_TARGETS}
-	)
+  set(${MODULE_PREFIX}_LIBS winpr freerdp ${V4L_TARGETS})
 
-	include_directories(..)
+  include_directories(..)
 
-	add_channel_client_subsystem_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} "" TRUE "")
+  add_channel_client_subsystem_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} "" TRUE "")
 
 endif()

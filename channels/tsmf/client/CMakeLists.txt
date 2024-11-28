@@ -20,65 +20,62 @@ define_channel_client("tsmf")
 
 message(DEPRECATION "TSMF channel is no longer maintained. Use [MS-RDPEVOR] (/video) instead.")
 
-
 find_package(PkgConfig)
-if (PkgConfig_FOUND)
-    pkg_check_modules(gstreamer gstreamer-1.0)
+if(PkgConfig_FOUND)
+  pkg_check_modules(gstreamer gstreamer-1.0)
 endif()
 
-if (WITH_GSTREAMER_1_0)
-	if(gstreamer_FOUND)
-		add_definitions(-DWITH_GSTREAMER_1_0)
-	else()
-		message(WARNING "gstreamer not detected, disabling support")
-	endif()
+if(WITH_GSTREAMER_1_0)
+  if(gstreamer_FOUND)
+    add_definitions(-DWITH_GSTREAMER_1_0)
+  else()
+    message(WARNING "gstreamer not detected, disabling support")
+  endif()
 endif()
 
 set(${MODULE_PREFIX}_SRCS
-	tsmf_audio.c
-	tsmf_audio.h
-	tsmf_codec.c
-	tsmf_codec.h
-	tsmf_constants.h
-	tsmf_decoder.c
-	tsmf_decoder.h
-	tsmf_ifman.c
-	tsmf_ifman.h
-	tsmf_main.c
-	tsmf_main.h
-	tsmf_media.c
-	tsmf_media.h
-	tsmf_types.h
+    tsmf_audio.c
+    tsmf_audio.h
+    tsmf_codec.c
+    tsmf_codec.h
+    tsmf_constants.h
+    tsmf_decoder.c
+    tsmf_decoder.h
+    tsmf_ifman.c
+    tsmf_ifman.h
+    tsmf_main.c
+    tsmf_main.h
+    tsmf_media.c
+    tsmf_media.h
+    tsmf_types.h
 )
 
-set(${MODULE_PREFIX}_LIBS
-	winpr freerdp
-)
+set(${MODULE_PREFIX}_LIBS winpr freerdp)
 include_directories(..)
 
 add_channel_client_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} TRUE "DVCPluginEntry")
 
 if(WITH_VIDEO_FFMPEG)
-	add_channel_client_subsystem(${MODULE_PREFIX} ${CHANNEL_NAME} "ffmpeg" "decoder")
+  add_channel_client_subsystem(${MODULE_PREFIX} ${CHANNEL_NAME} "ffmpeg" "decoder")
 endif()
 
 if(WITH_GSTREAMER_1_0)
-	find_package(X11)
-	if (X11_Xrandr_FOUND)
-		add_channel_client_subsystem(${MODULE_PREFIX} ${CHANNEL_NAME} "gstreamer" "decoder")
-	else()
-		message(WARNING "Disabling tsmf gstreamer because XRandR wasn't found")
-	endif()
+  find_package(X11)
+  if(X11_Xrandr_FOUND)
+    add_channel_client_subsystem(${MODULE_PREFIX} ${CHANNEL_NAME} "gstreamer" "decoder")
+  else()
+    message(WARNING "Disabling tsmf gstreamer because XRandR wasn't found")
+  endif()
 endif()
 
 if(WITH_OSS)
-	add_channel_client_subsystem(${MODULE_PREFIX} ${CHANNEL_NAME} "oss" "audio")
+  add_channel_client_subsystem(${MODULE_PREFIX} ${CHANNEL_NAME} "oss" "audio")
 endif()
 
 if(WITH_ALSA)
-	add_channel_client_subsystem(${MODULE_PREFIX} ${CHANNEL_NAME} "alsa" "audio")
+  add_channel_client_subsystem(${MODULE_PREFIX} ${CHANNEL_NAME} "alsa" "audio")
 endif()
 
 if(WITH_PULSE)
-	add_channel_client_subsystem(${MODULE_PREFIX} ${CHANNEL_NAME} "pulse" "audio")
+  add_channel_client_subsystem(${MODULE_PREFIX} ${CHANNEL_NAME} "pulse" "audio")
 endif()

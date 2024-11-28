@@ -21,96 +21,106 @@ include(CMakeDependentOption)
 include(InstallFreeRDPDesktop)
 
 if(WITH_CLIENT_COMMON)
-	add_subdirectory(common)
+  add_subdirectory(common)
 endif()
 
 if(FREERDP_VENDOR AND WITH_CLIENT)
-	if(WIN32 AND NOT UWP)
-		add_subdirectory(Windows)
-	else()
-		if(WITH_SAMPLE)
-			add_subdirectory(Sample)
-		endif()
-	endif()
-
-	if (WITH_CLIENT_SDL)
-        add_subdirectory(SDL)
+  if(WIN32 AND NOT UWP)
+    add_subdirectory(Windows)
+  else()
+    if(WITH_SAMPLE)
+      add_subdirectory(Sample)
     endif()
+  endif()
 
-	if(WITH_X11)
-		add_subdirectory(X11)
-	endif()
+  if(WITH_CLIENT_SDL)
+    add_subdirectory(SDL)
+  endif()
 
-	if(WITH_WAYLAND AND WAYLAND_FOUND)
-		add_subdirectory(Wayland)
-	endif()
+  if(WITH_X11)
+    add_subdirectory(X11)
+  endif()
 
-	if(APPLE)
-		if(IOS)
-			if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/iOS")
-				message(STATUS "Adding iOS client")
-				add_subdirectory(iOS)
-			endif()
-		else()
-            option(WITH_CLIENT_MAC "Build native mac client" ON)
-            if (WITH_CLIENT_MAC)
-    			add_subdirectory(Mac)
-            endif()
-		endif()
-	endif()
+  if(WITH_WAYLAND AND WAYLAND_FOUND)
+    add_subdirectory(Wayland)
+  endif()
 
-	if(ANDROID)
-		message(STATUS "Android client module is built with Android Studio project")
-	endif()
+  if(APPLE)
+    if(IOS)
+      if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/iOS")
+        message(STATUS "Adding iOS client")
+        add_subdirectory(iOS)
+      endif()
+    else()
+      option(WITH_CLIENT_MAC "Build native mac client" ON)
+      if(WITH_CLIENT_MAC)
+        add_subdirectory(Mac)
+      endif()
+    endif()
+  endif()
+
+  if(ANDROID)
+    message(STATUS "Android client module is built with Android Studio project")
+  endif()
 endif()
 
 # Pick up other clients
 if(WITH_CLIENT)
-	set(FILENAME "ModuleOptions.cmake")
-	file(GLOB FILEPATHS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*/${FILENAME}")
+  set(FILENAME "ModuleOptions.cmake")
+  file(GLOB FILEPATHS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*/${FILENAME}")
 
-	foreach(FILEPATH ${FILEPATHS})
-		if(${FILEPATH} MATCHES "^([^/]*)/+${FILENAME}")
-			string(REGEX REPLACE "^([^/]*)/+${FILENAME}" "\\1" FREERDP_CLIENT ${FILEPATH})
-			set(FREERDP_CLIENT_ENABLED 0)
-			include(${FILEPATH})
-			if(FREERDP_CLIENT_ENABLED)
-				if(NOT (${FREERDP_CLIENT_VENDOR} MATCHES "FreeRDP"))
-					list(APPEND FREERDP_EXTRA_CLIENTS ${FREERDP_CLIENT})
-					if(${FREERDP_CLIENT_VENDOR} MATCHES "${VENDOR}")
-						set(CLIENT_VENDOR_PATH "client/${FREERDP_CLIENT}" PARENT_SCOPE)
-					endif()
-				endif()
-			endif()
-		endif()
-	endforeach()
+  foreach(FILEPATH ${FILEPATHS})
+    if(${FILEPATH} MATCHES "^([^/]*)/+${FILENAME}")
+      string(REGEX REPLACE "^([^/]*)/+${FILENAME}" "\\1" FREERDP_CLIENT ${FILEPATH})
+      set(FREERDP_CLIENT_ENABLED 0)
+      include(${FILEPATH})
+      if(FREERDP_CLIENT_ENABLED)
+        if(NOT (${FREERDP_CLIENT_VENDOR} MATCHES "FreeRDP"))
+          list(APPEND FREERDP_EXTRA_CLIENTS ${FREERDP_CLIENT})
+          if(${FREERDP_CLIENT_VENDOR} MATCHES "${VENDOR}")
+            set(CLIENT_VENDOR_PATH "client/${FREERDP_CLIENT}" PARENT_SCOPE)
+          endif()
+        endif()
+      endif()
+    endif()
+  endforeach()
 
-	foreach(FREERDP_CLIENT ${FREERDP_EXTRA_CLIENTS})
-		add_subdirectory(${FREERDP_CLIENT})
-	endforeach()
+  foreach(FREERDP_CLIENT ${FREERDP_EXTRA_CLIENTS})
+    add_subdirectory(${FREERDP_CLIENT})
+  endforeach()
 endif()
 
-if (WITH_FUSE)
-    list(APPEND FREERDP_CLIENT_PC_PRIVATE_LIBS "-lfuse3")
+if(WITH_FUSE)
+  list(APPEND FREERDP_CLIENT_PC_PRIVATE_LIBS "-lfuse3")
 endif()
 
 list(JOIN FREERDP_CLIENT_PC_PRIVATE_LIBS " " FREERDP_CLIENT_PC_PRIVATE_LIBS)
 include(pkg-config-install-prefix)
-cleaning_configure_file(${CMAKE_CURRENT_SOURCE_DIR}/freerdp-client.pc.in ${CMAKE_CURRENT_BINARY_DIR}/freerdp-client${FREERDP_VERSION_MAJOR}.pc @ONLY)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/freerdp-client${FREERDP_VERSION_MAJOR}.pc DESTINATION ${PKG_CONFIG_PC_INSTALL_DIR})
+cleaning_configure_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/freerdp-client.pc.in
+  ${CMAKE_CURRENT_BINARY_DIR}/freerdp-client${FREERDP_VERSION_MAJOR}.pc @ONLY
+)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/freerdp-client${FREERDP_VERSION_MAJOR}.pc
+        DESTINATION ${PKG_CONFIG_PC_INSTALL_DIR}
+)
 
 export(PACKAGE freerdp-client)
 
-SetFreeRDPCMakeInstallDir(FREERDP_CLIENT_CMAKE_INSTALL_DIR "FreeRDP-Client${FREERDP_VERSION_MAJOR}")
+setfreerdpcmakeinstalldir(FREERDP_CLIENT_CMAKE_INSTALL_DIR "FreeRDP-Client${FREERDP_VERSION_MAJOR}")
 
-configure_package_config_file(FreeRDP-ClientConfig.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/FreeRDP-ClientConfig.cmake
-	INSTALL_DESTINATION ${FREERDP_CLIENT_CMAKE_INSTALL_DIR}
-	PATH_VARS FREERDP_INCLUDE_DIR)
+configure_package_config_file(
+  FreeRDP-ClientConfig.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/FreeRDP-ClientConfig.cmake
+  INSTALL_DESTINATION ${FREERDP_CLIENT_CMAKE_INSTALL_DIR} PATH_VARS FREERDP_INCLUDE_DIR
+)
 
-write_basic_package_version_file(${CMAKE_CURRENT_BINARY_DIR}/FreeRDP-ClientConfigVersion.cmake
-	VERSION ${FREERDP_VERSION} COMPATIBILITY SameMajorVersion)
+write_basic_package_version_file(
+  ${CMAKE_CURRENT_BINARY_DIR}/FreeRDP-ClientConfigVersion.cmake VERSION ${FREERDP_VERSION}
+  COMPATIBILITY SameMajorVersion
+)
 
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/FreeRDP-ClientConfig.cmake ${CMAKE_CURRENT_BINARY_DIR}/FreeRDP-ClientConfigVersion.cmake
-	DESTINATION ${FREERDP_CLIENT_CMAKE_INSTALL_DIR})
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/FreeRDP-ClientConfig.cmake
+              ${CMAKE_CURRENT_BINARY_DIR}/FreeRDP-ClientConfigVersion.cmake
+        DESTINATION ${FREERDP_CLIENT_CMAKE_INSTALL_DIR}
+)
 
 install(EXPORT FreeRDP-ClientTargets DESTINATION ${FREERDP_CLIENT_CMAKE_INSTALL_DIR})

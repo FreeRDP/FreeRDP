@@ -15,16 +15,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(SRCS
-    xfreerdp.c
-)
+set(SRCS xfreerdp.c)
 
-AddTargetWithResourceFile(${MODULE_NAME} TRUE "${PROJECT_VERSION}" SRCS)
+addtargetwithresourcefile(${MODULE_NAME} TRUE "${PROJECT_VERSION}" SRCS)
 set_target_properties(${MODULE_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "..")
 
-list(APPEND LIBS
-    xfreerdp-client
-)
+list(APPEND LIBS xfreerdp-client)
 
 target_link_libraries(${MODULE_NAME} PRIVATE ${LIBS})
 
@@ -32,4 +28,3 @@ install(TARGETS ${MODULE_NAME} RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPO
 install_freerdp_desktop("${MODULE_NAME}")
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Client/X11")
-

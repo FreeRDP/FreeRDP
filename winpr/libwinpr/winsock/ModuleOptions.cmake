@@ -1,4 +1,3 @@
-
 set(MINWIN_LAYER "0")
 set(MINWIN_GROUP "none")
 set(MINWIN_MAJOR_VERSION "0")

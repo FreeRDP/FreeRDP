@@ -21,11 +21,7 @@ include(CMakeDependentOption)
 macro(define_channel_options)
   set(PREFIX "CHANNEL")
 
-  cmake_parse_arguments(${PREFIX}
-    ""
-    "NAME;TYPE;DESCRIPTION;SPECIFICATIONS;DEFAULT"
-    ""
-    ${ARGN})
+  cmake_parse_arguments(${PREFIX} "" "NAME;TYPE;DESCRIPTION;SPECIFICATIONS;DEFAULT" "" ${ARGN})
 
   string(TOUPPER "CHANNEL_${CHANNEL_NAME}" CHANNEL_OPTION)
   string(TOUPPER "CHANNEL_${CHANNEL_NAME}_CLIENT" CHANNEL_CLIENT_OPTION)
@@ -52,8 +48,8 @@ macro(define_channel_options)
 
   set(CHANNEL_OPTION_DOC "Build ${CHANNEL_NAME} ${CHANNEL_TYPE} channel")
 
-  if ("${CHANNEL_TYPE}" STREQUAL "DYNAMIC")
-    CMAKE_DEPENDENT_OPTION(${CHANNEL_OPTION} "${CHANNEL_OPTION_DOC}" ${CHANNEL_DEFAULT} "CHANNEL_DRDYNVC" OFF)
+  if("${CHANNEL_TYPE}" STREQUAL "DYNAMIC")
+    cmake_dependent_option(${CHANNEL_OPTION} "${CHANNEL_OPTION_DOC}" ${CHANNEL_DEFAULT} "CHANNEL_DRDYNVC" OFF)
   else()
     option(${CHANNEL_OPTION} "${CHANNEL_OPTION_DOC}" ${CHANNEL_DEFAULT})
   endif()
@@ -65,8 +61,9 @@ macro(define_channel_client_options _channel_client_default)
   string(TOUPPER "CHANNEL_${CHANNEL_NAME}" CHANNEL_OPTION)
   set(CHANNEL_CLIENT_OPTION_DOC "Build ${CHANNEL_NAME} ${CHANNEL_TYPE} channel client")
 
-  CMAKE_DEPENDENT_OPTION(${CHANNEL_CLIENT_OPTION} "${CHANNEL_CLIENT_OPTION_DOC}"
-    ${_channel_client_default} "${CHANNEL_OPTION}" OFF)
+  cmake_dependent_option(
+    ${CHANNEL_CLIENT_OPTION} "${CHANNEL_CLIENT_OPTION_DOC}" ${_channel_client_default} "${CHANNEL_OPTION}" OFF
+  )
 endmacro(define_channel_client_options)
 
 macro(define_channel_server_options _channel_server_default)
@@ -74,8 +71,9 @@ macro(define_channel_server_options _channel_server_default)
   string(TOUPPER "CHANNEL_${CHANNEL_NAME}" CHANNEL_OPTION)
   set(CHANNEL_SERVER_OPTION_DOC "Build ${CHANNEL_NAME} ${CHANNEL_TYPE} channel server")
 
-  CMAKE_DEPENDENT_OPTION(${CHANNEL_SERVER_OPTION} "${CHANNEL_SERVER_OPTION_DOC}"
-    ${_channel_server_default} "${CHANNEL_OPTION}" OFF)
+  cmake_dependent_option(
+    ${CHANNEL_SERVER_OPTION} "${CHANNEL_SERVER_OPTION_DOC}" ${_channel_server_default} "${CHANNEL_OPTION}" OFF
+  )
 endmacro(define_channel_server_options)
 
 macro(define_channel _channel_name)
@@ -119,29 +117,33 @@ macro(define_channel_server_subsystem _channel_name _subsystem _type)
 endmacro(define_channel_server_subsystem)
 
 macro(add_channel_client _channel_prefix _channel_name)
-	if (${_channel_prefix}_CLIENT)
-		add_subdirectory(client)
-		if(${${_channel_prefix}_CLIENT_STATIC})
-			set(CHANNEL_STATIC_CLIENT_MODULES ${CHANNEL_STATIC_CLIENT_MODULES} ${_channel_prefix} PARENT_SCOPE)
-			set(${_channel_prefix}_CLIENT_NAME ${${_channel_prefix}_CLIENT_NAME} PARENT_SCOPE)
-			set(${_channel_prefix}_CLIENT_CHANNEL ${${_channel_prefix}_CLIENT_CHANNEL} PARENT_SCOPE)
-			set(${_channel_prefix}_CLIENT_ENTRY ${${_channel_prefix}_CLIENT_ENTRY} PARENT_SCOPE)
-			set(CHANNEL_STATIC_CLIENT_ENTRIES ${CHANNEL_STATIC_CLIENT_ENTRIES} ${${_channel_prefix}_CLIENT_ENTRY} PARENT_SCOPE)
-		endif()
-	endif()
+  if(${_channel_prefix}_CLIENT)
+    add_subdirectory(client)
+    if(${${_channel_prefix}_CLIENT_STATIC})
+      set(CHANNEL_STATIC_CLIENT_MODULES ${CHANNEL_STATIC_CLIENT_MODULES} ${_channel_prefix} PARENT_SCOPE)
+      set(${_channel_prefix}_CLIENT_NAME ${${_channel_prefix}_CLIENT_NAME} PARENT_SCOPE)
+      set(${_channel_prefix}_CLIENT_CHANNEL ${${_channel_prefix}_CLIENT_CHANNEL} PARENT_SCOPE)
+      set(${_channel_prefix}_CLIENT_ENTRY ${${_channel_prefix}_CLIENT_ENTRY} PARENT_SCOPE)
+      set(CHANNEL_STATIC_CLIENT_ENTRIES ${CHANNEL_STATIC_CLIENT_ENTRIES} ${${_channel_prefix}_CLIENT_ENTRY}
+          PARENT_SCOPE
+      )
+    endif()
+  endif()
 endmacro(add_channel_client)
 
 macro(add_channel_server _channel_prefix _channel_name)
-	if (${_channel_prefix}_SERVER)
-		add_subdirectory(server)
-		if(${${_channel_prefix}_SERVER_STATIC})
-			set(CHANNEL_STATIC_SERVER_MODULES ${CHANNEL_STATIC_SERVER_MODULES} ${_channel_prefix} PARENT_SCOPE)
-			set(${_channel_prefix}_SERVER_NAME ${${_channel_prefix}_SERVER_NAME} PARENT_SCOPE)
-			set(${_channel_prefix}_SERVER_CHANNEL ${${_channel_prefix}_SERVER_CHANNEL} PARENT_SCOPE)
-			set(${_channel_prefix}_SERVER_ENTRY ${${_channel_prefix}_SERVER_ENTRY} PARENT_SCOPE)
-			set(CHANNEL_STATIC_SERVER_ENTRIES ${CHANNEL_STATIC_SERVER_ENTRIES} ${${_channel_prefix}_SERVER_ENTRY} PARENT_SCOPE)
-		endif()
-	endif()
+  if(${_channel_prefix}_SERVER)
+    add_subdirectory(server)
+    if(${${_channel_prefix}_SERVER_STATIC})
+      set(CHANNEL_STATIC_SERVER_MODULES ${CHANNEL_STATIC_SERVER_MODULES} ${_channel_prefix} PARENT_SCOPE)
+      set(${_channel_prefix}_SERVER_NAME ${${_channel_prefix}_SERVER_NAME} PARENT_SCOPE)
+      set(${_channel_prefix}_SERVER_CHANNEL ${${_channel_prefix}_SERVER_CHANNEL} PARENT_SCOPE)
+      set(${_channel_prefix}_SERVER_ENTRY ${${_channel_prefix}_SERVER_ENTRY} PARENT_SCOPE)
+      set(CHANNEL_STATIC_SERVER_ENTRIES ${CHANNEL_STATIC_SERVER_ENTRIES} ${${_channel_prefix}_SERVER_ENTRY}
+          PARENT_SCOPE
+      )
+    endif()
+  endif()
 endmacro(add_channel_server)
 
 macro(add_channel_client_subsystem _channel_prefix _channel_name _subsystem _type)
@@ -165,79 +167,87 @@ macro(add_channel_client_subsystem _channel_prefix _channel_name _subsystem _typ
 endmacro(add_channel_client_subsystem)
 
 macro(channel_install _targets _destination _export_target)
-	if (NOT BUILD_SHARED_LIBS)
-		foreach(_target_name IN ITEMS ${_targets})
-			target_include_directories(${_target_name} INTERFACE $<INSTALL_INTERFACE:include>)
-		endforeach()
-		install(TARGETS ${_targets} DESTINATION ${_destination} EXPORT ${_export_target})
-	endif()
+  if(NOT BUILD_SHARED_LIBS)
+    foreach(_target_name IN ITEMS ${_targets})
+      target_include_directories(${_target_name} INTERFACE $<INSTALL_INTERFACE:include>)
+    endforeach()
+    install(TARGETS ${_targets} DESTINATION ${_destination} EXPORT ${_export_target})
+  endif()
 endmacro(channel_install)
 
 macro(server_channel_install _targets _destination)
-	channel_install(${_targets} ${_destination} "FreeRDP-ServerTargets")
+  channel_install(${_targets} ${_destination} "FreeRDP-ServerTargets")
 endmacro(server_channel_install)
 
 macro(client_channel_install _targets _destination)
-	channel_install(${_targets} ${_destination} "FreeRDP-ClientTargets")
+  channel_install(${_targets} ${_destination} "FreeRDP-ClientTargets")
 endmacro(client_channel_install)
 
 macro(add_channel_client_library _module_prefix _module_name _channel_name _dynamic _entry)
   set(_lnk_dir ${${_module_prefix}_LINK_DIRS})
-  if (NOT "${_lnk_dir}" STREQUAL "")
+  if(NOT "${_lnk_dir}" STREQUAL "")
     link_directories(${_lnk_dir})
   endif()
 
-	set(${_module_prefix}_STATIC ON PARENT_SCOPE)
-	set(${_module_prefix}_NAME ${_module_name} PARENT_SCOPE)
-	set(${_module_prefix}_CHANNEL ${_channel_name} PARENT_SCOPE)
-	set(${_module_prefix}_ENTRY ${_entry} PARENT_SCOPE)
+  set(${_module_prefix}_STATIC ON PARENT_SCOPE)
+  set(${_module_prefix}_NAME ${_module_name} PARENT_SCOPE)
+  set(${_module_prefix}_CHANNEL ${_channel_name} PARENT_SCOPE)
+  set(${_module_prefix}_ENTRY ${_entry} PARENT_SCOPE)
 
-	add_library(${_module_name} OBJECT ${${_module_prefix}_SRCS})
-	set_property(TARGET ${_module_name} PROPERTY FOLDER "Channels/${CHANNEL_NAME}/Client")
+  add_library(${_module_name} OBJECT ${${_module_prefix}_SRCS})
+  set_property(TARGET ${_module_name} PROPERTY FOLDER "Channels/${CHANNEL_NAME}/Client")
 
-	if (${_module_prefix}_LIBS)
-		target_link_libraries(${_module_name} PUBLIC ${${_module_prefix}_LIBS})
-	endif()
-	client_channel_install(${_module_name}  ${FREERDP_ADDIN_PATH})
+  if(${_module_prefix}_LIBS)
+    target_link_libraries(${_module_name} PUBLIC ${${_module_prefix}_LIBS})
+  endif()
+  client_channel_install(${_module_name} ${FREERDP_ADDIN_PATH})
 endmacro(add_channel_client_library)
 
-macro(add_channel_client_subsystem_library _module_prefix _module_name _channel_name _type _dynamic _entry)
+macro(
+  add_channel_client_subsystem_library
+  _module_prefix
+  _module_name
+  _channel_name
+  _type
+  _dynamic
+  _entry
+)
   set(_lnk_dir ${${_module_prefix}_LINK_DIRS})
-  if (NOT "${_lnk_dir}" STREQUAL "")
+  if(NOT "${_lnk_dir}" STREQUAL "")
     link_directories(${_lnk_dir})
   endif()
 
-	set(${_module_prefix}_STATIC ON PARENT_SCOPE)
-	set(${_module_prefix}_NAME ${_module_name} PARENT_SCOPE)
-	set(${_module_prefix}_TYPE ${_type} PARENT_SCOPE)
+  set(${_module_prefix}_STATIC ON PARENT_SCOPE)
+  set(${_module_prefix}_NAME ${_module_name} PARENT_SCOPE)
+  set(${_module_prefix}_TYPE ${_type} PARENT_SCOPE)
 
-	add_library(${_module_name} OBJECT ${${_module_prefix}_SRCS})
-	set_property(TARGET ${_module_name} PROPERTY FOLDER "Channels/${_channel_name}/Client/Subsystem/${CHANNEL_SUBSYSTEM}")
+  add_library(${_module_name} OBJECT ${${_module_prefix}_SRCS})
+  set_property(TARGET ${_module_name} PROPERTY FOLDER "Channels/${_channel_name}/Client/Subsystem/${CHANNEL_SUBSYSTEM}")
 
-	if (${_module_prefix}_LIBS)
-		target_link_libraries(${_module_name} PUBLIC ${${_module_prefix}_LIBS})
-	endif()
-	client_channel_install(${_module_name}  ${FREERDP_ADDIN_PATH})
+  if(${_module_prefix}_LIBS)
+    target_link_libraries(${_module_name} PUBLIC ${${_module_prefix}_LIBS})
+  endif()
+  client_channel_install(${_module_name} ${FREERDP_ADDIN_PATH})
 endmacro(add_channel_client_subsystem_library)
 
 macro(add_channel_server_library _module_prefix _module_name _channel_name _dynamic _entry)
   set(_lnk_dir ${${_module_prefix}_LINK_DIRS})
-  if (NOT "${_lnk_dir}" STREQUAL "")
+  if(NOT "${_lnk_dir}" STREQUAL "")
     link_directories(${_lnk_dir})
   endif()
 
-	set(${_module_prefix}_STATIC ON PARENT_SCOPE)
-	set(${_module_prefix}_NAME ${_module_name} PARENT_SCOPE)
-	set(${_module_prefix}_CHANNEL ${_channel_name} PARENT_SCOPE)
-	set(${_module_prefix}_ENTRY ${_entry} PARENT_SCOPE)
+  set(${_module_prefix}_STATIC ON PARENT_SCOPE)
+  set(${_module_prefix}_NAME ${_module_name} PARENT_SCOPE)
+  set(${_module_prefix}_CHANNEL ${_channel_name} PARENT_SCOPE)
+  set(${_module_prefix}_ENTRY ${_entry} PARENT_SCOPE)
 
-	add_library(${_module_name} OBJECT ${${_module_prefix}_SRCS})
-	set_property(TARGET ${_module_name} PROPERTY FOLDER "Channels/${CHANNEL_NAME}/Server")
+  add_library(${_module_name} OBJECT ${${_module_prefix}_SRCS})
+  set_property(TARGET ${_module_name} PROPERTY FOLDER "Channels/${CHANNEL_NAME}/Server")
 
-	if (${_module_prefix}_LIBS)
-		target_link_libraries(${_module_name} PUBLIC ${${_module_prefix}_LIBS})
-	endif()
-	server_channel_install(${_module_name}  ${FREERDP_ADDIN_PATH})
+  if(${_module_prefix}_LIBS)
+    target_link_libraries(${_module_name} PUBLIC ${${_module_prefix}_LIBS})
+  endif()
+  server_channel_install(${_module_name} ${FREERDP_ADDIN_PATH})
 endmacro(add_channel_server_library)
 
 set(FILENAME "ChannelOptions.cmake")
@@ -254,7 +264,7 @@ foreach(FILEPATH ${FILEPATHS})
   endif()
 endforeach()
 
-if (NOT "${DRDYNVC_MATCH}" STREQUAL "")
+if(NOT "${DRDYNVC_MATCH}" STREQUAL "")
   list(REMOVE_ITEM FILEPATHS ${DRDYNVC_MATCH})
   list(APPEND FILEPATHS ${DRDYNVC_MATCH})
   list(REVERSE FILEPATHS) # list PREPEND is not available on old CMake3
@@ -281,7 +291,7 @@ foreach(FILEPATH ${FILEPATHS})
   endif()
 endforeach(FILEPATH)
 
-if (WITH_CHANNELS)
+if(WITH_CHANNELS)
   if(WITH_CLIENT_CHANNELS)
     add_subdirectory(client)
     set(FREERDP_CHANNELS_CLIENT_SRCS ${FREERDP_CHANNELS_CLIENT_SRCS} PARENT_SCOPE)

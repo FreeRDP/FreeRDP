@@ -18,14 +18,9 @@
 
 define_channel_client("ainput")
 
-set(${MODULE_PREFIX}_SRCS
-	ainput_main.c
-	ainput_main.h
-)
+set(${MODULE_PREFIX}_SRCS ainput_main.c ainput_main.h)
 
-set(${MODULE_PREFIX}_LIBS
-	winpr
-)
+set(${MODULE_PREFIX}_LIBS winpr)
 
 include_directories(..)
 

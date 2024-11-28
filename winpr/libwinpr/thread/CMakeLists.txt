@@ -16,15 +16,16 @@
 # limitations under the License.
 
 winpr_module_add(
-	apc.h
-	apc.c
-	argv.c
-	process.c
-	processor.c
-	thread.c
-	thread.h
-	tls.c)
+  apc.h
+  apc.c
+  argv.c
+  process.c
+  processor.c
+  thread.c
+  thread.h
+  tls.c
+)
 
 if(BUILD_TESTING_INTERNAL OR BUILD_TESTING)
-	add_subdirectory(test)
+  add_subdirectory(test)
 endif()

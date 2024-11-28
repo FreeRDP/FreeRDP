@@ -1,4 +1,3 @@
-
 set(FREERDP_SERVER_NAME "wfreerdp-server")
 set(FREERDP_SERVER_PLATFORM "Windows")
 set(FREERDP_SERVER_VENDOR "FreeRDP")

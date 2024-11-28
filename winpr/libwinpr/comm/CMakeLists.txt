@@ -18,36 +18,32 @@
 set(MODULE_NAME "winpr-comm")
 set(MODULE_PREFIX "WINPR_COMM")
 
-if (NOT WIN32)
-	set(${MODULE_PREFIX}_SRCS
-		comm.c
-		comm.h
-	)
-	if(NOT EMSCRIPTEN)
-		winpr_definition_add(-DWINPR_HAVE_SERIAL_SUPPORT)
-		list(APPEND ${MODULE_PREFIX}_SRCS
-			comm_io.c
-			comm_ioctl.c
-			comm_ioctl.h
-			comm_serial_sys.c
-			comm_serial_sys.h
-			comm_sercx_sys.c
-			comm_sercx_sys.h
-			comm_sercx2_sys.c
-			comm_sercx2_sys.h
-		)
-	else()
-		list(APPEND ${MODULE_PREFIX}_SRCS
-			comm_ioctl_dummy.c
-			comm_ioctl.h
-		)
-	endif()
+if(NOT WIN32)
+  set(${MODULE_PREFIX}_SRCS comm.c comm.h)
+  if(NOT EMSCRIPTEN)
+    winpr_definition_add(-DWINPR_HAVE_SERIAL_SUPPORT)
+    list(
+      APPEND
+      ${MODULE_PREFIX}_SRCS
+      comm_io.c
+      comm_ioctl.c
+      comm_ioctl.h
+      comm_serial_sys.c
+      comm_serial_sys.h
+      comm_sercx_sys.c
+      comm_sercx_sys.h
+      comm_sercx2_sys.c
+      comm_sercx2_sys.h
+    )
+  else()
+    list(APPEND ${MODULE_PREFIX}_SRCS comm_ioctl_dummy.c comm_ioctl.h)
+  endif()
 
-	winpr_module_add(${${MODULE_PREFIX}_SRCS})
+  winpr_module_add(${${MODULE_PREFIX}_SRCS})
 
-	if(NOT EMSCRIPTEN)
-		if(BUILD_TESTING_INTERNAL AND BUILD_COMM_TESTS)
-			add_subdirectory(test)
-		endif()
-	endif()
+  if(NOT EMSCRIPTEN)
+    if(BUILD_TESTING_INTERNAL AND BUILD_COMM_TESTS)
+      add_subdirectory(test)
+    endif()
+  endif()
 endif()

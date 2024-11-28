@@ -17,13 +17,8 @@
 
 define_channel_server("rdpdr")
 
-set(${MODULE_PREFIX}_SRCS
-	rdpdr_main.c
-	rdpdr_main.h
-)
+set(${MODULE_PREFIX}_SRCS rdpdr_main.c rdpdr_main.h)
 
-set(${MODULE_PREFIX}_LIBS
-    freerdp
-)
+set(${MODULE_PREFIX}_LIBS freerdp)
 
 add_channel_server_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} FALSE "VirtualChannelEntry")

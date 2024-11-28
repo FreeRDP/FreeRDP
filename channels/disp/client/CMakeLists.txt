@@ -17,16 +17,9 @@
 
 define_channel_client("disp")
 
-set(${MODULE_PREFIX}_SRCS
-	disp_main.c
-	disp_main.h
-	../disp_common.c
-	../disp_common.h
-)
+set(${MODULE_PREFIX}_SRCS disp_main.c disp_main.h ../disp_common.c ../disp_common.h)
 
-set(${MODULE_PREFIX}_LIBS
-	winpr
-)
+set(${MODULE_PREFIX}_LIBS winpr)
 include_directories(..)
 
 add_channel_client_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} TRUE "DVCPluginEntry")

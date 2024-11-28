@@ -15,45 +15,36 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(SRCS
-	hash.c
-	rand.c
-	cipher.c
-	cert.c
-	crypto.c
-	crypto.h
-)
-if (WITH_INTERNAL_RC4)
-    list(APPEND SRCS rc4.c rc4.h)
+set(SRCS hash.c rand.c cipher.c cert.c crypto.c crypto.h)
+if(WITH_INTERNAL_RC4)
+  list(APPEND SRCS rc4.c rc4.h)
 endif()
 
-if (WITH_INTERNAL_MD4)
-    list(APPEND SRCS md4.c md4.h)
+if(WITH_INTERNAL_MD4)
+  list(APPEND SRCS md4.c md4.h)
 endif()
 
-if (WITH_INTERNAL_MD5)
-	list(APPEND SRCS md5.c md5.h)
-	list(APPEND SRCS hmac_md5.c hmac_md5.h)
+if(WITH_INTERNAL_MD5)
+  list(APPEND SRCS md5.c md5.h)
+  list(APPEND SRCS hmac_md5.c hmac_md5.h)
 endif()
 
-winpr_module_add(
-    ${SRCS}
-)
+winpr_module_add(${SRCS})
 
 if(OPENSSL_FOUND)
-	winpr_include_directory_add(${OPENSSL_INCLUDE_DIR})
-	winpr_library_add_private(${OPENSSL_LIBRARIES})
+  winpr_include_directory_add(${OPENSSL_INCLUDE_DIR})
+  winpr_library_add_private(${OPENSSL_LIBRARIES})
 endif()
 
 if(MBEDTLS_FOUND)
-	winpr_include_directory_add(${MBEDTLS_INCLUDE_DIR})
-	winpr_library_add_private(${MBEDTLS_LIBRARIES})
+  winpr_include_directory_add(${MBEDTLS_INCLUDE_DIR})
+  winpr_library_add_private(${MBEDTLS_LIBRARIES})
 endif()
 
 if(WIN32)
-	winpr_library_add_public(crypt32)
+  winpr_library_add_public(crypt32)
 endif()
 
 if(BUILD_TESTING_INTERNAL OR BUILD_TESTING)
-	add_subdirectory(test)
+  add_subdirectory(test)
 endif()

@@ -18,14 +18,9 @@
 
 define_channel_client("sshagent")
 
-set(${MODULE_PREFIX}_SRCS
-	sshagent_main.c
-	sshagent_main.h
-)
+set(${MODULE_PREFIX}_SRCS sshagent_main.c sshagent_main.h)
 
-set(${MODULE_PREFIX}_LIBS
-	winpr
-)
+set(${MODULE_PREFIX}_LIBS winpr)
 
 include_directories(..)
 

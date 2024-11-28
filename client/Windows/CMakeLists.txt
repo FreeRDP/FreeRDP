@@ -19,28 +19,31 @@ set(MODULE_NAME "wfreerdp-client")
 set(MODULE_PREFIX "FREERDP_CLIENT_WINDOWS_CONTROL")
 
 set(${MODULE_PREFIX}_SRCS
-	wf_gdi.c
-	wf_gdi.h
-	wf_event.c
-	wf_event.h
-	wf_channels.c
-	wf_channels.h
-	wf_graphics.c
-	wf_graphics.h
-	wf_cliprdr.c
-	wf_cliprdr.h
-	wf_rail.c
-	wf_rail.h
-	wf_client.c
-	wf_client.h
-	wf_floatbar.c
-	wf_floatbar.h
-	wf_defaults.h
-	wf_defaults.c
-	resource/wfreerdp.rc
-	resource/resource.h)
+    wf_gdi.c
+    wf_gdi.h
+    wf_event.c
+    wf_event.h
+    wf_channels.c
+    wf_channels.h
+    wf_graphics.c
+    wf_graphics.h
+    wf_cliprdr.c
+    wf_cliprdr.h
+    wf_rail.c
+    wf_rail.h
+    wf_client.c
+    wf_client.h
+    wf_floatbar.c
+    wf_floatbar.h
+    wf_defaults.h
+    wf_defaults.c
+    resource/wfreerdp.rc
+    resource/resource.h
+)
 
-option(WITH_WINDOWS_CERT_STORE "Build ${MODULE_NAME} with additional certificate validation against windows certificate store" ON)
+option(WITH_WINDOWS_CERT_STORE
+       "Build ${MODULE_NAME} with additional certificate validation against windows certificate store" ON
+)
 if(WITH_WINDOWS_CERT_STORE)
   add_definitions("-DWITH_WINDOWS_CERT_STORE")
 endif()
@@ -59,9 +62,9 @@ if(WITH_PROGRESS_BAR)
 endif()
 
 if(CLIENT_INTERFACE_SHARED)
-	AddTargetWithResourceFile(${MODULE_NAME} "SHARED" "${FREERDP_VERSION}" ${MODULE_PREFIX}_SRCS)
+  addtargetwithresourcefile(${MODULE_NAME} "SHARED" "${FREERDP_VERSION}" ${MODULE_PREFIX}_SRCS)
 else()
-	AddTargetWithResourceFile(${MODULE_NAME} FALSE "${FREERDP_VERSION}" ${MODULE_PREFIX}_SRCS)
+  addtargetwithresourcefile(${MODULE_NAME} FALSE "${FREERDP_VERSION}" ${MODULE_PREFIX}_SRCS)
 endif()
 target_include_directories(${MODULE_NAME} INTERFACE $<INSTALL_INTERFACE:include>)
 
@@ -70,14 +73,14 @@ list(APPEND PUB_LIBS winpr freerdp)
 
 list(APPEND PRIV_LIBS msimg32.lib credui.lib)
 
-if (MINGW)
-    list(APPEND PRIV_LIBS ntdll.lib) # only required with MINGW
+if(MINGW)
+  list(APPEND PRIV_LIBS ntdll.lib) # only required with MINGW
 endif()
 target_link_libraries(${MODULE_NAME} PUBLIC ${PUB_LIBS})
 target_link_libraries(${MODULE_NAME} PRIVATE ${PRIV_LIBS})
 
 if(WITH_CLIENT_INTERFACE)
-	install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT libraries)
+  install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT libraries)
 endif()
 add_subdirectory(cli)
 

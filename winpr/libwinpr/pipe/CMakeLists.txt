@@ -18,5 +18,5 @@
 winpr_module_add(pipe.c pipe.h)
 
 if(BUILD_TESTING_INTERNAL OR BUILD_TESTING)
-	add_subdirectory(test)
+  add_subdirectory(test)
 endif()

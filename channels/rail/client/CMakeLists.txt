@@ -18,16 +18,14 @@
 define_channel_client("rail")
 
 set(${MODULE_PREFIX}_SRCS
-	../rail_common.h
-	../rail_common.c
-	client_rails.c
-	rail_main.c
-	rail_main.h
-	rail_orders.c
-	rail_orders.h
+    ../rail_common.h
+    ../rail_common.c
+    client_rails.c
+    rail_main.c
+    rail_main.h
+    rail_orders.c
+    rail_orders.h
 )
 
-set(${MODULE_PREFIX}_LIBS
-	freerdp
-)
+set(${MODULE_PREFIX}_LIBS freerdp)
 add_channel_client_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} FALSE "VirtualChannelEntryEx")

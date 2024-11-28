@@ -19,57 +19,52 @@ set(SRCS
     sdl_connection_dialog.hpp
 )
 
-list(APPEND LIBS
-    sdl2_client_res
-    winpr
-)
+list(APPEND LIBS sdl2_client_res winpr)
 
-if (NOT WITH_SDL_LINK_SHARED)
-    list(APPEND LIBS ${SDL2_STATIC_LIBRARIES})
+if(NOT WITH_SDL_LINK_SHARED)
+  list(APPEND LIBS ${SDL2_STATIC_LIBRARIES})
 else()
-    list(APPEND LIBS ${SDL2_LIBRARIES})
+  list(APPEND LIBS ${SDL2_LIBRARIES})
 endif()
 
 macro(find_sdl_component name)
-	find_package(${name})
-	if (NOT ${name}_FOUND)
-		find_package(PkgConfig REQUIRED)
-		pkg_check_modules(${name} REQUIRED ${name})
+  find_package(${name})
+  if(NOT ${name}_FOUND)
+    find_package(PkgConfig REQUIRED)
+    pkg_check_modules(${name} REQUIRED ${name})
 
-		if (BUILD_SHARED_LIBS)
-			list(APPEND LIBS ${${name}_LIBRARIES})
-			link_directories(${${name}_LIBRARY_DIRS})
-            include_directories(SYSTEM ${${name}_INCLUDE_DIRS})
-		else()
-			list(APPEND LIBS ${${name}_STATIC_LIBRARIES})
-			link_directories(${${name}_STATIC_LIBRARY_DIRS})
-            include_directories(SYSTEM ${${name}_STATIC_INCLUDE_DIRS})
-		endif()
-	else()
-		if (WITH_SDL_LINK_SHARED)
-			list(APPEND LIBS ${name}::${name})
-		else()
-			list(APPEND LIBS ${name}::${name}-static)
-		endif()
-	endif()
+    if(BUILD_SHARED_LIBS)
+      list(APPEND LIBS ${${name}_LIBRARIES})
+      link_directories(${${name}_LIBRARY_DIRS})
+      include_directories(SYSTEM ${${name}_INCLUDE_DIRS})
+    else()
+      list(APPEND LIBS ${${name}_STATIC_LIBRARIES})
+      link_directories(${${name}_STATIC_LIBRARY_DIRS})
+      include_directories(SYSTEM ${${name}_STATIC_INCLUDE_DIRS})
+    endif()
+  else()
+    if(WITH_SDL_LINK_SHARED)
+      list(APPEND LIBS ${name}::${name})
+    else()
+      list(APPEND LIBS ${name}::${name}-static)
+    endif()
+  endif()
 endmacro()
 
 find_sdl_component(SDL2_ttf)
 
 option(WITH_SDL_IMAGE_DIALOGS "Build with SDL_image support (recommended)" OFF)
-if (WITH_SDL_IMAGE_DIALOGS)
-    find_sdl_component(SDL2_image)
-    add_definitions(-DWITH_SDL_IMAGE_DIALOGS)
+if(WITH_SDL_IMAGE_DIALOGS)
+  find_sdl_component(SDL2_image)
+  add_definitions(-DWITH_SDL_IMAGE_DIALOGS)
 endif()
 
 add_subdirectory(res)
 
-add_library(sdl2-dialogs STATIC
-    ${SRCS}
-)
+add_library(sdl2-dialogs STATIC ${SRCS})
 
 target_link_libraries(sdl2-dialogs PRIVATE ${LIBS})
 
 if(BUILD_TESTING_INTERNAL OR BUILD_TESTING)
-#	add_subdirectory(test)
+  #	add_subdirectory(test)
 endif()
