@@ -440,7 +440,7 @@ BOOL proxy_parse_uri(rdpSettings* settings, const char* uri_in)
 	{
 		if (_stricmp("http", protocol) == 0)
 		{
-			/* The default is 80. Also for Proxys. */
+			/* The default is 80. Also for Proxies. */
 			port = 80;
 		}
 		else

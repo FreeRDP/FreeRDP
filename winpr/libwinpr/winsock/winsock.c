@@ -1266,16 +1266,20 @@ int _gethostname(char* name, int namelen)
 	return status;
 }
 
-struct servent* _getservbyport(int port, const char* proto)
+struct servent* /* codespell:ignore servent */ _getservbyport(int port, const char* proto)
 {
-	struct servent* serv = NULL;
+	struct servent* serv = NULL; // codespell:ignore servent
+
 	serv = getservbyport(port, proto);
 	return serv;
 }
 
-struct servent* _getservbyname(const char* name, const char* proto)
+struct servent*                                     /* codespell:ignore servent */
+_getservbyname(const char* name, const char* proto) // codespell:ignore servent
+
 {
-	struct servent* serv = NULL;
+	struct servent* serv = NULL; // codespell:ignore servent
+
 	serv = getservbyname(name, proto);
 	return serv;
 }

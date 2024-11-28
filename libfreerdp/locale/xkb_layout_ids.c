@@ -198,7 +198,7 @@ static const XKB_VARIANT ca_variants[] = {
 	{ "multi", KBD_CANADIAN_MULTILINGUAL_STANDARD },     /* Multilingual, first part */
 	{ "multi-2gr", KBD_CANADIAN_MULTILINGUAL_STANDARD }, /* Multilingual, second part */
 	{ "ike", KBD_INUKTITUT_LATIN },                      /* Inuktitut */
-	{ "shs", 0 },                                        /* Secwepemctsin */
+	{ "shs" /* codespell:ignore shs */, 0 },             /* Secwepemctsin */
 	{ "kut", 0 },                                        /* Ktunaxa */
 	{ "", 0 },
 };

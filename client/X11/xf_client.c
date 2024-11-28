@@ -1862,7 +1862,7 @@ BOOL xf_setup_x11(xfContext* xfc)
 	xfc->UseXThreads = TRUE;
 
 #if !defined(NDEBUG)
-	/* uncomment below if debugging to prevent keyboard grap */
+	/* uncomment below if debugging to prevent keyboard grab */
 	xfc->debug = TRUE;
 #endif
 
