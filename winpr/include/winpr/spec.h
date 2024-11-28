@@ -324,7 +324,7 @@ WINPR_PRAGMA_DIAG_IGNORED_RESERVED_IDENTIFIER
 #define _In_count_(size)
 #define _In_count_c_(size)
 #define _In_count_x_(size)
-#define _In_defensive_(annotes)
+#define _In_defensive_(annotates)
 #define _In_opt_
 #define _In_opt_bytecount_(size)
 #define _In_opt_bytecount_c_(size)
@@ -369,7 +369,7 @@ WINPR_PRAGMA_DIAG_IGNORED_RESERVED_IDENTIFIER
 #define _Inout_count_(size)
 #define _Inout_count_c_(size)
 #define _Inout_count_x_(size)
-#define _Inout_defensive_(annotes)
+#define _Inout_defensive_(annotates)
 #define _Inout_opt_
 #define _Inout_opt_bytecap_(size)
 #define _Inout_opt_bytecap_c_(size)
@@ -450,7 +450,7 @@ WINPR_PRAGMA_DIAG_IGNORED_RESERVED_IDENTIFIER
 #define _Out_cap_x_(size)
 #define _Out_capcount_(capcount)
 #define _Out_capcount_x_(capcount)
-#define _Out_defensive_(annotes)
+#define _Out_defensive_(annotates)
 #define _Out_opt_
 #define _Out_opt_bytecap_(size)
 #define _Out_opt_bytecap_c_(size)

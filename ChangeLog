@@ -485,7 +485,7 @@ Noteworthy changes:
   by just turning on logging
 * Full OpenSSL 3 support
 * Internal implementations for RC4, MD4 and MD5 (required for non critical
-  parts in RDP but not part of more recend SSL libraries)
+  parts in RDP but not part of more recent SSL libraries)
 * Updated RDP protocol support
 * Improved xfreerdp remote app support
 * Reworked internal state machine for both client and server implementations

@@ -185,8 +185,9 @@ struct sockaddr_in6_old
 typedef union sockaddr_gen
 {
 	struct sockaddr Address;
-	struct sockaddr_in AddressIn;
+	struct sockaddr_in AddressIn; /* codespell:ignore addressin */
 	struct sockaddr_in6_old AddressIn6;
+
 } sockaddr_gen;
 
 WINPR_PRAGMA_DIAG_PUSH
@@ -351,8 +352,10 @@ extern "C"
 	WINPR_API struct hostent* _gethostbyaddr(const char* addr, int len, int type);
 	WINPR_API struct hostent* _gethostbyname(const char* name);
 	WINPR_API int _gethostname(char* name, int namelen);
-	WINPR_API struct servent* _getservbyport(int port, const char* proto);
-	WINPR_API struct servent* _getservbyname(const char* name, const char* proto);
+	WINPR_API struct servent* /* codespell:ignore servent */ _getservbyport(int port,
+	                                                                        const char* proto);
+	WINPR_API struct servent* /* codespell:ignore servent */ _getservbyname(const char* name,
+	                                                                        const char* proto);
 	WINPR_API struct protoent* _getprotobynumber(int number);
 	WINPR_API struct protoent* _getprotobyname(const char* name);
 

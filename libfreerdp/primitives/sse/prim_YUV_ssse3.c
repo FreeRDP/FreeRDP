@@ -900,8 +900,8 @@ static INLINE void ssse3_RGBToAVC444YUVv2_BGRX_DOUBLE_ROW(
 				const __m128i mask =
 				    _mm_set_epi8((char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80,
 				                 (char)0x80, (char)0x80, (char)0x80, 15, 13, 11, 9, 7, 5, 3, 1);
-				const __m128i udo = _mm_shuffle_epi8(uo, mask);
-				_mm_storel_epi64((__m128i*)yOddChromaDst1, udo);
+				const __m128i udo /* codespell:ignore udo */ = _mm_shuffle_epi8(uo, mask);
+				_mm_storel_epi64((__m128i*)yOddChromaDst1, udo); // codespell:ignore udo
 				yOddChromaDst1 += 8;
 			}
 
