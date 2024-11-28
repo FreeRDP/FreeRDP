@@ -498,6 +498,8 @@ static const struct settings_str_entry settings_map[] = {
 	  "FreeRDP_GatewayAvdHubdiscoverygeourl" },
 	{ FreeRDP_GatewayAvdWvdEndpointPool, FREERDP_SETTINGS_TYPE_STRING,
 	  "FreeRDP_GatewayAvdWvdEndpointPool" },
+	{ FreeRDP_GatewayAzureActiveDirectory, FREERDP_SETTINGS_TYPE_STRING,
+	  "FreeRDP_GatewayAzureActiveDirectory" },
 	{ FreeRDP_GatewayDomain, FREERDP_SETTINGS_TYPE_STRING, "FreeRDP_GatewayDomain" },
 	{ FreeRDP_GatewayHostname, FREERDP_SETTINGS_TYPE_STRING, "FreeRDP_GatewayHostname" },
 	{ FreeRDP_GatewayHttpExtAuthBearer, FREERDP_SETTINGS_TYPE_STRING,

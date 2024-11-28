@@ -165,7 +165,7 @@ static BOOL arm_fetch_wellknown(rdpArm* arm)
 	WINPR_ASSERT(arm->context);
 
 	const char* base =
-	    freerdp_settings_get_string(arm->context->settings, FreeRDP_GatewayAvdArmpath);
+	    freerdp_settings_get_string(arm->context->settings, FreeRDP_GatewayAzureActiveDirectory);
 	const char* tenantid =
 	    freerdp_settings_get_string(arm->context->settings, FreeRDP_GatewayAvdAadtenantid);
 	WINPR_JSON_Delete(arm->wellknown);

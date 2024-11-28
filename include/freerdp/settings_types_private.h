@@ -485,7 +485,9 @@ struct rdp_settings
 	SETTINGS_DEPRECATED(ALIGN64 char* GatewayAvdClientID);             /** 2013
 		                                                                * @since version 3.10.0
 		                                                                */
-	UINT64 padding2015[2015 - 2014];                                   /* 2014 */
+	SETTINGS_DEPRECATED(ALIGN64 char* GatewayAzureActiveDirectory);    /** 2014
+		                                                                * @since version 3.10.0
+		                                                                */
 
 	/* Proxy */
 	SETTINGS_DEPRECATED(ALIGN64 UINT32 ProxyType);    /* 2015 */

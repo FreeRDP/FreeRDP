@@ -1039,11 +1039,7 @@ static BOOL client_cli_get_rdsaad_access_token(freerdp* instance, const char* sc
 
 	const char* client_id =
 	    freerdp_settings_get_string(instance->context->settings, FreeRDP_GatewayAvdClientID);
-	const char* base =
-	    freerdp_settings_get_string(instance->context->settings, FreeRDP_GatewayAvdArmpath);
-	const char* tenantid =
-	    freerdp_settings_get_string(instance->context->settings, FreeRDP_GatewayAvdAadtenantid);
-	if (!base || !tenantid || !client_id)
+	if (!client_id)
 		goto cleanup;
 
 	winpr_asprintf(&redirect_uri, &redirec_uri_len,
@@ -1101,8 +1097,8 @@ static BOOL client_cli_get_avd_access_token(freerdp* instance, char** token)
 
 	const char* client_id =
 	    freerdp_settings_get_string(instance->context->settings, FreeRDP_GatewayAvdClientID);
-	const char* base =
-	    freerdp_settings_get_string(instance->context->settings, FreeRDP_GatewayAvdArmpath);
+	const char* base = freerdp_settings_get_string(instance->context->settings,
+	                                               FreeRDP_GatewayAzureActiveDirectory);
 	const char* tenantid =
 	    freerdp_settings_get_string(instance->context->settings, FreeRDP_GatewayAvdAadtenantid);
 	if (!base || !tenantid || !client_id)

@@ -2787,6 +2787,9 @@ const char* freerdp_settings_get_string(const rdpSettings* settings,
 		case FreeRDP_GatewayAvdWvdEndpointPool:
 			return settings->GatewayAvdWvdEndpointPool;
 
+		case FreeRDP_GatewayAzureActiveDirectory:
+			return settings->GatewayAzureActiveDirectory;
+
 		case FreeRDP_GatewayDomain:
 			return settings->GatewayDomain;
 
@@ -3098,6 +3101,9 @@ char* freerdp_settings_get_string_writable(rdpSettings* settings, FreeRDP_Settin
 
 		case FreeRDP_GatewayAvdWvdEndpointPool:
 			return settings->GatewayAvdWvdEndpointPool;
+
+		case FreeRDP_GatewayAzureActiveDirectory:
+			return settings->GatewayAzureActiveDirectory;
 
 		case FreeRDP_GatewayDomain:
 			return settings->GatewayDomain;
@@ -3420,6 +3426,9 @@ BOOL freerdp_settings_set_string_(rdpSettings* settings, FreeRDP_Settings_Keys_S
 
 		case FreeRDP_GatewayAvdWvdEndpointPool:
 			return update_string_(&settings->GatewayAvdWvdEndpointPool, cnv.c, len);
+
+		case FreeRDP_GatewayAzureActiveDirectory:
+			return update_string_(&settings->GatewayAzureActiveDirectory, cnv.c, len);
 
 		case FreeRDP_GatewayDomain:
 			return update_string_(&settings->GatewayDomain, cnv.c, len);
@@ -3760,6 +3769,10 @@ BOOL freerdp_settings_set_string_copy_(rdpSettings* settings, FreeRDP_Settings_K
 
 		case FreeRDP_GatewayAvdWvdEndpointPool:
 			return update_string_copy_(&settings->GatewayAvdWvdEndpointPool, cnv.cc, len, cleanup);
+
+		case FreeRDP_GatewayAzureActiveDirectory:
+			return update_string_copy_(&settings->GatewayAzureActiveDirectory, cnv.cc, len,
+			                           cleanup);
 
 		case FreeRDP_GatewayDomain:
 			return update_string_copy_(&settings->GatewayDomain, cnv.cc, len, cleanup);
