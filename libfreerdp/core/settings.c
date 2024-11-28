@@ -824,7 +824,7 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 		if (!freerdp_settings_set_string(settings, FreeRDP_GatewayAvdClientID,
 		                                 "a85cf173-4192-42f8-81fa-777a763e6e2c"))
 			goto out_fail;
-		if (!freerdp_settings_set_string(settings, FreeRDP_GatewayAvdArmpath,
+		if (!freerdp_settings_set_string(settings, FreeRDP_GatewayAzureActiveDirectory,
 		                                 "login.microsoftonline.com"))
 			goto out_fail;
 		if (!freerdp_settings_set_string(settings, FreeRDP_GatewayAvdAadtenantid, "common"))

@@ -395,6 +395,7 @@ static const size_t string_list_indices[] = {
 	FreeRDP_GatewayAvdGeo,
 	FreeRDP_GatewayAvdHubdiscoverygeourl,
 	FreeRDP_GatewayAvdWvdEndpointPool,
+	FreeRDP_GatewayAzureActiveDirectory,
 	FreeRDP_GatewayDomain,
 	FreeRDP_GatewayHostname,
 	FreeRDP_GatewayHttpExtAuthBearer,

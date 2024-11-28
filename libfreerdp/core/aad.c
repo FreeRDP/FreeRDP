@@ -857,7 +857,7 @@ BOOL aad_fetch_wellknown(rdpAad* aad)
 	WINPR_ASSERT(aad->rdpcontext);
 
 	const char* base =
-	    freerdp_settings_get_string(aad->rdpcontext->settings, FreeRDP_GatewayAvdArmpath);
+	    freerdp_settings_get_string(aad->rdpcontext->settings, FreeRDP_GatewayAzureActiveDirectory);
 	const char* tenantid =
 	    freerdp_settings_get_string(aad->rdpcontext->settings, FreeRDP_GatewayAvdAadtenantid);
 	WINPR_JSON_Delete(aad->wellknown);
@@ -993,7 +993,7 @@ WINPR_JSON* freerdp_utils_aad_get_wellknown(wLog* log, const char* base, const c
 	free(response);
 
 	if (!json)
-		WLog_Print(log, WLOG_ERROR, "failed to parse reponse as JSON");
+		WLog_Print(log, WLOG_ERROR, "failed to parse response as JSON");
 
 	return json;
 }

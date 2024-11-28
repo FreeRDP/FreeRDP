@@ -3716,7 +3716,7 @@ static int parse_aad_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_
 		};
 		const struct app_map amap[] = { { "tenantid:", FreeRDP_GatewayAvdAadtenantid,
 			                              parse_app_option_program },
-			                            { "base:", FreeRDP_GatewayAvdArmpath, NULL } };
+			                            { "ad:", FreeRDP_GatewayAzureActiveDirectory, NULL } };
 		for (size_t x = 0; x < count; x++)
 		{
 			BOOL handled = FALSE;
@@ -4614,7 +4614,7 @@ static int freerdp_client_settings_parse_command_line_arguments_int(
 				return fail_at(arg, COMMAND_LINE_ERROR_UNEXPECTED_VALUE);
 		}
 #endif
-		CommandLineSwitchCase(arg, "aad")
+		CommandLineSwitchCase(arg, "azure")
 		{
 			int rc = parse_aad_options(settings, arg);
 			if (rc != 0)
