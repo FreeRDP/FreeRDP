@@ -249,7 +249,7 @@ static xfCachedData* xf_cached_data_new_copy(const BYTE* data, size_t data_lengt
 	BYTE* copy = NULL;
 	if (data_length > 0)
 	{
-		copy = malloc(data_length);
+		copy = calloc(data_length + 1, sizeof(BYTE));
 		if (!copy)
 			return NULL;
 		memcpy(copy, data, data_length);
@@ -962,7 +962,6 @@ static void xf_cliprdr_process_requested_data(xfClipboard* clipboard, BOOL hasDa
 		case CF_TEXT:
 		case CF_OEMTEXT:
 		case CF_UNICODETEXT:
-			size = strlen((const char*)data) + 1;
 			srcFormatId = format->localFormat;
 			break;
 
