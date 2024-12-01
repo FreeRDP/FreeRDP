@@ -1,7 +1,8 @@
-# WinPR: Windows Portable Runtime
-# libwinpr-file cmake build script
+# FreeRDP: A Remote Desktop Protocol Implementation
+# FreeRDP cmake build script
 #
-# Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+# Copyright 2024 Armin Novak <armin.novak@thincast.com>
+# Copyright 2024 Thincast Technologies GmbH
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,11 +15,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+define_channel_client_subsystem("drive" "file" "")
 
-winpr_module_add(generic.c namedPipeClient.c namedPipeClient.h pattern.c file.c)
+set(${MODULE_PREFIX}_SRCS
+		drive_backend_file.c
+	)
 
-winpr_library_add_private(cwalk)
+set(${MODULE_PREFIX}_LIBS
+		winpr
+)
 
-if(BUILD_TESTING_INTERNAL OR BUILD_TESTING)
-  add_subdirectory(test)
-endif()
+include_directories(..)
+
+add_channel_client_subsystem_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} "" TRUE "")
