@@ -40,6 +40,7 @@ public class BookmarkBase implements Parcelable, Cloneable
 	protected int type;
 	private long id;
 	private String label;
+	private String rdpFileName;
 	private String username;
 	private String password;
 	private String domain;
@@ -53,6 +54,7 @@ public class BookmarkBase implements Parcelable, Cloneable
 		type = parcel.readInt();
 		id = parcel.readLong();
 		label = parcel.readString();
+		rdpFileName = parcel.readString();
 		username = parcel.readString();
 		password = parcel.readString();
 		domain = parcel.readString();
@@ -73,6 +75,7 @@ public class BookmarkBase implements Parcelable, Cloneable
 		type = TYPE_INVALID;
 		id = -1;
 		label = "";
+		rdpFileName = null;
 		username = "";
 		password = "";
 		domain = "";
@@ -111,6 +114,16 @@ public class BookmarkBase implements Parcelable, Cloneable
 	public void setLabel(String label)
 	{
 		this.label = label;
+	}
+
+	public String getRdpFileName()
+	{
+		return rdpFileName;
+	}
+
+	public void setRdpFileName(String rdpFileName)
+	{
+			this.rdpFileName = rdpFileName;
 	}
 
 	public String getUsername()
@@ -207,6 +220,7 @@ public class BookmarkBase implements Parcelable, Cloneable
 		out.writeInt(type);
 		out.writeLong(id);
 		out.writeString(label);
+		out.writeString(rdpFileName);
 		out.writeString(username);
 		out.writeString(password);
 		out.writeString(domain);
@@ -226,6 +240,7 @@ public class BookmarkBase implements Parcelable, Cloneable
 		SharedPreferences.Editor editor = sharedPrefs.edit();
 		editor.clear();
 		editor.putString("bookmark.label", label);
+		editor.putString("bookmark.rdpFileName", rdpFileName);
 		editor.putString("bookmark.username", username);
 		editor.putString("bookmark.password", password);
 		editor.putString("bookmark.domain", domain);
@@ -293,6 +308,7 @@ public class BookmarkBase implements Parcelable, Cloneable
 	public void readFromSharedPreferences(SharedPreferences sharedPrefs)
 	{
 		label = sharedPrefs.getString("bookmark.label", "");
+		rdpFileName = sharedPrefs.getString("bookmark.rdpFileName", null);
 		username = sharedPrefs.getString("bookmark.username", "");
 		password = sharedPrefs.getString("bookmark.password", "");
 		domain = sharedPrefs.getString("bookmark.domain", "");
