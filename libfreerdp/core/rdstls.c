@@ -936,6 +936,8 @@ int rdstls_authenticate(rdpRdstls* rdstls)
 
 static SSIZE_T rdstls_parse_pdu_data_type(wLog* log, UINT16 dataType, wStream* s)
 {
+	size_t pduLength = 0;
+
 	switch (dataType)
 	{
 		case RDSTLS_DATA_PASSWORD_CREDS:
@@ -972,9 +974,7 @@ static SSIZE_T rdstls_parse_pdu_data_type(wLog* log, UINT16 dataType, wStream* s
 				return 0;
 			Stream_Read_UINT16(s, passwordLength);
 
-			if (Stream_GetRemainingLength(s) < passwordLength)
-				return 0;
-			Stream_Seek(s, passwordLength);
+			pduLength = Stream_GetPosition(s) + passwordLength;
 		}
 		break;
 		case RDSTLS_DATA_AUTORECONNECT_COOKIE:
@@ -987,8 +987,8 @@ static SSIZE_T rdstls_parse_pdu_data_type(wLog* log, UINT16 dataType, wStream* s
 			if (Stream_GetRemainingLength(s) < 2)
 				return 0;
 			Stream_Read_UINT16(s, cookieLength);
-			if (!Stream_SafeSeek(s, cookieLength))
-				return 0;
+
+			pduLength = Stream_GetPosition(s) + cookieLength;
 		}
 		break;
 		default:
@@ -996,10 +996,9 @@ static SSIZE_T rdstls_parse_pdu_data_type(wLog* log, UINT16 dataType, wStream* s
 			return -1;
 	}
 
-	const size_t len = Stream_GetPosition(s);
-	if (len > SSIZE_MAX)
+	if (pduLength > SSIZE_MAX)
 		return 0;
-	return (SSIZE_T)len;
+	return (SSIZE_T)pduLength;
 }
 
 SSIZE_T rdstls_parse_pdu(wLog* log, wStream* stream)
