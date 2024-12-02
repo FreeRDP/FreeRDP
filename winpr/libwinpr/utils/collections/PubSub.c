@@ -22,6 +22,7 @@
 #endif
 
 #include <winpr/crt.h>
+#include <winpr/assert.h>
 
 #include <winpr/collections.h>
 
@@ -36,6 +37,9 @@
 
 wEventType* PubSub_GetEventTypes(wPubSub* pubSub, int* count)
 {
+	if (!pubSub)
+		return NULL;
+
 	if (count)
 		*count = pubSub->count;
 
@@ -48,11 +52,15 @@ wEventType* PubSub_GetEventTypes(wPubSub* pubSub, int* count)
 
 void PubSub_Lock(wPubSub* pubSub)
 {
+	WINPR_ASSERT(pubSub);
+
 	EnterCriticalSection(&pubSub->lock);
 }
 
 void PubSub_Unlock(wPubSub* pubSub)
 {
+	WINPR_ASSERT(pubSub);
+
 	LeaveCriticalSection(&pubSub->lock);
 }
 
@@ -60,6 +68,9 @@ wEventType* PubSub_FindEventType(wPubSub* pubSub, const char* EventName)
 {
 	int index;
 	wEventType* event = NULL;
+
+	if (!pubSub)
+		return event;
 
 	for (index = 0; index < pubSub->count; index++)
 	{
@@ -75,6 +86,8 @@ wEventType* PubSub_FindEventType(wPubSub* pubSub, const char* EventName)
 
 void PubSub_AddEventTypes(wPubSub* pubSub, wEventType* events, int count)
 {
+	WINPR_ASSERT(pubSub);
+
 	if (pubSub->synchronized)
 		PubSub_Lock(pubSub);
 
@@ -103,6 +116,9 @@ int PubSub_Subscribe(wPubSub* pubSub, const char* EventName, pEventHandler Event
 	wEventType* event;
 	int status = -1;
 
+	if (!pubSub)
+		return status;
+
 	if (pubSub->synchronized)
 		PubSub_Lock(pubSub);
 
@@ -129,6 +145,9 @@ int PubSub_Unsubscribe(wPubSub* pubSub, const char* EventName, pEventHandler Eve
 	int index;
 	wEventType* event;
 	int status = -1;
+
+	if (!pubSub)
+		return status;
 
 	if (pubSub->synchronized)
 		PubSub_Lock(pubSub);
@@ -163,6 +182,9 @@ int PubSub_OnEvent(wPubSub* pubSub, const char* EventName, void* context, wEvent
 	int index;
 	wEventType* event;
 	int status = -1;
+
+	if (!pubSub)
+		return status;
 
 	if (pubSub->synchronized)
 		PubSub_Lock(pubSub);
