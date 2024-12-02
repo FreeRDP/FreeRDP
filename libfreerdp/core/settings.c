@@ -64,6 +64,14 @@ struct bounds_t
 	INT32 height;
 };
 
+static const char* bounds2str(const struct bounds_t* bounds, char* buffer, size_t len)
+{
+	WINPR_ASSERT(bounds);
+	(void)_snprintf(buffer, len, "{%dx%d-%dx%d}", bounds->x, bounds->y, bounds->x + bounds->width,
+	                bounds->y + bounds->height);
+	return buffer;
+}
+
 static struct bounds_t union_rect(const struct bounds_t* a, const struct bounds_t* b)
 {
 	WINPR_ASSERT(a);
@@ -335,7 +343,7 @@ void freerdp_settings_print_warnings(const rdpSettings* settings)
 	}
 }
 
-static BOOL monitor_operlaps(const rdpSettings* settings, UINT32 start, UINT32 count,
+static BOOL monitor_operlaps(const rdpSettings* settings, UINT32 orig, UINT32 start, UINT32 count,
                              const rdpMonitor* compare)
 {
 	const struct bounds_t rect1 = {
@@ -351,6 +359,12 @@ static BOOL monitor_operlaps(const rdpSettings* settings, UINT32 start, UINT32 c
 
 		if (intersect_rects(&rect1, &rect2))
 		{
+			char buffer1[32] = { 0 };
+			char buffer2[32] = { 0 };
+
+			WLog_ERR(TAG, "Monitor %" PRIu32 " and %" PRIu32 " are overlapping:", orig, x);
+			WLog_ERR(TAG, "%s overlapps with %s", bounds2str(&rect1, buffer1, sizeof(buffer1)),
+			         bounds2str(&rect2, buffer2, sizeof(buffer2)));
 			WLog_ERR(
 			    TAG,
 			    "Mulitimonitor mode requested, but local layout has gaps or overlapping areas!");
@@ -487,8 +501,12 @@ static BOOL find_path_exists_with_dijkstra(UINT32** graph, size_t count, UINT32 
 		{
 			if (!visited[y])
 			{
-				if (mindistance + cost[nextnode][y] < distance[y])
+				UINT32 dist = mindistance + cost[nextnode][y];
+				if (dist < distance[y])
+				{
+					distance[y] = dist;
 					parent[y] = nextnode;
+				}
 			}
 		}
 		pos++;
@@ -548,7 +566,7 @@ static BOOL freerdp_settings_client_monitors_overlap(const rdpSettings* settings
 	{
 		const rdpMonitor* monitor =
 		    freerdp_settings_get_pointer_array(settings, FreeRDP_MonitorDefArray, x);
-		if (monitor_operlaps(settings, x + 1, count, monitor))
+		if (monitor_operlaps(settings, x, x + 1, count, monitor))
 			return TRUE;
 	}
 	return FALSE;
