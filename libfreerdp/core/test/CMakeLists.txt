@@ -15,7 +15,7 @@ set(FUZZERS TestFuzzCoreClient.c TestFuzzCoreServer.c TestFuzzCryptoCertificateD
 
 # Test not compatible with package tests, disable
 if(WITH_SAMPLE AND WITH_SERVER AND NOT WIN32 AND BUILD_TESTING_INTERNAL)
-  add_definitions(-DCMAKE_EXECUTABLE_SUFFIX="${CMAKE_EXECUTABLE_SUFFIX}")
+  add_compile_definitions(CMAKE_EXECUTABLE_SUFFIX="${CMAKE_EXECUTABLE_SUFFIX}")
   set(TESTS ${TESTS} TestConnect.c)
 else()
   message("Skipping connection tests, requires BUILD_TESTING_INTERNAL, WITH_SAMPLE and WITH_SERVER set!")
@@ -25,8 +25,8 @@ create_test_sourcelist(SRCS ${DRIVER} ${TESTS})
 
 add_executable(${MODULE_NAME} ${SRCS})
 
-add_definitions(-DTESTING_OUTPUT_DIRECTORY="${PROJECT_BINARY_DIR}")
-add_definitions(-DTESTING_SRC_DIRECTORY="${PROJECT_SOURCE_DIR}")
+add_compile_definitions(TESTING_OUTPUT_DIRECTORY="${PROJECT_BINARY_DIR}")
+add_compile_definitions(TESTING_SRC_DIRECTORY="${PROJECT_SOURCE_DIR}")
 
 target_link_libraries(${MODULE_NAME} freerdp winpr freerdp-client)
 

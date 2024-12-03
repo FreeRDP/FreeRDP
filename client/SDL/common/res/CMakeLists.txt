@@ -67,7 +67,7 @@ if(SDL_USE_COMPILED_RESOURCES)
   foreach(FILE ${RES_FONT_FILES})
     convert_to_bin("${FILE}" "fonts")
   endforeach()
-  add_definitions(-DSDL_USE_COMPILED_RESOURCES)
+  add_compile_definitions(SDL_USE_COMPILED_RESOURCES)
 
   set(FINIT ${CMAKE_CURRENT_BINARY_DIR}/resource-init.cpp)
   list(APPEND FACTORY_SRCS ${FINIT})
@@ -94,7 +94,7 @@ else()
     string(APPEND SDL_RESOURCE_ROOT "${FREERDP_VERSION_MAJOR}")
   endif()
 
-  add_definitions(-DSDL_RESOURCE_ROOT="${SDL_RESOURCE_ROOT}")
+  add_compile_definitions(SDL_RESOURCE_ROOT="${SDL_RESOURCE_ROOT}")
 
   if(WITH_SDL_IMAGE_DIALOGS)
     install(FILES ${RES_SVG_FILES} DESTINATION ${SDL_RESOURCE_ROOT}/images)

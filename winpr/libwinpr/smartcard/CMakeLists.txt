@@ -18,7 +18,7 @@
 set(MODULE_PREFIX "WINPR_SMARTCARD")
 
 if(PCSC_WINPR_FOUND)
-  winpr_definition_add(-DWITH_WINPR_PCSC)
+  winpr_definition_add(WITH_WINPR_PCSC)
 endif()
 
 option(WITH_SMARTCARD_PCSC "Enable smartcard PCSC backend" ON)
@@ -26,12 +26,12 @@ option(WITH_SMARTCARD_PCSC "Enable smartcard PCSC backend" ON)
 set(${MODULE_PREFIX}_SRCS smartcard.c smartcard.h)
 
 if(WITH_SMARTCARD_PCSC)
-  winpr_definition_add(-DWITH_SMARTCARD_PCSC)
+  winpr_definition_add(WITH_SMARTCARD_PCSC)
   list(APPEND ${MODULE_PREFIX}_SRCS smartcard_pcsc.c smartcard_pcsc.h)
 endif()
 
 if(WITH_SMARTCARD_INSPECT)
-  winpr_definition_add(-DWITH_SMARTCARD_INSPECT)
+  winpr_definition_add(WITH_SMARTCARD_INSPECT)
   list(APPEND ${MODULE_PREFIX}_SRCS smartcard_inspect.c smartcard_inspect.h)
 endif()
 
