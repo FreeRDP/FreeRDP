@@ -492,7 +492,7 @@ BOOL ClipboardSetData(wClipboard* clipboard, UINT32 formatId, const void* data, 
 
 	free(clipboard->data);
 
-	clipboard->data = calloc(size + 1, sizeof(char));
+	clipboard->data = calloc(size + sizeof(WCHAR), sizeof(char));
 
 	if (!clipboard->data)
 		return FALSE;
@@ -506,8 +506,10 @@ BOOL ClipboardSetData(wClipboard* clipboard, UINT32 formatId, const void* data, 
 	{
 		case CF_TEXT:
 		case CF_OEMTEXT:
-		case CF_UNICODETEXT:
 			clipboard->size = strnlen(clipboard->data, size) + 1;
+			break;
+		case CF_UNICODETEXT:
+			clipboard->size = (_wcsnlen(clipboard->data, size / sizeof(WCHAR)) + 1) * sizeof(WCHAR);
 			break;
 		default:
 			clipboard->size = size;
