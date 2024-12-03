@@ -654,9 +654,7 @@ BOOL WINAPI Win32_WTSVirtualChannelWrite(HANDLE hChannel, LPCVOID lpBuffer,
 
 BOOL Win32_WTSVirtualChannelPurge_Internal(HANDLE hChannelHandle, ULONG IoControlCode)
 {
-	DWORD error;
-	NTSTATUS ntstatus;
-	IO_STATUS_BLOCK ioStatusBlock;
+	IO_STATUS_BLOCK ioStatusBlock = { 0 };
 	WTSAPI_CHANNEL* pChannel = (WTSAPI_CHANNEL*)hChannelHandle;
 
 	if (!pChannel || (pChannel->magic != WTSAPI_CHANNEL_MAGIC))
@@ -665,7 +663,7 @@ BOOL Win32_WTSVirtualChannelPurge_Internal(HANDLE hChannelHandle, ULONG IoContro
 		return FALSE;
 	}
 
-	ntstatus =
+	NTSTATUS ntstatus =
 	    NtDeviceIoControlFile(pChannel->hFile, 0, 0, 0, &ioStatusBlock, IoControlCode, 0, 0, 0, 0);
 
 	if (ntstatus == STATUS_PENDING)
@@ -673,20 +671,20 @@ BOOL Win32_WTSVirtualChannelPurge_Internal(HANDLE hChannelHandle, ULONG IoContro
 		ntstatus = NtWaitForSingleObject(pChannel->hFile, 0, 0);
 
 		if (ntstatus >= 0)
-			ntstatus = ioStatusBlock.Status;
+			ntstatus = ioStatusBlock.DUMMYUNIONNAME.Status;
 	}
 
 	if (ntstatus == STATUS_BUFFER_OVERFLOW)
 	{
 		ntstatus = STATUS_BUFFER_TOO_SMALL;
-		error = RtlNtStatusToDosError(ntstatus);
+		const DWORD error = RtlNtStatusToDosError(ntstatus);
 		SetLastError(error);
 		return FALSE;
 	}
 
 	if (ntstatus < 0)
 	{
-		error = RtlNtStatusToDosError(ntstatus);
+		const DWORD error = RtlNtStatusToDosError(ntstatus);
 		SetLastError(error);
 		return FALSE;
 	}

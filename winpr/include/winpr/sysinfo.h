@@ -84,8 +84,8 @@ extern "C"
 			{
 				WORD wProcessorArchitecture;
 				WORD wReserved;
-			};
-		};
+			} DUMMYSTRUCTNAME;
+		} DUMMYUNIONNAME;
 
 		DWORD dwPageSize;
 		LPVOID lpMinimumApplicationAddress;

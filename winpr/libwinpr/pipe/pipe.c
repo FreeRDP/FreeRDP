@@ -332,7 +332,7 @@ BOOL NamedPipeRead(PVOID Object, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 		/* synchronous behavior */
 		lpOverlapped->Internal = 0;
 		lpOverlapped->InternalHigh = (ULONG_PTR)nNumberOfBytesToRead;
-		lpOverlapped->Pointer = (PVOID)lpBuffer;
+		lpOverlapped->DUMMYUNIONNAME.Pointer = (PVOID)lpBuffer;
 		(void)SetEvent(lpOverlapped->hEvent);
 #endif
 	}
@@ -426,7 +426,7 @@ BOOL NamedPipeWrite(PVOID Object, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite,
 				PVOID pv;
 			} cnv;
 			cnv.cpv = lpBuffer;
-			lpOverlapped->Pointer = cnv.pv;
+			lpOverlapped->DUMMYUNIONNAME.Pointer = cnv.pv;
 		}
 		(void)SetEvent(lpOverlapped->hEvent);
 #endif
@@ -782,7 +782,7 @@ BOOL ConnectNamedPipe(HANDLE hNamedPipe, LPOVERLAPPED lpOverlapped)
 		/* synchronous behavior */
 		lpOverlapped->Internal = 2;
 		lpOverlapped->InternalHigh = (ULONG_PTR)0;
-		lpOverlapped->Pointer = (PVOID)NULL;
+		lpOverlapped->DUMMYUNIONNAME.Pointer = (PVOID)NULL;
 		(void)SetEvent(lpOverlapped->hEvent);
 	}
 
