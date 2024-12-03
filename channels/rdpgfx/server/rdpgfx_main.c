@@ -97,7 +97,7 @@ static INLINE BOOL rdpgfx_server_packet_complete_header(wStream* s, size_t start
 	const size_t cap = Stream_Capacity(s);
 	if (cap < start + RDPGFX_HEADER_SIZE)
 		return FALSE;
-	if ((start > UINT32_MAX) || (current > start))
+	if ((start > UINT32_MAX) || (current < start))
 		return FALSE;
 	/* Fill actual length */
 	Stream_SetPosition(s, start + RDPGFX_HEADER_SIZE - sizeof(UINT32));
