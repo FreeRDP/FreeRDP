@@ -559,6 +559,33 @@ fail:
 	return rc;
 }
 
+static void log_monitor(UINT32 idx, const rdpMonitor* monitor, wLog* log, DWORD level)
+{
+	WINPR_ASSERT(monitor);
+
+	WLog_Print(log, level,
+	           "[%" PRIu32 "] [%s] {%dx%d-%dx%d} [%" PRIu32 "] {%" PRIu32 "x%" PRIu32
+	           ", orientation: %" PRIu32 ", desktopScale: %" PRIu32 ", deviceScale: %" PRIu32 "}",
+	           idx, monitor->is_primary ? "primary" : "       ", monitor->x, monitor->y,
+	           monitor->width, monitor->height, monitor->orig_screen,
+	           monitor->attributes.physicalWidth, monitor->attributes.physicalHeight,
+	           monitor->attributes.orientation, monitor->attributes.desktopScaleFactor,
+	           monitor->attributes.deviceScaleFactor);
+}
+
+static void log_monitor_configuration(const rdpSettings* settings, wLog* log, DWORD level)
+{
+	const UINT32 count = freerdp_settings_get_uint32(settings, FreeRDP_MonitorCount);
+	WLog_Print(log, level, "[BEGIN] MonitorDefArray[%" PRIu32 "]", count);
+	for (UINT32 x = 0; x < count; x++)
+	{
+		const rdpMonitor* monitor =
+		    freerdp_settings_get_pointer_array(settings, FreeRDP_MonitorDefArray, x);
+		log_monitor(x, monitor, log, level);
+	}
+	WLog_Print(log, level, "[END] MonitorDefArray[%" PRIu32 "]", count);
+}
+
 static BOOL freerdp_settings_client_monitors_overlap(const rdpSettings* settings)
 {
 	const UINT32 count = freerdp_settings_get_uint32(settings, FreeRDP_MonitorCount);
@@ -652,6 +679,7 @@ static BOOL freerdp_settings_client_monitors_check_primary_and_origin(const rdpS
 
 BOOL freerdp_settings_check_client_after_preconnect(const rdpSettings* settings)
 {
+	log_monitor_configuration(settings, WLog_Get(TAG), WLOG_DEBUG);
 	if (freerdp_settings_client_monitors_overlap(settings))
 		return FALSE;
 	if (freerdp_settings_client_monitors_have_gaps(settings))
