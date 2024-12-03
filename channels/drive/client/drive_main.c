@@ -56,6 +56,7 @@ typedef struct
 	wListDictionary* files;
 
 	HANDLE thread;
+	BOOL async;
 	wMessageQueue* IrpQueue;
 
 	DEVMAN* devman;
@@ -748,10 +749,25 @@ static UINT drive_process_irp(DRIVE_DEVICE* drive, IRP* irp)
 	return error;
 }
 
+static BOOL drive_poll_run(DRIVE_DEVICE* drive, IRP* irp)
+{
+	WINPR_ASSERT(drive);
+
+	if (irp)
+	{
+		const UINT error = drive_process_irp(drive, irp);
+		if (error)
+		{
+			WLog_ERR(TAG, "drive_process_irp failed with error %" PRIu32 "!", error);
+			return FALSE;
+		}
+	}
+
+	return TRUE;
+}
+
 static DWORD WINAPI drive_thread_func(LPVOID arg)
 {
-	IRP* irp = NULL;
-	wMessage message = { 0 };
 	DRIVE_DEVICE* drive = (DRIVE_DEVICE*)arg;
 	UINT error = CHANNEL_RC_OK;
 
@@ -770,26 +786,22 @@ static DWORD WINAPI drive_thread_func(LPVOID arg)
 			break;
 		}
 
+		if (MessageQueue_Size(drive->IrpQueue) < 1)
+			continue;
+
+		wMessage message = { 0 };
 		if (!MessageQueue_Peek(drive->IrpQueue, &message, TRUE))
 		{
 			WLog_ERR(TAG, "MessageQueue_Peek failed!");
-			error = ERROR_INTERNAL_ERROR;
-			break;
+			continue;
 		}
 
 		if (message.id == WMQ_QUIT)
 			break;
 
-		irp = (IRP*)message.wParam;
-
-		if (irp)
-		{
-			if ((error = drive_process_irp(drive, irp)))
-			{
-				WLog_ERR(TAG, "drive_process_irp failed with error %" PRIu32 "!", error);
-				break;
-			}
-		}
+		IRP* irp = (IRP*)message.wParam;
+		if (!drive_poll_run(drive, irp))
+			break;
 	}
 
 fail:
@@ -813,10 +825,18 @@ static UINT drive_irp_request(DEVICE* device, IRP* irp)
 	if (!drive)
 		return ERROR_INVALID_PARAMETER;
 
-	if (!MessageQueue_Post(drive->IrpQueue, NULL, 0, (void*)irp, NULL))
+	if (drive->async)
 	{
-		WLog_ERR(TAG, "MessageQueue_Post failed!");
-		return ERROR_INTERNAL_ERROR;
+		if (!MessageQueue_Post(drive->IrpQueue, NULL, 0, (void*)irp, NULL))
+		{
+			WLog_ERR(TAG, "MessageQueue_Post failed!");
+			return ERROR_INTERNAL_ERROR;
+		}
+	}
+	else
+	{
+		if (!drive_poll_run(drive, irp))
+			return ERROR_INTERNAL_ERROR;
 	}
 
 	return CHANNEL_RC_OK;
@@ -995,14 +1015,19 @@ static UINT drive_register_drive_path(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints,
 			goto out_error;
 		}
 
-		if (!(drive->thread =
-		          CreateThread(NULL, 0, drive_thread_func, drive, CREATE_SUSPENDED, NULL)))
+		drive->async = !freerdp_settings_get_bool(drive->rdpcontext->settings,
+		                                          FreeRDP_SynchronousStaticChannels);
+		if (drive->async)
 		{
-			WLog_ERR(TAG, "CreateThread failed!");
-			goto out_error;
-		}
+			if (!(drive->thread =
+			          CreateThread(NULL, 0, drive_thread_func, drive, CREATE_SUSPENDED, NULL)))
+			{
+				WLog_ERR(TAG, "CreateThread failed!");
+				goto out_error;
+			}
 
-		ResumeThread(drive->thread);
+			ResumeThread(drive->thread);
+		}
 	}
 
 	return CHANNEL_RC_OK;
