@@ -679,14 +679,30 @@ static BOOL freerdp_settings_client_monitors_check_primary_and_origin(const rdpS
 
 BOOL freerdp_settings_check_client_after_preconnect(const rdpSettings* settings)
 {
-	log_monitor_configuration(settings, WLog_Get(TAG), WLOG_DEBUG);
+	wLog* log = WLog_Get(TAG);
+	BOOL rc = TRUE;
+	log_monitor_configuration(settings, log, WLOG_DEBUG);
 	if (freerdp_settings_client_monitors_overlap(settings))
-		return FALSE;
+		rc = FALSE;
 	if (freerdp_settings_client_monitors_have_gaps(settings))
-		return FALSE;
+		rc = FALSE;
 	if (!freerdp_settings_client_monitors_check_primary_and_origin(settings))
-		return FALSE;
-	return TRUE;
+		rc = FALSE;
+	if (!rc)
+	{
+		DWORD level = WLOG_ERROR;
+		WLog_Print(log, level, "Invalid or unsupported monitor configuration detected");
+		WLog_Print(log, level, "Check if the configuration is valid.");
+		WLog_Print(log, level,
+		           "If you suspect a bug create a new issue at "
+		           "https://github.com/FreeRDP/FreeRDP/issues/new");
+		WLog_Print(
+		    log, level,
+		    "Provide at least the following log lines detailing your monitor configuration:");
+		log_monitor_configuration(settings, log, level);
+	}
+
+	return rc;
 }
 
 BOOL freerdp_settings_set_default_order_support(rdpSettings* settings)
