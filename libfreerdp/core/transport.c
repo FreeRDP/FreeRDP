@@ -1114,14 +1114,15 @@ static int transport_default_read_pdu(rdpTransport* transport, wStream* s)
 		position = Stream_GetPosition(s);
 		if (position > pduLength)
 			return -1;
-
-		status = transport_read_layer_bytes(transport, s, pduLength - Stream_GetPosition(s));
-
-		if (status != 1)
+		else if (position < pduLength)
 		{
-			if ((status < INT32_MIN) || (status > INT32_MAX))
-				return -1;
-			return (int)status;
+			status = transport_read_layer_bytes(transport, s, pduLength - position);
+			if (status != 1)
+			{
+				if ((status < INT32_MIN) || (status > INT32_MAX))
+					return -1;
+				return (int)status;
+			}
 		}
 
 		if (Stream_GetPosition(s) >= pduLength)
