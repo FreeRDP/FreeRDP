@@ -70,8 +70,8 @@ FREERDP_LOCAL const char* freerdp_settings_glyph_level_string(UINT32 level, char
 
 FREERDP_LOCAL BOOL freerdp_settings_set_pointer_len_(rdpSettings* settings,
                                                      FreeRDP_Settings_Keys_Pointer id,
-                                                     SSIZE_T lenId, const void* data, size_t len,
-                                                     size_t size);
+                                                     FreeRDP_Settings_Keys_UInt32 lenId,
+                                                     const void* data, size_t len, size_t size);
 FREERDP_LOCAL BOOL freerdp_target_net_adresses_reset(rdpSettings* settings, size_t size);
 
 #endif /* FREERDP_LIB_CORE_SETTINGS_H */
