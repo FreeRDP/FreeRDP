@@ -478,6 +478,8 @@ static int transport_bio_buffered_write(BIO* bio, const char* buf, int num)
 
 	WINPR_ASSERT(bio);
 	WINPR_ASSERT(ptr);
+	if (num < 0)
+		return num;
 
 	ptr->writeBlocked = FALSE;
 	BIO_clear_flags(bio, BIO_FLAGS_WRITE);
@@ -485,7 +487,7 @@ static int transport_bio_buffered_write(BIO* bio, const char* buf, int num)
 	/* we directly append extra bytes in the xmit buffer, this could be prevented
 	 * but for now it makes the code more simple.
 	 */
-	if (buf && num && !ringbuffer_write(&ptr->xmitBuffer, (const BYTE*)buf, num))
+	if (buf && (num > 0) && !ringbuffer_write(&ptr->xmitBuffer, (const BYTE*)buf, (size_t)num))
 	{
 		WLog_ERR(TAG, "an error occurred when writing (num: %d)", num);
 		return -1;
