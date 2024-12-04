@@ -20,6 +20,11 @@ include(CMakeDependentOption)
 
 winpr_include_directory_add(${CMAKE_CURRENT_SOURCE_DIR})
 
+option(WITH_STREAMPOOL_DEBUG "build with extensive streampool logging" OFF)
+if(WITH_STREAMPOOL_DEBUG)
+  winpr_definition_add(-DWITH_STREAMPOOL_DEBUG)
+endif()
+
 option(WITH_LODEPNG "build WinPR with PNG support" OFF)
 if(WITH_LODEPNG)
   find_package(lodepng REQUIRED)
