@@ -39,18 +39,23 @@ static char* append(char** buffer, size_t* size, const char* str)
 	return *buffer;
 }
 
-static LPSTR tr_esc_str(LPCSTR arg, bool format)
+static LPSTR tr_esc_str(LPCSTR arg, bool format, int* failed)
 {
 	const char* str = NULL;
 	LPSTR tmp = NULL;
 	size_t ds = 0;
+
+	assert(failed);
 
 	if (NULL == arg)
 		return NULL;
 
 	const size_t s = strlen(arg) + 1;
 	if (!resize(&tmp, &ds, s))
-		exit(-2);
+	{
+		*failed = -2;
+		return NULL;
+	}
 
 	for (size_t x = 0; x < s; x++)
 	{
@@ -60,7 +65,10 @@ static LPSTR tr_esc_str(LPCSTR arg, bool format)
 			case '-':
 				str = "\\-";
 				if (!append(&tmp, &ds, str))
-					exit(-3);
+				{
+					*failed = -3;
+					return NULL;
+				}
 				break;
 
 			case '<':
@@ -70,7 +78,10 @@ static LPSTR tr_esc_str(LPCSTR arg, bool format)
 					str = "<";
 
 				if (!append(&tmp, &ds, str))
-					exit(-3);
+				{
+					*failed = -4;
+					return NULL;
+				}
 				break;
 
 			case '>':
@@ -80,30 +91,45 @@ static LPSTR tr_esc_str(LPCSTR arg, bool format)
 					str = ">";
 
 				if (!append(&tmp, &ds, str))
-					exit(-4);
+				{
+					*failed = -5;
+					return NULL;
+				}
 				break;
 
 			case '\'':
 				str = "\\*(Aq";
 				if (!append(&tmp, &ds, str))
-					exit(-4);
+				{
+					*failed = -6;
+					return NULL;
+				}
 				break;
 
 			case '.':
 				if (!append(&tmp, &ds, "\\&."))
-					exit(-6);
+				{
+					*failed = -7;
+					return NULL;
+				}
 				break;
 
 			case '\r':
 			case '\n':
 				if (!append(&tmp, &ds, "\n.br\n"))
-					exit(-7);
+				{
+					*failed = -8;
+					return NULL;
+				}
 				break;
 
 			default:
 				data[0] = arg[x];
 				if (!append(&tmp, &ds, data))
-					exit(-8);
+				{
+					*failed = -9;
+					return NULL;
+				}
 				break;
 		}
 	}
@@ -113,6 +139,7 @@ static LPSTR tr_esc_str(LPCSTR arg, bool format)
 
 int main(int argc, char* argv[])
 {
+	int rc = -3;
 	size_t elements = sizeof(global_cmd_args) / sizeof(global_cmd_args[0]);
 
 	if (argc != 2)
@@ -142,11 +169,22 @@ int main(int argc, char* argv[])
 
 	for (size_t x = 0; x < elements - 1; x++)
 	{
+		int failed = 0;
 		const COMMAND_LINE_ARGUMENT_A* arg = &global_cmd_args[x];
-		char* name = tr_esc_str(arg->Name, FALSE);
-		char* alias = tr_esc_str(arg->Alias, FALSE);
-		char* format = tr_esc_str(arg->Format, TRUE);
-		char* text = tr_esc_str(arg->Text, FALSE);
+		char* name = tr_esc_str(arg->Name, FALSE, &failed);
+		char* alias = tr_esc_str(arg->Alias, FALSE, &failed);
+		char* format = tr_esc_str(arg->Format, TRUE, &failed);
+		char* text = tr_esc_str(arg->Text, FALSE, &failed);
+
+		if (failed != 0)
+		{
+			free(name);
+			free(alias);
+			free(format);
+			free(text);
+			rc = failed;
+			goto fail;
+		}
 
 		(void)fprintf(fp, ".PP\n");
 		bool first = true;
@@ -192,7 +230,12 @@ int main(int argc, char* argv[])
 				(void)fprintf(fp, " (default:%s)\n", arg->Default ? "on" : "off");
 			else if (arg->Default)
 			{
-				char* value = tr_esc_str(arg->Default, FALSE);
+				char* value = tr_esc_str(arg->Default, FALSE, &failed);
+				if (failed != 0)
+				{
+					rc = failed;
+					goto fail;
+				}
 				(void)fprintf(fp, " (default:%s)\n", value);
 				free(value);
 			}
@@ -207,8 +250,13 @@ int main(int argc, char* argv[])
 		free(text);
 	}
 
+	rc = 0;
+fail:
 	(void)fclose(fp);
 
-	(void)fprintf(stdout, "successfully generated '%s'\n", fname);
-	return 0;
+	if (rc == 0)
+		(void)fprintf(stdout, "successfully generated '%s'\n", fname);
+	else
+		(void)fprintf(stdout, "failed to generate '%s'\n", fname);
+	return rc;
 }
