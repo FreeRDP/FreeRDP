@@ -193,12 +193,7 @@ BOOL freerdp_connect(freerdp* instance)
 	WINPR_ASSERT(rdp);
 	WINPR_ASSERT(rdp->settings);
 
-	if (rc < 0)
-		return FALSE;
-
-	if (rc == 0)
-		goto freerdp_connect_finally;
-
+	if (rc > 0)
 	/* Pointers might have changed in between */
 	{
 		rdp_update_internal* up = update_cast(rdp->update);
@@ -211,10 +206,7 @@ BOOL freerdp_connect(freerdp* instance)
 			if (up->pcap_rfx)
 				up->dump_rfx = TRUE;
 		}
-	}
 
-	if (rc > 0)
-	{
 		pointer_cache_register_callbacks(instance->context->update);
 		status = IFCALLRESULT(TRUE, instance->PostConnect, instance);
 		instance->ConnectionCallbackState = CLIENT_STATE_POSTCONNECT_PASSED;
