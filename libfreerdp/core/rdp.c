@@ -2400,6 +2400,8 @@ static void rdp_reset_free(rdpRdp* rdp)
 {
 	WINPR_ASSERT(rdp);
 
+	(void)security_lock(rdp);
+
 	rdp_free_rc4_decrypt_keys(rdp);
 	rdp_free_rc4_encrypt_keys(rdp);
 
@@ -2419,6 +2421,8 @@ static void rdp_reset_free(rdpRdp* rdp)
 	rdp->license = NULL;
 	rdp->transport = NULL;
 	rdp->fastpath = NULL;
+
+	security_unlock(rdp);
 }
 
 BOOL rdp_reset(rdpRdp* rdp)
