@@ -66,7 +66,6 @@ struct rdp_arm
 
 	UINT32 gateway_retry;
 	wLog* log;
-	WINPR_JSON* wellknown;
 };
 
 typedef struct rdp_arm rdpArm;
@@ -163,14 +162,19 @@ static BOOL arm_fetch_wellknown(rdpArm* arm)
 {
 	WINPR_ASSERT(arm);
 	WINPR_ASSERT(arm->context);
+	WINPR_ASSERT(arm->context->rdp);
+
+	rdpRdp* rdp = arm->context->rdp;
+	if (rdp->wellknown)
+		return TRUE;
 
 	const char* base =
 	    freerdp_settings_get_string(arm->context->settings, FreeRDP_GatewayAzureActiveDirectory);
 	const char* tenantid =
 	    freerdp_settings_get_string(arm->context->settings, FreeRDP_GatewayAvdAadtenantid);
-	WINPR_JSON_Delete(arm->wellknown);
-	arm->wellknown = freerdp_utils_aad_get_wellknown(arm->log, base, tenantid);
-	return arm->wellknown ? TRUE : FALSE;
+
+	rdp->wellknown = freerdp_utils_aad_get_wellknown(arm->log, base, tenantid);
+	return rdp->wellknown ? TRUE : FALSE;
 }
 
 static wStream* arm_build_http_request(rdpArm* arm, const char* method,
@@ -275,7 +279,6 @@ static void arm_free(rdpArm* arm)
 
 	freerdp_tls_free(arm->tls);
 	http_context_free(arm->http);
-	WINPR_JSON_Delete(arm->wellknown);
 
 	free(arm);
 }
@@ -988,6 +991,12 @@ fail:
 static BOOL arm_handle_request(rdpArm* arm, BOOL* retry, DWORD timeout)
 {
 	WINPR_ASSERT(retry);
+
+	if (!arm_fetch_wellknown(arm))
+	{
+		*retry = TRUE;
+		return FALSE;
+	}
 
 	*retry = FALSE;
 
