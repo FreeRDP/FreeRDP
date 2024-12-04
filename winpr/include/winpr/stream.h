@@ -1370,12 +1370,23 @@ extern "C"
 
 	WINPR_API void StreamPool_Return(wStreamPool* pool, wStream* s);
 
-	WINPR_API wStream* StreamPool_Take(wStreamPool* pool, size_t size);
-
 	WINPR_API void Stream_AddRef(wStream* s);
 	WINPR_API void Stream_Release(wStream* s);
 
+	WINPR_ATTR_MALLOC(Stream_Release, 1)
+	WINPR_API wStream* StreamPool_Take(wStreamPool* pool, size_t size);
+
 	WINPR_API wStream* StreamPool_Find(wStreamPool* pool, const BYTE* ptr);
+
+	/** Return the number of streams still not returned to the pool
+	 *
+	 *  @param pool The pool to query, must not be \b NULL
+	 *
+	 *  @return the number of streams still in use
+	 *
+	 *  @since version 3.10.0
+	 */
+	WINPR_API size_t StreamPool_UsedCount(wStreamPool* pool);
 
 	WINPR_API void StreamPool_Clear(wStreamPool* pool);
 

@@ -348,6 +348,14 @@ void StreamPool_Clear(wStreamPool* pool)
 	StreamPool_Unlock(pool);
 }
 
+size_t StreamPool_UsedCount(wStreamPool* pool)
+{
+	StreamPool_Lock(pool);
+	size_t usize = pool->uSize;
+	StreamPool_Unlock(pool);
+	return usize;
+}
+
 /**
  * Construction, Destruction
  */
