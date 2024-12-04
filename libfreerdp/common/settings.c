@@ -1281,7 +1281,8 @@ BOOL freerdp_settings_set_value_for_name(rdpSettings* settings, const char* name
 }
 
 BOOL freerdp_settings_set_pointer_len_(rdpSettings* settings, FreeRDP_Settings_Keys_Pointer id,
-                                       SSIZE_T lenId, const void* data, size_t len, size_t size)
+                                       FreeRDP_Settings_Keys_UInt32 lenId, const void* data,
+                                       size_t len, size_t size)
 {
 	BOOL rc = FALSE;
 	void* copy = NULL;
@@ -1289,9 +1290,9 @@ BOOL freerdp_settings_set_pointer_len_(rdpSettings* settings, FreeRDP_Settings_K
 	free(old);
 	if (!freerdp_settings_set_pointer(settings, id, NULL))
 		return FALSE;
-	if (lenId >= 0)
+	if (lenId != FreeRDP_UINT32_UNUSED)
 	{
-		if (!freerdp_settings_set_uint32(settings, (FreeRDP_Settings_Keys_UInt32)lenId, 0))
+		if (!freerdp_settings_set_uint32(settings, lenId, 0))
 			return FALSE;
 	}
 
@@ -1313,9 +1314,9 @@ BOOL freerdp_settings_set_pointer_len_(rdpSettings* settings, FreeRDP_Settings_K
 
 	// freerdp_settings_set_pointer takes ownership of copy
 	//  NOLINTNEXTLINE(clang-analyzer-unix.Malloc)
-	if (lenId < 0)
+	if (lenId == FreeRDP_UINT32_UNUSED)
 		return TRUE;
-	return freerdp_settings_set_uint32(settings, (FreeRDP_Settings_Keys_UInt32)lenId, (UINT32)len);
+	return freerdp_settings_set_uint32(settings, lenId, (UINT32)len);
 }
 
 const void* freerdp_settings_get_pointer(const rdpSettings* settings,
@@ -1456,10 +1457,10 @@ BOOL freerdp_settings_set_pointer_len(rdpSettings* settings, FreeRDP_Settings_Ke
 			return freerdp_settings_set_pointer_len_(settings, id, FreeRDP_MonitorDefArraySize,
 			                                         data, len, sizeof(rdpMonitor));
 		case FreeRDP_ClientAutoReconnectCookie:
-			return freerdp_settings_set_pointer_len_(settings, id, -1, data, len,
+			return freerdp_settings_set_pointer_len_(settings, id, FreeRDP_UINT32_UNUSED, data, len,
 			                                         sizeof(ARC_CS_PRIVATE_PACKET));
 		case FreeRDP_ServerAutoReconnectCookie:
-			return freerdp_settings_set_pointer_len_(settings, id, -1, data, len,
+			return freerdp_settings_set_pointer_len_(settings, id, FreeRDP_UINT32_UNUSED, data, len,
 			                                         sizeof(ARC_SC_PRIVATE_PACKET));
 		case FreeRDP_ClientTimeZone:
 			if (len > 1)
@@ -1467,7 +1468,7 @@ BOOL freerdp_settings_set_pointer_len(rdpSettings* settings, FreeRDP_Settings_Ke
 				WLog_ERR(TAG, "FreeRDP_ClientTimeZone::len must be 0 or 1");
 				return FALSE;
 			}
-			return freerdp_settings_set_pointer_len_(settings, id, -1, data, len,
+			return freerdp_settings_set_pointer_len_(settings, id, FreeRDP_UINT32_UNUSED, data, len,
 			                                         sizeof(TIME_ZONE_INFORMATION));
 		case FreeRDP_BitmapCacheV2CellInfo:
 			return freerdp_settings_set_pointer_len_(settings, id, FreeRDP_BitmapCacheV2NumCells,
@@ -1478,7 +1479,7 @@ BOOL freerdp_settings_set_pointer_len(rdpSettings* settings, FreeRDP_Settings_Ke
 				WLog_ERR(TAG, "FreeRDP_GlyphCache::len must be 0 or 10");
 				return FALSE;
 			}
-			return freerdp_settings_set_pointer_len_(settings, id, -1, data, len,
+			return freerdp_settings_set_pointer_len_(settings, id, FreeRDP_UINT32_UNUSED, data, len,
 			                                         sizeof(GLYPH_CACHE_DEFINITION));
 		case FreeRDP_FragCache:
 			if (len > 1)
@@ -1486,7 +1487,7 @@ BOOL freerdp_settings_set_pointer_len(rdpSettings* settings, FreeRDP_Settings_Ke
 				WLog_ERR(TAG, "FreeRDP_FragCache::len must be 0 or 1");
 				return FALSE;
 			}
-			return freerdp_settings_set_pointer_len_(settings, id, -1, data, len,
+			return freerdp_settings_set_pointer_len_(settings, id, FreeRDP_UINT32_UNUSED, data, len,
 			                                         sizeof(GLYPH_CACHE_DEFINITION));
 		case FreeRDP_StaticChannelArray:
 			if (data == NULL)
@@ -1509,7 +1510,8 @@ BOOL freerdp_settings_set_pointer_len(rdpSettings* settings, FreeRDP_Settings_Ke
 			return freerdp_settings_set_pointer_len_(settings, id, FreeRDP_ReceivedCapabilitiesSize,
 			                                         data, len, sizeof(char));
 		case FreeRDP_OrderSupport:
-			return freerdp_settings_set_pointer_len_(settings, id, -1, data, len, sizeof(char));
+			return freerdp_settings_set_pointer_len_(settings, id, FreeRDP_UINT32_UNUSED, data, len,
+			                                         sizeof(char));
 
 		case FreeRDP_MonitorIds:
 			return freerdp_settings_set_pointer_len_(

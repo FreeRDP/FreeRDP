@@ -1736,8 +1736,8 @@ BOOL freerdp_target_net_adresses_reset(rdpSettings* settings, size_t size)
 
 	if (size > 0)
 	{
-		if (!freerdp_settings_set_pointer_len_(settings, FreeRDP_TargetNetPorts, -1, NULL, size,
-		                                       sizeof(UINT32)))
+		if (!freerdp_settings_set_pointer_len_(settings, FreeRDP_TargetNetPorts,
+		                                       FreeRDP_UINT32_UNUSED, NULL, size, sizeof(UINT32)))
 			return FALSE;
 		if (!freerdp_settings_set_pointer_len_(settings, FreeRDP_TargetNetAddresses,
 		                                       FreeRDP_TargetNetAddressCount, NULL, size,
