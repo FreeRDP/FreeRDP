@@ -149,10 +149,10 @@ static void transport_ssl_cb(const SSL* ssl, int where, int ret)
 
 wStream* transport_send_stream_init(rdpTransport* transport, size_t size)
 {
-	wStream* s = NULL;
 	WINPR_ASSERT(transport);
 
-	if (!(s = StreamPool_Take(transport->ReceivePool, size)))
+	wStream* s = StreamPool_Take(transport->ReceivePool, size);
+	if (!s)
 		return NULL;
 
 	if (!Stream_EnsureCapacity(s, size))
@@ -216,7 +216,12 @@ static BOOL transport_default_attach(rdpTransport* transport, int sockfd)
 		 */
 		BIO_set_fd(socketBio, sockfd, BIO_CLOSE);
 	}
+	EnterCriticalSection(&(transport->ReadLock));
+	EnterCriticalSection(&(transport->WriteLock));
 	transport->frontBio = bufferedBio;
+	LeaveCriticalSection(&(transport->WriteLock));
+	LeaveCriticalSection(&(transport->ReadLock));
+
 	return TRUE;
 fail:
 
@@ -1592,6 +1597,8 @@ static BOOL transport_default_disconnect(rdpTransport* transport)
 	if (!transport)
 		return FALSE;
 
+	EnterCriticalSection(&(transport->ReadLock));
+	EnterCriticalSection(&(transport->WriteLock));
 	if (transport->tls)
 	{
 		freerdp_tls_free(transport->tls);
@@ -1624,6 +1631,8 @@ static BOOL transport_default_disconnect(rdpTransport* transport)
 	transport->frontBio = NULL;
 	transport->layer = TRANSPORT_LAYER_TCP;
 	transport->earlyUserAuth = FALSE;
+	LeaveCriticalSection(&(transport->WriteLock));
+	LeaveCriticalSection(&(transport->ReadLock));
 	return status;
 }
 
@@ -1708,15 +1717,35 @@ void transport_free(rdpTransport* transport)
 
 	transport_disconnect(transport);
 
+	EnterCriticalSection(&(transport->ReadLock));
 	if (transport->ReceiveBuffer)
 		Stream_Release(transport->ReceiveBuffer);
+	LeaveCriticalSection(&(transport->ReadLock));
+
+	/* HACK: We disconnected the transport above, now wait without a read or write lock until all
+	 * streams in use have been returned to the pool. */
+	while (TRUE)
+	{
+		const size_t used = StreamPool_UsedCount(transport->ReceivePool);
+		if (used == 0)
+			break;
+		WLog_Print(transport->log, WLOG_WARN, "%" PRIuz " streams still in use, sleeping...", used);
+		Sleep(100);
+	}
+
+	EnterCriticalSection(&(transport->ReadLock));
+	EnterCriticalSection(&(transport->WriteLock));
 
 	nla_free(transport->nla);
 	StreamPool_Free(transport->ReceivePool);
 	(void)CloseHandle(transport->connectedEvent);
 	(void)CloseHandle(transport->rereadEvent);
 	(void)CloseHandle(transport->ioEvent);
+
+	LeaveCriticalSection(&(transport->ReadLock));
 	DeleteCriticalSection(&(transport->ReadLock));
+
+	LeaveCriticalSection(&(transport->WriteLock));
 	DeleteCriticalSection(&(transport->WriteLock));
 	free(transport);
 }
