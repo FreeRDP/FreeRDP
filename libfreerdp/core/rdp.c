@@ -26,6 +26,7 @@
 #include <winpr/string.h>
 #include <winpr/synch.h>
 #include <winpr/assert.h>
+#include <winpr/json.h>
 
 #include "rdp.h"
 
@@ -2522,6 +2523,7 @@ void rdp_free(rdpRdp* rdp)
 		if (rdp->abortEvent)
 			(void)CloseHandle(rdp->abortEvent);
 		aad_free(rdp->aad);
+		WINPR_JSON_Delete(rdp->wellknown);
 		free(rdp);
 	}
 }

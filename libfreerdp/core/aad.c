@@ -48,7 +48,6 @@ struct rdp_aad
 	char* hostname;
 	char* scope;
 	wLog* log;
-	WINPR_JSON* wellknown;
 };
 
 #ifdef WITH_AAD
@@ -189,7 +188,13 @@ static BOOL aad_get_nonce(rdpAad* aad)
 	size_t response_length = 0;
 	WINPR_JSON* json = NULL;
 
-	WINPR_JSON* obj = WINPR_JSON_GetObjectItem(aad->wellknown, "token_endpoint");
+	WINPR_ASSERT(aad);
+	WINPR_ASSERT(aad->rdpcontext);
+
+	rdpRdp* rdp = aad->rdpcontext->rdp;
+	WINPR_ASSERT(rdp);
+
+	WINPR_JSON* obj = WINPR_JSON_GetObjectItem(rdp->wellknown, "token_endpoint");
 	if (!obj)
 	{
 		WLog_Print(aad->log, WLOG_ERROR, "wellknown does not have 'token_endpoint', aborting");
@@ -796,7 +801,6 @@ void aad_free(rdpAad* aad)
 	free(aad->access_token);
 	free(aad->kid);
 	freerdp_key_free(aad->key);
-	WINPR_JSON_Delete(aad->wellknown);
 
 	free(aad);
 }
@@ -856,13 +860,18 @@ BOOL aad_fetch_wellknown(rdpAad* aad)
 	WINPR_ASSERT(aad);
 	WINPR_ASSERT(aad->rdpcontext);
 
+	rdpRdp* rdp = aad->rdpcontext->rdp;
+	WINPR_ASSERT(rdp);
+
+	if (rdp->wellknown)
+		return TRUE;
+
 	const char* base =
 	    freerdp_settings_get_string(aad->rdpcontext->settings, FreeRDP_GatewayAzureActiveDirectory);
 	const char* tenantid =
 	    freerdp_settings_get_string(aad->rdpcontext->settings, FreeRDP_GatewayAvdAadtenantid);
-	WINPR_JSON_Delete(aad->wellknown);
-	aad->wellknown = freerdp_utils_aad_get_wellknown(aad->log, base, tenantid);
-	return aad->wellknown ? TRUE : FALSE;
+	rdp->wellknown = freerdp_utils_aad_get_wellknown(aad->log, base, tenantid);
+	return rdp->wellknown ? TRUE : FALSE;
 }
 
 const char* freerdp_utils_aad_get_wellknown_string(rdpContext* context, AAD_WELLKNOWN_VALUES which)
@@ -875,11 +884,11 @@ const char* freerdp_utils_aad_get_wellknown_custom_string(rdpContext* context, c
 {
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->rdp);
-	rdpAad* aad = context->rdp->aad;
-	if (!aad || !aad->wellknown)
+
+	if (!context->rdp->wellknown)
 		return NULL;
 
-	WINPR_JSON* obj = WINPR_JSON_GetObjectItem(aad->wellknown, which);
+	WINPR_JSON* obj = WINPR_JSON_GetObjectItem(context->rdp->wellknown, which);
 	if (!obj)
 		return NULL;
 
@@ -951,11 +960,11 @@ WINPR_JSON* freerdp_utils_aad_get_wellknown_custom_object(rdpContext* context, c
 {
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->rdp);
-	rdpAad* aad = context->rdp->aad;
-	if (!aad || !aad->wellknown)
+
+	if (!context->rdp->wellknown)
 		return NULL;
 
-	return WINPR_JSON_GetObjectItem(aad->wellknown, which);
+	return WINPR_JSON_GetObjectItem(context->rdp->wellknown, which);
 }
 
 WINPR_ATTR_MALLOC(WINPR_JSON_Delete, 1)
