@@ -412,10 +412,6 @@ endif(APPLE)
 if(ANDROID)
   set_property(GLOBAL PROPERTY FIND_LIBRARY_USE_LIB64_PATHS ${ANDROID_LIBRARY_USE_LIB64_PATHS})
 
-  if(${ANDROID_ABI} STREQUAL "armeabi")
-    set(WITH_NEON OFF)
-  endif()
-
   if(ANDROID_ABI STREQUAL arm64-v8a)
     include(CheckCCompilerFlag)
     check_c_compiler_flag("-mfloat-abi=softfp" ABI_SOFTFP_SUPPORTED)

@@ -23,13 +23,9 @@
 #include "../nsc_types.h"
 #include "nsc_sse2.h"
 
-#if defined(WITH_SSE2)
-#if defined(_M_IX86) || defined(_M_AMD64) || defined(_M_IA64) || defined(_M_IX86_AMD64)
-#define SSE2_ENABLED
-#endif
-#endif
+#include "../../core/simd.h"
 
-#if defined(SSE2_ENABLED)
+#if defined(SSE_AVX_INTRINSICS_ENABLED)
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -388,7 +384,7 @@ static BOOL nsc_encode_sse2(NSC_CONTEXT* context, const BYTE* data, UINT32 scanl
 
 void nsc_init_sse2(NSC_CONTEXT* context)
 {
-#if defined(SSE2_ENABLED)
+#if defined(SSE_AVX_INTRINSICS_ENABLED)
 	if (!IsProcessorFeaturePresent(PF_XMMI64_INSTRUCTIONS_AVAILABLE))
 		return;
 

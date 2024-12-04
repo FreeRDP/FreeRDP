@@ -28,7 +28,7 @@
 
 #include <freerdp/codec/color.h>
 
-#if defined(SSE2_ENABLED)
+#if defined(SSE_AVX_INTRINSICS_ENABLED)
 #define TAG FREERDP_TAG("primitives.copy")
 
 #include <emmintrin.h>
@@ -258,14 +258,14 @@ static pstatus_t sse_image_copy_no_overlap(BYTE* WINPR_RESTRICT pDstData, DWORD 
 /* ------------------------------------------------------------------------- */
 void primitives_init_copy_sse41(primitives_t* prims)
 {
-#if defined(SSE2_ENABLED)
+#if defined(SSE_AVX_INTRINSICS_ENABLED)
 	if (IsProcessorFeaturePresent(PF_SSE4_1_INSTRUCTIONS_AVAILABLE))
 	{
 		WLog_VRB(PRIM_TAG, "SSE4.1 optimizations");
 		prims->copy_no_overlap = sse_image_copy_no_overlap;
 	}
 #else
-	WLog_VRB(PRIM_TAG, "undefined WITH_SSE2");
+	WLog_VRB(PRIM_TAG, "undefined WITH_SIMD or SSE4.1 intrinsics not available");
 	WINPR_UNUSED(prims);
 #endif
 }

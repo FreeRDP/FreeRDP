@@ -21,9 +21,8 @@
 #cmakedefine WITH_ADD_PLUGIN_TO_RPATH
 #cmakedefine WITH_PROFILER
 #cmakedefine WITH_GPROF
-#cmakedefine WITH_SSE2
+#cmakedefine WITH_SIMD
 #cmakedefine WITH_AVX2
-#cmakedefine WITH_NEON
 #cmakedefine WITH_CUPS
 #cmakedefine WITH_JPEG
 #cmakedefine WITH_WIN8

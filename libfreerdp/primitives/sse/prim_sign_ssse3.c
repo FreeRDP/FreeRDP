@@ -23,7 +23,7 @@
 
 #include "prim_internal.h"
 
-#if defined(SSE2_ENABLED)
+#if defined(SSE_AVX_INTRINSICS_ENABLED)
 #include <emmintrin.h>
 #include <tmmintrin.h>
 
@@ -165,12 +165,12 @@ static pstatus_t ssse3_sign_16s(const INT16* WINPR_RESTRICT pSrc, INT16* WINPR_R
 	return PRIMITIVES_SUCCESS;
 }
 
-#endif /* SSE2_ENABLED */
+#endif /* SSE_AVX_INTRINSICS_ENABLED */
 
 /* ------------------------------------------------------------------------- */
 void primitives_init_sign_ssse3(primitives_t* WINPR_RESTRICT prims)
 {
-#if defined(SSE2_ENABLED)
+#if defined(SSE_AVX_INTRINSICS_ENABLED)
 	generic = primitives_get_generic();
 	primitives_init_sign(prims);
 	/* Pick tuned versions if possible. */
@@ -184,7 +184,7 @@ void primitives_init_sign_ssse3(primitives_t* WINPR_RESTRICT prims)
 	}
 
 #else
-	WLog_VRB(PRIM_TAG, "undefined WITH_SSE2");
+	WLog_VRB(PRIM_TAG, "undefined WITH_SIMD or SSSE3/SSE3 intrinsics not available");
 	WINPR_UNUSED(prims);
 #endif
 }

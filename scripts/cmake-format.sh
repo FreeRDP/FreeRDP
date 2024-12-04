@@ -28,7 +28,8 @@ then
 fi
 
 CMAKE_FILES=$(find ${SRC_PATH} -name "*.cmake" -o -name "CMakeLists.txt")
-for FILE in $CMAKE_FILES;
+CMAKE_CI_FILES=$(find ${SRC_PATH}/ci -name "*.txt")
+for FILE in $CMAKE_FILES $CMAKE_CI_FILES;
 do
 	echo "processing file $FILE..."
 	cmake-format -c "$SCRIPT_PATH/cmake-format.yml" $FORMAT_ARG $FILE

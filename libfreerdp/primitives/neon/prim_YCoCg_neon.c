@@ -27,7 +27,7 @@
 #include "prim_templates.h"
 #include "prim_YCoCg.h"
 
-#if defined(NEON_ENABLED)
+#if defined(NEON_INTRINSICS_ENABLED)
 #include <arm_neon.h>
 
 static primitives_t* generic = NULL;
@@ -157,7 +157,7 @@ static pstatus_t neon_YCoCgToRGB_8u_AC4R(const BYTE* WINPR_RESTRICT pSrc, INT32 
 /* ------------------------------------------------------------------------- */
 void primitives_init_YCoCg_neon(primitives_t* WINPR_RESTRICT prims)
 {
-#if defined(NEON_ENABLED)
+#if defined(NEON_INTRINSICS_ENABLED)
 	generic = primitives_get_generic();
 	primitives_init_YCoCg(prims);
 
@@ -167,7 +167,7 @@ void primitives_init_YCoCg_neon(primitives_t* WINPR_RESTRICT prims)
 		prims->YCoCgToRGB_8u_AC4R = neon_YCoCgToRGB_8u_AC4R;
 	}
 #else
-	WLog_VRB(PRIM_TAG, "undefined WITH_NEON");
+	WLog_VRB(PRIM_TAG, "undefined WITH_SIMD or neon intrinsics not available");
 	WINPR_UNUSED(prims);
 #endif
 }
