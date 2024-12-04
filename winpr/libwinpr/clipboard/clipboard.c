@@ -506,10 +506,11 @@ BOOL ClipboardSetData(wClipboard* clipboard, UINT32 formatId, const void* data, 
 	{
 		case CF_TEXT:
 		case CF_OEMTEXT:
-			clipboard->size = strnlen(clipboard->data, size) + 1;
+			clipboard->size = (UINT32)(strnlen(clipboard->data, size) + 1UL);
 			break;
 		case CF_UNICODETEXT:
-			clipboard->size = (_wcsnlen(clipboard->data, size / sizeof(WCHAR)) + 1) * sizeof(WCHAR);
+			clipboard->size =
+			    (UINT32)((_wcsnlen(clipboard->data, size / sizeof(WCHAR)) + 1UL) * sizeof(WCHAR));
 			break;
 		default:
 			clipboard->size = size;
