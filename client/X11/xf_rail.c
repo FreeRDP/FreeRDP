@@ -588,7 +588,7 @@ static BOOL xf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 		}
 	}
 
-	if ((fieldFlags & WINDOW_ORDER_STATE_NEW) == 0)
+	if (fieldFlags & (WINDOW_ORDER_STATE_NEW | WINDOW_ORDER_FIELD_STYLE))
 		xf_SetWindowStyle(xfc, appWindow, appWindow->dwStyle, appWindow->dwExStyle);
 
 	/* We should only be using the visibility rects for shaping the window */
