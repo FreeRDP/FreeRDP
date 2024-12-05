@@ -909,19 +909,16 @@ void xf_SetWindowStyle(xfContext* xfc, xfAppWindow* appWindow, UINT32 style, UIN
 	LogTagAndXChangeProperty(TAG, xfc->display, appWindow->handle, xfc->_NET_WM_WINDOW_TYPE,
 	                         XA_ATOM, 32, PropModeReplace, (BYTE*)&window_type, 1);
 
-	if (ex_style & (WS_EX_CONTROLPARENT | WS_EX_TOOLWINDOW | WS_EX_DLGMODALFRAME))
-		xf_XSetTransientForHint(xfc, appWindow);
+	const BOOL above = (ex_style & WS_EX_TOPMOST) != 0;
+	const BOOL transient = (style & WS_CHILD) == 0;
 
-	if (((ex_style & WS_EX_TOPMOST) != 0) && ((ex_style & WS_EX_TOOLWINDOW) == 0))
-	{
-		xf_SendClientEvent(xfc, appWindow->handle, xfc->_NET_WM_STATE, 4, _NET_WM_STATE_ADD,
-		                   xfc->_NET_WM_STATE_ABOVE, 0, 0);
-	}
-	else
-	{
-		xf_SendClientEvent(xfc, appWindow->handle, xfc->_NET_WM_STATE, 4, _NET_WM_STATE_REMOVE,
-		                   xfc->_NET_WM_STATE_ABOVE, 0, 0);
-	}
+	if (transient)
+		xf_XSetTransientForHint(
+		    xfc, appWindow); // xf_XSetTransientForHint only sets the hint if there is a parent
+
+	xf_SendClientEvent(xfc, appWindow->handle, xfc->_NET_WM_STATE, 4,
+	                   above ? _NET_WM_STATE_ADD : _NET_WM_STATE_REMOVE, xfc->_NET_WM_STATE_ABOVE,
+	                   0, 0);
 }
 
 void xf_SetWindowActions(xfContext* xfc, xfAppWindow* appWindow)
