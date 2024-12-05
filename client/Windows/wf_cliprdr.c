@@ -1935,7 +1935,7 @@ wf_cliprdr_server_format_list_response(CliprdrClientContext* context,
 	(void)formatListResponse;
 
 	if (formatListResponse->common.msgFlags != CB_RESPONSE_OK)
-		return E_FAIL;
+		WLog_WARN(TAG, "format list update failed");
 
 	return CHANNEL_RC_OK;
 }
