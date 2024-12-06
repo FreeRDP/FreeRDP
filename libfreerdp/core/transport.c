@@ -151,6 +151,9 @@ wStream* transport_send_stream_init(rdpTransport* transport, size_t size)
 {
 	WINPR_ASSERT(transport);
 
+	if (!transport->frontBio)
+		return NULL;
+
 	wStream* s = StreamPool_Take(transport->ReceivePool, size);
 	if (!s)
 		return NULL;
@@ -1828,6 +1831,8 @@ rdpTsg* transport_get_tsg(rdpTransport* transport)
 wStream* transport_take_from_pool(rdpTransport* transport, size_t size)
 {
 	WINPR_ASSERT(transport);
+	if (!transport->frontBio)
+		return NULL;
 	return StreamPool_Take(transport->ReceivePool, size);
 }
 
