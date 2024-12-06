@@ -171,7 +171,7 @@ if(WINPR_HAVE_UNWIND_H)
   endif()
 endif()
 
-include(JsonDetect)
+#include(JsonDetect)
 if(NOT WITH_JSON_DISABLED)
   if(JSONC_FOUND AND NOT WITH_CJSON_REQUIRED)
     winpr_library_add_private(${JSONC_LIBRARIES})
