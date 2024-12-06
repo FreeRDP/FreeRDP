@@ -491,7 +491,7 @@ char* StreamPool_GetStatistics(wStreamPool* pool, char* buffer, size_t size)
 		if ((offset > 0) && (offset < size - used))
 			used += (size_t)offset;
 	}
-	free((void*)entry->msg);
+	free((void*)entry.msg);
 	StreamPool_Unlock(pool);
 #endif
 	buffer[used] = '\0';
