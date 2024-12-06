@@ -307,10 +307,9 @@ int TestCmdLine(int argc, char* argv[])
 		}
 		CommandLineSwitchCase(arg, "valuelist")
 		{
-			char** p = NULL;
 			size_t count = 0;
-			p = CommandLineParseCommaSeparatedValuesEx(arg->Name, arg->Value, &count);
-			free(p);
+			char** p = CommandLineParseCommaSeparatedValuesEx(arg->Name, arg->Value, &count);
+			free((void*)p);
 
 			if (!p || count != 3)
 			{
@@ -322,10 +321,9 @@ int TestCmdLine(int argc, char* argv[])
 		}
 		CommandLineSwitchCase(arg, "valuelist-empty")
 		{
-			char** p = NULL;
 			size_t count = 0;
-			p = CommandLineParseCommaSeparatedValuesEx(arg->Name, arg->Value, &count);
-			free(p);
+			char** p = CommandLineParseCommaSeparatedValuesEx(arg->Name, arg->Value, &count);
+			free((void*)p);
 
 			if (!p || count != 1)
 			{

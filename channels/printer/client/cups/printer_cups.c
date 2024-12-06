@@ -347,7 +347,7 @@ static void printer_cups_release_enum_printers(rdpPrinter** printers)
 			(*cur)->ReleaseRef(*cur);
 		cur++;
 	}
-	free(printers);
+	free((void*)printers);
 }
 
 static rdpPrinter** printer_cups_enum_printers(rdpPrinterDriver* driver)

@@ -270,7 +270,7 @@ static BOOL pf_server_setup_channels(freerdp_peer* peer)
 
 	rc = TRUE;
 fail:
-	free(accepted_channels);
+	free((void*)accepted_channels);
 	return rc;
 }
 

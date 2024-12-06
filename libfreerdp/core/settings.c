@@ -762,11 +762,11 @@ BOOL freerdp_capability_buffer_allocate(rdpSettings* settings, UINT32 count)
 	memset(tmp, 0, count * sizeof(BYTE));
 	settings->ReceivedCapabilities = tmp;
 
-	tmp = realloc(settings->ReceivedCapabilityData, count * sizeof(BYTE*));
+	tmp = realloc((void*)settings->ReceivedCapabilityData, count * sizeof(BYTE*));
 	if (!tmp)
 		return FALSE;
 	memset(tmp, 0, count * sizeof(BYTE*));
-	settings->ReceivedCapabilityData = tmp;
+	settings->ReceivedCapabilityData = (BYTE**)tmp;
 
 	tmp = realloc(settings->ReceivedCapabilityDataSizes, count * sizeof(UINT32));
 	if (!tmp)

@@ -30,8 +30,12 @@ extern "C"
 #include <winpr/winpr.h>
 #include <winpr/wlog.h>
 
-	void* winpr_unwind_backtrace(DWORD size);
 	void winpr_unwind_backtrace_free(void* buffer);
+
+	WINPR_ATTR_MALLOC(winpr_unwind_backtrace_free, 1)
+	void* winpr_unwind_backtrace(DWORD size);
+
+	WINPR_ATTR_MALLOC(free, 1)
 	char** winpr_unwind_backtrace_symbols(void* buffer, size_t* used);
 
 #ifdef __cplusplus

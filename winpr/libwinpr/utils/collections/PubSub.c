@@ -173,7 +173,8 @@ int PubSub_Unsubscribe(wPubSub* pubSub, const char* EventName, ...)
 			{
 				event->EventHandlers[index] = NULL;
 				event->EventHandlerCount--;
-				MoveMemory(&event->EventHandlers[index], &event->EventHandlers[index + 1],
+				MoveMemory((void*)&event->EventHandlers[index],
+				           (void*)&event->EventHandlers[index + 1],
 				           (MAX_EVENT_HANDLERS - index - 1) * sizeof(pEventHandler));
 				status = 1;
 			}

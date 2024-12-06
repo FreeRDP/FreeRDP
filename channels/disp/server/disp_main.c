@@ -453,7 +453,7 @@ static UINT disp_server_open(DispServerContext* context)
 		goto out_close;
 	}
 
-	CopyMemory(&priv->channelEvent, buffer, sizeof(HANDLE));
+	priv->channelEvent = *(HANDLE*)buffer;
 	WTSFreeMemory(buffer);
 
 	if (priv->thread == NULL)

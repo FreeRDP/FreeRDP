@@ -520,7 +520,7 @@ static HANDLE device_server_get_channel_handle(device_server* device)
 	                           &BytesReturned) == TRUE)
 	{
 		if (BytesReturned == sizeof(HANDLE))
-			CopyMemory(&ChannelEvent, buffer, sizeof(HANDLE));
+			ChannelEvent = *(HANDLE*)buffer;
 
 		WTSFreeMemory(buffer);
 	}

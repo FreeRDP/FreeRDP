@@ -367,7 +367,7 @@ static HANDLE enumerator_server_get_channel_handle(enumerator_server* enumerator
 	                           &BytesReturned) == TRUE)
 	{
 		if (BytesReturned == sizeof(HANDLE))
-			CopyMemory(&ChannelEvent, buffer, sizeof(HANDLE));
+			ChannelEvent = *(HANDLE*)buffer;
 
 		WTSFreeMemory(buffer);
 	}

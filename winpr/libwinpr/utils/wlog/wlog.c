@@ -220,7 +220,7 @@ static BOOL log_recursion(LPCSTR file, LPCSTR fkt, size_t line)
 #endif
 	status = TRUE;
 out:
-	free(msg);
+	free((void*)msg);
 	winpr_backtrace_free(bt);
 	return status;
 }
@@ -678,7 +678,7 @@ BOOL WLog_ParseFilter(wLog* root, wLogFilter* filter, LPCSTR name)
 	if (!q)
 	{
 		free(names);
-		free(filter->Names);
+		free((void*)filter->Names);
 		filter->Names = NULL;
 		filter->NameCount = 0;
 		return FALSE;
@@ -691,7 +691,7 @@ BOOL WLog_ParseFilter(wLog* root, wLogFilter* filter, LPCSTR name)
 	if (iLevel < 0)
 	{
 		free(names);
-		free(filter->Names);
+		free((void*)filter->Names);
 		filter->Names = NULL;
 		filter->NameCount = 0;
 		return FALSE;
@@ -904,7 +904,7 @@ wLog* WLog_New(LPCSTR name, wLog* rootLogger)
 
 	return log;
 out_fail:
-	free(log->Children);
+	free((void*)log->Children);
 	free(log->Name);
 	free(log);
 	return NULL;
@@ -922,8 +922,8 @@ void WLog_Free(wLog* log)
 
 		free(log->Name);
 		free(log->Names[0]);
-		free(log->Names);
-		free(log->Children);
+		free((void*)log->Names);
+		free((void*)log->Children);
 		DeleteCriticalSection(&log->lock);
 		free(log);
 	}
@@ -950,20 +950,16 @@ static BOOL WLog_AddChild(wLog* parent, wLog* child)
 
 		if (!parent->ChildrenSize)
 		{
-			if (parent->Children)
-				free(parent->Children);
-
+			free((void*)parent->Children);
 			parent->Children = NULL;
 		}
 		else
 		{
-			tmp = (wLog**)realloc(parent->Children, sizeof(wLog*) * parent->ChildrenSize);
+			tmp = (wLog**)realloc((void*)parent->Children, sizeof(wLog*) * parent->ChildrenSize);
 
 			if (!tmp)
 			{
-				if (parent->Children)
-					free(parent->Children);
-
+				free((void*)parent->Children);
 				parent->Children = NULL;
 				goto exit;
 			}

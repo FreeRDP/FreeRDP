@@ -386,7 +386,7 @@ void pointer_cache_free(rdpPointerCache* pointer_cache)
 			}
 		}
 
-		free(pointer_cache->entries);
+		free((void*)pointer_cache->entries);
 		free(pointer_cache);
 	}
 }

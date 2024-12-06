@@ -277,7 +277,7 @@ static DWORD WINAPI TestSynchCritical_Main(LPVOID arg)
 		DeleteCriticalSection(&critical);
 	}
 
-	free(hThreads);
+	free((void*)hThreads);
 
 	/**
 	 * TryEnterCriticalSection in thread must fail if we hold the lock in the main thread

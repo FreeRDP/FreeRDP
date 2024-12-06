@@ -32,9 +32,15 @@ extern "C"
 
 	WINPR_API void winpr_log_backtrace(const char* tag, DWORD level, DWORD size);
 	WINPR_API void winpr_log_backtrace_ex(wLog* log, DWORD level, DWORD size);
-	WINPR_API void* winpr_backtrace(DWORD size);
+
 	WINPR_API void winpr_backtrace_free(void* buffer);
+
+	WINPR_ATTR_MALLOC(winpr_backtrace_free, 1)
+	WINPR_API void* winpr_backtrace(DWORD size);
+
+	WINPR_ATTR_MALLOC(free, 1)
 	WINPR_API char** winpr_backtrace_symbols(void* buffer, size_t* used);
+
 	WINPR_API void winpr_backtrace_symbols_fd(void* buffer, int fd);
 	WINPR_API char* winpr_strerror(INT32 dw, char* dmsg, size_t size);
 

@@ -912,7 +912,7 @@ static int freerdp_tcp_connect_multi(rdpContext* context, char** hostnames, cons
 	if (!peers || !events || (count < 1))
 	{
 		free(peers);
-		free(events);
+		free((void*)events);
 		return -1;
 	}
 
@@ -985,7 +985,7 @@ static int freerdp_tcp_connect_multi(rdpContext* context, char** hostnames, cons
 		peer_free(&peers[index]);
 
 	free(peers);
-	free(events);
+	free((void*)events);
 	return (int)sockfd;
 }
 

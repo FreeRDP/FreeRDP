@@ -254,7 +254,7 @@ static void string_list_allocate(string_list* list, int allocate_count)
 {
 	if (!list->strings && list->allocated == 0)
 	{
-		list->strings = calloc((size_t)allocate_count, sizeof(char*));
+		list->strings = (char**)calloc((size_t)allocate_count, sizeof(char*));
 		list->allocated = list->strings ? allocate_count : -1;
 		list->count = 0;
 	}
@@ -265,7 +265,7 @@ static void string_list_free(string_list* list)
 	/* Note: we don't free the contents of the strings array: this */
 	/* is handled by the caller,  either by returning this */
 	/* content,  or freeing it itself. */
-	free(list->strings);
+	free((void*)list->strings);
 }
 
 static int extract_string(GENERAL_NAME* name, void* data, int index, int count)
@@ -358,7 +358,7 @@ static void object_list_allocate(object_list* list, int allocate_count)
 {
 	if (!list->strings && list->allocated == 0)
 	{
-		list->strings = calloc(allocate_count, sizeof(list->strings[0]));
+		list->strings = (char**)calloc(allocate_count, sizeof(list->strings[0]));
 		list->allocated = list->strings ? allocate_count : -1;
 		list->count = 0;
 	}
@@ -384,7 +384,8 @@ static char* object_string(ASN1_TYPE* object)
 
 static void object_list_free(object_list* list)
 {
-	free(list->strings);
+	WINPR_ASSERT(list);
+	free((void*)list->strings);
 }
 
 static int extract_othername_object_as_string(GENERAL_NAME* name, void* data, int index, int count)
@@ -504,19 +505,19 @@ void x509_utils_dns_names_free(size_t count, size_t* lengths, char** dns_names)
 			}
 		}
 
-		free(dns_names);
+		free((void*)dns_names);
 	}
 }
 
 char** x509_utils_get_dns_names(const X509* x509, size_t* count, size_t** lengths)
 {
 	char** result = 0;
-	string_list list;
+	string_list list = { 0 };
 	string_list_initialize(&list);
 	map_subject_alt_name(x509, GEN_DNS, extract_string, &list);
-	(*count) = list.count;
+	(*count) = (size_t)list.count;
 
-	if (list.count == 0)
+	if (list.count <= 0)
 	{
 		string_list_free(&list);
 		return NULL;
@@ -524,13 +525,13 @@ char** x509_utils_get_dns_names(const X509* x509, size_t* count, size_t** length
 
 	/* lengths are not useful,  since we converted the
 	   strings to utf-8,  there cannot be nul-bytes in them. */
-	result = calloc(list.count, sizeof(*result));
-	(*lengths) = calloc(list.count, sizeof(**lengths));
+	result = (char**)calloc((size_t)list.count, sizeof(*result));
+	(*lengths) = calloc((size_t)list.count, sizeof(**lengths));
 
 	if (!result || !(*lengths))
 	{
 		string_list_free(&list);
-		free(result);
+		free((void*)result);
 		free(*lengths);
 		(*lengths) = 0;
 		(*count) = 0;

@@ -1646,6 +1646,8 @@ int main(int argc, char* argv[])
 	RDP_CLIENT_ENTRY_POINTS clientEntryPoints = {};
 
 	freerdp_client_warn_experimental(argc, argv);
+	WLog_WARN(SDL_TAG,
+	          "SDL2 client does not support clipboard! Only SDL3 client has (partial) support");
 
 	RdpClientEntry(&clientEntryPoints);
 	std::unique_ptr<sdl_rdp_context, void (*)(sdl_rdp_context*)> sdl_rdp(

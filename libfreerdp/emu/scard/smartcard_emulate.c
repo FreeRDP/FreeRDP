@@ -1253,7 +1253,7 @@ HANDLE WINAPI Emulate_SCardAccessStartedEvent(SmartcardEmulationContext* smartca
 	WLog_Print(smartcard->log, smartcard->log_default_level, "SCardAccessStartedEvent {");
 
 	/* Not required, return random */
-	winpr_RAND(&hEvent, sizeof(hEvent));
+	winpr_RAND((void*)&hEvent, sizeof(hEvent));
 
 	WLog_Print(smartcard->log, smartcard->log_default_level, "SCardAccessStartedEvent } hEvent: %p",
 	           hEvent);

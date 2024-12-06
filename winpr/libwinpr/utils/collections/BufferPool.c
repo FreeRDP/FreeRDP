@@ -364,7 +364,7 @@ BOOL BufferPool_Return(wBufferPool* pool, void* buffer)
 		if ((pool->size + 1) >= pool->capacity)
 		{
 			SSIZE_T newCapacity = pool->capacity * 2;
-			void** newArray = (void**)realloc(pool->array, sizeof(void*) * newCapacity);
+			void** newArray = (void**)realloc((void*)pool->array, sizeof(void*) * newCapacity);
 			if (!newArray)
 				goto out_error;
 
@@ -545,7 +545,7 @@ void BufferPool_Free(wBufferPool* pool)
 		{
 			/* fixed size buffers */
 
-			free(pool->array);
+			free((void*)pool->array);
 		}
 		else
 		{

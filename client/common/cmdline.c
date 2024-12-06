@@ -585,7 +585,7 @@ static COMMAND_LINE_ARGUMENT_A* create_merged_args(const COMMAND_LINE_ARGUMENT_A
 	}
 
 	COMMAND_LINE_ARGUMENT_A* largs =
-	    calloc(count + ARRAYSIZE(global_cmd_args), sizeof(COMMAND_LINE_ARGUMENT_A));
+	    calloc((size_t)count + ARRAYSIZE(global_cmd_args), sizeof(COMMAND_LINE_ARGUMENT_A));
 	*pcount = 0;
 	if (!largs)
 		return NULL;
@@ -3416,7 +3416,7 @@ static int parse_mouse_options(rdpSettings* settings, const COMMAND_LINE_ARGUMEN
 
 	size_t count = 0;
 	char** ptr = CommandLineParseCommaSeparatedValuesEx("mouse", arg->Value, &count);
-	UINT rc = 0;
+	int rc = 0;
 	if (ptr)
 	{
 		for (size_t x = 1; x < count; x++)
@@ -5519,7 +5519,7 @@ static void argv_free(int* pargc, char** pargv[])
 		return;
 	for (int x = 0; x < argc; x++)
 		free(argv[x]);
-	free(argv);
+	free((void*)argv);
 }
 
 static BOOL argv_append(int* pargc, char** pargv[], char* what)
@@ -5534,7 +5534,7 @@ static BOOL argv_append(int* pargc, char** pargv[], char* what)
 		return FALSE;
 
 	int nargc = *pargc + 1;
-	char** tmp = realloc(*pargv, nargc * sizeof(char*));
+	char** tmp = (char**)realloc((void*)*pargv, (size_t)nargc * sizeof(char*));
 	if (!tmp)
 		return FALSE;
 
@@ -5721,8 +5721,9 @@ int freerdp_client_settings_parse_command_line_arguments_ex(
 		argv = aargv;
 	}
 
+	WINPR_ASSERT(count <= SSIZE_MAX);
 	size_t lcount = 0;
-	COMMAND_LINE_ARGUMENT_A* largs = create_merged_args(args, count, &lcount);
+	COMMAND_LINE_ARGUMENT_A* largs = create_merged_args(args, (SSIZE_T)count, &lcount);
 	if (!largs)
 		goto fail;
 
@@ -5828,15 +5829,15 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 	)
 	{
 		if (!freerdp_settings_set_bool(settings, FreeRDP_DeviceRedirection, TRUE))
-			return COMMAND_LINE_ERROR; /* rdpsnd requires rdpdr to be registered */
+			return FALSE; /* rdpsnd requires rdpdr to be registered */
 		if (!freerdp_settings_set_bool(settings, FreeRDP_AudioPlayback, TRUE))
-			return COMMAND_LINE_ERROR; /* Both rdpsnd and tsmf require this flag to be set */
+			return FALSE; /* Both rdpsnd and tsmf require this flag to be set */
 	}
 
 	if (freerdp_dynamic_channel_collection_find(settings, AUDIN_CHANNEL_NAME))
 	{
 		if (!freerdp_settings_set_bool(settings, FreeRDP_AudioCapture, TRUE))
-			return COMMAND_LINE_ERROR;
+			return FALSE;
 	}
 
 	if (freerdp_settings_get_bool(settings, FreeRDP_NetworkAutoDetect) ||
@@ -5844,7 +5845,7 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 	    freerdp_settings_get_bool(settings, FreeRDP_SupportMultitransport))
 	{
 		if (!freerdp_settings_set_bool(settings, FreeRDP_DeviceRedirection, TRUE))
-			return COMMAND_LINE_ERROR; /* these RDP8 features require rdpdr to be registered */
+			return FALSE; /* these RDP8 features require rdpdr to be registered */
 	}
 
 	const char* DrivesToRedirect = freerdp_settings_get_string(settings, FreeRDP_DrivesToRedirect);
@@ -5914,9 +5915,6 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 
 		if (!freerdp_settings_set_bool(settings, FreeRDP_DeviceRedirection, TRUE))
 			return FALSE;
-
-		if (!freerdp_settings_set_bool(settings, FreeRDP_DeviceRedirection, TRUE))
-			return COMMAND_LINE_ERROR;
 	}
 	else if (freerdp_settings_get_bool(settings, FreeRDP_RedirectDrives))
 	{
@@ -5936,7 +5934,7 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 	    freerdp_settings_get_bool(settings, FreeRDP_RedirectPrinters))
 	{
 		if (!freerdp_settings_set_bool(settings, FreeRDP_DeviceRedirection, TRUE))
-			return COMMAND_LINE_ERROR; /* All of these features require rdpdr */
+			return FALSE; /* All of these features require rdpdr */
 	}
 
 	if (freerdp_settings_get_bool(settings, FreeRDP_RedirectHomeDrive))

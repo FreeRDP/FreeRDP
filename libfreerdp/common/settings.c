@@ -51,7 +51,7 @@ BOOL freerdp_addin_argv_add_argument_ex(ADDIN_ARGV* args, const char* argument, 
 	if (len == 0)
 		len = strlen(argument);
 
-	new_argv = (char**)realloc(args->argv, sizeof(char*) * (args->argc + 1));
+	new_argv = (char**)realloc((void*)args->argv, sizeof(char*) * (args->argc + 1));
 
 	if (!new_argv)
 		return FALSE;
@@ -81,8 +81,8 @@ BOOL freerdp_addin_argv_del_argument(ADDIN_ARGV* args, const char* argument)
 		if (strcmp(argument, arg) == 0)
 		{
 			free(arg);
-			memmove_s(&args->argv[x], (args->argc - x) * sizeof(char*), &args->argv[x + 1],
-			          (args->argc - x - 1) * sizeof(char*));
+			memmove_s((void*)&args->argv[x], (args->argc - x) * sizeof(char*),
+			          (void*)&args->argv[x + 1], (args->argc - x - 1) * sizeof(char*));
 			args->argv[args->argc - 1] = NULL;
 			args->argc--;
 			return TRUE;
@@ -221,13 +221,13 @@ BOOL freerdp_device_collection_add(rdpSettings* settings, RDPDR_DEVICE* device)
 			new_size = count * 2;
 
 		new_array =
-		    (RDPDR_DEVICE**)realloc(settings->DeviceArray, new_size * sizeof(RDPDR_DEVICE*));
+		    (RDPDR_DEVICE**)realloc((void*)settings->DeviceArray, new_size * sizeof(RDPDR_DEVICE*));
 
 		if (!new_array)
 			return FALSE;
 
 		settings->DeviceArray = new_array;
-		memset(&settings->DeviceArray[old], 0, (new_size - old) * sizeof(RDPDR_DEVICE*));
+		memset((void*)&settings->DeviceArray[old], 0, (new_size - old) * sizeof(RDPDR_DEVICE*));
 
 		if (!freerdp_settings_set_uint32(settings, FreeRDP_DeviceArraySize, new_size))
 			return FALSE;
@@ -567,7 +567,7 @@ void freerdp_device_collection_free(rdpSettings* settings)
 			(void)freerdp_settings_set_pointer_array(settings, FreeRDP_DeviceArray, index, NULL);
 	}
 
-	free(settings->DeviceArray);
+	free((void*)settings->DeviceArray);
 
 	(void)freerdp_settings_set_pointer(settings, FreeRDP_DeviceArray, NULL);
 	(void)freerdp_settings_set_uint32(settings, FreeRDP_DeviceArraySize, 0);
@@ -588,10 +588,12 @@ BOOL freerdp_static_channel_collection_del(rdpSettings* settings, const char* na
 			if (strcmp(name, cur->argv[0]) == 0)
 			{
 				const size_t rem = settings->StaticChannelArraySize - count + 1;
-				memmove_s(&settings->StaticChannelArray[x], (count - x) * sizeof(ADDIN_ARGV*),
-				          &settings->StaticChannelArray[x + 1],
+				memmove_s((void*)&settings->StaticChannelArray[x],
+				          (count - x) * sizeof(ADDIN_ARGV*),
+				          (void*)&settings->StaticChannelArray[x + 1],
 				          (count - x - 1) * sizeof(ADDIN_ARGV*));
-				memset(&settings->StaticChannelArray[count - 1], 0, sizeof(ADDIN_ARGV*) * rem);
+				memset((void*)&settings->StaticChannelArray[count - 1], 0,
+				       sizeof(ADDIN_ARGV*) * rem);
 
 				freerdp_addin_argv_free(cur);
 				return freerdp_settings_set_uint32(settings, FreeRDP_StaticChannelCount, count - 1);
@@ -600,7 +602,7 @@ BOOL freerdp_static_channel_collection_del(rdpSettings* settings, const char* na
 	}
 	{
 		const size_t rem = settings->StaticChannelArraySize - count;
-		memset(&settings->StaticChannelArray[count], 0, sizeof(ADDIN_ARGV*) * rem);
+		memset((void*)&settings->StaticChannelArray[count], 0, sizeof(ADDIN_ARGV*) * rem);
 	}
 	return FALSE;
 }
@@ -622,8 +624,8 @@ BOOL freerdp_static_channel_collection_add(rdpSettings* settings, ADDIN_ARGV* ch
 		if (new_size == 0)
 			new_size = count * 2ul;
 
-		new_array =
-		    (ADDIN_ARGV**)realloc(settings->StaticChannelArray, new_size * sizeof(ADDIN_ARGV*));
+		new_array = (ADDIN_ARGV**)realloc((void*)settings->StaticChannelArray,
+		                                  new_size * sizeof(ADDIN_ARGV*));
 
 		if (!new_array)
 			return FALSE;
@@ -631,7 +633,7 @@ BOOL freerdp_static_channel_collection_add(rdpSettings* settings, ADDIN_ARGV* ch
 		settings->StaticChannelArray = new_array;
 		{
 			const size_t rem = new_size - oldSize;
-			memset(&settings->StaticChannelArray[oldSize], 0, sizeof(ADDIN_ARGV*) * rem);
+			memset((void*)&settings->StaticChannelArray[oldSize], 0, sizeof(ADDIN_ARGV*) * rem);
 		}
 		if (!freerdp_settings_set_uint32(settings, FreeRDP_StaticChannelArraySize, new_size))
 			return FALSE;
@@ -676,7 +678,7 @@ void freerdp_static_channel_collection_free(rdpSettings* settings)
 			freerdp_addin_argv_free(settings->StaticChannelArray[i]);
 	}
 
-	free(settings->StaticChannelArray);
+	free((void*)settings->StaticChannelArray);
 	(void)freerdp_settings_set_uint32(settings, FreeRDP_StaticChannelArraySize, 0);
 	settings->StaticChannelArray = NULL;
 	(void)freerdp_settings_set_uint32(settings, FreeRDP_StaticChannelCount, 0);
@@ -696,10 +698,12 @@ BOOL freerdp_dynamic_channel_collection_del(rdpSettings* settings, const char* n
 			if (strcmp(name, cur->argv[0]) == 0)
 			{
 				const size_t rem = settings->DynamicChannelArraySize - count + 1;
-				memmove_s(&settings->DynamicChannelArray[x], (count - x) * sizeof(ADDIN_ARGV*),
-				          &settings->DynamicChannelArray[x + 1],
+				memmove_s((void*)&settings->DynamicChannelArray[x],
+				          (count - x) * sizeof(ADDIN_ARGV*),
+				          (void*)&settings->DynamicChannelArray[x + 1],
 				          (count - x - 1) * sizeof(ADDIN_ARGV*));
-				memset(&settings->DynamicChannelArray[count - 1], 0, sizeof(ADDIN_ARGV*) * rem);
+				memset((void*)&settings->DynamicChannelArray[count - 1], 0,
+				       sizeof(ADDIN_ARGV*) * rem);
 
 				freerdp_addin_argv_free(cur);
 				return freerdp_settings_set_uint32(settings, FreeRDP_DynamicChannelCount,
@@ -728,7 +732,8 @@ BOOL freerdp_dynamic_channel_collection_add(rdpSettings* settings, ADDIN_ARGV* c
 		if (size == 0)
 			size = count * 2;
 
-		new_array = realloc(settings->DynamicChannelArray, sizeof(ADDIN_ARGV*) * size);
+		new_array =
+		    (ADDIN_ARGV**)realloc((void*)settings->DynamicChannelArray, sizeof(ADDIN_ARGV*) * size);
 
 		if (!new_array)
 			return FALSE;
@@ -736,7 +741,7 @@ BOOL freerdp_dynamic_channel_collection_add(rdpSettings* settings, ADDIN_ARGV* c
 		settings->DynamicChannelArray = new_array;
 		{
 			const size_t rem = size - oldSize;
-			memset(&settings->DynamicChannelArray[oldSize], 0, sizeof(ADDIN_ARGV*) * rem);
+			memset((void*)&settings->DynamicChannelArray[oldSize], 0, sizeof(ADDIN_ARGV*) * rem);
 		}
 		if (!freerdp_settings_set_uint32(settings, FreeRDP_DynamicChannelArraySize, size))
 			return FALSE;
@@ -773,7 +778,7 @@ void freerdp_addin_argv_free(ADDIN_ARGV* args)
 	{
 		for (int index = 0; index < args->argc; index++)
 			free(args->argv[index]);
-		free(args->argv);
+		free((void*)args->argv);
 	}
 
 	free(args);
@@ -791,7 +796,7 @@ ADDIN_ARGV* freerdp_addin_argv_new(size_t argc, const char* const argv[])
 		return args;
 
 	args->argc = (int)argc;
-	args->argv = calloc(argc, sizeof(char*));
+	args->argv = (char**)calloc(argc, sizeof(char*));
 	if (!args->argv)
 		goto fail;
 
@@ -838,7 +843,7 @@ void freerdp_dynamic_channel_collection_free(rdpSettings* settings)
 			freerdp_addin_argv_free(settings->DynamicChannelArray[i]);
 	}
 
-	free(settings->DynamicChannelArray);
+	free((void*)settings->DynamicChannelArray);
 	(void)freerdp_settings_set_uint32(settings, FreeRDP_DynamicChannelArraySize, 0);
 	settings->DynamicChannelArray = NULL;
 	(void)freerdp_settings_set_uint32(settings, FreeRDP_DynamicChannelCount, 0);
@@ -861,7 +866,7 @@ void freerdp_capability_buffer_free(rdpSettings* settings)
 	free(settings->ReceivedCapabilityDataSizes);
 	settings->ReceivedCapabilityDataSizes = NULL;
 
-	free(settings->ReceivedCapabilityData);
+	free((void*)settings->ReceivedCapabilityData);
 	settings->ReceivedCapabilityData = NULL;
 	free(settings->ReceivedCapabilities);
 	settings->ReceivedCapabilities = NULL;
@@ -912,7 +917,7 @@ void freerdp_target_net_addresses_free(rdpSettings* settings)
 			free(settings->TargetNetAddresses[index]);
 	}
 
-	free(settings->TargetNetAddresses);
+	free((void*)settings->TargetNetAddresses);
 	free(settings->TargetNetPorts);
 	settings->TargetNetAddressCount = 0;
 	settings->TargetNetAddresses = NULL;
@@ -928,7 +933,7 @@ void freerdp_server_license_issuers_free(rdpSettings* settings)
 		for (UINT32 x = 0; x < settings->ServerLicenseProductIssuersCount; x++)
 			free(settings->ServerLicenseProductIssuers[x]);
 	}
-	free(settings->ServerLicenseProductIssuers);
+	free((void*)settings->ServerLicenseProductIssuers);
 	settings->ServerLicenseProductIssuers = NULL;
 	settings->ServerLicenseProductIssuersCount = 0;
 }

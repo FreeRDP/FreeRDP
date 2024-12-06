@@ -277,7 +277,7 @@ static DWORD WINAPI audin_server_thread_func(LPVOID arg)
 	                           &BytesReturned) == TRUE)
 	{
 		if (BytesReturned == sizeof(HANDLE))
-			CopyMemory(&ChannelEvent, buffer, sizeof(HANDLE));
+			ChannelEvent = *(HANDLE*)buffer;
 
 		WTSFreeMemory(buffer);
 	}

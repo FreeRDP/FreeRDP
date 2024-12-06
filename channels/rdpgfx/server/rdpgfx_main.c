@@ -1589,7 +1589,7 @@ static BOOL rdpgfx_server_open(RdpgfxServerContext* context)
 			goto fail;
 		}
 
-		CopyMemory(&priv->channelEvent, buffer, sizeof(HANDLE));
+		priv->channelEvent = *(HANDLE*)buffer;
 		WTSFreeMemory(buffer);
 
 		if (!(priv->zgfx = zgfx_context_new(TRUE)))

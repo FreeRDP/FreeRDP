@@ -119,7 +119,7 @@ static int shadow_encoder_uninit_grid(rdpShadowEncoder* encoder)
 
 	if (encoder->grid)
 	{
-		free(encoder->grid);
+		free((void*)encoder->grid);
 		encoder->grid = NULL;
 	}
 

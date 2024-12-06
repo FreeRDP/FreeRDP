@@ -147,7 +147,7 @@ static BOOL WLog_JournaldAppender_Set(wLogAppender* appender, const char* settin
 	if (!value || (strnlen(value, 2) == 0))
 		return FALSE;
 
-	if (strcmp("identifier", setting))
+	if (strcmp("identifier", setting) != 0)
 		return FALSE;
 
 	/* If the stream is already open the identifier can't be changed */

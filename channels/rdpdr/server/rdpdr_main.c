@@ -2020,7 +2020,7 @@ static DWORD WINAPI rdpdr_server_thread(LPVOID arg)
 	                           &BytesReturned) == TRUE)
 	{
 		if (BytesReturned == sizeof(HANDLE))
-			CopyMemory(&ChannelEvent, buffer, sizeof(HANDLE));
+			ChannelEvent = *(HANDLE*)buffer;
 
 		WTSFreeMemory(buffer);
 	}

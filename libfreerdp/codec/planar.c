@@ -1711,9 +1711,9 @@ BOOL freerdp_bitmap_planar_context_reset(BITMAP_PLANAR_CONTEXT* WINPR_RESTRICT c
 		return FALSE;
 	context->nTempStep = context->maxWidth * 4;
 
-	memset(context->planes, 0, sizeof(context->planes));
-	memset(context->rlePlanes, 0, sizeof(context->rlePlanes));
-	memset(context->deltaPlanes, 0, sizeof(context->deltaPlanes));
+	memset((void*)context->planes, 0, sizeof(context->planes));
+	memset((void*)context->rlePlanes, 0, sizeof(context->rlePlanes));
+	memset((void*)context->deltaPlanes, 0, sizeof(context->deltaPlanes));
 
 	if (context->maxPlaneSize > 0)
 	{

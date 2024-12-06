@@ -760,7 +760,7 @@ int xf_input_event(xfContext* xfc, const XEvent* xevent, XIDeviceEvent* event, i
 	 * filter out anything else, like floatbar window events
 	 */
 	const Window w = xevent->xany.window;
-	if (w != xfc->window)
+	if (w != xfc->window->handle)
 	{
 		if (!xfc->remote_app)
 			return 0;

@@ -39,7 +39,7 @@ static void msusb_mspipes_free(MSUSB_PIPE_DESCRIPTOR** MsPipes, UINT32 NumberOfP
 		for (UINT32 pnum = 0; pnum < NumberOfPipes && MsPipes[pnum]; pnum++)
 			free(MsPipes[pnum]);
 
-		free(MsPipes);
+		free((void*)MsPipes);
 	}
 }
 
@@ -96,7 +96,7 @@ out_error:
 	for (UINT32 pnum = 0; pnum < NumberOfPipes; pnum++)
 		free(MsPipes[pnum]);
 
-	free(MsPipes);
+	free((void*)MsPipes);
 	return NULL;
 }
 
@@ -125,7 +125,7 @@ static void msusb_msinterface_free_list(MSUSB_INTERFACE_DESCRIPTOR** MsInterface
 			msusb_msinterface_free(MsInterfaces[inum]);
 		}
 
-		free(MsInterfaces);
+		free((void*)MsInterfaces);
 	}
 }
 
@@ -256,7 +256,7 @@ fail:
 	for (UINT32 inum = 0; inum < NumInterfaces; inum++)
 		msusb_msinterface_free(MsInterfaces[inum]);
 
-	free(MsInterfaces);
+	free((void*)MsInterfaces);
 	return NULL;
 }
 

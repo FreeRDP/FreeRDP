@@ -236,7 +236,7 @@ void offscreen_cache_free(rdpOffscreenCache* offscreenCache)
 			}
 		}
 
-		free(offscreenCache->entries);
+		free((void*)offscreenCache->entries);
 		free(offscreenCache);
 	}
 }

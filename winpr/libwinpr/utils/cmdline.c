@@ -783,7 +783,7 @@ fail:
 	{
 		if (count)
 			*count = 0;
-		free(p);
+		free((void*)p);
 		return NULL;
 	}
 	return p;

@@ -1581,7 +1581,7 @@ void http_response_free(HttpResponse* response)
 	if (!response)
 		return;
 
-	free(response->lines);
+	free((void*)response->lines);
 	ListDictionary_Free(response->Authenticates);
 	ListDictionary_Free(response->SetCookie);
 	Stream_Free(response->data, TRUE);

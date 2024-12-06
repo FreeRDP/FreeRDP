@@ -89,7 +89,7 @@ static BOOL StreamPool_EnsureCapacity(wStreamPool* pool, size_t count, BOOL used
 		if (*cap < *size + count)
 			*cap += count;
 
-		new_arr = (wStream**)realloc(*array, sizeof(wStream*) * new_cap);
+		new_arr = (wStream**)realloc((void*)*array, sizeof(wStream*) * new_cap);
 		if (!new_arr)
 			return FALSE;
 		*cap = new_cap;
@@ -110,7 +110,7 @@ static void StreamPool_ShiftUsed(wStreamPool* pool, size_t index, INT64 count)
 		const size_t pcount = (size_t)count;
 		StreamPool_EnsureCapacity(pool, pcount, TRUE);
 
-		MoveMemory(&pool->uArray[index + pcount], &pool->uArray[index],
+		MoveMemory((void*)&pool->uArray[index + pcount], (void*)&pool->uArray[index],
 		           (pool->uSize - index) * sizeof(wStream*));
 		pool->uSize += pcount;
 	}
@@ -120,7 +120,7 @@ static void StreamPool_ShiftUsed(wStreamPool* pool, size_t index, INT64 count)
 		const size_t off = index + pcount;
 		if (pool->uSize > off)
 		{
-			MoveMemory(&pool->uArray[index], &pool->uArray[index + pcount],
+			MoveMemory((void*)&pool->uArray[index], (void*)&pool->uArray[index + pcount],
 			           (pool->uSize - index - pcount) * sizeof(wStream*));
 		}
 
@@ -163,7 +163,7 @@ static void StreamPool_ShiftAvailable(wStreamPool* pool, size_t index, INT64 cou
 		const size_t pcount = (size_t)count;
 
 		StreamPool_EnsureCapacity(pool, pcount, FALSE);
-		MoveMemory(&pool->aArray[index + pcount], &pool->aArray[index],
+		MoveMemory((void*)&pool->aArray[index + pcount], (void*)&pool->aArray[index],
 		           (pool->aSize - index) * sizeof(wStream*));
 		pool->aSize += pcount;
 	}
@@ -173,7 +173,7 @@ static void StreamPool_ShiftAvailable(wStreamPool* pool, size_t index, INT64 cou
 		const size_t off = index + pcount;
 		if (pool->aSize > off)
 		{
-			MoveMemory(&pool->aArray[index], &pool->aArray[index + pcount],
+			MoveMemory((void*)&pool->aArray[index], (void*)&pool->aArray[index + pcount],
 			           (pool->aSize - index - pcount) * sizeof(wStream*));
 		}
 
@@ -388,8 +388,8 @@ void StreamPool_Free(wStreamPool* pool)
 
 		DeleteCriticalSection(&pool->lock);
 
-		free(pool->aArray);
-		free(pool->uArray);
+		free((void*)pool->aArray);
+		free((void*)pool->uArray);
 
 		free(pool);
 	}

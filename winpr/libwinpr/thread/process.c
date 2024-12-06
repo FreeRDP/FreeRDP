@@ -345,7 +345,7 @@ finish:
 		pthread_sigmask(SIG_SETMASK, &oldSigMask, NULL);
 
 	free(filename);
-	free(pArgs);
+	free((void*)pArgs);
 
 	if (lpszEnvironmentBlock)
 		FreeEnvironmentStrings(lpszEnvironmentBlock);
@@ -360,7 +360,7 @@ finish:
 			i++;
 		}
 
-		free(envp);
+		free((void*)envp);
 	}
 
 	return ret;

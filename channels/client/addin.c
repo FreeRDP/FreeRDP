@@ -430,7 +430,7 @@ void freerdp_channels_addin_list_free(FREERDP_ADDIN** ppAddins)
 	for (size_t index = 0; ppAddins[index] != NULL; index++)
 		free(ppAddins[index]);
 
-	free(ppAddins);
+	free((void*)ppAddins);
 }
 
 extern const STATIC_ENTRY CLIENT_VirtualChannelEntryEx_TABLE[];

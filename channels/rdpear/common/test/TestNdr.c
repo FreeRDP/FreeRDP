@@ -21,7 +21,8 @@ int TestNdr(int argc, char* argv[])
 
 	BYTE* target = NULL;
 	NdrArrayHints hints = { 2 };
-	NdrDeferredEntry e = { 0x020028, "arrayContent", &hints, &target, ndr_uint8Array_descr() };
+	NdrDeferredEntry e = { 0x020028, "arrayContent", &hints, (void*)&target,
+		                   ndr_uint8Array_descr() };
 
 	if (!ndr_push_deferreds(context, &e, 1))
 		goto out;

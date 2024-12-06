@@ -32,7 +32,7 @@ void string_list_free(char** string_list)
 		free(string_list[i]);
 	}
 
-	free(string_list);
+	free((void*)string_list);
 }
 
 int string_list_length(const char** string_list)
@@ -47,7 +47,7 @@ int string_list_length(const char** string_list)
 char** string_list_copy(const char** string_list)
 {
 	int length = string_list_length(string_list);
-	char** copy = calloc(length + 1, sizeof(char*));
+	char** copy = (char**)calloc(length + 1, sizeof(char*));
 
 	if (!copy)
 	{

@@ -130,7 +130,7 @@ UINT rdpei_server_init(RdpeiServerContext* context)
 			WTSFreeMemory(buffer);
 		goto out_close;
 	}
-	CopyMemory(&priv->eventHandle, buffer, sizeof(HANDLE));
+	priv->eventHandle = *(HANDLE*)buffer;
 	WTSFreeMemory(buffer);
 
 	return CHANNEL_RC_OK;

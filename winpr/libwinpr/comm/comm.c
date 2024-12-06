@@ -171,7 +171,7 @@ static void CommInit(void)
 
 	if (!InitializeCriticalSectionEx(&sCommDevicesLock, 0, 0))
 	{
-		free(sCommDevices);
+		free((void*)sCommDevices);
 		sCommDevices = NULL;
 		return;
 	}

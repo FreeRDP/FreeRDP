@@ -29,6 +29,6 @@ int TestBacktrace(int argc, char* argv[])
 
 	winpr_backtrace_symbols_fd(stack, fileno(stdout));
 	winpr_backtrace_free(stack);
-	free(msg);
+	free((void*)msg);
 	return rc;
 }

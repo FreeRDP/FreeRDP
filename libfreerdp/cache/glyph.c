@@ -740,7 +740,7 @@ void glyph_cache_free(rdpGlyphCache* glyphCache)
 				}
 			}
 
-			free(entries);
+			free((void*)entries);
 			cache[i].entries = NULL;
 		}
 

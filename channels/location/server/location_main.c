@@ -375,7 +375,7 @@ static HANDLE location_server_get_channel_handle(location_server* location)
 	                           &BytesReturned) == TRUE)
 	{
 		if (BytesReturned == sizeof(HANDLE))
-			CopyMemory(&ChannelEvent, buffer, sizeof(HANDLE));
+			ChannelEvent = *(HANDLE*)buffer;
 
 		WTSFreeMemory(buffer);
 	}
