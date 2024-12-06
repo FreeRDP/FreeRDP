@@ -25,6 +25,8 @@
 #include <winpr/collections.h>
 
 #include "../stream.h"
+#include "../log.h"
+#define TAG WINPR_TAG("utils.streampool")
 
 struct s_StreamPoolEntry
 {
@@ -368,10 +370,15 @@ void StreamPool_Clear(wStreamPool* pool)
 		discard_entry(cur, TRUE);
 	}
 
-	for (size_t x = 0; x < pool->uSize; x++)
+	if (pool->uSize > 0)
 	{
-		struct s_StreamPoolEntry* cur = &pool->uArray[x];
-		discard_entry(cur, TRUE);
+		WLog_WARN(TAG, "Clearing StreamPool, but there are %" PRIuz " streams currently in use",
+		          pool->uSize);
+		for (size_t x = 0; x < pool->uSize; x++)
+		{
+			struct s_StreamPoolEntry* cur = &pool->uArray[x];
+			discard_entry(cur, TRUE);
+		}
 	}
 
 	StreamPool_Unlock(pool);
@@ -441,7 +448,7 @@ char* StreamPool_GetStatistics(wStreamPool* pool, char* buffer, size_t size)
 
 	size_t used = 0;
 	int offset = _snprintf(buffer, size - 1,
-	                       "aSize    =%" PRIuz ", uSize    =%" PRIuz "aCapacity=%" PRIuz
+	                       "aSize    =%" PRIuz ", uSize    =%" PRIuz ", aCapacity=%" PRIuz
 	                       ", uCapacity=%" PRIuz,
 	                       pool->aSize, pool->uSize, pool->aCapacity, pool->uCapacity);
 	if ((offset > 0) && (offset < size))
@@ -466,6 +473,25 @@ char* StreamPool_GetStatistics(wStreamPool* pool, char* buffer, size_t size)
 				used += (size_t)offset;
 		}
 	}
+
+	offset = _snprintf(&buffer[used], size - 1 - used, "\n-- statistics called from --\n");
+	if ((offset > 0) && (offset < size - used))
+		used += (size_t)offset;
+
+	struct s_StreamPoolEntry entry = { 0 };
+	void* stack = winpr_backtrace(20);
+	if (stack)
+		entry.msg = winpr_backtrace_symbols(stack, &entry.lines);
+	winpr_backtrace_free(stack);
+
+	for (size_t x = 0; x < entry.lines; x++)
+	{
+		const char* msg = entry.msg[x];
+		offset = _snprintf(&buffer[used], size - 1 - used, "[%" PRIuz "]: %s\n", x, msg);
+		if ((offset > 0) && (offset < size - used))
+			used += (size_t)offset;
+	}
+	free((void*)entry.msg);
 	StreamPool_Unlock(pool);
 #endif
 	buffer[used] = '\0';
