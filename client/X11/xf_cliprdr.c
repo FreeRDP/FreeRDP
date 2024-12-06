@@ -1070,7 +1070,7 @@ static BOOL append(xfClipboard* clipboard, const void* sdata, size_t length)
 	WINPR_ASSERT(clipboard);
 
 	const size_t size = length + clipboard->incr_data_length + 2;
-	void* data = realloc(clipboard->incr_data, size);
+	BYTE* data = realloc(clipboard->incr_data, size);
 	if (!data)
 		return FALSE;
 	clipboard->incr_data = data;
