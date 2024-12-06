@@ -491,6 +491,9 @@ BOOL rdp_client_disconnect(rdpRdp* rdp)
 			return FALSE;
 	}
 
+	if (!transport_disconnect(rdp->transport))
+		return FALSE;
+
 	if (!rdp_reset(rdp))
 		return FALSE;
 
