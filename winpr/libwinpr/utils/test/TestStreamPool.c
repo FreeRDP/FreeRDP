@@ -72,6 +72,10 @@ int TestStreamPool(int argc, char* argv[])
 
 	printf("%s\n", StreamPool_GetStatistics(pool, buffer, sizeof(buffer)));
 
+	Stream_Release(s[2]);
+	Stream_Release(s[3]);
+	Stream_Release(s[4]);
+
 	StreamPool_Free(pool);
 
 	return 0;
