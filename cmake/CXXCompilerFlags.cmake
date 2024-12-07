@@ -69,8 +69,12 @@ endif()
 
 # https://stackoverflow.com/questions/4913922/possible-problems-with-nominmax-on-visual-c
 if(WIN32)
-  add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-DNOMINMAX>)
+  add_compile_definitions($<$<COMPILE_LANGUAGE:CXX>:NOMINMAX>)
 endif()
 
 set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} CACHE STRING "default CXXFLAGS")
 message("Using CXXFLAGS ${CMAKE_CXX_FLAGS}")
+message("Using CXXFLAGS_RELEASE ${CMAKE_CXX_FLAGS_RELEASE}")
+message("Using CXXFLAGS_DEBUG ${CMAKE_CXX_FLAGS_DEBUG}")
+message("Using CXXFLAGS_MINSIZEREL ${CMAKE_CXX_FLAGS_MINSIZEREL}")
+message("Using CXXFLAGS_RELWITHDEBINFO ${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")

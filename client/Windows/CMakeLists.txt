@@ -45,12 +45,12 @@ option(WITH_WINDOWS_CERT_STORE
        "Build ${MODULE_NAME} with additional certificate validation against windows certificate store" ON
 )
 if(WITH_WINDOWS_CERT_STORE)
-  add_definitions("-DWITH_WINDOWS_CERT_STORE")
+  add_compile_definitions("WITH_WINDOWS_CERT_STORE")
 endif()
 
 option(WITH_WIN_CONSOLE "Build ${MODULE_NAME} with console support" OFF)
 if(WITH_WIN_CONSOLE)
-  add_definitions("-DWITH_WIN_CONSOLE")
+  add_compile_definitions("WITH_WIN_CONSOLE")
   set(WIN32_GUI_FLAG "TRUE")
 else()
   set(WIN32_GUI_FLAG "WIN32")
@@ -58,7 +58,7 @@ endif()
 
 option(WITH_PROGRESS_BAR "Build ${MODULE_NAME} with connect progress bar (Windows 7+ or 2008 R2+)" ON)
 if(WITH_PROGRESS_BAR)
-  add_definitions("-DWITH_PROGRESS_BAR")
+  add_compile_definitions("WITH_PROGRESS_BAR")
 endif()
 
 if(CLIENT_INTERFACE_SHARED)
