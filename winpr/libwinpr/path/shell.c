@@ -223,7 +223,7 @@ static char* GetPath_SYSTEM_CONFIG_HOME(void)
 #if defined(WIN32) && !defined(_UWP)
 
 	WCHAR* wpath = NULL;
-	if (FAILED(SHGetKnownFolderPath(&FOLDERID_ProgramData, 0, -1, &wpath)))
+	if (FAILED(SHGetKnownFolderPath(&FOLDERID_ProgramData, 0, (HANDLE)-1, &wpath)))
 		return NULL;
 
 	if (wpath)
