@@ -25,3 +25,4 @@ std::vector<unsigned char> @CLASSNAME@::init() {
 	};
 	return std::vector<unsigned char>(data, data + sizeof(data));
 }
+

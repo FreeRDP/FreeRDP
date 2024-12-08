@@ -4,6 +4,12 @@ else()
   include_directories(${CMAKE_BINARY_DIR}/include/)
 
   add_executable(generate_argument_manpage generate_argument_manpage.c ../cmdline.h)
+
+  # Ensure we build with host compiler and no compile/link flags used by other modules.
+  set_target_properties(
+    generate_argument_manpage PROPERTIES COMPILE_OPTIONS "" LINK_OPTIONS "" STATIC_LIBRARY_OPTIONS ""
+  )
+
   export(TARGETS generate_argument_manpage FILE "${CMAKE_BINARY_DIR}/GenerateArgumentManpageConfig.cmake")
 endif()
 
