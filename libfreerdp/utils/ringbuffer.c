@@ -41,6 +41,7 @@
 
 BOOL ringbuffer_init(RingBuffer* rb, size_t initialSize)
 {
+	WINPR_ASSERT(rb);
 	rb->buffer = malloc(initialSize);
 
 	if (!rb->buffer)
@@ -54,23 +55,29 @@ BOOL ringbuffer_init(RingBuffer* rb, size_t initialSize)
 
 size_t ringbuffer_used(const RingBuffer* rb)
 {
+	WINPR_ASSERT(rb);
 	return rb->size - rb->freeSize;
 }
 
 size_t ringbuffer_capacity(const RingBuffer* rb)
 {
+	WINPR_ASSERT(rb);
 	return rb->size;
 }
 
 void ringbuffer_destroy(RingBuffer* rb)
 {
 	DEBUG_RINGBUFFER("ringbuffer_destroy(%p)", (void*)rb);
+	if (!rb)
+		return;
+
 	free(rb->buffer);
 	rb->buffer = NULL;
 }
 
 static BOOL ringbuffer_realloc(RingBuffer* rb, size_t targetSize)
 {
+	WINPR_ASSERT(rb);
 	BYTE* newData = NULL;
 	DEBUG_RINGBUFFER("ringbuffer_realloc(%p): targetSize: %" PRIdz "", (void*)rb, targetSize);
 
@@ -162,6 +169,8 @@ BOOL ringbuffer_write(RingBuffer* rb, const BYTE* ptr, size_t sz)
 {
 	size_t toWrite = 0;
 	size_t remaining = 0;
+
+	WINPR_ASSERT(rb);
 	DEBUG_RINGBUFFER("ringbuffer_write(%p): sz: %" PRIdz "", (void*)rb, sz);
 
 	if ((rb->freeSize <= sz) && !ringbuffer_realloc(rb, rb->size + sz))
@@ -198,6 +207,7 @@ BYTE* ringbuffer_ensure_linear_write(RingBuffer* rb, size_t sz)
 {
 	DEBUG_RINGBUFFER("ringbuffer_ensure_linear_write(%p): sz: %" PRIdz "", (void*)rb, sz);
 
+	WINPR_ASSERT(rb);
 	if (rb->freeSize < sz)
 	{
 		if (!ringbuffer_realloc(rb, rb->size + sz - rb->freeSize + 32))
@@ -229,6 +239,7 @@ BOOL ringbuffer_commit_written_bytes(RingBuffer* rb, size_t sz)
 {
 	DEBUG_RINGBUFFER("ringbuffer_commit_written_bytes(%p): sz: %" PRIdz "", (void*)rb, sz);
 
+	WINPR_ASSERT(rb);
 	if (sz < 1)
 		return TRUE;
 
@@ -248,6 +259,7 @@ int ringbuffer_peek(const RingBuffer* rb, DataChunk chunks[2], size_t sz)
 	int status = 0;
 	DEBUG_RINGBUFFER("ringbuffer_peek(%p): sz: %" PRIdz "", (const void*)rb, sz);
 
+	WINPR_ASSERT(rb);
 	if (sz < 1)
 		return 0;
 
@@ -282,6 +294,7 @@ void ringbuffer_commit_read_bytes(RingBuffer* rb, size_t sz)
 {
 	DEBUG_RINGBUFFER("ringbuffer_commit_read_bytes(%p): sz: %" PRIdz "", (void*)rb, sz);
 
+	WINPR_ASSERT(rb);
 	if (sz < 1)
 		return;
 
