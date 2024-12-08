@@ -206,3 +206,13 @@ list(INSERT _FFmpeg_REQUIRED_VARS 0 _FFmpeg_FOUND_LIBRARIES)
 
 # Give a nice error message if some of the required vars are missing.
 find_package_handle_standard_args(FFmpeg REQUIRED_VARS ${_FFmpeg_REQUIRED_VARS} HANDLE_COMPONENTS)
+if(APPLE AND SWSCALE_USE_STATIC_LIBS)
+  list(APPEND SWSCALE_LIBRARIES ${AVUTIL_LIBRARIES})
+  list(APPEND SWSCALE_LIBRARIES "-pthread")
+  list(APPEND SWSCALE_LIBRARIES "-lm")
+  list(APPEND SWSCALE_LIBRARIES "-framework VideoToolbox")
+  list(APPEND SWSCALE_LIBRARIES "-framework CoreFoundation")
+  list(APPEND SWSCALE_LIBRARIES "-framework CoreMedia")
+  list(APPEND SWSCALE_LIBRARIES "-framework CoreVideo")
+  list(APPEND SWSCALE_LIBRARIES "-framework CoreServices")
+endif()
