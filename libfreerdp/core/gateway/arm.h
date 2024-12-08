@@ -20,8 +20,12 @@
 #ifndef FREERDP_LIB_CORE_GATEWAY_ARM_H
 #define FREERDP_LIB_CORE_GATEWAY_ARM_H
 
-#include <freerdp/api.h>
+#include <winpr/wtypes.h>
+#include <winpr/wlog.h>
 
-FREERDP_LOCAL BOOL arm_resolve_endpoint(rdpContext* context, DWORD timeout);
+#include <freerdp/api.h>
+#include <freerdp/types.h>
+
+FREERDP_LOCAL BOOL arm_resolve_endpoint(wLog* log, rdpContext* context, DWORD timeout);
 
 #endif /* FREERDP_LIB_CORE_GATEWAY_ARM_H */
