@@ -864,11 +864,11 @@ static BOOL kerberos_hash_channel_bindings(WINPR_DIGEST_CTX* md5, SEC_CHANNEL_BI
 {
 	BYTE buf[4];
 
-	Data_Write_UINT32(buf, bindings->dwInitiatorAddrType);
+	winpr_Data_Write_UINT32(buf, bindings->dwInitiatorAddrType);
 	if (!winpr_Digest_Update(md5, buf, 4))
 		return FALSE;
 
-	Data_Write_UINT32(buf, bindings->cbInitiatorLength);
+	winpr_Data_Write_UINT32(buf, bindings->cbInitiatorLength);
 	if (!winpr_Digest_Update(md5, buf, 4))
 		return FALSE;
 
@@ -877,11 +877,11 @@ static BOOL kerberos_hash_channel_bindings(WINPR_DIGEST_CTX* md5, SEC_CHANNEL_BI
 	                         bindings->cbInitiatorLength))
 		return FALSE;
 
-	Data_Write_UINT32(buf, bindings->dwAcceptorAddrType);
+	winpr_Data_Write_UINT32(buf, bindings->dwAcceptorAddrType);
 	if (!winpr_Digest_Update(md5, buf, 4))
 		return FALSE;
 
-	Data_Write_UINT32(buf, bindings->cbAcceptorLength);
+	winpr_Data_Write_UINT32(buf, bindings->cbAcceptorLength);
 	if (!winpr_Digest_Update(md5, buf, 4))
 		return FALSE;
 
@@ -890,7 +890,7 @@ static BOOL kerberos_hash_channel_bindings(WINPR_DIGEST_CTX* md5, SEC_CHANNEL_BI
 	                         bindings->cbAcceptorLength))
 		return FALSE;
 
-	Data_Write_UINT32(buf, bindings->cbApplicationDataLength);
+	winpr_Data_Write_UINT32(buf, bindings->cbApplicationDataLength);
 	if (!winpr_Digest_Update(md5, buf, 4))
 		return FALSE;
 
@@ -1076,8 +1076,8 @@ static SECURITY_STATUS SEC_ENTRY kerberos_InitializeSecurityContextA(
 			/* Write the checksum (delegation not implemented) */
 			cksum.data = cksum_contents;
 			cksum.length = sizeof(cksum_contents);
-			Data_Write_UINT32(cksum_contents, 16);
-			Data_Write_UINT32((cksum_contents + 20), context->flags);
+			winpr_Data_Write_UINT32(cksum_contents, 16);
+			winpr_Data_Write_UINT32((cksum_contents + 20), context->flags);
 
 			if (bindings_buffer)
 			{
@@ -1865,17 +1865,18 @@ static SECURITY_STATUS SEC_ENTRY kerberos_EncryptMessage(PCtxtHandle phContext, 
 	encrypt_iov[1].data.data = data_buffer->pvBuffer;
 
 	/* Write the GSS header with 0 in RRC */
-	Data_Write_UINT16_BE(header, TOK_ID_WRAP);
+	winpr_Data_Write_UINT16_BE(header, TOK_ID_WRAP);
 	header[2] = flags;
 	header[3] = (char)0xFF;
-	Data_Write_UINT32(header + 4, 0);
-	Data_Write_UINT64_BE(header + 8, (context->local_seq + MessageSeqNo));
+	winpr_Data_Write_UINT32(header + 4, 0);
+	winpr_Data_Write_UINT64_BE(header + 8, (context->local_seq + MessageSeqNo));
 
 	/* Copy header to be encrypted */
 	CopyMemory(encrypt_iov[2].data.data, header, 16);
 
 	/* Set the correct RRC */
-	Data_Write_UINT16_BE(header + 6, 16 + encrypt_iov[3].data.length + encrypt_iov[4].data.length);
+	winpr_Data_Write_UINT16_BE(header + 6,
+	                           16 + encrypt_iov[3].data.length + encrypt_iov[4].data.length);
 
 	if (krb_log_exec(krb5glue_encrypt_iov, creds->ctx, key, usage, encrypt_iov,
 	                 ARRAYSIZE(encrypt_iov)))
@@ -1978,8 +1979,8 @@ static SECURITY_STATUS SEC_ENTRY kerberos_DecryptMessage(PCtxtHandle phContext,
 		return SEC_E_INTERNAL_ERROR;
 
 	/* Validate the encrypted header */
-	Data_Write_UINT16_BE(iov[2].data.data + 4, ec);
-	Data_Write_UINT16_BE(iov[2].data.data + 6, rrc);
+	winpr_Data_Write_UINT16_BE(iov[2].data.data + 4, ec);
+	winpr_Data_Write_UINT16_BE(iov[2].data.data + 6, rrc);
 	if (memcmp(iov[2].data.data, header, 16) != 0)
 		return SEC_E_MESSAGE_ALTERED;
 
@@ -2041,10 +2042,10 @@ static SECURITY_STATUS SEC_ENTRY kerberos_MakeSignature(PCtxtHandle phContext, U
 
 	/* Write the header */
 	header = sig_buffer->pvBuffer;
-	Data_Write_UINT16_BE(header, TOK_ID_MIC);
+	winpr_Data_Write_UINT16_BE(header, TOK_ID_MIC);
 	header[2] = flags;
 	memset(header + 3, 0xFF, 5);
-	Data_Write_UINT64_BE(header + 8, (context->local_seq + MessageSeqNo));
+	winpr_Data_Write_UINT64_BE(header + 8, (context->local_seq + MessageSeqNo));
 
 	/* Set up the iov array */
 	iov[0].data.data = data_buffer->pvBuffer;

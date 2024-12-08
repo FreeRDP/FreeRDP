@@ -86,13 +86,13 @@ static NTLM_AV_PAIR* ntlm_av_pair_next(NTLM_AV_PAIR* pAvPairList, size_t* pcbAvP
 static INLINE void ntlm_av_pair_set_id(NTLM_AV_PAIR* pAvPair, UINT16 id)
 {
 	WINPR_ASSERT(pAvPair);
-	Data_Write_UINT16(&pAvPair->AvId, id);
+	winpr_Data_Write_UINT16(&pAvPair->AvId, id);
 }
 
 static INLINE void ntlm_av_pair_set_len(NTLM_AV_PAIR* pAvPair, UINT16 len)
 {
 	WINPR_ASSERT(pAvPair);
-	Data_Write_UINT16(&pAvPair->AvLen, len);
+	winpr_Data_Write_UINT16(&pAvPair->AvLen, len);
 }
 
 static BOOL ntlm_av_pair_list_init(NTLM_AV_PAIR* pAvPairList, size_t cbAvPairList)
@@ -461,10 +461,10 @@ static void ntlm_compute_single_host_data(NTLM_CONTEXT* context)
 	 * different or if they are on different hosts, then the information MUST be ignored.
 	 * Any fields after the MachineID field MUST be ignored on receipt.
 	 */
-	Data_Write_UINT32(&context->SingleHostData.Size, 48);
-	Data_Write_UINT32(&context->SingleHostData.Z4, 0);
-	Data_Write_UINT32(&context->SingleHostData.DataPresent, 1);
-	Data_Write_UINT32(&context->SingleHostData.CustomData, SECURITY_MANDATORY_MEDIUM_RID);
+	winpr_Data_Write_UINT32(&context->SingleHostData.Size, 48);
+	winpr_Data_Write_UINT32(&context->SingleHostData.Z4, 0);
+	winpr_Data_Write_UINT32(&context->SingleHostData.DataPresent, 1);
+	winpr_Data_Write_UINT32(&context->SingleHostData.CustomData, SECURITY_MANDATORY_MEDIUM_RID);
 	FillMemory(context->SingleHostData.MachineID, 32, 0xAA);
 }
 
@@ -727,7 +727,7 @@ BOOL ntlm_construct_authenticate_target_info(NTLM_CONTEXT* context)
 	if (context->UseMIC)
 	{
 		UINT32 flags = 0;
-		Data_Write_UINT32(&flags, MSV_AV_FLAGS_MESSAGE_INTEGRITY_CHECK);
+		winpr_Data_Write_UINT32(&flags, MSV_AV_FLAGS_MESSAGE_INTEGRITY_CHECK);
 
 		if (!ntlm_av_pair_add(AuthenticateTargetInfo, cbAuthenticateTargetInfo, MsvAvFlags,
 		                      (PBYTE)&flags, 4))

@@ -876,7 +876,7 @@ BYTE* freerdp_assistance_encrypt_pass_stub(const char* password, const char* pas
 	if (!pbIn || !pbOut)
 		goto fail;
 
-	Data_Write_UINT32(pbIn, cbPassStubW);
+	winpr_Data_Write_UINT32(pbIn, cbPassStubW);
 	CopyMemory(&pbIn[4], PassStubW, cbPassStubW);
 	rc4Ctx = winpr_RC4_New(PasswordHash, sizeof(PasswordHash));
 

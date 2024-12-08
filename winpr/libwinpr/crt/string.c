@@ -536,7 +536,7 @@ DWORD CharUpperBuffW(LPWSTR lpsz, DWORD cchLength)
 	{
 		WCHAR value = winpr_Data_Get_UINT16(&lpsz[i]);
 		value = WINPR_TOUPPERW(value);
-		Data_Write_UINT16(&lpsz[i], value);
+		winpr_Data_Write_UINT16(&lpsz[i], value);
 	}
 
 	return cchLength;
@@ -603,7 +603,7 @@ DWORD CharLowerBuffW(LPWSTR lpsz, DWORD cchLength)
 	{
 		WCHAR value = winpr_Data_Get_UINT16(&lpsz[i]);
 		value = WINPR_TOLOWERW(value);
-		Data_Write_UINT16(&lpsz[i], value);
+		winpr_Data_Write_UINT16(&lpsz[i], value);
 	}
 
 	return cchLength;

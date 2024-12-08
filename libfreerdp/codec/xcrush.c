@@ -704,7 +704,7 @@ static int xcrush_generate_output(XCRUSH_CONTEXT* WINPR_RESTRICT xcrush,
 	if (&OutputBuffer[2] >= &OutputBuffer[OutputSize])
 		return -6001; /* error */
 
-	Data_Write_UINT16(OutputBuffer, MatchCount);
+	winpr_Data_Write_UINT16(OutputBuffer, MatchCount);
 	MatchDetails = (RDP61_MATCH_DETAILS*)&OutputBuffer[2];
 	Literals = (BYTE*)&MatchDetails[MatchCount];
 
@@ -713,12 +713,12 @@ static int xcrush_generate_output(XCRUSH_CONTEXT* WINPR_RESTRICT xcrush,
 
 	for (MatchIndex = 0; MatchIndex < MatchCount; MatchIndex++)
 	{
-		Data_Write_UINT16(&MatchDetails[MatchIndex].MatchLength,
-		                  xcrush->OptimizedMatches[MatchIndex].MatchLength);
-		Data_Write_UINT16(&MatchDetails[MatchIndex].MatchOutputOffset,
-		                  xcrush->OptimizedMatches[MatchIndex].MatchOffset - HistoryOffset);
-		Data_Write_UINT32(&MatchDetails[MatchIndex].MatchHistoryOffset,
-		                  xcrush->OptimizedMatches[MatchIndex].ChunkOffset);
+		winpr_Data_Write_UINT16(&MatchDetails[MatchIndex].MatchLength,
+		                        xcrush->OptimizedMatches[MatchIndex].MatchLength);
+		winpr_Data_Write_UINT16(&MatchDetails[MatchIndex].MatchOutputOffset,
+		                        xcrush->OptimizedMatches[MatchIndex].MatchOffset - HistoryOffset);
+		winpr_Data_Write_UINT32(&MatchDetails[MatchIndex].MatchHistoryOffset,
+		                        xcrush->OptimizedMatches[MatchIndex].ChunkOffset);
 	}
 
 	CurrentOffset = HistoryOffset;
