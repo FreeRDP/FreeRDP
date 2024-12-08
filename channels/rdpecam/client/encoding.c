@@ -95,6 +95,12 @@ static enum AVPixelFormat ecamToAVPixFormat(CAM_MEDIA_FORMAT ecamFormat)
  */
 static BOOL ecam_init_sws_context(CameraDeviceStream* stream, enum AVPixelFormat pixFormat)
 {
+	const enum AVPixelFormat outPixFormat =
+#ifdef WITH_VAAPI_H264_ENCODING
+	    AV_PIX_FMT_NV12;
+#else
+	    AV_PIX_FMT_YUV420P;
+#endif
 	WINPR_ASSERT(stream);
 
 	if (stream->sws)
@@ -130,8 +136,15 @@ static BOOL ecam_init_sws_context(CameraDeviceStream* stream, enum AVPixelFormat
 	const int width = (int)stream->currMediaType.Width;
 	const int height = (int)stream->currMediaType.Height;
 
-	stream->sws = sws_getContext(width, height, pixFormat, width, height, AV_PIX_FMT_YUV420P, 0,
-	                             NULL, NULL, NULL);
+	if (av_image_alloc(stream->swsOutData, stream->swsOutStride, width, height, outPixFormat, 16) <
+	    0)
+	{
+		WLog_ERR(TAG, "av_image_alloc failed");
+		return FALSE;
+	}
+
+	stream->sws =
+	    sws_getContext(width, height, pixFormat, width, height, outPixFormat, 0, NULL, NULL, NULL);
 	if (!stream->sws)
 	{
 		WLog_ERR(TAG, "sws_getContext failed");
@@ -152,8 +165,6 @@ static BOOL ecam_encoder_compress_h264(CameraDeviceStream* stream, const BYTE* s
 	UINT32 dstSize = 0;
 	BYTE* srcSlice[4] = { 0 };
 	int srcLineSizes[4] = { 0 };
-	BYTE* yuv420pData[3] = { 0 };
-	UINT32 yuv420pStride[3] = { 0 };
 	prim_size_t size = { stream->currMediaType.Width, stream->currMediaType.Height };
 	CAM_MEDIA_FORMAT inputFormat = streamInputFormat(stream);
 	enum AVPixelFormat pixFormat = AV_PIX_FMT_NONE;
@@ -205,22 +216,21 @@ static BOOL ecam_encoder_compress_h264(CameraDeviceStream* stream, const BYTE* s
 		}
 	}
 
-	/* get buffers for YUV420P */
-	if (h264_get_yuv_buffer(stream->h264, srcLineSizes[0], size.width, size.height, yuv420pData,
-	                        yuv420pStride) < 0)
-		return FALSE;
-
-	/* convert from source format to YUV420P */
+	/* convert from source format to YUV420P or NV12 */
 	if (!ecam_init_sws_context(stream, pixFormat))
 		return FALSE;
 
 	const BYTE* cSrcSlice[4] = { srcSlice[0], srcSlice[1], srcSlice[2], srcSlice[3] };
-	if (sws_scale(stream->sws, cSrcSlice, srcLineSizes, 0, (int)size.height, yuv420pData,
-	              (int*)yuv420pStride) <= 0)
+	if (sws_scale(stream->sws, cSrcSlice, srcLineSizes, 0, (int)size.height, stream->swsOutData,
+	              stream->swsOutStride) <= 0)
 		return FALSE;
 
-	/* encode from YUV420P to H264 */
-	if (h264_compress(stream->h264, ppDstData, &dstSize) < 0)
+	/* encode from YUV420P or NV12 to H264 */
+	const BYTE* cSrcData[4] = { stream->swsOutData[0], stream->swsOutData[1], stream->swsOutData[2],
+		                        stream->swsOutData[3] };
+	const UINT32 cSrcStride[4] = { stream->swsOutStride[0], stream->swsOutStride[1],
+		                           stream->swsOutStride[2], stream->swsOutStride[3] };
+	if (h264_compress_ex(stream->h264, cSrcData, cSrcStride, ppDstData, &dstSize) < 0)
 		return FALSE;
 
 	*pDstSize = dstSize;
@@ -241,6 +251,9 @@ static void ecam_encoder_context_free_h264(CameraDeviceStream* stream)
 		sws_freeContext(stream->sws);
 		stream->sws = NULL;
 	}
+
+	if (stream->swsOutData[0])
+		av_freep(&stream->swsOutData[0]); /* sets to NULL */
 
 #if defined(WITH_INPUT_FORMAT_MJPG)
 	if (stream->avOutFrame)
@@ -354,11 +367,17 @@ static BOOL ecam_encoder_context_init_h264(CameraDeviceStream* stream)
 	                             ecam_encoder_h264_get_max_bitrate(stream)))
 		goto fail;
 
+	/* Using CQP mode for rate control. It produces more comparable quality
+	 * between VAAPI and software encoding than VBR mode
+	 */
 	if (!h264_context_set_option(stream->h264, H264_CONTEXT_OPTION_RATECONTROL,
-	                             H264_RATECONTROL_VBR))
+	                             H264_RATECONTROL_CQP))
 		goto fail;
 
-	if (!h264_context_set_option(stream->h264, H264_CONTEXT_OPTION_QP, 0))
+	/* Using 26 as CQP value. Lower values will produce better quality but
+	 * higher bitrate; higher values - lower bitrate but degraded quality
+	 */
+	if (!h264_context_set_option(stream->h264, H264_CONTEXT_OPTION_QP, 26))
 		goto fail;
 
 #if defined(WITH_INPUT_FORMAT_MJPG)
