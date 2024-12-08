@@ -109,14 +109,13 @@ static BOOL ntlm_av_pair_list_init(NTLM_AV_PAIR* pAvPairList, size_t cbAvPairLis
 
 static INLINE BOOL ntlm_av_pair_get_id(const NTLM_AV_PAIR* pAvPair, size_t size, UINT16* pair)
 {
-	UINT16 AvId = 0;
 	if (!pAvPair || !pair)
 		return FALSE;
 
 	if (size < sizeof(NTLM_AV_PAIR))
 		return FALSE;
 
-	Data_Read_UINT16(&pAvPair->AvId, AvId);
+	const UINT16 AvId = winpr_Data_Get_UINT16(&pAvPair->AvId);
 
 	*pair = AvId;
 	return TRUE;
@@ -142,14 +141,13 @@ ULONG ntlm_av_pair_list_length(NTLM_AV_PAIR* pAvPairList, size_t cbAvPairList)
 
 static INLINE BOOL ntlm_av_pair_get_len(const NTLM_AV_PAIR* pAvPair, size_t size, size_t* pAvLen)
 {
-	UINT16 AvLen = 0;
 	if (!pAvPair)
 		return FALSE;
 
 	if (size < sizeof(NTLM_AV_PAIR))
 		return FALSE;
 
-	Data_Read_UINT16(&pAvPair->AvLen, AvLen);
+	const UINT16 AvLen = winpr_Data_Get_UINT16(&pAvPair->AvLen);
 
 	*pAvLen = AvLen;
 	return TRUE;

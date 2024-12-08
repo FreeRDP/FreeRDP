@@ -1040,7 +1040,7 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 		                     context->NTLMv2Response.Challenge.cbAvPairs, MsvAvFlags, &cbAvFlags);
 
 		if (AvFlags)
-			Data_Read_UINT32(ntlm_av_pair_get_value_pointer(AvFlags), flags);
+			flags = winpr_Data_Get_UINT32(ntlm_av_pair_get_value_pointer(AvFlags));
 	}
 
 	if (!ntlm_read_message_fields_buffer(

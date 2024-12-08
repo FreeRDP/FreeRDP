@@ -114,7 +114,7 @@ BOOL krb5glue_authenticator_validate_chksum(krb5glue_authenticator authenticator
 	if (!authenticator || !authenticator->checksum ||
 	    authenticator->checksum->checksum_type != cksumtype || authenticator->checksum->length < 24)
 		return FALSE;
-	Data_Read_UINT32((authenticator->checksum->contents + 20), (*flags));
+	*flags = winpr_Data_Get_UINT32((authenticator->checksum->contents + 20));
 	return TRUE;
 }
 

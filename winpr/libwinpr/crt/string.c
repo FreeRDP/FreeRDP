@@ -532,11 +532,9 @@ DWORD CharUpperBuffA(LPSTR lpsz, DWORD cchLength)
 
 DWORD CharUpperBuffW(LPWSTR lpsz, DWORD cchLength)
 {
-	WCHAR value = 0;
-
 	for (DWORD i = 0; i < cchLength; i++)
 	{
-		Data_Read_UINT16(&lpsz[i], value);
+		WCHAR value = winpr_Data_Get_UINT16(&lpsz[i]);
 		value = WINPR_TOUPPERW(value);
 		Data_Write_UINT16(&lpsz[i], value);
 	}
@@ -601,11 +599,9 @@ DWORD CharLowerBuffA(LPSTR lpsz, DWORD cchLength)
 
 DWORD CharLowerBuffW(LPWSTR lpsz, DWORD cchLength)
 {
-	WCHAR value = 0;
-
 	for (DWORD i = 0; i < cchLength; i++)
 	{
-		Data_Read_UINT16(&lpsz[i], value);
+		WCHAR value = winpr_Data_Get_UINT16(&lpsz[i]);
 		value = WINPR_TOLOWERW(value);
 		Data_Write_UINT16(&lpsz[i], value);
 	}
