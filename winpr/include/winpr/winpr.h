@@ -145,15 +145,16 @@ WINPR_API const char* winpr_get_build_config(void);
  * @return The casted pointer
  * @since version 3.9.0
  */
-#define WINPR_REINTERPRET_CAST(ptr, srcType, dstType) \
-	__extension__({                                   \
-		union                                         \
-		{                                             \
-			srcType src;                              \
-			dstType dst;                              \
-		} cnv;                                        \
-		cnv.src = ptr;                                \
-		cnv.dst;                                      \
+#define WINPR_REINTERPRET_CAST(ptr, srcType, dstType)            \
+	__extension__({                                              \
+		union                                                    \
+		{                                                        \
+			srcType src;                                         \
+			dstType dst;                                         \
+		} cnv;                                                   \
+		WINPR_STATIC_ASSERT(sizeof(srcType) == sizeof(dstType)); \
+		cnv.src = ptr;                                           \
+		cnv.dst;                                                 \
 	})
 
 /**
