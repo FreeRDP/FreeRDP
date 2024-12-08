@@ -342,6 +342,48 @@ extern "C"
 	WINPR_ATTR_MALLOC(free, 1)
 	WINPR_API char* GetCombinedPath(const char* basePath, const char* subPath);
 
+	/** @brief creates a normalized version of \b path
+	 *  Duplicate path delimiters  and '.' in path are removed, '..' is resolved. The normalized
+	 * path does not contain any of these.
+	 *
+	 *  @param path The path to normalize
+	 *  @return A normalized version of \b path or \b NULL in case of an error
+	 *  @since version 3.10.0
+	 */
+	WINPR_ATTR_MALLOC(free, 1)
+	WINPR_API WCHAR* winpr_NormalizePathW(const WCHAR* path);
+
+	/** @brief creates a normalized version of \b path
+	 *  Duplicate path delimiters  and '.' in path are removed, '..' is resolved. The normalized
+	 * path does not contain any of these.
+	 *
+	 *  @param path The path to normalize
+	 *  @return A normalized version of \b path or \b NULL in case of an error
+	 *  @since version 3.10.0
+	 */
+	WINPR_ATTR_MALLOC(free, 1)
+	WINPR_API char* winpr_NormalizePathA(const char* path);
+
+	/** @brief Checks if path \b root is the root of \b path
+	 * Both paths are normalized first and then checked if \b root is a prefix of \b path.
+	 *
+	 *  @param root The root path, must be an absolute path.
+	 *  @param path The path to check
+	 *  @return \b TRUE if \b path has \b root as parent
+	 *  @since version 3.10.0
+	 */
+	WINPR_API BOOL winpr_PathIsRootOfA(const char* root, const char* path);
+
+	/** @brief Checks if path \b root is the root of \b path
+	 * Both paths are normalized first and then checked if \b root is a prefix of \b path
+	 *
+	 *  @param root The root path, must be an absolute path.
+	 *  @param path The path to check
+	 *  @return \b TRUE if \b path has \b root as parent
+	 *  @since version 3.10.0
+	 */
+	WINPR_API BOOL winpr_PathIsRootOfW(const WCHAR* root, const WCHAR* path);
+
 	WINPR_API BOOL PathMakePathA(LPCSTR path, LPSECURITY_ATTRIBUTES lpAttributes);
 	WINPR_API BOOL PathMakePathW(LPCWSTR path, LPSECURITY_ATTRIBUTES lpAttributes);
 
