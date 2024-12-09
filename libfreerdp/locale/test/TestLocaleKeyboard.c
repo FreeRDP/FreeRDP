@@ -267,7 +267,7 @@ static BOOL test_scancode_cnv(void)
 			(void)fprintf(stderr,
 			              "[%" PRIu32 "]: keycode->scancode->keycode failed: %" PRIu32
 			              " -> %" PRIu32 " -> %" PRIu32 "\n",
-			              x, sc, kk);
+			              x, sc, ex, kk);
 			return FALSE;
 		}
 	}
