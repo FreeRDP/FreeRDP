@@ -760,11 +760,6 @@ int xf_input_event(xfContext* xfc, const XEvent* xevent, XIDeviceEvent* event, i
 	 * filter out anything else, like floatbar window events
 	 */
 	const Window w = xevent->xany.window;
-	if (w != xfc->window->handle)
-	{
-		if (!xfc->remote_app)
-			return 0;
-	}
 
 	settings = xfc->common.context.settings;
 	WINPR_ASSERT(settings);
@@ -772,6 +767,12 @@ int xf_input_event(xfContext* xfc, const XEvent* xevent, XIDeviceEvent* event, i
 	xfWindow* window = xfc->window;
 	if (window)
 	{
+		if (w != window->handle)
+		{
+			if (!xfc->remote_app)
+				return 0;
+		}
+
 		if (xf_floatbar_is_locked(window->floatbar))
 			return 0;
 	}
