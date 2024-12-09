@@ -2400,6 +2400,7 @@ static void rdp_reset_free(rdpRdp* rdp)
 {
 	WINPR_ASSERT(rdp);
 
+	(void)security_lock(rdp);
 	rdp_free_rc4_decrypt_keys(rdp);
 	rdp_free_rc4_encrypt_keys(rdp);
 
@@ -2407,6 +2408,7 @@ static void rdp_reset_free(rdpRdp* rdp)
 	winpr_Cipher_Free(rdp->fips_decrypt);
 	rdp->fips_encrypt = NULL;
 	rdp->fips_decrypt = NULL;
+	(void)security_unlock(rdp);
 
 	mcs_free(rdp->mcs);
 	nego_free(rdp->nego);
@@ -2502,7 +2504,6 @@ void rdp_free(rdpRdp* rdp)
 {
 	if (rdp)
 	{
-		DeleteCriticalSection(&rdp->critical);
 		rdp_reset_free(rdp);
 
 		freerdp_settings_free(rdp->settings);
@@ -2522,6 +2523,7 @@ void rdp_free(rdpRdp* rdp)
 		if (rdp->abortEvent)
 			(void)CloseHandle(rdp->abortEvent);
 		aad_free(rdp->aad);
+		DeleteCriticalSection(&rdp->critical);
 		free(rdp);
 	}
 }
