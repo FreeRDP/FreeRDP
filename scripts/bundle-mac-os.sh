@@ -126,7 +126,10 @@ CMAKE_ARGS="-DCMAKE_SKIP_INSTALL_ALL_DEPENDENCY=ON \
 	-DCMAKE_VERBOSE_MAKEFILE=ON \
 	-DCMAKE_BUILD_TYPE=Release \
  	-DWITH_MANPAGES=OFF \
-	-DBUILD_SHARED_LIBS=ON \
+	-DBUILD_SHARED_LIBS=OFF \
+	-DWITH_SDL_LINK_SHARED=OFF \
+	-DOPENSSL_USE_STATIC_LIBS=ON \
+	-DZLIB_LIBRARY="$INSTALL/lib/libz.a" \
 	-DCMAKE_OSX_ARCHITECTURES=$CMAKE_ARCHS \
 	-DCMAKE_OSX_DEPLOYMENT_TARGET=$DEPLOYMENT_TARGET \
 	-DCMAKE_INSTALL_PREFIX='$INSTALL' \
@@ -184,11 +187,11 @@ cmake -GNinja -Buriparser -S$SRC/uriparser $CMAKE_ARGS -DURIPARSER_BUILD_DOCS=OF
 cmake --build uriparser
 cmake --install uriparser
 
-cmake -GNinja -BcJSON -S$SRC/cJSON $CMAKE_ARGS -DENABLE_CJSON_TEST=OFF -DBUILD_SHARED_AND_STATIC_LIBS=OFF
+cmake -GNinja -BcJSON -S$SRC/cJSON $CMAKE_ARGS -DENABLE_CJSON_TEST=OFF -DBUILD_SHARED_LIBS=OFF
 cmake --build cJSON
 cmake --install cJSON
 
-cmake -GNinja -Bopus -S$SRC/opus $CMAKE_ARGS -DOPUS_BUILD_SHARED_LIBRARY=ON
+cmake -GNinja -Bopus -S$SRC/opus $CMAKE_ARGS -DOPUS_BUILD_SHARED_LIBRARY=OFF
 cmake --build opus
 cmake --install opus
 
@@ -210,7 +213,7 @@ cmake --build SDL_image
 cmake --install SDL_image
 
 cmake -GNinja -Blibusb-cmake -S$SRC/libusb-cmake $CMAKE_ARGS -DLIBUSB_BUILD_EXAMPLES=OFF -DLIBUSB_BUILD_TESTING=OFF \
-	-DLIBUSB_ENABLE_DEBUG_LOGGING=OFF -DLIBUSB_BUILD_SHARED_LIBS=ON
+	-DLIBUSB_ENABLE_DEBUG_LOGGING=OFF -DLIBUSB_BUILD_SHARED_LIBS=OFF
 cmake --build libusb-cmake
 cmake --install libusb-cmake
 
@@ -226,7 +229,7 @@ mkdir -p faac
 cd faac
 # undefine __SSE2__, symbol clashes with universal build
 CFLAGS="$OSSL_FLAGS -U__SSE2__" LDFLAGS=$OSSL_FLAGS $SRC/faac/configure --prefix=$INSTALL --libdir="$INSTALL/lib" \
-	--enable-shared --disable-static
+	--enable-shared --enable-static
 CFLAGS="$OSSL_FLAGS -U__SSE2__" LDFLAGS=$OSSL_FLAGS make -j
 CFLAGS="$OSSL_FLAGS -U__SSE2__" LDFLAGS=$OSSL_FLAGS make -j install
 
@@ -234,7 +237,7 @@ cd $BUILD
 
 meson setup --prefix="$INSTALL" -Doptimization=3 -Db_lto=true -Db_pie=true -Dc_args="$OSSL_FLAGS" -Dc_link_args="$OSSL_FLAGS" \
 	-Dcpp_args="$OSSL_FLAGS" -Dcpp_link_args="$OSSL_FLAGS" -Dpkgconfig.relocatable=true -Dtests=disabled \
-       	-Dlibdir=lib openh264 $SRC/openh264
+       	-Dlibdir=lib -Ddefault_library=static openh264 $SRC/openh264
 ninja -C openh264 install
 
 for ARCH in $DEPLOYMENT_ARCH;
@@ -244,7 +247,7 @@ do
 	FFCFLAGS="-arch $ARCH -mmacosx-version-min=$DEPLOYMENT_TARGET"
 	FINSTPATH=$BUILD/FFmpeg/install/$ARCH
 	CFLAGS=$FFCFLAGS LDFLAGS=$FFCFLAGS $SRC/FFmpeg/configure --prefix=$FINSTPATH --disable-all \
-		--enable-shared --disable-static --enable-swscale --disable-asm --disable-libxcb \
+		--enable-shared --enable-static --enable-swscale --disable-asm --disable-libxcb \
 		--disable-securetransport --disable-xlib --enable-cross-compile
 	CFLAGS=$FFCFLAGS LDFLAGS=$FFCFLAGS make -j
 	CFLAGS=$FFCFLAGS LDFLAGS=$FFCFLAGS make -j install
@@ -256,7 +259,7 @@ BASE_ARCH="${DEPLOYMENT_ARCH%% *}"
 cd $BUILD/FFmpeg/install/$ARCH
 cp -r include/* $INSTALL/include/
 find lib -type l -exec cp -P {} $INSTALL/lib/ \;
-BASE_LIBS=$(find lib -type f -name "*.dylib" -exec basename {} \;)
+BASE_LIBS=$(find lib -type f -name "*.a" -exec basename {} \;)
 
 cd $BUILD/FFmpeg/install
 for LIB in $BASE_LIBS;
@@ -267,7 +270,14 @@ done
 
 cd $BUILD
 cmake -GNinja -Bfreerdp -S"$SCRIPT_PATH/.." \
+	-DCMAKE_FIND_LIBRARY_SUFFIXES=".a" \
+	-DZLIB_LIBRARY="$INSTALL/lib/libz.a" \
+	-DCMAKE_C_STANDARD_LIBRARIES="$INSTALL/lib/libz.a -framework Foundation -framework IOKit -framework Security $INSTALL/lib/libavutil.a -pthread -lm -framework VideoToolbox -framework CoreFoundation -framework CoreMedia -framework CoreVideo -framework CoreServices -lc++" \
+	-DCMAKE_CXX_STANDARD_LIBRARIES="-framework Foundation -framework IOKit -framework Security $INSTALL/lib/libavutil.a -pthread -lm -framework VideoToolbox -framework CoreFoundation -framework CoreMedia -framework CoreVideo -framework CoreServices -lc++" \
 	$CMAKE_ARGS \
+	-DLIBUSB_USE_STATIC_LIBS=ON \
+	-DFAAC_LIBRARY="$INSTALL/lib/libfaac.a" \
+	-DSWSCALE_LIBRARIES="$INSTALL/lib/libswscale.a" \
 	-DWITH_PLATFORM_SERVER=OFF \
 	-DWITH_SIMD=ON \
 	-DWITH_FFMPEG=OFF \
@@ -276,6 +286,7 @@ cmake -GNinja -Bfreerdp -S"$SCRIPT_PATH/.." \
 	-DWITH_WEBVIEW=OFF \
 	-DWITH_FAAD2=ON \
 	-DWITH_FAAC=ON \
+	-DWITH_OPENH264=ON \
 	-DWITH_INTERNAL_RC4=ON \
 	-DWITH_INTERNAL_MD4=ON \
 	-DWITH_INTERNAL_MD5=ON \
@@ -288,7 +299,10 @@ cmake --install freerdp
 # remove unused stuff from bin
 find "$INSTALL"  -name "*.a" -exec rm -f {} \;
 find "$INSTALL"  -name "*.la" -exec rm -f {} \;
+find "$INSTALL"  -name "*.dylib" -exec rm -f {} \;
 find "$INSTALL" -name sdl2-config -exec rm -f {} \;
+find "$INSTALL" -name faac -exec rm -f {} \;
+find "$INSTALL" -name faad -exec rm -f {} \;
 
 fix_rpath "$INSTALL/lib"
 fix_rpath "$INSTALL/bin" "$INSTALL/lib" ""
