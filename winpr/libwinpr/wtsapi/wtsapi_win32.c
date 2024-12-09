@@ -671,7 +671,13 @@ BOOL Win32_WTSVirtualChannelPurge_Internal(HANDLE hChannelHandle, ULONG IoContro
 		ntstatus = NtWaitForSingleObject(pChannel->hFile, 0, 0);
 
 		if (ntstatus >= 0)
+		{
+#if defined(NONAMELESSUNION) && !defined(__MINGW32__)
 			ntstatus = ioStatusBlock.DUMMYUNIONNAME.Status;
+#else
+			ntstatus = ioStatusBlock.Status;
+#endif
+		}
 	}
 
 	if (ntstatus == STATUS_BUFFER_OVERFLOW)
