@@ -875,13 +875,14 @@ DWORD EnumDynamicTimeZoneInformation(const DWORD dwIndex,
 	const time_t t = time(NULL);
 	struct tm tres = { 0 };
 
-	const char* tz = getenv("TZ");
+	char* tz = winpr_secure_getenv("TZ");
 	char* tzcopy = NULL;
 	if (tz)
 	{
 		size_t tzianalen = 0;
 		winpr_asprintf(&tzcopy, &tzianalen, "TZ=%s", tz);
 	}
+	free(tz);
 
 	char* tziana = NULL;
 	{
@@ -889,15 +890,15 @@ DWORD EnumDynamicTimeZoneInformation(const DWORD dwIndex,
 		winpr_asprintf(&tziana, &tzianalen, "TZ=%s", entry->Iana);
 	}
 	if (tziana)
-		putenv(tziana);
+		winpr_secure_putenv(tziana);
 
 	tzset();
 	struct tm* local_time = localtime_r(&t, &tres);
 	free(tziana);
 	if (tzcopy)
-		putenv(tzcopy);
+		winpr_secure_putenv(tzcopy);
 	else
-		unsetenv("TZ");
+		winpr_secure_unsetenv("TZ");
 	free(tzcopy);
 
 	if (local_time)
