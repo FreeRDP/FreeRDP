@@ -215,7 +215,7 @@ static int TestFileFindFirstFileA(const char* str)
 	obj->fnObjectNew = winpr_ObjectStringClone;
 
 	if (!create_layout(BasePath, files))
-		return -1;
+		goto fail;
 
 	NativePathCchAppendA(FilePath, PATHCCH_MAX_CCH, testFile1A);
 
