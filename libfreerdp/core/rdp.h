@@ -21,6 +21,7 @@
 #ifndef FREERDP_LIB_CORE_RDP_H
 #define FREERDP_LIB_CORE_RDP_H
 
+#include <winpr/json.h>
 #include <freerdp/config.h>
 
 #include "nla.h"
@@ -206,6 +207,7 @@ struct rdp_rdp
 
 	wLog* log;
 	char log_context[64];
+	WINPR_JSON* wellknown;
 };
 
 FREERDP_LOCAL BOOL rdp_read_security_header(rdpRdp* rdp, wStream* s, UINT16* flags, UINT16* length);
