@@ -40,7 +40,7 @@ static std::string from_settings(const rdpSettings* settings, FreeRDP_Settings_K
 	return val;
 }
 
-static std::string from_wellknown(rdpContext* context, AAD_WELLKNOWN_VALUES which)
+static std::string from_aad_wellknown(rdpContext* context, AAD_WELLKNOWN_VALUES which)
 {
 	auto val = freerdp_utils_aad_get_wellknown_string(context, which);
 
@@ -63,12 +63,12 @@ static BOOL sdl_webview_get_rdsaad_access_token(freerdp* instance, const char* s
 	WINPR_UNUSED(instance);
 	WINPR_UNUSED(instance->context);
 
-	std::string client_id = from_settings(instance->context->settings, FreeRDP_GatewayAvdClientID);
+	auto client_id = from_settings(instance->context->settings, FreeRDP_GatewayAvdClientID);
 	std::string redirect_uri = "ms-appx-web%3a%2f%2fMicrosoft.AAD.BrokerPlugin%2f" + client_id;
 
 	*token = nullptr;
 
-	std::string ep = from_wellknown(instance->context, AAD_WELLKNOWN_authorization_endpoint);
+	auto ep = from_aad_wellknown(instance->context, AAD_WELLKNOWN_authorization_endpoint);
 	auto url = ep + "?client_id=" + client_id + "&response_type=code&scope=" + scope +
 	           "&redirect_uri=" + redirect_uri;
 
@@ -90,13 +90,13 @@ static BOOL sdl_webview_get_avd_access_token(freerdp* instance, char** token)
 	WINPR_ASSERT(instance);
 	WINPR_ASSERT(instance->context);
 
-	std::string client_id = from_settings(instance->context->settings, FreeRDP_GatewayAvdClientID);
+	auto client_id = from_settings(instance->context->settings, FreeRDP_GatewayAvdClientID);
 	std::string redirect_uri = "ms-appx-web%3a%2f%2fMicrosoft.AAD.BrokerPlugin%2f" + client_id;
 	std::string scope = "https%3A%2F%2Fwww.wvd.microsoft.com%2F.default";
 
 	*token = nullptr;
 
-	std::string ep = from_wellknown(instance->context, AAD_WELLKNOWN_authorization_endpoint);
+	auto ep = from_aad_wellknown(instance->context, AAD_WELLKNOWN_authorization_endpoint);
 	auto url = ep + "?client_id=" + client_id + "&response_type=code&scope=" + scope +
 	           "&redirect_uri=" + redirect_uri;
 	const std::string title = "FreeRDP WebView - AVD access token";
