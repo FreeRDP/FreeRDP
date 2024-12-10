@@ -785,7 +785,10 @@ static BOOL license_send(rdpLicense* license, wStream* s, BYTE type)
 		flags |= EXTENDED_ERROR_MSG_SUPPORTED;
 
 	if (!license_write_preamble(s, type, flags, wMsgSize))
+	{
+		Stream_Release(s);
 		return FALSE;
+	}
 
 #ifdef WITH_DEBUG_LICENSE
 	WLog_DBG(TAG, "Sending %s Packet, length %" PRIu16 "", license_request_type_string(type),
@@ -1742,7 +1745,7 @@ BOOL license_send_license_info(rdpLicense* license, const LICENSE_BLOB* calBlob,
 
 	if (!license_check_stream_capacity(s, 8 + sizeof(license->ClientRandom),
 	                                   "license info::ClientRandom"))
-		return FALSE;
+		goto error;
 
 	Stream_Write_UINT32(s,
 	                    license->PreferredKeyExchangeAlg); /* PreferredKeyExchangeAlg (4 bytes) */
@@ -2479,7 +2482,6 @@ BOOL license_answer_license_request(rdpLicense* license)
 
 BOOL license_send_platform_challenge_response(rdpLicense* license)
 {
-	wStream* s = license_send_stream_init(license);
 	wStream* challengeRespData = NULL;
 	BYTE* buffer = NULL;
 	BOOL status = 0;
@@ -2552,6 +2554,10 @@ BOOL license_send_platform_challenge_response(rdpLicense* license)
 	winpr_HexDump(TAG, WLOG_DEBUG, license->EncryptedHardwareId->data,
 	              license->EncryptedHardwareId->length);
 #endif
+	wStream* s = license_send_stream_init(license);
+	if (!s)
+		return FALSE;
+
 	if (license_write_client_platform_challenge_response(license, s))
 		return license_send(license, s, PLATFORM_CHALLENGE_RESPONSE);
 
