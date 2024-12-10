@@ -1725,20 +1725,7 @@ void transport_free(rdpTransport* transport)
 		Stream_Release(transport->ReceiveBuffer);
 	LeaveCriticalSection(&(transport->ReadLock));
 
-	/* HACK: We disconnected the transport above, now wait without a read or write lock until all
-	 * streams in use have been returned to the pool. */
-	while (TRUE)
-	{
-		const size_t used = StreamPool_UsedCount(transport->ReceivePool);
-		if (used == 0)
-			break;
-		WLog_Print(transport->log, WLOG_WARN, "%" PRIuz " streams still in use, sleeping...", used);
-
-		char buffer[4096] = { 0 };
-		StreamPool_GetStatistics(transport->ReceivePool, buffer, sizeof(buffer));
-		WLog_Print(transport->log, WLOG_WARN, "Pool statistics: %s", buffer);
-		Sleep(100);
-	}
+	(void)StreamPool_WaitForReturn(transport->ReceivePool, INFINITE);
 
 	EnterCriticalSection(&(transport->ReadLock));
 	EnterCriticalSection(&(transport->WriteLock));

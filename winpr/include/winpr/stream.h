@@ -1388,6 +1388,18 @@ extern "C"
 	 */
 	WINPR_API size_t StreamPool_UsedCount(wStreamPool* pool);
 
+	/** Wait up to \b timeoutMS milliseconds for streams to be returned to the pool.
+	 *  Use \b INFINITE for an infinite timeout
+	 *
+	 *  @param pool The pool to query, must not be \b NULL
+	 *  @param timeoutMS Milliseconds to wait at most, use \b INFINITE for no timeout.
+	 *
+	 *  @return \b TRUE in case all streams were returned, \b FALSE otherwise.
+	 *
+	 *  @since version 3.10.0
+	 */
+	WINPR_API BOOL StreamPool_WaitForReturn(wStreamPool* pool, UINT32 timeoutMS);
+
 	WINPR_API void StreamPool_Clear(wStreamPool* pool);
 
 	WINPR_API void StreamPool_Free(wStreamPool* pool);

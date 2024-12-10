@@ -497,3 +497,32 @@ char* StreamPool_GetStatistics(wStreamPool* pool, char* buffer, size_t size)
 	buffer[used] = '\0';
 	return buffer;
 }
+
+BOOL StreamPool_WaitForReturn(wStreamPool* pool, UINT32 timeoutMS)
+{
+	wLog* log = WLog_Get(TAG);
+
+	/* HACK: We disconnected the transport above, now wait without a read or write lock until all
+	 * streams in use have been returned to the pool. */
+	while (timeoutMS > 0)
+	{
+		const size_t used = StreamPool_UsedCount(pool);
+		if (used == 0)
+			return TRUE;
+		WLog_Print(log, WLOG_DEBUG, "%" PRIuz " streams still in use, sleeping...", used);
+
+		char buffer[4096] = { 0 };
+		StreamPool_GetStatistics(pool, buffer, sizeof(buffer));
+		WLog_Print(log, WLOG_TRACE, "Pool statistics: %s", buffer);
+
+		UINT32 diff = 10;
+		if (timeoutMS != INFINITE)
+		{
+			diff = timeoutMS > 10 ? 10 : timeoutMS;
+			timeoutMS -= diff;
+		}
+		Sleep(diff);
+	}
+
+	return FALSE;
+}
