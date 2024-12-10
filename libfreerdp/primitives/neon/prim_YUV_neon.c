@@ -81,13 +81,13 @@ static INLINE BYTE* neon_YuvToRgbPixel(BYTE* pRGB, int16x8_t Y, int16x8_t D, int
                                        const uint8_t rPos, const uint8_t gPos, const uint8_t bPos,
                                        const uint8_t aPos)
 {
-	uint8x8x4_t bgrx;
 	const int32x4_t Ch = vmulq_n_s32(vmovl_s16(vget_high_s16(Y)), 256); /* Y * 256 */
 	const int32x4_t Cl = vmulq_n_s32(vmovl_s16(vget_low_s16(Y)), 256);  /* Y * 256 */
 	const int16x4_t Dh = vget_high_s16(D);
 	const int16x4_t Dl = vget_low_s16(D);
 	const int16x4_t Eh = vget_high_s16(E);
 	const int16x4_t El = vget_low_s16(E);
+	uint8x8x4_t bgrx = vld4_u8(pRGB);
 	{
 		/* B = (256L * Y + 475 * (U - 128)) >> 8*/
 		const int16x4_t c475 = vdup_n_s16(475);
@@ -120,10 +120,6 @@ static INLINE BYTE* neon_YuvToRgbPixel(BYTE* pRGB, int16x8_t Y, int16x8_t D, int
 		const int32x4_t Rl = vrshrq_n_s32(CEl, 8);
 		const int16x8_t R = vcombine_s16(vqmovn_s32(Rl), vqmovn_s32(Rh));
 		bgrx.val[rPos] = vqmovun_s16(R);
-	}
-	{
-		/* A */
-		bgrx.val[aPos] = vdup_n_u8(0xFF);
 	}
 	vst4_u8(pRGB, bgrx);
 	pRGB += 32;
@@ -213,7 +209,6 @@ static INLINE pstatus_t neon_YUV420ToX(const BYTE* WINPR_RESTRICT pSrc[3], const
 				const BYTE r = YUV2R(Y, U, V);
 				const BYTE g = YUV2G(Y, U, V);
 				const BYTE b = YUV2B(Y, U, V);
-				pRGB1[aPos] = 0xFF;
 				pRGB1[rPos] = r;
 				pRGB1[gPos] = g;
 				pRGB1[bPos] = b;
@@ -226,7 +221,6 @@ static INLINE pstatus_t neon_YUV420ToX(const BYTE* WINPR_RESTRICT pSrc[3], const
 				const BYTE r = YUV2R(Y, U, V);
 				const BYTE g = YUV2G(Y, U, V);
 				const BYTE b = YUV2B(Y, U, V);
-				pRGB2[aPos] = 0xFF;
 				pRGB2[rPos] = r;
 				pRGB2[gPos] = g;
 				pRGB2[bPos] = b;
@@ -325,7 +319,6 @@ static INLINE pstatus_t neon_YUV444ToX(const BYTE* WINPR_RESTRICT pSrc[3], const
 			const BYTE r = YUV2R(Y, U, V);
 			const BYTE g = YUV2G(Y, U, V);
 			const BYTE b = YUV2B(Y, U, V);
-			pRGB[aPos] = 0xFF;
 			pRGB[rPos] = r;
 			pRGB[gPos] = g;
 			pRGB[bPos] = b;
