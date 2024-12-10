@@ -236,6 +236,7 @@ static const char* freerdp_passphrase_read_askpass(const char* prompt, char* buf
 
 	(void)sprintf_s(command, sizeof(command), "%s 'FreeRDP authentication\n%s'", askpass_env,
 	                prompt);
+	// NOLINTNEXTLINE(clang-analyzer-optin.taint.GenericTaint)
 	FILE* askproc = popen(command, "r");
 	if (!askproc)
 		return NULL;
