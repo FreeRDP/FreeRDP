@@ -1458,6 +1458,7 @@ HANDLE GetFileHandleForFileDescriptor(int fd)
 
 	(void)setvbuf(fp, NULL, _IONBF, 0);
 
+	// NOLINTNEXTLINE(clang-analyzer-unix.Stream)
 	pFile = FileHandle_New(fp);
 	if (!pFile)
 		return INVALID_HANDLE_VALUE;
