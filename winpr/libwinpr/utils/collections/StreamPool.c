@@ -451,14 +451,14 @@ char* StreamPool_GetStatistics(wStreamPool* pool, char* buffer, size_t size)
 	                       "aSize    =%" PRIuz ", uSize    =%" PRIuz ", aCapacity=%" PRIuz
 	                       ", uCapacity=%" PRIuz,
 	                       pool->aSize, pool->uSize, pool->aCapacity, pool->uCapacity);
-	if ((offset > 0) && (offset < size))
+	if ((offset > 0) && ((size_t)offset < size))
 		used += (size_t)offset;
 
 #if defined(WITH_STREAMPOOL_DEBUG)
 	StreamPool_Lock(pool);
 
 	offset = _snprintf(&buffer[used], size - 1 - used, "\n-- dump used array take locations --\n");
-	if ((offset > 0) && (offset < size - used))
+	if ((offset > 0) && ((size_t)offset < size - used))
 		used += (size_t)offset;
 	for (size_t x = 0; x < pool->uSize; x++)
 	{
@@ -469,13 +469,13 @@ char* StreamPool_GetStatistics(wStreamPool* pool, char* buffer, size_t size)
 		{
 			offset = _snprintf(&buffer[used], size - 1 - used, "[%" PRIuz " | %" PRIuz "]: %s\n", x,
 			                   y, cur->msg[y]);
-			if ((offset > 0) && (offset < size - used))
+			if ((offset > 0) && ((size_t)offset < size - used))
 				used += (size_t)offset;
 		}
 	}
 
 	offset = _snprintf(&buffer[used], size - 1 - used, "\n-- statistics called from --\n");
-	if ((offset > 0) && (offset < size - used))
+	if ((offset > 0) && ((size_t)offset < size - used))
 		used += (size_t)offset;
 
 	struct s_StreamPoolEntry entry = { 0 };
@@ -488,7 +488,7 @@ char* StreamPool_GetStatistics(wStreamPool* pool, char* buffer, size_t size)
 	{
 		const char* msg = entry.msg[x];
 		offset = _snprintf(&buffer[used], size - 1 - used, "[%" PRIuz "]: %s\n", x, msg);
-		if ((offset > 0) && (offset < size - used))
+		if ((offset > 0) && ((size_t)offset < size - used))
 			used += (size_t)offset;
 	}
 	free((void*)entry.msg);

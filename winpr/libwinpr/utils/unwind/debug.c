@@ -197,5 +197,6 @@ char** winpr_unwind_backtrace_symbols(void* buffer, size_t* used)
 			                dlinfo.dli_fname, dlinfo.dli_fbase, dlinfo.dli_sname, dlinfo.dli_saddr);
 	}
 
+	// NOLINTNEXTLINE(clang-analyzer-unix.Malloc): function is an allocator
 	return cnv.cpp;
 }
