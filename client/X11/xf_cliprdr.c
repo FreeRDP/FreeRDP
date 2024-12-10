@@ -1081,6 +1081,13 @@ static BOOL append(xfClipboard* clipboard, const void* sdata, size_t length)
 	return TRUE;
 }
 
+static BOOL xf_cliprdr_stop_incr(xfClipboard* clipboard)
+{
+	clipboard->incr_starts = FALSE;
+	clipboard->incr_data_length = 0;
+	return xf_restore_input_flags(clipboard);
+}
+
 static BOOL xf_cliprdr_get_requested_data(xfClipboard* clipboard, Atom target)
 {
 	WINPR_ASSERT(clipboard);
@@ -1104,7 +1111,7 @@ static BOOL xf_cliprdr_get_requested_data(xfClipboard* clipboard, Atom target)
 	unsigned long total_bytes = 0;
 	BYTE* property_data = NULL;
 	const int rc = LogTagAndXGetWindowProperty(
-	    TAG, xfc->display, xfc->drawable, clipboard->property_atom, 0, 0, 0, target, &type,
+	    TAG, xfc->display, xfc->drawable, clipboard->property_atom, 0, 0, False, target, &type,
 	    &format_property, &length, &total_bytes, &property_data);
 	if (rc != Success)
 	{
@@ -1112,17 +1119,19 @@ static BOOL xf_cliprdr_get_requested_data(xfClipboard* clipboard, Atom target)
 		return FALSE;
 	}
 
+	size_t len = 0;
+
 	/* No data, empty return */
 	if ((total_bytes <= 0) && !clipboard->incr_starts)
 	{
+		xf_cliprdr_stop_incr(clipboard);
 	}
 	/* We have to read incremental updates */
 	else if (type == clipboard->incr_atom)
 	{
+		xf_cliprdr_stop_incr(clipboard);
 		clipboard->incr_starts = TRUE;
-		clipboard->incr_data_length = 0;
 		has_data = TRUE; /* data will follow in PropertyNotify event */
-		xf_add_input_flags(clipboard, PropertyChangeMask);
 	}
 	else
 	{
@@ -1130,23 +1139,20 @@ static BOOL xf_cliprdr_get_requested_data(xfClipboard* clipboard, Atom target)
 		unsigned long incremental_len = 0;
 
 		/* Incremental updates completed, pass data */
+		len = clipboard->incr_data_length;
 		if (total_bytes <= 0)
 		{
-			/* INCR finish */
-			clipboard->incr_starts = FALSE;
-
-			/* Restore previous event mask */
-			xf_restore_input_flags(clipboard);
-
+			xf_cliprdr_stop_incr(clipboard);
 			has_data = TRUE;
 		}
 		/* Read incremental data batch */
 		else if (LogTagAndXGetWindowProperty(TAG, xfc->display, xfc->drawable,
-		                                     clipboard->property_atom, 0, total_bytes, 0, target,
-		                                     &type, &format_property, &incremental_len, &length,
-		                                     &incremental_data) == Success)
+		                                     clipboard->property_atom, 0, total_bytes, False,
+		                                     target, &type, &format_property, &incremental_len,
+		                                     &length, &incremental_data) == Success)
 		{
 			has_data = append(clipboard, incremental_data, incremental_len);
+			len = clipboard->incr_data_length;
 		}
 
 		if (incremental_data)
@@ -1154,8 +1160,7 @@ static BOOL xf_cliprdr_get_requested_data(xfClipboard* clipboard, Atom target)
 	}
 
 	LogTagAndXDeleteProperty(TAG, xfc->display, xfc->drawable, clipboard->property_atom);
-	xf_cliprdr_process_requested_data(clipboard, has_data, clipboard->incr_data,
-	                                  clipboard->incr_data_length);
+	xf_cliprdr_process_requested_data(clipboard, has_data, clipboard->incr_data, len);
 
 	return TRUE;
 }
@@ -1330,6 +1335,8 @@ void xf_cliprdr_clear_cached_data(xfClipboard* clipboard)
 	HashTable_Clear(clipboard->cachedRawData);
 
 	cliprdr_file_context_clear(clipboard->file);
+
+	xf_cliprdr_stop_incr(clipboard);
 	ClipboardUnlock(clipboard->system);
 }
 
