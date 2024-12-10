@@ -134,8 +134,9 @@ extern "C"
 
 	/** Helper to fetch a \b WINPR_JSON object from AAD/ARM::wellknown JSON
 	 *
-	 * @param context The rdpContext to query for
-	 * @param which The raw string name of the field to query
+	 * @param  log A logger instance to use
+	 * @param base the base URL to connect to
+	 * @param tenantid the tenant to use for the connection, use \b common for default
 	 *  @return A \b WINPR_JSON object to be used for queries or \b NULL in case it does not exist.
 	 *
 	 *  @since version 3.10.0
