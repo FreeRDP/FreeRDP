@@ -41,7 +41,7 @@ BOOL sspi_gss_wrap_token(SecBuffer* buf, const WinPrAsn1_OID* oid, uint16_t tok_
 	WINPR_ASSERT(oid);
 	WINPR_ASSERT(token);
 
-	Data_Write_UINT16_BE(tok_id_buf, tok_id);
+	winpr_Data_Write_UINT16_BE(tok_id_buf, tok_id);
 
 	enc = WinPrAsn1Encoder_New(WINPR_ASN1_DER);
 	if (!enc)
