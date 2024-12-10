@@ -868,8 +868,12 @@ BOOL aad_fetch_wellknown(rdpAad* aad)
 
 	const char* base =
 	    freerdp_settings_get_string(aad->rdpcontext->settings, FreeRDP_GatewayAzureActiveDirectory);
-	const char* tenantid =
-	    freerdp_settings_get_string(aad->rdpcontext->settings, FreeRDP_GatewayAvdAadtenantid);
+	const BOOL useTenant =
+	    freerdp_settings_get_bool(aad->rdpcontext->settings, FreeRDP_GatewayAvdUseTenantid);
+	const char* tenantid = "common";
+	if (useTenant)
+		tenantid =
+		    freerdp_settings_get_string(aad->rdpcontext->settings, FreeRDP_GatewayAvdAadtenantid);
 	rdp->wellknown = freerdp_utils_aad_get_wellknown(aad->log, base, tenantid);
 	return rdp->wellknown ? TRUE : FALSE;
 }

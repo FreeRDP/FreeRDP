@@ -829,6 +829,8 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 			goto out_fail;
 		if (!freerdp_settings_set_string(settings, FreeRDP_GatewayAvdAadtenantid, "common"))
 			goto out_fail;
+		if (!freerdp_settings_set_bool(settings, FreeRDP_GatewayAvdUseTenantid, FALSE))
+			goto out_fail;
 		if (!freerdp_settings_set_uint32(settings, FreeRDP_DesktopPhysicalWidth, 1000))
 			goto out_fail;
 		if (!freerdp_settings_set_uint32(settings, FreeRDP_DesktopPhysicalHeight, 1000))

@@ -64,6 +64,7 @@ static const size_t bool_list_indices[] = {
 	FreeRDP_FrameMarkerCommandEnabled,
 	FreeRDP_Fullscreen,
 	FreeRDP_GatewayArmTransport,
+	FreeRDP_GatewayAvdUseTenantid,
 	FreeRDP_GatewayBypassLocal,
 	FreeRDP_GatewayEnabled,
 	FreeRDP_GatewayHttpExtAuthSspiNtlm,

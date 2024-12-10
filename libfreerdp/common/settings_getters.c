@@ -240,6 +240,9 @@ BOOL freerdp_settings_get_bool(const rdpSettings* settings, FreeRDP_Settings_Key
 		case FreeRDP_GatewayArmTransport:
 			return settings->GatewayArmTransport;
 
+		case FreeRDP_GatewayAvdUseTenantid:
+			return settings->GatewayAvdUseTenantid;
+
 		case FreeRDP_GatewayBypassLocal:
 			return settings->GatewayBypassLocal;
 
@@ -902,6 +905,10 @@ BOOL freerdp_settings_set_bool(rdpSettings* settings, FreeRDP_Settings_Keys_Bool
 
 		case FreeRDP_GatewayArmTransport:
 			settings->GatewayArmTransport = cnv.c;
+			break;
+
+		case FreeRDP_GatewayAvdUseTenantid:
+			settings->GatewayAvdUseTenantid = cnv.c;
 			break;
 
 		case FreeRDP_GatewayBypassLocal:

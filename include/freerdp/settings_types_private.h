@@ -495,7 +495,10 @@ struct rdp_settings
 	SETTINGS_DEPRECATED(ALIGN64 UINT16 ProxyPort);    /* 2017 */
 	SETTINGS_DEPRECATED(ALIGN64 char* ProxyUsername); /* 2018 */
 	SETTINGS_DEPRECATED(ALIGN64 char* ProxyPassword); /* 2019 */
-	UINT64 padding2112[2112 - 2020];                  /* 2020 */
+	SETTINGS_DEPRECATED(ALIGN64 BOOL GatewayAvdUseTenantid); /** 2020
+		                                                      * @since version 3.10.0
+		                                                      */
+	UINT64 padding2112[2112 - 2021];                         /* 2021 */
 
 	/**
 	 * RemoteApp

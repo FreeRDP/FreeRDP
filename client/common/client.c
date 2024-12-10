@@ -1099,8 +1099,12 @@ static BOOL client_cli_get_avd_access_token(freerdp* instance, char** token)
 	    freerdp_settings_get_string(instance->context->settings, FreeRDP_GatewayAvdClientID);
 	const char* base = freerdp_settings_get_string(instance->context->settings,
 	                                               FreeRDP_GatewayAzureActiveDirectory);
-	const char* tenantid =
-	    freerdp_settings_get_string(instance->context->settings, FreeRDP_GatewayAvdAadtenantid);
+	const BOOL useTenant =
+	    freerdp_settings_get_bool(instance->context->settings, FreeRDP_GatewayAvdUseTenantid);
+	const char* tenantid = "common";
+	if (useTenant)
+		tenantid =
+		    freerdp_settings_get_string(instance->context->settings, FreeRDP_GatewayAvdAadtenantid);
 	if (!base || !tenantid || !client_id)
 		goto cleanup;
 

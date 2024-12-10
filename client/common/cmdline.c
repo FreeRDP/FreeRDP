@@ -3722,6 +3722,25 @@ static int parse_aad_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_
 			BOOL handled = FALSE;
 			const char* val = ptr[x];
 
+			if (option_starts_with("use-tenantid", val))
+			{
+				PARSE_ON_OFF_RESULT bval = parse_on_off_option(val);
+				if (bval == PARSE_FAIL)
+				{
+					rc = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+					break;
+				}
+				else
+				{
+					if (!freerdp_settings_set_bool(settings, FreeRDP_GatewayAvdUseTenantid,
+					                               bval != PARSE_OFF))
+					{
+						rc = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+						break;
+					}
+				}
+				continue;
+			}
 			for (size_t y = 0; y < ARRAYSIZE(amap); y++)
 			{
 				const struct app_map* cur = &amap[y];
