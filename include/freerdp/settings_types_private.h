@@ -482,7 +482,12 @@ struct rdp_settings
 	SETTINGS_DEPRECATED(ALIGN64 BOOL GatewayIgnoreRedirectionPolicy);  /** 2012
 		                                                                * @since version 3.4.0
 		                                                                */
-	UINT64 padding2015[2015 - 2013];                                   /* 2013 */
+	SETTINGS_DEPRECATED(ALIGN64 char* GatewayAvdClientID);             /** 2013
+		                                                                * @since version 3.10.0
+		                                                                */
+	SETTINGS_DEPRECATED(ALIGN64 char* GatewayAzureActiveDirectory);    /** 2014
+		                                                                * @since version 3.10.0
+		                                                                */
 
 	/* Proxy */
 	SETTINGS_DEPRECATED(ALIGN64 UINT32 ProxyType);    /* 2015 */
@@ -490,7 +495,10 @@ struct rdp_settings
 	SETTINGS_DEPRECATED(ALIGN64 UINT16 ProxyPort);    /* 2017 */
 	SETTINGS_DEPRECATED(ALIGN64 char* ProxyUsername); /* 2018 */
 	SETTINGS_DEPRECATED(ALIGN64 char* ProxyPassword); /* 2019 */
-	UINT64 padding2112[2112 - 2020];                  /* 2020 */
+	SETTINGS_DEPRECATED(ALIGN64 BOOL GatewayAvdUseTenantid); /** 2020
+		                                                      * @since version 3.10.0
+		                                                      */
+	UINT64 padding2112[2112 - 2021];                         /* 2021 */
 
 	/**
 	 * RemoteApp

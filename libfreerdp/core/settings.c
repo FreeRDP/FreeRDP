@@ -821,6 +821,16 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 
 	if (!server && !remote)
 	{
+		if (!freerdp_settings_set_string(settings, FreeRDP_GatewayAvdClientID,
+		                                 "a85cf173-4192-42f8-81fa-777a763e6e2c"))
+			goto out_fail;
+		if (!freerdp_settings_set_string(settings, FreeRDP_GatewayAzureActiveDirectory,
+		                                 "login.microsoftonline.com"))
+			goto out_fail;
+		if (!freerdp_settings_set_string(settings, FreeRDP_GatewayAvdAadtenantid, "common"))
+			goto out_fail;
+		if (!freerdp_settings_set_bool(settings, FreeRDP_GatewayAvdUseTenantid, FALSE))
+			goto out_fail;
 		if (!freerdp_settings_set_uint32(settings, FreeRDP_DesktopPhysicalWidth, 1000))
 			goto out_fail;
 		if (!freerdp_settings_set_uint32(settings, FreeRDP_DesktopPhysicalHeight, 1000))
