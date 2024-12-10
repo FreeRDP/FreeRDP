@@ -288,8 +288,8 @@ static BOOL ecam_init_mjpeg_decoder(CameraDeviceStream* stream)
 		return FALSE;
 	}
 
-	stream->avContext->width = stream->currMediaType.Width;
-	stream->avContext->height = stream->currMediaType.Height;
+	stream->avContext->width = WINPR_SAFE_INT_CAST(int, stream->currMediaType.Width);
+	stream->avContext->height = WINPR_SAFE_INT_CAST(int, stream->currMediaType.Height);
 
 	/* AV_EF_EXPLODE flag is to abort decoding on minor error detection,
 	 * return error, so we can skip corrupted frames, if any */

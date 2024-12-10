@@ -23,6 +23,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/assert.h>
+#include <winpr/cast.h>
 
 #include <freerdp/log.h>
 
@@ -256,7 +257,9 @@ int rpc_send_bind_pdu(rdpRpc* rpc, BOOL initial)
 	bind_pdu.auth_verifier.auth_reserved = 0x00;
 	bind_pdu.auth_verifier.auth_context_id = 0x00000000;
 	offset += (8 + bind_pdu.header.auth_length);
-	bind_pdu.header.frag_length = offset;
+
+	WINPR_ASSERT(offset <= UINT16_MAX);
+	bind_pdu.header.frag_length = (UINT16)offset;
 
 	buffer = Stream_New(NULL, bind_pdu.header.frag_length);
 
@@ -408,14 +411,19 @@ int rpc_send_rpc_auth_3_pdu(rdpRpc* rpc)
 	auth_3_pdu.max_xmit_frag = rpc->max_xmit_frag;
 	auth_3_pdu.max_recv_frag = rpc->max_recv_frag;
 	offset = 20;
-	auth_3_pdu.auth_verifier.auth_pad_length = rpc_offset_align(&offset, 4);
+
+	const size_t align = rpc_offset_align(&offset, 4);
+	WINPR_ASSERT(align <= UINT8_MAX);
+	auth_3_pdu.auth_verifier.auth_pad_length = (BYTE)align;
 	auth_3_pdu.auth_verifier.auth_type =
 	    rpc_auth_pkg_to_security_provider(credssp_auth_pkg_name(rpc->auth));
 	auth_3_pdu.auth_verifier.auth_level = RPC_C_AUTHN_LEVEL_PKT_INTEGRITY;
 	auth_3_pdu.auth_verifier.auth_reserved = 0x00;
 	auth_3_pdu.auth_verifier.auth_context_id = 0x00000000;
 	offset += (8 + auth_3_pdu.header.auth_length);
-	auth_3_pdu.header.frag_length = offset;
+
+	WINPR_ASSERT(offset <= UINT16_MAX);
+	auth_3_pdu.header.frag_length = (UINT16)offset;
 
 	buffer = Stream_New(NULL, auth_3_pdu.header.frag_length);
 

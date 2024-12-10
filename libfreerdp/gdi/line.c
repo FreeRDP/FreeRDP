@@ -309,7 +309,7 @@ BOOL gdi_MoveToEx(HGDI_DC hdc, UINT32 X, UINT32 Y, HGDI_POINT lpPoint)
 		lpPoint->y = hdc->pen->posY;
 	}
 
-	hdc->pen->posX = X;
-	hdc->pen->posY = Y;
+	hdc->pen->posX = WINPR_SAFE_INT_CAST(INT32, X);
+	hdc->pen->posY = WINPR_SAFE_INT_CAST(INT32, Y);
 	return TRUE;
 }

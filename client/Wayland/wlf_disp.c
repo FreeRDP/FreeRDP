@@ -19,6 +19,7 @@
  */
 
 #include <winpr/sysinfo.h>
+#include <winpr/cast.h>
 
 #include "wlf_disp.h"
 
@@ -318,8 +319,8 @@ UINT wlf_disp_sendLayout(DispClientContext* disp, const rdpMonitor* monitors, si
 		layout->Flags = (monitor->is_primary ? DISPLAY_CONTROL_MONITOR_PRIMARY : 0);
 		layout->Left = monitor->x;
 		layout->Top = monitor->y;
-		layout->Width = monitor->width;
-		layout->Height = monitor->height;
+		layout->Width = WINPR_SAFE_INT_CAST(UINT32, monitor->width);
+		layout->Height = WINPR_SAFE_INT_CAST(UINT32, monitor->height);
 		layout->Orientation = ORIENTATION_LANDSCAPE;
 		layout->PhysicalWidth = monitor->attributes.physicalWidth;
 		layout->PhysicalHeight = monitor->attributes.physicalHeight;

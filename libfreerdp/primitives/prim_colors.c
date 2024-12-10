@@ -18,6 +18,8 @@
  */
 
 #include <freerdp/config.h>
+#include <winpr/assert.h>
+#include <winpr/cast.h>
 
 #include <freerdp/types.h>
 #include <freerdp/primitives.h>
@@ -284,7 +286,14 @@ static INLINE void writeScanlineGeneric(BYTE* dst, DWORD formatSize, UINT32 DstF
 	fkt_writePixel writePixel = getPixelWriteFunction(DstFormat, FALSE);
 
 	for (UINT32 x = 0; x < width; x++)
-		dst = writePixel(dst, formatSize, DstFormat, *r++, *g++, *b++, 0);
+	{
+		const INT16 pr = *r++;
+		const INT16 pg = *g++;
+		const INT16 pb = *b++;
+
+		dst = writePixel(dst, formatSize, DstFormat, WINPR_SAFE_INT_CAST(UINT8, pr),
+		                 WINPR_SAFE_INT_CAST(UINT8, pg), WINPR_SAFE_INT_CAST(UINT8, pb), 0);
+	}
 }
 
 static INLINE void writeScanlineRGB(BYTE* dst, DWORD formatSize, UINT32 DstFormat, const INT16* r,

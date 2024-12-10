@@ -26,6 +26,7 @@
 
 #include <winpr/winpr.h>
 #include <winpr/crt.h>
+#include <winpr/cast.h>
 #include <winpr/assert.h>
 #include <winpr/ssl.h>
 #include <winpr/synch.h>
@@ -404,8 +405,9 @@ static void test_peer_draw_icon(freerdp_peer* client, UINT32 x, UINT32 y)
 
 	rect.x = 0;
 	rect.y = 0;
-	rect.width = context->image->width;
-	rect.height = context->image->height;
+
+	rect.width = WINPR_SAFE_INT_CAST(UINT16, context->image->width);
+	rect.height = WINPR_SAFE_INT_CAST(UINT16, context->image->height);
 
 	const UINT32 w = freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth);
 	const UINT32 h = freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight);

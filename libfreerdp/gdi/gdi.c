@@ -26,6 +26,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/assert.h>
+#include <winpr/cast.h>
 
 #include <freerdp/api.h>
 #include <freerdp/log.h>
@@ -488,43 +489,39 @@ BOOL gdi_bitmap_update(rdpContext* context, const BITMAP_UPDATE* bitmapUpdate)
 
 	for (UINT32 index = 0; index < bitmapUpdate->number; index++)
 	{
+		BOOL rc = FALSE;
 		const BITMAP_DATA* bitmap = &(bitmapUpdate->rectangles[index]);
 		rdpBitmap* bmp = Bitmap_Alloc(context);
 
 		if (!bmp)
-		{
-			WLog_ERR(TAG, "Bitmap_Alloc failed");
-			return FALSE;
-		}
+			goto fail;
 
-		Bitmap_SetDimensions(bmp, bitmap->width, bitmap->height);
-		Bitmap_SetRectangle(bmp, bitmap->destLeft, bitmap->destTop, bitmap->destRight,
-		                    bitmap->destBottom);
+		if (!Bitmap_SetDimensions(bmp, WINPR_SAFE_INT_CAST(UINT16, bitmap->width),
+		                          WINPR_SAFE_INT_CAST(UINT16, bitmap->height)))
+			goto fail;
+
+		if (!Bitmap_SetRectangle(bmp, WINPR_SAFE_INT_CAST(UINT16, bitmap->destLeft),
+		                         WINPR_SAFE_INT_CAST(UINT16, bitmap->destTop),
+		                         WINPR_SAFE_INT_CAST(UINT16, bitmap->destRight),
+		                         WINPR_SAFE_INT_CAST(UINT16, bitmap->destBottom)))
+			goto fail;
 
 		if (!bmp->Decompress(context, bmp, bitmap->bitmapDataStream, bitmap->width, bitmap->height,
 		                     bitmap->bitsPerPixel, bitmap->bitmapLength, bitmap->compressed,
 		                     RDP_CODEC_ID_NONE))
-		{
-			WLog_ERR(TAG, "bmp->Decompress failed");
-			Bitmap_Free(context, bmp);
-			return FALSE;
-		}
+			goto fail;
 
 		if (!bmp->New(context, bmp))
-		{
-			WLog_ERR(TAG, "bmp->New failed");
-			Bitmap_Free(context, bmp);
-			return FALSE;
-		}
+			goto fail;
 
 		if (!bmp->Paint(context, bmp))
-		{
-			WLog_ERR(TAG, "bmp->Paint failed");
-			Bitmap_Free(context, bmp);
-			return FALSE;
-		}
+			goto fail;
 
+		rc = TRUE;
+	fail:
 		Bitmap_Free(context, bmp);
+		if (!rc)
+			return FALSE;
 	}
 
 	return TRUE;
@@ -1449,7 +1446,10 @@ BOOL gdi_send_suppress_output(rdpGdi* gdi, BOOL suppress)
 	update = gdi->context->update;
 	rect.left = 0;
 	rect.top = 0;
-	rect.right = freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth);
-	rect.bottom = freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight);
+
+	const UINT32 w = freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth);
+	const UINT32 h = freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight);
+	rect.right = WINPR_SAFE_INT_CAST(UINT16, w);
+	rect.bottom = WINPR_SAFE_INT_CAST(UINT16, h);
 	return update->SuppressOutput(gdi->context, !suppress, &rect);
 }

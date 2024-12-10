@@ -1017,7 +1017,7 @@ static UINT VCAPITYPE FreeRDP_VirtualChannelInitEx(
 		}
 		pChannelOpenData->flags = 1; /* init */
 		strncpy(pChannelOpenData->name, pChannelDef->name, CHANNEL_NAME_LEN);
-		pChannelOpenData->options = pChannelDef->options;
+		pChannelOpenData->options = WINPR_SAFE_INT_CAST(int, pChannelDef->options);
 
 		const UINT32 max = freerdp_settings_get_uint32(settings, FreeRDP_ChannelDefArraySize);
 		WINPR_ASSERT(max >= CHANNEL_MAX_COUNT);

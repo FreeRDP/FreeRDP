@@ -67,7 +67,8 @@ static int test_basic(void)
 
 	rects = region16_rects(&region, &nbRects);
 
-	if (!rects || nbRects != 2 || !compareRectangles(rects, r1_r2, nbRects))
+	if (!rects || nbRects != 2 ||
+	    !compareRectangles(rects, r1_r2, WINPR_SAFE_INT_CAST(int, nbRects)))
 		goto out;
 
 	/* clear region */
@@ -382,7 +383,8 @@ static int test_r1_r7_r8(void)
 
 	rects = region16_rects(&region, &nbRects);
 
-	if (!rects || nbRects != 5 || !compareRectangles(rects, r1_r7_r8, nbRects))
+	if (!rects || nbRects != 5 ||
+	    !compareRectangles(rects, r1_r7_r8, WINPR_SAFE_INT_CAST(int, nbRects)))
 		goto out;
 
 	retCode = 0;

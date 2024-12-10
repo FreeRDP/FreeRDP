@@ -18,6 +18,8 @@
  */
 
 #include <winpr/wtsapi.h>
+#include <winpr/assert.h>
+#include <winpr/cast.h>
 #include <freerdp/config.h>
 
 #include "settings.h"
@@ -1838,9 +1840,13 @@ static BOOL rdp_write_offscreen_bitmap_cache_capability_set(wStream* s, const rd
 	{
 		offscreenSupportLevel = 0x01;
 		Stream_Write_UINT32(s, offscreenSupportLevel);        /* offscreenSupportLevel (4 bytes) */
-		Stream_Write_UINT16(s, settings->OffscreenCacheSize); /* offscreenCacheSize (2 bytes) */
-		Stream_Write_UINT16(s,
-		                    settings->OffscreenCacheEntries); /* offscreenCacheEntries (2 bytes) */
+		Stream_Write_UINT16(
+		    s, WINPR_SAFE_INT_CAST(
+		           uint16_t, settings->OffscreenCacheSize)); /* offscreenCacheSize (2 bytes) */
+		Stream_Write_UINT16(
+		    s,
+		    WINPR_SAFE_INT_CAST(
+		        uint16_t, settings->OffscreenCacheEntries)); /* offscreenCacheEntries (2 bytes) */
 	}
 	else
 		Stream_Zero(s, 8);
@@ -2081,7 +2087,9 @@ static BOOL rdp_write_bitmap_cache_v2_capability_set(wStream* s, const rdpSettin
 
 	Stream_Write_UINT16(s, cacheFlags);                     /* cacheFlags (2 bytes) */
 	Stream_Write_UINT8(s, 0);                               /* pad2 (1 byte) */
-	Stream_Write_UINT8(s, settings->BitmapCacheV2NumCells); /* numCellCaches (1 byte) */
+	Stream_Write_UINT8(
+	    s,
+	    WINPR_SAFE_INT_CAST(uint8_t, settings->BitmapCacheV2NumCells)); /* numCellCaches (1 byte) */
 	rdp_write_bitmap_cache_cell_info(
 	    s, &settings->BitmapCacheV2CellInfo[0]); /* bitmapCache0CellInfo (4 bytes) */
 	rdp_write_bitmap_cache_cell_info(
@@ -2289,9 +2297,13 @@ static BOOL rdp_write_draw_nine_grid_cache_capability_set(wStream* s, const rdpS
 	const UINT32 drawNineGridSupportLevel =
 	    (settings->DrawNineGridEnabled) ? DRAW_NINEGRID_SUPPORTED_V2 : DRAW_NINEGRID_NO_SUPPORT;
 	Stream_Write_UINT32(s, drawNineGridSupportLevel); /* drawNineGridSupportLevel (4 bytes) */
-	Stream_Write_UINT16(s, settings->DrawNineGridCacheSize); /* drawNineGridCacheSize (2 bytes) */
 	Stream_Write_UINT16(
-	    s, settings->DrawNineGridCacheEntries); /* drawNineGridCacheEntries (2 bytes) */
+	    s, WINPR_SAFE_INT_CAST(
+	           uint16_t, settings->DrawNineGridCacheSize)); /* drawNineGridCacheSize (2 bytes) */
+	Stream_Write_UINT16(
+	    s,
+	    WINPR_SAFE_INT_CAST(
+	        uint16_t, settings->DrawNineGridCacheEntries)); /* drawNineGridCacheEntries (2 bytes) */
 	return rdp_capability_set_finish(s, header, CAPSET_TYPE_DRAW_NINE_GRID_CACHE);
 }
 
@@ -2564,9 +2576,13 @@ static BOOL rdp_write_window_list_capability_set(wStream* s, const rdpSettings* 
 
 	const size_t header = rdp_capability_set_start(s);
 	Stream_Write_UINT32(s, settings->RemoteWndSupportLevel); /* wndSupportLevel (4 bytes) */
-	Stream_Write_UINT8(s, settings->RemoteAppNumIconCaches); /* numIconCaches (1 byte) */
-	Stream_Write_UINT16(s,
-	                    settings->RemoteAppNumIconCacheEntries); /* numIconCacheEntries (2 bytes) */
+	Stream_Write_UINT8(
+	    s, WINPR_SAFE_INT_CAST(uint8_t,
+	                           settings->RemoteAppNumIconCaches)); /* numIconCaches (1 byte) */
+	Stream_Write_UINT16(
+	    s,
+	    WINPR_SAFE_INT_CAST(
+	        uint16_t, settings->RemoteAppNumIconCacheEntries)); /* numIconCacheEntries (2 bytes) */
 	return rdp_capability_set_finish(s, header, CAPSET_TYPE_WINDOW);
 }
 
@@ -2983,9 +2999,9 @@ static BOOL rdp_read_bitmap_codec_guid(wStream* s, GUID* guid)
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 16))
 		return FALSE;
 	Stream_Read(s, g, 16);
-	guid->Data1 = ((UINT32)g[3] << 24U) | ((UINT32)g[2] << 16U) | (g[1] << 8U) | g[0];
-	guid->Data2 = (g[5] << 8U) | g[4];
-	guid->Data3 = (g[7] << 8U) | g[6];
+	guid->Data1 = ((UINT32)g[3] << 24U) | ((UINT32)g[2] << 16U) | (UINT32)(g[1] << 8U) | g[0];
+	guid->Data2 = ((g[5] << 8U) | g[4]) & 0xFFFF;
+	guid->Data3 = ((g[7] << 8U) | g[6]) & 0xFFFF;
 	guid->Data4[0] = g[8];
 	guid->Data4[1] = g[9];
 	guid->Data4[2] = g[10];
@@ -3447,15 +3463,14 @@ static BOOL rdp_read_bitmap_codecs_capability_set(wStream* s, rdpSettings* setti
  */
 static BOOL rdp_write_rfx_client_capability_container(wStream* s, const rdpSettings* settings)
 {
-	UINT32 captureFlags = 0;
-	BYTE codecMode = 0;
-
 	WINPR_ASSERT(settings);
 	if (!Stream_EnsureRemainingCapacity(s, 64))
 		return FALSE;
 
-	captureFlags = settings->RemoteFxOnly ? 0 : CARDP_CAPS_CAPTURE_NON_CAC;
-	codecMode = settings->RemoteFxCodecMode;
+	const UINT32 captureFlags = settings->RemoteFxOnly ? 0 : CARDP_CAPS_CAPTURE_NON_CAC;
+
+	WINPR_ASSERT(settings->RemoteFxCodecMode <= UINT8_MAX);
+	const UINT8 codecMode = (UINT8)settings->RemoteFxCodecMode;
 	Stream_Write_UINT16(s, 49); /* codecPropertiesLength */
 	/* TS_RFX_CLNT_CAPS_CONTAINER */
 	Stream_Write_UINT32(s, 49);           /* length */

@@ -24,6 +24,7 @@
 #include "../settings.h"
 
 #include <winpr/assert.h>
+#include <winpr/cast.h>
 
 #include <winpr/crt.h>
 #include <winpr/synch.h>
@@ -1620,11 +1621,17 @@ static int rdg_write_websocket_data_packet(rdpRdg* rdg, const BYTE* buf, int isi
 	if (!sWS)
 		return FALSE;
 
-	Stream_Write_UINT16(sWS, PKT_TYPE_DATA ^ (maskingKey.u8[0] | maskingKey.u8[1] << 8)); /* Type */
-	Stream_Write_UINT16(sWS, 0 ^ (maskingKey.u8[2] | maskingKey.u8[3] << 8)); /* Reserved */
-	Stream_Write_UINT32(sWS, (UINT32)payloadSize ^ maskingKey.u32);           /* Packet length */
-	Stream_Write_UINT16(sWS,
-	                    (UINT16)isize ^ (maskingKey.u8[0] | maskingKey.u8[1] << 8)); /* Data size */
+	Stream_Write_UINT16(
+	    sWS, WINPR_SAFE_INT_CAST(
+	             uint16_t, PKT_TYPE_DATA ^ (maskingKey.u8[0] | maskingKey.u8[1] << 8))); /* Type */
+	Stream_Write_UINT16(
+	    sWS, WINPR_SAFE_INT_CAST(uint16_t,
+	                             0 ^ (maskingKey.u8[2] | maskingKey.u8[3] << 8))); /* Reserved */
+	Stream_Write_UINT32(
+	    sWS, WINPR_SAFE_INT_CAST(uint32_t, payloadSize ^ maskingKey.u32)); /* Packet length */
+	Stream_Write_UINT16(
+	    sWS, WINPR_SAFE_INT_CAST(
+	             uint16_t, isize ^ (maskingKey.u8[0] | maskingKey.u8[1] << 8))); /* Data size */
 
 	/* masking key is now off by 2 bytes. fix that */
 	maskingKey.u32 = (maskingKey.u32 & 0xffff) << 16 | (maskingKey.u32 >> 16);

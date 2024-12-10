@@ -29,6 +29,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/assert.h>
+#include <winpr/cast.h>
 
 #include "../core/settings.h"
 #include "../core/capabilities.h"
@@ -1780,7 +1781,7 @@ BOOL freerdp_settings_set_pointer_array(rdpSettings* settings, FreeRDP_Settings_
 				goto fail;
 			if ((offset >= maxOffset) || !data)
 				goto fail;
-			settings->OrderSupport[offset] = *(const BOOL*)data;
+			settings->OrderSupport[offset] = *(const BOOL*)data ? 1 : 0;
 			return TRUE;
 		case FreeRDP_GlyphCache:
 			maxOffset = 10;

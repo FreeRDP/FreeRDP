@@ -17,6 +17,9 @@
  * limitations under the License.
  */
 
+#include <winpr/assert.h>
+#include <winpr/cast.h>
+
 #include <freerdp/config.h>
 
 #include <freerdp/codec/bitmap.h>
@@ -25,7 +28,7 @@
 static INLINE UINT16 GETPIXEL16(const void* WINPR_RESTRICT d, UINT32 x, UINT32 y, UINT32 w)
 {
 	const BYTE* WINPR_RESTRICT src = (const BYTE*)d + ((y * w + x) * sizeof(UINT16));
-	return (UINT16)(((UINT16)src[1] << 8) | (UINT16)src[0]);
+	return WINPR_SAFE_INT_CAST(UINT16, ((UINT16)src[1] << 8) | (UINT16)src[0]);
 }
 
 static INLINE UINT32 GETPIXEL32(const void* WINPR_RESTRICT d, UINT32 x, UINT32 y, UINT32 w)
@@ -936,7 +939,7 @@ static INLINE SSIZE_T freerdp_bitmap_compress_16(const void* WINPR_RESTRICT srcD
 
 				if (pixel == (ypixel ^ mix))
 				{
-					fom_mask[fom_mask_len - 1] |= (1 << (fom_count % 8));
+					fom_mask[fom_mask_len - 1] |= WINPR_SAFE_INT_CAST(char, (1 << (fom_count % 8)));
 				}
 
 				fom_count++;

@@ -27,6 +27,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/assert.h>
+#include <winpr/cast.h>
 #include <winpr/stream.h>
 
 #include <freerdp/client/channels.h>
@@ -85,7 +86,7 @@ static BOOL location_write_header(wStream* s, UINT16 pduType, UINT32 pduLength)
 	return Stream_EnsureRemainingCapacity(s, pduLength);
 }
 
-static BOOL location_read_server_ready_pdu(LOCATION_CALLBACK* callback, wStream* s, UINT16 pduSize)
+static BOOL location_read_server_ready_pdu(LOCATION_CALLBACK* callback, wStream* s, UINT32 pduSize)
 {
 	if (pduSize < 6 + 4)
 		return FALSE; // Short message
@@ -244,7 +245,7 @@ static UINT location_send_base_location3d(IWTSVirtualChannel* channel,
 		    !freerdp_write_four_byte_float(s, *pdu->horizontalAccuracy))
 			return ERROR_INTERNAL_ERROR;
 
-		Stream_Write_UINT8(s, *pdu->source);
+		Stream_Write_UINT8(s, WINPR_SAFE_INT_CAST(UINT8, *pdu->source));
 	}
 
 	return location_channel_send(channel, s);

@@ -18,6 +18,7 @@
  */
 
 #include <winpr/assert.h>
+#include <winpr/cast.h>
 
 #include "camera.h"
 
@@ -46,14 +47,14 @@ static void ecam_dev_write_media_type(wStream* s, CAM_MEDIA_TYPE_DESCRIPTION* me
 {
 	WINPR_ASSERT(mediaType);
 
-	Stream_Write_UINT8(s, mediaType->Format);
+	Stream_Write_UINT8(s, WINPR_SAFE_INT_CAST(uint8_t, mediaType->Format));
 	Stream_Write_UINT32(s, mediaType->Width);
 	Stream_Write_UINT32(s, mediaType->Height);
 	Stream_Write_UINT32(s, mediaType->FrameRateNumerator);
 	Stream_Write_UINT32(s, mediaType->FrameRateDenominator);
 	Stream_Write_UINT32(s, mediaType->PixelAspectRatioNumerator);
 	Stream_Write_UINT32(s, mediaType->PixelAspectRatioDenominator);
-	Stream_Write_UINT8(s, mediaType->Flags);
+	Stream_Write_UINT8(s, WINPR_SAFE_INT_CAST(uint8_t, mediaType->Flags));
 }
 
 static BOOL ecam_dev_read_media_type(wStream* s, CAM_MEDIA_TYPE_DESCRIPTION* mediaType)
@@ -94,9 +95,9 @@ static UINT ecam_dev_send_sample_response(CameraDevice* dev, size_t streamIndex,
 
 	Stream_SetPosition(stream->sampleRespBuffer, 0);
 
-	Stream_Write_UINT8(stream->sampleRespBuffer, dev->ecam->version);
-	Stream_Write_UINT8(stream->sampleRespBuffer, msg);
-	Stream_Write_UINT8(stream->sampleRespBuffer, streamIndex);
+	Stream_Write_UINT8(stream->sampleRespBuffer, WINPR_SAFE_INT_CAST(uint8_t, dev->ecam->version));
+	Stream_Write_UINT8(stream->sampleRespBuffer, WINPR_SAFE_INT_CAST(uint8_t, msg));
+	Stream_Write_UINT8(stream->sampleRespBuffer, WINPR_SAFE_INT_CAST(uint8_t, streamIndex));
 
 	Stream_Write(stream->sampleRespBuffer, sample, size);
 
@@ -313,8 +314,8 @@ static UINT ecam_dev_send_current_media_type_response(CameraDevice* dev,
 		return ERROR_NOT_ENOUGH_MEMORY;
 	}
 
-	Stream_Write_UINT8(s, dev->ecam->version);
-	Stream_Write_UINT8(s, msg);
+	Stream_Write_UINT8(s, WINPR_SAFE_INT_CAST(uint8_t, dev->ecam->version));
+	Stream_Write_UINT8(s, WINPR_SAFE_INT_CAST(uint8_t, msg));
 
 	ecam_dev_write_media_type(s, mediaType);
 
@@ -416,8 +417,8 @@ static UINT ecam_dev_send_media_type_list_response(CameraDevice* dev,
 		return ERROR_NOT_ENOUGH_MEMORY;
 	}
 
-	Stream_Write_UINT8(s, dev->ecam->version);
-	Stream_Write_UINT8(s, msg);
+	Stream_Write_UINT8(s, WINPR_SAFE_INT_CAST(uint8_t, dev->ecam->version));
+	Stream_Write_UINT8(s, WINPR_SAFE_INT_CAST(uint8_t, msg));
 
 	for (size_t i = 0; i < nMediaTypes; i++, mediaTypes++)
 	{
@@ -516,8 +517,8 @@ static UINT ecam_dev_send_stream_list_response(CameraDevice* dev,
 		return ERROR_NOT_ENOUGH_MEMORY;
 	}
 
-	Stream_Write_UINT8(s, dev->ecam->version);
-	Stream_Write_UINT8(s, msg);
+	Stream_Write_UINT8(s, WINPR_SAFE_INT_CAST(uint8_t, dev->ecam->version));
+	Stream_Write_UINT8(s, WINPR_SAFE_INT_CAST(uint8_t, msg));
 
 	/* single stream description */
 	Stream_Write_UINT16(s, CAM_STREAM_FRAME_SOURCE_TYPE_Color);

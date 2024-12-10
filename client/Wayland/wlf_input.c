@@ -24,6 +24,7 @@
 #include <linux/input.h>
 
 #include <winpr/assert.h>
+#include <winpr/cast.h>
 
 #include <freerdp/config.h>
 #include <freerdp/locale/keyboard.h>
@@ -157,10 +158,12 @@ BOOL wlf_handle_pointer_buttons(freerdp* instance, const UwacPointerButtonEvent*
 	WINPR_ASSERT(y <= UINT16_MAX);
 
 	if ((flags & ~PTR_FLAGS_DOWN) != 0)
-		return freerdp_client_send_button_event(cctx, FALSE, flags, x, y);
+		return freerdp_client_send_button_event(cctx, FALSE, flags, WINPR_SAFE_INT_CAST(INT32, x),
+		                                        WINPR_SAFE_INT_CAST(INT32, y));
 
 	if ((xflags & ~PTR_XFLAGS_DOWN) != 0)
-		return freerdp_client_send_extended_button_event(cctx, FALSE, xflags, x, y);
+		return freerdp_client_send_extended_button_event(
+		    cctx, FALSE, xflags, WINPR_SAFE_INT_CAST(INT32, x), WINPR_SAFE_INT_CAST(INT32, y));
 
 	return FALSE;
 }

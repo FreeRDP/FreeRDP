@@ -27,6 +27,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/assert.h>
+#include <winpr/cast.h>
 #include <winpr/print.h>
 #include <winpr/stream.h>
 
@@ -68,7 +69,8 @@ static UINT rdpsnd_server_send_formats(RdpsndServerContext* context)
 	Stream_Write_UINT32(s, 0);                           /* dwVolume */
 	Stream_Write_UINT32(s, 0);                           /* dwPitch */
 	Stream_Write_UINT16(s, 0);                           /* wDGramPort */
-	Stream_Write_UINT16(s, context->num_server_formats); /* wNumberOfFormats */
+	Stream_Write_UINT16(
+	    s, WINPR_SAFE_INT_CAST(uint16_t, context->num_server_formats)); /* wNumberOfFormats */
 	Stream_Write_UINT8(s, context->block_no);            /* cLastBlockConfirmed */
 	Stream_Write_UINT16(s, CHANNEL_VERSION_WIN_MAX);     /* wVersion */
 	Stream_Write_UINT8(s, 0);                            /* bPad */
@@ -802,7 +804,6 @@ static UINT rdpsnd_server_set_volume(RdpsndServerContext* context, UINT16 left, 
  */
 static UINT rdpsnd_server_close(RdpsndServerContext* context)
 {
-	size_t pos = 0;
 	BOOL status = 0;
 	ULONG written = 0;
 	UINT error = CHANNEL_RC_OK;
@@ -836,9 +837,10 @@ static UINT rdpsnd_server_close(RdpsndServerContext* context)
 	Stream_Write_UINT8(s, SNDC_CLOSE);
 	Stream_Write_UINT8(s, 0);
 	Stream_Seek_UINT16(s);
-	pos = Stream_GetPosition(s);
+	const size_t pos = Stream_GetPosition(s);
+	WINPR_ASSERT(pos >= 4);
 	Stream_SetPosition(s, 2);
-	Stream_Write_UINT16(s, pos - 4);
+	Stream_Write_UINT16(s, WINPR_SAFE_INT_CAST(uint16_t, pos - 4));
 	Stream_SetPosition(s, pos);
 
 	const size_t len = Stream_GetPosition(s);

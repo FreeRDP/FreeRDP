@@ -28,6 +28,7 @@
 #include <X11/Xutil.h>
 
 #include <winpr/assert.h>
+#include <winpr/cast.h>
 #include <winpr/crt.h>
 
 #include <freerdp/log.h>
@@ -199,10 +200,13 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 			{
 				MONITOR_INFO* cur_vscreen = &vscreen->monitors[i];
 				const XRRMonitorInfo* cur_monitor = &rrmonitors[i];
-				cur_vscreen->area.left = cur_monitor->x;
-				cur_vscreen->area.top = cur_monitor->y;
-				cur_vscreen->area.right = cur_monitor->x + cur_monitor->width - 1;
-				cur_vscreen->area.bottom = cur_monitor->y + cur_monitor->height - 1;
+
+				cur_vscreen->area.left = WINPR_SAFE_INT_CAST(UINT16, cur_monitor->x);
+				cur_vscreen->area.top = WINPR_SAFE_INT_CAST(UINT16, cur_monitor->y);
+				cur_vscreen->area.right =
+				    WINPR_SAFE_INT_CAST(UINT16, cur_monitor->x + cur_monitor->width - 1);
+				cur_vscreen->area.bottom =
+				    WINPR_SAFE_INT_CAST(UINT16, cur_monitor->y + cur_monitor->height - 1);
 				cur_vscreen->primary = cur_monitor->primary > 0;
 			}
 		}
@@ -544,14 +548,17 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 		}
 
 		vscreen->area.left = 0;
-		vscreen->area.right = vR - vX - 1;
+		const int r = vR - vX - 1;
+		vscreen->area.right = WINPR_SAFE_INT_CAST(UINT16, r);
 		vscreen->area.top = 0;
-		vscreen->area.bottom = vB - vY - 1;
+		const int b = vB - vY - 1;
+		vscreen->area.bottom = WINPR_SAFE_INT_CAST(UINT16, b);
 
 		if (freerdp_settings_get_bool(settings, FreeRDP_Workarea))
 		{
-			vscreen->area.top = xfc->workArea.y;
-			vscreen->area.bottom = xfc->workArea.height + xfc->workArea.y - 1;
+			vscreen->area.top = WINPR_SAFE_INT_CAST(UINT16, xfc->workArea.y);
+			vscreen->area.bottom =
+			    WINPR_SAFE_INT_CAST(UINT16, xfc->workArea.height + xfc->workArea.y - 1);
 		}
 
 		if (!primaryMonitorFound)

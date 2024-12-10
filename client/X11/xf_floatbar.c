@@ -22,6 +22,7 @@
 #include <X11/cursorfont.h>
 
 #include <winpr/assert.h>
+#include <winpr/cast.h>
 
 #include "xf_floatbar.h"
 #include "resource/close.xbm"
@@ -398,7 +399,7 @@ static void xf_floatbar_event_expose(xfFloatbar* floatbar)
 	/* points for drawing the floatbar */
 	shape[0].x = 0;
 	shape[0].y = 0;
-	shape[1].x = floatbar->width;
+	shape[1].x = WINPR_SAFE_INT_CAST(short, floatbar->width);
 	shape[1].y = 0;
 	shape[2].x = shape[1].x - FLOATBAR_BORDER;
 	shape[2].y = FLOATBAR_HEIGHT;

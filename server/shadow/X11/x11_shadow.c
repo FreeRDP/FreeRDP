@@ -34,6 +34,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/assert.h>
+#include <winpr/cast.h>
 #include <winpr/path.h>
 #include <winpr/synch.h>
 #include <winpr/image.h>
@@ -594,10 +595,10 @@ static void x11_shadow_validate_region(x11ShadowSubsystem* subsystem, int x, int
 	if (!subsystem->use_xfixes || !subsystem->use_xdamage)
 		return;
 
-	region.x = x;
-	region.y = y;
-	region.width = width;
-	region.height = height;
+	region.x = WINPR_SAFE_INT_CAST(INT16, x);
+	region.y = WINPR_SAFE_INT_CAST(INT16, y);
+	region.width = WINPR_SAFE_INT_CAST(UINT16, width);
+	region.height = WINPR_SAFE_INT_CAST(UINT16, height);
 #if defined(WITH_XFIXES) && defined(WITH_XDAMAGE)
 	XLockDisplay(subsystem->display);
 	XFixesSetRegion(subsystem->display, subsystem->xdamage_region, &region, 1);
@@ -783,8 +784,9 @@ static int x11_shadow_screen_grab(x11ShadowSubsystem* subsystem)
 	EnterCriticalSection(&surface->lock);
 	surfaceRect.left = 0;
 	surfaceRect.top = 0;
-	surfaceRect.right = surface->width;
-	surfaceRect.bottom = surface->height;
+
+	surfaceRect.right = WINPR_SAFE_INT_CAST(UINT16, surface->width);
+	surfaceRect.bottom = WINPR_SAFE_INT_CAST(UINT16, surface->height);
 	LeaveCriticalSection(&surface->lock);
 
 	XLockDisplay(subsystem->display);

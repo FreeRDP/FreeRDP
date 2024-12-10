@@ -22,6 +22,7 @@
 #include <freerdp/config.h>
 
 #include <winpr/assert.h>
+#include <winpr/cast.h>
 #include <winpr/crt.h>
 #include <winpr/print.h>
 #include <winpr/bitstream.h>
@@ -1791,7 +1792,8 @@ static INLINE SSIZE_T progressive_process_tiles(
 			}
 
 			SubmitThreadpoolWork(progressive->work_objects[idx]);
-			close_cnt = idx + 1;
+
+			close_cnt = WINPR_SAFE_INT_CAST(UINT16, idx + 1);
 		}
 		else
 		{
@@ -2201,8 +2203,8 @@ static INLINE SSIZE_T progressive_wb_region(PROGRESSIVE_CONTEXT* WINPR_RESTRICT 
 	           region->numQuant, region->numProgQuant);
 #endif
 
-	boxLeft = surface->gridWidth;
-	boxTop = surface->gridHeight;
+	boxLeft = WINPR_SAFE_INT_CAST(UINT16, surface->gridWidth);
+	boxTop = WINPR_SAFE_INT_CAST(UINT16, surface->gridHeight);
 	boxRight = 0;
 	boxBottom = 0;
 
@@ -2344,8 +2346,11 @@ static INLINE BOOL update_tiles(PROGRESSIVE_CONTEXT* WINPR_RESTRICT progressive,
 		RFX_PROGRESSIVE_TILE* tile = surface->tiles[index];
 		WINPR_ASSERT(tile);
 
-		updateRect.left = nXDst + tile->x;
-		updateRect.top = nYDst + tile->y;
+		const UINT32 dl = nXDst + tile->x;
+		updateRect.left = WINPR_SAFE_INT_CAST(UINT16, dl);
+
+		const UINT32 dt = nYDst + tile->y;
+		updateRect.top = WINPR_SAFE_INT_CAST(UINT16, dt);
 		updateRect.right = updateRect.left + 64;
 		updateRect.bottom = updateRect.top + 64;
 
@@ -2478,8 +2483,6 @@ int progressive_compress(PROGRESSIVE_CONTEXT* WINPR_RESTRICT progressive,
 	int res = -6;
 	wStream* s = NULL;
 	UINT32 numRects = 0;
-	UINT32 x = 0;
-	UINT32 y = 0;
 	RFX_RECT* rects = NULL;
 	RFX_MESSAGE* message = NULL;
 
@@ -2540,15 +2543,19 @@ int progressive_compress(PROGRESSIVE_CONTEXT* WINPR_RESTRICT progressive,
 	}
 	else
 	{
-		x = 0;
-		y = 0;
+		UINT16 x = 0;
+		UINT16 y = 0;
+
 		for (UINT32 i = 0; i < numRects; i++)
 		{
 			RFX_RECT* r = &rects[i];
 			r->x = x;
 			r->y = y;
-			r->width = MIN(64, Width - x);
-			r->height = MIN(64, Height - y);
+
+			WINPR_ASSERT(Width >= x);
+			WINPR_ASSERT(Height >= y);
+			r->width = MIN(64, WINPR_SAFE_INT_CAST(UINT16, Width - x));
+			r->height = MIN(64, WINPR_SAFE_INT_CAST(UINT16, Height - y));
 
 			if (x + 64 >= Width)
 			{
@@ -2568,8 +2575,9 @@ int progressive_compress(PROGRESSIVE_CONTEXT* WINPR_RESTRICT progressive,
 	Stream_SetPosition(s, 0);
 
 	progressive->rfx_context->mode = RLGR1;
-	progressive->rfx_context->width = Width;
-	progressive->rfx_context->height = Height;
+
+	progressive->rfx_context->width = WINPR_SAFE_INT_CAST(UINT16, Width);
+	progressive->rfx_context->height = WINPR_SAFE_INT_CAST(UINT16, Height);
 	rfx_context_set_pixel_format(progressive->rfx_context, SrcFormat);
 	message = rfx_encode_message(progressive->rfx_context, rects, numRects, pSrcData, Width, Height,
 	                             ScanLine);

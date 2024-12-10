@@ -25,6 +25,7 @@
 #include <freerdp/config.h>
 
 #include <math.h>
+#include <winpr/cast.h>
 #include <winpr/assert.h>
 #include <winpr/sspicli.h>
 
@@ -205,8 +206,12 @@ static void xf_draw_screen_scaled(xfContext* xfc, int x, int y, int w, int h)
 	XSetForeground(xfc->display, xfc->gc, 0);
 	/* Black out possible space between desktop and window borders */
 	{
-		XRectangle box1 = { 0, 0, xfc->window->width, xfc->window->height };
-		XRectangle box2 = { xfc->offset_x, xfc->offset_y, xfc->scaledWidth, xfc->scaledHeight };
+		XRectangle box1 = { 0, 0, WINPR_SAFE_INT_CAST(UINT16, xfc->window->width),
+			                WINPR_SAFE_INT_CAST(UINT16, xfc->window->height) };
+		XRectangle box2 = { WINPR_SAFE_INT_CAST(UINT16, xfc->offset_x),
+			                WINPR_SAFE_INT_CAST(UINT16, xfc->offset_y),
+			                WINPR_SAFE_INT_CAST(UINT16, xfc->scaledWidth),
+			                WINPR_SAFE_INT_CAST(UINT16, xfc->scaledHeight) };
 		Region reg1 = XCreateRegion();
 		Region reg2 = XCreateRegion();
 		XUnionRectWithRegion(&box1, reg1, reg1);
@@ -215,8 +220,9 @@ static void xf_draw_screen_scaled(xfContext* xfc, int x, int y, int w, int h)
 		if (XSubtractRegion(reg1, reg2, reg1) && !XEmptyRegion(reg1))
 		{
 			XSetRegion(xfc->display, xfc->gc, reg1);
-			XFillRectangle(xfc->display, xfc->window->handle, xfc->gc, 0, 0, xfc->window->width,
-			               xfc->window->height);
+			XFillRectangle(xfc->display, xfc->window->handle, xfc->gc, 0, 0,
+			               WINPR_SAFE_INT_CAST(UINT16, xfc->window->width),
+			               WINPR_SAFE_INT_CAST(UINT16, xfc->window->height));
 			XSetClipMask(xfc->display, xfc->gc, None);
 		}
 
@@ -396,16 +402,17 @@ static BOOL xf_paint(xfContext* xfc, const GDI_RGN* region)
 
 	if (xfc->remote_app)
 	{
-		const RECTANGLE_16 rect = { .left = region->x,
-			                        .top = region->y,
-			                        .right = region->x + region->w,
-			                        .bottom = region->y + region->h };
+		const RECTANGLE_16 rect = { .left = WINPR_SAFE_INT_CAST(UINT16, region->x),
+			                        .top = WINPR_SAFE_INT_CAST(UINT16, region->y),
+			                        .right = WINPR_SAFE_INT_CAST(UINT16, region->x + region->w),
+			                        .bottom = WINPR_SAFE_INT_CAST(UINT16, region->y + region->h) };
 		xf_rail_paint(xfc, &rect);
 	}
 	else
 	{
 		XPutImage(xfc->display, xfc->primary, xfc->gc, xfc->image, region->x, region->y, region->x,
-		          region->y, region->w, region->h);
+		          region->y, WINPR_SAFE_INT_CAST(UINT16, region->w),
+		          WINPR_SAFE_INT_CAST(UINT16, region->h));
 		xf_draw_screen(xfc, region->x, region->y, region->w, region->h);
 	}
 	return TRUE;

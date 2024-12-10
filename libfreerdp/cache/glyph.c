@@ -23,6 +23,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/assert.h>
+#include <winpr/cast.h>
 
 #include <freerdp/freerdp.h>
 #include <winpr/stream.h>
@@ -195,7 +196,8 @@ static BOOL update_process_glyph_fragments(rdpContext* context, const BYTE* data
 	if (bkHeight < 0)
 		bkHeight = 0;
 
-	if (opX + opWidth > (INT64)freerdp_settings_get_uint32(context->settings, FreeRDP_DesktopWidth))
+	const UINT32 w = freerdp_settings_get_uint32(context->settings, FreeRDP_DesktopWidth);
+	if (opX + opWidth > (INT64)w)
 	{
 		/**
 		 * Some Microsoft servers send erroneous high values close to the
@@ -206,10 +208,10 @@ static BOOL update_process_glyph_fragments(rdpContext* context, const BYTE* data
 		 * a RDP session to Windows XP Professional SP3.
 		 * This workaround prevents resulting problems in the UI callbacks.
 		 */
-		opWidth = freerdp_settings_get_uint32(context->settings, FreeRDP_DesktopWidth) - opX;
+		opWidth = WINPR_SAFE_INT_CAST(int, w - opX);
 	}
 
-	if (bkX + bkWidth > (INT64)freerdp_settings_get_uint32(context->settings, FreeRDP_DesktopWidth))
+	if (bkX + bkWidth > (INT64)w)
 	{
 		/**
 		 * Some Microsoft servers send erroneous high values close to the
@@ -220,13 +222,13 @@ static BOOL update_process_glyph_fragments(rdpContext* context, const BYTE* data
 		 * a RDP session to Windows XP Professional SP3.
 		 * This workaround prevents resulting problems in the UI callbacks.
 		 */
-		bkWidth = freerdp_settings_get_uint32(context->settings, FreeRDP_DesktopWidth) - bkX;
+		bkWidth = WINPR_SAFE_INT_CAST(int, w - bkX);
 	}
 
-	bound.x = bkX;
-	bound.y = bkY;
-	bound.width = bkWidth;
-	bound.height = bkHeight;
+	bound.x = WINPR_SAFE_INT_CAST(INT16, bkX);
+	bound.y = WINPR_SAFE_INT_CAST(INT16, bkY);
+	bound.width = WINPR_SAFE_INT_CAST(INT16, bkWidth);
+	bound.height = WINPR_SAFE_INT_CAST(INT16, bkHeight);
 
 	if (!glyph->BeginDraw(context, opX, opY, opWidth, opHeight, bgcolor, fgcolor, fOpRedundant))
 		return FALSE;

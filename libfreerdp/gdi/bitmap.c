@@ -128,8 +128,8 @@ HGDI_BITMAP gdi_CreateBitmapEx(UINT32 nWidth, UINT32 nHeight, UINT32 format, UIN
 	else
 		hBitmap->scanline = nWidth * FreeRDPGetBytesPerPixel(hBitmap->format);
 
-	hBitmap->width = nWidth;
-	hBitmap->height = nHeight;
+	hBitmap->width = WINPR_SAFE_INT_CAST(int, nWidth);
+	hBitmap->height = WINPR_SAFE_INT_CAST(int, nHeight);
 	hBitmap->data = data;
 	hBitmap->free = fkt_free;
 	return hBitmap;

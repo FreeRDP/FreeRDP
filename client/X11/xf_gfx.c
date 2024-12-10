@@ -22,7 +22,10 @@
 #include <freerdp/config.h>
 
 #include <math.h>
+
 #include <winpr/assert.h>
+#include <winpr/cast.h>
+
 #include <freerdp/log.h>
 #include "xf_gfx.h"
 #include "xf_rail.h"
@@ -53,8 +56,8 @@ static UINT xf_OutputUpdate(xfContext* xfc, xfGfxSurface* surface)
 	surfaceY = surface->gdi.outputOriginY;
 	surfaceRect.left = 0;
 	surfaceRect.top = 0;
-	surfaceRect.right = surface->gdi.mappedWidth;
-	surfaceRect.bottom = surface->gdi.mappedHeight;
+	surfaceRect.right = WINPR_SAFE_INT_CAST(UINT16, surface->gdi.mappedWidth);
+	surfaceRect.bottom = WINPR_SAFE_INT_CAST(UINT16, surface->gdi.mappedHeight);
 	XSetClipMask(xfc->display, xfc->gc, None);
 	XSetFunction(xfc->display, xfc->gc, GXcopy);
 	XSetFillStyle(xfc->display, xfc->gc, FillSolid);
@@ -187,10 +190,10 @@ UINT xf_OutputExpose(xfContext* xfc, UINT32 x, UINT32 y, UINT32 width, UINT32 he
 	context = xfc->common.context.gdi->gfx;
 	WINPR_ASSERT(context);
 
-	invalidRect.left = x;
-	invalidRect.top = y;
-	invalidRect.right = x + width;
-	invalidRect.bottom = y + height;
+	invalidRect.left = WINPR_SAFE_INT_CAST(UINT16, x);
+	invalidRect.top = WINPR_SAFE_INT_CAST(UINT16, y);
+	invalidRect.right = WINPR_SAFE_INT_CAST(UINT16, x + width);
+	invalidRect.bottom = WINPR_SAFE_INT_CAST(UINT16, y + height);
 	status = context->GetSurfaceIds(context, &pSurfaceIds, &count);
 
 	if (status != CHANNEL_RC_OK)
@@ -209,10 +212,12 @@ UINT xf_OutputExpose(xfContext* xfc, UINT32 x, UINT32 y, UINT32 width, UINT32 he
 		if (!surface || (!surface->gdi.outputMapped && !surface->gdi.windowMapped))
 			continue;
 
-		surfaceRect.left = surface->gdi.outputOriginX;
-		surfaceRect.top = surface->gdi.outputOriginY;
-		surfaceRect.right = surface->gdi.outputOriginX + surface->gdi.outputTargetWidth;
-		surfaceRect.bottom = surface->gdi.outputOriginY + surface->gdi.outputTargetHeight;
+		surfaceRect.left = WINPR_SAFE_INT_CAST(UINT16, surface->gdi.outputOriginX);
+		surfaceRect.top = WINPR_SAFE_INT_CAST(UINT16, surface->gdi.outputOriginY);
+		surfaceRect.right = WINPR_SAFE_INT_CAST(UINT16, surface->gdi.outputOriginX +
+		                                                    surface->gdi.outputTargetWidth);
+		surfaceRect.bottom = WINPR_SAFE_INT_CAST(UINT16, surface->gdi.outputOriginY +
+		                                                     surface->gdi.outputTargetHeight);
 
 		if (rectangles_intersection(&invalidRect, &surfaceRect, &intersection))
 		{
