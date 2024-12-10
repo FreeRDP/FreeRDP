@@ -27,7 +27,7 @@
 #include <cjson/cJSON.h>
 #endif
 #if defined(WITH_JSONC)
-#include <json-c/json.h>
+#include <json.h>
 #endif
 
 #if defined(WITH_CJSON)
