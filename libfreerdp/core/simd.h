@@ -33,7 +33,8 @@
 #define SSE_AVX_INTRINSICS_ENABLED
 #endif
 
-#if defined(_M_ARM64) || defined(_M_ARM) || defined(__arm) || defined(__aarch64__)
+// Inspired by llvm arm_neon.h header checks
+#if defined(__ARM_NEON) && defined(__ARM_FP)
 #define NEON_INTRINSICS_ENABLED
 #endif
 #endif
