@@ -945,6 +945,10 @@ static void xf_cliprdr_process_requested_data(xfClipboard* clipboard, BOOL hasDa
 	if (clipboard->incr_starts && hasData)
 		return;
 
+	/* Reset incr_data_length, as we've reached the end of a possible incremental update.
+	 * this ensures on next event that the buffer is not reused. */
+	clipboard->incr_data_length = 0;
+
 	format = xf_cliprdr_get_client_format_by_id(clipboard, clipboard->requestedFormatId);
 
 	if (!hasData || !data || !format)
