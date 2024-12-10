@@ -260,6 +260,15 @@ INT32 h264_compress(H264_CONTEXT* h264, BYTE** ppDstData, UINT32* pDstSize)
 	return h264->subsystem->Compress(h264, pcYUVData, h264->iStride, ppDstData, pDstSize);
 }
 
+INT32 h264_compress_ex(H264_CONTEXT* h264, const BYTE** WINPR_RESTRICT pSrcData,
+                       const UINT32* WINPR_RESTRICT pSrcStride, BYTE** ppDstData, UINT32* pDstSize)
+{
+	if (!h264 || !h264->Compressor || !h264->subsystem || !h264->subsystem->Compress)
+		return -1;
+
+	return h264->subsystem->Compress(h264, pSrcData, pSrcStride, ppDstData, pDstSize);
+}
+
 INT32 avc420_compress(H264_CONTEXT* h264, const BYTE* pSrcData, DWORD SrcFormat, UINT32 nSrcStep,
                       UINT32 nSrcWidth, UINT32 nSrcHeight, const RECTANGLE_16* regionRect,
                       BYTE** ppDstData, UINT32* pDstSize, RDPGFX_H264_METABLOCK* meta)

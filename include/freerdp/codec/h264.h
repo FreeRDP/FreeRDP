@@ -84,6 +84,7 @@ extern "C"
 	 *  @param stride A pointer to hold the byte length of a line in the YUV buffers
 	 *  @return \b >= 0 for success, \b <0 for an error
 	 *  @since version 3.6.0
+	 *  @deprecated use h264_compress_ex instead
 	 */
 	FREERDP_API INT32 h264_get_yuv_buffer(H264_CONTEXT* h264, UINT32 nSrcStride, UINT32 nSrcWidth,
 	                                      UINT32 nSrcHeight, BYTE* YUVData[3], UINT32 stride[3]);
@@ -96,8 +97,24 @@ extern "C"
 	 * @param pDstSize A pointer for the destination buffer size in bytes
 	 * @return \b >= 0 for success, \b <0 for an error
 	 * @since version 3.6.0
+	 * @deprecated use h264_compress_ex instead
 	 */
 	FREERDP_API INT32 h264_compress(H264_CONTEXT* h264, BYTE** ppDstData, UINT32* pDstSize);
+
+	/**
+	 * @brief Compress directly supplied image data to H264 stream
+	 *
+	 * @param h264 The H264 context to use for compression
+	 * @param pSrcData A pointer to pointers to input buffers (in YUV420P or NV12 format)
+	 * @param pSrcStride A pointer to array of line byte lengths in the input buffers
+	 * @param ppDstData A pointer that will hold the allocated result buffer
+	 * @param pDstSize A pointer for the destination buffer size in bytes
+	 * @return \b >= 0 for success, \b <0 for an error
+	 * @since version
+	 */
+	FREERDP_API INT32 h264_compress_ex(H264_CONTEXT* h264, const BYTE** WINPR_RESTRICT pSrcData,
+	                                   const UINT32* WINPR_RESTRICT pSrcStride, BYTE** ppDstData,
+	                                   UINT32* pDstSize);
 
 	FREERDP_API INT32 avc420_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT32 SrcSize,
 	                                    BYTE* pDstData, DWORD DstFormat, UINT32 nDstStep,
