@@ -20,8 +20,7 @@
 #ifndef WINPR_ERROR_H
 #define WINPR_ERROR_H
 
-#include <winpr/platform.h>
-#include <winpr/winpr.h>
+#include <winpr/cast.h>
 #include <winpr/wtypes.h>
 
 #ifdef _WIN32
@@ -147,11 +146,8 @@
 WINPR_PRAGMA_DIAG_PUSH
 WINPR_PRAGMA_DIAG_IGNORED_RESERVED_ID_MACRO
 
-#ifdef __cplusplus
-#define ERROR_CAST(t, val) static_cast<t>(val)
-#else
-#define ERROR_CAST(t, val) (t)(val)
-#endif
+#define ERROR_CAST(t, val) WINPR_CXX_COMPAT_CAST(t, val)
+
 static INLINE HRESULT HRESULT_FROM_WIN32(unsigned long x)
 {
 	HRESULT hx = ERROR_CAST(HRESULT, x);

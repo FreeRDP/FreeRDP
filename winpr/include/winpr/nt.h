@@ -23,12 +23,9 @@
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
 #include <winpr/windows.h>
+#include <winpr/cast.h>
 
-#ifdef __cplusplus
-#define STATUS_CAST(t, val) static_cast<t>(val)
-#else
-#define STATUS_CAST(t, val) (t)(val)
-#endif
+#define STATUS_CAST(t, val) WINPR_CXX_COMPAT_CAST(t, val)
 
 #ifndef _WIN32
 

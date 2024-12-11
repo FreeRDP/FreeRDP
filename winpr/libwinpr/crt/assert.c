@@ -1,9 +1,9 @@
 /**
  * WinPR: Windows Portable Runtime
- * Compatibility header for runtime ASSERT macros
+ * Runtime ASSERT macros
  *
- * Copyright 2024 Armin Novak <armin.novak@thincast.com>
- * Copyright 2024 Thincast Technologies GmbH
+ * Copyright 2021 Armin Novak <armin.novak@thincast.com>
+ * Copyright 2021 Thincast Technologies GmbH
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,17 +18,16 @@
  * limitations under the License.
  */
 
-#ifndef WINPR_ASSERT_H
-#define WINPR_ASSERT_H
-
-#include <stdlib.h>
-#include <assert.h>
-
-#include <winpr/winpr.h>
-#include <winpr/wtypes.h>
+#include <winpr/assert.h>
 #include <winpr/wlog.h>
 #include <winpr/debug.h>
 
-#include <winpr/assert-api.h>
-#include <winpr/cast.h>
+#if defined(WITH_VERBOSE_WINPR_ASSERT) && (WITH_VERBOSE_WINPR_ASSERT != 0)
+void winpr_int_assert(const char* condstr, const char* file, const char* fkt, size_t line)
+{
+	wLog* _log_cached_ptr = WLog_Get("com.freerdp.winpr.assert");
+	WLog_Print(_log_cached_ptr, WLOG_FATAL, "%s [%s:%s:%" PRIuz "]", condstr, file, fkt, line);
+	winpr_log_backtrace_ex(_log_cached_ptr, WLOG_FATAL, 20);
+	abort();
+}
 #endif

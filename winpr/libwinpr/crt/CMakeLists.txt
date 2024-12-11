@@ -15,7 +15,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(CRT_FILES alignment.c conversion.c buffer.c memory.c unicode.c string.c)
+set(CRT_FILES
+    alignment.c
+    conversion.c
+    buffer.c
+    memory.c
+    unicode.c
+    string.c
+    assert.c
+)
 
 if(WITH_UNICODE_BUILTIN)
   list(APPEND CRT_FILES unicode_builtin.c)

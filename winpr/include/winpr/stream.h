@@ -28,6 +28,8 @@
 #include <winpr/endian.h>
 #include <winpr/synch.h>
 #include <winpr/assert.h>
+#include <winpr/cast.h>
+#include <winpr/wlog.h>
 
 #ifdef __cplusplus
 extern "C"
@@ -56,11 +58,7 @@ extern "C"
 	WINPR_API BOOL Stream_EnsureCapacity(wStream* s, size_t size);
 	WINPR_API BOOL Stream_EnsureRemainingCapacity(wStream* s, size_t size);
 
-#ifdef __cplusplus
-#define WINPR_STREAM_CAST(t, val) static_cast<t>(val)
-#else
-#define WINPR_STREAM_CAST(t, val) (t)(val)
-#endif
+#define WINPR_STREAM_CAST(t, val) WINPR_CXX_COMPAT_CAST(t, val)
 
 #define Stream_CheckAndLogRequiredCapacityOfSize(tag, s, nmemb, size)                         \
 	Stream_CheckAndLogRequiredCapacityEx(tag, WLOG_WARN, s, nmemb, size, "%s(%s:%" PRIuz ")", \
@@ -1252,7 +1250,7 @@ extern "C"
  *
  *  @since version 3.9.0
  */
-#define Stream_GetBufferAs(_s, _b) _b = Stream_BufferAs(_s, typeof(_b))
+#define Stream_GetBufferAs(_s, _b) _b = Stream_BufferAs(_s, __typeof(_b))
 
 #define Stream_PointerAs(s, type) WINPR_STREAM_CAST(type*, Stream_Pointer(s))
 
@@ -1274,7 +1272,7 @@ extern "C"
  *
  *  @since version 3.9.0
  */
-#define Stream_GetPointerAs(_s, _p) _p = Stream_PointerAs(_s, typeof(_p))
+#define Stream_GetPointerAs(_s, _p) _p = Stream_PointerAs(_s, __typeof(_p))
 
 #if defined(WITH_WINPR_DEPRECATED)
 	WINPR_API WINPR_DEPRECATED_VAR("Use Stream_SetPosition instead",
