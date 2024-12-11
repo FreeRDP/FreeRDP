@@ -375,7 +375,7 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  "suppress output when minimized" },
 	{ "print-reconnect-cookie", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL,
 	  "Print base64 reconnect cookie after connecting" },
-	{ "printer", COMMAND_LINE_VALUE_OPTIONAL, "<name>[,<driver>]", NULL, NULL, -1, NULL,
+	{ "printer", COMMAND_LINE_VALUE_OPTIONAL, "<name>[,<driver>[,default]]", NULL, NULL, -1, NULL,
 	  "Redirect printer device" },
 	{ "proxy", COMMAND_LINE_VALUE_REQUIRED, "[<proto>://][<user>:<password>@]<host>[:<port>]", NULL,
 	  NULL, -1, NULL,
