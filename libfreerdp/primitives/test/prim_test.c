@@ -47,13 +47,13 @@ float measure_delta_time(UINT64 t0, UINT64 t1)
 void measure_floatprint(float t, char* output, size_t len)
 {
 	/* I don't want to link against -lm, so avoid log,exp,... */
-	float f = 10.0;
+	float f = 10.0f;
 	int i = 0;
 
 	while (t > f)
-		f *= 10.0;
+		f *= 10.0f;
 
-	f /= 1000.0;
+	f /= 1000.0f;
 	i = ((int)(t / f + 0.5f)) * (int)f;
 
 	if (t < 0.0f)
