@@ -22,6 +22,7 @@
 #include <winpr/cast.h>
 #include <winpr/platform.h>
 #include <freerdp/config.h>
+#include <winpr/cast.h>
 
 #include "../rfx_types.h"
 #include "rfx_sse2.h"
@@ -73,17 +74,17 @@ static __inline void __attribute__((ATTRIBUTES))
 rfx_quantization_decode_block_sse2(INT16* WINPR_RESTRICT buffer, const size_t buffer_size,
                                    const UINT32 factor)
 {
-	__m128i a;
 	__m128i* ptr = (__m128i*)buffer;
-	__m128i* buf_end = (__m128i*)(buffer + buffer_size);
+	const __m128i* buf_end = (__m128i*)(buffer + buffer_size);
 
 	if (factor == 0)
 		return;
 
 	do
 	{
-		a = _mm_load_si128(ptr);
-		a = _mm_slli_epi16(a, WINPR_SAFE_INT_CAST(int, factor));
+		const __m128i la = _mm_load_si128(ptr);
+		const __m128i a = _mm_slli_epi16(la, WINPR_SAFE_INT_CAST(int, factor));
+
 		_mm_store_si128(ptr, a);
 		ptr++;
 	} while (ptr < buf_end);
@@ -122,8 +123,8 @@ rfx_quantization_encode_block_sse2(INT16* WINPR_RESTRICT buffer, const unsigned 
 
 	do
 	{
-		__m128i a = _mm_load_si128(ptr);
-		a = _mm_add_epi16(a, half);
+		const __m128i la = _mm_load_si128(ptr);
+		__m128i a = _mm_add_epi16(la, half);
 		a = _mm_srai_epi16(a, factor);
 		_mm_store_si128(ptr, a);
 		ptr++;
@@ -167,31 +168,25 @@ static void rfx_quantization_encode_sse2(INT16* WINPR_RESTRICT buffer,
 
 static __inline void __attribute__((ATTRIBUTES))
 rfx_dwt_2d_decode_block_horiz_sse2(INT16* WINPR_RESTRICT l, INT16* WINPR_RESTRICT h,
-                                   INT16* WINPR_RESTRICT dst, int subband_width)
+                                   INT16* WINPR_RESTRICT dst, size_t subband_width)
 {
 	INT16* l_ptr = l;
 	INT16* h_ptr = h;
 	INT16* dst_ptr = dst;
 	int first = 0;
 	int last = 0;
-	__m128i l_n;
-	__m128i h_n;
-	__m128i h_n_m;
-	__m128i tmp_n;
-	__m128i dst_n;
-	__m128i dst_n_p;
 	__m128i dst1;
 	__m128i dst2;
 
-	for (int y = 0; y < subband_width; y++)
+	for (size_t y = 0; y < subband_width; y++)
 	{
 		/* Even coefficients */
-		for (int n = 0; n < subband_width; n += 8)
+		for (size_t n = 0; n < subband_width; n += 8)
 		{
 			/* dst[2n] = l[n] - ((h[n-1] + h[n] + 1) >> 1); */
-			l_n = _mm_load_si128((__m128i*)l_ptr);
-			h_n = _mm_load_si128((__m128i*)h_ptr);
-			h_n_m = _mm_loadu_si128((__m128i*)(h_ptr - 1));
+			__m128i l_n = _mm_load_si128((__m128i*)l_ptr);
+			__m128i h_n = _mm_load_si128((__m128i*)h_ptr);
+			__m128i h_n_m = _mm_loadu_si128((__m128i*)(h_ptr - 1));
 
 			if (n == 0)
 			{
@@ -199,10 +194,10 @@ rfx_dwt_2d_decode_block_horiz_sse2(INT16* WINPR_RESTRICT l, INT16* WINPR_RESTRIC
 				h_n_m = _mm_insert_epi16(h_n_m, first, 0);
 			}
 
-			tmp_n = _mm_add_epi16(h_n, h_n_m);
+			__m128i tmp_n = _mm_add_epi16(h_n, h_n_m);
 			tmp_n = _mm_add_epi16(tmp_n, _mm_set1_epi16(1));
 			tmp_n = _mm_srai_epi16(tmp_n, 1);
-			dst_n = _mm_sub_epi16(l_n, tmp_n);
+			const __m128i dst_n = _mm_sub_epi16(l_n, tmp_n);
 			_mm_store_si128((__m128i*)l_ptr, dst_n);
 			l_ptr += 8;
 			h_ptr += 8;
@@ -212,13 +207,13 @@ rfx_dwt_2d_decode_block_horiz_sse2(INT16* WINPR_RESTRICT l, INT16* WINPR_RESTRIC
 		h_ptr -= subband_width;
 
 		/* Odd coefficients */
-		for (int n = 0; n < subband_width; n += 8)
+		for (size_t n = 0; n < subband_width; n += 8)
 		{
 			/* dst[2n + 1] = (h[n] << 1) + ((dst[2n] + dst[2n + 2]) >> 1); */
-			h_n = _mm_load_si128((__m128i*)h_ptr);
+			__m128i h_n = _mm_load_si128((__m128i*)h_ptr);
 			h_n = _mm_slli_epi16(h_n, 1);
-			dst_n = _mm_load_si128((__m128i*)(l_ptr));
-			dst_n_p = _mm_loadu_si128((__m128i*)(l_ptr + 1));
+			__m128i dst_n = _mm_load_si128((__m128i*)(l_ptr));
+			__m128i dst_n_p = _mm_loadu_si128((__m128i*)(l_ptr + 1));
 
 			if (n == subband_width - 8)
 			{
@@ -226,7 +221,7 @@ rfx_dwt_2d_decode_block_horiz_sse2(INT16* WINPR_RESTRICT l, INT16* WINPR_RESTRIC
 				dst_n_p = _mm_insert_epi16(dst_n_p, last, 7);
 			}
 
-			tmp_n = _mm_add_epi16(dst_n_p, dst_n);
+			__m128i tmp_n = _mm_add_epi16(dst_n_p, dst_n);
 			tmp_n = _mm_srai_epi16(tmp_n, 1);
 			tmp_n = _mm_add_epi16(tmp_n, h_n);
 			dst1 = _mm_unpacklo_epi16(dst_n, tmp_n);
@@ -242,40 +237,33 @@ rfx_dwt_2d_decode_block_horiz_sse2(INT16* WINPR_RESTRICT l, INT16* WINPR_RESTRIC
 
 static __inline void __attribute__((ATTRIBUTES))
 rfx_dwt_2d_decode_block_vert_sse2(INT16* WINPR_RESTRICT l, INT16* WINPR_RESTRICT h,
-                                  INT16* WINPR_RESTRICT dst, int subband_width)
+                                  INT16* WINPR_RESTRICT dst, size_t subband_width)
 {
 	INT16* l_ptr = l;
 	INT16* h_ptr = h;
 	INT16* dst_ptr = dst;
-	__m128i l_n;
-	__m128i h_n;
-	__m128i tmp_n;
-	__m128i h_n_m;
-	__m128i dst_n;
-	__m128i dst_n_m;
-	__m128i dst_n_p;
-	int total_width = subband_width + subband_width;
+	const size_t total_width = subband_width + subband_width;
 
 	/* Even coefficients */
-	for (int n = 0; n < subband_width; n++)
+	for (size_t n = 0; n < subband_width; n++)
 	{
-		for (int x = 0; x < total_width; x += 8)
+		for (size_t x = 0; x < total_width; x += 8)
 		{
 			/* dst[2n] = l[n] - ((h[n-1] + h[n] + 1) >> 1); */
-			l_n = _mm_load_si128((__m128i*)l_ptr);
-			h_n = _mm_load_si128((__m128i*)h_ptr);
-			tmp_n = _mm_add_epi16(h_n, _mm_set1_epi16(1));
+			const __m128i l_n = _mm_load_si128((__m128i*)l_ptr);
+			const __m128i h_n = _mm_load_si128((__m128i*)h_ptr);
+			__m128i tmp_n = _mm_add_epi16(h_n, _mm_set1_epi16(1));
 
 			if (n == 0)
 				tmp_n = _mm_add_epi16(tmp_n, h_n);
 			else
 			{
-				h_n_m = _mm_loadu_si128((__m128i*)(h_ptr - total_width));
+				const __m128i h_n_m = _mm_loadu_si128((__m128i*)(h_ptr - total_width));
 				tmp_n = _mm_add_epi16(tmp_n, h_n_m);
 			}
 
 			tmp_n = _mm_srai_epi16(tmp_n, 1);
-			dst_n = _mm_sub_epi16(l_n, tmp_n);
+			const __m128i dst_n = _mm_sub_epi16(l_n, tmp_n);
 			_mm_store_si128((__m128i*)dst_ptr, dst_n);
 			l_ptr += 8;
 			h_ptr += 8;
@@ -289,26 +277,26 @@ rfx_dwt_2d_decode_block_vert_sse2(INT16* WINPR_RESTRICT l, INT16* WINPR_RESTRICT
 	dst_ptr = dst + total_width;
 
 	/* Odd coefficients */
-	for (int n = 0; n < subband_width; n++)
+	for (size_t n = 0; n < subband_width; n++)
 	{
-		for (int x = 0; x < total_width; x += 8)
+		for (size_t x = 0; x < total_width; x += 8)
 		{
 			/* dst[2n + 1] = (h[n] << 1) + ((dst[2n] + dst[2n + 2]) >> 1); */
-			h_n = _mm_load_si128((__m128i*)h_ptr);
-			dst_n_m = _mm_load_si128((__m128i*)(dst_ptr - total_width));
+			__m128i h_n = _mm_load_si128((__m128i*)h_ptr);
+			__m128i dst_n_m = _mm_load_si128((__m128i*)(dst_ptr - total_width));
 			h_n = _mm_slli_epi16(h_n, 1);
-			tmp_n = dst_n_m;
+			__m128i tmp_n = dst_n_m;
 
 			if (n == subband_width - 1)
 				tmp_n = _mm_add_epi16(tmp_n, dst_n_m);
 			else
 			{
-				dst_n_p = _mm_loadu_si128((__m128i*)(dst_ptr + total_width));
+				const __m128i dst_n_p = _mm_loadu_si128((__m128i*)(dst_ptr + total_width));
 				tmp_n = _mm_add_epi16(tmp_n, dst_n_p);
 			}
 
 			tmp_n = _mm_srai_epi16(tmp_n, 1);
-			dst_n = _mm_add_epi16(tmp_n, h_n);
+			const __m128i dst_n = _mm_add_epi16(tmp_n, h_n);
 			_mm_store_si128((__m128i*)dst_ptr, dst_n);
 			h_ptr += 8;
 			dst_ptr += 8;
@@ -320,27 +308,21 @@ rfx_dwt_2d_decode_block_vert_sse2(INT16* WINPR_RESTRICT l, INT16* WINPR_RESTRICT
 
 static __inline void __attribute__((ATTRIBUTES))
 rfx_dwt_2d_decode_block_sse2(INT16* WINPR_RESTRICT buffer, INT16* WINPR_RESTRICT idwt,
-                             int subband_width)
+                             size_t subband_width)
 {
-	INT16* hl = NULL;
-	INT16* lh = NULL;
-	INT16* hh = NULL;
-	INT16* ll = NULL;
-	INT16* l_dst = NULL;
-	INT16* h_dst = NULL;
 	mm_prefetch_buffer((char*)idwt, 4ULL * subband_width * sizeof(INT16));
 	/* Inverse DWT in horizontal direction, results in 2 sub-bands in L, H order in tmp buffer idwt.
 	 */
 	/* The 4 sub-bands are stored in HL(0), LH(1), HH(2), LL(3) order. */
 	/* The lower part L uses LL(3) and HL(0). */
 	/* The higher part H uses LH(1) and HH(2). */
-	ll = buffer + 3ULL * subband_width * subband_width;
-	hl = buffer;
-	l_dst = idwt;
+	INT16* ll = buffer + 3ULL * subband_width * subband_width;
+	INT16* hl = buffer;
+	INT16* l_dst = idwt;
 	rfx_dwt_2d_decode_block_horiz_sse2(ll, hl, l_dst, subband_width);
-	lh = buffer + 1ULL * subband_width * subband_width;
-	hh = buffer + 2ULL * subband_width * subband_width;
-	h_dst = idwt + 2ULL * subband_width * subband_width;
+	INT16* lh = buffer + 1ULL * subband_width * subband_width;
+	INT16* hh = buffer + 2ULL * subband_width * subband_width;
+	INT16* h_dst = idwt + 2ULL * subband_width * subband_width;
 	rfx_dwt_2d_decode_block_horiz_sse2(lh, hh, h_dst, subband_width);
 	/* Inverse DWT in vertical direction, results are stored in original buffer. */
 	rfx_dwt_2d_decode_block_vert_sse2(l_dst, h_dst, buffer, subband_width);
@@ -359,43 +341,34 @@ static void rfx_dwt_2d_decode_sse2(INT16* WINPR_RESTRICT buffer, INT16* WINPR_RE
 
 static __inline void __attribute__((ATTRIBUTES))
 rfx_dwt_2d_encode_block_vert_sse2(INT16* WINPR_RESTRICT src, INT16* WINPR_RESTRICT l,
-                                  INT16* WINPR_RESTRICT h, int subband_width)
+                                  INT16* WINPR_RESTRICT h, size_t subband_width)
 {
-	int total_width = 0;
-	__m128i src_2n;
-	__m128i src_2n_1;
-	__m128i src_2n_2;
-	__m128i h_n;
-	__m128i h_n_m;
-	__m128i l_n;
-	total_width = subband_width << 1;
+	const size_t total_width = subband_width << 1;
 
-	for (int n = 0; n < subband_width; n++)
+	for (size_t n = 0; n < subband_width; n++)
 	{
-		for (int x = 0; x < total_width; x += 8)
+		for (size_t x = 0; x < total_width; x += 8)
 		{
-			src_2n = _mm_load_si128((__m128i*)src);
-			src_2n_1 = _mm_load_si128((__m128i*)(src + total_width));
+			__m128i src_2n = _mm_load_si128((__m128i*)src);
+			__m128i src_2n_1 = _mm_load_si128((__m128i*)(src + total_width));
+			__m128i src_2n_2 = src_2n;
 
 			if (n < subband_width - 1)
 				src_2n_2 = _mm_load_si128((__m128i*)(src + 2ULL * total_width));
-			else
-				src_2n_2 = src_2n;
 
 			/* h[n] = (src[2n + 1] - ((src[2n] + src[2n + 2]) >> 1)) >> 1 */
-			h_n = _mm_add_epi16(src_2n, src_2n_2);
+			__m128i h_n = _mm_add_epi16(src_2n, src_2n_2);
 			h_n = _mm_srai_epi16(h_n, 1);
 			h_n = _mm_sub_epi16(src_2n_1, h_n);
 			h_n = _mm_srai_epi16(h_n, 1);
 			_mm_store_si128((__m128i*)h, h_n);
 
-			if (n == 0)
-				h_n_m = h_n;
-			else
+			__m128i h_n_m = h_n;
+			if (n != 0)
 				h_n_m = _mm_load_si128((__m128i*)(h - total_width));
 
 			/* l[n] = src[2n] + ((h[n - 1] + h[n]) >> 1) */
-			l_n = _mm_add_epi16(h_n_m, h_n);
+			__m128i l_n = _mm_add_epi16(h_n_m, h_n);
 			l_n = _mm_srai_epi16(l_n, 1);
 			l_n = _mm_add_epi16(l_n, src_2n);
 			_mm_store_si128((__m128i*)l, l_n);
@@ -410,44 +383,36 @@ rfx_dwt_2d_encode_block_vert_sse2(INT16* WINPR_RESTRICT src, INT16* WINPR_RESTRI
 
 static __inline void __attribute__((ATTRIBUTES))
 rfx_dwt_2d_encode_block_horiz_sse2(INT16* WINPR_RESTRICT src, INT16* WINPR_RESTRICT l,
-                                   INT16* WINPR_RESTRICT h, int subband_width)
+                                   INT16* WINPR_RESTRICT h, size_t subband_width)
 {
-	int first = 0;
-	__m128i src_2n;
-	__m128i src_2n_1;
-	__m128i src_2n_2;
-	__m128i h_n;
-	__m128i h_n_m;
-	__m128i l_n;
-
-	for (int y = 0; y < subband_width; y++)
+	for (size_t y = 0; y < subband_width; y++)
 	{
-		for (int n = 0; n < subband_width; n += 8)
+		for (size_t n = 0; n < subband_width; n += 8)
 		{
 			/* The following 3 Set operations consumes more than half of the total DWT processing
 			 * time! */
-			src_2n =
+			__m128i src_2n =
 			    _mm_set_epi16(src[14], src[12], src[10], src[8], src[6], src[4], src[2], src[0]);
-			src_2n_1 =
+			__m128i src_2n_1 =
 			    _mm_set_epi16(src[15], src[13], src[11], src[9], src[7], src[5], src[3], src[1]);
-			src_2n_2 = _mm_set_epi16(n == subband_width - 8 ? src[14] : src[16], src[14], src[12],
-			                         src[10], src[8], src[6], src[4], src[2]);
+			__m128i src_2n_2 = _mm_set_epi16(n == subband_width - 8 ? src[14] : src[16], src[14],
+			                                 src[12], src[10], src[8], src[6], src[4], src[2]);
 			/* h[n] = (src[2n + 1] - ((src[2n] + src[2n + 2]) >> 1)) >> 1 */
-			h_n = _mm_add_epi16(src_2n, src_2n_2);
+			__m128i h_n = _mm_add_epi16(src_2n, src_2n_2);
 			h_n = _mm_srai_epi16(h_n, 1);
 			h_n = _mm_sub_epi16(src_2n_1, h_n);
 			h_n = _mm_srai_epi16(h_n, 1);
 			_mm_store_si128((__m128i*)h, h_n);
-			h_n_m = _mm_loadu_si128((__m128i*)(h - 1));
+			__m128i h_n_m = _mm_loadu_si128((__m128i*)(h - 1));
 
 			if (n == 0)
 			{
-				first = _mm_extract_epi16(h_n_m, 1);
+				int first = _mm_extract_epi16(h_n_m, 1);
 				h_n_m = _mm_insert_epi16(h_n_m, first, 0);
 			}
 
 			/* l[n] = src[2n] + ((h[n - 1] + h[n]) >> 1) */
-			l_n = _mm_add_epi16(h_n_m, h_n);
+			__m128i l_n = _mm_add_epi16(h_n_m, h_n);
 			l_n = _mm_srai_epi16(l_n, 1);
 			l_n = _mm_add_epi16(l_n, src_2n);
 			_mm_store_si128((__m128i*)l, l_n);
@@ -460,27 +425,21 @@ rfx_dwt_2d_encode_block_horiz_sse2(INT16* WINPR_RESTRICT src, INT16* WINPR_RESTR
 
 static __inline void __attribute__((ATTRIBUTES))
 rfx_dwt_2d_encode_block_sse2(INT16* WINPR_RESTRICT buffer, INT16* WINPR_RESTRICT dwt,
-                             int subband_width)
+                             size_t subband_width)
 {
-	INT16* hl = NULL;
-	INT16* lh = NULL;
-	INT16* hh = NULL;
-	INT16* ll = NULL;
-	INT16* l_src = NULL;
-	INT16* h_src = NULL;
 	mm_prefetch_buffer((char*)dwt, 4ULL * subband_width * sizeof(INT16));
 	/* DWT in vertical direction, results in 2 sub-bands in L, H order in tmp buffer dwt. */
-	l_src = dwt;
-	h_src = dwt + 2ULL * subband_width * subband_width;
+	INT16* l_src = dwt;
+	INT16* h_src = dwt + 2ULL * subband_width * subband_width;
 	rfx_dwt_2d_encode_block_vert_sse2(buffer, l_src, h_src, subband_width);
 	/* DWT in horizontal direction, results in 4 sub-bands in HL(0), LH(1), HH(2), LL(3) order,
 	 * stored in original buffer. */
 	/* The lower part L generates LL(3) and HL(0). */
 	/* The higher part H generates LH(1) and HH(2). */
-	ll = buffer + 3ULL * subband_width * subband_width;
-	hl = buffer;
-	lh = buffer + 1ULL * subband_width * subband_width;
-	hh = buffer + 2ULL * subband_width * subband_width;
+	INT16* ll = buffer + 3ULL * subband_width * subband_width;
+	INT16* hl = buffer;
+	INT16* lh = buffer + 1ULL * subband_width * subband_width;
+	INT16* hh = buffer + 2ULL * subband_width * subband_width;
 	rfx_dwt_2d_encode_block_horiz_sse2(l_src, ll, hl, subband_width);
 	rfx_dwt_2d_encode_block_horiz_sse2(h_src, lh, hh, subband_width);
 }

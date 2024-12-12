@@ -225,6 +225,7 @@ static BOOL xf_Pointer_GetCursorForCurrentScale(rdpContext* context, rdpPointer*
 		xpointer->cursorWidths[idx] = ci.width;
 		xpointer->cursorHeights[idx] = ci.height;
 		xpointer->cursors[idx] = XcursorImageLoadCursor(xfc->display, &ci);
+		cursorIndex = WINPR_SAFE_INT_CAST(int, idx);
 		xpointer->nCursors += 1;
 
 		winpr_aligned_free(tmp);

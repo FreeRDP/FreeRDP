@@ -75,6 +75,58 @@ static pstatus_t general_yCbCrToRGB_16s8u_P3AC4R_BGRX(const INT16* WINPR_RESTRIC
 	return PRIMITIVES_SUCCESS;
 }
 
+/* Table for precalculated constants
+ *
+ * 1.402525f * (1 << divisor)
+ * 0.714401f * (1 << divisor)
+ * 0.343730f * (1 << divisor)
+ * 1.769905f * (1 << divisor)
+ *
+ * generated with:
+ * for (int i=0; i<31; i++) {
+ *       int divisor = i;
+ *	float a = rounf( 1.402525f * (1 << divisor));
+ *	float b = rounf( 0.714401f * (1 << divisor));
+ *	float c = rounf( 0.343730f * (1 << divisor));
+ *	float d = rounf( 1.769905f * (1 << divisor));
+ *	printf("{%f,%f,%f,%f},\n", a, b, c, d);
+ *}
+ *
+ */
+static const INT32 divisortable[][4] = {
+	{ 1, 1, 0, 2 },
+	{ 3, 1, 1, 4 },
+	{ 6, 3, 1, 7 },
+	{ 11, 6, 3, 14 },
+	{ 22, 11, 5, 28 },
+	{ 45, 23, 11, 57 },
+	{ 90, 46, 22, 113 },
+	{ 180, 91, 44, 227 },
+	{ 359, 183, 88, 453 },
+	{ 718, 366, 176, 906 },
+	{ 1436, 732, 352, 1812 },
+	{ 2872, 1463, 704, 3625 },
+	{ 5745, 2926, 1408, 7250 },
+	{ 11489, 5852, 2816, 14499 },
+	{ 22979, 11705, 5632, 28998 },
+	{ 45958, 23409, 11263, 57996 },
+	{ 91916, 46819, 22527, 115992 },
+	{ 183832, 93638, 45053, 231985 },
+	{ 367664, 187276, 90107, 463970 },
+	{ 735327, 374552, 180214, 927940 },
+	{ 1470654, 749104, 360427, 1855880 },
+	{ 2941308, 1498208, 720854, 3711760 },
+	{ 5882616, 2996415, 1441708, 7423520 },
+	{ 11765232, 5992830, 2883416, 14847039 },
+	{ 23530464, 11985660, 5766833, 29694078 },
+	{ 47060928, 23971320, 11533665, 59388156 },
+	{ 94121856, 47942640, 23067330, 118776312 },
+	{ 188243712, 95885280, 46134660, 237552624 },
+	{ 376487424, 191770560, 92269320, 475105248 },
+	{ 752974848, 383541120, 184538640, 950210496 },
+	{ 1505949696, 767082240, 369077280, 1900420992 },
+};
+
 static pstatus_t general_yCbCrToRGB_16s8u_P3AC4R_general(const INT16* WINPR_RESTRICT pSrc[3],
                                                          UINT32 srcStep, BYTE* WINPR_RESTRICT pDst,
                                                          UINT32 dstStep, UINT32 DstFormat,
@@ -97,13 +149,13 @@ static pstatus_t general_yCbCrToRGB_16s8u_P3AC4R_general(const INT16* WINPR_REST
 			const INT32 Y = (INT32)((UINT32)((*pY++) + 4096) << divisor);
 			const INT32 Cb = (*pCb++);
 			const INT32 Cr = (*pCr++);
-			const INT64 CrR = Cr * (INT64)(1.402525f * (1 << divisor)) * 1LL;
-			const INT64 CrG = Cr * (INT64)(0.714401f * (1 << divisor)) * 1LL;
-			const INT64 CbG = Cb * (INT64)(0.343730f * (1 << divisor)) * 1LL;
-			const INT64 CbB = Cb * (INT64)(1.769905f * (1 << divisor)) * 1LL;
-			const INT64 R = (CrR + Y) >> (divisor + 5);
-			const INT64 G = (Y - CbG - CrG) >> (divisor + 5);
-			const INT64 B = (CbB + Y) >> (divisor + 5);
+			const INT32 CrR = Cr * divisortable[divisor][0];
+			const INT32 CrG = Cr * divisortable[divisor][1];
+			const INT32 CbG = Cb * divisortable[divisor][2];
+			const INT32 CbB = Cb * divisortable[divisor][3];
+			const INT32 R = (CrR + Y) >> (divisor + 5);
+			const INT32 G = (Y - CbG - CrG) >> (divisor + 5);
+			const INT32 B = (CbB + Y) >> (divisor + 5);
 			pRGB = writePixel(pRGB, formatSize, DstFormat, CLIP(R), CLIP(G), CLIP(B), 0);
 		}
 

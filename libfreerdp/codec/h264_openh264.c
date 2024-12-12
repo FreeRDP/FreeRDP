@@ -23,6 +23,7 @@
 #include <winpr/winpr.h>
 #include <winpr/library.h>
 #include <winpr/assert.h>
+#include <winpr/cast.h>
 
 #include <freerdp/log.h>
 #include <freerdp/codec/h264.h>
@@ -69,9 +70,9 @@ static const char* openh264_library_names[] = {
 };
 #endif
 
-static void openh264_trace_callback(H264_CONTEXT* WINPR_RESTRICT h264, int level,
-                                    const char* WINPR_RESTRICT message)
+static void openh264_trace_callback(void* ctx, int level, const char* message)
 {
+	H264_CONTEXT* h264 = ctx;
 	if (h264)
 		WLog_Print(h264->log, WLOG_TRACE, "%d - %s", level, message);
 }
@@ -249,9 +250,9 @@ static int openh264_compress(H264_CONTEXT* WINPR_RESTRICT h264,
 		}
 
 		sys->EncParamExt.iUsageType = usageType;
-		sys->EncParamExt.iPicWidth = (int)h264->width;
-		sys->EncParamExt.iPicHeight = (int)h264->height;
-		sys->EncParamExt.fMaxFrameRate = (int)h264->FrameRate;
+		sys->EncParamExt.iPicWidth = WINPR_SAFE_INT_CAST(int, h264->width);
+		sys->EncParamExt.iPicHeight = WINPR_SAFE_INT_CAST(int, h264->height);
+		sys->EncParamExt.fMaxFrameRate = WINPR_SAFE_INT_CAST(int, h264->FrameRate);
 		sys->EncParamExt.iMaxBitrate = UNSPECIFIED_BIT_RATE;
 		sys->EncParamExt.bEnableDenoise = 0;
 		sys->EncParamExt.bEnableLongTermReference = 0;
@@ -519,7 +520,7 @@ static BOOL openh264_init(H264_CONTEXT* h264)
 #if (OPENH264_MAJOR == 1) && (OPENH264_MINOR <= 5)
 	static EVideoFormatType videoFormat = videoFormatI420;
 #endif
-	static WelsTraceCallback traceCallback = (WelsTraceCallback)openh264_trace_callback;
+	static WelsTraceCallback traceCallback = openh264_trace_callback;
 
 	WINPR_ASSERT(h264);
 
@@ -620,7 +621,7 @@ static BOOL openh264_init(H264_CONTEXT* h264)
 
 				status =
 				    (*sys->pDecoder)
-				        ->SetOption(sys->pDecoder, DECODER_OPTION_TRACE_CALLBACK_CONTEXT, &h264);
+				        ->SetOption(sys->pDecoder, DECODER_OPTION_TRACE_CALLBACK_CONTEXT, h264);
 
 				if (status != 0)
 				{
@@ -633,7 +634,7 @@ static BOOL openh264_init(H264_CONTEXT* h264)
 
 				status =
 				    (*sys->pDecoder)
-				        ->SetOption(sys->pDecoder, DECODER_OPTION_TRACE_CALLBACK, &traceCallback);
+				        ->SetOption(sys->pDecoder, DECODER_OPTION_TRACE_CALLBACK, traceCallback);
 
 				if (status != 0)
 				{

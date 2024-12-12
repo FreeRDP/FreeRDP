@@ -1226,7 +1226,8 @@ static INLINE int progressive_rfx_upgrade_block(RFX_PROGRESSIVE_UPGRADE_STATE* W
 			sign[index] = input;
 		}
 
-		buffer[index] += WINPR_SAFE_INT_CAST(INT16, (INT16)((UINT32)input << shift) & 0xFFFF);
+		const int32_t val = input << shift;
+		buffer[index] += WINPR_SAFE_INT_CAST(INT16, val);
 	}
 
 	return 1;
