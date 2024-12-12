@@ -41,6 +41,7 @@ See the header file "utf.h" for complete documentation.
 #include <winpr/wtypes.h>
 #include <winpr/string.h>
 #include <winpr/assert.h>
+#include <winpr/cast.h>
 
 #include "unicode.h"
 
@@ -392,7 +393,8 @@ static ConversionResult winpr_ConvertUTF8toUTF16_Internal(const uint8_t** source
 	while (source < sourceEnd)
 	{
 		uint32_t ch = 0;
-		unsigned short extraBytesToRead = trailingBytesForUTF8[*source];
+		unsigned short extraBytesToRead =
+		    WINPR_SAFE_INT_CAST(unsigned short, trailingBytesForUTF8[*source]);
 
 		if ((source + extraBytesToRead) >= sourceEnd)
 		{
@@ -572,7 +574,7 @@ static int winpr_ConvertUTF8toUTF16(const uint8_t* src, int cchSrc, uint16_t* ds
 		return 0;
 	}
 
-	return (result == conversionOK) ? length : 0;
+	return (result == conversionOK) ? WINPR_SAFE_INT_CAST(int, length) : 0;
 }
 
 static int winpr_ConvertUTF16toUTF8(const uint16_t* src, int cchSrc, uint8_t* dst, int cchDst)
@@ -614,7 +616,7 @@ static int winpr_ConvertUTF16toUTF8(const uint16_t* src, int cchSrc, uint8_t* ds
 		return 0;
 	}
 
-	return (result == conversionOK) ? length : 0;
+	return (result == conversionOK) ? WINPR_SAFE_INT_CAST(int, length) : 0;
 }
 
 /* --------------------------------------------------------------------- */
@@ -655,8 +657,9 @@ int int_MultiByteToWideChar(UINT CodePage, DWORD dwFlags, LPCSTR lpMultiByteStr,
 			return 0;
 	}
 
-	return winpr_ConvertUTF8toUTF16((const uint8_t*)lpMultiByteStr, cbCharLen,
-	                                (uint16_t*)lpWideCharStr, cchWideChar);
+	return winpr_ConvertUTF8toUTF16((const uint8_t*)lpMultiByteStr,
+	                                WINPR_SAFE_INT_CAST(int, cbCharLen), (uint16_t*)lpWideCharStr,
+	                                cchWideChar);
 }
 
 int int_WideCharToMultiByte(UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr, int cchWideChar,
@@ -690,6 +693,7 @@ int int_WideCharToMultiByte(UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr,
 	 * in bytes for lpMultiByteStr and makes no use of the output parameter itself.
 	 */
 
-	return winpr_ConvertUTF16toUTF8((const uint16_t*)lpWideCharStr, cbCharLen,
-	                                (uint8_t*)lpMultiByteStr, cbMultiByte);
+	return winpr_ConvertUTF16toUTF8((const uint16_t*)lpWideCharStr,
+	                                WINPR_SAFE_INT_CAST(int, cbCharLen), (uint8_t*)lpMultiByteStr,
+	                                cbMultiByte);
 }
