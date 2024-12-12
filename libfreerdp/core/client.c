@@ -1017,7 +1017,7 @@ static UINT VCAPITYPE FreeRDP_VirtualChannelInitEx(
 		}
 		pChannelOpenData->flags = 1; /* init */
 		strncpy(pChannelOpenData->name, pChannelDef->name, CHANNEL_NAME_LEN);
-		pChannelOpenData->options = WINPR_SAFE_INT_CAST(int, pChannelDef->options);
+		pChannelOpenData->options = pChannelDef->options;
 
 		const UINT32 max = freerdp_settings_get_uint32(settings, FreeRDP_ChannelDefArraySize);
 		WINPR_ASSERT(max >= CHANNEL_MAX_COUNT);
@@ -1114,7 +1114,7 @@ static UINT VCAPITYPE FreeRDP_VirtualChannelInit(LPVOID* ppInitHandle, PCHANNEL_
 			return CHANNEL_RC_INITIALIZATION_ERROR;
 		pChannelOpenData->flags = 1; /* init */
 		strncpy(pChannelOpenData->name, pChannelDef->name, CHANNEL_NAME_LEN);
-		pChannelOpenData->options = WINPR_SAFE_INT_CAST(int, pChannelDef->options);
+		pChannelOpenData->options = pChannelDef->options;
 
 		if (ChannelCount < CHANNEL_MAX_COUNT)
 		{
