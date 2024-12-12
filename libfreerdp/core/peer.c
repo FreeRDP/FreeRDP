@@ -25,6 +25,7 @@
 #include "settings.h"
 
 #include <winpr/assert.h>
+#include <winpr/cast.h>
 #include <winpr/crt.h>
 #include <winpr/winsock.h>
 
@@ -990,8 +991,8 @@ static state_run_t peer_recv_callback_internal(rdpTransport* transport, wStream*
 					const UINT32 h = freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight);
 					const rdpMonitor primary = { .x = 0,
 						                         .y = 0,
-						                         .width = w,
-						                         .height = h,
+						                         .width = WINPR_SAFE_INT_CAST(int32_t, w),
+						                         .height = WINPR_SAFE_INT_CAST(int32_t, h),
 						                         .is_primary = TRUE,
 						                         .orig_screen = 0,
 						                         .attributes = { .physicalWidth = w,
@@ -1375,18 +1376,15 @@ static const char* os_major_type_to_string(UINT16 osMajorType)
 
 const char* freerdp_peer_os_major_type_string(freerdp_peer* client)
 {
-	rdpContext* context = NULL;
-	UINT16 osMajorType = 0;
-
 	WINPR_ASSERT(client);
 
-	context = client->context;
+	rdpContext* context = client->context;
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->settings);
 
-	osMajorType = freerdp_settings_get_uint32(context->settings, FreeRDP_OsMajorType);
-
-	return os_major_type_to_string(osMajorType);
+	const UINT32 osMajorType = freerdp_settings_get_uint32(context->settings, FreeRDP_OsMajorType);
+	WINPR_ASSERT(osMajorType <= UINT16_MAX);
+	return os_major_type_to_string((UINT16)osMajorType);
 }
 
 static const char* os_minor_type_to_string(UINT16 osMinorType)
@@ -1422,18 +1420,15 @@ static const char* os_minor_type_to_string(UINT16 osMinorType)
 
 const char* freerdp_peer_os_minor_type_string(freerdp_peer* client)
 {
-	rdpContext* context = NULL;
-	UINT16 osMinorType = 0;
-
 	WINPR_ASSERT(client);
 
-	context = client->context;
+	rdpContext* context = client->context;
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->settings);
 
-	osMinorType = freerdp_settings_get_uint32(context->settings, FreeRDP_OsMinorType);
-
-	return os_minor_type_to_string(osMinorType);
+	const UINT32 osMinorType = freerdp_settings_get_uint32(context->settings, FreeRDP_OsMinorType);
+	WINPR_ASSERT(osMinorType <= UINT16_MAX);
+	return os_minor_type_to_string((UINT16)osMinorType);
 }
 
 freerdp_peer* freerdp_peer_new(int sockfd)

@@ -18,6 +18,8 @@
  * limitations under the License.
  */
 
+#include <winpr/assert.h>
+#include <winpr/cast.h>
 #include <winpr/platform.h>
 #include <freerdp/config.h>
 
@@ -81,7 +83,7 @@ rfx_quantization_decode_block_sse2(INT16* WINPR_RESTRICT buffer, const size_t bu
 	do
 	{
 		a = _mm_load_si128(ptr);
-		a = _mm_slli_epi16(a, factor);
+		a = _mm_slli_epi16(a, WINPR_SAFE_INT_CAST(int, factor));
 		_mm_store_si128(ptr, a);
 		ptr++;
 	} while (ptr < buf_end);
@@ -107,22 +109,20 @@ static void rfx_quantization_decode_sse2(INT16* WINPR_RESTRICT buffer,
 }
 
 static __inline void __attribute__((ATTRIBUTES))
-rfx_quantization_encode_block_sse2(INT16* WINPR_RESTRICT buffer, const int buffer_size,
-                                   const UINT32 factor)
+rfx_quantization_encode_block_sse2(INT16* WINPR_RESTRICT buffer, const unsigned buffer_size,
+                                   const INT16 factor)
 {
-	__m128i a;
 	__m128i* ptr = (__m128i*)buffer;
-	__m128i* buf_end = (__m128i*)(buffer + buffer_size);
-	__m128i half;
+	const __m128i* buf_end = (const __m128i*)(buffer + buffer_size);
 
 	if (factor == 0)
 		return;
 
-	half = _mm_set1_epi16(1 << (factor - 1));
+	const __m128i half = _mm_set1_epi16(WINPR_SAFE_INT_CAST(INT16, 1 << (factor - 1)));
 
 	do
 	{
-		a = _mm_load_si128(ptr);
+		__m128i a = _mm_load_si128(ptr);
 		a = _mm_add_epi16(a, half);
 		a = _mm_srai_epi16(a, factor);
 		_mm_store_si128(ptr, a);
@@ -135,18 +135,33 @@ static void rfx_quantization_encode_sse2(INT16* WINPR_RESTRICT buffer,
 {
 	WINPR_ASSERT(buffer);
 	WINPR_ASSERT(quantization_values);
+	for (size_t x = 0; x < 10; x++)
+	{
+		WINPR_ASSERT(quantization_values[x] >= 6);
+		WINPR_ASSERT(quantization_values[x] <= INT16_MAX + 6);
+	}
 
 	mm_prefetch_buffer((char*)buffer, 4096 * sizeof(INT16));
-	rfx_quantization_encode_block_sse2(buffer, 1024, quantization_values[8] - 6);        /* HL1 */
-	rfx_quantization_encode_block_sse2(buffer + 1024, 1024, quantization_values[7] - 6); /* LH1 */
-	rfx_quantization_encode_block_sse2(buffer + 2048, 1024, quantization_values[9] - 6); /* HH1 */
-	rfx_quantization_encode_block_sse2(buffer + 3072, 256, quantization_values[5] - 6);  /* HL2 */
-	rfx_quantization_encode_block_sse2(buffer + 3328, 256, quantization_values[4] - 6);  /* LH2 */
-	rfx_quantization_encode_block_sse2(buffer + 3584, 256, quantization_values[6] - 6);  /* HH2 */
-	rfx_quantization_encode_block_sse2(buffer + 3840, 64, quantization_values[2] - 6);   /* HL3 */
-	rfx_quantization_encode_block_sse2(buffer + 3904, 64, quantization_values[1] - 6);   /* LH3 */
-	rfx_quantization_encode_block_sse2(buffer + 3968, 64, quantization_values[3] - 6);   /* HH3 */
-	rfx_quantization_encode_block_sse2(buffer + 4032, 64, quantization_values[0] - 6);   /* LL3 */
+	rfx_quantization_encode_block_sse2(
+	    buffer, 1024, WINPR_SAFE_INT_CAST(INT16, quantization_values[8] - 6)); /* HL1 */
+	rfx_quantization_encode_block_sse2(
+	    buffer + 1024, 1024, WINPR_SAFE_INT_CAST(INT16, quantization_values[7] - 6)); /* LH1 */
+	rfx_quantization_encode_block_sse2(
+	    buffer + 2048, 1024, WINPR_SAFE_INT_CAST(INT16, quantization_values[9] - 6)); /* HH1 */
+	rfx_quantization_encode_block_sse2(
+	    buffer + 3072, 256, WINPR_SAFE_INT_CAST(INT16, quantization_values[5] - 6)); /* HL2 */
+	rfx_quantization_encode_block_sse2(
+	    buffer + 3328, 256, WINPR_SAFE_INT_CAST(INT16, quantization_values[4] - 6)); /* LH2 */
+	rfx_quantization_encode_block_sse2(
+	    buffer + 3584, 256, WINPR_SAFE_INT_CAST(INT16, quantization_values[6] - 6)); /* HH2 */
+	rfx_quantization_encode_block_sse2(
+	    buffer + 3840, 64, WINPR_SAFE_INT_CAST(INT16, quantization_values[2] - 6)); /* HL3 */
+	rfx_quantization_encode_block_sse2(
+	    buffer + 3904, 64, WINPR_SAFE_INT_CAST(INT16, quantization_values[1] - 6)); /* LH3 */
+	rfx_quantization_encode_block_sse2(
+	    buffer + 3968, 64, WINPR_SAFE_INT_CAST(INT16, quantization_values[3] - 6)); /* HH3 */
+	rfx_quantization_encode_block_sse2(
+	    buffer + 4032, 64, WINPR_SAFE_INT_CAST(INT16, quantization_values[0] - 6)); /* LL3 */
 	rfx_quantization_encode_block_sse2(buffer, 4096, 5);
 }
 

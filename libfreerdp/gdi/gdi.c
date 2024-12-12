@@ -26,6 +26,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/assert.h>
+#include <winpr/cast.h>
 
 #include <freerdp/api.h>
 #include <freerdp/log.h>
@@ -488,43 +489,39 @@ BOOL gdi_bitmap_update(rdpContext* context, const BITMAP_UPDATE* bitmapUpdate)
 
 	for (UINT32 index = 0; index < bitmapUpdate->number; index++)
 	{
+		BOOL rc = FALSE;
 		const BITMAP_DATA* bitmap = &(bitmapUpdate->rectangles[index]);
 		rdpBitmap* bmp = Bitmap_Alloc(context);
 
 		if (!bmp)
-		{
-			WLog_ERR(TAG, "Bitmap_Alloc failed");
-			return FALSE;
-		}
+			goto fail;
 
-		Bitmap_SetDimensions(bmp, bitmap->width, bitmap->height);
-		Bitmap_SetRectangle(bmp, bitmap->destLeft, bitmap->destTop, bitmap->destRight,
-		                    bitmap->destBottom);
+		if (!Bitmap_SetDimensions(bmp, WINPR_SAFE_INT_CAST(UINT16, bitmap->width),
+		                          WINPR_SAFE_INT_CAST(UINT16, bitmap->height)))
+			goto fail;
+
+		if (!Bitmap_SetRectangle(bmp, WINPR_SAFE_INT_CAST(UINT16, bitmap->destLeft),
+		                         WINPR_SAFE_INT_CAST(UINT16, bitmap->destTop),
+		                         WINPR_SAFE_INT_CAST(UINT16, bitmap->destRight),
+		                         WINPR_SAFE_INT_CAST(UINT16, bitmap->destBottom)))
+			goto fail;
 
 		if (!bmp->Decompress(context, bmp, bitmap->bitmapDataStream, bitmap->width, bitmap->height,
 		                     bitmap->bitsPerPixel, bitmap->bitmapLength, bitmap->compressed,
 		                     RDP_CODEC_ID_NONE))
-		{
-			WLog_ERR(TAG, "bmp->Decompress failed");
-			Bitmap_Free(context, bmp);
-			return FALSE;
-		}
+			goto fail;
 
 		if (!bmp->New(context, bmp))
-		{
-			WLog_ERR(TAG, "bmp->New failed");
-			Bitmap_Free(context, bmp);
-			return FALSE;
-		}
+			goto fail;
 
 		if (!bmp->Paint(context, bmp))
-		{
-			WLog_ERR(TAG, "bmp->Paint failed");
-			Bitmap_Free(context, bmp);
-			return FALSE;
-		}
+			goto fail;
 
+		rc = TRUE;
+	fail:
 		Bitmap_Free(context, bmp);
+		if (!rc)
+			return FALSE;
 	}
 
 	return TRUE;
@@ -675,8 +672,8 @@ static BOOL gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 
 	if (hbrush)
 	{
-		hbrush->nXOrg = brush->x;
-		hbrush->nYOrg = brush->y;
+		hbrush->nXOrg = WINPR_SAFE_INT_CAST(int32_t, brush->x);
+		hbrush->nYOrg = WINPR_SAFE_INT_CAST(int32_t, brush->y);
 		gdi->drawing->hdc->brush = hbrush;
 		ret = gdi_BitBlt(gdi->drawing->hdc, patblt->nLeftRect, patblt->nTopRect, patblt->nWidth,
 		                 patblt->nHeight, gdi->primary->hdc, nXSrc, nYSrc, rop, &gdi->palette);
@@ -786,7 +783,7 @@ static BOOL gdi_line_to(rdpContext* context, const LINE_TO_ORDER* lineTo)
 		return FALSE;
 
 	gdi_SelectObject(gdi->drawing->hdc, (HGDIOBJECT)hPen);
-	gdi_SetROP2(gdi->drawing->hdc, lineTo->bRop2);
+	gdi_SetROP2(gdi->drawing->hdc, WINPR_SAFE_INT_CAST(int32_t, lineTo->bRop2));
 	gdi_MoveToEx(gdi->drawing->hdc, lineTo->nXStart, lineTo->nYStart, NULL);
 	gdi_LineTo(gdi->drawing->hdc, lineTo->nXEnd, lineTo->nYEnd);
 	gdi_DeleteObject((HGDIOBJECT)hPen);
@@ -811,7 +808,7 @@ static BOOL gdi_polyline(rdpContext* context, const POLYLINE_ORDER* polyline)
 		return FALSE;
 
 	gdi_SelectObject(gdi->drawing->hdc, (HGDIOBJECT)hPen);
-	gdi_SetROP2(gdi->drawing->hdc, polyline->bRop2);
+	gdi_SetROP2(gdi->drawing->hdc, WINPR_SAFE_INT_CAST(int32_t, polyline->bRop2));
 	x = polyline->xStart;
 	y = polyline->yStart;
 	gdi_ClipCoords(gdi->drawing->hdc, &x, &y, &w, &h, NULL, NULL);
@@ -947,8 +944,8 @@ static BOOL gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 				goto out_fail;
 			}
 
-			gdi->drawing->hdc->brush->nXOrg = brush->x;
-			gdi->drawing->hdc->brush->nYOrg = brush->y;
+			gdi->drawing->hdc->brush->nXOrg = WINPR_SAFE_INT_CAST(int32_t, brush->x);
+			gdi->drawing->hdc->brush->nYOrg = WINPR_SAFE_INT_CAST(int32_t, brush->y);
 			ret = gdi_BitBlt(gdi->drawing->hdc, mem3blt->nLeftRect, mem3blt->nTopRect,
 			                 mem3blt->nWidth, mem3blt->nHeight, bitmap->hdc, mem3blt->nXSrc,
 			                 mem3blt->nYSrc, gdi_rop3_code_checked(mem3blt->bRop), &gdi->palette);
@@ -1148,7 +1145,10 @@ static BOOL gdi_surface_bits(rdpContext* context, const SURFACE_BITS_COMMAND* cm
 		UINT32 width = rects[i].right - rects[i].left;
 		UINT32 height = rects[i].bottom - rects[i].top;
 
-		if (!gdi_InvalidateRegion(gdi->primary->hdc, left, top, width, height))
+		if (!gdi_InvalidateRegion(gdi->primary->hdc, WINPR_SAFE_INT_CAST(int32_t, left),
+		                          WINPR_SAFE_INT_CAST(int32_t, top),
+		                          WINPR_SAFE_INT_CAST(int32_t, width),
+		                          WINPR_SAFE_INT_CAST(int32_t, height)))
 		{
 			WLog_ERR(TAG, "Failed to update invalid region");
 			goto out;
@@ -1372,8 +1372,10 @@ BOOL gdi_init_ex(freerdp* instance, UINT32 format, UINT32 stride, BYTE* buffer,
 		goto fail;
 
 	gdi->context = context;
-	gdi->width = freerdp_settings_get_uint32(context->settings, FreeRDP_DesktopWidth);
-	gdi->height = freerdp_settings_get_uint32(context->settings, FreeRDP_DesktopHeight);
+	gdi->width = WINPR_SAFE_INT_CAST(
+	    int32_t, freerdp_settings_get_uint32(context->settings, FreeRDP_DesktopWidth));
+	gdi->height = WINPR_SAFE_INT_CAST(
+	    int32_t, freerdp_settings_get_uint32(context->settings, FreeRDP_DesktopHeight));
 	gdi->dstFormat = format;
 	/* default internal buffer format */
 	WLog_Print(gdi->log, WLOG_INFO, "Local framebuffer format  %s",
@@ -1449,7 +1451,10 @@ BOOL gdi_send_suppress_output(rdpGdi* gdi, BOOL suppress)
 	update = gdi->context->update;
 	rect.left = 0;
 	rect.top = 0;
-	rect.right = freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth);
-	rect.bottom = freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight);
+
+	const UINT32 w = freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth);
+	const UINT32 h = freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight);
+	rect.right = WINPR_SAFE_INT_CAST(UINT16, w);
+	rect.bottom = WINPR_SAFE_INT_CAST(UINT16, h);
 	return update->SuppressOutput(gdi->context, !suppress, &rect);
 }

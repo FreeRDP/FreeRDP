@@ -1,4 +1,7 @@
 #include <cassert>
+
+#include <winpr/cast.h>
+
 #include "sdl_selectlist.hpp"
 
 static const Uint32 vpadding = 5;
@@ -80,7 +83,8 @@ int SdlSelectList::run()
 							if (CurrentActiveTextInput > 0)
 								CurrentActiveTextInput--;
 							else
-								CurrentActiveTextInput = _list.size() - 1;
+								CurrentActiveTextInput =
+								    WINPR_SAFE_INT_CAST(ssize_t, _list.size() - 1);
 							break;
 						case SDLK_DOWN:
 						case SDLK_TAB:
@@ -88,7 +92,8 @@ int SdlSelectList::run()
 								CurrentActiveTextInput = 0;
 							else
 								CurrentActiveTextInput++;
-							CurrentActiveTextInput = CurrentActiveTextInput % _list.size();
+							CurrentActiveTextInput =
+							    CurrentActiveTextInput % WINPR_SAFE_INT_CAST(ssize_t, _list.size());
 							break;
 						case SDLK_RETURN:
 						case SDLK_RETURN2:
@@ -171,7 +176,7 @@ ssize_t SdlSelectList::get_index(const SDL_MouseButtonEvent& button)
 		auto r = cur.rect();
 
 		if ((x >= r.x) && (x <= r.x + r.w) && (y >= r.y) && (y <= r.y + r.h))
-			return i;
+			return WINPR_SAFE_INT_CAST(ssize_t, i);
 	}
 	return -1;
 }

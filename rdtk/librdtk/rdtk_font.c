@@ -24,6 +24,7 @@
 #include <winpr/wtypes.h>
 #include <winpr/crt.h>
 #include <winpr/assert.h>
+#include <winpr/cast.h>
 #include <winpr/path.h>
 #include <winpr/file.h>
 #include <winpr/print.h>
@@ -323,12 +324,12 @@ static int rdtk_font_parse_descriptor_buffer(rdtkFont* font, uint8_t* buffer, si
 	*q = '\0';
 	errno = 0;
 	{
-		long val = strtol(p, NULL, 0);
+		const unsigned long val = strtoul(p, NULL, 0);
 
-		if ((errno != 0) || (val < INT32_MIN) || (val > INT32_MAX))
+		if ((errno != 0) || (val > UINT16_MAX))
 			return -1;
 
-		font->height = val;
+		font->height = (uint16_t)val;
 	}
 	*q = '"';
 

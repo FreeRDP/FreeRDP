@@ -1,5 +1,6 @@
 #include <winpr/sysinfo.h>
 #include <winpr/assert.h>
+#include <winpr/cast.h>
 #include <winpr/pool.h>
 
 #include <freerdp/settings.h>
@@ -379,9 +380,9 @@ static RECTANGLE_16 clamp(YUV_CONTEXT* WINPR_RESTRICT context,
 	RECTANGLE_16 c = *rect;
 	const UINT32 height = MIN(context->height, srcHeight);
 	if (c.top > height)
-		c.top = height;
+		c.top = WINPR_SAFE_INT_CAST(UINT16, height);
 	if (c.bottom > height)
-		c.bottom = height;
+		c.bottom = WINPR_SAFE_INT_CAST(UINT16, height);
 	return c;
 }
 

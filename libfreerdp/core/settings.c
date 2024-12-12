@@ -1595,6 +1595,7 @@ BOOL freerdp_settings_copy(rdpSettings* _settings, const rdpSettings* settings)
 	_settings->ClientTimeZone = NULL;
 	_settings->RedirectionPassword = NULL;
 	_settings->RedirectionTsvUrl = NULL;
+	_settings->RedirectionGuid = NULL;
 	_settings->TargetNetAddresses = NULL;
 	_settings->TargetNetPorts = NULL;
 	_settings->DeviceArray = NULL;

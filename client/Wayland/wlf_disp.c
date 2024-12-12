@@ -19,6 +19,7 @@
  */
 
 #include <winpr/sysinfo.h>
+#include <winpr/cast.h>
 
 #include "wlf_disp.h"
 
@@ -261,9 +262,9 @@ wlfDispContext* wlf_disp_new(wlfContext* wlc)
 
 	ret->wlc = wlc;
 	ret->lastSentWidth = ret->targetWidth =
-	    freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth);
+	    WINPR_SAFE_INT_CAST(int, freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth));
 	ret->lastSentHeight = ret->targetHeight =
-	    freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight);
+	    WINPR_SAFE_INT_CAST(int, freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight));
 	PubSub_SubscribeActivated(pubSub, wlf_disp_OnActivated);
 	PubSub_SubscribeGraphicsReset(pubSub, wlf_disp_OnGraphicsReset);
 	PubSub_SubscribeTimer(pubSub, wlf_disp_OnTimer);
@@ -318,8 +319,8 @@ UINT wlf_disp_sendLayout(DispClientContext* disp, const rdpMonitor* monitors, si
 		layout->Flags = (monitor->is_primary ? DISPLAY_CONTROL_MONITOR_PRIMARY : 0);
 		layout->Left = monitor->x;
 		layout->Top = monitor->y;
-		layout->Width = monitor->width;
-		layout->Height = monitor->height;
+		layout->Width = WINPR_SAFE_INT_CAST(UINT32, monitor->width);
+		layout->Height = WINPR_SAFE_INT_CAST(UINT32, monitor->height);
 		layout->Orientation = ORIENTATION_LANDSCAPE;
 		layout->PhysicalWidth = monitor->attributes.physicalWidth;
 		layout->PhysicalHeight = monitor->attributes.physicalHeight;
@@ -439,7 +440,7 @@ int wlf_list_monitors(wlfContext* wlc)
 
 	for (uint32_t i = 0; i < nmonitors; i++)
 	{
-		const UwacOutput* monitor = UwacDisplayGetOutput(wlc->display, i);
+		const UwacOutput* monitor = UwacDisplayGetOutput(wlc->display, WINPR_SAFE_INT_CAST(int, i));
 		UwacSize resolution;
 		UwacPosition pos;
 

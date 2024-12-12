@@ -22,6 +22,7 @@
 #include <freerdp/config.h>
 
 #include <winpr/crt.h>
+#include <winpr/cast.h>
 #include <winpr/stream.h>
 #include <winpr/interlocked.h>
 
@@ -988,7 +989,9 @@ static UINT drdynvc_write_data(drdynvcPlugin* drdynvc, UINT32 ChannelId, const B
 		cbLen = drdynvc_write_variable_uint(data_out, dataSize);
 		pos = Stream_GetPosition(data_out);
 		Stream_SetPosition(data_out, 0);
-		Stream_Write_UINT8(data_out, (DATA_FIRST_PDU << 4) | cbChId | (cbLen << 2));
+
+		const INT32 pdu = (DATA_FIRST_PDU << 4) | cbChId | (cbLen << 2);
+		Stream_Write_UINT8(data_out, WINPR_SAFE_INT_CAST(UINT8, pdu));
 		Stream_SetPosition(data_out, pos);
 		chunkLength = CHANNEL_CHUNK_LENGTH - pos;
 		Stream_Write(data_out, data, chunkLength);
@@ -1154,7 +1157,8 @@ static UINT32 drdynvc_read_variable_uint(wStream* s, int cbLen)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT drdynvc_process_create_request(drdynvcPlugin* drdynvc, int Sp, int cbChId, wStream* s)
+static UINT drdynvc_process_create_request(drdynvcPlugin* drdynvc, UINT8 Sp, UINT8 cbChId,
+                                           wStream* s)
 {
 	UINT status = 0;
 	wStream* data_out = NULL;

@@ -22,6 +22,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/assert.h>
+#include <winpr/cast.h>
 
 #include <freerdp/crypto/er.h>
 #include <freerdp/crypto/ber.h>
@@ -279,7 +280,7 @@ BOOL er_read_bit_string(wStream* s, int* length, BYTE* padding)
 BOOL er_write_bit_string_tag(wStream* s, UINT32 length, BYTE padding, BOOL flag)
 {
 	er_write_universal_tag(s, ER_TAG_BIT_STRING, FALSE);
-	er_write_length(s, length, flag);
+	er_write_length(s, WINPR_SAFE_INT_CAST(int, length), flag);
 	Stream_Write_UINT8(s, padding);
 	return TRUE;
 }
@@ -406,13 +407,13 @@ int er_write_integer(wStream* s, INT32 value)
 	if (value <= 127 && value >= -128)
 	{
 		er_write_length(s, 1, FALSE);
-		Stream_Write_UINT8(s, value);
+		Stream_Write_INT8(s, WINPR_SAFE_INT_CAST(INT8, value));
 		return 2;
 	}
 	else if (value <= 32767 && value >= -32768)
 	{
 		er_write_length(s, 2, FALSE);
-		Stream_Write_INT16_BE(s, value);
+		Stream_Write_INT16_BE(s, WINPR_SAFE_INT_CAST(INT16, value));
 		return 3;
 	}
 	else

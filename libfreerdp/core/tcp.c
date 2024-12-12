@@ -593,7 +593,7 @@ static long transport_bio_buffered_ctrl(BIO* bio, int cmd, long arg1, void* arg2
 			break;
 
 		case BIO_CTRL_WPENDING:
-			status = ringbuffer_used(&ptr->xmitBuffer);
+			status = WINPR_SAFE_INT_CAST(long, ringbuffer_used(&ptr->xmitBuffer));
 			break;
 
 		case BIO_CTRL_PENDING:
@@ -815,9 +815,8 @@ static BOOL freerdp_tcp_connect_timeout(rdpContext* context, int sockfd, struct 
                                         socklen_t addrlen, UINT32 timeout)
 {
 	BOOL rc = FALSE;
-	HANDLE handles[2];
-	int status = 0;
-	int count = 0;
+	HANDLE handles[2] = { 0 };
+	DWORD count = 0;
 	u_long arg = 0;
 	DWORD tout = (timeout > 0) ? timeout : INFINITE;
 
@@ -826,22 +825,23 @@ static BOOL freerdp_tcp_connect_timeout(rdpContext* context, int sockfd, struct 
 	if (!handles[count])
 		return FALSE;
 
-	status = WSAEventSelect(sockfd, handles[count++], FD_READ | FD_WRITE | FD_CONNECT | FD_CLOSE);
+	const int wsastatus =
+	    WSAEventSelect(sockfd, handles[count++], FD_READ | FD_WRITE | FD_CONNECT | FD_CLOSE);
 
-	if (status < 0)
+	if (wsastatus < 0)
 	{
 		WLog_ERR(TAG, "WSAEventSelect failed with %d", WSAGetLastError());
 		goto fail;
 	}
 
 	handles[count++] = utils_get_abort_event(context->rdp);
-	status = _connect(sockfd, addr, addrlen);
+	const int constatus = _connect(sockfd, addr, WINPR_SAFE_INT_CAST(int, addrlen));
 
-	if (status < 0)
+	if (constatus < 0)
 	{
-		status = WSAGetLastError();
+		const int estatus = WSAGetLastError();
 
-		switch (status)
+		switch (estatus)
 		{
 			case WSAEINPROGRESS:
 			case WSAEWOULDBLOCK:
@@ -852,9 +852,9 @@ static BOOL freerdp_tcp_connect_timeout(rdpContext* context, int sockfd, struct 
 		}
 	}
 
-	status = WaitForMultipleObjects(count, handles, FALSE, tout);
+	const DWORD wstatus = WaitForMultipleObjects(count, handles, FALSE, tout);
 
-	if (WAIT_OBJECT_0 != status)
+	if (WAIT_OBJECT_0 != wstatus)
 		goto fail;
 
 	const SSIZE_T res = recv(sockfd, NULL, 0, 0);
@@ -865,7 +865,7 @@ static BOOL freerdp_tcp_connect_timeout(rdpContext* context, int sockfd, struct 
 			goto fail;
 	}
 
-	status = WSAEventSelect(sockfd, handles[0], 0);
+	const int status = WSAEventSelect(sockfd, handles[0], 0);
 
 	if (status < 0)
 	{
@@ -903,7 +903,6 @@ static int freerdp_tcp_connect_multi(rdpContext* context, char** hostnames, cons
                                      UINT32 count, UINT16 port, UINT32 timeout)
 {
 	UINT32 sindex = count;
-	int status = -1;
 	SOCKET sockfd = INVALID_SOCKET;
 	struct addrinfo* addr = NULL;
 	struct addrinfo* result = NULL;
@@ -923,7 +922,7 @@ static int freerdp_tcp_connect_multi(rdpContext* context, char** hostnames, cons
 		int curPort = port;
 
 		if (ports)
-			curPort = ports[index];
+			curPort = WINPR_SAFE_INT_CAST(int, ports[index]);
 
 		result = freerdp_tcp_resolve_host(hostnames[index], curPort, 0);
 
@@ -965,9 +964,9 @@ static int freerdp_tcp_connect_multi(rdpContext* context, char** hostnames, cons
 			continue;
 
 		/* blocking tcp connect */
-		status = _connect(sockfd, addr->ai_addr, addr->ai_addrlen);
+		const int rc = _connect(sockfd, addr->ai_addr, WINPR_SAFE_INT_CAST(int, addr->ai_addrlen));
 
-		if (status >= 0)
+		if (rc >= 0)
 		{
 			/* connection success */
 			sindex = index;

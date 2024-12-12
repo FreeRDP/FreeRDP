@@ -800,7 +800,7 @@ static BOOL tls_prepare(rdpTls* tls, BIO* underlying, SSL_METHOD* method, int op
 	}
 #endif
 #if OPENSSL_VERSION_NUMBER >= 0x10100000L && !defined(LIBRESSL_VERSION_NUMBER)
-	SSL_CTX_set_security_level(tls->ctx, settings->TlsSecLevel);
+	SSL_CTX_set_security_level(tls->ctx, WINPR_SAFE_INT_CAST(int, settings->TlsSecLevel));
 #endif
 
 	if (settings->AllowedTlsCiphers)

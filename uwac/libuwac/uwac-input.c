@@ -48,7 +48,7 @@ static struct wl_buffer* create_pointer_buffer(UwacSeat* seat, const void* src, 
 
 	assert(seat);
 
-	fd = uwac_create_anonymous_file(size);
+	fd = uwac_create_anonymous_file(WINPR_SAFE_INT_CAST(int32_t, size));
 
 	if (fd < 0)
 		return buffer;
@@ -61,7 +61,7 @@ static struct wl_buffer* create_pointer_buffer(UwacSeat* seat, const void* src, 
 	}
 	memcpy(data, src, size);
 
-	pool = wl_shm_create_pool(seat->display->shm, fd, size);
+	pool = wl_shm_create_pool(seat->display->shm, fd, WINPR_SAFE_INT_CAST(int32_t, size));
 
 	if (!pool)
 	{
@@ -69,9 +69,10 @@ static struct wl_buffer* create_pointer_buffer(UwacSeat* seat, const void* src, 
 		goto error_mmap;
 	}
 
-	buffer =
-	    wl_shm_pool_create_buffer(pool, 0, seat->pointer_image->width, seat->pointer_image->height,
-	                              seat->pointer_image->width * 4, WL_SHM_FORMAT_ARGB8888);
+	buffer = wl_shm_pool_create_buffer(
+	    pool, 0, WINPR_SAFE_INT_CAST(int32_t, seat->pointer_image->width),
+	    WINPR_SAFE_INT_CAST(int32_t, seat->pointer_image->height),
+	    WINPR_SAFE_INT_CAST(int32_t, seat->pointer_image->width * 4), WL_SHM_FORMAT_ARGB8888);
 	wl_shm_pool_destroy(pool);
 
 	if (munmap(data, size) < 0)
@@ -121,8 +122,8 @@ static UwacReturnCode set_cursor_image(UwacSeat* seat, uint32_t serial)
 				return UWAC_ERROR_INTERNAL;
 
 			surface = seat->pointer_surface;
-			x = image->hotspot_x / scale;
-			y = image->hotspot_y / scale;
+			x = WINPR_SAFE_INT_CAST(int32_t, image->hotspot_x) / scale;
+			y = WINPR_SAFE_INT_CAST(int32_t, image->hotspot_y) / scale;
 			break;
 		case 1: /* NULL pointer */
 			break;
@@ -133,8 +134,8 @@ static UwacReturnCode set_cursor_image(UwacSeat* seat, uint32_t serial)
 			image = cursor->images[0];
 			if (!image)
 				return UWAC_ERROR_INTERNAL;
-			x = image->hotspot_x;
-			y = image->hotspot_y;
+			x = WINPR_SAFE_INT_CAST(int32_t, image->hotspot_x);
+			y = WINPR_SAFE_INT_CAST(int32_t, image->hotspot_y);
 			buffer = wl_cursor_image_get_buffer(image);
 			if (!buffer)
 				return UWAC_ERROR_INTERNAL;
@@ -146,7 +147,8 @@ static UwacReturnCode set_cursor_image(UwacSeat* seat, uint32_t serial)
 	{
 		wl_surface_set_buffer_scale(surface, scale);
 		wl_surface_attach(surface, buffer, 0, 0);
-		wl_surface_damage(surface, 0, 0, image->width, image->height);
+		wl_surface_damage(surface, 0, 0, WINPR_SAFE_INT_CAST(int32_t, image->width),
+		                  WINPR_SAFE_INT_CAST(int32_t, image->height));
 		wl_surface_commit(surface);
 	}
 

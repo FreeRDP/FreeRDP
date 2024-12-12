@@ -24,6 +24,7 @@
 #include <linux/input.h>
 
 #include <winpr/assert.h>
+#include <winpr/cast.h>
 
 #include <freerdp/config.h>
 #include <freerdp/locale/keyboard.h>
@@ -72,16 +73,13 @@ BOOL wlf_handle_pointer_enter(freerdp* instance, const UwacPointerEnterLeaveEven
 	if (!wlf_scale_coordinates(instance->context, &x, &y, TRUE))
 		return FALSE;
 
-	WINPR_ASSERT(x <= UINT16_MAX);
-	WINPR_ASSERT(y <= UINT16_MAX);
 	cctx = (rdpClientContext*)instance->context;
-	return freerdp_client_send_button_event(cctx, FALSE, PTR_FLAGS_MOVE, x, y);
+	return freerdp_client_send_button_event(
+	    cctx, FALSE, PTR_FLAGS_MOVE, WINPR_SAFE_INT_CAST(int, x), WINPR_SAFE_INT_CAST(int, y));
 }
 
 BOOL wlf_handle_pointer_motion(freerdp* instance, const UwacPointerMotionEvent* ev)
 {
-	uint32_t x = 0;
-	uint32_t y = 0;
 	rdpClientContext* cctx = NULL;
 
 	if (!instance || !ev)
@@ -90,15 +88,15 @@ BOOL wlf_handle_pointer_motion(freerdp* instance, const UwacPointerMotionEvent* 
 	cctx = (rdpClientContext*)instance->context;
 	WINPR_ASSERT(cctx);
 
-	x = ev->x;
-	y = ev->y;
+	uint32_t x = ev->x;
+	uint32_t y = ev->y;
 
 	if (!wlf_scale_coordinates(instance->context, &x, &y, TRUE))
 		return FALSE;
 
-	WINPR_ASSERT(x <= UINT16_MAX);
-	WINPR_ASSERT(y <= UINT16_MAX);
-	return freerdp_client_send_button_event(cctx, FALSE, PTR_FLAGS_MOVE, x, y);
+	return freerdp_client_send_button_event(cctx, FALSE, PTR_FLAGS_MOVE,
+	                                        WINPR_SAFE_INT_CAST(int32_t, x),
+	                                        WINPR_SAFE_INT_CAST(int32_t, y));
 }
 
 BOOL wlf_handle_pointer_buttons(freerdp* instance, const UwacPointerButtonEvent* ev)
@@ -106,8 +104,6 @@ BOOL wlf_handle_pointer_buttons(freerdp* instance, const UwacPointerButtonEvent*
 	rdpClientContext* cctx = NULL;
 	UINT16 flags = 0;
 	UINT16 xflags = 0;
-	uint32_t x = 0;
-	uint32_t y = 0;
 
 	if (!instance || !ev)
 		return FALSE;
@@ -115,8 +111,8 @@ BOOL wlf_handle_pointer_buttons(freerdp* instance, const UwacPointerButtonEvent*
 	cctx = (rdpClientContext*)instance->context;
 	WINPR_ASSERT(cctx);
 
-	x = ev->x;
-	y = ev->y;
+	uint32_t x = ev->x;
+	uint32_t y = ev->y;
 
 	if (!wlf_scale_coordinates(instance->context, &x, &y, TRUE))
 		return FALSE;
@@ -153,14 +149,14 @@ BOOL wlf_handle_pointer_buttons(freerdp* instance, const UwacPointerButtonEvent*
 			return TRUE;
 	}
 
-	WINPR_ASSERT(x <= UINT16_MAX);
-	WINPR_ASSERT(y <= UINT16_MAX);
+	const INT32 cx = WINPR_SAFE_INT_CAST(int32_t, x);
+	const INT32 cy = WINPR_SAFE_INT_CAST(int32_t, y);
 
 	if ((flags & ~PTR_FLAGS_DOWN) != 0)
-		return freerdp_client_send_button_event(cctx, FALSE, flags, x, y);
+		return freerdp_client_send_button_event(cctx, FALSE, flags, cx, cy);
 
 	if ((xflags & ~PTR_XFLAGS_DOWN) != 0)
-		return freerdp_client_send_extended_button_event(cctx, FALSE, xflags, x, y);
+		return freerdp_client_send_extended_button_event(cctx, FALSE, xflags, cx, cy);
 
 	return FALSE;
 }

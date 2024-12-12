@@ -424,7 +424,7 @@ static UwacBuffer* UwacWindowFindFreeBuffer(UwacWindow* w, ssize_t* index)
 		{
 			w->buffers[i].used = true;
 			if (index)
-				*index = i;
+				*index = WINPR_SAFE_INT_CAST(ssize_t, i);
 			return &w->buffers[i];
 		}
 	}
@@ -440,7 +440,7 @@ static UwacBuffer* UwacWindowFindFreeBuffer(UwacWindow* w, ssize_t* index)
 
 	w->buffers[i].used = true;
 	if (index)
-		*index = i;
+		*index = WINPR_SAFE_INT_CAST(ssize_t, i);
 	return &w->buffers[i];
 }
 
@@ -500,10 +500,10 @@ UwacWindow* UwacCreateWindowShm(UwacDisplay* display, uint32_t width, uint32_t h
 
 	w->display = display;
 	w->format = format;
-	w->width = width;
-	w->height = height;
-	w->stride = width * bppFromShmFormat(format);
-	allocSize = w->stride * height;
+	w->width = WINPR_SAFE_INT_CAST(int, width);
+	w->height = WINPR_SAFE_INT_CAST(int, height);
+	w->stride = WINPR_SAFE_INT_CAST(int, width) * bppFromShmFormat(format);
+	allocSize = w->stride * WINPR_SAFE_INT_CAST(int, height);
 	ret = UwacWindowShmAllocBuffers(w, UWAC_INITIAL_BUFFERS, allocSize, width, height, format);
 
 	if (ret != UWAC_SUCCESS)
@@ -662,7 +662,9 @@ UwacReturnCode UwacWindowSetOpaqueRegion(UwacWindow* window, uint32_t x, uint32_
 	if (!window->opaque_region)
 		return UWAC_ERROR_NOMEMORY;
 
-	wl_region_add(window->opaque_region, x, y, width, height);
+	wl_region_add(window->opaque_region, WINPR_SAFE_INT_CAST(int32_t, x),
+	              WINPR_SAFE_INT_CAST(int32_t, y), WINPR_SAFE_INT_CAST(int32_t, width),
+	              WINPR_SAFE_INT_CAST(int32_t, height));
 	wl_surface_set_opaque_region(window->surface, window->opaque_region);
 	return UWAC_SUCCESS;
 }
@@ -680,7 +682,9 @@ UwacReturnCode UwacWindowSetInputRegion(UwacWindow* window, uint32_t x, uint32_t
 	if (!window->input_region)
 		return UWAC_ERROR_NOMEMORY;
 
-	wl_region_add(window->input_region, x, y, width, height);
+	wl_region_add(window->input_region, WINPR_SAFE_INT_CAST(int32_t, x),
+	              WINPR_SAFE_INT_CAST(int32_t, y), WINPR_SAFE_INT_CAST(int32_t, width),
+	              WINPR_SAFE_INT_CAST(int32_t, height));
 	wl_surface_set_input_region(window->surface, window->input_region);
 	return UWAC_SUCCESS;
 }

@@ -102,7 +102,7 @@ static pstatus_t general_copy_8u_AC4r(const BYTE* pSrc, INT32 srcStep, BYTE* pDs
 {
 	const BYTE* src = pSrc;
 	BYTE* dst = pDst;
-	int rowbytes = width * sizeof(UINT32);
+	int rowbytes = width * (int)sizeof(UINT32);
 
 	if ((width == 0) || (height == 0))
 		return PRIMITIVES_SUCCESS;
