@@ -633,7 +633,7 @@ static INLINE SSIZE_T freerdp_bitmap_compress_24(const void* WINPR_RESTRICT srcD
 
 				if (pixel == (ypixel ^ mix))
 				{
-					fom_mask[fom_mask_len - 1] |= (1 << (fom_count % 8));
+					fom_mask[fom_mask_len - 1] |= WINPR_SAFE_INT_CAST(char, (1 << (fom_count % 8)));
 				}
 
 				fom_count++;

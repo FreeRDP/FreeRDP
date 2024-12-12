@@ -1334,7 +1334,8 @@ static BOOL rdg_tls_connect(rdpRdg* rdg, rdpTls* tls, const char* peerAddress, i
 }
 
 static BOOL rdg_establish_data_connection(rdpRdg* rdg, rdpTls* tls, const char* method,
-                                          const char* peerAddress, int timeout, BOOL* rpcFallback)
+                                          const char* peerAddress, UINT32 timeout,
+                                          BOOL* rpcFallback)
 {
 	char buffer[64] = { 0 };
 	HttpResponse* response = NULL;

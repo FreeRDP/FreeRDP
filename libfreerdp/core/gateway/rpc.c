@@ -824,7 +824,7 @@ static int rpc_in_channel_connect(RpcInChannel* inChannel, UINT32 timeout)
 	return 1;
 }
 
-static int rpc_out_channel_connect(RpcOutChannel* outChannel, int timeout)
+static int rpc_out_channel_connect(RpcOutChannel* outChannel, UINT32 timeout)
 {
 	rdpContext* context = NULL;
 

@@ -205,15 +205,16 @@ static BOOL wts_read_drdynvc_create_response(rdpPeerChannel* channel, wStream* s
 static BOOL wts_read_drdynvc_data_first(rdpPeerChannel* channel, wStream* s, int cbLen,
                                         UINT32 length)
 {
-	int value = 0;
 	WINPR_ASSERT(channel);
 	WINPR_ASSERT(s);
-	value = wts_read_variable_uint(s, cbLen, &channel->dvc_total_length);
+	const UINT32 value = wts_read_variable_uint(s, cbLen, &channel->dvc_total_length);
 
 	if (value == 0)
 		return FALSE;
-
-	length -= value;
+	if (value > length)
+		length = 0;
+	else
+		length -= value;
 
 	if (length > channel->dvc_total_length)
 		return FALSE;

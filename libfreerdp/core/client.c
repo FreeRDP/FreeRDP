@@ -1114,7 +1114,7 @@ static UINT VCAPITYPE FreeRDP_VirtualChannelInit(LPVOID* ppInitHandle, PCHANNEL_
 			return CHANNEL_RC_INITIALIZATION_ERROR;
 		pChannelOpenData->flags = 1; /* init */
 		strncpy(pChannelOpenData->name, pChannelDef->name, CHANNEL_NAME_LEN);
-		pChannelOpenData->options = pChannelDef->options;
+		pChannelOpenData->options = WINPR_SAFE_INT_CAST(int, pChannelDef->options);
 
 		if (ChannelCount < CHANNEL_MAX_COUNT)
 		{

@@ -1,5 +1,7 @@
 #include <cassert>
+
 #include <winpr/cast.h>
+
 #include "sdl_selectlist.hpp"
 
 static const Uint32 vpadding = 5;
@@ -91,7 +93,7 @@ int SdlSelectList::run()
 							else
 								CurrentActiveTextInput++;
 							CurrentActiveTextInput =
-							    WINPR_SAFE_INT_CAST(ssize_t, CurrentActiveTextInput % _list.size());
+							    CurrentActiveTextInput % WINPR_SAFE_INT_CAST(ssize_t, _list.size());
 							break;
 						case SDLK_RETURN:
 						case SDLK_RETURN2:

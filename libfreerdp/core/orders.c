@@ -3199,11 +3199,9 @@ BOOL update_write_cache_brush_order(wStream* s, const CACHE_BRUSH_ORDER* cache_b
 				/* uncompressed brush */
 				const size_t scanline = 8ULL * (cache_brush->bpp / 8);
 
-				for (int i = 7; i >= 0; i--)
+				for (size_t i = 0; i <= 7; i++)
 				{
-					Stream_Write(
-					    s, &cache_brush->data[1ULL * WINPR_SAFE_INT_CAST(size_t, i) * scanline],
-					    scanline);
+					Stream_Write(s, &cache_brush->data[1LL * (7 - i) * scanline], scanline);
 				}
 			}
 		}
