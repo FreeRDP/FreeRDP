@@ -25,6 +25,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <winpr/assert.h>
+#include <winpr/cast.h>
 #include <winpr/crt.h>
 
 #include <freerdp/codec/nsc.h>
@@ -114,8 +116,6 @@ static BOOL nsc_encode_argb_to_aycocg(NSC_CONTEXT* WINPR_RESTRICT context,
                                       const BYTE* WINPR_RESTRICT data, UINT32 scanline)
 {
 	size_t y = 0;
-	UINT16 rw = 0;
-	BYTE ccl = 0;
 	const BYTE* src = NULL;
 	BYTE* yplane = NULL;
 	BYTE* coplane = NULL;
@@ -125,11 +125,10 @@ static BOOL nsc_encode_argb_to_aycocg(NSC_CONTEXT* WINPR_RESTRICT context,
 	INT16 g_val = 0;
 	INT16 b_val = 0;
 	BYTE a_val = 0;
-	UINT32 tempWidth = 0;
 
-	tempWidth = ROUND_UP_TO(context->width, 8);
-	rw = (context->ChromaSubsamplingLevel ? tempWidth : context->width);
-	ccl = context->ColorLossLevel;
+	UINT16 tempWidth = ROUND_UP_TO(context->width, 8);
+	const UINT16 rw = (context->ChromaSubsamplingLevel ? tempWidth : context->width);
+	const BYTE ccl = WINPR_SAFE_INT_CAST(BYTE, context->ColorLossLevel);
 
 	for (; y < context->height; y++)
 	{
@@ -359,7 +358,8 @@ static UINT32 nsc_rle_encode(const BYTE* WINPR_RESTRICT in, BYTE* WINPR_RESTRICT
 		{
 			*out++ = *in;
 			*out++ = *in;
-			*out++ = runlength - 2;
+			WINPR_ASSERT(runlength >= 2);
+			*out++ = WINPR_SAFE_INT_CAST(BYTE, runlength - 2);
 			runlength = 1;
 			planeSize += 3;
 		}
@@ -491,8 +491,8 @@ BOOL nsc_compose_message(NSC_CONTEXT* WINPR_RESTRICT context, wStream* WINPR_RES
 	if (!context || !s || !data)
 		return FALSE;
 
-	context->width = width;
-	context->height = height;
+	context->width = WINPR_SAFE_INT_CAST(UINT16, width);
+	context->height = WINPR_SAFE_INT_CAST(UINT16, height);
 
 	if (!nsc_context_initialize_encode(context))
 		return FALSE;
@@ -516,8 +516,9 @@ BOOL nsc_compose_message(NSC_CONTEXT* WINPR_RESTRICT context, wStream* WINPR_RES
 	message.OrangeChromaPlaneByteCount = context->PlaneByteCount[1];
 	message.GreenChromaPlaneByteCount = context->PlaneByteCount[2];
 	message.AlphaPlaneByteCount = context->PlaneByteCount[3];
-	message.ColorLossLevel = context->ColorLossLevel;
-	message.ChromaSubsamplingLevel = context->ChromaSubsamplingLevel;
+
+	message.ColorLossLevel = WINPR_SAFE_INT_CAST(BYTE, context->ColorLossLevel);
+	message.ChromaSubsamplingLevel = WINPR_SAFE_INT_CAST(BYTE, context->ChromaSubsamplingLevel);
 	return nsc_write_message(context, s, &message);
 }
 
