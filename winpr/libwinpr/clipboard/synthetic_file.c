@@ -1148,8 +1148,9 @@ static UINT file_get_range(struct synthetic_file* file, UINT64 offset, UINT32 si
 
 			dwHigh = offset >> 32;
 			dwLow = offset & 0xFFFFFFFF;
-			if (INVALID_SET_FILE_POINTER ==
-			    SetFilePointer(file->fd, dwLow, (PLONG)&dwHigh, FILE_BEGIN))
+			if (INVALID_SET_FILE_POINTER == SetFilePointer(file->fd,
+			                                               WINPR_SAFE_INT_CAST(LONG, dwLow),
+			                                               (PLONG)&dwHigh, FILE_BEGIN))
 			{
 				error = GetLastError();
 				break;
