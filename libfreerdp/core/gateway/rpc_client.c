@@ -24,6 +24,7 @@
 #include <winpr/crt.h>
 #include <winpr/wtypes.h>
 #include <winpr/assert.h>
+#include <winpr/cast.h>
 #include <winpr/print.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
@@ -1088,7 +1089,10 @@ BOOL rpc_client_write_call(rdpRpc* rpc, wStream* s, UINT16 opnum)
 	offset = 24;
 	stub_data_pad = rpc_offset_align(&offset, 8);
 	offset += length;
-	request_pdu.auth_verifier.auth_pad_length = rpc_offset_align(&offset, 4);
+
+	const size_t alg = rpc_offset_align(&offset, 4);
+	WINPR_ASSERT(alg <= UINT8_MAX);
+	request_pdu.auth_verifier.auth_pad_length = (UINT8)alg;
 	request_pdu.auth_verifier.auth_type =
 	    rpc_auth_pkg_to_security_provider(credssp_auth_pkg_name(rpc->auth));
 	request_pdu.auth_verifier.auth_level = RPC_C_AUTHN_LEVEL_PKT_INTEGRITY;
