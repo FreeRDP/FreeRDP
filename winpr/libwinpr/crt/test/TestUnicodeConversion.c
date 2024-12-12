@@ -97,7 +97,7 @@ static BOOL compare_utf16_int(const WCHAR* what, size_t buffersize, SSIZE_T rc, 
 	}
 	else
 	{
-		if (!check_short_buffer(prefix, WINPR_SAFE_INT_CAST(int, rc), buffersize, test, FALSE))
+		if (!check_short_buffer(prefix, WINPR_SAFE_INT_CAST(SSIZE_T, rc), buffersize, test, FALSE))
 			return FALSE;
 	}
 
@@ -151,7 +151,7 @@ static BOOL compare_utf8_int(const char* what, size_t buffersize, SSIZE_T rc, SS
 	}
 	else
 	{
-		if (!check_short_buffer(prefix, WINPR_SAFE_INT_CAST(int, rc), buffersize, test, TRUE))
+		if (!check_short_buffer(prefix, WINPR_SAFE_INT_CAST(SSIZE_T, rc), buffersize, test, TRUE))
 			return FALSE;
 	}
 
