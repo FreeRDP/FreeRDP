@@ -297,10 +297,12 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 		xfc->savedPosY = xfc->window->top;
 
 		startX = (freerdp_settings_get_uint32(settings, FreeRDP_DesktopPosX) != UINT32_MAX)
-		             ? freerdp_settings_get_uint32(settings, FreeRDP_DesktopPosX)
+		             ? WINPR_SAFE_INT_CAST(
+		                   int, freerdp_settings_get_uint32(settings, FreeRDP_DesktopPosX))
 		             : 0;
 		startY = (freerdp_settings_get_uint32(settings, FreeRDP_DesktopPosY) != UINT32_MAX)
-		             ? freerdp_settings_get_uint32(settings, FreeRDP_DesktopPosY)
+		             ? WINPR_SAFE_INT_CAST(
+		                   int, freerdp_settings_get_uint32(settings, FreeRDP_DesktopPosY))
 		             : 0;
 	}
 	else
@@ -332,8 +334,10 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 		/* Lastly apply any monitor shift(translation from remote to local coordinate system)
 		 *  to startX and startY values
 		 */
-		startX += freerdp_settings_get_uint32(settings, FreeRDP_MonitorLocalShiftX);
-		startY += freerdp_settings_get_uint32(settings, FreeRDP_MonitorLocalShiftY);
+		startX += WINPR_SAFE_INT_CAST(
+		    int, freerdp_settings_get_uint32(settings, FreeRDP_MonitorLocalShiftX));
+		startY += WINPR_SAFE_INT_CAST(
+		    int, freerdp_settings_get_uint32(settings, FreeRDP_MonitorLocalShiftY));
 	}
 
 	/*
@@ -345,7 +349,8 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 	if (xfc->_NET_WM_FULLSCREEN_MONITORS != None ||
 	    freerdp_settings_get_uint32(settings, FreeRDP_MonitorCount) == 1)
 	{
-		xf_ResizeDesktopWindow(xfc, window, width, height);
+		xf_ResizeDesktopWindow(xfc, window, WINPR_SAFE_INT_CAST(int, width),
+		                       WINPR_SAFE_INT_CAST(int, height));
 
 		if (fullscreen)
 		{
@@ -364,7 +369,8 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 			 * Resize the window again, the previous call to xf_SendClientEvent might have
 			 * changed the window size (borders, ...)
 			 */
-			xf_ResizeDesktopWindow(xfc, window, width, height);
+			xf_ResizeDesktopWindow(xfc, window, WINPR_SAFE_INT_CAST(int, width),
+			                       WINPR_SAFE_INT_CAST(int, height));
 			XMoveWindow(xfc->display, window->handle, startX, startY);
 		}
 
@@ -438,13 +444,15 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 			width = xfc->vscreen.area.right - xfc->vscreen.area.left + 1;
 			height = xfc->vscreen.area.bottom - xfc->vscreen.area.top + 1;
 			DEBUG_X11("X window move and resize %dx%d@%dx%d", startX, startY, width, height);
-			xf_ResizeDesktopWindow(xfc, window, width, height);
+			xf_ResizeDesktopWindow(xfc, window, WINPR_SAFE_INT_CAST(int, width),
+			                       WINPR_SAFE_INT_CAST(int, height));
 			XMoveWindow(xfc->display, window->handle, startX, startY);
 		}
 		else
 		{
 			xf_SetWindowDecorations(xfc, window->handle, window->decorations);
-			xf_ResizeDesktopWindow(xfc, window, width, height);
+			xf_ResizeDesktopWindow(xfc, window, WINPR_SAFE_INT_CAST(int, width),
+			                       WINPR_SAFE_INT_CAST(int, height));
 			XMoveWindow(xfc->display, window->handle, startX, startY);
 
 			if (xfc->fullscreenMonitors.top)
@@ -631,9 +639,10 @@ static const char* get_shm_id(void)
 
 Window xf_CreateDummyWindow(xfContext* xfc)
 {
-	return XCreateWindow(xfc->display, RootWindowOfScreen(xfc->screen), xfc->workArea.x,
-	                     xfc->workArea.y, 1, 1, 0, xfc->depth, InputOutput, xfc->visual,
-	                     xfc->attribs_mask, &xfc->attribs);
+	return XCreateWindow(xfc->display, RootWindowOfScreen(xfc->screen),
+	                     WINPR_SAFE_INT_CAST(int, xfc->workArea.x),
+	                     WINPR_SAFE_INT_CAST(int, xfc->workArea.y), 1, 1, 0, xfc->depth,
+	                     InputOutput, xfc->visual, xfc->attribs_mask, &xfc->attribs);
 }
 
 void xf_DestroyDummyWindow(xfContext* xfc, Window window)
@@ -663,10 +672,11 @@ xfWindow* xf_CreateDesktopWindow(xfContext* xfc, char* name, int width, int heig
 	window->is_transient = FALSE;
 
 	WINPR_ASSERT(xfc->depth != 0);
-	window->handle =
-	    XCreateWindow(xfc->display, RootWindowOfScreen(xfc->screen), xfc->workArea.x,
-	                  xfc->workArea.y, xfc->workArea.width, xfc->workArea.height, 0, xfc->depth,
-	                  InputOutput, xfc->visual, xfc->attribs_mask, &xfc->attribs);
+	window->handle = XCreateWindow(
+	    xfc->display, RootWindowOfScreen(xfc->screen), WINPR_SAFE_INT_CAST(int, xfc->workArea.x),
+	    WINPR_SAFE_INT_CAST(int, xfc->workArea.y), WINPR_SAFE_INT_CAST(int, xfc->workArea.width),
+	    WINPR_SAFE_INT_CAST(int, xfc->workArea.height), 0, xfc->depth, InputOutput, xfc->visual,
+	    xfc->attribs_mask, &xfc->attribs);
 	window->shmid = shm_open(get_shm_id(), (O_CREAT | O_RDWR), (S_IREAD | S_IWRITE));
 
 	if (window->shmid < 0)
@@ -765,9 +775,10 @@ xfWindow* xf_CreateDesktopWindow(xfContext* xfc, char* name, int width, int heig
 	else if ((freerdp_settings_get_uint32(settings, FreeRDP_DesktopPosX) != UINT32_MAX) &&
 	         (freerdp_settings_get_uint32(settings, FreeRDP_DesktopPosY) != UINT32_MAX))
 	{
-		XMoveWindow(xfc->display, window->handle,
-		            freerdp_settings_get_uint32(settings, FreeRDP_DesktopPosX),
-		            freerdp_settings_get_uint32(settings, FreeRDP_DesktopPosY));
+		XMoveWindow(
+		    xfc->display, window->handle,
+		    WINPR_SAFE_INT_CAST(int, freerdp_settings_get_uint32(settings, FreeRDP_DesktopPosX)),
+		    WINPR_SAFE_INT_CAST(int, freerdp_settings_get_uint32(settings, FreeRDP_DesktopPosY)));
 	}
 
 	window->floatbar = xf_floatbar_new(xfc, window->handle, name,
@@ -1231,8 +1242,9 @@ void xf_ShowWindow(xfContext* xfc, xfAppWindow* appWindow, BYTE state)
 			 */
 			if (appWindow->rail_state == WINDOW_SHOW_MAXIMIZED)
 			{
-				xf_UpdateWindowArea(xfc, appWindow, 0, 0, appWindow->windowWidth,
-				                    appWindow->windowHeight);
+				xf_UpdateWindowArea(xfc, appWindow, 0, 0,
+				                    WINPR_SAFE_INT_CAST(int, appWindow->windowWidth),
+				                    WINPR_SAFE_INT_CAST(int, appWindow->windowHeight));
 			}
 
 			break;
@@ -1278,10 +1290,10 @@ void xf_SetWindowRects(xfContext* xfc, xfAppWindow* appWindow, RECTANGLE_16* rec
 
 	for (int i = 0; i < nrects; i++)
 	{
-		xrects[i].x = rects[i].left;
-		xrects[i].y = rects[i].top;
-		xrects[i].width = rects[i].right - rects[i].left;
-		xrects[i].height = rects[i].bottom - rects[i].top;
+		xrects[i].x = WINPR_SAFE_INT_CAST(short, rects[i].left);
+		xrects[i].y = WINPR_SAFE_INT_CAST(short, rects[i].top);
+		xrects[i].width = WINPR_SAFE_INT_CAST(unsigned short, rects[i].right - rects[i].left);
+		xrects[i].height = WINPR_SAFE_INT_CAST(unsigned short, rects[i].bottom - rects[i].top);
 	}
 
 	XShapeCombineRectangles(xfc->display, appWindow->handle, ShapeBounding, 0, 0, xrects, nrects,
@@ -1303,14 +1315,15 @@ void xf_SetWindowVisibilityRects(xfContext* xfc, xfAppWindow* appWindow, UINT32 
 
 	for (int i = 0; i < nrects; i++)
 	{
-		xrects[i].x = rects[i].left;
-		xrects[i].y = rects[i].top;
-		xrects[i].width = rects[i].right - rects[i].left;
-		xrects[i].height = rects[i].bottom - rects[i].top;
+		xrects[i].x = WINPR_SAFE_INT_CAST(short, rects[i].left);
+		xrects[i].y = WINPR_SAFE_INT_CAST(short, rects[i].top);
+		xrects[i].width = WINPR_SAFE_INT_CAST(unsigned short, rects[i].right - rects[i].left);
+		xrects[i].height = WINPR_SAFE_INT_CAST(unsigned short, rects[i].bottom - rects[i].top);
 	}
 
-	XShapeCombineRectangles(xfc->display, appWindow->handle, ShapeBounding, rectsOffsetX,
-	                        rectsOffsetY, xrects, nrects, ShapeSet, 0);
+	XShapeCombineRectangles(xfc->display, appWindow->handle, ShapeBounding,
+	                        WINPR_SAFE_INT_CAST(int, rectsOffsetX),
+	                        WINPR_SAFE_INT_CAST(int, rectsOffsetY), xrects, nrects, ShapeSet, 0);
 	free(xrects);
 #endif
 }
@@ -1470,9 +1483,10 @@ UINT xf_AppUpdateWindowFromSurface(xfContext* xfc, gdiGfxSurface* surface)
 		if (!appWindow->image)
 		{
 			WINPR_ASSERT(xfc->depth != 0);
-			appWindow->image = XCreateImage(xfc->display, xfc->visual, xfc->depth, ZPixmap, 0,
-			                                (char*)surface->data, surface->width, surface->height,
-			                                xfc->scanline_pad, surface->scanline);
+			appWindow->image =
+			    XCreateImage(xfc->display, xfc->visual, xfc->depth, ZPixmap, 0,
+			                 (char*)surface->data, surface->width, surface->height,
+			                 xfc->scanline_pad, WINPR_SAFE_INT_CAST(int, surface->scanline));
 			if (!appWindow->image)
 			{
 				WLog_WARN(TAG,
