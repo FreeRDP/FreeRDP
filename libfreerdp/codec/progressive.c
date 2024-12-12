@@ -2116,7 +2116,7 @@ static INLINE SSIZE_T progressive_wb_skip_region(PROGRESSIVE_CONTEXT* WINPR_REST
 	if (rc < 0)
 		return rc;
 
-	if (!Stream_SafeSeek(s, rc))
+	if (!Stream_SafeSeek(s, WINPR_SAFE_INT_CAST(size_t, rc)))
 		return -1111;
 
 	return rc;
@@ -2521,7 +2521,10 @@ int progressive_compress(PROGRESSIVE_CONTEXT* WINPR_RESTRICT progressive,
 		numRects *= (Height + 63) / 64;
 	}
 	else
-		numRects = region16_n_rects(invalidRegion);
+	{
+		const int nr = region16_n_rects(invalidRegion);
+		numRects = WINPR_SAFE_INT_CAST(uint32_t, nr);
+	}
 
 	if (numRects == 0)
 		return 0;
