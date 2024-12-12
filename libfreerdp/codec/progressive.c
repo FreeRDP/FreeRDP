@@ -1196,7 +1196,7 @@ static INLINE int progressive_rfx_upgrade_block(RFX_PROGRESSIVE_UPGRADE_STATE* W
 			raw->mask = ((1 << numBits) - 1);
 			input = (INT16)((raw->accumulator >> (32 - numBits)) & raw->mask);
 			BitStream_Shift(raw, numBits);
-			buffer[index] += WINPR_SAFE_INT_CAST(int16_t, (input << shift));
+			buffer[index] += WINPR_SAFE_INT_CAST(INT16, (INT16)((UINT32)input << shift) & 0xFFFF);
 		}
 
 		return 1;
@@ -1226,7 +1226,7 @@ static INLINE int progressive_rfx_upgrade_block(RFX_PROGRESSIVE_UPGRADE_STATE* W
 			sign[index] = input;
 		}
 
-		buffer[index] += WINPR_SAFE_INT_CAST(int16_t, ((UINT32)input << shift));
+		buffer[index] += WINPR_SAFE_INT_CAST(INT16, (INT16)((UINT32)input << shift) & 0xFFFF);
 	}
 
 	return 1;

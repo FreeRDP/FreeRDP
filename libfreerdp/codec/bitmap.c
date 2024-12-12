@@ -469,7 +469,7 @@ static INLINE SSIZE_T freerdp_bitmap_compress_24(const void* WINPR_RESTRICT srcD
                                                  UINT32 byte_limit, UINT32 start_line,
                                                  wStream* WINPR_RESTRICT temp_s, UINT32 e)
 {
-	char fom_mask[8192] = { 0 }; /* good for up to 64K bitmap */
+	int8_t fom_mask[8192] = { 0 }; /* good for up to 64K bitmap */
 	SSIZE_T lines_sent = 0;
 	UINT16 count = 0;
 	UINT16 color_count = 0;
