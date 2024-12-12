@@ -25,6 +25,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/assert.h>
+#include <winpr/cast.h>
 #include <winpr/synch.h>
 #include <winpr/print.h>
 #include <winpr/stream.h>
@@ -845,7 +846,8 @@ static UINT video_VideoData(VideoClientContext* context, const TSMM_VIDEO_DATA* 
 		UINT64 timeAfterH264 = 0;
 		MAPPED_GEOMETRY* geom = presentation->geometry;
 
-		const RECTANGLE_16 rect = { 0, 0, surface->alignedWidth, surface->alignedHeight };
+		const RECTANGLE_16 rect = { 0, 0, WINPR_SAFE_INT_CAST(UINT16, surface->alignedWidth),
+			                        WINPR_SAFE_INT_CAST(UINT16, surface->alignedHeight) };
 		Stream_SealLength(presentation->currentSample);
 		Stream_SetPosition(presentation->currentSample, 0);
 
