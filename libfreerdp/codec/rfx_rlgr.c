@@ -28,6 +28,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <winpr/assert.h>
+#include <winpr/cast.h>
 #include <winpr/crt.h>
 #include <winpr/print.h>
 #include <winpr/sysinfo.h>
@@ -161,10 +163,10 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* WINPR_RESTRICT pSrcData, UINT32 
 	InitOnceExecuteOnce(&rfx_rlgr_init_once, rfx_rlgr_init, NULL, NULL);
 
 	k = 1;
-	kp = k << LSGR;
+	kp = WINPR_SAFE_INT_CAST(int32_t, k << LSGR);
 
 	kr = 1;
-	krp = kr << LSGR;
+	krp = WINPR_SAFE_INT_CAST(int32_t, kr << LSGR);
 
 	if ((mode != RLGR1) && (mode != RLGR3))
 		mode = RLGR1;
@@ -192,7 +194,7 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* WINPR_RESTRICT pSrcData, UINT32 
 
 			/* count number of leading 0s */
 
-			cnt = lzcnt_s(bs->accumulator);
+			cnt = WINPR_SAFE_INT_CAST(int32_t, lzcnt_s(bs->accumulator));
 
 			size_t nbits = BitStream_GetRemainingLength(bs);
 
@@ -205,7 +207,7 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* WINPR_RESTRICT pSrcData, UINT32 
 			{
 				BitStream_Shift32(bs);
 
-				cnt = lzcnt_s(bs->accumulator);
+				cnt = WINPR_SAFE_INT_CAST(int32_t, lzcnt_s(bs->accumulator));
 
 				nbits = BitStream_GetRemainingLength(bs);
 
@@ -256,7 +258,7 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* WINPR_RESTRICT pSrcData, UINT32 
 
 			/* count number of leading 1s */
 
-			cnt = lzcnt_s(~(bs->accumulator));
+			cnt = WINPR_SAFE_INT_CAST(int, lzcnt_s(~(bs->accumulator)));
 
 			nbits = BitStream_GetRemainingLength(bs);
 
@@ -269,7 +271,7 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* WINPR_RESTRICT pSrcData, UINT32 
 			{
 				BitStream_Shift32(bs);
 
-				cnt = lzcnt_s(~(bs->accumulator));
+				cnt = WINPR_SAFE_INT_CAST(int, lzcnt_s(~(bs->accumulator)));
 
 				nbits = BitStream_GetRemainingLength(bs);
 
@@ -337,9 +339,9 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* WINPR_RESTRICT pSrcData, UINT32 
 			/* compute magnitude from code */
 
 			if (sign)
-				mag = ((INT16)(code + 1)) * -1;
+				mag = WINPR_SAFE_INT_CAST(int16_t, (code + 1)) * -1;
 			else
-				mag = (INT16)(code + 1);
+				mag = WINPR_SAFE_INT_CAST(int16_t, code + 1);
 
 			/* write to output stream */
 
@@ -367,7 +369,7 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* WINPR_RESTRICT pSrcData, UINT32 
 
 			/* count number of leading 1s */
 
-			cnt = lzcnt_s(~(bs->accumulator));
+			cnt = WINPR_SAFE_INT_CAST(int, lzcnt_s(~(bs->accumulator)));
 
 			size_t nbits = BitStream_GetRemainingLength(bs);
 
@@ -380,7 +382,7 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* WINPR_RESTRICT pSrcData, UINT32 
 			{
 				BitStream_Shift32(bs);
 
-				cnt = lzcnt_s(~(bs->accumulator));
+				cnt = WINPR_SAFE_INT_CAST(int, lzcnt_s(~(bs->accumulator)));
 
 				nbits = BitStream_GetRemainingLength(bs);
 
@@ -468,9 +470,9 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* WINPR_RESTRICT pSrcData, UINT32 
 					 */
 
 					if (code & 1)
-						mag = ((INT16)((code + 1) >> 1)) * -1;
+						mag = WINPR_SAFE_INT_CAST(INT16, (code + 1) >> 1) * -1;
 					else
-						mag = (INT16)(code >> 1);
+						mag = WINPR_SAFE_INT_CAST(INT16, code >> 1);
 				}
 
 				if ((pOutput - pDstData) < DstSize)
@@ -485,7 +487,7 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* WINPR_RESTRICT pSrcData, UINT32 
 
 				if (code)
 				{
-					mag = (UINT32)code;
+					mag = WINPR_SAFE_INT_CAST(INT16, code);
 					nIdx = 32 - lzcnt_s(mag);
 				}
 
@@ -525,9 +527,9 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* WINPR_RESTRICT pSrcData, UINT32 
 				}
 
 				if (val1 & 1)
-					mag = ((INT16)((val1 + 1) >> 1)) * -1;
+					mag = WINPR_SAFE_INT_CAST(int16_t, (val1 + 1) >> 1) * -1;
 				else
-					mag = (INT16)(val1 >> 1);
+					mag = WINPR_SAFE_INT_CAST(int16_t, val1 >> 1);
 
 				if ((pOutput - pDstData) < DstSize)
 				{
@@ -536,9 +538,9 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* WINPR_RESTRICT pSrcData, UINT32 
 				}
 
 				if (val2 & 1)
-					mag = ((INT16)((val2 + 1) >> 1)) * -1;
+					mag = WINPR_SAFE_INT_CAST(int16_t, (val2 + 1) >> 1) * -1;
 				else
-					mag = (INT16)(val2 >> 1);
+					mag = WINPR_SAFE_INT_CAST(int16_t, val2 >> 1);
 
 				if ((pOutput - pDstData) < DstSize)
 				{
@@ -585,18 +587,22 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* WINPR_RESTRICT pSrcData, UINT32 
 #define OutputBits(numBits, bitPattern) rfx_bitstream_put_bits(bs, bitPattern, numBits)
 
 /* Emit a bit (0 or 1), count number of times, to the output bitstream */
-#define OutputBit(count, bit)                                    \
-	do                                                           \
-	{                                                            \
-		UINT16 _b = ((bit) ? 0xFFFF : 0);                        \
-		int _c = (count);                                        \
-		for (; _c > 0; _c -= 16)                                 \
-			rfx_bitstream_put_bits(bs, _b, (_c > 16 ? 16 : _c)); \
-	} while (0)
+static inline void OutputBit(RFX_BITSTREAM* bs, int count, UINT8 bit)
+{
+	UINT16 _b = ((bit) ? 0xFFFF : 0);
+	int _c = (count);
+	for (; _c > 0; _c -= 16)
+		rfx_bitstream_put_bits(bs, _b, (_c > 16 ? 16 : _c));
+}
 
 /* Converts the input value to (2 * abs(input) - sign(input)), where sign(input) = (input < 0 ? 1 :
  * 0) and returns it */
-#define Get2MagSign(input) ((input) >= 0 ? 2 * (input) : -2 * (input)-1)
+static inline UINT32 Get2MagSign(INT32 input)
+{
+	if (input >= 0)
+		return WINPR_SAFE_INT_CAST(UINT32, 2 * input);
+	return WINPR_SAFE_INT_CAST(UINT32, -2 * input - 1);
+}
 
 /* Outputs the Golomb/Rice encoding of a non-negative integer */
 #define CodeGR(krp, val) rfx_rlgr_code_gr(bs, krp, val)
@@ -607,9 +613,10 @@ static void rfx_rlgr_code_gr(RFX_BITSTREAM* bs, int* krp, UINT32 val)
 
 	/* unary part of GR code */
 
-	UINT32 vk = (val) >> kr;
-	OutputBit(vk, 1);
-	OutputBit(1, 0);
+	WINPR_ASSERT((kr > 0) || (val <= INT32_MAX));
+	const int vk = WINPR_SAFE_INT_CAST(int, val >> kr);
+	OutputBit(bs, vk, 1);
+	OutputBit(bs, 1, 0);
 
 	/* remainder part of GR code, if needed */
 	if (kr)
@@ -656,7 +663,7 @@ int rfx_rlgr_encode(RLGR_MODE mode, const INT16* WINPR_RESTRICT data, UINT32 dat
 		{
 			int numZeros = 0;
 			int runmax = 0;
-			int sign = 0;
+			BYTE sign = 0;
 
 			/* RUN-LENGTH MODE */
 
@@ -673,14 +680,14 @@ int rfx_rlgr_encode(RLGR_MODE mode, const INT16* WINPR_RESTRICT data, UINT32 dat
 			runmax = 1 << k;
 			while (numZeros >= runmax)
 			{
-				OutputBit(1, 0); /* output a zero bit */
+				OutputBit(bs, 1, 0); /* output a zero bit */
 				numZeros -= runmax;
 				UpdateParam(kp, UP_GR, k); /* update kp, k */
 				runmax = 1 << k;
 			}
 
 			/* output a 1 to terminate runs */
-			OutputBit(1, 1);
+			OutputBit(bs, 1, 1);
 
 			/* output the remaining run length using k bits */
 			OutputBits(k, numZeros);
@@ -693,7 +700,7 @@ int rfx_rlgr_encode(RLGR_MODE mode, const INT16* WINPR_RESTRICT data, UINT32 dat
 			    (UINT32)(input < 0 ? -input : input); /* absolute value of input coefficient */
 			sign = (input < 0 ? 1 : 0);         /* sign of input coefficient */
 
-			OutputBit(1, sign);              /* output the sign bit */
+			OutputBit(bs, 1, sign);          /* output the sign bit */
 			CodeGR(&krp, mag ? mag - 1 : 0); /* output GR code for (mag - 1) */
 
 			UpdateParam(kp, -DN_GR, k);
