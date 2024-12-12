@@ -54,7 +54,7 @@ typedef struct
 {
 	char name[CHANNEL_NAME_LEN + 1];
 	int OpenHandle;
-	int options;
+	ULONG options;
 	int flags;
 	void* pInterface;
 	rdpChannels* channels;
