@@ -60,9 +60,9 @@ static pstatus_t general_yCbCrToRGB_16s8u_P3AC4R_BGRX(const INT16* WINPR_RESTRIC
 			const INT64 CrG = Cr * (INT64)(0.714401f * (1 << divisor)) * 1LL;
 			const INT64 CbG = Cb * (INT64)(0.343730f * (1 << divisor)) * 1LL;
 			const INT64 CbB = Cb * (INT64)(1.769905f * (1 << divisor)) * 1LL;
-			R = ((INT16)((CrR + Y) >> divisor) >> 5);
-			G = ((INT16)((Y - CbG - CrG) >> divisor) >> 5);
-			B = ((INT16)((CbB + Y) >> divisor) >> 5);
+			R = WINPR_SAFE_INT_CAST(int16_t, ((CrR + Y) >> divisor) >> 5);
+			G = WINPR_SAFE_INT_CAST(int16_t, ((Y - CbG - CrG) >> divisor) >> 5);
+			B = WINPR_SAFE_INT_CAST(int16_t, ((CbB + Y) >> divisor) >> 5);
 			pRGB = writePixelBGRX(pRGB, formatSize, DstFormat, CLIP(R), CLIP(G), CLIP(B), 0);
 		}
 

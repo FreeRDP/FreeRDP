@@ -163,10 +163,10 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* WINPR_RESTRICT pSrcData, UINT32 
 	InitOnceExecuteOnce(&rfx_rlgr_init_once, rfx_rlgr_init, NULL, NULL);
 
 	k = 1;
-	kp = k << LSGR;
+	kp = WINPR_SAFE_INT_CAST(int32_t, k << LSGR);
 
 	kr = 1;
-	krp = kr << LSGR;
+	krp = WINPR_SAFE_INT_CAST(int32_t, kr << LSGR);
 
 	if ((mode != RLGR1) && (mode != RLGR3))
 		mode = RLGR1;
@@ -194,7 +194,7 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* WINPR_RESTRICT pSrcData, UINT32 
 
 			/* count number of leading 0s */
 
-			cnt = lzcnt_s(bs->accumulator);
+			cnt = WINPR_SAFE_INT_CAST(int32_t, lzcnt_s(bs->accumulator));
 
 			size_t nbits = BitStream_GetRemainingLength(bs);
 
@@ -207,7 +207,7 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* WINPR_RESTRICT pSrcData, UINT32 
 			{
 				BitStream_Shift32(bs);
 
-				cnt = lzcnt_s(bs->accumulator);
+				cnt = WINPR_SAFE_INT_CAST(int32_t, lzcnt_s(bs->accumulator));
 
 				nbits = BitStream_GetRemainingLength(bs);
 
@@ -258,7 +258,7 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* WINPR_RESTRICT pSrcData, UINT32 
 
 			/* count number of leading 1s */
 
-			cnt = lzcnt_s(~(bs->accumulator));
+			cnt = WINPR_SAFE_INT_CAST(int, lzcnt_s(~(bs->accumulator)));
 
 			nbits = BitStream_GetRemainingLength(bs);
 
@@ -271,7 +271,7 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* WINPR_RESTRICT pSrcData, UINT32 
 			{
 				BitStream_Shift32(bs);
 
-				cnt = lzcnt_s(~(bs->accumulator));
+				cnt = WINPR_SAFE_INT_CAST(int, lzcnt_s(~(bs->accumulator)));
 
 				nbits = BitStream_GetRemainingLength(bs);
 
@@ -339,9 +339,9 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* WINPR_RESTRICT pSrcData, UINT32 
 			/* compute magnitude from code */
 
 			if (sign)
-				mag = ((INT16)(code + 1)) * -1;
+				mag = WINPR_SAFE_INT_CAST(int16_t, (code + 1)) * -1;
 			else
-				mag = (INT16)(code + 1);
+				mag = WINPR_SAFE_INT_CAST(int16_t, code + 1);
 
 			/* write to output stream */
 
@@ -369,7 +369,7 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* WINPR_RESTRICT pSrcData, UINT32 
 
 			/* count number of leading 1s */
 
-			cnt = lzcnt_s(~(bs->accumulator));
+			cnt = WINPR_SAFE_INT_CAST(int, lzcnt_s(~(bs->accumulator)));
 
 			size_t nbits = BitStream_GetRemainingLength(bs);
 
@@ -382,7 +382,7 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* WINPR_RESTRICT pSrcData, UINT32 
 			{
 				BitStream_Shift32(bs);
 
-				cnt = lzcnt_s(~(bs->accumulator));
+				cnt = WINPR_SAFE_INT_CAST(int, lzcnt_s(~(bs->accumulator)));
 
 				nbits = BitStream_GetRemainingLength(bs);
 
@@ -527,9 +527,9 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* WINPR_RESTRICT pSrcData, UINT32 
 				}
 
 				if (val1 & 1)
-					mag = ((INT16)((val1 + 1) >> 1)) * -1;
+					mag = WINPR_SAFE_INT_CAST(int16_t, (val1 + 1) >> 1) * -1;
 				else
-					mag = (INT16)(val1 >> 1);
+					mag = WINPR_SAFE_INT_CAST(int16_t, val1 >> 1);
 
 				if ((pOutput - pDstData) < DstSize)
 				{
@@ -538,9 +538,9 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* WINPR_RESTRICT pSrcData, UINT32 
 				}
 
 				if (val2 & 1)
-					mag = ((INT16)((val2 + 1) >> 1)) * -1;
+					mag = (WINPR_SAFE_INT_CAST(int16_t, (val2 + 1) >> 1)) * -1;
 				else
-					mag = (INT16)(val2 >> 1);
+					mag = WINPR_SAFE_INT_CAST(int16_t, val2 >> 1);
 
 				if ((pOutput - pDstData) < DstSize)
 				{
