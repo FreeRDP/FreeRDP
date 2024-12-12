@@ -470,9 +470,9 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* WINPR_RESTRICT pSrcData, UINT32 
 					 */
 
 					if (code & 1)
-						mag = ((INT16)((code + 1) >> 1)) * -1;
+						mag = (WINPR_SAFE_INT_CAST(INT16, (code + 1) >> 1)) * -1;
 					else
-						mag = (INT16)(code >> 1);
+						mag = WINPR_SAFE_INT_CAST(INT16, code >> 1);
 				}
 
 				if ((pOutput - pDstData) < DstSize)
