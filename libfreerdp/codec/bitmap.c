@@ -383,7 +383,7 @@ static INLINE UINT16 out_mix_count_3(UINT16 in_count, wStream* WINPR_RESTRICT in
 /*****************************************************************************/
 /* fom */
 static INLINE UINT16 out_from_count_2(UINT16 in_count, wStream* WINPR_RESTRICT in_s,
-                                      const char* WINPR_RESTRICT in_mask, size_t in_mask_len)
+                                      const uint8_t* WINPR_RESTRICT in_mask, size_t in_mask_len)
 {
 	if (in_count > 0)
 	{

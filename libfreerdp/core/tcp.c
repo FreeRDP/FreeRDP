@@ -816,7 +816,7 @@ static BOOL freerdp_tcp_connect_timeout(rdpContext* context, int sockfd, struct 
 {
 	BOOL rc = FALSE;
 	HANDLE handles[2] = { 0 };
-	size_t count = 0;
+	DWORD count = 0;
 	u_long arg = 0;
 	DWORD tout = (timeout > 0) ? timeout : INFINITE;
 
@@ -903,7 +903,6 @@ static int freerdp_tcp_connect_multi(rdpContext* context, char** hostnames, cons
                                      UINT32 count, UINT16 port, UINT32 timeout)
 {
 	UINT32 sindex = count;
-	int status = -1;
 	SOCKET sockfd = INVALID_SOCKET;
 	struct addrinfo* addr = NULL;
 	struct addrinfo* result = NULL;

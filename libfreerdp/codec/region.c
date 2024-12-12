@@ -676,9 +676,11 @@ BOOL region16_union_rect(REGION16* dst, const REGION16* src, const RECTANGLE_16*
 	dstExtents->right = MAX(rect->right, srcExtents->right);
 	newItems->size =
 	    WINPR_SAFE_INT_CAST(long, sizeof(REGION16_DATA) + (usedRects * sizeof(RECTANGLE_16)));
-	tmpItems = realloc(newItems, WINPR_SAFE_INT_CAST(size_t, newItems->size));
+	if (newItems->size != 0)
+		tmpItems = realloc(newItems, WINPR_SAFE_INT_CAST(size_t, newItems->size));
 	if (!tmpItems)
 		free(newItems);
+
 	newItems = tmpItems;
 	dst->data = newItems;
 
