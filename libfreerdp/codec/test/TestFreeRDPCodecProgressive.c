@@ -180,15 +180,15 @@ static void* test_image_memset32(UINT32* ptr, UINT32 fill, size_t length)
 	return (void*)ptr;
 }
 
-static int test_image_fill(BYTE* pDstData, int nDstStep, int nXDst, int nYDst, int nWidth,
-                           int nHeight, UINT32 color)
+static int test_image_fill(BYTE* pDstData, UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst,
+                           UINT32 nWidth, UINT32 nHeight, UINT32 color)
 {
 	UINT32* pDstPixel = NULL;
 
 	if (nDstStep < 0)
 		nDstStep = 4 * nWidth;
 
-	for (int y = 0; y < nHeight; y++)
+	for (UINT32 y = 0; y < nHeight; y++)
 	{
 		pDstPixel = (UINT32*)&pDstData[((nYDst + y) * nDstStep) + (nXDst * 4)];
 		test_image_memset32(pDstPixel, color, nWidth);
@@ -197,13 +197,13 @@ static int test_image_fill(BYTE* pDstData, int nDstStep, int nXDst, int nYDst, i
 	return 1;
 }
 
-static int test_image_fill_quarter(BYTE* pDstData, int nDstStep, int nWidth, int nHeight,
-                                   UINT32 color, int quarter)
+static int test_image_fill_quarter(BYTE* pDstData, UINT32 nDstStep, UINT32 nWidth, UINT32 nHeight,
+                                   UINT32 color, UINT32 quarter)
 {
-	int x = 0;
-	int y = 0;
-	int width = 0;
-	int height = 0;
+	UINT32 x = 0;
+	UINT32 y = 0;
+	UINT32 width = 0;
+	UINT32 height = 0;
 
 	switch (quarter)
 	{
@@ -242,8 +242,8 @@ static int test_image_fill_quarter(BYTE* pDstData, int nDstStep, int nWidth, int
 	return 1;
 }
 
-static int test_image_fill_unused_quarters(BYTE* pDstData, int nDstStep, int nWidth, int nHeight,
-                                           UINT32 color, int quarter)
+static int test_image_fill_unused_quarters(BYTE* pDstData, UINT32 nDstStep, UINT32 nWidth,
+                                           UINT32 nHeight, UINT32 color, UINT32 quarter)
 {
 	return 1;
 

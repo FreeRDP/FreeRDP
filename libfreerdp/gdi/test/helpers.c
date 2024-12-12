@@ -85,9 +85,9 @@ static void test_dump_data(unsigned char* p, size_t len, size_t width, const cha
 
 void test_dump_bitmap(HGDI_BITMAP hBmp, const char* name)
 {
-	UINT32 stride =
+	const size_t stride =
 	    WINPR_SAFE_INT_CAST(uint32_t, hBmp->width) * FreeRDPGetBytesPerPixel(hBmp->format);
-	test_dump_data(hBmp->data, WINPR_SAFE_INT_CAST(uint32_t, hBmp->height) * stride, stride, name);
+	test_dump_data(hBmp->data, stride * WINPR_SAFE_INT_CAST(uint32_t, hBmp->height), stride, name);
 }
 
 static BOOL CompareBitmaps(HGDI_BITMAP hBmp1, HGDI_BITMAP hBmp2, const gdiPalette* palette)
