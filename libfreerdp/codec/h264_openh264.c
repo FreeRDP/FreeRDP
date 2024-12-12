@@ -109,8 +109,9 @@ static int openh264_decompress(H264_CONTEXT* WINPR_RESTRICT h264,
 	pYUVData[2] = NULL;
 
 	WINPR_ASSERT(sys->pDecoder);
-	state =
-	    (*sys->pDecoder)->DecodeFrame2(sys->pDecoder, pSrcData, SrcSize, pYUVData, &sBufferInfo);
+	state = (*sys->pDecoder)
+	            ->DecodeFrame2(sys->pDecoder, pSrcData, WINPR_SAFE_INT_CAST(int, SrcSize), pYUVData,
+	                           &sBufferInfo);
 
 	if (sBufferInfo.iBufferStatus != 1)
 	{
