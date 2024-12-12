@@ -71,10 +71,10 @@ static void Ellipse_Bresenham(HGDI_DC hdc, int x1, int y1, int x2, int y2)
 
 	do
 	{
-		gdi_SetPixel(hdc, x2, y1, 0);
-		gdi_SetPixel(hdc, x1, y1, 0);
-		gdi_SetPixel(hdc, x1, y2, 0);
-		gdi_SetPixel(hdc, x2, y2, 0);
+		gdi_SetPixel(hdc, WINPR_SAFE_INT_CAST(UINT32, x2), WINPR_SAFE_INT_CAST(UINT32, y1), 0);
+		gdi_SetPixel(hdc, WINPR_SAFE_INT_CAST(UINT32, x1), WINPR_SAFE_INT_CAST(UINT32, y1), 0);
+		gdi_SetPixel(hdc, WINPR_SAFE_INT_CAST(UINT32, x1), WINPR_SAFE_INT_CAST(UINT32, y2), 0);
+		gdi_SetPixel(hdc, WINPR_SAFE_INT_CAST(UINT32, x2), WINPR_SAFE_INT_CAST(UINT32, y2), 0);
 		e2 = 2 * e;
 
 		if (e2 >= dx)

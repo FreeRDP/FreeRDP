@@ -20,6 +20,8 @@
 #ifndef FREERDP_LIB_GDI_CORE_H
 #define FREERDP_LIB_GDI_CORE_H
 
+#include <winpr/cast.h>
+
 #include "graphics.h"
 #include "brush.h"
 
@@ -32,12 +34,12 @@ FREERDP_LOCAL void gdi_bitmap_free_ex(gdiBitmap* gdi_bmp);
 
 static INLINE BYTE* gdi_get_bitmap_pointer(HGDI_DC hdcBmp, INT32 x, INT32 y)
 {
-	BYTE* p = NULL;
 	HGDI_BITMAP hBmp = (HGDI_BITMAP)hdcBmp->selectedObject;
 
 	if ((x >= 0) && (y >= 0) && (x < hBmp->width) && (y < hBmp->height))
 	{
-		p = hBmp->data + (y * hBmp->scanline) + (x * FreeRDPGetBytesPerPixel(hdcBmp->format));
+		BYTE* p = hBmp->data + (WINPR_SAFE_INT_CAST(UINT32, y) * hBmp->scanline) +
+		          (WINPR_SAFE_INT_CAST(UINT32, x) * FreeRDPGetBytesPerPixel(hdcBmp->format));
 		return p;
 	}
 	else
@@ -72,15 +74,14 @@ static INLINE BYTE* gdi_get_brush_pointer(HGDI_DC hdcBrush, UINT32 x, UINT32 y)
 			 * at the brush origin and copy across the client area.
 			 * Calculate the offset of the mapped pixel in the brush bitmap according to
 			 * brush origin and dest coordinates */
-			x = (x + hBmpBrush->width - (hdcBrush->brush->nXOrg % hBmpBrush->width)) %
-			    hBmpBrush->width;
-			y = (y + hBmpBrush->height - (hdcBrush->brush->nYOrg % hBmpBrush->height)) %
-			    hBmpBrush->height;
+			const UINT32 w = WINPR_SAFE_INT_CAST(UINT32, hBmpBrush->width);
+			const UINT32 h = WINPR_SAFE_INT_CAST(UINT32, hBmpBrush->height);
+			x = (x + w - (WINPR_SAFE_INT_CAST(UINT32, hdcBrush->brush->nXOrg) % w)) % w;
+			y = (y + h - (WINPR_SAFE_INT_CAST(UINT32, hdcBrush->brush->nYOrg) % h)) % h;
 			p = hBmpBrush->data + (y * hBmpBrush->scanline) +
 			    (x * FreeRDPGetBytesPerPixel(hBmpBrush->format));
 			return p;
 		}
-		break;
 
 		default:
 			break;
