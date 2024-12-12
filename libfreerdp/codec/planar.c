@@ -1442,7 +1442,6 @@ static INLINE BOOL freerdp_bitmap_planar_compress_planes_rle(BYTE* WINPR_RESTRIC
 BYTE* freerdp_bitmap_planar_delta_encode_plane(const BYTE* WINPR_RESTRICT inPlane, UINT32 width,
                                                UINT32 height, BYTE* WINPR_RESTRICT outPlane)
 {
-	char s2c = 0;
 	BYTE* outPtr = NULL;
 	const BYTE* srcPtr = NULL;
 	const BYTE* prevLinePtr = NULL;
@@ -1467,10 +1466,12 @@ BYTE* freerdp_bitmap_planar_delta_encode_plane(const BYTE* WINPR_RESTRICT inPlan
 		for (UINT32 x = 0; x < width; x++, outPtr++, srcPtr++, prevLinePtr++)
 		{
 			INT32 delta = *srcPtr - *prevLinePtr;
-			s2c = WINPR_SAFE_INT_CAST(char, (delta >= 0) ? delta : (~((BYTE)(-delta)) + 1));
-			s2c = WINPR_SAFE_INT_CAST(char, (s2c >= 0) ? ((UINT32)s2c << 1)
-			                                           : (((UINT32)(~((BYTE)s2c) + 1) << 1) - 1));
-			*outPtr = (BYTE)s2c;
+			BYTE s2c =
+			    WINPR_SAFE_INT_CAST(BYTE, (delta >= 0) ? delta : (~((BYTE)(-delta)) + 1) & 0xFF);
+			s2c = WINPR_SAFE_INT_CAST(BYTE, (s2c >= 0)
+			                                    ? (s2c << 1) & 0xFF
+			                                    : (((UINT32)(~((BYTE)s2c) + 1) << 1) - 1) & 0xFF);
+			*outPtr = s2c;
 		}
 	}
 
