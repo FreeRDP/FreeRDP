@@ -461,8 +461,10 @@ sdlDispContext::sdlDispContext(SdlContext* sdl) : _sdl(sdl)
 	auto settings = _sdl->context()->settings;
 	auto pubSub = _sdl->context()->pubSub;
 
-	_lastSentWidth = _targetWidth = freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth);
-	_lastSentHeight = _targetHeight = freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight);
+	_lastSentWidth = _targetWidth =
+	    WINPR_SAFE_INT_CAST(int, freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth));
+	_lastSentHeight = _targetHeight =
+	    WINPR_SAFE_INT_CAST(int, freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight));
 	PubSub_SubscribeActivated(pubSub, sdlDispContext::OnActivated);
 	PubSub_SubscribeGraphicsReset(pubSub, sdlDispContext::OnGraphicsReset);
 	addTimer();
