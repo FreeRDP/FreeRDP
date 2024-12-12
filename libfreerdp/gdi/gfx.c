@@ -23,6 +23,9 @@
 
 #include "../core/update.h"
 
+#include <winpr/assert.h>
+#include <winpr/cast.h>
+
 #include <freerdp/api.h>
 #include <freerdp/log.h>
 #include <freerdp/gdi/gfx.h>
@@ -1035,20 +1038,20 @@ static UINT gdi_SurfaceCommand(RdpgfxClientContext* context, const RDPGFX_SURFAC
 	gdi = (rdpGdi*)context->custom;
 
 	EnterCriticalSection(&context->mux);
+	const UINT16 codecId = WINPR_SAFE_INT_CAST(UINT16, cmd->codecId);
 	WLog_Print(gdi->log, WLOG_TRACE,
 	           "surfaceId=%" PRIu32 ", codec=%s [%" PRIu32 "], contextId=%" PRIu32 ", format=%s, "
 	           "left=%" PRIu32 ", top=%" PRIu32 ", right=%" PRIu32 ", bottom=%" PRIu32
 	           ", width=%" PRIu32 ", height=%" PRIu32 " "
 	           "length=%" PRIu32 ", data=%p, extra=%p",
-	           cmd->surfaceId, rdpgfx_get_codec_id_string(cmd->codecId), cmd->codecId,
-	           cmd->contextId, FreeRDPGetColorFormatName(cmd->format), cmd->left, cmd->top,
-	           cmd->right, cmd->bottom, cmd->width, cmd->height, cmd->length, (void*)cmd->data,
-	           (void*)cmd->extra);
+	           cmd->surfaceId, rdpgfx_get_codec_id_string(codecId), cmd->codecId, cmd->contextId,
+	           FreeRDPGetColorFormatName(cmd->format), cmd->left, cmd->top, cmd->right, cmd->bottom,
+	           cmd->width, cmd->height, cmd->length, (void*)cmd->data, (void*)cmd->extra);
 #if defined(WITH_GFX_FRAME_DUMP)
 	dump_cmd(cmd, gdi->frameId);
 #endif
 
-	switch (cmd->codecId)
+	switch (codecId)
 	{
 		case RDPGFX_CODECID_UNCOMPRESSED:
 			status = gdi_SurfaceCommand_Uncompressed(gdi, context, cmd);
@@ -1084,13 +1087,13 @@ static UINT gdi_SurfaceCommand(RdpgfxClientContext* context, const RDPGFX_SURFAC
 			break;
 
 		case RDPGFX_CODECID_CAPROGRESSIVE_V2:
-			WLog_WARN(TAG, "SurfaceCommand %s [0x%08" PRIX32 "] not implemented",
-			          rdpgfx_get_codec_id_string(cmd->codecId), cmd->codecId);
+			WLog_WARN(TAG, "SurfaceCommand %s [0x%08" PRIX16 "] not implemented",
+			          rdpgfx_get_codec_id_string(codecId), codecId);
 			break;
 
 		default:
-			WLog_WARN(TAG, "Invalid SurfaceCommand %s [0x%08" PRIX32 "]",
-			          rdpgfx_get_codec_id_string(cmd->codecId), cmd->codecId);
+			WLog_WARN(TAG, "Invalid SurfaceCommand %s [0x%08" PRIX16 "]",
+			          rdpgfx_get_codec_id_string(codecId), codecId);
 			break;
 	}
 
@@ -1251,8 +1254,9 @@ static BOOL intersect_rect(const RECTANGLE_16* rect, const gdiGfxSurface* surfac
 		return FALSE;
 	prect->left = rect->left;
 	prect->top = rect->top;
-	prect->right = MIN(rect->right, surface->width);
-	prect->bottom = MIN(rect->bottom, surface->height);
+
+	prect->right = MIN(rect->right, WINPR_SAFE_INT_CAST(UINT16, surface->width));
+	prect->bottom = MIN(rect->bottom, WINPR_SAFE_INT_CAST(UINT16, surface->height));
 	return TRUE;
 }
 
