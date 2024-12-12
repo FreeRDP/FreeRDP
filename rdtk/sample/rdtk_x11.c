@@ -21,6 +21,8 @@
 #include <stdint.h>
 
 #include <winpr/wlog.h>
+#include <winpr/assert.h>
+#include <winpr/cast.h>
 #include <rdtk/rdtk.h>
 
 #include <X11/Xlib.h>
@@ -31,36 +33,17 @@
 int main(int argc, char** argv)
 {
 	int rc = 1;
-	GC gc = NULL;
-	int depth = 0;
-	int x = 0;
-	int y = 0;
-	int width = 0;
-	int height = 0;
-	uint8_t* buffer = NULL;
-	int scanline = 0;
 	int pf_count = 0;
 	XEvent event;
 	XImage* image = NULL;
 	Pixmap pixmap = 0;
-	Screen* screen = NULL;
-	Visual* visual = NULL;
-	int scanline_pad = 0;
-	int screen_number = 0;
-	Display* display = NULL;
 	Window window = 0;
-	Window root_window = 0;
-	rdtkEngine* engine = NULL;
 	rdtkSurface* surface = NULL;
-	unsigned long border = 0;
-	unsigned long background = 0;
-	XPixmapFormatValues* pf = NULL;
-	XPixmapFormatValues* pfs = NULL;
 
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
 
-	display = XOpenDisplay(NULL);
+	Display* display = XOpenDisplay(NULL);
 
 	if (!display)
 	{
@@ -68,27 +51,27 @@ int main(int argc, char** argv)
 		return 1;
 	}
 
-	x = 10;
-	y = 10;
-	width = 640;
-	height = 480;
+	const INT32 x = 10;
+	const INT32 y = 10;
+	const UINT32 width = 640;
+	const UINT32 height = 480;
 
-	screen_number = DefaultScreen(display);
-	screen = ScreenOfDisplay(display, screen_number);
-	visual = DefaultVisual(display, screen_number);
-	gc = DefaultGC(display, screen_number);
-	depth = DefaultDepthOfScreen(screen);
-	root_window = RootWindow(display, screen_number);
-	border = BlackPixel(display, screen_number);
-	background = WhitePixel(display, screen_number);
+	const int screen_number = DefaultScreen(display);
+	const Screen* screen = ScreenOfDisplay(display, screen_number);
+	Visual* visual = DefaultVisual(display, screen_number);
+	const GC gc = DefaultGC(display, screen_number);
+	const int depth = DefaultDepthOfScreen(screen);
+	const Window root_window = RootWindow(display, screen_number);
+	const unsigned long border = BlackPixel(display, screen_number);
+	const unsigned long background = WhitePixel(display, screen_number);
 
-	scanline_pad = 0;
+	int scanline_pad = 0;
 
-	pfs = XListPixmapFormats(display, &pf_count);
+	XPixmapFormatValues* pfs = XListPixmapFormats(display, &pf_count);
 
 	for (int index = 0; index < pf_count; index++)
 	{
-		pf = &pfs[index];
+		XPixmapFormatValues* pf = &pfs[index];
 
 		if (pf->depth == depth)
 		{
@@ -99,13 +82,10 @@ int main(int argc, char** argv)
 
 	XFree(pfs);
 
-	engine = rdtk_engine_new();
-	if (!engine)
-		goto fail;
-
-	scanline = width * 4;
-	buffer = (uint8_t*)calloc(height, scanline);
-	if (!buffer)
+	rdtkEngine* engine = rdtk_engine_new();
+	const size_t scanline = width * 4ULL;
+	uint8_t* buffer = (uint8_t*)calloc(height, scanline);
+	if (!engine || !buffer || (depth < 0))
 		goto fail;
 
 	surface = rdtk_surface_new(engine, buffer, width, height, scanline);
@@ -123,9 +103,9 @@ int main(int argc, char** argv)
 	XSetFunction(display, gc, GXcopy);
 	XSetFillStyle(display, gc, FillSolid);
 
-	pixmap = XCreatePixmap(display, window, width, height, depth);
+	pixmap = XCreatePixmap(display, window, width, height, (unsigned)depth);
 
-	image = XCreateImage(display, visual, depth, ZPixmap, 0, (char*)buffer, width, height,
+	image = XCreateImage(display, visual, (unsigned)depth, ZPixmap, 0, (char*)buffer, width, height,
 	                     scanline_pad, 0);
 
 	while (1)
