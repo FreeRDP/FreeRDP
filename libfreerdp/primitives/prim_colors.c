@@ -18,6 +18,8 @@
  */
 
 #include <freerdp/config.h>
+#include <winpr/assert.h>
+#include <winpr/cast.h>
 
 #include <freerdp/types.h>
 #include <freerdp/primitives.h>
@@ -58,9 +60,9 @@ static pstatus_t general_yCbCrToRGB_16s8u_P3AC4R_BGRX(const INT16* WINPR_RESTRIC
 			const INT64 CrG = Cr * (INT64)(0.714401f * (1 << divisor)) * 1LL;
 			const INT64 CbG = Cb * (INT64)(0.343730f * (1 << divisor)) * 1LL;
 			const INT64 CbB = Cb * (INT64)(1.769905f * (1 << divisor)) * 1LL;
-			R = ((INT16)((CrR + Y) >> divisor) >> 5);
-			G = ((INT16)((Y - CbG - CrG) >> divisor) >> 5);
-			B = ((INT16)((CbB + Y) >> divisor) >> 5);
+			R = WINPR_SAFE_INT_CAST(int16_t, ((CrR + Y) >> divisor) >> 5);
+			G = WINPR_SAFE_INT_CAST(int16_t, ((Y - CbG - CrG) >> divisor) >> 5);
+			B = WINPR_SAFE_INT_CAST(int16_t, ((CbB + Y) >> divisor) >> 5);
 			pRGB = writePixelBGRX(pRGB, formatSize, DstFormat, CLIP(R), CLIP(G), CLIP(B), 0);
 		}
 
@@ -284,7 +286,14 @@ static INLINE void writeScanlineGeneric(BYTE* dst, DWORD formatSize, UINT32 DstF
 	fkt_writePixel writePixel = getPixelWriteFunction(DstFormat, FALSE);
 
 	for (UINT32 x = 0; x < width; x++)
-		dst = writePixel(dst, formatSize, DstFormat, *r++, *g++, *b++, 0);
+	{
+		const INT16 pr = *r++;
+		const INT16 pg = *g++;
+		const INT16 pb = *b++;
+
+		dst = writePixel(dst, formatSize, DstFormat, WINPR_SAFE_INT_CAST(UINT8, pr),
+		                 WINPR_SAFE_INT_CAST(UINT8, pg), WINPR_SAFE_INT_CAST(UINT8, pb), 0);
+	}
 }
 
 static INLINE void writeScanlineRGB(BYTE* dst, DWORD formatSize, UINT32 DstFormat, const INT16* r,
