@@ -963,7 +963,7 @@ static HANDLE FileCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dw
 
 	if (fstat(fileno(pFile->fp), &st) == 0 && dwFlagsAndAttributes & FILE_ATTRIBUTE_READONLY)
 	{
-		st.st_mode &= ~(S_IWUSR | S_IWGRP | S_IWOTH);
+		st.st_mode &= WINPR_SAFE_INT_CAST(mode_t, ~(S_IWUSR | S_IWGRP | S_IWOTH));
 		fchmod(fileno(pFile->fp), st.st_mode);
 	}
 
