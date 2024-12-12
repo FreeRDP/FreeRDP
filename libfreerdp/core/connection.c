@@ -1994,7 +1994,7 @@ fail:
 	return status;
 }
 
-const char* rdp_client_connection_state_string(int state)
+const char* rdp_client_connection_state_string(UINT state)
 {
 	switch (state)
 	{

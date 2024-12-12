@@ -1136,9 +1136,11 @@ static int x11_shadow_xshm_init(x11ShadowSubsystem* subsystem)
 		return -1;
 	}
 
-	subsystem->fb_shm_info.shmid = shmget(
-	    IPC_PRIVATE, 1ull * subsystem->fb_image->bytes_per_line * subsystem->fb_image->height,
-	    IPC_CREAT | 0600);
+	subsystem->fb_shm_info.shmid =
+	    shmget(IPC_PRIVATE,
+	           1ull * WINPR_SAFE_INT_CAST(uint32_t, subsystem->fb_image->bytes_per_line) *
+	               WINPR_SAFE_INT_CAST(uint32_t, subsystem->fb_image->height),
+	           IPC_CREAT | 0600);
 
 	if (subsystem->fb_shm_info.shmid == -1)
 	{
@@ -1160,10 +1162,11 @@ static int x11_shadow_xshm_init(x11ShadowSubsystem* subsystem)
 
 	XSync(subsystem->display, False);
 	shmctl(subsystem->fb_shm_info.shmid, IPC_RMID, 0);
-	subsystem->fb_pixmap =
-	    XShmCreatePixmap(subsystem->display, subsystem->root_window, subsystem->fb_image->data,
-	                     &(subsystem->fb_shm_info), subsystem->fb_image->width,
-	                     subsystem->fb_image->height, subsystem->fb_image->depth);
+	subsystem->fb_pixmap = XShmCreatePixmap(
+	    subsystem->display, subsystem->root_window, subsystem->fb_image->data,
+	    &(subsystem->fb_shm_info), WINPR_SAFE_INT_CAST(uint32_t, subsystem->fb_image->width),
+	    WINPR_SAFE_INT_CAST(uint32_t, subsystem->fb_image->height),
+	    WINPR_SAFE_INT_CAST(uint32_t, subsystem->fb_image->depth));
 	XSync(subsystem->display, False);
 
 	if (!subsystem->fb_pixmap)
@@ -1323,8 +1326,8 @@ static int x11_shadow_subsystem_init(rdpShadowSubsystem* sub)
 
 		if (pf->depth == (INT64)subsystem->depth)
 		{
-			subsystem->bpp = pf->bits_per_pixel;
-			subsystem->scanline_pad = pf->scanline_pad;
+			subsystem->bpp = WINPR_SAFE_INT_CAST(uint32_t, pf->bits_per_pixel);
+			subsystem->scanline_pad = WINPR_SAFE_INT_CAST(uint32_t, pf->scanline_pad);
 			break;
 		}
 	}

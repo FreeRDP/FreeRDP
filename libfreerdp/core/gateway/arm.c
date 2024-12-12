@@ -828,8 +828,9 @@ static BOOL arm_fill_rdstls(rdpArm* arm, rdpSettings* settings, const WINPR_JSON
 			goto endOfFunction;
 		}
 
-		BOOL status = freerdp_settings_set_pointer_len(settings, FreeRDP_RedirectionGuid, wGUID,
-		                                               (wGUID_len + 1) * sizeof(WCHAR));
+		BOOL status = freerdp_settings_set_pointer_len(
+		    settings, FreeRDP_RedirectionGuid, wGUID,
+		    WINPR_SAFE_INT_CAST(size_t, (wGUID_len + 1)) * sizeof(WCHAR));
 		if (!status)
 		{
 			WLog_Print(arm->log, WLOG_ERROR, "unable to set RedirectionGuid");

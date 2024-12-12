@@ -409,7 +409,7 @@ static BOOL freerdp_prevent_session_lock(rdpContext* context)
 	if (FakeMouseMotionInterval && in->lastInputTimestamp)
 	{
 		const time_t now = time(NULL);
-		if (now - in->lastInputTimestamp > FakeMouseMotionInterval)
+		if (WINPR_SAFE_INT_CAST(size_t, now) - in->lastInputTimestamp > FakeMouseMotionInterval)
 		{
 			WLog_Print(context->log, WLOG_DEBUG,
 			           "fake mouse move: x=%d y=%d lastInputTimestamp=%" PRIu64 " "
