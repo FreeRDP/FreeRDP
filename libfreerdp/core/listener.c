@@ -197,7 +197,7 @@ static BOOL freerdp_listener_open(freerdp_listener* instance, const char* bind_a
 		arg = 1;
 		ioctlsocket(sockfd, FIONBIO, &arg);
 #endif
-		status = _bind((SOCKET)sockfd, ai->ai_addr, ai->ai_addrlen);
+		status = _bind((SOCKET)sockfd, ai->ai_addr, WINPR_SAFE_INT_CAST(int, ai->ai_addrlen));
 
 		if (status != 0)
 		{
