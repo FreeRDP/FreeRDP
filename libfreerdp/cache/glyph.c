@@ -110,8 +110,8 @@ static BOOL update_process_glyph(rdpContext* context, const BYTE* data, UINT32 c
 
 	if ((dx <= (bound->x + bound->width)) && (dy <= (bound->y + bound->height)))
 	{
-		INT32 dw = glyph->cx - sx;
-		INT32 dh = glyph->cy - sy;
+		INT32 dw = WINPR_SAFE_INT_CAST(int32_t, glyph->cx) - sx;
+		INT32 dh = WINPR_SAFE_INT_CAST(int32_t, glyph->cy) - sy;
 
 		if ((dw + dx) > (bound->x + bound->width))
 			dw = (bound->x + bound->width) - (dw + dx);

@@ -709,8 +709,8 @@ static INLINE void progressive_rfx_idwt_y(const INT16* WINPR_RESTRICT pLowBand, 
 			pH += nHighStep;
 			L0 = *pL;
 			pL += nLowStep;
-			X2 = L0 - ((H0 + H1) / 2);
-			X1 = ((X0 + X2) / 2) + (2 * H0);
+			X2 = WINPR_SAFE_INT_CAST(int16_t, L0 - ((H0 + H1) / 2));
+			X1 = WINPR_SAFE_INT_CAST(int16t, ((X0 + X2) / 2) + (2 * H0));
 			*pX = X0;
 			pX += nDstStep;
 			*pX = X1;
@@ -725,12 +725,12 @@ static INLINE void progressive_rfx_idwt_y(const INT16* WINPR_RESTRICT pLowBand, 
 			{
 				*pX = X2;
 				pX += nDstStep;
-				*pX = X2 + (2 * H0);
+				*pX = WINPR_SAFE_INT_CAST(int16_t, X2 + (2 * H0));
 			}
 			else
 			{
 				L0 = *pL;
-				X0 = L0 - H0;
+				X0 = WINPR_SAFE_INT_CAST(int16_t, L0 - H0);
 				*pX = X2;
 				pX += nDstStep;
 				*pX = WINPR_SAFE_INT_CAST(int16_t, ((X0 + X2) / 2) + (2 * H0));
@@ -750,7 +750,7 @@ static INLINE void progressive_rfx_idwt_y(const INT16* WINPR_RESTRICT pLowBand, 
 			*pX = X0;
 			pX += nDstStep;
 			L0 = *pL;
-			*pX = (X0 + L0) / 2;
+			*pX = WINPR_SAFE_INT_CAST(int16_t, (X0 + L0) / 2);
 		}
 
 		pLowBand++;
@@ -1102,7 +1102,8 @@ static INLINE INT16 progressive_rfx_srl_read(RFX_PROGRESSIVE_UPGRADE_STATE* WINP
 			if (k)
 			{
 				bs->mask = ((1 << k) - 1);
-				state->nz = ((bs->accumulator >> (32u - k)) & bs->mask);
+				state->nz =
+				    WINPR_SAFE_INT_CAST(int16_t, ((bs->accumulator >> (32u - k)) & bs->mask));
 				BitStream_Shift(bs, k);
 			}
 
@@ -1195,7 +1196,7 @@ static INLINE int progressive_rfx_upgrade_block(RFX_PROGRESSIVE_UPGRADE_STATE* W
 			raw->mask = ((1 << numBits) - 1);
 			input = (INT16)((raw->accumulator >> (32 - numBits)) & raw->mask);
 			BitStream_Shift(raw, numBits);
-			buffer[index] += (input << shift);
+			buffer[index] += WINPR_SAFE_INT_CAST(int16_t, (input << shift));
 		}
 
 		return 1;
