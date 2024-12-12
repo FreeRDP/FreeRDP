@@ -30,6 +30,8 @@
 #include <winpr/crt.h>
 #include <winpr/synch.h>
 #include <winpr/stream.h>
+#include <winpr/assert.h>
+#include <winpr/cast.h>
 
 #include <freerdp/log.h>
 #include <freerdp/constants.h>
@@ -81,7 +83,8 @@ static BOOL wts_queue_receive_data(rdpPeerChannel* channel, const BYTE* Buffer, 
 	if (!messageCtx)
 		return FALSE;
 
-	messageCtx->channelId = channel->channelId;
+	WINPR_ASSERT(channel->channelId <= UINT16_MAX);
+	messageCtx->channelId = (UINT16)channel->channelId;
 	messageCtx->length = Length;
 	messageCtx->offset = 0;
 	buffer = (BYTE*)(messageCtx + 1);
@@ -93,12 +96,14 @@ static BOOL wts_queue_send_item(rdpPeerChannel* channel, BYTE* Buffer, UINT32 Le
 {
 	BYTE* buffer = NULL;
 	UINT32 length = 0;
-	UINT16 channelId = 0;
+
 	WINPR_ASSERT(channel);
 	WINPR_ASSERT(channel->vcm);
 	buffer = Buffer;
 	length = Length;
-	channelId = channel->channelId;
+
+	WINPR_ASSERT(channel->channelId <= UINT16_MAX);
+	const UINT16 channelId = (UINT16)channel->channelId;
 	return MessageQueue_Post(channel->vcm->queue, (void*)(UINT_PTR)channelId, 0, (void*)buffer,
 	                         (void*)(UINT_PTR)length);
 }
@@ -200,15 +205,16 @@ static BOOL wts_read_drdynvc_create_response(rdpPeerChannel* channel, wStream* s
 static BOOL wts_read_drdynvc_data_first(rdpPeerChannel* channel, wStream* s, int cbLen,
                                         UINT32 length)
 {
-	int value = 0;
 	WINPR_ASSERT(channel);
 	WINPR_ASSERT(s);
-	value = wts_read_variable_uint(s, cbLen, &channel->dvc_total_length);
+	const UINT32 value = wts_read_variable_uint(s, cbLen, &channel->dvc_total_length);
 
 	if (value == 0)
 		return FALSE;
-
-	length -= value;
+	if (value > length)
+		length = 0;
+	else
+		length -= value;
 
 	if (length > channel->dvc_total_length)
 		return FALSE;
@@ -390,12 +396,12 @@ static int wts_write_variable_uint(wStream* s, UINT32 val)
 	if (val <= 0xFF)
 	{
 		cb = 0;
-		Stream_Write_UINT8(s, val);
+		Stream_Write_UINT8(s, WINPR_SAFE_INT_CAST(uint8_t, val));
 	}
 	else if (val <= 0xFFFF)
 	{
 		cb = 1;
-		Stream_Write_UINT16(s, val);
+		Stream_Write_UINT16(s, WINPR_SAFE_INT_CAST(uint16_t, val));
 	}
 	else
 	{
@@ -416,7 +422,7 @@ static void wts_write_drdynvc_header(wStream* s, BYTE Cmd, UINT32 ChannelId)
 	Stream_GetPointer(s, bm);
 	Stream_Seek_UINT8(s);
 	cbChId = wts_write_variable_uint(s, ChannelId);
-	*bm = ((Cmd & 0x0F) << 4) | cbChId;
+	*bm = (((Cmd & 0x0F) << 4) | cbChId) & 0xFF;
 }
 
 static BOOL wts_write_drdynvc_create_request(wStream* s, UINT32 ChannelId, const char* ChannelName)
@@ -1319,7 +1325,9 @@ HANDLE WINAPI FreeRDP_WTSVirtualChannelOpen(HANDLE hServer, DWORD SessionId, LPS
 	{
 		const UINT32 VCChunkSize =
 		    freerdp_settings_get_uint32(context->settings, FreeRDP_VCChunkSize);
-		channel = channel_new(vcm, client, joined_channel->ChannelId, index,
+
+		WINPR_ASSERT(index <= UINT16_MAX);
+		channel = channel_new(vcm, client, joined_channel->ChannelId, (UINT16)index,
 		                      RDP_PEER_CHANNEL_TYPE_SVC, VCChunkSize, pVirtualName);
 
 		if (!channel)
@@ -1600,11 +1608,11 @@ BOOL WINAPI FreeRDP_WTSVirtualChannelWrite(HANDLE hChannelHandle, PCHAR Buffer, 
 			if (first && (Length > Stream_GetRemainingLength(s)))
 			{
 				cbLen = wts_write_variable_uint(s, Length);
-				buffer[0] = (DATA_FIRST_PDU << 4) | (cbLen << 2) | cbChId;
+				buffer[0] = ((DATA_FIRST_PDU << 4) | (cbLen << 2) | cbChId) & 0xFF;
 			}
 			else
 			{
-				buffer[0] = (DATA_PDU << 4) | cbChId;
+				buffer[0] = ((DATA_PDU << 4) | cbChId) & 0xFF;
 			}
 
 			first = FALSE;
