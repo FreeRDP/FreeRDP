@@ -194,13 +194,14 @@ void region16_clear(REGION16* region)
 
 static INLINE REGION16_DATA* allocateRegion(long nbItems)
 {
-	long allocSize = sizeof(REGION16_DATA) + (nbItems * sizeof(RECTANGLE_16));
+	size_t allocSize =
+	    sizeof(REGION16_DATA) + (WINPR_SAFE_INT_CAST(size_t, nbItems) * sizeof(RECTANGLE_16));
 	REGION16_DATA* ret = (REGION16_DATA*)malloc(allocSize);
 
 	if (!ret)
 		return ret;
 
-	ret->size = allocSize;
+	ret->size = WINPR_SAFE_INT_CAST(long, allocSize);
 	ret->nbRects = nbItems;
 	return ret;
 }
@@ -485,7 +486,7 @@ static BOOL region16_simplify_bands(REGION16* region)
 		}
 
 		region->data->nbRects = finalNbRects;
-		region->data->size = allocSize;
+		region->data->size = WINPR_SAFE_INT_CAST(long, allocSize);
 	}
 
 	return TRUE;
@@ -526,7 +527,7 @@ BOOL region16_union_rect(REGION16* dst, const REGION16* src, const RECTANGLE_16*
 		return TRUE;
 	}
 
-	newItems = allocateRegion((1ULL + 4ULL * region16_n_rects(src)));
+	newItems = allocateRegion((1L + 4L * region16_n_rects(src)));
 
 	if (!newItems)
 		return FALSE;
@@ -673,10 +674,13 @@ BOOL region16_union_rect(REGION16* dst, const REGION16* src, const RECTANGLE_16*
 	dstExtents->left = MIN(rect->left, srcExtents->left);
 	dstExtents->bottom = MAX(rect->bottom, srcExtents->bottom);
 	dstExtents->right = MAX(rect->right, srcExtents->right);
-	newItems->size = sizeof(REGION16_DATA) + (usedRects * sizeof(RECTANGLE_16));
-	tmpItems = realloc(newItems, newItems->size);
+	newItems->size =
+	    WINPR_SAFE_INT_CAST(long, sizeof(REGION16_DATA) + (usedRects * sizeof(RECTANGLE_16)));
+	if (newItems->size != 0)
+		tmpItems = realloc(newItems, WINPR_SAFE_INT_CAST(size_t, newItems->size));
 	if (!tmpItems)
 		free(newItems);
+
 	newItems = tmpItems;
 	dst->data = newItems;
 
@@ -792,7 +796,8 @@ BOOL region16_intersect_rect(REGION16* dst, const REGION16* src, const RECTANGLE
 	}
 
 	newItems->nbRects = usedRects;
-	newItems->size = sizeof(REGION16_DATA) + (usedRects * sizeof(RECTANGLE_16));
+	newItems->size =
+	    WINPR_SAFE_INT_CAST(long, sizeof(REGION16_DATA) + (usedRects * sizeof(RECTANGLE_16)));
 
 	if ((dst->data->size > 0) && (dst->data != &empty_region))
 		free(dst->data);
