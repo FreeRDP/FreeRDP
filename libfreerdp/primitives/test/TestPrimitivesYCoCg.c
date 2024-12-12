@@ -52,15 +52,17 @@ static BOOL test_YCoCgRToRGB_8u_AC4R_func(UINT32 width, UINT32 height)
 		PROFILER_CREATE(genericProf, "YCoCgRToRGB_8u_AC4R-GENERIC")
 		PROFILER_CREATE(optProf, "YCoCgRToRGB_8u_AC4R-OPT")
 		PROFILER_ENTER(genericProf)
-		status = generic->YCoCgToRGB_8u_AC4R(in, srcStride, out_c, format, dstStride, width, height,
-		                                     2, TRUE);
+		status = generic->YCoCgToRGB_8u_AC4R(in, WINPR_SAFE_INT_CAST(int, srcStride), out_c, format,
+		                                     WINPR_SAFE_INT_CAST(int, dstStride), width, height, 2,
+		                                     TRUE);
 		PROFILER_EXIT(genericProf)
 
 		if (status != PRIMITIVES_SUCCESS)
 			goto loop_fail;
 
 		PROFILER_ENTER(optProf)
-		status = optimized->YCoCgToRGB_8u_AC4R(in, srcStride, out_sse, format, dstStride, width,
+		status = optimized->YCoCgToRGB_8u_AC4R(in, WINPR_SAFE_INT_CAST(int, srcStride), out_sse,
+		                                       format, WINPR_SAFE_INT_CAST(int, dstStride), width,
 		                                       height, 2, TRUE);
 		PROFILER_EXIT(optProf)
 

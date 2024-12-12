@@ -341,7 +341,7 @@ xfFloatbar* xf_floatbar_new(xfContext* xfc, Window window, const char* name, DWO
 	floatbar->root_window = window;
 	floatbar->flags = flags;
 	floatbar->xfc = xfc;
-	floatbar->locked = flags & 0x0002;
+	floatbar->locked = (flags & 0x0002) != 0 ? TRUE : FALSE;
 	xf_floatbar_toggle_fullscreen(floatbar, FALSE);
 	char** missingList = NULL;
 	int missingCount = 0;

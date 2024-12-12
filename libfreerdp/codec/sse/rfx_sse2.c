@@ -83,7 +83,7 @@ rfx_quantization_decode_block_sse2(INT16* WINPR_RESTRICT buffer, const size_t bu
 	do
 	{
 		a = _mm_load_si128(ptr);
-		a = _mm_slli_epi16(a, factor);
+		a = _mm_slli_epi16(a, WINPR_SAFE_INT_CAST(int, factor));
 		_mm_store_si128(ptr, a);
 		ptr++;
 	} while (ptr < buf_end);

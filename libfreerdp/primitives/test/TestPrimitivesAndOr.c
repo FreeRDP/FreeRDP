@@ -26,7 +26,7 @@
 static BOOL test_and_32u_impl(const char* name, __andC_32u_t fkt, const UINT32* src,
                               const UINT32 val, UINT32* dst, size_t size)
 {
-	pstatus_t status = fkt(src, val, dst, size);
+	pstatus_t status = fkt(src, val, dst, WINPR_SAFE_INT_CAST(int32_t, size));
 	if (status != PRIMITIVES_SUCCESS)
 		return FALSE;
 

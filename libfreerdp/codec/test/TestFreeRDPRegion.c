@@ -559,7 +559,8 @@ static int test_r1_inter_r3(void)
 
 	rects = region16_rects(&intersection, &nbRects);
 
-	if (!rects || nbRects != 1 || !compareRectangles(rects, r1_inter_r3, nbRects))
+	if (!rects || nbRects != 1 ||
+	    !compareRectangles(rects, r1_inter_r3, WINPR_SAFE_INT_CAST(int, nbRects)))
 		goto out;
 
 	retCode = 0;
@@ -619,7 +620,8 @@ static int test_r1_r3_inter_r11(void)
 
 	rects = region16_rects(&intersection, &nbRects);
 
-	if (!rects || nbRects != 1 || !compareRectangles(rects, r1_r3_inter_r11, nbRects))
+	if (!rects || nbRects != 1 ||
+	    !compareRectangles(rects, r1_r3_inter_r11, WINPR_SAFE_INT_CAST(int, nbRects)))
 		goto out;
 
 	retCode = 0;
@@ -686,7 +688,8 @@ static int test_norbert_case(void)
 
 	rects = region16_rects(&intersection, &nbRects);
 
-	if (!rects || nbRects != 5 || !compareRectangles(rects, inRectangles, nbRects))
+	if (!rects || nbRects != 5 ||
+	    !compareRectangles(rects, inRectangles, WINPR_SAFE_INT_CAST(int, nbRects)))
 		goto out;
 
 	if (!compareRectangles(region16_extents(&intersection), &expected_inter_extents, 1))
