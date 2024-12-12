@@ -580,18 +580,20 @@ static BOOL xf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 			    appWindow->width == (INT64)appWindow->windowWidth &&
 			    appWindow->height == (INT64)appWindow->windowHeight)
 			{
-				xf_UpdateWindowArea(xfc, appWindow, 0, 0, appWindow->windowWidth,
-				                    appWindow->windowHeight);
+				xf_UpdateWindowArea(xfc, appWindow, 0, 0,
+				                    WINPR_SAFE_INT_CAST(int, appWindow->windowWidth),
+				                    WINPR_SAFE_INT_CAST(int, appWindow->windowHeight));
 			}
 			else
 			{
 				xf_MoveWindow(xfc, appWindow, appWindow->windowOffsetX, appWindow->windowOffsetY,
-				              appWindow->windowWidth, appWindow->windowHeight);
+				              WINPR_SAFE_INT_CAST(int, appWindow->windowWidth),
+				              WINPR_SAFE_INT_CAST(int, appWindow->windowHeight));
 			}
 
 			xf_SetWindowVisibilityRects(xfc, appWindow, visibilityRectsOffsetX,
 			                            visibilityRectsOffsetY, appWindow->visibilityRects,
-			                            appWindow->numVisibilityRects);
+			                            WINPR_SAFE_INT_CAST(int, appWindow->numVisibilityRects));
 		}
 
 		if (appWindow->rail_state == WINDOW_SHOW_MAXIMIZED)
@@ -1205,10 +1207,10 @@ xfAppWindow* xf_rail_add_window(xfContext* xfc, UINT64 id, UINT32 x, UINT32 y, U
 	appWindow->xfc = xfc;
 	appWindow->windowId = id;
 	appWindow->surfaceId = surfaceId;
-	appWindow->x = x;
-	appWindow->y = y;
-	appWindow->width = width;
-	appWindow->height = height;
+	appWindow->x = WINPR_SAFE_INT_CAST(int, x);
+	appWindow->y = WINPR_SAFE_INT_CAST(int, y);
+	appWindow->width = WINPR_SAFE_INT_CAST(int, width);
+	appWindow->height = WINPR_SAFE_INT_CAST(int, height);
 
 	if (!xf_AppWindowCreate(xfc, appWindow))
 		goto fail;

@@ -81,15 +81,17 @@ static BOOL xfVideoShowSurface(VideoClientContext* video, const VideoSurface* su
 	if (freerdp_settings_get_bool(settings, FreeRDP_SmartSizing) ||
 	    freerdp_settings_get_bool(settings, FreeRDP_MultiTouchGestures))
 	{
-		XPutImage(xfc->display, xfc->primary, xfc->gc, xfSurface->image, 0, 0, surface->x,
-		          surface->y, surface->w, surface->h);
+		XPutImage(xfc->display, xfc->primary, xfc->gc, xfSurface->image, 0, 0,
+		          WINPR_SAFE_INT_CAST(int, surface->x), WINPR_SAFE_INT_CAST(int, surface->y),
+		          surface->w, surface->h);
 		xf_draw_screen(xfc, surface->x, surface->y, surface->w, surface->h);
 	}
 	else
 #endif
 	{
-		XPutImage(xfc->display, xfc->drawable, xfc->gc, xfSurface->image, 0, 0, surface->x,
-		          surface->y, surface->w, surface->h);
+		XPutImage(xfc->display, xfc->drawable, xfc->gc, xfSurface->image, 0, 0,
+		          WINPR_SAFE_INT_CAST(int, surface->x), WINPR_SAFE_INT_CAST(int, surface->y),
+		          surface->w, surface->h);
 	}
 
 	return TRUE;
