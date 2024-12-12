@@ -165,7 +165,7 @@ static BOOL gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap, const 
 
 			if (!rfx_process_message(context->codecs->rfx, pSrcData, SrcSize, bitmap->left,
 			                         bitmap->top, bitmap->data, bitmap->format, gdi->stride,
-			                         gdi->height, &invalidRegion))
+			                         WINPR_SAFE_INT_CAST(UINT32, gdi->height), &invalidRegion))
 			{
 				WLog_ERR(TAG, "rfx_process_message failed");
 				return FALSE;

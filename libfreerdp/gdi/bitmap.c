@@ -623,9 +623,13 @@ BOOL gdi_BitBlt(HGDI_DC hdcDest, INT32 nXDest, INT32 nYDest, INT32 nWidth, INT32
 			if (!hSrcBmp || !hDstBmp)
 				return FALSE;
 
-			if (!freerdp_image_copy(hDstBmp->data, hDstBmp->format, hDstBmp->scanline, nXDest,
-			                        nYDest, nWidth, nHeight, hSrcBmp->data, hSrcBmp->format,
-			                        hSrcBmp->scanline, nXSrc, nYSrc, palette, FREERDP_FLIP_NONE))
+			if (!freerdp_image_copy(
+			        hDstBmp->data, hDstBmp->format, hDstBmp->scanline,
+			        WINPR_SAFE_INT_CAST(UINT32, nXDest), WINPR_SAFE_INT_CAST(UINT32, nYDest),
+			        WINPR_SAFE_INT_CAST(UINT32, nWidth), WINPR_SAFE_INT_CAST(UINT32, nHeight),
+			        hSrcBmp->data, hSrcBmp->format, hSrcBmp->scanline,
+			        WINPR_SAFE_INT_CAST(UINT32, nXSrc), WINPR_SAFE_INT_CAST(UINT32, nYSrc), palette,
+			        FREERDP_FLIP_NONE))
 				return FALSE;
 
 			break;
@@ -644,9 +648,13 @@ BOOL gdi_BitBlt(HGDI_DC hdcDest, INT32 nXDest, INT32 nYDest, INT32 nWidth, INT32
 			if (!hSrcBmp || !hDstBmp)
 				return FALSE;
 
-			if (!freerdp_image_copy(hDstBmp->data, hDstBmp->format, hDstBmp->scanline, nXDest,
-			                        nYDest, nWidth, nHeight, hSrcBmp->data, hSrcBmp->format,
-			                        hSrcBmp->scanline, nXSrc, nYSrc, palette, FREERDP_FLIP_NONE))
+			if (!freerdp_image_copy(
+			        hDstBmp->data, hDstBmp->format, hDstBmp->scanline,
+			        WINPR_SAFE_INT_CAST(UINT32, nXDest), WINPR_SAFE_INT_CAST(UINT32, nYDest),
+			        WINPR_SAFE_INT_CAST(UINT32, nWidth), WINPR_SAFE_INT_CAST(UINT32, nHeight),
+			        hSrcBmp->data, hSrcBmp->format, hSrcBmp->scanline,
+			        WINPR_SAFE_INT_CAST(UINT32, nXSrc), WINPR_SAFE_INT_CAST(UINT32, nYSrc), palette,
+			        FREERDP_FLIP_NONE))
 				return FALSE;
 
 			break;
