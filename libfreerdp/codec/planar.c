@@ -323,7 +323,7 @@ static INLINE INT32 planar_decompress_plane_rle_only(const BYTE* WINPR_RESTRICT 
 					}
 
 					const INT32 delta = previousScanline[x] + p;
-					*dstp = WINPR_SAFE_INT_CAST(BYTE, delta);
+					*dstp = WINPR_SAFE_INT_CAST(BYTE, delta & 0xFF);
 					dstp++;
 					x++;
 					cRawBytes--;
