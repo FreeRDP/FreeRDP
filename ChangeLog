@@ -1,3 +1,33 @@
+# 2024-12-12 Version 3.10.0
+
+We're happy to present a new release of FreeRDP.
+This one contains some more code cleanups (we've addressed lots of clang-tidy
+warnings) as well as some highly anticipated new features and bugfixes.
+
+So, what is new:
+* Enforce use of a supported build type (#10777)
+* Enable FDK-AAC support for nightly packages (#10875, #10781)
+* Better AAD/AVD support (#10796)
+* Build system updates (#10844)
+* Enforce spell checking (#10881)
+* Split unit tests so a subset can be run during package build (#10776)
+* We're shipping a .desktop file now (#10465)
+* Build scripts for nightly packages (#10835, #10783)
+
+Noteworthy changes:
+* Fix wStream API bugs (#10885)
+* Autoreconnect fixes (#10915)
+* Fix monitor layout checks (#10905)
+* Enforce code formatting for CMake files (#10895)
+* Enable SIMD optimizations by default (#10894)
+* WinPR types not based on stdint.h et al (#10754)
+* Improve code assertions (#10768)
+* Code cleanups (#10763, #10914)
+
+For a complete and detailed change log since the last release run:
+git log 3.10.0...3.9.0
+
+
 # 2024-10-21 Version 3.9.0
 
 We're proud to present the newest release of FreeRDP.

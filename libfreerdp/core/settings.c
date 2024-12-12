@@ -1474,6 +1474,13 @@ static BOOL freerdp_settings_int_buffer_copy(rdpSettings* _settings, const rdpSe
 	                                      RedirectionTsvUrlLength))
 		goto out_fail;
 
+	const UINT32 RedirectionGuidLength =
+	    freerdp_settings_get_uint32(settings, FreeRDP_RedirectionGuidLength);
+	const BYTE* RedirectionGuid = freerdp_settings_get_pointer(settings, FreeRDP_RedirectionGuid);
+	if (!freerdp_settings_set_pointer_len(_settings, FreeRDP_RedirectionGuid, RedirectionGuid,
+	                                      RedirectionGuidLength))
+		goto out_fail;
+
 	const UINT32 nrports = freerdp_settings_get_uint32(settings, FreeRDP_TargetNetAddressCount);
 	if (!freerdp_target_net_adresses_reset(_settings, nrports))
 		return FALSE;
