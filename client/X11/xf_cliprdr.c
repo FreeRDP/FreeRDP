@@ -2131,7 +2131,7 @@ xf_cliprdr_server_format_data_request(CliprdrClientContext* context,
 	else
 		format = xf_cliprdr_get_client_format_by_id(clipboard, formatId);
 
-	clipboard->requestedFormatId = rawTransfer ? CF_RAW : formatId;
+	clipboard->requestedFormatId = rawTransfer ? CF_RAW : WINPR_SAFE_INT_CAST(int, formatId);
 	if (!format)
 		return xf_cliprdr_send_data_response(clipboard, format, NULL, 0);
 
