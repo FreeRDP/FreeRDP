@@ -26,7 +26,7 @@
 /* ------------------------------------------------------------------------- */
 static INLINE INT16 shift(INT16 val, UINT32 sh)
 {
-	const INT16 rc = (val << sh) & 0xFFFF;
+	const INT16 rc = WINPR_SAFE_INT_CAST(int16_t, (val << sh) & 0xFFFF);
 	return WINPR_SAFE_INT_CAST(INT16, rc);
 }
 
@@ -66,7 +66,7 @@ static INLINE pstatus_t general_rShiftC_16s(const INT16* pSrc, UINT32 val, INT16
 		return -1;
 
 	for (UINT32 x = 0; x < len; x++)
-		pDst[x] = pSrc[x] >> val;
+		pDst[x] = WINPR_SAFE_INT_CAST(int16_t, pSrc[x] >> val);
 
 	return PRIMITIVES_SUCCESS;
 }

@@ -923,7 +923,7 @@ static int freerdp_tcp_connect_multi(rdpContext* context, char** hostnames, cons
 		int curPort = port;
 
 		if (ports)
-			curPort = ports[index];
+			curPort = WINPR_SAFE_INT_CAST(int, ports[index]);
 
 		result = freerdp_tcp_resolve_host(hostnames[index], curPort, 0);
 

@@ -63,10 +63,10 @@ static UINT32 update_glyph_offset(const BYTE* data, size_t length, UINT32 index,
 		}
 
 		if (flAccel & SO_VERTICAL)
-			*y += offset;
+			*y += WINPR_SAFE_INT_CAST(int32_t, offset);
 
 		if (flAccel & SO_HORIZONTAL)
-			*x += offset;
+			*x += WINPR_SAFE_INT_CAST(int32_t, offset);
 	}
 
 	return index;
@@ -127,7 +127,7 @@ static BOOL update_process_glyph(rdpContext* context, const BYTE* data, UINT32 c
 	}
 
 	if (flAccel & SO_CHAR_INC_EQUAL_BM_BASE)
-		*x += glyph->cx;
+		*x += WINPR_SAFE_INT_CAST(int32_t, glyph->cx);
 
 	return TRUE;
 }
@@ -313,7 +313,8 @@ static BOOL update_gdi_glyph_index(rdpContext* context, GLYPH_INDEX_ORDER* glyph
 	    context, glyphIndex->data, glyphIndex->cbData, glyphIndex->cacheId, glyphIndex->ulCharInc,
 	    glyphIndex->flAccel, glyphIndex->backColor, glyphIndex->foreColor, glyphIndex->x,
 	    glyphIndex->y, glyphIndex->bkLeft, glyphIndex->bkTop, bkWidth, bkHeight, glyphIndex->opLeft,
-	    glyphIndex->opTop, opWidth, opHeight, glyphIndex->fOpRedundant);
+	    glyphIndex->opTop, opWidth, opHeight,
+	    WINPR_SAFE_INT_CAST(int32_t, glyphIndex->fOpRedundant));
 }
 
 static BOOL update_gdi_fast_index(rdpContext* context, const FAST_INDEX_ORDER* fastIndex)
