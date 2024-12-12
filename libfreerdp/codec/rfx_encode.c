@@ -286,9 +286,10 @@ void rfx_encode_rgb(RFX_CONTEXT* WINPR_RESTRICT context, RFX_TILE* WINPR_RESTRIC
 	pSrcDst[2] = (INT16*)((&pBuffer[((8192ULL + 32ULL) * 2ULL) + 16ULL])); /* cr_b_buffer */
 	PROFILER_ENTER(context->priv->prof_rfx_encode_rgb)
 	PROFILER_ENTER(context->priv->prof_rfx_encode_format_rgb)
-	rfx_encode_format_rgb(tile->data, tile->width, tile->height, tile->scanline,
-	                      context->pixel_format, context->palette, pSrcDst[0], pSrcDst[1],
-	                      pSrcDst[2]);
+	rfx_encode_format_rgb(tile->data, WINPR_SAFE_INT_CAST(int, tile->width),
+	                      WINPR_SAFE_INT_CAST(int, tile->height),
+	                      WINPR_SAFE_INT_CAST(int, tile->scanline), context->pixel_format,
+	                      context->palette, pSrcDst[0], pSrcDst[1], pSrcDst[2]);
 	PROFILER_EXIT(context->priv->prof_rfx_encode_format_rgb)
 	PROFILER_ENTER(context->priv->prof_rfx_rgb_to_ycbcr)
 
