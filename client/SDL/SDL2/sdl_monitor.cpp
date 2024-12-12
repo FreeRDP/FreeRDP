@@ -127,14 +127,14 @@ static BOOL sdl_apply_max_size(SdlContext* sdl, UINT32* pMaxWidth, UINT32* pMaxH
 		else if (freerdp_settings_get_bool(settings, FreeRDP_Workarea))
 		{
 			SDL_Rect rect = {};
-			SDL_GetDisplayUsableBounds(monitor->orig_screen, &rect);
+			SDL_GetDisplayUsableBounds(WINPR_SAFE_INT_CAST(int, monitor->orig_screen), &rect);
 			*pMaxWidth = rect.w;
 			*pMaxHeight = rect.h;
 		}
 		else if (freerdp_settings_get_uint32(settings, FreeRDP_PercentScreen) > 0)
 		{
 			SDL_Rect rect = {};
-			SDL_GetDisplayUsableBounds(monitor->orig_screen, &rect);
+			SDL_GetDisplayUsableBounds(WINPR_SAFE_INT_CAST(int, monitor->orig_screen), &rect);
 
 			*pMaxWidth = rect.w;
 			*pMaxHeight = rect.h;
@@ -233,7 +233,7 @@ static BOOL sdl_apply_display_properties(SdlContext* sdl)
 			for (int i = 0; i < SDL_GetNumDisplayModes(*id); i++)
 			{
 				SDL_DisplayMode mode = {};
-				SDL_GetDisplayMode(x, i, &mode);
+				SDL_GetDisplayMode(WINPR_SAFE_INT_CAST(int, x), i, &mode);
 
 				if (mode.w > rect.w)
 				{
