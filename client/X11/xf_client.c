@@ -25,6 +25,7 @@
 #include <freerdp/config.h>
 
 #include <math.h>
+#include <winpr/cast.h>
 #include <winpr/assert.h>
 #include <winpr/sspicli.h>
 
@@ -205,8 +206,12 @@ static void xf_draw_screen_scaled(xfContext* xfc, int x, int y, int w, int h)
 	XSetForeground(xfc->display, xfc->gc, 0);
 	/* Black out possible space between desktop and window borders */
 	{
-		XRectangle box1 = { 0, 0, xfc->window->width, xfc->window->height };
-		XRectangle box2 = { xfc->offset_x, xfc->offset_y, xfc->scaledWidth, xfc->scaledHeight };
+		XRectangle box1 = { 0, 0, WINPR_SAFE_INT_CAST(UINT16, xfc->window->width),
+			                WINPR_SAFE_INT_CAST(UINT16, xfc->window->height) };
+		XRectangle box2 = { WINPR_SAFE_INT_CAST(UINT16, xfc->offset_x),
+			                WINPR_SAFE_INT_CAST(UINT16, xfc->offset_y),
+			                WINPR_SAFE_INT_CAST(UINT16, xfc->scaledWidth),
+			                WINPR_SAFE_INT_CAST(UINT16, xfc->scaledHeight) };
 		Region reg1 = XCreateRegion();
 		Region reg2 = XCreateRegion();
 		XUnionRectWithRegion(&box1, reg1, reg1);
@@ -215,8 +220,9 @@ static void xf_draw_screen_scaled(xfContext* xfc, int x, int y, int w, int h)
 		if (XSubtractRegion(reg1, reg2, reg1) && !XEmptyRegion(reg1))
 		{
 			XSetRegion(xfc->display, xfc->gc, reg1);
-			XFillRectangle(xfc->display, xfc->window->handle, xfc->gc, 0, 0, xfc->window->width,
-			               xfc->window->height);
+			XFillRectangle(xfc->display, xfc->window->handle, xfc->gc, 0, 0,
+			               WINPR_SAFE_INT_CAST(UINT16, xfc->window->width),
+			               WINPR_SAFE_INT_CAST(UINT16, xfc->window->height));
 			XSetClipMask(xfc->display, xfc->gc, None);
 		}
 
@@ -353,17 +359,20 @@ static BOOL xf_desktop_resize(rdpContext* context)
 
 	if (!freerdp_settings_get_bool(settings, FreeRDP_SmartSizing))
 	{
-		xfc->scaledWidth = freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth);
-		xfc->scaledHeight = freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight);
+		xfc->scaledWidth =
+		    WINPR_SAFE_INT_CAST(int, freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth));
+		xfc->scaledHeight =
+		    WINPR_SAFE_INT_CAST(int, freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight));
 	}
 
 #endif
 
 	if (!xfc->fullscreen)
 	{
-		xf_ResizeDesktopWindow(xfc, xfc->window,
-		                       freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth),
-		                       freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight));
+		xf_ResizeDesktopWindow(
+		    xfc, xfc->window,
+		    WINPR_SAFE_INT_CAST(int, freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth)),
+		    WINPR_SAFE_INT_CAST(int, freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight)));
 	}
 	else
 	{
@@ -374,8 +383,10 @@ static BOOL xf_desktop_resize(rdpContext* context)
 		{
 			/* Update the saved width and height values the window will be
 			 * resized to when toggling out of fullscreen */
-			xfc->savedWidth = freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth);
-			xfc->savedHeight = freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight);
+			xfc->savedWidth = WINPR_SAFE_INT_CAST(
+			    int, freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth));
+			xfc->savedHeight = WINPR_SAFE_INT_CAST(
+			    int, freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight));
 		}
 
 		XSetFunction(xfc->display, xfc->gc, GXcopy);
@@ -396,16 +407,17 @@ static BOOL xf_paint(xfContext* xfc, const GDI_RGN* region)
 
 	if (xfc->remote_app)
 	{
-		const RECTANGLE_16 rect = { .left = region->x,
-			                        .top = region->y,
-			                        .right = region->x + region->w,
-			                        .bottom = region->y + region->h };
+		const RECTANGLE_16 rect = { .left = WINPR_SAFE_INT_CAST(UINT16, region->x),
+			                        .top = WINPR_SAFE_INT_CAST(UINT16, region->y),
+			                        .right = WINPR_SAFE_INT_CAST(UINT16, region->x + region->w),
+			                        .bottom = WINPR_SAFE_INT_CAST(UINT16, region->y + region->h) };
 		xf_rail_paint(xfc, &rect);
 	}
 	else
 	{
 		XPutImage(xfc->display, xfc->primary, xfc->gc, xfc->image, region->x, region->y, region->x,
-		          region->y, region->w, region->h);
+		          region->y, WINPR_SAFE_INT_CAST(UINT16, region->w),
+		          WINPR_SAFE_INT_CAST(UINT16, region->h));
 		xf_draw_screen(xfc, region->x, region->y, region->w, region->h);
 	}
 	return TRUE;
@@ -480,7 +492,7 @@ static BOOL xf_sw_desktop_resize(rdpContext* context)
 	WINPR_ASSERT(xfc->depth != 0);
 	if (!(xfc->image = XCreateImage(xfc->display, xfc->visual, xfc->depth, ZPixmap, 0,
 	                                (char*)gdi->primary_buffer, gdi->width, gdi->height,
-	                                xfc->scanline_pad, gdi->stride)))
+	                                xfc->scanline_pad, WINPR_SAFE_INT_CAST(int, gdi->stride))))
 	{
 		goto out;
 	}
@@ -562,8 +574,10 @@ BOOL xf_create_window(xfContext* xfc)
 	rdpSettings* settings = xfc->common.context.settings;
 	WINPR_ASSERT(settings);
 
-	int width = freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth);
-	int height = freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight);
+	int width =
+	    WINPR_SAFE_INT_CAST(int, freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth));
+	int height =
+	    WINPR_SAFE_INT_CAST(int, freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight));
 
 	const XSetWindowAttributes empty = { 0 };
 	xfc->attribs = empty;
@@ -628,10 +642,12 @@ BOOL xf_create_window(xfContext* xfc)
 		if (freerdp_settings_get_bool(settings, FreeRDP_SmartSizing) && !xfc->fullscreen)
 		{
 			if (freerdp_settings_get_uint32(settings, FreeRDP_SmartSizingWidth) > 0)
-				width = freerdp_settings_get_uint32(settings, FreeRDP_SmartSizingWidth);
+				width = WINPR_SAFE_INT_CAST(
+				    int, freerdp_settings_get_uint32(settings, FreeRDP_SmartSizingWidth));
 
 			if (freerdp_settings_get_uint32(settings, FreeRDP_SmartSizingHeight) > 0)
-				height = freerdp_settings_get_uint32(settings, FreeRDP_SmartSizingHeight);
+				height = WINPR_SAFE_INT_CAST(
+				    int, freerdp_settings_get_uint32(settings, FreeRDP_SmartSizingHeight));
 
 			xfc->scaledWidth = width;
 			xfc->scaledHeight = height;
@@ -706,7 +722,7 @@ BOOL xf_create_image(xfContext* xfc)
 		                          (char*)cgdi->primary_buffer,
 		                          freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth),
 		                          freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight),
-		                          xfc->scanline_pad, cgdi->stride);
+		                          xfc->scanline_pad, WINPR_SAFE_INT_CAST(int, cgdi->stride));
 		xfc->image->byte_order = LSBFirst;
 		xfc->image->bitmap_bit_order = LSBFirst;
 	}
@@ -1381,8 +1397,10 @@ static BOOL xf_post_connect(freerdp* instance)
 		return FALSE;
 
 #ifdef WITH_XRENDER
-	xfc->scaledWidth = freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth);
-	xfc->scaledHeight = freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight);
+	xfc->scaledWidth =
+	    WINPR_SAFE_INT_CAST(int, freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth));
+	xfc->scaledHeight =
+	    WINPR_SAFE_INT_CAST(int, freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight));
 	xfc->offset_x = 0;
 	xfc->offset_y = 0;
 #endif
@@ -1428,8 +1446,9 @@ static BOOL xf_post_connect(freerdp* instance)
 	}
 
 	EventArgsInit(&e, "xfreerdp");
-	e.width = freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth);
-	e.height = freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight);
+	e.width = WINPR_SAFE_INT_CAST(int, freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth));
+	e.height =
+	    WINPR_SAFE_INT_CAST(int, freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight));
 	PubSub_OnResizeWindow(context->pubSub, xfc, &e);
 	return TRUE;
 }
@@ -1694,7 +1713,7 @@ int xf_exit_code_from_disconnect_reason(DWORD reason)
 {
 	if (reason == 0 ||
 	    (reason >= XF_EXIT_PARSE_ARGUMENTS && reason <= XF_EXIT_CONNECT_NO_OR_MISSING_CREDENTIALS))
-		return reason;
+		return WINPR_SAFE_INT_CAST(int, reason);
 	/* License error set */
 	else if (reason >= 0x100 && reason <= 0x10A)
 		reason -= 0x100 + XF_EXIT_LICENSE_INTERNAL;
@@ -1705,7 +1724,7 @@ int xf_exit_code_from_disconnect_reason(DWORD reason)
 	else if (!(reason <= 0xC))
 		reason = XF_EXIT_UNKNOWN;
 
-	return reason;
+	return WINPR_SAFE_INT_CAST(int, reason);
 }
 
 static void xf_TerminateEventHandler(void* context, const TerminateEventArgs* e)
