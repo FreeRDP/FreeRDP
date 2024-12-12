@@ -27,6 +27,7 @@
 #include <stdint.h>
 
 #include <winpr/crt.h>
+#include <winpr/cast.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
 #include <winpr/stream.h>
@@ -661,7 +662,8 @@ static UINT rdpei_write_touch_frame(wLog* log, wStream* s, RDPINPUT_TOUCH_FRAME*
 		           contact->contactFlags);
 		rdpei_print_contact_flags(log, contact->contactFlags);
 #endif
-		Stream_Write_UINT8(s, contact->contactId); /* contactId (1 byte) */
+		Stream_Write_UINT8(
+		    s, WINPR_SAFE_INT_CAST(uint8_t, contact->contactId)); /* contactId (1 byte) */
 		/* fieldsPresent (TWO_BYTE_UNSIGNED_INTEGER) */
 		rdpei_write_2byte_unsigned(s, contact->fieldsPresent);
 		rdpei_write_4byte_signed(s, contact->x); /* x (FOUR_BYTE_SIGNED_INTEGER) */
@@ -1075,14 +1077,21 @@ static UINT rdpei_touch_process(RdpeiClientContext* context, INT32 externalId, U
 		contact.y = y;
 		contact.contactId = (UINT32)contactIdlocal;
 		contact.contactFlags = contactFlags;
-		contact.fieldsPresent = fieldFlags;
+		contact.fieldsPresent = WINPR_SAFE_INT_CAST(UINT16, fieldFlags);
 
 		if (fieldFlags & CONTACT_DATA_CONTACTRECT_PRESENT)
 		{
-			contact.contactRectLeft = va_arg(ap, INT32);
-			contact.contactRectTop = va_arg(ap, INT32);
-			contact.contactRectRight = va_arg(ap, INT32);
-			contact.contactRectBottom = va_arg(ap, INT32);
+			INT32 val = va_arg(ap, INT32);
+			contact.contactRectLeft = WINPR_SAFE_INT_CAST(INT16, val);
+
+			val = va_arg(ap, INT32);
+			contact.contactRectTop = WINPR_SAFE_INT_CAST(INT16, val);
+
+			val = va_arg(ap, INT32);
+			contact.contactRectRight = WINPR_SAFE_INT_CAST(INT16, val);
+
+			val = va_arg(ap, INT32);
+			contact.contactRectBottom = WINPR_SAFE_INT_CAST(INT16, val);
 		}
 		if (fieldFlags & CONTACT_DATA_ORIENTATION_PRESENT)
 		{
@@ -1292,19 +1301,35 @@ static UINT rdpei_pen_process(RdpeiClientContext* context, INT32 externalId, UIN
 
 		contact.x = x;
 		contact.y = y;
-		contact.fieldsPresent = fieldFlags;
+		contact.fieldsPresent = WINPR_SAFE_INT_CAST(UINT16, fieldFlags);
 
 		contact.contactFlags = contactFlags;
 		if (fieldFlags & RDPINPUT_PEN_CONTACT_PENFLAGS_PRESENT)
-			contact.penFlags = va_arg(ap, UINT32);
+		{
+			const UINT32 val = va_arg(ap, UINT32);
+			contact.penFlags = WINPR_SAFE_INT_CAST(UINT16, val);
+		}
 		if (fieldFlags & RDPINPUT_PEN_CONTACT_PRESSURE_PRESENT)
-			contact.pressure = va_arg(ap, UINT32);
+		{
+			const UINT32 val = va_arg(ap, UINT32);
+			contact.pressure = WINPR_SAFE_INT_CAST(UINT16, val);
+		}
 		if (fieldFlags & RDPINPUT_PEN_CONTACT_ROTATION_PRESENT)
-			contact.rotation = va_arg(ap, UINT32);
+		{
+			const UINT32 val = va_arg(ap, UINT32);
+			contact.rotation = WINPR_SAFE_INT_CAST(UINT16, val);
+		}
 		if (fieldFlags & RDPINPUT_PEN_CONTACT_TILTX_PRESENT)
-			contact.tiltX = va_arg(ap, INT32);
+		{
+			const INT32 val = va_arg(ap, INT32);
+			contact.tiltX = WINPR_SAFE_INT_CAST(INT16, val);
+		}
 		if (fieldFlags & RDPINPUT_PEN_CONTACT_TILTY_PRESENT)
-			contact.tiltY = va_arg(ap, INT32);
+		{
+			const INT32 val = va_arg(ap, INT32);
+			WINPR_ASSERT((val >= INT16_MIN) && (val <= INT16_MAX));
+			contact.tiltY = WINPR_SAFE_INT_CAST(INT16, val);
+		}
 
 		error = context->AddPen(context, externalId, &contact);
 	}
