@@ -19,10 +19,10 @@
  * limitations under the License.
  */
 
-#include <winpr/assert.h>
-
 #include <freerdp/config.h>
 
+#include <winpr/assert.h>
+#include <winpr/cast.h>
 #include <winpr/crt.h>
 #include <winpr/print.h>
 #include <winpr/bitstream.h>
@@ -2090,7 +2090,7 @@ int ncrush_decompress(NCRUSH_CONTEXT* ncrush, const BYTE* pSrcData, UINT32 SrcSi
 			IndexLEC = HuffTableLEC[MaskedBits] & 0xFFF;
 			BitLength = HuffTableLEC[MaskedBits] >> 12;
 			bits >>= BitLength;
-			nbits -= BitLength;
+			nbits -= WINPR_SAFE_INT_CAST(int32_t, BitLength);
 
 			if (!NCrushFetchBits(&SrcPtr, &SrcEnd, &nbits, &bits))
 				return -1;
@@ -2130,7 +2130,7 @@ int ncrush_decompress(NCRUSH_CONTEXT* ncrush, const BYTE* pSrcData, UINT32 SrcSi
 				LengthOfMatch = HuffTableLOM[MaskedBits] & 0xFFF;
 				BitLength = HuffTableLOM[MaskedBits] >> 12;
 				bits >>= BitLength;
-				nbits -= BitLength;
+				nbits -= WINPR_SAFE_INT_CAST(int32_t, BitLength);
 			}
 
 			if (!NCrushFetchBits(&SrcPtr, &SrcEnd, &nbits, &bits))
@@ -2154,7 +2154,7 @@ int ncrush_decompress(NCRUSH_CONTEXT* ncrush, const BYTE* pSrcData, UINT32 SrcSi
 				const UINT16 Mask = get_word(&HuffTableMask[idx]);
 				const UINT32 MaskedBits = bits & Mask;
 				bits >>= LengthOfMatchBits;
-				nbits -= LengthOfMatchBits;
+				nbits -= WINPR_SAFE_INT_CAST(int32_t, LengthOfMatchBits);
 				LengthOfMatchBase += MaskedBits;
 
 				if (!NCrushFetchBits(&SrcPtr, &SrcEnd, &nbits, &bits))
@@ -2192,7 +2192,7 @@ int ncrush_decompress(NCRUSH_CONTEXT* ncrush, const BYTE* pSrcData, UINT32 SrcSi
 					CopyOffset = tmp - 1;
 				}
 				bits >>= CopyOffsetBits;
-				nbits -= CopyOffsetBits;
+				nbits -= WINPR_SAFE_INT_CAST(int32_t, CopyOffsetBits);
 
 				if (!NCrushFetchBits(&SrcPtr, &SrcEnd, &nbits, &bits))
 					return -1;
@@ -2206,7 +2206,7 @@ int ncrush_decompress(NCRUSH_CONTEXT* ncrush, const BYTE* pSrcData, UINT32 SrcSi
 				LengthOfMatch = HuffTableLOM[MaskedBits] & 0xFFF;
 				BitLength = HuffTableLOM[MaskedBits] >> 12;
 				bits >>= BitLength;
-				nbits -= BitLength;
+				nbits -= WINPR_SAFE_INT_CAST(int32_t, BitLength);
 			}
 			if (!NCrushFetchBits(&SrcPtr, &SrcEnd, &nbits, &bits))
 				return -1;
@@ -2229,7 +2229,7 @@ int ncrush_decompress(NCRUSH_CONTEXT* ncrush, const BYTE* pSrcData, UINT32 SrcSi
 				const UINT16 Mask = get_word(&HuffTableMask[idx]);
 				const UINT32 MaskedBits = bits & Mask;
 				bits >>= LengthOfMatchBits;
-				nbits -= LengthOfMatchBits;
+				nbits -= WINPR_SAFE_INT_CAST(int32_t, LengthOfMatchBits);
 				LengthOfMatchBase += MaskedBits;
 
 				if (!NCrushFetchBits(&SrcPtr, &SrcEnd, &nbits, &bits))
@@ -2321,7 +2321,6 @@ static int ncrush_hash_table_add(NCRUSH_CONTEXT* ncrush, const BYTE* pSrcData, U
                                  UINT32 HistoryOffset)
 {
 	const BYTE* SrcPtr = pSrcData;
-	UINT32 Hash = 0;
 	UINT32 Offset = HistoryOffset;
 	UINT32 EndOffset = Offset + SrcSize - 8;
 
@@ -2331,8 +2330,8 @@ static int ncrush_hash_table_add(NCRUSH_CONTEXT* ncrush, const BYTE* pSrcData, U
 
 	while (Offset < EndOffset)
 	{
-		Hash = ncrush->HashTable[get_word(SrcPtr)];
-		ncrush->HashTable[get_word(SrcPtr)] = Offset;
+		const UINT16 Hash = ncrush->HashTable[get_word(SrcPtr)];
+		ncrush->HashTable[get_word(SrcPtr)] = WINPR_SAFE_INT_CAST(UINT16, Offset);
 		ncrush->MatchTable[Offset] = Hash;
 		SrcPtr++;
 		Offset++;
@@ -2500,18 +2499,18 @@ static int ncrush_move_encoder_windows(NCRUSH_CONTEXT* ncrush, BYTE* HistoryPtr)
 
 	for (size_t i = 0; i < ARRAYSIZE(ncrush->HashTable); i++)
 	{
-		INT32 NewHash = ncrush->HashTable[i] - HistoryOffset;
-		ncrush->HashTable[i] = (NewHash <= 0) ? 0 : NewHash;
+		const INT32 NewHash = ncrush->HashTable[i] - HistoryOffset;
+		ncrush->HashTable[i] = (NewHash <= 0) ? 0 : WINPR_SAFE_INT_CAST(UINT16, NewHash);
 	}
 
 	const size_t match_half = ARRAYSIZE(ncrush->MatchTable) / 2;
 	for (size_t j = 0; j < match_half; j++)
 	{
-		if (HistoryOffset + j >= ARRAYSIZE(ncrush->MatchTable))
+		if ((size_t)HistoryOffset + j >= ARRAYSIZE(ncrush->MatchTable))
 			continue;
 
-		INT32 NewMatch = ncrush->MatchTable[HistoryOffset + j] - HistoryOffset;
-		ncrush->MatchTable[j] = (NewMatch <= 0) ? 0 : NewMatch;
+		const INT32 NewMatch = ncrush->MatchTable[(size_t)HistoryOffset + j] - HistoryOffset;
+		ncrush->MatchTable[j] = (NewMatch <= 0) ? 0 : WINPR_SAFE_INT_CAST(UINT16, NewMatch);
 	}
 
 	ZeroMemory(&ncrush->MatchTable[match_half], match_half * sizeof(UINT16));
@@ -2526,7 +2525,6 @@ int ncrush_compress(NCRUSH_CONTEXT* ncrush, const BYTE* pSrcData, UINT32 SrcSize
 	BYTE* DstPtr = NULL;
 	UINT32 bits = 0;
 	UINT32 offset = 0;
-	UINT16 Mask = 0;
 	UINT32 MaskedBits = 0;
 	UINT32 accumulator = 0;
 	const BYTE* SrcEndPtr = NULL;
@@ -2639,7 +2637,8 @@ int ncrush_compress(NCRUSH_CONTEXT* ncrush, const BYTE* pSrcData, UINT32 SrcSize
 			int rc = 0;
 
 			MatchOffset = 0;
-			rc = ncrush_find_best_match(ncrush, HistoryOffset, &MatchOffset);
+			rc = ncrush_find_best_match(ncrush, WINPR_SAFE_INT_CAST(UINT16, HistoryOffset),
+			                            &MatchOffset);
 
 			if (rc < 0)
 				return -1005;
@@ -2778,7 +2777,7 @@ int ncrush_compress(NCRUSH_CONTEXT* ncrush, const BYTE* pSrcData, UINT32 SrcSize
 					return -1009;
 
 				NCrushWriteBits(&DstPtr, &accumulator, &offset, CodeLEC, BitLength);
-				Mask = ((1 << CopyOffsetBits) - 1);
+				UINT16 Mask = WINPR_SAFE_INT_CAST(UINT16, (1 << CopyOffsetBits) - 1);
 				MaskedBits = CopyOffset & Mask;
 				NCrushWriteBits(&DstPtr, &accumulator, &offset, MaskedBits, CopyOffsetBits);
 
@@ -2798,7 +2797,7 @@ int ncrush_compress(NCRUSH_CONTEXT* ncrush, const BYTE* pSrcData, UINT32 SrcSize
 				if (IndexCO >= ARRAYSIZE(HuffCodeLOM))
 					return -1;
 				NCrushWriteBits(&DstPtr, &accumulator, &offset, HuffCodeLOM[IndexCO], BitLength);
-				Mask = ((1 << IndexLOM) - 1);
+				Mask = WINPR_SAFE_INT_CAST(UINT16, (1 << IndexLOM) - 1);
 				MaskedBits = (MatchLength - 2) & Mask;
 				NCrushWriteBits(&DstPtr, &accumulator, &offset, MaskedBits, IndexLOM);
 
@@ -2840,7 +2839,7 @@ int ncrush_compress(NCRUSH_CONTEXT* ncrush, const BYTE* pSrcData, UINT32 SrcSize
 				if (IndexCO >= ARRAYSIZE(HuffCodeLOM))
 					return -1;
 				NCrushWriteBits(&DstPtr, &accumulator, &offset, HuffCodeLOM[IndexCO], BitLength);
-				Mask = ((1 << IndexLOM) - 1);
+				const UINT16 Mask = WINPR_SAFE_INT_CAST(UINT16, (1 << IndexLOM) - 1);
 				MaskedBits = (MatchLength - 2) & Mask;
 				NCrushWriteBits(&DstPtr, &accumulator, &offset, MaskedBits, IndexLOM);
 
@@ -2937,9 +2936,9 @@ static int ncrush_generate_tables(NCRUSH_CONTEXT* context)
 	WINPR_ASSERT(28 < ARRAYSIZE(LOMBitsLUT));
 
 	UINT32 cnt = 0;
-	for (int i = 0; i < 28; i++)
+	for (BYTE i = 0; i < 28; i++)
 	{
-		for (int j = 0; j < 1 << LOMBitsLUT[i]; j++)
+		for (UINT32 j = 0; j < 1 << LOMBitsLUT[i]; j++)
 		{
 			size_t l = (cnt++) + 2ull;
 			context->HuffTableLOM[l] = i;
@@ -2962,9 +2961,9 @@ static int ncrush_generate_tables(NCRUSH_CONTEXT* context)
 	}
 
 	size_t k = 0;
-	for (int i = 0; i < 16; i++)
+	for (BYTE i = 0; i < 16; i++)
 	{
-		for (int j = 0; j < 1 << CopyOffsetBitsLUT[i]; j++)
+		for (size_t j = 0; j < 1 << CopyOffsetBitsLUT[i]; j++)
 		{
 			size_t l = k++ + 2ull;
 			context->HuffTableCopyOffset[l] = i;
@@ -2973,9 +2972,11 @@ static int ncrush_generate_tables(NCRUSH_CONTEXT* context)
 
 	k /= 128;
 
-	for (int i = 16; i < 32; i++)
+	for (BYTE i = 16; i < 32; i++)
 	{
-		for (int j = 0; j < 1 << (CopyOffsetBitsLUT[i] - 7); j++)
+		const UINT32 lut = CopyOffsetBitsLUT[i];
+		WINPR_ASSERT(lut >= 7);
+		for (size_t j = 0; j < 1 << (lut - 7); j++)
 		{
 			size_t l = k++ + 2 + 256ull;
 			context->HuffTableCopyOffset[l] = i;
