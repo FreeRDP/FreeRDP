@@ -576,7 +576,7 @@ disconnect:
 	if (timer)
 		(void)CloseHandle(timer);
 	freerdp_disconnect(instance);
-	return status;
+	return WINPR_SAFE_INT_CAST(int, status);
 }
 
 static BOOL wlf_client_global_init(void)

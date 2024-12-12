@@ -1662,8 +1662,8 @@ BOOL freerdp_client_send_button_event(rdpClientContext* cctx, BOOL relative, UIN
 	if (relative && haveRelative)
 	{
 		return freerdp_input_send_rel_mouse_event(cctx->context.input, mflags,
-		                                          WINPR_SAFE_INT_CAST(INT16, x),
-		                                          WINPR_SAFE_INT_CAST(INT16, y));
+		                                          WINPR_SAFE_INT_CAST(int16_t, x),
+		                                          WINPR_SAFE_INT_CAST(int16_t, y));
 	}
 
 #if defined(CHANNEL_AINPUT_CLIENT)
@@ -1721,8 +1721,8 @@ BOOL freerdp_client_send_extended_button_event(rdpClientContext* cctx, BOOL rela
 	if (relative && haveRelative)
 	{
 		return freerdp_input_send_rel_mouse_event(cctx->context.input, mflags,
-		                                          WINPR_SAFE_INT_CAST(INT16, x),
-		                                          WINPR_SAFE_INT_CAST(INT16, y));
+		                                          WINPR_SAFE_INT_CAST(int16_t, x),
+		                                          WINPR_SAFE_INT_CAST(int16_t, y));
 	}
 
 #if defined(CHANNEL_AINPUT_CLIENT)
