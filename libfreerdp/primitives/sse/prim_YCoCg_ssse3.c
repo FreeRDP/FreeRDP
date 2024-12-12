@@ -42,8 +42,11 @@ static pstatus_t ssse3_YCoCgRToRGB_8u_AC4R_invert(const BYTE* WINPR_RESTRICT pSr
 {
 	const BYTE* sptr = pSrc;
 	BYTE* dptr = pDst;
-	int sRowBump = srcStep - width * sizeof(UINT32);
-	int dRowBump = dstStep - width * sizeof(UINT32);
+
+	WINPR_ASSERT(srcStep / sizeof(UINT32) >= width);
+	WINPR_ASSERT(dstStep / sizeof(UINT32) >= width);
+	const size_t sRowBump = srcStep - width * sizeof(UINT32);
+	const size_t dRowBump = dstStep - width * sizeof(UINT32);
 	/* Shift left by "shift" and divide by two is the same as shift
 	 * left by "shift-1".
 	 */
