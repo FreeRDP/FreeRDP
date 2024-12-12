@@ -2616,7 +2616,7 @@ int freerdp_client_rdp_file_get_integer_option(const rdpFile* file, const char* 
 	if (freerdp_client_rdp_file_find_integer_entry(wfile, name, &value, &line))
 	{
 		if (value && ~(*value))
-			return *value;
+			return WINPR_SAFE_INT_CAST(int, *value);
 		if (line)
 			return (int)line->iValue;
 	}
