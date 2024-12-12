@@ -106,6 +106,8 @@ typedef struct
 #endif
 
 	/* sws_scale */
+	BYTE* swsOutData[4];
+	int swsOutStride[4];
 	struct SwsContext* sws;
 
 } CameraDeviceStream;
