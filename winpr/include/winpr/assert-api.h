@@ -34,20 +34,26 @@
 			winpr_int_assert(#cond, (file), (fkt), (line)); \
 	} while (0)
 
+#else
+#define winpr_internal_assert(cond, file, fkt, line) assert(cond)
+#endif
+
 #ifdef __cplusplus
 extern "C"
 {
 #endif
 
-	extern WINPR_NORETURN(void winpr_int_assert(const char* condstr, const char* file,
-	                                            const char* fkt, size_t line));
+	/* this function meant only to be used by WINPR_ASSERT
+	 * it needs to be exported as our assert implementation calls this for debug logging.
+	 *
+	 * also export when WITH_VERBOSE_WINPR_ASSERT is disabled as other software might compile with
+	 * it enabled
+	 */
+	WINPR_API WINPR_NORETURN(void winpr_int_assert(const char* condstr, const char* file,
+	                                               const char* fkt, size_t line));
 
 #ifdef __cplusplus
 }
-#endif
-
-#else
-#define winpr_internal_assert(cond, file, fkt, line) assert(cond)
 #endif
 
 #define WINPR_ASSERT_AT(cond, file, fkt, line)                                                    \

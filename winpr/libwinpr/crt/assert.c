@@ -22,7 +22,6 @@
 #include <winpr/wlog.h>
 #include <winpr/debug.h>
 
-#if defined(WITH_VERBOSE_WINPR_ASSERT) && (WITH_VERBOSE_WINPR_ASSERT != 0)
 void winpr_int_assert(const char* condstr, const char* file, const char* fkt, size_t line)
 {
 	wLog* _log_cached_ptr = WLog_Get("com.freerdp.winpr.assert");
@@ -30,4 +29,3 @@ void winpr_int_assert(const char* condstr, const char* file, const char* fkt, si
 	winpr_log_backtrace_ex(_log_cached_ptr, WLOG_FATAL, 20);
 	abort();
 }
-#endif
