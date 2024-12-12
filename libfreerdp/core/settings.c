@@ -1341,15 +1341,17 @@ static BOOL freerdp_settings_int_buffer_copy(rdpSettings* _settings, const rdpSe
 		{ FreeRDP_BitmapCacheV2NumCells, FreeRDP_BitmapCacheV2CellInfo },
 		{ FreeRDP_RedirectionPasswordLength, FreeRDP_RedirectionPassword },
 		{ FreeRDP_RedirectionTsvUrlLength, FreeRDP_RedirectionTsvUrl },
-		{ FreeRDP_RedirectionGuidLength, FreeRDP_RedirectionGuid }
+		{ FreeRDP_RedirectionGuidLength, FreeRDP_RedirectionGuid },
+		{ FreeRDP_MonitorDefArraySize, FreeRDP_MonitorDefArray }
 	};
 
-	for (int i = 0; i < ARRAYSIZE(pointerDefs); i++)
+	for (size_t i = 0; i < ARRAYSIZE(pointerDefs); i++)
 	{
-		UINT32 n = freerdp_settings_get_uint32(settings, pointerDefs[i].lenKey);
+		const PointerDefs* keys = &pointerDefs[i];
+		UINT32 n = freerdp_settings_get_uint32(settings, keys->lenKey);
 
-		const void* ptr = freerdp_settings_get_pointer(settings, pointerDefs[i].pointerKey);
-		if (!freerdp_settings_set_pointer_len(_settings, pointerDefs[i].pointerKey, ptr, n))
+		const void* ptr = freerdp_settings_get_pointer(settings, keys->pointerKey);
+		if (!freerdp_settings_set_pointer_len(_settings, keys->pointerKey, ptr, n))
 			goto out_fail;
 	}
 
@@ -1718,9 +1720,7 @@ BOOL freerdp_settings_enforce_monitor_exists(rdpSettings* settings)
 
 	if (nrIds == 0)
 	{
-		rdpMonitor monitor = { 0 };
-		if (!freerdp_settings_set_uint32(settings, FreeRDP_NumMonitorIds, 1) ||
-		    !freerdp_settings_set_pointer_len(settings, FreeRDP_MonitorDefArray, &monitor, 1))
+		if (!freerdp_settings_set_uint32(settings, FreeRDP_NumMonitorIds, 1))
 			return FALSE;
 	}
 	if (!useMonitors || (count == 0))
