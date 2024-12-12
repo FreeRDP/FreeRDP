@@ -773,7 +773,7 @@ static void write_file_attributes(CliprdrFuseFile* fuse_file, struct stat* attr)
 	{
 		attr->st_mode = S_IFREG | (fuse_file->is_readonly ? 0444 : 0644);
 		attr->st_nlink = 1;
-		attr->st_size = fuse_file->size;
+		attr->st_size = WINPR_SAFE_INT_CAST(__off_t, fuse_file->size);
 	}
 	attr->st_uid = getuid();
 	attr->st_gid = getgid();
@@ -1110,7 +1110,7 @@ static void cliprdr_file_fuse_readdir(fuse_req_t fuse_req, fuse_ino_t fuse_ino, 
 
 		write_file_attributes(child, &attr);
 		entry_size = fuse_add_direntry(fuse_req, buf + written_size, max_size - written_size,
-		                               child->filename, &attr, i + 1);
+		                               child->filename, &attr, WINPR_SAFE_INT_CAST(off_t, i + 1));
 		if (entry_size > max_size - written_size)
 			break;
 
@@ -1466,7 +1466,7 @@ static UINT cliprdr_file_context_server_file_range_request(
 	if (!rfile)
 		goto fail;
 
-	if (_fseeki64(rfile->fp, offset, SEEK_SET) < 0)
+	if (_fseeki64(rfile->fp, WINPR_SAFE_INT_CAST(int64_t, offset), SEEK_SET) < 0)
 		goto fail;
 
 	data = malloc(fileContentsRequest->cbRequested);
