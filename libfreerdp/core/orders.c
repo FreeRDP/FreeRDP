@@ -26,6 +26,7 @@
 #include <winpr/wtypes.h>
 #include <winpr/crt.h>
 #include <winpr/assert.h>
+#include <winpr/cast.h>
 
 #include <freerdp/api.h>
 #include <freerdp/log.h>
@@ -3196,11 +3197,11 @@ BOOL update_write_cache_brush_order(wStream* s, const CACHE_BRUSH_ORDER* cache_b
 			else
 			{
 				/* uncompressed brush */
-				int scanline = (cache_brush->bpp / 8) * 8;
+				const size_t scanline = 8ULL * (cache_brush->bpp / 8);
 
-				for (int i = 7; i >= 0; i--)
+				for (size_t i = 0; i <= 7; i++)
 				{
-					Stream_Write(s, &cache_brush->data[1LL * i * scanline], scanline);
+					Stream_Write(s, &cache_brush->data[1LL * (7 - i) * scanline], scanline);
 				}
 			}
 		}
@@ -3613,8 +3614,10 @@ static BOOL update_read_bounds(wStream* s, rdpBounds* bounds)
 
 	return TRUE;
 }
-BOOL update_write_bounds(wStream* s, ORDER_INFO* orderInfo)
+BOOL update_write_bounds(wStream* s, const ORDER_INFO* orderInfo)
 {
+	WINPR_ASSERT(orderInfo);
+
 	if (!(orderInfo->controlFlags & ORDER_BOUNDS))
 		return TRUE;
 
