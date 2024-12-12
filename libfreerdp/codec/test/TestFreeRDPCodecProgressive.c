@@ -156,13 +156,13 @@ static void sample_file_free(EGFX_SAMPLE_FILE* file)
 	file->size = 0;
 }
 
-static void test_fill_image_alpha_channel(BYTE* data, int width, int height, BYTE value)
+static void test_fill_image_alpha_channel(BYTE* data, UINT32 width, UINT32 height, BYTE value)
 {
 	UINT32* pixel = NULL;
 
-	for (int i = 0; i < height; i++)
+	for (UINT32 i = 0; i < height; i++)
 	{
-		for (int j = 0; j < width; j++)
+		for (UINT32 j = 0; j < width; j++)
 		{
 			pixel = (UINT32*)&data[((1ULL * i * width) + j) * 4ULL];
 			*pixel = ((*pixel & 0x00FFFFFF) | (value << 24));
@@ -180,15 +180,15 @@ static void* test_image_memset32(UINT32* ptr, UINT32 fill, size_t length)
 	return (void*)ptr;
 }
 
-static int test_image_fill(BYTE* pDstData, int nDstStep, int nXDst, int nYDst, int nWidth,
-                           int nHeight, UINT32 color)
+static int test_image_fill(BYTE* pDstData, UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst,
+                           UINT32 nWidth, UINT32 nHeight, UINT32 color)
 {
 	UINT32* pDstPixel = NULL;
 
 	if (nDstStep < 0)
 		nDstStep = 4 * nWidth;
 
-	for (int y = 0; y < nHeight; y++)
+	for (UINT32 y = 0; y < nHeight; y++)
 	{
 		pDstPixel = (UINT32*)&pDstData[((nYDst + y) * nDstStep) + (nXDst * 4)];
 		test_image_memset32(pDstPixel, color, nWidth);
@@ -197,13 +197,13 @@ static int test_image_fill(BYTE* pDstData, int nDstStep, int nXDst, int nYDst, i
 	return 1;
 }
 
-static int test_image_fill_quarter(BYTE* pDstData, int nDstStep, int nWidth, int nHeight,
-                                   UINT32 color, int quarter)
+static int test_image_fill_quarter(BYTE* pDstData, UINT32 nDstStep, UINT32 nWidth, UINT32 nHeight,
+                                   UINT32 color, UINT32 quarter)
 {
-	int x = 0;
-	int y = 0;
-	int width = 0;
-	int height = 0;
+	UINT32 x = 0;
+	UINT32 y = 0;
+	UINT32 width = 0;
+	UINT32 height = 0;
 
 	switch (quarter)
 	{
@@ -242,8 +242,8 @@ static int test_image_fill_quarter(BYTE* pDstData, int nDstStep, int nWidth, int
 	return 1;
 }
 
-static int test_image_fill_unused_quarters(BYTE* pDstData, int nDstStep, int nWidth, int nHeight,
-                                           UINT32 color, int quarter)
+static int test_image_fill_unused_quarters(BYTE* pDstData, UINT32 nDstStep, UINT32 nWidth,
+                                           UINT32 nHeight, UINT32 color, UINT32 quarter)
 {
 	return 1;
 
@@ -888,8 +888,8 @@ static int test_progressive_decode(PROGRESSIVE_CONTEXT* progressive, EGFX_SAMPLE
 			if ((nWidth <= 0) || (nHeight <= 0))
 				continue;
 
-			nXSrc = nXDst - tile->x;
-			nYSrc = nYDst - tile->y;
+			nXSrc = nXDst - WINPR_SAFE_INT_CAST(int, tile->x);
+			nYSrc = nYDst - WINPR_SAFE_INT_CAST(int, tile->y);
 			freerdp_image_copy(g_DstData, PIXEL_FORMAT_XRGB32, g_DstStep, nXDst, nYDst, nWidth,
 			                   nHeight, tile->data, PIXEL_FORMAT_XRGB32, 64 * 4, nXSrc, nYSrc, NULL,
 			                   FREERDP_FLIP_NONE);
