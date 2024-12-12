@@ -25,6 +25,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/assert.h>
+#include <winpr/cast.h>
 #include <winpr/tchar.h>
 #include <winpr/synch.h>
 #include <winpr/dsparse.h>
@@ -752,8 +753,9 @@ static BOOL rpc_channel_tls_connect(RpcChannel* channel, UINT32 timeout)
 
 	if (channel->client->isProxy)
 	{
+		WINPR_ASSERT(settings->GatewayPort <= UINT16_MAX);
 		if (!proxy_connect(context, bufferedBio, proxyUsername, proxyPassword,
-		                   settings->GatewayHostname, settings->GatewayPort))
+		                   settings->GatewayHostname, (UINT16)settings->GatewayPort))
 		{
 			BIO_free_all(bufferedBio);
 			return FALSE;
@@ -822,7 +824,7 @@ static int rpc_in_channel_connect(RpcInChannel* inChannel, UINT32 timeout)
 	return 1;
 }
 
-static int rpc_out_channel_connect(RpcOutChannel* outChannel, int timeout)
+static int rpc_out_channel_connect(RpcOutChannel* outChannel, UINT32 timeout)
 {
 	rdpContext* context = NULL;
 
