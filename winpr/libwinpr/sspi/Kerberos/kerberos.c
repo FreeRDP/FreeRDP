@@ -29,6 +29,7 @@
 #include <ctype.h>
 
 #include <winpr/assert.h>
+#include <winpr/cast.h>
 #include <winpr/asn1.h>
 #include <winpr/crt.h>
 #include <winpr/interlocked.h>
@@ -1866,7 +1867,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_EncryptMessage(PCtxtHandle phContext, 
 
 	/* Write the GSS header with 0 in RRC */
 	winpr_Data_Write_UINT16_BE(header, TOK_ID_WRAP);
-	header[2] = flags;
+	header[2] = WINPR_SAFE_INT_CAST(char, flags);
 	header[3] = (char)0xFF;
 	winpr_Data_Write_UINT32(header + 4, 0);
 	winpr_Data_Write_UINT64_BE(header + 8, (context->local_seq + MessageSeqNo));
@@ -1875,8 +1876,8 @@ static SECURITY_STATUS SEC_ENTRY kerberos_EncryptMessage(PCtxtHandle phContext, 
 	CopyMemory(encrypt_iov[2].data.data, header, 16);
 
 	/* Set the correct RRC */
-	winpr_Data_Write_UINT16_BE(header + 6,
-	                           16 + encrypt_iov[3].data.length + encrypt_iov[4].data.length);
+	const size_t len = 16 + encrypt_iov[3].data.length + encrypt_iov[4].data.length;
+	winpr_Data_Write_UINT16_BE(header + 6, WINPR_SAFE_INT_CAST(UINT16, len));
 
 	if (krb_log_exec(krb5glue_encrypt_iov, creds->ctx, key, usage, encrypt_iov,
 	                 ARRAYSIZE(encrypt_iov)))
@@ -2043,7 +2044,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_MakeSignature(PCtxtHandle phContext, U
 	/* Write the header */
 	header = sig_buffer->pvBuffer;
 	winpr_Data_Write_UINT16_BE(header, TOK_ID_MIC);
-	header[2] = flags;
+	header[2] = WINPR_SAFE_INT_CAST(char, flags);
 	memset(header + 3, 0xFF, 5);
 	winpr_Data_Write_UINT64_BE(header + 8, (context->local_seq + MessageSeqNo));
 
