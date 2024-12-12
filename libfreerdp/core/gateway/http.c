@@ -1313,7 +1313,7 @@ static SSIZE_T http_response_recv_line(rdpTls* tls, HttpResponse* response)
 		end = (char*)Stream_Pointer(response->data) - s;
 
 		if (string_strnstr(end, "\r\n\r\n", s) != NULL)
-			payloadOffset = Stream_GetPosition(response->data);
+			payloadOffset = WINPR_SAFE_INT_CAST(SSIZE_T, Stream_GetPosition(response->data));
 	}
 
 out_error:
