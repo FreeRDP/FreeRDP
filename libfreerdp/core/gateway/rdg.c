@@ -1252,7 +1252,7 @@ static BOOL rdg_send_http_request(rdpRdg* rdg, rdpTls* tls, const char* method,
 	return (status >= 0);
 }
 
-static BOOL rdg_tls_connect(rdpRdg* rdg, rdpTls* tls, const char* peerAddress, int timeout)
+static BOOL rdg_tls_connect(rdpRdg* rdg, rdpTls* tls, const char* peerAddress, UINT32 timeout)
 {
 	long status = 0;
 	BIO* layerBio = NULL;

@@ -320,7 +320,7 @@ int xf_keyboard_read_keyboard_state(xfContext* xfc)
 		              &dummy, &dummy, &dummy, &state);
 	}
 
-	return state;
+	return WINPR_SAFE_INT_CAST(int, state);
 }
 
 static int xf_keyboard_get_keymask(xfContext* xfc, int keysym)

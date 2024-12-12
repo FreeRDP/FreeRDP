@@ -82,9 +82,9 @@ static BOOL nsc_decode(NSC_CONTEXT* WINPR_RESTRICT context)
 			INT16 y_val = (INT16)*yplane;
 			INT16 co_val = (INT16)(INT8)(((INT16)*coplane) << shift);
 			INT16 cg_val = (INT16)(INT8)(((INT16)*cgplane) << shift);
-			INT16 r_val = y_val + co_val - cg_val;
-			INT16 g_val = y_val + cg_val;
-			INT16 b_val = y_val - co_val - cg_val;
+			INT16 r_val = WINPR_SAFE_INT_CAST(int16_t, y_val + co_val - cg_val);
+			INT16 g_val = WINPR_SAFE_INT_CAST(int16_t, y_val + cg_val);
+			INT16 b_val = WINPR_SAFE_INT_CAST(int16_t, y_val - co_val - cg_val);
 
 			if (pos + 4 > context->BitmapDataLength)
 				return FALSE;
