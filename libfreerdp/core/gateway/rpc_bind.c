@@ -111,21 +111,17 @@ const p_uuid_t BTFN_UUID = {
 
 static int rpc_bind_setup(rdpRpc* rpc)
 {
-	int rc = -1;
-	rdpContext* context = NULL;
-	rdpSettings* settings = NULL;
-	freerdp* instance = NULL;
 	SEC_WINNT_AUTH_IDENTITY identity = { 0 };
 
 	WINPR_ASSERT(rpc);
 
-	context = transport_get_context(rpc->transport);
+	rdpContext* context = transport_get_context(rpc->transport);
 	WINPR_ASSERT(context);
 
-	settings = context->settings;
+	rdpSettings* settings = context->settings;
 	WINPR_ASSERT(settings);
 
-	instance = context->instance;
+	freerdp* instance = context->instance;
 	WINPR_ASSERT(instance);
 
 	credssp_auth_free(rpc->auth);
@@ -133,7 +129,7 @@ static int rpc_bind_setup(rdpRpc* rpc)
 	if (!rpc->auth)
 		return -1;
 
-	rc = utils_authenticate_gateway(instance, GW_AUTH_RPC);
+	auth_status rc = utils_authenticate_gateway(instance, GW_AUTH_RPC);
 	switch (rc)
 	{
 		case AUTH_SUCCESS:
