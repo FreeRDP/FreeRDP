@@ -710,7 +710,7 @@ static INLINE void progressive_rfx_idwt_y(const INT16* WINPR_RESTRICT pLowBand, 
 			L0 = *pL;
 			pL += nLowStep;
 			X2 = WINPR_SAFE_INT_CAST(int16_t, L0 - ((H0 + H1) / 2));
-			X1 = WINPR_SAFE_INT_CAST(int16t, ((X0 + X2) / 2) + (2 * H0));
+			X1 = WINPR_SAFE_INT_CAST(int16_t, ((X0 + X2) / 2) + (2 * H0));
 			*pX = X0;
 			pX += nDstStep;
 			*pX = X1;
