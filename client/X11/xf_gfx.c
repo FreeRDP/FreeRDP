@@ -91,8 +91,10 @@ static UINT xf_OutputUpdate(xfContext* xfc, xfGfxSurface* surface)
 
 		if (xfc->remote_app)
 		{
-			XPutImage(xfc->display, xfc->primary, xfc->gc, surface->image, nXSrc, nYSrc, nXDst,
-			          nYDst, dwidth, dheight);
+			XPutImage(xfc->display, xfc->primary, xfc->gc, surface->image,
+			          WINPR_SAFE_INT_CAST(int, nXSrc), WINPR_SAFE_INT_CAST(int, nYSrc),
+			          WINPR_SAFE_INT_CAST(int, nXDst), WINPR_SAFE_INT_CAST(int, nYDst), dwidth,
+			          dheight);
 			xf_lock_x11(xfc);
 			xf_rail_paint_surface(xfc, surface->gdi.windowId, rect);
 			xf_unlock_x11(xfc);
@@ -102,15 +104,19 @@ static UINT xf_OutputUpdate(xfContext* xfc, xfGfxSurface* surface)
 		    if (freerdp_settings_get_bool(settings, FreeRDP_SmartSizing) ||
 		        freerdp_settings_get_bool(settings, FreeRDP_MultiTouchGestures))
 		{
-			XPutImage(xfc->display, xfc->primary, xfc->gc, surface->image, nXSrc, nYSrc, nXDst,
-			          nYDst, dwidth, dheight);
+			XPutImage(xfc->display, xfc->primary, xfc->gc, surface->image,
+			          WINPR_SAFE_INT_CAST(int, nXSrc), WINPR_SAFE_INT_CAST(int, nYSrc),
+			          WINPR_SAFE_INT_CAST(int, nXDst), WINPR_SAFE_INT_CAST(int, nYDst), dwidth,
+			          dheight);
 			xf_draw_screen(xfc, nXDst, nYDst, dwidth, dheight);
 		}
 		else
 #endif
 		{
-			XPutImage(xfc->display, xfc->drawable, xfc->gc, surface->image, nXSrc, nYSrc, nXDst,
-			          nYDst, dwidth, dheight);
+			XPutImage(xfc->display, xfc->drawable, xfc->gc, surface->image,
+			          WINPR_SAFE_INT_CAST(int, nXSrc), WINPR_SAFE_INT_CAST(int, nYSrc),
+			          WINPR_SAFE_INT_CAST(int, nXDst), WINPR_SAFE_INT_CAST(int, nYDst), dwidth,
+			          dheight);
 		}
 	}
 
@@ -327,10 +333,10 @@ static UINT xf_CreateSurface(RdpgfxClientContext* context,
 	if (FreeRDPAreColorFormatsEqualNoAlpha(gdi->dstFormat, surface->gdi.format))
 	{
 		WINPR_ASSERT(xfc->depth != 0);
-		surface->image =
-		    XCreateImage(xfc->display, xfc->visual, xfc->depth, ZPixmap, 0,
-		                 (char*)surface->gdi.data, surface->gdi.mappedWidth,
-		                 surface->gdi.mappedHeight, xfc->scanline_pad, surface->gdi.scanline);
+		surface->image = XCreateImage(xfc->display, xfc->visual, xfc->depth, ZPixmap, 0,
+		                              (char*)surface->gdi.data, surface->gdi.mappedWidth,
+		                              surface->gdi.mappedHeight, xfc->scanline_pad,
+		                              WINPR_SAFE_INT_CAST(int, surface->gdi.scanline));
 	}
 	else
 	{
@@ -352,7 +358,7 @@ static UINT xf_CreateSurface(RdpgfxClientContext* context,
 		surface->image =
 		    XCreateImage(xfc->display, xfc->visual, xfc->depth, ZPixmap, 0, (char*)surface->stage,
 		                 surface->gdi.mappedWidth, surface->gdi.mappedHeight, xfc->scanline_pad,
-		                 surface->stageScanline);
+		                 WINPR_SAFE_INT_CAST(int, surface->stageScanline));
 	}
 
 	if (!surface->image)

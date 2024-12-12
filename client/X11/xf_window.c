@@ -334,8 +334,10 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 		/* Lastly apply any monitor shift(translation from remote to local coordinate system)
 		 *  to startX and startY values
 		 */
-		startX += freerdp_settings_get_uint32(settings, FreeRDP_MonitorLocalShiftX);
-		startY += freerdp_settings_get_uint32(settings, FreeRDP_MonitorLocalShiftY);
+		startX += WINPR_SAFE_INT_CAST(
+		    int, freerdp_settings_get_uint32(settings, FreeRDP_MonitorLocalShiftX));
+		startY += WINPR_SAFE_INT_CAST(
+		    int, freerdp_settings_get_uint32(settings, FreeRDP_MonitorLocalShiftY));
 	}
 
 	/*
@@ -347,7 +349,8 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 	if (xfc->_NET_WM_FULLSCREEN_MONITORS != None ||
 	    freerdp_settings_get_uint32(settings, FreeRDP_MonitorCount) == 1)
 	{
-		xf_ResizeDesktopWindow(xfc, window, width, height);
+		xf_ResizeDesktopWindow(xfc, window, WINPR_SAFE_INT_CAST(int, width),
+		                       WINPR_SAFE_INT_CAST(int, height));
 
 		if (fullscreen)
 		{
@@ -441,13 +444,15 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 			width = xfc->vscreen.area.right - xfc->vscreen.area.left + 1;
 			height = xfc->vscreen.area.bottom - xfc->vscreen.area.top + 1;
 			DEBUG_X11("X window move and resize %dx%d@%dx%d", startX, startY, width, height);
-			xf_ResizeDesktopWindow(xfc, window, width, height);
+			xf_ResizeDesktopWindow(xfc, window, WINPR_SAFE_INT_CAST(int, width),
+			                       WINPR_SAFE_INT_CAST(int, height));
 			XMoveWindow(xfc->display, window->handle, startX, startY);
 		}
 		else
 		{
 			xf_SetWindowDecorations(xfc, window->handle, window->decorations);
-			xf_ResizeDesktopWindow(xfc, window, width, height);
+			xf_ResizeDesktopWindow(xfc, window, WINPR_SAFE_INT_CAST(int, width),
+			                       WINPR_SAFE_INT_CAST(int, height));
 			XMoveWindow(xfc->display, window->handle, startX, startY);
 
 			if (xfc->fullscreenMonitors.top)
@@ -634,9 +639,10 @@ static const char* get_shm_id(void)
 
 Window xf_CreateDummyWindow(xfContext* xfc)
 {
-	return XCreateWindow(xfc->display, RootWindowOfScreen(xfc->screen), xfc->workArea.x,
-	                     xfc->workArea.y, 1, 1, 0, xfc->depth, InputOutput, xfc->visual,
-	                     xfc->attribs_mask, &xfc->attribs);
+	return XCreateWindow(xfc->display, RootWindowOfScreen(xfc->screen),
+	                     WINPR_SAFE_INT_CAST(int, xfc->workArea.x),
+	                     WINPR_SAFE_INT_CAST(int, xfc->workArea.y), 1, 1, 0, xfc->depth,
+	                     InputOutput, xfc->visual, xfc->attribs_mask, &xfc->attribs);
 }
 
 void xf_DestroyDummyWindow(xfContext* xfc, Window window)
@@ -769,9 +775,10 @@ xfWindow* xf_CreateDesktopWindow(xfContext* xfc, char* name, int width, int heig
 	else if ((freerdp_settings_get_uint32(settings, FreeRDP_DesktopPosX) != UINT32_MAX) &&
 	         (freerdp_settings_get_uint32(settings, FreeRDP_DesktopPosY) != UINT32_MAX))
 	{
-		XMoveWindow(xfc->display, window->handle,
-		            freerdp_settings_get_uint32(settings, FreeRDP_DesktopPosX),
-		            freerdp_settings_get_uint32(settings, FreeRDP_DesktopPosY));
+		XMoveWindow(
+		    xfc->display, window->handle,
+		    WINPR_SAFE_INT_CAST(int, freerdp_settings_get_uint32(settings, FreeRDP_DesktopPosX)),
+		    WINPR_SAFE_INT_CAST(int, freerdp_settings_get_uint32(settings, FreeRDP_DesktopPosY)));
 	}
 
 	window->floatbar = xf_floatbar_new(xfc, window->handle, name,
@@ -1235,8 +1242,9 @@ void xf_ShowWindow(xfContext* xfc, xfAppWindow* appWindow, BYTE state)
 			 */
 			if (appWindow->rail_state == WINDOW_SHOW_MAXIMIZED)
 			{
-				xf_UpdateWindowArea(xfc, appWindow, 0, 0, appWindow->windowWidth,
-				                    appWindow->windowHeight);
+				xf_UpdateWindowArea(xfc, appWindow, 0, 0,
+				                    WINPR_SAFE_INT_CAST(int, appWindow->windowWidth),
+				                    WINPR_SAFE_INT_CAST(int, appWindow->windowHeight));
 			}
 
 			break;

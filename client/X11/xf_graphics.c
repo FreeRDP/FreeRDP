@@ -138,7 +138,7 @@ static BOOL xf_Pointer_GetCursorForCurrentScale(rdpContext* context, rdpPointer*
 		if ((xpointer->cursorWidths[i] == xTargetSize) &&
 		    (xpointer->cursorHeights[i] == yTargetSize))
 		{
-			cursorIndex = i;
+			cursorIndex = WINPR_SAFE_INT_CAST(int, i);
 		}
 	}
 
