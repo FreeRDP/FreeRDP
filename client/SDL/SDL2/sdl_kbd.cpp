@@ -17,6 +17,8 @@
  * limitations under the License.
  */
 
+#include <winpr/cast.h>
+
 #include "sdl_kbd.hpp"
 #include "sdl_disp.hpp"
 #include "sdl_freerdp.hpp"
@@ -293,9 +295,9 @@ static const scancode_entry_t map[] = {
 #endif
 };
 
-static UINT32 sdl_get_kbd_flags()
+static UINT16 sdl_get_kbd_flags()
 {
-	UINT32 flags = 0;
+	UINT16 flags = 0;
 
 	SDL_Keymod mod = SDL_GetModState();
 	if ((mod & KMOD_NUM) != 0)
@@ -314,7 +316,7 @@ static UINT32 sdl_get_kbd_flags()
 
 BOOL sdlInput::keyboard_sync_state()
 {
-	const UINT32 syncFlags = sdl_get_kbd_flags();
+	const auto syncFlags = sdl_get_kbd_flags();
 	return freerdp_input_send_synchronize_event(_sdl->context()->input, syncFlags);
 }
 
@@ -324,7 +326,7 @@ BOOL sdlInput::keyboard_focus_in()
 	WINPR_ASSERT(input);
 
 	auto syncFlags = sdl_get_kbd_flags();
-	freerdp_input_send_focus_in_event(input, syncFlags);
+	freerdp_input_send_focus_in_event(input, WINPR_SAFE_INT_CAST(UINT16, syncFlags));
 
 	/* finish with a mouse pointer position like mstsc.exe if required */
 #if 0
