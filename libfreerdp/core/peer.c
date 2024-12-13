@@ -1237,6 +1237,7 @@ static BOOL freerdp_peer_send_channel_data(freerdp_peer* client, UINT16 channelI
 static BOOL freerdp_peer_send_server_redirection_pdu(freerdp_peer* peer,
                                                      const rdpRedirection* redirection)
 {
+	BOOL rc = FALSE;
 	WINPR_ASSERT(peer);
 	WINPR_ASSERT(peer->context);
 
@@ -1247,11 +1248,10 @@ static BOOL freerdp_peer_send_server_redirection_pdu(freerdp_peer* peer,
 		goto fail;
 	if (!rdp_send_pdu(peer->context->rdp, s, PDU_TYPE_SERVER_REDIRECTION, 0))
 		goto fail;
-
-	return rdp_reset_runtime_settings(peer->context->rdp);
+	rc = rdp_reset_runtime_settings(peer->context->rdp);
 fail:
 	Stream_Release(s);
-	return FALSE;
+	return rc;
 }
 
 static BOOL freerdp_peer_send_channel_packet(freerdp_peer* client, UINT16 channelId,
