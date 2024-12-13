@@ -1294,6 +1294,76 @@ out_fail:
 	return NULL;
 }
 
+BOOL freerdp_settings_set_bools(rdpSettings* settings, const FreeRDP_Settings_Bool_Value* values,
+                                size_t n)
+{
+	WINPR_ASSERT(settings);
+
+	for (size_t i = 0; i < n; i++)
+	{
+		if (!freerdp_settings_set_bool(settings, values[i].keyId, values[i].value))
+			return FALSE;
+	}
+
+	return TRUE;
+}
+
+BOOL freerdp_settings_set_uint16s(rdpSettings* settings,
+                                  const FreeRDP_Settings_UInt16_Value* values, size_t n)
+{
+	WINPR_ASSERT(settings);
+
+	for (size_t i = 0; i < n; i++)
+	{
+		if (!freerdp_settings_set_uint16(settings, values[i].keyId, values[i].value))
+			return FALSE;
+	}
+
+	return TRUE;
+}
+
+BOOL freerdp_settings_set_int32s(rdpSettings* settings, const FreeRDP_Settings_Int32_Value* values,
+                                 size_t n)
+{
+	WINPR_ASSERT(settings);
+
+	for (size_t i = 0; i < n; i++)
+	{
+		if (!freerdp_settings_set_int32(settings, values[i].keyId, values[i].value))
+			return FALSE;
+	}
+
+	return TRUE;
+}
+
+BOOL freerdp_settings_set_uint32s(rdpSettings* settings,
+                                  const FreeRDP_Settings_UInt32_Value* values, size_t n)
+{
+	WINPR_ASSERT(settings);
+
+	for (size_t i = 0; i < n; i++)
+	{
+		if (!freerdp_settings_set_uint32(settings, values[i].keyId, values[i].value))
+			return FALSE;
+	}
+
+	return TRUE;
+}
+
+BOOL freerdp_settings_set_strings(rdpSettings* settings,
+                                  const FreeRDP_Settings_String_Value* values, size_t n)
+{
+	WINPR_ASSERT(settings);
+
+	for (size_t i = 0; i < n; i++)
+	{
+		if (!freerdp_settings_set_string(settings, values[i].keyId, values[i].value))
+			return FALSE;
+	}
+
+	return TRUE;
+}
+
 static void freerdp_settings_free_internal(rdpSettings* settings)
 {
 	freerdp_server_license_issuers_free(settings);

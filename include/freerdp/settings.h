@@ -74,6 +74,51 @@ extern "C"
 
 	typedef struct rdp_settings rdpSettings;
 
+	/** \brief a BOOL key id and its value
+	 * \since version 3.11.0
+	 */
+	typedef struct
+	{
+		FreeRDP_Settings_Keys_Bool keyId;
+		BOOL value;
+	} FreeRDP_Settings_Bool_Value;
+
+	/** \brief a UINT16 key id and its value
+	 * \since version 3.11.0
+	 */
+	typedef struct
+	{
+		FreeRDP_Settings_Keys_UInt16 keyId;
+		UINT32 value;
+	} FreeRDP_Settings_UInt16_Value;
+
+	/** \brief a INT32 key id and its value
+	 * \since version 3.11.0
+	 */
+	typedef struct
+	{
+		FreeRDP_Settings_Keys_Int32 keyId;
+		UINT32 value;
+	} FreeRDP_Settings_Int32_Value;
+
+	/** \brief a UINT32 key id and its value
+	 * \since version 3.11.0
+	 */
+	typedef struct
+	{
+		FreeRDP_Settings_Keys_UInt32 keyId;
+		UINT32 value;
+	} FreeRDP_Settings_UInt32_Value;
+
+	/** \brief a string key id and its value
+	 * \since version 3.11.0
+	 */
+	typedef struct
+	{
+		FreeRDP_Settings_Keys_String keyId;
+		const char* value;
+	} FreeRDP_Settings_String_Value;
+
 /**
  * rdpSettings creation flags
  */
@@ -310,7 +355,7 @@ extern "C"
 
 	/** \brief Sets a BOOL settings value.
 	 *
-	 *  \param settings A pointer to the settings to query, must not be NULL.
+	 *  \param settings A pointer to the settings to alter, must not be NULL.
 	 *  \param id The key to query
 	 *  \param param The value to set.
 	 *
@@ -318,6 +363,19 @@ extern "C"
 	 */
 	FREERDP_API BOOL freerdp_settings_set_bool(rdpSettings* settings, FreeRDP_Settings_Keys_Bool id,
 	                                           BOOL param);
+
+	/** \brief Sets some BOOL settings values.
+	 *
+	 *  \param settings A pointer to the settings to alter, must not be NULL.
+	 *  \param values The key/values to set
+	 *  \param n The number of key/value to set.
+	 *  \since version 3.11.0
+	 *
+	 *  \return \b TRUE for success, \b FALSE for failure
+	 */
+	FREERDP_API BOOL freerdp_settings_set_bools(rdpSettings* settings,
+	                                            const FreeRDP_Settings_Bool_Value* values,
+	                                            size_t n);
 
 	/** \brief Returns a INT16 settings value
 	 *
@@ -361,6 +419,19 @@ extern "C"
 	FREERDP_API BOOL freerdp_settings_set_uint16(rdpSettings* settings,
 	                                             FreeRDP_Settings_Keys_UInt16 id, UINT16 param);
 
+	/** \brief Sets some UINT16 settings values.
+	 *
+	 *  \param settings A pointer to the settings to alter, must not be NULL.
+	 *  \param values The key/values to set
+	 *  \param n The number of key/value to set.
+	 *  \since version 3.11.0
+	 *
+	 *  \return \b TRUE for success, \b FALSE for failure
+	 */
+	FREERDP_API BOOL freerdp_settings_set_uint16s(rdpSettings* settings,
+	                                              const FreeRDP_Settings_UInt16_Value* values,
+	                                              size_t n);
+
 	/** \brief Returns a INT32 settings value
 	 *
 	 *  \param settings A pointer to the settings to query, must not be NULL.
@@ -382,6 +453,19 @@ extern "C"
 	FREERDP_API BOOL freerdp_settings_set_int32(rdpSettings* settings,
 	                                            FreeRDP_Settings_Keys_Int32 id, INT32 param);
 
+	/** \brief Sets some INT32 settings values.
+	 *
+	 *  \param settings A pointer to the settings to alter, must not be NULL.
+	 *  \param values The key/values to set
+	 *  \param n The number of key/value to set.
+	 *  \since version 3.11.0
+	 *
+	 *  \return \b TRUE for success, \b FALSE for failure
+	 */
+	FREERDP_API BOOL freerdp_settings_set_int32s(rdpSettings* settings,
+	                                             const FreeRDP_Settings_Int32_Value* values,
+	                                             size_t n);
+
 	/** \brief Returns a UINT32 settings value
 	 *
 	 *  \param settings A pointer to the settings to query, must not be NULL.
@@ -394,7 +478,7 @@ extern "C"
 
 	/** \brief Sets a UINT32 settings value.
 	 *
-	 *  \param settings A pointer to the settings to query, must not be NULL.
+	 *  \param settings A pointer to the settings to alter, must not be NULL.
 	 *  \param id The key to query
 	 *  \param param The value to set.
 	 *
@@ -402,6 +486,19 @@ extern "C"
 	 */
 	FREERDP_API BOOL freerdp_settings_set_uint32(rdpSettings* settings,
 	                                             FreeRDP_Settings_Keys_UInt32 id, UINT32 param);
+
+	/** \brief Sets some UINT32 settings values.
+	 *
+	 *  \param settings A pointer to the settings to alter, must not be NULL.
+	 *  \param values The key/values to set
+	 *  \param n The number of key/value to set.
+	 *  \since version 3.11.0
+	 *
+	 *  \return \b TRUE for success, \b FALSE for failure
+	 */
+	FREERDP_API BOOL freerdp_settings_set_uint32s(rdpSettings* settings,
+	                                              const FreeRDP_Settings_UInt32_Value* values,
+	                                              size_t n);
 
 	/** \brief Returns a INT64 settings value
 	 *
@@ -489,6 +586,19 @@ extern "C"
 	FREERDP_API BOOL freerdp_settings_set_string(rdpSettings* settings,
 	                                             FreeRDP_Settings_Keys_String id,
 	                                             const char* param);
+
+	/** \brief Sets some strings settings values.
+	 *
+	 *  \param settings A pointer to the settings to alter, must not be NULL.
+	 *  \param values The key/values to set
+	 *  \param n The number of key/value to set.
+	 *  \since version 3.11.0
+	 *
+	 *  \return \b TRUE for success, \b FALSE for failure
+	 */
+	FREERDP_API BOOL freerdp_settings_set_strings(rdpSettings* settings,
+	                                              const FreeRDP_Settings_String_Value* values,
+	                                              size_t n);
 
 	/** \brief appends a string to a settings value. The \b param is copied.
 	 *  If the initial value of the setting was not empty, @code <old value><separator><param>
