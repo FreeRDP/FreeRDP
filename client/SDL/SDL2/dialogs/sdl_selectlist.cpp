@@ -96,7 +96,7 @@ int SdlSelectList::run()
 
 							const auto s = _list.size();
 							CurrentActiveTextInput =
-							    CurrentActiveTextInput % WINPR_SAFE_INT_CAST(ssize_t, s;
+							    CurrentActiveTextInput % WINPR_SAFE_INT_CAST(ssize_t, s);
 						}
 						break;
 						case SDLK_RETURN:
