@@ -89,7 +89,7 @@ extern "C"
 	typedef struct
 	{
 		FreeRDP_Settings_Keys_UInt16 keyId;
-		UINT32 value;
+		UINT16 value;
 	} FreeRDP_Settings_UInt16_Value;
 
 	/** \brief a INT32 key id and its value
@@ -98,7 +98,7 @@ extern "C"
 	typedef struct
 	{
 		FreeRDP_Settings_Keys_Int32 keyId;
-		UINT32 value;
+		INT32 value;
 	} FreeRDP_Settings_Int32_Value;
 
 	/** \brief a UINT32 key id and its value
