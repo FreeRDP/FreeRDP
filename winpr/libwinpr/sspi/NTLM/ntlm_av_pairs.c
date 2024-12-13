@@ -298,54 +298,55 @@ static BOOL ntlm_av_pair_add_copy(NTLM_AV_PAIR* pAvPairList, size_t cbAvPairList
 	                        ntlm_av_pair_get_value_pointer(pAvPair), (UINT16)avLen);
 }
 
+static char* get_name(COMPUTER_NAME_FORMAT type)
+{
+	DWORD nSize = 0;
+
+	if (GetComputerNameExA(type, NULL, &nSize))
+		return NULL;
+
+	if (GetLastError() != ERROR_MORE_DATA)
+		return NULL;
+
+	char* computerName = calloc(1, nSize);
+
+	if (!computerName)
+		return NULL;
+
+	if (!GetComputerNameExA(type, computerName, &nSize))
+	{
+		free(computerName);
+		return NULL;
+	}
+
+	return computerName;
+}
+
 static int ntlm_get_target_computer_name(PUNICODE_STRING pName, COMPUTER_NAME_FORMAT type)
 {
-	char* name = NULL;
 	int status = -1;
-	DWORD nSize = 0;
-	CHAR* computerName = NULL;
 
 	WINPR_ASSERT(pName);
 
-	if (GetComputerNameExA(ComputerNameNetBIOS, NULL, &nSize) || GetLastError() != ERROR_MORE_DATA)
-		return -1;
-
-	computerName = calloc(nSize, sizeof(CHAR));
-
-	if (!computerName)
-		return -1;
-
-	if (!GetComputerNameExA(ComputerNameNetBIOS, computerName, &nSize))
-	{
-		free(computerName);
-		return -1;
-	}
-
-	if (nSize > MAX_COMPUTERNAME_LENGTH)
-		computerName[MAX_COMPUTERNAME_LENGTH] = '\0';
-
-	name = computerName;
-
+	char* name = get_name(ComputerNameNetBIOS);
 	if (!name)
 		return -1;
 
-	if (type == ComputerNameNetBIOS)
-		CharUpperA(name);
+	CharUpperA(name);
 
 	size_t len = 0;
 	pName->Buffer = ConvertUtf8ToWCharAlloc(name, &len);
+	free(name);
 
 	if (!pName->Buffer || (len == 0) || (len > UINT16_MAX / sizeof(WCHAR)))
 	{
 		free(pName->Buffer);
 		pName->Buffer = NULL;
-		free(name);
 		return status;
 	}
 
 	pName->Length = (USHORT)((len) * sizeof(WCHAR));
 	pName->MaximumLength = pName->Length;
-	free(name);
 	return 1;
 }
 

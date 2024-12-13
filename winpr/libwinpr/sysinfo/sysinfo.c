@@ -434,22 +434,18 @@ BOOL GetComputerNameW(LPWSTR lpBuffer, LPDWORD lpnSize)
 
 BOOL GetComputerNameA(LPSTR lpBuffer, LPDWORD lpnSize)
 {
-	char* dot = NULL;
-	size_t length = 0;
-	char hostname[256] = { 0 };
-
 	if (!lpnSize)
 	{
 		SetLastError(ERROR_BAD_ARGUMENTS);
 		return FALSE;
 	}
 
-	if (gethostname(hostname, sizeof(hostname)) == -1)
+	char hostname[256 + 1] = { 0 };
+	if (gethostname(hostname, ARRAYSIZE(hostname) - 1) == -1)
 		return FALSE;
 
-	length = strnlen(hostname, sizeof(hostname));
-	dot = strchr(hostname, '.');
-
+	size_t length = strnlen(hostname, MAX_COMPUTERNAME_LENGTH);
+	const char* dot = strchr(hostname, '.');
 	if (dot)
 		length = (dot - hostname);
 
@@ -460,7 +456,7 @@ BOOL GetComputerNameA(LPSTR lpBuffer, LPDWORD lpnSize)
 		return FALSE;
 	}
 
-	CopyMemory(lpBuffer, hostname, length);
+	strncpy(lpBuffer, hostname, length);
 	lpBuffer[length] = '\0';
 	*lpnSize = (DWORD)length;
 	return TRUE;

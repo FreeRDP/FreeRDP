@@ -318,16 +318,13 @@ static void settings_load_hkey_local_machine(rdpSettings* settings)
 		settings_client_load_hkey_local_machine(settings);
 }
 
-static BOOL settings_get_computer_name(rdpSettings* settings)
+static BOOL settings_init_computer_name(rdpSettings* settings)
 {
-	CHAR computerName[256] = { 0 };
-	DWORD nSize = sizeof(computerName);
+	CHAR computerName[MAX_COMPUTERNAME_LENGTH + 1] = { 0 };
+	DWORD nSize = MAX_COMPUTERNAME_LENGTH;
 
 	if (!GetComputerNameExA(ComputerNameNetBIOS, computerName, &nSize))
 		return FALSE;
-
-	if (nSize > MAX_COMPUTERNAME_LENGTH)
-		computerName[MAX_COMPUTERNAME_LENGTH] = '\0';
 
 	return freerdp_settings_set_string(settings, FreeRDP_ComputerName, computerName);
 }
@@ -986,7 +983,7 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	if (!freerdp_settings_set_bool(settings, FreeRDP_SupportMultitransport, TRUE))
 		goto out_fail;
 
-	if (!settings_get_computer_name(settings))
+	if (!settings_init_computer_name(settings))
 		goto out_fail;
 
 	if (!freerdp_settings_set_pointer_len(settings, FreeRDP_RdpServerCertificate, NULL, 1))
@@ -998,14 +995,6 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	{
 		char tmp[32] = { 0 };
 		if (!freerdp_settings_set_string_len(settings, FreeRDP_ClientProductId, tmp, sizeof(tmp)))
-			goto out_fail;
-	}
-
-	{
-		char ClientHostname[33] = { 0 };
-		DWORD size = sizeof(ClientHostname) - 2;
-		GetComputerNameA(ClientHostname, &size);
-		if (!freerdp_settings_set_string(settings, FreeRDP_ClientHostname, ClientHostname))
 			goto out_fail;
 	}
 
