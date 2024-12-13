@@ -88,13 +88,17 @@ int SdlSelectList::run()
 							break;
 						case SDLK_DOWN:
 						case SDLK_TAB:
+						{
 							if (CurrentActiveTextInput < 0)
 								CurrentActiveTextInput = 0;
 							else
 								CurrentActiveTextInput++;
+
+							const auto s = _list.size();
 							CurrentActiveTextInput =
-							    CurrentActiveTextInput % WINPR_SAFE_INT_CAST(ssize_t, _list.size());
-							break;
+							    CurrentActiveTextInput % WINPR_SAFE_INT_CAST(ssize_t, s;
+						}
+						break;
 						case SDLK_RETURN:
 						case SDLK_RETURN2:
 						case SDLK_KP_ENTER:

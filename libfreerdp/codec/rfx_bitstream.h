@@ -77,10 +77,9 @@ extern "C"
 		UINT16 bits = WINPR_SAFE_INT_CAST(UINT16, _bits);
 
 		int nbits = (_nbits);
-		int b;
 		while (bs->byte_pos < bs->nbytes && nbits > 0)
 		{
-			b = nbits;
+			int b = nbits;
 			if (b > bs->bits_left)
 				b = bs->bits_left;
 			bs->buffer[bs->byte_pos] |= ((bits >> (nbits - b)) & ((1 << b) - 1))

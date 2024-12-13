@@ -22,7 +22,6 @@
 #include <winpr/cast.h>
 #include <winpr/platform.h>
 #include <freerdp/config.h>
-#include <winpr/cast.h>
 
 #include "../rfx_types.h"
 #include "rfx_sse2.h"
