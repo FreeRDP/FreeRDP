@@ -594,6 +594,26 @@ extern "C"
 	                                                    FreeRDP_Settings_Keys_Pointer id,
 	                                                    size_t offset, const void* data);
 
+	/** \brief Set a setting \name to value \b value
+	 *  Both, key and value are provided as strings and parsed internally.
+	 *
+	 *  The \b value will be checked internally:
+	 *   - Integer types must be within boundaries
+	 *   - \b BOOL must be any of {'true', 'false', 'on', 'off', '0', '1'} (case insensitive)
+	 *   - Strings are passed on as is
+	 *   - Pointers are also passed as is
+	 *
+	 *  @param settings The settings instance to set the value, must not be \b NULL
+	 *  @param name The name of the settings key (like 'FreeRDP_Domain', same as output of \ref
+	 * freerdp_settings_get_name_for_key ) Must not be \b NULL
+	 *  @param value The value of the setting. Must not be \b NULL
+	 *
+	 *  @note If the function fails check \ref wLog output for details
+	 *
+	 *  @since version 3.0.0
+	 *
+	 *  @return \b TRUE in case of success, \b FALSE otherwise.
+	 */
 	FREERDP_API BOOL freerdp_settings_set_value_for_name(rdpSettings* settings, const char* name,
 	                                                     const char* value);
 
