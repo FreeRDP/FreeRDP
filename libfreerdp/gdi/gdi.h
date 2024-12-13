@@ -38,8 +38,8 @@ static INLINE BYTE* gdi_get_bitmap_pointer(HGDI_DC hdcBmp, INT32 x, INT32 y)
 
 	if ((x >= 0) && (y >= 0) && (x < hBmp->width) && (y < hBmp->height))
 	{
-		BYTE* p = hBmp->data + (WINPR_SAFE_INT_CAST(UINT32, y) * hBmp->scanline) +
-		          (WINPR_SAFE_INT_CAST(UINT32, x) * FreeRDPGetBytesPerPixel(hdcBmp->format));
+		BYTE* p = hBmp->data + (WINPR_SAFE_INT_CAST(size_t, y) * hBmp->scanline) +
+		          (WINPR_SAFE_INT_CAST(size_t, x) * FreeRDPGetBytesPerPixel(hdcBmp->format));
 		return p;
 	}
 	else

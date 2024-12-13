@@ -103,7 +103,7 @@ int SdlSelectList::run()
 						case SDLK_RETURN2:
 						case SDLK_KP_ENTER:
 							running = false;
-							res = static_cast<int>(CurrentActiveTextInput);
+							res = WINPR_SAFE_INT_CAST(int, CurrentActiveTextInput);
 							break;
 						case SDLK_ESCAPE:
 							running = false;

@@ -130,8 +130,8 @@ static inline BOOL RLEDECOMPRESS(const BYTE* WINPR_RESTRICT pbSrcBuffer, UINT32 
 		return FALSE;
 	}
 
-	const BYTE* pbEnd = pbSrcBuffer + cbSrcBuffer;
-	const BYTE* pbDestEnd = pbDestBuffer + rowDelta * height;
+	const BYTE* pbEnd = &pbSrcBuffer[cbSrcBuffer];
+	const BYTE* pbDestEnd = &pbDestBuffer[1ULL * rowDelta * height];
 
 	while (pbSrc < pbEnd)
 	{
