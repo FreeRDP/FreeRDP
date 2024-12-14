@@ -209,7 +209,7 @@ static krb5_error_code krb5_prompter(krb5_context context, void* data, const cha
 
 			const size_t len = strlen((const char*)data);
 			if (len > UINT32_MAX)
-				return KRB5_ERROR;
+				return KRB5KRB_ERR_GENERIC;
 			prompts[i].reply->length = (UINT32)len;
 		}
 	}
