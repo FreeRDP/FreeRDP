@@ -1,0 +1,32 @@
+name: '[freebsd] architecture builds'
+on:
+  workflow_dispatch:
+    branches: [ master, stable* ]
+  schedule:
+    - cron: '30 5 * * SAT'
+
+jobs:
+  freebsd_job:
+    runs-on: ubuntu-latest
+    name: Build on FreeBSD
+    steps:
+    - uses: actions/checkout@v4
+    - name: Test in FreeBSD
+      id: test
+      uses: vmactions/freebsd-vm@v1
+      with:
+        usesh: true
+        prepare: |
+          pkg install -y cmake ninja krb5-devel libressl-devel json-c \
+            libcjson fdk-aad libsoxr sdl2 sdl3 sdl2_ttf sdl2_image opus \
+            png webp openjpeg libjpeg-turbo opensc v4l_compat libv4l uriparser \
+            pkcs11-helper ffmpeg pulseaudio pcsc-lite cups 
+
+        run: |
+          cmake -GNinja \
+            -C ci/cmake-preloads/config-freebsd.txt \
+            -B ci-build \
+            -S . \
+            -DCMAKE_INSTALL_PREFIX=/tmp/ci-test \
+          cmake --build ci-build --parallel $(nproc) --target install
+          cmake --build ci-build --parallel $(nproc) --target test
