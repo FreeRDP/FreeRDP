@@ -313,6 +313,7 @@ if(CMAKE_COMPILER_IS_CLANG OR CMAKE_COMPILER_IS_GNUCC)
   file(REMOVE ${PROJECT_BINARY_DIR}/foo.txt)
   set(CMAKE_REQUIRED_LINK_OPTIONS ${CMAKE_REQUIRED_LINK_OPTIONS_SAVED})
 
+  option(WITH_NO_UNDEFINED "compile with -Wl,--no-undefined" OFF)
   if(WITH_NO_UNDEFINED)
     check_c_compiler_flag(-Wl,--no-undefined no-undefined)
 
