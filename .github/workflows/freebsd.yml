@@ -21,9 +21,11 @@ jobs:
             libcjson fdk-aac libsoxr sdl2 sdl3 sdl2_ttf sdl2_image opus \
             png webp openjpeg libjpeg-turbo opensc v4l_compat libv4l uriparser \
             pkcs11-helper ffmpeg pulseaudio pcsc-lite cups opencl libressl openssl33 \
-            gsm influxpkg-config icu fusefs-libs3 
+            gsm influxpkg-config icu fusefs-libs3 ccache opencl-clang-llvm15 faac faad2 \
+            opus-tools openh264 alsa-lib cairo ocl-icd
 
         run: |
+          export LD_LIBRARY_PATH=/usr/lib/clang/18/lib/freebsd \
           cmake -GNinja \
             -C ci/cmake-preloads/config-freebsd.txt \
             -B ci-build \
