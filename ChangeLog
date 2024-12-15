@@ -1,3 +1,20 @@
+# 2024-12-16 Version 3.10.1
+
+We're happy to present a new release of FreeRDP.
+This release contains a few fixes for bugs revealed by checks introduced
+with 3.10.0
+
+Noteworthy Changes:
+ * Add FreeBSD as architecture build to our ci (#10980 and others)
+ * Fix empty include directory creation (#10981)
+ * fix SIMD detection (#10968)
+ * improve settings unit test coverage (#10966)
+ * fix sending server redirection PDU (#10963)
+ * fix return and use of GetComputerNameA (#10962)
+
+For a complete and detailed change log since the last release run:
+git log 3.10.1...3.10.0
+
 # 2024-12-12 Version 3.10.0
 
 We're happy to present a new release of FreeRDP.
