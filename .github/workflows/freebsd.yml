@@ -16,6 +16,7 @@ jobs:
       uses: vmactions/freebsd-vm@v1
       with:
         usesh: true
+        copyback: false
         prepare: |
           pkg install -y cmake ninja krb5-devel libressl-devel json-c \
             libcjson fdk-aac libsoxr sdl2 sdl3 sdl2_ttf sdl2_image opus \
