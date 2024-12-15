@@ -1163,7 +1163,14 @@ static UINT rdpdr_process_connect(rdpdrPlugin* rdpdr)
 	const char* name = freerdp_settings_get_string(settings, FreeRDP_ClientHostname);
 	if (!name)
 		name = freerdp_settings_get_string(settings, FreeRDP_ComputerName);
-	strncpy(rdpdr->computerName, name, sizeof(rdpdr->computerName) - 1);
+	if (!name)
+	{
+		DWORD size = sizeof(rdpdr->computerName) - 1;
+		if (!GetComputerNameExA(ComputerNameNetBIOS, rdpdr->computerName, &size))
+			return ERROR_INTERNAL_ERROR;
+	}
+	else
+		strncpy(rdpdr->computerName, name, strnlen(name, sizeof(rdpdr->computerName)));
 
 	for (UINT32 index = 0; index < freerdp_settings_get_uint32(settings, FreeRDP_DeviceCount);
 	     index++)
@@ -1290,14 +1297,12 @@ static UINT rdpdr_send_client_name_request(rdpdrPlugin* rdpdr)
 	WINPR_ASSERT(rdpdr->state == RDPDR_CHANNEL_STATE_ANNOUNCE_REPLY);
 	rdpdr_state_advance(rdpdr, RDPDR_CHANNEL_STATE_NAME_REQUEST);
 
-	if (!rdpdr->computerName[0])
-	{
-		DWORD size = sizeof(rdpdr->computerName) - 1;
-		GetComputerNameA(rdpdr->computerName, &size);
-	}
+	const size_t len = strnlen(rdpdr->computerName, sizeof(rdpdr->computerName));
+	if (len == 0)
+		return ERROR_INTERNAL_ERROR;
 
 	WINPR_ASSERT(rdpdr->computerName);
-	computerNameW = ConvertUtf8ToWCharAlloc(rdpdr->computerName, &computerNameLenW);
+	computerNameW = ConvertUtf8NToWCharAlloc(rdpdr->computerName, len, &computerNameLenW);
 	computerNameLenW *= sizeof(WCHAR);
 
 	if (computerNameLenW > 0)

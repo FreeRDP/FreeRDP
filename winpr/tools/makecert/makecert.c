@@ -222,42 +222,35 @@ static char* x509_name_parse(char* name, char* txt, size_t* length)
 	return entry;
 }
 
-static char* x509_get_default_name(void)
+static char* get_name(COMPUTER_NAME_FORMAT type)
 {
-	CHAR* computerName = NULL;
 	DWORD nSize = 0;
 
-	if (GetComputerNameExA(ComputerNamePhysicalDnsFullyQualified, NULL, &nSize) ||
-	    GetLastError() != ERROR_MORE_DATA)
-		goto fallback;
-
-	computerName = (CHAR*)calloc(1, nSize);
-
-	if (!computerName)
-		goto fallback;
-
-	if (!GetComputerNameExA(ComputerNamePhysicalDnsFullyQualified, computerName, &nSize))
-		goto fallback;
-
-	return computerName;
-fallback:
-	free(computerName);
-
-	if (GetComputerNameExA(ComputerNamePhysicalNetBIOS, NULL, &nSize) ||
-	    GetLastError() != ERROR_MORE_DATA)
+	if (GetComputerNameExA(type, NULL, &nSize))
 		return NULL;
 
-	computerName = (CHAR*)calloc(1, nSize);
+	if (GetLastError() != ERROR_MORE_DATA)
+		return NULL;
+
+	char* computerName = calloc(1, nSize);
 
 	if (!computerName)
 		return NULL;
 
-	if (!GetComputerNameExA(ComputerNamePhysicalNetBIOS, computerName, &nSize))
+	if (!GetComputerNameExA(type, computerName, &nSize))
 	{
 		free(computerName);
 		return NULL;
 	}
 
+	return computerName;
+}
+
+static char* x509_get_default_name(void)
+{
+	char* computerName = get_name(ComputerNamePhysicalDnsFullyQualified);
+	if (!computerName)
+		computerName = get_name(ComputerNamePhysicalNetBIOS);
 	return computerName;
 }
 

@@ -105,45 +105,49 @@ static BOOL check_context_(NTLM_CONTEXT* context, const char* file, const char* 
 	return rc;
 }
 
+static char* get_name(COMPUTER_NAME_FORMAT type)
+{
+	DWORD nSize = 0;
+
+	if (GetComputerNameExA(type, NULL, &nSize))
+		return NULL;
+
+	if (GetLastError() != ERROR_MORE_DATA)
+		return NULL;
+
+	char* computerName = calloc(1, nSize);
+
+	if (!computerName)
+		return NULL;
+
+	if (!GetComputerNameExA(type, computerName, &nSize))
+	{
+		free(computerName);
+		return NULL;
+	}
+
+	return computerName;
+}
+
 static int ntlm_SetContextWorkstation(NTLM_CONTEXT* context, char* Workstation)
 {
 	char* ws = Workstation;
-	DWORD nSize = 0;
 	CHAR* computerName = NULL;
 
 	WINPR_ASSERT(context);
 
 	if (!Workstation)
 	{
-		if (GetComputerNameExA(ComputerNameNetBIOS, NULL, &nSize) ||
-		    GetLastError() != ERROR_MORE_DATA)
-			return -1;
-
-		computerName = calloc(nSize, sizeof(CHAR));
-
+		computerName = get_name(ComputerNameNetBIOS);
 		if (!computerName)
 			return -1;
-
-		if (!GetComputerNameExA(ComputerNameNetBIOS, computerName, &nSize))
-		{
-			free(computerName);
-			return -1;
-		}
-
-		if (nSize > MAX_COMPUTERNAME_LENGTH)
-			computerName[MAX_COMPUTERNAME_LENGTH] = '\0';
-
 		ws = computerName;
-
-		if (!ws)
-			return -1;
 	}
 
 	size_t len = 0;
 	context->Workstation.Buffer = ConvertUtf8ToWCharAlloc(ws, &len);
 
-	if (!Workstation)
-		free(ws);
+	free(computerName);
 
 	if (!context->Workstation.Buffer || (len > UINT16_MAX / sizeof(WCHAR)))
 		return -1;
