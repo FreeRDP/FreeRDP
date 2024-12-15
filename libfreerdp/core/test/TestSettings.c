@@ -1382,6 +1382,106 @@ fail:
 	return log_result(rc, __func__);
 }
 
+static BOOL test_string_null(rdpSettings* settings, FreeRDP_Settings_Keys_String id)
+{
+	if (!freerdp_settings_set_string(settings, id, NULL))
+		return FALSE;
+
+	const char* chk = freerdp_settings_get_string(settings, id);
+	return (chk == NULL);
+}
+
+static BOOL test_string_check(rdpSettings* settings, FreeRDP_Settings_Keys_String id,
+                              const char* string, size_t len)
+{
+	const char* chk = freerdp_settings_get_string(settings, id);
+	if (!chk)
+		return FALSE;
+
+	const size_t clen = strnlen(chk, len + 1);
+
+	/* set strings must always be '\0' terminated */
+	if (clen != len)
+		return FALSE;
+
+	/* Strings must match comparison */
+	if (strncmp(string, chk, clen) != 0)
+		return FALSE;
+
+	return TRUE;
+}
+
+static BOOL test_string_check_reset(rdpSettings* settings, FreeRDP_Settings_Keys_String id,
+                                    const char* string, size_t len)
+{
+	return test_string_check(settings, id, string, len) && test_string_null(settings, id);
+}
+
+static BOOL test_string_set_readback(rdpSettings* settings, FreeRDP_Settings_Keys_String id,
+                                     const char* string, size_t len)
+{
+	WINPR_ASSERT(len > 3);
+
+	BOOL rc = FALSE;
+	WCHAR* wstr = NULL;
+
+	const size_t slen = strnlen(string, len);
+	if (!freerdp_settings_set_string_len(settings, id, string, slen - 1))
+		goto fail;
+
+	if (!test_string_check_reset(settings, id, string, slen - 1))
+		goto fail;
+
+	if (!freerdp_settings_set_string(settings, id, string))
+		goto fail;
+
+	size_t wlen = 0;
+	wstr = freerdp_settings_get_string_as_utf16(settings, id, &wlen);
+	if (!wstr || (wlen != slen))
+		goto fail;
+
+	if (!test_string_check_reset(settings, id, string, slen))
+		goto fail;
+
+	if (!freerdp_settings_set_string_from_utf16N(settings, id, wstr, slen - 1))
+		goto fail;
+
+	if (!test_string_check(settings, id, string, slen - 1))
+		goto fail;
+
+	if (!freerdp_settings_set_string_from_utf16(settings, id, wstr))
+		goto fail;
+
+	if (!test_string_check(settings, id, string, slen))
+		goto fail;
+
+	rc = TRUE;
+fail:
+	free(wstr);
+	return rc;
+}
+
+static BOOL test_string_len(rdpSettings* settings)
+{
+	BOOL rc = FALSE;
+
+	const char user[] = "abcdefg";
+	if (!test_string_set_readback(settings, FreeRDP_Username, user, sizeof(user)))
+		goto fail;
+
+	const char pwd[] = "xyz";
+	if (!test_string_set_readback(settings, FreeRDP_Password, pwd, sizeof(pwd)))
+		goto fail;
+
+	const char domain[] = "foobar";
+	if (!test_string_set_readback(settings, FreeRDP_Domain, domain, sizeof(domain)))
+		goto fail;
+
+	rc = TRUE;
+fail:
+	return rc;
+}
+
 int TestSettings(int argc, char* argv[])
 {
 	int rc = -1;
@@ -1414,9 +1514,7 @@ int TestSettings(int argc, char* argv[])
 		return -1;
 	}
 
-	if (!freerdp_settings_set_string(settings, FreeRDP_Username, "abcdefg"))
-		goto fail;
-	if (!freerdp_settings_set_string(settings, FreeRDP_Password, "xyz"))
+	if (!test_string_len(settings))
 		goto fail;
 
 	cloned = freerdp_settings_clone(settings);
