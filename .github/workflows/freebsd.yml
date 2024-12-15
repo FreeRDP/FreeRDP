@@ -26,6 +26,7 @@ jobs:
 
         run: |
           export LD_LIBRARY_PATH=/usr/lib/clang/18/lib/freebsd
+          export CTEST_OUTPUT_ON_FAILURE=1
           cmake -GNinja \
             -C ci/cmake-preloads/config-freebsd.txt \
             -B ci-build \
