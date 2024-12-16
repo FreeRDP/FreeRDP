@@ -284,12 +284,12 @@ static BOOL wl_post_connect(freerdp* instance)
 	UwacWindowSetOpaqueRegion(context->window, 0, 0, w, h);
 	instance->context->update->EndPaint = wl_end_paint;
 	instance->context->update->DesktopResize = wl_resize_display;
-	UINT32 KeyboardLayout =
-	    freerdp_settings_get_uint32(instance->context->settings, FreeRDP_KeyboardLayout);
 	const char* KeyboardRemappingList =
 	    freerdp_settings_get_string(instance->context->settings, FreeRDP_KeyboardRemappingList);
 
-	freerdp_keyboard_init_ex(KeyboardLayout, KeyboardRemappingList);
+	context->remap_table = freerdp_keyboard_remap_string_to_list(KeyboardRemappingList);
+	if (!context->remap_table)
+		return FALSE;
 
 	if (!(context->disp = wlf_disp_new(context)))
 		return FALSE;
@@ -304,21 +304,21 @@ static BOOL wl_post_connect(freerdp* instance)
 
 static void wl_post_disconnect(freerdp* instance)
 {
-	wlfContext* context = NULL;
-
 	if (!instance)
 		return;
 
 	if (!instance->context)
 		return;
 
-	context = (wlfContext*)instance->context;
+	wlfContext* context = (wlfContext*)instance->context;
 	gdi_free(instance);
 	wlf_clipboard_free(context->clipboard);
 	wlf_disp_free(context->disp);
 
 	if (context->window)
 		UwacDestroyWindow(&context->window);
+	freerdp_keyboard_remap_free(context->remap_table);
+	context->remap_table = NULL;
 }
 
 static BOOL handle_uwac_events(freerdp* instance, UwacDisplay* display)

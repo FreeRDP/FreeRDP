@@ -55,6 +55,11 @@ static DWORD VIRTUAL_SCANCODE_TO_X11_KEYCODE[256][2] = { 0 };
 static DWORD X11_KEYCODE_TO_VIRTUAL_SCANCODE[256] = { 0 };
 static DWORD REMAPPING_TABLE[0x10000] = { 0 };
 
+struct rdp_remap_table
+{
+	DWORD table[0x10000];
+};
+
 struct scancode_map_entry
 {
 	DWORD scancode;
@@ -342,6 +347,52 @@ DWORD freerdp_keyboard_init(DWORD keyboardLayoutId)
 	return keyboardLayoutId;
 }
 
+FREERDP_REMAP_TABLE* freerdp_keyboard_remap_string_to_list(const char* list)
+{
+	const size_t remap_table_size = 0x10000;
+
+	FREERDP_REMAP_TABLE* remap_table = calloc(1, sizeof(FREERDP_REMAP_TABLE));
+	if (!remap_table)
+		return NULL;
+
+	for (size_t x = 0; x < ARRAYSIZE(remap_table->table); x++)
+		remap_table->table[x] = (UINT32)x;
+
+	if (!list)
+		return remap_table;
+
+	char* copy = _strdup(list);
+	if (!copy)
+		goto fail;
+
+	BOOL success = FALSE;
+	char* context = NULL;
+	char* token = strtok_s(copy, ",", &context);
+	while (token)
+	{
+		DWORD key = 0;
+		DWORD value = 0;
+		if (!freerdp_extract_key_value(token, &key, &value))
+			goto fail;
+		if (key >= remap_table_size)
+			goto fail;
+		remap_table->table[key] = value;
+		token = strtok_s(NULL, ",", &context);
+	}
+
+	success = TRUE;
+
+fail:
+	free(copy);
+
+	if (!success)
+	{
+		free(remap_table);
+		return NULL;
+	}
+	return remap_table;
+}
+
 DWORD freerdp_keyboard_init_ex(DWORD keyboardLayoutId, const char* keyboardRemappingList)
 {
 	DWORD res = freerdp_keyboard_init(keyboardLayoutId);
@@ -441,4 +492,17 @@ const char* freerdp_keyboard_scancode_name(DWORD scancode)
 	}
 
 	return NULL;
+}
+
+DWORD freerdp_keyboard_remap_key(const FREERDP_REMAP_TABLE* remap_table, DWORD rdpScanCode)
+{
+	if (!remap_table || (ARRAYSIZE(remap_table->table) <= rdpScanCode))
+		return 0;
+
+	return remap_table->table[rdpScanCode];
+}
+
+void freerdp_keyboard_remap_free(FREERDP_REMAP_TABLE* table)
+{
+	free(table);
 }
