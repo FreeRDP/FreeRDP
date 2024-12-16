@@ -326,7 +326,9 @@ static BOOL settings_init_computer_name(rdpSettings* settings)
 	if (!GetComputerNameExA(ComputerNameNetBIOS, computerName, &nSize))
 		return FALSE;
 
-	return freerdp_settings_set_string(settings, FreeRDP_ComputerName, computerName);
+	if (!freerdp_settings_set_string(settings, FreeRDP_ComputerName, computerName))
+		return FALSE;
+	return freerdp_settings_set_string(settings, FreeRDP_ClientHostname, computerName);
 }
 
 void freerdp_settings_print_warnings(const rdpSettings* settings)
