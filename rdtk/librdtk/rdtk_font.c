@@ -146,6 +146,7 @@ int rdtk_font_text_draw_size(rdtkFont* font, uint16_t* width, uint16_t* height, 
 	return 1;
 }
 
+WINPR_ATTR_MALLOC(free, 1)
 static char* rdtk_font_load_descriptor_file(const char* filename, size_t* pSize)
 {
 	WINPR_ASSERT(filename);
@@ -170,7 +171,7 @@ static char* rdtk_font_load_descriptor_file(const char* filename, size_t* pSize)
 	if (fileSize.i64 < 1)
 		goto fail;
 
-	uint8_t* buffer = (uint8_t*)malloc(fileSize.s + 2);
+	char* buffer = (char*)calloc(fileSize.s + 4, sizeof(char));
 
 	if (!buffer)
 		goto fail;
@@ -193,7 +194,7 @@ static char* rdtk_font_load_descriptor_file(const char* filename, size_t* pSize)
 	buffer[fileSize.s] = '\0';
 	buffer[fileSize.s + 1] = '\0';
 	*pSize = fileSize.s;
-	return (char*)buffer;
+	return buffer;
 
 fail:
 	(void)fclose(fp);
@@ -238,15 +239,11 @@ static int rdtk_font_convert_descriptor_code_to_utf8(const char* str, uint8_t* u
 	return 1;
 }
 
-static int rdtk_font_parse_descriptor_buffer(rdtkFont* font, const char* sbuffer, size_t size)
+static int rdtk_font_parse_descriptor_buffer(rdtkFont* font, char* buffer, size_t size)
 {
 	int rc = -1;
 
 	WINPR_ASSERT(font);
-
-	char* buffer = strndup(sbuffer, size);
-	if (!buffer)
-		goto fail;
 
 	const char xmlversion[] = "<?xml version=\"1.0\" encoding=\"utf-8\"?>";
 	const char xmlfont[] = "<Font ";
@@ -670,7 +667,6 @@ static rdtkFont* rdtk_embedded_font_new(rdtkEngine* engine, const uint8_t* image
                                         size_t descriptorSize)
 {
 	size_t size = 0;
-	uint8_t* buffer = NULL;
 
 	WINPR_ASSERT(engine);
 
@@ -697,14 +693,13 @@ static rdtkFont* rdtk_embedded_font_new(rdtkEngine* engine, const uint8_t* image
 	}
 
 	size = descriptorSize;
-	buffer = (uint8_t*)malloc(size);
+	char* buffer = (char*)calloc(size + 4, sizeof(char));
 
 	if (!buffer)
 		goto fail;
 
 	CopyMemory(buffer, descriptorData, size);
 	const int status2 = rdtk_font_parse_descriptor_buffer(font, buffer, size);
-	free(buffer);
 
 	if (status2 < 0)
 		goto fail;
