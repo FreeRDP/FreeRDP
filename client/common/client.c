@@ -1056,7 +1056,7 @@ static BOOL client_cli_get_rdsaad_access_token(freerdp* instance, const char* sc
 	printf("Paste redirect URL here: \n");
 
 	if (freerdp_interruptible_get_line(instance->context, &url, &size, stdin) < 0)
-		return FALSE;
+		goto cleanup;
 
 	char* code = extract_authorization_code(url);
 	if (!code)
