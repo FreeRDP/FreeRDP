@@ -1096,9 +1096,9 @@ BOOL rpc_client_write_call(rdpRpc* rpc, wStream* s, UINT16 opnum)
 	request_pdu.auth_verifier.auth_context_id = 0x00000000;
 	offset += (8 + request_pdu.header.auth_length);
 
-	if (offset > UINT32_MAX)
+	if (offset > UINT16_MAX)
 		goto fail;
-	request_pdu.header.frag_length = (UINT32)offset;
+	request_pdu.header.frag_length = (UINT16)offset;
 	buffer = (BYTE*)calloc(1, request_pdu.header.frag_length);
 
 	if (!buffer)
