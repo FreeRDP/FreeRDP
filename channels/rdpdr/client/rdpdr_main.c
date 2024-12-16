@@ -1165,7 +1165,7 @@ static UINT rdpdr_process_connect(rdpdrPlugin* rdpdr)
 		name = freerdp_settings_get_string(settings, FreeRDP_ComputerName);
 	if (!name)
 	{
-		DWORD size = sizeof(rdpdr->computerName) - 1;
+		DWORD size = ARRAYSIZE(rdpdr->computerName);
 		if (!GetComputerNameExA(ComputerNameNetBIOS, rdpdr->computerName, &size))
 			return ERROR_INTERNAL_ERROR;
 	}
