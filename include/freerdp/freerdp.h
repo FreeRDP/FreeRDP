@@ -659,7 +659,7 @@ owned by rdpRdp */
 	FREERDP_API BOOL freerdp_nla_impersonate(rdpContext* context);
 	FREERDP_API BOOL freerdp_nla_revert_to_self(rdpContext* context);
 
-	FREERDP_API UINT32 freerdp_get_nla_sspi_error(rdpContext* context);
+	FREERDP_API INT32 freerdp_get_nla_sspi_error(rdpContext* context);
 
 	/** Encrypts the provided buffer using the NLA's GSSAPI context
 	 *

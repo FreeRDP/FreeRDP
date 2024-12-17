@@ -1219,7 +1219,7 @@ BOOL freerdp_nla_revert_to_self(rdpContext* context)
 	return nla_revert_to_self(nla);
 }
 
-UINT32 freerdp_get_nla_sspi_error(rdpContext* context)
+INT32 freerdp_get_nla_sspi_error(rdpContext* context)
 {
 	rdpNla* nla = NULL;
 
