@@ -63,7 +63,7 @@ BYTE* gdi_GetPointer(HGDI_BITMAP hBmp, INT32 iX, INT32 iY)
 	const UINT32 Y = WINPR_SAFE_INT_CAST(uint32_t, iY);
 
 	UINT32 bpp = FreeRDPGetBytesPerPixel(hBmp->format);
-	return &hBmp->data[(Y * hBmp->width * bpp) + X * bpp];
+	return &hBmp->data[(Y * WINPR_SAFE_INT_CAST(uint32_t, hBmp->width) * bpp) + X * bpp];
 }
 
 /**
@@ -332,7 +332,9 @@ static INLINE BOOL BitBlt_write(HGDI_DC hdcDest, HGDI_DC hdcSrc, INT32 nXDest, I
 			case GDI_BS_HATCHED:
 			case GDI_BS_PATTERN:
 			{
-				const BYTE* patp = gdi_get_brush_pointer(hdcDest, nXDest + x, nYDest + y);
+				const BYTE* patp =
+				    gdi_get_brush_pointer(hdcDest, WINPR_SAFE_INT_CAST(uint32_t, nXDest + x),
+				                          WINPR_SAFE_INT_CAST(uint32_t, nYDest + y));
 
 				if (!patp)
 				{
