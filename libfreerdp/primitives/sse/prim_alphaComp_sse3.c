@@ -66,7 +66,7 @@ static pstatus_t sse2_alphaComp_argb(const BYTE* WINPR_RESTRICT pSrc1, UINT32 sr
 	src1Jump = (src1Step - linebytes) / sizeof(UINT32);
 	src2Jump = (src2Step - linebytes) / sizeof(UINT32);
 	dstJump = (dstStep - linebytes) / sizeof(UINT32);
-	xmm0 = _mm_set1_epi32(0);
+	xmm0 = mm_set1_epu32(0);
 	xmm1 = _mm_set1_epi16(1);
 
 	for (UINT32 y = 0; y < height; ++y)

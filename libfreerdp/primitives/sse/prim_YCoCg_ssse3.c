@@ -144,11 +144,11 @@ static pstatus_t ssse3_YCoCgRToRGB_8u_AC4R_invert(const BYTE* WINPR_RESTRICT pSr
 			if (withAlpha)
 				R7 = _mm_unpackhi_epi64(R5, R5);
 			else
-				R7 = _mm_set1_epi32((int32_t)0xFFFFFFFFU);
+				R7 = mm_set1_epu32((int32_t)0xFFFFFFFFU);
 
 			/* R7 = a7a6a5a4 a3a2a1a0 a7a6a5a4 a3a2a1a0 */
 			/* Expand Y's from 8-bit unsigned to 16-bit signed. */
-			R1 = _mm_set1_epi32(0);
+			R1 = mm_set1_epu32(0);
 			R0 = _mm_unpacklo_epi8(R5, R1);
 			/* R0 = 00y700y6 00y500y4 00y300y2 00y100y0 */
 			/* Shift Co's and Cg's by (shift-1).  -1 covers division by two.
@@ -157,7 +157,7 @@ static pstatus_t ssse3_YCoCgRToRGB_8u_AC4R_invert(const BYTE* WINPR_RESTRICT pSr
 			 * version and then mask.
 			 */
 			R6 = _mm_slli_epi16(R6, dataShift);
-			R1 = _mm_set1_epi8((int8_t)mask);
+			R1 = mm_set1_epu8((int8_t)mask);
 			R6 = _mm_and_si128(R6, R1);
 			/* R6 = shifted o7o6o5o4 o3o2o1o0 g7g6g5g4 g3g2g1g0 */
 			/* Expand Co's from 8-bit signed to 16-bit signed */
@@ -333,11 +333,11 @@ static pstatus_t ssse3_YCoCgRToRGB_8u_AC4R_no_invert(const BYTE* WINPR_RESTRICT 
 			if (withAlpha)
 				R7 = _mm_unpackhi_epi64(R5, R5);
 			else
-				R7 = _mm_set1_epi32((int32_t)0xFFFFFFFFU);
+				R7 = mm_set1_epu32((int32_t)0xFFFFFFFFU);
 
 			/* R7 = a7a6a5a4 a3a2a1a0 a7a6a5a4 a3a2a1a0 */
 			/* Expand Y's from 8-bit unsigned to 16-bit signed. */
-			R1 = _mm_set1_epi32(0);
+			R1 = mm_set1_epu32(0);
 			R0 = _mm_unpacklo_epi8(R5, R1);
 			/* R0 = 00y700y6 00y500y4 00y300y2 00y100y0 */
 			/* Shift Co's and Cg's by (shift-1).  -1 covers division by two.
@@ -346,7 +346,7 @@ static pstatus_t ssse3_YCoCgRToRGB_8u_AC4R_no_invert(const BYTE* WINPR_RESTRICT 
 			 * version and then mask.
 			 */
 			R6 = _mm_slli_epi16(R6, dataShift);
-			R1 = _mm_set1_epi8((int8_t)mask);
+			R1 = mm_set1_epu8((int8_t)mask);
 			R6 = _mm_and_si128(R6, R1);
 			/* R6 = shifted o7o6o5o4 o3o2o1o0 g7g6g5g4 g3g2g1g0 */
 			/* Expand Co's from 8-bit signed to 16-bit signed */

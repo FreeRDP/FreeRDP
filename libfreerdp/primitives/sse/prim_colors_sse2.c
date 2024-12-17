@@ -67,21 +67,6 @@ sse2_yCbCrToRGB_16s16s_P3P3(const INT16* WINPR_RESTRICT pSrc[3], int srcStep,
                             INT16* WINPR_RESTRICT pDst[3], int dstStep,
                             const prim_size_t* WINPR_RESTRICT roi) /* region of interest */
 {
-	__m128i zero;
-	__m128i max;
-	__m128i r_cr;
-	__m128i g_cb;
-	__m128i g_cr;
-	__m128i b_cb;
-	__m128i c4096;
-	const __m128i* y_buf = NULL;
-	const __m128i* cb_buf = NULL;
-	const __m128i* cr_buf = NULL;
-	__m128i* r_buf = NULL;
-	__m128i* g_buf = NULL;
-	__m128i* b_buf = NULL;
-	int srcbump = 0;
-	int dstbump = 0;
 	int imax = 0;
 
 	if (((ULONG_PTR)(pSrc[0]) & 0x0f) || ((ULONG_PTR)(pSrc[1]) & 0x0f) ||
@@ -93,21 +78,21 @@ sse2_yCbCrToRGB_16s16s_P3P3(const INT16* WINPR_RESTRICT pSrc[3], int srcStep,
 		return generic->yCbCrToRGB_16s16s_P3P3(pSrc, srcStep, pDst, dstStep, roi);
 	}
 
-	zero = _mm_setzero_si128();
-	max = _mm_set1_epi16(255);
-	y_buf = (const __m128i*)(pSrc[0]);
-	cb_buf = (const __m128i*)(pSrc[1]);
-	cr_buf = (const __m128i*)(pSrc[2]);
-	r_buf = (__m128i*)(pDst[0]);
-	g_buf = (__m128i*)(pDst[1]);
-	b_buf = (__m128i*)(pDst[2]);
-	r_cr = _mm_set1_epi16(22986);  /*  1.403 << 14 */
-	g_cb = _mm_set1_epi16(-5636);  /* -0.344 << 14 */
-	g_cr = _mm_set1_epi16(-11698); /* -0.714 << 14 */
-	b_cb = _mm_set1_epi16(28999);  /*  1.770 << 14 */
-	c4096 = _mm_set1_epi16(4096);
-	srcbump = srcStep / sizeof(__m128i);
-	dstbump = dstStep / sizeof(__m128i);
+	const __m128i zero = _mm_setzero_si128();
+	const __m128i max = _mm_set1_epi16(255);
+	const __m128i* y_buf = (const __m128i*)(pSrc[0]);
+	const __m128i* cb_buf = (const __m128i*)(pSrc[1]);
+	const __m128i* cr_buf = (const __m128i*)(pSrc[2]);
+	__m128i* r_buf = (__m128i*)(pDst[0]);
+	__m128i* g_buf = (__m128i*)(pDst[1]);
+	__m128i* b_buf = (__m128i*)(pDst[2]);
+	__m128i r_cr = _mm_set1_epi16(22986);  /*  1.403 << 14 */
+	__m128i g_cb = _mm_set1_epi16(-5636);  /* -0.344 << 14 */
+	__m128i g_cr = _mm_set1_epi16(-11698); /* -0.714 << 14 */
+	__m128i b_cb = _mm_set1_epi16(28999);  /*  1.770 << 14 */
+	__m128i c4096 = _mm_set1_epi16(4096);
+	const size_t srcbump = WINPR_SAFE_INT_CAST(size_t, srcStep) / sizeof(__m128i);
+	const size_t dstbump = WINPR_SAFE_INT_CAST(size_t, dstStep) / sizeof(__m128i);
 #ifdef DO_PREFETCH
 
 	/* Prefetch Y's, Cb's, and Cr's. */
@@ -353,7 +338,7 @@ sse2_yCbCrToRGB_16s8u_P3AC4R_BGRX(const INT16* WINPR_RESTRICT pSrc[3], UINT32 sr
 				R0 = r1;                              /* R0 = 00R300R200R100R0 */
 				R3 = r2;                              /* R3 = 00R700R600R500R4 */
 				R0 = _mm_packus_epi16(R0, R3);        /* R0 = R7R6R5R4R3R2R1R0 */
-				R3 = _mm_set1_epi32(0xFFFFFFFFU);     /* R3 = FFFFFFFFFFFFFFFF */
+				R3 = mm_set1_epu32(0xFFFFFFFFU);      /* R3 = FFFFFFFFFFFFFFFF */
 				R4 = R3;                              /* R4 = FFFFFFFFFFFFFFFF */
 				R4 = _mm_unpacklo_epi8(R0, R4);       /* R4 = R3FFR2FFR1FFR0FF */
 				R3 = _mm_unpackhi_epi8(R0, R3);       /* R3 = R7FFR6FFR5FFR4FF */
@@ -551,7 +536,7 @@ sse2_yCbCrToRGB_16s8u_P3AC4R_RGBX(const INT16* WINPR_RESTRICT pSrc[3], UINT32 sr
 				R0 = b1;                              /* R0 = 00B300B200B100B0 */
 				R3 = b2;                              /* R3 = 00B700B600B500B4 */
 				R0 = _mm_packus_epi16(R0, R3);        /* R0 = B7B6B5B4B3B2B1B0 */
-				R3 = _mm_set1_epi32(0xFFFFFFFFU);     /* R3 = FFFFFFFFFFFFFFFF */
+				R3 = mm_set1_epu32(0xFFFFFFFFU);      /* R3 = FFFFFFFFFFFFFFFF */
 				R4 = R3;                              /* R4 = FFFFFFFFFFFFFFFF */
 				R4 = _mm_unpacklo_epi8(R0, R4);       /* R4 = B3FFB2FFB1FFB0FF */
 				R3 = _mm_unpackhi_epi8(R0, R3);       /* R3 = B7FFB6FFB5FFB4FF */
@@ -632,25 +617,12 @@ sse2_RGBToYCbCr_16s16s_P3P3(const INT16* WINPR_RESTRICT pSrc[3], int srcStep,
                             INT16* WINPR_RESTRICT pDst[3], int dstStep,
                             const prim_size_t* WINPR_RESTRICT roi) /* region of interest */
 {
-	__m128i min;
-	__m128i max;
-	__m128i y_r;
-	__m128i y_g;
-	__m128i y_b;
-	__m128i cb_r;
-	__m128i cb_g;
-	__m128i cb_b;
-	__m128i cr_r;
-	__m128i cr_g;
-	__m128i cr_b;
 	const __m128i* r_buf = (const __m128i*)(pSrc[0]);
 	const __m128i* g_buf = (const __m128i*)(pSrc[1]);
 	const __m128i* b_buf = (const __m128i*)(pSrc[2]);
 	__m128i* y_buf = (__m128i*)(pDst[0]);
 	__m128i* cb_buf = (__m128i*)(pDst[1]);
 	__m128i* cr_buf = (__m128i*)(pDst[2]);
-	int srcbump = 0;
-	int dstbump = 0;
 	int imax = 0;
 
 	if (((ULONG_PTR)(pSrc[0]) & 0x0f) || ((ULONG_PTR)(pSrc[1]) & 0x0f) ||
@@ -662,20 +634,20 @@ sse2_RGBToYCbCr_16s16s_P3P3(const INT16* WINPR_RESTRICT pSrc[3], int srcStep,
 		return generic->RGBToYCbCr_16s16s_P3P3(pSrc, srcStep, pDst, dstStep, roi);
 	}
 
-	min = _mm_set1_epi16(-128 * 32);
-	max = _mm_set1_epi16(127 * 32);
+	const __m128i min = _mm_set1_epi16(-128 * 32);
+	const __m128i max = _mm_set1_epi16(127 * 32);
 
-	y_r = _mm_set1_epi16(9798);    /*  0.299000 << 15 */
-	y_g = _mm_set1_epi16(19235);   /*  0.587000 << 15 */
-	y_b = _mm_set1_epi16(3735);    /*  0.114000 << 15 */
-	cb_r = _mm_set1_epi16(-5535);  /* -0.168935 << 15 */
-	cb_g = _mm_set1_epi16(-10868); /* -0.331665 << 15 */
-	cb_b = _mm_set1_epi16(16403);  /*  0.500590 << 15 */
-	cr_r = _mm_set1_epi16(16377);  /*  0.499813 << 15 */
-	cr_g = _mm_set1_epi16(-13714); /* -0.418531 << 15 */
-	cr_b = _mm_set1_epi16(-2663);  /* -0.081282 << 15 */
-	srcbump = srcStep / sizeof(__m128i);
-	dstbump = dstStep / sizeof(__m128i);
+	__m128i y_r = _mm_set1_epi16(9798);    /*  0.299000 << 15 */
+	__m128i y_g = _mm_set1_epi16(19235);   /*  0.587000 << 15 */
+	__m128i y_b = _mm_set1_epi16(3735);    /*  0.114000 << 15 */
+	__m128i cb_r = _mm_set1_epi16(-5535);  /* -0.168935 << 15 */
+	__m128i cb_g = _mm_set1_epi16(-10868); /* -0.331665 << 15 */
+	__m128i cb_b = _mm_set1_epi16(16403);  /*  0.500590 << 15 */
+	__m128i cr_r = _mm_set1_epi16(16377);  /*  0.499813 << 15 */
+	__m128i cr_g = _mm_set1_epi16(-13714); /* -0.418531 << 15 */
+	__m128i cr_b = _mm_set1_epi16(-2663);  /* -0.081282 << 15 */
+	const size_t srcbump = WINPR_SAFE_INT_CAST(size_t, srcStep) / sizeof(__m128i);
+	const size_t dstbump = WINPR_SAFE_INT_CAST(size_t, dstStep) / sizeof(__m128i);
 #ifdef DO_PREFETCH
 
 	/* Prefetch RGB's. */
@@ -775,7 +747,7 @@ static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_BGRX(
 	const UINT16* pg = (const UINT16*)(pSrc[1]);
 	const UINT16* pb = (const UINT16*)(pSrc[2]);
 	const UINT32 pad = roi->width % 16;
-	const __m128i a = _mm_set1_epi32(0xFFFFFFFFU);
+	const __m128i a = mm_set1_epu32(0xFFFFFFFFU);
 	BYTE* out = NULL;
 	UINT32 srcbump = 0;
 	UINT32 dstbump = 0;
@@ -886,7 +858,7 @@ static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_RGBX(
 	const UINT16* pg = (const UINT16*)(pSrc[1]);
 	const UINT16* pb = (const UINT16*)(pSrc[2]);
 	const UINT32 pad = roi->width % 16;
-	const __m128i a = _mm_set1_epi32(0xFFFFFFFFU);
+	const __m128i a = mm_set1_epu32(0xFFFFFFFFU);
 	BYTE* out = NULL;
 	UINT32 srcbump = 0;
 	UINT32 dstbump = 0;
@@ -997,7 +969,7 @@ static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_XBGR(
 	const UINT16* pg = (const UINT16*)(pSrc[1]);
 	const UINT16* pb = (const UINT16*)(pSrc[2]);
 	const UINT32 pad = roi->width % 16;
-	const __m128i a = _mm_set1_epi32(0xFFFFFFFFU);
+	const __m128i a = mm_set1_epu32(0xFFFFFFFFU);
 	BYTE* out = NULL;
 	UINT32 srcbump = 0;
 	UINT32 dstbump = 0;
@@ -1107,7 +1079,7 @@ static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_XRGB(
 	const UINT16* pr = (const UINT16*)(pSrc[0]);
 	const UINT16* pg = (const UINT16*)(pSrc[1]);
 	const UINT16* pb = (const UINT16*)(pSrc[2]);
-	const __m128i a = _mm_set1_epi32(0xFFFFFFFFU);
+	const __m128i a = mm_set1_epu32(0xFFFFFFFFU);
 	const UINT32 pad = roi->width % 16;
 	BYTE* out = NULL;
 	UINT32 srcbump = 0;

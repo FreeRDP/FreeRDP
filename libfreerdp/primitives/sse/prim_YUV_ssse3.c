@@ -37,11 +37,6 @@
 
 static primitives_t* generic = NULL;
 
-static inline __m128i mm_set_epu32(uint32_t val1, uint32_t val2, uint32_t val3, uint32_t val4)
-{
-	return _mm_set_epi32((int32_t)val1, (int32_t)val2, (int32_t)val3, (int32_t)val4);
-}
-
 /****************************************************************************/
 /* SSSE3 YUV420 -> RGB conversion                                           */
 /****************************************************************************/
@@ -289,7 +284,7 @@ static pstatus_t ssse3_YUV444ToRGB_8u_P3AC4R(const BYTE* WINPR_RESTRICT pSrc[],
 	_mm_set_epi8(0, -29, -99, 127, 0, -29, -99, 127, 0, -29, -99, 127, 0, -29, -99, 127)
 #define BGRX_V_FACTORS \
 	_mm_set_epi8(0, 127, -116, -12, 0, 127, -116, -12, 0, 127, -116, -12, 0, 127, -116, -12)
-#define CONST128_FACTORS _mm_set1_epi8(-128)
+#define CONST128_FACTORS mm_set1_epu8(-128)
 
 #define Y_SHIFT 7
 #define U_SHIFT 8
