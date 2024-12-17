@@ -1,3 +1,14 @@
+# 2024-12-17 Version 3.10.3
+
+Follow up release to 3.10.2, as we've discovered a few bugs after release.
+
+Noteworthy changes:
+ * Fix usage of GetComputerNameExA (#10988)
+ * Fix cmake clean target (#10990)
+
+For a complete and detailed change log since the last release run:
+git log 3.10.3...3.10.2
+
 # 2024-12-16 Version 3.10.2
 
 Follow up release to 3.10.1, as we've discovered a few bugs during release
