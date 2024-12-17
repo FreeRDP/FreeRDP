@@ -301,7 +301,7 @@ static int extract_string(GENERAL_NAME* name, void* data, int index, int count)
 		return 1;
 	}
 
-	string_list_allocate(list, WINPR_SAFE_INT_CAST(size_t, count));
+	string_list_allocate(list, WINPR_SAFE_INT_CAST(WINPR_CIPHER_TYPE, count));
 
 	if (list->allocated <= 0)
 	{
