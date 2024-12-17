@@ -237,8 +237,6 @@ static INLINE INT32 planar_decompress_plane_rle_only(const BYTE* WINPR_RESTRICT 
 	WINPR_ASSERT(nHeight <= INT32_MAX);
 	WINPR_ASSERT(nWidth <= INT32_MAX);
 
-	previousScanline = NULL;
-
 	for (UINT32 y = 0; y < nHeight; y++)
 	{
 		BYTE* dstp = &pDstData[1ULL * (y)*nWidth];
@@ -300,25 +298,25 @@ static INLINE INT32 planar_decompress_plane_rle_only(const BYTE* WINPR_RESTRICT 
 			else
 			{
 				/* delta values relative to previous scanline */
-				INT32 p = 0;
+				INT16 p = 0;
 				while (cRawBytes > 0)
 				{
-					UINT32 deltaValue = *srcp;
+					UINT8 deltaValue = *srcp;
 					srcp++;
 
 					if (deltaValue & 1)
 					{
 						deltaValue = deltaValue >> 1;
 						deltaValue = deltaValue + 1;
-						p = -WINPR_SAFE_INT_CAST(INT32, deltaValue);
+						p = -WINPR_SAFE_INT_CAST(INT16, deltaValue);
 					}
 					else
 					{
 						deltaValue = deltaValue >> 1;
-						p = WINPR_SAFE_INT_CAST(INT32, deltaValue);
+						p = WINPR_SAFE_INT_CAST(INT16, deltaValue);
 					}
 
-					const INT32 delta = previousScanline[x] + p;
+					const INT16 delta = previousScanline[x] + p;
 					*dstp = WINPR_SAFE_INT_CAST(BYTE, delta & 0xFF);
 					dstp++;
 					x++;
@@ -327,8 +325,8 @@ static INLINE INT32 planar_decompress_plane_rle_only(const BYTE* WINPR_RESTRICT 
 
 				while (nRunLength > 0)
 				{
-					const INT32 deltaValue = previousScanline[x] + p;
-					*dstp = WINPR_SAFE_INT_CAST(UINT8, deltaValue);
+					const INT16 deltaValue = previousScanline[x] + p;
+					*dstp = WINPR_SAFE_INT_CAST(UINT8, deltaValue & 0xFF);
 					dstp++;
 					x++;
 					nRunLength--;
