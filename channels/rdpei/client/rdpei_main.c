@@ -970,7 +970,7 @@ static UINT32 rdpei_get_version(RdpeiClientContext* context)
 {
 	RDPEI_PLUGIN* rdpei = NULL;
 	if (!context || !context->handle)
-		return -1;
+		return 0;
 	rdpei = (RDPEI_PLUGIN*)context->handle;
 	return rdpei->version;
 }
@@ -979,7 +979,7 @@ static UINT32 rdpei_get_features(RdpeiClientContext* context)
 {
 	RDPEI_PLUGIN* rdpei = NULL;
 	if (!context || !context->handle)
-		return -1;
+		return 0;
 	rdpei = (RDPEI_PLUGIN*)context->handle;
 	return rdpei->features;
 }
