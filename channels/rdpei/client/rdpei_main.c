@@ -524,7 +524,8 @@ static DWORD WINAPI rdpei_periodic_update(LPVOID arg)
 			break;
 		}
 
-		error = rdpei_poll_run(rdpei->rdpcontext, rdpei);
+		if (!rdpei_poll_run(rdpei->rdpcontext, rdpei))
+			error = ERROR_INTERNAL_ERROR;
 	}
 
 out:

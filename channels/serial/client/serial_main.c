@@ -899,7 +899,7 @@ FREERDP_ENTRY_POINT(
 		}
 
 		for (size_t i = 0; i <= len; i++)
-			Stream_Write_UINT8(serial->device.data, name[i] < 0 ? '_' : name[i]);
+			Stream_Write_INT8(serial->device.data, name[i] < 0 ? '_' : name[i]);
 
 		if (driver != NULL)
 		{
