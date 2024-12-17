@@ -645,7 +645,7 @@ static BOOL rdg_set_auth_header(rdpCredsspAuth* auth, HttpRequest* request)
 		if (authToken->cbBuffer > INT_MAX)
 			return FALSE;
 
-		base64AuthToken = crypto_base64_encode(authToken->pvBuffer, (int)authToken->cbBuffer);
+		base64AuthToken = crypto_base64_encode(authToken->pvBuffer, authToken->cbBuffer);
 	}
 
 	if (base64AuthToken)
@@ -1313,7 +1313,7 @@ static BOOL rdg_tls_connect(rdpRdg* rdg, rdpTls* tls, const char* peerAddress, U
 	}
 
 	tls->hostname = settings->GatewayHostname;
-	tls->port = MIN(UINT16_MAX, settings->GatewayPort);
+	tls->port = WINPR_SAFE_INT_CAST(int32_t, MIN(UINT16_MAX, settings->GatewayPort));
 	tls->isGatewayTransport = TRUE;
 	status = freerdp_tls_connect(tls, bufferedBio);
 	if (status < 1)
