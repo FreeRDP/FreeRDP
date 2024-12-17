@@ -628,7 +628,7 @@ static INLINE BOOL planar_decompress_planes_raw(const BYTE* WINPR_RESTRICT pSrcD
 	{
 		BYTE* pRGB = NULL;
 
-		if (y > (INT64)nHeight)
+		if (y > WINPR_SAFE_INT_CAST(INT64, nHeight))
 		{
 			WLog_ERR(TAG, "planar plane destination Y %" PRId32 " exceeds height %" PRIu32, y,
 			         nHeight);
