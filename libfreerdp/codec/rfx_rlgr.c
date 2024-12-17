@@ -65,16 +65,16 @@
  * Update the passed parameter and clamp it to the range [0, KPMAX]
  * Return the value of parameter right-shifted by LSGR
  */
-#define UpdateParam(_param, _deltaP, _k) \
-	do                                   \
-	{                                    \
-		(_param) += (_deltaP);           \
-		if ((_param) > KPMAX)            \
-			(_param) = KPMAX;            \
-		if ((_param) < 0)                \
-			(_param) = 0;                \
-		(_k) = ((_param) >> LSGR);       \
-	} while (0)
+static inline uint32_t UpdateParam(int32_t* param, int32_t deltaP)
+{
+	WINPR_ASSERT(param);
+	*param += (deltaP);
+	if ((*param) > KPMAX)
+		(*param) = KPMAX;
+	if ((*param) < 0)
+		(*param) = 0;
+	return (*param) >> LSGR;
+}
 
 static BOOL g_LZCNT = FALSE;
 
@@ -349,7 +349,7 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* WINPR_RESTRICT pSrcData, UINT32 
 			size = run;
 
 			if ((offset + size) > rDstSize)
-				size = DstSize - offset;
+				size = WINPR_SAFE_INT_CAST(size_t, DstSize - offset);
 
 			if (size)
 			{
@@ -424,7 +424,7 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* WINPR_RESTRICT pSrcData, UINT32 
 				if (krp < 0)
 					krp = 0;
 
-				kr = krp >> LSGR;
+				kr = (krp >> LSGR) & UINT32_MAX;
 			}
 			else if (vk != 1)
 			{
@@ -551,16 +551,16 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* WINPR_RESTRICT pSrcData, UINT32 
 		}
 	}
 
-	offset = (pOutput - pDstData);
+	offset = WINPR_SAFE_INT_CAST(size_t, (pOutput - pDstData));
 
 	if (offset < rDstSize)
 	{
-		size = DstSize - offset;
+		size = WINPR_SAFE_INT_CAST(size_t, DstSize) - offset;
 		ZeroMemory(pOutput, size * 2);
 		pOutput += size;
 	}
 
-	offset = (pOutput - pDstData);
+	offset = WINPR_SAFE_INT_CAST(size_t, (pOutput - pDstData));
 
 	if ((DstSize < 0) || (offset != (size_t)DstSize))
 		return -1;
@@ -607,7 +607,7 @@ static inline UINT32 Get2MagSign(INT32 input)
 /* Outputs the Golomb/Rice encoding of a non-negative integer */
 #define CodeGR(krp, val) rfx_rlgr_code_gr(bs, krp, val)
 
-static void rfx_rlgr_code_gr(RFX_BITSTREAM* bs, int* krp, UINT32 val)
+static void rfx_rlgr_code_gr(RFX_BITSTREAM* bs, uint32_t* krp, UINT32 val)
 {
 	int kr = *krp >> LSGR;
 
@@ -627,22 +627,21 @@ static void rfx_rlgr_code_gr(RFX_BITSTREAM* bs, int* krp, UINT32 val)
 	/* update krp, only if it is not equal to 1 */
 	if (vk == 0)
 	{
-		UpdateParam(*krp, -2, kr);
+		kr = UpdateParam(krp, -2);
 	}
 	else if (vk > 1)
 	{
-		UpdateParam(*krp, vk, kr);
+		kr = UpdateParam(krp, vk);
 	}
 }
 
-int rfx_rlgr_encode(RLGR_MODE mode, const INT16* WINPR_RESTRICT data, UINT32 data_size,
-                    BYTE* WINPR_RESTRICT buffer, UINT32 buffer_size)
+uint32_t rfx_rlgr_encode(RLGR_MODE mode, const INT16* WINPR_RESTRICT data, UINT32 data_size,
+                         BYTE* WINPR_RESTRICT buffer, UINT32 buffer_size)
 {
-	int k = 0;
-	int kp = 0;
-	int krp = 0;
+	uint32_t k = 0;
+	uint32_t kp = 0;
+	uint32_t krp = 0;
 	RFX_BITSTREAM* bs = NULL;
-	int processed_size = 0;
 
 	if (!(bs = (RFX_BITSTREAM*)winpr_aligned_calloc(1, sizeof(RFX_BITSTREAM), 32)))
 		return 0;
@@ -661,8 +660,8 @@ int rfx_rlgr_encode(RLGR_MODE mode, const INT16* WINPR_RESTRICT data, UINT32 dat
 
 		if (k)
 		{
-			int numZeros = 0;
-			int runmax = 0;
+			uint32_t numZeros = 0;
+			uint32_t runmax = 0;
 			BYTE sign = 0;
 
 			/* RUN-LENGTH MODE */
@@ -682,7 +681,7 @@ int rfx_rlgr_encode(RLGR_MODE mode, const INT16* WINPR_RESTRICT data, UINT32 dat
 			{
 				OutputBit(bs, 1, 0); /* output a zero bit */
 				numZeros -= runmax;
-				UpdateParam(kp, UP_GR, k); /* update kp, k */
+				k = UpdateParam(&kp, UP_GR); /* update kp, k */
 				runmax = 1 << k;
 			}
 
@@ -703,7 +702,7 @@ int rfx_rlgr_encode(RLGR_MODE mode, const INT16* WINPR_RESTRICT data, UINT32 dat
 			OutputBit(bs, 1, sign);          /* output the sign bit */
 			CodeGR(&krp, mag ? mag - 1 : 0); /* output GR code for (mag - 1) */
 
-			UpdateParam(kp, -DN_GR, k);
+			k = UpdateParam(&kp, -DN_GR);
 		}
 		else
 		{
@@ -725,11 +724,11 @@ int rfx_rlgr_encode(RLGR_MODE mode, const INT16* WINPR_RESTRICT data, UINT32 dat
 				   and the update direction is reversed */
 				if (twoMs)
 				{
-					UpdateParam(kp, -DQ_GR, k);
+					k = UpdateParam(&kp, -DQ_GR);
 				}
 				else
 				{
-					UpdateParam(kp, UQ_GR, k);
+					k = UpdateParam(&kp, UQ_GR);
 				}
 			}
 			else /* mode == RLGR3 */
@@ -760,18 +759,18 @@ int rfx_rlgr_encode(RLGR_MODE mode, const INT16* WINPR_RESTRICT data, UINT32 dat
 
 				if (twoMs1 && twoMs2)
 				{
-					UpdateParam(kp, -2 * DQ_GR, k);
+					k = UpdateParam(&kp, -2 * DQ_GR);
 				}
 				else if (!twoMs1 && !twoMs2)
 				{
-					UpdateParam(kp, 2 * UQ_GR, k);
+					k = UpdateParam(&kp, 2 * UQ_GR);
 				}
 			}
 		}
 	}
 
 	rfx_bitstream_flush(bs);
-	processed_size = rfx_bitstream_get_processed_bytes(bs);
+	uint32_t processed_size = rfx_bitstream_get_processed_bytes(bs);
 	winpr_aligned_free(bs);
 
 	return processed_size;

@@ -33,9 +33,9 @@ extern "C"
 	typedef struct
 	{
 		BYTE* buffer;
-		int nbytes;
-		int byte_pos;
-		int bits_left;
+		uint32_t nbytes;
+		uint32_t byte_pos;
+		uint32_t bits_left;
 	} RFX_BITSTREAM;
 
 	static inline void rfx_bitstream_attach(RFX_BITSTREAM* bs, BYTE* WINPR_RESTRICT buffer,
@@ -45,17 +45,17 @@ extern "C"
 		bs->buffer = (buffer);
 
 		WINPR_ASSERT(nbytes <= INT32_MAX);
-		bs->nbytes = WINPR_SAFE_INT_CAST(int, nbytes);
+		bs->nbytes = nbytes;
 		bs->byte_pos = 0;
 		bs->bits_left = 8;
 	}
 
-	static inline int rfx_bitstream_get_bits(RFX_BITSTREAM* bs, int nbits)
+	static inline uint32_t rfx_bitstream_get_bits(RFX_BITSTREAM* bs, uint32_t nbits)
 	{
 		UINT16 n = 0;
 		while (bs->byte_pos < bs->nbytes && nbits > 0)
 		{
-			int b = nbits;
+			uint32_t b = nbits;
 			if (b > bs->bits_left)
 				b = bs->bits_left;
 			if (n)
@@ -72,14 +72,14 @@ extern "C"
 		return n;
 	}
 
-	static inline void rfx_bitstream_put_bits(RFX_BITSTREAM* bs, int _bits, int _nbits)
+	static inline void rfx_bitstream_put_bits(RFX_BITSTREAM* bs, uint32_t _bits, uint32_t _nbits)
 	{
 		UINT16 bits = WINPR_SAFE_INT_CAST(UINT16, _bits);
 
-		int nbits = (_nbits);
+		uint32_t nbits = (_nbits);
 		while (bs->byte_pos < bs->nbytes && nbits > 0)
 		{
-			int b = nbits;
+			uint32_t b = nbits;
 			if (b > bs->bits_left)
 				b = bs->bits_left;
 			bs->buffer[bs->byte_pos] |= ((bits >> (nbits - b)) & ((1 << b) - 1))
@@ -99,7 +99,7 @@ extern "C"
 		WINPR_ASSERT(bs);
 		if (bs->bits_left != 8)
 		{
-			int _nbits = 8 - bs->bits_left;
+			uint32_t _nbits = 8 - bs->bits_left;
 			rfx_bitstream_put_bits(bs, 0, _nbits);
 		}
 	}
@@ -110,7 +110,7 @@ extern "C"
 		return ((bs)->byte_pos >= (bs)->nbytes);
 	}
 
-	static inline int rfx_bitstream_left(RFX_BITSTREAM* bs)
+	static inline uint32_t rfx_bitstream_left(RFX_BITSTREAM* bs)
 	{
 		WINPR_ASSERT(bs);
 
@@ -120,7 +120,7 @@ extern "C"
 		return ((bs)->nbytes - (bs)->byte_pos - 1) * 8 + (bs)->bits_left;
 	}
 
-	static inline int rfx_bitstream_get_processed_bytes(RFX_BITSTREAM* bs)
+	static inline uint32_t rfx_bitstream_get_processed_bytes(RFX_BITSTREAM* bs)
 	{
 		WINPR_ASSERT(bs);
 		if ((bs)->bits_left < 8)
