@@ -383,8 +383,8 @@ static BOOL rdg_read_all(rdpContext* context, rdpTls* tls, BYTE* buffer, size_t 
 			continue;
 		}
 
-		readCount += status;
-		pBuffer += status;
+		readCount += WINPR_SAFE_INT_CAST(uint32_t, status);
+		pBuffer += WINPR_SAFE_INT_CAST(uint32_t, status);
 	}
 
 	return TRUE;
@@ -415,8 +415,8 @@ static wStream* rdg_receive_packet(rdpRdg* rdg)
 		return NULL;
 	}
 
-	if (!rdg_read_all(rdg->context, rdg->tlsOut, Stream_Buffer(s) + header,
-	                  (int)packetLength - (int)header, &rdg->transferEncoding))
+	if (!rdg_read_all(rdg->context, rdg->tlsOut, Stream_Buffer(s) + header, packetLength - header,
+	                  &rdg->transferEncoding))
 	{
 		Stream_Free(s, TRUE);
 		return NULL;
@@ -987,14 +987,14 @@ static BOOL rdg_process_tunnel_authorization_response(rdpRdg* rdg, wStream* s)
 
 static BOOL rdg_process_extauth_sspi(rdpRdg* rdg, wStream* s)
 {
-	UINT32 errorCode = 0;
+	INT32 errorCode = 0;
 	UINT16 authBlobLen = 0;
 	SecBuffer authToken = { 0 };
 	BYTE* authTokenData = NULL;
 
 	WINPR_ASSERT(rdg);
 
-	Stream_Read_UINT32(s, errorCode);
+	Stream_Read_INT32(s, errorCode);
 	Stream_Read_UINT16(s, authBlobLen);
 
 	if (errorCode != ERROR_SUCCESS)
@@ -1879,8 +1879,7 @@ static int rdg_read_data_packet(rdpRdg* rdg, BYTE* buffer, size_t size)
 				return -1;
 
 			status = rdg_socket_read(rdg->tlsOut->bio, (BYTE*)(&header) + readCount,
-			                         (int)sizeof(RdgPacketHeader) - (int)readCount,
-			                         &rdg->transferEncoding);
+			                         sizeof(RdgPacketHeader) - readCount, &rdg->transferEncoding);
 
 			if (status <= 0)
 			{
@@ -1918,7 +1917,7 @@ static int rdg_read_data_packet(rdpRdg* rdg, BYTE* buffer, size_t size)
 				return -1;
 			status =
 			    rdg_socket_read(rdg->tlsOut->bio, (BYTE*)(&rdg->packetRemainingCount) + readCount,
-			                    2 - (int)readCount, &rdg->transferEncoding);
+			                    2 - readCount, &rdg->transferEncoding);
 
 			if (status < 0)
 			{

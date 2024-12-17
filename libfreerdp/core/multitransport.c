@@ -180,7 +180,7 @@ state_run_t multitransport_recv_response(rdpMultitransport* multi, wStream* s)
 	HRESULT hr = 0;
 
 	Stream_Read_UINT32(s, requestId); /* requestId (4 bytes) */
-	Stream_Read_UINT32(s, hr);        /* hrResponse (4 bytes) */
+	Stream_Read_INT32(s, hr);         /* hrResponse (4 bytes) */
 
 	return IFCALLRESULT(STATE_RUN_SUCCESS, multi->MtResponse, multi, requestId, hr);
 }

@@ -734,7 +734,7 @@ static BOOL rdp_security_stream_out(rdpRdp* rdp, wStream* s, size_t length, UINT
 			if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
 			{
 				BYTE* data = Stream_PointerAs(s, BYTE) + 12;
-				const size_t size = (data - Stream_Buffer(s));
+				const size_t size = WINPR_SAFE_INT_CAST(size_t, (data - Stream_Buffer(s)));
 				if (size > length)
 					goto unlock;
 
@@ -2582,11 +2582,12 @@ void* rdp_get_io_callback_context(rdpRdp* rdp)
 const char* rdp_finalize_flags_to_str(UINT32 flags, char* buffer, size_t size)
 {
 	char number[32] = { 0 };
-	const UINT32 mask = ~(FINALIZE_SC_SYNCHRONIZE_PDU | FINALIZE_SC_CONTROL_COOPERATE_PDU |
-	                      FINALIZE_SC_CONTROL_GRANTED_PDU | FINALIZE_SC_FONT_MAP_PDU |
-	                      FINALIZE_CS_SYNCHRONIZE_PDU | FINALIZE_CS_CONTROL_COOPERATE_PDU |
-	                      FINALIZE_CS_CONTROL_REQUEST_PDU | FINALIZE_CS_PERSISTENT_KEY_LIST_PDU |
-	                      FINALIZE_CS_FONT_LIST_PDU | FINALIZE_DEACTIVATE_REACTIVATE);
+	const UINT32 mask =
+	    (uint32_t)~(FINALIZE_SC_SYNCHRONIZE_PDU | FINALIZE_SC_CONTROL_COOPERATE_PDU |
+	                FINALIZE_SC_CONTROL_GRANTED_PDU | FINALIZE_SC_FONT_MAP_PDU |
+	                FINALIZE_CS_SYNCHRONIZE_PDU | FINALIZE_CS_CONTROL_COOPERATE_PDU |
+	                FINALIZE_CS_CONTROL_REQUEST_PDU | FINALIZE_CS_PERSISTENT_KEY_LIST_PDU |
+	                FINALIZE_CS_FONT_LIST_PDU | FINALIZE_DEACTIVATE_REACTIVATE);
 
 	if (flags & FINALIZE_SC_SYNCHRONIZE_PDU)
 		winpr_str_append("FINALIZE_SC_SYNCHRONIZE_PDU", buffer, size, "|");

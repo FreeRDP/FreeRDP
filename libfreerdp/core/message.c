@@ -195,7 +195,7 @@ static BOOL update_message_SetKeyboardImeStatus(rdpContext* context, UINT16 imeI
 
 	up = update_cast(context->update);
 	return MessageQueue_Post(up->queue, (void*)context, MakeMessageId(Update, SetKeyboardImeStatus),
-	                         (void*)(size_t)((imeId << 16UL) | imeState),
+	                         (void*)(size_t)((((UINT32)imeId << 16UL) & 0xFFFF0000) | imeState),
 	                         (void*)(size_t)imeConvMode);
 }
 
