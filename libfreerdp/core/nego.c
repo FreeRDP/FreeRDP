@@ -1297,9 +1297,9 @@ static const char* nego_rdp_neg_rsp_flags_str(UINT32 flags)
 		winpr_str_append("RESTRICTED_ADMIN_MODE_SUPPORTED", buffer, sizeof(buffer), "|");
 	if (flags & REDIRECTED_AUTHENTICATION_MODE_SUPPORTED)
 		winpr_str_append("REDIRECTED_AUTHENTICATION_MODE_SUPPORTED", buffer, sizeof(buffer), "|");
-	if ((flags &
-	     ~(EXTENDED_CLIENT_DATA_SUPPORTED | DYNVC_GFX_PROTOCOL_SUPPORTED | RDP_NEGRSP_RESERVED |
-	       RESTRICTED_ADMIN_MODE_SUPPORTED | REDIRECTED_AUTHENTICATION_MODE_SUPPORTED)))
+	if ((flags & (uint32_t)~(EXTENDED_CLIENT_DATA_SUPPORTED | DYNVC_GFX_PROTOCOL_SUPPORTED |
+	                         RDP_NEGRSP_RESERVED | RESTRICTED_ADMIN_MODE_SUPPORTED |
+	                         REDIRECTED_AUTHENTICATION_MODE_SUPPORTED)))
 		winpr_str_append("UNKNOWN", buffer, sizeof(buffer), "|");
 
 	return buffer;

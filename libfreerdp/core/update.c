@@ -1133,9 +1133,9 @@ static BOOL update_bounds_equals(rdpBounds* bounds1, rdpBounds* bounds2)
 	return FALSE;
 }
 
-static int update_prepare_bounds(rdpContext* context, ORDER_INFO* orderInfo)
+static size_t update_prepare_bounds(rdpContext* context, ORDER_INFO* orderInfo)
 {
-	int length = 0;
+	size_t length = 0;
 	rdp_update_internal* update = NULL;
 
 	WINPR_ASSERT(context);

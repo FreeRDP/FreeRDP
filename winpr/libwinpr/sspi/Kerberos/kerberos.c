@@ -1898,7 +1898,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_DecryptMessage(PCtxtHandle phContext,
 	PSecBuffer sig_buffer = NULL;
 	PSecBuffer data_buffer = NULL;
 	krb5glue_key key = NULL;
-	krb5_keyusage usage = 0;
+	unsigned usage = 0;
 	char* header = NULL;
 	uint16_t tok_id = 0;
 	BYTE flags = 0;
