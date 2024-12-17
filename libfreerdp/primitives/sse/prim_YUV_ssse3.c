@@ -37,7 +37,7 @@
 
 static primitives_t* generic = NULL;
 
-static inline __m128i _mm_set_epu32(uint32_t val1, uint32_t val2, uint32_t val3, uint32_t val4)
+static inline __m128i mm_set_epu32(uint32_t val1, uint32_t val2, uint32_t val3, uint32_t val4)
 {
 	return _mm_set_epi32((int32_t)val1, (int32_t)val2, (int32_t)val3, (int32_t)val4);
 }
@@ -48,20 +48,20 @@ static inline __m128i _mm_set_epu32(uint32_t val1, uint32_t val2, uint32_t val3,
 static __m128i* ssse3_YUV444Pixel(__m128i* WINPR_RESTRICT dst, __m128i Yraw, __m128i Uraw,
                                   __m128i Vraw, UINT8 pos)
 {
-	const __m128i mapY[] = { _mm_set_epu32(0x80800380, 0x80800280, 0x80800180, 0x80800080),
-		                     _mm_set_epu32(0x80800780, 0x80800680, 0x80800580, 0x80800480),
-		                     _mm_set_epu32(0x80800B80, 0x80800A80, 0x80800980, 0x80800880),
-		                     _mm_set_epu32(0x80800F80, 0x80800E80, 0x80800D80, 0x80800C80) };
-	const __m128i mapUV[] = { _mm_set_epu32(0x80038002, 0x80018000, 0x80808080, 0x80808080),
-		                      _mm_set_epu32(0x80078006, 0x80058004, 0x80808080, 0x80808080),
-		                      _mm_set_epu32(0x800B800A, 0x80098008, 0x80808080, 0x80808080),
-		                      _mm_set_epu32(0x800F800E, 0x800D800C, 0x80808080, 0x80808080) };
-	const __m128i mask[] = { _mm_set_epu32(0x80038080, 0x80028080, 0x80018080, 0x80008080),
-		                     _mm_set_epu32(0x80800380, 0x80800280, 0x80800180, 0x80800080),
-		                     _mm_set_epu32(0x80808003, 0x80808002, 0x80808001, 0x80808000) };
+	const __m128i mapY[] = { mm_set_epu32(0x80800380, 0x80800280, 0x80800180, 0x80800080),
+		                     mm_set_epu32(0x80800780, 0x80800680, 0x80800580, 0x80800480),
+		                     mm_set_epu32(0x80800B80, 0x80800A80, 0x80800980, 0x80800880),
+		                     mm_set_epu32(0x80800F80, 0x80800E80, 0x80800D80, 0x80800C80) };
+	const __m128i mapUV[] = { mm_set_epu32(0x80038002, 0x80018000, 0x80808080, 0x80808080),
+		                      mm_set_epu32(0x80078006, 0x80058004, 0x80808080, 0x80808080),
+		                      mm_set_epu32(0x800B800A, 0x80098008, 0x80808080, 0x80808080),
+		                      mm_set_epu32(0x800F800E, 0x800D800C, 0x80808080, 0x80808080) };
+	const __m128i mask[] = { mm_set_epu32(0x80038080, 0x80028080, 0x80018080, 0x80008080),
+		                     mm_set_epu32(0x80800380, 0x80800280, 0x80800180, 0x80800080),
+		                     mm_set_epu32(0x80808003, 0x80808002, 0x80808001, 0x80808000) };
 	const __m128i c128 = _mm_set1_epi16(128);
 	__m128i BGRX = _mm_and_si128(_mm_loadu_si128(dst),
-	                             _mm_set_epu32(0xFF000000, 0xFF000000, 0xFF000000, 0xFF000000));
+	                             mm_set_epu32(0xFF000000, 0xFF000000, 0xFF000000, 0xFF000000));
 	{
 		__m128i C;
 		__m128i D;

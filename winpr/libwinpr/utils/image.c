@@ -166,7 +166,7 @@ BOOL readBitmapInfoHeader(wStream* s, WINPR_BITMAP_INFO_HEADER* bi, size_t* poff
 			if (bi->biSizeImage == 0)
 			{
 				UINT32 stride = ((((bi->biWidth * bi->biBitCount) + 31) & ~31) >> 3);
-				bi->biSizeImage = abs(bi->biHeight) * stride;
+				bi->biSizeImage = WINPR_SAFE_INT_CAST(uint32_t, abs(bi->biHeight)) * stride;
 			}
 			break;
 		case BI_BITFIELDS:
