@@ -208,7 +208,7 @@ static BOOL update_process_glyph_fragments(rdpContext* context, const BYTE* data
 		 * a RDP session to Windows XP Professional SP3.
 		 * This workaround prevents resulting problems in the UI callbacks.
 		 */
-		opWidth = WINPR_SAFE_INT_CAST(int, w - opX);
+		opWidth = WINPR_SAFE_INT_CAST(int, w) - opX;
 	}
 
 	if (bkX + bkWidth > (INT64)w)
@@ -222,7 +222,7 @@ static BOOL update_process_glyph_fragments(rdpContext* context, const BYTE* data
 		 * a RDP session to Windows XP Professional SP3.
 		 * This workaround prevents resulting problems in the UI callbacks.
 		 */
-		bkWidth = WINPR_SAFE_INT_CAST(int, w - bkX);
+		bkWidth = WINPR_SAFE_INT_CAST(int, w) - bkX;
 	}
 
 	bound.x = WINPR_SAFE_INT_CAST(INT16, bkX);
