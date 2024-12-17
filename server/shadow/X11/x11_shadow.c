@@ -863,7 +863,8 @@ static int x11_shadow_screen_grab(x11ShadowSubsystem* subsystem)
 			success = freerdp_image_copy_no_overlap(
 			    surface->data, surface->format, surface->scanline, x, y, (UINT32)width,
 			    (UINT32)height, (BYTE*)image->data, subsystem->format,
-			    (UINT32)image->bytes_per_line, x, y, NULL, FREERDP_FLIP_NONE);
+			    (UINT32)image->bytes_per_line, WINPR_SAFE_INT_CAST(UINT32, x),
+			    WINPR_SAFE_INT_CAST(UINT32, y), NULL, FREERDP_FLIP_NONE);
 			LeaveCriticalSection(&surface->lock);
 			if (!success)
 				goto fail_capture;
@@ -1008,9 +1009,9 @@ static int x11_shadow_subsystem_base_init(x11ShadowSubsystem* subsystem)
 	subsystem->xfds = ConnectionNumber(subsystem->display);
 	subsystem->number = DefaultScreen(subsystem->display);
 	subsystem->screen = ScreenOfDisplay(subsystem->display, subsystem->number);
-	subsystem->depth = DefaultDepthOfScreen(subsystem->screen);
-	subsystem->width = WidthOfScreen(subsystem->screen);
-	subsystem->height = HeightOfScreen(subsystem->screen);
+	subsystem->depth = WINPR_SAFE_INT_CAST(UINT32, DefaultDepthOfScreen(subsystem->screen));
+	subsystem->width = WINPR_SAFE_INT_CAST(UINT32, WidthOfScreen(subsystem->screen));
+	subsystem->height = WINPR_SAFE_INT_CAST(UINT32, HeightOfScreen(subsystem->screen));
 	subsystem->root_window = RootWindow(subsystem->display, subsystem->number);
 	return 1;
 }

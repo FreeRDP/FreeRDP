@@ -771,7 +771,7 @@ static INLINE size_t xcrush_copy_bytes_no_overlap(BYTE* WINPR_RESTRICT dst,
 {
 	// src and dst overlaps
 	// we should copy the area that doesn't overlap repeatedly
-	const size_t diff = (dst > src) ? dst - src : src - dst;
+	const size_t diff = WINPR_SAFE_INT_CAST(size_t, (dst > src) ? dst - src : src - dst);
 	const size_t rest = num % diff;
 	const size_t end = num - rest;
 
@@ -906,7 +906,7 @@ static int xcrush_decompress_l1(XCRUSH_CONTEXT* WINPR_RESTRICT xcrush,
 
 	if (Literals < pSrcEnd)
 	{
-		OutputLength = pSrcEnd - Literals;
+		OutputLength = WINPR_SAFE_INT_CAST(size_t, pSrcEnd - Literals);
 
 		if ((&HistoryPtr[OutputLength] >= HistoryBufferEnd) || (&Literals[OutputLength] > pSrcEnd))
 			return -1012;

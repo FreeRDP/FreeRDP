@@ -230,7 +230,7 @@ BOOL region16_copy(REGION16* dst, const REGION16* src)
 		if (!dst->data)
 			return FALSE;
 
-		CopyMemory(dst->data, src->data, src->data->size);
+		CopyMemory(dst->data, src->data, WINPR_SAFE_INT_CAST(size_t, src->data->size));
 	}
 
 	return TRUE;
@@ -457,7 +457,8 @@ static BOOL region16_simplify_bands(REGION16* region)
 			/* override band2, we don't move band1 pointer as the band after band2
 			 * may be merged too */
 			endBand = band2 + bandItems;
-			const size_t toMove = (endPtr - endBand) * sizeof(RECTANGLE_16);
+			const size_t toMove =
+			    WINPR_SAFE_INT_CAST(size_t, (endPtr - endBand)) * sizeof(RECTANGLE_16);
 
 			if (toMove)
 				MoveMemory(band2, endBand, toMove);
@@ -802,7 +803,7 @@ BOOL region16_intersect_rect(REGION16* dst, const REGION16* src, const RECTANGLE
 	if ((dst->data->size > 0) && (dst->data != &empty_region))
 		free(dst->data);
 
-	dst->data = realloc(newItems, newItems->size);
+	dst->data = realloc(newItems, WINPR_SAFE_INT_CAST(size_t, newItems->size));
 
 	if (!dst->data)
 	{

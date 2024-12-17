@@ -189,7 +189,7 @@ static INLINE void zgfx_history_buffer_ring_read(ZGFX_CONTEXT* WINPR_RESTRICT zg
 
 	if ((index + WINPR_SAFE_INT_CAST(uint32_t, bytes)) <= zgfx->HistoryBufferSize)
 	{
-		CopyMemory(dptr, &(zgfx->HistoryBuffer[index]), bytes);
+		CopyMemory(dptr, &(zgfx->HistoryBuffer[index]), WINPR_SAFE_INT_CAST(size_t, bytes));
 	}
 	else
 	{
@@ -211,7 +211,7 @@ static INLINE void zgfx_history_buffer_ring_read(ZGFX_CONTEXT* WINPR_RESTRICT zg
 		if (bytes > bytesLeft)
 			bytes = bytesLeft;
 
-		CopyMemory(dptr, origDst, bytes);
+		CopyMemory(dptr, origDst, WINPR_SAFE_INT_CAST(size_t, bytes));
 		dptr += bytes;
 		valid <<= 1;
 	} while ((bytesLeft -= bytes) > 0);

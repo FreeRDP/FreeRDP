@@ -1964,9 +1964,9 @@ static INLINE BOOL NCrushFetchBits(const BYTE** SrcPtr, const BYTE** SrcEnd, INT
 		}
 		else
 		{
-			UINT16 tmp = *(*SrcPtr)++;
-			tmp |= (*(*SrcPtr)++) << 8;
-			*bits += tmp << *nbits;
+			UINT32 tmp = *(*SrcPtr)++;
+			tmp |= ((*(*SrcPtr)++) << 8) & 0xFF00;
+			*bits += (tmp << *nbits) & UINT32_MAX;
 			*nbits += 16;
 		}
 	}
