@@ -1755,18 +1755,15 @@ static CliprdrFuseFile* clip_data_dir_new(CliprdrFileContext* file_context, BOOL
 
 static char* get_parent_path(const char* filepath)
 {
-	char* base = NULL;
-	size_t parent_path_length = 0;
-	char* parent_path = NULL;
-
-	base = strrchr(filepath, '/');
+	const char* base = strrchr(filepath, '/');
 	WINPR_ASSERT(base);
 
-	while (base > filepath && *base == '/')
+	while ((base > filepath) && (*base == '/'))
 		--base;
 
-	parent_path_length = 1 + base - filepath;
-	parent_path = calloc(parent_path_length + 1, sizeof(char));
+	WINPR_ASSERT(base >= filepath);
+	const size_t parent_path_length = 1ULL + (size_t)(base - filepath);
+	char* parent_path = calloc(parent_path_length + 1, sizeof(char));
 	if (!parent_path)
 		return NULL;
 

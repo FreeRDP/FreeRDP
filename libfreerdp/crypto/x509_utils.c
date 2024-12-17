@@ -237,9 +237,9 @@ that must be freed with OPENSSL_free.
 typedef struct string_list
 {
 	char** strings;
-	int allocated;
-	int count;
-	int maximum;
+	size_t allocated;
+	size_t count;
+	size_t maximum;
 } string_list;
 
 static void string_list_initialize(string_list* list)
@@ -250,12 +250,12 @@ static void string_list_initialize(string_list* list)
 	list->maximum = INT_MAX;
 }
 
-static void string_list_allocate(string_list* list, int allocate_count)
+static void string_list_allocate(string_list* list, size_t allocate_count)
 {
 	if (!list->strings && list->allocated == 0)
 	{
-		list->strings = (char**)calloc((size_t)allocate_count, sizeof(char*));
-		list->allocated = list->strings ? allocate_count : -1;
+		list->strings = (char**)calloc(allocate_count, sizeof(char*));
+		list->allocated = list->strings ? allocate_count : 0;
 		list->count = 0;
 	}
 }
@@ -273,6 +273,8 @@ static int extract_string(GENERAL_NAME* name, void* data, int index, int count)
 	string_list* list = data;
 	unsigned char* cstring = 0;
 	ASN1_STRING* str = NULL;
+
+	WINPR_UNUSED(index);
 
 	switch (name->type)
 	{
@@ -299,7 +301,7 @@ static int extract_string(GENERAL_NAME* name, void* data, int index, int count)
 		return 1;
 	}
 
-	string_list_allocate(list, count);
+	string_list_allocate(list, WINPR_SAFE_INT_CAST(size_t, count));
 
 	if (list->allocated <= 0)
 	{
@@ -340,9 +342,9 @@ typedef struct object_list
 {
 	ASN1_OBJECT* type_id;
 	char** strings;
-	int allocated;
-	int count;
-	int maximum;
+	size_t allocated;
+	size_t count;
+	size_t maximum;
 } object_list;
 
 static void object_list_initialize(object_list* list)
@@ -354,12 +356,12 @@ static void object_list_initialize(object_list* list)
 	list->maximum = INT_MAX;
 }
 
-static void object_list_allocate(object_list* list, int allocate_count)
+static void object_list_allocate(object_list* list, size_t allocate_count)
 {
-	if (!list->strings && list->allocated == 0)
+	if (!list->strings && (list->allocated == 0))
 	{
 		list->strings = (char**)calloc(allocate_count, sizeof(list->strings[0]));
-		list->allocated = list->strings ? allocate_count : -1;
+		list->allocated = list->strings ? allocate_count : 0;
 		list->count = 0;
 	}
 }
@@ -368,16 +370,16 @@ static char* object_string(ASN1_TYPE* object)
 {
 	char* result = NULL;
 	unsigned char* utf8String = NULL;
-	int length = 0;
+
 	/* TODO: check that object.type is a string type. */
-	length = ASN1_STRING_to_UTF8(&utf8String, object->value.asn1_string);
+	const int length = ASN1_STRING_to_UTF8(&utf8String, object->value.asn1_string);
 
 	if (length < 0)
 	{
 		return 0;
 	}
 
-	result = _strdup((char*)utf8String);
+	result = strndup((char*)utf8String, WINPR_SAFE_INT_CAST(size_t, length));
 	OPENSSL_free(utf8String);
 	return result;
 }
@@ -391,6 +393,10 @@ static void object_list_free(object_list* list)
 static int extract_othername_object_as_string(GENERAL_NAME* name, void* data, int index, int count)
 {
 	object_list* list = data;
+	WINPR_UNUSED(index);
+
+	if (count < 0)
+		return -1;
 
 	if (name->type != GEN_OTHERNAME)
 	{
@@ -402,7 +408,7 @@ static int extract_othername_object_as_string(GENERAL_NAME* name, void* data, in
 		return 1;
 	}
 
-	object_list_allocate(list, count);
+	object_list_allocate(list, WINPR_SAFE_INT_CAST(size_t, count));
 
 	if (list->allocated <= 0)
 	{
@@ -447,7 +453,7 @@ char* x509_utils_get_email(const X509* x509)
 char* x509_utils_get_upn(const X509* x509)
 {
 	char* result = 0;
-	object_list list;
+	object_list list = { 0 };
 	object_list_initialize(&list);
 	list.type_id = OBJ_nid2obj(NID_ms_upn);
 	list.maximum = 1;
@@ -538,7 +544,7 @@ char** x509_utils_get_dns_names(const X509* x509, size_t* count, size_t** length
 		return NULL;
 	}
 
-	for (int i = 0; i < list.count; i++)
+	for (size_t i = 0; i < list.count; i++)
 	{
 		result[i] = list.strings[i];
 		(*lengths)[i] = strlen(result[i]);
