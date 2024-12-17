@@ -2039,7 +2039,7 @@ static long transport_layer_bio_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 		{
 			int timeout = (int)arg1;
 			BOOL r = IFCALLRESULT(FALSE, layer->Wait, layer->userContext, TRUE,
-			                      WINPR_SAFE_INT_CAST(uint32_t_t, timeout));
+			                      WINPR_SAFE_INT_CAST(uint32_t, timeout));
 			/* Convert timeout to error return */
 			if (!r)
 			{
