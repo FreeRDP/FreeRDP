@@ -358,7 +358,7 @@ static void object_list_initialize(object_list* list)
 
 static void object_list_allocate(object_list* list, size_t allocate_count)
 {
-	if (!list->strings && (list->allocated == 0))
+	if (!list->strings && (list->allocated == 0) && (allocate_count > 0))
 	{
 		list->strings = (char**)calloc(allocate_count, sizeof(list->strings[0]));
 		list->allocated = list->strings ? allocate_count : 0;
@@ -521,7 +521,7 @@ char** x509_utils_get_dns_names(const X509* x509, size_t* count, size_t** length
 	string_list list = { 0 };
 	string_list_initialize(&list);
 	map_subject_alt_name(x509, GEN_DNS, extract_string, &list);
-	(*count) = (size_t)list.count;
+	(*count) = list.count;
 
 	if (list.count <= 0)
 	{
@@ -531,8 +531,8 @@ char** x509_utils_get_dns_names(const X509* x509, size_t* count, size_t** length
 
 	/* lengths are not useful,  since we converted the
 	   strings to utf-8,  there cannot be nul-bytes in them. */
-	result = (char**)calloc((size_t)list.count, sizeof(*result));
-	(*lengths) = calloc((size_t)list.count, sizeof(**lengths));
+	result = (char**)calloc(list.count, sizeof(*result));
+	(*lengths) = calloc(list.count, sizeof(**lengths));
 
 	if (!result || !(*lengths))
 	{
