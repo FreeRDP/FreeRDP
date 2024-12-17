@@ -62,9 +62,8 @@ function(cleaning_configure_file RSRC RDST)
   string(SHA256 DST_HASH "${DST}")
   if(NOT TARGET ct-${DST_HASH})
     add_custom_target(
-      ct-${DST_HASH} ALL COMMAND ${CMAKE_COMMAND} "-E" "make_directory" "${DST_DIR}"
-      COMMAND ${CMAKE_COMMAND} "-E" "copy_if_different" "${SOURCE_CFG}" "${DST}" DEPENDS ${SOURCE_CFG}
-      BYPRODUCTS ${DST}
+      ct-${DST_HASH} COMMAND ${CMAKE_COMMAND} "-E" "make_directory" "${DST_DIR}"
+      COMMAND ${CMAKE_COMMAND} "-E" "copy_if_different" "${SOURCE_CFG}" "${DST}" DEPENDS ${SOURCE_CFG} ${DST}
     )
   endif()
 endfunction()
