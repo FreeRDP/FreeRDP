@@ -95,8 +95,11 @@ int SdlSelectList::run()
 								CurrentActiveTextInput++;
 
 							const auto s = _list.size();
-							CurrentActiveTextInput =
-							    CurrentActiveTextInput % WINPR_SAFE_INT_CAST(ssize_t, s);
+							if (s <= 0)
+								CurrentActiveTextInput = 0;
+							else
+								CurrentActiveTextInput =
+								    CurrentActiveTextInput % WINPR_SAFE_INT_CAST(ssize_t, s);
 						}
 						break;
 						case SDLK_RETURN:
