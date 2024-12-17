@@ -165,7 +165,8 @@ BOOL readBitmapInfoHeader(wStream* s, WINPR_BITMAP_INFO_HEADER* bi, size_t* poff
 			}
 			if (bi->biSizeImage == 0)
 			{
-				UINT32 stride = ((((bi->biWidth * bi->biBitCount) + 31) & ~31) >> 3);
+				UINT32 stride = WINPR_SAFE_INT_CAST(
+				    uint32_t, ((((bi->biWidth * bi->biBitCount) + 31) & ~31) >> 3));
 				bi->biSizeImage = WINPR_SAFE_INT_CAST(uint32_t, abs(bi->biHeight)) * stride;
 			}
 			break;
@@ -323,7 +324,7 @@ int winpr_bitmap_write_ex(const char* filename, const BYTE* data, size_t stride,
 	FILE* fp = NULL;
 	int ret = -1;
 	void* bmpdata = NULL;
-	const size_t bpp_stride = ((((width * bpp) + 31) & ~31) >> 3);
+	const size_t bpp_stride = ((((width * bpp) + 31) & (size_t)~31) >> 3);
 
 	if ((stride > UINT32_MAX) || (width > UINT32_MAX) || (height > UINT32_MAX) ||
 	    (bpp > UINT32_MAX))
@@ -379,7 +380,7 @@ fail:
 int winpr_image_write(wImage* image, const char* filename)
 {
 	WINPR_ASSERT(image);
-	return winpr_image_write_ex(image, image->type, filename);
+	return winpr_image_write_ex(image, WINPR_SAFE_INT_CAST(uint32_t, image->type), filename);
 }
 
 int winpr_image_write_ex(wImage* image, UINT32 format, const char* filename)
@@ -458,7 +459,7 @@ static int winpr_image_bitmap_read_buffer(wImage* image, const BYTE* buffer, siz
 	image->bitsPerPixel = bi.biBitCount;
 	image->bytesPerPixel = (image->bitsPerPixel / 8UL);
 	const size_t bpp = (bi.biBitCount + 7UL) / 8UL;
-	image->scanline = (UINT32)(bi.biWidth * bpp);
+	image->scanline = WINPR_SAFE_INT_CAST(uint32_t, bi.biWidth) * bpp;
 	const size_t bmpsize = 1ULL * image->scanline * image->height;
 	if (bmpsize != bi.biSizeImage)
 		WLog_WARN(TAG, "bmpsize=%" PRIuz " != bi.biSizeImage=%" PRIu32, bmpsize, bi.biSizeImage);

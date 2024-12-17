@@ -231,10 +231,12 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 			for (UINT32 i = 0; i < vscreen->nmonitors; i++)
 			{
 				MONITOR_INFO* monitor = &vscreen->monitors[i];
-				monitor->area.left = screenInfo[i].x_org;
-				monitor->area.top = screenInfo[i].y_org;
-				monitor->area.right = screenInfo[i].x_org + screenInfo[i].width - 1;
-				monitor->area.bottom = screenInfo[i].y_org + screenInfo[i].height - 1;
+				monitor->area.left = WINPR_SAFE_INT_CAST(uint16_t, screenInfo[i].x_org);
+				monitor->area.top = WINPR_SAFE_INT_CAST(uint16_t, screenInfo[i].y_org);
+				monitor->area.right =
+				    WINPR_SAFE_INT_CAST(uint16_t, screenInfo[i].x_org + screenInfo[i].width - 1);
+				monitor->area.bottom =
+				    WINPR_SAFE_INT_CAST(uint16_t, screenInfo[i].y_org + screenInfo[i].height - 1);
 			}
 		}
 
@@ -320,15 +322,15 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 		{
 			xfc->workArea.x = 0;
 			xfc->workArea.y = 0;
-			xfc->workArea.width = WidthOfScreen(xfc->screen);
-			xfc->workArea.height = HeightOfScreen(xfc->screen);
+			xfc->workArea.width = WINPR_SAFE_INT_CAST(uint32_t, WidthOfScreen(xfc->screen));
+			xfc->workArea.height = WINPR_SAFE_INT_CAST(uint32_t, HeightOfScreen(xfc->screen));
 		}
 	}
 
 	if (freerdp_settings_get_bool(settings, FreeRDP_Fullscreen))
 	{
-		*pMaxWidth = WidthOfScreen(xfc->screen);
-		*pMaxHeight = HeightOfScreen(xfc->screen);
+		*pMaxWidth = WINPR_SAFE_INT_CAST(uint32_t, WidthOfScreen(xfc->screen));
+		*pMaxHeight = WINPR_SAFE_INT_CAST(uint32_t, HeightOfScreen(xfc->screen));
 	}
 	else if (freerdp_settings_get_bool(settings, FreeRDP_Workarea))
 	{
@@ -406,7 +408,7 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 				goto fail;
 
 			rdpMonitor* monitor = freerdp_settings_get_pointer_array_writable(
-			    settings, FreeRDP_MonitorDefArray, nmonitors);
+			    settings, FreeRDP_MonitorDefArray, WINPR_SAFE_INT_CAST(size_t, nmonitors));
 			monitor->x =
 			    WINPR_SAFE_INT_CAST(
 			        int32_t, vscreen->monitors[i].area.left*(
@@ -445,8 +447,8 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 				Rotation rot = 0;
 				Rotation ret = 0;
 				attrs = &monitor->attributes;
-				attrs->physicalWidth = rrmonitors[i].mwidth;
-				attrs->physicalHeight = rrmonitors[i].mheight;
+				attrs->physicalWidth = WINPR_SAFE_INT_CAST(uint32_t, rrmonitors[i].mwidth);
+				attrs->physicalHeight = WINPR_SAFE_INT_CAST(uint32_t, rrmonitors[i].mheight);
 				ret = XRRRotations(xfc->display, WINPR_SAFE_INT_CAST(int, i), &rot);
 				attrs->orientation = ret;
 			}
@@ -456,9 +458,11 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 			if (i == nr)
 			{
 				monitor->is_primary = TRUE;
-				if (!freerdp_settings_set_uint32(settings, FreeRDP_MonitorLocalShiftX, monitor->x))
+				if (!freerdp_settings_set_uint32(settings, FreeRDP_MonitorLocalShiftX,
+				                                 WINPR_SAFE_INT_CAST(uint32_t, monitor->x)))
 					goto fail;
-				if (!freerdp_settings_set_uint32(settings, FreeRDP_MonitorLocalShiftY, monitor->y))
+				if (!freerdp_settings_set_uint32(settings, FreeRDP_MonitorLocalShiftY,
+				                                 WINPR_SAFE_INT_CAST(uint32_t, monitor->y)))
 					goto fail;
 				primaryMonitorFound = TRUE;
 			}
@@ -497,7 +501,8 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 		nmonitors = 1;
 	}
 
-	if (!freerdp_settings_set_uint32(settings, FreeRDP_MonitorCount, nmonitors))
+	if (!freerdp_settings_set_uint32(settings, FreeRDP_MonitorCount,
+	                                 WINPR_SAFE_INT_CAST(uint32_t, nmonitors)))
 		goto fail;
 
 	/* If we have specific monitor information */
@@ -587,7 +592,7 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 				   The monitor listed with /list:monitor on index zero is always the primary
 				*/
 				screen = DefaultScreenOfDisplay(xfc->display);
-				monitor_index = XScreenNumberOfScreen(screen);
+				monitor_index = WINPR_SAFE_INT_CAST(uint32_t, XScreenNumberOfScreen(screen));
 			}
 
 			UINT32 j = monitor_index;
@@ -598,9 +603,11 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 			if ((pmonitor->x != 0) || (pmonitor->y != 0))
 			{
 				pmonitor->is_primary = TRUE;
-				if (!freerdp_settings_set_uint32(settings, FreeRDP_MonitorLocalShiftX, pmonitor->x))
+				if (!freerdp_settings_set_uint32(settings, FreeRDP_MonitorLocalShiftX,
+				                                 WINPR_SAFE_INT_CAST(uint32_t, pmonitor->x)))
 					goto fail;
-				if (!freerdp_settings_set_uint32(settings, FreeRDP_MonitorLocalShiftY, pmonitor->y))
+				if (!freerdp_settings_set_uint32(settings, FreeRDP_MonitorLocalShiftY,
+				                                 WINPR_SAFE_INT_CAST(uint32_t, pmonitor->y)))
 					goto fail;
 			}
 			else
@@ -616,10 +623,10 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 					{
 						monitor->is_primary = TRUE;
 						if (!freerdp_settings_set_uint32(settings, FreeRDP_MonitorLocalShiftX,
-						                                 monitor->x))
+						                                 WINPR_SAFE_INT_CAST(uint32_t, monitor->x)))
 							goto fail;
 						if (!freerdp_settings_set_uint32(settings, FreeRDP_MonitorLocalShiftY,
-						                                 monitor->y))
+						                                 WINPR_SAFE_INT_CAST(uint32_t, monitor->y)))
 							goto fail;
 						primaryMonitorFound = TRUE;
 					}
