@@ -1165,7 +1165,7 @@ static UINT drdynvc_process_create_request(drdynvcPlugin* drdynvc, UINT8 Sp, UIN
 	UINT channel_status = 0;
 	DVCMAN* dvcman = NULL;
 	DVCMAN_CHANNEL* channel = NULL;
-	UINT32 retStatus = 0;
+	INT32 retStatus = 0;
 
 	WINPR_UNUSED(Sp);
 	if (!drdynvc)
@@ -1231,14 +1231,14 @@ static UINT drdynvc_process_create_request(drdynvcPlugin* drdynvc, UINT8 Sp, UIN
 			break;
 		case ERROR_NOT_FOUND:
 			WLog_Print(drdynvc->log, WLOG_DEBUG, "no listener for '%s'", name);
-			retStatus = (UINT32)0xC0000001; /* same code used by mstsc, STATUS_UNSUCCESSFUL */
+			retStatus = (INT32)0xC0000001; /* same code used by mstsc, STATUS_UNSUCCESSFUL */
 			break;
 		default:
 			WLog_Print(drdynvc->log, WLOG_DEBUG, "channel creation error");
-			retStatus = (UINT32)0xC0000001; /* same code used by mstsc, STATUS_UNSUCCESSFUL */
+			retStatus = (INT32)0xC0000001; /* same code used by mstsc, STATUS_UNSUCCESSFUL */
 			break;
 	}
-	Stream_Write_UINT32(data_out, retStatus);
+	Stream_Write_INT32(data_out, retStatus);
 
 	status = drdynvc_send(drdynvc, data_out);
 	if (status != CHANNEL_RC_OK)
