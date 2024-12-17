@@ -573,7 +573,7 @@ static char* freerdp_assistance_contains_element(char* input, size_t ilen, const
 		WINPR_ASSERT((size_t)erc < sizeof(ekey));
 		if ((erc <= 0) || ((size_t)erc >= sizeof(ekey)))
 			return NULL;
-		const size_t offset = start - tag;
+		const size_t offset = WINPR_SAFE_INT_CAST(size_t, start - tag);
 		dend = end = strrstr(start, ilen - offset, ekey);
 		if (end)
 			end += strnlen(ekey, sizeof(ekey));
