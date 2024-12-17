@@ -177,25 +177,25 @@ BOOL rdpei_read_4byte_unsigned(wStream* s, UINT32* value)
 			break;
 
 		case 1:
-			*value = (byte & 0x3F) << 8;
+			*value = ((byte & 0x3F) << 8) & 0xFF;
 			Stream_Read_UINT8(s, byte);
 			*value |= byte;
 			break;
 
 		case 2:
-			*value = (byte & 0x3F) << 16;
+			*value = ((byte & 0x3F) << 16) & 0xFF0000;
 			Stream_Read_UINT8(s, byte);
-			*value |= (byte << 8);
+			*value |= ((byte << 8) & 0xFF);
 			Stream_Read_UINT8(s, byte);
 			*value |= byte;
 			break;
 
 		case 3:
-			*value = (byte & 0x3F) << 24;
+			*value = ((byte & 0x3F) << 24) & 0xFF0000;
 			Stream_Read_UINT8(s, byte);
-			*value |= (byte << 16);
+			*value |= ((byte << 16) & 0xFF00);
 			Stream_Read_UINT8(s, byte);
-			*value |= (byte << 8);
+			*value |= ((byte << 8) & 0xFF);
 			Stream_Read_UINT8(s, byte);
 			*value |= byte;
 			break;
