@@ -31,16 +31,16 @@
 static primitives_t* generic = NULL;
 
 /* ------------------------------------------------------------------------- */
-SSE3_SCD_ROUTINE(sse2_lShiftC_16s, INT16, generic->lShiftC_16s, _mm_slli_epi16,
+SSE3_SCD_ROUTINE(sse2_lShiftC_16s, INT16, generic->lShiftC_16s, _mm_slli_epi16, int16_t,
                  *dptr++ = (INT16)(((UINT16)*sptr++ << val) & 0xFFFF))
 /* ------------------------------------------------------------------------- */
-SSE3_SCD_ROUTINE(sse2_rShiftC_16s, INT16, generic->rShiftC_16s, _mm_srai_epi16,
+SSE3_SCD_ROUTINE(sse2_rShiftC_16s, INT16, generic->rShiftC_16s, _mm_srai_epi16, int16_t,
                  *dptr++ = *sptr++ >> val)
 /* ------------------------------------------------------------------------- */
-SSE3_SCD_ROUTINE(sse2_lShiftC_16u, UINT16, generic->lShiftC_16u, _mm_slli_epi16,
-                 *dptr++ = (INT16)(((UINT16)*sptr++ << val) & 0xFFFF))
+SSE3_SCD_ROUTINE(sse2_lShiftC_16u, UINT16, generic->lShiftC_16u, _mm_slli_epi16, int16_t,
+                 *dptr++ = (((UINT16)*sptr++ << val) & 0xFFFF))
 /* ------------------------------------------------------------------------- */
-SSE3_SCD_ROUTINE(sse2_rShiftC_16u, UINT16, generic->rShiftC_16u, _mm_srli_epi16,
+SSE3_SCD_ROUTINE(sse2_rShiftC_16u, UINT16, generic->rShiftC_16u, _mm_srli_epi16, int16_t,
                  *dptr++ = *sptr++ >> val)
 
 static pstatus_t sse2_lShiftC_16s_inplace(INT16* WINPR_RESTRICT pSrcDst, UINT32 val, UINT32 len)
@@ -72,7 +72,7 @@ static pstatus_t sse2_lShiftC_16s_inplace(INT16* WINPR_RESTRICT pSrcDst, UINT32 
 	}
 
 	/* Use 8 128-bit SSE registers. */
-	int count = len >> (8 - shifts);
+	uint32_t count = len >> (8 - shifts);
 	len -= count << (8 - shifts);
 
 	while (count--)
@@ -88,14 +88,14 @@ static pstatus_t sse2_lShiftC_16s_inplace(INT16* WINPR_RESTRICT pSrcDst, UINT32 
 		__m128i xmm6 = _mm_load_si128(src++);
 		__m128i xmm7 = _mm_load_si128(src);
 
-		xmm0 = _mm_slli_epi16(xmm0, val);
-		xmm1 = _mm_slli_epi16(xmm1, val);
-		xmm2 = _mm_slli_epi16(xmm2, val);
-		xmm3 = _mm_slli_epi16(xmm3, val);
-		xmm4 = _mm_slli_epi16(xmm4, val);
-		xmm5 = _mm_slli_epi16(xmm5, val);
-		xmm6 = _mm_slli_epi16(xmm6, val);
-		xmm7 = _mm_slli_epi16(xmm7, val);
+		xmm0 = _mm_slli_epi16(xmm0, (int16_t)val);
+		xmm1 = _mm_slli_epi16(xmm1, (int16_t)val);
+		xmm2 = _mm_slli_epi16(xmm2, (int16_t)val);
+		xmm3 = _mm_slli_epi16(xmm3, (int16_t)val);
+		xmm4 = _mm_slli_epi16(xmm4, (int16_t)val);
+		xmm5 = _mm_slli_epi16(xmm5, (int16_t)val);
+		xmm6 = _mm_slli_epi16(xmm6, (int16_t)val);
+		xmm7 = _mm_slli_epi16(xmm7, (int16_t)val);
 
 		__m128i* dst = (__m128i*)pSrcDst;
 
@@ -119,7 +119,7 @@ static pstatus_t sse2_lShiftC_16s_inplace(INT16* WINPR_RESTRICT pSrcDst, UINT32 
 		const __m128i* src = (const __m128i*)pSrcDst;
 		__m128i xmm0 = LOAD_SI128(src);
 
-		xmm0 = _mm_slli_epi16(xmm0, val);
+		xmm0 = _mm_slli_epi16(xmm0, (int16_t)val);
 
 		__m128i* dst = (__m128i*)pSrcDst;
 		_mm_store_si128(dst++, xmm0);
