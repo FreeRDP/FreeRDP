@@ -44,8 +44,8 @@ extern "C"
 		WINPR_ASSERT(bs);
 		bs->buffer = (buffer);
 
-		WINPR_ASSERT(nbytes <= INT32_MAX);
-		bs->nbytes = nbytes;
+		WINPR_ASSERT(nbytes <= UINT32_MAX);
+		bs->nbytes = WINPR_SAFE_INT_CAST(uint32_t, nbytes);
 		bs->byte_pos = 0;
 		bs->bits_left = 8;
 	}

@@ -65,14 +65,22 @@
  * Update the passed parameter and clamp it to the range [0, KPMAX]
  * Return the value of parameter right-shifted by LSGR
  */
-static inline uint32_t UpdateParam(int32_t* param, int32_t deltaP)
+static inline uint32_t UpdateParam(uint32_t* param, int32_t deltaP)
 {
 	WINPR_ASSERT(param);
-	*param += (deltaP);
+	if (deltaP < 0)
+	{
+		const uint32_t udeltaP = WINPR_SAFE_INT_CAST(uint32_t, -deltaP);
+		if (udeltaP > *param)
+			*param = 0;
+		else
+			*param -= udeltaP;
+	}
+	else
+		*param += WINPR_SAFE_INT_CAST(uint32_t, deltaP);
+
 	if ((*param) > KPMAX)
 		(*param) = KPMAX;
-	if ((*param) < 0)
-		(*param) = 0;
 	return (*param) >> LSGR;
 }
 
@@ -82,6 +90,10 @@ static INIT_ONCE rfx_rlgr_init_once = INIT_ONCE_STATIC_INIT;
 
 static BOOL CALLBACK rfx_rlgr_init(PINIT_ONCE once, PVOID param, PVOID* context)
 {
+	WINPR_UNUSED(once);
+	WINPR_UNUSED(param);
+	WINPR_UNUSED(context);
+
 	g_LZCNT = IsProcessorFeaturePresentEx(PF_EX_LZCNT);
 	return TRUE;
 }
@@ -140,16 +152,16 @@ static INLINE UINT32 lzcnt_s(UINT32 x)
 int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* WINPR_RESTRICT pSrcData, UINT32 SrcSize,
                     INT16* WINPR_RESTRICT pDstData, UINT32 rDstSize)
 {
-	int vk = 0;
+	uint32_t vk = 0;
 	size_t run = 0;
-	int cnt = 0;
+	size_t cnt = 0;
 	size_t size = 0;
 	size_t offset = 0;
 	INT16 mag = 0;
 	UINT32 k = 0;
-	INT32 kp = 0;
+	UINT32 kp = 0;
 	UINT32 kr = 0;
-	INT32 krp = 0;
+	UINT32 krp = 0;
 	UINT16 code = 0;
 	UINT32 sign = 0;
 	UINT32 nIdx = 0;
@@ -163,10 +175,10 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* WINPR_RESTRICT pSrcData, UINT32 
 	InitOnceExecuteOnce(&rfx_rlgr_init_once, rfx_rlgr_init, NULL, NULL);
 
 	k = 1;
-	kp = WINPR_SAFE_INT_CAST(int32_t, k << LSGR);
+	kp = k << LSGR;
 
 	kr = 1;
-	krp = WINPR_SAFE_INT_CAST(int32_t, kr << LSGR);
+	krp = kr << LSGR;
 
 	if ((mode != RLGR1) && (mode != RLGR3))
 		mode = RLGR1;
@@ -194,25 +206,25 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* WINPR_RESTRICT pSrcData, UINT32 
 
 			/* count number of leading 0s */
 
-			cnt = WINPR_SAFE_INT_CAST(int32_t, lzcnt_s(bs->accumulator));
+			cnt = lzcnt_s(bs->accumulator);
 
 			size_t nbits = BitStream_GetRemainingLength(bs);
 
-			if ((size_t)cnt > nbits)
-				cnt = (int)nbits;
+			if (cnt > nbits)
+				cnt = WINPR_SAFE_INT_CAST(uint32_t, nbits);
 
-			vk = cnt;
+			vk = WINPR_SAFE_INT_CAST(uint32_t, cnt);
 
 			while ((cnt == 32) && (BitStream_GetRemainingLength(bs) > 0))
 			{
 				BitStream_Shift32(bs);
 
-				cnt = WINPR_SAFE_INT_CAST(int32_t, lzcnt_s(bs->accumulator));
+				cnt = lzcnt_s(bs->accumulator);
 
 				nbits = BitStream_GetRemainingLength(bs);
 
 				if ((size_t)cnt > nbits)
-					cnt = (int)nbits;
+					cnt = nbits;
 
 				vk += cnt;
 			}
@@ -258,25 +270,25 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* WINPR_RESTRICT pSrcData, UINT32 
 
 			/* count number of leading 1s */
 
-			cnt = WINPR_SAFE_INT_CAST(int, lzcnt_s(~(bs->accumulator)));
+			cnt = lzcnt_s(~(bs->accumulator));
 
 			nbits = BitStream_GetRemainingLength(bs);
 
-			if ((size_t)cnt > nbits)
-				cnt = (int)nbits;
+			if (cnt > nbits)
+				cnt = nbits;
 
-			vk = cnt;
+			vk = WINPR_SAFE_INT_CAST(uint32_t, cnt);
 
 			while ((cnt == 32) && (BitStream_GetRemainingLength(bs) > 0))
 			{
 				BitStream_Shift32(bs);
 
-				cnt = WINPR_SAFE_INT_CAST(int, lzcnt_s(~(bs->accumulator)));
+				cnt = lzcnt_s(~(bs->accumulator));
 
 				nbits = BitStream_GetRemainingLength(bs);
 
-				if ((size_t)cnt > nbits)
-					cnt = (int)nbits;
+				if (cnt > nbits)
+					cnt = nbits;
 
 				vk += cnt;
 			}
@@ -308,9 +320,9 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* WINPR_RESTRICT pSrcData, UINT32 
 			{
 				/* update kr, krp params */
 
-				krp -= 2;
-
-				if (krp < 0)
+				if (krp > 2)
+					krp -= 2;
+				else
 					krp = 0;
 
 				kr = krp >> LSGR;
@@ -329,9 +341,9 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* WINPR_RESTRICT pSrcData, UINT32 
 
 			/* update k, kp params */
 
-			kp -= DN_GR;
-
-			if (kp < 0)
+			if (kp > DN_GR)
+				kp -= DN_GR;
+			else
 				kp = 0;
 
 			k = kp >> LSGR;
@@ -369,25 +381,25 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* WINPR_RESTRICT pSrcData, UINT32 
 
 			/* count number of leading 1s */
 
-			cnt = WINPR_SAFE_INT_CAST(int, lzcnt_s(~(bs->accumulator)));
+			cnt = lzcnt_s(~(bs->accumulator));
 
 			size_t nbits = BitStream_GetRemainingLength(bs);
 
-			if ((size_t)cnt > nbits)
-				cnt = (int)nbits;
+			if (cnt > nbits)
+				cnt = nbits;
 
-			vk = cnt;
+			vk = WINPR_SAFE_INT_CAST(uint32_t, cnt);
 
 			while ((cnt == 32) && (BitStream_GetRemainingLength(bs) > 0))
 			{
 				BitStream_Shift32(bs);
 
-				cnt = WINPR_SAFE_INT_CAST(int, lzcnt_s(~(bs->accumulator)));
+				cnt = lzcnt_s(~(bs->accumulator));
 
 				nbits = BitStream_GetRemainingLength(bs);
 
 				if ((size_t)cnt > nbits)
-					cnt = (int)nbits;
+					cnt = nbits;
 
 				vk += cnt;
 			}
@@ -419,9 +431,9 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* WINPR_RESTRICT pSrcData, UINT32 
 			{
 				/* update kr, krp params */
 
-				krp -= 2;
-
-				if (krp < 0)
+				if (krp > 2)
+					krp -= 2;
+				else
 					krp = 0;
 
 				kr = (krp >> LSGR) & UINT32_MAX;
@@ -457,9 +469,9 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* WINPR_RESTRICT pSrcData, UINT32 
 				{
 					/* update k, kp params */
 
-					kp -= DQ_GR;
-
-					if (kp < 0)
+					if (kp > DQ_GR)
+						kp -= DQ_GR;
+					else
 						kp = 0;
 
 					k = kp >> LSGR;
@@ -487,8 +499,8 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* WINPR_RESTRICT pSrcData, UINT32 
 
 				if (code)
 				{
-					mag = WINPR_SAFE_INT_CAST(INT16, code);
-					nIdx = 32 - lzcnt_s(mag);
+					mag = WINPR_SAFE_INT_CAST(int16_t, code);
+					nIdx = 32 - lzcnt_s(WINPR_SAFE_INT_CAST(uint32_t, mag));
 				}
 
 				if (BitStream_GetRemainingLength(bs) < nIdx)
@@ -507,9 +519,9 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* WINPR_RESTRICT pSrcData, UINT32 
 				{
 					/* update k, kp params */
 
-					kp -= (2 * DQ_GR);
-
-					if (kp < 0)
+					if (kp > 2 * DQ_GR)
+						kp -= (2 * DQ_GR);
+					else
 						kp = 0;
 
 					k = kp >> LSGR;
@@ -544,7 +556,7 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* WINPR_RESTRICT pSrcData, UINT32 
 
 				if ((pOutput - pDstData) < DstSize)
 				{
-					*pOutput = mag;
+					*pOutput = WINPR_SAFE_INT_CAST(int16_t, mag);
 					pOutput++;
 				}
 			}
@@ -587,12 +599,15 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* WINPR_RESTRICT pSrcData, UINT32 
 #define OutputBits(numBits, bitPattern) rfx_bitstream_put_bits(bs, bitPattern, numBits)
 
 /* Emit a bit (0 or 1), count number of times, to the output bitstream */
-static inline void OutputBit(RFX_BITSTREAM* bs, int count, UINT8 bit)
+static inline void OutputBit(RFX_BITSTREAM* bs, uint32_t count, UINT8 bit)
 {
 	UINT16 _b = ((bit) ? 0xFFFF : 0);
-	int _c = (count);
-	for (; _c > 0; _c -= 16)
-		rfx_bitstream_put_bits(bs, _b, (_c > 16 ? 16 : _c));
+	const uint32_t rem = count % 16;
+	for (uint32_t x = 0; x < count - rem; x += 16)
+		rfx_bitstream_put_bits(bs, _b, 16);
+
+	if (rem > 0)
+		rfx_bitstream_put_bits(bs, _b, rem);
 }
 
 /* Converts the input value to (2 * abs(input) - sign(input)), where sign(input) = (input < 0 ? 1 :
@@ -609,12 +624,11 @@ static inline UINT32 Get2MagSign(INT32 input)
 
 static void rfx_rlgr_code_gr(RFX_BITSTREAM* bs, uint32_t* krp, UINT32 val)
 {
-	int kr = *krp >> LSGR;
+	uint32_t kr = *krp >> LSGR;
 
 	/* unary part of GR code */
 
-	WINPR_ASSERT((kr > 0) || (val <= INT32_MAX));
-	const int vk = WINPR_SAFE_INT_CAST(int, val >> kr);
+	const uint32_t vk = val >> kr;
 	OutputBit(bs, vk, 1);
 	OutputBit(bs, 1, 0);
 
@@ -631,7 +645,7 @@ static void rfx_rlgr_code_gr(RFX_BITSTREAM* bs, uint32_t* krp, UINT32 val)
 	}
 	else if (vk > 1)
 	{
-		kr = UpdateParam(krp, vk);
+		kr = UpdateParam(krp, WINPR_CXX_SAFE_CAST(int32_t, vk));
 	}
 }
 
