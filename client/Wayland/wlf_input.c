@@ -324,19 +324,20 @@ BOOL wlf_handle_pointer_source(freerdp* instance, const UwacPointerSourceEvent* 
 
 BOOL wlf_handle_key(freerdp* instance, const UwacKeyEvent* ev)
 {
-	rdpInput* input = NULL;
-	DWORD rdp_scancode = 0;
-
 	if (!instance || !ev)
 		return FALSE;
 
 	WINPR_ASSERT(instance->context);
+	wlfContext* ctx = (wlfContext*)instance->context;
 	if (freerdp_settings_get_bool(instance->context->settings, FreeRDP_GrabKeyboard) &&
 	    ev->raw_key == KEY_RIGHTCTRL)
 		wlf_handle_ungrab_key(instance, ev);
 
-	input = instance->context->input;
-	rdp_scancode = freerdp_keyboard_get_rdp_scancode_from_x11_keycode(ev->raw_key + 8);
+	rdpInput* input = instance->context->input;
+
+	const DWORD vc = GetVirtualKeyCodeFromKeycode(ev->raw_key, WINPR_KEYCODE_TYPE_EVDEV);
+	const DWORD sc = GetVirtualScanCodeFromVirtualKeyCode(vc, WINPR_KBD_TYPE_IBM_ENHANCED);
+	const DWORD rdp_scancode = freerdp_keyboard_remap_key(ctx->remap_table, sc);
 
 	if (rdp_scancode == RDP_SCANCODE_UNKNOWN)
 		return TRUE;

@@ -511,38 +511,6 @@ bool sdlInput::extract(const std::string& token, uint32_t& key, uint32_t& value)
 	return freerdp_extract_key_value(token.c_str(), &key, &value);
 }
 
-uint32_t sdlInput::remapScancode(uint32_t scancode)
-{
-	if (!_remapInitialized.exchange(true))
-		remapInitialize();
-	auto it = _remapList.find(scancode);
-	if (it != _remapList.end())
-		return it->second;
-	return scancode;
-}
-
-void sdlInput::remapInitialize()
-{
-	WINPR_ASSERT(_sdl);
-
-	auto context = _sdl->context();
-	WINPR_ASSERT(context);
-	auto KeyboardRemappingList =
-	    freerdp_settings_get_string(context->settings, FreeRDP_KeyboardRemappingList);
-	if (!KeyboardRemappingList)
-		return;
-
-	auto list = tokenize(KeyboardRemappingList);
-	for (auto& token : list)
-	{
-		uint32_t key = 0;
-		uint32_t value = 0;
-		if (!extract(token, key, value))
-			continue;
-		_remapList.emplace(key, value);
-	}
-}
-
 BOOL sdlInput::keyboard_handle_event(const SDL_KeyboardEvent* ev)
 {
 	WINPR_ASSERT(ev);
@@ -583,7 +551,7 @@ BOOL sdlInput::keyboard_handle_event(const SDL_KeyboardEvent* ev)
 		}
 	}
 
-	auto scancode = remapScancode(rdp_scancode);
+	auto scancode = freerdp_keyboard_remap_key(_remapTable, rdp_scancode);
 	return freerdp_input_send_keyboard_event_ex(_sdl->context()->input, ev->type == SDL_KEYDOWN,
 	                                            ev->repeat, scancode);
 }
@@ -625,10 +593,18 @@ BOOL sdlInput::mouse_grab(Uint32 windowID, SDL_bool enable)
 sdlInput::sdlInput(SdlContext* sdl)
     : _sdl(sdl), _lastWindowID(UINT32_MAX), _hotkeyModmask(prefToMask())
 {
-
+	auto list =
+	    freerdp_settings_get_string(_sdl->context()->settings, FreeRDP_KeyboardRemappingList);
+	_remapTable = freerdp_keyboard_remap_string_to_list(list);
+	assert(_remapTable);
 	_hotkeyFullscreen = prefKeyValue("SDL_Fullscreen", SDL_SCANCODE_RETURN);
 	_hotkeyResizable = prefKeyValue("SDL_Resizeable", SDL_SCANCODE_R);
 	_hotkeyGrab = prefKeyValue("SDL_Grab", SDL_SCANCODE_G);
 	_hotkeyDisconnect = prefKeyValue("SDL_Disconnect", SDL_SCANCODE_D);
 	_hotkeyMinimize = prefKeyValue("SDL_Minimize", SDL_SCANCODE_M);
+}
+
+sdlInput::~sdlInput()
+{
+	freerdp_keyboard_remap_free(_remapTable);
 }

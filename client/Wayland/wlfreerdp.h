@@ -24,6 +24,7 @@
 #include <freerdp/gdi/gfx.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/log.h>
+#include <freerdp/locale/keyboard.h>
 #include <winpr/wtypes.h>
 #include <uwac/uwac.h>
 
@@ -49,6 +50,7 @@ typedef struct
 	wLog* log;
 	CRITICAL_SECTION critical;
 	wArrayList* events;
+	FREERDP_REMAP_TABLE* remap_table;
 } wlfContext;
 
 BOOL wlf_scale_coordinates(rdpContext* context, UINT32* px, UINT32* py, BOOL fromLocalToRDP);

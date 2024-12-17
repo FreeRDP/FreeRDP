@@ -26,6 +26,7 @@
 
 #include <winpr/wtypes.h>
 #include <freerdp/freerdp.h>
+#include <freerdp/locale/keyboard.h>
 #include <SDL3/SDL.h>
 
 #include "sdl_types.hpp"
@@ -36,7 +37,7 @@ class sdlInput
 	explicit sdlInput(SdlContext* sdl);
 	sdlInput(const sdlInput& other) = delete;
 	sdlInput(sdlInput&& other) = delete;
-	~sdlInput() = default;
+	~sdlInput();
 
 	sdlInput& operator=(const sdlInput& other) = delete;
 	sdlInput& operator=(sdlInput&& other) = delete;
@@ -62,13 +63,8 @@ class sdlInput
 	                                       const std::string& delimiter = ",");
 	static bool extract(const std::string& token, uint32_t& key, uint32_t& value);
 
-	uint32_t remapScancode(uint32_t scancode);
-	void remapInitialize();
-
 	SdlContext* _sdl;
 	Uint32 _lastWindowID;
-	std::map<uint32_t, uint32_t> _remapList;
-	std::atomic<bool> _remapInitialized = false;
 
 	// hotkey handling
 	uint32_t _hotkeyModmask; // modifier keys mask
@@ -77,4 +73,5 @@ class sdlInput
 	uint32_t _hotkeyGrab;
 	uint32_t _hotkeyDisconnect;
 	uint32_t _hotkeyMinimize;
+	FREERDP_REMAP_TABLE* _remapTable;
 };
