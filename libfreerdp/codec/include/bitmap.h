@@ -30,7 +30,7 @@
  */
 static inline BYTE* WRITEFGBGIMAGE(BYTE* WINPR_RESTRICT pbDest,
                                    const BYTE* WINPR_RESTRICT pbDestEnd, UINT32 rowDelta,
-                                   BYTE bitmask, PIXEL fgPel, INT32 cBits)
+                                   BYTE bitmask, PIXEL fgPel, UINT32 cBits)
 {
 	PIXEL xorPixel = 0;
 	BYTE mask = 0x01;

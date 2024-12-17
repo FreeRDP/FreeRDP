@@ -467,11 +467,11 @@ static INLINE void write_pixel_16(BYTE* _buf, UINT16 _pix)
 		(_buf) += 2;                \
 	} while (0)
 #define DESTREADPIXEL(_pix, _buf) _pix = ((UINT16*)(_buf))[0]
-#define SRCREADPIXEL(_pix, _buf)                                            \
-	do                                                                      \
-	{                                                                       \
-		(_pix) = WINPR_SAFE_INT_CAST(UINT16, (_buf)[0] | ((_buf)[1] << 8)); \
-		(_buf) += 2;                                                        \
+#define SRCREADPIXEL(_pix, _buf)                                                       \
+	do                                                                                 \
+	{                                                                                  \
+		(_pix) = WINPR_SAFE_INT_CAST(UINT16, (_buf)[0] | (((_buf)[1] << 8) & 0xFF00)); \
+		(_buf) += 2;                                                                   \
 	} while (0)
 #define WRITEFGBGIMAGE WriteFgBgImage16to16
 #define WRITEFIRSTLINEFGBGIMAGE WriteFirstLineFgBgImage16to16
@@ -500,12 +500,13 @@ static INLINE void write_pixel_16(BYTE* _buf, UINT16 _pix)
 		write_pixel_24(_buf, _pix); \
 		(_buf) += 3;                \
 	} while (0)
-#define DESTREADPIXEL(_pix, _buf) _pix = (_buf)[0] | ((_buf)[1] << 8) | ((_buf)[2] << 16)
-#define SRCREADPIXEL(_pix, _buf)                                   \
-	do                                                             \
-	{                                                              \
-		(_pix) = (_buf)[0] | ((_buf)[1] << 8) | ((_buf)[2] << 16); \
-		(_buf) += 3;                                               \
+#define DESTREADPIXEL(_pix, _buf) \
+	_pix = (_buf)[0] | (((_buf)[1] << 8) & 0xFF00) | (((_buf)[2] << 16) & 0xFF0000)
+#define SRCREADPIXEL(_pix, _buf)                                                           \
+	do                                                                                     \
+	{                                                                                      \
+		(_pix) = (_buf)[0] | (((_buf)[1] << 8) & 0xFF00) | (((_buf)[2] << 16) & 0xFF0000); \
+		(_buf) += 3;                                                                       \
 	} while (0)
 
 #define WRITEFGBGIMAGE WriteFgBgImage24to24
