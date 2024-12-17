@@ -345,11 +345,11 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* WINPR_RESTRICT pSrcData, UINT32 
 
 			/* write to output stream */
 
-			offset = WINPR_SAFE_INT_CAST(size_t, (pOutput - pDstData));
+			offset = WINPR_SAFE_INT_CAST(size_t, (pOutput)-pDstData);
 			size = run;
 
 			if ((offset + size) > rDstSize)
-				size = WINPR_SAFE_INT_CAST(size_t, DstSize - offset);
+				size = WINPR_SAFE_INT_CAST(size_t, DstSize) - offset;
 
 			if (size)
 			{
