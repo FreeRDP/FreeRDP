@@ -559,8 +559,8 @@ static int x11_shadow_query_cursor(x11ShadowSubsystem* subsystem, BOOL getImage)
 
 	if ((x != (INT64)subsystem->common.pointerX) || (y != (INT64)subsystem->common.pointerY))
 	{
-		subsystem->common.pointerX = x;
-		subsystem->common.pointerY = y;
+		subsystem->common.pointerX = WINPR_SAFE_INT_CAST(UINT32, x);
+		subsystem->common.pointerY = WINPR_SAFE_INT_CAST(UINT32, y);
 		x11_shadow_pointer_position_update(subsystem);
 	}
 
@@ -805,8 +805,8 @@ static int x11_shadow_screen_grab(x11ShadowSubsystem* subsystem)
 		EnterCriticalSection(&surface->lock);
 		status = shadow_capture_compare_with_format(
 		    surface->data, surface->format, surface->scanline, surface->width, surface->height,
-		    (BYTE*)&(image->data[surface->width * 4ull]), subsystem->format, image->bytes_per_line,
-		    &invalidRect);
+		    (BYTE*)&(image->data[surface->width * 4ull]), subsystem->format,
+		    WINPR_SAFE_INT_CAST(UINT32, image->bytes_per_line), &invalidRect);
 		LeaveCriticalSection(&surface->lock);
 	}
 	else
@@ -820,7 +820,8 @@ static int x11_shadow_screen_grab(x11ShadowSubsystem* subsystem)
 		{
 			status = shadow_capture_compare_with_format(
 			    surface->data, surface->format, surface->scanline, surface->width, surface->height,
-			    (BYTE*)image->data, subsystem->format, image->bytes_per_line, &invalidRect);
+			    (BYTE*)image->data, subsystem->format,
+			    WINPR_SAFE_INT_CAST(UINT32, image->bytes_per_line), &invalidRect);
 		}
 		LeaveCriticalSection(&surface->lock);
 		if (!image)

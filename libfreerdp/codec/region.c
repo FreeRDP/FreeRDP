@@ -474,7 +474,8 @@ static BOOL region16_simplify_bands(REGION16* region)
 
 	if (finalNbRects != nbRects)
 	{
-		size_t allocSize = sizeof(REGION16_DATA) + (finalNbRects * sizeof(RECTANGLE_16));
+		size_t allocSize = sizeof(REGION16_DATA) +
+		                   (WINPR_SAFE_INT_CAST(size_t, finalNbRects) * sizeof(RECTANGLE_16));
 		REGION16_DATA* data = realloc(region->data, allocSize);
 		if (!data)
 			free(region->data);
