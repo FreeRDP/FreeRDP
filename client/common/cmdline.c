@@ -498,7 +498,7 @@ static void freerdp_client_print_command_line_args(COMMAND_LINE_ARGUMENT_A* parg
 
 		if (arg->Flags & (COMMAND_LINE_VALUE_BOOL | COMMAND_LINE_VALUE_FLAG))
 		{
-			if ((arg->Flags & ~COMMAND_LINE_VALUE_BOOL) == 0)
+			if ((arg->Flags & (uint32_t)~COMMAND_LINE_VALUE_BOOL) == 0)
 				rc = printf("    %s%s", arg->Default ? "-" : "+", arg->Name);
 			else if ((arg->Flags & COMMAND_LINE_VALUE_OPTIONAL) != 0)
 				rc = printf("    [%s|/]%s", arg->Default ? "-" : "+", arg->Name);
@@ -3105,7 +3105,7 @@ static int parse_clipboard_options(rdpSettings* settings, const COMMAND_LINE_ARG
 			{
 				const UINT32 mask =
 				    freerdp_settings_get_uint32(settings, FreeRDP_ClipboardFeatureMask) &
-				    ~(CLIPRDR_FLAG_LOCAL_TO_REMOTE | CLIPRDR_FLAG_REMOTE_TO_LOCAL);
+				    (uint32_t)~(CLIPRDR_FLAG_LOCAL_TO_REMOTE | CLIPRDR_FLAG_REMOTE_TO_LOCAL);
 				const PARSE_CLIP_DIR_RESULT bval = parse_clip_direciton_to_option(cur);
 				UINT32 bflags = 0;
 				switch (bval)
@@ -3135,7 +3135,8 @@ static int parse_clipboard_options(rdpSettings* settings, const COMMAND_LINE_ARG
 			{
 				const UINT32 mask =
 				    freerdp_settings_get_uint32(settings, FreeRDP_ClipboardFeatureMask) &
-				    ~(CLIPRDR_FLAG_LOCAL_TO_REMOTE_FILES | CLIPRDR_FLAG_REMOTE_TO_LOCAL_FILES);
+				    (uint32_t)~(CLIPRDR_FLAG_LOCAL_TO_REMOTE_FILES |
+				                CLIPRDR_FLAG_REMOTE_TO_LOCAL_FILES);
 				const PARSE_CLIP_DIR_RESULT bval = parse_clip_direciton_to_option(cur);
 				UINT32 bflags = 0;
 				switch (bval)

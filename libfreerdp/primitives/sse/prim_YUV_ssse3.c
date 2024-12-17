@@ -711,7 +711,7 @@ static pstatus_t ssse3_RGBToAVC444YUV_BGRX(const BYTE* WINPR_RESTRICT pSrc, UINT
 		const BYTE* srcEven = y < roi->height ? pSrc + y * srcStep : pMaxSrc;
 		const BYTE* srcOdd = !last ? pSrc + (y + 1) * srcStep : pMaxSrc;
 		const size_t i = y >> 1;
-		const size_t n = (i & ~7) + i;
+		const size_t n = (i & (size_t)~7) + i;
 		BYTE* b1Even = pDst1[0] + y * dst1Step[0];
 		BYTE* b1Odd = !last ? (b1Even + dst1Step[0]) : NULL;
 		BYTE* b2 = pDst1[1] + (y / 2) * dst1Step[1];

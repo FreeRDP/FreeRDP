@@ -460,7 +460,7 @@ static INLINE BOOL rfx_process_message_sync(RFX_CONTEXT* WINPR_RESTRICT context,
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
-	context->decodedHeaderBlocks &= ~RFX_DECODED_SYNC;
+	context->decodedHeaderBlocks &= (uint32_t)~RFX_DECODED_SYNC;
 
 	/* RFX_SYNC */
 	if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, 6))
@@ -493,7 +493,7 @@ static INLINE BOOL rfx_process_message_codec_versions(RFX_CONTEXT* WINPR_RESTRIC
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
-	context->decodedHeaderBlocks &= ~RFX_DECODED_VERSIONS;
+	context->decodedHeaderBlocks &= (uint32_t)~RFX_DECODED_VERSIONS;
 
 	if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, 4))
 		return FALSE;
@@ -538,7 +538,7 @@ static INLINE BOOL rfx_process_message_channels(RFX_CONTEXT* WINPR_RESTRICT cont
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
-	context->decodedHeaderBlocks &= ~RFX_DECODED_CHANNELS;
+	context->decodedHeaderBlocks &= (uint32_t)~RFX_DECODED_CHANNELS;
 
 	if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, 1))
 		return FALSE;
