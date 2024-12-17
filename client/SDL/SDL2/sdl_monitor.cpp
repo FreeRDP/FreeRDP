@@ -136,16 +136,18 @@ static BOOL sdl_apply_max_size(SdlContext* sdl, UINT32* pMaxWidth, UINT32* pMaxH
 			SDL_Rect rect = {};
 			SDL_GetDisplayUsableBounds(WINPR_SAFE_INT_CAST(int, monitor->orig_screen), &rect);
 
-			*pMaxWidth = rect.w;
-			*pMaxHeight = rect.h;
+			*pMaxWidth = WINPR_SAFE_INT_CAST(uint32_t, rect.w);
+			*pMaxHeight = WINPR_SAFE_INT_CAST(uint32_t, rect.h);
 
 			if (freerdp_settings_get_bool(settings, FreeRDP_PercentScreenUseWidth))
-				*pMaxWidth =
-				    (rect.w * freerdp_settings_get_uint32(settings, FreeRDP_PercentScreen)) / 100;
+				*pMaxWidth = (WINPR_SAFE_INT_CAST(uint32_t, rect.w) *
+				              freerdp_settings_get_uint32(settings, FreeRDP_PercentScreen)) /
+				             100;
 
 			if (freerdp_settings_get_bool(settings, FreeRDP_PercentScreenUseHeight))
-				*pMaxHeight =
-				    (rect.h * freerdp_settings_get_uint32(settings, FreeRDP_PercentScreen)) / 100;
+				*pMaxHeight = (WINPR_SAFE_INT_CAST(uint32_t, rect.h) *
+				               freerdp_settings_get_uint32(settings, FreeRDP_PercentScreen)) /
+				              100;
 		}
 		else if (freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth) &&
 		         freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight))

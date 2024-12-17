@@ -113,14 +113,14 @@ BOOL sdlDispContext::sendResize()
 		_waitingResize = TRUE;
 		layout.Flags = DISPLAY_CONTROL_MONITOR_PRIMARY;
 		layout.Top = layout.Left = 0;
-		layout.Width = _targetWidth;
-		layout.Height = _targetHeight;
+		layout.Width = WINPR_SAFE_INT_CAST(uint32_t, _targetWidth);
+		layout.Height = WINPR_SAFE_INT_CAST(uint32_t, _targetHeight);
 		layout.Orientation = freerdp_settings_get_uint16(settings, FreeRDP_DesktopOrientation);
 		layout.DesktopScaleFactor =
 		    freerdp_settings_get_uint32(settings, FreeRDP_DesktopScaleFactor);
 		layout.DeviceScaleFactor = freerdp_settings_get_uint32(settings, FreeRDP_DeviceScaleFactor);
-		layout.PhysicalWidth = _targetWidth;
-		layout.PhysicalHeight = _targetHeight;
+		layout.PhysicalWidth = WINPR_SAFE_INT_CAST(uint32_t, _targetWidth);
+		layout.PhysicalHeight = WINPR_SAFE_INT_CAST(uint32_t, _targetHeight);
 
 		if (IFCALLRESULT(CHANNEL_RC_OK, _disp->SendMonitorLayout, _disp, 1, &layout) !=
 		    CHANNEL_RC_OK)
@@ -251,8 +251,8 @@ UINT sdlDispContext::sendLayout(const rdpMonitor* monitors, size_t nmonitors)
 		layout->Flags = (monitor->is_primary ? DISPLAY_CONTROL_MONITOR_PRIMARY : 0);
 		layout->Left = monitor->x;
 		layout->Top = monitor->y;
-		layout->Width = monitor->width;
-		layout->Height = monitor->height;
+		layout->Width = WINPR_SAFE_INT_CAST(uint32_t, monitor->width);
+		layout->Height = WINPR_SAFE_INT_CAST(uint32_t, monitor->height);
 		layout->Orientation = ORIENTATION_LANDSCAPE;
 		layout->PhysicalWidth = monitor->attributes.physicalWidth;
 		layout->PhysicalHeight = monitor->attributes.physicalHeight;

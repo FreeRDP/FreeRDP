@@ -136,7 +136,7 @@ enum SDL_EXIT_CODE
 
 struct sdl_exit_code_map_t
 {
-	DWORD error;
+	UINT32 error;
 	int code;
 	const char* code_tag;
 };
@@ -229,7 +229,7 @@ static void sdl_hide_connection_dialog(SdlContext* sdl)
 		sdl->connection_dialog->hide();
 }
 
-static const struct sdl_exit_code_map_t* sdl_map_entry_by_error(DWORD error)
+static const struct sdl_exit_code_map_t* sdl_map_entry_by_error(INT32 error)
 {
 	for (const auto& x : sdl_exit_code_map)
 	{
@@ -249,7 +249,7 @@ static int sdl_map_error_to_exit_code(DWORD error)
 	return SDL_EXIT_CONN_FAILED;
 }
 
-static const char* sdl_map_error_to_code_tag(DWORD error)
+static const char* sdl_map_error_to_code_tag(INT32 error)
 {
 	const struct sdl_exit_code_map_t* entry = sdl_map_entry_by_error(error);
 	if (entry)
@@ -715,8 +715,8 @@ static BOOL sdl_create_windows(SdlContext* sdl)
 		auto monitor = static_cast<rdpMonitor*>(
 		    freerdp_settings_get_pointer_array_writable(settings, FreeRDP_MonitorDefArray, x));
 
-		Uint32 w = monitor->width;
-		Uint32 h = monitor->height;
+		Uint32 w = WINPR_SAFE_INT_CAST(uint32_t, monitor->width);
+		Uint32 h = WINPR_SAFE_INT_CAST(uint32_t, monitor->height);
 		if (!(freerdp_settings_get_bool(settings, FreeRDP_UseMultimon) ||
 		      freerdp_settings_get_bool(settings, FreeRDP_Fullscreen)))
 		{
