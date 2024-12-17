@@ -117,7 +117,7 @@ struct rdp_nla
 	rdpTransport* transport;
 	UINT32 version;
 	UINT32 peerVersion;
-	UINT32 errorCode;
+	INT32 errorCode;
 
 	/* Lifetime of buffer nla_new -> nla_free */
 	SecBuffer ClientNonce; /* Depending on protocol version a random nonce or a value read from the
@@ -1936,7 +1936,7 @@ static int nla_decode_ts_request(rdpNla* nla, wStream* s)
 				/* errorCode [4] INTEGER */
 				if (WinPrAsn1DecReadInteger(&dec2, &val) == 0)
 					return -1;
-				nla->errorCode = (UINT)val;
+				nla->errorCode = val;
 				WLog_DBG(TAG, "   <<----- error code %s 0x%08" PRIx32, NtStatus2Tag(nla->errorCode),
 				         nla->errorCode);
 				break;

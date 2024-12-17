@@ -677,7 +677,7 @@ static INLINE BOOL update_read_2byte_unsigned(wStream* s, UINT32* value)
 		if (!Stream_CheckAndLogRequiredLength(TAG, s, 1))
 			return FALSE;
 
-		*value = (byte & 0x7F) << 8;
+		*value = ((byte & 0x7F) << 8) & 0xFFFF;
 		Stream_Read_UINT8(s, byte);
 		*value |= byte;
 	}
@@ -794,25 +794,25 @@ static INLINE BOOL update_read_4byte_unsigned(wStream* s, UINT32* value)
 			break;
 
 		case 1:
-			*value = (byte & 0x3F) << 8;
+			*value = ((byte & 0x3F) << 8) & 0xFFFF;
 			Stream_Read_UINT8(s, byte);
 			*value |= byte;
 			break;
 
 		case 2:
-			*value = (byte & 0x3F) << 16;
+			*value = ((byte & 0x3F) << 16) & 0xFFFFFF;
 			Stream_Read_UINT8(s, byte);
-			*value |= (byte << 8);
+			*value |= ((byte << 8)) & 0xFFFF;
 			Stream_Read_UINT8(s, byte);
 			*value |= byte;
 			break;
 
 		case 3:
-			*value = (byte & 0x3F) << 24;
+			*value = ((byte & 0x3F) << 24) & 0xFFFFFFFF;
 			Stream_Read_UINT8(s, byte);
-			*value |= (byte << 16);
+			*value |= ((byte << 16)) & 0xFFFFFF;
 			Stream_Read_UINT8(s, byte);
-			*value |= (byte << 8);
+			*value |= ((byte << 8)) & 0xFFFF;
 			Stream_Read_UINT8(s, byte);
 			*value |= byte;
 			break;
@@ -2553,7 +2553,7 @@ BOOL update_write_cache_bitmap_v2_order(wStream* s, CACHE_BITMAP_V2_ORDER* cache
 	WINPR_ASSERT(cache_bitmap_v2->cacheId <= 3);
 	WINPR_ASSERT(bitsPerPixelId <= 0x0f);
 	WINPR_ASSERT(cache_bitmap_v2->flags <= 0x1FF);
-	*flags = (UINT16)((cache_bitmap_v2->cacheId & 0x0003) | (bitsPerPixelId << 3) |
+	*flags = (UINT16)((cache_bitmap_v2->cacheId & 0x0003) | ((bitsPerPixelId << 3) & 0xFFFF) |
 	                  ((cache_bitmap_v2->flags << 7) & 0xFF80));
 
 	if (cache_bitmap_v2->flags & CBR2_PERSISTENT_KEY_PRESENT)
