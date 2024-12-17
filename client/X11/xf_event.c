@@ -839,8 +839,10 @@ static BOOL xf_event_ConfigureNotify(xfContext* xfc, const XConfigureEvent* even
 				xfc->scaledWidth = xfc->window->width;
 				xfc->scaledHeight = xfc->window->height;
 				xf_draw_screen(xfc, 0, 0,
-				               freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth),
-				               freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight));
+				               WINPR_SAFE_INT_CAST(int32_t, freerdp_settings_get_uint32(
+				                                                settings, FreeRDP_DesktopWidth)),
+				               WINPR_SAFE_INT_CAST(int32_t, freerdp_settings_get_uint32(
+				                                                settings, FreeRDP_DesktopHeight)));
 			}
 			else
 			{
