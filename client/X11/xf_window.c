@@ -307,8 +307,8 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 	}
 	else
 	{
-		width = xfc->savedWidth;
-		height = xfc->savedHeight;
+		width = WINPR_SAFE_INT_CAST(uint32_t, xfc->savedWidth);
+		height = WINPR_SAFE_INT_CAST(uint32_t, xfc->savedHeight);
 		startX = xfc->savedPosX;
 		startY = xfc->savedPosY;
 	}
@@ -639,10 +639,10 @@ static const char* get_shm_id(void)
 
 Window xf_CreateDummyWindow(xfContext* xfc)
 {
-	return XCreateWindow(xfc->display, RootWindowOfScreen(xfc->screen),
-	                     WINPR_SAFE_INT_CAST(int, xfc->workArea.x),
-	                     WINPR_SAFE_INT_CAST(int, xfc->workArea.y), 1, 1, 0, xfc->depth,
-	                     InputOutput, xfc->visual, xfc->attribs_mask, &xfc->attribs);
+	return XCreateWindow(
+	    xfc->display, RootWindowOfScreen(xfc->screen), WINPR_SAFE_INT_CAST(int, xfc->workArea.x),
+	    WINPR_SAFE_INT_CAST(int, xfc->workArea.y), 1, 1, 0, xfc->depth, InputOutput, xfc->visual,
+	    WINPR_SAFE_INT_CAST(uint32_t, xfc->attribs_mask), &xfc->attribs);
 }
 
 void xf_DestroyDummyWindow(xfContext* xfc, Window window)
@@ -672,11 +672,11 @@ xfWindow* xf_CreateDesktopWindow(xfContext* xfc, char* name, int width, int heig
 	window->is_transient = FALSE;
 
 	WINPR_ASSERT(xfc->depth != 0);
-	window->handle = XCreateWindow(
-	    xfc->display, RootWindowOfScreen(xfc->screen), WINPR_SAFE_INT_CAST(int, xfc->workArea.x),
-	    WINPR_SAFE_INT_CAST(int, xfc->workArea.y), WINPR_SAFE_INT_CAST(int, xfc->workArea.width),
-	    WINPR_SAFE_INT_CAST(int, xfc->workArea.height), 0, xfc->depth, InputOutput, xfc->visual,
-	    xfc->attribs_mask, &xfc->attribs);
+	window->handle = XCreateWindow(xfc->display, RootWindowOfScreen(xfc->screen),
+	                               WINPR_SAFE_INT_CAST(int, xfc->workArea.x),
+	                               WINPR_SAFE_INT_CAST(int, xfc->workArea.y), xfc->workArea.width,
+	                               xfc->workArea.height, 0, xfc->depth, InputOutput, xfc->visual,
+	                               WINPR_SAFE_INT_CAST(uint32_t, xfc->attribs_mask), &xfc->attribs);
 	window->shmid = shm_open(get_shm_id(), (O_CREAT | O_RDWR), (S_IREAD | S_IWRITE));
 
 	if (window->shmid < 0)
@@ -1203,7 +1203,9 @@ void xf_MoveWindow(xfContext* xfc, xfAppWindow* appWindow, int x, int y, int wid
 	appWindow->height = height;
 
 	if (resize)
-		XMoveResizeWindow(xfc->display, appWindow->handle, x, y, width, height);
+		XMoveResizeWindow(xfc->display, appWindow->handle, x, y,
+		                  WINPR_SAFE_INT_CAST(uint32_t, width),
+		                  WINPR_SAFE_INT_CAST(uint32_t, height));
 	else
 		XMoveWindow(xfc->display, appWindow->handle, x, y);
 
@@ -1313,7 +1315,7 @@ void xf_SetWindowVisibilityRects(xfContext* xfc, xfAppWindow* appWindow, UINT32 
 		return;
 
 #ifdef WITH_XEXT
-	xrects = (XRectangle*)calloc(nrects, sizeof(XRectangle));
+	xrects = (XRectangle*)calloc(WINPR_SAFE_INT_CAST(uint32_t, nrects), sizeof(XRectangle));
 
 	for (int i = 0; i < nrects; i++)
 	{
@@ -1486,8 +1488,8 @@ UINT xf_AppUpdateWindowFromSurface(xfContext* xfc, gdiGfxSurface* surface)
 		{
 			WINPR_ASSERT(xfc->depth != 0);
 			appWindow->image =
-			    XCreateImage(xfc->display, xfc->visual, xfc->depth, ZPixmap, 0,
-			                 (char*)surface->data, surface->width, surface->height,
+			    XCreateImage(xfc->display, xfc->visual, WINPR_SAFE_INT_CAST(uint32_t, xfc->depth),
+			                 ZPixmap, 0, (char*)surface->data, surface->width, surface->height,
 			                 xfc->scanline_pad, WINPR_SAFE_INT_CAST(int, surface->scanline));
 			if (!appWindow->image)
 			{
@@ -1540,7 +1542,9 @@ BOOL xf_AppWindowResize(xfContext* xfc, xfAppWindow* appWindow)
 
 	WINPR_ASSERT(xfc->depth != 0);
 	appWindow->pixmap =
-	    XCreatePixmap(xfc->display, xfc->drawable, appWindow->width, appWindow->height, xfc->depth);
+	    XCreatePixmap(xfc->display, xfc->drawable, WINPR_SAFE_INT_CAST(uint32_t, appWindow->width),
+	                  WINPR_SAFE_INT_CAST(uint32_t, appWindow->height),
+	                  WINPR_SAFE_INT_CAST(uint32_t, xfc->depth));
 	xf_AppWindowDestroyImage(appWindow);
 
 	return appWindow->pixmap != 0;
