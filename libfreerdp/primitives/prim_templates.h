@@ -50,7 +50,6 @@
 		UINT32 offBeatMask;                                                           \
 		const _type_* sptr = pSrc;                                                    \
 		_type_* dptr = pDst;                                                          \
-		int count;                                                                    \
 		if (val == 0)                                                                 \
 			return PRIMITIVES_SUCCESS;                                                \
 		if (val >= 16)                                                                \
@@ -81,7 +80,7 @@
 				return PRIMITIVES_SUCCESS;                                            \
 		}                                                                             \
 		/* Use 8 128-bit SSE registers. */                                            \
-		count = len >> (8 - shifts);                                                  \
+		size_t count = len >> (8 - shifts);                                           \
 		len -= count << (8 - shifts);                                                 \
 		if ((const ULONG_PTR)sptr & 0x0f)                                             \
 		{                                                                             \
