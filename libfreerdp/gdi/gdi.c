@@ -446,9 +446,12 @@ gdiBitmap* gdi_bitmap_new_ex(rdpGdi* gdi, int width, int height, int bpp, BYTE* 
 	           bpp);
 
 	if (!data)
-		bitmap->bitmap = gdi_CreateCompatibleBitmap(gdi->hdc, width, height);
+		bitmap->bitmap = gdi_CreateCompatibleBitmap(gdi->hdc, WINPR_SAFE_INT_CAST(uint32_t, width),
+		                                            WINPR_SAFE_INT_CAST(uint32_t, height));
 	else
-		bitmap->bitmap = gdi_create_bitmap(gdi, width, height, bpp, data);
+		bitmap->bitmap = gdi_create_bitmap(gdi, WINPR_SAFE_INT_CAST(uint32_t, width),
+		                                   WINPR_SAFE_INT_CAST(uint32_t, height),
+		                                   WINPR_SAFE_INT_CAST(uint32_t, bpp), data);
 
 	if (!bitmap->bitmap)
 		goto fail_bitmap_bitmap;
@@ -1083,8 +1086,8 @@ static BOOL gdi_surface_bits(rdpContext* context, const SURFACE_BITS_COMMAND* cm
 		case RDP_CODEC_ID_IMAGE_REMOTEFX:
 			if (!rfx_process_message(context->codecs->rfx, cmd->bmp.bitmapData,
 			                         cmd->bmp.bitmapDataLength, cmdRect.left, cmdRect.top,
-			                         gdi->primary_buffer, gdi->dstFormat, gdi->stride, gdi->height,
-			                         &region))
+			                         gdi->primary_buffer, gdi->dstFormat, gdi->stride,
+			                         WINPR_SAFE_INT_CAST(uint32_t, gdi->height), &region))
 			{
 				WLog_ERR(TAG, "Failed to process RemoteFX message");
 				goto out;
@@ -1228,7 +1231,8 @@ static BOOL gdi_init_primary(rdpGdi* gdi, UINT32 stride, UINT32 format, BYTE* bu
 	if (stride > 0)
 		gdi->stride = stride;
 	else
-		gdi->stride = gdi->width * FreeRDPGetBytesPerPixel(gdi->dstFormat);
+		gdi->stride =
+		    WINPR_SAFE_INT_CAST(uint32_t, gdi->width) * FreeRDPGetBytesPerPixel(gdi->dstFormat);
 
 	if (!gdi->primary)
 		goto fail_primary;
@@ -1238,12 +1242,15 @@ static BOOL gdi_init_primary(rdpGdi* gdi, UINT32 stride, UINT32 format, BYTE* bu
 
 	if (!buffer)
 	{
-		gdi->primary->bitmap = gdi_CreateCompatibleBitmap(gdi->hdc, gdi->width, gdi->height);
+		gdi->primary->bitmap =
+		    gdi_CreateCompatibleBitmap(gdi->hdc, WINPR_SAFE_INT_CAST(uint32_t, gdi->width),
+		                               WINPR_SAFE_INT_CAST(uint32_t, gdi->height));
 	}
 	else
 	{
-		gdi->primary->bitmap =
-		    gdi_CreateBitmapEx(gdi->width, gdi->height, gdi->dstFormat, gdi->stride, buffer, pfree);
+		gdi->primary->bitmap = gdi_CreateBitmapEx(WINPR_SAFE_INT_CAST(uint32_t, gdi->width),
+		                                          WINPR_SAFE_INT_CAST(uint32_t, gdi->height),
+		                                          gdi->dstFormat, gdi->stride, buffer, pfree);
 	}
 
 	if (!gdi->primary->bitmap)

@@ -37,7 +37,7 @@
 #include "clipping.h"
 #include "line.h"
 
-static BOOL gdi_rop_color(UINT32 rop, BYTE* pixelPtr, UINT32 pen, UINT32 format)
+static BOOL gdi_rop_color(INT32 rop, BYTE* pixelPtr, UINT32 pen, UINT32 format)
 {
 	WINPR_ASSERT(pixelPtr);
 	const UINT32 srcPixel = FreeRDPReadColor(pixelPtr, format);
@@ -116,7 +116,7 @@ static BOOL gdi_rop_color(UINT32 rop, BYTE* pixelPtr, UINT32 pen, UINT32 format)
 	return FreeRDPWriteColor(pixelPtr, format, dstPixel);
 }
 
-BOOL gdi_LineTo(HGDI_DC hdc, UINT32 nXEnd, UINT32 nYEnd)
+BOOL gdi_LineTo(HGDI_DC hdc, INT32 nXEnd, INT32 nYEnd)
 {
 	INT32 e2 = 0;
 	UINT32 pen = 0;
@@ -299,7 +299,7 @@ BOOL gdi_PolyPolyline(HGDI_DC hdc, GDI_POINT* lppt, const UINT32* lpdwPolyPoints
  * @return nonzero on success, 0 otherwise
  */
 
-BOOL gdi_MoveToEx(HGDI_DC hdc, UINT32 X, UINT32 Y, HGDI_POINT lpPoint)
+BOOL gdi_MoveToEx(HGDI_DC hdc, INT32 X, INT32 Y, HGDI_POINT lpPoint)
 {
 	WINPR_ASSERT(hdc);
 
@@ -309,7 +309,7 @@ BOOL gdi_MoveToEx(HGDI_DC hdc, UINT32 X, UINT32 Y, HGDI_POINT lpPoint)
 		lpPoint->y = hdc->pen->posY;
 	}
 
-	hdc->pen->posX = WINPR_SAFE_INT_CAST(int32_t, X);
-	hdc->pen->posY = WINPR_SAFE_INT_CAST(int32_t, Y);
+	hdc->pen->posX = X;
+	hdc->pen->posY = Y;
 	return TRUE;
 }

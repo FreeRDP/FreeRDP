@@ -57,8 +57,11 @@ UINT32 gdi_GetPixel(HGDI_DC hdc, UINT32 nXPos, UINT32 nYPos)
 	return FreeRDPReadColor(data, hBmp->format);
 }
 
-BYTE* gdi_GetPointer(HGDI_BITMAP hBmp, UINT32 X, UINT32 Y)
+BYTE* gdi_GetPointer(HGDI_BITMAP hBmp, INT32 iX, INT32 iY)
 {
+	const UINT32 X = WINPR_SAFE_INT_CAST(uint32_t, iX);
+	const UINT32 Y = WINPR_SAFE_INT_CAST(uint32_t, iY);
+
 	UINT32 bpp = FreeRDPGetBytesPerPixel(hBmp->format);
 	return &hBmp->data[(Y * hBmp->width * bpp) + X * bpp];
 }
