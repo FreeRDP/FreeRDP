@@ -451,7 +451,7 @@ std::string SDLConnectionDialog::print(const char* fmt, va_list ap)
 	{
 		res.resize(128);
 		if (size > 0)
-			res.resize(size);
+			res.resize(WINPR_SAFE_INT_CAST(uint32_t, size));
 
 		va_list copy;
 		va_copy(copy, ap);

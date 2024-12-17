@@ -208,8 +208,8 @@ static void xf_draw_screen_scaled(xfContext* xfc, int x, int y, int w, int h)
 	{
 		XRectangle box1 = { 0, 0, WINPR_SAFE_INT_CAST(UINT16, xfc->window->width),
 			                WINPR_SAFE_INT_CAST(UINT16, xfc->window->height) };
-		XRectangle box2 = { WINPR_SAFE_INT_CAST(UINT16, xfc->offset_x),
-			                WINPR_SAFE_INT_CAST(UINT16, xfc->offset_y),
+		XRectangle box2 = { WINPR_SAFE_INT_CAST(INT16, xfc->offset_x),
+			                WINPR_SAFE_INT_CAST(INT16, xfc->offset_y),
 			                WINPR_SAFE_INT_CAST(UINT16, xfc->scaledWidth),
 			                WINPR_SAFE_INT_CAST(UINT16, xfc->scaledHeight) };
 		Region reg1 = XCreateRegion();
@@ -684,10 +684,10 @@ BOOL xf_create_window(xfContext* xfc)
 
 	WINPR_ASSERT(xfc->depth != 0);
 	if (!xfc->primary)
-		xfc->primary =
-		    XCreatePixmap(xfc->display, xfc->drawable,
-		                  freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth),
-		                  freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight), xfc->depth);
+		xfc->primary = XCreatePixmap(xfc->display, xfc->drawable,
+		                             freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth),
+		                             freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight),
+		                             WINPR_SAFE_INT_CAST(uint32_t, xfc->depth));
 
 	xfc->drawing = xfc->primary;
 
@@ -718,11 +718,12 @@ BOOL xf_create_image(xfContext* xfc)
 		WINPR_ASSERT(cgdi);
 
 		WINPR_ASSERT(xfc->depth != 0);
-		xfc->image = XCreateImage(xfc->display, xfc->visual, xfc->depth, ZPixmap, 0,
-		                          (char*)cgdi->primary_buffer,
-		                          freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth),
-		                          freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight),
-		                          xfc->scanline_pad, WINPR_SAFE_INT_CAST(int, cgdi->stride));
+		xfc->image =
+		    XCreateImage(xfc->display, xfc->visual, WINPR_SAFE_INT_CAST(uint32_t, xfc->depth),
+		                 ZPixmap, 0, (char*)cgdi->primary_buffer,
+		                 freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth),
+		                 freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight),
+		                 xfc->scanline_pad, WINPR_SAFE_INT_CAST(int, cgdi->stride));
 		xfc->image->byte_order = LSBFirst;
 		xfc->image->bitmap_bit_order = LSBFirst;
 	}
@@ -1764,8 +1765,10 @@ static void xf_ZoomingChangeEventHandler(void* context, const ZoomingChangeEvent
 
 	xfc->scaledWidth = w;
 	xfc->scaledHeight = h;
-	xf_draw_screen(xfc, 0, 0, freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth),
-	               freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight));
+	xf_draw_screen(
+	    xfc, 0, 0,
+	    WINPR_SAFE_INT_CAST(int32_t, freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth)),
+	    WINPR_SAFE_INT_CAST(int32_t, freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight)));
 }
 
 static void xf_PanningChangeEventHandler(void* context, const PanningChangeEventArgs* e)

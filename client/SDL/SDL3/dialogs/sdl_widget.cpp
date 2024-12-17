@@ -196,7 +196,7 @@ SdlWidget::~SdlWidget()
 		SDL_DestroyTexture(_image);
 }
 
-bool SdlWidget::error_ex(Uint32 res, const char* what, const char* file, size_t line,
+bool SdlWidget::error_ex(Sint32 res, const char* what, const char* file, size_t line,
                          const char* fkt)
 {
 	static wLog* log = nullptr;

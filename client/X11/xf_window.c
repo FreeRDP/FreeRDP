@@ -273,8 +273,8 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 	const rdpSettings* settings = NULL;
 	int startX = 0;
 	int startY = 0;
-	UINT32 width = window->width;
-	UINT32 height = window->height;
+	UINT32 width = WINPR_SAFE_INT_CAST(uint32_t, window->width);
+	UINT32 height = WINPR_SAFE_INT_CAST(uint32_t, window->height);
 
 	WINPR_ASSERT(xfc);
 
@@ -808,7 +808,8 @@ void xf_ResizeDesktopWindow(xfContext* xfc, xfWindow* window, int width, int hei
 	size_hints->win_gravity = NorthWestGravity;
 	size_hints->min_width = size_hints->min_height = 1;
 	size_hints->max_width = size_hints->max_height = 16384;
-	XResizeWindow(xfc->display, window->handle, width, height);
+	XResizeWindow(xfc->display, window->handle, WINPR_SAFE_INT_CAST(uint32_t, width),
+	              WINPR_SAFE_INT_CAST(uint32_t, height));
 #ifdef WITH_XRENDER
 
 	if (!freerdp_settings_get_bool(settings, FreeRDP_SmartSizing) &&
@@ -1054,8 +1055,9 @@ BOOL xf_AppWindowCreate(xfContext* xfc, xfAppWindow* appWindow)
 	WINPR_ASSERT(xfc->depth != 0);
 	appWindow->handle =
 	    XCreateWindow(xfc->display, RootWindowOfScreen(xfc->screen), appWindow->x, appWindow->y,
-	                  appWindow->width, appWindow->height, 0, xfc->depth, InputOutput, xfc->visual,
-	                  xfc->attribs_mask, &xfc->attribs);
+	                  WINPR_SAFE_INT_CAST(uint32_t, appWindow->width),
+	                  WINPR_SAFE_INT_CAST(uint32_t, appWindow->height), 0, xfc->depth, InputOutput,
+	                  xfc->visual, WINPR_SAFE_INT_CAST(uint32_t, xfc->attribs_mask), &xfc->attribs);
 
 	if (!appWindow->handle)
 		return FALSE;
@@ -1286,7 +1288,7 @@ void xf_SetWindowRects(xfContext* xfc, xfAppWindow* appWindow, RECTANGLE_16* rec
 		return;
 
 #ifdef WITH_XEXT
-	xrects = (XRectangle*)calloc(nrects, sizeof(XRectangle));
+	xrects = (XRectangle*)calloc(WINPR_SAFE_INT_CAST(uint32_t, nrects), sizeof(XRectangle));
 
 	for (int i = 0; i < nrects; i++)
 	{
@@ -1359,12 +1361,12 @@ void xf_UpdateWindowArea(xfContext* xfc, xfAppWindow* appWindow, int x, int y, i
 
 	if (freerdp_settings_get_bool(settings, FreeRDP_SoftwareGdi))
 	{
-		XPutImage(xfc->display, appWindow->pixmap, appWindow->gc, xfc->image, ax, ay, x, y, width,
-		          height);
+		XPutImage(xfc->display, appWindow->pixmap, appWindow->gc, xfc->image, ax, ay, x, y,
+		          WINPR_SAFE_INT_CAST(uint32_t, width), WINPR_SAFE_INT_CAST(uint32_t, height));
 	}
 
-	XCopyArea(xfc->display, appWindow->pixmap, appWindow->handle, appWindow->gc, x, y, width,
-	          height, x, y);
+	XCopyArea(xfc->display, appWindow->pixmap, appWindow->handle, appWindow->gc, x, y,
+	          WINPR_SAFE_INT_CAST(uint32_t, width), WINPR_SAFE_INT_CAST(uint32_t, height), x, y);
 	XFlush(xfc->display);
 	xf_unlock_x11(xfc);
 }

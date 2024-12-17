@@ -86,6 +86,7 @@ int SdlSelectList::run()
 								CurrentActiveTextInput = 0;
 							else
 								CurrentActiveTextInput++;
+							assert(_list.size() > 0);
 							CurrentActiveTextInput = CurrentActiveTextInput % _list.size();
 							break;
 						case SDLK_RETURN:
