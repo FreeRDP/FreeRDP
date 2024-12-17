@@ -305,7 +305,9 @@ static BOOL sdl_detect_single_window(SdlContext* sdl, UINT32* pMaxWidth, UINT32*
 		if (freerdp_settings_get_uint32(settings, FreeRDP_NumMonitorIds) == 0)
 		{
 			const size_t id =
-			    (!sdl->windows.empty()) ? sdl->windows.begin()->second.displayIndex() : 0;
+			    (!sdl->windows.empty())
+			        ? WINPR_SAFE_INT_CAST(uint32_t, sdl->windows.begin()->second.displayIndex())
+			        : 0;
 			if (!freerdp_settings_set_pointer_len(settings, FreeRDP_MonitorIds, &id, 1))
 				return FALSE;
 		}

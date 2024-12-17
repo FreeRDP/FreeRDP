@@ -17,7 +17,8 @@ SdlSelectList::SdlSelectList(const std::string& title, const std::vector<std::st
 	assert(widget_width <= INT32_MAX);
 	assert(height <= INT32_MAX);
 
-	auto flags = SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_MOUSE_FOCUS | SDL_WINDOW_INPUT_FOCUS;
+	auto flags = WINPR_SAFE_INT_CAST(uint32_t, SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_MOUSE_FOCUS |
+	                                               SDL_WINDOW_INPUT_FOCUS);
 	auto rc = SDL_CreateWindowAndRenderer(static_cast<int>(widget_width), static_cast<int>(height),
 	                                      flags, &_window, &_renderer);
 	if (rc != 0)
@@ -122,7 +123,7 @@ int SdlSelectList::run()
 					reset_mouseover();
 					if (TextInputIndex >= 0)
 					{
-						auto& cur = _list[TextInputIndex];
+						auto& cur = _list[WINPR_SAFE_INT_CAST(size_t, TextInputIndex)];
 						if (!cur.set_mouseover(_renderer, true))
 							throw;
 					}
@@ -158,7 +159,7 @@ int SdlSelectList::run()
 			reset_highlight();
 			if (CurrentActiveTextInput >= 0)
 			{
-				auto& cur = _list[CurrentActiveTextInput];
+				auto& cur = _list[WINPR_SAFE_INT_CAST(size_t, CurrentActiveTextInput)];
 				if (!cur.set_highlight(_renderer, true))
 					throw;
 			}
