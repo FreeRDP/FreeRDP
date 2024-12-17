@@ -121,15 +121,15 @@ static BOOL sdl_apply_max_size(SdlContext* sdl, UINT32* pMaxWidth, UINT32* pMaxH
 
 		if (freerdp_settings_get_bool(settings, FreeRDP_Fullscreen))
 		{
-			*pMaxWidth = monitor->width;
-			*pMaxHeight = monitor->height;
+			*pMaxWidth = WINPR_SAFE_INT_CAST(uint32_t, monitor->width);
+			*pMaxHeight = WINPR_SAFE_INT_CAST(uint32_t, monitor->height);
 		}
 		else if (freerdp_settings_get_bool(settings, FreeRDP_Workarea))
 		{
 			SDL_Rect rect = {};
 			SDL_GetDisplayUsableBounds(WINPR_SAFE_INT_CAST(int, monitor->orig_screen), &rect);
-			*pMaxWidth = rect.w;
-			*pMaxHeight = rect.h;
+			*pMaxWidth = WINPR_SAFE_INT_CAST(uint32_t, rect.w);
+			*pMaxHeight = WINPR_SAFE_INT_CAST(uint32_t, rect.h);
 		}
 		else if (freerdp_settings_get_uint32(settings, FreeRDP_PercentScreen) > 0)
 		{
@@ -280,8 +280,8 @@ static BOOL sdl_apply_display_properties(SdlContext* sdl)
 		monitor->attributes.desktopScaleFactor = static_cast<UINT32>(factor);
 		monitor->attributes.deviceScaleFactor = 100;
 		monitor->attributes.orientation = rdp_orientation;
-		monitor->attributes.physicalWidth = scale(rect.w, hdpi);
-		monitor->attributes.physicalHeight = scale(rect.h, vdpi);
+		monitor->attributes.physicalWidth = scale(WINPR_SAFE_INT_CAST(uint32_t, rect.w), hdpi);
+		monitor->attributes.physicalHeight = scale(WINPR_SAFE_INT_CAST(uint32_t, rect.h), vdpi);
 	}
 	return TRUE;
 }

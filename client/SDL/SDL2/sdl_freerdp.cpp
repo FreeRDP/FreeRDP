@@ -240,7 +240,7 @@ static const struct sdl_exit_code_map_t* sdl_map_entry_by_error(INT32 error)
 	return nullptr;
 }
 
-static int sdl_map_error_to_exit_code(DWORD error)
+static int sdl_map_error_to_exit_code(INT32 error)
 {
 	const struct sdl_exit_code_map_t* entry = sdl_map_entry_by_error(error);
 	if (entry)
