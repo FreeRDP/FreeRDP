@@ -778,7 +778,7 @@ int winpr_Cipher_BytesToKey(int cipher, WINPR_MD_TYPE md, const void* salt, cons
 	const EVP_MD* evp_md = NULL;
 	const EVP_CIPHER* evp_cipher = NULL;
 	evp_md = winpr_openssl_get_evp_md(md);
-	evp_cipher = winpr_openssl_get_evp_cipher(WINPR_SAFE_INT_CAST(size_t, cipher));
+	evp_cipher = winpr_openssl_get_evp_cipher(WINPR_SAFE_INT_CAST(WINPR_CIPHER_TYPE, cipher));
 	WINPR_ASSERT(datal <= INT_MAX);
 	WINPR_ASSERT(count <= INT_MAX);
 	return EVP_BytesToKey(evp_cipher, evp_md, salt, data, (int)datal, (int)count, key, iv);
