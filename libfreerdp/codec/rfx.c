@@ -596,7 +596,7 @@ static INLINE BOOL rfx_process_message_context(RFX_CONTEXT* WINPR_RESTRICT conte
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
-	context->decodedHeaderBlocks &= ~RFX_DECODED_CONTEXT;
+	context->decodedHeaderBlocks &= (uint32_t)~RFX_DECODED_CONTEXT;
 
 	if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, 5))
 		return FALSE;
