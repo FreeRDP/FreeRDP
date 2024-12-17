@@ -361,11 +361,11 @@ FREERDP_REMAP_TABLE* freerdp_keyboard_remap_string_to_list(const char* list)
 	if (!list)
 		return remap_table;
 
+	BOOL success = FALSE;
 	char* copy = _strdup(list);
 	if (!copy)
 		goto fail;
 
-	BOOL success = FALSE;
 	char* context = NULL;
 	char* token = strtok_s(copy, ",", &context);
 	while (token)

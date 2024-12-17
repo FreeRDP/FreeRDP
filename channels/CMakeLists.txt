@@ -18,7 +18,7 @@
 include(CMakeParseArguments)
 include(CMakeDependentOption)
 
-function(define_channel_options)
+macro(define_channel_options)
   set(PREFIX "CHANNEL")
 
   cmake_parse_arguments(
@@ -53,7 +53,7 @@ function(define_channel_options)
   cmake_dependent_option(
     ${CHANNEL_SERVER_OPTION} "${CHANNEL_SERVER_OPTION_DOC}" ${CHANNEL_SERVER_DEFAULT} "${CHANNEL_OPTION}" OFF
   )
-endfunction(define_channel_options)
+endmacro(define_channel_options)
 
 macro(define_channel _channel_name)
   set(CHANNEL_NAME ${_channel_name})
