@@ -606,7 +606,7 @@ BOOL ber_read_integer(wStream* s, UINT32* value)
 		BYTE byte = 0;
 		Stream_Read_UINT8(s, byte);
 		Stream_Read_UINT16_BE(s, *value);
-		*value += (byte << 16);
+		*value += (byte << 16) & 0xFF0000;
 	}
 	else if (length == 4)
 	{

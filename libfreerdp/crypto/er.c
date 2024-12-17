@@ -305,7 +305,7 @@ void er_write_octet_string(wStream* s, BYTE* oct_str, int length, BOOL flag)
 {
 	er_write_universal_tag(s, ER_TAG_OCTET_STRING, FALSE);
 	er_write_length(s, length, flag);
-	Stream_Write(s, oct_str, length);
+	Stream_Write(s, oct_str, WINPR_SAFE_INT_CAST(size_t, length));
 }
 
 int er_write_octet_string_tag(wStream* s, int length, BOOL flag)
@@ -363,7 +363,7 @@ BOOL er_read_integer(wStream* s, UINT32* value)
 
 	if (value == NULL)
 	{
-		Stream_Seek(s, length);
+		Stream_Seek(s, WINPR_SAFE_INT_CAST(size_t, length));
 		return TRUE;
 	}
 
@@ -380,7 +380,7 @@ BOOL er_read_integer(wStream* s, UINT32* value)
 		BYTE byte = 0;
 		Stream_Read_UINT8(s, byte);
 		Stream_Read_UINT16_BE(s, *value);
-		*value += (byte << 16);
+		*value += (byte << 16) & 0xFF0000;
 	}
 	else if (length == 4)
 	{

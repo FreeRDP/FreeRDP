@@ -1975,7 +1975,7 @@ static void rdp_write_bitmap_cache_cell_info(wStream* s, BITMAP_CACHE_V2_CELL_IN
 	 * is used to indicate a persistent bitmap cache.
 	 */
 	WINPR_ASSERT(cellInfo);
-	info = (cellInfo->numEntries | (cellInfo->persistent << 31));
+	info = (cellInfo->numEntries | (((UINT32)cellInfo->persistent << 31) & 0xFF000000));
 	Stream_Write_UINT32(s, info);
 }
 
@@ -2151,13 +2151,13 @@ static BOOL rdp_apply_virtual_channel_capability_set(rdpSettings* settings, cons
 	    (src->VCFlags & VCCAPS_COMPR_SC))
 		settings->VCFlags |= VCCAPS_COMPR_SC;
 	else
-		settings->VCFlags &= ~VCCAPS_COMPR_SC;
+		settings->VCFlags &= (uint32_t)~VCCAPS_COMPR_SC;
 
 	if (!settings->ServerMode && (settings->VCFlags & VCCAPS_COMPR_CS_8K) &&
 	    (src->VCFlags & VCCAPS_COMPR_CS_8K))
 		settings->VCFlags |= VCCAPS_COMPR_CS_8K;
 	else
-		settings->VCFlags &= ~VCCAPS_COMPR_CS_8K;
+		settings->VCFlags &= (uint32_t)~VCCAPS_COMPR_CS_8K;
 
 	/*
 	 * When one peer does not write the VCChunkSize, the VCChunkSize must not be

@@ -311,7 +311,7 @@ static BOOL transport_default_connect_tls(rdpTransport* transport)
 
 	tls->hostname = settings->ServerHostname;
 	tls->serverName = settings->UserSpecifiedServerName;
-	tls->port = MIN(UINT16_MAX, settings->ServerPort);
+	tls->port = WINPR_SAFE_INT_CAST(int32_t, MIN(UINT16_MAX, settings->ServerPort));
 
 	if (tls->port == 0)
 		tls->port = 3389;
@@ -847,7 +847,7 @@ static SSIZE_T transport_read_layer(rdpTransport* transport, BYTE* data, size_t 
 		VALGRIND_MAKE_MEM_DEFINED(data + read, bytes - read);
 #endif
 		read += status;
-		rdp->inBytes += status;
+		rdp->inBytes += WINPR_SAFE_INT_CAST(uint64_t, status);
 	}
 
 	return read;
@@ -1026,7 +1026,7 @@ static SSIZE_T parse_default_mode_pdu(rdpTransport* transport, wStream* stream)
 
 SSIZE_T transport_parse_pdu(rdpTransport* transport, wStream* s, BOOL* incomplete)
 {
-	size_t pduLength = 0;
+	SSIZE_T pduLength = 0;
 
 	if (!transport)
 		return -1;
@@ -1045,20 +1045,20 @@ SSIZE_T transport_parse_pdu(rdpTransport* transport, wStream* s, BOOL* incomplet
 	else
 		pduLength = parse_default_mode_pdu(transport, s);
 
-	if (pduLength == 0)
-		return 0;
+	if (pduLength <= 0)
+		return pduLength;
 
 	if (pduLength > SSIZE_MAX)
 		return -1;
 
 	const size_t len = Stream_Length(s);
-	if (len > pduLength)
+	if (len > WINPR_SAFE_INT_CAST(size_t, pduLength))
 		return -1;
 
 	if (incomplete)
-		*incomplete = len < pduLength;
+		*incomplete = len < WINPR_SAFE_INT_CAST(size_t, pduLength);
 
-	return (int)pduLength;
+	return pduLength;
 }
 
 static int transport_default_read_pdu(rdpTransport* transport, wStream* s)
@@ -2022,7 +2022,8 @@ static long transport_layer_bio_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 		case BIO_C_WAIT_READ:
 		{
 			int timeout = (int)arg1;
-			BOOL r = IFCALLRESULT(FALSE, layer->Wait, layer->userContext, FALSE, timeout);
+			BOOL r = IFCALLRESULT(FALSE, layer->Wait, layer->userContext, FALSE,
+			                      WINPR_SAFE_INT_CAST(uint32_t, timeout));
 			/* Convert timeout to error return */
 			if (!r)
 			{
@@ -2037,7 +2038,8 @@ static long transport_layer_bio_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 		case BIO_C_WAIT_WRITE:
 		{
 			int timeout = (int)arg1;
-			BOOL r = IFCALLRESULT(FALSE, layer->Wait, layer->userContext, TRUE, timeout);
+			BOOL r = IFCALLRESULT(FALSE, layer->Wait, layer->userContext, TRUE,
+			                      WINPR_SAFE_INT_CAST(uint32_t_t, timeout));
 			/* Convert timeout to error return */
 			if (!r)
 			{
