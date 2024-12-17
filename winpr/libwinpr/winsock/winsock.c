@@ -1009,7 +1009,7 @@ SOCKET _accept(SOCKET s, struct sockaddr* addr, int* addrlen)
 	socklen_t s_addrlen = (socklen_t)*addrlen;
 	const int status = accept(fd, addr, &s_addrlen);
 	*addrlen = (int)s_addrlen;
-	return WINPR_SAFE_INT_CAST(SOCKET, status);
+	return (SOCKET)status;
 }
 
 int _bind(SOCKET s, const struct sockaddr* addr, int namelen)
