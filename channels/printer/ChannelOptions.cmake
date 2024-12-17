@@ -1,4 +1,4 @@
-set(OPTION_DEFAULT OFF)
+set(OPTION_DEFAULT ON)
 set(OPTION_CLIENT_DEFAULT ON)
 set(OPTION_SERVER_DEFAULT OFF)
 
@@ -33,7 +33,8 @@ define_channel_options(
   "[MS-RDPEPC]"
   DEFAULT
   ${OPTION_DEFAULT}
+  CLIENT_DEFAULT
+  ${OPTION_CLIENT_DEFAULT}
+  SERVER_DEFAULT
+  ${OPTION_SERVER_DEFAULT}
 )
-
-define_channel_client_options(${OPTION_CLIENT_DEFAULT})
-define_channel_server_options(${OPTION_SERVER_DEFAULT})
