@@ -1113,7 +1113,7 @@ u_short _htons(u_short hostshort)
 
 unsigned long _inet_addr(const char* cp)
 {
-	return WINPR_SAFE_INT_CAST(long, inet_addr(cp));
+	return WINPR_SAFE_INT_CAST(unsigned long, inet_addr(cp));
 }
 
 char* _inet_ntoa(struct in_addr in)

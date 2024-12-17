@@ -236,15 +236,16 @@ static BOOL ArrayList_Shift(wArrayList* arrayList, size_t index, SSIZE_T count)
 	}
 	else if (count < 0)
 	{
-		const size_t off = index + (size_t)(-1 * count);
+		const size_t scount = WINPR_SAFE_INT_CAST(size_t, -count);
+		const size_t off = index + scount;
 		if (off < arrayList->size)
 		{
 			const size_t chunk = arrayList->size - off;
-			MoveMemory((void*)&arrayList->array[index], (void*)&arrayList->array[index - count],
+			MoveMemory((void*)&arrayList->array[index], (void*)&arrayList->array[index + scount],
 			           chunk * sizeof(void*));
 		}
 
-		arrayList->size += count;
+		arrayList->size += scount;
 	}
 
 	return TRUE;
