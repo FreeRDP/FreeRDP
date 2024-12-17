@@ -108,7 +108,7 @@ static pstatus_t general_copy_8u_AC4r(const BYTE* pSrc, INT32 srcStep, BYTE* pDs
 {
 	const BYTE* src = pSrc;
 	BYTE* dst = pDst;
-	int rowbytes = width * (int)sizeof(UINT32);
+	const size_t rowbytes = WINPR_SAFE_INT_CAST(size_t, width) * sizeof(UINT32);
 
 	if ((width == 0) || (height == 0))
 		return PRIMITIVES_SUCCESS;
@@ -118,7 +118,7 @@ static pstatus_t general_copy_8u_AC4r(const BYTE* pSrc, INT32 srcStep, BYTE* pDs
 	{
 		do
 		{
-			generic->copy(src, dst, rowbytes);
+			generic->copy(src, dst, WINPR_SAFE_INT_CAST(int32_t, rowbytes));
 			src += srcStep;
 			dst += dstStep;
 		} while (--height);
@@ -273,7 +273,8 @@ pstatus_t generic_image_copy_no_overlap_memcpy(
 		    &pSrcData[srcVMultiplier * (y + nYSrc) * nSrcStep + srcVOffset];
 		BYTE* WINPR_RESTRICT dstLine =
 		    &pDstData[dstVMultiplier * (y + nYDst) * nDstStep + dstVOffset];
-		memcpy(&dstLine[xDstOffset], &srcLine[xSrcOffset], copyDstWidth);
+		memcpy(&dstLine[xDstOffset], &srcLine[xSrcOffset],
+		       WINPR_SAFE_INT_CAST(size_t, copyDstWidth));
 	}
 
 	return PRIMITIVES_SUCCESS;

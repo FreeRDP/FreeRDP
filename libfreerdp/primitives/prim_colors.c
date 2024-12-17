@@ -210,8 +210,10 @@ general_yCbCrToRGB_16s16s_P3P3(const INT16* WINPR_RESTRICT pSrc[3], INT32 srcSte
 	INT16* rptr = pDst[0];
 	INT16* gptr = pDst[1];
 	INT16* bptr = pDst[2];
-	UINT32 srcbump = (srcStep - (roi->width * sizeof(UINT16))) / sizeof(UINT16);
-	UINT32 dstbump = (dstStep - (roi->width * sizeof(UINT16))) / sizeof(UINT16);
+	UINT32 srcbump =
+	    (WINPR_SAFE_INT_CAST(uint32_t, srcStep) - (roi->width * sizeof(UINT16))) / sizeof(UINT16);
+	UINT32 dstbump =
+	    (WINPR_SAFE_INT_CAST(uint32_t, dstStep) - (roi->width * sizeof(UINT16))) / sizeof(UINT16);
 
 	for (UINT32 y = 0; y < roi->height; y++)
 	{
