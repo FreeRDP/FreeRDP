@@ -25,6 +25,7 @@
 
 #include <winpr/string.h>
 #include <winpr/file.h>
+#include <winpr/cast.h>
 
 #include <freerdp/client.h>
 #include <freerdp/client/file.h>
@@ -1136,18 +1137,23 @@ BOOL freerdp_client_populate_rdp_file_from_settings(rdpFile* file, const rdpSett
 	file->DesktopHeight = freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight);
 	file->SessionBpp = freerdp_settings_get_uint32(settings, FreeRDP_ColorDepth);
 	file->DesktopScaleFactor = freerdp_settings_get_uint32(settings, FreeRDP_DesktopScaleFactor);
-	file->DynamicResolution = freerdp_settings_get_bool(settings, FreeRDP_DynamicResolutionUpdate);
-	file->VideoPlaybackMode = freerdp_settings_get_bool(settings, FreeRDP_SupportVideoOptimized);
+	file->DynamicResolution = WINPR_SAFE_INT_CAST(
+	    UINT32, freerdp_settings_get_bool(settings, FreeRDP_DynamicResolutionUpdate));
+	file->VideoPlaybackMode = WINPR_SAFE_INT_CAST(
+	    UINT32, freerdp_settings_get_bool(settings, FreeRDP_SupportVideoOptimized));
 
 	// TODO file->MaximizeToCurrentDisplays;
 	// TODO file->SingleMonInWindowedMode;
 	// TODO file->EncodeRedirectedVideoCapture;
 	// TODO file->RedirectedVideoCaptureEncodingQuality;
-	file->ConnectToConsole = freerdp_settings_get_bool(settings, FreeRDP_ConsoleSession);
-	file->NegotiateSecurityLayer =
-	    freerdp_settings_get_bool(settings, FreeRDP_NegotiateSecurityLayer);
-	file->EnableCredSSPSupport = freerdp_settings_get_bool(settings, FreeRDP_NlaSecurity);
-	file->EnableRdsAadAuth = freerdp_settings_get_bool(settings, FreeRDP_AadSecurity);
+	file->ConnectToConsole =
+	    WINPR_SAFE_INT_CAST(UINT32, freerdp_settings_get_bool(settings, FreeRDP_ConsoleSession));
+	file->NegotiateSecurityLayer = WINPR_SAFE_INT_CAST(
+	    UINT32, freerdp_settings_get_bool(settings, FreeRDP_NegotiateSecurityLayer));
+	file->EnableCredSSPSupport =
+	    WINPR_SAFE_INT_CAST(UINT32, freerdp_settings_get_bool(settings, FreeRDP_NlaSecurity));
+	file->EnableRdsAadAuth =
+	    WINPR_SAFE_INT_CAST(UINT32, freerdp_settings_get_bool(settings, FreeRDP_AadSecurity));
 
 	if (freerdp_settings_get_bool(settings, FreeRDP_RemoteApplicationMode))
 		index = FreeRDP_RemoteApplicationWorkingDir;
@@ -1224,19 +1230,22 @@ BOOL freerdp_client_populate_rdp_file_from_settings(rdpFile* file, const rdpSett
 	if (!rdp_opt_duplicate(settings, FreeRDP_GatewayAvdActivityhint, &file->activityhint))
 		return FALSE;
 
-	file->AudioCaptureMode = freerdp_settings_get_bool(settings, FreeRDP_AudioCapture);
-	file->BitmapCachePersistEnable =
-	    freerdp_settings_get_bool(settings, FreeRDP_BitmapCachePersistEnabled);
-	file->Compression = freerdp_settings_get_bool(settings, FreeRDP_CompressionEnabled);
+	file->AudioCaptureMode =
+	    WINPR_SAFE_INT_CAST(UINT32, freerdp_settings_get_bool(settings, FreeRDP_AudioCapture));
+	file->BitmapCachePersistEnable = WINPR_SAFE_INT_CAST(
+	    UINT32, freerdp_settings_get_bool(settings, FreeRDP_BitmapCachePersistEnabled));
+	file->Compression = WINPR_SAFE_INT_CAST(
+	    UINT32, freerdp_settings_get_bool(settings, FreeRDP_CompressionEnabled));
 	file->AuthenticationLevel = freerdp_settings_get_uint32(settings, FreeRDP_AuthenticationLevel);
 	file->GatewayUsageMethod = freerdp_settings_get_uint32(settings, FreeRDP_GatewayUsageMethod);
 	file->GatewayCredentialsSource =
 	    freerdp_settings_get_uint32(settings, FreeRDP_GatewayCredentialsSource);
-	file->PromptCredentialOnce =
-	    freerdp_settings_get_bool(settings, FreeRDP_GatewayUseSameCredentials);
-	file->PromptForCredentials = freerdp_settings_get_bool(settings, FreeRDP_PromptForCredentials);
-	file->RemoteApplicationMode =
-	    freerdp_settings_get_bool(settings, FreeRDP_RemoteApplicationMode);
+	file->PromptCredentialOnce = WINPR_SAFE_INT_CAST(
+	    UINT32, freerdp_settings_get_bool(settings, FreeRDP_GatewayUseSameCredentials));
+	file->PromptForCredentials = WINPR_SAFE_INT_CAST(
+	    UINT32, freerdp_settings_get_bool(settings, FreeRDP_PromptForCredentials));
+	file->RemoteApplicationMode = WINPR_SAFE_INT_CAST(
+	    UINT32, freerdp_settings_get_bool(settings, FreeRDP_RemoteApplicationMode));
 	if (!FILE_POPULATE_STRING(&file->GatewayAccessToken, settings, FreeRDP_GatewayAccessToken) ||
 	    !FILE_POPULATE_STRING(&file->RemoteApplicationProgram, settings,
 	                          FreeRDP_RemoteApplicationProgram) ||
@@ -1251,26 +1260,34 @@ BOOL freerdp_client_populate_rdp_file_from_settings(rdpFile* file, const rdpSett
 	    !FILE_POPULATE_STRING(&file->RemoteApplicationCmdLine, settings,
 	                          FreeRDP_RemoteApplicationCmdLine))
 		return FALSE;
-	file->SpanMonitors = freerdp_settings_get_bool(settings, FreeRDP_SpanMonitors);
-	file->UseMultiMon = freerdp_settings_get_bool(settings, FreeRDP_UseMultimon);
-	file->AllowDesktopComposition =
-	    freerdp_settings_get_bool(settings, FreeRDP_AllowDesktopComposition);
-	file->AllowFontSmoothing = freerdp_settings_get_bool(settings, FreeRDP_AllowFontSmoothing);
-	file->DisableWallpaper = freerdp_settings_get_bool(settings, FreeRDP_DisableWallpaper);
-	file->DisableFullWindowDrag =
-	    freerdp_settings_get_bool(settings, FreeRDP_DisableFullWindowDrag);
-	file->DisableMenuAnims = freerdp_settings_get_bool(settings, FreeRDP_DisableMenuAnims);
-	file->DisableThemes = freerdp_settings_get_bool(settings, FreeRDP_DisableThemes);
+	file->SpanMonitors =
+	    WINPR_SAFE_INT_CAST(UINT32, freerdp_settings_get_bool(settings, FreeRDP_SpanMonitors));
+	file->UseMultiMon =
+	    WINPR_SAFE_INT_CAST(UINT32, freerdp_settings_get_bool(settings, FreeRDP_UseMultimon));
+	file->AllowDesktopComposition = WINPR_SAFE_INT_CAST(
+	    UINT32, freerdp_settings_get_bool(settings, FreeRDP_AllowDesktopComposition));
+	file->AllowFontSmoothing = WINPR_SAFE_INT_CAST(
+	    UINT32, freerdp_settings_get_bool(settings, FreeRDP_AllowFontSmoothing));
+	file->DisableWallpaper =
+	    WINPR_SAFE_INT_CAST(UINT32, freerdp_settings_get_bool(settings, FreeRDP_DisableWallpaper));
+	file->DisableFullWindowDrag = WINPR_SAFE_INT_CAST(
+	    UINT32, freerdp_settings_get_bool(settings, FreeRDP_DisableFullWindowDrag));
+	file->DisableMenuAnims =
+	    WINPR_SAFE_INT_CAST(UINT32, freerdp_settings_get_bool(settings, FreeRDP_DisableMenuAnims));
+	file->DisableThemes =
+	    WINPR_SAFE_INT_CAST(UINT32, freerdp_settings_get_bool(settings, FreeRDP_DisableThemes));
 	file->BandwidthAutoDetect = (freerdp_settings_get_uint32(settings, FreeRDP_ConnectionType) >=
 	                             CONNECTION_TYPE_AUTODETECT)
 	                                ? TRUE
 	                                : FALSE;
 	file->NetworkAutoDetect =
 	    freerdp_settings_get_bool(settings, FreeRDP_NetworkAutoDetect) ? 1 : 0;
-	file->AutoReconnectionEnabled =
-	    freerdp_settings_get_bool(settings, FreeRDP_AutoReconnectionEnabled);
-	file->RedirectSmartCards = freerdp_settings_get_bool(settings, FreeRDP_RedirectSmartCards);
-	file->RedirectWebauthN = freerdp_settings_get_bool(settings, FreeRDP_RedirectWebAuthN);
+	file->AutoReconnectionEnabled = WINPR_SAFE_INT_CAST(
+	    UINT32, freerdp_settings_get_bool(settings, FreeRDP_AutoReconnectionEnabled));
+	file->RedirectSmartCards = WINPR_SAFE_INT_CAST(
+	    UINT32, freerdp_settings_get_bool(settings, FreeRDP_RedirectSmartCards));
+	file->RedirectWebauthN =
+	    WINPR_SAFE_INT_CAST(UINT32, freerdp_settings_get_bool(settings, FreeRDP_RedirectWebAuthN));
 
 	redirectCameras =
 	    freerdp_client_channel_args_to_string(settings, RDPECAM_DVC_CHANNEL_NAME, "device:");
