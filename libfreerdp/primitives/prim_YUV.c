@@ -511,8 +511,8 @@ static pstatus_t general_YUV420ToRGB_8u_P3AC4R(const BYTE* WINPR_RESTRICT pSrc[3
 	pV = pSrc[2];
 	lastCol = roi->width & 0x01;
 	lastRow = roi->height & 0x01;
-	nWidth = (roi->width + 1) & ~0x0001;
-	nHeight = (roi->height + 1) & ~0x0001;
+	nWidth = (roi->width + 1) & (uint32_t)~0x0001;
+	nHeight = (roi->height + 1) & (uint32_t)~0x0001;
 	halfWidth = nWidth / 2;
 	halfHeight = nHeight / 2;
 	srcPad[0] = (srcStep[0] - nWidth);
@@ -1066,7 +1066,7 @@ static INLINE pstatus_t general_RGBToAVC444YUV_BGRX(const BYTE* WINPR_RESTRICT p
 		const BYTE* srcEven = y < roi->height ? pSrc + 1ULL * y * srcStep : pMaxSrc;
 		const BYTE* srcOdd = !last ? pSrc + 1ULL * (y + 1) * srcStep : pMaxSrc;
 		const UINT32 i = y >> 1;
-		const UINT32 n = (i & ~7) + i;
+		const UINT32 n = (i & (uint32_t)~7) + i;
 		BYTE* b1Even = pDst1[0] + 1ULL * y * dst1Step[0];
 		BYTE* b1Odd = !last ? (b1Even + dst1Step[0]) : NULL;
 		BYTE* b2 = pDst1[1] + 1ULL * (y / 2) * dst1Step[1];
@@ -1207,7 +1207,7 @@ static INLINE pstatus_t general_RGBToAVC444YUV_RGBX(const BYTE* WINPR_RESTRICT p
 		const BYTE* srcEven = y < roi->height ? pSrc + 1ULL * y * srcStep : pMaxSrc;
 		const BYTE* srcOdd = !last ? pSrc + 1ULL * (y + 1) * srcStep : pMaxSrc;
 		const UINT32 i = y >> 1;
-		const UINT32 n = (i & ~7) + i;
+		const UINT32 n = (i & (uint32_t)~7) + i;
 		BYTE* b1Even = pDst1[0] + 1ULL * y * dst1Step[0];
 		BYTE* b1Odd = !last ? (b1Even + dst1Step[0]) : NULL;
 		BYTE* b2 = pDst1[1] + 1ULL * (y / 2) * dst1Step[1];
@@ -1412,7 +1412,7 @@ static INLINE pstatus_t general_RGBToAVC444YUV_ANY(
 		const BYTE* srcEven = y < roi->height ? pSrc + y * srcStep : pMaxSrc;
 		const BYTE* srcOdd = !last ? pSrc + (y + 1) * srcStep : pMaxSrc;
 		const UINT32 i = (UINT32)y >> 1;
-		const UINT32 n = (i & ~7) + i;
+		const UINT32 n = (i & (uint32_t)~7) + i;
 		BYTE* b1Even = pDst1[0] + y * dst1Step[0];
 		BYTE* b1Odd = !last ? (b1Even + dst1Step[0]) : NULL;
 		BYTE* b2 = pDst1[1] + (y / 2) * dst1Step[1];
