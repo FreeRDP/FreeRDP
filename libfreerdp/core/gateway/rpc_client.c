@@ -568,7 +568,6 @@ fail:
 static SSIZE_T rpc_client_default_out_channel_recv(rdpRpc* rpc)
 {
 	SSIZE_T status = -1;
-	UINT32 statusCode = 0;
 	HttpResponse* response = NULL;
 	RpcInChannel* inChannel = NULL;
 	RpcOutChannel* outChannel = NULL;
@@ -647,7 +646,7 @@ static SSIZE_T rpc_client_default_out_channel_recv(rdpRpc* rpc)
 		if (!response)
 			return -1;
 
-		statusCode = http_response_get_status_code(response);
+		const INT16 statusCode = http_response_get_status_code(response);
 
 		if (statusCode != HTTP_STATUS_OK)
 		{

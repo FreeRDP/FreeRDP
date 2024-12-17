@@ -289,7 +289,7 @@ static UINT ExtractRunLengthMegaMega(const BYTE* pbOrderHdr, const BYTE* pbEnd, 
 		return 0;
 	}
 
-	runLength = ((UINT16)pbOrderHdr[1]) | (((UINT16)pbOrderHdr[2]) << 8);
+	runLength = ((UINT16)pbOrderHdr[1]) | ((((UINT16)pbOrderHdr[2]) << 8) & 0xFF00);
 	(*advance) += 2;
 
 	return runLength;

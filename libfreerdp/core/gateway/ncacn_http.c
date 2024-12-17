@@ -205,7 +205,7 @@ BOOL rpc_ncacn_http_send_out_channel_request(RpcChannel* outChannel, BOOL replac
 {
 	BOOL status = TRUE;
 	wStream* s = NULL;
-	int contentLength = 0;
+	size_t contentLength = 0;
 	rdpCredsspAuth* auth = NULL;
 	HttpContext* http = NULL;
 	const SecBuffer* buffer = NULL;
