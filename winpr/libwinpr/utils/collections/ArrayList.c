@@ -241,11 +241,11 @@ static BOOL ArrayList_Shift(wArrayList* arrayList, size_t index, SSIZE_T count)
 		if (off < arrayList->size)
 		{
 			const size_t chunk = arrayList->size - off;
-			MoveMemory((void*)&arrayList->array[index], (void*)&arrayList->array[index + scount],
+			MoveMemory((void*)&arrayList->array[index], (void*)&arrayList->array[off],
 			           chunk * sizeof(void*));
 		}
 
-		arrayList->size += scount;
+		arrayList->size -= scount;
 	}
 
 	return TRUE;
