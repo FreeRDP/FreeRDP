@@ -108,7 +108,9 @@ static UINT xf_OutputUpdate(xfContext* xfc, xfGfxSurface* surface)
 			          WINPR_SAFE_INT_CAST(int, nXSrc), WINPR_SAFE_INT_CAST(int, nYSrc),
 			          WINPR_SAFE_INT_CAST(int, nXDst), WINPR_SAFE_INT_CAST(int, nYDst), dwidth,
 			          dheight);
-			xf_draw_screen(xfc, nXDst, nYDst, dwidth, dheight);
+			xf_draw_screen(
+			    xfc, WINPR_SAFE_INT_CAST(int32_t, nXDst), WINPR_SAFE_INT_CAST(int32_t, nYDst),
+			    WINPR_SAFE_INT_CAST(int32_t, dwidth), WINPR_SAFE_INT_CAST(int32_t, dheight));
 		}
 		else
 #endif
@@ -318,7 +320,8 @@ static UINT xf_CreateSurface(RdpgfxClientContext* context,
 	}
 
 	surface->gdi.scanline = surface->gdi.width * FreeRDPGetBytesPerPixel(surface->gdi.format);
-	surface->gdi.scanline = x11_pad_scanline(surface->gdi.scanline, xfc->scanline_pad);
+	surface->gdi.scanline =
+	    x11_pad_scanline(surface->gdi.scanline, WINPR_SAFE_INT_CAST(uint32_t, xfc->scanline_pad));
 	size = 1ull * surface->gdi.scanline * surface->gdi.height;
 	surface->gdi.data = (BYTE*)winpr_aligned_malloc(size, 16);
 
@@ -333,17 +336,18 @@ static UINT xf_CreateSurface(RdpgfxClientContext* context,
 	if (FreeRDPAreColorFormatsEqualNoAlpha(gdi->dstFormat, surface->gdi.format))
 	{
 		WINPR_ASSERT(xfc->depth != 0);
-		surface->image = XCreateImage(xfc->display, xfc->visual, xfc->depth, ZPixmap, 0,
-		                              (char*)surface->gdi.data, surface->gdi.mappedWidth,
-		                              surface->gdi.mappedHeight, xfc->scanline_pad,
-		                              WINPR_SAFE_INT_CAST(int, surface->gdi.scanline));
+		surface->image = XCreateImage(
+		    xfc->display, xfc->visual, WINPR_SAFE_INT_CAST(uint32_t, xfc->depth), ZPixmap, 0,
+		    (char*)surface->gdi.data, surface->gdi.mappedWidth, surface->gdi.mappedHeight,
+		    xfc->scanline_pad, WINPR_SAFE_INT_CAST(int, surface->gdi.scanline));
 	}
 	else
 	{
 		UINT32 width = surface->gdi.width;
 		UINT32 bytes = FreeRDPGetBytesPerPixel(gdi->dstFormat);
 		surface->stageScanline = width * bytes;
-		surface->stageScanline = x11_pad_scanline(surface->stageScanline, xfc->scanline_pad);
+		surface->stageScanline = x11_pad_scanline(surface->stageScanline,
+		                                          WINPR_SAFE_INT_CAST(uint32_t, xfc->scanline_pad));
 		size = 1ull * surface->stageScanline * surface->gdi.height;
 		surface->stage = (BYTE*)winpr_aligned_malloc(size, 16);
 
@@ -355,10 +359,10 @@ static UINT xf_CreateSurface(RdpgfxClientContext* context,
 
 		ZeroMemory(surface->stage, size);
 		WINPR_ASSERT(xfc->depth != 0);
-		surface->image =
-		    XCreateImage(xfc->display, xfc->visual, xfc->depth, ZPixmap, 0, (char*)surface->stage,
-		                 surface->gdi.mappedWidth, surface->gdi.mappedHeight, xfc->scanline_pad,
-		                 WINPR_SAFE_INT_CAST(int, surface->stageScanline));
+		surface->image = XCreateImage(
+		    xfc->display, xfc->visual, WINPR_SAFE_INT_CAST(uint32_t, xfc->depth), ZPixmap, 0,
+		    (char*)surface->stage, surface->gdi.mappedWidth, surface->gdi.mappedHeight,
+		    xfc->scanline_pad, WINPR_SAFE_INT_CAST(int, surface->stageScanline));
 	}
 
 	if (!surface->image)

@@ -213,7 +213,7 @@ SSIZE_T sdl_retry_dialog(freerdp* instance, const char* what, size_t current, vo
 	const size_t delay = freerdp_settings_get_uint32(settings, FreeRDP_TcpConnectTimeout);
 	std::lock_guard<CriticalSection> lock(sdl->critical);
 	if (!sdl->connection_dialog)
-		return delay;
+		return WINPR_SAFE_INT_CAST(ssize_t, delay);
 
 	sdl->connection_dialog->setTitle("Retry connection to %s",
 	                                 freerdp_settings_get_server_name(instance->context->settings));
@@ -251,7 +251,7 @@ SSIZE_T sdl_retry_dialog(freerdp* instance, const char* what, size_t current, vo
 	sdl->connection_dialog->showInfo("[%s] retry %" PRIuz "/%" PRIuz ", delaying %" PRIuz
 	                                 "ms before next attempt",
 	                                 what, current, max, delay);
-	return delay;
+	return WINPR_SAFE_INT_CAST(ssize_t, delay);
 }
 
 BOOL sdl_present_gateway_message(freerdp* instance, UINT32 type, BOOL isDisplayMandatory,
@@ -612,7 +612,7 @@ BOOL sdl_auth_dialog_show(const SDL_UserAuthArg* args)
 BOOL sdl_scard_dialog_show(const char* title, Sint32 count, const char** list)
 {
 	std::vector<std::string> vlist;
-	vlist.reserve(count);
+	vlist.reserve(WINPR_SAFE_INT_CAST(size_t, count));
 	for (Sint32 x = 0; x < count; x++)
 		vlist.emplace_back(list[x]);
 	SdlSelectList slist(title, vlist);

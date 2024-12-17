@@ -142,14 +142,14 @@ static BOOL wlf_disp_sendResize(wlfDispContext* wlfDisp)
 		wlfDisp->waitingResize = TRUE;
 		layout.Flags = DISPLAY_CONTROL_MONITOR_PRIMARY;
 		layout.Top = layout.Left = 0;
-		layout.Width = wlfDisp->targetWidth;
-		layout.Height = wlfDisp->targetHeight;
+		layout.Width = WINPR_SAFE_INT_CAST(uint32_t, wlfDisp->targetWidth);
+		layout.Height = WINPR_SAFE_INT_CAST(uint32_t, wlfDisp->targetHeight);
 		layout.Orientation = freerdp_settings_get_uint16(settings, FreeRDP_DesktopOrientation);
 		layout.DesktopScaleFactor =
 		    freerdp_settings_get_uint32(settings, FreeRDP_DesktopScaleFactor);
 		layout.DeviceScaleFactor = freerdp_settings_get_uint32(settings, FreeRDP_DeviceScaleFactor);
-		layout.PhysicalWidth = wlfDisp->targetWidth;
-		layout.PhysicalHeight = wlfDisp->targetHeight;
+		layout.PhysicalWidth = WINPR_SAFE_INT_CAST(uint32_t, wlfDisp->targetWidth);
+		layout.PhysicalHeight = WINPR_SAFE_INT_CAST(uint32_t, wlfDisp->targetHeight);
 
 		if (IFCALLRESULT(CHANNEL_RC_OK, wlfDisp->disp->SendMonitorLayout, wlfDisp->disp, 1,
 		                 &layout) != CHANNEL_RC_OK)
