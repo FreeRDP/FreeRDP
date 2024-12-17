@@ -393,7 +393,8 @@ static void xf_floatbar_event_expose(xfFloatbar* floatbar)
 	WINPR_ASSERT(display);
 
 	/* create the pixmap that we'll use for shaping the window */
-	pmap = XCreatePixmap(display, floatbar->handle, floatbar->width, floatbar->height, 1);
+	pmap = XCreatePixmap(display, floatbar->handle, WINPR_SAFE_INT_CAST(uint32_t, floatbar->width),
+	                     WINPR_SAFE_INT_CAST(uint32_t, floatbar->height), 1);
 	gc = XCreateGC(display, floatbar->handle, 0, 0);
 	shape_gc = XCreateGC(display, pmap, 0, 0);
 	/* points for drawing the floatbar */
@@ -420,7 +421,8 @@ static void xf_floatbar_event_expose(xfFloatbar* floatbar)
 	border[4].y = border[0].y;
 	/* Fill all pixels with 0 */
 	XSetForeground(display, shape_gc, 0);
-	XFillRectangle(display, pmap, shape_gc, 0, 0, floatbar->width, floatbar->height);
+	XFillRectangle(display, pmap, shape_gc, 0, 0, WINPR_SAFE_INT_CAST(uint32_t, floatbar->width),
+	               WINPR_SAFE_INT_CAST(uint32_t, floatbar->height));
 	/* Fill all pixels which should be shown with 1 */
 	XSetForeground(display, shape_gc, 1);
 	XFillPolygon(display, pmap, shape_gc, shape, 5, 0, CoordModeOrigin);
@@ -662,7 +664,9 @@ static void xf_floatbar_resize(xfFloatbar* floatbar, const XMotionEvent* event)
 	/* only resize and move window if still above minimum width */
 	if (FLOATBAR_MIN_WIDTH < width)
 	{
-		XMoveResizeWindow(xfc->display, floatbar->handle, x, 0, width, floatbar->height);
+		XMoveResizeWindow(xfc->display, floatbar->handle, x, 0,
+		                  WINPR_SAFE_INT_CAST(uint32_t, width),
+		                  WINPR_SAFE_INT_CAST(uint32_t, floatbar->height));
 		floatbar->x = x;
 		floatbar->width = width;
 	}

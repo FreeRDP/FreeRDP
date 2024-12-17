@@ -402,7 +402,8 @@ static BOOL xf_event_Expose(xfContext* xfc, const XExposeEvent* event, BOOL app)
 	{
 		if (xfc->common.context.gdi->gfx)
 		{
-			xf_OutputExpose(xfc, x, y, w, h);
+			xf_OutputExpose(xfc, WINPR_SAFE_INT_CAST(uint32_t, x), WINPR_SAFE_INT_CAST(uint32_t, y),
+			                WINPR_SAFE_INT_CAST(uint32_t, w), WINPR_SAFE_INT_CAST(uint32_t, h));
 			return TRUE;
 		}
 		xf_draw_screen(xfc, x, y, w, h);
