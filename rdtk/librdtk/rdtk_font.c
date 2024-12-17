@@ -41,8 +41,8 @@
 #define FILE_EXT "bmp"
 #endif
 
-static int rdtk_font_draw_glyph(rdtkSurface* surface, int nXDst, int nYDst, rdtkFont* font,
-                                rdtkGlyph* glyph)
+static int rdtk_font_draw_glyph(rdtkSurface* surface, uint16_t nXDst, uint16_t nYDst,
+                                rdtkFont* font, rdtkGlyph* glyph)
 {
 	WINPR_ASSERT(surface);
 	WINPR_ASSERT(font);
@@ -50,21 +50,21 @@ static int rdtk_font_draw_glyph(rdtkSurface* surface, int nXDst, int nYDst, rdtk
 
 	nXDst += glyph->offsetX;
 	nYDst += glyph->offsetY;
-	const int nXSrc = glyph->rectX;
-	const int nYSrc = glyph->rectY;
-	const int nWidth = glyph->rectWidth;
-	const int nHeight = glyph->rectHeight;
+	const size_t nXSrc = WINPR_SAFE_INT_CAST(size_t, glyph->rectX);
+	const size_t nYSrc = WINPR_SAFE_INT_CAST(size_t, glyph->rectY);
+	const size_t nWidth = WINPR_SAFE_INT_CAST(size_t, glyph->rectWidth);
+	const size_t nHeight = WINPR_SAFE_INT_CAST(size_t, glyph->rectHeight);
 	const uint32_t nSrcStep = font->image->scanline;
 	const uint8_t* pSrcData = font->image->data;
 	uint8_t* pDstData = surface->data;
 	const uint32_t nDstStep = surface->scanline;
 
-	for (int y = 0; y < nHeight; y++)
+	for (size_t y = 0; y < nHeight; y++)
 	{
 		const uint8_t* pSrcPixel = &pSrcData[((nYSrc + y) * nSrcStep) + (nXSrc * 4)];
 		uint8_t* pDstPixel = &pDstData[((nYDst + y) * nDstStep) + (nXDst * 4)];
 
-		for (int x = 0; x < nWidth; x++)
+		for (size_t x = 0; x < nWidth; x++)
 		{
 			uint8_t B = pSrcPixel[0];
 			uint8_t G = pSrcPixel[1];
@@ -134,7 +134,7 @@ int rdtk_font_text_draw_size(rdtkFont* font, uint16_t* width, uint16_t* height, 
 	const size_t length = strlen(text);
 	for (size_t index = 0; index < length; index++)
 	{
-		const size_t glyphIndex = text[index] - 32;
+		const size_t glyphIndex = WINPR_SAFE_INT_CAST(size_t, text[index] - 32);
 
 		if (glyphIndex < font->glyphCount)
 		{
@@ -217,7 +217,7 @@ static int rdtk_font_convert_descriptor_code_to_utf8(const char* str, uint8_t* u
 	{
 		if ((str[0] > 31) && (str[0] < 127))
 		{
-			utf8[0] = str[0];
+			utf8[0] = WINPR_SAFE_INT_CAST(uint8_t, str[0] & 0xFF);
 		}
 	}
 	else

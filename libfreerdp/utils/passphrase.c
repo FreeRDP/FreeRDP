@@ -175,7 +175,7 @@ static const char* freerdp_passphrase_read_tty(rdpContext* context, const char* 
 	{
 		struct termios new_flags = { 0 };
 		new_flags = orig_flags;
-		new_flags.c_lflag &= ~ECHO;
+		new_flags.c_lflag &= (uint32_t)~ECHO;
 		new_flags.c_lflag |= ECHONL;
 		terminal_needs_reset = TRUE;
 		if (tcsetattr(terminal_fildes, TCSAFLUSH, &new_flags) == -1)

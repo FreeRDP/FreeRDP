@@ -500,7 +500,7 @@ static void* clipboard_synthesize_html_format(wClipboard* clipboard, UINT32 form
 
 	if (formatId == ClipboardGetFormatId(clipboard, "text/html"))
 	{
-		const INT64 SrcSize = (INT64)*pSize;
+		const size_t SrcSize = (size_t)*pSize;
 		const size_t DstSize = SrcSize + 200;
 		char* body = NULL;
 		char num[20] = { 0 };
@@ -605,7 +605,7 @@ static void* clipboard_synthesize_text_html(wClipboard* clipboard, UINT32 format
 	if (formatId == ClipboardGetFormatId(clipboard, "HTML Format"))
 	{
 		const char* str = (const char*)data;
-		const size_t SrcSize = (INT64)*pSize;
+		const size_t SrcSize = *pSize;
 		const char* begStr = strstr(str, "StartHTML:");
 		const char* endStr = strstr(str, "EndHTML:");
 
