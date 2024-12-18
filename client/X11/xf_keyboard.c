@@ -378,7 +378,7 @@ static BOOL xf_keyboard_get_key_state(xfContext* xfc, int state, KeySym keysym)
 	return (state & keysymMask) ? TRUE : FALSE;
 }
 
-static BOOL xf_keyboard_set_key_state(xfContext* xfc, BOOL on, int keysym)
+static BOOL xf_keyboard_set_key_state(xfContext* xfc, BOOL on, KeySym keysym)
 {
 	if (!xfc->xkbAvailable)
 		return FALSE;

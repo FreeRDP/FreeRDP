@@ -680,7 +680,8 @@ static int x11_shadow_blend_cursor(x11ShadowSubsystem* subsystem)
 	for (size_t y = 0; y < nHeight; y++)
 	{
 		const BYTE* pSrcPixel = &pSrcData[((nYSrc + y) * nSrcStep) + (4ULL * nXSrc)];
-		BYTE* pDstPixel = &pDstData[((nYDst + y) * nDstStep) + (4ULL * nXDst)];
+		BYTE* pDstPixel = &pDstData[((WINPR_ASSERTING_INT_CAST(uint32_t, nYDst) + y) * nDstStep) +
+		                            (4ULL * WINPR_ASSERTING_INT_CAST(uint32_t, nXDst))];
 
 		for (size_t x = 0; x < nWidth; x++)
 		{
@@ -1203,7 +1204,7 @@ UINT32 x11_shadow_enum_monitors(MONITOR_DEF* monitors, UINT32 maxMonitors)
 	if (!display)
 	{
 		WLog_ERR(TAG, "failed to open display: %s", XDisplayName(NULL));
-		return -1;
+		return 0;
 	}
 
 	displayWidth = WidthOfScreen(DefaultScreenOfDisplay(display));
@@ -1267,7 +1268,7 @@ UINT32 x11_shadow_enum_monitors(MONITOR_DEF* monitors, UINT32 maxMonitors)
 	}
 
 	errno = 0;
-	return numMonitors;
+	return WINPR_ASSERTING_INT_CAST(uint32_t, numMonitors);
 }
 
 static int x11_shadow_subsystem_init(rdpShadowSubsystem* sub)

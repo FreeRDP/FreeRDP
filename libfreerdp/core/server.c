@@ -1408,7 +1408,8 @@ HANDLE WINAPI FreeRDP_WTSVirtualChannelOpenEx(DWORD SessionId, LPSTR pVirtualNam
 		return NULL;
 	}
 
-	channel->channelId = InterlockedIncrement(&vcm->dvc_channel_id_seq);
+	const LONG hdl = InterlockedIncrement(&vcm->dvc_channel_id_seq);
+	channel->channelId = WINPR_ASSERTING_INT_CAST(uint32_t, hdl);
 
 	if (!HashTable_Insert(vcm->dynamicVirtualChannels, &channel->channelId, channel))
 	{

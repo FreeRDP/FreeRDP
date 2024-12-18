@@ -249,7 +249,7 @@ static int sdl_map_error_to_exit_code(UINT32 error)
 	return SDL_EXIT_CONN_FAILED;
 }
 
-static const char* sdl_map_error_to_code_tag(INT32 error)
+static const char* sdl_map_error_to_code_tag(UINT32 error)
 {
 	const struct sdl_exit_code_map_t* entry = sdl_map_entry_by_error(error);
 	if (entry)

@@ -267,7 +267,7 @@ static void LIBUSB_CALL func_iso_callback(struct libusb_transfer* transfer)
 			Stream_SetPosition(user_data->data,
 			                   40); /* TS_URB_ISOCH_TRANSFER_RESULT IsoPacket offset */
 
-			for (int i = 0; i < transfer->num_iso_packets; i++)
+			for (size_t i = 0; i < WINPR_ASSERTING_INT_CAST(size_t, transfer->num_iso_packets); i++)
 			{
 				const UINT32 act_len = transfer->iso_packet_desc[i].actual_length;
 				Stream_Write_UINT32(user_data->data, index);
@@ -309,8 +309,8 @@ static void LIBUSB_CALL func_iso_callback(struct libusb_transfer* transfer)
 					const UINT32 RequestID = streamID & INTERFACE_ID_MASK;
 					user_data->cb(user_data->idev, user_data->callback, user_data->data,
 					              InterfaceId, user_data->noack, user_data->MessageId, RequestID,
-					              transfer->num_iso_packets, transfer->status,
-					              user_data->StartFrame, user_data->ErrorCount,
+					              WINPR_ASSERTING_INT_CAST(uint32_t, transfer->num_iso_packets),
+					              transfer->status, user_data->StartFrame, user_data->ErrorCount,
 					              user_data->OutputBufferSize);
 					user_data->data = NULL;
 				}
@@ -371,9 +371,10 @@ static void LIBUSB_CALL func_bulk_transfer_cb(struct libusb_transfer* transfer)
 		const UINT32 RequestID = streamID & INTERFACE_ID_MASK;
 
 		user_data->cb(user_data->idev, user_data->callback, user_data->data, InterfaceId,
-		              user_data->noack, user_data->MessageId, RequestID, transfer->num_iso_packets,
+		              user_data->noack, user_data->MessageId, RequestID,
+		              WINPR_ASSERTING_INT_CAST(uint32_t, transfer->num_iso_packets),
 		              transfer->status, user_data->StartFrame, user_data->ErrorCount,
-		              transfer->actual_length);
+		              WINPR_ASSERTING_INT_CAST(uint32_t, transfer->actual_length));
 		user_data->data = NULL;
 		ArrayList_Remove(list, transfer);
 	}
@@ -699,8 +700,9 @@ libusb_udev_complete_msconfig_setup(IUDEVICE* idev, MSUSB_CONFIG_DESCRIPTOR* MsC
 			 * ||  bus_number  |  dev_number  |      bEndpointAddress       ||
 			 * ---------------------------------------------------------------
 			 * ***********************/
-			MsPipe->PipeHandle = LibusbEndpoint->bEndpointAddress | (pdev->dev_number << 16) |
-			                     (pdev->bus_number << 24);
+			MsPipe->PipeHandle = LibusbEndpoint->bEndpointAddress |
+			                     (((uint32_t)pdev->dev_number << 16) & 0xFF0000) |
+			                     (((uint32_t)pdev->bus_number << 24) & 0xFF000000);
 			/* count endpoint max packet size */
 			unsigned max = LibusbEndpoint->wMaxPacketSize & 0x07ff;
 			BYTE attr = LibusbEndpoint->bmAttributes;
