@@ -299,8 +299,7 @@ void CriticalSection::unlock()
 	LeaveCriticalSection(&_section);
 }
 
-WinPREvent::WinPREvent(bool initial)
-    : _handle(CreateEventA(nullptr, TRUE, initial ? TRUE : FALSE, nullptr))
+WinPREvent::WinPREvent(bool initial) : _handle(CreateEventA(nullptr, TRUE, initial, nullptr))
 {
 }
 
