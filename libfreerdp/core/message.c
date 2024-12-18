@@ -3119,8 +3119,6 @@ int input_message_queue_process_pending_messages(rdpInput* input)
 
 		if (!status)
 			break;
-
-		count++;
 	}
 
 	return status;
