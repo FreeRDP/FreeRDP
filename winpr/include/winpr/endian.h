@@ -26,12 +26,9 @@
 #include <winpr/wtypes.h>
 #include <winpr/platform.h>
 #include <winpr/assert.h>
+#include <winpr/cast.h>
 
-#ifdef __cplusplus
-#define WINPR_ENDIAN_CAST(t, val) static_cast<t>(val)
-#else
-#define WINPR_ENDIAN_CAST(t, val) (t)(val)
-#endif
+#define WINPR_ENDIAN_CAST(t, val) WINPR_CXX_COMPAT_CAST(t, val)
 
 #ifdef __cplusplus
 extern "C"
