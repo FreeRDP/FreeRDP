@@ -292,6 +292,8 @@ static void rdpsnd_oss_free(rdpsndDevicePlugin* device)
 
 static UINT32 rdpsnd_oss_get_volume(rdpsndDevicePlugin* device)
 {
+	rdpsndOssPlugin* oss = (rdpsndOssPlugin*)device;
+	WINPR_ASSERT(oss);
 	int vol = 0;
 
 	/* On error return 50% volume. */
