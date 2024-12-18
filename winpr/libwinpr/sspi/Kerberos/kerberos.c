@@ -1925,7 +1925,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_DecryptMessage(PCtxtHandle phContext,
 		return SEC_E_INVALID_TOKEN;
 
 	/* Read in header information */
-	const BYTE* header = sig_buffer->pvBuffer;
+	BYTE* header = sig_buffer->pvBuffer;
 	tok_id = winpr_Data_Get_UINT16_BE(header);
 	flags = header[2];
 	ec = winpr_Data_Get_UINT16_BE((header + 4));
@@ -1933,7 +1933,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_DecryptMessage(PCtxtHandle phContext,
 	seq_no = winpr_Data_Get_UINT64_BE((header + 8));
 
 	/* Check that the header is valid */
-	if (tok_id != TOK_ID_WRAP || (BYTE)header[3] != 0xFF)
+	if ((tok_id != TOK_ID_WRAP) || (header[3] != 0xFF))
 		return SEC_E_INVALID_TOKEN;
 
 	if ((flags & FLAG_SENDER_IS_ACCEPTOR) == context->acceptor)
@@ -2095,7 +2095,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_VerifySignature(PCtxtHandle phContext,
 		return SEC_E_INVALID_TOKEN;
 
 	/* Read in header info */
-	const BYTE* header = sig_buffer->pvBuffer;
+	BYTE* header = sig_buffer->pvBuffer;
 	tok_id = winpr_Data_Get_UINT16_BE(header);
 	flags = header[2];
 	seq_no = winpr_Data_Get_UINT64_BE((header + 8));

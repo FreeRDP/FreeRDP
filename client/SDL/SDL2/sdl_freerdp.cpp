@@ -234,7 +234,7 @@ static const struct sdl_exit_code_map_t* sdl_map_entry_by_error(INT32 error)
 	for (const auto& x : sdl_exit_code_map)
 	{
 		const struct sdl_exit_code_map_t* cur = &x;
-		if (cur->error == error)
+		if (cur->error == (uint32_t)error)
 			return cur;
 	}
 	return nullptr;

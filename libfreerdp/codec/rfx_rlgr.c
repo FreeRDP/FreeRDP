@@ -223,7 +223,7 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* WINPR_RESTRICT pSrcData, UINT32 
 
 				nbits = BitStream_GetRemainingLength(bs);
 
-				if ((size_t)cnt > nbits)
+				if (cnt > nbits)
 					cnt = nbits;
 
 				vk += cnt;
@@ -398,7 +398,7 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* WINPR_RESTRICT pSrcData, UINT32 
 
 				nbits = BitStream_GetRemainingLength(bs);
 
-				if ((size_t)cnt > nbits)
+				if (cnt > nbits)
 					cnt = nbits;
 
 				vk += cnt;

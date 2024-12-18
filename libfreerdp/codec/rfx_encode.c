@@ -72,7 +72,7 @@ static void rfx_encode_format_rgb(const BYTE* WINPR_RESTRICT rgb_data, uint32_t 
 
 			case PIXEL_FORMAT_XBGR32:
 			case PIXEL_FORMAT_ABGR32:
-				for (int x = 0; x < width; x++)
+				for (size_t x = 0; x < width; x++)
 				{
 					src++;
 					*b_buf++ = (INT16)(*src++);
@@ -84,7 +84,7 @@ static void rfx_encode_format_rgb(const BYTE* WINPR_RESTRICT rgb_data, uint32_t 
 
 			case PIXEL_FORMAT_RGBX32:
 			case PIXEL_FORMAT_RGBA32:
-				for (int x = 0; x < width; x++)
+				for (size_t x = 0; x < width; x++)
 				{
 					*r_buf++ = (INT16)(*src++);
 					*g_buf++ = (INT16)(*src++);
@@ -96,7 +96,7 @@ static void rfx_encode_format_rgb(const BYTE* WINPR_RESTRICT rgb_data, uint32_t 
 
 			case PIXEL_FORMAT_XRGB32:
 			case PIXEL_FORMAT_ARGB32:
-				for (int x = 0; x < width; x++)
+				for (size_t x = 0; x < width; x++)
 				{
 					src++;
 					*r_buf++ = (INT16)(*src++);
@@ -107,7 +107,7 @@ static void rfx_encode_format_rgb(const BYTE* WINPR_RESTRICT rgb_data, uint32_t 
 				break;
 
 			case PIXEL_FORMAT_BGR24:
-				for (int x = 0; x < width; x++)
+				for (size_t x = 0; x < width; x++)
 				{
 					*b_buf++ = (INT16)(*src++);
 					*g_buf++ = (INT16)(*src++);
@@ -117,7 +117,7 @@ static void rfx_encode_format_rgb(const BYTE* WINPR_RESTRICT rgb_data, uint32_t 
 				break;
 
 			case PIXEL_FORMAT_RGB24:
-				for (int x = 0; x < width; x++)
+				for (size_t x = 0; x < width; x++)
 				{
 					*r_buf++ = (INT16)(*src++);
 					*g_buf++ = (INT16)(*src++);
@@ -127,7 +127,7 @@ static void rfx_encode_format_rgb(const BYTE* WINPR_RESTRICT rgb_data, uint32_t 
 				break;
 
 			case PIXEL_FORMAT_BGR16:
-				for (int x = 0; x < width; x++)
+				for (size_t x = 0; x < width; x++)
 				{
 					*b_buf++ = (INT16)(((*(src + 1)) & 0xF8) | ((*(src + 1)) >> 5));
 					*g_buf++ = (INT16)((((*(src + 1)) & 0x07) << 5) | (((*src) & 0xE0) >> 3));
@@ -138,7 +138,7 @@ static void rfx_encode_format_rgb(const BYTE* WINPR_RESTRICT rgb_data, uint32_t 
 				break;
 
 			case PIXEL_FORMAT_RGB16:
-				for (int x = 0; x < width; x++)
+				for (size_t x = 0; x < width; x++)
 				{
 					*r_buf++ = (INT16)(((*(src + 1)) & 0xF8) | ((*(src + 1)) >> 5));
 					*g_buf++ = (INT16)((((*(src + 1)) & 0x07) << 5) | (((*src) & 0xE0) >> 3));
@@ -152,7 +152,7 @@ static void rfx_encode_format_rgb(const BYTE* WINPR_RESTRICT rgb_data, uint32_t 
 				if (!palette)
 					break;
 
-				for (int x = 0; x < width; x++)
+				for (size_t x = 0; x < width; x++)
 				{
 					int shift = 0;
 					BYTE idx = 0;
@@ -176,7 +176,7 @@ static void rfx_encode_format_rgb(const BYTE* WINPR_RESTRICT rgb_data, uint32_t 
 				if (!palette)
 					break;
 
-				for (int x = 0; x < width; x++)
+				for (size_t x = 0; x < width; x++)
 				{
 					int idx = (*src) * 3;
 					*r_buf++ = (INT16)palette[idx];
@@ -199,7 +199,7 @@ static void rfx_encode_format_rgb(const BYTE* WINPR_RESTRICT rgb_data, uint32_t 
 			g = *(g_buf - 1);
 			b = *(b_buf - 1);
 
-			for (int x = 0; x < x_exceed; x++)
+			for (size_t x = 0; x < x_exceed; x++)
 			{
 				*r_buf++ = r;
 				*g_buf++ = g;
@@ -264,9 +264,9 @@ void rfx_encode_rgb(RFX_CONTEXT* WINPR_RESTRICT context, RFX_TILE* WINPR_RESTRIC
 	} cnv;
 	BYTE* pBuffer = NULL;
 	INT16* pSrcDst[3];
-	int YLen = 0;
-	int CbLen = 0;
-	int CrLen = 0;
+	uint32_t YLen = 0;
+	uint32_t CbLen = 0;
+	uint32_t CrLen = 0;
 	UINT32* YQuant = NULL;
 	UINT32* CbQuant = NULL;
 	UINT32* CrQuant = NULL;
@@ -305,9 +305,9 @@ void rfx_encode_rgb(RFX_CONTEXT* WINPR_RESTRICT context, RFX_TILE* WINPR_RESTRIC
 	rfx_encode_component(context, YQuant, pSrcDst[0], tile->YData, 4096, &YLen);
 	rfx_encode_component(context, CbQuant, pSrcDst[1], tile->CbData, 4096, &CbLen);
 	rfx_encode_component(context, CrQuant, pSrcDst[2], tile->CrData, 4096, &CrLen);
-	tile->YLen = (UINT16)YLen;
-	tile->CbLen = (UINT16)CbLen;
-	tile->CrLen = (UINT16)CrLen;
+	tile->YLen = WINPR_SAFE_INT_CAST(UINT16, YLen);
+	tile->CbLen = WINPR_SAFE_INT_CAST(UINT16, CbLen);
+	tile->CrLen = WINPR_SAFE_INT_CAST(UINT16, CrLen);
 	PROFILER_EXIT(context->priv->prof_rfx_encode_rgb)
 	BufferPool_Return(context->priv->BufferPool, pBuffer);
 }
