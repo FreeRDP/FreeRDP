@@ -78,6 +78,7 @@ Checks: >
     -readability-string-compare,
     -readability-uppercase-literal-suffix,
     -performance-no-int-to-ptr,
+    -performance-enum-size,
     -performance-avoid-endl
 WarningsAsErrors: ''
 HeaderFilterRegex: ''
