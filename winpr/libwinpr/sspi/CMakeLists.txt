@@ -65,8 +65,8 @@ if(WITH_KRB5)
 
   list(APPEND ${MODULE_PREFIX}_KERBEROS_SRCS Kerberos/krb5glue.h)
 
-  winpr_include_directory_add(${KRB5_INCLUDEDIR})
-  winpr_include_directory_add(${KRB5_INCLUDE_DIRS})
+  winpr_system_include_directory_add(${KRB5_INCLUDEDIR})
+  winpr_system_include_directory_add(${KRB5_INCLUDE_DIRS})
   winpr_library_add_private(${KRB5_LIBRARIES})
   winpr_library_add_private(${KRB5_LIBRARY})
   winpr_library_add_compile_options(${KRB5_CFLAGS})
@@ -100,12 +100,12 @@ winpr_module_add(
 )
 
 if(OPENSSL_FOUND)
-  winpr_include_directory_add(${OPENSSL_INCLUDE_DIR})
+  winpr_system_include_directory_add(${OPENSSL_INCLUDE_DIR})
   winpr_library_add_private(${OPENSSL_LIBRARIES})
 endif()
 
 if(MBEDTLS_FOUND)
-  winpr_include_directory_add(${MBEDTLS_INCLUDE_DIR})
+  winpr_system_include_directory_add(${MBEDTLS_INCLUDE_DIR})
   winpr_library_add_private(${MBEDTLS_LIBRARIES})
 endif()
 

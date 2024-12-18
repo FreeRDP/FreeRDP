@@ -32,7 +32,7 @@ winpr_module_add(
 )
 
 if(FREEBSD)
-  winpr_include_directory_add(${EPOLLSHIM_INCLUDE_DIR})
+  winpr_system_include_directory_add(${EPOLLSHIM_INCLUDE_DIR})
   winpr_library_add_private(${EPOLLSHIM_LIBS})
 endif()
 
