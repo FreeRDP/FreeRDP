@@ -53,7 +53,7 @@ typedef struct
 typedef struct
 {
 	char name[CHANNEL_NAME_LEN + 1];
-	int OpenHandle;
+	uint32_t OpenHandle;
 	ULONG options;
 	int flags;
 	void* pInterface;

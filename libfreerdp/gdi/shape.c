@@ -172,7 +172,7 @@ BOOL gdi_FillRect(HGDI_DC hdc, const HGDI_RECT rect, HGDI_BRUSH hbr)
 			for (INT32 y = 1; y < nHeight; y++)
 			{
 				BYTE* dstp = gdi_get_bitmap_pointer(hdc, nXDest, nYDest + y);
-				memcpy(dstp, srcp, 1ull * nWidth * formatSize);
+				memcpy(dstp, srcp, 1ull * WINPR_ASSERTING_INT_CAST(size_t, nWidth) * formatSize);
 			}
 
 			break;
@@ -187,9 +187,15 @@ BOOL gdi_FillRect(HGDI_DC hdc, const HGDI_RECT rect, HGDI_BRUSH hbr)
 				for (INT32 x = 0; x < nWidth; x++)
 				{
 					const size_t yOffset =
-					    ((1ULL * nYDest + y) * hbr->pattern->width % hbr->pattern->height) *
+					    ((1ULL * WINPR_ASSERTING_INT_CAST(size_t, nYDest) +
+					      WINPR_ASSERTING_INT_CAST(size_t, y)) *
+					     WINPR_ASSERTING_INT_CAST(size_t, hbr->pattern->width) %
+					     WINPR_ASSERTING_INT_CAST(size_t, hbr->pattern->height)) *
 					    formatSize;
-					const size_t xOffset = ((1ULL * nXDest + x) % hbr->pattern->width) * formatSize;
+					const size_t xOffset = ((1ULL * WINPR_ASSERTING_INT_CAST(size_t, nXDest) +
+					                         WINPR_ASSERTING_INT_CAST(size_t, x)) %
+					                        WINPR_ASSERTING_INT_CAST(size_t, hbr->pattern->width)) *
+					                       formatSize;
 					const BYTE* patp = &hbr->pattern->data[yOffset + xOffset];
 
 					if (monochrome)
