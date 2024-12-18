@@ -224,7 +224,7 @@ static BOOL freerdp_listener_open(freerdp_listener* instance, const char* bind_a
 			break;
 		}
 
-		WSAEventSelect(sockfd, listener->events[listener->num_sockfds],
+		WSAEventSelect((SOCKET)sockfd, listener->events[listener->num_sockfds],
 		               FD_READ | FD_ACCEPT | FD_CLOSE);
 		listener->num_sockfds++;
 		WLog_INFO(TAG, "Listening on [%s]:%" PRIu16, addr, port);
@@ -268,7 +268,7 @@ static BOOL freerdp_listener_open_local(freerdp_listener* instance, const char* 
 	addr.sun_family = AF_UNIX;
 	strncpy(addr.sun_path, path, sizeof(addr.sun_path) - 1);
 	unlink(path);
-	status = _bind(sockfd, (struct sockaddr*)&addr, sizeof(addr));
+	status = _bind((SOCKET)sockfd, (struct sockaddr*)&addr, sizeof(addr));
 
 	if (status != 0)
 	{
@@ -277,7 +277,7 @@ static BOOL freerdp_listener_open_local(freerdp_listener* instance, const char* 
 		return FALSE;
 	}
 
-	status = _listen(sockfd, 10);
+	status = _listen((SOCKET)sockfd, 10);
 
 	if (status != 0)
 	{
@@ -325,7 +325,8 @@ static BOOL freerdp_listener_open_from_socket(freerdp_listener* instance, int fd
 	if (!listener->events[listener->num_sockfds])
 		return FALSE;
 
-	WSAEventSelect(fd, listener->events[listener->num_sockfds], FD_READ | FD_ACCEPT | FD_CLOSE);
+	WSAEventSelect((SOCKET)fd, listener->events[listener->num_sockfds],
+	               FD_READ | FD_ACCEPT | FD_CLOSE);
 
 	listener->num_sockfds++;
 	WLog_INFO(TAG, "Listening on socket %d.", fd);
@@ -382,7 +383,7 @@ static DWORD freerdp_listener_get_event_handles(freerdp_listener* instance, HAND
 		events[index] = listener->events[index];
 	}
 
-	return listener->num_sockfds;
+	return WINPR_SAFE_INT_CAST(uint32_t, listener->num_sockfds);
 }
 
 BOOL freerdp_peer_set_local_and_hostname(freerdp_peer* client,
@@ -479,7 +480,7 @@ static BOOL freerdp_listener_check_fds(freerdp_listener* instance)
 		(void)WSAResetEvent(listener->events[i]);
 		int peer_addr_size = sizeof(peer_addr);
 		SOCKET peer_sockfd =
-		    _accept(listener->sockfds[i], (struct sockaddr*)&peer_addr, &peer_addr_size);
+		    _accept((SOCKET)listener->sockfds[i], (struct sockaddr*)&peer_addr, &peer_addr_size);
 
 		if (peer_sockfd == (SOCKET)-1)
 		{

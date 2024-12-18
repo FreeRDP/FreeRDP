@@ -231,7 +231,7 @@ fail:
 	if (socketBio)
 		BIO_free_all(socketBio);
 	else
-		closesocket(sockfd);
+		closesocket((SOCKET)sockfd);
 
 	return FALSE;
 }

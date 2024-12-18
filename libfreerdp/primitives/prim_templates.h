@@ -197,113 +197,113 @@
  * SCD = Source, Constant, Destination
  * PRE = preload xmm0 with the constant.
  */
-#define SSE3_SCD_PRE_ROUTINE(_name_, _type_, _fallback_, _op_, _slowWay_)            \
-	static pstatus_t _name_(const _type_* pSrc, _type_ val, _type_* pDst, INT32 len) \
-	{                                                                                \
-		int shifts = 0;                                                              \
-		UINT32 offBeatMask;                                                          \
-		const _type_* sptr = pSrc;                                                   \
-		_type_* dptr = pDst;                                                         \
-		size_t count;                                                                \
-		__m128i xmm0;                                                                \
-		if (len < 16) /* pointless if too small */                                   \
-		{                                                                            \
-			return _fallback_(pSrc, val, pDst, len);                                 \
-		}                                                                            \
-		if (sizeof(_type_) == 1)                                                     \
-			shifts = 1;                                                              \
-		else if (sizeof(_type_) == 2)                                                \
-			shifts = 2;                                                              \
-		else if (sizeof(_type_) == 4)                                                \
-			shifts = 3;                                                              \
-		else if (sizeof(_type_) == 8)                                                \
-			shifts = 4;                                                              \
-		offBeatMask = (1 << (shifts - 1)) - 1;                                       \
-		if ((ULONG_PTR)pDst & offBeatMask)                                           \
-		{                                                                            \
-			/* Incrementing the pointer skips over 16-byte boundary. */              \
-			return _fallback_(pSrc, val, pDst, len);                                 \
-		}                                                                            \
-		/* Get to the 16-byte boundary now. */                                       \
-		while ((ULONG_PTR)dptr & 0x0f)                                               \
-		{                                                                            \
-			_slowWay_;                                                               \
-			if (--len == 0)                                                          \
-				return PRIMITIVES_SUCCESS;                                           \
-		}                                                                            \
-		/* Use 4 128-bit SSE registers. */                                           \
-		count = len >> (7 - shifts);                                                 \
-		len -= count << (7 - shifts);                                                \
-		xmm0 = _mm_set1_epi32(val);                                                  \
-		if ((const ULONG_PTR)sptr & 0x0f)                                            \
-		{                                                                            \
-			while (count--)                                                          \
-			{                                                                        \
-				__m128i xmm1 = _mm_lddqu_si128((const __m128i*)sptr);                \
-				sptr += (16 / sizeof(_type_));                                       \
-				__m128i xmm2 = _mm_lddqu_si128((const __m128i*)sptr);                \
-				sptr += (16 / sizeof(_type_));                                       \
-				__m128i xmm3 = _mm_lddqu_si128((const __m128i*)sptr);                \
-				sptr += (16 / sizeof(_type_));                                       \
-				__m128i xmm4 = _mm_lddqu_si128((const __m128i*)sptr);                \
-				sptr += (16 / sizeof(_type_));                                       \
-				xmm1 = _op_(xmm1, xmm0);                                             \
-				xmm2 = _op_(xmm2, xmm0);                                             \
-				xmm3 = _op_(xmm3, xmm0);                                             \
-				xmm4 = _op_(xmm4, xmm0);                                             \
-				_mm_store_si128((__m128i*)dptr, xmm1);                               \
-				dptr += (16 / sizeof(_type_));                                       \
-				_mm_store_si128((__m128i*)dptr, xmm2);                               \
-				dptr += (16 / sizeof(_type_));                                       \
-				_mm_store_si128((__m128i*)dptr, xmm3);                               \
-				dptr += (16 / sizeof(_type_));                                       \
-				_mm_store_si128((__m128i*)dptr, xmm4);                               \
-				dptr += (16 / sizeof(_type_));                                       \
-			}                                                                        \
-		}                                                                            \
-		else                                                                         \
-		{                                                                            \
-			while (count--)                                                          \
-			{                                                                        \
-				__m128i xmm1 = _mm_load_si128((const __m128i*)sptr);                 \
-				sptr += (16 / sizeof(_type_));                                       \
-				__m128i xmm2 = _mm_load_si128((const __m128i*)sptr);                 \
-				sptr += (16 / sizeof(_type_));                                       \
-				__m128i xmm3 = _mm_load_si128((const __m128i*)sptr);                 \
-				sptr += (16 / sizeof(_type_));                                       \
-				__m128i xmm4 = _mm_load_si128((const __m128i*)sptr);                 \
-				sptr += (16 / sizeof(_type_));                                       \
-				xmm1 = _op_(xmm1, xmm0);                                             \
-				xmm2 = _op_(xmm2, xmm0);                                             \
-				xmm3 = _op_(xmm3, xmm0);                                             \
-				xmm4 = _op_(xmm4, xmm0);                                             \
-				_mm_store_si128((__m128i*)dptr, xmm1);                               \
-				dptr += (16 / sizeof(_type_));                                       \
-				_mm_store_si128((__m128i*)dptr, xmm2);                               \
-				dptr += (16 / sizeof(_type_));                                       \
-				_mm_store_si128((__m128i*)dptr, xmm3);                               \
-				dptr += (16 / sizeof(_type_));                                       \
-				_mm_store_si128((__m128i*)dptr, xmm4);                               \
-				dptr += (16 / sizeof(_type_));                                       \
-			}                                                                        \
-		}                                                                            \
-		/* Use a single 128-bit SSE register. */                                     \
-		count = len >> (5 - shifts);                                                 \
-		len -= count << (5 - shifts);                                                \
-		while (count--)                                                              \
-		{                                                                            \
-			__m128i xmm1 = LOAD_SI128(sptr);                                         \
-			sptr += (16 / sizeof(_type_));                                           \
-			xmm1 = _op_(xmm1, xmm0);                                                 \
-			_mm_store_si128((__m128i*)dptr, xmm1);                                   \
-			dptr += (16 / sizeof(_type_));                                           \
-		}                                                                            \
-		/* Finish off the remainder. */                                              \
-		while (len--)                                                                \
-		{                                                                            \
-			_slowWay_;                                                               \
-		}                                                                            \
-		return PRIMITIVES_SUCCESS;                                                   \
+#define SSE3_SCD_PRE_ROUTINE(_name_, _type_, _fallback_, _op_, _slowWay_)             \
+	static pstatus_t _name_(const _type_* pSrc, _type_ val, _type_* pDst, size_t len) \
+	{                                                                                 \
+		int shifts = 0;                                                               \
+		UINT32 offBeatMask;                                                           \
+		const _type_* sptr = pSrc;                                                    \
+		_type_* dptr = pDst;                                                          \
+		size_t count;                                                                 \
+		__m128i xmm0;                                                                 \
+		if (len < 16) /* pointless if too small */                                    \
+		{                                                                             \
+			return _fallback_(pSrc, val, pDst, len);                                  \
+		}                                                                             \
+		if (sizeof(_type_) == 1)                                                      \
+			shifts = 1;                                                               \
+		else if (sizeof(_type_) == 2)                                                 \
+			shifts = 2;                                                               \
+		else if (sizeof(_type_) == 4)                                                 \
+			shifts = 3;                                                               \
+		else if (sizeof(_type_) == 8)                                                 \
+			shifts = 4;                                                               \
+		offBeatMask = (1 << (shifts - 1)) - 1;                                        \
+		if ((ULONG_PTR)pDst & offBeatMask)                                            \
+		{                                                                             \
+			/* Incrementing the pointer skips over 16-byte boundary. */               \
+			return _fallback_(pSrc, val, pDst, len);                                  \
+		}                                                                             \
+		/* Get to the 16-byte boundary now. */                                        \
+		while ((ULONG_PTR)dptr & 0x0f)                                                \
+		{                                                                             \
+			_slowWay_;                                                                \
+			if (--len == 0)                                                           \
+				return PRIMITIVES_SUCCESS;                                            \
+		}                                                                             \
+		/* Use 4 128-bit SSE registers. */                                            \
+		count = len >> (7 - shifts);                                                  \
+		len -= count << (7 - shifts);                                                 \
+		xmm0 = _mm_set1_epi32(val);                                                   \
+		if ((const ULONG_PTR)sptr & 0x0f)                                             \
+		{                                                                             \
+			while (count--)                                                           \
+			{                                                                         \
+				__m128i xmm1 = _mm_lddqu_si128((const __m128i*)sptr);                 \
+				sptr += (16 / sizeof(_type_));                                        \
+				__m128i xmm2 = _mm_lddqu_si128((const __m128i*)sptr);                 \
+				sptr += (16 / sizeof(_type_));                                        \
+				__m128i xmm3 = _mm_lddqu_si128((const __m128i*)sptr);                 \
+				sptr += (16 / sizeof(_type_));                                        \
+				__m128i xmm4 = _mm_lddqu_si128((const __m128i*)sptr);                 \
+				sptr += (16 / sizeof(_type_));                                        \
+				xmm1 = _op_(xmm1, xmm0);                                              \
+				xmm2 = _op_(xmm2, xmm0);                                              \
+				xmm3 = _op_(xmm3, xmm0);                                              \
+				xmm4 = _op_(xmm4, xmm0);                                              \
+				_mm_store_si128((__m128i*)dptr, xmm1);                                \
+				dptr += (16 / sizeof(_type_));                                        \
+				_mm_store_si128((__m128i*)dptr, xmm2);                                \
+				dptr += (16 / sizeof(_type_));                                        \
+				_mm_store_si128((__m128i*)dptr, xmm3);                                \
+				dptr += (16 / sizeof(_type_));                                        \
+				_mm_store_si128((__m128i*)dptr, xmm4);                                \
+				dptr += (16 / sizeof(_type_));                                        \
+			}                                                                         \
+		}                                                                             \
+		else                                                                          \
+		{                                                                             \
+			while (count--)                                                           \
+			{                                                                         \
+				__m128i xmm1 = _mm_load_si128((const __m128i*)sptr);                  \
+				sptr += (16 / sizeof(_type_));                                        \
+				__m128i xmm2 = _mm_load_si128((const __m128i*)sptr);                  \
+				sptr += (16 / sizeof(_type_));                                        \
+				__m128i xmm3 = _mm_load_si128((const __m128i*)sptr);                  \
+				sptr += (16 / sizeof(_type_));                                        \
+				__m128i xmm4 = _mm_load_si128((const __m128i*)sptr);                  \
+				sptr += (16 / sizeof(_type_));                                        \
+				xmm1 = _op_(xmm1, xmm0);                                              \
+				xmm2 = _op_(xmm2, xmm0);                                              \
+				xmm3 = _op_(xmm3, xmm0);                                              \
+				xmm4 = _op_(xmm4, xmm0);                                              \
+				_mm_store_si128((__m128i*)dptr, xmm1);                                \
+				dptr += (16 / sizeof(_type_));                                        \
+				_mm_store_si128((__m128i*)dptr, xmm2);                                \
+				dptr += (16 / sizeof(_type_));                                        \
+				_mm_store_si128((__m128i*)dptr, xmm3);                                \
+				dptr += (16 / sizeof(_type_));                                        \
+				_mm_store_si128((__m128i*)dptr, xmm4);                                \
+				dptr += (16 / sizeof(_type_));                                        \
+			}                                                                         \
+		}                                                                             \
+		/* Use a single 128-bit SSE register. */                                      \
+		count = len >> (5 - shifts);                                                  \
+		len -= count << (5 - shifts);                                                 \
+		while (count--)                                                               \
+		{                                                                             \
+			__m128i xmm1 = LOAD_SI128(sptr);                                          \
+			sptr += (16 / sizeof(_type_));                                            \
+			xmm1 = _op_(xmm1, xmm0);                                                  \
+			_mm_store_si128((__m128i*)dptr, xmm1);                                    \
+			dptr += (16 / sizeof(_type_));                                            \
+		}                                                                             \
+		/* Finish off the remainder. */                                               \
+		while (len--)                                                                 \
+		{                                                                             \
+			_slowWay_;                                                                \
+		}                                                                             \
+		return PRIMITIVES_SUCCESS;                                                    \
 	}
 
 /* ----------------------------------------------------------------------------

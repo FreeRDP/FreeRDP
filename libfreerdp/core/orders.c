@@ -190,7 +190,7 @@ static BYTE get_bmf_bpp(UINT32 bmf, BOOL* pValid)
 	if (pValid)
 		*pValid = TRUE;
 	/* Mask out highest bit */
-	switch (bmf & (~CACHED_BRUSH))
+	switch (bmf & (uint32_t)(~CACHED_BRUSH))
 	{
 		case 1:
 			return 1;
@@ -775,14 +775,11 @@ static INLINE BOOL update_write_2byte_signed(wStream* s, INT32 value)
 }
 static INLINE BOOL update_read_4byte_unsigned(wStream* s, UINT32* value)
 {
-	BYTE byte = 0;
-	BYTE count = 0;
-
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 1))
 		return FALSE;
 
-	Stream_Read_UINT8(s, byte);
-	count = (byte & 0xC0) >> 6;
+	const UINT32 byte = Stream_Get_UINT8(s);
+	const BYTE count = WINPR_SAFE_INT_CAST(uint8_t, (byte & 0xC0) >> 6);
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, count))
 		return FALSE;
@@ -795,26 +792,20 @@ static INLINE BOOL update_read_4byte_unsigned(wStream* s, UINT32* value)
 
 		case 1:
 			*value = ((byte & 0x3F) << 8) & 0xFFFF;
-			Stream_Read_UINT8(s, byte);
-			*value |= byte;
+			*value |= Stream_Get_UINT8(s);
 			break;
 
 		case 2:
 			*value = ((byte & 0x3F) << 16) & 0xFFFFFF;
-			Stream_Read_UINT8(s, byte);
-			*value |= ((byte << 8)) & 0xFFFF;
-			Stream_Read_UINT8(s, byte);
-			*value |= byte;
+			*value |= ((Stream_Get_UINT8(s) << 8)) & 0xFFFF;
+			*value |= Stream_Get_UINT8(s);
 			break;
 
 		case 3:
-			*value = ((byte & 0x3F) << 24) & 0xFFFFFFFF;
-			Stream_Read_UINT8(s, byte);
-			*value |= ((byte << 16)) & 0xFFFFFF;
-			Stream_Read_UINT8(s, byte);
-			*value |= ((byte << 8)) & 0xFFFF;
-			Stream_Read_UINT8(s, byte);
-			*value |= byte;
+			*value = ((byte & 0x3F) << 24) & 0xFF000000;
+			*value |= ((Stream_Get_UINT8(s) << 16)) & 0xFF0000;
+			*value |= ((Stream_Get_UINT8(s) << 8)) & 0xFF00;
+			*value |= Stream_Get_UINT8(s);
 			break;
 
 		default:
@@ -875,7 +866,7 @@ static INLINE BOOL update_read_delta(wStream* s, INT32* value)
 	Stream_Read_UINT8(s, byte);
 
 	if (byte & 0x40)
-		uvalue = (byte | ~0x3F);
+		uvalue = (byte | ((~0x3F) & 0xFF));
 	else
 		uvalue = (byte & 0x3F);
 
@@ -3021,19 +3012,18 @@ static BOOL update_decompress_brush(wStream* s, BYTE* output, size_t outSize, BY
 	if (!Stream_CheckAndLogRequiredLengthOfSize(TAG, s, 4ULL + bytesPerPixel, 4ULL))
 		return FALSE;
 
-	for (INT8 y = 7; y >= 0; y--)
+	for (size_t y = 0; y < 7; y++)
 	{
 		for (size_t x = 0; x < 8; x++)
 		{
-			UINT32 index = 0;
 			if ((x % 4) == 0)
 				Stream_Read_UINT8(s, byte);
 
-			index = ((byte >> ((3 - (x % 4)) * 2)) & 0x03);
+			const uint32_t index = ((byte >> ((3 - (x % 4)) * 2)) & 0x03);
 
 			for (size_t k = 0; k < bytesPerPixel; k++)
 			{
-				const size_t dstIndex = ((8ULL * y + x) * bytesPerPixel) + k;
+				const size_t dstIndex = ((8ULL * (7ULL - y) + x) * bytesPerPixel) + k;
 				const size_t srcIndex = (index * bytesPerPixel) + k;
 				if (dstIndex >= outSize)
 					return FALSE;
@@ -3501,8 +3491,6 @@ update_read_draw_gdiplus_cache_end_order(wStream* s,
 }
 static BOOL update_read_field_flags(wStream* s, UINT32* fieldFlags, BYTE flags, BYTE fieldBytes)
 {
-	BYTE byte = 0;
-
 	if (flags & ORDER_ZERO_FIELD_BYTE_BIT0)
 		fieldBytes--;
 
@@ -3519,10 +3507,10 @@ static BOOL update_read_field_flags(wStream* s, UINT32* fieldFlags, BYTE flags, 
 
 	*fieldFlags = 0;
 
-	for (int i = 0; i < fieldBytes; i++)
+	for (size_t i = 0; i < fieldBytes; i++)
 	{
-		Stream_Read_UINT8(s, byte);
-		*fieldFlags |= byte << (i * 8);
+		const UINT32 byte = Stream_Get_UINT8(s);
+		*fieldFlags |= (byte << (i * 8ULL)) & 0xFFFFFFFF;
 	}
 
 	return TRUE;
@@ -4076,7 +4064,6 @@ static BOOL update_recv_secondary_order(rdpUpdate* update, wStream* s, BYTE flag
 	BYTE orderType = 0;
 	UINT16 extraFlags = 0;
 	INT16 orderLength = 0;
-	INT32 orderLengthFull = 0;
 	rdp_update_internal* up = update_cast(update);
 	rdpContext* context = update->context;
 	rdpSettings* settings = context->settings;
@@ -4109,14 +4096,14 @@ static BOOL update_recv_secondary_order(rdpUpdate* update, wStream* s, BYTE flag
 	/* orderLength might be negative without the adjusted header data.
 	 * Account for that here so all further checks operate on the correct value.
 	 */
-	orderLengthFull = orderLength + 7;
+	const int32_t orderLengthFull = orderLength + 7;
 	if (orderLengthFull < 0)
 	{
 		WLog_Print(up->log, WLOG_ERROR, "orderLength %" PRIu16 " must be >= 7", orderLength);
 		return FALSE;
 	}
 
-	if (!Stream_CheckAndLogRequiredLength(TAG, s, (size_t)orderLengthFull))
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, WINPR_SAFE_INT_CAST(size_t, orderLengthFull)))
 		return FALSE;
 
 	if (!check_secondary_order_supported(up->log, settings, orderType, name))
@@ -4239,7 +4226,7 @@ static BOOL update_recv_secondary_order(rdpUpdate* update, wStream* s, BYTE flag
 		WLog_Print(up->log, WLOG_ERROR, "%s %s failed", secondary_order_str, name);
 	}
 
-	end = start + orderLengthFull;
+	end = start + WINPR_SAFE_INT_CAST(size_t, orderLengthFull);
 	pos = Stream_GetPosition(s);
 	if (pos > end)
 	{

@@ -1810,7 +1810,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_EncryptMessage(PCtxtHandle phContext, 
 	char* header = NULL;
 	BYTE flags = 0;
 	krb5glue_key key = NULL;
-	unsigned usage = 0;
+	krb5_keyusage usage = 0;
 	krb5_crypto_iov encrypt_iov[] = { { KRB5_CRYPTO_TYPE_HEADER, { 0 } },
 		                              { KRB5_CRYPTO_TYPE_DATA, { 0 } },
 		                              { KRB5_CRYPTO_TYPE_DATA, { 0 } },
@@ -1898,7 +1898,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_DecryptMessage(PCtxtHandle phContext,
 	PSecBuffer sig_buffer = NULL;
 	PSecBuffer data_buffer = NULL;
 	krb5glue_key key = NULL;
-	unsigned usage = 0;
+	krb5_keyusage usage = 0;
 	uint16_t tok_id = 0;
 	BYTE flags = 0;
 	uint16_t ec = 0;
@@ -2000,7 +2000,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_MakeSignature(PCtxtHandle phContext, U
 	PSecBuffer sig_buffer = NULL;
 	PSecBuffer data_buffer = NULL;
 	krb5glue_key key = NULL;
-	unsigned usage = 0;
+	krb5_keyusage usage = 0;
 	char* header = NULL;
 	BYTE flags = 0;
 	krb5_crypto_iov iov[] = { { KRB5_CRYPTO_TYPE_DATA, { 0 } },
@@ -2071,7 +2071,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_VerifySignature(PCtxtHandle phContext,
 	PSecBuffer sig_buffer = NULL;
 	PSecBuffer data_buffer = NULL;
 	krb5glue_key key = NULL;
-	unsigned usage = 0;
+	krb5_keyusage usage = 0;
 	BYTE flags = 0;
 	uint16_t tok_id = 0;
 	uint64_t seq_no = 0;

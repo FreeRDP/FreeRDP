@@ -2204,7 +2204,7 @@ DWORD nla_get_error(rdpNla* nla)
 {
 	if (!nla)
 		return ERROR_INTERNAL_ERROR;
-	return nla->errorCode;
+	return (UINT32)nla->errorCode;
 }
 
 INT32 nla_get_sspi_error(rdpNla* nla)

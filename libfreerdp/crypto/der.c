@@ -91,7 +91,7 @@ void der_write_octet_string(wStream* s, BYTE* oct_str, int length)
 {
 	der_write_universal_tag(s, ER_TAG_OCTET_STRING, FALSE);
 	der_write_length(s, length);
-	Stream_Write(s, oct_str, length);
+	Stream_Write(s, oct_str, WINPR_SAFE_INT_CAST(size_t, length));
 }
 
 int der_skip_sequence_tag(int length)

@@ -2204,10 +2204,10 @@ BOOL gcc_write_client_monitor_data(wStream* s, const rdpMcs* mcs)
 		for (UINT32 i = 0; i < settings->MonitorCount; i++)
 		{
 			const rdpMonitor* current = &settings->MonitorDefArray[i];
-			const UINT32 left = current->x - baseX;
-			const UINT32 top = current->y - baseY;
-			const UINT32 right = left + current->width - 1;
-			const UINT32 bottom = top + current->height - 1;
+			const UINT32 left = WINPR_SAFE_INT_CAST(uint32_t, current->x - baseX);
+			const UINT32 top = WINPR_SAFE_INT_CAST(uint32_t, current->y - baseY);
+			const UINT32 right = left + WINPR_SAFE_INT_CAST(uint32_t, current->width - 1);
+			const UINT32 bottom = top + WINPR_SAFE_INT_CAST(uint32_t, current->height - 1);
 			const UINT32 flags = current->is_primary ? MONITOR_PRIMARY : 0;
 			WLog_DBG(TAG,
 			         "Monitor[%" PRIu32 "]: top=%" PRIu32 ", left=%" PRIu32 ", bottom=%" PRIu32
