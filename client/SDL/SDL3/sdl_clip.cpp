@@ -335,7 +335,7 @@ UINT sdlClip::SendDataRequest(uint32_t formatID, const std::string& mime)
 		.requestedFormatId = formatID
 	};
 
-	_request_queue.push({ formatID, mime });
+	_request_queue.emplace(formatID, mime);
 
 	WINPR_ASSERT(_ctx);
 	WINPR_ASSERT(_ctx->ClientFormatDataRequest);
