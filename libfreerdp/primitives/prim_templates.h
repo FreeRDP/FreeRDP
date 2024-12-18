@@ -198,8 +198,9 @@
  * PRE = preload xmm0 with the constant.
  */
 #define SSE3_SCD_PRE_ROUTINE(_name_, _type_, _fallback_, _op_, _slowWay_)             \
-	static pstatus_t _name_(const _type_* pSrc, _type_ val, _type_* pDst, size_t len) \
+	static pstatus_t _name_(const _type_* pSrc, _type_ val, _type_* pDst, INT32 ilen) \
 	{                                                                                 \
+		size_t len = WINPR_SAFE_INT_CAST(size_t, ilen);                               \
 		int shifts = 0;                                                               \
 		UINT32 offBeatMask;                                                           \
 		const _type_* sptr = pSrc;                                                    \
@@ -208,7 +209,7 @@
 		__m128i xmm0;                                                                 \
 		if (len < 16) /* pointless if too small */                                    \
 		{                                                                             \
-			return _fallback_(pSrc, val, pDst, len);                                  \
+			return _fallback_(pSrc, val, pDst, WINPR_SAFE_INT_CAST(int32_t, len));    \
 		}                                                                             \
 		if (sizeof(_type_) == 1)                                                      \
 			shifts = 1;                                                               \
@@ -222,7 +223,7 @@
 		if ((ULONG_PTR)pDst & offBeatMask)                                            \
 		{                                                                             \
 			/* Incrementing the pointer skips over 16-byte boundary. */               \
-			return _fallback_(pSrc, val, pDst, len);                                  \
+			return _fallback_(pSrc, val, pDst, WINPR_SAFE_INT_CAST(int32_t, len));    \
 		}                                                                             \
 		/* Get to the 16-byte boundary now. */                                        \
 		while ((ULONG_PTR)dptr & 0x0f)                                                \
@@ -234,7 +235,7 @@
 		/* Use 4 128-bit SSE registers. */                                            \
 		count = len >> (7 - shifts);                                                  \
 		len -= count << (7 - shifts);                                                 \
-		xmm0 = _mm_set1_epi32(val);                                                   \
+		xmm0 = mm_set1_epu32(val);                                                    \
 		if ((const ULONG_PTR)sptr & 0x0f)                                             \
 		{                                                                             \
 			while (count--)                                                           \

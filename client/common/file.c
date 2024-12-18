@@ -2408,7 +2408,8 @@ BOOL freerdp_client_populate_settings_from_rdp_file(const rdpFile* file, rdpSett
 
 		cnv.c = args->argv;
 		if (status)
-			status = freerdp_client_add_dynamic_channel(settings, args->argc, cnv.cc);
+			status = freerdp_client_add_dynamic_channel(
+			    settings, WINPR_SAFE_INT_CAST(size_t, args->argc), cnv.cc);
 		freerdp_addin_argv_free(args);
 		if (!status)
 			return FALSE;
