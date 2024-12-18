@@ -459,7 +459,8 @@ static int winpr_image_bitmap_read_buffer(wImage* image, const BYTE* buffer, siz
 	image->bitsPerPixel = bi.biBitCount;
 	image->bytesPerPixel = (image->bitsPerPixel / 8UL);
 	const size_t bpp = (bi.biBitCount + 7UL) / 8UL;
-	image->scanline = WINPR_SAFE_INT_CAST(uint32_t, bi.biWidth) * bpp;
+	image->scanline =
+	    WINPR_SAFE_INT_CAST(uint32_t, bi.biWidth) * WINPR_SAFE_INT_CAST(uint32_t, bpp);
 	const size_t bmpsize = 1ULL * image->scanline * image->height;
 	if (bmpsize != bi.biSizeImage)
 		WLog_WARN(TAG, "bmpsize=%" PRIuz " != bi.biSizeImage=%" PRIu32, bmpsize, bi.biSizeImage);

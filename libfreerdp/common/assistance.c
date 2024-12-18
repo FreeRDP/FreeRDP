@@ -498,13 +498,15 @@ static BOOL freerdp_assistance_parse_attr_uint32(UINT32* opt, const char* key, c
 		return FALSE;
 
 	char buffer[64] = { 0 };
-	if (size >= sizeof(buffer))
+	if ((!copt && (size > 0)) || (size >= sizeof(buffer)))
 	{
 		WLog_WARN(TAG, "Invalid UINT32 string '%s' [%" PRIuz "]", copt, size);
 		return FALSE;
 	}
 
-	strncpy(buffer, copt, size);
+	if (size > 0)
+		strncpy(buffer, copt, size);
+
 	errno = 0;
 	unsigned long val = strtoul(buffer, NULL, 0);
 

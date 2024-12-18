@@ -649,8 +649,8 @@ static void rfx_rlgr_code_gr(RFX_BITSTREAM* bs, uint32_t* krp, UINT32 val)
 	}
 }
 
-uint32_t rfx_rlgr_encode(RLGR_MODE mode, const INT16* WINPR_RESTRICT data, UINT32 data_size,
-                         BYTE* WINPR_RESTRICT buffer, UINT32 buffer_size)
+int rfx_rlgr_encode(RLGR_MODE mode, const INT16* WINPR_RESTRICT data, UINT32 data_size,
+                    BYTE* WINPR_RESTRICT buffer, UINT32 buffer_size)
 {
 	uint32_t k = 0;
 	uint32_t kp = 0;
@@ -787,5 +787,5 @@ uint32_t rfx_rlgr_encode(RLGR_MODE mode, const INT16* WINPR_RESTRICT data, UINT3
 	uint32_t processed_size = rfx_bitstream_get_processed_bytes(bs);
 	winpr_aligned_free(bs);
 
-	return processed_size;
+	return WINPR_SAFE_INT_CAST(int, processed_size);
 }
