@@ -1349,7 +1349,7 @@ static void print_entry(FILE* fp, WINPR_FORMAT_ARG const char* fmt, const char* 
 }
 WINPR_PRAGMA_DIAG_POP
 
-static WINPR_NORETURN(void usage(const char* app, const char* invalid))
+static int usage(const char* app, const char* invalid)
 {
 	FILE* fp = stdout;
 
@@ -1362,7 +1362,7 @@ static WINPR_NORETURN(void usage(const char* app, const char* invalid))
 	print_entry(fp, "\t%s\n", options.sfast, sizeof(options.sfast));
 	print_entry(fp, "\t%s<port>\n", options.sport, sizeof(options.sport));
 	print_entry(fp, "\t%s\n", options.slocal_only, sizeof(options.slocal_only));
-	exit(-1);
+	return -1;
 }
 
 int main(int argc, char* argv[])
@@ -1394,7 +1394,7 @@ int main(int argc, char* argv[])
 			port = strtol(sport, NULL, 10);
 
 			if ((port < 1) || (port > UINT16_MAX) || (errno != 0))
-				usage(app, arg);
+				return usage(app, arg);
 		}
 		else if (strncmp(arg, options.slocal_only, sizeof(options.slocal_only)) == 0)
 			localOnly = TRUE;
@@ -1402,22 +1402,22 @@ int main(int argc, char* argv[])
 		{
 			info.test_pcap_file = &arg[sizeof(options.spcap)];
 			if (!winpr_PathFileExists(info.test_pcap_file))
-				usage(app, arg);
+				return usage(app, arg);
 		}
 		else if (strncmp(arg, options.scert, sizeof(options.scert)) == 0)
 		{
 			info.cert = &arg[sizeof(options.scert)];
 			if (!winpr_PathFileExists(info.cert))
-				usage(app, arg);
+				return usage(app, arg);
 		}
 		else if (strncmp(arg, options.skey, sizeof(options.skey)) == 0)
 		{
 			info.key = &arg[sizeof(options.skey)];
 			if (!winpr_PathFileExists(info.key))
-				usage(app, arg);
+				return usage(app, arg);
 		}
 		else
-			usage(app, arg);
+			return usage(app, arg);
 	}
 
 	WTSRegisterWtsApiFunctionTable(FreeRDP_InitWtsApi());
