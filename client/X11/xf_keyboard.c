@@ -323,7 +323,7 @@ int xf_keyboard_read_keyboard_state(xfContext* xfc)
 	return WINPR_ASSERTING_INT_CAST(int, state);
 }
 
-static int xf_keyboard_get_keymask(xfContext* xfc, int keysym)
+static int xf_keyboard_get_keymask(xfContext* xfc, KeySym keysym)
 {
 	int keysymMask = 0;
 	KeyCode keycode = XKeysymToKeycode(xfc->display, keysym);
@@ -348,7 +348,7 @@ static int xf_keyboard_get_keymask(xfContext* xfc, int keysym)
 	return keysymMask;
 }
 
-BOOL xf_keyboard_get_key_state(xfContext* xfc, int state, int keysym)
+BOOL xf_keyboard_get_key_state(xfContext* xfc, int state, KeySym keysym)
 {
 	int keysymMask = xf_keyboard_get_keymask(xfc, keysym);
 
@@ -397,8 +397,8 @@ UINT32 xf_keyboard_get_toggle_keys_state(xfContext* xfc)
 
 static void xk_keyboard_update_modifier_keys(xfContext* xfc)
 {
-	const int keysyms[] = { XK_Shift_L,   XK_Shift_R,   XK_Alt_L,   XK_Alt_R,
-		                    XK_Control_L, XK_Control_R, XK_Super_L, XK_Super_R };
+	const KeySym keysyms[] = { XK_Shift_L,   XK_Shift_R,   XK_Alt_L,   XK_Alt_R,
+		                       XK_Control_L, XK_Control_R, XK_Super_L, XK_Super_R };
 
 	xf_keyboard_clear(xfc);
 

@@ -613,9 +613,10 @@ BOOL sdl_auth_dialog_show(const SDL_UserAuthArg* args)
 
 BOOL sdl_scard_dialog_show(const char* title, Sint32 count, const char** list)
 {
+	const auto scount = WINPR_ASSERTING_INT_CAST(size_t, count);
 	std::vector<std::string> vlist;
-	vlist.reserve(count);
-	for (Sint32 x = 0; x < count; x++)
+	vlist.reserve(scount);
+	for (size_t x = 0; x < scount; x++)
 		vlist.emplace_back(list[x]);
 	SdlSelectList slist(title, vlist);
 	Sint32 value = slist.run();
