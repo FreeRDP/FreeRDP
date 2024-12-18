@@ -658,8 +658,9 @@ libusb_udev_complete_msconfig_setup(IUDEVICE* idev, MSUSB_CONFIG_DESCRIPTOR* MsC
 	 * ||  bus_number  |  dev_number  |      bConfigurationValue    ||
 	 * ---------------------------------------------------------------
 	 * ***********************/
-	MsConfig->ConfigurationHandle =
-	    MsConfig->bConfigurationValue | (pdev->bus_number << 24) | (pdev->dev_number << 16);
+	MsConfig->ConfigurationHandle = (uint32_t)MsConfig->bConfigurationValue |
+	                                ((uint32_t)pdev->bus_number << 24) |
+	                                (((uint32_t)pdev->dev_number << 16) & 0xFF0000);
 	MsInterfaces = MsConfig->MsInterfaces;
 
 	for (UINT32 inum = 0; inum < MsConfig->NumInterfaces; inum++)

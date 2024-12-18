@@ -1975,8 +1975,8 @@ static SECURITY_STATUS SEC_ENTRY kerberos_DecryptMessage(PCtxtHandle phContext,
 	iov[0].data.data = (char*)&header[16 + rrc + ec];
 	iov[1].data.data = data_buffer->pvBuffer;
 	iov[2].data.data = (char*)&header[16 + ec];
-	iov[3].data.data = iov[2].data.data + iov[2].data.length;
-	iov[4].data.data = iov[3].data.data + iov[3].data.length;
+	iov[3].data.data = (char*)iov[2].data.data + iov[2].data.length;
+	iov[4].data.data = (char*)iov[3].data.data + iov[3].data.length;
 
 	if (krb_log_exec(krb5glue_decrypt_iov, creds->ctx, key, usage, iov, ARRAYSIZE(iov)))
 		return SEC_E_INTERNAL_ERROR;
