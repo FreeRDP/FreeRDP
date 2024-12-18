@@ -644,7 +644,7 @@ BOOL rdp_read_header(rdpRdp* rdp, wStream* s, UINT16* length, UINT16* channelId)
 	if (!per_read_integer16(s, channelId, 0)) /* channelId */
 		return FALSE;
 
-	Stream_Read_UINT8(s, byte); /* dataPriority + Segmentation (0x70) */
+	const uint8_t byte = Stream_Get_UINT8(s); /* dataPriority + Segmentation (0x70) */
 
 	if (!per_read_length(s, length)) /* userData (OCTET_STRING) */
 		return FALSE;
@@ -992,7 +992,7 @@ static BOOL rdp_recv_server_set_keyboard_indicators_pdu(rdpRdp* rdp, wStream* s)
 	if (!Stream_CheckAndLogRequiredLengthWLog(rdp->log, s, 4))
 		return FALSE;
 
-	Stream_Read_UINT16(s, unitId);   /* unitId (2 bytes) */
+	const uint16_t unitId = Stream_Get_UINT16(s); /* unitId (2 bytes) */
 	Stream_Read_UINT16(s, ledFlags); /* ledFlags (2 bytes) */
 	return IFCALLRESULT(TRUE, context->update->SetKeyboardIndicators, context, ledFlags);
 }
