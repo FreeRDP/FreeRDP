@@ -787,8 +787,8 @@ static UINT urbdrc_udevman_parse_addin_args(UDEVMAN* udevman, const ADDIN_ARGV* 
 
 static UINT udevman_listener_created_callback(IUDEVMAN* iudevman)
 {
-	UINT status = CHANNEL_RC_OK;
 	UDEVMAN* udevman = (UDEVMAN*)iudevman;
+	WINPR_ASSERT(udevman);
 
 	if (udevman->devices_vid_pid)
 	{

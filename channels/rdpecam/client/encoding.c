@@ -206,8 +206,8 @@ static BOOL ecam_encoder_compress_h264(CameraDeviceStream* stream, const BYTE* s
 	}
 
 	/* get buffers for YUV420P */
-	if (h264_get_yuv_buffer(stream->h264, srcLineSizes[0], size.width, size.height, yuv420pData,
-	                        yuv420pStride) < 0)
+	if (h264_get_yuv_buffer(stream->h264, WINPR_ASSERTING_INT_CAST(uint32_t, srcLineSizes[0]),
+	                        size.width, size.height, yuv420pData, yuv420pStride) < 0)
 		return FALSE;
 
 	/* convert from source format to YUV420P */
