@@ -775,12 +775,13 @@ static BOOL sdl_create_windows(SdlContext* sdl)
 
 static BOOL sdl_wait_create_windows(SdlContext* sdl)
 {
-	std::lock_guard<CriticalSection> lock(sdl->critical);
+	std::unique_lock<CriticalSection> lock(sdl->critical);
 	sdl->windows_created.clear();
 	if (!sdl_push_user_event(SDL_EVENT_USER_CREATE_WINDOWS, sdl))
 		return FALSE;
+	lock.unlock();
 
-	HANDLE handles[] = { sdl->initialized.handle(), freerdp_abort_event(sdl->context()) };
+	HANDLE handles[] = { sdl->windows_created.handle(), freerdp_abort_event(sdl->context()) };
 
 	const DWORD rc = WaitForMultipleObjects(ARRAYSIZE(handles), handles, FALSE, INFINITE);
 	switch (rc)
