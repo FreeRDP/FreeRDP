@@ -98,10 +98,13 @@ static void Ellipse_Bresenham(HGDI_DC hdc, int x1, int y1, int x2, int y2)
 
 	while (y1 - y2 < b)
 	{
+		y1++;
+		y2--;
+
 		gdi_SetPixel(hdc, WINPR_ASSERTING_INT_CAST(uint32_t, x1 - 1),
-		             WINPR_ASSERTING_INT_CAST(uint32_t, ++y1), 0);
+		             WINPR_ASSERTING_INT_CAST(uint32_t, y1), 0);
 		gdi_SetPixel(hdc, WINPR_ASSERTING_INT_CAST(uint32_t, x1 - 1),
-		             WINPR_ASSERTING_INT_CAST(uint32_t, --y2), 0);
+		             WINPR_ASSERTING_INT_CAST(uint32_t, y2), 0);
 	}
 }
 
