@@ -403,6 +403,8 @@ static BOOL sdl_draw_to_window(SdlContext* sdl, SdlWindow& window,
 
 	if (!freerdp_settings_get_bool(context->settings, FreeRDP_SmartSizing))
 	{
+		window.setOffsetX(0);
+		window.setOffsetY(0);
 		if (gdi->width < size.w)
 		{
 			window.setOffsetX((size.w - gdi->width) / 2);
@@ -775,12 +777,13 @@ static BOOL sdl_create_windows(SdlContext* sdl)
 
 static BOOL sdl_wait_create_windows(SdlContext* sdl)
 {
-	std::lock_guard<CriticalSection> lock(sdl->critical);
+	std::unique_lock<CriticalSection> lock(sdl->critical);
 	sdl->windows_created.clear();
 	if (!sdl_push_user_event(SDL_EVENT_USER_CREATE_WINDOWS, sdl))
 		return FALSE;
+	lock.unlock();
 
-	HANDLE handles[] = { sdl->initialized.handle(), freerdp_abort_event(sdl->context()) };
+	HANDLE handles[] = { sdl->windows_created.handle(), freerdp_abort_event(sdl->context()) };
 
 	const DWORD rc = WaitForMultipleObjects(ARRAYSIZE(handles), handles, FALSE, INFINITE);
 	switch (rc)
@@ -864,6 +867,16 @@ static int sdl_run(SdlContext* sdl)
 				}
 			}
 
+			auto point2pix = [](Uint32 win_id, float& x, float& y)
+			{
+				auto win = SDL_GetWindowFromID(win_id);
+				assert(win);
+				auto scale = SDL_GetWindowDisplayScale(win);
+				assert(scale);
+				x *= scale;
+				y *= scale;
+			};
+
 			switch (windowEvent.type)
 			{
 				case SDL_EVENT_QUIT:
@@ -882,15 +895,18 @@ static int sdl_run(SdlContext* sdl)
 				break; // TODO: Switch keyboard layout
 				case SDL_EVENT_MOUSE_MOTION:
 				{
-					const SDL_MouseMotionEvent* ev = &windowEvent.motion;
-					sdl_handle_mouse_motion(sdl, ev);
+					SDL_MouseMotionEvent& ev = windowEvent.motion;
+					point2pix(ev.windowID, ev.x, ev.y);
+					point2pix(ev.windowID, ev.xrel, ev.yrel);
+					sdl_handle_mouse_motion(sdl, &ev);
 				}
 				break;
 				case SDL_EVENT_MOUSE_BUTTON_DOWN:
 				case SDL_EVENT_MOUSE_BUTTON_UP:
 				{
-					const SDL_MouseButtonEvent* ev = &windowEvent.button;
-					sdl_handle_mouse_button(sdl, ev);
+					SDL_MouseButtonEvent& ev = windowEvent.button;
+					point2pix(ev.windowID, ev.x, ev.y);
+					sdl_handle_mouse_button(sdl, &ev);
 				}
 				break;
 				case SDL_EVENT_MOUSE_WHEEL:
@@ -1017,6 +1033,7 @@ static int sdl_run(SdlContext* sdl)
 				}
 				break;
 				case SDL_EVENT_USER_POINTER_SET:
+					windowEvent.user.code = static_cast<Sint32>(sdl->disp.scale_factor());
 					sdl_Pointer_Set_Process(&windowEvent.user);
 					break;
 				case SDL_EVENT_CLIPBOARD_UPDATE:
@@ -1041,10 +1058,32 @@ static int sdl_run(SdlContext* sdl)
 
 							switch (ev->type)
 							{
-								case SDL_EVENT_WINDOW_RESIZED:
+								case SDL_EVENT_WINDOW_DISPLAY_SCALE_CHANGED:
+								{
+									if (freerdp_settings_get_bool(sdl->context()->settings,
+									                              FreeRDP_DynamicResolutionUpdate))
+									{
+										break;
+									}
+									auto win = window->second.window();
+									int w_pix{};
+									int h_pix{};
+									assert(SDL_GetWindowSizeInPixels(win, &w_pix, &h_pix));
+									auto scale = SDL_GetWindowDisplayScale(win);
+									assert(scale != 0);
+									auto w_gdi = sdl->context()->gdi->width;
+									auto h_gdi = sdl->context()->gdi->height;
+									auto pix2point = [=](int pix)
+									{ return static_cast<int>(static_cast<float>(pix) / scale); };
+									if (w_pix != w_gdi || h_pix != h_gdi)
+									{
+										SDL_SetWindowSize(win, pix2point(w_gdi), pix2point(h_gdi));
+									}
+								}
+								break;
 								case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
 									window->second.fill();
-									window->second.updateSurface();
+									sdl_draw_to_window(sdl, window->second);
 									break;
 								case SDL_EVENT_WINDOW_MOVED:
 								{

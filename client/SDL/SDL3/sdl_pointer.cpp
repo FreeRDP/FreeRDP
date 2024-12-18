@@ -158,9 +158,22 @@ BOOL sdl_Pointer_Set_Process(SDL_UserEvent* uptr)
 	if (!rc)
 		return FALSE;
 
-	ptr->cursor = SDL_CreateColorCursor(ptr->image, x, y);
+	// create a cursor image in 100% display scale to trick SDL into creating the cursor with the
+	// correct size
+	const auto hidpi_scale = static_cast<float>(uptr->code) / 100;
+	auto normal = SDL_CreateSurface(
+	    static_cast<int>(static_cast<float>(ptr->image->w) / hidpi_scale),
+	    static_cast<int>(static_cast<float>(ptr->image->h) / hidpi_scale), ptr->image->format);
+	assert(normal);
+	SDL_BlitSurfaceScaled(ptr->image, nullptr, normal, nullptr,
+	                      SDL_ScaleMode::SDL_SCALEMODE_NEAREST);
+	SDL_AddSurfaceAlternateImage(normal, ptr->image);
+
+	ptr->cursor = SDL_CreateColorCursor(normal, x, y);
 	if (!ptr->cursor)
 		return FALSE;
+
+	SDL_DestroySurface(normal);
 
 	SDL_SetCursor(ptr->cursor);
 	SDL_ShowCursor();
