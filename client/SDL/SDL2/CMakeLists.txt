@@ -16,9 +16,7 @@
 # limitations under the License.
 set(MODULE_NAME "sdl2-freerdp")
 
-find_package(SDL2 REQUIRED COMPONENTS)
-include_directories(SYSTEM ${SDL2_INCLUDE_DIR})
-include_directories(SYSTEM ${SDL2_INCLUDE_DIRS})
+find_package(SDL2 REQUIRED)
 
 find_package(Threads REQUIRED)
 
@@ -59,9 +57,11 @@ list(
 )
 
 if(NOT WITH_SDL_LINK_SHARED)
-  list(APPEND LIBS ${SDL2_STATIC_LIBRARIES})
+  list(APPEND LIBS SDL2::SDL2-static)
+  set_target_properties(SDL2::SDL2-static PROPERTIES SYSTEM TRUE)
 else()
-  list(APPEND LIBS ${SDL2_LIBRARIES})
+  list(APPEND LIBS SDL2::SDL2)
+  set_target_properties(SDL2::SDL2 PROPERTIES SYSTEM TRUE)
 endif()
 
 addtargetwithresourcefile(${MODULE_NAME} TRUE "${PROJECT_VERSION}" SRCS)

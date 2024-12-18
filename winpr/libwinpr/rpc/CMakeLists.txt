@@ -17,7 +17,7 @@
 
 winpr_module_add(rpc.c)
 
-winpr_include_directory_add(${OPENSSL_INCLUDE_DIR})
+winpr_system_include_directory_add(${OPENSSL_INCLUDE_DIR})
 
 winpr_library_add_private(${OPENSSL_LIBRARIES})
 

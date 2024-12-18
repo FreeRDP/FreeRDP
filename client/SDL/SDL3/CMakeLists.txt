@@ -18,7 +18,7 @@
 # limitations under the License.
 set(MODULE_NAME "sdl3-freerdp")
 
-find_package(SDL3 REQUIRED COMPONENTS)
+find_package(SDL3 REQUIRED)
 
 find_package(Threads REQUIRED)
 
@@ -61,10 +61,11 @@ list(
 )
 
 if(NOT WITH_SDL_LINK_SHARED)
-  list(APPEND LIBS ${SDL3_STATIC_LIBRARIES})
+  list(APPEND LIBS SDL3::SDL3-static)
 else()
-  list(APPEND LIBS ${SDL3_LIBRARIES})
+  list(APPEND LIBS SDL3::SDL3)
 endif()
+set_target_properties(SDL3::Headers PROPERTIES SYSTEM TRUE)
 
 addtargetwithresourcefile(${MODULE_NAME} "${WIN32_GUI_FLAG}" "${PROJECT_VERSION}" SRCS)
 
