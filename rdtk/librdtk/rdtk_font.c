@@ -61,8 +61,8 @@ static int rdtk_font_draw_glyph(rdtkSurface* surface, uint16_t nXDst, uint16_t n
 
 	for (size_t y = 0; y < nHeight; y++)
 	{
-		const uint8_t* pSrcPixel = &pSrcData[((nYSrc + y) * nSrcStep) + (nXSrc * 4)];
-		uint8_t* pDstPixel = &pDstData[((nYDst + y) * nDstStep) + (nXDst * 4)];
+		const uint8_t* pSrcPixel = &pSrcData[((1ULL * nYSrc + y) * nSrcStep) + (4ULL * nXSrc)];
+		uint8_t* pDstPixel = &pDstData[((1ULL * nYDst + y) * nDstStep) + (4ULL * nXDst)];
 
 		for (size_t x = 0; x < nWidth; x++)
 		{
