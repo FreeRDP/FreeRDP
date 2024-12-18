@@ -473,7 +473,7 @@ static UINT urb_select_configuration(IUDEVICE* pdev, GENERIC_CHANNEL_CALLBACK* c
 
 	if (MsOutSize > 0)
 	{
-		if ((size_t)MsOutSize > SIZE_MAX - 36)
+		if (MsOutSize > SIZE_MAX - 36)
 			return ERROR_INVALID_DATA;
 
 		out_size = 36 + MsOutSize;
