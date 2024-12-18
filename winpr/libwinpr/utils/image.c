@@ -467,7 +467,9 @@ static int winpr_image_bitmap_read_buffer(wImage* image, const BYTE* buffer, siz
 	if (bi.biSizeImage < bmpsize)
 		goto fail;
 
-	image->data = (BYTE*)malloc(bi.biSizeImage);
+	image->data = NULL;
+	if (bi.biSizeImage > 0)
+		image->data = (BYTE*)malloc(bi.biSizeImage);
 
 	if (!image->data)
 		goto fail;

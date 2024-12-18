@@ -1969,9 +1969,9 @@ static SECURITY_STATUS SEC_ENTRY kerberos_DecryptMessage(PCtxtHandle phContext,
 		return SEC_E_INVALID_TOKEN;
 
 	/* Locate the parts of the message */
-	iov[0].data.data = header + 16 + rrc + ec;
+	iov[0].data.data = (char*)&header[16 + rrc + ec];
 	iov[1].data.data = data_buffer->pvBuffer;
-	iov[2].data.data = header + 16 + ec;
+	iov[2].data.data = (char*)&header[16 + ec];
 	iov[3].data.data = iov[2].data.data + iov[2].data.length;
 	iov[4].data.data = iov[3].data.data + iov[3].data.length;
 
@@ -2131,8 +2131,8 @@ static SECURITY_STATUS SEC_ENTRY kerberos_VerifySignature(PCtxtHandle phContext,
 
 	/* Set up the iov array */
 	iov[0].data.data = data_buffer->pvBuffer;
-	iov[1].data.data = header;
-	iov[2].data.data = header + 16;
+	iov[1].data.data = (char*)header;
+	iov[2].data.data = (char*)&header[16];
 
 	if (krb_log_exec(krb5glue_verify_checksum_iov, creds->ctx, key, usage, iov, ARRAYSIZE(iov),
 	                 &is_valid))
