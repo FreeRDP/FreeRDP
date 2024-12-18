@@ -4096,15 +4096,14 @@ static BOOL update_recv_secondary_order(rdpUpdate* update, wStream* s, BYTE flag
 	/* orderLength might be negative without the adjusted header data.
 	 * Account for that here so all further checks operate on the correct value.
 	 */
-	const int32_t orderLengthFull = orderLength + 7;
-	if (orderLengthFull < 0)
+	if (orderLength < 0)
 	{
 		WLog_Print(up->log, WLOG_ERROR, "orderLength %" PRIu16 " must be >= 7", orderLength);
 		return FALSE;
 	}
 
-	if (!Stream_CheckAndLogRequiredLength(TAG, s,
-	                                      WINPR_ASSERTING_INT_CAST(size_t, orderLengthFull)))
+	const size_t orderLengthFull = WINPR_ASSERTING_INT_CAST(size_t, orderLength) + 7ULL;
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, orderLengthFull))
 		return FALSE;
 
 	if (!check_secondary_order_supported(up->log, settings, orderType, name))
