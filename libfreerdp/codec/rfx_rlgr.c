@@ -645,7 +645,7 @@ static void rfx_rlgr_code_gr(RFX_BITSTREAM* bs, uint32_t* krp, UINT32 val)
 	}
 	else if (vk > 1)
 	{
-		kr = UpdateParam(krp, WINPR_CXX_SAFE_CAST(int32_t, vk));
+		kr = UpdateParam(krp, WINPR_CXX_COMPAT_CAST(int32_t, vk));
 	}
 }
 
