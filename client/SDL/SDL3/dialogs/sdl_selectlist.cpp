@@ -78,17 +78,18 @@ int SdlSelectList::run()
 						case SDLK_BACKSPACE:
 							if (CurrentActiveTextInput > 0)
 								CurrentActiveTextInput--;
+							else if (_list.empty())
+								CurrentActiveTextInput = 0;
 							else
 								CurrentActiveTextInput =
 								    WINPR_ASSERTING_INT_CAST(ssize_t, _list.size()) - 1;
 							break;
 						case SDLK_DOWN:
 						case SDLK_TAB:
-							if (CurrentActiveTextInput < 0)
+							if ((CurrentActiveTextInput < 0) || _list.empty())
 								CurrentActiveTextInput = 0;
 							else
 								CurrentActiveTextInput++;
-							assert(_list.size() > 0);
 							CurrentActiveTextInput =
 							    CurrentActiveTextInput %
 							    WINPR_ASSERTING_INT_CAST(ssize_t, _list.size());

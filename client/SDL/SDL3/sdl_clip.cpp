@@ -780,7 +780,7 @@ const void* sdlClip::ClipDataCb(void* userdata, const char* mime_type, size_t* s
 		auto request = clip->_request_queue.front();
 		clip->_request_queue.pop();
 
-		if (!clip->_request_queue.size())
+		if (clip->_request_queue.empty())
 			(void)ResetEvent(clip->_event);
 
 		if (request.success())
