@@ -17,8 +17,8 @@ SdlSelectList::SdlSelectList(const std::string& title, const std::vector<std::st
 	assert(widget_width <= INT32_MAX);
 	assert(height <= INT32_MAX);
 
-	auto flags = WINPR_SAFE_INT_CAST(uint32_t, SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_MOUSE_FOCUS |
-	                                               SDL_WINDOW_INPUT_FOCUS);
+	auto flags = WINPR_ASSERTING_INT_CAST(
+	    uint32_t, SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_MOUSE_FOCUS | SDL_WINDOW_INPUT_FOCUS);
 	auto rc = SDL_CreateWindowAndRenderer(static_cast<int>(widget_width), static_cast<int>(height),
 	                                      flags, &_window, &_renderer);
 	if (rc != 0)
@@ -85,7 +85,7 @@ int SdlSelectList::run()
 								CurrentActiveTextInput--;
 							else
 								CurrentActiveTextInput =
-								    WINPR_SAFE_INT_CAST(ssize_t, _list.size() - 1);
+								    WINPR_ASSERTING_INT_CAST(ssize_t, _list.size() - 1);
 							break;
 						case SDLK_DOWN:
 						case SDLK_TAB:
@@ -100,14 +100,14 @@ int SdlSelectList::run()
 								CurrentActiveTextInput = 0;
 							else
 								CurrentActiveTextInput =
-								    CurrentActiveTextInput % WINPR_SAFE_INT_CAST(ssize_t, s);
+								    CurrentActiveTextInput % WINPR_ASSERTING_INT_CAST(ssize_t, s);
 						}
 						break;
 						case SDLK_RETURN:
 						case SDLK_RETURN2:
 						case SDLK_KP_ENTER:
 							running = false;
-							res = WINPR_SAFE_INT_CAST(int, CurrentActiveTextInput);
+							res = WINPR_ASSERTING_INT_CAST(int, CurrentActiveTextInput);
 							break;
 						case SDLK_ESCAPE:
 							running = false;
@@ -123,7 +123,7 @@ int SdlSelectList::run()
 					reset_mouseover();
 					if (TextInputIndex >= 0)
 					{
-						auto& cur = _list[WINPR_SAFE_INT_CAST(size_t, TextInputIndex)];
+						auto& cur = _list[WINPR_ASSERTING_INT_CAST(size_t, TextInputIndex)];
 						if (!cur.set_mouseover(_renderer, true))
 							throw;
 					}
@@ -159,7 +159,7 @@ int SdlSelectList::run()
 			reset_highlight();
 			if (CurrentActiveTextInput >= 0)
 			{
-				auto& cur = _list[WINPR_SAFE_INT_CAST(size_t, CurrentActiveTextInput)];
+				auto& cur = _list[WINPR_ASSERTING_INT_CAST(size_t, CurrentActiveTextInput)];
 				if (!cur.set_highlight(_renderer, true))
 					throw;
 			}
@@ -184,7 +184,7 @@ ssize_t SdlSelectList::get_index(const SDL_MouseButtonEvent& button)
 		auto r = cur.rect();
 
 		if ((x >= r.x) && (x <= r.x + r.w) && (y >= r.y) && (y <= r.y + r.h))
-			return WINPR_SAFE_INT_CAST(ssize_t, i);
+			return WINPR_ASSERTING_INT_CAST(ssize_t, i);
 	}
 	return -1;
 }

@@ -121,7 +121,7 @@ ssize_t SdlInputWidgetList::get_index(const SDL_MouseButtonEvent& button)
 		auto r = cur.input_rect();
 
 		if ((x >= r.x) && (x <= r.x + r.w) && (y >= r.y) && (y <= r.y + r.h))
-			return WINPR_SAFE_INT_CAST(ssize_t, i);
+			return WINPR_ASSERTING_INT_CAST(ssize_t, i);
 	}
 	return -1;
 }

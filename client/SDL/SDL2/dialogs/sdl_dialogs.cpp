@@ -212,7 +212,7 @@ SSIZE_T sdl_retry_dialog(freerdp* instance, const char* what, size_t current, vo
 	const size_t delay = freerdp_settings_get_uint32(settings, FreeRDP_TcpConnectTimeout);
 	std::lock_guard<CriticalSection> lock(sdl->critical);
 	if (!sdl->connection_dialog)
-		return WINPR_SAFE_INT_CAST(SSIZE_T, delay);
+		return WINPR_ASSERTING_INT_CAST(SSIZE_T, delay);
 
 	sdl->connection_dialog->setTitle("Retry connection to %s",
 	                                 freerdp_settings_get_server_name(instance->context->settings));
@@ -253,7 +253,7 @@ SSIZE_T sdl_retry_dialog(freerdp* instance, const char* what, size_t current, vo
 	sdl->connection_dialog->showInfo("[%s] retry %" PRIuz "/%" PRIuz ", delaying %" PRIuz
 	                                 "ms before next attempt",
 	                                 what, current, max, delay);
-	return WINPR_SAFE_INT_CAST(SSIZE_T, delay);
+	return WINPR_ASSERTING_INT_CAST(SSIZE_T, delay);
 }
 
 BOOL sdl_present_gateway_message(freerdp* instance, UINT32 type, BOOL isDisplayMandatory,

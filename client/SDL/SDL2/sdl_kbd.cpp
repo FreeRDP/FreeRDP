@@ -326,7 +326,7 @@ BOOL sdlInput::keyboard_focus_in()
 	WINPR_ASSERT(input);
 
 	auto syncFlags = sdl_get_kbd_flags();
-	freerdp_input_send_focus_in_event(input, WINPR_SAFE_INT_CAST(UINT16, syncFlags));
+	freerdp_input_send_focus_in_event(input, WINPR_ASSERTING_INT_CAST(UINT16, syncFlags));
 
 	/* finish with a mouse pointer position like mstsc.exe if required */
 #if 0

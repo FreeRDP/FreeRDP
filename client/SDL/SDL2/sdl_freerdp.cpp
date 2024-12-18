@@ -715,8 +715,8 @@ static BOOL sdl_create_windows(SdlContext* sdl)
 		auto monitor = static_cast<rdpMonitor*>(
 		    freerdp_settings_get_pointer_array_writable(settings, FreeRDP_MonitorDefArray, x));
 
-		Uint32 w = WINPR_SAFE_INT_CAST(uint32_t, monitor->width);
-		Uint32 h = WINPR_SAFE_INT_CAST(uint32_t, monitor->height);
+		Uint32 w = WINPR_ASSERTING_INT_CAST(uint32_t, monitor->width);
+		Uint32 h = WINPR_ASSERTING_INT_CAST(uint32_t, monitor->height);
 		if (!(freerdp_settings_get_bool(settings, FreeRDP_UseMultimon) ||
 		      freerdp_settings_get_bool(settings, FreeRDP_Fullscreen)))
 		{
