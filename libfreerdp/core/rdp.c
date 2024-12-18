@@ -540,7 +540,6 @@ fail:
 BOOL rdp_read_header(rdpRdp* rdp, wStream* s, UINT16* length, UINT16* channelId)
 {
 	BYTE li = 0;
-	BYTE byte = 0;
 	BYTE code = 0;
 	BYTE choice = 0;
 	UINT16 initiator = 0;
@@ -981,7 +980,6 @@ static BOOL rdp_recv_server_shutdown_denied_pdu(rdpRdp* rdp, wStream* s)
 
 static BOOL rdp_recv_server_set_keyboard_indicators_pdu(rdpRdp* rdp, wStream* s)
 {
-	UINT16 unitId = 0;
 	UINT16 ledFlags = 0;
 
 	WINPR_ASSERT(rdp);
