@@ -297,9 +297,9 @@ static UINT32 rdpsnd_oss_get_volume(rdpsndDevicePlugin* device)
 	int vol = 0;
 
 	/* On error return 50% volume. */
-	const UINT32 dwVolumeLeft = ((50 * 0xFFFF) / 100);  /* 50% */
-	const UINT32 dwVolumeRight = ((50 * 0xFFFF) / 100); /* 50% */
-	const UINT32 dwVolume = ((dwVolumeLeft << 16) | dwVolumeRight);
+	UINT32 dwVolumeLeft = ((50 * 0xFFFF) / 100);  /* 50% */
+	UINT32 dwVolumeRight = ((50 * 0xFFFF) / 100); /* 50% */
+	UINT32 dwVolume = ((dwVolumeLeft << 16) | dwVolumeRight);
 
 	if (device == NULL || oss->mixer_handle == -1)
 		return dwVolume;
