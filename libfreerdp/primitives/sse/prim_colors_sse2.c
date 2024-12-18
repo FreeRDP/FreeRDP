@@ -41,11 +41,12 @@ static primitives_t* generic = NULL;
 
 #define CACHE_LINE_BYTES 64
 
-#define mm_between_epi16(_val, _min, _max)                       \
-	do                                                           \
-	{                                                            \
-		(_val) = _mm_min_epi16(_max, _mm_max_epi16(_val, _min)); \
-	} while (0)
+static inline __m128i mm_between_epi16_int(__m128i val, __m128i min, __m128i max)
+{
+	return _mm_min_epi16(max, _mm_max_epi16(val, min));
+}
+
+#define mm_between_epi16(_val, _min, _max) (_val) = mm_between_epi16_int((_val), (_min), (_max))
 
 #ifdef DO_PREFETCH
 /*---------------------------------------------------------------------------*/
