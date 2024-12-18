@@ -252,7 +252,7 @@ static void rfx_encode_component(RFX_CONTEXT* WINPR_RESTRICT context,
 	PROFILER_EXIT(context->priv->prof_rfx_encode_component)
 	BufferPool_Return(context->priv->BufferPool, dwt_buffer);
 
-	*size = WINPR_SAFE_INT_CAST(uint32_t, rc);
+	*size = WINPR_ASSERTING_INT_CAST(uint32_t, rc);
 }
 
 void rfx_encode_rgb(RFX_CONTEXT* WINPR_RESTRICT context, RFX_TILE* WINPR_RESTRICT tile)
@@ -305,9 +305,9 @@ void rfx_encode_rgb(RFX_CONTEXT* WINPR_RESTRICT context, RFX_TILE* WINPR_RESTRIC
 	rfx_encode_component(context, YQuant, pSrcDst[0], tile->YData, 4096, &YLen);
 	rfx_encode_component(context, CbQuant, pSrcDst[1], tile->CbData, 4096, &CbLen);
 	rfx_encode_component(context, CrQuant, pSrcDst[2], tile->CrData, 4096, &CrLen);
-	tile->YLen = WINPR_SAFE_INT_CAST(UINT16, YLen);
-	tile->CbLen = WINPR_SAFE_INT_CAST(UINT16, CbLen);
-	tile->CrLen = WINPR_SAFE_INT_CAST(UINT16, CrLen);
+	tile->YLen = WINPR_ASSERTING_INT_CAST(UINT16, YLen);
+	tile->CbLen = WINPR_ASSERTING_INT_CAST(UINT16, CbLen);
+	tile->CrLen = WINPR_ASSERTING_INT_CAST(UINT16, CrLen);
 	PROFILER_EXIT(context->priv->prof_rfx_encode_rgb)
 	BufferPool_Return(context->priv->BufferPool, pBuffer);
 }

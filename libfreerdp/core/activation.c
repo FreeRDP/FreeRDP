@@ -40,7 +40,8 @@ static BOOL rdp_write_synchronize_pdu(wStream* s, const rdpSettings* settings)
 	if (!Stream_CheckAndLogRequiredCapacity(TAG, (s), 4))
 		return FALSE;
 	Stream_Write_UINT16(s, SYNCMSGTYPE_SYNC); /* messageType (2 bytes) */
-	Stream_Write_UINT16(s, WINPR_SAFE_INT_CAST(uint16_t, PduSource)); /* targetUser (2 bytes) */
+	Stream_Write_UINT16(s,
+	                    WINPR_ASSERTING_INT_CAST(uint16_t, PduSource)); /* targetUser (2 bytes) */
 	return TRUE;
 }
 

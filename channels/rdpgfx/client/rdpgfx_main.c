@@ -1255,8 +1255,8 @@ static UINT rdpgfx_recv_end_frame_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStrea
 
 				qoe.frameId = pdu.frameId;
 				qoe.timestamp = gfx->StartDecodingTime % UINT32_MAX;
-				qoe.timeDiffSE = WINPR_SAFE_INT_CAST(UINT16, diff);
-				qoe.timeDiffEDR = WINPR_SAFE_INT_CAST(UINT16, EndFrameTime);
+				qoe.timeDiffSE = WINPR_ASSERTING_INT_CAST(UINT16, diff);
+				qoe.timeDiffEDR = WINPR_ASSERTING_INT_CAST(UINT16, EndFrameTime);
 
 				if ((error = rdpgfx_send_qoe_frame_acknowledge_pdu(context, &qoe)))
 					WLog_Print(gfx->log, WLOG_ERROR,

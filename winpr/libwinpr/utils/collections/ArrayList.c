@@ -236,7 +236,7 @@ static BOOL ArrayList_Shift(wArrayList* arrayList, size_t index, SSIZE_T count)
 	}
 	else if (count < 0)
 	{
-		const size_t scount = WINPR_SAFE_INT_CAST(size_t, -count);
+		const size_t scount = WINPR_ASSERTING_INT_CAST(size_t, -count);
 		const size_t off = index + scount;
 		if (off < arrayList->size)
 		{

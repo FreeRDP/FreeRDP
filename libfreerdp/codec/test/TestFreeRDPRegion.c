@@ -68,7 +68,7 @@ static int test_basic(void)
 	rects = region16_rects(&region, &nbRects);
 
 	if (!rects || nbRects != 2 ||
-	    !compareRectangles(rects, r1_r2, WINPR_SAFE_INT_CAST(int, nbRects)))
+	    !compareRectangles(rects, r1_r2, WINPR_ASSERTING_INT_CAST(int, nbRects)))
 		goto out;
 
 	/* clear region */
@@ -116,7 +116,7 @@ static int test_r1_r3(void)
 	rects = region16_rects(&region, &nbRects);
 
 	if (!rects || nbRects != 3 ||
-	    !compareRectangles(rects, r1_r3, WINPR_SAFE_INT_CAST(int, nbRects)))
+	    !compareRectangles(rects, r1_r3, WINPR_ASSERTING_INT_CAST(int, nbRects)))
 		goto out;
 
 	/* R3 + R1  */
@@ -131,7 +131,7 @@ static int test_r1_r3(void)
 	rects = region16_rects(&region, &nbRects);
 
 	if (!rects || nbRects != 3 ||
-	    !compareRectangles(rects, r1_r3, WINPR_SAFE_INT_CAST(int, nbRects)))
+	    !compareRectangles(rects, r1_r3, WINPR_ASSERTING_INT_CAST(int, nbRects)))
 		goto out;
 
 	retCode = 0;
@@ -177,7 +177,7 @@ static int test_r9_r10(void)
 	rects = region16_rects(&region, &nbRects);
 
 	if (!rects || nbRects != 3 ||
-	    !compareRectangles(rects, r9_r10, WINPR_SAFE_INT_CAST(int, nbRects)))
+	    !compareRectangles(rects, r9_r10, WINPR_ASSERTING_INT_CAST(int, nbRects)))
 		goto out;
 
 	retCode = 0;
@@ -219,7 +219,7 @@ static int test_r1_r5(void)
 	rects = region16_rects(&region, &nbRects);
 
 	if (!rects || nbRects != 3 ||
-	    !compareRectangles(rects, r1_r5, WINPR_SAFE_INT_CAST(int, nbRects)))
+	    !compareRectangles(rects, r1_r5, WINPR_ASSERTING_INT_CAST(int, nbRects)))
 		goto out;
 
 	retCode = 0;
@@ -259,7 +259,8 @@ static int test_r1_r6(void)
 
 	rects = region16_rects(&region, &nbRects);
 
-	if (!rects || nbRects != 1 || !compareRectangles(rects, &r1, WINPR_SAFE_INT_CAST(int, nbRects)))
+	if (!rects || nbRects != 1 ||
+	    !compareRectangles(rects, &r1, WINPR_ASSERTING_INT_CAST(int, nbRects)))
 		goto out;
 
 	retCode = 0;
@@ -309,7 +310,7 @@ static int test_r1_r2_r4(void)
 	rects = region16_rects(&region, &nbRects);
 
 	if (!rects || nbRects != 2 ||
-	    !compareRectangles(rects, r1_r2_r4, WINPR_SAFE_INT_CAST(int, nbRects)))
+	    !compareRectangles(rects, r1_r2_r4, WINPR_ASSERTING_INT_CAST(int, nbRects)))
 		goto out;
 
 	retCode = 0;
@@ -357,7 +358,7 @@ static int test_r1_r7_r8(void)
 	rects = region16_rects(&region, &nbRects);
 
 	if (!rects || nbRects != 5 ||
-	    !compareRectangles(rects, r1_r7_r8, WINPR_SAFE_INT_CAST(int, nbRects)))
+	    !compareRectangles(rects, r1_r7_r8, WINPR_ASSERTING_INT_CAST(int, nbRects)))
 		goto out;
 
 	region16_clear(&region);
@@ -374,7 +375,7 @@ static int test_r1_r7_r8(void)
 	rects = region16_rects(&region, &nbRects);
 
 	if (!rects || nbRects != 5 ||
-	    !compareRectangles(rects, r1_r7_r8, WINPR_SAFE_INT_CAST(int, nbRects)))
+	    !compareRectangles(rects, r1_r7_r8, WINPR_ASSERTING_INT_CAST(int, nbRects)))
 		goto out;
 
 	region16_clear(&region);
@@ -391,7 +392,7 @@ static int test_r1_r7_r8(void)
 	rects = region16_rects(&region, &nbRects);
 
 	if (!rects || nbRects != 5 ||
-	    !compareRectangles(rects, r1_r7_r8, WINPR_SAFE_INT_CAST(int, nbRects)))
+	    !compareRectangles(rects, r1_r7_r8, WINPR_ASSERTING_INT_CAST(int, nbRects)))
 		goto out;
 
 	retCode = 0;
@@ -567,7 +568,7 @@ static int test_r1_inter_r3(void)
 	rects = region16_rects(&intersection, &nbRects);
 
 	if (!rects || nbRects != 1 ||
-	    !compareRectangles(rects, r1_inter_r3, WINPR_SAFE_INT_CAST(int, nbRects)))
+	    !compareRectangles(rects, r1_inter_r3, WINPR_ASSERTING_INT_CAST(int, nbRects)))
 		goto out;
 
 	retCode = 0;
@@ -628,7 +629,7 @@ static int test_r1_r3_inter_r11(void)
 	rects = region16_rects(&intersection, &nbRects);
 
 	if (!rects || nbRects != 1 ||
-	    !compareRectangles(rects, r1_r3_inter_r11, WINPR_SAFE_INT_CAST(int, nbRects)))
+	    !compareRectangles(rects, r1_r3_inter_r11, WINPR_ASSERTING_INT_CAST(int, nbRects)))
 		goto out;
 
 	retCode = 0;
@@ -696,7 +697,7 @@ static int test_norbert_case(void)
 	rects = region16_rects(&intersection, &nbRects);
 
 	if (!rects || nbRects != 5 ||
-	    !compareRectangles(rects, inRectangles, WINPR_SAFE_INT_CAST(int, nbRects)))
+	    !compareRectangles(rects, inRectangles, WINPR_ASSERTING_INT_CAST(int, nbRects)))
 		goto out;
 
 	if (!compareRectangles(region16_extents(&intersection), &expected_inter_extents, 1))

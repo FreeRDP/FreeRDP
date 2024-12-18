@@ -1142,7 +1142,7 @@ int http_chuncked_read(BIO* bio, BYTE* pBuffer, size_t size,
 				if (status <= 0)
 					return (effectiveDataLen > 0 ? effectiveDataLen : status);
 
-				encodingContext->nextOffset -= WINPR_SAFE_INT_CAST(uint32_t, status);
+				encodingContext->nextOffset -= WINPR_ASSERTING_INT_CAST(uint32_t, status);
 				if (encodingContext->nextOffset == 0)
 				{
 					encodingContext->state = ChunkStateFooter;
@@ -1313,7 +1313,7 @@ static SSIZE_T http_response_recv_line(rdpTls* tls, HttpResponse* response)
 		end = (char*)Stream_Pointer(response->data) - s;
 
 		if (string_strnstr(end, "\r\n\r\n", s) != NULL)
-			payloadOffset = WINPR_SAFE_INT_CAST(SSIZE_T, Stream_GetPosition(response->data));
+			payloadOffset = WINPR_ASSERTING_INT_CAST(SSIZE_T, Stream_GetPosition(response->data));
 	}
 
 out_error:
@@ -1357,7 +1357,7 @@ static BOOL http_response_recv_body(rdpTls* tls, HttpResponse* response, BOOL re
 				full_len += status;
 			}
 		} while (ctx.state != ChunkStateEnd);
-		response->BodyLength = WINPR_SAFE_INT_CAST(uint32_t, full_len);
+		response->BodyLength = WINPR_ASSERTING_INT_CAST(uint32_t, full_len);
 		if (response->BodyLength > 0)
 			response->BodyContent = &(Stream_Buffer(response->data))[payloadOffset];
 	}
@@ -1439,8 +1439,8 @@ HttpResponse* http_response_recv(rdpTls* tls, BOOL readContentLength)
 		char* context = NULL;
 
 		while ((line = string_strnstr(line, "\r\n",
-		                              WINPR_SAFE_INT_CAST(size_t, payloadOffset) -
-		                                  WINPR_SAFE_INT_CAST(size_t, (line - buffer)) - 2UL)))
+		                              WINPR_ASSERTING_INT_CAST(size_t, payloadOffset) -
+		                                  WINPR_ASSERTING_INT_CAST(size_t, (line - buffer)) - 2UL)))
 		{
 			line += 2;
 			count++;
@@ -1472,7 +1472,7 @@ HttpResponse* http_response_recv(rdpTls* tls, BOOL readContentLength)
 			goto out_error;
 
 		response->BodyLength =
-		    Stream_GetPosition(response->data) - WINPR_SAFE_INT_CAST(size_t, payloadOffset);
+		    Stream_GetPosition(response->data) - WINPR_ASSERTING_INT_CAST(size_t, payloadOffset);
 
 		WINPR_ASSERT(response->BodyLength == 0);
 		bodyLength = response->BodyLength; /* expected body length */
@@ -1506,7 +1506,7 @@ HttpResponse* http_response_recv(rdpTls* tls, BOOL readContentLength)
 
 		/* Fetch remaining body! */
 		if (!http_response_recv_body(tls, response, readContentLength,
-		                             WINPR_SAFE_INT_CAST(size_t, payloadOffset), bodyLength))
+		                             WINPR_ASSERTING_INT_CAST(size_t, payloadOffset), bodyLength))
 			goto out_error;
 	}
 	Stream_SealLength(response->data);

@@ -311,7 +311,7 @@ static BOOL transport_default_connect_tls(rdpTransport* transport)
 
 	tls->hostname = settings->ServerHostname;
 	tls->serverName = settings->UserSpecifiedServerName;
-	tls->port = WINPR_SAFE_INT_CAST(int32_t, MIN(UINT16_MAX, settings->ServerPort));
+	tls->port = WINPR_ASSERTING_INT_CAST(int32_t, MIN(UINT16_MAX, settings->ServerPort));
 
 	if (tls->port == 0)
 		tls->port = 3389;
@@ -847,7 +847,7 @@ static SSIZE_T transport_read_layer(rdpTransport* transport, BYTE* data, size_t 
 		VALGRIND_MAKE_MEM_DEFINED(data + read, bytes - read);
 #endif
 		read += status;
-		rdp->inBytes += WINPR_SAFE_INT_CAST(uint64_t, status);
+		rdp->inBytes += WINPR_ASSERTING_INT_CAST(uint64_t, status);
 	}
 
 	return read;
@@ -1052,11 +1052,11 @@ SSIZE_T transport_parse_pdu(rdpTransport* transport, wStream* s, BOOL* incomplet
 		return -1;
 
 	const size_t len = Stream_Length(s);
-	if (len > WINPR_SAFE_INT_CAST(size_t, pduLength))
+	if (len > WINPR_ASSERTING_INT_CAST(size_t, pduLength))
 		return -1;
 
 	if (incomplete)
-		*incomplete = len < WINPR_SAFE_INT_CAST(size_t, pduLength);
+		*incomplete = len < WINPR_ASSERTING_INT_CAST(size_t, pduLength);
 
 	return pduLength;
 }
@@ -2023,7 +2023,7 @@ static long transport_layer_bio_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 		{
 			int timeout = (int)arg1;
 			BOOL r = IFCALLRESULT(FALSE, layer->Wait, layer->userContext, FALSE,
-			                      WINPR_SAFE_INT_CAST(uint32_t, timeout));
+			                      WINPR_ASSERTING_INT_CAST(uint32_t, timeout));
 			/* Convert timeout to error return */
 			if (!r)
 			{
@@ -2039,7 +2039,7 @@ static long transport_layer_bio_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 		{
 			int timeout = (int)arg1;
 			BOOL r = IFCALLRESULT(FALSE, layer->Wait, layer->userContext, TRUE,
-			                      WINPR_SAFE_INT_CAST(uint32_t, timeout));
+			                      WINPR_ASSERTING_INT_CAST(uint32_t, timeout));
 			/* Convert timeout to error return */
 			if (!r)
 			{

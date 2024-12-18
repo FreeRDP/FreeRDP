@@ -888,8 +888,8 @@ static int test_progressive_decode(PROGRESSIVE_CONTEXT* progressive, EGFX_SAMPLE
 			if ((nWidth <= 0) || (nHeight <= 0))
 				continue;
 
-			nXSrc = nXDst - WINPR_SAFE_INT_CAST(int, tile->x);
-			nYSrc = nYDst - WINPR_SAFE_INT_CAST(int, tile->y);
+			nXSrc = nXDst - WINPR_ASSERTING_INT_CAST(int, tile->x);
+			nYSrc = nYDst - WINPR_ASSERTING_INT_CAST(int, tile->y);
 			freerdp_image_copy(g_DstData, PIXEL_FORMAT_XRGB32, g_DstStep, nXDst, nYDst, nWidth,
 			                   nHeight, tile->data, PIXEL_FORMAT_XRGB32, 64 * 4, nXSrc, nYSrc, NULL,
 			                   FREERDP_FLIP_NONE);

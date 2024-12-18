@@ -328,9 +328,9 @@ BOOL rdp_write_share_control_header(rdpRdp* rdp, wStream* s, size_t length, UINT
 		return FALSE;
 	length -= RDP_PACKET_HEADER_MAX_LENGTH;
 	/* Share Control Header */
-	Stream_Write_UINT16(s, WINPR_SAFE_INT_CAST(uint16_t, length));      /* totalLength */
-	Stream_Write_UINT16(s, WINPR_SAFE_INT_CAST(uint16_t, type | 0x10)); /* pduType */
-	Stream_Write_UINT16(s, WINPR_SAFE_INT_CAST(uint16_t, channel_id));  /* pduSource */
+	Stream_Write_UINT16(s, WINPR_ASSERTING_INT_CAST(uint16_t, length));      /* totalLength */
+	Stream_Write_UINT16(s, WINPR_ASSERTING_INT_CAST(uint16_t, type | 0x10)); /* pduType */
+	Stream_Write_UINT16(s, WINPR_ASSERTING_INT_CAST(uint16_t, channel_id));  /* pduSource */
 	return TRUE;
 }
 
@@ -374,8 +374,8 @@ BOOL rdp_write_share_data_header(rdpRdp* rdp, wStream* s, size_t length, BYTE ty
 	Stream_Write_UINT32(s, share_id);  /* shareId (4 bytes) */
 	Stream_Write_UINT8(s, 0);          /* pad1 (1 byte) */
 	Stream_Write_UINT8(s, STREAM_LOW); /* streamId (1 byte) */
-	Stream_Write_UINT16(s,
-	                    WINPR_SAFE_INT_CAST(uint16_t, length)); /* uncompressedLength (2 bytes) */
+	Stream_Write_UINT16(
+	    s, WINPR_ASSERTING_INT_CAST(uint16_t, length)); /* uncompressedLength (2 bytes) */
 	Stream_Write_UINT8(s, type);       /* pduType2, Data PDU Type (1 byte) */
 	Stream_Write_UINT8(s, 0);          /* compressedType (1 byte) */
 	Stream_Write_UINT16(s, 0);         /* compressedLength (2 bytes) */
@@ -704,7 +704,8 @@ BOOL rdp_write_header(rdpRdp* rdp, wStream* s, size_t length, UINT16 channelId)
 	 * the data first and then store the header.
 	 */
 	length = (length - RDP_PACKET_HEADER_MAX_LENGTH) | 0x8000;
-	Stream_Write_UINT16_BE(s, WINPR_SAFE_INT_CAST(uint16_t, length)); /* userData (OCTET_STRING) */
+	Stream_Write_UINT16_BE(
+	    s, WINPR_ASSERTING_INT_CAST(uint16_t, length)); /* userData (OCTET_STRING) */
 	return TRUE;
 }
 
@@ -734,7 +735,7 @@ static BOOL rdp_security_stream_out(rdpRdp* rdp, wStream* s, size_t length, UINT
 			if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
 			{
 				BYTE* data = Stream_PointerAs(s, BYTE) + 12;
-				const size_t size = WINPR_SAFE_INT_CAST(size_t, (data - Stream_Buffer(s)));
+				const size_t size = WINPR_ASSERTING_INT_CAST(size_t, (data - Stream_Buffer(s)));
 				if (size > length)
 					goto unlock;
 
@@ -751,7 +752,7 @@ static BOOL rdp_security_stream_out(rdpRdp* rdp, wStream* s, size_t length, UINT
 				if (*pad)
 					memset(data + length, 0, *pad);
 
-				Stream_Write_UINT8(s, WINPR_SAFE_INT_CAST(uint8_t, *pad));
+				Stream_Write_UINT8(s, WINPR_ASSERTING_INT_CAST(uint8_t, *pad));
 
 				if (!Stream_CheckAndLogRequiredCapacityWLog(rdp->log, s, 8))
 					goto unlock;

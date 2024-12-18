@@ -901,7 +901,7 @@ static BOOL input_update_last_event(rdpInput* input, BOOL mouse, UINT16 x, UINT1
 	if (freerdp_settings_get_uint32(input->context->settings, FreeRDP_FakeMouseMotionInterval) > 0)
 	{
 		const time_t now = time(NULL);
-		in->lastInputTimestamp = WINPR_SAFE_INT_CAST(UINT64, now);
+		in->lastInputTimestamp = WINPR_ASSERTING_INT_CAST(UINT64, now);
 
 		if (mouse)
 		{

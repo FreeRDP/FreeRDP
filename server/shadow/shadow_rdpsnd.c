@@ -40,7 +40,7 @@ static void rdpsnd_activated(RdpsndServerContext* context)
 		{
 			if (audio_format_compatible(&context->server_formats[j], &context->client_formats[i]))
 			{
-				context->SelectFormat(context, WINPR_SAFE_INT_CAST(UINT16, i));
+				context->SelectFormat(context, WINPR_ASSERTING_INT_CAST(UINT16, i));
 				return;
 			}
 		}

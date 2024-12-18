@@ -92,8 +92,8 @@ sse2_yCbCrToRGB_16s16s_P3P3(const INT16* WINPR_RESTRICT pSrc[3], int srcStep,
 	__m128i g_cr = _mm_set1_epi16(-11698); /* -0.714 << 14 */
 	__m128i b_cb = _mm_set1_epi16(28999);  /*  1.770 << 14 */
 	__m128i c4096 = _mm_set1_epi16(4096);
-	const size_t srcbump = WINPR_SAFE_INT_CAST(size_t, srcStep) / sizeof(__m128i);
-	const size_t dstbump = WINPR_SAFE_INT_CAST(size_t, dstStep) / sizeof(__m128i);
+	const size_t srcbump = WINPR_ASSERTING_INT_CAST(size_t, srcStep) / sizeof(__m128i);
+	const size_t dstbump = WINPR_ASSERTING_INT_CAST(size_t, dstStep) / sizeof(__m128i);
 #ifdef DO_PREFETCH
 
 	/* Prefetch Y's, Cb's, and Cr's. */
@@ -647,8 +647,8 @@ sse2_RGBToYCbCr_16s16s_P3P3(const INT16* WINPR_RESTRICT pSrc[3], int srcStep,
 	__m128i cr_r = _mm_set1_epi16(16377);  /*  0.499813 << 15 */
 	__m128i cr_g = _mm_set1_epi16(-13714); /* -0.418531 << 15 */
 	__m128i cr_b = _mm_set1_epi16(-2663);  /* -0.081282 << 15 */
-	const size_t srcbump = WINPR_SAFE_INT_CAST(size_t, srcStep) / sizeof(__m128i);
-	const size_t dstbump = WINPR_SAFE_INT_CAST(size_t, dstStep) / sizeof(__m128i);
+	const size_t srcbump = WINPR_ASSERTING_INT_CAST(size_t, srcStep) / sizeof(__m128i);
+	const size_t dstbump = WINPR_ASSERTING_INT_CAST(size_t, dstStep) / sizeof(__m128i);
 #ifdef DO_PREFETCH
 
 	/* Prefetch RGB's. */

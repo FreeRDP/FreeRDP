@@ -111,8 +111,8 @@ static int openh264_decompress(H264_CONTEXT* WINPR_RESTRICT h264,
 
 	WINPR_ASSERT(sys->pDecoder);
 	state = (*sys->pDecoder)
-	            ->DecodeFrame2(sys->pDecoder, pSrcData, WINPR_SAFE_INT_CAST(int, SrcSize), pYUVData,
-	                           &sBufferInfo);
+	            ->DecodeFrame2(sys->pDecoder, pSrcData, WINPR_ASSERTING_INT_CAST(int, SrcSize),
+	                           pYUVData, &sBufferInfo);
 
 	if (sBufferInfo.iBufferStatus != 1)
 	{
@@ -250,9 +250,9 @@ static int openh264_compress(H264_CONTEXT* WINPR_RESTRICT h264,
 		}
 
 		sys->EncParamExt.iUsageType = usageType;
-		sys->EncParamExt.iPicWidth = WINPR_SAFE_INT_CAST(int, h264->width);
-		sys->EncParamExt.iPicHeight = WINPR_SAFE_INT_CAST(int, h264->height);
-		sys->EncParamExt.fMaxFrameRate = WINPR_SAFE_INT_CAST(int, h264->FrameRate);
+		sys->EncParamExt.iPicWidth = WINPR_ASSERTING_INT_CAST(int, h264->width);
+		sys->EncParamExt.iPicHeight = WINPR_ASSERTING_INT_CAST(int, h264->height);
+		sys->EncParamExt.fMaxFrameRate = WINPR_ASSERTING_INT_CAST(int, h264->FrameRate);
 		sys->EncParamExt.iMaxBitrate = UNSPECIFIED_BIT_RATE;
 		sys->EncParamExt.bEnableDenoise = 0;
 		sys->EncParamExt.bEnableLongTermReference = 0;

@@ -783,7 +783,7 @@ static BOOL tls_prepare(rdpTls* tls, BIO* underlying, SSL_METHOD* method, int op
 	}
 
 	SSL_CTX_set_mode(tls->ctx, SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER | SSL_MODE_ENABLE_PARTIAL_WRITE);
-	SSL_CTX_set_options(tls->ctx, WINPR_SAFE_INT_CAST(uint64_t, options));
+	SSL_CTX_set_options(tls->ctx, WINPR_ASSERTING_INT_CAST(uint64_t, options));
 	SSL_CTX_set_read_ahead(tls->ctx, 1);
 #if OPENSSL_VERSION_NUMBER >= 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
 	UINT16 version = freerdp_settings_get_uint16(settings, FreeRDP_TLSMinVersion);
@@ -800,7 +800,7 @@ static BOOL tls_prepare(rdpTls* tls, BIO* underlying, SSL_METHOD* method, int op
 	}
 #endif
 #if OPENSSL_VERSION_NUMBER >= 0x10100000L && !defined(LIBRESSL_VERSION_NUMBER)
-	SSL_CTX_set_security_level(tls->ctx, WINPR_SAFE_INT_CAST(int, settings->TlsSecLevel));
+	SSL_CTX_set_security_level(tls->ctx, WINPR_ASSERTING_INT_CAST(int, settings->TlsSecLevel));
 #endif
 
 	if (settings->AllowedTlsCiphers)

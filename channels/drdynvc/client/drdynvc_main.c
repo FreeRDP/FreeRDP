@@ -991,7 +991,7 @@ static UINT drdynvc_write_data(drdynvcPlugin* drdynvc, UINT32 ChannelId, const B
 		Stream_SetPosition(data_out, 0);
 
 		const INT32 pdu = (DATA_FIRST_PDU << 4) | cbChId | (cbLen << 2);
-		Stream_Write_UINT8(data_out, WINPR_SAFE_INT_CAST(UINT8, pdu));
+		Stream_Write_UINT8(data_out, WINPR_ASSERTING_INT_CAST(UINT8, pdu));
 		Stream_SetPosition(data_out, pos);
 		chunkLength = CHANNEL_CHUNK_LENGTH - pos;
 		Stream_Write(data_out, data, chunkLength);

@@ -630,7 +630,7 @@ BOOL SetFileAttributesA(LPCSTR lpFileName, DWORD dwFileAttributes)
 
 	if (dwFileAttributes & FILE_ATTRIBUTE_READONLY)
 	{
-		st.st_mode &= WINPR_SAFE_INT_CAST(mode_t, (mode_t)(~(S_IWUSR | S_IWGRP | S_IWOTH)));
+		st.st_mode &= WINPR_ASSERTING_INT_CAST(mode_t, (mode_t)(~(S_IWUSR | S_IWGRP | S_IWOTH)));
 	}
 	else
 	{

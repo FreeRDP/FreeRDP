@@ -151,14 +151,15 @@ void xf_rail_adjust_position(xfContext* xfc, xfAppWindow* appWindow)
 		 * Calculate new size/position for the rail window(new values for
 		 * windowOffsetX/windowOffsetY/windowWidth/windowHeight) on the server
 		 */
-		const INT16 left = WINPR_SAFE_INT_CAST(INT16, appWindow->resizeMarginLeft);
-		const INT16 right = WINPR_SAFE_INT_CAST(INT16, appWindow->resizeMarginRight);
-		const INT16 top = WINPR_SAFE_INT_CAST(INT16, appWindow->resizeMarginTop);
-		const INT16 bottom = WINPR_SAFE_INT_CAST(INT16, appWindow->resizeMarginBottom);
-		windowMove.left = WINPR_SAFE_INT_CAST(INT16, appWindow->x - left);
-		windowMove.top = WINPR_SAFE_INT_CAST(INT16, appWindow->y - top);
-		windowMove.right = WINPR_SAFE_INT_CAST(INT16, appWindow->x + appWindow->width + right);
-		windowMove.bottom = WINPR_SAFE_INT_CAST(INT16, appWindow->y + appWindow->height + bottom);
+		const INT16 left = WINPR_ASSERTING_INT_CAST(INT16, appWindow->resizeMarginLeft);
+		const INT16 right = WINPR_ASSERTING_INT_CAST(INT16, appWindow->resizeMarginRight);
+		const INT16 top = WINPR_ASSERTING_INT_CAST(INT16, appWindow->resizeMarginTop);
+		const INT16 bottom = WINPR_ASSERTING_INT_CAST(INT16, appWindow->resizeMarginBottom);
+		windowMove.left = WINPR_ASSERTING_INT_CAST(INT16, appWindow->x - left);
+		windowMove.top = WINPR_ASSERTING_INT_CAST(INT16, appWindow->y - top);
+		windowMove.right = WINPR_ASSERTING_INT_CAST(INT16, appWindow->x + appWindow->width + right);
+		windowMove.bottom =
+		    WINPR_ASSERTING_INT_CAST(INT16, appWindow->y + appWindow->height + bottom);
 		xfc->rail->ClientWindowMove(xfc->rail, &windowMove);
 	}
 }
@@ -194,17 +195,17 @@ void xf_rail_end_local_move(xfContext* xfc, xfAppWindow* appWindow)
 		 * windowOffsetX/windowOffsetY/windowWidth/windowHeight) on the server
 		 *
 		 */
-		const INT16 left = WINPR_SAFE_INT_CAST(INT16, appWindow->resizeMarginLeft);
-		const INT16 right = WINPR_SAFE_INT_CAST(INT16, appWindow->resizeMarginRight);
-		const INT16 top = WINPR_SAFE_INT_CAST(INT16, appWindow->resizeMarginTop);
-		const INT16 bottom = WINPR_SAFE_INT_CAST(INT16, appWindow->resizeMarginBottom);
-		const INT16 w = WINPR_SAFE_INT_CAST(INT16, appWindow->width + right);
-		const INT16 h = WINPR_SAFE_INT_CAST(INT16, appWindow->height + bottom);
-		windowMove.left = WINPR_SAFE_INT_CAST(INT16, appWindow->x - left);
-		windowMove.top = WINPR_SAFE_INT_CAST(INT16, appWindow->y - top);
-		windowMove.right = WINPR_SAFE_INT_CAST(INT16, appWindow->x + w); /* In the update to RDP
-		           the position is one past the window */
-		windowMove.bottom = WINPR_SAFE_INT_CAST(INT16, appWindow->y + h);
+		const INT16 left = WINPR_ASSERTING_INT_CAST(INT16, appWindow->resizeMarginLeft);
+		const INT16 right = WINPR_ASSERTING_INT_CAST(INT16, appWindow->resizeMarginRight);
+		const INT16 top = WINPR_ASSERTING_INT_CAST(INT16, appWindow->resizeMarginTop);
+		const INT16 bottom = WINPR_ASSERTING_INT_CAST(INT16, appWindow->resizeMarginBottom);
+		const INT16 w = WINPR_ASSERTING_INT_CAST(INT16, appWindow->width + right);
+		const INT16 h = WINPR_ASSERTING_INT_CAST(INT16, appWindow->height + bottom);
+		windowMove.left = WINPR_ASSERTING_INT_CAST(INT16, appWindow->x - left);
+		windowMove.top = WINPR_ASSERTING_INT_CAST(INT16, appWindow->y - top);
+		windowMove.right = WINPR_ASSERTING_INT_CAST(INT16, appWindow->x + w); /* In the update to
+		           RDP the position is one past the window */
+		windowMove.bottom = WINPR_ASSERTING_INT_CAST(INT16, appWindow->y + h);
 		xfc->rail->ClientWindowMove(xfc->rail, &windowMove);
 	}
 
@@ -228,8 +229,8 @@ void xf_rail_end_local_move(xfContext* xfc, xfAppWindow* appWindow)
 	 */
 	appWindow->windowOffsetX = appWindow->x;
 	appWindow->windowOffsetY = appWindow->y;
-	appWindow->windowWidth = WINPR_SAFE_INT_CAST(uint32_t, appWindow->width);
-	appWindow->windowHeight = WINPR_SAFE_INT_CAST(uint32_t, appWindow->height);
+	appWindow->windowWidth = WINPR_ASSERTING_INT_CAST(uint32_t, appWindow->width);
+	appWindow->windowHeight = WINPR_ASSERTING_INT_CAST(uint32_t, appWindow->height);
 	appWindow->local_move.state = LMS_TERMINATING;
 }
 
@@ -243,10 +244,10 @@ BOOL xf_rail_paint_surface(xfContext* xfc, UINT64 windowId, const RECTANGLE_16* 
 		return FALSE;
 
 	const RECTANGLE_16 windowRect = {
-		.left = WINPR_SAFE_INT_CAST(UINT16, MAX(appWindow->x, 0)),
-		.top = WINPR_SAFE_INT_CAST(UINT16, MAX(appWindow->y, 0)),
-		.right = WINPR_SAFE_INT_CAST(UINT16, MAX(appWindow->x + appWindow->width, 0)),
-		.bottom = WINPR_SAFE_INT_CAST(UINT16, MAX(appWindow->y + appWindow->height, 0))
+		.left = WINPR_ASSERTING_INT_CAST(UINT16, MAX(appWindow->x, 0)),
+		.top = WINPR_ASSERTING_INT_CAST(UINT16, MAX(appWindow->y, 0)),
+		.right = WINPR_ASSERTING_INT_CAST(UINT16, MAX(appWindow->x + appWindow->width, 0)),
+		.bottom = WINPR_ASSERTING_INT_CAST(UINT16, MAX(appWindow->y + appWindow->height, 0))
 	};
 
 	REGION16 windowInvalidRegion = { 0 };
@@ -259,10 +260,10 @@ BOOL xf_rail_paint_surface(xfContext* xfc, UINT64 windowId, const RECTANGLE_16* 
 		const RECTANGLE_16* extents = region16_extents(&windowInvalidRegion);
 
 		const RECTANGLE_16 updateRect = {
-			.left = WINPR_SAFE_INT_CAST(UINT16, extents->left - appWindow->x),
-			.top = WINPR_SAFE_INT_CAST(UINT16, extents->top - appWindow->y),
-			.right = WINPR_SAFE_INT_CAST(UINT16, extents->right - appWindow->x),
-			.bottom = WINPR_SAFE_INT_CAST(UINT16, extents->bottom - appWindow->y)
+			.left = WINPR_ASSERTING_INT_CAST(UINT16, extents->left - appWindow->x),
+			.top = WINPR_ASSERTING_INT_CAST(UINT16, extents->top - appWindow->y),
+			.right = WINPR_ASSERTING_INT_CAST(UINT16, extents->right - appWindow->x),
+			.bottom = WINPR_ASSERTING_INT_CAST(UINT16, extents->bottom - appWindow->y)
 		};
 
 		xf_UpdateWindowArea(xfc, appWindow, updateRect.left, updateRect.top,
@@ -330,10 +331,11 @@ static BOOL xf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 	if (fieldFlags & WINDOW_ORDER_STATE_NEW)
 	{
 		if (!appWindow)
-			appWindow = xf_rail_add_window(
-			    xfc, orderInfo->windowId, WINPR_SAFE_INT_CAST(uint32_t, windowState->windowOffsetX),
-			    WINPR_SAFE_INT_CAST(uint32_t, windowState->windowOffsetY), windowState->windowWidth,
-			    windowState->windowHeight, 0xFFFFFFFF);
+			appWindow =
+			    xf_rail_add_window(xfc, orderInfo->windowId,
+			                       WINPR_ASSERTING_INT_CAST(uint32_t, windowState->windowOffsetX),
+			                       WINPR_ASSERTING_INT_CAST(uint32_t, windowState->windowOffsetY),
+			                       windowState->windowWidth, windowState->windowHeight, 0xFFFFFFFF);
 
 		if (!appWindow)
 			return FALSE;
@@ -550,7 +552,7 @@ static BOOL xf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 
 	if (fieldFlags & WINDOW_ORDER_FIELD_SHOW)
 	{
-		xf_ShowWindow(xfc, appWindow, WINPR_SAFE_INT_CAST(UINT8, appWindow->showState));
+		xf_ShowWindow(xfc, appWindow, WINPR_ASSERTING_INT_CAST(UINT8, appWindow->showState));
 	}
 
 	if (fieldFlags & WINDOW_ORDER_FIELD_TITLE)
@@ -582,20 +584,21 @@ static BOOL xf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 			    appWindow->height == (INT64)appWindow->windowHeight)
 			{
 				xf_UpdateWindowArea(xfc, appWindow, 0, 0,
-				                    WINPR_SAFE_INT_CAST(int, appWindow->windowWidth),
-				                    WINPR_SAFE_INT_CAST(int, appWindow->windowHeight));
+				                    WINPR_ASSERTING_INT_CAST(int, appWindow->windowWidth),
+				                    WINPR_ASSERTING_INT_CAST(int, appWindow->windowHeight));
 			}
 			else
 			{
 				xf_MoveWindow(xfc, appWindow, appWindow->windowOffsetX, appWindow->windowOffsetY,
-				              WINPR_SAFE_INT_CAST(int, appWindow->windowWidth),
-				              WINPR_SAFE_INT_CAST(int, appWindow->windowHeight));
+				              WINPR_ASSERTING_INT_CAST(int, appWindow->windowWidth),
+				              WINPR_ASSERTING_INT_CAST(int, appWindow->windowHeight));
 			}
 
 			xf_SetWindowVisibilityRects(
-			    xfc, appWindow, WINPR_SAFE_INT_CAST(uint32_t, visibilityRectsOffsetX),
-			    WINPR_SAFE_INT_CAST(uint32_t, visibilityRectsOffsetY), appWindow->visibilityRects,
-			    WINPR_SAFE_INT_CAST(int, appWindow->numVisibilityRects));
+			    xfc, appWindow, WINPR_ASSERTING_INT_CAST(uint32_t, visibilityRectsOffsetX),
+			    WINPR_ASSERTING_INT_CAST(uint32_t, visibilityRectsOffsetY),
+			    appWindow->visibilityRects,
+			    WINPR_ASSERTING_INT_CAST(int, appWindow->numVisibilityRects));
 		}
 
 		if (appWindow->rail_state == WINDOW_SHOW_MAXIMIZED)
@@ -706,11 +709,12 @@ static BOOL convert_rail_icon(const ICON_INFO* iconInfo, xfRailIcon* railIcon)
 		goto error;
 
 	if (!freerdp_image_copy_from_icon_data(
-	        argbPixels, PIXEL_FORMAT_ARGB32, 0, 0, 0, WINPR_SAFE_INT_CAST(UINT16, iconInfo->width),
-	        WINPR_SAFE_INT_CAST(UINT16, iconInfo->height), iconInfo->bitsColor,
-	        WINPR_SAFE_INT_CAST(UINT16, iconInfo->cbBitsColor), iconInfo->bitsMask,
-	        WINPR_SAFE_INT_CAST(UINT16, iconInfo->cbBitsMask), iconInfo->colorTable,
-	        WINPR_SAFE_INT_CAST(UINT16, iconInfo->cbColorTable), iconInfo->bpp))
+	        argbPixels, PIXEL_FORMAT_ARGB32, 0, 0, 0,
+	        WINPR_ASSERTING_INT_CAST(UINT16, iconInfo->width),
+	        WINPR_ASSERTING_INT_CAST(UINT16, iconInfo->height), iconInfo->bitsColor,
+	        WINPR_ASSERTING_INT_CAST(UINT16, iconInfo->cbBitsColor), iconInfo->bitsMask,
+	        WINPR_ASSERTING_INT_CAST(UINT16, iconInfo->cbBitsMask), iconInfo->colorTable,
+	        WINPR_ASSERTING_INT_CAST(UINT16, iconInfo->cbColorTable), iconInfo->bpp))
 		goto error;
 
 	const UINT32 nelements = 2 + iconInfo->width * iconInfo->height;
@@ -721,7 +725,7 @@ static BOOL convert_rail_icon(const ICON_INFO* iconInfo, xfRailIcon* railIcon)
 
 	railIcon->data = pixels;
 
-	railIcon->length = WINPR_SAFE_INT_CAST(int, nelements);
+	railIcon->length = WINPR_ASSERTING_INT_CAST(int, nelements);
 	pixels[0] = iconInfo->width;
 	pixels[1] = iconInfo->height;
 	nextPixel = argbPixels;
@@ -763,8 +767,8 @@ static BOOL xf_rail_window_icon(rdpContext* context, const WINDOW_ORDER_INFO* or
 	WINPR_ASSERT(windowIcon);
 	WINPR_ASSERT(windowIcon->iconInfo);
 	xfRailIcon* icon = RailIconCache_Lookup(
-	    xfc->railIconCache, WINPR_SAFE_INT_CAST(UINT8, windowIcon->iconInfo->cacheId),
-	    WINPR_SAFE_INT_CAST(UINT16, windowIcon->iconInfo->cacheEntry));
+	    xfc->railIconCache, WINPR_ASSERTING_INT_CAST(UINT8, windowIcon->iconInfo->cacheId),
+	    WINPR_ASSERTING_INT_CAST(UINT16, windowIcon->iconInfo->cacheEntry));
 
 	if (!icon)
 	{
@@ -797,8 +801,8 @@ static BOOL xf_rail_window_cached_icon(rdpContext* context, const WINDOW_ORDER_I
 		return TRUE;
 
 	icon = RailIconCache_Lookup(
-	    xfc->railIconCache, WINPR_SAFE_INT_CAST(UINT8, windowCachedIcon->cachedIcon.cacheId),
-	    WINPR_SAFE_INT_CAST(UINT16, windowCachedIcon->cachedIcon.cacheEntry));
+	    xfc->railIconCache, WINPR_ASSERTING_INT_CAST(UINT8, windowCachedIcon->cachedIcon.cacheId),
+	    WINPR_ASSERTING_INT_CAST(UINT16, windowCachedIcon->cachedIcon.cacheEntry));
 
 	if (!icon)
 	{
@@ -1209,10 +1213,10 @@ xfAppWindow* xf_rail_add_window(xfContext* xfc, UINT64 id, UINT32 x, UINT32 y, U
 	appWindow->xfc = xfc;
 	appWindow->windowId = id;
 	appWindow->surfaceId = surfaceId;
-	appWindow->x = WINPR_SAFE_INT_CAST(int, x);
-	appWindow->y = WINPR_SAFE_INT_CAST(int, y);
-	appWindow->width = WINPR_SAFE_INT_CAST(int, width);
-	appWindow->height = WINPR_SAFE_INT_CAST(int, height);
+	appWindow->x = WINPR_ASSERTING_INT_CAST(int, x);
+	appWindow->y = WINPR_ASSERTING_INT_CAST(int, y);
+	appWindow->width = WINPR_ASSERTING_INT_CAST(int, width);
+	appWindow->height = WINPR_ASSERTING_INT_CAST(int, height);
 
 	if (!xf_AppWindowCreate(xfc, appWindow))
 		goto fail;

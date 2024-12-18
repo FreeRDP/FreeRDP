@@ -571,7 +571,8 @@ static UINT enumerator_send_select_version_response_pdu(
 	}
 
 	Stream_Write_UINT8(s, selectVersionResponse->Header.Version);
-	Stream_Write_UINT8(s, WINPR_SAFE_INT_CAST(uint8_t, selectVersionResponse->Header.MessageId));
+	Stream_Write_UINT8(s,
+	                   WINPR_ASSERTING_INT_CAST(uint8_t, selectVersionResponse->Header.MessageId));
 
 	return enumerator_server_packet_send(context, s);
 }

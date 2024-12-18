@@ -245,7 +245,7 @@ static UINT location_send_base_location3d(IWTSVirtualChannel* channel,
 		    !freerdp_write_four_byte_float(s, *pdu->horizontalAccuracy))
 			return ERROR_INTERNAL_ERROR;
 
-		Stream_Write_UINT8(s, WINPR_SAFE_INT_CAST(UINT8, *pdu->source));
+		Stream_Write_UINT8(s, WINPR_ASSERTING_INT_CAST(UINT8, *pdu->source));
 	}
 
 	return location_channel_send(channel, s);

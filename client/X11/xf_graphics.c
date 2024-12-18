@@ -138,7 +138,7 @@ static BOOL xf_Pointer_GetCursorForCurrentScale(rdpContext* context, rdpPointer*
 		if ((xpointer->cursorWidths[i] == xTargetSize) &&
 		    (xpointer->cursorHeights[i] == yTargetSize))
 		{
-			cursorIndex = WINPR_SAFE_INT_CAST(int, i);
+			cursorIndex = WINPR_ASSERTING_INT_CAST(int, i);
 		}
 	}
 
@@ -225,7 +225,7 @@ static BOOL xf_Pointer_GetCursorForCurrentScale(rdpContext* context, rdpPointer*
 		xpointer->cursorWidths[idx] = ci.width;
 		xpointer->cursorHeights[idx] = ci.height;
 		xpointer->cursors[idx] = XcursorImageLoadCursor(xfc->display, &ci);
-		cursorIndex = WINPR_SAFE_INT_CAST(int, idx);
+		cursorIndex = WINPR_ASSERTING_INT_CAST(int, idx);
 		xpointer->nCursors += 1;
 
 		winpr_aligned_free(tmp);
@@ -471,8 +471,8 @@ static BOOL xf_Pointer_SetPosition(rdpContext* context, UINT32 x, UINT32 y)
 		goto out;
 	}
 
-	rc = XWarpPointer(xfc->display, handle, handle, 0, 0, 0, 0, WINPR_SAFE_INT_CAST(int, x),
-	                  WINPR_SAFE_INT_CAST(int, y));
+	rc = XWarpPointer(xfc->display, handle, handle, 0, 0, 0, 0, WINPR_ASSERTING_INT_CAST(int, x),
+	                  WINPR_ASSERTING_INT_CAST(int, y));
 	if (rc == 0)
 		WLog_WARN(TAG, "XWarpPointer==%d", rc);
 	tmp.event_mask = current.your_event_mask;

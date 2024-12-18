@@ -779,7 +779,7 @@ static INLINE BOOL update_read_4byte_unsigned(wStream* s, UINT32* value)
 		return FALSE;
 
 	const UINT32 byte = Stream_Get_UINT8(s);
-	const BYTE count = WINPR_SAFE_INT_CAST(uint8_t, (byte & 0xC0) >> 6);
+	const BYTE count = WINPR_ASSERTING_INT_CAST(uint8_t, (byte & 0xC0) >> 6);
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, count))
 		return FALSE;
@@ -4103,7 +4103,8 @@ static BOOL update_recv_secondary_order(rdpUpdate* update, wStream* s, BYTE flag
 		return FALSE;
 	}
 
-	if (!Stream_CheckAndLogRequiredLength(TAG, s, WINPR_SAFE_INT_CAST(size_t, orderLengthFull)))
+	if (!Stream_CheckAndLogRequiredLength(TAG, s,
+	                                      WINPR_ASSERTING_INT_CAST(size_t, orderLengthFull)))
 		return FALSE;
 
 	if (!check_secondary_order_supported(up->log, settings, orderType, name))
@@ -4226,7 +4227,7 @@ static BOOL update_recv_secondary_order(rdpUpdate* update, wStream* s, BYTE flag
 		WLog_Print(up->log, WLOG_ERROR, "%s %s failed", secondary_order_str, name);
 	}
 
-	end = start + WINPR_SAFE_INT_CAST(size_t, orderLengthFull);
+	end = start + WINPR_ASSERTING_INT_CAST(size_t, orderLengthFull);
 	pos = Stream_GetPosition(s);
 	if (pos > end)
 	{

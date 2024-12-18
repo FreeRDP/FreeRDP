@@ -620,19 +620,19 @@ static pstatus_t general_YUV420ToRGB_8u_P3AC4R(const BYTE* WINPR_RESTRICT pSrc[3
 static INLINE BYTE RGB2Y(INT32 R, INT32 G, INT32 B)
 {
 	const INT32 val = ((54 * R + 183 * G + 18 * B) >> 8);
-	return WINPR_SAFE_INT_CAST(BYTE, val);
+	return WINPR_ASSERTING_INT_CAST(BYTE, val);
 }
 
 static INLINE BYTE RGB2U(INT32 R, INT32 G, INT32 B)
 {
 	const INT32 val = (((-29 * R - 99 * G + 128 * B) >> 8) + 128);
-	return WINPR_SAFE_INT_CAST(BYTE, val);
+	return WINPR_ASSERTING_INT_CAST(BYTE, val);
 }
 
 static INLINE BYTE RGB2V(INT32 R, INT32 G, INT32 B)
 {
 	const INT32 val = (((128 * R - 116 * G - 12 * B) >> 8) + 128);
-	return WINPR_SAFE_INT_CAST(BYTE, val);
+	return WINPR_ASSERTING_INT_CAST(BYTE, val);
 }
 
 // NOLINTBEGIN(readability-non-const-parameter)
@@ -1019,8 +1019,8 @@ static INLINE void general_RGBToAVC444YUV_BGRX_DOUBLE_ROW(
 		/* 2x 2y pixel in luma UV plane use averaging
 		 */
 		{
-			const BYTE Uavg = WINPR_SAFE_INT_CAST(BYTE, ((UINT16)U1e + U2e + U1o + U2o) / 4);
-			const BYTE Vavg = WINPR_SAFE_INT_CAST(BYTE, ((UINT16)V1e + V2e + V1o + V2o) / 4);
+			const BYTE Uavg = WINPR_ASSERTING_INT_CAST(BYTE, ((UINT16)U1e + U2e + U1o + U2o) / 4);
+			const BYTE Vavg = WINPR_ASSERTING_INT_CAST(BYTE, ((UINT16)V1e + V2e + V1o + V2o) / 4);
 			*b2++ = Uavg;
 			*b3++ = Vavg;
 		}
@@ -1160,8 +1160,8 @@ static INLINE void general_RGBToAVC444YUV_RGBX_DOUBLE_ROW(
 		/* 2x 2y pixel in luma UV plane use averaging
 		 */
 		{
-			const BYTE Uavg = WINPR_SAFE_INT_CAST(BYTE, ((UINT16)U1e + U2e + U1o + U2o) / 4);
-			const BYTE Vavg = WINPR_SAFE_INT_CAST(BYTE, ((UINT16)V1e + V2e + V1o + V2o) / 4);
+			const BYTE Uavg = WINPR_ASSERTING_INT_CAST(BYTE, ((UINT16)U1e + U2e + U1o + U2o) / 4);
+			const BYTE Vavg = WINPR_ASSERTING_INT_CAST(BYTE, ((UINT16)V1e + V2e + V1o + V2o) / 4);
 			*b2++ = Uavg;
 			*b3++ = Vavg;
 		}
@@ -1310,9 +1310,9 @@ static INLINE void general_RGBToAVC444YUV_ANY_DOUBLE_ROW(
 		/* 2x 2y pixel in luma UV plane use averaging
 		 */
 		{
-			const BYTE Uavg = WINPR_SAFE_INT_CAST(
+			const BYTE Uavg = WINPR_ASSERTING_INT_CAST(
 			    BYTE, ((UINT16)U1e + (UINT16)U2e + (UINT16)U1o + (UINT16)U2o) / 4);
-			const BYTE Vavg = WINPR_SAFE_INT_CAST(
+			const BYTE Vavg = WINPR_ASSERTING_INT_CAST(
 			    BYTE, ((UINT16)V1e + (UINT16)V2e + (UINT16)V1o + (UINT16)V2o) / 4);
 			*b2++ = Uavg;
 			*b3++ = Vavg;

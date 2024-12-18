@@ -1841,11 +1841,11 @@ static BOOL rdp_write_offscreen_bitmap_cache_capability_set(wStream* s, const rd
 		offscreenSupportLevel = 0x01;
 		Stream_Write_UINT32(s, offscreenSupportLevel);        /* offscreenSupportLevel (4 bytes) */
 		Stream_Write_UINT16(
-		    s, WINPR_SAFE_INT_CAST(
+		    s, WINPR_ASSERTING_INT_CAST(
 		           uint16_t, settings->OffscreenCacheSize)); /* offscreenCacheSize (2 bytes) */
 		Stream_Write_UINT16(
 		    s,
-		    WINPR_SAFE_INT_CAST(
+		    WINPR_ASSERTING_INT_CAST(
 		        uint16_t, settings->OffscreenCacheEntries)); /* offscreenCacheEntries (2 bytes) */
 	}
 	else
@@ -2088,8 +2088,8 @@ static BOOL rdp_write_bitmap_cache_v2_capability_set(wStream* s, const rdpSettin
 	Stream_Write_UINT16(s, cacheFlags);                     /* cacheFlags (2 bytes) */
 	Stream_Write_UINT8(s, 0);                               /* pad2 (1 byte) */
 	Stream_Write_UINT8(
-	    s,
-	    WINPR_SAFE_INT_CAST(uint8_t, settings->BitmapCacheV2NumCells)); /* numCellCaches (1 byte) */
+	    s, WINPR_ASSERTING_INT_CAST(uint8_t,
+	                                settings->BitmapCacheV2NumCells)); /* numCellCaches (1 byte) */
 	rdp_write_bitmap_cache_cell_info(
 	    s, &settings->BitmapCacheV2CellInfo[0]); /* bitmapCache0CellInfo (4 bytes) */
 	rdp_write_bitmap_cache_cell_info(
@@ -2298,11 +2298,11 @@ static BOOL rdp_write_draw_nine_grid_cache_capability_set(wStream* s, const rdpS
 	    (settings->DrawNineGridEnabled) ? DRAW_NINEGRID_SUPPORTED_V2 : DRAW_NINEGRID_NO_SUPPORT;
 	Stream_Write_UINT32(s, drawNineGridSupportLevel); /* drawNineGridSupportLevel (4 bytes) */
 	Stream_Write_UINT16(
-	    s, WINPR_SAFE_INT_CAST(
+	    s, WINPR_ASSERTING_INT_CAST(
 	           uint16_t, settings->DrawNineGridCacheSize)); /* drawNineGridCacheSize (2 bytes) */
 	Stream_Write_UINT16(
 	    s,
-	    WINPR_SAFE_INT_CAST(
+	    WINPR_ASSERTING_INT_CAST(
 	        uint16_t, settings->DrawNineGridCacheEntries)); /* drawNineGridCacheEntries (2 bytes) */
 	return rdp_capability_set_finish(s, header, CAPSET_TYPE_DRAW_NINE_GRID_CACHE);
 }
@@ -2577,11 +2577,11 @@ static BOOL rdp_write_window_list_capability_set(wStream* s, const rdpSettings* 
 	const size_t header = rdp_capability_set_start(s);
 	Stream_Write_UINT32(s, settings->RemoteWndSupportLevel); /* wndSupportLevel (4 bytes) */
 	Stream_Write_UINT8(
-	    s, WINPR_SAFE_INT_CAST(uint8_t,
-	                           settings->RemoteAppNumIconCaches)); /* numIconCaches (1 byte) */
+	    s, WINPR_ASSERTING_INT_CAST(uint8_t,
+	                                settings->RemoteAppNumIconCaches)); /* numIconCaches (1 byte) */
 	Stream_Write_UINT16(
 	    s,
-	    WINPR_SAFE_INT_CAST(
+	    WINPR_ASSERTING_INT_CAST(
 	        uint16_t, settings->RemoteAppNumIconCacheEntries)); /* numIconCacheEntries (2 bytes) */
 	return rdp_capability_set_finish(s, header, CAPSET_TYPE_WINDOW);
 }

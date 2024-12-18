@@ -447,7 +447,7 @@ BOOL GetComputerNameA(LPSTR lpBuffer, LPDWORD lpnSize)
 	size_t length = strnlen(hostname, MAX_COMPUTERNAME_LENGTH);
 	const char* dot = strchr(hostname, '.');
 	if (dot)
-		length = WINPR_SAFE_INT_CAST(size_t, (dot - hostname));
+		length = WINPR_ASSERTING_INT_CAST(size_t, (dot - hostname));
 
 	if ((*lpnSize <= (DWORD)length) || !lpBuffer)
 	{
@@ -577,8 +577,8 @@ UINT64 winpr_GetTickCount64NS(void)
 	struct timespec ts = { 0 };
 
 	if (clock_gettime(CLOCK_MONOTONIC_RAW, &ts) == 0)
-		ticks = (WINPR_SAFE_INT_CAST(uint64_t, ts.tv_sec) * 1000000000ull) +
-		        WINPR_SAFE_INT_CAST(uint64_t, ts.tv_nsec);
+		ticks = (WINPR_ASSERTING_INT_CAST(uint64_t, ts.tv_sec) * 1000000000ull) +
+		        WINPR_ASSERTING_INT_CAST(uint64_t, ts.tv_nsec);
 #elif defined(__MACH__) && defined(__APPLE__)
 	ticks = mac_get_time_ns();
 #elif defined(_WIN32)
@@ -631,8 +631,8 @@ UINT64 winpr_GetUnixTimeNS(void)
 	struct timespec ts = { 0 };
 	if (clock_gettime(CLOCK_REALTIME, &ts) != 0)
 		return 0;
-	return WINPR_SAFE_INT_CAST(uint64_t, ts.tv_sec) * 1000000000ull +
-	       WINPR_SAFE_INT_CAST(uint64_t, ts.tv_nsec);
+	return WINPR_ASSERTING_INT_CAST(uint64_t, ts.tv_sec) * 1000000000ull +
+	       WINPR_ASSERTING_INT_CAST(uint64_t, ts.tv_nsec);
 #else
 	struct timeval tv = { 0 };
 	if (gettimeofday(&tv, NULL) != 0)

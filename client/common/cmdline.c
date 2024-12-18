@@ -369,7 +369,7 @@ static SSIZE_T forced_newline_at(const char* text, size_t len, size_t limit,
 		const char* tok = strchr(text, d);
 		if (tok)
 		{
-			const size_t offset = WINPR_SAFE_INT_CAST(size_t, tok - text);
+			const size_t offset = WINPR_ASSERTING_INT_CAST(size_t, tok - text);
 			if ((offset > len) || (offset > limit))
 				continue;
 			return (SSIZE_T)(offset);
@@ -461,7 +461,7 @@ static size_t print_description(const char* text, size_t start_offset, size_t cu
 	const int rc = printf("\n");
 	if (rc >= 0)
 	{
-		const size_t src = WINPR_SAFE_INT_CAST(size_t, rc);
+		const size_t src = WINPR_ASSERTING_INT_CAST(size_t, rc);
 		WINPR_ASSERT(SIZE_MAX - src > current);
 		current += src;
 	}

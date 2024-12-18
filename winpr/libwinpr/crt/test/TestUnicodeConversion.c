@@ -97,7 +97,8 @@ static BOOL compare_utf16_int(const WCHAR* what, size_t buffersize, SSIZE_T rc, 
 	}
 	else
 	{
-		if (!check_short_buffer(prefix, WINPR_SAFE_INT_CAST(SSIZE_T, rc), buffersize, test, FALSE))
+		if (!check_short_buffer(prefix, WINPR_ASSERTING_INT_CAST(SSIZE_T, rc), buffersize, test,
+		                        FALSE))
 			return FALSE;
 	}
 
@@ -151,7 +152,8 @@ static BOOL compare_utf8_int(const char* what, size_t buffersize, SSIZE_T rc, SS
 	}
 	else
 	{
-		if (!check_short_buffer(prefix, WINPR_SAFE_INT_CAST(SSIZE_T, rc), buffersize, test, TRUE))
+		if (!check_short_buffer(prefix, WINPR_ASSERTING_INT_CAST(SSIZE_T, rc), buffersize, test,
+		                        TRUE))
 			return FALSE;
 	}
 
@@ -221,7 +223,7 @@ static BOOL test_convert_to_utf16_n(const testcase_t* test)
 	{
 		char prefix[8192] = { 0 };
 		create_prefix(prefix, ARRAYSIZE(prefix), 0, rc2,
-		              WINPR_SAFE_INT_CAST(SSIZE_T, test->utf8len), test, __func__, __LINE__);
+		              WINPR_ASSERTING_INT_CAST(SSIZE_T, test->utf8len), test, __func__, __LINE__);
 		(void)fprintf(stderr,
 		              "%s ConvertUtf8NToWChar(%s, %" PRIuz ", NULL, 0) expected %" PRIuz
 		              ", got %" PRIdz "\n",
@@ -287,7 +289,7 @@ static BOOL test_convert_to_utf8_n(const testcase_t* test)
 	{
 		char prefix[8192] = { 0 };
 		create_prefix(prefix, ARRAYSIZE(prefix), 0, rc2,
-		              WINPR_SAFE_INT_CAST(SSIZE_T, test->utf16len), test, __func__, __LINE__);
+		              WINPR_ASSERTING_INT_CAST(SSIZE_T, test->utf16len), test, __func__, __LINE__);
 		(void)fprintf(stderr,
 		              "%s ConvertWCharNToUtf8(%s, %" PRIuz ", NULL, 0) expected %" PRIuz
 		              ", got %" PRIdz "\n",

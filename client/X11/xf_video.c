@@ -47,9 +47,9 @@ static VideoSurface* xfVideoCreateSurface(VideoClientContext* video, UINT32 x, U
 	xfc = (xfContext*)video->custom;
 	WINPR_ASSERT(xfc);
 
-	ret->image = XCreateImage(xfc->display, xfc->visual, WINPR_SAFE_INT_CAST(uint32_t, xfc->depth),
-	                          ZPixmap, 0, (char*)ret->base.data, width, height, 8,
-	                          WINPR_SAFE_INT_CAST(int, ret->base.scanline));
+	ret->image = XCreateImage(
+	    xfc->display, xfc->visual, WINPR_ASSERTING_INT_CAST(uint32_t, xfc->depth), ZPixmap, 0,
+	    (char*)ret->base.data, width, height, 8, WINPR_ASSERTING_INT_CAST(int, ret->base.scanline));
 
 	if (!ret->image)
 	{
@@ -83,18 +83,19 @@ static BOOL xfVideoShowSurface(VideoClientContext* video, const VideoSurface* su
 	    freerdp_settings_get_bool(settings, FreeRDP_MultiTouchGestures))
 	{
 		XPutImage(xfc->display, xfc->primary, xfc->gc, xfSurface->image, 0, 0,
-		          WINPR_SAFE_INT_CAST(int, surface->x), WINPR_SAFE_INT_CAST(int, surface->y),
-		          surface->w, surface->h);
-		xf_draw_screen(
-		    xfc, WINPR_SAFE_INT_CAST(int32_t, surface->x), WINPR_SAFE_INT_CAST(int32_t, surface->y),
-		    WINPR_SAFE_INT_CAST(int32_t, surface->w), WINPR_SAFE_INT_CAST(int32_t, surface->h));
+		          WINPR_ASSERTING_INT_CAST(int, surface->x),
+		          WINPR_ASSERTING_INT_CAST(int, surface->y), surface->w, surface->h);
+		xf_draw_screen(xfc, WINPR_ASSERTING_INT_CAST(int32_t, surface->x),
+		               WINPR_ASSERTING_INT_CAST(int32_t, surface->y),
+		               WINPR_ASSERTING_INT_CAST(int32_t, surface->w),
+		               WINPR_ASSERTING_INT_CAST(int32_t, surface->h));
 	}
 	else
 #endif
 	{
 		XPutImage(xfc->display, xfc->drawable, xfc->gc, xfSurface->image, 0, 0,
-		          WINPR_SAFE_INT_CAST(int, surface->x), WINPR_SAFE_INT_CAST(int, surface->y),
-		          surface->w, surface->h);
+		          WINPR_ASSERTING_INT_CAST(int, surface->x),
+		          WINPR_ASSERTING_INT_CAST(int, surface->y), surface->w, surface->h);
 	}
 
 	return TRUE;

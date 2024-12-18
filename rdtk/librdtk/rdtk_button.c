@@ -48,31 +48,31 @@ int rdtk_button_draw(rdtkSurface* surface, uint16_t nXDst, uint16_t nYDst, uint1
 		const int wd = (ninePatch->width - ninePatch->fillWidth);
 		const int hd = (ninePatch->height - ninePatch->fillHeight);
 
-		const uint16_t fillWidth = nWidth - WINPR_SAFE_INT_CAST(uint16_t, wd);
-		const uint16_t fillHeight = nHeight - WINPR_SAFE_INT_CAST(uint16_t, hd);
-		uint16_t offsetX = WINPR_SAFE_INT_CAST(UINT16, ninePatch->fillLeft);
-		uint16_t offsetY = WINPR_SAFE_INT_CAST(UINT16, ninePatch->fillTop);
+		const uint16_t fillWidth = nWidth - WINPR_ASSERTING_INT_CAST(uint16_t, wd);
+		const uint16_t fillHeight = nHeight - WINPR_ASSERTING_INT_CAST(uint16_t, hd);
+		uint16_t offsetX = WINPR_ASSERTING_INT_CAST(UINT16, ninePatch->fillLeft);
+		uint16_t offsetY = WINPR_ASSERTING_INT_CAST(UINT16, ninePatch->fillTop);
 
 		if (textWidth < fillWidth)
 		{
 			const int twd = ((fillWidth - textWidth) / 2) + ninePatch->fillLeft;
-			offsetX = WINPR_SAFE_INT_CAST(uint16_t, twd);
+			offsetX = WINPR_ASSERTING_INT_CAST(uint16_t, twd);
 		}
 		else if (textWidth < ninePatch->width)
 		{
 			const int twd = ((ninePatch->width - textWidth) / 2);
-			offsetX = WINPR_SAFE_INT_CAST(uint16_t, twd);
+			offsetX = WINPR_ASSERTING_INT_CAST(uint16_t, twd);
 		}
 
 		if (textHeight < fillHeight)
 		{
 			const int twd = ((fillHeight - textHeight) / 2) + ninePatch->fillTop;
-			offsetY = WINPR_SAFE_INT_CAST(uint16_t, twd);
+			offsetY = WINPR_ASSERTING_INT_CAST(uint16_t, twd);
 		}
 		else if (textHeight < ninePatch->height)
 		{
 			const int twd = ((ninePatch->height - textHeight) / 2);
-			offsetY = WINPR_SAFE_INT_CAST(uint16_t, twd);
+			offsetY = WINPR_ASSERTING_INT_CAST(uint16_t, twd);
 		}
 
 		rdtk_font_draw_text(surface, nXDst + offsetX, nYDst + offsetY, font, text);

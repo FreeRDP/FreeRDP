@@ -195,13 +195,13 @@ void region16_clear(REGION16* region)
 static INLINE REGION16_DATA* allocateRegion(long nbItems)
 {
 	size_t allocSize =
-	    sizeof(REGION16_DATA) + (WINPR_SAFE_INT_CAST(size_t, nbItems) * sizeof(RECTANGLE_16));
+	    sizeof(REGION16_DATA) + (WINPR_ASSERTING_INT_CAST(size_t, nbItems) * sizeof(RECTANGLE_16));
 	REGION16_DATA* ret = (REGION16_DATA*)malloc(allocSize);
 
 	if (!ret)
 		return ret;
 
-	ret->size = WINPR_SAFE_INT_CAST(long, allocSize);
+	ret->size = WINPR_ASSERTING_INT_CAST(long, allocSize);
 	ret->nbRects = nbItems;
 	return ret;
 }
@@ -230,7 +230,7 @@ BOOL region16_copy(REGION16* dst, const REGION16* src)
 		if (!dst->data)
 			return FALSE;
 
-		CopyMemory(dst->data, src->data, WINPR_SAFE_INT_CAST(size_t, src->data->size));
+		CopyMemory(dst->data, src->data, WINPR_ASSERTING_INT_CAST(size_t, src->data->size));
 	}
 
 	return TRUE;
@@ -458,7 +458,7 @@ static BOOL region16_simplify_bands(REGION16* region)
 			 * may be merged too */
 			endBand = band2 + bandItems;
 			const size_t toMove =
-			    WINPR_SAFE_INT_CAST(size_t, (endPtr - endBand)) * sizeof(RECTANGLE_16);
+			    WINPR_ASSERTING_INT_CAST(size_t, (endPtr - endBand)) * sizeof(RECTANGLE_16);
 
 			if (toMove)
 				MoveMemory(band2, endBand, toMove);
@@ -475,7 +475,7 @@ static BOOL region16_simplify_bands(REGION16* region)
 	if (finalNbRects != nbRects)
 	{
 		size_t allocSize = sizeof(REGION16_DATA) +
-		                   (WINPR_SAFE_INT_CAST(size_t, finalNbRects) * sizeof(RECTANGLE_16));
+		                   (WINPR_ASSERTING_INT_CAST(size_t, finalNbRects) * sizeof(RECTANGLE_16));
 		REGION16_DATA* data = realloc(region->data, allocSize);
 		if (!data)
 			free(region->data);
@@ -488,7 +488,7 @@ static BOOL region16_simplify_bands(REGION16* region)
 		}
 
 		region->data->nbRects = finalNbRects;
-		region->data->size = WINPR_SAFE_INT_CAST(long, allocSize);
+		region->data->size = WINPR_ASSERTING_INT_CAST(long, allocSize);
 	}
 
 	return TRUE;
@@ -677,9 +677,9 @@ BOOL region16_union_rect(REGION16* dst, const REGION16* src, const RECTANGLE_16*
 	dstExtents->bottom = MAX(rect->bottom, srcExtents->bottom);
 	dstExtents->right = MAX(rect->right, srcExtents->right);
 	newItems->size =
-	    WINPR_SAFE_INT_CAST(long, sizeof(REGION16_DATA) + (usedRects * sizeof(RECTANGLE_16)));
+	    WINPR_ASSERTING_INT_CAST(long, sizeof(REGION16_DATA) + (usedRects * sizeof(RECTANGLE_16)));
 	if (newItems->size != 0)
-		tmpItems = realloc(newItems, WINPR_SAFE_INT_CAST(size_t, newItems->size));
+		tmpItems = realloc(newItems, WINPR_ASSERTING_INT_CAST(size_t, newItems->size));
 	if (!tmpItems)
 		free(newItems);
 
@@ -799,12 +799,12 @@ BOOL region16_intersect_rect(REGION16* dst, const REGION16* src, const RECTANGLE
 
 	newItems->nbRects = usedRects;
 	newItems->size =
-	    WINPR_SAFE_INT_CAST(long, sizeof(REGION16_DATA) + (usedRects * sizeof(RECTANGLE_16)));
+	    WINPR_ASSERTING_INT_CAST(long, sizeof(REGION16_DATA) + (usedRects * sizeof(RECTANGLE_16)));
 
 	if ((dst->data->size > 0) && (dst->data != &empty_region))
 		free(dst->data);
 
-	dst->data = realloc(newItems, WINPR_SAFE_INT_CAST(size_t, newItems->size));
+	dst->data = realloc(newItems, WINPR_ASSERTING_INT_CAST(size_t, newItems->size));
 
 	if (!dst->data)
 	{

@@ -70,14 +70,14 @@ static inline uint32_t UpdateParam(uint32_t* param, int32_t deltaP)
 	WINPR_ASSERT(param);
 	if (deltaP < 0)
 	{
-		const uint32_t udeltaP = WINPR_SAFE_INT_CAST(uint32_t, -deltaP);
+		const uint32_t udeltaP = WINPR_ASSERTING_INT_CAST(uint32_t, -deltaP);
 		if (udeltaP > *param)
 			*param = 0;
 		else
 			*param -= udeltaP;
 	}
 	else
-		*param += WINPR_SAFE_INT_CAST(uint32_t, deltaP);
+		*param += WINPR_ASSERTING_INT_CAST(uint32_t, deltaP);
 
 	if ((*param) > KPMAX)
 		(*param) = KPMAX;
@@ -211,9 +211,9 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* WINPR_RESTRICT pSrcData, UINT32 
 			size_t nbits = BitStream_GetRemainingLength(bs);
 
 			if (cnt > nbits)
-				cnt = WINPR_SAFE_INT_CAST(uint32_t, nbits);
+				cnt = WINPR_ASSERTING_INT_CAST(uint32_t, nbits);
 
-			vk = WINPR_SAFE_INT_CAST(uint32_t, cnt);
+			vk = WINPR_ASSERTING_INT_CAST(uint32_t, cnt);
 
 			while ((cnt == 32) && (BitStream_GetRemainingLength(bs) > 0))
 			{
@@ -277,7 +277,7 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* WINPR_RESTRICT pSrcData, UINT32 
 			if (cnt > nbits)
 				cnt = nbits;
 
-			vk = WINPR_SAFE_INT_CAST(uint32_t, cnt);
+			vk = WINPR_ASSERTING_INT_CAST(uint32_t, cnt);
 
 			while ((cnt == 32) && (BitStream_GetRemainingLength(bs) > 0))
 			{
@@ -351,17 +351,17 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* WINPR_RESTRICT pSrcData, UINT32 
 			/* compute magnitude from code */
 
 			if (sign)
-				mag = WINPR_SAFE_INT_CAST(int16_t, (code + 1)) * -1;
+				mag = WINPR_ASSERTING_INT_CAST(int16_t, (code + 1)) * -1;
 			else
-				mag = WINPR_SAFE_INT_CAST(int16_t, code + 1);
+				mag = WINPR_ASSERTING_INT_CAST(int16_t, code + 1);
 
 			/* write to output stream */
 
-			offset = WINPR_SAFE_INT_CAST(size_t, (pOutput)-pDstData);
+			offset = WINPR_ASSERTING_INT_CAST(size_t, (pOutput)-pDstData);
 			size = run;
 
 			if ((offset + size) > rDstSize)
-				size = WINPR_SAFE_INT_CAST(size_t, DstSize) - offset;
+				size = WINPR_ASSERTING_INT_CAST(size_t, DstSize) - offset;
 
 			if (size)
 			{
@@ -388,7 +388,7 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* WINPR_RESTRICT pSrcData, UINT32 
 			if (cnt > nbits)
 				cnt = nbits;
 
-			vk = WINPR_SAFE_INT_CAST(uint32_t, cnt);
+			vk = WINPR_ASSERTING_INT_CAST(uint32_t, cnt);
 
 			while ((cnt == 32) && (BitStream_GetRemainingLength(bs) > 0))
 			{
@@ -482,9 +482,9 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* WINPR_RESTRICT pSrcData, UINT32 
 					 */
 
 					if (code & 1)
-						mag = WINPR_SAFE_INT_CAST(INT16, (code + 1) >> 1) * -1;
+						mag = WINPR_ASSERTING_INT_CAST(INT16, (code + 1) >> 1) * -1;
 					else
-						mag = WINPR_SAFE_INT_CAST(INT16, code >> 1);
+						mag = WINPR_ASSERTING_INT_CAST(INT16, code >> 1);
 				}
 
 				if ((pOutput - pDstData) < DstSize)
@@ -499,8 +499,8 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* WINPR_RESTRICT pSrcData, UINT32 
 
 				if (code)
 				{
-					mag = WINPR_SAFE_INT_CAST(int16_t, code);
-					nIdx = 32 - lzcnt_s(WINPR_SAFE_INT_CAST(uint32_t, mag));
+					mag = WINPR_ASSERTING_INT_CAST(int16_t, code);
+					nIdx = 32 - lzcnt_s(WINPR_ASSERTING_INT_CAST(uint32_t, mag));
 				}
 
 				if (BitStream_GetRemainingLength(bs) < nIdx)
@@ -539,9 +539,9 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* WINPR_RESTRICT pSrcData, UINT32 
 				}
 
 				if (val1 & 1)
-					mag = WINPR_SAFE_INT_CAST(int16_t, (val1 + 1) >> 1) * -1;
+					mag = WINPR_ASSERTING_INT_CAST(int16_t, (val1 + 1) >> 1) * -1;
 				else
-					mag = WINPR_SAFE_INT_CAST(int16_t, val1 >> 1);
+					mag = WINPR_ASSERTING_INT_CAST(int16_t, val1 >> 1);
 
 				if ((pOutput - pDstData) < DstSize)
 				{
@@ -550,29 +550,29 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* WINPR_RESTRICT pSrcData, UINT32 
 				}
 
 				if (val2 & 1)
-					mag = WINPR_SAFE_INT_CAST(int16_t, (val2 + 1) >> 1) * -1;
+					mag = WINPR_ASSERTING_INT_CAST(int16_t, (val2 + 1) >> 1) * -1;
 				else
-					mag = WINPR_SAFE_INT_CAST(int16_t, val2 >> 1);
+					mag = WINPR_ASSERTING_INT_CAST(int16_t, val2 >> 1);
 
 				if ((pOutput - pDstData) < DstSize)
 				{
-					*pOutput = WINPR_SAFE_INT_CAST(int16_t, mag);
+					*pOutput = WINPR_ASSERTING_INT_CAST(int16_t, mag);
 					pOutput++;
 				}
 			}
 		}
 	}
 
-	offset = WINPR_SAFE_INT_CAST(size_t, (pOutput - pDstData));
+	offset = WINPR_ASSERTING_INT_CAST(size_t, (pOutput - pDstData));
 
 	if (offset < rDstSize)
 	{
-		size = WINPR_SAFE_INT_CAST(size_t, DstSize) - offset;
+		size = WINPR_ASSERTING_INT_CAST(size_t, DstSize) - offset;
 		ZeroMemory(pOutput, size * 2);
 		pOutput += size;
 	}
 
-	offset = WINPR_SAFE_INT_CAST(size_t, (pOutput - pDstData));
+	offset = WINPR_ASSERTING_INT_CAST(size_t, (pOutput - pDstData));
 
 	if ((DstSize < 0) || (offset != (size_t)DstSize))
 		return -1;
@@ -615,8 +615,8 @@ static inline void OutputBit(RFX_BITSTREAM* bs, uint32_t count, UINT8 bit)
 static inline UINT32 Get2MagSign(INT32 input)
 {
 	if (input >= 0)
-		return WINPR_SAFE_INT_CAST(UINT32, 2 * input);
-	return WINPR_SAFE_INT_CAST(UINT32, -2 * input - 1);
+		return WINPR_ASSERTING_INT_CAST(UINT32, 2 * input);
+	return WINPR_ASSERTING_INT_CAST(UINT32, -2 * input - 1);
 }
 
 /* Outputs the Golomb/Rice encoding of a non-negative integer */
@@ -787,5 +787,5 @@ int rfx_rlgr_encode(RLGR_MODE mode, const INT16* WINPR_RESTRICT data, UINT32 dat
 	uint32_t processed_size = rfx_bitstream_get_processed_bytes(bs);
 	winpr_aligned_free(bs);
 
-	return WINPR_SAFE_INT_CAST(int, processed_size);
+	return WINPR_ASSERTING_INT_CAST(int, processed_size);
 }

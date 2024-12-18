@@ -1975,7 +1975,7 @@ static PfChannelResult pf_rdpdr_back_data(proxyData* pdata,
 	WINPR_ASSERT(channel);
 
 	if (!pf_channel_rdpdr_client_handle(pdata->pc,
-	                                    WINPR_SAFE_INT_CAST(UINT16, channel->back_channel_id),
+	                                    WINPR_ASSERTING_INT_CAST(UINT16, channel->back_channel_id),
 	                                    channel->channel_name, xdata, xsize, flags, totalSize))
 		return PF_CHANNEL_RESULT_ERROR;
 
@@ -1995,7 +1995,7 @@ static PfChannelResult pf_rdpdr_front_data(proxyData* pdata,
 	WINPR_ASSERT(channel);
 
 	if (!pf_channel_rdpdr_server_handle(pdata->ps,
-	                                    WINPR_SAFE_INT_CAST(UINT16, channel->front_channel_id),
+	                                    WINPR_ASSERTING_INT_CAST(UINT16, channel->front_channel_id),
 	                                    channel->channel_name, xdata, xsize, flags, totalSize))
 		return PF_CHANNEL_RESULT_ERROR;
 

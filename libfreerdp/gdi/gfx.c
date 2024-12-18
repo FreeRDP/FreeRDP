@@ -1038,7 +1038,7 @@ static UINT gdi_SurfaceCommand(RdpgfxClientContext* context, const RDPGFX_SURFAC
 	gdi = (rdpGdi*)context->custom;
 
 	EnterCriticalSection(&context->mux);
-	const UINT16 codecId = WINPR_SAFE_INT_CAST(UINT16, cmd->codecId);
+	const UINT16 codecId = WINPR_ASSERTING_INT_CAST(UINT16, cmd->codecId);
 	WLog_Print(gdi->log, WLOG_TRACE,
 	           "surfaceId=%" PRIu32 ", codec=%s [%" PRIu32 "], contextId=%" PRIu32 ", format=%s, "
 	           "left=%" PRIu32 ", top=%" PRIu32 ", right=%" PRIu32 ", bottom=%" PRIu32
@@ -1255,8 +1255,8 @@ static BOOL intersect_rect(const RECTANGLE_16* rect, const gdiGfxSurface* surfac
 	prect->left = rect->left;
 	prect->top = rect->top;
 
-	prect->right = MIN(rect->right, WINPR_SAFE_INT_CAST(UINT16, surface->width));
-	prect->bottom = MIN(rect->bottom, WINPR_SAFE_INT_CAST(UINT16, surface->height));
+	prect->right = MIN(rect->right, WINPR_ASSERTING_INT_CAST(UINT16, surface->width));
+	prect->bottom = MIN(rect->bottom, WINPR_ASSERTING_INT_CAST(UINT16, surface->height));
 	return TRUE;
 }
 

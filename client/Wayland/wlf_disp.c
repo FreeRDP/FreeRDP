@@ -142,14 +142,14 @@ static BOOL wlf_disp_sendResize(wlfDispContext* wlfDisp)
 		wlfDisp->waitingResize = TRUE;
 		layout.Flags = DISPLAY_CONTROL_MONITOR_PRIMARY;
 		layout.Top = layout.Left = 0;
-		layout.Width = WINPR_SAFE_INT_CAST(uint32_t, wlfDisp->targetWidth);
-		layout.Height = WINPR_SAFE_INT_CAST(uint32_t, wlfDisp->targetHeight);
+		layout.Width = WINPR_ASSERTING_INT_CAST(uint32_t, wlfDisp->targetWidth);
+		layout.Height = WINPR_ASSERTING_INT_CAST(uint32_t, wlfDisp->targetHeight);
 		layout.Orientation = freerdp_settings_get_uint16(settings, FreeRDP_DesktopOrientation);
 		layout.DesktopScaleFactor =
 		    freerdp_settings_get_uint32(settings, FreeRDP_DesktopScaleFactor);
 		layout.DeviceScaleFactor = freerdp_settings_get_uint32(settings, FreeRDP_DeviceScaleFactor);
-		layout.PhysicalWidth = WINPR_SAFE_INT_CAST(uint32_t, wlfDisp->targetWidth);
-		layout.PhysicalHeight = WINPR_SAFE_INT_CAST(uint32_t, wlfDisp->targetHeight);
+		layout.PhysicalWidth = WINPR_ASSERTING_INT_CAST(uint32_t, wlfDisp->targetWidth);
+		layout.PhysicalHeight = WINPR_ASSERTING_INT_CAST(uint32_t, wlfDisp->targetHeight);
 
 		if (IFCALLRESULT(CHANNEL_RC_OK, wlfDisp->disp->SendMonitorLayout, wlfDisp->disp, 1,
 		                 &layout) != CHANNEL_RC_OK)
@@ -262,9 +262,9 @@ wlfDispContext* wlf_disp_new(wlfContext* wlc)
 
 	ret->wlc = wlc;
 	ret->lastSentWidth = ret->targetWidth =
-	    WINPR_SAFE_INT_CAST(int, freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth));
+	    WINPR_ASSERTING_INT_CAST(int, freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth));
 	ret->lastSentHeight = ret->targetHeight =
-	    WINPR_SAFE_INT_CAST(int, freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight));
+	    WINPR_ASSERTING_INT_CAST(int, freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight));
 	PubSub_SubscribeActivated(pubSub, wlf_disp_OnActivated);
 	PubSub_SubscribeGraphicsReset(pubSub, wlf_disp_OnGraphicsReset);
 	PubSub_SubscribeTimer(pubSub, wlf_disp_OnTimer);
@@ -319,8 +319,8 @@ UINT wlf_disp_sendLayout(DispClientContext* disp, const rdpMonitor* monitors, si
 		layout->Flags = (monitor->is_primary ? DISPLAY_CONTROL_MONITOR_PRIMARY : 0);
 		layout->Left = monitor->x;
 		layout->Top = monitor->y;
-		layout->Width = WINPR_SAFE_INT_CAST(UINT32, monitor->width);
-		layout->Height = WINPR_SAFE_INT_CAST(UINT32, monitor->height);
+		layout->Width = WINPR_ASSERTING_INT_CAST(UINT32, monitor->width);
+		layout->Height = WINPR_ASSERTING_INT_CAST(UINT32, monitor->height);
 		layout->Orientation = ORIENTATION_LANDSCAPE;
 		layout->PhysicalWidth = monitor->attributes.physicalWidth;
 		layout->PhysicalHeight = monitor->attributes.physicalHeight;
@@ -440,7 +440,8 @@ int wlf_list_monitors(wlfContext* wlc)
 
 	for (uint32_t i = 0; i < nmonitors; i++)
 	{
-		const UwacOutput* monitor = UwacDisplayGetOutput(wlc->display, WINPR_SAFE_INT_CAST(int, i));
+		const UwacOutput* monitor =
+		    UwacDisplayGetOutput(wlc->display, WINPR_ASSERTING_INT_CAST(int, i));
 		UwacSize resolution;
 		UwacPosition pos;
 

@@ -63,10 +63,10 @@ static UINT32 update_glyph_offset(const BYTE* data, size_t length, UINT32 index,
 		}
 
 		if (flAccel & SO_VERTICAL)
-			*y += WINPR_SAFE_INT_CAST(int32_t, offset);
+			*y += WINPR_ASSERTING_INT_CAST(int32_t, offset);
 
 		if (flAccel & SO_HORIZONTAL)
-			*x += WINPR_SAFE_INT_CAST(int32_t, offset);
+			*x += WINPR_ASSERTING_INT_CAST(int32_t, offset);
 	}
 
 	return index;
@@ -110,8 +110,8 @@ static BOOL update_process_glyph(rdpContext* context, const BYTE* data, UINT32 c
 
 	if ((dx <= (bound->x + bound->width)) && (dy <= (bound->y + bound->height)))
 	{
-		INT32 dw = WINPR_SAFE_INT_CAST(int32_t, glyph->cx) - sx;
-		INT32 dh = WINPR_SAFE_INT_CAST(int32_t, glyph->cy) - sy;
+		INT32 dw = WINPR_ASSERTING_INT_CAST(int32_t, glyph->cx) - sx;
+		INT32 dh = WINPR_ASSERTING_INT_CAST(int32_t, glyph->cy) - sy;
 
 		if ((dw + dx) > (bound->x + bound->width))
 			dw = (bound->x + bound->width) - (dw + dx);
@@ -127,7 +127,7 @@ static BOOL update_process_glyph(rdpContext* context, const BYTE* data, UINT32 c
 	}
 
 	if (flAccel & SO_CHAR_INC_EQUAL_BM_BASE)
-		*x += WINPR_SAFE_INT_CAST(int32_t, glyph->cx);
+		*x += WINPR_ASSERTING_INT_CAST(int32_t, glyph->cx);
 
 	return TRUE;
 }
@@ -208,7 +208,7 @@ static BOOL update_process_glyph_fragments(rdpContext* context, const BYTE* data
 		 * a RDP session to Windows XP Professional SP3.
 		 * This workaround prevents resulting problems in the UI callbacks.
 		 */
-		opWidth = WINPR_SAFE_INT_CAST(int, w) - opX;
+		opWidth = WINPR_ASSERTING_INT_CAST(int, w) - opX;
 	}
 
 	if (bkX + bkWidth > (INT64)w)
@@ -222,13 +222,13 @@ static BOOL update_process_glyph_fragments(rdpContext* context, const BYTE* data
 		 * a RDP session to Windows XP Professional SP3.
 		 * This workaround prevents resulting problems in the UI callbacks.
 		 */
-		bkWidth = WINPR_SAFE_INT_CAST(int, w) - bkX;
+		bkWidth = WINPR_ASSERTING_INT_CAST(int, w) - bkX;
 	}
 
-	bound.x = WINPR_SAFE_INT_CAST(INT16, bkX);
-	bound.y = WINPR_SAFE_INT_CAST(INT16, bkY);
-	bound.width = WINPR_SAFE_INT_CAST(INT16, bkWidth);
-	bound.height = WINPR_SAFE_INT_CAST(INT16, bkHeight);
+	bound.x = WINPR_ASSERTING_INT_CAST(INT16, bkX);
+	bound.y = WINPR_ASSERTING_INT_CAST(INT16, bkY);
+	bound.width = WINPR_ASSERTING_INT_CAST(INT16, bkWidth);
+	bound.height = WINPR_ASSERTING_INT_CAST(INT16, bkHeight);
 
 	if (!glyph->BeginDraw(context, opX, opY, opWidth, opHeight, bgcolor, fgcolor, fOpRedundant))
 		return FALSE;
@@ -314,7 +314,7 @@ static BOOL update_gdi_glyph_index(rdpContext* context, GLYPH_INDEX_ORDER* glyph
 	    glyphIndex->flAccel, glyphIndex->backColor, glyphIndex->foreColor, glyphIndex->x,
 	    glyphIndex->y, glyphIndex->bkLeft, glyphIndex->bkTop, bkWidth, bkHeight, glyphIndex->opLeft,
 	    glyphIndex->opTop, opWidth, opHeight,
-	    WINPR_SAFE_INT_CAST(int32_t, glyphIndex->fOpRedundant));
+	    WINPR_ASSERTING_INT_CAST(int32_t, glyphIndex->fOpRedundant));
 }
 
 static BOOL update_gdi_fast_index(rdpContext* context, const FAST_INDEX_ORDER* fastIndex)

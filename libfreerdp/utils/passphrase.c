@@ -345,5 +345,5 @@ SSIZE_T freerdp_interruptible_get_line(rdpContext* context, char** plineptr, siz
 	}
 	*plineptr = ptr;
 	*psize = used;
-	return WINPR_SAFE_INT_CAST(SSIZE_T, used);
+	return WINPR_ASSERTING_INT_CAST(SSIZE_T, used);
 }

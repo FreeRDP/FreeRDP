@@ -320,7 +320,7 @@ int xf_keyboard_read_keyboard_state(xfContext* xfc)
 		              &dummy, &dummy, &dummy, &state);
 	}
 
-	return WINPR_SAFE_INT_CAST(int, state);
+	return WINPR_ASSERTING_INT_CAST(int, state);
 }
 
 static int xf_keyboard_get_keymask(xfContext* xfc, int keysym)
@@ -370,8 +370,9 @@ static BOOL xf_keyboard_set_key_state(xfContext* xfc, BOOL on, int keysym)
 		return FALSE;
 	}
 
-	return XkbLockModifiers(xfc->display, XkbUseCoreKbd, WINPR_SAFE_INT_CAST(uint32_t, keysymMask),
-	                        on ? WINPR_SAFE_INT_CAST(uint32_t, keysymMask) : 0);
+	return XkbLockModifiers(xfc->display, XkbUseCoreKbd,
+	                        WINPR_ASSERTING_INT_CAST(uint32_t, keysymMask),
+	                        on ? WINPR_ASSERTING_INT_CAST(uint32_t, keysymMask) : 0);
 }
 
 UINT32 xf_keyboard_get_toggle_keys_state(xfContext* xfc)
@@ -430,7 +431,7 @@ void xf_keyboard_focus_in(xfContext* xfc)
 	WINPR_ASSERT(input);
 
 	const UINT32 syncFlags = xf_keyboard_get_toggle_keys_state(xfc);
-	freerdp_input_send_focus_in_event(input, WINPR_SAFE_INT_CAST(UINT16, syncFlags));
+	freerdp_input_send_focus_in_event(input, WINPR_ASSERTING_INT_CAST(UINT16, syncFlags));
 	xk_keyboard_update_modifier_keys(xfc);
 
 	/* finish with a mouse pointer position like mstsc.exe if required */
@@ -527,7 +528,7 @@ static int xf_keyboard_execute_action_script(xfContext* xfc, XF_MODIFIER_KEYS* m
 	winpr_str_append(keyStr, combination, sizeof(combination), "+");
 
 	for (size_t i = 0; i < strnlen(combination, sizeof(combination)); i++)
-		combination[i] = WINPR_SAFE_INT_CAST(char, tolower(combination[i]));
+		combination[i] = WINPR_ASSERTING_INT_CAST(char, tolower(combination[i]));
 
 	const size_t count = ArrayList_Count(xfc->keyCombinations);
 

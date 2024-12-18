@@ -183,35 +183,37 @@ static INLINE void zgfx_history_buffer_ring_read(ZGFX_CONTEXT* WINPR_RESTRICT zg
 		return;
 
 	bytesLeft = (INT32)count;
-	index = (zgfx->HistoryIndex + zgfx->HistoryBufferSize - WINPR_SAFE_INT_CAST(uint32_t, offset)) %
+	index = (zgfx->HistoryIndex + zgfx->HistoryBufferSize -
+	         WINPR_ASSERTING_INT_CAST(uint32_t, offset)) %
 	        zgfx->HistoryBufferSize;
 	bytes = MIN(bytesLeft, offset);
 
-	if ((index + WINPR_SAFE_INT_CAST(uint32_t, bytes)) <= zgfx->HistoryBufferSize)
+	if ((index + WINPR_ASSERTING_INT_CAST(uint32_t, bytes)) <= zgfx->HistoryBufferSize)
 	{
-		CopyMemory(dptr, &(zgfx->HistoryBuffer[index]), WINPR_SAFE_INT_CAST(size_t, bytes));
+		CopyMemory(dptr, &(zgfx->HistoryBuffer[index]), WINPR_ASSERTING_INT_CAST(size_t, bytes));
 	}
 	else
 	{
 		front = zgfx->HistoryBufferSize - index;
 		CopyMemory(dptr, &(zgfx->HistoryBuffer[index]), front);
-		CopyMemory(&dptr[front], zgfx->HistoryBuffer, WINPR_SAFE_INT_CAST(uint32_t, bytes) - front);
+		CopyMemory(&dptr[front], zgfx->HistoryBuffer,
+		           WINPR_ASSERTING_INT_CAST(uint32_t, bytes) - front);
 	}
 
 	if ((bytesLeft -= bytes) == 0)
 		return;
 
 	dptr += bytes;
-	valid = WINPR_SAFE_INT_CAST(uint32_t, bytes);
+	valid = WINPR_ASSERTING_INT_CAST(uint32_t, bytes);
 
 	do
 	{
-		bytes = WINPR_SAFE_INT_CAST(int32_t, valid);
+		bytes = WINPR_ASSERTING_INT_CAST(int32_t, valid);
 
 		if (bytes > bytesLeft)
 			bytes = bytesLeft;
 
-		CopyMemory(dptr, origDst, WINPR_SAFE_INT_CAST(size_t, bytes));
+		CopyMemory(dptr, origDst, WINPR_ASSERTING_INT_CAST(size_t, bytes));
 		dptr += bytes;
 		valid <<= 1;
 	} while ((bytesLeft -= bytes) > 0);
@@ -337,7 +339,7 @@ static INLINE BOOL zgfx_decompress_segment(ZGFX_CONTEXT* WINPR_RESTRICT zgfx,
 						if (count > sizeof(zgfx->OutputBuffer) - zgfx->OutputCount)
 							return FALSE;
 
-						zgfx_history_buffer_ring_read(zgfx, WINPR_SAFE_INT_CAST(int, distance),
+						zgfx_history_buffer_ring_read(zgfx, WINPR_ASSERTING_INT_CAST(int, distance),
 						                              &(zgfx->OutputBuffer[zgfx->OutputCount]),
 						                              count);
 						zgfx_history_buffer_ring_write(
@@ -508,7 +510,7 @@ static BOOL zgfx_compress_segment(ZGFX_CONTEXT* WINPR_RESTRICT zgfx, wStream* WI
 	}
 
 	(*pFlags) |= ZGFX_PACKET_COMPR_TYPE_RDP8; /* RDP 8.0 compression format */
-	Stream_Write_UINT8(s, WINPR_SAFE_INT_CAST(uint8_t, *pFlags)); /* header (1 byte) */
+	Stream_Write_UINT8(s, WINPR_ASSERTING_INT_CAST(uint8_t, *pFlags)); /* header (1 byte) */
 	Stream_Write(s, pSrcData, SrcSize);
 	return TRUE;
 }
@@ -590,7 +592,7 @@ int zgfx_compress_to_stream(ZGFX_CONTEXT* WINPR_RESTRICT zgfx, wStream* WINPR_RE
 	if (posSegmentCount)
 	{
 		Stream_SetPosition(sDst, posSegmentCount);
-		Stream_Write_UINT16(sDst, WINPR_SAFE_INT_CAST(uint16_t, fragment));
+		Stream_Write_UINT16(sDst, WINPR_ASSERTING_INT_CAST(uint16_t, fragment));
 		Stream_SetPosition(sDst, Stream_Length(sDst));
 	}
 

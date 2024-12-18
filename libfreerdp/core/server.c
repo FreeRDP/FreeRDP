@@ -396,12 +396,12 @@ static int wts_write_variable_uint(wStream* s, UINT32 val)
 	if (val <= 0xFF)
 	{
 		cb = 0;
-		Stream_Write_UINT8(s, WINPR_SAFE_INT_CAST(uint8_t, val));
+		Stream_Write_UINT8(s, WINPR_ASSERTING_INT_CAST(uint8_t, val));
 	}
 	else if (val <= 0xFFFF)
 	{
 		cb = 1;
-		Stream_Write_UINT16(s, WINPR_SAFE_INT_CAST(uint16_t, val));
+		Stream_Write_UINT16(s, WINPR_ASSERTING_INT_CAST(uint16_t, val));
 	}
 	else
 	{

@@ -163,7 +163,8 @@ BOOL LogonUserA(LPCSTR lpszUsername, LPCSTR lpszDomain, LPCSTR lpszPassword, DWO
 
 	struct passwd pwd = { 0 };
 	struct passwd* pw = NULL;
-	const int rc = getpwnam_r(lpszUsername, &pwd, buf, WINPR_SAFE_INT_CAST(size_t, buflen), &pw);
+	const int rc =
+	    getpwnam_r(lpszUsername, &pwd, buf, WINPR_ASSERTING_INT_CAST(size_t, buflen), &pw);
 	free(buf);
 	if ((rc == 0) && pw)
 	{

@@ -1416,10 +1416,10 @@ BOOL gcc_write_client_core_data(wStream* s, const rdpMcs* mcs)
 		return FALSE;
 
 	Stream_Write_UINT32(s, settings->RdpVersion);    /* Version */
-	Stream_Write_UINT16(s,
-	                    WINPR_SAFE_INT_CAST(uint16_t, settings->DesktopWidth)); /* DesktopWidth */
-	Stream_Write_UINT16(s,
-	                    WINPR_SAFE_INT_CAST(uint16_t, settings->DesktopHeight)); /* DesktopHeight */
+	Stream_Write_UINT16(
+	    s, WINPR_ASSERTING_INT_CAST(uint16_t, settings->DesktopWidth)); /* DesktopWidth */
+	Stream_Write_UINT16(
+	    s, WINPR_ASSERTING_INT_CAST(uint16_t, settings->DesktopHeight)); /* DesktopHeight */
 	Stream_Write_UINT16(s,
 	                    RNS_UD_COLOR_8BPP); /* ColorDepth, ignored because of postBeta2ColorDepth */
 	Stream_Write_UINT16(s, RNS_UD_SAS_DEL); /* SASSequence (Secure Access Sequence) */
@@ -1461,7 +1461,7 @@ BOOL gcc_write_client_core_data(wStream* s, const rdpMcs* mcs)
 	         HighColorToString(highColorDepth),
 	         freerdp_supported_color_depths_string(SupportedColorDepths, dbuffer, sizeof(dbuffer)),
 	         rdp_early_client_caps_string(earlyCapabilityFlags, buffer, sizeof(buffer)));
-	Stream_Write_UINT16(s, WINPR_SAFE_INT_CAST(uint16_t, highColorDepth)); /* highColorDepth */
+	Stream_Write_UINT16(s, WINPR_ASSERTING_INT_CAST(uint16_t, highColorDepth)); /* highColorDepth */
 	Stream_Write_UINT16(s, SupportedColorDepths); /* supportedColorDepths */
 	Stream_Write_UINT16(s, earlyCapabilityFlags); /* earlyCapabilityFlags */
 
@@ -1981,7 +1981,8 @@ BOOL gcc_write_server_network_data(wStream* s, const rdpMcs* mcs)
 		return FALSE;
 
 	Stream_Write_UINT16(s, MCS_GLOBAL_CHANNEL_ID); /* MCSChannelId */
-	Stream_Write_UINT16(s, WINPR_SAFE_INT_CAST(uint16_t, mcs->channelCount)); /* channelCount */
+	Stream_Write_UINT16(s,
+	                    WINPR_ASSERTING_INT_CAST(uint16_t, mcs->channelCount)); /* channelCount */
 
 	for (UINT32 i = 0; i < mcs->channelCount; i++)
 	{
@@ -2204,10 +2205,10 @@ BOOL gcc_write_client_monitor_data(wStream* s, const rdpMcs* mcs)
 		for (UINT32 i = 0; i < settings->MonitorCount; i++)
 		{
 			const rdpMonitor* current = &settings->MonitorDefArray[i];
-			const UINT32 left = WINPR_SAFE_INT_CAST(uint32_t, current->x - baseX);
-			const UINT32 top = WINPR_SAFE_INT_CAST(uint32_t, current->y - baseY);
-			const UINT32 right = left + WINPR_SAFE_INT_CAST(uint32_t, current->width - 1);
-			const UINT32 bottom = top + WINPR_SAFE_INT_CAST(uint32_t, current->height - 1);
+			const UINT32 left = WINPR_ASSERTING_INT_CAST(uint32_t, current->x - baseX);
+			const UINT32 top = WINPR_ASSERTING_INT_CAST(uint32_t, current->y - baseY);
+			const UINT32 right = left + WINPR_ASSERTING_INT_CAST(uint32_t, current->width - 1);
+			const UINT32 bottom = top + WINPR_ASSERTING_INT_CAST(uint32_t, current->height - 1);
 			const UINT32 flags = current->is_primary ? MONITOR_PRIMARY : 0;
 			WLog_DBG(TAG,
 			         "Monitor[%" PRIu32 "]: top=%" PRIu32 ", left=%" PRIu32 ", bottom=%" PRIu32

@@ -126,8 +126,8 @@ BOOL gdi_LineTo(HGDI_DC hdc, INT32 nXEnd, INT32 nYEnd)
 
 	const INT32 x1 = hdc->pen->posX;
 	const INT32 y1 = hdc->pen->posY;
-	const INT32 x2 = WINPR_SAFE_INT_CAST(int32_t, nXEnd);
-	const INT32 y2 = WINPR_SAFE_INT_CAST(int32_t, nYEnd);
+	const INT32 x2 = WINPR_ASSERTING_INT_CAST(int32_t, nXEnd);
+	const INT32 y2 = WINPR_ASSERTING_INT_CAST(int32_t, nYEnd);
 	const INT32 dx = (x1 > x2) ? x1 - x2 : x2 - x1;
 	const INT32 dy = (y1 > y2) ? y1 - y2 : y2 - y1;
 	const INT32 sx = (x1 < x2) ? 1 : -1;

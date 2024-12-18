@@ -593,7 +593,7 @@ static long transport_bio_buffered_ctrl(BIO* bio, int cmd, long arg1, void* arg2
 			break;
 
 		case BIO_CTRL_WPENDING:
-			status = WINPR_SAFE_INT_CAST(long, ringbuffer_used(&ptr->xmitBuffer));
+			status = WINPR_ASSERTING_INT_CAST(long, ringbuffer_used(&ptr->xmitBuffer));
 			break;
 
 		case BIO_CTRL_PENDING:
@@ -835,7 +835,7 @@ static BOOL freerdp_tcp_connect_timeout(rdpContext* context, int sockfd, struct 
 	}
 
 	handles[count++] = utils_get_abort_event(context->rdp);
-	const int constatus = _connect((SOCKET)sockfd, addr, WINPR_SAFE_INT_CAST(int, addrlen));
+	const int constatus = _connect((SOCKET)sockfd, addr, WINPR_ASSERTING_INT_CAST(int, addrlen));
 
 	if (constatus < 0)
 	{
@@ -922,7 +922,7 @@ static int freerdp_tcp_connect_multi(rdpContext* context, char** hostnames, cons
 		int curPort = port;
 
 		if (ports)
-			curPort = WINPR_SAFE_INT_CAST(int, ports[index]);
+			curPort = WINPR_ASSERTING_INT_CAST(int, ports[index]);
 
 		result = freerdp_tcp_resolve_host(hostnames[index], curPort, 0);
 
@@ -964,7 +964,8 @@ static int freerdp_tcp_connect_multi(rdpContext* context, char** hostnames, cons
 			continue;
 
 		/* blocking tcp connect */
-		const int rc = _connect(sockfd, addr->ai_addr, WINPR_SAFE_INT_CAST(int, addr->ai_addrlen));
+		const int rc =
+		    _connect(sockfd, addr->ai_addr, WINPR_ASSERTING_INT_CAST(int, addr->ai_addrlen));
 
 		if (rc >= 0)
 		{

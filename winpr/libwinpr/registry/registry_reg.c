@@ -237,7 +237,7 @@ static RegVal* reg_load_value(const Reg* reg, RegKey* key)
 			if (!end)
 				goto fail;
 			const intptr_t cmp = end - start + 1;
-			if ((cmp < 0) || (len != WINPR_SAFE_INT_CAST(size_t, cmp)))
+			if ((cmp < 0) || (len != WINPR_ASSERTING_INT_CAST(size_t, cmp)))
 				goto fail;
 			if (start[0] == '"')
 				start++;

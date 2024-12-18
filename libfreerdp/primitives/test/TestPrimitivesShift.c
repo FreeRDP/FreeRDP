@@ -209,7 +209,7 @@ static BOOL test_ShiftWrapper_16s_func(void)
 	UINT32 tmp = 0;
 	winpr_RAND(&tmp, sizeof(tmp));
 	winpr_RAND(src, sizeof(src));
-	INT32 val = WINPR_SAFE_INT_CAST(int32_t, tmp % 16);
+	INT32 val = WINPR_ASSERTING_INT_CAST(int32_t, tmp % 16);
 
 	/* Negative tests */
 	status = generic->shiftC_16s(src + 1, 16, d1 + 1, FUNC_TEST_SIZE);
@@ -275,7 +275,7 @@ static BOOL test_ShiftWrapper_16u_func(void)
 	UINT32 tmp = 0;
 	winpr_RAND(&tmp, sizeof(tmp));
 	winpr_RAND(src, sizeof(src));
-	INT32 val = WINPR_SAFE_INT_CAST(int32_t, tmp % 16);
+	INT32 val = WINPR_ASSERTING_INT_CAST(int32_t, tmp % 16);
 
 	/* Negative */
 	status = generic->shiftC_16u(src + 1, 16, d1 + 1, FUNC_TEST_SIZE);

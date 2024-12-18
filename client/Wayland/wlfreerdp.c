@@ -65,10 +65,10 @@ static BOOL wl_update_buffer(wlfContext* context_w, INT32 ix, INT32 iy, INT32 iw
 		return FALSE;
 
 	EnterCriticalSection(&context_w->critical);
-	UINT32 x = WINPR_SAFE_INT_CAST(UINT16, ix);
-	UINT32 y = WINPR_SAFE_INT_CAST(UINT16, iy);
-	UINT32 w = WINPR_SAFE_INT_CAST(UINT16, iw);
-	UINT32 h = WINPR_SAFE_INT_CAST(UINT16, ih);
+	UINT32 x = WINPR_ASSERTING_INT_CAST(UINT16, ix);
+	UINT32 y = WINPR_ASSERTING_INT_CAST(UINT16, iy);
+	UINT32 w = WINPR_ASSERTING_INT_CAST(UINT16, iw);
+	UINT32 h = WINPR_ASSERTING_INT_CAST(UINT16, ih);
 	rc = UwacWindowGetDrawingBufferGeometry(context_w->window, &geometry, &stride);
 	data = UwacWindowGetDrawingBuffer(context_w->window);
 
@@ -87,16 +87,16 @@ static BOOL wl_update_buffer(wlfContext* context_w, INT32 ix, INT32 iy, INT32 iw
 		goto fail;
 	}
 
-	area.left = WINPR_SAFE_INT_CAST(UINT16, x);
-	area.top = WINPR_SAFE_INT_CAST(UINT16, y);
-	area.right = WINPR_SAFE_INT_CAST(UINT16, x + w);
-	area.bottom = WINPR_SAFE_INT_CAST(UINT16, y + h);
+	area.left = WINPR_ASSERTING_INT_CAST(UINT16, x);
+	area.top = WINPR_ASSERTING_INT_CAST(UINT16, y);
+	area.right = WINPR_ASSERTING_INT_CAST(UINT16, x + w);
+	area.bottom = WINPR_ASSERTING_INT_CAST(UINT16, y + h);
 
 	if (!wlf_copy_image(
-	        gdi->primary_buffer, gdi->stride, WINPR_SAFE_INT_CAST(size_t, gdi->width),
-	        WINPR_SAFE_INT_CAST(size_t, gdi->height), data, stride,
-	        WINPR_SAFE_INT_CAST(size_t, geometry.width),
-	        WINPR_SAFE_INT_CAST(size_t, geometry.height), &area,
+	        gdi->primary_buffer, gdi->stride, WINPR_ASSERTING_INT_CAST(size_t, gdi->width),
+	        WINPR_ASSERTING_INT_CAST(size_t, gdi->height), data, stride,
+	        WINPR_ASSERTING_INT_CAST(size_t, geometry.width),
+	        WINPR_ASSERTING_INT_CAST(size_t, geometry.height), &area,
 	        freerdp_settings_get_bool(context_w->common.context.settings, FreeRDP_SmartSizing)))
 		goto fail;
 
@@ -576,7 +576,7 @@ disconnect:
 	if (timer)
 		(void)CloseHandle(timer);
 	freerdp_disconnect(instance);
-	return WINPR_SAFE_INT_CAST(int, status);
+	return WINPR_ASSERTING_INT_CAST(int, status);
 }
 
 static BOOL wlf_client_global_init(void)

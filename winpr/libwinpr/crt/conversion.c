@@ -36,7 +36,7 @@ errno_t _itoa_s(int value, char* buffer, size_t sizeInCharacters, int radix)
 	if (sizeInCharacters < (size_t)length)
 		return -1;
 
-	(void)sprintf_s(buffer, WINPR_SAFE_INT_CAST(size_t, length + 1), "%d", value);
+	(void)sprintf_s(buffer, WINPR_ASSERTING_INT_CAST(size_t, length + 1), "%d", value);
 
 	return 0;
 }

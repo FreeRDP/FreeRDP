@@ -47,7 +47,7 @@ int string_list_length(const char** string_list)
 char** string_list_copy(const char** string_list)
 {
 	int length = string_list_length(string_list);
-	char** copy = (char**)calloc(WINPR_SAFE_INT_CAST(size_t, length) + 1, sizeof(char*));
+	char** copy = (char**)calloc(WINPR_ASSERTING_INT_CAST(size_t, length) + 1, sizeof(char*));
 
 	if (!copy)
 	{

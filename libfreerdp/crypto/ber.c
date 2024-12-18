@@ -644,7 +644,7 @@ size_t ber_write_integer(wStream* s, UINT32 value)
 		ber_write_universal_tag(s, BER_TAG_INTEGER, FALSE);
 		ber_write_length(s, 1);
 
-		Stream_Write_UINT8(s, WINPR_SAFE_INT_CAST(UINT8, value));
+		Stream_Write_UINT8(s, WINPR_ASSERTING_INT_CAST(UINT8, value));
 		return 3;
 	}
 	else if (value < 0x8000)
@@ -652,7 +652,7 @@ size_t ber_write_integer(wStream* s, UINT32 value)
 		ber_write_universal_tag(s, BER_TAG_INTEGER, FALSE);
 		ber_write_length(s, 2);
 
-		Stream_Write_UINT16_BE(s, WINPR_SAFE_INT_CAST(UINT16, value));
+		Stream_Write_UINT16_BE(s, WINPR_ASSERTING_INT_CAST(UINT16, value));
 		return 4;
 	}
 	else if (value < 0x800000)
@@ -660,8 +660,8 @@ size_t ber_write_integer(wStream* s, UINT32 value)
 		ber_write_universal_tag(s, BER_TAG_INTEGER, FALSE);
 		ber_write_length(s, 3);
 
-		Stream_Write_UINT8(s, WINPR_SAFE_INT_CAST(UINT8, value >> 16));
-		Stream_Write_UINT16_BE(s, WINPR_SAFE_INT_CAST(UINT16, value));
+		Stream_Write_UINT8(s, WINPR_ASSERTING_INT_CAST(UINT8, value >> 16));
+		Stream_Write_UINT16_BE(s, WINPR_ASSERTING_INT_CAST(UINT16, value));
 		return 5;
 	}
 	else if (value < 0x80000000)

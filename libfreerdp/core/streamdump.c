@@ -80,7 +80,7 @@ static
 		return FALSE;
 
 	if (pOffset)
-		(void)_fseeki64(fp, WINPR_SAFE_INT_CAST(int64_t, *pOffset), SEEK_SET);
+		(void)_fseeki64(fp, WINPR_ASSERTING_INT_CAST(int64_t, *pOffset), SEEK_SET);
 
 	r = fread(&ts, 1, sizeof(ts), fp);
 	if (r != sizeof(ts))
@@ -211,7 +211,7 @@ SSIZE_T stream_dump_append(const rdpContext* context, UINT32 flags, wStream* s, 
 	if (!fp)
 		return -1;
 
-	r = _fseeki64(fp, WINPR_SAFE_INT_CAST(int64_t, *offset), SEEK_SET);
+	r = _fseeki64(fp, WINPR_ASSERTING_INT_CAST(int64_t, *offset), SEEK_SET);
 	if (r < 0)
 		goto fail;
 
@@ -239,7 +239,7 @@ SSIZE_T stream_dump_get(const rdpContext* context, UINT32* flags, wStream* s, si
 	fp = stream_dump_get_file(context->settings, "rb");
 	if (!fp)
 		return -1;
-	r = _fseeki64(fp, WINPR_SAFE_INT_CAST(int64_t, *offset), SEEK_SET);
+	r = _fseeki64(fp, WINPR_ASSERTING_INT_CAST(int64_t, *offset), SEEK_SET);
 	if (r < 0)
 		goto fail;
 

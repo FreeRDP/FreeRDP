@@ -480,7 +480,7 @@ static BOOL check_key_helpers(size_t key, const char* stype)
 		                          FreeRDP_ReceivedCapabilities,
 		                          FreeRDP_OrderSupport,
 		                          FreeRDP_MonitorIds };
-	const char* name = freerdp_settings_get_name_for_key(WINPR_SAFE_INT_CAST(SSIZE_T, key));
+	const char* name = freerdp_settings_get_name_for_key(WINPR_ASSERTING_INT_CAST(SSIZE_T, key));
 	if (!name)
 	{
 		printf("[%s] missing name for key %" PRIuz "\n", stype, key);
@@ -504,7 +504,7 @@ static BOOL check_key_helpers(size_t key, const char* stype)
 		printf("[%s] missing reverse type for key %s [%" PRIuz "]\n", stype, name, key);
 		return FALSE;
 	}
-	rc = freerdp_settings_get_type_for_key(WINPR_SAFE_INT_CAST(SSIZE_T, key));
+	rc = freerdp_settings_get_type_for_key(WINPR_ASSERTING_INT_CAST(SSIZE_T, key));
 	if (rc < 0)
 	{
 		printf("[%s] missing reverse name for key %s [%" PRIuz "]\n", stype, name, key);
@@ -527,7 +527,7 @@ static BOOL check_key_helpers(size_t key, const char* stype)
 	for (size_t x = 0; x < ARRAYSIZE(clear_keys); x++)
 	{
 		const size_t id = clear_keys[x];
-		const char* foo = freerdp_settings_get_name_for_key(WINPR_SAFE_INT_CAST(SSIZE_T, id));
+		const char* foo = freerdp_settings_get_name_for_key(WINPR_ASSERTING_INT_CAST(SSIZE_T, id));
 		if (!freerdp_settings_set_pointer_len(settings, id, NULL, 0))
 		{
 			printf("[%s] freerdp_settings_set_pointer_len(%s, NULL, 0) failed\n", stype, foo);
@@ -1527,7 +1527,8 @@ int TestSettings(int argc, char* argv[])
 	for (size_t x = 0; x < ARRAYSIZE(bool_list_indices); x++)
 	{
 		const size_t key = bool_list_indices[x];
-		const char* name = freerdp_settings_get_name_for_key(WINPR_SAFE_INT_CAST(SSIZE_T, key));
+		const char* name =
+		    freerdp_settings_get_name_for_key(WINPR_ASSERTING_INT_CAST(SSIZE_T, key));
 		const BOOL val = freerdp_settings_get_bool(settings, key);
 		const BOOL cval = freerdp_settings_get_bool(cloned, key);
 		if (val != cval)
@@ -1567,7 +1568,8 @@ int TestSettings(int argc, char* argv[])
 	for (size_t x = 0; x < ARRAYSIZE(uint16_list_indices); x++)
 	{
 		const size_t key = uint16_list_indices[x];
-		const char* name = freerdp_settings_get_name_for_key(WINPR_SAFE_INT_CAST(SSIZE_T, key));
+		const char* name =
+		    freerdp_settings_get_name_for_key(WINPR_ASSERTING_INT_CAST(SSIZE_T, key));
 		const UINT16 val = freerdp_settings_get_uint16(settings, key);
 		const UINT16 cval = freerdp_settings_get_uint16(cloned, key);
 		if (val != cval)
@@ -1587,7 +1589,8 @@ int TestSettings(int argc, char* argv[])
 	for (size_t x = 0; x < ARRAYSIZE(uint32_list_indices); x++)
 	{
 		const size_t key = uint32_list_indices[x];
-		const char* name = freerdp_settings_get_name_for_key(WINPR_SAFE_INT_CAST(SSIZE_T, key));
+		const char* name =
+		    freerdp_settings_get_name_for_key(WINPR_ASSERTING_INT_CAST(SSIZE_T, key));
 		const UINT32 val = freerdp_settings_get_uint32(settings, key);
 		const UINT32 cval = freerdp_settings_get_uint32(cloned, key);
 		if (val != cval)
@@ -1607,7 +1610,8 @@ int TestSettings(int argc, char* argv[])
 	for (size_t x = 0; x < ARRAYSIZE(int32_list_indices); x++)
 	{
 		const size_t key = int32_list_indices[x];
-		const char* name = freerdp_settings_get_name_for_key(WINPR_SAFE_INT_CAST(SSIZE_T, key));
+		const char* name =
+		    freerdp_settings_get_name_for_key(WINPR_ASSERTING_INT_CAST(SSIZE_T, key));
 		const INT32 val = freerdp_settings_get_int32(settings, key);
 		const INT32 cval = freerdp_settings_get_int32(cloned, key);
 		if (val != cval)
@@ -1627,7 +1631,8 @@ int TestSettings(int argc, char* argv[])
 	for (size_t x = 0; x < ARRAYSIZE(uint64_list_indices); x++)
 	{
 		const size_t key = uint64_list_indices[x];
-		const char* name = freerdp_settings_get_name_for_key(WINPR_SAFE_INT_CAST(SSIZE_T, key));
+		const char* name =
+		    freerdp_settings_get_name_for_key(WINPR_ASSERTING_INT_CAST(SSIZE_T, key));
 		const UINT64 val = freerdp_settings_get_uint64(settings, key);
 		const UINT64 cval = freerdp_settings_get_uint64(cloned, key);
 		if (val != cval)
@@ -1669,7 +1674,8 @@ int TestSettings(int argc, char* argv[])
 		const size_t key = string_list_indices[x];
 		const char val[] = "test-string";
 		const char* res = NULL;
-		const char* name = freerdp_settings_get_name_for_key(WINPR_SAFE_INT_CAST(SSIZE_T, key));
+		const char* name =
+		    freerdp_settings_get_name_for_key(WINPR_ASSERTING_INT_CAST(SSIZE_T, key));
 		const char* oval = freerdp_settings_get_string(settings, key);
 		const char* cval = freerdp_settings_get_string(cloned, key);
 		if ((oval != cval) && (strcmp(oval, cval) != 0))

@@ -301,7 +301,7 @@ static int extract_string(GENERAL_NAME* name, void* data, int index, int count)
 		return 1;
 	}
 
-	string_list_allocate(list, WINPR_SAFE_INT_CAST(WINPR_CIPHER_TYPE, count));
+	string_list_allocate(list, WINPR_ASSERTING_INT_CAST(WINPR_CIPHER_TYPE, count));
 
 	if (list->allocated <= 0)
 	{
@@ -379,7 +379,7 @@ static char* object_string(ASN1_TYPE* object)
 		return 0;
 	}
 
-	result = strndup((char*)utf8String, WINPR_SAFE_INT_CAST(size_t, length));
+	result = strndup((char*)utf8String, WINPR_ASSERTING_INT_CAST(size_t, length));
 	OPENSSL_free(utf8String);
 	return result;
 }
@@ -408,7 +408,7 @@ static int extract_othername_object_as_string(GENERAL_NAME* name, void* data, in
 		return 1;
 	}
 
-	object_list_allocate(list, WINPR_SAFE_INT_CAST(size_t, count));
+	object_list_allocate(list, WINPR_ASSERTING_INT_CAST(size_t, count));
 
 	if (list->allocated <= 0)
 	{

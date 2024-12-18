@@ -394,7 +394,7 @@ static ConversionResult winpr_ConvertUTF8toUTF16_Internal(const uint8_t** source
 	{
 		uint32_t ch = 0;
 		unsigned short extraBytesToRead =
-		    WINPR_SAFE_INT_CAST(unsigned short, trailingBytesForUTF8[*source]);
+		    WINPR_ASSERTING_INT_CAST(unsigned short, trailingBytesForUTF8[*source]);
 
 		if ((source + extraBytesToRead) >= sourceEnd)
 		{
@@ -574,7 +574,7 @@ static int winpr_ConvertUTF8toUTF16(const uint8_t* src, int cchSrc, uint16_t* ds
 		return 0;
 	}
 
-	return (result == conversionOK) ? WINPR_SAFE_INT_CAST(int, length) : 0;
+	return (result == conversionOK) ? WINPR_ASSERTING_INT_CAST(int, length) : 0;
 }
 
 static int winpr_ConvertUTF16toUTF8(const uint16_t* src, int cchSrc, uint8_t* dst, int cchDst)
@@ -616,7 +616,7 @@ static int winpr_ConvertUTF16toUTF8(const uint16_t* src, int cchSrc, uint8_t* ds
 		return 0;
 	}
 
-	return (result == conversionOK) ? WINPR_SAFE_INT_CAST(int, length) : 0;
+	return (result == conversionOK) ? WINPR_ASSERTING_INT_CAST(int, length) : 0;
 }
 
 /* --------------------------------------------------------------------- */
@@ -658,8 +658,8 @@ int int_MultiByteToWideChar(UINT CodePage, DWORD dwFlags, LPCSTR lpMultiByteStr,
 	}
 
 	return winpr_ConvertUTF8toUTF16((const uint8_t*)lpMultiByteStr,
-	                                WINPR_SAFE_INT_CAST(int, cbCharLen), (uint16_t*)lpWideCharStr,
-	                                cchWideChar);
+	                                WINPR_ASSERTING_INT_CAST(int, cbCharLen),
+	                                (uint16_t*)lpWideCharStr, cchWideChar);
 }
 
 int int_WideCharToMultiByte(UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr, int cchWideChar,
@@ -694,6 +694,6 @@ int int_WideCharToMultiByte(UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr,
 	 */
 
 	return winpr_ConvertUTF16toUTF8((const uint16_t*)lpWideCharStr,
-	                                WINPR_SAFE_INT_CAST(int, cbCharLen), (uint8_t*)lpMultiByteStr,
-	                                cbMultiByte);
+	                                WINPR_ASSERTING_INT_CAST(int, cbCharLen),
+	                                (uint8_t*)lpMultiByteStr, cbMultiByte);
 }

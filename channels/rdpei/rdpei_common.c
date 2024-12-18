@@ -45,7 +45,7 @@ BOOL rdpei_read_2byte_unsigned(wStream* s, UINT16* value)
 			return FALSE;
 
 		const INT32 ibyte = ((byte & 0x7F) << 8);
-		*value = WINPR_SAFE_INT_CAST(UINT16, ibyte);
+		*value = WINPR_ASSERTING_INT_CAST(UINT16, ibyte);
 		Stream_Read_UINT8(s, byte);
 		*value |= byte;
 	}
@@ -216,7 +216,7 @@ BOOL rdpei_write_4byte_unsigned(wStream* s, UINT32 value)
 
 	if (value <= 0x3FUL)
 	{
-		Stream_Write_UINT8(s, WINPR_SAFE_INT_CAST(uint8_t, value));
+		Stream_Write_UINT8(s, WINPR_ASSERTING_INT_CAST(uint8_t, value));
 	}
 	else if (value <= 0x3FFFUL)
 	{

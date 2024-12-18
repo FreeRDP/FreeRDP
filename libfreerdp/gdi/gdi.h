@@ -38,8 +38,8 @@ static INLINE BYTE* gdi_get_bitmap_pointer(HGDI_DC hdcBmp, INT32 x, INT32 y)
 
 	if ((x >= 0) && (y >= 0) && (x < hBmp->width) && (y < hBmp->height))
 	{
-		BYTE* p = hBmp->data + (WINPR_SAFE_INT_CAST(size_t, y) * hBmp->scanline) +
-		          (WINPR_SAFE_INT_CAST(size_t, x) * FreeRDPGetBytesPerPixel(hdcBmp->format));
+		BYTE* p = hBmp->data + (WINPR_ASSERTING_INT_CAST(size_t, y) * hBmp->scanline) +
+		          (WINPR_ASSERTING_INT_CAST(size_t, x) * FreeRDPGetBytesPerPixel(hdcBmp->format));
 		return p;
 	}
 	else
@@ -74,10 +74,10 @@ static INLINE BYTE* gdi_get_brush_pointer(HGDI_DC hdcBrush, UINT32 x, UINT32 y)
 			 * at the brush origin and copy across the client area.
 			 * Calculate the offset of the mapped pixel in the brush bitmap according to
 			 * brush origin and dest coordinates */
-			const UINT32 w = WINPR_SAFE_INT_CAST(UINT32, hBmpBrush->width);
-			const UINT32 h = WINPR_SAFE_INT_CAST(UINT32, hBmpBrush->height);
-			x = (x + w - (WINPR_SAFE_INT_CAST(UINT32, hdcBrush->brush->nXOrg) % w)) % w;
-			y = (y + h - (WINPR_SAFE_INT_CAST(UINT32, hdcBrush->brush->nYOrg) % h)) % h;
+			const UINT32 w = WINPR_ASSERTING_INT_CAST(UINT32, hBmpBrush->width);
+			const UINT32 h = WINPR_ASSERTING_INT_CAST(UINT32, hBmpBrush->height);
+			x = (x + w - (WINPR_ASSERTING_INT_CAST(UINT32, hdcBrush->brush->nXOrg) % w)) % w;
+			y = (y + h - (WINPR_ASSERTING_INT_CAST(UINT32, hdcBrush->brush->nYOrg) % h)) % h;
 			p = hBmpBrush->data + (y * hBmpBrush->scanline) +
 			    (x * FreeRDPGetBytesPerPixel(hBmpBrush->format));
 			return p;

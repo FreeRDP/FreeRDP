@@ -43,8 +43,8 @@ UINT ecam_channel_send_error_response(CameraPlugin* ecam, GENERIC_CHANNEL_CALLBA
 		return ERROR_NOT_ENOUGH_MEMORY;
 	}
 
-	Stream_Write_UINT8(s, WINPR_SAFE_INT_CAST(uint8_t, ecam->version));
-	Stream_Write_UINT8(s, WINPR_SAFE_INT_CAST(uint8_t, msg));
+	Stream_Write_UINT8(s, WINPR_ASSERTING_INT_CAST(uint8_t, ecam->version));
+	Stream_Write_UINT8(s, WINPR_ASSERTING_INT_CAST(uint8_t, msg));
 	Stream_Write_UINT32(s, code);
 
 	return ecam_channel_write(ecam, hchannel, msg, s, TRUE);
@@ -67,8 +67,8 @@ UINT ecam_channel_send_generic_msg(CameraPlugin* ecam, GENERIC_CHANNEL_CALLBACK*
 		return ERROR_NOT_ENOUGH_MEMORY;
 	}
 
-	Stream_Write_UINT8(s, WINPR_SAFE_INT_CAST(uint8_t, ecam->version));
-	Stream_Write_UINT8(s, WINPR_SAFE_INT_CAST(uint8_t, msg));
+	Stream_Write_UINT8(s, WINPR_ASSERTING_INT_CAST(uint8_t, ecam->version));
+	Stream_Write_UINT8(s, WINPR_ASSERTING_INT_CAST(uint8_t, msg));
 
 	return ecam_channel_write(ecam, hchannel, msg, s, TRUE);
 }
@@ -119,8 +119,8 @@ static UINT ecam_send_device_added_notification(CameraPlugin* ecam,
 		return ERROR_NOT_ENOUGH_MEMORY;
 	}
 
-	Stream_Write_UINT8(s, WINPR_SAFE_INT_CAST(uint8_t, ecam->version));
-	Stream_Write_UINT8(s, WINPR_SAFE_INT_CAST(uint8_t, msg));
+	Stream_Write_UINT8(s, WINPR_ASSERTING_INT_CAST(uint8_t, ecam->version));
+	Stream_Write_UINT8(s, WINPR_ASSERTING_INT_CAST(uint8_t, msg));
 
 	size_t devNameLen = strlen(deviceName);
 	if (Stream_Write_UTF16_String_From_UTF8(s, devNameLen + 1, deviceName, devNameLen, TRUE) < 0)

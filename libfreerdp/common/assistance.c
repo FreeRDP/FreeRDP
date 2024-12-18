@@ -453,7 +453,7 @@ static BOOL freerdp_assistance_parse_attr(const char** opt, size_t* plength, con
 		         key);
 		return FALSE;
 	}
-	const size_t length = WINPR_SAFE_INT_CAST(size_t, q - p);
+	const size_t length = WINPR_ASSERTING_INT_CAST(size_t, q - p);
 	*opt = p;
 	*plength = length;
 
@@ -575,7 +575,7 @@ static char* freerdp_assistance_contains_element(char* input, size_t ilen, const
 		WINPR_ASSERT((size_t)erc < sizeof(ekey));
 		if ((erc <= 0) || ((size_t)erc >= sizeof(ekey)))
 			return NULL;
-		const size_t offset = WINPR_SAFE_INT_CAST(size_t, start - tag);
+		const size_t offset = WINPR_ASSERTING_INT_CAST(size_t, start - tag);
 		dend = end = strrstr(start, ilen - offset, ekey);
 		if (end)
 			end += strnlen(ekey, sizeof(ekey));
@@ -589,12 +589,12 @@ static char* freerdp_assistance_contains_element(char* input, size_t ilen, const
 		return NULL;
 	}
 	if (plen)
-		*plen = WINPR_SAFE_INT_CAST(size_t, end - tag);
+		*plen = WINPR_ASSERTING_INT_CAST(size_t, end - tag);
 
 	if (pdata)
 		*pdata = data;
 	if (pdlen)
-		*pdlen = WINPR_SAFE_INT_CAST(size_t, dend - data);
+		*pdlen = WINPR_ASSERTING_INT_CAST(size_t, dend - data);
 	return tag;
 }
 
@@ -646,7 +646,7 @@ static BOOL freerdp_assistance_get_element(char* input, size_t ilen, const char*
 
 	char* end = tag + len;
 	*element = data;
-	*elen = WINPR_SAFE_INT_CAST(size_t, end - data + 1);
+	*elen = WINPR_ASSERTING_INT_CAST(size_t, end - data + 1);
 	return TRUE;
 }
 

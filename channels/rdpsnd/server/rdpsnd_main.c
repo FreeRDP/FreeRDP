@@ -70,7 +70,7 @@ static UINT rdpsnd_server_send_formats(RdpsndServerContext* context)
 	Stream_Write_UINT32(s, 0);                           /* dwPitch */
 	Stream_Write_UINT16(s, 0);                           /* wDGramPort */
 	Stream_Write_UINT16(
-	    s, WINPR_SAFE_INT_CAST(uint16_t, context->num_server_formats)); /* wNumberOfFormats */
+	    s, WINPR_ASSERTING_INT_CAST(uint16_t, context->num_server_formats)); /* wNumberOfFormats */
 	Stream_Write_UINT8(s, context->block_no);            /* cLastBlockConfirmed */
 	Stream_Write_UINT16(s, CHANNEL_VERSION_WIN_MAX);     /* wVersion */
 	Stream_Write_UINT8(s, 0);                            /* bPad */
@@ -840,7 +840,7 @@ static UINT rdpsnd_server_close(RdpsndServerContext* context)
 	const size_t pos = Stream_GetPosition(s);
 	WINPR_ASSERT(pos >= 4);
 	Stream_SetPosition(s, 2);
-	Stream_Write_UINT16(s, WINPR_SAFE_INT_CAST(uint16_t, pos - 4));
+	Stream_Write_UINT16(s, WINPR_ASSERTING_INT_CAST(uint16_t, pos - 4));
 	Stream_SetPosition(s, pos);
 
 	const size_t len = Stream_GetPosition(s);

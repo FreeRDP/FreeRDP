@@ -326,9 +326,9 @@ BOOL FilePatternMatchA(LPCSTR lpFileName, LPCSTR lpPattern)
 		if (!lpNextWildcard)
 		{
 			lpX = lpSubPattern;
-			cchX = WINPR_SAFE_INT_CAST(size_t, (lpWildcard - lpSubPattern));
+			cchX = WINPR_ASSERTING_INT_CAST(size_t, (lpWildcard - lpSubPattern));
 			lpY = &lpSubPattern[cchX + cchWildcard];
-			cchY = (cchSubPattern - WINPR_SAFE_INT_CAST(size_t, (lpY - lpSubPattern)));
+			cchY = (cchSubPattern - WINPR_ASSERTING_INT_CAST(size_t, (lpY - lpSubPattern)));
 			match = FilePatternMatchSubExpressionA(lpSubFileName, cchSubFileName, lpX, cchX, lpY,
 			                                       cchY, lpWildcard, &lpMatchEnd);
 			return match;
@@ -338,12 +338,13 @@ BOOL FilePatternMatchA(LPCSTR lpFileName, LPCSTR lpPattern)
 			while (lpNextWildcard)
 			{
 				cchSubFileName =
-				    cchFileName - WINPR_SAFE_INT_CAST(size_t, (lpSubFileName - lpFileName));
+				    cchFileName - WINPR_ASSERTING_INT_CAST(size_t, (lpSubFileName - lpFileName));
 				cchNextWildcard = ((dwNextFlags & WILDCARD_DOS) ? 2 : 1);
 				lpX = lpSubPattern;
-				cchX = WINPR_SAFE_INT_CAST(size_t, (lpWildcard - lpSubPattern));
+				cchX = WINPR_ASSERTING_INT_CAST(size_t, (lpWildcard - lpSubPattern));
 				lpY = &lpSubPattern[cchX + cchWildcard];
-				cchY = WINPR_SAFE_INT_CAST(size_t, (lpNextWildcard - lpWildcard)) - cchWildcard;
+				cchY =
+				    WINPR_ASSERTING_INT_CAST(size_t, (lpNextWildcard - lpWildcard)) - cchWildcard;
 				match = FilePatternMatchSubExpressionA(lpSubFileName, cchSubFileName, lpX, cchX,
 				                                       lpY, cchY, lpWildcard, &lpMatchEnd);
 

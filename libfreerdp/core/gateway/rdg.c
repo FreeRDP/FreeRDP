@@ -383,8 +383,8 @@ static BOOL rdg_read_all(rdpContext* context, rdpTls* tls, BYTE* buffer, size_t 
 			continue;
 		}
 
-		readCount += WINPR_SAFE_INT_CAST(uint32_t, status);
-		pBuffer += WINPR_SAFE_INT_CAST(uint32_t, status);
+		readCount += WINPR_ASSERTING_INT_CAST(uint32_t, status);
+		pBuffer += WINPR_ASSERTING_INT_CAST(uint32_t, status);
 	}
 
 	return TRUE;
@@ -1313,7 +1313,7 @@ static BOOL rdg_tls_connect(rdpRdg* rdg, rdpTls* tls, const char* peerAddress, U
 	}
 
 	tls->hostname = settings->GatewayHostname;
-	tls->port = WINPR_SAFE_INT_CAST(int32_t, MIN(UINT16_MAX, settings->GatewayPort));
+	tls->port = WINPR_ASSERTING_INT_CAST(int32_t, MIN(UINT16_MAX, settings->GatewayPort));
 	tls->isGatewayTransport = TRUE;
 	status = freerdp_tls_connect(tls, bufferedBio);
 	if (status < 1)
@@ -1623,15 +1623,15 @@ static int rdg_write_websocket_data_packet(rdpRdg* rdg, const BYTE* buf, int isi
 		return FALSE;
 
 	Stream_Write_UINT16(
-	    sWS, WINPR_SAFE_INT_CAST(
+	    sWS, WINPR_ASSERTING_INT_CAST(
 	             uint16_t, PKT_TYPE_DATA ^ (maskingKey.u8[0] | maskingKey.u8[1] << 8))); /* Type */
 	Stream_Write_UINT16(
-	    sWS, WINPR_SAFE_INT_CAST(uint16_t,
-	                             0 ^ (maskingKey.u8[2] | maskingKey.u8[3] << 8))); /* Reserved */
+	    sWS, WINPR_ASSERTING_INT_CAST(
+	             uint16_t, 0 ^ (maskingKey.u8[2] | maskingKey.u8[3] << 8))); /* Reserved */
 	Stream_Write_UINT32(
-	    sWS, WINPR_SAFE_INT_CAST(uint32_t, payloadSize ^ maskingKey.u32)); /* Packet length */
+	    sWS, WINPR_ASSERTING_INT_CAST(uint32_t, payloadSize ^ maskingKey.u32)); /* Packet length */
 	Stream_Write_UINT16(
-	    sWS, WINPR_SAFE_INT_CAST(
+	    sWS, WINPR_ASSERTING_INT_CAST(
 	             uint16_t, isize ^ (maskingKey.u8[0] | maskingKey.u8[1] << 8))); /* Data size */
 
 	/* masking key is now off by 2 bytes. fix that */

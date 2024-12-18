@@ -334,7 +334,7 @@ static UINT read_touch_frame(RdpeiServerContext* context, wStream* s, RDPINPUT_T
 		if ((error = read_touch_contact_data(context, s, contact)))
 		{
 			WLog_ERR(TAG, "read_touch_contact_data failed with error %" PRIu32 "!", error);
-			frame->contactCount = WINPR_SAFE_INT_CAST(UINT16, i);
+			frame->contactCount = WINPR_ASSERTING_INT_CAST(UINT16, i);
 			touch_frame_reset(frame);
 			return error;
 		}
@@ -366,7 +366,7 @@ static UINT read_pen_frame(RdpeiServerContext* context, wStream* s, RDPINPUT_PEN
 		if ((error = read_pen_contact(context, s, contact)))
 		{
 			WLog_ERR(TAG, "read_touch_contact_data failed with error %" PRIu32 "!", error);
-			frame->contactCount = WINPR_SAFE_INT_CAST(UINT16, i);
+			frame->contactCount = WINPR_ASSERTING_INT_CAST(UINT16, i);
 
 			pen_frame_reset(frame);
 			return error;
@@ -407,7 +407,7 @@ static UINT read_touch_event(RdpeiServerContext* context, wStream* s)
 		if ((error = read_touch_frame(context, s, frame)))
 		{
 			WLog_ERR(TAG, "read_touch_contact_data failed with error %" PRIu32 "!", error);
-			event->frameCount = WINPR_SAFE_INT_CAST(UINT16, i);
+			event->frameCount = WINPR_ASSERTING_INT_CAST(UINT16, i);
 
 			goto out_cleanup;
 		}
@@ -449,7 +449,7 @@ static UINT read_pen_event(RdpeiServerContext* context, wStream* s)
 		if ((error = read_pen_frame(context, s, frame)))
 		{
 			WLog_ERR(TAG, "read_pen_frame failed with error %" PRIu32 "!", error);
-			event->frameCount = WINPR_SAFE_INT_CAST(UINT16, i);
+			event->frameCount = WINPR_ASSERTING_INT_CAST(UINT16, i);
 
 			goto out_cleanup;
 		}

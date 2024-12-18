@@ -54,7 +54,7 @@ static inline BYTE* WRITEFGBGIMAGE(BYTE* WINPR_RESTRICT pbDest,
 			data = xorPixel;
 
 		DESTWRITEPIXEL(pbDest, data);
-		mask = WINPR_SAFE_INT_CAST(BYTE, (mask << 1) & 0xFF);
+		mask = WINPR_ASSERTING_INT_CAST(BYTE, (mask << 1) & 0xFF);
 	});
 	return pbDest;
 }
@@ -87,7 +87,7 @@ static inline BYTE* WRITEFIRSTLINEFGBGIMAGE(BYTE* WINPR_RESTRICT pbDest,
 			data = BLACK_PIXEL;
 
 		DESTWRITEPIXEL(pbDest, data);
-		mask = WINPR_SAFE_INT_CAST(BYTE, (mask << 1) & 0xFF);
+		mask = WINPR_ASSERTING_INT_CAST(BYTE, (mask << 1) & 0xFF);
 	});
 	return pbDest;
 }

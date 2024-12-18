@@ -244,8 +244,8 @@ static BOOL TestPrimitiveYUVCombine(primitives_t* prims, prim_size_t roi)
 		if (!(paux[x] = set_padding(halfSize, padding)))
 			goto fail;
 
-		memset(luma[x], WINPR_SAFE_INT_CAST(int, 0xAB + 3 * x), halfSize);
-		memset(chroma[x], WINPR_SAFE_INT_CAST(int, 0x80 + 2 * x), halfSize);
+		memset(luma[x], WINPR_ASSERTING_INT_CAST(int, 0xAB + 3 * x), halfSize);
+		memset(chroma[x], WINPR_ASSERTING_INT_CAST(int, 0x80 + 2 * x), halfSize);
 
 		if (!check_padding(luma[x], halfSize, padding, "luma"))
 			goto fail;

@@ -846,8 +846,8 @@ static UINT video_VideoData(VideoClientContext* context, const TSMM_VIDEO_DATA* 
 		UINT64 timeAfterH264 = 0;
 		MAPPED_GEOMETRY* geom = presentation->geometry;
 
-		const RECTANGLE_16 rect = { 0, 0, WINPR_SAFE_INT_CAST(UINT16, surface->alignedWidth),
-			                        WINPR_SAFE_INT_CAST(UINT16, surface->alignedHeight) };
+		const RECTANGLE_16 rect = { 0, 0, WINPR_ASSERTING_INT_CAST(UINT16, surface->alignedWidth),
+			                        WINPR_ASSERTING_INT_CAST(UINT16, surface->alignedHeight) };
 		Stream_SealLength(presentation->currentSample);
 		Stream_SetPosition(presentation->currentSample, 0);
 

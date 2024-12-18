@@ -830,14 +830,14 @@ device_send_start_streams_request_pdu(CameraDeviceServerContext* context,
 
 		Stream_Write_UINT8(s, info->StreamIndex);
 
-		Stream_Write_UINT8(s, WINPR_SAFE_INT_CAST(uint8_t, description->Format));
+		Stream_Write_UINT8(s, WINPR_ASSERTING_INT_CAST(uint8_t, description->Format));
 		Stream_Write_UINT32(s, description->Width);
 		Stream_Write_UINT32(s, description->Height);
 		Stream_Write_UINT32(s, description->FrameRateNumerator);
 		Stream_Write_UINT32(s, description->FrameRateDenominator);
 		Stream_Write_UINT32(s, description->PixelAspectRatioNumerator);
 		Stream_Write_UINT32(s, description->PixelAspectRatioDenominator);
-		Stream_Write_UINT8(s, WINPR_SAFE_INT_CAST(uint8_t, description->Flags));
+		Stream_Write_UINT8(s, WINPR_ASSERTING_INT_CAST(uint8_t, description->Flags));
 	}
 
 	return device_server_packet_send(context, s);
@@ -890,7 +890,7 @@ device_send_property_value_request_pdu(CameraDeviceServerContext* context,
 	if (!s)
 		return ERROR_NOT_ENOUGH_MEMORY;
 
-	Stream_Write_UINT8(s, WINPR_SAFE_INT_CAST(uint8_t, propertyValueRequest->PropertySet));
+	Stream_Write_UINT8(s, WINPR_ASSERTING_INT_CAST(uint8_t, propertyValueRequest->PropertySet));
 	Stream_Write_UINT8(s, propertyValueRequest->PropertyId);
 
 	return device_server_packet_send(context, s);
@@ -910,11 +910,11 @@ static UINT device_send_set_property_value_request_pdu(
 	if (!s)
 		return ERROR_NOT_ENOUGH_MEMORY;
 
-	Stream_Write_UINT8(s, WINPR_SAFE_INT_CAST(uint8_t, setPropertyValueRequest->PropertySet));
+	Stream_Write_UINT8(s, WINPR_ASSERTING_INT_CAST(uint8_t, setPropertyValueRequest->PropertySet));
 	Stream_Write_UINT8(s, setPropertyValueRequest->PropertyId);
 
-	Stream_Write_UINT8(s,
-	                   WINPR_SAFE_INT_CAST(uint8_t, setPropertyValueRequest->PropertyValue.Mode));
+	Stream_Write_UINT8(
+	    s, WINPR_ASSERTING_INT_CAST(uint8_t, setPropertyValueRequest->PropertyValue.Mode));
 	Stream_Write_INT32(s, setPropertyValueRequest->PropertyValue.Value);
 
 	return device_server_packet_send(context, s);

@@ -197,7 +197,7 @@ static BOOL freerdp_listener_open(freerdp_listener* instance, const char* bind_a
 		arg = 1;
 		ioctlsocket(sockfd, FIONBIO, &arg);
 #endif
-		status = _bind((SOCKET)sockfd, ai->ai_addr, WINPR_SAFE_INT_CAST(int, ai->ai_addrlen));
+		status = _bind((SOCKET)sockfd, ai->ai_addr, WINPR_ASSERTING_INT_CAST(int, ai->ai_addrlen));
 
 		if (status != 0)
 		{
@@ -383,7 +383,7 @@ static DWORD freerdp_listener_get_event_handles(freerdp_listener* instance, HAND
 		events[index] = listener->events[index];
 	}
 
-	return WINPR_SAFE_INT_CAST(uint32_t, listener->num_sockfds);
+	return WINPR_ASSERTING_INT_CAST(uint32_t, listener->num_sockfds);
 }
 
 BOOL freerdp_peer_set_local_and_hostname(freerdp_peer* client,

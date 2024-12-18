@@ -87,17 +87,18 @@ static void test_dump_data(unsigned char* p, size_t len, size_t width, const cha
 void test_dump_bitmap(HGDI_BITMAP hBmp, const char* name)
 {
 	const size_t stride =
-	    WINPR_SAFE_INT_CAST(size_t, hBmp->width) * FreeRDPGetBytesPerPixel(hBmp->format);
-	test_dump_data(hBmp->data, stride * WINPR_SAFE_INT_CAST(uint32_t, hBmp->height), stride, name);
+	    WINPR_ASSERTING_INT_CAST(size_t, hBmp->width) * FreeRDPGetBytesPerPixel(hBmp->format);
+	test_dump_data(hBmp->data, stride * WINPR_ASSERTING_INT_CAST(uint32_t, hBmp->height), stride,
+	               name);
 }
 
 static BOOL CompareBitmaps(HGDI_BITMAP hBmp1, HGDI_BITMAP hBmp2, const gdiPalette* palette)
 {
 	const BYTE* p1 = hBmp1->data;
 	const BYTE* p2 = hBmp2->data;
-	const UINT32 minw =
-	    WINPR_SAFE_INT_CAST(uint32_t, (hBmp1->width < hBmp2->width) ? hBmp1->width : hBmp2->width);
-	const UINT32 minh = WINPR_SAFE_INT_CAST(
+	const UINT32 minw = WINPR_ASSERTING_INT_CAST(
+	    uint32_t, (hBmp1->width < hBmp2->width) ? hBmp1->width : hBmp2->width);
+	const UINT32 minh = WINPR_ASSERTING_INT_CAST(
 	    uint32_t, (hBmp1->height < hBmp2->height) ? hBmp1->height : hBmp2->height);
 
 	for (UINT32 y = 0; y < minh; y++)

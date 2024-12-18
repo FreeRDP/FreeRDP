@@ -208,8 +208,8 @@ static BOOL SamReadEntry(WINPR_SAM* sam, WINPR_SAM_ENTRY* entry)
 	p[2] = strchr(p[1], ':') + 1;
 	p[3] = strchr(p[2], ':') + 1;
 	p[4] = strchr(p[3], ':') + 1;
-	const size_t LmHashLength = WINPR_SAFE_INT_CAST(size_t, (p[3] - p[2] - 1));
-	const size_t NtHashLength = WINPR_SAFE_INT_CAST(size_t, (p[4] - p[3] - 1));
+	const size_t LmHashLength = WINPR_ASSERTING_INT_CAST(size_t, (p[3] - p[2] - 1));
+	const size_t NtHashLength = WINPR_ASSERTING_INT_CAST(size_t, (p[4] - p[3] - 1));
 
 	if ((LmHashLength != 0) && (LmHashLength != 32))
 		return FALSE;

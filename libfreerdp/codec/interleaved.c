@@ -467,11 +467,11 @@ static INLINE void write_pixel_16(BYTE* _buf, UINT16 _pix)
 		(_buf) += 2;                \
 	} while (0)
 #define DESTREADPIXEL(_pix, _buf) _pix = ((UINT16*)(_buf))[0]
-#define SRCREADPIXEL(_pix, _buf)                                                       \
-	do                                                                                 \
-	{                                                                                  \
-		(_pix) = WINPR_SAFE_INT_CAST(UINT16, (_buf)[0] | (((_buf)[1] << 8) & 0xFF00)); \
-		(_buf) += 2;                                                                   \
+#define SRCREADPIXEL(_pix, _buf)                                                            \
+	do                                                                                      \
+	{                                                                                       \
+		(_pix) = WINPR_ASSERTING_INT_CAST(UINT16, (_buf)[0] | (((_buf)[1] << 8) & 0xFF00)); \
+		(_buf) += 2;                                                                        \
 	} while (0)
 #define WRITEFGBGIMAGE WriteFgBgImage16to16
 #define WRITEFIRSTLINEFGBGIMAGE WriteFirstLineFgBgImage16to16

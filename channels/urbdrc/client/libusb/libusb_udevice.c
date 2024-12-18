@@ -675,11 +675,11 @@ libusb_udev_complete_msconfig_setup(IUDEVICE* idev, MSUSB_CONFIG_DESCRIPTOR* MsC
 		 * ---------------------------------------------------------------
 		 * ***********************/
 		MsInterface->InterfaceHandle =
-		    WINPR_SAFE_INT_CAST(UINT32, (LibusbAltsetting->bInterfaceNumber |
-		                                 (LibusbAltsetting->bAlternateSetting << 8) |
-		                                 (pdev->dev_number << 16) | (pdev->bus_number << 24)));
+		    WINPR_ASSERTING_INT_CAST(UINT32, (LibusbAltsetting->bInterfaceNumber |
+		                                      (LibusbAltsetting->bAlternateSetting << 8) |
+		                                      (pdev->dev_number << 16) | (pdev->bus_number << 24)));
 		const size_t len = 16 + (MsInterface->NumberOfPipes * 20);
-		MsInterface->Length = WINPR_SAFE_INT_CAST(UINT16, len);
+		MsInterface->Length = WINPR_ASSERTING_INT_CAST(UINT16, len);
 		MsInterface->bInterfaceClass = LibusbAltsetting->bInterfaceClass;
 		MsInterface->bInterfaceSubClass = LibusbAltsetting->bInterfaceSubClass;
 		MsInterface->bInterfaceProtocol = LibusbAltsetting->bInterfaceProtocol;
@@ -710,7 +710,7 @@ libusb_udev_complete_msconfig_setup(IUDEVICE* idev, MSUSB_CONFIG_DESCRIPTOR* MsC
 				max *= (1 + ((LibusbEndpoint->wMaxPacketSize >> 11) & 3));
 			}
 
-			MsPipe->MaximumPacketSize = WINPR_SAFE_INT_CAST(uint16_t, max);
+			MsPipe->MaximumPacketSize = WINPR_ASSERTING_INT_CAST(uint16_t, max);
 			MsPipe->bEndpointAddress = LibusbEndpoint->bEndpointAddress;
 			MsPipe->bInterval = LibusbEndpoint->bInterval;
 			MsPipe->PipeType = attr & 0x3;
@@ -718,7 +718,7 @@ libusb_udev_complete_msconfig_setup(IUDEVICE* idev, MSUSB_CONFIG_DESCRIPTOR* MsC
 		}
 	}
 
-	MsConfig->MsOutSize = WINPR_SAFE_INT_CAST(int, MsOutSize);
+	MsConfig->MsOutSize = WINPR_ASSERTING_INT_CAST(int, MsOutSize);
 	MsConfig->InitCompleted = 1;
 
 	/* replace device's MsConfig */
@@ -760,8 +760,8 @@ static int libusb_udev_select_configuration(IUDEVICE* idev, UINT32 bConfiguratio
 	if (bConfigurationValue == 0)
 		ret = libusb_set_configuration(libusb_handle, -1);
 	else
-		ret =
-		    libusb_set_configuration(libusb_handle, WINPR_SAFE_INT_CAST(int, bConfigurationValue));
+		ret = libusb_set_configuration(libusb_handle,
+		                               WINPR_ASSERTING_INT_CAST(int, bConfigurationValue));
 
 	if (log_libusb_result(urbdrc->log, WLOG_ERROR, "libusb_set_configuration", ret))
 	{
@@ -1265,9 +1265,9 @@ static int libusb_udev_isoch_transfer(IUDEVICE* idev, GENERIC_CHANNEL_CALLBACK* 
 
 	/**  process URB_FUNCTION_IOSCH_TRANSFER */
 	libusb_fill_iso_transfer(
-	    iso_transfer, pdev->libusb_handle, WINPR_SAFE_INT_CAST(uint8_t, EndpointAddress),
-	    Stream_Pointer(user_data->data), WINPR_SAFE_INT_CAST(int, BufferSize),
-	    WINPR_SAFE_INT_CAST(int, NumberOfPackets), func_iso_callback, user_data, Timeout);
+	    iso_transfer, pdev->libusb_handle, WINPR_ASSERTING_INT_CAST(uint8_t, EndpointAddress),
+	    Stream_Pointer(user_data->data), WINPR_ASSERTING_INT_CAST(int, BufferSize),
+	    WINPR_ASSERTING_INT_CAST(int, NumberOfPackets), func_iso_callback, user_data, Timeout);
 	set_stream_id_for_buffer(iso_transfer, streamID);
 	libusb_set_iso_packet_lengths(iso_transfer, iso_packet_size);
 
@@ -1369,16 +1369,16 @@ static int libusb_udev_bulk_or_interrupt_transfer(IUDEVICE* idev,
 		case BULK_TRANSFER:
 			/** Bulk Transfer */
 			libusb_fill_bulk_transfer(
-			    transfer, pdev->libusb_handle, WINPR_SAFE_INT_CAST(uint8_t, EndpointAddress),
-			    Stream_Pointer(user_data->data), WINPR_SAFE_INT_CAST(int, BufferSize),
+			    transfer, pdev->libusb_handle, WINPR_ASSERTING_INT_CAST(uint8_t, EndpointAddress),
+			    Stream_Pointer(user_data->data), WINPR_ASSERTING_INT_CAST(int, BufferSize),
 			    func_bulk_transfer_cb, user_data, Timeout);
 			break;
 
 		case INTERRUPT_TRANSFER:
 			/**  Interrupt Transfer */
 			libusb_fill_interrupt_transfer(
-			    transfer, pdev->libusb_handle, WINPR_SAFE_INT_CAST(uint8_t, EndpointAddress),
-			    Stream_Pointer(user_data->data), WINPR_SAFE_INT_CAST(int, BufferSize),
+			    transfer, pdev->libusb_handle, WINPR_ASSERTING_INT_CAST(uint8_t, EndpointAddress),
+			    Stream_Pointer(user_data->data), WINPR_ASSERTING_INT_CAST(int, BufferSize),
 			    func_bulk_transfer_cb, user_data, Timeout);
 			break;
 

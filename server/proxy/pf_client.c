@@ -490,8 +490,8 @@ static BOOL pf_client_receive_channel_data_hook(freerdp* instance, UINT16 channe
 				return TRUE;
 
 			return ps->context.peer->SendChannelPacket(
-			    ps->context.peer, WINPR_SAFE_INT_CAST(UINT16, channel->front_channel_id), totalSize,
-			    flags, xdata, xsize);
+			    ps->context.peer, WINPR_ASSERTING_INT_CAST(UINT16, channel->front_channel_id),
+			    totalSize, flags, xdata, xsize);
 		case PF_CHANNEL_RESULT_DROP:
 			return TRUE;
 		case PF_CHANNEL_RESULT_ERROR:

@@ -74,8 +74,8 @@ UINT client_rail_server_start_cmd(RailClientContext* context)
 	const UINT32 w = freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth);
 	const UINT32 h = freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight);
 
-	sysparam.workArea.right = WINPR_SAFE_INT_CAST(UINT16, w);
-	sysparam.workArea.bottom = WINPR_SAFE_INT_CAST(UINT16, h);
+	sysparam.workArea.right = WINPR_ASSERTING_INT_CAST(UINT16, w);
+	sysparam.workArea.bottom = WINPR_ASSERTING_INT_CAST(UINT16, h);
 	sysparam.dragFullWindows = FALSE;
 	status = context->ClientSystemParam(context, &sysparam);
 

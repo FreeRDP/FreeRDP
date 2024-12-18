@@ -60,9 +60,9 @@ static pstatus_t general_yCbCrToRGB_16s8u_P3AC4R_BGRX(const INT16* WINPR_RESTRIC
 			const INT64 CrG = Cr * (INT64)(0.714401f * (1 << divisor)) * 1LL;
 			const INT64 CbG = Cb * (INT64)(0.343730f * (1 << divisor)) * 1LL;
 			const INT64 CbB = Cb * (INT64)(1.769905f * (1 << divisor)) * 1LL;
-			R = WINPR_SAFE_INT_CAST(int16_t, ((CrR + Y) >> divisor) >> 5);
-			G = WINPR_SAFE_INT_CAST(int16_t, ((Y - CbG - CrG) >> divisor) >> 5);
-			B = WINPR_SAFE_INT_CAST(int16_t, ((CbB + Y) >> divisor) >> 5);
+			R = WINPR_ASSERTING_INT_CAST(int16_t, ((CrR + Y) >> divisor) >> 5);
+			G = WINPR_ASSERTING_INT_CAST(int16_t, ((Y - CbG - CrG) >> divisor) >> 5);
+			B = WINPR_ASSERTING_INT_CAST(int16_t, ((CbB + Y) >> divisor) >> 5);
 			pRGB = writePixelBGRX(pRGB, formatSize, DstFormat, CLIP(R), CLIP(G), CLIP(B), 0);
 		}
 
@@ -210,10 +210,10 @@ general_yCbCrToRGB_16s16s_P3P3(const INT16* WINPR_RESTRICT pSrc[3], INT32 srcSte
 	INT16* rptr = pDst[0];
 	INT16* gptr = pDst[1];
 	INT16* bptr = pDst[2];
-	UINT32 srcbump =
-	    (WINPR_SAFE_INT_CAST(uint32_t, srcStep) - (roi->width * sizeof(UINT16))) / sizeof(UINT16);
-	UINT32 dstbump =
-	    (WINPR_SAFE_INT_CAST(uint32_t, dstStep) - (roi->width * sizeof(UINT16))) / sizeof(UINT16);
+	UINT32 srcbump = (WINPR_ASSERTING_INT_CAST(uint32_t, srcStep) - (roi->width * sizeof(UINT16))) /
+	                 sizeof(UINT16);
+	UINT32 dstbump = (WINPR_ASSERTING_INT_CAST(uint32_t, dstStep) - (roi->width * sizeof(UINT16))) /
+	                 sizeof(UINT16);
 
 	for (UINT32 y = 0; y < roi->height; y++)
 	{
@@ -290,10 +290,10 @@ general_RGBToYCbCr_16s16s_P3P3(const INT16* WINPR_RESTRICT pSrc[3], INT32 srcSte
 	INT16* yptr = pDst[0];
 	INT16* cbptr = pDst[1];
 	INT16* crptr = pDst[2];
-	UINT32 srcbump =
-	    (WINPR_SAFE_INT_CAST(uint32_t, srcStep) - (roi->width * sizeof(UINT16))) / sizeof(UINT16);
-	UINT32 dstbump =
-	    (WINPR_SAFE_INT_CAST(uint32_t, dstStep) - (roi->width * sizeof(UINT16))) / sizeof(UINT16);
+	UINT32 srcbump = (WINPR_ASSERTING_INT_CAST(uint32_t, srcStep) - (roi->width * sizeof(UINT16))) /
+	                 sizeof(UINT16);
+	UINT32 dstbump = (WINPR_ASSERTING_INT_CAST(uint32_t, dstStep) - (roi->width * sizeof(UINT16))) /
+	                 sizeof(UINT16);
 
 	for (UINT32 y = 0; y < roi->height; y++)
 	{
@@ -347,8 +347,9 @@ static INLINE void writeScanlineGeneric(BYTE* dst, DWORD formatSize, UINT32 DstF
 		const INT16 pg = *g++;
 		const INT16 pb = *b++;
 
-		dst = writePixel(dst, formatSize, DstFormat, WINPR_SAFE_INT_CAST(UINT8, pr),
-		                 WINPR_SAFE_INT_CAST(UINT8, pg), WINPR_SAFE_INT_CAST(UINT8, pb), 0);
+		dst =
+		    writePixel(dst, formatSize, DstFormat, WINPR_ASSERTING_INT_CAST(UINT8, pr),
+		               WINPR_ASSERTING_INT_CAST(UINT8, pg), WINPR_ASSERTING_INT_CAST(UINT8, pb), 0);
 	}
 }
 

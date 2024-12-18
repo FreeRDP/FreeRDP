@@ -313,11 +313,11 @@ BOOL update_write_surfcmd_surface_bits(wStream* s, const SURFACE_BITS_COMMAND* c
 			break;
 	}
 
-	Stream_Write_UINT16(s, WINPR_SAFE_INT_CAST(uint16_t, cmdType));
-	Stream_Write_UINT16(s, WINPR_SAFE_INT_CAST(uint16_t, cmd->destLeft));
-	Stream_Write_UINT16(s, WINPR_SAFE_INT_CAST(uint16_t, cmd->destTop));
-	Stream_Write_UINT16(s, WINPR_SAFE_INT_CAST(uint16_t, cmd->destRight));
-	Stream_Write_UINT16(s, WINPR_SAFE_INT_CAST(uint16_t, cmd->destBottom));
+	Stream_Write_UINT16(s, WINPR_ASSERTING_INT_CAST(uint16_t, cmdType));
+	Stream_Write_UINT16(s, WINPR_ASSERTING_INT_CAST(uint16_t, cmd->destLeft));
+	Stream_Write_UINT16(s, WINPR_ASSERTING_INT_CAST(uint16_t, cmd->destTop));
+	Stream_Write_UINT16(s, WINPR_ASSERTING_INT_CAST(uint16_t, cmd->destRight));
+	Stream_Write_UINT16(s, WINPR_ASSERTING_INT_CAST(uint16_t, cmd->destBottom));
 	return update_write_surfcmd_bitmap_ex(s, &cmd->bmp);
 }
 

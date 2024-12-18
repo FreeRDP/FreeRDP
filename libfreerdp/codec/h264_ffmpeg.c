@@ -170,10 +170,10 @@ static BOOL libavcodec_create_encoder(H264_CONTEXT* WINPR_RESTRICT h264)
 	sys->codecEncoderContext->delay = 0;
 #if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(56, 13, 100)
 	sys->codecEncoderContext->framerate =
-	    (AVRational){ WINPR_SAFE_INT_CAST(int, h264->FrameRate), 1 };
+	    (AVRational){ WINPR_ASSERTING_INT_CAST(int, h264->FrameRate), 1 };
 #endif
 	sys->codecEncoderContext->time_base =
-	    (AVRational){ 1, WINPR_SAFE_INT_CAST(int, h264->FrameRate) };
+	    (AVRational){ 1, WINPR_ASSERTING_INT_CAST(int, h264->FrameRate) };
 	av_opt_set(sys->codecEncoderContext, "preset", "medium", AV_OPT_SEARCH_CHILDREN);
 	av_opt_set(sys->codecEncoderContext, "tune", "zerolatency", AV_OPT_SEARCH_CHILDREN);
 	sys->codecEncoderContext->flags |= AV_CODEC_FLAG_LOOP_FILTER;

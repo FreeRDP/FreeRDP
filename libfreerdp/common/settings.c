@@ -52,8 +52,8 @@ BOOL freerdp_addin_argv_add_argument_ex(ADDIN_ARGV* args, const char* argument, 
 	if (len == 0)
 		len = strlen(argument);
 
-	new_argv = (char**)realloc((void*)args->argv,
-	                           sizeof(char*) * (WINPR_SAFE_INT_CAST(uint32_t, args->argc) + 1));
+	new_argv = (char**)realloc(
+	    (void*)args->argv, sizeof(char*) * (WINPR_ASSERTING_INT_CAST(uint32_t, args->argc) + 1));
 
 	if (!new_argv)
 		return FALSE;
@@ -84,9 +84,9 @@ BOOL freerdp_addin_argv_del_argument(ADDIN_ARGV* args, const char* argument)
 		{
 			free(arg);
 			memmove_s((void*)&args->argv[x],
-			          (WINPR_SAFE_INT_CAST(uint32_t, args->argc - x)) * sizeof(char*),
+			          (WINPR_ASSERTING_INT_CAST(uint32_t, args->argc - x)) * sizeof(char*),
 			          (void*)&args->argv[x + 1],
-			          (WINPR_SAFE_INT_CAST(uint32_t, args->argc - x - 1)) * sizeof(char*));
+			          (WINPR_ASSERTING_INT_CAST(uint32_t, args->argc - x - 1)) * sizeof(char*));
 			args->argv[args->argc - 1] = NULL;
 			args->argc--;
 			return TRUE;
@@ -158,7 +158,8 @@ int freerdp_addin_set_argument_value(ADDIN_ARGV* args, const char* option, const
 
 		if (p)
 		{
-			if (strncmp(args->argv[i], option, WINPR_SAFE_INT_CAST(size_t, p - args->argv[i])) == 0)
+			if (strncmp(args->argv[i], option,
+			            WINPR_ASSERTING_INT_CAST(size_t, p - args->argv[i])) == 0)
 			{
 				free(args->argv[i]);
 				args->argv[i] = str;
@@ -833,7 +834,7 @@ ADDIN_ARGV* freerdp_addin_argv_clone(const ADDIN_ARGV* args)
 	if (!args)
 		return NULL;
 	cnv.c = args->argv;
-	return freerdp_addin_argv_new(WINPR_SAFE_INT_CAST(uint32_t, args->argc), cnv.cc);
+	return freerdp_addin_argv_new(WINPR_ASSERTING_INT_CAST(uint32_t, args->argc), cnv.cc);
 }
 
 void freerdp_dynamic_channel_collection_free(rdpSettings* settings)

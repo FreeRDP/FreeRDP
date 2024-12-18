@@ -1681,7 +1681,7 @@ LONG smartcard_unpack_redir_scard_context_(wStream* s, REDIR_SCARDCONTEXT* conte
 	}
 
 	if (!smartcard_ndr_pointer_read_(s, index, &pbContextNdrPtr, file, function,
-	                                 WINPR_SAFE_INT_CAST(size_t, line)))
+	                                 WINPR_ASSERTING_INT_CAST(size_t, line)))
 		return ERROR_INVALID_DATA;
 
 	if (((context->cbContext == 0) && pbContextNdrPtr) ||
@@ -1783,7 +1783,7 @@ LONG smartcard_unpack_redir_scard_handle_(wStream* s, REDIR_SCARDHANDLE* handle,
 		return STATUS_BUFFER_TOO_SMALL;
 
 	if (!smartcard_ndr_pointer_read_(s, index, NULL, file, function,
-	                                 WINPR_SAFE_INT_CAST(size_t, line)))
+	                                 WINPR_ASSERTING_INT_CAST(size_t, line)))
 		return ERROR_INVALID_DATA;
 
 	return SCARD_S_SUCCESS;

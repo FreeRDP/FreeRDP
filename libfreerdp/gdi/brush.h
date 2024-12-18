@@ -43,7 +43,7 @@ extern "C"
 		if (!hdc || !hdc->brush)
 			return GDI_BS_NULL;
 
-		return WINPR_SAFE_INT_CAST(UINT32, hdc->brush->style);
+		return WINPR_ASSERTING_INT_CAST(UINT32, hdc->brush->style);
 	}
 
 #ifdef __cplusplus

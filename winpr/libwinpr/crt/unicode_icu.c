@@ -62,14 +62,14 @@ int int_MultiByteToWideChar(UINT CodePage, DWORD dwFlags, LPCSTR lpMultiByteStr,
 	if (isNullTerminated)
 		len = strlen(lpMultiByteStr) + 1;
 	else
-		len = WINPR_SAFE_INT_CAST(size_t, cbMultiByte);
+		len = WINPR_ASSERTING_INT_CAST(size_t, cbMultiByte);
 
 	if (len >= INT_MAX)
 	{
 		SetLastError(ERROR_INVALID_PARAMETER);
 		return 0;
 	}
-	cbMultiByte = WINPR_SAFE_INT_CAST(int, len);
+	cbMultiByte = WINPR_ASSERTING_INT_CAST(int, len);
 
 	/*
 	 * if cchWideChar is 0, the function returns the required buffer size
@@ -161,14 +161,14 @@ int int_WideCharToMultiByte(UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr,
 	if (cchWideChar == -1)
 		len = _wcslen(lpWideCharStr) + 1;
 	else
-		len = WINPR_SAFE_INT_CAST(size_t, cchWideChar);
+		len = WINPR_ASSERTING_INT_CAST(size_t, cchWideChar);
 
 	if (len >= INT32_MAX)
 	{
 		SetLastError(ERROR_INVALID_PARAMETER);
 		return 0;
 	}
-	cchWideChar = WINPR_SAFE_INT_CAST(int, len);
+	cchWideChar = WINPR_ASSERTING_INT_CAST(int, len);
 
 	/*
 	 * if cbMultiByte is 0, the function returns the required buffer size

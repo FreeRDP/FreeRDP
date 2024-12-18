@@ -65,8 +65,8 @@ update_gdi_create_offscreen_bitmap(rdpContext* context,
 	if (!bitmap)
 		return FALSE;
 
-	if (!Bitmap_SetDimensions(bitmap, WINPR_SAFE_INT_CAST(UINT16, createOffscreenBitmap->cx),
-	                          WINPR_SAFE_INT_CAST(UINT16, createOffscreenBitmap->cy)))
+	if (!Bitmap_SetDimensions(bitmap, WINPR_ASSERTING_INT_CAST(UINT16, createOffscreenBitmap->cx),
+	                          WINPR_ASSERTING_INT_CAST(UINT16, createOffscreenBitmap->cy)))
 	{
 		Bitmap_Free(context, bitmap);
 		return FALSE;

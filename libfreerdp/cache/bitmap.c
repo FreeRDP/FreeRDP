@@ -80,7 +80,7 @@ static BOOL update_gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 	if (!bitmap)
 		return TRUE;
 
-	const BYTE style = WINPR_SAFE_INT_CAST(UINT8, brush->style);
+	const BYTE style = WINPR_ASSERTING_INT_CAST(UINT8, brush->style);
 
 	if (brush->style & CACHED_BRUSH)
 	{
@@ -108,8 +108,8 @@ static BOOL update_gdi_cache_bitmap(rdpContext* context, const CACHE_BITMAP_ORDE
 	if (!bitmap)
 		return FALSE;
 
-	if (!Bitmap_SetDimensions(bitmap, WINPR_SAFE_INT_CAST(UINT16, cacheBitmap->bitmapWidth),
-	                          WINPR_SAFE_INT_CAST(UINT16, cacheBitmap->bitmapHeight)))
+	if (!Bitmap_SetDimensions(bitmap, WINPR_ASSERTING_INT_CAST(UINT16, cacheBitmap->bitmapWidth),
+	                          WINPR_ASSERTING_INT_CAST(UINT16, cacheBitmap->bitmapHeight)))
 		goto fail;
 
 	if (!bitmap->Decompress(context, bitmap, cacheBitmap->bitmapDataStream,
@@ -150,8 +150,8 @@ static BOOL update_gdi_cache_bitmap_v2(rdpContext* context, CACHE_BITMAP_V2_ORDE
 	if ((ColorDepth == 15) && (cacheBitmapV2->bitmapBpp == 16))
 		cacheBitmapV2->bitmapBpp = ColorDepth;
 
-	if (!Bitmap_SetDimensions(bitmap, WINPR_SAFE_INT_CAST(UINT16, cacheBitmapV2->bitmapWidth),
-	                          WINPR_SAFE_INT_CAST(UINT16, cacheBitmapV2->bitmapHeight)))
+	if (!Bitmap_SetDimensions(bitmap, WINPR_ASSERTING_INT_CAST(UINT16, cacheBitmapV2->bitmapWidth),
+	                          WINPR_ASSERTING_INT_CAST(UINT16, cacheBitmapV2->bitmapHeight)))
 		goto fail;
 
 	if (!bitmap->Decompress(context, bitmap, cacheBitmapV2->bitmapDataStream,
@@ -195,8 +195,8 @@ static BOOL update_gdi_cache_bitmap_v3(rdpContext* context, CACHE_BITMAP_V3_ORDE
 
 	compressed = (bitmapData->codecID != RDP_CODEC_ID_NONE);
 
-	if (!Bitmap_SetDimensions(bitmap, WINPR_SAFE_INT_CAST(UINT16, bitmapData->width),
-	                          WINPR_SAFE_INT_CAST(UINT16, bitmapData->height)))
+	if (!Bitmap_SetDimensions(bitmap, WINPR_ASSERTING_INT_CAST(UINT16, bitmapData->width),
+	                          WINPR_ASSERTING_INT_CAST(UINT16, bitmapData->height)))
 		goto fail;
 
 	if (!bitmap->Decompress(context, bitmap, bitmapData->data, bitmapData->width,
@@ -330,8 +330,8 @@ static int bitmap_cache_save_persistent(rdpBitmapCache* bitmapCache)
 
 				cacheEntry.key64 = bitmap->key64;
 
-				cacheEntry.width = WINPR_SAFE_INT_CAST(UINT16, bitmap->width);
-				cacheEntry.height = WINPR_SAFE_INT_CAST(UINT16, bitmap->height);
+				cacheEntry.width = WINPR_ASSERTING_INT_CAST(UINT16, bitmap->width);
+				cacheEntry.height = WINPR_ASSERTING_INT_CAST(UINT16, bitmap->height);
 				const UINT64 size = 4ULL * bitmap->width * bitmap->height;
 				if (size > UINT32_MAX)
 					continue;

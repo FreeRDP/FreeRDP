@@ -1005,7 +1005,7 @@ int WSAIoctl(SOCKET s, DWORD dwIoControlCode, LPVOID lpvInBuffer, DWORD cbInBuff
 
 SOCKET _accept(SOCKET s, struct sockaddr* addr, int* addrlen)
 {
-	int fd = WINPR_SAFE_INT_CAST(int, s);
+	int fd = WINPR_ASSERTING_INT_CAST(int, s);
 	socklen_t s_addrlen = (socklen_t)*addrlen;
 	const int status = accept(fd, addr, &s_addrlen);
 	*addrlen = (int)s_addrlen;
@@ -1113,7 +1113,7 @@ u_short _htons(u_short hostshort)
 
 unsigned long _inet_addr(const char* cp)
 {
-	return WINPR_SAFE_INT_CAST(unsigned long, inet_addr(cp));
+	return WINPR_ASSERTING_INT_CAST(unsigned long, inet_addr(cp));
 }
 
 char* _inet_ntoa(struct in_addr in)

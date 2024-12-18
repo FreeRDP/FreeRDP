@@ -609,9 +609,9 @@ static UINT rdpgfx_write_h264_metablock(wLog* log, wStream* s, const RDPGFX_H264
 	for (UINT32 index = 0; index < meta->numRegionRects; index++)
 	{
 		quantQualityVal = &(meta->quantQualityVals[index]);
-		Stream_Write_UINT8(
-		    s, WINPR_SAFE_INT_CAST(uint8_t, quantQualityVal->qp | (quantQualityVal->r << 6) |
-		                                        (quantQualityVal->p << 7))); /* qpVal (1 byte) */
+		Stream_Write_UINT8(s, WINPR_ASSERTING_INT_CAST(
+		                          uint8_t, quantQualityVal->qp | (quantQualityVal->r << 6) |
+		                                       (quantQualityVal->p << 7))); /* qpVal (1 byte) */
 		/* qualityVal (1 byte) */
 		Stream_Write_UINT8(s, quantQualityVal->qualityVal);
 	}
@@ -681,8 +681,9 @@ static UINT rdpgfx_write_surface_command(wLog* log, wStream* s, const RDPGFX_SUR
 			return ERROR_INTERNAL_ERROR;
 		/* Write RDPGFX_CMDID_WIRETOSURFACE_2 format for CAPROGRESSIVE */
 		Stream_Write_UINT16(
-		    s, WINPR_SAFE_INT_CAST(uint16_t, cmd->surfaceId)); /* surfaceId (2 bytes) */
-		Stream_Write_UINT16(s, WINPR_SAFE_INT_CAST(uint16_t, cmd->codecId)); /* codecId (2 bytes) */
+		    s, WINPR_ASSERTING_INT_CAST(uint16_t, cmd->surfaceId)); /* surfaceId (2 bytes) */
+		Stream_Write_UINT16(
+		    s, WINPR_ASSERTING_INT_CAST(uint16_t, cmd->codecId)); /* codecId (2 bytes) */
 		Stream_Write_UINT32(s, cmd->contextId); /* codecContextId (4 bytes) */
 		Stream_Write_UINT8(s, pixelFormat);     /* pixelFormat (1 byte) */
 		Stream_Write_UINT32(s, cmd->length);    /* bitmapDataLength (4 bytes) */
@@ -694,13 +695,16 @@ static UINT rdpgfx_write_surface_command(wLog* log, wStream* s, const RDPGFX_SUR
 		if (!Stream_EnsureRemainingCapacity(s, 17))
 			return ERROR_INTERNAL_ERROR;
 		Stream_Write_UINT16(
-		    s, WINPR_SAFE_INT_CAST(uint16_t, cmd->surfaceId)); /* surfaceId (2 bytes) */
-		Stream_Write_UINT16(s, WINPR_SAFE_INT_CAST(uint16_t, cmd->codecId)); /* codecId (2 bytes) */
+		    s, WINPR_ASSERTING_INT_CAST(uint16_t, cmd->surfaceId)); /* surfaceId (2 bytes) */
+		Stream_Write_UINT16(
+		    s, WINPR_ASSERTING_INT_CAST(uint16_t, cmd->codecId)); /* codecId (2 bytes) */
 		Stream_Write_UINT8(s, pixelFormat);     /* pixelFormat (1 byte) */
-		Stream_Write_UINT16(s, WINPR_SAFE_INT_CAST(uint16_t, cmd->left));   /* left (2 bytes) */
-		Stream_Write_UINT16(s, WINPR_SAFE_INT_CAST(uint16_t, cmd->top));    /* top (2 bytes) */
-		Stream_Write_UINT16(s, WINPR_SAFE_INT_CAST(uint16_t, cmd->right));  /* right (2 bytes) */
-		Stream_Write_UINT16(s, WINPR_SAFE_INT_CAST(uint16_t, cmd->bottom)); /* bottom (2 bytes) */
+		Stream_Write_UINT16(s, WINPR_ASSERTING_INT_CAST(uint16_t, cmd->left)); /* left (2 bytes) */
+		Stream_Write_UINT16(s, WINPR_ASSERTING_INT_CAST(uint16_t, cmd->top));  /* top (2 bytes) */
+		Stream_Write_UINT16(s,
+		                    WINPR_ASSERTING_INT_CAST(uint16_t, cmd->right)); /* right (2 bytes) */
+		Stream_Write_UINT16(s,
+		                    WINPR_ASSERTING_INT_CAST(uint16_t, cmd->bottom)); /* bottom (2 bytes) */
 		Stream_Write_UINT32(s, cmd->length);    /* bitmapDataLength (4 bytes) */
 		const size_t bitmapDataStart = Stream_GetPosition(s);
 

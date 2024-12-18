@@ -142,7 +142,7 @@ static BOOL arm_tls_connect(rdpArm* arm, rdpTls* tls, UINT32 timeout)
 	}
 
 	tls->hostname = freerdp_settings_get_string(settings, FreeRDP_GatewayHostname);
-	tls->port = MIN(UINT16_MAX, WINPR_SAFE_INT_CAST(int32_t, settings->GatewayPort));
+	tls->port = MIN(UINT16_MAX, WINPR_ASSERTING_INT_CAST(int32_t, settings->GatewayPort));
 	tls->isGatewayTransport = TRUE;
 	status = freerdp_tls_connect(tls, bufferedBio);
 	if (status < 1)
@@ -383,7 +383,7 @@ static WINPR_CIPHER_CTX* treatAuthBlob(wLog* log, const BYTE* pbInput, size_t cb
 		return NULL;
 	}
 
-	cbInput -= WINPR_SAFE_INT_CAST(size_t, (algoSz + 1)) * sizeof(WCHAR);
+	cbInput -= WINPR_ASSERTING_INT_CAST(size_t, (algoSz + 1)) * sizeof(WCHAR);
 
 	if (cbInput < 12)
 	{
@@ -394,7 +394,7 @@ static WINPR_CIPHER_CTX* treatAuthBlob(wLog* log, const BYTE* pbInput, size_t cb
 	/* BCRYPT_KEY_DATA_BLOB_HEADER */
 	wStream staticStream = { 0 };
 	wStream* s = Stream_StaticConstInit(
-	    &staticStream, pbInput + WINPR_SAFE_INT_CAST(size_t, (algoSz + 1)) * sizeof(WCHAR),
+	    &staticStream, pbInput + WINPR_ASSERTING_INT_CAST(size_t, (algoSz + 1)) * sizeof(WCHAR),
 	    cbInput);
 
 	UINT32 dwMagic = 0;
@@ -830,7 +830,7 @@ static BOOL arm_fill_rdstls(rdpArm* arm, rdpSettings* settings, const WINPR_JSON
 
 		BOOL status = freerdp_settings_set_pointer_len(
 		    settings, FreeRDP_RedirectionGuid, wGUID,
-		    WINPR_SAFE_INT_CAST(size_t, (wGUID_len + 1)) * sizeof(WCHAR));
+		    WINPR_ASSERTING_INT_CAST(size_t, (wGUID_len + 1)) * sizeof(WCHAR));
 		if (!status)
 		{
 			WLog_Print(arm->log, WLOG_ERROR, "unable to set RedirectionGuid");

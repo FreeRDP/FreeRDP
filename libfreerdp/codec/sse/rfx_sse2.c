@@ -76,7 +76,7 @@ rfx_quantization_decode_block_sse2(INT16* WINPR_RESTRICT buffer, const size_t bu
 	do
 	{
 		const __m128i la = _mm_load_si128(ptr);
-		const __m128i a = _mm_slli_epi16(la, WINPR_SAFE_INT_CAST(int, factor));
+		const __m128i a = _mm_slli_epi16(la, WINPR_ASSERTING_INT_CAST(int, factor));
 
 		_mm_store_si128(ptr, a);
 		ptr++;
@@ -112,7 +112,7 @@ rfx_quantization_encode_block_sse2(INT16* WINPR_RESTRICT buffer, const unsigned 
 	if (factor == 0)
 		return;
 
-	const __m128i half = _mm_set1_epi16(WINPR_SAFE_INT_CAST(INT16, 1 << (factor - 1)));
+	const __m128i half = _mm_set1_epi16(WINPR_ASSERTING_INT_CAST(INT16, 1 << (factor - 1)));
 
 	do
 	{
@@ -137,25 +137,25 @@ static void rfx_quantization_encode_sse2(INT16* WINPR_RESTRICT buffer,
 
 	mm_prefetch_buffer((char*)buffer, 4096 * sizeof(INT16));
 	rfx_quantization_encode_block_sse2(
-	    buffer, 1024, WINPR_SAFE_INT_CAST(INT16, quantization_values[8] - 6)); /* HL1 */
+	    buffer, 1024, WINPR_ASSERTING_INT_CAST(INT16, quantization_values[8] - 6)); /* HL1 */
 	rfx_quantization_encode_block_sse2(
-	    buffer + 1024, 1024, WINPR_SAFE_INT_CAST(INT16, quantization_values[7] - 6)); /* LH1 */
+	    buffer + 1024, 1024, WINPR_ASSERTING_INT_CAST(INT16, quantization_values[7] - 6)); /* LH1 */
 	rfx_quantization_encode_block_sse2(
-	    buffer + 2048, 1024, WINPR_SAFE_INT_CAST(INT16, quantization_values[9] - 6)); /* HH1 */
+	    buffer + 2048, 1024, WINPR_ASSERTING_INT_CAST(INT16, quantization_values[9] - 6)); /* HH1 */
 	rfx_quantization_encode_block_sse2(
-	    buffer + 3072, 256, WINPR_SAFE_INT_CAST(INT16, quantization_values[5] - 6)); /* HL2 */
+	    buffer + 3072, 256, WINPR_ASSERTING_INT_CAST(INT16, quantization_values[5] - 6)); /* HL2 */
 	rfx_quantization_encode_block_sse2(
-	    buffer + 3328, 256, WINPR_SAFE_INT_CAST(INT16, quantization_values[4] - 6)); /* LH2 */
+	    buffer + 3328, 256, WINPR_ASSERTING_INT_CAST(INT16, quantization_values[4] - 6)); /* LH2 */
 	rfx_quantization_encode_block_sse2(
-	    buffer + 3584, 256, WINPR_SAFE_INT_CAST(INT16, quantization_values[6] - 6)); /* HH2 */
+	    buffer + 3584, 256, WINPR_ASSERTING_INT_CAST(INT16, quantization_values[6] - 6)); /* HH2 */
 	rfx_quantization_encode_block_sse2(
-	    buffer + 3840, 64, WINPR_SAFE_INT_CAST(INT16, quantization_values[2] - 6)); /* HL3 */
+	    buffer + 3840, 64, WINPR_ASSERTING_INT_CAST(INT16, quantization_values[2] - 6)); /* HL3 */
 	rfx_quantization_encode_block_sse2(
-	    buffer + 3904, 64, WINPR_SAFE_INT_CAST(INT16, quantization_values[1] - 6)); /* LH3 */
+	    buffer + 3904, 64, WINPR_ASSERTING_INT_CAST(INT16, quantization_values[1] - 6)); /* LH3 */
 	rfx_quantization_encode_block_sse2(
-	    buffer + 3968, 64, WINPR_SAFE_INT_CAST(INT16, quantization_values[3] - 6)); /* HH3 */
+	    buffer + 3968, 64, WINPR_ASSERTING_INT_CAST(INT16, quantization_values[3] - 6)); /* HH3 */
 	rfx_quantization_encode_block_sse2(
-	    buffer + 4032, 64, WINPR_SAFE_INT_CAST(INT16, quantization_values[0] - 6)); /* LL3 */
+	    buffer + 4032, 64, WINPR_ASSERTING_INT_CAST(INT16, quantization_values[0] - 6)); /* LL3 */
 	rfx_quantization_encode_block_sse2(buffer, 4096, 5);
 }
 

@@ -72,7 +72,7 @@ static SSIZE_T stream_sprintf(wStream* s, WINPR_FORMAT_ARG const char* fmt, ...)
 
 	char* ptr = Stream_PointerAs(s, char);
 	va_start(ap, fmt);
-	const int rc2 = vsnprintf(ptr, WINPR_SAFE_INT_CAST(size_t, rc) + 1, fmt, ap);
+	const int rc2 = vsnprintf(ptr, WINPR_ASSERTING_INT_CAST(size_t, rc) + 1, fmt, ap);
 	va_end(ap);
 	if (rc != rc2)
 		return -23;

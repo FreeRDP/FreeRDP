@@ -91,8 +91,8 @@ static INLINE BOOL avc420_yuv_to_rgb(const BYTE* WINPR_RESTRICT pYUVData[3],
 	pYUVPoint[1] = pYUVData[1] + 1ULL * rect->top / 2 * iStride[1] + rect->left / 2;
 	pYUVPoint[2] = pYUVData[2] + 1ULL * rect->top / 2 * iStride[2] + rect->left / 2;
 
-	roi.width = WINPR_SAFE_INT_CAST(uint32_t, width);
-	roi.height = WINPR_SAFE_INT_CAST(uint32_t, height);
+	roi.width = WINPR_ASSERTING_INT_CAST(uint32_t, width);
+	roi.height = WINPR_ASSERTING_INT_CAST(uint32_t, height);
 
 	if (prims->YUV420ToRGB_8u_P3AC4R(pYUVPoint, iStride, pDstPoint, nDstStep, DstFormat, &roi) !=
 	    PRIMITIVES_SUCCESS)
@@ -124,8 +124,8 @@ static INLINE BOOL avc444_yuv_to_rgb(const BYTE* WINPR_RESTRICT pYUVData[3],
 	pYUVPoint[1] = pYUVData[1] + 1ULL * rect->top * iStride[1] + rect->left;
 	pYUVPoint[2] = pYUVData[2] + 1ULL * rect->top * iStride[2] + rect->left;
 
-	roi.width = WINPR_SAFE_INT_CAST(uint32_t, width);
-	roi.height = WINPR_SAFE_INT_CAST(uint32_t, height);
+	roi.width = WINPR_ASSERTING_INT_CAST(uint32_t, width);
+	roi.height = WINPR_ASSERTING_INT_CAST(uint32_t, height);
 
 	if (prims->YUV444ToRGB_8u_P3AC4R(pYUVPoint, iStride, pDstPoint, nDstStep, DstFormat, &roi) !=
 	    PRIMITIVES_SUCCESS)
@@ -380,9 +380,9 @@ static RECTANGLE_16 clamp(YUV_CONTEXT* WINPR_RESTRICT context,
 	RECTANGLE_16 c = *rect;
 	const UINT32 height = MIN(context->height, srcHeight);
 	if (c.top > height)
-		c.top = WINPR_SAFE_INT_CAST(UINT16, height);
+		c.top = WINPR_ASSERTING_INT_CAST(UINT16, height);
 	if (c.bottom > height)
-		c.bottom = WINPR_SAFE_INT_CAST(UINT16, height);
+		c.bottom = WINPR_ASSERTING_INT_CAST(UINT16, height);
 	return c;
 }
 

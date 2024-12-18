@@ -49,7 +49,7 @@ static BOOL nsc_encode_argb_to_aycocg_sse2(NSC_CONTEXT* context, const BYTE* dat
 	const UINT16 tempWidth = ROUND_UP_TO(context->width, 8);
 	const UINT16 rw = (context->ChromaSubsamplingLevel > 0 ? tempWidth : context->width);
 
-	const BYTE ccl = WINPR_SAFE_INT_CAST(BYTE, context->ColorLossLevel);
+	const BYTE ccl = WINPR_ASSERTING_INT_CAST(BYTE, context->ColorLossLevel);
 
 	for (; y < context->height; y++)
 	{
@@ -136,97 +136,104 @@ static BOOL nsc_encode_argb_to_aycocg_sse2(NSC_CONTEXT* context, const BYTE* dat
 					src += 24;
 					break;
 				case PIXEL_FORMAT_BGR16:
-					b_val = _mm_set_epi16(
-					    WINPR_SAFE_INT_CAST(INT16, ((*(src + 15)) & 0xF8) | ((*(src + 15)) >> 5)),
-					    WINPR_SAFE_INT_CAST(INT16, ((*(src + 13)) & 0xF8) | ((*(src + 13)) >> 5)),
-					    WINPR_SAFE_INT_CAST(INT16, ((*(src + 11)) & 0xF8) | ((*(src + 11)) >> 5)),
-					    WINPR_SAFE_INT_CAST(INT16, ((*(src + 9)) & 0xF8) | ((*(src + 9)) >> 5)),
-					    WINPR_SAFE_INT_CAST(INT16, ((*(src + 7)) & 0xF8) | ((*(src + 7)) >> 5)),
-					    WINPR_SAFE_INT_CAST(INT16, ((*(src + 5)) & 0xF8) | ((*(src + 5)) >> 5)),
-					    WINPR_SAFE_INT_CAST(INT16, ((*(src + 3)) & 0xF8) | ((*(src + 3)) >> 5)),
-					    WINPR_SAFE_INT_CAST(INT16, ((*(src + 1)) & 0xF8) | ((*(src + 1)) >> 5)));
-					g_val =
-					    _mm_set_epi16(WINPR_SAFE_INT_CAST(INT16, (((*(src + 15)) & 0x07) << 5) |
-					                                                 (((*(src + 14)) & 0xE0) >> 3)),
-					                  WINPR_SAFE_INT_CAST(INT16, (((*(src + 13)) & 0x07) << 5) |
-					                                                 (((*(src + 12)) & 0xE0) >> 3)),
-					                  WINPR_SAFE_INT_CAST(INT16, (((*(src + 11)) & 0x07) << 5) |
-					                                                 (((*(src + 10)) & 0xE0) >> 3)),
-					                  WINPR_SAFE_INT_CAST(INT16, (((*(src + 9)) & 0x07) << 5) |
-					                                                 (((*(src + 8)) & 0xE0) >> 3)),
-					                  WINPR_SAFE_INT_CAST(INT16, (((*(src + 7)) & 0x07) << 5) |
-					                                                 (((*(src + 6)) & 0xE0) >> 3)),
-					                  WINPR_SAFE_INT_CAST(INT16, (((*(src + 5)) & 0x07) << 5) |
-					                                                 (((*(src + 4)) & 0xE0) >> 3)),
-					                  WINPR_SAFE_INT_CAST(INT16, (((*(src + 3)) & 0x07) << 5) |
-					                                                 (((*(src + 2)) & 0xE0) >> 3)),
-					                  WINPR_SAFE_INT_CAST(INT16, (((*(src + 1)) & 0x07) << 5) |
-					                                                 (((*src) & 0xE0) >> 3)));
-					r_val =
-					    _mm_set_epi16(WINPR_SAFE_INT_CAST(INT16, (((*(src + 14)) & 0x1F) << 3) |
-					                                                 (((*(src + 14)) >> 2) & 0x07)),
-					                  WINPR_SAFE_INT_CAST(INT16, (((*(src + 12)) & 0x1F) << 3) |
-					                                                 (((*(src + 12)) >> 2) & 0x07)),
-					                  WINPR_SAFE_INT_CAST(INT16, (((*(src + 10)) & 0x1F) << 3) |
-					                                                 (((*(src + 10)) >> 2) & 0x07)),
-					                  WINPR_SAFE_INT_CAST(INT16, (((*(src + 8)) & 0x1F) << 3) |
-					                                                 (((*(src + 8)) >> 2) & 0x07)),
-					                  WINPR_SAFE_INT_CAST(INT16, (((*(src + 6)) & 0x1F) << 3) |
-					                                                 (((*(src + 6)) >> 2) & 0x07)),
-					                  WINPR_SAFE_INT_CAST(INT16, (((*(src + 4)) & 0x1F) << 3) |
-					                                                 (((*(src + 4)) >> 2) & 0x07)),
-					                  WINPR_SAFE_INT_CAST(INT16, (((*(src + 2)) & 0x1F) << 3) |
-					                                                 (((*(src + 2)) >> 2) & 0x07)),
-					                  WINPR_SAFE_INT_CAST(INT16, (((*src) & 0x1F) << 3) |
-					                                                 (((*src) >> 2) & 0x07)));
+					b_val = _mm_set_epi16(WINPR_ASSERTING_INT_CAST(INT16, ((*(src + 15)) & 0xF8) |
+					                                                          ((*(src + 15)) >> 5)),
+					                      WINPR_ASSERTING_INT_CAST(INT16, ((*(src + 13)) & 0xF8) |
+					                                                          ((*(src + 13)) >> 5)),
+					                      WINPR_ASSERTING_INT_CAST(INT16, ((*(src + 11)) & 0xF8) |
+					                                                          ((*(src + 11)) >> 5)),
+					                      WINPR_ASSERTING_INT_CAST(INT16, ((*(src + 9)) & 0xF8) |
+					                                                          ((*(src + 9)) >> 5)),
+					                      WINPR_ASSERTING_INT_CAST(INT16, ((*(src + 7)) & 0xF8) |
+					                                                          ((*(src + 7)) >> 5)),
+					                      WINPR_ASSERTING_INT_CAST(INT16, ((*(src + 5)) & 0xF8) |
+					                                                          ((*(src + 5)) >> 5)),
+					                      WINPR_ASSERTING_INT_CAST(INT16, ((*(src + 3)) & 0xF8) |
+					                                                          ((*(src + 3)) >> 5)),
+					                      WINPR_ASSERTING_INT_CAST(INT16, ((*(src + 1)) & 0xF8) |
+					                                                          ((*(src + 1)) >> 5)));
+					g_val = _mm_set_epi16(
+					    WINPR_ASSERTING_INT_CAST(INT16, (((*(src + 15)) & 0x07) << 5) |
+					                                        (((*(src + 14)) & 0xE0) >> 3)),
+					    WINPR_ASSERTING_INT_CAST(INT16, (((*(src + 13)) & 0x07) << 5) |
+					                                        (((*(src + 12)) & 0xE0) >> 3)),
+					    WINPR_ASSERTING_INT_CAST(INT16, (((*(src + 11)) & 0x07) << 5) |
+					                                        (((*(src + 10)) & 0xE0) >> 3)),
+					    WINPR_ASSERTING_INT_CAST(INT16, (((*(src + 9)) & 0x07) << 5) |
+					                                        (((*(src + 8)) & 0xE0) >> 3)),
+					    WINPR_ASSERTING_INT_CAST(INT16, (((*(src + 7)) & 0x07) << 5) |
+					                                        (((*(src + 6)) & 0xE0) >> 3)),
+					    WINPR_ASSERTING_INT_CAST(INT16, (((*(src + 5)) & 0x07) << 5) |
+					                                        (((*(src + 4)) & 0xE0) >> 3)),
+					    WINPR_ASSERTING_INT_CAST(INT16, (((*(src + 3)) & 0x07) << 5) |
+					                                        (((*(src + 2)) & 0xE0) >> 3)),
+					    WINPR_ASSERTING_INT_CAST(INT16, (((*(src + 1)) & 0x07) << 5) |
+					                                        (((*src) & 0xE0) >> 3)));
+					r_val = _mm_set_epi16(
+					    WINPR_ASSERTING_INT_CAST(INT16, (((*(src + 14)) & 0x1F) << 3) |
+					                                        (((*(src + 14)) >> 2) & 0x07)),
+					    WINPR_ASSERTING_INT_CAST(INT16, (((*(src + 12)) & 0x1F) << 3) |
+					                                        (((*(src + 12)) >> 2) & 0x07)),
+					    WINPR_ASSERTING_INT_CAST(INT16, (((*(src + 10)) & 0x1F) << 3) |
+					                                        (((*(src + 10)) >> 2) & 0x07)),
+					    WINPR_ASSERTING_INT_CAST(INT16, (((*(src + 8)) & 0x1F) << 3) |
+					                                        (((*(src + 8)) >> 2) & 0x07)),
+					    WINPR_ASSERTING_INT_CAST(INT16, (((*(src + 6)) & 0x1F) << 3) |
+					                                        (((*(src + 6)) >> 2) & 0x07)),
+					    WINPR_ASSERTING_INT_CAST(INT16, (((*(src + 4)) & 0x1F) << 3) |
+					                                        (((*(src + 4)) >> 2) & 0x07)),
+					    WINPR_ASSERTING_INT_CAST(INT16, (((*(src + 2)) & 0x1F) << 3) |
+					                                        (((*(src + 2)) >> 2) & 0x07)),
+					    WINPR_ASSERTING_INT_CAST(INT16,
+					                             (((*src) & 0x1F) << 3) | (((*src) >> 2) & 0x07)));
 					a_val = _mm_set1_epi16(0xFF);
 					src += 16;
 					break;
 
 				case PIXEL_FORMAT_RGB16:
 					r_val = _mm_set_epi16(
-					    WINPR_SAFE_INT_CAST(INT16, ((src[15] & 0xF8) | (src[15] >> 5))),
-					    WINPR_SAFE_INT_CAST(INT16, ((src[13] & 0xF8) | (src[13] >> 5))),
-					    WINPR_SAFE_INT_CAST(INT16, ((src[11] & 0xF8) | (src[11] >> 5))),
-					    WINPR_SAFE_INT_CAST(INT16, ((src[9] & 0xF8) | (src[9] >> 5))),
-					    WINPR_SAFE_INT_CAST(INT16, ((src[7] & 0xF8) | (src[7] >> 5))),
-					    WINPR_SAFE_INT_CAST(INT16, ((src[5] & 0xF8) | (src[5] >> 5))),
-					    WINPR_SAFE_INT_CAST(INT16, ((src[3] & 0xF8) | (src[3] >> 5))),
-					    WINPR_SAFE_INT_CAST(INT16, ((src[1] & 0xF8) | (src[1] >> 5))));
-					g_val =
-					    _mm_set_epi16(WINPR_SAFE_INT_CAST(INT16, (((*(src + 15)) & 0x07) << 5) |
-					                                                 (((*(src + 14)) & 0xE0) >> 3)),
-					                  WINPR_SAFE_INT_CAST(INT16, (((*(src + 13)) & 0x07) << 5) |
-					                                                 (((*(src + 12)) & 0xE0) >> 3)),
-					                  WINPR_SAFE_INT_CAST(INT16, (((*(src + 11)) & 0x07) << 5) |
-					                                                 (((*(src + 10)) & 0xE0) >> 3)),
-					                  WINPR_SAFE_INT_CAST(INT16, (((*(src + 9)) & 0x07) << 5) |
-					                                                 (((*(src + 8)) & 0xE0) >> 3)),
-					                  WINPR_SAFE_INT_CAST(INT16, (((*(src + 7)) & 0x07) << 5) |
-					                                                 (((*(src + 6)) & 0xE0) >> 3)),
-					                  WINPR_SAFE_INT_CAST(INT16, (((*(src + 5)) & 0x07) << 5) |
-					                                                 (((*(src + 4)) & 0xE0) >> 3)),
-					                  WINPR_SAFE_INT_CAST(INT16, (((*(src + 3)) & 0x07) << 5) |
-					                                                 (((*(src + 2)) & 0xE0) >> 3)),
-					                  WINPR_SAFE_INT_CAST(INT16, (((*(src + 1)) & 0x07) << 5) |
-					                                                 (((*src) & 0xE0) >> 3)));
-					b_val =
-					    _mm_set_epi16(WINPR_SAFE_INT_CAST(INT16, (((*(src + 14)) & 0x1F) << 3) |
-					                                                 (((*(src + 14)) >> 2) & 0x07)),
-					                  WINPR_SAFE_INT_CAST(INT16, (((*(src + 12)) & 0x1F) << 3) |
-					                                                 (((*(src + 12)) >> 2) & 0x07)),
-					                  WINPR_SAFE_INT_CAST(INT16, (((*(src + 10)) & 0x1F) << 3) |
-					                                                 (((*(src + 10)) >> 2) & 0x07)),
-					                  WINPR_SAFE_INT_CAST(INT16, (((*(src + 8)) & 0x1F) << 3) |
-					                                                 (((*(src + 8)) >> 2) & 0x07)),
-					                  WINPR_SAFE_INT_CAST(INT16, (((*(src + 6)) & 0x1F) << 3) |
-					                                                 (((*(src + 6)) >> 2) & 0x07)),
-					                  WINPR_SAFE_INT_CAST(INT16, (((*(src + 4)) & 0x1F) << 3) |
-					                                                 (((*(src + 4)) >> 2) & 0x07)),
-					                  WINPR_SAFE_INT_CAST(INT16, (((*(src + 2)) & 0x1F) << 3) |
-					                                                 (((*(src + 2)) >> 2) & 0x07)),
-					                  WINPR_SAFE_INT_CAST(INT16, (((*src) & 0x1F) << 3) |
-					                                                 (((*src) >> 2) & 0x07)));
+					    WINPR_ASSERTING_INT_CAST(INT16, ((src[15] & 0xF8) | (src[15] >> 5))),
+					    WINPR_ASSERTING_INT_CAST(INT16, ((src[13] & 0xF8) | (src[13] >> 5))),
+					    WINPR_ASSERTING_INT_CAST(INT16, ((src[11] & 0xF8) | (src[11] >> 5))),
+					    WINPR_ASSERTING_INT_CAST(INT16, ((src[9] & 0xF8) | (src[9] >> 5))),
+					    WINPR_ASSERTING_INT_CAST(INT16, ((src[7] & 0xF8) | (src[7] >> 5))),
+					    WINPR_ASSERTING_INT_CAST(INT16, ((src[5] & 0xF8) | (src[5] >> 5))),
+					    WINPR_ASSERTING_INT_CAST(INT16, ((src[3] & 0xF8) | (src[3] >> 5))),
+					    WINPR_ASSERTING_INT_CAST(INT16, ((src[1] & 0xF8) | (src[1] >> 5))));
+					g_val = _mm_set_epi16(
+					    WINPR_ASSERTING_INT_CAST(INT16, (((*(src + 15)) & 0x07) << 5) |
+					                                        (((*(src + 14)) & 0xE0) >> 3)),
+					    WINPR_ASSERTING_INT_CAST(INT16, (((*(src + 13)) & 0x07) << 5) |
+					                                        (((*(src + 12)) & 0xE0) >> 3)),
+					    WINPR_ASSERTING_INT_CAST(INT16, (((*(src + 11)) & 0x07) << 5) |
+					                                        (((*(src + 10)) & 0xE0) >> 3)),
+					    WINPR_ASSERTING_INT_CAST(INT16, (((*(src + 9)) & 0x07) << 5) |
+					                                        (((*(src + 8)) & 0xE0) >> 3)),
+					    WINPR_ASSERTING_INT_CAST(INT16, (((*(src + 7)) & 0x07) << 5) |
+					                                        (((*(src + 6)) & 0xE0) >> 3)),
+					    WINPR_ASSERTING_INT_CAST(INT16, (((*(src + 5)) & 0x07) << 5) |
+					                                        (((*(src + 4)) & 0xE0) >> 3)),
+					    WINPR_ASSERTING_INT_CAST(INT16, (((*(src + 3)) & 0x07) << 5) |
+					                                        (((*(src + 2)) & 0xE0) >> 3)),
+					    WINPR_ASSERTING_INT_CAST(INT16, (((*(src + 1)) & 0x07) << 5) |
+					                                        (((*src) & 0xE0) >> 3)));
+					b_val = _mm_set_epi16(
+					    WINPR_ASSERTING_INT_CAST(INT16, (((*(src + 14)) & 0x1F) << 3) |
+					                                        (((*(src + 14)) >> 2) & 0x07)),
+					    WINPR_ASSERTING_INT_CAST(INT16, (((*(src + 12)) & 0x1F) << 3) |
+					                                        (((*(src + 12)) >> 2) & 0x07)),
+					    WINPR_ASSERTING_INT_CAST(INT16, (((*(src + 10)) & 0x1F) << 3) |
+					                                        (((*(src + 10)) >> 2) & 0x07)),
+					    WINPR_ASSERTING_INT_CAST(INT16, (((*(src + 8)) & 0x1F) << 3) |
+					                                        (((*(src + 8)) >> 2) & 0x07)),
+					    WINPR_ASSERTING_INT_CAST(INT16, (((*(src + 6)) & 0x1F) << 3) |
+					                                        (((*(src + 6)) >> 2) & 0x07)),
+					    WINPR_ASSERTING_INT_CAST(INT16, (((*(src + 4)) & 0x1F) << 3) |
+					                                        (((*(src + 4)) >> 2) & 0x07)),
+					    WINPR_ASSERTING_INT_CAST(INT16, (((*(src + 2)) & 0x1F) << 3) |
+					                                        (((*(src + 2)) >> 2) & 0x07)),
+					    WINPR_ASSERTING_INT_CAST(INT16,
+					                             (((*src) & 0x1F) << 3) | (((*src) >> 2) & 0x07)));
 					a_val = _mm_set1_epi16(0xFF);
 					src += 16;
 					break;

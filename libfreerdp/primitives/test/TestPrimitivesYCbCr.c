@@ -1639,8 +1639,9 @@ static int test_PrimitivesYCbCr(const primitives_t* prims, UINT32 format, prim_s
 		CopyMemory(pSrcDst[2], pYCbCr[2], srcSize);
 		PROFILER_ENTER(prof1)
 		cnv.pi = pSrcDst;
-		status = prims->yCbCrToRGB_16s16s_P3P3(cnv.cpi, WINPR_SAFE_INT_CAST(int, srcStride),
-		                                       pSrcDst, WINPR_SAFE_INT_CAST(int, srcStride), &roi);
+		status =
+		    prims->yCbCrToRGB_16s16s_P3P3(cnv.cpi, WINPR_ASSERTING_INT_CAST(int, srcStride),
+		                                  pSrcDst, WINPR_ASSERTING_INT_CAST(int, srcStride), &roi);
 		PROFILER_EXIT(prof1)
 
 		if (status != PRIMITIVES_SUCCESS)

@@ -307,7 +307,7 @@ static BOOL rdpsnd_pulse_set_format_spec(rdpsndPulsePlugin* pulse, const AUDIO_F
 		return FALSE;
 
 	sample_spec.rate = format->nSamplesPerSec;
-	sample_spec.channels = WINPR_SAFE_INT_CAST(uint8_t, format->nChannels);
+	sample_spec.channels = WINPR_ASSERTING_INT_CAST(uint8_t, format->nChannels);
 
 	switch (format->wFormatTag)
 	{

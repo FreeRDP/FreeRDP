@@ -206,8 +206,8 @@ static int xcrush_append_chunk(XCRUSH_CONTEXT* WINPR_RESTRICT xcrush,
 
 	if (size >= 15)
 	{
-		const UINT16 seed = xcrush_update_hash(&data[*beg], WINPR_SAFE_INT_CAST(UINT16, size));
-		xcrush->Signatures[xcrush->SignatureIndex].size = WINPR_SAFE_INT_CAST(UINT16, size);
+		const UINT16 seed = xcrush_update_hash(&data[*beg], WINPR_ASSERTING_INT_CAST(UINT16, size));
+		xcrush->Signatures[xcrush->SignatureIndex].size = WINPR_ASSERTING_INT_CAST(UINT16, size);
 		xcrush->Signatures[xcrush->SignatureIndex].seed = seed;
 		xcrush->SignatureIndex++;
 		*beg = end;
@@ -402,7 +402,7 @@ static int xcrush_insert_chunk(XCRUSH_CONTEXT* WINPR_RESTRICT xcrush,
 	}
 
 	xcrush->Chunks[index].next = xcrush->NextChunks[seed] & 0xFFFF;
-	xcrush->NextChunks[seed] = WINPR_SAFE_INT_CAST(UINT16, index);
+	xcrush->NextChunks[seed] = WINPR_ASSERTING_INT_CAST(UINT16, index);
 	return 1;
 }
 
@@ -699,7 +699,7 @@ static int xcrush_generate_output(XCRUSH_CONTEXT* WINPR_RESTRICT xcrush,
 	if (&OutputBuffer[2] >= &OutputBuffer[OutputSize])
 		return -6001; /* error */
 
-	winpr_Data_Write_UINT16(OutputBuffer, WINPR_SAFE_INT_CAST(UINT16, MatchCount));
+	winpr_Data_Write_UINT16(OutputBuffer, WINPR_ASSERTING_INT_CAST(UINT16, MatchCount));
 	MatchDetails = (RDP61_MATCH_DETAILS*)&OutputBuffer[2];
 	Literals = (BYTE*)&MatchDetails[MatchCount];
 
@@ -710,14 +710,14 @@ static int xcrush_generate_output(XCRUSH_CONTEXT* WINPR_RESTRICT xcrush,
 	{
 		const UINT32 len = xcrush->OptimizedMatches[MatchIndex].MatchLength;
 		winpr_Data_Write_UINT16(&MatchDetails[MatchIndex].MatchLength,
-		                        WINPR_SAFE_INT_CAST(UINT16, len));
+		                        WINPR_ASSERTING_INT_CAST(UINT16, len));
 
 		const UINT32 moff = xcrush->OptimizedMatches[MatchIndex].MatchOffset;
 		WINPR_ASSERT(moff >= HistoryOffset);
 
 		const UINT32 off = moff - HistoryOffset;
 		winpr_Data_Write_UINT16(&MatchDetails[MatchIndex].MatchOutputOffset,
-		                        WINPR_SAFE_INT_CAST(UINT16, off));
+		                        WINPR_ASSERTING_INT_CAST(UINT16, off));
 		winpr_Data_Write_UINT32(&MatchDetails[MatchIndex].MatchHistoryOffset,
 		                        xcrush->OptimizedMatches[MatchIndex].ChunkOffset);
 	}
@@ -771,7 +771,7 @@ static INLINE size_t xcrush_copy_bytes_no_overlap(BYTE* WINPR_RESTRICT dst,
 {
 	// src and dst overlaps
 	// we should copy the area that doesn't overlap repeatedly
-	const size_t diff = WINPR_SAFE_INT_CAST(size_t, (dst > src) ? dst - src : src - dst);
+	const size_t diff = WINPR_ASSERTING_INT_CAST(size_t, (dst > src) ? dst - src : src - dst);
 	const size_t rest = num % diff;
 	const size_t end = num - rest;
 
@@ -906,7 +906,7 @@ static int xcrush_decompress_l1(XCRUSH_CONTEXT* WINPR_RESTRICT xcrush,
 
 	if (Literals < pSrcEnd)
 	{
-		OutputLength = WINPR_SAFE_INT_CAST(size_t, pSrcEnd - Literals);
+		OutputLength = WINPR_ASSERTING_INT_CAST(size_t, pSrcEnd - Literals);
 
 		if ((&HistoryPtr[OutputLength] >= HistoryBufferEnd) || (&Literals[OutputLength] > pSrcEnd))
 			return -1012;

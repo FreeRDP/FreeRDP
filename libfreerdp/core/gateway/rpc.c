@@ -769,7 +769,7 @@ static BOOL rpc_channel_tls_connect(RpcChannel* channel, UINT32 timeout)
 		return FALSE;
 
 	tls->hostname = settings->GatewayHostname;
-	tls->port = WINPR_SAFE_INT_CAST(int32_t, MIN(UINT16_MAX, settings->GatewayPort));
+	tls->port = WINPR_ASSERTING_INT_CAST(int32_t, MIN(UINT16_MAX, settings->GatewayPort));
 	tls->isGatewayTransport = TRUE;
 	int tlsStatus = freerdp_tls_connect(tls, bufferedBio);
 

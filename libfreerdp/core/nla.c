@@ -1562,8 +1562,8 @@ static BOOL nla_encode_ts_credentials(rdpNla* nla)
 			/* keySpec [0] INTEGER */
 			if (!WinPrAsn1EncContextualInteger(
 			        enc, 0,
-			        WINPR_SAFE_INT_CAST(WinPrAsn1_INTEGER,
-			                            freerdp_settings_get_uint32(settings, FreeRDP_KeySpec))))
+			        WINPR_ASSERTING_INT_CAST(
+			            WinPrAsn1_INTEGER, freerdp_settings_get_uint32(settings, FreeRDP_KeySpec))))
 				goto out;
 
 			for (size_t i = 0; i < ARRAYSIZE(cspData_fields); i++)
@@ -1773,7 +1773,7 @@ BOOL nla_send(rdpNla* nla)
 	/* version [0] INTEGER */
 	WLog_DBG(TAG, "   ----->> protocol version %" PRIu32, nla->version);
 	if (!WinPrAsn1EncContextualInteger(enc, 0,
-	                                   WINPR_SAFE_INT_CAST(WinPrAsn1_INTEGER, nla->version)))
+	                                   WINPR_ASSERTING_INT_CAST(WinPrAsn1_INTEGER, nla->version)))
 		goto fail;
 
 	/* negoTokens [1] SEQUENCE OF SEQUENCE */
@@ -1812,8 +1812,8 @@ BOOL nla_send(rdpNla* nla)
 	{
 		WLog_DBG(TAG, "   ----->> error code %s 0x%08" PRIx32, NtStatus2Tag(nla->errorCode),
 		         nla->errorCode);
-		if (!WinPrAsn1EncContextualInteger(enc, 4,
-		                                   WINPR_SAFE_INT_CAST(WinPrAsn1_INTEGER, nla->errorCode)))
+		if (!WinPrAsn1EncContextualInteger(
+		        enc, 4, WINPR_ASSERTING_INT_CAST(WinPrAsn1_INTEGER, nla->errorCode)))
 			goto fail;
 	}
 

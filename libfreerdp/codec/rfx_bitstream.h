@@ -45,7 +45,7 @@ extern "C"
 		bs->buffer = (buffer);
 
 		WINPR_ASSERT(nbytes <= UINT32_MAX);
-		bs->nbytes = WINPR_SAFE_INT_CAST(uint32_t, nbytes);
+		bs->nbytes = WINPR_ASSERTING_INT_CAST(uint32_t, nbytes);
 		bs->byte_pos = 0;
 		bs->bits_left = 8;
 	}
@@ -74,7 +74,7 @@ extern "C"
 
 	static inline void rfx_bitstream_put_bits(RFX_BITSTREAM* bs, uint32_t _bits, uint32_t _nbits)
 	{
-		UINT16 bits = WINPR_SAFE_INT_CAST(UINT16, _bits);
+		UINT16 bits = WINPR_ASSERTING_INT_CAST(UINT16, _bits);
 
 		uint32_t nbits = (_nbits);
 		while (bs->byte_pos < bs->nbytes && nbits > 0)

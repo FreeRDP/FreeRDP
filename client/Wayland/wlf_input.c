@@ -74,8 +74,9 @@ BOOL wlf_handle_pointer_enter(freerdp* instance, const UwacPointerEnterLeaveEven
 		return FALSE;
 
 	cctx = (rdpClientContext*)instance->context;
-	return freerdp_client_send_button_event(
-	    cctx, FALSE, PTR_FLAGS_MOVE, WINPR_SAFE_INT_CAST(int, x), WINPR_SAFE_INT_CAST(int, y));
+	return freerdp_client_send_button_event(cctx, FALSE, PTR_FLAGS_MOVE,
+	                                        WINPR_ASSERTING_INT_CAST(int, x),
+	                                        WINPR_ASSERTING_INT_CAST(int, y));
 }
 
 BOOL wlf_handle_pointer_motion(freerdp* instance, const UwacPointerMotionEvent* ev)
@@ -95,8 +96,8 @@ BOOL wlf_handle_pointer_motion(freerdp* instance, const UwacPointerMotionEvent* 
 		return FALSE;
 
 	return freerdp_client_send_button_event(cctx, FALSE, PTR_FLAGS_MOVE,
-	                                        WINPR_SAFE_INT_CAST(int32_t, x),
-	                                        WINPR_SAFE_INT_CAST(int32_t, y));
+	                                        WINPR_ASSERTING_INT_CAST(int32_t, x),
+	                                        WINPR_ASSERTING_INT_CAST(int32_t, y));
 }
 
 BOOL wlf_handle_pointer_buttons(freerdp* instance, const UwacPointerButtonEvent* ev)
@@ -149,8 +150,8 @@ BOOL wlf_handle_pointer_buttons(freerdp* instance, const UwacPointerButtonEvent*
 			return TRUE;
 	}
 
-	const INT32 cx = WINPR_SAFE_INT_CAST(int32_t, x);
-	const INT32 cy = WINPR_SAFE_INT_CAST(int32_t, y);
+	const INT32 cx = WINPR_ASSERTING_INT_CAST(int32_t, x);
+	const INT32 cy = WINPR_ASSERTING_INT_CAST(int32_t, y);
 
 	if ((flags & ~PTR_FLAGS_DOWN) != 0)
 		return freerdp_client_send_button_event(cctx, FALSE, flags, cx, cy);
@@ -450,5 +451,5 @@ BOOL wlf_handle_touch_motion(freerdp* instance, const UwacTouchMotion* ev)
 		return FALSE;
 
 	return freerdp_client_handle_touch(&wlf->common, FREERDP_TOUCH_MOTION, 0,
-	                                   WINPR_SAFE_INT_CAST(uint32_t, ev->id), x, y);
+	                                   WINPR_ASSERTING_INT_CAST(uint32_t, ev->id), x, y);
 }

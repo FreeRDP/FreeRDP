@@ -128,7 +128,7 @@ static BOOL nsc_encode_argb_to_aycocg(NSC_CONTEXT* WINPR_RESTRICT context,
 
 	UINT16 tempWidth = ROUND_UP_TO(context->width, 8);
 	const UINT16 rw = (context->ChromaSubsamplingLevel ? tempWidth : context->width);
-	const BYTE ccl = WINPR_SAFE_INT_CAST(BYTE, context->ColorLossLevel);
+	const BYTE ccl = WINPR_ASSERTING_INT_CAST(BYTE, context->ColorLossLevel);
 
 	for (; y < context->height; y++)
 	{
@@ -359,7 +359,7 @@ static UINT32 nsc_rle_encode(const BYTE* WINPR_RESTRICT in, BYTE* WINPR_RESTRICT
 			*out++ = *in;
 			*out++ = *in;
 			WINPR_ASSERT(runlength >= 2);
-			*out++ = WINPR_SAFE_INT_CAST(BYTE, runlength - 2);
+			*out++ = WINPR_ASSERTING_INT_CAST(BYTE, runlength - 2);
 			runlength = 1;
 			planeSize += 3;
 		}
@@ -491,8 +491,8 @@ BOOL nsc_compose_message(NSC_CONTEXT* WINPR_RESTRICT context, wStream* WINPR_RES
 	if (!context || !s || !data)
 		return FALSE;
 
-	context->width = WINPR_SAFE_INT_CAST(UINT16, width);
-	context->height = WINPR_SAFE_INT_CAST(UINT16, height);
+	context->width = WINPR_ASSERTING_INT_CAST(UINT16, width);
+	context->height = WINPR_ASSERTING_INT_CAST(UINT16, height);
 
 	if (!nsc_context_initialize_encode(context))
 		return FALSE;
@@ -517,8 +517,9 @@ BOOL nsc_compose_message(NSC_CONTEXT* WINPR_RESTRICT context, wStream* WINPR_RES
 	message.GreenChromaPlaneByteCount = context->PlaneByteCount[2];
 	message.AlphaPlaneByteCount = context->PlaneByteCount[3];
 
-	message.ColorLossLevel = WINPR_SAFE_INT_CAST(BYTE, context->ColorLossLevel);
-	message.ChromaSubsamplingLevel = WINPR_SAFE_INT_CAST(BYTE, context->ChromaSubsamplingLevel);
+	message.ColorLossLevel = WINPR_ASSERTING_INT_CAST(BYTE, context->ColorLossLevel);
+	message.ChromaSubsamplingLevel =
+	    WINPR_ASSERTING_INT_CAST(BYTE, context->ChromaSubsamplingLevel);
 	return nsc_write_message(context, s, &message);
 }
 

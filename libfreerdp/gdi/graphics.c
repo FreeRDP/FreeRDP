@@ -125,10 +125,10 @@ static BOOL gdi_Bitmap_Paint(rdpContext* context, rdpBitmap* bitmap)
 	gdiBitmap* gdi_bitmap = (gdiBitmap*)bitmap;
 	UINT32 width = bitmap->right - bitmap->left + 1;
 	UINT32 height = bitmap->bottom - bitmap->top + 1;
-	return gdi_BitBlt(context->gdi->primary->hdc, WINPR_SAFE_INT_CAST(int, bitmap->left),
-	                  WINPR_SAFE_INT_CAST(int, bitmap->top), WINPR_SAFE_INT_CAST(int, width),
-	                  WINPR_SAFE_INT_CAST(int, height), gdi_bitmap->hdc, 0, 0, GDI_SRCCOPY,
-	                  &context->gdi->palette);
+	return gdi_BitBlt(context->gdi->primary->hdc, WINPR_ASSERTING_INT_CAST(int, bitmap->left),
+	                  WINPR_ASSERTING_INT_CAST(int, bitmap->top),
+	                  WINPR_ASSERTING_INT_CAST(int, width), WINPR_ASSERTING_INT_CAST(int, height),
+	                  gdi_bitmap->hdc, 0, 0, GDI_SRCCOPY, &context->gdi->palette);
 }
 
 static BOOL gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap, const BYTE* pSrcData,
@@ -165,7 +165,7 @@ static BOOL gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap, const 
 
 			if (!rfx_process_message(context->codecs->rfx, pSrcData, SrcSize, bitmap->left,
 			                         bitmap->top, bitmap->data, bitmap->format, gdi->stride,
-			                         WINPR_SAFE_INT_CAST(UINT32, gdi->height), &invalidRegion))
+			                         WINPR_ASSERTING_INT_CAST(UINT32, gdi->height), &invalidRegion))
 			{
 				WLog_ERR(TAG, "rfx_process_message failed");
 				return FALSE;

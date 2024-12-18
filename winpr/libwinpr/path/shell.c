@@ -390,7 +390,8 @@ char* GetKnownPath(eKnownPathTypes id)
 	}
 
 	if (!path)
-		WLog_WARN(TAG, "Path %s is %p", GetKnownPathIdString(WINPR_SAFE_INT_CAST(int, id)), path);
+		WLog_WARN(TAG, "Path %s is %p", GetKnownPathIdString(WINPR_ASSERTING_INT_CAST(int, id)),
+		          path);
 	return path;
 }
 

@@ -991,8 +991,8 @@ static state_run_t peer_recv_callback_internal(rdpTransport* transport, wStream*
 					const UINT32 h = freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight);
 					const rdpMonitor primary = { .x = 0,
 						                         .y = 0,
-						                         .width = WINPR_SAFE_INT_CAST(int32_t, w),
-						                         .height = WINPR_SAFE_INT_CAST(int32_t, h),
+						                         .width = WINPR_ASSERTING_INT_CAST(int32_t, w),
+						                         .height = WINPR_ASSERTING_INT_CAST(int32_t, h),
 						                         .is_primary = TRUE,
 						                         .orig_screen = 0,
 						                         .attributes = { .physicalWidth = w,

@@ -1282,7 +1282,7 @@ SSIZE_T client_common_retry_dialog(freerdp* instance, const char* what, size_t c
 
 	WLog_INFO(TAG, "[%s] retry %" PRIuz "/%" PRIuz ", delaying %" PRIuz "ms before next attempt",
 	          what, current, max, delay);
-	return WINPR_SAFE_INT_CAST(SSIZE_T, delay);
+	return WINPR_ASSERTING_INT_CAST(SSIZE_T, delay);
 }
 
 BOOL client_auto_reconnect(freerdp* instance)
@@ -1662,8 +1662,8 @@ BOOL freerdp_client_send_button_event(rdpClientContext* cctx, BOOL relative, UIN
 	if (relative && haveRelative)
 	{
 		return freerdp_input_send_rel_mouse_event(cctx->context.input, mflags,
-		                                          WINPR_SAFE_INT_CAST(int16_t, x),
-		                                          WINPR_SAFE_INT_CAST(int16_t, y));
+		                                          WINPR_ASSERTING_INT_CAST(int16_t, x),
+		                                          WINPR_ASSERTING_INT_CAST(int16_t, y));
 	}
 
 #if defined(CHANNEL_AINPUT_CLIENT)
@@ -1721,8 +1721,8 @@ BOOL freerdp_client_send_extended_button_event(rdpClientContext* cctx, BOOL rela
 	if (relative && haveRelative)
 	{
 		return freerdp_input_send_rel_mouse_event(cctx->context.input, mflags,
-		                                          WINPR_SAFE_INT_CAST(int16_t, x),
-		                                          WINPR_SAFE_INT_CAST(int16_t, y));
+		                                          WINPR_ASSERTING_INT_CAST(int16_t, x),
+		                                          WINPR_ASSERTING_INT_CAST(int16_t, y));
 	}
 
 #if defined(CHANNEL_AINPUT_CLIENT)
@@ -2088,19 +2088,19 @@ BOOL freerdp_client_handle_pen(rdpClientContext* cctx, UINT32 flags, INT32 devic
 	if ((flags & FREERDP_PEN_HAS_ROTATION) != 0)
 	{
 		const unsigned arg = va_arg(args, unsigned);
-		rotation = WINPR_SAFE_INT_CAST(UINT16, arg);
+		rotation = WINPR_ASSERTING_INT_CAST(UINT16, arg);
 		fieldFlags |= RDPINPUT_PEN_CONTACT_ROTATION_PRESENT;
 	}
 	if ((flags & FREERDP_PEN_HAS_TILTX) != 0)
 	{
 		const int arg = va_arg(args, int);
-		tiltX = WINPR_SAFE_INT_CAST(INT16, arg);
+		tiltX = WINPR_ASSERTING_INT_CAST(INT16, arg);
 		fieldFlags |= RDPINPUT_PEN_CONTACT_TILTX_PRESENT;
 	}
 	if ((flags & FREERDP_PEN_HAS_TILTY) != 0)
 	{
 		const int arg = va_arg(args, int);
-		tiltY = WINPR_SAFE_INT_CAST(INT16, arg);
+		tiltY = WINPR_ASSERTING_INT_CAST(INT16, arg);
 		fieldFlags |= RDPINPUT_PEN_CONTACT_TILTY_PRESENT;
 	}
 	va_end(args);

@@ -314,7 +314,7 @@ static BOOL xf_cliprdr_is_self_owned(xfClipboard* clipboard)
 
 static void xf_cliprdr_set_raw_transfer_enabled(xfClipboard* clipboard, BOOL enabled)
 {
-	UINT32 data = WINPR_SAFE_INT_CAST(uint32_t, enabled);
+	UINT32 data = WINPR_ASSERTING_INT_CAST(uint32_t, enabled);
 	xfContext* xfc = NULL;
 
 	WINPR_ASSERT(clipboard);
@@ -950,7 +950,7 @@ static void xf_cliprdr_process_requested_data(xfClipboard* clipboard, BOOL hasDa
 	clipboard->incr_data_length = 0;
 
 	format = xf_cliprdr_get_client_format_by_id(
-	    clipboard, WINPR_SAFE_INT_CAST(uint32_t, clipboard->requestedFormatId));
+	    clipboard, WINPR_ASSERTING_INT_CAST(uint32_t, clipboard->requestedFormatId));
 
 	if (!hasData || !data || !format)
 	{
@@ -1101,7 +1101,7 @@ static BOOL xf_cliprdr_get_requested_data(xfClipboard* clipboard, Atom target)
 	WINPR_ASSERT(xfc);
 
 	const xfCliprdrFormat* format = xf_cliprdr_get_client_format_by_id(
-	    clipboard, WINPR_SAFE_INT_CAST(uint32_t, clipboard->requestedFormatId));
+	    clipboard, WINPR_ASSERTING_INT_CAST(uint32_t, clipboard->requestedFormatId));
 
 	if (!format || (format->atom != target))
 	{
@@ -1153,7 +1153,7 @@ static BOOL xf_cliprdr_get_requested_data(xfClipboard* clipboard, Atom target)
 		/* Read incremental data batch */
 		else if (LogTagAndXGetWindowProperty(
 		             TAG, xfc->display, xfc->drawable, clipboard->property_atom, 0,
-		             WINPR_SAFE_INT_CAST(int32_t, total_bytes), False, target, &type,
+		             WINPR_ASSERTING_INT_CAST(int32_t, total_bytes), False, target, &type,
 		             &format_property, &incremental_len, &length, &incremental_data) == Success)
 		{
 			has_data = append(clipboard, incremental_data, incremental_len);
@@ -1235,7 +1235,7 @@ static void xf_cliprdr_provide_data(xfClipboard* clipboard, const XSelectionEven
 	{
 		LogTagAndXChangeProperty(TAG, xfc->display, respond->requestor, respond->property,
 		                         respond->target, 8, PropModeReplace, data,
-		                         WINPR_SAFE_INT_CAST(int32_t, size));
+		                         WINPR_ASSERTING_INT_CAST(int32_t, size));
 	}
 }
 
@@ -1702,7 +1702,7 @@ static BOOL xf_cliprdr_process_property_notify(xfClipboard* clipboard, const XPr
 	         clipboard->incr_starts)
 	{
 		format = xf_cliprdr_get_client_format_by_id(
-		    clipboard, WINPR_SAFE_INT_CAST(uint32_t, clipboard->requestedFormatId));
+		    clipboard, WINPR_ASSERTING_INT_CAST(uint32_t, clipboard->requestedFormatId));
 
 		if (format)
 			xf_cliprdr_get_requested_data(clipboard, format->atom);
@@ -2134,7 +2134,7 @@ xf_cliprdr_server_format_data_request(CliprdrClientContext* context,
 	else
 		format = xf_cliprdr_get_client_format_by_id(clipboard, formatId);
 
-	clipboard->requestedFormatId = rawTransfer ? CF_RAW : WINPR_SAFE_INT_CAST(int, formatId);
+	clipboard->requestedFormatId = rawTransfer ? CF_RAW : WINPR_ASSERTING_INT_CAST(int, formatId);
 	if (!format)
 		return xf_cliprdr_send_data_response(clipboard, format, NULL, 0);
 
@@ -2593,7 +2593,7 @@ xfClipboard* xf_clipboard_new(xfContext* xfc, BOOL relieveFilenameRestriction)
 			goto fail;
 	}
 
-	clipboard->numClientFormats = WINPR_SAFE_INT_CAST(uint32_t, n);
+	clipboard->numClientFormats = WINPR_ASSERTING_INT_CAST(uint32_t, n);
 	clipboard->targets[0] = Logging_XInternAtom(xfc->log, xfc->display, "TIMESTAMP", FALSE);
 	clipboard->targets[1] = Logging_XInternAtom(xfc->log, xfc->display, "TARGETS", FALSE);
 	clipboard->numTargets = 2;

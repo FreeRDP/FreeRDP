@@ -50,8 +50,8 @@ static BOOL nsc_decode(NSC_CONTEXT* WINPR_RESTRICT context)
 
 	const UINT16 rw = ROUND_UP_TO(context->width, 8);
 	WINPR_ASSERT(context->ColorLossLevel >= 1);
-	const BYTE shift = WINPR_SAFE_INT_CAST(BYTE, context->ColorLossLevel -
-	                                                 1); /* colorloss recovery + YCoCg shift */
+	const BYTE shift = WINPR_ASSERTING_INT_CAST(BYTE, context->ColorLossLevel -
+	                                                      1); /* colorloss recovery + YCoCg shift */
 	BYTE* bmpdata = context->BitmapData;
 
 	if (!bmpdata)
@@ -82,9 +82,9 @@ static BOOL nsc_decode(NSC_CONTEXT* WINPR_RESTRICT context)
 			INT16 y_val = (INT16)*yplane;
 			INT16 co_val = (INT16)(INT8)(((INT16)*coplane) << shift);
 			INT16 cg_val = (INT16)(INT8)(((INT16)*cgplane) << shift);
-			INT16 r_val = WINPR_SAFE_INT_CAST(int16_t, y_val + co_val - cg_val);
-			INT16 g_val = WINPR_SAFE_INT_CAST(int16_t, y_val + cg_val);
-			INT16 b_val = WINPR_SAFE_INT_CAST(int16_t, y_val - co_val - cg_val);
+			INT16 r_val = WINPR_ASSERTING_INT_CAST(int16_t, y_val + co_val - cg_val);
+			INT16 g_val = WINPR_ASSERTING_INT_CAST(int16_t, y_val + cg_val);
+			INT16 b_val = WINPR_ASSERTING_INT_CAST(int16_t, y_val - co_val - cg_val);
 
 			if (pos + 4 > context->BitmapDataLength)
 				return FALSE;
@@ -475,8 +475,8 @@ BOOL nsc_process_message(NSC_CONTEXT* WINPR_RESTRICT context, UINT16 bpp, UINT32
 			return FALSE;
 	}
 
-	context->width = WINPR_SAFE_INT_CAST(UINT16, width);
-	context->height = WINPR_SAFE_INT_CAST(UINT16, height);
+	context->width = WINPR_ASSERTING_INT_CAST(UINT16, width);
+	context->height = WINPR_ASSERTING_INT_CAST(UINT16, height);
 	ret = nsc_context_initialize(context, s);
 
 	if (!ret)

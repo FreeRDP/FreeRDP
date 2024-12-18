@@ -52,7 +52,7 @@ static pstatus_t ssse3_sign_16s(const INT16* WINPR_RESTRICT pSrc, INT16* WINPR_R
 	while ((ULONG_PTR)dptr & 0x0f)
 	{
 		INT16 src = *sptr++;
-		*dptr++ = WINPR_SAFE_INT_CAST(int16_t, (src < 0) ? (-1) : ((src > 0) ? 1 : 0));
+		*dptr++ = WINPR_ASSERTING_INT_CAST(int16_t, (src < 0) ? (-1) : ((src > 0) ? 1 : 0));
 
 		if (--len == 0)
 			return PRIMITIVES_SUCCESS;
@@ -159,7 +159,7 @@ static pstatus_t ssse3_sign_16s(const INT16* WINPR_RESTRICT pSrc, INT16* WINPR_R
 	while (len--)
 	{
 		INT16 src = *sptr++;
-		*dptr++ = WINPR_SAFE_INT_CAST(int16_t, (src < 0) ? -1 : ((src > 0) ? 1 : 0));
+		*dptr++ = WINPR_ASSERTING_INT_CAST(int16_t, (src < 0) ? -1 : ((src > 0) ? 1 : 0));
 	}
 
 	return PRIMITIVES_SUCCESS;

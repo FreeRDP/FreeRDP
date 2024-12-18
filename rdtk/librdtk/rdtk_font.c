@@ -50,10 +50,10 @@ static int rdtk_font_draw_glyph(rdtkSurface* surface, uint16_t nXDst, uint16_t n
 
 	nXDst += glyph->offsetX;
 	nYDst += glyph->offsetY;
-	const size_t nXSrc = WINPR_SAFE_INT_CAST(size_t, glyph->rectX);
-	const size_t nYSrc = WINPR_SAFE_INT_CAST(size_t, glyph->rectY);
-	const size_t nWidth = WINPR_SAFE_INT_CAST(size_t, glyph->rectWidth);
-	const size_t nHeight = WINPR_SAFE_INT_CAST(size_t, glyph->rectHeight);
+	const size_t nXSrc = WINPR_ASSERTING_INT_CAST(size_t, glyph->rectX);
+	const size_t nYSrc = WINPR_ASSERTING_INT_CAST(size_t, glyph->rectY);
+	const size_t nWidth = WINPR_ASSERTING_INT_CAST(size_t, glyph->rectWidth);
+	const size_t nHeight = WINPR_ASSERTING_INT_CAST(size_t, glyph->rectHeight);
 	const uint32_t nSrcStep = font->image->scanline;
 	const uint8_t* pSrcData = font->image->data;
 	uint8_t* pDstData = surface->data;
@@ -134,7 +134,7 @@ int rdtk_font_text_draw_size(rdtkFont* font, uint16_t* width, uint16_t* height, 
 	const size_t length = strlen(text);
 	for (size_t index = 0; index < length; index++)
 	{
-		const size_t glyphIndex = WINPR_SAFE_INT_CAST(size_t, text[index] - 32);
+		const size_t glyphIndex = WINPR_ASSERTING_INT_CAST(size_t, text[index] - 32);
 
 		if (glyphIndex < font->glyphCount)
 		{
@@ -217,7 +217,7 @@ static int rdtk_font_convert_descriptor_code_to_utf8(const char* str, uint8_t* u
 	{
 		if ((str[0] > 31) && (str[0] < 127))
 		{
-			utf8[0] = WINPR_SAFE_INT_CAST(uint8_t, str[0] & 0xFF);
+			utf8[0] = WINPR_ASSERTING_INT_CAST(uint8_t, str[0] & 0xFF);
 		}
 	}
 	else

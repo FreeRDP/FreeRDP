@@ -69,7 +69,7 @@ BOOL GetUserProfileDirectoryA(HANDLE hToken, LPSTR lpProfileDir, LPDWORD lpcchSi
 		return FALSE;
 
 	const int status =
-	    getpwnam_r(token->Username, &pwd, buf, WINPR_SAFE_INT_CAST(size_t, buflen), &pw);
+	    getpwnam_r(token->Username, &pwd, buf, WINPR_ASSERTING_INT_CAST(size_t, buflen), &pw);
 
 	if ((status != 0) || !pw)
 	{
