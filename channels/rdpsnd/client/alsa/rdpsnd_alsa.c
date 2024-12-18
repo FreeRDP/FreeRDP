@@ -110,7 +110,7 @@ static int rdpsnd_alsa_set_hw_params(rdpsndAlsaPlugin* alsa)
 	 * Commonly this is (2 * period_size), but some hardware can do 8 periods per buffer.
 	 * It is also possible for the buffer size to not be an integer multiple of the period size.
 	 */
-	int interrupts_per_sec_near = 50;
+	const size_t interrupts_per_sec_near = 50;
 	const size_t bytes_per_sec =
 	    (1ull * alsa->actual_rate * alsa->aformat.wBitsPerSample / 8 * alsa->actual_channels);
 	alsa->buffer_size = buffer_size_max;

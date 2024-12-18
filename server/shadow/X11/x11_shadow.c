@@ -862,10 +862,12 @@ static int x11_shadow_screen_grab(x11ShadowSubsystem* subsystem)
 			WINPR_ASSERT(width >= 0);
 			WINPR_ASSERT(height >= 0);
 			success = freerdp_image_copy_no_overlap(
-			    surface->data, surface->format, surface->scanline, x, y, (UINT32)width,
-			    (UINT32)height, (BYTE*)image->data, subsystem->format,
-			    (UINT32)image->bytes_per_line, WINPR_SAFE_INT_CAST(UINT32, x),
-			    WINPR_SAFE_INT_CAST(UINT32, y), NULL, FREERDP_FLIP_NONE);
+			    surface->data, surface->format, surface->scanline, WINPR_SAFE_INT_CAST(uint32_t, x),
+			    WINPR_SAFE_INT_CAST(uint32_t, y), WINPR_SAFE_INT_CAST(uint32_t, width),
+			    WINPR_SAFE_INT_CAST(uint32_t, height), (BYTE*)image->data, subsystem->format,
+			    WINPR_SAFE_INT_CAST(uint32_t, image->bytes_per_line),
+			    WINPR_SAFE_INT_CAST(UINT32, x), WINPR_SAFE_INT_CAST(UINT32, y), NULL,
+			    FREERDP_FLIP_NONE);
 			LeaveCriticalSection(&surface->lock);
 			if (!success)
 				goto fail_capture;

@@ -370,7 +370,8 @@ static BOOL xf_keyboard_set_key_state(xfContext* xfc, BOOL on, int keysym)
 		return FALSE;
 	}
 
-	return XkbLockModifiers(xfc->display, XkbUseCoreKbd, keysymMask, on ? keysymMask : 0);
+	return XkbLockModifiers(xfc->display, XkbUseCoreKbd, WINPR_SAFE_INT_CAST(uint32_t, keysymMask),
+	                        on ? WINPR_SAFE_INT_CAST(uint32_t, keysymMask) : 0);
 }
 
 UINT32 xf_keyboard_get_toggle_keys_state(xfContext* xfc)

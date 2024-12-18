@@ -449,5 +449,6 @@ BOOL wlf_handle_touch_motion(freerdp* instance, const UwacTouchMotion* ev)
 	if (!scale_signed_coordinates(instance->context, &x, &y, TRUE))
 		return FALSE;
 
-	return freerdp_client_handle_touch(&wlf->common, FREERDP_TOUCH_MOTION, 0, ev->id, x, y);
+	return freerdp_client_handle_touch(&wlf->common, FREERDP_TOUCH_MOTION, 0,
+	                                   WINPR_SAFE_INT_CAST(uint32_t, ev->id), x, y);
 }
