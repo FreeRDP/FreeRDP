@@ -238,7 +238,7 @@ static UINT parallel_process_irp_write(PARALLEL_DEVICE* parallel, IRP* irp)
 			break;
 		}
 
-		Stream_Seek(irp->input, status);
+		Stream_Seek(irp->input, WINPR_ASSERTING_INT_CAST(size_t, status));
 		len -= status;
 	}
 

@@ -411,8 +411,10 @@ static BOOL video_onMappedGeometryUpdate(MAPPED_GEOMETRY* geometry)
 
 	         r->x, r->y, r->width, r->height);
 
-	presentation->surface->x = geometry->topLevelLeft + geometry->left;
-	presentation->surface->y = geometry->topLevelTop + geometry->top;
+	presentation->surface->x =
+	    WINPR_ASSERTING_INT_CAST(uint32_t, geometry->topLevelLeft + geometry->left);
+	presentation->surface->y =
+	    WINPR_ASSERTING_INT_CAST(uint32_t, geometry->topLevelTop + geometry->top);
 
 	return TRUE;
 }
@@ -481,8 +483,10 @@ static UINT video_PresentationRequest(VideoClientContext* video,
 
 		WLog_DBG(TAG, "creating presentation 0x%x", req->PresentationId);
 		priv->currentPresentation = PresentationContext_new(
-		    video, req->PresentationId, geom->topLevelLeft + geom->left,
-		    geom->topLevelTop + geom->top, req->SourceWidth, req->SourceHeight);
+		    video, req->PresentationId,
+		    WINPR_ASSERTING_INT_CAST(uint32_t, geom->topLevelLeft + geom->left),
+		    WINPR_ASSERTING_INT_CAST(uint32_t, geom->topLevelTop + geom->top), req->SourceWidth,
+		    req->SourceHeight);
 		if (!priv->currentPresentation)
 		{
 			WLog_ERR(TAG, "unable to create presentation video");

@@ -152,7 +152,8 @@ static UINT ecam_dev_sample_captured_callback(CameraDevice* dev, int streamIndex
 	}
 	stream->nSampleCredits--;
 
-	return ecam_dev_send_sample_response(dev, streamIndex, encodedSample, encodedSize);
+	return ecam_dev_send_sample_response(dev, WINPR_ASSERTING_INT_CAST(size_t, streamIndex),
+	                                     encodedSample, encodedSize);
 }
 
 static void ecam_dev_stop_stream(CameraDevice* dev, size_t streamIndex)
@@ -798,7 +799,7 @@ void ecam_dev_destroy(CameraDevice* dev)
 
 	free(dev->hlistener);
 
-	for (int i = 0; i < ECAM_DEVICE_MAX_STREAMS; i++)
+	for (size_t i = 0; i < ECAM_DEVICE_MAX_STREAMS; i++)
 		ecam_dev_stop_stream(dev, i);
 
 	free(dev);

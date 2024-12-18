@@ -167,8 +167,7 @@ static UINT remdesk_recv_ctl_version_info_pdu(RemdeskServerContext* context, wSt
 static UINT remdesk_recv_ctl_remote_control_desktop_pdu(RemdeskServerContext* context, wStream* s,
                                                         REMDESK_CHANNEL_HEADER* header)
 {
-	SSIZE_T cchStringW = 0;
-	SSIZE_T cbRaConnectionStringW = 0;
+	size_t cchStringW = 0;
 	REMDESK_CTL_REMOTE_CONTROL_DESKTOP_PDU pdu = { 0 };
 	UINT error = 0;
 	UINT32 msgLength = header->DataLength - 4;
@@ -185,7 +184,7 @@ static UINT remdesk_recv_ctl_remote_control_desktop_pdu(RemdeskServerContext* co
 		return ERROR_INVALID_DATA;
 
 	cchStringW++;
-	cbRaConnectionStringW = cchStringW * 2;
+	const size_t cbRaConnectionStringW = cchStringW * 2;
 	pdu.raConnectionString =
 	    ConvertWCharNToUtf8Alloc(raConnectionStringW, cbRaConnectionStringW / sizeof(WCHAR), NULL);
 	if (!pdu.raConnectionString)
@@ -208,31 +207,28 @@ static UINT remdesk_recv_ctl_remote_control_desktop_pdu(RemdeskServerContext* co
 static UINT remdesk_recv_ctl_authenticate_pdu(RemdeskServerContext* context, wStream* s,
                                               REMDESK_CHANNEL_HEADER* header)
 {
-	int cchStringW = 0;
-	UINT32 msgLength = 0;
-	int cbExpertBlobW = 0;
+	size_t cchTmpStringW = 0;
 	const WCHAR* expertBlobW = NULL;
-	int cbRaConnectionStringW = 0;
 	REMDESK_CTL_AUTHENTICATE_PDU pdu = { 0 };
-	msgLength = header->DataLength - 4;
+	UINT32 msgLength = header->DataLength - 4;
 	const WCHAR* pStringW = Stream_ConstPointer(s);
 	const WCHAR* raConnectionStringW = pStringW;
 
-	while ((msgLength > 0) && pStringW[cchStringW])
+	while ((msgLength > 0) && pStringW[cchTmpStringW])
 	{
 		msgLength -= 2;
-		cchStringW++;
+		cchTmpStringW++;
 	}
 
-	if (pStringW[cchStringW] || !cchStringW)
+	if (pStringW[cchTmpStringW] || !cchTmpStringW)
 		return ERROR_INVALID_DATA;
 
-	cchStringW++;
-	cbRaConnectionStringW = cchStringW * 2;
-	pStringW += cchStringW;
+	cchTmpStringW++;
+	const size_t cbRaConnectionStringW = cchTmpStringW * sizeof(WCHAR);
+	pStringW += cchTmpStringW;
 	expertBlobW = pStringW;
-	cchStringW = 0;
 
+	size_t cchStringW = 0;
 	while ((msgLength > 0) && pStringW[cchStringW])
 	{
 		msgLength -= 2;
@@ -243,7 +239,7 @@ static UINT remdesk_recv_ctl_authenticate_pdu(RemdeskServerContext* context, wSt
 		return ERROR_INVALID_DATA;
 
 	cchStringW++;
-	cbExpertBlobW = cchStringW * 2;
+	const size_t cbExpertBlobW = cchStringW * 2;
 	pdu.raConnectionString =
 	    ConvertWCharNToUtf8Alloc(raConnectionStringW, cbRaConnectionStringW / sizeof(WCHAR), NULL);
 	if (!pdu.raConnectionString)
@@ -270,7 +266,6 @@ static UINT remdesk_recv_ctl_authenticate_pdu(RemdeskServerContext* context, wSt
 static UINT remdesk_recv_ctl_verify_password_pdu(RemdeskServerContext* context, wStream* s,
                                                  REMDESK_CHANNEL_HEADER* header)
 {
-	SSIZE_T cbExpertBlobW = 0;
 	REMDESK_CTL_VERIFY_PASSWORD_PDU pdu;
 	UINT error = 0;
 
@@ -278,7 +273,10 @@ static UINT remdesk_recv_ctl_verify_password_pdu(RemdeskServerContext* context, 
 		return ERROR_INVALID_DATA;
 
 	const WCHAR* expertBlobW = Stream_ConstPointer(s);
-	cbExpertBlobW = header->DataLength - 4;
+	if (header->DataLength < 4)
+		return ERROR_INVALID_PARAMETER;
+
+	const size_t cbExpertBlobW = header->DataLength - 4;
 
 	pdu.expertBlob = ConvertWCharNToUtf8Alloc(expertBlobW, cbExpertBlobW / sizeof(WCHAR), NULL);
 	if (pdu.expertBlob)

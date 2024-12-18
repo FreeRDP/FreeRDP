@@ -726,7 +726,8 @@ static UINT rdpgfx_write_surface_command(wLog* log, wStream* s, const RDPGFX_SUR
 			havc420 = &(havc444->bitstream[0]); /* avc420EncodedBitstreamInfo (4 bytes) */
 			if (!Stream_EnsureRemainingCapacity(s, 4))
 				return ERROR_INTERNAL_ERROR;
-			Stream_Write_UINT32(s, havc444->cbAvc420EncodedBitstream1 | (havc444->LC << 30UL));
+			Stream_Write_UINT32(s, havc444->cbAvc420EncodedBitstream1 |
+			                           ((uint32_t)havc444->LC << 30UL));
 			/* avc420EncodedBitstream1 */
 			error = rdpgfx_write_h264_avc420(log, s, havc420);
 

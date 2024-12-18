@@ -420,7 +420,7 @@ static UINT urb_select_configuration(IUDEVICE* pdev, GENERIC_CHANNEL_CALLBACK* c
 	UINT32 usbd_status = 0;
 	BYTE ConfigurationDescriptorIsValid = 0;
 	wStream* out = NULL;
-	int MsOutSize = 0;
+	size_t MsOutSize = 0;
 	URBDRC_PLUGIN* urbdrc = NULL;
 	const BOOL noAck = (RequestField & 0x80000000U) != 0;
 	const UINT32 RequestId = RequestField & 0x7FFFFFFF;
@@ -469,7 +469,7 @@ static UINT urb_select_configuration(IUDEVICE* pdev, GENERIC_CHANNEL_CALLBACK* c
 	}
 
 	if (MsConfig)
-		MsOutSize = MsConfig->MsOutSize;
+		MsOutSize = WINPR_ASSERTING_INT_CAST(size_t, MsConfig->MsOutSize);
 
 	if (MsOutSize > 0)
 	{

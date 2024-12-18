@@ -366,7 +366,7 @@ static UINT location_send(LocationClientContext* context, LOCATION_PDUTYPE type,
 					speed = va_arg(ap, double);
 					heading = va_arg(ap, double);
 					horizontalAccuracy = va_arg(ap, double);
-					source = va_arg(ap, int);
+					source = WINPR_ASSERTING_INT_CAST(LOCATIONSOURCE, va_arg(ap, int));
 					pdu.speed = &speed;
 					pdu.heading = &heading;
 					pdu.horizontalAccuracy = &horizontalAccuracy;

@@ -127,6 +127,9 @@ static const WinPrAsn1_OID kerberos_OID = { 9, (void*)"\x2a\x86\x48\x86\xf7\x12\
 static const WinPrAsn1_OID kerberos_u2u_OID = { 10,
 	                                            (void*)"\x2a\x86\x48\x86\xf7\x12\x01\x02\x02\x03" };
 
+#define krb_log_exec_bool(fkt, ctx, ...)                                                     \
+	kerberos_log_msg(ctx, fkt(ctx, ##__VA_ARGS__) ? KRB5KRB_ERR_GENERIC : 0, #fkt, __FILE__, \
+	                 __func__, __LINE__)
 #define krb_log_exec(fkt, ctx, ...) \
 	kerberos_log_msg(ctx, fkt(ctx, ##__VA_ARGS__), #fkt, __FILE__, __func__, __LINE__)
 #define krb_log_exec_ptr(fkt, ctx, ...) \
@@ -1349,10 +1352,10 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcceptSecurityContext(
 			if (rv != 0)
 				goto cleanup;
 
-			if ((!sname || krb_log_exec(krb5_principal_compare_any_realm, credentials->ctx,
-			                            principal, entry.principal)) &&
-			    (!realm ||
-			     krb_log_exec(krb5_realm_compare, credentials->ctx, principal, entry.principal)))
+			if ((!sname || krb_log_exec_bool(krb5_principal_compare_any_realm, credentials->ctx,
+			                                 principal, entry.principal)) &&
+			    (!realm || krb_log_exec_bool(krb5_realm_compare, credentials->ctx, principal,
+			                                 entry.principal)))
 				break;
 			if (krb_log_exec(krb5glue_free_keytab_entry_contents, credentials->ctx, &entry))
 				goto cleanup;

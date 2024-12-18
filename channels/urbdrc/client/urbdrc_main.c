@@ -360,7 +360,7 @@ static UINT urdbrc_send_usb_device_add(GENERIC_CHANNEL_CALLBACK* callback, IUDEV
 	Stream_Write_UINT32(out, 2); /* UsbBusInterfaceVersion, 0 ,1 or 2 */ // TODO: Get from libusb
 	Stream_Write_UINT32(out, 0x600); /* USBDI_Version, 0x500 or 0x600 */ // TODO: Get from libusb
 	/* Supported_USB_Version, 0x110,0x110 or 0x200(usb2.0) */
-	bcdUSB = pdev->query_device_descriptor(pdev, BCD_USB);
+	bcdUSB = WINPR_ASSERTING_INT_CAST(uint32_t, pdev->query_device_descriptor(pdev, BCD_USB));
 	Stream_Write_UINT32(out, bcdUSB);
 	Stream_Write_UINT32(out, 0x00000000); /* HcdCapabilities, MUST always be zero */
 
