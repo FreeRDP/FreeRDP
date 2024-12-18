@@ -1220,17 +1220,15 @@ BOOL freerdp_nla_revert_to_self(rdpContext* context)
 	return nla_revert_to_self(nla);
 }
 
-INT32 freerdp_get_nla_sspi_error(rdpContext* context)
+UINT32 freerdp_get_nla_sspi_error(rdpContext* context)
 {
-	rdpNla* nla = NULL;
-
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->rdp);
 	WINPR_ASSERT(context->rdp->transport);
 
-	nla = transport_get_nla(context->rdp->transport);
+	rdpNla* nla = transport_get_nla(context->rdp->transport);
 
-	return nla_get_sspi_error(nla);
+	return (UINT32)nla_get_sspi_error(nla);
 }
 
 BOOL freerdp_nla_encrypt(rdpContext* context, const SecBuffer* inBuffer, SecBuffer* outBuffer)
