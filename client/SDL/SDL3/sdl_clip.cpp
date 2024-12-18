@@ -162,7 +162,6 @@ bool sdlClip::handle_update(const SDL_ClipboardEvent& ev)
 
 	clearServerFormats();
 
-	std::string mime_uri_list = "text/uri-list";
 	std::string mime_html = "text/html";
 
 	std::vector<std::string> mime_bitmap = { "image/bmp", "image/x-bmp", "image/x-MS-bmp",

@@ -53,7 +53,7 @@ SdlWidget::SdlWidget(SDL_Renderer* renderer, const SDL_FRect& rect, bool input)
 		widget_log_error(-1, "SDLResourceManager::get");
 	else
 	{
-		_font = TTF_OpenFontIO(ops, 1, 64);
+		_font = TTF_OpenFontIO(ops, true, 64);
 		if (!_font)
 			widget_log_error(-1, "TTF_OpenFontRW");
 	}
@@ -134,8 +134,7 @@ SDL_Texture* SdlWidget::render_text(SDL_Renderer* renderer, const std::string& t
 	const float scale = dst.h / src.h;
 	const float sws = (src.w) * scale;
 	const float dws = (dst.w) / scale;
-	if (dst.w > sws)
-		dst.w = sws;
+	dst.w = std::min(dst.w, sws);
 	if (src.w > dws)
 	{
 		src.x = src.w - dws;
