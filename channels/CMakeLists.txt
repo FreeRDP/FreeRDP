@@ -21,32 +21,24 @@ include(CMakeDependentOption)
 macro(define_channel_options)
   set(PREFIX "CHANNEL")
 
-  cmake_parse_arguments(${PREFIX} "" "NAME;TYPE;DESCRIPTION;SPECIFICATIONS;DEFAULT" "" ${ARGN})
+  cmake_parse_arguments(
+    ${PREFIX} "" "NAME;TYPE;DESCRIPTION;SPECIFICATIONS;DEFAULT;CLIENT_DEFAULT;SERVER_DEFAULT" "" ${ARGN}
+  )
 
   string(TOUPPER "CHANNEL_${CHANNEL_NAME}" CHANNEL_OPTION)
   string(TOUPPER "CHANNEL_${CHANNEL_NAME}_CLIENT" CHANNEL_CLIENT_OPTION)
   string(TOUPPER "CHANNEL_${CHANNEL_NAME}_SERVER" CHANNEL_SERVER_OPTION)
   string(TOUPPER "${CHANNEL_TYPE}" CHANNEL_TYPE)
 
-  if(${${CHANNEL_CLIENT_OPTION}})
-    set(OPTION_CLIENT_DEFAULT ${${CHANNEL_CLIENT_OPTION}})
-  endif()
-
-  if(${${CHANNEL_SERVER_OPTION}})
-    set(OPTION_SERVER_DEFAULT ${${CHANNEL_SERVER_OPTION}})
-  endif()
-
-  if(${${CHANNEL_OPTION}})
-    set(OPTION_DEFAULT ${${CHANNEL_OPTION}})
-  endif()
-
-  if(${OPTION_CLIENT_DEFAULT} OR ${OPTION_SERVER_DEFAULT})
+  if(CHANNEL_DEFAULT)
+    set(OPTION_DEFAULT ${CHANNEL_DEFAULT})
+  elseif(CHANNEL_CLIENT_OPTION OR CHANNEL_SERVER_OPTION)
     set(OPTION_DEFAULT "ON")
   endif()
 
-  set(CHANNEL_DEFAULT ${OPTION_DEFAULT})
-
   set(CHANNEL_OPTION_DOC "Build ${CHANNEL_NAME} ${CHANNEL_TYPE} channel")
+  set(CHANNEL_CLIENT_OPTION_DOC "Build ${CHANNEL_NAME} ${CHANNEL_TYPE} channel client")
+  set(CHANNEL_SERVER_OPTION_DOC "Build ${CHANNEL_NAME} ${CHANNEL_TYPE} channel server")
 
   if("${CHANNEL_TYPE}" STREQUAL "DYNAMIC")
     cmake_dependent_option(${CHANNEL_OPTION} "${CHANNEL_OPTION_DOC}" ${CHANNEL_DEFAULT} "CHANNEL_DRDYNVC" OFF)
@@ -54,27 +46,14 @@ macro(define_channel_options)
     option(${CHANNEL_OPTION} "${CHANNEL_OPTION_DOC}" ${CHANNEL_DEFAULT})
   endif()
 
+  cmake_dependent_option(
+    ${CHANNEL_CLIENT_OPTION} "${CHANNEL_CLIENT_OPTION_DOC}" ${CHANNEL_CLIENT_DEFAULT} "${CHANNEL_OPTION}" OFF
+  )
+
+  cmake_dependent_option(
+    ${CHANNEL_SERVER_OPTION} "${CHANNEL_SERVER_OPTION_DOC}" ${CHANNEL_SERVER_DEFAULT} "${CHANNEL_OPTION}" OFF
+  )
 endmacro(define_channel_options)
-
-macro(define_channel_client_options _channel_client_default)
-  string(TOUPPER "CHANNEL_${CHANNEL_NAME}_CLIENT" CHANNEL_CLIENT_OPTION)
-  string(TOUPPER "CHANNEL_${CHANNEL_NAME}" CHANNEL_OPTION)
-  set(CHANNEL_CLIENT_OPTION_DOC "Build ${CHANNEL_NAME} ${CHANNEL_TYPE} channel client")
-
-  cmake_dependent_option(
-    ${CHANNEL_CLIENT_OPTION} "${CHANNEL_CLIENT_OPTION_DOC}" ${_channel_client_default} "${CHANNEL_OPTION}" OFF
-  )
-endmacro(define_channel_client_options)
-
-macro(define_channel_server_options _channel_server_default)
-  string(TOUPPER "CHANNEL_${CHANNEL_NAME}_SERVER" CHANNEL_SERVER_OPTION)
-  string(TOUPPER "CHANNEL_${CHANNEL_NAME}" CHANNEL_OPTION)
-  set(CHANNEL_SERVER_OPTION_DOC "Build ${CHANNEL_NAME} ${CHANNEL_TYPE} channel server")
-
-  cmake_dependent_option(
-    ${CHANNEL_SERVER_OPTION} "${CHANNEL_SERVER_OPTION_DOC}" ${_channel_server_default} "${CHANNEL_OPTION}" OFF
-  )
-endmacro(define_channel_server_options)
 
 macro(define_channel _channel_name)
   set(CHANNEL_NAME ${_channel_name})
