@@ -49,6 +49,26 @@
 #include <freerdp/log.h>
 #define TAG CLIENT_TAG("x11")
 
+typedef struct
+{
+	BOOL Shift;
+	BOOL LeftShift;
+	BOOL RightShift;
+	BOOL Alt;
+	BOOL LeftAlt;
+	BOOL RightAlt;
+	BOOL Ctrl;
+	BOOL LeftCtrl;
+	BOOL RightCtrl;
+	BOOL Super;
+	BOOL LeftSuper;
+	BOOL RightSuper;
+} XF_MODIFIER_KEYS;
+
+static UINT32 xf_keyboard_get_toggle_keys_state(xfContext* xfc);
+static BOOL xf_keyboard_handle_special_keys(xfContext* xfc, KeySym keysym);
+static void xf_keyboard_handle_special_keys_release(xfContext* xfc, KeySym keysym);
+
 static void xf_keyboard_modifier_map_free(xfContext* xfc)
 {
 	WINPR_ASSERT(xfc);
@@ -215,7 +235,7 @@ void xf_keyboard_release_all_keypress(xfContext* xfc)
 	xf_sync_kbd_state(xfc);
 }
 
-BOOL xf_keyboard_key_pressed(xfContext* xfc, KeySym keysym)
+static BOOL xf_keyboard_key_pressed(xfContext* xfc, KeySym keysym)
 {
 	KeyCode keycode = XKeysymToKeycode(xfc->display, keysym);
 	WINPR_ASSERT(keycode < ARRAYSIZE(xfc->KeyboardState));
@@ -303,7 +323,7 @@ void xf_keyboard_send_key(xfContext* xfc, BOOL down, BOOL repeat, const XKeyEven
 	}
 }
 
-int xf_keyboard_read_keyboard_state(xfContext* xfc)
+static int xf_keyboard_read_keyboard_state(xfContext* xfc)
 {
 	int dummy = 0;
 	Window wdummy = 0;
@@ -348,7 +368,7 @@ static int xf_keyboard_get_keymask(xfContext* xfc, KeySym keysym)
 	return keysymMask;
 }
 
-BOOL xf_keyboard_get_key_state(xfContext* xfc, int state, KeySym keysym)
+static BOOL xf_keyboard_get_key_state(xfContext* xfc, int state, KeySym keysym)
 {
 	int keysymMask = xf_keyboard_get_keymask(xfc, keysym);
 
