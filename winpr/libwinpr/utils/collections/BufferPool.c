@@ -85,9 +85,10 @@ static BOOL BufferPool_ShiftAvailable(wBufferPool* pool, size_t index, int count
 		if (pool->aSize + count > pool->aCapacity)
 		{
 			wBufferPoolItem* newArray = NULL;
-			SSIZE_T newCapacity = pool->aCapacity;
+			SSIZE_T newCapacity = pool->aSize + count;
 			newCapacity += (newCapacity + 2) / 2;
 
+			WINPR_ASSERT(newCapacity > 0);
 			if (pool->alignment > 0)
 				newArray = (wBufferPoolItem*)winpr_aligned_realloc(
 				    pool->aArray,
@@ -376,7 +377,7 @@ BOOL BufferPool_Return(wBufferPool* pool, void* buffer)
 
 		if ((pool->size + 1) >= pool->capacity)
 		{
-			SSIZE_T newCapacity = pool->capacity + (pool->capacity + 2) / 2;
+			SSIZE_T newCapacity = pool->size + (pool->size + 2) / 2 + 1;
 			void** newArray = (void**)realloc(
 			    (void*)pool->array, sizeof(void*) * WINPR_ASSERTING_INT_CAST(size_t, newCapacity));
 			if (!newArray)
@@ -413,7 +414,7 @@ BOOL BufferPool_Return(wBufferPool* pool, void* buffer)
 		{
 			if ((pool->aSize + 1) >= pool->aCapacity)
 			{
-				SSIZE_T newCapacity = pool->aSize + (pool->aSize + 2) / 2;
+				SSIZE_T newCapacity = pool->aSize + (pool->aSize + 2) / 2 + 1;
 				wBufferPoolItem* newArray = (wBufferPoolItem*)realloc(
 				    pool->aArray,
 				    sizeof(wBufferPoolItem) * WINPR_ASSERTING_INT_CAST(size_t, newCapacity));
