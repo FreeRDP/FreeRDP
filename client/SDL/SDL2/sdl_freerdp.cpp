@@ -1420,10 +1420,7 @@ static BOOL sdl_client_global_init()
 	}
 #endif
 
-	if (freerdp_handle_signals() != 0)
-		return FALSE;
-
-	return TRUE;
+	return freerdp_handle_signals() != 0;
 }
 
 /* Optional global tear down */
@@ -1723,9 +1720,7 @@ BOOL SdlContext::update_fullscreen(BOOL enter)
 BOOL SdlContext::update_minimize()
 {
 	std::lock_guard<CriticalSection> lock(critical);
-	if (!sdl_push_user_event(SDL_USEREVENT_WINDOW_MINIMIZE))
-		return FALSE;
-	return TRUE;
+	return sdl_push_user_event(SDL_USEREVENT_WINDOW_MINIMIZE);
 }
 
 BOOL SdlContext::update_resizeable(BOOL enable)

@@ -138,7 +138,7 @@ BOOL sdl_authenticate_ex(freerdp* instance, char** username, char** password, ch
 
 	auto arg = reinterpret_cast<SDL_UserAuthArg*>(event.padding);
 
-	res = arg->result > 0 ? TRUE : FALSE;
+	res = arg->result > 0;
 
 	free(*username);
 	free(*domain);
@@ -195,7 +195,7 @@ BOOL sdl_choose_smartcard(freerdp* instance, SmartcardCertInfo** cert_list, DWOR
 	if (!sdl_wait_for_result(instance->context, SDL_USEREVENT_SCARD_RESULT, &event))
 		return res;
 
-	res = (event.user.code >= 0) ? TRUE : FALSE;
+	res = (event.user.code >= 0);
 	*choice = static_cast<DWORD>(event.user.code);
 
 	return res;
@@ -277,7 +277,7 @@ BOOL sdl_present_gateway_message(freerdp* instance, UINT32 type, BOOL isDisplayM
 	const int rc = sdl_show_dialog(instance->context, title, message, flags);
 	free(title);
 	free(message);
-	return rc > 0 ? TRUE : FALSE;
+	return rc > 0;
 }
 
 int sdl_logon_error_info(freerdp* instance, UINT32 data, UINT32 type)
