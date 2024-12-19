@@ -56,7 +56,7 @@ int SdlWindow::displayIndex() const
 {
 	if (!_window)
 		return 0;
-	return SDL_GetDisplayForWindow(_window);
+	return WINPR_ASSERTING_INT_CAST(int, SDL_GetDisplayForWindow(_window));
 }
 
 SDL_Rect SdlWindow::rect() const

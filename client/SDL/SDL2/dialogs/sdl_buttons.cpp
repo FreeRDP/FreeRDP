@@ -1,6 +1,8 @@
 #include <cassert>
 #include <algorithm>
 
+#include <winpr/cast.h>
+
 #include "sdl_buttons.hpp"
 
 static const Uint32 hpadding = 10;
@@ -17,8 +19,11 @@ bool SdlButtonList::populate(SDL_Renderer* renderer, const std::vector<std::stri
 	assert(labels.size() == ids.size());
 
 	_list.clear();
-	size_t button_width = ids.size() * (width + hpadding) + hpadding;
-	size_t offsetX = total_width - std::min<size_t>(total_width, button_width);
+	size_t button_width =
+	    ids.size() * (WINPR_ASSERTING_INT_CAST(uint32_t, width) + hpadding) + hpadding;
+	size_t offsetX =
+	    WINPR_ASSERTING_INT_CAST(uint32_t, total_width) -
+	    std::min<size_t>(WINPR_ASSERTING_INT_CAST(uint32_t, total_width), button_width);
 	for (size_t x = 0; x < ids.size(); x++)
 	{
 		const size_t curOffsetX = offsetX + x * (static_cast<size_t>(width) + hpadding);

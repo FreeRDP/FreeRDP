@@ -162,7 +162,6 @@ bool sdlClip::handle_update(const SDL_ClipboardEvent& ev)
 
 	clearServerFormats();
 
-	std::string mime_uri_list = "text/uri-list";
 	std::string mime_html = "text/html";
 
 	std::vector<std::string> mime_bitmap = { "image/bmp", "image/x-bmp", "image/x-MS-bmp",
@@ -176,7 +175,7 @@ bool sdlClip::handle_update(const SDL_ClipboardEvent& ev)
 	std::vector<std::string> clientFormatNames;
 	std::vector<CLIPRDR_FORMAT> clientFormats;
 
-	size_t nformats = ev.n_mime_types;
+	size_t nformats = WINPR_ASSERTING_INT_CAST(size_t, ev.n_mime_types);
 	const char** clipboard_mime_formats = ev.mime_types;
 
 	WLog_Print(_log, WLOG_TRACE, "SDL has %d formats", nformats);
@@ -336,7 +335,7 @@ UINT sdlClip::SendDataRequest(uint32_t formatID, const std::string& mime)
 		.requestedFormatId = formatID
 	};
 
-	_request_queue.push({ formatID, mime });
+	_request_queue.emplace(formatID, mime);
 
 	WINPR_ASSERT(_ctx);
 	WINPR_ASSERT(_ctx->ClientFormatDataRequest);
@@ -781,7 +780,7 @@ const void* sdlClip::ClipDataCb(void* userdata, const char* mime_type, size_t* s
 		auto request = clip->_request_queue.front();
 		clip->_request_queue.pop();
 
-		if (!clip->_request_queue.size())
+		if (clip->_request_queue.empty())
 			(void)ResetEvent(clip->_event);
 
 		if (request.success())

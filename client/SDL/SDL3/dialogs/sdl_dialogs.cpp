@@ -138,7 +138,7 @@ BOOL sdl_authenticate_ex(freerdp* instance, char** username, char** password, ch
 
 	auto arg = reinterpret_cast<SDL_UserAuthArg*>(event.padding);
 
-	res = arg->result > 0 ? TRUE : FALSE;
+	res = arg->result > 0;
 
 	free(*username);
 	free(*domain);
@@ -195,7 +195,7 @@ BOOL sdl_choose_smartcard(freerdp* instance, SmartcardCertInfo** cert_list, DWOR
 	if (!sdl_wait_for_result(instance->context, SDL_EVENT_USER_SCARD_RESULT, &event))
 		return res;
 
-	res = (event.user.code >= 0) ? TRUE : FALSE;
+	res = (event.user.code >= 0);
 	*choice = static_cast<DWORD>(event.user.code);
 
 	return res;
@@ -213,7 +213,7 @@ SSIZE_T sdl_retry_dialog(freerdp* instance, const char* what, size_t current, vo
 	const size_t delay = freerdp_settings_get_uint32(settings, FreeRDP_TcpConnectTimeout);
 	std::lock_guard<CriticalSection> lock(sdl->critical);
 	if (!sdl->connection_dialog)
-		return delay;
+		return WINPR_ASSERTING_INT_CAST(ssize_t, delay);
 
 	sdl->connection_dialog->setTitle("Retry connection to %s",
 	                                 freerdp_settings_get_server_name(instance->context->settings));
@@ -251,7 +251,7 @@ SSIZE_T sdl_retry_dialog(freerdp* instance, const char* what, size_t current, vo
 	sdl->connection_dialog->showInfo("[%s] retry %" PRIuz "/%" PRIuz ", delaying %" PRIuz
 	                                 "ms before next attempt",
 	                                 what, current, max, delay);
-	return delay;
+	return WINPR_ASSERTING_INT_CAST(ssize_t, delay);
 }
 
 BOOL sdl_present_gateway_message(freerdp* instance, UINT32 type, BOOL isDisplayMandatory,
@@ -275,7 +275,7 @@ BOOL sdl_present_gateway_message(freerdp* instance, UINT32 type, BOOL isDisplayM
 	const int rc = sdl_show_dialog(instance->context, title, message, flags);
 	free(title);
 	free(message);
-	return rc > 0 ? TRUE : FALSE;
+	return rc > 0;
 }
 
 int sdl_logon_error_info(freerdp* instance, UINT32 data, UINT32 type)
@@ -612,7 +612,7 @@ BOOL sdl_auth_dialog_show(const SDL_UserAuthArg* args)
 BOOL sdl_scard_dialog_show(const char* title, Sint32 count, const char** list)
 {
 	std::vector<std::string> vlist;
-	vlist.reserve(count);
+	vlist.reserve(WINPR_ASSERTING_INT_CAST(size_t, count));
 	for (Sint32 x = 0; x < count; x++)
 		vlist.emplace_back(list[x]);
 	SdlSelectList slist(title, vlist);

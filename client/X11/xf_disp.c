@@ -388,8 +388,8 @@ UINT xf_disp_sendLayout(DispClientContext* disp, const rdpMonitor* monitors, UIN
 		layout->Flags = (monitor->is_primary ? DISPLAY_CONTROL_MONITOR_PRIMARY : 0);
 		layout->Left = monitor->x;
 		layout->Top = monitor->y;
-		layout->Width = monitor->width;
-		layout->Height = monitor->height;
+		layout->Width = WINPR_ASSERTING_INT_CAST(uint32_t, monitor->width);
+		layout->Height = WINPR_ASSERTING_INT_CAST(uint32_t, monitor->height);
 		layout->Orientation = ORIENTATION_LANDSCAPE;
 		layout->PhysicalWidth = monitor->attributes.physicalWidth;
 		layout->PhysicalHeight = monitor->attributes.physicalHeight;
@@ -479,7 +479,8 @@ BOOL xf_disp_handle_configureNotify(xfContext* xfc, int width, int height)
 	if (!xfDisp)
 		return FALSE;
 
-	return xf_disp_queueResize(xfDisp, width, height);
+	return xf_disp_queueResize(xfDisp, WINPR_ASSERTING_INT_CAST(uint32_t, width),
+	                           WINPR_ASSERTING_INT_CAST(uint32_t, height));
 }
 
 static UINT xf_DisplayControlCaps(DispClientContext* disp, UINT32 maxNumMonitors,
