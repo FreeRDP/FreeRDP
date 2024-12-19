@@ -17,6 +17,8 @@
  * permissions and limitations under the License.
  */
 
+#include <math.h>
+
 #include <freerdp/config.h>
 #include <winpr/assert.h>
 #include <winpr/cast.h>
@@ -32,6 +34,44 @@
 #define MINMAX(_v_, _l_, _h_) ((_v_) < (_l_) ? (_l_) : ((_v_) > (_h_) ? (_h_) : (_v_)))
 #endif /* !MINMAX */
 /* ------------------------------------------------------------------------- */
+
+/* pregenerated table for ycbcr constants: [0,27]
+ *
+ * rounded integer values derived from the following formula:
+ *
+ * { (1.402525f * 2^divisor), (0.714401f * 2^divisor), (0.343730f * 2^divisor), (1.769905f *
+ * 2^divisor) }
+ */
+
+const INT32 ycbcr_constants[][4] = { { 1, 11, 10, 11 },
+	                                 { 3, 21, 21, 22 },
+	                                 { 6, 43, 41, 43 },
+	                                 { 11, 86, 83, 86 },
+	                                 { 22, 171, 165, 172 },
+	                                 { 45, 343, 331, 345 },
+	                                 { 90, 686, 662, 689 },
+	                                 { 180, 1371, 1324, 1379 },
+	                                 { 359, 2743, 2648, 2757 },
+	                                 { 718, 5486, 5296, 5514 },
+	                                 { 1436, 10972, 10592, 11028 },
+	                                 { 2872, 21943, 21184, 22057 },
+	                                 { 5745, 43886, 42368, 44114 },
+	                                 { 11489, 87772, 84736, 88227 },
+	                                 { 22979, 175545, 169472, 176454 },
+	                                 { 45958, 351089, 338943, 352908 },
+	                                 { 91916, 702179, 677887, 705816 },
+	                                 { 183832, 1404358, 1355773, 1411633 },
+	                                 { 367664, 2808716, 2711547, 2823266 },
+	                                 { 735327, 5617432, 5423094, 5646532 },
+	                                 { 1470654, 11234864, 10846187, 11293064 },
+	                                 { 2941308, 22469727, 21692374, 22586128 },
+	                                 { 5882616, 44939455, 43384748, 45172256 },
+	                                 { 11765232, 89878910, 86769496, 90344511 },
+	                                 { 23530465, 179757820, 173538992, 180689022 },
+	                                 { 47060930, 359515640, 347077985, 361378045 },
+	                                 { 94121859, 719031280, 694155970, 722756090 },
+	                                 { 188243719, 1438062559, 1388311940, 1445512180 } };
+
 static pstatus_t general_yCbCrToRGB_16s8u_P3AC4R_BGRX(const INT16* WINPR_RESTRICT pSrc[3],
                                                       UINT32 srcStep, BYTE* WINPR_RESTRICT pDst,
                                                       UINT32 dstStep, UINT32 DstFormat,
@@ -49,20 +89,22 @@ static pstatus_t general_yCbCrToRGB_16s8u_P3AC4R_BGRX(const INT16* WINPR_RESTRIC
 	{
 		for (UINT32 x = 0; x < roi->width; x++)
 		{
-			INT16 R = 0;
-			INT16 G = 0;
-			INT16 B = 0;
 			const INT32 divisor = 16;
 			const INT32 Y = (INT32)((UINT32)((*pY++) + 4096) << divisor);
 			const INT32 Cb = (*pCb++);
 			const INT32 Cr = (*pCr++);
-			const INT64 CrR = Cr * (INT64)(1.402525f * (1 << divisor)) * 1LL;
-			const INT64 CrG = Cr * (INT64)(0.714401f * (1 << divisor)) * 1LL;
-			const INT64 CbG = Cb * (INT64)(0.343730f * (1 << divisor)) * 1LL;
-			const INT64 CbB = Cb * (INT64)(1.769905f * (1 << divisor)) * 1LL;
-			R = WINPR_ASSERTING_INT_CAST(int16_t, ((CrR + Y) >> divisor) >> 5);
-			G = WINPR_ASSERTING_INT_CAST(int16_t, ((Y - CbG - CrG) >> divisor) >> 5);
-			B = WINPR_ASSERTING_INT_CAST(int16_t, ((CbB + Y) >> divisor) >> 5);
+
+			const INT32 CrR = WINPR_ASSERTING_INT_CAST(
+			    int32_t, Cr* ycbcr_constants[divisor][0]); //(1.402525f * 2^divisor);
+			const INT32 CrG = WINPR_ASSERTING_INT_CAST(
+			    int32_t, Cr* ycbcr_constants[divisor][1]); //(0.714401f * 2^divisor);
+			const INT32 CbG = WINPR_ASSERTING_INT_CAST(
+			    int32_t, Cb* ycbcr_constants[divisor][2]); //(0.343730f * 2^divisor);
+			const INT32 CbB = WINPR_ASSERTING_INT_CAST(
+			    int32_t, Cb* ycbcr_constants[divisor][3]); //(1.769905f * 2^divisor);
+			const INT16 R = WINPR_ASSERTING_INT_CAST(int16_t, ((CrR + Y) >> divisor) >> 5);
+			const INT16 G = WINPR_ASSERTING_INT_CAST(int16_t, ((Y - CbG - CrG) >> divisor) >> 5);
+			const INT16 B = WINPR_ASSERTING_INT_CAST(int16_t, ((CbB + Y) >> divisor) >> 5);
 			pRGB = writePixelBGRX(pRGB, formatSize, DstFormat, CLIP(R), CLIP(G), CLIP(B), 0);
 		}
 

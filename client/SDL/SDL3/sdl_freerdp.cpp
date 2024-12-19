@@ -1370,7 +1370,7 @@ static int sdl_client_thread_run(SdlContext* sdl, std::string& error_msg)
 
 	freerdp_disconnect(instance);
 
-	return 0;
+	return exit_code;
 }
 
 /* RDP main loop.
