@@ -17,6 +17,7 @@
  */
 
 #include <winpr/assert.h>
+#include <winpr/cast.h>
 
 #include <rdtk/config.h>
 
@@ -27,24 +28,17 @@
 int rdtk_text_field_draw(rdtkSurface* surface, uint16_t nXDst, uint16_t nYDst, uint16_t nWidth,
                          uint16_t nHeight, rdtkTextField* textField, const char* text)
 {
-	uint16_t offsetX = 0;
-	uint16_t offsetY = 0;
 	uint16_t textWidth = 0;
 	uint16_t textHeight = 0;
-	uint16_t fillWidth = 0;
-	uint16_t fillHeight = 0;
-	rdtkFont* font = NULL;
-	rdtkEngine* engine = NULL;
-	rdtkNinePatch* ninePatch = NULL;
 
 	WINPR_ASSERT(surface);
 	WINPR_ASSERT(textField);
 	WINPR_ASSERT(text);
 
-	engine = surface->engine;
-	font = engine->font;
+	rdtkEngine* engine = surface->engine;
+	rdtkFont* font = engine->font;
 	textField = surface->engine->textField;
-	ninePatch = textField->ninePatch;
+	rdtkNinePatch* ninePatch = textField->ninePatch;
 
 	rdtk_font_text_draw_size(font, &textWidth, &textHeight, text);
 
@@ -52,21 +46,35 @@ int rdtk_text_field_draw(rdtkSurface* surface, uint16_t nXDst, uint16_t nYDst, u
 
 	if ((textWidth > 0) && (textHeight > 0))
 	{
-		fillWidth = nWidth - (ninePatch->width - ninePatch->fillWidth);
-		fillHeight = nHeight - (ninePatch->height - ninePatch->fillHeight);
+		const int fwd = (ninePatch->width - ninePatch->fillWidth);
+		const int fhd = (ninePatch->height - ninePatch->fillHeight);
 
-		offsetX = ninePatch->fillLeft;
-		offsetY = ninePatch->fillTop;
+		uint16_t fillWidth = nWidth - WINPR_ASSERTING_INT_CAST(uint16_t, fwd);
+		uint16_t fillHeight = nHeight - WINPR_ASSERTING_INT_CAST(uint16_t, fhd);
+		uint16_t offsetX = WINPR_ASSERTING_INT_CAST(uint16_t, ninePatch->fillLeft);
+		uint16_t offsetY = WINPR_ASSERTING_INT_CAST(uint16_t, ninePatch->fillTop);
 
 		if (textWidth < fillWidth)
-			offsetX = ((fillWidth - textWidth) / 2) + ninePatch->fillLeft;
+		{
+			const int wd = ((fillWidth - textWidth) / 2) + ninePatch->fillLeft;
+			offsetX = WINPR_ASSERTING_INT_CAST(uint16_t, wd);
+		}
 		else if (textWidth < ninePatch->width)
-			offsetX = ((ninePatch->width - textWidth) / 2);
+		{
+			const int wd = ((ninePatch->width - textWidth) / 2);
+			offsetX = WINPR_ASSERTING_INT_CAST(uint16_t, wd);
+		}
 
 		if (textHeight < fillHeight)
-			offsetY = ((fillHeight - textHeight) / 2) + ninePatch->fillTop;
+		{
+			const int wd = ((fillHeight - textHeight) / 2) + ninePatch->fillTop;
+			offsetY = WINPR_ASSERTING_INT_CAST(uint16_t, wd);
+		}
 		else if (textHeight < ninePatch->height)
-			offsetY = ((ninePatch->height - textHeight) / 2);
+		{
+			const int wd = ((ninePatch->height - textHeight) / 2);
+			offsetY = WINPR_ASSERTING_INT_CAST(uint16_t, wd);
+		}
 
 		rdtk_font_draw_text(surface, nXDst + offsetX, nYDst + offsetY, font, text);
 	}
