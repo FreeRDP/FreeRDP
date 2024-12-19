@@ -380,10 +380,10 @@ sse2_yCbCrToRGB_16s8u_P3AC4R_BGRX(const INT16* WINPR_RESTRICT pSrc[3], UINT32 sr
 			const INT32 Y = ((*y_buf++) + 4096) << divisor;
 			const INT32 Cb = (*cb_buf++);
 			const INT32 Cr = (*cr_buf++);
-			const INT32 CrR = Cr * (INT32)(1.402525f * (1 << divisor));
-			const INT32 CrG = Cr * (INT32)(0.714401f * (1 << divisor));
-			const INT32 CbG = Cb * (INT32)(0.343730f * (1 << divisor));
-			const INT32 CbB = Cb * (INT32)(1.769905f * (1 << divisor));
+			const INT32 CrR = Cr * ycbcr_table[divisor][0];
+			const INT32 CrG = Cr * ycbcr_table[divisor][1];
+			const INT32 CbG = Cb * ycbcr_table[divisor][2];
+			const INT32 CbB = Cb * ycbcr_table[divisor][3];
 			const INT16 R = ((INT16)((CrR + Y) >> divisor) >> 5);
 			const INT16 G = ((INT16)((Y - CbG - CrG) >> divisor) >> 5);
 			const INT16 B = ((INT16)((CbB + Y) >> divisor) >> 5);
@@ -561,10 +561,10 @@ sse2_yCbCrToRGB_16s8u_P3AC4R_RGBX(const INT16* WINPR_RESTRICT pSrc[3], UINT32 sr
 			const INT32 Y = ((*y_buf++) + 4096) << divisor;
 			const INT32 Cb = (*cb_buf++);
 			const INT32 Cr = (*cr_buf++);
-			const INT32 CrR = Cr * (INT32)(1.402525f * (1 << divisor));
-			const INT32 CrG = Cr * (INT32)(0.714401f * (1 << divisor));
-			const INT32 CbG = Cb * (INT32)(0.343730f * (1 << divisor));
-			const INT32 CbB = Cb * (INT32)(1.769905f * (1 << divisor));
+			const INT32 CrR = Cr * ycbcr_table[divisor][0];
+			const INT32 CrG = Cr * ycbcr_table[divisor][1];
+			const INT32 CbG = Cb * ycbcr_table[divisor][2];
+			const INT32 CbB = Cb * ycbcr_table[divisor][3];
 			const INT16 R = ((INT16)((CrR + Y) >> divisor) >> 5);
 			const INT16 G = ((INT16)((Y - CbG - CrG) >> divisor) >> 5);
 			const INT16 B = ((INT16)((CbB + Y) >> divisor) >> 5);
@@ -785,16 +785,11 @@ static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_BGRX(
 				r = _mm_packus_epi16(R0, R1); /* r = R7R6R5R4R3R2R1R0 */
 			}
 			{
-				__m128i gbHi;
-				__m128i gbLo;
-				__m128i arHi;
-				__m128i arLo;
-				{
-					gbLo = _mm_unpacklo_epi8(b, g); /* R0 = G7G6G5G4G3G2G1G0 */
-					gbHi = _mm_unpackhi_epi8(b, g); /* R1 = G7B7G6B7G5B5G4B4 */
-					arLo = _mm_unpacklo_epi8(r, a); /* R4 = FFR3FFR2FFR1FFR0 */
-					arHi = _mm_unpackhi_epi8(r, a); /* R3 = FFR7FFR6FFR5FFR4 */
-				}
+				const __m128i gbLo = _mm_unpacklo_epi8(b, g); /* R0 = G7G6G5G4G3G2G1G0 */
+				const __m128i gbHi = _mm_unpackhi_epi8(b, g); /* R1 = G7B7G6B7G5B5G4B4 */
+				const __m128i arLo = _mm_unpacklo_epi8(r, a); /* R4 = FFR3FFR2FFR1FFR0 */
+				const __m128i arHi = _mm_unpackhi_epi8(r, a); /* R3 = FFR7FFR6FFR5FFR4 */
+
 				{
 					const __m128i bgrx = _mm_unpacklo_epi16(gbLo, arLo);
 					_mm_store_si128((__m128i*)out, bgrx);
