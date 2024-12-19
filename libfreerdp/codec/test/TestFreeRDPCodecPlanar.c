@@ -5426,7 +5426,7 @@ static BOOL CompareBitmap(const BYTE* srcA, UINT32 srcAFormat, const BYTE* srcB,
 	double maxDiff = NAN;
 	const UINT32 srcABits = FreeRDPGetBitsPerPixel(srcAFormat);
 	const UINT32 srcBBits = FreeRDPGetBitsPerPixel(srcBFormat);
-	UINT32 diff = fabs((double)srcABits - srcBBits);
+	UINT32 diff = WINPR_ASSERTING_INT_CAST(uint32_t, fabs((double)srcABits - srcBBits));
 
 	/* No support for 8bpp */
 	if ((srcABits < 15) || (srcBBits < 15))
