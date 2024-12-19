@@ -261,7 +261,7 @@ static pstatus_t ssse3_YCoCgRToRGB_8u_AC4R_no_invert(const BYTE* WINPR_RESTRICT 
 
 	for (UINT32 h = 0; h < height; h++)
 	{
-		int w = WINPR_ASSERTING_INT_CAST(int, width);
+		UINT32 w = width;
 		BOOL onStride = 0;
 
 		/* Get to a 16-byte destination boundary. */
