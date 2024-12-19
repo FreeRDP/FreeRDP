@@ -18,7 +18,7 @@
  */
 
 #include <winpr/config.h>
-
+#include <winpr/cast.h>
 #include <winpr/shell.h>
 
 /**
@@ -68,7 +68,8 @@ BOOL GetUserProfileDirectoryA(HANDLE hToken, LPSTR lpProfileDir, LPDWORD lpcchSi
 	if (!buf)
 		return FALSE;
 
-	const int status = getpwnam_r(token->Username, &pwd, buf, buflen, &pw);
+	const int status =
+	    getpwnam_r(token->Username, &pwd, buf, WINPR_ASSERTING_INT_CAST(size_t, buflen), &pw);
 
 	if ((status != 0) || !pw)
 	{

@@ -176,11 +176,11 @@ fail:
 static BYTE value(char c)
 {
 	if ((c >= '0') && (c <= '9'))
-		return c - '0';
+		return (c - '0') & 0xFF;
 	if ((c >= 'A') && (c <= 'F'))
-		return 10 + c - 'A';
+		return (10 + c - 'A') & 0xFF;
 	if ((c >= 'a') && (c <= 'f'))
-		return 10 + c - 'a';
+		return (10 + c - 'a') & 0xFF;
 	return 0;
 }
 

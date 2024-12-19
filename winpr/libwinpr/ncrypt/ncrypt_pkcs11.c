@@ -578,11 +578,11 @@ static void wprintKeyName(LPWSTR str, CK_SLOT_ID slotId, CK_BYTE* id, CK_ULONG i
 
 static size_t parseHex(const char* str, const char* end, CK_BYTE* target)
 {
-	int ret = 0;
+	size_t ret = 0;
 
 	for (; str != end && *str; str++, ret++, target++)
 	{
-		CK_BYTE v = 0;
+		int v = 0;
 		if (*str <= '9' && *str >= '0')
 		{
 			v = (*str - '0');
@@ -622,7 +622,7 @@ static size_t parseHex(const char* str, const char* end, CK_BYTE* target)
 			return 0;
 		}
 
-		*target = v;
+		*target = v & 0xFF;
 	}
 	return ret;
 }
