@@ -695,10 +695,10 @@ const char* credssp_auth_pkg_name(rdpCredsspAuth* auth)
 	return auth->pkgNameA;
 }
 
-UINT32 credssp_auth_sspi_error(rdpCredsspAuth* auth)
+INT32 credssp_auth_sspi_error(rdpCredsspAuth* auth)
 {
 	WINPR_ASSERT(auth);
-	return (UINT32)auth->sspi_error;
+	return auth->sspi_error;
 }
 
 void credssp_auth_tableAndContext(rdpCredsspAuth* auth, SecurityFunctionTable** ptable,

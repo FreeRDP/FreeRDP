@@ -375,7 +375,7 @@ size_t freerdp_key_get_bits(const rdpPrivateKey* key)
 	rc = EVP_PKEY_get_bits(key->evp);
 #endif
 
-	return rc;
+	return WINPR_ASSERTING_INT_CAST(size_t, rc);
 }
 
 BOOL freerdp_key_generate(rdpPrivateKey* key, size_t key_length)
@@ -530,7 +530,7 @@ BYTE* freerdp_key_get_param(const rdpPrivateKey* key, enum FREERDP_KEY_PARAM par
 		buf = NULL;
 	}
 	else
-		*plength = length;
+		*plength = WINPR_ASSERTING_INT_CAST(size_t, length);
 
 fail:
 	BN_free(bn);

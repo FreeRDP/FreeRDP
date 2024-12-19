@@ -29,7 +29,7 @@ static pstatus_t general_sign_16s(const INT16* pSrc, INT16* pDst, UINT32 len)
 	while (len--)
 	{
 		INT16 src = *pSrc++;
-		*pDst++ = (src < 0) ? (-1) : ((src > 0) ? 1 : 0);
+		*pDst++ = WINPR_ASSERTING_INT_CAST(int16_t, (src < 0) ? (-1) : ((src > 0) ? 1 : 0));
 	}
 
 	return PRIMITIVES_SUCCESS;

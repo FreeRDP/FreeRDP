@@ -22,6 +22,8 @@
 #ifndef FREERDP_LIB_GDI_BRUSH_H
 #define FREERDP_LIB_GDI_BRUSH_H
 
+#include <winpr/cast.h>
+
 #include <freerdp/api.h>
 #include <freerdp/gdi/gdi.h>
 
@@ -41,7 +43,7 @@ extern "C"
 		if (!hdc || !hdc->brush)
 			return GDI_BS_NULL;
 
-		return hdc->brush->style;
+		return WINPR_ASSERTING_INT_CAST(UINT32, hdc->brush->style);
 	}
 
 #ifdef __cplusplus
