@@ -154,9 +154,8 @@ static void rfx_encode_format_rgb(const BYTE* WINPR_RESTRICT rgb_data, uint32_t 
 
 				for (size_t x = 0; x < width; x++)
 				{
-					int shift = 0;
 					BYTE idx = 0;
-					shift = (7 - (x % 8));
+					const size_t shift = (7 - (x % 8));
 					idx = ((*src) >> shift) & 1;
 					idx |= (((*(src + 1)) >> shift) & 1) << 1;
 					idx |= (((*(src + 2)) >> shift) & 1) << 2;

@@ -1197,7 +1197,7 @@ static INLINE int progressive_rfx_upgrade_block(RFX_PROGRESSIVE_UPGRADE_STATE* W
 			input = (INT16)((raw->accumulator >> (32 - numBits)) & raw->mask);
 			BitStream_Shift(raw, numBits);
 			buffer[index] +=
-			    WINPR_ASSERTING_INT_CAST(INT16, (INT16)((UINT32)input << shift) & 0xFFFF);
+			    WINPR_ASSERTING_INT_CAST(INT16, (INT16)(((UINT32)input << shift) & 0xFFFF));
 		}
 
 		return 1;
