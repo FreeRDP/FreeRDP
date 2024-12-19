@@ -387,8 +387,10 @@ static BOOL xf_event_Expose(xfContext* xfc, const XExposeEvent* event, BOOL app)
 	{
 		x = 0;
 		y = 0;
-		w = freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth);
-		h = freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight);
+		w = WINPR_ASSERTING_INT_CAST(int,
+		                             freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth));
+		h = WINPR_ASSERTING_INT_CAST(int,
+		                             freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight));
 	}
 	else
 	{
@@ -402,7 +404,9 @@ static BOOL xf_event_Expose(xfContext* xfc, const XExposeEvent* event, BOOL app)
 	{
 		if (xfc->common.context.gdi->gfx)
 		{
-			xf_OutputExpose(xfc, x, y, w, h);
+			xf_OutputExpose(
+			    xfc, WINPR_ASSERTING_INT_CAST(uint32_t, x), WINPR_ASSERTING_INT_CAST(uint32_t, y),
+			    WINPR_ASSERTING_INT_CAST(uint32_t, w), WINPR_ASSERTING_INT_CAST(uint32_t, h));
 			return TRUE;
 		}
 		xf_draw_screen(xfc, x, y, w, h);
@@ -485,7 +489,8 @@ static BOOL xf_event_MotionNotify(xfContext* xfc, const XMotionEvent* event, BOO
 	    (xfc->common.mouse_grabbed && freerdp_client_use_relative_mouse_events(&xfc->common)))
 		return TRUE;
 
-	return xf_generic_MotionNotify(xfc, event->x, event->y, event->state, event->window, app);
+	return xf_generic_MotionNotify(xfc, event->x, event->y,
+	                               WINPR_ASSERTING_INT_CAST(int, event->state), event->window, app);
 }
 
 BOOL xf_generic_ButtonEvent(xfContext* xfc, int x, int y, int button, Window window, BOOL app,
@@ -593,7 +598,9 @@ static BOOL xf_event_ButtonPress(xfContext* xfc, const XButtonEvent* event, BOOL
 	if (xfc->xi_event ||
 	    (xfc->common.mouse_grabbed && freerdp_client_use_relative_mouse_events(&xfc->common)))
 		return TRUE;
-	return xf_generic_ButtonEvent(xfc, event->x, event->y, event->button, event->window, app, TRUE);
+	return xf_generic_ButtonEvent(xfc, event->x, event->y,
+	                              WINPR_ASSERTING_INT_CAST(int, event->button), event->window, app,
+	                              TRUE);
 }
 
 static BOOL xf_event_ButtonRelease(xfContext* xfc, const XButtonEvent* event, BOOL app)
@@ -603,7 +610,8 @@ static BOOL xf_event_ButtonRelease(xfContext* xfc, const XButtonEvent* event, BO
 	if (xfc->xi_event ||
 	    (xfc->common.mouse_grabbed && freerdp_client_use_relative_mouse_events(&xfc->common)))
 		return TRUE;
-	return xf_generic_ButtonEvent(xfc, event->x, event->y, event->button, event->window, app,
+	return xf_generic_ButtonEvent(xfc, event->x, event->y,
+	                              WINPR_ASSERTING_INT_CAST(int, event->button), event->window, app,
 	                              FALSE);
 }
 
@@ -835,14 +843,19 @@ static BOOL xf_event_ConfigureNotify(xfContext* xfc, const XConfigureEvent* even
 			{
 				xfc->scaledWidth = xfc->window->width;
 				xfc->scaledHeight = xfc->window->height;
-				xf_draw_screen(xfc, 0, 0,
-				               freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth),
-				               freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight));
+				xf_draw_screen(
+				    xfc, 0, 0,
+				    WINPR_ASSERTING_INT_CAST(
+				        int32_t, freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth)),
+				    WINPR_ASSERTING_INT_CAST(
+				        int32_t, freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight)));
 			}
 			else
 			{
-				xfc->scaledWidth = freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth);
-				xfc->scaledHeight = freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight);
+				xfc->scaledWidth = WINPR_ASSERTING_INT_CAST(
+				    int, freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth));
+				xfc->scaledHeight = WINPR_ASSERTING_INT_CAST(
+				    int, freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight));
 			}
 
 #endif

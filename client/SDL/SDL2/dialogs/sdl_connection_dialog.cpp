@@ -331,7 +331,8 @@ bool SDLConnectionDialog::createWindow()
 	const int widget_width = 600;
 	const int total_height = 300;
 
-	auto flags = SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_MOUSE_FOCUS | SDL_WINDOW_INPUT_FOCUS;
+	auto flags = WINPR_ASSERTING_INT_CAST(
+	    uint32_t, SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_MOUSE_FOCUS | SDL_WINDOW_INPUT_FOCUS);
 	auto rc = SDL_CreateWindowAndRenderer(widget_width, total_height, flags, &_window, &_renderer);
 	if (rc != 0)
 	{
@@ -452,7 +453,7 @@ std::string SDLConnectionDialog::print(const char* fmt, va_list ap)
 	{
 		res.resize(128);
 		if (size > 0)
-			res.resize(size);
+			res.resize(WINPR_ASSERTING_INT_CAST(size_t, size));
 
 		va_list copy;
 		va_copy(copy, ap);
