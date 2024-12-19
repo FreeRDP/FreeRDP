@@ -883,7 +883,8 @@ BOOL audin_server_set_formats(audin_server_context* context, SSIZE_T count,
 	}
 	else
 	{
-		AUDIO_FORMAT* audin_server_formats = audio_formats_new(count);
+		const size_t scount = (size_t)count;
+		AUDIO_FORMAT* audin_server_formats = audio_formats_new(scount);
 		if (!audin_server_formats)
 			return count == 0;
 
@@ -891,7 +892,7 @@ BOOL audin_server_set_formats(audin_server_context* context, SSIZE_T count,
 		{
 			if (!audio_format_copy(&formats[x], &audin_server_formats[x]))
 			{
-				audio_formats_free(audin_server_formats, count);
+				audio_formats_free(audin_server_formats, scount);
 				return FALSE;
 			}
 		}

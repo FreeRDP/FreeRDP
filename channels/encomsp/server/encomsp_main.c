@@ -84,13 +84,16 @@ static int encomsp_read_unicode_string(wStream* s, ENCOMSP_UNICODE_STRING* str)
  */
 static UINT encomsp_recv_change_participant_control_level_pdu(EncomspServerContext* context,
                                                               wStream* s,
-                                                              ENCOMSP_ORDER_HEADER* header)
+                                                              const ENCOMSP_ORDER_HEADER* header)
 {
-	int beg = 0;
-	int end = 0;
-	ENCOMSP_CHANGE_PARTICIPANT_CONTROL_LEVEL_PDU pdu;
+	ENCOMSP_CHANGE_PARTICIPANT_CONTROL_LEVEL_PDU pdu = { 0 };
 	UINT error = CHANNEL_RC_OK;
-	beg = ((int)Stream_GetPosition(s)) - ENCOMSP_ORDER_HEADER_SIZE;
+
+	const size_t pos = Stream_GetPosition(s);
+	if (pos < ENCOMSP_ORDER_HEADER_SIZE)
+		return ERROR_INVALID_PARAMETER;
+
+	const size_t beg = pos - ENCOMSP_ORDER_HEADER_SIZE;
 	CopyMemory(&pdu, header, sizeof(ENCOMSP_ORDER_HEADER));
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 6))
@@ -98,7 +101,7 @@ static UINT encomsp_recv_change_participant_control_level_pdu(EncomspServerConte
 
 	Stream_Read_UINT16(s, pdu.Flags);         /* Flags (2 bytes) */
 	Stream_Read_UINT32(s, pdu.ParticipantId); /* ParticipantId (4 bytes) */
-	end = (int)Stream_GetPosition(s);
+	const size_t end = Stream_GetPosition(s);
 
 	if ((beg + header->Length) < end)
 	{
