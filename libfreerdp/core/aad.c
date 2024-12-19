@@ -258,17 +258,17 @@ int aad_client_begin(rdpAad* aad)
 	/* Get the host part of the hostname */
 	const char* hostname = freerdp_settings_get_string(settings, FreeRDP_AadServerHostname);
 	if (!hostname)
-		hostname = freerdp_settings_get_string(settings, FreeRDP_ServerHostname);
+		hostname = freerdp_settings_get_server_name(settings);
 	if (!hostname)
 	{
-		WLog_Print(aad->log, WLOG_ERROR, "FreeRDP_ServerHostname == NULL");
+		WLog_Print(aad->log, WLOG_ERROR, "hostname == NULL");
 		return -1;
 	}
 
 	aad->hostname = _strdup(hostname);
 	if (!aad->hostname)
 	{
-		WLog_Print(aad->log, WLOG_ERROR, "_strdup(FreeRDP_ServerHostname) == NULL");
+		WLog_Print(aad->log, WLOG_ERROR, "_strdup(hostname) == NULL");
 		return -1;
 	}
 
