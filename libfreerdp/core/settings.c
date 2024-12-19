@@ -1709,6 +1709,13 @@ BOOL freerdp_settings_enforce_monitor_exists(rdpSettings* settings)
 	const BOOL multimon = freerdp_settings_get_bool(settings, FreeRDP_UseMultimon);
 	const BOOL useMonitors = fullscreen || multimon;
 
+	const UINT32 size = freerdp_settings_get_uint32(settings, FreeRDP_MonitorDefArraySize);
+	if (size == 0)
+	{
+		if (!freerdp_settings_set_pointer_len(settings, FreeRDP_MonitorDefArray, NULL, 16))
+			return FALSE;
+	}
+
 	if (nrIds == 0)
 	{
 		if (!freerdp_settings_set_uint32(settings, FreeRDP_NumMonitorIds, 1))
@@ -1750,7 +1757,6 @@ BOOL freerdp_settings_enforce_monitor_exists(rdpSettings* settings)
 	}
 	else if (fullscreen || (multimon && (count == 1)))
 	{
-
 		/* not all platforms start primary monitor at 0/0, so enforce this to avoid issues with
 		 * fullscreen mode */
 		rdpMonitor* monitor =
