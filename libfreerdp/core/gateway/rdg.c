@@ -24,6 +24,7 @@
 #include "../settings.h"
 
 #include <winpr/assert.h>
+#include <winpr/cast.h>
 
 #include <winpr/crt.h>
 #include <winpr/synch.h>
@@ -382,8 +383,8 @@ static BOOL rdg_read_all(rdpContext* context, rdpTls* tls, BYTE* buffer, size_t 
 			continue;
 		}
 
-		readCount += status;
-		pBuffer += status;
+		readCount += WINPR_ASSERTING_INT_CAST(uint32_t, status);
+		pBuffer += WINPR_ASSERTING_INT_CAST(uint32_t, status);
 	}
 
 	return TRUE;
@@ -414,8 +415,8 @@ static wStream* rdg_receive_packet(rdpRdg* rdg)
 		return NULL;
 	}
 
-	if (!rdg_read_all(rdg->context, rdg->tlsOut, Stream_Buffer(s) + header,
-	                  (int)packetLength - (int)header, &rdg->transferEncoding))
+	if (!rdg_read_all(rdg->context, rdg->tlsOut, Stream_Buffer(s) + header, packetLength - header,
+	                  &rdg->transferEncoding))
 	{
 		Stream_Free(s, TRUE);
 		return NULL;
@@ -644,7 +645,7 @@ static BOOL rdg_set_auth_header(rdpCredsspAuth* auth, HttpRequest* request)
 		if (authToken->cbBuffer > INT_MAX)
 			return FALSE;
 
-		base64AuthToken = crypto_base64_encode(authToken->pvBuffer, (int)authToken->cbBuffer);
+		base64AuthToken = crypto_base64_encode(authToken->pvBuffer, authToken->cbBuffer);
 	}
 
 	if (base64AuthToken)
@@ -986,14 +987,14 @@ static BOOL rdg_process_tunnel_authorization_response(rdpRdg* rdg, wStream* s)
 
 static BOOL rdg_process_extauth_sspi(rdpRdg* rdg, wStream* s)
 {
-	UINT32 errorCode = 0;
+	INT32 errorCode = 0;
 	UINT16 authBlobLen = 0;
 	SecBuffer authToken = { 0 };
 	BYTE* authTokenData = NULL;
 
 	WINPR_ASSERT(rdg);
 
-	Stream_Read_UINT32(s, errorCode);
+	Stream_Read_INT32(s, errorCode);
 	Stream_Read_UINT16(s, authBlobLen);
 
 	if (errorCode != ERROR_SUCCESS)
@@ -1251,7 +1252,7 @@ static BOOL rdg_send_http_request(rdpRdg* rdg, rdpTls* tls, const char* method,
 	return (status >= 0);
 }
 
-static BOOL rdg_tls_connect(rdpRdg* rdg, rdpTls* tls, const char* peerAddress, int timeout)
+static BOOL rdg_tls_connect(rdpRdg* rdg, rdpTls* tls, const char* peerAddress, UINT32 timeout)
 {
 	long status = 0;
 	BIO* layerBio = NULL;
@@ -1312,7 +1313,7 @@ static BOOL rdg_tls_connect(rdpRdg* rdg, rdpTls* tls, const char* peerAddress, i
 	}
 
 	tls->hostname = settings->GatewayHostname;
-	tls->port = MIN(UINT16_MAX, settings->GatewayPort);
+	tls->port = WINPR_ASSERTING_INT_CAST(int32_t, MIN(UINT16_MAX, settings->GatewayPort));
 	tls->isGatewayTransport = TRUE;
 	status = freerdp_tls_connect(tls, bufferedBio);
 	if (status < 1)
@@ -1333,7 +1334,8 @@ static BOOL rdg_tls_connect(rdpRdg* rdg, rdpTls* tls, const char* peerAddress, i
 }
 
 static BOOL rdg_establish_data_connection(rdpRdg* rdg, rdpTls* tls, const char* method,
-                                          const char* peerAddress, int timeout, BOOL* rpcFallback)
+                                          const char* peerAddress, UINT32 timeout,
+                                          BOOL* rpcFallback)
 {
 	char buffer[64] = { 0 };
 	HttpResponse* response = NULL;
@@ -1620,11 +1622,17 @@ static int rdg_write_websocket_data_packet(rdpRdg* rdg, const BYTE* buf, int isi
 	if (!sWS)
 		return FALSE;
 
-	Stream_Write_UINT16(sWS, PKT_TYPE_DATA ^ (maskingKey.u8[0] | maskingKey.u8[1] << 8)); /* Type */
-	Stream_Write_UINT16(sWS, 0 ^ (maskingKey.u8[2] | maskingKey.u8[3] << 8)); /* Reserved */
-	Stream_Write_UINT32(sWS, (UINT32)payloadSize ^ maskingKey.u32);           /* Packet length */
-	Stream_Write_UINT16(sWS,
-	                    (UINT16)isize ^ (maskingKey.u8[0] | maskingKey.u8[1] << 8)); /* Data size */
+	Stream_Write_UINT16(
+	    sWS, WINPR_ASSERTING_INT_CAST(
+	             uint16_t, PKT_TYPE_DATA ^ (maskingKey.u8[0] | maskingKey.u8[1] << 8))); /* Type */
+	Stream_Write_UINT16(
+	    sWS, WINPR_ASSERTING_INT_CAST(
+	             uint16_t, 0 ^ (maskingKey.u8[2] | maskingKey.u8[3] << 8))); /* Reserved */
+	Stream_Write_UINT32(
+	    sWS, WINPR_ASSERTING_INT_CAST(uint32_t, payloadSize ^ maskingKey.u32)); /* Packet length */
+	Stream_Write_UINT16(
+	    sWS, WINPR_ASSERTING_INT_CAST(
+	             uint16_t, isize ^ (maskingKey.u8[0] | maskingKey.u8[1] << 8))); /* Data size */
 
 	/* masking key is now off by 2 bytes. fix that */
 	maskingKey.u32 = (maskingKey.u32 & 0xffff) << 16 | (maskingKey.u32 >> 16);
@@ -1871,8 +1879,7 @@ static int rdg_read_data_packet(rdpRdg* rdg, BYTE* buffer, size_t size)
 				return -1;
 
 			status = rdg_socket_read(rdg->tlsOut->bio, (BYTE*)(&header) + readCount,
-			                         (int)sizeof(RdgPacketHeader) - (int)readCount,
-			                         &rdg->transferEncoding);
+			                         sizeof(RdgPacketHeader) - readCount, &rdg->transferEncoding);
 
 			if (status <= 0)
 			{
@@ -1910,7 +1917,7 @@ static int rdg_read_data_packet(rdpRdg* rdg, BYTE* buffer, size_t size)
 				return -1;
 			status =
 			    rdg_socket_read(rdg->tlsOut->bio, (BYTE*)(&rdg->packetRemainingCount) + readCount,
-			                    2 - (int)readCount, &rdg->transferEncoding);
+			                    2 - readCount, &rdg->transferEncoding);
 
 			if (status < 0)
 			{

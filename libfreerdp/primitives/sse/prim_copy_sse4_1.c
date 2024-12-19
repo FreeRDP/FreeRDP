@@ -52,8 +52,8 @@ static INLINE pstatus_t sse_image_copy_bgr24_bgrx32(BYTE* WINPR_RESTRICT pDstDat
 	const SSIZE_T srcByte = 3;
 	const SSIZE_T dstByte = 4;
 
-	const __m128i mask = _mm_set_epi32(0xFF000000, 0xFF000000, 0xFF000000, 0xFF000000);
-	const __m128i smask = _mm_set_epi32(0xff0b0a09, 0xff080706, 0xff050403, 0xff020100);
+	const __m128i mask = mm_set_epu32(0xFF000000, 0xFF000000, 0xFF000000, 0xFF000000);
+	const __m128i smask = mm_set_epu32(0xff0b0a09, 0xff080706, 0xff050403, 0xff020100);
 	const UINT32 rem = nWidth % 4;
 
 	const size_t align = nSrcStep % 64;

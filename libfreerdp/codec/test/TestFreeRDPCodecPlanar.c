@@ -5426,7 +5426,7 @@ static BOOL CompareBitmap(const BYTE* srcA, UINT32 srcAFormat, const BYTE* srcB,
 	double maxDiff = NAN;
 	const UINT32 srcABits = FreeRDPGetBitsPerPixel(srcAFormat);
 	const UINT32 srcBBits = FreeRDPGetBitsPerPixel(srcBFormat);
-	UINT32 diff = fabs((double)srcABits - srcBBits);
+	UINT32 diff = WINPR_ASSERTING_INT_CAST(uint32_t, fabs((double)srcABits - srcBBits));
 
 	/* No support for 8bpp */
 	if ((srcABits < 15) || (srcBBits < 15))
@@ -5757,9 +5757,10 @@ static BOOL FuzzPlanar(void)
 		       ", nDstHeight=%" PRIu32 ", nDstStep=%" PRIu32 ", total size=%" PRIuz "\n",
 		       FreeRDPGetColorFormatName(DstFormat), nXDst, nYDst, nDstWidth, nDstHeight, nDstStep,
 		       sizeof(dstData));
-		freerdp_planar_switch_bgr(planar, prand(2) % 2);
+		freerdp_planar_switch_bgr(planar, ((prand(2) % 2) != 0) ? TRUE : FALSE);
 		planar_decompress(planar, data, dataSize, prand(4096), prand(4096), dstData, DstFormat,
-		                  nDstStep, nXDst, nYDst, nDstWidth, nDstHeight, prand(2));
+		                  nDstStep, nXDst, nYDst, nDstWidth, nDstHeight,
+		                  ((prand(2) % 2) != 0) ? TRUE : FALSE);
 	}
 
 	rc = TRUE;

@@ -204,13 +204,12 @@ static BOOL test_rShift_16u_func(void)
 static BOOL test_ShiftWrapper_16s_func(void)
 {
 	pstatus_t status = 0;
-	INT16 ALIGN(src[FUNC_TEST_SIZE + 3]);
-	INT16 ALIGN(d1[FUNC_TEST_SIZE + 3]);
+	INT16 ALIGN(src[FUNC_TEST_SIZE + 3]) = { 0 };
+	INT16 ALIGN(d1[FUNC_TEST_SIZE + 3]) = { 0 };
 	UINT32 tmp = 0;
-	INT32 val = 0;
 	winpr_RAND(&tmp, sizeof(tmp));
 	winpr_RAND(src, sizeof(src));
-	val = tmp % 16;
+	INT32 val = WINPR_ASSERTING_INT_CAST(int32_t, tmp % 16);
 
 	/* Negative tests */
 	status = generic->shiftC_16s(src + 1, 16, d1 + 1, FUNC_TEST_SIZE);
@@ -271,13 +270,12 @@ static BOOL test_ShiftWrapper_16s_func(void)
 static BOOL test_ShiftWrapper_16u_func(void)
 {
 	pstatus_t status = 0;
-	UINT16 ALIGN(src[FUNC_TEST_SIZE + 3]);
-	UINT16 ALIGN(d1[FUNC_TEST_SIZE + 3]);
+	UINT16 ALIGN(src[FUNC_TEST_SIZE + 3]) = { 0 };
+	UINT16 ALIGN(d1[FUNC_TEST_SIZE + 3]) = { 0 };
 	UINT32 tmp = 0;
-	INT32 val = 0;
 	winpr_RAND(&tmp, sizeof(tmp));
 	winpr_RAND(src, sizeof(src));
-	val = tmp % 16;
+	INT32 val = WINPR_ASSERTING_INT_CAST(int32_t, tmp % 16);
 
 	/* Negative */
 	status = generic->shiftC_16u(src + 1, 16, d1 + 1, FUNC_TEST_SIZE);

@@ -72,7 +72,7 @@ static SSIZE_T stream_sprintf(wStream* s, WINPR_FORMAT_ARG const char* fmt, ...)
 
 	char* ptr = Stream_PointerAs(s, char);
 	va_start(ap, fmt);
-	const int rc2 = vsnprintf(ptr, rc + 1, fmt, ap);
+	const int rc2 = vsnprintf(ptr, WINPR_ASSERTING_INT_CAST(size_t, rc) + 1, fmt, ap);
 	va_end(ap);
 	if (rc != rc2)
 		return -23;
@@ -258,17 +258,17 @@ int aad_client_begin(rdpAad* aad)
 	/* Get the host part of the hostname */
 	const char* hostname = freerdp_settings_get_string(settings, FreeRDP_AadServerHostname);
 	if (!hostname)
-		hostname = freerdp_settings_get_server_name(settings);
+		hostname = freerdp_settings_get_string(settings, FreeRDP_ServerHostname);
 	if (!hostname)
 	{
-		WLog_Print(aad->log, WLOG_ERROR, "hostname == NULL");
+		WLog_Print(aad->log, WLOG_ERROR, "FreeRDP_ServerHostname == NULL");
 		return -1;
 	}
 
 	aad->hostname = _strdup(hostname);
 	if (!aad->hostname)
 	{
-		WLog_Print(aad->log, WLOG_ERROR, "_strdup(hostname) == NULL");
+		WLog_Print(aad->log, WLOG_ERROR, "_strdup(FreeRDP_ServerHostname) == NULL");
 		return -1;
 	}
 

@@ -69,7 +69,7 @@ FREERDP_LOCAL BOOL rdp_server_reactivate(rdpRdp* rdp);
 FREERDP_LOCAL BOOL rdp_server_transition_to_state(rdpRdp* rdp, CONNECTION_STATE state);
 FREERDP_LOCAL const char* rdp_get_state_string(const rdpRdp* rdp);
 
-FREERDP_LOCAL const char* rdp_client_connection_state_string(int state);
+FREERDP_LOCAL const char* rdp_client_connection_state_string(UINT state);
 
 FREERDP_LOCAL BOOL rdp_channels_from_mcs(rdpSettings* settings, const rdpRdp* rdp);
 

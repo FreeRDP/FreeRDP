@@ -409,7 +409,8 @@ static BOOL freerdp_prevent_session_lock(rdpContext* context)
 	if (FakeMouseMotionInterval && in->lastInputTimestamp)
 	{
 		const time_t now = time(NULL);
-		if (now - in->lastInputTimestamp > FakeMouseMotionInterval)
+		if (WINPR_ASSERTING_INT_CAST(size_t, now) - in->lastInputTimestamp >
+		    FakeMouseMotionInterval)
 		{
 			WLog_Print(context->log, WLOG_DEBUG,
 			           "fake mouse move: x=%d y=%d lastInputTimestamp=%" PRIu64 " "
@@ -1220,15 +1221,13 @@ BOOL freerdp_nla_revert_to_self(rdpContext* context)
 
 UINT32 freerdp_get_nla_sspi_error(rdpContext* context)
 {
-	rdpNla* nla = NULL;
-
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->rdp);
 	WINPR_ASSERT(context->rdp->transport);
 
-	nla = transport_get_nla(context->rdp->transport);
+	rdpNla* nla = transport_get_nla(context->rdp->transport);
 
-	return nla_get_sspi_error(nla);
+	return (UINT32)nla_get_sspi_error(nla);
 }
 
 BOOL freerdp_nla_encrypt(rdpContext* context, const SecBuffer* inBuffer, SecBuffer* outBuffer)

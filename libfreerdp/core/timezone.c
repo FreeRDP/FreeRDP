@@ -200,17 +200,17 @@ BOOL rdp_read_client_time_zone(wStream* s, rdpSettings* settings)
 	if (!tz)
 		return FALSE;
 
-	Stream_Read_UINT32(s, tz->Bias); /* Bias */
+	Stream_Read_INT32(s, tz->Bias); /* Bias */
 	/* standardName (64 bytes) */
 	Stream_Read(s, tz->StandardName, sizeof(tz->StandardName));
 	if (!rdp_read_system_time(s, &tz->StandardDate)) /* StandardDate */
 		return FALSE;
-	Stream_Read_UINT32(s, tz->StandardBias);    /* StandardBias */
+	Stream_Read_INT32(s, tz->StandardBias); /* StandardBias */
 	/* daylightName (64 bytes) */
 	Stream_Read(s, tz->DaylightName, sizeof(tz->DaylightName));
 	if (!rdp_read_system_time(s, &tz->DaylightDate)) /* DaylightDate */
 		return FALSE;
-	Stream_Read_UINT32(s, tz->DaylightBias);    /* DaylightBias */
+	Stream_Read_INT32(s, tz->DaylightBias); /* DaylightBias */
 	log_timezone(tz, 0);
 	return TRUE;
 }

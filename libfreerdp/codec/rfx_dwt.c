@@ -17,6 +17,9 @@
  * limitations under the License.
  */
 
+#include <winpr/assert.h>
+#include <winpr/cast.h>
+
 #include <freerdp/config.h>
 
 #include <stdio.h>
@@ -47,13 +50,13 @@ static INLINE void rfx_dwt_2d_decode_block(INT16* WINPR_RESTRICT buffer, INT16* 
 	for (size_t y = 0; y < subband_width; y++)
 	{
 		/* Even coefficients */
-		l_dst[0] = ll[0] - ((hl[0] + hl[0] + 1) >> 1);
-		h_dst[0] = lh[0] - ((hh[0] + hh[0] + 1) >> 1);
+		l_dst[0] = WINPR_ASSERTING_INT_CAST(int16_t, ll[0] - ((hl[0] + hl[0] + 1) >> 1));
+		h_dst[0] = WINPR_ASSERTING_INT_CAST(int16_t, lh[0] - ((hh[0] + hh[0] + 1) >> 1));
 		for (size_t n = 1; n < subband_width; n++)
 		{
 			const size_t x = n << 1;
-			l_dst[x] = ll[n] - ((hl[n - 1] + hl[n] + 1) >> 1);
-			h_dst[x] = lh[n] - ((hh[n - 1] + hh[n] + 1) >> 1);
+			l_dst[x] = WINPR_ASSERTING_INT_CAST(int16_t, ll[n] - ((hl[n - 1] + hl[n] + 1) >> 1));
+			h_dst[x] = WINPR_ASSERTING_INT_CAST(int16_t, lh[n] - ((hh[n - 1] + hh[n] + 1) >> 1));
 		}
 
 		/* Odd coefficients */
@@ -61,13 +64,20 @@ static INLINE void rfx_dwt_2d_decode_block(INT16* WINPR_RESTRICT buffer, INT16* 
 		for (; n < subband_width - 1; n++)
 		{
 			const size_t x = n << 1;
-			l_dst[x + 1] = (hl[n] << 1) + ((l_dst[x] + l_dst[x + 2]) >> 1);
-			h_dst[x + 1] = (hh[n] << 1) + ((h_dst[x] + h_dst[x + 2]) >> 1);
+
+			const int ld = (hl[n] << 1) + ((l_dst[x] + l_dst[x + 2]) >> 1);
+			const int hd = (hh[n] << 1) + ((h_dst[x] + h_dst[x + 2]) >> 1);
+
+			l_dst[x + 1] = WINPR_ASSERTING_INT_CAST(INT16, ld);
+			h_dst[x + 1] = WINPR_ASSERTING_INT_CAST(INT16, hd);
 		}
 
 		const size_t x = n << 1;
-		l_dst[x + 1] = (hl[n] << 1) + (l_dst[x]);
-		h_dst[x + 1] = (hh[n] << 1) + (h_dst[x]);
+
+		const int ld = (hl[n] << 1) + (l_dst[x]);
+		const int hd = (hh[n] << 1) + (h_dst[x]);
+		l_dst[x + 1] = WINPR_ASSERTING_INT_CAST(INT16, ld);
+		h_dst[x + 1] = WINPR_ASSERTING_INT_CAST(INT16, hd);
 
 		ll += subband_width;
 		hl += subband_width;
@@ -85,7 +95,8 @@ static INLINE void rfx_dwt_2d_decode_block(INT16* WINPR_RESTRICT buffer, INT16* 
 		const INT16* h = idwt + x + subband_width * total_width;
 		INT16* dst = buffer + x;
 
-		*dst = *l - ((*h * 2 + 1) >> 1);
+		const int dd = *l - ((*h * 2 + 1) >> 1);
+		*dst = WINPR_ASSERTING_INT_CAST(INT16, dd);
 
 		for (size_t n = 1; n < subband_width; n++)
 		{
@@ -93,15 +104,18 @@ static INLINE void rfx_dwt_2d_decode_block(INT16* WINPR_RESTRICT buffer, INT16* 
 			h += total_width;
 
 			/* Even coefficients */
-			dst[2 * total_width] = *l - ((*(h - total_width) + *h + 1) >> 1);
+			const int d2 = *l - ((*(h - total_width) + *h + 1) >> 1);
+			dst[2 * total_width] = WINPR_ASSERTING_INT_CAST(INT16, d2);
 
 			/* Odd coefficients */
-			dst[total_width] = (*(h - total_width) << 1) + ((*dst + dst[2 * total_width]) >> 1);
+			const int d = (*(h - total_width) << 1) + ((*dst + dst[2 * total_width]) >> 1);
+			dst[total_width] = WINPR_ASSERTING_INT_CAST(INT16, d);
 
 			dst += 2 * total_width;
 		}
 
-		dst[total_width] = (*h << 1) + ((*dst * 2) >> 1);
+		const int d = (*h << 1) + ((*dst * 2) >> 1);
+		dst[total_width] = WINPR_ASSERTING_INT_CAST(INT16, d);
 	}
 }
 
@@ -141,12 +155,14 @@ static void rfx_dwt_2d_encode_block(INT16* WINPR_RESTRICT buffer, INT16* WINPR_R
 			src = buffer + 1ULL * y * total_width + x;
 
 			/* H */
-			*h = (src[total_width] -
-			      ((src[0] + src[n < subband_width - 1 ? 2 * total_width : 0]) >> 1)) >>
-			     1;
+			*h = WINPR_ASSERTING_INT_CAST(
+			    int16_t, (src[total_width] -
+			              ((src[0] + src[n < subband_width - 1 ? 2 * total_width : 0]) >> 1)) >>
+			                 1);
 
 			/* L */
-			*l = src[0] + (n == 0 ? *h : (*(h - total_width) + *h) >> 1);
+			*l = WINPR_ASSERTING_INT_CAST(int16_t,
+			                              src[0] + (n == 0 ? *h : (*(h - total_width) + *h) >> 1));
 		}
 	}
 
@@ -171,10 +187,12 @@ static void rfx_dwt_2d_encode_block(INT16* WINPR_RESTRICT buffer, INT16* WINPR_R
 			UINT32 x = n << 1;
 
 			/* HL */
-			hl[n] =
-			    (l_src[x + 1] - ((l_src[x] + l_src[n < subband_width - 1 ? x + 2 : x]) >> 1)) >> 1;
+			hl[n] = WINPR_ASSERTING_INT_CAST(
+			    int16_t,
+			    (l_src[x + 1] - ((l_src[x] + l_src[n < subband_width - 1 ? x + 2 : x]) >> 1)) >> 1);
 			/* LL */
-			ll[n] = l_src[x] + (n == 0 ? hl[n] : (hl[n - 1] + hl[n]) >> 1);
+			ll[n] = WINPR_ASSERTING_INT_CAST(
+			    int16_t, l_src[x] + (n == 0 ? hl[n] : (hl[n - 1] + hl[n]) >> 1));
 		}
 
 		/* H */
@@ -183,10 +201,12 @@ static void rfx_dwt_2d_encode_block(INT16* WINPR_RESTRICT buffer, INT16* WINPR_R
 			UINT32 x = n << 1;
 
 			/* HH */
-			hh[n] =
-			    (h_src[x + 1] - ((h_src[x] + h_src[n < subband_width - 1 ? x + 2 : x]) >> 1)) >> 1;
+			hh[n] = WINPR_ASSERTING_INT_CAST(
+			    int16_t,
+			    (h_src[x + 1] - ((h_src[x] + h_src[n < subband_width - 1 ? x + 2 : x]) >> 1)) >> 1);
 			/* LH */
-			lh[n] = h_src[x] + (n == 0 ? hh[n] : (hh[n - 1] + hh[n]) >> 1);
+			lh[n] = WINPR_ASSERTING_INT_CAST(
+			    int16_t, h_src[x] + (n == 0 ? hh[n] : (hh[n - 1] + hh[n]) >> 1));
 		}
 
 		ll += subband_width;

@@ -21,11 +21,12 @@
 
 #include <freerdp/config.h>
 
-#include <winpr/assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
+#include <winpr/assert.h>
+#include <winpr/cast.h>
 #include <winpr/crt.h>
 #include <winpr/tchar.h>
 #include <winpr/sysinfo.h>
@@ -416,7 +417,8 @@ void rfx_context_set_pixel_format(RFX_CONTEXT* WINPR_RESTRICT context, UINT32 pi
 {
 	WINPR_ASSERT(context);
 	context->pixel_format = pixel_format;
-	context->bits_per_pixel = FreeRDPGetBitsPerPixel(pixel_format);
+	const UINT32 bpp = FreeRDPGetBitsPerPixel(pixel_format);
+	context->bits_per_pixel = WINPR_ASSERTING_INT_CAST(UINT8, bpp);
 }
 
 UINT32 rfx_context_get_pixel_format(RFX_CONTEXT* WINPR_RESTRICT context)
@@ -443,8 +445,8 @@ BOOL rfx_context_reset(RFX_CONTEXT* WINPR_RESTRICT context, UINT32 width, UINT32
 	if (!context)
 		return FALSE;
 
-	context->width = width;
-	context->height = height;
+	context->width = WINPR_ASSERTING_INT_CAST(UINT16, width);
+	context->height = WINPR_ASSERTING_INT_CAST(UINT16, height);
 	context->state = RFX_STATE_SEND_HEADERS;
 	context->expectedDataBlockType = WBT_FRAME_BEGIN;
 	context->frameIdx = 0;
@@ -458,7 +460,7 @@ static INLINE BOOL rfx_process_message_sync(RFX_CONTEXT* WINPR_RESTRICT context,
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
-	context->decodedHeaderBlocks &= ~RFX_DECODED_SYNC;
+	context->decodedHeaderBlocks &= (uint32_t)~RFX_DECODED_SYNC;
 
 	/* RFX_SYNC */
 	if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, 6))
@@ -491,7 +493,7 @@ static INLINE BOOL rfx_process_message_codec_versions(RFX_CONTEXT* WINPR_RESTRIC
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
-	context->decodedHeaderBlocks &= ~RFX_DECODED_VERSIONS;
+	context->decodedHeaderBlocks &= (uint32_t)~RFX_DECODED_VERSIONS;
 
 	if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, 4))
 		return FALSE;
@@ -536,7 +538,7 @@ static INLINE BOOL rfx_process_message_channels(RFX_CONTEXT* WINPR_RESTRICT cont
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
-	context->decodedHeaderBlocks &= ~RFX_DECODED_CHANNELS;
+	context->decodedHeaderBlocks &= (uint32_t)~RFX_DECODED_CHANNELS;
 
 	if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, 1))
 		return FALSE;
@@ -594,7 +596,7 @@ static INLINE BOOL rfx_process_message_context(RFX_CONTEXT* WINPR_RESTRICT conte
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
-	context->decodedHeaderBlocks &= ~RFX_DECODED_CONTEXT;
+	context->decodedHeaderBlocks &= (uint32_t)~RFX_DECODED_CONTEXT;
 
 	if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, 5))
 		return FALSE;
@@ -820,7 +822,7 @@ static INLINE BOOL rfx_allocate_tiles(RFX_MESSAGE* WINPR_RESTRICT message, size_
 
 	message->tiles = tmpTiles;
 	if (!allocOnly)
-		message->numTiles = count;
+		message->numTiles = WINPR_ASSERTING_INT_CAST(UINT16, count);
 	else
 	{
 		WINPR_ASSERT(message->numTiles <= count);
@@ -1586,7 +1588,8 @@ static INLINE void CALLBACK rfx_compose_message_tile_work_callback(PTP_CALLBACK_
 static INLINE BOOL computeRegion(const RFX_RECT* WINPR_RESTRICT rects, size_t numRects,
                                  REGION16* WINPR_RESTRICT region, size_t width, size_t height)
 {
-	const RECTANGLE_16 mainRect = { 0, 0, width, height };
+	const RECTANGLE_16 mainRect = { 0, 0, WINPR_ASSERTING_INT_CAST(UINT16, width),
+		                            WINPR_ASSERTING_INT_CAST(UINT16, height) };
 
 	WINPR_ASSERT(rects);
 	for (size_t i = 0; i < numRects; i++)
@@ -1724,7 +1727,7 @@ RFX_MESSAGE* rfx_encode_message(RFX_CONTEXT* WINPR_RESTRICT context,
 	if (!(message->rects = winpr_aligned_calloc(regionNbRects, sizeof(RFX_RECT), 32)))
 		goto skip_encoding_loop;
 
-	message->numRects = regionNbRects;
+	message->numRects = WINPR_ASSERTING_INT_CAST(UINT16, regionNbRects);
 
 	for (UINT32 i = 0; i < regionNbRects; i++, regionRect++)
 	{
@@ -1746,8 +1749,8 @@ RFX_MESSAGE* rfx_encode_message(RFX_CONTEXT* WINPR_RESTRICT context,
 			if ((yIdx == endTileY) && (gridRelY + 64 > height))
 				tileHeight = height - gridRelY;
 
-			currentTileRect.top = gridRelY;
-			currentTileRect.bottom = gridRelY + tileHeight;
+			currentTileRect.top = WINPR_ASSERTING_INT_CAST(UINT16, gridRelY);
+			currentTileRect.bottom = WINPR_ASSERTING_INT_CAST(UINT16, gridRelY + tileHeight);
 
 			for (UINT32 xIdx = startTileX, gridRelX = startTileX * 64; xIdx <= endTileX;
 			     xIdx++, gridRelX += 64)
@@ -1757,13 +1760,15 @@ RFX_MESSAGE* rfx_encode_message(RFX_CONTEXT* WINPR_RESTRICT context,
 					const BYTE* cpv;
 					BYTE* pv;
 				} cnv;
-				int tileWidth = 64;
+				UINT32 tileWidth = 64;
 
 				if ((xIdx == endTileX) && (gridRelX + 64 > width))
-					tileWidth = width - gridRelX;
+				{
+					tileWidth = (width - gridRelX);
+				}
 
-				currentTileRect.left = gridRelX;
-				currentTileRect.right = gridRelX + tileWidth;
+				currentTileRect.left = WINPR_ASSERTING_INT_CAST(UINT16, gridRelX);
+				currentTileRect.right = WINPR_ASSERTING_INT_CAST(UINT16, gridRelX + tileWidth);
 
 				/* checks if this tile is already treated */
 				if (region16_intersects_rect(&tilesRegion, &currentTileRect))
@@ -1773,11 +1778,12 @@ RFX_MESSAGE* rfx_encode_message(RFX_CONTEXT* WINPR_RESTRICT context,
 				if (!tile)
 					goto skip_encoding_loop;
 
-				tile->xIdx = xIdx;
-				tile->yIdx = yIdx;
-				tile->x = gridRelX;
-				tile->y = gridRelY;
+				tile->xIdx = WINPR_ASSERTING_INT_CAST(UINT16, xIdx);
+				tile->yIdx = WINPR_ASSERTING_INT_CAST(UINT16, yIdx);
+				tile->x = WINPR_ASSERTING_INT_CAST(UINT16, gridRelX);
+				tile->y = WINPR_ASSERTING_INT_CAST(UINT16, gridRelY);
 				tile->scanline = scanline;
+
 				tile->width = tileWidth;
 				tile->height = tileHeight;
 				const UINT32 ax = gridRelX;
@@ -2050,7 +2056,8 @@ static INLINE BOOL rfx_write_message_tileset(RFX_CONTEXT* WINPR_RESTRICT context
 	Stream_Write_UINT16(s, CBT_TILESET);            /* subtype (2 bytes) */
 	Stream_Write_UINT16(s, 0);                      /* idx (2 bytes) */
 	Stream_Write_UINT16(s, context->properties);    /* properties (2 bytes) */
-	Stream_Write_UINT8(s, message->numQuant);       /* numQuant (1 byte) */
+	Stream_Write_UINT8(
+	    s, WINPR_ASSERTING_INT_CAST(uint8_t, message->numQuant)); /* numQuant (1 byte) */
 	Stream_Write_UINT8(s, 0x40);                    /* tileSize (1 byte) */
 	Stream_Write_UINT16(s, message->numTiles);      /* numTiles (2 bytes) */
 	Stream_Write_UINT32(s, message->tilesDataSize); /* tilesDataSize (4 bytes) */
@@ -2059,7 +2066,8 @@ static INLINE BOOL rfx_write_message_tileset(RFX_CONTEXT* WINPR_RESTRICT context
 	for (size_t i = 0; i < message->numQuant * 5ul; i++)
 	{
 		WINPR_ASSERT(quantVals);
-		Stream_Write_UINT8(s, quantVals[0] + (quantVals[1] << 4));
+		Stream_Write_UINT8(s,
+		                   WINPR_ASSERTING_INT_CAST(uint8_t, quantVals[0] + (quantVals[1] << 4)));
 		quantVals += 2;
 	}
 

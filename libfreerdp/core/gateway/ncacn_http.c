@@ -33,7 +33,7 @@
 
 #define AUTH_PKG NTLM_SSP_NAME
 
-static wStream* rpc_auth_http_request(HttpContext* http, const char* method, int contentLength,
+static wStream* rpc_auth_http_request(HttpContext* http, const char* method, size_t contentLength,
                                       const SecBuffer* authToken, const char* auth_scheme)
 {
 	wStream* s = NULL;
@@ -77,7 +77,6 @@ BOOL rpc_ncacn_http_send_in_channel_request(RpcChannel* inChannel)
 {
 	wStream* s = NULL;
 	SSIZE_T status = 0;
-	int contentLength = 0;
 	rdpCredsspAuth* auth = NULL;
 	HttpContext* http = NULL;
 	const SecBuffer* buffer = NULL;
@@ -93,7 +92,7 @@ BOOL rpc_ncacn_http_send_in_channel_request(RpcChannel* inChannel)
 	if (rc < 0)
 		return FALSE;
 
-	contentLength = (rc == 0) ? 0 : 0x40000000;
+	const size_t contentLength = (rc == 0) ? 0 : 0x40000000;
 	buffer = credssp_auth_have_output_token(auth) ? credssp_auth_get_output_buffer(auth) : NULL;
 	s = rpc_auth_http_request(http, "RPC_IN_DATA", contentLength, buffer,
 	                          credssp_auth_pkg_name(auth));
@@ -206,7 +205,7 @@ BOOL rpc_ncacn_http_send_out_channel_request(RpcChannel* outChannel, BOOL replac
 {
 	BOOL status = TRUE;
 	wStream* s = NULL;
-	int contentLength = 0;
+	size_t contentLength = 0;
 	rdpCredsspAuth* auth = NULL;
 	HttpContext* http = NULL;
 	const SecBuffer* buffer = NULL;

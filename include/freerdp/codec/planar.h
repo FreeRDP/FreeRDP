@@ -22,6 +22,7 @@
 #ifndef FREERDP_CODEC_PLANAR_H
 #define FREERDP_CODEC_PLANAR_H
 
+#include <winpr/cast.h>
 #include <winpr/crt.h>
 
 #include <freerdp/codec/color.h>
@@ -32,16 +33,24 @@
 #define PLANAR_FORMAT_HEADER_NA (1 << 5)
 #define PLANAR_FORMAT_HEADER_CLL_MASK 0x07
 
-#define PLANAR_CONTROL_BYTE(_nRunLength, _cRawBytes) \
-	(_nRunLength & 0x0F) | ((_cRawBytes & 0x0F) << 4)
-
-#define PLANAR_CONTROL_BYTE_RUN_LENGTH(_controlByte) (_controlByte & 0x0F)
-#define PLANAR_CONTROL_BYTE_RAW_BYTES(_controlByte) ((_controlByte >> 4) & 0x0F)
-
 #ifdef __cplusplus
 extern "C"
 {
 #endif
+
+	static inline BYTE PLANAR_CONTROL_BYTE(UINT32 nRunLength, UINT32 cRawBytes)
+	{
+		return WINPR_ASSERTING_INT_CAST(UINT8, ((nRunLength & 0x0F) | ((cRawBytes & 0x0F) << 4)));
+	}
+
+	static inline BYTE PLANAR_CONTROL_BYTE_RUN_LENGTH(UINT32 controlByte)
+	{
+		return (controlByte & 0x0F);
+	}
+	static inline BYTE PLANAR_CONTROL_BYTE_RAW_BYTES(UINT32 controlByte)
+	{
+		return ((controlByte >> 4) & 0x0F);
+	}
 
 	typedef struct S_BITMAP_PLANAR_CONTEXT BITMAP_PLANAR_CONTEXT;
 

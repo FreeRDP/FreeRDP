@@ -107,7 +107,7 @@ UINT32 gdi_SetBkColor(HGDI_DC hdc, UINT32 crColor)
  * @return background mode
  */
 
-UINT32 gdi_GetBkMode(HGDI_DC hdc)
+INT32 gdi_GetBkMode(HGDI_DC hdc)
 {
 	return hdc->bkMode;
 }

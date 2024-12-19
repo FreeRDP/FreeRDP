@@ -46,6 +46,22 @@
 #endif
 
 #if defined(SSE_AVX_INTRINSICS_ENABLED)
+#include <emmintrin.h>
+static inline __m128i mm_set_epu32(uint32_t val1, uint32_t val2, uint32_t val3, uint32_t val4)
+{
+	return _mm_set_epi32((int32_t)val1, (int32_t)val2, (int32_t)val3, (int32_t)val4);
+}
+
+static inline __m128i mm_set1_epu32(uint32_t val)
+{
+	return _mm_set1_epi32((int32_t)val);
+}
+
+static inline __m128i mm_set1_epu8(uint8_t val)
+{
+	return _mm_set1_epi8((int8_t)val);
+}
+
 /* Use lddqu for unaligned; load for 16-byte aligned. */
 #define LOAD_SI128(_ptr_)                                                       \
 	(((const ULONG_PTR)(_ptr_)&0x0f) ? _mm_lddqu_si128((const __m128i*)(_ptr_)) \

@@ -195,7 +195,7 @@ static BOOL update_message_SetKeyboardImeStatus(rdpContext* context, UINT16 imeI
 
 	up = update_cast(context->update);
 	return MessageQueue_Post(up->queue, (void*)context, MakeMessageId(Update, SetKeyboardImeStatus),
-	                         (void*)(size_t)((imeId << 16UL) | imeState),
+	                         (void*)(size_t)((((UINT32)imeId << 16UL) & 0xFFFF0000) | imeState),
 	                         (void*)(size_t)imeConvMode);
 }
 
@@ -3104,16 +3104,14 @@ int input_message_queue_process_message(rdpInput* input, wMessage* message)
 
 int input_message_queue_process_pending_messages(rdpInput* input)
 {
-	int count = 0;
 	int status = 1;
 	wMessage message = { 0 };
-	wMessageQueue* queue = NULL;
 	rdp_input_internal* in = input_cast(input);
 
 	if (!in->queue)
 		return -1;
 
-	queue = in->queue;
+	wMessageQueue* queue = in->queue;
 
 	while (MessageQueue_Peek(queue, &message, TRUE))
 	{
@@ -3121,8 +3119,6 @@ int input_message_queue_process_pending_messages(rdpInput* input)
 
 		if (!status)
 			break;
-
-		count++;
 	}
 
 	return status;

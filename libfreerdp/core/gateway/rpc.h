@@ -775,7 +775,7 @@ FREERDP_LOCAL void rpc_channel_free(RpcChannel* channel);
 
 WINPR_ATTR_MALLOC(rpc_channel_free, 1)
 FREERDP_LOCAL RpcOutChannel* rpc_out_channel_new(rdpRpc* rpc, const GUID* guid);
-FREERDP_LOCAL int rpc_out_channel_replacement_connect(RpcOutChannel* outChannel, int timeout);
+FREERDP_LOCAL int rpc_out_channel_replacement_connect(RpcOutChannel* outChannel, uint32_t timeout);
 
 FREERDP_LOCAL BOOL rpc_in_channel_transition_to_state(RpcInChannel* inChannel,
                                                       CLIENT_IN_CHANNEL_STATE state);

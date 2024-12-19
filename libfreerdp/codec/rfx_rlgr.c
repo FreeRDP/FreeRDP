@@ -28,6 +28,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <winpr/assert.h>
+#include <winpr/cast.h>
 #include <winpr/crt.h>
 #include <winpr/print.h>
 #include <winpr/sysinfo.h>
@@ -63,16 +65,24 @@
  * Update the passed parameter and clamp it to the range [0, KPMAX]
  * Return the value of parameter right-shifted by LSGR
  */
-#define UpdateParam(_param, _deltaP, _k) \
-	do                                   \
-	{                                    \
-		(_param) += (_deltaP);           \
-		if ((_param) > KPMAX)            \
-			(_param) = KPMAX;            \
-		if ((_param) < 0)                \
-			(_param) = 0;                \
-		(_k) = ((_param) >> LSGR);       \
-	} while (0)
+static inline uint32_t UpdateParam(uint32_t* param, int32_t deltaP)
+{
+	WINPR_ASSERT(param);
+	if (deltaP < 0)
+	{
+		const uint32_t udeltaP = WINPR_ASSERTING_INT_CAST(uint32_t, -deltaP);
+		if (udeltaP > *param)
+			*param = 0;
+		else
+			*param -= udeltaP;
+	}
+	else
+		*param += WINPR_ASSERTING_INT_CAST(uint32_t, deltaP);
+
+	if ((*param) > KPMAX)
+		(*param) = KPMAX;
+	return (*param) >> LSGR;
+}
 
 static BOOL g_LZCNT = FALSE;
 
@@ -80,6 +90,10 @@ static INIT_ONCE rfx_rlgr_init_once = INIT_ONCE_STATIC_INIT;
 
 static BOOL CALLBACK rfx_rlgr_init(PINIT_ONCE once, PVOID param, PVOID* context)
 {
+	WINPR_UNUSED(once);
+	WINPR_UNUSED(param);
+	WINPR_UNUSED(context);
+
 	g_LZCNT = IsProcessorFeaturePresentEx(PF_EX_LZCNT);
 	return TRUE;
 }
@@ -138,16 +152,16 @@ static INLINE UINT32 lzcnt_s(UINT32 x)
 int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* WINPR_RESTRICT pSrcData, UINT32 SrcSize,
                     INT16* WINPR_RESTRICT pDstData, UINT32 rDstSize)
 {
-	int vk = 0;
+	uint32_t vk = 0;
 	size_t run = 0;
-	int cnt = 0;
+	size_t cnt = 0;
 	size_t size = 0;
 	size_t offset = 0;
 	INT16 mag = 0;
 	UINT32 k = 0;
-	INT32 kp = 0;
+	UINT32 kp = 0;
 	UINT32 kr = 0;
-	INT32 krp = 0;
+	UINT32 krp = 0;
 	UINT16 code = 0;
 	UINT32 sign = 0;
 	UINT32 nIdx = 0;
@@ -196,10 +210,10 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* WINPR_RESTRICT pSrcData, UINT32 
 
 			size_t nbits = BitStream_GetRemainingLength(bs);
 
-			if ((size_t)cnt > nbits)
-				cnt = (int)nbits;
+			if (cnt > nbits)
+				cnt = WINPR_ASSERTING_INT_CAST(uint32_t, nbits);
 
-			vk = cnt;
+			vk = WINPR_ASSERTING_INT_CAST(uint32_t, cnt);
 
 			while ((cnt == 32) && (BitStream_GetRemainingLength(bs) > 0))
 			{
@@ -209,8 +223,8 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* WINPR_RESTRICT pSrcData, UINT32 
 
 				nbits = BitStream_GetRemainingLength(bs);
 
-				if ((size_t)cnt > nbits)
-					cnt = (int)nbits;
+				if (cnt > nbits)
+					cnt = nbits;
 
 				vk += cnt;
 			}
@@ -260,10 +274,10 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* WINPR_RESTRICT pSrcData, UINT32 
 
 			nbits = BitStream_GetRemainingLength(bs);
 
-			if ((size_t)cnt > nbits)
-				cnt = (int)nbits;
+			if (cnt > nbits)
+				cnt = nbits;
 
-			vk = cnt;
+			vk = WINPR_ASSERTING_INT_CAST(uint32_t, cnt);
 
 			while ((cnt == 32) && (BitStream_GetRemainingLength(bs) > 0))
 			{
@@ -273,8 +287,8 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* WINPR_RESTRICT pSrcData, UINT32 
 
 				nbits = BitStream_GetRemainingLength(bs);
 
-				if ((size_t)cnt > nbits)
-					cnt = (int)nbits;
+				if (cnt > nbits)
+					cnt = nbits;
 
 				vk += cnt;
 			}
@@ -306,9 +320,9 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* WINPR_RESTRICT pSrcData, UINT32 
 			{
 				/* update kr, krp params */
 
-				krp -= 2;
-
-				if (krp < 0)
+				if (krp > 2)
+					krp -= 2;
+				else
 					krp = 0;
 
 				kr = krp >> LSGR;
@@ -327,9 +341,9 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* WINPR_RESTRICT pSrcData, UINT32 
 
 			/* update k, kp params */
 
-			kp -= DN_GR;
-
-			if (kp < 0)
+			if (kp > DN_GR)
+				kp -= DN_GR;
+			else
 				kp = 0;
 
 			k = kp >> LSGR;
@@ -337,17 +351,17 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* WINPR_RESTRICT pSrcData, UINT32 
 			/* compute magnitude from code */
 
 			if (sign)
-				mag = ((INT16)(code + 1)) * -1;
+				mag = WINPR_ASSERTING_INT_CAST(int16_t, (code + 1)) * -1;
 			else
-				mag = (INT16)(code + 1);
+				mag = WINPR_ASSERTING_INT_CAST(int16_t, code + 1);
 
 			/* write to output stream */
 
-			offset = (pOutput - pDstData);
+			offset = WINPR_ASSERTING_INT_CAST(size_t, (pOutput)-pDstData);
 			size = run;
 
 			if ((offset + size) > rDstSize)
-				size = DstSize - offset;
+				size = WINPR_ASSERTING_INT_CAST(size_t, DstSize) - offset;
 
 			if (size)
 			{
@@ -371,10 +385,10 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* WINPR_RESTRICT pSrcData, UINT32 
 
 			size_t nbits = BitStream_GetRemainingLength(bs);
 
-			if ((size_t)cnt > nbits)
-				cnt = (int)nbits;
+			if (cnt > nbits)
+				cnt = nbits;
 
-			vk = cnt;
+			vk = WINPR_ASSERTING_INT_CAST(uint32_t, cnt);
 
 			while ((cnt == 32) && (BitStream_GetRemainingLength(bs) > 0))
 			{
@@ -384,8 +398,8 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* WINPR_RESTRICT pSrcData, UINT32 
 
 				nbits = BitStream_GetRemainingLength(bs);
 
-				if ((size_t)cnt > nbits)
-					cnt = (int)nbits;
+				if (cnt > nbits)
+					cnt = nbits;
 
 				vk += cnt;
 			}
@@ -417,12 +431,12 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* WINPR_RESTRICT pSrcData, UINT32 
 			{
 				/* update kr, krp params */
 
-				krp -= 2;
-
-				if (krp < 0)
+				if (krp > 2)
+					krp -= 2;
+				else
 					krp = 0;
 
-				kr = krp >> LSGR;
+				kr = (krp >> LSGR) & UINT32_MAX;
 			}
 			else if (vk != 1)
 			{
@@ -455,9 +469,9 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* WINPR_RESTRICT pSrcData, UINT32 
 				{
 					/* update k, kp params */
 
-					kp -= DQ_GR;
-
-					if (kp < 0)
+					if (kp > DQ_GR)
+						kp -= DQ_GR;
+					else
 						kp = 0;
 
 					k = kp >> LSGR;
@@ -468,9 +482,9 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* WINPR_RESTRICT pSrcData, UINT32 
 					 */
 
 					if (code & 1)
-						mag = ((INT16)((code + 1) >> 1)) * -1;
+						mag = WINPR_ASSERTING_INT_CAST(INT16, (code + 1) >> 1) * -1;
 					else
-						mag = (INT16)(code >> 1);
+						mag = WINPR_ASSERTING_INT_CAST(INT16, code >> 1);
 				}
 
 				if ((pOutput - pDstData) < DstSize)
@@ -485,8 +499,8 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* WINPR_RESTRICT pSrcData, UINT32 
 
 				if (code)
 				{
-					mag = (UINT32)code;
-					nIdx = 32 - lzcnt_s(mag);
+					mag = WINPR_ASSERTING_INT_CAST(int16_t, code);
+					nIdx = 32 - lzcnt_s(WINPR_ASSERTING_INT_CAST(uint32_t, mag));
 				}
 
 				if (BitStream_GetRemainingLength(bs) < nIdx)
@@ -505,9 +519,9 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* WINPR_RESTRICT pSrcData, UINT32 
 				{
 					/* update k, kp params */
 
-					kp -= (2 * DQ_GR);
-
-					if (kp < 0)
+					if (kp > 2 * DQ_GR)
+						kp -= (2 * DQ_GR);
+					else
 						kp = 0;
 
 					k = kp >> LSGR;
@@ -525,9 +539,9 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* WINPR_RESTRICT pSrcData, UINT32 
 				}
 
 				if (val1 & 1)
-					mag = ((INT16)((val1 + 1) >> 1)) * -1;
+					mag = WINPR_ASSERTING_INT_CAST(int16_t, (val1 + 1) >> 1) * -1;
 				else
-					mag = (INT16)(val1 >> 1);
+					mag = WINPR_ASSERTING_INT_CAST(int16_t, val1 >> 1);
 
 				if ((pOutput - pDstData) < DstSize)
 				{
@@ -536,29 +550,29 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* WINPR_RESTRICT pSrcData, UINT32 
 				}
 
 				if (val2 & 1)
-					mag = ((INT16)((val2 + 1) >> 1)) * -1;
+					mag = WINPR_ASSERTING_INT_CAST(int16_t, (val2 + 1) >> 1) * -1;
 				else
-					mag = (INT16)(val2 >> 1);
+					mag = WINPR_ASSERTING_INT_CAST(int16_t, val2 >> 1);
 
 				if ((pOutput - pDstData) < DstSize)
 				{
-					*pOutput = mag;
+					*pOutput = WINPR_ASSERTING_INT_CAST(int16_t, mag);
 					pOutput++;
 				}
 			}
 		}
 	}
 
-	offset = (pOutput - pDstData);
+	offset = WINPR_ASSERTING_INT_CAST(size_t, (pOutput - pDstData));
 
 	if (offset < rDstSize)
 	{
-		size = DstSize - offset;
+		size = WINPR_ASSERTING_INT_CAST(size_t, DstSize) - offset;
 		ZeroMemory(pOutput, size * 2);
 		pOutput += size;
 	}
 
-	offset = (pOutput - pDstData);
+	offset = WINPR_ASSERTING_INT_CAST(size_t, (pOutput - pDstData));
 
 	if ((DstSize < 0) || (offset != (size_t)DstSize))
 		return -1;
@@ -585,31 +599,38 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* WINPR_RESTRICT pSrcData, UINT32 
 #define OutputBits(numBits, bitPattern) rfx_bitstream_put_bits(bs, bitPattern, numBits)
 
 /* Emit a bit (0 or 1), count number of times, to the output bitstream */
-#define OutputBit(count, bit)                                    \
-	do                                                           \
-	{                                                            \
-		UINT16 _b = ((bit) ? 0xFFFF : 0);                        \
-		int _c = (count);                                        \
-		for (; _c > 0; _c -= 16)                                 \
-			rfx_bitstream_put_bits(bs, _b, (_c > 16 ? 16 : _c)); \
-	} while (0)
+static inline void OutputBit(RFX_BITSTREAM* bs, uint32_t count, UINT8 bit)
+{
+	UINT16 _b = ((bit) ? 0xFFFF : 0);
+	const uint32_t rem = count % 16;
+	for (uint32_t x = 0; x < count - rem; x += 16)
+		rfx_bitstream_put_bits(bs, _b, 16);
+
+	if (rem > 0)
+		rfx_bitstream_put_bits(bs, _b, rem);
+}
 
 /* Converts the input value to (2 * abs(input) - sign(input)), where sign(input) = (input < 0 ? 1 :
  * 0) and returns it */
-#define Get2MagSign(input) ((input) >= 0 ? 2 * (input) : -2 * (input)-1)
+static inline UINT32 Get2MagSign(INT32 input)
+{
+	if (input >= 0)
+		return WINPR_ASSERTING_INT_CAST(UINT32, 2 * input);
+	return WINPR_ASSERTING_INT_CAST(UINT32, -2 * input - 1);
+}
 
 /* Outputs the Golomb/Rice encoding of a non-negative integer */
 #define CodeGR(krp, val) rfx_rlgr_code_gr(bs, krp, val)
 
-static void rfx_rlgr_code_gr(RFX_BITSTREAM* bs, int* krp, UINT32 val)
+static void rfx_rlgr_code_gr(RFX_BITSTREAM* bs, uint32_t* krp, UINT32 val)
 {
-	int kr = *krp >> LSGR;
+	uint32_t kr = *krp >> LSGR;
 
 	/* unary part of GR code */
 
-	UINT32 vk = (val) >> kr;
-	OutputBit(vk, 1);
-	OutputBit(1, 0);
+	const uint32_t vk = val >> kr;
+	OutputBit(bs, vk, 1);
+	OutputBit(bs, 1, 0);
 
 	/* remainder part of GR code, if needed */
 	if (kr)
@@ -620,22 +641,21 @@ static void rfx_rlgr_code_gr(RFX_BITSTREAM* bs, int* krp, UINT32 val)
 	/* update krp, only if it is not equal to 1 */
 	if (vk == 0)
 	{
-		UpdateParam(*krp, -2, kr);
+		(void)UpdateParam(krp, -2);
 	}
 	else if (vk > 1)
 	{
-		UpdateParam(*krp, vk, kr);
+		(void)UpdateParam(krp, WINPR_CXX_COMPAT_CAST(int32_t, vk));
 	}
 }
 
 int rfx_rlgr_encode(RLGR_MODE mode, const INT16* WINPR_RESTRICT data, UINT32 data_size,
                     BYTE* WINPR_RESTRICT buffer, UINT32 buffer_size)
 {
-	int k = 0;
-	int kp = 0;
-	int krp = 0;
+	uint32_t k = 0;
+	uint32_t kp = 0;
+	uint32_t krp = 0;
 	RFX_BITSTREAM* bs = NULL;
-	int processed_size = 0;
 
 	if (!(bs = (RFX_BITSTREAM*)winpr_aligned_calloc(1, sizeof(RFX_BITSTREAM), 32)))
 		return 0;
@@ -654,9 +674,9 @@ int rfx_rlgr_encode(RLGR_MODE mode, const INT16* WINPR_RESTRICT data, UINT32 dat
 
 		if (k)
 		{
-			int numZeros = 0;
-			int runmax = 0;
-			int sign = 0;
+			uint32_t numZeros = 0;
+			uint32_t runmax = 0;
+			BYTE sign = 0;
 
 			/* RUN-LENGTH MODE */
 
@@ -673,14 +693,14 @@ int rfx_rlgr_encode(RLGR_MODE mode, const INT16* WINPR_RESTRICT data, UINT32 dat
 			runmax = 1 << k;
 			while (numZeros >= runmax)
 			{
-				OutputBit(1, 0); /* output a zero bit */
+				OutputBit(bs, 1, 0); /* output a zero bit */
 				numZeros -= runmax;
-				UpdateParam(kp, UP_GR, k); /* update kp, k */
+				k = UpdateParam(&kp, UP_GR); /* update kp, k */
 				runmax = 1 << k;
 			}
 
 			/* output a 1 to terminate runs */
-			OutputBit(1, 1);
+			OutputBit(bs, 1, 1);
 
 			/* output the remaining run length using k bits */
 			OutputBits(k, numZeros);
@@ -693,10 +713,10 @@ int rfx_rlgr_encode(RLGR_MODE mode, const INT16* WINPR_RESTRICT data, UINT32 dat
 			    (UINT32)(input < 0 ? -input : input); /* absolute value of input coefficient */
 			sign = (input < 0 ? 1 : 0);         /* sign of input coefficient */
 
-			OutputBit(1, sign);              /* output the sign bit */
+			OutputBit(bs, 1, sign);          /* output the sign bit */
 			CodeGR(&krp, mag ? mag - 1 : 0); /* output GR code for (mag - 1) */
 
-			UpdateParam(kp, -DN_GR, k);
+			k = UpdateParam(&kp, -DN_GR);
 		}
 		else
 		{
@@ -718,11 +738,11 @@ int rfx_rlgr_encode(RLGR_MODE mode, const INT16* WINPR_RESTRICT data, UINT32 dat
 				   and the update direction is reversed */
 				if (twoMs)
 				{
-					UpdateParam(kp, -DQ_GR, k);
+					k = UpdateParam(&kp, -DQ_GR);
 				}
 				else
 				{
-					UpdateParam(kp, UQ_GR, k);
+					k = UpdateParam(&kp, UQ_GR);
 				}
 			}
 			else /* mode == RLGR3 */
@@ -753,19 +773,19 @@ int rfx_rlgr_encode(RLGR_MODE mode, const INT16* WINPR_RESTRICT data, UINT32 dat
 
 				if (twoMs1 && twoMs2)
 				{
-					UpdateParam(kp, -2 * DQ_GR, k);
+					k = UpdateParam(&kp, -2 * DQ_GR);
 				}
 				else if (!twoMs1 && !twoMs2)
 				{
-					UpdateParam(kp, 2 * UQ_GR, k);
+					k = UpdateParam(&kp, 2 * UQ_GR);
 				}
 			}
 		}
 	}
 
 	rfx_bitstream_flush(bs);
-	processed_size = rfx_bitstream_get_processed_bytes(bs);
+	uint32_t processed_size = rfx_bitstream_get_processed_bytes(bs);
 	winpr_aligned_free(bs);
 
-	return processed_size;
+	return WINPR_ASSERTING_INT_CAST(int, processed_size);
 }

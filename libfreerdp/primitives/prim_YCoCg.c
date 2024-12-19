@@ -43,8 +43,8 @@ static pstatus_t general_YCoCgToRGB_8u_AC4R(const BYTE* pSrc, INT32 srcStep, BYT
 
 	for (size_t y = 0; y < height; y++)
 	{
-		const BYTE* sptr = &pSrc[y * srcStep];
-		BYTE* dptr = &pDst[y * dstStep];
+		const BYTE* sptr = &pSrc[y * WINPR_ASSERTING_INT_CAST(uint32_t, srcStep)];
+		BYTE* dptr = &pDst[y * WINPR_ASSERTING_INT_CAST(uint32_t, dstStep)];
 		for (size_t x = 0; x < width; x++)
 		{
 			/* Note: shifts must be done before sign-conversion. */

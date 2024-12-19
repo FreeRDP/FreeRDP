@@ -30,12 +30,12 @@ extern "C"
 {
 #endif
 
-	FREERDP_LOCAL BOOL gdi_LineTo(HGDI_DC hdc, UINT32 nXEnd, UINT32 nYEnd);
+	FREERDP_LOCAL BOOL gdi_LineTo(HGDI_DC hdc, INT32 nXEnd, INT32 nYEnd);
 	FREERDP_LOCAL BOOL gdi_PolylineTo(HGDI_DC hdc, GDI_POINT* lppt, DWORD cCount);
 	FREERDP_LOCAL BOOL gdi_Polyline(HGDI_DC hdc, GDI_POINT* lppt, UINT32 cPoints);
 	FREERDP_LOCAL BOOL gdi_PolyPolyline(HGDI_DC hdc, GDI_POINT* lppt, const UINT32* lpdwPolyPoints,
 	                                    DWORD cCount);
-	FREERDP_LOCAL BOOL gdi_MoveToEx(HGDI_DC hdc, UINT32 X, UINT32 Y, HGDI_POINT lpPoint);
+	FREERDP_LOCAL BOOL gdi_MoveToEx(HGDI_DC hdc, INT32 X, INT32 Y, HGDI_POINT lpPoint);
 
 #ifdef __cplusplus
 }

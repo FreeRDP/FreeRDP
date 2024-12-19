@@ -20,6 +20,7 @@
 #include <freerdp/config.h>
 
 #include <winpr/assert.h>
+#include <winpr/cast.h>
 #include <winpr/crt.h>
 #include <winpr/crypto.h>
 
@@ -963,7 +964,7 @@ static BOOL rts_read_pdu_fault(wStream* s, rpcconn_fault_hdr_t* ctx, BOOL silent
 	Stream_Read_UINT8(s, ctx->reserved);
 	Stream_Read_UINT32(s, ctx->status);
 
-	WLog_WARN(TAG, "status=%s", Win32ErrorCode2Tag(ctx->status));
+	WLog_WARN(TAG, "status=%s", Win32ErrorCode2Tag(ctx->status & 0xFFFF));
 	return rts_read_auth_verifier_with_stub(s, &ctx->auth_verifier, &ctx->header, silent);
 }
 
