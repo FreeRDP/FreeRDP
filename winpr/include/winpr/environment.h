@@ -22,8 +22,62 @@
 #ifndef WINPR_ENVIRONMENT_H
 #define WINPR_ENVIRONMENT_H
 
+#include <stdbool.h>
+
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+	/** @brief thread safe getenv
+	 *
+	 *  @param value The key to get the value for
+	 *
+	 *  @return A copy of the string or \b NULL in case not found.
+	 *  @since version 3.10.0
+	 */
+	WINPR_ATTR_MALLOC(free, 1)
+	WINPR_API char* winpr_secure_getenv(const char* value);
+
+	/** @brief thread safe setenv
+	 * Put a copy of the string \b value for key \b name in the environment.
+	 *
+	 *  @return \b 0 in case of success, a negative number in case of an error
+	 *  @since version 3.10.0
+	 */
+	WINPR_API int winpr_secure_setenv(const char* name, const char* value, bool overwrite);
+
+	/** @brief thread safe putenv
+	 * Put a copy of the string \b value in the environment. The string must have a <key>=<value>
+	 * syntax.
+	 *
+	 *  @return \b 0 in case of success, a negative number in case of an error
+	 *  @since version 3.10.0
+	 */
+	WINPR_API int winpr_secure_putenv(const char* value);
+
+	/** @brief thread safe unsetenv
+	 * Clear a environment variable with key \b name from the environment
+	 *
+	 *  @return \b 0 in case of success, a negative number in case of an error
+	 *  @since version 3.10.0
+	 */
+	WINPR_API int winpr_secure_unsetenv(const char* name);
+
+	/** @brief thread safe clearenv
+	 * Clear all strings from the environment
+	 *
+	 *  @return \b 0 in case of success, a negative number in case of an error
+	 *  @since version 3.10.0
+	 */
+	WINPR_API int winpr_secure_clearenv(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #ifndef _WIN32
 
