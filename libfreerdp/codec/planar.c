@@ -317,7 +317,7 @@ static INLINE INT32 planar_decompress_plane_rle_only(const BYTE* WINPR_RESTRICT 
 					{
 						deltaValue = deltaValue >> 1;
 						deltaValue = deltaValue + 1;
-						p = (int16_t)-1 * WINPR_ASSERTING_INT_CAST(int16_t, deltaValue);
+						p = WINPR_ASSERTING_INT_CAST(int16_t, -1 * (int16_t)deltaValue);
 					}
 					else
 					{
