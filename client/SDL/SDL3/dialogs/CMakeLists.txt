@@ -53,6 +53,7 @@ macro(find_sdl_component name)
     list(APPEND LIBS ${name}::${name}-static)
     set_target_properties(${name}::${name}-static PROPERTIES SYSTEM TRUE)
   endif()
+
 endmacro()
 
 find_sdl_component(SDL3_ttf)

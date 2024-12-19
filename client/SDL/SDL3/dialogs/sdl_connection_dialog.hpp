@@ -102,7 +102,7 @@ class SDLConnectionDialog
 	std::string _msg;
 	MsgType _type = MSG_NONE;
 	MsgType _type_active = MSG_NONE;
-	SDL_TimerID _timer = -1;
+	SDL_TimerID _timer = 0;
 	bool _running = false;
 	std::vector<widget_cfg_t> _list;
 	SdlButtonList _buttons;
