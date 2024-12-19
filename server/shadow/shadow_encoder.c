@@ -170,7 +170,7 @@ static int shadow_encoder_init_nsc(rdpShadowEncoder* encoder)
 		goto fail;
 	if (!nsc_context_set_parameters(
 	        encoder->nsc, NSC_ALLOW_SUBSAMPLING,
-	        freerdp_settings_get_bool(settings, FreeRDP_NSCodecAllowSubsampling)))
+	        freerdp_settings_get_bool(settings, FreeRDP_NSCodecAllowSubsampling) ? 1 : 0))
 		goto fail;
 	if (!nsc_context_set_parameters(
 	        encoder->nsc, NSC_DYNAMIC_COLOR_FIDELITY,
