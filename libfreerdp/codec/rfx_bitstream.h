@@ -20,88 +20,115 @@
 #ifndef FREERDP_LIB_CODEC_RFX_BITSTREAM_H
 #define FREERDP_LIB_CODEC_RFX_BITSTREAM_H
 
+#include <winpr/assert.h>
+#include <winpr/cast.h>
+
 #include <freerdp/codec/rfx.h>
 
-typedef struct
+#ifdef __cplusplus
+extern "C"
 {
-	BYTE* buffer;
-	int nbytes;
-	int byte_pos;
-	int bits_left;
-} RFX_BITSTREAM;
+#endif
 
-#define rfx_bitstream_attach(bs, _buffer, _nbytes) \
-	do                                             \
-	{                                              \
-		bs->buffer = (BYTE*)(_buffer);             \
-		bs->nbytes = (_nbytes);                    \
-		bs->byte_pos = 0;                          \
-		bs->bits_left = 8;                         \
-	} while (0)
+	typedef struct
+	{
+		BYTE* buffer;
+		uint32_t nbytes;
+		uint32_t byte_pos;
+		uint32_t bits_left;
+	} RFX_BITSTREAM;
 
-#define rfx_bitstream_get_bits(bs, _nbits, _r)                                       \
-	do                                                                               \
-	{                                                                                \
-		int nbits = _nbits;                                                          \
-		int b;                                                                       \
-		UINT16 n = 0;                                                                \
-		while (bs->byte_pos < bs->nbytes && nbits > 0)                               \
-		{                                                                            \
-			b = nbits;                                                               \
-			if (b > bs->bits_left)                                                   \
-				b = bs->bits_left;                                                   \
-			if (n)                                                                   \
-				n <<= b;                                                             \
-			n |= (bs->buffer[bs->byte_pos] >> (bs->bits_left - b)) & ((1 << b) - 1); \
-			bs->bits_left -= b;                                                      \
-			nbits -= b;                                                              \
-			if (bs->bits_left == 0)                                                  \
-			{                                                                        \
-				bs->bits_left = 8;                                                   \
-				bs->byte_pos++;                                                      \
-			}                                                                        \
-		}                                                                            \
-		_r = n;                                                                      \
-	} while (0)
+	static inline void rfx_bitstream_attach(RFX_BITSTREAM* bs, BYTE* WINPR_RESTRICT buffer,
+	                                        size_t nbytes)
+	{
+		WINPR_ASSERT(bs);
+		bs->buffer = (buffer);
 
-#define rfx_bitstream_put_bits(bs, _bits, _nbits)                                \
-	do                                                                           \
-	{                                                                            \
-		UINT16 bits = (_bits);                                                   \
-		int nbits = (_nbits);                                                    \
-		int b;                                                                   \
-		while (bs->byte_pos < bs->nbytes && nbits > 0)                           \
-		{                                                                        \
-			b = nbits;                                                           \
-			if (b > bs->bits_left)                                               \
-				b = bs->bits_left;                                               \
-			bs->buffer[bs->byte_pos] |= ((bits >> (nbits - b)) & ((1 << b) - 1)) \
-			                            << (bs->bits_left - b);                  \
-			bs->bits_left -= b;                                                  \
-			nbits -= b;                                                          \
-			if (bs->bits_left == 0)                                              \
-			{                                                                    \
-				bs->bits_left = 8;                                               \
-				bs->byte_pos++;                                                  \
-			}                                                                    \
-		}                                                                        \
-	} while (0)
-#define rfx_bitstream_flush(bs)                    \
-	do                                             \
-	{                                              \
-		if (bs->bits_left != 8)                    \
-		{                                          \
-			int _nbits = 8 - bs->bits_left;        \
-			rfx_bitstream_put_bits(bs, 0, _nbits); \
-		}                                          \
-	} while (0)
+		WINPR_ASSERT(nbytes <= UINT32_MAX);
+		bs->nbytes = WINPR_ASSERTING_INT_CAST(uint32_t, nbytes);
+		bs->byte_pos = 0;
+		bs->bits_left = 8;
+	}
 
-#define rfx_bitstream_eos(_bs) ((_bs)->byte_pos >= (_bs)->nbytes)
-#define rfx_bitstream_left(_bs)       \
-	((_bs)->byte_pos >= (_bs)->nbytes \
-	     ? 0                          \
-	     : ((_bs)->nbytes - (_bs)->byte_pos - 1) * 8 + (_bs)->bits_left)
-#define rfx_bitstream_get_processed_bytes(_bs) \
-	((_bs)->bits_left < 8 ? (_bs)->byte_pos + 1 : (_bs)->byte_pos)
+	static inline uint32_t rfx_bitstream_get_bits(RFX_BITSTREAM* bs, uint32_t nbits)
+	{
+		UINT16 n = 0;
+		while (bs->byte_pos < bs->nbytes && nbits > 0)
+		{
+			uint32_t b = nbits;
+			if (b > bs->bits_left)
+				b = bs->bits_left;
+			if (n)
+				n <<= b;
+			n |= (bs->buffer[bs->byte_pos] >> (bs->bits_left - b)) & ((1 << b) - 1);
+			bs->bits_left -= b;
+			nbits -= b;
+			if (bs->bits_left == 0)
+			{
+				bs->bits_left = 8;
+				bs->byte_pos++;
+			}
+		}
+		return n;
+	}
 
+	static inline void rfx_bitstream_put_bits(RFX_BITSTREAM* bs, uint32_t _bits, uint32_t _nbits)
+	{
+		UINT16 bits = WINPR_ASSERTING_INT_CAST(UINT16, _bits);
+
+		uint32_t nbits = (_nbits);
+		while (bs->byte_pos < bs->nbytes && nbits > 0)
+		{
+			uint32_t b = nbits;
+			if (b > bs->bits_left)
+				b = bs->bits_left;
+			bs->buffer[bs->byte_pos] |= ((bits >> (nbits - b)) & ((1 << b) - 1))
+			                            << (bs->bits_left - b);
+			bs->bits_left -= b;
+			nbits -= b;
+			if (bs->bits_left == 0)
+			{
+				bs->bits_left = 8;
+				bs->byte_pos++;
+			}
+		}
+	}
+
+	static inline void rfx_bitstream_flush(RFX_BITSTREAM* bs)
+	{
+		WINPR_ASSERT(bs);
+		if (bs->bits_left != 8)
+		{
+			uint32_t _nbits = 8 - bs->bits_left;
+			rfx_bitstream_put_bits(bs, 0, _nbits);
+		}
+	}
+
+	static inline BOOL rfx_bitstream_eos(RFX_BITSTREAM* bs)
+	{
+		WINPR_ASSERT(bs);
+		return ((bs)->byte_pos >= (bs)->nbytes);
+	}
+
+	static inline uint32_t rfx_bitstream_left(RFX_BITSTREAM* bs)
+	{
+		WINPR_ASSERT(bs);
+
+		if ((bs)->byte_pos >= (bs)->nbytes)
+			return 0;
+
+		return ((bs)->nbytes - (bs)->byte_pos - 1) * 8 + (bs)->bits_left;
+	}
+
+	static inline uint32_t rfx_bitstream_get_processed_bytes(RFX_BITSTREAM* bs)
+	{
+		WINPR_ASSERT(bs);
+		if ((bs)->bits_left < 8)
+			return (bs)->byte_pos + 1;
+		return (bs)->byte_pos;
+	}
+
+#ifdef __cplusplus
+}
+#endif
 #endif /* FREERDP_LIB_CODEC_RFX_BITSTREAM_H */

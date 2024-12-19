@@ -22,6 +22,8 @@
  */
 
 #include <winpr/wtypes.h>
+#include <winpr/assert.h>
+#include <winpr/cast.h>
 
 #include <freerdp/config.h>
 
@@ -509,8 +511,8 @@ static pstatus_t general_YUV420ToRGB_8u_P3AC4R(const BYTE* WINPR_RESTRICT pSrc[3
 	pV = pSrc[2];
 	lastCol = roi->width & 0x01;
 	lastRow = roi->height & 0x01;
-	nWidth = (roi->width + 1) & ~0x0001;
-	nHeight = (roi->height + 1) & ~0x0001;
+	nWidth = (roi->width + 1) & (uint32_t)~0x0001;
+	nHeight = (roi->height + 1) & (uint32_t)~0x0001;
 	halfWidth = nWidth / 2;
 	halfHeight = nHeight / 2;
 	srcPad[0] = (srcStep[0] - nWidth);
@@ -615,19 +617,22 @@ static pstatus_t general_YUV420ToRGB_8u_P3AC4R(const BYTE* WINPR_RESTRICT pSrc[3
  * | U | =  ( | -29   -99    128 | | G | ) >> 8 + | 128 |
  * | V |    ( | 128  -116    -12 | | B | )        | 128 |
  */
-static INLINE BYTE RGB2Y(BYTE R, BYTE G, BYTE B)
+static INLINE BYTE RGB2Y(INT32 R, INT32 G, INT32 B)
 {
-	return (54 * R + 183 * G + 18 * B) >> 8;
+	const INT32 val = ((54 * R + 183 * G + 18 * B) >> 8);
+	return WINPR_ASSERTING_INT_CAST(BYTE, val);
 }
 
-static INLINE BYTE RGB2U(BYTE R, BYTE G, BYTE B)
+static INLINE BYTE RGB2U(INT32 R, INT32 G, INT32 B)
 {
-	return ((-29 * R - 99 * G + 128 * B) >> 8) + 128;
+	const INT32 val = (((-29 * R - 99 * G + 128 * B) >> 8) + 128);
+	return WINPR_ASSERTING_INT_CAST(BYTE, val);
 }
 
 static INLINE BYTE RGB2V(INT32 R, INT32 G, INT32 B)
 {
-	return ((128 * R - 116 * G - 12 * B) >> 8) + 128;
+	const INT32 val = (((128 * R - 116 * G - 12 * B) >> 8) + 128);
+	return WINPR_ASSERTING_INT_CAST(BYTE, val);
 }
 
 // NOLINTBEGIN(readability-non-const-parameter)
@@ -769,41 +774,49 @@ static INLINE pstatus_t general_RGBToYUV420_RGBX(const BYTE* WINPR_RESTRICT pSrc
 
 		for (UINT32 x = 0; x < roi->width; x += 2)
 		{
-			BYTE R = 0;
-			BYTE G = 0;
-			BYTE B = 0;
-			INT32 Ra = 0;
-			INT32 Ga = 0;
-			INT32 Ba = 0;
+			BYTE R = *(src + x1 + 0);
+			BYTE G = *(src + x1 + 1);
+			BYTE B = *(src + x1 + 2);
 			/* row 1, pixel 1 */
-			Ra = R = *(src + x1 + 0);
-			Ga = G = *(src + x1 + 1);
-			Ba = B = *(src + x1 + 2);
+			INT32 Ra = R;
+			INT32 Ga = G;
+			INT32 Ba = B;
 			ydst[y1] = RGB2Y(R, G, B);
 
 			if (x < max_x)
 			{
 				/* row 1, pixel 2 */
-				Ra += R = *(src + x2 + 0);
-				Ga += G = *(src + x2 + 1);
-				Ba += B = *(src + x2 + 2);
+				R = *(src + x2 + 0);
+				G = *(src + x2 + 1);
+				B = *(src + x2 + 2);
+				Ra += R;
+				Ga += G;
+				Ba += B;
 				ydst[y2] = RGB2Y(R, G, B);
 			}
 
 			if (y < max_y)
 			{
 				/* row 2, pixel 1 */
-				Ra += R = *(src + x3 + 0);
-				Ga += G = *(src + x3 + 1);
-				Ba += B = *(src + x3 + 2);
+				R = *(src + x3 + 0);
+				G = *(src + x3 + 1);
+				B = *(src + x3 + 2);
+
+				Ra += R;
+				Ga += G;
+				Ba += B;
 				ydst[y3] = RGB2Y(R, G, B);
 
 				if (x < max_x)
 				{
 					/* row 2, pixel 2 */
-					Ra += R = *(src + x4 + 0);
-					Ga += G = *(src + x4 + 1);
-					Ba += B = *(src + x4 + 2);
+					R = *(src + x4 + 0);
+					G = *(src + x4 + 1);
+					B = *(src + x4 + 2);
+
+					Ra += R;
+					Ga += G;
+					Ba += B;
 					ydst[y4] = RGB2Y(R, G, B);
 				}
 			}
@@ -1006,8 +1019,8 @@ static INLINE void general_RGBToAVC444YUV_BGRX_DOUBLE_ROW(
 		/* 2x 2y pixel in luma UV plane use averaging
 		 */
 		{
-			const BYTE Uavg = ((UINT16)U1e + (UINT16)U2e + (UINT16)U1o + (UINT16)U2o) / 4;
-			const BYTE Vavg = ((UINT16)V1e + (UINT16)V2e + (UINT16)V1o + (UINT16)V2o) / 4;
+			const BYTE Uavg = WINPR_ASSERTING_INT_CAST(BYTE, ((UINT16)U1e + U2e + U1o + U2o) / 4);
+			const BYTE Vavg = WINPR_ASSERTING_INT_CAST(BYTE, ((UINT16)V1e + V2e + V1o + V2o) / 4);
 			*b2++ = Uavg;
 			*b3++ = Vavg;
 		}
@@ -1053,7 +1066,7 @@ static INLINE pstatus_t general_RGBToAVC444YUV_BGRX(const BYTE* WINPR_RESTRICT p
 		const BYTE* srcEven = y < roi->height ? pSrc + 1ULL * y * srcStep : pMaxSrc;
 		const BYTE* srcOdd = !last ? pSrc + 1ULL * (y + 1) * srcStep : pMaxSrc;
 		const UINT32 i = y >> 1;
-		const UINT32 n = (i & ~7) + i;
+		const UINT32 n = (i & (uint32_t)~7) + i;
 		BYTE* b1Even = pDst1[0] + 1ULL * y * dst1Step[0];
 		BYTE* b1Odd = !last ? (b1Even + dst1Step[0]) : NULL;
 		BYTE* b2 = pDst1[1] + 1ULL * (y / 2) * dst1Step[1];
@@ -1147,8 +1160,8 @@ static INLINE void general_RGBToAVC444YUV_RGBX_DOUBLE_ROW(
 		/* 2x 2y pixel in luma UV plane use averaging
 		 */
 		{
-			const BYTE Uavg = ((UINT16)U1e + (UINT16)U2e + (UINT16)U1o + (UINT16)U2o) / 4;
-			const BYTE Vavg = ((UINT16)V1e + (UINT16)V2e + (UINT16)V1o + (UINT16)V2o) / 4;
+			const BYTE Uavg = WINPR_ASSERTING_INT_CAST(BYTE, ((UINT16)U1e + U2e + U1o + U2o) / 4);
+			const BYTE Vavg = WINPR_ASSERTING_INT_CAST(BYTE, ((UINT16)V1e + V2e + V1o + V2o) / 4);
 			*b2++ = Uavg;
 			*b3++ = Vavg;
 		}
@@ -1194,7 +1207,7 @@ static INLINE pstatus_t general_RGBToAVC444YUV_RGBX(const BYTE* WINPR_RESTRICT p
 		const BYTE* srcEven = y < roi->height ? pSrc + 1ULL * y * srcStep : pMaxSrc;
 		const BYTE* srcOdd = !last ? pSrc + 1ULL * (y + 1) * srcStep : pMaxSrc;
 		const UINT32 i = y >> 1;
-		const UINT32 n = (i & ~7) + i;
+		const UINT32 n = (i & (uint32_t)~7) + i;
 		BYTE* b1Even = pDst1[0] + 1ULL * y * dst1Step[0];
 		BYTE* b1Odd = !last ? (b1Even + dst1Step[0]) : NULL;
 		BYTE* b2 = pDst1[1] + 1ULL * (y / 2) * dst1Step[1];
@@ -1297,8 +1310,10 @@ static INLINE void general_RGBToAVC444YUV_ANY_DOUBLE_ROW(
 		/* 2x 2y pixel in luma UV plane use averaging
 		 */
 		{
-			const BYTE Uavg = ((UINT16)U1e + (UINT16)U2e + (UINT16)U1o + (UINT16)U2o) / 4;
-			const BYTE Vavg = ((UINT16)V1e + (UINT16)V2e + (UINT16)V1o + (UINT16)V2o) / 4;
+			const BYTE Uavg = WINPR_ASSERTING_INT_CAST(
+			    BYTE, ((UINT16)U1e + (UINT16)U2e + (UINT16)U1o + (UINT16)U2o) / 4);
+			const BYTE Vavg = WINPR_ASSERTING_INT_CAST(
+			    BYTE, ((UINT16)V1e + (UINT16)V2e + (UINT16)V1o + (UINT16)V2o) / 4);
 			*b2++ = Uavg;
 			*b3++ = Vavg;
 		}
@@ -1397,7 +1412,7 @@ static INLINE pstatus_t general_RGBToAVC444YUV_ANY(
 		const BYTE* srcEven = y < roi->height ? pSrc + y * srcStep : pMaxSrc;
 		const BYTE* srcOdd = !last ? pSrc + (y + 1) * srcStep : pMaxSrc;
 		const UINT32 i = (UINT32)y >> 1;
-		const UINT32 n = (i & ~7) + i;
+		const UINT32 n = (i & (uint32_t)~7) + i;
 		BYTE* b1Even = pDst1[0] + y * dst1Step[0];
 		BYTE* b1Odd = !last ? (b1Even + dst1Step[0]) : NULL;
 		BYTE* b2 = pDst1[1] + (y / 2) * dst1Step[1];

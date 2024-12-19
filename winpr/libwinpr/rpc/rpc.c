@@ -732,12 +732,13 @@ RPC_STATUS UuidToStringW(const UUID* Uuid, RPC_WSTR* StringUuid)
 
 RPC_STATUS UuidFromStringA(RPC_CSTR StringUuid, UUID* Uuid)
 {
-	BYTE bin[36];
+	BYTE bin[36] = { 0 };
 
 	if (!StringUuid)
 		return UuidCreateNil(Uuid);
 
-	if (strlen((char*)StringUuid) != 36)
+	const size_t slen = 2 * sizeof(UUID) + 4;
+	if (strnlen(StringUuid, slen) != slen)
 		return RPC_S_INVALID_STRING_UUID;
 
 	if ((StringUuid[8] != '-') || (StringUuid[13] != '-') || (StringUuid[18] != '-') ||
@@ -746,17 +747,17 @@ RPC_STATUS UuidFromStringA(RPC_CSTR StringUuid, UUID* Uuid)
 		return RPC_S_INVALID_STRING_UUID;
 	}
 
-	for (int index = 0; index < 36; index++)
+	for (size_t index = 0; index < 36; index++)
 	{
 		if ((index == 8) || (index == 13) || (index == 18) || (index == 23))
 			continue;
 
 		if ((StringUuid[index] >= '0') && (StringUuid[index] <= '9'))
-			bin[index] = StringUuid[index] - '0';
+			bin[index] = (StringUuid[index] - '0') & 0xFF;
 		else if ((StringUuid[index] >= 'a') && (StringUuid[index] <= 'f'))
-			bin[index] = StringUuid[index] - 'a' + 10;
+			bin[index] = (StringUuid[index] - 'a' + 10) & 0xFF;
 		else if ((StringUuid[index] >= 'A') && (StringUuid[index] <= 'F'))
-			bin[index] = StringUuid[index] - 'A' + 10;
+			bin[index] = (StringUuid[index] - 'A' + 10) & 0xFF;
 		else
 			return RPC_S_INVALID_STRING_UUID;
 	}

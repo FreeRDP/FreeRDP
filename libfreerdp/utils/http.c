@@ -118,7 +118,7 @@ BOOL freerdp_http_request(const char* url, const char* body, long* status_code, 
 		goto out;
 	}
 
-	const size_t len = path - (url + 8);
+	const size_t len = WINPR_ASSERTING_INT_CAST(size_t, path - (url + 8));
 	hostname = strndup(&url[8], len);
 	if (!hostname)
 		return FALSE;

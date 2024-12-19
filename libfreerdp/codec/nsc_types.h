@@ -23,6 +23,8 @@
 
 #include <freerdp/config.h>
 
+#include <winpr/assert.h>
+#include <winpr/cast.h>
 #include <winpr/crt.h>
 #include <winpr/wlog.h>
 #include <winpr/collections.h>
@@ -31,7 +33,10 @@
 #include <freerdp/codec/nsc.h>
 
 #define ROUND_UP_TO(_b, _n) (_b + ((~(_b & (_n - 1)) + 0x1) & (_n - 1)))
-#define MINMAX(_v, _l, _h) ((_v) < (_l) ? (_l) : ((_v) > (_h) ? (_h) : (_v)))
+#define MINMAX(_v, _l, _h)                                             \
+	((_v) < (_l) ? WINPR_ASSERTING_INT_CAST(BYTE, (_l))                \
+	             : ((_v) > (_h) ? WINPR_ASSERTING_INT_CAST(BYTE, (_h)) \
+	                            : WINPR_ASSERTING_INT_CAST(BYTE, (_v))))
 
 typedef struct
 {

@@ -1513,8 +1513,8 @@ static BOOL tsg_ndr_read_tunnel_context(wLog* log, wStream* s, CONTEXT_HANDLE* t
 	WINPR_ASSERT(tunnelId);
 	Stream_Read_UINT32(s, *tunnelId); /* TunnelId (4 bytes) */
 
-	UINT32 ReturnValue = 0;
-	Stream_Read_UINT32(s, ReturnValue); /* ReturnValue (4 bytes) */
+	INT32 ReturnValue = 0;
+	Stream_Read_INT32(s, ReturnValue); /* ReturnValue (4 bytes) */
 	if (ReturnValue != NO_ERROR)
 		WLog_WARN(TAG, "ReturnValue=%s", NtStatus2Tag(ReturnValue));
 	return TRUE;

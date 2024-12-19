@@ -196,7 +196,7 @@ int CommandLineParseArgumentsA(int argc, LPSTR* argv, COMMAND_LINE_ARGUMENT_A* o
 			{
 				SSIZE_T separator_index = (separator - argv[i]);
 				SSIZE_T value_index = separator_index + 1;
-				keyword_length = (separator - keyword);
+				keyword_length = WINPR_ASSERTING_INT_CAST(size_t, (separator - keyword));
 				value = &argv[i][value_index];
 			}
 			else
@@ -818,7 +818,7 @@ char* CommandLineToCommaSeparatedValuesEx(int argc, char* argv[], const char* fi
 {
 	char* str = NULL;
 	size_t offset = 0;
-	size_t size = argc + 1;
+	size_t size = WINPR_ASSERTING_INT_CAST(size_t, argc) + 1;
 	if ((argc <= 0) || !argv)
 		return NULL;
 
