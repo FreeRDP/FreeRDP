@@ -39,7 +39,7 @@ int test_sizes[] = { 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096 };
 float measure_delta_time(UINT64 t0, UINT64 t1)
 {
 	INT64 diff = (INT64)(t1 - t0);
-	double retval = (double)(diff / 1000000000.0);
+	double retval = ((double)diff / 1000000000.0);
 	return (retval < 0.0) ? 0.0f : (float)retval;
 }
 
