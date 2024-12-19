@@ -238,7 +238,7 @@ static UINT parallel_process_irp_write(PARALLEL_DEVICE* parallel, IRP* irp)
 			break;
 		}
 
-		Stream_Seek(irp->input, status);
+		Stream_Seek(irp->input, WINPR_ASSERTING_INT_CAST(size_t, status));
 		len -= status;
 	}
 
@@ -481,7 +481,7 @@ FREERDP_ENTRY_POINT(
 		}
 
 		for (size_t i = 0; i <= length; i++)
-			Stream_Write_UINT8(parallel->device.data, name[i] < 0 ? '_' : name[i]);
+			Stream_Write_INT8(parallel->device.data, name[i] < 0 ? '_' : name[i]);
 
 		parallel->path = path;
 		parallel->queue = MessageQueue_New(NULL);

@@ -25,6 +25,7 @@
 #include <freerdp/config.h>
 
 #include <winpr/crt.h>
+#include <winpr/cast.h>
 
 #include <freerdp/channels/log.h>
 #include <freerdp/freerdp.h>
@@ -315,7 +316,7 @@ static UINT rail_write_languageime_info_order(wStream* s,
 		return ERROR_INVALID_PARAMETER;
 
 	Stream_Write_UINT32(s, langImeInfo->ProfileType);
-	Stream_Write_UINT16(s, langImeInfo->LanguageID);
+	Stream_Write_UINT16(s, WINPR_ASSERTING_INT_CAST(UINT16, langImeInfo->LanguageID));
 	Stream_Write(s, &langImeInfo->LanguageProfileCLSID, sizeof(langImeInfo->LanguageProfileCLSID));
 	Stream_Write(s, &langImeInfo->ProfileGUID, sizeof(langImeInfo->ProfileGUID));
 	Stream_Write_UINT32(s, langImeInfo->KeyboardLayout);

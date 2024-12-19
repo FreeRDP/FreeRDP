@@ -29,6 +29,7 @@
 #include <time.h>
 
 #include <winpr/crt.h>
+#include <winpr/cast.h>
 #include <winpr/assert.h>
 #include <winpr/stream.h>
 #include <winpr/cmdline.h>
@@ -306,7 +307,7 @@ static BOOL rdpsnd_pulse_set_format_spec(rdpsndPulsePlugin* pulse, const AUDIO_F
 		return FALSE;
 
 	sample_spec.rate = format->nSamplesPerSec;
-	sample_spec.channels = format->nChannels;
+	sample_spec.channels = WINPR_ASSERTING_INT_CAST(uint8_t, format->nChannels);
 
 	switch (format->wFormatTag)
 	{

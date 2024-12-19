@@ -21,6 +21,7 @@
 #include <freerdp/config.h>
 
 #include <winpr/crt.h>
+#include <winpr/cast.h>
 #include <winpr/stream.h>
 
 #include "rdpei_common.h"
@@ -43,7 +44,8 @@ BOOL rdpei_read_2byte_unsigned(wStream* s, UINT16* value)
 		if (!Stream_CheckAndLogRequiredLength(TAG, s, 1))
 			return FALSE;
 
-		*value = (byte & 0x7F) << 8;
+		const INT32 ibyte = ((byte & 0x7F) << 8);
+		*value = WINPR_ASSERTING_INT_CAST(UINT16, ibyte);
 		Stream_Read_UINT8(s, byte);
 		*value |= byte;
 	}
@@ -175,25 +177,25 @@ BOOL rdpei_read_4byte_unsigned(wStream* s, UINT32* value)
 			break;
 
 		case 1:
-			*value = (byte & 0x3F) << 8;
+			*value = ((byte & 0x3F) << 8) & 0xFF;
 			Stream_Read_UINT8(s, byte);
 			*value |= byte;
 			break;
 
 		case 2:
-			*value = (byte & 0x3F) << 16;
+			*value = ((byte & 0x3F) << 16) & 0xFF0000;
 			Stream_Read_UINT8(s, byte);
-			*value |= (byte << 8);
+			*value |= ((byte << 8) & 0xFF);
 			Stream_Read_UINT8(s, byte);
 			*value |= byte;
 			break;
 
 		case 3:
-			*value = (byte & 0x3F) << 24;
+			*value = ((byte & 0x3F) << 24) & 0xFF0000;
 			Stream_Read_UINT8(s, byte);
-			*value |= (byte << 16);
+			*value |= ((byte << 16) & 0xFF00);
 			Stream_Read_UINT8(s, byte);
-			*value |= (byte << 8);
+			*value |= ((byte << 8) & 0xFF);
 			Stream_Read_UINT8(s, byte);
 			*value |= byte;
 			break;
@@ -214,7 +216,7 @@ BOOL rdpei_write_4byte_unsigned(wStream* s, UINT32 value)
 
 	if (value <= 0x3FUL)
 	{
-		Stream_Write_UINT8(s, value);
+		Stream_Write_UINT8(s, WINPR_ASSERTING_INT_CAST(uint8_t, value));
 	}
 	else if (value <= 0x3FFFUL)
 	{

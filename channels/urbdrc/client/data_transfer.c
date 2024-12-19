@@ -23,6 +23,7 @@
 #include <string.h>
 
 #include <winpr/sysinfo.h>
+#include <winpr/cast.h>
 
 #include <urbdrc_helpers.h>
 
@@ -419,7 +420,7 @@ static UINT urb_select_configuration(IUDEVICE* pdev, GENERIC_CHANNEL_CALLBACK* c
 	UINT32 usbd_status = 0;
 	BYTE ConfigurationDescriptorIsValid = 0;
 	wStream* out = NULL;
-	int MsOutSize = 0;
+	size_t MsOutSize = 0;
 	URBDRC_PLUGIN* urbdrc = NULL;
 	const BOOL noAck = (RequestField & 0x80000000U) != 0;
 	const UINT32 RequestId = RequestField & 0x7FFFFFFF;
@@ -468,11 +469,11 @@ static UINT urb_select_configuration(IUDEVICE* pdev, GENERIC_CHANNEL_CALLBACK* c
 	}
 
 	if (MsConfig)
-		MsOutSize = MsConfig->MsOutSize;
+		MsOutSize = WINPR_ASSERTING_INT_CAST(size_t, MsConfig->MsOutSize);
 
 	if (MsOutSize > 0)
 	{
-		if ((size_t)MsOutSize > SIZE_MAX - 36)
+		if (MsOutSize > SIZE_MAX - 36)
 			return ERROR_INVALID_DATA;
 
 		out_size = 36 + MsOutSize;
@@ -495,7 +496,7 @@ static UINT urb_select_configuration(IUDEVICE* pdev, GENERIC_CHANNEL_CALLBACK* c
 		/** CbTsUrbResult */
 		Stream_Write_UINT32(out, 8U + (UINT32)MsOutSize);
 		/** TS_URB_RESULT_HEADER Size*/
-		Stream_Write_UINT16(out, 8U + (UINT32)MsOutSize);
+		Stream_Write_UINT16(out, WINPR_ASSERTING_INT_CAST(uint16_t, 8U + (UINT32)MsOutSize));
 	}
 	else
 	{
@@ -601,7 +602,7 @@ static UINT urb_select_interface(IUDEVICE* pdev, GENERIC_CHANNEL_CALLBACK* callb
 	Stream_Write_UINT32(out, RequestId);              /** RequestId */
 	Stream_Write_UINT32(out, 8 + interface_size);     /** CbTsUrbResult */
 	/** TS_URB_RESULT_HEADER */
-	Stream_Write_UINT16(out, 8 + interface_size); /** Size */
+	Stream_Write_UINT16(out, WINPR_ASSERTING_INT_CAST(uint16_t, 8 + interface_size)); /** Size */
 	/** Padding, MUST be ignored upon receipt */
 	Stream_Write_UINT16(out, TS_URB_SELECT_INTERFACE);
 	Stream_Write_UINT32(out, USBD_STATUS_SUCCESS); /** UsbdStatus */
@@ -767,10 +768,12 @@ static UINT urb_bulk_or_interrupt_transfer(IUDEVICE* pdev, GENERIC_CHANNEL_CALLB
 	}
 
 	/**  process TS_URB_BULK_OR_INTERRUPT_TRANSFER */
-	return pdev->bulk_or_interrupt_transfer(
+	const int rc = pdev->bulk_or_interrupt_transfer(
 	    pdev, callback, MessageId, RequestId, EndpointAddress, TransferFlags, noAck,
 	    OutputBufferSize, (transferDir == USBD_TRANSFER_DIRECTION_OUT) ? Stream_Pointer(s) : NULL,
 	    urb_bulk_transfer_cb, 10000);
+
+	return (uint32_t)rc;
 }
 
 static void urb_isoch_transfer_cb(IUDEVICE* pdev, GENERIC_CHANNEL_CALLBACK* callback, wStream* out,
@@ -794,7 +797,7 @@ static void urb_isoch_transfer_cb(IUDEVICE* pdev, GENERIC_CHANNEL_CALLBACK* call
 		Stream_Write_UINT32(out, RequestId);       /** RequestId */
 		Stream_Write_UINT32(out, 20 + packetSize); /** CbTsUrbResult */
 		/** TsUrbResult TS_URB_RESULT_HEADER */
-		Stream_Write_UINT16(out, 20 + packetSize); /** Size */
+		Stream_Write_UINT16(out, WINPR_ASSERTING_INT_CAST(uint16_t, 20 + packetSize)); /** Size */
 		Stream_Write_UINT16(out, 0);               /* Padding */
 		Stream_Write_UINT32(out, status);          /** UsbdStatus */
 		Stream_Write_UINT32(out, StartFrame);      /** StartFrame */
@@ -948,8 +951,8 @@ static UINT urb_control_descriptor_request(IUDEVICE* pdev, GENERIC_CHANNEL_CALLB
 	/** process get usb device descriptor */
 	if (!pdev->control_transfer(pdev, RequestId, 0, 0, bmRequestType,
 	                            0x06, /* REQUEST_GET_DESCRIPTOR */
-	                            (desc_type << 8) | desc_index, langId, &usbd_status,
-	                            &OutputBufferSize, Stream_Pointer(out), 1000))
+	                            WINPR_ASSERTING_INT_CAST(UINT16, ((desc_type << 8) | desc_index)),
+	                            langId, &usbd_status, &OutputBufferSize, Stream_Pointer(out), 1000))
 	{
 		WLog_Print(urbdrc->log, WLOG_ERROR, "get_descriptor failed");
 		Stream_Free(out, TRUE);

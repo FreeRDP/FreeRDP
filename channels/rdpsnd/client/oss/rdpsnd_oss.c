@@ -292,15 +292,14 @@ static void rdpsnd_oss_free(rdpsndDevicePlugin* device)
 
 static UINT32 rdpsnd_oss_get_volume(rdpsndDevicePlugin* device)
 {
-	int vol = 0;
-	UINT32 dwVolume = 0;
-	UINT16 dwVolumeLeft = 0;
-	UINT16 dwVolumeRight = 0;
 	rdpsndOssPlugin* oss = (rdpsndOssPlugin*)device;
+	WINPR_ASSERT(oss);
+	int vol = 0;
+
 	/* On error return 50% volume. */
-	dwVolumeLeft = ((50 * 0xFFFF) / 100);  /* 50% */
-	dwVolumeRight = ((50 * 0xFFFF) / 100); /* 50% */
-	dwVolume = ((dwVolumeLeft << 16) | dwVolumeRight);
+	UINT32 dwVolumeLeft = ((50 * 0xFFFF) / 100);  /* 50% */
+	UINT32 dwVolumeRight = ((50 * 0xFFFF) / 100); /* 50% */
+	UINT32 dwVolume = ((dwVolumeLeft << 16) | dwVolumeRight);
 
 	if (device == NULL || oss->mixer_handle == -1)
 		return dwVolume;
