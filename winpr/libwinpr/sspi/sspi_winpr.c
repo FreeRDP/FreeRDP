@@ -357,7 +357,7 @@ int sspi_SetAuthIdentityWithLengthW(SEC_WINNT_AUTH_IDENTITY* identity, const WCH
 {
 	WINPR_ASSERT(identity);
 	sspi_FreeAuthIdentity(identity);
-	identity->Flags &= ~SEC_WINNT_AUTH_IDENTITY_ANSI;
+	identity->Flags &= (uint32_t)~SEC_WINNT_AUTH_IDENTITY_ANSI;
 	identity->Flags |= SEC_WINNT_AUTH_IDENTITY_UNICODE;
 
 	if (!copy(&identity->User, &identity->UserLength, user, userLen))
@@ -882,7 +882,7 @@ int sspi_CopyAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity,
 		if (status <= 0)
 			return -1;
 
-		identity->Flags &= ~SEC_WINNT_AUTH_IDENTITY_ANSI;
+		identity->Flags &= (uint32_t)~SEC_WINNT_AUTH_IDENTITY_ANSI;
 		identity->Flags |= SEC_WINNT_AUTH_IDENTITY_UNICODE;
 		return 1;
 	}

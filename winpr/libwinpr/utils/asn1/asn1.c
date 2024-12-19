@@ -1168,13 +1168,13 @@ static int read2digits(wStream* s)
 	int ret = 0;
 	char c = 0;
 
-	Stream_Read_UINT8(s, c);
+	Stream_Read_INT8(s, c);
 	if (c < '0' || c > '9')
 		return -1;
 
 	ret = (c - '0') * 10;
 
-	Stream_Read_UINT8(s, c);
+	Stream_Read_INT8(s, c);
 	if (c < '0' || c > '9')
 		return -1;
 
@@ -1203,38 +1203,38 @@ size_t WinPrAsn1DecReadUtcTime(WinPrAsn1Decoder* dec, WinPrAsn1_UTCTIME* target)
 	Stream_StaticConstInit(s, Stream_ConstPointer(&dec->source), len);
 
 	v = read2digits(s);
-	if (v <= 0)
+	if ((v <= 0) || (v >= UINT16_MAX - 2000))
 		return 0;
-	target->year = 2000 + v;
+	target->year = (UINT16)(2000 + v);
 
 	v = read2digits(s);
-	if (v <= 0)
+	if ((v <= 0) || (v > UINT8_MAX))
 		return 0;
-	target->month = v;
+	target->month = (UINT8)v;
 
 	v = read2digits(s);
-	if (v <= 0)
+	if ((v <= 0) || (v > UINT8_MAX))
 		return 0;
-	target->day = v;
+	target->day = (UINT8)v;
 
 	v = read2digits(s);
-	if (v <= 0)
+	if ((v <= 0) || (v > UINT8_MAX))
 		return 0;
-	target->hour = v;
+	target->hour = (UINT8)v;
 
 	v = read2digits(s);
-	if (v <= 0)
+	if ((v <= 0) || (v > UINT8_MAX))
 		return 0;
-	target->minute = v;
+	target->minute = (UINT8)v;
 
 	v = read2digits(s);
-	if (v <= 0)
+	if ((v <= 0) || (v > UINT8_MAX))
 		return 0;
-	target->second = v;
+	target->second = (UINT8)v;
 
 	if (Stream_GetRemainingLength(s) >= 1)
 	{
-		Stream_Read_UINT8(s, target->tz);
+		Stream_Read_INT8(s, target->tz);
 	}
 
 	Stream_Seek(&dec->source, len);

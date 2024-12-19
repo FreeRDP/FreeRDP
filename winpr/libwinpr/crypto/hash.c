@@ -548,6 +548,7 @@ BOOL winpr_Digest_Init_Allow_FIPS(WINPR_DIGEST_CTX* ctx, WINPR_MD_TYPE md)
 
 #if defined(WITH_OPENSSL)
 #if OPENSSL_VERSION_NUMBER >= 0x30000000L
+#if !defined(WITH_INTERNAL_MD5)
 	if (md == WINPR_MD_MD5)
 	{
 		EVP_MD* md5 = EVP_MD_fetch(NULL, "MD5", "fips=no");
@@ -555,6 +556,7 @@ BOOL winpr_Digest_Init_Allow_FIPS(WINPR_DIGEST_CTX* ctx, WINPR_MD_TYPE md)
 		EVP_MD_free(md5);
 		return rc;
 	}
+#endif
 #endif
 	const EVP_MD* evp = winpr_openssl_get_evp_md(md);
 	EVP_MD_CTX_set_flags(ctx->mdctx, EVP_MD_CTX_FLAG_NON_FIPS_ALLOW);

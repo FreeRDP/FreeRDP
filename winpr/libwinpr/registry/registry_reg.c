@@ -227,20 +227,17 @@ static RegVal* reg_load_value(const Reg* reg, RegKey* key)
 		break;
 		case REG_SZ:
 		{
-			size_t len = 0;
-			size_t cmp = 0;
-			char* end = NULL;
 			char* start = strchr(data, '"');
 			if (!start)
 				goto fail;
 
 			/* Check for terminating quote, check it is the last symbol */
-			len = strlen(start);
-			end = strchr(start + 1, '"');
+			const size_t len = strlen(start);
+			char* end = strchr(start + 1, '"');
 			if (!end)
 				goto fail;
-			cmp = end - start + 1;
-			if (len != cmp)
+			const intptr_t cmp = end - start + 1;
+			if ((cmp < 0) || (len != WINPR_ASSERTING_INT_CAST(size_t, cmp)))
 				goto fail;
 			if (start[0] == '"')
 				start++;

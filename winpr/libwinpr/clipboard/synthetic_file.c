@@ -458,7 +458,7 @@ static BOOL process_uri_list(wClipboard* clipboard, const char* data, size_t len
 
 		if (stop == lim)
 		{
-			if (strnlen(start, stop - start) < 1)
+			if (strnlen(start, WINPR_ASSERTING_INT_CAST(size_t, stop - start)) < 1)
 				return TRUE;
 			cur = lim;
 		}
@@ -466,7 +466,7 @@ static BOOL process_uri_list(wClipboard* clipboard, const char* data, size_t len
 		if (comment)
 			continue;
 
-		if (!process_uri(clipboard, start, stop - start))
+		if (!process_uri(clipboard, start, WINPR_ASSERTING_INT_CAST(size_t, stop - start)))
 			return FALSE;
 	}
 
@@ -807,11 +807,13 @@ static void* convert_filedescriptors_to_file_list(wClipboard* clipboard, UINT32 
 		previous_at = curName;
 		while ((stop_at = stop_at_special_chars(previous_at)) != NULL)
 		{
-			char* tmp = strndup(previous_at, stop_at - previous_at);
+			char* tmp =
+			    strndup(previous_at, WINPR_ASSERTING_INT_CAST(size_t, stop_at - previous_at));
 			if (!tmp)
 				goto loop_fail;
 
-			rc = _snprintf(&dst[pos], stop_at - previous_at + 1, "%s", tmp);
+			rc = _snprintf(&dst[pos], WINPR_ASSERTING_INT_CAST(size_t, stop_at - previous_at + 1),
+			               "%s", tmp);
 			free(tmp);
 			if (rc < 0)
 				goto loop_fail;
@@ -1012,7 +1014,7 @@ error:
 	return FALSE;
 }
 
-static UINT file_get_size(const struct synthetic_file* file, UINT64* size)
+static int32_t file_get_size(const struct synthetic_file* file, UINT64* size)
 {
 	UINT64 s = 0;
 
@@ -1148,8 +1150,9 @@ static UINT file_get_range(struct synthetic_file* file, UINT64 offset, UINT32 si
 
 			dwHigh = offset >> 32;
 			dwLow = offset & 0xFFFFFFFF;
-			if (INVALID_SET_FILE_POINTER ==
-			    SetFilePointer(file->fd, dwLow, (PLONG)&dwHigh, FILE_BEGIN))
+			if (INVALID_SET_FILE_POINTER == SetFilePointer(file->fd,
+			                                               WINPR_ASSERTING_INT_CAST(LONG, dwLow),
+			                                               (PLONG)&dwHigh, FILE_BEGIN))
 			{
 				error = GetLastError();
 				break;

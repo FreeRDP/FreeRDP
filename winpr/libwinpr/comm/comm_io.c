@@ -335,12 +335,13 @@ BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 			goto return_false;
 		}
 
-		*lpNumberOfBytesRead = (UINT32)nbRead;
+		*lpNumberOfBytesRead = WINPR_ASSERTING_INT_CAST(UINT32, nbRead);
 
 		EnterCriticalSection(&pComm->EventsLock);
 		if (pComm->PendingEvents & SERIAL_EV_WINPR_WAITING)
 		{
-			if (pComm->eventChar != '\0' && memchr(lpBuffer, pComm->eventChar, nbRead))
+			if (pComm->eventChar != '\0' &&
+			    memchr(lpBuffer, pComm->eventChar, WINPR_ASSERTING_INT_CAST(size_t, nbRead)))
 				pComm->PendingEvents |= SERIAL_EV_RXCHAR;
 		}
 		LeaveCriticalSection(&pComm->EventsLock);

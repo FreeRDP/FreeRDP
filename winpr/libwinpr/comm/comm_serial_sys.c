@@ -438,7 +438,7 @@ static BOOL set_line_control(WINPR_COMM* pComm, const SERIAL_LINE_CONTROL* pLine
 	switch (pLineControl->StopBits)
 	{
 		case STOP_BIT_1:
-			upcomingTermios.c_cflag &= ~CSTOPB;
+			upcomingTermios.c_cflag &= (uint32_t)~CSTOPB;
 			break;
 
 		case STOP_BITS_1_5:
@@ -459,16 +459,16 @@ static BOOL set_line_control(WINPR_COMM* pComm, const SERIAL_LINE_CONTROL* pLine
 	switch (pLineControl->Parity)
 	{
 		case NO_PARITY:
-			upcomingTermios.c_cflag &= ~(PARENB | PARODD | CMSPAR);
+			upcomingTermios.c_cflag &= (uint32_t)~(PARENB | PARODD | CMSPAR);
 			break;
 
 		case ODD_PARITY:
-			upcomingTermios.c_cflag &= ~CMSPAR;
+			upcomingTermios.c_cflag &= (uint32_t)~CMSPAR;
 			upcomingTermios.c_cflag |= PARENB | PARODD;
 			break;
 
 		case EVEN_PARITY:
-			upcomingTermios.c_cflag &= ~(PARODD | CMSPAR);
+			upcomingTermios.c_cflag &= (uint32_t)~(PARODD | CMSPAR);
 			upcomingTermios.c_cflag |= PARENB;
 			break;
 
@@ -477,7 +477,7 @@ static BOOL set_line_control(WINPR_COMM* pComm, const SERIAL_LINE_CONTROL* pLine
 			break;
 
 		case SPACE_PARITY:
-			upcomingTermios.c_cflag &= ~PARODD;
+			upcomingTermios.c_cflag &= (uint32_t)~PARODD;
 			upcomingTermios.c_cflag |= PARENB | CMSPAR;
 			break;
 
@@ -491,22 +491,22 @@ static BOOL set_line_control(WINPR_COMM* pComm, const SERIAL_LINE_CONTROL* pLine
 	switch (pLineControl->WordLength)
 	{
 		case 5:
-			upcomingTermios.c_cflag &= ~CSIZE;
+			upcomingTermios.c_cflag &= (uint32_t)~CSIZE;
 			upcomingTermios.c_cflag |= CS5;
 			break;
 
 		case 6:
-			upcomingTermios.c_cflag &= ~CSIZE;
+			upcomingTermios.c_cflag &= (uint32_t)~CSIZE;
 			upcomingTermios.c_cflag |= CS6;
 			break;
 
 		case 7:
-			upcomingTermios.c_cflag &= ~CSIZE;
+			upcomingTermios.c_cflag &= (uint32_t)~CSIZE;
 			upcomingTermios.c_cflag |= CS7;
 			break;
 
 		case 8:
-			upcomingTermios.c_cflag &= ~CSIZE;
+			upcomingTermios.c_cflag &= (uint32_t)~CSIZE;
 			upcomingTermios.c_cflag |= CS8;
 			break;
 
@@ -611,7 +611,7 @@ static BOOL set_handflow(WINPR_COMM* pComm, const SERIAL_HANDFLOW* pHandflow)
 	}
 	else
 	{
-		upcomingTermios.c_cflag &= ~HUPCL;
+		upcomingTermios.c_cflag &= (uint32_t)~HUPCL;
 
 		/* FIXME: is the DTR line also needs to be forced to a disable state according
 		 * SERIAL_DTR_CONTROL? */
@@ -696,7 +696,7 @@ static BOOL set_handflow(WINPR_COMM* pComm, const SERIAL_HANDFLOW* pHandflow)
 	}
 	else
 	{
-		upcomingTermios.c_iflag &= ~IXON;
+		upcomingTermios.c_iflag &= (uint32_t)~IXON;
 	}
 
 	if (pHandflow->FlowReplace & SERIAL_AUTO_RECEIVE)
@@ -705,14 +705,14 @@ static BOOL set_handflow(WINPR_COMM* pComm, const SERIAL_HANDFLOW* pHandflow)
 	}
 	else
 	{
-		upcomingTermios.c_iflag &= ~IXOFF;
+		upcomingTermios.c_iflag &= (uint32_t)~IXOFF;
 	}
 
 	// FIXME: could be implemented during read/write I/O, as of today ErrorChar is necessary '\0'
 	if (pHandflow->FlowReplace & SERIAL_ERROR_CHAR)
 	{
 		/* errors will be replaced by the character '\0'. */
-		upcomingTermios.c_iflag &= ~IGNPAR;
+		upcomingTermios.c_iflag &= (uint32_t)~IGNPAR;
 	}
 	else
 	{
@@ -725,7 +725,7 @@ static BOOL set_handflow(WINPR_COMM* pComm, const SERIAL_HANDFLOW* pHandflow)
 	}
 	else
 	{
-		upcomingTermios.c_iflag &= ~IGNBRK;
+		upcomingTermios.c_iflag &= (uint32_t)~IGNBRK;
 	}
 
 	// FIXME: could be implemented during read/write I/O
@@ -1073,7 +1073,7 @@ static BOOL set_wait_mask(WINPR_COMM* pComm, const ULONG* pWaitMask)
 			Sleep(10); /* 10ms */
 
 		EnterCriticalSection(&pComm->EventsLock);
-		pComm->PendingEvents &= ~SERIAL_EV_WINPR_STOP;
+		pComm->PendingEvents &= (uint32_t)~SERIAL_EV_WINPR_STOP;
 		LeaveCriticalSection(&pComm->EventsLock);
 	}
 
@@ -1159,8 +1159,8 @@ static BOOL purge(WINPR_COMM* pComm, const ULONG* pPurgeMask)
 	WINPR_ASSERT(pComm);
 	WINPR_ASSERT(pPurgeMask);
 
-	if ((*pPurgeMask & ~(SERIAL_PURGE_TXABORT | SERIAL_PURGE_RXABORT | SERIAL_PURGE_TXCLEAR |
-	                     SERIAL_PURGE_RXCLEAR)) > 0)
+	if ((*pPurgeMask & (uint32_t)~(SERIAL_PURGE_TXABORT | SERIAL_PURGE_RXABORT |
+	                               SERIAL_PURGE_TXCLEAR | SERIAL_PURGE_RXCLEAR)) > 0)
 	{
 		CommLog_Print(WLOG_WARN, "Invalid purge mask: 0x%" PRIX32 "\n", *pPurgeMask);
 		SetLastError(ERROR_INVALID_PARAMETER);
@@ -1379,7 +1379,7 @@ static BOOL get_commstatus(WINPR_COMM* pComm, SERIAL_STATUS* pCommstatus)
 	{
 		/* FIXME: "now empty" from the specs is ambiguous, need to track previous completed
 		 * transmission? */
-		pComm->PendingEvents &= ~SERIAL_EV_TXEMPTY;
+		pComm->PendingEvents &= (uint32_t)~SERIAL_EV_TXEMPTY;
 	}
 
 	if (currentCounters.cts != pComm->counters.cts)
@@ -1413,7 +1413,7 @@ static BOOL get_commstatus(WINPR_COMM* pComm, SERIAL_STATUS* pCommstatus)
 	{
 		/* FIXME: "is 80 percent full" from the specs is ambiguous, need to track when it previously
 		 * * occurred? */
-		pComm->PendingEvents &= ~SERIAL_EV_RX80FULL;
+		pComm->PendingEvents &= (uint32_t)~SERIAL_EV_RX80FULL;
 	}
 
 	rc = TRUE;
@@ -1452,7 +1452,7 @@ static void consume_event(WINPR_COMM* pComm, ULONG* pOutputMask, ULONG event)
 static BOOL unlock_return(WINPR_COMM* pComm, BOOL res)
 {
 	EnterCriticalSection(&pComm->EventsLock);
-	pComm->PendingEvents &= ~SERIAL_EV_WINPR_WAITING;
+	pComm->PendingEvents &= (uint32_t)~SERIAL_EV_WINPR_WAITING;
 	LeaveCriticalSection(&pComm->EventsLock);
 	return res;
 }
@@ -1620,7 +1620,7 @@ static BOOL config_size(WINPR_COMM* pComm, ULONG* pSize)
 static BOOL immediate_char(WINPR_COMM* pComm, const UCHAR* pChar)
 {
 	BOOL result = 0;
-	DWORD nbBytesWritten = -1;
+	DWORD nbBytesWritten = 0;
 
 	WINPR_ASSERT(pComm);
 	WINPR_ASSERT(pChar);

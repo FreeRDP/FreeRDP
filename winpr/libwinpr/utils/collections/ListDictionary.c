@@ -159,7 +159,7 @@ size_t ListDictionary_GetKeys(wListDictionary* listDictionary, ULONG_PTR** ppKey
 			if (listDictionary->synchronized)
 				LeaveCriticalSection(&listDictionary->lock);
 
-			return -1;
+			return 0;
 		}
 	}
 
