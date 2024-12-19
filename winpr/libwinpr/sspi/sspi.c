@@ -457,7 +457,7 @@ const char* GetSecurityStatusString(SECURITY_STATUS status)
 			break;
 	}
 
-	return NtStatus2Tag((DWORD)status);
+	return NtStatus2Tag(status);
 }
 
 BOOL IsSecurityStatusError(SECURITY_STATUS status)

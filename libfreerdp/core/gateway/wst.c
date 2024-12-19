@@ -744,15 +744,13 @@ static BOOL wst_parse_url(rdpWst* wst, const char* url)
 	wst->gwhostname = NULL;
 	if (pos - hostStart == 0)
 		return FALSE;
-	wst->gwhostname = malloc(sizeof(char) * (pos - hostStart + 1));
+	wst->gwhostname = strndup(hostStart, WINPR_ASSERTING_INT_CAST(size_t, (pos - hostStart)));
 	if (!wst->gwhostname)
 		return FALSE;
-	strncpy(wst->gwhostname, hostStart, (pos - hostStart));
-	wst->gwhostname[pos - hostStart] = '\0';
 
 	if (*pos == ':')
 	{
-		char port[6];
+		char port[6] = { 0 };
 		char* portNumberEnd = NULL;
 		pos++;
 		const char* portStart = pos;
@@ -760,7 +758,7 @@ static BOOL wst_parse_url(rdpWst* wst, const char* url)
 			pos++;
 		if (pos - portStart > 5 || pos - portStart == 0)
 			return FALSE;
-		strncpy(port, portStart, (pos - portStart));
+		strncpy(port, portStart, WINPR_ASSERTING_INT_CAST(size_t, (pos - portStart)));
 		port[pos - portStart] = '\0';
 		long _p = strtol(port, &portNumberEnd, 10);
 		if (portNumberEnd && (*portNumberEnd == '\0') && (_p > 0) && (_p <= UINT16_MAX))

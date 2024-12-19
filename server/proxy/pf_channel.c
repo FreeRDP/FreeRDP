@@ -16,6 +16,7 @@
  * limitations under the License.
  */
 #include <winpr/assert.h>
+#include <winpr/cast.h>
 
 #include <freerdp/freerdp.h>
 #include <freerdp/server/proxy/proxy_log.h>
@@ -199,9 +200,9 @@ PfChannelResult channelTracker_flushCurrent(ChannelStateTracker* t, BOOL first, 
 
 	if (toBack)
 	{
-		proxyChannelDataEventInfo ev;
+		proxyChannelDataEventInfo ev = { 0 };
 
-		ev.channel_id = channel->front_channel_id;
+		ev.channel_id = WINPR_ASSERTING_INT_CAST(UINT16, channel->front_channel_id);
 		ev.channel_name = channel->channel_name;
 		ev.data = Stream_Buffer(currentPacket);
 		ev.data_len = Stream_GetPosition(currentPacket);
@@ -216,9 +217,9 @@ PfChannelResult channelTracker_flushCurrent(ChannelStateTracker* t, BOOL first, 
 	}
 
 	ps = pdata->ps;
-	r = ps->context.peer->SendChannelPacket(ps->context.peer, channel->front_channel_id,
-	                                        currentPacketSize, flags, Stream_Buffer(currentPacket),
-	                                        Stream_GetPosition(currentPacket));
+	r = ps->context.peer->SendChannelPacket(
+	    ps->context.peer, WINPR_ASSERTING_INT_CAST(UINT16, channel->front_channel_id),
+	    currentPacketSize, flags, Stream_Buffer(currentPacket), Stream_GetPosition(currentPacket));
 
 	return r ? PF_CHANNEL_RESULT_DROP : PF_CHANNEL_RESULT_ERROR;
 }
@@ -236,7 +237,7 @@ static PfChannelResult pf_channel_generic_back_data(proxyData* pdata,
 	switch (channel->channelMode)
 	{
 		case PF_UTILS_CHANNEL_PASSTHROUGH:
-			ev.channel_id = channel->back_channel_id;
+			ev.channel_id = WINPR_ASSERTING_INT_CAST(UINT16, channel->back_channel_id);
 			ev.channel_name = channel->channel_name;
 			ev.data = xdata;
 			ev.data_len = xsize;
@@ -270,7 +271,7 @@ static PfChannelResult pf_channel_generic_front_data(proxyData* pdata,
 	switch (channel->channelMode)
 	{
 		case PF_UTILS_CHANNEL_PASSTHROUGH:
-			ev.channel_id = channel->front_channel_id;
+			ev.channel_id = WINPR_ASSERTING_INT_CAST(UINT16, channel->front_channel_id);
 			ev.channel_name = channel->channel_name;
 			ev.data = xdata;
 			ev.data_len = xsize;

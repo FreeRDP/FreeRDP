@@ -19,6 +19,8 @@
 #include <freerdp/config.h>
 
 #include <winpr/assert.h>
+#include <winpr/cast.h>
+
 #include <rdtk/rdtk.h>
 
 #include "shadow.h"
@@ -42,7 +44,9 @@ BOOL shadow_client_init_lobby(rdpShadowServer* server)
 		return FALSE;
 
 	EnterCriticalSection(&lobby->lock);
-	surface = rdtk_surface_new(engine, lobby->data, lobby->width, lobby->height, lobby->scanline);
+	surface =
+	    rdtk_surface_new(engine, lobby->data, WINPR_ASSERTING_INT_CAST(uint16_t, lobby->width),
+	                     WINPR_ASSERTING_INT_CAST(uint16_t, lobby->height), lobby->scanline);
 	if (!surface)
 		goto fail;
 

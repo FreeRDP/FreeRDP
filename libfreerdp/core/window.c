@@ -401,8 +401,8 @@ static BOOL update_read_window_state_order(wStream* s, WINDOW_ORDER_INFO* orderI
 		if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
 			return FALSE;
 
-		Stream_Read_UINT32(s, windowState->visibleOffsetX); /* visibleOffsetX (4 bytes) */
-		Stream_Read_UINT32(s, windowState->visibleOffsetY); /* visibleOffsetY (4 bytes) */
+		Stream_Read_INT32(s, windowState->visibleOffsetX); /* visibleOffsetX (4 bytes) */
+		Stream_Read_INT32(s, windowState->visibleOffsetY); /* visibleOffsetY (4 bytes) */
 	}
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_VISIBILITY)

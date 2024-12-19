@@ -28,6 +28,7 @@
 #include <winpr/crt.h>
 #include <winpr/cmdline.h>
 #include <winpr/wlog.h>
+#include <winpr/cast.h>
 
 #include <pulse/pulseaudio.h>
 
@@ -259,7 +260,8 @@ static UINT audin_pulse_set_format(IAudinDevice* device, const AUDIO_FORMAT* for
 		pulse->frames_per_packet = FramesPerPacket;
 
 	sample_spec.rate = format->nSamplesPerSec;
-	sample_spec.channels = format->nChannels;
+
+	sample_spec.channels = WINPR_ASSERTING_INT_CAST(uint8_t, format->nChannels);
 
 	switch (format->wFormatTag)
 	{
@@ -382,7 +384,8 @@ static UINT audin_pulse_open(IAudinDevice* device, AudinReceive receive, void* u
 		pa_threaded_mainloop_unlock(pulse->mainloop);
 		WLog_Print(pulse->log, WLOG_DEBUG, "pa_stream_new failed (%d)",
 		           pa_context_errno(pulse->context));
-		return pa_context_errno(pulse->context);
+		const int rc = pa_context_errno(pulse->context);
+		return (UINT)rc;
 	}
 
 	pulse->bytes_per_frame = pa_frame_size(&pulse->sample_spec);
@@ -407,7 +410,8 @@ static UINT audin_pulse_open(IAudinDevice* device, AudinReceive receive, void* u
 		pa_threaded_mainloop_unlock(pulse->mainloop);
 		WLog_Print(pulse->log, WLOG_ERROR, "pa_stream_connect_playback failed (%d)",
 		           pa_context_errno(pulse->context));
-		return pa_context_errno(pulse->context);
+		const int rc = pa_context_errno(pulse->context);
+		return (UINT)rc;
 	}
 
 	while (pulse->stream)
@@ -423,7 +427,8 @@ static UINT audin_pulse_open(IAudinDevice* device, AudinReceive receive, void* u
 			WLog_Print(pulse->log, WLOG_ERROR, "bad stream state (%s: %d)",
 			           pulse_stream_state_string(state), pa_context_errno(pulse->context));
 			pa_threaded_mainloop_unlock(pulse->mainloop);
-			return pa_context_errno(pulse->context);
+			const int rc = pa_context_errno(pulse->context);
+			return (UINT)rc;
 		}
 
 		pa_threaded_mainloop_wait(pulse->mainloop);

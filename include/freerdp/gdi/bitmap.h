@@ -32,7 +32,7 @@ extern "C"
 
 	FREERDP_API UINT32 gdi_GetPixel(HGDI_DC hdc, UINT32 nXPos, UINT32 nYPos);
 	FREERDP_API UINT32 gdi_SetPixel(HGDI_DC hdc, UINT32 X, UINT32 Y, UINT32 crColor);
-	FREERDP_API BYTE* gdi_GetPointer(HGDI_BITMAP hBmp, UINT32 X, UINT32 Y);
+	FREERDP_API BYTE* gdi_GetPointer(HGDI_BITMAP hBmp, INT32 X, INT32 Y);
 
 	FREERDP_API HGDI_BITMAP gdi_CreateBitmap(UINT32 nWidth, UINT32 nHeight, UINT32 format,
 	                                         BYTE* data);

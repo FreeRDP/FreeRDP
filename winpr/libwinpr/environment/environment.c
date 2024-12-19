@@ -422,7 +422,8 @@ LPCH MergeEnvironmentStrings(PCSTR original, PCSTR merge)
 			if (!foundEquals)
 				continue;
 
-			if (strncmp(envp, mergeStrings[run], foundEquals - mergeStrings[run] + 1) == 0)
+			const intptr_t len = foundEquals - mergeStrings[run] + 1;
+			if (strncmp(envp, mergeStrings[run], WINPR_ASSERTING_INT_CAST(size_t, len)) == 0)
 			{
 				// found variable in merge list ... use this ....
 				if (*(foundEquals + 1) == '\0')
@@ -534,7 +535,7 @@ DWORD GetEnvironmentVariableEBA(LPCSTR envBlock, LPCSTR lpName, LPSTR lpBuffer, 
 			return 0;
 		}
 
-		nLength = (foundEquals - penvb);
+		nLength = WINPR_ASSERTING_INT_CAST(size_t, (foundEquals - penvb));
 
 		if (nLength != lpNameLength)
 		{

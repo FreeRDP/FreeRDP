@@ -424,7 +424,7 @@ static UwacBuffer* UwacWindowFindFreeBuffer(UwacWindow* w, ssize_t* index)
 		{
 			w->buffers[i].used = true;
 			if (index)
-				*index = i;
+				*index = WINPR_ASSERTING_INT_CAST(ssize_t, i);
 			return &w->buffers[i];
 		}
 	}
@@ -440,7 +440,7 @@ static UwacBuffer* UwacWindowFindFreeBuffer(UwacWindow* w, ssize_t* index)
 
 	w->buffers[i].used = true;
 	if (index)
-		*index = i;
+		*index = WINPR_ASSERTING_INT_CAST(ssize_t, i);
 	return &w->buffers[i];
 }
 
@@ -482,7 +482,6 @@ UwacWindow* UwacCreateWindowShm(UwacDisplay* display, uint32_t width, uint32_t h
                                 enum wl_shm_format format)
 {
 	UwacWindow* w = NULL;
-	int allocSize = 0;
 	int ret = 0;
 
 	if (!display)
@@ -500,10 +499,10 @@ UwacWindow* UwacCreateWindowShm(UwacDisplay* display, uint32_t width, uint32_t h
 
 	w->display = display;
 	w->format = format;
-	w->width = width;
-	w->height = height;
-	w->stride = width * bppFromShmFormat(format);
-	allocSize = w->stride * height;
+	w->width = WINPR_ASSERTING_INT_CAST(int32_t, width);
+	w->height = WINPR_ASSERTING_INT_CAST(int32_t, height);
+	w->stride = WINPR_ASSERTING_INT_CAST(int32_t, width* bppFromShmFormat(format));
+	const size_t allocSize = w->stride * height;
 	ret = UwacWindowShmAllocBuffers(w, UWAC_INITIAL_BUFFERS, allocSize, width, height, format);
 
 	if (ret != UWAC_SUCCESS)
@@ -662,7 +661,9 @@ UwacReturnCode UwacWindowSetOpaqueRegion(UwacWindow* window, uint32_t x, uint32_
 	if (!window->opaque_region)
 		return UWAC_ERROR_NOMEMORY;
 
-	wl_region_add(window->opaque_region, x, y, width, height);
+	wl_region_add(window->opaque_region, WINPR_ASSERTING_INT_CAST(int32_t, x),
+	              WINPR_ASSERTING_INT_CAST(int32_t, y), WINPR_ASSERTING_INT_CAST(int32_t, width),
+	              WINPR_ASSERTING_INT_CAST(int32_t, height));
 	wl_surface_set_opaque_region(window->surface, window->opaque_region);
 	return UWAC_SUCCESS;
 }
