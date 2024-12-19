@@ -28,6 +28,7 @@
 #include <winpr/crt.h>
 #include <winpr/crypto.h>
 #include <winpr/assert.h>
+#include <winpr/cast.h>
 
 #include <freerdp/log.h>
 #include <freerdp/utils/string.h>
@@ -436,7 +437,9 @@ BOOL gcc_write_conference_create_request(wStream* s, wStream* userData)
 	if (!per_write_object_identifier(s, t124_02_98_oid)) /* ITU-T T.124 (02/98) OBJECT_IDENTIFIER */
 		return FALSE;
 	/* ConnectData::connectPDU (OCTET_STRING) */
-	if (!per_write_length(s, Stream_GetPosition(userData) + 14)) /* connectPDU length */
+	const size_t pos = Stream_GetPosition(userData);
+	WINPR_ASSERT(pos <= UINT16_MAX - 14);
+	if (!per_write_length(s, (UINT16)pos + 14)) /* connectPDU length */
 		return FALSE;
 	/* ConnectGCCPDU */
 	if (!per_write_choice(s, 0)) /* From ConnectGCCPDU select conferenceCreateRequest (0) of type
@@ -459,7 +462,9 @@ BOOL gcc_write_conference_create_request(wStream* s, wStream* userData)
 	                            4)) /* h221NonStandard, client-to-server H.221 key, "Duca" */
 		return FALSE;
 	/* userData::value (OCTET_STRING) */
-	return per_write_octet_string(s, Stream_Buffer(userData), Stream_GetPosition(userData),
+	const size_t upos = Stream_GetPosition(userData);
+	WINPR_ASSERT(upos <= UINT16_MAX);
+	return per_write_octet_string(s, Stream_Buffer(userData), (UINT16)upos,
 	                              0); /* array of client data blocks */
 }
 
@@ -559,7 +564,9 @@ BOOL gcc_write_conference_create_response(wStream* s, wStream* userData)
 	                            4)) /* h221NonStandard, server-to-client H.221 key, "McDn" */
 		return FALSE;
 	/* userData (OCTET_STRING) */
-	return per_write_octet_string(s, Stream_Buffer(userData), Stream_GetPosition(userData),
+	const size_t pos = Stream_GetPosition(userData);
+	WINPR_ASSERT(pos <= UINT16_MAX);
+	return per_write_octet_string(s, Stream_Buffer(userData), (UINT16)pos,
 	                              0); /* array of server data blocks */
 }
 
@@ -1001,7 +1008,9 @@ static UINT16 filterAndLogEarlyClientCapabilityFlags(UINT32 flags)
 		          flags, ~mask, unknown,
 		          rdp_early_client_caps_string(unknown, buffer, sizeof(buffer)));
 	}
-	return filtered;
+
+	WINPR_ASSERT(filtered <= UINT16_MAX);
+	return (UINT16)filtered;
 }
 
 static UINT16 earlyClientCapsFromSettings(const rdpSettings* settings)
@@ -1407,8 +1416,10 @@ BOOL gcc_write_client_core_data(wStream* s, const rdpMcs* mcs)
 		return FALSE;
 
 	Stream_Write_UINT32(s, settings->RdpVersion);    /* Version */
-	Stream_Write_UINT16(s, settings->DesktopWidth);  /* DesktopWidth */
-	Stream_Write_UINT16(s, settings->DesktopHeight); /* DesktopHeight */
+	Stream_Write_UINT16(
+	    s, WINPR_ASSERTING_INT_CAST(uint16_t, settings->DesktopWidth)); /* DesktopWidth */
+	Stream_Write_UINT16(
+	    s, WINPR_ASSERTING_INT_CAST(uint16_t, settings->DesktopHeight)); /* DesktopHeight */
 	Stream_Write_UINT16(s,
 	                    RNS_UD_COLOR_8BPP); /* ColorDepth, ignored because of postBeta2ColorDepth */
 	Stream_Write_UINT16(s, RNS_UD_SAS_DEL); /* SASSequence (Secure Access Sequence) */
@@ -1440,7 +1451,8 @@ BOOL gcc_write_client_core_data(wStream* s, const rdpMcs* mcs)
 	highColorDepth = ColorDepthToHighColor(ColorDepth);
 	earlyCapabilityFlags = earlyClientCapsFromSettings(settings);
 
-	connectionType = settings->ConnectionType;
+	WINPR_ASSERT(settings->ConnectionType <= UINT8_MAX);
+	connectionType = (UINT8)settings->ConnectionType;
 
 	if (!Stream_EnsureRemainingCapacity(s, 6))
 		return FALSE;
@@ -1449,7 +1461,7 @@ BOOL gcc_write_client_core_data(wStream* s, const rdpMcs* mcs)
 	         HighColorToString(highColorDepth),
 	         freerdp_supported_color_depths_string(SupportedColorDepths, dbuffer, sizeof(dbuffer)),
 	         rdp_early_client_caps_string(earlyCapabilityFlags, buffer, sizeof(buffer)));
-	Stream_Write_UINT16(s, highColorDepth);       /* highColorDepth */
+	Stream_Write_UINT16(s, WINPR_ASSERTING_INT_CAST(uint16_t, highColorDepth)); /* highColorDepth */
 	Stream_Write_UINT16(s, SupportedColorDepths); /* supportedColorDepths */
 	Stream_Write_UINT16(s, earlyCapabilityFlags); /* earlyCapabilityFlags */
 
@@ -1809,8 +1821,12 @@ BOOL gcc_write_server_security_data(wStream* s, rdpMcs* mcs)
 	if (len < 0)
 		return FALSE;
 	const size_t end = Stream_GetPosition(s);
+
+	WINPR_ASSERT(end >= posHeader);
+	const size_t diff = end - posHeader;
+	WINPR_ASSERT(diff <= UINT16_MAX);
 	Stream_SetPosition(s, posHeader);
-	if (!gcc_write_user_data_header(s, SC_SECURITY, end - posHeader))
+	if (!gcc_write_user_data_header(s, SC_SECURITY, (UINT16)diff))
 		return FALSE;
 	Stream_SetPosition(s, posCertLen);
 	WINPR_ASSERT(len <= UINT32_MAX);
@@ -1884,13 +1900,13 @@ BOOL gcc_read_client_network_data(wStream* s, rdpMcs* mcs)
 
 BOOL gcc_write_client_network_data(wStream* s, const rdpMcs* mcs)
 {
-	UINT16 length = 0;
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(mcs);
 	if (mcs->channelCount > 0)
 	{
-		length = mcs->channelCount * 12 + 8;
-		if (!gcc_write_user_data_header(s, CS_NET, length))
+		const size_t length = mcs->channelCount * 12 + 8;
+		WINPR_ASSERT(length <= UINT16_MAX);
+		if (!gcc_write_user_data_header(s, CS_NET, (UINT16)length))
 			return FALSE;
 		Stream_Write_UINT32(s, mcs->channelCount); /* channelCount */
 
@@ -1960,11 +1976,13 @@ BOOL gcc_write_server_network_data(wStream* s, const rdpMcs* mcs)
 	WINPR_ASSERT(mcs);
 	const size_t payloadLen = 8 + mcs->channelCount * 2 + (mcs->channelCount % 2 == 1 ? 2 : 0);
 
-	if (!gcc_write_user_data_header(s, SC_NET, payloadLen))
+	WINPR_ASSERT(payloadLen <= UINT16_MAX);
+	if (!gcc_write_user_data_header(s, SC_NET, (UINT16)payloadLen))
 		return FALSE;
 
 	Stream_Write_UINT16(s, MCS_GLOBAL_CHANNEL_ID); /* MCSChannelId */
-	Stream_Write_UINT16(s, mcs->channelCount);     /* channelCount */
+	Stream_Write_UINT16(s,
+	                    WINPR_ASSERTING_INT_CAST(uint16_t, mcs->channelCount)); /* channelCount */
 
 	for (UINT32 i = 0; i < mcs->channelCount; i++)
 	{
@@ -2153,7 +2171,6 @@ BOOL gcc_read_client_monitor_data(wStream* s, rdpMcs* mcs)
 
 BOOL gcc_write_client_monitor_data(wStream* s, const rdpMcs* mcs)
 {
-	UINT16 length = 0;
 	INT32 baseX = 0;
 	INT32 baseY = 0;
 	const rdpSettings* settings = mcs_get_const_settings(mcs);
@@ -2164,7 +2181,9 @@ BOOL gcc_write_client_monitor_data(wStream* s, const rdpMcs* mcs)
 	WLog_DBG(TAG, "MonitorCount=%" PRIu32, settings->MonitorCount);
 	if (settings->MonitorCount > 1)
 	{
-		length = (20 * settings->MonitorCount) + 12;
+		const size_t len = (20 * settings->MonitorCount) + 12;
+		WINPR_ASSERT(len <= UINT16_MAX);
+		const UINT16 length = (UINT16)len;
 		if (!gcc_write_user_data_header(s, CS_MONITOR, length))
 			return FALSE;
 		Stream_Write_UINT32(s, settings->MonitorFlags); /* flags */
@@ -2186,10 +2205,10 @@ BOOL gcc_write_client_monitor_data(wStream* s, const rdpMcs* mcs)
 		for (UINT32 i = 0; i < settings->MonitorCount; i++)
 		{
 			const rdpMonitor* current = &settings->MonitorDefArray[i];
-			const UINT32 left = current->x - baseX;
-			const UINT32 top = current->y - baseY;
-			const UINT32 right = left + current->width - 1;
-			const UINT32 bottom = top + current->height - 1;
+			const UINT32 left = WINPR_ASSERTING_INT_CAST(uint32_t, current->x - baseX);
+			const UINT32 top = WINPR_ASSERTING_INT_CAST(uint32_t, current->y - baseY);
+			const UINT32 right = left + WINPR_ASSERTING_INT_CAST(uint32_t, current->width - 1);
+			const UINT32 bottom = top + WINPR_ASSERTING_INT_CAST(uint32_t, current->height - 1);
 			const UINT32 flags = current->is_primary ? MONITOR_PRIMARY : 0;
 			WLog_DBG(TAG,
 			         "Monitor[%" PRIu32 "]: top=%" PRIu32 ", left=%" PRIu32 ", bottom=%" PRIu32
@@ -2249,7 +2268,6 @@ BOOL gcc_read_client_monitor_extended_data(wStream* s, rdpMcs* mcs)
 
 BOOL gcc_write_client_monitor_extended_data(wStream* s, const rdpMcs* mcs)
 {
-	UINT16 length = 0;
 	const rdpSettings* settings = mcs_get_const_settings(mcs);
 
 	WINPR_ASSERT(s);
@@ -2257,8 +2275,9 @@ BOOL gcc_write_client_monitor_extended_data(wStream* s, const rdpMcs* mcs)
 
 	if (settings->HasMonitorAttributes)
 	{
-		length = (20 * settings->MonitorCount) + 16;
-		if (!gcc_write_user_data_header(s, CS_MONITOR_EX, length))
+		const size_t length = (20 * settings->MonitorCount) + 16;
+		WINPR_ASSERT(length <= UINT16_MAX);
+		if (!gcc_write_user_data_header(s, CS_MONITOR_EX, (UINT16)length))
 			return FALSE;
 		Stream_Write_UINT32(s, settings->MonitorAttributeFlags); /* flags */
 		Stream_Write_UINT32(s, 20);                              /* monitorAttributeSize */

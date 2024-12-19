@@ -17,6 +17,9 @@
  * limitations under the License.
  */
 
+#include <winpr/assert.h>
+#include <winpr/cast.h>
+
 #include <freerdp/config.h>
 
 #include <freerdp/primitives.h>
@@ -72,16 +75,14 @@ void rfx_quantization_decode(INT16* WINPR_RESTRICT buffer, const UINT32* WINPR_R
 static INLINE void rfx_quantization_encode_block(INT16* WINPR_RESTRICT buffer, size_t buffer_size,
                                                  UINT32 factor)
 {
-	INT16 half = 0;
-
 	if (factor == 0)
 		return;
 
-	half = (1 << (factor - 1));
+	const INT16 half = WINPR_ASSERTING_INT_CAST(INT16, 1 << (factor - 1));
 	/* Could probably use prims->rShiftC_16s(dst+half, factor, dst, buffer_size); */
 	for (INT16* dst = buffer; buffer_size > 0; dst++, buffer_size--)
 	{
-		*dst = (*dst + half) >> factor;
+		*dst = WINPR_ASSERTING_INT_CAST(INT16, (*dst + half) >> factor);
 	}
 }
 
