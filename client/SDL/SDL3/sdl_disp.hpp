@@ -75,6 +75,7 @@ class sdlDispContext
 	UINT16 _lastSentDesktopOrientation = 0;
 	UINT32 _lastSentDesktopScaleFactor = 0;
 	UINT32 _lastSentDeviceScaleFactor = 0;
+	UINT32 _targetDesktopScaleFactor = 0;
 	SDL_TimerID _timer = 0;
 	unsigned _timer_retries = 0;
 };

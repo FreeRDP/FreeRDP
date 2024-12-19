@@ -70,20 +70,18 @@ BOOL sdl_scale_coordinates(SdlContext* sdl, Uint32 windowId, INT32* px, INT32* p
 		break;
 	}
 
-	if (freerdp_settings_get_bool(sdl->context()->settings, FreeRDP_SmartSizing))
+	if (!fromLocalToRDP)
 	{
-		if (!fromLocalToRDP)
-		{
-			*px = static_cast<INT32>(*px * sx);
-			*py = static_cast<INT32>(*py * sy);
-		}
-		else
-		{
-			*px = static_cast<INT32>(*px / sx);
-			*py = static_cast<INT32>(*py / sy);
-		}
+		*px = static_cast<INT32>(*px * sx);
+		*py = static_cast<INT32>(*py * sy);
 	}
-	else if (applyOffset)
+	else
+	{
+		*px = static_cast<INT32>(*px / sx);
+		*py = static_cast<INT32>(*py / sy);
+	}
+
+	if (applyOffset)
 	{
 		*px -= offset_x;
 		*py -= offset_y;
