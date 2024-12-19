@@ -1486,7 +1486,8 @@ static const UINT32 TEST_XRGB_IMAGE[4096] = {
 	0xFF169ff8, 0xFF159ef7, 0xFF149df7, 0xFF139cf6, 0xFF129bf5, 0xFF129bf5, 0xFF129bf5, 0xFF129bf5
 };
 
-static int test_bmp_cmp_count(const BYTE* mem1, const BYTE* mem2, int size, int channel, int margin)
+static int test_bmp_cmp_count(const BYTE* mem1, const BYTE* mem2, size_t size, int channel,
+                              int margin)
 {
 	int error = 0;
 	int count = 0;
@@ -1494,7 +1495,7 @@ static int test_bmp_cmp_count(const BYTE* mem1, const BYTE* mem2, int size, int 
 	mem1 += channel;
 	mem2 += channel;
 
-	for (int index = 0; index < size; index++)
+	for (size_t index = 0; index < size; index++)
 	{
 		if (*mem1 != *mem2)
 		{
@@ -1511,16 +1512,16 @@ static int test_bmp_cmp_count(const BYTE* mem1, const BYTE* mem2, int size, int 
 	return count;
 }
 
-static int test_bmp_cmp_dump(const BYTE* actual, const BYTE* expected, int size, int channel,
+static int test_bmp_cmp_dump(const BYTE* actual, const BYTE* expected, size_t size, int channel,
                              int margin)
 {
-	int error[3];
+	int error[3] = { 0 };
 	int count = 0;
 	size /= 4;
 	actual += channel;
 	expected += channel;
 
-	for (int index = 0; index < size; index++)
+	for (size_t index = 0; index < size; index++)
 	{
 		if (*actual != *expected)
 		{
@@ -1529,8 +1530,8 @@ static int test_bmp_cmp_dump(const BYTE* actual, const BYTE* expected, int size,
 			const INT16 Y = TEST_Y_COMPONENT[index];
 			const INT16 Cb = TEST_CB_COMPONENT[index];
 			const INT16 Cr = TEST_CR_COMPONENT[index];
-			const int x = index % 64;
-			const int y = (index - x) / 64;
+			const size_t x = index % 64;
+			const size_t y = (index - x) / 64;
 			BYTE R = 0;
 			BYTE G = 0;
 			BYTE B = 0;
@@ -1546,9 +1547,9 @@ static int test_bmp_cmp_dump(const BYTE* actual, const BYTE* expected, int size,
 
 			if ((error[0] > margin) || (error[1] > margin) || (error[2] > margin))
 			{
-				printf("(%2d,%2d)    Y: %+5" PRId16 " Cb: %+5" PRId16 " Cr: %+5" PRId16
-				       "    R: %03" PRIu8 "/%03" PRIu8 " G: %03" PRIu8 "/%03" PRIu8 " B: %03" PRIu8
-				       "/%03" PRIu8 "    %d %d %d\n",
+				printf("(%2" PRIuz ",%2" PRIuz ")    Y: %+5" PRId16 " Cb: %+5" PRId16
+				       " Cr: %+5" PRId16 "    R: %03" PRIu8 "/%03" PRIu8 " G: %03" PRIu8
+				       "/%03" PRIu8 " B: %03" PRIu8 "/%03" PRIu8 "    %d %d %d\n",
 				       x, y, Y, Cb, Cr, R, eR, G, eG, B, eB, R - eR, G - eG, B - eB);
 				count++;
 			}
@@ -1638,7 +1639,9 @@ static int test_PrimitivesYCbCr(const primitives_t* prims, UINT32 format, prim_s
 		CopyMemory(pSrcDst[2], pYCbCr[2], srcSize);
 		PROFILER_ENTER(prof1)
 		cnv.pi = pSrcDst;
-		status = prims->yCbCrToRGB_16s16s_P3P3(cnv.cpi, srcStride, pSrcDst, srcStride, &roi);
+		status =
+		    prims->yCbCrToRGB_16s16s_P3P3(cnv.cpi, WINPR_ASSERTING_INT_CAST(int, srcStride),
+		                                  pSrcDst, WINPR_ASSERTING_INT_CAST(int, srcStride), &roi);
 		PROFILER_EXIT(prof1)
 
 		if (status != PRIMITIVES_SUCCESS)

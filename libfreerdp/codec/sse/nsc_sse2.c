@@ -17,6 +17,8 @@
  * limitations under the License.
  */
 
+#include <winpr/assert.h>
+#include <winpr/cast.h>
 #include <winpr/platform.h>
 #include <freerdp/config.h>
 
@@ -40,39 +42,30 @@
 static BOOL nsc_encode_argb_to_aycocg_sse2(NSC_CONTEXT* context, const BYTE* data, UINT32 scanline)
 {
 	size_t y = 0;
-	UINT16 rw = 0;
-	BYTE ccl = 0;
-	const BYTE* src = NULL;
-	BYTE* yplane = NULL;
-	BYTE* coplane = NULL;
-	BYTE* cgplane = NULL;
-	BYTE* aplane = NULL;
-	__m128i r_val;
-	__m128i g_val;
-	__m128i b_val;
-	__m128i a_val;
-	__m128i y_val;
-	__m128i co_val;
-	__m128i cg_val;
-	UINT32 tempWidth = 0;
 
 	if (!context || !data || (scanline == 0))
 		return FALSE;
 
-	tempWidth = ROUND_UP_TO(context->width, 8);
-	rw = (context->ChromaSubsamplingLevel > 0 ? tempWidth : context->width);
-	ccl = context->ColorLossLevel;
+	const UINT16 tempWidth = ROUND_UP_TO(context->width, 8);
+	const UINT16 rw = (context->ChromaSubsamplingLevel > 0 ? tempWidth : context->width);
+
+	const BYTE ccl = WINPR_ASSERTING_INT_CAST(BYTE, context->ColorLossLevel);
 
 	for (; y < context->height; y++)
 	{
-		src = data + (context->height - 1 - y) * scanline;
-		yplane = context->priv->PlaneBuffers[0] + y * rw;
-		coplane = context->priv->PlaneBuffers[1] + y * rw;
-		cgplane = context->priv->PlaneBuffers[2] + y * rw;
-		aplane = context->priv->PlaneBuffers[3] + y * context->width;
+		const BYTE* src = data + (context->height - 1 - y) * scanline;
+		BYTE* yplane = context->priv->PlaneBuffers[0] + y * rw;
+		BYTE* coplane = context->priv->PlaneBuffers[1] + y * rw;
+		BYTE* cgplane = context->priv->PlaneBuffers[2] + y * rw;
+		BYTE* aplane = context->priv->PlaneBuffers[3] + y * context->width;
 
 		for (UINT16 x = 0; x < context->width; x += 8)
 		{
+			__m128i r_val = { 0 };
+			__m128i g_val = { 0 };
+			__m128i b_val = { 0 };
+			__m128i a_val = { 0 };
+
 			switch (context->format)
 			{
 				case PIXEL_FORMAT_BGRX32:
@@ -142,65 +135,105 @@ static BOOL nsc_encode_argb_to_aycocg_sse2(NSC_CONTEXT* context, const BYTE* dat
 					a_val = _mm_set1_epi16(0xFF);
 					src += 24;
 					break;
-
 				case PIXEL_FORMAT_BGR16:
-					b_val = _mm_set_epi16((((*(src + 15)) & 0xF8) | ((*(src + 15)) >> 5)),
-					                      (((*(src + 13)) & 0xF8) | ((*(src + 13)) >> 5)),
-					                      (((*(src + 11)) & 0xF8) | ((*(src + 11)) >> 5)),
-					                      (((*(src + 9)) & 0xF8) | ((*(src + 9)) >> 5)),
-					                      (((*(src + 7)) & 0xF8) | ((*(src + 7)) >> 5)),
-					                      (((*(src + 5)) & 0xF8) | ((*(src + 5)) >> 5)),
-					                      (((*(src + 3)) & 0xF8) | ((*(src + 3)) >> 5)),
-					                      (((*(src + 1)) & 0xF8) | ((*(src + 1)) >> 5)));
+					b_val = _mm_set_epi16(WINPR_ASSERTING_INT_CAST(INT16, ((*(src + 15)) & 0xF8) |
+					                                                          ((*(src + 15)) >> 5)),
+					                      WINPR_ASSERTING_INT_CAST(INT16, ((*(src + 13)) & 0xF8) |
+					                                                          ((*(src + 13)) >> 5)),
+					                      WINPR_ASSERTING_INT_CAST(INT16, ((*(src + 11)) & 0xF8) |
+					                                                          ((*(src + 11)) >> 5)),
+					                      WINPR_ASSERTING_INT_CAST(INT16, ((*(src + 9)) & 0xF8) |
+					                                                          ((*(src + 9)) >> 5)),
+					                      WINPR_ASSERTING_INT_CAST(INT16, ((*(src + 7)) & 0xF8) |
+					                                                          ((*(src + 7)) >> 5)),
+					                      WINPR_ASSERTING_INT_CAST(INT16, ((*(src + 5)) & 0xF8) |
+					                                                          ((*(src + 5)) >> 5)),
+					                      WINPR_ASSERTING_INT_CAST(INT16, ((*(src + 3)) & 0xF8) |
+					                                                          ((*(src + 3)) >> 5)),
+					                      WINPR_ASSERTING_INT_CAST(INT16, ((*(src + 1)) & 0xF8) |
+					                                                          ((*(src + 1)) >> 5)));
 					g_val = _mm_set_epi16(
-					    ((((*(src + 15)) & 0x07) << 5) | (((*(src + 14)) & 0xE0) >> 3)),
-					    ((((*(src + 13)) & 0x07) << 5) | (((*(src + 12)) & 0xE0) >> 3)),
-					    ((((*(src + 11)) & 0x07) << 5) | (((*(src + 10)) & 0xE0) >> 3)),
-					    ((((*(src + 9)) & 0x07) << 5) | (((*(src + 8)) & 0xE0) >> 3)),
-					    ((((*(src + 7)) & 0x07) << 5) | (((*(src + 6)) & 0xE0) >> 3)),
-					    ((((*(src + 5)) & 0x07) << 5) | (((*(src + 4)) & 0xE0) >> 3)),
-					    ((((*(src + 3)) & 0x07) << 5) | (((*(src + 2)) & 0xE0) >> 3)),
-					    ((((*(src + 1)) & 0x07) << 5) | (((*src) & 0xE0) >> 3)));
+					    WINPR_ASSERTING_INT_CAST(INT16, (((*(src + 15)) & 0x07) << 5) |
+					                                        (((*(src + 14)) & 0xE0) >> 3)),
+					    WINPR_ASSERTING_INT_CAST(INT16, (((*(src + 13)) & 0x07) << 5) |
+					                                        (((*(src + 12)) & 0xE0) >> 3)),
+					    WINPR_ASSERTING_INT_CAST(INT16, (((*(src + 11)) & 0x07) << 5) |
+					                                        (((*(src + 10)) & 0xE0) >> 3)),
+					    WINPR_ASSERTING_INT_CAST(INT16, (((*(src + 9)) & 0x07) << 5) |
+					                                        (((*(src + 8)) & 0xE0) >> 3)),
+					    WINPR_ASSERTING_INT_CAST(INT16, (((*(src + 7)) & 0x07) << 5) |
+					                                        (((*(src + 6)) & 0xE0) >> 3)),
+					    WINPR_ASSERTING_INT_CAST(INT16, (((*(src + 5)) & 0x07) << 5) |
+					                                        (((*(src + 4)) & 0xE0) >> 3)),
+					    WINPR_ASSERTING_INT_CAST(INT16, (((*(src + 3)) & 0x07) << 5) |
+					                                        (((*(src + 2)) & 0xE0) >> 3)),
+					    WINPR_ASSERTING_INT_CAST(INT16, (((*(src + 1)) & 0x07) << 5) |
+					                                        (((*src) & 0xE0) >> 3)));
 					r_val = _mm_set_epi16(
-					    ((((*(src + 14)) & 0x1F) << 3) | (((*(src + 14)) >> 2) & 0x07)),
-					    ((((*(src + 12)) & 0x1F) << 3) | (((*(src + 12)) >> 2) & 0x07)),
-					    ((((*(src + 10)) & 0x1F) << 3) | (((*(src + 10)) >> 2) & 0x07)),
-					    ((((*(src + 8)) & 0x1F) << 3) | (((*(src + 8)) >> 2) & 0x07)),
-					    ((((*(src + 6)) & 0x1F) << 3) | (((*(src + 6)) >> 2) & 0x07)),
-					    ((((*(src + 4)) & 0x1F) << 3) | (((*(src + 4)) >> 2) & 0x07)),
-					    ((((*(src + 2)) & 0x1F) << 3) | (((*(src + 2)) >> 2) & 0x07)),
-					    ((((*src) & 0x1F) << 3) | (((*src) >> 2) & 0x07)));
+					    WINPR_ASSERTING_INT_CAST(INT16, (((*(src + 14)) & 0x1F) << 3) |
+					                                        (((*(src + 14)) >> 2) & 0x07)),
+					    WINPR_ASSERTING_INT_CAST(INT16, (((*(src + 12)) & 0x1F) << 3) |
+					                                        (((*(src + 12)) >> 2) & 0x07)),
+					    WINPR_ASSERTING_INT_CAST(INT16, (((*(src + 10)) & 0x1F) << 3) |
+					                                        (((*(src + 10)) >> 2) & 0x07)),
+					    WINPR_ASSERTING_INT_CAST(INT16, (((*(src + 8)) & 0x1F) << 3) |
+					                                        (((*(src + 8)) >> 2) & 0x07)),
+					    WINPR_ASSERTING_INT_CAST(INT16, (((*(src + 6)) & 0x1F) << 3) |
+					                                        (((*(src + 6)) >> 2) & 0x07)),
+					    WINPR_ASSERTING_INT_CAST(INT16, (((*(src + 4)) & 0x1F) << 3) |
+					                                        (((*(src + 4)) >> 2) & 0x07)),
+					    WINPR_ASSERTING_INT_CAST(INT16, (((*(src + 2)) & 0x1F) << 3) |
+					                                        (((*(src + 2)) >> 2) & 0x07)),
+					    WINPR_ASSERTING_INT_CAST(INT16,
+					                             (((*src) & 0x1F) << 3) | (((*src) >> 2) & 0x07)));
 					a_val = _mm_set1_epi16(0xFF);
 					src += 16;
 					break;
 
 				case PIXEL_FORMAT_RGB16:
-					r_val = _mm_set_epi16((((*(src + 15)) & 0xF8) | ((*(src + 15)) >> 5)),
-					                      (((*(src + 13)) & 0xF8) | ((*(src + 13)) >> 5)),
-					                      (((*(src + 11)) & 0xF8) | ((*(src + 11)) >> 5)),
-					                      (((*(src + 9)) & 0xF8) | ((*(src + 9)) >> 5)),
-					                      (((*(src + 7)) & 0xF8) | ((*(src + 7)) >> 5)),
-					                      (((*(src + 5)) & 0xF8) | ((*(src + 5)) >> 5)),
-					                      (((*(src + 3)) & 0xF8) | ((*(src + 3)) >> 5)),
-					                      (((*(src + 1)) & 0xF8) | ((*(src + 1)) >> 5)));
+					r_val = _mm_set_epi16(
+					    WINPR_ASSERTING_INT_CAST(INT16, ((src[15] & 0xF8) | (src[15] >> 5))),
+					    WINPR_ASSERTING_INT_CAST(INT16, ((src[13] & 0xF8) | (src[13] >> 5))),
+					    WINPR_ASSERTING_INT_CAST(INT16, ((src[11] & 0xF8) | (src[11] >> 5))),
+					    WINPR_ASSERTING_INT_CAST(INT16, ((src[9] & 0xF8) | (src[9] >> 5))),
+					    WINPR_ASSERTING_INT_CAST(INT16, ((src[7] & 0xF8) | (src[7] >> 5))),
+					    WINPR_ASSERTING_INT_CAST(INT16, ((src[5] & 0xF8) | (src[5] >> 5))),
+					    WINPR_ASSERTING_INT_CAST(INT16, ((src[3] & 0xF8) | (src[3] >> 5))),
+					    WINPR_ASSERTING_INT_CAST(INT16, ((src[1] & 0xF8) | (src[1] >> 5))));
 					g_val = _mm_set_epi16(
-					    ((((*(src + 15)) & 0x07) << 5) | (((*(src + 14)) & 0xE0) >> 3)),
-					    ((((*(src + 13)) & 0x07) << 5) | (((*(src + 12)) & 0xE0) >> 3)),
-					    ((((*(src + 11)) & 0x07) << 5) | (((*(src + 10)) & 0xE0) >> 3)),
-					    ((((*(src + 9)) & 0x07) << 5) | (((*(src + 8)) & 0xE0) >> 3)),
-					    ((((*(src + 7)) & 0x07) << 5) | (((*(src + 6)) & 0xE0) >> 3)),
-					    ((((*(src + 5)) & 0x07) << 5) | (((*(src + 4)) & 0xE0) >> 3)),
-					    ((((*(src + 3)) & 0x07) << 5) | (((*(src + 2)) & 0xE0) >> 3)),
-					    ((((*(src + 1)) & 0x07) << 5) | (((*src) & 0xE0) >> 3)));
+					    WINPR_ASSERTING_INT_CAST(INT16, (((*(src + 15)) & 0x07) << 5) |
+					                                        (((*(src + 14)) & 0xE0) >> 3)),
+					    WINPR_ASSERTING_INT_CAST(INT16, (((*(src + 13)) & 0x07) << 5) |
+					                                        (((*(src + 12)) & 0xE0) >> 3)),
+					    WINPR_ASSERTING_INT_CAST(INT16, (((*(src + 11)) & 0x07) << 5) |
+					                                        (((*(src + 10)) & 0xE0) >> 3)),
+					    WINPR_ASSERTING_INT_CAST(INT16, (((*(src + 9)) & 0x07) << 5) |
+					                                        (((*(src + 8)) & 0xE0) >> 3)),
+					    WINPR_ASSERTING_INT_CAST(INT16, (((*(src + 7)) & 0x07) << 5) |
+					                                        (((*(src + 6)) & 0xE0) >> 3)),
+					    WINPR_ASSERTING_INT_CAST(INT16, (((*(src + 5)) & 0x07) << 5) |
+					                                        (((*(src + 4)) & 0xE0) >> 3)),
+					    WINPR_ASSERTING_INT_CAST(INT16, (((*(src + 3)) & 0x07) << 5) |
+					                                        (((*(src + 2)) & 0xE0) >> 3)),
+					    WINPR_ASSERTING_INT_CAST(INT16, (((*(src + 1)) & 0x07) << 5) |
+					                                        (((*src) & 0xE0) >> 3)));
 					b_val = _mm_set_epi16(
-					    ((((*(src + 14)) & 0x1F) << 3) | (((*(src + 14)) >> 2) & 0x07)),
-					    ((((*(src + 12)) & 0x1F) << 3) | (((*(src + 12)) >> 2) & 0x07)),
-					    ((((*(src + 10)) & 0x1F) << 3) | (((*(src + 10)) >> 2) & 0x07)),
-					    ((((*(src + 8)) & 0x1F) << 3) | (((*(src + 8)) >> 2) & 0x07)),
-					    ((((*(src + 6)) & 0x1F) << 3) | (((*(src + 6)) >> 2) & 0x07)),
-					    ((((*(src + 4)) & 0x1F) << 3) | (((*(src + 4)) >> 2) & 0x07)),
-					    ((((*(src + 2)) & 0x1F) << 3) | (((*(src + 2)) >> 2) & 0x07)),
-					    ((((*src) & 0x1F) << 3) | (((*src) >> 2) & 0x07)));
+					    WINPR_ASSERTING_INT_CAST(INT16, (((*(src + 14)) & 0x1F) << 3) |
+					                                        (((*(src + 14)) >> 2) & 0x07)),
+					    WINPR_ASSERTING_INT_CAST(INT16, (((*(src + 12)) & 0x1F) << 3) |
+					                                        (((*(src + 12)) >> 2) & 0x07)),
+					    WINPR_ASSERTING_INT_CAST(INT16, (((*(src + 10)) & 0x1F) << 3) |
+					                                        (((*(src + 10)) >> 2) & 0x07)),
+					    WINPR_ASSERTING_INT_CAST(INT16, (((*(src + 8)) & 0x1F) << 3) |
+					                                        (((*(src + 8)) >> 2) & 0x07)),
+					    WINPR_ASSERTING_INT_CAST(INT16, (((*(src + 6)) & 0x1F) << 3) |
+					                                        (((*(src + 6)) >> 2) & 0x07)),
+					    WINPR_ASSERTING_INT_CAST(INT16, (((*(src + 4)) & 0x1F) << 3) |
+					                                        (((*(src + 4)) >> 2) & 0x07)),
+					    WINPR_ASSERTING_INT_CAST(INT16, (((*(src + 2)) & 0x1F) << 3) |
+					                                        (((*(src + 2)) >> 2) & 0x07)),
+					    WINPR_ASSERTING_INT_CAST(INT16,
+					                             (((*src) & 0x1F) << 3) | (((*src) >> 2) & 0x07)));
 					a_val = _mm_set1_epi16(0xFF);
 					src += 16;
 					break;
@@ -275,12 +308,12 @@ static BOOL nsc_encode_argb_to_aycocg_sse2(NSC_CONTEXT* context, const BYTE* dat
 					break;
 			}
 
-			y_val = _mm_srai_epi16(r_val, 2);
+			__m128i y_val = _mm_srai_epi16(r_val, 2);
 			y_val = _mm_add_epi16(y_val, _mm_srai_epi16(g_val, 1));
 			y_val = _mm_add_epi16(y_val, _mm_srai_epi16(b_val, 2));
-			co_val = _mm_sub_epi16(r_val, b_val);
+			__m128i co_val = _mm_sub_epi16(r_val, b_val);
 			co_val = _mm_srai_epi16(co_val, ccl);
-			cg_val = _mm_sub_epi16(g_val, _mm_srai_epi16(r_val, 1));
+			__m128i cg_val = _mm_sub_epi16(g_val, _mm_srai_epi16(r_val, 1));
 			cg_val = _mm_sub_epi16(cg_val, _mm_srai_epi16(b_val, 1));
 			cg_val = _mm_srai_epi16(cg_val, ccl);
 			y_val = _mm_packus_epi16(y_val, y_val);
@@ -310,9 +343,9 @@ static BOOL nsc_encode_argb_to_aycocg_sse2(NSC_CONTEXT* context, const BYTE* dat
 
 	if (context->ChromaSubsamplingLevel > 0 && (y % 2) == 1)
 	{
-		yplane = context->priv->PlaneBuffers[0] + y * rw;
-		coplane = context->priv->PlaneBuffers[1] + y * rw;
-		cgplane = context->priv->PlaneBuffers[2] + y * rw;
+		BYTE* yplane = context->priv->PlaneBuffers[0] + y * rw;
+		BYTE* coplane = context->priv->PlaneBuffers[1] + y * rw;
+		BYTE* cgplane = context->priv->PlaneBuffers[2] + y * rw;
 		CopyMemory(yplane, yplane - rw, rw);
 		CopyMemory(coplane, coplane - rw, rw);
 		CopyMemory(cgplane, cgplane - rw, rw);

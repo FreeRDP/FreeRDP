@@ -52,7 +52,7 @@ static pstatus_t sse2_set_8u(BYTE val, BYTE* WINPR_RESTRICT pDst, UINT32 len)
 			return PRIMITIVES_SUCCESS;
 	}
 
-	xmm0 = _mm_set1_epi8(byte);
+	xmm0 = mm_set1_epu8(byte);
 	/* Cover 256-byte chunks via SSE register stores. */
 	count = len >> 8;
 	len -= count << 8;
@@ -144,7 +144,7 @@ static pstatus_t sse2_set_32u(UINT32 val, UINT32* WINPR_RESTRICT pDst, UINT32 le
 			return PRIMITIVES_SUCCESS;
 	}
 
-	xmm0 = _mm_set1_epi32(val);
+	xmm0 = mm_set1_epu32(val);
 	/* Cover 256-byte chunks via SSE register stores. */
 	count = len >> 6;
 	len -= count << 6;

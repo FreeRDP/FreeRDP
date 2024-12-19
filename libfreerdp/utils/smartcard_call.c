@@ -1805,7 +1805,7 @@ LONG smartcard_irp_device_control_call(scard_call_context* smartcard, wStream* o
 	if ((result & 0xC0000000L) == 0xC0000000L)
 	{
 		/* NTSTATUS error */
-		*pIoStatus = (UINT32)result;
+		*pIoStatus = result;
 		WLog_WARN(TAG, "IRP failure: %s (0x%08" PRIX32 "), ntstatus: 0x%08" PRIX32 "",
 		          scard_get_ioctl_string(ioControlCode, TRUE), ioControlCode, result);
 	}

@@ -1418,7 +1418,7 @@ BOOL rdp_client_transition_to_state(rdpRdp* rdp, CONNECTION_STATE state)
 		ConnectionStateChangeEventArgs stateEvent = { 0 };
 		rdpContext* context = rdp->context;
 		EventArgsInit(&stateEvent, "libfreerdp");
-		stateEvent.state = rdp_get_state(rdp);
+		stateEvent.state = WINPR_ASSERTING_INT_CAST(int32_t, rdp_get_state(rdp));
 		stateEvent.active = rdp_is_active_state(rdp);
 		PubSub_OnConnectionStateChange(rdp->pubSub, context, &stateEvent);
 	}
@@ -1994,7 +1994,7 @@ fail:
 	return status;
 }
 
-const char* rdp_client_connection_state_string(int state)
+const char* rdp_client_connection_state_string(UINT state)
 {
 	switch (state)
 	{
