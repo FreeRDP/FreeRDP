@@ -53,18 +53,18 @@ HGDI_BITMAP test_convert_to_bitmap(const BYTE* src, UINT32 SrcFormat, UINT32 Src
 	return bmp;
 }
 
-static void test_dump_data(unsigned char* p, int len, int width, const char* name)
+static void test_dump_data(unsigned char* p, size_t len, size_t width, const char* name)
 {
 	unsigned char* line = p;
-	int thisline = 0;
-	int offset = 0;
-	printf("\n%s[%d][%d]:\n", name, len / width, width);
+	const size_t stride = (width > 0) ? len / width : 1;
+	size_t offset = 0;
+	printf("\n%s[%" PRIuz "][%" PRIuz "]:\n", name, stride, width);
 
 	while (offset < len)
 	{
-		int i = 0;
-		printf("%04x ", offset);
-		thisline = len - offset;
+		size_t i = 0;
+		printf("%04" PRIxz " ", offset);
+		size_t thisline = len - offset;
 
 		if (thisline > width)
 			thisline = width;
@@ -86,16 +86,20 @@ static void test_dump_data(unsigned char* p, int len, int width, const char* nam
 
 void test_dump_bitmap(HGDI_BITMAP hBmp, const char* name)
 {
-	UINT32 stride = hBmp->width * FreeRDPGetBytesPerPixel(hBmp->format);
-	test_dump_data(hBmp->data, hBmp->height * stride, stride, name);
+	const size_t stride =
+	    WINPR_ASSERTING_INT_CAST(size_t, hBmp->width) * FreeRDPGetBytesPerPixel(hBmp->format);
+	test_dump_data(hBmp->data, stride * WINPR_ASSERTING_INT_CAST(uint32_t, hBmp->height), stride,
+	               name);
 }
 
 static BOOL CompareBitmaps(HGDI_BITMAP hBmp1, HGDI_BITMAP hBmp2, const gdiPalette* palette)
 {
 	const BYTE* p1 = hBmp1->data;
 	const BYTE* p2 = hBmp2->data;
-	const UINT32 minw = (hBmp1->width < hBmp2->width) ? hBmp1->width : hBmp2->width;
-	const UINT32 minh = (hBmp1->height < hBmp2->height) ? hBmp1->height : hBmp2->height;
+	const UINT32 minw = WINPR_ASSERTING_INT_CAST(
+	    uint32_t, (hBmp1->width < hBmp2->width) ? hBmp1->width : hBmp2->width);
+	const UINT32 minh = WINPR_ASSERTING_INT_CAST(
+	    uint32_t, (hBmp1->height < hBmp2->height) ? hBmp1->height : hBmp2->height);
 
 	for (UINT32 y = 0; y < minh; y++)
 	{

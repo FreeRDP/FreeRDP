@@ -155,7 +155,7 @@ int schannel_openssl_client_init(SCHANNEL_OPENSSL* context)
 	 * support empty fragments. This needs to be disabled.
 	 */
 	options |= SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS;
-	SSL_CTX_set_options(context->ctx, options);
+	SSL_CTX_set_options(context->ctx, WINPR_ASSERTING_INT_CAST(uint64_t, options));
 	context->ssl = SSL_new(context->ctx);
 
 	if (!context->ssl)
@@ -411,11 +411,12 @@ SECURITY_STATUS schannel_openssl_client_process_tokens(SCHANNEL_OPENSSL* context
 
 		if (status > 0)
 		{
-			if (pBuffer->cbBuffer < (unsigned long)status)
+			if (pBuffer->cbBuffer < WINPR_ASSERTING_INT_CAST(uint32_t, status))
 				return SEC_E_INSUFFICIENT_MEMORY;
 
-			CopyMemory(pBuffer->pvBuffer, context->ReadBuffer, status);
-			pBuffer->cbBuffer = status;
+			CopyMemory(pBuffer->pvBuffer, context->ReadBuffer,
+			           WINPR_ASSERTING_INT_CAST(uint32_t, status));
+			pBuffer->cbBuffer = WINPR_ASSERTING_INT_CAST(uint32_t, status);
 			return (context->connected) ? SEC_E_OK : SEC_I_CONTINUE_NEEDED;
 		}
 		else
@@ -480,11 +481,12 @@ SECURITY_STATUS schannel_openssl_server_process_tokens(SCHANNEL_OPENSSL* context
 
 		if (status > 0)
 		{
-			if (pBuffer->cbBuffer < (unsigned long)status)
+			if (pBuffer->cbBuffer < WINPR_ASSERTING_INT_CAST(uint32_t, status))
 				return SEC_E_INSUFFICIENT_MEMORY;
 
-			CopyMemory(pBuffer->pvBuffer, context->ReadBuffer, status);
-			pBuffer->cbBuffer = status;
+			CopyMemory(pBuffer->pvBuffer, context->ReadBuffer,
+			           WINPR_ASSERTING_INT_CAST(uint32_t, status));
+			pBuffer->cbBuffer = WINPR_ASSERTING_INT_CAST(uint32_t, status);
 			return (context->connected) ? SEC_E_OK : SEC_I_CONTINUE_NEEDED;
 		}
 		else
@@ -575,7 +577,7 @@ SECURITY_STATUS schannel_openssl_decrypt_message(SCHANNEL_OPENSSL* context, PSec
 	pMessage->pBuffers[0].cbBuffer = 5;
 	pMessage->pBuffers[1].BufferType = SECBUFFER_DATA;
 	pMessage->pBuffers[1].pvBuffer = buffer;
-	pMessage->pBuffers[1].cbBuffer = length;
+	pMessage->pBuffers[1].cbBuffer = WINPR_ASSERTING_INT_CAST(uint32_t, length);
 	pMessage->pBuffers[2].BufferType = SECBUFFER_STREAM_TRAILER;
 	pMessage->pBuffers[2].cbBuffer = 36;
 	pMessage->pBuffers[3].BufferType = SECBUFFER_EMPTY;

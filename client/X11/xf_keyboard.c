@@ -28,6 +28,7 @@
 #include <winpr/crt.h>
 #include <winpr/path.h>
 #include <winpr/assert.h>
+#include <winpr/cast.h>
 #include <winpr/collections.h>
 
 #include <freerdp/utils/string.h>
@@ -47,6 +48,26 @@
 
 #include <freerdp/log.h>
 #define TAG CLIENT_TAG("x11")
+
+typedef struct
+{
+	BOOL Shift;
+	BOOL LeftShift;
+	BOOL RightShift;
+	BOOL Alt;
+	BOOL LeftAlt;
+	BOOL RightAlt;
+	BOOL Ctrl;
+	BOOL LeftCtrl;
+	BOOL RightCtrl;
+	BOOL Super;
+	BOOL LeftSuper;
+	BOOL RightSuper;
+} XF_MODIFIER_KEYS;
+
+static UINT32 xf_keyboard_get_toggle_keys_state(xfContext* xfc);
+static BOOL xf_keyboard_handle_special_keys(xfContext* xfc, KeySym keysym);
+static void xf_keyboard_handle_special_keys_release(xfContext* xfc, KeySym keysym);
 
 static void xf_keyboard_modifier_map_free(xfContext* xfc)
 {
@@ -214,7 +235,7 @@ void xf_keyboard_release_all_keypress(xfContext* xfc)
 	xf_sync_kbd_state(xfc);
 }
 
-BOOL xf_keyboard_key_pressed(xfContext* xfc, KeySym keysym)
+static BOOL xf_keyboard_key_pressed(xfContext* xfc, KeySym keysym)
 {
 	KeyCode keycode = XKeysymToKeycode(xfc->display, keysym);
 	WINPR_ASSERT(keycode < ARRAYSIZE(xfc->KeyboardState));
@@ -280,8 +301,15 @@ void xf_keyboard_send_key(xfContext* xfc, BOOL down, BOOL repeat, const XKeyEven
 					freerdp_input_send_keyboard_event_ex(input, down, repeat, rdp_scancode);
 			}
 			else
+			{
+				char str[3 * ARRAYSIZE(buffer)] = { 0 };
+				const size_t rc = wcstombs(str, buffer, ARRAYSIZE(buffer));
+
+				WCHAR wbuffer[ARRAYSIZE(buffer)] = { 0 };
+				ConvertUtf8ToWChar(str, wbuffer, rc);
 				freerdp_input_send_unicode_keyboard_event(input, down ? 0 : KBD_FLAGS_RELEASE,
-				                                          buffer[0]);
+				                                          wbuffer[0]);
+			}
 		}
 		else if (rdp_scancode == RDP_SCANCODE_UNKNOWN)
 			WLog_ERR(TAG, "Unknown key with X keycode 0x%02" PRIx8 "", event->keycode);
@@ -295,7 +323,7 @@ void xf_keyboard_send_key(xfContext* xfc, BOOL down, BOOL repeat, const XKeyEven
 	}
 }
 
-int xf_keyboard_read_keyboard_state(xfContext* xfc)
+static int xf_keyboard_read_keyboard_state(xfContext* xfc)
 {
 	int dummy = 0;
 	Window wdummy = 0;
@@ -312,10 +340,10 @@ int xf_keyboard_read_keyboard_state(xfContext* xfc)
 		              &dummy, &dummy, &dummy, &state);
 	}
 
-	return state;
+	return WINPR_ASSERTING_INT_CAST(int, state);
 }
 
-static int xf_keyboard_get_keymask(xfContext* xfc, int keysym)
+static int xf_keyboard_get_keymask(xfContext* xfc, KeySym keysym)
 {
 	int keysymMask = 0;
 	KeyCode keycode = XKeysymToKeycode(xfc->display, keysym);
@@ -340,7 +368,7 @@ static int xf_keyboard_get_keymask(xfContext* xfc, int keysym)
 	return keysymMask;
 }
 
-BOOL xf_keyboard_get_key_state(xfContext* xfc, int state, int keysym)
+static BOOL xf_keyboard_get_key_state(xfContext* xfc, int state, KeySym keysym)
 {
 	int keysymMask = xf_keyboard_get_keymask(xfc, keysym);
 
@@ -350,7 +378,7 @@ BOOL xf_keyboard_get_key_state(xfContext* xfc, int state, int keysym)
 	return (state & keysymMask) ? TRUE : FALSE;
 }
 
-static BOOL xf_keyboard_set_key_state(xfContext* xfc, BOOL on, int keysym)
+static BOOL xf_keyboard_set_key_state(xfContext* xfc, BOOL on, KeySym keysym)
 {
 	if (!xfc->xkbAvailable)
 		return FALSE;
@@ -362,7 +390,9 @@ static BOOL xf_keyboard_set_key_state(xfContext* xfc, BOOL on, int keysym)
 		return FALSE;
 	}
 
-	return XkbLockModifiers(xfc->display, XkbUseCoreKbd, keysymMask, on ? keysymMask : 0);
+	return XkbLockModifiers(xfc->display, XkbUseCoreKbd,
+	                        WINPR_ASSERTING_INT_CAST(uint32_t, keysymMask),
+	                        on ? WINPR_ASSERTING_INT_CAST(uint32_t, keysymMask) : 0);
 }
 
 UINT32 xf_keyboard_get_toggle_keys_state(xfContext* xfc)
@@ -387,8 +417,8 @@ UINT32 xf_keyboard_get_toggle_keys_state(xfContext* xfc)
 
 static void xk_keyboard_update_modifier_keys(xfContext* xfc)
 {
-	const int keysyms[] = { XK_Shift_L,   XK_Shift_R,   XK_Alt_L,   XK_Alt_R,
-		                    XK_Control_L, XK_Control_R, XK_Super_L, XK_Super_R };
+	const KeySym keysyms[] = { XK_Shift_L,   XK_Shift_R,   XK_Alt_L,   XK_Alt_R,
+		                       XK_Control_L, XK_Control_R, XK_Super_L, XK_Super_R };
 
 	xf_keyboard_clear(xfc);
 
@@ -421,7 +451,7 @@ void xf_keyboard_focus_in(xfContext* xfc)
 	WINPR_ASSERT(input);
 
 	const UINT32 syncFlags = xf_keyboard_get_toggle_keys_state(xfc);
-	freerdp_input_send_focus_in_event(input, syncFlags);
+	freerdp_input_send_focus_in_event(input, WINPR_ASSERTING_INT_CAST(UINT16, syncFlags));
 	xk_keyboard_update_modifier_keys(xfc);
 
 	/* finish with a mouse pointer position like mstsc.exe if required */
@@ -518,7 +548,7 @@ static int xf_keyboard_execute_action_script(xfContext* xfc, XF_MODIFIER_KEYS* m
 	winpr_str_append(keyStr, combination, sizeof(combination), "+");
 
 	for (size_t i = 0; i < strnlen(combination, sizeof(combination)); i++)
-		combination[i] = tolower(combination[i]);
+		combination[i] = WINPR_ASSERTING_INT_CAST(char, tolower(combination[i]));
 
 	const size_t count = ArrayList_Count(xfc->keyCombinations);
 

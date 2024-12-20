@@ -665,7 +665,7 @@ static BOOL http_proxy_connect(rdpContext* context, BIO* bufferedBio, const char
 			goto fail;
 		}
 
-		resultsize += status;
+		resultsize += WINPR_ASSERTING_INT_CAST(size_t, status);
 	}
 
 	/* Extract HTTP status line */

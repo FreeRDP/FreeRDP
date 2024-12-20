@@ -110,7 +110,7 @@ static int rdpsnd_alsa_set_hw_params(rdpsndAlsaPlugin* alsa)
 	 * Commonly this is (2 * period_size), but some hardware can do 8 periods per buffer.
 	 * It is also possible for the buffer size to not be an integer multiple of the period size.
 	 */
-	int interrupts_per_sec_near = 50;
+	const size_t interrupts_per_sec_near = 50;
 	const size_t bytes_per_sec =
 	    (1ull * alsa->actual_rate * alsa->aformat.wBitsPerSample / 8 * alsa->actual_channels);
 	alsa->buffer_size = buffer_size_max;
@@ -352,12 +352,10 @@ static UINT32 rdpsnd_alsa_get_volume(rdpsndDevicePlugin* device)
 	long volume_max = 0;
 	long volume_left = 0;
 	long volume_right = 0;
-	UINT32 dwVolume = 0;
-	UINT16 dwVolumeLeft = 0;
-	UINT16 dwVolumeRight = 0;
+
 	rdpsndAlsaPlugin* alsa = (rdpsndAlsaPlugin*)device;
-	dwVolumeLeft = ((50 * 0xFFFF) / 100);  /* 50% */
-	dwVolumeRight = ((50 * 0xFFFF) / 100); /* 50% */
+	UINT32 dwVolumeLeft = ((50 * 0xFFFF) / 100);  /* 50% */
+	UINT32 dwVolumeRight = ((50 * 0xFFFF) / 100); /* 50% */
 
 	if (!rdpsnd_alsa_open_mixer(alsa))
 		return 0;
@@ -378,8 +376,7 @@ static UINT32 rdpsnd_alsa_get_volume(rdpsndDevicePlugin* device)
 		}
 	}
 
-	dwVolume = (dwVolumeLeft << 16) | dwVolumeRight;
-	return dwVolume;
+	return (dwVolumeLeft << 16) | dwVolumeRight;
 }
 
 static BOOL rdpsnd_alsa_set_volume(rdpsndDevicePlugin* device, UINT32 value)
@@ -448,7 +445,7 @@ static UINT rdpsnd_alsa_play(rdpsndDevicePlugin* device, const BYTE* data, size_
 			break;
 		}
 
-		offset += status * frame_size;
+		offset += WINPR_ASSERTING_INT_CAST(size_t, status) * frame_size;
 	}
 
 	{

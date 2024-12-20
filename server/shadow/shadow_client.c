@@ -22,6 +22,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/assert.h>
+#include <winpr/cast.h>
 #include <winpr/file.h>
 #include <winpr/path.h>
 #include <winpr/synch.h>
@@ -1291,8 +1292,8 @@ static BOOL shadow_client_send_surface_gfx(rdpShadowClient* client, const BYTE* 
 		WINPR_ASSERT(cmd.bottom <= UINT16_MAX);
 		rect.x = (UINT16)cmd.left;
 		rect.y = (UINT16)cmd.top;
-		rect.width = (UINT16)cmd.right - cmd.left;
-		rect.height = (UINT16)cmd.bottom - cmd.top;
+		rect.width = WINPR_ASSERTING_INT_CAST(UINT16, cmd.right - cmd.left);
+		rect.height = WINPR_ASSERTING_INT_CAST(UINT16, cmd.bottom - cmd.top);
 
 		rc = rfx_compose_message(encoder->rfx, s, &rect, 1, pSrcData, nWidth, nHeight, nSrcStep);
 
@@ -2141,12 +2142,12 @@ static int shadow_client_subsystem_process_message(rdpShadowClient* client, wMes
 			pointerNew.xorBpp = 24;
 			pointerColor = &(pointerNew.colorPtrAttr);
 			pointerColor->cacheIndex = 0;
-			pointerColor->hotSpotX = msg->xHot;
-			pointerColor->hotSpotY = msg->yHot;
-			pointerColor->width = msg->width;
-			pointerColor->height = msg->height;
-			pointerColor->lengthAndMask = msg->lengthAndMask;
-			pointerColor->lengthXorMask = msg->lengthXorMask;
+			pointerColor->hotSpotX = WINPR_ASSERTING_INT_CAST(UINT16, msg->xHot);
+			pointerColor->hotSpotY = WINPR_ASSERTING_INT_CAST(UINT16, msg->yHot);
+			pointerColor->width = WINPR_ASSERTING_INT_CAST(UINT16, msg->width);
+			pointerColor->height = WINPR_ASSERTING_INT_CAST(UINT16, msg->height);
+			pointerColor->lengthAndMask = WINPR_ASSERTING_INT_CAST(UINT16, msg->lengthAndMask);
+			pointerColor->lengthXorMask = WINPR_ASSERTING_INT_CAST(UINT16, msg->lengthXorMask);
 			pointerColor->xorMaskData = msg->xorMaskData;
 			pointerColor->andMaskData = msg->andMaskData;
 			pointerCached.cacheIndex = pointerColor->cacheIndex;
