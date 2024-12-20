@@ -19,6 +19,9 @@
 #ifndef RDTK_H
 #define RDTK_H
 
+#include <winpr/assert.h>
+#include <winpr/winpr.h>
+
 #include <stdint.h>
 #include <rdtk/api.h>
 
@@ -38,8 +41,10 @@ extern "C"
 
 	/* Engine */
 
-	RDTK_EXPORT rdtkEngine* rdtk_engine_new(void);
 	RDTK_EXPORT void rdtk_engine_free(rdtkEngine* engine);
+
+	WINPR_ATTR_MALLOC(rdtk_engine_free, 1)
+	RDTK_EXPORT rdtkEngine* rdtk_engine_new(void);
 
 	/* Surface */
 
