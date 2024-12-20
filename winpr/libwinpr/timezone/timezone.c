@@ -899,6 +899,7 @@ DWORD EnumDynamicTimeZoneInformation(const DWORD dwIndex,
 	else
 		unsetenv("TZ");
 	free(tzcopy);
+	tzset();
 
 	if (local_time)
 		dynamic_time_zone_from_localtime(local_time, lpTimeZoneInformation);

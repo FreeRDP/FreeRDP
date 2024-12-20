@@ -66,9 +66,9 @@ krb5_error_code krb5glue_crypto_length(krb5_context ctx, krb5glue_key key, int t
 	krb5_decrypt_iov_ivec(ctx, key, usage, iov, size, NULL)
 #define krb5glue_make_checksum_iov(ctx, key, usage, iov, size) \
 	krb5_create_checksum_iov(ctx, key, usage, iov, size, NULL)
-krb5_error_code krb5glue_verify_checksum_iov(krb5_context ctx, krb5glue_key key, unsigned usage,
-                                             krb5_crypto_iov* iov, unsigned int iov_size,
-                                             krb5_boolean* is_valid);
+krb5_error_code krb5glue_verify_checksum_iov(krb5_context ctx, krb5glue_key key,
+                                             krb5_keyusage usage, krb5_crypto_iov* iov,
+                                             unsigned int iov_size, krb5_boolean* is_valid);
 #define krb5glue_auth_con_set_cksumtype(ctx, auth_ctx, cksumtype) \
 	krb5_auth_con_setcksumtype(ctx, auth_ctx, cksumtype)
 #define krb5glue_set_principal_realm(ctx, principal, realm) \
