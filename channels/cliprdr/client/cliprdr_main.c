@@ -574,15 +574,15 @@ static UINT cliprdr_client_capabilities(CliprdrClientContext* context,
 	 * -> Update clipboard context feature state to what was agreed upon.
 	 */
 	if (!cliprdr->useLongFormatNames)
-		flags &= ~CB_USE_LONG_FORMAT_NAMES;
+		flags &= (uint32_t)~CB_USE_LONG_FORMAT_NAMES;
 	if (!cliprdr->streamFileClipEnabled)
-		flags &= ~CB_STREAM_FILECLIP_ENABLED;
+		flags &= (uint32_t)~CB_STREAM_FILECLIP_ENABLED;
 	if (!cliprdr->fileClipNoFilePaths)
-		flags &= ~CB_FILECLIP_NO_FILE_PATHS;
+		flags &= (uint32_t)~CB_FILECLIP_NO_FILE_PATHS;
 	if (!cliprdr->canLockClipData)
-		flags &= ~CB_CAN_LOCK_CLIPDATA;
+		flags &= (uint32_t)~CB_CAN_LOCK_CLIPDATA;
 	if (!cliprdr->hasHugeFileSupport)
-		flags &= ~CB_HUGE_FILE_SUPPORT_ENABLED;
+		flags &= (uint32_t)~CB_HUGE_FILE_SUPPORT_ENABLED;
 
 	cliprdr->useLongFormatNames = (flags & CB_USE_LONG_FORMAT_NAMES) ? TRUE : FALSE;
 	cliprdr->streamFileClipEnabled = (flags & CB_STREAM_FILECLIP_ENABLED) ? TRUE : FALSE;
