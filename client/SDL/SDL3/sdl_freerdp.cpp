@@ -1037,7 +1037,7 @@ static int sdl_run(SdlContext* sdl)
 
 							switch (ev->type)
 							{
-								case SDL_EVENT_WINDOW_RESIZED:
+								case SDL_EVENT_WINDOW_DISPLAY_SCALE_CHANGED:
 								case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
 									window->second.fill();
 									window->second.updateSurface();
