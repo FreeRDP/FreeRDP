@@ -23,6 +23,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/assert.h>
+#include <winpr/cast.h>
 
 #include <freerdp/freerdp.h>
 #include <winpr/stream.h>
@@ -62,10 +63,10 @@ static UINT32 update_glyph_offset(const BYTE* data, size_t length, UINT32 index,
 		}
 
 		if (flAccel & SO_VERTICAL)
-			*y += offset;
+			*y += WINPR_ASSERTING_INT_CAST(int32_t, offset);
 
 		if (flAccel & SO_HORIZONTAL)
-			*x += offset;
+			*x += WINPR_ASSERTING_INT_CAST(int32_t, offset);
 	}
 
 	return index;
@@ -109,8 +110,8 @@ static BOOL update_process_glyph(rdpContext* context, const BYTE* data, UINT32 c
 
 	if ((dx <= (bound->x + bound->width)) && (dy <= (bound->y + bound->height)))
 	{
-		INT32 dw = glyph->cx - sx;
-		INT32 dh = glyph->cy - sy;
+		INT32 dw = WINPR_ASSERTING_INT_CAST(int32_t, glyph->cx) - sx;
+		INT32 dh = WINPR_ASSERTING_INT_CAST(int32_t, glyph->cy) - sy;
 
 		if ((dw + dx) > (bound->x + bound->width))
 			dw = (bound->x + bound->width) - (dw + dx);
@@ -126,7 +127,7 @@ static BOOL update_process_glyph(rdpContext* context, const BYTE* data, UINT32 c
 	}
 
 	if (flAccel & SO_CHAR_INC_EQUAL_BM_BASE)
-		*x += glyph->cx;
+		*x += WINPR_ASSERTING_INT_CAST(int32_t, glyph->cx);
 
 	return TRUE;
 }
@@ -195,7 +196,8 @@ static BOOL update_process_glyph_fragments(rdpContext* context, const BYTE* data
 	if (bkHeight < 0)
 		bkHeight = 0;
 
-	if (opX + opWidth > (INT64)freerdp_settings_get_uint32(context->settings, FreeRDP_DesktopWidth))
+	const UINT32 w = freerdp_settings_get_uint32(context->settings, FreeRDP_DesktopWidth);
+	if (opX + opWidth > (INT64)w)
 	{
 		/**
 		 * Some Microsoft servers send erroneous high values close to the
@@ -206,10 +208,10 @@ static BOOL update_process_glyph_fragments(rdpContext* context, const BYTE* data
 		 * a RDP session to Windows XP Professional SP3.
 		 * This workaround prevents resulting problems in the UI callbacks.
 		 */
-		opWidth = freerdp_settings_get_uint32(context->settings, FreeRDP_DesktopWidth) - opX;
+		opWidth = WINPR_ASSERTING_INT_CAST(int, w) - opX;
 	}
 
-	if (bkX + bkWidth > (INT64)freerdp_settings_get_uint32(context->settings, FreeRDP_DesktopWidth))
+	if (bkX + bkWidth > (INT64)w)
 	{
 		/**
 		 * Some Microsoft servers send erroneous high values close to the
@@ -220,13 +222,13 @@ static BOOL update_process_glyph_fragments(rdpContext* context, const BYTE* data
 		 * a RDP session to Windows XP Professional SP3.
 		 * This workaround prevents resulting problems in the UI callbacks.
 		 */
-		bkWidth = freerdp_settings_get_uint32(context->settings, FreeRDP_DesktopWidth) - bkX;
+		bkWidth = WINPR_ASSERTING_INT_CAST(int, w) - bkX;
 	}
 
-	bound.x = bkX;
-	bound.y = bkY;
-	bound.width = bkWidth;
-	bound.height = bkHeight;
+	bound.x = WINPR_ASSERTING_INT_CAST(INT16, bkX);
+	bound.y = WINPR_ASSERTING_INT_CAST(INT16, bkY);
+	bound.width = WINPR_ASSERTING_INT_CAST(INT16, bkWidth);
+	bound.height = WINPR_ASSERTING_INT_CAST(INT16, bkHeight);
 
 	if (!glyph->BeginDraw(context, opX, opY, opWidth, opHeight, bgcolor, fgcolor, fOpRedundant))
 		return FALSE;
@@ -311,7 +313,8 @@ static BOOL update_gdi_glyph_index(rdpContext* context, GLYPH_INDEX_ORDER* glyph
 	    context, glyphIndex->data, glyphIndex->cbData, glyphIndex->cacheId, glyphIndex->ulCharInc,
 	    glyphIndex->flAccel, glyphIndex->backColor, glyphIndex->foreColor, glyphIndex->x,
 	    glyphIndex->y, glyphIndex->bkLeft, glyphIndex->bkTop, bkWidth, bkHeight, glyphIndex->opLeft,
-	    glyphIndex->opTop, opWidth, opHeight, glyphIndex->fOpRedundant);
+	    glyphIndex->opTop, opWidth, opHeight,
+	    WINPR_ASSERTING_INT_CAST(int32_t, glyphIndex->fOpRedundant));
 }
 
 static BOOL update_gdi_fast_index(rdpContext* context, const FAST_INDEX_ORDER* fastIndex)

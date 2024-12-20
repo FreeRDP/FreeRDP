@@ -23,6 +23,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/assert.h>
+#include <winpr/cast.h>
 #include <winpr/stream.h>
 
 #include <freerdp/log.h>
@@ -64,7 +65,12 @@ update_gdi_create_offscreen_bitmap(rdpContext* context,
 	if (!bitmap)
 		return FALSE;
 
-	Bitmap_SetDimensions(bitmap, createOffscreenBitmap->cx, createOffscreenBitmap->cy);
+	if (!Bitmap_SetDimensions(bitmap, WINPR_ASSERTING_INT_CAST(UINT16, createOffscreenBitmap->cx),
+	                          WINPR_ASSERTING_INT_CAST(UINT16, createOffscreenBitmap->cy)))
+	{
+		Bitmap_Free(context, bitmap);
+		return FALSE;
+	}
 
 	if (!bitmap->New(context, bitmap))
 	{

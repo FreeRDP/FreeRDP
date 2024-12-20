@@ -22,6 +22,7 @@
 #include "settings.h"
 
 #include <winpr/assert.h>
+#include <winpr/cast.h>
 
 #include "activation.h"
 #include "display.h"
@@ -39,7 +40,8 @@ static BOOL rdp_write_synchronize_pdu(wStream* s, const rdpSettings* settings)
 	if (!Stream_CheckAndLogRequiredCapacity(TAG, (s), 4))
 		return FALSE;
 	Stream_Write_UINT16(s, SYNCMSGTYPE_SYNC); /* messageType (2 bytes) */
-	Stream_Write_UINT16(s, PduSource);        /* targetUser (2 bytes) */
+	Stream_Write_UINT16(s,
+	                    WINPR_ASSERTING_INT_CAST(uint16_t, PduSource)); /* targetUser (2 bytes) */
 	return TRUE;
 }
 
@@ -331,13 +333,14 @@ error:
 
 BOOL rdp_send_client_persistent_key_list_pdu(rdpRdp* rdp)
 {
-	UINT32 keyMaxFrag = 2042;
+	UINT16 keyMaxFrag = 2042;
 	UINT64* keyList = NULL;
 	RDP_BITMAP_PERSISTENT_INFO info = { 0 };
+	WINPR_ASSERT(rdp);
 	rdpSettings* settings = rdp->settings;
-	UINT32 keyCount = rdp_load_persistent_key_list(rdp, &keyList);
+	UINT16 keyCount = rdp_load_persistent_key_list(rdp, &keyList);
 
-	WLog_DBG(TAG, "Persistent Key List: TotalKeyCount: %" PRIu32 " MaxKeyFrag: %" PRIu32, keyCount,
+	WLog_DBG(TAG, "Persistent Key List: TotalKeyCount: %" PRIu16 " MaxKeyFrag: %" PRIu16, keyCount,
 	         keyMaxFrag);
 
 	// MS-RDPBCGR recommends sending no more than 169 entries at once.

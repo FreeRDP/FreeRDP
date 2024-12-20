@@ -60,14 +60,20 @@ static BOOL memory_regions_overlap_2d(const BYTE* p1, int p1Step, int p1Size, co
 
 	if (p1m <= p2m)
 	{
-		ULONG_PTR p1mEnd = p1m + 1ull * (height - 1) * p1Step + 1ull * width * p1Size;
+		ULONG_PTR p1mEnd = p1m +
+		                   1ull * (WINPR_ASSERTING_INT_CAST(uint32_t, height - 1)) *
+		                       WINPR_ASSERTING_INT_CAST(uint32_t, p1Step) +
+		                   1ull * WINPR_ASSERTING_INT_CAST(uint32_t, width* p1Size);
 
 		if (p1mEnd > p2m)
 			return TRUE;
 	}
 	else
 	{
-		ULONG_PTR p2mEnd = p2m + 1ull * (height - 1) * p2Step + 1ull * width * p2Size;
+		ULONG_PTR p2mEnd = p2m +
+		                   1ull * (WINPR_ASSERTING_INT_CAST(uintptr_t, height - 1)) *
+		                       WINPR_ASSERTING_INT_CAST(uintptr_t, p2Step) +
+		                   1ull * WINPR_ASSERTING_INT_CAST(uintptr_t, width* p2Size);
 
 		if (p2mEnd > p1m)
 			return TRUE;
@@ -102,7 +108,7 @@ static pstatus_t general_copy_8u_AC4r(const BYTE* pSrc, INT32 srcStep, BYTE* pDs
 {
 	const BYTE* src = pSrc;
 	BYTE* dst = pDst;
-	int rowbytes = width * sizeof(UINT32);
+	const size_t rowbytes = WINPR_ASSERTING_INT_CAST(size_t, width) * sizeof(UINT32);
 
 	if ((width == 0) || (height == 0))
 		return PRIMITIVES_SUCCESS;
@@ -112,7 +118,7 @@ static pstatus_t general_copy_8u_AC4r(const BYTE* pSrc, INT32 srcStep, BYTE* pDs
 	{
 		do
 		{
-			generic->copy(src, dst, rowbytes);
+			generic->copy(src, dst, WINPR_ASSERTING_INT_CAST(int32_t, rowbytes));
 			src += srcStep;
 			dst += dstStep;
 		} while (--height);
@@ -267,7 +273,8 @@ pstatus_t generic_image_copy_no_overlap_memcpy(
 		    &pSrcData[srcVMultiplier * (y + nYSrc) * nSrcStep + srcVOffset];
 		BYTE* WINPR_RESTRICT dstLine =
 		    &pDstData[dstVMultiplier * (y + nYDst) * nDstStep + dstVOffset];
-		memcpy(&dstLine[xDstOffset], &srcLine[xSrcOffset], copyDstWidth);
+		memcpy(&dstLine[xDstOffset], &srcLine[xSrcOffset],
+		       WINPR_ASSERTING_INT_CAST(size_t, copyDstWidth));
 	}
 
 	return PRIMITIVES_SUCCESS;

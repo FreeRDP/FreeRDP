@@ -117,7 +117,7 @@ struct rdp_nla
 	rdpTransport* transport;
 	UINT32 version;
 	UINT32 peerVersion;
-	UINT32 errorCode;
+	INT32 errorCode;
 
 	/* Lifetime of buffer nla_new -> nla_free */
 	SecBuffer ClientNonce; /* Depending on protocol version a random nonce or a value read from the
@@ -1561,7 +1561,9 @@ static BOOL nla_encode_ts_credentials(rdpNla* nla)
 
 			/* keySpec [0] INTEGER */
 			if (!WinPrAsn1EncContextualInteger(
-			        enc, 0, freerdp_settings_get_uint32(settings, FreeRDP_KeySpec)))
+			        enc, 0,
+			        WINPR_ASSERTING_INT_CAST(
+			            WinPrAsn1_INTEGER, freerdp_settings_get_uint32(settings, FreeRDP_KeySpec))))
 				goto out;
 
 			for (size_t i = 0; i < ARRAYSIZE(cspData_fields); i++)
@@ -1770,7 +1772,8 @@ BOOL nla_send(rdpNla* nla)
 
 	/* version [0] INTEGER */
 	WLog_DBG(TAG, "   ----->> protocol version %" PRIu32, nla->version);
-	if (!WinPrAsn1EncContextualInteger(enc, 0, nla->version))
+	if (!WinPrAsn1EncContextualInteger(enc, 0,
+	                                   WINPR_ASSERTING_INT_CAST(WinPrAsn1_INTEGER, nla->version)))
 		goto fail;
 
 	/* negoTokens [1] SEQUENCE OF SEQUENCE */
@@ -1809,7 +1812,8 @@ BOOL nla_send(rdpNla* nla)
 	{
 		WLog_DBG(TAG, "   ----->> error code %s 0x%08" PRIx32, NtStatus2Tag(nla->errorCode),
 		         nla->errorCode);
-		if (!WinPrAsn1EncContextualInteger(enc, 4, nla->errorCode))
+		if (!WinPrAsn1EncContextualInteger(
+		        enc, 4, WINPR_ASSERTING_INT_CAST(WinPrAsn1_INTEGER, nla->errorCode)))
 			goto fail;
 	}
 
@@ -1932,7 +1936,7 @@ static int nla_decode_ts_request(rdpNla* nla, wStream* s)
 				/* errorCode [4] INTEGER */
 				if (WinPrAsn1DecReadInteger(&dec2, &val) == 0)
 					return -1;
-				nla->errorCode = (UINT)val;
+				nla->errorCode = val;
 				WLog_DBG(TAG, "   <<----- error code %s 0x%08" PRIx32, NtStatus2Tag(nla->errorCode),
 				         nla->errorCode);
 				break;
@@ -2200,10 +2204,10 @@ DWORD nla_get_error(rdpNla* nla)
 {
 	if (!nla)
 		return ERROR_INTERNAL_ERROR;
-	return nla->errorCode;
+	return (UINT32)nla->errorCode;
 }
 
-UINT32 nla_get_sspi_error(rdpNla* nla)
+INT32 nla_get_sspi_error(rdpNla* nla)
 {
 	WINPR_ASSERT(nla);
 	return credssp_auth_sspi_error(nla->auth);
