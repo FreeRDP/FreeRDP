@@ -105,7 +105,7 @@ typedef struct
 
 static void printer_cups_get_printjob_name(char* buf, size_t size, size_t id)
 {
-	struct tm tres;
+	struct tm tres = { 0 };
 	const time_t tt = time(NULL);
 	const struct tm* t = localtime_r(&tt, &tres);
 
