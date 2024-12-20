@@ -27,6 +27,7 @@
 #include <winpr/wtypes.h>
 #include <winpr/crt.h>
 #include <winpr/sam.h>
+#include <winpr/cast.h>
 #include <winpr/print.h>
 #include <winpr/file.h>
 
@@ -185,16 +186,13 @@ static void SamLookupFinish(WINPR_SAM* sam)
 
 static BOOL SamReadEntry(WINPR_SAM* sam, WINPR_SAM_ENTRY* entry)
 {
-	char* p[5];
-	size_t LmHashLength = 0;
-	size_t NtHashLength = 0;
+	char* p[5] = { 0 };
 	size_t count = 0;
-	char* cur = NULL;
 
 	if (!sam || !entry || !sam->line)
 		return FALSE;
 
-	cur = sam->line;
+	char* cur = sam->line;
 
 	while ((cur = strchr(cur, ':')) != NULL)
 	{
@@ -210,8 +208,8 @@ static BOOL SamReadEntry(WINPR_SAM* sam, WINPR_SAM_ENTRY* entry)
 	p[2] = strchr(p[1], ':') + 1;
 	p[3] = strchr(p[2], ':') + 1;
 	p[4] = strchr(p[3], ':') + 1;
-	LmHashLength = (p[3] - p[2] - 1);
-	NtHashLength = (p[4] - p[3] - 1);
+	const size_t LmHashLength = WINPR_ASSERTING_INT_CAST(size_t, (p[3] - p[2] - 1));
+	const size_t NtHashLength = WINPR_ASSERTING_INT_CAST(size_t, (p[4] - p[3] - 1));
 
 	if ((LmHashLength != 0) && (LmHashLength != 32))
 		return FALSE;

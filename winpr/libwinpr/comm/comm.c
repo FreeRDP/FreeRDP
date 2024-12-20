@@ -722,7 +722,7 @@ BOOL SetCommState(HANDLE hFile, LPDCB lpDCB)
 
 	if (lpDCB->fBinary)
 	{
-		upcomingTermios.c_lflag &= ~ICANON;
+		upcomingTermios.c_lflag &= WINPR_ASSERTING_INT_CAST(tcflag_t, ~ICANON);
 	}
 	else
 	{
@@ -736,7 +736,7 @@ BOOL SetCommState(HANDLE hFile, LPDCB lpDCB)
 	}
 	else
 	{
-		upcomingTermios.c_iflag &= ~INPCK;
+		upcomingTermios.c_iflag &= WINPR_ASSERTING_INT_CAST(tcflag_t, ~INPCK);
 	}
 
 	/* http://msdn.microsoft.com/en-us/library/windows/desktop/aa363423%28v=vs.85%29.aspx
@@ -1400,8 +1400,8 @@ HANDLE CommCreateFileA(LPCSTR lpDeviceName, DWORD dwDesiredAccess, DWORD dwShare
 		goto error_handle;
 	}
 
-	upcomingTermios.c_iflag &=
-	    ~(/*IGNBRK |*/ BRKINT | PARMRK | ISTRIP | INLCR | IGNCR | ICRNL /*| IXON*/);
+	upcomingTermios.c_iflag &= WINPR_ASSERTING_INT_CAST(
+	    tcflag_t, ~(/*IGNBRK |*/ BRKINT | PARMRK | ISTRIP | INLCR | IGNCR | ICRNL /*| IXON*/));
 	upcomingTermios.c_oflag = 0; /* <=> &= ~OPOST */
 	upcomingTermios.c_lflag = 0; /* <=> &= ~(ECHO | ECHONL | ICANON | ISIG | IEXTEN); */
 	/* upcomingTermios.c_cflag &= ~(CSIZE | PARENB); */
