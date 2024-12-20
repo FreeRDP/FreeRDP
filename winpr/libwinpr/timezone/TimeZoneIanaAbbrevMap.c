@@ -91,6 +91,7 @@ static void append_timezone(const char* dir, const char* name)
 	else
 		unsetenv("TZ");
 	free(tz);
+	tzset();
 }
 
 static void handle_link(const char* base, const char* dir, const char* name);
