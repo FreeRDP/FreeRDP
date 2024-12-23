@@ -18,7 +18,8 @@
 set(MODULE_NAME "freerdp-core")
 set(MODULE_PREFIX "FREERDP_CORE")
 
-check_include_files("ctype.h;linux/vm_sockets.h" HAVE_AF_VSOCK_H)
+# We use some fields that are only defined in linux 5.11+
+check_symbol_exists(VMADDR_FLAG_TO_HOST "ctype.h;sys/socket.h;linux/vm_sockets.h" HAVE_AF_VSOCK_H)
 
 freerdp_definition_add(EXT_PATH="${FREERDP_EXTENSION_PATH}")
 
