@@ -70,7 +70,7 @@ static BOOL freerdp_listener_open_from_vsock(freerdp_listener* instance, const c
 		char ebuffer[256] = { 0 };
 		WLog_ERR(TAG, "Error making socket nonblocking: %s",
 		         winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
-		closesocket((SOCKET)sockfd);
+		close(sockfd);
 		return FALSE;
 	}
 	struct sockaddr_vm addr = { 0 };
@@ -86,15 +86,16 @@ static BOOL freerdp_listener_open_from_vsock(freerdp_listener* instance, const c
 		char ebuffer[256] = { 0 };
 		WLog_ERR(TAG, "could not extract port from '%s', value=%ul, error=%s", bind_address, val,
 		         winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
+		close(sockfd);
 		return FALSE;
 	}
-	addr.svm_cid = val;
+	addr.svm_cid = WINPR_ASSERTING_INT_CAST(unsigned int, val);
 	if (bind(sockfd, (struct sockaddr*)&addr, sizeof(struct sockaddr_vm)) == -1)
 	{
 		char ebuffer[256] = { 0 };
 		WLog_ERR(TAG, "Error binding vsock at cid %d port %d: %s", addr.svm_cid, port,
 		         winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
-		closesocket((SOCKET)sockfd);
+		close(sockfd);
 		return FALSE;
 	}
 
@@ -103,7 +104,7 @@ static BOOL freerdp_listener_open_from_vsock(freerdp_listener* instance, const c
 		char ebuffer[256] = { 0 };
 		WLog_ERR(TAG, "Error listening to socket at cid %d port %d: %s", addr.svm_cid, port,
 		         winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
-		closesocket((SOCKET)sockfd);
+		close(sockfd);
 		return FALSE;
 	}
 	listener->sockfds[listener->num_sockfds] = sockfd;
@@ -114,7 +115,8 @@ static BOOL freerdp_listener_open_from_vsock(freerdp_listener* instance, const c
 		listener->num_sockfds = 0;
 	}
 
-	WSAEventSelect(sockfd, listener->events[listener->num_sockfds], FD_READ | FD_ACCEPT | FD_CLOSE);
+	WSAEventSelect((SOCKET)sockfd, listener->events[listener->num_sockfds],
+	               FD_READ | FD_ACCEPT | FD_CLOSE);
 	listener->num_sockfds++;
 
 	WLog_INFO(TAG, "Listening on %s:%d", bind_address, port);
