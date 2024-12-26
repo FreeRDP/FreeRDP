@@ -47,6 +47,7 @@
 #include <errno.h>
 
 #include <winpr/crt.h>
+#include <winpr/assert.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
 #include <winpr/stream.h>
@@ -96,6 +97,8 @@ typedef struct
  */
 static int connect_to_sshagent(const char* udspath)
 {
+	WINPR_ASSERT(udspath);
+
 	int agent_fd = socket(AF_UNIX, SOCK_STREAM, 0);
 
 	if (agent_fd == -1)
@@ -131,6 +134,8 @@ static int connect_to_sshagent(const char* udspath)
 static DWORD WINAPI sshagent_read_thread(LPVOID data)
 {
 	SSHAGENT_CHANNEL_CALLBACK* callback = (SSHAGENT_CHANNEL_CALLBACK*)data;
+	WINPR_ASSERT(callback);
+
 	BYTE buffer[4096] = { 0 };
 	int going = 1;
 	UINT status = CHANNEL_RC_OK;
@@ -188,6 +193,8 @@ static DWORD WINAPI sshagent_read_thread(LPVOID data)
 static UINT sshagent_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, wStream* data)
 {
 	SSHAGENT_CHANNEL_CALLBACK* callback = (SSHAGENT_CHANNEL_CALLBACK*)pChannelCallback;
+	WINPR_ASSERT(callback);
+
 	BYTE* pBuffer = Stream_Pointer(data);
 	size_t cbSize = Stream_GetRemainingLength(data);
 	BYTE* pos = pBuffer;
@@ -209,7 +216,7 @@ static UINT sshagent_on_data_received(IWTSVirtualChannelCallback* pChannelCallba
 		}
 		else
 		{
-			bytes_to_write -= bytes_written;
+			bytes_to_write -= WINPR_ASSERTING_INT_CAST(size_t, bytes_written);
 			pos += bytes_written;
 		}
 	}
@@ -227,6 +234,8 @@ static UINT sshagent_on_data_received(IWTSVirtualChannelCallback* pChannelCallba
 static UINT sshagent_on_close(IWTSVirtualChannelCallback* pChannelCallback)
 {
 	SSHAGENT_CHANNEL_CALLBACK* callback = (SSHAGENT_CHANNEL_CALLBACK*)pChannelCallback;
+	WINPR_ASSERT(callback);
+
 	/* Call shutdown() to wake up the read() in sshagent_read_thread(). */
 	shutdown(callback->agent_fd, SHUT_RDWR);
 	EnterCriticalSection(&callback->lock);
@@ -256,6 +265,9 @@ static UINT sshagent_on_new_channel_connection(IWTSListenerCallback* pListenerCa
                                                IWTSVirtualChannelCallback** ppCallback)
 {
 	SSHAGENT_LISTENER_CALLBACK* listener_callback = (SSHAGENT_LISTENER_CALLBACK*)pListenerCallback;
+	WINPR_UNUSED(Data);
+	WINPR_UNUSED(pbAccept);
+
 	SSHAGENT_CHANNEL_CALLBACK* callback =
 	    (SSHAGENT_CHANNEL_CALLBACK*)calloc(1, sizeof(SSHAGENT_CHANNEL_CALLBACK));
 
@@ -306,6 +318,9 @@ static UINT sshagent_on_new_channel_connection(IWTSListenerCallback* pListenerCa
 static UINT sshagent_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelManager* pChannelMgr)
 {
 	SSHAGENT_PLUGIN* sshagent = (SSHAGENT_PLUGIN*)pPlugin;
+	WINPR_ASSERT(sshagent);
+	WINPR_ASSERT(pChannelMgr);
+
 	sshagent->listener_callback =
 	    (SSHAGENT_LISTENER_CALLBACK*)calloc(1, sizeof(SSHAGENT_LISTENER_CALLBACK));
 
@@ -353,6 +368,9 @@ static UINT sshagent_plugin_terminated(IWTSPlugin* pPlugin)
 FREERDP_ENTRY_POINT(UINT VCAPITYPE sshagent_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints))
 {
 	UINT status = CHANNEL_RC_OK;
+
+	WINPR_ASSERT(pEntryPoints);
+
 	SSHAGENT_PLUGIN* sshagent = (SSHAGENT_PLUGIN*)pEntryPoints->GetPlugin(pEntryPoints, "sshagent");
 
 	if (!sshagent)
@@ -375,5 +393,3 @@ FREERDP_ENTRY_POINT(UINT VCAPITYPE sshagent_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS
 
 	return status;
 }
-
-/* vim: set sw=8:ts=8:noet: */
