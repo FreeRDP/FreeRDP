@@ -1,7 +1,8 @@
 # FreeRDP: A Remote Desktop Protocol Implementation
 # FreeRDP cmake build script
 #
-# Copyright 2020 Microsoft
+# Copyright 2024 Armin Novak <armin.novak@thincast.com>
+# Copyright 2024 Thincast Technologies GmbH
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,10 +16,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-define_channel_server("gfxredir")
+set(SRCS gfxredir_common.h gfxredir_common.c)
 
-set(${MODULE_PREFIX}_SRCS gfxredir_main.c gfxredir_main.h)
+# Library currently header only
+add_library(gfxredir-common STATIC ${SRCS})
 
-set(${MODULE_PREFIX}_LIBS freerdp gfxredir-common)
-
-add_channel_server_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} FALSE "DVCPluginEntry")
+channel_install(gfxredir-common ${FREERDP_ADDIN_PATH} "FreeRDPTargets")

@@ -20,6 +20,7 @@
 #include <freerdp/config.h>
 
 #include <winpr/crt.h>
+#include <winpr/assert.h>
 #include <winpr/stream.h>
 #include <freerdp/channels/log.h>
 
@@ -34,6 +35,7 @@
  */
 UINT gfxredir_read_header(wStream* s, GFXREDIR_HEADER* header)
 {
+	WINPR_ASSERT(header);
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
 		return ERROR_INVALID_DATA;
 
@@ -49,6 +51,7 @@ UINT gfxredir_read_header(wStream* s, GFXREDIR_HEADER* header)
  */
 UINT gfxredir_write_header(wStream* s, const GFXREDIR_HEADER* header)
 {
+	WINPR_ASSERT(header);
 	Stream_Write_UINT32(s, header->cmdId);
 	Stream_Write_UINT32(s, header->length);
 	return CHANNEL_RC_OK;
