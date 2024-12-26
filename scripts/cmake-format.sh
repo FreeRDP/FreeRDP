@@ -30,11 +30,12 @@ then
 	fi
 fi
 
-if [[ -z REST_ARGS ]];
+if [ ! -n "$REST_ARGS" ];
 then
 	CMAKE_FILES=$(find ${SRC_PATH} -name "*.cmake" -o -name "CMakeLists.txt")
 	CMAKE_CI_FILES=$(find ${SRC_PATH}/ci -name "*.txt")
 fi
+
 for FILE in $CMAKE_FILES $CMAKE_CI_FILES $REST_ARGS;
 do
 	echo "processing file $FILE..."
