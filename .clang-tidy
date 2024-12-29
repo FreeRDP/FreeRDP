@@ -60,11 +60,13 @@ Checks: >
     -llvm-else-after-return,
     -readability-else-after-return,
     -readability-avoid-nested-conditional-operator,
+    -modernize-use-using,
     -modernize-use-trailing-return-type,
     -modernize-return-braced-init-list,
     -modernize-macro-to-enum,
     -modernize-pass-by-value,
     -modernize-avoid-c-arrays,
+    -readability-use-anyofallof,
     -readability-braces-around-statements,
     -readability-convert-member-functions-to-static,
     -readability-function-cognitive-complexity,
@@ -78,6 +80,7 @@ Checks: >
     -readability-string-compare,
     -readability-uppercase-literal-suffix,
     -performance-no-int-to-ptr,
+    -performance-enum-size,
     -performance-avoid-endl
 WarningsAsErrors: ''
 HeaderFilterRegex: ''

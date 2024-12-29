@@ -539,7 +539,7 @@ static UINT handle_hotplug(rdpdrPlugin* rdpdr)
 	{
 		if (pDirent->d_name[0] != '.')
 		{
-			sprintf_s(fullpath, ARRAYSIZE(fullpath), "%s/%s", szdir, pDirent->d_name);
+			(void)sprintf_s(fullpath, ARRAYSIZE(fullpath), "%s/%s", szdir, pDirent->d_name);
 			if (stat(fullpath, &buf) != 0)
 				continue;
 

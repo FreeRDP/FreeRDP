@@ -1,4 +1,6 @@
 
+#include <winpr/cast.h>
+
 #include <freerdp/freerdp.h>
 #include <freerdp/client/rail.h>
 
@@ -68,8 +70,12 @@ UINT client_rail_server_start_cmd(RailClientContext* context)
 	sysparam.params |= SPI_MASK_SET_WORK_AREA;
 	sysparam.workArea.left = 0;
 	sysparam.workArea.top = 0;
-	sysparam.workArea.right = freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth);
-	sysparam.workArea.bottom = freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight);
+
+	const UINT32 w = freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth);
+	const UINT32 h = freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight);
+
+	sysparam.workArea.right = WINPR_ASSERTING_INT_CAST(UINT16, w);
+	sysparam.workArea.bottom = WINPR_ASSERTING_INT_CAST(UINT16, h);
 	sysparam.dragFullWindows = FALSE;
 	status = context->ClientSystemParam(context, &sysparam);
 

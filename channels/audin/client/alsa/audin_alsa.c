@@ -187,7 +187,8 @@ static DWORD WINAPI audin_alsa_thread_func(LPVOID arg)
 			break;
 		}
 
-		error = alsa->receive(&alsa->aformat, buffer, (long)framesRead * alsa->bytes_per_frame,
+		error = alsa->receive(&alsa->aformat, buffer,
+		                      WINPR_ASSERTING_INT_CAST(size_t, framesRead) * alsa->bytes_per_frame,
 		                      alsa->user_data);
 
 		if (error)

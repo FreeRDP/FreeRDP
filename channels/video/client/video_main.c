@@ -25,6 +25,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/assert.h>
+#include <winpr/cast.h>
 #include <winpr/synch.h>
 #include <winpr/print.h>
 #include <winpr/stream.h>
@@ -410,8 +411,10 @@ static BOOL video_onMappedGeometryUpdate(MAPPED_GEOMETRY* geometry)
 
 	         r->x, r->y, r->width, r->height);
 
-	presentation->surface->x = geometry->topLevelLeft + geometry->left;
-	presentation->surface->y = geometry->topLevelTop + geometry->top;
+	presentation->surface->x =
+	    WINPR_ASSERTING_INT_CAST(uint32_t, geometry->topLevelLeft + geometry->left);
+	presentation->surface->y =
+	    WINPR_ASSERTING_INT_CAST(uint32_t, geometry->topLevelTop + geometry->top);
 
 	return TRUE;
 }
@@ -480,8 +483,10 @@ static UINT video_PresentationRequest(VideoClientContext* video,
 
 		WLog_DBG(TAG, "creating presentation 0x%x", req->PresentationId);
 		priv->currentPresentation = PresentationContext_new(
-		    video, req->PresentationId, geom->topLevelLeft + geom->left,
-		    geom->topLevelTop + geom->top, req->SourceWidth, req->SourceHeight);
+		    video, req->PresentationId,
+		    WINPR_ASSERTING_INT_CAST(uint32_t, geom->topLevelLeft + geom->left),
+		    WINPR_ASSERTING_INT_CAST(uint32_t, geom->topLevelTop + geom->top), req->SourceWidth,
+		    req->SourceHeight);
 		if (!priv->currentPresentation)
 		{
 			WLog_ERR(TAG, "unable to create presentation video");
@@ -845,7 +850,8 @@ static UINT video_VideoData(VideoClientContext* context, const TSMM_VIDEO_DATA* 
 		UINT64 timeAfterH264 = 0;
 		MAPPED_GEOMETRY* geom = presentation->geometry;
 
-		const RECTANGLE_16 rect = { 0, 0, surface->alignedWidth, surface->alignedHeight };
+		const RECTANGLE_16 rect = { 0, 0, WINPR_ASSERTING_INT_CAST(UINT16, surface->alignedWidth),
+			                        WINPR_ASSERTING_INT_CAST(UINT16, surface->alignedHeight) };
 		Stream_SealLength(presentation->currentSample);
 		Stream_SetPosition(presentation->currentSample, 0);
 

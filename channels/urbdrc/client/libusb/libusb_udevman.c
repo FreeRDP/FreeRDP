@@ -624,7 +624,7 @@ static BOOL udevman_initialize(IUDEVMAN* idevman, UINT32 channelId)
 	if (!udevman)
 		return FALSE;
 
-	idevman->status &= ~URBDRC_DEVICE_CHANNEL_CLOSED;
+	idevman->status &= (uint32_t)~URBDRC_DEVICE_CHANNEL_CLOSED;
 	idevman->controlChannelId = channelId;
 	return TRUE;
 }
@@ -787,18 +787,20 @@ static UINT urbdrc_udevman_parse_addin_args(UDEVMAN* udevman, const ADDIN_ARGV* 
 
 static UINT udevman_listener_created_callback(IUDEVMAN* iudevman)
 {
-	UINT status = 0;
 	UDEVMAN* udevman = (UDEVMAN*)iudevman;
+	WINPR_ASSERT(udevman);
 
 	if (udevman->devices_vid_pid)
 	{
-		status = urbdrc_udevman_register_devices(udevman, udevman->devices_vid_pid, FALSE);
-		if (status != CHANNEL_RC_OK)
-			return status;
+		if (!urbdrc_udevman_register_devices(udevman, udevman->devices_vid_pid, FALSE))
+			return ERROR_INTERNAL_ERROR;
 	}
 
 	if (udevman->devices_addr)
-		return urbdrc_udevman_register_devices(udevman, udevman->devices_addr, TRUE);
+	{
+		if (!urbdrc_udevman_register_devices(udevman, udevman->devices_addr, TRUE))
+			return ERROR_INTERNAL_ERROR;
+	}
 
 	return CHANNEL_RC_OK;
 }
@@ -898,7 +900,6 @@ FREERDP_ENTRY_POINT(UINT VCAPITYPE libusb_freerdp_urbdrc_client_subsystem_entry(
     PFREERDP_URBDRC_SERVICE_ENTRY_POINTS pEntryPoints))
 {
 	wObject* obj = NULL;
-	UINT rc = 0;
 	UINT status = 0;
 	UDEVMAN* udevman = NULL;
 	const ADDIN_ARGV* args = pEntryPoints->args;
@@ -916,9 +917,9 @@ FREERDP_ENTRY_POINT(UINT VCAPITYPE libusb_freerdp_urbdrc_client_subsystem_entry(
 
 	udevman->next_device_id = BASE_USBDEVICE_NUM;
 	udevman->iface.plugin = pEntryPoints->plugin;
-	rc = libusb_init(&udevman->context);
+	const int res = libusb_init(&udevman->context);
 
-	if (rc != LIBUSB_SUCCESS)
+	if (res != LIBUSB_SUCCESS)
 		goto fail;
 
 #ifdef _WIN32

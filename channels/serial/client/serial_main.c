@@ -69,7 +69,7 @@ typedef struct
 } IRP_THREAD_DATA;
 
 static void close_terminated_irp_thread_handles(SERIAL_DEVICE* serial, BOOL forceClose);
-static UINT32 GetLastErrorToIoStatus(SERIAL_DEVICE* serial)
+static INT32 GetLastErrorToIoStatus(SERIAL_DEVICE* serial)
 {
 	/* http://msdn.microsoft.com/en-us/library/ff547466%28v=vs.85%29.aspx#generic_status_values_for_serial_device_control_requests
 	 */
@@ -899,7 +899,7 @@ FREERDP_ENTRY_POINT(
 		}
 
 		for (size_t i = 0; i <= len; i++)
-			Stream_Write_UINT8(serial->device.data, name[i] < 0 ? '_' : name[i]);
+			Stream_Write_INT8(serial->device.data, name[i] < 0 ? '_' : name[i]);
 
 		if (driver != NULL)
 		{

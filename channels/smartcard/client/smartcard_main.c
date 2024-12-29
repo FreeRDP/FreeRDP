@@ -155,7 +155,7 @@ static DWORD WINAPI smartcard_context_thread(LPVOID arg)
 	if (status && smartcard->rdpcontext)
 		setChannelError(smartcard->rdpcontext, error, "smartcard_context_thread reported an error");
 
-	ExitThread(status);
+	ExitThread((uint32_t)status);
 	return error;
 }
 
@@ -387,7 +387,7 @@ static UINT smartcard_process_irp(SMARTCARD_DEVICE* smartcard, IRP* irp, BOOL* h
 			UINT error = 0;
 
 			smartcard_operation_free(&element->operation, TRUE);
-			irp->IoStatus = (UINT32)STATUS_UNSUCCESSFUL;
+			irp->IoStatus = STATUS_UNSUCCESSFUL;
 
 			if ((error = smartcard_complete_irp(smartcard, irp, handled)))
 			{
@@ -505,7 +505,7 @@ static UINT smartcard_process_irp(SMARTCARD_DEVICE* smartcard, IRP* irp, BOOL* h
 		UINT ustatus = 0;
 		WLog_ERR(TAG, "Unexpected SmartCard IRP: MajorFunction %s, MinorFunction: 0x%08" PRIX32 "",
 		         rdpdr_irp_string(irp->MajorFunction), irp->MinorFunction);
-		irp->IoStatus = (UINT32)STATUS_NOT_SUPPORTED;
+		irp->IoStatus = STATUS_NOT_SUPPORTED;
 
 		if ((ustatus = smartcard_complete_irp(smartcard, irp, handled)))
 		{
