@@ -802,7 +802,6 @@ BOOL freerdp_context_new_ex(freerdp* instance, rdpSettings* settings)
 	if (!rdp)
 		goto fail;
 
-	rdp_log_build_warnings(rdp);
 	context->rdp = rdp;
 	context->pubSub = rdp->pubSub;
 

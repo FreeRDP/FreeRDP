@@ -319,6 +319,7 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 		flags |= WINPR_SSL_INIT_ENABLE_FIPS;
 
 	winpr_InitializeSSL(flags);
+	rdp_log_build_warnings(rdp);
 
 	/* FIPS Mode forces the following and overrides the following(by happening later */
 	/* in the command line processing): */
