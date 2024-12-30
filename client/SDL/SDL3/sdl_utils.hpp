@@ -105,8 +105,8 @@ bool sdl_push_quit();
 
 std::string sdl_window_event_str(Uint32 ev);
 const char* sdl_event_type_str(Uint32 type);
-const char* sdl_error_string(Uint32 res);
+const char* sdl_error_string(Sint32 res);
 
 #define sdl_log_error(res, log, what) sdl_log_error_ex(res, log, what, __FILE__, __LINE__, __func__)
-BOOL sdl_log_error_ex(Uint32 res, wLog* log, const char* what, const char* file, size_t line,
+BOOL sdl_log_error_ex(Sint32 res, wLog* log, const char* what, const char* file, size_t line,
                       const char* fkt);

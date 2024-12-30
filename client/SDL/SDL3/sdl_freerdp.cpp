@@ -230,7 +230,7 @@ static void sdl_hide_connection_dialog(SdlContext* sdl)
 		sdl->connection_dialog->hide();
 }
 
-static const struct sdl_exit_code_map_t* sdl_map_entry_by_error(DWORD error)
+static const struct sdl_exit_code_map_t* sdl_map_entry_by_error(UINT32 error)
 {
 	for (const auto& x : sdl_exit_code_map)
 	{
@@ -250,7 +250,7 @@ static int sdl_map_error_to_exit_code(DWORD error)
 	return SDL_EXIT_CONN_FAILED;
 }
 
-static const char* sdl_map_error_to_code_tag(DWORD error)
+static const char* sdl_map_error_to_code_tag(INT32 error)
 {
 	const struct sdl_exit_code_map_t* entry = sdl_map_entry_by_error(error);
 	if (entry)
@@ -666,9 +666,9 @@ static const char* sdl_window_get_title(rdpSettings* settings)
 	char buffer[MAX_PATH + 64] = {};
 
 	if (!addPort)
-		sprintf_s(buffer, sizeof(buffer), "%s %s", prefix, name);
+		(void)sprintf_s(buffer, sizeof(buffer), "%s %s", prefix, name);
 	else
-		sprintf_s(buffer, sizeof(buffer), "%s %s:%" PRIu32, prefix, name, port);
+		(void)sprintf_s(buffer, sizeof(buffer), "%s %s:%" PRIu32, prefix, name, port);
 
 	if (!freerdp_settings_set_string(settings, FreeRDP_WindowTitle, buffer))
 		return nullptr;
@@ -714,8 +714,8 @@ static BOOL sdl_create_windows(SdlContext* sdl)
 		auto monitor = static_cast<rdpMonitor*>(
 		    freerdp_settings_get_pointer_array_writable(settings, FreeRDP_MonitorDefArray, x));
 
-		Uint32 w = monitor->width;
-		Uint32 h = monitor->height;
+		auto w = WINPR_ASSERTING_INT_CAST(Uint32, monitor->width);
+		auto h = WINPR_ASSERTING_INT_CAST(Uint32, monitor->height);
 		if (!(freerdp_settings_get_bool(settings, FreeRDP_UseMultimon) ||
 		      freerdp_settings_get_bool(settings, FreeRDP_Fullscreen)))
 		{
@@ -1370,7 +1370,7 @@ static int sdl_client_thread_run(SdlContext* sdl, std::string& error_msg)
 
 	freerdp_disconnect(instance);
 
-	return 0;
+	return exit_code;
 }
 
 /* RDP main loop.
@@ -1405,10 +1405,7 @@ static BOOL sdl_client_global_init()
 	}
 #endif
 
-	if (freerdp_handle_signals() != 0)
-		return FALSE;
-
-	return TRUE;
+	return (freerdp_handle_signals() == 0);
 }
 
 /* Optional global tear down */
@@ -1706,9 +1703,7 @@ BOOL SdlContext::update_fullscreen(BOOL enter)
 BOOL SdlContext::update_minimize()
 {
 	std::lock_guard<CriticalSection> lock(critical);
-	if (!sdl_push_user_event(SDL_EVENT_USER_WINDOW_MINIMIZE))
-		return FALSE;
-	return TRUE;
+	return sdl_push_user_event(SDL_EVENT_USER_WINDOW_MINIMIZE);
 }
 
 BOOL SdlContext::update_resizeable(BOOL enable)

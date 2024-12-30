@@ -369,7 +369,7 @@ static SSIZE_T forced_newline_at(const char* text, size_t len, size_t limit,
 		const char* tok = strchr(text, d);
 		if (tok)
 		{
-			const size_t offset = tok - text;
+			const size_t offset = WINPR_ASSERTING_INT_CAST(size_t, tok - text);
 			if ((offset > len) || (offset > limit))
 				continue;
 			return (SSIZE_T)(offset);
@@ -461,8 +461,9 @@ static size_t print_description(const char* text, size_t start_offset, size_t cu
 	const int rc = printf("\n");
 	if (rc >= 0)
 	{
-		WINPR_ASSERT(SIZE_MAX - rc > current);
-		current += (size_t)rc;
+		const size_t src = WINPR_ASSERTING_INT_CAST(size_t, rc);
+		WINPR_ASSERT(SIZE_MAX - src > current);
+		current += src;
 	}
 	return current;
 }
@@ -497,7 +498,7 @@ static void freerdp_client_print_command_line_args(COMMAND_LINE_ARGUMENT_A* parg
 
 		if (arg->Flags & (COMMAND_LINE_VALUE_BOOL | COMMAND_LINE_VALUE_FLAG))
 		{
-			if ((arg->Flags & ~COMMAND_LINE_VALUE_BOOL) == 0)
+			if ((arg->Flags & (uint32_t)~COMMAND_LINE_VALUE_BOOL) == 0)
 				rc = printf("    %s%s", arg->Default ? "-" : "+", arg->Name);
 			else if ((arg->Flags & COMMAND_LINE_VALUE_OPTIONAL) != 0)
 				rc = printf("    [%s|/]%s", arg->Default ? "-" : "+", arg->Name);
@@ -3104,7 +3105,7 @@ static int parse_clipboard_options(rdpSettings* settings, const COMMAND_LINE_ARG
 			{
 				const UINT32 mask =
 				    freerdp_settings_get_uint32(settings, FreeRDP_ClipboardFeatureMask) &
-				    ~(CLIPRDR_FLAG_LOCAL_TO_REMOTE | CLIPRDR_FLAG_REMOTE_TO_LOCAL);
+				    (uint32_t)~(CLIPRDR_FLAG_LOCAL_TO_REMOTE | CLIPRDR_FLAG_REMOTE_TO_LOCAL);
 				const PARSE_CLIP_DIR_RESULT bval = parse_clip_direciton_to_option(cur);
 				UINT32 bflags = 0;
 				switch (bval)
@@ -3134,7 +3135,8 @@ static int parse_clipboard_options(rdpSettings* settings, const COMMAND_LINE_ARG
 			{
 				const UINT32 mask =
 				    freerdp_settings_get_uint32(settings, FreeRDP_ClipboardFeatureMask) &
-				    ~(CLIPRDR_FLAG_LOCAL_TO_REMOTE_FILES | CLIPRDR_FLAG_REMOTE_TO_LOCAL_FILES);
+				    (uint32_t)~(CLIPRDR_FLAG_LOCAL_TO_REMOTE_FILES |
+				                CLIPRDR_FLAG_REMOTE_TO_LOCAL_FILES);
 				const PARSE_CLIP_DIR_RESULT bval = parse_clip_direciton_to_option(cur);
 				UINT32 bflags = 0;
 				switch (bval)
