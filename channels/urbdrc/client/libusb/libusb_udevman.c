@@ -925,7 +925,7 @@ FREERDP_ENTRY_POINT(UINT VCAPITYPE libusb_freerdp_urbdrc_client_subsystem_entry(
 #ifdef _WIN32
 #if LIBUSB_API_VERSION >= 0x01000106
 	/* Prefer usbDK backend on windows. Not supported on other platforms. */
-	rc = libusb_set_option(udevman->context, LIBUSB_OPTION_USE_USBDK);
+	const int rc = libusb_set_option(udevman->context, LIBUSB_OPTION_USE_USBDK);
 	switch (rc)
 	{
 		case LIBUSB_SUCCESS:
