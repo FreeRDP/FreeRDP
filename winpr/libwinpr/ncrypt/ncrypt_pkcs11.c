@@ -486,10 +486,12 @@ static SECURITY_STATUS collect_keys(NCryptP11ProviderHandle* provider, P11EnumKe
 static BOOL convertKeyType(CK_KEY_TYPE k, LPWSTR dest, DWORD len, DWORD* outlen)
 {
 	const WCHAR* r = NULL;
+	size_t retLen = 0;
 
-#define ALGO_CASE(V, S) \
-	case V:             \
-		r = S;          \
+#define ALGO_CASE(V, S)                         \
+	case V:                                     \
+		r = S;                                  \
+		retLen = _wcsnlen((S), ARRAYSIZE((S))); \
 		break
 	switch (k)
 	{
@@ -522,7 +524,6 @@ static BOOL convertKeyType(CK_KEY_TYPE k, LPWSTR dest, DWORD len, DWORD* outlen)
 	}
 #undef ALGO_CASE
 
-	size_t retLen = _wcslen(r);
 	if (retLen > UINT32_MAX)
 		return FALSE;
 
@@ -537,7 +538,7 @@ static BOOL convertKeyType(CK_KEY_TYPE k, LPWSTR dest, DWORD len, DWORD* outlen)
 	}
 	else
 	{
-		if (retLen + 1 < len)
+		if (retLen + 1 > len)
 		{
 			WLog_ERR(TAG, "target buffer is too small for algo name");
 			return FALSE;
