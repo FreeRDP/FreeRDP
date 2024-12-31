@@ -34,6 +34,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/assert.h>
+#include <winpr/cast.h>
 #include <winpr/path.h>
 #include <winpr/synch.h>
 #include <winpr/image.h>
@@ -558,8 +559,8 @@ static int x11_shadow_query_cursor(x11ShadowSubsystem* subsystem, BOOL getImage)
 
 	if ((x != (INT64)subsystem->common.pointerX) || (y != (INT64)subsystem->common.pointerY))
 	{
-		subsystem->common.pointerX = x;
-		subsystem->common.pointerY = y;
+		subsystem->common.pointerX = WINPR_ASSERTING_INT_CAST(UINT32, x);
+		subsystem->common.pointerY = WINPR_ASSERTING_INT_CAST(UINT32, y);
 		x11_shadow_pointer_position_update(subsystem);
 	}
 
@@ -594,10 +595,10 @@ static void x11_shadow_validate_region(x11ShadowSubsystem* subsystem, int x, int
 	if (!subsystem->use_xfixes || !subsystem->use_xdamage)
 		return;
 
-	region.x = x;
-	region.y = y;
-	region.width = width;
-	region.height = height;
+	region.x = WINPR_ASSERTING_INT_CAST(INT16, x);
+	region.y = WINPR_ASSERTING_INT_CAST(INT16, y);
+	region.width = WINPR_ASSERTING_INT_CAST(UINT16, width);
+	region.height = WINPR_ASSERTING_INT_CAST(UINT16, height);
 #if defined(WITH_XFIXES) && defined(WITH_XDAMAGE)
 	XLockDisplay(subsystem->display);
 	XFixesSetRegion(subsystem->display, subsystem->xdamage_region, &region, 1);
@@ -679,7 +680,8 @@ static int x11_shadow_blend_cursor(x11ShadowSubsystem* subsystem)
 	for (size_t y = 0; y < nHeight; y++)
 	{
 		const BYTE* pSrcPixel = &pSrcData[((nYSrc + y) * nSrcStep) + (4ULL * nXSrc)];
-		BYTE* pDstPixel = &pDstData[((nYDst + y) * nDstStep) + (4ULL * nXDst)];
+		BYTE* pDstPixel = &pDstData[((WINPR_ASSERTING_INT_CAST(uint32_t, nYDst) + y) * nDstStep) +
+		                            (4ULL * WINPR_ASSERTING_INT_CAST(uint32_t, nXDst))];
 
 		for (size_t x = 0; x < nWidth; x++)
 		{
@@ -783,8 +785,9 @@ static int x11_shadow_screen_grab(x11ShadowSubsystem* subsystem)
 	EnterCriticalSection(&surface->lock);
 	surfaceRect.left = 0;
 	surfaceRect.top = 0;
-	surfaceRect.right = surface->width;
-	surfaceRect.bottom = surface->height;
+
+	surfaceRect.right = WINPR_ASSERTING_INT_CAST(UINT16, surface->width);
+	surfaceRect.bottom = WINPR_ASSERTING_INT_CAST(UINT16, surface->height);
 	LeaveCriticalSection(&surface->lock);
 
 	XLockDisplay(subsystem->display);
@@ -803,8 +806,8 @@ static int x11_shadow_screen_grab(x11ShadowSubsystem* subsystem)
 		EnterCriticalSection(&surface->lock);
 		status = shadow_capture_compare_with_format(
 		    surface->data, surface->format, surface->scanline, surface->width, surface->height,
-		    (BYTE*)&(image->data[surface->width * 4ull]), subsystem->format, image->bytes_per_line,
-		    &invalidRect);
+		    (BYTE*)&(image->data[surface->width * 4ull]), subsystem->format,
+		    WINPR_ASSERTING_INT_CAST(UINT32, image->bytes_per_line), &invalidRect);
 		LeaveCriticalSection(&surface->lock);
 	}
 	else
@@ -818,7 +821,8 @@ static int x11_shadow_screen_grab(x11ShadowSubsystem* subsystem)
 		{
 			status = shadow_capture_compare_with_format(
 			    surface->data, surface->format, surface->scanline, surface->width, surface->height,
-			    (BYTE*)image->data, subsystem->format, image->bytes_per_line, &invalidRect);
+			    (BYTE*)image->data, subsystem->format,
+			    WINPR_ASSERTING_INT_CAST(UINT32, image->bytes_per_line), &invalidRect);
 		}
 		LeaveCriticalSection(&surface->lock);
 		if (!image)
@@ -859,9 +863,13 @@ static int x11_shadow_screen_grab(x11ShadowSubsystem* subsystem)
 			WINPR_ASSERT(width >= 0);
 			WINPR_ASSERT(height >= 0);
 			success = freerdp_image_copy_no_overlap(
-			    surface->data, surface->format, surface->scanline, x, y, (UINT32)width,
-			    (UINT32)height, (BYTE*)image->data, subsystem->format,
-			    (UINT32)image->bytes_per_line, x, y, NULL, FREERDP_FLIP_NONE);
+			    surface->data, surface->format, surface->scanline,
+			    WINPR_ASSERTING_INT_CAST(uint32_t, x), WINPR_ASSERTING_INT_CAST(uint32_t, y),
+			    WINPR_ASSERTING_INT_CAST(uint32_t, width),
+			    WINPR_ASSERTING_INT_CAST(uint32_t, height), (BYTE*)image->data, subsystem->format,
+			    WINPR_ASSERTING_INT_CAST(uint32_t, image->bytes_per_line),
+			    WINPR_ASSERTING_INT_CAST(UINT32, x), WINPR_ASSERTING_INT_CAST(UINT32, y), NULL,
+			    FREERDP_FLIP_NONE);
 			LeaveCriticalSection(&surface->lock);
 			if (!success)
 				goto fail_capture;
@@ -1006,9 +1014,9 @@ static int x11_shadow_subsystem_base_init(x11ShadowSubsystem* subsystem)
 	subsystem->xfds = ConnectionNumber(subsystem->display);
 	subsystem->number = DefaultScreen(subsystem->display);
 	subsystem->screen = ScreenOfDisplay(subsystem->display, subsystem->number);
-	subsystem->depth = DefaultDepthOfScreen(subsystem->screen);
-	subsystem->width = WidthOfScreen(subsystem->screen);
-	subsystem->height = HeightOfScreen(subsystem->screen);
+	subsystem->depth = WINPR_ASSERTING_INT_CAST(UINT32, DefaultDepthOfScreen(subsystem->screen));
+	subsystem->width = WINPR_ASSERTING_INT_CAST(UINT32, WidthOfScreen(subsystem->screen));
+	subsystem->height = WINPR_ASSERTING_INT_CAST(UINT32, HeightOfScreen(subsystem->screen));
 	subsystem->root_window = RootWindow(subsystem->display, subsystem->number);
 	return 1;
 }
@@ -1134,9 +1142,11 @@ static int x11_shadow_xshm_init(x11ShadowSubsystem* subsystem)
 		return -1;
 	}
 
-	subsystem->fb_shm_info.shmid = shmget(
-	    IPC_PRIVATE, 1ull * subsystem->fb_image->bytes_per_line * subsystem->fb_image->height,
-	    IPC_CREAT | 0600);
+	subsystem->fb_shm_info.shmid =
+	    shmget(IPC_PRIVATE,
+	           1ull * WINPR_ASSERTING_INT_CAST(uint32_t, subsystem->fb_image->bytes_per_line) *
+	               WINPR_ASSERTING_INT_CAST(uint32_t, subsystem->fb_image->height),
+	           IPC_CREAT | 0600);
 
 	if (subsystem->fb_shm_info.shmid == -1)
 	{
@@ -1158,10 +1168,11 @@ static int x11_shadow_xshm_init(x11ShadowSubsystem* subsystem)
 
 	XSync(subsystem->display, False);
 	shmctl(subsystem->fb_shm_info.shmid, IPC_RMID, 0);
-	subsystem->fb_pixmap =
-	    XShmCreatePixmap(subsystem->display, subsystem->root_window, subsystem->fb_image->data,
-	                     &(subsystem->fb_shm_info), subsystem->fb_image->width,
-	                     subsystem->fb_image->height, subsystem->fb_image->depth);
+	subsystem->fb_pixmap = XShmCreatePixmap(
+	    subsystem->display, subsystem->root_window, subsystem->fb_image->data,
+	    &(subsystem->fb_shm_info), WINPR_ASSERTING_INT_CAST(uint32_t, subsystem->fb_image->width),
+	    WINPR_ASSERTING_INT_CAST(uint32_t, subsystem->fb_image->height),
+	    WINPR_ASSERTING_INT_CAST(uint32_t, subsystem->fb_image->depth));
 	XSync(subsystem->display, False);
 
 	if (!subsystem->fb_pixmap)
@@ -1193,7 +1204,7 @@ UINT32 x11_shadow_enum_monitors(MONITOR_DEF* monitors, UINT32 maxMonitors)
 	if (!display)
 	{
 		WLog_ERR(TAG, "failed to open display: %s", XDisplayName(NULL));
-		return -1;
+		return 0;
 	}
 
 	displayWidth = WidthOfScreen(DefaultScreenOfDisplay(display));
@@ -1257,7 +1268,7 @@ UINT32 x11_shadow_enum_monitors(MONITOR_DEF* monitors, UINT32 maxMonitors)
 	}
 
 	errno = 0;
-	return numMonitors;
+	return WINPR_ASSERTING_INT_CAST(uint32_t, numMonitors);
 }
 
 static int x11_shadow_subsystem_init(rdpShadowSubsystem* sub)
@@ -1321,8 +1332,8 @@ static int x11_shadow_subsystem_init(rdpShadowSubsystem* sub)
 
 		if (pf->depth == (INT64)subsystem->depth)
 		{
-			subsystem->bpp = pf->bits_per_pixel;
-			subsystem->scanline_pad = pf->scanline_pad;
+			subsystem->bpp = WINPR_ASSERTING_INT_CAST(uint32_t, pf->bits_per_pixel);
+			subsystem->scanline_pad = WINPR_ASSERTING_INT_CAST(uint32_t, pf->scanline_pad);
 			break;
 		}
 	}

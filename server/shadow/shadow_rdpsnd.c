@@ -19,6 +19,9 @@
 #include <freerdp/config.h>
 
 #include <winpr/crt.h>
+#include <winpr/assert.h>
+#include <winpr/cast.h>
+
 #include <freerdp/log.h>
 #include <freerdp/codec/dsp.h>
 #include <freerdp/server/server-common.h>
@@ -37,7 +40,7 @@ static void rdpsnd_activated(RdpsndServerContext* context)
 		{
 			if (audio_format_compatible(&context->server_formats[j], &context->client_formats[i]))
 			{
-				context->SelectFormat(context, i);
+				context->SelectFormat(context, WINPR_ASSERTING_INT_CAST(UINT16, i));
 				return;
 			}
 		}
