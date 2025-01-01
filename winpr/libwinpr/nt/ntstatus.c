@@ -4613,7 +4613,7 @@ static int ntstatus_compare(const void* pKey, const void* pValue)
 	return *key < cur->code ? -1 : 1;
 }
 
-const char* NtStatus2Tag(DWORD ntstatus)
+const char* NtStatus2Tag(NTSTATUS ntstatus)
 {
 
 #if 1 /* Requires sorted struct */
