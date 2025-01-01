@@ -1548,7 +1548,7 @@ static LONG smartcard_LocateCardsByATRA_Call(scard_call_context* smartcard, wStr
 }
 
 LONG smartcard_irp_device_control_call(scard_call_context* smartcard, wStream* out,
-                                       UINT32* pIoStatus, SMARTCARD_OPERATION* operation)
+                                       NTSTATUS* pIoStatus, SMARTCARD_OPERATION* operation)
 {
 	LONG result = 0;
 	UINT32 offset = 0;
