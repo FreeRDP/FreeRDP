@@ -5,18 +5,22 @@
 #include <winpr/tchar.h>
 #include <winpr/windows.h>
 #include <winpr/library.h>
+#include <winpr/nt.h>
 
 int TestLibraryLoadLibrary(int argc, char* argv[])
 {
 	HINSTANCE library = NULL;
 	LPCSTR SharedLibraryExtension = NULL;
-	CHAR LibraryPath[PATHCCH_MAX_CCH];
+	CHAR LibraryPath[PATHCCH_MAX_CCH] = { 0 };
 	PCHAR p = NULL;
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
 	if (!GetModuleFileNameA(NULL, LibraryPath, PATHCCH_MAX_CCH))
 	{
-		printf("%s: GetModuleFilenameA failed: 0x%08" PRIX32 "\n", __func__, GetLastError());
+		const UINT32 err = GetLastError();
+		const HRESULT herr = HRESULT_FROM_WIN32(err);
+		printf("%s: GetModuleFilenameA failed: %s - %s [0x%08" PRIX32 "]\n", __func__,
+		       NtStatus2Tag(herr), Win32ErrorCode2Tag(err), err);
 		return -1;
 	}
 
@@ -37,13 +41,19 @@ int TestLibraryLoadLibrary(int argc, char* argv[])
 
 	if (!(library = LoadLibraryA(LibraryPath)))
 	{
-		printf("%s: LoadLibraryA failure: 0x%08" PRIX32 "\n", __func__, GetLastError());
+		const UINT32 err = GetLastError();
+		const HRESULT herr = HRESULT_FROM_WIN32(err);
+		printf("%s: LoadLibraryA failure: %s - %s [0x%08" PRIX32 "]\n", __func__,
+		       NtStatus2Tag(herr), Win32ErrorCode2Tag(err), err);
 		return -1;
 	}
 
 	if (!FreeLibrary(library))
 	{
-		printf("%s: FreeLibrary failure: 0x%08" PRIX32 "\n", __func__, GetLastError());
+		const UINT32 err = GetLastError();
+		const HRESULT herr = HRESULT_FROM_WIN32(err);
+		printf("%s: FreeLibrary failure: %s - %s [0x%08" PRIX32 "]\n", __func__, NtStatus2Tag(herr),
+		       Win32ErrorCode2Tag(err), err);
 		return -1;
 	}
 
