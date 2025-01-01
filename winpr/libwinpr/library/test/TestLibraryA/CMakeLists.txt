@@ -22,6 +22,9 @@ set(SRCS TestLibraryA.c)
 
 add_library(${MODULE_NAME} SHARED ${SRCS})
 set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
-set_target_properties(${MODULE_NAME} PROPERTIES LIBRARY_OUTPUT_DIRECTORY "${TESTING_OUTPUT_DIRECTORY}")
+set_target_properties(
+  ${MODULE_NAME} PROPERTIES LIBRARY_OUTPUT_DIRECTORY "${TESTING_OUTPUT_DIRECTORY}" RUNTIME_OUTPUT_DIRECTORY
+                                                                                   "${TESTING_OUTPUT_DIRECTORY}"
+)
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "WinPR/Test/Extra")
