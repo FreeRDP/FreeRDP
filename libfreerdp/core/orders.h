@@ -196,7 +196,7 @@ FREERDP_LOCAL BOOL update_recv_order(rdpUpdate* update, wStream* s);
 FREERDP_LOCAL BOOL update_write_field_flags(wStream* s, UINT32 fieldFlags, BYTE flags,
                                             BYTE fieldBytes);
 
-FREERDP_LOCAL BOOL update_write_bounds(wStream* s, ORDER_INFO* orderInfo);
+FREERDP_LOCAL BOOL update_write_bounds(wStream* s, const ORDER_INFO* orderInfo);
 
 FREERDP_LOCAL size_t update_approximate_dstblt_order(ORDER_INFO* orderInfo,
                                                      const DSTBLT_ORDER* dstblt);

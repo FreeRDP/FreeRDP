@@ -42,8 +42,11 @@ static pstatus_t ssse3_YCoCgRToRGB_8u_AC4R_invert(const BYTE* WINPR_RESTRICT pSr
 {
 	const BYTE* sptr = pSrc;
 	BYTE* dptr = pDst;
-	int sRowBump = srcStep - width * sizeof(UINT32);
-	int dRowBump = dstStep - width * sizeof(UINT32);
+
+	WINPR_ASSERT(srcStep / sizeof(UINT32) >= width);
+	WINPR_ASSERT(dstStep / sizeof(UINT32) >= width);
+	const size_t sRowBump = srcStep - width * sizeof(UINT32);
+	const size_t dRowBump = dstStep - width * sizeof(UINT32);
 	/* Shift left by "shift" and divide by two is the same as shift
 	 * left by "shift-1".
 	 */
@@ -62,8 +65,9 @@ static pstatus_t ssse3_YCoCgRToRGB_8u_AC4R_invert(const BYTE* WINPR_RESTRICT pSr
 	if ((width < 8) || (ULONG_PTR)dptr & 0x03)
 	{
 		/* Too small, or we'll never hit a 16-byte boundary.  Punt. */
-		return generic->YCoCgToRGB_8u_AC4R(pSrc, srcStep, pDst, DstFormat, dstStep, width, height,
-		                                   shift, withAlpha);
+		return generic->YCoCgToRGB_8u_AC4R(pSrc, WINPR_ASSERTING_INT_CAST(INT32, srcStep), pDst,
+		                                   DstFormat, WINPR_ASSERTING_INT_CAST(INT32, dstStep),
+		                                   width, height, shift, withAlpha);
 	}
 
 	for (UINT32 h = 0; h < height; h++)
@@ -80,8 +84,9 @@ static pstatus_t ssse3_YCoCgRToRGB_8u_AC4R_invert(const BYTE* WINPR_RESTRICT pSr
 			if (startup > width)
 				startup = width;
 
-			status = generic->YCoCgToRGB_8u_AC4R(sptr, srcStep, dptr, DstFormat, dstStep, startup,
-			                                     1, shift, withAlpha);
+			status = generic->YCoCgToRGB_8u_AC4R(
+			    sptr, WINPR_ASSERTING_INT_CAST(INT32, srcStep), dptr, DstFormat,
+			    WINPR_ASSERTING_INT_CAST(INT32, dstStep), startup, 1, shift, withAlpha);
 
 			if (status != PRIMITIVES_SUCCESS)
 				return status;
@@ -139,11 +144,11 @@ static pstatus_t ssse3_YCoCgRToRGB_8u_AC4R_invert(const BYTE* WINPR_RESTRICT pSr
 			if (withAlpha)
 				R7 = _mm_unpackhi_epi64(R5, R5);
 			else
-				R7 = _mm_set1_epi32(0xFFFFFFFFU);
+				R7 = mm_set1_epu32(0xFFFFFFFFU);
 
 			/* R7 = a7a6a5a4 a3a2a1a0 a7a6a5a4 a3a2a1a0 */
 			/* Expand Y's from 8-bit unsigned to 16-bit signed. */
-			R1 = _mm_set1_epi32(0);
+			R1 = mm_set1_epu32(0);
 			R0 = _mm_unpacklo_epi8(R5, R1);
 			/* R0 = 00y700y6 00y500y4 00y300y2 00y100y0 */
 			/* Shift Co's and Cg's by (shift-1).  -1 covers division by two.
@@ -152,7 +157,7 @@ static pstatus_t ssse3_YCoCgRToRGB_8u_AC4R_invert(const BYTE* WINPR_RESTRICT pSr
 			 * version and then mask.
 			 */
 			R6 = _mm_slli_epi16(R6, dataShift);
-			R1 = _mm_set1_epi8(mask);
+			R1 = mm_set1_epu8(mask);
 			R6 = _mm_and_si128(R6, R1);
 			/* R6 = shifted o7o6o5o4 o3o2o1o0 g7g6g5g4 g3g2g1g0 */
 			/* Expand Co's from 8-bit signed to 16-bit signed */
@@ -203,8 +208,9 @@ static pstatus_t ssse3_YCoCgRToRGB_8u_AC4R_invert(const BYTE* WINPR_RESTRICT pSr
 		if (w > 0)
 		{
 			pstatus_t status = 0;
-			status = generic->YCoCgToRGB_8u_AC4R(sptr, srcStep, dptr, DstFormat, dstStep, w, 1,
-			                                     shift, withAlpha);
+			status = generic->YCoCgToRGB_8u_AC4R(
+			    sptr, WINPR_ASSERTING_INT_CAST(INT32, srcStep), dptr, DstFormat,
+			    WINPR_ASSERTING_INT_CAST(INT32, dstStep), w, 1, shift, withAlpha);
 
 			if (status != PRIMITIVES_SUCCESS)
 				return status;
@@ -228,8 +234,8 @@ static pstatus_t ssse3_YCoCgRToRGB_8u_AC4R_no_invert(const BYTE* WINPR_RESTRICT 
 {
 	const BYTE* sptr = pSrc;
 	BYTE* dptr = pDst;
-	int sRowBump = srcStep - width * sizeof(UINT32);
-	int dRowBump = dstStep - width * sizeof(UINT32);
+	size_t sRowBump = srcStep - width * sizeof(UINT32);
+	size_t dRowBump = dstStep - width * sizeof(UINT32);
 	/* Shift left by "shift" and divide by two is the same as shift
 	 * left by "shift-1".
 	 */
@@ -248,13 +254,14 @@ static pstatus_t ssse3_YCoCgRToRGB_8u_AC4R_no_invert(const BYTE* WINPR_RESTRICT 
 	if ((width < 8) || (ULONG_PTR)dptr & 0x03)
 	{
 		/* Too small, or we'll never hit a 16-byte boundary.  Punt. */
-		return generic->YCoCgToRGB_8u_AC4R(pSrc, srcStep, pDst, DstFormat, dstStep, width, height,
-		                                   shift, withAlpha);
+		return generic->YCoCgToRGB_8u_AC4R(pSrc, WINPR_ASSERTING_INT_CAST(INT32, srcStep), pDst,
+		                                   DstFormat, WINPR_ASSERTING_INT_CAST(INT32, dstStep),
+		                                   width, height, shift, withAlpha);
 	}
 
 	for (UINT32 h = 0; h < height; h++)
 	{
-		int w = width;
+		UINT32 w = width;
 		BOOL onStride = 0;
 
 		/* Get to a 16-byte destination boundary. */
@@ -266,8 +273,9 @@ static pstatus_t ssse3_YCoCgRToRGB_8u_AC4R_no_invert(const BYTE* WINPR_RESTRICT 
 			if (startup > width)
 				startup = width;
 
-			status = generic->YCoCgToRGB_8u_AC4R(sptr, srcStep, dptr, DstFormat, dstStep, startup,
-			                                     1, shift, withAlpha);
+			status = generic->YCoCgToRGB_8u_AC4R(
+			    sptr, WINPR_ASSERTING_INT_CAST(INT32, srcStep), dptr, DstFormat,
+			    WINPR_ASSERTING_INT_CAST(INT32, dstStep), startup, 1, shift, withAlpha);
 
 			if (status != PRIMITIVES_SUCCESS)
 				return status;
@@ -325,11 +333,11 @@ static pstatus_t ssse3_YCoCgRToRGB_8u_AC4R_no_invert(const BYTE* WINPR_RESTRICT 
 			if (withAlpha)
 				R7 = _mm_unpackhi_epi64(R5, R5);
 			else
-				R7 = _mm_set1_epi32(0xFFFFFFFFU);
+				R7 = mm_set1_epu32(0xFFFFFFFFU);
 
 			/* R7 = a7a6a5a4 a3a2a1a0 a7a6a5a4 a3a2a1a0 */
 			/* Expand Y's from 8-bit unsigned to 16-bit signed. */
-			R1 = _mm_set1_epi32(0);
+			R1 = mm_set1_epu32(0);
 			R0 = _mm_unpacklo_epi8(R5, R1);
 			/* R0 = 00y700y6 00y500y4 00y300y2 00y100y0 */
 			/* Shift Co's and Cg's by (shift-1).  -1 covers division by two.
@@ -338,7 +346,7 @@ static pstatus_t ssse3_YCoCgRToRGB_8u_AC4R_no_invert(const BYTE* WINPR_RESTRICT 
 			 * version and then mask.
 			 */
 			R6 = _mm_slli_epi16(R6, dataShift);
-			R1 = _mm_set1_epi8(mask);
+			R1 = mm_set1_epu8(mask);
 			R6 = _mm_and_si128(R6, R1);
 			/* R6 = shifted o7o6o5o4 o3o2o1o0 g7g6g5g4 g3g2g1g0 */
 			/* Expand Co's from 8-bit signed to 16-bit signed */
@@ -393,14 +401,16 @@ static pstatus_t ssse3_YCoCgRToRGB_8u_AC4R_no_invert(const BYTE* WINPR_RESTRICT 
 		if (w > 0)
 		{
 			pstatus_t status = 0;
-			status = generic->YCoCgToRGB_8u_AC4R(sptr, srcStep, dptr, DstFormat, dstStep, w, 1,
-			                                     shift, withAlpha);
+			status = generic->YCoCgToRGB_8u_AC4R(
+			    sptr, WINPR_ASSERTING_INT_CAST(INT32, srcStep), dptr, DstFormat,
+			    WINPR_ASSERTING_INT_CAST(INT32, dstStep), WINPR_ASSERTING_INT_CAST(UINT32, w), 1,
+			    shift, withAlpha);
 
 			if (status != PRIMITIVES_SUCCESS)
 				return status;
 
-			sptr += w * sizeof(UINT32);
-			dptr += w * sizeof(UINT32);
+			sptr += WINPR_ASSERTING_INT_CAST(UINT32, w) * sizeof(UINT32);
+			dptr += WINPR_ASSERTING_INT_CAST(UINT32, w) * sizeof(UINT32);
 		}
 
 		sptr += sRowBump;
@@ -420,13 +430,15 @@ static pstatus_t ssse3_YCoCgRToRGB_8u_AC4R(const BYTE* WINPR_RESTRICT pSrc, INT3
 	{
 		case PIXEL_FORMAT_BGRX32:
 		case PIXEL_FORMAT_BGRA32:
-			return ssse3_YCoCgRToRGB_8u_AC4R_invert(pSrc, srcStep, pDst, DstFormat, dstStep, width,
-			                                        height, shift, withAlpha);
+			return ssse3_YCoCgRToRGB_8u_AC4R_invert(
+			    pSrc, WINPR_ASSERTING_INT_CAST(UINT32, srcStep), pDst, DstFormat,
+			    WINPR_ASSERTING_INT_CAST(UINT32, dstStep), width, height, shift, withAlpha);
 
 		case PIXEL_FORMAT_RGBX32:
 		case PIXEL_FORMAT_RGBA32:
-			return ssse3_YCoCgRToRGB_8u_AC4R_no_invert(pSrc, srcStep, pDst, DstFormat, dstStep,
-			                                           width, height, shift, withAlpha);
+			return ssse3_YCoCgRToRGB_8u_AC4R_no_invert(
+			    pSrc, WINPR_ASSERTING_INT_CAST(UINT32, srcStep), pDst, DstFormat,
+			    WINPR_ASSERTING_INT_CAST(UINT32, dstStep), width, height, shift, withAlpha);
 
 		default:
 			return generic->YCoCgToRGB_8u_AC4R(pSrc, srcStep, pDst, DstFormat, dstStep, width,

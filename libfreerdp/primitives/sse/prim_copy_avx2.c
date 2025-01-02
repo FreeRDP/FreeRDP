@@ -34,6 +34,13 @@
 #include <emmintrin.h>
 #include <immintrin.h>
 
+static inline __m256i mm256_set_epu32(uint32_t i0, uint32_t i1, uint32_t i2, uint32_t i3,
+                                      uint32_t i4, uint32_t i5, uint32_t i6, uint32_t i7)
+{
+	return _mm256_set_epi32((int32_t)i0, (int32_t)i1, (int32_t)i2, (int32_t)i3, (int32_t)i4,
+	                        (int32_t)i5, (int32_t)i6, (int32_t)i7);
+}
+
 static INLINE pstatus_t avx2_image_copy_no_overlap_convert(
     BYTE* WINPR_RESTRICT pDstData, DWORD DstFormat, UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst,
     UINT32 nWidth, UINT32 nHeight, const BYTE* WINPR_RESTRICT pSrcData, DWORD SrcFormat,
@@ -52,12 +59,12 @@ static INLINE pstatus_t avx2_image_copy_bgr24_bgrx32(BYTE* WINPR_RESTRICT pDstDa
 	const SSIZE_T srcByte = 3;
 	const SSIZE_T dstByte = 4;
 
-	const __m256i mask = _mm256_set_epi32(0xFF000000, 0xFF000000, 0xFF000000, 0xFF000000,
-	                                      0xFF000000, 0xFF000000, 0xFF000000, 0xFF000000);
-	const __m256i smask = _mm256_set_epi32(0xff171615, 0xff141312, 0xff1110ff, 0xffffffff,
-	                                       0xff0b0a09, 0xff080706, 0xff050403, 0xff020100);
-	const __m256i shelpmask = _mm256_set_epi32(0xffffffff, 0xffffffff, 0xffffff1f, 0xff1e1d1c,
-	                                           0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff);
+	const __m256i mask = mm256_set_epu32(0xFF000000, 0xFF000000, 0xFF000000, 0xFF000000, 0xFF000000,
+	                                     0xFF000000, 0xFF000000, 0xFF000000);
+	const __m256i smask = mm256_set_epu32(0xff171615, 0xff141312, 0xff1110ff, 0xffffffff,
+	                                      0xff0b0a09, 0xff080706, 0xff050403, 0xff020100);
+	const __m256i shelpmask = mm256_set_epu32(0xffffffff, 0xffffffff, 0xffffff1f, 0xff1e1d1c,
+	                                          0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff);
 	const UINT32 rem = nWidth % 8;
 	const SSIZE_T width = nWidth - rem;
 

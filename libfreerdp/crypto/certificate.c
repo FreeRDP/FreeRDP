@@ -789,7 +789,7 @@ static BOOL certificate_read_server_proprietary_certificate(rdpCertificate* cert
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return FALSE;
 
-	sigdatalen = Stream_PointerAs(s, const BYTE) - sigdata;
+	sigdatalen = WINPR_ASSERTING_INT_CAST(size_t, Stream_PointerAs(s, const BYTE) - sigdata);
 	Stream_Read_UINT16(s, wSignatureBlobType);
 
 	if (wSignatureBlobType != BB_RSA_SIGNATURE_BLOB)
@@ -1564,7 +1564,7 @@ BOOL freerdp_certificate_get_public_key(const rdpCertificate* cert, BYTE** Publi
 		goto exit;
 	}
 
-	*PublicKey = optr = ptr = (BYTE*)calloc(length, sizeof(BYTE));
+	*PublicKey = optr = ptr = (BYTE*)calloc(WINPR_ASSERTING_INT_CAST(size_t, length), sizeof(BYTE));
 
 	if (!ptr)
 		goto exit;
@@ -1642,7 +1642,7 @@ BOOL freerdp_certificate_publickey_encrypt(const rdpCertificate* cert, const BYT
 	if (!ctx)
 		return FALSE;
 
-	size_t outputSize = EVP_PKEY_size(pkey);
+	size_t outputSize = WINPR_ASSERTING_INT_CAST(size_t, EVP_PKEY_size(pkey));
 	output = malloc(outputSize);
 	if (output == NULL)
 		goto out;
@@ -1692,7 +1692,7 @@ BYTE* freerdp_certificate_get_der(const rdpCertificate* cert, size_t* pLength)
 	if (rc <= 0)
 		return NULL;
 
-	BYTE* ptr = calloc(rc + 1, sizeof(BYTE));
+	BYTE* ptr = calloc(WINPR_ASSERTING_INT_CAST(size_t, rc) + 1, sizeof(BYTE));
 	if (!ptr)
 		return NULL;
 	BYTE* i2d_ptr = ptr;
@@ -1771,7 +1771,7 @@ char* freerdp_certificate_get_param(const rdpCertificate* cert, enum FREERDP_CER
 	}
 #endif
 
-	const size_t bnsize = BN_num_bytes(bn);
+	const size_t bnsize = WINPR_ASSERTING_INT_CAST(size_t, BN_num_bytes(bn));
 	char* rc = calloc(bnsize + 1, sizeof(char));
 	if (!rc)
 		goto fail;

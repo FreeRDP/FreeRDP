@@ -37,7 +37,7 @@
 #include "clipping.h"
 #include "line.h"
 
-static BOOL gdi_rop_color(UINT32 rop, BYTE* pixelPtr, UINT32 pen, UINT32 format)
+static BOOL gdi_rop_color(INT32 rop, BYTE* pixelPtr, UINT32 pen, UINT32 format)
 {
 	WINPR_ASSERT(pixelPtr);
 	const UINT32 srcPixel = FreeRDPReadColor(pixelPtr, format);
@@ -116,7 +116,7 @@ static BOOL gdi_rop_color(UINT32 rop, BYTE* pixelPtr, UINT32 pen, UINT32 format)
 	return FreeRDPWriteColor(pixelPtr, format, dstPixel);
 }
 
-BOOL gdi_LineTo(HGDI_DC hdc, UINT32 nXEnd, UINT32 nYEnd)
+BOOL gdi_LineTo(HGDI_DC hdc, INT32 nXEnd, INT32 nYEnd)
 {
 	INT32 e2 = 0;
 	UINT32 pen = 0;
@@ -126,8 +126,8 @@ BOOL gdi_LineTo(HGDI_DC hdc, UINT32 nXEnd, UINT32 nYEnd)
 
 	const INT32 x1 = hdc->pen->posX;
 	const INT32 y1 = hdc->pen->posY;
-	const INT32 x2 = nXEnd;
-	const INT32 y2 = nYEnd;
+	const INT32 x2 = WINPR_ASSERTING_INT_CAST(int32_t, nXEnd);
+	const INT32 y2 = WINPR_ASSERTING_INT_CAST(int32_t, nYEnd);
 	const INT32 dx = (x1 > x2) ? x1 - x2 : x2 - x1;
 	const INT32 dy = (y1 > y2) ? y1 - y2 : y2 - y1;
 	const INT32 sx = (x1 < x2) ? 1 : -1;
@@ -299,7 +299,7 @@ BOOL gdi_PolyPolyline(HGDI_DC hdc, GDI_POINT* lppt, const UINT32* lpdwPolyPoints
  * @return nonzero on success, 0 otherwise
  */
 
-BOOL gdi_MoveToEx(HGDI_DC hdc, UINT32 X, UINT32 Y, HGDI_POINT lpPoint)
+BOOL gdi_MoveToEx(HGDI_DC hdc, INT32 X, INT32 Y, HGDI_POINT lpPoint)
 {
 	WINPR_ASSERT(hdc);
 

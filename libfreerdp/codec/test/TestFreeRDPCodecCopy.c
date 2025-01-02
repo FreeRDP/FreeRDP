@@ -32,7 +32,7 @@ static BOOL TestFreeRDPImageCopy(UINT32 w, UINT32 h, UINT32 srcFormat, UINT32 ds
 		                        NULL, 0);
 		const UINT64 end = winpr_GetUnixTimeNS();
 
-		double ms = end - start;
+		double ms = (double)(end - start);
 		ms /= 1000000.0;
 
 		(void)fprintf(stdout,
@@ -70,7 +70,7 @@ static BOOL TestFreeRDPImageCopy_no_overlap(UINT32 w, UINT32 h, UINT32 srcFormat
 		                                   srcStep, 0, 0, NULL, 0);
 		const UINT64 end = winpr_GetUnixTimeNS();
 
-		double ms = end - start;
+		double ms = (double)(end - start);
 		ms /= 1000000.0;
 
 		(void)fprintf(stdout,

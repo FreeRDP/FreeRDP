@@ -41,11 +41,49 @@ static primitives_t* generic = NULL;
 
 #define CACHE_LINE_BYTES 64
 
-#define mm_between_epi16(_val, _min, _max)                       \
-	do                                                           \
-	{                                                            \
-		(_val) = _mm_min_epi16(_max, _mm_max_epi16(_val, _min)); \
-	} while (0)
+/*  1.403 << 14 */
+/* -0.344 << 14 */
+/* -0.714 << 14 */
+/*  1.770 << 14 */
+
+static const int32_t ycbcr_table[][4] = { { 1, 0, -1, 2 },
+	                                      { 3, -1, -1, 4 },
+	                                      { 6, -1, -3, 7 },
+	                                      { 11, -3, -6, 14 },
+	                                      { 22, -6, -11, 28 },
+	                                      { 45, -11, -23, 57 },
+	                                      { 90, -22, -46, 113 },
+	                                      { 180, -44, -91, 227 },
+	                                      { 359, -88, -183, 453 },
+	                                      { 718, -176, -366, 906 },
+	                                      { 1437, -352, -731, 1812 },
+	                                      { 2873, -705, -1462, 3625 },
+	                                      { 5747, -1409, -2925, 7250 },
+	                                      { 11493, -2818, -5849, 14500 },
+	                                      { 22987, -5636, -11698, 29000 },
+	                                      { 45974, -11272, -23396, 57999 },
+	                                      { 91947, -22544, -46793, 115999 },
+	                                      { 183894, -45089, -93585, 231997 },
+	                                      { 367788, -90178, -187171, 463995 },
+	                                      { 735576, -180355, -374342, 927990 },
+	                                      { 1471152, -360710, -748683, 1855980 },
+	                                      { 2942304, -721420, -1497367, 3711959 },
+	                                      { 5884609, -1442841, -2994733, 7423918 },
+	                                      { 11769217, -2885681, -5989466, 14847836 },
+	                                      { 23538434, -5771362, -11978932, 29695672 },
+	                                      { 47076868, -11542725, -23957864, 59391345 },
+	                                      { 94153736, -23085449, -47915729, 118782689 },
+	                                      { 188307472, -46170898, -95831458, 237565379 },
+	                                      { 376614945, -92341797, -191662916, 475130757 },
+	                                      { 753229890, -184683594, -383325831, 950261514 },
+	                                      { 1506459779, -369367187, -766651662, 1900523028 } };
+
+static inline __m128i mm_between_epi16_int(__m128i val, __m128i min, __m128i max)
+{
+	return _mm_min_epi16(max, _mm_max_epi16(val, min));
+}
+
+#define mm_between_epi16(_val, _min, _max) (_val) = mm_between_epi16_int((_val), (_min), (_max))
 
 #ifdef DO_PREFETCH
 /*---------------------------------------------------------------------------*/
@@ -67,23 +105,6 @@ sse2_yCbCrToRGB_16s16s_P3P3(const INT16* WINPR_RESTRICT pSrc[3], int srcStep,
                             INT16* WINPR_RESTRICT pDst[3], int dstStep,
                             const prim_size_t* WINPR_RESTRICT roi) /* region of interest */
 {
-	__m128i zero;
-	__m128i max;
-	__m128i r_cr;
-	__m128i g_cb;
-	__m128i g_cr;
-	__m128i b_cb;
-	__m128i c4096;
-	const __m128i* y_buf = NULL;
-	const __m128i* cb_buf = NULL;
-	const __m128i* cr_buf = NULL;
-	__m128i* r_buf = NULL;
-	__m128i* g_buf = NULL;
-	__m128i* b_buf = NULL;
-	int srcbump = 0;
-	int dstbump = 0;
-	int imax = 0;
-
 	if (((ULONG_PTR)(pSrc[0]) & 0x0f) || ((ULONG_PTR)(pSrc[1]) & 0x0f) ||
 	    ((ULONG_PTR)(pSrc[2]) & 0x0f) || ((ULONG_PTR)(pDst[0]) & 0x0f) ||
 	    ((ULONG_PTR)(pDst[1]) & 0x0f) || ((ULONG_PTR)(pDst[2]) & 0x0f) || (roi->width & 0x07) ||
@@ -93,21 +114,25 @@ sse2_yCbCrToRGB_16s16s_P3P3(const INT16* WINPR_RESTRICT pSrc[3], int srcStep,
 		return generic->yCbCrToRGB_16s16s_P3P3(pSrc, srcStep, pDst, dstStep, roi);
 	}
 
-	zero = _mm_setzero_si128();
-	max = _mm_set1_epi16(255);
-	y_buf = (const __m128i*)(pSrc[0]);
-	cb_buf = (const __m128i*)(pSrc[1]);
-	cr_buf = (const __m128i*)(pSrc[2]);
-	r_buf = (__m128i*)(pDst[0]);
-	g_buf = (__m128i*)(pDst[1]);
-	b_buf = (__m128i*)(pDst[2]);
-	r_cr = _mm_set1_epi16(22986);  /*  1.403 << 14 */
-	g_cb = _mm_set1_epi16(-5636);  /* -0.344 << 14 */
-	g_cr = _mm_set1_epi16(-11698); /* -0.714 << 14 */
-	b_cb = _mm_set1_epi16(28999);  /*  1.770 << 14 */
-	c4096 = _mm_set1_epi16(4096);
-	srcbump = srcStep / sizeof(__m128i);
-	dstbump = dstStep / sizeof(__m128i);
+	const __m128i zero = _mm_setzero_si128();
+	const __m128i max = _mm_set1_epi16(255);
+	const __m128i* y_buf = (const __m128i*)(pSrc[0]);
+	const __m128i* cb_buf = (const __m128i*)(pSrc[1]);
+	const __m128i* cr_buf = (const __m128i*)(pSrc[2]);
+	__m128i* r_buf = (__m128i*)(pDst[0]);
+	__m128i* g_buf = (__m128i*)(pDst[1]);
+	__m128i* b_buf = (__m128i*)(pDst[2]);
+	__m128i r_cr =
+	    _mm_set1_epi16(WINPR_ASSERTING_INT_CAST(int16_t, ycbcr_table[14][0])); /*  1.403 << 14 */
+	__m128i g_cb =
+	    _mm_set1_epi16(WINPR_ASSERTING_INT_CAST(int16_t, ycbcr_table[14][1])); /* -0.344 << 14 */
+	__m128i g_cr =
+	    _mm_set1_epi16(WINPR_ASSERTING_INT_CAST(int16_t, ycbcr_table[14][2])); /* -0.714 << 14 */
+	__m128i b_cb =
+	    _mm_set1_epi16(WINPR_ASSERTING_INT_CAST(int16_t, ycbcr_table[14][3])); /*  1.770 << 14 */
+	__m128i c4096 = _mm_set1_epi16(4096);
+	const size_t srcbump = WINPR_ASSERTING_INT_CAST(size_t, srcStep) / sizeof(__m128i);
+	const size_t dstbump = WINPR_ASSERTING_INT_CAST(size_t, dstStep) / sizeof(__m128i);
 #ifdef DO_PREFETCH
 
 	/* Prefetch Y's, Cb's, and Cr's. */
@@ -130,11 +155,11 @@ sse2_yCbCrToRGB_16s16s_P3P3(const INT16* WINPR_RESTRICT pSrc[3], int srcStep,
 	cb_buf = (__m128i*)(pSrc[1]);
 	cr_buf = (__m128i*)(pSrc[2]);
 #endif /* DO_PREFETCH */
-	imax = roi->width * sizeof(INT16) / sizeof(__m128i);
+	const size_t imax = roi->width * sizeof(INT16) / sizeof(__m128i);
 
 	for (UINT32 yp = 0; yp < roi->height; ++yp)
 	{
-		for (int i = 0; i < imax; i++)
+		for (size_t i = 0; i < imax; i++)
 		{
 			/* In order to use SSE2 signed 16-bit integer multiplication
 			 * we need to convert the floating point factors to signed int
@@ -156,34 +181,28 @@ sse2_yCbCrToRGB_16s16s_P3P3(const INT16* WINPR_RESTRICT pSrc[3], int srcStep,
 			 * r = ((y+4096)>>2 + HIWORD(cr*22986)) >> 3
 			 */
 			/* y = (y_r_buf[i] + 4096) >> 2 */
-			__m128i y;
-			__m128i cb;
-			__m128i cr;
-			__m128i r;
-			__m128i g;
-			__m128i b;
-			y = _mm_load_si128(y_buf + i);
+			__m128i y = _mm_load_si128(y_buf + i);
 			y = _mm_add_epi16(y, c4096);
 			y = _mm_srai_epi16(y, 2);
 			/* cb = cb_g_buf[i]; */
-			cb = _mm_load_si128(cb_buf + i);
+			__m128i cb = _mm_load_si128(cb_buf + i);
 			/* cr = cr_b_buf[i]; */
-			cr = _mm_load_si128(cr_buf + i);
+			__m128i cr = _mm_load_si128(cr_buf + i);
 			/* (y + HIWORD(cr*22986)) >> 3 */
-			r = _mm_add_epi16(y, _mm_mulhi_epi16(cr, r_cr));
+			__m128i r = _mm_add_epi16(y, _mm_mulhi_epi16(cr, r_cr));
 			r = _mm_srai_epi16(r, 3);
 			/* r_buf[i] = CLIP(r); */
 			mm_between_epi16(r, zero, max);
 			_mm_store_si128(r_buf + i, r);
 			/* (y + HIWORD(cb*-5636) + HIWORD(cr*-11698)) >> 3 */
-			g = _mm_add_epi16(y, _mm_mulhi_epi16(cb, g_cb));
+			__m128i g = _mm_add_epi16(y, _mm_mulhi_epi16(cb, g_cb));
 			g = _mm_add_epi16(g, _mm_mulhi_epi16(cr, g_cr));
 			g = _mm_srai_epi16(g, 3);
 			/* g_buf[i] = CLIP(g); */
 			mm_between_epi16(g, zero, max);
 			_mm_store_si128(g_buf + i, g);
 			/* (y + HIWORD(cb*28999)) >> 3 */
-			b = _mm_add_epi16(y, _mm_mulhi_epi16(cb, b_cb));
+			__m128i b = _mm_add_epi16(y, _mm_mulhi_epi16(cb, b_cb));
 			b = _mm_srai_epi16(b, 3);
 			/* b_buf[i] = CLIP(b); */
 			mm_between_epi16(b, zero, max);
@@ -209,10 +228,14 @@ sse2_yCbCrToRGB_16s8u_P3AC4R_BGRX(const INT16* WINPR_RESTRICT pSrc[3], UINT32 sr
 {
 	const __m128i zero = _mm_setzero_si128();
 	const __m128i max = _mm_set1_epi16(255);
-	const __m128i r_cr = _mm_set1_epi16(22986);  /*  1.403 << 14 */
-	const __m128i g_cb = _mm_set1_epi16(-5636);  /* -0.344 << 14 */
-	const __m128i g_cr = _mm_set1_epi16(-11698); /* -0.714 << 14 */
-	const __m128i b_cb = _mm_set1_epi16(28999);  /*  1.770 << 14 */
+	const __m128i r_cr =
+	    _mm_set1_epi16(WINPR_ASSERTING_INT_CAST(int16_t, ycbcr_table[14][0])); /*  1.403 << 14 */
+	const __m128i g_cb =
+	    _mm_set1_epi16(WINPR_ASSERTING_INT_CAST(int16_t, ycbcr_table[14][1])); /* -0.344 << 14 */
+	const __m128i g_cr =
+	    _mm_set1_epi16(WINPR_ASSERTING_INT_CAST(int16_t, ycbcr_table[14][2])); /* -0.714 << 14 */
+	const __m128i b_cb =
+	    _mm_set1_epi16(WINPR_ASSERTING_INT_CAST(int16_t, ycbcr_table[14][3])); /*  1.770 << 14 */
 	const __m128i c4096 = _mm_set1_epi16(4096);
 	const INT16* y_buf = pSrc[0];
 	const INT16* cb_buf = pSrc[1];
@@ -268,93 +291,76 @@ sse2_yCbCrToRGB_16s8u_P3AC4R_BGRX(const INT16* WINPR_RESTRICT pSrc[3], UINT32 sr
 			 * r = ((y+4096)>>2 + HIWORD(cr*22986)) >> 3
 			 */
 			/* y = (y_r_buf[i] + 4096) >> 2 */
-			__m128i y1;
-			__m128i y2;
-			__m128i cb1;
-			__m128i cb2;
-			__m128i cr1;
-			__m128i cr2;
-			__m128i r1;
-			__m128i r2;
-			__m128i g1;
-			__m128i g2;
-			__m128i b1;
-			__m128i b2;
-			y1 = _mm_load_si128((const __m128i*)y_buf);
+			__m128i y1 = _mm_load_si128((const __m128i*)y_buf);
 			y_buf += step;
 			y1 = _mm_add_epi16(y1, c4096);
 			y1 = _mm_srai_epi16(y1, 2);
 			/* cb = cb_g_buf[i]; */
-			cb1 = _mm_load_si128((const __m128i*)cb_buf);
+			__m128i cb1 = _mm_load_si128((const __m128i*)cb_buf);
 			cb_buf += step;
 			/* cr = cr_b_buf[i]; */
-			cr1 = _mm_load_si128((const __m128i*)cr_buf);
+			__m128i cr1 = _mm_load_si128((const __m128i*)cr_buf);
 			cr_buf += step;
 			/* (y + HIWORD(cr*22986)) >> 3 */
-			r1 = _mm_add_epi16(y1, _mm_mulhi_epi16(cr1, r_cr));
+			__m128i r1 = _mm_add_epi16(y1, _mm_mulhi_epi16(cr1, r_cr));
 			r1 = _mm_srai_epi16(r1, 3);
 			/* r_buf[i] = CLIP(r); */
 			mm_between_epi16(r1, zero, max);
 			/* (y + HIWORD(cb*-5636) + HIWORD(cr*-11698)) >> 3 */
-			g1 = _mm_add_epi16(y1, _mm_mulhi_epi16(cb1, g_cb));
+			__m128i g1 = _mm_add_epi16(y1, _mm_mulhi_epi16(cb1, g_cb));
 			g1 = _mm_add_epi16(g1, _mm_mulhi_epi16(cr1, g_cr));
 			g1 = _mm_srai_epi16(g1, 3);
 			/* g_buf[i] = CLIP(g); */
 			mm_between_epi16(g1, zero, max);
 			/* (y + HIWORD(cb*28999)) >> 3 */
-			b1 = _mm_add_epi16(y1, _mm_mulhi_epi16(cb1, b_cb));
+			__m128i b1 = _mm_add_epi16(y1, _mm_mulhi_epi16(cb1, b_cb));
 			b1 = _mm_srai_epi16(b1, 3);
 			/* b_buf[i] = CLIP(b); */
 			mm_between_epi16(b1, zero, max);
-			y2 = _mm_load_si128((const __m128i*)y_buf);
+			__m128i y2 = _mm_load_si128((const __m128i*)y_buf);
 			y_buf += step;
 			y2 = _mm_add_epi16(y2, c4096);
 			y2 = _mm_srai_epi16(y2, 2);
 			/* cb = cb_g_buf[i]; */
-			cb2 = _mm_load_si128((const __m128i*)cb_buf);
+			__m128i cb2 = _mm_load_si128((const __m128i*)cb_buf);
 			cb_buf += step;
 			/* cr = cr_b_buf[i]; */
-			cr2 = _mm_load_si128((const __m128i*)cr_buf);
+			__m128i cr2 = _mm_load_si128((const __m128i*)cr_buf);
 			cr_buf += step;
 			/* (y + HIWORD(cr*22986)) >> 3 */
-			r2 = _mm_add_epi16(y2, _mm_mulhi_epi16(cr2, r_cr));
+			__m128i r2 = _mm_add_epi16(y2, _mm_mulhi_epi16(cr2, r_cr));
 			r2 = _mm_srai_epi16(r2, 3);
 			/* r_buf[i] = CLIP(r); */
 			mm_between_epi16(r2, zero, max);
 			/* (y + HIWORD(cb*-5636) + HIWORD(cr*-11698)) >> 3 */
-			g2 = _mm_add_epi16(y2, _mm_mulhi_epi16(cb2, g_cb));
+			__m128i g2 = _mm_add_epi16(y2, _mm_mulhi_epi16(cb2, g_cb));
 			g2 = _mm_add_epi16(g2, _mm_mulhi_epi16(cr2, g_cr));
 			g2 = _mm_srai_epi16(g2, 3);
 			/* g_buf[i] = CLIP(g); */
 			mm_between_epi16(g2, zero, max);
 			/* (y + HIWORD(cb*28999)) >> 3 */
-			b2 = _mm_add_epi16(y2, _mm_mulhi_epi16(cb2, b_cb));
+			__m128i b2 = _mm_add_epi16(y2, _mm_mulhi_epi16(cb2, b_cb));
 			b2 = _mm_srai_epi16(b2, 3);
 			/* b_buf[i] = CLIP(b); */
 			mm_between_epi16(b2, zero, max);
 			{
-				__m128i R0;
-				__m128i R1;
-				__m128i R2;
-				__m128i R3;
-				__m128i R4;
 				/* The comments below pretend these are 8-byte registers
 				 * rather than 16-byte, for readability.
 				 */
-				R0 = b1;                              /* R0 = 00B300B200B100B0 */
-				R1 = b2;                              /* R1 = 00B700B600B500B4 */
+				__m128i R0 = b1;                      /* R0 = 00B300B200B100B0 */
+				__m128i R1 = b2;                      /* R1 = 00B700B600B500B4 */
 				R0 = _mm_packus_epi16(R0, R1);        /* R0 = B7B6B5B4B3B2B1B0 */
 				R1 = g1;                              /* R1 = 00G300G200G100G0 */
-				R2 = g2;                              /* R2 = 00G700G600G500G4 */
+				__m128i R2 = g2;                      /* R2 = 00G700G600G500G4 */
 				R1 = _mm_packus_epi16(R1, R2);        /* R1 = G7G6G5G4G3G2G1G0 */
 				R2 = R1;                              /* R2 = G7G6G5G4G3G2G1G0 */
 				R2 = _mm_unpacklo_epi8(R0, R2);       /* R2 = B3G3B2G2B1G1B0G0 */
 				R1 = _mm_unpackhi_epi8(R0, R1);       /* R1 = B7G7B6G6B5G5B4G4 */
 				R0 = r1;                              /* R0 = 00R300R200R100R0 */
-				R3 = r2;                              /* R3 = 00R700R600R500R4 */
+				__m128i R3 = r2;                      /* R3 = 00R700R600R500R4 */
 				R0 = _mm_packus_epi16(R0, R3);        /* R0 = R7R6R5R4R3R2R1R0 */
-				R3 = _mm_set1_epi32(0xFFFFFFFFU);     /* R3 = FFFFFFFFFFFFFFFF */
-				R4 = R3;                              /* R4 = FFFFFFFFFFFFFFFF */
+				R3 = mm_set1_epu32(0xFFFFFFFFU);      /* R3 = FFFFFFFFFFFFFFFF */
+				__m128i R4 = R3;                      /* R4 = FFFFFFFFFFFFFFFF */
 				R4 = _mm_unpacklo_epi8(R0, R4);       /* R4 = R3FFR2FFR1FFR0FF */
 				R3 = _mm_unpackhi_epi8(R0, R3);       /* R3 = R7FFR6FFR5FFR4FF */
 				R0 = R4;                              /* R0 = R4               */
@@ -380,13 +386,13 @@ sse2_yCbCrToRGB_16s8u_P3AC4R_BGRX(const INT16* WINPR_RESTRICT pSrc[3], UINT32 sr
 			const INT32 Y = ((*y_buf++) + 4096) << divisor;
 			const INT32 Cb = (*cb_buf++);
 			const INT32 Cr = (*cr_buf++);
-			const INT32 CrR = Cr * (INT32)(1.402525f * (1 << divisor));
-			const INT32 CrG = Cr * (INT32)(0.714401f * (1 << divisor));
-			const INT32 CbG = Cb * (INT32)(0.343730f * (1 << divisor));
-			const INT32 CbB = Cb * (INT32)(1.769905f * (1 << divisor));
-			const INT16 R = ((INT16)((CrR + Y) >> divisor) >> 5);
-			const INT16 G = ((INT16)((Y - CbG - CrG) >> divisor) >> 5);
-			const INT16 B = ((INT16)((CbB + Y) >> divisor) >> 5);
+			const INT32 CrR = Cr * ycbcr_table[divisor][0];
+			const INT32 CrG = Cr * ycbcr_table[divisor][1];
+			const INT32 CbG = Cb * ycbcr_table[divisor][2];
+			const INT32 CbB = Cb * ycbcr_table[divisor][3];
+			const INT16 R = WINPR_ASSERTING_INT_CAST(int16_t, (((CrR + Y) >> divisor) >> 5));
+			const INT16 G = WINPR_ASSERTING_INT_CAST(int16_t, (((Y - CbG - CrG) >> divisor) >> 5));
+			const INT16 B = WINPR_ASSERTING_INT_CAST(int16_t, (((CbB + Y) >> divisor) >> 5));
 			*d_buf++ = CLIP(B);
 			*d_buf++ = CLIP(G);
 			*d_buf++ = CLIP(R);
@@ -407,10 +413,14 @@ sse2_yCbCrToRGB_16s8u_P3AC4R_RGBX(const INT16* WINPR_RESTRICT pSrc[3], UINT32 sr
 {
 	const __m128i zero = _mm_setzero_si128();
 	const __m128i max = _mm_set1_epi16(255);
-	const __m128i r_cr = _mm_set1_epi16(22986);  /*  1.403 << 14 */
-	const __m128i g_cb = _mm_set1_epi16(-5636);  /* -0.344 << 14 */
-	const __m128i g_cr = _mm_set1_epi16(-11698); /* -0.714 << 14 */
-	const __m128i b_cb = _mm_set1_epi16(28999);  /*  1.770 << 14 */
+	const __m128i r_cr =
+	    _mm_set1_epi16(WINPR_ASSERTING_INT_CAST(int16_t, ycbcr_table[14][0])); /*  1.403 << 14 */
+	const __m128i g_cb =
+	    _mm_set1_epi16(WINPR_ASSERTING_INT_CAST(int16_t, ycbcr_table[14][1])); /* -0.344 << 14 */
+	const __m128i g_cr =
+	    _mm_set1_epi16(WINPR_ASSERTING_INT_CAST(int16_t, ycbcr_table[14][2])); /* -0.714 << 14 */
+	const __m128i b_cb =
+	    _mm_set1_epi16(WINPR_ASSERTING_INT_CAST(int16_t, ycbcr_table[14][3])); /*  1.770 << 14 */
 	const __m128i c4096 = _mm_set1_epi16(4096);
 	const INT16* y_buf = pSrc[0];
 	const INT16* cb_buf = pSrc[1];
@@ -466,93 +476,76 @@ sse2_yCbCrToRGB_16s8u_P3AC4R_RGBX(const INT16* WINPR_RESTRICT pSrc[3], UINT32 sr
 			 * r = ((y+4096)>>2 + HIWORD(cr*22986)) >> 3
 			 */
 			/* y = (y_r_buf[i] + 4096) >> 2 */
-			__m128i y1;
-			__m128i y2;
-			__m128i cb1;
-			__m128i cb2;
-			__m128i cr1;
-			__m128i cr2;
-			__m128i r1;
-			__m128i r2;
-			__m128i g1;
-			__m128i g2;
-			__m128i b1;
-			__m128i b2;
-			y1 = _mm_load_si128((const __m128i*)y_buf);
+			__m128i y1 = _mm_load_si128((const __m128i*)y_buf);
 			y_buf += step;
 			y1 = _mm_add_epi16(y1, c4096);
 			y1 = _mm_srai_epi16(y1, 2);
 			/* cb = cb_g_buf[i]; */
-			cb1 = _mm_load_si128((const __m128i*)cb_buf);
+			__m128i cb1 = _mm_load_si128((const __m128i*)cb_buf);
 			cb_buf += step;
 			/* cr = cr_b_buf[i]; */
-			cr1 = _mm_load_si128((const __m128i*)cr_buf);
+			__m128i cr1 = _mm_load_si128((const __m128i*)cr_buf);
 			cr_buf += step;
 			/* (y + HIWORD(cr*22986)) >> 3 */
-			r1 = _mm_add_epi16(y1, _mm_mulhi_epi16(cr1, r_cr));
+			__m128i r1 = _mm_add_epi16(y1, _mm_mulhi_epi16(cr1, r_cr));
 			r1 = _mm_srai_epi16(r1, 3);
 			/* r_buf[i] = CLIP(r); */
 			mm_between_epi16(r1, zero, max);
 			/* (y + HIWORD(cb*-5636) + HIWORD(cr*-11698)) >> 3 */
-			g1 = _mm_add_epi16(y1, _mm_mulhi_epi16(cb1, g_cb));
+			__m128i g1 = _mm_add_epi16(y1, _mm_mulhi_epi16(cb1, g_cb));
 			g1 = _mm_add_epi16(g1, _mm_mulhi_epi16(cr1, g_cr));
 			g1 = _mm_srai_epi16(g1, 3);
 			/* g_buf[i] = CLIP(g); */
 			mm_between_epi16(g1, zero, max);
 			/* (y + HIWORD(cb*28999)) >> 3 */
-			b1 = _mm_add_epi16(y1, _mm_mulhi_epi16(cb1, b_cb));
+			__m128i b1 = _mm_add_epi16(y1, _mm_mulhi_epi16(cb1, b_cb));
 			b1 = _mm_srai_epi16(b1, 3);
 			/* b_buf[i] = CLIP(b); */
 			mm_between_epi16(b1, zero, max);
-			y2 = _mm_load_si128((const __m128i*)y_buf);
+			__m128i y2 = _mm_load_si128((const __m128i*)y_buf);
 			y_buf += step;
 			y2 = _mm_add_epi16(y2, c4096);
 			y2 = _mm_srai_epi16(y2, 2);
 			/* cb = cb_g_buf[i]; */
-			cb2 = _mm_load_si128((const __m128i*)cb_buf);
+			__m128i cb2 = _mm_load_si128((const __m128i*)cb_buf);
 			cb_buf += step;
 			/* cr = cr_b_buf[i]; */
-			cr2 = _mm_load_si128((const __m128i*)cr_buf);
+			__m128i cr2 = _mm_load_si128((const __m128i*)cr_buf);
 			cr_buf += step;
 			/* (y + HIWORD(cr*22986)) >> 3 */
-			r2 = _mm_add_epi16(y2, _mm_mulhi_epi16(cr2, r_cr));
+			__m128i r2 = _mm_add_epi16(y2, _mm_mulhi_epi16(cr2, r_cr));
 			r2 = _mm_srai_epi16(r2, 3);
 			/* r_buf[i] = CLIP(r); */
 			mm_between_epi16(r2, zero, max);
 			/* (y + HIWORD(cb*-5636) + HIWORD(cr*-11698)) >> 3 */
-			g2 = _mm_add_epi16(y2, _mm_mulhi_epi16(cb2, g_cb));
+			__m128i g2 = _mm_add_epi16(y2, _mm_mulhi_epi16(cb2, g_cb));
 			g2 = _mm_add_epi16(g2, _mm_mulhi_epi16(cr2, g_cr));
 			g2 = _mm_srai_epi16(g2, 3);
 			/* g_buf[i] = CLIP(g); */
 			mm_between_epi16(g2, zero, max);
 			/* (y + HIWORD(cb*28999)) >> 3 */
-			b2 = _mm_add_epi16(y2, _mm_mulhi_epi16(cb2, b_cb));
+			__m128i b2 = _mm_add_epi16(y2, _mm_mulhi_epi16(cb2, b_cb));
 			b2 = _mm_srai_epi16(b2, 3);
 			/* b_buf[i] = CLIP(b); */
 			mm_between_epi16(b2, zero, max);
 			{
-				__m128i R0;
-				__m128i R1;
-				__m128i R2;
-				__m128i R3;
-				__m128i R4;
 				/* The comments below pretend these are 8-byte registers
 				 * rather than 16-byte, for readability.
 				 */
-				R0 = r1;                              /* R0 = 00R300R200R100R0 */
-				R1 = r2;                              /* R1 = 00R700R600R500R4 */
+				__m128i R0 = r1;                      /* R0 = 00R300R200R100R0 */
+				__m128i R1 = r2;                      /* R1 = 00R700R600R500R4 */
 				R0 = _mm_packus_epi16(R0, R1);        /* R0 = R7R6R5R4R3R2R1R0 */
 				R1 = g1;                              /* R1 = 00G300G200G100G0 */
-				R2 = g2;                              /* R2 = 00G700G600G500G4 */
+				__m128i R2 = g2;                      /* R2 = 00G700G600G500G4 */
 				R1 = _mm_packus_epi16(R1, R2);        /* R1 = G7G6G5G4G3G2G1G0 */
 				R2 = R1;                              /* R2 = G7G6G5G4G3G2G1G0 */
 				R2 = _mm_unpacklo_epi8(R0, R2);       /* R2 = R3G3R2G2R1G1R0G0 */
 				R1 = _mm_unpackhi_epi8(R0, R1);       /* R1 = R7G7R6G6R5G5R4G4 */
 				R0 = b1;                              /* R0 = 00B300B200B100B0 */
-				R3 = b2;                              /* R3 = 00B700B600B500B4 */
+				__m128i R3 = b2;                      /* R3 = 00B700B600B500B4 */
 				R0 = _mm_packus_epi16(R0, R3);        /* R0 = B7B6B5B4B3B2B1B0 */
-				R3 = _mm_set1_epi32(0xFFFFFFFFU);     /* R3 = FFFFFFFFFFFFFFFF */
-				R4 = R3;                              /* R4 = FFFFFFFFFFFFFFFF */
+				R3 = mm_set1_epu32(0xFFFFFFFFU);      /* R3 = FFFFFFFFFFFFFFFF */
+				__m128i R4 = R3;                      /* R4 = FFFFFFFFFFFFFFFF */
 				R4 = _mm_unpacklo_epi8(R0, R4);       /* R4 = B3FFB2FFB1FFB0FF */
 				R3 = _mm_unpackhi_epi8(R0, R3);       /* R3 = B7FFB6FFB5FFB4FF */
 				R0 = R4;                              /* R0 = R4               */
@@ -578,13 +571,13 @@ sse2_yCbCrToRGB_16s8u_P3AC4R_RGBX(const INT16* WINPR_RESTRICT pSrc[3], UINT32 sr
 			const INT32 Y = ((*y_buf++) + 4096) << divisor;
 			const INT32 Cb = (*cb_buf++);
 			const INT32 Cr = (*cr_buf++);
-			const INT32 CrR = Cr * (INT32)(1.402525f * (1 << divisor));
-			const INT32 CrG = Cr * (INT32)(0.714401f * (1 << divisor));
-			const INT32 CbG = Cb * (INT32)(0.343730f * (1 << divisor));
-			const INT32 CbB = Cb * (INT32)(1.769905f * (1 << divisor));
-			const INT16 R = ((INT16)((CrR + Y) >> divisor) >> 5);
-			const INT16 G = ((INT16)((Y - CbG - CrG) >> divisor) >> 5);
-			const INT16 B = ((INT16)((CbB + Y) >> divisor) >> 5);
+			const INT32 CrR = Cr * ycbcr_table[divisor][0];
+			const INT32 CrG = Cr * ycbcr_table[divisor][1];
+			const INT32 CbG = Cb * ycbcr_table[divisor][2];
+			const INT32 CbB = Cb * ycbcr_table[divisor][3];
+			const INT16 R = WINPR_ASSERTING_INT_CAST(int16_t, (((CrR + Y) >> divisor) >> 5));
+			const INT16 G = WINPR_ASSERTING_INT_CAST(int16_t, (((Y - CbG - CrG) >> divisor) >> 5));
+			const INT16 B = WINPR_ASSERTING_INT_CAST(int16_t, (((CbB + Y) >> divisor) >> 5));
 			*d_buf++ = CLIP(R);
 			*d_buf++ = CLIP(G);
 			*d_buf++ = CLIP(B);
@@ -632,25 +625,12 @@ sse2_RGBToYCbCr_16s16s_P3P3(const INT16* WINPR_RESTRICT pSrc[3], int srcStep,
                             INT16* WINPR_RESTRICT pDst[3], int dstStep,
                             const prim_size_t* WINPR_RESTRICT roi) /* region of interest */
 {
-	__m128i min;
-	__m128i max;
-	__m128i y_r;
-	__m128i y_g;
-	__m128i y_b;
-	__m128i cb_r;
-	__m128i cb_g;
-	__m128i cb_b;
-	__m128i cr_r;
-	__m128i cr_g;
-	__m128i cr_b;
 	const __m128i* r_buf = (const __m128i*)(pSrc[0]);
 	const __m128i* g_buf = (const __m128i*)(pSrc[1]);
 	const __m128i* b_buf = (const __m128i*)(pSrc[2]);
 	__m128i* y_buf = (__m128i*)(pDst[0]);
 	__m128i* cb_buf = (__m128i*)(pDst[1]);
 	__m128i* cr_buf = (__m128i*)(pDst[2]);
-	int srcbump = 0;
-	int dstbump = 0;
 	int imax = 0;
 
 	if (((ULONG_PTR)(pSrc[0]) & 0x0f) || ((ULONG_PTR)(pSrc[1]) & 0x0f) ||
@@ -662,20 +642,20 @@ sse2_RGBToYCbCr_16s16s_P3P3(const INT16* WINPR_RESTRICT pSrc[3], int srcStep,
 		return generic->RGBToYCbCr_16s16s_P3P3(pSrc, srcStep, pDst, dstStep, roi);
 	}
 
-	min = _mm_set1_epi16(-128 * 32);
-	max = _mm_set1_epi16(127 * 32);
+	const __m128i min = _mm_set1_epi16(-128 * 32);
+	const __m128i max = _mm_set1_epi16(127 * 32);
 
-	y_r = _mm_set1_epi16(9798);    /*  0.299000 << 15 */
-	y_g = _mm_set1_epi16(19235);   /*  0.587000 << 15 */
-	y_b = _mm_set1_epi16(3735);    /*  0.114000 << 15 */
-	cb_r = _mm_set1_epi16(-5535);  /* -0.168935 << 15 */
-	cb_g = _mm_set1_epi16(-10868); /* -0.331665 << 15 */
-	cb_b = _mm_set1_epi16(16403);  /*  0.500590 << 15 */
-	cr_r = _mm_set1_epi16(16377);  /*  0.499813 << 15 */
-	cr_g = _mm_set1_epi16(-13714); /* -0.418531 << 15 */
-	cr_b = _mm_set1_epi16(-2663);  /* -0.081282 << 15 */
-	srcbump = srcStep / sizeof(__m128i);
-	dstbump = dstStep / sizeof(__m128i);
+	__m128i y_r = _mm_set1_epi16(9798);    /*  0.299000 << 15 */
+	__m128i y_g = _mm_set1_epi16(19235);   /*  0.587000 << 15 */
+	__m128i y_b = _mm_set1_epi16(3735);    /*  0.114000 << 15 */
+	__m128i cb_r = _mm_set1_epi16(-5535);  /* -0.168935 << 15 */
+	__m128i cb_g = _mm_set1_epi16(-10868); /* -0.331665 << 15 */
+	__m128i cb_b = _mm_set1_epi16(16403);  /*  0.500590 << 15 */
+	__m128i cr_r = _mm_set1_epi16(16377);  /*  0.499813 << 15 */
+	__m128i cr_g = _mm_set1_epi16(-13714); /* -0.418531 << 15 */
+	__m128i cr_b = _mm_set1_epi16(-2663);  /* -0.081282 << 15 */
+	const size_t srcbump = WINPR_ASSERTING_INT_CAST(size_t, srcStep) / sizeof(__m128i);
+	const size_t dstbump = WINPR_ASSERTING_INT_CAST(size_t, dstStep) / sizeof(__m128i);
 #ifdef DO_PREFETCH
 
 	/* Prefetch RGB's. */
@@ -715,21 +695,15 @@ sse2_RGBToYCbCr_16s16s_P3P3(const INT16* WINPR_RESTRICT pSrc[3], int srcStep,
 			 * within the upper 16 bits we will also have to scale the RGB
 			 * values used in the multiplication by << 5+(16-n).
 			 */
-			__m128i r;
-			__m128i g;
-			__m128i b;
-			__m128i y;
-			__m128i cb;
-			__m128i cr;
-			r = _mm_load_si128(r_buf + i);
-			g = _mm_load_si128(g_buf + i);
-			b = _mm_load_si128(b_buf + i);
+			__m128i r = _mm_load_si128(r_buf + i);
+			__m128i g = _mm_load_si128(g_buf + i);
+			__m128i b = _mm_load_si128(b_buf + i);
 			/* r<<6; g<<6; b<<6 */
 			r = _mm_slli_epi16(r, 6);
 			g = _mm_slli_epi16(g, 6);
 			b = _mm_slli_epi16(b, 6);
 			/* y = HIWORD(r*y_r) + HIWORD(g*y_g) + HIWORD(b*y_b) + min */
-			y = _mm_mulhi_epi16(r, y_r);
+			__m128i y = _mm_mulhi_epi16(r, y_r);
 			y = _mm_add_epi16(y, _mm_mulhi_epi16(g, y_g));
 			y = _mm_add_epi16(y, _mm_mulhi_epi16(b, y_b));
 			y = _mm_add_epi16(y, min);
@@ -737,14 +711,14 @@ sse2_RGBToYCbCr_16s16s_P3P3(const INT16* WINPR_RESTRICT pSrc[3], int srcStep,
 			mm_between_epi16(y, min, max);
 			_mm_store_si128(y_buf + i, y);
 			/* cb = HIWORD(r*cb_r) + HIWORD(g*cb_g) + HIWORD(b*cb_b) */
-			cb = _mm_mulhi_epi16(r, cb_r);
+			__m128i cb = _mm_mulhi_epi16(r, cb_r);
 			cb = _mm_add_epi16(cb, _mm_mulhi_epi16(g, cb_g));
 			cb = _mm_add_epi16(cb, _mm_mulhi_epi16(b, cb_b));
 			/* cb_g_buf[i] = MINMAX(cb, (-128 << 5), (127 << 5)); */
 			mm_between_epi16(cb, min, max);
 			_mm_store_si128(cb_buf + i, cb);
 			/* cr = HIWORD(r*cr_r) + HIWORD(g*cr_g) + HIWORD(b*cr_b) */
-			cr = _mm_mulhi_epi16(r, cr_r);
+			__m128i cr = _mm_mulhi_epi16(r, cr_r);
 			cr = _mm_add_epi16(cr, _mm_mulhi_epi16(g, cr_g));
 			cr = _mm_add_epi16(cr, _mm_mulhi_epi16(b, cr_b));
 			/* cr_b_buf[i] = MINMAX(cr, (-128 << 5), (127 << 5)); */
@@ -775,7 +749,7 @@ static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_BGRX(
 	const UINT16* pg = (const UINT16*)(pSrc[1]);
 	const UINT16* pb = (const UINT16*)(pSrc[2]);
 	const UINT32 pad = roi->width % 16;
-	const __m128i a = _mm_set1_epi32(0xFFFFFFFFU);
+	const __m128i a = mm_set1_epu32(0xFFFFFFFFU);
 	BYTE* out = NULL;
 	UINT32 srcbump = 0;
 	UINT32 dstbump = 0;
@@ -821,16 +795,11 @@ static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_BGRX(
 				r = _mm_packus_epi16(R0, R1); /* r = R7R6R5R4R3R2R1R0 */
 			}
 			{
-				__m128i gbHi;
-				__m128i gbLo;
-				__m128i arHi;
-				__m128i arLo;
-				{
-					gbLo = _mm_unpacklo_epi8(b, g); /* R0 = G7G6G5G4G3G2G1G0 */
-					gbHi = _mm_unpackhi_epi8(b, g); /* R1 = G7B7G6B7G5B5G4B4 */
-					arLo = _mm_unpacklo_epi8(r, a); /* R4 = FFR3FFR2FFR1FFR0 */
-					arHi = _mm_unpackhi_epi8(r, a); /* R3 = FFR7FFR6FFR5FFR4 */
-				}
+				const __m128i gbLo = _mm_unpacklo_epi8(b, g); /* R0 = G7G6G5G4G3G2G1G0 */
+				const __m128i gbHi = _mm_unpackhi_epi8(b, g); /* R1 = G7B7G6B7G5B5G4B4 */
+				const __m128i arLo = _mm_unpacklo_epi8(r, a); /* R4 = FFR3FFR2FFR1FFR0 */
+				const __m128i arHi = _mm_unpackhi_epi8(r, a); /* R3 = FFR7FFR6FFR5FFR4 */
+
 				{
 					const __m128i bgrx = _mm_unpacklo_epi16(gbLo, arLo);
 					_mm_store_si128((__m128i*)out, bgrx);
@@ -886,7 +855,7 @@ static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_RGBX(
 	const UINT16* pg = (const UINT16*)(pSrc[1]);
 	const UINT16* pb = (const UINT16*)(pSrc[2]);
 	const UINT32 pad = roi->width % 16;
-	const __m128i a = _mm_set1_epi32(0xFFFFFFFFU);
+	const __m128i a = mm_set1_epu32(0xFFFFFFFFU);
 	BYTE* out = NULL;
 	UINT32 srcbump = 0;
 	UINT32 dstbump = 0;
@@ -997,7 +966,7 @@ static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_XBGR(
 	const UINT16* pg = (const UINT16*)(pSrc[1]);
 	const UINT16* pb = (const UINT16*)(pSrc[2]);
 	const UINT32 pad = roi->width % 16;
-	const __m128i a = _mm_set1_epi32(0xFFFFFFFFU);
+	const __m128i a = mm_set1_epu32(0xFFFFFFFFU);
 	BYTE* out = NULL;
 	UINT32 srcbump = 0;
 	UINT32 dstbump = 0;
@@ -1107,7 +1076,7 @@ static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_XRGB(
 	const UINT16* pr = (const UINT16*)(pSrc[0]);
 	const UINT16* pg = (const UINT16*)(pSrc[1]);
 	const UINT16* pb = (const UINT16*)(pSrc[2]);
-	const __m128i a = _mm_set1_epi32(0xFFFFFFFFU);
+	const __m128i a = mm_set1_epu32(0xFFFFFFFFU);
 	const UINT32 pad = roi->width % 16;
 	BYTE* out = NULL;
 	UINT32 srcbump = 0;

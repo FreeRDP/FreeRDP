@@ -71,10 +71,14 @@ static void Ellipse_Bresenham(HGDI_DC hdc, int x1, int y1, int x2, int y2)
 
 	do
 	{
-		gdi_SetPixel(hdc, x2, y1, 0);
-		gdi_SetPixel(hdc, x1, y1, 0);
-		gdi_SetPixel(hdc, x1, y2, 0);
-		gdi_SetPixel(hdc, x2, y2, 0);
+		gdi_SetPixel(hdc, WINPR_ASSERTING_INT_CAST(UINT32, x2),
+		             WINPR_ASSERTING_INT_CAST(UINT32, y1), 0);
+		gdi_SetPixel(hdc, WINPR_ASSERTING_INT_CAST(UINT32, x1),
+		             WINPR_ASSERTING_INT_CAST(UINT32, y1), 0);
+		gdi_SetPixel(hdc, WINPR_ASSERTING_INT_CAST(UINT32, x1),
+		             WINPR_ASSERTING_INT_CAST(UINT32, y2), 0);
+		gdi_SetPixel(hdc, WINPR_ASSERTING_INT_CAST(UINT32, x2),
+		             WINPR_ASSERTING_INT_CAST(UINT32, y2), 0);
 		e2 = 2 * e;
 
 		if (e2 >= dx)
@@ -94,8 +98,13 @@ static void Ellipse_Bresenham(HGDI_DC hdc, int x1, int y1, int x2, int y2)
 
 	while (y1 - y2 < b)
 	{
-		gdi_SetPixel(hdc, x1 - 1, ++y1, 0);
-		gdi_SetPixel(hdc, x1 - 1, --y2, 0);
+		y1++;
+		y2--;
+
+		gdi_SetPixel(hdc, WINPR_ASSERTING_INT_CAST(uint32_t, x1 - 1),
+		             WINPR_ASSERTING_INT_CAST(uint32_t, y1), 0);
+		gdi_SetPixel(hdc, WINPR_ASSERTING_INT_CAST(uint32_t, x1 - 1),
+		             WINPR_ASSERTING_INT_CAST(uint32_t, y2), 0);
 	}
 }
 
@@ -166,7 +175,7 @@ BOOL gdi_FillRect(HGDI_DC hdc, const HGDI_RECT rect, HGDI_BRUSH hbr)
 			for (INT32 y = 1; y < nHeight; y++)
 			{
 				BYTE* dstp = gdi_get_bitmap_pointer(hdc, nXDest, nYDest + y);
-				memcpy(dstp, srcp, 1ull * nWidth * formatSize);
+				memcpy(dstp, srcp, 1ull * WINPR_ASSERTING_INT_CAST(size_t, nWidth) * formatSize);
 			}
 
 			break;
@@ -181,9 +190,15 @@ BOOL gdi_FillRect(HGDI_DC hdc, const HGDI_RECT rect, HGDI_BRUSH hbr)
 				for (INT32 x = 0; x < nWidth; x++)
 				{
 					const size_t yOffset =
-					    ((1ULL * nYDest + y) * hbr->pattern->width % hbr->pattern->height) *
+					    ((1ULL * WINPR_ASSERTING_INT_CAST(size_t, nYDest) +
+					      WINPR_ASSERTING_INT_CAST(size_t, y)) *
+					     WINPR_ASSERTING_INT_CAST(size_t, hbr->pattern->width) %
+					     WINPR_ASSERTING_INT_CAST(size_t, hbr->pattern->height)) *
 					    formatSize;
-					const size_t xOffset = ((1ULL * nXDest + x) % hbr->pattern->width) * formatSize;
+					const size_t xOffset = ((1ULL * WINPR_ASSERTING_INT_CAST(size_t, nXDest) +
+					                         WINPR_ASSERTING_INT_CAST(size_t, x)) %
+					                        WINPR_ASSERTING_INT_CAST(size_t, hbr->pattern->width)) *
+					                       formatSize;
 					const BYTE* patp = &hbr->pattern->data[yOffset + xOffset];
 
 					if (monochrome)

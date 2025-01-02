@@ -20,6 +20,8 @@
 #include <freerdp/config.h>
 
 #include <winpr/crt.h>
+#include <winpr/assert.h>
+#include <winpr/cast.h>
 
 #include <freerdp/crypto/der.h>
 
@@ -38,18 +40,18 @@ int der_write_length(wStream* s, int length)
 	if (length > 0x7F && length <= 0xFF)
 	{
 		Stream_Write_UINT8(s, 0x81);
-		Stream_Write_UINT8(s, length);
+		Stream_Write_UINT8(s, WINPR_ASSERTING_INT_CAST(UINT8, length));
 		return 2;
 	}
 	else if (length > 0xFF)
 	{
 		Stream_Write_UINT8(s, 0x82);
-		Stream_Write_UINT16_BE(s, length);
+		Stream_Write_UINT16_BE(s, WINPR_ASSERTING_INT_CAST(UINT16, length));
 		return 3;
 	}
 	else
 	{
-		Stream_Write_UINT8(s, length);
+		Stream_Write_UINT8(s, WINPR_ASSERTING_INT_CAST(UINT8, length));
 		return 1;
 	}
 }
@@ -89,7 +91,7 @@ void der_write_octet_string(wStream* s, BYTE* oct_str, int length)
 {
 	der_write_universal_tag(s, ER_TAG_OCTET_STRING, FALSE);
 	der_write_length(s, length);
-	Stream_Write(s, oct_str, length);
+	Stream_Write(s, oct_str, WINPR_ASSERTING_INT_CAST(size_t, length));
 }
 
 int der_skip_sequence_tag(int length)

@@ -1006,7 +1006,8 @@ static UINT VCAPITYPE FreeRDP_VirtualChannelInitEx(
 
 		WINPR_ASSERT(pChannelOpenData);
 
-		pChannelOpenData->OpenHandle = InterlockedIncrement(&g_OpenHandleSeq);
+		const LONG hdl = InterlockedIncrement(&g_OpenHandleSeq);
+		pChannelOpenData->OpenHandle = WINPR_ASSERTING_INT_CAST(uint32_t, hdl);
 		pChannelOpenData->channels = channels;
 		pChannelOpenData->lpUserParam = lpUserParam;
 		if (!HashTable_Insert(g_ChannelHandles, (void*)(UINT_PTR)pChannelOpenData->OpenHandle,
@@ -1106,8 +1107,11 @@ static UINT VCAPITYPE FreeRDP_VirtualChannelInit(LPVOID* ppInitHandle, PCHANNEL_
 		UINT32 ChannelCount = freerdp_settings_get_uint32(settings, FreeRDP_ChannelCount);
 
 		pChannelDef = &pChannel[index];
+
 		pChannelOpenData = &channels->openDataList[channels->openDataCount];
-		pChannelOpenData->OpenHandle = InterlockedIncrement(&g_OpenHandleSeq);
+
+		const LONG hdl = InterlockedIncrement(&g_OpenHandleSeq);
+		pChannelOpenData->OpenHandle = WINPR_ASSERTING_INT_CAST(uint32_t, hdl);
 		pChannelOpenData->channels = channels;
 		if (!HashTable_Insert(g_ChannelHandles, (void*)(UINT_PTR)pChannelOpenData->OpenHandle,
 		                      (void*)pChannelOpenData))
