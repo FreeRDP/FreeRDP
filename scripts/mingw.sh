@@ -15,6 +15,7 @@ INSTALL_BASE="$SCRIPT_PATH/../build-mingw/install"
 CLONE=1
 DEPS=1
 BUILD=1
+FFMPEG=0
 
 for i in "$@"
 do
@@ -27,6 +28,9 @@ case $i in
     ;;
     -c|--no-clone)
     CLONE=0
+    ;;
+    -f|--with-ffmpeg)
+    FFMPEG=1
     ;;
     *)
             # unknown option
@@ -80,7 +84,10 @@ then
 	do_clone uriparser-0.9.7 https://github.com/uriparser/uriparser.git uriparser
 	do_clone v1.7.17 https://github.com/DaveGamble/cJSON.git cJSON
 	do_clone release-2.30.0 https://github.com/libsdl-org/SDL.git SDL
-	do_clone n6.1.1 https://github.com/FFmpeg/FFmpeg.git FFmpeg
+	if [ $FFMPEG -ne 0 ];
+	then
+		do_clone n6.1.1 https://github.com/FFmpeg/FFmpeg.git FFmpeg
+	fi
 	do_clone v2.4.1 https://github.com/cisco/openh264.git openh264
 	do_clone v1.0.27 https://github.com/libusb/libusb-cmake.git libusb-cmake
 	do_clone release-2.8.2 https://github.com/libsdl-org/SDL_image.git SDL_image
@@ -151,18 +158,21 @@ then
 	     -DLIBUSB_ENABLE_DEBUG_LOGGING=OFF
 
 	# TODO: This takes ages to compile, disable
-	#(
-	#    cd "$BUILD_BASE"
-	#    mkdir -p FFmpeg
-	#    cd FFmpeg
-	#    "$SRC_BASE/FFmpeg/configure" \
-	#        --arch=x86_64 \
-	#        --target-os=mingw64 \
-	#        --cross-prefix=x86_64-w64-mingw32- \
-	#        --prefix="$INSTALL_BASE"
-	#    make -j
-	#    make -j install
-	#)
+	if [ $FFMPEG -ne 0 ];
+	then
+	(
+	    cd "$BUILD_BASE"
+	    mkdir -p FFmpeg
+	    cd FFmpeg
+	    "$SRC_BASE/FFmpeg/configure" \
+	        --arch=x86_64 \
+	        --target-os=mingw64 \
+	        --cross-prefix=x86_64-w64-mingw32- \
+	        --prefix="$INSTALL_BASE"
+	    make -j
+	    make -j install
+	)
+	fi
 
 	meson setup --cross-file "$SCRIPT_PATH/mingw-meson.conf" \
 	    -Dprefix="$INSTALL_BASE" \
