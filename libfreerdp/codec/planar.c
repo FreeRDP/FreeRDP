@@ -229,10 +229,6 @@ static INLINE INT32 planar_skip_plane_rle(const BYTE* WINPR_RESTRICT pSrcData, U
 
 static inline UINT8 clamp(INT16 val)
 {
-	if (val < 0)
-		return 0;
-	if (val > 0xFF)
-		return 0xFF;
 	return (UINT8)val;
 }
 
