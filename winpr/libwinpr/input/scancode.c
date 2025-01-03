@@ -23,15 +23,40 @@
 
 #include <winpr/input.h>
 
+#include "../log.h"
+#define TAG WINPR_TAG("input.scancode")
+
 /**
  * Virtual Scan Codes
  */
 
 /**
+ * Keyboard Type 1
+ * WINPR_KBD_TYPE_IBM_PC_XT
+ */
+static const DWORD KBD1T[128] = { 0 };
+static const DWORD KBD1X[128] = { 0 };
+
+/**
+ * Keyboard Type 2
+ * WINPR_KBD_TYPE_OLIVETTI_ICO
+ */
+static const DWORD KBD2T[128] = { 0 };
+static const DWORD KBD2X[128] = { 0 };
+
+/**
+ * Keyboard Type 3
+ * WINPR_KBD_TYPE_IBM_PC_AT
+ */
+static const DWORD KBD3T[128] = { 0 };
+static const DWORD KBD3X[128] = { 0 };
+
+/**
  * Keyboard Type 4
+ * WINPR_KBD_TYPE_IBM_ENHANCED
  */
 
-static DWORD KBD4T[128] = {
+static const DWORD KBD4T[128] = {
 	KBD4_T00, KBD4_T01, KBD4_T02, KBD4_T03, KBD4_T04, KBD4_T05, KBD4_T06, KBD4_T07, KBD4_T08,
 	KBD4_T09, KBD4_T0A, KBD4_T0B, KBD4_T0C, KBD4_T0D, KBD4_T0E, KBD4_T0F, KBD4_T10, KBD4_T11,
 	KBD4_T12, KBD4_T13, KBD4_T14, KBD4_T15, KBD4_T16, KBD4_T17, KBD4_T18, KBD4_T19, KBD4_T1A,
@@ -49,7 +74,7 @@ static DWORD KBD4T[128] = {
 	KBD4_T7E, KBD4_T7F
 };
 
-static DWORD KBD4X[128] = {
+static const DWORD KBD4X[128] = {
 	VK_NONE,  VK_NONE,  VK_NONE,  VK_NONE,  VK_NONE,  VK_NONE,  VK_NONE,  VK_NONE,  VK_NONE,
 	VK_NONE,  VK_NONE,  VK_NONE,  VK_NONE,  VK_NONE,  VK_NONE,  VK_NONE,  KBD4_X10, VK_NONE,
 	VK_NONE,  VK_NONE,  VK_NONE,  VK_NONE,  VK_NONE,  VK_NONE,  VK_NONE,  KBD4_X19, VK_NONE,
@@ -68,10 +93,25 @@ static DWORD KBD4X[128] = {
 };
 
 /**
+ * Keyboard Type 5
+ * WINPR_KBD_TYPE_NOKIA_1050
+ */
+static const DWORD KBD5T[128] = { 0 };
+static const DWORD KBD5X[128] = { 0 };
+
+/**
+ * Keyboard Type 6
+ * WINPR_KBD_TYPE_NOKIA_9140
+ */
+static const DWORD KBD6T[128] = { 0 };
+static const DWORD KBD6X[128] = { 0 };
+
+/**
  * Keyboard Type 7
+ * WINPR_KBD_TYPE_JAPANESE
  */
 
-static DWORD KBD7T[128] = {
+static const DWORD KBD7T[128] = {
 	KBD7_T00, KBD7_T01, KBD7_T02, KBD7_T03, KBD7_T04, KBD7_T05, KBD7_T06, KBD7_T07, KBD7_T08,
 	KBD7_T09, KBD7_T0A, KBD7_T0B, KBD7_T0C, KBD7_T0D, KBD7_T0E, KBD7_T0F, KBD7_T10, KBD7_T11,
 	KBD7_T12, KBD7_T13, KBD7_T14, KBD7_T15, KBD7_T16, KBD7_T17, KBD7_T18, KBD7_T19, KBD7_T1A,
@@ -89,7 +129,7 @@ static DWORD KBD7T[128] = {
 	KBD7_T7E, KBD7_T7F
 };
 
-static DWORD KBD7X[128] = {
+static const DWORD KBD7X[128] = {
 	VK_NONE,  VK_NONE,  VK_NONE,  VK_NONE,  VK_NONE,  VK_NONE,  VK_NONE,  VK_NONE,  VK_NONE,
 	VK_NONE,  VK_NONE,  VK_NONE,  VK_NONE,  VK_NONE,  VK_NONE,  VK_NONE,  KBD7_X10, VK_NONE,
 	VK_NONE,  VK_NONE,  VK_NONE,  VK_NONE,  VK_NONE,  VK_NONE,  VK_NONE,  KBD7_X19, VK_NONE,
@@ -107,6 +147,13 @@ static DWORD KBD7X[128] = {
 	VK_NONE,  VK_NONE
 };
 
+/**
+ * Keyboard Type 8
+ * WINPR_KBD_TYPE_KOREAN
+ */
+static const DWORD KBD8T[128] = { 0 };
+static const DWORD KBD8X[128] = { 0 };
+
 DWORD GetVirtualKeyCodeFromVirtualScanCode(DWORD scancode, DWORD dwKeyboardType)
 {
 	const DWORD codeIndex = scancode & 0xFF;
@@ -114,81 +161,96 @@ DWORD GetVirtualKeyCodeFromVirtualScanCode(DWORD scancode, DWORD dwKeyboardType)
 	if (codeIndex > 127)
 		return VK_NONE;
 
-	if ((dwKeyboardType != WINPR_KBD_TYPE_IBM_ENHANCED) &&
-	    (dwKeyboardType != WINPR_KBD_TYPE_JAPANESE))
-		dwKeyboardType = WINPR_KBD_TYPE_IBM_ENHANCED;
+	switch (dwKeyboardType)
+	{
+		case WINPR_KBD_TYPE_IBM_PC_XT:
+			return (scancode & KBDEXT) ? KBD1X[codeIndex] : KBD1T[codeIndex];
+		case WINPR_KBD_TYPE_OLIVETTI_ICO:
+			return (scancode & KBDEXT) ? KBD2X[codeIndex] : KBD2T[codeIndex];
+		case WINPR_KBD_TYPE_IBM_PC_AT:
+			return (scancode & KBDEXT) ? KBD3X[codeIndex] : KBD3T[codeIndex];
+		case WINPR_KBD_TYPE_IBM_ENHANCED:
+			return (scancode & KBDEXT) ? KBD4X[codeIndex] : KBD4T[codeIndex];
+		case WINPR_KBD_TYPE_NOKIA_1050:
+			return (scancode & KBDEXT) ? KBD5X[codeIndex] : KBD5T[codeIndex];
+		case WINPR_KBD_TYPE_NOKIA_9140:
+			return (scancode & KBDEXT) ? KBD6X[codeIndex] : KBD6T[codeIndex];
+		case WINPR_KBD_TYPE_JAPANESE:
+			return (scancode & KBDEXT) ? KBD7X[codeIndex] : KBD7T[codeIndex];
+		case WINPR_KBD_TYPE_KOREAN:
+			return (scancode & KBDEXT) ? KBD8X[codeIndex] : KBD8T[codeIndex];
+		default:
+			WLog_ERR(TAG, "dwKeyboardType=0x%08" PRIx32 " not supported", dwKeyboardType);
+			return VK_NONE;
+	}
+}
 
-	if (dwKeyboardType == WINPR_KBD_TYPE_IBM_ENHANCED)
-		return (scancode & KBDEXT) ? KBD4X[codeIndex] : KBD4T[codeIndex];
-	else if (dwKeyboardType == WINPR_KBD_TYPE_JAPANESE)
-		return (scancode & KBDEXT) ? KBD7X[codeIndex] : KBD7T[codeIndex];
-
+static DWORD get_scancode(DWORD vkcode, const DWORD* array, size_t arraysize, DWORD flag)
+{
+	WINPR_ASSERT(array);
+	for (size_t x = 0; x < arraysize; x++)
+	{
+		const DWORD cur = array[x];
+		if (cur == vkcode)
+			return WINPR_ASSERTING_INT_CAST(DWORD, x) | flag;
+	}
 	return VK_NONE;
 }
 
 DWORD GetVirtualScanCodeFromVirtualKeyCode(DWORD vkcode, DWORD dwKeyboardType)
 {
-	DWORD scancode = 0;
 	DWORD codeIndex = vkcode & 0xFF;
 
-	if ((dwKeyboardType != WINPR_KBD_TYPE_IBM_ENHANCED) &&
-	    (dwKeyboardType != WINPR_KBD_TYPE_JAPANESE))
-		dwKeyboardType = WINPR_KBD_TYPE_IBM_ENHANCED;
-
-	if (dwKeyboardType == WINPR_KBD_TYPE_IBM_ENHANCED)
+	switch (dwKeyboardType)
 	{
-		if (vkcode & KBDEXT)
-		{
-			WINPR_ASSERT(ARRAYSIZE(KBD4X) <= UINT32_MAX);
-			for (size_t i = 0; i < ARRAYSIZE(KBD4X); i++)
-			{
-				if (KBD4X[i] == codeIndex)
-				{
-					scancode = (DWORD)(i | KBDEXT);
-					break;
-				}
-			}
-		}
-		else
-		{
-			WINPR_ASSERT(ARRAYSIZE(KBD4T) <= UINT32_MAX);
-			for (size_t i = 0; i < ARRAYSIZE(KBD4T); i++)
-			{
-				if (KBD4T[i] == codeIndex)
-				{
-					scancode = (DWORD)i;
-					break;
-				}
-			}
-		}
-	}
-	else if (dwKeyboardType == WINPR_KBD_TYPE_JAPANESE)
-	{
-		if (vkcode & KBDEXT)
-		{
-			WINPR_ASSERT(ARRAYSIZE(KBD7X) <= UINT32_MAX);
-			for (size_t i = 0; i < ARRAYSIZE(KBD7X); i++)
-			{
-				if (KBD7X[i] == codeIndex)
-				{
-					scancode = (DWORD)(i | KBDEXT);
-					break;
-				}
-			}
-		}
-		else
-		{
-			WINPR_ASSERT(ARRAYSIZE(KBD7T) <= UINT32_MAX);
-			for (size_t i = 0; i < ARRAYSIZE(KBD7T); i++)
-			{
-				if (KBD7T[i] == codeIndex)
-				{
-					scancode = (DWORD)i;
-					break;
-				}
-			}
-		}
-	}
+		case WINPR_KBD_TYPE_IBM_PC_XT:
+			if (vkcode & KBDEXT)
+				return get_scancode(codeIndex, KBD1X, ARRAYSIZE(KBD1X), KBDEXT);
+			else
+				return get_scancode(codeIndex, KBD1T, ARRAYSIZE(KBD1T), 0);
 
-	return scancode;
+		case WINPR_KBD_TYPE_OLIVETTI_ICO:
+			if (vkcode & KBDEXT)
+				return get_scancode(codeIndex, KBD2X, ARRAYSIZE(KBD2X), KBDEXT);
+			else
+				return get_scancode(codeIndex, KBD2T, ARRAYSIZE(KBD2T), 0);
+
+		case WINPR_KBD_TYPE_IBM_PC_AT:
+			if (vkcode & KBDEXT)
+				return get_scancode(codeIndex, KBD3X, ARRAYSIZE(KBD3X), KBDEXT);
+			else
+				return get_scancode(codeIndex, KBD3T, ARRAYSIZE(KBD3T), 0);
+
+		case WINPR_KBD_TYPE_IBM_ENHANCED:
+			if (vkcode & KBDEXT)
+				return get_scancode(codeIndex, KBD4X, ARRAYSIZE(KBD4X), KBDEXT);
+			else
+				return get_scancode(codeIndex, KBD4T, ARRAYSIZE(KBD4T), 0);
+
+		case WINPR_KBD_TYPE_NOKIA_1050:
+			if (vkcode & KBDEXT)
+				return get_scancode(codeIndex, KBD5X, ARRAYSIZE(KBD5X), KBDEXT);
+			else
+				return get_scancode(codeIndex, KBD5T, ARRAYSIZE(KBD5T), 0);
+
+		case WINPR_KBD_TYPE_NOKIA_9140:
+			if (vkcode & KBDEXT)
+				return get_scancode(codeIndex, KBD6X, ARRAYSIZE(KBD6X), KBDEXT);
+			else
+				return get_scancode(codeIndex, KBD6T, ARRAYSIZE(KBD6T), 0);
+
+		case WINPR_KBD_TYPE_JAPANESE:
+			if (vkcode & KBDEXT)
+				return get_scancode(codeIndex, KBD7X, ARRAYSIZE(KBD7X), KBDEXT);
+			else
+				return get_scancode(codeIndex, KBD7T, ARRAYSIZE(KBD7T), 0);
+		case WINPR_KBD_TYPE_KOREAN:
+			if (vkcode & KBDEXT)
+				return get_scancode(codeIndex, KBD8X, ARRAYSIZE(KBD8X), KBDEXT);
+			else
+				return get_scancode(codeIndex, KBD8T, ARRAYSIZE(KBD8T), 0);
+		default:
+			WLog_ERR(TAG, "dwKeyboardType=0x%08" PRIx32 " not supported", dwKeyboardType);
+			return 0;
+	}
 }
