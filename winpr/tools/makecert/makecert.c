@@ -963,7 +963,7 @@ int makecert_context_process(MAKECERT_CONTEXT* context, int argc, char** argv)
 		key_length = (int)val;
 	}
 
-	if (!makecert_create_rsa(&context->pkey, key_length))
+	if (!makecert_create_rsa(&context->pkey, WINPR_ASSERTING_INT_CAST(size_t, key_length)))
 		return -1;
 
 	X509_set_version(context->x509, 2);

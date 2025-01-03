@@ -133,7 +133,8 @@ ULONG ntlm_av_pair_list_length(NTLM_AV_PAIR* pAvPairList, size_t cbAvPairList)
 	if (pAvPair < pAvPairList)
 		return 0;
 
-	const size_t size = ((PBYTE)pAvPair - (PBYTE)pAvPairList) + sizeof(NTLM_AV_PAIR);
+	const size_t size = WINPR_ASSERTING_INT_CAST(size_t, ((PBYTE)pAvPair - (PBYTE)pAvPairList)) +
+	                    sizeof(NTLM_AV_PAIR);
 	WINPR_ASSERT(size <= UINT32_MAX);
 	WINPR_ASSERT(size >= 0);
 	return (ULONG)size;

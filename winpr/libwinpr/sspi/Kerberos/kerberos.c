@@ -29,6 +29,7 @@
 #include <ctype.h>
 
 #include <winpr/assert.h>
+#include <winpr/cast.h>
 #include <winpr/asn1.h>
 #include <winpr/crt.h>
 #include <winpr/interlocked.h>
@@ -126,6 +127,9 @@ static const WinPrAsn1_OID kerberos_OID = { 9, (void*)"\x2a\x86\x48\x86\xf7\x12\
 static const WinPrAsn1_OID kerberos_u2u_OID = { 10,
 	                                            (void*)"\x2a\x86\x48\x86\xf7\x12\x01\x02\x02\x03" };
 
+#define krb_log_exec_bool(fkt, ctx, ...)                                                     \
+	kerberos_log_msg(ctx, fkt(ctx, ##__VA_ARGS__) ? KRB5KRB_ERR_GENERIC : 0, #fkt, __FILE__, \
+	                 __func__, __LINE__)
 #define krb_log_exec(fkt, ctx, ...) \
 	kerberos_log_msg(ctx, fkt(ctx, ##__VA_ARGS__), #fkt, __FILE__, __func__, __LINE__)
 #define krb_log_exec_ptr(fkt, ctx, ...) \
@@ -405,7 +409,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleA(
 	{
 		krb5_creds creds = { 0 };
 		krb5_creds matchCreds = { 0 };
-		int matchFlags = KRB5_TC_MATCH_TIMES;
+		krb5_flags matchFlags = KRB5_TC_MATCH_TIMES;
 
 		krb5_timeofday(ctx, &matchCreds.times.endtime);
 		matchCreds.times.endtime += 60;
@@ -1348,10 +1352,10 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcceptSecurityContext(
 			if (rv != 0)
 				goto cleanup;
 
-			if ((!sname || krb_log_exec(krb5_principal_compare_any_realm, credentials->ctx,
-			                            principal, entry.principal)) &&
-			    (!realm ||
-			     krb_log_exec(krb5_realm_compare, credentials->ctx, principal, entry.principal)))
+			if ((!sname || krb_log_exec_bool(krb5_principal_compare_any_realm, credentials->ctx,
+			                                 principal, entry.principal)) &&
+			    (!realm || krb_log_exec_bool(krb5_realm_compare, credentials->ctx, principal,
+			                                 entry.principal)))
 				break;
 			if (krb_log_exec(krb5glue_free_keytab_entry_contents, credentials->ctx, &entry))
 				goto cleanup;
@@ -1597,7 +1601,7 @@ static SECURITY_STATUS kerberos_ATTR_TICKET_LOGON(KRB_CONTEXT* context,
 {
 	krb5_creds matchCred = { 0 };
 	krb5_auth_context authContext = NULL;
-	int getCredsFlags = KRB5_GC_CACHED;
+	krb5_flags getCredsFlags = KRB5_GC_CACHED;
 	BOOL firstRun = TRUE;
 	krb5_creds* hostCred = NULL;
 	SECURITY_STATUS ret = SEC_E_INSUFFICIENT_MEMORY;
@@ -1866,7 +1870,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_EncryptMessage(PCtxtHandle phContext, 
 
 	/* Write the GSS header with 0 in RRC */
 	winpr_Data_Write_UINT16_BE(header, TOK_ID_WRAP);
-	header[2] = flags;
+	header[2] = WINPR_ASSERTING_INT_CAST(char, flags);
 	header[3] = (char)0xFF;
 	winpr_Data_Write_UINT32(header + 4, 0);
 	winpr_Data_Write_UINT64_BE(header + 8, (context->local_seq + MessageSeqNo));
@@ -1875,8 +1879,8 @@ static SECURITY_STATUS SEC_ENTRY kerberos_EncryptMessage(PCtxtHandle phContext, 
 	CopyMemory(encrypt_iov[2].data.data, header, 16);
 
 	/* Set the correct RRC */
-	winpr_Data_Write_UINT16_BE(header + 6,
-	                           16 + encrypt_iov[3].data.length + encrypt_iov[4].data.length);
+	const size_t len = 16 + encrypt_iov[3].data.length + encrypt_iov[4].data.length;
+	winpr_Data_Write_UINT16_BE(header + 6, WINPR_ASSERTING_INT_CAST(UINT16, len));
 
 	if (krb_log_exec(krb5glue_encrypt_iov, creds->ctx, key, usage, encrypt_iov,
 	                 ARRAYSIZE(encrypt_iov)))
@@ -1898,7 +1902,6 @@ static SECURITY_STATUS SEC_ENTRY kerberos_DecryptMessage(PCtxtHandle phContext,
 	PSecBuffer data_buffer = NULL;
 	krb5glue_key key = NULL;
 	krb5_keyusage usage = 0;
-	char* header = NULL;
 	uint16_t tok_id = 0;
 	BYTE flags = 0;
 	uint16_t ec = 0;
@@ -1925,15 +1928,15 @@ static SECURITY_STATUS SEC_ENTRY kerberos_DecryptMessage(PCtxtHandle phContext,
 		return SEC_E_INVALID_TOKEN;
 
 	/* Read in header information */
-	header = sig_buffer->pvBuffer;
+	BYTE* header = sig_buffer->pvBuffer;
 	tok_id = winpr_Data_Get_UINT16_BE(header);
 	flags = header[2];
-	ec = winpr_Data_Get_UINT16_BE((header + 4));
-	rrc = winpr_Data_Get_UINT16_BE((header + 6));
-	seq_no = winpr_Data_Get_UINT64_BE((header + 8));
+	ec = winpr_Data_Get_UINT16_BE(&header[4]);
+	rrc = winpr_Data_Get_UINT16_BE(&header[6]);
+	seq_no = winpr_Data_Get_UINT64_BE(&header[8]);
 
 	/* Check that the header is valid */
-	if (tok_id != TOK_ID_WRAP || (BYTE)header[3] != 0xFF)
+	if ((tok_id != TOK_ID_WRAP) || (header[3] != 0xFF))
 		return SEC_E_INVALID_TOKEN;
 
 	if ((flags & FLAG_SENDER_IS_ACCEPTOR) == context->acceptor)
@@ -1969,11 +1972,15 @@ static SECURITY_STATUS SEC_ENTRY kerberos_DecryptMessage(PCtxtHandle phContext,
 		return SEC_E_INVALID_TOKEN;
 
 	/* Locate the parts of the message */
-	iov[0].data.data = header + 16 + rrc + ec;
+	iov[0].data.data = (char*)&header[16 + rrc + ec];
 	iov[1].data.data = data_buffer->pvBuffer;
-	iov[2].data.data = header + 16 + ec;
-	iov[3].data.data = iov[2].data.data + iov[2].data.length;
-	iov[4].data.data = iov[3].data.data + iov[3].data.length;
+	iov[2].data.data = (char*)&header[16 + ec];
+	char* data2 = iov[2].data.data;
+	iov[3].data.data = &data2[iov[2].data.length];
+
+	char* data3 = iov[3].data.data;
+	iov[4].data.data = &data2[iov[3].data.length];
+	iov[4].data.data = &data3[iov[3].data.length];
 
 	if (krb_log_exec(krb5glue_decrypt_iov, creds->ctx, key, usage, iov, ARRAYSIZE(iov)))
 		return SEC_E_INTERNAL_ERROR;
@@ -2001,7 +2008,6 @@ static SECURITY_STATUS SEC_ENTRY kerberos_MakeSignature(PCtxtHandle phContext, U
 	PSecBuffer data_buffer = NULL;
 	krb5glue_key key = NULL;
 	krb5_keyusage usage = 0;
-	char* header = NULL;
 	BYTE flags = 0;
 	krb5_crypto_iov iov[] = { { KRB5_CRYPTO_TYPE_DATA, { 0 } },
 		                      { KRB5_CRYPTO_TYPE_DATA, { 0 } },
@@ -2041,9 +2047,9 @@ static SECURITY_STATUS SEC_ENTRY kerberos_MakeSignature(PCtxtHandle phContext, U
 		return SEC_E_INSUFFICIENT_MEMORY;
 
 	/* Write the header */
-	header = sig_buffer->pvBuffer;
+	char* header = sig_buffer->pvBuffer;
 	winpr_Data_Write_UINT16_BE(header, TOK_ID_MIC);
-	header[2] = flags;
+	header[2] = WINPR_ASSERTING_INT_CAST(char, flags);
 	memset(header + 3, 0xFF, 5);
 	winpr_Data_Write_UINT64_BE(header + 8, (context->local_seq + MessageSeqNo));
 
@@ -2072,7 +2078,6 @@ static SECURITY_STATUS SEC_ENTRY kerberos_VerifySignature(PCtxtHandle phContext,
 	PSecBuffer data_buffer = NULL;
 	krb5glue_key key = NULL;
 	krb5_keyusage usage = 0;
-	char* header = NULL;
 	BYTE flags = 0;
 	uint16_t tok_id = 0;
 	uint64_t seq_no = 0;
@@ -2096,7 +2101,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_VerifySignature(PCtxtHandle phContext,
 		return SEC_E_INVALID_TOKEN;
 
 	/* Read in header info */
-	header = sig_buffer->pvBuffer;
+	BYTE* header = sig_buffer->pvBuffer;
 	tok_id = winpr_Data_Get_UINT16_BE(header);
 	flags = header[2];
 	seq_no = winpr_Data_Get_UINT64_BE((header + 8));
@@ -2132,8 +2137,8 @@ static SECURITY_STATUS SEC_ENTRY kerberos_VerifySignature(PCtxtHandle phContext,
 
 	/* Set up the iov array */
 	iov[0].data.data = data_buffer->pvBuffer;
-	iov[1].data.data = header;
-	iov[2].data.data = header + 16;
+	iov[1].data.data = (char*)header;
+	iov[2].data.data = (char*)&header[16];
 
 	if (krb_log_exec(krb5glue_verify_checksum_iov, creds->ctx, key, usage, iov, ARRAYSIZE(iov),
 	                 &is_valid))
