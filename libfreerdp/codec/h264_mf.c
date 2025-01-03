@@ -451,9 +451,13 @@ static void mf_uninit(H264_CONTEXT* h264)
 	}
 }
 
-static BOOL mf_init(H264_CONTEXT* h264)
+static BOOL mf_init(H264_CONTEXT* h264, BOOL* hwAccel)
 {
 	HRESULT hr;
+
+	WINPR_ASSERT(hwAccel);
+	*hwAccel = FALSE; /* not supported */
+
 	H264_CONTEXT_MF* sys = (H264_CONTEXT_MF*)calloc(1, sizeof(H264_CONTEXT_MF));
 
 	if (!sys)
