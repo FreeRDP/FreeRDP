@@ -875,7 +875,8 @@ extern "C"
 		WINPR_KBD_TYPE_IBM_ENHANCED = 0x00000004, /* IBM enhanced (101-key or 102-key) keyboard */
 		WINPR_KBD_TYPE_NOKIA_1050 = 0x00000005,   /* Nokia 1050 and similar keyboards */
 		WINPR_KBD_TYPE_NOKIA_9140 = 0x00000006,   /* Nokia 9140 and similar keyboards */
-		WINPR_KBD_TYPE_JAPANESE = 0x00000007      /* Japanese keyboard */
+		WINPR_KBD_TYPE_JAPANESE = 0x00000007,     /* Japanese keyboard */
+		WINPR_KBD_TYPE_KOREAN = 0x00000008        /* Korean keyboard */
 	};
 
 	/**
