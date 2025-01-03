@@ -54,7 +54,7 @@ extern "C"
 	FREERDP_API const char* scard_get_ioctl_string(UINT32 ioControlCode, BOOL funcName);
 
 	FREERDP_API BOOL rdpdr_write_iocompletion_header(wStream* out, UINT32 DeviceId,
-	                                                 UINT32 CompletionId, UINT32 ioStatus);
+	                                                 UINT32 CompletionId, NTSTATUS ioStatus);
 
 	FREERDP_API void rdpdr_dump_received_packet(wLog* log, DWORD lvl, wStream* out,
 	                                            const char* custom);

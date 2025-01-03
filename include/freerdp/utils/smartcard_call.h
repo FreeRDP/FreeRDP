@@ -56,7 +56,7 @@ extern "C"
 	FREERDP_API void* smartcard_call_get_context(scard_call_context* ctx, SCARDCONTEXT hContext);
 
 	FREERDP_API LONG smartcard_irp_device_control_call(scard_call_context* context, wStream* out,
-	                                                   UINT32* pIoStatus,
+	                                                   NTSTATUS* pIoStatus,
 	                                                   SMARTCARD_OPERATION* operation);
 
 #ifdef __cplusplus

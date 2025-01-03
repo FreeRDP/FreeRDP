@@ -252,7 +252,7 @@ const char* rdpdr_packetid_string(UINT16 packetid)
 }
 
 BOOL rdpdr_write_iocompletion_header(wStream* out, UINT32 DeviceId, UINT32 CompletionId,
-                                     UINT32 ioStatus)
+                                     NTSTATUS ioStatus)
 {
 	WINPR_ASSERT(out);
 	Stream_SetPosition(out, 0);
@@ -262,7 +262,7 @@ BOOL rdpdr_write_iocompletion_header(wStream* out, UINT32 DeviceId, UINT32 Compl
 	Stream_Write_UINT16(out, PAKID_CORE_DEVICE_IOCOMPLETION); /* PacketId (2 bytes) */
 	Stream_Write_UINT32(out, DeviceId);                       /* DeviceId (4 bytes) */
 	Stream_Write_UINT32(out, CompletionId);                   /* CompletionId (4 bytes) */
-	Stream_Write_UINT32(out, ioStatus);                       /* IoStatus (4 bytes) */
+	Stream_Write_INT32(out, ioStatus);                        /* IoStatus (4 bytes) */
 
 	return TRUE;
 }

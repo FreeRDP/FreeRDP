@@ -64,9 +64,9 @@ typedef struct
 	rdpContext* rdpcontext;
 } DRIVE_DEVICE;
 
-static INT32 drive_map_windows_err(DWORD fs_errno)
+static NTSTATUS drive_map_windows_err(DWORD fs_errno)
 {
-	INT32 rc = 0;
+	NTSTATUS rc = 0;
 
 	/* try to return NTSTATUS version of error code */
 
