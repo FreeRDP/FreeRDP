@@ -1045,9 +1045,6 @@ SSIZE_T transport_parse_pdu(rdpTransport* transport, wStream* s, BOOL* incomplet
 	if (pduLength <= 0)
 		return pduLength;
 
-	if (pduLength > SSIZE_MAX)
-		return -1;
-
 	const size_t len = Stream_Length(s);
 	if (len > WINPR_ASSERTING_INT_CAST(size_t, pduLength))
 		return -1;

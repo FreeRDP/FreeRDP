@@ -76,6 +76,9 @@ static INLINE BYTE* gdi_get_brush_pointer(HGDI_DC hdcBrush, UINT32 x, UINT32 y)
 			 * brush origin and dest coordinates */
 			const UINT32 w = WINPR_ASSERTING_INT_CAST(UINT32, hBmpBrush->width);
 			const UINT32 h = WINPR_ASSERTING_INT_CAST(UINT32, hBmpBrush->height);
+
+			WINPR_ASSERT(w > 0);
+			WINPR_ASSERT(h > 0);
 			x = (x + w - (WINPR_ASSERTING_INT_CAST(UINT32, hdcBrush->brush->nXOrg) % w)) % w;
 			y = (y + h - (WINPR_ASSERTING_INT_CAST(UINT32, hdcBrush->brush->nYOrg) % h)) % h;
 			p = hBmpBrush->data + (y * hBmpBrush->scanline) +

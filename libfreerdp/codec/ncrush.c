@@ -2614,9 +2614,8 @@ int ncrush_compress(NCRUSH_CONTEXT* ncrush, const BYTE* pSrcData, UINT32 SrcSize
 	CopyOffset = 0;
 	MatchOffset = 0;
 	const intptr_t thsize = HistoryPtr - HistoryBuffer;
-	WINPR_ASSERT(thsize >= 0);
-	WINPR_ASSERT(thsize <= UINT32_MAX);
-	ncrush_hash_table_add(ncrush, pSrcData, SrcSize, (UINT32)thsize);
+
+	ncrush_hash_table_add(ncrush, pSrcData, SrcSize, WINPR_ASSERTING_INT_CAST(UINT32, thsize));
 	CopyMemory(HistoryPtr, pSrcData, SrcSize);
 	ncrush->HistoryPtr = &HistoryPtr[SrcSize];
 

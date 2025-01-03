@@ -440,7 +440,7 @@ int websocket_context_read(websocket_context* encodingContext, BIO* bio, BYTE* p
 
 				effectiveDataLen += status;
 
-				if ((size_t)status == size)
+				if ((size_t)status >= size)
 					return effectiveDataLen;
 				pBuffer += status;
 				size -= WINPR_ASSERTING_INT_CAST(size_t, status);
