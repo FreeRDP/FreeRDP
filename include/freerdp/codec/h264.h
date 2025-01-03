@@ -126,6 +126,16 @@ extern "C"
 	WINPR_ATTR_MALLOC(h264_context_free, 1)
 	FREERDP_API H264_CONTEXT* h264_context_new(BOOL Compressor);
 
+	/**
+	 * @brief Creates new h264 context
+	 *
+	 * @param Compressor TRUE if used to compress, FALSE if used to decompress
+	 * @param hwAccel in: TRUE to request hw accel, out: TRUE if hw accel is on
+	 * @return new h264 context, NULL for an error
+	 * @since version
+	 */
+	FREERDP_API H264_CONTEXT* h264_context_new2(BOOL Compressor, BOOL* hwAccel);
+
 #ifdef __cplusplus
 }
 #endif

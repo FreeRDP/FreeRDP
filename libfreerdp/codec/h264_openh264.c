@@ -509,7 +509,7 @@ static BOOL openh264_load_functionpointers(H264_CONTEXT* h264, const char* name)
 }
 #endif
 
-static BOOL openh264_init(H264_CONTEXT* h264)
+static BOOL openh264_init(H264_CONTEXT* h264, BOOL* hwAccel)
 {
 #if defined(WITH_OPENH264_LOADING)
 	BOOL success = FALSE;
@@ -523,6 +523,8 @@ static BOOL openh264_init(H264_CONTEXT* h264)
 	static WelsTraceCallback traceCallback = openh264_trace_callback;
 
 	WINPR_ASSERT(h264);
+	WINPR_ASSERT(hwAccel);
+	*hwAccel = FALSE; /* not supported */
 
 	h264->numSystemData = 1;
 	sysContexts =

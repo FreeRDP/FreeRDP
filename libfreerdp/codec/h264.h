@@ -30,7 +30,7 @@ extern "C"
 {
 #endif
 
-	typedef BOOL (*pfnH264SubsystemInit)(H264_CONTEXT* h264);
+	typedef BOOL (*pfnH264SubsystemInit)(H264_CONTEXT* h264, BOOL* hwAccel);
 	typedef void (*pfnH264SubsystemUninit)(H264_CONTEXT* h264);
 
 	typedef int (*pfnH264SubsystemDecompress)(H264_CONTEXT* WINPR_RESTRICT h264,
@@ -53,6 +53,7 @@ extern "C"
 	struct S_H264_CONTEXT
 	{
 		BOOL Compressor;
+		BOOL hwAccel;
 
 		UINT32 width;
 		UINT32 height;

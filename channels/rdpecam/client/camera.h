@@ -98,6 +98,7 @@ typedef struct
 	wStream* sampleRespBuffer;
 
 	H264_CONTEXT* h264;
+	BOOL h264hwAccel;
 
 #if defined(WITH_INPUT_FORMAT_MJPG)
 	AVCodecContext* avContext;

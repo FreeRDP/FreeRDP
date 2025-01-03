@@ -437,12 +437,14 @@ static void mediacodec_uninit(H264_CONTEXT* h264)
 	h264->pSystemData = NULL;
 }
 
-static BOOL mediacodec_init(H264_CONTEXT* h264)
+static BOOL mediacodec_init(H264_CONTEXT* h264, BOOL* hwAccel)
 {
 	H264_CONTEXT_MEDIACODEC* sys;
 	media_status_t status;
 
 	WINPR_ASSERT(h264);
+	WINPR_ASSERT(hwAccel);
+	*hwAccel = FALSE; /* not supported */
 
 	if (h264->Compressor)
 	{
