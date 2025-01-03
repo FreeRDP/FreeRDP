@@ -242,9 +242,10 @@ general_yCbCrToRGB_16s16s_P3P3(const INT16* WINPR_RESTRICT pSrc[3], INT32 srcSte
 			 * B: 1.770 << 16 = 115998
 			 */
 			cy = (INT32)((UINT32)(cy + 4096) << 16);
-			r = cy + cr * ycbcr_constants[16][0];
-			g = cy - cb * ycbcr_constants[16][1] - cr * ycbcr_constants[16][2];
-			b = cy + cb * ycbcr_constants[16][3];
+
+			r = 1LL * cy + 1LL * cr * ycbcr_constants[16][0];
+			g = 1LL * cy - 1LL * cb * ycbcr_constants[16][1] - 1LL * cr * ycbcr_constants[16][2];
+			b = 1LL * cy + 1LL * cb * ycbcr_constants[16][3];
 			*rptr++ = CLIP(r >> 21);
 			*gptr++ = CLIP(g >> 21);
 			*bptr++ = CLIP(b >> 21);
