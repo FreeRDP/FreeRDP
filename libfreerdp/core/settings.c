@@ -941,7 +941,7 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	                                 CONNECTION_TYPE_AUTODETECT) ||
 	    !freerdp_settings_set_bool(settings, FreeRDP_NetworkAutoDetect, TRUE) ||
 	    !freerdp_settings_set_uint32(settings, FreeRDP_EncryptionMethods, ENCRYPTION_METHOD_NONE) ||
-	    !freerdp_settings_set_uint32(settings, FreeRDP_EncryptionLevel, ENCRYPTION_LEVEL_NONE) ||
+	    !freerdp_settings_set_uint32(settings, FreeRDP_EncryptionLevel, ENCRYPTION_LEVEL_CLIENT_COMPATIBLE) ||
 	    !freerdp_settings_set_bool(settings, FreeRDP_FIPSMode, FALSE) ||
 	    !freerdp_settings_set_bool(settings, FreeRDP_CompressionEnabled, TRUE) ||
 	    !freerdp_settings_set_bool(settings, FreeRDP_LogonNotify, TRUE) ||

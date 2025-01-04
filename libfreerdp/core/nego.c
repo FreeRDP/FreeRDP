@@ -1505,18 +1505,6 @@ BOOL nego_send_negotiation_response(rdpNego* nego)
 				if (!freerdp_settings_set_bool(settings, FreeRDP_UseRdpSecurityLayer, TRUE))
 					return FALSE;
 
-				if (freerdp_settings_get_uint32(settings, FreeRDP_EncryptionLevel) ==
-				    ENCRYPTION_LEVEL_NONE)
-				{
-					/**
-					 * If the server implementation did not explicitly set a
-					 * encryption level we default to client compatible
-					 */
-					if (!freerdp_settings_set_uint32(settings, FreeRDP_EncryptionLevel,
-					                                 ENCRYPTION_LEVEL_CLIENT_COMPATIBLE))
-						return FALSE;
-				}
-
 				if (freerdp_settings_get_bool(settings, FreeRDP_LocalConnection))
 				{
 					/**
@@ -1531,6 +1519,12 @@ BOOL nego_send_negotiation_response(rdpNego* nego)
 						return FALSE;
 					if (!freerdp_settings_set_uint32(settings, FreeRDP_EncryptionLevel,
 					                                 ENCRYPTION_LEVEL_NONE))
+						return FALSE;
+				}
+				else if (freerdp_settings_get_uint32(settings, FreeRDP_EncryptionLevel) == ENCRYPTION_LEVEL_NONE)
+				{
+					/* Server is configured not to use encryption. This should be reserved for debugging */
+					if (!freerdp_settings_set_bool(settings, FreeRDP_UseRdpSecurityLayer, FALSE))
 						return FALSE;
 				}
 				else if (!freerdp_settings_get_pointer(settings, FreeRDP_RdpServerRsaKey))
