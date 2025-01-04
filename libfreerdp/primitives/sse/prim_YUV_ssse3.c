@@ -1142,7 +1142,7 @@ static pstatus_t ssse3_LumaToYUV444(const BYTE* WINPR_RESTRICT pSrcRaw[], const 
 	return PRIMITIVES_SUCCESS;
 }
 
-static INLINE void ssse3_filter(BYTE* WINPR_RESTRICT pSrcDst, const BYTE* WINPR_RESTRICT pSrc2)
+static INLINE void ssse3_filter(BYTE* WINPR_RESTRICT pSrcDst, BYTE* WINPR_RESTRICT pSrc2)
 {
 	const __m128i even = _mm_set_epi8((char)0x80, 14, (char)0x80, 12, (char)0x80, 10, (char)0x80, 8,
 	                                  (char)0x80, 6, (char)0x80, 4, (char)0x80, 2, (char)0x80, 0);
@@ -1152,16 +1152,40 @@ static INLINE void ssse3_filter(BYTE* WINPR_RESTRICT pSrcDst, const BYTE* WINPR_
 	const __m128i u = _mm_loadu_si128((const __m128i*)pSrcDst);
 	const __m128i u1 = _mm_loadu_si128((const __m128i*)pSrc2);
 	const __m128i uEven = _mm_shuffle_epi8(u, even);
-	const __m128i uEven4 = _mm_slli_epi16(uEven, 2);
 	const __m128i uOdd = _mm_shuffle_epi8(u, odd);
 	const __m128i u1Even = _mm_shuffle_epi8(u1, even);
 	const __m128i u1Odd = _mm_shuffle_epi8(u1, odd);
-	const __m128i tmp1 = _mm_add_epi16(uOdd, u1Even);
-	const __m128i tmp2 = _mm_add_epi16(tmp1, u1Odd);
-	const __m128i result = _mm_sub_epi16(uEven4, tmp2);
-	const __m128i packed = _mm_packus_epi16(result, uOdd);
-	const __m128i interleaved = _mm_shuffle_epi8(packed, interleave);
-	_mm_storeu_si128((__m128i*)pSrcDst, interleaved);
+
+	{
+		const __m128i etmp1 = _mm_add_epi16(uOdd, u1Even);
+		const __m128i etmp2 = _mm_add_epi16(etmp1, u1Odd);
+		const __m128i uEven4 = _mm_slli_epi16(uEven, 2);
+		const __m128i result2x2y = _mm_sub_epi16(uEven4, etmp2);
+
+		const __m128i otmp1 = _mm_add_epi16(uEven, u1Even);
+		const __m128i otmp2 = _mm_add_epi16(otmp1, u1Odd);
+		const __m128i uOdd4 = _mm_slli_epi16(uOdd, 2);
+		const __m128i result2x12y = _mm_sub_epi16(uOdd4, otmp2);
+
+		const __m128i packed = _mm_packus_epi16(result2x2y, result2x12y);
+		const __m128i interleaved = _mm_shuffle_epi8(packed, interleave);
+		_mm_storeu_si128((__m128i*)pSrcDst, interleaved);
+	}
+	{
+		const __m128i etmp1 = _mm_add_epi16(uOdd, uEven);
+		const __m128i etmp2 = _mm_add_epi16(etmp1, u1Odd);
+		const __m128i u1Even4 = _mm_slli_epi16(u1Even, 2);
+		const __m128i result2x2y1 = _mm_sub_epi16(u1Even4, etmp2);
+
+		const __m128i otmp1 = _mm_add_epi16(uOdd, uEven);
+		const __m128i otmp2 = _mm_add_epi16(otmp1, u1Even);
+		const __m128i u1Odd4 = _mm_slli_epi16(u1Odd, 2);
+		const __m128i result2x12y1 = _mm_sub_epi16(u1Odd4, otmp2);
+
+		const __m128i packed = _mm_packus_epi16(result2x2y1, result2x12y1);
+		const __m128i interleaved = _mm_shuffle_epi8(packed, interleave);
+		_mm_storeu_si128((__m128i*)pSrc2, interleaved);
+	}
 }
 
 static pstatus_t ssse3_ChromaFilter(BYTE* WINPR_RESTRICT pDst[], const UINT32 dstStep[],
