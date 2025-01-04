@@ -120,21 +120,67 @@ static pstatus_t general_ChromaFilter(BYTE* WINPR_RESTRICT pDst[3], const UINT32
 		{
 			const UINT32 val2x = (x * 2);
 			const UINT32 val2x1 = val2x + 1;
-			const BYTE inU = pU[val2x];
-			const BYTE inV = pV[val2x];
-			const INT32 up = inU * 4;
-			const INT32 vp = inV * 4;
-			INT32 u2020 = 0;
-			INT32 v2020 = 0;
 
 			if (val2x1 > nWidth)
 				continue;
 
-			u2020 = up - pU[val2x1] - pU1[val2x] - pU1[val2x1];
-			v2020 = vp - pV[val2x1] - pV1[val2x] - pV1[val2x1];
+			/* store filtered U/V values for a 2x2 square */
+			const INT32 uval[2][2] = { { pU[val2x], pU[val2x1] }, { pU1[val2x], pU1[val2x1] } };
+			const INT32 vval[2][2] = { { pV[val2x], pV[val2x1] }, { pV1[val2x], pV1[val2x1] } };
 
-			pU[val2x] = CONDITIONAL_CLIP(u2020, inU);
-			pV[val2x] = CONDITIONAL_CLIP(v2020, inV);
+			/* reconstruct 2x,2y U/V values */
+			{
+
+				const BYTE inU = pU[val2x];
+				const BYTE inV = pV[val2x];
+				const INT32 up = uval[0][0] * 4;
+				const INT32 vp = vval[0][0] * 4;
+				const INT32 u2020 = up - uval[0][1] - uval[1][0] - uval[1][1];
+				const INT32 v2020 = vp - vval[0][1] - vval[1][0] - vval[1][1];
+
+				pU[val2x] = CONDITIONAL_CLIP(u2020, inU);
+				pV[val2x] = CONDITIONAL_CLIP(v2020, inV);
+			}
+
+			/* reconstruct 2x_1,2y U/V values */
+			{
+
+				const BYTE inU = pU[val2x1];
+				const BYTE inV = pV[val2x1];
+				const INT32 up = uval[0][1] * 4;
+				const INT32 vp = vval[0][1] * 4;
+				const INT32 u2020 = up - uval[0][0] - uval[1][0] - uval[1][1];
+				const INT32 v2020 = vp - vval[0][0] - vval[1][0] - vval[1][1];
+
+				pU[val2x1] = CONDITIONAL_CLIP(u2020, inU);
+				pV[val2x1] = CONDITIONAL_CLIP(v2020, inV);
+			}
+
+			/* reconstruct 2x,2y+1 U/V values */
+			{
+				const BYTE inU = pU1[val2x];
+				const BYTE inV = pV1[val2x];
+				const INT32 up = uval[1][0] * 4;
+				const INT32 vp = vval[1][0] * 4;
+				const INT32 u2020 = up - uval[0][0] - uval[0][1] - uval[1][1];
+				const INT32 v2020 = vp - vval[0][0] - vval[0][1] - vval[1][1];
+
+				pU1[val2x] = CONDITIONAL_CLIP(u2020, inU);
+				pV1[val2x] = CONDITIONAL_CLIP(v2020, inV);
+			}
+
+			/* reconstruct 2x+1,2y+1 U/V values */
+			{
+				const BYTE inU = pU1[val2x1];
+				const BYTE inV = pV1[val2x1];
+				const INT32 up = uval[1][1] * 4;
+				const INT32 vp = vval[1][1] * 4;
+				const INT32 u2020 = up - uval[0][0] - uval[0][1] - uval[1][0];
+				const INT32 v2020 = vp - vval[0][0] - vval[0][1] - vval[1][0];
+
+				pU1[val2x1] = CONDITIONAL_CLIP(u2020, inU);
+				pV1[val2x1] = CONDITIONAL_CLIP(v2020, inV);
+			}
 		}
 	}
 
