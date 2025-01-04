@@ -23,6 +23,8 @@
 
 #include <winpr/collections.h>
 
+#define MAX(a, b) ((a) > (b)) ? (a) : (b)
+
 typedef struct
 {
 	SSIZE_T size;
@@ -85,28 +87,35 @@ static BOOL BufferPool_ShiftAvailable(wBufferPool* pool, size_t index, int count
 		if (pool->aSize + count > pool->aCapacity)
 		{
 			wBufferPoolItem* newArray = NULL;
-			SSIZE_T newCapacity = pool->aCapacity * 2;
+			SSIZE_T newCapacity = pool->aSize + count;
+			newCapacity += (newCapacity + 2) / 2;
 
+			WINPR_ASSERT(newCapacity > 0);
 			if (pool->alignment > 0)
 				newArray = (wBufferPoolItem*)winpr_aligned_realloc(
-				    pool->aArray, sizeof(wBufferPoolItem) * newCapacity, pool->alignment);
+				    pool->aArray,
+				    sizeof(wBufferPoolItem) * WINPR_ASSERTING_INT_CAST(size_t, newCapacity),
+				    pool->alignment);
 			else
-				newArray =
-				    (wBufferPoolItem*)realloc(pool->aArray, sizeof(wBufferPoolItem) * newCapacity);
+				newArray = (wBufferPoolItem*)realloc(
+				    pool->aArray,
+				    sizeof(wBufferPoolItem) * WINPR_ASSERTING_INT_CAST(size_t, newCapacity));
 			if (!newArray)
 				return FALSE;
 			pool->aArray = newArray;
 			pool->aCapacity = newCapacity;
 		}
 
-		MoveMemory(&pool->aArray[index + count], &pool->aArray[index],
-		           (pool->aSize - index) * sizeof(wBufferPoolItem));
+		MoveMemory(
+		    &pool->aArray[index + WINPR_ASSERTING_INT_CAST(size_t, count)], &pool->aArray[index],
+		    (WINPR_ASSERTING_INT_CAST(size_t, pool->aSize) - index) * sizeof(wBufferPoolItem));
 		pool->aSize += count;
 	}
 	else if (count < 0)
 	{
-		MoveMemory(&pool->aArray[index], &pool->aArray[index - count],
-		           (pool->aSize - index) * sizeof(wBufferPoolItem));
+		MoveMemory(
+		    &pool->aArray[index], &pool->aArray[index + WINPR_ASSERTING_INT_CAST(size_t, -count)],
+		    (WINPR_ASSERTING_INT_CAST(size_t, pool->aSize) - index) * sizeof(wBufferPoolItem));
 		pool->aSize += count;
 	}
 	return TRUE;
@@ -122,10 +131,13 @@ static BOOL BufferPool_ShiftUsed(wBufferPool* pool, SSIZE_T index, SSIZE_T count
 			wBufferPoolItem* newUArray = NULL;
 			if (pool->alignment > 0)
 				newUArray = (wBufferPoolItem*)winpr_aligned_realloc(
-				    pool->uArray, sizeof(wBufferPoolItem) * newUCapacity, pool->alignment);
+				    pool->uArray,
+				    sizeof(wBufferPoolItem) * WINPR_ASSERTING_INT_CAST(size_t, newUCapacity),
+				    pool->alignment);
 			else
-				newUArray =
-				    (wBufferPoolItem*)realloc(pool->uArray, sizeof(wBufferPoolItem) * newUCapacity);
+				newUArray = (wBufferPoolItem*)realloc(
+				    pool->uArray,
+				    sizeof(wBufferPoolItem) * WINPR_ASSERTING_INT_CAST(size_t, newUCapacity));
 			if (!newUArray)
 				return FALSE;
 			pool->uCapacity = newUCapacity;
@@ -133,13 +145,13 @@ static BOOL BufferPool_ShiftUsed(wBufferPool* pool, SSIZE_T index, SSIZE_T count
 		}
 
 		MoveMemory(&pool->uArray[index + count], &pool->uArray[index],
-		           (pool->uSize - index) * sizeof(wBufferPoolItem));
+		           WINPR_ASSERTING_INT_CAST(size_t, pool->uSize - index) * sizeof(wBufferPoolItem));
 		pool->uSize += count;
 	}
 	else if (count < 0)
 	{
 		MoveMemory(&pool->uArray[index], &pool->uArray[index - count],
-		           (pool->uSize - index) * sizeof(wBufferPoolItem));
+		           WINPR_ASSERTING_INT_CAST(size_t, pool->uSize - index) * sizeof(wBufferPoolItem));
 		pool->uSize += count;
 	}
 	return TRUE;
@@ -232,9 +244,10 @@ void* BufferPool_Take(wBufferPool* pool, SSIZE_T size)
 		if (!buffer)
 		{
 			if (pool->alignment)
-				buffer = winpr_aligned_malloc(pool->fixedSize, pool->alignment);
+				buffer = winpr_aligned_malloc(WINPR_ASSERTING_INT_CAST(size_t, pool->fixedSize),
+				                              pool->alignment);
 			else
-				buffer = malloc(pool->fixedSize);
+				buffer = malloc(WINPR_ASSERTING_INT_CAST(size_t, pool->fixedSize));
 		}
 
 		if (!buffer)
@@ -279,9 +292,10 @@ void* BufferPool_Take(wBufferPool* pool, SSIZE_T size)
 			else
 			{
 				if (pool->alignment)
-					buffer = winpr_aligned_malloc(size, pool->alignment);
+					buffer = winpr_aligned_malloc(WINPR_ASSERTING_INT_CAST(size_t, size),
+					                              pool->alignment);
 				else
-					buffer = malloc(size);
+					buffer = malloc(WINPR_ASSERTING_INT_CAST(size_t, size));
 
 				if (!buffer)
 					goto out_error;
@@ -295,9 +309,10 @@ void* BufferPool_Take(wBufferPool* pool, SSIZE_T size)
 			{
 				void* newBuffer = NULL;
 				if (pool->alignment)
-					newBuffer = winpr_aligned_realloc(buffer, size, pool->alignment);
+					newBuffer = winpr_aligned_realloc(
+					    buffer, WINPR_ASSERTING_INT_CAST(size_t, size), pool->alignment);
 				else
-					newBuffer = realloc(buffer, size);
+					newBuffer = realloc(buffer, WINPR_ASSERTING_INT_CAST(size_t, size));
 
 				if (!newBuffer)
 					goto out_error_no_free;
@@ -305,7 +320,7 @@ void* BufferPool_Take(wBufferPool* pool, SSIZE_T size)
 				buffer = newBuffer;
 			}
 
-			if (!BufferPool_ShiftAvailable(pool, foundIndex, -1))
+			if (!BufferPool_ShiftAvailable(pool, WINPR_ASSERTING_INT_CAST(size_t, foundIndex), -1))
 				goto out_error;
 		}
 
@@ -314,7 +329,8 @@ void* BufferPool_Take(wBufferPool* pool, SSIZE_T size)
 
 		if (pool->uSize + 1 > pool->uCapacity)
 		{
-			size_t newUCapacity = pool->uCapacity * 2ULL;
+			size_t newUCapacity = WINPR_ASSERTING_INT_CAST(size_t, pool->uCapacity);
+			newUCapacity += (newUCapacity + 2) / 2;
 			if (newUCapacity > SSIZE_MAX)
 				goto out_error;
 			wBufferPoolItem* newUArray =
@@ -363,8 +379,9 @@ BOOL BufferPool_Return(wBufferPool* pool, void* buffer)
 
 		if ((pool->size + 1) >= pool->capacity)
 		{
-			SSIZE_T newCapacity = pool->capacity * 2;
-			void** newArray = (void**)realloc((void*)pool->array, sizeof(void*) * newCapacity);
+			SSIZE_T newCapacity = MAX(1, pool->size + (pool->size + 2) / 2 + 1);
+			void** newArray = (void**)realloc(
+			    (void*)pool->array, sizeof(void*) * WINPR_ASSERTING_INT_CAST(size_t, newCapacity));
 			if (!newArray)
 				goto out_error;
 
@@ -399,9 +416,10 @@ BOOL BufferPool_Return(wBufferPool* pool, void* buffer)
 		{
 			if ((pool->aSize + 1) >= pool->aCapacity)
 			{
-				SSIZE_T newCapacity = pool->aCapacity * 2;
-				wBufferPoolItem* newArray =
-				    (wBufferPoolItem*)realloc(pool->aArray, sizeof(wBufferPoolItem) * newCapacity);
+				SSIZE_T newCapacity = MAX(1, pool->aSize + (pool->aSize + 2) / 2 + 1);
+				wBufferPoolItem* newArray = (wBufferPoolItem*)realloc(
+				    pool->aArray,
+				    sizeof(wBufferPoolItem) * WINPR_ASSERTING_INT_CAST(size_t, newCapacity));
 				if (!newArray)
 					goto out_error;
 
@@ -500,7 +518,8 @@ wBufferPool* BufferPool_New(BOOL synchronized, SSIZE_T fixedSize, DWORD alignmen
 
 			pool->size = 0;
 			pool->capacity = 32;
-			pool->array = (void**)calloc(pool->capacity, sizeof(void*));
+			pool->array =
+			    (void**)calloc(WINPR_ASSERTING_INT_CAST(size_t, pool->capacity), sizeof(void*));
 			if (!pool->array)
 				goto out_error;
 		}
@@ -510,13 +529,15 @@ wBufferPool* BufferPool_New(BOOL synchronized, SSIZE_T fixedSize, DWORD alignmen
 
 			pool->aSize = 0;
 			pool->aCapacity = 32;
-			pool->aArray = (wBufferPoolItem*)calloc(pool->aCapacity, sizeof(wBufferPoolItem));
+			pool->aArray = (wBufferPoolItem*)calloc(
+			    WINPR_ASSERTING_INT_CAST(size_t, pool->aCapacity), sizeof(wBufferPoolItem));
 			if (!pool->aArray)
 				goto out_error;
 
 			pool->uSize = 0;
 			pool->uCapacity = 32;
-			pool->uArray = (wBufferPoolItem*)calloc(pool->uCapacity, sizeof(wBufferPoolItem));
+			pool->uArray = (wBufferPoolItem*)calloc(
+			    WINPR_ASSERTING_INT_CAST(size_t, pool->uCapacity), sizeof(wBufferPoolItem));
 			if (!pool->uArray)
 				goto out_error;
 		}

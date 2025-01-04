@@ -156,12 +156,12 @@ static const char* skip_if_null(const struct format_option* opt, const char* fmt
 	const char* end = strstr(str, opt->replace);
 	if (!end)
 		return NULL;
-	*pskiplen = end - fmt + opt->replacelen;
+	*pskiplen = WINPR_ASSERTING_INT_CAST(size_t, end - fmt) + opt->replacelen;
 
 	if (!opt->arg)
 		return NULL;
 
-	const size_t replacelen = end - str;
+	const size_t replacelen = WINPR_ASSERTING_INT_CAST(size_t, end - str);
 
 	char buffer[WLOG_MAX_PREFIX_SIZE] = { 0 };
 	memcpy(buffer, str, MIN(replacelen, ARRAYSIZE(buffer) - 1));
@@ -207,9 +207,10 @@ static BOOL replace_format_string(const char* FormatString, struct format_option
 				WINPR_PRAGMA_DIAG_POP
 				if (rc < 0)
 					return FALSE;
-				if (!check_and_log_format_size(format, formatlen, index, rc))
+				if (!check_and_log_format_size(format, formatlen, index,
+				                               WINPR_ASSERTING_INT_CAST(size_t, rc)))
 					return FALSE;
-				index += rc;
+				index += WINPR_ASSERTING_INT_CAST(size_t, rc);
 			}
 			FormatString += fmtlen;
 		}
