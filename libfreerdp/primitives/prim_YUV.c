@@ -333,15 +333,48 @@ general_YUV444SplitToYUV420(const BYTE* WINPR_RESTRICT pSrc[3], const UINT32 src
 	return PRIMITIVES_SUCCESS;
 }
 
+static pstatus_t general_YUV444ToRGB_DOUBLE_ROW(BYTE* WINPR_RESTRICT pRGB[2], UINT32 DstFormat,
+                                                const BYTE* WINPR_RESTRICT pY[2],
+                                                const BYTE* WINPR_RESTRICT pU[2],
+                                                const BYTE* WINPR_RESTRICT pV[2], size_t nWidth)
+{
+	const DWORD formatSize = FreeRDPGetBytesPerPixel(DstFormat);
+	fkt_writePixel writePixel = getPixelWriteFunction(DstFormat, FALSE);
+
+	WINPR_ASSERT(nWidth % 2 == 0);
+	for (size_t x = 0; x < nWidth; x += 2)
+	{
+		const INT32 subU = pU[0][x + 1] + pU[1][x] + pU[1][x + 1];
+		const INT32 avgU = ((4 * pU[0][x]) - subU);
+		const BYTE useU = CONDITIONAL_CLIP(avgU, pU[0][x]);
+		const INT32 subV = pV[0][x + 1] + pV[1][x] + pV[1][x + 1];
+		const INT32 avgV = ((4 * pV[0][x]) - subV);
+		const BYTE useV = CONDITIONAL_CLIP(avgV, pV[0][x]);
+
+		const BYTE U[2][2] = { { useU, pU[0][x + 1] }, { pU[1][x], pU[1][x + 1] } };
+		const BYTE V[2][2] = { { useV, pV[0][x + 1] }, { pV[1][x], pV[1][x + 1] } };
+
+		for (size_t i = 0; i < 2; i++)
+		{
+			for (size_t j = 0; j < 2; j++)
+			{
+				const BYTE r = YUV2R(pY[i][x + j], U[i][j], V[i][j]);
+				const BYTE g = YUV2G(pY[i][x + j], U[i][j], V[i][j]);
+				const BYTE b = YUV2B(pY[i][x + j], U[i][j], V[i][j]);
+				pRGB[i] = writePixel(pRGB[i], formatSize, DstFormat, r, g, b, 0);
+			}
+		}
+	}
+
+	return PRIMITIVES_SUCCESS;
+}
+
 static pstatus_t general_YUV444ToRGB_8u_P3AC4R_general(const BYTE* WINPR_RESTRICT pSrc[3],
                                                        const UINT32 srcStep[3],
                                                        BYTE* WINPR_RESTRICT pDst, UINT32 dstStep,
                                                        UINT32 DstFormat,
                                                        const prim_size_t* WINPR_RESTRICT roi)
 {
-	const DWORD formatSize = FreeRDPGetBytesPerPixel(DstFormat);
-	fkt_writePixel writePixel = getPixelWriteFunction(DstFormat, FALSE);
-
 	WINPR_ASSERT(pSrc);
 	WINPR_ASSERT(pDst);
 	WINPR_ASSERT(roi);
@@ -349,25 +382,53 @@ static pstatus_t general_YUV444ToRGB_8u_P3AC4R_general(const BYTE* WINPR_RESTRIC
 	const UINT32 nWidth = roi->width;
 	const UINT32 nHeight = roi->height;
 
-	for (size_t y = 0; y < nHeight; y++)
+	WINPR_ASSERT(nHeight % 2 == 0);
+	for (size_t y = 0; y < nHeight; y += 2)
 	{
-		const BYTE* pY = pSrc[0] + y * srcStep[0];
-		const BYTE* pU = pSrc[1] + y * srcStep[1];
-		const BYTE* pV = pSrc[2] + y * srcStep[2];
-		BYTE* pRGB = pDst + y * dstStep;
+		const BYTE* pY[2] = { pSrc[0] + y * srcStep[0], pSrc[0] + (y + 1) * srcStep[0] };
+		const BYTE* pU[2] = { pSrc[1] + y * srcStep[1], pSrc[1] + (y + 1) * srcStep[1] };
+		const BYTE* pV[2] = { pSrc[2] + y * srcStep[2], pSrc[2] + (y + 1) * srcStep[2] };
+		BYTE* pRGB[] = { pDst + y * dstStep, pDst + (y + 1) * dstStep };
 
-		for (size_t x = 0; x < nWidth; x++)
-		{
-			const BYTE Y = pY[x];
-			const BYTE U = pU[x];
-			const BYTE V = pV[x];
-			const BYTE r = YUV2R(Y, U, V);
-			const BYTE g = YUV2G(Y, U, V);
-			const BYTE b = YUV2B(Y, U, V);
-			pRGB = writePixel(pRGB, formatSize, DstFormat, r, g, b, 0);
-		}
+		pstatus_t rc = general_YUV444ToRGB_DOUBLE_ROW(pRGB, DstFormat, pY, pU, pV, nWidth);
+		if (rc != PRIMITIVES_SUCCESS)
+			return rc;
 	}
 
+	return PRIMITIVES_SUCCESS;
+}
+
+static pstatus_t general_YUV444ToBGRX_DOUBLE_ROW(BYTE* WINPR_RESTRICT pRGB[2], UINT32 DstFormat,
+                                                 const BYTE* WINPR_RESTRICT pY[2],
+                                                 const BYTE* WINPR_RESTRICT pU[2],
+                                                 const BYTE* WINPR_RESTRICT pV[2], size_t nWidth)
+{
+	const DWORD formatSize = FreeRDPGetBytesPerPixel(DstFormat);
+
+	WINPR_ASSERT(nWidth % 2 == 0);
+	for (size_t x = 0; x < nWidth; x += 2)
+	{
+		const INT32 subU = pU[0][x + 1] + pU[1][x] + pU[1][x + 1];
+		const INT32 avgU = ((4 * pU[0][x]) - subU);
+		const BYTE useU = CONDITIONAL_CLIP(avgU, pU[0][x]);
+		const INT32 subV = pV[0][x + 1] + pV[1][x] + pV[1][x + 1];
+		const INT32 avgV = ((4 * pV[0][x]) - subV);
+		const BYTE useV = CONDITIONAL_CLIP(avgV, pV[0][x]);
+
+		const BYTE U[2][2] = { { useU, pU[0][x + 1] }, { pU[1][x], pU[1][x + 1] } };
+		const BYTE V[2][2] = { { useV, pV[0][x + 1] }, { pV[1][x], pV[1][x + 1] } };
+
+		for (size_t i = 0; i < 2; i++)
+		{
+			for (size_t j = 0; j < 2; j++)
+			{
+				const BYTE r = YUV2R(pY[i][x + j], U[i][j], V[i][j]);
+				const BYTE g = YUV2G(pY[i][x + j], U[i][j], V[i][j]);
+				const BYTE b = YUV2B(pY[i][x + j], U[i][j], V[i][j]);
+				pRGB[i] = writePixelBGRX(pRGB[i], formatSize, DstFormat, r, g, b, 0);
+			}
+		}
+	}
 	return PRIMITIVES_SUCCESS;
 }
 
@@ -377,8 +438,6 @@ static pstatus_t general_YUV444ToRGB_8u_P3AC4R_BGRX(const BYTE* WINPR_RESTRICT p
                                                     UINT32 DstFormat,
                                                     const prim_size_t* WINPR_RESTRICT roi)
 {
-	const DWORD formatSize = FreeRDPGetBytesPerPixel(DstFormat);
-
 	WINPR_ASSERT(pSrc);
 	WINPR_ASSERT(pDst);
 	WINPR_ASSERT(roi);
@@ -386,23 +445,17 @@ static pstatus_t general_YUV444ToRGB_8u_P3AC4R_BGRX(const BYTE* WINPR_RESTRICT p
 	const UINT32 nWidth = roi->width;
 	const UINT32 nHeight = roi->height;
 
-	for (size_t y = 0; y < nHeight; y++)
+	WINPR_ASSERT(nHeight % 2 == 0);
+	for (size_t y = 0; y < nHeight; y += 2)
 	{
-		const BYTE* pY = pSrc[0] + y * srcStep[0];
-		const BYTE* pU = pSrc[1] + y * srcStep[1];
-		const BYTE* pV = pSrc[2] + y * srcStep[2];
-		BYTE* pRGB = pDst + y * dstStep;
+		const BYTE* pY[2] = { pSrc[0] + y * srcStep[0], pSrc[0] + (y + 1) * srcStep[0] };
+		const BYTE* pU[2] = { pSrc[1] + y * srcStep[1], pSrc[1] + (y + 1) * srcStep[1] };
+		const BYTE* pV[2] = { pSrc[2] + y * srcStep[2], pSrc[2] + (y + 1) * srcStep[2] };
+		BYTE* pRGB[] = { pDst + y * dstStep, pDst + (y + 1) * dstStep };
 
-		for (size_t x = 0; x < nWidth; x++)
-		{
-			const BYTE Y = pY[x];
-			const BYTE U = pU[x];
-			const BYTE V = pV[x];
-			const BYTE r = YUV2R(Y, U, V);
-			const BYTE g = YUV2G(Y, U, V);
-			const BYTE b = YUV2B(Y, U, V);
-			pRGB = writePixelBGRX(pRGB, formatSize, DstFormat, r, g, b, 0);
-		}
+		pstatus_t rc = general_YUV444ToBGRX_DOUBLE_ROW(pRGB, DstFormat, pY, pU, pV, nWidth);
+		if (rc != PRIMITIVES_SUCCESS)
+			return rc;
 	}
 
 	return PRIMITIVES_SUCCESS;
