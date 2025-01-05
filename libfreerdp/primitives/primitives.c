@@ -410,3 +410,16 @@ DWORD primitives_flags(primitives_t* p)
 {
 	return p->flags;
 }
+
+const char* primitives_avc444_frame_type_str(avc444_frame_type type)
+{
+	switch (type)
+	{
+		case AVC444_LUMA:
+			return "AVC444_LUMA";
+		case AVC444_CHROMAv1:
+			return "AVC444_CHROMAv1";
+		case AVC444_CHROMAv2:
+			return "AVC444_CHROMAv2";
+	}
+}
