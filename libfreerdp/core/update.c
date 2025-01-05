@@ -1079,19 +1079,20 @@ static BOOL update_check_flush(rdpContext* context, size_t size)
 
 	wStream* s = update->us;
 
-	if (!update->us)
+	if (!s)
 	{
-		update_begin_paint(&update->common);
-		return FALSE;
+		if (!update_begin_paint(&update->common))
+			return FALSE;
+		s = update->us;
 	}
 
-	if (Stream_GetPosition(s) + size + 64 >= 0x3FFF)
+	if (Stream_GetPosition(s) + size + 64 >= FASTPATH_MAX_PACKET_SIZE)
 	{
+		// Too big for the current packet. Flush first
 		update_flush(context);
-		return TRUE;
 	}
 
-	return FALSE;
+	return TRUE;
 }
 
 static BOOL update_set_bounds(rdpContext* context, const rdpBounds* bounds)
