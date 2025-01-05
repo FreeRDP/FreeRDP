@@ -344,23 +344,26 @@ static pstatus_t general_YUV444ToRGB_DOUBLE_ROW(BYTE* WINPR_RESTRICT pRGB[2], UI
 	WINPR_ASSERT(nWidth % 2 == 0);
 	for (size_t x = 0; x < nWidth; x += 2)
 	{
-		const INT32 subU = pU[0][x + 1] + pU[1][x] + pU[1][x + 1];
-		const INT32 avgU = ((4 * pU[0][x]) - subU);
-		const BYTE useU = CONDITIONAL_CLIP(avgU, pU[0][x]);
-		const INT32 subV = pV[0][x + 1] + pV[1][x] + pV[1][x + 1];
-		const INT32 avgV = ((4 * pV[0][x]) - subV);
-		const BYTE useV = CONDITIONAL_CLIP(avgV, pV[0][x]);
-
-		const BYTE U[2][2] = { { useU, pU[0][x + 1] }, { pU[1][x], pU[1][x + 1] } };
-		const BYTE V[2][2] = { { useV, pV[0][x + 1] }, { pV[1][x], pV[1][x + 1] } };
-
 		for (size_t i = 0; i < 2; i++)
 		{
 			for (size_t j = 0; j < 2; j++)
 			{
-				const BYTE r = YUV2R(pY[i][x + j], U[i][j], V[i][j]);
-				const BYTE g = YUV2G(pY[i][x + j], U[i][j], V[i][j]);
-				const BYTE b = YUV2B(pY[i][x + j], U[i][j], V[i][j]);
+				const BYTE y = pY[i][x + j];
+				INT32 u = pU[i][x + j];
+				INT32 v = pV[i][x + j];
+				if ((i == 0) && (j == 0))
+				{
+					const INT32 subU = (INT32)pU[0][x + 1] + pU[1][x] + pU[1][x + 1];
+					const INT32 avgU = ((4 * u) - subU);
+					u = CONDITIONAL_CLIP(avgU, u);
+
+					const INT32 subV = (INT32)pV[0][x + 1] + pV[1][x] + pV[1][x + 1];
+					const INT32 avgV = ((4 * v) - subV);
+					v = CONDITIONAL_CLIP(avgV, v);
+				}
+				const BYTE r = YUV2R(y, u, v);
+				const BYTE g = YUV2G(y, u, v);
+				const BYTE b = YUV2B(y, u, v);
 				pRGB[i] = writePixel(pRGB[i], formatSize, DstFormat, r, g, b, 0);
 			}
 		}
@@ -385,10 +388,13 @@ static pstatus_t general_YUV444ToRGB_8u_P3AC4R_general(const BYTE* WINPR_RESTRIC
 	WINPR_ASSERT(nHeight % 2 == 0);
 	for (size_t y = 0; y < nHeight; y += 2)
 	{
-		const BYTE* pY[2] = { pSrc[0] + y * srcStep[0], pSrc[0] + (y + 1) * srcStep[0] };
-		const BYTE* pU[2] = { pSrc[1] + y * srcStep[1], pSrc[1] + (y + 1) * srcStep[1] };
-		const BYTE* pV[2] = { pSrc[2] + y * srcStep[2], pSrc[2] + (y + 1) * srcStep[2] };
-		BYTE* pRGB[] = { pDst + y * dstStep, pDst + (y + 1) * dstStep };
+		const BYTE* WINPR_RESTRICT pY[2] = { pSrc[0] + y * srcStep[0],
+			                                 pSrc[0] + (y + 1) * srcStep[0] };
+		const BYTE* WINPR_RESTRICT pU[2] = { pSrc[1] + y * srcStep[1],
+			                                 pSrc[1] + (y + 1) * srcStep[1] };
+		const BYTE* WINPR_RESTRICT pV[2] = { pSrc[2] + y * srcStep[2],
+			                                 pSrc[2] + (y + 1) * srcStep[2] };
+		BYTE* WINPR_RESTRICT pRGB[] = { pDst + y * dstStep, pDst + (y + 1) * dstStep };
 
 		pstatus_t rc = general_YUV444ToRGB_DOUBLE_ROW(pRGB, DstFormat, pY, pU, pV, nWidth);
 		if (rc != PRIMITIVES_SUCCESS)
@@ -633,40 +639,171 @@ static INLINE BYTE RGB2V(INT32 R, INT32 G, INT32 B)
 	return WINPR_ASSERTING_INT_CAST(BYTE, val);
 }
 
-// NOLINTBEGIN(readability-non-const-parameter)
-static pstatus_t general_RGBToYUV444_8u_P3AC4R(const BYTE* WINPR_RESTRICT pSrc, UINT32 SrcFormat,
-                                               const UINT32 srcStep, BYTE* WINPR_RESTRICT pDst[3],
-                                               UINT32 dstStep[3],
-                                               const prim_size_t* WINPR_RESTRICT roi)
-// NOLINTEND(readability-non-const-parameter)
+static void BGRX_fillYUV(size_t offset, const BYTE* WINPR_RESTRICT pRGB[2],
+                         BYTE* WINPR_RESTRICT pY[2], BYTE* WINPR_RESTRICT pU[2],
+                         BYTE* WINPR_RESTRICT pV[2])
 {
-	const UINT32 bpp = FreeRDPGetBytesPerPixel(SrcFormat);
-	UINT32 nWidth = 0;
-	UINT32 nHeight = 0;
-	nWidth = roi->width;
-	nHeight = roi->height;
+	WINPR_ASSERT(pRGB);
+	WINPR_ASSERT(pY);
+	WINPR_ASSERT(pU);
+	WINPR_ASSERT(pV);
 
-	for (size_t y = 0; y < nHeight; y++)
+	const UINT32 SrcFormat = PIXEL_FORMAT_BGRX32;
+	const UINT32 bpp = 4;
+
+	for (size_t i = 0; i < 2; i++)
 	{
-		const BYTE* pRGB = pSrc + y * srcStep;
-		BYTE* pY = pDst[0] + y * dstStep[0];
-		BYTE* pU = pDst[1] + y * dstStep[1];
-		BYTE* pV = pDst[2] + y * dstStep[2];
-
-		for (size_t x = 0; x < nWidth; x++)
+		for (size_t j = 0; j < 2; j++)
 		{
 			BYTE B = 0;
 			BYTE G = 0;
 			BYTE R = 0;
-			const UINT32 color = FreeRDPReadColor(&pRGB[x * bpp], SrcFormat);
+			const UINT32 color = FreeRDPReadColor(&pRGB[i][(offset + j) * bpp], SrcFormat);
 			FreeRDPSplitColor(color, SrcFormat, &R, &G, &B, NULL, NULL);
-			pY[x] = RGB2Y(R, G, B);
-			pU[x] = RGB2U(R, G, B);
-			pV[x] = RGB2V(R, G, B);
+			pY[i][offset + j] = RGB2Y(R, G, B);
+			pU[i][offset + j] = RGB2U(R, G, B);
+			pV[i][offset + j] = RGB2V(R, G, B);
 		}
 	}
 
+	/* Apply chroma filter */
+	const INT32 avgU = (pU[0][offset] + pU[0][offset + 1] + pU[1][offset] + pU[1][offset + 1]) / 4;
+	pU[0][offset] = CONDITIONAL_CLIP(avgU, pU[0][offset]);
+	const INT32 avgV = (pV[0][offset] + pV[0][offset + 1] + pV[1][offset] + pV[1][offset + 1]) / 4;
+	pV[0][offset] = CONDITIONAL_CLIP(avgV, pV[0][offset]);
+}
+
+static inline pstatus_t general_BGRXToYUV444_DOUBLE_ROW(const BYTE* WINPR_RESTRICT pRGB[2],
+                                                        BYTE* WINPR_RESTRICT pY[2],
+                                                        BYTE* WINPR_RESTRICT pU[2],
+                                                        BYTE* WINPR_RESTRICT pV[2], UINT32 nWidth)
+{
+
+	WINPR_ASSERT((nWidth % 2) == 0);
+	for (size_t x = 0; x < nWidth; x += 2)
+	{
+		BGRX_fillYUV(x, pRGB, pY, pU, pV);
+	}
 	return PRIMITIVES_SUCCESS;
+}
+
+static pstatus_t general_RGBToYUV444_8u_P3AC4R_BGRX(const BYTE* WINPR_RESTRICT pSrc,
+                                                    const UINT32 srcStep,
+                                                    BYTE* WINPR_RESTRICT pDst[3],
+                                                    const UINT32 dstStep[3],
+                                                    const prim_size_t* WINPR_RESTRICT roi)
+{
+	const UINT32 nWidth = roi->width;
+	const UINT32 nHeight = roi->height;
+
+	WINPR_ASSERT((nHeight % 2) == 0);
+	for (size_t y = 0; y < nHeight; y += 2)
+	{
+		const BYTE* pRGB[] = { pSrc + y * srcStep, pSrc + (y + 1) * srcStep };
+		BYTE* pY[] = { pDst[0] + y * dstStep[0], pDst[0] + (y + 1) * dstStep[0] };
+		BYTE* pU[] = { pDst[1] + y * dstStep[1], pDst[1] + (y + 1) * dstStep[1] };
+		BYTE* pV[] = { pDst[2] + y * dstStep[2], pDst[2] + (y + 1) * dstStep[2] };
+
+		const pstatus_t rc = general_BGRXToYUV444_DOUBLE_ROW(pRGB, pY, pU, pV, nWidth);
+		if (rc != PRIMITIVES_SUCCESS)
+			return rc;
+	}
+
+	return PRIMITIVES_SUCCESS;
+}
+
+static void fillYUV(size_t offset, const BYTE* WINPR_RESTRICT pRGB[2], UINT32 SrcFormat,
+                    BYTE* WINPR_RESTRICT pY[2], BYTE* WINPR_RESTRICT pU[2],
+                    BYTE* WINPR_RESTRICT pV[2])
+{
+	WINPR_ASSERT(pRGB);
+	WINPR_ASSERT(pY);
+	WINPR_ASSERT(pU);
+	WINPR_ASSERT(pV);
+	const UINT32 bpp = FreeRDPGetBytesPerPixel(SrcFormat);
+
+	INT32 avgU = 0;
+	INT32 avgV = 0;
+	for (size_t i = 0; i < 2; i++)
+	{
+		for (size_t j = 0; j < 2; j++)
+		{
+			BYTE B = 0;
+			BYTE G = 0;
+			BYTE R = 0;
+			const UINT32 color = FreeRDPReadColor(&pRGB[i][(offset + j) * bpp], SrcFormat);
+			FreeRDPSplitColor(color, SrcFormat, &R, &G, &B, NULL, NULL);
+			const BYTE y = RGB2Y(R, G, B);
+			const BYTE u = RGB2U(R, G, B);
+			const BYTE v = RGB2V(R, G, B);
+			avgU += u;
+			avgV += v;
+			pY[i][offset + j] = y;
+			pU[i][offset + j] = u;
+			pV[i][offset + j] = v;
+		}
+	}
+
+	/* Apply chroma filter */
+	avgU /= 4;
+	pU[0][offset] = CLIP(avgU);
+
+	avgV /= 4;
+	pV[0][offset] = CLIP(avgV);
+}
+
+static inline pstatus_t general_RGBToYUV444_DOUBLE_ROW(const BYTE* WINPR_RESTRICT pRGB[2],
+                                                       UINT32 SrcFormat, BYTE* WINPR_RESTRICT pY[2],
+                                                       BYTE* WINPR_RESTRICT pU[2],
+                                                       BYTE* WINPR_RESTRICT pV[2], UINT32 nWidth)
+{
+
+	WINPR_ASSERT((nWidth % 2) == 0);
+	for (size_t x = 0; x < nWidth; x += 2)
+	{
+		fillYUV(x, pRGB, SrcFormat, pY, pU, pV);
+	}
+	return PRIMITIVES_SUCCESS;
+}
+
+static pstatus_t general_RGBToYUV444_8u_P3AC4R_RGB(const BYTE* WINPR_RESTRICT pSrc,
+                                                   UINT32 SrcFormat, const UINT32 srcStep,
+                                                   BYTE* WINPR_RESTRICT pDst[3],
+                                                   const UINT32 dstStep[3],
+                                                   const prim_size_t* WINPR_RESTRICT roi)
+{
+	const UINT32 nWidth = roi->width;
+	const UINT32 nHeight = roi->height;
+
+	WINPR_ASSERT((nHeight % 2) == 0);
+	for (size_t y = 0; y < nHeight; y += 2)
+	{
+		const BYTE* pRGB[] = { pSrc + y * srcStep, pSrc + (y + 1) * srcStep };
+		BYTE* pY[] = { &pDst[0][y * dstStep[0]], &pDst[0][(y + 1) * dstStep[0]] };
+		BYTE* pU[] = { &pDst[1][y * dstStep[1]], &pDst[1][(y + 1) * dstStep[1]] };
+		BYTE* pV[] = { &pDst[2][y * dstStep[2]], &pDst[2][(y + 1) * dstStep[2]] };
+
+		const pstatus_t rc = general_RGBToYUV444_DOUBLE_ROW(pRGB, SrcFormat, pY, pU, pV, nWidth);
+		if (rc != PRIMITIVES_SUCCESS)
+			return rc;
+	}
+
+	return PRIMITIVES_SUCCESS;
+}
+
+static pstatus_t general_RGBToYUV444_8u_P3AC4R(const BYTE* WINPR_RESTRICT pSrc, UINT32 SrcFormat,
+                                               const UINT32 srcStep, BYTE* WINPR_RESTRICT pDst[3],
+                                               const UINT32 dstStep[3],
+                                               const prim_size_t* WINPR_RESTRICT roi)
+{
+	switch (SrcFormat)
+	{
+		case PIXEL_FORMAT_BGRA32:
+		case PIXEL_FORMAT_BGRX32:
+			return general_RGBToYUV444_8u_P3AC4R_BGRX(pSrc, srcStep, pDst, dstStep, roi);
+		default:
+			return general_RGBToYUV444_8u_P3AC4R_RGB(pSrc, SrcFormat, srcStep, pDst, dstStep, roi);
+	}
 }
 
 static INLINE pstatus_t general_RGBToYUV420_BGRX(const BYTE* WINPR_RESTRICT pSrc, UINT32 srcStep,
@@ -1896,6 +2033,6 @@ void primitives_init_YUV(primitives_t* WINPR_RESTRICT prims)
 
 void primitives_init_YUV_opt(primitives_t* WINPR_RESTRICT prims)
 {
-	primitives_init_YUV_ssse3(prims);
+	primitives_init_YUV_sse41(prims);
 	primitives_init_YUV_neon(prims);
 }
