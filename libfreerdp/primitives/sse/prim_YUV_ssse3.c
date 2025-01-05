@@ -1142,83 +1142,6 @@ static pstatus_t ssse3_LumaToYUV444(const BYTE* WINPR_RESTRICT pSrcRaw[], const 
 	return PRIMITIVES_SUCCESS;
 }
 
-static INLINE void ssse3_filter(BYTE* WINPR_RESTRICT pSrcDst, const BYTE* WINPR_RESTRICT pSrc2)
-{
-	const __m128i even = _mm_set_epi8((char)0x80, 14, (char)0x80, 12, (char)0x80, 10, (char)0x80, 8,
-	                                  (char)0x80, 6, (char)0x80, 4, (char)0x80, 2, (char)0x80, 0);
-	const __m128i odd = _mm_set_epi8((char)0x80, 15, (char)0x80, 13, (char)0x80, 11, (char)0x80, 9,
-	                                 (char)0x80, 7, (char)0x80, 5, (char)0x80, 3, (char)0x80, 1);
-	const __m128i interleave = _mm_set_epi8(15, 7, 14, 6, 13, 5, 12, 4, 11, 3, 10, 2, 9, 1, 8, 0);
-	const __m128i u = _mm_loadu_si128((const __m128i*)pSrcDst);
-	const __m128i u1 = _mm_loadu_si128((const __m128i*)pSrc2);
-	const __m128i uEven = _mm_shuffle_epi8(u, even);
-	const __m128i uEven4 = _mm_slli_epi16(uEven, 2);
-	const __m128i uOdd = _mm_shuffle_epi8(u, odd);
-	const __m128i u1Even = _mm_shuffle_epi8(u1, even);
-	const __m128i u1Odd = _mm_shuffle_epi8(u1, odd);
-	const __m128i tmp1 = _mm_add_epi16(uOdd, u1Even);
-	const __m128i tmp2 = _mm_add_epi16(tmp1, u1Odd);
-	const __m128i result = _mm_sub_epi16(uEven4, tmp2);
-	const __m128i packed = _mm_packus_epi16(result, uOdd);
-	const __m128i interleaved = _mm_shuffle_epi8(packed, interleave);
-	_mm_storeu_si128((__m128i*)pSrcDst, interleaved);
-}
-
-static pstatus_t ssse3_ChromaFilter(BYTE* WINPR_RESTRICT pDst[], const UINT32 dstStep[],
-                                    const RECTANGLE_16* WINPR_RESTRICT roi)
-{
-	const UINT32 oddY = 1;
-	const UINT32 evenY = 0;
-	const UINT32 nWidth = roi->right - roi->left;
-	const UINT32 nHeight = roi->bottom - roi->top;
-	const UINT32 halfHeight = (nHeight + 1) / 2;
-	const UINT32 halfWidth = (nWidth + 1) / 2;
-	const UINT32 halfPad = halfWidth % 16;
-
-	/* Filter */
-	for (size_t y = roi->top; y < halfHeight + roi->top; y++)
-	{
-		size_t x = roi->left;
-		const size_t val2y = (y * 2ULL + evenY);
-		const size_t val2y1 = val2y + oddY;
-		BYTE* pU1 = pDst[1] + 1ULL * dstStep[1] * val2y1;
-		BYTE* pV1 = pDst[2] + 1ULL * dstStep[2] * val2y1;
-		BYTE* pU = pDst[1] + 1ULL * dstStep[1] * val2y;
-		BYTE* pV = pDst[2] + 1ULL * dstStep[2] * val2y;
-
-		if (val2y1 > nHeight)
-			continue;
-
-		for (; x < halfWidth + roi->left - halfPad; x += 16)
-		{
-			ssse3_filter(&pU[2 * x], &pU1[2 * x]);
-			ssse3_filter(&pV[2 * x], &pV1[2 * x]);
-		}
-
-		for (; x < halfWidth + roi->left; x++)
-		{
-			const size_t val2x = (x * 2ULL);
-			const size_t val2x1 = val2x + 1ULL;
-			const BYTE inU = pU[val2x];
-			const BYTE inV = pV[val2x];
-			const INT32 up = inU * 4;
-			const INT32 vp = inV * 4;
-			INT32 u2020 = 0;
-			INT32 v2020 = 0;
-
-			if (val2x1 > nWidth)
-				continue;
-
-			u2020 = up - pU[val2x1] - pU1[val2x] - pU1[val2x1];
-			v2020 = vp - pV[val2x1] - pV1[val2x] - pV1[val2x1];
-			pU[val2x] = CONDITIONAL_CLIP(u2020, inU);
-			pV[val2x] = CONDITIONAL_CLIP(v2020, inV);
-		}
-	}
-
-	return PRIMITIVES_SUCCESS;
-}
-
 static pstatus_t ssse3_ChromaV1ToYUV444(const BYTE* WINPR_RESTRICT pSrcRaw[3],
                                         const UINT32 srcStep[3], BYTE* WINPR_RESTRICT pDstRaw[3],
                                         const UINT32 dstStep[3],
@@ -1313,8 +1236,7 @@ static pstatus_t ssse3_ChromaV1ToYUV444(const BYTE* WINPR_RESTRICT pSrcRaw[3],
 		}
 	}
 
-	/* Filter */
-	return ssse3_ChromaFilter(pDst, dstStep, roi);
+	return PRIMITIVES_SUCCESS;
 }
 
 static pstatus_t ssse3_ChromaV2ToYUV444(const BYTE* WINPR_RESTRICT pSrc[3], const UINT32 srcStep[3],
@@ -1429,7 +1351,7 @@ static pstatus_t ssse3_ChromaV2ToYUV444(const BYTE* WINPR_RESTRICT pSrc[3], cons
 		}
 	}
 
-	return ssse3_ChromaFilter(pDst, dstStep, roi);
+	return PRIMITIVES_SUCCESS;
 }
 
 static pstatus_t ssse3_YUV420CombineToYUV444(avc444_frame_type type,

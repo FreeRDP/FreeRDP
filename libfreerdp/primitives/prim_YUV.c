@@ -93,54 +93,6 @@ static pstatus_t general_LumaToYUV444(const BYTE* WINPR_RESTRICT pSrcRaw[3],
 	return PRIMITIVES_SUCCESS;
 }
 
-static pstatus_t general_ChromaFilter(BYTE* WINPR_RESTRICT pDst[3], const UINT32 dstStep[3],
-                                      const RECTANGLE_16* WINPR_RESTRICT roi)
-{
-	const UINT32 oddY = 1;
-	const UINT32 evenY = 0;
-	const UINT32 nWidth = roi->right - roi->left;
-	const UINT32 nHeight = roi->bottom - roi->top;
-	const UINT32 halfHeight = (nHeight + 1) / 2;
-	const UINT32 halfWidth = (nWidth + 1) / 2;
-
-	/* Filter */
-	for (UINT32 y = roi->top; y < halfHeight + roi->top; y++)
-	{
-		const UINT32 val2y = (y * 2 + evenY);
-		const UINT32 val2y1 = val2y + oddY;
-		BYTE* pU1 = pDst[1] + 1ULL * dstStep[1] * val2y1;
-		BYTE* pV1 = pDst[2] + 1ULL * dstStep[2] * val2y1;
-		BYTE* pU = pDst[1] + 1ULL * dstStep[1] * val2y;
-		BYTE* pV = pDst[2] + 1ULL * dstStep[2] * val2y;
-
-		if (val2y1 > nHeight)
-			continue;
-
-		for (UINT32 x = roi->left; x < halfWidth + roi->left; x++)
-		{
-			const UINT32 val2x = (x * 2);
-			const UINT32 val2x1 = val2x + 1;
-			const BYTE inU = pU[val2x];
-			const BYTE inV = pV[val2x];
-			const INT32 up = inU * 4;
-			const INT32 vp = inV * 4;
-			INT32 u2020 = 0;
-			INT32 v2020 = 0;
-
-			if (val2x1 > nWidth)
-				continue;
-
-			u2020 = up - pU[val2x1] - pU1[val2x] - pU1[val2x1];
-			v2020 = vp - pV[val2x1] - pV1[val2x] - pV1[val2x1];
-
-			pU[val2x] = CONDITIONAL_CLIP(u2020, inU);
-			pV[val2x] = CONDITIONAL_CLIP(v2020, inV);
-		}
-	}
-
-	return PRIMITIVES_SUCCESS;
-}
-
 static pstatus_t general_ChromaV1ToYUV444(const BYTE* WINPR_RESTRICT pSrcRaw[3],
                                           const UINT32 srcStep[3], BYTE* WINPR_RESTRICT pDstRaw[3],
                                           const UINT32 dstStep[3],
@@ -212,8 +164,7 @@ static pstatus_t general_ChromaV1ToYUV444(const BYTE* WINPR_RESTRICT pSrcRaw[3],
 		}
 	}
 
-	/* Filter */
-	return general_ChromaFilter(pDst, dstStep, roi);
+	return PRIMITIVES_SUCCESS;
 }
 
 static pstatus_t general_ChromaV2ToYUV444(const BYTE* WINPR_RESTRICT pSrc[3],
@@ -264,7 +215,7 @@ static pstatus_t general_ChromaV2ToYUV444(const BYTE* WINPR_RESTRICT pSrc[3],
 		}
 	}
 
-	return general_ChromaFilter(pDst, dstStep, roi);
+	return PRIMITIVES_SUCCESS;
 }
 
 static pstatus_t general_YUV420CombineToYUV444(avc444_frame_type type,
@@ -307,13 +258,12 @@ general_YUV444SplitToYUV420(const BYTE* WINPR_RESTRICT pSrc[3], const UINT32 src
 {
 	UINT32 uY = 0;
 	UINT32 vY = 0;
-	UINT32 halfWidth = 0;
-	UINT32 halfHeight = 0;
+
 	/* The auxiliary frame is aligned to multiples of 16x16.
 	 * We need the padded height for B4 and B5 conversion. */
 	const UINT32 padHeigth = roi->height + 16 - roi->height % 16;
-	halfWidth = (roi->width + 1) / 2;
-	halfHeight = (roi->height + 1) / 2;
+	const UINT32 halfWidth = (roi->width + 1) / 2;
+	const UINT32 halfHeight = (roi->height + 1) / 2;
 
 	/* B1 */
 	for (size_t y = 0; y < roi->height; y++)
@@ -328,18 +278,13 @@ general_YUV444SplitToYUV420(const BYTE* WINPR_RESTRICT pSrc[3], const UINT32 src
 	{
 		const BYTE* pSrcU = pSrc[1] + 2ULL * y * srcStep[1];
 		const BYTE* pSrcV = pSrc[2] + 2ULL * y * srcStep[2];
-		const BYTE* pSrcU1 = pSrc[1] + (2ULL * y + 1ULL) * srcStep[1];
-		const BYTE* pSrcV1 = pSrc[2] + (2ULL * y + 1ULL) * srcStep[2];
 		BYTE* pU = pMainDst[1] + y * dstMainStep[1];
 		BYTE* pV = pMainDst[2] + y * dstMainStep[2];
 
 		for (size_t x = 0; x < halfWidth; x++)
 		{
-			/* Filter */
-			const INT32 u = pSrcU[2 * x] + pSrcU[2 * x + 1] + pSrcU1[2 * x] + pSrcU1[2 * x + 1];
-			const INT32 v = pSrcV[2 * x] + pSrcV[2 * x + 1] + pSrcV1[2 * x] + pSrcV1[2 * x + 1];
-			pU[x] = CLIP(u / 4L);
-			pV[x] = CLIP(v / 4L);
+			pU[x] = pSrcV[2 * x];
+			pV[x] = pSrcU[2 * x];
 		}
 	}
 
