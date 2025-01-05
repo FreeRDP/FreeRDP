@@ -286,6 +286,29 @@ static INLINE BYTE YUV2B(INT32 Y, INT32 U, INT32 V)
 	return CLIP(b8);
 }
 
+/**
+ * | Y |    ( |  54   183     18 | | R | )        |  0  |
+ * | U | =  ( | -29   -99    128 | | G | ) >> 8 + | 128 |
+ * | V |    ( | 128  -116    -12 | | B | )        | 128 |
+ */
+static INLINE BYTE RGB2Y(INT32 R, INT32 G, INT32 B)
+{
+	const INT32 val = ((54 * R + 183 * G + 18 * B) >> 8);
+	return WINPR_ASSERTING_INT_CAST(BYTE, val);
+}
+
+static INLINE BYTE RGB2U(INT32 R, INT32 G, INT32 B)
+{
+	const INT32 val = (((-29 * R - 99 * G + 128 * B) >> 8) + 128);
+	return WINPR_ASSERTING_INT_CAST(BYTE, val);
+}
+
+static INLINE BYTE RGB2V(INT32 R, INT32 G, INT32 B)
+{
+	const INT32 val = (((128 * R - 116 * G - 12 * B) >> 8) + 128);
+	return WINPR_ASSERTING_INT_CAST(BYTE, val);
+}
+
 /* Function prototypes for all the init/deinit routines. */
 FREERDP_LOCAL void primitives_init_copy(primitives_t* WINPR_RESTRICT prims);
 FREERDP_LOCAL void primitives_init_set(primitives_t* WINPR_RESTRICT prims);
