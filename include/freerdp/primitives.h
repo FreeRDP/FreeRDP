@@ -182,7 +182,7 @@ typedef pstatus_t (*__RGBToYUV420_8u_P3AC4R_t)(const BYTE* WINPR_RESTRICT pSrc, 
 	                                           const prim_size_t* WINPR_RESTRICT roi);
 typedef pstatus_t (*__RGBToYUV444_8u_P3AC4R_t)(const BYTE* WINPR_RESTRICT pSrc, UINT32 SrcFormat,
 	                                           UINT32 srcStep, BYTE* WINPR_RESTRICT pDst[3],
-	                                           UINT32 dstStep[3],
+	                                           const UINT32 dstStep[3],
 	                                           const prim_size_t* WINPR_RESTRICT roi);
 typedef pstatus_t (*__YUV420CombineToYUV444_t)(avc444_frame_type type,
 	                                           const BYTE* WINPR_RESTRICT pSrc[3],
