@@ -39,6 +39,7 @@
 #include <winpr/synch.h>
 #include <winpr/image.h>
 #include <winpr/sysinfo.h>
+#include <winpr/environment.h>
 
 #include <freerdp/log.h>
 #include <freerdp/codec/color.h>
@@ -997,8 +998,10 @@ static int x11_shadow_subsystem_base_init(x11ShadowSubsystem* subsystem)
 	if (subsystem->display)
 		return 1; /* initialize once */
 
-	if (!getenv("DISPLAY"))
-		setenv("DISPLAY", ":0", 1);
+	char* disp = winpr_secure_getenv("DISPLAY");
+	if (!disp)
+		winpr_secure_setenv("DISPLAY", ":0", true);
+	free(disp);
 
 	if (!XInitThreads())
 		return -1;
@@ -1196,8 +1199,10 @@ UINT32 x11_shadow_enum_monitors(MONITOR_DEF* monitors, UINT32 maxMonitors)
 	int displayHeight = 0;
 	int numMonitors = 0;
 
-	if (!getenv("DISPLAY"))
-		setenv("DISPLAY", ":0", 1);
+	char* disp = winpr_secure_getenv("DISPLAY");
+	if (!disp)
+		winpr_secure_setenv("DISPLAY", ":0", true);
+	free(disp);
 
 	display = XOpenDisplay(NULL);
 
