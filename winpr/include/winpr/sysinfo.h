@@ -31,8 +31,9 @@ extern "C"
 {
 #endif
 
-#ifndef _WIN32
-
+#ifdef _WIN32
+#include <winnt.h>
+#else
 #define PROCESSOR_ARCHITECTURE_INTEL 0
 #define PROCESSOR_ARCHITECTURE_MIPS 1
 #define PROCESSOR_ARCHITECTURE_ALPHA 2
