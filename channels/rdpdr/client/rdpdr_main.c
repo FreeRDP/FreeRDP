@@ -1516,8 +1516,7 @@ static UINT dummy_irp_response(rdpdrPlugin* rdpdr, wStream* s)
 	Stream_Read_UINT32(s, FileId);       /* FileId (4 bytes) */
 	Stream_Read_UINT32(s, CompletionId); /* CompletionId (4 bytes) */
 
-	if (!rdpdr_write_iocompletion_header(output, DeviceId, CompletionId,
-	                                     (UINT32)STATUS_UNSUCCESSFUL))
+	if (!rdpdr_write_iocompletion_header(output, DeviceId, CompletionId, STATUS_UNSUCCESSFUL))
 		return CHANNEL_RC_NO_MEMORY;
 
 	return rdpdr_send(rdpdr, output);
