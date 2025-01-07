@@ -1166,7 +1166,7 @@ int freerdp_tcp_default_connect(rdpContext* context, rdpSettings* settings, cons
 		struct sockaddr_vm addr = { 0 };
 
 		addr.svm_family = AF_VSOCK;
-		addr.svm_port = port;
+		addr.svm_port = WINPR_ASSERTING_INT_CAST(typeof(addr.svm_port), port);
 
 		errno = 0;
 		char* ptr = NULL;
@@ -1178,7 +1178,7 @@ int freerdp_tcp_default_connect(rdpContext* context, rdpSettings* settings, cons
 			         winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 			return -1;
 		}
-		addr.svm_cid = val;
+		addr.svm_cid = WINPR_ASSERTING_INT_CAST(typeof(addr.svm_cid), val);
 		if (addr.svm_cid == 2)
 		{
 			addr.svm_flags = VMADDR_FLAG_TO_HOST;
