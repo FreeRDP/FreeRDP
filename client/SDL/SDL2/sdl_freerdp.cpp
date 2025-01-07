@@ -273,7 +273,7 @@ static int error_info_to_error(freerdp* instance, DWORD* pcode, char** msg, size
 	const int exit_code = sdl_map_error_to_exit_code(code);
 
 	winpr_asprintf(msg, len, "Terminate with %s due to ERROR_INFO %s [0x%08" PRIx32 "]: %s",
-	               sdl_map_error_to_code_tag(exit_code), name, code, str);
+	               sdl_map_error_to_code_tag(code), name, code, str);
 	WLog_DBG(SDL_TAG, "%s", *msg);
 	if (pcode)
 		*pcode = code;
