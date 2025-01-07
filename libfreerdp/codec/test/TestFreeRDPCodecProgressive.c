@@ -1185,8 +1185,17 @@ static WINPR_NORETURN(void usage(const char* name))
 
 static void print_codec_stats(const char* name, UINT64 timeNS)
 {
-	const double dectimems = timeNS / 1000000.0;
-	(void)fprintf(stderr, "[%s] took %lf ms to decode\n", name, dectimems);
+	const double dectimeMS = (double)timeNS / 1000.0 / 1000.0;
+	(void)fprintf(stderr, "[%s] took %lf ms to decode\n", name, dectimeMS);
+}
+
+static UINT64 measure_diff_and_print(const char* cname, UINT32 frameId, UINT64 start)
+{
+	const UINT64 end = winpr_GetTickCount64NS();
+	const UINT64 diff = end - start;
+	const double ddiff = (double)diff / 1000000.0;
+	(void)fprintf(stderr, "frame [%s] %" PRIu32 " took %lf ms\n", cname, frameId, ddiff);
+	return diff;
 }
 
 static int test_dump(int argc, char* argv[])
@@ -1264,12 +1273,7 @@ static int test_dump(int argc, char* argv[])
 						success = progressive_decompress(codecs->progressive, cmd.data, cmd.length,
 						                                 dst, DstFormat, 0, cmd.left, cmd.top,
 						                                 &invalid, cmd.surfaceId, frameId);
-					const UINT64 end = winpr_GetTickCount64NS();
-					const UINT64 diff = end - start;
-					const double ddiff = diff / 1000000.0;
-					(void)fprintf(stderr, "frame [%s] %" PRIu32 " took %lf ms\n", cname, frameId,
-					              ddiff);
-					CAPROGRESSIVE_dectime += diff;
+					CAPROGRESSIVE_dectime += measure_diff_and_print(cname, frameId, start);
 				}
 				break;
 
@@ -1286,12 +1290,7 @@ static int test_dump(int argc, char* argv[])
 						                         .right = (UINT16)MIN(UINT16_MAX, cmd.right),
 						                         .bottom = (UINT16)MIN(UINT16_MAX, cmd.bottom) };
 					region16_union_rect(&invalid, &invalid, &invalidRect);
-					const UINT64 end = winpr_GetTickCount64NS();
-					const UINT64 diff = end - start;
-					const double ddiff = diff / 1000000.0;
-					(void)fprintf(stderr, "frame [%s] %" PRIu32 " took %lf ms\n", cname, frameId,
-					              ddiff);
-					UNCOMPRESSED_dectime += diff;
+					UNCOMPRESSED_dectime += measure_diff_and_print(cname, frameId, start);
 				}
 				break;
 				case RDPGFX_CODECID_CAVIDEO:
@@ -1301,12 +1300,7 @@ static int test_dump(int argc, char* argv[])
 					                         dst, DstFormat, stride, height, &invalid))
 						success = -1;
 
-					const UINT64 end = winpr_GetTickCount64NS();
-					const UINT64 diff = end - start;
-					const double ddiff = diff / 1000000.0;
-					(void)fprintf(stderr, "frame [%s] %" PRIu32 " took %lf ms\n", cname, frameId,
-					              ddiff);
-					CAVIDEO_dectime += diff;
+					CAVIDEO_dectime += measure_diff_and_print(cname, frameId, start);
 				}
 				break;
 				case RDPGFX_CODECID_CLEARCODEC:
@@ -1322,12 +1316,7 @@ static int test_dump(int argc, char* argv[])
 						                               .bottom =
 						                                   (UINT16)MIN(UINT16_MAX, cmd.bottom) };
 					region16_union_rect(&invalid, &invalid, &invalidRect);
-					const UINT64 end = winpr_GetTickCount64NS();
-					const UINT64 diff = end - start;
-					const double ddiff = diff / 1000000.0;
-					(void)fprintf(stderr, "frame [%s] %" PRIu32 " took %lf ms\n", cname, frameId,
-					              ddiff);
-					CLEARCODEC_dectime += diff;
+					CLEARCODEC_dectime += measure_diff_and_print(cname, frameId, start);
 				}
 				break;
 				case RDPGFX_CODECID_PLANAR:
@@ -1346,24 +1335,14 @@ static int test_dump(int argc, char* argv[])
 						                                   (UINT16)MIN(UINT16_MAX, cmd.bottom) };
 					region16_union_rect(&invalid, &invalid, &invalidRect);
 
-					const UINT64 end = winpr_GetTickCount64NS();
-					const UINT64 diff = end - start;
-					const double ddiff = diff / 1000000.0;
-					(void)fprintf(stderr, "frame [%s] %" PRIu32 " took %lf ms\n", cname, frameId,
-					              ddiff);
-					PLANAR_dectime += diff;
+					PLANAR_dectime += measure_diff_and_print(cname, frameId, start);
 				}
 				break;
 				case RDPGFX_CODECID_AVC420:
 				{
 					const UINT64 start = winpr_GetTickCount64NS();
 
-					const UINT64 end = winpr_GetTickCount64NS();
-					const UINT64 diff = end - start;
-					const double ddiff = diff / 1000000.0;
-					(void)fprintf(stderr, "frame [%s] %" PRIu32 " took %lf ms\n", cname, frameId,
-					              ddiff);
-					AVC420_dectime += diff;
+					AVC420_dectime += measure_diff_and_print(cname, frameId, start);
 					success = -1;
 				}
 				break;
@@ -1371,12 +1350,7 @@ static int test_dump(int argc, char* argv[])
 				{
 					const UINT64 start = winpr_GetTickCount64NS();
 
-					const UINT64 end = winpr_GetTickCount64NS();
-					const UINT64 diff = end - start;
-					const double ddiff = diff / 1000000.0;
-					(void)fprintf(stderr, "frame [%s] %" PRIu32 " took %lf ms\n", cname, frameId,
-					              ddiff);
-					ALPHA_dectime += diff;
+					ALPHA_dectime += measure_diff_and_print(cname, frameId, start);
 					success = -1;
 				}
 				break;
@@ -1384,12 +1358,7 @@ static int test_dump(int argc, char* argv[])
 				{
 					const UINT64 start = winpr_GetTickCount64NS();
 
-					const UINT64 end = winpr_GetTickCount64NS();
-					const UINT64 diff = end - start;
-					const double ddiff = diff / 1000000.0;
-					(void)fprintf(stderr, "frame [%s] %" PRIu32 " took %lf ms\n", cname, frameId,
-					              ddiff);
-					AVC444_dectime += diff;
+					AVC444_dectime += measure_diff_and_print(cname, frameId, start);
 					success = -1;
 				}
 				break;
@@ -1397,12 +1366,7 @@ static int test_dump(int argc, char* argv[])
 				{
 					const UINT64 start = winpr_GetTickCount64NS();
 
-					const UINT64 end = winpr_GetTickCount64NS();
-					const UINT64 diff = end - start;
-					const double ddiff = diff / 1000000.0;
-					(void)fprintf(stderr, "frame [%s] %" PRIu32 " took %lf ms\n", cname, frameId,
-					              ddiff);
-					AVC444v2_dectime += diff;
+					AVC444v2_dectime += measure_diff_and_print(cname, frameId, start);
 					success = -1;
 				}
 				break;
@@ -1429,11 +1393,7 @@ static int test_dump(int argc, char* argv[])
 					                                   rect->left, rect->top, NULL, 0))
 						success = -42;
 				}
-				const UINT64 end = winpr_GetTickCount64NS();
-				const UINT64 diff = end - start;
-				const double ddiff = diff / 1000000.0;
-				(void)fprintf(stderr, "frame %" PRIu32 " copy took %lf ms\n", frameId, ddiff);
-				copytime += diff;
+				copytime += measure_diff_and_print(cname, frameId, start);
 			}
 			region16_clear(&invalid);
 		}
