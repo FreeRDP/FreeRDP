@@ -12,7 +12,7 @@ SdlSelectList::SdlSelectList(const std::string& title, const std::vector<std::st
 
 	const size_t total_height = labels.size() * (widget_height + vpadding) + vpadding;
 	const size_t height = total_height + widget_height;
-	assert(widget_width <= INT32_MAX);
+	static_assert(widget_width <= INT32_MAX);
 	assert(height <= INT32_MAX);
 	auto rc = SDL_CreateWindowAndRenderer(
 	    title.c_str(), static_cast<int>(widget_width), static_cast<int>(height),

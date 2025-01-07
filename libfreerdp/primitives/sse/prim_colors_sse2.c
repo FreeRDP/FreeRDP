@@ -242,7 +242,7 @@ sse2_yCbCrToRGB_16s8u_P3AC4R_BGRX(const INT16* WINPR_RESTRICT pSrc[3], UINT32 sr
 	const INT16* cr_buf = pSrc[2];
 	const UINT32 pad = roi->width % 16;
 	const UINT32 step = sizeof(__m128i) / sizeof(INT16);
-	const UINT32 imax = (roi->width - pad) * sizeof(INT16) / sizeof(__m128i);
+	const size_t imax = (roi->width - pad) * sizeof(INT16) / sizeof(__m128i);
 	BYTE* d_buf = pDst;
 	const size_t dstPad = (dstStep - roi->width * 4);
 #ifdef DO_PREFETCH
@@ -250,7 +250,7 @@ sse2_yCbCrToRGB_16s8u_P3AC4R_BGRX(const INT16* WINPR_RESTRICT pSrc[3], UINT32 sr
 	/* Prefetch Y's, Cb's, and Cr's. */
 	for (UINT32 yp = 0; yp < roi->height; yp++)
 	{
-		for (int i = 0; i < imax; i += (CACHE_LINE_BYTES / sizeof(__m128i)))
+		for (size_t i = 0; i < imax; i += (CACHE_LINE_BYTES / sizeof(__m128i)))
 		{
 			_mm_prefetch((char*)(&((__m128i*)y_buf)[i]), _MM_HINT_NTA);
 			_mm_prefetch((char*)(&((__m128i*)cb_buf)[i]), _MM_HINT_NTA);
@@ -269,7 +269,7 @@ sse2_yCbCrToRGB_16s8u_P3AC4R_BGRX(const INT16* WINPR_RESTRICT pSrc[3], UINT32 sr
 
 	for (UINT32 yp = 0; yp < roi->height; ++yp)
 	{
-		for (UINT32 i = 0; i < imax; i += 2)
+		for (size_t i = 0; i < imax; i += 2)
 		{
 			/* In order to use SSE2 signed 16-bit integer multiplication
 			 * we need to convert the floating point factors to signed int
@@ -427,7 +427,7 @@ sse2_yCbCrToRGB_16s8u_P3AC4R_RGBX(const INT16* WINPR_RESTRICT pSrc[3], UINT32 sr
 	const INT16* cr_buf = pSrc[2];
 	const UINT32 pad = roi->width % 16;
 	const UINT32 step = sizeof(__m128i) / sizeof(INT16);
-	const UINT32 imax = (roi->width - pad) * sizeof(INT16) / sizeof(__m128i);
+	const size_t imax = (roi->width - pad) * sizeof(INT16) / sizeof(__m128i);
 	BYTE* d_buf = pDst;
 	const size_t dstPad = (dstStep - roi->width * 4);
 #ifdef DO_PREFETCH
@@ -435,7 +435,7 @@ sse2_yCbCrToRGB_16s8u_P3AC4R_RGBX(const INT16* WINPR_RESTRICT pSrc[3], UINT32 sr
 	/* Prefetch Y's, Cb's, and Cr's. */
 	for (UINT32 yp = 0; yp < roi->height; yp++)
 	{
-		for (int i = 0; i < imax; i += (CACHE_LINE_BYTES / sizeof(__m128i)))
+		for (size_t i = 0; i < imax; i += (CACHE_LINE_BYTES / sizeof(__m128i)))
 		{
 			_mm_prefetch((char*)(&((__m128i*)y_buf)[i]), _MM_HINT_NTA);
 			_mm_prefetch((char*)(&((__m128i*)cb_buf)[i]), _MM_HINT_NTA);
@@ -454,7 +454,7 @@ sse2_yCbCrToRGB_16s8u_P3AC4R_RGBX(const INT16* WINPR_RESTRICT pSrc[3], UINT32 sr
 
 	for (UINT32 yp = 0; yp < roi->height; ++yp)
 	{
-		for (UINT32 i = 0; i < imax; i += 2)
+		for (size_t i = 0; i < imax; i += 2)
 		{
 			/* In order to use SSE2 signed 16-bit integer multiplication
 			 * we need to convert the floating point factors to signed int
@@ -631,7 +631,6 @@ sse2_RGBToYCbCr_16s16s_P3P3(const INT16* WINPR_RESTRICT pSrc[3], int srcStep,
 	__m128i* y_buf = (__m128i*)(pDst[0]);
 	__m128i* cb_buf = (__m128i*)(pDst[1]);
 	__m128i* cr_buf = (__m128i*)(pDst[2]);
-	int imax = 0;
 
 	if (((ULONG_PTR)(pSrc[0]) & 0x0f) || ((ULONG_PTR)(pSrc[1]) & 0x0f) ||
 	    ((ULONG_PTR)(pSrc[2]) & 0x0f) || ((ULONG_PTR)(pDst[0]) & 0x0f) ||
@@ -678,11 +677,11 @@ sse2_RGBToYCbCr_16s16s_P3P3(const INT16* WINPR_RESTRICT pSrc[3], int srcStep,
 	g_buf = (__m128i*)(pSrc[1]);
 	b_buf = (__m128i*)(pSrc[2]);
 #endif /* DO_PREFETCH */
-	imax = roi->width * sizeof(INT16) / sizeof(__m128i);
+	const size_t imax = roi->width * sizeof(INT16) / sizeof(__m128i);
 
 	for (UINT32 yp = 0; yp < roi->height; ++yp)
 	{
-		for (int i = 0; i < imax; i++)
+		for (size_t i = 0; i < imax; i++)
 		{
 			/* In order to use SSE2 signed 16-bit integer multiplication we
 			 * need to convert the floating point factors to signed int

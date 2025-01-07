@@ -175,7 +175,8 @@ BOOL gdi_LineTo(HGDI_DC hdc, INT32 nXEnd, INT32 nYEnd)
 		{
 			if ((x >= bx1 && x <= bx2) && (y >= by1 && y <= by2))
 			{
-				BYTE* pixel = gdi_GetPointer(bmp, x, y);
+				BYTE* pixel = gdi_GetPointer(bmp, WINPR_ASSERTING_INT_CAST(uint32_t, x),
+				                             WINPR_ASSERTING_INT_CAST(uint32_t, y));
 				WINPR_ASSERT(pixel);
 				gdi_rop_color(rop2, pixel, pen, bmp->format);
 			}

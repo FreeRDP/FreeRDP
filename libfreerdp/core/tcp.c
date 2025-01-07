@@ -1152,7 +1152,6 @@ int freerdp_tcp_default_connect(rdpContext* context, rdpSettings* settings, cons
 		if (sockfd < 0)
 		{
 			freerdp_set_last_error_if_not(context, FREERDP_ERROR_CONNECT_FAILED);
-
 			return -1;
 		}
 	}
@@ -1163,10 +1162,19 @@ int freerdp_tcp_default_connect(rdpContext* context, rdpSettings* settings, cons
 #if defined(HAVE_AF_VSOCK_H)
 		hostname = vsock;
 		sockfd = socket(AF_VSOCK, SOCK_STREAM, 0);
+		if (sockfd < 0)
+		{
+			char buffer[256] = { 0 };
+			WLog_WARN(TAG, "socket(AF_VSOCK, SOCK_STREAM, 0) failed with %s [%d]",
+			          winpr_strerror(errno, buffer, sizeof(buffer)));
+			freerdp_set_last_error_if_not(context, FREERDP_ERROR_CONNECT_FAILED);
+			return -1;
+		}
+
 		struct sockaddr_vm addr = { 0 };
 
 		addr.svm_family = AF_VSOCK;
-		addr.svm_port = port;
+		addr.svm_port = WINPR_ASSERTING_INT_CAST(typeof(addr.svm_port), port);
 
 		errno = 0;
 		char* ptr = NULL;
@@ -1178,7 +1186,7 @@ int freerdp_tcp_default_connect(rdpContext* context, rdpSettings* settings, cons
 			         winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 			return -1;
 		}
-		addr.svm_cid = val;
+		addr.svm_cid = WINPR_ASSERTING_INT_CAST(typeof(addr.svm_cid), val);
 		if (addr.svm_cid == 2)
 		{
 			addr.svm_flags = VMADDR_FLAG_TO_HOST;

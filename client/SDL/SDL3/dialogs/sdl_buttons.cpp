@@ -17,8 +17,9 @@ bool SdlButtonList::populate(SDL_Renderer* renderer, const std::vector<std::stri
 	assert(labels.size() == ids.size());
 
 	_list.clear();
-	size_t button_width = ids.size() * (width + hpadding) + hpadding;
-	size_t offsetX = total_width - std::min<size_t>(total_width, button_width);
+	size_t button_width = ids.size() * (static_cast<size_t>(width) + hpadding) + hpadding;
+	size_t offsetX = static_cast<size_t>(total_width) -
+	                 std::min<size_t>(static_cast<size_t>(total_width), button_width);
 	for (size_t x = 0; x < ids.size(); x++)
 	{
 		const size_t curOffsetX = offsetX + x * (static_cast<size_t>(width) + hpadding);

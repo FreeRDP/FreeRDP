@@ -31,7 +31,7 @@ static BOOL run_encode_decode_single(UINT16 bpp, BITMAP_INTERLEAVED_CONTEXT* enc
 	const UINT32 bstep = FreeRDPGetBytesPerPixel(format);
 	const size_t step = (13ULL + w) * 4ULL;
 	const size_t SrcSize = step * h;
-	const float maxDiff = 4.0f * ((bpp < 24) ? 2.0f : 1.0f);
+	const int maxDiff = 4 * ((bpp < 24) ? 2 : 1);
 	UINT32 DstSize = SrcSize;
 	BYTE* pSrcData = calloc(1, SrcSize);
 	BYTE* pDstData = calloc(1, SrcSize);
@@ -79,13 +79,13 @@ static BOOL run_encode_decode_single(UINT16 bpp, BITMAP_INTERLEAVED_CONTEXT* enc
 			FreeRDPSplitColor(srcColor, format, &r, &g, &b, NULL, NULL);
 			FreeRDPSplitColor(dstColor, format, &dr, &dg, &db, NULL, NULL);
 
-			if (fabsf((float)r - dr) > maxDiff)
+			if (abs(r - dr) > maxDiff)
 				goto fail;
 
-			if (fabsf((float)g - dg) > maxDiff)
+			if (abs(g - dg) > maxDiff)
 				goto fail;
 
-			if (fabsf((float)b - db) > maxDiff)
+			if (abs(b - db) > maxDiff)
 				goto fail;
 		}
 	}

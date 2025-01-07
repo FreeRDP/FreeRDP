@@ -358,7 +358,7 @@ struct S_IRP
 	UINT32 MinorFunction;
 	wStream* input;
 
-	UINT32 IoStatus;
+	NTSTATUS IoStatus;
 	wStream* output;
 
 	pcIRPResponse Complete;
