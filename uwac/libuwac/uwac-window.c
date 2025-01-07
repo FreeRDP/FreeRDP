@@ -683,7 +683,9 @@ UwacReturnCode UwacWindowSetInputRegion(UwacWindow* window, uint32_t x, uint32_t
 	if (!window->input_region)
 		return UWAC_ERROR_NOMEMORY;
 
-	wl_region_add(window->input_region, x, y, width, height);
+	wl_region_add(window->input_region, WINPR_ASSERTING_INT_CAST(int32_t, x),
+	              WINPR_ASSERTING_INT_CAST(int32_t, y), WINPR_ASSERTING_INT_CAST(int32_t, width),
+	              WINPR_ASSERTING_INT_CAST(int32_t, height));
 	wl_surface_set_input_region(window->surface, window->input_region);
 	return UWAC_SUCCESS;
 }

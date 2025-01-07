@@ -35,6 +35,8 @@
 #include <sys/timerfd.h>
 #include <sys/epoll.h>
 
+#include <winpr/cast.h>
+
 #include "uwac-os.h"
 #include "wayland-cursor.h"
 #include "wayland-client-protocol.h"
@@ -59,7 +61,7 @@ static struct wl_buffer* create_pointer_buffer(UwacSeat* seat, const void* src, 
 	}
 	memcpy(data, src, size);
 
-	pool = wl_shm_create_pool(seat->display->shm, fd, size);
+	pool = wl_shm_create_pool(seat->display->shm, fd, WINPR_ASSERTING_INT_CAST(int32_t, size));
 
 	if (!pool)
 	{
