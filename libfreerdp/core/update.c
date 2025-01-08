@@ -1053,7 +1053,7 @@ static BOOL s_update_end_paint(rdpContext* context)
 	return TRUE;
 }
 
-static void update_flush(rdpContext* context)
+static BOOL update_flush(rdpContext* context)
 {
 	rdp_update_internal* update = NULL;
 
@@ -1062,14 +1062,18 @@ static void update_flush(rdpContext* context)
 
 	if (update->numberOrders > 0)
 	{
-		update_end_paint(&update->common);
-		update_begin_paint(&update->common);
+		if (!update_end_paint(&update->common))
+			return FALSE;
+
+		if (!update_begin_paint(&update->common))
+			return FALSE;
 	}
+	return TRUE;
 }
 
-static void update_force_flush(rdpContext* context)
+static BOOL update_force_flush(rdpContext* context)
 {
-	update_flush(context);
+	return update_flush(context);
 }
 
 static BOOL update_check_flush(rdpContext* context, size_t size)
@@ -1089,7 +1093,8 @@ static BOOL update_check_flush(rdpContext* context, size_t size)
 	if (Stream_GetPosition(s) + size + 64 >= FASTPATH_MAX_PACKET_SIZE)
 	{
 		// Too big for the current packet. Flush first
-		update_flush(context);
+		if (!update_flush(context))
+			return FALSE;
 	}
 
 	return TRUE;
@@ -1349,7 +1354,8 @@ static BOOL update_send_surface_bits(rdpContext* context,
 	WINPR_ASSERT(surfaceBitsCommand);
 	WINPR_ASSERT(rdp);
 
-	update_force_flush(context);
+	if (!update_force_flush(context))
+		return FALSE;
 	s = fastpath_update_pdu_init(rdp->fastpath);
 
 	if (!s)
@@ -1362,8 +1368,7 @@ static BOOL update_send_surface_bits(rdpContext* context,
 	                              surfaceBitsCommand->skipCompression))
 		goto out_fail;
 
-	update_force_flush(context);
-	ret = TRUE;
+	ret = update_force_flush(context);
 out_fail:
 	Stream_Release(s);
 	return ret;
@@ -1376,7 +1381,8 @@ static BOOL update_send_surface_frame_marker(rdpContext* context,
 	WINPR_ASSERT(context);
 	rdpRdp* rdp = context->rdp;
 	BOOL ret = FALSE;
-	update_force_flush(context);
+	if (!update_force_flush(context))
+		return FALSE;
 
 	WINPR_ASSERT(rdp);
 	s = fastpath_update_pdu_init(rdp->fastpath);
@@ -1390,8 +1396,7 @@ static BOOL update_send_surface_frame_marker(rdpContext* context,
 	    !fastpath_send_update_pdu(rdp->fastpath, FASTPATH_UPDATETYPE_SURFCMDS, s, FALSE))
 		goto out_fail;
 
-	update_force_flush(context);
-	ret = TRUE;
+	ret = update_force_flush(context);
 out_fail:
 	Stream_Release(s);
 	return ret;
@@ -1406,7 +1411,8 @@ static BOOL update_send_surface_frame_bits(rdpContext* context, const SURFACE_BI
 	rdpRdp* rdp = context->rdp;
 	BOOL ret = FALSE;
 
-	update_force_flush(context);
+	if (!update_force_flush(context))
+		return FALSE;
 
 	WINPR_ASSERT(rdp);
 	s = fastpath_update_pdu_init(rdp->fastpath);
@@ -1431,7 +1437,10 @@ static BOOL update_send_surface_frame_bits(rdpContext* context, const SURFACE_BI
 
 	ret = fastpath_send_update_pdu(rdp->fastpath, FASTPATH_UPDATETYPE_SURFCMDS, s,
 	                               cmd->skipCompression);
-	update_force_flush(context);
+	if (!ret)
+		goto out_fail;
+
+	ret = update_force_flush(context);
 out_fail:
 	Stream_Release(s);
 	return ret;
@@ -1491,7 +1500,8 @@ static BOOL update_send_bitmap_update(rdpContext* context, const BITMAP_UPDATE* 
 	rdpUpdate* update = context->update;
 	BOOL ret = TRUE;
 
-	update_force_flush(context);
+	if (!update_force_flush(context))
+		return FALSE;
 
 	WINPR_ASSERT(rdp);
 	s = fastpath_update_pdu_init(rdp->fastpath);
@@ -1507,7 +1517,8 @@ static BOOL update_send_bitmap_update(rdpContext* context, const BITMAP_UPDATE* 
 		goto out_fail;
 	}
 
-	update_force_flush(context);
+	ret = update_force_flush(context);
+
 out_fail:
 	Stream_Release(s);
 	return ret;
