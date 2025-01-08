@@ -68,7 +68,6 @@ jobs:
             libkrb5-dev \
             libcjson-dev \
             libsdl2-ttf-dev \
-            libwebkit2gtk-4.0-dev \
             libopus-dev \
             libwebp-dev \
             libpng-dev \
@@ -80,6 +79,7 @@ jobs:
             abigail-tools \
             pylint \
             curl
+        sudo apt-get satisfy -q -y "libwebkit2gtk-4.0-dev | libwebkit2gtk-4.1-dev"
 
       - name: "Prepare configuration"
         run: |

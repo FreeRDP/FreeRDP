@@ -119,13 +119,13 @@ jobs:
           libcjson-dev \
           libsdl2-ttf-dev \
           libsdl2-image-dev \
-          libwebkit2gtk-4.0-dev \
           clang \
           libopus-dev \
           libwebp-dev \
           libpng-dev \
           libjpeg-dev \
           liburiparser-dev
+        sudo apt-get satisfy -q -y "libwebkit2gtk-4.0-dev | libwebkit2gtk-4.1-dev"
         mkdir ci-build
         cd ci-build
         export CC=/usr/bin/clang
