@@ -5572,14 +5572,15 @@ static int freerdp_client_settings_parse_command_line_arguments_int(
 		if (!value_to_int(arg->Value, &val, 1, UINT16_MAX))
 			return fail_at(arg, COMMAND_LINE_ERROR_UNEXPECTED_VALUE);
 
-		if (!freerdp_settings_set_uint32(settings, FreeRDP_ServerPort, (UINT32)val))
+		if (!freerdp_settings_set_uint32(settings, FreeRDP_ServerPort,
+		                                 WINPR_ASSERTING_INT_CAST(UINT32, val)))
 			return fail_at(arg, COMMAND_LINE_ERROR);
 	}
 
 	if (freerdp_settings_get_bool(settings, FreeRDP_VmConnectMode))
 	{
 		const COMMAND_LINE_ARGUMENT_A* nego = CommandLineFindArgumentA(largs, "nego");
-		if (nego)
+		if (nego && (nego->Flags & COMMAND_LINE_ARGUMENT_PRESENT))
 			return fail_at(arg, COMMAND_LINE_ERROR);
 
 		const UINT32 port = freerdp_settings_get_uint32(settings, FreeRDP_ServerPort);
