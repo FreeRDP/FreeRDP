@@ -1316,7 +1316,8 @@ BOOL gdi_resize_ex(rdpGdi* gdi, UINT32 width, UINT32 height, UINT32 stride, UINT
 	WINPR_ASSERT(gdi->context->update);
 
 	/* EndPaint might not have been called, ensure the update lock is released */
-	update_end_paint(gdi->context->update);
+	if (!update_end_paint(gdi->context->update))
+		return FALSE;
 	rdp_update_lock(gdi->context->update);
 
 	if (gdi->drawing == gdi->primary)

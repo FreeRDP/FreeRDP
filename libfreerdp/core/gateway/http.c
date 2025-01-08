@@ -1126,6 +1126,7 @@ int http_chuncked_read(BIO* bio, BYTE* pBuffer, size_t size,
 	WINPR_ASSERT(bio);
 	WINPR_ASSERT(pBuffer);
 	WINPR_ASSERT(encodingContext != NULL);
+	WINPR_ASSERT(size <= INT32_MAX);
 	while (TRUE)
 	{
 		switch (encodingContext->state)
