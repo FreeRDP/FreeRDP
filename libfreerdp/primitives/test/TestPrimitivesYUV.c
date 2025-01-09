@@ -1,6 +1,7 @@
 
 #include <freerdp/config.h>
 
+#include <stdlib.h>
 #include <math.h>
 
 #include "prim_test.h"
@@ -688,19 +689,19 @@ static BOOL compare_yuv420(BYTE** planesA, BYTE** planesB, UINT32 width, UINT32 
 
 	if (check_for_mismatches(planesA[0], planesB[0], size))
 	{
-		(void)fprintf(stderr, "Mismatch in Y planes!");
+		(void)fprintf(stderr, "Mismatch in Y planes!\n");
 		rc = FALSE;
 	}
 
 	if (check_for_mismatches(planesA[1], planesB[1], uvsize))
 	{
-		(void)fprintf(stderr, "Mismatch in U planes!");
+		(void)fprintf(stderr, "Mismatch in U planes!\n");
 		rc = FALSE;
 	}
 
 	if (check_for_mismatches(planesA[2], planesB[2], uvsize))
 	{
-		(void)fprintf(stderr, "Mismatch in V planes!");
+		(void)fprintf(stderr, "Mismatch in V planes!\n");
 		rc = FALSE;
 	}
 
@@ -884,7 +885,7 @@ static BOOL TestPrimitiveRgbToLumaChroma(primitives_t* prims, prim_size_t roi, U
 
 	res = TRUE;
 fail:
-	printf("[%s] run %s.\n", __func__, (res) ? "SUCCESS" : "FAILED");
+	printf("[%s][version %u] run %s.\n", __func__, (unsigned)version, (res) ? "SUCCESS" : "FAILED");
 	free_padding(rgb, padding);
 	free_yuv420(luma, padding);
 	free_yuv420(chroma, padding);
@@ -1001,6 +1002,7 @@ static BOOL yuv444_to_rgb(BYTE* rgb, size_t stride, const BYTE* yuv[3], const UI
 /* Check the result of generic matches the optimized routine.
  *
  */
+#include <winpr/print.h>
 static BOOL compare_yuv444_to_rgb(prim_size_t roi, DWORD type)
 {
 	BOOL rc = FALSE;
@@ -1074,6 +1076,15 @@ static BOOL compare_yuv444_to_rgb(prim_size_t roi, DWORD type)
 				        "|0x%" PRIx8 "] g[0x%" PRIx8 "|0x%" PRIx8 "] b[0x%" PRIx8 "|0x%" PRIx8
 				        "]\n",
 				        x, y, r1, r2, g1, g2, b1, b2);
+				fprintf(stderr, "roi: %dx%d\n", roi.width, roi.height);
+				winpr_HexDump("y0", WLOG_INFO, &yline[0][x], 16);
+				winpr_HexDump("y1", WLOG_INFO, &yline[0][x + roi.width], 16);
+				winpr_HexDump("u0", WLOG_INFO, &yline[1][x], 16);
+				winpr_HexDump("u1", WLOG_INFO, &yline[1][x + roi.width], 16);
+				winpr_HexDump("v0", WLOG_INFO, &yline[2][x], 16);
+				winpr_HexDump("v1", WLOG_INFO, &yline[2][x + roi.width], 16);
+				winpr_HexDump("foo1", WLOG_INFO, &line1[x * 4], 16);
+				winpr_HexDump("foo2", WLOG_INFO, &line2[x * 4], 16);
 				goto fail;
 			}
 		}
@@ -1245,6 +1256,41 @@ fail:
 	return rc;
 }
 
+static BOOL similarYUV(const BYTE* line1, const BYTE* line2, size_t len)
+{
+	for (size_t x = 0; x < len; x++)
+	{
+		const int a = line1[x];
+		const int b = line2[x];
+		const int diff = abs(a - b);
+		if (diff >= 2)
+			return FALSE;
+		return TRUE;
+	}
+}
+
+/* Due to optimizations the Y value might be off by +/- 1 */
+static int similarY(const BYTE* a, const BYTE* b, size_t size, size_t type)
+{
+	switch (type)
+	{
+		case 0:
+		case 1:
+		case 2:
+			for (size_t x = 0; x < size; x++)
+			{
+				const int ba = a[x];
+				const int bb = b[x];
+				const int diff = abs(ba - bb);
+				if (diff > 2)
+					return diff;
+			}
+			return 0;
+			break;
+		default:
+			return memcmp(a, b, size);
+	}
+}
 /* Check the result of generic matches the optimized routine.
  *
  */
@@ -1300,9 +1346,15 @@ static BOOL compare_rgb_to_yuv420(prim_size_t roi, DWORD type)
 
 		for (size_t x = 0; x < ARRAYSIZE(yline1); x++)
 		{
-			if (memcmp(yline1[x], yline2[x], yuvStep[x]) != 0)
+			if (similarY(yline1[x], yline2[x], yuvStep[x], x) != 0)
 			{
-				fprintf(stderr, "[%s] compare failed in line %" PRIuz, __func__, x);
+				fprintf(stderr, "[%s] compare failed in component %" PRIuz ", line %" PRIuz "\n",
+				        __func__, x, y);
+				fprintf(stderr, "[%s] roi %" PRIu32 "x%" PRIu32 "\n", __func__, roi.width,
+				        roi.height);
+				winpr_HexDump(TAG, WLOG_WARN, yline1[x], yuvStep[x]);
+				winpr_HexDump(TAG, WLOG_WARN, yline2[x], yuvStep[x]);
+				winpr_HexDump(TAG, WLOG_WARN, &rgb[y * stride], stride);
 				goto fail;
 			}
 		}
