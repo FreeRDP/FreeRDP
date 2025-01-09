@@ -320,6 +320,21 @@ static INLINE BYTE RGB2V(INT32 R, INT32 G, INT32 B)
 	return WINPR_ASSERTING_INT_CAST(BYTE, val);
 }
 
+FREERDP_LOCAL void general_RGBToAVC444YUV_BGRX_DOUBLE_ROW(
+    size_t offset, const BYTE* WINPR_RESTRICT srcEven, const BYTE* WINPR_RESTRICT srcOdd,
+    BYTE* WINPR_RESTRICT b1Even, BYTE* WINPR_RESTRICT b1Odd, BYTE* WINPR_RESTRICT b2,
+    BYTE* WINPR_RESTRICT b3, BYTE* WINPR_RESTRICT b4, BYTE* WINPR_RESTRICT b5,
+    BYTE* WINPR_RESTRICT b6, BYTE* WINPR_RESTRICT b7, UINT32 width);
+
+FREERDP_LOCAL void general_RGBToAVC444YUVv2_BGRX_DOUBLE_ROW(
+    size_t offset, const BYTE* WINPR_RESTRICT pSrcEven, const BYTE* WINPR_RESTRICT pSrcOdd,
+    BYTE* WINPR_RESTRICT yLumaDstEven, BYTE* WINPR_RESTRICT yLumaDstOdd,
+    BYTE* WINPR_RESTRICT uLumaDst, BYTE* WINPR_RESTRICT vLumaDst,
+    BYTE* WINPR_RESTRICT yEvenChromaDst1, BYTE* WINPR_RESTRICT yEvenChromaDst2,
+    BYTE* WINPR_RESTRICT yOddChromaDst1, BYTE* WINPR_RESTRICT yOddChromaDst2,
+    BYTE* WINPR_RESTRICT uChromaDst1, BYTE* WINPR_RESTRICT uChromaDst2,
+    BYTE* WINPR_RESTRICT vChromaDst1, BYTE* WINPR_RESTRICT vChromaDst2, UINT32 width);
+
 /* Function prototypes for all the init/deinit routines. */
 FREERDP_LOCAL void primitives_init_copy(primitives_t* WINPR_RESTRICT prims);
 FREERDP_LOCAL void primitives_init_set(primitives_t* WINPR_RESTRICT prims);
