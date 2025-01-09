@@ -1,10 +1,17 @@
 include(CMakeFindDependencyMacro)
-if(NOT "@WITH_JSON_DISABLED@" AND NOT "@BUILD_SHARED_LIBS@")
-    if("@JSONC_FOUND@" AND NOT "@WITH_CJSON_REQUIRED@")
-        find_dependency(JSONC)
-    elseif("@CJSON_FOUND@")
-        find_dependency(cJSON)
-    endif()
+
+if(NOT "@BUILD_SHARED_LIBS@")
+	if(NOT "@WITH_JSON_DISABLED@")
+	    if("@JSONC_FOUND@" AND NOT "@WITH_CJSON_REQUIRED@")
+	        find_dependency(JSONC)
+	    elseif("@CJSON_FOUND@")
+	        find_dependency(cJSON)
+	    endif()
+	endif()
+
+	if("@WITH_URIPARSER@")
+		find_dependency(uriparser)
+	endif()
 endif()
 
 @PACKAGE_INIT@
