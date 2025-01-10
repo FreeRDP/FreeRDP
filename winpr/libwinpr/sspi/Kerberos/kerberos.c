@@ -1979,7 +1979,6 @@ static SECURITY_STATUS SEC_ENTRY kerberos_DecryptMessage(PCtxtHandle phContext,
 	iov[3].data.data = &data2[iov[2].data.length];
 
 	char* data3 = iov[3].data.data;
-	iov[4].data.data = &data2[iov[3].data.length];
 	iov[4].data.data = &data3[iov[3].data.length];
 
 	if (krb_log_exec(krb5glue_decrypt_iov, creds->ctx, key, usage, iov, ARRAYSIZE(iov)))
