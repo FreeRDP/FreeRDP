@@ -382,7 +382,7 @@ primitives_t* primitives_get_generic(void)
 	return &pPrimitivesGeneric;
 }
 
-primitives_t* primitives_get_by_type(DWORD type)
+primitives_t* primitives_get_by_type(primitive_hints type)
 {
 	InitOnceExecuteOnce(&generic_primitives_InitOnce, primitives_init_generic_cb, NULL, NULL);
 

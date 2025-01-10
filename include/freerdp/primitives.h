@@ -274,6 +274,18 @@ typedef enum
 	FREERDP_API BOOL primitives_init(primitives_t* p, primitive_hints hints);
 	FREERDP_API void primitives_uninit(void);
 
+	/** @brief get a specific primitives implementation
+	 *
+	 *  This will try to return the primitives implementation suggested by \b hint
+	 *  If that does not exist or does not work on the platform any other (e.g. usually pure
+	 * software) is returned
+	 *
+	 *  @param hint the type of primitives to return.
+	 *  @return A primitive implementation matching the hint closest or \b NULL in case of failure.
+	 *  @since version 3.11.0
+	 */
+	FREERDP_API primitives_t* primitives_get_by_type(primitive_hints type);
+
 	FREERDP_API const char* primitives_avc444_frame_type_str(avc444_frame_type type);
 
 	/** @brief convert a hint to a string

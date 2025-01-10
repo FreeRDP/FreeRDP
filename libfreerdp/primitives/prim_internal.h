@@ -362,6 +362,4 @@ FREERDP_LOCAL void primitives_init_YUV_opt(primitives_t* WINPR_RESTRICT prims);
 FREERDP_LOCAL BOOL primitives_init_opencl(primitives_t* WINPR_RESTRICT prims);
 #endif
 
-FREERDP_LOCAL primitives_t* primitives_get_by_type(DWORD type);
-
 #endif /* FREERDP_LIB_PRIM_INTERNAL_H */

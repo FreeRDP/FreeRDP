@@ -8,6 +8,7 @@ SCRIPT_PATH=$(realpath "$SCRIPT_PATH")
 # 1. All words consisting of only 2 characters (too many issues with variable names)
 # 2. Every word of the form 'pEvent', e.g. variable prefixed with p for pointer
 # 3. Every word prefixed by e.g. '\tSome text', e.g. format string escapes
+codespell --version
 codespell \
     -I "$SCRIPT_PATH/codespell.ignore" \
     -S ".git,*.ai,*.svg,*.rtf,*/assets/de_*,*/res/values-*,*/protocols/xdg*,*/test/*" \
