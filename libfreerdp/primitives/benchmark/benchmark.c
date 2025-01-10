@@ -203,78 +203,49 @@ int main(int argc, char* argv[])
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
 	primitives_YUV_benchmark bench = primitives_YUV_benchmark_init();
-	primitives_t* opt = primitives_get();
-	primitives_t* generic = primitives_get_generic();
-	if (!generic || !opt)
-	{
-		(void)fprintf(stderr, "failed to get primitives: generic=%p, opt=%p\n", (void*)generic,
-		              (void*)opt);
-		goto fail;
-	}
 
-	printf("Running YUV420 -> RGB benchmark on generic implementation:\n");
-	if (!primitives_YUV420_benchmark_run(&bench, generic))
+	for (primitive_hints hint = PRIMITIVES_PURE_SOFT; hint < PRIMITIVES_AUTODETECT; hint++)
 	{
-		(void)fprintf(stderr, "YUV420 -> RGB benchmark failed\n");
-		goto fail;
-	}
-	printf("\n");
+		const char* hintstr = primtives_hint_str(hint);
+		primitives_t* prim = primitives_get_by_type(hint);
+		if (!prim)
+		{
+			(void)fprintf(stderr, "failed to get primitives: %s\n", hintstr);
+			goto fail;
+		}
 
-	printf("Running YUV420 benchmark on optimized implementation:\n");
-	if (!primitives_YUV420_benchmark_run(&bench, opt))
-	{
-		(void)fprintf(stderr, "YUV420 benchmark failed\n");
-		goto fail;
-	}
-	printf("\n");
+		printf("Running YUV420 -> RGB benchmark on %s implementation:\n", hintstr);
+		if (!primitives_YUV420_benchmark_run(&bench, prim))
+		{
+			(void)fprintf(stderr, "YUV420 -> RGB benchmark failed\n");
+			goto fail;
+		}
+		printf("\n");
 
-	printf("Running RGB -> YUV420 benchmark on generic implementation:\n");
-	if (!primitives_RGB2420_benchmark_run(&bench, generic))
-	{
-		(void)fprintf(stderr, "RGB -> YUV420 benchmark failed\n");
-		goto fail;
-	}
-	printf("\n");
+		printf("Running RGB -> YUV420 benchmark on %s implementation:\n", hintstr);
+		if (!primitives_RGB2420_benchmark_run(&bench, prim))
+		{
+			(void)fprintf(stderr, "RGB -> YUV420 benchmark failed\n");
+			goto fail;
+		}
+		printf("\n");
 
-	printf("Running RGB -> YUV420 benchmark on optimized implementation:\n");
-	if (!primitives_RGB2420_benchmark_run(&bench, opt))
-	{
-		(void)fprintf(stderr, "RGB -> YUV420 benchmark failed\n");
-		goto fail;
-	}
-	printf("\n");
+		printf("Running YUV444 -> RGB benchmark on %s implementation:\n", hintstr);
+		if (!primitives_YUV444_benchmark_run(&bench, prim))
+		{
+			(void)fprintf(stderr, "YUV444 -> RGB benchmark failed\n");
+			goto fail;
+		}
+		printf("\n");
 
-	printf("Running YUV444 -> RGB benchmark on generic implementation:\n");
-	if (!primitives_YUV444_benchmark_run(&bench, generic))
-	{
-		(void)fprintf(stderr, "YUV444 -> RGB benchmark failed\n");
-		goto fail;
+		printf("Running RGB -> YUV444 benchmark on %s implementation:\n", hintstr);
+		if (!primitives_RGB2444_benchmark_run(&bench, prim))
+		{
+			(void)fprintf(stderr, "RGB -> YUV444 benchmark failed\n");
+			goto fail;
+		}
+		printf("\n");
 	}
-	printf("\n");
-
-	printf("Running YUV444 -> RGB benchmark on optimized implementation:\n");
-	if (!primitives_YUV444_benchmark_run(&bench, opt))
-	{
-		(void)fprintf(stderr, "YUV444 -> RGB benchmark failed\n");
-		goto fail;
-	}
-	printf("\n");
-
-	printf("Running RGB -> YUV444 benchmark on generic implementation:\n");
-	if (!primitives_RGB2444_benchmark_run(&bench, generic))
-	{
-		(void)fprintf(stderr, "RGB -> YUV444 benchmark failed\n");
-		goto fail;
-	}
-	printf("\n");
-
-	printf("Running RGB -> YUV444 benchmark on optimized implementation:\n");
-	if (!primitives_RGB2444_benchmark_run(&bench, opt))
-	{
-		(void)fprintf(stderr, "RGB -> YUV444 benchmark failed\n");
-		goto fail;
-	}
-	printf("\n");
 fail:
 	primitives_YUV_benchmark_free(&bench);
 	return 0;
