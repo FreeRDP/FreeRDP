@@ -425,3 +425,20 @@ const char* primitives_avc444_frame_type_str(avc444_frame_type type)
 			return "INVALID_FRAME_TYPE";
 	}
 }
+
+const char* primtives_hint_str(primitive_hints hint)
+{
+	switch (hint)
+	{
+		case PRIMITIVES_PURE_SOFT:
+			return "PRIMITIVES_PURE_SOFT";
+		case PRIMITIVES_ONLY_CPU:
+			return "PRIMITIVES_ONLY_CPU";
+		case PRIMITIVES_ONLY_GPU:
+			return "PRIMITIVES_ONLY_GPU";
+		case PRIMITIVES_AUTODETECT:
+			return "PRIMITIVES_AUTODETECT";
+		default:
+			return "PRIMITIVES_UNKNOWN";
+	}
+}

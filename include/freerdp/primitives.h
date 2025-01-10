@@ -276,6 +276,14 @@ typedef enum
 
 	FREERDP_API const char* primitives_avc444_frame_type_str(avc444_frame_type type);
 
+	/** @brief convert a hint to a string
+	 *
+	 *  @param hint the hint to stringify
+	 *  @return the string representation of the hint
+	 *  @since version 3.11.0
+	 */
+	FREERDP_API const char* primtives_hint_str(primitive_hints hint);
+
 #ifdef __cplusplus
 }
 #endif
