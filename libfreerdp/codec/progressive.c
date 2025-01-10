@@ -2530,7 +2530,7 @@ int progressive_compress(PROGRESSIVE_CONTEXT* WINPR_RESTRICT progressive,
 	if (numRects == 0)
 		return 0;
 
-	if (!Stream_EnsureCapacity(progressive->rects, numRects * sizeof(RFX_RECT)))
+	if (!Stream_EnsureRemainingCapacity(progressive->rects, numRects * sizeof(RFX_RECT)))
 		return -5;
 	rects = Stream_BufferAs(progressive->rects, RFX_RECT);
 	if (invalidRegion)

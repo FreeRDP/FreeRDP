@@ -258,7 +258,7 @@ BOOL ndr_start_constructed(NdrContext* context, wStream* s)
 {
 	WINPR_ASSERT(context);
 
-	if (!Stream_EnsureCapacity(s, 8))
+	if (!Stream_EnsureRemainingCapacity(s, 8))
 		return FALSE;
 
 	if (context->constructLevel == NDR_MAX_CONSTRUCTS)
