@@ -33,10 +33,11 @@
 #include "prim_internal.h"
 #include "prim_YUV.h"
 
-static pstatus_t general_LumaToYUV444(const BYTE* WINPR_RESTRICT pSrcRaw[3],
-                                      const UINT32 srcStep[3], BYTE* WINPR_RESTRICT pDstRaw[3],
-                                      const UINT32 dstStep[3],
-                                      const RECTANGLE_16* WINPR_RESTRICT roi)
+static inline pstatus_t general_LumaToYUV444(const BYTE* WINPR_RESTRICT pSrcRaw[3],
+                                             const UINT32 srcStep[3],
+                                             BYTE* WINPR_RESTRICT pDstRaw[3],
+                                             const UINT32 dstStep[3],
+                                             const RECTANGLE_16* WINPR_RESTRICT roi)
 {
 	const UINT32 nWidth = roi->right - roi->left;
 	const UINT32 nHeight = roi->bottom - roi->top;
@@ -93,10 +94,11 @@ static pstatus_t general_LumaToYUV444(const BYTE* WINPR_RESTRICT pSrcRaw[3],
 	return PRIMITIVES_SUCCESS;
 }
 
-static pstatus_t general_ChromaV1ToYUV444(const BYTE* WINPR_RESTRICT pSrcRaw[3],
-                                          const UINT32 srcStep[3], BYTE* WINPR_RESTRICT pDstRaw[3],
-                                          const UINT32 dstStep[3],
-                                          const RECTANGLE_16* WINPR_RESTRICT roi)
+static inline pstatus_t general_ChromaV1ToYUV444(const BYTE* WINPR_RESTRICT pSrcRaw[3],
+                                                 const UINT32 srcStep[3],
+                                                 BYTE* WINPR_RESTRICT pDstRaw[3],
+                                                 const UINT32 dstStep[3],
+                                                 const RECTANGLE_16* WINPR_RESTRICT roi)
 {
 	const UINT32 mod = 16;
 	UINT32 uY = 0;
@@ -167,11 +169,11 @@ static pstatus_t general_ChromaV1ToYUV444(const BYTE* WINPR_RESTRICT pSrcRaw[3],
 	return PRIMITIVES_SUCCESS;
 }
 
-static pstatus_t general_ChromaV2ToYUV444(const BYTE* WINPR_RESTRICT pSrc[3],
-                                          const UINT32 srcStep[3], UINT32 nTotalWidth,
-                                          UINT32 nTotalHeight, BYTE* WINPR_RESTRICT pDst[3],
-                                          const UINT32 dstStep[3],
-                                          const RECTANGLE_16* WINPR_RESTRICT roi)
+static inline pstatus_t general_ChromaV2ToYUV444(const BYTE* WINPR_RESTRICT pSrc[3],
+                                                 const UINT32 srcStep[3], UINT32 nTotalWidth,
+                                                 UINT32 nTotalHeight, BYTE* WINPR_RESTRICT pDst[3],
+                                                 const UINT32 dstStep[3],
+                                                 const RECTANGLE_16* WINPR_RESTRICT roi)
 {
 	const UINT32 nWidth = roi->right - roi->left;
 	const UINT32 nHeight = roi->bottom - roi->top;
@@ -333,10 +335,10 @@ general_YUV444SplitToYUV420(const BYTE* WINPR_RESTRICT pSrc[3], const UINT32 src
 	return PRIMITIVES_SUCCESS;
 }
 
-static pstatus_t general_YUV444ToRGB_DOUBLE_ROW(BYTE* WINPR_RESTRICT pRGB[2], UINT32 DstFormat,
-                                                const BYTE* WINPR_RESTRICT pY[2],
-                                                const BYTE* WINPR_RESTRICT pU[2],
-                                                const BYTE* WINPR_RESTRICT pV[2], size_t nWidth)
+static inline pstatus_t
+general_YUV444ToRGB_DOUBLE_ROW(BYTE* WINPR_RESTRICT pRGB[2], UINT32 DstFormat,
+                               const BYTE* WINPR_RESTRICT pY[2], const BYTE* WINPR_RESTRICT pU[2],
+                               const BYTE* WINPR_RESTRICT pV[2], size_t nWidth)
 {
 	const DWORD formatSize = FreeRDPGetBytesPerPixel(DstFormat);
 	fkt_writePixel writePixel = getPixelWriteFunction(DstFormat, FALSE);
@@ -1053,11 +1055,13 @@ static pstatus_t general_RGBToYUV420_8u_P3AC4R(const BYTE* WINPR_RESTRICT pSrc, 
 	}
 }
 
-INLINE void general_RGBToAVC444YUV_BGRX_DOUBLE_ROW(
-    size_t offset, const BYTE* WINPR_RESTRICT pSrcEven, const BYTE* WINPR_RESTRICT pSrcOdd,
-    BYTE* WINPR_RESTRICT b1Even, BYTE* WINPR_RESTRICT b1Odd, BYTE* WINPR_RESTRICT b2,
-    BYTE* WINPR_RESTRICT b3, BYTE* WINPR_RESTRICT b4, BYTE* WINPR_RESTRICT b5,
-    BYTE* WINPR_RESTRICT b6, BYTE* WINPR_RESTRICT b7, UINT32 width)
+void general_RGBToAVC444YUV_BGRX_DOUBLE_ROW(size_t offset, const BYTE* WINPR_RESTRICT pSrcEven,
+                                            const BYTE* WINPR_RESTRICT pSrcOdd,
+                                            BYTE* WINPR_RESTRICT b1Even, BYTE* WINPR_RESTRICT b1Odd,
+                                            BYTE* WINPR_RESTRICT b2, BYTE* WINPR_RESTRICT b3,
+                                            BYTE* WINPR_RESTRICT b4, BYTE* WINPR_RESTRICT b5,
+                                            BYTE* WINPR_RESTRICT b6, BYTE* WINPR_RESTRICT b7,
+                                            UINT32 width)
 {
 	for (UINT32 x = offset; x < width; x += 2)
 	{

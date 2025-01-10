@@ -91,6 +91,10 @@ endif()
 
 freerdp_object_library_add(freerdp-primitives)
 
+if(BUILD_BENCHMARK)
+  add_subdirectory(benchmark)
+endif()
+
 if(BUILD_TESTING_INTERNAL)
   add_subdirectory(test)
 endif()
