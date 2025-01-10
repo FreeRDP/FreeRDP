@@ -6,6 +6,8 @@
 
 #include "prim_test.h"
 
+#include <winpr/print.h>
+
 #include <winpr/wlog.h>
 #include <winpr/crypto.h>
 #include <freerdp/primitives.h>
@@ -1002,7 +1004,6 @@ static BOOL yuv444_to_rgb(BYTE* rgb, size_t stride, const BYTE* yuv[3], const UI
 /* Check the result of generic matches the optimized routine.
  *
  */
-#include <winpr/print.h>
 static BOOL compare_yuv444_to_rgb(prim_size_t roi, DWORD type)
 {
 	BOOL rc = FALSE;
@@ -1051,10 +1052,14 @@ static BOOL compare_yuv444_to_rgb(prim_size_t roi, DWORD type)
 			const UINT32 color1 = FreeRDPReadColor(&line1[x * 4], format);
 			const UINT32 color2 = FreeRDPReadColor(&line2[x * 4], format);
 
-			BYTE r1, g1, b1;
+			BYTE r1 = 0;
+			BYTE g1 = 0;
+			BYTE b1 = 0;
 			FreeRDPSplitColor(color1, format, &r1, &g1, &b1, NULL, NULL);
 
-			BYTE r2, g2, b2;
+			BYTE r2 = 0;
+			BYTE g2 = 0;
+			BYTE b2 = 0;
 			FreeRDPSplitColor(color2, format, &r2, &g2, &b2, NULL, NULL);
 
 			const int dr12 = abs(r1 - r2);
@@ -1071,12 +1076,12 @@ static BOOL compare_yuv444_to_rgb(prim_size_t roi, DWORD type)
 
 			if ((dr12 > 0) || (dg12 > 0) || (db12 > 0))
 			{
-				fprintf(stderr,
-				        "[%" PRIuz "x%" PRIuz "] generic and optimized data mismatch: r[0x%" PRIx8
-				        "|0x%" PRIx8 "] g[0x%" PRIx8 "|0x%" PRIx8 "] b[0x%" PRIx8 "|0x%" PRIx8
-				        "]\n",
-				        x, y, r1, r2, g1, g2, b1, b2);
-				fprintf(stderr, "roi: %dx%d\n", roi.width, roi.height);
+				(void)fprintf(stderr,
+				              "[%" PRIuz "x%" PRIuz
+				              "] generic and optimized data mismatch: r[0x%" PRIx8 "|0x%" PRIx8
+				              "] g[0x%" PRIx8 "|0x%" PRIx8 "] b[0x%" PRIx8 "|0x%" PRIx8 "]\n",
+				              x, y, r1, r2, g1, g2, b1, b2);
+				(void)fprintf(stderr, "roi: %dx%d\n", roi.width, roi.height);
 				winpr_HexDump("y0", WLOG_INFO, &yline[0][x], 16);
 				winpr_HexDump("y1", WLOG_INFO, &yline[0][x + roi.width], 16);
 				winpr_HexDump("u0", WLOG_INFO, &yline[1][x], 16);
@@ -1151,7 +1156,7 @@ static BOOL compare_rgb_to_yuv444(prim_size_t roi, DWORD type)
 		{
 			if (memcmp(yline1[x], yline2[x], yuvStep[x]) != 0)
 			{
-				fprintf(stderr, "[%s] compare failed in line %" PRIuz, __func__, x);
+				(void)fprintf(stderr, "[%s] compare failed in line %" PRIuz, __func__, x);
 				goto fail;
 			}
 		}
@@ -1218,10 +1223,14 @@ static BOOL compare_yuv420_to_rgb(prim_size_t roi, DWORD type)
 			const UINT32 color1 = FreeRDPReadColor(&line1[x * 4], format);
 			const UINT32 color2 = FreeRDPReadColor(&line2[x * 4], format);
 
-			BYTE r1, g1, b1;
+			BYTE r1 = 0;
+			BYTE g1 = 0;
+			BYTE b1 = 0;
 			FreeRDPSplitColor(color1, format, &r1, &g1, &b1, NULL, NULL);
 
-			BYTE r2, g2, b2;
+			BYTE r2 = 0;
+			BYTE g2 = 0;
+			BYTE b2 = 0;
 			FreeRDPSplitColor(color2, format, &r2, &g2, &b2, NULL, NULL);
 
 			const int dr12 = abs(r1 - r2);
@@ -1348,10 +1357,11 @@ static BOOL compare_rgb_to_yuv420(prim_size_t roi, DWORD type)
 		{
 			if (similarY(yline1[x], yline2[x], yuvStep[x], x) != 0)
 			{
-				fprintf(stderr, "[%s] compare failed in component %" PRIuz ", line %" PRIuz "\n",
-				        __func__, x, y);
-				fprintf(stderr, "[%s] roi %" PRIu32 "x%" PRIu32 "\n", __func__, roi.width,
-				        roi.height);
+				(void)fprintf(stderr,
+				              "[%s] compare failed in component %" PRIuz ", line %" PRIuz "\n",
+				              __func__, x, y);
+				(void)fprintf(stderr, "[%s] roi %" PRIu32 "x%" PRIu32 "\n", __func__, roi.width,
+				              roi.height);
 				winpr_HexDump(TAG, WLOG_WARN, yline1[x], yuvStep[x]);
 				winpr_HexDump(TAG, WLOG_WARN, yline2[x], yuvStep[x]);
 				winpr_HexDump(TAG, WLOG_WARN, &rgb[y * stride], stride);

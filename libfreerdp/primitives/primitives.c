@@ -421,5 +421,7 @@ const char* primitives_avc444_frame_type_str(avc444_frame_type type)
 			return "AVC444_CHROMAv1";
 		case AVC444_CHROMAv2:
 			return "AVC444_CHROMAv2";
+		default:
+			return "INVALID_FRAME_TYPE";
 	}
 }

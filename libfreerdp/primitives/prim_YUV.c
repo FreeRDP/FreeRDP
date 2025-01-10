@@ -357,11 +357,11 @@ general_YUV444ToRGB_DOUBLE_ROW(BYTE* WINPR_RESTRICT pRGB[2], UINT32 DstFormat,
 				{
 					const INT32 subU = (INT32)pU[0][x + 1] + pU[1][x] + pU[1][x + 1];
 					const INT32 avgU = ((4 * u) - subU);
-					u = CONDITIONAL_CLIP(avgU, u);
+					u = CONDITIONAL_CLIP(avgU, WINPR_ASSERTING_INT_CAST(BYTE, u));
 
 					const INT32 subV = (INT32)pV[0][x + 1] + pV[1][x] + pV[1][x + 1];
 					const INT32 avgV = ((4 * v) - subV);
-					v = CONDITIONAL_CLIP(avgV, v);
+					v = CONDITIONAL_CLIP(avgV, WINPR_ASSERTING_INT_CAST(BYTE, v));
 				}
 				const BYTE r = YUV2R(y, u, v);
 				const BYTE g = YUV2G(y, u, v);
@@ -1063,7 +1063,7 @@ void general_RGBToAVC444YUV_BGRX_DOUBLE_ROW(size_t offset, const BYTE* WINPR_RES
                                             BYTE* WINPR_RESTRICT b6, BYTE* WINPR_RESTRICT b7,
                                             UINT32 width)
 {
-	for (UINT32 x = offset; x < width; x += 2)
+	for (size_t x = offset; x < width; x += 2)
 	{
 		const BYTE* srcEven = &pSrcEven[4ULL * x];
 		const BYTE* srcOdd = &pSrcOdd[4ULL * x];
@@ -1813,7 +1813,7 @@ static INLINE pstatus_t general_RGBToAVC444YUVv2_ANY(
 	return PRIMITIVES_SUCCESS;
 }
 
-inline void general_RGBToAVC444YUVv2_BGRX_DOUBLE_ROW(
+void general_RGBToAVC444YUVv2_BGRX_DOUBLE_ROW(
     size_t offset, const BYTE* WINPR_RESTRICT pSrcEven, const BYTE* WINPR_RESTRICT pSrcOdd,
     BYTE* WINPR_RESTRICT yLumaDstEven, BYTE* WINPR_RESTRICT yLumaDstOdd,
     BYTE* WINPR_RESTRICT uLumaDst, BYTE* WINPR_RESTRICT vLumaDst,
@@ -1822,7 +1822,7 @@ inline void general_RGBToAVC444YUVv2_BGRX_DOUBLE_ROW(
     BYTE* WINPR_RESTRICT uChromaDst1, BYTE* WINPR_RESTRICT uChromaDst2,
     BYTE* WINPR_RESTRICT vChromaDst1, BYTE* WINPR_RESTRICT vChromaDst2, UINT32 width)
 {
-	for (UINT32 x = offset; x < width; x += 2)
+	for (size_t x = offset; x < width; x += 2)
 	{
 		const BYTE* srcEven = &pSrcEven[4ULL * x];
 		const BYTE* srcOdd = &pSrcOdd[4ULL * x];
