@@ -16,7 +16,7 @@
  * permissions and limitations under the License.
  */
 
-static uchar clamp_uc(int v, short l, short h)
+uchar clamp_uc(int v, short l, short h)
 {
 	if (v > h)
 		v = h;
@@ -25,7 +25,7 @@ static uchar clamp_uc(int v, short l, short h)
 	return (uchar)v;
 }
 
-static short avgUV(const uchar* buf, unsinged stride, unsigned x, unsigned y)
+short avgUV(__global const uchar* buf, unsigned stride, unsigned x, unsigned y)
 {
 	const short U00 = buf[y * stride];
 	if ((x != 0) || (y != 0))
