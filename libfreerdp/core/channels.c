@@ -304,14 +304,14 @@ BOOL freerdp_channel_send_packet(rdpRdp* rdp, UINT16 channelId, size_t totalSize
 	if (!s)
 		return FALSE;
 
-	Stream_Write_UINT32(s, (UINT32)totalSize);
-	Stream_Write_UINT32(s, flags);
-
-	if (!Stream_EnsureCapacity(s, chunkSize))
+	if (!Stream_EnsureRemainingCapacity(s, chunkSize + 8))
 	{
 		Stream_Release(s);
 		return FALSE;
 	}
+
+	Stream_Write_UINT32(s, (UINT32)totalSize);
+	Stream_Write_UINT32(s, flags);
 
 	Stream_Write(s, data, chunkSize);
 
