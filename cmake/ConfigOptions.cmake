@@ -54,6 +54,7 @@ if(WIN32 AND NOT UWP)
   option(WITH_WIN8 "Use Windows 8 libraries" OFF)
 endif()
 
+option(BUILD_BENCHMARK "Build benchmark tools (for debugging and development only)" OFF)
 option(BUILD_TESTING "Build unit tests (compatible with packaging)" OFF)
 cmake_dependent_option(
   BUILD_TESTING_INTERNAL "Build unit tests (CI only, not for packaging!)" OFF "NOT BUILD_TESTING" OFF

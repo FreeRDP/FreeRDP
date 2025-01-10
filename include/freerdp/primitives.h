@@ -182,7 +182,7 @@ typedef pstatus_t (*__RGBToYUV420_8u_P3AC4R_t)(const BYTE* WINPR_RESTRICT pSrc, 
 	                                           const prim_size_t* WINPR_RESTRICT roi);
 typedef pstatus_t (*__RGBToYUV444_8u_P3AC4R_t)(const BYTE* WINPR_RESTRICT pSrc, UINT32 SrcFormat,
 	                                           UINT32 srcStep, BYTE* WINPR_RESTRICT pDst[3],
-	                                           UINT32 dstStep[3],
+	                                           const UINT32 dstStep[3],
 	                                           const prim_size_t* WINPR_RESTRICT roi);
 typedef pstatus_t (*__YUV420CombineToYUV444_t)(avc444_frame_type type,
 	                                           const BYTE* WINPR_RESTRICT pSrc[3],
@@ -273,6 +273,28 @@ typedef enum
 	FREERDP_API DWORD primitives_flags(primitives_t* p);
 	FREERDP_API BOOL primitives_init(primitives_t* p, primitive_hints hints);
 	FREERDP_API void primitives_uninit(void);
+
+	/** @brief get a specific primitives implementation
+	 *
+	 *  This will try to return the primitives implementation suggested by \b hint
+	 *  If that does not exist or does not work on the platform any other (e.g. usually pure
+	 * software) is returned
+	 *
+	 *  @param hint the type of primitives to return.
+	 *  @return A primitive implementation matching the hint closest or \b NULL in case of failure.
+	 *  @since version 3.11.0
+	 */
+	FREERDP_API primitives_t* primitives_get_by_type(primitive_hints type);
+
+	FREERDP_API const char* primitives_avc444_frame_type_str(avc444_frame_type type);
+
+	/** @brief convert a hint to a string
+	 *
+	 *  @param hint the hint to stringify
+	 *  @return the string representation of the hint
+	 *  @since version 3.11.0
+	 */
+	FREERDP_API const char* primtives_hint_str(primitive_hints hint);
 
 #ifdef __cplusplus
 }
