@@ -304,7 +304,7 @@ BOOL freerdp_channel_send_packet(rdpRdp* rdp, UINT16 channelId, size_t totalSize
 	if (!s)
 		return FALSE;
 
-	if (!Stream_EnsureCapacity(s, chunkSize + 8))
+	if (!Stream_EnsureRemainingCapacity(s, chunkSize + 8))
 	{
 		Stream_Release(s);
 		return FALSE;
