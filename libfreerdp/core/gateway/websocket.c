@@ -354,7 +354,7 @@ static int websocket_handle_payload(BIO* bio, BYTE* pBuffer, size_t size,
 int websocket_context_read(websocket_context* encodingContext, BIO* bio, BYTE* pBuffer, size_t size)
 {
 	int status = 0;
-	int effectiveDataLen = 0;
+	size_t effectiveDataLen = 0;
 
 	WINPR_ASSERT(bio);
 	WINPR_ASSERT(pBuffer);
@@ -371,7 +371,8 @@ int websocket_context_read(websocket_context* encodingContext, BIO* bio, BYTE* p
 				ERR_clear_error();
 				status = BIO_read(bio, (char*)buffer, sizeof(buffer));
 				if (status <= 0)
-					return (effectiveDataLen > 0 ? effectiveDataLen : status);
+					return (effectiveDataLen > 0 ? WINPR_ASSERTING_INT_CAST(int, effectiveDataLen)
+					                             : status);
 
 				encodingContext->opcode = buffer[0];
 				if (((encodingContext->opcode & 0xf) != WebsocketContinuationOpcode) &&
@@ -387,7 +388,8 @@ int websocket_context_read(websocket_context* encodingContext, BIO* bio, BYTE* p
 				ERR_clear_error();
 				status = BIO_read(bio, (char*)buffer, sizeof(buffer));
 				if (status <= 0)
-					return (effectiveDataLen > 0 ? effectiveDataLen : status);
+					return (effectiveDataLen > 0 ? WINPR_ASSERTING_INT_CAST(int, effectiveDataLen)
+					                             : status);
 
 				encodingContext->masking = ((buffer[0] & WEBSOCKET_MASK_BIT) == WEBSOCKET_MASK_BIT);
 				encodingContext->lengthAndMaskPosition = 0;
@@ -416,11 +418,15 @@ int websocket_context_read(websocket_context* encodingContext, BIO* bio, BYTE* p
 					ERR_clear_error();
 					status = BIO_read(bio, (char*)buffer, sizeof(buffer));
 					if (status <= 0)
-						return (effectiveDataLen > 0 ? effectiveDataLen : status);
-
+						return (effectiveDataLen > 0
+						            ? WINPR_ASSERTING_INT_CAST(int, effectiveDataLen)
+						            : status);
+					if (status > UINT8_MAX)
+						return -1;
 					encodingContext->payloadLength =
 					    (encodingContext->payloadLength) << 8 | buffer[0];
-					encodingContext->lengthAndMaskPosition += status;
+					encodingContext->lengthAndMaskPosition +=
+					    WINPR_ASSERTING_INT_CAST(BYTE, status);
 				}
 				encodingContext->state =
 				    (encodingContext->masking ? WebSocketStateMaskingKey : WebSocketStatePayload);
@@ -436,12 +442,13 @@ int websocket_context_read(websocket_context* encodingContext, BIO* bio, BYTE* p
 			{
 				status = websocket_handle_payload(bio, pBuffer, size, encodingContext);
 				if (status < 0)
-					return (effectiveDataLen > 0 ? effectiveDataLen : status);
+					return (effectiveDataLen > 0 ? WINPR_ASSERTING_INT_CAST(int, effectiveDataLen)
+					                             : status);
 
-				effectiveDataLen += status;
+				effectiveDataLen += WINPR_ASSERTING_INT_CAST(size_t, status);
 
-				if ((size_t)status >= size)
-					return effectiveDataLen;
+				if (WINPR_ASSERTING_INT_CAST(size_t, status) >= size)
+					return WINPR_ASSERTING_INT_CAST(int, effectiveDataLen);
 				pBuffer += status;
 				size -= WINPR_ASSERTING_INT_CAST(size_t, status);
 			}
