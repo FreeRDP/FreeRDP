@@ -1524,6 +1524,8 @@ BOOL nego_send_negotiation_response(rdpNego* nego)
 				else if (freerdp_settings_get_uint32(settings, FreeRDP_EncryptionLevel) == ENCRYPTION_LEVEL_NONE)
 				{
 					/* Server is configured not to use encryption. This should be reserved for debugging */
+					WLog_INFO(TAG,
+					          "Turning off encryption because EncryptionLevel is set to NONE.");
 					if (!freerdp_settings_set_bool(settings, FreeRDP_UseRdpSecurityLayer, FALSE))
 						return FALSE;
 				}
