@@ -79,7 +79,7 @@ jobs:
             abigail-tools \
             pylint \
             curl
-        sudo apt-get satisfy -q -y "libwebkit2gtk-4.0-dev | libwebkit2gtk-4.1-dev"
+          sudo apt-get satisfy -q -y "libwebkit2gtk-4.0-dev | libwebkit2gtk-4.1-dev"
 
       - name: "Prepare configuration"
         run: |
