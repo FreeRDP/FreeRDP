@@ -1905,10 +1905,10 @@ void general_RGBToAVC444YUVv2_BGRX_DOUBLE_ROW(
 		if (x < width - 1)
 			*yLumaDstEven++ = Yb;
 
-		if (srcOdd)
+		if (srcOdd && yLumaDstOdd)
 			*yLumaDstOdd++ = Yc;
 
-		if (srcOdd && (x < width - 1))
+		if (srcOdd && (x < width - 1) && yLumaDstOdd)
 			*yLumaDstOdd++ = Yd;
 
 		/* 2x 2y [b2,b3] */
