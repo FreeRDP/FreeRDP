@@ -171,12 +171,15 @@ BOOL yuv_context_reset(YUV_CONTEXT* WINPR_RESTRICT context, UINT32 width, UINT32
 
 	if (context->useThreads)
 	{
-		const size_t pw = (width + TILE_SIZE - width % TILE_SIZE) / TILE_SIZE;
-		const size_t ph = height + TILE_SIZE - height % TILE_SIZE / TILE_SIZE;
-
-		/* calculate absolute maximum of work tiles to be used.
+		/* Preallocate workers for 16x16 tiles.
+		 * this is overallocation for most cases.
+		 *
+		 * ~2MB total for a 4k resolution, so negligible.
 		 */
-		const size_t count = MAX((height + context->heightStep) / context->heightStep, pw * ph);
+		const size_t pw = (width + TILE_SIZE - width % TILE_SIZE) / 16;
+		const size_t ph = (height + TILE_SIZE - height % TILE_SIZE) / 16;
+
+		const size_t count = pw * ph;
 
 		context->work_object_count = 0;
 		if (context->encoder)
@@ -440,11 +443,8 @@ static BOOL pool_decode(YUV_CONTEXT* WINPR_RESTRICT context, PTP_WORK_CALLBACK c
 
 				if (context->work_object_count <= waitCount)
 				{
-					WLog_ERR(TAG,
-					         "YUV decoder: invalid number of tiles, only support less than %" PRIu32
-					         ", got %" PRIu32,
-					         context->work_object_count, waitCount);
-					goto fail;
+					free_objects(context->work_objects, context->work_object_count);
+					waitCount = 0;
 				}
 
 				YUV_PROCESS_WORK_PARAM* cur = &context->work_dec_params[waitCount];
@@ -587,11 +587,8 @@ static BOOL pool_decode_rect(YUV_CONTEXT* WINPR_RESTRICT context, BYTE type,
 
 		if (context->work_object_count <= waitCount)
 		{
-			WLog_ERR(TAG,
-			         "YUV rect decoder: invalid number of tiles, only support less than %" PRIu32
-			         ", got %" PRIu32,
-			         context->work_object_count, waitCount);
-			goto fail;
+			free_objects(context->work_objects, context->work_object_count);
+			waitCount = 0;
 		}
 		current = &context->work_combined_params[waitCount];
 		*current = pool_decode_rect_param(&regionRects[waitCount], context, type, pYUVData, iStride,
@@ -849,11 +846,8 @@ static BOOL pool_encode(YUV_CONTEXT* WINPR_RESTRICT context, PTP_WORK_CALLBACK c
 
 			if (context->work_object_count <= waitCount)
 			{
-				WLog_ERR(TAG,
-				         "YUV encoder: invalid number of tiles, only support less than %" PRIu32
-				         ", got %" PRIu32,
-				         context->work_object_count, waitCount);
-				goto fail;
+				free_objects(context->work_objects, context->work_object_count);
+				waitCount = 0;
 			}
 
 			current = &context->work_enc_params[waitCount];
