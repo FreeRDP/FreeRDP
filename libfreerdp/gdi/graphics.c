@@ -160,12 +160,16 @@ static BOOL gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap, const 
 	{
 		if ((codecId == RDP_CODEC_ID_REMOTEFX) || (codecId == RDP_CODEC_ID_IMAGE_REMOTEFX))
 		{
-			REGION16 invalidRegion;
+			REGION16 invalidRegion = { 0 };
 			region16_init(&invalidRegion);
 
-			if (!rfx_process_message(context->codecs->rfx, pSrcData, SrcSize, bitmap->left,
-			                         bitmap->top, bitmap->data, bitmap->format, gdi->stride,
-			                         WINPR_ASSERTING_INT_CAST(UINT32, gdi->height), &invalidRegion))
+			const BOOL rc =
+			    rfx_process_message(context->codecs->rfx, pSrcData, SrcSize, bitmap->left,
+			                        bitmap->top, bitmap->data, bitmap->format, gdi->stride,
+			                        WINPR_ASSERTING_INT_CAST(UINT32, gdi->height), &invalidRegion);
+			region16_uninit(&invalidRegion);
+
+			if (!rc)
 			{
 				WLog_ERR(TAG, "rfx_process_message failed");
 				return FALSE;
