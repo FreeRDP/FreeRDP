@@ -280,7 +280,7 @@ typedef enum
 	 *  If that does not exist or does not work on the platform any other (e.g. usually pure
 	 * software) is returned
 	 *
-	 *  @param hint the type of primitives to return.
+	 *  @param type the type of primitives to return.
 	 *  @return A primitive implementation matching the hint closest or \b NULL in case of failure.
 	 *  @since version 3.11.0
 	 */
