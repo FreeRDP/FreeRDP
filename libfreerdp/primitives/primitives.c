@@ -91,6 +91,8 @@ static BOOL CALLBACK primitives_init_generic_cb(PINIT_ONCE once, PVOID param, PV
 
 static BOOL primitives_init_optimized(primitives_t* prims)
 {
+	primitives_init_generic(prims);
+
 #if defined(HAVE_CPU_OPTIMIZED_PRIMITIVES)
 	primitives_init_add_opt(prims);
 	primitives_init_andor_opt(prims);
