@@ -91,8 +91,6 @@ static BOOL CALLBACK primitives_init_generic_cb(PINIT_ONCE once, PVOID param, PV
 
 static BOOL primitives_init_optimized(primitives_t* prims)
 {
-	primitives_init_generic(prims);
-
 #if defined(HAVE_CPU_OPTIMIZED_PRIMITIVES)
 	primitives_init_add_opt(prims);
 	primitives_init_andor_opt(prims);
@@ -220,7 +218,7 @@ static BOOL primitives_autodetect_best(primitives_t* prims)
 	};
 	const struct prim_benchmark* best = NULL;
 
-#if !defined(HAVE_CPU_OPTIMIZED_PRIMITIVES) && !defined(WITH_OPENCL)
+#if !defined(HAVE_CPU_OPTIMIZED_PRIMITIVES) || !defined(WITH_OPENCL)
 	{
 		struct prim_benchmark* cur = &testcases[0];
 		cur->prims = primitives_get_by_type(cur->flags);
