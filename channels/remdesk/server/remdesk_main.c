@@ -279,7 +279,7 @@ static UINT remdesk_recv_ctl_verify_password_pdu(RemdeskServerContext* context, 
 	const size_t cbExpertBlobW = header->DataLength - 4;
 
 	pdu.expertBlob = ConvertWCharNToUtf8Alloc(expertBlobW, cbExpertBlobW / sizeof(WCHAR), NULL);
-	if (pdu.expertBlob)
+	if (!pdu.expertBlob)
 		return ERROR_INTERNAL_ERROR;
 
 	WLog_INFO(TAG, "ExpertBlob: %s", pdu.expertBlob);
