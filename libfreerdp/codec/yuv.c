@@ -171,12 +171,12 @@ BOOL yuv_context_reset(YUV_CONTEXT* WINPR_RESTRICT context, UINT32 width, UINT32
 
 	if (context->useThreads)
 	{
-		const UINT32 pw = (width + TILE_SIZE - width % TILE_SIZE) / TILE_SIZE;
-		const UINT32 ph = (height + TILE_SIZE - height % TILE_SIZE) / TILE_SIZE;
+		const size_t pw = (width + TILE_SIZE - width % TILE_SIZE) / TILE_SIZE;
+		const size_t ph = height + TILE_SIZE - height % TILE_SIZE / TILE_SIZE;
 
-		/* We´ve calculated the amount of workers for 64x64 tiles, but the decoder
-		 * might get 16x16 tiles mixed in. */
-		const UINT32 count = pw * ph * 16;
+		/* calculate absolute maximum of work tiles to be used.
+		 */
+		const size_t count = MAX((height + context->heightStep) / context->heightStep, pw * ph);
 
 		context->work_object_count = 0;
 		if (context->encoder)
@@ -215,7 +215,7 @@ BOOL yuv_context_reset(YUV_CONTEXT* WINPR_RESTRICT context, UINT32 width, UINT32
 		memset(wtmp, 0, count * sizeof(PTP_WORK));
 
 		context->work_objects = (PTP_WORK*)wtmp;
-		context->work_object_count = count;
+		context->work_object_count = WINPR_ASSERTING_INT_CAST(uint32_t, count);
 	}
 	rc = TRUE;
 fail:
