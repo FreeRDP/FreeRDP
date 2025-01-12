@@ -11,6 +11,7 @@ set(TESTS
     TestFreeRDPCodecPlanar.c
     TestFreeRDPCodecCopy.c
     TestFreeRDPCodecClear.c
+    TestFreeRDPCodecH264.c
     TestFreeRDPCodecInterleaved.c
     TestFreeRDPCodecProgressive.c
     TestFreeRDPCodecRemoteFX.c

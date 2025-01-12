@@ -1876,6 +1876,8 @@ skip_encoding_loop:
 	WLog_Print(context->priv->log, WLOG_ERROR, "failed");
 
 	rfx_message_free(context, message);
+	region16_uninit(&tilesRegion);
+	region16_uninit(&rectsRegion);
 	return NULL;
 }
 

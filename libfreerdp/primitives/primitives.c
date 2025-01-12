@@ -220,7 +220,7 @@ static BOOL primitives_autodetect_best(primitives_t* prims)
 	};
 	const struct prim_benchmark* best = NULL;
 
-#if !defined(HAVE_CPU_OPTIMIZED_PRIMITIVES) && !defined(WITH_OPENCL)
+#if !defined(HAVE_CPU_OPTIMIZED_PRIMITIVES) || !defined(WITH_OPENCL)
 	{
 		struct prim_benchmark* cur = &testcases[0];
 		cur->prims = primitives_get_by_type(cur->flags);

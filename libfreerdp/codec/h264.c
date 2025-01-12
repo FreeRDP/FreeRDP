@@ -659,11 +659,6 @@ static BOOL h264_context_init(H264_CONTEXT* h264)
 	if (!h264)
 		return FALSE;
 
-	h264->log = WLog_Get(TAG);
-
-	if (!h264->log)
-		return FALSE;
-
 	h264->subsystem = NULL;
 	InitOnceExecuteOnce(&subsystems_once, h264_register_subsystems, NULL, NULL);
 
@@ -691,6 +686,12 @@ BOOL h264_context_reset(H264_CONTEXT* h264, UINT32 width, UINT32 height)
 
 	h264->width = width;
 	h264->height = height;
+
+	if (h264->subsystem && h264->subsystem->Uninit)
+		h264->subsystem->Uninit(h264);
+	if (!h264_context_init(h264))
+		return FALSE;
+
 	return yuv_context_reset(h264->yuv, width, height);
 }
 
@@ -699,6 +700,11 @@ H264_CONTEXT* h264_context_new(BOOL Compressor)
 	H264_CONTEXT* h264 = (H264_CONTEXT*)calloc(1, sizeof(H264_CONTEXT));
 	if (!h264)
 		return NULL;
+
+	h264->log = WLog_Get(TAG);
+
+	if (!h264->log)
+		goto fail;
 
 	h264->Compressor = Compressor;
 	if (Compressor)

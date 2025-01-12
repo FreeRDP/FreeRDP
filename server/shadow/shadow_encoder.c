@@ -504,7 +504,7 @@ rdpShadowEncoder* shadow_encoder_new(rdpShadowClient* client)
 
 	if (shadow_encoder_init(encoder) < 0)
 	{
-		free(encoder);
+		shadow_encoder_free(encoder);
 		return NULL;
 	}
 
