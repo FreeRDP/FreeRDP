@@ -501,10 +501,10 @@ std::list<std::string> sdlInput::tokenize(const std::string& data, const std::st
 	{
 		auto token = data.substr(lastpos, pos);
 		lastpos = pos + 1;
-		list.push_back(token);
+		list.push_back(std::move(token));
 	}
 	auto token = data.substr(lastpos);
-	list.push_back(token);
+	list.push_back(std::move(token));
 	return list;
 }
 

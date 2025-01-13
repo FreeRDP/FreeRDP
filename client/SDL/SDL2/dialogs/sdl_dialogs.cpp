@@ -547,28 +547,27 @@ BOOL sdl_message_dialog_show(const char* title, const char* message, Sint32 flag
 
 BOOL sdl_auth_dialog_show(const SDL_UserAuthArg* args)
 {
-	const std::vector<std::string> auth = { "Username:        ", "Domain:          ",
-		                                    "Password:        " };
-	const std::vector<std::string> authPin = { "Device:       ", "PIN:        " };
-	const std::vector<std::string> gw = { "GatewayUsername: ", "GatewayDomain:   ",
-		                                  "GatewayPassword: " };
+	std::vector<std::string> auth = { "Username:        ", "Domain:          ",
+		                              "Password:        " };
+	std::vector<std::string> authPin = { "Device:       ", "PIN:        " };
+	std::vector<std::string> gw = { "GatewayUsername: ", "GatewayDomain:   ", "GatewayPassword: " };
 	std::vector<std::string> prompt;
 	Sint32 rc = -1;
 
 	switch (args->result)
 	{
 		case AUTH_SMARTCARD_PIN:
-			prompt = authPin;
+			prompt = std::move(authPin);
 			break;
 		case AUTH_TLS:
 		case AUTH_RDP:
 		case AUTH_NLA:
-			prompt = auth;
+			prompt = std::move(auth);
 			break;
 		case GW_AUTH_HTTP:
 		case GW_AUTH_RDG:
 		case GW_AUTH_RPC:
-			prompt = gw;
+			prompt = std::move(gw);
 			break;
 		default:
 			break;

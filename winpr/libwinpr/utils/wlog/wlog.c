@@ -919,7 +919,10 @@ void WLog_Free(wLog* log)
 		}
 
 		free(log->Name);
-		free(log->Names[0]);
+
+		/* The first element in this array is allocated, the rest are indices into this variable */
+		if (log->Names)
+			free(log->Names[0]);
 		free((void*)log->Names);
 		free((void*)log->Children);
 		DeleteCriticalSection(&log->lock);
