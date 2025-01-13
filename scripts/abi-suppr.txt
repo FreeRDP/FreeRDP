@@ -28,3 +28,7 @@ name = rdpdr_write_iocompletion_header
 change_kind = function-subtype-change
 name = smartcard_irp_device_control_call
 
+# freerdp_passphrase_read did not return const char* but char*
+[suppress_function]
+change_kind = function-subtype-change
+name = freerdp_passphrase_read
