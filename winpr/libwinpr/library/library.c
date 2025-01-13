@@ -385,10 +385,11 @@ DWORD GetModuleFileNameA(HMODULE hModule, LPSTR lpFilename, DWORD nSize)
 	lpFilename[nSize - 1] = '\0';
 	SetLastError(ERROR_INSUFFICIENT_BUFFER);
 	return nSize;
-#endif
+#else
 	WLog_ERR(TAG, "is not implemented");
 	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
 	return 0;
+#endif
 }
 
 #endif
