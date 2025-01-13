@@ -1113,7 +1113,7 @@ static UINT cliprdr_server_read(CliprdrServerContext* context)
 		Stream_Read_UINT16(s, header.msgFlags); /* msgFlags (2 bytes) */
 		Stream_Read_UINT32(s, header.dataLen);  /* dataLen (4 bytes) */
 
-		if (!Stream_EnsureCapacity(s, (header.dataLen + CLIPRDR_HEADER_LENGTH)))
+		if (!Stream_EnsureRemainingCapacity(s, header.dataLen))
 		{
 			WLog_ERR(TAG, "Stream_EnsureCapacity failed!");
 			return CHANNEL_RC_NO_MEMORY;
