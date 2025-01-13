@@ -1560,7 +1560,7 @@ static rdpsndPlugin* allocatePlugin(void)
 
 fail:
 	if (rdpsnd)
-		audio_format_free(rdpsnd->fixed_format);
+		audio_formats_free(rdpsnd->fixed_format, 1);
 	free(rdpsnd);
 	return NULL;
 }
