@@ -85,7 +85,7 @@ jobs:
               libv4l-dev \
               cmake \
               clang
-            sudo apt-get satisfy -q -y "libwebkit2gtk-4.0-dev | libwebkit2gtk-4.1-dev"
+            apt-get satisfy -q -y "libwebkit2gtk-4.0-dev | libwebkit2gtk-4.1-dev"
           run: |
             cmake -GNinja \
               -C ci/cmake-preloads/config-linux-all.txt \
