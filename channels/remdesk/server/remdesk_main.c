@@ -266,8 +266,7 @@ static UINT remdesk_recv_ctl_authenticate_pdu(RemdeskServerContext* context, wSt
 static UINT remdesk_recv_ctl_verify_password_pdu(RemdeskServerContext* context, wStream* s,
                                                  REMDESK_CHANNEL_HEADER* header)
 {
-	REMDESK_CTL_VERIFY_PASSWORD_PDU pdu;
-	UINT error = 0;
+	REMDESK_CTL_VERIFY_PASSWORD_PDU pdu = { 0 };
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
 		return ERROR_INVALID_DATA;
@@ -284,10 +283,10 @@ static UINT remdesk_recv_ctl_verify_password_pdu(RemdeskServerContext* context, 
 
 	WLog_INFO(TAG, "ExpertBlob: %s", pdu.expertBlob);
 
-	if ((error = remdesk_send_ctl_result_pdu(context, 0)))
-		WLog_ERR(TAG, "remdesk_send_ctl_result_pdu failed with error %" PRIu32 "!", error);
+	// TODO: Callback?
 
-	return error;
+	free(pdu.expertBlob);
+	return remdesk_send_ctl_result_pdu(context, 0);
 }
 
 /**
