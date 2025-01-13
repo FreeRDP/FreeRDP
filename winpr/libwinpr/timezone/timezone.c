@@ -28,6 +28,7 @@
 #include <winpr/assert.h>
 #include <winpr/file.h>
 #include "../log.h"
+#include "timezone.h"
 
 #define TAG WINPR_TAG("timezone")
 
@@ -875,31 +876,12 @@ DWORD EnumDynamicTimeZoneInformation(const DWORD dwIndex,
 	const time_t t = time(NULL);
 	struct tm tres = { 0 };
 
-	const char* tz = getenv("TZ");
-	char* tzcopy = NULL;
-	if (tz)
-	{
-		size_t tzianalen = 0;
-		winpr_asprintf(&tzcopy, &tzianalen, "TZ=%s", tz);
-	}
+	char* tzcopy = entry->Iana ? setNewAndSaveOldTZ(entry->Iana) : NULL;
 
-	char* tziana = NULL;
-	{
-		size_t tzianalen = 0;
-		winpr_asprintf(&tziana, &tzianalen, "TZ=%s", entry->Iana);
-	}
-	if (tziana)
-		putenv(tziana);
-
-	tzset();
 	struct tm* local_time = localtime_r(&t, &tres);
-	free(tziana);
-	if (tzcopy)
-		putenv(tzcopy);
-	else
-		unsetenv("TZ");
-	free(tzcopy);
-	tzset();
+
+	if (entry->Iana)
+		restoreSavedTZ(tzcopy);
 
 	if (local_time)
 		dynamic_time_zone_from_localtime(local_time, lpTimeZoneInformation);
@@ -934,5 +916,34 @@ DWORD GetDynamicTimeZoneInformationEffectiveYears(
 	WINPR_UNUSED(FirstYear);
 	WINPR_UNUSED(LastYear);
 	return ERROR_FILE_NOT_FOUND;
+}
+#endif
+
+#if !defined(_WIN32)
+char* setNewAndSaveOldTZ(const char* val)
+{
+	// NOLINTBEGIN(concurrency-mt-unsafe)
+	const char* otz = getenv("TZ");
+	char* oldtz = NULL;
+	if (otz)
+		oldtz = _strdup(otz);
+	setenv("TZ", val, 1);
+	tzset();
+	// NOLINTEND(concurrency-mt-unsafe)
+	return oldtz;
+}
+
+void restoreSavedTZ(char* saved)
+{
+	// NOLINTBEGIN(concurrency-mt-unsafe)
+	if (saved)
+	{
+		setenv("TZ", saved, 1);
+		free(saved);
+	}
+	else
+		unsetenv("TZ");
+	tzset();
+	// NOLINTEND(concurrency-mt-unsafe)
 }
 #endif
