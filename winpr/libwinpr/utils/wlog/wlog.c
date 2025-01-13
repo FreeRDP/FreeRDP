@@ -904,9 +904,7 @@ wLog* WLog_New(LPCSTR name, wLog* rootLogger)
 
 	return log;
 out_fail:
-	free((void*)log->Children);
-	free(log->Name);
-	free(log);
+	WLog_Free(log);
 	return NULL;
 }
 
