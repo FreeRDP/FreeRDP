@@ -331,11 +331,9 @@ static BOOL xf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 	if (fieldFlags & WINDOW_ORDER_STATE_NEW)
 	{
 		if (!appWindow)
-			appWindow =
-			    xf_rail_add_window(xfc, orderInfo->windowId,
-			                       WINPR_ASSERTING_INT_CAST(uint32_t, windowState->windowOffsetX),
-			                       WINPR_ASSERTING_INT_CAST(uint32_t, windowState->windowOffsetY),
-			                       windowState->windowWidth, windowState->windowHeight, 0xFFFFFFFF);
+			appWindow = xf_rail_add_window(xfc, orderInfo->windowId, windowState->windowOffsetX,
+			                               windowState->windowOffsetY, windowState->windowWidth,
+			                               windowState->windowHeight, 0xFFFFFFFF);
 
 		if (!appWindow)
 			return FALSE;
@@ -1197,7 +1195,7 @@ int xf_rail_uninit(xfContext* xfc, RailClientContext* rail)
 	return 1;
 }
 
-xfAppWindow* xf_rail_add_window(xfContext* xfc, UINT64 id, UINT32 x, UINT32 y, UINT32 width,
+xfAppWindow* xf_rail_add_window(xfContext* xfc, UINT64 id, INT32 x, INT32 y, UINT32 width,
                                 UINT32 height, UINT32 surfaceId)
 {
 	xfAppWindow* appWindow = NULL;
@@ -1213,8 +1211,8 @@ xfAppWindow* xf_rail_add_window(xfContext* xfc, UINT64 id, UINT32 x, UINT32 y, U
 	appWindow->xfc = xfc;
 	appWindow->windowId = id;
 	appWindow->surfaceId = surfaceId;
-	appWindow->x = WINPR_ASSERTING_INT_CAST(int, x);
-	appWindow->y = WINPR_ASSERTING_INT_CAST(int, y);
+	appWindow->x = x;
+	appWindow->y = y;
 	appWindow->width = WINPR_ASSERTING_INT_CAST(int, width);
 	appWindow->height = WINPR_ASSERTING_INT_CAST(int, height);
 
