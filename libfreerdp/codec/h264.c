@@ -37,7 +37,7 @@
 
 static BOOL avc444_ensure_buffer(H264_CONTEXT* h264, DWORD nDstHeight);
 
-BOOL avc420_ensure_buffer(H264_CONTEXT* h264, UINT32 stride, UINT32 width, UINT32 height)
+BOOL yuv_ensure_buffer(H264_CONTEXT* h264, UINT32 stride, UINT32 width, UINT32 height)
 {
 	BOOL isNull = FALSE;
 	UINT32 pheight = height;
@@ -54,7 +54,9 @@ BOOL avc420_ensure_buffer(H264_CONTEXT* h264, UINT32 stride, UINT32 width, UINT3
 	if (pheight % 16 != 0)
 		pheight += 16 - pheight % 16;
 
-	for (size_t x = 0; x < 3; x++)
+	const size_t nPlanes = h264->hwAccel ? 2 : 3;
+
+	for (size_t x = 0; x < nPlanes; x++)
 	{
 		if (!h264->pYUVData[x] || !h264->pOldYUVData[x])
 			isNull = TRUE;
@@ -68,13 +70,23 @@ BOOL avc420_ensure_buffer(H264_CONTEXT* h264, UINT32 stride, UINT32 width, UINT3
 	if (isNull || (width != h264->width) || (height != h264->height) ||
 	    (stride != h264->iStride[0]))
 	{
-		h264->iStride[0] = stride;
-		h264->iStride[1] = (stride + 1) / 2;
-		h264->iStride[2] = (stride + 1) / 2;
+		if (h264->hwAccel) /* NV12 */
+		{
+			h264->iStride[0] = stride;
+			h264->iStride[1] = stride;
+			h264->iStride[2] = 0;
+		}
+		else /* I420 */
+		{
+			h264->iStride[0] = stride;
+			h264->iStride[1] = (stride + 1) / 2;
+			h264->iStride[2] = (stride + 1) / 2;
+		}
+
 		h264->width = width;
 		h264->height = height;
 
-		for (size_t x = 0; x < 3; x++)
+		for (size_t x = 0; x < nPlanes; x++)
 		{
 			BYTE* tmp1 = winpr_aligned_recalloc(h264->pYUVData[x], h264->iStride[x], pheight, 16);
 			BYTE* tmp2 =
@@ -89,6 +101,11 @@ BOOL avc420_ensure_buffer(H264_CONTEXT* h264, UINT32 stride, UINT32 width, UINT3
 	}
 
 	return TRUE;
+}
+
+BOOL avc420_ensure_buffer(H264_CONTEXT* h264, UINT32 stride, UINT32 width, UINT32 height)
+{
+	return yuv_ensure_buffer(h264, stride, width, height);
 }
 
 INT32 avc420_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT32 SrcSize, BYTE* pDstData,
@@ -238,7 +255,7 @@ INT32 h264_get_yuv_buffer(H264_CONTEXT* h264, UINT32 nSrcStride, UINT32 nSrcWidt
 	if (!h264 || !h264->Compressor || !h264->subsystem || !h264->subsystem->Compress)
 		return -1;
 
-	if (!avc420_ensure_buffer(h264, nSrcStride, nSrcWidth, nSrcHeight))
+	if (!yuv_ensure_buffer(h264, nSrcStride, nSrcWidth, nSrcHeight))
 		return -1;
 
 	for (size_t x = 0; x < 3; x++)
@@ -708,7 +725,6 @@ H264_CONTEXT* h264_context_new(BOOL Compressor)
 
 	h264->Compressor = Compressor;
 	if (Compressor)
-
 	{
 		/* Default compressor settings, may be changed by caller */
 		h264->BitRate = 1000000;
@@ -786,6 +802,9 @@ BOOL h264_context_set_option(H264_CONTEXT* h264, H264_CONTEXT_OPTION option, UIN
 		case H264_CONTEXT_OPTION_USAGETYPE:
 			h264->UsageType = value;
 			return TRUE;
+		case H264_CONTEXT_OPTION_HW_ACCEL:
+			h264->hwAccel = value ? TRUE : FALSE;
+			return TRUE;
 		default:
 			WLog_Print(h264->log, WLOG_WARN, "Unknown H264_CONTEXT_OPTION[0x%08" PRIx32 "]",
 			           option);
@@ -808,6 +827,8 @@ UINT32 h264_context_get_option(H264_CONTEXT* h264, H264_CONTEXT_OPTION option)
 			return h264->QP;
 		case H264_CONTEXT_OPTION_USAGETYPE:
 			return h264->UsageType;
+		case H264_CONTEXT_OPTION_HW_ACCEL:
+			return h264->hwAccel;
 		default:
 			WLog_Print(h264->log, WLOG_WARN, "Unknown H264_CONTEXT_OPTION[0x%08" PRIx32 "]",
 			           option);

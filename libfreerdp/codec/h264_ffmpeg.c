@@ -65,7 +65,7 @@ static inline char* error_string(char* errbuf, size_t errbuf_size, int errnum)
 #define av_err2str(errnum) error_string((char[64]){ 0 }, 64, errnum)
 #endif
 
-#ifdef WITH_VAAPI
+#if defined(WITH_VAAPI) || defined(WITH_VAAPI_H264_ENCODING)
 #define VAAPI_DEVICE "/dev/dri/renderD128"
 #endif
 
@@ -81,7 +81,7 @@ typedef struct
 	AVPacket bufferpacket;
 #endif
 	AVPacket* packet;
-#ifdef WITH_VAAPI
+#if defined(WITH_VAAPI) || defined(WITH_VAAPI_H264_ENCODING)
 	AVBufferRef* hwctx;
 	AVFrame* hwVideoFrame;
 	enum AVPixelFormat hw_pix_fmt;
@@ -91,7 +91,7 @@ typedef struct
 #endif
 } H264_CONTEXT_LIBAVCODEC;
 
-static void libavcodec_destroy_encoder(H264_CONTEXT* WINPR_RESTRICT h264)
+static void libavcodec_destroy_encoder_context(H264_CONTEXT* WINPR_RESTRICT h264)
 {
 	H264_CONTEXT_LIBAVCODEC* sys = NULL;
 
@@ -110,11 +110,47 @@ static void libavcodec_destroy_encoder(H264_CONTEXT* WINPR_RESTRICT h264)
 #endif
 	}
 
-	sys->codecEncoder = NULL;
 	sys->codecEncoderContext = NULL;
 }
 
-static BOOL libavcodec_create_encoder(H264_CONTEXT* WINPR_RESTRICT h264)
+#ifdef WITH_VAAPI_H264_ENCODING
+static int set_hw_frames_ctx(H264_CONTEXT* WINPR_RESTRICT h264)
+{
+	H264_CONTEXT_LIBAVCODEC* sys = (H264_CONTEXT_LIBAVCODEC*)h264->pSystemData;
+	AVBufferRef* hw_frames_ref = NULL;
+	AVHWFramesContext* frames_ctx = NULL;
+	int err = 0;
+
+	if (!(hw_frames_ref = av_hwframe_ctx_alloc(sys->hwctx)))
+	{
+		WLog_Print(h264->log, WLOG_ERROR, "Failed to create VAAPI frame context");
+		return -1;
+	}
+	frames_ctx = (AVHWFramesContext*)(hw_frames_ref->data);
+	frames_ctx->format = AV_PIX_FMT_VAAPI;
+	frames_ctx->sw_format = AV_PIX_FMT_NV12;
+	frames_ctx->width = sys->codecEncoderContext->width;
+	frames_ctx->height = sys->codecEncoderContext->height;
+	frames_ctx->initial_pool_size = 20;
+	if ((err = av_hwframe_ctx_init(hw_frames_ref)) < 0)
+	{
+		WLog_Print(h264->log, WLOG_ERROR,
+		           "Failed to initialize VAAPI frame context."
+		           "Error code: %s",
+		           av_err2str(err));
+		av_buffer_unref(&hw_frames_ref);
+		return err;
+	}
+	sys->codecEncoderContext->hw_frames_ctx = av_buffer_ref(hw_frames_ref);
+	if (!sys->codecEncoderContext->hw_frames_ctx)
+		err = AVERROR(ENOMEM);
+
+	av_buffer_unref(&hw_frames_ref);
+	return err;
+}
+#endif
+
+static BOOL libavcodec_create_encoder_context(H264_CONTEXT* WINPR_RESTRICT h264)
 {
 	BOOL recreate = FALSE;
 	H264_CONTEXT_LIBAVCODEC* sys = NULL;
@@ -126,9 +162,10 @@ static BOOL libavcodec_create_encoder(H264_CONTEXT* WINPR_RESTRICT h264)
 		return FALSE;
 
 	sys = (H264_CONTEXT_LIBAVCODEC*)h264->pSystemData;
-	if (!sys)
+	if (!sys || !sys->codecEncoder)
 		return FALSE;
-	recreate = !sys->codecEncoder || !sys->codecEncoderContext;
+
+	recreate = !sys->codecEncoderContext;
 
 	if (sys->codecEncoderContext)
 	{
@@ -140,11 +177,7 @@ static BOOL libavcodec_create_encoder(H264_CONTEXT* WINPR_RESTRICT h264)
 	if (!recreate)
 		return TRUE;
 
-	libavcodec_destroy_encoder(h264);
-	sys->codecEncoder = avcodec_find_encoder(AV_CODEC_ID_H264);
-
-	if (!sys->codecEncoder)
-		goto EXCEPTION;
+	libavcodec_destroy_encoder_context(h264);
 
 	sys->codecEncoderContext = avcodec_alloc_context3(sys->codecEncoder);
 
@@ -158,7 +191,11 @@ static BOOL libavcodec_create_encoder(H264_CONTEXT* WINPR_RESTRICT h264)
 			break;
 
 		case H264_RATECONTROL_CQP:
-			/* TODO: sys->codecEncoderContext-> = h264->QP; */
+			if (av_opt_set_int(sys->codecEncoderContext, "qp", h264->QP, AV_OPT_SEARCH_CHILDREN) <
+			    0)
+			{
+				WLog_Print(h264->log, WLOG_ERROR, "av_opt_set_int failed");
+			}
 			break;
 
 		default:
@@ -174,17 +211,33 @@ static BOOL libavcodec_create_encoder(H264_CONTEXT* WINPR_RESTRICT h264)
 #endif
 	sys->codecEncoderContext->time_base =
 	    (AVRational){ 1, WINPR_ASSERTING_INT_CAST(int, h264->FrameRate) };
-	av_opt_set(sys->codecEncoderContext, "preset", "medium", AV_OPT_SEARCH_CHILDREN);
 	av_opt_set(sys->codecEncoderContext, "tune", "zerolatency", AV_OPT_SEARCH_CHILDREN);
+
 	sys->codecEncoderContext->flags |= AV_CODEC_FLAG_LOOP_FILTER;
-	sys->codecEncoderContext->pix_fmt = AV_PIX_FMT_YUV420P;
+
+#ifdef WITH_VAAPI_H264_ENCODING
+	if (sys->hwctx)
+	{
+		av_opt_set(sys->codecEncoderContext, "preset", "veryslow", AV_OPT_SEARCH_CHILDREN);
+
+		sys->codecEncoderContext->pix_fmt = AV_PIX_FMT_VAAPI;
+		/* set hw_frames_ctx for encoder's AVCodecContext */
+		if (set_hw_frames_ctx(h264) < 0)
+			goto EXCEPTION;
+	}
+	else
+#endif
+	{
+		av_opt_set(sys->codecEncoderContext, "preset", "medium", AV_OPT_SEARCH_CHILDREN);
+		sys->codecEncoderContext->pix_fmt = AV_PIX_FMT_YUV420P;
+	}
 
 	if (avcodec_open2(sys->codecEncoderContext, sys->codecEncoder, NULL) < 0)
 		goto EXCEPTION;
 
 	return TRUE;
 EXCEPTION:
-	libavcodec_destroy_encoder(h264);
+	libavcodec_destroy_encoder_context(h264);
 	return FALSE;
 }
 
@@ -346,7 +399,7 @@ static int libavcodec_compress(H264_CONTEXT* WINPR_RESTRICT h264,
 	H264_CONTEXT_LIBAVCODEC* sys = (H264_CONTEXT_LIBAVCODEC*)h264->pSystemData;
 	WINPR_ASSERT(sys);
 
-	if (!libavcodec_create_encoder(h264))
+	if (!libavcodec_create_encoder_context(h264))
 		return -1;
 
 #if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(58, 133, 100)
@@ -369,7 +422,7 @@ static int libavcodec_compress(H264_CONTEXT* WINPR_RESTRICT h264,
 
 	WINPR_ASSERT(sys->videoFrame);
 	WINPR_ASSERT(sys->codecEncoderContext);
-	sys->videoFrame->format = sys->codecEncoderContext->pix_fmt;
+	sys->videoFrame->format = AV_PIX_FMT_YUV420P;
 	sys->videoFrame->width = sys->codecEncoderContext->width;
 	sys->videoFrame->height = sys->codecEncoderContext->height;
 #if LIBAVUTIL_VERSION_INT >= AV_VERSION_INT(52, 48, 100)
@@ -391,9 +444,37 @@ static int libavcodec_compress(H264_CONTEXT* WINPR_RESTRICT h264,
 	sys->videoFrame->linesize[1] = (int)pStride[1];
 	sys->videoFrame->linesize[2] = (int)pStride[2];
 	sys->videoFrame->pts++;
+
+#ifdef WITH_VAAPI_H264_ENCODING
+	if (sys->hwctx)
+	{
+		av_frame_unref(sys->hwVideoFrame);
+		if ((status = av_hwframe_get_buffer(sys->codecEncoderContext->hw_frames_ctx,
+		                                    sys->hwVideoFrame, 0)) < 0 ||
+		    !sys->hwVideoFrame->hw_frames_ctx)
+		{
+			WLog_Print(h264->log, WLOG_ERROR, "av_hwframe_get_buffer failed (%s [%d])",
+			           av_err2str(status), status);
+			goto fail;
+		}
+		sys->videoFrame->format = AV_PIX_FMT_NV12;
+		if ((status = av_hwframe_transfer_data(sys->hwVideoFrame, sys->videoFrame, 0)) < 0)
+		{
+			WLog_Print(h264->log, WLOG_ERROR, "av_hwframe_transfer_data failed (%s [%d])",
+			           av_err2str(status), status);
+			goto fail;
+		}
+	}
+#endif
+
 	/* avcodec_encode_video2 is deprecated with libavcodec 57.48.101 */
 #if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(57, 48, 101)
+#ifdef WITH_VAAPI_H264_ENCODING
+	status = avcodec_send_frame(sys->codecEncoderContext,
+	                            sys->hwctx ? sys->hwVideoFrame : sys->videoFrame);
+#else
 	status = avcodec_send_frame(sys->codecEncoderContext, sys->videoFrame);
+#endif
 
 	if (status < 0)
 	{
@@ -486,8 +567,7 @@ static void libavcodec_uninit(H264_CONTEXT* h264)
 #endif
 	}
 
-#ifdef WITH_VAAPI
-
+#if defined(WITH_VAAPI) || defined(WITH_VAAPI_H264_ENCODING)
 	if (sys->hwVideoFrame)
 	{
 #if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(55, 18, 102)
@@ -506,6 +586,7 @@ static void libavcodec_uninit(H264_CONTEXT* h264)
 		av_buffer_unref(&sys->hw_frames_ctx);
 
 #endif
+
 #endif
 
 	if (sys->codecParser)
@@ -521,7 +602,7 @@ static void libavcodec_uninit(H264_CONTEXT* h264)
 #endif
 	}
 
-	libavcodec_destroy_encoder(h264);
+	libavcodec_destroy_encoder_context(h264);
 	free(sys);
 	h264->pSystemData = NULL;
 }
@@ -666,10 +747,45 @@ static BOOL libavcodec_init(H264_CONTEXT* h264)
 			goto EXCEPTION;
 		}
 	}
+	else
+	{
+#ifdef WITH_VAAPI_H264_ENCODING
+		if (h264->hwAccel) /* user requested hw accel */
+		{
+			sys->codecEncoder = avcodec_find_encoder_by_name("h264_vaapi");
+			if (!sys->codecEncoder)
+			{
+				WLog_Print(h264->log, WLOG_ERROR, "H264 VAAPI encoder not found");
+			}
+			else if (av_hwdevice_ctx_create(&sys->hwctx, AV_HWDEVICE_TYPE_VAAPI, VAAPI_DEVICE, NULL,
+			                                0) < 0)
+			{
+				WLog_Print(h264->log, WLOG_ERROR, "av_hwdevice_ctx_create failed");
+				sys->codecEncoder = NULL;
+				sys->hwctx = NULL;
+			}
+			else
+			{
+				WLog_Print(h264->log, WLOG_INFO, "Using VAAPI for accelerated H264 encoding");
+			}
+		}
+#endif
+		if (!sys->codecEncoder)
+		{
+			sys->codecEncoder = avcodec_find_encoder(AV_CODEC_ID_H264);
+			h264->hwAccel = FALSE; /* not supported */
+		}
+
+		if (!sys->codecEncoder)
+		{
+			WLog_Print(h264->log, WLOG_ERROR, "Failed to initialize H264 encoder");
+			goto EXCEPTION;
+		}
+	}
 
 #if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(55, 18, 102)
 	sys->videoFrame = av_frame_alloc();
-#ifdef WITH_VAAPI
+#if defined(WITH_VAAPI) || defined(WITH_VAAPI_H264_ENCODING)
 	sys->hwVideoFrame = av_frame_alloc();
 #endif
 #else
@@ -682,8 +798,7 @@ static BOOL libavcodec_init(H264_CONTEXT* h264)
 		goto EXCEPTION;
 	}
 
-#ifdef WITH_VAAPI
-
+#if defined(WITH_VAAPI) || defined(WITH_VAAPI_H264_ENCODING)
 	if (!sys->hwVideoFrame)
 	{
 		WLog_Print(h264->log, WLOG_ERROR, "Failed to allocate libav hw frame");
