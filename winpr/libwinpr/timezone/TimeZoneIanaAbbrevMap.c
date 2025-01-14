@@ -27,6 +27,7 @@
 #include <unistd.h>
 
 #include <winpr/string.h>
+#include "timezone.h"
 
 typedef struct
 {
@@ -73,25 +74,14 @@ static void append_timezone(const char* dir, const char* name)
 	if (!tz)
 		return;
 
-	const char* otz = getenv("TZ");
-	char* oldtz = NULL;
-	if (otz)
-		oldtz = _strdup(otz);
-	setenv("TZ", tz, 1);
-	tzset();
+	char* oldtz = setNewAndSaveOldTZ(tz);
+
 	const time_t t = time(NULL);
 	struct tm lt = { 0 };
 	(void)localtime_r(&t, &lt);
 	append(tz, lt.tm_zone);
-	if (oldtz)
-	{
-		setenv("TZ", oldtz, 1);
-		free(oldtz);
-	}
-	else
-		unsetenv("TZ");
+	restoreSavedTZ(oldtz);
 	free(tz);
-	tzset();
 }
 
 static void handle_link(const char* base, const char* dir, const char* name);

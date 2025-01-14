@@ -165,6 +165,7 @@ fail:
 	return ret;
 }
 
+#if defined(HAVE_CPU_OPTIMIZED_PRIMITIVES) && defined(WITH_OPENCL)
 static BOOL primitives_YUV_benchmark_run(primitives_YUV_benchmark* bench, primitives_t* prims,
                                          UINT64 runTime, UINT32* computations)
 {
@@ -196,6 +197,7 @@ static BOOL primitives_YUV_benchmark_run(primitives_YUV_benchmark* bench, primit
 	}
 	return TRUE;
 }
+#endif
 
 static BOOL primitives_autodetect_best(primitives_t* prims)
 {
@@ -222,7 +224,11 @@ static BOOL primitives_autodetect_best(primitives_t* prims)
 
 #if !defined(HAVE_CPU_OPTIMIZED_PRIMITIVES) || !defined(WITH_OPENCL)
 	{
+#if defined(HAVE_CPU_OPTIMIZED_PRIMITIVES) || defined(WITH_OPENCL)
+		struct prim_benchmark* cur = &testcases[1];
+#else
 		struct prim_benchmark* cur = &testcases[0];
+#endif
 		cur->prims = primitives_get_by_type(cur->flags);
 		if (!cur->prims)
 		{
