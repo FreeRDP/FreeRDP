@@ -731,23 +731,29 @@ static int dynamic_time_zone_from_localtime(const struct tm* local_time,
 	int rc = HAVE_TRANSITION_DATES;
 
 	tz->Bias = get_bias(local_time, FALSE);
+
+	/* If the current time has (or had) DST */
 	if (local_time->tm_isdst >= 0)
 	{
 		/* DST bias is the difference between standard time and DST in minutes */
 		const LONG d = get_bias(local_time, TRUE);
 		tz->DaylightBias = -1 * (tz->Bias - d);
 		if (!get_transition_date(local_time, FALSE, &tz->StandardDate))
+		{
 			rc |= HAVE_NO_STANDARD_TRANSITION_DATE;
+			tz->StandardBias = 0;
+		}
 		if (!get_transition_date(local_time, TRUE, &tz->DaylightDate))
+		{
 			rc |= HAVE_NO_DAYLIGHT_TRANSITION_DATE;
+			tz->DaylightBias = 0;
+		}
 	}
 	return rc;
 }
 
 DWORD GetDynamicTimeZoneInformation(PDYNAMIC_TIME_ZONE_INFORMATION tz)
 {
-	BOOL doesNotHaveStandardDate = FALSE;
-	BOOL doesNotHaveDaylightDate = FALSE;
 	const char** list = NULL;
 	char* tzid = NULL;
 	const char* defaultName = "Client Local Time";
@@ -767,13 +773,7 @@ DWORD GetDynamicTimeZoneInformation(PDYNAMIC_TIME_ZONE_INFORMATION tz)
 
 	tz->Bias = get_bias(local_time, FALSE);
 	if (local_time->tm_isdst >= 0)
-	{
-		const int rc = dynamic_time_zone_from_localtime(local_time, tz);
-		if (rc & HAVE_NO_STANDARD_TRANSITION_DATE)
-			doesNotHaveStandardDate = TRUE;
-		if (rc & HAVE_NO_DAYLIGHT_TRANSITION_DATE)
-			doesNotHaveDaylightDate = TRUE;
-	}
+		dynamic_time_zone_from_localtime(local_time, tz);
 
 	tzid = winpr_guess_time_zone();
 	if (!map_iana_id(tzid, tz))
@@ -795,12 +795,6 @@ DWORD GetDynamicTimeZoneInformation(PDYNAMIC_TIME_ZONE_INFORMATION tz)
 	}
 	else
 		res = (local_time->tm_isdst) ? TIME_ZONE_ID_DAYLIGHT : TIME_ZONE_ID_STANDARD;
-
-	if (doesNotHaveDaylightDate)
-		tz->DaylightBias = 0;
-
-	if (doesNotHaveStandardDate)
-		tz->StandardBias = 0;
 
 out_error:
 	free(tzid);
