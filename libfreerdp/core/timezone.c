@@ -93,20 +93,20 @@ static void log_timezone_(const TIME_ZONE_INFORMATION* tzif, DWORD result, const
 	DWORD level = WLOG_TRACE;
 	wLog* log = WLog_Get(TIMEZONE_TAG);
 	log_print(log, level, file, fkt, line, "TIME_ZONE_INFORMATION {");
-	log_print(log, level, file, fkt, line, "  Bias=%" PRIu32, tzif->Bias);
+	log_print(log, level, file, fkt, line, "  Bias=%" PRId32, tzif->Bias);
 	(void)ConvertWCharNToUtf8(tzif->StandardName, ARRAYSIZE(tzif->StandardName), buffer,
 	                          ARRAYSIZE(buffer));
 	log_print(log, level, file, fkt, line, "  StandardName=%s", buffer);
 	log_print(log, level, file, fkt, line, "  StandardDate=%s",
 	          systemtime2str(&tzif->StandardDate, buffer, sizeof(buffer)));
-	log_print(log, level, file, fkt, line, "  StandardBias=%" PRIu32, tzif->StandardBias);
+	log_print(log, level, file, fkt, line, "  StandardBias=%" PRId32, tzif->StandardBias);
 
 	(void)ConvertWCharNToUtf8(tzif->DaylightName, ARRAYSIZE(tzif->DaylightName), buffer,
 	                          ARRAYSIZE(buffer));
 	log_print(log, level, file, fkt, line, "  DaylightName=%s", buffer);
 	log_print(log, level, file, fkt, line, "  DaylightDate=%s",
 	          systemtime2str(&tzif->DaylightDate, buffer, sizeof(buffer)));
-	log_print(log, level, file, fkt, line, "  DaylightBias=%" PRIu32, tzif->DaylightBias);
+	log_print(log, level, file, fkt, line, "  DaylightBias=%" PRId32, tzif->DaylightBias);
 
 	switch (result)
 	{
