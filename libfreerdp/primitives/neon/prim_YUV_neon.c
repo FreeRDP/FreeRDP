@@ -322,6 +322,45 @@ static inline void neon_avgUV(uint8x16_t pU[2])
 	pU[0] = u;
 }
 
+static INLINE pstatus_t neon_YUV444ToX_SINGLE_ROW(const BYTE* WINPR_RESTRICT pY,
+                                                  const BYTE* WINPR_RESTRICT pU,
+                                                  const BYTE* WINPR_RESTRICT pV,
+                                                  BYTE* WINPR_RESTRICT pRGB, size_t width,
+                                                  const uint8_t rPos, const uint8_t gPos,
+                                                  const uint8_t bPos, const uint8_t aPos)
+{
+	WINPR_ASSERT(width % 2 == 0);
+
+	size_t x = 0;
+
+	for (; x < width - width % 16; x += 16)
+	{
+		uint8x16_t U = vld1q_u8(&pU[x]);
+		uint8x16_t V = vld1q_u8(&pV[x]);
+		const uint8x16_t Y0raw = vld1q_u8(&pY[x]);
+		const uint8x8x2_t Y0 = { { vget_low_u8(Y0raw), vget_high_u8(Y0raw) } };
+		const int16x8x2_t D0 = loadUV444(U);
+		const int16x8x2_t E0 = loadUV444(V);
+		neon_YuvToRgbPixel(&pRGB[4ULL * x], Y0, D0, E0, rPos, gPos, bPos, aPos);
+	}
+
+	for (; x < width; x += 2)
+	{
+		BYTE* rgb = &pRGB[x * 4];
+
+		for (size_t j = 0; j < 2; j++)
+		{
+			const BYTE y = pY[x + j];
+			const BYTE u = pU[x + j];
+			const BYTE v = pV[x + j];
+
+			neon_write_pixel(&rgb[4 * (j)], y, u, v, rPos, gPos, bPos, aPos);
+		}
+	}
+
+	return PRIMITIVES_SUCCESS;
+}
+
 static INLINE pstatus_t neon_YUV444ToX_DOUBLE_ROW(const BYTE* WINPR_RESTRICT pY[2],
                                                   const BYTE* WINPR_RESTRICT pU[2],
                                                   const BYTE* WINPR_RESTRICT pV[2],
@@ -388,8 +427,8 @@ static INLINE pstatus_t neon_YUV444ToX(const BYTE* WINPR_RESTRICT pSrc[3], const
 	const UINT32 nWidth = roi->width;
 	const UINT32 nHeight = roi->height;
 
-	WINPR_ASSERT(nHeight % 2 == 0);
-	for (size_t y = 0; y < nHeight; y += 2)
+	size_t y = 0;
+	for (; y < nHeight - nHeight % 2; y += 2)
 	{
 		const uint8_t* WINPR_RESTRICT pY[2] = { pSrc[0] + y * srcStep[0],
 			                                    pSrc[0] + (y + 1) * srcStep[0] };
@@ -402,6 +441,18 @@ static INLINE pstatus_t neon_YUV444ToX(const BYTE* WINPR_RESTRICT pSrc[3], const
 
 		const pstatus_t rc =
 		    neon_YUV444ToX_DOUBLE_ROW(pY, pU, pV, pRGB, nWidth, rPos, gPos, bPos, aPos);
+		if (rc != PRIMITIVES_SUCCESS)
+			return rc;
+	}
+	for (; y < nHeight; y++)
+	{
+		const uint8_t* WINPR_RESTRICT pY = pSrc[0] + y * srcStep[0];
+		const uint8_t* WINPR_RESTRICT pU = pSrc[1] + y * srcStep[1];
+		const uint8_t* WINPR_RESTRICT pV = pSrc[2] + y * srcStep[2];
+		uint8_t* WINPR_RESTRICT pRGB = &pDst[y * dstStep];
+
+		const pstatus_t rc =
+		    neon_YUV444ToX_SINGLE_ROW(pY, pU, pV, pRGB, nWidth, rPos, gPos, bPos, aPos);
 		if (rc != PRIMITIVES_SUCCESS)
 			return rc;
 	}

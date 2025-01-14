@@ -464,6 +464,47 @@ static inline pstatus_t sse41_YUV444ToRGB_8u_P3AC4R_BGRX_DOUBLE_ROW(
 	return PRIMITIVES_SUCCESS;
 }
 
+static inline void BGRX_fillRGB_single(size_t offset, BYTE* WINPR_RESTRICT pRGB,
+                                       const BYTE* WINPR_RESTRICT pY, const BYTE* WINPR_RESTRICT pU,
+                                       const BYTE* WINPR_RESTRICT pV, BOOL filter)
+{
+	WINPR_ASSERT(pRGB);
+	WINPR_ASSERT(pY);
+	WINPR_ASSERT(pU);
+	WINPR_ASSERT(pV);
+
+	const UINT32 DstFormat = PIXEL_FORMAT_BGRX32;
+	const UINT32 bpp = 4;
+
+	for (size_t j = 0; j < 2; j++)
+	{
+		const BYTE Y = pY[offset + j];
+		BYTE U = pU[offset + j];
+		BYTE V = pV[offset + j];
+
+		const BYTE r = YUV2R(Y, U, V);
+		const BYTE g = YUV2G(Y, U, V);
+		const BYTE b = YUV2B(Y, U, V);
+		writePixelBGRX(&pRGB[(j + offset) * bpp], bpp, DstFormat, r, g, b, 0);
+	}
+}
+
+static inline pstatus_t sse41_YUV444ToRGB_8u_P3AC4R_BGRX_SINGLE_ROW(
+    BYTE* WINPR_RESTRICT pDst, const BYTE* WINPR_RESTRICT YData, const BYTE* WINPR_RESTRICT UData,
+    const BYTE* WINPR_RESTRICT VData, UINT32 nWidth)
+{
+	WINPR_ASSERT((nWidth % 2) == 0);
+
+	size_t x = 0;
+
+	for (; x < nWidth; x += 2)
+	{
+		BGRX_fillRGB_single(x, pDst, YData, UData, VData, TRUE);
+	}
+
+	return PRIMITIVES_SUCCESS;
+}
+
 static inline pstatus_t sse41_YUV444ToRGB_8u_P3AC4R_BGRX(const BYTE* WINPR_RESTRICT pSrc[],
                                                          const UINT32 srcStep[],
                                                          BYTE* WINPR_RESTRICT pDst, UINT32 dstStep,
@@ -472,8 +513,8 @@ static inline pstatus_t sse41_YUV444ToRGB_8u_P3AC4R_BGRX(const BYTE* WINPR_RESTR
 	const UINT32 nWidth = roi->width;
 	const UINT32 nHeight = roi->height;
 
-	WINPR_ASSERT((nHeight % 2) == 0);
-	for (size_t y = 0; y < nHeight; y += 2)
+	size_t y = 0;
+	for (; y < nHeight - nHeight % 2; y += 2)
 	{
 		BYTE* dst[] = { (pDst + dstStep * y), (pDst + dstStep * (y + 1)) };
 		const BYTE* YData[] = { pSrc[0] + y * srcStep[0], pSrc[0] + (y + 1) * srcStep[0] };
@@ -482,6 +523,17 @@ static inline pstatus_t sse41_YUV444ToRGB_8u_P3AC4R_BGRX(const BYTE* WINPR_RESTR
 
 		const pstatus_t rc =
 		    sse41_YUV444ToRGB_8u_P3AC4R_BGRX_DOUBLE_ROW(dst, YData, UData, VData, nWidth);
+		if (rc != PRIMITIVES_SUCCESS)
+			return rc;
+	}
+	for (; y < nHeight; y++)
+	{
+		BYTE* dst = (pDst + dstStep * y);
+		const BYTE* YData = pSrc[0] + y * srcStep[0];
+		const BYTE* UData = pSrc[1] + y * srcStep[1];
+		const BYTE* VData = pSrc[2] + y * srcStep[2];
+		const pstatus_t rc =
+		    sse41_YUV444ToRGB_8u_P3AC4R_BGRX_SINGLE_ROW(dst, YData, UData, VData, nWidth);
 		if (rc != PRIMITIVES_SUCCESS)
 			return rc;
 	}
