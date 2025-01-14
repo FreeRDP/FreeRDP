@@ -648,6 +648,7 @@ static BOOL openh264_init(H264_CONTEXT* h264)
 		}
 	}
 
+	h264->hwAccel = FALSE; /* not supported */
 	return TRUE;
 EXCEPTION:
 	openh264_uninit(h264);

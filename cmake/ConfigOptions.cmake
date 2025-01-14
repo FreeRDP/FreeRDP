@@ -161,6 +161,10 @@ option(WITH_FFMPEG "Enable FFMPEG for audio/video encoding/decoding" ON)
 cmake_dependent_option(WITH_DSP_FFMPEG "Use FFMPEG for audio encoding/decoding" ON "WITH_FFMPEG" OFF)
 cmake_dependent_option(WITH_VIDEO_FFMPEG "Use FFMPEG for video encoding/decoding" ON "WITH_FFMPEG" OFF)
 cmake_dependent_option(WITH_VAAPI "Use FFMPEG VAAPI" OFF "WITH_VIDEO_FFMPEG" OFF)
+cmake_dependent_option(WITH_VAAPI_H264_ENCODING "Use FFMPEG VAAPI hardware H264 encoding" ON "WITH_VIDEO_FFMPEG" OFF)
+if(WITH_VAAPI_H264_ENCODING)
+  add_definitions("-DWITH_VAAPI_H264_ENCODING")
+endif()
 
 option(USE_VERSION_FROM_GIT_TAG "Extract FreeRDP version from git tag." ON)
 
