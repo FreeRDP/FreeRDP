@@ -56,23 +56,22 @@ extern "C"
 }
 #endif
 
-#define WINPR_ASSERT_AT(cond, file, fkt, line)                                                    \
-	do                                                                                            \
-	{                                                                                             \
-		WINPR_PRAGMA_DIAG_PUSH                                                                    \
-		WINPR_PRAGMA_DIAG_TAUTOLOGICAL_CONSTANT_OUT_OF_RANGE_COMPARE                              \
-		WINPR_PRAGMA_DIAG_TAUTOLOGICAL_VALUE_RANGE_COMPARE                                        \
-		WINPR_PRAGMA_DIAG_IGNORED_UNKNOWN_PRAGMAS                                                 \
-		WINPR_DO_COVERITY_PRAGMA(coverity compliance block \(deviate "CONSTANT_EXPRESSION_RESULT" \
-		                                                             "WINPR_ASSERT" \)          \
-	    \(deviate "NO_EFFECT"                                                                       \
-		        "WINPR_ASSERT" \))                                                                \
-                                                                                                  \
-		winpr_internal_assert((cond), (file), (fkt), (line));                                     \
-                                                                                                  \
-		WINPR_DO_COVERITY_PRAGMA(coverity compliance end_block "CONSTANT_EXPRESSION_RESULT"       \
-		                                                       "NO_EFFECT")                       \
-		WINPR_PRAGMA_DIAG_POP                                                                     \
+#define WINPR_ASSERT_AT(cond, file, fkt, line)                                                     \
+	do                                                                                             \
+	{                                                                                              \
+		WINPR_PRAGMA_DIAG_PUSH                                                                     \
+		WINPR_PRAGMA_DIAG_TAUTOLOGICAL_CONSTANT_OUT_OF_RANGE_COMPARE                               \
+		WINPR_PRAGMA_DIAG_TAUTOLOGICAL_VALUE_RANGE_COMPARE                                         \
+		WINPR_PRAGMA_DIAG_IGNORED_UNKNOWN_PRAGMAS                                                  \
+		WINPR_DO_COVERITY_PRAGMA(                                                                  \
+		    coverity compliance block deviate 'CONSTANT_EXPRESSION_RESULT' 'WINPR_ASSERT')         \
+		WINPR_DO_COVERITY_PRAGMA(coverity compliance block deviate : 2 'NO_EFFECT' 'WINPR_ASSERT') \
+                                                                                                   \
+		winpr_internal_assert((cond), (file), (fkt), (line));                                      \
+                                                                                                   \
+		WINPR_DO_COVERITY_PRAGMA(                                                                  \
+		    coverity compliance end_block 'CONSTANT_EXPRESSION_RESULT' 'NO_EFFECT')                \
+		WINPR_PRAGMA_DIAG_POP                                                                      \
 	} while (0)
 #define WINPR_ASSERT(cond) WINPR_ASSERT_AT((cond), __FILE__, __func__, __LINE__)
 
