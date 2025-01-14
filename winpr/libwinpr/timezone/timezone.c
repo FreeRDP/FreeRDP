@@ -880,11 +880,11 @@ DWORD EnumDynamicTimeZoneInformation(const DWORD dwIndex,
 
 	struct tm* local_time = localtime_r(&t, &tres);
 
-	if (entry->Iana)
-		restoreSavedTZ(tzcopy);
-
 	if (local_time)
 		dynamic_time_zone_from_localtime(local_time, lpTimeZoneInformation);
+
+	if (entry->Iana)
+		restoreSavedTZ(tzcopy);
 
 	return ERROR_SUCCESS;
 }
