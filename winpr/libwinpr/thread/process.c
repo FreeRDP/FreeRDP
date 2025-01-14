@@ -444,6 +444,7 @@ BOOL CreateProcessWithTokenW(HANDLE hToken, DWORD dwLogonFlags, LPCWSTR lpApplic
 
 VOID ExitProcess(UINT uExitCode)
 {
+	// NOLINTNEXTLINE(concurrency-mt-unsafe)
 	exit((int)uExitCode);
 }
 

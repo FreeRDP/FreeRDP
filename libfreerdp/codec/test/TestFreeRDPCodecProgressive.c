@@ -1180,6 +1180,7 @@ static WINPR_NORETURN(void usage(const char* name))
 {
 	FILE* fp = stdout;
 	(void)fprintf(fp, "%s <directory> <width> <height>\n", name);
+	// NOLINTNEXTLINE(concurrency-mt-unsafe)
 	exit(-1);
 }
 

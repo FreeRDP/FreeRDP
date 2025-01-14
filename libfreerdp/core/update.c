@@ -203,13 +203,9 @@ static BOOL update_write_bitmap_data(rdpUpdate* update_pub, wStream* s, BITMAP_D
 			    WINPR_ASSERTING_INT_CAST(
 			        uint16_t, bitmapData->cbUncompressedSize)); /* cbUncompressedSize (2 bytes) */
 		}
+	}
 
-		Stream_Write(s, bitmapData->bitmapDataStream, bitmapData->bitmapLength);
-	}
-	else
-	{
-		Stream_Write(s, bitmapData->bitmapDataStream, bitmapData->bitmapLength);
-	}
+	Stream_Write(s, bitmapData->bitmapDataStream, bitmapData->bitmapLength);
 
 	return TRUE;
 }

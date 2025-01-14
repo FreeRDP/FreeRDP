@@ -1814,6 +1814,7 @@ static void xf_PanningChangeEventHandler(void* context, const PanningChangeEvent
 
 static BOOL xfreerdp_client_global_init(void)
 {
+	// NOLINTNEXTLINE(concurrency-mt-unsafe)
 	(void)setlocale(LC_ALL, "");
 
 	if (freerdp_handle_signals() != 0)

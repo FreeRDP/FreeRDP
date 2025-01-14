@@ -152,9 +152,9 @@ DWORD GetEnvironmentVariableA(LPCSTR lpName, LPSTR lpBuffer, DWORD nSize)
 {
 #if !defined(_UWP)
 	size_t length = 0;
-	char* env = NULL;
 
-	env = getenv(lpName);
+	// NOLINTNEXTLINE(concurrency-mt-unsafe)
+	char* env = getenv(lpName);
 
 	if (!env)
 	{
@@ -191,11 +191,13 @@ BOOL SetEnvironmentVariableA(LPCSTR lpName, LPCSTR lpValue)
 
 	if (lpValue)
 	{
+		// NOLINTNEXTLINE(concurrency-mt-unsafe)
 		if (0 != setenv(lpName, lpValue, 1))
 			return FALSE;
 	}
 	else
 	{
+		// NOLINTNEXTLINE(concurrency-mt-unsafe)
 		if (0 != unsetenv(lpName))
 			return FALSE;
 	}

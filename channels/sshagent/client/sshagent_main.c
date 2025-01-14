@@ -334,6 +334,7 @@ static UINT sshagent_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelMa
 	sshagent->listener_callback->iface.OnNewChannelConnection = sshagent_on_new_channel_connection;
 	sshagent->listener_callback->plugin = pPlugin;
 	sshagent->listener_callback->channel_mgr = pChannelMgr;
+	// NOLINTNEXTLINE(concurrency-mt-unsafe)
 	sshagent->listener_callback->agent_uds_path = getenv("SSH_AUTH_SOCK");
 
 	if (sshagent->listener_callback->agent_uds_path == NULL)

@@ -361,7 +361,7 @@ WCHAR* _wcsstr(const WCHAR* str, const WCHAR* strSearch)
 
 /* _wcschr -> wcschr */
 
-WCHAR* _wcschr(const WCHAR* str, WCHAR value)
+WCHAR* _wcschr(const WCHAR* str, WCHAR c)
 {
 	union
 	{
@@ -370,10 +370,10 @@ WCHAR* _wcschr(const WCHAR* str, WCHAR value)
 	} cnv;
 	const WCHAR* p = str;
 
-	while (*p && (*p != value))
+	while (*p && (*p != c))
 		p++;
 
-	cnv.cc = (*p == value) ? p : NULL;
+	cnv.cc = (*p == c) ? p : NULL;
 	return cnv.c;
 }
 

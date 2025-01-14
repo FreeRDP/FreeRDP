@@ -251,9 +251,9 @@ static int cipher_compare(const void* a, const void* b)
 	return *cipher > map->md ? 1 : -1;
 }
 
-const char* winpr_cipher_type_to_string(WINPR_CIPHER_TYPE cipher)
+const char* winpr_cipher_type_to_string(WINPR_CIPHER_TYPE md)
 {
-	WINPR_CIPHER_TYPE lc = cipher;
+	WINPR_CIPHER_TYPE lc = md;
 	const struct cipher_map* ret = bsearch(&lc, s_cipher_map, ARRAYSIZE(s_cipher_map),
 	                                       sizeof(struct cipher_map), cipher_compare);
 	if (!ret)

@@ -124,6 +124,7 @@ static void iterate_subdir_recursive(const char* base, const char* bname, const 
 	if (d)
 	{
 		struct dirent* dp = NULL;
+		// NOLINTNEXTLINE(concurrency-mt-unsafe)
 		while ((dp = readdir(d)) != NULL)
 		{
 			switch (dp->d_type)

@@ -997,8 +997,12 @@ static int x11_shadow_subsystem_base_init(x11ShadowSubsystem* subsystem)
 	if (subsystem->display)
 		return 1; /* initialize once */
 
+	// NOLINTNEXTLINE(concurrency-mt-unsafe)
 	if (!getenv("DISPLAY"))
+	{
+		// NOLINTNEXTLINE(concurrency-mt-unsafe)
 		setenv("DISPLAY", ":0", 1);
+	}
 
 	if (!XInitThreads())
 		return -1;
@@ -1196,8 +1200,12 @@ UINT32 x11_shadow_enum_monitors(MONITOR_DEF* monitors, UINT32 maxMonitors)
 	int displayHeight = 0;
 	int numMonitors = 0;
 
+	// NOLINTNEXTLINE(concurrency-mt-unsafe)
 	if (!getenv("DISPLAY"))
+	{
+		// NOLINTNEXTLINE(concurrency-mt-unsafe)
 		setenv("DISPLAY", ":0", 1);
+	}
 
 	display = XOpenDisplay(NULL);
 

@@ -318,12 +318,12 @@ extern "C"
 	 * The function does string conversions of any '\0' terminated input string
 	 *
 	 *  \param wstr A '\0' terminated WCHAR string, may be NULL
-	 *  \param pSize Ignored if NULL, otherwise receives the length of the result string in
+	 *  \param pUtfCharLength Ignored if NULL, otherwise receives the length of the result string in
 	 * characters (strlen)
 	 *
 	 *  \return An allocated zero terminated UTF-8 string or NULL in case of failure.
 	 */
-	WINPR_API char* ConvertWCharToUtf8Alloc(const WCHAR* wstr, size_t* pSize);
+	WINPR_API char* ConvertWCharToUtf8Alloc(const WCHAR* wstr, size_t* pUtfCharLength);
 
 	/** \brief Converts form UTF-16 to UTF-8, returns an allocated string
 	 *
@@ -332,12 +332,13 @@ extern "C"
 	 *
 	 *  \param wstr A WCHAR string of \b wlen length
 	 *  \param wlen The (buffer) length in characters of \b wstr
-	 *  \param pSize Ignored if NULL, otherwise receives the length of the result string in
+	 *  \param pUtfCharLength Ignored if NULL, otherwise receives the length of the result string in
 	 * characters (strlen)
 	 *
 	 *  \return An allocated zero terminated UTF-8 string or NULL in case of failure.
 	 */
-	WINPR_API char* ConvertWCharNToUtf8Alloc(const WCHAR* wstr, size_t wlen, size_t* pSize);
+	WINPR_API char* ConvertWCharNToUtf8Alloc(const WCHAR* wstr, size_t wlen,
+	                                         size_t* pUtfCharLength);
 
 	/** \brief Converts multistring form UTF-16 to UTF-8, returns an allocated string
 	 *
@@ -346,12 +347,13 @@ extern "C"
 	 *
 	 *  \param wstr A WCHAR string of \b len character length
 	 *  \param wlen The (buffer) length in characters of \b str
-	 *  \param pSize Ignored if NULL, otherwise receives the length of the result string in
+	 *  \param pUtfCharLength Ignored if NULL, otherwise receives the length of the result string in
 	 * characters (including any '\0' character)
 	 *
 	 *  \return An allocated double zero terminated UTF-8 string or NULL in case of failure.
 	 */
-	WINPR_API char* ConvertMszWCharNToUtf8Alloc(const WCHAR* wstr, size_t wlen, size_t* pSize);
+	WINPR_API char* ConvertMszWCharNToUtf8Alloc(const WCHAR* wstr, size_t wlen,
+	                                            size_t* pUtfCharLength);
 
 	/** \brief Converts form UTF-8 to UTF-16, returns an allocated string
 	 *

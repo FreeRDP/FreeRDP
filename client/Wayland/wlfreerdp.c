@@ -581,6 +581,7 @@ disconnect:
 
 static BOOL wlf_client_global_init(void)
 {
+	// NOLINTNEXTLINE(concurrency-mt-unsafe)
 	(void)setlocale(LC_ALL, "");
 
 	if (freerdp_handle_signals() != 0)

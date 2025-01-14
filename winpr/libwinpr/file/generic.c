@@ -1118,6 +1118,7 @@ BOOL FindNextFileA(HANDLE hFindFile, LPWIN32_FIND_DATAA lpFindFileData)
 
 	WIN32_FILE_SEARCH* pFileSearch = (WIN32_FILE_SEARCH*)hFindFile;
 	struct dirent* pDirent = NULL;
+	// NOLINTNEXTLINE(concurrency-mt-unsafe)
 	while ((pDirent = readdir(pFileSearch->pDir)) != NULL)
 	{
 		if (FilePatternMatchA(pDirent->d_name, pFileSearch->lpPattern))

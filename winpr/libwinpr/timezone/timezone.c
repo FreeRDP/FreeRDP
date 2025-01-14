@@ -752,7 +752,7 @@ static int dynamic_time_zone_from_localtime(const struct tm* local_time,
 	return rc;
 }
 
-DWORD GetDynamicTimeZoneInformation(PDYNAMIC_TIME_ZONE_INFORMATION tz)
+DWORD GetDynamicTimeZoneInformation(PDYNAMIC_TIME_ZONE_INFORMATION pTimeZoneInformation)
 {
 	const char** list = NULL;
 	char* tzid = NULL;
@@ -760,10 +760,11 @@ DWORD GetDynamicTimeZoneInformation(PDYNAMIC_TIME_ZONE_INFORMATION tz)
 	DWORD res = TIME_ZONE_ID_UNKNOWN;
 	const DYNAMIC_TIME_ZONE_INFORMATION empty = { 0 };
 
-	WINPR_ASSERT(tz);
+	WINPR_ASSERT(pTimeZoneInformation);
 
-	*tz = empty;
-	(void)ConvertUtf8ToWChar(defaultName, tz->StandardName, ARRAYSIZE(tz->StandardName));
+	*pTimeZoneInformation = empty;
+	(void)ConvertUtf8ToWChar(defaultName, pTimeZoneInformation->StandardName,
+	                         ARRAYSIZE(pTimeZoneInformation->StandardName));
 
 	const time_t t = time(NULL);
 	struct tm tres = { 0 };
@@ -771,12 +772,12 @@ DWORD GetDynamicTimeZoneInformation(PDYNAMIC_TIME_ZONE_INFORMATION tz)
 	if (!local_time)
 		goto out_error;
 
-	tz->Bias = get_bias(local_time, FALSE);
+	pTimeZoneInformation->Bias = get_bias(local_time, FALSE);
 	if (local_time->tm_isdst >= 0)
-		dynamic_time_zone_from_localtime(local_time, tz);
+		dynamic_time_zone_from_localtime(local_time, pTimeZoneInformation);
 
 	tzid = winpr_guess_time_zone();
-	if (!map_iana_id(tzid, tz))
+	if (!map_iana_id(tzid, pTimeZoneInformation))
 	{
 		const size_t len = TimeZoneIanaAbbrevGet(local_time->tm_zone, NULL, 0);
 		list = (const char**)calloc(len, sizeof(const char*));
@@ -786,7 +787,7 @@ DWORD GetDynamicTimeZoneInformation(PDYNAMIC_TIME_ZONE_INFORMATION tz)
 		for (size_t x = 0; x < size; x++)
 		{
 			const char* id = list[x];
-			if (map_iana_id(id, tz))
+			if (map_iana_id(id, pTimeZoneInformation))
 			{
 				res = (local_time->tm_isdst) ? TIME_ZONE_ID_DAYLIGHT : TIME_ZONE_ID_STANDARD;
 				break;
@@ -800,7 +801,7 @@ out_error:
 	free(tzid);
 	free((void*)list);
 
-	log_timezone(tz, res);
+	log_timezone(pTimeZoneInformation, res);
 	return res;
 }
 

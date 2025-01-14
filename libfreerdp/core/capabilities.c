@@ -4540,8 +4540,7 @@ BOOL rdp_recv_demand_active(rdpRdp* rdp, wStream* s, UINT16 pduSource, UINT16 le
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return FALSE;
 
-	UINT32 SessionId = 0;
-	Stream_Read_UINT32(s, SessionId); /* SessionId */
+	const UINT32 SessionId = Stream_Get_UINT32(s); /* SessionId */
 
 	{
 		rdp_secondary_update_internal* secondary = secondary_update_cast(rdp->update->secondary);
