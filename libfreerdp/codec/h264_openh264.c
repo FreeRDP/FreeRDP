@@ -621,7 +621,7 @@ static BOOL openh264_init(H264_CONTEXT* h264)
 
 				status =
 				    (*sys->pDecoder)
-				        ->SetOption(sys->pDecoder, DECODER_OPTION_TRACE_CALLBACK_CONTEXT, h264);
+				        ->SetOption(sys->pDecoder, DECODER_OPTION_TRACE_CALLBACK_CONTEXT, &h264);
 
 				if (status != 0)
 				{
@@ -634,7 +634,7 @@ static BOOL openh264_init(H264_CONTEXT* h264)
 
 				status =
 				    (*sys->pDecoder)
-				        ->SetOption(sys->pDecoder, DECODER_OPTION_TRACE_CALLBACK, traceCallback);
+				        ->SetOption(sys->pDecoder, DECODER_OPTION_TRACE_CALLBACK, &traceCallback);
 
 				if (status != 0)
 				{
