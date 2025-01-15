@@ -495,9 +495,7 @@ static inline pstatus_t sse41_YUV444ToRGB_8u_P3AC4R_BGRX_SINGLE_ROW(
 {
 	WINPR_ASSERT((nWidth % 2) == 0);
 
-	size_t x = 0;
-
-	for (; x < nWidth; x += 2)
+	for (size_t x = 0; x < nWidth; x += 2)
 	{
 		BGRX_fillRGB_single(x, pDst, YData, UData, VData, TRUE);
 	}
@@ -1031,20 +1029,18 @@ static pstatus_t sse41_RGBToAVC444YUV_BGRX(const BYTE* WINPR_RESTRICT pSrc, UINT
                                            const UINT32 dst2Step[],
                                            const prim_size_t* WINPR_RESTRICT roi)
 {
-	const BYTE* pMaxSrc = pSrc + 1ULL * (roi->height - 1) * srcStep;
-
 	if (roi->height < 1 || roi->width < 1)
 		return !PRIMITIVES_SUCCESS;
 
-	for (size_t y = 0; y < roi->height; y += 2)
+	size_t y = 0;
+	for (; y < roi->height - roi->height % 2; y += 2)
 	{
-		const BOOL last = (y >= (roi->height - 1));
-		const BYTE* srcEven = y < roi->height ? pSrc + y * srcStep : pMaxSrc;
-		const BYTE* srcOdd = !last ? pSrc + (y + 1) * srcStep : pMaxSrc;
+		const BYTE* srcEven = pSrc + y * srcStep;
+		const BYTE* srcOdd = pSrc + (y + 1) * srcStep;
 		const size_t i = y >> 1;
 		const size_t n = (i & (size_t)~7) + i;
 		BYTE* b1Even = pDst1[0] + y * dst1Step[0];
-		BYTE* b1Odd = !last ? (b1Even + dst1Step[0]) : NULL;
+		BYTE* b1Odd = (b1Even + dst1Step[0]);
 		BYTE* b2 = pDst1[1] + (y / 2) * dst1Step[1];
 		BYTE* b3 = pDst1[2] + (y / 2) * dst1Step[2];
 		BYTE* b4 = pDst2[0] + 1ULL * dst2Step[0] * n;
@@ -1053,6 +1049,18 @@ static pstatus_t sse41_RGBToAVC444YUV_BGRX(const BYTE* WINPR_RESTRICT pSrc, UINT
 		BYTE* b7 = pDst2[2] + (y / 2) * dst2Step[2];
 		sse41_RGBToAVC444YUV_BGRX_DOUBLE_ROW(srcEven, srcOdd, b1Even, b1Odd, b2, b3, b4, b5, b6, b7,
 		                                     roi->width);
+	}
+
+	for (; y < roi->height; y++)
+	{
+		const BYTE* srcEven = pSrc + y * srcStep;
+		BYTE* b1Even = pDst1[0] + y * dst1Step[0];
+		BYTE* b2 = pDst1[1] + (y / 2) * dst1Step[1];
+		BYTE* b3 = pDst1[2] + (y / 2) * dst1Step[2];
+		BYTE* b6 = pDst2[1] + (y / 2) * dst2Step[1];
+		BYTE* b7 = pDst2[2] + (y / 2) * dst2Step[2];
+		general_RGBToAVC444YUV_BGRX_DOUBLE_ROW(0, srcEven, NULL, b1Even, NULL, b2, b3, NULL, NULL,
+		                                       b6, b7, roi->width);
 	}
 
 	return PRIMITIVES_SUCCESS;
@@ -1350,12 +1358,13 @@ static pstatus_t sse41_RGBToAVC444YUVv2_BGRX(const BYTE* WINPR_RESTRICT pSrc, UI
 	if (roi->height < 1 || roi->width < 1)
 		return !PRIMITIVES_SUCCESS;
 
-	for (size_t y = 0; y < roi->height; y += 2)
+	size_t y = 0;
+	for (; y < roi->height - roi->height % 2; y += 2)
 	{
 		const BYTE* srcEven = (pSrc + y * srcStep);
 		const BYTE* srcOdd = (srcEven + srcStep);
 		BYTE* dstLumaYEven = (pDst1[0] + y * dst1Step[0]);
-		BYTE* dstLumaYOdd = (y < roi->height - 1) ? (dstLumaYEven + dst1Step[0]) : NULL;
+		BYTE* dstLumaYOdd = (dstLumaYEven + dst1Step[0]);
 		BYTE* dstLumaU = (pDst1[1] + (y / 2) * dst1Step[1]);
 		BYTE* dstLumaV = (pDst1[2] + (y / 2) * dst1Step[2]);
 		BYTE* dstEvenChromaY1 = (pDst2[0] + y * dst2Step[0]);
@@ -1370,6 +1379,24 @@ static pstatus_t sse41_RGBToAVC444YUVv2_BGRX(const BYTE* WINPR_RESTRICT pSrc, UI
 		                                       dstLumaV, dstEvenChromaY1, dstEvenChromaY2,
 		                                       dstOddChromaY1, dstOddChromaY2, dstChromaU1,
 		                                       dstChromaU2, dstChromaV1, dstChromaV2, roi->width);
+	}
+
+	for (; y < roi->height; y++)
+	{
+		const BYTE* srcEven = (pSrc + y * srcStep);
+		BYTE* dstLumaYEven = (pDst1[0] + y * dst1Step[0]);
+		BYTE* dstLumaU = (pDst1[1] + (y / 2) * dst1Step[1]);
+		BYTE* dstLumaV = (pDst1[2] + (y / 2) * dst1Step[2]);
+		BYTE* dstEvenChromaY1 = (pDst2[0] + y * dst2Step[0]);
+		BYTE* dstEvenChromaY2 = dstEvenChromaY1 + roi->width / 2;
+		BYTE* dstChromaU1 = (pDst2[1] + (y / 2) * dst2Step[1]);
+		BYTE* dstChromaV1 = (pDst2[2] + (y / 2) * dst2Step[2]);
+		BYTE* dstChromaU2 = dstChromaU1 + roi->width / 4;
+		BYTE* dstChromaV2 = dstChromaV1 + roi->width / 4;
+		general_RGBToAVC444YUVv2_BGRX_DOUBLE_ROW(0, srcEven, NULL, dstLumaYEven, NULL, dstLumaU,
+		                                         dstLumaV, dstEvenChromaY1, dstEvenChromaY2, NULL,
+		                                         NULL, dstChromaU1, dstChromaU2, dstChromaV1,
+		                                         dstChromaV2, roi->width);
 	}
 
 	return PRIMITIVES_SUCCESS;
