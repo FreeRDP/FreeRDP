@@ -32,7 +32,8 @@
 #define TAG CLIENT_TAG("sdl.cliprdr")
 
 #define mime_text_plain "text/plain"
-#define mime_text_utf8 mime_text_plain ";charset=utf-8"
+// NOLINTNEXTLINE(bugprone-suspicious-missing-comma)
+const char mime_text_utf8[] = mime_text_plain ";charset=utf-8";
 
 static const std::vector<const char*>& s_mime_text()
 {
