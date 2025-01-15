@@ -259,10 +259,12 @@ static UINT sshagent_on_close(IWTSVirtualChannelCallback* pChannelCallback)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+// NOLINTBEGIN(readability-non-const-parameter)
 static UINT sshagent_on_new_channel_connection(IWTSListenerCallback* pListenerCallback,
                                                IWTSVirtualChannel* pChannel, BYTE* Data,
                                                BOOL* pbAccept,
                                                IWTSVirtualChannelCallback** ppCallback)
+// NOLINTEND(readability-non-const-parameter)
 {
 	SSHAGENT_LISTENER_CALLBACK* listener_callback = (SSHAGENT_LISTENER_CALLBACK*)pListenerCallback;
 	WINPR_UNUSED(Data);
