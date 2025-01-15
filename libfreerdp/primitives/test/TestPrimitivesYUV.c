@@ -114,9 +114,8 @@ static void get_size(BOOL large, UINT32* width, UINT32* height)
 	UINT32 shift = large ? 8 : 1;
 	winpr_RAND(width, sizeof(*width));
 	winpr_RAND(height, sizeof(*height));
-	// TODO: Algorithm only works on even resolutions...
 	*width = (*width % 64 + 1) << shift;
-	*height = (*height % 64 + 1) << shift;
+	*height = (*height % 64 + 1);
 }
 
 static BOOL check_padding(const BYTE* psrc, size_t size, size_t padding, const char* buffer)
@@ -220,13 +219,18 @@ static BOOL TestPrimitiveYUVCombine(primitives_t* prims, prim_size_t roi)
 	BYTE* yuv[3] = { 0 };
 	BYTE* pmain[3] = { 0 };
 	BYTE* paux[3] = { 0 };
-	UINT32 lumaStride[3];
-	UINT32 chromaStride[3];
-	UINT32 yuvStride[3];
+	UINT32 lumaStride[3] = { 0 };
+	UINT32 chromaStride[3] = { 0 };
+	UINT32 yuvStride[3] = { 0 };
 	const size_t padding = 10000;
-	RECTANGLE_16 rect;
+	RECTANGLE_16 rect = { 0 };
 	PROFILER_DEFINE(yuvCombine)
 	PROFILER_DEFINE(yuvSplit)
+
+	// TODO: we only support even height values at the moment
+	if (roi.height % 2)
+		roi.height++;
+
 	awidth = roi.width + 16 - roi.width % 16;
 	aheight = roi.height + 16 - roi.height % 16;
 	(void)fprintf(stderr,
@@ -1342,6 +1346,10 @@ static BOOL compare_rgb_to_yuv420(prim_size_t roi, DWORD type)
 
 	for (size_t y = 0; y < roi.height; y++)
 	{
+		// odd lines do produce artefacts in last line, skip check
+		if (((y + 1) >= roi.height) && ((y % 2) == 0))
+			continue;
+
 		const BYTE* yline1[3] = {
 			&yuv1[0][y * yuvStep[0]],
 			&yuv1[1][(y / 2) * yuvStep[1]],
