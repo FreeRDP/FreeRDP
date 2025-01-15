@@ -1181,13 +1181,11 @@ static INLINE int progressive_rfx_upgrade_block(RFX_PROGRESSIVE_UPGRADE_STATE* W
                                                 INT16* WINPR_RESTRICT sign, UINT32 length,
                                                 UINT32 shift, UINT32 bitPos, UINT32 numBits)
 {
-	INT16 input = 0;
-	wBitStream* raw = NULL;
-
 	if (!numBits)
 		return 1;
 
-	raw = state->raw;
+	wBitStream* raw = state->raw;
+	int32_t input = 0;
 
 	if (!state->nonLL)
 	{
@@ -1196,8 +1194,11 @@ static INLINE int progressive_rfx_upgrade_block(RFX_PROGRESSIVE_UPGRADE_STATE* W
 			raw->mask = ((1 << numBits) - 1);
 			input = (INT16)((raw->accumulator >> (32 - numBits)) & raw->mask);
 			BitStream_Shift(raw, numBits);
-			buffer[index] +=
-			    WINPR_ASSERTING_INT_CAST(INT16, (INT16)(((UINT32)input << shift) & 0xFFFF));
+
+			const int32_t shifted = input << shift;
+			const int32_t val = buffer[index] + shifted;
+			const int16_t ival = WINPR_ASSERTING_INT_CAST(int16_t, val);
+			buffer[index] = ival;
 		}
 
 		return 1;
@@ -1224,11 +1225,12 @@ static INLINE int progressive_rfx_upgrade_block(RFX_PROGRESSIVE_UPGRADE_STATE* W
 		{
 			/* sign == 0, read from srl */
 			input = progressive_rfx_srl_read(state, numBits);
-			sign[index] = input;
+			sign[index] = WINPR_ASSERTING_INT_CAST(int16_t, input);
 		}
 
 		const int32_t val = input << shift;
-		buffer[index] += WINPR_ASSERTING_INT_CAST(INT16, val);
+		const int32_t ival = buffer[index] + val;
+		buffer[index] = WINPR_ASSERTING_INT_CAST(INT16, ival);
 	}
 
 	return 1;

@@ -745,13 +745,13 @@ static INLINE void sse41_RGBToYUV420_BGRX_UV(const BYTE* WINPR_RESTRICT src1,
 		sse41_BGRX_TO_YUV(&src1[4ULL * (1ULL + x)], NULL, &u[1], &v[1]);
 		sse41_BGRX_TO_YUV(&src2[4ULL * x], NULL, &u[2], &v[2]);
 		sse41_BGRX_TO_YUV(&src2[4ULL * (1ULL + x)], NULL, &u[3], &v[3]);
-		const INT16 u4 = (INT16)u[0] + u[1] + u[2] + u[3];
-		const INT16 uu = u4 / 4;
+		const INT16 u4 = WINPR_ASSERTING_INT_CAST(INT16, (INT16)u[0] + u[1] + u[2] + u[3]);
+		const INT16 uu = WINPR_ASSERTING_INT_CAST(INT16, u4 / 4);
 		const BYTE u8 = CLIP(uu);
 		dst1[x / 2] = u8;
 
-		const INT16 v4 = (INT16)v[0] + v[1] + v[2] + v[3];
-		const INT16 vu = v4 / 4;
+		const INT16 v4 = WINPR_ASSERTING_INT_CAST(INT16, (INT16)v[0] + v[1] + v[2] + v[3]);
+		const INT16 vu = WINPR_ASSERTING_INT_CAST(INT16, v4 / 4);
 		const BYTE v8 = CLIP(vu);
 		dst2[x / 2] = v8;
 	}
