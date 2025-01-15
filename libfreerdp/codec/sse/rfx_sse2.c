@@ -384,13 +384,13 @@ rfx_dwt_2d_encode_block_horiz_sse2(INT16* WINPR_RESTRICT src, INT16* WINPR_RESTR
 		{
 			/* The following 3 Set operations consumes more than half of the total DWT processing
 			 * time! */
+			const INT16 src16 = (INT16)(((n + 8) == subband_width) ? src[14] : src[16]);
 			__m128i src_2n =
 			    _mm_set_epi16(src[14], src[12], src[10], src[8], src[6], src[4], src[2], src[0]);
 			__m128i src_2n_1 =
 			    _mm_set_epi16(src[15], src[13], src[11], src[9], src[7], src[5], src[3], src[1]);
 			__m128i src_2n_2 =
-			    _mm_set_epi16(((n + 8) == subband_width) ? src[14] : src[16], src[14], src[12],
-			                  src[10], src[8], src[6], src[4], src[2]);
+			    _mm_set_epi16(src16, src[14], src[12], src[10], src[8], src[6], src[4], src[2]);
 			/* h[n] = (src[2n + 1] - ((src[2n] + src[2n + 2]) >> 1)) >> 1 */
 			__m128i h_n = _mm_add_epi16(src_2n, src_2n_2);
 			h_n = _mm_srai_epi16(h_n, 1);

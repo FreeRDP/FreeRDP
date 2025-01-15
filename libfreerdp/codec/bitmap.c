@@ -633,8 +633,10 @@ static INLINE SSIZE_T freerdp_bitmap_compress_24(const void* WINPR_RESTRICT srcD
 
 				if (pixel == (ypixel ^ mix))
 				{
-					fom_mask[fom_mask_len - 1] |=
-					    WINPR_ASSERTING_INT_CAST(int8_t, (1 << (fom_count % 8)));
+					const int tmp = (1 << (fom_count % 8));
+					const int val = fom_mask[fom_mask_len - 1] | tmp;
+					const int8_t ival = WINPR_ASSERTING_INT_CAST(int8_t, val);
+					fom_mask[fom_mask_len - 1] = ival;
 				}
 
 				fom_count++;
@@ -940,8 +942,10 @@ static INLINE SSIZE_T freerdp_bitmap_compress_16(const void* WINPR_RESTRICT srcD
 
 				if (pixel == (ypixel ^ mix))
 				{
-					fom_mask[fom_mask_len - 1] |=
-					    WINPR_ASSERTING_INT_CAST(int8_t, (1 << (fom_count % 8)));
+					const int tmp = (1 << (fom_count % 8));
+					const int val = fom_mask[fom_mask_len - 1] | tmp;
+					const int8_t ival = WINPR_ASSERTING_INT_CAST(int8_t, val);
+					fom_mask[fom_mask_len - 1] = ival;
 				}
 
 				fom_count++;
