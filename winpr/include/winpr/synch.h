@@ -296,7 +296,7 @@ extern "C"
 #define OpenWaitableTimer OpenWaitableTimerA
 #endif
 
-	WINPR_API int GetTimerFileDescriptor(HANDLE hEvent);
+	WINPR_API int GetTimerFileDescriptor(HANDLE hTimer);
 
 	/**
 	 * Timer-Queue Timer

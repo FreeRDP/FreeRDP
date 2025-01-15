@@ -528,6 +528,7 @@ UwacWindow* UwacCreateWindowShm(UwacDisplay* display, uint32_t width, uint32_t h
 
 #if BUILD_IVI
 	uint32_t ivi_surface_id = 1;
+	// NOLINTNEXTLINE(concurrency-mt-unsafe)
 	char* env = getenv("IVI_SURFACE_ID");
 	if (env)
 	{

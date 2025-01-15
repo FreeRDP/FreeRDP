@@ -40,6 +40,7 @@ static void* fail_on_null(void* p)
 	if (p == NULL)
 	{
 		(void)fprintf(stderr, "out of memory\n");
+		// NOLINTNEXTLINE(concurrency-mt-unsafe)
 		exit(EXIT_FAILURE);
 	}
 

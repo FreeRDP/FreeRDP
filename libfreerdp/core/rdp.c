@@ -980,8 +980,6 @@ static BOOL rdp_recv_server_shutdown_denied_pdu(rdpRdp* rdp, wStream* s)
 
 static BOOL rdp_recv_server_set_keyboard_indicators_pdu(rdpRdp* rdp, wStream* s)
 {
-	UINT16 ledFlags = 0;
-
 	WINPR_ASSERT(rdp);
 	WINPR_ASSERT(s);
 
@@ -993,7 +991,7 @@ static BOOL rdp_recv_server_set_keyboard_indicators_pdu(rdpRdp* rdp, wStream* s)
 		return FALSE;
 
 	const uint16_t unitId = Stream_Get_UINT16(s); /* unitId (2 bytes) */
-	Stream_Read_UINT16(s, ledFlags); /* ledFlags (2 bytes) */
+	const UINT16 ledFlags = Stream_Get_UINT16(s); /* ledFlags (2 bytes) */
 	return IFCALLRESULT(TRUE, context->update->SetKeyboardIndicators, context, ledFlags);
 }
 

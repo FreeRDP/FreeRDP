@@ -84,7 +84,7 @@ extern "C"
 	WINPR_API BOOL winpr_HMAC_Init(WINPR_HMAC_CTX* ctx, WINPR_MD_TYPE md, const void* key,
 	                               size_t keylen);
 	WINPR_API BOOL winpr_HMAC_Update(WINPR_HMAC_CTX* ctx, const void* input, size_t ilen);
-	WINPR_API BOOL winpr_HMAC_Final(WINPR_HMAC_CTX* ctx, void* output, size_t ilen);
+	WINPR_API BOOL winpr_HMAC_Final(WINPR_HMAC_CTX* ctx, void* output, size_t olen);
 
 	WINPR_API BOOL winpr_HMAC(WINPR_MD_TYPE md, const void* key, size_t keylen, const void* input,
 	                          size_t ilen, void* output, size_t olen);
@@ -111,7 +111,7 @@ extern "C"
 	WINPR_API BOOL winpr_Digest_Init_Allow_FIPS(WINPR_DIGEST_CTX* ctx, WINPR_MD_TYPE md);
 	WINPR_API BOOL winpr_Digest_Init(WINPR_DIGEST_CTX* ctx, WINPR_MD_TYPE md);
 	WINPR_API BOOL winpr_Digest_Update(WINPR_DIGEST_CTX* ctx, const void* input, size_t ilen);
-	WINPR_API BOOL winpr_Digest_Final(WINPR_DIGEST_CTX* ctx, void* output, size_t ilen);
+	WINPR_API BOOL winpr_Digest_Final(WINPR_DIGEST_CTX* ctx, void* output, size_t olen);
 
 	WINPR_API BOOL winpr_Digest_Allow_FIPS(WINPR_MD_TYPE md, const void* input, size_t ilen,
 	                                       void* output, size_t olen);

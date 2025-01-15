@@ -40,7 +40,7 @@ void winpr_HexDump(const char* tag, UINT32 level, const void* data, size_t lengt
 	winpr_HexLogDump(log, level, data, length);
 }
 
-void winpr_HexLogDump(wLog* log, UINT32 lvl, const void* data, size_t length)
+void winpr_HexLogDump(wLog* log, UINT32 level, const void* data, size_t length)
 {
 	const BYTE* p = data;
 	size_t line = 0;
@@ -59,7 +59,7 @@ void winpr_HexLogDump(wLog* log, UINT32 lvl, const void* data, size_t length)
 
 	char* buffer = NULL;
 
-	if (!WLog_IsLevelActive(log, lvl))
+	if (!WLog_IsLevelActive(log, level))
 		return;
 
 	if (!log)
@@ -120,13 +120,13 @@ void winpr_HexLogDump(wLog* log, UINT32 lvl, const void* data, size_t length)
 			pos += (size_t)rc;
 		}
 
-		WLog_Print(log, lvl, "%s", buffer);
+		WLog_Print(log, level, "%s", buffer);
 		offset += line;
 		p += line;
 		pos = 0;
 	}
 
-	WLog_Print(log, lvl, "[length=%" PRIuz "] ", length);
+	WLog_Print(log, level, "[length=%" PRIuz "] ", length);
 fail:
 	free(buffer);
 }

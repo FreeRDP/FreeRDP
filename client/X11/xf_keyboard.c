@@ -300,6 +300,7 @@ void xf_keyboard_send_key(xfContext* xfc, BOOL down, BOOL repeat, const XKeyEven
 			else
 			{
 				char str[3 * ARRAYSIZE(buffer)] = { 0 };
+				// NOLINTNEXTLINE(concurrency-mt-unsafe)
 				const size_t rc = wcstombs(str, buffer, ARRAYSIZE(buffer));
 
 				WCHAR wbuffer[ARRAYSIZE(buffer)] = { 0 };

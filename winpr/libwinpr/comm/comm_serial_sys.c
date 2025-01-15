@@ -1557,6 +1557,7 @@ static BOOL set_break_off(WINPR_COMM* pComm)
 static BOOL set_xoff(WINPR_COMM* pComm)
 {
 	WINPR_ASSERT(pComm);
+	// NOLINTNEXTLINE(concurrency-mt-unsafe)
 	if (tcflow(pComm->fd, TCIOFF) < 0)
 	{
 		char ebuffer[256] = { 0 };
@@ -1572,6 +1573,7 @@ static BOOL set_xoff(WINPR_COMM* pComm)
 static BOOL set_xon(WINPR_COMM* pComm)
 {
 	WINPR_ASSERT(pComm);
+	// NOLINTNEXTLINE(concurrency-mt-unsafe)
 	if (tcflow(pComm->fd, TCION) < 0)
 	{
 		char ebuffer[256] = { 0 };

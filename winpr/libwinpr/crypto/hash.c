@@ -672,12 +672,12 @@ BOOL winpr_Digest_Final(WINPR_DIGEST_CTX* ctx, void* output, size_t olen)
 	return FALSE;
 }
 
-BOOL winpr_DigestSign_Init(WINPR_DIGEST_CTX* ctx, WINPR_MD_TYPE digest, void* key)
+BOOL winpr_DigestSign_Init(WINPR_DIGEST_CTX* ctx, WINPR_MD_TYPE md, void* key)
 {
 	WINPR_ASSERT(ctx);
 
 #if defined(WITH_OPENSSL)
-	const EVP_MD* evp = winpr_openssl_get_evp_md(digest);
+	const EVP_MD* evp = winpr_openssl_get_evp_md(md);
 	if (!evp)
 		return FALSE;
 

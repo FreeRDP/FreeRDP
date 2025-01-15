@@ -228,10 +228,10 @@ int uwac_create_anonymous_file(off_t size)
 	static const char template[] = "/weston-shared-XXXXXX";
 	size_t length = 0;
 	char* name = NULL;
-	const char* path = NULL;
 	int fd = 0;
 	int ret = 0;
-	path = getenv("XDG_RUNTIME_DIR");
+	// NOLINTNEXTLINE(concurrency-mt-unsafe)
+	const char* path = getenv("XDG_RUNTIME_DIR");
 
 	if (!path)
 	{

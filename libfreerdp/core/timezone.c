@@ -61,14 +61,14 @@ static char* systemtime2str(const SYSTEMTIME* t, char* buffer, size_t len)
 	const SYSTEMTIME empty = { 0 };
 
 	if (memcmp(t, &empty, sizeof(SYSTEMTIME)) == 0)
-		_snprintf(buffer, len, "{ not set }");
+		(void)_snprintf(buffer, len, "{ not set }");
 	else
 	{
-		_snprintf(buffer, len,
-		          "{ %" PRIu16 "-%" PRIu16 "-%" PRIu16 " [%s] %" PRIu16 ":%" PRIu16 ":%" PRIu16
-		          ".%" PRIu16 "}",
-		          t->wYear, t->wMonth, t->wDay, weekday2str(t->wDayOfWeek), t->wHour, t->wMinute,
-		          t->wSecond, t->wMilliseconds);
+		(void)_snprintf(buffer, len,
+		                "{ %" PRIu16 "-%" PRIu16 "-%" PRIu16 " [%s] %" PRIu16 ":%" PRIu16
+		                ":%" PRIu16 ".%" PRIu16 "}",
+		                t->wYear, t->wMonth, t->wDay, weekday2str(t->wDayOfWeek), t->wHour,
+		                t->wMinute, t->wSecond, t->wMilliseconds);
 	}
 	return buffer;
 }

@@ -176,7 +176,7 @@ static WINPR_JSON* load_timezones_from_file(const char* filename)
 		goto end;
 	}
 
-	jstr = calloc(jstrlen + 1, sizeof(char));
+	jstr = calloc(WINPR_ASSERTING_INT_CAST(size_t, jstrlen + 1), sizeof(char));
 	if (!jstr)
 	{
 		WLog_WARN(TAG, "Timezone resource file '%s' failed to allocate buffer of size %" PRId64,
@@ -184,14 +184,14 @@ static WINPR_JSON* load_timezones_from_file(const char* filename)
 		goto end;
 	}
 
-	if (fread(jstr, jstrlen, sizeof(char), fp) != 1)
+	if (fread(jstr, WINPR_ASSERTING_INT_CAST(size_t, jstrlen), sizeof(char), fp) != 1)
 	{
 		WLog_WARN(TAG, "Timezone resource file '%s' failed to read buffer of size %" PRId64,
 		          filename, jstrlen);
 		goto end;
 	}
 
-	json = WINPR_JSON_ParseWithLength(jstr, jstrlen);
+	json = WINPR_JSON_ParseWithLength(jstr, WINPR_ASSERTING_INT_CAST(size_t, jstrlen));
 	if (!json)
 		WLog_WARN(TAG, "Timezone resource file '%s' is not a valid JSON file", filename);
 end:
@@ -356,7 +356,8 @@ static char* get_wzid_icu(const UChar* utzid, size_t utzid_len)
 	char* res = NULL;
 	UErrorCode error = U_ZERO_ERROR;
 
-	int32_t rc = ucal_getWindowsTimeZoneID(utzid, utzid_len, NULL, 0, &error);
+	int32_t rc = ucal_getWindowsTimeZoneID(utzid, WINPR_ASSERTING_INT_CAST(int32_t, utzid_len),
+	                                       NULL, 0, &error);
 	if ((error == U_BUFFER_OVERFLOW_ERROR) && (rc > 0))
 	{
 		rc++; // make space for '\0'
@@ -364,7 +365,8 @@ static char* get_wzid_icu(const UChar* utzid, size_t utzid_len)
 		if (wzid)
 		{
 			UErrorCode error2 = U_ZERO_ERROR;
-			int32_t rc2 = ucal_getWindowsTimeZoneID(utzid, utzid_len, wzid, rc, &error2);
+			int32_t rc2 = ucal_getWindowsTimeZoneID(
+			    utzid, WINPR_ASSERTING_INT_CAST(int32_t, utzid_len), wzid, rc, &error2);
 			if (U_SUCCESS(error2) && (rc2 > 0))
 				res = ConvertWCharNToUtf8Alloc(wzid, (size_t)rc, NULL);
 			free(wzid);

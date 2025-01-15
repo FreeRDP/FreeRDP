@@ -656,6 +656,7 @@ RPC_STATUS RpcBindingServerFromClient(RPC_BINDING_HANDLE ClientBinding,
 void RpcRaiseException(RPC_STATUS exception)
 {
 	WLog_ERR(TAG, "RpcRaiseException: 0x%08luX", exception);
+	// NOLINTNEXTLINE(concurrency-mt-unsafe)
 	exit((int)exception);
 }
 

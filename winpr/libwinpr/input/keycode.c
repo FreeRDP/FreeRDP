@@ -877,7 +877,7 @@ DWORD GetVirtualKeyCodeFromKeycode(DWORD keycode, WINPR_KEYCODE_TYPE type)
 	return vkcode;
 }
 
-DWORD GetKeycodeFromVirtualKeyCode(DWORD vkcode, WINPR_KEYCODE_TYPE type)
+DWORD GetKeycodeFromVirtualKeyCode(DWORD keycode, WINPR_KEYCODE_TYPE type)
 {
 	DWORD* targetArray = NULL;
 	size_t targetSize = 0;
@@ -902,7 +902,7 @@ DWORD GetKeycodeFromVirtualKeyCode(DWORD vkcode, WINPR_KEYCODE_TYPE type)
 
 	for (DWORD index = 0; index < targetSize; index++)
 	{
-		if (vkcode == targetArray[index])
+		if (keycode == targetArray[index])
 			return index;
 	}
 

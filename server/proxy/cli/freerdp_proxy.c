@@ -52,6 +52,7 @@ static const char* strsignal(int signum)
 // NOLINTBEGIN(bugprone-signal-handler,cert-msc54-cpp,cert-sig30-c)
 static void cleanup_handler(int signum)
 {
+	// NOLINTNEXTLINE(concurrency-mt-unsafe)
 	WLog_INFO(TAG, "caught signal %s [%d], starting cleanup...", strsignal(signum), signum);
 
 	WLog_INFO(TAG, "stopping all connections.");

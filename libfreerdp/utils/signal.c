@@ -98,6 +98,7 @@ static void term_handler(int signum)
 	if (!recursive)
 	{
 		recursive = TRUE;
+		// NOLINTNEXTLINE(concurrency-mt-unsafe)
 		WLog_ERR(TAG, "Caught signal '%s' [%d]", strsignal(signum), signum);
 	}
 
@@ -107,7 +108,10 @@ static void term_handler(int signum)
 		const cleanup_handler_t empty = { 0 };
 		cleanup_handler_t* cur = &cleanup_handlers[x];
 		if (cur->handler)
+		{
+			// NOLINTNEXTLINE(concurrency-mt-unsafe)
 			cur->handler(signum, strsignal(signum), cur->context);
+		}
 		*cur = empty;
 	}
 	cleanup_handler_count = 0;
@@ -123,6 +127,7 @@ static void fatal_handler(int signum)
 	if (!recursive)
 	{
 		recursive = TRUE;
+		// NOLINTNEXTLINE(concurrency-mt-unsafe)
 		WLog_ERR(TAG, "Caught signal '%s' [%d]", strsignal(signum), signum);
 
 		winpr_log_backtrace(TAG, WLOG_ERROR, 20);

@@ -172,6 +172,7 @@ int LogDynAndXGetWindowProperty_ex(wLog* log, const char* file, const char* fkt,
 
 BOOL IsGnome(void)
 {
+	// NOLINTNEXTLINE(concurrency-mt-unsafe)
 	char* env = getenv("DESKTOP_SESSION");
 	return (env != NULL && strcmp(env, "gnome") == 0);
 }

@@ -130,6 +130,7 @@ HMODULE LoadLibraryA(LPCSTR lpLibFileName)
 
 	if (!library)
 	{
+		// NOLINTNEXTLINE(concurrency-mt-unsafe)
 		const char* err = dlerror();
 		WLog_ERR(TAG, "failed with %s", err);
 		return NULL;
@@ -190,6 +191,7 @@ FARPROC GetProcAddress(HMODULE hModule, LPCSTR lpProcName)
 
 	if (proc == NULL)
 	{
+		// NOLINTNEXTLINE(concurrency-mt-unsafe)
 		WLog_ERR(TAG, "GetProcAddress: could not find procedure %s: %s", lpProcName, dlerror());
 		return (FARPROC)NULL;
 	}
