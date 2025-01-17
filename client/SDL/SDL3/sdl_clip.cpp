@@ -176,7 +176,11 @@ bool sdlClip::handle_update(const SDL_ClipboardEvent& ev)
 	std::vector<std::string> clientFormatNames;
 	std::vector<CLIPRDR_FORMAT> clientFormats;
 
+#if SDL_VERSION_ATLEAST(3, 1, 8)
+	size_t nformats = WINPR_ASSERTING_INT_CAST(size_t, ev.num_mime_types);
+#else
 	size_t nformats = WINPR_ASSERTING_INT_CAST(size_t, ev.n_mime_types);
+#endif
 	const char** clipboard_mime_formats = ev.mime_types;
 
 	WLog_Print(_log, WLOG_TRACE, "SDL has %d formats", nformats);
