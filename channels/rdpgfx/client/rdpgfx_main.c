@@ -508,7 +508,6 @@ fail:
  */
 static UINT rdpgfx_recv_reset_graphics_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStream* s)
 {
-	MONITOR_DEF* monitor = NULL;
 	RDPGFX_RESET_GRAPHICS_PDU pdu = { 0 };
 	WINPR_ASSERT(callback);
 
@@ -540,7 +539,7 @@ static UINT rdpgfx_recv_reset_graphics_pdu(GENERIC_CHANNEL_CALLBACK* callback, w
 
 	for (UINT32 index = 0; index < pdu.monitorCount; index++)
 	{
-		monitor = &(pdu.monitorDefArray[index]);
+		MONITOR_DEF* monitor = &(pdu.monitorDefArray[index]);
 		Stream_Read_INT32(s, monitor->left);   /* left (4 bytes) */
 		Stream_Read_INT32(s, monitor->top);    /* top (4 bytes) */
 		Stream_Read_INT32(s, monitor->right);  /* right (4 bytes) */
@@ -570,7 +569,7 @@ static UINT rdpgfx_recv_reset_graphics_pdu(GENERIC_CHANNEL_CALLBACK* callback, w
 #if defined(WITH_DEBUG_RDPGFX)
 	for (UINT32 index = 0; index < pdu.monitorCount; index++)
 	{
-		monitor = &(pdu.monitorDefArray[index]);
+		MONITOR_DEF* monitor = &(pdu.monitorDefArray[index]);
 		DEBUG_RDPGFX(gfx->log,
 		             "RecvResetGraphicsPdu: monitor left:%" PRIi32 " top:%" PRIi32 " right:%" PRIi32
 		             " bottom:%" PRIi32 " flags:0x%" PRIx32 "",
