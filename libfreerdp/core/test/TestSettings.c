@@ -950,20 +950,52 @@ static BOOL prepare_monitor_array(rdpSettings* settings, const struct validity_t
 	WINPR_ASSERT(settings);
 	WINPR_ASSERT(testcase);
 
-	const size_t count = freerdp_settings_get_uint32(settings, FreeRDP_MonitorDefArraySize);
-	if (count < testcase->count)
+	return freerdp_settings_set_monitor_def_array_sorted(settings, testcase->monitors,
+	                                                     testcase->count);
+}
+
+static BOOL check_primary_offset(const rdpSettings* settings, const rdpMonitor* monitors,
+                                 size_t count)
+{
+	const rdpMonitor* cprimary = NULL;
+	for (size_t x = 0; x < count; x++)
 	{
-		(void)fprintf(stderr, "MonitorDefArraySize=%" PRIuz ", but testcase requires %" PRIuz "\n",
-		              count, testcase->count);
-		return FALSE;
+		const rdpMonitor* cur = &monitors[x];
+		if (cur->is_primary)
+			cprimary = cur;
 	}
-	for (size_t x = 0; x < testcase->count; x++)
+	if (!cprimary)
 	{
-		const rdpMonitor* monitor = &testcase->monitors[x];
-		if (!freerdp_settings_set_pointer_array(settings, FreeRDP_MonitorDefArray, x, monitor))
+		for (size_t x = 0; x < count; x++)
+		{
+			const rdpMonitor* cur = &monitors[x];
+			if ((cur->x == 0) && (cur->y == 0))
+				cprimary = cur;
+		}
+	}
+	const rdpMonitor* sprimary = NULL;
+	for (size_t x = 0; x < count; x++)
+	{
+		const rdpMonitor* cur =
+		    freerdp_settings_get_pointer_array(settings, FreeRDP_MonitorDefArray, x);
+		if (!cur)
 			return FALSE;
+		if (cur->is_primary)
+			sprimary = cur;
 	}
-	return freerdp_settings_set_uint32(settings, FreeRDP_MonitorCount, testcase->count);
+
+	if (!sprimary || !cprimary)
+		return FALSE;
+
+	const INT32 xoff = cprimary->x;
+	const INT32 yoff = cprimary->y;
+	const INT32 sxoff = freerdp_settings_get_int32(settings, FreeRDP_MonitorLocalShiftX);
+	const INT32 syoff = freerdp_settings_get_int32(settings, FreeRDP_MonitorLocalShiftY);
+	if (xoff != sxoff)
+		return FALSE;
+	if (yoff != syoff)
+		return FALSE;
+	return TRUE;
 }
 
 static BOOL test_validity_check(void)
@@ -1348,7 +1380,7 @@ static BOOL test_validity_check(void)
 		{ FALSE, ARRAYSIZE(single_monitor_invalid_3), single_monitor_invalid_3 },
 		{ FALSE, ARRAYSIZE(single_monitor_invalid_4), single_monitor_invalid_4 },
 		{ TRUE, ARRAYSIZE(multi_monitor_valid), multi_monitor_valid },
-		{ FALSE, ARRAYSIZE(multi_monitor_invalid_1), multi_monitor_invalid_1 },
+		{ TRUE, ARRAYSIZE(multi_monitor_invalid_1), multi_monitor_invalid_1 },
 		{ FALSE, ARRAYSIZE(multi_monitor_invalid_2), multi_monitor_invalid_2 },
 		{ FALSE, ARRAYSIZE(multi_monitor_invalid_3), multi_monitor_invalid_3 },
 		{ FALSE, ARRAYSIZE(multi_monitor_invalid_4), multi_monitor_invalid_4 },
@@ -1370,7 +1402,9 @@ static BOOL test_validity_check(void)
 #else
 			const BOOL res = cur->expected;
 #endif
-			if (res != cur->expected)
+
+			if ((res != cur->expected) ||
+			    !check_primary_offset(settings, cur->monitors, cur->count))
 			{
 				rc = log_result_case(FALSE, __func__, x);
 			}
