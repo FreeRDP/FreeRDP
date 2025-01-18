@@ -56,11 +56,12 @@
 
 int xf_list_monitors(xfContext* xfc)
 {
-	Display* display = NULL;
+	WINPR_UNUSED(xfc);
+
 	int major = 0;
 	int minor = 0;
 	int nmonitors = 0;
-	display = XOpenDisplay(NULL);
+	Display* display = XOpenDisplay(NULL);
 
 	if (!display)
 	{
@@ -142,8 +143,6 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 	BOOL rc = FALSE;
 	UINT32 monitor_index = 0;
 	BOOL primaryMonitorFound = FALSE;
-	VIRTUAL_SCREEN* vscreen = NULL;
-	rdpSettings* settings = NULL;
 	int mouse_x = 0;
 	int mouse_y = 0;
 	int _dummy_i = 0;
@@ -162,8 +161,9 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 	if (!xfc || !pMaxWidth || !pMaxHeight || !xfc->common.context.settings)
 		return FALSE;
 
-	settings = xfc->common.context.settings;
-	vscreen = &xfc->vscreen;
+	rdpSettings* settings = xfc->common.context.settings;
+	VIRTUAL_SCREEN* vscreen = &xfc->vscreen;
+
 	*pMaxWidth = freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth);
 	*pMaxHeight = freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight);
 
@@ -244,8 +244,15 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 	}
 
 #endif
-	xfc->fullscreenMonitors.top = xfc->fullscreenMonitors.bottom = xfc->fullscreenMonitors.left =
-	    xfc->fullscreenMonitors.right = 0;
+
+	rdpMonitor* rdpmonitors = calloc(vscreen->nmonitors + 1, sizeof(rdpMonitor));
+	if (!rdpmonitors)
+		goto fail;
+
+	xfc->fullscreenMonitors.top = 0;
+	xfc->fullscreenMonitors.bottom = 0;
+	xfc->fullscreenMonitors.left = 0;
+	xfc->fullscreenMonitors.right = 0;
 
 	/* Determine which monitor that the mouse cursor is on */
 	if (vscreen->monitors)
@@ -388,7 +395,7 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 
 	/* Create array of all active monitors by taking into account monitors requested on the
 	 * command-line */
-	int nmonitors = 0;
+	size_t nmonitors = 0;
 	{
 		UINT32 nr = 0;
 
@@ -407,8 +414,7 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 			if (!vscreen->monitors)
 				goto fail;
 
-			rdpMonitor* monitor = freerdp_settings_get_pointer_array_writable(
-			    settings, FreeRDP_MonitorDefArray, WINPR_ASSERTING_INT_CAST(size_t, nmonitors));
+			rdpMonitor* monitor = &rdpmonitors[nmonitors];
 			monitor->x =
 			    WINPR_ASSERTING_INT_CAST(
 			        int32_t, vscreen->monitors[i].area.left*(
@@ -458,12 +464,6 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 			if (i == nr)
 			{
 				monitor->is_primary = TRUE;
-				if (!freerdp_settings_set_uint32(settings, FreeRDP_MonitorLocalShiftX,
-				                                 WINPR_ASSERTING_INT_CAST(uint32_t, monitor->x)))
-					goto fail;
-				if (!freerdp_settings_set_uint32(settings, FreeRDP_MonitorLocalShiftY,
-				                                 WINPR_ASSERTING_INT_CAST(uint32_t, monitor->y)))
-					goto fail;
 				primaryMonitorFound = TRUE;
 			}
 
@@ -473,7 +473,7 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 
 	/* If no monitor is active(bogus command-line monitor specification) - then lets try to fallback
 	 * to go fullscreen on the current monitor only */
-	if (nmonitors == 0 && vscreen->nmonitors > 0)
+	if ((nmonitors == 0) && (vscreen->nmonitors > 0))
 	{
 		if (!vscreen->monitors)
 			goto fail;
@@ -488,8 +488,7 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 		const INT32 maxh =
 		    ((height < 0) || ((UINT32)height < *pMaxHeight)) ? width : (INT32)*pMaxHeight;
 
-		rdpMonitor* monitor =
-		    freerdp_settings_get_pointer_array_writable(settings, FreeRDP_MonitorDefArray, 0);
+		rdpMonitor* monitor = &rdpmonitors[0];
 		if (!monitor)
 			goto fail;
 
@@ -508,8 +507,7 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 	/* If we have specific monitor information */
 	if (freerdp_settings_get_uint32(settings, FreeRDP_MonitorCount) > 0)
 	{
-		const rdpMonitor* cmonitor =
-		    freerdp_settings_get_pointer_array(settings, FreeRDP_MonitorDefArray, 0);
+		const rdpMonitor* cmonitor = &rdpmonitors[0];
 		if (!cmonitor)
 			goto fail;
 
@@ -518,34 +516,37 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 		int vY = cmonitor->y;
 		int vR = vX + cmonitor->width;
 		int vB = vY + cmonitor->height;
-		xfc->fullscreenMonitors.top = xfc->fullscreenMonitors.bottom =
-		    xfc->fullscreenMonitors.left = xfc->fullscreenMonitors.right = cmonitor->orig_screen;
+		const int32_t corig = WINPR_ASSERTING_INT_CAST(int32_t, cmonitor->orig_screen);
+		xfc->fullscreenMonitors.top = corig;
+		xfc->fullscreenMonitors.bottom = corig;
+		xfc->fullscreenMonitors.left = corig;
+		xfc->fullscreenMonitors.right = corig;
 
 		/* Calculate bounding rectangle around all monitors to be used AND
 		 * also set the Xinerama indices which define left/top/right/bottom monitors.
 		 */
 		for (UINT32 i = 0; i < freerdp_settings_get_uint32(settings, FreeRDP_MonitorCount); i++)
 		{
-			rdpMonitor* monitor =
-			    freerdp_settings_get_pointer_array_writable(settings, FreeRDP_MonitorDefArray, i);
+			rdpMonitor* monitor = &rdpmonitors[i];
 
 			/* does the same as gdk_rectangle_union */
-			int destX = MIN(vX, monitor->x);
-			int destY = MIN(vY, monitor->y);
-			int destR = MAX(vR, monitor->x + monitor->width);
-			int destB = MAX(vB, monitor->y + monitor->height);
+			const int destX = MIN(vX, monitor->x);
+			const int destY = MIN(vY, monitor->y);
+			const int destR = MAX(vR, monitor->x + monitor->width);
+			const int destB = MAX(vB, monitor->y + monitor->height);
+			const int32_t orig = WINPR_ASSERTING_INT_CAST(int32_t, monitor->orig_screen);
 
 			if (vX != destX)
-				xfc->fullscreenMonitors.left = monitor->orig_screen;
+				xfc->fullscreenMonitors.left = orig;
 
 			if (vY != destY)
-				xfc->fullscreenMonitors.top = monitor->orig_screen;
+				xfc->fullscreenMonitors.top = orig;
 
 			if (vR != destR)
-				xfc->fullscreenMonitors.right = monitor->orig_screen;
+				xfc->fullscreenMonitors.right = orig;
 
 			if (vB != destB)
-				xfc->fullscreenMonitors.bottom = monitor->orig_screen;
+				xfc->fullscreenMonitors.bottom = orig;
 
 			const UINT32 ps = freerdp_settings_get_uint32(settings, FreeRDP_PercentScreen);
 			WINPR_ASSERT(ps <= 100);
@@ -596,19 +597,12 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 			}
 
 			UINT32 j = monitor_index;
-			rdpMonitor* pmonitor =
-			    freerdp_settings_get_pointer_array_writable(settings, FreeRDP_MonitorDefArray, j);
+			rdpMonitor* pmonitor = &rdpmonitors[j];
 
 			/* If the "default" monitor is not 0,0 use it */
 			if ((pmonitor->x != 0) || (pmonitor->y != 0))
 			{
 				pmonitor->is_primary = TRUE;
-				if (!freerdp_settings_set_uint32(settings, FreeRDP_MonitorLocalShiftX,
-				                                 WINPR_ASSERTING_INT_CAST(uint32_t, pmonitor->x)))
-					goto fail;
-				if (!freerdp_settings_set_uint32(settings, FreeRDP_MonitorLocalShiftY,
-				                                 WINPR_ASSERTING_INT_CAST(uint32_t, pmonitor->y)))
-					goto fail;
 			}
 			else
 			{
@@ -617,44 +611,14 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 				for (UINT32 i = 0; i < freerdp_settings_get_uint32(settings, FreeRDP_MonitorCount);
 				     i++)
 				{
-					rdpMonitor* monitor = freerdp_settings_get_pointer_array_writable(
-					    settings, FreeRDP_MonitorDefArray, i);
+					rdpMonitor* monitor = &rdpmonitors[i];
 					if (!primaryMonitorFound && monitor->x == 0 && monitor->y == 0)
 					{
 						monitor->is_primary = TRUE;
-						if (!freerdp_settings_set_uint32(
-						        settings, FreeRDP_MonitorLocalShiftX,
-						        WINPR_ASSERTING_INT_CAST(uint32_t, monitor->x)))
-							goto fail;
-						if (!freerdp_settings_set_uint32(
-						        settings, FreeRDP_MonitorLocalShiftY,
-						        WINPR_ASSERTING_INT_CAST(uint32_t, monitor->y)))
-							goto fail;
 						primaryMonitorFound = TRUE;
 					}
 				}
 			}
-		}
-
-		/* Subtract monitor shift from monitor variables for server-side use.
-		 * We maintain monitor shift value as Window requires the primary monitor to have a
-		 * coordinate of 0,0 In some X configurations, no monitor may have a coordinate of 0,0. This
-		 * can also be happen if the user requests specific monitors from the command-line as well.
-		 * So, we make sure to translate our primary monitor's upper-left corner to 0,0 on the
-		 * server.
-		 */
-		for (UINT32 i = 0; i < freerdp_settings_get_uint32(settings, FreeRDP_MonitorCount); i++)
-		{
-			rdpMonitor* monitor =
-			    freerdp_settings_get_pointer_array_writable(settings, FreeRDP_MonitorDefArray, i);
-			monitor->x =
-			    monitor->x -
-			    WINPR_ASSERTING_INT_CAST(
-			        int32_t, freerdp_settings_get_uint32(settings, FreeRDP_MonitorLocalShiftX));
-			monitor->y =
-			    monitor->y -
-			    WINPR_ASSERTING_INT_CAST(
-			        int32_t, freerdp_settings_get_uint32(settings, FreeRDP_MonitorLocalShiftY));
 		}
 
 		/* Set the desktop width and height according to the bounding rectangle around the active
@@ -666,13 +630,15 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 	/* some 2008 server freeze at logon if we announce support for monitor layout PDU with
 	 * #monitors < 2. So let's announce it only if we have more than 1 monitor.
 	 */
-	if (freerdp_settings_get_uint32(settings, FreeRDP_MonitorCount) > 1)
+	nmonitors = freerdp_settings_get_uint32(settings, FreeRDP_MonitorCount);
+	if (nmonitors > 1)
 	{
 		if (!freerdp_settings_set_bool(settings, FreeRDP_SupportMonitorLayoutPdu, TRUE))
 			goto fail;
 	}
 
-	rc = TRUE;
+	rc = freerdp_settings_set_monitor_def_array_sorted(settings, rdpmonitors, nmonitors);
+
 fail:
 #ifdef USABLE_XRANDR
 
@@ -680,5 +646,6 @@ fail:
 		XRRFreeMonitors(rrmonitors);
 
 #endif
+	free(rdpmonitors);
 	return rc;
 }

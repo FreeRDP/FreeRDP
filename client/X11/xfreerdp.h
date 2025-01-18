@@ -64,17 +64,17 @@ typedef XcursorUInt XcursorPixel;
 
 struct xf_FullscreenMonitors
 {
-	UINT32 top;
-	UINT32 bottom;
-	UINT32 left;
-	UINT32 right;
+	INT32 top;
+	INT32 bottom;
+	INT32 left;
+	INT32 right;
 };
 typedef struct xf_FullscreenMonitors xfFullscreenMonitors;
 
 struct xf_WorkArea
 {
-	UINT32 x;
-	UINT32 y;
+	INT32 x;
+	INT32 y;
 	UINT32 width;
 	UINT32 height;
 };
