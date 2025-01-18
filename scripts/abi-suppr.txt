@@ -37,3 +37,8 @@ name = freerdp_passphrase_read
 [suppress_function]
 change_kind = function-subtype-change
 name = freerdp_settings_get_uint32
+
+# freerdp_settings_set_uint32 subtype change (delete MonitorLocalShift[XY]
+[suppress_function]
+change_kind = function-subtype-change
+name = freerdp_settings_set_uint32
