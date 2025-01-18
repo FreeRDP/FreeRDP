@@ -30,7 +30,7 @@ SdlInputWidgetList::SdlInputWidgetList(const std::string& title,
 	    title.c_str(), total_width, static_cast<int>(total_height),
 	    SDL_WINDOW_HIGH_PIXEL_DENSITY | SDL_WINDOW_MOUSE_FOCUS | SDL_WINDOW_INPUT_FOCUS, &_window,
 	    &_renderer);
-	if (rc != 0)
+	if (!rc)
 		widget_log_error(rc, "SDL_CreateWindowAndRenderer");
 	else
 	{
