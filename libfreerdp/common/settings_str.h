@@ -362,6 +362,8 @@ static const struct settings_str_entry settings_map[] = {
 	{ FreeRDP_MonitorCount, FREERDP_SETTINGS_TYPE_UINT32, "FreeRDP_MonitorCount" },
 	{ FreeRDP_MonitorDefArraySize, FREERDP_SETTINGS_TYPE_UINT32, "FreeRDP_MonitorDefArraySize" },
 	{ FreeRDP_MonitorFlags, FREERDP_SETTINGS_TYPE_UINT32, "FreeRDP_MonitorFlags" },
+	{ FreeRDP_MonitorLocalShiftX, FREERDP_SETTINGS_TYPE_UINT32, "FreeRDP_MonitorLocalShiftX" },
+	{ FreeRDP_MonitorLocalShiftY, FREERDP_SETTINGS_TYPE_UINT32, "FreeRDP_MonitorLocalShiftY" },
 	{ FreeRDP_MultifragMaxRequestSize, FREERDP_SETTINGS_TYPE_UINT32,
 	  "FreeRDP_MultifragMaxRequestSize" },
 	{ FreeRDP_MultitransportFlags, FREERDP_SETTINGS_TYPE_UINT32, "FreeRDP_MultitransportFlags" },
