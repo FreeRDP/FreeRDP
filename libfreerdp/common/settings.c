@@ -2257,3 +2257,114 @@ BOOL freerdp_settings_are_valid(const rdpSettings* settings)
 {
 	return settings != NULL;
 }
+
+/* Function to sort rdpMonitor arrays:
+ * 1. first element is primary monitor
+ * 2. all others are sorted by coordinates of x/y
+ */
+static int sort_monitor_fn(const void* pva, const void* pvb)
+{
+	const rdpMonitor* a = pva;
+	const rdpMonitor* b = pvb;
+	WINPR_ASSERT(a);
+	WINPR_ASSERT(b);
+	if (a->is_primary && b->is_primary)
+		return 0;
+	if (a->is_primary)
+		return -1;
+	if (b->is_primary)
+		return 1;
+
+	if (a->x != b->x)
+		return a->x - b->x;
+	if (a->y != b->y)
+		return a->y - b->y;
+	return 0;
+}
+
+BOOL freerdp_settings_set_monitor_def_array_sorted(rdpSettings* settings,
+                                                   const rdpMonitor* monitors, size_t count)
+{
+	WINPR_ASSERT(monitors || (count == 0));
+	if (count == 0)
+	{
+		if (!freerdp_settings_set_int32(settings, FreeRDP_MonitorLocalShiftX, 0))
+			return FALSE;
+		if (!freerdp_settings_set_int32(settings, FreeRDP_MonitorLocalShiftY, 0))
+			return FALSE;
+		if (!freerdp_settings_set_pointer_len(settings, FreeRDP_MonitorDefArray, NULL, 0))
+			return FALSE;
+		return freerdp_settings_set_uint32(settings, FreeRDP_MonitorCount, 0);
+		return TRUE;
+	}
+
+	// Find primary or alternatively the monitor at 0/0
+	const rdpMonitor* primary = NULL;
+	for (size_t x = 0; x < count; x++)
+	{
+		const rdpMonitor* cur = &monitors[x];
+		if (cur->is_primary)
+		{
+			primary = cur;
+			break;
+		}
+	}
+	if (!primary)
+	{
+		for (size_t x = 0; x < count; x++)
+		{
+			const rdpMonitor* cur = &monitors[x];
+			if ((cur->x == 0) && (cur->y == 0))
+			{
+				primary = cur;
+				break;
+			}
+		}
+	}
+
+	if (!primary)
+	{
+		WLog_ERR(TAG, "Could not find primary monitor, aborting");
+		return FALSE;
+	}
+
+	if (!freerdp_settings_set_pointer_len(settings, FreeRDP_MonitorDefArray, NULL, count))
+		return FALSE;
+	rdpMonitor* sorted = freerdp_settings_get_pointer_writable(settings, FreeRDP_MonitorDefArray);
+	WINPR_ASSERT(sorted);
+
+	size_t sortpos = 0;
+
+	/* Set primary. Ensure left/top is at 0/0 and flags contains MONITOR_PRIMARY */
+	sorted[sortpos] = *primary;
+	sorted[sortpos].x = 0;
+	sorted[sortpos].y = 0;
+	sorted[sortpos].is_primary = TRUE;
+	sortpos++;
+
+	/* Set monitor shift to original layout */
+	const INT32 offsetX = primary->x;
+	const INT32 offsetY = primary->y;
+	if (!freerdp_settings_set_int32(settings, FreeRDP_MonitorLocalShiftX, offsetX))
+		return FALSE;
+	if (!freerdp_settings_set_int32(settings, FreeRDP_MonitorLocalShiftY, offsetY))
+		return FALSE;
+
+	for (size_t x = 0; x < count; x++)
+	{
+		const rdpMonitor* cur = &monitors[x];
+		if (cur == primary)
+			continue;
+
+		rdpMonitor m = monitors[x];
+		m.x -= offsetX;
+		m.y -= offsetY;
+		sorted[sortpos++] = m;
+	}
+
+	// Sort remaining monitors by x/y ?
+	qsort(sorted, count, sizeof(rdpMonitor), sort_monitor_fn);
+
+	return freerdp_settings_set_uint32(settings, FreeRDP_MonitorCount,
+	                                   WINPR_ASSERTING_INT_CAST(uint32_t, count));
+}

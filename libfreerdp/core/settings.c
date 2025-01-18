@@ -606,6 +606,7 @@ static BOOL freerdp_settings_client_monitors_check_primary_and_origin(const rdpS
 	const UINT32 count = freerdp_settings_get_uint32(settings, FreeRDP_MonitorCount);
 	BOOL havePrimary = FALSE;
 	BOOL foundOrigin = FALSE;
+	BOOL primaryIsOrigin = FALSE;
 	BOOL rc = TRUE;
 
 	struct bounds_t bounds = { 0 };
@@ -644,6 +645,7 @@ static BOOL freerdp_settings_client_monitors_check_primary_and_origin(const rdpS
 				rc = FALSE;
 			}
 			foundOrigin = TRUE;
+			primaryIsOrigin = monitor->is_primary != 0;
 		}
 	}
 
@@ -670,6 +672,11 @@ static BOOL freerdp_settings_client_monitors_check_primary_and_origin(const rdpS
 	if (!foundOrigin)
 	{
 		WLog_ERR(TAG, "Monitor configuration must start at 0/0 for first monitor!");
+		rc = FALSE;
+	}
+	if (!primaryIsOrigin)
+	{
+		WLog_ERR(TAG, "Monitor configuration must start at 0/0 for primary monitor!");
 		rc = FALSE;
 	}
 
@@ -970,10 +977,10 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	if (!freerdp_settings_set_pointer_len(settings, FreeRDP_MonitorDefArray, NULL, 32))
 		goto out_fail;
 
-	if (!freerdp_settings_set_uint32(settings, FreeRDP_MonitorLocalShiftX, 0))
+	if (!freerdp_settings_set_int32(settings, FreeRDP_MonitorLocalShiftX, 0))
 		goto out_fail;
 
-	if (!freerdp_settings_set_uint32(settings, FreeRDP_MonitorLocalShiftY, 0))
+	if (!freerdp_settings_set_int32(settings, FreeRDP_MonitorLocalShiftY, 0))
 		goto out_fail;
 
 	if (!freerdp_settings_set_pointer_len(settings, FreeRDP_MonitorIds, NULL, 0))
@@ -1737,35 +1744,20 @@ BOOL freerdp_settings_enforce_monitor_exists(rdpSettings* settings)
 		if (!freerdp_settings_set_uint32(settings, FreeRDP_MonitorCount, 1))
 			return FALSE;
 
-		rdpMonitor* monitor =
-		    freerdp_settings_get_pointer_array_writable(settings, FreeRDP_MonitorDefArray, 0);
-		if (!monitor)
+		rdpMonitor monitor = { 0 };
+		monitor.x = 0;
+		monitor.y = 0;
+		monitor.width = WINPR_ASSERTING_INT_CAST(int32_t, width);
+		monitor.height = WINPR_ASSERTING_INT_CAST(int32_t, height);
+		monitor.is_primary = TRUE;
+		monitor.orig_screen = 0;
+		monitor.attributes.physicalWidth = pwidth;
+		monitor.attributes.physicalHeight = pheight;
+		monitor.attributes.orientation = orientation;
+		monitor.attributes.desktopScaleFactor = desktopScaleFactor;
+		monitor.attributes.deviceScaleFactor = deviceScaleFactor;
+		if (!freerdp_settings_set_monitor_def_array_sorted(settings, &monitor, 1))
 			return FALSE;
-		monitor->x = 0;
-		monitor->y = 0;
-		WINPR_ASSERT(width <= INT32_MAX);
-		monitor->width = (INT32)width;
-		WINPR_ASSERT(height <= INT32_MAX);
-		monitor->height = (INT32)height;
-		monitor->is_primary = TRUE;
-		monitor->orig_screen = 0;
-		monitor->attributes.physicalWidth = pwidth;
-		monitor->attributes.physicalHeight = pheight;
-		monitor->attributes.orientation = orientation;
-		monitor->attributes.desktopScaleFactor = desktopScaleFactor;
-		monitor->attributes.deviceScaleFactor = deviceScaleFactor;
-	}
-	else if (fullscreen || (multimon && (count == 1)))
-	{
-		/* not all platforms start primary monitor at 0/0, so enforce this to avoid issues with
-		 * fullscreen mode */
-		rdpMonitor* monitor =
-		    freerdp_settings_get_pointer_array_writable(settings, FreeRDP_MonitorDefArray, 0);
-		if (!monitor)
-			return FALSE;
-		monitor->x = 0;
-		monitor->y = 0;
-		monitor->is_primary = TRUE;
 	}
 
 	return TRUE;

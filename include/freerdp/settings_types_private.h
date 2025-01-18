@@ -160,8 +160,8 @@ struct rdp_settings
 	SETTINGS_DEPRECATED(ALIGN64 BOOL ListMonitors);            /*    392 */
 	SETTINGS_DEPRECATED(ALIGN64 UINT32* MonitorIds);           /*    393 */
 	SETTINGS_DEPRECATED(ALIGN64 UINT32 NumMonitorIds);         /*    394 */
-	SETTINGS_DEPRECATED(ALIGN64 UINT32 MonitorLocalShiftX);    /*395 */
-	SETTINGS_DEPRECATED(ALIGN64 UINT32 MonitorLocalShiftY);    /*    396 */
+	SETTINGS_DEPRECATED(ALIGN64 INT32 MonitorLocalShiftX);     /*395 */
+	SETTINGS_DEPRECATED(ALIGN64 INT32 MonitorLocalShiftY);     /*    396 */
 	SETTINGS_DEPRECATED(ALIGN64 BOOL HasMonitorAttributes);    /*    397 */
 	SETTINGS_DEPRECATED(ALIGN64 UINT32 MonitorFlags);          /* 398 */
 	SETTINGS_DEPRECATED(ALIGN64 UINT32 MonitorAttributeFlags); /* 399 */

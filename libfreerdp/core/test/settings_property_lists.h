@@ -281,8 +281,6 @@ static const size_t uint32_list_indices[] = {
 	FreeRDP_MonitorCount,
 	FreeRDP_MonitorDefArraySize,
 	FreeRDP_MonitorFlags,
-	FreeRDP_MonitorLocalShiftX,
-	FreeRDP_MonitorLocalShiftY,
 	FreeRDP_MultifragMaxRequestSize,
 	FreeRDP_MultitransportFlags,
 	FreeRDP_NSCodecColorLossLevel,
@@ -348,6 +346,8 @@ static const size_t uint32_list_indices[] = {
 
 #define have_int32_list_indices
 static const size_t int32_list_indices[] = {
+	FreeRDP_MonitorLocalShiftX,
+	FreeRDP_MonitorLocalShiftY,
 	FreeRDP_XPan,
 	FreeRDP_YPan,
 };

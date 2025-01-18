@@ -752,6 +752,27 @@ extern "C"
 	WINPR_ATTR_MALLOC(free, 1)
 	FREERDP_API char* freerdp_settings_get_config_path(void);
 
+	/** @brief Sort monitor array according to:
+	 *  1. First monitor is at x/y 0/0 and is the primary monitor
+	 *  2. The primary monitor must be at 0/0, if not set
+	 * FreeRDP_MonitorLocalShiftX/FreeRDP_MonitorLocalShiftY
+	 *
+	 *  The FreeRDP_MonitorLocalShiftX/FreeRDP_MonitorLocalShiftY is required to map the local
+	 * monitors / mouse / touch coordinates to the remote ones.
+	 *
+	 *  @param settings The settings to set the monitors for
+	 *  @param monitors The unsorted monitors array
+	 *  @param count The number of monitors in the unsorted array
+	 *
+	 *  @return \b TRUE if the configuration is valid (or could be corrected to a valid one), \b
+	 * FALSE otherwise.
+	 *
+	 *  @version since 3.11.0
+	 */
+	FREERDP_API BOOL freerdp_settings_set_monitor_def_array_sorted(rdpSettings* settings,
+	                                                               const rdpMonitor* monitors,
+	                                                               size_t count);
+
 #ifdef __cplusplus
 }
 #endif
