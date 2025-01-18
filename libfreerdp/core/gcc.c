@@ -2198,26 +2198,25 @@ BOOL gcc_write_client_monitor_data(wStream* s, const rdpMcs* mcs)
 			{
 				baseX = current->x;
 				baseY = current->y;
-				break;
 			}
 		}
 
 		for (UINT32 i = 0; i < settings->MonitorCount; i++)
 		{
 			const rdpMonitor* current = &settings->MonitorDefArray[i];
-			const UINT32 left = WINPR_ASSERTING_INT_CAST(uint32_t, current->x - baseX);
-			const UINT32 top = WINPR_ASSERTING_INT_CAST(uint32_t, current->y - baseY);
-			const UINT32 right = left + WINPR_ASSERTING_INT_CAST(uint32_t, current->width - 1);
-			const UINT32 bottom = top + WINPR_ASSERTING_INT_CAST(uint32_t, current->height - 1);
-			const UINT32 flags = current->is_primary ? MONITOR_PRIMARY : 0;
+			const INT32 left = WINPR_ASSERTING_INT_CAST(int32_t, current->x - baseX);
+			const INT32 top = WINPR_ASSERTING_INT_CAST(int32_t, current->y - baseY);
+			const INT32 right = left + WINPR_ASSERTING_INT_CAST(int32_t, current->width - 1);
+			const INT32 bottom = top + WINPR_ASSERTING_INT_CAST(int32_t, current->height - 1);
+			const INT32 flags = current->is_primary ? MONITOR_PRIMARY : 0;
 			WLog_DBG(TAG,
 			         "Monitor[%" PRIu32 "]: top=%" PRIu32 ", left=%" PRIu32 ", bottom=%" PRIu32
 			         ", right=%" PRIu32 ", flags=%" PRIu32,
 			         i, top, left, bottom, right, flags);
-			Stream_Write_UINT32(s, left);   /* left */
-			Stream_Write_UINT32(s, top);    /* top */
-			Stream_Write_UINT32(s, right);  /* right */
-			Stream_Write_UINT32(s, bottom); /* bottom */
+			Stream_Write_INT32(s, left);   /* left */
+			Stream_Write_INT32(s, top);    /* top */
+			Stream_Write_INT32(s, right);  /* right */
+			Stream_Write_INT32(s, bottom); /* bottom */
 			Stream_Write_UINT32(s, flags);  /* flags */
 		}
 	}

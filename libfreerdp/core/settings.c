@@ -1763,8 +1763,6 @@ BOOL freerdp_settings_enforce_monitor_exists(rdpSettings* settings)
 		    freerdp_settings_get_pointer_array_writable(settings, FreeRDP_MonitorDefArray, 0);
 		if (!monitor)
 			return FALSE;
-		monitor->x = 0;
-		monitor->y = 0;
 		monitor->is_primary = TRUE;
 	}
 
