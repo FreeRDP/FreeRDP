@@ -277,7 +277,7 @@ static BOOL sdl_apply_display_properties(SdlContext* sdl)
 		monitor.attributes.orientation = rdp_orientation;
 		monitor.attributes.physicalWidth = scale(WINPR_ASSERTING_INT_CAST(uint32_t, rect.w), hdpi);
 		monitor.attributes.physicalHeight = scale(WINPR_ASSERTING_INT_CAST(uint32_t, rect.h), vdpi);
-		monitors.push_back(monitor);
+		monitors.emplace_back(monitor);
 	}
 	return freerdp_settings_set_monitor_def_array_sorted(settings, monitors.data(),
 	                                                     monitors.size());
