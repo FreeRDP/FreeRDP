@@ -62,7 +62,7 @@ extern "C"
 		UINT32 FrameRate;
 		UINT32 QP;
 		UINT32 UsageType;
-		BOOL hwAccel;
+		UINT32 hwAccel;
 		UINT32 NumberOfThreads;
 
 		UINT32 iStride[3];
