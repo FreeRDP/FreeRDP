@@ -14,6 +14,7 @@ android {
         minSdkVersion rootProject.ext.minApi
         targetSdkVersion rootProject.ext.targetApi
         vectorDrawables.useSupportLibrary = true
+	ndkVersion = "27.2.12479018"
 
         ndk {
             File jniLibsDirectory = new File(project.projectDir, "src/main/jniLibs")
