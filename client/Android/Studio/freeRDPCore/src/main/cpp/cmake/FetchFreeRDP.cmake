@@ -24,7 +24,7 @@ set(WITH_URIPARSER ON CACHE INTERNAL "fetch content")
 
 FetchContent_Declare(
   FreeRDP
-  URL     "${CMAKE_CURRENT_LIST_DIR}/../../../../../../../../ "
+  SOURCE_DIR     "${CMAKE_CURRENT_LIST_DIR}/../../../../../../../../"
 )
 
 include (FetchLibreSSL)
@@ -37,4 +37,4 @@ include (FetchPNG)
 include (FetchWebP)
 include (ExternalJPEG)
 include (FetchLibUSB)
-FetchContent_MakeAvailable(libressl opus png webp libusb cJSON uriparser jpeg FreeRDP)
+FetchContent_MakeAvailable(libressl opus png webp libusb cJSON uriparser FreeRDP)

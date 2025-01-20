@@ -5,6 +5,7 @@ ExternalProject_Add(
   DOWNLOAD_COMMAND
 	  URL      https://github.com/cisco/openh264/archive/refs/tags/v2.5.0.tar.gz
 	  URL_HASH SHA256=94c8ca364db990047ec4ec3481b04ce0d791e62561ef5601443011bdc00825e3
+  	DOWNLOAD_EXTRACT_TIMESTAMP ON
   CONFIGURE_COMMAND
 	meson setup <BINARY_DIR> -Dprefix=<INSTALL_DIR>
   BUILD_COMMAND
