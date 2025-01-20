@@ -37,9 +37,9 @@ include (FetchLibUSB)
 
 FetchContent_Declare(
   FreeRDP
-  SOURCE_DIR     "${CMAKE_CURRENT_LIST_DIR}/../../../../../../../../"
   OVERRIDE_FIND_PACKAGE
   SYSTEM
+  SOURCE_DIR     "${CMAKE_CURRENT_LIST_DIR}/../../../../../../../../"
 )
 
 FetchContent_MakeAvailable(FreeRDP)
