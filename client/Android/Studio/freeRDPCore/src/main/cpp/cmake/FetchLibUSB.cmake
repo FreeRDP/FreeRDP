@@ -7,6 +7,8 @@ FetchContent_Declare(
   libusb
   GIT_REPOSITORY https://github.com/libusb/libusb-cmake.git
   GIT_TAG        v1.0.27-1
+  OVERRIDE_FIND_PACKAGE
+  SYSTEM
 )
 
 FetchContent_MakeAvailable(libusb)

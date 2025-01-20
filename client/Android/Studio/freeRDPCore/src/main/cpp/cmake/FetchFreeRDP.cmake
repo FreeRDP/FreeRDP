@@ -20,12 +20,9 @@ set(WITH_LIBRESSL ON CACHE INTERNAL "fetch content")
 set(WITH_CJSON_REQUIRED ON CACHE INTERNAL "fetch content")
 set(WITH_ZLIB ON CACHE INTERNAL "fetch content")
 set(WITH_OPUS ON CACHE INTERNAL "fetch content")
-set(WITH_URIPARSER ON CACHE INTERNAL "fetch content")
+set(WITH_URIPARSER OFF CACHE INTERNAL "fetch content")
 
-FetchContent_Declare(
-  FreeRDP
-  SOURCE_DIR     "${CMAKE_CURRENT_LIST_DIR}/../../../../../../../../"
-)
+set(WITH_MANPAGES OFF CACHE INTERNAL "fetch content")
 
 include (FetchLibreSSL)
 include (FetchcJSON)
@@ -37,4 +34,12 @@ include (FetchPNG)
 include (FetchWebP)
 include (ExternalJPEG)
 include (FetchLibUSB)
-FetchContent_MakeAvailable(libressl opus png webp libusb cJSON uriparser FreeRDP)
+
+FetchContent_Declare(
+  FreeRDP
+  SOURCE_DIR     "${CMAKE_CURRENT_LIST_DIR}/../../../../../../../../"
+  OVERRIDE_FIND_PACKAGE
+  SYSTEM
+)
+
+FetchContent_MakeAvailable(FreeRDP)

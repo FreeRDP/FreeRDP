@@ -11,6 +11,8 @@ FetchContent_Declare(
   webp
   GIT_REPOSITORY https://chromium.googlesource.com/webm/libwebp
   GIT_TAG        v1.5.0
+  OVERRIDE_FIND_PACKAGE
+  SYSTEM
 )
 
 FetchContent_MakeAvailable(webp)

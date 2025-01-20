@@ -6,6 +6,8 @@ FetchContent_Declare(
   png
   GIT_REPOSITORY https://github.com/pnggroup/libpng.git
   GIT_TAG        v1.6.45
+  OVERRIDE_FIND_PACKAGE
+  SYSTEM
 )
 
 FetchContent_MakeAvailable(png)
