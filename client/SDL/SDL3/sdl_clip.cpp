@@ -238,9 +238,9 @@ bool sdlClip::handle_update(const SDL_ClipboardEvent& ev)
 	clientFormats.erase(u, clientFormats.end());
 
 	const CLIPRDR_FORMAT_LIST formatList = {
-		.common = { .msgType = CB_FORMAT_LIST, .msgFlags = 0, .dataLen = 0 },
-		.numFormats = static_cast<UINT32>(clientFormats.size()),
-		.formats = clientFormats.data(),
+		{ CB_FORMAT_LIST, 0, 0 },
+		static_cast<UINT32>(clientFormats.size()),
+		clientFormats.data(),
 	};
 
 	WLog_Print(_log, WLOG_TRACE,
@@ -283,15 +283,11 @@ UINT sdlClip::MonitorReady(CliprdrClientContext* context, const CLIPRDR_MONITOR_
 UINT sdlClip::SendClientCapabilities()
 {
 	CLIPRDR_GENERAL_CAPABILITY_SET generalCapabilitySet = {
-		.capabilitySetType = CB_CAPSTYPE_GENERAL,
-		.capabilitySetLength = 12,
-		.version = CB_CAPS_VERSION_2,
-		.generalFlags = CB_USE_LONG_FORMAT_NAMES | cliprdr_file_context_current_flags(_file)
+		CB_CAPSTYPE_GENERAL, 12, CB_CAPS_VERSION_2,
+		CB_USE_LONG_FORMAT_NAMES | cliprdr_file_context_current_flags(_file)
 	};
-	CLIPRDR_CAPABILITIES capabilities = {
-		.common = { .msgType = CB_TYPE_NONE, .msgFlags = 0, .dataLen = 0 },
-		.cCapabilitiesSets = 1,
-		.capabilitySets = reinterpret_cast<CLIPRDR_CAPABILITY_SET*>(&generalCapabilitySet)
+	const CLIPRDR_CAPABILITIES capabilities = {
+		{ CB_TYPE_NONE, 0, 0 }, 1, reinterpret_cast<CLIPRDR_CAPABILITY_SET*>(&generalCapabilitySet)
 	};
 
 	WINPR_ASSERT(_ctx);
@@ -308,9 +304,8 @@ void sdlClip::clearServerFormats()
 UINT sdlClip::SendFormatListResponse(BOOL status)
 {
 	const CLIPRDR_FORMAT_LIST_RESPONSE formatListResponse = {
-		.common = { .msgType = CB_FORMAT_LIST_RESPONSE,
-		            .msgFlags = static_cast<UINT16>(status ? CB_RESPONSE_OK : CB_RESPONSE_FAIL),
-		            .dataLen = 0 }
+		{ CB_FORMAT_LIST_RESPONSE, static_cast<UINT16>(status ? CB_RESPONSE_OK : CB_RESPONSE_FAIL),
+		  0 }
 	};
 	WINPR_ASSERT(_ctx);
 	WINPR_ASSERT(_ctx->ClientFormatListResponse);
@@ -335,10 +330,7 @@ UINT sdlClip::SendDataResponse(const BYTE* data, size_t size)
 
 UINT sdlClip::SendDataRequest(uint32_t formatID, const std::string& mime)
 {
-	CLIPRDR_FORMAT_DATA_REQUEST request = {
-		.common = { .msgType = CB_TYPE_NONE, .msgFlags = 0, .dataLen = 0 },
-		.requestedFormatId = formatID
-	};
+	const CLIPRDR_FORMAT_DATA_REQUEST request = { { CB_TYPE_NONE, 0, 0 }, formatID };
 
 	_request_queue.emplace(formatID, mime);
 
