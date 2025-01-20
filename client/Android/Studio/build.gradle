@@ -19,10 +19,10 @@ if (!hasProperty('RELEASE_STORE_PASSWORD')) {
 }
 
 ext {
-    compileApi = releaseProperties.get('COMPILE_API', 31)
-    targetApi = releaseProperties.get('TARGET_API', 31)
+    compileApi = releaseProperties.get('COMPILE_API', 35)
+    targetApi = releaseProperties.get('TARGET_API', 35)
     minApi = releaseProperties.get('MIN_API', 23)
-    toolsVersion = releaseProperties.get('TOOLS_VERSION', '31.0.0')
+    toolsVersion = releaseProperties.get('TOOLS_VERSION', '35.0.0')
 
     println '----------------- Project configuration -------------------'
     println 'RELEASE_STORE_FILE: ' + RELEASE_STORE_FILE
@@ -38,9 +38,12 @@ buildscript {
     repositories {
         mavenCentral()
         google()
+        maven {
+            url 'https://maven.google.com'
+        }
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:7.1.2'
+       classpath 'com.android.tools.build:gradle:8.8.0'
     }
 }
 
@@ -48,5 +51,20 @@ allprojects {
     repositories {
         mavenCentral()
         google()
+        maven {
+            url 'https://maven.google.com'
+        }
+    }
+
+    subprojects {
+        afterEvaluate { project ->
+            if (project.hasProperty('android')) {
+                project.android {
+                    if (namespace == null) {
+                        namespace 'com.freerdp.' + project.name.toLowerCase()
+                    }
+                }
+            }
+        }
     }
 }
