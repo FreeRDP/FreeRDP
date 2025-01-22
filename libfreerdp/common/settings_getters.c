@@ -2544,6 +2544,12 @@ INT32 freerdp_settings_get_int32(const rdpSettings* settings, FreeRDP_Settings_K
 
 	switch (id)
 	{
+		case FreeRDP_MonitorLocalShiftX:
+			return settings->MonitorLocalShiftX;
+
+		case FreeRDP_MonitorLocalShiftY:
+			return settings->MonitorLocalShiftY;
+
 		case FreeRDP_XPan:
 			return settings->XPan;
 
@@ -2574,6 +2580,14 @@ BOOL freerdp_settings_set_int32(rdpSettings* settings, FreeRDP_Settings_Keys_Int
 
 	switch (id)
 	{
+		case FreeRDP_MonitorLocalShiftX:
+			settings->MonitorLocalShiftX = cnv.c;
+			break;
+
+		case FreeRDP_MonitorLocalShiftY:
+			settings->MonitorLocalShiftY = cnv.c;
+			break;
+
 		case FreeRDP_XPan:
 			settings->XPan = cnv.c;
 			break;

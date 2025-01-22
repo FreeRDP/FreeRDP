@@ -448,6 +448,8 @@ static const struct settings_str_entry settings_map[] = {
 	{ FreeRDP_TlsSecLevel, FREERDP_SETTINGS_TYPE_UINT32, "FreeRDP_TlsSecLevel" },
 	{ FreeRDP_VCChunkSize, FREERDP_SETTINGS_TYPE_UINT32, "FreeRDP_VCChunkSize" },
 	{ FreeRDP_VCFlags, FREERDP_SETTINGS_TYPE_UINT32, "FreeRDP_VCFlags" },
+	{ FreeRDP_MonitorLocalShiftX, FREERDP_SETTINGS_TYPE_INT32, "FreeRDP_MonitorLocalShiftX" },
+	{ FreeRDP_MonitorLocalShiftY, FREERDP_SETTINGS_TYPE_INT32, "FreeRDP_MonitorLocalShiftY" },
 	{ FreeRDP_XPan, FREERDP_SETTINGS_TYPE_INT32, "FreeRDP_XPan" },
 	{ FreeRDP_YPan, FREERDP_SETTINGS_TYPE_INT32, "FreeRDP_YPan" },
 	{ FreeRDP_ParentWindowId, FREERDP_SETTINGS_TYPE_UINT64, "FreeRDP_ParentWindowId" },

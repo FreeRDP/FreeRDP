@@ -196,10 +196,7 @@ static BOOL sdl_apply_display_properties(SdlContext* sdl)
 		return TRUE;
 
 	const UINT32 numIds = freerdp_settings_get_uint32(settings, FreeRDP_NumMonitorIds);
-	if (!freerdp_settings_set_pointer_len(settings, FreeRDP_MonitorDefArray, nullptr, numIds))
-		return FALSE;
-	if (!freerdp_settings_set_uint32(settings, FreeRDP_MonitorCount, numIds))
-		return FALSE;
+	std::vector<rdpMonitor> monitors;
 
 	for (UINT32 x = 0; x < numIds; x++)
 	{
@@ -260,26 +257,25 @@ static BOOL sdl_apply_display_properties(SdlContext* sdl)
 		    SDL_GetCurrentDisplayOrientation(WINPR_ASSERTING_INT_CAST(uint32_t, *id));
 		const UINT32 rdp_orientation = sdl_orientaion_to_rdp(orientation);
 
-		auto monitor = static_cast<rdpMonitor*>(
-		    freerdp_settings_get_pointer_array_writable(settings, FreeRDP_MonitorDefArray, x));
-		WINPR_ASSERT(monitor);
+		rdpMonitor monitor = {};
 
 		/* windows uses 96 dpi as 'default' and the scale factors are in percent. */
 		const auto factor = dpi / 96.0f * 100.0f;
-		monitor->orig_screen = x;
-		monitor->x = rect.x;
-		monitor->y = rect.y;
-		monitor->width = rect.w;
-		monitor->height = rect.h;
-		monitor->is_primary = x == 0;
-		monitor->attributes.desktopScaleFactor = static_cast<UINT32>(factor);
-		monitor->attributes.deviceScaleFactor = 100;
-		monitor->attributes.orientation = rdp_orientation;
-		monitor->attributes.physicalWidth = scale(WINPR_ASSERTING_INT_CAST(uint32_t, rect.w), hdpi);
-		monitor->attributes.physicalHeight =
-		    scale(WINPR_ASSERTING_INT_CAST(uint32_t, rect.h), vdpi);
+		monitor.orig_screen = x;
+		monitor.x = rect.x;
+		monitor.y = rect.y;
+		monitor.width = rect.w;
+		monitor.height = rect.h;
+		monitor.is_primary = x == 0;
+		monitor.attributes.desktopScaleFactor = static_cast<UINT32>(factor);
+		monitor.attributes.deviceScaleFactor = 100;
+		monitor.attributes.orientation = rdp_orientation;
+		monitor.attributes.physicalWidth = scale(WINPR_ASSERTING_INT_CAST(uint32_t, rect.w), hdpi);
+		monitor.attributes.physicalHeight = scale(WINPR_ASSERTING_INT_CAST(uint32_t, rect.h), vdpi);
+		monitors.emplace_back(monitor);
 	}
-	return TRUE;
+	return freerdp_settings_set_monitor_def_array_sorted(settings, monitors.data(),
+	                                                     monitors.size());
 }
 
 static BOOL sdl_detect_single_window(SdlContext* sdl, UINT32* pMaxWidth, UINT32* pMaxHeight)

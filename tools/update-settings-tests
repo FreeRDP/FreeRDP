@@ -324,6 +324,9 @@ try:
         getter_list = dict(type_list)
         setter_list = dict(type_list)
         setter_list2 = dict(type_list)
+        # Compatibility with older 3.x releases where the value was wrongly an unsigned type
+        getter_list['UINT32'].append('MonitorLocalShiftX')
+        getter_list['UINT32'].append('MonitorLocalShiftY')
         write_getter(f, getter_list, 'BOOL', 'bool', '')
         write_setter(f, setter_list, 'BOOL', 'bool', '')
         write_getter(f, getter_list, 'UINT16', 'uint16', '')
