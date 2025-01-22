@@ -1,7 +1,7 @@
 #!/bin/bash
 SCM_URL=https://github.com/cisco/openh264/archive
-SCM_TAG=v2.4.1
-SCM_HASH=8ffbe944e74043d0d3fb53d4a2a14c94de71f58dbea6a06d0dc92369542958ea
+SCM_TAG=v2.5.0
+SCM_HASH=94c8ca364db990047ec4ec3481b04ce0d791e62561ef5601443011bdc00825e3
 
 source $(dirname "${BASH_SOURCE[0]}")/android-build-common.sh
 
@@ -10,7 +10,7 @@ function build {
 	BASE=$(pwd)
 	common_run cd $BUILD_SRC
 	PATH=$ANDROID_NDK:$PATH
-	MAKE="make PATH=$PATH ENABLEPIC=Yes OS=android NDKROOT=$ANDROID_NDK NDK_TOOLCHAIN_VERSION=clang TARGET=android-$2 NDKLEVEL=$2 ARCH=$1 -j libraries"
+	MAKE="make LDFLAGS=-static-libstdc++ PATH=$PATH ENABLEPIC=Yes OS=android NDKROOT=$ANDROID_NDK NDK_TOOLCHAIN_VERSION=clang TARGET=android-$2 NDKLEVEL=$2 ARCH=$1 -j libraries"
 
 	common_run export QUIET_AR="$CCACHE "
 	common_run export QUIET_ASM="$CCACHE "
@@ -18,7 +18,7 @@ function build {
 	common_run export QUIET_CCAR="$CCACHE "
 	common_run export QUIET_CXX="$CCACHE "
 
-	common_run $MAKE -j
+	common_run $MAKE
 	# Install creates a non optimal directory layout, fix that
 	common_run $MAKE PREFIX=$BUILD_SRC/libs/$1 install
 	common_run cd $BASE
