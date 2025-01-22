@@ -256,13 +256,24 @@ function common_update {
 
 	echo "Preparing checkout..."
 	BASE=$(pwd)
-	CACHE=$SCRIPT_PATH/../cache
+	CACHE=$(realpath $SCRIPT_PATH/../cache)
 	common_run mkdir -p $CACHE
 	TARFILE="$CACHE/$SCM_TAG.tar.gz"
 
 	if [[ ! -f "$TARFILE" ]];
 	then
-		common_run wget -O "$TARFILE" "$SCM_URL/$SCM_TAG.tar.gz"
+		WGET=$(which wget)
+		CURL=$(which curl)
+		if [ -x "$CURL" ];
+		then
+			common_run $CURL -L -o "$TARFILE" "$SCM_URL/$SCM_TAG.tar.gz"
+		elif [ -x "$WGET" ];
+		then
+			common_run $WGET -O "$TARFILE" "$SCM_URL/$SCM_TAG.tar.gz"
+		else
+			echo "Neither wget nor curl installed, aborting"
+			exit -1
+		fi
 	fi
 
 	echo "$SCM_HASH $TARFILE" > $TARFILE.sha256sum
