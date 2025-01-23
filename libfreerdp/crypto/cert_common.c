@@ -200,23 +200,36 @@ X509* x509_from_rsa(const RSA* rsa)
 #endif
 	);
 	if (!bio)
+	{
+		WLog_ERR(TAG, "BIO_new() failed");
 		return NULL;
+	}
 
 	const int rc = PEM_write_bio_RSA_PUBKEY(bio, (RSA*)rsa);
 	if (rc != 1)
+	{
+		WLog_ERR(TAG, "PEM_write_bio_RSA_PUBKEY(bio, (RSA*)rsa) failed");
 		goto fail;
+	}
 
 	pubkey = PEM_read_bio_PUBKEY(bio, NULL, NULL, NULL);
 	if (!pubkey)
+	{
+		WLog_ERR(TAG, "PEM_read_bio_PUBKEY(bio, NULL, NULL, NULL) failed");
 		goto fail;
+	}
 
 	x509 = X509_new();
 	if (!x509)
+	{
+		WLog_ERR(TAG, "X509_new() failed");
 		goto fail;
+	}
 
 	const int res = X509_set_pubkey(x509, pubkey);
 	if (res != 1)
 	{
+		WLog_ERR(TAG, "X509_set_pubkey(x509, pubkey) failed");
 		X509_free(x509);
 		x509 = NULL;
 		goto fail;
