@@ -101,10 +101,10 @@ public class HomeActivity extends AppCompatActivity
 		}
 
 		// load views
-		clearTextButton = (Button)findViewById(R.id.clear_search_btn);
-		superBarEditText = (EditText)findViewById(R.id.superBarEditText);
+		clearTextButton = findViewById(R.id.clear_search_btn);
+		superBarEditText = findViewById(R.id.superBarEditText);
 
-		listViewBookmarks = (ListView)findViewById(R.id.listViewBookmarks);
+		listViewBookmarks = findViewById(R.id.listViewBookmarks);
 
 		// set listeners for the list view
 		listViewBookmarks.setOnItemClickListener(new AdapterView.OnItemClickListener() {

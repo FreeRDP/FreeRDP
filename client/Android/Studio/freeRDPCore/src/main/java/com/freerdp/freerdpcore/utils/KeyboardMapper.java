@@ -229,7 +229,7 @@ public class KeyboardMapper
 
 	public void init(Context context)
 	{
-		if (initialized == true)
+		if (initialized)
 			return;
 
 		keymapAndroid = new int[256];
@@ -714,12 +714,12 @@ public class KeyboardMapper
 
 	// interface that gets called for input handling
 	public interface KeyProcessingListener {
-		abstract void processVirtualKey(int virtualKeyCode, boolean down);
+		void processVirtualKey(int virtualKeyCode, boolean down);
 
-		abstract void processUnicodeKey(int unicodeKey);
+		void processUnicodeKey(int unicodeKey);
 
-		abstract void switchKeyboard(int keyboardType);
+		void switchKeyboard(int keyboardType);
 
-		abstract void modifiersChanged();
+		void modifiersChanged();
 	}
 }

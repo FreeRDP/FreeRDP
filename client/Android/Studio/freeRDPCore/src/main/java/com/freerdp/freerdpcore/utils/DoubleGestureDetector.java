@@ -234,7 +234,7 @@ public class DoubleGestureDetector
 				break;
 		}
 
-		if ((action == MotionEvent.ACTION_MOVE) && handled == false)
+		if ((action == MotionEvent.ACTION_MOVE) && !handled)
 			handled = true;
 
 		return handled;

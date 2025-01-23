@@ -55,7 +55,7 @@
         </activity-alias>
 
         <activity
-            android:exported="true"
+            android:exported="false"
             android:name=".presentation.BookmarkActivity"
             android:label="@string/title_bookmark_settings"
             android:theme="@style/Theme.Settings">

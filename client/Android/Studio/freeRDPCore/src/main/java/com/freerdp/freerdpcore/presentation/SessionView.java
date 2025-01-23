@@ -28,6 +28,8 @@ import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputConnection;
 
+import androidx.annotation.NonNull;
+
 import com.freerdp.freerdpcore.application.SessionState;
 import com.freerdp.freerdpcore.services.LibFreeRDP;
 import com.freerdp.freerdpcore.utils.DoubleGestureDetector;
@@ -228,14 +230,17 @@ public class SessionView extends View
 		                          (int)(height * scaleFactor) + touchPointerPaddingHeight);
 	}
 
-	@Override public void onDraw(Canvas canvas)
+	@Override public void onDraw(@NonNull Canvas canvas)
 	{
 		super.onDraw(canvas);
 
 		canvas.save();
 		canvas.concat(scaleMatrix);
 		canvas.drawColor(Color.BLACK);
-		surface.draw(canvas);
+		if (surface != null)
+		{
+			surface.draw(canvas);
+		}
 		canvas.restore();
 	}
 
@@ -278,17 +283,17 @@ public class SessionView extends View
 	}
 
 	public interface SessionViewListener {
-		abstract void onSessionViewBeginTouch();
+		void onSessionViewBeginTouch();
 
-		abstract void onSessionViewEndTouch();
+		void onSessionViewEndTouch();
 
-		abstract void onSessionViewLeftTouch(int x, int y, boolean down);
+		void onSessionViewLeftTouch(int x, int y, boolean down);
 
-		abstract void onSessionViewRightTouch(int x, int y, boolean down);
+		void onSessionViewRightTouch(int x, int y, boolean down);
 
-		abstract void onSessionViewMove(int x, int y);
+		void onSessionViewMove(int x, int y);
 
-		abstract void onSessionViewScroll(boolean down);
+		void onSessionViewScroll(boolean down);
 	}
 
 	private class SessionGestureListener extends GestureDetector.SimpleOnGestureListener

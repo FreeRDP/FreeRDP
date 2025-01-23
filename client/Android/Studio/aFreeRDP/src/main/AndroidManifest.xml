@@ -96,7 +96,8 @@
 
         <provider
             android:name="com.freerdp.freerdpcore.services.FreeRDPSuggestionProvider"
-            android:authorities="com.freerdp.afreerdp.services.freerdpsuggestionprovider"></provider>
+            android:authorities="com.freerdp.afreerdp.services.freerdpsuggestionprovider"
+            android:exported="false"></provider>
 
         <meta-data android:name="com.samsung.android.keepalive.density" android:value="true"/>
 

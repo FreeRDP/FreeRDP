@@ -14,7 +14,7 @@
     android:layout_height="match_parent">
 
     <!-- children are specified bottom-up so that we have a correct z-order in our final layout -->
-    <android.inputmethodservice.KeyboardView xmlns:android="http://schemas.android.com/apk/res/android"
+    <android.inputmethodservice.KeyboardView
         android:id="@+id/extended_keyboard"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -56,7 +56,7 @@
         android:layout_alignBottom="@id/sessionScrollView"
         android:layout_centerHorizontal="true" />
 
-    <android.inputmethodservice.KeyboardView xmlns:android="http://schemas.android.com/apk/res/android"
+    <android.inputmethodservice.KeyboardView
         android:id="@+id/extended_keyboard_header"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

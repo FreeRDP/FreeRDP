@@ -57,7 +57,7 @@ public class ButtonPreference extends Preference
 	@Override public View getView(View convertView, ViewGroup parent)
 	{
 		View v = super.getView(convertView, parent);
-		button = (Button)v.findViewById(R.id.preference_button);
+		button = v.findViewById(R.id.preference_button);
 		if (buttonText != null)
 			button.setText(buttonText);
 		if (buttonOnClickListener != null)
@@ -66,7 +66,7 @@ public class ButtonPreference extends Preference
 		// additional init for ICS - make widget frame visible
 		// refer to
 		// http://stackoverflow.com/questions/8762984/custom-preference-broken-in-honeycomb-ics
-		LinearLayout widgetFrameView = ((LinearLayout)v.findViewById(android.R.id.widget_frame));
+		LinearLayout widgetFrameView = v.findViewById(android.R.id.widget_frame);
 		widgetFrameView.setVisibility(View.VISIBLE);
 
 		return v;

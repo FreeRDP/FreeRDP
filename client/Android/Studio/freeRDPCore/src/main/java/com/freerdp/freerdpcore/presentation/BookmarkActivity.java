@@ -209,7 +209,7 @@ public class BookmarkActivity extends PreferenceActivity implements OnSharedPref
 	{
 		if (!LibFreeRDP.hasH264Support())
 		{
-			final int preferenceIdList[] = { R.string.preference_key_h264,
+			final int[] preferenceIdList = { R.string.preference_key_h264,
 				                             R.string.preference_key_h264_3g };
 
 			PreferenceManager mgr = getPreferenceManager();
@@ -609,11 +609,9 @@ public class BookmarkActivity extends PreferenceActivity implements OnSharedPref
 	private boolean verifySettings(SharedPreferences sharedPreferences)
 	{
 
-		boolean verifyFailed = false;
+		boolean verifyFailed = sharedPreferences.getString("bookmark.label", "").length() == 0;
 		// perform sanity checks on settings
 		// Label set
-		if (sharedPreferences.getString("bookmark.label", "").length() == 0)
-			verifyFailed = true;
 
 		// Server and port specified
 		if (!verifyFailed && sharedPreferences.getString("bookmark.hostname", "").length() == 0)
@@ -671,8 +669,6 @@ public class BookmarkActivity extends PreferenceActivity implements OnSharedPref
 				                       }
 			                       })
 			    .show();
-
-			return;
 		}
 		else
 		{

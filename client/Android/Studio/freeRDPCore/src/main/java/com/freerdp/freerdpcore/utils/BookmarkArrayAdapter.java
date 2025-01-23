@@ -49,9 +49,9 @@ public class BookmarkArrayAdapter extends ArrayAdapter<BookmarkBase>
 		}
 
 		BookmarkBase bookmark = getItem(position);
-		TextView label = (TextView)curView.findViewById(R.id.bookmark_text1);
-		TextView hostname = (TextView)curView.findViewById(R.id.bookmark_text2);
-		ImageView star_icon = (ImageView)curView.findViewById(R.id.bookmark_icon2);
+		TextView label = curView.findViewById(R.id.bookmark_text1);
+		TextView hostname = curView.findViewById(R.id.bookmark_text2);
+		ImageView star_icon = curView.findViewById(R.id.bookmark_icon2);
 		assert label != null;
 		assert hostname != null;
 
