@@ -1344,6 +1344,6 @@ public class ScrollView2D extends FrameLayout
 
 	// interface to receive notifications when the view is scrolled
 	public interface ScrollView2DListener {
-		abstract void onScrollChanged(ScrollView2D scrollView, int x, int y, int oldx, int oldy);
+		void onScrollChanged(ScrollView2D scrollView, int x, int y, int oldx, int oldy);
 	}
 }

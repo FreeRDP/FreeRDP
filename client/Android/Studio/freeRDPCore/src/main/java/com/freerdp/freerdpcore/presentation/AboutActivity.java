@@ -31,7 +31,7 @@ public class AboutActivity extends AppCompatActivity
 	{
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_about);
-		mWebView = (WebView)findViewById(R.id.activity_about_webview);
+		mWebView = findViewById(R.id.activity_about_webview);
 	}
 
 	@Override protected void onResume()

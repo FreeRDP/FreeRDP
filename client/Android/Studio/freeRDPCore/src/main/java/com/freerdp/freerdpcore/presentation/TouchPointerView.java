@@ -52,12 +52,12 @@ public class TouchPointerView extends ImageView
 	private static final float SCROLL_DELTA = 10.0f;
 	private static final int DEFAULT_TOUCH_POINTER_RESTORE_DELAY = 150;
 	private RectF pointerRect;
-	private RectF pointerAreaRects[] = new RectF[9];
+	private final RectF[] pointerAreaRects = new RectF[9];
 	private Matrix translationMatrix;
 	private boolean pointerMoving = false;
 	private boolean pointerScrolling = false;
 	private TouchPointerListener listener = null;
-	private UIHandler uiHandler = new UIHandler();
+	private final UIHandler uiHandler = new UIHandler();
 	// gesture detection
 	private GestureDetector gestureDetector;
 	public TouchPointerView(Context context)
@@ -174,18 +174,14 @@ public class TouchPointerView extends ImageView
 	{
 		RectF transRect = new RectF(pointerAreaRects[area]);
 		translationMatrix.mapRect(transRect);
-		if (transRect.contains(event.getX(), event.getY()))
-			return true;
-		return false;
+		return transRect.contains(event.getX(), event.getY());
 	}
 
 	private boolean pointerTouched(MotionEvent event)
 	{
 		RectF transRect = new RectF(pointerRect);
 		translationMatrix.mapRect(transRect);
-		if (transRect.contains(event.getX(), event.getY()))
-			return true;
-		return false;
+		return transRect.contains(event.getX(), event.getY());
 	}
 
 	@Override public boolean onTouchEvent(MotionEvent event)
@@ -205,21 +201,21 @@ public class TouchPointerView extends ImageView
 
 	// touch pointer listener - is triggered if an action field is
 	public interface TouchPointerListener {
-		abstract void onTouchPointerClose();
+		void onTouchPointerClose();
 
-		abstract void onTouchPointerLeftClick(int x, int y, boolean down);
+		void onTouchPointerLeftClick(int x, int y, boolean down);
 
-		abstract void onTouchPointerRightClick(int x, int y, boolean down);
+		void onTouchPointerRightClick(int x, int y, boolean down);
 
-		abstract void onTouchPointerMove(int x, int y);
+		void onTouchPointerMove(int x, int y);
 
-		abstract void onTouchPointerScroll(boolean down);
+		void onTouchPointerScroll(boolean down);
 
-		abstract void onTouchPointerToggleKeyboard();
+		void onTouchPointerToggleKeyboard();
 
-		abstract void onTouchPointerToggleExtKeyboard();
+		void onTouchPointerToggleExtKeyboard();
 
-		abstract void onTouchPointerResetScrollZoom();
+		void onTouchPointerResetScrollZoom();
 	}
 
 	private class UIHandler extends Handler

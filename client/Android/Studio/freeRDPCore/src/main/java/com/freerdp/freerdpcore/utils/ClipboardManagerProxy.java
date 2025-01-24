@@ -26,7 +26,8 @@ public abstract class ClipboardManagerProxy
 
 	public abstract void getPrimaryClipManually();
 
-	public static interface OnClipboardChangedListener {
+	public interface OnClipboardChangedListener
+	{
 		void onClipboardChanged(String data);
 	}
 
@@ -59,7 +60,7 @@ public abstract class ClipboardManagerProxy
 	private static class HCClipboardManager
 	    extends ClipboardManagerProxy implements ClipboardManager.OnPrimaryClipChangedListener
 	{
-		private ClipboardManager mClipboardManager;
+		private final ClipboardManager mClipboardManager;
 		private OnClipboardChangedListener mListener;
 
 		public HCClipboardManager(Context ctx)

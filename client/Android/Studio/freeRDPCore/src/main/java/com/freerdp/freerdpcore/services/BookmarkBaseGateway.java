@@ -25,7 +25,7 @@ import java.util.ArrayList;
 public abstract class BookmarkBaseGateway
 {
 	private final static String TAG = "BookmarkBaseGateway";
-	private SQLiteOpenHelper bookmarkDB;
+	private final SQLiteOpenHelper bookmarkDB;
 
 	private static final String JOIN_PREFIX = "join_";
 	private static final String KEY_BOOKMARK_ID = "bookmarkId";

@@ -111,7 +111,7 @@ public class BookmarkDB extends SQLiteOpenHelper
 		{
 			if (i != 0)
 				buf.append(delim);
-			buf.append((String)list.get(i));
+			buf.append(list.get(i));
 		}
 		return buf.toString();
 	}

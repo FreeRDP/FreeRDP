@@ -255,13 +255,13 @@ public class SessionActivity extends AppCompatActivity
 			    }
 		    });
 
-		sessionView = (SessionView)findViewById(R.id.sessionView);
+		sessionView = findViewById(R.id.sessionView);
 		sessionView.setScaleGestureDetector(
 		    new ScaleGestureDetector(this, new PinchZoomListener()));
 		sessionView.setSessionViewListener(this);
 		sessionView.requestFocus();
 
-		touchPointerView = (TouchPointerView)findViewById(R.id.touchPointerView);
+		touchPointerView = findViewById(R.id.touchPointerView);
 		touchPointerView.setTouchPointerListener(this);
 
 		keyboardMapper = new KeyboardMapper();
@@ -274,20 +274,20 @@ public class SessionActivity extends AppCompatActivity
 		cursorKeyboard = new Keyboard(getApplicationContext(), R.xml.cursor_keyboard);
 
 		// hide keyboard below the sessionView
-		keyboardView = (KeyboardView)findViewById(R.id.extended_keyboard);
+		keyboardView = findViewById(R.id.extended_keyboard);
 		keyboardView.setKeyboard(specialkeysKeyboard);
 		keyboardView.setOnKeyboardActionListener(this);
 
-		modifiersKeyboardView = (KeyboardView)findViewById(R.id.extended_keyboard_header);
+		modifiersKeyboardView = findViewById(R.id.extended_keyboard_header);
 		modifiersKeyboardView.setKeyboard(modifiersKeyboard);
 		modifiersKeyboardView.setOnKeyboardActionListener(this);
 
-		scrollView = (ScrollView2D)findViewById(R.id.sessionScrollView);
+		scrollView = findViewById(R.id.sessionScrollView);
 		scrollView.setScrollViewListener(this);
 		uiHandler = new UIHandler();
 		libFreeRDPBroadcastReceiver = new LibFreeRDPBroadcastReceiver();
 
-		zoomControls = (ZoomControls)findViewById(R.id.zoomControls);
+		zoomControls = findViewById(R.id.zoomControls);
 		zoomControls.hide();
 		zoomControls.setOnZoomInClickListener(new View.OnClickListener() {
 			@Override public void onClick(View v)
@@ -313,7 +313,7 @@ public class SessionActivity extends AppCompatActivity
 		// register freerdp events broadcast receiver
 		IntentFilter filter = new IntentFilter();
 		filter.addAction(GlobalApp.ACTION_EVENT_FREERDP);
-		registerReceiver(libFreeRDPBroadcastReceiver, filter);
+		registerReceiver(libFreeRDPBroadcastReceiver, filter, RECEIVER_EXPORTED);
 
 		mClipboardManager = ClipboardManagerProxy.getClipboardManager(this);
 		mClipboardManager.addClipboardChangedListener(this);
@@ -501,8 +501,8 @@ public class SessionActivity extends AppCompatActivity
 
 	static class ConnectThread extends Thread
 	{
-		private SessionState runnableSession;
-		private Context context;
+		private final SessionState runnableSession;
+		private final Context context;
 
 		public ConnectThread(@NonNull Context context, @NonNull SessionState session)
 		{
@@ -1161,10 +1161,13 @@ public class SessionActivity extends AppCompatActivity
 	{
 		int mappedX = (int)((float)(x + scrollView.getScrollX()) / sessionView.getZoom());
 		int mappedY = (int)((float)(y + scrollView.getScrollY()) / sessionView.getZoom());
-		if (mappedX > bitmap.getWidth())
-			mappedX = bitmap.getWidth();
-		if (mappedY > bitmap.getHeight())
-			mappedY = bitmap.getHeight();
+		if (bitmap != null)
+		{
+			if (mappedX > bitmap.getWidth())
+				mappedX = bitmap.getWidth();
+			if (mappedY > bitmap.getHeight())
+				mappedY = bitmap.getHeight();
+		}
 		return new Point(mappedX, mappedY);
 	}
 

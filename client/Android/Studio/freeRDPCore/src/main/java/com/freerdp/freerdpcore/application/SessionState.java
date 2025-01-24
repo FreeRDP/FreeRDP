@@ -34,9 +34,9 @@ public class SessionState implements Parcelable
 			    return new SessionState[size];
 		    }
 	    };
-	private long instance;
-	private BookmarkBase bookmark;
-	private Uri openUri;
+	private final long instance;
+	private final BookmarkBase bookmark;
+	private final Uri openUri;
 	private BitmapDrawable surface;
 	private LibFreeRDP.UIEventListener uiEventListener;
 

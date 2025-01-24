@@ -25,7 +25,7 @@ import java.util.ArrayList;
 public class QuickConnectHistoryGateway
 {
 	private final static String TAG = "QuickConnectHistoryGateway";
-	private SQLiteOpenHelper historyDB;
+	private final SQLiteOpenHelper historyDB;
 
 	public QuickConnectHistoryGateway(SQLiteOpenHelper historyDB)
 	{

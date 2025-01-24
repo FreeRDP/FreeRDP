@@ -25,6 +25,6 @@ public class ScreenReceiver extends BroadcastReceiver
 		if (intent.getAction().equals(Intent.ACTION_SCREEN_OFF))
 			app.startDisconnectTimer();
 		else if (intent.getAction().equals(Intent.ACTION_SCREEN_ON))
-			app.cancelDisconnectTimer();
+			GlobalApp.cancelDisconnectTimer();
 	}
 }

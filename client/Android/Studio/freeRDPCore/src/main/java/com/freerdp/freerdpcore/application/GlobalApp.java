@@ -74,7 +74,7 @@ public class GlobalApp extends Application implements LibFreeRDP.EventListener
 		{
 			// start disconnect timeout...
 			disconnectTimer = new Timer();
-			disconnectTimer.schedule(new DisconnectTask(), timeoutMinutes * 60 * 1000);
+			disconnectTimer.schedule(new DisconnectTask(), (long)timeoutMinutes * 60 * 1000);
 		}
 	}
 
@@ -148,7 +148,7 @@ public class GlobalApp extends Application implements LibFreeRDP.EventListener
 		// http://thinkandroid.wordpress.com/2010/01/24/handling-screen-off-and-screen-on-intents/
 		IntentFilter filter = new IntentFilter(Intent.ACTION_SCREEN_ON);
 		filter.addAction(Intent.ACTION_SCREEN_OFF);
-		registerReceiver(new ScreenReceiver(), filter);
+		registerReceiver(new ScreenReceiver(), filter, RECEIVER_EXPORTED);
 	}
 
 	// helper to send FreeRDP notifications

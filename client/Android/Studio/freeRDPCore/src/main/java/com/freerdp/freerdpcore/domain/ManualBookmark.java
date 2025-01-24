@@ -40,7 +40,7 @@ public class ManualBookmark extends BookmarkBase
 		hostname = parcel.readString();
 		port = parcel.readInt();
 
-		enableGatewaySettings = (parcel.readInt() == 1 ? true : false);
+		enableGatewaySettings = (parcel.readInt() == 1);
 		gatewaySettings = parcel.readParcelable(GatewaySettings.class.getClassLoader());
 	}
 

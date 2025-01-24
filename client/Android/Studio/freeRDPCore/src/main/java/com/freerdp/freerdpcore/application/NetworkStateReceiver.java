@@ -17,6 +17,8 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+
 public class NetworkStateReceiver extends BroadcastReceiver
 {
 
@@ -34,8 +36,13 @@ public class NetworkStateReceiver extends BroadcastReceiver
 		        info.getType() != ConnectivityManager.TYPE_WIMAX);
 	}
 
-	@Override public void onReceive(Context context, Intent intent)
+	@Override public void onReceive(@NonNull Context context, @NonNull Intent intent)
 	{
+		String action = intent.getAction();
+		if (!action.equals("android.net.conn.CONNECTIVITY_CHANGE"))
+		{
+			return;
+		}
 
 		// check if we are connected via 3g or wlan
 		if (intent.getExtras() != null)
@@ -44,15 +51,18 @@ public class NetworkStateReceiver extends BroadcastReceiver
 			    (NetworkInfo)intent.getExtras().get(ConnectivityManager.EXTRA_NETWORK_INFO);
 
 			// are we connected at all?
-			if (info != null && info.isConnected())
+			if (info != null)
 			{
-				// see if we are connected through 3G or WiFi
-				Log.d("app", "Connected via type " + info.getTypeName());
-				GlobalApp.ConnectedTo3G = (info.getType() != ConnectivityManager.TYPE_WIFI &&
-				                           info.getType() != ConnectivityManager.TYPE_WIMAX);
-			}
+				if (info.isConnected())
+				{
+					// see if we are connected through 3G or WiFi
+					Log.d("app", "Connected via type " + info.getTypeName());
+					GlobalApp.ConnectedTo3G = (info.getType() != ConnectivityManager.TYPE_WIFI &&
+					                           info.getType() != ConnectivityManager.TYPE_WIMAX);
+				}
 
-			Log.v("NetworkState", info.toString());
+				Log.v("NetworkState", info.toString());
+			}
 		}
 	}
 }

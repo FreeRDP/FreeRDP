@@ -59,7 +59,7 @@ public class LibFreeRDP
 			}
 			catch (UnsatisfiedLinkError e)
 			{
-				Log.e(TAG, "Failed to load library " + lib + ": " + e.toString());
+				Log.e(TAG, "Failed to load library " + lib + ": " + e);
 				success = false;
 				break;
 			}
@@ -111,7 +111,7 @@ public class LibFreeRDP
 		}
 		catch (UnsatisfiedLinkError e)
 		{
-			Log.e(TAG, "Failed to load library: " + e.toString());
+			Log.e(TAG, "Failed to load library: " + e);
 			throw e;
 		}
 	}
@@ -260,7 +260,7 @@ public class LibFreeRDP
 		String hostname = bookmark.<ManualBookmark>get().getHostname();
 
 		args.add("/v:" + hostname);
-		args.add("/port:" + String.valueOf(port));
+		args.add("/port:" + port);
 
 		arg = bookmark.getUsername();
 		if (!arg.isEmpty())
@@ -280,7 +280,7 @@ public class LibFreeRDP
 
 		args.add(
 		    String.format("/size:%dx%d", screenSettings.getWidth(), screenSettings.getHeight()));
-		args.add("/bpp:" + String.valueOf(screenSettings.getColors()));
+		args.add("/bpp:" + screenSettings.getColors());
 
 		if (advanced.getConsoleMode())
 		{
@@ -380,7 +380,7 @@ public class LibFreeRDP
 		/* 0 ... local
 		   1 ... remote
 		   2 ... disable */
-		args.add("/audio-mode:" + String.valueOf(advanced.getRedirectSound()));
+		args.add("/audio-mode:" + advanced.getRedirectSound());
 		if (advanced.getRedirectSound() == 0)
 		{
 			args.add("/sound");
@@ -420,7 +420,7 @@ public class LibFreeRDP
 		int port = openUri.getPort();
 		if (hostname != null)
 		{
-			hostname = hostname + ((port == -1) ? "" : (":" + String.valueOf(port)));
+			hostname = hostname + ((port == -1) ? "" : (":" + port));
 			args.add("/v:" + hostname);
 		}
 
@@ -636,7 +636,8 @@ public class LibFreeRDP
 		return freerdp_get_version();
 	}
 
-	public static interface EventListener {
+	public interface EventListener
+	{
 		void OnPreConnect(long instance);
 
 		void OnConnectionSuccess(long instance);
@@ -648,7 +649,8 @@ public class LibFreeRDP
 		void OnDisconnected(long instance);
 	}
 
-	public static interface UIEventListener {
+	public interface UIEventListener
+	{
 		void OnSettingsChanged(int width, int height, int bpp);
 
 		boolean OnAuthenticate(StringBuilder username, StringBuilder domain,
