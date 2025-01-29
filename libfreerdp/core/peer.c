@@ -258,7 +258,8 @@ static BOOL freerdp_peer_initialize(freerdp_peer* client)
 		return FALSE;
 	}
 
-	if (freerdp_settings_get_bool(settings, FreeRDP_RdpSecurity))
+	if (freerdp_settings_get_bool(settings, FreeRDP_RdpSecurity) &&
+		freerdp_settings_get_uint32(settings, FreeRDP_EncryptionLevel) != ENCRYPTION_LEVEL_NONE)
 	{
 
 		if (!freerdp_certificate_is_rdp_security_compatible(cert))
