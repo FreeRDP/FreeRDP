@@ -102,10 +102,10 @@ static void libavcodec_destroy_encoder_context(H264_CONTEXT* WINPR_RESTRICT h264
 
 	if (sys->codecEncoderContext)
 	{
-		avcodec_close(sys->codecEncoderContext);
 #if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(55, 69, 100)
 		avcodec_free_context(&sys->codecEncoderContext);
 #else
+		avcodec_close(sys->codecEncoderContext);
 		av_free(sys->codecEncoderContext);
 #endif
 	}
@@ -293,15 +293,17 @@ static int libavcodec_decompress(H264_CONTEXT* WINPR_RESTRICT h264,
 
 	sys->videoFrame->format = AV_PIX_FMT_YUV420P;
 
-	do
-	{
 #ifdef WITH_VAAPI
 		status = avcodec_receive_frame(sys->codecDecoderContext,
 		                               sys->hwctx ? sys->hwVideoFrame : sys->videoFrame);
 #else
 		status = avcodec_receive_frame(sys->codecDecoderContext, sys->videoFrame);
 #endif
-	} while (status == AVERROR(EAGAIN));
+	    if (status == AVERROR(EAGAIN))
+	    {
+		    rc = 0;
+		    goto fail;
+	    }
 
 	gotFrame = (status == 0);
 #else
@@ -594,10 +596,10 @@ static void libavcodec_uninit(H264_CONTEXT* h264)
 
 	if (sys->codecDecoderContext)
 	{
-		avcodec_close(sys->codecDecoderContext);
 #if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(55, 69, 100)
 		avcodec_free_context(&sys->codecDecoderContext);
 #else
+		avcodec_close(sys->codecDecoderContext);
 		av_free(sys->codecDecoderContext);
 #endif
 	}
