@@ -65,7 +65,9 @@ static const char* openh264_library_names[] = {
 #elif defined(__APPLE__)
 	"libopenh264.dylib"
 #else
-	"libopenh264.so"
+	"libopenh264.so.7",     "libopenh264.so.2.5.0", "libopenh264.so.2.4.1", "libopenh264.so.2.4.0",
+	"libopenh264.so.2.3.1", "libopenh264.so.2.3.0", "libopenh264.so",
+
 #endif
 };
 #endif
