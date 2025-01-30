@@ -206,6 +206,7 @@ cp %{_topdir}/SOURCES/source_version freerdp-nightly-%{version}/.source_version
     -DWITH_SERVER=ON \
     -DWITH_CAIRO=ON \
     -DBUILD_TESTING=ON \
+    -DCMAKE_CTEST_ARGUMENTS="-DExperimentalTest;--output-on-failure;--no-compress-output" \
     -DCMAKE_BUILD_TYPE=RelWithDebInfo \
     -DCMAKE_INSTALL_PREFIX=%{INSTALL_PREFIX} \
     -DCMAKE_INSTALL_LIBDIR=%{_lib}
