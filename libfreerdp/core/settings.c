@@ -933,6 +933,7 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	    !freerdp_settings_set_uint32(settings, FreeRDP_GatewayPort, 443) ||
 	    !freerdp_settings_set_bool(settings, FreeRDP_DesktopResize, TRUE) ||
 	    !freerdp_settings_set_bool(settings, FreeRDP_ToggleFullscreen, TRUE) ||
+	    !freerdp_settings_set_bool(settings, FreeRDP_MinimizeHotkey, TRUE) ||
 	    !freerdp_settings_set_uint32(settings, FreeRDP_DesktopPosX, UINT32_MAX) ||
 	    !freerdp_settings_set_uint32(settings, FreeRDP_DesktopPosY, UINT32_MAX) ||
 	    !freerdp_settings_set_bool(settings, FreeRDP_SoftwareGdi, TRUE) ||

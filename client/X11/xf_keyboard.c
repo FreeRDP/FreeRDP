@@ -640,8 +640,10 @@ BOOL xf_keyboard_handle_special_keys(xfContext* xfc, KeySym keysym)
 		{
 			case XK_m:
 			case XK_M:
-				xf_minimize(xfc);
-				return TRUE;
+				if(freerdp_settings_get_bool(xfc->common.context.settings, FreeRDP_MinimizeHotkey)) {
+					xf_minimize(xfc);
+					return TRUE;
+				}
 			case XK_c:
 			case XK_C:
 				/* Ctrl-Alt-C: toggle control */

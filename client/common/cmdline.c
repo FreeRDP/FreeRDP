@@ -5241,6 +5241,11 @@ static int freerdp_client_settings_parse_command_line_arguments_int(
 			if (!freerdp_settings_set_bool(settings, FreeRDP_ToggleFullscreen, enable))
 				return fail_at(arg, COMMAND_LINE_ERROR);
 		}
+		CommandLineSwitchCase(arg, "minimize-hotkey")
+		{
+			if (!freerdp_settings_set_bool(settings, FreeRDP_MinimizeHotkey, enable))
+				return fail_at(arg, COMMAND_LINE_ERROR);
+		}
 		CommandLineSwitchCase(arg, "force-console-callbacks")
 		{
 			if (!freerdp_settings_set_bool(settings, FreeRDP_UseCommonStdioCallbacks, enable))

@@ -104,6 +104,7 @@ static const size_t bool_list_indices[] = {
 	FreeRDP_LongCredentialsSupported,
 	FreeRDP_LyncRdpMode,
 	FreeRDP_MaximizeShell,
+	FreeRDP_MinimizeHotkey,
 	FreeRDP_MouseAttached,
 	FreeRDP_MouseHasWheel,
 	FreeRDP_MouseMotion,
