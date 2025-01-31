@@ -435,33 +435,6 @@ autodetect_on_connect_time_auto_detect_progress_default(rdpAutoDetect* autodetec
 	return autodetect->state;
 }
 
-static BOOL autodetect_send_netchar_sync(rdpAutoDetect* autodetect, RDP_TRANSPORT_TYPE transport,
-                                         UINT16 sequenceNumber)
-{
-	wStream* s = NULL;
-
-	WINPR_ASSERT(autodetect);
-	WINPR_ASSERT(autodetect->context);
-	WINPR_ASSERT(autodetect->context->rdp);
-
-	/* Send the response PDU to the server */
-	s = rdp_message_channel_pdu_init(autodetect->context->rdp);
-
-	if (!s)
-		return FALSE;
-
-	WLog_Print(autodetect->log, WLOG_TRACE,
-	           "sending Network Characteristics Sync PDU -> bandwidth=%" PRIu32 ", rtt=%" PRIu32 "",
-	           autodetect->netCharBandwidth, autodetect->netCharAverageRTT);
-	Stream_Write_UINT8(s, 0x0E);                            /* headerLength (1 byte) */
-	Stream_Write_UINT8(s, TYPE_ID_AUTODETECT_RESPONSE);     /* headerTypeId (1 byte) */
-	Stream_Write_UINT16(s, sequenceNumber);                 /* sequenceNumber (2 bytes) */
-	Stream_Write_UINT16(s, RDP_NETCHAR_SYNC_RESPONSE_TYPE); /* responseType (1 byte) */
-	Stream_Write_UINT32(s, autodetect->netCharBandwidth);   /* bandwidth (4 bytes) */
-	Stream_Write_UINT32(s, autodetect->netCharAverageRTT);  /* rtt (4 bytes) */
-	return rdp_send_message_channel_pdu(autodetect->context->rdp, s, SEC_AUTODETECT_RSP);
-}
-
 static BOOL autodetect_recv_rtt_measure_request(rdpAutoDetect* autodetect,
                                                 RDP_TRANSPORT_TYPE transport, wStream* s,
                                                 const AUTODETECT_REQ_PDU* autodetectReqPdu)

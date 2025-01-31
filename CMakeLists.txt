@@ -199,146 +199,14 @@ if(BUILD_TESTING_INTERNAL)
   add_compile_definitions(BUILD_TESTING_INTERNAL)
 elseif(BUILD_TESTING)
   set(EXPORT_ALL_SYMBOLS OFF CACHE BOOL "testing default" FORCE)
-else()
-  option(EXPORT_ALL_SYMBOLS "Export all symbols form library" OFF)
 endif()
 
-if(EXPORT_ALL_SYMBOLS)
-  #	set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
-  add_compile_definitions(EXPORT_ALL_SYMBOLS)
-endif(EXPORT_ALL_SYMBOLS)
-
-# Compiler-specific flags
-if(CMAKE_COMPILER_IS_GNUCC)
-  if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64" OR CMAKE_SYSTEM_PROCESSOR MATCHES "i686")
-    check_symbol_exists(__x86_64__ "" IS_X86_64)
-    if(IS_X86_64)
-      set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
-    else()
-      set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -march=i686")
-    endif()
-  endif()
-
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
-
-  if(NOT EXPORT_ALL_SYMBOLS)
-    message(STATUS "GCC default symbol visibility: hidden")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fvisibility=hidden")
-  endif()
-  check_c_compiler_flag(-Wimplicit-function-declaration Wimplicit-function-declaration)
-  if(Wimplicit-function-declaration)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wimplicit-function-declaration")
-  endif()
-
-  if(NOT OPENBSD)
-    check_c_compiler_flag(-Wredundant-decls Wredundant-decls)
-    if(Wredundant-decls)
-      set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wredundant-decls")
-    endif()
-  endif()
-  add_compile_definitions("$<$<CONFIG:Release>:NDEBUG>")
-  add_compile_definitions("$<$<CONFIG:MinSizeRel>:NDEBUG>")
-  add_compile_options("$<$<CONFIG:RelWithDebInfo>:-g>")
-  add_compile_options("$<$<CONFIG:Debug>:-g>")
-endif()
+include(ExportAllSymbols)
 
 set(THREAD_PREFER_PTHREAD_FLAG TRUE)
 
 if(NOT IOS)
   find_package(Threads REQUIRED)
-endif()
-
-# Enable address sanitizer, where supported and when required
-if(CMAKE_COMPILER_IS_CLANG OR CMAKE_COMPILER_IS_GNUCC)
-  set(CMAKE_REQUIRED_LINK_OPTIONS_SAVED ${CMAKE_REQUIRED_LINK_OPTIONS})
-  file(WRITE ${PROJECT_BINARY_DIR}/foo.txt "")
-  if(WITH_SANITIZE_ADDRESS)
-    list(APPEND CMAKE_REQUIRED_LINK_OPTIONS "-fsanitize=address")
-    check_c_compiler_flag("-fsanitize=address" fsanitize-address)
-    check_c_compiler_flag("-fsanitize-blacklist=${PROJECT_BINARY_DIR}/foo.txt" fsanitize-blacklist)
-    check_c_compiler_flag("-fsanitize-address-use-after-scope" fsanitize-address-use-after-scope)
-
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address")
-    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -fsanitize=address")
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=address")
-
-    if(fsanitize-blacklist)
-      set(CMAKE_C_FLAGS
-          "${CMAKE_C_FLAGS} -fsanitize-blacklist=${PROJECT_SOURCE_DIR}/scripts/blacklist-address-sanitizer.txt"
-      )
-    endif(fsanitize-blacklist)
-
-    if(fsanitize-address-use-after-scope)
-      set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize-address-use-after-scope")
-    endif(fsanitize-address-use-after-scope)
-  elseif(WITH_SANITIZE_MEMORY)
-    list(APPEND CMAKE_REQUIRED_LINK_OPTIONS "-fsanitize=memory")
-    check_c_compiler_flag("-fsanitize=memory" fsanitize-memory)
-    check_c_compiler_flag("-fsanitize-blacklist=${PROJECT_BINARY_DIR}/foo.txt" fsanitize-blacklist)
-    check_c_compiler_flag("-fsanitize-memory-use-after-dtor" fsanitize-memory-use-after-dtor)
-    check_c_compiler_flag("-fsanitize-memory-track-origins" fsanitize-memory-track-origins)
-
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=memory")
-    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -fsanitize=memory")
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=memory")
-
-    if(fsanitize-blacklist)
-      set(CMAKE_C_FLAGS
-          "${CMAKE_C_FLAGS} -fsanitize-blacklist=${PROJECT_SOURCE_DIR}/scripts/blacklist-memory-sanitizer.txt"
-      )
-    endif(fsanitize-blacklist)
-
-    if(fsanitize-memory-use-after-dtor)
-      set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize-memory-use-after-dtor")
-    endif(fsanitize-memory-use-after-dtor)
-
-    if(fsanitize-memory-track-origins)
-      set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize-memory-track-origins")
-    endif(fsanitize-memory-track-origins)
-  elseif(WITH_SANITIZE_THREAD)
-    list(APPEND CMAKE_REQUIRED_LINK_OPTIONS "-fsanitize=thread")
-    check_c_compiler_flag("-fsanitize=thread" fsanitize-thread)
-    check_c_compiler_flag("-fsanitize-blacklist=${PROJECT_BINARY_DIR}/foo.txt" fsanitize-blacklist)
-
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=thread")
-    if(fsanitize-blacklist)
-      set(CMAKE_C_FLAGS
-          "${CMAKE_C_FLAGS} -fsanitize-blacklist=${PROJECT_SOURCE_DIR}/scripts/blacklist-thread-sanitizer.txt"
-      )
-    endif(fsanitize-blacklist)
-    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -fsanitize=thread")
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=thread")
-  endif()
-
-  file(REMOVE ${PROJECT_BINARY_DIR}/foo.txt)
-  set(CMAKE_REQUIRED_LINK_OPTIONS ${CMAKE_REQUIRED_LINK_OPTIONS_SAVED})
-
-  option(WITH_NO_UNDEFINED "compile with -Wl,--no-undefined" OFF)
-  if(WITH_NO_UNDEFINED)
-    check_c_compiler_flag(-Wl,--no-undefined no-undefined)
-
-    if(no-undefined)
-      set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--no-undefined")
-      set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--no-undefined")
-    endif()
-  endif()
-endif()
-
-if(MSVC)
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /Gd")
-
-  set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR})
-  set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR})
-
-  add_compile_options("$<$<CONFIG:Release>:/Zi>")
-
-  add_compile_definitions(_CRT_NONSTDC_NO_DEPRECATE)
-endif()
-
-if(ANDROID)
-  # workaround for https://github.com/android-ndk/ndk/issues/243
-  string(REPLACE "-g " "" CMAKE_C_FLAGS ${CMAKE_C_FLAGS})
-  set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -g")
 endif()
 
 if(WIN32)
@@ -449,12 +317,6 @@ if(ANDROID)
       ${PROJECT_SOURCE_DIR}/scripts/gprof_generate.sh.in ${PROJECT_BINARY_DIR}/scripts/gprof_generate.sh @ONLY
     )
   endif(WITH_GPROF)
-endif()
-
-if(WITH_VALGRIND_MEMCHECK)
-  check_include_files(valgrind/memcheck.h FREERDP_HAVE_VALGRIND_MEMCHECK_H)
-else()
-  unset(FREERDP_HAVE_VALGRIND_MEMCHECK_H CACHE)
 endif()
 
 if(UNIX OR CYGWIN)
@@ -637,15 +499,6 @@ if(NOT DEFINED PROXY_PLUGINDIR)
   set(FREERDP_PROXY_PLUGINDIR "${FREERDP_PLUGIN_PATH}/proxy/")
 else()
   set(FREERDP_PROXY_PLUGINDIR "${PROXY_PLUGINDIR}")
-endif()
-
-# Android profiling
-if(ANDROID)
-  if(WITH_GPROF)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pg")
-    set(PROFILER_LIBRARIES "${FREERDP_EXTERNAL_PROFILER_PATH}/obj/local/${ANDROID_ABI}/libandroid-ndk-profiler.a")
-    include_directories(SYSTEM "${FREERDP_EXTERNAL_PROFILER_PATH}")
-  endif()
 endif()
 
 # Unit Tests

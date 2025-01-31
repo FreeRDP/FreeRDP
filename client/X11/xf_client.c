@@ -1151,20 +1151,16 @@ static void xf_button_map_init(xfContext* xfc)
  */
 static BOOL xf_pre_connect(freerdp* instance)
 {
-	rdpChannels* channels = NULL;
-	rdpSettings* settings = NULL;
-	rdpContext* context = NULL;
-	xfContext* xfc = NULL;
 	UINT32 maxWidth = 0;
 	UINT32 maxHeight = 0;
 
 	WINPR_ASSERT(instance);
 
-	context = instance->context;
-	xfc = (xfContext*)instance->context;
+	rdpContext* context = instance->context;
 	WINPR_ASSERT(context);
+	xfContext* xfc = (xfContext*)context;
 
-	settings = context->settings;
+	rdpSettings* settings = context->settings;
 	WINPR_ASSERT(settings);
 
 	if (!freerdp_settings_set_bool(settings, FreeRDP_CertificateCallbackPreferPEM, TRUE))
@@ -1175,9 +1171,6 @@ static BOOL xf_pre_connect(freerdp* instance)
 		if (!xf_setup_x11(xfc))
 			return FALSE;
 	}
-
-	channels = context->channels;
-	WINPR_ASSERT(channels);
 
 	if (!freerdp_settings_set_uint32(settings, FreeRDP_OsMajorType, OSMAJORTYPE_UNIX))
 		return FALSE;

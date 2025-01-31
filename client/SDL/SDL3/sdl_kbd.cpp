@@ -185,7 +185,6 @@ static const scancode_entry_t map[] = {
 	ENTRY(SDL_SCANCODE_AC_FORWARD, RDP_SCANCODE_BROWSER_FORWARD),
 	ENTRY(SDL_SCANCODE_AC_STOP, RDP_SCANCODE_BROWSER_STOP),
 
-#if 1 // TODO: unmapped
 	ENTRY(SDL_SCANCODE_NONUSHASH, RDP_SCANCODE_UNKNOWN),
 	ENTRY(SDL_SCANCODE_APPLICATION, RDP_SCANCODE_UNKNOWN),
 	ENTRY(SDL_SCANCODE_POWER, RDP_SCANCODE_UNKNOWN),
@@ -280,7 +279,6 @@ static const scancode_entry_t map[] = {
 	ENTRY(SDL_SCANCODE_MEDIA_EJECT, RDP_SCANCODE_UNKNOWN),
 	ENTRY(SDL_SCANCODE_MEDIA_REWIND, RDP_SCANCODE_UNKNOWN),
 	ENTRY(SDL_SCANCODE_MEDIA_FAST_FORWARD, RDP_SCANCODE_UNKNOWN)
-#endif
 };
 
 static UINT32 sdl_get_kbd_flags()
@@ -390,17 +388,6 @@ uint32_t sdlInput::prefToMask()
 	return mod;
 }
 
-static const char* sdl_scancode_name(Uint32 scancode)
-{
-	for (const auto& cur : map)
-	{
-		if (cur.sdl == scancode)
-			return cur.sdl_name;
-	}
-
-	return "SDL_SCANCODE_UNKNOWN";
-}
-
 static Uint32 sdl_scancode_val(const char* scancodeName)
 {
 	for (const auto& cur : map)
@@ -410,28 +397,6 @@ static Uint32 sdl_scancode_val(const char* scancodeName)
 	}
 
 	return SDL_SCANCODE_UNKNOWN;
-}
-
-static const char* sdl_rdp_scancode_name(UINT32 scancode)
-{
-	for (const auto& cur : map)
-	{
-		if (cur.rdp == scancode)
-			return cur.rdp_name;
-	}
-
-	return "RDP_SCANCODE_UNKNOWN";
-}
-
-static UINT32 sdl_rdp_scancode_val(const char* scancodeName)
-{
-	for (const auto& cur : map)
-	{
-		if (strcmp(cur.rdp_name, scancodeName) == 0)
-			return cur.rdp;
-	}
-
-	return RDP_SCANCODE_UNKNOWN;
 }
 
 static UINT32 sdl_scancode_to_rdp(Uint32 scancode)

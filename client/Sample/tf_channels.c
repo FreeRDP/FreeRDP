@@ -32,12 +32,6 @@
 #include "tf_channels.h"
 #include "tf_freerdp.h"
 
-static UINT tf_update_surfaces(RdpgfxClientContext* context)
-{
-	WINPR_UNUSED(context);
-	return CHANNEL_RC_OK;
-}
-
 void tf_OnChannelConnectedEventHandler(void* context, const ChannelConnectedEventArgs* e)
 {
 	tfContext* tf = (tfContext*)context;

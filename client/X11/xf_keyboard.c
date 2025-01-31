@@ -117,18 +117,14 @@ static BOOL xf_action_script_append(xfContext* xfc, const char* buffer, size_t s
 
 static BOOL xf_keyboard_action_script_init(xfContext* xfc)
 {
-	wObject* obj = NULL;
-	const rdpSettings* settings = NULL;
-
-	settings = xfc->common.context.settings;
-	WINPR_ASSERT(settings);
+	WINPR_ASSERT(xfc);
 
 	xfc->keyCombinations = ArrayList_New(TRUE);
 
 	if (!xfc->keyCombinations)
 		return FALSE;
 
-	obj = ArrayList_Object(xfc->keyCombinations);
+	wObject* obj = ArrayList_Object(xfc->keyCombinations);
 	WINPR_ASSERT(obj);
 	obj->fnObjectNew = winpr_ObjectStringClone;
 	obj->fnObjectFree = winpr_ObjectStringFree;
