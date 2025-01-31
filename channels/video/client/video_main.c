@@ -185,13 +185,9 @@ static PresentationContext* PresentationContext_new(VideoClientContext* video, B
                                                     UINT32 x, UINT32 y, UINT32 width, UINT32 height)
 {
 	size_t s = 4ULL * width * height;
-	VideoClientContextPriv* priv = NULL;
 	PresentationContext* ret = NULL;
 
 	WINPR_ASSERT(video);
-
-	priv = video->priv;
-	WINPR_ASSERT(priv);
 
 	if (s > INT32_MAX)
 		return NULL;
