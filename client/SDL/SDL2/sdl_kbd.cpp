@@ -416,17 +416,6 @@ uint32_t sdlInput::prefToMask()
 	return mod;
 }
 
-static const char* sdl_scancode_name(Uint32 scancode)
-{
-	for (const auto& cur : map)
-	{
-		if (cur.sdl == scancode)
-			return cur.sdl_name;
-	}
-
-	return "SDL_SCANCODE_UNKNOWN";
-}
-
 static Uint32 sdl_scancode_val(const char* scancodeName)
 {
 	for (const auto& cur : map)
@@ -436,28 +425,6 @@ static Uint32 sdl_scancode_val(const char* scancodeName)
 	}
 
 	return SDL_SCANCODE_UNKNOWN;
-}
-
-static const char* sdl_rdp_scancode_name(UINT32 scancode)
-{
-	for (const auto& cur : map)
-	{
-		if (cur.rdp == scancode)
-			return cur.rdp_name;
-	}
-
-	return "RDP_SCANCODE_UNKNOWN";
-}
-
-static UINT32 sdl_rdp_scancode_val(const char* scancodeName)
-{
-	for (const auto& cur : map)
-	{
-		if (strcmp(cur.rdp_name, scancodeName) == 0)
-			return cur.rdp;
-	}
-
-	return RDP_SCANCODE_UNKNOWN;
 }
 
 static UINT32 sdl_scancode_to_rdp(Uint32 scancode)
