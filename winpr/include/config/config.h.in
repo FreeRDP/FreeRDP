@@ -44,7 +44,7 @@
 #cmakedefine WITH_DEBUG_MUTEX
 
 #cmakedefine WINPR_UTILS_IMAGE_WEBP /** @since version 3.3.0 */
-#cmakedefine WINPR_UTILS_IMAGE_PNG /** @since version 3.3.0 */
+#cmakedefine WINPR_UTILS_IMAGE_PNG  /** @since version 3.3.0 */
 #cmakedefine WINPR_UTILS_IMAGE_JPEG /** @since version 3.3.0 */
 
 #endif /* WINPR_CONFIG_H */
