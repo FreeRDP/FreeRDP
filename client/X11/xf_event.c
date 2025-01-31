@@ -194,20 +194,14 @@ static BOOL xf_action_script_append(xfContext* xfc, const char* buffer, size_t s
 
 BOOL xf_event_action_script_init(xfContext* xfc)
 {
-	wObject* obj = NULL;
-	const rdpSettings* settings = NULL;
-
 	WINPR_ASSERT(xfc);
-
-	settings = xfc->common.context.settings;
-	WINPR_ASSERT(settings);
 
 	xfc->xevents = ArrayList_New(TRUE);
 
 	if (!xfc->xevents)
 		return FALSE;
 
-	obj = ArrayList_Object(xfc->xevents);
+	wObject* obj = ArrayList_Object(xfc->xevents);
 	WINPR_ASSERT(obj);
 	obj->fnObjectNew = winpr_ObjectStringClone;
 	obj->fnObjectFree = winpr_ObjectStringFree;

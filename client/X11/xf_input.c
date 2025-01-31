@@ -223,14 +223,10 @@ static BOOL register_raw_events(xfContext* xfc, Window window)
 
 static BOOL register_device_events(xfContext* xfc, Window window)
 {
-	XIEventMask mask;
+	XIEventMask mask = { 0 };
 	unsigned char mask_bytes[XIMaskLen(XI_LASTEVENT)] = { 0 };
-	rdpSettings* settings = NULL;
 
 	WINPR_ASSERT(xfc);
-
-	settings = xfc->common.context.settings;
-	WINPR_ASSERT(settings);
 
 	XISetMask(mask_bytes, XI_DeviceChanged);
 	XISetMask(mask_bytes, XI_HierarchyChanged);
@@ -750,8 +746,6 @@ static int xf_input_pens_unhover(xfContext* xfc)
 
 int xf_input_event(xfContext* xfc, const XEvent* xevent, XIDeviceEvent* event, int evtype)
 {
-	const rdpSettings* settings = NULL;
-
 	WINPR_ASSERT(xfc);
 	WINPR_ASSERT(xevent);
 	WINPR_ASSERT(event);
@@ -760,9 +754,6 @@ int xf_input_event(xfContext* xfc, const XEvent* xevent, XIDeviceEvent* event, i
 	 * filter out anything else, like floatbar window events
 	 */
 	const Window w = xevent->xany.window;
-
-	settings = xfc->common.context.settings;
-	WINPR_ASSERT(settings);
 
 	xfWindow* window = xfc->window;
 	if (window)
