@@ -72,6 +72,7 @@ const char* freerdp_passphrase_read(rdpContext* context, const char* prompt, cha
 #include <stdio.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <sys/wait.h>
 #include <termios.h>
 #include <unistd.h>
 #include <freerdp/utils/signal.h>
