@@ -18,12 +18,47 @@ jobs:
         usesh: true
         copyback: false
         prepare: |
-          pkg install -y cmake ninja krb5-devel json-c \
-            libcjson fdk-aac libsoxr sdl2 sdl3 sdl2_ttf sdl2_image opus \
-            png webp openjpeg libjpeg-turbo opensc v4l_compat libv4l uriparser \
-            pkcs11-helper ffmpeg pulseaudio pcsc-lite cups opencl openssl111 \
-            gsm influxpkg-config icu fusefs-libs3 ccache opencl-clang-llvm15 faac faad2 \
-            opus-tools openh264 alsa-lib cairo ocl-icd
+          pkg install -y \
+            cmake \
+            ninja \
+            krb5-devel \
+            json-c \
+            libcjson \
+            fdk-aac \
+            libsoxr \
+            sdl2 \
+            sdl3 \
+            sdl2_ttf \
+            sdl2_image \
+            opus \
+            png \
+            webp \
+            openjpeg \
+            libjpeg-turbo \
+            opensc \
+            v4l_compat \
+            libv4l \
+            uriparser \
+            pkcs11-helper \
+            ffmpeg \
+            pulseaudio \
+            pcsc-lite \
+            cups \
+            opencl \
+            openssl34 \
+            gsm \
+            influxpkg-config \
+            icu \
+            fusefs-libs3 \
+            ccache \
+            opencl-clang-llvm15 \
+            faac \
+            faad2 \
+            opus-tools \
+            openh264 \
+            alsa-lib \
+            cairo \
+            ocl-icd
 
         run: |
           export LD_LIBRARY_PATH=/usr/lib/clang/18/lib/freebsd
