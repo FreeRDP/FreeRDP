@@ -202,23 +202,6 @@ static BOOL requested_format_replace(RequestedFormat** ppRequestedFormat, UINT32
 	return TRUE;
 }
 
-static BOOL requested_format_matches(const RequestedFormat* pRequestedFormat, UINT32 formatId,
-                                     const char* formatName)
-{
-	if (!pRequestedFormat)
-		return FALSE;
-	if (pRequestedFormat->formatToRequest != formatId)
-		return FALSE;
-	if (formatName || pRequestedFormat->formatName)
-	{
-		if (!formatName || !pRequestedFormat->formatName)
-			return FALSE;
-		if (strcmp(formatName, pRequestedFormat->formatName) != 0)
-			return FALSE;
-	}
-	return TRUE;
-}
-
 static void xf_cached_data_free(void* ptr)
 {
 	xfCachedData* cached_data = ptr;
@@ -1037,22 +1020,6 @@ static void xf_cliprdr_process_requested_data(xfClipboard* clipboard, BOOL hasDa
 
 	xf_cliprdr_send_data_response(clipboard, format, pDstData, DstSize);
 	free(pDstData);
-}
-
-static BOOL xf_add_input_flags(xfClipboard* clipboard, long mask)
-{
-	WINPR_ASSERT(clipboard);
-
-	xfContext* xfc = clipboard->xfc;
-	WINPR_ASSERT(xfc);
-
-	XWindowAttributes attr = { 0 };
-	XGetWindowAttributes(xfc->display, xfc->drawable, &attr);
-	if ((attr.all_event_masks & mask) == 0)
-		clipboard->event_mask = attr.all_event_masks;
-
-	XSelectInput(xfc->display, xfc->drawable, attr.all_event_masks | mask);
-	return TRUE;
 }
 
 static BOOL xf_restore_input_flags(xfClipboard* clipboard)
