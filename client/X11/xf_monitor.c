@@ -242,7 +242,9 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 
 		XFree(screenInfo);
 	}
-
+#else
+	{
+	}
 #endif
 
 	rdpMonitor* rdpmonitors = calloc(vscreen->nmonitors + 1, sizeof(rdpMonitor));
