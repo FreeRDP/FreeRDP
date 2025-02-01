@@ -242,8 +242,12 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 
 		XFree(screenInfo);
 	}
-
+	else
 #endif
+	{
+		/* Both XRandR and Xinerama are either not compiled in or are not working, do nothing.
+		 */
+	}
 
 	rdpMonitor* rdpmonitors = calloc(vscreen->nmonitors + 1, sizeof(rdpMonitor));
 	if (!rdpmonitors)
