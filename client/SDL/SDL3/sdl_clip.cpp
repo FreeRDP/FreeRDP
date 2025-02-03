@@ -160,11 +160,15 @@ bool sdlClip::handle_update(const SDL_ClipboardEvent& ev)
 {
 	if (!_ctx || !_sync || ev.owner)
 	{
-		if (ev.owner)
+		/* TODO: Hack to identify our own updates */
+		if (ev.owner && (ev.reserved == 0x42))
 		{
-			return SDL_SetClipboardData(sdlClip::ClipDataCb, sdlClip::ClipCleanCb, this,
-			                            ev.mime_types,
-			                            WINPR_ASSERTING_INT_CAST(size_t, ev.num_mime_types));
+			_cache_data.clear();
+			auto rc =
+			    SDL_SetClipboardData(sdlClip::ClipDataCb, sdlClip::ClipCleanCb, this, ev.mime_types,
+			                         WINPR_ASSERTING_INT_CAST(size_t, ev.num_mime_types));
+			_current_mimetypes.clear();
+			return rc;
 		}
 		return true;
 	}
@@ -305,6 +309,7 @@ UINT sdlClip::SendClientCapabilities()
 void sdlClip::clearServerFormats()
 {
 	_serverFormats.clear();
+	_cache_data.clear();
 	cliprdr_file_context_clear(_file);
 }
 
@@ -511,6 +516,9 @@ UINT sdlClip::ReceiveServerFormatList(CliprdrClientContext* context,
 	ev.clipboard.num_mime_types =
 	    WINPR_ASSERTING_INT_CAST(Sint32, clipboard->_current_mimetypes.size());
 	ev.clipboard.mime_types = clipboard->_current_mimetypes.data();
+
+	/* TODO: Hack to identify our own updates */
+	ev.clipboard.reserved = 0x42;
 	auto rc = (SDL_PushEvent(&ev) == 1);
 	return clipboard->SendFormatListResponse(rc);
 }
@@ -815,7 +823,6 @@ void sdlClip::ClipCleanCb(void* userdata)
 	ClipboardLockGuard give_me_a_name(clip->_system);
 	std::lock_guard<CriticalSection> lock(clip->_lock);
 	ClipboardEmpty(clip->_system);
-	clip->_cache_data.clear();
 }
 
 bool sdlClip::mime_is_file(const std::string& mime)
