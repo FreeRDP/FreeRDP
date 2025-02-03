@@ -748,15 +748,7 @@ const void* sdlClip::ClipDataCb(void* userdata, const char* mime_type, size_t* s
 	{
 		HANDLE hdl[2] = { freerdp_abort_event(clip->_sdl->context()), clip->_event };
 
-		// Unlock the sdl->critical lock or we'll deadlock with the FreeRDP thread
-		// when it pushes events (like end_paint).
-		// we can safely do that here as we're called from the SDL thread
-		SdlContext* sdl = clip->_sdl;
-		sdl->critical.unlock();
-
 		DWORD status = WaitForMultipleObjects(ARRAYSIZE(hdl), hdl, FALSE, 10 * 1000);
-
-		sdl->critical.lock();
 
 		if (status != WAIT_OBJECT_0 + 1)
 		{
