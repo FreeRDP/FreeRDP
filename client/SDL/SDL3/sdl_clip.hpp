@@ -153,4 +153,5 @@ class sdlClip
 		std::shared_ptr<void> ptr;
 	};
 	std::map<std::string, cache_entry> _cache_data;
+	std::vector<const char*> _current_mimetypes;
 };

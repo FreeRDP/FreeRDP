@@ -159,7 +159,15 @@ BOOL sdlClip::uninit(CliprdrClientContext* clip)
 bool sdlClip::handle_update(const SDL_ClipboardEvent& ev)
 {
 	if (!_ctx || !_sync || ev.owner)
+	{
+		if (ev.owner)
+		{
+			return SDL_SetClipboardData(sdlClip::ClipDataCb, sdlClip::ClipCleanCb, this,
+			                            ev.mime_types,
+			                            WINPR_ASSERTING_INT_CAST(size_t, ev.num_mime_types));
+		}
 		return true;
+	}
 
 	clearServerFormats();
 
@@ -273,8 +281,7 @@ UINT sdlClip::MonitorReady(CliprdrClientContext* context, const CLIPRDR_MONITOR_
 		return ret;
 
 	clipboard->_sync = true;
-	SDL_ClipboardEvent ev = { SDL_EVENT_CLIPBOARD_UPDATE, 0, 0, false, 0, nullptr };
-	if (!clipboard->handle_update(ev))
+	if (!sdl_push_user_event(SDL_EVENT_CLIPBOARD_UPDATE))
 		return ERROR_INTERNAL_ERROR;
 
 	return CHANNEL_RC_OK;
@@ -475,29 +482,36 @@ UINT sdlClip::ReceiveServerFormatList(CliprdrClientContext* context,
 		}
 	}
 
-	std::vector<const char*> mimetypes;
+	clipboard->_current_mimetypes.clear();
 	if (text)
 	{
-		mimetypes.insert(mimetypes.end(), s_mime_text().begin(), s_mime_text().end());
+		clipboard->_current_mimetypes.insert(clipboard->_current_mimetypes.end(),
+		                                     s_mime_text().begin(), s_mime_text().end());
 	}
 	if (image)
 	{
-		mimetypes.insert(mimetypes.end(), s_mime_bitmap().begin(), s_mime_bitmap().end());
-		mimetypes.insert(mimetypes.end(), s_mime_image().begin(), s_mime_image().end());
+		clipboard->_current_mimetypes.insert(clipboard->_current_mimetypes.end(),
+		                                     s_mime_bitmap().begin(), s_mime_bitmap().end());
+		clipboard->_current_mimetypes.insert(clipboard->_current_mimetypes.end(),
+		                                     s_mime_image().begin(), s_mime_image().end());
 	}
 	if (html)
 	{
-		mimetypes.push_back(s_mime_html);
+		clipboard->_current_mimetypes.push_back(s_mime_html);
 	}
 	if (file)
 	{
-		mimetypes.push_back(s_mime_uri_list);
-		mimetypes.push_back(s_mime_gnome_copied_files);
-		mimetypes.push_back(s_mime_mate_copied_files);
+		clipboard->_current_mimetypes.push_back(s_mime_uri_list);
+		clipboard->_current_mimetypes.push_back(s_mime_gnome_copied_files);
+		clipboard->_current_mimetypes.push_back(s_mime_mate_copied_files);
 	}
 
-	const bool rc = SDL_SetClipboardData(sdlClip::ClipDataCb, sdlClip::ClipCleanCb, clipboard,
-	                                     mimetypes.data(), mimetypes.size());
+	SDL_Event ev = { SDL_EVENT_CLIPBOARD_UPDATE };
+	ev.clipboard.owner = true;
+	ev.clipboard.num_mime_types =
+	    WINPR_ASSERTING_INT_CAST(Sint32, clipboard->_current_mimetypes.size());
+	ev.clipboard.mime_types = clipboard->_current_mimetypes.data();
+	auto rc = (SDL_PushEvent(&ev) == 1);
 	return clipboard->SendFormatListResponse(rc);
 }
 
@@ -741,6 +755,8 @@ const void* sdlClip::ClipDataCb(void* userdata, const char* mime_type, size_t* s
 		}
 
 		uint32_t formatID = clip->serverIdForMime(mime_type);
+		WLog_Print(clip->_log, WLOG_INFO, "requesting format %s [0x%08" PRIx32 "]", mime_type,
+		           formatID);
 		if (clip->SendDataRequest(formatID, mime_type))
 			return nullptr;
 	}

@@ -270,6 +270,7 @@ BOOL sdl_push_user_event(Uint32 type, ...)
 		case SDL_EVENT_USER_QUIT:
 		case SDL_EVENT_USER_POINTER_NULL:
 		case SDL_EVENT_USER_POINTER_DEFAULT:
+		case SDL_EVENT_CLIPBOARD_UPDATE:
 			break;
 		default:
 			va_end(ap);
