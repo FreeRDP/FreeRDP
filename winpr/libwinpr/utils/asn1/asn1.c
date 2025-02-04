@@ -1081,7 +1081,7 @@ static size_t WinPrAsn1DecReadMemoryChunkLike(WinPrAsn1Decoder* dec, WinPrAsn1_t
 	ret += len;
 
 	target->len = len;
-	if (allocate)
+	if (allocate && (len > 0))
 	{
 		target->data = malloc(len);
 		if (!target->data)

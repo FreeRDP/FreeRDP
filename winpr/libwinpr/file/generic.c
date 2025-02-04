@@ -474,13 +474,13 @@ BOOL WINAPI GetFileAttributesExA(LPCSTR lpFileName, GET_FILEEX_INFO_LEVELS fInfo
                                  LPVOID lpFileInformation)
 {
 	LPWIN32_FILE_ATTRIBUTE_DATA fd = lpFileInformation;
-	WIN32_FIND_DATAA findFileData;
-	HANDLE hFind = NULL;
+	WIN32_FIND_DATAA findFileData = { 0 };
 
 	if (!fd)
 		return FALSE;
 
-	if ((hFind = FindFirstFileA(lpFileName, &findFileData)) == INVALID_HANDLE_VALUE)
+	HANDLE hFind = FindFirstFileA(lpFileName, &findFileData);
+	if (hFind == INVALID_HANDLE_VALUE)
 		return FALSE;
 
 	FindClose(hFind);
@@ -514,10 +514,10 @@ BOOL WINAPI GetFileAttributesExW(LPCWSTR lpFileName, GET_FILEEX_INFO_LEVELS fInf
 
 DWORD WINAPI GetFileAttributesA(LPCSTR lpFileName)
 {
-	WIN32_FIND_DATAA findFileData;
-	HANDLE hFind = NULL;
+	WIN32_FIND_DATAA findFileData = { 0 };
+	HANDLE hFind = FindFirstFileA(lpFileName, &findFileData);
 
-	if ((hFind = FindFirstFileA(lpFileName, &findFileData)) == INVALID_HANDLE_VALUE)
+	if (hFind == INVALID_HANDLE_VALUE)
 		return INVALID_FILE_ATTRIBUTES;
 
 	FindClose(hFind);
@@ -1217,6 +1217,7 @@ BOOL FindClose(HANDLE hFindFile)
 	if (pFileSearch->pDir)
 		closedir(pFileSearch->pDir);
 
+	// NOLINTNEXTLINE(clang-analyzer-unix.Malloc)
 	free(pFileSearch);
 	return TRUE;
 }

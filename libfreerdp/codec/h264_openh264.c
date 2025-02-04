@@ -152,9 +152,9 @@ static int openh264_decompress(H264_CONTEXT* WINPR_RESTRICT h264,
 #endif
 
 	pSystemBuffer = &sBufferInfo.UsrData.sSystemBuffer;
-	iStride[0] = pSystemBuffer->iStride[0];
-	iStride[1] = pSystemBuffer->iStride[1];
-	iStride[2] = pSystemBuffer->iStride[1];
+	iStride[0] = WINPR_ASSERTING_INT_CAST(uint32_t, pSystemBuffer->iStride[0]);
+	iStride[1] = WINPR_ASSERTING_INT_CAST(uint32_t, pSystemBuffer->iStride[1]);
+	iStride[2] = WINPR_ASSERTING_INT_CAST(uint32_t, pSystemBuffer->iStride[1]);
 
 	if (sBufferInfo.iBufferStatus != 1)
 	{
@@ -254,13 +254,15 @@ static int openh264_compress(H264_CONTEXT* WINPR_RESTRICT h264,
 		sys->EncParamExt.iUsageType = usageType;
 		sys->EncParamExt.iPicWidth = WINPR_ASSERTING_INT_CAST(int, h264->width);
 		sys->EncParamExt.iPicHeight = WINPR_ASSERTING_INT_CAST(int, h264->height);
-		sys->EncParamExt.fMaxFrameRate = WINPR_ASSERTING_INT_CAST(int, h264->FrameRate);
+		sys->EncParamExt.fMaxFrameRate = WINPR_ASSERTING_INT_CAST(short, h264->FrameRate);
 		sys->EncParamExt.iMaxBitrate = UNSPECIFIED_BIT_RATE;
 		sys->EncParamExt.bEnableDenoise = 0;
 		sys->EncParamExt.bEnableLongTermReference = 0;
 		sys->EncParamExt.iSpatialLayerNum = 1;
-		sys->EncParamExt.iMultipleThreadIdc = (int)h264->NumberOfThreads;
-		sys->EncParamExt.sSpatialLayers[0].fFrameRate = h264->FrameRate;
+		sys->EncParamExt.iMultipleThreadIdc =
+		    WINPR_ASSERTING_INT_CAST(unsigned short, h264->NumberOfThreads);
+		sys->EncParamExt.sSpatialLayers[0].fFrameRate =
+		    WINPR_ASSERTING_INT_CAST(short, h264->FrameRate);
 		sys->EncParamExt.sSpatialLayers[0].iVideoWidth = sys->EncParamExt.iPicWidth;
 		sys->EncParamExt.sSpatialLayers[0].iVideoHeight = sys->EncParamExt.iPicHeight;
 		sys->EncParamExt.sSpatialLayers[0].iMaxSpatialBitrate = sys->EncParamExt.iMaxBitrate;
@@ -279,6 +281,8 @@ static int openh264_compress(H264_CONTEXT* WINPR_RESTRICT h264,
 				sys->EncParamExt.iRCMode = RC_OFF_MODE;
 				sys->EncParamExt.sSpatialLayers[0].iDLayerQp = (int)h264->QP;
 				sys->EncParamExt.bEnableFrameSkip = 0;
+				break;
+			default:
 				break;
 		}
 
@@ -338,9 +342,9 @@ static int openh264_compress(H264_CONTEXT* WINPR_RESTRICT h264,
 					}
 				}
 
-				if (sys->EncParamExt.fMaxFrameRate != (int)h264->FrameRate)
+				if ((uint32_t)sys->EncParamExt.fMaxFrameRate != h264->FrameRate)
 				{
-					sys->EncParamExt.fMaxFrameRate = (int)h264->FrameRate;
+					sys->EncParamExt.fMaxFrameRate = WINPR_ASSERTING_INT_CAST(int, h264->FrameRate);
 
 					WINPR_ASSERT((*sys->pEncoder)->SetOption);
 					status = (*sys->pEncoder)
@@ -375,6 +379,8 @@ static int openh264_compress(H264_CONTEXT* WINPR_RESTRICT h264,
 					}
 				}
 
+				break;
+			default:
 				break;
 		}
 	}
@@ -621,9 +627,9 @@ static BOOL openh264_init(H264_CONTEXT* h264)
 					goto EXCEPTION;
 				}
 
-				status =
-				    (*sys->pDecoder)
-				        ->SetOption(sys->pDecoder, DECODER_OPTION_TRACE_CALLBACK_CONTEXT, &h264);
+				status = (*sys->pDecoder)
+				             ->SetOption(sys->pDecoder, DECODER_OPTION_TRACE_CALLBACK_CONTEXT,
+				                         (void*)&h264);
 
 				if (status != 0)
 				{
@@ -634,9 +640,9 @@ static BOOL openh264_init(H264_CONTEXT* h264)
 					goto EXCEPTION;
 				}
 
-				status =
-				    (*sys->pDecoder)
-				        ->SetOption(sys->pDecoder, DECODER_OPTION_TRACE_CALLBACK, &traceCallback);
+				status = (*sys->pDecoder)
+				             ->SetOption(sys->pDecoder, DECODER_OPTION_TRACE_CALLBACK,
+				                         (void*)&traceCallback);
 
 				if (status != 0)
 				{
