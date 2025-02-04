@@ -750,9 +750,11 @@ static BOOL request_file_size_async(CliprdrFileContext* file_context, CliprdrFus
 		HashTable_Remove(file_context->request_table, (void*)(uintptr_t)fuse_request->stream_id);
 		return FALSE;
 	}
+	// NOLINTNEXTLINE(clang-analyzer-unix.Malloc)
 	DEBUG_CLIPRDR(file_context->log, "Requested file size for file \"%s\" with stream id %u",
 	              fuse_file->filename, fuse_request->stream_id);
 
+	// NOLINTNEXTLINE(clang-analyzer-unix.Malloc)
 	return TRUE;
 }
 

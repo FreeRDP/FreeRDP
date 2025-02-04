@@ -757,10 +757,8 @@ static SSIZE_T freerdp_client_rdp_file_add_line(rdpFile* file)
 
 	while ((file->lineCount + 1) > file->lineSize)
 	{
-		size_t new_size = 0;
-		rdpFileLine* new_line = NULL;
-		new_size = file->lineSize * 2;
-		new_line = (rdpFileLine*)realloc(file->lines, new_size * sizeof(rdpFileLine));
+		size_t new_size = file->lineCount + 2048;
+		rdpFileLine* new_line = (rdpFileLine*)realloc(file->lines, new_size * sizeof(rdpFileLine));
 
 		if (!new_line)
 			return -1;

@@ -207,15 +207,13 @@ static const char* freerdp_passphrase_read_tty(rdpContext* context, const char* 
 	}
 
 	if (terminal_fildes != STDIN_FILENO)
-	{
-		if (fclose(fp) == -1)
-			goto error;
-	}
+		(void)fclose(fp);
 
 	return buf;
 
 error:
 {
+	// NOLINTNEXTLINE(clang-analyzer-unix.Stream)
 	int saved_errno = errno;
 	if (terminal_needs_reset)
 		(void)tcsetattr(terminal_fildes, TCSAFLUSH, &orig_flags);
@@ -225,9 +223,11 @@ error:
 		if (fp)
 			(void)fclose(fp);
 	}
+	// NOLINTNEXTLINE(clang-analyzer-unix.Stream)
 	errno = saved_errno;
-	return NULL;
 }
+
+	return NULL;
 }
 
 static const char* freerdp_passphrase_read_askpass(const char* prompt, char* buf, size_t bufsiz,

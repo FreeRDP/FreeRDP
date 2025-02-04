@@ -92,6 +92,10 @@ static BOOL similarRGB(size_t y, const BYTE* src, const BYTE* dst, size_t size, 
 			              "[%s] Color value  mismatch R[%02X %02X], G[%02X %02X], B[%02X %02X] at "
 			              "position %" PRIuz "\n",
 			              use444 ? "AVC444" : "AVC420", sR, dR, sG, dG, sA, dA, x);
+			(void)fprintf(stderr,
+			              "[%s] Color value  mismatch Y[%02X %02X], U[%02X %02X], V[%02X %02X] at "
+			              "position %" PRIuz "\n",
+			              use444 ? "AVC444" : "AVC420", sY, dY, sU, dU, sV, dV, x);
 			return FALSE;
 		}
 
