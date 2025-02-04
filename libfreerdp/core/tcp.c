@@ -1102,8 +1102,6 @@ static int get_next_addrinfo(rdpContext* context, struct addrinfo* input, struct
 			const int family = (IPvX == 4) ? AF_INET : AF_INET6;
 			while (addr && (addr->ai_family != family))
 				addr = addr->ai_next;
-			if (!addr)
-				goto fail;
 		}
 		break;
 		default:
