@@ -245,7 +245,7 @@ static INLINE INT32 planar_decompress_plane_rle_only(const BYTE* WINPR_RESTRICT 
 	for (UINT32 y = 0; y < nHeight; y++)
 	{
 		BYTE* dstp = &pDstData[1ULL * (y)*nWidth];
-		BYTE pixel = 0;
+		INT16 pixel = 0;
 		BYTE* currentScanline = dstp;
 
 		for (UINT32 x = 0; x < nWidth;)
@@ -286,7 +286,7 @@ static INLINE INT32 planar_decompress_plane_rle_only(const BYTE* WINPR_RESTRICT 
 				{
 					pixel = *srcp;
 					srcp++;
-					*dstp = pixel;
+					*dstp = clamp(pixel);
 					dstp++;
 					x++;
 					cRawBytes--;
@@ -294,7 +294,7 @@ static INLINE INT32 planar_decompress_plane_rle_only(const BYTE* WINPR_RESTRICT 
 
 				while (nRunLength > 0)
 				{
-					*dstp = pixel;
+					*dstp = clamp(pixel);
 					dstp++;
 					x++;
 					nRunLength--;
@@ -303,7 +303,6 @@ static INLINE INT32 planar_decompress_plane_rle_only(const BYTE* WINPR_RESTRICT 
 			else
 			{
 				/* delta values relative to previous scanline */
-				INT16 p = 0;
 				while (cRawBytes > 0)
 				{
 					UINT8 deltaValue = *srcp;
@@ -313,15 +312,16 @@ static INLINE INT32 planar_decompress_plane_rle_only(const BYTE* WINPR_RESTRICT 
 					{
 						deltaValue = deltaValue >> 1;
 						deltaValue = deltaValue + 1;
-						p = WINPR_ASSERTING_INT_CAST(int16_t, -1 * (int16_t)deltaValue);
+						pixel = WINPR_ASSERTING_INT_CAST(int16_t, -1 * (int16_t)deltaValue);
 					}
 					else
 					{
 						deltaValue = deltaValue >> 1;
-						p = WINPR_ASSERTING_INT_CAST(INT16, deltaValue);
+						pixel = WINPR_ASSERTING_INT_CAST(INT16, deltaValue);
 					}
 
-					const INT16 delta = WINPR_ASSERTING_INT_CAST(int16_t, previousScanline[x] + p);
+					const INT16 delta =
+					    WINPR_ASSERTING_INT_CAST(int16_t, previousScanline[x] + pixel);
 					*dstp = clamp(delta);
 					dstp++;
 					x++;
@@ -331,7 +331,7 @@ static INLINE INT32 planar_decompress_plane_rle_only(const BYTE* WINPR_RESTRICT 
 				while (nRunLength > 0)
 				{
 					const INT16 deltaValue =
-					    WINPR_ASSERTING_INT_CAST(int16_t, previousScanline[x] + p);
+					    WINPR_ASSERTING_INT_CAST(int16_t, previousScanline[x] + pixel);
 					*dstp = clamp(deltaValue);
 					dstp++;
 					x++;
