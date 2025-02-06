@@ -1,3 +1,41 @@
+# 2025-02-06 Version 3.11.0
+
+A new release with bugfixes and code cleanups as well as a few nifty little
+features that will improve your meetings.
+
+Noteworthy changes:
+ * Updated android client to more recent gradle (#11105, #11110)
+ * Fix cmake clean target (#109
+ * SDL3 bugfixes and API updates (#11092, #11093, #11128)
+ * Fix keyboard mapping, add working japanese and korean types, deprecate
+   obsolete functions (#10989, #11035, #11011, #11074, #11037)
+ * Fix timezone mapping and iteration (#11077, #11079, #11080, #11083)
+ * Fix YUV reverse filter for AVC444 modes (#11045, #11063, #11066, #11081, #11086,
+   #11087)
+ * Fix H.264 encoder wrapper issues (#11117, #11121, #11078)
+ * MS-RDPECAM: Support for H.264 encoding with VA-API (#10887)
+ * Fix various CMake, build script and github workflow issues (#10992, #10996,
+   #11020, #11031, #11030, #11062, #11064, #11069, #11073, #11123, #11109,
+   #11120, #11053, #11089)
+ * [codec,planar] fix decoder regression (#11033)
+ * [client,cmdline] fix vmconnect checks (#11051)
+ * Fix multi-monitor related checks (#11095)
+ * Fix various compiler and clang-tidy warnings (#10953, #11003, #11004,
+   #11007, #11016, #11018, #11019, #11021, #11017, #11000, #11023, #11024,
+   #11026, #11002, #11028, #11001, #11029, #10999, #11006, #11034, #10998,
+   #11044, #11050, #11052, #11057, #11059, #11065, #11067, #11068, #11060,
+   #11071, #11085, #11088, #11099, #11102, #11108, #11124, #11126, #11129,
+   #11130)
+
+New Contributors
+ * @chewi made their first contribution in https://github.com/FreeRDP/FreeRDP/pull/11004
+ * @gpotter2 made their first contribution in https://github.com/FreeRDP/FreeRDP/pull/11016
+ * @vmpn made their first contribution in https://github.com/FreeRDP/FreeRDP/pull/11092
+
+For a complete and detailed change log since the last release run:
+git log 3.11.0...3.10.3
+
+
 # 2024-12-17 Version 3.10.3
 
 Follow up release to 3.10.2, as we've discovered a few bugs after release.
