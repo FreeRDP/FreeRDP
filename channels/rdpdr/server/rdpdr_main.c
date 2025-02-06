@@ -86,6 +86,10 @@ static BOOL rdpdr_device_equal(const void* v1, const void* v2)
 {
 	const UINT32* p1 = (const UINT32*)v1;
 	const UINT32* p2 = (const UINT32*)v2;
+	if (!p1 && !p2)
+		return TRUE;
+	if (!p1 || !p2)
+		return FALSE;
 	return *p1 == *p2;
 }
 
