@@ -364,6 +364,7 @@ static BOOL nla_client_setup_identity(rdpNla* nla)
 	if (!settings->Username)
 	{
 		sspi_FreeAuthIdentity(nla->identity);
+		free(nla->identity);
 		nla->identity = NULL;
 	}
 	else if (settings->SmartcardLogon)
