@@ -1114,21 +1114,31 @@ SECURITY_STATUS SEC_ENTRY sspi_VerifySignature(PCtxtHandle phContext, PSecBuffer
 
 WINPR_PRAGMA_DIAG_POP
 
+static void zfree(WCHAR* str, size_t len, BOOL isWCHAR)
+{
+	if (str)
+		memset(str, 0, len * (isWCHAR ? sizeof(WCHAR) : sizeof(char)));
+	free(str);
+}
+
 void sspi_FreeAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity)
 {
 	if (!identity)
 		return;
-	free(identity->User);
-	identity->UserLength = (UINT32)0;
-	identity->User = NULL;
 
-	free(identity->Domain);
-	identity->DomainLength = (UINT32)0;
-	identity->Domain = NULL;
+	const BOOL wc = (identity->Flags & SEC_WINNT_AUTH_IDENTITY_UNICODE) != 0;
+	zfree(identity->User, identity->UserLength, wc);
+	zfree(identity->Domain, identity->DomainLength, wc);
 
-	if (identity->PasswordLength > 0)
-		memset(identity->Password, 0, identity->PasswordLength);
-	free(identity->Password);
-	identity->Password = NULL;
-	identity->PasswordLength = (UINT32)0;
+	/* identity->PasswordLength does have a dual use. In Pass The Hash (PTH) mode the maximum
+	 * password length (512) is added to the real length to mark this as a hash. when we free up
+	 * this field without removing these additional bytes we would corrupt the stack.
+	 */
+	size_t len = identity->PasswordLength;
+	if (len > SSPI_CREDENTIALS_HASH_LENGTH_OFFSET)
+		len -= SSPI_CREDENTIALS_HASH_LENGTH_OFFSET;
+	zfree(identity->Password, len, wc);
+
+	const SEC_WINNT_AUTH_IDENTITY empty = { 0 };
+	*identity = empty;
 }

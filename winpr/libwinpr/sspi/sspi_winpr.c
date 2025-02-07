@@ -347,7 +347,7 @@ static BOOL copy(WCHAR** dst, ULONG* dstLen, const WCHAR* what, size_t len)
 		return FALSE;
 
 	memcpy(*dst, what, len * sizeof(WCHAR));
-	*dstLen = (UINT32)len;
+	*dstLen = WINPR_ASSERTING_INT_CAST(UINT32, len);
 	return TRUE;
 }
 
