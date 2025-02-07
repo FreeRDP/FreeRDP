@@ -1,3 +1,14 @@
+# 2025-02-07 Version 3.11.1
+
+A bugfix release addressing two regressions reported against 3.11.0
+
+Noteworthy changes:
+ * Fix a segfault when passing /pth (#11138)
+ * Fix a regression in planar codec (#11136)
+
+For a complete and detailed change log since the last release run:
+git log 3.11.1...3.11.0
+
 # 2025-02-06 Version 3.11.0
 
 A new release with bugfixes and code cleanups as well as a few nifty little
