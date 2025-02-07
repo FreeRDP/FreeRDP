@@ -775,7 +775,7 @@ static void write_file_attributes(CliprdrFuseFile* fuse_file, struct stat* attr)
 	{
 		attr->st_mode = S_IFREG | (fuse_file->is_readonly ? 0444 : 0644);
 		attr->st_nlink = 1;
-		attr->st_size = WINPR_ASSERTING_INT_CAST(__off_t, fuse_file->size);
+		attr->st_size = WINPR_ASSERTING_INT_CAST(off_t, fuse_file->size);
 	}
 	attr->st_uid = getuid();
 	attr->st_gid = getgid();
