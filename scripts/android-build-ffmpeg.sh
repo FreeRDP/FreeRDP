@@ -122,11 +122,47 @@ function build {
         ${ARCH_OPTIONS} \
         --enable-cross-compile \
         --enable-pic \
-        --enable-jni --enable-mediacodec \
+        --enable-jni \
+	--enable-mediacodec \
         --enable-shared \
         --disable-vulkan \
         --disable-stripping \
-        --disable-programs --disable-doc --disable-avdevice --disable-avfilter --disable-avformat
+        --disable-programs \
+	--disable-doc \
+	--disable-avdevice \
+	--disable-avfilter \
+	--disable-avformat \
+	--disable-everything \
+	--enable-encoder=aac \
+	--enable-encoder=libfdk_aac \
+	--enable-encoder=libgsm \
+	--enable-encoder=libgsm_ms \
+	--enable-encoder=libopenh264 \
+	--enable-encoder=libopus \
+	--enable-encoder=pcm_alaw \
+	--enable-encoder=pcm_mulaw \
+	--enable-encoder=pcm_s16le \
+	--enable-encoder=pcm_u16le \
+	--enable-encoder=h264 \
+	--enable-encoder=h264_omx \
+	--enable-encoder=h264_mediacodec \
+	--enable-encoder=h264_vulkan \
+	--enable-decoder=aac \
+	--enable-decoder=aac_mediacodec \
+	--enable-decoder=adpcm_g722 \
+	--enable-decoder=adpcm_g726 \
+	--enable-decoder=adpcm_g726le \
+	--enable-decoder=gsm \
+	--enable-decoder=gsm_ms \
+	--enable-decoder=mp3 \
+	--enable-decoder=mp3_mediacodec \
+	--enable-decoder=h264 \
+	--enable-decoder=h264_mediacodec \
+	--enable-decoder=libopus \
+	--enable-decoder=pcm_alaw \
+	--enable-decoder=pcm_mulaw \
+	--enable-decoder=pcm_s16le \
+	--enable-decoder=pcm_u16le
 
     common_run make clean
     common_run make -j
