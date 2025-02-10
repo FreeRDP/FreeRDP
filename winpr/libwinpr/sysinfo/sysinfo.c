@@ -447,7 +447,11 @@ BOOL GetComputerNameA(LPSTR lpBuffer, LPDWORD lpnSize)
 	size_t length = strnlen(hostname, MAX_COMPUTERNAME_LENGTH);
 	const char* dot = strchr(hostname, '.');
 	if (dot)
-		length = WINPR_ASSERTING_INT_CAST(size_t, (dot - hostname));
+	{
+		const size_t dotlen = WINPR_ASSERTING_INT_CAST(size_t, (dot - hostname));
+		if (dotlen < length)
+			length = dotlen;
+	}
 
 	if ((*lpnSize <= (DWORD)length) || !lpBuffer)
 	{
