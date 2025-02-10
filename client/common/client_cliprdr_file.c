@@ -1664,14 +1664,6 @@ static BOOL cliprdr_file_content_changed_and_update(void* ihash, size_t hsize, c
 	return changed;
 }
 
-static BOOL cliprdr_file_server_content_changed_and_update(CliprdrFileContext* file,
-                                                           const void* data, size_t size)
-{
-	WINPR_ASSERT(file);
-	return cliprdr_file_content_changed_and_update(file->server_data_hash,
-	                                               sizeof(file->server_data_hash), data, size);
-}
-
 static BOOL cliprdr_file_client_content_changed_and_update(CliprdrFileContext* file,
                                                            const void* data, size_t size)
 {

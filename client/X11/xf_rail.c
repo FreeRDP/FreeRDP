@@ -173,12 +173,8 @@ void xf_rail_end_local_move(xfContext* xfc, xfAppWindow* appWindow)
 	unsigned int mask = 0;
 	Window root_window = 0;
 	Window child_window = 0;
-	rdpInput* input = NULL;
 
 	WINPR_ASSERT(xfc);
-
-	input = xfc->common.context.input;
-	WINPR_ASSERT(input);
 
 	if ((appWindow->local_move.direction == _NET_WM_MOVERESIZE_MOVE_KEYBOARD) ||
 	    (appWindow->local_move.direction == _NET_WM_MOVERESIZE_SIZE_KEYBOARD))

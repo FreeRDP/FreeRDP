@@ -254,20 +254,6 @@ BOOL audio_format_compatible(const AUDIO_FORMAT* with, const AUDIO_FORMAT* what)
 	return TRUE;
 }
 
-static BOOL audio_format_valid(const AUDIO_FORMAT* format)
-{
-	if (!format)
-		return FALSE;
-
-	if (format->nChannels == 0)
-		return FALSE;
-
-	if (format->nSamplesPerSec == 0)
-		return FALSE;
-
-	return TRUE;
-}
-
 AUDIO_FORMAT* audio_format_new(void)
 {
 	return audio_formats_new(1);

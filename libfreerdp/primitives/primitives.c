@@ -109,6 +109,7 @@ static BOOL primitives_init_optimized(primitives_t* prims)
 	return TRUE;
 }
 
+#if defined(HAVE_CPU_OPTIMIZED_PRIMITIVES) && defined(WITH_OPENCL)
 typedef struct
 {
 	BYTE* channels[3];
@@ -165,7 +166,6 @@ fail:
 	return ret;
 }
 
-#if defined(HAVE_CPU_OPTIMIZED_PRIMITIVES) && defined(WITH_OPENCL)
 static BOOL primitives_YUV_benchmark_run(primitives_YUV_benchmark* bench, primitives_t* prims,
                                          UINT64 runTime, UINT32* computations)
 {
