@@ -350,7 +350,10 @@ static LONG smartcard_ListReadersA_Call(scard_call_context* smartcard, wStream* 
 		return SCARD_F_UNKNOWN_ERROR;
 
 	if (status != SCARD_S_SUCCESS)
-		return scard_log_status_error(TAG, "SCardListReadersA", status);
+	{
+		(void)scard_log_status_error(TAG, "SCardListReadersA", status);
+		return smartcard_pack_list_readers_return(out, &ret, FALSE);
+	}
 
 	cchReaders = filter_device_by_name_a(smartcard->names, &mszReaders, cchReaders);
 	ret.msz = (BYTE*)mszReaders;
@@ -400,7 +403,10 @@ static LONG smartcard_ListReadersW_Call(scard_call_context* smartcard, wStream* 
 		return SCARD_F_UNKNOWN_ERROR;
 
 	if (status != SCARD_S_SUCCESS)
-		return scard_log_status_error(TAG, "SCardListReadersW", status);
+	{
+		(void)scard_log_status_error(TAG, "SCardListReadersW", status);
+		return smartcard_pack_list_readers_return(out, &ret, TRUE);
+	}
 
 	cchReaders = filter_device_by_name_w(smartcard->names, &mszReaders.pw, cchReaders);
 	ret.msz = mszReaders.pb;
