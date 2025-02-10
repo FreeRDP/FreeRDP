@@ -318,7 +318,7 @@ static BOOL get_devpath_from_device(libusb_device* device, char* path, size_t si
 	for (int i = 0; i < nPorts; i++)
 	{
 		int nChars = snprintf(path, size, "%" PRIu8, ports[i]);
-		if ((nChars <= 0) || (nChars >= size))
+		if ((nChars <= 0) || ((size_t)nChars >= size))
 			return FALSE;
 
 		size -= nChars;
