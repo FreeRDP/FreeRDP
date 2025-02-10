@@ -31,6 +31,7 @@ static const CAM_MEDIA_FORMAT_INFO supportedFormats[] = {
 /* inputFormat, outputFormat */
 #if defined(WITH_INPUT_FORMAT_H264)
 	{ CAM_MEDIA_FORMAT_H264, CAM_MEDIA_FORMAT_H264 }, /* passthrough */
+	{ CAM_MEDIA_FORMAT_MJPG_H264, CAM_MEDIA_FORMAT_H264 },
 #endif
 #if defined(WITH_INPUT_FORMAT_MJPG)
 	{ CAM_MEDIA_FORMAT_MJPG, CAM_MEDIA_FORMAT_H264 },
@@ -658,12 +659,6 @@ static UINT ecam_dev_on_data_received(IWTSVirtualChannelCallback* pChannelCallba
  */
 static UINT ecam_dev_on_open(IWTSVirtualChannelCallback* pChannelCallback)
 {
-	GENERIC_CHANNEL_CALLBACK* hchannel = (GENERIC_CHANNEL_CALLBACK*)pChannelCallback;
-	WINPR_ASSERT(hchannel);
-
-	CameraDevice* dev = (CameraDevice*)hchannel->plugin;
-	WINPR_ASSERT(dev);
-
 	WLog_DBG(TAG, "entered");
 	return CHANNEL_RC_OK;
 }

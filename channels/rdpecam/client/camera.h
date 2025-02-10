@@ -33,6 +33,7 @@
 #include <libavutil/imgutils.h>
 
 #include <winpr/wlog.h>
+#include <winpr/wtypes.h>
 
 #include <freerdp/api.h>
 #include <freerdp/types.h>
@@ -59,6 +60,12 @@
  * will fit in, even with highest resolution.
  */
 #define ECAM_SAMPLE_RESPONSE_BUFFER_SIZE (1024ULL * 4050ULL)
+
+/* Special format addition for CAM_MEDIA_FORMAT enum formats
+ * used to support H264 stream muxed in MJPG container stream.
+ * The value picked not to overlap with enum values
+ */
+#define CAM_MEDIA_FORMAT_MJPG_H264 0x0401
 
 typedef struct s_ICamHal ICamHal;
 
@@ -103,6 +110,11 @@ typedef struct
 	AVCodecContext* avContext;
 	AVPacket* avInputPkt;
 	AVFrame* avOutFrame;
+#endif
+
+#if defined(WITH_INPUT_FORMAT_H264)
+	size_t h264FrameMaxSize;
+	BYTE* h264Frame;
 #endif
 
 	/* sws_scale */
@@ -192,5 +204,6 @@ BOOL ecam_encoder_context_init(CameraDeviceStream* stream);
 BOOL ecam_encoder_context_free(CameraDeviceStream* stream);
 BOOL ecam_encoder_compress(CameraDeviceStream* stream, const BYTE* srcData, size_t srcSize,
                            BYTE** ppDstData, size_t* pDstSize);
+UINT32 h264_get_max_bitrate(UINT32 height);
 
 #endif /* FREERDP_CLIENT_CAMERA_H */
