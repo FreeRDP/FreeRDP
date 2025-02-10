@@ -60,14 +60,14 @@ struct LanguageIdentifier
 
 typedef struct
 {
-	DWORD code; /* Keyboard layout code */
+	INT64 code; /* Keyboard layout code */
 	DWORD id;   /* Keyboard variant ID */
 	char* name; /* Keyboard layout variant name */
 } RDP_KEYBOARD_LAYOUT_VARIANT;
 
 typedef struct
 {
-	DWORD code; /* Keyboard layout code */
+	INT64 code; /* Keyboard layout code */
 	char* file; /* IME file */
 	char* name; /* Keyboard layout name */
 } RDP_KEYBOARD_IME;
