@@ -48,6 +48,11 @@ static size_t demux_uvcH264(const BYTE* srcData, size_t srcSize, BYTE* h264_data
 	WINPR_ASSERT(h264_data);
 	WINPR_ASSERT(srcData);
 
+	if (srcSize < 30)
+	{
+		WLog_ERR(TAG, "Expected srcSize >= 30, got %" PRIuz, srcSize);
+		return 0;
+	}
 	const uint8_t* spl = NULL;
 	uint8_t* ph264 = h264_data;
 
@@ -69,6 +74,12 @@ static size_t demux_uvcH264(const BYTE* srcData, size_t srcSize, BYTE* h264_data
 		return 0;
 	}
 
+	if (spl > srcData + srcSize - 4)
+	{
+		WLog_ERR(TAG, "Payload + Header size bigger than srcData buffer");
+		return 0;
+	}
+
 	/* 1st segment length in big endian
 	 * includes payload size + header + 6 bytes (2 length + 4 payload size)
 	 */
@@ -81,6 +92,12 @@ static size_t demux_uvcH264(const BYTE* srcData, size_t srcSize, BYTE* h264_data
 	header_length |= (uint16_t)spl[3] << 8;
 
 	spl += header_length;
+	if (spl > srcData + srcSize)
+	{
+		WLog_ERR(TAG, "Header size bigger than srcData buffer");
+		return 0;
+	}
+
 	/* payload size in little endian */
 	uint32_t payload_size = (uint32_t)spl[0] << 0;
 	payload_size |= (uint32_t)spl[1] << 8;
@@ -121,6 +138,11 @@ static size_t demux_uvcH264(const BYTE* srcData, size_t srcSize, BYTE* h264_data
 		/* 2nd+ segment length in big endian */
 		length = (uint16_t)spl[2] << 8;
 		length |= (uint16_t)spl[3];
+		if (length < 2)
+		{
+			WLog_ERR(TAG, "Expected 2nd+ APP4 length >= 2 but have %" PRIu16, length);
+			return 0;
+		}
 
 		length -= 2;
 		spl += 4; /* APP4 marker + length */
