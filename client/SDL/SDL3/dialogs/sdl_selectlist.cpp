@@ -94,8 +94,11 @@ int SdlSelectList::run()
 							{
 								auto s = _list.size();
 								CurrentActiveTextInput++;
-								CurrentActiveTextInput =
-								    CurrentActiveTextInput % WINPR_ASSERTING_INT_CAST(ssize_t, s);
+								if (s > 0)
+								{
+									CurrentActiveTextInput = CurrentActiveTextInput %
+									                         WINPR_ASSERTING_INT_CAST(ssize_t, s);
+								}
 							}
 							break;
 						case SDLK_RETURN:

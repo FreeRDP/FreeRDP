@@ -32,13 +32,13 @@
 typedef struct
 {
 	const char* variant;     /* XKB Keyboard layout variant */
-	UINT32 keyboardLayoutID; /* Keyboard Layout ID */
+	INT64 keyboardLayoutID;  /* Keyboard Layout ID */
 } XKB_VARIANT;
 
 typedef struct
 {
 	const char* layout;      /* XKB Keyboard layout */
-	UINT32 keyboardLayoutID; /* Keyboard Layout ID */
+	INT64 keyboardLayoutID;  /* Keyboard Layout ID */
 	const XKB_VARIANT* variants;
 } XKB_LAYOUT;
 
