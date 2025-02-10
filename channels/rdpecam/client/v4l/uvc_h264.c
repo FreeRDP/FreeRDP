@@ -46,7 +46,7 @@ static uint8_t GUID_UVCX_H264_XU[16] = { 0x41, 0x76, 0x9E, 0xA2, 0x04, 0xDE, 0xE
  *
  * returns: length of xu control
  */
-uint16_t get_length_xu_control(CamV4lStream* stream, uint8_t unit, uint8_t selector)
+static uint16_t get_length_xu_control(CamV4lStream* stream, uint8_t unit, uint8_t selector)
 {
 	WINPR_ASSERT(stream);
 	WINPR_ASSERT(stream->fd > 0);
@@ -81,8 +81,8 @@ uint16_t get_length_xu_control(CamV4lStream* stream, uint8_t unit, uint8_t selec
  *
  * returns: 0 if query succeeded or error code on fail
  */
-int query_xu_control(CamV4lStream* stream, uint8_t unit, uint8_t selector, uint8_t query,
-                     void* data)
+static int query_xu_control(CamV4lStream* stream, uint8_t unit, uint8_t selector, uint8_t query,
+                            void* data)
 {
 	int err = 0;
 	uint16_t len = get_length_xu_control(stream, unit, selector);
@@ -208,8 +208,8 @@ BOOL set_h264_muxed_format(CamV4lStream* stream, const CAM_MEDIA_TYPE_DESCRIPTIO
 		return FALSE;
 
 	/* set resolution */
-	config_probe_req.wWidth = mediaType->Width;
-	config_probe_req.wHeight = mediaType->Height;
+	config_probe_req.wWidth = WINPR_ASSERTING_INT_CAST(uint16_t, mediaType->Width);
+	config_probe_req.wHeight = WINPR_ASSERTING_INT_CAST(uint16_t, mediaType->Height);
 
 	/* set frame rate in 100ns units */
 	uint32_t frame_interval =
@@ -315,10 +315,10 @@ static BOOL get_devpath_from_device(libusb_device* device, char* path, size_t si
 	if (nPorts <= 0)
 		return FALSE;
 
-	for (size_t i = 0; i < nPorts; i++)
+	for (int i = 0; i < nPorts; i++)
 	{
 		int nChars = snprintf(path, size, "%" PRIu8, ports[i]);
-		if (nChars <= 0 || nChars >= size)
+		if ((nChars <= 0) || (nChars >= size))
 			return FALSE;
 
 		size -= nChars;
@@ -367,20 +367,17 @@ static uint8_t get_guid_unit_id_from_device(libusb_device* device, const uint8_t
 
 		for (uint8_t j = 0; j < config->bNumInterfaces; j++)
 		{
-			for (size_t k = 0; k < config->interface[j].num_altsetting; k++)
+			const struct libusb_interface* cfg = &config->interface[j];
+			for (int k = 0; k < cfg->num_altsetting; k++)
 			{
-				const struct libusb_interface_descriptor* interface = NULL;
-				const uint8_t* ptr = NULL;
-
-				interface = &config->interface[j].altsetting[k];
+				const struct libusb_interface_descriptor* interface = &cfg->altsetting[k];
 				if (interface->bInterfaceClass != LIBUSB_CLASS_VIDEO ||
 				    interface->bInterfaceSubClass != USB_VIDEO_CONTROL)
 					continue;
-				ptr = interface->extra;
-				while (ptr - interface->extra + sizeof(xu_descriptor) < interface->extra_length)
-				{
-					xu_descriptor* desc = (xu_descriptor*)ptr;
 
+				const xu_descriptor* desc = (const xu_descriptor*)interface->extra;
+				while (((const uint8_t*)desc) < interface->extra + interface->extra_length)
+				{
 					if (desc->bDescriptorType == USB_VIDEO_CONTROL_INTERFACE &&
 					    desc->bDescriptorSubType == USB_VIDEO_CONTROL_XU_TYPE &&
 					    memcmp(desc->guidExtensionCode, guid, 16) == 0)
@@ -393,7 +390,7 @@ static uint8_t get_guid_unit_id_from_device(libusb_device* device, const uint8_t
 						         ddesc.idVendor, ddesc.idProduct, unit_id);
 						return unit_id;
 					}
-					ptr += desc->bLength;
+					desc++;
 				}
 			}
 		}

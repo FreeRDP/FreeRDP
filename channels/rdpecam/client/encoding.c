@@ -83,7 +83,7 @@ static size_t demux_uvcH264(const BYTE* srcData, size_t srcSize, BYTE* h264_data
 	/* 1st segment length in big endian
 	 * includes payload size + header + 6 bytes (2 length + 4 payload size)
 	 */
-	uint16_t length = (uint16_t)spl[0] << 8;
+	uint16_t length = (uint16_t)(spl[0] << 8) & UINT16_MAX;
 	length |= (uint16_t)spl[1];
 
 	spl += 2; /* header */
@@ -136,7 +136,7 @@ static size_t demux_uvcH264(const BYTE* srcData, size_t srcSize, BYTE* h264_data
 		}
 
 		/* 2nd+ segment length in big endian */
-		length = (uint16_t)spl[2] << 8;
+		length = (uint16_t)(spl[2] << 8) & UINT16_MAX;
 		length |= (uint16_t)spl[3];
 		if (length < 2)
 		{
@@ -296,7 +296,9 @@ static BOOL ecam_encoder_compress_h264(CameraDeviceStream* stream, const BYTE* s
 #if defined(WITH_INPUT_FORMAT_H264)
 	if (inputFormat == CAM_MEDIA_FORMAT_MJPG_H264)
 	{
-		dstSize = demux_uvcH264(srcData, srcSize, stream->h264Frame, stream->h264FrameMaxSize);
+		const size_t rc =
+		    demux_uvcH264(srcData, srcSize, stream->h264Frame, stream->h264FrameMaxSize);
+		dstSize = WINPR_ASSERTING_INT_CAST(uint32_t, rc);
 		*ppDstData = stream->h264Frame;
 		*pDstSize = dstSize;
 		return dstSize > 0;
@@ -484,8 +486,8 @@ static BOOL ecam_encoder_context_init_h264(CameraDeviceStream* stream)
 #if defined(WITH_INPUT_FORMAT_H264)
 	if (streamInputFormat(stream) == CAM_MEDIA_FORMAT_MJPG_H264)
 	{
-		stream->h264FrameMaxSize =
-		    stream->currMediaType.Width * stream->currMediaType.Height; /* 1 byte per pixel */
+		stream->h264FrameMaxSize = 1ULL * stream->currMediaType.Width *
+		                           stream->currMediaType.Height; /* 1 byte per pixel */
 		stream->h264Frame = (BYTE*)calloc(stream->h264FrameMaxSize, sizeof(BYTE));
 		return TRUE; /* encoder not needed */
 	}
