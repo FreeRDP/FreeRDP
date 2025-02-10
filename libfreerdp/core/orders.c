@@ -866,7 +866,7 @@ static INLINE BOOL update_read_delta(wStream* s, INT32* value)
 	Stream_Read_UINT8(s, byte);
 
 	if (byte & 0x40)
-		uvalue = (byte | ~0x3F);
+		uvalue = (byte | ~0x3F) & UINT32_MAX;
 	else
 		uvalue = (byte & 0x3F);
 

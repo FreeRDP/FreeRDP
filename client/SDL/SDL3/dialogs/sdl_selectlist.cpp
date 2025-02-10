@@ -81,18 +81,25 @@ int SdlSelectList::run()
 							else if (_list.empty())
 								CurrentActiveTextInput = 0;
 							else
-								CurrentActiveTextInput =
-								    WINPR_ASSERTING_INT_CAST(ssize_t, _list.size()) - 1;
+							{
+								auto s = _list.size();
+								CurrentActiveTextInput = WINPR_ASSERTING_INT_CAST(ssize_t, s) - 1;
+							}
 							break;
 						case SDLK_DOWN:
 						case SDLK_TAB:
 							if ((CurrentActiveTextInput < 0) || _list.empty())
 								CurrentActiveTextInput = 0;
 							else
+							{
+								auto s = _list.size();
 								CurrentActiveTextInput++;
-							CurrentActiveTextInput =
-							    CurrentActiveTextInput %
-							    WINPR_ASSERTING_INT_CAST(ssize_t, _list.size());
+								if (s > 0)
+								{
+									CurrentActiveTextInput = CurrentActiveTextInput %
+									                         WINPR_ASSERTING_INT_CAST(ssize_t, s);
+								}
+							}
 							break;
 						case SDLK_RETURN:
 						case SDLK_RETURN2:

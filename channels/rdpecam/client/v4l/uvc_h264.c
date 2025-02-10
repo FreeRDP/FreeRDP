@@ -318,10 +318,10 @@ static BOOL get_devpath_from_device(libusb_device* device, char* path, size_t si
 	for (int i = 0; i < nPorts; i++)
 	{
 		int nChars = snprintf(path, size, "%" PRIu8, ports[i]);
-		if ((nChars <= 0) || (nChars >= size))
+		if ((nChars <= 0) || ((size_t)nChars >= size))
 			return FALSE;
 
-		size -= nChars;
+		size -= (size_t)nChars;
 		path += nChars;
 
 		if (i < nPorts - 1)
@@ -382,11 +382,11 @@ static uint8_t get_guid_unit_id_from_device(libusb_device* device, const uint8_t
 					    desc->bDescriptorSubType == USB_VIDEO_CONTROL_XU_TYPE &&
 					    memcmp(desc->guidExtensionCode, guid, 16) == 0)
 					{
-						uint8_t unit_id = desc->bUnitID;
+						int8_t unit_id = desc->bUnitID;
 
 						WLog_DBG(TAG,
 						         "For camera %04" PRIx16 ":%04" PRIx16
-						         " found UVCX H264 UnitID %" PRIu8,
+						         " found UVCX H264 UnitID %" PRId8,
 						         ddesc.idVendor, ddesc.idProduct, unit_id);
 						return unit_id;
 					}

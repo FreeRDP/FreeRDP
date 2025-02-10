@@ -1031,9 +1031,7 @@ static int32_t file_get_size(const struct synthetic_file* file, UINT64* size)
 static UINT delegate_file_request_size(wClipboardDelegate* delegate,
                                        const wClipboardFileSizeRequest* request)
 {
-	UINT error = NO_ERROR;
 	UINT64 size = 0;
-	struct synthetic_file* file = NULL;
 
 	if (!delegate || !delegate->clipboard || !request)
 		return ERROR_BAD_ARGUMENTS;
@@ -1041,15 +1039,16 @@ static UINT delegate_file_request_size(wClipboardDelegate* delegate,
 	if (delegate->clipboard->sequenceNumber != delegate->clipboard->fileListSequenceNumber)
 		return ERROR_INVALID_STATE;
 
-	file = ArrayList_GetItem(delegate->clipboard->localFiles, request->listIndex);
+	struct synthetic_file* file =
+	    ArrayList_GetItem(delegate->clipboard->localFiles, request->listIndex);
 
 	if (!file)
 		return ERROR_INDEX_ABSENT;
 
-	error = file_get_size(file, &size);
-
+	const int32_t s = file_get_size(file, &size);
+	uint32_t error = 0;
 	if (error)
-		error = delegate->ClipboardFileSizeFailure(delegate, request, error);
+		error = delegate->ClipboardFileSizeFailure(delegate, request, (UINT)s);
 	else
 		error = delegate->ClipboardFileSizeSuccess(delegate, request, size);
 

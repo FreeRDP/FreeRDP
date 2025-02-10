@@ -88,7 +88,6 @@ static int freerdp_connect_begin(freerdp* instance)
 	rdpRdp* rdp = NULL;
 	BOOL status = TRUE;
 	rdpSettings* settings = NULL;
-	UINT32 KeyboardLayout = 0;
 
 	if (!instance)
 		return -1;
@@ -131,7 +130,7 @@ static int freerdp_connect_begin(freerdp* instance)
 		status = utils_reload_channels(instance->context);
 
 	const UINT32 cp = freerdp_settings_get_uint32(settings, FreeRDP_KeyboardCodePage);
-	KeyboardLayout = freerdp_get_keyboard_default_layout_for_locale(cp);
+	int64_t KeyboardLayout = freerdp_get_keyboard_default_layout_for_locale(cp);
 	if (KeyboardLayout == 0)
 		KeyboardLayout = freerdp_settings_get_uint32(settings, FreeRDP_KeyboardLayout);
 

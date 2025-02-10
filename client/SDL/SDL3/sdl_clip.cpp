@@ -511,10 +511,10 @@ UINT sdlClip::ReceiveServerFormatList(CliprdrClientContext* context,
 		clipboard->_current_mimetypes.push_back(s_mime_mate_copied_files);
 	}
 
+	auto s = clipboard->_current_mimetypes.size();
 	SDL_Event ev = { SDL_EVENT_CLIPBOARD_UPDATE };
 	ev.clipboard.owner = true;
-	ev.clipboard.num_mime_types =
-	    WINPR_ASSERTING_INT_CAST(Sint32, clipboard->_current_mimetypes.size());
+	ev.clipboard.num_mime_types = WINPR_ASSERTING_INT_CAST(Sint32, s);
 	ev.clipboard.mime_types = clipboard->_current_mimetypes.data();
 
 	/* TODO: Hack to identify our own updates */

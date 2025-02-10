@@ -132,7 +132,8 @@ static size_t demux_uvcH264(const BYTE* srcData, size_t srcSize, BYTE* h264_data
 		if (spl[0] != 0xFF || spl[1] != 0xE4)
 		{
 			WLog_ERR(TAG, "Expected 2nd+ APP4 marker but none found");
-			return ph264 - h264_data;
+			const intptr_t diff = ph264 - h264_data;
+			return WINPR_ASSERTING_INT_CAST(size_t, diff);
 		}
 
 		/* 2nd+ segment length in big endian */
@@ -153,7 +154,8 @@ static size_t demux_uvcH264(const BYTE* srcData, size_t srcSize, BYTE* h264_data
 		spl += length;
 	}
 
-	return ph264 - h264_data;
+	const intptr_t diff = ph264 - h264_data;
+	return WINPR_ASSERTING_INT_CAST(size_t, diff);
 }
 #endif
 
