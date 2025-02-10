@@ -19,7 +19,7 @@ if(WITH_V4L)
 
   define_channel_client_subsystem("rdpecam" "v4l" "")
 
-  set(${MODULE_PREFIX}_SRCS camera_v4l.c)
+  set(${MODULE_PREFIX}_SRCS camera_v4l.c uvc_h264.c)
 
   set(${MODULE_PREFIX}_LIBS winpr freerdp ${V4L_TARGETS})
 
