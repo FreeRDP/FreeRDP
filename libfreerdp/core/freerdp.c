@@ -1460,7 +1460,7 @@ BOOL freerdp_is_valid_mcs_create_response(const BYTE* data, size_t size)
 	return result;
 }
 
-BOOL freerdp_presist_credentials(rdpContext* context)
+BOOL freerdp_persist_credentials(rdpContext* context)
 {
 	if (!context)
 		return FALSE;

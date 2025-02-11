@@ -21,6 +21,7 @@
 #define FREERDP_CLIENT_H
 
 #include <winpr/cmdline.h>
+#include <freerdp/client/cmdline.h>
 
 #include <freerdp/config.h>
 #include <freerdp/api.h>
@@ -170,8 +171,7 @@ extern "C"
 	FREERDP_API int freerdp_client_settings_parse_command_line_ex(
 	    rdpSettings* settings, int argc, char** argv, BOOL allowUnknown,
 	    COMMAND_LINE_ARGUMENT_A* args, size_t count,
-	    int (*handle_option)(const COMMAND_LINE_ARGUMENT_A* arg, void* custom),
-	    void* handle_userdata);
+	    freerdp_command_line_handle_option_t handle_option, void* handle_userdata);
 
 	FREERDP_API int freerdp_client_settings_parse_connection_file(rdpSettings* settings,
 	                                                              const char* filename);

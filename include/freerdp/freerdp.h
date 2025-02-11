@@ -748,7 +748,7 @@ owned by rdpRdp */
 	 * state, ...)
 	 *  \since version 3.12.0
 	 */
-	FREERDP_API BOOL freerdp_presist_credentials(rdpContext* context);
+	FREERDP_API BOOL freerdp_persist_credentials(rdpContext* context);
 
 #ifdef __cplusplus
 }

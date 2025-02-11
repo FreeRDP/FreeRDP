@@ -72,9 +72,6 @@
 #include <freerdp/log.h>
 #define TAG CLIENT_TAG("common.cmdline")
 
-typedef int (*freerdp_command_line_handle_option_t)(const COMMAND_LINE_ARGUMENT_A* arg,
-                                                    void* custom);
-
 static const char str_force[] = "force";
 
 static const char* option_starts_with(const char* what, const char* val);
