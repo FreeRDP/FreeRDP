@@ -22,9 +22,22 @@
 #define FREERDP_LIB_PRIM_SHIFT_H
 
 #include <winpr/wtypes.h>
+#include <winpr/sysinfo.h>
+
 #include <freerdp/config.h>
 #include <freerdp/primitives.h>
+#include "prim_internal.h"
 
-extern void primitives_init_shift_sse3(primitives_t* WINPR_RESTRICT prims);
+FREERDP_LOCAL void primitives_init_shift_sse3_int(primitives_t* WINPR_RESTRICT prims);
+static inline void primitives_init_shift_sse3(primitives_t* WINPR_RESTRICT prims)
+{
+	primitives_init_shift(prims);
+
+	if (!IsProcessorFeaturePresent(PF_SSE2_INSTRUCTIONS_AVAILABLE) ||
+	    !IsProcessorFeaturePresent(PF_SSE3_INSTRUCTIONS_AVAILABLE))
+		return;
+
+	primitives_init_shift_sse3_int(prims);
+}
 
 #endif

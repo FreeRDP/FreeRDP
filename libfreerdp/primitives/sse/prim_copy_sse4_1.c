@@ -251,14 +251,11 @@ static pstatus_t sse_image_copy_no_overlap(BYTE* WINPR_RESTRICT pDstData, DWORD 
 #endif
 
 /* ------------------------------------------------------------------------- */
-void primitives_init_copy_sse41(primitives_t* prims)
+void primitives_init_copy_sse41_int(primitives_t* WINPR_RESTRICT prims)
 {
 #if defined(SSE_AVX_INTRINSICS_ENABLED)
-	if (IsProcessorFeaturePresent(PF_SSE4_1_INSTRUCTIONS_AVAILABLE))
-	{
-		WLog_VRB(PRIM_TAG, "SSE4.1 optimizations");
-		prims->copy_no_overlap = sse_image_copy_no_overlap;
-	}
+	WLog_VRB(PRIM_TAG, "SSE4.1 optimizations");
+	prims->copy_no_overlap = sse_image_copy_no_overlap;
 #else
 	WLog_VRB(PRIM_TAG, "undefined WITH_SIMD or SSE4.1 intrinsics not available");
 	WINPR_UNUSED(prims);

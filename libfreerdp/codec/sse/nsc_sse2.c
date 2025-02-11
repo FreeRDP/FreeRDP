@@ -389,13 +389,9 @@ static BOOL nsc_encode_sse2(NSC_CONTEXT* context, const BYTE* data, UINT32 scanl
 }
 #endif
 
-void nsc_init_sse2(NSC_CONTEXT* context)
+void nsc_init_sse2_int(NSC_CONTEXT* WINPR_RESTRICT context)
 {
 #if defined(SSE_AVX_INTRINSICS_ENABLED)
-	if (!IsProcessorFeaturePresent(PF_SSE2_INSTRUCTIONS_AVAILABLE) ||
-	    !IsProcessorFeaturePresent(PF_SSE3_INSTRUCTIONS_AVAILABLE))
-		return;
-
 	PROFILER_RENAME(context->priv->prof_nsc_encode, "nsc_encode_sse2")
 	context->encode = nsc_encode_sse2;
 #else

@@ -171,20 +171,14 @@ static pstatus_t sse3_add_16s_inplace(INT16* WINPR_RESTRICT pSrcDst1,
 #endif
 
 /* ------------------------------------------------------------------------- */
-void primitives_init_add_sse3(primitives_t* WINPR_RESTRICT prims)
+void primitives_init_add_sse3_int(primitives_t* WINPR_RESTRICT prims)
 {
 #if defined(SSE_AVX_INTRINSICS_ENABLED)
 	generic = primitives_get_generic();
-	primitives_init_add(prims);
 
-	if (IsProcessorFeaturePresent(PF_SSE2_INSTRUCTIONS_AVAILABLE) &&
-	    IsProcessorFeaturePresent(PF_SSE3_INSTRUCTIONS_AVAILABLE)) /* for LDDQU */
-	{
-		WLog_VRB(PRIM_TAG, "SSE2/SSE3 optimizations");
-		prims->add_16s = sse3_add_16s;
-		prims->add_16s_inplace = sse3_add_16s_inplace;
-	}
-
+	WLog_VRB(PRIM_TAG, "SSE2/SSE3 optimizations");
+	prims->add_16s = sse3_add_16s;
+	prims->add_16s_inplace = sse3_add_16s_inplace;
 #else
 	WLog_VRB(PRIM_TAG, "undefined WITH_SIMD or SSE3 intrinsics not available");
 	WINPR_UNUSED(prims);

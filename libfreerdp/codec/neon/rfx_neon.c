@@ -523,20 +523,16 @@ static void rfx_dwt_2d_extrapolate_decode_neon(INT16* buffer, INT16* temp)
 }
 #endif // NEON_INTRINSICS_ENABLED
 
-void rfx_init_neon(RFX_CONTEXT* context)
+void rfx_init_neon_int(RFX_CONTEXT* WINPR_RESTRICT context)
 {
 #if defined(NEON_INTRINSICS_ENABLED)
-	if (IsProcessorFeaturePresent(PF_ARM_NEON_INSTRUCTIONS_AVAILABLE))
-	{
-		DEBUG_RFX("Using NEON optimizations");
-		PROFILER_RENAME(context->priv->prof_rfx_ycbcr_to_rgb, "rfx_decode_YCbCr_to_RGB_NEON");
-		PROFILER_RENAME(context->priv->prof_rfx_quantization_decode,
-		                "rfx_quantization_decode_NEON");
-		PROFILER_RENAME(context->priv->prof_rfx_dwt_2d_decode, "rfx_dwt_2d_decode_NEON");
-		context->quantization_decode = rfx_quantization_decode_NEON;
-		context->dwt_2d_decode = rfx_dwt_2d_decode_NEON;
-		context->dwt_2d_extrapolate_decode = rfx_dwt_2d_extrapolate_decode_neon;
-	}
+	DEBUG_RFX("Using NEON optimizations");
+	PROFILER_RENAME(context->priv->prof_rfx_ycbcr_to_rgb, "rfx_decode_YCbCr_to_RGB_NEON");
+	PROFILER_RENAME(context->priv->prof_rfx_quantization_decode, "rfx_quantization_decode_NEON");
+	PROFILER_RENAME(context->priv->prof_rfx_dwt_2d_decode, "rfx_dwt_2d_decode_NEON");
+	context->quantization_decode = rfx_quantization_decode_NEON;
+	context->dwt_2d_decode = rfx_dwt_2d_decode_NEON;
+	context->dwt_2d_extrapolate_decode = rfx_dwt_2d_extrapolate_decode_neon;
 #else
 	WINPR_UNUSED(context);
 #endif

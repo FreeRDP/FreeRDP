@@ -32,12 +32,9 @@
 #define TAG FREERDP_TAG("codec.nsc.neon")
 #endif
 
-void nsc_init_neon(NSC_CONTEXT* context)
+void nsc_init_neon_int(NSC_CONTEXT* WINPR_RESTRICT context)
 {
 #if defined(NEON_INTRINSICS_ENABLED)
-	if (!IsProcessorFeaturePresent(PF_ARM_NEON_INSTRUCTIONS_AVAILABLE))
-		return;
-
 	WLog_WARN(TAG, "TODO: Implement neon optimized version of this function");
 #endif
 }

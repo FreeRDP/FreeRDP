@@ -201,18 +201,12 @@ static pstatus_t sse2_alphaComp_argb(const BYTE* WINPR_RESTRICT pSrc1, UINT32 sr
 #endif
 
 /* ------------------------------------------------------------------------- */
-void primitives_init_alphaComp_sse3(primitives_t* WINPR_RESTRICT prims)
+void primitives_init_alphaComp_sse3_int(primitives_t* WINPR_RESTRICT prims)
 {
 #if defined(SSE_AVX_INTRINSICS_ENABLED)
 	generic = primitives_get_generic();
-	primitives_init_alphaComp(prims);
-
-	if (IsProcessorFeaturePresent(PF_SSE2_INSTRUCTIONS_AVAILABLE) &&
-	    IsProcessorFeaturePresent(PF_SSE3_INSTRUCTIONS_AVAILABLE)) /* for LDDQU */
-	{
-		WLog_VRB(PRIM_TAG, "SSE2/SSE3 optimizations");
-		prims->alphaComp_argb = sse2_alphaComp_argb;
-	}
+	WLog_VRB(PRIM_TAG, "SSE2/SSE3 optimizations");
+	prims->alphaComp_argb = sse2_alphaComp_argb;
 
 #else
 	WLog_VRB(PRIM_TAG, "undefined WITH_SIMD or SSE3 intrinsics not available");

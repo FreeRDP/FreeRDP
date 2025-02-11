@@ -169,20 +169,16 @@ static pstatus_t ssse3_sign_16s(const INT16* WINPR_RESTRICT pSrc, INT16* WINPR_R
 #endif /* SSE_AVX_INTRINSICS_ENABLED */
 
 /* ------------------------------------------------------------------------- */
-void primitives_init_sign_ssse3(primitives_t* WINPR_RESTRICT prims)
+void primitives_init_sign_ssse3_int(primitives_t* WINPR_RESTRICT prims)
 {
 #if defined(SSE_AVX_INTRINSICS_ENABLED)
 	generic = primitives_get_generic();
-	primitives_init_sign(prims);
+
 	/* Pick tuned versions if possible. */
 	/* I didn't spot an IPP version of this. */
 
-	if (IsProcessorFeaturePresentEx(PF_EX_SSSE3) &&
-	    IsProcessorFeaturePresent(PF_SSE3_INSTRUCTIONS_AVAILABLE))
-	{
-		WLog_VRB(PRIM_TAG, "SSE3/SSSE3 optimizations");
-		prims->sign_16s = ssse3_sign_16s;
-	}
+	WLog_VRB(PRIM_TAG, "SSE3/SSSE3 optimizations");
+	prims->sign_16s = ssse3_sign_16s;
 
 #else
 	WLog_VRB(PRIM_TAG, "undefined WITH_SIMD or SSSE3/SSE3 intrinsics not available");

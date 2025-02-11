@@ -1749,23 +1749,18 @@ static pstatus_t sse41_YUV420CombineToYUV444(avc444_frame_type type,
 }
 #endif
 
-void primitives_init_YUV_sse41(primitives_t* WINPR_RESTRICT prims)
+void primitives_init_YUV_sse41_int(primitives_t* WINPR_RESTRICT prims)
 {
 #if defined(SSE_AVX_INTRINSICS_ENABLED)
 	generic = primitives_get_generic();
-	primitives_init_YUV(prims);
 
-	if (IsProcessorFeaturePresentEx(PF_EX_SSE41) &&
-	    IsProcessorFeaturePresent(PF_SSE4_1_INSTRUCTIONS_AVAILABLE))
-	{
-		WLog_VRB(PRIM_TAG, "SSE3/sse41 optimizations");
-		prims->RGBToYUV420_8u_P3AC4R = sse41_RGBToYUV420;
-		prims->RGBToAVC444YUV = sse41_RGBToAVC444YUV;
-		prims->RGBToAVC444YUVv2 = sse41_RGBToAVC444YUVv2;
-		prims->YUV420ToRGB_8u_P3AC4R = sse41_YUV420ToRGB;
-		prims->YUV444ToRGB_8u_P3AC4R = sse41_YUV444ToRGB_8u_P3AC4R;
-		prims->YUV420CombineToYUV444 = sse41_YUV420CombineToYUV444;
-	}
+	WLog_VRB(PRIM_TAG, "SSE3/sse41 optimizations");
+	prims->RGBToYUV420_8u_P3AC4R = sse41_RGBToYUV420;
+	prims->RGBToAVC444YUV = sse41_RGBToAVC444YUV;
+	prims->RGBToAVC444YUVv2 = sse41_RGBToAVC444YUVv2;
+	prims->YUV420ToRGB_8u_P3AC4R = sse41_YUV420ToRGB;
+	prims->YUV444ToRGB_8u_P3AC4R = sse41_YUV444ToRGB_8u_P3AC4R;
+	prims->YUV420CombineToYUV444 = sse41_YUV420CombineToYUV444;
 #else
 	WLog_VRB(PRIM_TAG, "undefined WITH_SIMD or sse41 intrinsics not available");
 	WINPR_UNUSED(prims);

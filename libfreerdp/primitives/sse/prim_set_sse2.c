@@ -214,21 +214,17 @@ static pstatus_t sse2_set_32s(INT32 val, INT32* WINPR_RESTRICT pDst, UINT32 len)
 #endif
 
 /* ------------------------------------------------------------------------- */
-void primitives_init_set_sse2(primitives_t* WINPR_RESTRICT prims)
+void primitives_init_set_sse2_int(primitives_t* WINPR_RESTRICT prims)
 {
 #if defined(SSE_AVX_INTRINSICS_ENABLED)
 	generic = primitives_get_generic();
-	primitives_init_set(prims);
+
 	/* Pick tuned versions if possible. */
 
-	if (IsProcessorFeaturePresent(PF_SSE2_INSTRUCTIONS_AVAILABLE) &&
-	    IsProcessorFeaturePresent(PF_SSE3_INSTRUCTIONS_AVAILABLE))
-	{
-		WLog_VRB(PRIM_TAG, "SSE2 optimizations");
-		prims->set_8u = sse2_set_8u;
-		prims->set_32s = sse2_set_32s;
-		prims->set_32u = sse2_set_32u;
-	}
+	WLog_VRB(PRIM_TAG, "SSE2 optimizations");
+	prims->set_8u = sse2_set_8u;
+	prims->set_32s = sse2_set_32s;
+	prims->set_32u = sse2_set_32u;
 
 #else
 	WLog_VRB(PRIM_TAG, "undefined WITH_SIMD or SSE2 intrinsics not available");

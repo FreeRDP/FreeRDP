@@ -140,22 +140,17 @@ static pstatus_t sse2_lShiftC_16s_inplace(INT16* WINPR_RESTRICT pSrcDst, UINT32 
  */
 
 /* ------------------------------------------------------------------------- */
-void primitives_init_shift_sse3(primitives_t* WINPR_RESTRICT prims)
+void primitives_init_shift_sse3_int(primitives_t* WINPR_RESTRICT prims)
 {
 #if defined(SSE_AVX_INTRINSICS_ENABLED)
 	generic = primitives_get_generic();
-	primitives_init_shift(prims);
 
-	if (IsProcessorFeaturePresent(PF_SSE2_INSTRUCTIONS_AVAILABLE) &&
-	    IsProcessorFeaturePresent(PF_SSE3_INSTRUCTIONS_AVAILABLE))
-	{
-		WLog_VRB(PRIM_TAG, "SSE2/SSE3 optimizations");
-		prims->lShiftC_16s_inplace = sse2_lShiftC_16s_inplace;
-		prims->lShiftC_16s = sse2_lShiftC_16s;
-		prims->rShiftC_16s = sse2_rShiftC_16s;
-		prims->lShiftC_16u = sse2_lShiftC_16u;
-		prims->rShiftC_16u = sse2_rShiftC_16u;
-	}
+	WLog_VRB(PRIM_TAG, "SSE2/SSE3 optimizations");
+	prims->lShiftC_16s_inplace = sse2_lShiftC_16s_inplace;
+	prims->lShiftC_16s = sse2_lShiftC_16s;
+	prims->rShiftC_16s = sse2_rShiftC_16s;
+	prims->lShiftC_16u = sse2_lShiftC_16u;
+	prims->rShiftC_16u = sse2_rShiftC_16u;
 
 #else
 	WLog_VRB(PRIM_TAG, "undefined WITH_SIMD or SSE3 intrinsics not available");

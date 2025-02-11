@@ -20,9 +20,18 @@
 #ifndef FREERDP_LIB_CODEC_RFX_NEON_H
 #define FREERDP_LIB_CODEC_RFX_NEON_H
 
+#include <winpr/sysinfo.h>
+
 #include <freerdp/codec/rfx.h>
 #include <freerdp/api.h>
 
-FREERDP_LOCAL void rfx_init_neon(RFX_CONTEXT* context);
+FREERDP_LOCAL void rfx_init_neon_int(RFX_CONTEXT* WINPR_RESTRICT context);
+static inline void rfx_init_neon(RFX_CONTEXT* WINPR_RESTRICT context)
+{
+	if (!IsProcessorFeaturePresent(PF_ARM_NEON_INSTRUCTIONS_AVAILABLE))
+		return;
+
+	rfx_init_neon_int(context);
+}
 
 #endif /* FREERDP_LIB_CODEC_RFX_NEON_H */

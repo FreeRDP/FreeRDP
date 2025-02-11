@@ -22,9 +22,23 @@
 #define FREERDP_LIB_PRIM_ANDOR_H
 
 #include <winpr/wtypes.h>
+#include <winpr/sysinfo.h>
+
 #include <freerdp/config.h>
 #include <freerdp/primitives.h>
 
-void primitives_init_andor_sse3(primitives_t* WINPR_RESTRICT prims);
+#include "prim_internal.h"
+
+FREERDP_LOCAL void primitives_init_andor_sse3_int(primitives_t* WINPR_RESTRICT prims);
+static inline void primitives_init_andor_sse3(primitives_t* WINPR_RESTRICT prims)
+{
+	primitives_init_andor(prims);
+
+	if (!IsProcessorFeaturePresent(PF_SSE2_INSTRUCTIONS_AVAILABLE) ||
+	    !IsProcessorFeaturePresent(PF_SSE3_INSTRUCTIONS_AVAILABLE))
+		return;
+
+	primitives_init_andor_sse3_int(prims);
+}
 
 #endif

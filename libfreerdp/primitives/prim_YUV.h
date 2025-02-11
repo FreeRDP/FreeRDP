@@ -22,10 +22,34 @@
 #define FREERDP_LIB_PRIM_YUV_H
 
 #include <winpr/wtypes.h>
+#include <winpr/sysinfo.h>
+
 #include <freerdp/config.h>
 #include <freerdp/primitives.h>
 
-void primitives_init_YUV_sse41(primitives_t* WINPR_RESTRICT prims);
-void primitives_init_YUV_neon(primitives_t* WINPR_RESTRICT prims);
+#include "prim_internal.h"
+
+FREERDP_LOCAL void primitives_init_YUV_sse41_int(primitives_t* WINPR_RESTRICT prims);
+static inline void primitives_init_YUV_sse41(primitives_t* WINPR_RESTRICT prims)
+{
+	primitives_init_YUV(prims);
+
+	if (!IsProcessorFeaturePresentEx(PF_EX_SSE41) ||
+	    !IsProcessorFeaturePresent(PF_SSE4_1_INSTRUCTIONS_AVAILABLE))
+		return;
+
+	primitives_init_YUV_sse41_int(prims);
+}
+
+FREERDP_LOCAL void primitives_init_YUV_neon_int(primitives_t* WINPR_RESTRICT prims);
+static inline void primitives_init_YUV_neon(primitives_t* WINPR_RESTRICT prims)
+{
+	primitives_init_YUV(prims);
+
+	if (!IsProcessorFeaturePresentEx(PF_EX_SSE41))
+		return;
+
+	primitives_init_YUV_neon_int(prims);
+}
 
 #endif

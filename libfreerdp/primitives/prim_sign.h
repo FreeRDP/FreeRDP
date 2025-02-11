@@ -22,9 +22,22 @@
 #define FREERDP_LIB_PRIM_SIGN_H
 
 #include <winpr/wtypes.h>
+#include <winpr/sysinfo.h>
+
 #include <freerdp/config.h>
 #include <freerdp/primitives.h>
 
-void primitives_init_sign_ssse3(primitives_t* WINPR_RESTRICT prims);
+#include "prim_internal.h"
+
+FREERDP_LOCAL void primitives_init_sign_ssse3_int(primitives_t* WINPR_RESTRICT prims);
+static inline void primitives_init_sign_ssse3(primitives_t* WINPR_RESTRICT prims)
+{
+	primitives_init_sign(prims);
+	if (!IsProcessorFeaturePresentEx(PF_EX_SSSE3) ||
+	    !IsProcessorFeaturePresent(PF_SSE3_INSTRUCTIONS_AVAILABLE))
+		return;
+
+	primitives_init_sign_ssse3_int(prims);
+}
 
 #endif
