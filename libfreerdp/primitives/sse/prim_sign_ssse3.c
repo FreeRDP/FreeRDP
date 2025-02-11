@@ -21,7 +21,7 @@
 
 #include "prim_sign.h"
 
-#include "prim_internal.h"
+#include "prim_avxsse.h"
 
 #if defined(SSE_AVX_INTRINSICS_ENABLED)
 #include <emmintrin.h>

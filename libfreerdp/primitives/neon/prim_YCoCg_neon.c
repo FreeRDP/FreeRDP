@@ -24,7 +24,6 @@
 #include <winpr/sysinfo.h>
 
 #include "prim_internal.h"
-#include "prim_templates.h"
 #include "prim_YCoCg.h"
 
 #if defined(NEON_INTRINSICS_ENABLED)

@@ -28,7 +28,7 @@
 
 #include "prim_alphaComp.h"
 
-#include "prim_internal.h"
+#include "prim_avxsse.h"
 
 /* ------------------------------------------------------------------------- */
 #if defined(SSE_AVX_INTRINSICS_ENABLED)

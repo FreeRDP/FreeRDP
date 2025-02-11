@@ -22,7 +22,7 @@
 #include <freerdp/primitives.h>
 #include <freerdp/log.h>
 
-#include "prim_internal.h"
+#include "prim_avxsse.h"
 #include "prim_copy.h"
 #include "../codec/color.h"
 

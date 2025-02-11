@@ -21,7 +21,7 @@
 #include <freerdp/primitives.h>
 #include <winpr/sysinfo.h>
 
-#include "prim_internal.h"
+#include "prim_avxsse.h".h "
 #include "prim_set.h"
 
 /* ========================================================================= */

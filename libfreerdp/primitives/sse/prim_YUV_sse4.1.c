@@ -28,7 +28,7 @@
 #include <freerdp/types.h>
 #include <freerdp/primitives.h>
 
-#include "prim_internal.h"
+#include "prim_avxsse.h"
 #include "prim_YUV.h"
 
 #if defined(SSE_AVX_INTRINSICS_ENABLED)
