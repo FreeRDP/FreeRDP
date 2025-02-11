@@ -830,16 +830,12 @@ void xf_minimize(xfContext* xfc)
 
 void xf_lock_x11_(xfContext* xfc, const char* fkt)
 {
-
 	if (!xfc->UseXThreads)
 		(void)WaitForSingleObject(xfc->mutex, INFINITE);
 	else
 		XLockDisplay(xfc->display);
 
 	xfc->locked++;
-#ifdef WITH_DEBUG_X11
-	WLog_VRB(TAG, "[%" PRIu32 "] from %s", xfc->locked, fkt);
-#endif
 }
 
 void xf_unlock_x11_(xfContext* xfc, const char* fkt)
@@ -848,10 +844,6 @@ void xf_unlock_x11_(xfContext* xfc, const char* fkt)
 		WLog_WARN(TAG, "X11: trying to unlock although not locked!");
 	else
 		xfc->locked--;
-
-#ifdef WITH_DEBUG_X11
-	WLog_VRB(TAG, "[%" PRIu32 "] from %s", xfc->locked, fkt);
-#endif
 
 	if (!xfc->UseXThreads)
 		(void)ReleaseMutex(xfc->mutex);
