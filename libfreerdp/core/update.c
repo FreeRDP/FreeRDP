@@ -149,6 +149,43 @@ static BOOL update_read_bitmap_data(rdpUpdate* update, wStream* s, BITMAP_DATA* 
 	return TRUE;
 }
 
+static BOOL update_write_bitmap_data_header(const BITMAP_DATA* bitmapData, wStream* s)
+{
+	WINPR_ASSERT(bitmapData);
+	if (!Stream_EnsureRemainingCapacity(s, 18))
+		return FALSE;
+	Stream_Write_UINT16(s, WINPR_ASSERTING_INT_CAST(uint16_t, bitmapData->destLeft));
+	Stream_Write_UINT16(s, WINPR_ASSERTING_INT_CAST(uint16_t, bitmapData->destTop));
+	Stream_Write_UINT16(s, WINPR_ASSERTING_INT_CAST(uint16_t, bitmapData->destRight));
+	Stream_Write_UINT16(s, WINPR_ASSERTING_INT_CAST(uint16_t, bitmapData->destBottom));
+	Stream_Write_UINT16(s, WINPR_ASSERTING_INT_CAST(uint16_t, bitmapData->width));
+	Stream_Write_UINT16(s, WINPR_ASSERTING_INT_CAST(uint16_t, bitmapData->height));
+	Stream_Write_UINT16(s, WINPR_ASSERTING_INT_CAST(uint16_t, bitmapData->bitsPerPixel));
+	Stream_Write_UINT16(s, WINPR_ASSERTING_INT_CAST(uint16_t, bitmapData->flags));
+	Stream_Write_UINT16(s, WINPR_ASSERTING_INT_CAST(uint16_t, bitmapData->bitmapLength));
+	return TRUE;
+}
+
+static BOOL update_write_bitmap_data_no_comp_header(const BITMAP_DATA* bitmapData, wStream* s)
+{
+	WINPR_ASSERT(bitmapData);
+	if (!Stream_EnsureRemainingCapacity(s, 8))
+		return FALSE;
+
+	Stream_Write_UINT16(
+	    s, WINPR_ASSERTING_INT_CAST(
+	           uint16_t, bitmapData->cbCompFirstRowSize)); /* cbCompFirstRowSize (2 bytes) */
+	Stream_Write_UINT16(
+	    s, WINPR_ASSERTING_INT_CAST(
+	           uint16_t, bitmapData->cbCompMainBodySize)); /* cbCompMainBodySize (2 bytes) */
+	Stream_Write_UINT16(
+	    s, WINPR_ASSERTING_INT_CAST(uint16_t, bitmapData->cbScanWidth)); /* cbScanWidth (2 bytes) */
+	Stream_Write_UINT16(
+	    s, WINPR_ASSERTING_INT_CAST(
+	           uint16_t, bitmapData->cbUncompressedSize)); /* cbUncompressedSize (2 bytes) */
+	return TRUE;
+}
+
 static BOOL update_write_bitmap_data(rdpUpdate* update_pub, wStream* s, BITMAP_DATA* bitmapData)
 {
 	rdp_update_internal* update = update_cast(update_pub);
@@ -173,38 +210,20 @@ static BOOL update_write_bitmap_data(rdpUpdate* update_pub, wStream* s, BITMAP_D
 		}
 	}
 
-	Stream_Write_UINT16(s, WINPR_ASSERTING_INT_CAST(uint16_t, bitmapData->destLeft));
-	Stream_Write_UINT16(s, WINPR_ASSERTING_INT_CAST(uint16_t, bitmapData->destTop));
-	Stream_Write_UINT16(s, WINPR_ASSERTING_INT_CAST(uint16_t, bitmapData->destRight));
-	Stream_Write_UINT16(s, WINPR_ASSERTING_INT_CAST(uint16_t, bitmapData->destBottom));
-	Stream_Write_UINT16(s, WINPR_ASSERTING_INT_CAST(uint16_t, bitmapData->width));
-	Stream_Write_UINT16(s, WINPR_ASSERTING_INT_CAST(uint16_t, bitmapData->height));
-	Stream_Write_UINT16(s, WINPR_ASSERTING_INT_CAST(uint16_t, bitmapData->bitsPerPixel));
-	Stream_Write_UINT16(s, WINPR_ASSERTING_INT_CAST(uint16_t, bitmapData->flags));
-	Stream_Write_UINT16(s, WINPR_ASSERTING_INT_CAST(uint16_t, bitmapData->bitmapLength));
+	if (!update_write_bitmap_data_header(bitmapData, s))
+		return FALSE;
 
 	if (bitmapData->flags & BITMAP_COMPRESSION)
 	{
-		if (!(bitmapData->flags & NO_BITMAP_COMPRESSION_HDR))
+		if ((bitmapData->flags & NO_BITMAP_COMPRESSION_HDR) == 0)
 		{
-			Stream_Write_UINT16(
-			    s,
-			    WINPR_ASSERTING_INT_CAST(
-			        uint16_t, bitmapData->cbCompFirstRowSize)); /* cbCompFirstRowSize (2 bytes) */
-			Stream_Write_UINT16(
-			    s,
-			    WINPR_ASSERTING_INT_CAST(
-			        uint16_t, bitmapData->cbCompMainBodySize)); /* cbCompMainBodySize (2 bytes) */
-			Stream_Write_UINT16(
-			    s, WINPR_ASSERTING_INT_CAST(uint16_t,
-			                                bitmapData->cbScanWidth)); /* cbScanWidth (2 bytes) */
-			Stream_Write_UINT16(
-			    s,
-			    WINPR_ASSERTING_INT_CAST(
-			        uint16_t, bitmapData->cbUncompressedSize)); /* cbUncompressedSize (2 bytes) */
+			if (!update_write_bitmap_data_no_comp_header(bitmapData, s))
+				return FALSE;
 		}
 	}
 
+	if (!Stream_EnsureRemainingCapacity(s, bitmapData->bitmapLength))
+		return FALSE;
 	Stream_Write(s, bitmapData->bitmapDataStream, bitmapData->bitmapLength);
 
 	return TRUE;
@@ -2544,6 +2563,132 @@ static UINT16 update_calculate_new_or_existing_window(const WINDOW_ORDER_INFO* o
 	return orderSize;
 }
 
+static BOOL update_write_order_field_flags(UINT32 fieldFlags, const WINDOW_STATE_ORDER* stateOrder,
+                                           wStream* s)
+{
+	WINPR_ASSERT(stateOrder);
+
+	if ((fieldFlags & WINDOW_ORDER_FIELD_OWNER) != 0)
+		Stream_Write_UINT32(s, stateOrder->ownerWindowId);
+
+	if ((fieldFlags & WINDOW_ORDER_FIELD_STYLE) != 0)
+	{
+		Stream_Write_UINT32(s, stateOrder->style);
+		Stream_Write_UINT32(s, stateOrder->extendedStyle);
+	}
+
+	if ((fieldFlags & WINDOW_ORDER_FIELD_SHOW) != 0)
+	{
+		Stream_Write_UINT8(s, WINPR_ASSERTING_INT_CAST(uint8_t, stateOrder->showState));
+	}
+
+	if ((fieldFlags & WINDOW_ORDER_FIELD_TITLE) != 0)
+	{
+		Stream_Write_UINT16(s, stateOrder->titleInfo.length);
+		Stream_Write(s, stateOrder->titleInfo.string, stateOrder->titleInfo.length);
+	}
+
+	if ((fieldFlags & WINDOW_ORDER_FIELD_CLIENT_AREA_OFFSET) != 0)
+	{
+		Stream_Write_INT32(s, stateOrder->clientOffsetX);
+		Stream_Write_INT32(s, stateOrder->clientOffsetY);
+	}
+
+	if ((fieldFlags & WINDOW_ORDER_FIELD_CLIENT_AREA_SIZE) != 0)
+	{
+		Stream_Write_UINT32(s, stateOrder->clientAreaWidth);
+		Stream_Write_UINT32(s, stateOrder->clientAreaHeight);
+	}
+
+	if ((fieldFlags & WINDOW_ORDER_FIELD_RESIZE_MARGIN_X) != 0)
+	{
+		Stream_Write_UINT32(s, stateOrder->resizeMarginLeft);
+		Stream_Write_UINT32(s, stateOrder->resizeMarginRight);
+	}
+
+	if ((fieldFlags & WINDOW_ORDER_FIELD_RESIZE_MARGIN_Y) != 0)
+	{
+		Stream_Write_UINT32(s, stateOrder->resizeMarginTop);
+		Stream_Write_UINT32(s, stateOrder->resizeMarginBottom);
+	}
+
+	if ((fieldFlags & WINDOW_ORDER_FIELD_RP_CONTENT) != 0)
+	{
+		Stream_Write_UINT8(s, WINPR_ASSERTING_INT_CAST(uint8_t, stateOrder->RPContent));
+	}
+
+	if ((fieldFlags & WINDOW_ORDER_FIELD_ROOT_PARENT) != 0)
+	{
+		Stream_Write_UINT32(s, stateOrder->rootParentHandle);
+	}
+
+	if ((fieldFlags & WINDOW_ORDER_FIELD_WND_OFFSET) != 0)
+	{
+		Stream_Write_INT32(s, stateOrder->windowOffsetX);
+		Stream_Write_INT32(s, stateOrder->windowOffsetY);
+	}
+
+	if ((fieldFlags & WINDOW_ORDER_FIELD_WND_CLIENT_DELTA) != 0)
+	{
+		Stream_Write_INT32(s, stateOrder->windowClientDeltaX);
+		Stream_Write_INT32(s, stateOrder->windowClientDeltaY);
+	}
+
+	if ((fieldFlags & WINDOW_ORDER_FIELD_WND_SIZE) != 0)
+	{
+		Stream_Write_UINT32(s, stateOrder->windowWidth);
+		Stream_Write_UINT32(s, stateOrder->windowHeight);
+	}
+
+	if ((fieldFlags & WINDOW_ORDER_FIELD_WND_RECTS) != 0)
+	{
+		Stream_Write_UINT16(s, WINPR_ASSERTING_INT_CAST(uint16_t, stateOrder->numWindowRects));
+		Stream_Write(s, stateOrder->windowRects, stateOrder->numWindowRects * sizeof(RECTANGLE_16));
+	}
+
+	if ((fieldFlags & WINDOW_ORDER_FIELD_VIS_OFFSET) != 0)
+	{
+		Stream_Write_INT32(s, stateOrder->visibleOffsetX);
+		Stream_Write_INT32(s, stateOrder->visibleOffsetY);
+	}
+
+	if ((fieldFlags & WINDOW_ORDER_FIELD_VISIBILITY) != 0)
+	{
+		Stream_Write_UINT16(s, WINPR_ASSERTING_INT_CAST(uint16_t, stateOrder->numVisibilityRects));
+		Stream_Write(s, stateOrder->visibilityRects,
+		             stateOrder->numVisibilityRects * sizeof(RECTANGLE_16));
+	}
+
+	if ((fieldFlags & WINDOW_ORDER_FIELD_OVERLAY_DESCRIPTION) != 0)
+	{
+		Stream_Write_UINT16(s, stateOrder->OverlayDescription.length);
+		Stream_Write(s, stateOrder->OverlayDescription.string,
+		             stateOrder->OverlayDescription.length);
+	}
+
+	if ((fieldFlags & WINDOW_ORDER_FIELD_TASKBAR_BUTTON) != 0)
+	{
+		Stream_Write_UINT8(s, stateOrder->TaskbarButton);
+	}
+
+	if ((fieldFlags & WINDOW_ORDER_FIELD_ENFORCE_SERVER_ZORDER) != 0)
+	{
+		Stream_Write_UINT8(s, stateOrder->EnforceServerZOrder);
+	}
+
+	if ((fieldFlags & WINDOW_ORDER_FIELD_APPBAR_STATE) != 0)
+	{
+		Stream_Write_UINT8(s, stateOrder->AppBarState);
+	}
+
+	if ((fieldFlags & WINDOW_ORDER_FIELD_APPBAR_EDGE) != 0)
+	{
+		Stream_Write_UINT8(s, stateOrder->AppBarEdge);
+	}
+
+	return TRUE;
+}
+
 static BOOL update_send_new_or_existing_window(rdpContext* context,
                                                const WINDOW_ORDER_INFO* orderInfo,
                                                const WINDOW_STATE_ORDER* stateOrder)
@@ -2573,123 +2718,8 @@ static BOOL update_send_new_or_existing_window(rdpContext* context,
 	Stream_Write_UINT32(s, orderInfo->fieldFlags); /* FieldsPresentFlags (4 bytes) */
 	Stream_Write_UINT32(s, orderInfo->windowId);   /* WindowID (4 bytes) */
 
-	if ((orderInfo->fieldFlags & WINDOW_ORDER_FIELD_OWNER) != 0)
-		Stream_Write_UINT32(s, stateOrder->ownerWindowId);
-
-	if ((orderInfo->fieldFlags & WINDOW_ORDER_FIELD_STYLE) != 0)
-	{
-		Stream_Write_UINT32(s, stateOrder->style);
-		Stream_Write_UINT32(s, stateOrder->extendedStyle);
-	}
-
-	if ((orderInfo->fieldFlags & WINDOW_ORDER_FIELD_SHOW) != 0)
-	{
-		Stream_Write_UINT8(s, WINPR_ASSERTING_INT_CAST(uint8_t, stateOrder->showState));
-	}
-
-	if ((orderInfo->fieldFlags & WINDOW_ORDER_FIELD_TITLE) != 0)
-	{
-		Stream_Write_UINT16(s, stateOrder->titleInfo.length);
-		Stream_Write(s, stateOrder->titleInfo.string, stateOrder->titleInfo.length);
-	}
-
-	if ((orderInfo->fieldFlags & WINDOW_ORDER_FIELD_CLIENT_AREA_OFFSET) != 0)
-	{
-		Stream_Write_INT32(s, stateOrder->clientOffsetX);
-		Stream_Write_INT32(s, stateOrder->clientOffsetY);
-	}
-
-	if ((orderInfo->fieldFlags & WINDOW_ORDER_FIELD_CLIENT_AREA_SIZE) != 0)
-	{
-		Stream_Write_UINT32(s, stateOrder->clientAreaWidth);
-		Stream_Write_UINT32(s, stateOrder->clientAreaHeight);
-	}
-
-	if ((orderInfo->fieldFlags & WINDOW_ORDER_FIELD_RESIZE_MARGIN_X) != 0)
-	{
-		Stream_Write_UINT32(s, stateOrder->resizeMarginLeft);
-		Stream_Write_UINT32(s, stateOrder->resizeMarginRight);
-	}
-
-	if ((orderInfo->fieldFlags & WINDOW_ORDER_FIELD_RESIZE_MARGIN_Y) != 0)
-	{
-		Stream_Write_UINT32(s, stateOrder->resizeMarginTop);
-		Stream_Write_UINT32(s, stateOrder->resizeMarginBottom);
-	}
-
-	if ((orderInfo->fieldFlags & WINDOW_ORDER_FIELD_RP_CONTENT) != 0)
-	{
-		Stream_Write_UINT8(s, WINPR_ASSERTING_INT_CAST(uint8_t, stateOrder->RPContent));
-	}
-
-	if ((orderInfo->fieldFlags & WINDOW_ORDER_FIELD_ROOT_PARENT) != 0)
-	{
-		Stream_Write_UINT32(s, stateOrder->rootParentHandle);
-	}
-
-	if ((orderInfo->fieldFlags & WINDOW_ORDER_FIELD_WND_OFFSET) != 0)
-	{
-		Stream_Write_INT32(s, stateOrder->windowOffsetX);
-		Stream_Write_INT32(s, stateOrder->windowOffsetY);
-	}
-
-	if ((orderInfo->fieldFlags & WINDOW_ORDER_FIELD_WND_CLIENT_DELTA) != 0)
-	{
-		Stream_Write_INT32(s, stateOrder->windowClientDeltaX);
-		Stream_Write_INT32(s, stateOrder->windowClientDeltaY);
-	}
-
-	if ((orderInfo->fieldFlags & WINDOW_ORDER_FIELD_WND_SIZE) != 0)
-	{
-		Stream_Write_UINT32(s, stateOrder->windowWidth);
-		Stream_Write_UINT32(s, stateOrder->windowHeight);
-	}
-
-	if ((orderInfo->fieldFlags & WINDOW_ORDER_FIELD_WND_RECTS) != 0)
-	{
-		Stream_Write_UINT16(s, WINPR_ASSERTING_INT_CAST(uint16_t, stateOrder->numWindowRects));
-		Stream_Write(s, stateOrder->windowRects, stateOrder->numWindowRects * sizeof(RECTANGLE_16));
-	}
-
-	if ((orderInfo->fieldFlags & WINDOW_ORDER_FIELD_VIS_OFFSET) != 0)
-	{
-		Stream_Write_INT32(s, stateOrder->visibleOffsetX);
-		Stream_Write_INT32(s, stateOrder->visibleOffsetY);
-	}
-
-	if ((orderInfo->fieldFlags & WINDOW_ORDER_FIELD_VISIBILITY) != 0)
-	{
-		Stream_Write_UINT16(s, WINPR_ASSERTING_INT_CAST(uint16_t, stateOrder->numVisibilityRects));
-		Stream_Write(s, stateOrder->visibilityRects,
-		             stateOrder->numVisibilityRects * sizeof(RECTANGLE_16));
-	}
-
-	if ((orderInfo->fieldFlags & WINDOW_ORDER_FIELD_OVERLAY_DESCRIPTION) != 0)
-	{
-		Stream_Write_UINT16(s, stateOrder->OverlayDescription.length);
-		Stream_Write(s, stateOrder->OverlayDescription.string,
-		             stateOrder->OverlayDescription.length);
-	}
-
-	if ((orderInfo->fieldFlags & WINDOW_ORDER_FIELD_TASKBAR_BUTTON) != 0)
-	{
-		Stream_Write_UINT8(s, stateOrder->TaskbarButton);
-	}
-
-	if ((orderInfo->fieldFlags & WINDOW_ORDER_FIELD_ENFORCE_SERVER_ZORDER) != 0)
-	{
-		Stream_Write_UINT8(s, stateOrder->EnforceServerZOrder);
-	}
-
-	if ((orderInfo->fieldFlags & WINDOW_ORDER_FIELD_APPBAR_STATE) != 0)
-	{
-		Stream_Write_UINT8(s, stateOrder->AppBarState);
-	}
-
-	if ((orderInfo->fieldFlags & WINDOW_ORDER_FIELD_APPBAR_EDGE) != 0)
-	{
-		Stream_Write_UINT8(s, stateOrder->AppBarEdge);
-	}
+	if (!update_write_order_field_flags(orderInfo->fieldFlags, stateOrder, s))
+		return FALSE;
 
 	update->numberOrders++;
 	return TRUE;
@@ -2902,6 +2932,52 @@ static UINT16 update_calculate_new_or_existing_notification_icons_order(
 	return orderSize;
 }
 
+static BOOL update_send_new_or_existing_order_icon(const ICON_INFO* iconInfo, wStream* s)
+{
+	WINPR_ASSERT(iconInfo);
+
+	if (!Stream_EnsureRemainingCapacity(s, 8))
+		return FALSE;
+
+	Stream_Write_UINT16(
+	    s, WINPR_ASSERTING_INT_CAST(uint16_t, iconInfo->cacheEntry)); /* CacheEntry (2 bytes) */
+	Stream_Write_UINT8(s,
+	                   WINPR_ASSERTING_INT_CAST(uint8_t, iconInfo->cacheId)); /* CacheId (1 byte) */
+	Stream_Write_UINT8(s, WINPR_ASSERTING_INT_CAST(uint8_t, iconInfo->bpp));  /* Bpp (1 byte) */
+	Stream_Write_UINT16(s,
+	                    WINPR_ASSERTING_INT_CAST(uint16_t, iconInfo->width)); /* Width (2 bytes) */
+	Stream_Write_UINT16(
+	    s, WINPR_ASSERTING_INT_CAST(uint16_t, iconInfo->height)); /* Height (2 bytes) */
+
+	if (iconInfo->bpp <= 8)
+	{
+		if (!Stream_EnsureRemainingCapacity(s, 2))
+			return FALSE;
+		Stream_Write_UINT16(s, WINPR_ASSERTING_INT_CAST(
+		                           uint16_t, iconInfo->cbColorTable)); /* CbColorTable (2 bytes) */
+	}
+
+	if (!Stream_EnsureRemainingCapacity(s, 4ULL + iconInfo->cbBitsMask))
+		return FALSE;
+	Stream_Write_UINT16(
+	    s, WINPR_ASSERTING_INT_CAST(uint16_t, iconInfo->cbBitsMask)); /* CbBitsMask (2 bytes) */
+	Stream_Write_UINT16(
+	    s, WINPR_ASSERTING_INT_CAST(uint16_t, iconInfo->cbBitsColor)); /* CbBitsColor (2 bytes) */
+	Stream_Write(s, iconInfo->bitsMask, iconInfo->cbBitsMask);         /* BitsMask (variable) */
+
+	if (iconInfo->bpp <= 8)
+	{
+		if (!Stream_EnsureRemainingCapacity(s, iconInfo->cbColorTable))
+			return FALSE;
+		Stream_Write(s, iconInfo->colorTable, iconInfo->cbColorTable); /* ColorTable (variable) */
+	}
+
+	if (!Stream_EnsureRemainingCapacity(s, iconInfo->cbBitsColor))
+		return FALSE;
+	Stream_Write(s, iconInfo->bitsColor, iconInfo->cbBitsColor); /* BitsColor (variable) */
+	return TRUE;
+}
+
 static BOOL
 update_send_new_or_existing_notification_icons(rdpContext* context,
                                                const WINDOW_ORDER_INFO* orderInfo,
@@ -2974,37 +3050,10 @@ update_send_new_or_existing_notification_icons(rdpContext* context,
 
 	if ((orderInfo->fieldFlags & WINDOW_ORDER_ICON) != 0)
 	{
-		const ICON_INFO iconInfo = iconStateOrder->icon;
+		const ICON_INFO* iconInfo = &iconStateOrder->icon;
 
-		Stream_Write_UINT16(
-		    s, WINPR_ASSERTING_INT_CAST(uint16_t, iconInfo.cacheEntry)); /* CacheEntry (2 bytes) */
-		Stream_Write_UINT8(
-		    s, WINPR_ASSERTING_INT_CAST(uint8_t, iconInfo.cacheId)); /* CacheId (1 byte) */
-		Stream_Write_UINT8(s, WINPR_ASSERTING_INT_CAST(uint8_t, iconInfo.bpp)); /* Bpp (1 byte) */
-		Stream_Write_UINT16(
-		    s, WINPR_ASSERTING_INT_CAST(uint16_t, iconInfo.width)); /* Width (2 bytes) */
-		Stream_Write_UINT16(
-		    s, WINPR_ASSERTING_INT_CAST(uint16_t, iconInfo.height)); /* Height (2 bytes) */
-
-		if (iconInfo.bpp <= 8)
-		{
-			Stream_Write_UINT16(
-			    s, WINPR_ASSERTING_INT_CAST(uint16_t,
-			                                iconInfo.cbColorTable)); /* CbColorTable (2 bytes) */
-		}
-
-		Stream_Write_UINT16(
-		    s, WINPR_ASSERTING_INT_CAST(uint16_t, iconInfo.cbBitsMask)); /* CbBitsMask (2 bytes) */
-		Stream_Write_UINT16(s, WINPR_ASSERTING_INT_CAST(
-		                           uint16_t, iconInfo.cbBitsColor)); /* CbBitsColor (2 bytes) */
-		Stream_Write(s, iconInfo.bitsMask, iconInfo.cbBitsMask); /* BitsMask (variable) */
-
-		if (iconInfo.bpp <= 8)
-		{
-			Stream_Write(s, iconInfo.colorTable, iconInfo.cbColorTable); /* ColorTable (variable) */
-		}
-
-		Stream_Write(s, iconInfo.bitsColor, iconInfo.cbBitsColor); /* BitsColor (variable) */
+		if (!update_send_new_or_existing_order_icon(iconInfo, s))
+			return FALSE;
 	}
 	else if ((orderInfo->fieldFlags & WINDOW_ORDER_CACHED_ICON) != 0)
 	{

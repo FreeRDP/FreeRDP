@@ -1480,149 +1480,174 @@ static SSIZE_T freerdp_client_write_setting_to_buffer(char** buffer, size_t* buf
 	return len;
 }
 
-size_t freerdp_client_write_rdp_file_buffer(const rdpFile* file, char* buffer, size_t size)
+static SSIZE_T write_int_parameters(const rdpFile* file, char* buffer, size_t size)
 {
-	size_t totalSize = 0;
+	WINPR_ASSERT(file);
 
-	if (!file)
-		return 0;
+	struct intentry_t
+	{
+		const char* key;
+		DWORD val;
+	};
+	const struct intentry_t settings[] = {
+		{ key_int_use_multimon, file->UseMultiMon },
+		{ key_int_maximizetocurrentdisplays, file->MaximizeToCurrentDisplays },
+		{ key_int_singlemoninwindowedmode, file->SingleMonInWindowedMode },
+		{ key_int_screen_mode_id, file->ScreenModeId },
+		{ key_int_span_monitors, file->SpanMonitors },
+		{ key_int_smart_sizing, file->SmartSizing },
+		{ key_int_dynamic_resolution, file->DynamicResolution },
+		{ key_int_enablesuperpan, file->EnableSuperSpan },
+		{ key_int_superpanaccelerationfactor, file->SuperSpanAccelerationFactor },
+		{ key_int_desktopwidth, file->DesktopWidth },
+		{ key_int_desktopheight, file->DesktopHeight },
+		{ key_int_desktop_size_id, file->DesktopSizeId },
+		{ key_int_session_bpp, file->SessionBpp },
+		{ key_int_desktopscalefactor, file->DesktopScaleFactor },
+		{ key_int_compression, file->Compression },
+		{ key_int_keyboardhook, file->KeyboardHook },
+		{ key_int_disable_ctrl_alt_del, file->DisableCtrlAltDel },
+		{ key_int_audiomode, file->AudioMode },
+		{ key_int_audioqualitymode, file->AudioQualityMode },
+		{ key_int_audiocapturemode, file->AudioCaptureMode },
+		{ key_int_encode_redirected_video_capture, file->EncodeRedirectedVideoCapture },
+		{ key_int_redirected_video_capture_encoding_quality,
+		  file->RedirectedVideoCaptureEncodingQuality },
+		{ key_int_videoplaybackmode, file->VideoPlaybackMode },
+		{ key_int_connection_type, file->ConnectionType },
+		{ key_int_networkautodetect, file->NetworkAutoDetect },
+		{ key_int_bandwidthautodetect, file->BandwidthAutoDetect },
+		{ key_int_pinconnectionbar, file->PinConnectionBar },
+		{ key_int_displayconnectionbar, file->DisplayConnectionBar },
+		{ key_int_workspaceid, file->WorkspaceId },
+		{ key_int_enableworkspacereconnect, file->EnableWorkspaceReconnect },
+		{ key_int_disable_wallpaper, file->DisableWallpaper },
+		{ key_int_allow_font_smoothing, file->AllowFontSmoothing },
+		{ key_int_allow_desktop_composition, file->AllowDesktopComposition },
+		{ key_int_disable_full_window_drag, file->DisableFullWindowDrag },
+		{ key_int_disable_menu_anims, file->DisableMenuAnims },
+		{ key_int_disable_themes, file->DisableThemes },
+		{ key_int_disable_cursor_setting, file->DisableCursorSetting },
+		{ key_int_bitmapcachesize, file->BitmapCacheSize },
+		{ key_int_bitmapcachepersistenable, file->BitmapCachePersistEnable },
+		{ key_int_server_port, file->ServerPort },
+		{ key_int_redirectdrives, file->RedirectDrives },
+		{ key_int_redirectprinters, file->RedirectPrinters },
+		{ key_int_redirectcomports, file->RedirectComPorts },
+		{ key_int_redirectlocation, file->RedirectLocation },
+		{ key_int_redirectsmartcards, file->RedirectSmartCards },
+		{ key_int_redirectclipboard, file->RedirectClipboard },
+		{ key_int_redirectposdevices, file->RedirectPosDevices },
+		{ key_int_redirectdirectx, file->RedirectDirectX },
+		{ key_int_disableprinterredirection, file->DisablePrinterRedirection },
+		{ key_int_disableclipboardredirection, file->DisableClipboardRedirection },
+		{ key_int_connect_to_console, file->ConnectToConsole },
+		{ key_int_administrative_session, file->AdministrativeSession },
+		{ key_int_autoreconnection_enabled, file->AutoReconnectionEnabled },
+		{ key_int_autoreconnect_max_retries, file->AutoReconnectMaxRetries },
+		{ key_int_public_mode, file->PublicMode },
+		{ key_int_authentication_level, file->AuthenticationLevel },
+		{ key_int_promptcredentialonce, file->PromptCredentialOnce },
+		{ key_int_prompt_for_credentials, file->PromptForCredentials },
+		{ key_int_negotiate_security_layer, file->NegotiateSecurityLayer },
+		{ key_int_enablecredsspsupport, file->EnableCredSSPSupport },
+		{ key_int_enablerdsaadauth, file->EnableRdsAadAuth },
+		{ key_int_remoteapplicationmode, file->RemoteApplicationMode },
+		{ key_int_remoteapplicationexpandcmdline, file->RemoteApplicationExpandCmdLine },
+		{ key_int_remoteapplicationexpandworkingdir, file->RemoteApplicationExpandWorkingDir },
+		{ key_int_disableconnectionsharing, file->DisableConnectionSharing },
+		{ key_int_disableremoteappcapscheck, file->DisableRemoteAppCapsCheck },
+		{ key_int_gatewayusagemethod, file->GatewayUsageMethod },
+		{ key_int_gatewayprofileusagemethod, file->GatewayProfileUsageMethod },
+		{ key_int_gatewaycredentialssource, file->GatewayCredentialsSource },
+		{ key_int_use_redirection_server_name, file->UseRedirectionServerName },
+		{ key_int_rdgiskdcproxy, file->RdgIsKdcProxy },
+		{ key_int_redirectwebauthn, file->RedirectWebauthN }
+	};
 
-	/* either buffer and size are null or non-null */
-	if ((!buffer || !size) && (buffer || size))
-		return 0;
-
-#define WRITE_SETTING_(fmt_, ...)                                                                \
-	{                                                                                            \
-		SSIZE_T res = freerdp_client_write_setting_to_buffer(&buffer, &size, fmt_, __VA_ARGS__); \
-		if (res < 0)                                                                             \
-			return 0;                                                                            \
-		totalSize += (size_t)res;                                                                \
+	SSIZE_T totalSize = 0;
+	for (size_t x = 0; x < ARRAYSIZE(settings); x++)
+	{
+		const struct intentry_t* cur = &settings[x];
+		if (~(size_t)(cur->val))
+		{
+			const SSIZE_T res = freerdp_client_write_setting_to_buffer(
+			    &buffer, &size, "%s:s:%" PRIu32, cur->key, cur->val);
+			if (res < 0)
+				return res;
+			totalSize += res;
+		}
 	}
 
-#define WRITE_SETTING_INT(key_, param_)                   \
-	do                                                    \
-	{                                                     \
-		if (~(param_))                                    \
-			WRITE_SETTING_("%s:i:%" PRIu32, key_, param_) \
-	} while (0)
+	return totalSize;
+}
 
-#define WRITE_SETTING_STR(key_, param_)             \
-	do                                              \
-	{                                               \
-		if (~(size_t)(param_))                      \
-			WRITE_SETTING_("%s:s:%s", key_, param_) \
-	} while (0)
+static SSIZE_T write_string_parameters(const rdpFile* file, char* buffer, size_t size)
+{
+	WINPR_ASSERT(file);
 
-	/* integer parameters */
-	WRITE_SETTING_INT(key_int_use_multimon, file->UseMultiMon);
-	WRITE_SETTING_INT(key_int_maximizetocurrentdisplays, file->MaximizeToCurrentDisplays);
-	WRITE_SETTING_INT(key_int_singlemoninwindowedmode, file->SingleMonInWindowedMode);
-	WRITE_SETTING_INT(key_int_screen_mode_id, file->ScreenModeId);
-	WRITE_SETTING_INT(key_int_span_monitors, file->SpanMonitors);
-	WRITE_SETTING_INT(key_int_smart_sizing, file->SmartSizing);
-	WRITE_SETTING_INT(key_int_dynamic_resolution, file->DynamicResolution);
-	WRITE_SETTING_INT(key_int_enablesuperpan, file->EnableSuperSpan);
-	WRITE_SETTING_INT(key_int_superpanaccelerationfactor, file->SuperSpanAccelerationFactor);
-	WRITE_SETTING_INT(key_int_desktopwidth, file->DesktopWidth);
-	WRITE_SETTING_INT(key_int_desktopheight, file->DesktopHeight);
-	WRITE_SETTING_INT(key_int_desktop_size_id, file->DesktopSizeId);
-	WRITE_SETTING_INT(key_int_session_bpp, file->SessionBpp);
-	WRITE_SETTING_INT(key_int_desktopscalefactor, file->DesktopScaleFactor);
-	WRITE_SETTING_INT(key_int_compression, file->Compression);
-	WRITE_SETTING_INT(key_int_keyboardhook, file->KeyboardHook);
-	WRITE_SETTING_INT(key_int_disable_ctrl_alt_del, file->DisableCtrlAltDel);
-	WRITE_SETTING_INT(key_int_audiomode, file->AudioMode);
-	WRITE_SETTING_INT(key_int_audioqualitymode, file->AudioQualityMode);
-	WRITE_SETTING_INT(key_int_audiocapturemode, file->AudioCaptureMode);
-	WRITE_SETTING_INT(key_int_encode_redirected_video_capture, file->EncodeRedirectedVideoCapture);
-	WRITE_SETTING_INT(key_int_redirected_video_capture_encoding_quality,
-	                  file->RedirectedVideoCaptureEncodingQuality);
-	WRITE_SETTING_INT(key_int_videoplaybackmode, file->VideoPlaybackMode);
-	WRITE_SETTING_INT(key_int_connection_type, file->ConnectionType);
-	WRITE_SETTING_INT(key_int_networkautodetect, file->NetworkAutoDetect);
-	WRITE_SETTING_INT(key_int_bandwidthautodetect, file->BandwidthAutoDetect);
-	WRITE_SETTING_INT(key_int_pinconnectionbar, file->PinConnectionBar);
-	WRITE_SETTING_INT(key_int_displayconnectionbar, file->DisplayConnectionBar);
-	WRITE_SETTING_INT(key_int_workspaceid, file->WorkspaceId);
-	WRITE_SETTING_INT(key_int_enableworkspacereconnect, file->EnableWorkspaceReconnect);
-	WRITE_SETTING_INT(key_int_disable_wallpaper, file->DisableWallpaper);
-	WRITE_SETTING_INT(key_int_allow_font_smoothing, file->AllowFontSmoothing);
-	WRITE_SETTING_INT(key_int_allow_desktop_composition, file->AllowDesktopComposition);
-	WRITE_SETTING_INT(key_int_disable_full_window_drag, file->DisableFullWindowDrag);
-	WRITE_SETTING_INT(key_int_disable_menu_anims, file->DisableMenuAnims);
-	WRITE_SETTING_INT(key_int_disable_themes, file->DisableThemes);
-	WRITE_SETTING_INT(key_int_disable_cursor_setting, file->DisableCursorSetting);
-	WRITE_SETTING_INT(key_int_bitmapcachesize, file->BitmapCacheSize);
-	WRITE_SETTING_INT(key_int_bitmapcachepersistenable, file->BitmapCachePersistEnable);
-	WRITE_SETTING_INT(key_int_server_port, file->ServerPort);
-	WRITE_SETTING_INT(key_int_redirectdrives, file->RedirectDrives);
-	WRITE_SETTING_INT(key_int_redirectprinters, file->RedirectPrinters);
-	WRITE_SETTING_INT(key_int_redirectcomports, file->RedirectComPorts);
-	WRITE_SETTING_INT(key_int_redirectlocation, file->RedirectLocation);
-	WRITE_SETTING_INT(key_int_redirectsmartcards, file->RedirectSmartCards);
-	WRITE_SETTING_INT(key_int_redirectclipboard, file->RedirectClipboard);
-	WRITE_SETTING_INT(key_int_redirectposdevices, file->RedirectPosDevices);
-	WRITE_SETTING_INT(key_int_redirectdirectx, file->RedirectDirectX);
-	WRITE_SETTING_INT(key_int_disableprinterredirection, file->DisablePrinterRedirection);
-	WRITE_SETTING_INT(key_int_disableclipboardredirection, file->DisableClipboardRedirection);
-	WRITE_SETTING_INT(key_int_connect_to_console, file->ConnectToConsole);
-	WRITE_SETTING_INT(key_int_administrative_session, file->AdministrativeSession);
-	WRITE_SETTING_INT(key_int_autoreconnection_enabled, file->AutoReconnectionEnabled);
-	WRITE_SETTING_INT(key_int_autoreconnect_max_retries, file->AutoReconnectMaxRetries);
-	WRITE_SETTING_INT(key_int_public_mode, file->PublicMode);
-	WRITE_SETTING_INT(key_int_authentication_level, file->AuthenticationLevel);
-	WRITE_SETTING_INT(key_int_promptcredentialonce, file->PromptCredentialOnce);
-	WRITE_SETTING_INT(key_int_prompt_for_credentials, file->PromptForCredentials);
-	WRITE_SETTING_INT(key_int_negotiate_security_layer, file->NegotiateSecurityLayer);
-	WRITE_SETTING_INT(key_int_enablecredsspsupport, file->EnableCredSSPSupport);
-	WRITE_SETTING_INT(key_int_enablerdsaadauth, file->EnableRdsAadAuth);
-	WRITE_SETTING_INT(key_int_remoteapplicationmode, file->RemoteApplicationMode);
-	WRITE_SETTING_INT(key_int_remoteapplicationexpandcmdline, file->RemoteApplicationExpandCmdLine);
-	WRITE_SETTING_INT(key_int_remoteapplicationexpandworkingdir,
-	                  file->RemoteApplicationExpandWorkingDir);
-	WRITE_SETTING_INT(key_int_disableconnectionsharing, file->DisableConnectionSharing);
-	WRITE_SETTING_INT(key_int_disableremoteappcapscheck, file->DisableRemoteAppCapsCheck);
-	WRITE_SETTING_INT(key_int_gatewayusagemethod, file->GatewayUsageMethod);
-	WRITE_SETTING_INT(key_int_gatewayprofileusagemethod, file->GatewayProfileUsageMethod);
-	WRITE_SETTING_INT(key_int_gatewaycredentialssource, file->GatewayCredentialsSource);
-	WRITE_SETTING_INT(key_int_use_redirection_server_name, file->UseRedirectionServerName);
-	WRITE_SETTING_INT(key_int_rdgiskdcproxy, file->RdgIsKdcProxy);
-	WRITE_SETTING_INT(key_int_redirectwebauthn, file->RedirectWebauthN);
+	struct strentry_t
+	{
+		const char* key;
+		const char* val;
+	};
+	const struct strentry_t settings[] = {
+		{ key_str_username, file->Username },
+		{ key_str_domain, file->Domain },
+		{ key_str_password, file->Password },
+		{ key_str_full_address, file->FullAddress },
+		{ key_str_alternate_full_address, file->AlternateFullAddress },
+		{ key_str_usbdevicestoredirect, file->UsbDevicesToRedirect },
+		{ key_str_camerastoredirect, file->RedirectCameras },
+		{ key_str_loadbalanceinfo, file->LoadBalanceInfo },
+		{ key_str_remoteapplicationname, file->RemoteApplicationName },
+		{ key_str_remoteapplicationicon, file->RemoteApplicationIcon },
+		{ key_str_remoteapplicationprogram, file->RemoteApplicationProgram },
+		{ key_str_remoteapplicationfile, file->RemoteApplicationFile },
+		{ key_str_remoteapplicationguid, file->RemoteApplicationGuid },
+		{ key_str_remoteapplicationcmdline, file->RemoteApplicationCmdLine },
+		{ key_str_alternate_shell, file->AlternateShell },
+		{ key_str_shell_working_directory, file->ShellWorkingDirectory },
+		{ key_str_gatewayhostname, file->GatewayHostname },
+		{ key_str_resourceprovider, file->ResourceProvider },
+		{ key_str_wvd, file->WvdEndpointPool },
+		{ key_str_geo, file->geo },
+		{ key_str_armpath, file->armpath },
+		{ key_str_aadtenantid, file->aadtenantid },
+		{ key_str_diagnosticserviceurl, file->diagnosticserviceurl },
+		{ key_str_hubdiscoverygeourl, file->hubdiscoverygeourl },
+		{ key_str_activityhint, file->activityhint },
+		{ key_str_gatewayaccesstoken, file->GatewayAccessToken },
+		{ key_str_kdcproxyname, file->KdcProxyName },
+		{ key_str_drivestoredirect, file->DrivesToRedirect },
+		{ key_str_devicestoredirect, file->DevicesToRedirect },
+		{ key_str_winposstr, file->WinPosStr },
+		{ key_str_pcb, file->PreconnectionBlob },
+		{ key_str_selectedmonitors, file->SelectedMonitors }
+	};
 
-	/* string parameters */
-	WRITE_SETTING_STR(key_str_username, file->Username);
-	WRITE_SETTING_STR(key_str_domain, file->Domain);
-	WRITE_SETTING_STR(key_str_password, file->Password);
-	WRITE_SETTING_STR(key_str_full_address, file->FullAddress);
-	WRITE_SETTING_STR(key_str_alternate_full_address, file->AlternateFullAddress);
-	WRITE_SETTING_STR(key_str_usbdevicestoredirect, file->UsbDevicesToRedirect);
-	WRITE_SETTING_STR(key_str_camerastoredirect, file->RedirectCameras);
-	WRITE_SETTING_STR(key_str_loadbalanceinfo, file->LoadBalanceInfo);
-	WRITE_SETTING_STR(key_str_remoteapplicationname, file->RemoteApplicationName);
-	WRITE_SETTING_STR(key_str_remoteapplicationicon, file->RemoteApplicationIcon);
-	WRITE_SETTING_STR(key_str_remoteapplicationprogram, file->RemoteApplicationProgram);
-	WRITE_SETTING_STR(key_str_remoteapplicationfile, file->RemoteApplicationFile);
-	WRITE_SETTING_STR(key_str_remoteapplicationguid, file->RemoteApplicationGuid);
-	WRITE_SETTING_STR(key_str_remoteapplicationcmdline, file->RemoteApplicationCmdLine);
-	WRITE_SETTING_STR(key_str_alternate_shell, file->AlternateShell);
-	WRITE_SETTING_STR(key_str_shell_working_directory, file->ShellWorkingDirectory);
-	WRITE_SETTING_STR(key_str_gatewayhostname, file->GatewayHostname);
-	WRITE_SETTING_STR(key_str_resourceprovider, file->ResourceProvider);
-	WRITE_SETTING_STR(key_str_wvd, file->WvdEndpointPool);
-	WRITE_SETTING_STR(key_str_geo, file->geo);
-	WRITE_SETTING_STR(key_str_armpath, file->armpath);
-	WRITE_SETTING_STR(key_str_aadtenantid, file->aadtenantid);
-	WRITE_SETTING_STR(key_str_diagnosticserviceurl, file->diagnosticserviceurl);
-	WRITE_SETTING_STR(key_str_hubdiscoverygeourl, file->hubdiscoverygeourl);
-	WRITE_SETTING_STR(key_str_activityhint, file->activityhint);
-	WRITE_SETTING_STR(key_str_gatewayaccesstoken, file->GatewayAccessToken);
-	WRITE_SETTING_STR(key_str_kdcproxyname, file->KdcProxyName);
-	WRITE_SETTING_STR(key_str_drivestoredirect, file->DrivesToRedirect);
-	WRITE_SETTING_STR(key_str_devicestoredirect, file->DevicesToRedirect);
-	WRITE_SETTING_STR(key_str_winposstr, file->WinPosStr);
-	WRITE_SETTING_STR(key_str_pcb, file->PreconnectionBlob);
-	WRITE_SETTING_STR(key_str_selectedmonitors, file->SelectedMonitors);
+	SSIZE_T totalSize = 0;
+	for (size_t x = 0; x < ARRAYSIZE(settings); x++)
+	{
+		const struct strentry_t* cur = &settings[x];
+		if (~(size_t)(cur->val))
+		{
+			const SSIZE_T res = freerdp_client_write_setting_to_buffer(&buffer, &size, "%s:s:%s",
+			                                                           cur->key, cur->val);
+			if (res < 0)
+				return res;
+			totalSize += res;
+		}
+	}
 
+	return totalSize;
+}
+
+static SSIZE_T write_custom_parameters(const rdpFile* file, char* buffer, size_t size)
+{
+	WINPR_ASSERT(file);
+
+	SSIZE_T totalSize = 0;
 	/* custom parameters */
 	for (size_t i = 0; i < file->lineCount; ++i)
 	{
@@ -1636,11 +1661,40 @@ size_t freerdp_client_write_rdp_file_buffer(const rdpFile* file, char* buffer, s
 			res = freerdp_client_write_setting_to_buffer(&buffer, &size, "%s:s:%s", curLine->name,
 			                                             curLine->sValue);
 		if (res < 0)
-			return 0;
+			return res;
 
-		totalSize += (size_t)res;
+		totalSize += res;
 	}
+	return totalSize;
+}
 
+size_t freerdp_client_write_rdp_file_buffer(const rdpFile* file, char* buffer, size_t size)
+{
+	size_t totalSize = 0;
+
+	if (!file)
+		return 0;
+
+	/* either buffer and size are null or non-null */
+	if ((!buffer || !size) && (buffer || size))
+		return 0;
+
+	/* integer parameters */
+	const SSIZE_T intsize = write_int_parameters(file, buffer, size);
+	if (intsize < 0)
+		return 0;
+	totalSize += (size_t)intsize;
+
+	/* string parameters */
+	const SSIZE_T stringsize = write_string_parameters(file, buffer, size);
+	if (stringsize < 0)
+		return 0;
+
+	/* custom parameters */
+	const SSIZE_T customsize = write_custom_parameters(file, buffer, size);
+	if (customsize < 0)
+		return 0;
+	totalSize += (size_t)customsize;
 	return totalSize;
 }
 
