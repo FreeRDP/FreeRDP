@@ -28,6 +28,8 @@
 BOOL xf_keyboard_init(xfContext* xfc);
 void xf_keyboard_free(xfContext* xfc);
 
+BOOL xf_keyboard_action_script_init(xfContext* xfc);
+
 void xf_keyboard_key_press(xfContext* xfc, const XKeyEvent* event, KeySym keysym);
 void xf_keyboard_key_release(xfContext* xfc, const XKeyEvent* event, KeySym keysym);
 
@@ -39,5 +41,7 @@ BOOL xf_keyboard_set_ime_status(rdpContext* context, UINT16 imeId, UINT32 imeSta
                                 UINT32 imeConvMode);
 
 BOOL xf_ungrab(xfContext* xfc);
+
+void xf_button_map_init(xfContext* xfc);
 
 #endif /* FREERDP_CLIENT_X11_XF_KEYBOARD_H */

@@ -442,8 +442,8 @@ static UINT32 sdl_scancode_to_rdp(Uint32 scancode)
 
 #if defined(WITH_DEBUG_SDL_KBD_EVENTS)
 	auto code = static_cast<SDL_Scancode>(scancode);
-	WLog_DBG(TAG, "got %s [%s] -> [%s]", SDL_GetScancodeName(code), sdl_scancode_name(scancode),
-	         sdl_rdp_scancode_name(rdp));
+	WLog_DBG(TAG, "got %s [0x%08" PRIx32 "] -> [%s]", SDL_GetScancodeName(code), scancode,
+	         freerdp_keyboard_scancode_name(rdp));
 #endif
 	return rdp;
 }

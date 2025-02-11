@@ -34,7 +34,7 @@ extern "C"
 	/** @brief Callback function type definition for command line handling
 	 *
 	 *  @param arg A pointer to the argument to handle
-	 *  @param void* A pointer to user defined data
+	 *  @param custom A pointer to user defined data
 	 *
 	 *  @return \b 0 for success or a \b COMMAND_LINE_ERROR code
 	 *

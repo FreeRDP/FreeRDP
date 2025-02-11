@@ -830,16 +830,12 @@ void xf_minimize(xfContext* xfc)
 
 void xf_lock_x11_(xfContext* xfc, const char* fkt)
 {
-
 	if (!xfc->UseXThreads)
 		(void)WaitForSingleObject(xfc->mutex, INFINITE);
 	else
 		XLockDisplay(xfc->display);
 
 	xfc->locked++;
-#ifdef WITH_DEBUG_X11
-	WLog_VRB(TAG, "[%" PRIu32 "] from %s", xfc->locked, fkt);
-#endif
 }
 
 void xf_unlock_x11_(xfContext* xfc, const char* fkt)
@@ -848,10 +844,6 @@ void xf_unlock_x11_(xfContext* xfc, const char* fkt)
 		WLog_WARN(TAG, "X11: trying to unlock although not locked!");
 	else
 		xfc->locked--;
-
-#ifdef WITH_DEBUG_X11
-	WLog_VRB(TAG, "[%" PRIu32 "] from %s", xfc->locked, fkt);
-#endif
 
 	if (!xfc->UseXThreads)
 		(void)ReleaseMutex(xfc->mutex);
@@ -1084,7 +1076,7 @@ static UINT16 get_flags_for_button(size_t button)
 	return 0;
 }
 
-static void xf_button_map_init(xfContext* xfc)
+void xf_button_map_init(xfContext* xfc)
 {
 	size_t pos = 0;
 	/* loop counter for array initialization */
@@ -1210,7 +1202,15 @@ static BOOL xf_pre_connect(freerdp* instance)
 
 	if (!freerdp_settings_get_bool(settings, FreeRDP_AuthenticationOnly))
 	{
+		const char* KeyboardRemappingList = freerdp_settings_get_string(
+		    xfc->common.context.settings, FreeRDP_KeyboardRemappingList);
+
+		xfc->remap_table = freerdp_keyboard_remap_string_to_list(KeyboardRemappingList);
+		if (!xfc->remap_table)
+			return FALSE;
 		if (!xf_keyboard_init(xfc))
+			return FALSE;
+		if (!xf_keyboard_action_script_init(xfc))
 			return FALSE;
 		if (!xf_detect_monitors(xfc, &maxWidth, &maxHeight))
 			return FALSE;
@@ -1497,6 +1497,9 @@ static void xf_post_disconnect(freerdp* instance)
 		xfc->drawable = 0;
 	else
 		xf_DestroyDummyWindow(xfc, xfc->drawable);
+
+	freerdp_keyboard_remap_free(xfc->remap_table);
+	xfc->remap_table = NULL;
 
 	xf_window_free(xfc);
 }
