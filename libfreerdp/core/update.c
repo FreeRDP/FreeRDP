@@ -149,6 +149,43 @@ static BOOL update_read_bitmap_data(rdpUpdate* update, wStream* s, BITMAP_DATA* 
 	return TRUE;
 }
 
+static BOOL update_write_bitmap_data_header(const BITMAP_DATA* bitmapData, wStream* s)
+{
+	WINPR_ASSERT(bitmapData);
+	if (!Stream_EnsureRemainingCapacity(s, 18))
+		return FALSE;
+	Stream_Write_UINT16(s, WINPR_ASSERTING_INT_CAST(uint16_t, bitmapData->destLeft));
+	Stream_Write_UINT16(s, WINPR_ASSERTING_INT_CAST(uint16_t, bitmapData->destTop));
+	Stream_Write_UINT16(s, WINPR_ASSERTING_INT_CAST(uint16_t, bitmapData->destRight));
+	Stream_Write_UINT16(s, WINPR_ASSERTING_INT_CAST(uint16_t, bitmapData->destBottom));
+	Stream_Write_UINT16(s, WINPR_ASSERTING_INT_CAST(uint16_t, bitmapData->width));
+	Stream_Write_UINT16(s, WINPR_ASSERTING_INT_CAST(uint16_t, bitmapData->height));
+	Stream_Write_UINT16(s, WINPR_ASSERTING_INT_CAST(uint16_t, bitmapData->bitsPerPixel));
+	Stream_Write_UINT16(s, WINPR_ASSERTING_INT_CAST(uint16_t, bitmapData->flags));
+	Stream_Write_UINT16(s, WINPR_ASSERTING_INT_CAST(uint16_t, bitmapData->bitmapLength));
+	return TRUE;
+}
+
+static BOOL update_write_bitmap_data_no_comp_header(const BITMAP_DATA* bitmapData, wStream* s)
+{
+	WINPR_ASSERT(bitmapData);
+	if (!Stream_EnsureRemainingCapacity(s, 8))
+		return FALSE;
+
+	Stream_Write_UINT16(
+	    s, WINPR_ASSERTING_INT_CAST(
+	           uint16_t, bitmapData->cbCompFirstRowSize)); /* cbCompFirstRowSize (2 bytes) */
+	Stream_Write_UINT16(
+	    s, WINPR_ASSERTING_INT_CAST(
+	           uint16_t, bitmapData->cbCompMainBodySize)); /* cbCompMainBodySize (2 bytes) */
+	Stream_Write_UINT16(
+	    s, WINPR_ASSERTING_INT_CAST(uint16_t, bitmapData->cbScanWidth)); /* cbScanWidth (2 bytes) */
+	Stream_Write_UINT16(
+	    s, WINPR_ASSERTING_INT_CAST(
+	           uint16_t, bitmapData->cbUncompressedSize)); /* cbUncompressedSize (2 bytes) */
+	return TRUE;
+}
+
 static BOOL update_write_bitmap_data(rdpUpdate* update_pub, wStream* s, BITMAP_DATA* bitmapData)
 {
 	rdp_update_internal* update = update_cast(update_pub);
@@ -173,38 +210,20 @@ static BOOL update_write_bitmap_data(rdpUpdate* update_pub, wStream* s, BITMAP_D
 		}
 	}
 
-	Stream_Write_UINT16(s, WINPR_ASSERTING_INT_CAST(uint16_t, bitmapData->destLeft));
-	Stream_Write_UINT16(s, WINPR_ASSERTING_INT_CAST(uint16_t, bitmapData->destTop));
-	Stream_Write_UINT16(s, WINPR_ASSERTING_INT_CAST(uint16_t, bitmapData->destRight));
-	Stream_Write_UINT16(s, WINPR_ASSERTING_INT_CAST(uint16_t, bitmapData->destBottom));
-	Stream_Write_UINT16(s, WINPR_ASSERTING_INT_CAST(uint16_t, bitmapData->width));
-	Stream_Write_UINT16(s, WINPR_ASSERTING_INT_CAST(uint16_t, bitmapData->height));
-	Stream_Write_UINT16(s, WINPR_ASSERTING_INT_CAST(uint16_t, bitmapData->bitsPerPixel));
-	Stream_Write_UINT16(s, WINPR_ASSERTING_INT_CAST(uint16_t, bitmapData->flags));
-	Stream_Write_UINT16(s, WINPR_ASSERTING_INT_CAST(uint16_t, bitmapData->bitmapLength));
+	if (!update_write_bitmap_data_header(bitmapData, s))
+		return FALSE;
 
 	if (bitmapData->flags & BITMAP_COMPRESSION)
 	{
-		if (!(bitmapData->flags & NO_BITMAP_COMPRESSION_HDR))
+		if ((bitmapData->flags & NO_BITMAP_COMPRESSION_HDR) == 0)
 		{
-			Stream_Write_UINT16(
-			    s,
-			    WINPR_ASSERTING_INT_CAST(
-			        uint16_t, bitmapData->cbCompFirstRowSize)); /* cbCompFirstRowSize (2 bytes) */
-			Stream_Write_UINT16(
-			    s,
-			    WINPR_ASSERTING_INT_CAST(
-			        uint16_t, bitmapData->cbCompMainBodySize)); /* cbCompMainBodySize (2 bytes) */
-			Stream_Write_UINT16(
-			    s, WINPR_ASSERTING_INT_CAST(uint16_t,
-			                                bitmapData->cbScanWidth)); /* cbScanWidth (2 bytes) */
-			Stream_Write_UINT16(
-			    s,
-			    WINPR_ASSERTING_INT_CAST(
-			        uint16_t, bitmapData->cbUncompressedSize)); /* cbUncompressedSize (2 bytes) */
+			if (!update_write_bitmap_data_no_comp_header(bitmapData, s))
+				return FALSE;
 		}
 	}
 
+	if (!Stream_EnsureRemainingCapacity(s, bitmapData->bitmapLength))
+		return FALSE;
 	Stream_Write(s, bitmapData->bitmapDataStream, bitmapData->bitmapLength);
 
 	return TRUE;
