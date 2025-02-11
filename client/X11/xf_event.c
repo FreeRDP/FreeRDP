@@ -734,6 +734,7 @@ static BOOL xf_event_MappingNotify(xfContext* xfc, const XMappingEvent* event, B
 			return xf_keyboard_init(xfc);
 		case MappingPointer:
 			WLog_VRB(TAG, "[%d] MappingPointer", event->request);
+			xf_button_map_init(xfc);
 			return TRUE;
 		default:
 			WLog_WARN(TAG,

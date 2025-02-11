@@ -1076,7 +1076,7 @@ static UINT16 get_flags_for_button(size_t button)
 	return 0;
 }
 
-static void xf_button_map_init(xfContext* xfc)
+void xf_button_map_init(xfContext* xfc)
 {
 	size_t pos = 0;
 	/* loop counter for array initialization */

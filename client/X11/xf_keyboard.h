@@ -42,4 +42,6 @@ BOOL xf_keyboard_set_ime_status(rdpContext* context, UINT16 imeId, UINT32 imeSta
 
 BOOL xf_ungrab(xfContext* xfc);
 
+void xf_button_map_init(xfContext* xfc);
+
 #endif /* FREERDP_CLIENT_X11_XF_KEYBOARD_H */
