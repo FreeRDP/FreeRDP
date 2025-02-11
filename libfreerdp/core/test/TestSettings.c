@@ -1,5 +1,6 @@
 #include <stdio.h>
 
+#include <winpr/user.h>
 #include <winpr/crypto.h>
 
 #include <freerdp/settings.h>

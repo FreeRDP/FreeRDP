@@ -60,6 +60,7 @@ function(cleaning_configure_file RSRC RDST)
 
   # Create a target to recreate the configuration file if something changes.
   string(SHA256 DST_HASH "${DST}")
+  string(SUBSTRING "${DST_HASH}" 0 8 DST_HASH)
   if(NOT TARGET ct-${DST_HASH})
     add_custom_target(
       ct-${DST_HASH} COMMAND ${CMAKE_COMMAND} "-E" "make_directory" "${DST_DIR}"

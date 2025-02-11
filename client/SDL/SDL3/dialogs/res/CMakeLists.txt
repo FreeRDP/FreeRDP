@@ -26,4 +26,4 @@ endif()
 
 target_link_libraries(sdl3_client_res sdl-common-client-res)
 
-set_property(TARGET sdl3_client_res PROPERTY POSITION_INDEPENDENT_CODE ON)
+set_target_properties(sdl3_client_res PROPERTIES POSITION_INDEPENDENT_CODE ON INTERPROCEDURAL_OPTIMIZATION OFF)
