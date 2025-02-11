@@ -375,9 +375,10 @@ static uint8_t get_guid_unit_id_from_device(libusb_device* device, const uint8_t
 				    interface->bInterfaceSubClass != USB_VIDEO_CONTROL)
 					continue;
 
-				const xu_descriptor* desc = (const xu_descriptor*)interface->extra;
-				while (((const uint8_t*)desc) < interface->extra + interface->extra_length)
+				const uint8_t* ptr = interface->extra;
+				while (ptr < interface->extra + interface->extra_length)
 				{
+					const xu_descriptor* desc = (const xu_descriptor*)ptr;
 					if (desc->bDescriptorType == USB_VIDEO_CONTROL_INTERFACE &&
 					    desc->bDescriptorSubType == USB_VIDEO_CONTROL_XU_TYPE &&
 					    memcmp(desc->guidExtensionCode, guid, 16) == 0)
@@ -390,7 +391,7 @@ static uint8_t get_guid_unit_id_from_device(libusb_device* device, const uint8_t
 						         ddesc.idVendor, ddesc.idProduct, unit_id);
 						return unit_id;
 					}
-					desc++;
+					ptr += desc->bLength;
 				}
 			}
 		}
