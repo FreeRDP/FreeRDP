@@ -115,10 +115,23 @@ static BOOL xf_action_script_append(xfContext* xfc, const char* buffer, size_t s
 	return ArrayList_Append(xfc->keyCombinations, buffer);
 }
 
-static BOOL xf_keyboard_action_script_init(xfContext* xfc)
+static void xf_keyboard_action_script_free(xfContext* xfc)
+{
+	xf_event_action_script_free(xfc);
+
+	if (xfc->keyCombinations)
+	{
+		ArrayList_Free(xfc->keyCombinations);
+		xfc->keyCombinations = NULL;
+		xfc->actionScriptExists = FALSE;
+	}
+}
+
+BOOL xf_keyboard_action_script_init(xfContext* xfc)
 {
 	WINPR_ASSERT(xfc);
 
+	xf_keyboard_action_script_free(xfc);
 	xfc->keyCombinations = ArrayList_New(TRUE);
 
 	if (!xfc->keyCombinations)
@@ -133,18 +146,6 @@ static BOOL xf_keyboard_action_script_init(xfContext* xfc)
 		return FALSE;
 
 	return xf_event_action_script_init(xfc);
-}
-
-static void xf_keyboard_action_script_free(xfContext* xfc)
-{
-	xf_event_action_script_free(xfc);
-
-	if (xfc->keyCombinations)
-	{
-		ArrayList_Free(xfc->keyCombinations);
-		xfc->keyCombinations = NULL;
-		xfc->actionScriptExists = FALSE;
-	}
 }
 
 BOOL xf_keyboard_init(xfContext* xfc)
@@ -163,11 +164,7 @@ BOOL xf_keyboard_init(xfContext* xfc)
 	if (!freerdp_settings_set_uint32(settings, FreeRDP_KeyboardLayout, xfc->KeyboardLayout))
 		return FALSE;
 
-	if (!xf_keyboard_update_modifier_map(xfc))
-		return FALSE;
-
-	xf_keyboard_action_script_init(xfc);
-	return TRUE;
+	return xf_keyboard_update_modifier_map(xfc);
 }
 
 void xf_keyboard_free(xfContext* xfc)

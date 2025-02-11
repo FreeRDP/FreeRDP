@@ -28,6 +28,8 @@
 BOOL xf_keyboard_init(xfContext* xfc);
 void xf_keyboard_free(xfContext* xfc);
 
+BOOL xf_keyboard_action_script_init(xfContext* xfc);
+
 void xf_keyboard_key_press(xfContext* xfc, const XKeyEvent* event, KeySym keysym);
 void xf_keyboard_key_release(xfContext* xfc, const XKeyEvent* event, KeySym keysym);
 

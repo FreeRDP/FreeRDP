@@ -1204,6 +1204,8 @@ static BOOL xf_pre_connect(freerdp* instance)
 	{
 		if (!xf_keyboard_init(xfc))
 			return FALSE;
+		if (!xf_keyboard_action_script_init(xfc))
+			return FALSE;
 		if (!xf_detect_monitors(xfc, &maxWidth, &maxHeight))
 			return FALSE;
 	}

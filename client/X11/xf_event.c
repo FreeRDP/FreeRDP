@@ -196,6 +196,8 @@ BOOL xf_event_action_script_init(xfContext* xfc)
 {
 	WINPR_ASSERT(xfc);
 
+	xf_event_action_script_free(xfc);
+
 	xfc->xevents = ArrayList_New(TRUE);
 
 	if (!xfc->xevents)
@@ -723,10 +725,23 @@ static BOOL xf_event_MappingNotify(xfContext* xfc, const XMappingEvent* event, B
 {
 	WINPR_UNUSED(app);
 
-	if (event->request == MappingModifier)
-		return xf_keyboard_update_modifier_map(xfc);
-
-	return TRUE;
+	switch (event->request)
+	{
+		case MappingModifier:
+			return xf_keyboard_update_modifier_map(xfc);
+		case MappingKeyboard:
+			WLog_VRB(TAG, "[%d] MappingKeyboard", event->request);
+			return xf_keyboard_init(xfc);
+		case MappingPointer:
+			WLog_VRB(TAG, "[%d] MappingPointer", event->request);
+			return TRUE;
+		default:
+			WLog_WARN(TAG,
+			          "[%d] Unsupported MappingNotify::request, must be one "
+			          "of[MappingModifier(%d), MappingKeyboard(%d), MappingPointer(%d)]",
+			          event->request, MappingModifier, MappingKeyboard, MappingPointer);
+			return FALSE;
+	}
 }
 
 static BOOL xf_event_ClientMessage(xfContext* xfc, const XClientMessageEvent* event, BOOL app)
