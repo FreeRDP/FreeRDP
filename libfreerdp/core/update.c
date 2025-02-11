@@ -2902,6 +2902,52 @@ static UINT16 update_calculate_new_or_existing_notification_icons_order(
 	return orderSize;
 }
 
+static BOOL update_send_new_or_existing_order_icon(const ICON_INFO* iconInfo, wStream* s)
+{
+	WINPR_ASSERT(iconInfo);
+
+	if (!Stream_EnsureRemainingCapacity(s, 8))
+		return FALSE;
+
+	Stream_Write_UINT16(
+	    s, WINPR_ASSERTING_INT_CAST(uint16_t, iconInfo->cacheEntry)); /* CacheEntry (2 bytes) */
+	Stream_Write_UINT8(s,
+	                   WINPR_ASSERTING_INT_CAST(uint8_t, iconInfo->cacheId)); /* CacheId (1 byte) */
+	Stream_Write_UINT8(s, WINPR_ASSERTING_INT_CAST(uint8_t, iconInfo->bpp));  /* Bpp (1 byte) */
+	Stream_Write_UINT16(s,
+	                    WINPR_ASSERTING_INT_CAST(uint16_t, iconInfo->width)); /* Width (2 bytes) */
+	Stream_Write_UINT16(
+	    s, WINPR_ASSERTING_INT_CAST(uint16_t, iconInfo->height)); /* Height (2 bytes) */
+
+	if (iconInfo->bpp <= 8)
+	{
+		if (!Stream_EnsureRemainingCapacity(s, 2))
+			return FALSE;
+		Stream_Write_UINT16(s, WINPR_ASSERTING_INT_CAST(
+		                           uint16_t, iconInfo->cbColorTable)); /* CbColorTable (2 bytes) */
+	}
+
+	if (!Stream_EnsureRemainingCapacity(s, 4ULL + iconInfo->cbBitsMask))
+		return FALSE;
+	Stream_Write_UINT16(
+	    s, WINPR_ASSERTING_INT_CAST(uint16_t, iconInfo->cbBitsMask)); /* CbBitsMask (2 bytes) */
+	Stream_Write_UINT16(
+	    s, WINPR_ASSERTING_INT_CAST(uint16_t, iconInfo->cbBitsColor)); /* CbBitsColor (2 bytes) */
+	Stream_Write(s, iconInfo->bitsMask, iconInfo->cbBitsMask);         /* BitsMask (variable) */
+
+	if (iconInfo->bpp <= 8)
+	{
+		if (!Stream_EnsureRemainingCapacity(s, iconInfo->cbColorTable))
+			return FALSE;
+		Stream_Write(s, iconInfo->colorTable, iconInfo->cbColorTable); /* ColorTable (variable) */
+	}
+
+	if (!Stream_EnsureRemainingCapacity(s, iconInfo->cbBitsColor))
+		return FALSE;
+	Stream_Write(s, iconInfo->bitsColor, iconInfo->cbBitsColor); /* BitsColor (variable) */
+	return TRUE;
+}
+
 static BOOL
 update_send_new_or_existing_notification_icons(rdpContext* context,
                                                const WINDOW_ORDER_INFO* orderInfo,
@@ -2974,37 +3020,10 @@ update_send_new_or_existing_notification_icons(rdpContext* context,
 
 	if ((orderInfo->fieldFlags & WINDOW_ORDER_ICON) != 0)
 	{
-		const ICON_INFO iconInfo = iconStateOrder->icon;
+		const ICON_INFO* iconInfo = &iconStateOrder->icon;
 
-		Stream_Write_UINT16(
-		    s, WINPR_ASSERTING_INT_CAST(uint16_t, iconInfo.cacheEntry)); /* CacheEntry (2 bytes) */
-		Stream_Write_UINT8(
-		    s, WINPR_ASSERTING_INT_CAST(uint8_t, iconInfo.cacheId)); /* CacheId (1 byte) */
-		Stream_Write_UINT8(s, WINPR_ASSERTING_INT_CAST(uint8_t, iconInfo.bpp)); /* Bpp (1 byte) */
-		Stream_Write_UINT16(
-		    s, WINPR_ASSERTING_INT_CAST(uint16_t, iconInfo.width)); /* Width (2 bytes) */
-		Stream_Write_UINT16(
-		    s, WINPR_ASSERTING_INT_CAST(uint16_t, iconInfo.height)); /* Height (2 bytes) */
-
-		if (iconInfo.bpp <= 8)
-		{
-			Stream_Write_UINT16(
-			    s, WINPR_ASSERTING_INT_CAST(uint16_t,
-			                                iconInfo.cbColorTable)); /* CbColorTable (2 bytes) */
-		}
-
-		Stream_Write_UINT16(
-		    s, WINPR_ASSERTING_INT_CAST(uint16_t, iconInfo.cbBitsMask)); /* CbBitsMask (2 bytes) */
-		Stream_Write_UINT16(s, WINPR_ASSERTING_INT_CAST(
-		                           uint16_t, iconInfo.cbBitsColor)); /* CbBitsColor (2 bytes) */
-		Stream_Write(s, iconInfo.bitsMask, iconInfo.cbBitsMask); /* BitsMask (variable) */
-
-		if (iconInfo.bpp <= 8)
-		{
-			Stream_Write(s, iconInfo.colorTable, iconInfo.cbColorTable); /* ColorTable (variable) */
-		}
-
-		Stream_Write(s, iconInfo.bitsColor, iconInfo.cbBitsColor); /* BitsColor (variable) */
+		if (!update_send_new_or_existing_order_icon(iconInfo, s))
+			return FALSE;
 	}
 	else if ((orderInfo->fieldFlags & WINDOW_ORDER_CACHED_ICON) != 0)
 	{
