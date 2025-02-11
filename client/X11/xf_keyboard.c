@@ -159,8 +159,7 @@ BOOL xf_keyboard_init(xfContext* xfc)
 
 	xf_keyboard_clear(xfc);
 	xfc->KeyboardLayout = freerdp_settings_get_uint32(settings, FreeRDP_KeyboardLayout);
-	xfc->KeyboardLayout = freerdp_keyboard_init_ex(
-	    xfc->KeyboardLayout, freerdp_settings_get_string(settings, FreeRDP_KeyboardRemappingList));
+	xfc->KeyboardLayout = freerdp_keyboard_init_ex(xfc->KeyboardLayout, NULL);
 	if (!freerdp_settings_set_uint32(settings, FreeRDP_KeyboardLayout, xfc->KeyboardLayout))
 		return FALSE;
 
@@ -243,7 +242,8 @@ void xf_keyboard_send_key(xfContext* xfc, BOOL down, BOOL repeat, const XKeyEven
 	rdpInput* input = xfc->common.context.input;
 	WINPR_ASSERT(input);
 
-	const DWORD rdp_scancode = freerdp_keyboard_get_rdp_scancode_from_x11_keycode(event->keycode);
+	const DWORD sc = freerdp_keyboard_get_rdp_scancode_from_x11_keycode(event->keycode);
+	const DWORD rdp_scancode = freerdp_keyboard_remap_key(xfc->remap_table, sc);
 	if (rdp_scancode == RDP_SCANCODE_PAUSE && !xf_keyboard_key_pressed(xfc, XK_Control_L) &&
 	    !xf_keyboard_key_pressed(xfc, XK_Control_R))
 	{

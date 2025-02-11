@@ -53,6 +53,7 @@ typedef struct xf_context xfContext;
 #include <freerdp/codec/h264.h>
 #include <freerdp/codec/progressive.h>
 #include <freerdp/codec/region.h>
+#include <freerdp/locale/keyboard.h>
 
 #if !defined(XcursorUInt)
 typedef unsigned int XcursorUInt;
@@ -315,6 +316,7 @@ struct xf_context
 	BOOL xi_event;
 	HANDLE pipethread;
 	wLog* log;
+	FREERDP_REMAP_TABLE* remap_table;
 };
 
 BOOL xf_create_window(xfContext* xfc);

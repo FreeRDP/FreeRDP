@@ -1202,6 +1202,12 @@ static BOOL xf_pre_connect(freerdp* instance)
 
 	if (!freerdp_settings_get_bool(settings, FreeRDP_AuthenticationOnly))
 	{
+		const char* KeyboardRemappingList = freerdp_settings_get_string(
+		    xfc->common.context.settings, FreeRDP_KeyboardRemappingList);
+
+		xfc->remap_table = freerdp_keyboard_remap_string_to_list(KeyboardRemappingList);
+		if (!xfc->remap_table)
+			return FALSE;
 		if (!xf_keyboard_init(xfc))
 			return FALSE;
 		if (!xf_keyboard_action_script_init(xfc))
@@ -1491,6 +1497,9 @@ static void xf_post_disconnect(freerdp* instance)
 		xfc->drawable = 0;
 	else
 		xf_DestroyDummyWindow(xfc, xfc->drawable);
+
+	freerdp_keyboard_remap_free(xfc->remap_table);
+	xfc->remap_table = NULL;
 
 	xf_window_free(xfc);
 }
