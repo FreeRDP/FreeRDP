@@ -22,6 +22,7 @@
 #include <freerdp/primitives.h>
 #include <freerdp/log.h>
 
+#include "prim_internal.h"
 #include "prim_avxsse.h"
 #include "prim_copy.h"
 #include "../codec/color.h"
@@ -68,12 +69,12 @@ static INLINE pstatus_t sse_image_copy_bgr24_bgrx32(BYTE* WINPR_RESTRICT pDstDat
 			{
 				const __m128i* src = (const __m128i*)&srcLine[(x + nXSrc) * srcByte];
 				__m128i* dst = (__m128i*)&dstLine[(x + nXDst) * dstByte];
-				const __m128i s0 = _mm_loadu_si128(src);
+				const __m128i s0 = LOAD_SI128(src);
 				const __m128i s1 = _mm_shuffle_epi8(s0, smask);
-				const __m128i s2 = _mm_loadu_si128(dst);
+				const __m128i s2 = LOAD_SI128(dst);
 
 				__m128i d0 = _mm_blendv_epi8(s1, s2, mask);
-				_mm_storeu_si128(dst, d0);
+				STORE_SI128(dst, d0);
 			}
 		}
 		for (; x < nWidth; x++)
@@ -118,10 +119,10 @@ static INLINE pstatus_t sse_image_copy_bgrx32_bgrx32(BYTE* WINPR_RESTRICT pDstDa
 		{
 			const __m128i* src = (const __m128i*)&srcLine[(x + nXSrc) * srcByte];
 			__m128i* dst = (__m128i*)&dstLine[(x + nXDst) * dstByte];
-			const __m128i s0 = _mm_loadu_si128(src);
-			const __m128i s1 = _mm_loadu_si128(dst);
+			const __m128i s0 = LOAD_SI128(src);
+			const __m128i s1 = LOAD_SI128(dst);
 			__m128i d0 = _mm_blendv_epi8(s1, s0, mask);
-			_mm_storeu_si128(dst, d0);
+			STORE_SI128(dst, d0);
 		}
 
 		for (; x < nWidth; x++)

@@ -41,20 +41,20 @@ set(CODEC_SRCS
     yuv.c
 )
 
-set(CODEC_SSE2_SRCS sse/rfx_sse2.c sse/rfx_sse2.h sse/nsc_sse2.c sse/nsc_sse2.h)
+set(CODEC_SSE3_SRCS sse/rfx_sse2.c sse/rfx_sse2.h sse/nsc_sse2.c sse/nsc_sse2.h)
 
 set(CODEC_NEON_SRCS neon/rfx_neon.c neon/rfx_neon.h neon/nsc_neon.c neon/nsc_neon.h)
 
 # Append initializers
 set(CODEC_LIBS "")
-list(APPEND CODEC_SRCS ${CODEC_SSE2_SRCS})
+list(APPEND CODEC_SRCS ${CODEC_SSE3_SRCS})
 list(APPEND CODEC_SRCS ${CODEC_NEON_SRCS})
 
 include(CompilerDetect)
 include(DetectIntrinsicSupport)
 
 if(WITH_SIMD)
-  set_simd_source_file_properties("sse2" ${CODEC_SSE2_SRCS})
+  set_simd_source_file_properties("sse3" ${CODEC_SSE3_SRCS})
   set_simd_source_file_properties("neon" ${CODEC_NEON_SRCS})
 endif()
 

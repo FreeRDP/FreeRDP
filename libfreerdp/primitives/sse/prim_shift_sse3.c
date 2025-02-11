@@ -79,14 +79,14 @@ static pstatus_t sse2_lShiftC_16s_inplace(INT16* WINPR_RESTRICT pSrcDst, UINT32 
 	{
 		const __m128i* src = (const __m128i*)pSrcDst;
 
-		__m128i xmm0 = _mm_load_si128(src++);
-		__m128i xmm1 = _mm_load_si128(src++);
-		__m128i xmm2 = _mm_load_si128(src++);
-		__m128i xmm3 = _mm_load_si128(src++);
-		__m128i xmm4 = _mm_load_si128(src++);
-		__m128i xmm5 = _mm_load_si128(src++);
-		__m128i xmm6 = _mm_load_si128(src++);
-		__m128i xmm7 = _mm_load_si128(src);
+		__m128i xmm0 = LOAD_SI128(src++);
+		__m128i xmm1 = LOAD_SI128(src++);
+		__m128i xmm2 = LOAD_SI128(src++);
+		__m128i xmm3 = LOAD_SI128(src++);
+		__m128i xmm4 = LOAD_SI128(src++);
+		__m128i xmm5 = LOAD_SI128(src++);
+		__m128i xmm6 = LOAD_SI128(src++);
+		__m128i xmm7 = LOAD_SI128(src);
 
 		xmm0 = _mm_slli_epi16(xmm0, (int16_t)val);
 		xmm1 = _mm_slli_epi16(xmm1, (int16_t)val);
@@ -99,14 +99,14 @@ static pstatus_t sse2_lShiftC_16s_inplace(INT16* WINPR_RESTRICT pSrcDst, UINT32 
 
 		__m128i* dst = (__m128i*)pSrcDst;
 
-		_mm_store_si128(dst++, xmm0);
-		_mm_store_si128(dst++, xmm1);
-		_mm_store_si128(dst++, xmm2);
-		_mm_store_si128(dst++, xmm3);
-		_mm_store_si128(dst++, xmm4);
-		_mm_store_si128(dst++, xmm5);
-		_mm_store_si128(dst++, xmm6);
-		_mm_store_si128(dst++, xmm7);
+		STORE_SI128(dst++, xmm0);
+		STORE_SI128(dst++, xmm1);
+		STORE_SI128(dst++, xmm2);
+		STORE_SI128(dst++, xmm3);
+		STORE_SI128(dst++, xmm4);
+		STORE_SI128(dst++, xmm5);
+		STORE_SI128(dst++, xmm6);
+		STORE_SI128(dst++, xmm7);
 
 		pSrcDst = (INT16*)dst;
 	}
@@ -122,7 +122,7 @@ static pstatus_t sse2_lShiftC_16s_inplace(INT16* WINPR_RESTRICT pSrcDst, UINT32 
 		xmm0 = _mm_slli_epi16(xmm0, (int16_t)val);
 
 		__m128i* dst = (__m128i*)pSrcDst;
-		_mm_store_si128(dst++, xmm0);
+		STORE_SI128(dst++, xmm0);
 		pSrcDst = (INT16*)dst;
 	}
 

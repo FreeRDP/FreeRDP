@@ -181,32 +181,32 @@ sse2_yCbCrToRGB_16s16s_P3P3(const INT16* WINPR_RESTRICT pSrc[3], int srcStep,
 			 * r = ((y+4096)>>2 + HIWORD(cr*22986)) >> 3
 			 */
 			/* y = (y_r_buf[i] + 4096) >> 2 */
-			__m128i y = _mm_load_si128(y_buf + i);
+			__m128i y = LOAD_SI128(y_buf + i);
 			y = _mm_add_epi16(y, c4096);
 			y = _mm_srai_epi16(y, 2);
 			/* cb = cb_g_buf[i]; */
-			__m128i cb = _mm_load_si128(cb_buf + i);
+			__m128i cb = LOAD_SI128(cb_buf + i);
 			/* cr = cr_b_buf[i]; */
-			__m128i cr = _mm_load_si128(cr_buf + i);
+			__m128i cr = LOAD_SI128(cr_buf + i);
 			/* (y + HIWORD(cr*22986)) >> 3 */
 			__m128i r = _mm_add_epi16(y, _mm_mulhi_epi16(cr, r_cr));
 			r = _mm_srai_epi16(r, 3);
 			/* r_buf[i] = CLIP(r); */
 			mm_between_epi16(r, zero, max);
-			_mm_store_si128(r_buf + i, r);
+			STORE_SI128(r_buf + i, r);
 			/* (y + HIWORD(cb*-5636) + HIWORD(cr*-11698)) >> 3 */
 			__m128i g = _mm_add_epi16(y, _mm_mulhi_epi16(cb, g_cb));
 			g = _mm_add_epi16(g, _mm_mulhi_epi16(cr, g_cr));
 			g = _mm_srai_epi16(g, 3);
 			/* g_buf[i] = CLIP(g); */
 			mm_between_epi16(g, zero, max);
-			_mm_store_si128(g_buf + i, g);
+			STORE_SI128(g_buf + i, g);
 			/* (y + HIWORD(cb*28999)) >> 3 */
 			__m128i b = _mm_add_epi16(y, _mm_mulhi_epi16(cb, b_cb));
 			b = _mm_srai_epi16(b, 3);
 			/* b_buf[i] = CLIP(b); */
 			mm_between_epi16(b, zero, max);
-			_mm_store_si128(b_buf + i, b);
+			STORE_SI128(b_buf + i, b);
 		}
 
 		y_buf += srcbump;
@@ -291,15 +291,15 @@ sse2_yCbCrToRGB_16s8u_P3AC4R_BGRX(const INT16* WINPR_RESTRICT pSrc[3], UINT32 sr
 			 * r = ((y+4096)>>2 + HIWORD(cr*22986)) >> 3
 			 */
 			/* y = (y_r_buf[i] + 4096) >> 2 */
-			__m128i y1 = _mm_load_si128((const __m128i*)y_buf);
+			__m128i y1 = LOAD_SI128(y_buf);
 			y_buf += step;
 			y1 = _mm_add_epi16(y1, c4096);
 			y1 = _mm_srai_epi16(y1, 2);
 			/* cb = cb_g_buf[i]; */
-			__m128i cb1 = _mm_load_si128((const __m128i*)cb_buf);
+			__m128i cb1 = LOAD_SI128(cb_buf);
 			cb_buf += step;
 			/* cr = cr_b_buf[i]; */
-			__m128i cr1 = _mm_load_si128((const __m128i*)cr_buf);
+			__m128i cr1 = LOAD_SI128(cr_buf);
 			cr_buf += step;
 			/* (y + HIWORD(cr*22986)) >> 3 */
 			__m128i r1 = _mm_add_epi16(y1, _mm_mulhi_epi16(cr1, r_cr));
@@ -317,15 +317,15 @@ sse2_yCbCrToRGB_16s8u_P3AC4R_BGRX(const INT16* WINPR_RESTRICT pSrc[3], UINT32 sr
 			b1 = _mm_srai_epi16(b1, 3);
 			/* b_buf[i] = CLIP(b); */
 			mm_between_epi16(b1, zero, max);
-			__m128i y2 = _mm_load_si128((const __m128i*)y_buf);
+			__m128i y2 = LOAD_SI128(y_buf);
 			y_buf += step;
 			y2 = _mm_add_epi16(y2, c4096);
 			y2 = _mm_srai_epi16(y2, 2);
 			/* cb = cb_g_buf[i]; */
-			__m128i cb2 = _mm_load_si128((const __m128i*)cb_buf);
+			__m128i cb2 = LOAD_SI128(cb_buf);
 			cb_buf += step;
 			/* cr = cr_b_buf[i]; */
-			__m128i cr2 = _mm_load_si128((const __m128i*)cr_buf);
+			__m128i cr2 = LOAD_SI128(cr_buf);
 			cr_buf += step;
 			/* (y + HIWORD(cr*22986)) >> 3 */
 			__m128i r2 = _mm_add_epi16(y2, _mm_mulhi_epi16(cr2, r_cr));
@@ -369,13 +369,13 @@ sse2_yCbCrToRGB_16s8u_P3AC4R_BGRX(const INT16* WINPR_RESTRICT pSrc[3], UINT32 sr
 				R2 = R3;                              /* R2 = R3               */
 				R2 = _mm_unpacklo_epi16(R1, R2);      /* R2 = B5G5R5FFB4G4R4FF */
 				R3 = _mm_unpackhi_epi16(R1, R3);      /* R3 = B7G7R7FFB6G6R6FF */
-				_mm_store_si128((__m128i*)d_buf, R0); /* B1G1R1FFB0G0R0FF      */
+				STORE_SI128(d_buf, R0);               /* B1G1R1FFB0G0R0FF      */
 				d_buf += sizeof(__m128i);
-				_mm_store_si128((__m128i*)d_buf, R4); /* B3G3R3FFB2G2R2FF      */
+				STORE_SI128(d_buf, R4); /* B3G3R3FFB2G2R2FF      */
 				d_buf += sizeof(__m128i);
-				_mm_store_si128((__m128i*)d_buf, R2); /* B5G5R5FFB4G4R4FF      */
+				STORE_SI128(d_buf, R2); /* B5G5R5FFB4G4R4FF      */
 				d_buf += sizeof(__m128i);
-				_mm_store_si128((__m128i*)d_buf, R3); /* B7G7R7FFB6G6R6FF      */
+				STORE_SI128(d_buf, R3); /* B7G7R7FFB6G6R6FF      */
 				d_buf += sizeof(__m128i);
 			}
 		}
@@ -476,15 +476,15 @@ sse2_yCbCrToRGB_16s8u_P3AC4R_RGBX(const INT16* WINPR_RESTRICT pSrc[3], UINT32 sr
 			 * r = ((y+4096)>>2 + HIWORD(cr*22986)) >> 3
 			 */
 			/* y = (y_r_buf[i] + 4096) >> 2 */
-			__m128i y1 = _mm_load_si128((const __m128i*)y_buf);
+			__m128i y1 = LOAD_SI128(y_buf);
 			y_buf += step;
 			y1 = _mm_add_epi16(y1, c4096);
 			y1 = _mm_srai_epi16(y1, 2);
 			/* cb = cb_g_buf[i]; */
-			__m128i cb1 = _mm_load_si128((const __m128i*)cb_buf);
+			__m128i cb1 = LOAD_SI128(cb_buf);
 			cb_buf += step;
 			/* cr = cr_b_buf[i]; */
-			__m128i cr1 = _mm_load_si128((const __m128i*)cr_buf);
+			__m128i cr1 = LOAD_SI128(cr_buf);
 			cr_buf += step;
 			/* (y + HIWORD(cr*22986)) >> 3 */
 			__m128i r1 = _mm_add_epi16(y1, _mm_mulhi_epi16(cr1, r_cr));
@@ -502,15 +502,15 @@ sse2_yCbCrToRGB_16s8u_P3AC4R_RGBX(const INT16* WINPR_RESTRICT pSrc[3], UINT32 sr
 			b1 = _mm_srai_epi16(b1, 3);
 			/* b_buf[i] = CLIP(b); */
 			mm_between_epi16(b1, zero, max);
-			__m128i y2 = _mm_load_si128((const __m128i*)y_buf);
+			__m128i y2 = LOAD_SI128(y_buf);
 			y_buf += step;
 			y2 = _mm_add_epi16(y2, c4096);
 			y2 = _mm_srai_epi16(y2, 2);
 			/* cb = cb_g_buf[i]; */
-			__m128i cb2 = _mm_load_si128((const __m128i*)cb_buf);
+			__m128i cb2 = LOAD_SI128(cb_buf);
 			cb_buf += step;
 			/* cr = cr_b_buf[i]; */
-			__m128i cr2 = _mm_load_si128((const __m128i*)cr_buf);
+			__m128i cr2 = LOAD_SI128(cr_buf);
 			cr_buf += step;
 			/* (y + HIWORD(cr*22986)) >> 3 */
 			__m128i r2 = _mm_add_epi16(y2, _mm_mulhi_epi16(cr2, r_cr));
@@ -554,13 +554,13 @@ sse2_yCbCrToRGB_16s8u_P3AC4R_RGBX(const INT16* WINPR_RESTRICT pSrc[3], UINT32 sr
 				R2 = R3;                              /* R2 = R3               */
 				R2 = _mm_unpacklo_epi16(R1, R2);      /* R2 = R5G5B5FFR4G4B4FF */
 				R3 = _mm_unpackhi_epi16(R1, R3);      /* R3 = R7G7B7FFR6G6B6FF */
-				_mm_store_si128((__m128i*)d_buf, R0); /* R1G1B1FFR0G0B0FF      */
+				STORE_SI128(d_buf, R0);               /* R1G1B1FFR0G0B0FF      */
 				d_buf += sizeof(__m128i);
-				_mm_store_si128((__m128i*)d_buf, R4); /* R3G3B3FFR2G2B2FF      */
+				STORE_SI128(d_buf, R4); /* R3G3B3FFR2G2B2FF      */
 				d_buf += sizeof(__m128i);
-				_mm_store_si128((__m128i*)d_buf, R2); /* R5G5B5FFR4G4B4FF      */
+				STORE_SI128(d_buf, R2); /* R5G5B5FFR4G4B4FF      */
 				d_buf += sizeof(__m128i);
-				_mm_store_si128((__m128i*)d_buf, R3); /* R7G7B7FFR6G6B6FF      */
+				STORE_SI128(d_buf, R3); /* R7G7B7FFR6G6B6FF      */
 				d_buf += sizeof(__m128i);
 			}
 		}
@@ -694,9 +694,9 @@ sse2_RGBToYCbCr_16s16s_P3P3(const INT16* WINPR_RESTRICT pSrc[3], int srcStep,
 			 * within the upper 16 bits we will also have to scale the RGB
 			 * values used in the multiplication by << 5+(16-n).
 			 */
-			__m128i r = _mm_load_si128(r_buf + i);
-			__m128i g = _mm_load_si128(g_buf + i);
-			__m128i b = _mm_load_si128(b_buf + i);
+			__m128i r = LOAD_SI128(r_buf + i);
+			__m128i g = LOAD_SI128(g_buf + i);
+			__m128i b = LOAD_SI128(b_buf + i);
 			/* r<<6; g<<6; b<<6 */
 			r = _mm_slli_epi16(r, 6);
 			g = _mm_slli_epi16(g, 6);
@@ -708,21 +708,21 @@ sse2_RGBToYCbCr_16s16s_P3P3(const INT16* WINPR_RESTRICT pSrc[3], int srcStep,
 			y = _mm_add_epi16(y, min);
 			/* y_r_buf[i] = MINMAX(y, 0, (255 << 5)) - (128 << 5); */
 			mm_between_epi16(y, min, max);
-			_mm_store_si128(y_buf + i, y);
+			STORE_SI128(y_buf + i, y);
 			/* cb = HIWORD(r*cb_r) + HIWORD(g*cb_g) + HIWORD(b*cb_b) */
 			__m128i cb = _mm_mulhi_epi16(r, cb_r);
 			cb = _mm_add_epi16(cb, _mm_mulhi_epi16(g, cb_g));
 			cb = _mm_add_epi16(cb, _mm_mulhi_epi16(b, cb_b));
 			/* cb_g_buf[i] = MINMAX(cb, (-128 << 5), (127 << 5)); */
 			mm_between_epi16(cb, min, max);
-			_mm_store_si128(cb_buf + i, cb);
+			STORE_SI128(cb_buf + i, cb);
 			/* cr = HIWORD(r*cr_r) + HIWORD(g*cr_g) + HIWORD(b*cr_b) */
 			__m128i cr = _mm_mulhi_epi16(r, cr_r);
 			cr = _mm_add_epi16(cr, _mm_mulhi_epi16(g, cr_g));
 			cr = _mm_add_epi16(cr, _mm_mulhi_epi16(b, cr_b));
 			/* cr_b_buf[i] = MINMAX(cr, (-128 << 5), (127 << 5)); */
 			mm_between_epi16(cr, min, max);
-			_mm_store_si128(cr_buf + i, cr);
+			STORE_SI128(cr_buf + i, cr);
 		}
 
 		y_buf += srcbump;
@@ -769,27 +769,27 @@ static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_BGRX(
 			{
 				__m128i R0;
 				__m128i R1;
-				R0 = _mm_load_si128((const __m128i*)pb);
+				R0 = LOAD_SI128(pb);
 				pb += 8; /* R0 = 00B300B200B100B0 */
-				R1 = _mm_load_si128((const __m128i*)pb);
+				R1 = LOAD_SI128(pb);
 				pb += 8;                      /* R1 = 00B700B600B500B4 */
 				b = _mm_packus_epi16(R0, R1); /* b = B7B6B5B4B3B2B1B0 */
 			}
 			{
 				__m128i R0;
 				__m128i R1;
-				R0 = _mm_load_si128((const __m128i*)pg);
+				R0 = LOAD_SI128(pg);
 				pg += 8; /* R1 = 00G300G200G100G0 */
-				R1 = _mm_load_si128((const __m128i*)pg);
+				R1 = LOAD_SI128(pg);
 				pg += 8;                      /* R2 = 00G700G600G500G4 */
 				g = _mm_packus_epi16(R0, R1); /* g = G7G6G5G4G3G2G1G0 */
 			}
 			{
 				__m128i R0;
 				__m128i R1;
-				R0 = _mm_load_si128((const __m128i*)pr);
+				R0 = LOAD_SI128(pr);
 				pr += 8; /* R0 = 00R300R200R100R0 */
-				R1 = _mm_load_si128((const __m128i*)pr);
+				R1 = LOAD_SI128(pr);
 				pr += 8;                      /* R3 = 00R700R600R500R4 */
 				r = _mm_packus_epi16(R0, R1); /* r = R7R6R5R4R3R2R1R0 */
 			}
@@ -801,22 +801,22 @@ static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_BGRX(
 
 				{
 					const __m128i bgrx = _mm_unpacklo_epi16(gbLo, arLo);
-					_mm_store_si128((__m128i*)out, bgrx);
+					STORE_SI128(out, bgrx);
 					out += 16; /* FFR1G1B1FFR0G0B0      */
 				}
 				{
 					const __m128i bgrx = _mm_unpackhi_epi16(gbLo, arLo);
-					_mm_store_si128((__m128i*)out, bgrx);
+					STORE_SI128(out, bgrx);
 					out += 16; /* FFR3G3B3FFR2G2B2      */
 				}
 				{
 					const __m128i bgrx = _mm_unpacklo_epi16(gbHi, arHi);
-					_mm_store_si128((__m128i*)out, bgrx);
+					STORE_SI128(out, bgrx);
 					out += 16; /* FFR5G5B5FFR4G4B4      */
 				}
 				{
 					const __m128i bgrx = _mm_unpackhi_epi16(gbHi, arHi);
-					_mm_store_si128((__m128i*)out, bgrx);
+					STORE_SI128(out, bgrx);
 					out += 16; /* FFR7G7B7FFR6G6B6      */
 				}
 			}
@@ -875,27 +875,27 @@ static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_RGBX(
 			{
 				__m128i R0;
 				__m128i R1;
-				R0 = _mm_load_si128((const __m128i*)pb);
+				R0 = LOAD_SI128(pb);
 				pb += 8; /* R0 = 00B300B200B100B0 */
-				R1 = _mm_load_si128((const __m128i*)pb);
+				R1 = LOAD_SI128(pb);
 				pb += 8;                      /* R1 = 00B700B600B500B4 */
 				b = _mm_packus_epi16(R0, R1); /* b = B7B6B5B4B3B2B1B0 */
 			}
 			{
 				__m128i R0;
 				__m128i R1;
-				R0 = _mm_load_si128((const __m128i*)pg);
+				R0 = LOAD_SI128(pg);
 				pg += 8; /* R1 = 00G300G200G100G0 */
-				R1 = _mm_load_si128((const __m128i*)pg);
+				R1 = LOAD_SI128(pg);
 				pg += 8;                      /* R2 = 00G700G600G500G4 */
 				g = _mm_packus_epi16(R0, R1); /* g = G7G6G5G4G3G2G1G0 */
 			}
 			{
 				__m128i R0;
 				__m128i R1;
-				R0 = _mm_load_si128((const __m128i*)pr);
+				R0 = LOAD_SI128(pr);
 				pr += 8; /* R0 = 00R300R200R100R0 */
-				R1 = _mm_load_si128((const __m128i*)pr);
+				R1 = LOAD_SI128(pr);
 				pr += 8;                      /* R3 = 00R700R600R500R4 */
 				r = _mm_packus_epi16(R0, R1); /* r = R7R6R5R4R3R2R1R0 */
 			}
@@ -912,22 +912,22 @@ static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_RGBX(
 				}
 				{
 					const __m128i bgrx = _mm_unpacklo_epi16(gbLo, arLo);
-					_mm_store_si128((__m128i*)out, bgrx);
+					STORE_SI128(out, bgrx);
 					out += 16; /* FFR1G1B1FFR0G0B0      */
 				}
 				{
 					const __m128i bgrx = _mm_unpackhi_epi16(gbLo, arLo);
-					_mm_store_si128((__m128i*)out, bgrx);
+					STORE_SI128(out, bgrx);
 					out += 16; /* FFR3G3B3FFR2G2B2      */
 				}
 				{
 					const __m128i bgrx = _mm_unpacklo_epi16(gbHi, arHi);
-					_mm_store_si128((__m128i*)out, bgrx);
+					STORE_SI128(out, bgrx);
 					out += 16; /* FFR5G5B5FFR4G4B4      */
 				}
 				{
 					const __m128i bgrx = _mm_unpackhi_epi16(gbHi, arHi);
-					_mm_store_si128((__m128i*)out, bgrx);
+					STORE_SI128(out, bgrx);
 					out += 16; /* FFR7G7B7FFR6G6B6      */
 				}
 			}
@@ -986,27 +986,27 @@ static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_XBGR(
 			{
 				__m128i R0;
 				__m128i R1;
-				R0 = _mm_load_si128((const __m128i*)pb);
+				R0 = LOAD_SI128(pb);
 				pb += 8; /* R0 = 00B300B200B100B0 */
-				R1 = _mm_load_si128((const __m128i*)pb);
+				R1 = LOAD_SI128(pb);
 				pb += 8;                      /* R1 = 00B700B600B500B4 */
 				b = _mm_packus_epi16(R0, R1); /* b = B7B6B5B4B3B2B1B0 */
 			}
 			{
 				__m128i R0;
 				__m128i R1;
-				R0 = _mm_load_si128((const __m128i*)pg);
+				R0 = LOAD_SI128(pg);
 				pg += 8; /* R1 = 00G300G200G100G0 */
-				R1 = _mm_load_si128((const __m128i*)pg);
+				R1 = LOAD_SI128(pg);
 				pg += 8;                      /* R2 = 00G700G600G500G4 */
 				g = _mm_packus_epi16(R0, R1); /* g = G7G6G5G4G3G2G1G0 */
 			}
 			{
 				__m128i R0;
 				__m128i R1;
-				R0 = _mm_load_si128((const __m128i*)pr);
+				R0 = LOAD_SI128(pr);
 				pr += 8; /* R0 = 00R300R200R100R0 */
-				R1 = _mm_load_si128((const __m128i*)pr);
+				R1 = LOAD_SI128(pr);
 				pr += 8;                      /* R3 = 00R700R600R500R4 */
 				r = _mm_packus_epi16(R0, R1); /* r = R7R6R5R4R3R2R1R0 */
 			}
@@ -1023,22 +1023,22 @@ static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_XBGR(
 				}
 				{
 					const __m128i bgrx = _mm_unpacklo_epi16(gbLo, arLo);
-					_mm_store_si128((__m128i*)out, bgrx);
+					STORE_SI128(out, bgrx);
 					out += 16; /* FFR1G1B1FFR0G0B0      */
 				}
 				{
 					const __m128i bgrx = _mm_unpackhi_epi16(gbLo, arLo);
-					_mm_store_si128((__m128i*)out, bgrx);
+					STORE_SI128(out, bgrx);
 					out += 16; /* FFR3G3B3FFR2G2B2      */
 				}
 				{
 					const __m128i bgrx = _mm_unpacklo_epi16(gbHi, arHi);
-					_mm_store_si128((__m128i*)out, bgrx);
+					STORE_SI128(out, bgrx);
 					out += 16; /* FFR5G5B5FFR4G4B4      */
 				}
 				{
 					const __m128i bgrx = _mm_unpackhi_epi16(gbHi, arHi);
-					_mm_store_si128((__m128i*)out, bgrx);
+					STORE_SI128(out, bgrx);
 					out += 16; /* FFR7G7B7FFR6G6B6      */
 				}
 			}
@@ -1097,27 +1097,27 @@ static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_XRGB(
 			{
 				__m128i R0;
 				__m128i R1;
-				R0 = _mm_load_si128((const __m128i*)pb);
+				R0 = LOAD_SI128(pb);
 				pb += 8; /* R0 = 00B300B200B100B0 */
-				R1 = _mm_load_si128((const __m128i*)pb);
+				R1 = LOAD_SI128(pb);
 				pb += 8;                      /* R1 = 00B700B600B500B4 */
 				b = _mm_packus_epi16(R0, R1); /* b = B7B6B5B4B3B2B1B0 */
 			}
 			{
 				__m128i R0;
 				__m128i R1;
-				R0 = _mm_load_si128((const __m128i*)pg);
+				R0 = LOAD_SI128(pg);
 				pg += 8; /* R1 = 00G300G200G100G0 */
-				R1 = _mm_load_si128((const __m128i*)pg);
+				R1 = LOAD_SI128(pg);
 				pg += 8;                      /* R2 = 00G700G600G500G4 */
 				g = _mm_packus_epi16(R0, R1); /* g = G7G6G5G4G3G2G1G0 */
 			}
 			{
 				__m128i R0;
 				__m128i R1;
-				R0 = _mm_load_si128((const __m128i*)pr);
+				R0 = LOAD_SI128(pr);
 				pr += 8; /* R0 = 00R300R200R100R0 */
-				R1 = _mm_load_si128((const __m128i*)pr);
+				R1 = LOAD_SI128(pr);
 				pr += 8;                      /* R3 = 00R700R600R500R4 */
 				r = _mm_packus_epi16(R0, R1); /* r = R7R6R5R4R3R2R1R0 */
 			}
@@ -1134,22 +1134,22 @@ static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_XRGB(
 				}
 				{
 					const __m128i bgrx = _mm_unpacklo_epi16(gbLo, arLo);
-					_mm_store_si128((__m128i*)out, bgrx);
+					STORE_SI128(out, bgrx);
 					out += 16; /* FFR1G1B1FFR0G0B0      */
 				}
 				{
 					const __m128i bgrx = _mm_unpackhi_epi16(gbLo, arLo);
-					_mm_store_si128((__m128i*)out, bgrx);
+					STORE_SI128(out, bgrx);
 					out += 16; /* FFR3G3B3FFR2G2B2      */
 				}
 				{
 					const __m128i bgrx = _mm_unpacklo_epi16(gbHi, arHi);
-					_mm_store_si128((__m128i*)out, bgrx);
+					STORE_SI128(out, bgrx);
 					out += 16; /* FFR5G5B5FFR4G4B4      */
 				}
 				{
 					const __m128i bgrx = _mm_unpackhi_epi16(gbHi, arHi);
-					_mm_store_si128((__m128i*)out, bgrx);
+					STORE_SI128(out, bgrx);
 					out += 16; /* FFR7G7B7FFR6G6B6      */
 				}
 			}
@@ -1217,7 +1217,8 @@ void primitives_init_colors_sse2(primitives_t* prims)
 	generic = primitives_get_generic();
 	primitives_init_colors(prims);
 
-	if (IsProcessorFeaturePresent(PF_SSE2_INSTRUCTIONS_AVAILABLE))
+	if (IsProcessorFeaturePresent(PF_SSE2_INSTRUCTIONS_AVAILABLE) &&
+	    IsProcessorFeaturePresent(PF_SSE3_INSTRUCTIONS_AVAILABLE))
 	{
 		WLog_VRB(PRIM_TAG, "SSE2 optimizations");
 		prims->RGBToRGB_16s8u_P3AC4R = sse2_RGBToRGB_16s8u_P3AC4R;

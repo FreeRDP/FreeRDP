@@ -28,6 +28,7 @@
 
 #include "prim_alphaComp.h"
 
+#include "prim_internal.h"
 #include "prim_avxsse.h"
 
 /* ------------------------------------------------------------------------- */
@@ -171,7 +172,7 @@ static pstatus_t sse2_alphaComp_argb(const BYTE* WINPR_RESTRICT pSrc1, UINT32 sr
 			xmm5 = _mm_and_si128(xmm5, xmm3);
 			/* BlGlRlAlBkGkRkAkBjGjRjAjBiGiRiAi */
 			xmm5 = _mm_packus_epi16(xmm5, xmm4);
-			_mm_store_si128((__m128i*)dptr, xmm5);
+			STORE_SI128(dptr, xmm5);
 			dptr += 4;
 		}
 
