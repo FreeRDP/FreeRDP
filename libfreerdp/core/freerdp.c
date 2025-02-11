@@ -1459,3 +1459,11 @@ BOOL freerdp_is_valid_mcs_create_response(const BYTE* data, size_t size)
 	test_mcs_free(mcs);
 	return result;
 }
+
+BOOL freerdp_persist_credentials(rdpContext* context)
+{
+	if (!context)
+		return FALSE;
+	WINPR_ASSERT(context->rdp);
+	return utils_persist_credentials(context->rdp->originalSettings, context->rdp->settings);
+}

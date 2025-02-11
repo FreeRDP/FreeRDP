@@ -31,6 +31,18 @@ extern "C"
 {
 #endif
 
+	/** @brief Callback function type definition for command line handling
+	 *
+	 *  @param arg A pointer to the argument to handle
+	 *  @param void* A pointer to user defined data
+	 *
+	 *  @return \b 0 for success or a \b COMMAND_LINE_ERROR code
+	 *
+	 *  @since version 3.12.0
+	 */
+	typedef int (*freerdp_command_line_handle_option_t)(const COMMAND_LINE_ARGUMENT_A* arg,
+	                                                    void* custom);
+
 	/** \brief parses command line arguments to appropriate settings values.
 	 *
 	 * \param settings The settings instance to store the parsed values to
@@ -63,8 +75,7 @@ extern "C"
 	FREERDP_API int freerdp_client_settings_parse_command_line_arguments_ex(
 	    rdpSettings* settings, int argc, char** argv, BOOL allowUnknown,
 	    COMMAND_LINE_ARGUMENT_A* args, size_t count,
-	    int (*handle_option)(const COMMAND_LINE_ARGUMENT_A* arg, void* custom),
-	    void* handle_userdata);
+	    freerdp_command_line_handle_option_t handle_option, void* handle_userdata);
 
 	FREERDP_API int freerdp_client_settings_command_line_status_print(rdpSettings* settings,
 	                                                                  int status, int argc,

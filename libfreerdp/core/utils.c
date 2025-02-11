@@ -253,6 +253,29 @@ BOOL utils_sync_credentials(rdpSettings* settings, BOOL toGateway)
 	return TRUE;
 }
 
+BOOL utils_persist_credentials(rdpSettings* settings, const rdpSettings* current)
+{
+	if (!settings || !current)
+		return FALSE;
+
+	const SSIZE_T keys[] = { FreeRDP_GatewayUsername, FreeRDP_GatewayDomain,
+		                     FreeRDP_GatewayPassword, FreeRDP_Username,
+		                     FreeRDP_Domain,          FreeRDP_Password };
+
+	for (size_t x = 0; x < ARRAYSIZE(keys); x++)
+	{
+		const SSIZE_T key = keys[x];
+		if (!freerdp_settings_copy_item(settings, current, key))
+		{
+			WLog_ERR(TAG, "Failed to copy %s from current to backup settings",
+			         freerdp_settings_get_name_for_key(key));
+			return FALSE;
+		}
+	}
+
+	return TRUE;
+}
+
 BOOL utils_str_is_empty(const char* str)
 {
 	if (!str)

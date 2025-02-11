@@ -736,6 +736,20 @@ owned by rdpRdp */
 	FREERDP_API BOOL freerdp_is_valid_mcs_create_request(const BYTE* data, size_t size);
 	FREERDP_API BOOL freerdp_is_valid_mcs_create_response(const BYTE* data, size_t size);
 
+	/** \brief Persist the current credentials (gateway, target server, ...)
+	 *
+	 *  FreeRDP internally keeps a backup of connection settings to revert to whenever a reconnect
+	 * is required. If a client modifies settings during runtime after pre-connect call this
+	 * function or the credentials will be lost on any reconnect, redirect, ...
+	 *
+	 *  \param context The RDP context to use, must not be \b NULL
+	 *
+	 *  \return \b TRUE if successful, \b FALSE if settings could not be applied (wrong session
+	 * state, ...)
+	 *  \since version 3.12.0
+	 */
+	FREERDP_API BOOL freerdp_persist_credentials(rdpContext* context);
+
 #ifdef __cplusplus
 }
 #endif

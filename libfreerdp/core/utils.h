@@ -50,6 +50,7 @@ BOOL utils_abort_event_is_set(const rdpRdp* rdp);
 BOOL utils_reset_abort(rdpRdp* rdp);
 BOOL utils_abort_connect(rdpRdp* rdp);
 BOOL utils_sync_credentials(rdpSettings* settings, BOOL toGateway);
+BOOL utils_persist_credentials(rdpSettings* settings, const rdpSettings* current);
 
 BOOL utils_str_is_empty(const char* str);
 BOOL utils_str_copy(const char* value, char** dst);
