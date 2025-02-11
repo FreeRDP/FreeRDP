@@ -1,3 +1,46 @@
+# 2025-02-14 Version 3.12.0
+
+A bugfix and cleanup release.
+Due to a new function and a new macro the minor version was incremented.
+* Multimonitor backward compatibility fixes
+* Smartcard compatibility
+* Improve the [MS-RDPECAM] support
+* Improve smartcard redirection support
+* Refactor SSE optimizations: Split headers, unify load/store, require SSE3 for
+  all optimized functions
+* Refactors the CMake build to better support configuration based builders
+* Fix a few regressions from last release (USB redirection and graphical glitches)
+
+Noteworthy Changes:
+* Fix all unused warnings (#11167)
+* [common,settings] fix backward compatibility for LocalMonitorOffset (#11175)
+* Warning cleanups (#11172, #11173, #11167)
+* CMake configurable C/C++ standard, WINPR_ATTR_UNUSED (#11171)
+* [utils,smartcard] fix return checks for SCardListReaders (#11170)
+* [primitives,sse] split headers (#11163)
+* X11 keymap reload fix (#11162)
+* [core,freerdp] New API freerdp_presist_credentials (#/11160)
+* [client,common] Avoid use of reserved types by @fossdd (#11144)
+* [core,orders] fix update_read_delta by @akallabeth (#11145)
+* [build,android] only enable required codecs for ffmpeg by @akallabeth (#11147)
+* [iOS] Update OpenSSL library location and build script by @beersheba (#11148)
+* Warn fixes, code cleanups by @akallabeth (#11140)
+* [server] fix compilation errors after adding NONAMELESSUNION. by @llyzs (#11149)
+* [channel,rdpecam] support Logitech UVC H.264 stream mux payload by @oleg0421 (#11132)
+* [winpr,sysinfo] limit GetComputerNameA to 31 chars by @akallabeth (#11150)
+* Warn fixes42 by @akallabeth (#11151)
+* [utils,smartcard] return proper list for smartcard listing by @akallabeth (#11152)
+* [channel,rdpecam] uvc_h264 xu_descriptor pointer fix by @oleg0421 (#11154)
+* [channel,urbdrc] fix libusb return code checks by @akallabeth (#11156)
+* Function size refactor by @akallabeth (#11157)
+* Cmake multiconfig2 by @akallabeth (#10853)
+
+New Contributors:
+* @fossdd made their first contribution in https://github.com/FreeRDP/FreeRDP/pull/11144
+
+For a complete and detailed change log since the last release run:
+git log 3.12.0...3.11.1
+
 # 2025-02-07 Version 3.11.1
 
 A bugfix release addressing two regressions reported against 3.11.0
