@@ -208,10 +208,7 @@ BOOL xf_event_action_script_init(xfContext* xfc)
 	obj->fnObjectNew = winpr_ObjectStringClone;
 	obj->fnObjectFree = winpr_ObjectStringFree;
 
-	if (!run_action_script(xfc, "xevent", NULL, xf_action_script_append, NULL))
-		return FALSE;
-
-	return TRUE;
+	return run_action_script(xfc, "xevent", NULL, xf_action_script_append, NULL);
 }
 
 void xf_event_action_script_free(xfContext* xfc)
@@ -304,9 +301,7 @@ static BOOL xf_event_execute_action_script(xfContext* xfc, const XEvent* event)
 	char arg[2048] = { 0 };
 	(void)_snprintf(command, sizeof(command), "xevent %s", xeventName);
 	(void)_snprintf(arg, sizeof(arg), "%lu", (unsigned long)xfc->window->handle);
-	if (!run_action_script(xfc, command, arg, action_script_run, NULL))
-		return FALSE;
-	return TRUE;
+	return run_action_script(xfc, command, arg, action_script_run, NULL);
 }
 
 void xf_adjust_coordinates_to_screen(xfContext* xfc, UINT32* x, UINT32* y)
