@@ -1569,7 +1569,7 @@ static SSIZE_T write_int_parameters(const rdpFile* file, char* buffer, size_t si
 	for (size_t x = 0; x < ARRAYSIZE(settings); x++)
 	{
 		const struct intentry_t* cur = &settings[x];
-		if (~(size_t)(cur->val))
+		if (~cur->val)
 		{
 			const SSIZE_T res = freerdp_client_write_setting_to_buffer(
 			    &buffer, &size, "%s:s:%" PRIu32, cur->key, cur->val);
@@ -1689,6 +1689,7 @@ size_t freerdp_client_write_rdp_file_buffer(const rdpFile* file, char* buffer, s
 	const SSIZE_T stringsize = write_string_parameters(file, buffer, size);
 	if (stringsize < 0)
 		return 0;
+	totalSize += (size_t)stringsize;
 
 	/* custom parameters */
 	const SSIZE_T customsize = write_custom_parameters(file, buffer, size);
