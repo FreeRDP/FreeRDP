@@ -138,3 +138,39 @@ VOID DisassociateCurrentThreadFromCallback(PTP_CALLBACK_INSTANCE pci)
 }
 
 #endif /* WINPR_THREAD_POOL defined */
+
+#if defined(WINPR_CALLBACK_ENVIRON)
+VOID InitializeThreadpoolEnvironment(PTP_CALLBACK_ENVIRON pcbe)
+{
+	const TP_CALLBACK_ENVIRON empty = { 0 };
+	WINPR_ASSERT(pcbe);
+
+	*pcbe = empty;
+	pcbe->Version = 1;
+}
+
+VOID DestroyThreadpoolEnvironment(PTP_CALLBACK_ENVIRON pcbe)
+{
+	/* no actions, this may change in a future release. */
+	WINPR_UNUSED(pcbe);
+}
+
+VOID SetThreadpoolCallbackPool(PTP_CALLBACK_ENVIRON pcbe, PTP_POOL ptpp)
+{
+	WINPR_ASSERT(pcbe);
+	pcbe->Pool = ptpp;
+}
+
+VOID SetThreadpoolCallbackRunsLong(PTP_CALLBACK_ENVIRON pcbe)
+{
+	WINPR_ASSERT(pcbe);
+	pcbe->u.s.LongFunction = 1;
+}
+
+VOID SetThreadpoolCallbackLibrary(PTP_CALLBACK_ENVIRON pcbe, PVOID mod)
+{
+	WINPR_ASSERT(pcbe);
+	pcbe->RaceDll = mod;
+}
+
+#endif
