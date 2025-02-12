@@ -593,6 +593,16 @@ WINPR_PRAGMA_DIAG_POP
 #endif
 #endif
 
+#if defined(__cplusplus) && (__cplusplus >= 201703L)
+#define WINPR_ATTR_UNUSED [[maybe_unused]] /** @since version 3.12.0 */
+#elif defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 202000L)
+#define WINPR_ATTR_UNUSED [[maybe_unused]] /** @since version 3.12.0 */
+#elif defined(__GNUC__) || defined(__clang__)
+#define WINPR_ATTR_UNUSED __attribute__((unused)) /** @since version 3.12.0 */
+#else
+#define WINPR_ATTR_UNUSED /** @since version 3.12.0 */
+#endif
+
 #define WINPR_UNUSED(x) (void)(x)
 
 #endif /* WINPR_PLATFORM_H */
