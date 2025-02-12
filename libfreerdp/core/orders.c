@@ -866,7 +866,7 @@ static INLINE BOOL update_read_delta(wStream* s, INT32* value)
 	Stream_Read_UINT8(s, byte);
 
 	if (byte & 0x40)
-		uvalue = (byte | ~0x3F) & UINT32_MAX;
+		uvalue = WINPR_CXX_COMPAT_CAST(UINT32, (byte | ~0x3F));
 	else
 		uvalue = (byte & 0x3F);
 

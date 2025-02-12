@@ -389,7 +389,9 @@ static uint8_t get_guid_unit_id_from_device(libusb_device* device, const uint8_t
 						         "For camera %04" PRIx16 ":%04" PRIx16
 						         " found UVCX H264 UnitID %" PRId8,
 						         ddesc.idVendor, ddesc.idProduct, unit_id);
-						return unit_id;
+						if (unit_id < 0)
+							return 0;
+						return WINPR_CXX_COMPAT_CAST(uint8_t, unit_id);
 					}
 					ptr += desc->bLength;
 				}
