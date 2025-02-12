@@ -42,3 +42,61 @@ name = freerdp_settings_get_uint32
 [suppress_function]
 change_kind = function-subtype-change
 name = freerdp_settings_set_uint32
+
+# suppress local functions (false positives)
+[suppress_function]
+change_kind = all
+name = primitives_init_YCoCg_neon
+
+[suppress_function]
+change_kind = all
+name = primitives_init_YCoCg_ssse3
+
+[suppress_function]
+change_kind = all
+name = primitives_init_YUV_neon
+
+[suppress_function]
+change_kind = all
+name = primitives_init_YUV_sse41
+
+[suppress_function]
+change_kind = all
+name = primitives_init_add_sse3
+
+[suppress_function]
+change_kind = all
+name = primitives_init_alphaComp_sse3
+
+[suppress_function]
+change_kind = all
+name = primitives_init_andor_sse3
+
+[suppress_function]
+change_kind = all
+name = primitives_init_colors_neon
+
+[suppress_function]
+change_kind = all
+name = primitives_init_colors_sse2
+
+[suppress_function]
+change_kind = all
+name = primitives_init_copy_avx2
+
+[suppress_function]
+change_kind = all
+name = primitives_init_copy_sse41
+
+[suppress_function]
+change_kind = all
+name = primitives_init_set_sse2
+
+[suppress_function]
+change_kind = all
+name = primitives_init_shift_sse3
+
+[suppress_function]
+change_kind = all
+name = primitives_init_sign_ssse3
+
