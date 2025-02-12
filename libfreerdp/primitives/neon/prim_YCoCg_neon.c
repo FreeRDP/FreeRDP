@@ -24,7 +24,6 @@
 #include <winpr/sysinfo.h>
 
 #include "prim_internal.h"
-#include "prim_templates.h"
 #include "prim_YCoCg.h"
 
 #if defined(NEON_INTRINSICS_ENABLED)
@@ -155,17 +154,13 @@ static pstatus_t neon_YCoCgToRGB_8u_AC4R(const BYTE* WINPR_RESTRICT pSrc, INT32 
 #endif
 
 /* ------------------------------------------------------------------------- */
-void primitives_init_YCoCg_neon(primitives_t* WINPR_RESTRICT prims)
+void primitives_init_YCoCg_neon_int(primitives_t* WINPR_RESTRICT prims)
 {
 #if defined(NEON_INTRINSICS_ENABLED)
 	generic = primitives_get_generic();
-	primitives_init_YCoCg(prims);
 
-	if (IsProcessorFeaturePresent(PF_ARM_NEON_INSTRUCTIONS_AVAILABLE))
-	{
-		WLog_VRB(PRIM_TAG, "NEON optimizations");
-		prims->YCoCgToRGB_8u_AC4R = neon_YCoCgToRGB_8u_AC4R;
-	}
+	WLog_VRB(PRIM_TAG, "NEON optimizations");
+	prims->YCoCgToRGB_8u_AC4R = neon_YCoCgToRGB_8u_AC4R;
 #else
 	WLog_VRB(PRIM_TAG, "undefined WITH_SIMD or neon intrinsics not available");
 	WINPR_UNUSED(prims);

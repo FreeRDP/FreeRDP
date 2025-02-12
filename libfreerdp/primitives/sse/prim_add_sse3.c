@@ -75,29 +75,29 @@ static pstatus_t sse3_add_16s_inplace(INT16* WINPR_RESTRICT pSrcDst1,
 			__m128i* vdptr1 = (__m128i*)dptr1;
 			__m128i* vdptr2 = (__m128i*)dptr2;
 
-			__m128i xmm0 = _mm_lddqu_si128(vsptr1++);
-			__m128i xmm1 = _mm_lddqu_si128(vsptr1++);
-			__m128i xmm2 = _mm_lddqu_si128(vsptr1++);
-			__m128i xmm3 = _mm_lddqu_si128(vsptr1++);
-			__m128i xmm4 = _mm_lddqu_si128(vsptr2++);
-			__m128i xmm5 = _mm_lddqu_si128(vsptr2++);
-			__m128i xmm6 = _mm_lddqu_si128(vsptr2++);
-			__m128i xmm7 = _mm_lddqu_si128(vsptr2++);
+			__m128i xmm0 = LOAD_SI128(vsptr1++);
+			__m128i xmm1 = LOAD_SI128(vsptr1++);
+			__m128i xmm2 = LOAD_SI128(vsptr1++);
+			__m128i xmm3 = LOAD_SI128(vsptr1++);
+			__m128i xmm4 = LOAD_SI128(vsptr2++);
+			__m128i xmm5 = LOAD_SI128(vsptr2++);
+			__m128i xmm6 = LOAD_SI128(vsptr2++);
+			__m128i xmm7 = LOAD_SI128(vsptr2++);
 
 			xmm0 = _mm_adds_epi16(xmm0, xmm4);
 			xmm1 = _mm_adds_epi16(xmm1, xmm5);
 			xmm2 = _mm_adds_epi16(xmm2, xmm6);
 			xmm3 = _mm_adds_epi16(xmm3, xmm7);
 
-			_mm_store_si128(vdptr1++, xmm0);
-			_mm_store_si128(vdptr1++, xmm1);
-			_mm_store_si128(vdptr1++, xmm2);
-			_mm_store_si128(vdptr1++, xmm3);
+			STORE_SI128(vdptr1++, xmm0);
+			STORE_SI128(vdptr1++, xmm1);
+			STORE_SI128(vdptr1++, xmm2);
+			STORE_SI128(vdptr1++, xmm3);
 
-			_mm_store_si128(vdptr2++, xmm0);
-			_mm_store_si128(vdptr2++, xmm1);
-			_mm_store_si128(vdptr2++, xmm2);
-			_mm_store_si128(vdptr2++, xmm3);
+			STORE_SI128(vdptr2++, xmm0);
+			STORE_SI128(vdptr2++, xmm1);
+			STORE_SI128(vdptr2++, xmm2);
+			STORE_SI128(vdptr2++, xmm3);
 
 			dptr1 = (INT16*)vdptr1;
 			dptr2 = (INT16*)vdptr2;
@@ -113,29 +113,29 @@ static pstatus_t sse3_add_16s_inplace(INT16* WINPR_RESTRICT pSrcDst1,
 			__m128i* vdptr1 = (__m128i*)dptr1;
 			__m128i* vdptr2 = (__m128i*)dptr2;
 
-			__m128i xmm0 = _mm_load_si128(vsptr1++);
-			__m128i xmm1 = _mm_load_si128(vsptr1++);
-			__m128i xmm2 = _mm_load_si128(vsptr1++);
-			__m128i xmm3 = _mm_load_si128(vsptr1++);
-			__m128i xmm4 = _mm_load_si128(vsptr2++);
-			__m128i xmm5 = _mm_load_si128(vsptr2++);
-			__m128i xmm6 = _mm_load_si128(vsptr2++);
-			__m128i xmm7 = _mm_load_si128(vsptr2++);
+			__m128i xmm0 = LOAD_SI128(vsptr1++);
+			__m128i xmm1 = LOAD_SI128(vsptr1++);
+			__m128i xmm2 = LOAD_SI128(vsptr1++);
+			__m128i xmm3 = LOAD_SI128(vsptr1++);
+			__m128i xmm4 = LOAD_SI128(vsptr2++);
+			__m128i xmm5 = LOAD_SI128(vsptr2++);
+			__m128i xmm6 = LOAD_SI128(vsptr2++);
+			__m128i xmm7 = LOAD_SI128(vsptr2++);
 
 			xmm0 = _mm_adds_epi16(xmm0, xmm4);
 			xmm1 = _mm_adds_epi16(xmm1, xmm5);
 			xmm2 = _mm_adds_epi16(xmm2, xmm6);
 			xmm3 = _mm_adds_epi16(xmm3, xmm7);
 
-			_mm_store_si128(vdptr1++, xmm0);
-			_mm_store_si128(vdptr1++, xmm1);
-			_mm_store_si128(vdptr1++, xmm2);
-			_mm_store_si128(vdptr1++, xmm3);
+			STORE_SI128(vdptr1++, xmm0);
+			STORE_SI128(vdptr1++, xmm1);
+			STORE_SI128(vdptr1++, xmm2);
+			STORE_SI128(vdptr1++, xmm3);
 
-			_mm_store_si128(vdptr2++, xmm0);
-			_mm_store_si128(vdptr2++, xmm1);
-			_mm_store_si128(vdptr2++, xmm2);
-			_mm_store_si128(vdptr2++, xmm3);
+			STORE_SI128(vdptr2++, xmm0);
+			STORE_SI128(vdptr2++, xmm1);
+			STORE_SI128(vdptr2++, xmm2);
+			STORE_SI128(vdptr2++, xmm3);
 
 			dptr1 = (INT16*)vdptr1;
 			dptr2 = (INT16*)vdptr2;
@@ -156,8 +156,8 @@ static pstatus_t sse3_add_16s_inplace(INT16* WINPR_RESTRICT pSrcDst1,
 
 		xmm0 = _mm_adds_epi16(xmm0, xmm1);
 
-		_mm_store_si128(vdptr1++, xmm0);
-		_mm_store_si128(vdptr2++, xmm0);
+		STORE_SI128(vdptr1++, xmm0);
+		STORE_SI128(vdptr2++, xmm0);
 
 		dptr1 = (INT16*)vdptr1;
 		dptr2 = (INT16*)vdptr2;
@@ -171,20 +171,14 @@ static pstatus_t sse3_add_16s_inplace(INT16* WINPR_RESTRICT pSrcDst1,
 #endif
 
 /* ------------------------------------------------------------------------- */
-void primitives_init_add_sse3(primitives_t* WINPR_RESTRICT prims)
+void primitives_init_add_sse3_int(primitives_t* WINPR_RESTRICT prims)
 {
 #if defined(SSE_AVX_INTRINSICS_ENABLED)
 	generic = primitives_get_generic();
-	primitives_init_add(prims);
 
-	if (IsProcessorFeaturePresent(PF_SSE2_INSTRUCTIONS_AVAILABLE) &&
-	    IsProcessorFeaturePresent(PF_SSE3_INSTRUCTIONS_AVAILABLE)) /* for LDDQU */
-	{
-		WLog_VRB(PRIM_TAG, "SSE2/SSE3 optimizations");
-		prims->add_16s = sse3_add_16s;
-		prims->add_16s_inplace = sse3_add_16s_inplace;
-	}
-
+	WLog_VRB(PRIM_TAG, "SSE2/SSE3 optimizations");
+	prims->add_16s = sse3_add_16s;
+	prims->add_16s_inplace = sse3_add_16s_inplace;
 #else
 	WLog_VRB(PRIM_TAG, "undefined WITH_SIMD or SSE3 intrinsics not available");
 	WINPR_UNUSED(prims);

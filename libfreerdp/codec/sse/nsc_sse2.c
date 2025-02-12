@@ -26,6 +26,7 @@
 #include "nsc_sse2.h"
 
 #include "../../core/simd.h"
+#include "../../primitives/sse/prim_avxsse.h"
 
 #if defined(SSE_AVX_INTRINSICS_ENABLED)
 #include <stdio.h>
@@ -290,13 +291,13 @@ static BOOL nsc_encode_argb_to_aycocg_sse2(NSC_CONTEXT* context, const BYTE* dat
 			cg_val = _mm_sub_epi16(cg_val, _mm_srai_epi16(b_val, 1));
 			cg_val = _mm_srai_epi16(cg_val, ccl);
 			y_val = _mm_packus_epi16(y_val, y_val);
-			_mm_storeu_si128((__m128i*)yplane, y_val);
+			STORE_SI128(yplane, y_val);
 			co_val = _mm_packs_epi16(co_val, co_val);
-			_mm_storeu_si128((__m128i*)coplane, co_val);
+			STORE_SI128(coplane, co_val);
 			cg_val = _mm_packs_epi16(cg_val, cg_val);
-			_mm_storeu_si128((__m128i*)cgplane, cg_val);
+			STORE_SI128(cgplane, cg_val);
 			a_val = _mm_packus_epi16(a_val, a_val);
-			_mm_storeu_si128((__m128i*)aplane, a_val);
+			STORE_SI128(aplane, a_val);
 			yplane += 8;
 			coplane += 8;
 			cgplane += 8;
@@ -354,21 +355,21 @@ static void nsc_encode_subsampling_sse2(NSC_CONTEXT* context)
 
 		for (UINT32 x = 0; x < tempWidth >> 1; x += 8)
 		{
-			t = _mm_loadu_si128((__m128i*)co_src0);
-			t = _mm_avg_epu8(t, _mm_loadu_si128((__m128i*)co_src1));
+			t = LOAD_SI128(co_src0);
+			t = _mm_avg_epu8(t, LOAD_SI128(co_src1));
 			val = _mm_and_si128(_mm_srli_si128(t, 1), mask);
 			val = _mm_avg_epu16(val, _mm_and_si128(t, mask));
 			val = _mm_packus_epi16(val, val);
-			_mm_storeu_si128((__m128i*)co_dst, val);
+			STORE_SI128(co_dst, val);
 			co_dst += 8;
 			co_src0 += 16;
 			co_src1 += 16;
-			t = _mm_loadu_si128((__m128i*)cg_src0);
-			t = _mm_avg_epu8(t, _mm_loadu_si128((__m128i*)cg_src1));
+			t = LOAD_SI128(cg_src0);
+			t = _mm_avg_epu8(t, LOAD_SI128(cg_src1));
 			val = _mm_and_si128(_mm_srli_si128(t, 1), mask);
 			val = _mm_avg_epu16(val, _mm_and_si128(t, mask));
 			val = _mm_packus_epi16(val, val);
-			_mm_storeu_si128((__m128i*)cg_dst, val);
+			STORE_SI128(cg_dst, val);
 			cg_dst += 8;
 			cg_src0 += 16;
 			cg_src1 += 16;
@@ -388,12 +389,9 @@ static BOOL nsc_encode_sse2(NSC_CONTEXT* context, const BYTE* data, UINT32 scanl
 }
 #endif
 
-void nsc_init_sse2(NSC_CONTEXT* context)
+void nsc_init_sse2_int(NSC_CONTEXT* WINPR_RESTRICT context)
 {
 #if defined(SSE_AVX_INTRINSICS_ENABLED)
-	if (!IsProcessorFeaturePresent(PF_XMMI64_INSTRUCTIONS_AVAILABLE))
-		return;
-
 	PROFILER_RENAME(context->priv->prof_nsc_encode, "nsc_encode_sse2")
 	context->encode = nsc_encode_sse2;
 #else

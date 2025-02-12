@@ -25,9 +25,16 @@ set(PRIMITIVES_SRCS
     prim_internal.h
 )
 
-set(PRIMITIVES_SSE2_SRCS sse/prim_colors_sse2.c sse/prim_set_sse2.c)
-
-set(PRIMITIVES_SSE3_SRCS sse/prim_add_sse3.c sse/prim_alphaComp_sse3.c sse/prim_andor_sse3.c sse/prim_shift_sse3.c)
+set(PRIMITIVES_SSE3_SRCS
+    sse/prim_avxsse.h
+    sse/prim_templates.h
+    sse/prim_colors_sse2.c
+    sse/prim_set_sse2.c
+    sse/prim_add_sse3.c
+    sse/prim_alphaComp_sse3.c
+    sse/prim_andor_sse3.c
+    sse/prim_shift_sse3.c
+)
 
 set(PRIMITIVES_SSSE3_SRCS sse/prim_sign_ssse3.c sse/prim_YCoCg_ssse3.c)
 
@@ -58,14 +65,8 @@ if(WITH_OPENCL)
   freerdp_library_add(OpenCL::OpenCL)
 endif()
 
-set(PRIMITIVES_OPT_SRCS
-    ${PRIMITIVES_NEON_SRCS}
-    ${PRIMITIVES_SSE2_SRCS}
-    ${PRIMITIVES_SSE3_SRCS}
-    ${PRIMITIVES_SSSE3_SRCS}
-    ${PRIMITIVES_SSE4_1_SRCS}
-    ${PRIMITIVES_SSE4_2_SRCS}
-    ${PRIMITIVES_OPENCL_SRCS}
+set(PRIMITIVES_OPT_SRCS ${PRIMITIVES_NEON_SRCS} ${PRIMITIVES_SSE3_SRCS} ${PRIMITIVES_SSSE3_SRCS}
+                        ${PRIMITIVES_SSE4_1_SRCS} ${PRIMITIVES_SSE4_2_SRCS} ${PRIMITIVES_OPENCL_SRCS}
 )
 
 if(WITH_AVX2)
@@ -80,7 +81,6 @@ add_library(freerdp-primitives OBJECT ${PRIMITIVES_SRCS})
 include(CompilerDetect)
 include(DetectIntrinsicSupport)
 if(WITH_SIMD)
-  set_simd_source_file_properties("sse2" ${PRIMITIVES_SSE2_SRCS})
   set_simd_source_file_properties("sse3" ${PRIMITIVES_SSE3_SRCS})
   set_simd_source_file_properties("ssse3" ${PRIMITIVES_SSSE3_SRCS})
   set_simd_source_file_properties("sse4.1" ${PRIMITIVES_SSE4_1_SRCS})

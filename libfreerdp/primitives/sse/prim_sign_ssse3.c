@@ -22,6 +22,7 @@
 #include "prim_sign.h"
 
 #include "prim_internal.h"
+#include "prim_avxsse.h"
 
 #if defined(SSE_AVX_INTRINSICS_ENABLED)
 #include <emmintrin.h>
@@ -79,25 +80,25 @@ static pstatus_t ssse3_sign_16s(const INT16* WINPR_RESTRICT pSrc, INT16* WINPR_R
 			xmm1 = _mm_set1_epi16(0x0001U);
 			xmm2 = _mm_set1_epi16(0x0001U);
 			xmm3 = _mm_set1_epi16(0x0001U);
-			xmm4 = _mm_lddqu_si128((const __m128i*)sptr);
+			xmm4 = LOAD_SI128(sptr);
 			sptr += 8;
-			xmm5 = _mm_lddqu_si128((const __m128i*)sptr);
+			xmm5 = LOAD_SI128(sptr);
 			sptr += 8;
-			xmm6 = _mm_lddqu_si128((const __m128i*)sptr);
+			xmm6 = LOAD_SI128(sptr);
 			sptr += 8;
-			xmm7 = _mm_lddqu_si128((const __m128i*)sptr);
+			xmm7 = LOAD_SI128(sptr);
 			sptr += 8;
 			xmm0 = _mm_sign_epi16(xmm0, xmm4);
 			xmm1 = _mm_sign_epi16(xmm1, xmm5);
 			xmm2 = _mm_sign_epi16(xmm2, xmm6);
 			xmm3 = _mm_sign_epi16(xmm3, xmm7);
-			_mm_store_si128((__m128i*)dptr, xmm0);
+			STORE_SI128(dptr, xmm0);
 			dptr += 8;
-			_mm_store_si128((__m128i*)dptr, xmm1);
+			STORE_SI128(dptr, xmm1);
 			dptr += 8;
-			_mm_store_si128((__m128i*)dptr, xmm2);
+			STORE_SI128(dptr, xmm2);
 			dptr += 8;
-			_mm_store_si128((__m128i*)dptr, xmm3);
+			STORE_SI128(dptr, xmm3);
 			dptr += 8;
 		}
 	}
@@ -118,25 +119,25 @@ static pstatus_t ssse3_sign_16s(const INT16* WINPR_RESTRICT pSrc, INT16* WINPR_R
 			xmm1 = _mm_set1_epi16(0x0001U);
 			xmm2 = _mm_set1_epi16(0x0001U);
 			xmm3 = _mm_set1_epi16(0x0001U);
-			xmm4 = _mm_load_si128((const __m128i*)sptr);
+			xmm4 = LOAD_SI128(sptr);
 			sptr += 8;
-			xmm5 = _mm_load_si128((const __m128i*)sptr);
+			xmm5 = LOAD_SI128(sptr);
 			sptr += 8;
-			xmm6 = _mm_load_si128((const __m128i*)sptr);
+			xmm6 = LOAD_SI128(sptr);
 			sptr += 8;
-			xmm7 = _mm_load_si128((const __m128i*)sptr);
+			xmm7 = LOAD_SI128(sptr);
 			sptr += 8;
 			xmm0 = _mm_sign_epi16(xmm0, xmm4);
 			xmm1 = _mm_sign_epi16(xmm1, xmm5);
 			xmm2 = _mm_sign_epi16(xmm2, xmm6);
 			xmm3 = _mm_sign_epi16(xmm3, xmm7);
-			_mm_store_si128((__m128i*)dptr, xmm0);
+			STORE_SI128(dptr, xmm0);
 			dptr += 8;
-			_mm_store_si128((__m128i*)dptr, xmm1);
+			STORE_SI128(dptr, xmm1);
 			dptr += 8;
-			_mm_store_si128((__m128i*)dptr, xmm2);
+			STORE_SI128(dptr, xmm2);
 			dptr += 8;
-			_mm_store_si128((__m128i*)dptr, xmm3);
+			STORE_SI128(dptr, xmm3);
 			dptr += 8;
 		}
 	}
@@ -151,7 +152,7 @@ static pstatus_t ssse3_sign_16s(const INT16* WINPR_RESTRICT pSrc, INT16* WINPR_R
 		__m128i xmm1 = LOAD_SI128(sptr);
 		sptr += 8;
 		xmm0 = _mm_sign_epi16(xmm0, xmm1);
-		_mm_store_si128((__m128i*)dptr, xmm0);
+		STORE_SI128(dptr, xmm0);
 		dptr += 8;
 	}
 
@@ -168,20 +169,16 @@ static pstatus_t ssse3_sign_16s(const INT16* WINPR_RESTRICT pSrc, INT16* WINPR_R
 #endif /* SSE_AVX_INTRINSICS_ENABLED */
 
 /* ------------------------------------------------------------------------- */
-void primitives_init_sign_ssse3(primitives_t* WINPR_RESTRICT prims)
+void primitives_init_sign_ssse3_int(primitives_t* WINPR_RESTRICT prims)
 {
 #if defined(SSE_AVX_INTRINSICS_ENABLED)
 	generic = primitives_get_generic();
-	primitives_init_sign(prims);
+
 	/* Pick tuned versions if possible. */
 	/* I didn't spot an IPP version of this. */
 
-	if (IsProcessorFeaturePresentEx(PF_EX_SSSE3) &&
-	    IsProcessorFeaturePresent(PF_SSE3_INSTRUCTIONS_AVAILABLE))
-	{
-		WLog_VRB(PRIM_TAG, "SSE3/SSSE3 optimizations");
-		prims->sign_16s = ssse3_sign_16s;
-	}
+	WLog_VRB(PRIM_TAG, "SSE3/SSSE3 optimizations");
+	prims->sign_16s = ssse3_sign_16s;
 
 #else
 	WLog_VRB(PRIM_TAG, "undefined WITH_SIMD or SSSE3/SSE3 intrinsics not available");

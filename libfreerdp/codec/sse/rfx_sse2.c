@@ -27,6 +27,7 @@
 #include "rfx_sse2.h"
 
 #include "../../core/simd.h"
+#include "../../primitives/sse/prim_avxsse.h"
 
 #if defined(SSE_AVX_INTRINSICS_ENABLED)
 #include <stdio.h>
@@ -75,10 +76,10 @@ rfx_quantization_decode_block_sse2(INT16* WINPR_RESTRICT buffer, const size_t bu
 
 	do
 	{
-		const __m128i la = _mm_load_si128(ptr);
+		const __m128i la = LOAD_SI128(ptr);
 		const __m128i a = _mm_slli_epi16(la, WINPR_ASSERTING_INT_CAST(int, factor));
 
-		_mm_store_si128(ptr, a);
+		STORE_SI128(ptr, a);
 		ptr++;
 	} while (ptr < buf_end);
 }
@@ -116,10 +117,10 @@ rfx_quantization_encode_block_sse2(INT16* WINPR_RESTRICT buffer, const unsigned 
 
 	do
 	{
-		const __m128i la = _mm_load_si128(ptr);
+		const __m128i la = LOAD_SI128(ptr);
 		__m128i a = _mm_add_epi16(la, half);
 		a = _mm_srai_epi16(a, factor);
-		_mm_store_si128(ptr, a);
+		STORE_SI128(ptr, a);
 		ptr++;
 	} while (ptr < buf_end);
 }
@@ -177,9 +178,9 @@ rfx_dwt_2d_decode_block_horiz_sse2(INT16* WINPR_RESTRICT l, INT16* WINPR_RESTRIC
 		for (size_t n = 0; n < subband_width; n += 8)
 		{
 			/* dst[2n] = l[n] - ((h[n-1] + h[n] + 1) >> 1); */
-			__m128i l_n = _mm_load_si128((__m128i*)l_ptr);
-			__m128i h_n = _mm_load_si128((__m128i*)h_ptr);
-			__m128i h_n_m = _mm_loadu_si128((__m128i*)(h_ptr - 1));
+			__m128i l_n = LOAD_SI128(l_ptr);
+			__m128i h_n = LOAD_SI128(h_ptr);
+			__m128i h_n_m = LOAD_SI128(h_ptr - 1);
 
 			if (n == 0)
 			{
@@ -191,7 +192,7 @@ rfx_dwt_2d_decode_block_horiz_sse2(INT16* WINPR_RESTRICT l, INT16* WINPR_RESTRIC
 			tmp_n = _mm_add_epi16(tmp_n, _mm_set1_epi16(1));
 			tmp_n = _mm_srai_epi16(tmp_n, 1);
 			const __m128i dst_n = _mm_sub_epi16(l_n, tmp_n);
-			_mm_store_si128((__m128i*)l_ptr, dst_n);
+			STORE_SI128(l_ptr, dst_n);
 			l_ptr += 8;
 			h_ptr += 8;
 		}
@@ -203,10 +204,10 @@ rfx_dwt_2d_decode_block_horiz_sse2(INT16* WINPR_RESTRICT l, INT16* WINPR_RESTRIC
 		for (size_t n = 0; n < subband_width; n += 8)
 		{
 			/* dst[2n + 1] = (h[n] << 1) + ((dst[2n] + dst[2n + 2]) >> 1); */
-			__m128i h_n = _mm_load_si128((__m128i*)h_ptr);
+			__m128i h_n = LOAD_SI128(h_ptr);
 			h_n = _mm_slli_epi16(h_n, 1);
-			__m128i dst_n = _mm_load_si128((__m128i*)(l_ptr));
-			__m128i dst_n_p = _mm_loadu_si128((__m128i*)(l_ptr + 1));
+			__m128i dst_n = LOAD_SI128(l_ptr);
+			__m128i dst_n_p = LOAD_SI128(l_ptr + 1);
 
 			if (n == subband_width - 8)
 			{
@@ -219,8 +220,8 @@ rfx_dwt_2d_decode_block_horiz_sse2(INT16* WINPR_RESTRICT l, INT16* WINPR_RESTRIC
 			tmp_n = _mm_add_epi16(tmp_n, h_n);
 			dst1 = _mm_unpacklo_epi16(dst_n, tmp_n);
 			dst2 = _mm_unpackhi_epi16(dst_n, tmp_n);
-			_mm_store_si128((__m128i*)dst_ptr, dst1);
-			_mm_store_si128((__m128i*)(dst_ptr + 8), dst2);
+			STORE_SI128(dst_ptr, dst1);
+			STORE_SI128(dst_ptr + 8, dst2);
 			l_ptr += 8;
 			h_ptr += 8;
 			dst_ptr += 16;
@@ -243,21 +244,21 @@ rfx_dwt_2d_decode_block_vert_sse2(INT16* WINPR_RESTRICT l, INT16* WINPR_RESTRICT
 		for (size_t x = 0; x < total_width; x += 8)
 		{
 			/* dst[2n] = l[n] - ((h[n-1] + h[n] + 1) >> 1); */
-			const __m128i l_n = _mm_load_si128((__m128i*)l_ptr);
-			const __m128i h_n = _mm_load_si128((__m128i*)h_ptr);
+			const __m128i l_n = LOAD_SI128(l_ptr);
+			const __m128i h_n = LOAD_SI128(h_ptr);
 			__m128i tmp_n = _mm_add_epi16(h_n, _mm_set1_epi16(1));
 
 			if (n == 0)
 				tmp_n = _mm_add_epi16(tmp_n, h_n);
 			else
 			{
-				const __m128i h_n_m = _mm_loadu_si128((__m128i*)(h_ptr - total_width));
+				const __m128i h_n_m = LOAD_SI128(h_ptr - total_width);
 				tmp_n = _mm_add_epi16(tmp_n, h_n_m);
 			}
 
 			tmp_n = _mm_srai_epi16(tmp_n, 1);
 			const __m128i dst_n = _mm_sub_epi16(l_n, tmp_n);
-			_mm_store_si128((__m128i*)dst_ptr, dst_n);
+			STORE_SI128(dst_ptr, dst_n);
 			l_ptr += 8;
 			h_ptr += 8;
 			dst_ptr += 8;
@@ -275,8 +276,8 @@ rfx_dwt_2d_decode_block_vert_sse2(INT16* WINPR_RESTRICT l, INT16* WINPR_RESTRICT
 		for (size_t x = 0; x < total_width; x += 8)
 		{
 			/* dst[2n + 1] = (h[n] << 1) + ((dst[2n] + dst[2n + 2]) >> 1); */
-			__m128i h_n = _mm_load_si128((__m128i*)h_ptr);
-			__m128i dst_n_m = _mm_load_si128((__m128i*)(dst_ptr - total_width));
+			__m128i h_n = LOAD_SI128(h_ptr);
+			__m128i dst_n_m = LOAD_SI128(dst_ptr - total_width);
 			h_n = _mm_slli_epi16(h_n, 1);
 			__m128i tmp_n = dst_n_m;
 
@@ -284,13 +285,13 @@ rfx_dwt_2d_decode_block_vert_sse2(INT16* WINPR_RESTRICT l, INT16* WINPR_RESTRICT
 				tmp_n = _mm_add_epi16(tmp_n, dst_n_m);
 			else
 			{
-				const __m128i dst_n_p = _mm_loadu_si128((__m128i*)(dst_ptr + total_width));
+				const __m128i dst_n_p = LOAD_SI128(dst_ptr + total_width);
 				tmp_n = _mm_add_epi16(tmp_n, dst_n_p);
 			}
 
 			tmp_n = _mm_srai_epi16(tmp_n, 1);
 			const __m128i dst_n = _mm_add_epi16(tmp_n, h_n);
-			_mm_store_si128((__m128i*)dst_ptr, dst_n);
+			STORE_SI128(dst_ptr, dst_n);
 			h_ptr += 8;
 			dst_ptr += 8;
 		}
@@ -342,29 +343,29 @@ rfx_dwt_2d_encode_block_vert_sse2(INT16* WINPR_RESTRICT src, INT16* WINPR_RESTRI
 	{
 		for (size_t x = 0; x < total_width; x += 8)
 		{
-			__m128i src_2n = _mm_load_si128((__m128i*)src);
-			__m128i src_2n_1 = _mm_load_si128((__m128i*)(src + total_width));
+			__m128i src_2n = LOAD_SI128(src);
+			__m128i src_2n_1 = LOAD_SI128(src + total_width);
 			__m128i src_2n_2 = src_2n;
 
 			if (n < subband_width - 1)
-				src_2n_2 = _mm_load_si128((__m128i*)(src + 2ULL * total_width));
+				src_2n_2 = LOAD_SI128(src + 2ULL * total_width);
 
 			/* h[n] = (src[2n + 1] - ((src[2n] + src[2n + 2]) >> 1)) >> 1 */
 			__m128i h_n = _mm_add_epi16(src_2n, src_2n_2);
 			h_n = _mm_srai_epi16(h_n, 1);
 			h_n = _mm_sub_epi16(src_2n_1, h_n);
 			h_n = _mm_srai_epi16(h_n, 1);
-			_mm_store_si128((__m128i*)h, h_n);
+			STORE_SI128(h, h_n);
 
 			__m128i h_n_m = h_n;
 			if (n != 0)
-				h_n_m = _mm_load_si128((__m128i*)(h - total_width));
+				h_n_m = LOAD_SI128(h - total_width);
 
 			/* l[n] = src[2n] + ((h[n - 1] + h[n]) >> 1) */
 			__m128i l_n = _mm_add_epi16(h_n_m, h_n);
 			l_n = _mm_srai_epi16(l_n, 1);
 			l_n = _mm_add_epi16(l_n, src_2n);
-			_mm_store_si128((__m128i*)l, l_n);
+			STORE_SI128(l, l_n);
 			src += 8;
 			l += 8;
 			h += 8;
@@ -396,8 +397,8 @@ rfx_dwt_2d_encode_block_horiz_sse2(INT16* WINPR_RESTRICT src, INT16* WINPR_RESTR
 			h_n = _mm_srai_epi16(h_n, 1);
 			h_n = _mm_sub_epi16(src_2n_1, h_n);
 			h_n = _mm_srai_epi16(h_n, 1);
-			_mm_store_si128((__m128i*)h, h_n);
-			__m128i h_n_m = _mm_loadu_si128((__m128i*)(h - 1));
+			STORE_SI128(h, h_n);
+			__m128i h_n_m = LOAD_SI128(h - 1);
 
 			if (n == 0)
 			{
@@ -409,7 +410,7 @@ rfx_dwt_2d_encode_block_horiz_sse2(INT16* WINPR_RESTRICT src, INT16* WINPR_RESTR
 			__m128i l_n = _mm_add_epi16(h_n_m, h_n);
 			l_n = _mm_srai_epi16(l_n, 1);
 			l_n = _mm_add_epi16(l_n, src_2n);
-			_mm_store_si128((__m128i*)l, l_n);
+			STORE_SI128(l, l_n);
 			src += 16;
 			l += 8;
 			h += 8;
@@ -450,12 +451,9 @@ static void rfx_dwt_2d_encode_sse2(INT16* WINPR_RESTRICT buffer, INT16* WINPR_RE
 }
 #endif
 
-void rfx_init_sse2(RFX_CONTEXT* context)
+void rfx_init_sse2_int(RFX_CONTEXT* WINPR_RESTRICT context)
 {
 #if defined(SSE_AVX_INTRINSICS_ENABLED)
-	if (!IsProcessorFeaturePresent(PF_XMMI64_INSTRUCTIONS_AVAILABLE))
-		return;
-
 	PROFILER_RENAME(context->priv->prof_rfx_quantization_decode, "rfx_quantization_decode_sse2")
 	PROFILER_RENAME(context->priv->prof_rfx_quantization_encode, "rfx_quantization_encode_sse2")
 	PROFILER_RENAME(context->priv->prof_rfx_dwt_2d_decode, "rfx_dwt_2d_decode_sse2")

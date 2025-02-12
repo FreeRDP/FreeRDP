@@ -22,6 +22,8 @@
 #define FREERDP_LIB_PRIM_COPY_H
 
 #include <winpr/wtypes.h>
+#include <winpr/sysinfo.h>
+
 #include <freerdp/config.h>
 #include <freerdp/primitives.h>
 
@@ -38,10 +40,24 @@ pstatus_t generic_image_copy_no_overlap_memcpy(
     SSIZE_T srcVMultiplier, SSIZE_T srcVOffset, SSIZE_T dstVMultiplier, SSIZE_T dstVOffset,
     UINT32 flags);
 
-void primitives_init_copy_sse41(primitives_t* prims);
+FREERDP_LOCAL void primitives_init_copy_sse41_int(primitives_t* WINPR_RESTRICT prims);
+static inline void primitives_init_copy_sse41(primitives_t* WINPR_RESTRICT prims)
+{
+	if (!IsProcessorFeaturePresent(PF_SSE4_1_INSTRUCTIONS_AVAILABLE))
+		return;
+
+	primitives_init_copy_sse41_int(prims);
+}
 
 #if defined(WITH_AVX2)
-void primitives_init_copy_avx2(primitives_t* prims);
+FREERDP_LOCAL void primitives_init_copy_avx2_int(primitives_t* WINPR_RESTRICT prims);
+static inline void primitives_init_copy_avx2(primitives_t* WINPR_RESTRICT prims)
+{
+	if (!IsProcessorFeaturePresent(PF_AVX2_INSTRUCTIONS_AVAILABLE))
+		return;
+
+	primitives_init_copy_avx2_int(prims);
+}
 #endif
 
 #endif

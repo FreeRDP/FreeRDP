@@ -45,40 +45,6 @@
 #define HAVE_CPU_OPTIMIZED_PRIMITIVES 1
 #endif
 
-#if defined(SSE_AVX_INTRINSICS_ENABLED)
-#include <emmintrin.h>
-static inline __m128i mm_set_epu32(uint32_t val1, uint32_t val2, uint32_t val3, uint32_t val4)
-{
-	return _mm_set_epi32((int32_t)val1, (int32_t)val2, (int32_t)val3, (int32_t)val4);
-}
-
-static inline __m128i mm_set_epu8(uint8_t val1, uint8_t val2, uint8_t val3, uint8_t val4,
-                                  uint8_t val5, uint8_t val6, uint8_t val7, uint8_t val8,
-                                  uint8_t val9, uint8_t val10, uint8_t val11, uint8_t val12,
-                                  uint8_t val13, uint8_t val14, uint8_t val15, uint8_t val16)
-{
-	return _mm_set_epi8((int8_t)val1, (int8_t)val2, (int8_t)val3, (int8_t)val4, (int8_t)val5,
-	                    (int8_t)val6, (int8_t)val7, (int8_t)val8, (int8_t)val9, (int8_t)val10,
-	                    (int8_t)val11, (int8_t)val12, (int8_t)val13, (int8_t)val14, (int8_t)val15,
-	                    (int8_t)val16);
-}
-
-static inline __m128i mm_set1_epu32(uint32_t val)
-{
-	return _mm_set1_epi32((int32_t)val);
-}
-
-static inline __m128i mm_set1_epu8(uint8_t val)
-{
-	return _mm_set1_epi8((int8_t)val);
-}
-
-/* Use lddqu for unaligned; load for 16-byte aligned. */
-#define LOAD_SI128(_ptr_)                                                       \
-	(((const ULONG_PTR)(_ptr_)&0x0f) ? _mm_lddqu_si128((const __m128i*)(_ptr_)) \
-	                                 : _mm_load_si128((const __m128i*)(_ptr_)))
-#endif
-
 static INLINE BYTE* writePixelBGRA(BYTE* dst, DWORD formatSize, UINT32 format, BYTE R, BYTE G,
                                    BYTE B, BYTE A)
 {

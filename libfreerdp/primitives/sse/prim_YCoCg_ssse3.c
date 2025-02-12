@@ -73,7 +73,6 @@ static pstatus_t ssse3_YCoCgRToRGB_8u_AC4R_invert(const BYTE* WINPR_RESTRICT pSr
 	for (UINT32 h = 0; h < height; h++)
 	{
 		UINT32 w = width;
-		BOOL onStride = 0;
 
 		/* Get to a 16-byte destination boundary. */
 		if ((ULONG_PTR)dptr & 0x0f)
@@ -96,9 +95,6 @@ static pstatus_t ssse3_YCoCgRToRGB_8u_AC4R_invert(const BYTE* WINPR_RESTRICT pSr
 			w -= startup;
 		}
 
-		/* Each loop handles eight pixels at a time. */
-		onStride = (((ULONG_PTR)sptr & 0x0f) == 0) ? TRUE : FALSE;
-
 		while (w >= 8)
 		{
 			__m128i R0;
@@ -110,22 +106,10 @@ static pstatus_t ssse3_YCoCgRToRGB_8u_AC4R_invert(const BYTE* WINPR_RESTRICT pSr
 			__m128i R6;
 			__m128i R7;
 
-			if (onStride)
-			{
-				/* The faster path, 16-byte aligned load. */
-				R0 = _mm_load_si128((const __m128i*)sptr);
-				sptr += (128 / 8);
-				R1 = _mm_load_si128((const __m128i*)sptr);
-				sptr += (128 / 8);
-			}
-			else
-			{
-				/* Off-stride, slower LDDQU load. */
-				R0 = _mm_lddqu_si128((const __m128i*)sptr);
-				sptr += (128 / 8);
-				R1 = _mm_lddqu_si128((const __m128i*)sptr);
-				sptr += (128 / 8);
-			}
+			R0 = LOAD_SI128(sptr);
+			sptr += (128 / 8);
+			R1 = LOAD_SI128(sptr);
+			sptr += (128 / 8);
 
 			/* R0 = a3y3o3g3 a2y2o2g2 a1y1o1g1 a0y0o0g0 */
 			/* R1 = a7y7o7g7 a6y6o6g6 a5y5o5g5 a4y4o4g4 */
@@ -197,9 +181,9 @@ static pstatus_t ssse3_YCoCgRToRGB_8u_AC4R_invert(const BYTE* WINPR_RESTRICT pSr
 			/* R4 = A3R3G3B3 A2R2G2B2 A1R1G1B1 A0R0G0B0 */
 			R5 = _mm_unpackhi_epi16(R2, R3);
 			/* R5 = A7R7G7B7 A6R6G6B6 A5R6G5B5 A4R4G4B4 */
-			_mm_store_si128((__m128i*)dptr, R4);
+			STORE_SI128(dptr, R4);
 			dptr += (128 / 8);
-			_mm_store_si128((__m128i*)dptr, R5);
+			STORE_SI128(dptr, R5);
 			dptr += (128 / 8);
 			w -= 8;
 		}
@@ -262,7 +246,6 @@ static pstatus_t ssse3_YCoCgRToRGB_8u_AC4R_no_invert(const BYTE* WINPR_RESTRICT 
 	for (UINT32 h = 0; h < height; h++)
 	{
 		UINT32 w = width;
-		BOOL onStride = 0;
 
 		/* Get to a 16-byte destination boundary. */
 		if ((ULONG_PTR)dptr & 0x0f)
@@ -285,47 +268,26 @@ static pstatus_t ssse3_YCoCgRToRGB_8u_AC4R_no_invert(const BYTE* WINPR_RESTRICT 
 			w -= startup;
 		}
 
-		/* Each loop handles eight pixels at a time. */
-		onStride = (((const ULONG_PTR)sptr & 0x0f) == 0) ? TRUE : FALSE;
-
 		while (w >= 8)
 		{
-			__m128i R0;
-			__m128i R1;
-			__m128i R2;
-			__m128i R3;
-			__m128i R4;
-			__m128i R5;
-			__m128i R6;
 			__m128i R7;
 
-			if (onStride)
-			{
-				/* The faster path, 16-byte aligned load. */
-				R0 = _mm_load_si128((const __m128i*)sptr);
-				sptr += (128 / 8);
-				R1 = _mm_load_si128((const __m128i*)sptr);
-				sptr += (128 / 8);
-			}
-			else
-			{
-				/* Off-stride, slower LDDQU load. */
-				R0 = _mm_lddqu_si128((const __m128i*)sptr);
-				sptr += (128 / 8);
-				R1 = _mm_lddqu_si128((const __m128i*)sptr);
-				sptr += (128 / 8);
-			}
+			/* The faster path, 16-byte aligned load. */
+			__m128i R0 = LOAD_SI128(sptr);
+			sptr += (128 / 8);
+			__m128i R1 = LOAD_SI128(sptr);
+			sptr += (128 / 8);
 
 			/* R0 = a3y3o3g3 a2y2o2g2 a1y1o1g1 a0y0o0g0 */
 			/* R1 = a7y7o7g7 a6y6o6g6 a5y5o5g5 a4y4o4g4 */
 			/* Shuffle to pack all the like types together. */
-			R2 = _mm_set_epi32(0x0f0b0703, 0x0e0a0602, 0x0d090501, 0x0c080400);
-			R3 = _mm_shuffle_epi8(R0, R2);
-			R4 = _mm_shuffle_epi8(R1, R2);
+			__m128i R2 = _mm_set_epi32(0x0f0b0703, 0x0e0a0602, 0x0d090501, 0x0c080400);
+			__m128i R3 = _mm_shuffle_epi8(R0, R2);
+			__m128i R4 = _mm_shuffle_epi8(R1, R2);
 			/* R3 = a3a2a1a0 y3y2y1y0 o3o2o1o0 g3g2g1g0 */
 			/* R4 = a7a6a5a4 y7y6y5y4 o7o6o5o4 g7g6g5g4 */
-			R5 = _mm_unpackhi_epi32(R3, R4);
-			R6 = _mm_unpacklo_epi32(R3, R4);
+			__m128i R5 = _mm_unpackhi_epi32(R3, R4);
+			__m128i R6 = _mm_unpacklo_epi32(R3, R4);
 
 			/* R5 = a7a6a5a4 a3a2a1a0 y7y6y5y4 y3y2y1y0 */
 			/* R6 = o7o6o5o4 o3o2o1o0 g7g6g5g4 g3g2g1g0 */
@@ -390,9 +352,9 @@ static pstatus_t ssse3_YCoCgRToRGB_8u_AC4R_no_invert(const BYTE* WINPR_RESTRICT 
 			/* R4 = A3R3G3B3 A2R2G2B2 A1R1G1B1 A0R0G0B0 */
 			R5 = _mm_unpackhi_epi16(R2, R3);
 			/* R5 = A7R7G7B7 A6R6G6B6 A5R6G5B5 A4R4G4B4 */
-			_mm_store_si128((__m128i*)dptr, R4);
+			STORE_SI128(dptr, R4);
 			dptr += (128 / 8);
-			_mm_store_si128((__m128i*)dptr, R5);
+			STORE_SI128(dptr, R5);
 			dptr += (128 / 8);
 			w -= 8;
 		}
@@ -449,18 +411,13 @@ static pstatus_t ssse3_YCoCgRToRGB_8u_AC4R(const BYTE* WINPR_RESTRICT pSrc, INT3
 #endif
 
 /* ------------------------------------------------------------------------- */
-void primitives_init_YCoCg_ssse3(primitives_t* WINPR_RESTRICT prims)
+void primitives_init_YCoCg_ssse3_int(primitives_t* WINPR_RESTRICT prims)
 {
 #if defined(SSE_AVX_INTRINSICS_ENABLED)
 	generic = primitives_get_generic();
-	primitives_init_YCoCg(prims);
 
-	if (IsProcessorFeaturePresentEx(PF_EX_SSSE3) &&
-	    IsProcessorFeaturePresent(PF_SSE3_INSTRUCTIONS_AVAILABLE))
-	{
-		WLog_VRB(PRIM_TAG, "SSE3/SSSE3 optimizations");
-		prims->YCoCgToRGB_8u_AC4R = ssse3_YCoCgRToRGB_8u_AC4R;
-	}
+	WLog_VRB(PRIM_TAG, "SSE3/SSSE3 optimizations");
+	prims->YCoCgToRGB_8u_AC4R = ssse3_YCoCgRToRGB_8u_AC4R;
 #else
 	WLog_VRB(PRIM_TAG, "undefined WITH_SIMD or SSE2 intrinsics not available");
 	WINPR_UNUSED(prims);

@@ -24,7 +24,6 @@
 #include <winpr/sysinfo.h>
 
 #include "prim_internal.h"
-#include "prim_templates.h"
 #include "prim_colors.h"
 
 /*---------------------------------------------------------------------------*/
@@ -344,19 +343,15 @@ neon_RGBToRGB_16s8u_P3AC4R(const INT16* WINPR_RESTRICT pSrc[3], /* 16-bit R,G, a
 #endif /* NEON_INTRINSICS_ENABLED */
 
 /* ------------------------------------------------------------------------- */
-void primitives_init_colors_neon(primitives_t* prims)
+void primitives_init_colors_neon_int(primitives_t* WINPR_RESTRICT prims)
 {
 #if defined(NEON_INTRINSICS_ENABLED)
 	generic = primitives_get_generic();
-	primitives_init_colors(prims);
 
-	if (IsProcessorFeaturePresent(PF_ARM_NEON_INSTRUCTIONS_AVAILABLE))
-	{
-		WLog_VRB(PRIM_TAG, "NEON optimizations");
-		prims->RGBToRGB_16s8u_P3AC4R = neon_RGBToRGB_16s8u_P3AC4R;
-		prims->yCbCrToRGB_16s8u_P3AC4R = neon_yCbCrToRGB_16s8u_P3AC4R;
-		prims->yCbCrToRGB_16s16s_P3P3 = neon_yCbCrToRGB_16s16s_P3P3;
-	}
+	WLog_VRB(PRIM_TAG, "NEON optimizations");
+	prims->RGBToRGB_16s8u_P3AC4R = neon_RGBToRGB_16s8u_P3AC4R;
+	prims->yCbCrToRGB_16s8u_P3AC4R = neon_yCbCrToRGB_16s8u_P3AC4R;
+	prims->yCbCrToRGB_16s16s_P3P3 = neon_yCbCrToRGB_16s16s_P3P3;
 #else
 	WLog_VRB(PRIM_TAG, "undefined WITH_SIMD or neon intrinsics not available");
 	WINPR_UNUSED(prims);

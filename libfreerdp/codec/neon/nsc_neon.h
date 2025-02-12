@@ -20,9 +20,18 @@
 #ifndef FREERDP_LIB_CODEC_NSC_NEON_H
 #define FREERDP_LIB_CODEC_NSC_NEON_H
 
+#include <winpr/sysinfo.h>
+
 #include <freerdp/codec/nsc.h>
 #include <freerdp/api.h>
 
-FREERDP_LOCAL void nsc_init_neon(NSC_CONTEXT* context);
+FREERDP_LOCAL void nsc_init_neon_int(NSC_CONTEXT* WINPR_RESTRICT context);
+static inline void nsc_init_neon(NSC_CONTEXT* WINPR_RESTRICT context)
+{
+	if (!IsProcessorFeaturePresent(PF_ARM_NEON_INSTRUCTIONS_AVAILABLE))
+		return;
+
+	nsc_init_neon_int(context);
+}
 
 #endif /* FREERDP_LIB_CODEC_NSC_NEON_H */

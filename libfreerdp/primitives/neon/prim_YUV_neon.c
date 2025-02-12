@@ -776,19 +776,14 @@ static pstatus_t neon_YUV420CombineToYUV444(avc444_frame_type type,
 }
 #endif
 
-void primitives_init_YUV_neon(primitives_t* WINPR_RESTRICT prims)
+void primitives_init_YUV_neon_int(primitives_t* WINPR_RESTRICT prims)
 {
 #if defined(NEON_INTRINSICS_ENABLED)
 	generic = primitives_get_generic();
-	primitives_init_YUV(prims);
-
-	if (IsProcessorFeaturePresent(PF_ARM_NEON_INSTRUCTIONS_AVAILABLE))
-	{
-		WLog_VRB(PRIM_TAG, "NEON optimizations");
-		prims->YUV420ToRGB_8u_P3AC4R = neon_YUV420ToRGB_8u_P3AC4R;
-		prims->YUV444ToRGB_8u_P3AC4R = neon_YUV444ToRGB_8u_P3AC4R;
-		prims->YUV420CombineToYUV444 = neon_YUV420CombineToYUV444;
-	}
+	WLog_VRB(PRIM_TAG, "NEON optimizations");
+	prims->YUV420ToRGB_8u_P3AC4R = neon_YUV420ToRGB_8u_P3AC4R;
+	prims->YUV444ToRGB_8u_P3AC4R = neon_YUV444ToRGB_8u_P3AC4R;
+	prims->YUV420CombineToYUV444 = neon_YUV420CombineToYUV444;
 #else
 	WLog_VRB(PRIM_TAG, "undefined WITH_SIMD or neon intrinsics not available");
 	WINPR_UNUSED(prims);
