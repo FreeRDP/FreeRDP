@@ -1812,12 +1812,6 @@ UINT32 freerdp_settings_get_uint32(const rdpSettings* settings, FreeRDP_Settings
 		case FreeRDP_MonitorFlags:
 			return settings->MonitorFlags;
 
-		case FreeRDP_MonitorLocalShiftX:
-			return settings->MonitorLocalShiftX;
-
-		case FreeRDP_MonitorLocalShiftY:
-			return settings->MonitorLocalShiftY;
-
 		case FreeRDP_MultifragMaxRequestSize:
 			return settings->MultifragMaxRequestSize;
 
@@ -2000,6 +1994,12 @@ UINT32 freerdp_settings_get_uint32(const rdpSettings* settings, FreeRDP_Settings
 
 		case FreeRDP_VCFlags:
 			return settings->VCFlags;
+
+		case (FreeRDP_Settings_Keys_UInt32)FreeRDP_MonitorLocalShiftX:
+			return (UINT32)settings->MonitorLocalShiftX;
+
+		case (FreeRDP_Settings_Keys_UInt32)FreeRDP_MonitorLocalShiftY:
+			return (UINT32)settings->MonitorLocalShiftY;
 
 		default:
 			WLog_ERR(TAG, "Invalid key index %" PRIuz " [%s|%s]", id,
@@ -2275,14 +2275,6 @@ BOOL freerdp_settings_set_uint32(rdpSettings* settings, FreeRDP_Settings_Keys_UI
 
 		case FreeRDP_MonitorFlags:
 			settings->MonitorFlags = cnv.c;
-			break;
-
-		case FreeRDP_MonitorLocalShiftX:
-			settings->MonitorLocalShiftX = cnv.c;
-			break;
-
-		case FreeRDP_MonitorLocalShiftY:
-			settings->MonitorLocalShiftY = cnv.c;
 			break;
 
 		case FreeRDP_MultifragMaxRequestSize:

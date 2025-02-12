@@ -63,6 +63,8 @@ typedef struct
 	UINT32 offset;
 } wtsChannelMessage;
 
+static const DWORD g_err_oom = WINPR_CXX_COMPAT_CAST(DWORD, E_OUTOFMEMORY);
+
 static DWORD g_SessionId = 1;
 static wHashTable* g_ServerHandles = NULL;
 
@@ -1153,7 +1155,7 @@ BOOL WINAPI FreeRDP_WTSQuerySessionInformationA(HANDLE hServer, DWORD SessionId,
 
 		if (!pBuffer)
 		{
-			SetLastError(E_OUTOFMEMORY);
+			SetLastError(g_err_oom);
 			return FALSE;
 		}
 
@@ -1569,7 +1571,7 @@ BOOL WINAPI FreeRDP_WTSVirtualChannelWrite(HANDLE hChannelHandle, PCHAR Buffer, 
 
 		if (!buffer)
 		{
-			SetLastError(E_OUTOFMEMORY);
+			SetLastError(g_err_oom);
 			goto fail;
 		}
 
@@ -1598,7 +1600,7 @@ BOOL WINAPI FreeRDP_WTSVirtualChannelWrite(HANDLE hChannelHandle, PCHAR Buffer, 
 			if (!s)
 			{
 				WLog_ERR(TAG, "Stream_New failed!");
-				SetLastError(E_OUTOFMEMORY);
+				SetLastError(g_err_oom);
 				goto fail;
 			}
 
@@ -1683,7 +1685,7 @@ BOOL WINAPI FreeRDP_WTSVirtualChannelQuery(HANDLE hChannelHandle, WTS_VIRTUAL_CL
 
 			if (!*ppBuffer)
 			{
-				SetLastError(E_OUTOFMEMORY);
+				SetLastError(g_err_oom);
 			}
 			else
 			{
@@ -1701,7 +1703,7 @@ BOOL WINAPI FreeRDP_WTSVirtualChannelQuery(HANDLE hChannelHandle, WTS_VIRTUAL_CL
 
 			if (!*ppBuffer)
 			{
-				SetLastError(E_OUTOFMEMORY);
+				SetLastError(g_err_oom);
 			}
 			else
 			{
@@ -1743,7 +1745,7 @@ BOOL WINAPI FreeRDP_WTSVirtualChannelQuery(HANDLE hChannelHandle, WTS_VIRTUAL_CL
 
 			if (!*ppBuffer)
 			{
-				SetLastError(E_OUTOFMEMORY);
+				SetLastError(g_err_oom);
 				status = FALSE;
 			}
 			else
@@ -1761,7 +1763,7 @@ BOOL WINAPI FreeRDP_WTSVirtualChannelQuery(HANDLE hChannelHandle, WTS_VIRTUAL_CL
 			*ppBuffer = malloc(sizeof(value));
 			if (!*ppBuffer)
 			{
-				SetLastError(E_OUTOFMEMORY);
+				SetLastError(g_err_oom);
 				status = FALSE;
 			}
 			else

@@ -281,8 +281,6 @@ static const size_t uint32_list_indices[] = {
 	FreeRDP_MonitorCount,
 	FreeRDP_MonitorDefArraySize,
 	FreeRDP_MonitorFlags,
-	FreeRDP_MonitorLocalShiftX,
-	FreeRDP_MonitorLocalShiftY,
 	FreeRDP_MultifragMaxRequestSize,
 	FreeRDP_MultitransportFlags,
 	FreeRDP_NSCodecColorLossLevel,

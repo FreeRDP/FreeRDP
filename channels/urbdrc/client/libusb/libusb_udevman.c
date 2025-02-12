@@ -791,10 +791,14 @@ static UINT udevman_listener_created_callback(IUDEVMAN* iudevman)
 	WINPR_ASSERT(udevman);
 
 	if (udevman->devices_vid_pid)
-		return urbdrc_udevman_register_devices(udevman, udevman->devices_vid_pid, FALSE);
+		return urbdrc_udevman_register_devices(udevman, udevman->devices_vid_pid, FALSE)
+		           ? CHANNEL_RC_OK
+		           : CHANNEL_RC_INITIALIZATION_ERROR;
 
 	if (udevman->devices_addr)
-		return urbdrc_udevman_register_devices(udevman, udevman->devices_addr, TRUE);
+		return urbdrc_udevman_register_devices(udevman, udevman->devices_addr, TRUE)
+		           ? CHANNEL_RC_OK
+		           : CHANNEL_RC_INITIALIZATION_ERROR;
 
 	return CHANNEL_RC_OK;
 }
