@@ -216,7 +216,7 @@ static void WLog_FileAppender_Free(wLogAppender* appender)
 	}
 }
 
-wLogAppender* WLog_FileAppender_New(wLog* log)
+wLogAppender* WLog_FileAppender_New(WINPR_ATTR_UNUSED wLog* log)
 {
 	LPSTR env = NULL;
 	LPCSTR name = NULL;

@@ -18,6 +18,7 @@
  */
 
 #include <winpr/config.h>
+#include <winpr/wlog.h>
 
 #ifndef _WIN32
 #include <winpr/bcrypt.h>
@@ -27,87 +28,126 @@
  * http://msdn.microsoft.com/en-us/library/windows/desktop/aa376210/
  */
 
-NTSTATUS BCryptOpenAlgorithmProvider(BCRYPT_ALG_HANDLE* phAlgorithm, LPCWSTR pszAlgId,
-                                     LPCWSTR pszImplementation, ULONG dwFlags)
+NTSTATUS BCryptOpenAlgorithmProvider(WINPR_ATTR_UNUSED BCRYPT_ALG_HANDLE* phAlgorithm,
+                                     WINPR_ATTR_UNUSED LPCWSTR pszAlgId,
+                                     WINPR_ATTR_UNUSED LPCWSTR pszImplementation,
+                                     WINPR_ATTR_UNUSED ULONG dwFlags)
 {
+	WLog_ERR("TODO", "TODO: implement");
 	return 0;
 }
 
-NTSTATUS BCryptCloseAlgorithmProvider(BCRYPT_ALG_HANDLE hAlgorithm, ULONG dwFlags)
+NTSTATUS BCryptCloseAlgorithmProvider(WINPR_ATTR_UNUSED BCRYPT_ALG_HANDLE hAlgorithm,
+                                      WINPR_ATTR_UNUSED ULONG dwFlags)
 {
+	WLog_ERR("TODO", "TODO: implement");
 	return 0;
 }
 
-NTSTATUS BCryptGetProperty(BCRYPT_HANDLE hObject, LPCWSTR pszProperty, PUCHAR pbOutput,
-                           ULONG cbOutput, ULONG* pcbResult, ULONG dwFlags)
+NTSTATUS BCryptGetProperty(WINPR_ATTR_UNUSED BCRYPT_HANDLE hObject,
+                           WINPR_ATTR_UNUSED LPCWSTR pszProperty, WINPR_ATTR_UNUSED PUCHAR pbOutput,
+                           WINPR_ATTR_UNUSED ULONG cbOutput, WINPR_ATTR_UNUSED ULONG* pcbResult,
+                           WINPR_ATTR_UNUSED ULONG dwFlags)
 {
+	WLog_ERR("TODO", "TODO: implement");
 	return 0;
 }
 
-NTSTATUS BCryptCreateHash(BCRYPT_ALG_HANDLE hAlgorithm, BCRYPT_HASH_HANDLE* phHash,
-                          PUCHAR pbHashObject, ULONG cbHashObject, PUCHAR pbSecret, ULONG cbSecret,
-                          ULONG dwFlags)
+NTSTATUS BCryptCreateHash(WINPR_ATTR_UNUSED BCRYPT_ALG_HANDLE hAlgorithm,
+                          WINPR_ATTR_UNUSED BCRYPT_HASH_HANDLE* phHash,
+                          WINPR_ATTR_UNUSED PUCHAR pbHashObject,
+                          WINPR_ATTR_UNUSED ULONG cbHashObject, WINPR_ATTR_UNUSED PUCHAR pbSecret,
+                          WINPR_ATTR_UNUSED ULONG cbSecret, WINPR_ATTR_UNUSED ULONG dwFlags)
 {
+	WLog_ERR("TODO", "TODO: implement");
 	return 0;
 }
 
-NTSTATUS BCryptDestroyHash(BCRYPT_HASH_HANDLE hHash)
+NTSTATUS BCryptDestroyHash(WINPR_ATTR_UNUSED BCRYPT_HASH_HANDLE hHash)
 {
+	WLog_ERR("TODO", "TODO: implement");
 	return 0;
 }
 
-NTSTATUS BCryptHashData(BCRYPT_HASH_HANDLE hHash, PUCHAR pbInput, ULONG cbInput, ULONG dwFlags)
+NTSTATUS BCryptHashData(WINPR_ATTR_UNUSED BCRYPT_HASH_HANDLE hHash,
+                        WINPR_ATTR_UNUSED PUCHAR pbInput, WINPR_ATTR_UNUSED ULONG cbInput,
+                        WINPR_ATTR_UNUSED ULONG dwFlags)
 {
+	WLog_ERR("TODO", "TODO: implement");
 	return 0;
 }
 
-NTSTATUS BCryptFinishHash(BCRYPT_HASH_HANDLE hHash, PUCHAR pbOutput, ULONG cbOutput, ULONG dwFlags)
+NTSTATUS BCryptFinishHash(WINPR_ATTR_UNUSED BCRYPT_HASH_HANDLE hHash,
+                          WINPR_ATTR_UNUSED PUCHAR pbOutput, WINPR_ATTR_UNUSED ULONG cbOutput,
+                          WINPR_ATTR_UNUSED ULONG dwFlags)
 {
+	WLog_ERR("TODO", "TODO: implement");
 	return 0;
 }
 
-NTSTATUS BCryptGenRandom(BCRYPT_ALG_HANDLE hAlgorithm, PUCHAR pbBuffer, ULONG cbBuffer,
-                         ULONG dwFlags)
+NTSTATUS BCryptGenRandom(WINPR_ATTR_UNUSED BCRYPT_ALG_HANDLE hAlgorithm,
+                         WINPR_ATTR_UNUSED PUCHAR pbBuffer, WINPR_ATTR_UNUSED ULONG cbBuffer,
+                         WINPR_ATTR_UNUSED ULONG dwFlags)
 {
+	WLog_ERR("TODO", "TODO: implement");
 	return 0;
 }
 
-NTSTATUS BCryptGenerateSymmetricKey(BCRYPT_ALG_HANDLE hAlgorithm, BCRYPT_KEY_HANDLE* phKey,
-                                    PUCHAR pbKeyObject, ULONG cbKeyObject, PUCHAR pbSecret,
-                                    ULONG cbSecret, ULONG dwFlags)
+NTSTATUS BCryptGenerateSymmetricKey(WINPR_ATTR_UNUSED BCRYPT_ALG_HANDLE hAlgorithm,
+                                    WINPR_ATTR_UNUSED BCRYPT_KEY_HANDLE* phKey,
+                                    WINPR_ATTR_UNUSED PUCHAR pbKeyObject,
+                                    WINPR_ATTR_UNUSED ULONG cbKeyObject,
+                                    WINPR_ATTR_UNUSED PUCHAR pbSecret,
+                                    WINPR_ATTR_UNUSED ULONG cbSecret,
+                                    WINPR_ATTR_UNUSED ULONG dwFlags)
 {
+	WLog_ERR("TODO", "TODO: implement");
 	return 0;
 }
 
-NTSTATUS BCryptGenerateKeyPair(BCRYPT_ALG_HANDLE hAlgorithm, BCRYPT_KEY_HANDLE* phKey,
-                               ULONG dwLength, ULONG dwFlags)
+NTSTATUS BCryptGenerateKeyPair(WINPR_ATTR_UNUSED BCRYPT_ALG_HANDLE hAlgorithm,
+                               WINPR_ATTR_UNUSED BCRYPT_KEY_HANDLE* phKey,
+                               WINPR_ATTR_UNUSED ULONG dwLength, WINPR_ATTR_UNUSED ULONG dwFlags)
 {
+	WLog_ERR("TODO", "TODO: implement");
 	return 0;
 }
 
-NTSTATUS BCryptImportKey(BCRYPT_ALG_HANDLE hAlgorithm, BCRYPT_KEY_HANDLE hImportKey,
-                         LPCWSTR pszBlobType, BCRYPT_KEY_HANDLE* phKey, PUCHAR pbKeyObject,
-                         ULONG cbKeyObject, PUCHAR pbInput, ULONG cbInput, ULONG dwFlags)
+NTSTATUS BCryptImportKey(WINPR_ATTR_UNUSED BCRYPT_ALG_HANDLE hAlgorithm,
+                         WINPR_ATTR_UNUSED BCRYPT_KEY_HANDLE hImportKey,
+                         WINPR_ATTR_UNUSED LPCWSTR pszBlobType,
+                         WINPR_ATTR_UNUSED BCRYPT_KEY_HANDLE* phKey,
+                         WINPR_ATTR_UNUSED PUCHAR pbKeyObject, WINPR_ATTR_UNUSED ULONG cbKeyObject,
+                         WINPR_ATTR_UNUSED PUCHAR pbInput, WINPR_ATTR_UNUSED ULONG cbInput,
+                         WINPR_ATTR_UNUSED ULONG dwFlags)
 {
+	WLog_ERR("TODO", "TODO: implement");
 	return 0;
 }
 
-NTSTATUS BCryptDestroyKey(BCRYPT_KEY_HANDLE hKey)
+NTSTATUS BCryptDestroyKey(WINPR_ATTR_UNUSED BCRYPT_KEY_HANDLE hKey)
 {
+	WLog_ERR("TODO", "TODO: implement");
 	return 0;
 }
 
-NTSTATUS BCryptEncrypt(BCRYPT_KEY_HANDLE hKey, PUCHAR pbInput, ULONG cbInput, VOID* pPaddingInfo,
-                       PUCHAR pbIV, ULONG cbIV, PUCHAR pbOutput, ULONG cbOutput, ULONG* pcbResult,
-                       ULONG dwFlags)
+NTSTATUS BCryptEncrypt(WINPR_ATTR_UNUSED BCRYPT_KEY_HANDLE hKey, WINPR_ATTR_UNUSED PUCHAR pbInput,
+                       WINPR_ATTR_UNUSED ULONG cbInput, WINPR_ATTR_UNUSED VOID* pPaddingInfo,
+                       WINPR_ATTR_UNUSED PUCHAR pbIV, WINPR_ATTR_UNUSED ULONG cbIV,
+                       WINPR_ATTR_UNUSED PUCHAR pbOutput, WINPR_ATTR_UNUSED ULONG cbOutput,
+                       WINPR_ATTR_UNUSED ULONG* pcbResult, WINPR_ATTR_UNUSED ULONG dwFlags)
 {
+	WLog_ERR("TODO", "TODO: implement");
 	return 0;
 }
 
-NTSTATUS BCryptDecrypt(BCRYPT_KEY_HANDLE hKey, PUCHAR pbInput, ULONG cbInput, VOID* pPaddingInfo,
-                       PUCHAR pbIV, ULONG cbIV, PUCHAR pbOutput, ULONG cbOutput, ULONG* pcbResult,
-                       ULONG dwFlags)
+NTSTATUS BCryptDecrypt(WINPR_ATTR_UNUSED BCRYPT_KEY_HANDLE hKey, WINPR_ATTR_UNUSED PUCHAR pbInput,
+                       WINPR_ATTR_UNUSED ULONG cbInput, WINPR_ATTR_UNUSED VOID* pPaddingInfo,
+                       WINPR_ATTR_UNUSED PUCHAR pbIV, WINPR_ATTR_UNUSED ULONG cbIV,
+                       WINPR_ATTR_UNUSED PUCHAR pbOutput, WINPR_ATTR_UNUSED ULONG cbOutput,
+                       WINPR_ATTR_UNUSED ULONG* pcbResult, WINPR_ATTR_UNUSED ULONG dwFlags)
 {
+	WLog_ERR("TODO", "TODO: implement");
 	return 0;
 }
 

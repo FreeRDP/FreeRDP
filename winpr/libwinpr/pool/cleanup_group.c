@@ -92,8 +92,9 @@ VOID winpr_SetThreadpoolCallbackCleanupGroup(PTP_CALLBACK_ENVIRON pcbe, PTP_CLEA
 #endif
 }
 
-VOID winpr_CloseThreadpoolCleanupGroupMembers(PTP_CLEANUP_GROUP ptpcg, BOOL fCancelPendingCallbacks,
-                                              PVOID pvCleanupContext)
+VOID winpr_CloseThreadpoolCleanupGroupMembers(WINPR_ATTR_UNUSED PTP_CLEANUP_GROUP ptpcg,
+                                              WINPR_ATTR_UNUSED BOOL fCancelPendingCallbacks,
+                                              WINPR_ATTR_UNUSED PVOID pvCleanupContext)
 {
 #ifdef _WIN32
 	InitOnceExecuteOnce(&init_once_module, init_module, NULL, NULL);

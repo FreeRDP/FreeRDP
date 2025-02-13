@@ -660,7 +660,7 @@ static SECURITY_STATUS parseKeyName(LPCWSTR pszKeyName, CK_SLOT_ID* slotId, CK_B
 
 static SECURITY_STATUS NCryptP11EnumKeys(NCRYPT_PROV_HANDLE hProvider, LPCWSTR pszScope,
                                          NCryptKeyName** ppKeyName, PVOID* ppEnumState,
-                                         DWORD dwFlags)
+                                         WINPR_ATTR_UNUSED DWORD dwFlags)
 {
 	NCryptP11ProviderHandle* provider = (NCryptP11ProviderHandle*)hProvider;
 	P11EnumKeysState* state = (P11EnumKeysState*)*ppEnumState;
@@ -979,7 +979,8 @@ static SECURITY_STATUS check_for_piv_container_name(NCryptP11KeyHandle* key, BYT
 
 static SECURITY_STATUS NCryptP11KeyGetProperties(NCryptP11KeyHandle* keyHandle,
                                                  NCryptKeyGetPropertyEnum property, PBYTE pbOutput,
-                                                 DWORD cbOutput, DWORD* pcbResult, DWORD dwFlags)
+                                                 DWORD cbOutput, DWORD* pcbResult,
+                                                 WINPR_ATTR_UNUSED DWORD dwFlags)
 {
 	SECURITY_STATUS ret = NTE_FAIL;
 	CK_RV rv = 0;
@@ -1202,7 +1203,8 @@ static SECURITY_STATUS NCryptP11GetProperty(NCRYPT_HANDLE hObject, NCryptKeyGetP
 }
 
 static SECURITY_STATUS NCryptP11OpenKey(NCRYPT_PROV_HANDLE hProvider, NCRYPT_KEY_HANDLE* phKey,
-                                        LPCWSTR pszKeyName, DWORD dwLegacyKeySpec, DWORD dwFlags)
+                                        LPCWSTR pszKeyName, WINPR_ATTR_UNUSED DWORD dwLegacyKeySpec,
+                                        WINPR_ATTR_UNUSED DWORD dwFlags)
 {
 	SECURITY_STATUS ret = 0;
 	CK_SLOT_ID slotId = 0;
@@ -1272,8 +1274,8 @@ fail:
 }
 
 SECURITY_STATUS NCryptOpenP11StorageProviderEx(NCRYPT_PROV_HANDLE* phProvider,
-                                               LPCWSTR pszProviderName, DWORD dwFlags,
-                                               LPCSTR* modulePaths)
+                                               WINPR_ATTR_UNUSED LPCWSTR pszProviderName,
+                                               WINPR_ATTR_UNUSED DWORD dwFlags, LPCSTR* modulePaths)
 {
 	SECURITY_STATUS status = ERROR_INVALID_PARAMETER;
 	LPCSTR defaultPaths[] = { "p11-kit-proxy.so", "opensc-pkcs11.so", NULL };

@@ -29,20 +29,23 @@
 
 #if (!defined(_WIN32)) || (defined(_WIN32) && (_WIN32_WINNT < 0x0600))
 
-BOOL winpr_InitOnceBeginInitialize(LPINIT_ONCE lpInitOnce, DWORD dwFlags, PBOOL fPending,
-                                   LPVOID* lpContext)
+BOOL winpr_InitOnceBeginInitialize(WINPR_ATTR_UNUSED LPINIT_ONCE lpInitOnce,
+                                   WINPR_ATTR_UNUSED DWORD dwFlags,
+                                   WINPR_ATTR_UNUSED PBOOL fPending,
+                                   WINPR_ATTR_UNUSED LPVOID* lpContext)
 {
 	WLog_ERR(TAG, "not implemented");
 	return FALSE;
 }
 
-BOOL winpr_InitOnceComplete(LPINIT_ONCE lpInitOnce, DWORD dwFlags, LPVOID lpContext)
+BOOL winpr_InitOnceComplete(WINPR_ATTR_UNUSED LPINIT_ONCE lpInitOnce,
+                            WINPR_ATTR_UNUSED DWORD dwFlags, WINPR_ATTR_UNUSED LPVOID lpContext)
 {
 	WLog_ERR(TAG, "not implemented");
 	return FALSE;
 }
 
-VOID winpr_InitOnceInitialize(PINIT_ONCE InitOnce)
+VOID winpr_InitOnceInitialize(WINPR_ATTR_UNUSED PINIT_ONCE InitOnce)
 {
 	WLog_ERR(TAG, "not implemented");
 }

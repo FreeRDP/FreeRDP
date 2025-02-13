@@ -253,7 +253,7 @@ static BOOL SamReadEntry(WINPR_SAM* sam, WINPR_SAM_ENTRY* entry)
 	return TRUE;
 }
 
-void SamFreeEntry(WINPR_SAM* sam, WINPR_SAM_ENTRY* entry)
+void SamFreeEntry(WINPR_ATTR_UNUSED WINPR_SAM* sam, WINPR_SAM_ENTRY* entry)
 {
 	if (entry)
 	{

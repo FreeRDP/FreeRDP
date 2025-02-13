@@ -305,7 +305,7 @@ static char* reg_load_peek_next_line(Reg* reg)
 	return reg->next_line;
 }
 
-static void reg_insert_key(Reg* reg, RegKey* key, RegKey* subkey)
+static void reg_insert_key(WINPR_ATTR_UNUSED Reg* reg, RegKey* key, RegKey* subkey)
 {
 	char* name = NULL;
 	char* path = NULL;
@@ -430,7 +430,7 @@ static void reg_load(Reg* reg)
 	reg_load_finish(reg);
 }
 
-static void reg_unload_value(Reg* reg, RegVal* value)
+static void reg_unload_value(WINPR_ATTR_UNUSED Reg* reg, RegVal* value)
 {
 	WINPR_ASSERT(reg);
 	WINPR_ASSERT(value);

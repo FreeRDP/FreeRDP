@@ -29,16 +29,16 @@
 
 #ifndef _WIN32
 
-VOID WakeByAddressAll(PVOID Address)
+VOID WakeByAddressAll(WINPR_ATTR_UNUSED PVOID Address)
 {
 }
 
-VOID WakeByAddressSingle(PVOID Address)
+VOID WakeByAddressSingle(WINPR_ATTR_UNUSED PVOID Address)
 {
 }
 
-BOOL WaitOnAddress(VOID volatile* Address, PVOID CompareAddress, size_t AddressSize,
-                   DWORD dwMilliseconds)
+BOOL WaitOnAddress(WINPR_ATTR_UNUSED VOID volatile* Address, WINPR_ATTR_UNUSED PVOID CompareAddress,
+                   WINPR_ATTR_UNUSED size_t AddressSize, WINPR_ATTR_UNUSED DWORD dwMilliseconds)
 {
 	return TRUE;
 }

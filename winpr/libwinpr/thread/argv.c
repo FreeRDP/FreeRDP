@@ -271,8 +271,9 @@ LPSTR* CommandLineToArgvA(LPCSTR lpCmdLine, int* pNumArgs)
 
 #ifndef _WIN32
 
-LPWSTR* CommandLineToArgvW(LPCWSTR lpCmdLine, int* pNumArgs)
+LPWSTR* CommandLineToArgvW(WINPR_ATTR_UNUSED LPCWSTR lpCmdLine, WINPR_ATTR_UNUSED int* pNumArgs)
 {
+	WLog_ERR("TODO", "TODO: Implement");
 	return NULL;
 }
 

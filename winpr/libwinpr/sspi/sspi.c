@@ -157,7 +157,9 @@ BOOL InitializeSspiModule_Native(void)
 }
 #endif
 
-static BOOL CALLBACK InitializeSspiModuleInt(PINIT_ONCE once, PVOID param, PVOID* context)
+static BOOL CALLBACK InitializeSspiModuleInt(WINPR_ATTR_UNUSED PINIT_ONCE once,
+                                             WINPR_ATTR_UNUSED PVOID param,
+                                             WINPR_ATTR_UNUSED PVOID* context)
 {
 	BOOL status = FALSE;
 #if defined(WITH_NATIVE_SSPI)

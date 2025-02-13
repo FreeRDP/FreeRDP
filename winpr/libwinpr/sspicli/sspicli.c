@@ -126,8 +126,9 @@ static HANDLE_OPS ops = { LogonUserIsHandled,
 	                      NULL,
 	                      NULL };
 
-BOOL LogonUserA(LPCSTR lpszUsername, LPCSTR lpszDomain, LPCSTR lpszPassword, DWORD dwLogonType,
-                DWORD dwLogonProvider, PHANDLE phToken)
+BOOL LogonUserA(LPCSTR lpszUsername, LPCSTR lpszDomain, WINPR_ATTR_UNUSED LPCSTR lpszPassword,
+                WINPR_ATTR_UNUSED DWORD dwLogonType, WINPR_ATTR_UNUSED DWORD dwLogonProvider,
+                PHANDLE phToken)
 {
 	if (!lpszUsername)
 		return FALSE;
@@ -182,23 +183,33 @@ fail:
 	return FALSE;
 }
 
-BOOL LogonUserW(LPCWSTR lpszUsername, LPCWSTR lpszDomain, LPCWSTR lpszPassword, DWORD dwLogonType,
-                DWORD dwLogonProvider, PHANDLE phToken)
+BOOL LogonUserW(WINPR_ATTR_UNUSED LPCWSTR lpszUsername, WINPR_ATTR_UNUSED LPCWSTR lpszDomain,
+                WINPR_ATTR_UNUSED LPCWSTR lpszPassword, WINPR_ATTR_UNUSED DWORD dwLogonType,
+                WINPR_ATTR_UNUSED DWORD dwLogonProvider, WINPR_ATTR_UNUSED PHANDLE phToken)
 {
+	WLog_ERR("TODO", "TODO: implement");
 	return TRUE;
 }
 
-BOOL LogonUserExA(LPCSTR lpszUsername, LPCSTR lpszDomain, LPCSTR lpszPassword, DWORD dwLogonType,
-                  DWORD dwLogonProvider, PHANDLE phToken, PSID* ppLogonSid, PVOID* ppProfileBuffer,
-                  LPDWORD pdwProfileLength, PQUOTA_LIMITS pQuotaLimits)
+BOOL LogonUserExA(WINPR_ATTR_UNUSED LPCSTR lpszUsername, WINPR_ATTR_UNUSED LPCSTR lpszDomain,
+                  WINPR_ATTR_UNUSED LPCSTR lpszPassword, WINPR_ATTR_UNUSED DWORD dwLogonType,
+                  WINPR_ATTR_UNUSED DWORD dwLogonProvider, WINPR_ATTR_UNUSED PHANDLE phToken,
+                  WINPR_ATTR_UNUSED PSID* ppLogonSid, WINPR_ATTR_UNUSED PVOID* ppProfileBuffer,
+                  WINPR_ATTR_UNUSED LPDWORD pdwProfileLength,
+                  WINPR_ATTR_UNUSED PQUOTA_LIMITS pQuotaLimits)
 {
+	WLog_ERR("TODO", "TODO: implement");
 	return TRUE;
 }
 
-BOOL LogonUserExW(LPCWSTR lpszUsername, LPCWSTR lpszDomain, LPCWSTR lpszPassword, DWORD dwLogonType,
-                  DWORD dwLogonProvider, PHANDLE phToken, PSID* ppLogonSid, PVOID* ppProfileBuffer,
-                  LPDWORD pdwProfileLength, PQUOTA_LIMITS pQuotaLimits)
+BOOL LogonUserExW(WINPR_ATTR_UNUSED LPCWSTR lpszUsername, WINPR_ATTR_UNUSED LPCWSTR lpszDomain,
+                  WINPR_ATTR_UNUSED LPCWSTR lpszPassword, WINPR_ATTR_UNUSED DWORD dwLogonType,
+                  WINPR_ATTR_UNUSED DWORD dwLogonProvider, WINPR_ATTR_UNUSED PHANDLE phToken,
+                  WINPR_ATTR_UNUSED PSID* ppLogonSid, WINPR_ATTR_UNUSED PVOID* ppProfileBuffer,
+                  WINPR_ATTR_UNUSED LPDWORD pdwProfileLength,
+                  WINPR_ATTR_UNUSED PQUOTA_LIMITS pQuotaLimits)
 {
+	WLog_ERR("TODO", "TODO: implement");
 	return TRUE;
 }
 

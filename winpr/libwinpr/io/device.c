@@ -120,10 +120,11 @@ static char* GetDeviceFileUnixDomainSocketFilePathA(LPCSTR lpName)
  * http://msdn.microsoft.com/en-us/library/windows/hardware/ff548397/
  */
 
-NTSTATUS _IoCreateDeviceEx(PDRIVER_OBJECT_EX DriverObject, ULONG DeviceExtensionSize,
-                           PUNICODE_STRING DeviceName, DEVICE_TYPE DeviceType,
-                           ULONG DeviceCharacteristics, BOOLEAN Exclusive,
-                           PDEVICE_OBJECT_EX* DeviceObject)
+NTSTATUS _IoCreateDeviceEx(WINPR_ATTR_UNUSED PDRIVER_OBJECT_EX DriverObject,
+                           WINPR_ATTR_UNUSED ULONG DeviceExtensionSize, PUNICODE_STRING DeviceName,
+                           WINPR_ATTR_UNUSED DEVICE_TYPE DeviceType,
+                           WINPR_ATTR_UNUSED ULONG DeviceCharacteristics,
+                           WINPR_ATTR_UNUSED BOOLEAN Exclusive, PDEVICE_OBJECT_EX* DeviceObject)
 {
 	int status = 0;
 	char* DeviceBasePath = NULL;

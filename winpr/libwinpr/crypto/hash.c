@@ -631,7 +631,7 @@ BOOL winpr_Digest_Update(WINPR_DIGEST_CTX* ctx, const void* input, size_t ilen)
 	return TRUE;
 }
 
-BOOL winpr_Digest_Final(WINPR_DIGEST_CTX* ctx, void* output, size_t olen)
+BOOL winpr_Digest_Final(WINPR_DIGEST_CTX* ctx, void* output, WINPR_ATTR_UNUSED size_t olen)
 {
 	WINPR_ASSERT(ctx);
 

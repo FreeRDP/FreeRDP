@@ -116,11 +116,12 @@ static HANDLE_OPS ops = {
 	NULL, /* FileGetFileInformationByHandle */
 };
 
-static HANDLE NamedPipeClientCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess,
-                                         DWORD dwShareMode,
-                                         LPSECURITY_ATTRIBUTES lpSecurityAttributes,
-                                         DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes,
-                                         HANDLE hTemplateFile)
+static HANDLE
+NamedPipeClientCreateFileA(LPCSTR lpFileName, WINPR_ATTR_UNUSED DWORD dwDesiredAccess,
+                           WINPR_ATTR_UNUSED DWORD dwShareMode,
+                           WINPR_ATTR_UNUSED LPSECURITY_ATTRIBUTES lpSecurityAttributes,
+                           WINPR_ATTR_UNUSED DWORD dwCreationDisposition,
+                           DWORD dwFlagsAndAttributes, WINPR_ATTR_UNUSED HANDLE hTemplateFile)
 {
 	int status = 0;
 	struct sockaddr_un s = { 0 };

@@ -136,13 +136,13 @@
  * PathCchRemoveBackslash
  */
 
-HRESULT PathCchRemoveBackslashA(PSTR pszPath, size_t cchPath)
+HRESULT PathCchRemoveBackslashA(WINPR_ATTR_UNUSED PSTR pszPath, WINPR_ATTR_UNUSED size_t cchPath)
 {
 	WLog_ERR(TAG, "not implemented");
 	return E_NOTIMPL;
 }
 
-HRESULT PathCchRemoveBackslashW(PWSTR pszPath, size_t cchPath)
+HRESULT PathCchRemoveBackslashW(WINPR_ATTR_UNUSED PWSTR pszPath, WINPR_ATTR_UNUSED size_t cchPath)
 {
 	WLog_ERR(TAG, "not implemented");
 	return E_NOTIMPL;
@@ -206,15 +206,17 @@ HRESULT PathCchRemoveBackslashW(PWSTR pszPath, size_t cchPath)
 #undef CUR_PATH_SEPARATOR_CHR
 #undef PATH_CCH_ADD_SEPARATOR_EX
 
-HRESULT PathCchRemoveBackslashExA(PSTR pszPath, size_t cchPath, PSTR* ppszEnd,
-                                  size_t* pcchRemaining)
+HRESULT PathCchRemoveBackslashExA(WINPR_ATTR_UNUSED PSTR pszPath, WINPR_ATTR_UNUSED size_t cchPath,
+                                  WINPR_ATTR_UNUSED PSTR* ppszEnd,
+                                  WINPR_ATTR_UNUSED size_t* pcchRemaining)
 {
 	WLog_ERR(TAG, "not implemented");
 	return E_NOTIMPL;
 }
 
-HRESULT PathCchRemoveBackslashExW(PWSTR pszPath, size_t cchPath, PWSTR* ppszEnd,
-                                  size_t* pcchRemaining)
+HRESULT PathCchRemoveBackslashExW(WINPR_ATTR_UNUSED PWSTR pszPath, WINPR_ATTR_UNUSED size_t cchPath,
+                                  WINPR_ATTR_UNUSED PWSTR* ppszEnd,
+                                  WINPR_ATTR_UNUSED size_t* pcchRemaining)
 {
 	WLog_ERR(TAG, "not implemented");
 	return E_NOTIMPL;
@@ -352,13 +354,15 @@ HRESULT PathCchRemoveBackslashExW(PWSTR pszPath, size_t cchPath, PWSTR* ppszEnd,
  * PathCchAppendEx
  */
 
-HRESULT PathCchAppendExA(PSTR pszPath, size_t cchPath, PCSTR pszMore, unsigned long dwFlags)
+HRESULT PathCchAppendExA(WINPR_ATTR_UNUSED PSTR pszPath, WINPR_ATTR_UNUSED size_t cchPath,
+                         WINPR_ATTR_UNUSED PCSTR pszMore, WINPR_ATTR_UNUSED unsigned long dwFlags)
 {
 	WLog_ERR(TAG, "not implemented");
 	return E_NOTIMPL;
 }
 
-HRESULT PathCchAppendExW(PWSTR pszPath, size_t cchPath, PCWSTR pszMore, unsigned long dwFlags)
+HRESULT PathCchAppendExW(WINPR_ATTR_UNUSED PWSTR pszPath, WINPR_ATTR_UNUSED size_t cchPath,
+                         WINPR_ATTR_UNUSED PCWSTR pszMore, WINPR_ATTR_UNUSED unsigned long dwFlags)
 {
 	WLog_ERR(TAG, "not implemented");
 	return E_NOTIMPL;
@@ -368,13 +372,16 @@ HRESULT PathCchAppendExW(PWSTR pszPath, size_t cchPath, PCWSTR pszMore, unsigned
  * PathCchCanonicalize
  */
 
-HRESULT PathCchCanonicalizeA(PSTR pszPathOut, size_t cchPathOut, PCSTR pszPathIn)
+HRESULT PathCchCanonicalizeA(WINPR_ATTR_UNUSED PSTR pszPathOut, WINPR_ATTR_UNUSED size_t cchPathOut,
+                             WINPR_ATTR_UNUSED PCSTR pszPathIn)
 {
 	WLog_ERR(TAG, "not implemented");
 	return E_NOTIMPL;
 }
 
-HRESULT PathCchCanonicalizeW(PWSTR pszPathOut, size_t cchPathOut, PCWSTR pszPathIn)
+HRESULT PathCchCanonicalizeW(WINPR_ATTR_UNUSED PWSTR pszPathOut,
+                             WINPR_ATTR_UNUSED size_t cchPathOut,
+                             WINPR_ATTR_UNUSED PCWSTR pszPathIn)
 {
 	WLog_ERR(TAG, "not implemented");
 	return E_NOTIMPL;
@@ -384,15 +391,19 @@ HRESULT PathCchCanonicalizeW(PWSTR pszPathOut, size_t cchPathOut, PCWSTR pszPath
  * PathCchCanonicalizeEx
  */
 
-HRESULT PathCchCanonicalizeExA(PSTR pszPathOut, size_t cchPathOut, PCSTR pszPathIn,
-                               unsigned long dwFlags)
+HRESULT PathCchCanonicalizeExA(WINPR_ATTR_UNUSED PSTR pszPathOut,
+                               WINPR_ATTR_UNUSED size_t cchPathOut,
+                               WINPR_ATTR_UNUSED PCSTR pszPathIn,
+                               WINPR_ATTR_UNUSED unsigned long dwFlags)
 {
 	WLog_ERR(TAG, "not implemented");
 	return E_NOTIMPL;
 }
 
-HRESULT PathCchCanonicalizeExW(PWSTR pszPathOut, size_t cchPathOut, PCWSTR pszPathIn,
-                               unsigned long dwFlags)
+HRESULT PathCchCanonicalizeExW(WINPR_ATTR_UNUSED PWSTR pszPathOut,
+                               WINPR_ATTR_UNUSED size_t cchPathOut,
+                               WINPR_ATTR_UNUSED PCWSTR pszPathIn,
+                               WINPR_ATTR_UNUSED unsigned long dwFlags)
 {
 	WLog_ERR(TAG, "not implemented");
 	return E_NOTIMPL;
@@ -402,13 +413,17 @@ HRESULT PathCchCanonicalizeExW(PWSTR pszPathOut, size_t cchPathOut, PCWSTR pszPa
  * PathAllocCanonicalize
  */
 
-HRESULT PathAllocCanonicalizeA(PCSTR pszPathIn, unsigned long dwFlags, PSTR* ppszPathOut)
+HRESULT PathAllocCanonicalizeA(WINPR_ATTR_UNUSED PCSTR pszPathIn,
+                               WINPR_ATTR_UNUSED unsigned long dwFlags,
+                               WINPR_ATTR_UNUSED PSTR* ppszPathOut)
 {
 	WLog_ERR(TAG, "not implemented");
 	return E_NOTIMPL;
 }
 
-HRESULT PathAllocCanonicalizeW(PCWSTR pszPathIn, unsigned long dwFlags, PWSTR* ppszPathOut)
+HRESULT PathAllocCanonicalizeW(WINPR_ATTR_UNUSED PCWSTR pszPathIn,
+                               WINPR_ATTR_UNUSED unsigned long dwFlags,
+                               WINPR_ATTR_UNUSED PWSTR* ppszPathOut)
 {
 	WLog_ERR(TAG, "not implemented");
 	return E_NOTIMPL;
@@ -418,13 +433,15 @@ HRESULT PathAllocCanonicalizeW(PCWSTR pszPathIn, unsigned long dwFlags, PWSTR* p
  * PathCchCombine
  */
 
-HRESULT PathCchCombineA(PSTR pszPathOut, size_t cchPathOut, PCSTR pszPathIn, PCSTR pszMore)
+HRESULT PathCchCombineA(WINPR_ATTR_UNUSED PSTR pszPathOut, WINPR_ATTR_UNUSED size_t cchPathOut,
+                        WINPR_ATTR_UNUSED PCSTR pszPathIn, WINPR_ATTR_UNUSED PCSTR pszMore)
 {
 	WLog_ERR(TAG, "not implemented");
 	return E_NOTIMPL;
 }
 
-HRESULT PathCchCombineW(PWSTR pszPathOut, size_t cchPathOut, PCWSTR pszPathIn, PCWSTR pszMore)
+HRESULT PathCchCombineW(WINPR_ATTR_UNUSED PWSTR pszPathOut, WINPR_ATTR_UNUSED size_t cchPathOut,
+                        WINPR_ATTR_UNUSED PCWSTR pszPathIn, WINPR_ATTR_UNUSED PCWSTR pszMore)
 {
 	WLog_ERR(TAG, "not implemented");
 	return E_NOTIMPL;
@@ -434,15 +451,17 @@ HRESULT PathCchCombineW(PWSTR pszPathOut, size_t cchPathOut, PCWSTR pszPathIn, P
  * PathCchCombineEx
  */
 
-HRESULT PathCchCombineExA(PSTR pszPathOut, size_t cchPathOut, PCSTR pszPathIn, PCSTR pszMore,
-                          unsigned long dwFlags)
+HRESULT PathCchCombineExA(WINPR_ATTR_UNUSED PSTR pszPathOut, WINPR_ATTR_UNUSED size_t cchPathOut,
+                          WINPR_ATTR_UNUSED PCSTR pszPathIn, WINPR_ATTR_UNUSED PCSTR pszMore,
+                          WINPR_ATTR_UNUSED unsigned long dwFlags)
 {
 	WLog_ERR(TAG, "not implemented");
 	return E_NOTIMPL;
 }
 
-HRESULT PathCchCombineExW(PWSTR pszPathOut, size_t cchPathOut, PCWSTR pszPathIn, PCWSTR pszMore,
-                          unsigned long dwFlags)
+HRESULT PathCchCombineExW(WINPR_ATTR_UNUSED PWSTR pszPathOut, WINPR_ATTR_UNUSED size_t cchPathOut,
+                          WINPR_ATTR_UNUSED PCWSTR pszPathIn, WINPR_ATTR_UNUSED PCWSTR pszMore,
+                          WINPR_ATTR_UNUSED unsigned long dwFlags)
 {
 	WLog_ERR(TAG, "not implemented");
 	return E_NOTIMPL;
@@ -564,7 +583,8 @@ HRESULT PathCchFindExtensionA(PCSTR pszPath, size_t cchPath, PCSTR* ppszExt)
 	return S_OK;
 }
 
-HRESULT PathCchFindExtensionW(PCWSTR pszPath, size_t cchPath, PCWSTR* ppszExt)
+HRESULT PathCchFindExtensionW(WINPR_ATTR_UNUSED PCWSTR pszPath, WINPR_ATTR_UNUSED size_t cchPath,
+                              WINPR_ATTR_UNUSED PCWSTR* ppszExt)
 {
 	WLog_ERR(TAG, "not implemented");
 	return E_NOTIMPL;
@@ -574,13 +594,15 @@ HRESULT PathCchFindExtensionW(PCWSTR pszPath, size_t cchPath, PCWSTR* ppszExt)
  * PathCchRenameExtension
  */
 
-HRESULT PathCchRenameExtensionA(PSTR pszPath, size_t cchPath, PCSTR pszExt)
+HRESULT PathCchRenameExtensionA(WINPR_ATTR_UNUSED PSTR pszPath, WINPR_ATTR_UNUSED size_t cchPath,
+                                WINPR_ATTR_UNUSED PCSTR pszExt)
 {
 	WLog_ERR(TAG, "not implemented");
 	return E_NOTIMPL;
 }
 
-HRESULT PathCchRenameExtensionW(PWSTR pszPath, size_t cchPath, PCWSTR pszExt)
+HRESULT PathCchRenameExtensionW(WINPR_ATTR_UNUSED PWSTR pszPath, WINPR_ATTR_UNUSED size_t cchPath,
+                                WINPR_ATTR_UNUSED PCWSTR pszExt)
 {
 	WLog_ERR(TAG, "not implemented");
 	return E_NOTIMPL;
@@ -590,13 +612,13 @@ HRESULT PathCchRenameExtensionW(PWSTR pszPath, size_t cchPath, PCWSTR pszExt)
  * PathCchRemoveExtension
  */
 
-HRESULT PathCchRemoveExtensionA(PSTR pszPath, size_t cchPath)
+HRESULT PathCchRemoveExtensionA(WINPR_ATTR_UNUSED PSTR pszPath, WINPR_ATTR_UNUSED size_t cchPath)
 {
 	WLog_ERR(TAG, "not implemented");
 	return E_NOTIMPL;
 }
 
-HRESULT PathCchRemoveExtensionW(PWSTR pszPath, size_t cchPath)
+HRESULT PathCchRemoveExtensionW(WINPR_ATTR_UNUSED PWSTR pszPath, WINPR_ATTR_UNUSED size_t cchPath)
 {
 	WLog_ERR(TAG, "not implemented");
 	return E_NOTIMPL;
@@ -606,13 +628,13 @@ HRESULT PathCchRemoveExtensionW(PWSTR pszPath, size_t cchPath)
  * PathCchIsRoot
  */
 
-BOOL PathCchIsRootA(PCSTR pszPath)
+BOOL PathCchIsRootA(WINPR_ATTR_UNUSED PCSTR pszPath)
 {
 	WLog_ERR(TAG, "not implemented");
 	return FALSE;
 }
 
-BOOL PathCchIsRootW(PCWSTR pszPath)
+BOOL PathCchIsRootW(WINPR_ATTR_UNUSED PCWSTR pszPath)
 {
 	WLog_ERR(TAG, "not implemented");
 	return FALSE;
@@ -654,13 +676,13 @@ BOOL PathIsUNCExW(PCWSTR pszPath, PCWSTR* ppszServer)
  * PathCchSkipRoot
  */
 
-HRESULT PathCchSkipRootA(PCSTR pszPath, PCSTR* ppszRootEnd)
+HRESULT PathCchSkipRootA(WINPR_ATTR_UNUSED PCSTR pszPath, WINPR_ATTR_UNUSED PCSTR* ppszRootEnd)
 {
 	WLog_ERR(TAG, "not implemented");
 	return E_NOTIMPL;
 }
 
-HRESULT PathCchSkipRootW(PCWSTR pszPath, PCWSTR* ppszRootEnd)
+HRESULT PathCchSkipRootW(WINPR_ATTR_UNUSED PCWSTR pszPath, WINPR_ATTR_UNUSED PCWSTR* ppszRootEnd)
 {
 	WLog_ERR(TAG, "not implemented");
 	return E_NOTIMPL;
@@ -670,13 +692,13 @@ HRESULT PathCchSkipRootW(PCWSTR pszPath, PCWSTR* ppszRootEnd)
  * PathCchStripToRoot
  */
 
-HRESULT PathCchStripToRootA(PSTR pszPath, size_t cchPath)
+HRESULT PathCchStripToRootA(WINPR_ATTR_UNUSED PSTR pszPath, WINPR_ATTR_UNUSED size_t cchPath)
 {
 	WLog_ERR(TAG, "not implemented");
 	return E_NOTIMPL;
 }
 
-HRESULT PathCchStripToRootW(PWSTR pszPath, size_t cchPath)
+HRESULT PathCchStripToRootW(WINPR_ATTR_UNUSED PWSTR pszPath, WINPR_ATTR_UNUSED size_t cchPath)
 {
 	WLog_ERR(TAG, "not implemented");
 	return E_NOTIMPL;
@@ -764,13 +786,13 @@ HRESULT PathCchStripPrefixW(PWSTR pszPath, size_t cchPath)
  * PathCchRemoveFileSpec
  */
 
-HRESULT PathCchRemoveFileSpecA(PSTR pszPath, size_t cchPath)
+HRESULT PathCchRemoveFileSpecA(WINPR_ATTR_UNUSED PSTR pszPath, WINPR_ATTR_UNUSED size_t cchPath)
 {
 	WLog_ERR(TAG, "not implemented");
 	return E_NOTIMPL;
 }
 
-HRESULT PathCchRemoveFileSpecW(PWSTR pszPath, size_t cchPath)
+HRESULT PathCchRemoveFileSpecW(WINPR_ATTR_UNUSED PWSTR pszPath, WINPR_ATTR_UNUSED size_t cchPath)
 {
 	WLog_ERR(TAG, "not implemented");
 	return E_NOTIMPL;

@@ -221,7 +221,8 @@ fail:
 	return newMemblock;
 }
 
-size_t winpr_aligned_msize(void* memblock, size_t alignment, size_t offset)
+size_t winpr_aligned_msize(void* memblock, WINPR_ATTR_UNUSED size_t alignment,
+                           WINPR_ATTR_UNUSED size_t offset)
 {
 	WINPR_ALIGNED_MEM* pMem = NULL;
 

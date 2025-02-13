@@ -21,29 +21,38 @@
 
 #include <winpr/crt.h>
 #include <winpr/pool.h>
+#include <winpr/wlog.h>
 
 #ifdef WINPR_THREAD_POOL
 
-PTP_IO winpr_CreateThreadpoolIo(HANDLE fl, PTP_WIN32_IO_CALLBACK pfnio, PVOID pv,
-                                PTP_CALLBACK_ENVIRON pcbe)
+PTP_IO winpr_CreateThreadpoolIo(WINPR_ATTR_UNUSED HANDLE fl,
+                                WINPR_ATTR_UNUSED PTP_WIN32_IO_CALLBACK pfnio,
+                                WINPR_ATTR_UNUSED PVOID pv,
+                                WINPR_ATTR_UNUSED PTP_CALLBACK_ENVIRON pcbe)
 {
+	WLog_ERR("TODO", "TODO: Implement");
 	return NULL;
 }
 
-VOID winpr_CloseThreadpoolIo(PTP_IO pio)
+VOID winpr_CloseThreadpoolIo(WINPR_ATTR_UNUSED PTP_IO pio)
 {
+	WLog_ERR("TODO", "TODO: Implement");
 }
 
-VOID winpr_StartThreadpoolIo(PTP_IO pio)
+VOID winpr_StartThreadpoolIo(WINPR_ATTR_UNUSED PTP_IO pio)
 {
+	WLog_ERR("TODO", "TODO: Implement");
 }
 
-VOID winpr_CancelThreadpoolIo(PTP_IO pio)
+VOID winpr_CancelThreadpoolIo(WINPR_ATTR_UNUSED PTP_IO pio)
 {
+	WLog_ERR("TODO", "TODO: Implement");
 }
 
-VOID winpr_WaitForThreadpoolIoCallbacks(PTP_IO pio, BOOL fCancelPendingCallbacks)
+VOID winpr_WaitForThreadpoolIoCallbacks(WINPR_ATTR_UNUSED PTP_IO pio,
+                                        WINPR_ATTR_UNUSED BOOL fCancelPendingCallbacks)
 {
+	WLog_ERR("TODO", "TODO: Implement");
 }
 
 #endif

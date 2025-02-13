@@ -20,6 +20,7 @@
 #include <winpr/config.h>
 
 #include <winpr/crt.h>
+#include <winpr/wlog.h>
 
 #include <winpr/memory.h>
 
@@ -76,9 +77,13 @@
 
 #include "memory.h"
 
-HANDLE CreateFileMappingA(HANDLE hFile, LPSECURITY_ATTRIBUTES lpAttributes, DWORD flProtect,
-                          DWORD dwMaximumSizeHigh, DWORD dwMaximumSizeLow, LPCSTR lpName)
+HANDLE CreateFileMappingA(WINPR_ATTR_UNUSED HANDLE hFile,
+                          WINPR_ATTR_UNUSED LPSECURITY_ATTRIBUTES lpAttributes,
+                          WINPR_ATTR_UNUSED DWORD flProtect,
+                          WINPR_ATTR_UNUSED DWORD dwMaximumSizeHigh,
+                          WINPR_ATTR_UNUSED DWORD dwMaximumSizeLow, WINPR_ATTR_UNUSED LPCSTR lpName)
 {
+	WLog_ERR("TODO", "TODO: Implement");
 	if (hFile != INVALID_HANDLE_VALUE)
 	{
 		return NULL; /* not yet implemented */
@@ -87,41 +92,62 @@ HANDLE CreateFileMappingA(HANDLE hFile, LPSECURITY_ATTRIBUTES lpAttributes, DWOR
 	return NULL;
 }
 
-HANDLE CreateFileMappingW(HANDLE hFile, LPSECURITY_ATTRIBUTES lpAttributes, DWORD flProtect,
-                          DWORD dwMaximumSizeHigh, DWORD dwMaximumSizeLow, LPCWSTR lpName)
+HANDLE CreateFileMappingW(WINPR_ATTR_UNUSED HANDLE hFile,
+                          WINPR_ATTR_UNUSED LPSECURITY_ATTRIBUTES lpAttributes,
+                          WINPR_ATTR_UNUSED DWORD flProtect,
+                          WINPR_ATTR_UNUSED DWORD dwMaximumSizeHigh,
+                          WINPR_ATTR_UNUSED DWORD dwMaximumSizeLow,
+                          WINPR_ATTR_UNUSED LPCWSTR lpName)
 {
+	WLog_ERR("TODO", "TODO: Implement");
 	return NULL;
 }
 
-HANDLE OpenFileMappingA(DWORD dwDesiredAccess, BOOL bInheritHandle, LPCSTR lpName)
+HANDLE OpenFileMappingA(WINPR_ATTR_UNUSED DWORD dwDesiredAccess,
+                        WINPR_ATTR_UNUSED BOOL bInheritHandle, WINPR_ATTR_UNUSED LPCSTR lpName)
 {
+	WLog_ERR("TODO", "TODO: Implement");
 	return NULL;
 }
 
-HANDLE OpenFileMappingW(DWORD dwDesiredAccess, BOOL bInheritHandle, LPCWSTR lpName)
+HANDLE OpenFileMappingW(WINPR_ATTR_UNUSED DWORD dwDesiredAccess,
+                        WINPR_ATTR_UNUSED BOOL bInheritHandle, WINPR_ATTR_UNUSED LPCWSTR lpName)
 {
+	WLog_ERR("TODO", "TODO: Implement");
 	return NULL;
 }
 
-LPVOID MapViewOfFile(HANDLE hFileMappingObject, DWORD dwDesiredAccess, DWORD dwFileOffsetHigh,
-                     DWORD dwFileOffsetLow, size_t dwNumberOfBytesToMap)
+LPVOID MapViewOfFile(WINPR_ATTR_UNUSED HANDLE hFileMappingObject,
+                     WINPR_ATTR_UNUSED DWORD dwDesiredAccess,
+                     WINPR_ATTR_UNUSED DWORD dwFileOffsetHigh,
+                     WINPR_ATTR_UNUSED DWORD dwFileOffsetLow,
+                     WINPR_ATTR_UNUSED size_t dwNumberOfBytesToMap)
 {
+	WLog_ERR("TODO", "TODO: Implement");
 	return NULL;
 }
 
-LPVOID MapViewOfFileEx(HANDLE hFileMappingObject, DWORD dwDesiredAccess, DWORD dwFileOffsetHigh,
-                       DWORD dwFileOffsetLow, size_t dwNumberOfBytesToMap, LPVOID lpBaseAddress)
+LPVOID MapViewOfFileEx(WINPR_ATTR_UNUSED HANDLE hFileMappingObject,
+                       WINPR_ATTR_UNUSED DWORD dwDesiredAccess,
+                       WINPR_ATTR_UNUSED DWORD dwFileOffsetHigh,
+                       WINPR_ATTR_UNUSED DWORD dwFileOffsetLow,
+                       WINPR_ATTR_UNUSED size_t dwNumberOfBytesToMap,
+                       WINPR_ATTR_UNUSED LPVOID lpBaseAddress)
 {
+	WLog_ERR("TODO", "TODO: Implement");
 	return NULL;
 }
 
-BOOL FlushViewOfFile(LPCVOID lpBaseAddress, size_t dwNumberOfBytesToFlush)
+BOOL FlushViewOfFile(WINPR_ATTR_UNUSED LPCVOID lpBaseAddress,
+                     WINPR_ATTR_UNUSED size_t dwNumberOfBytesToFlush)
 {
+	WLog_ERR("TODO", "TODO: Implement");
 	return TRUE;
 }
 
-BOOL UnmapViewOfFile(LPCVOID lpBaseAddress)
+BOOL UnmapViewOfFile(WINPR_ATTR_UNUSED LPCVOID lpBaseAddress)
 {
+	WLog_ERR("TODO", "TODO: Implement");
 	return TRUE;
 }
 

@@ -116,7 +116,7 @@ static void WLog_SyslogAppender_Free(wLogAppender* appender)
 	free(appender);
 }
 
-wLogAppender* WLog_SyslogAppender_New(wLog* log)
+wLogAppender* WLog_SyslogAppender_New(WINPR_ATTR_UNUSED wLog* log)
 {
 	wLogSyslogAppender* appender = NULL;
 

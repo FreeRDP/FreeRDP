@@ -21,24 +21,33 @@
 
 #include <winpr/crt.h>
 #include <winpr/pool.h>
+#include <winpr/wlog.h>
 
 #ifdef WINPR_THREAD_POOL
 
-PTP_WAIT winpr_CreateThreadpoolWait(PTP_WAIT_CALLBACK pfnwa, PVOID pv, PTP_CALLBACK_ENVIRON pcbe)
+PTP_WAIT winpr_CreateThreadpoolWait(WINPR_ATTR_UNUSED PTP_WAIT_CALLBACK pfnwa,
+                                    WINPR_ATTR_UNUSED PVOID pv,
+                                    WINPR_ATTR_UNUSED PTP_CALLBACK_ENVIRON pcbe)
 {
+	WLog_ERR("TODO", "TODO: Implement");
 	return NULL;
 }
 
-VOID winpr_CloseThreadpoolWait(PTP_WAIT pwa)
+VOID winpr_CloseThreadpoolWait(WINPR_ATTR_UNUSED PTP_WAIT pwa)
 {
+	WLog_ERR("TODO", "TODO: Implement");
 }
 
-VOID winpr_SetThreadpoolWait(PTP_WAIT pwa, HANDLE h, PFILETIME pftTimeout)
+VOID winpr_SetThreadpoolWait(WINPR_ATTR_UNUSED PTP_WAIT pwa, WINPR_ATTR_UNUSED HANDLE h,
+                             WINPR_ATTR_UNUSED PFILETIME pftTimeout)
 {
+	WLog_ERR("TODO", "TODO: Implement");
 }
 
-VOID winpr_WaitForThreadpoolWaitCallbacks(PTP_WAIT pwa, BOOL fCancelPendingCallbacks)
+VOID winpr_WaitForThreadpoolWaitCallbacks(WINPR_ATTR_UNUSED PTP_WAIT pwa,
+                                          WINPR_ATTR_UNUSED BOOL fCancelPendingCallbacks)
 {
+	WLog_ERR("TODO", "TODO: Implement");
 }
 
 #endif

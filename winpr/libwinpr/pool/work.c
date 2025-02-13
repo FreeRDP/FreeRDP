@@ -155,8 +155,9 @@ VOID winpr_SubmitThreadpoolWork(PTP_WORK pwk)
 	// NOLINTNEXTLINE(clang-analyzer-unix.Malloc): Queue_Enqueue takes ownership of callbackInstance
 }
 
-BOOL winpr_TrySubmitThreadpoolCallback(PTP_SIMPLE_CALLBACK pfns, PVOID pv,
-                                       PTP_CALLBACK_ENVIRON pcbe)
+BOOL winpr_TrySubmitThreadpoolCallback(WINPR_ATTR_UNUSED PTP_SIMPLE_CALLBACK pfns,
+                                       WINPR_ATTR_UNUSED PVOID pv,
+                                       WINPR_ATTR_UNUSED PTP_CALLBACK_ENVIRON pcbe)
 {
 #ifdef _WIN32
 	InitOnceExecuteOnce(&init_once_module, init_module, NULL, NULL);
@@ -169,7 +170,8 @@ BOOL winpr_TrySubmitThreadpoolCallback(PTP_SIMPLE_CALLBACK pfns, PVOID pv,
 	return FALSE;
 }
 
-VOID winpr_WaitForThreadpoolWorkCallbacks(PTP_WORK pwk, BOOL fCancelPendingCallbacks)
+VOID winpr_WaitForThreadpoolWorkCallbacks(PTP_WORK pwk,
+                                          WINPR_ATTR_UNUSED BOOL fCancelPendingCallbacks)
 {
 	HANDLE event = NULL;
 	PTP_POOL pool = NULL;

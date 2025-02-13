@@ -83,7 +83,7 @@
 
 #endif
 
-DLL_DIRECTORY_COOKIE AddDllDirectory(PCWSTR NewDirectory)
+DLL_DIRECTORY_COOKIE AddDllDirectory(WINPR_ATTR_UNUSED PCWSTR NewDirectory)
 {
 	/* TODO: Implement */
 	WLog_ERR(TAG, "not implemented");
@@ -91,7 +91,7 @@ DLL_DIRECTORY_COOKIE AddDllDirectory(PCWSTR NewDirectory)
 	return NULL;
 }
 
-BOOL RemoveDllDirectory(DLL_DIRECTORY_COOKIE Cookie)
+BOOL RemoveDllDirectory(WINPR_ATTR_UNUSED DLL_DIRECTORY_COOKIE Cookie)
 {
 	/* TODO: Implement */
 	WLog_ERR(TAG, "not implemented");
@@ -99,7 +99,7 @@ BOOL RemoveDllDirectory(DLL_DIRECTORY_COOKIE Cookie)
 	return FALSE;
 }
 
-BOOL SetDefaultDllDirectories(DWORD DirectoryFlags)
+BOOL SetDefaultDllDirectories(WINPR_ATTR_UNUSED DWORD DirectoryFlags)
 {
 	/* TODO: Implement */
 	WLog_ERR(TAG, "not implemented");
@@ -210,7 +210,7 @@ BOOL FreeLibrary(HMODULE hLibModule)
 	return TRUE;
 }
 
-HMODULE GetModuleHandleA(LPCSTR lpModuleName)
+HMODULE GetModuleHandleA(WINPR_ATTR_UNUSED LPCSTR lpModuleName)
 {
 	/* TODO: Implement */
 	WLog_ERR(TAG, "not implemented");
@@ -218,7 +218,7 @@ HMODULE GetModuleHandleA(LPCSTR lpModuleName)
 	return NULL;
 }
 
-HMODULE GetModuleHandleW(LPCWSTR lpModuleName)
+HMODULE GetModuleHandleW(WINPR_ATTR_UNUSED LPCWSTR lpModuleName)
 {
 	/* TODO: Implement */
 	WLog_ERR(TAG, "not implemented");

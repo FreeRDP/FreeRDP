@@ -26,7 +26,7 @@
 
 #ifndef _WIN32
 
-errno_t _itoa_s(int value, char* buffer, size_t sizeInCharacters, int radix)
+errno_t _itoa_s(int value, char* buffer, size_t sizeInCharacters, WINPR_ATTR_UNUSED int radix)
 {
 	int length = sprintf_s(NULL, 0, "%d", value);
 

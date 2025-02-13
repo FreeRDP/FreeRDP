@@ -448,7 +448,7 @@ static BOOL ntlm_write_negotiate_flags(wStream* s, UINT32 flags, const char* nam
 }
 
 static BOOL ntlm_read_message_integrity_check(wStream* s, size_t* offset, BYTE* data, size_t size,
-                                              const char* name)
+                                              WINPR_ATTR_UNUSED const char* name)
 {
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(offset);
@@ -466,7 +466,7 @@ static BOOL ntlm_read_message_integrity_check(wStream* s, size_t* offset, BYTE* 
 }
 
 static BOOL ntlm_write_message_integrity_check(wStream* s, size_t offset, const BYTE* data,
-                                               size_t size, const char* name)
+                                               size_t size, WINPR_ATTR_UNUSED const char* name)
 {
 	size_t pos = 0;
 

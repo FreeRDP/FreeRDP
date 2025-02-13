@@ -99,7 +99,8 @@ SECURITY_STATUS winpr_NCryptDefault_dtor(NCRYPT_HANDLE handle)
 }
 
 SECURITY_STATUS NCryptEnumStorageProviders(DWORD* wProviderCount,
-                                           NCryptProviderName** ppProviderList, DWORD dwFlags)
+                                           NCryptProviderName** ppProviderList,
+                                           WINPR_ATTR_UNUSED DWORD dwFlags)
 {
 	NCryptProviderName* ret = NULL;
 	size_t stringAllocSize = 0;

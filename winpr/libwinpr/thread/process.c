@@ -24,6 +24,7 @@
 #include "../handle/nonehandle.h"
 
 #include <winpr/thread.h>
+#include <winpr/wlog.h>
 
 /**
  * CreateProcessA
@@ -150,11 +151,13 @@ static char* FindApplicationPath(char* application)
 static HANDLE CreateProcessHandle(pid_t pid);
 static BOOL ProcessHandleCloseHandle(HANDLE handle);
 
-static BOOL CreateProcessExA(HANDLE hToken, DWORD dwLogonFlags, LPCSTR lpApplicationName,
-                             LPSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes,
-                             LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles,
-                             DWORD dwCreationFlags, LPVOID lpEnvironment, LPCSTR lpCurrentDirectory,
-                             LPSTARTUPINFOA lpStartupInfo,
+static BOOL CreateProcessExA(HANDLE hToken, WINPR_ATTR_UNUSED DWORD dwLogonFlags,
+                             LPCSTR lpApplicationName, WINPR_ATTR_UNUSED LPSTR lpCommandLine,
+                             WINPR_ATTR_UNUSED LPSECURITY_ATTRIBUTES lpProcessAttributes,
+                             WINPR_ATTR_UNUSED LPSECURITY_ATTRIBUTES lpThreadAttributes,
+                             WINPR_ATTR_UNUSED BOOL bInheritHandles,
+                             WINPR_ATTR_UNUSED DWORD dwCreationFlags, LPVOID lpEnvironment,
+                             LPCSTR lpCurrentDirectory, LPSTARTUPINFOA lpStartupInfo,
                              LPPROCESS_INFORMATION lpProcessInformation)
 {
 	pid_t pid = 0;
@@ -377,12 +380,17 @@ BOOL CreateProcessA(LPCSTR lpApplicationName, LPSTR lpCommandLine,
 	                        lpCurrentDirectory, lpStartupInfo, lpProcessInformation);
 }
 
-BOOL CreateProcessW(LPCWSTR lpApplicationName, LPWSTR lpCommandLine,
-                    LPSECURITY_ATTRIBUTES lpProcessAttributes,
-                    LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles,
-                    DWORD dwCreationFlags, LPVOID lpEnvironment, LPCWSTR lpCurrentDirectory,
-                    LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation)
+BOOL CreateProcessW(WINPR_ATTR_UNUSED LPCWSTR lpApplicationName,
+                    WINPR_ATTR_UNUSED LPWSTR lpCommandLine,
+                    WINPR_ATTR_UNUSED LPSECURITY_ATTRIBUTES lpProcessAttributes,
+                    WINPR_ATTR_UNUSED LPSECURITY_ATTRIBUTES lpThreadAttributes,
+                    WINPR_ATTR_UNUSED BOOL bInheritHandles, WINPR_ATTR_UNUSED DWORD dwCreationFlags,
+                    WINPR_ATTR_UNUSED LPVOID lpEnvironment,
+                    WINPR_ATTR_UNUSED LPCWSTR lpCurrentDirectory,
+                    WINPR_ATTR_UNUSED LPSTARTUPINFOW lpStartupInfo,
+                    WINPR_ATTR_UNUSED LPPROCESS_INFORMATION lpProcessInformation)
 {
+	WLog_ERR("TODO", "TODO: implement");
 	return FALSE;
 }
 
@@ -397,36 +405,50 @@ BOOL CreateProcessAsUserA(HANDLE hToken, LPCSTR lpApplicationName, LPSTR lpComma
 	                        lpCurrentDirectory, lpStartupInfo, lpProcessInformation);
 }
 
-BOOL CreateProcessAsUserW(HANDLE hToken, LPCWSTR lpApplicationName, LPWSTR lpCommandLine,
-                          LPSECURITY_ATTRIBUTES lpProcessAttributes,
-                          LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles,
-                          DWORD dwCreationFlags, LPVOID lpEnvironment, LPCWSTR lpCurrentDirectory,
-                          LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation)
+BOOL CreateProcessAsUserW(WINPR_ATTR_UNUSED HANDLE hToken,
+                          WINPR_ATTR_UNUSED LPCWSTR lpApplicationName,
+                          WINPR_ATTR_UNUSED LPWSTR lpCommandLine,
+                          WINPR_ATTR_UNUSED LPSECURITY_ATTRIBUTES lpProcessAttributes,
+                          WINPR_ATTR_UNUSED LPSECURITY_ATTRIBUTES lpThreadAttributes,
+                          WINPR_ATTR_UNUSED BOOL bInheritHandles,
+                          WINPR_ATTR_UNUSED DWORD dwCreationFlags,
+                          WINPR_ATTR_UNUSED LPVOID lpEnvironment,
+                          WINPR_ATTR_UNUSED LPCWSTR lpCurrentDirectory,
+                          WINPR_ATTR_UNUSED LPSTARTUPINFOW lpStartupInfo,
+                          WINPR_ATTR_UNUSED LPPROCESS_INFORMATION lpProcessInformation)
 {
+	WLog_ERR("TODO", "TODO: implement");
 	return FALSE;
 }
 
-BOOL CreateProcessWithLogonA(LPCSTR lpUsername, LPCSTR lpDomain, LPCSTR lpPassword,
-                             DWORD dwLogonFlags, LPCSTR lpApplicationName, LPSTR lpCommandLine,
-                             DWORD dwCreationFlags, LPVOID lpEnvironment, LPCSTR lpCurrentDirectory,
+BOOL CreateProcessWithLogonA(
+    WINPR_ATTR_UNUSED LPCSTR lpUsername, WINPR_ATTR_UNUSED LPCSTR lpDomain,
+    WINPR_ATTR_UNUSED LPCSTR lpPassword, WINPR_ATTR_UNUSED DWORD dwLogonFlags,
+    WINPR_ATTR_UNUSED LPCSTR lpApplicationName, WINPR_ATTR_UNUSED LPSTR lpCommandLine,
+    WINPR_ATTR_UNUSED DWORD dwCreationFlags, WINPR_ATTR_UNUSED LPVOID lpEnvironment,
+    WINPR_ATTR_UNUSED LPCSTR lpCurrentDirectory, WINPR_ATTR_UNUSED LPSTARTUPINFOA lpStartupInfo,
+    WINPR_ATTR_UNUSED LPPROCESS_INFORMATION lpProcessInformation)
+{
+	WLog_ERR("TODO", "TODO: implement");
+	return FALSE;
+}
+
+BOOL CreateProcessWithLogonW(
+    WINPR_ATTR_UNUSED LPCWSTR lpUsername, WINPR_ATTR_UNUSED LPCWSTR lpDomain,
+    WINPR_ATTR_UNUSED LPCWSTR lpPassword, WINPR_ATTR_UNUSED DWORD dwLogonFlags,
+    WINPR_ATTR_UNUSED LPCWSTR lpApplicationName, WINPR_ATTR_UNUSED LPWSTR lpCommandLine,
+    WINPR_ATTR_UNUSED DWORD dwCreationFlags, WINPR_ATTR_UNUSED LPVOID lpEnvironment,
+    WINPR_ATTR_UNUSED LPCWSTR lpCurrentDirectory, WINPR_ATTR_UNUSED LPSTARTUPINFOW lpStartupInfo,
+    WINPR_ATTR_UNUSED LPPROCESS_INFORMATION lpProcessInformation)
+{
+	WLog_ERR("TODO", "TODO: implement");
+	return FALSE;
+}
+
+BOOL CreateProcessWithTokenA(WINPR_ATTR_UNUSED HANDLE hToken, WINPR_ATTR_UNUSED DWORD dwLogonFlags,
+                             LPCSTR lpApplicationName, LPSTR lpCommandLine, DWORD dwCreationFlags,
+                             LPVOID lpEnvironment, LPCSTR lpCurrentDirectory,
                              LPSTARTUPINFOA lpStartupInfo,
-                             LPPROCESS_INFORMATION lpProcessInformation)
-{
-	return FALSE;
-}
-
-BOOL CreateProcessWithLogonW(LPCWSTR lpUsername, LPCWSTR lpDomain, LPCWSTR lpPassword,
-                             DWORD dwLogonFlags, LPCWSTR lpApplicationName, LPWSTR lpCommandLine,
-                             DWORD dwCreationFlags, LPVOID lpEnvironment,
-                             LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo,
-                             LPPROCESS_INFORMATION lpProcessInformation)
-{
-	return FALSE;
-}
-
-BOOL CreateProcessWithTokenA(HANDLE hToken, DWORD dwLogonFlags, LPCSTR lpApplicationName,
-                             LPSTR lpCommandLine, DWORD dwCreationFlags, LPVOID lpEnvironment,
-                             LPCSTR lpCurrentDirectory, LPSTARTUPINFOA lpStartupInfo,
                              LPPROCESS_INFORMATION lpProcessInformation)
 {
 	return CreateProcessExA(NULL, 0, lpApplicationName, lpCommandLine, NULL, NULL, FALSE,
@@ -434,11 +456,16 @@ BOOL CreateProcessWithTokenA(HANDLE hToken, DWORD dwLogonFlags, LPCSTR lpApplica
 	                        lpProcessInformation);
 }
 
-BOOL CreateProcessWithTokenW(HANDLE hToken, DWORD dwLogonFlags, LPCWSTR lpApplicationName,
-                             LPWSTR lpCommandLine, DWORD dwCreationFlags, LPVOID lpEnvironment,
-                             LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo,
-                             LPPROCESS_INFORMATION lpProcessInformation)
+BOOL CreateProcessWithTokenW(WINPR_ATTR_UNUSED HANDLE hToken, WINPR_ATTR_UNUSED DWORD dwLogonFlags,
+                             WINPR_ATTR_UNUSED LPCWSTR lpApplicationName,
+                             WINPR_ATTR_UNUSED LPWSTR lpCommandLine,
+                             WINPR_ATTR_UNUSED DWORD dwCreationFlags,
+                             WINPR_ATTR_UNUSED LPVOID lpEnvironment,
+                             WINPR_ATTR_UNUSED LPCWSTR lpCurrentDirectory,
+                             WINPR_ATTR_UNUSED LPSTARTUPINFOW lpStartupInfo,
+                             WINPR_ATTR_UNUSED LPPROCESS_INFORMATION lpProcessInformation)
 {
+	WLog_ERR("TODO", "TODO: implement");
 	return FALSE;
 }
 
@@ -465,15 +492,17 @@ BOOL GetExitCodeProcess(HANDLE hProcess, LPDWORD lpExitCode)
 
 HANDLE _GetCurrentProcess(VOID)
 {
+	WLog_ERR("TODO", "TODO: implement");
 	return NULL;
 }
 
 DWORD GetCurrentProcessId(VOID)
 {
+	WLog_ERR("TODO", "TODO: implement");
 	return ((DWORD)getpid());
 }
 
-BOOL TerminateProcess(HANDLE hProcess, UINT uExitCode)
+BOOL TerminateProcess(HANDLE hProcess, WINPR_ATTR_UNUSED UINT uExitCode)
 {
 	WINPR_PROCESS* process = NULL;
 	process = (WINPR_PROCESS*)hProcess;

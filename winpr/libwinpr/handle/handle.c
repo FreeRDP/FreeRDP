@@ -60,21 +60,27 @@ BOOL CloseHandle(HANDLE hObject)
 	return FALSE;
 }
 
-BOOL DuplicateHandle(HANDLE hSourceProcessHandle, HANDLE hSourceHandle, HANDLE hTargetProcessHandle,
-                     LPHANDLE lpTargetHandle, DWORD dwDesiredAccess, BOOL bInheritHandle,
-                     DWORD dwOptions)
+BOOL DuplicateHandle(WINPR_ATTR_UNUSED HANDLE hSourceProcessHandle,
+                     WINPR_ATTR_UNUSED HANDLE hSourceHandle,
+                     WINPR_ATTR_UNUSED HANDLE hTargetProcessHandle,
+                     WINPR_ATTR_UNUSED LPHANDLE lpTargetHandle,
+                     WINPR_ATTR_UNUSED DWORD dwDesiredAccess, WINPR_ATTR_UNUSED BOOL bInheritHandle,
+                     WINPR_ATTR_UNUSED DWORD dwOptions)
 {
 	*((ULONG_PTR*)lpTargetHandle) = (ULONG_PTR)hSourceHandle;
 	return TRUE;
 }
 
-BOOL GetHandleInformation(HANDLE hObject, LPDWORD lpdwFlags)
+BOOL GetHandleInformation(WINPR_ATTR_UNUSED HANDLE hObject, WINPR_ATTR_UNUSED LPDWORD lpdwFlags)
 {
+	WLog_ERR("TODO", "TODO: Implement");
 	return TRUE;
 }
 
-BOOL SetHandleInformation(HANDLE hObject, DWORD dwMask, DWORD dwFlags)
+BOOL SetHandleInformation(WINPR_ATTR_UNUSED HANDLE hObject, WINPR_ATTR_UNUSED DWORD dwMask,
+                          WINPR_ATTR_UNUSED DWORD dwFlags)
 {
+	WLog_ERR("TODO", "TODO: Implement");
 	return TRUE;
 }
 

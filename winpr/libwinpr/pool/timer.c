@@ -21,30 +21,41 @@
 
 #include <winpr/crt.h>
 #include <winpr/pool.h>
+#include <winpr/wlog.h>
 
 #ifdef WINPR_THREAD_POOL
 
-PTP_TIMER winpr_CreateThreadpoolTimer(PTP_TIMER_CALLBACK pfnti, PVOID pv, PTP_CALLBACK_ENVIRON pcbe)
+PTP_TIMER winpr_CreateThreadpoolTimer(WINPR_ATTR_UNUSED PTP_TIMER_CALLBACK pfnti,
+                                      WINPR_ATTR_UNUSED PVOID pv,
+                                      WINPR_ATTR_UNUSED PTP_CALLBACK_ENVIRON pcbe)
 {
+	WLog_ERR("TODO", "TODO: Implement");
 	return NULL;
 }
 
-VOID winpr_CloseThreadpoolTimer(PTP_TIMER pti)
+VOID winpr_CloseThreadpoolTimer(WINPR_ATTR_UNUSED PTP_TIMER pti)
 {
+	WLog_ERR("TODO", "TODO: Implement");
 }
 
-BOOL winpr_IsThreadpoolTimerSet(PTP_TIMER pti)
+BOOL winpr_IsThreadpoolTimerSet(WINPR_ATTR_UNUSED PTP_TIMER pti)
 {
+	WLog_ERR("TODO", "TODO: Implement");
 	return FALSE;
 }
 
-VOID winpr_SetThreadpoolTimer(PTP_TIMER pti, PFILETIME pftDueTime, DWORD msPeriod,
-                              DWORD msWindowLength)
+VOID winpr_SetThreadpoolTimer(WINPR_ATTR_UNUSED PTP_TIMER pti,
+                              WINPR_ATTR_UNUSED PFILETIME pftDueTime,
+                              WINPR_ATTR_UNUSED DWORD msPeriod,
+                              WINPR_ATTR_UNUSED DWORD msWindowLength)
 {
+	WLog_ERR("TODO", "TODO: Implement");
 }
 
-VOID winpr_WaitForThreadpoolTimerCallbacks(PTP_TIMER pti, BOOL fCancelPendingCallbacks)
+VOID winpr_WaitForThreadpoolTimerCallbacks(WINPR_ATTR_UNUSED PTP_TIMER pti,
+                                           WINPR_ATTR_UNUSED BOOL fCancelPendingCallbacks)
 {
+	WLog_ERR("TODO", "TODO: Implement");
 }
 
 #endif

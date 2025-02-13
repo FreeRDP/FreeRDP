@@ -423,8 +423,9 @@ BOOL ResetEvent(HANDLE hEvent)
 
 #endif
 
-HANDLE CreateFileDescriptorEventW(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset,
-                                  BOOL bInitialState, int FileDescriptor, ULONG mode)
+HANDLE CreateFileDescriptorEventW(WINPR_ATTR_UNUSED LPSECURITY_ATTRIBUTES lpEventAttributes,
+                                  BOOL bManualReset, WINPR_ATTR_UNUSED BOOL bInitialState,
+                                  int FileDescriptor, ULONG mode)
 {
 #ifndef _WIN32
 	WINPR_EVENT* event = NULL;

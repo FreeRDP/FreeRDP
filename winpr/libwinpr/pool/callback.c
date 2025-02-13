@@ -21,6 +21,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/pool.h>
+#include <winpr/wlog.h>
 #include <winpr/library.h>
 
 #ifdef WINPR_THREAD_POOL
@@ -40,13 +41,14 @@ static BOOL CALLBACK init_module(PINIT_ONCE once, PVOID param, PVOID* context)
 }
 #endif
 
-BOOL winpr_CallbackMayRunLong(PTP_CALLBACK_INSTANCE pci)
+BOOL winpr_CallbackMayRunLong(WINPR_ATTR_UNUSED PTP_CALLBACK_INSTANCE pci)
 {
 #ifdef _WIN32
 	InitOnceExecuteOnce(&init_once_module, init_module, NULL, NULL);
 	if (pCallbackMayRunLong)
 		return pCallbackMayRunLong(pci);
 #endif
+	WLog_ERR("TODO", "TODO: implement");
 	/* No default implementation */
 	return FALSE;
 }

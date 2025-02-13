@@ -86,7 +86,7 @@ size_t ArrayList_Items(wArrayList* arrayList, ULONG_PTR** ppItems)
  * Gets a value indicating whether the ArrayList has a fixed size.
  */
 
-BOOL ArrayList_IsFixedSized(wArrayList* arrayList)
+BOOL ArrayList_IsFixedSized(WINPR_ATTR_UNUSED wArrayList* arrayList)
 {
 	WINPR_ASSERT(arrayList);
 	return FALSE;
@@ -96,7 +96,7 @@ BOOL ArrayList_IsFixedSized(wArrayList* arrayList)
  * Gets a value indicating whether the ArrayList is read-only.
  */
 
-BOOL ArrayList_IsReadOnly(wArrayList* arrayList)
+BOOL ArrayList_IsReadOnly(WINPR_ATTR_UNUSED wArrayList* arrayList)
 {
 	WINPR_ASSERT(arrayList);
 	return FALSE;

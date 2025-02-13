@@ -581,8 +581,8 @@ WINPR_CIPHER_CTX* winpr_Cipher_New(WINPR_CIPHER_TYPE cipher, WINPR_CRYPTO_OPERAT
 }
 
 WINPR_API WINPR_CIPHER_CTX* winpr_Cipher_NewEx(WINPR_CIPHER_TYPE cipher, WINPR_CRYPTO_OPERATION op,
-                                               const void* key, size_t keylen, const void* iv,
-                                               size_t ivlen)
+                                               const void* key, WINPR_ATTR_UNUSED size_t keylen,
+                                               const void* iv, WINPR_ATTR_UNUSED size_t ivlen)
 {
 	if (cipher == WINPR_CIPHER_ARC4_128)
 	{

@@ -390,8 +390,9 @@ static BOOL FileGetFileInformationByHandle(HANDLE hFile,
 	return TRUE;
 }
 
-static BOOL FileLockFileEx(HANDLE hFile, DWORD dwFlags, DWORD dwReserved,
-                           DWORD nNumberOfBytesToLockLow, DWORD nNumberOfBytesToLockHigh,
+static BOOL FileLockFileEx(HANDLE hFile, DWORD dwFlags, WINPR_ATTR_UNUSED DWORD dwReserved,
+                           WINPR_ATTR_UNUSED DWORD nNumberOfBytesToLockLow,
+                           WINPR_ATTR_UNUSED DWORD nNumberOfBytesToLockHigh,
                            LPOVERLAPPED lpOverlapped)
 {
 #ifdef __sun
@@ -463,8 +464,10 @@ static BOOL FileLockFileEx(HANDLE hFile, DWORD dwFlags, DWORD dwReserved,
 	return TRUE;
 }
 
-static BOOL FileUnlockFile(HANDLE hFile, DWORD dwFileOffsetLow, DWORD dwFileOffsetHigh,
-                           DWORD nNumberOfBytesToUnlockLow, DWORD nNumberOfBytesToUnlockHigh)
+static BOOL FileUnlockFile(HANDLE hFile, WINPR_ATTR_UNUSED DWORD dwFileOffsetLow,
+                           WINPR_ATTR_UNUSED DWORD dwFileOffsetHigh,
+                           WINPR_ATTR_UNUSED DWORD nNumberOfBytesToUnlockLow,
+                           WINPR_ATTR_UNUSED DWORD nNumberOfBytesToUnlockHigh)
 {
 	WINPR_FILE* pFile = (WINPR_FILE*)hFile;
 #ifdef __sun
@@ -506,8 +509,10 @@ static BOOL FileUnlockFile(HANDLE hFile, DWORD dwFileOffsetLow, DWORD dwFileOffs
 	return TRUE;
 }
 
-static BOOL FileUnlockFileEx(HANDLE hFile, DWORD dwReserved, DWORD nNumberOfBytesToUnlockLow,
-                             DWORD nNumberOfBytesToUnlockHigh, LPOVERLAPPED lpOverlapped)
+static BOOL FileUnlockFileEx(HANDLE hFile, WINPR_ATTR_UNUSED DWORD dwReserved,
+                             WINPR_ATTR_UNUSED DWORD nNumberOfBytesToUnlockLow,
+                             WINPR_ATTR_UNUSED DWORD nNumberOfBytesToUnlockHigh,
+                             LPOVERLAPPED lpOverlapped)
 {
 	WINPR_FILE* pFile = (WINPR_FILE*)hFile;
 #ifdef __sun
@@ -575,7 +580,7 @@ static struct timespec filetimeToTimespec(const FILETIME* ftime)
 	return ts;
 }
 
-static BOOL FileSetFileTime(HANDLE hFile, const FILETIME* lpCreationTime,
+static BOOL FileSetFileTime(HANDLE hFile, WINPR_ATTR_UNUSED const FILETIME* lpCreationTime,
                             const FILETIME* lpLastAccessTime, const FILETIME* lpLastWriteTime)
 {
 	struct timespec times[2] = { { UTIME_OMIT, UTIME_OMIT },
@@ -971,7 +976,7 @@ static HANDLE FileCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dw
 	return pFile;
 }
 
-static BOOL IsFileDevice(LPCTSTR lpDeviceName)
+static BOOL IsFileDevice(WINPR_ATTR_UNUSED LPCTSTR lpDeviceName)
 {
 	return TRUE;
 }
@@ -1029,12 +1034,13 @@ HANDLE GetStdHandle(DWORD nStdHandle)
 	return (HANDLE)pFile;
 }
 
-BOOL SetStdHandle(DWORD nStdHandle, HANDLE hHandle)
+BOOL SetStdHandle(WINPR_ATTR_UNUSED DWORD nStdHandle, WINPR_ATTR_UNUSED HANDLE hHandle)
 {
 	return FALSE;
 }
 
-BOOL SetStdHandleEx(DWORD dwStdHandle, HANDLE hNewHandle, HANDLE* phOldHandle)
+BOOL SetStdHandleEx(WINPR_ATTR_UNUSED DWORD dwStdHandle, WINPR_ATTR_UNUSED HANDLE hNewHandle,
+                    WINPR_ATTR_UNUSED HANDLE* phOldHandle)
 {
 	return FALSE;
 }

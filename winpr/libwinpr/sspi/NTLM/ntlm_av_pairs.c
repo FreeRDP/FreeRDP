@@ -323,7 +323,8 @@ static char* get_name(COMPUTER_NAME_FORMAT type)
 	return computerName;
 }
 
-static int ntlm_get_target_computer_name(PUNICODE_STRING pName, COMPUTER_NAME_FORMAT type)
+static int ntlm_get_target_computer_name(PUNICODE_STRING pName,
+                                         WINPR_ATTR_UNUSED COMPUTER_NAME_FORMAT type)
 {
 	int status = -1;
 

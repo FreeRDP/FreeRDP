@@ -286,7 +286,8 @@ static void winpr_openssl_cleanup(void)
 	winpr_CleanupSSL(WINPR_SSL_INIT_DEFAULT);
 }
 
-static BOOL CALLBACK winpr_openssl_initialize(PINIT_ONCE once, PVOID param, PVOID* context)
+static BOOL CALLBACK winpr_openssl_initialize(WINPR_ATTR_UNUSED PINIT_ONCE once, PVOID param,
+                                              WINPR_ATTR_UNUSED PVOID* context)
 {
 	DWORD flags = param ? *(PDWORD)param : WINPR_SSL_INIT_DEFAULT;
 
@@ -355,7 +356,7 @@ BOOL winpr_InitializeSSL(DWORD flags)
 }
 
 #if defined(OPENSSL_VERSION_MAJOR) && (OPENSSL_VERSION_MAJOR >= 3)
-static int unload(OSSL_PROVIDER* provider, void* data)
+static int unload(OSSL_PROVIDER* provider, WINPR_ATTR_UNUSED void* data)
 {
 	if (!provider)
 		return 1;

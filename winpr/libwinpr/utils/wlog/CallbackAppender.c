@@ -28,12 +28,14 @@ typedef struct
 	wLogCallbacks* callbacks;
 } wLogCallbackAppender;
 
-static BOOL WLog_CallbackAppender_Open(wLog* log, wLogAppender* appender)
+static BOOL WLog_CallbackAppender_Open(WINPR_ATTR_UNUSED wLog* log,
+                                       WINPR_ATTR_UNUSED wLogAppender* appender)
 {
 	return TRUE;
 }
 
-static BOOL WLog_CallbackAppender_Close(wLog* log, wLogAppender* appender)
+static BOOL WLog_CallbackAppender_Close(WINPR_ATTR_UNUSED wLog* log,
+                                        WINPR_ATTR_UNUSED wLogAppender* appender)
 {
 	return TRUE;
 }
@@ -145,7 +147,7 @@ static void WLog_CallbackAppender_Free(wLogAppender* appender)
 	free(appender);
 }
 
-wLogAppender* WLog_CallbackAppender_New(wLog* log)
+wLogAppender* WLog_CallbackAppender_New(WINPR_ATTR_UNUSED wLog* log)
 {
 	wLogCallbackAppender* CallbackAppender = NULL;
 

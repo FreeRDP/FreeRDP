@@ -619,20 +619,25 @@ BOOL SetWaitableTimer(HANDLE hTimer, const LARGE_INTEGER* lpDueTime, LONG lPerio
 
 BOOL SetWaitableTimerEx(HANDLE hTimer, const LARGE_INTEGER* lpDueTime, LONG lPeriod,
                         PTIMERAPCROUTINE pfnCompletionRoutine, LPVOID lpArgToCompletionRoutine,
-                        PREASON_CONTEXT WakeContext, ULONG TolerableDelay)
+                        WINPR_ATTR_UNUSED PREASON_CONTEXT WakeContext,
+                        WINPR_ATTR_UNUSED ULONG TolerableDelay)
 {
 	return SetWaitableTimer(hTimer, lpDueTime, lPeriod, pfnCompletionRoutine,
 	                        lpArgToCompletionRoutine, FALSE);
 }
 
-HANDLE OpenWaitableTimerA(DWORD dwDesiredAccess, BOOL bInheritHandle, LPCSTR lpTimerName)
+HANDLE OpenWaitableTimerA(WINPR_ATTR_UNUSED DWORD dwDesiredAccess,
+                          WINPR_ATTR_UNUSED BOOL bInheritHandle,
+                          WINPR_ATTR_UNUSED LPCSTR lpTimerName)
 {
 	/* TODO: Implement */
 	WLog_ERR(TAG, "not implemented");
 	return NULL;
 }
 
-HANDLE OpenWaitableTimerW(DWORD dwDesiredAccess, BOOL bInheritHandle, LPCWSTR lpTimerName)
+HANDLE OpenWaitableTimerW(WINPR_ATTR_UNUSED DWORD dwDesiredAccess,
+                          WINPR_ATTR_UNUSED BOOL bInheritHandle,
+                          WINPR_ATTR_UNUSED LPCWSTR lpTimerName)
 {
 	/* TODO: Implement */
 	WLog_ERR(TAG, "not implemented");

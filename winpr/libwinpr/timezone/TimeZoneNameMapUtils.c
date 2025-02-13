@@ -398,7 +398,7 @@ static const char* map_fallback(const char* iana, TimeZoneNameType type)
 	return res;
 }
 #else
-static const char* map_fallback(const char* iana, TimeZoneNameType type)
+static const char* map_fallback(const char* iana, WINPR_ATTR_UNUSED TimeZoneNameType type)
 {
 	if (!iana)
 		return NULL;
