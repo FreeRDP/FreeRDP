@@ -346,8 +346,11 @@ static LONG smartcard_ListReadersA_Call(scard_call_context* smartcard, wStream* 
 	DWORD cchReaders = SCARD_AUTOALLOCATE;
 	LONG status = ret.ReturnCode = wrap(smartcard, SCardListReadersA, operation->hContext,
 	                                    (LPCSTR)call->mszGroups, (LPSTR)&mszReaders, &cchReaders);
-	if (cchReaders == SCARD_AUTOALLOCATE)
-		return SCARD_F_UNKNOWN_ERROR;
+	if (status == SCARD_S_SUCCESS)
+	{
+		if (cchReaders == SCARD_AUTOALLOCATE)
+			status = SCARD_F_UNKNOWN_ERROR;
+	}
 
 	if (status != SCARD_S_SUCCESS)
 	{
@@ -399,8 +402,11 @@ static LONG smartcard_ListReadersW_Call(scard_call_context* smartcard, wStream* 
 	cchReaders = SCARD_AUTOALLOCATE;
 	status = ret.ReturnCode = wrap(smartcard, SCardListReadersW, operation->hContext, string.wz,
 	                               (LPWSTR)&mszReaders.pw, &cchReaders);
-	if (cchReaders == SCARD_AUTOALLOCATE)
-		return SCARD_F_UNKNOWN_ERROR;
+	if (status == SCARD_S_SUCCESS)
+	{
+		if (cchReaders == SCARD_AUTOALLOCATE)
+			status = SCARD_F_UNKNOWN_ERROR;
+	}
 
 	if (status != SCARD_S_SUCCESS)
 	{
