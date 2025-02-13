@@ -24,5 +24,6 @@
   * XMPP channel: #FreeRDP#matrix.org@matrix.org (bridged)
   * IRC channel : #freerdp @ irc.oftc.net (bridged)
 * Joining our mailing list <freerdp-devel@lists.sourceforge.net> may be helpful too.
+* Check the pull request builder at https://ci.freerdp.com/job/code-quality-checker/ and fix all warnings affecting your code
 
 ## Please remove this text before submitting your pull!
