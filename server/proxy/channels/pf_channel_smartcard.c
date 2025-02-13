@@ -72,7 +72,7 @@ static pf_channel_client_context* scard_get_client_context(pClientContext* pc)
 }
 
 static BOOL pf_channel_client_write_iostatus(wStream* out, const SMARTCARD_OPERATION* op,
-                                             UINT32 ioStatus)
+                                             NTSTATUS ioStatus)
 {
 	UINT16 component = 0;
 	UINT16 packetid = 0;
@@ -99,7 +99,7 @@ static BOOL pf_channel_client_write_iostatus(wStream* out, const SMARTCARD_OPERA
 	WINPR_ASSERT(dID == op->deviceID);
 	WINPR_ASSERT(cID == op->completionID);
 
-	Stream_Write_UINT32(out, ioStatus);
+	Stream_Write_INT32(out, ioStatus);
 	Stream_SetPosition(out, pos);
 	return TRUE;
 }
@@ -118,7 +118,7 @@ static VOID irp_thread(PTP_CALLBACK_INSTANCE Instance, PVOID Context, PTP_WORK W
 	struct thread_arg* arg = Context;
 	pf_channel_client_context* scard = arg->scard;
 	{
-		UINT32 ioStatus = 0;
+		NTSTATUS ioStatus = 0;
 		LONG rc = smartcard_irp_device_control_call(arg->scard->callctx, arg->e->out, &ioStatus,
 		                                            &arg->e->op);
 		if (rc == CHANNEL_RC_OK)
@@ -166,7 +166,7 @@ BOOL pf_channel_smartcard_client_handle(wLog* log, pClientContext* pc, wStream* 
 	LONG status = 0;
 	UINT32 FileId = 0;
 	UINT32 CompletionId = 0;
-	UINT32 ioStatus = 0;
+	NTSTATUS ioStatus = 0;
 	pf_channel_client_queue_element e = { 0 };
 	pf_channel_client_context* scard = scard_get_client_context(pc);
 

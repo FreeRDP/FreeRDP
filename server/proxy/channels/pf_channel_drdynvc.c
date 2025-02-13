@@ -631,7 +631,7 @@ static DynChannelContext* DynChannelContext_new(proxyData* pdata,
 {
 	DynChannelContext* dyn = calloc(1, sizeof(DynChannelContext));
 	if (!dyn)
-		return FALSE;
+		return NULL;
 
 	dyn->log = WLog_Get(DTAG);
 	WINPR_ASSERT(dyn->log);
