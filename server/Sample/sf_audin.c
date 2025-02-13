@@ -34,7 +34,8 @@
 
 #if defined(CHANNEL_AUDIN_SERVER)
 
-static UINT sf_peer_audin_data(audin_server_context* audin, const SNDIN_DATA* data)
+static UINT sf_peer_audin_data(WINPR_ATTR_UNUSED audin_server_context* audin,
+                               const SNDIN_DATA* data)
 {
 	/* TODO: Implement */
 	WINPR_ASSERT(audin);
