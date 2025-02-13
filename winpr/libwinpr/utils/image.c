@@ -245,7 +245,7 @@ BYTE* winpr_bitmap_construct_header(size_t width, size_t height, size_t bpp)
 			offset += sizeof(DWORD) * 3; // 3 DWORD color masks
 			break;
 		default:
-			return FALSE;
+			return NULL;
 	}
 
 	if (!writeBitmapFileHeader(s, &bf))
