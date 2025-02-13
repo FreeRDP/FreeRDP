@@ -139,7 +139,7 @@ static FILE* IniFile_Open_File(wIniFile* ini, const char* filename)
 	WINPR_ASSERT(ini);
 
 	if (!filename)
-		return FALSE;
+		return NULL;
 
 	if (ini->readOnly)
 		return winpr_fopen(filename, "rb");
