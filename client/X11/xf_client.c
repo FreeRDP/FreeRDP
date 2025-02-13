@@ -297,8 +297,8 @@ BOOL xf_picture_transform_required(xfContext* xfc)
 }
 #endif /* WITH_XRENDER defined */
 
-void xf_draw_screen_(xfContext* xfc, int x, int y, int w, int h, const char* fkt, const char* file,
-                     int line)
+void xf_draw_screen_(xfContext* xfc, int x, int y, int w, int h, const char* fkt,
+                     WINPR_ATTR_UNUSED const char* file, WINPR_ATTR_UNUSED int line)
 {
 	if (!xfc)
 	{
@@ -828,7 +828,7 @@ void xf_minimize(xfContext* xfc)
 	PubSub_OnWindowStateChange(context->pubSub, context, &e);
 }
 
-void xf_lock_x11_(xfContext* xfc, const char* fkt)
+void xf_lock_x11_(xfContext* xfc, WINPR_ATTR_UNUSED const char* fkt)
 {
 	if (!xfc->UseXThreads)
 		(void)WaitForSingleObject(xfc->mutex, INFINITE);
@@ -838,7 +838,7 @@ void xf_lock_x11_(xfContext* xfc, const char* fkt)
 	xfc->locked++;
 }
 
-void xf_unlock_x11_(xfContext* xfc, const char* fkt)
+void xf_unlock_x11_(xfContext* xfc, WINPR_ATTR_UNUSED const char* fkt)
 {
 	if (xfc->locked == 0)
 		WLog_WARN(TAG, "X11: trying to unlock although not locked!");
@@ -1321,7 +1321,8 @@ static BOOL xf_process_pipe(rdpContext* context, const char* pipe)
 	return TRUE;
 }
 
-static void cleanup_pipe(int signum, const char* signame, void* context)
+static void cleanup_pipe(WINPR_ATTR_UNUSED int signum, WINPR_ATTR_UNUSED const char* signame,
+                         void* context)
 {
 	const char* pipe = context;
 	if (!pipe)
@@ -2085,7 +2086,7 @@ static BOOL xfreerdp_client_new(freerdp* instance, rdpContext* context)
 	return TRUE;
 }
 
-static void xfreerdp_client_free(freerdp* instance, rdpContext* context)
+static void xfreerdp_client_free(WINPR_ATTR_UNUSED freerdp* instance, rdpContext* context)
 {
 	if (!context)
 		return;

@@ -174,8 +174,8 @@ const char* x11_event_string(int event)
 	} while (0)
 #endif
 
-static BOOL xf_action_script_append(xfContext* xfc, const char* buffer, size_t size, void* user,
-                                    const char* what, const char* arg)
+static BOOL xf_action_script_append(xfContext* xfc, const char* buffer, size_t size,
+                                    WINPR_ATTR_UNUSED void* user, const char* what, const char* arg)
 {
 	WINPR_ASSERT(xfc);
 	WINPR_UNUSED(what);
@@ -456,7 +456,8 @@ BOOL xf_generic_MotionNotify(xfContext* xfc, int x, int y, int state, Window win
 	return TRUE;
 }
 
-BOOL xf_generic_RawMotionNotify(xfContext* xfc, int x, int y, Window window, BOOL app)
+BOOL xf_generic_RawMotionNotify(xfContext* xfc, int x, int y, WINPR_ATTR_UNUSED Window window,
+                                BOOL app)
 {
 	WINPR_ASSERT(xfc);
 

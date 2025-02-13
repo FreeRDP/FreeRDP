@@ -1110,8 +1110,9 @@ BOOL xf_AppWindowCreate(xfContext* xfc, xfAppWindow* appWindow)
 	return TRUE;
 }
 
-void xf_SetWindowMinMaxInfo(xfContext* xfc, xfAppWindow* appWindow, int maxWidth, int maxHeight,
-                            int maxPosX, int maxPosY, int minTrackWidth, int minTrackHeight,
+void xf_SetWindowMinMaxInfo(xfContext* xfc, xfAppWindow* appWindow, WINPR_ATTR_UNUSED int maxWidth,
+                            WINPR_ATTR_UNUSED int maxHeight, WINPR_ATTR_UNUSED int maxPosX,
+                            WINPR_ATTR_UNUSED int maxPosY, int minTrackWidth, int minTrackHeight,
                             int maxTrackWidth, int maxTrackHeight)
 {
 	XSizeHints* size_hints = NULL;
