@@ -27,11 +27,8 @@ message("project ${PROJECT_NAME} is using version ${PROJECT_VERSION}")
 
 set(MODULE_NAME "xfreerdp")
 
-set(CMAKE_C_STANDARD 11)
-set(CMAKE_C_STANDARD_REQUIRED ON)
-set(CMAKE_C_EXTENSIONS ON)
-
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/)
+include(ProjectCStandard)
 include(CommonConfigOptions)
 
 include(ConfigureFreeRDP)

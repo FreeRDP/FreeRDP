@@ -28,11 +28,8 @@ project(sdl-freerdp LANGUAGES CXX VERSION ${FREERDP_DEFAULT_PROJECT_VERSION})
 
 message("project ${PROJECT_NAME} is using version ${PROJECT_VERSION}")
 
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS ON)
-
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/)
+include(ProjectCXXStandard)
 include(CommonConfigOptions)
 
 include(ConfigureFreeRDP)
