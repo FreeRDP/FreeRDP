@@ -153,18 +153,19 @@ def write_setter_case(f, val, postfix, isPointer, cast):
         f.write('\t\t\tsettings->' + val + ' = ' + cast + ' cnv.v;\n')
         f.write('\t\t\tbreak;\n\n')
     elif not postfix:
-        f.write('\t\t\tsettings->' + val + ' = cnv.c;\n')
+        f.write('\t\t\tsettings->' + val + ' = ' + cast + ' cnv.c;\n')
         f.write('\t\t\tbreak;\n\n')
     elif len(postfix) <= 1:
         f.write('\t\t\treturn update_string' + postfix + '(&settings->' + val + ', cnv.c, len);\n\n')
     else:
         f.write('\t\t\treturn update_string' + postfix + '(&settings->' + val + ', cnv.cc, len, cleanup);\n\n')
 
-def write_setter(f, entry_dict, entry_type, entry_name, postfix):
+def write_setter(f, entry_dict, entry_type, entry_name, postfix, compat_dict):
     isString = 'string' in entry_name
     isPointer = 'pointer' in entry_name
     copy = dict(entry_dict)
     values = get_values(entry_dict, entry_type)
+    compat_values = get_values(compat_dict, entry_type)
     keys = get_keys(copy, entry_type, values)
 
     typestr = 'FreeRDP_Settings_Keys_' + entry_name.capitalize()
@@ -213,6 +214,10 @@ def write_setter(f, entry_dict, entry_type, entry_name, postfix):
                 k = keys[index];
                 if k != 'void*' and len(k) > 0:
                     cast = '(' + k + ')'
+            write_setter_case(f, val, postfix, isPointer, cast)
+    if compat_values:
+        for val in compat_values:
+            cast = '(int32_t)'
             write_setter_case(f, val, postfix, isPointer, cast)
     f.write('\t\tdefault:\n')
     f.write('\t\t\tWLog_ERR(TAG, "Invalid key index %" PRIuz " [%s|%s]", id, freerdp_settings_get_name_for_key(id), freerdp_settings_get_type_name_for_key(id));\n')
@@ -339,25 +344,27 @@ try:
         compat_getter_list['UINT32'].append('MonitorLocalShiftX')
         compat_getter_list['UINT32'].append('MonitorLocalShiftY')
 
+        compat_setter_list = dict(compat_getter_list)
+
         write_getter(f, getter_list, 'BOOL', 'bool', '', compat_getter_list)
-        write_setter(f, setter_list, 'BOOL', 'bool', '')
+        write_setter(f, setter_list, 'BOOL', 'bool', '', compat_setter_list)
         write_getter(f, getter_list, 'UINT16', 'uint16', '', compat_getter_list)
-        write_setter(f, setter_list, 'UINT16', 'uint16', '')
+        write_setter(f, setter_list, 'UINT16', 'uint16', '', compat_setter_list)
         write_getter(f, getter_list, 'INT16', 'int16', '', compat_getter_list)
-        write_setter(f, setter_list, 'INT16', 'int16', '')
+        write_setter(f, setter_list, 'INT16', 'int16', '', compat_setter_list)
         write_getter(f, getter_list, 'UINT32', 'uint32', '', compat_getter_list)
-        write_setter(f, setter_list, 'UINT32', 'uint32', '')
+        write_setter(f, setter_list, 'UINT32', 'uint32', '', compat_setter_list)
         write_getter(f, getter_list, 'INT32', 'int32', '', compat_getter_list)
-        write_setter(f, setter_list, 'INT32', 'int32', '')
+        write_setter(f, setter_list, 'INT32', 'int32', '', compat_setter_list)
         write_getter(f, getter_list, 'UINT64', 'uint64', '', compat_getter_list)
-        write_setter(f, setter_list, 'UINT64', 'uint64', '')
+        write_setter(f, setter_list, 'UINT64', 'uint64', '', compat_setter_list)
         write_getter(f, getter_list, 'INT64', 'int64', '', compat_getter_list)
-        write_setter(f, setter_list, 'INT64', 'int64', '')
+        write_setter(f, setter_list, 'INT64', 'int64', '', compat_setter_list)
         write_getter(f, getter_list, 'char*', 'string', '_', compat_getter_list)
-        write_setter(f, setter_list, 'char*', 'string', '_')
-        write_setter(f, setter_list2, 'char*', 'string', '_copy_')
+        write_setter(f, setter_list, 'char*', 'string', '_', compat_setter_list)
+        write_setter(f, setter_list2, 'char*', 'string', '_copy_', compat_setter_list)
         write_getter(f, getter_list, '*', 'pointer', '', compat_getter_list)
-        write_setter(f, setter_list, '*', 'pointer', '')
+        write_setter(f, setter_list, '*', 'pointer', '', compat_setter_list)
 
         f.write('\n')
 

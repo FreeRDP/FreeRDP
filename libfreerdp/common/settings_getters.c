@@ -2529,6 +2529,14 @@ BOOL freerdp_settings_set_uint32(WINPR_ATTR_UNUSED rdpSettings* settings,
 			settings->VCFlags = cnv.c;
 			break;
 
+		case FreeRDP_MonitorLocalShiftX:
+			settings->MonitorLocalShiftX = (int32_t)cnv.c;
+			break;
+
+		case FreeRDP_MonitorLocalShiftY:
+			settings->MonitorLocalShiftY = (int32_t)cnv.c;
+			break;
+
 		default:
 			WLog_ERR(TAG, "Invalid key index %" PRIuz " [%s|%s]", id,
 			         freerdp_settings_get_name_for_key(id),
