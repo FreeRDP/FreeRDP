@@ -1027,7 +1027,8 @@ static BOOL config_plugin_unload(proxyPlugin* plugin)
 	return TRUE;
 }
 
-static BOOL config_plugin_keyboard_event(proxyPlugin* plugin, proxyData* pdata, void* param)
+static BOOL config_plugin_keyboard_event(proxyPlugin* plugin, WINPR_ATTR_UNUSED proxyData* pdata,
+                                         void* param)
 {
 	BOOL rc = 0;
 	const struct config_plugin_data* custom = NULL;
@@ -1051,7 +1052,8 @@ static BOOL config_plugin_keyboard_event(proxyPlugin* plugin, proxyData* pdata, 
 	return rc;
 }
 
-static BOOL config_plugin_unicode_event(proxyPlugin* plugin, proxyData* pdata, void* param)
+static BOOL config_plugin_unicode_event(proxyPlugin* plugin, WINPR_ATTR_UNUSED proxyData* pdata,
+                                        void* param)
 {
 	BOOL rc = 0;
 	const struct config_plugin_data* custom = NULL;
@@ -1075,7 +1077,8 @@ static BOOL config_plugin_unicode_event(proxyPlugin* plugin, proxyData* pdata, v
 	return rc;
 }
 
-static BOOL config_plugin_mouse_event(proxyPlugin* plugin, proxyData* pdata, void* param)
+static BOOL config_plugin_mouse_event(proxyPlugin* plugin, WINPR_ATTR_UNUSED proxyData* pdata,
+                                      void* param)
 {
 	BOOL rc = 0;
 	const struct config_plugin_data* custom = NULL;
@@ -1098,7 +1101,8 @@ static BOOL config_plugin_mouse_event(proxyPlugin* plugin, proxyData* pdata, voi
 	return rc;
 }
 
-static BOOL config_plugin_mouse_ex_event(proxyPlugin* plugin, proxyData* pdata, void* param)
+static BOOL config_plugin_mouse_ex_event(proxyPlugin* plugin, WINPR_ATTR_UNUSED proxyData* pdata,
+                                         void* param)
 {
 	BOOL rc = 0;
 	const struct config_plugin_data* custom = NULL;
@@ -1121,7 +1125,8 @@ static BOOL config_plugin_mouse_ex_event(proxyPlugin* plugin, proxyData* pdata, 
 	return rc;
 }
 
-static BOOL config_plugin_client_channel_data(proxyPlugin* plugin, proxyData* pdata, void* param)
+static BOOL config_plugin_client_channel_data(WINPR_ATTR_UNUSED proxyPlugin* plugin,
+                                              WINPR_ATTR_UNUSED proxyData* pdata, void* param)
 {
 	const proxyChannelDataEventInfo* channel = (const proxyChannelDataEventInfo*)(param);
 
@@ -1134,7 +1139,8 @@ static BOOL config_plugin_client_channel_data(proxyPlugin* plugin, proxyData* pd
 	return TRUE;
 }
 
-static BOOL config_plugin_server_channel_data(proxyPlugin* plugin, proxyData* pdata, void* param)
+static BOOL config_plugin_server_channel_data(WINPR_ATTR_UNUSED proxyPlugin* plugin,
+                                              WINPR_ATTR_UNUSED proxyData* pdata, void* param)
 {
 	const proxyChannelDataEventInfo* channel = (const proxyChannelDataEventInfo*)(param);
 
@@ -1147,7 +1153,8 @@ static BOOL config_plugin_server_channel_data(proxyPlugin* plugin, proxyData* pd
 	return TRUE;
 }
 
-static BOOL config_plugin_dynamic_channel_create(proxyPlugin* plugin, proxyData* pdata, void* param)
+static BOOL config_plugin_dynamic_channel_create(proxyPlugin* plugin,
+                                                 WINPR_ATTR_UNUSED proxyData* pdata, void* param)
 {
 	BOOL accept = 0;
 	const proxyChannelDataEventInfo* channel = (const proxyChannelDataEventInfo*)(param);
@@ -1212,7 +1219,8 @@ static BOOL config_plugin_dynamic_channel_create(proxyPlugin* plugin, proxyData*
 	return accept;
 }
 
-static BOOL config_plugin_channel_create(proxyPlugin* plugin, proxyData* pdata, void* param)
+static BOOL config_plugin_channel_create(proxyPlugin* plugin, WINPR_ATTR_UNUSED proxyData* pdata,
+                                         void* param)
 {
 	BOOL accept = 0;
 	const proxyChannelDataEventInfo* channel = (const proxyChannelDataEventInfo*)(param);

@@ -70,7 +70,7 @@ end:
 	return rc;
 }
 
-BOOL pf_utils_is_passthrough(const proxyConfig* config)
+BOOL pf_utils_is_passthrough(WINPR_ATTR_UNUSED const proxyConfig* config)
 {
 	WINPR_ASSERT(config);
 

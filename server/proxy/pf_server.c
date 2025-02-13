@@ -392,7 +392,7 @@ static BOOL pf_server_logon(freerdp_peer* peer, const SEC_WINNT_AUTH_IDENTITY* i
 	return TRUE;
 }
 
-static BOOL pf_server_adjust_monitor_layout(freerdp_peer* peer)
+static BOOL pf_server_adjust_monitor_layout(WINPR_ATTR_UNUSED freerdp_peer* peer)
 {
 	WINPR_ASSERT(peer);
 	/* proxy as is, there's no need to do anything here */

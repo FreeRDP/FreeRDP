@@ -332,8 +332,8 @@ BOOL pf_modules_run_filter(proxyModule* module, PF_FILTER_TYPE type, proxyData* 
  * @context: current session server's rdpContext instance.
  * @info: pointer to per-session data.
  */
-static BOOL pf_modules_set_plugin_data(proxyPluginsManager* mgr, const char* plugin_name,
-                                       proxyData* pdata, void* data)
+static BOOL pf_modules_set_plugin_data(WINPR_ATTR_UNUSED proxyPluginsManager* mgr,
+                                       const char* plugin_name, proxyData* pdata, void* data)
 {
 	union
 	{
@@ -363,8 +363,8 @@ static BOOL pf_modules_set_plugin_data(proxyPluginsManager* mgr, const char* plu
  * if there's no data related to `plugin_name` in `context` (current session), a NULL will be
  * returned.
  */
-static void* pf_modules_get_plugin_data(proxyPluginsManager* mgr, const char* plugin_name,
-                                        proxyData* pdata)
+static void* pf_modules_get_plugin_data(WINPR_ATTR_UNUSED proxyPluginsManager* mgr,
+                                        const char* plugin_name, proxyData* pdata)
 {
 	union
 	{
@@ -378,7 +378,7 @@ static void* pf_modules_get_plugin_data(proxyPluginsManager* mgr, const char* pl
 	return HashTable_GetItemValue(pdata->modules_info, ccharconv.cp);
 }
 
-static void pf_modules_abort_connect(proxyPluginsManager* mgr, proxyData* pdata)
+static void pf_modules_abort_connect(WINPR_ATTR_UNUSED proxyPluginsManager* mgr, proxyData* pdata)
 {
 	WINPR_ASSERT(pdata);
 	WLog_DBG(TAG, "is called!");

@@ -521,8 +521,9 @@ static UINT rdpdr_send_client_name_request(pClientContext* pc, pf_channel_client
 
 #define rdpdr_ignore_capset(srv, log, s, header) \
 	rdpdr_ignore_capset_((srv), (log), (s), header, __func__)
-static UINT rdpdr_ignore_capset_(BOOL srv, wLog* log, wStream* s,
-                                 const RDPDR_CAPABILITY_HEADER* header, const char* fkt)
+static UINT rdpdr_ignore_capset_(WINPR_ATTR_UNUSED BOOL srv, WINPR_ATTR_UNUSED wLog* log,
+                                 wStream* s, const RDPDR_CAPABILITY_HEADER* header,
+                                 WINPR_ATTR_UNUSED const char* fkt)
 {
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(header);
@@ -1509,8 +1510,8 @@ static BOOL pf_channel_rdpdr_common_context_new(pf_channel_common_context* commo
 }
 
 static BOOL pf_channel_rdpdr_client_pass_message(pServerContext* ps, pClientContext* pc,
-                                                 UINT16 channelId, const char* channel_name,
-                                                 wStream* s)
+                                                 WINPR_ATTR_UNUSED UINT16 channelId,
+                                                 const char* channel_name, wStream* s)
 {
 	pf_channel_client_context* rdpdr = NULL;
 
