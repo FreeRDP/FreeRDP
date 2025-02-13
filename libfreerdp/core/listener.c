@@ -52,8 +52,9 @@
 
 #define TAG FREERDP_TAG("core.listener")
 
-static BOOL freerdp_listener_open_from_vsock(freerdp_listener* instance, const char* bind_address,
-                                             UINT16 port)
+static BOOL freerdp_listener_open_from_vsock(WINPR_ATTR_UNUSED freerdp_listener* instance,
+                                             WINPR_ATTR_UNUSED const char* bind_address,
+                                             WINPR_ATTR_UNUSED UINT16 port)
 {
 #if defined(HAVE_AF_VSOCK_H)
 	rdpListener* listener = (rdpListener*)instance->listener;
