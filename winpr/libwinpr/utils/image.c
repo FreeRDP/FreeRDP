@@ -715,6 +715,9 @@ SSIZE_T winpr_convert_from_jpeg(const BYTE* comp_data, size_t comp_data_bytes, U
 
 	size_t stride = 1ULL * cinfo.image_width * cinfo.num_components;
 
+	if ((stride == 0) || (cinfo.image_height == 0))
+		goto fail;
+
 	decomp_data = calloc(stride, cinfo.image_height);
 	if (decomp_data)
 	{

@@ -133,7 +133,7 @@ def write_getter(f, entry_dict, entry_type, entry_name, postfix, compat_dict):
     if isPointer:
         f.write(' freerdp_settings_get_pointer_writable(rdpSettings* settings, ' + typestr + ' id)\n')
     else:
-        f.write(' freerdp_settings_get_' + entry_name.lower() + '(const rdpSettings* settings, ' + typestr + ' id)\n')
+        f.write(' freerdp_settings_get_' + entry_name.lower() + '(WINPR_ATTR_UNUSED const rdpSettings* settings, WINPR_ATTR_UNUSED ' + typestr + ' id)\n')
     if isString or isPointer:
         ret = 'NULL';
     elif 'bool' in entry_name:
@@ -171,7 +171,7 @@ def write_setter(f, entry_dict, entry_type, entry_name, postfix):
     typestr = typestr.replace('_Uint', '_UInt')
     f.write('BOOL freerdp_settings_set_' + entry_name.lower())
     f.write(postfix)
-    f.write('(rdpSettings* settings, ' + typestr + ' id, ')
+    f.write('(WINPR_ATTR_UNUSED rdpSettings* settings, WINPR_ATTR_UNUSED ' + typestr + ' id, ')
     if isString or isPointer:
         f.write('const ')
     if not isPointer:

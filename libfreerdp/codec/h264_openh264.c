@@ -411,7 +411,8 @@ static int openh264_compress(H264_CONTEXT* WINPR_RESTRICT h264,
 	{
 		for (int j = 0; j < info.sLayerInfo[i].iNalCount; j++)
 		{
-			*pDstSize += info.sLayerInfo[i].pNalLengthInByte[j];
+			const int val = info.sLayerInfo[i].pNalLengthInByte[j];
+			*pDstSize += WINPR_ASSERTING_INT_CAST(uint32_t, val);
 		}
 	}
 

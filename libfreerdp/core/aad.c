@@ -393,7 +393,7 @@ static char* aad_final_digest(rdpAad* aad, WINPR_DIGEST_CTX* ctx)
 	if (dsf <= 0)
 	{
 		WLog_Print(aad->log, WLOG_ERROR, "winpr_DigestSign_Final failed with %d", dsf);
-		return FALSE;
+		return NULL;
 	}
 
 	char* buffer = calloc(siglen + 1, sizeof(char));

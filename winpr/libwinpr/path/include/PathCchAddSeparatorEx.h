@@ -1,4 +1,6 @@
 
+#include <winpr/wtypes.h>
+
 /*
 #define DEFINE_UNICODE			FALSE
 #define CUR_PATH_SEPARATOR_CHR		'\\'

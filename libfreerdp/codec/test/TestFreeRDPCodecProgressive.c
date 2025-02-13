@@ -1176,7 +1176,7 @@ static void free_cmd(RDPGFX_SURFACE_COMMAND* cmd)
 	free(cmd->data);
 }
 
-static WINPR_NORETURN(void usage(const char* name))
+WINPR_NORETURN(static void usage(const char* name))
 {
 	FILE* fp = stdout;
 	(void)fprintf(fp, "%s <directory> <width> <height>\n", name);

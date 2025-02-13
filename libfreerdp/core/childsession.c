@@ -543,7 +543,7 @@ BIO* createChildSessionBio(void)
 	if (!bufferedBio)
 	{
 		BIO_free_all(lowLevelBio);
-		return FALSE;
+		return NULL;
 	}
 
 	bufferedBio = BIO_push(bufferedBio, lowLevelBio);

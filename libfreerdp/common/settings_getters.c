@@ -51,7 +51,8 @@ static BOOL update_string_(char** current, char* next, size_t next_len)
 	return !next || (*current != NULL);
 }
 
-BOOL freerdp_settings_get_bool(const rdpSettings* settings, FreeRDP_Settings_Keys_Bool id)
+BOOL freerdp_settings_get_bool(WINPR_ATTR_UNUSED const rdpSettings* settings,
+                               WINPR_ATTR_UNUSED FreeRDP_Settings_Keys_Bool id)
 {
 	WINPR_ASSERT(settings);
 
@@ -648,7 +649,8 @@ BOOL freerdp_settings_get_bool(const rdpSettings* settings, FreeRDP_Settings_Key
 	}
 }
 
-BOOL freerdp_settings_set_bool(rdpSettings* settings, FreeRDP_Settings_Keys_Bool id, BOOL val)
+BOOL freerdp_settings_set_bool(WINPR_ATTR_UNUSED rdpSettings* settings,
+                               WINPR_ATTR_UNUSED FreeRDP_Settings_Keys_Bool id, BOOL val)
 {
 	union
 	{
@@ -1448,7 +1450,8 @@ BOOL freerdp_settings_set_bool(rdpSettings* settings, FreeRDP_Settings_Keys_Bool
 	return TRUE;
 }
 
-UINT16 freerdp_settings_get_uint16(const rdpSettings* settings, FreeRDP_Settings_Keys_UInt16 id)
+UINT16 freerdp_settings_get_uint16(WINPR_ATTR_UNUSED const rdpSettings* settings,
+                                   WINPR_ATTR_UNUSED FreeRDP_Settings_Keys_UInt16 id)
 {
 	WINPR_ASSERT(settings);
 
@@ -1502,7 +1505,8 @@ UINT16 freerdp_settings_get_uint16(const rdpSettings* settings, FreeRDP_Settings
 	}
 }
 
-BOOL freerdp_settings_set_uint16(rdpSettings* settings, FreeRDP_Settings_Keys_UInt16 id, UINT16 val)
+BOOL freerdp_settings_set_uint16(WINPR_ATTR_UNUSED rdpSettings* settings,
+                                 WINPR_ATTR_UNUSED FreeRDP_Settings_Keys_UInt16 id, UINT16 val)
 {
 	union
 	{
@@ -1578,7 +1582,8 @@ BOOL freerdp_settings_set_uint16(rdpSettings* settings, FreeRDP_Settings_Keys_UI
 	return TRUE;
 }
 
-INT16 freerdp_settings_get_int16(const rdpSettings* settings, FreeRDP_Settings_Keys_Int16 id)
+INT16 freerdp_settings_get_int16(WINPR_ATTR_UNUSED const rdpSettings* settings,
+                                 WINPR_ATTR_UNUSED FreeRDP_Settings_Keys_Int16 id)
 {
 	WINPR_ASSERT(settings);
 
@@ -1593,7 +1598,8 @@ INT16 freerdp_settings_get_int16(const rdpSettings* settings, FreeRDP_Settings_K
 	}
 }
 
-BOOL freerdp_settings_set_int16(rdpSettings* settings, FreeRDP_Settings_Keys_Int16 id, INT16 val)
+BOOL freerdp_settings_set_int16(WINPR_ATTR_UNUSED rdpSettings* settings,
+                                WINPR_ATTR_UNUSED FreeRDP_Settings_Keys_Int16 id, INT16 val)
 {
 	union
 	{
@@ -1617,7 +1623,8 @@ BOOL freerdp_settings_set_int16(rdpSettings* settings, FreeRDP_Settings_Keys_Int
 	return TRUE;
 }
 
-UINT32 freerdp_settings_get_uint32(const rdpSettings* settings, FreeRDP_Settings_Keys_UInt32 id)
+UINT32 freerdp_settings_get_uint32(WINPR_ATTR_UNUSED const rdpSettings* settings,
+                                   WINPR_ATTR_UNUSED FreeRDP_Settings_Keys_UInt32 id)
 {
 	WINPR_ASSERT(settings);
 
@@ -2010,7 +2017,8 @@ UINT32 freerdp_settings_get_uint32(const rdpSettings* settings, FreeRDP_Settings
 	}
 }
 
-BOOL freerdp_settings_set_uint32(rdpSettings* settings, FreeRDP_Settings_Keys_UInt32 id, UINT32 val)
+BOOL freerdp_settings_set_uint32(WINPR_ATTR_UNUSED rdpSettings* settings,
+                                 WINPR_ATTR_UNUSED FreeRDP_Settings_Keys_UInt32 id, UINT32 val)
 {
 	union
 	{
@@ -2530,7 +2538,8 @@ BOOL freerdp_settings_set_uint32(rdpSettings* settings, FreeRDP_Settings_Keys_UI
 	return TRUE;
 }
 
-INT32 freerdp_settings_get_int32(const rdpSettings* settings, FreeRDP_Settings_Keys_Int32 id)
+INT32 freerdp_settings_get_int32(WINPR_ATTR_UNUSED const rdpSettings* settings,
+                                 WINPR_ATTR_UNUSED FreeRDP_Settings_Keys_Int32 id)
 {
 	WINPR_ASSERT(settings);
 
@@ -2557,7 +2566,8 @@ INT32 freerdp_settings_get_int32(const rdpSettings* settings, FreeRDP_Settings_K
 	}
 }
 
-BOOL freerdp_settings_set_int32(rdpSettings* settings, FreeRDP_Settings_Keys_Int32 id, INT32 val)
+BOOL freerdp_settings_set_int32(WINPR_ATTR_UNUSED rdpSettings* settings,
+                                WINPR_ATTR_UNUSED FreeRDP_Settings_Keys_Int32 id, INT32 val)
 {
 	union
 	{
@@ -2597,7 +2607,8 @@ BOOL freerdp_settings_set_int32(rdpSettings* settings, FreeRDP_Settings_Keys_Int
 	return TRUE;
 }
 
-UINT64 freerdp_settings_get_uint64(const rdpSettings* settings, FreeRDP_Settings_Keys_UInt64 id)
+UINT64 freerdp_settings_get_uint64(WINPR_ATTR_UNUSED const rdpSettings* settings,
+                                   WINPR_ATTR_UNUSED FreeRDP_Settings_Keys_UInt64 id)
 {
 	WINPR_ASSERT(settings);
 
@@ -2615,7 +2626,8 @@ UINT64 freerdp_settings_get_uint64(const rdpSettings* settings, FreeRDP_Settings
 	}
 }
 
-BOOL freerdp_settings_set_uint64(rdpSettings* settings, FreeRDP_Settings_Keys_UInt64 id, UINT64 val)
+BOOL freerdp_settings_set_uint64(WINPR_ATTR_UNUSED rdpSettings* settings,
+                                 WINPR_ATTR_UNUSED FreeRDP_Settings_Keys_UInt64 id, UINT64 val)
 {
 	union
 	{
@@ -2643,7 +2655,8 @@ BOOL freerdp_settings_set_uint64(rdpSettings* settings, FreeRDP_Settings_Keys_UI
 	return TRUE;
 }
 
-INT64 freerdp_settings_get_int64(const rdpSettings* settings, FreeRDP_Settings_Keys_Int64 id)
+INT64 freerdp_settings_get_int64(WINPR_ATTR_UNUSED const rdpSettings* settings,
+                                 WINPR_ATTR_UNUSED FreeRDP_Settings_Keys_Int64 id)
 {
 	WINPR_ASSERT(settings);
 
@@ -2658,7 +2671,8 @@ INT64 freerdp_settings_get_int64(const rdpSettings* settings, FreeRDP_Settings_K
 	}
 }
 
-BOOL freerdp_settings_set_int64(rdpSettings* settings, FreeRDP_Settings_Keys_Int64 id, INT64 val)
+BOOL freerdp_settings_set_int64(WINPR_ATTR_UNUSED rdpSettings* settings,
+                                WINPR_ATTR_UNUSED FreeRDP_Settings_Keys_Int64 id, INT64 val)
 {
 	union
 	{
@@ -2682,8 +2696,8 @@ BOOL freerdp_settings_set_int64(rdpSettings* settings, FreeRDP_Settings_Keys_Int
 	return TRUE;
 }
 
-const char* freerdp_settings_get_string(const rdpSettings* settings,
-                                        FreeRDP_Settings_Keys_String id)
+const char* freerdp_settings_get_string(WINPR_ATTR_UNUSED const rdpSettings* settings,
+                                        WINPR_ATTR_UNUSED FreeRDP_Settings_Keys_String id)
 {
 	WINPR_ASSERT(settings);
 
@@ -3313,7 +3327,8 @@ char* freerdp_settings_get_string_writable(rdpSettings* settings, FreeRDP_Settin
 	}
 }
 
-BOOL freerdp_settings_set_string_(rdpSettings* settings, FreeRDP_Settings_Keys_String id,
+BOOL freerdp_settings_set_string_(WINPR_ATTR_UNUSED rdpSettings* settings,
+                                  WINPR_ATTR_UNUSED FreeRDP_Settings_Keys_String id,
                                   const char* val, size_t len)
 {
 	union
@@ -3653,7 +3668,8 @@ BOOL freerdp_settings_set_string(rdpSettings* settings, FreeRDP_Settings_Keys_St
 	return freerdp_settings_set_string_copy_(settings, id, val, len, TRUE);
 }
 
-BOOL freerdp_settings_set_string_copy_(rdpSettings* settings, FreeRDP_Settings_Keys_String id,
+BOOL freerdp_settings_set_string_copy_(WINPR_ATTR_UNUSED rdpSettings* settings,
+                                       WINPR_ATTR_UNUSED FreeRDP_Settings_Keys_String id,
                                        const char* val, size_t len, BOOL cleanup)
 {
 	union
@@ -4092,7 +4108,8 @@ void* freerdp_settings_get_pointer_writable(rdpSettings* settings, FreeRDP_Setti
 	}
 }
 
-BOOL freerdp_settings_set_pointer(rdpSettings* settings, FreeRDP_Settings_Keys_Pointer id,
+BOOL freerdp_settings_set_pointer(WINPR_ATTR_UNUSED rdpSettings* settings,
+                                  WINPR_ATTR_UNUSED FreeRDP_Settings_Keys_Pointer id,
                                   const void* val)
 {
 	union
