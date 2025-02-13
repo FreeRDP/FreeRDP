@@ -144,10 +144,11 @@ static BOOL wlf_Pointer_SetDefault(rdpContext* context)
 	return TRUE;
 }
 
-static BOOL wlf_Pointer_SetPosition(rdpContext* context, UINT32 x, UINT32 y)
+static BOOL wlf_Pointer_SetPosition(WINPR_ATTR_UNUSED rdpContext* context,
+                                    WINPR_ATTR_UNUSED UINT32 x, WINPR_ATTR_UNUSED UINT32 y)
 {
 	// TODO
-	WLog_WARN(TAG, "not implemented");
+	WLog_ERR("TODO", "TODO: implement");
 	return TRUE;
 }
 

@@ -706,7 +706,7 @@ static UINT wlf_cliprdr_server_format_list(CliprdrClientContext* context,
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT
-wlf_cliprdr_server_format_list_response(CliprdrClientContext* context,
+wlf_cliprdr_server_format_list_response(WINPR_ATTR_UNUSED CliprdrClientContext* context,
                                         const CLIPRDR_FORMAT_LIST_RESPONSE* formatListResponse)
 {
 	WINPR_ASSERT(context);
