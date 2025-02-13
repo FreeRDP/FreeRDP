@@ -562,7 +562,8 @@ static UINT printer_process_irp_write(PRINTER_DEVICE* printer_dev, IRP* irp)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT printer_process_irp_device_control(PRINTER_DEVICE* printer_dev, IRP* irp)
+static UINT printer_process_irp_device_control(WINPR_ATTR_UNUSED PRINTER_DEVICE* printer_dev,
+                                               IRP* irp)
 {
 	WINPR_ASSERT(printer_dev);
 	WINPR_ASSERT(irp);

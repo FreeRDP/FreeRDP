@@ -195,7 +195,9 @@ static const char* call_to_string_proxy(BOOL client, UINT32 interfaceId, UINT32 
 	}
 }
 
-static const char* call_to_string_stub(BOOL client, UINT32 interfaceNr, UINT32 functionId)
+static const char* call_to_string_stub(WINPR_ATTR_UNUSED BOOL client,
+                                       WINPR_ATTR_UNUSED UINT32 interfaceNr,
+                                       WINPR_ATTR_UNUSED UINT32 functionId)
 {
 	return "QUERY_DEVICE_TEXT_RSP             [stub  |client]";
 }

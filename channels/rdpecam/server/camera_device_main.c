@@ -123,7 +123,8 @@ static UINT device_server_open_channel(device_server* device)
 	return Error;
 }
 
-static UINT device_server_handle_success_response(CameraDeviceServerContext* context, wStream* s,
+static UINT device_server_handle_success_response(CameraDeviceServerContext* context,
+                                                  WINPR_ATTR_UNUSED wStream* s,
                                                   const CAM_SHARED_MSG_HEADER* header)
 {
 	CAM_SUCCESS_RESPONSE pdu = { 0 };
@@ -747,9 +748,9 @@ static UINT device_server_write_and_send_header(CameraDeviceServerContext* conte
 	return device_server_packet_send(context, s);
 }
 
-static UINT
-device_send_activate_device_request_pdu(CameraDeviceServerContext* context,
-                                        const CAM_ACTIVATE_DEVICE_REQUEST* activateDeviceRequest)
+static UINT device_send_activate_device_request_pdu(
+    CameraDeviceServerContext* context,
+    WINPR_ATTR_UNUSED const CAM_ACTIVATE_DEVICE_REQUEST* activateDeviceRequest)
 {
 	WINPR_ASSERT(context);
 
@@ -758,15 +759,16 @@ device_send_activate_device_request_pdu(CameraDeviceServerContext* context,
 
 static UINT device_send_deactivate_device_request_pdu(
     CameraDeviceServerContext* context,
-    const CAM_DEACTIVATE_DEVICE_REQUEST* deactivateDeviceRequest)
+    WINPR_ATTR_UNUSED const CAM_DEACTIVATE_DEVICE_REQUEST* deactivateDeviceRequest)
 {
 	WINPR_ASSERT(context);
 
 	return device_server_write_and_send_header(context, CAM_MSG_ID_DeactivateDeviceRequest);
 }
 
-static UINT device_send_stream_list_request_pdu(CameraDeviceServerContext* context,
-                                                const CAM_STREAM_LIST_REQUEST* streamListRequest)
+static UINT device_send_stream_list_request_pdu(
+    CameraDeviceServerContext* context,
+    WINPR_ATTR_UNUSED const CAM_STREAM_LIST_REQUEST* streamListRequest)
 {
 	WINPR_ASSERT(context);
 
@@ -843,8 +845,9 @@ device_send_start_streams_request_pdu(CameraDeviceServerContext* context,
 	return device_server_packet_send(context, s);
 }
 
-static UINT device_send_stop_streams_request_pdu(CameraDeviceServerContext* context,
-                                                 const CAM_STOP_STREAMS_REQUEST* stopStreamsRequest)
+static UINT device_send_stop_streams_request_pdu(
+    CameraDeviceServerContext* context,
+    WINPR_ATTR_UNUSED const CAM_STOP_STREAMS_REQUEST* stopStreamsRequest)
 {
 	WINPR_ASSERT(context);
 
@@ -868,9 +871,9 @@ static UINT device_send_sample_request_pdu(CameraDeviceServerContext* context,
 	return device_server_packet_send(context, s);
 }
 
-static UINT
-device_send_property_list_request_pdu(CameraDeviceServerContext* context,
-                                      const CAM_PROPERTY_LIST_REQUEST* propertyListRequest)
+static UINT device_send_property_list_request_pdu(
+    CameraDeviceServerContext* context,
+    WINPR_ATTR_UNUSED const CAM_PROPERTY_LIST_REQUEST* propertyListRequest)
 {
 	WINPR_ASSERT(context);
 

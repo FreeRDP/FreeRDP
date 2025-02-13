@@ -568,7 +568,8 @@ static VOID VCAPITYPE rail_virtual_channel_open_event_ex(LPVOID lpUserParam, DWO
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rail_virtual_channel_event_connected(railPlugin* rail, LPVOID pData, UINT32 dataLength)
+static UINT rail_virtual_channel_event_connected(railPlugin* rail, WINPR_ATTR_UNUSED LPVOID pData,
+                                                 WINPR_ATTR_UNUSED UINT32 dataLength)
 {
 	RailClientContext* context = rail_get_client_interface(rail);
 	UINT status = CHANNEL_RC_OK;

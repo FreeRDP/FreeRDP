@@ -517,7 +517,7 @@ static UINT dvcman_channel_close(DVCMAN_CHANNEL* channel, BOOL perRequest, BOOL 
 	return error;
 }
 
-static DVCMAN_CHANNEL* dvcman_channel_new(drdynvcPlugin* drdynvc,
+static DVCMAN_CHANNEL* dvcman_channel_new(WINPR_ATTR_UNUSED drdynvcPlugin* drdynvc,
                                           IWTSVirtualChannelManager* pChannelMgr, UINT32 ChannelId,
                                           const char* ChannelName)
 {
@@ -828,7 +828,7 @@ static UINT dvcman_receive_channel_data_first(DVCMAN_CHANNEL* channel, UINT32 le
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT dvcman_receive_channel_data(DVCMAN_CHANNEL* channel, wStream* data,
-                                        UINT32 ThreadingFlags)
+                                        WINPR_ATTR_UNUSED UINT32 ThreadingFlags)
 {
 	UINT status = CHANNEL_RC_OK;
 	size_t dataSize = Stream_GetRemainingLength(data);

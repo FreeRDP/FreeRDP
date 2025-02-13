@@ -639,8 +639,10 @@ static UINT audin_on_close(IWTSVirtualChannelCallback* pChannelCallback)
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT audin_on_new_channel_connection(IWTSListenerCallback* pListenerCallback,
-                                            IWTSVirtualChannel* pChannel, BYTE* Data,
-                                            BOOL* pbAccept, IWTSVirtualChannelCallback** ppCallback)
+                                            IWTSVirtualChannel* pChannel,
+                                            WINPR_ATTR_UNUSED BYTE* Data,
+                                            WINPR_ATTR_UNUSED BOOL* pbAccept,
+                                            IWTSVirtualChannelCallback** ppCallback)
 {
 	GENERIC_LISTENER_CALLBACK* listener_callback = (GENERIC_LISTENER_CALLBACK*)pListenerCallback;
 

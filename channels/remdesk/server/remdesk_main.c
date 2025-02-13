@@ -138,8 +138,9 @@ out:
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT remdesk_recv_ctl_version_info_pdu(RemdeskServerContext* context, wStream* s,
-                                              REMDESK_CHANNEL_HEADER* header)
+static UINT remdesk_recv_ctl_version_info_pdu(WINPR_ATTR_UNUSED RemdeskServerContext* context,
+                                              wStream* s,
+                                              WINPR_ATTR_UNUSED REMDESK_CHANNEL_HEADER* header)
 {
 	UINT32 versionMajor = 0;
 	UINT32 versionMinor = 0;
@@ -204,8 +205,8 @@ static UINT remdesk_recv_ctl_remote_control_desktop_pdu(RemdeskServerContext* co
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT remdesk_recv_ctl_authenticate_pdu(RemdeskServerContext* context, wStream* s,
-                                              REMDESK_CHANNEL_HEADER* header)
+static UINT remdesk_recv_ctl_authenticate_pdu(WINPR_ATTR_UNUSED RemdeskServerContext* context,
+                                              wStream* s, REMDESK_CHANNEL_HEADER* header)
 {
 	size_t cchTmpStringW = 0;
 	const WCHAR* expertBlobW = NULL;

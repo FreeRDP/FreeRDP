@@ -189,7 +189,8 @@ static void dataReceived(Plugin* plugin, void* pData, UINT32 dataLength, UINT32 
 		closeChannel(plugin);
 }
 
-static void VCAPITYPE VirtualChannelOpenEventEx(LPVOID lpUserParam, DWORD openHandle, UINT event,
+static void VCAPITYPE VirtualChannelOpenEventEx(LPVOID lpUserParam,
+                                                WINPR_ATTR_UNUSED DWORD openHandle, UINT event,
                                                 LPVOID pData, UINT32 dataLength, UINT32 totalLength,
                                                 UINT32 dataFlags)
 {
@@ -240,7 +241,8 @@ static void channel_initialized(Plugin* plugin)
 }
 
 static VOID VCAPITYPE VirtualChannelInitEventEx(LPVOID lpUserParam, LPVOID pInitHandle, UINT event,
-                                                LPVOID pData, UINT dataLength)
+                                                WINPR_ATTR_UNUSED LPVOID pData,
+                                                WINPR_ATTR_UNUSED UINT dataLength)
 {
 	Plugin* plugin = (Plugin*)lpUserParam;
 

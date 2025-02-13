@@ -24,8 +24,9 @@
 #define TAG FREERDP_TAG("genericdynvc")
 
 static UINT generic_on_new_channel_connection(IWTSListenerCallback* pListenerCallback,
-                                              IWTSVirtualChannel* pChannel, BYTE* Data,
-                                              BOOL* pbAccept,
+                                              IWTSVirtualChannel* pChannel,
+                                              WINPR_ATTR_UNUSED BYTE* Data,
+                                              WINPR_ATTR_UNUSED BOOL* pbAccept,
                                               IWTSVirtualChannelCallback** ppCallback)
 {
 	GENERIC_CHANNEL_CALLBACK* callback = NULL;

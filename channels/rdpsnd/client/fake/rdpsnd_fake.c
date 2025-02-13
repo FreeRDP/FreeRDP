@@ -38,16 +38,19 @@ typedef struct
 	rdpsndDevicePlugin device;
 } rdpsndFakePlugin;
 
-static BOOL rdpsnd_fake_open(rdpsndDevicePlugin* device, const AUDIO_FORMAT* format, UINT32 latency)
+static BOOL rdpsnd_fake_open(WINPR_ATTR_UNUSED rdpsndDevicePlugin* device,
+                             WINPR_ATTR_UNUSED const AUDIO_FORMAT* format,
+                             WINPR_ATTR_UNUSED UINT32 latency)
 {
 	return TRUE;
 }
 
-static void rdpsnd_fake_close(rdpsndDevicePlugin* device)
+static void rdpsnd_fake_close(WINPR_ATTR_UNUSED rdpsndDevicePlugin* device)
 {
 }
 
-static BOOL rdpsnd_fake_set_volume(rdpsndDevicePlugin* device, UINT32 value)
+static BOOL rdpsnd_fake_set_volume(WINPR_ATTR_UNUSED rdpsndDevicePlugin* device,
+                                   WINPR_ATTR_UNUSED UINT32 value)
 {
 	return TRUE;
 }
@@ -62,12 +65,14 @@ static void rdpsnd_fake_free(rdpsndDevicePlugin* device)
 	free(fake);
 }
 
-static BOOL rdpsnd_fake_format_supported(rdpsndDevicePlugin* device, const AUDIO_FORMAT* format)
+static BOOL rdpsnd_fake_format_supported(WINPR_ATTR_UNUSED rdpsndDevicePlugin* device,
+                                         WINPR_ATTR_UNUSED const AUDIO_FORMAT* format)
 {
 	return TRUE;
 }
 
-static UINT rdpsnd_fake_play(rdpsndDevicePlugin* device, const BYTE* data, size_t size)
+static UINT rdpsnd_fake_play(WINPR_ATTR_UNUSED rdpsndDevicePlugin* device,
+                             WINPR_ATTR_UNUSED const BYTE* data, WINPR_ATTR_UNUSED size_t size)
 {
 	return CHANNEL_RC_OK;
 }

@@ -150,8 +150,8 @@ error_out:
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT cliprdr_process_format_list_response(cliprdrPlugin* cliprdr, wStream* s, UINT32 dataLen,
-                                          UINT16 msgFlags)
+UINT cliprdr_process_format_list_response(cliprdrPlugin* cliprdr, WINPR_ATTR_UNUSED wStream* s,
+                                          UINT32 dataLen, UINT16 msgFlags)
 {
 	CLIPRDR_FORMAT_LIST_RESPONSE formatListResponse = { 0 };
 	CliprdrClientContext* context = cliprdr_get_client_interface(cliprdr);

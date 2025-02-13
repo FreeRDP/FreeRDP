@@ -444,7 +444,8 @@ static BOOL urbdrc_announce_devices(IUDEVMAN* udevman)
 	return error == ERROR_SUCCESS;
 }
 
-static UINT urbdrc_device_control_channel(GENERIC_CHANNEL_CALLBACK* callback, wStream* s)
+static UINT urbdrc_device_control_channel(GENERIC_CHANNEL_CALLBACK* callback,
+                                          WINPR_ATTR_UNUSED wStream* s)
 {
 	URBDRC_PLUGIN* urbdrc = (URBDRC_PLUGIN*)callback->plugin;
 	IUDEVMAN* udevman = urbdrc->udevman;
@@ -647,8 +648,9 @@ static UINT urbdrc_on_close(IWTSVirtualChannelCallback* pChannelCallback)
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT urbdrc_on_new_channel_connection(IWTSListenerCallback* pListenerCallback,
-                                             IWTSVirtualChannel* pChannel, BYTE* pData,
-                                             BOOL* pbAccept,
+                                             IWTSVirtualChannel* pChannel,
+                                             WINPR_ATTR_UNUSED BYTE* pData,
+                                             WINPR_ATTR_UNUSED BOOL* pbAccept,
                                              IWTSVirtualChannelCallback** ppCallback)
 {
 	GENERIC_LISTENER_CALLBACK* listener_callback = (GENERIC_LISTENER_CALLBACK*)pListenerCallback;

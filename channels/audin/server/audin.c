@@ -191,8 +191,8 @@ static UINT audin_server_recv_open_reply(audin_server_context* context, wStream*
 	return error;
 }
 
-static UINT audin_server_recv_data_incoming(audin_server_context* context, wStream* s,
-                                            const SNDIN_PDU* header)
+static UINT audin_server_recv_data_incoming(audin_server_context* context,
+                                            WINPR_ATTR_UNUSED wStream* s, const SNDIN_PDU* header)
 {
 	audin_server* audin = (audin_server*)context;
 	SNDIN_DATA_INCOMING pdu = { 0 };
@@ -794,8 +794,9 @@ static UINT audin_server_receive_format_change_default(audin_server_context* con
 	return CHANNEL_RC_OK;
 }
 
-static UINT audin_server_incoming_data_default(audin_server_context* context,
-                                               const SNDIN_DATA_INCOMING* data_incoming)
+static UINT
+audin_server_incoming_data_default(audin_server_context* context,
+                                   WINPR_ATTR_UNUSED const SNDIN_DATA_INCOMING* data_incoming)
 {
 	audin_server* audin = (audin_server*)context;
 	WINPR_ASSERT(audin);

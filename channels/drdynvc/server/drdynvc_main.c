@@ -31,7 +31,7 @@
 
 #define TAG CHANNELS_TAG("drdynvc.server")
 
-static DWORD WINAPI drdynvc_server_thread(LPVOID arg)
+static DWORD WINAPI drdynvc_server_thread(WINPR_ATTR_UNUSED LPVOID arg)
 {
 #if 0
 	wStream* s;

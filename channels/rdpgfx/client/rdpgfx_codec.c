@@ -37,7 +37,8 @@
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rdpgfx_read_h264_metablock(RDPGFX_PLUGIN* gfx, wStream* s, RDPGFX_H264_METABLOCK* meta)
+static UINT rdpgfx_read_h264_metablock(WINPR_ATTR_UNUSED RDPGFX_PLUGIN* gfx, wStream* s,
+                                       RDPGFX_H264_METABLOCK* meta)
 {
 	RECTANGLE_16* regionRect = NULL;
 	RDPGFX_H264_QUANT_QUALITY* quantQualityVal = NULL;

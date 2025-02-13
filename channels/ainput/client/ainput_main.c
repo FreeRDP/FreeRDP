@@ -145,7 +145,8 @@ static UINT ainput_on_close(IWTSVirtualChannelCallback* pChannelCallback)
 	return CHANNEL_RC_OK;
 }
 
-static UINT init_plugin_cb(GENERIC_DYNVC_PLUGIN* base, rdpContext* rcontext, rdpSettings* settings)
+static UINT init_plugin_cb(GENERIC_DYNVC_PLUGIN* base, WINPR_ATTR_UNUSED rdpContext* rcontext,
+                           WINPR_ATTR_UNUSED rdpSettings* settings)
 {
 	AINPUT_PLUGIN* ainput = (AINPUT_PLUGIN*)base;
 	AInputClientContext* context = (AInputClientContext*)calloc(1, sizeof(AInputClientContext));
