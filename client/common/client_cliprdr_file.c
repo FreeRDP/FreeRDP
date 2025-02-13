@@ -379,7 +379,7 @@ static BOOL maybe_steal_inode(const void* key, void* value, void* arg)
 	return TRUE;
 }
 
-static BOOL notify_delete_child(void* data, size_t index, va_list ap)
+static BOOL notify_delete_child(void* data, WINPR_ATTR_UNUSED size_t index, va_list ap)
 {
 	CliprdrFuseFile* child = data;
 
@@ -398,7 +398,7 @@ static BOOL notify_delete_child(void* data, size_t index, va_list ap)
 	return TRUE;
 }
 
-static BOOL invalidate_inode(void* data, size_t index, va_list ap)
+static BOOL invalidate_inode(void* data, WINPR_ATTR_UNUSED size_t index, va_list ap)
 {
 	CliprdrFuseFile* fuse_file = data;
 
@@ -517,7 +517,8 @@ static void clear_no_cdi_entry(CliprdrFileContext* file_context)
 	HashTable_Unlock(file_context->inode_table);
 }
 
-static BOOL clear_clip_data_entries(const void* key, void* value, void* arg)
+static BOOL clear_clip_data_entries(WINPR_ATTR_UNUSED const void* key, void* value,
+                                    WINPR_ATTR_UNUSED void* arg)
 {
 	clear_entry_selection(value);
 
@@ -657,8 +658,9 @@ static CliprdrFuseFile* get_fuse_file_by_ino(CliprdrFileContext* file_context, f
 	return HashTable_GetItemValue(file_context->inode_table, (void*)(uintptr_t)fuse_ino);
 }
 
-static CliprdrFuseFile* get_fuse_file_by_name_from_parent(CliprdrFileContext* file_context,
-                                                          CliprdrFuseFile* parent, const char* name)
+static CliprdrFuseFile*
+get_fuse_file_by_name_from_parent(WINPR_ATTR_UNUSED CliprdrFileContext* file_context,
+                                  CliprdrFuseFile* parent, const char* name)
 {
 	WINPR_ASSERT(file_context);
 	WINPR_ASSERT(parent);
@@ -834,7 +836,7 @@ static void cliprdr_file_fuse_lookup(fuse_req_t fuse_req, fuse_ino_t parent_ino,
 }
 
 static void cliprdr_file_fuse_getattr(fuse_req_t fuse_req, fuse_ino_t fuse_ino,
-                                      struct fuse_file_info* file_info)
+                                      WINPR_ATTR_UNUSED struct fuse_file_info* file_info)
 {
 	CliprdrFileContext* file_context = fuse_req_userdata(fuse_req);
 	CliprdrFuseFile* fuse_file = NULL;
@@ -956,7 +958,7 @@ static BOOL request_file_range_async(CliprdrFileContext* file_context, CliprdrFu
 }
 
 static void cliprdr_file_fuse_read(fuse_req_t fuse_req, fuse_ino_t fuse_ino, size_t size,
-                                   off_t offset, struct fuse_file_info* file_info)
+                                   off_t offset, WINPR_ATTR_UNUSED struct fuse_file_info* file_info)
 {
 	CliprdrFileContext* file_context = fuse_req_userdata(fuse_req);
 	CliprdrFuseFile* fuse_file = NULL;
@@ -1026,7 +1028,8 @@ static void cliprdr_file_fuse_opendir(fuse_req_t fuse_req, fuse_ino_t fuse_ino,
 }
 
 static void cliprdr_file_fuse_readdir(fuse_req_t fuse_req, fuse_ino_t fuse_ino, size_t max_size,
-                                      off_t offset, struct fuse_file_info* file_info)
+                                      off_t offset,
+                                      WINPR_ATTR_UNUSED struct fuse_file_info* file_info)
 {
 	CliprdrFileContext* file_context = fuse_req_userdata(fuse_req);
 	CliprdrFuseFile* fuse_file = NULL;
@@ -1317,7 +1320,7 @@ cliprdr_file_context_send_contents_response(CliprdrFileContext* file,
 	return file->context->ClientFileContentsResponse(file->context, &response);
 }
 
-static BOOL dump_streams(const void* key, void* value, void* arg)
+static BOOL dump_streams(const void* key, void* value, WINPR_ATTR_UNUSED void* arg)
 {
 	const UINT32* ukey = key;
 	CliprdrLocalStream* cur = value;
@@ -1767,7 +1770,7 @@ static char* get_parent_path(const char* filepath)
 	return parent_path;
 }
 
-static BOOL is_fuse_file_not_parent(const void* key, void* value, void* arg)
+static BOOL is_fuse_file_not_parent(WINPR_ATTR_UNUSED const void* key, void* value, void* arg)
 {
 	CliprdrFuseFile* fuse_file = value;
 	CliprdrFuseFindParentContext* find_context = arg;
