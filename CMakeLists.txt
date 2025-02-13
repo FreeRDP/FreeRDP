@@ -25,10 +25,6 @@ if(POLICY CMP0091)
 endif()
 project(FreeRDP LANGUAGES C)
 
-set(CMAKE_C_STANDARD 11)
-set(CMAKE_C_STANDARD_REQUIRED ON)
-set(CMAKE_C_EXTENSIONS ON)
-
 add_custom_target(fuzzers COMMENT "Build fuzzers")
 
 if(NOT DEFINED VENDOR)
@@ -59,6 +55,8 @@ endif()
 
 # Include our extra modules
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake/)
+
+include(ProjectCStandard)
 
 # Check for cmake compatibility (enable/disable features)
 include(CheckCmakeCompat)

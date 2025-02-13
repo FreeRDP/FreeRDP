@@ -33,11 +33,9 @@ project(proxy-bitmap-filter-plugin VERSION ${FREERDP_DEFAULT_PROJECT_VERSION} LA
 message("project ${PROJECT_NAME} is using version ${PROJECT_VERSION}")
 
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../../../../cmake/)
+include(ProjectCXXStandard)
 include(CommonConfigOptions)
 include(CXXCompilerFlags)
-
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(SRCS bitmap-filter.cpp)
 addtargetwithresourcefile(${PROJECT_NAME} FALSE "${PROJECT_VERSION}" SRCS FALSE)

@@ -1,0 +1,3 @@
+set(CMAKE_CXX_STANDARD 17 CACHE STRING "project default")
+set(CMAKE_CXX_STANDARD_REQUIRED ON CACHE BOOL "project default")
+set(CMAKE_CXX_EXTENSIONS ON CACHE BOOL "project default")

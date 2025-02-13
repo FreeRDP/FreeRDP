@@ -26,10 +26,7 @@ if(NOT FREERDP_UNIFIED_BUILD)
   endif()
   project(WinPR LANGUAGES C)
 
-  set(CMAKE_C_STANDARD 11)
-  set(CMAKE_C_STANDARD_REQUIRED ON)
-  set(CMAKE_C_EXTENSIONS ON)
-
+  include(ProjectCStandard)
   include(CommonConfigOptions)
   include(ConfigOptions)
 

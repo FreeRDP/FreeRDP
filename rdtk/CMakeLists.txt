@@ -23,13 +23,12 @@ set(RDTK_VERSION "${RDTK_VERSION_MAJOR}.${RDTK_VERSION_MINOR}.${RDTK_VERSION_REV
 set(RDTK_VERSION_FULL "${RDTK_VERSION}")
 set(RDTK_API_VERSION "${RDTK_VERSION_MAJOR}")
 
+set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../cmake/)
 if(NOT FREERDP_UNIFIED_BUILD)
   cmake_minimum_required(VERSION 3.13)
   project(RdTk VERSION ${RDTK_VERSION} LANGUAGES C)
 
-  set(CMAKE_C_STANDARD 11)
-  set(CMAKE_C_STANDARD_REQUIRED ON)
-  set(CMAKE_C_EXTENSIONS ON)
+  include(ProjectCStandard)
 
   set(WINPR_VERSION_MAJOR 3)
   option(BUILD_TESTING_INTERNAL "Build library unit tests" ON)
@@ -40,7 +39,6 @@ else()
 endif()
 
 # Include our extra modules
-set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../cmake/)
 include(CommonConfigOptions)
 
 # Include cmake modules
