@@ -523,7 +523,7 @@ UINT sdlClip::ReceiveServerFormatList(CliprdrClientContext* context,
 	return clipboard->SendFormatListResponse(rc);
 }
 
-UINT sdlClip::ReceiveFormatListResponse(CliprdrClientContext* context,
+UINT sdlClip::ReceiveFormatListResponse(WINPR_ATTR_UNUSED CliprdrClientContext* context,
                                         const CLIPRDR_FORMAT_LIST_RESPONSE* formatListResponse)
 {
 	WINPR_ASSERT(context);

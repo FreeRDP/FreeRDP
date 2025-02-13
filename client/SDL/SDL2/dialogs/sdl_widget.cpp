@@ -42,7 +42,8 @@ static const SDL_Color backgroundcolor = { 0x38, 0x36, 0x35, 0xff };
 
 static const Uint32 hpadding = 10;
 
-SdlWidget::SdlWidget(SDL_Renderer* renderer, SDL_Rect rect, bool input) : _rect(rect), _input(input)
+SdlWidget::SdlWidget([[maybe_unused]] SDL_Renderer* renderer, SDL_Rect rect, bool input)
+    : _rect(rect), _input(input)
 {
 	assert(renderer);
 

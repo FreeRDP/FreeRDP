@@ -201,7 +201,8 @@ BOOL sdl_choose_smartcard(freerdp* instance, SmartcardCertInfo** cert_list, DWOR
 	return res;
 }
 
-SSIZE_T sdl_retry_dialog(freerdp* instance, const char* what, size_t current, void* userarg)
+SSIZE_T sdl_retry_dialog(freerdp* instance, const char* what, size_t current,
+                         [[maybe_unused]] void* userarg)
 {
 	WINPR_ASSERT(instance);
 	WINPR_ASSERT(instance->context);
@@ -254,8 +255,9 @@ SSIZE_T sdl_retry_dialog(freerdp* instance, const char* what, size_t current, vo
 	return WINPR_ASSERTING_INT_CAST(ssize_t, delay);
 }
 
-BOOL sdl_present_gateway_message(freerdp* instance, UINT32 type, BOOL isDisplayMandatory,
-                                 BOOL isConsentMandatory, size_t length, const WCHAR* wmessage)
+BOOL sdl_present_gateway_message(freerdp* instance, [[maybe_unused]] UINT32 type,
+                                 BOOL isDisplayMandatory, BOOL isConsentMandatory, size_t length,
+                                 const WCHAR* wmessage)
 {
 	if (!isDisplayMandatory)
 		return TRUE;
