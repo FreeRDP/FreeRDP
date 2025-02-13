@@ -196,8 +196,9 @@ static int x11_shadow_pam_authenticate(rdpShadowSubsystem* subsystem, rdpShadowC
 
 #endif
 
-static BOOL x11_shadow_input_synchronize_event(rdpShadowSubsystem* subsystem,
-                                               rdpShadowClient* client, UINT32 flags)
+static BOOL x11_shadow_input_synchronize_event(WINPR_ATTR_UNUSED rdpShadowSubsystem* subsystem,
+                                               WINPR_ATTR_UNUSED rdpShadowClient* client,
+                                               WINPR_ATTR_UNUSED UINT32 flags)
 {
 	/* TODO: Implement */
 	WLog_WARN(TAG, "not implemented");
@@ -250,9 +251,10 @@ static BOOL x11_shadow_input_keyboard_event(rdpShadowSubsystem* subsystem, rdpSh
 	return TRUE;
 }
 
-static BOOL x11_shadow_input_unicode_keyboard_event(rdpShadowSubsystem* subsystem,
-                                                    rdpShadowClient* client, UINT16 flags,
-                                                    UINT16 code)
+static BOOL x11_shadow_input_unicode_keyboard_event(WINPR_ATTR_UNUSED rdpShadowSubsystem* subsystem,
+                                                    WINPR_ATTR_UNUSED rdpShadowClient* client,
+                                                    WINPR_ATTR_UNUSED UINT16 flags,
+                                                    WINPR_ATTR_UNUSED UINT16 code)
 {
 	/* TODO: Implement */
 	WLog_WARN(TAG, "not implemented");
