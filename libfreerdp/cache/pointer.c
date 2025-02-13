@@ -523,7 +523,7 @@ fail:
 	return NULL;
 }
 
-void free_pointer_new_update(rdpContext* context, POINTER_NEW_UPDATE* pointer)
+void free_pointer_new_update(WINPR_ATTR_UNUSED rdpContext* context, POINTER_NEW_UPDATE* pointer)
 {
 	if (!pointer)
 		return;

@@ -806,7 +806,7 @@ fail:
 	return NULL;
 }
 
-void free_cache_glyph_order(rdpContext* context, CACHE_GLYPH_ORDER* glyph)
+void free_cache_glyph_order(WINPR_ATTR_UNUSED rdpContext* context, CACHE_GLYPH_ORDER* glyph)
 {
 	if (glyph)
 	{
@@ -869,7 +869,7 @@ fail:
 	return NULL;
 }
 
-void free_cache_glyph_v2_order(rdpContext* context, CACHE_GLYPH_V2_ORDER* glyph)
+void free_cache_glyph_v2_order(WINPR_ATTR_UNUSED rdpContext* context, CACHE_GLYPH_V2_ORDER* glyph)
 {
 	if (glyph)
 	{

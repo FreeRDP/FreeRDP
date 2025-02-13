@@ -56,8 +56,11 @@ fail:
 
 #else
 
-BOOL jpeg_decompress(const BYTE* input, BYTE* output, int width, int height, int size, int bpp)
+BOOL jpeg_decompress(WINPR_ATTR_UNUSED const BYTE* input, WINPR_ATTR_UNUSED BYTE* output,
+                     WINPR_ATTR_UNUSED int width, WINPR_ATTR_UNUSED int height,
+                     WINPR_ATTR_UNUSED int size, WINPR_ATTR_UNUSED int bpp)
 {
+	WLog_ERR("TODO", "TODO: implement");
 	return 0;
 }
 

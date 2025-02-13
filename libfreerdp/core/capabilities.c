@@ -792,7 +792,8 @@ static BOOL rdp_print_order_capability_set(wStream* s)
 }
 #endif
 
-static BOOL rdp_apply_bitmap_cache_capability_set(rdpSettings* settings, const rdpSettings* src)
+static BOOL rdp_apply_bitmap_cache_capability_set(WINPR_ATTR_UNUSED rdpSettings* settings,
+                                                  WINPR_ATTR_UNUSED const rdpSettings* src)
 {
 	WINPR_ASSERT(settings);
 	WINPR_ASSERT(src);
@@ -913,7 +914,8 @@ static BOOL rdp_print_bitmap_cache_capability_set(wStream* s)
 }
 #endif
 
-static BOOL rdp_apply_control_capability_set(rdpSettings* settings, const rdpSettings* src)
+static BOOL rdp_apply_control_capability_set(WINPR_ATTR_UNUSED rdpSettings* settings,
+                                             WINPR_ATTR_UNUSED const rdpSettings* src)
 {
 	WINPR_ASSERT(settings);
 	WINPR_ASSERT(src);
@@ -982,8 +984,8 @@ static BOOL rdp_print_control_capability_set(wStream* s)
 }
 #endif
 
-static BOOL rdp_apply_window_activation_capability_set(rdpSettings* settings,
-                                                       const rdpSettings* src)
+static BOOL rdp_apply_window_activation_capability_set(WINPR_ATTR_UNUSED rdpSettings* settings,
+                                                       WINPR_ATTR_UNUSED const rdpSettings* src)
 {
 	WINPR_ASSERT(settings);
 	WINPR_ASSERT(src);
@@ -1164,7 +1166,8 @@ static BOOL rdp_print_pointer_capability_set(wStream* s)
 }
 #endif
 
-static BOOL rdp_apply_share_capability_set(rdpSettings* settings, const rdpSettings* src)
+static BOOL rdp_apply_share_capability_set(WINPR_ATTR_UNUSED rdpSettings* settings,
+                                           WINPR_ATTR_UNUSED const rdpSettings* src)
 {
 	WINPR_ASSERT(settings);
 	WINPR_ASSERT(src);
@@ -1227,7 +1230,8 @@ static BOOL rdp_print_share_capability_set(wStream* s)
 }
 #endif
 
-static BOOL rdp_apply_color_cache_capability_set(rdpSettings* settings, const rdpSettings* src)
+static BOOL rdp_apply_color_cache_capability_set(WINPR_ATTR_UNUSED rdpSettings* settings,
+                                                 WINPR_ATTR_UNUSED const rdpSettings* src)
 {
 	WINPR_ASSERT(settings);
 	WINPR_ASSERT(src);
@@ -1531,7 +1535,8 @@ static BOOL rdp_print_input_capability_set(wStream* s)
 }
 #endif
 
-static BOOL rdp_apply_font_capability_set(rdpSettings* settings, const rdpSettings* src)
+static BOOL rdp_apply_font_capability_set(WINPR_ATTR_UNUSED rdpSettings* settings,
+                                          WINPR_ATTR_UNUSED const rdpSettings* src)
 {
 	WINPR_ASSERT(settings);
 	WINPR_ASSERT(src);

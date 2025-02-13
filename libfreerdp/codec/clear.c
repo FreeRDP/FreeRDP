@@ -1150,8 +1150,11 @@ fail:
 	return rc;
 }
 
-int clear_compress(CLEAR_CONTEXT* WINPR_RESTRICT clear, const BYTE* WINPR_RESTRICT pSrcData,
-                   UINT32 SrcSize, BYTE** WINPR_RESTRICT ppDstData, UINT32* WINPR_RESTRICT pDstSize)
+int clear_compress(WINPR_ATTR_UNUSED CLEAR_CONTEXT* WINPR_RESTRICT clear,
+                   WINPR_ATTR_UNUSED const BYTE* WINPR_RESTRICT pSrcData,
+                   WINPR_ATTR_UNUSED UINT32 SrcSize,
+                   WINPR_ATTR_UNUSED BYTE** WINPR_RESTRICT ppDstData,
+                   WINPR_ATTR_UNUSED UINT32* WINPR_RESTRICT pDstSize)
 {
 	WLog_ERR(TAG, "TODO: not implemented!");
 	return 1;

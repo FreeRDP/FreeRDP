@@ -381,10 +381,10 @@ out:
 }
 #endif /* _WIN32 */
 
-static BOOL list_provider_keys(const rdpSettings* settings, NCRYPT_PROV_HANDLE provider,
-                               LPCWSTR csp, LPCWSTR scope, const char* userFilter,
-                               const char* domainFilter, SmartcardCertInfo*** pcerts,
-                               size_t* pcount)
+static BOOL list_provider_keys(WINPR_ATTR_UNUSED const rdpSettings* settings,
+                               NCRYPT_PROV_HANDLE provider, LPCWSTR csp, LPCWSTR scope,
+                               const char* userFilter, const char* domainFilter,
+                               SmartcardCertInfo*** pcerts, size_t* pcount)
 {
 	BOOL ret = FALSE;
 	NCryptKeyName* keyName = NULL;

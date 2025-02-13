@@ -780,7 +780,7 @@ BOOL nego_recv_response(rdpNego* nego)
  * @return \b 0 for success, \b -1 for failure
  */
 
-int nego_recv(rdpTransport* transport, wStream* s, void* extra)
+int nego_recv(WINPR_ATTR_UNUSED rdpTransport* transport, wStream* s, void* extra)
 {
 	BYTE li = 0;
 	BYTE type = 0;
@@ -1160,7 +1160,7 @@ fail:
 	return rc;
 }
 
-static BOOL nego_process_correlation_info(rdpNego* nego, wStream* s)
+static BOOL nego_process_correlation_info(WINPR_ATTR_UNUSED rdpNego* nego, wStream* s)
 {
 	UINT8 type = 0;
 	UINT8 flags = 0;

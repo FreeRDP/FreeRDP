@@ -109,8 +109,9 @@ BOOL avc420_ensure_buffer(H264_CONTEXT* h264, UINT32 stride, UINT32 width, UINT3
 }
 
 INT32 avc420_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT32 SrcSize, BYTE* pDstData,
-                        DWORD DstFormat, UINT32 nDstStep, UINT32 nDstWidth, UINT32 nDstHeight,
-                        const RECTANGLE_16* regionRects, UINT32 numRegionRects)
+                        DWORD DstFormat, UINT32 nDstStep, WINPR_ATTR_UNUSED UINT32 nDstWidth,
+                        WINPR_ATTR_UNUSED UINT32 nDstHeight, const RECTANGLE_16* regionRects,
+                        UINT32 numRegionRects)
 {
 	int status = 0;
 	const BYTE* pYUVData[3];
@@ -511,8 +512,8 @@ fail:
 
 static BOOL avc444_process_rects(H264_CONTEXT* h264, const BYTE* pSrcData, UINT32 SrcSize,
                                  BYTE* pDstData, UINT32 DstFormat, UINT32 nDstStep,
-                                 UINT32 nDstWidth, UINT32 nDstHeight, const RECTANGLE_16* rects,
-                                 UINT32 nrRects, avc444_frame_type type)
+                                 WINPR_ATTR_UNUSED UINT32 nDstWidth, UINT32 nDstHeight,
+                                 const RECTANGLE_16* rects, UINT32 nrRects, avc444_frame_type type)
 {
 	const BYTE* pYUVData[3];
 	BYTE* pYUVDstData[3];
@@ -640,7 +641,9 @@ INT32 avc444_decompress(H264_CONTEXT* h264, BYTE op, const RECTANGLE_16* regionR
 static INIT_ONCE subsystems_once = INIT_ONCE_STATIC_INIT;
 static const H264_CONTEXT_SUBSYSTEM* subSystems[MAX_SUBSYSTEMS] = { 0 };
 
-static BOOL CALLBACK h264_register_subsystems(PINIT_ONCE once, PVOID param, PVOID* context)
+static BOOL CALLBACK h264_register_subsystems(WINPR_ATTR_UNUSED PINIT_ONCE once,
+                                              WINPR_ATTR_UNUSED PVOID param,
+                                              WINPR_ATTR_UNUSED PVOID* context)
 {
 	int i = 0;
 

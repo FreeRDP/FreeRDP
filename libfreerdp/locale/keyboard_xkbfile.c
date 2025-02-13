@@ -433,7 +433,7 @@ static int xkb_cmp(const void* pva, const void* pvb)
 
 static BOOL try_add(size_t offset, const char* xkb_keyname, DWORD* x11_keycode_to_rdp_scancode,
 
-                    size_t count)
+                    WINPR_ATTR_UNUSED size_t count)
 {
 	static BOOL initialized = FALSE;
 	static XKB_KEY_NAME_SCANCODE copy[ARRAYSIZE(XKB_KEY_NAME_SCANCODE_TABLE)] = { 0 };

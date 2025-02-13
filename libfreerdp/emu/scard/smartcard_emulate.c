@@ -1680,8 +1680,9 @@ LONG WINAPI Emulate_SCardConnectW(SmartcardEmulationContext* smartcard, SCARDCON
 }
 
 LONG WINAPI Emulate_SCardReconnect(SmartcardEmulationContext* smartcard, SCARDHANDLE hCard,
-                                   DWORD dwShareMode, DWORD dwPreferredProtocols,
-                                   DWORD dwInitialization, LPDWORD pdwActiveProtocol)
+                                   DWORD dwShareMode, WINPR_ATTR_UNUSED DWORD dwPreferredProtocols,
+                                   WINPR_ATTR_UNUSED DWORD dwInitialization,
+                                   LPDWORD pdwActiveProtocol)
 {
 	LONG status = scard_handle_valid(smartcard, hCard);
 

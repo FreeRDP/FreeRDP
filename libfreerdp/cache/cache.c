@@ -113,7 +113,8 @@ fail:
 	return NULL;
 }
 
-void free_cache_color_table_order(rdpContext* context, CACHE_COLOR_TABLE_ORDER* order)
+void free_cache_color_table_order(WINPR_ATTR_UNUSED rdpContext* context,
+                                  CACHE_COLOR_TABLE_ORDER* order)
 {
 	free(order);
 }
@@ -144,7 +145,7 @@ fail:
 	return NULL;
 }
 
-void free_surface_bits_command(rdpContext* context, SURFACE_BITS_COMMAND* order)
+void free_surface_bits_command(WINPR_ATTR_UNUSED rdpContext* context, SURFACE_BITS_COMMAND* order)
 {
 	if (order)
 		free(order->bmp.bitmapData);

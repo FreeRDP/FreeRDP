@@ -1234,7 +1234,7 @@ static BOOL rts_write_pdu_header(wStream* s, const rpcconn_rts_hdr_t* header)
 	return TRUE;
 }
 
-static BOOL rts_receive_window_size_command_read(rdpRpc* rpc, wStream* buffer,
+static BOOL rts_receive_window_size_command_read(WINPR_ATTR_UNUSED rdpRpc* rpc, wStream* buffer,
                                                  UINT64* ReceiveWindowSize)
 {
 	WINPR_ASSERT(rpc);
@@ -1320,7 +1320,7 @@ static BOOL rts_flow_control_ack_command_write(wStream* s, UINT32 BytesReceived,
 	return TRUE;
 }
 
-static BOOL rts_connection_timeout_command_read(rdpRpc* rpc, wStream* buffer,
+static BOOL rts_connection_timeout_command_read(WINPR_ATTR_UNUSED rdpRpc* rpc, wStream* buffer,
                                                 UINT64* ConnectionTimeout)
 {
 	WINPR_ASSERT(rpc);
@@ -1379,7 +1379,7 @@ static BOOL rts_client_keepalive_command_write(wStream* s, UINT32 ClientKeepaliv
 	return TRUE;
 }
 
-static BOOL rts_version_command_read(rdpRpc* rpc, wStream* buffer)
+static BOOL rts_version_command_read(WINPR_ATTR_UNUSED rdpRpc* rpc, wStream* buffer)
 {
 	WINPR_ASSERT(rpc);
 	WINPR_ASSERT(buffer);
@@ -1468,7 +1468,8 @@ static BOOL rts_association_group_id_command_write(wStream* s, const BYTE* Assoc
 	return TRUE;
 }
 
-static int rts_destination_command_read(rdpRpc* rpc, wStream* buffer, UINT32* Destination)
+static int rts_destination_command_read(WINPR_ATTR_UNUSED rdpRpc* rpc, wStream* buffer,
+                                        UINT32* Destination)
 {
 	UINT32 val = 0;
 	WINPR_ASSERT(rpc);
@@ -2181,7 +2182,7 @@ static int rts_recv_OUT_R1_A2_pdu(rdpRpc* rpc, wStream* buffer)
 	return 1;
 }
 
-static int rts_recv_OUT_R2_A6_pdu(rdpRpc* rpc, wStream* buffer)
+static int rts_recv_OUT_R2_A6_pdu(rdpRpc* rpc, WINPR_ATTR_UNUSED wStream* buffer)
 {
 	int status = 0;
 	RpcVirtualConnection* connection = NULL;
@@ -2216,7 +2217,7 @@ static int rts_recv_OUT_R2_A6_pdu(rdpRpc* rpc, wStream* buffer)
 	return 1;
 }
 
-static int rts_recv_OUT_R2_B3_pdu(rdpRpc* rpc, wStream* buffer)
+static int rts_recv_OUT_R2_B3_pdu(rdpRpc* rpc, WINPR_ATTR_UNUSED wStream* buffer)
 {
 	RpcVirtualConnection* connection = NULL;
 

@@ -215,8 +215,8 @@ static BOOL rdp_redirection_write_data(wStream* s, size_t length, const void* da
 	return TRUE;
 }
 
-static BOOL rdp_redirection_write_base64_wchar(UINT32 flag, wStream* s, size_t length,
-                                               const void* data)
+static BOOL rdp_redirection_write_base64_wchar(WINPR_ATTR_UNUSED UINT32 flag, wStream* s,
+                                               size_t length, const void* data)
 {
 	BOOL rc = FALSE;
 
@@ -933,7 +933,7 @@ void redirection_free(rdpRedirection* redirection)
 	}
 }
 
-static SSIZE_T redir_write_string(UINT32 flag, wStream* s, const char* str)
+static SSIZE_T redir_write_string(WINPR_ATTR_UNUSED UINT32 flag, wStream* s, const char* str)
 {
 	const size_t length = (strlen(str) + 1);
 	if (!Stream_EnsureRemainingCapacity(s, 4ull + length * sizeof(WCHAR)))
@@ -946,7 +946,8 @@ static SSIZE_T redir_write_string(UINT32 flag, wStream* s, const char* str)
 	return (SSIZE_T)(Stream_GetPosition(s) - pos);
 }
 
-static BOOL redir_write_data(UINT32 flag, wStream* s, UINT32 length, const BYTE* data)
+static BOOL redir_write_data(WINPR_ATTR_UNUSED UINT32 flag, wStream* s, UINT32 length,
+                             const BYTE* data)
 {
 	if (!Stream_EnsureRemainingCapacity(s, 4ull + length))
 		return FALSE;

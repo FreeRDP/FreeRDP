@@ -1717,7 +1717,7 @@ LONG smartcard_pack_redir_scard_context(wStream* s, const REDIR_SCARDCONTEXT* co
 	return SCARD_S_SUCCESS;
 }
 
-LONG smartcard_unpack_redir_scard_context_ref(wStream* s, UINT32 pbContextNdrPtr,
+LONG smartcard_unpack_redir_scard_context_ref(wStream* s, WINPR_ATTR_UNUSED UINT32 pbContextNdrPtr,
                                               REDIR_SCARDCONTEXT* context)
 {
 	UINT32 length = 0;

@@ -241,7 +241,8 @@ BOOL gdi_FillRect(HGDI_DC hdc, const HGDI_RECT rect, HGDI_BRUSH hbr)
  * @param nCount number of points
  * @return nonzero if successful, 0 otherwise
  */
-BOOL gdi_Polygon(HGDI_DC hdc, GDI_POINT* lpPoints, int nCount)
+BOOL gdi_Polygon(WINPR_ATTR_UNUSED HGDI_DC hdc, WINPR_ATTR_UNUSED GDI_POINT* lpPoints,
+                 WINPR_ATTR_UNUSED int nCount)
 {
 	WLog_ERR(TAG, "Not implemented!");
 	return FALSE;
@@ -256,7 +257,8 @@ BOOL gdi_Polygon(HGDI_DC hdc, GDI_POINT* lpPoints, int nCount)
  * @param nCount count of number of points in lpPolyCounts
  * @return nonzero if successful, 0 otherwise
  */
-BOOL gdi_PolyPolygon(HGDI_DC hdc, GDI_POINT* lpPoints, int* lpPolyCounts, int nCount)
+BOOL gdi_PolyPolygon(WINPR_ATTR_UNUSED HGDI_DC hdc, WINPR_ATTR_UNUSED GDI_POINT* lpPoints,
+                     WINPR_ATTR_UNUSED int* lpPolyCounts, WINPR_ATTR_UNUSED int nCount)
 {
 	WLog_ERR(TAG, "Not implemented!");
 	return FALSE;

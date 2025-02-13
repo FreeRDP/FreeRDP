@@ -444,8 +444,8 @@ static UINT32 nsc_compute_byte_count(NSC_CONTEXT* WINPR_RESTRICT context,
 	return maxPlaneSize;
 }
 
-BOOL nsc_write_message(NSC_CONTEXT* WINPR_RESTRICT context, wStream* WINPR_RESTRICT s,
-                       const NSC_MESSAGE* WINPR_RESTRICT message)
+BOOL nsc_write_message(WINPR_ATTR_UNUSED NSC_CONTEXT* WINPR_RESTRICT context,
+                       wStream* WINPR_RESTRICT s, const NSC_MESSAGE* WINPR_RESTRICT message)
 {
 	UINT32 totalPlaneByteCount = 0;
 	totalPlaneByteCount = message->LumaPlaneByteCount + message->OrangeChromaPlaneByteCount +

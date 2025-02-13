@@ -351,7 +351,7 @@ BOOL ber_read_enumerated(wStream* s, BYTE* enumerated, BYTE count)
 	return TRUE;
 }
 
-void ber_write_enumerated(wStream* s, BYTE enumerated, BYTE count)
+void ber_write_enumerated(wStream* s, BYTE enumerated, WINPR_ATTR_UNUSED BYTE count)
 {
 	ber_write_universal_tag(s, BER_TAG_ENUMERATED, FALSE);
 	ber_write_length(s, 1);

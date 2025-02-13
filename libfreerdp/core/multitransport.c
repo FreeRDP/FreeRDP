@@ -185,15 +185,17 @@ state_run_t multitransport_recv_response(rdpMultitransport* multi, wStream* s)
 	return IFCALLRESULT(STATE_RUN_SUCCESS, multi->MtResponse, multi, requestId, hr);
 }
 
-static state_run_t multitransport_no_udp(rdpMultitransport* multi, UINT32 reqId, UINT16 reqProto,
-                                         const BYTE* cookie)
+static state_run_t multitransport_no_udp(rdpMultitransport* multi, UINT32 reqId,
+                                         WINPR_ATTR_UNUSED UINT16 reqProto,
+                                         WINPR_ATTR_UNUSED const BYTE* cookie)
 {
 	return multitransport_client_send_response(multi, reqId, E_ABORT) ? STATE_RUN_SUCCESS
 	                                                                  : STATE_RUN_FAILED;
 }
 
-static state_run_t multitransport_server_handle_response(rdpMultitransport* multi, UINT32 reqId,
-                                                         UINT32 hrResponse)
+static state_run_t multitransport_server_handle_response(rdpMultitransport* multi,
+                                                         WINPR_ATTR_UNUSED UINT32 reqId,
+                                                         WINPR_ATTR_UNUSED UINT32 hrResponse)
 {
 	rdpRdp* rdp = multi->rdp;
 
@@ -203,7 +205,7 @@ static state_run_t multitransport_server_handle_response(rdpMultitransport* mult
 	return STATE_RUN_CONTINUE;
 }
 
-rdpMultitransport* multitransport_new(rdpRdp* rdp, UINT16 protocol)
+rdpMultitransport* multitransport_new(rdpRdp* rdp, WINPR_ATTR_UNUSED UINT16 protocol)
 {
 	WINPR_ASSERT(rdp);
 

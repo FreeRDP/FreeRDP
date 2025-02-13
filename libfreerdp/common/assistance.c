@@ -675,7 +675,7 @@ static BOOL freerdp_assistance_parse_all_elements_of(rdpAssistanceFile* file, ch
 }
 
 static BOOL freerdp_assistance_parse_all_elements_of_l(rdpAssistanceFile* file, char* data,
-                                                       size_t len)
+                                                       WINPR_ATTR_UNUSED size_t len)
 {
 	UINT32 p = 0;
 	const char* n = NULL;
@@ -803,7 +803,7 @@ char* freerdp_assistance_construct_expert_blob(const char* name, const char* pas
 	return ExpertBlob;
 }
 
-char* freerdp_assistance_generate_pass_stub(DWORD flags)
+char* freerdp_assistance_generate_pass_stub(WINPR_ATTR_UNUSED DWORD flags)
 {
 	UINT32 nums[14];
 	char* passStub = NULL;

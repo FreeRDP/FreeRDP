@@ -130,7 +130,8 @@ static const char* autodetect_request_type_to_string_buffer(UINT32 requestType, 
 }
 
 static BOOL autodetect_send_rtt_measure_request(rdpAutoDetect* autodetect,
-                                                RDP_TRANSPORT_TYPE transport, UINT16 sequenceNumber)
+                                                WINPR_ATTR_UNUSED RDP_TRANSPORT_TYPE transport,
+                                                UINT16 sequenceNumber)
 {
 	UINT16 requestType = 0;
 	wStream* s = NULL;
@@ -179,7 +180,7 @@ static BOOL autodetect_send_rtt_measure_response(rdpAutoDetect* autodetect, UINT
 }
 
 static BOOL autodetect_send_bandwidth_measure_start(rdpAutoDetect* autodetect,
-                                                    RDP_TRANSPORT_TYPE transport,
+                                                    WINPR_ATTR_UNUSED RDP_TRANSPORT_TYPE transport,
                                                     UINT16 sequenceNumber)
 {
 	UINT16 requestType = 0;
@@ -206,9 +207,10 @@ static BOOL autodetect_send_bandwidth_measure_start(rdpAutoDetect* autodetect,
 	return rdp_send_message_channel_pdu(autodetect->context->rdp, s, SEC_AUTODETECT_REQ);
 }
 
-static BOOL autodetect_send_bandwidth_measure_payload(rdpAutoDetect* autodetect,
-                                                      RDP_TRANSPORT_TYPE transport,
-                                                      UINT16 sequenceNumber, UINT16 payloadLength)
+static BOOL
+autodetect_send_bandwidth_measure_payload(rdpAutoDetect* autodetect,
+                                          WINPR_ATTR_UNUSED RDP_TRANSPORT_TYPE transport,
+                                          UINT16 sequenceNumber, UINT16 payloadLength)
 {
 	wStream* s = NULL;
 
@@ -246,7 +248,7 @@ static BOOL autodetect_send_bandwidth_measure_payload(rdpAutoDetect* autodetect,
 }
 
 static BOOL autodetect_send_bandwidth_measure_stop(rdpAutoDetect* autodetect,
-                                                   RDP_TRANSPORT_TYPE transport,
+                                                   WINPR_ATTR_UNUSED RDP_TRANSPORT_TYPE transport,
                                                    UINT16 sequenceNumber, UINT16 payloadLength)
 {
 	UINT16 requestType = 0;
@@ -354,7 +356,8 @@ static BOOL autodetect_send_bandwidth_measure_results(rdpAutoDetect* autodetect,
 	return rdp_send_message_channel_pdu(autodetect->context->rdp, s, SEC_AUTODETECT_RSP);
 }
 
-static BOOL autodetect_send_netchar_result(rdpAutoDetect* autodetect, RDP_TRANSPORT_TYPE transport,
+static BOOL autodetect_send_netchar_result(rdpAutoDetect* autodetect,
+                                           WINPR_ATTR_UNUSED RDP_TRANSPORT_TYPE transport,
                                            UINT16 sequenceNumber,
                                            const rdpNetworkCharacteristicsResult* result)
 {
@@ -436,7 +439,8 @@ autodetect_on_connect_time_auto_detect_progress_default(rdpAutoDetect* autodetec
 }
 
 static BOOL autodetect_recv_rtt_measure_request(rdpAutoDetect* autodetect,
-                                                RDP_TRANSPORT_TYPE transport, wStream* s,
+                                                WINPR_ATTR_UNUSED RDP_TRANSPORT_TYPE transport,
+                                                WINPR_ATTR_UNUSED wStream* s,
                                                 const AUTODETECT_REQ_PDU* autodetectReqPdu)
 {
 	WINPR_ASSERT(autodetect);
@@ -457,7 +461,8 @@ static BOOL autodetect_recv_rtt_measure_request(rdpAutoDetect* autodetect,
 }
 
 static BOOL autodetect_recv_rtt_measure_response(rdpAutoDetect* autodetect,
-                                                 RDP_TRANSPORT_TYPE transport, wStream* s,
+                                                 RDP_TRANSPORT_TYPE transport,
+                                                 WINPR_ATTR_UNUSED wStream* s,
                                                  const AUTODETECT_RSP_PDU* autodetectRspPdu)
 {
 	BOOL success = TRUE;
@@ -489,7 +494,8 @@ static BOOL autodetect_recv_rtt_measure_response(rdpAutoDetect* autodetect,
 }
 
 static BOOL autodetect_recv_bandwidth_measure_start(rdpAutoDetect* autodetect,
-                                                    RDP_TRANSPORT_TYPE transport, wStream* s,
+                                                    WINPR_ATTR_UNUSED RDP_TRANSPORT_TYPE transport,
+                                                    WINPR_ATTR_UNUSED wStream* s,
                                                     const AUTODETECT_REQ_PDU* autodetectReqPdu)
 {
 	WINPR_ASSERT(autodetect);
@@ -519,9 +525,10 @@ static BOOL autodetect_recv_bandwidth_measure_start(rdpAutoDetect* autodetect,
 	return TRUE;
 }
 
-static BOOL autodetect_recv_bandwidth_measure_payload(rdpAutoDetect* autodetect,
-                                                      RDP_TRANSPORT_TYPE transport, wStream* s,
-                                                      const AUTODETECT_REQ_PDU* autodetectReqPdu)
+static BOOL
+autodetect_recv_bandwidth_measure_payload(rdpAutoDetect* autodetect,
+                                          WINPR_ATTR_UNUSED RDP_TRANSPORT_TYPE transport,
+                                          wStream* s, const AUTODETECT_REQ_PDU* autodetectReqPdu)
 {
 	UINT16 payloadLength = 0;
 

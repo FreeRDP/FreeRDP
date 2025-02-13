@@ -639,7 +639,8 @@ fail:
 	return rc;
 }
 
-static BOOL certificate_process_server_public_key(rdpCertificate* cert, wStream* s, UINT32 length)
+static BOOL certificate_process_server_public_key(rdpCertificate* cert, wStream* s,
+                                                  WINPR_ATTR_UNUSED UINT32 length)
 {
 	char magic[sizeof(rsa_magic)] = { 0 };
 	UINT32 keylen = 0;

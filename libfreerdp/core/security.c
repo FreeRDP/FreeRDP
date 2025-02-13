@@ -201,17 +201,16 @@ BOOL security_session_key_blob(const BYTE* master_secret, size_t master_len,
 	                            client_len, server_random, server_len, &output[32], out_len - 32);
 }
 
-void security_mac_salt_key(const BYTE* session_key_blob, size_t session_len,
-                           const BYTE* client_random, size_t client_len, const BYTE* server_random,
-                           size_t server_len, BYTE* output, size_t out_len)
+void security_mac_salt_key(const BYTE* session_key_blob, WINPR_ATTR_UNUSED size_t session_len,
+                           WINPR_ATTR_UNUSED const BYTE* client_random,
+                           WINPR_ATTR_UNUSED size_t client_len,
+                           WINPR_ATTR_UNUSED const BYTE* server_random,
+                           WINPR_ATTR_UNUSED size_t server_len, BYTE* output,
+                           WINPR_ATTR_UNUSED size_t out_len)
 {
 	/* MacSaltKey = First128Bits(SessionKeyBlob) */
 	WINPR_ASSERT(out_len >= 16);
 	WINPR_ASSERT(session_len >= 16);
-	WINPR_UNUSED(client_random);
-	WINPR_UNUSED(client_len);
-	WINPR_UNUSED(server_random);
-	WINPR_UNUSED(server_len);
 	memcpy(output, session_key_blob, 16);
 }
 
@@ -293,7 +292,7 @@ BOOL security_licensing_encryption_key(const BYTE* session_key_blob, size_t sess
 	                                        output, out_len);
 }
 
-static void security_UINT32_le(BYTE* output, size_t out_len, UINT32 value)
+static void security_UINT32_le(BYTE* output, WINPR_ATTR_UNUSED size_t out_len, UINT32 value)
 {
 	WINPR_ASSERT(output);
 	WINPR_ASSERT(out_len >= 4);
@@ -390,6 +389,8 @@ BOOL security_mac_signature(rdpRdp* rdp, const BYTE* data, UINT32 length, BYTE* 
 	WINPR_ASSERT(data || (length == 0));
 	WINPR_ASSERT(output);
 	WINPR_ASSERT(out_len >= 8);
+	if (out_len < 8)
+		return FALSE;
 
 	security_UINT32_le(length_le, sizeof(length_le), length); /* length must be little-endian */
 
@@ -459,6 +460,8 @@ BOOL security_salted_mac_signature(rdpRdp* rdp, const BYTE* data, UINT32 length,
 	WINPR_ASSERT(data || (length == 0));
 	WINPR_ASSERT(output);
 	WINPR_ASSERT(out_len >= 8);
+	if (out_len < 8)
+		return FALSE;
 
 	security_UINT32_le(length_le, sizeof(length_le), length); /* length must be little-endian */
 
@@ -565,7 +568,8 @@ static BOOL security_X(const BYTE* master_secret, size_t master_len, const BYTE*
 	                               out_len - 32);
 }
 
-static void fips_expand_key_bits(const BYTE* in, size_t in_len, BYTE* out, size_t out_len)
+static void fips_expand_key_bits(const BYTE* in, WINPR_ATTR_UNUSED size_t in_len, BYTE* out,
+                                 WINPR_ATTR_UNUSED size_t out_len)
 {
 	BYTE buf[21] = { 0 };
 
@@ -896,7 +900,8 @@ BOOL security_hmac_signature(const BYTE* data, size_t length, BYTE* output, size
 
 	WINPR_ASSERT(rdp);
 	WINPR_ASSERT(output);
-	WINPR_ASSERT(out_len >= 8);
+	if (out_len < 8)
+		return FALSE;
 
 	security_UINT32_le(use_count_le, sizeof(use_count_le), rdp->encrypt_use_count);
 

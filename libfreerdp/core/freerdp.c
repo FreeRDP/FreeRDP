@@ -318,7 +318,8 @@ BOOL freerdp_abort_connect_context(rdpContext* context)
 }
 
 #if defined(WITH_FREERDP_DEPRECATED)
-BOOL freerdp_get_fds(freerdp* instance, void** rfds, int* rcount, void** wfds, int* wcount)
+BOOL freerdp_get_fds(freerdp* instance, void** rfds, int* rcount, WINPR_ATTR_UNUSED void** wfds,
+                     WINPR_ATTR_UNUSED int* wcount)
 {
 	rdpRdp* rdp = NULL;
 

@@ -376,8 +376,11 @@ static int stream_dump_replay_transport_read(rdpTransport* transport, wStream* s
 	return 1;
 }
 
-static int stream_dump_replay_transport_tcp_connect(rdpContext* context, rdpSettings* settings,
-                                                    const char* hostname, int port, DWORD timeout)
+static int stream_dump_replay_transport_tcp_connect(WINPR_ATTR_UNUSED rdpContext* context,
+                                                    WINPR_ATTR_UNUSED rdpSettings* settings,
+                                                    WINPR_ATTR_UNUSED const char* hostname,
+                                                    WINPR_ATTR_UNUSED int port,
+                                                    WINPR_ATTR_UNUSED DWORD timeout)
 {
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(settings);
@@ -386,9 +389,9 @@ static int stream_dump_replay_transport_tcp_connect(rdpContext* context, rdpSett
 	return 42;
 }
 
-static rdpTransportLayer* stream_dump_replay_transport_connect_layer(rdpTransport* transport,
-                                                                     const char* hostname, int port,
-                                                                     DWORD timeout)
+static rdpTransportLayer* stream_dump_replay_transport_connect_layer(
+    WINPR_ATTR_UNUSED rdpTransport* transport, WINPR_ATTR_UNUSED const char* hostname,
+    WINPR_ATTR_UNUSED int port, WINPR_ATTR_UNUSED DWORD timeout)
 {
 	WINPR_ASSERT(transport);
 	WINPR_ASSERT(hostname);
@@ -396,13 +399,13 @@ static rdpTransportLayer* stream_dump_replay_transport_connect_layer(rdpTranspor
 	return NULL;
 }
 
-static BOOL stream_dump_replay_transport_tls_connect(rdpTransport* transport)
+static BOOL stream_dump_replay_transport_tls_connect(WINPR_ATTR_UNUSED rdpTransport* transport)
 {
 	WINPR_ASSERT(transport);
 	return TRUE;
 }
 
-static BOOL stream_dump_replay_transport_accept(rdpTransport* transport)
+static BOOL stream_dump_replay_transport_accept(WINPR_ATTR_UNUSED rdpTransport* transport)
 {
 	WINPR_ASSERT(transport);
 	return TRUE;

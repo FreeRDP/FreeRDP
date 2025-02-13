@@ -119,7 +119,7 @@ void palette_cache_free(rdpPaletteCache* paletteCache)
 	}
 }
 
-void free_palette_update(rdpContext* context, PALETTE_UPDATE* pointer)
+void free_palette_update(WINPR_ATTR_UNUSED rdpContext* context, PALETTE_UPDATE* pointer)
 {
 	free(pointer);
 }

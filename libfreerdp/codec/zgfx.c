@@ -416,7 +416,7 @@ static INLINE BOOL zgfx_append(ZGFX_CONTEXT* WINPR_RESTRICT zgfx,
 
 int zgfx_decompress(ZGFX_CONTEXT* WINPR_RESTRICT zgfx, const BYTE* WINPR_RESTRICT pSrcData,
                     UINT32 SrcSize, BYTE** WINPR_RESTRICT ppDstData,
-                    UINT32* WINPR_RESTRICT pDstSize, UINT32 flags)
+                    UINT32* WINPR_RESTRICT pDstSize, WINPR_ATTR_UNUSED UINT32 flags)
 {
 	int status = -1;
 	BYTE descriptor = 0;
@@ -498,9 +498,9 @@ fail:
 	return status;
 }
 
-static BOOL zgfx_compress_segment(ZGFX_CONTEXT* WINPR_RESTRICT zgfx, wStream* WINPR_RESTRICT s,
-                                  const BYTE* WINPR_RESTRICT pSrcData, UINT32 SrcSize,
-                                  UINT32* WINPR_RESTRICT pFlags)
+static BOOL zgfx_compress_segment(WINPR_ATTR_UNUSED ZGFX_CONTEXT* WINPR_RESTRICT zgfx,
+                                  wStream* WINPR_RESTRICT s, const BYTE* WINPR_RESTRICT pSrcData,
+                                  UINT32 SrcSize, UINT32* WINPR_RESTRICT pFlags)
 {
 	/* FIXME: Currently compression not implemented. Just copy the raw source */
 	if (!Stream_EnsureRemainingCapacity(s, SrcSize + 1))
@@ -618,7 +618,7 @@ int zgfx_compress(ZGFX_CONTEXT* WINPR_RESTRICT zgfx, const BYTE* WINPR_RESTRICT 
 	return status;
 }
 
-void zgfx_context_reset(ZGFX_CONTEXT* WINPR_RESTRICT zgfx, BOOL flush)
+void zgfx_context_reset(ZGFX_CONTEXT* WINPR_RESTRICT zgfx, WINPR_ATTR_UNUSED BOOL flush)
 {
 	zgfx->HistoryIndex = 0;
 }

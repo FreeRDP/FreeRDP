@@ -1117,7 +1117,7 @@ static BOOL updateEarlyClientCaps(rdpSettings* settings, UINT32 earlyCapabilityF
 }
 
 static BOOL updateEarlyServerCaps(rdpSettings* settings, UINT32 earlyCapabilityFlags,
-                                  UINT32 connectionType)
+                                  WINPR_ATTR_UNUSED UINT32 connectionType)
 {
 	WINPR_ASSERT(settings);
 

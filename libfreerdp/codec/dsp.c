@@ -1460,7 +1460,7 @@ BOOL freerdp_dsp_supports_format(const AUDIO_FORMAT* WINPR_RESTRICT format, BOOL
 
 BOOL freerdp_dsp_context_reset(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
                                const AUDIO_FORMAT* WINPR_RESTRICT targetFormat,
-                               UINT32 FramesPerPacket)
+                               WINPR_ATTR_UNUSED UINT32 FramesPerPacket)
 {
 #if defined(WITH_FDK_AAC)
 	WINPR_ASSERT(targetFormat);
