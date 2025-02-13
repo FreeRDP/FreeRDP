@@ -79,7 +79,7 @@ class SdlWidget
 
 	TTF_Font* _font = nullptr;
 	SDL_Texture* _image = nullptr;
-	SDL_FRect _rect;
+	SDL_FRect _rect = {};
 	bool _input = false;
 	bool _wrap = false;
 	size_t _text_width = 0;
