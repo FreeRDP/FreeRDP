@@ -1033,7 +1033,7 @@ static WINPR_JSON* load_layouts_from_file(const char* filename)
 		goto end;
 	}
 
-	jstr = calloc(jstrlen + 1, sizeof(char));
+	jstr = calloc((size_t)jstrlen + 1, sizeof(char));
 	if (!jstr)
 	{
 		WLog_WARN(TAG, "resource file '%s' failed to allocate buffer of size %" PRId64, filename,
@@ -1041,14 +1041,14 @@ static WINPR_JSON* load_layouts_from_file(const char* filename)
 		goto end;
 	}
 
-	if (fread(jstr, jstrlen, sizeof(char), fp) != 1)
+	if (fread(jstr, (size_t)jstrlen, sizeof(char), fp) != 1)
 	{
 		WLog_WARN(TAG, "resource file '%s' failed to read buffer of size %" PRId64, filename,
 		          jstrlen);
 		goto end;
 	}
 
-	json = WINPR_JSON_ParseWithLength(jstr, jstrlen);
+	json = WINPR_JSON_ParseWithLength(jstr, (size_t)jstrlen);
 	if (!json)
 		WLog_WARN(TAG, "resource file '%s' is not a valid JSON file", filename);
 end:
@@ -1106,7 +1106,7 @@ static UINT32 get_object_integer(WINPR_JSON* json, size_t pos, const char* name)
 		return 0;
 	}
 
-	return WINPR_JSON_GetNumberValue(obj);
+	return (UINT32)WINPR_JSON_GetNumberValue(obj);
 }
 
 static bool parse_json_layout_entry_id(WINPR_JSON* json, size_t pos, RDP_KEYBOARD_LAYOUT* entry)
@@ -1184,7 +1184,12 @@ static BOOL parse_json_variant_entry(WINPR_JSON* json, size_t pos,
 		return FALSE;
 	}
 
-	if (!parse_json_layout_entry_id(json, pos, entry))
+	RDP_KEYBOARD_LAYOUT val = { 0 };
+	const BOOL rc = parse_json_layout_entry_id(json, pos, &val);
+	entry->code = val.code;
+	entry->name = val.name;
+
+	if (!rc)
 	{
 		clear_keyboard_variant(entry);
 		return FALSE;
