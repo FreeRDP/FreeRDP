@@ -74,6 +74,35 @@ static inline INT16 get_checked_int16_int(INT32 value, WINPR_ATTR_UNUSED const c
 	return (INT16)value;
 }
 
+#define check_val_fits_int16(value) check_val_fits_int16_int((value), __FILE__, __func__, __LINE__)
+static inline BOOL check_val_fits_int16_int(INT32 value, WINPR_ATTR_UNUSED const char* file,
+                                            WINPR_ATTR_UNUSED const char* fkt,
+                                            WINPR_ATTR_UNUSED size_t line)
+{
+	const DWORD level = WLOG_WARN;
+	static wLog* log = NULL;
+	if (!log)
+		log = WLog_Get(TAG);
+
+	if (value < INT16_MIN)
+	{
+		if (WLog_IsLevelActive(log, level))
+			WLog_PrintMessage(log, WLOG_MESSAGE_TEXT, level, line, file, fkt,
+			                  "value %" PRId32 " < %d", INT16_MIN);
+		return FALSE;
+	}
+
+	if (value > INT16_MAX)
+	{
+		if (WLog_IsLevelActive(log, level))
+			WLog_PrintMessage(log, WLOG_MESSAGE_TEXT, level, line, file, fkt,
+			                  "value %" PRId32 " > %d", INT16_MAX);
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
 #define gdi_rob3_code_string_checked(value) \
 	gdi_rob3_code_string_checked_int((value), __FILE__, __func__, __LINE__)
 static inline const char* gdi_rob3_code_string_checked_int(UINT32 rob,
@@ -1848,6 +1877,9 @@ static BOOL update_read_polyline_order(const char* orderName, wStream* s,
 
 		Stream_Read_UINT8(s, polyline->cbData);
 
+		if (!check_val_fits_int16(polyline->xStart) || !check_val_fits_int16(polyline->yStart))
+			return FALSE;
+
 		polyline->numDeltaEntries = new_num;
 		return update_read_delta_points(s, &polyline->points, polyline->numDeltaEntries,
 		                                get_checked_int16(polyline->xStart),
@@ -2194,6 +2226,7 @@ static BOOL update_read_fast_glyph_order(const char* orderName, wStream* s,
 
 	return TRUE;
 }
+
 static BOOL update_read_polygon_sc_order(const char* orderName, wStream* s,
                                          const ORDER_INFO* orderInfo, POLYGON_SC_ORDER* polygon_sc)
 {
@@ -2215,6 +2248,9 @@ static BOOL update_read_polygon_sc_order(const char* orderName, wStream* s,
 			return FALSE;
 
 		Stream_Read_UINT8(s, polygon_sc->cbData);
+
+		if (!check_val_fits_int16(polygon_sc->xStart) || !check_val_fits_int16(polygon_sc->yStart))
+			return FALSE;
 
 		polygon_sc->numPoints = num;
 		return update_read_delta_points(s, &polygon_sc->points, polygon_sc->numPoints,
@@ -2259,6 +2295,9 @@ static BOOL update_read_polygon_cb_order(const char* orderName, wStream* s,
 
 		Stream_Read_UINT8(s, polygon_cb->cbData);
 		polygon_cb->numPoints = num;
+
+		if (!check_val_fits_int16(polygon_cb->xStart) || !check_val_fits_int16(polygon_cb->yStart))
+			return FALSE;
 
 		if (!update_read_delta_points(s, &polygon_cb->points, polygon_cb->numPoints,
 		                              get_checked_int16(polygon_cb->xStart),
