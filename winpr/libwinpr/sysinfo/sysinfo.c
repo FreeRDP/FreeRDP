@@ -962,6 +962,11 @@ BOOL IsProcessorFeaturePresent(DWORD ProcessorFeature)
 		case PF_AVX512F_INSTRUCTIONS_AVAILABLE:
 			ret = __builtin_cpu_supports("avx512f");
 			break;
+		case PF_ARM_NEON_INSTRUCTIONS_AVAILABLE:
+#if defined(__ARM_NEON__)
+			ret = TRUE;
+#endif
+			break;
 		default:
 			WLog_WARN(TAG, "feature 0x%08" PRIx32 " check not implemented", ProcessorFeature);
 			break;

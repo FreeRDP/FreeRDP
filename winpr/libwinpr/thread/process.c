@@ -498,7 +498,6 @@ HANDLE _GetCurrentProcess(VOID)
 
 DWORD GetCurrentProcessId(VOID)
 {
-	WLog_ERR("TODO", "TODO: implement");
 	return ((DWORD)getpid());
 }
 
