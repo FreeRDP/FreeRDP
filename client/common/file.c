@@ -1074,9 +1074,10 @@ static INLINE BOOL FILE_POPULATE_STRING(char** _target, const rdpSettings* _sett
 	*_target = (void*)~((size_t)NULL);
 	if (str)
 	{
-		*_target = _strdup(str);
-		if (!_target)
+		char* copy = _strdup(str);
+		if (!copy)
 			return FALSE;
+		*_target = copy;
 	}
 	return TRUE;
 }
