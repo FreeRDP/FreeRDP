@@ -142,7 +142,8 @@ extern "C"
 	 *  @since version 3.10.0
 	 */
 	WINPR_ATTR_MALLOC(WINPR_JSON_Delete, 1)
-	WINPR_JSON* freerdp_utils_aad_get_wellknown(wLog* log, const char* base, const char* tenantid);
+	FREERDP_API WINPR_JSON* freerdp_utils_aad_get_wellknown(wLog* log, const char* base,
+	                                                        const char* tenantid);
 
 #ifdef __cplusplus
 }
