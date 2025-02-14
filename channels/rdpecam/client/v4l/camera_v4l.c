@@ -287,8 +287,8 @@ error:
  *
  * @return number of video capture devices
  */
-static UINT cam_v4l_enumerate(ICamHal* ihal, ICamHalEnumCallback callback, CameraPlugin* ecam,
-                              GENERIC_CHANNEL_CALLBACK* hchannel)
+static UINT cam_v4l_enumerate(WINPR_ATTR_UNUSED ICamHal* ihal, ICamHalEnumCallback callback,
+                              CameraPlugin* ecam, GENERIC_CHANNEL_CALLBACK* hchannel)
 {
 	UINT count = 0;
 
@@ -693,7 +693,8 @@ static UINT cam_v4l_stream_start(ICamHal* ihal, CameraDevice* dev, int streamInd
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT cam_v4l_stream_stop_by_device_id(ICamHal* ihal, const char* deviceId, int streamIndex)
+static UINT cam_v4l_stream_stop_by_device_id(ICamHal* ihal, const char* deviceId,
+                                             WINPR_ATTR_UNUSED int streamIndex)
 {
 	CamV4lHal* hal = (CamV4lHal*)ihal;
 

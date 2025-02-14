@@ -340,8 +340,8 @@ class SdlEventUpdateTriggerGuard
 	SdlEventUpdateTriggerGuard& operator=(SdlEventUpdateTriggerGuard&&) = delete;
 };
 
-static bool sdl_draw_to_window_rect(SdlContext* sdl, SdlWindow& window, SDL_Surface* surface,
-                                    SDL_Point offset, const SDL_Rect& srcRect)
+static bool sdl_draw_to_window_rect([[maybe_unused]] SdlContext* sdl, SdlWindow& window,
+                                    SDL_Surface* surface, SDL_Point offset, const SDL_Rect& srcRect)
 {
 	SDL_Rect dstRect = { offset.x + srcRect.x, offset.y + srcRect.y, srcRect.w, srcRect.h };
 	return window.blit(surface, srcRect, dstRect);
@@ -675,7 +675,8 @@ static const char* sdl_window_get_title(rdpSettings* settings)
 	return freerdp_settings_get_string(settings, FreeRDP_WindowTitle);
 }
 
-static void sdl_term_handler(int signum, const char* signame, void* context)
+static void sdl_term_handler([[maybe_unused]] int signum, [[maybe_unused]] const char* signame,
+                             [[maybe_unused]] void* context)
 {
 	sdl_push_quit();
 }
@@ -1449,7 +1450,7 @@ static BOOL sdl_client_new(freerdp* instance, rdpContext* context)
 	return TRUE;
 }
 
-static void sdl_client_free(freerdp* instance, rdpContext* context)
+static void sdl_client_free([[maybe_unused]] freerdp* instance, rdpContext* context)
 {
 	auto sdl = reinterpret_cast<sdl_rdp_context*>(context);
 

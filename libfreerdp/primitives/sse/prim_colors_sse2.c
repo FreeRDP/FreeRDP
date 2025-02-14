@@ -222,8 +222,9 @@ sse2_yCbCrToRGB_16s16s_P3P3(const INT16* WINPR_RESTRICT pSrc[3], int srcStep,
 
 /*---------------------------------------------------------------------------*/
 static pstatus_t
-sse2_yCbCrToRGB_16s8u_P3AC4R_BGRX(const INT16* WINPR_RESTRICT pSrc[3], UINT32 srcStep,
-                                  BYTE* WINPR_RESTRICT pDst, UINT32 dstStep,
+sse2_yCbCrToRGB_16s8u_P3AC4R_BGRX(const INT16* WINPR_RESTRICT pSrc[3],
+                                  WINPR_ATTR_UNUSED UINT32 srcStep, BYTE* WINPR_RESTRICT pDst,
+                                  UINT32 dstStep,
                                   const prim_size_t* WINPR_RESTRICT roi) /* region of interest */
 {
 	const __m128i zero = _mm_setzero_si128();
@@ -407,8 +408,9 @@ sse2_yCbCrToRGB_16s8u_P3AC4R_BGRX(const INT16* WINPR_RESTRICT pSrc[3], UINT32 sr
 
 /*---------------------------------------------------------------------------*/
 static pstatus_t
-sse2_yCbCrToRGB_16s8u_P3AC4R_RGBX(const INT16* WINPR_RESTRICT pSrc[3], UINT32 srcStep,
-                                  BYTE* WINPR_RESTRICT pDst, UINT32 dstStep,
+sse2_yCbCrToRGB_16s8u_P3AC4R_RGBX(const INT16* WINPR_RESTRICT pSrc[3],
+                                  WINPR_ATTR_UNUSED UINT32 srcStep, BYTE* WINPR_RESTRICT pDst,
+                                  UINT32 dstStep,
                                   const prim_size_t* WINPR_RESTRICT roi) /* region of interest */
 {
 	const __m128i zero = _mm_setzero_si128();

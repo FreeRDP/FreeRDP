@@ -1062,7 +1062,7 @@ static const char* findCardByAtr(LPCBYTE pbAtr)
 	return NULL;
 }
 
-static LONG WINAPI PCSC_SCardListCardsA(SCARDCONTEXT hContext, LPCBYTE pbAtr,
+static LONG WINAPI PCSC_SCardListCardsA(WINPR_ATTR_UNUSED SCARDCONTEXT hContext, LPCBYTE pbAtr,
                                         LPCGUID rgquidInterfaces, DWORD cguidInterfaceCount,
                                         CHAR* mszCards, LPDWORD pcchCards)
 {
@@ -1115,7 +1115,7 @@ static LONG WINAPI PCSC_SCardListCardsA(SCARDCONTEXT hContext, LPCBYTE pbAtr,
 	return SCARD_S_SUCCESS;
 }
 
-static LONG WINAPI PCSC_SCardListCardsW(SCARDCONTEXT hContext, LPCBYTE pbAtr,
+static LONG WINAPI PCSC_SCardListCardsW(WINPR_ATTR_UNUSED SCARDCONTEXT hContext, LPCBYTE pbAtr,
                                         LPCGUID rgquidInterfaces, DWORD cguidInterfaceCount,
                                         WCHAR* mszCards, LPDWORD pcchCards)
 {

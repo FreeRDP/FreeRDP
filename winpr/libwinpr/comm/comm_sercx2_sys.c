@@ -39,7 +39,8 @@
  * request with a STATUS_SUCCESS status code.
  */
 
-static BOOL set_serial_chars(WINPR_COMM* pComm, const SERIAL_CHARS* pSerialChars)
+static BOOL set_serial_chars(WINPR_ATTR_UNUSED WINPR_COMM* pComm,
+                             WINPR_ATTR_UNUSED const SERIAL_CHARS* pSerialChars)
 {
 	WINPR_ASSERT(pComm);
 	WINPR_ASSERT(pSerialChars);
@@ -47,7 +48,7 @@ static BOOL set_serial_chars(WINPR_COMM* pComm, const SERIAL_CHARS* pSerialChars
 	return TRUE;
 }
 
-static BOOL get_serial_chars(WINPR_COMM* pComm, SERIAL_CHARS* pSerialChars)
+static BOOL get_serial_chars(WINPR_ATTR_UNUSED WINPR_COMM* pComm, SERIAL_CHARS* pSerialChars)
 {
 	WINPR_ASSERT(pComm);
 	WINPR_ASSERT(pSerialChars);

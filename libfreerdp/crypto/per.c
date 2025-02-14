@@ -380,7 +380,7 @@ BOOL per_read_enumerated(wStream* s, BYTE* enumerated, BYTE count)
  * @return \b TRUE for success, \b FALSE otherwise
  */
 
-BOOL per_write_enumerated(wStream* s, BYTE enumerated, BYTE count)
+BOOL per_write_enumerated(wStream* s, BYTE enumerated, WINPR_ATTR_UNUSED BYTE count)
 {
 	if (!Stream_EnsureRemainingCapacity(s, 1))
 		return FALSE;

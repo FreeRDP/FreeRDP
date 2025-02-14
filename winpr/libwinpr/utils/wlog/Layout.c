@@ -76,7 +76,7 @@ struct format_option_recurse
  * Log Layout
  */
 WINPR_ATTR_FORMAT_ARG(3, 0)
-static void WLog_PrintMessagePrefixVA(wLog* log, wLogMessage* message,
+static void WLog_PrintMessagePrefixVA(WINPR_ATTR_UNUSED wLog* log, wLogMessage* message,
                                       WINPR_FORMAT_ARG const char* format, va_list args)
 {
 	WINPR_ASSERT(message);
@@ -306,7 +306,8 @@ wLogLayout* WLog_GetLogLayout(wLog* log)
 	return appender->Layout;
 }
 
-BOOL WLog_Layout_SetPrefixFormat(wLog* log, wLogLayout* layout, const char* format)
+BOOL WLog_Layout_SetPrefixFormat(WINPR_ATTR_UNUSED wLog* log, wLogLayout* layout,
+                                 const char* format)
 {
 	free(layout->FormatString);
 	layout->FormatString = NULL;
@@ -322,7 +323,7 @@ BOOL WLog_Layout_SetPrefixFormat(wLog* log, wLogLayout* layout, const char* form
 	return TRUE;
 }
 
-wLogLayout* WLog_Layout_New(wLog* log)
+wLogLayout* WLog_Layout_New(WINPR_ATTR_UNUSED wLog* log)
 {
 	LPCSTR prefix = "WLOG_PREFIX";
 	DWORD nSize = 0;
@@ -374,7 +375,7 @@ wLogLayout* WLog_Layout_New(wLog* log)
 	return layout;
 }
 
-void WLog_Layout_Free(wLog* log, wLogLayout* layout)
+void WLog_Layout_Free(WINPR_ATTR_UNUSED wLog* log, wLogLayout* layout)
 {
 	if (layout)
 	{

@@ -252,12 +252,14 @@ static UINT parallel_process_irp_write(PARALLEL_DEVICE* parallel, IRP* irp)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT parallel_process_irp_device_control(PARALLEL_DEVICE* parallel, IRP* irp)
+static UINT parallel_process_irp_device_control(WINPR_ATTR_UNUSED PARALLEL_DEVICE* parallel,
+                                                IRP* irp)
 {
 	WINPR_ASSERT(parallel);
 	WINPR_ASSERT(irp);
 
 	Stream_Write_UINT32(irp->output, 0); /* OutputBufferLength */
+	WINPR_ASSERT(irp->Complete);
 	return irp->Complete(irp);
 }
 

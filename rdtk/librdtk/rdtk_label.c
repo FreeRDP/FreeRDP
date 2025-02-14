@@ -25,8 +25,8 @@
 #include "rdtk_label.h"
 
 int rdtk_label_draw(rdtkSurface* surface, uint16_t nXDst, uint16_t nYDst, uint16_t nWidth,
-                    uint16_t nHeight, rdtkLabel* label, const char* text, uint16_t hAlign,
-                    uint16_t vAlign)
+                    uint16_t nHeight, WINPR_ATTR_UNUSED rdtkLabel* label, const char* text,
+                    WINPR_ATTR_UNUSED uint16_t hAlign, WINPR_ATTR_UNUSED uint16_t vAlign)
 {
 	uint16_t offsetX = 0;
 	uint16_t offsetY = 0;

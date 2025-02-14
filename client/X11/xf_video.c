@@ -62,7 +62,8 @@ static VideoSurface* xfVideoCreateSurface(VideoClientContext* video, UINT32 x, U
 }
 
 static BOOL xfVideoShowSurface(VideoClientContext* video, const VideoSurface* surface,
-                               UINT32 destinationWidth, UINT32 destinationHeight)
+                               WINPR_ATTR_UNUSED UINT32 destinationWidth,
+                               WINPR_ATTR_UNUSED UINT32 destinationHeight)
 {
 	const xfVideoSurface* xfSurface = (const xfVideoSurface*)surface;
 	xfContext* xfc = NULL;

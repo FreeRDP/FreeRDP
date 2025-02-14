@@ -2341,7 +2341,8 @@ static void* rdpgfx_get_cache_slot_data(RdpgfxClientContext* context, UINT16 cac
 	return pData;
 }
 
-static UINT init_plugin_cb(GENERIC_DYNVC_PLUGIN* base, rdpContext* rcontext, rdpSettings* settings)
+static UINT init_plugin_cb(GENERIC_DYNVC_PLUGIN* base, rdpContext* rcontext,
+                           WINPR_ATTR_UNUSED rdpSettings* settings)
 {
 	RdpgfxClientContext* context = NULL;
 	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*)base;

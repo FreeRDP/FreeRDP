@@ -51,9 +51,10 @@ static void usb_process_get_port_status(IUDEVICE* pdev, wStream* out)
 	}
 }
 
-static UINT urb_write_completion(IUDEVICE* pdev, GENERIC_CHANNEL_CALLBACK* callback, BOOL noAck,
-                                 wStream* out, UINT32 InterfaceId, UINT32 MessageId,
-                                 UINT32 RequestId, UINT32 usbd_status, UINT32 OutputBufferSize)
+static UINT urb_write_completion(WINPR_ATTR_UNUSED IUDEVICE* pdev,
+                                 GENERIC_CHANNEL_CALLBACK* callback, BOOL noAck, wStream* out,
+                                 UINT32 InterfaceId, UINT32 MessageId, UINT32 RequestId,
+                                 UINT32 usbd_status, UINT32 OutputBufferSize)
 {
 	if (!out)
 		return ERROR_INVALID_PARAMETER;
@@ -176,7 +177,8 @@ static UINT urbdrc_process_cancel_request(IUDEVICE* pdev, wStream* s, IUDEVMAN* 
 	return ERROR_SUCCESS;
 }
 
-static UINT urbdrc_process_retract_device_request(IUDEVICE* pdev, wStream* s, IUDEVMAN* udevman)
+static UINT urbdrc_process_retract_device_request(WINPR_ATTR_UNUSED IUDEVICE* pdev, wStream* s,
+                                                  IUDEVMAN* udevman)
 {
 	UINT32 Reason = 0;
 	URBDRC_PLUGIN* urbdrc = NULL;
@@ -727,8 +729,9 @@ static UINT urb_control_transfer(IUDEVICE* pdev, GENERIC_CHANNEL_CALLBACK* callb
 
 static void urb_bulk_transfer_cb(IUDEVICE* pdev, GENERIC_CHANNEL_CALLBACK* callback, wStream* out,
                                  UINT32 InterfaceId, BOOL noAck, UINT32 MessageId, UINT32 RequestId,
-                                 UINT32 NumberOfPackets, UINT32 status, UINT32 StartFrame,
-                                 UINT32 ErrorCount, UINT32 OutputBufferSize)
+                                 WINPR_ATTR_UNUSED UINT32 NumberOfPackets, UINT32 status,
+                                 WINPR_ATTR_UNUSED UINT32 StartFrame,
+                                 WINPR_ATTR_UNUSED UINT32 ErrorCount, UINT32 OutputBufferSize)
 {
 	if (!pdev->isChannelClosed(pdev))
 		urb_write_completion(pdev, callback, noAck, out, InterfaceId, MessageId, RequestId, status,
@@ -776,7 +779,8 @@ static UINT urb_bulk_or_interrupt_transfer(IUDEVICE* pdev, GENERIC_CHANNEL_CALLB
 	return (uint32_t)rc;
 }
 
-static void urb_isoch_transfer_cb(IUDEVICE* pdev, GENERIC_CHANNEL_CALLBACK* callback, wStream* out,
+static void urb_isoch_transfer_cb(WINPR_ATTR_UNUSED IUDEVICE* pdev,
+                                  GENERIC_CHANNEL_CALLBACK* callback, wStream* out,
                                   UINT32 InterfaceId, BOOL noAck, UINT32 MessageId,
                                   UINT32 RequestId, UINT32 NumberOfPackets, UINT32 status,
                                   UINT32 StartFrame, UINT32 ErrorCount, UINT32 OutputBufferSize)

@@ -254,7 +254,7 @@ extern "C"
 		pcbe->Version = 1;
 	}
 
-	static INLINE VOID DestroyThreadpoolEnvironment(PTP_CALLBACK_ENVIRON pcbe)
+	static INLINE VOID DestroyThreadpoolEnvironment(WINPR_ATTR_UNUSED PTP_CALLBACK_ENVIRON pcbe)
 	{
 		/* no actions, this may change in a future release. */
 	}

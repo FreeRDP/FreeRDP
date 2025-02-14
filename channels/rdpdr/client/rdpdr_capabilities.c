@@ -115,7 +115,7 @@ static BOOL rdpdr_write_printer_capset(rdpdrPlugin* rdpdr, wStream* s)
 }
 
 /* Process printer direction capability set */
-static UINT rdpdr_process_printer_capset(rdpdrPlugin* rdpdr, wStream* s,
+static UINT rdpdr_process_printer_capset(WINPR_ATTR_UNUSED rdpdrPlugin* rdpdr, wStream* s,
                                          const RDPDR_CAPABILITY_HEADER* header)
 {
 	WINPR_ASSERT(header);
@@ -133,7 +133,7 @@ static BOOL rdpdr_write_port_capset(rdpdrPlugin* rdpdr, wStream* s)
 }
 
 /* Process port redirection capability set */
-static UINT rdpdr_process_port_capset(rdpdrPlugin* rdpdr, wStream* s,
+static UINT rdpdr_process_port_capset(WINPR_ATTR_UNUSED rdpdrPlugin* rdpdr, wStream* s,
                                       const RDPDR_CAPABILITY_HEADER* header)
 {
 	WINPR_ASSERT(header);
@@ -151,7 +151,7 @@ static BOOL rdpdr_write_drive_capset(rdpdrPlugin* rdpdr, wStream* s)
 }
 
 /* Process drive redirection capability set */
-static UINT rdpdr_process_drive_capset(rdpdrPlugin* rdpdr, wStream* s,
+static UINT rdpdr_process_drive_capset(WINPR_ATTR_UNUSED rdpdrPlugin* rdpdr, wStream* s,
                                        const RDPDR_CAPABILITY_HEADER* header)
 {
 	WINPR_ASSERT(header);
@@ -169,7 +169,7 @@ static BOOL rdpdr_write_smartcard_capset(rdpdrPlugin* rdpdr, wStream* s)
 }
 
 /* Process smartcard redirection capability set */
-static UINT rdpdr_process_smartcard_capset(rdpdrPlugin* rdpdr, wStream* s,
+static UINT rdpdr_process_smartcard_capset(WINPR_ATTR_UNUSED rdpdrPlugin* rdpdr, wStream* s,
                                            const RDPDR_CAPABILITY_HEADER* header)
 {
 	WINPR_ASSERT(header);

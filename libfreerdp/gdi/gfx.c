@@ -317,7 +317,8 @@ static UINT gdi_call_update_surfaces(RdpgfxClientContext* context)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT gdi_EndFrame(RdpgfxClientContext* context, const RDPGFX_END_FRAME_PDU* endFrame)
+static UINT gdi_EndFrame(RdpgfxClientContext* context,
+                         WINPR_ATTR_UNUSED const RDPGFX_END_FRAME_PDU* endFrame)
 {
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(endFrame);

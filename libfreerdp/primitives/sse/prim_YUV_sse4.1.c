@@ -464,7 +464,7 @@ static inline pstatus_t sse41_YUV444ToRGB_8u_P3AC4R_BGRX_DOUBLE_ROW(
 
 static inline void BGRX_fillRGB_single(size_t offset, BYTE* WINPR_RESTRICT pRGB,
                                        const BYTE* WINPR_RESTRICT pY, const BYTE* WINPR_RESTRICT pU,
-                                       const BYTE* WINPR_RESTRICT pV, BOOL filter)
+                                       const BYTE* WINPR_RESTRICT pV, WINPR_ATTR_UNUSED BOOL filter)
 {
 	WINPR_ASSERT(pRGB);
 	WINPR_ASSERT(pY);
@@ -1021,10 +1021,10 @@ static INLINE void sse41_RGBToAVC444YUV_BGRX_DOUBLE_ROW(
 	                                       b7, width);
 }
 
-static pstatus_t sse41_RGBToAVC444YUV_BGRX(const BYTE* WINPR_RESTRICT pSrc, UINT32 srcFormat,
-                                           UINT32 srcStep, BYTE* WINPR_RESTRICT pDst1[],
-                                           const UINT32 dst1Step[], BYTE* WINPR_RESTRICT pDst2[],
-                                           const UINT32 dst2Step[],
+static pstatus_t sse41_RGBToAVC444YUV_BGRX(const BYTE* WINPR_RESTRICT pSrc,
+                                           WINPR_ATTR_UNUSED UINT32 srcFormat, UINT32 srcStep,
+                                           BYTE* WINPR_RESTRICT pDst1[], const UINT32 dst1Step[],
+                                           BYTE* WINPR_RESTRICT pDst2[], const UINT32 dst2Step[],
                                            const prim_size_t* WINPR_RESTRICT roi)
 {
 	if (roi->height < 1 || roi->width < 1)
@@ -1347,10 +1347,10 @@ static INLINE void sse41_RGBToAVC444YUVv2_BGRX_DOUBLE_ROW(
 	                                         uChromaDst2, vChromaDst1, vChromaDst2, width);
 }
 
-static pstatus_t sse41_RGBToAVC444YUVv2_BGRX(const BYTE* WINPR_RESTRICT pSrc, UINT32 srcFormat,
-                                             UINT32 srcStep, BYTE* WINPR_RESTRICT pDst1[],
-                                             const UINT32 dst1Step[], BYTE* WINPR_RESTRICT pDst2[],
-                                             const UINT32 dst2Step[],
+static pstatus_t sse41_RGBToAVC444YUVv2_BGRX(const BYTE* WINPR_RESTRICT pSrc,
+                                             WINPR_ATTR_UNUSED UINT32 srcFormat, UINT32 srcStep,
+                                             BYTE* WINPR_RESTRICT pDst1[], const UINT32 dst1Step[],
+                                             BYTE* WINPR_RESTRICT pDst2[], const UINT32 dst2Step[],
                                              const prim_size_t* WINPR_RESTRICT roi)
 {
 	if (roi->height < 1 || roi->width < 1)
@@ -1603,7 +1603,7 @@ static pstatus_t sse41_ChromaV1ToYUV444(const BYTE* WINPR_RESTRICT pSrcRaw[3],
 }
 
 static pstatus_t sse41_ChromaV2ToYUV444(const BYTE* WINPR_RESTRICT pSrc[3], const UINT32 srcStep[3],
-                                        UINT32 nTotalWidth, UINT32 nTotalHeight,
+                                        UINT32 nTotalWidth, WINPR_ATTR_UNUSED UINT32 nTotalHeight,
                                         BYTE* WINPR_RESTRICT pDst[3], const UINT32 dstStep[3],
                                         const RECTANGLE_16* WINPR_RESTRICT roi)
 {

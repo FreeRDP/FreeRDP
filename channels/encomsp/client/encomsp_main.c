@@ -1090,8 +1090,9 @@ static DWORD WINAPI encomsp_virtual_channel_client_thread(LPVOID arg)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT encomsp_virtual_channel_event_connected(encomspPlugin* encomsp, LPVOID pData,
-                                                    UINT32 dataLength)
+static UINT encomsp_virtual_channel_event_connected(encomspPlugin* encomsp,
+                                                    WINPR_ATTR_UNUSED LPVOID pData,
+                                                    WINPR_ATTR_UNUSED UINT32 dataLength)
 {
 	WINPR_ASSERT(encomsp);
 

@@ -108,8 +108,10 @@ static void* clipboard_synthesize_cf_oemtext(wClipboard* clipboard, UINT32 forma
  * System locale identifier associated with CF_TEXT
  */
 
-static void* clipboard_synthesize_cf_locale(wClipboard* clipboard, UINT32 formatId,
-                                            const void* data, UINT32* pSize)
+static void* clipboard_synthesize_cf_locale(WINPR_ATTR_UNUSED wClipboard* clipboard,
+                                            WINPR_ATTR_UNUSED UINT32 formatId,
+                                            WINPR_ATTR_UNUSED const void* data,
+                                            WINPR_ATTR_UNUSED UINT32* pSize)
 {
 	UINT32* pDstData = NULL;
 	pDstData = (UINT32*)malloc(sizeof(UINT32));
@@ -263,8 +265,9 @@ static void* clipboard_synthesize_cf_dib(wClipboard* clipboard, UINT32 formatId,
  * BITMAPV5HEADER structure followed by the bitmap color space information and the bitmap bits.
  */
 
-static void* clipboard_synthesize_cf_dibv5(wClipboard* clipboard, UINT32 formatId, const void* data,
-                                           UINT32* pSize)
+static void* clipboard_synthesize_cf_dibv5(wClipboard* clipboard, UINT32 formatId,
+                                           WINPR_ATTR_UNUSED const void* data,
+                                           WINPR_ATTR_UNUSED UINT32* pSize)
 {
 	if (formatId == CF_DIB)
 	{
@@ -325,8 +328,8 @@ fail:
  * Bitmap file format.
  */
 
-static void* clipboard_synthesize_image_bmp(wClipboard* clipboard, UINT32 formatId,
-                                            const void* data, UINT32* pSize)
+static void* clipboard_synthesize_image_bmp(WINPR_ATTR_UNUSED wClipboard* clipboard,
+                                            UINT32 formatId, const void* data, UINT32* pSize)
 {
 	UINT32 SrcSize = *pSize;
 
@@ -402,7 +405,8 @@ static void* clipboard_synthesize_image_bmp_to_png(wClipboard* clipboard, UINT32
 	                                                pSize);
 }
 
-static void* clipboard_synthesize_image_format_to_bmp(wClipboard* clipboard, UINT32 srcFormatId,
+static void* clipboard_synthesize_image_format_to_bmp(wClipboard* clipboard,
+                                                      WINPR_ATTR_UNUSED UINT32 srcFormatId,
                                                       const void* data, UINT32* pSize)
 {
 	WINPR_ASSERT(clipboard);

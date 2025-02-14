@@ -218,7 +218,7 @@ static BOOL rdstls_set_state(rdpRdstls* rdstls, RDSTLS_STATE state)
 	return rc;
 }
 
-static BOOL rdstls_write_capabilities(rdpRdstls* rdstls, wStream* s)
+static BOOL rdstls_write_capabilities(WINPR_ATTR_UNUSED rdpRdstls* rdstls, wStream* s)
 {
 	if (!Stream_EnsureRemainingCapacity(s, 6))
 		return FALSE;
@@ -304,7 +304,8 @@ static BOOL rdstls_write_authentication_request_with_password(rdpRdstls* rdstls,
 	return TRUE;
 }
 
-static BOOL rdstls_write_authentication_request_with_cookie(rdpRdstls* rdstls, wStream* s)
+static BOOL rdstls_write_authentication_request_with_cookie(WINPR_ATTR_UNUSED rdpRdstls* rdstls,
+                                                            WINPR_ATTR_UNUSED wStream* s)
 {
 	// TODO
 	return FALSE;
@@ -351,7 +352,7 @@ static BOOL rdstls_process_capabilities(rdpRdstls* rdstls, wStream* s)
 	return TRUE;
 }
 
-static BOOL rdstls_read_unicode_string(wLog* log, wStream* s, char** str)
+static BOOL rdstls_read_unicode_string(WINPR_ATTR_UNUSED wLog* log, wStream* s, char** str)
 {
 	UINT16 length = 0;
 
@@ -378,7 +379,8 @@ static BOOL rdstls_read_unicode_string(wLog* log, wStream* s, char** str)
 	return TRUE;
 }
 
-static BOOL rdstls_read_data(wLog* log, wStream* s, UINT16* pLength, const BYTE** pData)
+static BOOL rdstls_read_data(WINPR_ATTR_UNUSED wLog* log, wStream* s, UINT16* pLength,
+                             const BYTE** pData)
 {
 	UINT16 length = 0;
 
@@ -511,7 +513,8 @@ fail:
 	return rc;
 }
 
-static BOOL rdstls_process_authentication_request_with_cookie(rdpRdstls* rdstls, wStream* s)
+static BOOL rdstls_process_authentication_request_with_cookie(WINPR_ATTR_UNUSED rdpRdstls* rdstls,
+                                                              WINPR_ATTR_UNUSED wStream* s)
 {
 	// TODO
 	return FALSE;
@@ -605,7 +608,7 @@ static BOOL rdstls_process_authentication_response(rdpRdstls* rdstls, wStream* s
 	return TRUE;
 }
 
-static BOOL rdstls_send(rdpTransport* transport, wStream* s, void* extra)
+static BOOL rdstls_send(WINPR_ATTR_UNUSED rdpTransport* transport, wStream* s, void* extra)
 {
 	rdpRdstls* rdstls = (rdpRdstls*)extra;
 	rdpSettings* settings = NULL;
@@ -663,7 +666,7 @@ static BOOL rdstls_send(rdpTransport* transport, wStream* s, void* extra)
 	return TRUE;
 }
 
-static int rdstls_recv(rdpTransport* transport, wStream* s, void* extra)
+static int rdstls_recv(WINPR_ATTR_UNUSED rdpTransport* transport, wStream* s, void* extra)
 {
 	UINT16 version = 0;
 	UINT16 pduType = 0;

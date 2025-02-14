@@ -730,7 +730,7 @@ BOOL WSASetEvent(HANDLE hEvent)
 	return SetEvent(hEvent);
 }
 
-BOOL WSAResetEvent(HANDLE hEvent)
+BOOL WSAResetEvent(WINPR_ATTR_UNUSED HANDLE hEvent)
 {
 	/* POSIX systems auto reset the socket,
 	 * if no more data is available. */
@@ -776,8 +776,9 @@ DWORD WSAWaitForMultipleEvents(DWORD cEvents, const HANDLE* lphEvents, BOOL fWai
 	return WaitForMultipleObjectsEx(cEvents, lphEvents, fWaitAll, dwTimeout, fAlertable);
 }
 
-SOCKET WSASocketA(int af, int type, int protocol, LPWSAPROTOCOL_INFOA lpProtocolInfo, GROUP g,
-                  DWORD dwFlags)
+SOCKET WSASocketA(int af, int type, int protocol,
+                  WINPR_ATTR_UNUSED LPWSAPROTOCOL_INFOA lpProtocolInfo, WINPR_ATTR_UNUSED GROUP g,
+                  WINPR_ATTR_UNUSED DWORD dwFlags)
 {
 	SOCKET s = 0;
 	s = _socket(af, type, protocol);
@@ -790,9 +791,10 @@ SOCKET WSASocketW(int af, int type, int protocol, LPWSAPROTOCOL_INFOW lpProtocol
 	return WSASocketA(af, type, protocol, (LPWSAPROTOCOL_INFOA)lpProtocolInfo, g, dwFlags);
 }
 
-int WSAIoctl(SOCKET s, DWORD dwIoControlCode, LPVOID lpvInBuffer, DWORD cbInBuffer,
-             LPVOID lpvOutBuffer, DWORD cbOutBuffer, LPDWORD lpcbBytesReturned,
-             LPWSAOVERLAPPED lpOverlapped, LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine)
+int WSAIoctl(SOCKET s, DWORD dwIoControlCode, WINPR_ATTR_UNUSED LPVOID lpvInBuffer,
+             WINPR_ATTR_UNUSED DWORD cbInBuffer, LPVOID lpvOutBuffer, DWORD cbOutBuffer,
+             LPDWORD lpcbBytesReturned, WINPR_ATTR_UNUSED LPWSAOVERLAPPED lpOverlapped,
+             WINPR_ATTR_UNUSED LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine)
 {
 	int fd = 0;
 	int index = 0;

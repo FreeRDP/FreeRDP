@@ -119,7 +119,7 @@ static int wait_for_fd(int fd, int timeout)
 	return status;
 }
 
-static void replace_char(char* buffer, size_t buffer_len, const char* toreplace)
+static void replace_char(char* buffer, WINPR_ATTR_UNUSED size_t buffer_len, const char* toreplace)
 {
 	while (*toreplace != '\0')
 	{

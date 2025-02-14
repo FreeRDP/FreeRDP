@@ -258,7 +258,8 @@ static int bio_rdp_tls_puts(BIO* bio, const char* str)
 	return BIO_write(bio, str, (int)size);
 }
 
-static int bio_rdp_tls_gets(BIO* bio, char* str, int size)
+static int bio_rdp_tls_gets(WINPR_ATTR_UNUSED BIO* bio, WINPR_ATTR_UNUSED char* str,
+                            WINPR_ATTR_UNUSED int size)
 {
 	return 1;
 }
@@ -708,7 +709,9 @@ out_free:
 static INIT_ONCE secrets_file_idx_once = INIT_ONCE_STATIC_INIT;
 static int secrets_file_idx = -1;
 
-static BOOL CALLBACK secrets_file_init_cb(PINIT_ONCE once, PVOID param, PVOID* context)
+static BOOL CALLBACK secrets_file_init_cb(WINPR_ATTR_UNUSED PINIT_ONCE once,
+                                          WINPR_ATTR_UNUSED PVOID param,
+                                          WINPR_ATTR_UNUSED PVOID* context)
 {
 	secrets_file_idx = SSL_get_ex_new_index(0, NULL, NULL, NULL, NULL);
 
@@ -839,7 +842,8 @@ static BOOL tls_prepare(rdpTls* tls, BIO* underlying, SSL_METHOD* method, int op
 	return TRUE;
 }
 
-static void adjustSslOptions(int* options) // NOLINT(readability-non-const-parameter)
+static void
+adjustSslOptions(WINPR_ATTR_UNUSED int* options) // NOLINT(readability-non-const-parameter)
 {
 	WINPR_ASSERT(options);
 #if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
@@ -2017,7 +2021,8 @@ void tls_print_new_certificate_warn(rdpCertificateStore* store, const char* host
 	free(path);
 }
 
-void tls_print_certificate_error(rdpCertificateStore* store, rdpCertificateData* stored_data,
+void tls_print_certificate_error(rdpCertificateStore* store,
+                                 WINPR_ATTR_UNUSED rdpCertificateData* stored_data,
                                  const char* hostname, UINT16 port, const char* fingerprint)
 {
 	char* path = freerdp_certificate_store_get_cert_path(store, hostname, port);

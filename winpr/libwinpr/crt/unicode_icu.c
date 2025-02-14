@@ -143,9 +143,10 @@ int int_MultiByteToWideChar(UINT CodePage, DWORD dwFlags, LPCSTR lpMultiByteStr,
 	return cchWideChar;
 }
 
-int int_WideCharToMultiByte(UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr, int cchWideChar,
-                            LPSTR lpMultiByteStr, int cbMultiByte, LPCSTR lpDefaultChar,
-                            LPBOOL lpUsedDefaultChar)
+int int_WideCharToMultiByte(UINT CodePage, WINPR_ATTR_UNUSED DWORD dwFlags, LPCWSTR lpWideCharStr,
+                            int cchWideChar, LPSTR lpMultiByteStr, int cbMultiByte,
+                            WINPR_ATTR_UNUSED LPCSTR lpDefaultChar,
+                            WINPR_ATTR_UNUSED LPBOOL lpUsedDefaultChar)
 {
 	/* If cchWideChar is 0, the function fails */
 

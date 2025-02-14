@@ -38,12 +38,14 @@ typedef struct
 	int outputStream;
 } wLogConsoleAppender;
 
-static BOOL WLog_ConsoleAppender_Open(wLog* log, wLogAppender* appender)
+static BOOL WLog_ConsoleAppender_Open(WINPR_ATTR_UNUSED wLog* log,
+                                      WINPR_ATTR_UNUSED wLogAppender* appender)
 {
 	return TRUE;
 }
 
-static BOOL WLog_ConsoleAppender_Close(wLog* log, wLogAppender* appender)
+static BOOL WLog_ConsoleAppender_Close(WINPR_ATTR_UNUSED wLog* log,
+                                       WINPR_ATTR_UNUSED wLogAppender* appender)
 {
 	return TRUE;
 }
@@ -138,7 +140,8 @@ static BOOL WLog_ConsoleAppender_WriteMessage(wLog* log, wLogAppender* appender,
 
 static int g_DataId = 0;
 
-static BOOL WLog_ConsoleAppender_WriteDataMessage(wLog* log, wLogAppender* appender,
+static BOOL WLog_ConsoleAppender_WriteDataMessage(WINPR_ATTR_UNUSED wLog* log,
+                                                  WINPR_ATTR_UNUSED wLogAppender* appender,
                                                   wLogMessage* message)
 {
 #if defined(ANDROID)
@@ -160,7 +163,8 @@ static BOOL WLog_ConsoleAppender_WriteDataMessage(wLog* log, wLogAppender* appen
 
 static int g_ImageId = 0;
 
-static BOOL WLog_ConsoleAppender_WriteImageMessage(wLog* log, wLogAppender* appender,
+static BOOL WLog_ConsoleAppender_WriteImageMessage(WINPR_ATTR_UNUSED wLog* log,
+                                                   WINPR_ATTR_UNUSED wLogAppender* appender,
                                                    wLogMessage* message)
 {
 #if defined(ANDROID)
@@ -183,8 +187,8 @@ static BOOL WLog_ConsoleAppender_WriteImageMessage(wLog* log, wLogAppender* appe
 
 static int g_PacketId = 0;
 
-static BOOL WLog_ConsoleAppender_WritePacketMessage(wLog* log, wLogAppender* appender,
-                                                    wLogMessage* message)
+static BOOL WLog_ConsoleAppender_WritePacketMessage(WINPR_ATTR_UNUSED wLog* log,
+                                                    wLogAppender* appender, wLogMessage* message)
 {
 #if defined(ANDROID)
 	return FALSE;
@@ -245,7 +249,7 @@ static void WLog_ConsoleAppender_Free(wLogAppender* appender)
 	}
 }
 
-wLogAppender* WLog_ConsoleAppender_New(wLog* log)
+wLogAppender* WLog_ConsoleAppender_New(WINPR_ATTR_UNUSED wLog* log)
 {
 	wLogConsoleAppender* ConsoleAppender = NULL;
 

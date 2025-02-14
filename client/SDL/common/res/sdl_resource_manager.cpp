@@ -68,7 +68,8 @@ const std::vector<unsigned char>* SDLResourceManager::data(const std::string& ty
 #endif
 }
 
-std::string SDLResourceManager::filename(const std::string& type, const std::string& id)
+std::string SDLResourceManager::filename([[maybe_unused]] const std::string& type,
+                                         [[maybe_unused]] const std::string& id)
 {
 #if defined(SDL_RESOURCE_ROOT)
 	std::string uuid = type + "/" + id;

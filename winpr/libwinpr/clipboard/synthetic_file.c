@@ -536,7 +536,8 @@ error:
 	return NULL;
 }
 
-static void* convert_any_uri_list_to_filedescriptors(wClipboard* clipboard, UINT32 formatId,
+static void* convert_any_uri_list_to_filedescriptors(wClipboard* clipboard,
+                                                     WINPR_ATTR_UNUSED UINT32 formatId,
                                                      UINT32* pSize)
 {
 	FILEDESCRIPTORW* descriptors = NULL;
@@ -1216,27 +1217,31 @@ static UINT delegate_file_request_range(wClipboardDelegate* delegate,
 	return NO_ERROR;
 }
 
-static UINT dummy_file_size_success(wClipboardDelegate* delegate,
-                                    const wClipboardFileSizeRequest* request, UINT64 fileSize)
+static UINT dummy_file_size_success(WINPR_ATTR_UNUSED wClipboardDelegate* delegate,
+                                    WINPR_ATTR_UNUSED const wClipboardFileSizeRequest* request,
+                                    WINPR_ATTR_UNUSED UINT64 fileSize)
 {
 	return ERROR_NOT_SUPPORTED;
 }
 
-static UINT dummy_file_size_failure(wClipboardDelegate* delegate,
-                                    const wClipboardFileSizeRequest* request, UINT errorCode)
+static UINT dummy_file_size_failure(WINPR_ATTR_UNUSED wClipboardDelegate* delegate,
+                                    WINPR_ATTR_UNUSED const wClipboardFileSizeRequest* request,
+                                    WINPR_ATTR_UNUSED UINT errorCode)
 {
 	return ERROR_NOT_SUPPORTED;
 }
 
-static UINT dummy_file_range_success(wClipboardDelegate* delegate,
-                                     const wClipboardFileRangeRequest* request, const BYTE* data,
-                                     UINT32 size)
+static UINT dummy_file_range_success(WINPR_ATTR_UNUSED wClipboardDelegate* delegate,
+                                     WINPR_ATTR_UNUSED const wClipboardFileRangeRequest* request,
+                                     WINPR_ATTR_UNUSED const BYTE* data,
+                                     WINPR_ATTR_UNUSED UINT32 size)
 {
 	return ERROR_NOT_SUPPORTED;
 }
 
-static UINT dummy_file_range_failure(wClipboardDelegate* delegate,
-                                     const wClipboardFileRangeRequest* request, UINT errorCode)
+static UINT dummy_file_range_failure(WINPR_ATTR_UNUSED wClipboardDelegate* delegate,
+                                     WINPR_ATTR_UNUSED const wClipboardFileRangeRequest* request,
+                                     WINPR_ATTR_UNUSED UINT errorCode)
 {
 	return ERROR_NOT_SUPPORTED;
 }

@@ -871,11 +871,13 @@ static INLINE void progressive_rfx_decode_block(const primitives_t* prims,
 	prims->lShiftC_16s_inplace(buffer, shift, length);
 }
 
-static INLINE int progressive_rfx_decode_component(
-    PROGRESSIVE_CONTEXT* WINPR_RESTRICT progressive,
-    const RFX_COMPONENT_CODEC_QUANT* WINPR_RESTRICT shift, const BYTE* WINPR_RESTRICT data,
-    UINT32 length, INT16* WINPR_RESTRICT buffer, INT16* WINPR_RESTRICT current,
-    INT16* WINPR_RESTRICT sign, BOOL coeffDiff, BOOL subbandDiff, BOOL extrapolate)
+static INLINE int
+progressive_rfx_decode_component(PROGRESSIVE_CONTEXT* WINPR_RESTRICT progressive,
+                                 const RFX_COMPONENT_CODEC_QUANT* WINPR_RESTRICT shift,
+                                 const BYTE* WINPR_RESTRICT data, UINT32 length,
+                                 INT16* WINPR_RESTRICT buffer, INT16* WINPR_RESTRICT current,
+                                 INT16* WINPR_RESTRICT sign, BOOL coeffDiff,
+                                 WINPR_ATTR_UNUSED BOOL subbandDiff, BOOL extrapolate)
 {
 	int status = 0;
 	const primitives_t* prims = primitives_get();
@@ -1179,7 +1181,8 @@ progressive_rfx_upgrade_state_finish(RFX_PROGRESSIVE_UPGRADE_STATE* WINPR_RESTRI
 static INLINE int progressive_rfx_upgrade_block(RFX_PROGRESSIVE_UPGRADE_STATE* WINPR_RESTRICT state,
                                                 INT16* WINPR_RESTRICT buffer,
                                                 INT16* WINPR_RESTRICT sign, UINT32 length,
-                                                UINT32 shift, UINT32 bitPos, UINT32 numBits)
+                                                UINT32 shift, WINPR_ATTR_UNUSED UINT32 bitPos,
+                                                UINT32 numBits)
 {
 	if (!numBits)
 		return 1;
@@ -1236,15 +1239,14 @@ static INLINE int progressive_rfx_upgrade_block(RFX_PROGRESSIVE_UPGRADE_STATE* W
 	return 1;
 }
 
-static INLINE int
-progressive_rfx_upgrade_component(PROGRESSIVE_CONTEXT* WINPR_RESTRICT progressive,
-                                  const RFX_COMPONENT_CODEC_QUANT* WINPR_RESTRICT shift,
-                                  const RFX_COMPONENT_CODEC_QUANT* WINPR_RESTRICT bitPos,
-                                  const RFX_COMPONENT_CODEC_QUANT* WINPR_RESTRICT numBits,
-                                  INT16* WINPR_RESTRICT buffer, INT16* WINPR_RESTRICT current,
-                                  INT16* WINPR_RESTRICT sign, const BYTE* WINPR_RESTRICT srlData,
-                                  UINT32 srlLen, const BYTE* WINPR_RESTRICT rawData, UINT32 rawLen,
-                                  BOOL coeffDiff, BOOL subbandDiff, BOOL extrapolate)
+static INLINE int progressive_rfx_upgrade_component(
+    PROGRESSIVE_CONTEXT* WINPR_RESTRICT progressive,
+    const RFX_COMPONENT_CODEC_QUANT* WINPR_RESTRICT shift,
+    const RFX_COMPONENT_CODEC_QUANT* WINPR_RESTRICT bitPos,
+    const RFX_COMPONENT_CODEC_QUANT* WINPR_RESTRICT numBits, INT16* WINPR_RESTRICT buffer,
+    INT16* WINPR_RESTRICT current, INT16* WINPR_RESTRICT sign, const BYTE* WINPR_RESTRICT srlData,
+    UINT32 srlLen, const BYTE* WINPR_RESTRICT rawData, UINT32 rawLen, BOOL coeffDiff,
+    WINPR_ATTR_UNUSED BOOL subbandDiff, BOOL extrapolate)
 {
 	int rc = 0;
 	UINT32 aRawLen = 0;
@@ -1515,7 +1517,7 @@ static INLINE BOOL progressive_tile_read_upgrade(
     PROGRESSIVE_CONTEXT* WINPR_RESTRICT progressive, wStream* WINPR_RESTRICT s, UINT16 blockType,
     UINT32 blockLen, PROGRESSIVE_SURFACE_CONTEXT* WINPR_RESTRICT surface,
     PROGRESSIVE_BLOCK_REGION* WINPR_RESTRICT region,
-    const PROGRESSIVE_BLOCK_CONTEXT* WINPR_RESTRICT context)
+    WINPR_ATTR_UNUSED const PROGRESSIVE_BLOCK_CONTEXT* WINPR_RESTRICT context)
 {
 	RFX_PROGRESSIVE_TILE tile = { 0 };
 	const size_t expect = 20;
@@ -1589,12 +1591,11 @@ static INLINE BOOL progressive_tile_read_upgrade(
 	return progressive_surface_tile_replace(surface, region, &tile, TRUE);
 }
 
-static INLINE BOOL progressive_tile_read(PROGRESSIVE_CONTEXT* WINPR_RESTRICT progressive,
-                                         BOOL simple, wStream* WINPR_RESTRICT s, UINT16 blockType,
-                                         UINT32 blockLen,
-                                         PROGRESSIVE_SURFACE_CONTEXT* WINPR_RESTRICT surface,
-                                         PROGRESSIVE_BLOCK_REGION* WINPR_RESTRICT region,
-                                         const PROGRESSIVE_BLOCK_CONTEXT* WINPR_RESTRICT context)
+static INLINE BOOL progressive_tile_read(
+    PROGRESSIVE_CONTEXT* WINPR_RESTRICT progressive, BOOL simple, wStream* WINPR_RESTRICT s,
+    UINT16 blockType, UINT32 blockLen, PROGRESSIVE_SURFACE_CONTEXT* WINPR_RESTRICT surface,
+    PROGRESSIVE_BLOCK_REGION* WINPR_RESTRICT region,
+    WINPR_ATTR_UNUSED const PROGRESSIVE_BLOCK_CONTEXT* WINPR_RESTRICT context)
 {
 	RFX_PROGRESSIVE_TILE tile = { 0 };
 	size_t expect = simple ? 16 : 17;

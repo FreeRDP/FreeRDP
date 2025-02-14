@@ -126,8 +126,9 @@ static HANDLE_OPS ops = { SemaphoreIsHandled,
 	                      NULL,
 	                      NULL };
 
-HANDLE CreateSemaphoreW(LPSECURITY_ATTRIBUTES lpSemaphoreAttributes, LONG lInitialCount,
-                        LONG lMaximumCount, LPCWSTR lpName)
+HANDLE CreateSemaphoreW(WINPR_ATTR_UNUSED LPSECURITY_ATTRIBUTES lpSemaphoreAttributes,
+                        LONG lInitialCount, WINPR_ATTR_UNUSED LONG lMaximumCount,
+                        WINPR_ATTR_UNUSED LPCWSTR lpName)
 {
 	HANDLE handle = NULL;
 	WINPR_SEMAPHORE* semaphore = NULL;
@@ -193,24 +194,27 @@ HANDLE CreateSemaphoreW(LPSECURITY_ATTRIBUTES lpSemaphoreAttributes, LONG lIniti
 }
 
 HANDLE CreateSemaphoreA(LPSECURITY_ATTRIBUTES lpSemaphoreAttributes, LONG lInitialCount,
-                        LONG lMaximumCount, LPCSTR lpName)
+                        LONG lMaximumCount, WINPR_ATTR_UNUSED LPCSTR lpName)
 {
 	return CreateSemaphoreW(lpSemaphoreAttributes, lInitialCount, lMaximumCount, NULL);
 }
 
-HANDLE OpenSemaphoreW(DWORD dwDesiredAccess, BOOL bInheritHandle, LPCWSTR lpName)
+HANDLE OpenSemaphoreW(WINPR_ATTR_UNUSED DWORD dwDesiredAccess,
+                      WINPR_ATTR_UNUSED BOOL bInheritHandle, WINPR_ATTR_UNUSED LPCWSTR lpName)
 {
 	WLog_ERR(TAG, "not implemented");
 	return NULL;
 }
 
-HANDLE OpenSemaphoreA(DWORD dwDesiredAccess, BOOL bInheritHandle, LPCSTR lpName)
+HANDLE OpenSemaphoreA(WINPR_ATTR_UNUSED DWORD dwDesiredAccess,
+                      WINPR_ATTR_UNUSED BOOL bInheritHandle, WINPR_ATTR_UNUSED LPCSTR lpName)
 {
 	WLog_ERR(TAG, "not implemented");
 	return NULL;
 }
 
-BOOL ReleaseSemaphore(HANDLE hSemaphore, LONG lReleaseCount, LPLONG lpPreviousCount)
+BOOL ReleaseSemaphore(HANDLE hSemaphore, LONG lReleaseCount,
+                      WINPR_ATTR_UNUSED LPLONG lpPreviousCount)
 {
 	ULONG Type = 0;
 	WINPR_HANDLE* Object = NULL;

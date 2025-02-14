@@ -124,7 +124,7 @@ static UINT enumerator_server_open_channel(enumerator_server* enumerator)
 }
 
 static UINT enumerator_server_handle_select_version_request(CamDevEnumServerContext* context,
-                                                            wStream* s,
+                                                            WINPR_ATTR_UNUSED wStream* s,
                                                             const CAM_SHARED_MSG_HEADER* header)
 {
 	CAM_SELECT_VERSION_REQUEST pdu = { 0 };

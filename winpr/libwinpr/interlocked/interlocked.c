@@ -20,6 +20,7 @@
 #include <winpr/config.h>
 
 #include <winpr/assert.h>
+#include <winpr/wlog.h>
 #include <winpr/platform.h>
 #include <winpr/synch.h>
 #include <winpr/handle.h>
@@ -97,13 +98,16 @@ WINPR_PSLIST_ENTRY InterlockedPushEntrySList(WINPR_PSLIST_HEADER ListHead,
 #endif
 }
 
-WINPR_PSLIST_ENTRY InterlockedPushListSListEx(WINPR_PSLIST_HEADER ListHead, WINPR_PSLIST_ENTRY List,
-                                              WINPR_PSLIST_ENTRY ListEnd, ULONG Count)
+WINPR_PSLIST_ENTRY InterlockedPushListSListEx(WINPR_ATTR_UNUSED WINPR_PSLIST_HEADER ListHead,
+                                              WINPR_ATTR_UNUSED WINPR_PSLIST_ENTRY List,
+                                              WINPR_ATTR_UNUSED WINPR_PSLIST_ENTRY ListEnd,
+                                              WINPR_ATTR_UNUSED ULONG Count)
 {
 	WINPR_ASSERT(ListHead);
 	WINPR_ASSERT(List);
 	WINPR_ASSERT(ListEnd);
 
+	WLog_ERR("TODO", "TODO: implement");
 #ifdef _WIN64
 
 #else

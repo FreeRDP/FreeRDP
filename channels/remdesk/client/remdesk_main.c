@@ -135,13 +135,15 @@ static UINT remdesk_generate_expert_blob(remdeskPlugin* remdesk)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT remdesk_recv_ctl_server_announce_pdu(remdeskPlugin* remdesk, wStream* s,
-                                                 REMDESK_CHANNEL_HEADER* header)
+static UINT remdesk_recv_ctl_server_announce_pdu(WINPR_ATTR_UNUSED remdeskPlugin* remdesk,
+                                                 WINPR_ATTR_UNUSED wStream* s,
+                                                 WINPR_ATTR_UNUSED REMDESK_CHANNEL_HEADER* header)
 {
 	WINPR_ASSERT(remdesk);
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(header);
 
+	WLog_ERR("TODO", "TODO: implement");
 	return CHANNEL_RC_OK;
 }
 
@@ -151,7 +153,7 @@ static UINT remdesk_recv_ctl_server_announce_pdu(remdeskPlugin* remdesk, wStream
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT remdesk_recv_ctl_version_info_pdu(remdeskPlugin* remdesk, wStream* s,
-                                              REMDESK_CHANNEL_HEADER* header)
+                                              WINPR_ATTR_UNUSED REMDESK_CHANNEL_HEADER* header)
 {
 	UINT32 versionMajor = 0;
 	UINT32 versionMinor = 0;
@@ -222,8 +224,9 @@ static UINT remdesk_send_ctl_version_info_pdu(remdeskPlugin* remdesk)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT remdesk_recv_ctl_result_pdu(remdeskPlugin* remdesk, wStream* s,
-                                        REMDESK_CHANNEL_HEADER* header, UINT32* pResult)
+static UINT remdesk_recv_ctl_result_pdu(WINPR_ATTR_UNUSED remdeskPlugin* remdesk, wStream* s,
+                                        WINPR_ATTR_UNUSED REMDESK_CHANNEL_HEADER* header,
+                                        UINT32* pResult)
 {
 	UINT32 result = 0;
 
@@ -666,9 +669,10 @@ static UINT remdesk_process_receive(remdeskPlugin* remdesk, wStream* s)
 	return status;
 }
 
-static void remdesk_process_connect(remdeskPlugin* remdesk)
+static void remdesk_process_connect(WINPR_ATTR_UNUSED remdeskPlugin* remdesk)
 {
 	WINPR_ASSERT(remdesk);
+	WLog_ERR("TODO", "TODO: implement");
 }
 
 /**
@@ -843,8 +847,9 @@ static DWORD WINAPI remdesk_virtual_channel_client_thread(LPVOID arg)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT remdesk_virtual_channel_event_connected(remdeskPlugin* remdesk, LPVOID pData,
-                                                    UINT32 dataLength)
+static UINT remdesk_virtual_channel_event_connected(remdeskPlugin* remdesk,
+                                                    WINPR_ATTR_UNUSED LPVOID pData,
+                                                    WINPR_ATTR_UNUSED UINT32 dataLength)
 {
 	UINT error = 0;
 

@@ -26,6 +26,7 @@
 #include <winpr/error.h>
 #include <winpr/file.h>
 #include <winpr/string.h>
+#include <winpr/wlog.h>
 
 #include <winpr/environment.h>
 
@@ -97,50 +98,61 @@ DWORD GetCurrentDirectoryA(DWORD nBufferLength, LPSTR lpBuffer)
 	}
 }
 
-DWORD GetCurrentDirectoryW(DWORD nBufferLength, LPWSTR lpBuffer)
+DWORD GetCurrentDirectoryW(WINPR_ATTR_UNUSED DWORD nBufferLength, WINPR_ATTR_UNUSED LPWSTR lpBuffer)
 {
+	WLog_ERR("TODO", "TODO: not implemented");
 	return 0;
 }
 
-BOOL SetCurrentDirectoryA(LPCSTR lpPathName)
+BOOL SetCurrentDirectoryA(WINPR_ATTR_UNUSED LPCSTR lpPathName)
 {
+	WLog_ERR("TODO", "TODO: not implemented");
 	return TRUE;
 }
 
-BOOL SetCurrentDirectoryW(LPCWSTR lpPathName)
+BOOL SetCurrentDirectoryW(WINPR_ATTR_UNUSED LPCWSTR lpPathName)
 {
+	WLog_ERR("TODO", "TODO: not implemented");
 	return TRUE;
 }
 
-DWORD SearchPathA(LPCSTR lpPath, LPCSTR lpFileName, LPCSTR lpExtension, DWORD nBufferLength,
-                  LPSTR lpBuffer, LPSTR* lpFilePart)
+DWORD SearchPathA(WINPR_ATTR_UNUSED LPCSTR lpPath, WINPR_ATTR_UNUSED LPCSTR lpFileName,
+                  WINPR_ATTR_UNUSED LPCSTR lpExtension, WINPR_ATTR_UNUSED DWORD nBufferLength,
+                  WINPR_ATTR_UNUSED LPSTR lpBuffer, WINPR_ATTR_UNUSED LPSTR* lpFilePart)
 {
+	WLog_ERR("TODO", "TODO: not implemented");
 	return 0;
 }
 
-DWORD SearchPathW(LPCWSTR lpPath, LPCWSTR lpFileName, LPCWSTR lpExtension, DWORD nBufferLength,
-                  LPWSTR lpBuffer, LPWSTR* lpFilePart)
+DWORD SearchPathW(WINPR_ATTR_UNUSED LPCWSTR lpPath, WINPR_ATTR_UNUSED LPCWSTR lpFileName,
+                  WINPR_ATTR_UNUSED LPCWSTR lpExtension, WINPR_ATTR_UNUSED DWORD nBufferLength,
+                  WINPR_ATTR_UNUSED LPWSTR lpBuffer, WINPR_ATTR_UNUSED LPWSTR* lpFilePart)
 {
+	WLog_ERR("TODO", "TODO: not implemented");
 	return 0;
 }
 
 LPSTR GetCommandLineA(VOID)
 {
+	WLog_ERR("TODO", "TODO: not implemented");
 	return NULL;
 }
 
 LPWSTR GetCommandLineW(VOID)
 {
+	WLog_ERR("TODO", "TODO: not implemented");
 	return NULL;
 }
 
-BOOL NeedCurrentDirectoryForExePathA(LPCSTR ExeName)
+BOOL NeedCurrentDirectoryForExePathA(WINPR_ATTR_UNUSED LPCSTR ExeName)
 {
+	WLog_ERR("TODO", "TODO: not implemented");
 	return TRUE;
 }
 
-BOOL NeedCurrentDirectoryForExePathW(LPCWSTR ExeName)
+BOOL NeedCurrentDirectoryForExePathW(WINPR_ATTR_UNUSED LPCWSTR ExeName)
 {
+	WLog_ERR("TODO", "TODO: not implemented");
 	return TRUE;
 }
 
@@ -177,8 +189,10 @@ DWORD GetEnvironmentVariableA(LPCSTR lpName, LPSTR lpBuffer, DWORD nSize)
 #endif
 }
 
-DWORD GetEnvironmentVariableW(LPCWSTR lpName, LPWSTR lpBuffer, DWORD nSize)
+DWORD GetEnvironmentVariableW(WINPR_ATTR_UNUSED LPCWSTR lpName, WINPR_ATTR_UNUSED LPWSTR lpBuffer,
+                              WINPR_ATTR_UNUSED DWORD nSize)
 {
+	WLog_ERR("TODO", "TODO: not implemented");
 	SetLastError(ERROR_ENVVAR_NOT_FOUND);
 	return 0;
 }
@@ -208,8 +222,9 @@ BOOL SetEnvironmentVariableA(LPCSTR lpName, LPCSTR lpValue)
 #endif
 }
 
-BOOL SetEnvironmentVariableW(LPCWSTR lpName, LPCWSTR lpValue)
+BOOL SetEnvironmentVariableW(WINPR_ATTR_UNUSED LPCWSTR lpName, WINPR_ATTR_UNUSED LPCWSTR lpValue)
 {
+	WLog_ERR("TODO", "TODO: not implemented");
 	return FALSE;
 }
 
@@ -289,26 +304,33 @@ LPCH GetEnvironmentStringsA(VOID)
 
 LPWCH GetEnvironmentStringsW(VOID)
 {
+	WLog_ERR("TODO", "TODO: not implemented");
 	return NULL;
 }
 
-BOOL SetEnvironmentStringsA(LPCH NewEnvironment)
+BOOL SetEnvironmentStringsA(WINPR_ATTR_UNUSED LPCH NewEnvironment)
 {
+	WLog_ERR("TODO", "TODO: not implemented");
 	return TRUE;
 }
 
-BOOL SetEnvironmentStringsW(LPWCH NewEnvironment)
+BOOL SetEnvironmentStringsW(WINPR_ATTR_UNUSED LPWCH NewEnvironment)
 {
+	WLog_ERR("TODO", "TODO: not implemented");
 	return TRUE;
 }
 
-DWORD ExpandEnvironmentStringsA(LPCSTR lpSrc, LPSTR lpDst, DWORD nSize)
+DWORD ExpandEnvironmentStringsA(WINPR_ATTR_UNUSED LPCSTR lpSrc, WINPR_ATTR_UNUSED LPSTR lpDst,
+                                WINPR_ATTR_UNUSED DWORD nSize)
 {
+	WLog_ERR("TODO", "TODO: not implemented");
 	return 0;
 }
 
-DWORD ExpandEnvironmentStringsW(LPCWSTR lpSrc, LPWSTR lpDst, DWORD nSize)
+DWORD ExpandEnvironmentStringsW(WINPR_ATTR_UNUSED LPCWSTR lpSrc, WINPR_ATTR_UNUSED LPWSTR lpDst,
+                                WINPR_ATTR_UNUSED DWORD nSize)
 {
+	WLog_ERR("TODO", "TODO: not implemented");
 	return 0;
 }
 

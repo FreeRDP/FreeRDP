@@ -340,7 +340,8 @@ static const IWTSVirtualChannelCallback geometry_callbacks = { geometry_on_data_
 	                                                           NULL, /* Open */
 	                                                           geometry_on_close, NULL };
 
-static UINT init_plugin_cb(GENERIC_DYNVC_PLUGIN* base, rdpContext* rcontext, rdpSettings* settings)
+static UINT init_plugin_cb(GENERIC_DYNVC_PLUGIN* base, WINPR_ATTR_UNUSED rdpContext* rcontext,
+                           rdpSettings* settings)
 {
 	GeometryClientContext* context = NULL;
 	GEOMETRY_PLUGIN* geometry = (GEOMETRY_PLUGIN*)base;

@@ -60,7 +60,7 @@ struct S_FREERDP_DSP_CONTEXT
 #endif
 };
 
-static BOOL ffmpeg_codec_is_filtered(enum AVCodecID id, BOOL encoder)
+static BOOL ffmpeg_codec_is_filtered(enum AVCodecID id, WINPR_ATTR_UNUSED BOOL encoder)
 {
 	switch (id)
 	{

@@ -289,7 +289,8 @@ static UINT ecam_dev_process_start_streams_request(CameraDevice* dev,
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT ecam_dev_process_property_list_request(CameraDevice* dev,
-                                                   GENERIC_CHANNEL_CALLBACK* hchannel, wStream* s)
+                                                   GENERIC_CHANNEL_CALLBACK* hchannel,
+                                                   WINPR_ATTR_UNUSED wStream* s)
 {
 	WINPR_ASSERT(dev);
 	// TODO: supported properties implementation
@@ -538,7 +539,8 @@ static UINT ecam_dev_send_stream_list_response(CameraDevice* dev,
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT ecam_dev_process_stream_list_request(CameraDevice* dev,
-                                                 GENERIC_CHANNEL_CALLBACK* hchannel, wStream* s)
+                                                 GENERIC_CHANNEL_CALLBACK* hchannel,
+                                                 WINPR_ATTR_UNUSED wStream* s)
 {
 	return ecam_dev_send_stream_list_response(dev, hchannel);
 }
@@ -549,7 +551,8 @@ static UINT ecam_dev_process_stream_list_request(CameraDevice* dev,
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT ecam_dev_process_activate_device_request(CameraDevice* dev,
-                                                     GENERIC_CHANNEL_CALLBACK* hchannel, wStream* s)
+                                                     GENERIC_CHANNEL_CALLBACK* hchannel,
+                                                     WINPR_ATTR_UNUSED wStream* s)
 {
 	WINPR_ASSERT(dev);
 
@@ -657,7 +660,7 @@ static UINT ecam_dev_on_data_received(IWTSVirtualChannelCallback* pChannelCallba
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT ecam_dev_on_open(IWTSVirtualChannelCallback* pChannelCallback)
+static UINT ecam_dev_on_open(WINPR_ATTR_UNUSED IWTSVirtualChannelCallback* pChannelCallback)
 {
 	WLog_DBG(TAG, "entered");
 	return CHANNEL_RC_OK;
@@ -693,8 +696,9 @@ static UINT ecam_dev_on_close(IWTSVirtualChannelCallback* pChannelCallback)
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT ecam_dev_on_new_channel_connection(IWTSListenerCallback* pListenerCallback,
-                                               IWTSVirtualChannel* pChannel, BYTE* Data,
-                                               BOOL* pbAccept,
+                                               IWTSVirtualChannel* pChannel,
+                                               WINPR_ATTR_UNUSED BYTE* Data,
+                                               WINPR_ATTR_UNUSED BOOL* pbAccept,
                                                IWTSVirtualChannelCallback** ppCallback)
 {
 	GENERIC_LISTENER_CALLBACK* hlistener = (GENERIC_LISTENER_CALLBACK*)pListenerCallback;
@@ -727,7 +731,8 @@ static UINT ecam_dev_on_new_channel_connection(IWTSListenerCallback* pListenerCa
  *
  * @return CameraDevice pointer or NULL in case of error
  */
-CameraDevice* ecam_dev_create(CameraPlugin* ecam, const char* deviceId, const char* deviceName)
+CameraDevice* ecam_dev_create(CameraPlugin* ecam, const char* deviceId,
+                              WINPR_ATTR_UNUSED const char* deviceName)
 {
 	WINPR_ASSERT(ecam);
 	WINPR_ASSERT(ecam->hlistener);

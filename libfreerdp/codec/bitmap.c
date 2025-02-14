@@ -465,9 +465,10 @@ static INLINE UINT16 out_from_count_3(UINT16 in_count, wStream* WINPR_RESTRICT i
 	} while (0)
 
 static INLINE SSIZE_T freerdp_bitmap_compress_24(const void* WINPR_RESTRICT srcData, UINT32 width,
-                                                 UINT32 height, wStream* WINPR_RESTRICT s,
-                                                 UINT32 byte_limit, UINT32 start_line,
-                                                 wStream* WINPR_RESTRICT temp_s, UINT32 e)
+                                                 WINPR_ATTR_UNUSED UINT32 height,
+                                                 wStream* WINPR_RESTRICT s, UINT32 byte_limit,
+                                                 UINT32 start_line, wStream* WINPR_RESTRICT temp_s,
+                                                 UINT32 e)
 {
 	int8_t fom_mask[8192] = { 0 }; /* good for up to 64K bitmap */
 	SSIZE_T lines_sent = 0;
@@ -774,8 +775,9 @@ static INLINE SSIZE_T freerdp_bitmap_compress_24(const void* WINPR_RESTRICT srcD
 }
 
 static INLINE SSIZE_T freerdp_bitmap_compress_16(const void* WINPR_RESTRICT srcData, UINT32 width,
-                                                 UINT32 height, wStream* WINPR_RESTRICT s,
-                                                 UINT32 bpp, UINT32 byte_limit, UINT32 start_line,
+                                                 WINPR_ATTR_UNUSED UINT32 height,
+                                                 wStream* WINPR_RESTRICT s, UINT32 bpp,
+                                                 UINT32 byte_limit, UINT32 start_line,
                                                  wStream* WINPR_RESTRICT temp_s, UINT32 e)
 {
 	int8_t fom_mask[8192] = { 0 }; /* good for up to 64K bitmap */

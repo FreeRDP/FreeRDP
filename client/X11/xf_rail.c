@@ -77,6 +77,7 @@ typedef struct
 
 void xf_rail_enable_remoteapp_mode(xfContext* xfc)
 {
+	WINPR_ASSERT(xfc);
 	if (!xfc->remote_app)
 	{
 		xfc->remote_app = TRUE;
@@ -88,6 +89,7 @@ void xf_rail_enable_remoteapp_mode(xfContext* xfc)
 
 void xf_rail_disable_remoteapp_mode(xfContext* xfc)
 {
+	WINPR_ASSERT(xfc);
 	if (xfc->remote_app)
 	{
 		xfc->remote_app = FALSE;
@@ -137,6 +139,8 @@ void xf_rail_adjust_position(xfContext* xfc, xfAppWindow* appWindow)
 {
 	RAIL_WINDOW_MOVE_ORDER windowMove = { 0 };
 
+	WINPR_ASSERT(xfc);
+	WINPR_ASSERT(appWindow);
 	if (!appWindow->is_mapped || appWindow->local_move.state != LMS_NOT_ACTIVE)
 		return;
 
@@ -175,6 +179,7 @@ void xf_rail_end_local_move(xfContext* xfc, xfAppWindow* appWindow)
 	Window child_window = 0;
 
 	WINPR_ASSERT(xfc);
+	WINPR_ASSERT(appWindow);
 
 	if ((appWindow->local_move.direction == _NET_WM_MOVERESIZE_MOVE_KEYBOARD) ||
 	    (appWindow->local_move.direction == _NET_WM_MOVERESIZE_SIZE_KEYBOARD))
@@ -269,7 +274,7 @@ BOOL xf_rail_paint_surface(xfContext* xfc, UINT64 windowId, const RECTANGLE_16* 
 	return TRUE;
 }
 
-static BOOL rail_paint_fn(const void* pvkey, void* value, void* pvarg)
+static BOOL rail_paint_fn(const void* pvkey, WINPR_ATTR_UNUSED void* value, void* pvarg)
 {
 	rail_paint_fn_arg_t* arg = pvarg;
 	WINPR_ASSERT(pvkey);
@@ -320,6 +325,11 @@ static BOOL xf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 {
 	xfAppWindow* appWindow = NULL;
 	xfContext* xfc = (xfContext*)context;
+
+	WINPR_ASSERT(xfc);
+	WINPR_ASSERT(orderInfo);
+	WINPR_ASSERT(windowState);
+
 	UINT32 fieldFlags = orderInfo->fieldFlags;
 	BOOL position_or_size_updated = FALSE;
 	appWindow = xf_rail_get_window(xfc, orderInfo->windowId);
@@ -617,13 +627,13 @@ static BOOL xf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 static BOOL xf_rail_window_delete(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo)
 {
 	xfContext* xfc = (xfContext*)context;
+	WINPR_ASSERT(xfc);
 	return xf_rail_del_window(xfc, orderInfo->windowId);
 }
 
 static xfRailIconCache* RailIconCache_New(rdpSettings* settings)
 {
-	xfRailIconCache* cache = NULL;
-	cache = calloc(1, sizeof(xfRailIconCache));
+	xfRailIconCache* cache = calloc(1, sizeof(xfRailIconCache));
 
 	if (!cache)
 		return NULL;
@@ -646,21 +656,23 @@ static xfRailIconCache* RailIconCache_New(rdpSettings* settings)
 
 static void RailIconCache_Free(xfRailIconCache* cache)
 {
-	if (cache)
-	{
-		for (UINT32 i = 0; i < cache->numCaches * cache->numCacheEntries; i++)
-		{
-			free(cache->entries[i].data);
-		}
+	if (!cache)
+		return;
 
-		free(cache->scratch.data);
-		free(cache->entries);
-		free(cache);
+	for (UINT32 i = 0; i < cache->numCaches * cache->numCacheEntries; i++)
+	{
+		xfRailIcon* cur = &cache->entries[i];
+		free(cur->data);
 	}
+
+	free(cache->scratch.data);
+	free(cache->entries);
+	free(cache);
 }
 
 static xfRailIcon* RailIconCache_Lookup(xfRailIconCache* cache, UINT8 cacheId, UINT16 cacheEntry)
 {
+	WINPR_ASSERT(cache);
 	/*
 	 * MS-RDPERP 2.2.1.2.3 Icon Info (TS_ICON_INFO)
 	 *
@@ -694,10 +706,12 @@ static xfRailIcon* RailIconCache_Lookup(xfRailIconCache* cache, UINT8 cacheId, U
  */
 static BOOL convert_rail_icon(const ICON_INFO* iconInfo, xfRailIcon* railIcon)
 {
-	BYTE* argbPixels = NULL;
+	WINPR_ASSERT(iconInfo);
+	WINPR_ASSERT(railIcon);
+
 	BYTE* nextPixel = NULL;
 	long* pixels = NULL;
-	argbPixels = calloc(1ull * iconInfo->width * iconInfo->height, 4);
+	BYTE* argbPixels = calloc(1ull * iconInfo->width * iconInfo->height, 4);
 
 	if (!argbPixels)
 		goto error;
@@ -786,15 +800,17 @@ static BOOL xf_rail_window_cached_icon(rdpContext* context, const WINDOW_ORDER_I
                                        const WINDOW_CACHED_ICON_ORDER* windowCachedIcon)
 {
 	xfContext* xfc = (xfContext*)context;
-	xfAppWindow* railWindow = NULL;
-	xfRailIcon* icon = NULL;
+	WINPR_ASSERT(orderInfo);
+
 	BOOL replaceIcon = 0;
-	railWindow = xf_rail_get_window(xfc, orderInfo->windowId);
+	xfAppWindow* railWindow = xf_rail_get_window(xfc, orderInfo->windowId);
 
 	if (!railWindow)
 		return TRUE;
 
-	icon = RailIconCache_Lookup(
+	WINPR_ASSERT(windowCachedIcon);
+
+	xfRailIcon* icon = RailIconCache_Lookup(
 	    xfc->railIconCache, WINPR_ASSERTING_INT_CAST(UINT8, windowCachedIcon->cachedIcon.cacheId),
 	    WINPR_ASSERTING_INT_CAST(UINT16, windowCachedIcon->cachedIcon.cacheEntry));
 
@@ -810,9 +826,12 @@ static BOOL xf_rail_window_cached_icon(rdpContext* context, const WINDOW_ORDER_I
 	return TRUE;
 }
 
-static BOOL xf_rail_notify_icon_common(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
-                                       const NOTIFY_ICON_STATE_ORDER* notifyIconState)
+static BOOL
+xf_rail_notify_icon_common(WINPR_ATTR_UNUSED rdpContext* context,
+                           const WINDOW_ORDER_INFO* orderInfo,
+                           WINPR_ATTR_UNUSED const NOTIFY_ICON_STATE_ORDER* notifyIconState)
 {
+	WLog_ERR("TODO", "TODO: implement");
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_NOTIFY_VERSION)
 	{
 	}
@@ -852,18 +871,24 @@ static BOOL xf_rail_notify_icon_update(rdpContext* context, const WINDOW_ORDER_I
 	return xf_rail_notify_icon_common(context, orderInfo, notifyIconState);
 }
 
-static BOOL xf_rail_notify_icon_delete(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo)
+static BOOL xf_rail_notify_icon_delete(WINPR_ATTR_UNUSED rdpContext* context,
+                                       WINPR_ATTR_UNUSED const WINDOW_ORDER_INFO* orderInfo)
 {
+	WLog_ERR("TODO", "TODO: implement");
 	return TRUE;
 }
 
-static BOOL xf_rail_monitored_desktop(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
-                                      const MONITORED_DESKTOP_ORDER* monitoredDesktop)
+static BOOL
+xf_rail_monitored_desktop(WINPR_ATTR_UNUSED rdpContext* context,
+                          WINPR_ATTR_UNUSED const WINDOW_ORDER_INFO* orderInfo,
+                          WINPR_ATTR_UNUSED const MONITORED_DESKTOP_ORDER* monitoredDesktop)
 {
+	WLog_ERR("TODO", "TODO: implement");
 	return TRUE;
 }
 
-static BOOL xf_rail_non_monitored_desktop(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo)
+static BOOL xf_rail_non_monitored_desktop(rdpContext* context,
+                                          WINPR_ATTR_UNUSED const WINDOW_ORDER_INFO* orderInfo)
 {
 	xfContext* xfc = (xfContext*)context;
 	xf_rail_disable_remoteapp_mode(xfc);
@@ -872,7 +897,11 @@ static BOOL xf_rail_non_monitored_desktop(rdpContext* context, const WINDOW_ORDE
 
 static void xf_rail_register_update_callbacks(rdpUpdate* update)
 {
+	WINPR_ASSERT(update);
+
 	rdpWindowUpdate* window = update->window;
+	WINPR_ASSERT(window);
+
 	window->WindowCreate = xf_rail_window_common;
 	window->WindowUpdate = xf_rail_window_common;
 	window->WindowDelete = xf_rail_window_delete;
@@ -895,12 +924,10 @@ static void xf_rail_register_update_callbacks(rdpUpdate* update)
 static UINT xf_rail_server_execute_result(RailClientContext* context,
                                           const RAIL_EXEC_RESULT_ORDER* execResult)
 {
-	xfContext* xfc = NULL;
-
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(execResult);
 
-	xfc = (xfContext*)context->custom;
+	xfContext* xfc = (xfContext*)context->custom;
 	WINPR_ASSERT(xfc);
 
 	if (execResult->execResult != RAIL_EXEC_S_OK)
@@ -922,10 +949,11 @@ static UINT xf_rail_server_execute_result(RailClientContext* context,
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT xf_rail_server_system_param(RailClientContext* context,
-                                        const RAIL_SYSPARAM_ORDER* sysparam)
+static UINT xf_rail_server_system_param(WINPR_ATTR_UNUSED RailClientContext* context,
+                                        WINPR_ATTR_UNUSED const RAIL_SYSPARAM_ORDER* sysparam)
 {
 	// TODO: Actually apply param
+	WLog_ERR("TODO", "TODO: implement");
 	return CHANNEL_RC_OK;
 }
 
@@ -935,7 +963,7 @@ static UINT xf_rail_server_system_param(RailClientContext* context,
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT xf_rail_server_handshake(RailClientContext* context,
-                                     const RAIL_HANDSHAKE_ORDER* handshake)
+                                     WINPR_ATTR_UNUSED const RAIL_HANDSHAKE_ORDER* handshake)
 {
 	return client_rail_server_start_cmd(context);
 }
@@ -945,8 +973,9 @@ static UINT xf_rail_server_handshake(RailClientContext* context,
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT xf_rail_server_handshake_ex(RailClientContext* context,
-                                        const RAIL_HANDSHAKE_EX_ORDER* handshakeEx)
+static UINT
+xf_rail_server_handshake_ex(RailClientContext* context,
+                            WINPR_ATTR_UNUSED const RAIL_HANDSHAKE_EX_ORDER* handshakeEx)
 {
 	return client_rail_server_start_cmd(context);
 }
@@ -963,6 +992,9 @@ static UINT xf_rail_server_local_move_size(RailClientContext* context,
 	int y = 0;
 	int direction = 0;
 	Window child_window = 0;
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(localMoveSize);
+
 	xfContext* xfc = (xfContext*)context->custom;
 	xfAppWindow* appWindow = xf_rail_get_window(xfc, localMoveSize->windowId);
 
@@ -1058,6 +1090,9 @@ static UINT xf_rail_server_local_move_size(RailClientContext* context,
 static UINT xf_rail_server_min_max_info(RailClientContext* context,
                                         const RAIL_MINMAXINFO_ORDER* minMaxInfo)
 {
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(minMaxInfo);
+
 	xfContext* xfc = (xfContext*)context->custom;
 	xfAppWindow* appWindow = xf_rail_get_window(xfc, minMaxInfo->windowId);
 
@@ -1077,9 +1112,11 @@ static UINT xf_rail_server_min_max_info(RailClientContext* context,
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT xf_rail_server_language_bar_info(RailClientContext* context,
-                                             const RAIL_LANGBAR_INFO_ORDER* langBarInfo)
+static UINT
+xf_rail_server_language_bar_info(WINPR_ATTR_UNUSED RailClientContext* context,
+                                 WINPR_ATTR_UNUSED const RAIL_LANGBAR_INFO_ORDER* langBarInfo)
 {
+	WLog_ERR("TODO", "TODO: implement");
 	return CHANNEL_RC_OK;
 }
 
@@ -1088,9 +1125,11 @@ static UINT xf_rail_server_language_bar_info(RailClientContext* context,
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT xf_rail_server_get_appid_response(RailClientContext* context,
-                                              const RAIL_GET_APPID_RESP_ORDER* getAppIdResp)
+static UINT
+xf_rail_server_get_appid_response(WINPR_ATTR_UNUSED RailClientContext* context,
+                                  WINPR_ATTR_UNUSED const RAIL_GET_APPID_RESP_ORDER* getAppIdResp)
 {
+	WLog_ERR("TODO", "TODO: implement");
 	return CHANNEL_RC_OK;
 }
 
@@ -1194,12 +1233,10 @@ int xf_rail_uninit(xfContext* xfc, RailClientContext* rail)
 xfAppWindow* xf_rail_add_window(xfContext* xfc, UINT64 id, INT32 x, INT32 y, UINT32 width,
                                 UINT32 height, UINT32 surfaceId)
 {
-	xfAppWindow* appWindow = NULL;
-
 	if (!xfc)
 		return NULL;
 
-	appWindow = (xfAppWindow*)calloc(1, sizeof(xfAppWindow));
+	xfAppWindow* appWindow = (xfAppWindow*)calloc(1, sizeof(xfAppWindow));
 
 	if (!appWindow)
 		return NULL;

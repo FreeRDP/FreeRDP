@@ -429,7 +429,7 @@ static const CLIPRDR_FORMAT* xf_cliprdr_get_server_format_by_atom(xfClipboard* c
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT xf_cliprdr_send_data_request(xfClipboard* clipboard, UINT32 formatId,
-                                         const xfCliprdrFormat* cformat)
+                                         WINPR_ATTR_UNUSED const xfCliprdrFormat* cformat)
 {
 	CLIPRDR_FORMAT_DATA_REQUEST request = { 0 };
 	request.requestedFormatId = formatId;
@@ -2054,9 +2054,9 @@ out:
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT
-xf_cliprdr_server_format_list_response(CliprdrClientContext* context,
-                                       const CLIPRDR_FORMAT_LIST_RESPONSE* formatListResponse)
+static UINT xf_cliprdr_server_format_list_response(
+    WINPR_ATTR_UNUSED CliprdrClientContext* context,
+    WINPR_ATTR_UNUSED const CLIPRDR_FORMAT_LIST_RESPONSE* formatListResponse)
 {
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(formatListResponse);

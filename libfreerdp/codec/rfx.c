@@ -640,10 +640,9 @@ static INLINE BOOL rfx_process_message_context(RFX_CONTEXT* WINPR_RESTRICT conte
 	return TRUE;
 }
 
-static INLINE BOOL rfx_process_message_frame_begin(RFX_CONTEXT* WINPR_RESTRICT context,
-                                                   RFX_MESSAGE* WINPR_RESTRICT message,
-                                                   wStream* WINPR_RESTRICT s,
-                                                   UINT16* WINPR_RESTRICT pExpectedBlockType)
+static INLINE BOOL rfx_process_message_frame_begin(
+    RFX_CONTEXT* WINPR_RESTRICT context, WINPR_ATTR_UNUSED RFX_MESSAGE* WINPR_RESTRICT message,
+    wStream* WINPR_RESTRICT s, UINT16* WINPR_RESTRICT pExpectedBlockType)
 {
 	UINT32 frameIdx = 0;
 	UINT16 numRegions = 0;
@@ -673,10 +672,9 @@ static INLINE BOOL rfx_process_message_frame_begin(RFX_CONTEXT* WINPR_RESTRICT c
 	return TRUE;
 }
 
-static INLINE BOOL rfx_process_message_frame_end(RFX_CONTEXT* WINPR_RESTRICT context,
-                                                 RFX_MESSAGE* WINPR_RESTRICT message,
-                                                 wStream* WINPR_RESTRICT s,
-                                                 UINT16* WINPR_RESTRICT pExpectedBlockType)
+static INLINE BOOL rfx_process_message_frame_end(
+    RFX_CONTEXT* WINPR_RESTRICT context, WINPR_ATTR_UNUSED RFX_MESSAGE* WINPR_RESTRICT message,
+    WINPR_ATTR_UNUSED wStream* WINPR_RESTRICT s, UINT16* WINPR_RESTRICT pExpectedBlockType)
 {
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
@@ -802,8 +800,9 @@ typedef struct
 	RFX_CONTEXT* context;
 } RFX_TILE_PROCESS_WORK_PARAM;
 
-static INLINE void CALLBACK rfx_process_message_tile_work_callback(PTP_CALLBACK_INSTANCE instance,
-                                                                   void* context, PTP_WORK work)
+static INLINE void CALLBACK
+rfx_process_message_tile_work_callback(WINPR_ATTR_UNUSED PTP_CALLBACK_INSTANCE instance,
+                                       void* context, WINPR_ATTR_UNUSED PTP_WORK work)
 {
 	RFX_TILE_PROCESS_WORK_PARAM* param = (RFX_TILE_PROCESS_WORK_PARAM*)context;
 	WINPR_ASSERT(param);
@@ -1470,8 +1469,9 @@ static INLINE void rfx_update_context_properties(RFX_CONTEXT* WINPR_RESTRICT con
 	context->properties = properties;
 }
 
-static INLINE void rfx_write_message_sync(const RFX_CONTEXT* WINPR_RESTRICT context,
-                                          wStream* WINPR_RESTRICT s)
+static INLINE void
+rfx_write_message_sync(WINPR_ATTR_UNUSED const RFX_CONTEXT* WINPR_RESTRICT context,
+                       WINPR_ATTR_UNUSED wStream* WINPR_RESTRICT s)
 {
 	WINPR_ASSERT(context);
 
@@ -1481,8 +1481,9 @@ static INLINE void rfx_write_message_sync(const RFX_CONTEXT* WINPR_RESTRICT cont
 	Stream_Write_UINT16(s, WF_VERSION_1_0); /* version (2 bytes) */
 }
 
-static INLINE void rfx_write_message_codec_versions(const RFX_CONTEXT* WINPR_RESTRICT context,
-                                                    wStream* WINPR_RESTRICT s)
+static INLINE void
+rfx_write_message_codec_versions(WINPR_ATTR_UNUSED const RFX_CONTEXT* WINPR_RESTRICT context,
+                                 wStream* WINPR_RESTRICT s)
 {
 	WINPR_ASSERT(context);
 
@@ -1578,8 +1579,9 @@ struct S_RFX_TILE_COMPOSE_WORK_PARAM
 	RFX_CONTEXT* context;
 };
 
-static INLINE void CALLBACK rfx_compose_message_tile_work_callback(PTP_CALLBACK_INSTANCE instance,
-                                                                   void* context, PTP_WORK work)
+static INLINE void CALLBACK
+rfx_compose_message_tile_work_callback(WINPR_ATTR_UNUSED PTP_CALLBACK_INSTANCE instance,
+                                       void* context, WINPR_ATTR_UNUSED PTP_WORK work)
 {
 	RFX_TILE_COMPOSE_WORK_PARAM* param = (RFX_TILE_COMPOSE_WORK_PARAM*)context;
 	WINPR_ASSERT(param);
@@ -2092,9 +2094,9 @@ static INLINE BOOL rfx_write_message_tileset(RFX_CONTEXT* WINPR_RESTRICT context
 	return TRUE;
 }
 
-static INLINE BOOL rfx_write_message_frame_begin(RFX_CONTEXT* WINPR_RESTRICT context,
-                                                 wStream* WINPR_RESTRICT s,
-                                                 const RFX_MESSAGE* WINPR_RESTRICT message)
+static INLINE BOOL
+rfx_write_message_frame_begin(WINPR_ATTR_UNUSED RFX_CONTEXT* WINPR_RESTRICT context,
+                              wStream* WINPR_RESTRICT s, const RFX_MESSAGE* WINPR_RESTRICT message)
 {
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(message);
@@ -2111,7 +2113,7 @@ static INLINE BOOL rfx_write_message_frame_begin(RFX_CONTEXT* WINPR_RESTRICT con
 	return TRUE;
 }
 
-static INLINE BOOL rfx_write_message_region(RFX_CONTEXT* WINPR_RESTRICT context,
+static INLINE BOOL rfx_write_message_region(WINPR_ATTR_UNUSED RFX_CONTEXT* WINPR_RESTRICT context,
                                             wStream* WINPR_RESTRICT s,
                                             const RFX_MESSAGE* WINPR_RESTRICT message)
 {
@@ -2149,9 +2151,9 @@ static INLINE BOOL rfx_write_message_region(RFX_CONTEXT* WINPR_RESTRICT context,
 	return TRUE;
 }
 
-static INLINE BOOL rfx_write_message_frame_end(RFX_CONTEXT* WINPR_RESTRICT context,
-                                               wStream* WINPR_RESTRICT s,
-                                               const RFX_MESSAGE* WINPR_RESTRICT message)
+static INLINE BOOL rfx_write_message_frame_end(
+    WINPR_ATTR_UNUSED RFX_CONTEXT* WINPR_RESTRICT context, wStream* WINPR_RESTRICT s,
+    WINPR_ATTR_UNUSED const RFX_MESSAGE* WINPR_RESTRICT message)
 {
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(message);
@@ -2232,7 +2234,7 @@ UINT32 rfx_message_get_frame_idx(const RFX_MESSAGE* WINPR_RESTRICT message)
 	return message->frameIdx;
 }
 
-static INLINE BOOL rfx_write_progressive_wb_sync(RFX_CONTEXT* WINPR_RESTRICT rfx,
+static INLINE BOOL rfx_write_progressive_wb_sync(WINPR_ATTR_UNUSED RFX_CONTEXT* WINPR_RESTRICT rfx,
                                                  wStream* WINPR_RESTRICT s)
 {
 	const UINT32 blockLen = 12;
@@ -2249,8 +2251,8 @@ static INLINE BOOL rfx_write_progressive_wb_sync(RFX_CONTEXT* WINPR_RESTRICT rfx
 	return TRUE;
 }
 
-static INLINE BOOL rfx_write_progressive_wb_context(RFX_CONTEXT* WINPR_RESTRICT rfx,
-                                                    wStream* WINPR_RESTRICT s)
+static INLINE BOOL rfx_write_progressive_wb_context(
+    WINPR_ATTR_UNUSED RFX_CONTEXT* WINPR_RESTRICT rfx, wStream* WINPR_RESTRICT s)
 {
 	const UINT32 blockLen = 10;
 	WINPR_ASSERT(rfx);
@@ -2346,9 +2348,9 @@ static INLINE BOOL rfx_write_progressive_region(RFX_CONTEXT* WINPR_RESTRICT rfx,
 	return (used == blockLen);
 }
 
-static INLINE BOOL rfx_write_progressive_frame_begin(RFX_CONTEXT* WINPR_RESTRICT rfx,
-                                                     wStream* WINPR_RESTRICT s,
-                                                     const RFX_MESSAGE* WINPR_RESTRICT msg)
+static INLINE BOOL
+rfx_write_progressive_frame_begin(WINPR_ATTR_UNUSED RFX_CONTEXT* WINPR_RESTRICT rfx,
+                                  wStream* WINPR_RESTRICT s, const RFX_MESSAGE* WINPR_RESTRICT msg)
 {
 	const UINT32 blockLen = 12;
 	WINPR_ASSERT(rfx);
@@ -2366,8 +2368,8 @@ static INLINE BOOL rfx_write_progressive_frame_begin(RFX_CONTEXT* WINPR_RESTRICT
 	return TRUE;
 }
 
-static INLINE BOOL rfx_write_progressive_frame_end(RFX_CONTEXT* WINPR_RESTRICT rfx,
-                                                   wStream* WINPR_RESTRICT s)
+static INLINE BOOL rfx_write_progressive_frame_end(
+    WINPR_ATTR_UNUSED RFX_CONTEXT* WINPR_RESTRICT rfx, wStream* WINPR_RESTRICT s)
 {
 	const UINT32 blockLen = 6;
 	WINPR_ASSERT(rfx);
@@ -2382,9 +2384,9 @@ static INLINE BOOL rfx_write_progressive_frame_end(RFX_CONTEXT* WINPR_RESTRICT r
 	return TRUE;
 }
 
-static INLINE BOOL rfx_write_progressive_tile_simple(RFX_CONTEXT* WINPR_RESTRICT rfx,
-                                                     wStream* WINPR_RESTRICT s,
-                                                     const RFX_TILE* WINPR_RESTRICT tile)
+static INLINE BOOL
+rfx_write_progressive_tile_simple(WINPR_ATTR_UNUSED RFX_CONTEXT* WINPR_RESTRICT rfx,
+                                  wStream* WINPR_RESTRICT s, const RFX_TILE* WINPR_RESTRICT tile)
 {
 	UINT32 blockLen = 0;
 	WINPR_ASSERT(rfx);

@@ -1475,7 +1475,7 @@ BOOL freerdp_set_connection_type(rdpSettings* settings, UINT32 type)
 	return TRUE;
 }
 
-static UINT32 freerdp_get_keyboard_layout_for_type(const char* name, DWORD type)
+static UINT32 freerdp_get_keyboard_layout_for_type(const char* name, WINPR_ATTR_UNUSED DWORD type)
 {
 	UINT32 res = 0;
 	size_t count = 0;
@@ -2010,7 +2010,7 @@ static BOOL prepare_default_settings(rdpSettings* settings, COMMAND_LINE_ARGUMEN
 	return freerdp_set_connection_type(settings, CONNECTION_TYPE_AUTODETECT);
 }
 
-static BOOL setSmartcardEmulation(const char* value, rdpSettings* settings)
+static BOOL setSmartcardEmulation(WINPR_ATTR_UNUSED const char* value, rdpSettings* settings)
 {
 	return freerdp_settings_set_bool(settings, FreeRDP_SmartcardEmulation, TRUE);
 }
@@ -5426,7 +5426,7 @@ static int parse_command_line(rdpSettings* settings, const COMMAND_LINE_ARGUMENT
 
 static int freerdp_client_settings_parse_command_line_arguments_int(
     rdpSettings* settings, int argc, char* argv[], BOOL allowUnknown,
-    COMMAND_LINE_ARGUMENT_A* largs, size_t count,
+    COMMAND_LINE_ARGUMENT_A* largs, WINPR_ATTR_UNUSED size_t count,
     freerdp_command_line_handle_option_t handle_option, void* handle_userdata)
 {
 	char* user = NULL;

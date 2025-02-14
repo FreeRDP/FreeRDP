@@ -440,7 +440,8 @@ static INIT_ONCE threads_InitOnce = INIT_ONCE_STATIC_INIT;
 static pthread_t mainThreadId;
 static DWORD currentThreadTlsIndex = TLS_OUT_OF_INDEXES;
 
-static BOOL initializeThreads(PINIT_ONCE InitOnce, PVOID Parameter, PVOID* Context)
+static BOOL initializeThreads(WINPR_ATTR_UNUSED PINIT_ONCE InitOnce,
+                              WINPR_ATTR_UNUSED PVOID Parameter, WINPR_ATTR_UNUSED PVOID* Context)
 {
 	if (!apc_init(&mainThread.apc))
 	{
@@ -680,7 +681,7 @@ BOOL SetThreadPriority(HANDLE hThread, int nPriority)
 
 HANDLE CreateThread(LPSECURITY_ATTRIBUTES lpThreadAttributes, size_t dwStackSize,
                     LPTHREAD_START_ROUTINE lpStartAddress, LPVOID lpParameter,
-                    DWORD dwCreationFlags, LPDWORD lpThreadId)
+                    DWORD dwCreationFlags, WINPR_ATTR_UNUSED LPDWORD lpThreadId)
 {
 	HANDLE handle = NULL;
 	WINPR_THREAD* thread = (WINPR_THREAD*)calloc(1, sizeof(WINPR_THREAD));
@@ -813,9 +814,13 @@ BOOL ThreadCloseHandle(HANDLE handle)
 	return TRUE;
 }
 
-HANDLE CreateRemoteThread(HANDLE hProcess, LPSECURITY_ATTRIBUTES lpThreadAttributes,
-                          size_t dwStackSize, LPTHREAD_START_ROUTINE lpStartAddress,
-                          LPVOID lpParameter, DWORD dwCreationFlags, LPDWORD lpThreadId)
+HANDLE CreateRemoteThread(WINPR_ATTR_UNUSED HANDLE hProcess,
+                          WINPR_ATTR_UNUSED LPSECURITY_ATTRIBUTES lpThreadAttributes,
+                          WINPR_ATTR_UNUSED size_t dwStackSize,
+                          WINPR_ATTR_UNUSED LPTHREAD_START_ROUTINE lpStartAddress,
+                          WINPR_ATTR_UNUSED LPVOID lpParameter,
+                          WINPR_ATTR_UNUSED DWORD dwCreationFlags,
+                          WINPR_ATTR_UNUSED LPDWORD lpThreadId)
 {
 	WLog_ERR(TAG, "not implemented");
 	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
@@ -1000,7 +1005,7 @@ DWORD ResumeThread(HANDLE hThread)
 	return 0;
 }
 
-DWORD SuspendThread(HANDLE hThread)
+DWORD SuspendThread(WINPR_ATTR_UNUSED HANDLE hThread)
 {
 	WLog_ERR(TAG, "not implemented");
 	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);

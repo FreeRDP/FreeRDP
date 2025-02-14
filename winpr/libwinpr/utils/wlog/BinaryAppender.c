@@ -84,7 +84,7 @@ static BOOL WLog_BinaryAppender_Open(wLog* log, wLogAppender* appender)
 	return TRUE;
 }
 
-static BOOL WLog_BinaryAppender_Close(wLog* log, wLogAppender* appender)
+static BOOL WLog_BinaryAppender_Close(WINPR_ATTR_UNUSED wLog* log, wLogAppender* appender)
 {
 	wLogBinaryAppender* binaryAppender = NULL;
 
@@ -167,14 +167,16 @@ static BOOL WLog_BinaryAppender_WriteMessage(wLog* log, wLogAppender* appender,
 	return ret;
 }
 
-static BOOL WLog_BinaryAppender_WriteDataMessage(wLog* log, wLogAppender* appender,
-                                                 wLogMessage* message)
+static BOOL WLog_BinaryAppender_WriteDataMessage(WINPR_ATTR_UNUSED wLog* log,
+                                                 WINPR_ATTR_UNUSED wLogAppender* appender,
+                                                 WINPR_ATTR_UNUSED wLogMessage* message)
 {
 	return TRUE;
 }
 
-static BOOL WLog_BinaryAppender_WriteImageMessage(wLog* log, wLogAppender* appender,
-                                                  wLogMessage* message)
+static BOOL WLog_BinaryAppender_WriteImageMessage(WINPR_ATTR_UNUSED wLog* log,
+                                                  WINPR_ATTR_UNUSED wLogAppender* appender,
+                                                  WINPR_ATTR_UNUSED wLogMessage* message)
 {
 	return TRUE;
 }
@@ -218,7 +220,7 @@ static void WLog_BinaryAppender_Free(wLogAppender* appender)
 	}
 }
 
-wLogAppender* WLog_BinaryAppender_New(wLog* log)
+wLogAppender* WLog_BinaryAppender_New(WINPR_ATTR_UNUSED wLog* log)
 {
 	wLogBinaryAppender* BinaryAppender = NULL;
 

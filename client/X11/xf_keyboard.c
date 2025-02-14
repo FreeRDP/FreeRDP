@@ -103,8 +103,8 @@ static void xf_keyboard_clear(xfContext* xfc)
 	ZeroMemory(xfc->KeyboardState, sizeof(xfc->KeyboardState));
 }
 
-static BOOL xf_action_script_append(xfContext* xfc, const char* buffer, size_t size, void* user,
-                                    const char* what, const char* arg)
+static BOOL xf_action_script_append(xfContext* xfc, const char* buffer, size_t size,
+                                    WINPR_ATTR_UNUSED void* user, const char* what, const char* arg)
 {
 	WINPR_ASSERT(xfc);
 	WINPR_UNUSED(what);

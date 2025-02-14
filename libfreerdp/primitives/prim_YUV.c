@@ -171,7 +171,8 @@ static inline pstatus_t general_ChromaV1ToYUV444(const BYTE* WINPR_RESTRICT pSrc
 
 static inline pstatus_t general_ChromaV2ToYUV444(const BYTE* WINPR_RESTRICT pSrc[3],
                                                  const UINT32 srcStep[3], UINT32 nTotalWidth,
-                                                 UINT32 nTotalHeight, BYTE* WINPR_RESTRICT pDst[3],
+                                                 WINPR_ATTR_UNUSED UINT32 nTotalHeight,
+                                                 BYTE* WINPR_RESTRICT pDst[3],
                                                  const UINT32 dstStep[3],
                                                  const RECTANGLE_16* WINPR_RESTRICT roi)
 {

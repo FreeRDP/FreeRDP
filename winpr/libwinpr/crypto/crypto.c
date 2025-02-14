@@ -18,7 +18,7 @@
  */
 
 #include <winpr/config.h>
-
+#include <winpr/wlog.h>
 #include <winpr/crypto.h>
 
 /**
@@ -208,7 +208,7 @@ out:
 	return FALSE;
 }
 
-BOOL CryptUnprotectMemory(LPVOID pData, DWORD cbData, DWORD dwFlags)
+BOOL CryptUnprotectMemory(LPVOID pData, WINPR_ATTR_UNUSED DWORD cbData, DWORD dwFlags)
 {
 	BYTE* pPlainText = NULL;
 	size_t cbOut = 0;
@@ -262,41 +262,58 @@ out:
 	return FALSE;
 }
 
-BOOL CryptProtectData(DATA_BLOB* pDataIn, LPCWSTR szDataDescr, DATA_BLOB* pOptionalEntropy,
-                      PVOID pvReserved, CRYPTPROTECT_PROMPTSTRUCT* pPromptStruct, DWORD dwFlags,
-                      DATA_BLOB* pDataOut)
+BOOL CryptProtectData(WINPR_ATTR_UNUSED DATA_BLOB* pDataIn, WINPR_ATTR_UNUSED LPCWSTR szDataDescr,
+                      WINPR_ATTR_UNUSED DATA_BLOB* pOptionalEntropy,
+                      WINPR_ATTR_UNUSED PVOID pvReserved,
+                      WINPR_ATTR_UNUSED CRYPTPROTECT_PROMPTSTRUCT* pPromptStruct,
+                      WINPR_ATTR_UNUSED DWORD dwFlags, WINPR_ATTR_UNUSED DATA_BLOB* pDataOut)
 {
+	WLog_ERR("TODO", "TODO: Implement");
 	return TRUE;
 }
 
-BOOL CryptUnprotectData(DATA_BLOB* pDataIn, LPWSTR* ppszDataDescr, DATA_BLOB* pOptionalEntropy,
-                        PVOID pvReserved, CRYPTPROTECT_PROMPTSTRUCT* pPromptStruct, DWORD dwFlags,
-                        DATA_BLOB* pDataOut)
+BOOL CryptUnprotectData(WINPR_ATTR_UNUSED DATA_BLOB* pDataIn,
+                        WINPR_ATTR_UNUSED LPWSTR* ppszDataDescr,
+                        WINPR_ATTR_UNUSED DATA_BLOB* pOptionalEntropy,
+                        WINPR_ATTR_UNUSED PVOID pvReserved,
+                        WINPR_ATTR_UNUSED CRYPTPROTECT_PROMPTSTRUCT* pPromptStruct,
+                        WINPR_ATTR_UNUSED DWORD dwFlags, WINPR_ATTR_UNUSED DATA_BLOB* pDataOut)
 {
+	WLog_ERR("TODO", "TODO: Implement");
 	return TRUE;
 }
 
-BOOL CryptStringToBinaryW(LPCWSTR pszString, DWORD cchString, DWORD dwFlags, BYTE* pbBinary,
-                          DWORD* pcbBinary, DWORD* pdwSkip, DWORD* pdwFlags)
+BOOL CryptStringToBinaryW(WINPR_ATTR_UNUSED LPCWSTR pszString, WINPR_ATTR_UNUSED DWORD cchString,
+                          WINPR_ATTR_UNUSED DWORD dwFlags, WINPR_ATTR_UNUSED BYTE* pbBinary,
+                          WINPR_ATTR_UNUSED DWORD* pcbBinary, WINPR_ATTR_UNUSED DWORD* pdwSkip,
+                          WINPR_ATTR_UNUSED DWORD* pdwFlags)
 {
+	WLog_ERR("TODO", "TODO: Implement");
 	return TRUE;
 }
 
-BOOL CryptStringToBinaryA(LPCSTR pszString, DWORD cchString, DWORD dwFlags, BYTE* pbBinary,
-                          DWORD* pcbBinary, DWORD* pdwSkip, DWORD* pdwFlags)
+BOOL CryptStringToBinaryA(WINPR_ATTR_UNUSED LPCSTR pszString, WINPR_ATTR_UNUSED DWORD cchString,
+                          WINPR_ATTR_UNUSED DWORD dwFlags, WINPR_ATTR_UNUSED BYTE* pbBinary,
+                          WINPR_ATTR_UNUSED DWORD* pcbBinary, WINPR_ATTR_UNUSED DWORD* pdwSkip,
+                          WINPR_ATTR_UNUSED DWORD* pdwFlags)
 {
+	WLog_ERR("TODO", "TODO: Implement");
 	return TRUE;
 }
 
-BOOL CryptBinaryToStringW(CONST BYTE* pbBinary, DWORD cbBinary, DWORD dwFlags, LPWSTR pszString,
-                          DWORD* pcchString)
+BOOL CryptBinaryToStringW(WINPR_ATTR_UNUSED CONST BYTE* pbBinary, WINPR_ATTR_UNUSED DWORD cbBinary,
+                          WINPR_ATTR_UNUSED DWORD dwFlags, WINPR_ATTR_UNUSED LPWSTR pszString,
+                          WINPR_ATTR_UNUSED DWORD* pcchString)
 {
+	WLog_ERR("TODO", "TODO: Implement");
 	return TRUE;
 }
 
-BOOL CryptBinaryToStringA(CONST BYTE* pbBinary, DWORD cbBinary, DWORD dwFlags, LPSTR pszString,
-                          DWORD* pcchString)
+BOOL CryptBinaryToStringA(WINPR_ATTR_UNUSED CONST BYTE* pbBinary, WINPR_ATTR_UNUSED DWORD cbBinary,
+                          WINPR_ATTR_UNUSED DWORD dwFlags, WINPR_ATTR_UNUSED LPSTR pszString,
+                          WINPR_ATTR_UNUSED DWORD* pcchString)
 {
+	WLog_ERR("TODO", "TODO: Implement");
 	return TRUE;
 }
 

@@ -101,7 +101,7 @@ class ChannelData
 		_base /= str;
 	}
 
-	bool add(const std::string& name, bool back)
+	bool add(const std::string& name, WINPR_ATTR_UNUSED bool back)
 	{
 		std::lock_guard<std::mutex> guard(_mux);
 		if (_map.find(name) == _map.end())
@@ -285,7 +285,8 @@ static BOOL dump_dyn_channel_intercept_list(proxyPlugin* plugin, proxyData* pdat
 	return TRUE;
 }
 
-static BOOL dump_static_channel_intercept_list(proxyPlugin* plugin, proxyData* pdata, void* arg)
+static BOOL dump_static_channel_intercept_list([[maybe_unused]] proxyPlugin* plugin,
+                                               [[maybe_unused]] proxyData* pdata, void* arg)
 {
 	auto data = static_cast<proxyChannelToInterceptData*>(arg);
 

@@ -449,7 +449,8 @@ static UINT location_on_close(IWTSVirtualChannelCallback* pChannelCallback)
 	return res;
 }
 
-static UINT location_init(GENERIC_DYNVC_PLUGIN* plugin, rdpContext* context, rdpSettings* settings)
+static UINT location_init(GENERIC_DYNVC_PLUGIN* plugin, WINPR_ATTR_UNUSED rdpContext* context,
+                          WINPR_ATTR_UNUSED rdpSettings* settings)
 {
 	LOCATION_PLUGIN* loc = (LOCATION_PLUGIN*)plugin;
 

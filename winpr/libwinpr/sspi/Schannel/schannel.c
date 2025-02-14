@@ -88,9 +88,8 @@ static ALG_ID schannel_SupportedAlgs[] = { CALG_AES_128,
 	                                       CALG_DSS_SIGN,
 	                                       CALG_ECDSA };
 
-static SECURITY_STATUS SEC_ENTRY schannel_QueryCredentialsAttributesW(PCredHandle phCredential,
-                                                                      ULONG ulAttribute,
-                                                                      void* pBuffer)
+static SECURITY_STATUS SEC_ENTRY schannel_QueryCredentialsAttributesW(
+    WINPR_ATTR_UNUSED PCredHandle phCredential, ULONG ulAttribute, void* pBuffer)
 {
 	if (ulAttribute == SECPKG_ATTR_SUPPORTED_ALGS)
 	{
@@ -126,9 +125,10 @@ static SECURITY_STATUS SEC_ENTRY schannel_QueryCredentialsAttributesA(PCredHandl
 }
 
 static SECURITY_STATUS SEC_ENTRY schannel_AcquireCredentialsHandleW(
-    SEC_WCHAR* pszPrincipal, SEC_WCHAR* pszPackage, ULONG fCredentialUse, void* pvLogonID,
-    void* pAuthData, SEC_GET_KEY_FN pGetKeyFn, void* pvGetKeyArgument, PCredHandle phCredential,
-    PTimeStamp ptsExpiry)
+    WINPR_ATTR_UNUSED SEC_WCHAR* pszPrincipal, WINPR_ATTR_UNUSED SEC_WCHAR* pszPackage,
+    ULONG fCredentialUse, WINPR_ATTR_UNUSED void* pvLogonID, void* pAuthData,
+    WINPR_ATTR_UNUSED SEC_GET_KEY_FN pGetKeyFn, WINPR_ATTR_UNUSED void* pvGetKeyArgument,
+    PCredHandle phCredential, WINPR_ATTR_UNUSED PTimeStamp ptsExpiry)
 {
 	SCHANNEL_CREDENTIALS* credentials = NULL;
 
@@ -198,9 +198,11 @@ static SECURITY_STATUS SEC_ENTRY schannel_FreeCredentialsHandle(PCredHandle phCr
 }
 
 static SECURITY_STATUS SEC_ENTRY schannel_InitializeSecurityContextW(
-    PCredHandle phCredential, PCtxtHandle phContext, SEC_WCHAR* pszTargetName, ULONG fContextReq,
-    ULONG Reserved1, ULONG TargetDataRep, PSecBufferDesc pInput, ULONG Reserved2,
-    PCtxtHandle phNewContext, PSecBufferDesc pOutput, PULONG pfContextAttr, PTimeStamp ptsExpiry)
+    PCredHandle phCredential, PCtxtHandle phContext, WINPR_ATTR_UNUSED SEC_WCHAR* pszTargetName,
+    WINPR_ATTR_UNUSED ULONG fContextReq, WINPR_ATTR_UNUSED ULONG Reserved1,
+    WINPR_ATTR_UNUSED ULONG TargetDataRep, PSecBufferDesc pInput, WINPR_ATTR_UNUSED ULONG Reserved2,
+    PCtxtHandle phNewContext, PSecBufferDesc pOutput, WINPR_ATTR_UNUSED PULONG pfContextAttr,
+    WINPR_ATTR_UNUSED PTimeStamp ptsExpiry)
 {
 	SECURITY_STATUS status = 0;
 	SCHANNEL_CONTEXT* context = NULL;
@@ -254,9 +256,10 @@ static SECURITY_STATUS SEC_ENTRY schannel_InitializeSecurityContextA(
 }
 
 static SECURITY_STATUS SEC_ENTRY schannel_AcceptSecurityContext(
-    PCredHandle phCredential, PCtxtHandle phContext, PSecBufferDesc pInput, ULONG fContextReq,
-    ULONG TargetDataRep, PCtxtHandle phNewContext, PSecBufferDesc pOutput, PULONG pfContextAttr,
-    PTimeStamp ptsTimeStamp)
+    WINPR_ATTR_UNUSED PCredHandle phCredential, PCtxtHandle phContext, PSecBufferDesc pInput,
+    WINPR_ATTR_UNUSED ULONG fContextReq, WINPR_ATTR_UNUSED ULONG TargetDataRep,
+    PCtxtHandle phNewContext, PSecBufferDesc pOutput, WINPR_ATTR_UNUSED PULONG pfContextAttr,
+    WINPR_ATTR_UNUSED PTimeStamp ptsTimeStamp)
 {
 	SECURITY_STATUS status = 0;
 	SCHANNEL_CONTEXT* context = NULL;
@@ -329,22 +332,26 @@ static SECURITY_STATUS SEC_ENTRY schannel_QueryContextAttributes(PCtxtHandle phC
 	return SEC_E_UNSUPPORTED_FUNCTION;
 }
 
-static SECURITY_STATUS SEC_ENTRY schannel_MakeSignature(PCtxtHandle phContext, ULONG fQOP,
-                                                        PSecBufferDesc pMessage, ULONG MessageSeqNo)
+static SECURITY_STATUS SEC_ENTRY schannel_MakeSignature(WINPR_ATTR_UNUSED PCtxtHandle phContext,
+                                                        WINPR_ATTR_UNUSED ULONG fQOP,
+                                                        WINPR_ATTR_UNUSED PSecBufferDesc pMessage,
+                                                        WINPR_ATTR_UNUSED ULONG MessageSeqNo)
 {
 	return SEC_E_OK;
 }
 
-static SECURITY_STATUS SEC_ENTRY schannel_VerifySignature(PCtxtHandle phContext,
-                                                          PSecBufferDesc pMessage,
-                                                          ULONG MessageSeqNo, ULONG* pfQOP)
+static SECURITY_STATUS SEC_ENTRY schannel_VerifySignature(WINPR_ATTR_UNUSED PCtxtHandle phContext,
+                                                          WINPR_ATTR_UNUSED PSecBufferDesc pMessage,
+                                                          WINPR_ATTR_UNUSED ULONG MessageSeqNo,
+                                                          WINPR_ATTR_UNUSED ULONG* pfQOP)
 {
 	return SEC_E_OK;
 }
 
-static SECURITY_STATUS SEC_ENTRY schannel_EncryptMessage(PCtxtHandle phContext, ULONG fQOP,
+static SECURITY_STATUS SEC_ENTRY schannel_EncryptMessage(WINPR_ATTR_UNUSED PCtxtHandle phContext,
+                                                         WINPR_ATTR_UNUSED ULONG fQOP,
                                                          PSecBufferDesc pMessage,
-                                                         ULONG MessageSeqNo)
+                                                         WINPR_ATTR_UNUSED ULONG MessageSeqNo)
 {
 	SECURITY_STATUS status = 0;
 	SCHANNEL_CONTEXT* context = NULL;
@@ -359,7 +366,8 @@ static SECURITY_STATUS SEC_ENTRY schannel_EncryptMessage(PCtxtHandle phContext, 
 
 static SECURITY_STATUS SEC_ENTRY schannel_DecryptMessage(PCtxtHandle phContext,
                                                          PSecBufferDesc pMessage,
-                                                         ULONG MessageSeqNo, ULONG* pfQOP)
+                                                         WINPR_ATTR_UNUSED ULONG MessageSeqNo,
+                                                         WINPR_ATTR_UNUSED ULONG* pfQOP)
 {
 	SECURITY_STATUS status = 0;
 	SCHANNEL_CONTEXT* context = NULL;

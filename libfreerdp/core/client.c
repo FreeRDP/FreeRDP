@@ -131,7 +131,9 @@ static void channel_queue_free(void* obj)
 	channel_queue_message_free(msg);
 }
 
-static BOOL CALLBACK init_channel_handles_table(PINIT_ONCE once, PVOID param, PVOID* context)
+static BOOL CALLBACK init_channel_handles_table(WINPR_ATTR_UNUSED PINIT_ONCE once,
+                                                WINPR_ATTR_UNUSED PVOID param,
+                                                WINPR_ATTR_UNUSED PVOID* context)
 {
 	g_ChannelHandles = HashTable_New(TRUE);
 	return TRUE;
@@ -276,7 +278,7 @@ static UINT freerdp_drdynvc_on_channel_detached(DrdynvcClientContext* context, c
 	return status;
 }
 
-void freerdp_channels_register_instance(rdpChannels* channels, freerdp* instance)
+void freerdp_channels_register_instance(WINPR_ATTR_UNUSED rdpChannels* channels, freerdp* instance)
 {
 	/* store instance in TLS so future VirtualChannelInit calls can use it */
 	g_Instance = instance;
@@ -705,8 +707,9 @@ static BOOL freerdp_channels_process_sync(rdpChannels* channels, freerdp* instan
  * called only from main thread
  */
 #if defined(WITH_FREERDP_DEPRECATED)
-BOOL freerdp_channels_get_fds(rdpChannels* channels, freerdp* instance, void** read_fds,
-                              int* read_count, void** write_fds, int* write_count)
+BOOL freerdp_channels_get_fds(rdpChannels* channels, WINPR_ATTR_UNUSED freerdp* instance,
+                              void** read_fds, int* read_count, WINPR_ATTR_UNUSED void** write_fds,
+                              WINPR_ATTR_UNUSED int* write_count)
 {
 	void* pfd = NULL;
 	pfd = GetEventWaitObject(MessageQueue_Event(channels->queue));
@@ -1382,7 +1385,7 @@ static BOOL freerdp_channels_is_loaded_ex(rdpChannels* channels, PVIRTUALCHANNEL
 	return FALSE;
 }
 
-int freerdp_channels_client_load(rdpChannels* channels, rdpSettings* settings,
+int freerdp_channels_client_load(rdpChannels* channels, WINPR_ATTR_UNUSED rdpSettings* settings,
                                  PVIRTUALCHANNELENTRY entry, void* data)
 {
 	int status = 0;
@@ -1435,7 +1438,7 @@ int freerdp_channels_client_load(rdpChannels* channels, rdpSettings* settings,
 	return 0;
 }
 
-int freerdp_channels_client_load_ex(rdpChannels* channels, rdpSettings* settings,
+int freerdp_channels_client_load_ex(rdpChannels* channels, WINPR_ATTR_UNUSED rdpSettings* settings,
                                     PVIRTUALCHANNELENTRYEX entryEx, void* data)
 {
 	int status = 0;

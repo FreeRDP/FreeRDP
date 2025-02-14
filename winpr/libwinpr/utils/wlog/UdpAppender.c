@@ -35,7 +35,7 @@ typedef struct
 	SOCKET sock;
 } wLogUdpAppender;
 
-static BOOL WLog_UdpAppender_Open(wLog* log, wLogAppender* appender)
+static BOOL WLog_UdpAppender_Open(WINPR_ATTR_UNUSED wLog* log, wLogAppender* appender)
 {
 	wLogUdpAppender* udpAppender = NULL;
 	char addressString[256] = { 0 };

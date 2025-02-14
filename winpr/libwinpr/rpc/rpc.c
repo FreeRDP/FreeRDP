@@ -28,117 +28,142 @@
 #include "../log.h"
 #define TAG WINPR_TAG("rpc")
 
-RPC_STATUS RpcBindingCopy(RPC_BINDING_HANDLE SourceBinding, RPC_BINDING_HANDLE* DestinationBinding)
+RPC_STATUS RpcBindingCopy(WINPR_ATTR_UNUSED RPC_BINDING_HANDLE SourceBinding,
+                          WINPR_ATTR_UNUSED RPC_BINDING_HANDLE* DestinationBinding)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcBindingFree(RPC_BINDING_HANDLE* Binding)
+RPC_STATUS RpcBindingFree(WINPR_ATTR_UNUSED RPC_BINDING_HANDLE* Binding)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcBindingSetOption(RPC_BINDING_HANDLE hBinding, unsigned long option,
-                               ULONG_PTR optionValue)
+RPC_STATUS RpcBindingSetOption(WINPR_ATTR_UNUSED RPC_BINDING_HANDLE hBinding,
+                               WINPR_ATTR_UNUSED unsigned long option,
+                               WINPR_ATTR_UNUSED ULONG_PTR optionValue)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcBindingInqOption(RPC_BINDING_HANDLE hBinding, unsigned long option,
-                               ULONG_PTR* pOptionValue)
+RPC_STATUS RpcBindingInqOption(WINPR_ATTR_UNUSED RPC_BINDING_HANDLE hBinding,
+                               WINPR_ATTR_UNUSED unsigned long option,
+                               WINPR_ATTR_UNUSED ULONG_PTR* pOptionValue)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcBindingFromStringBindingA(RPC_CSTR StringBinding, RPC_BINDING_HANDLE* Binding)
+RPC_STATUS RpcBindingFromStringBindingA(WINPR_ATTR_UNUSED RPC_CSTR StringBinding,
+                                        WINPR_ATTR_UNUSED RPC_BINDING_HANDLE* Binding)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcBindingFromStringBindingW(RPC_WSTR StringBinding, RPC_BINDING_HANDLE* Binding)
+RPC_STATUS RpcBindingFromStringBindingW(WINPR_ATTR_UNUSED RPC_WSTR StringBinding,
+                                        WINPR_ATTR_UNUSED RPC_BINDING_HANDLE* Binding)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcSsGetContextBinding(void* ContextHandle, RPC_BINDING_HANDLE* Binding)
+RPC_STATUS RpcSsGetContextBinding(WINPR_ATTR_UNUSED void* ContextHandle,
+                                  WINPR_ATTR_UNUSED RPC_BINDING_HANDLE* Binding)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcBindingInqObject(RPC_BINDING_HANDLE Binding, UUID* ObjectUuid)
+RPC_STATUS RpcBindingInqObject(WINPR_ATTR_UNUSED RPC_BINDING_HANDLE Binding,
+                               WINPR_ATTR_UNUSED UUID* ObjectUuid)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcBindingReset(RPC_BINDING_HANDLE Binding)
+RPC_STATUS RpcBindingReset(WINPR_ATTR_UNUSED RPC_BINDING_HANDLE Binding)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcBindingSetObject(RPC_BINDING_HANDLE Binding, UUID* ObjectUuid)
+RPC_STATUS RpcBindingSetObject(WINPR_ATTR_UNUSED RPC_BINDING_HANDLE Binding,
+                               WINPR_ATTR_UNUSED UUID* ObjectUuid)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcMgmtInqDefaultProtectLevel(unsigned long AuthnSvc, unsigned long* AuthnLevel)
+RPC_STATUS RpcMgmtInqDefaultProtectLevel(WINPR_ATTR_UNUSED unsigned long AuthnSvc,
+                                         WINPR_ATTR_UNUSED unsigned long* AuthnLevel)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcBindingToStringBindingA(RPC_BINDING_HANDLE Binding, RPC_CSTR* StringBinding)
+RPC_STATUS RpcBindingToStringBindingA(WINPR_ATTR_UNUSED RPC_BINDING_HANDLE Binding,
+                                      WINPR_ATTR_UNUSED RPC_CSTR* StringBinding)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcBindingToStringBindingW(RPC_BINDING_HANDLE Binding, RPC_WSTR* StringBinding)
+RPC_STATUS RpcBindingToStringBindingW(WINPR_ATTR_UNUSED RPC_BINDING_HANDLE Binding,
+                                      WINPR_ATTR_UNUSED RPC_WSTR* StringBinding)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcBindingVectorFree(RPC_BINDING_VECTOR** BindingVector)
+RPC_STATUS RpcBindingVectorFree(WINPR_ATTR_UNUSED RPC_BINDING_VECTOR** BindingVector)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcStringBindingComposeA(RPC_CSTR ObjUuid, RPC_CSTR Protseq, RPC_CSTR NetworkAddr,
-                                    RPC_CSTR Endpoint, RPC_CSTR Options, RPC_CSTR* StringBinding)
+RPC_STATUS RpcStringBindingComposeA(WINPR_ATTR_UNUSED RPC_CSTR ObjUuid,
+                                    WINPR_ATTR_UNUSED RPC_CSTR Protseq,
+                                    WINPR_ATTR_UNUSED RPC_CSTR NetworkAddr,
+                                    WINPR_ATTR_UNUSED RPC_CSTR Endpoint,
+                                    WINPR_ATTR_UNUSED RPC_CSTR Options,
+                                    WINPR_ATTR_UNUSED RPC_CSTR* StringBinding)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcStringBindingComposeW(RPC_WSTR ObjUuid, RPC_WSTR Protseq, RPC_WSTR NetworkAddr,
-                                    RPC_WSTR Endpoint, RPC_WSTR Options, RPC_WSTR* StringBinding)
+RPC_STATUS RpcStringBindingComposeW(WINPR_ATTR_UNUSED RPC_WSTR ObjUuid,
+                                    WINPR_ATTR_UNUSED RPC_WSTR Protseq,
+                                    WINPR_ATTR_UNUSED RPC_WSTR NetworkAddr,
+                                    WINPR_ATTR_UNUSED RPC_WSTR Endpoint,
+                                    WINPR_ATTR_UNUSED RPC_WSTR Options,
+                                    WINPR_ATTR_UNUSED RPC_WSTR* StringBinding)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcStringBindingParseA(RPC_CSTR StringBinding, RPC_CSTR* ObjUuid, RPC_CSTR* Protseq,
-                                  RPC_CSTR* NetworkAddr, RPC_CSTR* Endpoint,
-                                  RPC_CSTR* NetworkOptions)
+RPC_STATUS RpcStringBindingParseA(WINPR_ATTR_UNUSED RPC_CSTR StringBinding,
+                                  WINPR_ATTR_UNUSED RPC_CSTR* ObjUuid,
+                                  WINPR_ATTR_UNUSED RPC_CSTR* Protseq,
+                                  WINPR_ATTR_UNUSED RPC_CSTR* NetworkAddr,
+                                  WINPR_ATTR_UNUSED RPC_CSTR* Endpoint,
+                                  WINPR_ATTR_UNUSED RPC_CSTR* NetworkOptions)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcStringBindingParseW(RPC_WSTR StringBinding, RPC_WSTR* ObjUuid, RPC_WSTR* Protseq,
-                                  RPC_WSTR* NetworkAddr, RPC_WSTR* Endpoint,
-                                  RPC_WSTR* NetworkOptions)
+RPC_STATUS RpcStringBindingParseW(WINPR_ATTR_UNUSED RPC_WSTR StringBinding,
+                                  WINPR_ATTR_UNUSED RPC_WSTR* ObjUuid,
+                                  WINPR_ATTR_UNUSED RPC_WSTR* Protseq,
+                                  WINPR_ATTR_UNUSED RPC_WSTR* NetworkAddr,
+                                  WINPR_ATTR_UNUSED RPC_WSTR* Endpoint,
+                                  WINPR_ATTR_UNUSED RPC_WSTR* NetworkOptions)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
@@ -160,243 +185,293 @@ RPC_STATUS RpcStringFreeW(RPC_WSTR* String)
 	return RPC_S_OK;
 }
 
-RPC_STATUS RpcIfInqId(RPC_IF_HANDLE RpcIfHandle, RPC_IF_ID* RpcIfId)
+RPC_STATUS RpcIfInqId(WINPR_ATTR_UNUSED RPC_IF_HANDLE RpcIfHandle,
+                      WINPR_ATTR_UNUSED RPC_IF_ID* RpcIfId)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcNetworkIsProtseqValidA(RPC_CSTR Protseq)
+RPC_STATUS RpcNetworkIsProtseqValidA(WINPR_ATTR_UNUSED RPC_CSTR Protseq)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcNetworkIsProtseqValidW(RPC_WSTR Protseq)
+RPC_STATUS RpcNetworkIsProtseqValidW(WINPR_ATTR_UNUSED RPC_WSTR Protseq)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcMgmtInqComTimeout(RPC_BINDING_HANDLE Binding, unsigned int* Timeout)
+RPC_STATUS RpcMgmtInqComTimeout(WINPR_ATTR_UNUSED RPC_BINDING_HANDLE Binding,
+                                WINPR_ATTR_UNUSED unsigned int* Timeout)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcMgmtSetComTimeout(RPC_BINDING_HANDLE Binding, unsigned int Timeout)
+RPC_STATUS RpcMgmtSetComTimeout(WINPR_ATTR_UNUSED RPC_BINDING_HANDLE Binding,
+                                WINPR_ATTR_UNUSED unsigned int Timeout)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcMgmtSetCancelTimeout(long Timeout)
+RPC_STATUS RpcMgmtSetCancelTimeout(WINPR_ATTR_UNUSED long Timeout)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcNetworkInqProtseqsA(RPC_PROTSEQ_VECTORA** ProtseqVector)
+RPC_STATUS RpcNetworkInqProtseqsA(WINPR_ATTR_UNUSED RPC_PROTSEQ_VECTORA** ProtseqVector)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcNetworkInqProtseqsW(RPC_PROTSEQ_VECTORW** ProtseqVector)
+RPC_STATUS RpcNetworkInqProtseqsW(WINPR_ATTR_UNUSED RPC_PROTSEQ_VECTORW** ProtseqVector)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcObjectInqType(UUID* ObjUuid, UUID* TypeUuid)
+RPC_STATUS RpcObjectInqType(WINPR_ATTR_UNUSED UUID* ObjUuid, WINPR_ATTR_UNUSED UUID* TypeUuid)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcObjectSetInqFn(RPC_OBJECT_INQ_FN* InquiryFn)
+RPC_STATUS RpcObjectSetInqFn(WINPR_ATTR_UNUSED RPC_OBJECT_INQ_FN* InquiryFn)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcObjectSetType(UUID* ObjUuid, UUID* TypeUuid)
+RPC_STATUS RpcObjectSetType(WINPR_ATTR_UNUSED UUID* ObjUuid, WINPR_ATTR_UNUSED UUID* TypeUuid)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcProtseqVectorFreeA(RPC_PROTSEQ_VECTORA** ProtseqVector)
+RPC_STATUS RpcProtseqVectorFreeA(WINPR_ATTR_UNUSED RPC_PROTSEQ_VECTORA** ProtseqVector)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcProtseqVectorFreeW(RPC_PROTSEQ_VECTORW** ProtseqVector)
+RPC_STATUS RpcProtseqVectorFreeW(WINPR_ATTR_UNUSED RPC_PROTSEQ_VECTORW** ProtseqVector)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcServerInqBindings(RPC_BINDING_VECTOR** BindingVector)
+RPC_STATUS RpcServerInqBindings(WINPR_ATTR_UNUSED RPC_BINDING_VECTOR** BindingVector)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcServerInqIf(RPC_IF_HANDLE IfSpec, UUID* MgrTypeUuid, RPC_MGR_EPV** MgrEpv)
+RPC_STATUS RpcServerInqIf(WINPR_ATTR_UNUSED RPC_IF_HANDLE IfSpec,
+                          WINPR_ATTR_UNUSED UUID* MgrTypeUuid,
+                          WINPR_ATTR_UNUSED RPC_MGR_EPV** MgrEpv)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcServerListen(unsigned int MinimumCallThreads, unsigned int MaxCalls,
-                           unsigned int DontWait)
+RPC_STATUS RpcServerListen(WINPR_ATTR_UNUSED unsigned int MinimumCallThreads,
+                           WINPR_ATTR_UNUSED unsigned int MaxCalls,
+                           WINPR_ATTR_UNUSED unsigned int DontWait)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcServerRegisterIf(RPC_IF_HANDLE IfSpec, UUID* MgrTypeUuid, RPC_MGR_EPV* MgrEpv)
+RPC_STATUS RpcServerRegisterIf(WINPR_ATTR_UNUSED RPC_IF_HANDLE IfSpec,
+                               WINPR_ATTR_UNUSED UUID* MgrTypeUuid,
+                               WINPR_ATTR_UNUSED RPC_MGR_EPV* MgrEpv)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcServerRegisterIfEx(RPC_IF_HANDLE IfSpec, UUID* MgrTypeUuid, RPC_MGR_EPV* MgrEpv,
-                                 unsigned int Flags, unsigned int MaxCalls,
-                                 RPC_IF_CALLBACK_FN* IfCallback)
+RPC_STATUS RpcServerRegisterIfEx(WINPR_ATTR_UNUSED RPC_IF_HANDLE IfSpec,
+                                 WINPR_ATTR_UNUSED UUID* MgrTypeUuid,
+                                 WINPR_ATTR_UNUSED RPC_MGR_EPV* MgrEpv,
+                                 WINPR_ATTR_UNUSED unsigned int Flags,
+                                 WINPR_ATTR_UNUSED unsigned int MaxCalls,
+                                 WINPR_ATTR_UNUSED RPC_IF_CALLBACK_FN* IfCallback)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcServerRegisterIf2(RPC_IF_HANDLE IfSpec, UUID* MgrTypeUuid, RPC_MGR_EPV* MgrEpv,
-                                unsigned int Flags, unsigned int MaxCalls, unsigned int MaxRpcSize,
-                                RPC_IF_CALLBACK_FN* IfCallbackFn)
+RPC_STATUS RpcServerRegisterIf2(WINPR_ATTR_UNUSED RPC_IF_HANDLE IfSpec,
+                                WINPR_ATTR_UNUSED UUID* MgrTypeUuid,
+                                WINPR_ATTR_UNUSED RPC_MGR_EPV* MgrEpv,
+                                WINPR_ATTR_UNUSED unsigned int Flags,
+                                WINPR_ATTR_UNUSED unsigned int MaxCalls,
+                                WINPR_ATTR_UNUSED unsigned int MaxRpcSize,
+                                WINPR_ATTR_UNUSED RPC_IF_CALLBACK_FN* IfCallbackFn)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcServerUnregisterIf(RPC_IF_HANDLE IfSpec, UUID* MgrTypeUuid,
-                                 unsigned int WaitForCallsToComplete)
+RPC_STATUS RpcServerUnregisterIf(WINPR_ATTR_UNUSED RPC_IF_HANDLE IfSpec,
+                                 WINPR_ATTR_UNUSED UUID* MgrTypeUuid,
+                                 WINPR_ATTR_UNUSED unsigned int WaitForCallsToComplete)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcServerUnregisterIfEx(RPC_IF_HANDLE IfSpec, UUID* MgrTypeUuid,
-                                   int RundownContextHandles)
+RPC_STATUS RpcServerUnregisterIfEx(WINPR_ATTR_UNUSED RPC_IF_HANDLE IfSpec,
+                                   WINPR_ATTR_UNUSED UUID* MgrTypeUuid,
+                                   WINPR_ATTR_UNUSED int RundownContextHandles)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcServerUseAllProtseqs(unsigned int MaxCalls, void* SecurityDescriptor)
+RPC_STATUS RpcServerUseAllProtseqs(WINPR_ATTR_UNUSED unsigned int MaxCalls,
+                                   WINPR_ATTR_UNUSED void* SecurityDescriptor)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcServerUseAllProtseqsEx(unsigned int MaxCalls, void* SecurityDescriptor,
-                                     PRPC_POLICY Policy)
+RPC_STATUS RpcServerUseAllProtseqsEx(WINPR_ATTR_UNUSED unsigned int MaxCalls,
+                                     WINPR_ATTR_UNUSED void* SecurityDescriptor,
+                                     WINPR_ATTR_UNUSED PRPC_POLICY Policy)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcServerUseAllProtseqsIf(unsigned int MaxCalls, RPC_IF_HANDLE IfSpec,
-                                     void* SecurityDescriptor)
+RPC_STATUS RpcServerUseAllProtseqsIf(WINPR_ATTR_UNUSED unsigned int MaxCalls,
+                                     WINPR_ATTR_UNUSED RPC_IF_HANDLE IfSpec,
+                                     WINPR_ATTR_UNUSED void* SecurityDescriptor)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcServerUseAllProtseqsIfEx(unsigned int MaxCalls, RPC_IF_HANDLE IfSpec,
-                                       void* SecurityDescriptor, PRPC_POLICY Policy)
+RPC_STATUS RpcServerUseAllProtseqsIfEx(WINPR_ATTR_UNUSED unsigned int MaxCalls,
+                                       WINPR_ATTR_UNUSED RPC_IF_HANDLE IfSpec,
+                                       WINPR_ATTR_UNUSED void* SecurityDescriptor,
+                                       WINPR_ATTR_UNUSED PRPC_POLICY Policy)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcServerUseProtseqA(RPC_CSTR Protseq, unsigned int MaxCalls, void* SecurityDescriptor)
+RPC_STATUS RpcServerUseProtseqA(WINPR_ATTR_UNUSED RPC_CSTR Protseq,
+                                WINPR_ATTR_UNUSED unsigned int MaxCalls,
+                                WINPR_ATTR_UNUSED void* SecurityDescriptor)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcServerUseProtseqExA(RPC_CSTR Protseq, unsigned int MaxCalls, void* SecurityDescriptor,
-                                  PRPC_POLICY Policy)
+RPC_STATUS RpcServerUseProtseqExA(WINPR_ATTR_UNUSED RPC_CSTR Protseq,
+                                  WINPR_ATTR_UNUSED unsigned int MaxCalls,
+                                  WINPR_ATTR_UNUSED void* SecurityDescriptor,
+                                  WINPR_ATTR_UNUSED PRPC_POLICY Policy)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcServerUseProtseqW(RPC_WSTR Protseq, unsigned int MaxCalls, void* SecurityDescriptor)
+RPC_STATUS RpcServerUseProtseqW(WINPR_ATTR_UNUSED RPC_WSTR Protseq,
+                                WINPR_ATTR_UNUSED unsigned int MaxCalls,
+                                WINPR_ATTR_UNUSED void* SecurityDescriptor)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcServerUseProtseqExW(RPC_WSTR Protseq, unsigned int MaxCalls, void* SecurityDescriptor,
-                                  PRPC_POLICY Policy)
+RPC_STATUS RpcServerUseProtseqExW(WINPR_ATTR_UNUSED RPC_WSTR Protseq,
+                                  WINPR_ATTR_UNUSED unsigned int MaxCalls,
+                                  WINPR_ATTR_UNUSED void* SecurityDescriptor,
+                                  WINPR_ATTR_UNUSED PRPC_POLICY Policy)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcServerUseProtseqEpA(RPC_CSTR Protseq, unsigned int MaxCalls, RPC_CSTR Endpoint,
-                                  void* SecurityDescriptor)
+RPC_STATUS RpcServerUseProtseqEpA(WINPR_ATTR_UNUSED RPC_CSTR Protseq,
+                                  WINPR_ATTR_UNUSED unsigned int MaxCalls,
+                                  WINPR_ATTR_UNUSED RPC_CSTR Endpoint,
+                                  WINPR_ATTR_UNUSED void* SecurityDescriptor)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcServerUseProtseqEpExA(RPC_CSTR Protseq, unsigned int MaxCalls, RPC_CSTR Endpoint,
-                                    void* SecurityDescriptor, PRPC_POLICY Policy)
+RPC_STATUS RpcServerUseProtseqEpExA(WINPR_ATTR_UNUSED RPC_CSTR Protseq,
+                                    WINPR_ATTR_UNUSED unsigned int MaxCalls,
+                                    WINPR_ATTR_UNUSED RPC_CSTR Endpoint,
+                                    WINPR_ATTR_UNUSED void* SecurityDescriptor,
+                                    WINPR_ATTR_UNUSED PRPC_POLICY Policy)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcServerUseProtseqEpW(RPC_WSTR Protseq, unsigned int MaxCalls, RPC_WSTR Endpoint,
-                                  void* SecurityDescriptor)
+RPC_STATUS RpcServerUseProtseqEpW(WINPR_ATTR_UNUSED RPC_WSTR Protseq,
+                                  WINPR_ATTR_UNUSED unsigned int MaxCalls,
+                                  WINPR_ATTR_UNUSED RPC_WSTR Endpoint,
+                                  WINPR_ATTR_UNUSED void* SecurityDescriptor)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcServerUseProtseqEpExW(RPC_WSTR Protseq, unsigned int MaxCalls, RPC_WSTR Endpoint,
-                                    void* SecurityDescriptor, PRPC_POLICY Policy)
+RPC_STATUS RpcServerUseProtseqEpExW(WINPR_ATTR_UNUSED RPC_WSTR Protseq,
+                                    WINPR_ATTR_UNUSED unsigned int MaxCalls,
+                                    WINPR_ATTR_UNUSED RPC_WSTR Endpoint,
+                                    WINPR_ATTR_UNUSED void* SecurityDescriptor,
+                                    WINPR_ATTR_UNUSED PRPC_POLICY Policy)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcServerUseProtseqIfA(RPC_CSTR Protseq, unsigned int MaxCalls, RPC_IF_HANDLE IfSpec,
-                                  void* SecurityDescriptor)
+RPC_STATUS RpcServerUseProtseqIfA(WINPR_ATTR_UNUSED RPC_CSTR Protseq,
+                                  WINPR_ATTR_UNUSED unsigned int MaxCalls,
+                                  WINPR_ATTR_UNUSED RPC_IF_HANDLE IfSpec,
+                                  WINPR_ATTR_UNUSED void* SecurityDescriptor)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcServerUseProtseqIfExA(RPC_CSTR Protseq, unsigned int MaxCalls, RPC_IF_HANDLE IfSpec,
-                                    void* SecurityDescriptor, PRPC_POLICY Policy)
+RPC_STATUS RpcServerUseProtseqIfExA(WINPR_ATTR_UNUSED RPC_CSTR Protseq,
+                                    WINPR_ATTR_UNUSED unsigned int MaxCalls,
+                                    WINPR_ATTR_UNUSED RPC_IF_HANDLE IfSpec,
+                                    WINPR_ATTR_UNUSED void* SecurityDescriptor,
+                                    WINPR_ATTR_UNUSED PRPC_POLICY Policy)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcServerUseProtseqIfW(RPC_WSTR Protseq, unsigned int MaxCalls, RPC_IF_HANDLE IfSpec,
-                                  void* SecurityDescriptor)
+RPC_STATUS RpcServerUseProtseqIfW(WINPR_ATTR_UNUSED RPC_WSTR Protseq,
+                                  WINPR_ATTR_UNUSED unsigned int MaxCalls,
+                                  WINPR_ATTR_UNUSED RPC_IF_HANDLE IfSpec,
+                                  WINPR_ATTR_UNUSED void* SecurityDescriptor)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcServerUseProtseqIfExW(RPC_WSTR Protseq, unsigned int MaxCalls, RPC_IF_HANDLE IfSpec,
-                                    void* SecurityDescriptor, PRPC_POLICY Policy)
+RPC_STATUS RpcServerUseProtseqIfExW(WINPR_ATTR_UNUSED RPC_WSTR Protseq,
+                                    WINPR_ATTR_UNUSED unsigned int MaxCalls,
+                                    WINPR_ATTR_UNUSED RPC_IF_HANDLE IfSpec,
+                                    WINPR_ATTR_UNUSED void* SecurityDescriptor,
+                                    WINPR_ATTR_UNUSED PRPC_POLICY Policy)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
@@ -407,25 +482,26 @@ void RpcServerYield(void)
 	WLog_ERR(TAG, "Not implemented");
 }
 
-RPC_STATUS RpcMgmtStatsVectorFree(RPC_STATS_VECTOR** StatsVector)
+RPC_STATUS RpcMgmtStatsVectorFree(WINPR_ATTR_UNUSED RPC_STATS_VECTOR** StatsVector)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcMgmtInqStats(RPC_BINDING_HANDLE Binding, RPC_STATS_VECTOR** Statistics)
+RPC_STATUS RpcMgmtInqStats(WINPR_ATTR_UNUSED RPC_BINDING_HANDLE Binding,
+                           WINPR_ATTR_UNUSED RPC_STATS_VECTOR** Statistics)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcMgmtIsServerListening(RPC_BINDING_HANDLE Binding)
+RPC_STATUS RpcMgmtIsServerListening(WINPR_ATTR_UNUSED RPC_BINDING_HANDLE Binding)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcMgmtStopServerListening(RPC_BINDING_HANDLE Binding)
+RPC_STATUS RpcMgmtStopServerListening(WINPR_ATTR_UNUSED RPC_BINDING_HANDLE Binding)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
@@ -437,7 +513,7 @@ RPC_STATUS RpcMgmtWaitServerListen(void)
 	return 0;
 }
 
-RPC_STATUS RpcMgmtSetServerStackSize(unsigned long ThreadStackSize)
+RPC_STATUS RpcMgmtSetServerStackSize(WINPR_ATTR_UNUSED unsigned long ThreadStackSize)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
@@ -454,71 +530,79 @@ RPC_STATUS RpcMgmtEnableIdleCleanup(void)
 	return 0;
 }
 
-RPC_STATUS RpcMgmtInqIfIds(RPC_BINDING_HANDLE Binding, RPC_IF_ID_VECTOR** IfIdVector)
+RPC_STATUS RpcMgmtInqIfIds(WINPR_ATTR_UNUSED RPC_BINDING_HANDLE Binding,
+                           WINPR_ATTR_UNUSED RPC_IF_ID_VECTOR** IfIdVector)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcIfIdVectorFree(RPC_IF_ID_VECTOR** IfIdVector)
+RPC_STATUS RpcIfIdVectorFree(WINPR_ATTR_UNUSED RPC_IF_ID_VECTOR** IfIdVector)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcMgmtInqServerPrincNameA(RPC_BINDING_HANDLE Binding, unsigned long AuthnSvc,
-                                      RPC_CSTR* ServerPrincName)
+RPC_STATUS RpcMgmtInqServerPrincNameA(WINPR_ATTR_UNUSED RPC_BINDING_HANDLE Binding,
+                                      WINPR_ATTR_UNUSED unsigned long AuthnSvc,
+                                      WINPR_ATTR_UNUSED RPC_CSTR* ServerPrincName)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcMgmtInqServerPrincNameW(RPC_BINDING_HANDLE Binding, unsigned long AuthnSvc,
-                                      RPC_WSTR* ServerPrincName)
+RPC_STATUS RpcMgmtInqServerPrincNameW(WINPR_ATTR_UNUSED RPC_BINDING_HANDLE Binding,
+                                      WINPR_ATTR_UNUSED unsigned long AuthnSvc,
+                                      WINPR_ATTR_UNUSED RPC_WSTR* ServerPrincName)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcServerInqDefaultPrincNameA(unsigned long AuthnSvc, RPC_CSTR* PrincName)
+RPC_STATUS RpcServerInqDefaultPrincNameA(WINPR_ATTR_UNUSED unsigned long AuthnSvc,
+                                         WINPR_ATTR_UNUSED RPC_CSTR* PrincName)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcServerInqDefaultPrincNameW(unsigned long AuthnSvc, RPC_WSTR* PrincName)
+RPC_STATUS RpcServerInqDefaultPrincNameW(WINPR_ATTR_UNUSED unsigned long AuthnSvc,
+                                         WINPR_ATTR_UNUSED RPC_WSTR* PrincName)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcEpResolveBinding(RPC_BINDING_HANDLE Binding, RPC_IF_HANDLE IfSpec)
+RPC_STATUS RpcEpResolveBinding(WINPR_ATTR_UNUSED RPC_BINDING_HANDLE Binding,
+                               WINPR_ATTR_UNUSED RPC_IF_HANDLE IfSpec)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcNsBindingInqEntryNameA(RPC_BINDING_HANDLE Binding, unsigned long EntryNameSyntax,
-                                     RPC_CSTR* EntryName)
+RPC_STATUS RpcNsBindingInqEntryNameA(WINPR_ATTR_UNUSED RPC_BINDING_HANDLE Binding,
+                                     WINPR_ATTR_UNUSED unsigned long EntryNameSyntax,
+                                     WINPR_ATTR_UNUSED RPC_CSTR* EntryName)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcNsBindingInqEntryNameW(RPC_BINDING_HANDLE Binding, unsigned long EntryNameSyntax,
-                                     RPC_WSTR* EntryName)
+RPC_STATUS RpcNsBindingInqEntryNameW(WINPR_ATTR_UNUSED RPC_BINDING_HANDLE Binding,
+                                     WINPR_ATTR_UNUSED unsigned long EntryNameSyntax,
+                                     WINPR_ATTR_UNUSED RPC_WSTR* EntryName)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcImpersonateClient(RPC_BINDING_HANDLE BindingHandle)
+RPC_STATUS RpcImpersonateClient(WINPR_ATTR_UNUSED RPC_BINDING_HANDLE BindingHandle)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcRevertToSelfEx(RPC_BINDING_HANDLE BindingHandle)
+RPC_STATUS RpcRevertToSelfEx(WINPR_ATTR_UNUSED RPC_BINDING_HANDLE BindingHandle)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
@@ -530,124 +614,166 @@ RPC_STATUS RpcRevertToSelf(void)
 	return 0;
 }
 
-RPC_STATUS RpcBindingInqAuthClientA(RPC_BINDING_HANDLE ClientBinding, RPC_AUTHZ_HANDLE* Privs,
-                                    RPC_CSTR* ServerPrincName, unsigned long* AuthnLevel,
-                                    unsigned long* AuthnSvc, unsigned long* AuthzSvc)
+RPC_STATUS RpcBindingInqAuthClientA(WINPR_ATTR_UNUSED RPC_BINDING_HANDLE ClientBinding,
+                                    WINPR_ATTR_UNUSED RPC_AUTHZ_HANDLE* Privs,
+                                    WINPR_ATTR_UNUSED RPC_CSTR* ServerPrincName,
+                                    WINPR_ATTR_UNUSED unsigned long* AuthnLevel,
+                                    WINPR_ATTR_UNUSED unsigned long* AuthnSvc,
+                                    WINPR_ATTR_UNUSED unsigned long* AuthzSvc)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcBindingInqAuthClientW(RPC_BINDING_HANDLE ClientBinding, RPC_AUTHZ_HANDLE* Privs,
-                                    RPC_WSTR* ServerPrincName, unsigned long* AuthnLevel,
-                                    unsigned long* AuthnSvc, unsigned long* AuthzSvc)
+RPC_STATUS RpcBindingInqAuthClientW(WINPR_ATTR_UNUSED RPC_BINDING_HANDLE ClientBinding,
+                                    WINPR_ATTR_UNUSED RPC_AUTHZ_HANDLE* Privs,
+                                    WINPR_ATTR_UNUSED RPC_WSTR* ServerPrincName,
+                                    WINPR_ATTR_UNUSED unsigned long* AuthnLevel,
+                                    WINPR_ATTR_UNUSED unsigned long* AuthnSvc,
+                                    WINPR_ATTR_UNUSED unsigned long* AuthzSvc)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcBindingInqAuthClientExA(RPC_BINDING_HANDLE ClientBinding, RPC_AUTHZ_HANDLE* Privs,
-                                      RPC_CSTR* ServerPrincName, unsigned long* AuthnLevel,
-                                      unsigned long* AuthnSvc, unsigned long* AuthzSvc,
-                                      unsigned long Flags)
+RPC_STATUS RpcBindingInqAuthClientExA(WINPR_ATTR_UNUSED RPC_BINDING_HANDLE ClientBinding,
+                                      WINPR_ATTR_UNUSED RPC_AUTHZ_HANDLE* Privs,
+                                      WINPR_ATTR_UNUSED RPC_CSTR* ServerPrincName,
+                                      WINPR_ATTR_UNUSED unsigned long* AuthnLevel,
+                                      WINPR_ATTR_UNUSED unsigned long* AuthnSvc,
+                                      WINPR_ATTR_UNUSED unsigned long* AuthzSvc,
+                                      WINPR_ATTR_UNUSED unsigned long Flags)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcBindingInqAuthClientExW(RPC_BINDING_HANDLE ClientBinding, RPC_AUTHZ_HANDLE* Privs,
-                                      RPC_WSTR* ServerPrincName, unsigned long* AuthnLevel,
-                                      unsigned long* AuthnSvc, unsigned long* AuthzSvc,
-                                      unsigned long Flags)
+RPC_STATUS RpcBindingInqAuthClientExW(WINPR_ATTR_UNUSED RPC_BINDING_HANDLE ClientBinding,
+                                      WINPR_ATTR_UNUSED RPC_AUTHZ_HANDLE* Privs,
+                                      WINPR_ATTR_UNUSED RPC_WSTR* ServerPrincName,
+                                      WINPR_ATTR_UNUSED unsigned long* AuthnLevel,
+                                      WINPR_ATTR_UNUSED unsigned long* AuthnSvc,
+                                      WINPR_ATTR_UNUSED unsigned long* AuthzSvc,
+                                      WINPR_ATTR_UNUSED unsigned long Flags)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcBindingInqAuthInfoA(RPC_BINDING_HANDLE Binding, RPC_CSTR* ServerPrincName,
-                                  unsigned long* AuthnLevel, unsigned long* AuthnSvc,
-                                  RPC_AUTH_IDENTITY_HANDLE* AuthIdentity, unsigned long* AuthzSvc)
+RPC_STATUS RpcBindingInqAuthInfoA(WINPR_ATTR_UNUSED RPC_BINDING_HANDLE Binding,
+                                  WINPR_ATTR_UNUSED RPC_CSTR* ServerPrincName,
+                                  WINPR_ATTR_UNUSED unsigned long* AuthnLevel,
+                                  WINPR_ATTR_UNUSED unsigned long* AuthnSvc,
+                                  WINPR_ATTR_UNUSED RPC_AUTH_IDENTITY_HANDLE* AuthIdentity,
+                                  WINPR_ATTR_UNUSED unsigned long* AuthzSvc)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcBindingInqAuthInfoW(RPC_BINDING_HANDLE Binding, RPC_WSTR* ServerPrincName,
-                                  unsigned long* AuthnLevel, unsigned long* AuthnSvc,
-                                  RPC_AUTH_IDENTITY_HANDLE* AuthIdentity, unsigned long* AuthzSvc)
+RPC_STATUS RpcBindingInqAuthInfoW(WINPR_ATTR_UNUSED RPC_BINDING_HANDLE Binding,
+                                  WINPR_ATTR_UNUSED RPC_WSTR* ServerPrincName,
+                                  WINPR_ATTR_UNUSED unsigned long* AuthnLevel,
+                                  WINPR_ATTR_UNUSED unsigned long* AuthnSvc,
+                                  WINPR_ATTR_UNUSED RPC_AUTH_IDENTITY_HANDLE* AuthIdentity,
+                                  WINPR_ATTR_UNUSED unsigned long* AuthzSvc)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcBindingSetAuthInfoA(RPC_BINDING_HANDLE Binding, RPC_CSTR ServerPrincName,
-                                  unsigned long AuthnLevel, unsigned long AuthnSvc,
-                                  RPC_AUTH_IDENTITY_HANDLE AuthIdentity, unsigned long AuthzSvc)
+RPC_STATUS RpcBindingSetAuthInfoA(WINPR_ATTR_UNUSED RPC_BINDING_HANDLE Binding,
+                                  WINPR_ATTR_UNUSED RPC_CSTR ServerPrincName,
+                                  WINPR_ATTR_UNUSED unsigned long AuthnLevel,
+                                  WINPR_ATTR_UNUSED unsigned long AuthnSvc,
+                                  WINPR_ATTR_UNUSED RPC_AUTH_IDENTITY_HANDLE AuthIdentity,
+                                  WINPR_ATTR_UNUSED unsigned long AuthzSvc)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcBindingSetAuthInfoExA(RPC_BINDING_HANDLE Binding, RPC_CSTR ServerPrincName,
-                                    unsigned long AuthnLevel, unsigned long AuthnSvc,
-                                    RPC_AUTH_IDENTITY_HANDLE AuthIdentity, unsigned long AuthzSvc,
-                                    RPC_SECURITY_QOS* SecurityQos)
+RPC_STATUS RpcBindingSetAuthInfoExA(WINPR_ATTR_UNUSED RPC_BINDING_HANDLE Binding,
+                                    WINPR_ATTR_UNUSED RPC_CSTR ServerPrincName,
+                                    WINPR_ATTR_UNUSED unsigned long AuthnLevel,
+                                    WINPR_ATTR_UNUSED unsigned long AuthnSvc,
+                                    WINPR_ATTR_UNUSED RPC_AUTH_IDENTITY_HANDLE AuthIdentity,
+                                    WINPR_ATTR_UNUSED unsigned long AuthzSvc,
+                                    WINPR_ATTR_UNUSED RPC_SECURITY_QOS* SecurityQos)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcBindingSetAuthInfoW(RPC_BINDING_HANDLE Binding, RPC_WSTR ServerPrincName,
-                                  unsigned long AuthnLevel, unsigned long AuthnSvc,
-                                  RPC_AUTH_IDENTITY_HANDLE AuthIdentity, unsigned long AuthzSvc)
+RPC_STATUS RpcBindingSetAuthInfoW(WINPR_ATTR_UNUSED RPC_BINDING_HANDLE Binding,
+                                  WINPR_ATTR_UNUSED RPC_WSTR ServerPrincName,
+                                  WINPR_ATTR_UNUSED unsigned long AuthnLevel,
+                                  WINPR_ATTR_UNUSED unsigned long AuthnSvc,
+                                  WINPR_ATTR_UNUSED RPC_AUTH_IDENTITY_HANDLE AuthIdentity,
+                                  WINPR_ATTR_UNUSED unsigned long AuthzSvc)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcBindingSetAuthInfoExW(RPC_BINDING_HANDLE Binding, RPC_WSTR ServerPrincName,
-                                    unsigned long AuthnLevel, unsigned long AuthnSvc,
-                                    RPC_AUTH_IDENTITY_HANDLE AuthIdentity, unsigned long AuthzSvc,
-                                    RPC_SECURITY_QOS* SecurityQOS)
+RPC_STATUS RpcBindingSetAuthInfoExW(WINPR_ATTR_UNUSED RPC_BINDING_HANDLE Binding,
+                                    WINPR_ATTR_UNUSED RPC_WSTR ServerPrincName,
+                                    WINPR_ATTR_UNUSED unsigned long AuthnLevel,
+                                    WINPR_ATTR_UNUSED unsigned long AuthnSvc,
+                                    WINPR_ATTR_UNUSED RPC_AUTH_IDENTITY_HANDLE AuthIdentity,
+                                    WINPR_ATTR_UNUSED unsigned long AuthzSvc,
+                                    WINPR_ATTR_UNUSED RPC_SECURITY_QOS* SecurityQOS)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcBindingInqAuthInfoExA(RPC_BINDING_HANDLE Binding, RPC_CSTR* ServerPrincName,
-                                    unsigned long* AuthnLevel, unsigned long* AuthnSvc,
-                                    RPC_AUTH_IDENTITY_HANDLE* AuthIdentity, unsigned long* AuthzSvc,
-                                    unsigned long RpcQosVersion, RPC_SECURITY_QOS* SecurityQOS)
+RPC_STATUS RpcBindingInqAuthInfoExA(WINPR_ATTR_UNUSED RPC_BINDING_HANDLE Binding,
+                                    WINPR_ATTR_UNUSED RPC_CSTR* ServerPrincName,
+                                    WINPR_ATTR_UNUSED unsigned long* AuthnLevel,
+                                    WINPR_ATTR_UNUSED unsigned long* AuthnSvc,
+                                    WINPR_ATTR_UNUSED RPC_AUTH_IDENTITY_HANDLE* AuthIdentity,
+                                    WINPR_ATTR_UNUSED unsigned long* AuthzSvc,
+                                    WINPR_ATTR_UNUSED unsigned long RpcQosVersion,
+                                    WINPR_ATTR_UNUSED RPC_SECURITY_QOS* SecurityQOS)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcBindingInqAuthInfoExW(RPC_BINDING_HANDLE Binding, RPC_WSTR* ServerPrincName,
-                                    unsigned long* AuthnLevel, unsigned long* AuthnSvc,
-                                    RPC_AUTH_IDENTITY_HANDLE* AuthIdentity, unsigned long* AuthzSvc,
-                                    unsigned long RpcQosVersion, RPC_SECURITY_QOS* SecurityQOS)
+RPC_STATUS RpcBindingInqAuthInfoExW(WINPR_ATTR_UNUSED RPC_BINDING_HANDLE Binding,
+                                    WINPR_ATTR_UNUSED RPC_WSTR* ServerPrincName,
+                                    WINPR_ATTR_UNUSED unsigned long* AuthnLevel,
+                                    WINPR_ATTR_UNUSED unsigned long* AuthnSvc,
+                                    WINPR_ATTR_UNUSED RPC_AUTH_IDENTITY_HANDLE* AuthIdentity,
+                                    WINPR_ATTR_UNUSED unsigned long* AuthzSvc,
+                                    WINPR_ATTR_UNUSED unsigned long RpcQosVersion,
+                                    WINPR_ATTR_UNUSED RPC_SECURITY_QOS* SecurityQOS)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcServerRegisterAuthInfoA(RPC_CSTR ServerPrincName, unsigned long AuthnSvc,
-                                      RPC_AUTH_KEY_RETRIEVAL_FN GetKeyFn, void* Arg)
+RPC_STATUS RpcServerRegisterAuthInfoA(WINPR_ATTR_UNUSED RPC_CSTR ServerPrincName,
+                                      WINPR_ATTR_UNUSED unsigned long AuthnSvc,
+                                      WINPR_ATTR_UNUSED RPC_AUTH_KEY_RETRIEVAL_FN GetKeyFn,
+                                      WINPR_ATTR_UNUSED void* Arg)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcServerRegisterAuthInfoW(RPC_WSTR ServerPrincName, unsigned long AuthnSvc,
-                                      RPC_AUTH_KEY_RETRIEVAL_FN GetKeyFn, void* Arg)
+RPC_STATUS RpcServerRegisterAuthInfoW(WINPR_ATTR_UNUSED RPC_WSTR ServerPrincName,
+                                      WINPR_ATTR_UNUSED unsigned long AuthnSvc,
+                                      WINPR_ATTR_UNUSED RPC_AUTH_KEY_RETRIEVAL_FN GetKeyFn,
+                                      WINPR_ATTR_UNUSED void* Arg)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcBindingServerFromClient(RPC_BINDING_HANDLE ClientBinding,
-                                      RPC_BINDING_HANDLE* ServerBinding)
+RPC_STATUS RpcBindingServerFromClient(WINPR_ATTR_UNUSED RPC_BINDING_HANDLE ClientBinding,
+                                      WINPR_ATTR_UNUSED RPC_BINDING_HANDLE* ServerBinding)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
@@ -666,19 +792,19 @@ RPC_STATUS RpcTestCancel(void)
 	return 0;
 }
 
-RPC_STATUS RpcServerTestCancel(RPC_BINDING_HANDLE BindingHandle)
+RPC_STATUS RpcServerTestCancel(WINPR_ATTR_UNUSED RPC_BINDING_HANDLE BindingHandle)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcCancelThread(void* Thread)
+RPC_STATUS RpcCancelThread(WINPR_ATTR_UNUSED void* Thread)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcCancelThreadEx(void* Thread, long Timeout)
+RPC_STATUS RpcCancelThreadEx(WINPR_ATTR_UNUSED void* Thread, WINPR_ATTR_UNUSED long Timeout)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
@@ -725,7 +851,7 @@ RPC_STATUS UuidToStringA(const UUID* Uuid, RPC_CSTR* StringUuid)
 	return RPC_S_OK;
 }
 
-RPC_STATUS UuidToStringW(const UUID* Uuid, RPC_WSTR* StringUuid)
+RPC_STATUS UuidToStringW(WINPR_ATTR_UNUSED const UUID* Uuid, WINPR_ATTR_UNUSED RPC_WSTR* StringUuid)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
@@ -778,7 +904,7 @@ RPC_STATUS UuidFromStringA(RPC_CSTR StringUuid, UUID* Uuid)
 	return RPC_S_OK;
 }
 
-RPC_STATUS UuidFromStringW(RPC_WSTR StringUuid, UUID* Uuid)
+RPC_STATUS UuidFromStringW(WINPR_ATTR_UNUSED RPC_WSTR StringUuid, WINPR_ATTR_UNUSED UUID* Uuid)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
@@ -823,7 +949,7 @@ int UuidEqual(const UUID* Uuid1, const UUID* Uuid2, RPC_STATUS* Status)
 	return ((UuidCompare(Uuid1, Uuid2, Status) == 0) ? TRUE : FALSE);
 }
 
-unsigned short UuidHash(const UUID* Uuid, RPC_STATUS* Status)
+unsigned short UuidHash(WINPR_ATTR_UNUSED const UUID* Uuid, WINPR_ATTR_UNUSED RPC_STATUS* Status)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
@@ -834,95 +960,117 @@ int UuidIsNil(const UUID* Uuid, RPC_STATUS* Status)
 	return UuidEqual(Uuid, &UUID_NIL, Status);
 }
 
-RPC_STATUS RpcEpRegisterNoReplaceA(RPC_IF_HANDLE IfSpec, RPC_BINDING_VECTOR* BindingVector,
-                                   UUID_VECTOR* UuidVector, RPC_CSTR Annotation)
+RPC_STATUS RpcEpRegisterNoReplaceA(WINPR_ATTR_UNUSED RPC_IF_HANDLE IfSpec,
+                                   WINPR_ATTR_UNUSED RPC_BINDING_VECTOR* BindingVector,
+                                   WINPR_ATTR_UNUSED UUID_VECTOR* UuidVector,
+                                   WINPR_ATTR_UNUSED RPC_CSTR Annotation)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcEpRegisterNoReplaceW(RPC_IF_HANDLE IfSpec, RPC_BINDING_VECTOR* BindingVector,
-                                   UUID_VECTOR* UuidVector, RPC_WSTR Annotation)
+RPC_STATUS RpcEpRegisterNoReplaceW(WINPR_ATTR_UNUSED RPC_IF_HANDLE IfSpec,
+                                   WINPR_ATTR_UNUSED RPC_BINDING_VECTOR* BindingVector,
+                                   WINPR_ATTR_UNUSED UUID_VECTOR* UuidVector,
+                                   WINPR_ATTR_UNUSED RPC_WSTR Annotation)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcEpRegisterA(RPC_IF_HANDLE IfSpec, RPC_BINDING_VECTOR* BindingVector,
-                          UUID_VECTOR* UuidVector, RPC_CSTR Annotation)
+RPC_STATUS RpcEpRegisterA(WINPR_ATTR_UNUSED RPC_IF_HANDLE IfSpec,
+                          WINPR_ATTR_UNUSED RPC_BINDING_VECTOR* BindingVector,
+                          WINPR_ATTR_UNUSED UUID_VECTOR* UuidVector,
+                          WINPR_ATTR_UNUSED RPC_CSTR Annotation)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcEpRegisterW(RPC_IF_HANDLE IfSpec, RPC_BINDING_VECTOR* BindingVector,
-                          UUID_VECTOR* UuidVector, RPC_WSTR Annotation)
+RPC_STATUS RpcEpRegisterW(WINPR_ATTR_UNUSED RPC_IF_HANDLE IfSpec,
+                          WINPR_ATTR_UNUSED RPC_BINDING_VECTOR* BindingVector,
+                          WINPR_ATTR_UNUSED UUID_VECTOR* UuidVector,
+                          WINPR_ATTR_UNUSED RPC_WSTR Annotation)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcEpUnregister(RPC_IF_HANDLE IfSpec, RPC_BINDING_VECTOR* BindingVector,
-                           UUID_VECTOR* UuidVector)
+RPC_STATUS RpcEpUnregister(WINPR_ATTR_UNUSED RPC_IF_HANDLE IfSpec,
+                           WINPR_ATTR_UNUSED RPC_BINDING_VECTOR* BindingVector,
+                           WINPR_ATTR_UNUSED UUID_VECTOR* UuidVector)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS DceErrorInqTextA(RPC_STATUS RpcStatus, RPC_CSTR ErrorText)
+RPC_STATUS DceErrorInqTextA(WINPR_ATTR_UNUSED RPC_STATUS RpcStatus,
+                            WINPR_ATTR_UNUSED RPC_CSTR ErrorText)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS DceErrorInqTextW(RPC_STATUS RpcStatus, RPC_WSTR ErrorText)
+RPC_STATUS DceErrorInqTextW(WINPR_ATTR_UNUSED RPC_STATUS RpcStatus,
+                            WINPR_ATTR_UNUSED RPC_WSTR ErrorText)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcMgmtEpEltInqBegin(RPC_BINDING_HANDLE EpBinding, unsigned long InquiryType,
-                                RPC_IF_ID* IfId, unsigned long VersOption, UUID* ObjectUuid,
-                                RPC_EP_INQ_HANDLE* InquiryContext)
+RPC_STATUS RpcMgmtEpEltInqBegin(WINPR_ATTR_UNUSED RPC_BINDING_HANDLE EpBinding,
+                                WINPR_ATTR_UNUSED unsigned long InquiryType,
+                                WINPR_ATTR_UNUSED RPC_IF_ID* IfId,
+                                WINPR_ATTR_UNUSED unsigned long VersOption,
+                                WINPR_ATTR_UNUSED UUID* ObjectUuid,
+                                WINPR_ATTR_UNUSED RPC_EP_INQ_HANDLE* InquiryContext)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcMgmtEpEltInqDone(RPC_EP_INQ_HANDLE* InquiryContext)
+RPC_STATUS RpcMgmtEpEltInqDone(WINPR_ATTR_UNUSED RPC_EP_INQ_HANDLE* InquiryContext)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcMgmtEpEltInqNextA(RPC_EP_INQ_HANDLE InquiryContext, RPC_IF_ID* IfId,
-                                RPC_BINDING_HANDLE* Binding, UUID* ObjectUuid, RPC_CSTR* Annotation)
+RPC_STATUS RpcMgmtEpEltInqNextA(WINPR_ATTR_UNUSED RPC_EP_INQ_HANDLE InquiryContext,
+                                WINPR_ATTR_UNUSED RPC_IF_ID* IfId,
+                                WINPR_ATTR_UNUSED RPC_BINDING_HANDLE* Binding,
+                                WINPR_ATTR_UNUSED UUID* ObjectUuid,
+                                WINPR_ATTR_UNUSED RPC_CSTR* Annotation)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcMgmtEpEltInqNextW(RPC_EP_INQ_HANDLE InquiryContext, RPC_IF_ID* IfId,
-                                RPC_BINDING_HANDLE* Binding, UUID* ObjectUuid, RPC_WSTR* Annotation)
+RPC_STATUS RpcMgmtEpEltInqNextW(WINPR_ATTR_UNUSED RPC_EP_INQ_HANDLE InquiryContext,
+                                WINPR_ATTR_UNUSED RPC_IF_ID* IfId,
+                                WINPR_ATTR_UNUSED RPC_BINDING_HANDLE* Binding,
+                                WINPR_ATTR_UNUSED UUID* ObjectUuid,
+                                WINPR_ATTR_UNUSED RPC_WSTR* Annotation)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcMgmtEpUnregister(RPC_BINDING_HANDLE EpBinding, RPC_IF_ID* IfId,
-                               RPC_BINDING_HANDLE Binding, UUID* ObjectUuid)
+RPC_STATUS RpcMgmtEpUnregister(WINPR_ATTR_UNUSED RPC_BINDING_HANDLE EpBinding,
+                               WINPR_ATTR_UNUSED RPC_IF_ID* IfId,
+                               WINPR_ATTR_UNUSED RPC_BINDING_HANDLE Binding,
+                               WINPR_ATTR_UNUSED UUID* ObjectUuid)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcMgmtSetAuthorizationFn(RPC_MGMT_AUTHORIZATION_FN AuthorizationFn)
+RPC_STATUS RpcMgmtSetAuthorizationFn(WINPR_ATTR_UNUSED RPC_MGMT_AUTHORIZATION_FN AuthorizationFn)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
 }
 
-RPC_STATUS RpcServerInqBindingHandle(RPC_BINDING_HANDLE* Binding)
+RPC_STATUS RpcServerInqBindingHandle(WINPR_ATTR_UNUSED RPC_BINDING_HANDLE* Binding)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;

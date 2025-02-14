@@ -158,8 +158,9 @@ static BOOL wlf_disp_sendResize(wlfDispContext* wlfDisp)
 	return wlf_update_last_sent(wlfDisp);
 }
 
-static BOOL wlf_disp_set_window_resizable(wlfDispContext* wlfDisp)
+static BOOL wlf_disp_set_window_resizable(WINPR_ATTR_UNUSED wlfDispContext* wlfDisp)
 {
+	WLog_ERR("TODO", "TODO: implement");
 #if 0 // TODO
 #endif
 	return TRUE;

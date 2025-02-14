@@ -21,7 +21,7 @@
 #include "sdl_utils.hpp"
 
 SdlWindow::SdlWindow(const std::string& title, Sint32 startupX, Sint32 startupY, Sint32 width,
-                     Sint32 height, Uint32 flags)
+                     Sint32 height, [[maybe_unused]] Uint32 flags)
 {
 	auto props = SDL_CreateProperties();
 	SDL_SetStringProperty(props, SDL_PROP_WINDOW_CREATE_TITLE_STRING, title.c_str());

@@ -2737,8 +2737,9 @@ static BOOL update_send_window_update(rdpContext* context, const WINDOW_ORDER_IN
 	return update_send_new_or_existing_window(context, orderInfo, stateOrder);
 }
 
-static UINT16 update_calculate_window_icon_order(const WINDOW_ORDER_INFO* orderInfo,
-                                                 const WINDOW_ICON_ORDER* iconOrder)
+static UINT16
+update_calculate_window_icon_order(WINPR_ATTR_UNUSED const WINDOW_ORDER_INFO* orderInfo,
+                                   const WINDOW_ICON_ORDER* iconOrder)
 {
 	UINT16 orderSize = 23;
 

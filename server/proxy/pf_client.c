@@ -93,7 +93,7 @@ static void pf_client_on_error_info(void* ctx, const ErrorInfoEventArgs* e)
 	freerdp_send_error_info(ps->context.rdp);
 }
 
-static void pf_client_on_activated(void* ctx, const ActivatedEventArgs* e)
+static void pf_client_on_activated(void* ctx, WINPR_ATTR_UNUSED const ActivatedEventArgs* e)
 {
 	pClientContext* pc = (pClientContext*)ctx;
 	pServerContext* ps = NULL;
@@ -334,7 +334,7 @@ typedef struct
 	UINT32 backId;
 } UpdateBackIdArgs;
 
-static BOOL updateBackIdFn(const void* key, void* value, void* arg)
+static BOOL updateBackIdFn(WINPR_ATTR_UNUSED const void* key, void* value, void* arg)
 {
 	pServerStaticChannelContext* current = (pServerStaticChannelContext*)value;
 	UpdateBackIdArgs* updateArgs = (UpdateBackIdArgs*)arg;

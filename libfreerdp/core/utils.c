@@ -374,7 +374,7 @@ static BOOL disable_port(rdpSettings* settings)
 	return remove_rdpdr_type(settings, RDPDR_DTYP_PARALLEL);
 }
 
-static BOOL disable_pnp(rdpSettings* settings)
+static BOOL disable_pnp(WINPR_ATTR_UNUSED rdpSettings* settings)
 {
 	// TODO(akallabeth): [MS-RDPEPNP] related stuff is disabled.
 	return TRUE;

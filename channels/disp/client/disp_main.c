@@ -271,8 +271,9 @@ static UINT disp_send_monitor_layout(DispClientContext* context, UINT32 NumMonit
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT disp_plugin_initialize(GENERIC_DYNVC_PLUGIN* base, rdpContext* rcontext,
-                                   rdpSettings* settings)
+static UINT disp_plugin_initialize(GENERIC_DYNVC_PLUGIN* base,
+                                   WINPR_ATTR_UNUSED rdpContext* rcontext,
+                                   WINPR_ATTR_UNUSED rdpSettings* settings)
 {
 	DispClientContext* context = NULL;
 	DISP_PLUGIN* disp = (DISP_PLUGIN*)base;

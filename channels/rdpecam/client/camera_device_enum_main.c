@@ -78,8 +78,8 @@ UINT ecam_channel_send_generic_msg(CameraPlugin* ecam, GENERIC_CHANNEL_CALLBACK*
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT ecam_channel_write(CameraPlugin* ecam, GENERIC_CHANNEL_CALLBACK* hchannel, CAM_MSG_ID msg,
-                        wStream* out, BOOL freeStream)
+UINT ecam_channel_write(WINPR_ATTR_UNUSED CameraPlugin* ecam, GENERIC_CHANNEL_CALLBACK* hchannel,
+                        CAM_MSG_ID msg, wStream* out, BOOL freeStream)
 {
 	if (!hchannel || !out)
 		return ERROR_INVALID_PARAMETER;
@@ -180,8 +180,8 @@ static UINT ecam_enumerate_devices(CameraPlugin* ecam, GENERIC_CHANNEL_CALLBACK*
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT ecam_process_select_version_response(CameraPlugin* ecam,
-                                                 GENERIC_CHANNEL_CALLBACK* hchannel, wStream* s,
-                                                 BYTE serverVersion)
+                                                 GENERIC_CHANNEL_CALLBACK* hchannel,
+                                                 WINPR_ATTR_UNUSED wStream* s, BYTE serverVersion)
 {
 	const BYTE clientVersion = ECAM_PROTO_VERSION;
 
@@ -289,7 +289,9 @@ static UINT ecam_on_close(IWTSVirtualChannelCallback* pChannelCallback)
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT ecam_on_new_channel_connection(IWTSListenerCallback* pListenerCallback,
-                                           IWTSVirtualChannel* pChannel, BYTE* Data, BOOL* pbAccept,
+                                           IWTSVirtualChannel* pChannel,
+                                           WINPR_ATTR_UNUSED BYTE* Data,
+                                           WINPR_ATTR_UNUSED BOOL* pbAccept,
                                            IWTSVirtualChannelCallback** ppCallback)
 {
 	GENERIC_LISTENER_CALLBACK* hlistener = (GENERIC_LISTENER_CALLBACK*)pListenerCallback;

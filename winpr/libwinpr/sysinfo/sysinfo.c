@@ -266,9 +266,10 @@ void GetSystemTime(LPSYSTEMTIME lpSystemTime)
 	}
 }
 
-BOOL SetSystemTime(CONST SYSTEMTIME* lpSystemTime)
+BOOL SetSystemTime(WINPR_ATTR_UNUSED CONST SYSTEMTIME* lpSystemTime)
 {
 	/* TODO: Implement */
+	WLog_ERR("TODO", "TODO: Implement");
 	return FALSE;
 }
 
@@ -296,9 +297,10 @@ VOID GetLocalTime(LPSYSTEMTIME lpSystemTime)
 	}
 }
 
-BOOL SetLocalTime(CONST SYSTEMTIME* lpSystemTime)
+BOOL SetLocalTime(WINPR_ATTR_UNUSED CONST SYSTEMTIME* lpSystemTime)
 {
 	/* TODO: Implement */
+	WLog_ERR("TODO", "TODO: Implement");
 	return FALSE;
 }
 
@@ -314,10 +316,12 @@ VOID GetSystemTimeAsFileTime(LPFILETIME lpSystemTimeAsFileTime)
 	*lpSystemTimeAsFileTime = t.ft;
 }
 
-BOOL GetSystemTimeAdjustment(PDWORD lpTimeAdjustment, PDWORD lpTimeIncrement,
-                             PBOOL lpTimeAdjustmentDisabled)
+BOOL GetSystemTimeAdjustment(WINPR_ATTR_UNUSED PDWORD lpTimeAdjustment,
+                             WINPR_ATTR_UNUSED PDWORD lpTimeIncrement,
+                             WINPR_ATTR_UNUSED PBOOL lpTimeAdjustmentDisabled)
 {
 	/* TODO: Implement */
+	WLog_ERR("TODO", "TODO: Implement");
 	return FALSE;
 }
 

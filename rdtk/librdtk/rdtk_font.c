@@ -240,7 +240,8 @@ static int rdtk_font_convert_descriptor_code_to_utf8(const char* str, uint8_t* u
 	return 1;
 }
 
-static int rdtk_font_parse_descriptor_buffer(rdtkFont* font, char* buffer, size_t size)
+static int rdtk_font_parse_descriptor_buffer(rdtkFont* font, char* buffer,
+                                             WINPR_ATTR_UNUSED size_t size)
 {
 	int rc = -1;
 

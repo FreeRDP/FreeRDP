@@ -103,8 +103,10 @@ typedef struct
 static int transport_bio_simple_init(BIO* bio, SOCKET socket, int shutdown);
 static int transport_bio_simple_uninit(BIO* bio);
 
-static long transport_bio_simple_callback(BIO* bio, int mode, const char* argp, int argi, long argl,
-                                          long ret)
+static long transport_bio_simple_callback(WINPR_ATTR_UNUSED BIO* bio, WINPR_ATTR_UNUSED int mode,
+                                          WINPR_ATTR_UNUSED const char* argp,
+                                          WINPR_ATTR_UNUSED int argi, WINPR_ATTR_UNUSED long argl,
+                                          WINPR_ATTR_UNUSED long ret)
 {
 	return 1;
 }
@@ -178,12 +180,13 @@ static int transport_bio_simple_read(BIO* bio, char* buf, int size)
 	return -1;
 }
 
-static int transport_bio_simple_puts(BIO* bio, const char* str)
+static int transport_bio_simple_puts(WINPR_ATTR_UNUSED BIO* bio, WINPR_ATTR_UNUSED const char* str)
 {
 	return 1;
 }
 
-static int transport_bio_simple_gets(BIO* bio, char* str, int size)
+static int transport_bio_simple_gets(WINPR_ATTR_UNUSED BIO* bio, WINPR_ATTR_UNUSED char* str,
+                                     WINPR_ATTR_UNUSED int size)
 {
 	return 1;
 }
@@ -461,8 +464,10 @@ typedef struct
 	RingBuffer xmitBuffer;
 } WINPR_BIO_BUFFERED_SOCKET;
 
-static long transport_bio_buffered_callback(BIO* bio, int mode, const char* argp, int argi,
-                                            long argl, long ret)
+static long transport_bio_buffered_callback(WINPR_ATTR_UNUSED BIO* bio, WINPR_ATTR_UNUSED int mode,
+                                            WINPR_ATTR_UNUSED const char* argp,
+                                            WINPR_ATTR_UNUSED int argi, WINPR_ATTR_UNUSED long argl,
+                                            WINPR_ATTR_UNUSED long ret)
 {
 	return 1;
 }
@@ -567,12 +572,14 @@ out:
 	return status;
 }
 
-static int transport_bio_buffered_puts(BIO* bio, const char* str)
+static int transport_bio_buffered_puts(WINPR_ATTR_UNUSED BIO* bio,
+                                       WINPR_ATTR_UNUSED const char* str)
 {
 	return 1;
 }
 
-static int transport_bio_buffered_gets(BIO* bio, char* str, int size)
+static int transport_bio_buffered_gets(WINPR_ATTR_UNUSED BIO* bio, WINPR_ATTR_UNUSED char* str,
+                                       WINPR_ATTR_UNUSED int size)
 {
 	return 1;
 }
@@ -900,7 +907,7 @@ static void peer_free(t_peer* peer)
 }
 
 static int freerdp_tcp_connect_multi(rdpContext* context, char** hostnames, const UINT32* ports,
-                                     UINT32 count, UINT16 port, UINT32 timeout)
+                                     UINT32 count, UINT16 port, WINPR_ATTR_UNUSED UINT32 timeout)
 {
 	UINT32 sindex = count;
 	SOCKET sockfd = INVALID_SOCKET;

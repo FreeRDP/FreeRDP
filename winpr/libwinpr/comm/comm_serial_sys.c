@@ -154,7 +154,7 @@ static const speed_t BAUD_TABLE[][3] = {
 
 static BOOL commstatus_error(WINPR_COMM* pComm, const char* ctrl);
 
-static BOOL get_properties(WINPR_COMM* pComm, COMMPROP* pProperties)
+static BOOL get_properties(WINPR_ATTR_UNUSED WINPR_COMM* pComm, COMMPROP* pProperties)
 {
 	WINPR_ASSERT(pComm);
 	/* http://msdn.microsoft.com/en-us/library/windows/hardware/jj680684%28v=vs.85%29.aspx
@@ -1128,7 +1128,7 @@ static BOOL get_wait_mask(WINPR_COMM* pComm, ULONG* pWaitMask)
 	return TRUE;
 }
 
-static BOOL set_queue_size(WINPR_COMM* pComm, const SERIAL_QUEUE_SIZE* pQueueSize)
+static BOOL set_queue_size(WINPR_ATTR_UNUSED WINPR_COMM* pComm, const SERIAL_QUEUE_SIZE* pQueueSize)
 {
 	WINPR_ASSERT(pComm);
 	WINPR_ASSERT(pQueueSize);
@@ -1606,7 +1606,7 @@ static BOOL get_dtrrts(WINPR_COMM* pComm, ULONG* pMask)
 	return TRUE;
 }
 
-static BOOL config_size(WINPR_COMM* pComm, ULONG* pSize)
+static BOOL config_size(WINPR_ATTR_UNUSED WINPR_COMM* pComm, ULONG* pSize)
 {
 	WINPR_ASSERT(pComm);
 	WINPR_ASSERT(pSize);
@@ -1640,7 +1640,7 @@ static BOOL immediate_char(WINPR_COMM* pComm, const UCHAR* pChar)
 	return result;
 }
 
-static BOOL reset_device(WINPR_COMM* pComm)
+static BOOL reset_device(WINPR_ATTR_UNUSED WINPR_COMM* pComm)
 {
 	/* http://msdn.microsoft.com/en-us/library/dn265347%28v=vs.85%29.aspx */
 	return TRUE;

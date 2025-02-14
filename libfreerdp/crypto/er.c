@@ -261,7 +261,7 @@ BOOL er_read_enumerated(wStream* s, BYTE* enumerated, BYTE count)
 	return TRUE;
 }
 
-void er_write_enumerated(wStream* s, BYTE enumerated, BYTE count, BOOL flag)
+void er_write_enumerated(wStream* s, BYTE enumerated, WINPR_ATTR_UNUSED BYTE count, BOOL flag)
 {
 	er_write_universal_tag(s, ER_TAG_ENUMERATED, FALSE);
 	er_write_length(s, 1, flag);

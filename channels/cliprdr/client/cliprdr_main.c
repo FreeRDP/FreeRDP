@@ -189,8 +189,9 @@ static UINT cliprdr_process_general_capability(cliprdrPlugin* cliprdr, wStream* 
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT cliprdr_process_clip_caps(cliprdrPlugin* cliprdr, wStream* s, UINT32 length,
-                                      UINT16 flags)
+static UINT cliprdr_process_clip_caps(cliprdrPlugin* cliprdr, wStream* s,
+                                      WINPR_ATTR_UNUSED UINT32 length,
+                                      WINPR_ATTR_UNUSED UINT16 flags)
 {
 	UINT16 lengthCapability = 0;
 	UINT16 cCapabilitiesSets = 0;
@@ -246,8 +247,8 @@ static UINT cliprdr_process_clip_caps(cliprdrPlugin* cliprdr, wStream* s, UINT32
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT cliprdr_process_monitor_ready(cliprdrPlugin* cliprdr, wStream* s, UINT32 length,
-                                          UINT16 flags)
+static UINT cliprdr_process_monitor_ready(cliprdrPlugin* cliprdr, WINPR_ATTR_UNUSED wStream* s,
+                                          UINT32 length, UINT16 flags)
 {
 	CLIPRDR_MONITOR_READY monitorReady = { 0 };
 	CliprdrClientContext* context = cliprdr_get_client_interface(cliprdr);
@@ -981,8 +982,9 @@ static VOID VCAPITYPE cliprdr_virtual_channel_open_event_ex(LPVOID lpUserParam, 
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT cliprdr_virtual_channel_event_connected(cliprdrPlugin* cliprdr, LPVOID pData,
-                                                    UINT32 dataLength)
+static UINT cliprdr_virtual_channel_event_connected(cliprdrPlugin* cliprdr,
+                                                    WINPR_ATTR_UNUSED LPVOID pData,
+                                                    WINPR_ATTR_UNUSED UINT32 dataLength)
 {
 	DWORD status = 0;
 	WINPR_ASSERT(cliprdr);

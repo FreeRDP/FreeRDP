@@ -56,7 +56,7 @@ typedef struct
 /* See MSDN Section on Multiple Display Monitors: http://msdn.microsoft.com/en-us/library/dd145071
  */
 
-int sdl_list_monitors(SdlContext* sdl)
+int sdl_list_monitors([[maybe_unused]] SdlContext* sdl)
 {
 	SDL_Init(SDL_INIT_VIDEO);
 

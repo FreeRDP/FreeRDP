@@ -878,63 +878,91 @@ INT64 WTSChannelGetOptions(freerdp_peer* client, UINT16 channel_id)
 	return (INT64)channel->options;
 }
 
-BOOL WINAPI FreeRDP_WTSStartRemoteControlSessionW(LPWSTR pTargetServerName, ULONG TargetLogonId,
-                                                  BYTE HotkeyVk, USHORT HotkeyModifiers)
+BOOL WINAPI FreeRDP_WTSStartRemoteControlSessionW(WINPR_ATTR_UNUSED LPWSTR pTargetServerName,
+                                                  WINPR_ATTR_UNUSED ULONG TargetLogonId,
+                                                  WINPR_ATTR_UNUSED BYTE HotkeyVk,
+                                                  WINPR_ATTR_UNUSED USHORT HotkeyModifiers)
 {
+	WLog_ERR("TODO", "TODO: implement");
 	return FALSE;
 }
 
-BOOL WINAPI FreeRDP_WTSStartRemoteControlSessionA(LPSTR pTargetServerName, ULONG TargetLogonId,
-                                                  BYTE HotkeyVk, USHORT HotkeyModifiers)
+BOOL WINAPI FreeRDP_WTSStartRemoteControlSessionA(WINPR_ATTR_UNUSED LPSTR pTargetServerName,
+                                                  WINPR_ATTR_UNUSED ULONG TargetLogonId,
+                                                  WINPR_ATTR_UNUSED BYTE HotkeyVk,
+                                                  WINPR_ATTR_UNUSED USHORT HotkeyModifiers)
 {
+	WLog_ERR("TODO", "TODO: implement");
 	return FALSE;
 }
 
-BOOL WINAPI FreeRDP_WTSStartRemoteControlSessionExW(LPWSTR pTargetServerName, ULONG TargetLogonId,
-                                                    BYTE HotkeyVk, USHORT HotkeyModifiers,
-                                                    DWORD flags)
+BOOL WINAPI FreeRDP_WTSStartRemoteControlSessionExW(WINPR_ATTR_UNUSED LPWSTR pTargetServerName,
+                                                    WINPR_ATTR_UNUSED ULONG TargetLogonId,
+                                                    WINPR_ATTR_UNUSED BYTE HotkeyVk,
+                                                    WINPR_ATTR_UNUSED USHORT HotkeyModifiers,
+                                                    WINPR_ATTR_UNUSED DWORD flags)
 {
+	WLog_ERR("TODO", "TODO: implement");
 	return FALSE;
 }
 
-BOOL WINAPI FreeRDP_WTSStartRemoteControlSessionExA(LPSTR pTargetServerName, ULONG TargetLogonId,
-                                                    BYTE HotkeyVk, USHORT HotkeyModifiers,
-                                                    DWORD flags)
+BOOL WINAPI FreeRDP_WTSStartRemoteControlSessionExA(WINPR_ATTR_UNUSED LPSTR pTargetServerName,
+                                                    WINPR_ATTR_UNUSED ULONG TargetLogonId,
+                                                    WINPR_ATTR_UNUSED BYTE HotkeyVk,
+                                                    WINPR_ATTR_UNUSED USHORT HotkeyModifiers,
+                                                    WINPR_ATTR_UNUSED DWORD flags)
 {
+	WLog_ERR("TODO", "TODO: implement");
 	return FALSE;
 }
 
-BOOL WINAPI FreeRDP_WTSStopRemoteControlSession(ULONG LogonId)
+BOOL WINAPI FreeRDP_WTSStopRemoteControlSession(WINPR_ATTR_UNUSED ULONG LogonId)
 {
+	WLog_ERR("TODO", "TODO: implement");
 	return FALSE;
 }
 
-BOOL WINAPI FreeRDP_WTSConnectSessionW(ULONG LogonId, ULONG TargetLogonId, PWSTR pPassword,
-                                       BOOL bWait)
+BOOL WINAPI FreeRDP_WTSConnectSessionW(WINPR_ATTR_UNUSED ULONG LogonId,
+                                       WINPR_ATTR_UNUSED ULONG TargetLogonId,
+                                       WINPR_ATTR_UNUSED PWSTR pPassword,
+                                       WINPR_ATTR_UNUSED BOOL bWait)
 {
+	WLog_ERR("TODO", "TODO: implement");
 	return FALSE;
 }
 
-BOOL WINAPI FreeRDP_WTSConnectSessionA(ULONG LogonId, ULONG TargetLogonId, PSTR pPassword,
-                                       BOOL bWait)
+BOOL WINAPI FreeRDP_WTSConnectSessionA(WINPR_ATTR_UNUSED ULONG LogonId,
+                                       WINPR_ATTR_UNUSED ULONG TargetLogonId,
+                                       WINPR_ATTR_UNUSED PSTR pPassword,
+                                       WINPR_ATTR_UNUSED BOOL bWait)
 {
+	WLog_ERR("TODO", "TODO: implement");
 	return FALSE;
 }
 
-BOOL WINAPI FreeRDP_WTSEnumerateServersW(LPWSTR pDomainName, DWORD Reserved, DWORD Version,
-                                         PWTS_SERVER_INFOW* ppServerInfo, DWORD* pCount)
+BOOL WINAPI FreeRDP_WTSEnumerateServersW(WINPR_ATTR_UNUSED LPWSTR pDomainName,
+                                         WINPR_ATTR_UNUSED DWORD Reserved,
+                                         WINPR_ATTR_UNUSED DWORD Version,
+                                         WINPR_ATTR_UNUSED PWTS_SERVER_INFOW* ppServerInfo,
+                                         WINPR_ATTR_UNUSED DWORD* pCount)
 {
+	WLog_ERR("TODO", "TODO: implement");
 	return FALSE;
 }
 
-BOOL WINAPI FreeRDP_WTSEnumerateServersA(LPSTR pDomainName, DWORD Reserved, DWORD Version,
-                                         PWTS_SERVER_INFOA* ppServerInfo, DWORD* pCount)
+BOOL WINAPI FreeRDP_WTSEnumerateServersA(WINPR_ATTR_UNUSED LPSTR pDomainName,
+                                         WINPR_ATTR_UNUSED DWORD Reserved,
+                                         WINPR_ATTR_UNUSED DWORD Version,
+                                         WINPR_ATTR_UNUSED PWTS_SERVER_INFOA* ppServerInfo,
+                                         WINPR_ATTR_UNUSED DWORD* pCount)
 {
+	WLog_ERR("TODO", "TODO: implement");
 	return FALSE;
 }
 
-HANDLE WINAPI FreeRDP_WTSOpenServerW(LPWSTR pServerName)
+HANDLE WINAPI FreeRDP_WTSOpenServerW(WINPR_ATTR_UNUSED LPWSTR pServerName)
 {
+	WLog_ERR("TODO", "TODO: implement");
 	return INVALID_HANDLE_VALUE;
 }
 
@@ -1056,8 +1084,9 @@ error_vcm_alloc:
 	return INVALID_HANDLE_VALUE;
 }
 
-HANDLE WINAPI FreeRDP_WTSOpenServerExW(LPWSTR pServerName)
+HANDLE WINAPI FreeRDP_WTSOpenServerExW(WINPR_ATTR_UNUSED LPWSTR pServerName)
 {
+	WLog_ERR("TODO", "TODO: implement");
 	return INVALID_HANDLE_VALUE;
 }
 
@@ -1088,55 +1117,85 @@ VOID WINAPI FreeRDP_WTSCloseServer(HANDLE hServer)
 	}
 }
 
-BOOL WINAPI FreeRDP_WTSEnumerateSessionsW(HANDLE hServer, DWORD Reserved, DWORD Version,
-                                          PWTS_SESSION_INFOW* ppSessionInfo, DWORD* pCount)
+BOOL WINAPI FreeRDP_WTSEnumerateSessionsW(WINPR_ATTR_UNUSED HANDLE hServer,
+                                          WINPR_ATTR_UNUSED DWORD Reserved,
+                                          WINPR_ATTR_UNUSED DWORD Version,
+                                          WINPR_ATTR_UNUSED PWTS_SESSION_INFOW* ppSessionInfo,
+                                          WINPR_ATTR_UNUSED DWORD* pCount)
 {
+	WLog_ERR("TODO", "TODO: implement");
 	return FALSE;
 }
 
-BOOL WINAPI FreeRDP_WTSEnumerateSessionsA(HANDLE hServer, DWORD Reserved, DWORD Version,
-                                          PWTS_SESSION_INFOA* ppSessionInfo, DWORD* pCount)
+BOOL WINAPI FreeRDP_WTSEnumerateSessionsA(WINPR_ATTR_UNUSED HANDLE hServer,
+                                          WINPR_ATTR_UNUSED DWORD Reserved,
+                                          WINPR_ATTR_UNUSED DWORD Version,
+                                          WINPR_ATTR_UNUSED PWTS_SESSION_INFOA* ppSessionInfo,
+                                          WINPR_ATTR_UNUSED DWORD* pCount)
 {
+	WLog_ERR("TODO", "TODO: implement");
 	return FALSE;
 }
 
-BOOL WINAPI FreeRDP_WTSEnumerateSessionsExW(HANDLE hServer, DWORD* pLevel, DWORD Filter,
-                                            PWTS_SESSION_INFO_1W* ppSessionInfo, DWORD* pCount)
+BOOL WINAPI FreeRDP_WTSEnumerateSessionsExW(WINPR_ATTR_UNUSED HANDLE hServer,
+                                            WINPR_ATTR_UNUSED DWORD* pLevel,
+                                            WINPR_ATTR_UNUSED DWORD Filter,
+                                            WINPR_ATTR_UNUSED PWTS_SESSION_INFO_1W* ppSessionInfo,
+                                            WINPR_ATTR_UNUSED DWORD* pCount)
 {
+	WLog_ERR("TODO", "TODO: implement");
 	return FALSE;
 }
 
-BOOL WINAPI FreeRDP_WTSEnumerateSessionsExA(HANDLE hServer, DWORD* pLevel, DWORD Filter,
-                                            PWTS_SESSION_INFO_1A* ppSessionInfo, DWORD* pCount)
+BOOL WINAPI FreeRDP_WTSEnumerateSessionsExA(WINPR_ATTR_UNUSED HANDLE hServer,
+                                            WINPR_ATTR_UNUSED DWORD* pLevel,
+                                            WINPR_ATTR_UNUSED DWORD Filter,
+                                            WINPR_ATTR_UNUSED PWTS_SESSION_INFO_1A* ppSessionInfo,
+                                            WINPR_ATTR_UNUSED DWORD* pCount)
 {
+	WLog_ERR("TODO", "TODO: implement");
 	return FALSE;
 }
 
-BOOL WINAPI FreeRDP_WTSEnumerateProcessesW(HANDLE hServer, DWORD Reserved, DWORD Version,
-                                           PWTS_PROCESS_INFOW* ppProcessInfo, DWORD* pCount)
+BOOL WINAPI FreeRDP_WTSEnumerateProcessesW(WINPR_ATTR_UNUSED HANDLE hServer,
+                                           WINPR_ATTR_UNUSED DWORD Reserved,
+                                           WINPR_ATTR_UNUSED DWORD Version,
+                                           WINPR_ATTR_UNUSED PWTS_PROCESS_INFOW* ppProcessInfo,
+                                           WINPR_ATTR_UNUSED DWORD* pCount)
 {
+	WLog_ERR("TODO", "TODO: implement");
 	return FALSE;
 }
 
-BOOL WINAPI FreeRDP_WTSEnumerateProcessesA(HANDLE hServer, DWORD Reserved, DWORD Version,
-                                           PWTS_PROCESS_INFOA* ppProcessInfo, DWORD* pCount)
+BOOL WINAPI FreeRDP_WTSEnumerateProcessesA(WINPR_ATTR_UNUSED HANDLE hServer,
+                                           WINPR_ATTR_UNUSED DWORD Reserved,
+                                           WINPR_ATTR_UNUSED DWORD Version,
+                                           WINPR_ATTR_UNUSED PWTS_PROCESS_INFOA* ppProcessInfo,
+                                           WINPR_ATTR_UNUSED DWORD* pCount)
 {
+	WLog_ERR("TODO", "TODO: implement");
 	return FALSE;
 }
 
-BOOL WINAPI FreeRDP_WTSTerminateProcess(HANDLE hServer, DWORD ProcessId, DWORD ExitCode)
+BOOL WINAPI FreeRDP_WTSTerminateProcess(WINPR_ATTR_UNUSED HANDLE hServer,
+                                        WINPR_ATTR_UNUSED DWORD ProcessId,
+                                        WINPR_ATTR_UNUSED DWORD ExitCode)
 {
+	WLog_ERR("TODO", "TODO: implement");
 	return FALSE;
 }
 
-BOOL WINAPI FreeRDP_WTSQuerySessionInformationW(HANDLE hServer, DWORD SessionId,
-                                                WTS_INFO_CLASS WTSInfoClass, LPWSTR* ppBuffer,
-                                                DWORD* pBytesReturned)
+BOOL WINAPI FreeRDP_WTSQuerySessionInformationW(WINPR_ATTR_UNUSED HANDLE hServer,
+                                                WINPR_ATTR_UNUSED DWORD SessionId,
+                                                WINPR_ATTR_UNUSED WTS_INFO_CLASS WTSInfoClass,
+                                                WINPR_ATTR_UNUSED LPWSTR* ppBuffer,
+                                                WINPR_ATTR_UNUSED DWORD* pBytesReturned)
 {
+	WLog_ERR("TODO", "TODO: implement");
 	return FALSE;
 }
 
-BOOL WINAPI FreeRDP_WTSQuerySessionInformationA(HANDLE hServer, DWORD SessionId,
+BOOL WINAPI FreeRDP_WTSQuerySessionInformationA(HANDLE hServer, WINPR_ATTR_UNUSED DWORD SessionId,
                                                 WTS_INFO_CLASS WTSInfoClass, LPSTR* ppBuffer,
                                                 DWORD* pBytesReturned)
 {
@@ -1168,65 +1227,96 @@ BOOL WINAPI FreeRDP_WTSQuerySessionInformationA(HANDLE hServer, DWORD SessionId,
 	return FALSE;
 }
 
-BOOL WINAPI FreeRDP_WTSQueryUserConfigW(LPWSTR pServerName, LPWSTR pUserName,
-                                        WTS_CONFIG_CLASS WTSConfigClass, LPWSTR* ppBuffer,
-                                        DWORD* pBytesReturned)
+BOOL WINAPI FreeRDP_WTSQueryUserConfigW(WINPR_ATTR_UNUSED LPWSTR pServerName,
+                                        WINPR_ATTR_UNUSED LPWSTR pUserName,
+                                        WINPR_ATTR_UNUSED WTS_CONFIG_CLASS WTSConfigClass,
+                                        WINPR_ATTR_UNUSED LPWSTR* ppBuffer,
+                                        WINPR_ATTR_UNUSED DWORD* pBytesReturned)
 {
+	WLog_ERR("TODO", "TODO: implement");
 	return FALSE;
 }
 
-BOOL WINAPI FreeRDP_WTSQueryUserConfigA(LPSTR pServerName, LPSTR pUserName,
-                                        WTS_CONFIG_CLASS WTSConfigClass, LPSTR* ppBuffer,
-                                        DWORD* pBytesReturned)
+BOOL WINAPI FreeRDP_WTSQueryUserConfigA(WINPR_ATTR_UNUSED LPSTR pServerName,
+                                        WINPR_ATTR_UNUSED LPSTR pUserName,
+                                        WINPR_ATTR_UNUSED WTS_CONFIG_CLASS WTSConfigClass,
+                                        WINPR_ATTR_UNUSED LPSTR* ppBuffer,
+                                        WINPR_ATTR_UNUSED DWORD* pBytesReturned)
 {
+	WLog_ERR("TODO", "TODO: implement");
 	return FALSE;
 }
 
-BOOL WINAPI FreeRDP_WTSSetUserConfigW(LPWSTR pServerName, LPWSTR pUserName,
-                                      WTS_CONFIG_CLASS WTSConfigClass, LPWSTR pBuffer,
-                                      DWORD DataLength)
+BOOL WINAPI FreeRDP_WTSSetUserConfigW(WINPR_ATTR_UNUSED LPWSTR pServerName,
+                                      WINPR_ATTR_UNUSED LPWSTR pUserName,
+                                      WINPR_ATTR_UNUSED WTS_CONFIG_CLASS WTSConfigClass,
+                                      WINPR_ATTR_UNUSED LPWSTR pBuffer,
+                                      WINPR_ATTR_UNUSED DWORD DataLength)
 {
+	WLog_ERR("TODO", "TODO: implement");
 	return FALSE;
 }
 
-BOOL WINAPI FreeRDP_WTSSetUserConfigA(LPSTR pServerName, LPSTR pUserName,
-                                      WTS_CONFIG_CLASS WTSConfigClass, LPSTR pBuffer,
-                                      DWORD DataLength)
+BOOL WINAPI FreeRDP_WTSSetUserConfigA(WINPR_ATTR_UNUSED LPSTR pServerName,
+                                      WINPR_ATTR_UNUSED LPSTR pUserName,
+                                      WINPR_ATTR_UNUSED WTS_CONFIG_CLASS WTSConfigClass,
+                                      WINPR_ATTR_UNUSED LPSTR pBuffer,
+                                      WINPR_ATTR_UNUSED DWORD DataLength)
 {
+	WLog_ERR("TODO", "TODO: implement");
 	return FALSE;
 }
 
-BOOL WINAPI FreeRDP_WTSSendMessageW(HANDLE hServer, DWORD SessionId, LPWSTR pTitle,
-                                    DWORD TitleLength, LPWSTR pMessage, DWORD MessageLength,
-                                    DWORD Style, DWORD Timeout, DWORD* pResponse, BOOL bWait)
+BOOL WINAPI
+FreeRDP_WTSSendMessageW(WINPR_ATTR_UNUSED HANDLE hServer, WINPR_ATTR_UNUSED DWORD SessionId,
+                        WINPR_ATTR_UNUSED LPWSTR pTitle, WINPR_ATTR_UNUSED DWORD TitleLength,
+                        WINPR_ATTR_UNUSED LPWSTR pMessage, WINPR_ATTR_UNUSED DWORD MessageLength,
+                        WINPR_ATTR_UNUSED DWORD Style, WINPR_ATTR_UNUSED DWORD Timeout,
+                        WINPR_ATTR_UNUSED DWORD* pResponse, WINPR_ATTR_UNUSED BOOL bWait)
 {
+	WLog_ERR("TODO", "TODO: implement");
 	return FALSE;
 }
 
-BOOL WINAPI FreeRDP_WTSSendMessageA(HANDLE hServer, DWORD SessionId, LPSTR pTitle,
-                                    DWORD TitleLength, LPSTR pMessage, DWORD MessageLength,
-                                    DWORD Style, DWORD Timeout, DWORD* pResponse, BOOL bWait)
+BOOL WINAPI
+FreeRDP_WTSSendMessageA(WINPR_ATTR_UNUSED HANDLE hServer, WINPR_ATTR_UNUSED DWORD SessionId,
+                        WINPR_ATTR_UNUSED LPSTR pTitle, WINPR_ATTR_UNUSED DWORD TitleLength,
+                        WINPR_ATTR_UNUSED LPSTR pMessage, WINPR_ATTR_UNUSED DWORD MessageLength,
+                        WINPR_ATTR_UNUSED DWORD Style, WINPR_ATTR_UNUSED DWORD Timeout,
+                        WINPR_ATTR_UNUSED DWORD* pResponse, WINPR_ATTR_UNUSED BOOL bWait)
 {
+	WLog_ERR("TODO", "TODO: implement");
 	return FALSE;
 }
 
-BOOL WINAPI FreeRDP_WTSDisconnectSession(HANDLE hServer, DWORD SessionId, BOOL bWait)
+BOOL WINAPI FreeRDP_WTSDisconnectSession(WINPR_ATTR_UNUSED HANDLE hServer,
+                                         WINPR_ATTR_UNUSED DWORD SessionId,
+                                         WINPR_ATTR_UNUSED BOOL bWait)
 {
+	WLog_ERR("TODO", "TODO: implement");
 	return FALSE;
 }
 
-BOOL WINAPI FreeRDP_WTSLogoffSession(HANDLE hServer, DWORD SessionId, BOOL bWait)
+BOOL WINAPI FreeRDP_WTSLogoffSession(WINPR_ATTR_UNUSED HANDLE hServer,
+                                     WINPR_ATTR_UNUSED DWORD SessionId,
+                                     WINPR_ATTR_UNUSED BOOL bWait)
 {
+	WLog_ERR("TODO", "TODO: implement");
 	return FALSE;
 }
 
-BOOL WINAPI FreeRDP_WTSShutdownSystem(HANDLE hServer, DWORD ShutdownFlag)
+BOOL WINAPI FreeRDP_WTSShutdownSystem(WINPR_ATTR_UNUSED HANDLE hServer,
+                                      WINPR_ATTR_UNUSED DWORD ShutdownFlag)
 {
+	WLog_ERR("TODO", "TODO: implement");
 	return FALSE;
 }
 
-BOOL WINAPI FreeRDP_WTSWaitSystemEvent(HANDLE hServer, DWORD EventMask, DWORD* pEventFlags)
+BOOL WINAPI FreeRDP_WTSWaitSystemEvent(WINPR_ATTR_UNUSED HANDLE hServer,
+                                       WINPR_ATTR_UNUSED DWORD EventMask,
+                                       WINPR_ATTR_UNUSED DWORD* pEventFlags)
 {
+	WLog_ERR("TODO", "TODO: implement");
 	return FALSE;
 }
 
@@ -1267,7 +1357,8 @@ fail:
 	return NULL;
 }
 
-HANDLE WINAPI FreeRDP_WTSVirtualChannelOpen(HANDLE hServer, DWORD SessionId, LPSTR pVirtualName)
+HANDLE WINAPI FreeRDP_WTSVirtualChannelOpen(HANDLE hServer, WINPR_ATTR_UNUSED DWORD SessionId,
+                                            LPSTR pVirtualName)
 {
 	size_t length = 0;
 	rdpMcs* mcs = NULL;
@@ -1502,8 +1593,8 @@ BOOL WINAPI FreeRDP_WTSVirtualChannelClose(HANDLE hChannelHandle)
 	return ret;
 }
 
-BOOL WINAPI FreeRDP_WTSVirtualChannelRead(HANDLE hChannelHandle, ULONG TimeOut, PCHAR Buffer,
-                                          ULONG BufferSize, PULONG pBytesRead)
+BOOL WINAPI FreeRDP_WTSVirtualChannelRead(HANDLE hChannelHandle, WINPR_ATTR_UNUSED ULONG TimeOut,
+                                          PCHAR Buffer, ULONG BufferSize, PULONG pBytesRead)
 {
 	BYTE* buffer = NULL;
 	wMessage message = { 0 };
@@ -1646,13 +1737,15 @@ fail:
 	return ret;
 }
 
-BOOL WINAPI FreeRDP_WTSVirtualChannelPurgeInput(HANDLE hChannelHandle)
+BOOL WINAPI FreeRDP_WTSVirtualChannelPurgeInput(WINPR_ATTR_UNUSED HANDLE hChannelHandle)
 {
+	WLog_ERR("TODO", "TODO: implement");
 	return TRUE;
 }
 
-BOOL WINAPI FreeRDP_WTSVirtualChannelPurgeOutput(HANDLE hChannelHandle)
+BOOL WINAPI FreeRDP_WTSVirtualChannelPurgeOutput(WINPR_ATTR_UNUSED HANDLE hChannelHandle)
 {
+	WLog_ERR("TODO", "TODO: implement");
 	return TRUE;
 }
 
@@ -1785,152 +1878,215 @@ VOID WINAPI FreeRDP_WTSFreeMemory(PVOID pMemory)
 	free(pMemory);
 }
 
-BOOL WINAPI FreeRDP_WTSFreeMemoryExW(WTS_TYPE_CLASS WTSTypeClass, PVOID pMemory,
-                                     ULONG NumberOfEntries)
+BOOL WINAPI FreeRDP_WTSFreeMemoryExW(WINPR_ATTR_UNUSED WTS_TYPE_CLASS WTSTypeClass,
+                                     WINPR_ATTR_UNUSED PVOID pMemory,
+                                     WINPR_ATTR_UNUSED ULONG NumberOfEntries)
 {
+	WLog_ERR("TODO", "TODO: implement");
 	return FALSE;
 }
 
-BOOL WINAPI FreeRDP_WTSFreeMemoryExA(WTS_TYPE_CLASS WTSTypeClass, PVOID pMemory,
-                                     ULONG NumberOfEntries)
+BOOL WINAPI FreeRDP_WTSFreeMemoryExA(WINPR_ATTR_UNUSED WTS_TYPE_CLASS WTSTypeClass,
+                                     WINPR_ATTR_UNUSED PVOID pMemory,
+                                     WINPR_ATTR_UNUSED ULONG NumberOfEntries)
 {
+	WLog_ERR("TODO", "TODO: implement");
 	return FALSE;
 }
 
-BOOL WINAPI FreeRDP_WTSRegisterSessionNotification(HWND hWnd, DWORD dwFlags)
+BOOL WINAPI FreeRDP_WTSRegisterSessionNotification(WINPR_ATTR_UNUSED HWND hWnd,
+                                                   WINPR_ATTR_UNUSED DWORD dwFlags)
 {
+	WLog_ERR("TODO", "TODO: implement");
 	return FALSE;
 }
 
-BOOL WINAPI FreeRDP_WTSUnRegisterSessionNotification(HWND hWnd)
+BOOL WINAPI FreeRDP_WTSUnRegisterSessionNotification(WINPR_ATTR_UNUSED HWND hWnd)
 {
+	WLog_ERR("TODO", "TODO: implement");
 	return FALSE;
 }
 
-BOOL WINAPI FreeRDP_WTSRegisterSessionNotificationEx(HANDLE hServer, HWND hWnd, DWORD dwFlags)
+BOOL WINAPI FreeRDP_WTSRegisterSessionNotificationEx(WINPR_ATTR_UNUSED HANDLE hServer,
+                                                     WINPR_ATTR_UNUSED HWND hWnd,
+                                                     WINPR_ATTR_UNUSED DWORD dwFlags)
 {
+	WLog_ERR("TODO", "TODO: implement");
 	return FALSE;
 }
 
-BOOL WINAPI FreeRDP_WTSUnRegisterSessionNotificationEx(HANDLE hServer, HWND hWnd)
+BOOL WINAPI FreeRDP_WTSUnRegisterSessionNotificationEx(WINPR_ATTR_UNUSED HANDLE hServer,
+                                                       WINPR_ATTR_UNUSED HWND hWnd)
 {
+	WLog_ERR("TODO", "TODO: implement");
 	return FALSE;
 }
 
-BOOL WINAPI FreeRDP_WTSQueryUserToken(ULONG SessionId, PHANDLE phToken)
+BOOL WINAPI FreeRDP_WTSQueryUserToken(WINPR_ATTR_UNUSED ULONG SessionId,
+                                      WINPR_ATTR_UNUSED PHANDLE phToken)
 {
+	WLog_ERR("TODO", "TODO: implement");
 	return FALSE;
 }
 
-BOOL WINAPI FreeRDP_WTSEnumerateProcessesExW(HANDLE hServer, DWORD* pLevel, DWORD SessionId,
-                                             LPWSTR* ppProcessInfo, DWORD* pCount)
+BOOL WINAPI FreeRDP_WTSEnumerateProcessesExW(WINPR_ATTR_UNUSED HANDLE hServer,
+                                             WINPR_ATTR_UNUSED DWORD* pLevel,
+                                             WINPR_ATTR_UNUSED DWORD SessionId,
+                                             WINPR_ATTR_UNUSED LPWSTR* ppProcessInfo,
+                                             WINPR_ATTR_UNUSED DWORD* pCount)
 {
+	WLog_ERR("TODO", "TODO: implement");
 	return FALSE;
 }
 
-BOOL WINAPI FreeRDP_WTSEnumerateProcessesExA(HANDLE hServer, DWORD* pLevel, DWORD SessionId,
-                                             LPSTR* ppProcessInfo, DWORD* pCount)
+BOOL WINAPI FreeRDP_WTSEnumerateProcessesExA(WINPR_ATTR_UNUSED HANDLE hServer,
+                                             WINPR_ATTR_UNUSED DWORD* pLevel,
+                                             WINPR_ATTR_UNUSED DWORD SessionId,
+                                             WINPR_ATTR_UNUSED LPSTR* ppProcessInfo,
+                                             WINPR_ATTR_UNUSED DWORD* pCount)
 {
+	WLog_ERR("TODO", "TODO: implement");
 	return FALSE;
 }
 
-BOOL WINAPI FreeRDP_WTSEnumerateListenersW(HANDLE hServer, PVOID pReserved, DWORD Reserved,
-                                           PWTSLISTENERNAMEW pListeners, DWORD* pCount)
+BOOL WINAPI FreeRDP_WTSEnumerateListenersW(WINPR_ATTR_UNUSED HANDLE hServer,
+                                           WINPR_ATTR_UNUSED PVOID pReserved,
+                                           WINPR_ATTR_UNUSED DWORD Reserved,
+                                           WINPR_ATTR_UNUSED PWTSLISTENERNAMEW pListeners,
+                                           WINPR_ATTR_UNUSED DWORD* pCount)
 {
+	WLog_ERR("TODO", "TODO: implement");
 	return FALSE;
 }
 
-BOOL WINAPI FreeRDP_WTSEnumerateListenersA(HANDLE hServer, PVOID pReserved, DWORD Reserved,
-                                           PWTSLISTENERNAMEA pListeners, DWORD* pCount)
+BOOL WINAPI FreeRDP_WTSEnumerateListenersA(WINPR_ATTR_UNUSED HANDLE hServer,
+                                           WINPR_ATTR_UNUSED PVOID pReserved,
+                                           WINPR_ATTR_UNUSED DWORD Reserved,
+                                           WINPR_ATTR_UNUSED PWTSLISTENERNAMEA pListeners,
+                                           WINPR_ATTR_UNUSED DWORD* pCount)
 {
+	WLog_ERR("TODO", "TODO: implement");
 	return FALSE;
 }
 
-BOOL WINAPI FreeRDP_WTSQueryListenerConfigW(HANDLE hServer, PVOID pReserved, DWORD Reserved,
-                                            LPWSTR pListenerName, PWTSLISTENERCONFIGW pBuffer)
+BOOL WINAPI FreeRDP_WTSQueryListenerConfigW(WINPR_ATTR_UNUSED HANDLE hServer,
+                                            WINPR_ATTR_UNUSED PVOID pReserved,
+                                            WINPR_ATTR_UNUSED DWORD Reserved,
+                                            WINPR_ATTR_UNUSED LPWSTR pListenerName,
+                                            WINPR_ATTR_UNUSED PWTSLISTENERCONFIGW pBuffer)
 {
+	WLog_ERR("TODO", "TODO: implement");
 	return FALSE;
 }
 
-BOOL WINAPI FreeRDP_WTSQueryListenerConfigA(HANDLE hServer, PVOID pReserved, DWORD Reserved,
-                                            LPSTR pListenerName, PWTSLISTENERCONFIGA pBuffer)
+BOOL WINAPI FreeRDP_WTSQueryListenerConfigA(WINPR_ATTR_UNUSED HANDLE hServer,
+                                            WINPR_ATTR_UNUSED PVOID pReserved,
+                                            WINPR_ATTR_UNUSED DWORD Reserved,
+                                            WINPR_ATTR_UNUSED LPSTR pListenerName,
+                                            WINPR_ATTR_UNUSED PWTSLISTENERCONFIGA pBuffer)
 {
+	WLog_ERR("TODO", "TODO: implement");
 	return FALSE;
 }
 
-BOOL WINAPI FreeRDP_WTSCreateListenerW(HANDLE hServer, PVOID pReserved, DWORD Reserved,
-                                       LPWSTR pListenerName, PWTSLISTENERCONFIGW pBuffer,
-                                       DWORD flag)
+BOOL WINAPI FreeRDP_WTSCreateListenerW(WINPR_ATTR_UNUSED HANDLE hServer,
+                                       WINPR_ATTR_UNUSED PVOID pReserved,
+                                       WINPR_ATTR_UNUSED DWORD Reserved,
+                                       WINPR_ATTR_UNUSED LPWSTR pListenerName,
+                                       WINPR_ATTR_UNUSED PWTSLISTENERCONFIGW pBuffer,
+                                       WINPR_ATTR_UNUSED DWORD flag)
 {
+	WLog_ERR("TODO", "TODO: implement");
 	return FALSE;
 }
 
-BOOL WINAPI FreeRDP_WTSCreateListenerA(HANDLE hServer, PVOID pReserved, DWORD Reserved,
-                                       LPSTR pListenerName, PWTSLISTENERCONFIGA pBuffer, DWORD flag)
+BOOL WINAPI FreeRDP_WTSCreateListenerA(WINPR_ATTR_UNUSED HANDLE hServer,
+                                       WINPR_ATTR_UNUSED PVOID pReserved,
+                                       WINPR_ATTR_UNUSED DWORD Reserved,
+                                       WINPR_ATTR_UNUSED LPSTR pListenerName,
+                                       WINPR_ATTR_UNUSED PWTSLISTENERCONFIGA pBuffer,
+                                       WINPR_ATTR_UNUSED DWORD flag)
 {
+	WLog_ERR("TODO", "TODO: implement");
 	return FALSE;
 }
 
-BOOL WINAPI FreeRDP_WTSSetListenerSecurityW(HANDLE hServer, PVOID pReserved, DWORD Reserved,
-                                            LPWSTR pListenerName,
-                                            SECURITY_INFORMATION SecurityInformation,
-                                            PSECURITY_DESCRIPTOR pSecurityDescriptor)
+BOOL WINAPI FreeRDP_WTSSetListenerSecurityW(
+    WINPR_ATTR_UNUSED HANDLE hServer, WINPR_ATTR_UNUSED PVOID pReserved,
+    WINPR_ATTR_UNUSED DWORD Reserved, WINPR_ATTR_UNUSED LPWSTR pListenerName,
+    WINPR_ATTR_UNUSED SECURITY_INFORMATION SecurityInformation,
+    WINPR_ATTR_UNUSED PSECURITY_DESCRIPTOR pSecurityDescriptor)
 {
+	WLog_ERR("TODO", "TODO: implement");
 	return FALSE;
 }
 
-BOOL WINAPI FreeRDP_WTSSetListenerSecurityA(HANDLE hServer, PVOID pReserved, DWORD Reserved,
-                                            LPSTR pListenerName,
-                                            SECURITY_INFORMATION SecurityInformation,
-                                            PSECURITY_DESCRIPTOR pSecurityDescriptor)
+BOOL WINAPI FreeRDP_WTSSetListenerSecurityA(
+    WINPR_ATTR_UNUSED HANDLE hServer, WINPR_ATTR_UNUSED PVOID pReserved,
+    WINPR_ATTR_UNUSED DWORD Reserved, WINPR_ATTR_UNUSED LPSTR pListenerName,
+    WINPR_ATTR_UNUSED SECURITY_INFORMATION SecurityInformation,
+    WINPR_ATTR_UNUSED PSECURITY_DESCRIPTOR pSecurityDescriptor)
 {
+	WLog_ERR("TODO", "TODO: implement");
 	return FALSE;
 }
 
-BOOL WINAPI FreeRDP_WTSGetListenerSecurityW(HANDLE hServer, PVOID pReserved, DWORD Reserved,
-                                            LPWSTR pListenerName,
-                                            SECURITY_INFORMATION SecurityInformation,
-                                            PSECURITY_DESCRIPTOR pSecurityDescriptor, DWORD nLength,
-                                            LPDWORD lpnLengthNeeded)
+BOOL WINAPI FreeRDP_WTSGetListenerSecurityW(
+    WINPR_ATTR_UNUSED HANDLE hServer, WINPR_ATTR_UNUSED PVOID pReserved,
+    WINPR_ATTR_UNUSED DWORD Reserved, WINPR_ATTR_UNUSED LPWSTR pListenerName,
+    WINPR_ATTR_UNUSED SECURITY_INFORMATION SecurityInformation,
+    WINPR_ATTR_UNUSED PSECURITY_DESCRIPTOR pSecurityDescriptor, WINPR_ATTR_UNUSED DWORD nLength,
+    WINPR_ATTR_UNUSED LPDWORD lpnLengthNeeded)
 {
+	WLog_ERR("TODO", "TODO: implement");
 	return FALSE;
 }
 
-BOOL WINAPI FreeRDP_WTSGetListenerSecurityA(HANDLE hServer, PVOID pReserved, DWORD Reserved,
-                                            LPSTR pListenerName,
-                                            SECURITY_INFORMATION SecurityInformation,
-                                            PSECURITY_DESCRIPTOR pSecurityDescriptor, DWORD nLength,
-                                            LPDWORD lpnLengthNeeded)
+BOOL WINAPI FreeRDP_WTSGetListenerSecurityA(
+    WINPR_ATTR_UNUSED HANDLE hServer, WINPR_ATTR_UNUSED PVOID pReserved,
+    WINPR_ATTR_UNUSED DWORD Reserved, WINPR_ATTR_UNUSED LPSTR pListenerName,
+    WINPR_ATTR_UNUSED SECURITY_INFORMATION SecurityInformation,
+    WINPR_ATTR_UNUSED PSECURITY_DESCRIPTOR pSecurityDescriptor, WINPR_ATTR_UNUSED DWORD nLength,
+    WINPR_ATTR_UNUSED LPDWORD lpnLengthNeeded)
 {
+	WLog_ERR("TODO", "TODO: implement");
 	return FALSE;
 }
 
-BOOL CDECL FreeRDP_WTSEnableChildSessions(BOOL bEnable)
+BOOL CDECL FreeRDP_WTSEnableChildSessions(WINPR_ATTR_UNUSED BOOL bEnable)
 {
+	WLog_ERR("TODO", "TODO: implement");
 	return FALSE;
 }
 
-BOOL CDECL FreeRDP_WTSIsChildSessionsEnabled(PBOOL pbEnabled)
+BOOL CDECL FreeRDP_WTSIsChildSessionsEnabled(WINPR_ATTR_UNUSED PBOOL pbEnabled)
 {
+	WLog_ERR("TODO", "TODO: implement");
 	return FALSE;
 }
 
-BOOL CDECL FreeRDP_WTSGetChildSessionId(PULONG pSessionId)
+BOOL CDECL FreeRDP_WTSGetChildSessionId(WINPR_ATTR_UNUSED PULONG pSessionId)
 {
+	WLog_ERR("TODO", "TODO: implement");
 	return FALSE;
 }
 
 DWORD WINAPI FreeRDP_WTSGetActiveConsoleSessionId(void)
 {
+	WLog_ERR("TODO", "TODO: implement");
 	return 0xFFFFFFFF;
 }
-BOOL WINAPI FreeRDP_WTSLogoffUser(HANDLE hServer)
+BOOL WINAPI FreeRDP_WTSLogoffUser(WINPR_ATTR_UNUSED HANDLE hServer)
 {
+	WLog_ERR("TODO", "TODO: implement");
 	return FALSE;
 }
 
-BOOL WINAPI FreeRDP_WTSLogonUser(HANDLE hServer, LPCSTR username, LPCSTR password, LPCSTR domain)
+BOOL WINAPI FreeRDP_WTSLogonUser(WINPR_ATTR_UNUSED HANDLE hServer,
+                                 WINPR_ATTR_UNUSED LPCSTR username,
+                                 WINPR_ATTR_UNUSED LPCSTR password, WINPR_ATTR_UNUSED LPCSTR domain)
 {
+	WLog_ERR("TODO", "TODO: implement");
 	return FALSE;
 }
 

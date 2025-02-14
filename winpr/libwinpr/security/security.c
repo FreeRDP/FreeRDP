@@ -122,92 +122,122 @@
  */
 
 #ifndef _WIN32
-
+#include <winpr/wlog.h>
 #include "security.h"
 
-BOOL InitializeSecurityDescriptor(PSECURITY_DESCRIPTOR pSecurityDescriptor, DWORD dwRevision)
+BOOL InitializeSecurityDescriptor(WINPR_ATTR_UNUSED PSECURITY_DESCRIPTOR pSecurityDescriptor,
+                                  WINPR_ATTR_UNUSED DWORD dwRevision)
 {
+	WLog_ERR("TODO", "TODO: Implement");
 	return TRUE;
 }
 
-DWORD GetSecurityDescriptorLength(PSECURITY_DESCRIPTOR pSecurityDescriptor)
+DWORD GetSecurityDescriptorLength(WINPR_ATTR_UNUSED PSECURITY_DESCRIPTOR pSecurityDescriptor)
 {
+	WLog_ERR("TODO", "TODO: Implement");
 	return 0;
 }
 
-BOOL IsValidSecurityDescriptor(PSECURITY_DESCRIPTOR pSecurityDescriptor)
+BOOL IsValidSecurityDescriptor(WINPR_ATTR_UNUSED PSECURITY_DESCRIPTOR pSecurityDescriptor)
 {
+	WLog_ERR("TODO", "TODO: Implement");
 	return TRUE;
 }
 
-BOOL GetSecurityDescriptorControl(PSECURITY_DESCRIPTOR pSecurityDescriptor,
-                                  PSECURITY_DESCRIPTOR_CONTROL pControl, LPDWORD lpdwRevision)
+BOOL GetSecurityDescriptorControl(WINPR_ATTR_UNUSED PSECURITY_DESCRIPTOR pSecurityDescriptor,
+                                  WINPR_ATTR_UNUSED PSECURITY_DESCRIPTOR_CONTROL pControl,
+                                  WINPR_ATTR_UNUSED LPDWORD lpdwRevision)
 {
+	WLog_ERR("TODO", "TODO: Implement");
 	return TRUE;
 }
 
-BOOL SetSecurityDescriptorControl(PSECURITY_DESCRIPTOR pSecurityDescriptor,
-                                  SECURITY_DESCRIPTOR_CONTROL ControlBitsOfInterest,
-                                  SECURITY_DESCRIPTOR_CONTROL ControlBitsToSet)
+BOOL SetSecurityDescriptorControl(WINPR_ATTR_UNUSED PSECURITY_DESCRIPTOR pSecurityDescriptor,
+                                  WINPR_ATTR_UNUSED SECURITY_DESCRIPTOR_CONTROL
+                                      ControlBitsOfInterest,
+                                  WINPR_ATTR_UNUSED SECURITY_DESCRIPTOR_CONTROL ControlBitsToSet)
 {
+	WLog_ERR("TODO", "TODO: Implement");
 	return TRUE;
 }
 
-BOOL GetSecurityDescriptorDacl(PSECURITY_DESCRIPTOR pSecurityDescriptor, LPBOOL lpbDaclPresent,
-                               PACL* pDacl, LPBOOL lpbDaclDefaulted)
+BOOL GetSecurityDescriptorDacl(WINPR_ATTR_UNUSED PSECURITY_DESCRIPTOR pSecurityDescriptor,
+                               WINPR_ATTR_UNUSED LPBOOL lpbDaclPresent,
+                               WINPR_ATTR_UNUSED PACL* pDacl,
+                               WINPR_ATTR_UNUSED LPBOOL lpbDaclDefaulted)
 {
+	WLog_ERR("TODO", "TODO: Implement");
 	return TRUE;
 }
 
-BOOL SetSecurityDescriptorDacl(PSECURITY_DESCRIPTOR pSecurityDescriptor, BOOL bDaclPresent,
-                               PACL pDacl, BOOL bDaclDefaulted)
+BOOL SetSecurityDescriptorDacl(WINPR_ATTR_UNUSED PSECURITY_DESCRIPTOR pSecurityDescriptor,
+                               WINPR_ATTR_UNUSED BOOL bDaclPresent, WINPR_ATTR_UNUSED PACL pDacl,
+                               WINPR_ATTR_UNUSED BOOL bDaclDefaulted)
 {
+	WLog_ERR("TODO", "TODO: Implement");
 	return TRUE;
 }
 
-BOOL GetSecurityDescriptorGroup(PSECURITY_DESCRIPTOR pSecurityDescriptor, PSID* pGroup,
-                                LPBOOL lpbGroupDefaulted)
+BOOL GetSecurityDescriptorGroup(WINPR_ATTR_UNUSED PSECURITY_DESCRIPTOR pSecurityDescriptor,
+                                WINPR_ATTR_UNUSED PSID* pGroup,
+                                WINPR_ATTR_UNUSED LPBOOL lpbGroupDefaulted)
 {
+	WLog_ERR("TODO", "TODO: Implement");
 	return TRUE;
 }
 
-BOOL SetSecurityDescriptorGroup(PSECURITY_DESCRIPTOR pSecurityDescriptor, PSID pGroup,
-                                BOOL bGroupDefaulted)
+BOOL SetSecurityDescriptorGroup(WINPR_ATTR_UNUSED PSECURITY_DESCRIPTOR pSecurityDescriptor,
+                                WINPR_ATTR_UNUSED PSID pGroup,
+                                WINPR_ATTR_UNUSED BOOL bGroupDefaulted)
 {
+	WLog_ERR("TODO", "TODO: Implement");
 	return TRUE;
 }
 
-BOOL GetSecurityDescriptorOwner(PSECURITY_DESCRIPTOR pSecurityDescriptor, PSID* pOwner,
-                                LPBOOL lpbOwnerDefaulted)
+BOOL GetSecurityDescriptorOwner(WINPR_ATTR_UNUSED PSECURITY_DESCRIPTOR pSecurityDescriptor,
+                                WINPR_ATTR_UNUSED PSID* pOwner,
+                                WINPR_ATTR_UNUSED LPBOOL lpbOwnerDefaulted)
 {
+	WLog_ERR("TODO", "TODO: Implement");
 	return TRUE;
 }
 
-BOOL SetSecurityDescriptorOwner(PSECURITY_DESCRIPTOR pSecurityDescriptor, PSID pOwner,
-                                BOOL bOwnerDefaulted)
+BOOL SetSecurityDescriptorOwner(WINPR_ATTR_UNUSED PSECURITY_DESCRIPTOR pSecurityDescriptor,
+                                WINPR_ATTR_UNUSED PSID pOwner,
+                                WINPR_ATTR_UNUSED BOOL bOwnerDefaulted)
 {
+	WLog_ERR("TODO", "TODO: Implement");
 	return TRUE;
 }
 
-DWORD GetSecurityDescriptorRMControl(PSECURITY_DESCRIPTOR SecurityDescriptor, PUCHAR RMControl)
+DWORD GetSecurityDescriptorRMControl(WINPR_ATTR_UNUSED PSECURITY_DESCRIPTOR SecurityDescriptor,
+                                     WINPR_ATTR_UNUSED PUCHAR RMControl)
 {
+	WLog_ERR("TODO", "TODO: Implement");
 	return 0;
 }
 
-DWORD SetSecurityDescriptorRMControl(PSECURITY_DESCRIPTOR SecurityDescriptor, PUCHAR RMControl)
+DWORD SetSecurityDescriptorRMControl(WINPR_ATTR_UNUSED PSECURITY_DESCRIPTOR SecurityDescriptor,
+                                     WINPR_ATTR_UNUSED PUCHAR RMControl)
 {
+	WLog_ERR("TODO", "TODO: Implement");
 	return 0;
 }
 
-BOOL GetSecurityDescriptorSacl(PSECURITY_DESCRIPTOR pSecurityDescriptor, LPBOOL lpbSaclPresent,
-                               PACL* pSacl, LPBOOL lpbSaclDefaulted)
+BOOL GetSecurityDescriptorSacl(WINPR_ATTR_UNUSED PSECURITY_DESCRIPTOR pSecurityDescriptor,
+                               WINPR_ATTR_UNUSED LPBOOL lpbSaclPresent,
+                               WINPR_ATTR_UNUSED PACL* pSacl,
+                               WINPR_ATTR_UNUSED LPBOOL lpbSaclDefaulted)
 {
+	WLog_ERR("TODO", "TODO: Implement");
 	return TRUE;
 }
 
-BOOL SetSecurityDescriptorSacl(PSECURITY_DESCRIPTOR pSecurityDescriptor, BOOL bSaclPresent,
-                               PACL pSacl, BOOL bSaclDefaulted)
+BOOL SetSecurityDescriptorSacl(WINPR_ATTR_UNUSED PSECURITY_DESCRIPTOR pSecurityDescriptor,
+                               WINPR_ATTR_UNUSED BOOL bSaclPresent, WINPR_ATTR_UNUSED PACL pSacl,
+                               WINPR_ATTR_UNUSED BOOL bSaclDefaulted)
 {
+	WLog_ERR("TODO", "TODO: Implement");
 	return TRUE;
 }
 

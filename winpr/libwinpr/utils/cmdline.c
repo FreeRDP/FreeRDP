@@ -389,10 +389,13 @@ int CommandLineParseArgumentsA(int argc, LPSTR* argv, COMMAND_LINE_ARGUMENT_A* o
 	return status;
 }
 
-int CommandLineParseArgumentsW(int argc, LPWSTR* argv, COMMAND_LINE_ARGUMENT_W* options,
-                               DWORD flags, void* context, COMMAND_LINE_PRE_FILTER_FN_W preFilter,
-                               COMMAND_LINE_POST_FILTER_FN_W postFilter)
+int CommandLineParseArgumentsW(WINPR_ATTR_UNUSED int argc, WINPR_ATTR_UNUSED LPWSTR* argv,
+                               WINPR_ATTR_UNUSED COMMAND_LINE_ARGUMENT_W* options,
+                               WINPR_ATTR_UNUSED DWORD flags, WINPR_ATTR_UNUSED void* context,
+                               WINPR_ATTR_UNUSED COMMAND_LINE_PRE_FILTER_FN_W preFilter,
+                               WINPR_ATTR_UNUSED COMMAND_LINE_POST_FILTER_FN_W postFilter)
 {
+	WLog_ERR("TODO", "TODO: implement");
 	return 0;
 }
 

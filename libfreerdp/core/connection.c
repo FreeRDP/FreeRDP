@@ -2133,7 +2133,7 @@ BOOL rdp_channels_from_mcs(rdpSettings* settings, const rdpRdp* rdp)
  * 1. send the CONFIRM_ACTIVE PDU to the server
  * 2. register callbacks, the server can now start sending stuff
  */
-state_run_t rdp_client_connect_confirm_active(rdpRdp* rdp, wStream* s)
+state_run_t rdp_client_connect_confirm_active(rdpRdp* rdp, WINPR_ATTR_UNUSED wStream* s)
 {
 	WINPR_ASSERT(rdp);
 	WINPR_ASSERT(rdp->settings);

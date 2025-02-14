@@ -87,8 +87,8 @@ static BOOL rdpsnd_check_pulse(rdpsndPulsePlugin* pulse, BOOL haveStream)
 
 static BOOL rdpsnd_pulse_format_supported(rdpsndDevicePlugin* device, const AUDIO_FORMAT* format);
 
-static void rdpsnd_pulse_get_sink_info(pa_context* c, const pa_sink_info* i, int eol,
-                                       void* userdata)
+static void rdpsnd_pulse_get_sink_info(pa_context* c, const pa_sink_info* i,
+                                       WINPR_ATTR_UNUSED int eol, void* userdata)
 {
 	UINT16 dwVolumeLeft = ((50 * 0xFFFF) / 100);  /* 50% */
 	UINT16 dwVolumeRight = ((50 * 0xFFFF) / 100); /* 50% */
@@ -208,7 +208,8 @@ static BOOL rdpsnd_pulse_connect(rdpsndDevicePlugin* device)
 	return rc;
 }
 
-static void rdpsnd_pulse_stream_success_callback(pa_stream* stream, int success, void* userdata)
+static void rdpsnd_pulse_stream_success_callback(WINPR_ATTR_UNUSED pa_stream* stream,
+                                                 WINPR_ATTR_UNUSED int success, void* userdata)
 {
 	rdpsndPulsePlugin* pulse = (rdpsndPulsePlugin*)userdata;
 
@@ -262,7 +263,8 @@ static void rdpsnd_pulse_stream_state_callback(pa_stream* stream, void* userdata
 	}
 }
 
-static void rdpsnd_pulse_stream_request_callback(pa_stream* stream, size_t length, void* userdata)
+static void rdpsnd_pulse_stream_request_callback(pa_stream* stream, WINPR_ATTR_UNUSED size_t length,
+                                                 void* userdata)
 {
 	rdpsndPulsePlugin* pulse = (rdpsndPulsePlugin*)userdata;
 

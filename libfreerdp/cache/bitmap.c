@@ -475,7 +475,8 @@ fail:
 	return NULL;
 }
 
-void free_bitmap_update(rdpContext* context, BITMAP_UPDATE* pointer)
+void free_bitmap_update(WINPR_ATTR_UNUSED rdpContext* context,
+                        WINPR_ATTR_UNUSED BITMAP_UPDATE* pointer)
 {
 	if (!pointer)
 		return;
@@ -534,7 +535,7 @@ fail:
 	return NULL;
 }
 
-void free_cache_bitmap_order(rdpContext* context, CACHE_BITMAP_ORDER* order)
+void free_cache_bitmap_order(WINPR_ATTR_UNUSED rdpContext* context, CACHE_BITMAP_ORDER* order)
 {
 	if (order)
 		free(order->bitmapDataStream);
@@ -571,7 +572,8 @@ fail:
 	return NULL;
 }
 
-void free_cache_bitmap_v2_order(rdpContext* context, CACHE_BITMAP_V2_ORDER* order)
+void free_cache_bitmap_v2_order(WINPR_ATTR_UNUSED rdpContext* context,
+                                WINPR_ATTR_UNUSED CACHE_BITMAP_V2_ORDER* order)
 {
 	if (order)
 		free(order->bitmapDataStream);
@@ -608,7 +610,7 @@ fail:
 	return NULL;
 }
 
-void free_cache_bitmap_v3_order(rdpContext* context, CACHE_BITMAP_V3_ORDER* order)
+void free_cache_bitmap_v3_order(WINPR_ATTR_UNUSED rdpContext* context, CACHE_BITMAP_V3_ORDER* order)
 {
 	if (order)
 		free(order->bitmapData.data);

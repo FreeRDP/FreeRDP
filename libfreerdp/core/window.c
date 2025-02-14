@@ -508,7 +508,8 @@ static BOOL update_read_window_cached_icon_order(wStream* s, WINDOW_ORDER_INFO* 
 	    s, &window_cached_icon->cachedIcon); /* cachedIcon (CACHED_ICON_INFO) */
 }
 
-static void update_read_window_delete_order(wStream* s, WINDOW_ORDER_INFO* orderInfo)
+static void update_read_window_delete_order(WINPR_ATTR_UNUSED wStream* s,
+                                            WINPR_ATTR_UNUSED WINDOW_ORDER_INFO* orderInfo)
 {
 	/* window deletion event */
 }
@@ -939,7 +940,9 @@ static BOOL update_read_notification_icon_state_order(wStream* s, WINDOW_ORDER_I
 	return TRUE;
 }
 
-static void update_read_notification_icon_delete_order(wStream* s, WINDOW_ORDER_INFO* orderInfo)
+static void
+update_read_notification_icon_delete_order(WINPR_ATTR_UNUSED wStream* s,
+                                           WINPR_ATTR_UNUSED WINDOW_ORDER_INFO* orderInfo)
 {
 	/* notification icon deletion event */
 }
@@ -1040,7 +1043,8 @@ static BOOL update_read_desktop_actively_monitored_order(wStream* s, WINDOW_ORDE
 	return TRUE;
 }
 
-static void update_read_desktop_non_monitored_order(wStream* s, WINDOW_ORDER_INFO* orderInfo)
+static void update_read_desktop_non_monitored_order(WINPR_ATTR_UNUSED wStream* s,
+                                                    WINPR_ATTR_UNUSED WINDOW_ORDER_INFO* orderInfo)
 {
 	/* non-monitored desktop notification event */
 }

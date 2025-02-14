@@ -326,7 +326,8 @@ static BOOL TsProxyReadTunnelContext(wLog* log, wStream* s, CONTEXT_HANDLE* tunn
 	return TRUE;
 }
 
-static BOOL TsProxyWriteTunnelContext(wLog* log, wStream* s, const CONTEXT_HANDLE* tunnelContext)
+static BOOL TsProxyWriteTunnelContext(WINPR_ATTR_UNUSED wLog* log, wStream* s,
+                                      const CONTEXT_HANDLE* tunnelContext)
 {
 	if (!Stream_EnsureRemainingCapacity(s, 20))
 		return FALSE;
@@ -337,7 +338,8 @@ static BOOL TsProxyWriteTunnelContext(wLog* log, wStream* s, const CONTEXT_HANDL
 	return TRUE;
 }
 
-static BOOL tsg_ndr_pointer_write(wLog* log, wStream* s, UINT32* index, DWORD length)
+static BOOL tsg_ndr_pointer_write(WINPR_ATTR_UNUSED wLog* log, wStream* s, UINT32* index,
+                                  DWORD length)
 {
 	WINPR_ASSERT(index);
 	const UINT32 ndrPtr = 0x20000 + (*index) * 4;
@@ -393,7 +395,8 @@ static BOOL tsg_ndr_pointer_read(wLog* log, wStream* s, UINT32* index, UINT32* p
 	return TRUE;
 }
 
-static BOOL tsg_ndr_write_string(wLog* log, wStream* s, const WCHAR* str, size_t length)
+static BOOL tsg_ndr_write_string(WINPR_ATTR_UNUSED wLog* log, wStream* s, const WCHAR* str,
+                                 size_t length)
 {
 	if (!Stream_EnsureRemainingCapacity(s, 12 + length) || (length > UINT32_MAX))
 		return FALSE;
@@ -469,7 +472,8 @@ static BOOL tsg_ndr_read_packet_header(wLog* log, wStream* s, TSG_PACKET_HEADER*
 	return TRUE;
 }
 
-static BOOL tsg_ndr_write_packet_header(wLog* log, wStream* s, const TSG_PACKET_HEADER* header)
+static BOOL tsg_ndr_write_packet_header(WINPR_ATTR_UNUSED wLog* log, wStream* s,
+                                        const TSG_PACKET_HEADER* header)
 {
 	WINPR_ASSERT(header);
 	if (!Stream_EnsureRemainingCapacity(s, 2 * sizeof(UINT16)))
@@ -489,7 +493,8 @@ static BOOL tsg_ndr_read_nap(wLog* log, wStream* s, TSG_CAPABILITY_NAP* nap)
 	return TRUE;
 }
 
-static BOOL tsg_ndr_write_nap(wLog* log, wStream* s, const TSG_CAPABILITY_NAP* nap)
+static BOOL tsg_ndr_write_nap(WINPR_ATTR_UNUSED wLog* log, wStream* s,
+                              const TSG_CAPABILITY_NAP* nap)
 {
 	WINPR_ASSERT(nap);
 
