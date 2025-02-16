@@ -147,7 +147,7 @@ static BOOL xf_disp_sendResize(xfDispContext* xfDisp)
 	xfDisp->lastSentDate = GetTickCount64();
 
 	const UINT32 mcount = freerdp_settings_get_uint32(settings, FreeRDP_MonitorCount);
-	if (xfc->fullscreen && (mcount > 0))
+	if (mcount > 1)
 	{
 		const rdpMonitor* monitors =
 		    freerdp_settings_get_pointer(settings, FreeRDP_MonitorDefArray);
@@ -278,7 +278,7 @@ static void xf_disp_OnTimer(void* context, const TimerEventArgs* e)
 	if (!xf_disp_check_context(context, &xfc, &xfDisp, &settings))
 		return;
 
-	if (!xfDisp->activated || xfc->fullscreen)
+	if (!xfDisp->activated)
 		return;
 
 	xf_disp_sendResize(xfDisp);
