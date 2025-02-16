@@ -2149,15 +2149,15 @@ BOOL gcc_read_client_monitor_data(wStream* s, rdpMcs* mcs)
 		if ((left > right) || (bottom > top))
 			return FALSE;
 
-		const INT32 w = right - left;
-		const INT32 h = bottom - top;
-		if ((w >= INT32_MAX) || (h >= INT32_MAX))
+		const INT64 w = right - left;
+		const INT64 h = bottom - top;
+		if ((w >= INT32_MAX) || (h >= INT32_MAX) || (w < 0) || (h < 0))
 			return FALSE;
 
 		current->x = left;
 		current->y = top;
-		current->width = w + 1;
-		current->height = h + 1;
+		current->width = WINPR_ASSERTING_INT_CAST(int32_t, w + 1);
+		current->height = WINPR_ASSERTING_INT_CAST(int32_t, h + 1);
 		current->is_primary = (flags & MONITOR_PRIMARY) ? TRUE : FALSE;
 	}
 
