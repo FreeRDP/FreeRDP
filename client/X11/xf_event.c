@@ -1216,7 +1216,24 @@ BOOL xf_event_process(freerdp* instance, const XEvent* event)
 		}
 
 		if (xf_floatbar_is_locked(floatbar))
-			return TRUE;
+		{
+			/* Filter input events, floatbar is locked do not forward anything to the session */
+			switch (event->type)
+			{
+				case MotionNotify:
+				case ButtonPress:
+				case ButtonRelease:
+				case KeyPress:
+				case KeyRelease:
+				case FocusIn:
+				case FocusOut:
+				case EnterNotify:
+				case LeaveNotify:
+					return TRUE;
+				default:
+					break;
+			}
+		}
 	}
 
 	xf_event_execute_action_script(xfc, event);
