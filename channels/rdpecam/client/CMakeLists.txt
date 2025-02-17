@@ -41,6 +41,12 @@ if(RDPECAM_INPUT_FORMAT_MJPG)
   add_compile_definitions("WITH_INPUT_FORMAT_MJPG")
 endif()
 
+# enable for VM environments where network bandwidth is not an issue
+option(RDPECAM_FORMAT_PASSTHROUGH "[MS-RDPECAM] Enable any format passthrough (no H264 encoding)" OFF)
+if(RDPECAM_FORMAT_PASSTHROUGH)
+  add_compile_definitions("WITH_FORMAT_PASSTHROUGH")
+endif()
+
 include_directories(SYSTEM ${SWSCALE_INCLUDE_DIRS})
 
 set(${MODULE_PREFIX}_SRCS camera_device_enum_main.c camera_device_main.c encoding.c)
