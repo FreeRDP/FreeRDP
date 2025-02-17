@@ -356,7 +356,9 @@ static size_t cam_v4l_stream_alloc_buffers(CamV4lStream* stream)
 
 	if (ioctl(stream->fd, VIDIOC_REQBUFS, &rbuffer) < 0 || rbuffer.count == 0)
 	{
-		WLog_ERR(TAG, "Failure in VIDIOC_REQBUFS, errno %d, count %d", errno, rbuffer.count);
+		char buffer[64] = { 0 };
+		WLog_ERR(TAG, "Failure in VIDIOC_REQBUFS, errno  %s [%d], count %d",
+		         winpr_strerror(errno, buffer, sizeof(buffer)), errno, rbuffer.count);
 		return 0;
 	}
 
@@ -372,35 +374,41 @@ static size_t cam_v4l_stream_alloc_buffers(CamV4lStream* stream)
 
 	for (unsigned int i = 0; i < rbuffer.count; i++)
 	{
-		struct v4l2_buffer buffer = { 0 };
-		buffer.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-		buffer.memory = V4L2_MEMORY_MMAP;
-		buffer.index = i;
+		struct v4l2_buffer vbuffer = { 0 };
+		vbuffer.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+		vbuffer.memory = V4L2_MEMORY_MMAP;
+		vbuffer.index = i;
 
-		if (ioctl(stream->fd, VIDIOC_QUERYBUF, &buffer) < 0)
+		if (ioctl(stream->fd, VIDIOC_QUERYBUF, &vbuffer) < 0)
 		{
-			WLog_ERR(TAG, "Failure in VIDIOC_QUERYBUF, errno %d", errno);
+			char buffer[64] = { 0 };
+			WLog_ERR(TAG, "Failure in VIDIOC_QUERYBUF, errno %s [%d]",
+			         winpr_strerror(errno, buffer, sizeof(buffer)), errno);
 			cam_v4l_stream_free_buffers(stream);
 			return 0;
 		}
 
-		stream->buffers[i].start = mmap(NULL, buffer.length, PROT_READ | PROT_WRITE, MAP_SHARED,
-		                                stream->fd, buffer.m.offset);
+		stream->buffers[i].start = mmap(NULL, vbuffer.length, PROT_READ | PROT_WRITE, MAP_SHARED,
+		                                stream->fd, vbuffer.m.offset);
 
 		if (MAP_FAILED == stream->buffers[i].start)
 		{
-			WLog_ERR(TAG, "Failure in mmap, errno %d", errno);
+			char buffer[64] = { 0 };
+			WLog_ERR(TAG, "Failure in mmap, errno %s [%d]",
+			         winpr_strerror(errno, buffer, sizeof(buffer)), errno);
 			cam_v4l_stream_free_buffers(stream);
 			return 0;
 		}
 
-		stream->buffers[i].length = buffer.length;
+		stream->buffers[i].length = vbuffer.length;
 
-		WLog_DBG(TAG, "Buffer %d mapped, size: %d", i, buffer.length);
+		WLog_DBG(TAG, "Buffer %d mapped, size: %d", i, vbuffer.length);
 
-		if (ioctl(stream->fd, VIDIOC_QBUF, &buffer) < 0)
+		if (ioctl(stream->fd, VIDIOC_QBUF, &vbuffer) < 0)
 		{
-			WLog_ERR(TAG, "Failure in VIDIOC_QBUF, errno %d", errno);
+			char buffer[64] = { 0 };
+			WLog_ERR(TAG, "Failure in VIDIOC_QBUF, errno %s [%d]",
+			         winpr_strerror(errno, buffer, sizeof(buffer)), errno);
 			cam_v4l_stream_free_buffers(stream);
 			return 0;
 		}
@@ -437,7 +445,9 @@ static UINT cam_v4l_stream_capture_thread(void* param)
 		}
 		else if (retVal < 0)
 		{
-			WLog_DBG(TAG, "Failure in poll, errno %d", errno);
+			char buffer[64] = { 0 };
+			WLog_DBG(TAG, "Failure in poll, errno %s [%d]",
+			         winpr_strerror(errno, buffer, sizeof(buffer)), errno);
 			Sleep(CAM_V4L2_CAPTURE_THREAD_SLEEP_MS); /* trying to recover */
 			continue;
 		}
@@ -464,7 +474,9 @@ static UINT cam_v4l_stream_capture_thread(void* param)
 				/* enqueue buffer back */
 				if (ioctl(fd, VIDIOC_QBUF, &buf) == -1)
 				{
-					WLog_ERR(TAG, "Failure in VIDIOC_QBUF, errno %d", errno);
+					char buffer[64] = { 0 };
+					WLog_ERR(TAG, "Failure in VIDIOC_QBUF, errno %s [%d]",
+					         winpr_strerror(errno, buffer, sizeof(buffer)), errno);
 				}
 			}
 		}
@@ -537,7 +549,9 @@ UINT cam_v4l_stream_stop(CamV4lStream* stream)
 	enum v4l2_buf_type type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	if (ioctl(stream->fd, VIDIOC_STREAMOFF, &type) < 0)
 	{
-		WLog_ERR(TAG, "Failure in VIDIOC_STREAMOFF, errno %d", errno);
+		char buffer[64] = { 0 };
+		WLog_ERR(TAG, "Failure in VIDIOC_STREAMOFF, errno %s [%d]",
+		         winpr_strerror(errno, buffer, sizeof(buffer)), errno);
 	}
 
 	cam_v4l_stream_free_buffers(stream);
@@ -611,7 +625,9 @@ static UINT cam_v4l_stream_start(ICamHal* ihal, CameraDevice* dev, int streamInd
 	/* set format and frame size */
 	if (ioctl(stream->fd, VIDIOC_S_FMT, &video_fmt) < 0)
 	{
-		WLog_ERR(TAG, "Failure in VIDIOC_S_FMT, errno %d", errno);
+		char buffer[64] = { 0 };
+		WLog_ERR(TAG, "Failure in VIDIOC_S_FMT, errno %s [%d]",
+		         winpr_strerror(errno, buffer, sizeof(buffer)), errno);
 		cam_v4l_stream_close_device(stream);
 		return CAM_ERROR_CODE_InvalidMediaType;
 	}
@@ -635,7 +651,9 @@ static UINT cam_v4l_stream_start(ICamHal* ihal, CameraDevice* dev, int streamInd
 
 		if (ioctl(stream->fd, VIDIOC_S_PARM, &sp2) < 0)
 		{
-			WLog_INFO(TAG, "Failed to set the framerate, errno %d", errno);
+			char buffer[64] = { 0 };
+			WLog_INFO(TAG, "Failed to set the framerate, errno %s [%d]",
+			          winpr_strerror(errno, buffer, sizeof(buffer)), errno);
 		}
 	}
 
@@ -666,7 +684,9 @@ static UINT cam_v4l_stream_start(ICamHal* ihal, CameraDevice* dev, int streamInd
 	enum v4l2_buf_type type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	if (ioctl(stream->fd, VIDIOC_STREAMON, &type) < 0)
 	{
-		WLog_ERR(TAG, "Failure in VIDIOC_STREAMON, errno %d", errno);
+		char buffer[64] = { 0 };
+		WLog_ERR(TAG, "Failure in VIDIOC_STREAMON, errno %s [%d]",
+		         winpr_strerror(errno, buffer, sizeof(buffer)), errno);
 		cam_v4l_stream_stop(stream);
 		return CAM_ERROR_CODE_UnexpectedError;
 	}
