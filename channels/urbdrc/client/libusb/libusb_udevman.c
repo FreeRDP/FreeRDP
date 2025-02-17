@@ -669,30 +669,30 @@ static BOOL udevman_parse_device_id_addr(const char** str, UINT16* id1, UINT16* 
 	return FALSE;
 }
 
-static BOOL urbdrc_udevman_register_devices(UDEVMAN* udevman, const char* devices, BOOL add_by_addr)
+static UINT urbdrc_udevman_register_devices(UDEVMAN* udevman, const char* devices, BOOL add_by_addr)
 {
 	const char* pos = devices;
-	VID_PID_PAIR* idpair = NULL;
-	UINT16 id1 = 0;
-	UINT16 id2 = 0;
 
 	while (*pos != '\0')
 	{
+		UINT16 id1 = 0;
+		UINT16 id2 = 0;
 		if (!udevman_parse_device_id_addr(&pos, &id1, &id2, (add_by_addr) ? UINT8_MAX : UINT16_MAX,
 		                                  ':', '#'))
 		{
 			WLog_ERR(TAG, "Invalid device argument: \"%s\"", devices);
-			return FALSE;
+			return CHANNEL_RC_INITIALIZATION_ERROR;
 		}
 
 		if (add_by_addr)
 		{
-			add_device(&udevman->iface, DEVICE_ADD_FLAG_BUS | DEVICE_ADD_FLAG_DEV, (UINT8)id1,
-			           (UINT8)id2, 0, 0);
+			if (!add_device(&udevman->iface, DEVICE_ADD_FLAG_BUS | DEVICE_ADD_FLAG_DEV, (UINT8)id1,
+			                (UINT8)id2, 0, 0))
+				return CHANNEL_RC_INITIALIZATION_ERROR;
 		}
 		else
 		{
-			idpair = calloc(1, sizeof(VID_PID_PAIR));
+			VID_PID_PAIR* idpair = calloc(1, sizeof(VID_PID_PAIR));
 			if (!idpair)
 				return CHANNEL_RC_NO_MEMORY;
 			idpair->vid = id1;
@@ -703,8 +703,12 @@ static BOOL urbdrc_udevman_register_devices(UDEVMAN* udevman, const char* device
 				return CHANNEL_RC_NO_MEMORY;
 			}
 
-			add_device(&udevman->iface, DEVICE_ADD_FLAG_VENDOR | DEVICE_ADD_FLAG_PRODUCT, 0, 0, id1,
-			           id2);
+			if (!add_device(&udevman->iface, DEVICE_ADD_FLAG_VENDOR | DEVICE_ADD_FLAG_PRODUCT, 0, 0,
+			                id1, id2))
+			{
+				// NOLINTNEXTLINE(clang-analyzer-unix.Malloc): ArrayList_Append owns idpair
+				return CHANNEL_RC_INITIALIZATION_ERROR;
+			}
 		}
 	}
 
@@ -791,14 +795,10 @@ static UINT udevman_listener_created_callback(IUDEVMAN* iudevman)
 	WINPR_ASSERT(udevman);
 
 	if (udevman->devices_vid_pid)
-		return urbdrc_udevman_register_devices(udevman, udevman->devices_vid_pid, FALSE)
-		           ? CHANNEL_RC_OK
-		           : CHANNEL_RC_INITIALIZATION_ERROR;
+		return urbdrc_udevman_register_devices(udevman, udevman->devices_vid_pid, FALSE);
 
 	if (udevman->devices_addr)
-		return urbdrc_udevman_register_devices(udevman, udevman->devices_addr, TRUE)
-		           ? CHANNEL_RC_OK
-		           : CHANNEL_RC_INITIALIZATION_ERROR;
+		return urbdrc_udevman_register_devices(udevman, udevman->devices_addr, TRUE);
 
 	return CHANNEL_RC_OK;
 }
