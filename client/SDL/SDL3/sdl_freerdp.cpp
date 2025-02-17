@@ -975,6 +975,7 @@ static int sdl_run(SdlContext* sdl)
 					const bool enter = windowEvent.user.code != 0;
 					if (window)
 						window->fullscreen(enter);
+					sdl->disp.addTimer();
 				}
 				break;
 				case SDL_EVENT_USER_WINDOW_MINIMIZE:

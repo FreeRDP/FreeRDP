@@ -58,11 +58,21 @@ BOOL sdlDispContext::settings_changed()
 	if (_lastSentDeviceScaleFactor !=
 	    freerdp_settings_get_uint32(settings, FreeRDP_DeviceScaleFactor))
 		return TRUE;
-	/* TODO
-	    if (_fullscreen != _sdl->fullscreen)
-	        return TRUE;
-	*/
-	return FALSE;
+
+	if (_fullscreen != _sdl->fullscreen)
+		return TRUE;
+
+	auto monitors = static_cast<const rdpMonitor*>(
+	    freerdp_settings_get_pointer(settings, FreeRDP_MonitorDefArray));
+	const UINT32 mcount = freerdp_settings_get_uint32(settings, FreeRDP_MonitorCount);
+
+	std::vector<rdpMonitor> layout;
+	for (size_t x = 0; x < mcount; x++)
+	{
+		layout.push_back(monitors[x]);
+	}
+
+	return layout != _lastSentLayout;
 }
 
 BOOL sdlDispContext::update_last_sent()
@@ -77,7 +87,7 @@ BOOL sdlDispContext::update_last_sent()
 	_lastSentDesktopOrientation = freerdp_settings_get_uint16(settings, FreeRDP_DesktopOrientation);
 	_lastSentDesktopScaleFactor = freerdp_settings_get_uint32(settings, FreeRDP_DesktopScaleFactor);
 	_lastSentDeviceScaleFactor = freerdp_settings_get_uint32(settings, FreeRDP_DeviceScaleFactor);
-	// TODO _fullscreen = _sdl->fullscreen;
+	_fullscreen = _sdl->fullscreen;
 	return TRUE;
 }
 
@@ -100,11 +110,19 @@ BOOL sdlDispContext::sendResize()
 	if (!settings_changed())
 		return TRUE;
 
+	auto monitors = static_cast<const rdpMonitor*>(
+	    freerdp_settings_get_pointer(settings, FreeRDP_MonitorDefArray));
 	const UINT32 mcount = freerdp_settings_get_uint32(settings, FreeRDP_MonitorCount);
+
+	_lastSentLayout.clear();
+	for (size_t x = 0; x < mcount; x++)
+	{
+		_lastSentLayout.push_back(monitors[x]);
+	}
+
 	if (_sdl->fullscreen && (mcount > 0))
 	{
-		auto monitors = static_cast<const rdpMonitor*>(
-		    freerdp_settings_get_pointer(settings, FreeRDP_MonitorDefArray));
+
 		if (sendLayout(monitors, mcount) != CHANNEL_RC_OK)
 			return FALSE;
 	}
@@ -284,10 +302,8 @@ UINT sdlDispContext::sendLayout(const rdpMonitor* monitors, size_t nmonitors)
 				break;
 		}
 
-		layout->DesktopScaleFactor =
-		    freerdp_settings_get_uint32(settings, FreeRDP_DesktopScaleFactor);
-		layout->DeviceScaleFactor =
-		    freerdp_settings_get_uint32(settings, FreeRDP_DeviceScaleFactor);
+		layout->DesktopScaleFactor = monitor->attributes.desktopScaleFactor;
+		layout->DeviceScaleFactor = monitor->attributes.deviceScaleFactor;
 	}
 
 	WINPR_ASSERT(_disp);

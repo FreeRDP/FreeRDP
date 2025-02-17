@@ -18,6 +18,10 @@
  */
 #pragma once
 
+#include <stdint.h>
+
+#include <vector>
+
 #include <freerdp/types.h>
 #include <freerdp/event.h>
 #include <freerdp/client/disp.h>
@@ -38,27 +42,28 @@ class sdlDispContext
 	sdlDispContext& operator=(const sdlDispContext& other) = delete;
 	sdlDispContext& operator=(sdlDispContext&& other) = delete;
 
-	BOOL init(DispClientContext* disp);
-	BOOL uninit(DispClientContext* disp);
+	bool init(DispClientContext* disp);
+	bool uninit(DispClientContext* disp);
 
-	BOOL handle_display_event(const SDL_DisplayEvent* ev);
+	bool handle_display_event(const SDL_DisplayEvent* ev);
 
-	BOOL handle_window_event(const SDL_WindowEvent* ev);
+	bool handle_window_event(const SDL_WindowEvent* ev);
+
+	bool addTimer();
 
   private:
-	UINT DisplayControlCaps(UINT32 maxNumMonitors, UINT32 maxMonitorAreaFactorA,
-	                        UINT32 maxMonitorAreaFactorB);
-	BOOL set_window_resizable();
+	[[nodiscard]] std::vector<rdpMonitor> currentMonitorLayout() const;
+	uint32_t DisplayControlCaps(uint32_t maxNumMonitors, uint32_t maxMonitorAreaFactorA,
+	                            uint32_t maxMonitorAreaFactorB);
+	bool set_window_resizable();
 
-	BOOL sendResize();
-	BOOL settings_changed();
-	BOOL update_last_sent();
-	UINT sendLayout(const rdpMonitor* monitors, size_t nmonitors);
+	bool sendResize();
+	bool settings_changed();
+	bool update_last_sent();
+	uint32_t sendLayout(const rdpMonitor* monitors, size_t nmonitors);
 
-	BOOL addTimer();
-
-	static UINT DisplayControlCaps(DispClientContext* disp, UINT32 maxNumMonitors,
-	                               UINT32 maxMonitorAreaFactorA, UINT32 maxMonitorAreaFactorB);
+	static UINT DisplayControlCaps(DispClientContext* disp, uint32_t maxNumMonitors,
+	                               uint32_t maxMonitorAreaFactorA, uint32_t maxMonitorAreaFactorB);
 	static void OnActivated(void* context, const ActivatedEventArgs* e);
 	static void OnGraphicsReset(void* context, const GraphicsResetEventArgs* e);
 	static Uint32 SDLCALL OnTimer(void* param, SDL_TimerID timerID, Uint32 interval);
@@ -67,14 +72,16 @@ class sdlDispContext
 	DispClientContext* _disp = nullptr;
 	int _lastSentWidth = -1;
 	int _lastSentHeight = -1;
-	UINT64 _lastSentDate = 0;
+	uint64_t _lastSentDate = 0;
 	int _targetWidth = -1;
 	int _targetHeight = -1;
-	BOOL _activated = FALSE;
-	BOOL _waitingResize = FALSE;
-	UINT16 _lastSentDesktopOrientation = 0;
-	UINT32 _lastSentDesktopScaleFactor = 0;
-	UINT32 _lastSentDeviceScaleFactor = 0;
+	bool _activated = false;
+	bool _waitingResize = false;
+	bool _lastSentFullscreen = false;
+	std::vector<rdpMonitor> _lastSentLayout;
+	uint16_t _lastSentDesktopOrientation = 0;
+	uint32_t _lastSentDesktopScaleFactor = 0;
+	uint32_t _lastSentDeviceScaleFactor = 0;
 	SDL_TimerID _timer = 0;
 	unsigned _timer_retries = 0;
 };

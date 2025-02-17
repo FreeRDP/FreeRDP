@@ -36,36 +36,38 @@
 static constexpr UINT64 RESIZE_MIN_DELAY = 200; /* minimum delay in ms between two resizes */
 static constexpr unsigned MAX_RETRIES = 5;
 
-BOOL sdlDispContext::settings_changed()
+bool sdlDispContext::settings_changed()
 {
 	auto settings = _sdl->context()->settings;
 	WINPR_ASSERT(settings);
 
 	if (_lastSentWidth != _targetWidth)
-		return TRUE;
+		return true;
 
 	if (_lastSentHeight != _targetHeight)
-		return TRUE;
+		return true;
 
 	if (_lastSentDesktopOrientation !=
 	    freerdp_settings_get_uint16(settings, FreeRDP_DesktopOrientation))
-		return TRUE;
+		return true;
 
 	if (_lastSentDesktopScaleFactor !=
 	    freerdp_settings_get_uint32(settings, FreeRDP_DesktopScaleFactor))
-		return TRUE;
+		return true;
 
 	if (_lastSentDeviceScaleFactor !=
 	    freerdp_settings_get_uint32(settings, FreeRDP_DeviceScaleFactor))
-		return TRUE;
-	/* TODO
-	    if (_fullscreen != _sdl->fullscreen)
-	        return TRUE;
-	*/
-	return FALSE;
+		return true;
+
+	if (_lastSentFullscreen != _sdl->fullscreen)
+		return true;
+
+	auto layout = currentMonitorLayout();
+
+	return layout != _lastSentLayout;
 }
 
-BOOL sdlDispContext::update_last_sent()
+bool sdlDispContext::update_last_sent()
 {
 	WINPR_ASSERT(_sdl);
 
@@ -77,11 +79,12 @@ BOOL sdlDispContext::update_last_sent()
 	_lastSentDesktopOrientation = freerdp_settings_get_uint16(settings, FreeRDP_DesktopOrientation);
 	_lastSentDesktopScaleFactor = freerdp_settings_get_uint32(settings, FreeRDP_DesktopScaleFactor);
 	_lastSentDeviceScaleFactor = freerdp_settings_get_uint32(settings, FreeRDP_DeviceScaleFactor);
-	// TODO _fullscreen = _sdl->fullscreen;
-	return TRUE;
+	_lastSentFullscreen = _sdl->fullscreen;
+	_lastSentLayout = currentMonitorLayout();
+	return true;
 }
 
-BOOL sdlDispContext::sendResize()
+bool sdlDispContext::sendResize()
 {
 	DISPLAY_CONTROL_MONITOR_LAYOUT layout = {};
 	auto settings = _sdl->context()->settings;
@@ -129,29 +132,29 @@ BOOL sdlDispContext::sendResize()
 	return update_last_sent();
 }
 
-BOOL sdlDispContext::set_window_resizable()
+bool sdlDispContext::set_window_resizable()
 {
 	_sdl->update_resizeable(TRUE);
-	return TRUE;
+	return true;
 }
 
-static BOOL sdl_disp_check_context(void* context, SdlContext** ppsdl, sdlDispContext** ppsdlDisp,
+static bool sdl_disp_check_context(void* context, SdlContext** ppsdl, sdlDispContext** ppsdlDisp,
                                    rdpSettings** ppSettings)
 {
 	if (!context)
-		return FALSE;
+		return false;
 
 	auto sdl = get_context(context);
 	if (!sdl)
-		return FALSE;
+		return false;
 
 	if (!sdl->context()->settings)
-		return FALSE;
+		return false;
 
 	*ppsdl = sdl;
 	*ppsdlDisp = &sdl->disp;
 	*ppSettings = sdl->context()->settings;
-	return TRUE;
+	return true;
 }
 
 void sdlDispContext::OnActivated(void* context, const ActivatedEventArgs* e)
@@ -298,7 +301,7 @@ UINT sdlDispContext::sendLayout(const rdpMonitor* monitors, size_t nmonitors)
 	return ret;
 }
 
-BOOL sdlDispContext::addTimer()
+bool sdlDispContext::addTimer()
 {
 	if (SDL_WasInit(SDL_INIT_EVENTS) == 0)
 		return FALSE;
@@ -309,10 +312,10 @@ BOOL sdlDispContext::addTimer()
 	_timer_retries = 0;
 	sendResize();
 	_timer = SDL_AddTimer(1000, sdlDispContext::OnTimer, this);
-	return TRUE;
+	return true;
 }
 
-BOOL sdlDispContext::handle_display_event(const SDL_DisplayEvent* ev)
+bool sdlDispContext::handle_display_event(const SDL_DisplayEvent* ev)
 {
 	WINPR_ASSERT(ev);
 
@@ -320,19 +323,19 @@ BOOL sdlDispContext::handle_display_event(const SDL_DisplayEvent* ev)
 	{
 		case SDL_EVENT_DISPLAY_ADDED:
 			SDL_Log("A new display with id %u was connected", ev->displayID);
-			return TRUE;
+			return true;
 		case SDL_EVENT_DISPLAY_REMOVED:
 			SDL_Log("The display with id %u was disconnected", ev->displayID);
-			return TRUE;
+			return true;
 		case SDL_EVENT_DISPLAY_ORIENTATION:
 			SDL_Log("The orientation of display with id %u was changed", ev->displayID);
-			return TRUE;
+			return true;
 		default:
-			return TRUE;
+			return true;
 	}
 }
 
-BOOL sdlDispContext::handle_window_event(const SDL_WindowEvent* ev)
+bool sdlDispContext::handle_window_event(const SDL_WindowEvent* ev)
 {
 	WINPR_ASSERT(ev);
 
@@ -348,14 +351,14 @@ BOOL sdlDispContext::handle_window_event(const SDL_WindowEvent* ev)
 		case SDL_EVENT_WINDOW_MINIMIZED:
 			gdi_send_suppress_output(_sdl->context()->gdi, TRUE);
 
-			return TRUE;
+			return true;
 
 		case SDL_EVENT_WINDOW_EXPOSED:
 		case SDL_EVENT_WINDOW_SHOWN:
 		case SDL_EVENT_WINDOW_MAXIMIZED:
 		case SDL_EVENT_WINDOW_RESTORED:
 			gdi_send_suppress_output(_sdl->context()->gdi, FALSE);
-			return TRUE;
+			return true;
 
 		case SDL_EVENT_WINDOW_RESIZED:
 		case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
@@ -366,7 +369,7 @@ BOOL sdlDispContext::handle_window_event(const SDL_WindowEvent* ev)
 		case SDL_EVENT_WINDOW_MOUSE_LEAVE:
 			WINPR_ASSERT(_sdl);
 			_sdl->input.keyboard_grab(ev->windowID, false);
-			return TRUE;
+			return true;
 		case SDL_EVENT_WINDOW_MOUSE_ENTER:
 			WINPR_ASSERT(_sdl);
 			_sdl->input.keyboard_grab(ev->windowID, true);
@@ -375,12 +378,13 @@ BOOL sdlDispContext::handle_window_event(const SDL_WindowEvent* ev)
 			return _sdl->input.keyboard_focus_in();
 
 		default:
-			return TRUE;
+			return true;
 	}
 }
 
-UINT sdlDispContext::DisplayControlCaps(DispClientContext* disp, UINT32 maxNumMonitors,
-                                        UINT32 maxMonitorAreaFactorA, UINT32 maxMonitorAreaFactorB)
+uint32_t sdlDispContext::DisplayControlCaps(DispClientContext* disp, uint32_t maxNumMonitors,
+                                            uint32_t maxMonitorAreaFactorA,
+                                            uint32_t maxMonitorAreaFactorB)
 {
 	/* we're called only if dynamic resolution update is activated */
 	WINPR_ASSERT(disp);
@@ -390,8 +394,22 @@ UINT sdlDispContext::DisplayControlCaps(DispClientContext* disp, UINT32 maxNumMo
 	                                   maxMonitorAreaFactorB);
 }
 
-UINT sdlDispContext::DisplayControlCaps(UINT32 maxNumMonitors, UINT32 maxMonitorAreaFactorA,
-                                        UINT32 maxMonitorAreaFactorB)
+std::vector<rdpMonitor> sdlDispContext::currentMonitorLayout() const
+{
+	auto monitors = static_cast<const rdpMonitor*>(
+	    freerdp_settings_get_pointer_array(_sdl->context()->settings, FreeRDP_MonitorDefArray, 0));
+	auto count = freerdp_settings_get_uint32(_sdl->context()->settings, FreeRDP_MonitorCount);
+
+	std::vector<rdpMonitor> layout;
+	for (size_t x = 0; x < count; x++)
+	{
+		layout.push_back(monitors[x]);
+	}
+	return layout;
+}
+
+uint32_t sdlDispContext::DisplayControlCaps(uint32_t maxNumMonitors, uint32_t maxMonitorAreaFactorA,
+                                            uint32_t maxMonitorAreaFactorB)
 {
 	auto settings = _sdl->context()->settings;
 	WINPR_ASSERT(settings);
@@ -400,7 +418,7 @@ UINT sdlDispContext::DisplayControlCaps(UINT32 maxNumMonitors, UINT32 maxMonitor
 	         "DisplayControlCapsPdu: MaxNumMonitors: %" PRIu32 " MaxMonitorAreaFactorA: %" PRIu32
 	         " MaxMonitorAreaFactorB: %" PRIu32 "",
 	         maxNumMonitors, maxMonitorAreaFactorA, maxMonitorAreaFactorB);
-	_activated = TRUE;
+	_activated = true;
 
 	if (freerdp_settings_get_bool(settings, FreeRDP_Fullscreen))
 		return CHANNEL_RC_OK;
@@ -409,15 +427,15 @@ UINT sdlDispContext::DisplayControlCaps(UINT32 maxNumMonitors, UINT32 maxMonitor
 	return set_window_resizable() ? CHANNEL_RC_OK : CHANNEL_RC_NO_MEMORY;
 }
 
-BOOL sdlDispContext::init(DispClientContext* disp)
+bool sdlDispContext::init(DispClientContext* disp)
 {
 	if (!disp)
-		return FALSE;
+		return false;
 
 	auto settings = _sdl->context()->settings;
 
 	if (!settings)
-		return FALSE;
+		return false;
 
 	_disp = disp;
 	disp->custom = this;
@@ -428,17 +446,17 @@ BOOL sdlDispContext::init(DispClientContext* disp)
 	}
 
 	_sdl->update_resizeable(TRUE);
-	return TRUE;
+	return true;
 }
 
-BOOL sdlDispContext::uninit(DispClientContext* disp)
+bool sdlDispContext::uninit(DispClientContext* disp)
 {
 	if (!disp)
-		return FALSE;
+		return false;
 
 	_disp = nullptr;
 	_sdl->update_resizeable(FALSE);
-	return TRUE;
+	return true;
 }
 
 sdlDispContext::sdlDispContext(SdlContext* sdl) : _sdl(sdl)
