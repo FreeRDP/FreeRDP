@@ -587,7 +587,7 @@ owned by rdpRdp */
 	 *
 	 *  @return a string representation of \b reason or rn-unknown
 	 *
-	 *  @since version 3.12.1
+	 *  @since version 3.13.0
 	 */
 	FREERDP_API const char* freerdp_disconnect_reason_string(int reason);
 
