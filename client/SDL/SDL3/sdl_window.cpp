@@ -21,7 +21,7 @@
 #include "sdl_utils.hpp"
 
 SdlWindow::SdlWindow(const std::string& title, Sint32 startupX, Sint32 startupY, Sint32 width,
-                     Sint32 height, [[maybe_unused]] Uint32 flags)
+                     Sint32 height, Uint32 flags)
 {
 	auto props = SDL_CreateProperties();
 	SDL_SetStringProperty(props, SDL_PROP_WINDOW_CREATE_TITLE_STRING, title.c_str());
@@ -29,7 +29,19 @@ SdlWindow::SdlWindow(const std::string& title, Sint32 startupX, Sint32 startupY,
 	SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_Y_NUMBER, startupY);
 	SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_WIDTH_NUMBER, width);
 	SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_HEIGHT_NUMBER, height);
-	// SDL_SetProperty(props, SDL_PROP_WINDOW_CREATE_FL);
+
+	if (flags & SDL_WINDOW_RESIZABLE)
+		SDL_SetBooleanProperty(props, SDL_PROP_WINDOW_CREATE_RESIZABLE_BOOLEAN, true);
+
+	if (flags & SDL_WINDOW_FULLSCREEN)
+		SDL_SetBooleanProperty(props, SDL_PROP_WINDOW_CREATE_FULLSCREEN_BOOLEAN, true);
+
+	if (flags & SDL_WINDOW_HIGH_PIXEL_DENSITY)
+		SDL_SetBooleanProperty(props, SDL_PROP_WINDOW_CREATE_HIGH_PIXEL_DENSITY_BOOLEAN, true);
+
+	if (flags & SDL_WINDOW_BORDERLESS)
+		SDL_SetBooleanProperty(props, SDL_PROP_WINDOW_CREATE_BORDERLESS_BOOLEAN, true);
+
 	_window = SDL_CreateWindowWithProperties(props);
 	SDL_DestroyProperties(props);
 }
