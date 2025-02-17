@@ -1275,12 +1275,12 @@ extern "C"
 #define Stream_GetPointerAs(_s, _p) _p = Stream_PointerAs(_s, __typeof(_p))
 
 #if defined(WITH_WINPR_DEPRECATED)
-	WINPR_API WINPR_DEPRECATED_VAR("Use Stream_SetPosition instead",
-	                               BOOL Stream_SetPointer(wStream* _s, BYTE* _p));
-	WINPR_API WINPR_DEPRECATED_VAR("Use Stream_New(buffer, capacity) instead",
-	                               BOOL Stream_SetBuffer(wStream* _s, BYTE* _b));
-	WINPR_API WINPR_DEPRECATED_VAR("Use Stream_New(buffer, capacity) instead",
-	                               void Stream_SetCapacity(wStream* _s, size_t capacity));
+	WINPR_DEPRECATED_VAR("Use Stream_SetPosition instead",
+	                     WINPR_API BOOL Stream_SetPointer(wStream* _s, BYTE* _p));
+	WINPR_DEPRECATED_VAR("Use Stream_New(buffer, capacity) instead",
+	                     WINPR_API BOOL Stream_SetBuffer(wStream* _s, BYTE* _b));
+	WINPR_DEPRECATED_VAR("Use Stream_New(buffer, capacity) instead",
+	                     WINPR_API void Stream_SetCapacity(wStream* _s, size_t capacity));
 #endif
 
 	static INLINE size_t Stream_Length(const wStream* _s)

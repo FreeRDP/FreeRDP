@@ -587,7 +587,7 @@ owned by rdpRdp */
 	 *
 	 *  @return a string representation of \b reason or rn-unknown
 	 *
-	 *  @since version 3.12.1
+	 *  @since version 3.13.0
 	 */
 	FREERDP_API const char* freerdp_disconnect_reason_string(int reason);
 
@@ -601,8 +601,8 @@ owned by rdpRdp */
 	FREERDP_API UINT freerdp_channels_detach(freerdp* instance);
 
 #if defined(WITH_FREERDP_DEPRECATED)
-	FREERDP_API WINPR_DEPRECATED_VAR("Use freerdp_get_event_handles",
-	                                 BOOL freerdp_get_fds(freerdp* instance, void** rfds,
+	WINPR_DEPRECATED_VAR("Use freerdp_get_event_handles",
+	                     FREERDP_API BOOL freerdp_get_fds(freerdp* instance, void** rfds,
 	                                                      int* rcount, void** wfds, int* wcount));
 #endif
 
