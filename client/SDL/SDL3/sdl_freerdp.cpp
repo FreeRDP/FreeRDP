@@ -712,8 +712,8 @@ static BOOL sdl_create_windows(SdlContext* sdl)
 		if (id < 0)
 			return FALSE;
 
-		auto monitor = static_cast<rdpMonitor*>(
-		    freerdp_settings_get_pointer_array_writable(settings, FreeRDP_MonitorDefArray, x));
+		auto monitor = static_cast<const rdpMonitor*>(
+		    freerdp_settings_get_pointer_array(settings, FreeRDP_MonitorDefArray, x));
 
 		auto w = WINPR_ASSERTING_INT_CAST(Uint32, monitor->width);
 		auto h = WINPR_ASSERTING_INT_CAST(Uint32, monitor->height);
@@ -915,12 +915,23 @@ static int sdl_run(SdlContext* sdl)
 				}
 				break;
 
-				case SDL_EVENT_RENDER_TARGETS_RESET:
+				case SDL_EVENT_DISPLAY_ORIENTATION:
+				case SDL_EVENT_DISPLAY_ADDED:
+				case SDL_EVENT_DISPLAY_REMOVED:
+				case SDL_EVENT_DISPLAY_MOVED:
+				case SDL_EVENT_DISPLAY_DESKTOP_MODE_CHANGED:
+				case SDL_EVENT_DISPLAY_CURRENT_MODE_CHANGED:
+				case SDL_EVENT_DISPLAY_CONTENT_SCALE_CHANGED:
 					sdl_redraw(sdl);
+					sdl->updateMonitorLayout();
 					break;
+				case SDL_EVENT_RENDER_DEVICE_LOST:
+				case SDL_EVENT_RENDER_TARGETS_RESET:
 				case SDL_EVENT_RENDER_DEVICE_RESET:
 					sdl_redraw(sdl);
+					sdl->updateMonitorLayout();
 					break;
+
 				case SDL_EVENT_WILL_ENTER_FOREGROUND:
 					sdl_redraw(sdl);
 					break;
@@ -959,6 +970,7 @@ static int sdl_run(SdlContext* sdl)
 				{
 					auto ctx = static_cast<SdlContext*>(windowEvent.user.data1);
 					sdl_create_windows(ctx);
+					sdl->updateMonitorLayout();
 				}
 				break;
 				case SDL_EVENT_USER_WINDOW_RESIZEABLE:
@@ -975,7 +987,7 @@ static int sdl_run(SdlContext* sdl)
 					const bool enter = windowEvent.user.code != 0;
 					if (window)
 						window->fullscreen(enter);
-					sdl->disp.addTimer();
+					sdl->updateMonitorLayout();
 				}
 				break;
 				case SDL_EVENT_USER_WINDOW_MINIMIZE:
@@ -1043,6 +1055,7 @@ static int sdl_run(SdlContext* sdl)
 								case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
 									window->second.fill();
 									window->second.updateSurface();
+									sdl->updateMonitorLayout();
 									break;
 								case SDL_EVENT_WINDOW_MOVED:
 								{
@@ -1733,6 +1746,120 @@ SdlContext::SdlContext(rdpContext* context)
 {
 	WINPR_ASSERT(context);
 	grab_kbd_enabled = freerdp_settings_get_bool(context->settings, FreeRDP_GrabKeyboard);
+}
+
+void SdlContext::updateMonitorLayout()
+{
+	std::vector<rdpMonitor> list;
+
+	auto settings = context()->settings;
+	if (!fullscreen)
+	{
+		for (const auto& pair : windows)
+		{
+			rdpMonitor mon = {};
+			const auto& window = pair.second;
+
+			int w = 0;
+			int h = 0;
+			SDL_GetWindowSize(window.window(), &w, &h);
+
+			int pw = 0;
+			int ph = 0;
+			SDL_GetWindowSizeInPixels(window.window(), &pw, &ph);
+
+			auto did = SDL_GetDisplayForWindow(window.window());
+			auto orientation = SDL_GetCurrentDisplayOrientation(did);
+
+			auto devScaleFactor = SDL_GetWindowPixelDensity(window.window()) * 100;
+
+			mon.x = 0;
+			mon.y = 0;
+			mon.width = w;
+			mon.height = h;
+			mon.is_primary = TRUE;
+			mon.orig_screen = 0;
+			mon.attributes.physicalWidth = pw;
+			mon.attributes.physicalHeight = ph;
+			switch (orientation)
+			{
+				default:
+				case SDL_ORIENTATION_UNKNOWN:
+				case SDL_ORIENTATION_LANDSCAPE:
+					mon.attributes.orientation = ORIENTATION_LANDSCAPE;
+					break;
+				case SDL_ORIENTATION_LANDSCAPE_FLIPPED:
+					mon.attributes.orientation = ORIENTATION_LANDSCAPE_FLIPPED;
+					break;
+				case SDL_ORIENTATION_PORTRAIT:
+					mon.attributes.orientation = ORIENTATION_PORTRAIT;
+					break;
+				case SDL_ORIENTATION_PORTRAIT_FLIPPED:
+					mon.attributes.orientation = ORIENTATION_PORTRAIT_FLIPPED;
+					break;
+			}
+
+			mon.attributes.desktopScaleFactor = devScaleFactor;
+			mon.attributes.deviceScaleFactor = 100;
+			list.push_back(mon);
+		}
+	}
+	else
+	{
+		for (const auto& pair : windows)
+		{
+			rdpMonitor mon = {};
+			const auto& window = pair.second;
+
+			auto did = SDL_GetDisplayForWindow(window.window());
+
+			SDL_Rect rect = {};
+			SDL_GetDisplayBounds(did, &rect);
+
+			auto scale = SDL_GetDisplayContentScale(did);
+			int pw = rect.w * scale;
+			int ph = rect.h * scale;
+
+			auto orientation = SDL_GetCurrentDisplayOrientation(did);
+
+			auto devScaleFactor = SDL_GetDisplayContentScale(did) * 100;
+
+			mon.x = rect.x;
+			mon.y = rect.y;
+			mon.width = rect.w;
+			mon.height = rect.h;
+			mon.is_primary = TRUE;
+			mon.orig_screen = did;
+			mon.attributes.physicalWidth = pw;
+			mon.attributes.physicalHeight = ph;
+			switch (orientation)
+			{
+				default:
+				case SDL_ORIENTATION_UNKNOWN:
+				case SDL_ORIENTATION_LANDSCAPE:
+					mon.attributes.orientation = ORIENTATION_LANDSCAPE;
+					break;
+				case SDL_ORIENTATION_LANDSCAPE_FLIPPED:
+					mon.attributes.orientation = ORIENTATION_LANDSCAPE_FLIPPED;
+					break;
+				case SDL_ORIENTATION_PORTRAIT:
+					mon.attributes.orientation = ORIENTATION_PORTRAIT;
+					break;
+				case SDL_ORIENTATION_PORTRAIT_FLIPPED:
+					mon.attributes.orientation = ORIENTATION_PORTRAIT_FLIPPED;
+					break;
+			}
+
+			mon.attributes.desktopScaleFactor = devScaleFactor;
+			mon.attributes.deviceScaleFactor = 100;
+			list.push_back(mon);
+		}
+	}
+
+	auto len = static_cast<uint32_t>(list.size());
+	freerdp_settings_set_pointer_len(settings, FreeRDP_MonitorDefArray, list.data(), len);
+	freerdp_settings_set_uint32(settings, FreeRDP_MonitorCount, len);
+	disp.addTimer();
 }
 
 rdpContext* SdlContext::context() const

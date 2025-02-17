@@ -52,14 +52,15 @@ class sdlDispContext
 	BOOL addTimer();
 
   private:
+	[[nodiscard]] std::vector<rdpMonitor> currentMonitorLayout() const;
+
 	UINT DisplayControlCaps(UINT32 maxNumMonitors, UINT32 maxMonitorAreaFactorA,
 	                        UINT32 maxMonitorAreaFactorB);
 	BOOL set_window_resizable();
 
 	BOOL sendResize();
 	BOOL settings_changed();
-	BOOL update_last_sent();
-	UINT sendLayout(const rdpMonitor* monitors, size_t nmonitors);
+	UINT sendLayout(const std::vector<rdpMonitor>& monitors);
 
 	static UINT DisplayControlCaps(DispClientContext* disp, UINT32 maxNumMonitors,
 	                               UINT32 maxMonitorAreaFactorA, UINT32 maxMonitorAreaFactorB);
@@ -69,17 +70,12 @@ class sdlDispContext
 
 	SdlContext* _sdl = nullptr;
 	DispClientContext* _disp = nullptr;
-	int _lastSentWidth = -1;
-	int _lastSentHeight = -1;
 	UINT64 _lastSentDate = 0;
 	int _targetWidth = -1;
 	int _targetHeight = -1;
 	BOOL _activated = FALSE;
 	BOOL _waitingResize = FALSE;
-	BOOL _fullscreen = FALSE;
-	UINT16 _lastSentDesktopOrientation = 0;
-	UINT32 _lastSentDesktopScaleFactor = 0;
-	UINT32 _lastSentDeviceScaleFactor = 0;
+
 	SDL_TimerID _timer = 0;
 	unsigned _timer_retries = 0;
 	std::vector<rdpMonitor> _lastSentLayout;

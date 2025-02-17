@@ -59,8 +59,7 @@ class sdlDispContext
 
 	bool sendResize();
 	bool settings_changed();
-	bool update_last_sent();
-	uint32_t sendLayout(const rdpMonitor* monitors, size_t nmonitors);
+	uint32_t sendLayout(const std::vector<rdpMonitor>& layout);
 
 	static UINT DisplayControlCaps(DispClientContext* disp, uint32_t maxNumMonitors,
 	                               uint32_t maxMonitorAreaFactorA, uint32_t maxMonitorAreaFactorB);
@@ -70,18 +69,10 @@ class sdlDispContext
 
 	SdlContext* _sdl = nullptr;
 	DispClientContext* _disp = nullptr;
-	int _lastSentWidth = -1;
-	int _lastSentHeight = -1;
 	uint64_t _lastSentDate = 0;
-	int _targetWidth = -1;
-	int _targetHeight = -1;
 	bool _activated = false;
 	bool _waitingResize = false;
-	bool _lastSentFullscreen = false;
 	std::vector<rdpMonitor> _lastSentLayout;
-	uint16_t _lastSentDesktopOrientation = 0;
-	uint32_t _lastSentDesktopScaleFactor = 0;
-	uint32_t _lastSentDeviceScaleFactor = 0;
 	SDL_TimerID _timer = 0;
 	unsigned _timer_retries = 0;
 };
