@@ -67,6 +67,7 @@ BOOL sdlDispContext::settings_changed()
 	const UINT32 mcount = freerdp_settings_get_uint32(settings, FreeRDP_MonitorCount);
 
 	std::vector<rdpMonitor> layout;
+	layout.reserve(mcount);
 	for (size_t x = 0; x < mcount; x++)
 	{
 		layout.push_back(monitors[x]);
@@ -254,9 +255,6 @@ UINT sdlDispContext::sendLayout(const rdpMonitor* monitors, size_t nmonitors)
 
 	WINPR_ASSERT(monitors);
 	WINPR_ASSERT(nmonitors > 0);
-
-	auto settings = _sdl->context()->settings;
-	WINPR_ASSERT(settings);
 
 	std::vector<DISPLAY_CONTROL_MONITOR_LAYOUT> layouts;
 	layouts.resize(nmonitors);

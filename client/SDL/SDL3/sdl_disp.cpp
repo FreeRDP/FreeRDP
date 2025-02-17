@@ -401,6 +401,7 @@ std::vector<rdpMonitor> sdlDispContext::currentMonitorLayout() const
 	auto count = freerdp_settings_get_uint32(_sdl->context()->settings, FreeRDP_MonitorCount);
 
 	std::vector<rdpMonitor> layout;
+	layout.reserve(count);
 	for (size_t x = 0; x < count; x++)
 	{
 		layout.push_back(monitors[x]);
