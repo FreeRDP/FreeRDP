@@ -347,6 +347,8 @@ extern "C"
 	/**
 	 *  Defines the possible disconnect reasons in the MCS Disconnect Provider
 	 *  Ultimatum PDU
+	 *
+	 *  [T.125] 7 Structure of Version 2 MCSPDUs Reason ::= ENUMERATED
 	 */
 
 	enum Disconnect_Ultimatum
@@ -578,6 +580,16 @@ owned by rdpRdp */
 
 	FREERDP_API BOOL freerdp_shall_disconnect_context(const rdpContext* context);
 	FREERDP_API BOOL freerdp_disconnect(freerdp* instance);
+
+	/** @brief stringify disconnect reason of type Disconnect_Ultimatum
+	 *
+	 *  @param reason the reason of type \b Disconnect_Ultimatum
+	 *
+	 *  @return a string representation of \b reason or rn-unknown
+	 *
+	 *  @since version 3.12.1
+	 */
+	FREERDP_API const char* freerdp_disconnect_reason_string(int reason);
 
 	WINPR_DEPRECATED_VAR("use freerdp_disconnect_before_reconnect_context instead",
 	                     FREERDP_API BOOL freerdp_disconnect_before_reconnect(freerdp* instance));

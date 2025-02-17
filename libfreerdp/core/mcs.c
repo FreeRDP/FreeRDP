@@ -1363,7 +1363,7 @@ BOOL mcs_recv_disconnect_provider_ultimatum(WINPR_ATTR_UNUSED rdpMcs* mcs, wStre
  * @param mcs mcs module
  */
 
-BOOL mcs_send_disconnect_provider_ultimatum(rdpMcs* mcs)
+BOOL mcs_send_disconnect_provider_ultimatum(rdpMcs* mcs, enum Disconnect_Ultimatum reason)
 {
 	wStream* s = NULL;
 	int status = -1;
@@ -1379,10 +1379,12 @@ BOOL mcs_send_disconnect_provider_ultimatum(rdpMcs* mcs)
 	if (!mcs_write_domain_mcspdu_header(s, DomainMCSPDU_DisconnectProviderUltimatum, length, 1))
 		goto fail;
 
-	if (!per_write_enumerated(s, 0x80, 0))
+	if (!per_write_enumerated(s, 0x80, reason))
 		goto fail;
 	status = transport_write(mcs->transport, s);
 fail:
+	WLog_DBG(TAG, "sending DisconnectProviderUltimatum(%s)",
+	         freerdp_disconnect_reason_string(reason));
 	Stream_Free(s, TRUE);
 	return (status < 0) ? FALSE : TRUE;
 }
