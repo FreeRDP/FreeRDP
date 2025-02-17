@@ -210,8 +210,6 @@ UINT sdlDispContext::sendLayout(const std::vector<rdpMonitor>& monitors)
 		layout.DesktopScaleFactor = monitor.attributes.desktopScaleFactor;
 		layout.DeviceScaleFactor = monitor.attributes.deviceScaleFactor;
 
-		SDL_Log("[xxx] monitor [0x%08x] %dx%d - %dx%d", layout.Flags, layout.Left, layout.Top,
-		        layout.Width, layout.Height);
 		layouts.push_back(layout);
 	}
 

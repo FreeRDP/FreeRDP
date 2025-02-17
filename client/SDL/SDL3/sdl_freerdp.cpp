@@ -717,32 +717,19 @@ static BOOL sdl_create_windows(SdlContext* sdl)
 
 		auto w = WINPR_ASSERTING_INT_CAST(Uint32, monitor->width);
 		auto h = WINPR_ASSERTING_INT_CAST(Uint32, monitor->height);
-		if (!(freerdp_settings_get_bool(settings, FreeRDP_UseMultimon) ||
-		      freerdp_settings_get_bool(settings, FreeRDP_Fullscreen)))
-		{
-			w = freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth);
-			h = freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight);
-		}
 
 		Uint32 flags = 0;
 		auto startupX = SDL_WINDOWPOS_CENTERED_DISPLAY(id);
 		auto startupY = SDL_WINDOWPOS_CENTERED_DISPLAY(id);
 
 		if (monitor->attributes.desktopScaleFactor > 100)
-		{
 			flags |= SDL_WINDOW_HIGH_PIXEL_DENSITY;
-		}
 
-		if (freerdp_settings_get_bool(settings, FreeRDP_Fullscreen) &&
-		    !freerdp_settings_get_bool(settings, FreeRDP_UseMultimon))
-		{
+		if (freerdp_settings_get_bool(settings, FreeRDP_Fullscreen))
 			flags |= SDL_WINDOW_FULLSCREEN;
-		}
 
-		if (freerdp_settings_get_bool(settings, FreeRDP_UseMultimon))
-		{
+		if (freerdp_settings_get_bool(settings, FreeRDP_Fullscreen))
 			flags |= SDL_WINDOW_BORDERLESS;
-		}
 
 		if (!freerdp_settings_get_bool(settings, FreeRDP_Decorations))
 			flags |= SDL_WINDOW_BORDERLESS;
@@ -756,13 +743,6 @@ static BOOL sdl_create_windows(SdlContext* sdl)
 		ScopeGuard guard1([&]() { sdl->windows_created.set(); });
 		if (!window.window())
 			return FALSE;
-
-		if (freerdp_settings_get_bool(settings, FreeRDP_UseMultimon))
-		{
-			auto r = window.rect();
-			window.setOffsetX(0 - r.x);
-			window.setOffsetY(0 - r.y);
-		}
 
 		sdl->windows.insert({ window.id(), std::move(window) });
 	}
