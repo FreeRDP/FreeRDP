@@ -14,15 +14,15 @@ jobs:
       matrix:
         include:
           - arch: armv6
-            distro: bullseye
+            distro: bookworm
           - arch: armv7
-            distro: bullseye
+            distro: bookworm
           - arch: aarch64
-            distro: bullseye
+            distro: bookworm
           - arch: s390x
-            distro: bullseye
+            distro: bookworm
           - arch: ppc64le
-            distro: bullseye
+            distro: bookworm
           - arch: riscv64
             distro: ubuntu22.04
     steps:
