@@ -240,7 +240,7 @@ extern "C"
 	WINPR_API BOOL ArrayList_Contains(wArrayList* arrayList, const void* obj);
 
 #if defined(WITH_WINPR_DEPRECATED)
-	WINPR_API WINPR_DEPRECATED(int ArrayList_Add(wArrayList* arrayList, const void* obj));
+	WINPR_DEPRECATED(WINPR_API int ArrayList_Add(wArrayList* arrayList, const void* obj));
 #endif
 
 	WINPR_API BOOL ArrayList_Append(wArrayList* arrayList, const void* obj);
@@ -628,7 +628,7 @@ extern "C"
 	WINPR_API size_t HashTable_Count(wHashTable* table);
 
 #if defined(WITH_WINPR_DEPRECATED)
-	WINPR_API WINPR_DEPRECATED(int HashTable_Add(wHashTable* table, const void* key,
+	WINPR_DEPRECATED(WINPR_API int HashTable_Add(wHashTable* table, const void* key,
 	                                             const void* value));
 #endif
 

@@ -185,13 +185,13 @@ extern "C"
 	/* Unicode Conversion */
 
 #if defined(WITH_WINPR_DEPRECATED)
-	WINPR_API WINPR_DEPRECATED_VAR("Use ConvertUtf8ToWChar instead",
-	                               int MultiByteToWideChar(UINT CodePage, DWORD dwFlags,
+	WINPR_DEPRECATED_VAR("Use ConvertUtf8ToWChar instead",
+	                     WINPR_API int MultiByteToWideChar(UINT CodePage, DWORD dwFlags,
 	                                                       LPCSTR lpMultiByteStr, int cbMultiByte,
 	                                                       LPWSTR lpWideCharStr, int cchWideChar));
 
-	WINPR_API WINPR_DEPRECATED_VAR("Use ConvertWCharToUtf8 instead",
-	                               int WideCharToMultiByte(UINT CodePage, DWORD dwFlags,
+	WINPR_DEPRECATED_VAR("Use ConvertWCharToUtf8 instead",
+	                     WINPR_API int WideCharToMultiByte(UINT CodePage, DWORD dwFlags,
 	                                                       LPCWSTR lpWideCharStr, int cchWideChar,
 	                                                       LPSTR lpMultiByteStr, int cbMultiByte,
 	                                                       LPCSTR lpDefaultChar,
@@ -406,13 +406,13 @@ extern "C"
 	WINPR_API const WCHAR* InitializeConstWCharFromUtf8(const char* str, WCHAR* buffer, size_t len);
 
 #if defined(WITH_WINPR_DEPRECATED)
-	WINPR_API WINPR_DEPRECATED_VAR("Use ConvertUtf8ToWChar functions instead",
-	                               int ConvertToUnicode(UINT CodePage, DWORD dwFlags,
+	WINPR_DEPRECATED_VAR("Use ConvertUtf8ToWChar functions instead",
+	                     WINPR_API int ConvertToUnicode(UINT CodePage, DWORD dwFlags,
 	                                                    LPCSTR lpMultiByteStr, int cbMultiByte,
 	                                                    LPWSTR* lpWideCharStr, int cchWideChar));
 
-	WINPR_API WINPR_DEPRECATED_VAR("Use ConvertWCharToUtf8 functions instead",
-	                               int ConvertFromUnicode(UINT CodePage, DWORD dwFlags,
+	WINPR_DEPRECATED_VAR("Use ConvertWCharToUtf8 functions instead",
+	                     WINPR_API int ConvertFromUnicode(UINT CodePage, DWORD dwFlags,
 	                                                      LPCWSTR lpWideCharStr, int cchWideChar,
 	                                                      LPSTR* lpMultiByteStr, int cbMultiByte,
 	                                                      LPCSTR lpDefaultChar,
