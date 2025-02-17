@@ -475,8 +475,7 @@ BOOL sdlInput::keyboard_handle_event(const SDL_KeyboardEvent* ev)
 
 			if (ev->scancode == _hotkeyGrab)
 			{
-				_sdl->grab_kbd_enabled = !_sdl->grab_kbd_enabled;
-				keyboard_grab(ev->windowID, _sdl->grab_kbd);
+				keyboard_grab(ev->windowID, !_sdl->grab_kbd);
 				return TRUE;
 			}
 			if (ev->scancode == _hotkeyDisconnect)
