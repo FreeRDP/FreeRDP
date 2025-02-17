@@ -314,6 +314,11 @@ BOOL freerdp_abort_connect_context(rdpContext* context)
 
 	freerdp_set_last_error_if_not(context, FREERDP_ERROR_CONNECT_CANCELLED);
 
+	/* Try to send a [MS-RDPBCGR] 1.3.1.4.1 User-Initiated on Client PDU, we don't care about
+	 * success */
+	if (context->rdp && context->rdp->mcs)
+		(void)mcs_send_disconnect_provider_ultimatum(context->rdp->mcs,
+		                                             Disconnect_Ultimatum_user_requested);
 	return utils_abort_connect(context->rdp);
 }
 
@@ -1467,4 +1472,23 @@ BOOL freerdp_persist_credentials(rdpContext* context)
 		return FALSE;
 	WINPR_ASSERT(context->rdp);
 	return utils_persist_credentials(context->rdp->originalSettings, context->rdp->settings);
+}
+
+const char* freerdp_disconnect_reason_string(int reason)
+{
+	switch (reason)
+	{
+		case Disconnect_Ultimatum_domain_disconnected:
+			return "rn-domain-disconnected";
+		case Disconnect_Ultimatum_provider_initiated:
+			return "rn-provider-initiated";
+		case Disconnect_Ultimatum_token_purged:
+			return "rn-token-purged";
+		case Disconnect_Ultimatum_user_requested:
+			return "rn-user-requested";
+		case Disconnect_Ultimatum_channel_purged:
+			return "rn-channel-purged";
+		default:
+			return "rn-unknown";
+	}
 }

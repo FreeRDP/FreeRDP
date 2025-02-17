@@ -394,7 +394,8 @@ static state_run_t peer_recv_data_pdu(freerdp_peer* client, wStream* s,
 			return STATE_RUN_CONTINUE; // State changed, trigger rerun
 
 		case DATA_PDU_TYPE_SHUTDOWN_REQUEST:
-			mcs_send_disconnect_provider_ultimatum(rdp->mcs);
+			mcs_send_disconnect_provider_ultimatum(rdp->mcs,
+			                                       Disconnect_Ultimatum_provider_initiated);
 			WLog_WARN(TAG, "disconnect provider ultimatum sent to peer, closing connection");
 			return STATE_RUN_QUIT_SESSION;
 
@@ -1219,7 +1220,8 @@ static BOOL freerdp_peer_close(freerdp_peer* client)
 		rdp_send_error_info(context->rdp);
 	}
 
-	return mcs_send_disconnect_provider_ultimatum(context->rdp->mcs);
+	return mcs_send_disconnect_provider_ultimatum(context->rdp->mcs,
+	                                              Disconnect_Ultimatum_provider_initiated);
 }
 
 static void freerdp_peer_disconnect(freerdp_peer* client)
