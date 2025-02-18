@@ -35,7 +35,7 @@
 static uint8_t GUID_UVCX_H264_XU[16] = { 0x41, 0x76, 0x9E, 0xA2, 0x04, 0xDE, 0xE3, 0x47,
 	                                     0x8B, 0x2B, 0xF4, 0x34, 0x1A, 0xFF, 0x00, 0x3B };
 
-#define TAG CHANNELS_TAG("uvc_h264.client")
+#define TAG CHANNELS_TAG("rdpecam-uvch264.client")
 
 /*
  * get length of xu control defined by unit id and selector
