@@ -1,4 +1,5 @@
 include(CMakeDependentOption)
+include(CheckIncludeFiles)
 
 cmake_dependent_option(
   WITH_VALGRIND_MEMCHECK "Compile with valgrind helpers." OFF
