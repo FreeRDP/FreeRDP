@@ -1379,12 +1379,12 @@ BOOL mcs_send_disconnect_provider_ultimatum(rdpMcs* mcs, enum Disconnect_Ultimat
 	if (!mcs_write_domain_mcspdu_header(s, DomainMCSPDU_DisconnectProviderUltimatum, length, 1))
 		goto fail;
 
-	if (!per_write_enumerated(s, 0x80, reason))
+	if (!per_write_enumerated(s, 0x80, WINPR_ASSERTING_INT_CAST(BYTE, reason)))
 		goto fail;
 	status = transport_write(mcs->transport, s);
 fail:
 	WLog_DBG(TAG, "sending DisconnectProviderUltimatum(%s)",
-	         freerdp_disconnect_reason_string(reason));
+	         freerdp_disconnect_reason_string((int)reason));
 	Stream_Free(s, TRUE);
 	return (status < 0) ? FALSE : TRUE;
 }
