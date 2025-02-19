@@ -152,7 +152,53 @@ static const speed_t BAUD_TABLE[][3] = {
 	{ BAUD_TABLE_END, 0, 0 }
 };
 
-static BOOL commstatus_error(WINPR_COMM* pComm, const char* ctrl);
+static const char* get_modem_flag_str(ULONG flag)
+{
+	if (flag & TIOCM_DTR)
+		return "DTR (data terminal ready)";
+	if (flag & TIOCM_RTS)
+		return "RTS (request to send)";
+	if (flag & TIOCM_ST)
+		return "Secondary TXD (transmit)";
+	if (flag & TIOCM_SR)
+		return "Secondary RXD (receive)";
+	if (flag & TIOCM_CTS)
+		return "CTS (clear to send)";
+	if (flag & TIOCM_CAR)
+		return "DCD (data carrier detect)";
+	if (flag & TIOCM_CD)
+		return "CD (carrier detect)";
+	if (flag & TIOCM_RNG)
+		return "RNG (ring)";
+	if (flag & TIOCM_RI)
+		return "RI (ring)";
+	if (flag & TIOCM_DSR)
+		return "DSR";
+	return "UNKNOWN";
+}
+
+static const char* get_modem_status_str(ULONG status, char* buffer, size_t size)
+{
+	const ULONG flags[] = { TIOCM_DTR, TIOCM_RTS, TIOCM_ST,  TIOCM_SR, TIOCM_CTS,
+		                    TIOCM_CAR, TIOCM_CD,  TIOCM_RNG, TIOCM_RI, TIOCM_DSR };
+	winpr_str_append("{", buffer, size, "");
+
+	const char* sep = "";
+	for (size_t x = 0; x < ARRAYSIZE(flags); x++)
+	{
+		const ULONG flag = flags[x];
+		if (status & flag)
+		{
+			winpr_str_append(get_modem_flag_str(flag), buffer, size, sep);
+			sep = "|";
+		}
+	}
+
+	char number[32] = { 0 };
+	_snprintf(number, sizeof(number), "}[0x%08" PRIx32 "]", status);
+	winpr_str_append(number, buffer, size, "");
+	return buffer;
+}
 
 static BOOL get_properties(WINPR_ATTR_UNUSED WINPR_COMM* pComm, COMMPROP* pProperties)
 {
@@ -248,9 +294,9 @@ static BOOL set_baud_rate(WINPR_COMM* pComm, const SERIAL_BAUD_RATE* pBaudRate)
 
 			WINPR_ASSERT(cfgetispeed(&futureState) == newSpeed);
 
-			if (_comm_ioctl_tcsetattr(pComm->fd, TCSANOW, &futureState) < 0)
+			if (comm_ioctl_tcsetattr(pComm->fd, TCSANOW, &futureState) < 0)
 			{
-				CommLog_Print(WLOG_WARN, "_comm_ioctl_tcsetattr failure: last-error: 0x%" PRIX32 "",
+				CommLog_Print(WLOG_WARN, "comm_ioctl_tcsetattr failure: last-error: 0x%" PRIX32 "",
 				              GetLastError());
 				return FALSE;
 			}
@@ -369,9 +415,9 @@ static BOOL set_serial_chars(WINPR_COMM* pComm, const SERIAL_CHARS* pSerialChars
 
 	upcomingTermios.c_cc[VSTOP] = pSerialChars->XoffChar;
 
-	if (_comm_ioctl_tcsetattr(pComm->fd, TCSANOW, &upcomingTermios) < 0)
+	if (comm_ioctl_tcsetattr(pComm->fd, TCSANOW, &upcomingTermios) < 0)
 	{
-		CommLog_Print(WLOG_WARN, "_comm_ioctl_tcsetattr failure: last-error: 0x%08" PRIX32 "",
+		CommLog_Print(WLOG_WARN, "comm_ioctl_tcsetattr failure: last-error: 0x%08" PRIX32 "",
 		              GetLastError());
 		return FALSE;
 	}
@@ -517,9 +563,9 @@ static BOOL set_line_control(WINPR_COMM* pComm, const SERIAL_LINE_CONTROL* pLine
 			break;
 	}
 
-	if (_comm_ioctl_tcsetattr(pComm->fd, TCSANOW, &upcomingTermios) < 0)
+	if (comm_ioctl_tcsetattr(pComm->fd, TCSANOW, &upcomingTermios) < 0)
 	{
-		CommLog_Print(WLOG_WARN, "_comm_ioctl_tcsetattr failure: last-error: 0x%08" PRIX32 "",
+		CommLog_Print(WLOG_WARN, "comm_ioctl_tcsetattr failure: last-error: 0x%08" PRIX32 "",
 		              GetLastError());
 		return FALSE;
 	}
@@ -747,29 +793,12 @@ static BOOL set_handflow(WINPR_COMM* pComm, const SERIAL_HANDFLOW* pHandflow)
 
 	/* XonLimit */
 
-	// FIXME: could be implemented during read/write I/O
-	if (pHandflow->XonLimit != TTY_THRESHOLD_UNTHROTTLE)
-	{
-		CommLog_Print(WLOG_WARN, "Attempt to set XonLimit with an unsupported value: %" PRId32 "",
-		              pHandflow->XonLimit);
-		SetLastError(ERROR_NOT_SUPPORTED);
-		result = FALSE; /* but keep on */
-	}
+	pComm->XOffLimit = pHandflow->XoffLimit;
+	pComm->XOnLimit = pHandflow->XonLimit;
 
-	/* XoffChar */
-
-	// FIXME: could be implemented during read/write I/O
-	if (pHandflow->XoffLimit != TTY_THRESHOLD_THROTTLE)
+	if (comm_ioctl_tcsetattr(pComm->fd, TCSANOW, &upcomingTermios) < 0)
 	{
-		CommLog_Print(WLOG_WARN, "Attempt to set XoffLimit with an unsupported value: %" PRId32 "",
-		              pHandflow->XoffLimit);
-		SetLastError(ERROR_NOT_SUPPORTED);
-		result = FALSE; /* but keep on */
-	}
-
-	if (_comm_ioctl_tcsetattr(pComm->fd, TCSANOW, &upcomingTermios) < 0)
-	{
-		CommLog_Print(WLOG_WARN, "_comm_ioctl_tcsetattr failure: last-error: 0x%" PRIX32 "",
+		CommLog_Print(WLOG_WARN, "comm_ioctl_tcsetattr failure: last-error: 0x%" PRIX32 "",
 		              GetLastError());
 		return FALSE;
 	}
@@ -836,13 +865,8 @@ static BOOL get_handflow(WINPR_COMM* pComm, SERIAL_HANDFLOW* pHandflow)
 
 	/* SERIAL_XOFF_CONTINUE unsupported */
 
-	/* XonLimit */
-
-	pHandflow->XonLimit = TTY_THRESHOLD_UNTHROTTLE;
-
-	/* XoffLimit */
-
-	pHandflow->XoffLimit = TTY_THRESHOLD_THROTTLE;
+	pHandflow->XonLimit = pComm->XOnLimit;
+	pHandflow->XoffLimit = pComm->XOffLimit;
 
 	return TRUE;
 }
@@ -903,32 +927,14 @@ static BOOL set_lines(WINPR_COMM* pComm, UINT32 lines)
 {
 	WINPR_ASSERT(pComm);
 
-	if (ioctl(pComm->fd, TIOCMBIS, &lines) < 0)
-	{
-		char ebuffer[256] = { 0 };
-		CommLog_Print(WLOG_WARN, "TIOCMBIS ioctl failed, lines=0x%" PRIX32 ", errno=[%d] %s", lines,
-		              errno, winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
-		SetLastError(ERROR_IO_DEVICE);
-		return FALSE;
-	}
-
-	return TRUE;
+	return CommIoCtl(pComm, TIOCMBIS, &lines);
 }
 
 static BOOL clear_lines(WINPR_COMM* pComm, UINT32 lines)
 {
 	WINPR_ASSERT(pComm);
 
-	if (ioctl(pComm->fd, TIOCMBIC, &lines) < 0)
-	{
-		char ebuffer[256] = { 0 };
-		CommLog_Print(WLOG_WARN, "TIOCMBIC ioctl failed, lines=0x%" PRIX32 ", errno=[%d] %s", lines,
-		              errno, winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
-		SetLastError(ERROR_IO_DEVICE);
-		return FALSE;
-	}
-
-	return TRUE;
+	return CommIoCtl(pComm, TIOCMBIC, &lines);
 }
 
 static BOOL set_dtr(WINPR_COMM* pComm)
@@ -1004,28 +1010,30 @@ static BOOL clear_rts(WINPR_COMM* pComm)
 	return clear_lines(pComm, TIOCM_RTS);
 }
 
-static BOOL get_modemstatus(WINPR_COMM* pComm, ULONG* pRegister)
+static BOOL get_raw_modemstatus(WINPR_COMM* pComm, int* pRegister)
 {
-	UINT32 lines = 0;
-
 	WINPR_ASSERT(pComm);
 	WINPR_ASSERT(pRegister);
 
-	*pRegister = 0;
-	if (ioctl(pComm->fd, TIOCMGET, &lines) < 0)
-	{
-		if (!commstatus_error(pComm, "TIOCMGET"))
-			return FALSE;
-	}
+	return CommIoCtl(pComm, TIOCMGET, pRegister);
+}
 
+static BOOL get_modemstatus(WINPR_COMM* pComm, ULONG* pRegister)
+{
+	int lines = 0;
+
+	if (!get_raw_modemstatus(pComm, &lines))
+		return FALSE;
+
+	*pRegister = 0;
 	if (lines & TIOCM_CTS)
-		*pRegister |= SERIAL_MSR_CTS;
+		*pRegister |= SERIAL_MSR_CTS | SERIAL_MSR_DCTS;
 	if (lines & TIOCM_DSR)
-		*pRegister |= SERIAL_MSR_DSR;
+		*pRegister |= SERIAL_MSR_DSR | SERIAL_MSR_DDSR;
 	if (lines & TIOCM_RI)
-		*pRegister |= SERIAL_MSR_RI;
+		*pRegister |= SERIAL_MSR_RI | SERIAL_MSR_TERI;
 	if (lines & TIOCM_CD)
-		*pRegister |= SERIAL_MSR_DCD;
+		*pRegister |= SERIAL_MSR_DCD | SERIAL_MSR_DDCD;
 
 	return TRUE;
 }
@@ -1083,17 +1091,12 @@ static BOOL set_wait_mask(WINPR_COMM* pComm, const ULONG* pWaitMask)
 	if (*pWaitMask == 0)
 	{
 		/* clearing pending events */
-#if defined(WINPR_HAVE_COMM_COUNTERS)
-		if (ioctl(pComm->fd, TIOCGICOUNT, &(pComm->counters)) < 0)
+		if (!CommUpdateIOCount(pComm, FALSE))
 		{
-			if (!commstatus_error(pComm, "TIOCGICOUNT"))
-			{
-				LeaveCriticalSection(&pComm->EventsLock);
-				return FALSE;
-			}
-			ZeroMemory(&(pComm->counters), sizeof(struct serial_icounter_struct));
+			LeaveCriticalSection(&pComm->EventsLock);
+			return FALSE;
 		}
-#endif
+
 		pComm->PendingEvents = 0;
 	}
 
@@ -1239,20 +1242,6 @@ static BOOL purge(WINPR_COMM* pComm, const ULONG* pPurgeMask)
 	return TRUE;
 }
 
-BOOL commstatus_error(WINPR_COMM* pComm, const char* ctrl)
-{
-	char ebuffer[256] = { 0 };
-	CommLog_Print(WLOG_WARN, "%s ioctl failed, errno=[%d] %s.", ctrl, errno,
-	              winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
-
-	if (!pComm->permissive)
-	{
-		SetLastError(ERROR_IO_DEVICE);
-		return FALSE;
-	}
-	return TRUE;
-}
-
 /* NB: get_commstatus also produces most of the events consumed by  wait_on_mask(). Exceptions:
  *  - SERIAL_EV_RXFLAG: FIXME: once EventChar supported
  *
@@ -1272,25 +1261,14 @@ static BOOL get_commstatus(WINPR_COMM* pComm, SERIAL_STATUS* pCommstatus)
 
 	ZeroMemory(pCommstatus, sizeof(SERIAL_STATUS));
 
-	ULONG status = 0;
-	if (!get_modemstatus(pComm, &status))
-	{
-		if (!commstatus_error(pComm, "TIOCGICOUNT"))
-			goto fail;
-		/* Errors and events based on counters could not be
-		 * detected but keep on.
-		 */
-		SetLastError(0);
-		status = 0;
-	}
+	int status = 0;
+	if (!get_raw_modemstatus(pComm, &status))
+		goto fail;
 
 #if defined(WINPR_HAVE_COMM_COUNTERS)
-	if (ioctl(pComm->fd, TIOCGICOUNT, &currentCounters) < 0)
-	{
-		if (!commstatus_error(pComm, "TIOCGICOUNT"))
-			goto fail;
-		ZeroMemory(&currentCounters, sizeof(struct serial_icounter_struct));
-	}
+	if (!CommUpdateIOCount(pComm, FALSE))
+		goto fail;
+	currentCounters = pComm->counters;
 
 	/* NB: preferred below (currentCounters.* != pComm->counters.*) over (currentCounters.* >
 	 * pComm->counters.*) thinking the counters can loop */
@@ -1329,11 +1307,8 @@ static BOOL get_commstatus(WINPR_COMM* pComm, SERIAL_STATUS* pCommstatus)
 
 	/* HoldReasons */
 
-	/* TODO: SERIAL_TX_WAITING_FOR_CTS */
-
-	/* TODO: SERIAL_TX_WAITING_FOR_DSR */
-
-	/* TODO: SERIAL_TX_WAITING_FOR_DCD */
+	if (status & TIOCM_CTS)
+		pComm->PendingEvents |= SERIAL_EV_CTS;
 
 	/* TODO: SERIAL_TX_WAITING_FOR_XON */
 
@@ -1341,37 +1316,34 @@ static BOOL get_commstatus(WINPR_COMM* pComm, SERIAL_STATUS* pCommstatus)
 
 	/* TODO: SERIAL_TX_WAITING_XOFF_SENT */
 
+	if (status & TIOCM_SR)
+		pComm->PendingEvents |= SERIAL_EV_RXFLAG | SERIAL_EV_RXCHAR;
+
 	/* AmountInInQueue */
+	int available = 0;
+	if (!CommIoCtl(pComm, FIONREAD, &available))
+		goto fail;
 
 #if defined(__linux__)
-	if (ioctl(pComm->fd, TIOCINQ, &(pCommstatus->AmountInInQueue)) < 0)
-	{
-		if (!commstatus_error(pComm, "TIOCINQ"))
-			goto fail;
-	}
+	if (!CommIoCtl(pComm, TIOCINQ, &pCommstatus->AmountInInQueue))
+		goto fail;
 #endif
 
 	/*  AmountInOutQueue */
 
-	if (ioctl(pComm->fd, TIOCOUTQ, &(pCommstatus->AmountInOutQueue)) < 0)
-	{
-		if (!commstatus_error(pComm, "TIOCOUTQ"))
-			goto fail;
-	}
+	if (!CommIoCtl(pComm, TIOCOUTQ, &pCommstatus->AmountInOutQueue))
+		goto fail;
 
 	/*  BOOLEAN EofReceived; FIXME: once EofChar supported */
 
 	/*  BOOLEAN WaitForImmediate; TODO: once IOCTL_SERIAL_IMMEDIATE_CHAR fully supported */
 
 	/* other events based on counters */
-#if defined(WINPR_HAVE_COMM_COUNTERS)
-	if (currentCounters.rx != pComm->counters.rx)
-	{
-		pComm->PendingEvents |= SERIAL_EV_RXFLAG | SERIAL_EV_RXCHAR;
-	}
 
-	if ((currentCounters.tx != pComm->counters.tx) && /* at least a transmission occurred AND ...*/
-	    (pCommstatus->AmountInOutQueue == 0))         /* output buffer is now empty */
+	if (available > 0)
+		pComm->PendingEvents |= SERIAL_EV_RXFLAG | SERIAL_EV_RXCHAR;
+
+	if (pCommstatus->AmountInOutQueue == 0) /* output buffer is now empty */
 	{
 		pComm->PendingEvents |= SERIAL_EV_TXEMPTY;
 	}
@@ -1380,6 +1352,21 @@ static BOOL get_commstatus(WINPR_COMM* pComm, SERIAL_STATUS* pCommstatus)
 		/* FIXME: "now empty" from the specs is ambiguous, need to track previous completed
 		 * transmission? */
 		pComm->PendingEvents &= (uint32_t)~SERIAL_EV_TXEMPTY;
+	}
+
+#if defined(WINPR_HAVE_COMM_COUNTERS)
+	if (currentCounters.tx != pComm->counters.tx)
+	{
+		pComm->PendingEvents |= SERIAL_EV_TXEMPTY;
+	}
+	else
+	{
+		pComm->PendingEvents |= SERIAL_EV_TXEMPTY;
+	}
+
+	if (currentCounters.rx != pComm->counters.rx)
+	{
+		pComm->PendingEvents |= SERIAL_EV_RXFLAG | SERIAL_EV_RXCHAR;
 	}
 
 	if (currentCounters.cts != pComm->counters.cts)
@@ -1401,7 +1388,6 @@ static BOOL get_commstatus(WINPR_COMM* pComm, SERIAL_STATUS* pCommstatus)
 	{
 		pComm->PendingEvents |= SERIAL_EV_RING;
 	}
-
 	pComm->counters = currentCounters;
 #endif
 
@@ -1494,7 +1480,6 @@ static BOOL wait_on_mask(WINPR_COMM* pComm, ULONG* pOutputMask)
 		consume_event(pComm, pOutputMask, SERIAL_EV_RXCHAR);
 		consume_event(pComm, pOutputMask, SERIAL_EV_RXFLAG);
 		consume_event(pComm, pOutputMask, SERIAL_EV_TXEMPTY);
-		consume_event(pComm, pOutputMask, SERIAL_EV_CTS);
 		consume_event(pComm, pOutputMask, SERIAL_EV_DSR);
 		consume_event(pComm, pOutputMask, SERIAL_EV_RLSD);
 		consume_event(pComm, pOutputMask, SERIAL_EV_BREAK);
@@ -1527,31 +1512,14 @@ static BOOL wait_on_mask(WINPR_COMM* pComm, ULONG* pOutputMask)
 static BOOL set_break_on(WINPR_COMM* pComm)
 {
 	WINPR_ASSERT(pComm);
-	if (ioctl(pComm->fd, TIOCSBRK, NULL) < 0)
-	{
-		char ebuffer[256] = { 0 };
-		CommLog_Print(WLOG_WARN, "TIOCSBRK ioctl failed, errno=[%d] %s", errno,
-		              winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
-		SetLastError(ERROR_IO_DEVICE);
-		return FALSE;
-	}
-
-	return TRUE;
+	return CommIoCtl(pComm, TIOCSBRK, NULL);
 }
 
 static BOOL set_break_off(WINPR_COMM* pComm)
 {
 	WINPR_ASSERT(pComm);
-	if (ioctl(pComm->fd, TIOCCBRK, NULL) < 0)
-	{
-		char ebuffer[256] = { 0 };
-		CommLog_Print(WLOG_WARN, "TIOCSBRK ioctl failed, errno=[%d] %s", errno,
-		              winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
-		SetLastError(ERROR_IO_DEVICE);
-		return FALSE;
-	}
 
-	return TRUE;
+	return CommIoCtl(pComm, TIOCCBRK, NULL);
 }
 
 static BOOL set_xoff(WINPR_COMM* pComm)
@@ -1588,12 +1556,12 @@ static BOOL set_xon(WINPR_COMM* pComm)
 
 static BOOL get_dtrrts(WINPR_COMM* pComm, ULONG* pMask)
 {
-	UINT32 lines = 0;
+	int lines = 0;
 
 	WINPR_ASSERT(pComm);
 	WINPR_ASSERT(pMask);
 
-	if (!get_modemstatus(pComm, &lines))
+	if (!get_raw_modemstatus(pComm, &lines))
 		return FALSE;
 
 	*pMask = 0;
@@ -1643,7 +1611,14 @@ static BOOL immediate_char(WINPR_COMM* pComm, const UCHAR* pChar)
 static BOOL reset_device(WINPR_ATTR_UNUSED WINPR_COMM* pComm)
 {
 	/* http://msdn.microsoft.com/en-us/library/dn265347%28v=vs.85%29.aspx */
-	return TRUE;
+	WINPR_ASSERT(pComm);
+
+	pComm->XOnLimit = TTY_THRESHOLD_UNTHROTTLE;
+	pComm->XOffLimit = TTY_THRESHOLD_THROTTLE;
+
+	(void)CommUpdateIOCount(pComm, TRUE);
+
+	return CommIoCtl(pComm, TIOCMSET, 0);
 }
 
 static const SERIAL_DRIVER SerialSys = {

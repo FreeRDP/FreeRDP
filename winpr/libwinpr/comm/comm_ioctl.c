@@ -75,7 +75,8 @@ static BOOL s_CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID 
 
 	*lpBytesReturned = 0; /* will be adjusted if required ... */
 
-	CommLog_Print(WLOG_DEBUG, "CommDeviceIoControl: IoControlCode: 0x%0.8x", dwIoControlCode);
+	CommLog_Print(WLOG_DEBUG, "CommDeviceIoControl: IoControlCode: %s [0x%08" PRIx32 "]",
+	              _comm_serial_ioctl_name(dwIoControlCode), dwIoControlCode);
 
 	/* remoteSerialDriver to be use ...
 	 *
@@ -374,6 +375,7 @@ static BOOL s_CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID 
 				if (!pServerSerialDriver->get_modemstatus(pComm, pRegister))
 					return FALSE;
 
+				CommLog_Print(WLOG_DEBUG, "modem status 0x%08" PRIx32, *pRegister);
 				*lpBytesReturned = sizeof(ULONG);
 				return TRUE;
 			}
@@ -392,7 +394,9 @@ static BOOL s_CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID 
 					return FALSE;
 				}
 
-				return pServerSerialDriver->set_wait_mask(pComm, pWaitMask);
+				const BOOL rc = pServerSerialDriver->set_wait_mask(pComm, pWaitMask);
+				CommLog_Print(WLOG_DEBUG, "set_wait_mask 0x%08" PRIx32 " -> %d", *pWaitMask, rc);
+				return rc;
 			}
 			break;
 		}
@@ -412,6 +416,7 @@ static BOOL s_CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID 
 				if (!pServerSerialDriver->get_wait_mask(pComm, pWaitMask))
 					return FALSE;
 
+				CommLog_Print(WLOG_DEBUG, "get_wait_mask 0x%08" PRIx32, *pWaitMask);
 				*lpBytesReturned = sizeof(ULONG);
 				return TRUE;
 			}
@@ -430,14 +435,11 @@ static BOOL s_CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID 
 					return FALSE;
 				}
 
-				if (!pServerSerialDriver->wait_on_mask(pComm, pOutputMask))
-				{
-					*lpBytesReturned = sizeof(ULONG);
-					return FALSE;
-				}
+				const BOOL rc = pServerSerialDriver->wait_on_mask(pComm, pOutputMask);
 
 				*lpBytesReturned = sizeof(ULONG);
-				return TRUE;
+				CommLog_Print(WLOG_DEBUG, "wait_on_mask 0x%08" PRIx32 " -> %d", *pOutputMask, rc);
+				return rc;
 			}
 			break;
 		}
@@ -647,19 +649,19 @@ BOOL CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffe
 	{
 		/* This might be a hint for a bug, especially when result==TRUE */
 		CommLog_Print(WLOG_WARN,
-		              "lpBytesReturned=%" PRIu32 " and nOutBufferSize=%" PRIu32 " are different!",
-		              *lpBytesReturned, nOutBufferSize);
+		              "IoControlCode=[0x%08" PRIX32 "] %s: lpBytesReturned=%" PRIu32
+		              " and nOutBufferSize=%" PRIu32 " are different!",
+		              dwIoControlCode, _comm_serial_ioctl_name(dwIoControlCode), *lpBytesReturned,
+		              nOutBufferSize);
 	}
 
 	if (pComm->permissive)
 	{
 		if (!result)
 		{
-			CommLog_Print(
-			    WLOG_WARN,
-			    "[permissive]: whereas it failed, made to succeed IoControlCode=[0x%08" PRIX32
-			    "] %s, last-error: 0x%08" PRIX32 "",
-			    dwIoControlCode, _comm_serial_ioctl_name(dwIoControlCode), GetLastError());
+			CommLog_Print(WLOG_WARN,
+			              "[permissive]: IoControlCode=[0x%08" PRIX32 "] %s failed, ignoring",
+			              dwIoControlCode, _comm_serial_ioctl_name(dwIoControlCode));
 		}
 
 		return TRUE; /* always! */
@@ -668,50 +670,32 @@ BOOL CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffe
 	return result;
 }
 
-int _comm_ioctl_tcsetattr(int fd, int optional_actions, const struct termios* termios_p)
+int comm_ioctl_tcsetattr(int fd, int optional_actions, const struct termios* termios_p)
 {
-	int result = 0;
 	struct termios currentState = { 0 };
-
-	if ((result = tcsetattr(fd, optional_actions, termios_p)) < 0)
+	size_t count = 0;
+	do
 	{
-		CommLog_Print(WLOG_WARN, "tcsetattr failure, errno: %d", errno);
-		return result;
-	}
-
-	/* NB: tcsetattr() can succeed even if not all changes have been applied. */
-	if ((result = tcgetattr(fd, &currentState)) < 0)
-	{
-		CommLog_Print(WLOG_WARN, "tcgetattr failure, errno: %d", errno);
-		return result;
-	}
-
-	// NOLINTNEXTLINE(bugprone-suspicious-memory-comparison,cert-exp42-c,cert-flp37-c)
-	if (memcmp(&currentState, termios_p, sizeof(struct termios)) != 0)
-	{
-		CommLog_Print(WLOG_DEBUG,
-		              "all termios parameters are not set yet, doing a second attempt...");
-		if ((result = tcsetattr(fd, optional_actions, termios_p)) < 0)
+		const int src = tcsetattr(fd, optional_actions, termios_p);
+		if (src < 0)
 		{
-			CommLog_Print(WLOG_WARN, "2nd tcsetattr failure, errno: %d", errno);
-			return result;
+			char buffer[64] = { 0 };
+			CommLog_Print(WLOG_WARN, "[%" PRIuz "] tcsetattr failure, errno: %s [%d]", count,
+			              winpr_strerror(errno, buffer, sizeof(buffer)), errno);
+			return src;
 		}
 
-		ZeroMemory(&currentState, sizeof(struct termios));
-		if ((result = tcgetattr(fd, &currentState)) < 0)
+		/* NB: tcsetattr() can succeed even if not all changes have been applied. */
+		const int rrc = tcgetattr(fd, &currentState);
+		if (rrc < 0)
 		{
-			CommLog_Print(WLOG_WARN, "tcgetattr failure, errno: %d", errno);
-			return result;
+			char buffer[64] = { 0 };
+			CommLog_Print(WLOG_WARN, "[%" PRIuz "] tcgetattr failure, errno: %s [%d]", count,
+			              winpr_strerror(errno, buffer, sizeof(buffer)), errno);
+			return rrc;
 		}
-
-		// NOLINTNEXTLINE(bugprone-suspicious-memory-comparison,cert-exp42-c,cert-flp37-c)
-		if (memcmp(&currentState, termios_p, sizeof(struct termios)) != 0)
-		{
-			CommLog_Print(WLOG_WARN,
-			              "Failure: all termios parameters are still not set on a second attempt");
-			return -1;
-		}
-	}
+		// NOLINTNEXTLINE(bugprone-suspicious-memory-comparison)
+	} while ((memcmp(&currentState, termios_p, sizeof(struct termios)) != 0) && (count++ < 2));
 
 	return 0;
 }

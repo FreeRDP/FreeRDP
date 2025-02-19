@@ -193,6 +193,12 @@ static UINT serial_process_irp_create(SERIAL_DEVICE* serial, IRP* irp)
 	irp->IoStatus = STATUS_SUCCESS;
 	WLog_Print(serial->log, WLOG_DEBUG, "%s (DeviceId: %" PRIu32 ", FileId: %" PRIu32 ") created.",
 	           serial->device.name, irp->device->id, irp->FileId);
+
+	DWORD BytesReturned = 0;
+	if (!CommDeviceIoControl(serial->hComm, IOCTL_SERIAL_RESET_DEVICE, NULL, 0, NULL, 0,
+	                         &BytesReturned, NULL))
+		goto error_handle;
+
 error_handle:
 	Stream_Write_UINT32(irp->output, irp->FileId); /* FileId (4 bytes) */
 	Stream_Write_UINT8(irp->output, 0);            /* Information (1 byte) */
@@ -529,6 +535,9 @@ error_out:
 
 	if (error && data->serial->rdpcontext)
 		setChannelError(data->serial->rdpcontext, error, "irp_thread_func reported an error");
+
+	if (error)
+		data->irp->Discard(data->irp);
 
 	/* NB: At this point, the server might already being reusing
 	 * the CompletionId whereas the thread is not yet

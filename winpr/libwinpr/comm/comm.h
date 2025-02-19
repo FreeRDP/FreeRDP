@@ -77,6 +77,12 @@ struct winpr_comm
 
 	BYTE eventChar;
 	/* NB: CloseHandle() has to free resources */
+	ULONG XOnLimit;
+	ULONG XOffLimit;
+
+#if defined(WINPR_HAVE_COMM_COUNTERS)
+	BOOL TIOCGICOUNTSupported;
+#endif
 };
 
 typedef struct winpr_comm WINPR_COMM;
@@ -106,6 +112,12 @@ BOOL CommIsHandled(HANDLE handle);
 BOOL CommIsHandleValid(HANDLE handle);
 BOOL CommCloseHandle(HANDLE handle);
 const HANDLE_CREATOR* GetCommHandleCreator(void);
+
+#define CommIoCtl(pComm, ctl, data) \
+	CommIoCtl_int((pComm), (ctl), (data), __FILE__, __func__, __LINE__)
+BOOL CommIoCtl_int(WINPR_COMM* pComm, unsigned long int ctl, void* data, const char* file,
+                   const char* fkt, size_t line);
+BOOL CommUpdateIOCount(HANDLE handle, BOOL checkSupportStatus);
 
 #if defined(WINPR_HAVE_SYS_EVENTFD_H)
 #ifndef WITH_EVENTFD_READ_WRITE
