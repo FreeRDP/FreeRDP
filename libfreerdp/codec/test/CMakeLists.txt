@@ -10,6 +10,7 @@ set(TESTS
     TestFreeRDPCodecZGfx.c
     TestFreeRDPCodecPlanar.c
     TestFreeRDPCodecCopy.c
+    TestFreeRDPCodecCursor.c
     TestFreeRDPCodecClear.c
     TestFreeRDPCodecInterleaved.c
     TestFreeRDPCodecProgressive.c
@@ -24,11 +25,45 @@ if(BUILD_TESTING_INTERNAL)
   list(APPEND TESTS TestFreeRDPCodecMppc.c TestFreeRDPCodecNCrush.c TestFreeRDPCodecXCrush.c)
 endif()
 
+file(GLOB CURSOR_TESTCASES_C LIST_DIRECTORIES false RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "cursor/*.c")
+file(GLOB CURSOR_TESTCASES_H LIST_DIRECTORIES false RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "cursor/*.h")
+
+# Create a combined header for all testcases
+set(TESTCASE_HEADER "${CMAKE_CURRENT_BINARY_DIR}/testcases.h")
+write_file(${TESTCASE_HEADER} "#pragma once\n")
+foreach(header ${CURSOR_TESTCASES_H})
+  write_file(${TESTCASE_HEADER} "#include <${header}>" APPEND)
+endforeach()
+
+write_file(${TESTCASE_HEADER} "\nstatic const gdiPalette* testcase_palette[] = {" APPEND)
+foreach(header ${CURSOR_TESTCASES_H})
+  get_filename_component(NAME ${header} NAME_WE)
+  write_file(${TESTCASE_HEADER} "&${NAME}_palette," APPEND)
+endforeach()
+write_file(${TESTCASE_HEADER} "};\n" APPEND)
+
+write_file(${TESTCASE_HEADER} "static const rdpPointer* testcase_pointer[] = {" APPEND)
+foreach(header ${CURSOR_TESTCASES_H})
+  get_filename_component(NAME ${header} NAME_WE)
+  write_file(${TESTCASE_HEADER} "&${NAME}_pointer," APPEND)
+endforeach()
+write_file(${TESTCASE_HEADER} "};\n" APPEND)
+
+write_file(${TESTCASE_HEADER} "static const uint8_t* testcase_image_bgra32[] = {" APPEND)
+foreach(header ${CURSOR_TESTCASES_H})
+  get_filename_component(NAME ${header} NAME_WE)
+  write_file(${TESTCASE_HEADER} "${NAME}_image_bgra32," APPEND)
+endforeach()
+write_file(${TESTCASE_HEADER} "};" APPEND)
+
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
+
 create_test_sourcelist(SRCS ${DRIVER} ${TESTS})
 
 add_compile_definitions(CMAKE_CURRENT_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
 add_compile_definitions(CMAKE_CURRENT_BINARY_DIR="${CMAKE_CURRENT_BINARY_DIR}")
-add_executable(${MODULE_NAME} ${SRCS})
+add_executable(${MODULE_NAME} ${SRCS} ${CURSOR_TESTCASES_H} ${CURSOR_TESTCASES_C} ${TESTCASE_HEADER})
 
 target_link_libraries(${MODULE_NAME} freerdp winpr)
 
