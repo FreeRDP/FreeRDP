@@ -445,6 +445,19 @@ static BOOL freerdp_image_copy_from_pointer_data_xbpp(
 			UINT32 pixelFormat = 0;
 			UINT32 color = 0;
 
+			andPixel = 0;
+
+			if (andMask)
+			{
+				andPixel = (*andBits & andBit) ? 1 : 0;
+
+				if (!(andBit >>= 1))
+				{
+					andBits++;
+					andBit = 0x80;
+				}
+			}
+
 			if (xorBpp == 32)
 			{
 				pixelFormat = PIXEL_FORMAT_BGRA32;
@@ -464,28 +477,29 @@ static BOOL freerdp_image_copy_from_pointer_data_xbpp(
 			{
 				pixelFormat = PIXEL_FORMAT_BGR24;
 				xorPixel = FreeRDPReadColor_int(xorBits, pixelFormat);
+
+				if (andPixel)
+				{
+					if (xorPixel == 0x00FFFFFFUL)
+						xorPixel |= 0xFF000000UL;
+					else
+						xorPixel = 0;
+				}
+				else
+					xorPixel |= 0xFF000000UL;
+
+				// We need a transparent default alpha value, so use a different format here
+				pixelFormat = PIXEL_FORMAT_ABGR32;
 			}
 
 			xorPixel = FreeRDPConvertColor(xorPixel, pixelFormat, PIXEL_FORMAT_ARGB32, palette);
 			xorBits += xorBytesPerPixel;
-			andPixel = 0;
-
-			if (andMask)
-			{
-				andPixel = (*andBits & andBit) ? 1 : 0;
-
-				if (!(andBit >>= 1))
-				{
-					andBits++;
-					andBit = 0x80;
-				}
-			}
 
 			if (andPixel)
 			{
-				if (xorPixel == 0xFF000000) /* black -> transparent */
+				if (xorPixel == 0xFF000000UL) /* black -> transparent */
 					xorPixel = 0x00000000;
-				else if (xorPixel == 0xFFFFFFFF) /* white -> inverted */
+				else if (xorPixel == 0xFFFFFFFFUL) /* white -> inverted */
 					xorPixel = freerdp_image_inverted_pointer_color(x, y, PIXEL_FORMAT_ARGB32);
 			}
 
