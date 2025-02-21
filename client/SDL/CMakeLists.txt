@@ -64,7 +64,8 @@ find_package(SDL3)
 
 cmake_dependent_option(WITH_CLIENT_SDL_VERSIONED "append sdl version to client binaries" OFF WITH_CLIENT_SDL OFF)
 cmake_dependent_option(
-  WITH_CLIENT_SDL2 "[experimental] build experimental SDL2 client" ${SDL2_FOUND} WITH_CLIENT_SDL OFF
+  WITH_CLIENT_SDL2 "[deprecated,experimental] build deprecated,experimental SDL2 client" ${SDL2_FOUND} WITH_CLIENT_SDL
+  OFF
 )
 cmake_dependent_option(
   WITH_CLIENT_SDL3 "[experimental] build experimental SDL3 client" ${SDL3_FOUND} WITH_CLIENT_SDL OFF
