@@ -43,7 +43,15 @@ function build {
 
 # Run the main program.
 common_parse_arguments $@
-common_update "$SCM_URL/$SCM_TAG" $SCM_TAG $BUILD_SRC $SCM_HASH
+
+SCM_MOD_TAG=$SCM_TAG
+
+# Workaround for naming of OpenSSL releases changing with every major version
+case $SCM_TAG in OpenSSL_*)
+    SCM_MOD_TAG=${SCM_TAG//OpenSSL_/openssl-}
+    SCM_MOD_TAG=${SCM_MOD_TAG//_/.}
+esac
+common_update "$SCM_URL/$SCM_TAG" $SCM_MOD_TAG $BUILD_SRC $SCM_HASH
 
 ORG_PATH=$PATH
 for ARCH in $BUILD_ARCH
