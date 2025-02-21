@@ -1,5 +1,11 @@
 # codec
 
+option(WITH_CURSOR_DUMP "Dump mouse cursor data to binary directory" OFF)
+if(WITH_CURSOR_DUMP)
+  add_compile_definitions(WITH_CURSOR_DUMP)
+  add_compile_definitions(CURSOR_DUMP_DIR="${CMAKE_CURRENT_BINARY_DIR}")
+endif()
+
 set(CODEC_SRCS
     bulk.c
     bulk.h

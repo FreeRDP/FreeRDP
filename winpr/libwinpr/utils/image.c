@@ -624,6 +624,7 @@ static void* winpr_convert_to_jpeg(WINPR_ATTR_UNUSED const void* data,
 	*pSize = 0;
 
 #if !defined(WINPR_UTILS_IMAGE_JPEG)
+	WLog_WARN(TAG, "JPEG not supported in this build");
 	return NULL;
 #else
 	BYTE* outbuffer = NULL;
@@ -697,6 +698,7 @@ SSIZE_T winpr_convert_from_jpeg(WINPR_ATTR_UNUSED const BYTE* comp_data,
 	WINPR_ASSERT(ppdecomp_data);
 
 #if !defined(WINPR_UTILS_IMAGE_JPEG)
+	WLog_WARN(TAG, "JPEG not supported in this build");
 	return -1;
 #else
 	struct jpeg_decompress_struct cinfo = { 0 };
@@ -759,6 +761,7 @@ static void* winpr_convert_to_webp(WINPR_ATTR_UNUSED const void* data,
 	*pSize = 0;
 
 #if !defined(WINPR_UTILS_IMAGE_WEBP)
+	WLog_WARN(TAG, "WEBP not supported in this build");
 	return NULL;
 #else
 	size_t dstSize = 0;
@@ -806,6 +809,7 @@ SSIZE_T winpr_convert_from_webp(WINPR_ATTR_UNUSED const BYTE* comp_data,
 	*bpp = 0;
 	*ppdecomp_data = NULL;
 #if !defined(WINPR_UTILS_IMAGE_WEBP)
+	WLog_WARN(TAG, "WEBP not supported in this build");
 	return -1;
 #else
 
@@ -1081,6 +1085,7 @@ static void* winpr_convert_to_png(WINPR_ATTR_UNUSED const void* data, WINPR_ATTR
 		return dst;
 	}
 #else
+	WLog_WARN(TAG, "PNG not supported in this build");
 	return NULL;
 #endif
 }
@@ -1103,6 +1108,7 @@ SSIZE_T winpr_convert_from_png(WINPR_ATTR_UNUSED const BYTE* comp_data,
 	return lodepng_decode32((unsigned char**)ppdecomp_data, width, height, comp_data,
 	                        comp_data_bytes);
 #else
+	WLog_WARN(TAG, "PNG not supported in this build");
 	return -1;
 #endif
 }
