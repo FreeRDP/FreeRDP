@@ -790,17 +790,53 @@ BOOL IsProcessorFeaturePresent(DWORD ProcessorFeature)
 	BOOL ret = FALSE;
 #if defined(ANDROID)
 	const uint64_t features = android_getCpuFeatures();
+	const AndroidCpuFamily family = android_getCpuFamily();
+	const BOOL isArm = (family == ANDROID_CPU_FAMILY_ARM) || (family == ANDROID_CPU_FAMILY_ARM64);
+	const BOOL isX86 = (family == ANDROID_CPU_FAMILY_X86) || (family == ANDROID_CPU_FAMILY_X86_64);
 
-	switch (ProcessorFeature)
+	if (isX86)
 	{
-		case PF_ARM_NEON_INSTRUCTIONS_AVAILABLE:
-		case PF_ARM_NEON:
-			return features & ANDROID_CPU_ARM_FEATURE_NEON;
-
-		default:
-			WLog_WARN(TAG, "feature 0x%08" PRIx32 " check not implemented", ProcessorFeature);
-			return FALSE;
+		switch (ProcessorFeature)
+		{
+			case PF_MMX_INSTRUCTIONS_AVAILABLE:
+			case PF_XMMI_INSTRUCTIONS_AVAILABLE:
+			case PF_XMMI64_INSTRUCTIONS_AVAILABLE:
+			case PF_3DNOW_INSTRUCTIONS_AVAILABLE:
+			case PF_SSE3_INSTRUCTIONS_AVAILABLE:
+				return TRUE;
+			case PF_SSSE3_INSTRUCTIONS_AVAILABLE:
+				return features & ANDROID_CPU_X86_FEATURE_SSSE3;
+			case PF_SSE4_1_INSTRUCTIONS_AVAILABLE:
+				return features & ANDROID_CPU_X86_FEATURE_SSE4_1;
+			case PF_SSE4_2_INSTRUCTIONS_AVAILABLE:
+				return features & ANDROID_CPU_X86_FEATURE_SSE4_2;
+			case PF_AVX_INSTRUCTIONS_AVAILABLE:
+				return features & ANDROID_CPU_X86_FEATURE_AVX;
+			case PF_AVX2_INSTRUCTIONS_AVAILABLE:
+				return features & ANDROID_CPU_X86_FEATURE_AVX2;
+			case PF_AVX512F_INSTRUCTIONS_AVAILABLE:
+			default:
+				WLog_WARN(TAG, "feature 0x%08" PRIx32 " check not implemented", ProcessorFeature);
+				return FALSE;
+		}
 	}
+
+	if (isArm)
+	{
+		switch (ProcessorFeature)
+		{
+			case PF_ARM_NEON_INSTRUCTIONS_AVAILABLE:
+			case PF_ARM_NEON:
+				return features & ANDROID_CPU_ARM_FEATURE_NEON;
+
+			default:
+				WLog_WARN(TAG, "feature 0x%08" PRIx32 " check not implemented", ProcessorFeature);
+				return FALSE;
+		}
+	}
+
+	WLog_WARN(TAG, "Unsupported Android CPU family 0x%08" PRIx32, family);
+	return FALSE;
 
 #elif defined(_M_ARM) || defined(_M_ARM64)
 #ifdef __linux__
@@ -869,6 +905,19 @@ BOOL IsProcessorFeaturePresent(DWORD ProcessorFeature)
 				ret = TRUE;
 
 			break;
+		case PF_MMX_INSTRUCTIONS_AVAILABLE:
+		case PF_XMMI_INSTRUCTIONS_AVAILABLE:
+		case PF_XMMI64_INSTRUCTIONS_AVAILABLE:
+		case PF_3DNOW_INSTRUCTIONS_AVAILABLE:
+		case PF_SSE3_INSTRUCTIONS_AVAILABLE:
+		case PF_SSSE3_INSTRUCTIONS_AVAILABLE:
+		case PF_SSE4_1_INSTRUCTIONS_AVAILABLE:
+		case PF_SSE4_2_INSTRUCTIONS_AVAILABLE:
+		case PF_AVX_INSTRUCTIONS_AVAILABLE:
+		case PF_AVX2_INSTRUCTIONS_AVAILABLE:
+		case PF_AVX512F_INSTRUCTIONS_AVAILABLE:
+			ret = FALSE;
+			break;
 		case PF_ARM_V8_INSTRUCTIONS_AVAILABLE:
 		case PF_ARM_V8_CRYPTO_INSTRUCTIONS_AVAILABLE:
 		case PF_ARM_V8_CRC32_INSTRUCTIONS_AVAILABLE:
@@ -885,6 +934,19 @@ BOOL IsProcessorFeaturePresent(DWORD ProcessorFeature)
 
 	switch (ProcessorFeature)
 	{
+		case PF_MMX_INSTRUCTIONS_AVAILABLE:
+		case PF_XMMI_INSTRUCTIONS_AVAILABLE:
+		case PF_XMMI64_INSTRUCTIONS_AVAILABLE:
+		case PF_3DNOW_INSTRUCTIONS_AVAILABLE:
+		case PF_SSE3_INSTRUCTIONS_AVAILABLE:
+		case PF_SSSE3_INSTRUCTIONS_AVAILABLE:
+		case PF_SSE4_1_INSTRUCTIONS_AVAILABLE:
+		case PF_SSE4_2_INSTRUCTIONS_AVAILABLE:
+		case PF_AVX_INSTRUCTIONS_AVAILABLE:
+		case PF_AVX2_INSTRUCTIONS_AVAILABLE:
+		case PF_AVX512F_INSTRUCTIONS_AVAILABLE:
+			ret = FALSE;
+			break;
 		case PF_ARM_NEON_INSTRUCTIONS_AVAILABLE:
 		case PF_ARM_NEON:
 #ifdef __ARM_NEON

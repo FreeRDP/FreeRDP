@@ -6220,7 +6220,7 @@ void freerdp_client_warn_deprecated(int argc, char* argv[])
 		return;
 
 	WLog_Print_unchecked(log, log_level, "[deprecated] %s client has been deprecated", app);
-	WLog_Print_unchecked(log, log_level, "As replacement there is a SDL based client available.");
+	WLog_Print_unchecked(log, log_level, "As replacement there is a SDL3 based client available.");
 	WLog_Print_unchecked(
 	    log, log_level,
 	    "If you are interested in keeping %s alive get in touch with the developers", app);

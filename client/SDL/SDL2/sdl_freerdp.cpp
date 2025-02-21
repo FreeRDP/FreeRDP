@@ -1644,6 +1644,7 @@ int main(int argc, char* argv[])
 	RDP_CLIENT_ENTRY_POINTS clientEntryPoints = {};
 
 	freerdp_client_warn_experimental(argc, argv);
+	freerdp_client_warn_deprecated(argc, argv);
 	WLog_WARN(SDL_TAG,
 	          "SDL2 client does not support clipboard! Only SDL3 client has (partial) support");
 

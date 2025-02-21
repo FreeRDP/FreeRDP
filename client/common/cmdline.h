@@ -267,6 +267,9 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  " * layout: set the keybouard layout announced to the server\n"
 	  " * lang: set the keyboard language identifier sent to the server\n"
 	  " * fn-key: Function key value\n"
+	  " * remap: RDP scancode to another one. Use /list:kbd-scancode to get the mapping. Example: "
+	  "To switch "
+	  "'a' and 's' on a US keyboard: /kbd:remap:0x1e=0x1f,remap:0x1f=0x1e\n"
 	  " * pipe: Name of a named pipe that can be used to type text into the RDP session\n" },
 #if defined(WITH_FREERDP_DEPRECATED_COMMANDLINE)
 	{ "kbd-lang", COMMAND_LINE_VALUE_REQUIRED, "0x<id>", NULL, NULL, -1, NULL,
