@@ -68,7 +68,7 @@ int TestFreeRDPCodecCursor(WINPR_ATTR_UNUSED int argc, WINPR_ATTR_UNUSED char* a
 	int rc = 0;
 	for (size_t x = 0; x < palette_len; x++)
 	{
-		const rdpPalette* palette = testcase_palette[x];
+		const gdiPalette* palette = testcase_palette[x];
 		const rdpPointer* pointer = testcase_pointer[x];
 		const uint8_t* bmp = testcase_image_bgra32[x];
 
