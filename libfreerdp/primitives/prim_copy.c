@@ -237,7 +237,7 @@ pstatus_t generic_image_copy_no_overlap_convert(
 		    &pDstData[dstVMultiplier * (y + nYDst) * nDstStep + dstVOffset];
 
 		SSIZE_T x = 0;
-		WINPR_PRAGMA_UNROLL_LOOP
+		// WINPR_PRAGMA_UNROLL_LOOP
 		for (; x < width; x++)
 		{
 			const UINT32 color = FreeRDPReadColor_int(&srcLine[(x + nXSrc) * srcByte], SrcFormat);

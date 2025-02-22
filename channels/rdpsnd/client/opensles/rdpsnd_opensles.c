@@ -335,11 +335,9 @@ static int rdpsnd_opensles_parse_addin_args(rdpsndDevicePlugin* device, ADDIN_AR
 FREERDP_ENTRY_POINT(UINT VCAPITYPE opensles_freerdp_rdpsnd_client_subsystem_entry(
     PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints))
 {
-	ADDIN_ARGV* args;
-	rdpsndopenslesPlugin* opensles;
-	UINT error;
+	UINT error = ERROR_INTERNAL_ERROR;
 	DEBUG_SND("pEntryPoints=%p", (void*)pEntryPoints);
-	opensles = (rdpsndopenslesPlugin*)calloc(1, sizeof(rdpsndopenslesPlugin));
+	rdpsndopenslesPlugin* opensles = (rdpsndopenslesPlugin*)calloc(1, sizeof(rdpsndopenslesPlugin));
 
 	if (!opensles)
 		return CHANNEL_RC_NO_MEMORY;
@@ -352,7 +350,7 @@ FREERDP_ENTRY_POINT(UINT VCAPITYPE opensles_freerdp_rdpsnd_client_subsystem_entr
 	opensles->device.Play = rdpsnd_opensles_play;
 	opensles->device.Close = rdpsnd_opensles_close;
 	opensles->device.Free = rdpsnd_opensles_free;
-	args = pEntryPoints->args;
+	const ADDIN_ARGV* args = pEntryPoints->args;
 	rdpsnd_opensles_parse_addin_args((rdpsndDevicePlugin*)opensles, args);
 
 	if (!opensles->device_name)

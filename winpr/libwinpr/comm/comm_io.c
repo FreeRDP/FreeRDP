@@ -226,7 +226,10 @@ BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 	 * there is no eventfd_read() but this not the case. */
 	/* discard a possible and no more relevant event */
 #if defined(WINPR_HAVE_SYS_EVENTFD_H)
-	eventfd_read(pComm->fd_read_event, NULL);
+	{
+		eventfd_t val = 0;
+		(void)eventfd_read(pComm->fd_read_event, &val);
+	}
 #endif
 	biggestFd = pComm->fd_read;
 
@@ -400,7 +403,10 @@ BOOL CommWriteFile(HANDLE hDevice, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite
 	/* discard a possible and no more relevant event */
 
 #if defined(WINPR_HAVE_SYS_EVENTFD_H)
-	eventfd_read(pComm->fd_write_event, NULL);
+	{
+		eventfd_t val = 0;
+		(void)eventfd_read(pComm->fd_write_event, &val);
+	}
 #endif
 
 	/* ms */
