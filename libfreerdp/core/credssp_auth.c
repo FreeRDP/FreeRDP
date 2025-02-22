@@ -207,7 +207,7 @@ static BOOL credssp_auth_client_init_cred_attributes(rdpCredsspAuth* auth)
 		SSIZE_T str_size = 0;
 
 		str_size = ConvertUtf8ToWChar(auth->kerberosSettings.kdcUrl, NULL, 0);
-		if ((str_size <= 0) || (str_size <= UINT16_MAX / 2))
+		if ((str_size <= 0) || (str_size >= UINT16_MAX / 2))
 			return FALSE;
 		str_size++;
 
