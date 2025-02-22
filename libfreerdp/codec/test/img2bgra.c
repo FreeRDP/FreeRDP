@@ -84,7 +84,7 @@ static int dump_data(const wImage* img, const char* file)
 	count = fprintf(fp, "static const uint8_t img_data[] ={\n");
 	if (count < 0)
 		goto fail;
-	count = dump_data_hex(fp, img->data, img->height * img->scanline);
+	count = dump_data_hex(fp, img->data, 1ULL * img->height * img->scanline);
 	if (count < 0)
 		goto fail;
 	count = fprintf(fp, "};\n");
