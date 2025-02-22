@@ -295,10 +295,8 @@ static UINT audin_opensles_parse_addin_args(AudinOpenSLESDevice* device, const A
 FREERDP_ENTRY_POINT(UINT VCAPITYPE opensles_freerdp_audin_client_subsystem_entry(
     PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEntryPoints))
 {
-	const ADDIN_ARGV* args;
-	AudinOpenSLESDevice* opensles;
-	UINT error;
-	opensles = (AudinOpenSLESDevice*)calloc(1, sizeof(AudinOpenSLESDevice));
+	UINT error = ERROR_INTERNAL_ERROR;
+	AudinOpenSLESDevice* opensles = (AudinOpenSLESDevice*)calloc(1, sizeof(AudinOpenSLESDevice));
 
 	if (!opensles)
 	{
@@ -313,7 +311,7 @@ FREERDP_ENTRY_POINT(UINT VCAPITYPE opensles_freerdp_audin_client_subsystem_entry
 	opensles->iface.Close = audin_opensles_close;
 	opensles->iface.Free = audin_opensles_free;
 	opensles->rdpcontext = pEntryPoints->rdpcontext;
-	args = pEntryPoints->args;
+	const ADDIN_ARGV* args = pEntryPoints->args;
 
 	if ((error = audin_opensles_parse_addin_args(opensles, args)))
 	{

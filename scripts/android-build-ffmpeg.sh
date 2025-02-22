@@ -103,11 +103,15 @@ function build {
     set_toolchain_clang_paths
     LDFLAGS=$(get_arch_specific_ldflags)
 
-	PATH=$ANDROID_NDK:$PATH
+    CARCH=$TARGET_ARCH
+    if [ "$CARCH" == "x86_64" ]; then
+        CARCH="x86-64"
+    fi
+    PATH=$ANDROID_NDK:$PATH
     common_run ./configure \
         --cross-prefix="${BUILD_HOST}-" \
         --sysroot="${ANDROID_NDK}/toolchains/llvm/prebuilt/${TOOLCHAIN}/sysroot" \
-        --arch="${TARGET_ARCH}" \
+        --arch="${CARCH}" \
         --cpu="${TARGET_CPU}" \
         --cc="${CC}" \
         --cxx="${CXX}" \
@@ -122,6 +126,7 @@ function build {
         ${ARCH_OPTIONS} \
         --enable-cross-compile \
         --enable-pic \
+        --enable-lto \
         --enable-jni \
 	--enable-mediacodec \
         --enable-shared \
