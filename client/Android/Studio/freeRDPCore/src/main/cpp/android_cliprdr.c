@@ -369,22 +369,17 @@ static UINT
 android_cliprdr_server_format_data_response(CliprdrClientContext* cliprdr,
                                             const CLIPRDR_FORMAT_DATA_RESPONSE* formatDataResponse)
 {
-	BYTE* data;
-	UINT32 size;
-	UINT32 formatId;
 	CLIPRDR_FORMAT* format = NULL;
-	androidContext* afc;
-	freerdp* instance;
 
 	if (!cliprdr || !formatDataResponse)
 		return ERROR_INVALID_PARAMETER;
 
-	afc = (androidContext*)cliprdr->custom;
+	androidContext* afc = (androidContext*)cliprdr->custom;
 
 	if (!afc)
 		return ERROR_INVALID_PARAMETER;
 
-	instance = ((rdpContext*)afc)->instance;
+	freerdp* instance = ((rdpContext*)afc)->instance;
 
 	if (!instance)
 		return ERROR_INVALID_PARAMETER;
@@ -401,12 +396,11 @@ android_cliprdr_server_format_data_response(CliprdrClientContext* cliprdr,
 		return ERROR_INTERNAL_ERROR;
 	}
 
+	UINT32 formatId = format->formatId;
 	if (format->formatName)
 		formatId = ClipboardRegisterFormat(afc->clipboard, format->formatName);
-	else
-		formatId = format->formatId;
 
-	size = formatDataResponse->common.dataLen;
+	size_t size = formatDataResponse->common.dataLen;
 
 	if (!ClipboardSetData(afc->clipboard, formatId, formatDataResponse->requestedFormatData, size))
 		return ERROR_INTERNAL_ERROR;
@@ -415,14 +409,12 @@ android_cliprdr_server_format_data_response(CliprdrClientContext* cliprdr,
 
 	if ((formatId == CF_TEXT) || (formatId == CF_UNICODETEXT))
 	{
-		JNIEnv* env;
-		jstring jdata;
-		jboolean attached;
+		JNIEnv* env = NULL;
 		formatId = ClipboardRegisterFormat(afc->clipboard, "text/plain");
-		data = (void*)ClipboardGetData(afc->clipboard, formatId, &size);
-		attached = jni_attach_thread(&env);
+		char* data = (char*)ClipboardGetData(afc->clipboard, formatId, &size);
+		jboolean attached = jni_attach_thread(&env);
 		size = strnlen(data, size);
-		jdata = jniNewStringUTF(env, data, size);
+		jstring jdata = jniNewStringUTF(env, data, size);
 		freerdp_callback("OnRemoteClipboardChanged", "(JLjava/lang/String;)V", (jlong)instance,
 		                 jdata);
 		(*env)->DeleteLocalRef(env, jdata);
