@@ -472,7 +472,16 @@ static BOOL ffmpeg_encode_frame(AVCodecContext* WINPR_RESTRICT context, AVFrame*
 	if (ret < 0)
 	{
 		const char* err = av_err2str(ret);
+		// Ignore errors: AAC encoder sometimes returns -22
+		// The log message from ffmpeg is '[aac @ 0x7f140db753c0] Input contains (near) NaN/+-Inf'
+		if (ret == AVERROR(EINVAL))
+		{
+			WLog_DBG(TAG, "Error submitting the packet to the encoder %s [%d], ignoring", err, ret);
+			return TRUE;
+		}
+
 		WLog_ERR(TAG, "Error submitting the packet to the encoder %s [%d]", err, ret);
+
 		return FALSE;
 	}
 
