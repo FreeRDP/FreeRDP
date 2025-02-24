@@ -193,7 +193,7 @@ BOOL run_action_script(xfContext* xfc, const char* what, const char* arg, fn_act
 
 	if (!xfc->actionScriptExists)
 	{
-		WLog_WARN(TAG, "[ActionScript] no such script '%s'", ActionScript);
+		WLog_DBG(TAG, "[ActionScript] no such script '%s'", ActionScript);
 		goto fail;
 	}
 
