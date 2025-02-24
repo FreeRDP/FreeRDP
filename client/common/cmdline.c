@@ -2159,15 +2159,20 @@ static int parse_tls_enforce(rdpSettings* settings, const char* Value)
 #endif
 		};
 
+		const struct map_t* found = NULL;
 		for (size_t x = 0; x < ARRAYSIZE(map); x++)
 		{
 			const struct map_t* cur = &map[x];
 			if (option_equals(cur->name, Value))
 			{
-				version = cur->version;
+				found = cur;
 				break;
 			}
 		}
+
+		if (!found)
+			return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+		version = found->version;
 	}
 
 	if (!(freerdp_settings_set_uint16(settings, FreeRDP_TLSMinVersion, version) &&
@@ -2182,35 +2187,35 @@ static int parse_tls_cipher_options(rdpSettings* settings, const COMMAND_LINE_AR
 	CommandLineSwitchStart(arg) CommandLineSwitchCase(arg, "tls")
 	{
 		if (option_starts_with("ciphers:", arg->Value))
-			rc = parse_tls_ciphers(settings, &arg->Value[8]);
+			rc = fail_at(arg, parse_tls_ciphers(settings, &arg->Value[8]));
 		else if (option_starts_with("seclevel:", arg->Value))
-			rc = parse_tls_seclevel(settings, &arg->Value[9]);
+			rc = fail_at(arg, parse_tls_seclevel(settings, &arg->Value[9]));
 		else if (option_starts_with("secrets-file:", arg->Value))
-			rc = parse_tls_secrets_file(settings, &arg->Value[13]);
+			rc = fail_at(arg, parse_tls_secrets_file(settings, &arg->Value[13]));
 		else if (option_starts_with("enforce:", arg->Value))
-			rc = parse_tls_enforce(settings, &arg->Value[8]);
+			rc = fail_at(arg, parse_tls_enforce(settings, &arg->Value[8]));
 	}
 
 #if defined(WITH_FREERDP_DEPRECATED_COMMANDLINE)
 	CommandLineSwitchCase(arg, "tls-ciphers")
 	{
 		WLog_WARN(TAG, "Option /tls-ciphers is deprecated, use /tls:ciphers instead");
-		rc = parse_tls_ciphers(settings, arg->Value);
+		rc = fail_at(arg, parse_tls_ciphers(settings, arg->Value));
 	}
 	CommandLineSwitchCase(arg, "tls-seclevel")
 	{
 		WLog_WARN(TAG, "Option /tls-seclevel is deprecated, use /tls:seclevel instead");
-		rc = parse_tls_seclevel(settings, arg->Value);
+		rc = fail_at(arg, parse_tls_seclevel(settings, arg->Value));
 	}
 	CommandLineSwitchCase(arg, "tls-secrets-file")
 	{
 		WLog_WARN(TAG, "Option /tls-secrets-file is deprecated, use /tls:secrets-file instead");
-		rc = parse_tls_secrets_file(settings, arg->Value);
+		rc = fail_at(arg, parse_tls_secrets_file(settings, arg->Value));
 	}
 	CommandLineSwitchCase(arg, "enforce-tlsv1_2")
 	{
 		WLog_WARN(TAG, "Option /enforce-tlsv1_2 is deprecated, use /tls:enforce:1.2 instead");
-		rc = parse_tls_enforce(settings, "1.2");
+		rc = fail_at(arg, parse_tls_enforce(settings, "1.2"));
 	}
 #endif
 	CommandLineSwitchDefault(arg)
