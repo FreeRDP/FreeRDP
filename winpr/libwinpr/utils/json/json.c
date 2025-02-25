@@ -617,7 +617,14 @@ BOOL WINPR_JSON_AddItemToArray(WINPR_JSON* array, WINPR_JSON* item)
 		return FALSE;
 	return TRUE;
 #elif defined(WITH_CJSON)
+#if defined(USE_CJSON_COMPAT)
+	if ((array == NULL) || (item == NULL))
+		return FALSE;
+	cJSON_AddItemToArray((cJSON*)array, (cJSON*)item);
+	return TRUE;
+#else
 	return cJSON_AddItemToArray((cJSON*)array, (cJSON*)item);
+#endif
 #else
 	WINPR_UNUSED(array);
 	WINPR_UNUSED(item);
