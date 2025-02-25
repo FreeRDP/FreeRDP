@@ -32,4 +32,4 @@ jobs:
 
       - name: "Run mingw [static] build..."
         run: |
-          ./scripts/mingw.sh -c -s
+          ./scripts/mingw.sh -c -s --clean-first
