@@ -12,6 +12,7 @@ SRC_BASE="$SCRIPT_PATH/../build-mingw/src"
 BUILD_BASE="$SCRIPT_PATH/../build-mingw/build"
 INSTALL_BASE="$SCRIPT_PATH/../build-mingw/install"
 
+CLEAN=0
 CLONE=1
 DEPS=1
 BUILD=1
@@ -29,6 +30,9 @@ for i in "$@"; do
     ;;
   -c | --no-clone)
     CLONE=0
+    ;;
+  --clean-first)
+    CLEAN=1
     ;;
   -d | --no-deps)
     DEPS=0
@@ -48,7 +52,7 @@ for i in "$@"; do
   *)
     # unknown option
     echo "unknown option '$i', quit"
-    echo "usage:\n\t$0 [-b|--no-build] [-c|--no-clone] [-d|--no-deps] [-f|--with-ffmpeg] [-o|--with-openh264] [-s|--static]"
+    echo "usage:\n\t$0 [-b|--no-build] [-c|--no-clone] [-d|--no-deps] [-f|--with-ffmpeg] [-o|--with-openh264] [-s|--static] [--clean-first]"
     exit 1
     ;;
   esac
@@ -57,6 +61,11 @@ done
 ARG_COMPILED_RES=1
 if [ $ARG_SHARED -ne 0 ]; then
   ARG_COMPILED_RES=0
+fi
+
+if [ $CLEAN -ne 0 ]; then
+    rm -rf "$BUILD_BASE"
+    rm -rf "$INSTALL_BASE"
 fi
 
 function do_clone {
@@ -86,7 +95,6 @@ function do_cmake_build {
     -DCMAKE_MODULE_PATH="$INSTALL_BASE/lib/cmake;$INSTALL_BASE/lib;$INSTALL_BASE" \
     -DCMAKE_INSTALL_PREFIX="$INSTALL_BASE" \
     -DBUILD_SHARED_LIBS=$ARG_SHARED \
-    -DCMAKE_INTERPROZEDURAL_OPTIMIZATION=OFF \
     -DCMAKE_EXE_LINKER_FLAGS="$CMAKE_DEFAULT_FLAGS" \
     -B "$1" \
     ${@:2}
