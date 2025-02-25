@@ -29,6 +29,7 @@ extern "C"
 #endif
 
 #include <stdarg.h>
+
 #include <winpr/wtypes.h>
 #include <winpr/winpr.h>
 #include <winpr/synch.h>
@@ -198,13 +199,36 @@ extern "C"
 		}                                                                                          \
 	} while (0)
 
-#define WLog_LVL(tag, lvl, ...) WLog_Print_tag(tag, lvl, __VA_ARGS__)
-#define WLog_VRB(tag, ...) WLog_Print_tag(tag, WLOG_TRACE, __VA_ARGS__)
-#define WLog_DBG(tag, ...) WLog_Print_tag(tag, WLOG_DEBUG, __VA_ARGS__)
-#define WLog_INFO(tag, ...) WLog_Print_tag(tag, WLOG_INFO, __VA_ARGS__)
-#define WLog_WARN(tag, ...) WLog_Print_tag(tag, WLOG_WARN, __VA_ARGS__)
-#define WLog_ERR(tag, ...) WLog_Print_tag(tag, WLOG_ERROR, __VA_ARGS__)
-#define WLog_FATAL(tag, ...) WLog_Print_tag(tag, WLOG_FATAL, __VA_ARGS__)
+	static inline void WLog_Print_dbg_tag(const char* WINPR_RESTRICT tag, DWORD log_level,
+	                                      size_t line, const char* file, const char* fkt, ...)
+	{
+		static wLog* log_cached_ptr = NULL;
+		if (!log_cached_ptr)
+			log_cached_ptr = WLog_Get(tag);
+
+		if (WLog_IsLevelActive(log_cached_ptr, log_level))
+		{
+			va_list ap;
+			va_start(ap, fkt);
+			WLog_PrintMessageVA(log_cached_ptr, WLOG_MESSAGE_TEXT, log_level, line, file, fkt, ap);
+			va_end(ap);
+		}
+	}
+
+#define WLog_LVL(tag, lvl, ...) \
+	WLog_Print_dbg_tag(tag, lvl, __LINE__, __FILE__, __func__, __VA_ARGS__)
+#define WLog_VRB(tag, ...) \
+	WLog_Print_dbg_tag(tag, WLOG_TRACE, __LINE__, __FILE__, __func__, __VA_ARGS__)
+#define WLog_DBG(tag, ...) \
+	WLog_Print_dbg_tag(tag, WLOG_DEBUG, __LINE__, __FILE__, __func__, __VA_ARGS__)
+#define WLog_INFO(tag, ...) \
+	WLog_Print_dbg_tag(tag, WLOG_INFO, __LINE__, __FILE__, __func__, __VA_ARGS__)
+#define WLog_WARN(tag, ...) \
+	WLog_Print_dbg_tag(tag, WLOG_WARN, __LINE__, __FILE__, __func__, __VA_ARGS__)
+#define WLog_ERR(tag, ...) \
+	WLog_Print_dbg_tag(tag, WLOG_ERROR, __LINE__, __FILE__, __func__, __VA_ARGS__)
+#define WLog_FATAL(tag, ...) \
+	WLog_Print_dbg_tag(tag, WLOG_FATAL, __LINE__, __FILE__, __func__, __VA_ARGS__)
 
 	WINPR_API BOOL WLog_SetLogLevel(wLog* log, DWORD logLevel);
 	WINPR_API BOOL WLog_SetStringLogLevel(wLog* log, LPCSTR level);
