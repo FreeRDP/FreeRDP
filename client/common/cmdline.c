@@ -3950,6 +3950,11 @@ static BOOL parse_gateway_host_option(rdpSettings* settings, const char* host)
 	free(name);
 	if (!rc)
 		return FALSE;
+	if (port != -1)
+	{
+		if (!freerdp_settings_set_uint32(settings, FreeRDP_GatewayPort, (UINT32)port))
+			return FALSE;
+	}
 	if (!freerdp_settings_set_bool(settings, FreeRDP_GatewayUseSameCredentials, TRUE))
 		return FALSE;
 	if (!freerdp_set_gateway_usage_method(settings, TSC_PROXY_MODE_DIRECT))
