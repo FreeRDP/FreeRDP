@@ -3,6 +3,12 @@ Overview
 
 More documentation might be found at https://github.com/FreeRDP/FreeRDP/wiki/Compilation
 
+A sample build script is part of the repository at scripts/mingw.sh
+It is periodically run as part of the https://github.com/FreeRDP/FreeRDP/actions/workflows/mingw.yml workflow.
+
+If you want to do your own build, check the script and the dependency versions checked out (we only use it for the ci builder,
+so updates are not always done in a timely fashion)
+
 FreeRDP can be built for Windows using llvm-mingw (https://github.com/mstorsjo/llvm-mingw) with both msvcrt and ucrt. 
 MinGW builds are not actively maintained at the moment and every once in a while the build process may stop working. Pull requests to maintain MinGW support are always welcome.
 

@@ -1,0 +1,26 @@
+{
+	"buildsystem": "autotools",
+	"name": "pkcs11-helper",
+	"sources": [
+		{
+			"sha256": "076c9f664812a45f2da25efc157338b0b8bb1949117f0144050fec176b6fdf78",
+			"type": "archive",
+			"url":
+			    "https://github.com/OpenSC/pkcs11-helper/archive/refs/tags/pkcs11-helper-1.30.0.tar.gz",
+			"x-checker-data": {
+				"project-id": 91990,
+				"stable-only": true,
+				"type": "anitya",
+				"url-template":
+				    "https://github.com/OpenSC/pkcs11-helper/archive/refs/tags/pkcs11-helper-$version.tar.gz"
+			}
+		},
+		{
+			"commands": [
+				"autoreconf -vfi"
+			],
+			"dest-filename": "autogen.sh",
+			"type": "script"
+		}
+	]
+}

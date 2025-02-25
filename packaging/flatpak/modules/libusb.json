@@ -1,22 +1,22 @@
 {
-	"name": "libusb",
-	"config-opts": [
-		"--disable-static"
-	],
 	"cleanup": [
 		"/lib/*.la",
 		"/lib/pkgconfig",
 		"/include"
 	],
-	"sources": [
-		{
-			"type": "archive",
-			"url":
-			    "https://github.com/libusb/libusb/releases/download/v1.0.27/libusb-1.0.27.tar.bz2",
-			"sha256": "ffaa41d741a8a3bee244ac8e54a72ea05bf2879663c098c82fc5757853441575"
-		}
+	"config-opts": [
+		"--disable-static"
 	],
+	"name": "libusb",
 	"post-install": [
 		"install -Dm644 COPYING /app/share/licenses/libusb/COPYING"
+	],
+	"sources": [
+		{
+			"sha256": "ffaa41d741a8a3bee244ac8e54a72ea05bf2879663c098c82fc5757853441575",
+			"type": "archive",
+			"url":
+			    "https://github.com/libusb/libusb/releases/download/v1.0.27/libusb-1.0.27.tar.bz2"
+		}
 	]
 }

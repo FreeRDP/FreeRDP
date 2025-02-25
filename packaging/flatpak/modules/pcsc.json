@@ -1,23 +1,29 @@
 {
-	"name": "pcsc",
+	"cleanup": [
+		"/share/doc",
+		"/share/man"
+	],
 	"config-opts": [
 		"--disable-libsystemd",
 		"--enable-pic",
 		"--disable-libusb",
-		"--disable-polkit",
 		"--enable-shared",
+		"--disable-polkit",
 		"--with-systemdsystemunitdir=/app/lib/systemd/"
 	],
+	"name": "pcsc",
 	"sources": [
 		{
-			"type": "git",
-			"url": "https://github.com/LudovicRousseau/PCSC.git",
-			"tag": "2.0.3",
-			"commit": "c4e7f6f9c6fe56fafd3f13c31fcc4f670ad6d022"
+			"sha256": "7fcb59f66a323f63cf1ab492579a57d899806835c52ba377af9ac57df68bf39b",
+			"type": "archive",
+			"url": "https://github.com/LudovicRousseau/PCSC/archive/refs/tags/2.3.1.tar.gz",
+			"x-checker-data": {
+				"project-id": 2611,
+				"stable-only": true,
+				"type": "anitya",
+				"url-template":
+				    "https://github.com/LudovicRousseau/PCSC/tags/${version0}.${version1}.${version2}"
+			}
 		}
-	],
-	"cleanup": [
-		"/share/doc",
-		"/share/man"
 	]
 }

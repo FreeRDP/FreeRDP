@@ -1,23 +1,28 @@
 {
-      "name": "uriparser",
-      "buildsystem": "cmake-ninja",
-      "cleanup": [
-      ],
-      "config-opts": [
-        "-DCMAKE_VERBOSE_MAKEFILE=ON",
-        "-DCMAKE_BUILD_TYPE:STRING=Release",
-        "-DCMAKE_INSTALL_LIBDIR:PATH=lib",
-        "-DURIPARSER_BUILD_TESTS:BOOL=OFF",
-        "-DURIPARSER_BUILD_DOCS:BOOL=OFF",
-        "-DURIPARSER_BUILD_TOOLS:BOOL=OFF",
-        "-DURIPARSER_BUILD_WCHAR_T:BOOL=OFF"
-      ],
-      "sources": [
-        {
-          "type": "git",
-          "url": "https://github.com/uriparser/uriparser.git",
-          "tag": "uriparser-0.9.7",
-          "commit": "634b678fa858abf1d1ebc0634e96e9e29596e92a"
-        }
-      ]
+	"builddir": true,
+	"buildsystem": "cmake-ninja",
+	"cleanup": [],
+	"config-opts": [
+		"-DCMAKE_VERBOSE_MAKEFILE=ON",
+		"-DCMAKE_BUILD_TYPE:STRING=Release",
+		"-DCMAKE_INSTALL_LIBDIR:PATH=lib",
+		"-DURIPARSER_BUILD_DOCS:BOOL=OFF",
+		"-DURIPARSER_BUILD_TESTS:BOOL=OFF"
+	],
+	"name": "urlparser",
+	"sources": [
+		{
+			"sha256": "1d71c054837ea32a31e462bce5a1af272379ecf511e33448e88100b87ff73b2e",
+			"type": "archive",
+			"url":
+			    "https://github.com/uriparser/uriparser/releases/download/uriparser-0.9.8/uriparser-0.9.8.tar.xz",
+			"x-checker-data": {
+				"project-id": 10160,
+				"stable-only": true,
+				"type": "anitya",
+				"url-template":
+				    "https://github.com/uriparser/uriparser/releases/download/uriparser-${version0}.${version1}.${version2}/uriparser-${version0}.${version1}.${version2}.tar.xz"
+			}
+		}
+	]
 }
