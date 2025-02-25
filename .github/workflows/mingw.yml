@@ -26,6 +26,10 @@ jobs:
             mingw-w64-tools \
             binutils-mingw-w64
 
-      - name: "Run mingw build..."
+      - name: "Run mingw [shared] build..."
         run: |
           ./scripts/mingw.sh
+
+      - name: "Run mingw [static] build..."
+        run: |
+          ./scripts/mingw.sh -c -s
