@@ -22,20 +22,19 @@ CMAKE_CMD_ARGS="-DANDROID_NDK=$ANDROID_NDK \
 	-DCMAKE_MAKE_PROGRAM=make"
 
 BASE=$(pwd)
-for ARCH in $BUILD_ARCH
-do
-	common_run cd $BASE
-	common_run mkdir -p $BUILD_SRC/cJSON-build/$ARCH
-	common_run cd $BUILD_SRC/cJSON-build/$ARCH
-	common_run export ANDROID_NDK=$ANDROID_NDK
-	common_run $CMAKE_PROGRAM $CMAKE_CMD_ARGS \
-		-DANDROID_ABI=$ARCH \
-		-DCMAKE_INSTALL_PREFIX=$BUILD_DST/$ARCH \
-		-DCMAKE_INSTALL_LIBDIR=. \
-		-B . \
-		-S $BUILD_SRC
-	echo $(pwd)
-	common_run $CMAKE_PROGRAM --build . --target install
+for ARCH in $BUILD_ARCH; do
+  common_run cd $BASE
+  common_run mkdir -p $BUILD_SRC/cJSON-build/$ARCH
+  common_run cd $BUILD_SRC/cJSON-build/$ARCH
+  common_run export ANDROID_NDK=$ANDROID_NDK
+  common_run $CMAKE_PROGRAM $CMAKE_CMD_ARGS \
+    -DANDROID_ABI=$ARCH \
+    -DCMAKE_INSTALL_PREFIX=$BUILD_DST/$ARCH \
+    -DCMAKE_INSTALL_LIBDIR=. \
+    -B . \
+    -S $BUILD_SRC
+  echo $(pwd)
+  common_run $CMAKE_PROGRAM --build . --target install
 done
 
 echo "Successfully build library for architectures $BUILD_ARCH"

@@ -10,7 +10,7 @@ SCRIPT_PATH=$(realpath "$SCRIPT_PATH")
 # 3. Every word prefixed by e.g. '\tSome text', e.g. format string escapes
 codespell --version
 codespell \
-    -I "$SCRIPT_PATH/codespell.ignore" \
-    -S ".git,*.ai,*.svg,*.rtf,*/assets/de_*,*/res/values-*,*/protocols/xdg*,*/test/*" \
-    --ignore-regex "\b[a-zA-Z][a-zA-Z]\b|\bp[A-Z].*|\\\\[a-z][a-zA-Z].*" \
-    --count $SCRIPT_PATH/..
+  -I "$SCRIPT_PATH/codespell.ignore" \
+  -S ".git,*.ai,*.svg,*.rtf,*/assets/de_*,*/res/values-*,*/protocols/xdg*,*/test/*" \
+  --ignore-regex "\b[a-zA-Z][a-zA-Z]\b|\bp[A-Z].*|\\\\[a-z][a-zA-Z].*" \
+  --count $SCRIPT_PATH/..
