@@ -1,13 +1,21 @@
 {
+	"add-build-extensions": {
+		"org.freedesktop.Platform.ffmpeg-full": {
+			"add-ld-path": ".",
+			"directory": "lib/ffmpeg",
+			"version": "24.08"
+		},
+		"org.freedesktop.Platform.openh264": {
+			"add-ld-path": ".",
+			"directory": "lib/openh264",
+			"version": "2.5.0"
+		}
+	},
 	"app-id": "com.freerdp.FreeRDP",
-	"runtime": "org.freedesktop.Platform",
-	"runtime-version": "23.08",
-	"sdk": "org.freedesktop.Sdk",
 	"build-options": {
 		"cflags": "-O3",
 		"cxxflags": "-O3"
 	},
-	"command": "freerdp.sh",
 	"cleanup": [
 		"*.a",
 		"*.la",
@@ -19,33 +27,17 @@
 		"/share/examples",
 		"/share/man"
 	],
+	"command": "freerdp.sh",
 	"finish-args": [
 		"--device=dri",
-		/* X11 + XShm access */
 		"--share=ipc",
 		"--socket=x11",
-		/* Needs to talk to the network */
 		"--share=network",
-		/* Play sounds redirected from guests */
 		"--socket=pulseaudio",
 		"--socket=cups",
-		/* Wayland access */
 		"--socket=wayland",
-		/* Allow rw access to download folder */
 		"--filesystem=xdg-download"
 	],
-	"add-build-extensions": {
-		"org.freedesktop.Platform.ffmpeg-full": {
-			"directory": "lib/ffmpeg",
-			"version": "23.08",
-			"add-ld-path": "."
-		},
-		"org.freedesktop.Platform.openh264": {
-			"directory": "lib/openh264",
-			"version": "2.4.1",
-			"add-ld-path": "."
-		}
-	},
 	"modules": [
 		"modules/openssl.json",
 		"modules/libusb.json",
@@ -55,10 +47,13 @@
 		"modules/pcsc.json",
 		"modules/krb5.json",
 		"modules/opensc.json",
+		"modules/pkcs11-helper.json",
+		"modules/SDL3.json",
+		"modules/SDL3_image.json",
+		"modules/SDL3_ttf.json",
 		{
-			"name": "freerdp",
-			"buildsystem": "cmake-ninja",
 			"builddir": true,
+			"buildsystem": "cmake-ninja",
 			"cleanup": [],
 			"config-opts": [
 				"-DCMAKE_VERBOSE_MAKEFILE=ON",
@@ -92,27 +87,31 @@
 				"-DWITH_WEBVIEW:BOOL=OFF",
 				"-DWITH_PULSE:BOOL=ON"
 			],
+			"name": "freerdp",
 			"sources": [
 				{
-					"type": "dir",
-					"path": "../.."
+					"path": "../..",
+					"type": "dir"
 				}
 			]
 		},
 		{
-			"name": "wrapper",
-			"buildsystem": "simple",
 			"build-commands": [
 				"install -D freerdp.sh /app/bin/freerdp.sh",
 				"mkdir -p /app/lib/ffmpeg",
 				"mkdir -p /app/lib/openh264"
 			],
+			"buildsystem": "simple",
+			"name": "wrapper",
 			"sources": [
 				{
-					"type": "file",
-					"path": "freerdp.sh"
+					"path": "freerdp.sh",
+					"type": "file"
 				}
 			]
 		}
-	]
+	],
+	"runtime": "org.freedesktop.Platform",
+	"runtime-version": "24.08",
+	"sdk": "org.freedesktop.Sdk"
 }

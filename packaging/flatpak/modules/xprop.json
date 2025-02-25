@@ -1,14 +1,21 @@
 {
-	"name": "xprop",
-	"sources": [
-		{
-			"type": "archive",
-			"url": "https://xorg.freedesktop.org/releases/individual/app/xprop-1.2.7.tar.xz",
-			"sha256": "4436e3148bb91a162406230d9f736a49ca8b50b74790015dc15d78d6ce8e825f"
-		}
-	],
 	"cleanup": [
 		"/share/doc",
 		"/share/man"
+	],
+	"name": "xprop",
+	"sources": [
+		{
+			"sha256": "d689e2adb7ef7b439f6469b51cda8a7daefc83243854c2a3b8f84d0f029d67ee",
+			"type": "archive",
+			"url": "https://xorg.freedesktop.org/releases/individual/app/xprop-1.2.8.tar.xz",
+			"x-checker-data": {
+				"project-id": 14958,
+				"stable-only": true,
+				"type": "anitya",
+				"url-template":
+				    "https://xorg.freedesktop.org/releases/individual/app/xprop-${version0}.${version1}.${version2}.tar.xz"
+			}
+		}
 	]
 }

@@ -1,0 +1,33 @@
+{
+	"builddir": true,
+	"buildsystem": "cmake-ninja",
+	"cleanup": [
+		"/include",
+		"/lib/*.la",
+		"/lib/*.a",
+		"/lib/cmake",
+		"/share/aclocal",
+		"/lib/pkgconfig"
+	],
+	"config-opts": [
+		"-DCMAKE_VERBOSE_MAKEFILE=ON",
+		"-DCMAKE_BUILD_TYPE:STRING=Release",
+		"-DCMAKE_INSTALL_LIBDIR:PATH=lib"
+	],
+	"name": "SDL3_image",
+	"sources": [
+		{
+			"sha256": "1690baea71b2b4ded9895126cddbc03a1000b027d099a4fb4669c4d23d73b19f",
+			"type": "archive",
+			"url":
+			    "https://github.com/libsdl-org/SDL_image/releases/download/release-3.2.0/SDL3_image-3.2.0.tar.gz",
+			"x-checker-data": {
+				"project-id": 4781,
+				"stable-only": true,
+				"type": "anitya",
+				"url-template":
+				    "https://github.com/libsdl-org/SDL_image/releases/download/release-${version0}.${version1}.${version2}/SDL3_image-${version0}.${version1}.${version2}.tar.gz"
+			}
+		}
+	]
+}
