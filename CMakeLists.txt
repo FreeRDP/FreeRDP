@@ -32,6 +32,9 @@ if(NOT PROJECT_SOURCE_DIR STREQUAL PROJECT_BINARY_DIR)
   file(GENERATE OUTPUT .gitignore CONTENT "*")
 endif()
 
+# Create compile_commands.json file
+set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
+
 if(NOT DEFINED VENDOR)
   set(VENDOR "FreeRDP" CACHE STRING "FreeRDP package vendor")
 endif()
