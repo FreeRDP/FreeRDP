@@ -27,6 +27,11 @@ project(FreeRDP LANGUAGES C)
 
 add_custom_target(fuzzers COMMENT "Build fuzzers")
 
+if(NOT PROJECT_SOURCE_DIR STREQUAL PROJECT_BINARY_DIR)
+  # Git auto-ignore out-of-source build directory
+  file(GENERATE OUTPUT .gitignore CONTENT "*")
+endif()
+
 if(NOT DEFINED VENDOR)
   set(VENDOR "FreeRDP" CACHE STRING "FreeRDP package vendor")
 endif()
