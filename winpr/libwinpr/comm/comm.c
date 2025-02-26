@@ -504,8 +504,8 @@ BOOL GetCommState(HANDLE hFile, LPDCB lpDCB)
 	lpLocalDcb->fAbortOnError = (handflow.ControlHandShake & SERIAL_ERROR_ABORT) != 0;
 	/* lpLocalDcb->fDummy2 not used */
 	lpLocalDcb->wReserved = 0; /* must be zero */
-	lpLocalDcb->XonLim = handflow.XonLimit;
-	lpLocalDcb->XoffLim = handflow.XoffLimit;
+	lpLocalDcb->XonLim = WINPR_ASSERTING_INT_CAST(WORD, handflow.XonLimit);
+	lpLocalDcb->XoffLim = WINPR_ASSERTING_INT_CAST(WORD, handflow.XoffLimit);
 	SERIAL_LINE_CONTROL lineControl = { 0 };
 
 	if (!CommDeviceIoControl(pComm, IOCTL_SERIAL_GET_LINE_CONTROL, NULL, 0, &lineControl,

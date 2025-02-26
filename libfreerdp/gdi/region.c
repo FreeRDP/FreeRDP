@@ -398,8 +398,8 @@ BOOL gdi_RgnToCRect(const HGDI_RGN rgn, INT32* left, INT32* top, INT32* right, I
  * @param bottom y2
  */
 
-INLINE BOOL gdi_CRgnToCRect(INT32 x, INT32 y, INT32 w, INT32 h, INT32* left, INT32* top,
-                            INT32* right, INT32* bottom)
+BOOL gdi_CRgnToCRect(INT32 x, INT32 y, INT32 w, INT32 h, INT32* left, INT32* top, INT32* right,
+                     INT32* bottom)
 {
 	BOOL rc = TRUE;
 	*left = x;

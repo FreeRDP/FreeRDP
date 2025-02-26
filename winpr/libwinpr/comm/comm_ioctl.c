@@ -701,7 +701,7 @@ int comm_ioctl_tcsetattr(int fd, int optional_actions, const struct termios* ter
 			              winpr_strerror(errno, buffer, sizeof(buffer)), errno);
 			return rrc;
 		}
-		// NOLINTNEXTLINE(bugprone-suspicious-memory-comparison)
+		// NOLINTNEXTLINE(bugprone-suspicious-memory-comparison,cert-exp42-c,cert-flp37-c)
 	} while ((memcmp(&currentState, termios_p, sizeof(struct termios)) != 0) && (count++ < 2));
 
 	return 0;
