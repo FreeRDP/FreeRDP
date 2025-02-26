@@ -1361,7 +1361,10 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcceptSecurityContext(
 			    (!realm || krb_log_exec_bool(krb5_realm_compare, credentials->ctx, principal,
 			                                 entry.principal)))
 				break;
-			if (krb_log_exec(krb5glue_free_keytab_entry_contents, credentials->ctx, &entry))
+			const krb5_error_code res =
+			    krb_log_exec(krb5glue_free_keytab_entry_contents, credentials->ctx, &entry);
+			memset(&entry, 0, sizeof(entry));
+			if (res != 0)
 				goto cleanup;
 		} while (1);
 
