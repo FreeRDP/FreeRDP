@@ -549,9 +549,6 @@ LONG smartcard_irp_device_control_decode(wStream* s, UINT32 CompletionId, UINT32
 {
 	LONG status = 0;
 	UINT32 offset = 0;
-	UINT32 ioControlCode = 0;
-	UINT32 outputBufferLength = 0;
-	UINT32 inputBufferLength = 0;
 
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(operation);
@@ -561,12 +558,13 @@ LONG smartcard_irp_device_control_decode(wStream* s, UINT32 CompletionId, UINT32
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 32))
 		return SCARD_F_INTERNAL_ERROR;
 
-	Stream_Read_UINT32(s, outputBufferLength); /* OutputBufferLength (4 bytes) */
-	Stream_Read_UINT32(s, inputBufferLength);  /* InputBufferLength (4 bytes) */
-	Stream_Read_UINT32(s, ioControlCode);      /* IoControlCode (4 bytes) */
+	const UINT32 outputBufferLength = Stream_Get_UINT32(s); /* OutputBufferLength (4 bytes) */
+	const UINT32 inputBufferLength = Stream_Get_UINT32(s);  /* InputBufferLength (4 bytes) */
+	const UINT32 ioControlCode = Stream_Get_UINT32(s);      /* IoControlCode (4 bytes) */
 	Stream_Seek(s, 20);                        /* Padding (20 bytes) */
 	operation->ioControlCode = ioControlCode;
 	operation->ioControlCodeName = scard_get_ioctl_string(ioControlCode, FALSE);
+	operation->outputBufferLength = outputBufferLength;
 
 	if (Stream_Length(s) != (Stream_GetPosition(s) + inputBufferLength))
 	{
