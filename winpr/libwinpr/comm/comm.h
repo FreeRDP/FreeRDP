@@ -120,6 +120,8 @@ BOOL CommIoCtl_int(WINPR_COMM* pComm, unsigned long int ctl, void* data, const c
                    const char* fkt, size_t line);
 BOOL CommUpdateIOCount(HANDLE handle, BOOL checkSupportStatus);
 
+const char* CommSerialEvString(ULONG status, char* buffer, size_t size);
+
 #if defined(WINPR_HAVE_SYS_EVENTFD_H)
 #ifndef WITH_EVENTFD_READ_WRITE
 int eventfd_read(int fd, eventfd_t* value);

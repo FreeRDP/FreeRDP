@@ -126,6 +126,7 @@ static const _SERIAL_IOCTL_NAME S_SERIAL_IOCTL_NAMES[] = {
 
 	{ IOCTL_USBPRINT_GET_1284_ID, "IOCTL_USBPRINT_GET_1284_ID" }
 };
+
 const char* _comm_serial_ioctl_name(ULONG number)
 {
 	for (size_t x = 0; x < ARRAYSIZE(S_SERIAL_IOCTL_NAMES); x++)
@@ -1703,4 +1704,70 @@ BOOL CommUpdateIOCount(WINPR_ATTR_UNUSED HANDLE handle, WINPR_ATTR_UNUSED BOOL c
 	}
 #endif
 	return TRUE;
+}
+
+static const char* CommSerialEvFlagString(ULONG flag)
+{
+	switch (flag)
+	{
+		case SERIAL_EV_RXCHAR:
+			return "SERIAL_EV_RXCHAR";
+		case SERIAL_EV_RXFLAG:
+			return "SERIAL_EV_RXFLAG";
+		case SERIAL_EV_TXEMPTY:
+			return "SERIAL_EV_TXEMPTY";
+		case SERIAL_EV_CTS:
+			return "SERIAL_EV_CTS ";
+		case SERIAL_EV_DSR:
+			return "SERIAL_EV_DSR ";
+		case SERIAL_EV_RLSD:
+			return "SERIAL_EV_RLSD";
+		case SERIAL_EV_BREAK:
+			return "SERIAL_EV_BREAK";
+		case SERIAL_EV_ERR:
+			return "SERIAL_EV_ERR ";
+		case SERIAL_EV_RING:
+			return "SERIAL_EV_RING";
+		case SERIAL_EV_PERR:
+			return "SERIAL_EV_PERR";
+		case SERIAL_EV_RX80FULL:
+			return "SERIAL_EV_RX80FULL";
+		case SERIAL_EV_EVENT1:
+			return "SERIAL_EV_EVENT1";
+		case SERIAL_EV_EVENT2:
+			return "SERIAL_EV_EVENT2";
+		case SERIAL_EV_WINPR_WAITING:
+			return "SERIAL_EV_WINPR_WAITING";
+		case SERIAL_EV_WINPR_STOP:
+			return "SERIAL_EV_WINPR_STOP";
+		default:
+			return "SERIAL_EV_UNKNOWN";
+	}
+}
+
+const char* CommSerialEvString(ULONG status, char* buffer, size_t size)
+{
+	const ULONG flags[] = { SERIAL_EV_RXCHAR, SERIAL_EV_RXFLAG,        SERIAL_EV_TXEMPTY,
+		                    SERIAL_EV_CTS,    SERIAL_EV_DSR,           SERIAL_EV_RLSD,
+		                    SERIAL_EV_BREAK,  SERIAL_EV_ERR,           SERIAL_EV_RING,
+		                    SERIAL_EV_PERR,   SERIAL_EV_RX80FULL,      SERIAL_EV_EVENT1,
+		                    SERIAL_EV_EVENT2, SERIAL_EV_WINPR_WAITING, SERIAL_EV_WINPR_STOP };
+
+	winpr_str_append("{", buffer, size, "");
+
+	const char* sep = "";
+	for (size_t x = 0; x < ARRAYSIZE(flags); x++)
+	{
+		const ULONG flag = flags[x];
+		if (status & flag)
+		{
+			winpr_str_append(CommSerialEvFlagString(flag), buffer, size, sep);
+			sep = "|";
+		}
+	}
+
+	char number[32] = { 0 };
+	(void)_snprintf(number, sizeof(number), "}[0x%08" PRIx32 "]", status);
+	winpr_str_append(number, buffer, size, "");
+	return buffer;
 }

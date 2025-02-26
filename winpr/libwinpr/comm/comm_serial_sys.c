@@ -152,41 +152,43 @@ static const speed_t BAUD_TABLE[][3] = {
 	{ BAUD_TABLE_END, 0, 0 }
 };
 
-static const char* get_modem_flag_str(ULONG flag)
+static const char* get_modem_flag_str(int flag)
 {
+	if (flag & TIOCM_LE)
+		return "DSR";
 	if (flag & TIOCM_DTR)
-		return "DTR (data terminal ready)";
+		return "DTR";
 	if (flag & TIOCM_RTS)
-		return "RTS (request to send)";
+		return "RTS";
 	if (flag & TIOCM_ST)
-		return "Secondary TXD (transmit)";
+		return "Secondary TXD";
 	if (flag & TIOCM_SR)
-		return "Secondary RXD (receive)";
+		return "Secondary RXD";
 	if (flag & TIOCM_CTS)
-		return "CTS (clear to send)";
+		return "CTS";
 	if (flag & TIOCM_CAR)
-		return "DCD (data carrier detect)";
+		return "DCD";
 	if (flag & TIOCM_CD)
-		return "CD (carrier detect)";
+		return "CD";
 	if (flag & TIOCM_RNG)
-		return "RNG (ring)";
+		return "RNG";
 	if (flag & TIOCM_RI)
-		return "RI (ring)";
+		return "RI";
 	if (flag & TIOCM_DSR)
 		return "DSR";
 	return "UNKNOWN";
 }
 
-static const char* get_modem_status_str(ULONG status, char* buffer, size_t size)
+static const char* get_modem_status_str(int status, char* buffer, size_t size)
 {
-	const ULONG flags[] = { TIOCM_DTR, TIOCM_RTS, TIOCM_ST,  TIOCM_SR, TIOCM_CTS,
-		                    TIOCM_CAR, TIOCM_CD,  TIOCM_RNG, TIOCM_RI, TIOCM_DSR };
+	const int flags[] = { TIOCM_LE,  TIOCM_DTR, TIOCM_RTS, TIOCM_ST, TIOCM_SR, TIOCM_CTS,
+		                  TIOCM_CAR, TIOCM_CD,  TIOCM_RNG, TIOCM_RI, TIOCM_DSR };
 	winpr_str_append("{", buffer, size, "");
 
 	const char* sep = "";
 	for (size_t x = 0; x < ARRAYSIZE(flags); x++)
 	{
-		const ULONG flag = flags[x];
+		const int flag = flags[x];
 		if (status & flag)
 		{
 			winpr_str_append(get_modem_flag_str(flag), buffer, size, sep);
@@ -195,7 +197,7 @@ static const char* get_modem_status_str(ULONG status, char* buffer, size_t size)
 	}
 
 	char number[32] = { 0 };
-	_snprintf(number, sizeof(number), "}[0x%08" PRIx32 "]", status);
+	(void)_snprintf(number, sizeof(number), "}[0x%08x]", (unsigned)status);
 	winpr_str_append(number, buffer, size, "");
 	return buffer;
 }
@@ -1015,7 +1017,12 @@ static BOOL get_raw_modemstatus(WINPR_COMM* pComm, int* pRegister)
 	WINPR_ASSERT(pComm);
 	WINPR_ASSERT(pRegister);
 
-	return CommIoCtl(pComm, TIOCMGET, pRegister);
+	const BOOL rc = CommIoCtl(pComm, TIOCMGET, pRegister);
+
+	char buffer[128] = { 0 };
+	CommLog_Print(WLOG_DEBUG, "status %s",
+	              get_modem_status_str(*pRegister, buffer, sizeof(buffer)));
+	return rc;
 }
 
 static BOOL get_modemstatus(WINPR_COMM* pComm, ULONG* pRegister)

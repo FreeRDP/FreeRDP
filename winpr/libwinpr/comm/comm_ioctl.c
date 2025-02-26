@@ -33,6 +33,8 @@
 #include "comm_sercx_sys.h"
 #include "comm_sercx2_sys.h"
 
+static const char* comm_ioctl_modem_status_string(ULONG status, char* buffer, size_t size);
+
 /* NB: MS-RDPESP's recommendation:
  *
  * <2> Section 3.2.5.1.6: Windows Implementations use IOCTL constants
@@ -52,6 +54,7 @@ static BOOL s_CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID 
                                   DWORD nInBufferSize, LPVOID lpOutBuffer, DWORD nOutBufferSize,
                                   LPDWORD lpBytesReturned, LPOVERLAPPED lpOverlapped)
 {
+	char buffer[128] = { 0 };
 	WINPR_COMM* pComm = (WINPR_COMM*)hDevice;
 	const SERIAL_DRIVER* pServerSerialDriver = NULL;
 
@@ -375,7 +378,8 @@ static BOOL s_CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID 
 				if (!pServerSerialDriver->get_modemstatus(pComm, pRegister))
 					return FALSE;
 
-				CommLog_Print(WLOG_DEBUG, "modem status 0x%08" PRIx32, *pRegister);
+				CommLog_Print(WLOG_DEBUG, "modem status %s" PRIx32,
+				              comm_ioctl_modem_status_string(*pRegister, buffer, sizeof(buffer)));
 				*lpBytesReturned = sizeof(ULONG);
 				return TRUE;
 			}
@@ -395,7 +399,8 @@ static BOOL s_CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID 
 				}
 
 				const BOOL rc = pServerSerialDriver->set_wait_mask(pComm, pWaitMask);
-				CommLog_Print(WLOG_DEBUG, "set_wait_mask 0x%08" PRIx32 " -> %d", *pWaitMask, rc);
+				CommLog_Print(WLOG_DEBUG, "set_wait_mask %s -> %d",
+				              CommSerialEvString(*pWaitMask, buffer, sizeof(buffer)), rc);
 				return rc;
 			}
 			break;
@@ -416,7 +421,8 @@ static BOOL s_CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID 
 				if (!pServerSerialDriver->get_wait_mask(pComm, pWaitMask))
 					return FALSE;
 
-				CommLog_Print(WLOG_DEBUG, "get_wait_mask 0x%08" PRIx32, *pWaitMask);
+				CommLog_Print(WLOG_DEBUG, "get_wait_mask %s",
+				              CommSerialEvString(*pWaitMask, buffer, sizeof(buffer)));
 				*lpBytesReturned = sizeof(ULONG);
 				return TRUE;
 			}
@@ -438,7 +444,8 @@ static BOOL s_CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID 
 				const BOOL rc = pServerSerialDriver->wait_on_mask(pComm, pOutputMask);
 
 				*lpBytesReturned = sizeof(ULONG);
-				CommLog_Print(WLOG_DEBUG, "wait_on_mask 0x%08" PRIx32 " -> %d", *pOutputMask, rc);
+				CommLog_Print(WLOG_DEBUG, "wait_on_mask %s -> %d",
+				              CommSerialEvString(*pOutputMask, buffer, sizeof(buffer)), rc);
 				return rc;
 			}
 			break;
@@ -698,4 +705,54 @@ int comm_ioctl_tcsetattr(int fd, int optional_actions, const struct termios* ter
 	} while ((memcmp(&currentState, termios_p, sizeof(struct termios)) != 0) && (count++ < 2));
 
 	return 0;
+}
+
+static const char* comm_ioctl_modem_flag_str(ULONG flag)
+{
+	switch (flag)
+	{
+		case SERIAL_MSR_DCTS:
+			return "SERIAL_MSR_DCTS";
+		case SERIAL_MSR_DDSR:
+			return "SERIAL_MSR_DDSR";
+		case SERIAL_MSR_TERI:
+			return "SERIAL_MSR_TERI";
+		case SERIAL_MSR_DDCD:
+			return "SERIAL_MSR_DDCD";
+		case SERIAL_MSR_CTS:
+			return "SERIAL_MSR_CTS";
+		case SERIAL_MSR_DSR:
+			return "SERIAL_MSR_DSR";
+		case SERIAL_MSR_RI:
+			return "SERIAL_MSR_RI";
+		case SERIAL_MSR_DCD:
+			return "SERIAL_MSR_DCD";
+		default:
+			return "SERIAL_MSR_UNKNOWN";
+	}
+}
+
+const char* comm_ioctl_modem_status_string(ULONG status, char* buffer, size_t size)
+{
+	const ULONG flags[] = { SERIAL_MSR_DCTS, SERIAL_MSR_DDSR, SERIAL_MSR_TERI, SERIAL_MSR_DDCD,
+		                    SERIAL_MSR_CTS,  SERIAL_MSR_DSR,  SERIAL_MSR_RI,   SERIAL_MSR_DCD
+
+	};
+	winpr_str_append("{", buffer, size, "");
+
+	const char* sep = "";
+	for (size_t x = 0; x < ARRAYSIZE(flags); x++)
+	{
+		const ULONG flag = flags[x];
+		if (status & flag)
+		{
+			winpr_str_append(comm_ioctl_modem_flag_str(flag), buffer, size, sep);
+			sep = "|";
+		}
+	}
+
+	char number[32] = { 0 };
+	(void)_snprintf(number, sizeof(number), "}[0x%08" PRIx32 "]", status);
+	winpr_str_append(number, buffer, size, "");
+	return buffer;
 }
