@@ -1581,7 +1581,6 @@ LONG smartcard_irp_device_control_call(scard_call_context* smartcard, wStream* o
 {
 	LONG result = 0;
 	UINT32 offset = 0;
-	UINT32 ioControlCode = 0;
 	size_t outputBufferLength = 0;
 	size_t objectBufferLength = 0;
 
@@ -1590,7 +1589,7 @@ LONG smartcard_irp_device_control_call(scard_call_context* smartcard, wStream* o
 	WINPR_ASSERT(pIoStatus);
 	WINPR_ASSERT(operation);
 
-	ioControlCode = operation->ioControlCode;
+	const UINT32 ioControlCode = operation->ioControlCode;
 	/**
 	 * [MS-RDPESC] 3.2.5.1: Sending Outgoing Messages:
 	 * the output buffer length SHOULD be set to 2048
@@ -1598,7 +1597,8 @@ LONG smartcard_irp_device_control_call(scard_call_context* smartcard, wStream* o
 	 * Since it's a SHOULD and not a MUST, we don't care
 	 * about it, but we still reserve at least 2048 bytes.
 	 */
-	if (!Stream_EnsureRemainingCapacity(out, 2048))
+	const size_t outMaxLen = MAX(2048, operation->outputBufferLength);
+	if (!Stream_EnsureRemainingCapacity(out, outMaxLen))
 		return SCARD_E_NO_MEMORY;
 
 	/* Device Control Response */
@@ -1848,6 +1848,13 @@ LONG smartcard_irp_device_control_call(scard_call_context* smartcard, wStream* o
 	WINPR_ASSERT(outputBufferLength <= UINT32_MAX);
 	WINPR_ASSERT(objectBufferLength <= UINT32_MAX);
 	Stream_SetPosition(out, RDPDR_DEVICE_IO_RESPONSE_LENGTH);
+
+	if (outputBufferLength > operation->outputBufferLength)
+	{
+		WLog_WARN(TAG, "IRP warn: expected outputBufferLength %" PRIu32 ", but have %" PRIu32,
+		          operation->outputBufferLength, outputBufferLength);
+	}
+
 	/* Device Control Response */
 	Stream_Write_UINT32(out, (UINT32)outputBufferLength); /* OutputBufferLength (4 bytes) */
 	smartcard_pack_common_type_header(out);               /* CommonTypeHeader (8 bytes) */

@@ -83,6 +83,7 @@ extern "C"
 		SCARDCONTEXT hContext;
 		SCARDHANDLE hCard;
 		const char* ioControlCodeName;
+		UINT32 outputBufferLength; /** @since version 3.13.0 */
 	} SMARTCARD_OPERATION;
 
 	FREERDP_API LONG smartcard_irp_device_control_decode(wStream* s, UINT32 CompletionId,
