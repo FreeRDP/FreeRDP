@@ -33,6 +33,8 @@
 
 static primitives_t* generic = NULL;
 
+#define CACHE_LINE_BYTES 64
+
 /*  1.403 << 14 */
 /* -0.344 << 14 */
 /* -0.714 << 14 */
@@ -77,6 +79,24 @@ static inline __m128i mm_between_epi16_int(__m128i val, __m128i min, __m128i max
 
 #define mm_between_epi16(_val, _min, _max) (_val) = mm_between_epi16_int((_val), (_min), (_max))
 
+static inline void mm_prefetch_buffer(const void* WINPR_RESTRICT buffer, size_t width,
+                                      size_t stride, size_t height)
+{
+	const size_t srcbump = stride / sizeof(__m128i);
+	const __m128i* buf = (const __m128i*)buffer;
+
+	for (size_t y = 0; y < height; y++)
+	{
+		const __m128i* line = &buf[y * srcbump];
+		for (size_t x = 0; x < width * sizeof(INT16) / sizeof(__m128i);
+		     x += (CACHE_LINE_BYTES / sizeof(__m128i)))
+		{
+			const char* ptr = (const char*)&line[x];
+			_mm_prefetch(ptr, _MM_HINT_NTA);
+		}
+	}
+}
+
 /*---------------------------------------------------------------------------*/
 static pstatus_t
 sse2_yCbCrToRGB_16s16s_P3P3(const INT16* WINPR_RESTRICT pSrc[3], int srcStep,
@@ -111,6 +131,11 @@ sse2_yCbCrToRGB_16s16s_P3P3(const INT16* WINPR_RESTRICT pSrc[3], int srcStep,
 	__m128i c4096 = _mm_set1_epi16(4096);
 	const size_t srcbump = WINPR_ASSERTING_INT_CAST(size_t, srcStep) / sizeof(__m128i);
 	const size_t dstbump = WINPR_ASSERTING_INT_CAST(size_t, dstStep) / sizeof(__m128i);
+
+	mm_prefetch_buffer(y_buf, roi->width, (size_t)srcStep, roi->height);
+	mm_prefetch_buffer(cb_buf, roi->width, (size_t)srcStep, roi->height);
+	mm_prefetch_buffer(cr_buf, roi->width, (size_t)srcStep, roi->height);
+
 	const size_t imax = roi->width * sizeof(INT16) / sizeof(__m128i);
 
 	for (UINT32 yp = 0; yp < roi->height; ++yp)
@@ -202,6 +227,10 @@ sse2_yCbCrToRGB_16s8u_P3AC4R_BGRX(const INT16* WINPR_RESTRICT pSrc[3],
 	const size_t imax = (roi->width - pad) * sizeof(INT16) / sizeof(__m128i);
 	BYTE* d_buf = pDst;
 	const size_t dstPad = (dstStep - roi->width * 4);
+
+	mm_prefetch_buffer(y_buf, roi->width, (size_t)srcStep, roi->height);
+	mm_prefetch_buffer(cr_buf, roi->width, (size_t)srcStep, roi->height);
+	mm_prefetch_buffer(cb_buf, roi->width, (size_t)srcStep, roi->height);
 
 	for (UINT32 yp = 0; yp < roi->height; ++yp)
 	{
@@ -367,6 +396,10 @@ sse2_yCbCrToRGB_16s8u_P3AC4R_RGBX(const INT16* WINPR_RESTRICT pSrc[3],
 	const size_t imax = (roi->width - pad) * sizeof(INT16) / sizeof(__m128i);
 	BYTE* d_buf = pDst;
 	const size_t dstPad = (dstStep - roi->width * 4);
+
+	mm_prefetch_buffer(y_buf, roi->width, (size_t)srcStep, roi->height);
+	mm_prefetch_buffer(cb_buf, roi->width, (size_t)srcStep, roi->height);
+	mm_prefetch_buffer(cr_buf, roi->width, (size_t)srcStep, roi->height);
 
 	for (UINT32 yp = 0; yp < roi->height; ++yp)
 	{
@@ -571,6 +604,10 @@ sse2_RGBToYCbCr_16s16s_P3P3(const INT16* WINPR_RESTRICT pSrc[3], int srcStep,
 	__m128i cr_b = _mm_set1_epi16(-2663);  /* -0.081282 << 15 */
 	const size_t srcbump = WINPR_ASSERTING_INT_CAST(size_t, srcStep) / sizeof(__m128i);
 	const size_t dstbump = WINPR_ASSERTING_INT_CAST(size_t, dstStep) / sizeof(__m128i);
+
+	mm_prefetch_buffer(r_buf, roi->width, (size_t)srcStep, roi->height);
+	mm_prefetch_buffer(g_buf, roi->width, (size_t)srcStep, roi->height);
+	mm_prefetch_buffer(b_buf, roi->width, (size_t)srcStep, roi->height);
 
 	const size_t imax = roi->width * sizeof(INT16) / sizeof(__m128i);
 
