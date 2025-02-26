@@ -56,41 +56,7 @@ WINPR_PRAGMA_DIAG_POP
 #include <winpr/wlog.h>
 #include <winpr/debug.h>
 
-#ifndef MIN
-#define MIN(a, b) (a) < (b) ? (a) : (b)
-#endif
-
 #define TAG "com.winpr.utils.debug"
-#define LOGT(...)                                           \
-	do                                                      \
-	{                                                       \
-		WLog_Print(WLog_Get(TAG), WLOG_TRACE, __VA_ARGS__); \
-	} while (0)
-#define LOGD(...)                                           \
-	do                                                      \
-	{                                                       \
-		WLog_Print(WLog_Get(TAG), WLOG_DEBUG, __VA_ARGS__); \
-	} while (0)
-#define LOGI(...)                                          \
-	do                                                     \
-	{                                                      \
-		WLog_Print(WLog_Get(TAG), WLOG_INFO, __VA_ARGS__); \
-	} while (0)
-#define LOGW(...)                                          \
-	do                                                     \
-	{                                                      \
-		WLog_Print(WLog_Get(TAG), WLOG_WARN, __VA_ARGS__); \
-	} while (0)
-#define LOGE(...)                                           \
-	do                                                      \
-	{                                                       \
-		WLog_Print(WLog_Get(TAG), WLOG_ERROR, __VA_ARGS__); \
-	} while (0)
-#define LOGF(...)                                           \
-	do                                                      \
-	{                                                       \
-		WLog_Print(WLog_Get(TAG), WLOG_FATAL, __VA_ARGS__); \
-	} while (0)
 
 static const char* support_msg = "Invalid stacktrace buffer! check if platform is supported!";
 
@@ -109,7 +75,7 @@ void winpr_backtrace_free(void* buffer)
 	winpr_win_backtrace_free(buffer);
 #else
 	free(buffer);
-	LOGF(support_msg);
+	WLog_FATAL(TAG, "%s", support_msg);
 #endif
 }
 
@@ -124,7 +90,7 @@ void* winpr_backtrace(DWORD size)
 #elif (defined(_WIN32) || defined(_WIN64)) && !defined(_UWP)
 	return winpr_win_backtrace(size);
 #else
-	LOGF(support_msg);
+	WLog_FATAL(TAG, "%s", support_msg);
 	/* return a non NULL buffer to allow the backtrace function family to succeed without failing
 	 */
 	return _strdup(support_msg);
@@ -138,7 +104,7 @@ char** winpr_backtrace_symbols(void* buffer, size_t* used)
 
 	if (!buffer)
 	{
-		LOGF(support_msg);
+		WLog_FATAL(TAG, "%s", support_msg);
 		return NULL;
 	}
 
@@ -151,7 +117,7 @@ char** winpr_backtrace_symbols(void* buffer, size_t* used)
 #elif (defined(_WIN32) || defined(_WIN64)) && !defined(_UWP)
 	return winpr_win_backtrace_symbols(buffer, used);
 #else
-	LOGF(support_msg);
+	WLog_FATAL(TAG, "%s", support_msg);
 
 	/* We return a char** on heap that is compatible with free:
 	 *
@@ -177,7 +143,7 @@ void winpr_backtrace_symbols_fd(void* buffer, int fd)
 {
 	if (!buffer)
 	{
-		LOGF(support_msg);
+		WLog_FATAL(TAG, "%s", support_msg);
 		return;
 	}
 
@@ -196,7 +162,7 @@ void winpr_backtrace_symbols_fd(void* buffer, int fd)
 		free((void*)lines);
 	}
 #else
-	LOGF(support_msg);
+	WLog_FATAL(TAG, "%s", support_msg);
 #endif
 }
 

@@ -32,10 +32,6 @@
 
 #define TAG WINPR_TAG("timezone")
 
-#ifndef MIN
-#define MIN(x, y) (((x) < (y)) ? (x) : (y))
-#endif
-
 #include "TimeZoneNameMap.h"
 #include "TimeZoneIanaAbbrevMap.h"
 

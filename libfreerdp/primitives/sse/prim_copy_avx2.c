@@ -29,8 +29,6 @@
 #include <freerdp/codec/color.h>
 
 #if defined(SSE_AVX_INTRINSICS_ENABLED)
-#define TAG FREERDP_TAG("primitives.copy")
-
 #include <emmintrin.h>
 #include <immintrin.h>
 

@@ -29,16 +29,9 @@
 #include <winpr/error.h>
 #include <winpr/print.h>
 
-#ifndef MIN
-#define MIN(a, b) (a) < (b) ? (a) : (b)
-#endif
-
 #ifndef _WIN32
 
 #include "unicode.h"
-
-#include "../log.h"
-#define TAG WINPR_TAG("unicode")
 
 /**
  * Notes on cross-platform Unicode portability:

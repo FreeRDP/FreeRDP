@@ -38,10 +38,6 @@
 #include "../log.h"
 #define TAG WINPR_TAG("crt")
 
-#ifndef MIN
-#define MIN(x, y) (((x) < (y)) ? (x) : (y))
-#endif
-
 #if defined(WITH_URIPARSER)
 char* winpr_str_url_decode(const char* str, size_t len)
 {

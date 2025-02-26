@@ -29,10 +29,6 @@
 #include <winpr/error.h>
 #include <winpr/print.h>
 
-#ifndef MIN
-#define MIN(a, b) (a) < (b) ? (a) : (b)
-#endif
-
 #include <unicode/ucnv.h>
 #include <unicode/ustring.h>
 

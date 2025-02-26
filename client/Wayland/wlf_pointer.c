@@ -71,10 +71,6 @@ static BOOL wlf_Pointer_Set(rdpContext* context, rdpPointer* pointer)
 	wlfContext* wlf = (wlfContext*)context;
 	wlfPointer* ptr = (wlfPointer*)pointer;
 	void* data = NULL;
-	UINT32 w = 0;
-	UINT32 h = 0;
-	UINT32 x = 0;
-	UINT32 y = 0;
 	size_t size = 0;
 	UwacReturnCode rc = UWAC_ERROR_INTERNAL;
 	BOOL res = FALSE;
@@ -83,10 +79,10 @@ static BOOL wlf_Pointer_Set(rdpContext* context, rdpPointer* pointer)
 	if (!wlf || !wlf->seat)
 		return FALSE;
 
-	x = pointer->xPos;
-	y = pointer->yPos;
-	w = pointer->width;
-	h = pointer->height;
+	UINT32 x = pointer->xPos;
+	UINT32 y = pointer->yPos;
+	UINT32 w = pointer->width;
+	UINT32 h = pointer->height;
 
 	if (!wlf_scale_coordinates(context, &x, &y, FALSE) ||
 	    !wlf_scale_coordinates(context, &w, &h, FALSE))
@@ -148,7 +144,7 @@ static BOOL wlf_Pointer_SetPosition(WINPR_ATTR_UNUSED rdpContext* context,
                                     WINPR_ATTR_UNUSED UINT32 x, WINPR_ATTR_UNUSED UINT32 y)
 {
 	// TODO
-	WLog_ERR("TODO", "TODO: implement");
+	WLog_ERR(TAG, "TODO: implement");
 	return TRUE;
 }
 
