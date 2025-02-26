@@ -195,14 +195,16 @@ static BOOL CommInitialized(void)
 	return TRUE;
 }
 
-void CommLog_Print(DWORD level, ...)
+void CommLog_PrintEx(DWORD level, const char* file, size_t line, const char* fkt, ...)
 {
 	if (!CommInitialized())
 		return;
 
+	if (!WLog_IsLevelActive(sLog, level))
+		return;
 	va_list ap = { 0 };
-	va_start(ap, level);
-	WLog_PrintVA(sLog, level, ap);
+	va_start(ap, fkt);
+	WLog_PrintMessageVA(sLog, WLOG_MESSAGE_TEXT, level, line, file, fkt, ap);
 	va_end(ap);
 }
 
