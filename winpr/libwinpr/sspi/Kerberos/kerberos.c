@@ -1363,6 +1363,8 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcceptSecurityContext(
 				break;
 			if (krb_log_exec(krb5glue_free_keytab_entry_contents, credentials->ctx, &entry))
 				goto cleanup;
+
+			memset(&entry, 0, sizeof(entry));
 		} while (1);
 
 		if (krb_log_exec(krb5_kt_end_seq_get, credentials->ctx, credentials->keytab, &cur))
