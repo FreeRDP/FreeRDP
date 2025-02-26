@@ -203,7 +203,7 @@ BOOL run_action_script(xfContext* xfc, const char* what, const char* arg, fn_act
 
 	if (!keyScript)
 	{
-		WLog_ERR(TAG, "Failed to execute '%s'", command);
+		WLog_ERR(TAG, "[ActionScript] Failed to execute '%s'", command);
 		goto fail;
 	}
 
@@ -223,6 +223,8 @@ BOOL run_action_script(xfContext* xfc, const char* what, const char* arg, fn_act
 	}
 
 	rc = read_data;
+	if (!rc)
+		WLog_ERR(TAG, "[ActionScript] No data returned from command '%s'", command);
 fail:
 	if (keyScript)
 		pclose(keyScript);
