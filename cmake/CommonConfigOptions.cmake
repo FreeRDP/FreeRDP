@@ -6,6 +6,10 @@ option(WITH_BINARY_VERSIONING "Use binary versioning" OFF)
 option(WITH_RESOURCE_VERSIONING "Use resource versioning" OFF)
 option(BUILD_SHARED_LIBS "Build shared libraries" ON)
 
+if(CMAKE_EXPORT_COMPILE_COMMANDS STREQUAL "")
+  set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE BOOL "project default" FORCE)
+endif()
+
 # We want to control the winpr assert for the whole project
 option(WITH_VERBOSE_WINPR_ASSERT "Compile with verbose WINPR_ASSERT." ON)
 if(WITH_VERBOSE_WINPR_ASSERT)
