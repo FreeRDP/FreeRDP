@@ -27,6 +27,9 @@
 #include "../utils/image.h"
 #include "clipboard.h"
 
+#include "../log.h"
+#define TAG WINPR_TAG("clipboard.synthetic")
+
 static const char* mime_bitmap[] = { "image/bmp", "image/x-bmp", "image/x-MS-bmp",
 	                                 "image/x-win-bitmap" };
 
@@ -235,6 +238,8 @@ static void* clipboard_synthesize_cf_dib(wClipboard* clipboard, UINT32 formatId,
 
 	if (formatId == CF_DIBV5)
 	{
+		WLog_WARN(TAG, "[DIB] Unsupported destination format %s",
+		          ClipboardGetFormatName(clipboard, formatId));
 	}
 	else if (is_format_bitmap(clipboard, formatId))
 	{
@@ -255,6 +260,11 @@ static void* clipboard_synthesize_cf_dib(wClipboard* clipboard, UINT32 formatId,
 		*pSize = DstSize;
 		return pDstData;
 	}
+	else
+	{
+		WLog_WARN(TAG, "[DIB] Unsupported destination format %s",
+		          ClipboardGetFormatName(clipboard, formatId));
+	}
 
 	return NULL;
 }
@@ -271,9 +281,38 @@ static void* clipboard_synthesize_cf_dibv5(wClipboard* clipboard, UINT32 formatI
 {
 	if (formatId == CF_DIB)
 	{
+		WLog_WARN(TAG, "[DIBv5] Unsupported destination format %s",
+		          ClipboardGetFormatName(clipboard, formatId));
 	}
 	else if (is_format_bitmap(clipboard, formatId))
 	{
+		WLog_WARN(TAG, "[DIBv5] Unsupported destination format %s",
+		          ClipboardGetFormatName(clipboard, formatId));
+	}
+	else
+	{
+		BOOL handled = FALSE;
+#if defined(WINPR_UTILS_IMAGE_PNG)
+		{
+			const UINT32 altFormatId = ClipboardRegisterFormat(clipboard, mime_png);
+			if (formatId == altFormatId)
+			{
+			}
+		}
+#endif
+#if defined(WINPR_UTILS_IMAGE_JPEG)
+		{
+			const UINT32 altFormatId = ClipboardRegisterFormat(clipboard, mime_jpeg);
+			if (formatId == altFormatId)
+			{
+			}
+		}
+#endif
+		if (!handled)
+		{
+			WLog_WARN(TAG, "[DIBv5] Unsupported destination format %s",
+			          ClipboardGetFormatName(clipboard, formatId));
+		}
 	}
 
 	return NULL;
@@ -349,6 +388,13 @@ static void* clipboard_synthesize_image_bmp(WINPR_ATTR_UNUSED wClipboard* clipbo
 	}
 	else if (formatId == CF_DIBV5)
 	{
+		WLog_WARN(TAG, "[BMP] Unsupported destination format %s",
+		          ClipboardGetFormatName(clipboard, formatId));
+	}
+	else
+	{
+		WLog_WARN(TAG, "[BMP] Unsupported destination format %s",
+		          ClipboardGetFormatName(clipboard, formatId));
 	}
 
 	return NULL;
@@ -741,8 +787,6 @@ BOOL ClipboardInitSynthesizers(wClipboard* clipboard)
 	/**
 	 * CF_DIBV5
 	 */
-
-	if (0)
 	{
 		ClipboardRegisterSynthesizer(clipboard, CF_DIBV5, CF_DIB, clipboard_synthesize_cf_dib);
 
