@@ -285,10 +285,7 @@ static void StreamPool_Remove(wStreamPool* pool, wStream* s)
 static void StreamPool_ReleaseOrReturn(wStreamPool* pool, wStream* s)
 {
 	StreamPool_Lock(pool);
-	if (s->count > 0)
-		s->count--;
-	if (s->count == 0)
-		StreamPool_Remove(pool, s);
+	StreamPool_Remove(pool, s);
 	StreamPool_Unlock(pool);
 }
 
@@ -310,12 +307,7 @@ void StreamPool_Return(wStreamPool* pool, wStream* s)
 void Stream_AddRef(wStream* s)
 {
 	WINPR_ASSERT(s);
-	if (s->pool)
-	{
-		StreamPool_Lock(s->pool);
-		s->count++;
-		StreamPool_Unlock(s->pool);
-	}
+	s->count++;
 }
 
 /**
@@ -325,8 +317,16 @@ void Stream_AddRef(wStream* s)
 void Stream_Release(wStream* s)
 {
 	WINPR_ASSERT(s);
-	if (s->pool)
-		StreamPool_ReleaseOrReturn(s->pool, s);
+
+	if (s->count > 0)
+		s->count--;
+	if (s->count == 0)
+	{
+		if (s->pool)
+			StreamPool_ReleaseOrReturn(s->pool, s);
+		else
+			Stream_Free(s, TRUE);
+	}
 }
 
 /**
