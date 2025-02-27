@@ -416,34 +416,6 @@ static void nsc_rle_compress_data(NSC_CONTEXT* WINPR_RESTRICT context)
 	}
 }
 
-static UINT32 nsc_compute_byte_count(NSC_CONTEXT* WINPR_RESTRICT context,
-                                     UINT32* WINPR_RESTRICT ByteCount, UINT32 width, UINT32 height)
-{
-	UINT32 tempWidth = 0;
-	UINT32 tempHeight = 0;
-	UINT32 maxPlaneSize = 0;
-	tempWidth = ROUND_UP_TO(width, 8);
-	tempHeight = ROUND_UP_TO(height, 2);
-	maxPlaneSize = tempWidth * tempHeight + 16;
-
-	if (context->ChromaSubsamplingLevel)
-	{
-		ByteCount[0] = tempWidth * height;
-		ByteCount[1] = tempWidth * tempHeight / 4;
-		ByteCount[2] = tempWidth * tempHeight / 4;
-		ByteCount[3] = width * height;
-	}
-	else
-	{
-		ByteCount[0] = width * height;
-		ByteCount[1] = width * height;
-		ByteCount[2] = width * height;
-		ByteCount[3] = width * height;
-	}
-
-	return maxPlaneSize;
-}
-
 BOOL nsc_write_message(WINPR_ATTR_UNUSED NSC_CONTEXT* WINPR_RESTRICT context,
                        wStream* WINPR_RESTRICT s, const NSC_MESSAGE* WINPR_RESTRICT message)
 {

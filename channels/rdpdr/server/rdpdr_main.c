@@ -1615,6 +1615,10 @@ static UINT rdpdr_server_receive_device_io_request(RdpdrServerContext* context, 
 		case IRP_MJ_LOCK_CONTROL:
 			return rdpdr_server_receive_io_lock_control_request(context, s, DeviceId, FileId,
 			                                                    CompletionId);
+		case IRP_MJ_SET_VOLUME_INFORMATION:
+			return rdpdr_server_receive_io_set_volume_information_request(context, s, DeviceId,
+			                                                              FileId, CompletionId);
+
 		default:
 			WLog_Print(
 			    context->priv->log, WLOG_WARN,

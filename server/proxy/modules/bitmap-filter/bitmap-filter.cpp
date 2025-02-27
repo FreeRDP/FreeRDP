@@ -38,6 +38,8 @@
 
 #define TAG MODULE_TAG("persist-bitmap-filter")
 
+// #define REPLY_WITH_EMPTY_OFFER
+
 static constexpr char plugin_name[] = "bitmap-filter";
 static constexpr char plugin_desc[] =
     "this plugin deactivates and filters persistent bitmap cache.";
@@ -267,6 +269,7 @@ static BOOL filter_set_plugin_data(proxyPlugin* plugin, proxyData* pdata, DynCha
 	return mgr->SetPluginData(mgr, plugin_name, pdata, data);
 }
 
+#if defined(REPLY_WITH_EMPTY_OFFER)
 static UINT8 drdynvc_value_to_cblen(UINT32 value)
 {
 	if (value <= 0xFF)
@@ -328,6 +331,7 @@ static BOOL filter_forward_empty_offer(const char* sessionID, proxyDynChannelInt
 	data->rewritten = TRUE;
 	return TRUE;
 }
+#endif
 
 static BOOL filter_dyn_channel_intercept(proxyPlugin* plugin, proxyData* pdata, void* arg)
 {
@@ -396,7 +400,8 @@ static BOOL filter_dyn_channel_intercept(proxyPlugin* plugin, proxyData* pdata, 
 				          inputDataLength, state->remaining());
 				data->result = PF_CHANNEL_RESULT_DROP;
 
-#if 0 // TODO: Sending this does screw up some windows RDP server versions :/
+#if defined(REPLY_WITH_EMPTY_OFFER) // TODO: Sending this does screw up some windows RDP server
+                                    // versions :/
 				if (state->remaining() == 0)
 				{
 					if (!filter_forward_empty_offer(pdata->session_id, data, pos,

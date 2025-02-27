@@ -30,8 +30,6 @@
 
 #define TAG FREERDP_TAG("cache.palette")
 
-static void* palette_cache_get(rdpPaletteCache* palette, UINT32 index);
-
 static void palette_cache_put(rdpPaletteCache* palette, UINT32 index, void* entry);
 
 static BOOL update_gdi_cache_color_table(rdpContext* context,
@@ -49,27 +47,6 @@ static BOOL update_gdi_cache_color_table(rdpContext* context,
 	return TRUE;
 }
 
-void* palette_cache_get(rdpPaletteCache* paletteCache, UINT32 index)
-{
-	void* entry = NULL;
-
-	if (index >= paletteCache->maxEntries)
-	{
-		WLog_ERR(TAG, "invalid color table index: 0x%08" PRIX32 "", index);
-		return NULL;
-	}
-
-	entry = paletteCache->entries[index].entry;
-
-	if (!entry)
-	{
-		WLog_ERR(TAG, "invalid color table at index: 0x%08" PRIX32 "", index);
-		return NULL;
-	}
-
-	return entry;
-}
-
 void palette_cache_put(rdpPaletteCache* paletteCache, UINT32 index, void* entry)
 {
 	if (index >= paletteCache->maxEntries)
@@ -85,6 +62,8 @@ void palette_cache_put(rdpPaletteCache* paletteCache, UINT32 index, void* entry)
 
 void palette_cache_register_callbacks(rdpUpdate* update)
 {
+	WINPR_ASSERT(update);
+	WINPR_ASSERT(update->secondary);
 	update->secondary->CacheColorTable = update_gdi_cache_color_table;
 }
 

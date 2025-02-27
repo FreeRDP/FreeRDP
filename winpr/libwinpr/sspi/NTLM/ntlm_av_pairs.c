@@ -51,6 +51,7 @@ static BOOL ntlm_av_pair_check_data(const NTLM_AV_PAIR* pAvPair, size_t cbAvPair
 	return cbAvPair >= offset;
 }
 
+#ifdef WITH_DEBUG_NTLM
 static const char* get_av_pair_string(UINT16 pair)
 {
 	switch (pair)
@@ -81,6 +82,7 @@ static const char* get_av_pair_string(UINT16 pair)
 			return "UNKNOWN";
 	}
 }
+#endif
 
 static BOOL ntlm_av_pair_check(const NTLM_AV_PAIR* pAvPair, size_t cbAvPair);
 static NTLM_AV_PAIR* ntlm_av_pair_next(NTLM_AV_PAIR* pAvPairList, size_t* pcbAvPairList);

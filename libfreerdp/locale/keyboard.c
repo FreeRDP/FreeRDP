@@ -263,6 +263,7 @@ static int freerdp_detect_keyboard(DWORD* keyboardLayoutId)
 	return 0;
 }
 
+#if defined(__APPLE__)
 static int freerdp_keyboard_init_apple(WINPR_ATTR_UNUSED const DWORD* keyboardLayoutId,
                                        DWORD* x11_keycode_to_rdp_scancode, size_t count)
 {
@@ -280,6 +281,7 @@ static int freerdp_keyboard_init_apple(WINPR_ATTR_UNUSED const DWORD* keyboardLa
 	maptype = WINPR_KEYCODE_TYPE_APPLE;
 	return 0;
 }
+#endif
 
 static int freerdp_keyboard_init_x11_evdev(WINPR_ATTR_UNUSED const DWORD* keyboardLayoutId,
                                            DWORD* x11_keycode_to_rdp_scancode, size_t count)

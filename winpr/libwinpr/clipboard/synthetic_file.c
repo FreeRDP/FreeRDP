@@ -615,22 +615,6 @@ static BOOL process_mate_copied_files(wClipboard* clipboard, const char* data, U
 	return process_files(clipboard, data, pSize, "copy\n");
 }
 
-static BOOL process_nautilus_clipboard(wClipboard* clipboard, const char* data, UINT32 pSize)
-{
-	return process_files(clipboard, data, pSize, "x-special/nautilus-clipboard\ncopy\n");
-}
-
-static void* convert_nautilus_clipboard_to_filedescriptors(wClipboard* clipboard, UINT32 formatId,
-                                                           const void* data, UINT32* pSize)
-{
-	const UINT32 expected = ClipboardGetFormatId(clipboard, mime_gnome_copied_files);
-	if (formatId != expected)
-		return NULL;
-	if (!process_nautilus_clipboard(clipboard, (const char*)data, *pSize))
-		return NULL;
-	return convert_any_uri_list_to_filedescriptors(clipboard, formatId, pSize);
-}
-
 static void* convert_gnome_copied_files_to_filedescriptors(wClipboard* clipboard, UINT32 formatId,
                                                            const void* data, UINT32* pSize)
 {
@@ -886,30 +870,6 @@ static void* convert_filedescriptors_to_gnome_copied_files(wClipboard* clipboard
 {
 	return convert_filedescriptors_to_file_list(clipboard, formatId, data, pSize, "copy\n",
 	                                            "file://", "\n", TRUE);
-}
-
-/* Prepend header of nautilus based filemanager's format to file list*/
-static void* convert_filedescriptors_to_nautilus_clipboard(wClipboard* clipboard, UINT32 formatId,
-                                                           const void* data, UINT32* pSize)
-{
-	/* Here Nemo (and Caja) have different behavior. They encounter error with the last \n . but
-	   nautilus needs it. So user have to skip Nemo's error dialog to continue. Caja has different
-	   TARGET , so it's easy to fix. see convert_filedescriptors_to_mate_copied_files
-
-	   The text based "x-special/nautilus-clipboard" type was introduced with GNOME 3.30 and
-	   was necessary for the desktop icons extension, as gnome-shell at that time only
-	   supported text based mime types for gnome extensions. With GNOME 3.38, gnome-shell got
-	   support for non-text based mime types for gnome extensions. With GNOME 40, nautilus reverted
-	   the mime type change to "x-special/gnome-copied-files" and removed support for the text based
-	   mime type. So, in the near future, change this behaviour in favor for Nemo and Caja.
-	*/
-	/*	see nautilus/src/nautilus-clipboard.c:convert_selection_data_to_str_list
-	    see nemo/libnemo-private/nemo-clipboard.c:nemo_clipboard_get_uri_list_from_selection_data
-	*/
-
-	return convert_filedescriptors_to_file_list(clipboard, formatId, data, pSize,
-	                                            "x-special/nautilus-clipboard\ncopy\n", "file://",
-	                                            "\n", FALSE);
 }
 
 static void* convert_filedescriptors_to_mate_copied_files(wClipboard* clipboard, UINT32 formatId,
