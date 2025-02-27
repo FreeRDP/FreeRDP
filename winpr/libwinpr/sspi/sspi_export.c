@@ -26,8 +26,10 @@
 #define SSPI_EXPORT __declspec(dllexport)
 #else
 #include <winpr/winpr.h>
+#if defined(SSPI_DLL)
 #define SEC_ENTRY
 #define SSPI_EXPORT WINPR_API
+#endif
 #endif
 
 #ifdef _WIN32

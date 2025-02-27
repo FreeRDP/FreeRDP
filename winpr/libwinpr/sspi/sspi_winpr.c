@@ -84,9 +84,6 @@ static const SecurityFunctionTableW_NAME SecurityFunctionTableW_NAME_LIST[] = {
 	{ BUFFER_NAME_LIST_W[4], &SCHANNEL_SecurityFunctionTableW }
 };
 
-#define SecHandle_LOWER_MAX 0xFFFFFFFF
-#define SecHandle_UPPER_MAX 0xFFFFFFFE
-
 typedef struct
 {
 	void* contextBuffer;

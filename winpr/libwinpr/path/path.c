@@ -27,7 +27,9 @@
 #include <winpr/path.h>
 #include <winpr/file.h>
 
+#if defined(WITH_RESOURCE_VERSIONING)
 #define STR(x) #x
+#endif
 
 #define PATH_SLASH_CHR '/'
 #define PATH_SLASH_STR "/"
@@ -57,18 +59,6 @@
 #define PATH_SEPARATOR_CHR PATH_SLASH_CHR
 #define PATH_SEPARATOR_STR PATH_SLASH_STR
 #define PATH_SEPARATOR_STR_W PATH_SLASH_STR_W
-#endif
-
-#define SHARED_LIBRARY_EXT_DLL "dll"
-#define SHARED_LIBRARY_EXT_SO "so"
-#define SHARED_LIBRARY_EXT_DYLIB "dylib"
-
-#ifdef _WIN32
-#define SHARED_LIBRARY_EXT SHARED_LIBRARY_EXT_DLL
-#elif defined(__APPLE__)
-#define SHARED_LIBRARY_EXT SHARED_LIBRARY_EXT_DYLIB
-#else
-#define SHARED_LIBRARY_EXT SHARED_LIBRARY_EXT_SO
 #endif
 
 #include "../log.h"

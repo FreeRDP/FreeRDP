@@ -24,17 +24,12 @@
 
 #include <winpr/crt.h>
 #include <winpr/library.h>
-#include <winpr/wlog.h>
 #include <winpr/nt.h>
 #include <winpr/endian.h>
-
-#include "../log.h"
-#define TAG WINPR_TAG("nt")
 
 #ifndef _WIN32
 
 #include <pthread.h>
-#include <winpr/crt.h>
 
 #include "../handle/handle.h"
 

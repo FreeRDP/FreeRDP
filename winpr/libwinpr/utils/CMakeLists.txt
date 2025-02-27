@@ -36,6 +36,7 @@ if(WITH_LODEPNG)
   winpr_library_add_private(${lodepng_LIBRARIES})
 endif()
 
+option(WINPR_UTILS_IMAGE_DIBv5 "[experimental] Add DIBv5 <--> BMP conversion support to clipboard" OFF)
 option(WINPR_UTILS_IMAGE_PNG "Add PNG <--> BMP conversion support to clipboard" OFF)
 if(WINPR_UTILS_IMAGE_PNG)
   find_package(PNG REQUIRED)

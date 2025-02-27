@@ -33,12 +33,6 @@
 
 static primitives_t* generic = NULL;
 
-#ifdef __GNUC__
-#define GNU_INLINE __attribute__((__gnu_inline__, __always_inline__, __artificial__))
-#else
-#define GNU_INLINE
-#endif
-
 #define CACHE_LINE_BYTES 64
 
 /*  1.403 << 14 */
@@ -85,19 +79,23 @@ static inline __m128i mm_between_epi16_int(__m128i val, __m128i min, __m128i max
 
 #define mm_between_epi16(_val, _min, _max) (_val) = mm_between_epi16_int((_val), (_min), (_max))
 
-#ifdef DO_PREFETCH
-/*---------------------------------------------------------------------------*/
-static inline void GNU_INLINE _mm_prefetch_buffer(char* WINPR_RESTRICT buffer, int num_bytes)
+static inline void mm_prefetch_buffer(const void* WINPR_RESTRICT buffer, size_t width,
+                                      size_t stride, size_t height)
 {
-	__m128i* buf = (__m128i*)buffer;
+	const size_t srcbump = stride / sizeof(__m128i);
+	const __m128i* buf = (const __m128i*)buffer;
 
-	for (unsigned int i = 0; i < (num_bytes / sizeof(__m128i));
-	     i += (CACHE_LINE_BYTES / sizeof(__m128i)))
+	for (size_t y = 0; y < height; y++)
 	{
-		_mm_prefetch((char*)(&buf[i]), _MM_HINT_NTA);
+		const __m128i* line = &buf[y * srcbump];
+		for (size_t x = 0; x < width * sizeof(INT16) / sizeof(__m128i);
+		     x += (CACHE_LINE_BYTES / sizeof(__m128i)))
+		{
+			const char* ptr = (const char*)&line[x];
+			_mm_prefetch(ptr, _MM_HINT_NTA);
+		}
 	}
 }
-#endif /* DO_PREFETCH */
 
 /*---------------------------------------------------------------------------*/
 static pstatus_t
@@ -133,28 +131,11 @@ sse2_yCbCrToRGB_16s16s_P3P3(const INT16* WINPR_RESTRICT pSrc[3], int srcStep,
 	__m128i c4096 = _mm_set1_epi16(4096);
 	const size_t srcbump = WINPR_ASSERTING_INT_CAST(size_t, srcStep) / sizeof(__m128i);
 	const size_t dstbump = WINPR_ASSERTING_INT_CAST(size_t, dstStep) / sizeof(__m128i);
-#ifdef DO_PREFETCH
 
-	/* Prefetch Y's, Cb's, and Cr's. */
-	for (UINT32 yp = 0; yp < roi->height; yp++)
-	{
-		for (int i = 0; i < roi->width * sizeof(INT16) / sizeof(__m128i);
-		     i += (CACHE_LINE_BYTES / sizeof(__m128i)))
-		{
-			_mm_prefetch((char*)(&y_buf[i]), _MM_HINT_NTA);
-			_mm_prefetch((char*)(&cb_buf[i]), _MM_HINT_NTA);
-			_mm_prefetch((char*)(&cr_buf[i]), _MM_HINT_NTA);
-		}
+	mm_prefetch_buffer(y_buf, roi->width, (size_t)srcStep, roi->height);
+	mm_prefetch_buffer(cb_buf, roi->width, (size_t)srcStep, roi->height);
+	mm_prefetch_buffer(cr_buf, roi->width, (size_t)srcStep, roi->height);
 
-		y_buf += srcbump;
-		cb_buf += srcbump;
-		cr_buf += srcbump;
-	}
-
-	y_buf = (__m128i*)(pSrc[0]);
-	cb_buf = (__m128i*)(pSrc[1]);
-	cr_buf = (__m128i*)(pSrc[2]);
-#endif /* DO_PREFETCH */
 	const size_t imax = roi->width * sizeof(INT16) / sizeof(__m128i);
 
 	for (UINT32 yp = 0; yp < roi->height; ++yp)
@@ -246,27 +227,10 @@ sse2_yCbCrToRGB_16s8u_P3AC4R_BGRX(const INT16* WINPR_RESTRICT pSrc[3],
 	const size_t imax = (roi->width - pad) * sizeof(INT16) / sizeof(__m128i);
 	BYTE* d_buf = pDst;
 	const size_t dstPad = (dstStep - roi->width * 4);
-#ifdef DO_PREFETCH
 
-	/* Prefetch Y's, Cb's, and Cr's. */
-	for (UINT32 yp = 0; yp < roi->height; yp++)
-	{
-		for (size_t i = 0; i < imax; i += (CACHE_LINE_BYTES / sizeof(__m128i)))
-		{
-			_mm_prefetch((char*)(&((__m128i*)y_buf)[i]), _MM_HINT_NTA);
-			_mm_prefetch((char*)(&((__m128i*)cb_buf)[i]), _MM_HINT_NTA);
-			_mm_prefetch((char*)(&((__m128i*)cr_buf)[i]), _MM_HINT_NTA);
-		}
-
-		y_buf += srcStep / sizeof(INT16);
-		cb_buf += srcStep / sizeof(INT16);
-		cr_buf += srcStep / sizeof(INT16);
-	}
-
-	y_buf = (INT16*)pSrc[0];
-	cb_buf = (INT16*)pSrc[1];
-	cr_buf = (INT16*)pSrc[2];
-#endif /* DO_PREFETCH */
+	mm_prefetch_buffer(y_buf, roi->width, (size_t)srcStep, roi->height);
+	mm_prefetch_buffer(cr_buf, roi->width, (size_t)srcStep, roi->height);
+	mm_prefetch_buffer(cb_buf, roi->width, (size_t)srcStep, roi->height);
 
 	for (UINT32 yp = 0; yp < roi->height; ++yp)
 	{
@@ -432,27 +396,10 @@ sse2_yCbCrToRGB_16s8u_P3AC4R_RGBX(const INT16* WINPR_RESTRICT pSrc[3],
 	const size_t imax = (roi->width - pad) * sizeof(INT16) / sizeof(__m128i);
 	BYTE* d_buf = pDst;
 	const size_t dstPad = (dstStep - roi->width * 4);
-#ifdef DO_PREFETCH
 
-	/* Prefetch Y's, Cb's, and Cr's. */
-	for (UINT32 yp = 0; yp < roi->height; yp++)
-	{
-		for (size_t i = 0; i < imax; i += (CACHE_LINE_BYTES / sizeof(__m128i)))
-		{
-			_mm_prefetch((char*)(&((__m128i*)y_buf)[i]), _MM_HINT_NTA);
-			_mm_prefetch((char*)(&((__m128i*)cb_buf)[i]), _MM_HINT_NTA);
-			_mm_prefetch((char*)(&((__m128i*)cr_buf)[i]), _MM_HINT_NTA);
-		}
-
-		y_buf += srcStep / sizeof(INT16);
-		cb_buf += srcStep / sizeof(INT16);
-		cr_buf += srcStep / sizeof(INT16);
-	}
-
-	y_buf = (INT16*)(pSrc[0]);
-	cb_buf = (INT16*)(pSrc[1]);
-	cr_buf = (INT16*)(pSrc[2]);
-#endif /* DO_PREFETCH */
+	mm_prefetch_buffer(y_buf, roi->width, (size_t)srcStep, roi->height);
+	mm_prefetch_buffer(cb_buf, roi->width, (size_t)srcStep, roi->height);
+	mm_prefetch_buffer(cr_buf, roi->width, (size_t)srcStep, roi->height);
 
 	for (UINT32 yp = 0; yp < roi->height; ++yp)
 	{
@@ -657,28 +604,11 @@ sse2_RGBToYCbCr_16s16s_P3P3(const INT16* WINPR_RESTRICT pSrc[3], int srcStep,
 	__m128i cr_b = _mm_set1_epi16(-2663);  /* -0.081282 << 15 */
 	const size_t srcbump = WINPR_ASSERTING_INT_CAST(size_t, srcStep) / sizeof(__m128i);
 	const size_t dstbump = WINPR_ASSERTING_INT_CAST(size_t, dstStep) / sizeof(__m128i);
-#ifdef DO_PREFETCH
 
-	/* Prefetch RGB's. */
-	for (UINT32 yp = 0; yp < roi->height; yp++)
-	{
-		for (int i = 0; i < roi->width * sizeof(INT16) / sizeof(__m128i);
-		     i += (CACHE_LINE_BYTES / sizeof(__m128i)))
-		{
-			_mm_prefetch((char*)(&r_buf[i]), _MM_HINT_NTA);
-			_mm_prefetch((char*)(&g_buf[i]), _MM_HINT_NTA);
-			_mm_prefetch((char*)(&b_buf[i]), _MM_HINT_NTA);
-		}
+	mm_prefetch_buffer(r_buf, roi->width, (size_t)srcStep, roi->height);
+	mm_prefetch_buffer(g_buf, roi->width, (size_t)srcStep, roi->height);
+	mm_prefetch_buffer(b_buf, roi->width, (size_t)srcStep, roi->height);
 
-		r_buf += srcbump;
-		g_buf += srcbump;
-		b_buf += srcbump;
-	}
-
-	r_buf = (__m128i*)(pSrc[0]);
-	g_buf = (__m128i*)(pSrc[1]);
-	b_buf = (__m128i*)(pSrc[2]);
-#endif /* DO_PREFETCH */
 	const size_t imax = roi->width * sizeof(INT16) / sizeof(__m128i);
 
 	for (UINT32 yp = 0; yp < roi->height; ++yp)
