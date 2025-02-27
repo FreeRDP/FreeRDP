@@ -147,22 +147,11 @@ static void transport_ssl_cb(const SSL* ssl, int where, int ret)
 	}
 }
 
-wStream* transport_send_stream_init(rdpTransport* transport, size_t size)
+wStream* transport_send_stream_init(WINPR_ATTR_UNUSED rdpTransport* transport, size_t size)
 {
 	WINPR_ASSERT(transport);
 
-	wStream* s = StreamPool_Take(transport->ReceivePool, size);
-	if (!s)
-		return NULL;
-
-	if (!Stream_EnsureCapacity(s, size))
-	{
-		Stream_Release(s);
-		return NULL;
-	}
-
-	Stream_SetPosition(s, 0);
-	return s;
+	return Stream_New(NULL, size);
 }
 
 BOOL transport_attach(rdpTransport* transport, int sockfd)
@@ -1447,9 +1436,12 @@ int transport_check_fds(rdpTransport* transport)
 	}
 
 	received = transport->ReceiveBuffer;
-
-	if (!(transport->ReceiveBuffer = StreamPool_Take(transport->ReceivePool, 0)))
+	transport->ReceiveBuffer = StreamPool_Take(transport->ReceivePool, 0);
+	if (!transport->ReceiveBuffer)
+	{
+		Stream_Release(received);
 		return -1;
+	}
 
 	/**
 	 * status:
