@@ -95,6 +95,8 @@ int main(int argc, char** argv)
 		  "Allow GFX AVC420 codec" },
 		{ "gfx-avc444", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL,
 		  "Allow GFX AVC444 codec" },
+		{ "bitmap-compat", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL,
+		  "Limit BitmapUpdate to 1 rectangle (fixes broken windows 11 24H2 clients)" },
 		{ "version", COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_PRINT_VERSION, NULL, NULL, NULL, -1,
 		  NULL, "Print version" },
 		{ "buildconfig", COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_PRINT_BUILDCONFIG, NULL, NULL, NULL,
