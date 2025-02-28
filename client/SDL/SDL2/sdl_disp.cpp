@@ -254,7 +254,7 @@ UINT sdlDispContext::sendLayout(const std::vector<rdpMonitor>& monitors)
 
 		layout.DesktopScaleFactor = monitor.attributes.desktopScaleFactor;
 		layout.DeviceScaleFactor = monitor.attributes.deviceScaleFactor;
-		Sdl_Log("[xxx] monitor %dx%d", layout.Width, layout.Height);
+		SDL_Log("[xxx] monitor %dx%d", layout.Width, layout.Height);
 		layouts.push_back(layout);
 	}
 
@@ -429,9 +429,9 @@ sdlDispContext::sdlDispContext(SdlContext* sdl) : _sdl(sdl)
 	auto settings = _sdl->context()->settings;
 	auto pubSub = _sdl->context()->pubSub;
 
-	_lastSentWidth = _targetWidth =
+	_targetWidth =
 	    WINPR_ASSERTING_INT_CAST(int, freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth));
-	_lastSentHeight = _targetHeight =
+	_targetHeight =
 	    WINPR_ASSERTING_INT_CAST(int, freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight));
 	PubSub_SubscribeActivated(pubSub, sdlDispContext::OnActivated);
 	PubSub_SubscribeGraphicsReset(pubSub, sdlDispContext::OnGraphicsReset);
