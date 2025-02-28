@@ -17,6 +17,7 @@
  * limitations under the License.
  */
 
+#include <algorithm>
 #include <vector>
 #include <winpr/sysinfo.h>
 #include <winpr/assert.h>
@@ -38,47 +39,45 @@ static constexpr unsigned MAX_RETRIES = 5;
 
 BOOL sdlDispContext::settings_changed()
 {
-	auto settings = _sdl->context()->settings;
-	WINPR_ASSERT(settings);
-
-	if (_lastSentWidth != _targetWidth)
-		return TRUE;
-
-	if (_lastSentHeight != _targetHeight)
-		return TRUE;
-
-	if (_lastSentDesktopOrientation !=
-	    freerdp_settings_get_uint16(settings, FreeRDP_DesktopOrientation))
-		return TRUE;
-
-	if (_lastSentDesktopScaleFactor !=
-	    freerdp_settings_get_uint32(settings, FreeRDP_DesktopScaleFactor))
-		return TRUE;
-
-	if (_lastSentDeviceScaleFactor !=
-	    freerdp_settings_get_uint32(settings, FreeRDP_DeviceScaleFactor))
-		return TRUE;
-	/* TODO
-	    if (_fullscreen != _sdl->fullscreen)
-	        return TRUE;
-	*/
-	return FALSE;
+	auto layout = currentMonitorLayout();
+	return layout != _lastSentLayout;
 }
 
-BOOL sdlDispContext::update_last_sent()
+std::vector<rdpMonitor> sdlDispContext::currentMonitorLayout() const
 {
-	WINPR_ASSERT(_sdl);
+	auto monitors = static_cast<const rdpMonitor*>(
+	    freerdp_settings_get_pointer_array(_sdl->context()->settings, FreeRDP_MonitorDefArray, 0));
+	auto count = freerdp_settings_get_uint32(_sdl->context()->settings, FreeRDP_MonitorCount);
 
-	auto settings = _sdl->context()->settings;
-	WINPR_ASSERT(settings);
+	std::vector<rdpMonitor> layout;
+	layout.reserve(std::max<size_t>(1, count));
 
-	_lastSentWidth = _targetWidth;
-	_lastSentHeight = _targetHeight;
-	_lastSentDesktopOrientation = freerdp_settings_get_uint16(settings, FreeRDP_DesktopOrientation);
-	_lastSentDesktopScaleFactor = freerdp_settings_get_uint32(settings, FreeRDP_DesktopScaleFactor);
-	_lastSentDeviceScaleFactor = freerdp_settings_get_uint32(settings, FreeRDP_DeviceScaleFactor);
-	// TODO _fullscreen = _sdl->fullscreen;
-	return TRUE;
+	if (!_sdl->fullscreen)
+	{
+		auto settings = _sdl->context()->settings;
+		const rdpMonitor mon = {
+			0,
+			0,
+			WINPR_ASSERTING_INT_CAST(int32_t,
+			                         freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth)),
+			WINPR_ASSERTING_INT_CAST(int32_t,
+			                         freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight)),
+			DISPLAY_CONTROL_MONITOR_PRIMARY,
+			0,
+			{ freerdp_settings_get_uint32(settings, FreeRDP_DesktopPhysicalWidth),
+			  freerdp_settings_get_uint32(settings, FreeRDP_DesktopPhysicalHeight),
+			  freerdp_settings_get_uint16(settings, FreeRDP_DesktopOrientation),
+			  freerdp_settings_get_uint32(settings, FreeRDP_DesktopScaleFactor),
+			  freerdp_settings_get_uint32(settings, FreeRDP_DeviceScaleFactor) }
+		};
+		layout.push_back(mon);
+	}
+	else
+	{
+		for (size_t x = 0; x < count; x++)
+			layout.push_back(monitors[x]);
+	}
+	return layout;
 }
 
 BOOL sdlDispContext::sendResize()
@@ -95,38 +94,11 @@ BOOL sdlDispContext::sendResize()
 	if (GetTickCount64() - _lastSentDate < RESIZE_MIN_DELAY)
 		return TRUE;
 
-	_lastSentDate = GetTickCount64();
-
 	if (!settings_changed())
 		return TRUE;
 
-	const UINT32 mcount = freerdp_settings_get_uint32(settings, FreeRDP_MonitorCount);
-	if (_sdl->fullscreen && (mcount > 0))
-	{
-		auto monitors = static_cast<const rdpMonitor*>(
-		    freerdp_settings_get_pointer(settings, FreeRDP_MonitorDefArray));
-		if (sendLayout(monitors, mcount) != CHANNEL_RC_OK)
-			return FALSE;
-	}
-	else
-	{
-		_waitingResize = TRUE;
-		layout.Flags = DISPLAY_CONTROL_MONITOR_PRIMARY;
-		layout.Top = layout.Left = 0;
-		layout.Width = WINPR_ASSERTING_INT_CAST(uint32_t, _targetWidth);
-		layout.Height = WINPR_ASSERTING_INT_CAST(uint32_t, _targetHeight);
-		layout.Orientation = freerdp_settings_get_uint16(settings, FreeRDP_DesktopOrientation);
-		layout.DesktopScaleFactor =
-		    freerdp_settings_get_uint32(settings, FreeRDP_DesktopScaleFactor);
-		layout.DeviceScaleFactor = freerdp_settings_get_uint32(settings, FreeRDP_DeviceScaleFactor);
-		layout.PhysicalWidth = WINPR_ASSERTING_INT_CAST(uint32_t, _targetWidth);
-		layout.PhysicalHeight = WINPR_ASSERTING_INT_CAST(uint32_t, _targetHeight);
-
-		if (IFCALLRESULT(CHANNEL_RC_OK, _disp->SendMonitorLayout, _disp, 1, &layout) !=
-		    CHANNEL_RC_OK)
-			return FALSE;
-	}
-	return update_last_sent();
+	auto monitors = currentMonitorLayout();
+	return sendLayout(monitors);
 }
 
 BOOL sdlDispContext::set_window_resizable()
@@ -230,45 +202,42 @@ Uint32 sdlDispContext::OnTimer(Uint32 interval, void* param)
 	return interval;
 }
 
-UINT sdlDispContext::sendLayout(const rdpMonitor* monitors, size_t nmonitors)
+UINT sdlDispContext::sendLayout(const std::vector<rdpMonitor>& monitors)
 {
 	UINT ret = CHANNEL_RC_OK;
 
-	WINPR_ASSERT(monitors);
-	WINPR_ASSERT(nmonitors > 0);
-
-	auto settings = _sdl->context()->settings;
-	WINPR_ASSERT(settings);
+	_lastSentLayout = monitors;
+	if (monitors.empty())
+		return CHANNEL_RC_OK;
 
 	std::vector<DISPLAY_CONTROL_MONITOR_LAYOUT> layouts;
-	layouts.resize(nmonitors);
+	layouts.resize(monitors.size());
 
-	for (size_t i = 0; i < nmonitors; i++)
+	for (const auto& monitor : monitors)
 	{
-		auto monitor = &monitors[i];
-		auto layout = &layouts[i];
+		DISPLAY_CONTROL_MONITOR_LAYOUT layout = {};
 
-		layout->Flags = (monitor->is_primary ? DISPLAY_CONTROL_MONITOR_PRIMARY : 0);
-		layout->Left = monitor->x;
-		layout->Top = monitor->y;
-		layout->Width = WINPR_ASSERTING_INT_CAST(uint32_t, monitor->width);
-		layout->Height = WINPR_ASSERTING_INT_CAST(uint32_t, monitor->height);
-		layout->Orientation = ORIENTATION_LANDSCAPE;
-		layout->PhysicalWidth = monitor->attributes.physicalWidth;
-		layout->PhysicalHeight = monitor->attributes.physicalHeight;
+		layout.Flags = (monitor.is_primary ? DISPLAY_CONTROL_MONITOR_PRIMARY : 0);
+		layout.Left = monitor.x;
+		layout.Top = monitor.y;
+		layout.Width = WINPR_ASSERTING_INT_CAST(uint32_t, monitor.width);
+		layout.Height = WINPR_ASSERTING_INT_CAST(uint32_t, monitor.height);
+		layout.Orientation = ORIENTATION_LANDSCAPE;
+		layout.PhysicalWidth = monitor.attributes.physicalWidth;
+		layout.PhysicalHeight = monitor.attributes.physicalHeight;
 
-		switch (monitor->attributes.orientation)
+		switch (monitor.attributes.orientation)
 		{
 			case 90:
-				layout->Orientation = ORIENTATION_PORTRAIT;
+				layout.Orientation = ORIENTATION_PORTRAIT;
 				break;
 
 			case 180:
-				layout->Orientation = ORIENTATION_LANDSCAPE_FLIPPED;
+				layout.Orientation = ORIENTATION_LANDSCAPE_FLIPPED;
 				break;
 
 			case 270:
-				layout->Orientation = ORIENTATION_PORTRAIT_FLIPPED;
+				layout.Orientation = ORIENTATION_PORTRAIT_FLIPPED;
 				break;
 
 			case 0:
@@ -280,14 +249,14 @@ UINT sdlDispContext::sendLayout(const rdpMonitor* monitors, size_t nmonitors)
 				 *
 				 * So we default to ORIENTATION_LANDSCAPE
 				 */
-				layout->Orientation = ORIENTATION_LANDSCAPE;
+				layout.Orientation = ORIENTATION_LANDSCAPE;
 				break;
 		}
 
-		layout->DesktopScaleFactor =
-		    freerdp_settings_get_uint32(settings, FreeRDP_DesktopScaleFactor);
-		layout->DeviceScaleFactor =
-		    freerdp_settings_get_uint32(settings, FreeRDP_DeviceScaleFactor);
+		layout.DesktopScaleFactor = monitor.attributes.desktopScaleFactor;
+		layout.DeviceScaleFactor = monitor.attributes.deviceScaleFactor;
+		SDL_Log("[xxx] monitor %dx%d", layout.Width, layout.Height);
+		layouts.push_back(layout);
 	}
 
 	WINPR_ASSERT(_disp);
@@ -461,9 +430,9 @@ sdlDispContext::sdlDispContext(SdlContext* sdl) : _sdl(sdl)
 	auto settings = _sdl->context()->settings;
 	auto pubSub = _sdl->context()->pubSub;
 
-	_lastSentWidth = _targetWidth =
+	_targetWidth =
 	    WINPR_ASSERTING_INT_CAST(int, freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth));
-	_lastSentHeight = _targetHeight =
+	_targetHeight =
 	    WINPR_ASSERTING_INT_CAST(int, freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight));
 	PubSub_SubscribeActivated(pubSub, sdlDispContext::OnActivated);
 	PubSub_SubscribeGraphicsReset(pubSub, sdlDispContext::OnGraphicsReset);
