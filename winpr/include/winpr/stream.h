@@ -1368,7 +1368,20 @@ extern "C"
 
 	WINPR_API void StreamPool_Return(wStreamPool* pool, wStream* s);
 
+	/** @brief increment reference count of stream
+	 *
+	 *  @param s The stream to reference
+	 *  @bug versions < 3.13.0 did only handle streams returned by StreamPool_Take
+	 */
 	WINPR_API void Stream_AddRef(wStream* s);
+
+	/** @brief Release a reference to a stream.
+	 *  If the reference count reaches \b 0 it is returned to the StreamPool it was taken from or \b
+	 * Stream_Free is called.
+	 *
+	 *  @param s The stream to release
+	 *  @bug versions < 3.13.0 did only handle streams returned by StreamPool_Take
+	 */
 	WINPR_API void Stream_Release(wStream* s);
 
 	WINPR_ATTR_MALLOC(Stream_Release, 1)
