@@ -20,7 +20,7 @@ set(MODULE_PREFIX "WINPR_COMM")
 
 if(NOT WIN32)
   set(${MODULE_PREFIX}_SRCS comm.c comm.h)
-  if(NOT EMSCRIPTEN)
+  if(NOT EMSCRIPTEN AND NOT APPLE)
     winpr_definition_add(WINPR_HAVE_SERIAL_SUPPORT)
     list(
       APPEND
