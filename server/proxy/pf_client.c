@@ -193,36 +193,6 @@ static BOOL pf_client_use_proxy_smartcard_auth(const rdpSettings* settings)
 	return TRUE;
 }
 
-static BOOL freerdp_client_load_static_channel_addin(rdpChannels* channels, rdpSettings* settings,
-                                                     const char* name, void* data)
-{
-	PVIRTUALCHANNELENTRY entry = NULL;
-	PVIRTUALCHANNELENTRY lentry = freerdp_load_channel_addin_entry(
-	    name, NULL, NULL, FREERDP_ADDIN_CHANNEL_STATIC | FREERDP_ADDIN_CHANNEL_ENTRYEX);
-	PVIRTUALCHANNELENTRYEX entryEx = WINPR_FUNC_PTR_CAST(lentry, PVIRTUALCHANNELENTRYEX);
-	if (!entryEx)
-		entry = freerdp_load_channel_addin_entry(name, NULL, NULL, FREERDP_ADDIN_CHANNEL_STATIC);
-
-	if (entryEx)
-	{
-		if (freerdp_channels_client_load_ex(channels, settings, entryEx, data) == 0)
-		{
-			WLog_INFO(TAG, "loading channelEx %s", name);
-			return TRUE;
-		}
-	}
-	else if (entry)
-	{
-		if (freerdp_channels_client_load(channels, settings, entry, data) == 0)
-		{
-			WLog_INFO(TAG, "loading channel %s", name);
-			return TRUE;
-		}
-	}
-
-	return FALSE;
-}
-
 static BOOL pf_client_pre_connect(freerdp* instance)
 {
 	pClientContext* pc = NULL;

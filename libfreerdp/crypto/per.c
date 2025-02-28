@@ -470,19 +470,6 @@ BOOL per_write_object_identifier(wStream* s, const BYTE oid[6])
 }
 
 /**
- * Write PER string.
- * @param s stream
- * @param str string
- * @param length string length
- */
-
-static void per_write_string(wStream* s, BYTE* str, int length)
-{
-	for (int i = 0; i < length; i++)
-		Stream_Write_UINT8(s, str[i]);
-}
-
-/**
  * Read PER OCTET_STRING.
  *
  * @param s The stream to read from

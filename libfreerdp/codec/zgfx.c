@@ -379,17 +379,6 @@ static INLINE BOOL zgfx_decompress_segment(ZGFX_CONTEXT* WINPR_RESTRICT zgfx,
 	return TRUE;
 }
 
-/* Allocate the buffers a bit larger.
- *
- * Due to optimizations some h264 decoders will read data beyond
- * the actual available data, so ensure that it will never be a
- * out of bounds read.
- */
-static INLINE BYTE* aligned_zgfx_malloc(size_t size)
-{
-	return malloc(size + 64);
-}
-
 static INLINE BOOL zgfx_append(ZGFX_CONTEXT* WINPR_RESTRICT zgfx,
                                BYTE** WINPR_RESTRICT ppConcatenated, size_t uncompressedSize,
                                size_t* WINPR_RESTRICT pUsed)

@@ -103,14 +103,6 @@ typedef struct
 static int transport_bio_simple_init(BIO* bio, SOCKET socket, int shutdown);
 static int transport_bio_simple_uninit(BIO* bio);
 
-static long transport_bio_simple_callback(WINPR_ATTR_UNUSED BIO* bio, WINPR_ATTR_UNUSED int mode,
-                                          WINPR_ATTR_UNUSED const char* argp,
-                                          WINPR_ATTR_UNUSED int argi, WINPR_ATTR_UNUSED long argl,
-                                          WINPR_ATTR_UNUSED long ret)
-{
-	return 1;
-}
-
 static int transport_bio_simple_write(BIO* bio, const char* buf, int size)
 {
 	int error = 0;
@@ -463,14 +455,6 @@ typedef struct
 	BOOL writeBlocked;
 	RingBuffer xmitBuffer;
 } WINPR_BIO_BUFFERED_SOCKET;
-
-static long transport_bio_buffered_callback(WINPR_ATTR_UNUSED BIO* bio, WINPR_ATTR_UNUSED int mode,
-                                            WINPR_ATTR_UNUSED const char* argp,
-                                            WINPR_ATTR_UNUSED int argi, WINPR_ATTR_UNUSED long argl,
-                                            WINPR_ATTR_UNUSED long ret)
-{
-	return 1;
-}
 
 static int transport_bio_buffered_write(BIO* bio, const char* buf, int num)
 {

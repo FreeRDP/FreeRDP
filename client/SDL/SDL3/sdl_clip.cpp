@@ -108,10 +108,7 @@ static bool operator<(const CLIPRDR_FORMAT& lhs, const CLIPRDR_FORMAT& rhs)
 {
 	return (lhs.formatId < rhs.formatId);
 }
-static bool operator>(const CLIPRDR_FORMAT& lhs, const CLIPRDR_FORMAT& rhs)
-{
-	return (lhs.formatId > rhs.formatId);
-}
+
 static bool operator==(const CLIPRDR_FORMAT& lhs, const CLIPRDR_FORMAT& rhs)
 {
 	return (lhs.formatId == rhs.formatId);

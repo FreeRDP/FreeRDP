@@ -1049,30 +1049,6 @@ static BOOL certificate_read_server_x509_certificate_chain(rdpCertificate* cert,
 	return update_x509_from_info(cert);
 }
 
-static BOOL certificate_write_server_x509_certificate_chain(const rdpCertificate* certificate,
-                                                            wStream* s)
-{
-	UINT32 numCertBlobs = 0;
-
-	WINPR_ASSERT(certificate);
-	WINPR_ASSERT(s);
-
-	numCertBlobs = certificate->x509_cert_chain.count;
-
-	if (!Stream_EnsureRemainingCapacity(s, 4))
-		return FALSE;
-	Stream_Write_UINT32(s, numCertBlobs); /* numCertBlobs */
-
-	for (UINT32 i = 0; i < numCertBlobs; i++)
-	{
-		const rdpCertBlob* cert = &certificate->x509_cert_chain.array[i];
-		if (!cert_blob_write(cert, s))
-			return FALSE;
-	}
-
-	return TRUE;
-}
-
 /**
  * Read a Server Certificate.
  * @param certificate certificate module

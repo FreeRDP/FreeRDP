@@ -229,22 +229,6 @@ static inline void BGRX_fillRGB(size_t offset, BYTE* WINPR_RESTRICT pRGB[2],
 	}
 }
 
-static inline void unpack_mul_add(__m128i toadd[2], __m128i narrow, short iMul, __m128i sub)
-{
-	const __m128i usub = _mm_sub_epi16(narrow, sub);
-	const __m128i mul = _mm_set1_epi32(iMul);
-	const __m128i umulhi = _mm_mulhi_epi16(usub, mul);
-	const __m128i umullo = _mm_mullo_epi16(usub, mul);
-	{
-		const __m128i umul = _mm_unpackhi_epi16(umullo, umulhi);
-		toadd[0] = _mm_add_epi32(toadd[0], umul);
-	}
-	{
-		const __m128i umul = _mm_unpacklo_epi16(umullo, umulhi);
-		toadd[1] = _mm_add_epi32(toadd[1], umul);
-	}
-}
-
 /* input are uint16_t vectors */
 static inline __m128i sse41_yuv2x_single(const __m128i Y, __m128i U, __m128i V, const short iMulU,
                                          const short iMulV)
