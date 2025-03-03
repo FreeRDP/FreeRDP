@@ -204,16 +204,24 @@ static BOOL ndr_descr_read_RPC_UNICODE_STRING(NdrContext* context, wStream* s, c
 	return ndr_read_RPC_UNICODE_STRING(context, s, hints, res);
 }
 
-#if 0
 BOOL ndr_write_RPC_UNICODE_STRING(NdrContext* context, wStream* s, const void* hints,
                                   const RPC_UNICODE_STRING* res)
 {
-	return ndr_write_uint32(context, s, res->lenHints.length) &&
-	       ndr_write_uint32(context, s, res->lenHints.maxLength) /*&&
-	       ndr_write_BYTE_ptr(context, s, (BYTE*)res->Buffer, res->Length)*/
-	    ;
+	WINPR_ASSERT(res);
+	if (!ndr_write_uint32(context, s, res->lenHints.length))
+		return FALSE;
+
+	if (!ndr_write_uint32(context, s, res->lenHints.maxLength))
+		return FALSE;
+
+	const BYTE* ptr = WINPR_CXX_COMPAT_CAST(const BYTE*, res->Buffer);
+	for (size_t x = 0; x < res->strLength; x++)
+	{
+		if (!ndr_write_uint8(context, s, ptr[x]))
+			return FALSE;
+	}
+	return TRUE;
 }
-#endif
 
 void ndr_dump_RPC_UNICODE_STRING(wLog* logger, UINT32 lvl, size_t indentLevel,
                                  const RPC_UNICODE_STRING* obj)
@@ -248,7 +256,7 @@ static void ndr_descr_destroy_RPC_UNICODE_STRING(NdrContext* context, const void
 static const NdrMessageDescr RPC_UNICODE_STRING_descr_s = { NDR_ARITY_SIMPLE,
 	                                                        sizeof(RPC_UNICODE_STRING),
 	                                                        ndr_descr_read_RPC_UNICODE_STRING,
-	                                                        /*ndr_write_RPC_UNICODE_STRING*/ NULL,
+	                                                        NULL,
 	                                                        ndr_descr_destroy_RPC_UNICODE_STRING,
 	                                                        ndr_descr_dump_RPC_UNICODE_STRING };
 

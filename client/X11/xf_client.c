@@ -891,12 +891,6 @@ static int xf_error_handler(Display* d, XErrorEvent* ev)
 	WLog_ERR(TAG, "%s", buf);
 	winpr_log_backtrace(TAG, WLOG_ERROR, 20);
 
-#if 0
-	const BOOL do_abort = TRUE;
-	if (do_abort)
-		abort();
-#endif
-
 	if (def_error_handler)
 		return def_error_handler(d, ev);
 

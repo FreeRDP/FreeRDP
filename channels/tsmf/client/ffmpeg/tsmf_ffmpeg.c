@@ -461,19 +461,6 @@ static BOOL tsmf_ffmpeg_decode_audio(ITSMFDecoder* decoder, const BYTE* data, UI
 	int len = 0;
 	int frame_size = 0;
 
-#if 0
-	WLog_DBG(TAG, ("tsmf_ffmpeg_decode_audio: data_size %"PRIu32"", data_size));
-
-	for (int i = 0; i < data_size; i++)
-	{
-		WLog_DBG(TAG, ("%02"PRIX8"", data[i]));
-
-		if (i % 16 == 15)
-			WLog_DBG(TAG, ("\n"));
-	}
-
-#endif
-
 	if (mdecoder->decoded_size_max == 0)
 		mdecoder->decoded_size_max = MAX_AUDIO_FRAME_SIZE + 16;
 

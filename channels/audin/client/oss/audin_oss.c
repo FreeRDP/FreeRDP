@@ -192,20 +192,6 @@ static DWORD WINAPI audin_oss_thread_func(LPVOID arg)
 		close(mixer_handle);
 	}
 
-#if 0 /* FreeBSD OSS implementation at this moment (2015.03) does not set PCM_CAP_INPUT flag. */
-	tmp = 0;
-
-	if (ioctl(pcm_handle, SNDCTL_DSP_GETCAPS, &tmp) == -1)
-	{
-		OSS_LOG_ERR("SNDCTL_DSP_GETCAPS failed, try ignored", errno);
-	}
-	else if ((tmp & PCM_CAP_INPUT) == 0)
-	{
-		OSS_LOG_ERR("Device does not supports playback", EOPNOTSUPP);
-		goto err_out;
-	}
-
-#endif
 	/* Set format. */
 	tmp = audin_oss_get_format(&oss->format);
 

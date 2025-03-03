@@ -35,15 +35,19 @@ int TestWtsApiEnumerateProcesses(int argc, char* argv[])
 		return -1;
 	}
 
-#if 0
+	int rc = 0;
 	{
 		printf("WTSEnumerateProcesses enumerated %"PRIu32" process:\n", count);
 		for (DWORD i = 0; i < count; i++)
-			printf("\t[%"PRIu32"]: %s (%"PRIu32")\n", i, pProcessInfo[i].pProcessName, pProcessInfo[i].ProcessId);
+		{
+			const WTS_PROCESS_INFOA* cur = &pProcessInfo[i];
+			if (!cur->pProcessName)
+				rc = -1;
+			printf("\t[%" PRIu32 "]: %s (%" PRIu32 ")\n", i, cur->pProcessName, cur->ProcessId);
+		}
 	}
-#endif
 
 	WTSFreeMemory(pProcessInfo);
 
-	return 0;
+	return rc;
 }

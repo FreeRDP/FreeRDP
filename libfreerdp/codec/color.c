@@ -322,7 +322,6 @@ BOOL freerdp_image_copy_from_monochrome(BYTE* WINPR_RESTRICT pDstData, UINT32 Ds
 
 static INLINE UINT32 freerdp_image_inverted_pointer_color(UINT32 x, UINT32 y, UINT32 format)
 {
-#if 1
 	/**
 	 * Inverted pointer colors (where individual pixels can change their
 	 * color to accommodate the background behind them) only seem to be
@@ -333,9 +332,6 @@ static INLINE UINT32 freerdp_image_inverted_pointer_color(UINT32 x, UINT32 y, UI
 	 * pixel's position.
 	 */
 	BYTE fill = (x + y) & 1 ? 0x00 : 0xFF;
-#else
-	BYTE fill = 0x00;
-#endif
 	return FreeRDPGetColor(format, fill, fill, fill, 0xFF);
 }
 
@@ -1129,6 +1125,37 @@ BOOL freerdp_image_fill(BYTE* WINPR_RESTRICT pDstData, DWORD DstFormat, UINT32 n
 	}
 
 	return TRUE;
+}
+
+BOOL freerdp_image_fill_ex(BYTE* pDstData, DWORD DstFormat, UINT32 nDstStep, UINT32 nXDst,
+                           UINT32 nYDst, UINT32 nWidth, UINT32 nHeight, UINT32 color, UINT32 flags)
+{
+	if (FreeRDPColorHasAlpha(DstFormat) && ((flags & FREERDP_IMAGE_FILL_IGNORE_ALPHA) != 0))
+	{
+		const UINT32 bpp = FreeRDPGetBytesPerPixel(DstFormat);
+		BYTE r = 0;
+		BYTE g = 0;
+		BYTE b = 0;
+		FreeRDPSplitColor(color, DstFormat, &r, &g, &b, NULL, NULL);
+
+		for (size_t y = 0; y < nHeight; y++)
+		{
+			BYTE* WINPR_RESTRICT line = &pDstData[(y + nYDst) * nDstStep];
+
+			for (size_t x = 0; x < nWidth; x++)
+			{
+				BYTE* WINPR_RESTRICT dst = &line[x * bpp];
+				const UINT32 dcolor = FreeRDPReadColor_int(dst, DstFormat);
+				BYTE a = 0;
+				FreeRDPSplitColor(dcolor, DstFormat, NULL, NULL, NULL, &a, NULL);
+				const UINT32 scolor = FreeRDPGetColor(DstFormat, r, g, b, a);
+				if (!FreeRDPWriteColor_int(dst, DstFormat, scolor))
+					return FALSE;
+			}
+		}
+		return TRUE;
+	}
+	return freerdp_image_fill(pDstData, DstFormat, nDstStep, nXDst, nYDst, nWidth, nHeight, color);
 }
 
 #if defined(WITH_SWSCALE)

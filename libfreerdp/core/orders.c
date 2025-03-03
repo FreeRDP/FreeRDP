@@ -917,26 +917,7 @@ static INLINE BOOL update_read_delta(wStream* s, INT32* value)
 
 	return TRUE;
 }
-#if 0
-static INLINE void update_read_glyph_delta(wStream* s, UINT16* value)
-{
-	BYTE byte;
-	Stream_Read_UINT8(s, byte);
 
-	if (byte == 0x80)
-		Stream_Read_UINT16(s, *value);
-	else
-		*value = (byte & 0x3F);
-}
-static INLINE void update_seek_glyph_delta(wStream* s)
-{
-	BYTE byte;
-	Stream_Read_UINT8(s, byte);
-
-	if (byte & 0x80)
-		Stream_Seek_UINT8(s);
-}
-#endif
 static INLINE BOOL update_read_brush(wStream* s, rdpBrush* brush, BYTE fieldFlags)
 {
 	if (fieldFlags & ORDER_FIELD_01)

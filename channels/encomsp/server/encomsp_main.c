@@ -47,36 +47,6 @@ static UINT encomsp_read_header(wStream* s, ENCOMSP_ORDER_HEADER* header)
 	return CHANNEL_RC_OK;
 }
 
-#if 0
-
-static int encomsp_write_header(wStream* s, ENCOMSP_ORDER_HEADER* header)
-{
-	Stream_Write_UINT16(s, header->Type); /* Type (2 bytes) */
-	Stream_Write_UINT16(s, header->Length); /* Length (2 bytes) */
-	return 1;
-}
-
-static int encomsp_read_unicode_string(wStream* s, ENCOMSP_UNICODE_STRING* str)
-{
-	ZeroMemory(str, sizeof(ENCOMSP_UNICODE_STRING));
-
-	if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))
-		return -1;
-
-	Stream_Read_UINT16(s, str->cchString); /* cchString (2 bytes) */
-
-	if (str->cchString > 1024)
-		return -1;
-
-    if (!Stream_CheckAndLogRequiredLengthOfSize(TAG, s, str->cchString, sizeof(WCHAR)))
-		return -1;
-
-	Stream_Read(s, &(str->wString), (str->cchString * 2)); /* String (variable) */
-	return 1;
-}
-
-#endif
-
 /**
  * Function description
  *
@@ -134,10 +104,10 @@ static UINT encomsp_recv_change_participant_control_level_pdu(EncomspServerConte
 static UINT encomsp_server_receive_pdu(EncomspServerContext* context, wStream* s)
 {
 	UINT error = CHANNEL_RC_OK;
-	ENCOMSP_ORDER_HEADER header;
 
 	while (Stream_GetRemainingLength(s) > 0)
 	{
+		ENCOMSP_ORDER_HEADER header = { 0 };
 		if ((error = encomsp_read_header(s, &header)))
 		{
 			WLog_ERR(TAG, "encomsp_read_header failed with error %" PRIu32 "!", error);

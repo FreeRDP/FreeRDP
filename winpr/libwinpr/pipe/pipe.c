@@ -706,13 +706,8 @@ HANDLE CreateNamedPipeA(LPCSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD
 
 	if (dwOpenMode & FILE_FLAG_OVERLAPPED)
 	{
-#if 0
-		int flags = fcntl(pNamedPipe->serverfd, F_GETFL);
-
-		if (flags != -1)
-			fcntl(pNamedPipe->serverfd, F_SETFL, flags | O_NONBLOCK);
-
-#endif
+		// TODO: Implement
+		WLog_ERR(TAG, "TODO: implement this");
 	}
 
 	// NOLINTNEXTLINE(clang-analyzer-unix.Malloc): ArrayList_Append takes ownership of baseSocket

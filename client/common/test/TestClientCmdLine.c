@@ -203,14 +203,6 @@ static const test tests[] = {
 	  check_settings_smartcard_no_redirection,
 	  { "testfreerdp", "/sound", "/drive:media,/foo/bar/blabla", "/v:test.freerdp.com", 0 },
 	  { { 0 } } },
-
-#if 0
-	{
-		COMMAND_LINE_STATUS_PRINT, check_settings_smartcard_no_redirection,
-		{"testfreerdp", "-z", "--plugin", "cliprdr", "--plugin", "rdpsnd", "--data", "alsa", "latency:100", "--", "--plugin", "rdpdr", "--data", "disk:w7share:/home/w7share", "--", "--plugin", "drdynvc", "--data", "tsmf:decoder:gstreamer", "--", "-u", "test", "host.example.com", 0},
-		{{0}}
-	},
-#endif
 };
 // NOLINTEND(bugprone-suspicious-missing-comma)
 

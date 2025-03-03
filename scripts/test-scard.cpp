@@ -205,13 +205,6 @@ static std::wstring err2wstr(LONG code)
 	return converter.from_bytes(str);
 }
 
-#if 0
-static bool test_listreadergroups(SCARDCONTEXT hContext) {
-    auto rc = SCardListReaderGroupsA(hContext, &groups, &foobar);
-    rc = SCardListReaderGroupsW(hContext, &groups, &foobar);
-}
-#endif
-
 static bool test_valid(SCARDCONTEXT context)
 {
 	auto rc = SCardIsValidContext(context);

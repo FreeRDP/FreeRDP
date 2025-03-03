@@ -161,8 +161,6 @@ static BOOL wlf_disp_sendResize(wlfDispContext* wlfDisp)
 static BOOL wlf_disp_set_window_resizable(WINPR_ATTR_UNUSED wlfDispContext* wlfDisp)
 {
 	WLog_ERR("TODO", "TODO: implement");
-#if 0 // TODO
-#endif
 	return TRUE;
 }
 
