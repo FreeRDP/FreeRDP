@@ -22,8 +22,8 @@
 
 #include <freerdp/api.h>
 
-WINPR_DEPRECATED_VAR(
-    "since 3.13.0, implement in client code",
-    FREERDP_LOCAL int freerdp_detect_keyboard_layout_from_xkb(DWORD* keyboardLayoutId));
+#if defined(WITH_FREERDP_3x_DEPRECATED)
+FREERDP_LOCAL int freerdp_detect_keyboard_layout_from_xkb(DWORD* keyboardLayoutId);
+#endif
 
 #endif /* FREERDP_LOCALE_KEYBOARD_X11_H */

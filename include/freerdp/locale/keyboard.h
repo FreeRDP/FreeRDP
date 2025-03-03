@@ -262,6 +262,7 @@ FREERDP_API const char* freerdp_keyboard_get_layout_name_from_id(DWORD keyboardL
  */
 FREERDP_API DWORD freerdp_keyboard_get_layout_id_from_name(const char* name);
 
+#if defined(WITH_FREERDP_3x_DEPRECATED)
 WINPR_DEPRECATED_VAR("since 3.11.0, implement yourself in client",
 	                 FREERDP_API DWORD freerdp_keyboard_init(DWORD keyboardLayoutId));
 
@@ -276,6 +277,7 @@ WINPR_DEPRECATED_VAR("since 3.11.0, implement yourself in client",
 WINPR_DEPRECATED_VAR("since 3.11.0, implement yourself in client",
 	                 FREERDP_API DWORD freerdp_keyboard_get_x11_keycode_from_rdp_scancode(
 	                     DWORD scancode, BOOL extended));
+#endif
 
 /** @brief deallocate a \b FREERDP_REMAP_TABLE
  *
