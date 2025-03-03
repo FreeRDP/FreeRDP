@@ -236,6 +236,10 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 		{
 			server->mayView = arg->Value ? TRUE : FALSE;
 		}
+		CommandLineSwitchCase(arg, "bitmap-compat")
+		{
+			server->SupportMultiRectBitmapUpdates = arg->Value ? FALSE : TRUE;
+		}
 		CommandLineSwitchCase(arg, "may-interact")
 		{
 			server->mayInteract = arg->Value ? TRUE : FALSE;
@@ -1001,6 +1005,7 @@ rdpShadowServer* shadow_server_new(void)
 	if (!server)
 		return NULL;
 
+	server->SupportMultiRectBitmapUpdates = TRUE;
 	server->port = 3389;
 	server->mayView = TRUE;
 	server->mayInteract = TRUE;

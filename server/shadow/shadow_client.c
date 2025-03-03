@@ -50,23 +50,25 @@ typedef struct
  *
  * So send all updates only with a single rectangle.
  */
-#define BitmapUpdateProxy(update, context, bitmap) \
-	BitmapUpdateProxyEx((update), (context), (bitmap), __FILE__, __LINE__, __func__)
-static BOOL BitmapUpdateProxyEx(rdpUpdate* update, rdpContext* context, const BITMAP_UPDATE* bitmap,
+#define BitmapUpdateProxy(client, bitmap) \
+	BitmapUpdateProxyEx((client), (bitmap), __FILE__, __LINE__, __func__)
+static BOOL BitmapUpdateProxyEx(rdpShadowClient* client, const BITMAP_UPDATE* bitmap,
                                 const char* file, size_t line, const char* fkt)
 {
-	WINPR_ASSERT(update);
-	WINPR_ASSERT(context);
+	WINPR_ASSERT(client);
 	WINPR_ASSERT(bitmap);
 
-	for (UINT32 x = 0; x < bitmap->number; x++)
+	rdpShadowServer* server = client->server;
+	WINPR_ASSERT(server);
+
+	rdpContext* context = (rdpContext*)client;
+
+	rdpUpdate* update = context->update;
+	WINPR_ASSERT(update);
+
+	if (server->SupportMultiRectBitmapUpdates)
 	{
-		BITMAP_UPDATE cur = { 0 };
-		BITMAP_DATA* bmp = &bitmap->rectangles[x];
-		cur.rectangles = bmp;
-		cur.number = 1;
-		cur.skipCompression = bitmap->skipCompression;
-		const BOOL rc = IFCALLRESULT(FALSE, update->BitmapUpdate, context, &cur);
+		const BOOL rc = IFCALLRESULT(FALSE, update->BitmapUpdate, context, bitmap);
 		if (!rc)
 		{
 			const DWORD log_level = WLOG_ERROR;
@@ -74,9 +76,32 @@ static BOOL BitmapUpdateProxyEx(rdpUpdate* update, rdpContext* context, const BI
 			if (WLog_IsLevelActive(log, log_level))
 			{
 				WLog_PrintMessage(log, WLOG_MESSAGE_TEXT, log_level, line, file, fkt,
-				                  "BitmapUpdate[%" PRIu32 "] failed", x);
+				                  "BitmapUpdate[count %" PRIu32 "] failed", bitmap->number);
 			}
 			return FALSE;
+		}
+	}
+	else
+	{
+		for (UINT32 x = 0; x < bitmap->number; x++)
+		{
+			BITMAP_UPDATE cur = { 0 };
+			BITMAP_DATA* bmp = &bitmap->rectangles[x];
+			cur.rectangles = bmp;
+			cur.number = 1;
+			cur.skipCompression = bitmap->skipCompression;
+			const BOOL rc = IFCALLRESULT(FALSE, update->BitmapUpdate, context, &cur);
+			if (!rc)
+			{
+				const DWORD log_level = WLOG_ERROR;
+				wLog* log = WLog_Get(TAG);
+				if (WLog_IsLevelActive(log, log_level))
+				{
+					WLog_PrintMessage(log, WLOG_MESSAGE_TEXT, log_level, line, file, fkt,
+					                  "BitmapUpdate[count 1, at %" PRIu32 "] failed", x);
+				}
+				return FALSE;
+			}
 		}
 	}
 
@@ -1813,7 +1838,7 @@ static BOOL shadow_client_send_bitmap_update(rdpShadowClient* client, BYTE* pSrc
 			if ((newUpdateSize >= maxUpdateSize) || (i + 1) >= k)
 			{
 				bitmapUpdate.number = j;
-				ret = BitmapUpdateProxy(update, context, &bitmapUpdate);
+				ret = BitmapUpdateProxy(client, &bitmapUpdate);
 
 				if (!ret)
 					break;
@@ -1827,7 +1852,7 @@ static BOOL shadow_client_send_bitmap_update(rdpShadowClient* client, BYTE* pSrc
 	}
 	else
 	{
-		ret = BitmapUpdateProxy(update, context, &bitmapUpdate);
+		ret = BitmapUpdateProxy(client, &bitmapUpdate);
 	}
 
 out:

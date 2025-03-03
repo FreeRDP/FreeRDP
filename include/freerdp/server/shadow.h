@@ -174,6 +174,7 @@ extern "C"
 		freerdp_listener* listener;
 
 		size_t maxClientsConnected;
+		BOOL SupportMultiRectBitmapUpdates; /** @since version 3.13.0 */
 	};
 
 	struct rdp_shadow_surface
