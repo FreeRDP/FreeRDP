@@ -551,9 +551,8 @@ static BOOL ffmpeg_decode(AVCodecContext* dec_ctx, AVPacket* pkt, AVFrame* frame
                           AVAudioResampleContext* resampleContext, AVFrame* resampled, wStream* out)
 #endif
 {
-	int ret = 0;
 	/* send the packet with the compressed data to the decoder */
-	ret = avcodec_send_packet(dec_ctx, pkt);
+	int ret = avcodec_send_packet(dec_ctx, pkt);
 
 	if (ret < 0)
 	{
@@ -568,8 +567,9 @@ static BOOL ffmpeg_decode(AVCodecContext* dec_ctx, AVPacket* pkt, AVFrame* frame
 		ret = avcodec_receive_frame(dec_ctx, frame);
 
 		if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF)
-			return TRUE;
-		else if (ret < 0)
+			break;
+
+		if (ret < 0)
 		{
 			const char* err = av_err2str(ret);
 			WLog_ERR(TAG, "Error during decoding %s [%d]", err, ret);
@@ -593,10 +593,11 @@ static BOOL ffmpeg_decode(AVCodecContext* dec_ctx, AVPacket* pkt, AVFrame* frame
 			}
 
 #if defined(SWRESAMPLE_FOUND)
-			if ((ret = (swr_init(resampleContext))) < 0)
+			ret = (swr_init(resampleContext));
 #else
-			if ((ret = (avresample_open(resampleContext))) < 0)
+			ret = (avresample_open(resampleContext));
 #endif
+			if (ret < 0)
 			{
 				const char* err = av_err2str(ret);
 				WLog_ERR(TAG, "Error during resampling %s [%d]", err, ret);
@@ -605,10 +606,11 @@ static BOOL ffmpeg_decode(AVCodecContext* dec_ctx, AVPacket* pkt, AVFrame* frame
 		}
 
 #if defined(SWRESAMPLE_FOUND)
-		if ((ret = swr_convert_frame(resampleContext, resampled, frame)) < 0)
+		ret = swr_convert_frame(resampleContext, resampled, frame);
 #else
-		if ((ret = avresample_convert_frame(resampleContext, resampled, frame)) < 0)
+		ret = avresample_convert_frame(resampleContext, resampled, frame);
 #endif
+		if (ret < 0)
 		{
 			const char* err = av_err2str(ret);
 			WLog_ERR(TAG, "Error during resampling %s [%d]", err, ret);
