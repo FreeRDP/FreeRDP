@@ -154,8 +154,7 @@ static BOOL rdp_set_monitor_layout_pdu_state_(rdpRdp* rdp, BOOL value, const cha
 		if (WLog_IsLevelActive(rdp->log, log_level))
 		{
 			WLog_PrintMessage(rdp->log, WLOG_MESSAGE_TEXT, log_level, line, file, fkt,
-			                  "rdp->monitor_layout_pdu == %s, expected FALSE",
-			                  value ? "TRUE" : "FALSE");
+			                  "rdp->monitor_layout_pdu == TRUE, expected FALSE");
 		}
 		return FALSE;
 	}

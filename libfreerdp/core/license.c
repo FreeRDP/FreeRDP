@@ -2555,7 +2555,7 @@ BOOL license_send_platform_challenge_response(rdpLicense* license)
 	return FALSE;
 }
 
-BOOL license_read_platform_challenge_response(rdpLicense* license)
+BOOL license_read_platform_challenge_response(WINPR_ATTR_UNUSED rdpLicense* license)
 {
 	WINPR_ASSERT(license);
 	WINPR_ASSERT(license->PlatformChallenge);
