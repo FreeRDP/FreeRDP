@@ -41,6 +41,7 @@
 #include "xf_graphics.h"
 #include "xf_utils.h"
 
+#include "xf_debug.h"
 #include "xf_event.h"
 
 #define TAG CLIENT_TAG("x11")
@@ -164,15 +165,6 @@ const char* x11_event_string(int event)
 			return "UNKNOWN";
 	}
 }
-
-#ifdef WITH_DEBUG_X11
-#define DEBUG_X11(...) WLog_DBG(TAG, __VA_ARGS__)
-#else
-#define DEBUG_X11(...) \
-	do                 \
-	{                  \
-	} while (0)
-#endif
 
 static BOOL xf_action_script_append(xfContext* xfc, const char* buffer, size_t size,
                                     WINPR_ATTR_UNUSED void* user, const char* what, const char* arg)

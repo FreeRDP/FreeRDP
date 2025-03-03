@@ -56,17 +56,9 @@
 #include "xf_input.h"
 #include "xf_keyboard.h"
 #include "xf_utils.h"
+#include "xf_debug.h"
 
 #define TAG CLIENT_TAG("x11")
-
-#ifdef WITH_DEBUG_X11
-#define DEBUG_X11(...) WLog_DBG(TAG, __VA_ARGS__)
-#else
-#define DEBUG_X11(...) \
-	do                 \
-	{                  \
-	} while (0)
-#endif
 
 #include <FreeRDP_Icon_256px.h>
 #define xf_icon_prop FreeRDP_Icon_256px_prop

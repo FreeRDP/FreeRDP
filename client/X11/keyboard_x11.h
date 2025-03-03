@@ -1,6 +1,6 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * RDP Keyboard layout ID detection from common X11 xkb keyboard layout names
+ * X11 Keyboard Mapping
  *
  * Copyright 2009-2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
@@ -17,14 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_LIB_LOCALE_XKB_LAYOUT_IDS_H
-#define FREERDP_LIB_LOCALE_XKB_LAYOUT_IDS_H
+#pragma once
 
-#include <freerdp/types.h>
 #include <freerdp/api.h>
 
-WINPR_DEPRECATED_VAR("since 3.13.0, implement in client code",
-                     FREERDP_LOCAL UINT32 find_keyboard_layout_in_xorg_rules(const char* layout,
-                                                                             const char* variant));
-
-#endif /* FREERDP_LIB_LOCALE_XKB_LAYOUT_IDS_H */
+int xf_detect_keyboard_layout_from_xkb(DWORD* keyboardLayoutId);
