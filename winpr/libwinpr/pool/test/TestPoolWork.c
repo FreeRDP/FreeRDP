@@ -111,9 +111,7 @@ fail:
 		 * CloseThreadpoolWork ! calling the CloseThreadpoolCleanupGroupMembers function releases
 		 * the work, wait, and timer objects associated with the cleanup group.
 		 */
-#if 0
-		CloseThreadpoolWork(work); // this would segfault, see comment above. */
-#endif
+		//	CloseThreadpoolWork(work); // this would segfault, see comment above. */
 	}
 
 	CloseThreadpool(pool);

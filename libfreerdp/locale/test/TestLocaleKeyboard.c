@@ -216,13 +216,6 @@ static BOOL test_layouts(DWORD types)
 			              cur->code);
 			goto fail;
 		}
-#if 0 // TODO: Should these always match?
-       if (strcmp(name, cur->name) != 0) {
-           (void)fprintf(stderr, "freerdp_keyboard_get_layouts(type: %" PRIu32 ") -> %" PRIuz " elements, failed:\n", types, count);
-           (void)fprintf(stderr, "[%" PRIuz "]: freerdp_keyboard_get_layouts(%"  PRIu32 ") -> %s != %s\n", x, cur->code, name, cur->name);
-           goto fail;
-       }
-#endif
 
 		const DWORD id = freerdp_keyboard_get_layout_id_from_name(cur->name);
 		// if (id != cur->code) {
