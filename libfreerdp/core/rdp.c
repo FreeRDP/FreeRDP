@@ -1634,9 +1634,7 @@ static state_run_t rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 	if (rdp->mcs->messageChannelId && (channelId == rdp->mcs->messageChannelId))
 	{
 		rdp->inPackets++;
-		if (!rdp_handle_message_channel(rdp, s, channelId, length))
-			return STATE_RUN_FAILED;
-		return STATE_RUN_SUCCESS;
+		return rdp_handle_message_channel(rdp, s, channelId, length);
 	}
 
 	if (rdp->settings->UseRdpSecurityLayer)

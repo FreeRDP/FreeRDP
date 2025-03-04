@@ -98,7 +98,7 @@ wStream* Stream_New(BYTE* buffer, size_t size)
 	if (!buffer && !size)
 		return NULL;
 
-	s = malloc(sizeof(wStream));
+	s = calloc(1, sizeof(wStream));
 	if (!s)
 		return NULL;
 
@@ -118,7 +118,7 @@ wStream* Stream_New(BYTE* buffer, size_t size)
 	s->length = size;
 
 	s->pool = NULL;
-	s->count = 0;
+	s->count = 1;
 	s->isAllocatedStream = TRUE;
 	s->isOwner = TRUE;
 	return s;
@@ -147,7 +147,7 @@ wStream* Stream_StaticInit(wStream* s, BYTE* buffer, size_t size)
 	s->buffer = s->pointer = buffer;
 	s->capacity = s->length = size;
 	s->pool = NULL;
-	s->count = 0;
+	s->count = 1;
 	s->isAllocatedStream = FALSE;
 	s->isOwner = FALSE;
 	return s;
