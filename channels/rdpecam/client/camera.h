@@ -89,15 +89,8 @@ typedef struct
 
 typedef struct
 {
-	CAM_MEDIA_FORMAT inputFormat;  /* camera side */
-	CAM_MEDIA_FORMAT outputFormat; /* network side */
-
-} CAM_MEDIA_FORMAT_INFO;
-
-typedef struct
-{
 	BOOL streaming;
-	CAM_MEDIA_FORMAT_INFO formats;
+	CAM_MEDIA_FORMAT inputFormat; /* camera side */
 	CAM_MEDIA_TYPE_DESCRIPTION currMediaType;
 
 	GENERIC_CHANNEL_CALLBACK* hSampleReqChannel;
@@ -124,11 +117,16 @@ typedef struct
 
 static INLINE CAM_MEDIA_FORMAT streamInputFormat(CameraDeviceStream* stream)
 {
-	return stream->formats.inputFormat;
+	return stream->inputFormat;
 }
 static INLINE CAM_MEDIA_FORMAT streamOutputFormat(CameraDeviceStream* stream)
 {
-	return stream->formats.outputFormat;
+#if !defined(WITH_FORMAT_PASSTHROUGH)
+	return CAM_MEDIA_FORMAT_H264;
+#else
+	return (stream->inputFormat == CAM_MEDIA_FORMAT_MJPG_H264) ? CAM_MEDIA_FORMAT_H264
+	                                                           : stream->inputFormat;
+#endif
 }
 
 typedef struct
@@ -159,9 +157,8 @@ struct s_ICamHal
 	(ICamHal* ihal, ICamHalEnumCallback callback, CameraPlugin* ecam,
 	 GENERIC_CHANNEL_CALLBACK* hchannel);
 	INT16(*GetMediaTypeDescriptions)
-	(ICamHal* ihal, const char* deviceId, int streamIndex,
-	 const CAM_MEDIA_FORMAT_INFO* supportedFormats, size_t nSupportedFormats,
-	 CAM_MEDIA_TYPE_DESCRIPTION* mediaTypes, size_t* nMediaTypes);
+	(ICamHal* ihal, const char* deviceId, int streamIndex, const CAM_MEDIA_FORMAT* supportedFormats,
+	 size_t nSupportedFormats, CAM_MEDIA_TYPE_DESCRIPTION* mediaTypes, size_t* nMediaTypes);
 	UINT(*StartStream)
 	(ICamHal* ihal, CameraDevice* dev, int streamIndex, const CAM_MEDIA_TYPE_DESCRIPTION* mediaType,
 	 ICamHalSampleCapturedCallback callback);
