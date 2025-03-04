@@ -27,7 +27,7 @@
 
 #include <linux/uvcvideo.h>
 #include <linux/videodev2.h>
-#include <libusb-1.0/libusb.h>
+#include <libusb.h>
 
 #include "uvc_h264.h"
 
