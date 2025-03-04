@@ -632,11 +632,6 @@ static UINT remdesk_process_receive(remdeskPlugin* remdesk, wStream* s)
 	WINPR_ASSERT(remdesk);
 	WINPR_ASSERT(s);
 
-#if 0
-	WLog_DBG(TAG, "RemdeskReceive: %"PRIuz"", Stream_GetRemainingLength(s));
-	winpr_HexDump(Stream_ConstPointer(s), Stream_GetRemainingLength(s));
-#endif
-
 	if ((status = remdesk_read_channel_header(s, &header)))
 	{
 		WLog_ERR(TAG, "remdesk_read_channel_header failed with error %" PRIu32 "", status);

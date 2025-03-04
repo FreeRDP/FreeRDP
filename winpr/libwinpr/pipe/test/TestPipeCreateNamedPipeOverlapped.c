@@ -195,11 +195,6 @@ static DWORD WINAPI named_pipe_server_thread(LPVOID arg)
 
 	/* 3: connect named pipe */
 
-#if 0
-	/* This sleep will most certainly cause ERROR_PIPE_CONNECTED below */
-	Sleep(2000);
-#endif
-
 	fConnected = ConnectNamedPipe(hNamedPipe, &overlapped);
 	status = GetLastError();
 

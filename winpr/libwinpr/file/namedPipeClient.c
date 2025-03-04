@@ -190,13 +190,8 @@ NamedPipeClientCreateFileA(LPCSTR lpFileName, WINPR_ATTR_UNUSED DWORD dwDesiredA
 
 	if (dwFlagsAndAttributes & FILE_FLAG_OVERLAPPED)
 	{
-#if 0
-		int flags = fcntl(pNamedPipe->clientfd, F_GETFL);
-
-		if (flags != -1)
-            (void)fcntl(pNamedPipe->clientfd, F_SETFL, flags | O_NONBLOCK);
-
-#endif
+		// TODO: Implement
+		WLog_ERR(TAG, "TODO: implement this");
 	}
 
 	return hNamedPipe;

@@ -1285,15 +1285,11 @@ static UINT gdi_SolidFill(RdpgfxClientContext* context, const RDPGFX_SOLID_FILL_
 	const BYTE g = solidFill->fillPixel.G;
 	const BYTE r = solidFill->fillPixel.R;
 
-#if 0
 	/* [MS-RDPEGFX] 3.3.5.4 Processing an RDPGFX_SOLIDFILL_PDU message
 	 * https://learn.microsoft.com/en-us/windows/win32/gdi/binary-raster-operations
 	 *
 	 * this sounds like the alpha value is always ignored.
 	 */
-	if (FreeRDPColorHasAlpha(surface->format))
-		a = solidFill->fillPixel.XA;
-#endif
 
 	const UINT32 color = FreeRDPGetColor(surface->format, r, g, b, a);
 

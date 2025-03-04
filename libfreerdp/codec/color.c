@@ -322,7 +322,6 @@ BOOL freerdp_image_copy_from_monochrome(BYTE* WINPR_RESTRICT pDstData, UINT32 Ds
 
 static INLINE UINT32 freerdp_image_inverted_pointer_color(UINT32 x, UINT32 y, UINT32 format)
 {
-#if 1
 	/**
 	 * Inverted pointer colors (where individual pixels can change their
 	 * color to accommodate the background behind them) only seem to be
@@ -333,9 +332,6 @@ static INLINE UINT32 freerdp_image_inverted_pointer_color(UINT32 x, UINT32 y, UI
 	 * pixel's position.
 	 */
 	BYTE fill = (x + y) & 1 ? 0x00 : 0xFF;
-#else
-	BYTE fill = 0x00;
-#endif
 	return FreeRDPGetColor(format, fill, fill, fill, 0xFF);
 }
 

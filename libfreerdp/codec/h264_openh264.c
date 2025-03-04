@@ -169,14 +169,6 @@ static int openh264_decompress(H264_CONTEXT* WINPR_RESTRICT h264,
 		return -2003;
 	}
 
-#if 0
-	WLog_Print(h264->log, WLOG_INFO,
-	           "h264_decompress: state=%u, pYUVData=[%p,%p,%p], bufferStatus=%d, width=%d, height=%d, format=%d, stride=[%d,%d]",
-	           state, (void*) pYUVData[0], (void*) pYUVData[1], (void*) pYUVData[2], sBufferInfo.iBufferStatus,
-	           pSystemBuffer->iWidth, pSystemBuffer->iHeight, pSystemBuffer->iFormat,
-	           pSystemBuffer->iStride[0], pSystemBuffer->iStride[1]);
-#endif
-
 	if (pSystemBuffer->iFormat != videoFormatI420)
 		return -2004;
 

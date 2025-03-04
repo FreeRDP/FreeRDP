@@ -56,17 +56,7 @@ static void dump_event(WINPR_EVENT* event, size_t index)
 {
 	char** msg = NULL;
 	size_t used = 0;
-#if 0
-	void* stack = winpr_backtrace(20);
-	WLog_DBG(TAG, "Called from:");
-	msg = winpr_backtrace_symbols(stack, &used);
 
-	for (size_t i = 0; i < used; i++)
-		WLog_DBG(TAG, "[%" PRIdz "]: %s", i, msg[i]);
-
-	free(msg);
-	winpr_backtrace_free(stack);
-#endif
 	WLog_DBG(TAG, "Event handle created still not closed! [%" PRIuz ", %p]", index, event);
 	msg = winpr_backtrace_symbols(event->create_stack, &used);
 

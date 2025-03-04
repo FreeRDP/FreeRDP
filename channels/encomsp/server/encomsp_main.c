@@ -47,36 +47,6 @@ static UINT encomsp_read_header(wStream* s, ENCOMSP_ORDER_HEADER* header)
 	return CHANNEL_RC_OK;
 }
 
-#if 0
-
-static int encomsp_write_header(wStream* s, ENCOMSP_ORDER_HEADER* header)
-{
-	Stream_Write_UINT16(s, header->Type); /* Type (2 bytes) */
-	Stream_Write_UINT16(s, header->Length); /* Length (2 bytes) */
-	return 1;
-}
-
-static int encomsp_read_unicode_string(wStream* s, ENCOMSP_UNICODE_STRING* str)
-{
-	ZeroMemory(str, sizeof(ENCOMSP_UNICODE_STRING));
-
-	if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))
-		return -1;
-
-	Stream_Read_UINT16(s, str->cchString); /* cchString (2 bytes) */
-
-	if (str->cchString > 1024)
-		return -1;
-
-    if (!Stream_CheckAndLogRequiredLengthOfSize(TAG, s, str->cchString, sizeof(WCHAR)))
-		return -1;
-
-	Stream_Read(s, &(str->wString), (str->cchString * 2)); /* String (variable) */
-	return 1;
-}
-
-#endif
-
 /**
  * Function description
  *

@@ -347,14 +347,6 @@ static int libavcodec_decompress(H264_CONTEXT* WINPR_RESTRICT h264,
 	}
 
 #endif
-#if 0
-	WLog_Print(h264->log, WLOG_INFO,
-	           "libavcodec_decompress: frame decoded (status=%d, gotFrame=%d, width=%d, height=%d, Y=[%p,%d], U=[%p,%d], V=[%p,%d])",
-	           status, gotFrame, sys->videoFrame->width, sys->videoFrame->height,
-	           (void*) sys->videoFrame->data[0], sys->videoFrame->linesize[0],
-	           (void*) sys->videoFrame->data[1], sys->videoFrame->linesize[1],
-	           (void*) sys->videoFrame->data[2], sys->videoFrame->linesize[2]);
-#endif
 
 	if (gotFrame)
 	{

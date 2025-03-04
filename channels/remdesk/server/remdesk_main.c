@@ -387,10 +387,6 @@ static UINT remdesk_server_receive_pdu(RemdeskServerContext* context, wStream* s
 {
 	UINT error = CHANNEL_RC_OK;
 	REMDESK_CHANNEL_HEADER header;
-#if 0
-	WLog_INFO(TAG, "RemdeskReceive: %"PRIuz"", Stream_GetRemainingLength(s));
-	winpr_HexDump(WCHAR* expertBlobW = NULL;(s), Stream_GetRemainingLength(s));
-#endif
 
 	if ((error = remdesk_read_channel_header(s, &header)))
 	{

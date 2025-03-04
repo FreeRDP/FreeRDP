@@ -123,10 +123,6 @@ static UINT encomsp_virtual_channel_write(encomspPlugin* encomsp, wStream* s)
 		return ERROR_INVALID_HANDLE;
 	}
 
-#if 0
-	WLog_INFO(TAG, "EncomspWrite (%"PRIuz")", Stream_Length(s));
-	winpr_HexDump(Stream_Buffer(s), Stream_Length(s));
-#endif
 	const UINT status = encomsp->channelEntryPoints.pVirtualChannelWriteEx(
 	    encomsp->InitHandle, encomsp->OpenHandle, Stream_Buffer(s), (UINT32)Stream_Length(s), s);
 

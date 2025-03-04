@@ -310,15 +310,6 @@ int TestClientRdpFile(int argc, char* argv[])
 		goto fail;
 	}
 
-#if 0 /* TODO: Currently unused */
-	if (freerdp_settings_get_uint32(settings, FreeRDP_GatewayProfileUsageMethod) != 1)
-	{
-		printf("GatewayProfileUsageMethod mismatch: Actual: %"PRIu32", Expected: 1\n",
-			   freerdp_settings_get_uint32(settings, FreeRDP_GatewayProfileUsageMethod));
-		goto fail;
-	}
-#endif
-
 	if (strcmp(freerdp_settings_get_string(settings, FreeRDP_GatewayHostname),
 	           "LAB1-W2K8R2-GW.lab1.awake.local") != 0)
 	{
@@ -368,15 +359,6 @@ int TestClientRdpFile(int argc, char* argv[])
 		       freerdp_settings_get_bool(settings, FreeRDP_Fullscreen));
 		return -1;
 	}
-
-#if 0 /* TODO: Currently unused */
-	if (freerdp_settings_get_uint32(settings, FreeRDP_GatewayProfileUsageMethod) != 1)
-	{
-		printf("GatewayProfileUsageMethod mismatch: Actual: %"PRIu32", Expected: 1\n",
-			   freerdp_settings_get_uint32(settings, FreeRDP_GatewayProfileUsageMethod));
-		goto fail;
-	}
-#endif
 
 	if (strcmp(freerdp_settings_get_string(settings, FreeRDP_ServerHostname),
 	           "LAB1-W7-DM-01.lab1.awake.global") != 0)
