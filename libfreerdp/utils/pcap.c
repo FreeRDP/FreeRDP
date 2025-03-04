@@ -192,11 +192,9 @@ BOOL pcap_get_next_record(rdpPcap* pcap, pcap_record* record)
 
 rdpPcap* pcap_open(const char* name, BOOL write)
 {
-	rdpPcap* pcap = NULL;
-
 	WINPR_ASSERT(name);
 
-	pcap = (rdpPcap*)calloc(1, sizeof(rdpPcap));
+	rdpPcap* pcap = (rdpPcap*)calloc(1, sizeof(rdpPcap));
 	if (!pcap)
 		goto fail;
 
@@ -242,7 +240,7 @@ void pcap_flush(rdpPcap* pcap)
 
 	while (pcap->record != NULL)
 	{
-		pcap_write_record(pcap, pcap->record);
+		(void)pcap_write_record(pcap, pcap->record);
 		pcap->record = pcap->record->next;
 	}
 

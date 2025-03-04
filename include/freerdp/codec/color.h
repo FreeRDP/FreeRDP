@@ -432,7 +432,7 @@ typedef struct gdi_palette gdiPalette;
 	                                     UINT32 nSrcStep, UINT32 nXSrc, UINT32 nYSrc,
 	                                     UINT32 nSrcWidth, UINT32 nSrcHeight);
 
-	/***
+	/** @brief fill an area with the color provided.
 	 *
 	 * @param pDstData  destination buffer
 	 * @param DstFormat destination buffer format
@@ -449,6 +449,31 @@ typedef struct gdi_palette gdiPalette;
 	FREERDP_API BOOL freerdp_image_fill(BYTE* WINPR_RESTRICT pDstData, DWORD DstFormat,
 	                                    UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst, UINT32 nWidth,
 	                                    UINT32 nHeight, UINT32 color);
+
+#define FREERDP_IMAGE_FILL_IGNORE_ALPHA 1 /** @since version 3.13.0 */
+
+	/** @brief fill an area with the color provided. If flag \b FREERDP_IMAGE_FILL_IGNORE_ALPHA is
+	 * set the destination alpha value will be kept.
+	 *
+	 * @param pDstData  destination buffer
+	 * @param DstFormat destination buffer format
+	 * @param nDstStep  destination buffer stride (line in bytes) 0 for default
+	 * @param nXDst     destination buffer offset x
+	 * @param nYDst     destination buffer offset y
+	 * @param nWidth    width to copy in pixels
+	 * @param nHeight   height to copy in pixels
+	 * @param color     Pixel color in DstFormat (internal representation format,
+	 *                  use FreeRDPGetColor to create)
+	 * @param flags \b FREERDP_IMAGE_FILL_* flags
+	 *
+	 * @return          TRUE if success, FALSE otherwise
+	 *
+	 * @since version 3.13.0
+	 */
+	FREERDP_API BOOL freerdp_image_fill_ex(BYTE* WINPR_RESTRICT pDstData, DWORD DstFormat,
+	                                       UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst,
+	                                       UINT32 nWidth, UINT32 nHeight, UINT32 color,
+	                                       UINT32 flags);
 
 #ifdef __cplusplus
 }

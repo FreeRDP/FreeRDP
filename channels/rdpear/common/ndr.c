@@ -992,3 +992,13 @@ BOOL ndr_treat_deferred_write(NdrContext* context, wStream* s)
 
 	return TRUE;
 }
+
+BOOL ndr_write_data(NdrContext* context, wStream* s, const void* data, size_t sz)
+{
+	if (!Stream_EnsureRemainingCapacity(s, sz))
+		return FALSE;
+
+	Stream_Write(s, data, sz);
+	ndr_context_bytes_written(context, sz);
+	return TRUE;
+}

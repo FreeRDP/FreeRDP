@@ -23,6 +23,8 @@
 #include <winpr/crt.h>
 #include <winpr/nt.h>
 
+#define HAVE_SORTED_STRUCT 1
+
 struct ntstatus_map
 {
 	DWORD code;
@@ -4616,7 +4618,7 @@ static int ntstatus_compare(const void* pKey, const void* pValue)
 const char* NtStatus2Tag(NTSTATUS ntstatus)
 {
 
-#if 1 /* Requires sorted struct */
+#if defined(HAVE_SORTED_STRUCT) /* Requires sorted struct */
 	size_t count = ARRAYSIZE(ntstatusmap);
 	size_t base = sizeof(ntstatusmap[0]);
 	const struct ntstatus_map* found =
@@ -4638,7 +4640,7 @@ const char* NtStatus2Tag(NTSTATUS ntstatus)
 
 const char* Win32ErrorCode2Tag(UINT16 code)
 {
-#if 1 /* Requires sorted struct */
+#if defined(HAVE_SORTED_STRUCT) /* Requires sorted struct */
 	DWORD ntstatus = code;
 	size_t count = ARRAYSIZE(win32errmap);
 	size_t base = sizeof(win32errmap[0]);
