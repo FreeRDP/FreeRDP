@@ -79,8 +79,8 @@ extern "C"
 	{
 		ULONG ControlHandShake;
 		ULONG FlowReplace;
-		WORD XonLimit;
-		WORD XoffLimit;
+		ULONG XonLimit;
+		ULONG XoffLimit;
 	} SERIAL_HANDFLOW, *PSERIAL_HANDFLOW;
 
 #define SERIAL_DTR_MASK ((ULONG)0x03)
@@ -223,7 +223,7 @@ extern "C"
 
 	} SERIAL_DRIVER;
 
-	int _comm_ioctl_tcsetattr(int fd, int optional_actions, const struct termios* termios_p);
+	int comm_ioctl_tcsetattr(int fd, int optional_actions, const struct termios* termios_p);
 
 #ifdef __cplusplus
 }

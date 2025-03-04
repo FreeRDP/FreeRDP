@@ -41,7 +41,7 @@ BOOL CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffe
 	return FALSE;
 }
 
-int _comm_ioctl_tcsetattr(int fd, int optional_actions, const struct termios* termios_p)
+int comm_ioctl_tcsetattr(int fd, int optional_actions, const struct termios* termios_p)
 {
 	WINPR_UNUSED(fd);
 	WINPR_UNUSED(optional_actions);
