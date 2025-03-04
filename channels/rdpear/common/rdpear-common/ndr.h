@@ -153,6 +153,7 @@ extern "C"
 	BOOL ndr_skip_bytes(NdrContext* context, wStream* s, size_t nbytes);
 	BOOL ndr_read_align(NdrContext* context, wStream* s, size_t sz);
 	BOOL ndr_write_align(NdrContext* context, wStream* s, size_t sz);
+	BOOL ndr_write_data(NdrContext* context, wStream* s, const void* data, size_t sz);
 
 	BOOL ndr_read_pickle(NdrContext* context, wStream* s);
 	BOOL ndr_write_pickle(NdrContext* context, wStream* s);
