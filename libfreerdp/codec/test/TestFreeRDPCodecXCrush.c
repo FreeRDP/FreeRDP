@@ -6,10 +6,10 @@
 static const BYTE TEST_BELLS_DATA[] = "for.whom.the.bell.tolls,.the.bell.tolls.for.thee!";
 
 static const BYTE TEST_BELLS_DATA_XCRUSH[] =
-    "\x12\x00\x66\x6f\x72\x2e\x77\x68\x6f\x6d\x2e\x74\x68\x65\x2e\x62"
+    "\x66\x6f\x72\x2e\x77\x68\x6f\x6d\x2e\x74\x68\x65\x2e\x62"
     "\x65\x6c\x6c\x2e\x74\x6f\x6c\x6c\x73\x2c\x2e\x74\x68\x65\x2e\x62"
     "\x65\x6c\x6c\x2e\x74\x6f\x6c\x6c\x73\x2e\x66\x6f\x72\x2e\x74\x68"
-    "\x65";
+    "\x65\x65\x21";
 
 static const BYTE TEST_ISLAND_DATA[] = "No man is an island entire of itself; every man "
                                        "is a piece of the continent, a part of the main; "
@@ -48,9 +48,9 @@ static void test_dump(const char* fkt, const void* generated, size_t generated_s
 	printf("[%s] output size mismatch: Actual: %" PRIuz ", Expected: %" PRIuz "\n", fkt,
 	       generated_size, expected_size);
 	printf("[%s] Actual\n", fkt);
-	BitDump(fkt, WLOG_INFO, generated, generated_size * 8ull, 0);
+	winpr_HexDump(fkt, WLOG_INFO, generated, generated_size);
 	printf("[%s] Expected\n", fkt);
-	BitDump(fkt, WLOG_INFO, expected, expected_size * 8ull, 0);
+	winpr_HexDump(fkt, WLOG_INFO, expected, expected_size);
 }
 
 static BOOL test_compare(const char* fkt, const void* generated, size_t generated_size,
@@ -104,11 +104,9 @@ struct test_argument
 
 static const struct test_argument tests[] = {
 	{ "XCrushCompressIsland", TEST_ISLAND_DATA, sizeof(TEST_ISLAND_DATA) - 1,
-	  TEST_ISLAND_DATA_XCRUSH, sizeof(TEST_ISLAND_DATA_XCRUSH) - 1 }
-#if 0
-	,{ "XCrushCompressBells", TEST_BELLS_DATA, sizeof(TEST_BELLS_DATA) - 1, TEST_BELLS_DATA_XCRUSH,
+	  TEST_ISLAND_DATA_XCRUSH, sizeof(TEST_ISLAND_DATA_XCRUSH) - 1 },
+	{ "XCrushCompressBells", TEST_BELLS_DATA, sizeof(TEST_BELLS_DATA) - 1, TEST_BELLS_DATA_XCRUSH,
 	  sizeof(TEST_BELLS_DATA_XCRUSH) - 1 }
-#endif
 };
 
 int TestFreeRDPCodecXCrush(int argc, char* argv[])

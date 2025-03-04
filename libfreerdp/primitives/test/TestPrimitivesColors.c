@@ -44,23 +44,9 @@ static BOOL test_RGBToRGB_16s8u_P3AC4R_func(prim_size_t roi, DWORD DstFormat)
 	if (!r || !g || !b || !out1 || !out2)
 		goto fail;
 
-#if 0
-	{
-		for (UINT32 y = 0; y < roi.height; y++)
-		{
-			for (UINT32 x = 0; x < roi.width; x++)
-			{
-				r[y * roi.width + x] = 0x01;
-				g[y * roi.width + x] = 0x02;
-				b[y * roi.width + x] = 0x04;
-			}
-		}
-	}
-#else
 	winpr_RAND(r, 1ULL * rgbStride * roi.height);
 	winpr_RAND(g, 1ULL * rgbStride * roi.height);
 	winpr_RAND(b, 1ULL * rgbStride * roi.height);
-#endif
 	ptrs[0] = r;
 	ptrs[1] = g;
 	ptrs[2] = b;
@@ -96,7 +82,7 @@ static BOOL test_RGBToRGB_16s8u_P3AC4R_func(prim_size_t roi, DWORD DstFormat)
 		}
 	}
 
-	printf("Results for %" PRIu32 "x%" PRIu32 " [%s]", roi.width, roi.height,
+	printf("Results for %" PRIu32 "x%" PRIu32 " [%s]\n", roi.width, roi.height,
 	       FreeRDPGetColorFormatName(DstFormat));
 	PROFILER_PRINT_HEADER
 	PROFILER_PRINT(genericProf)
@@ -276,8 +262,6 @@ int TestPrimitivesColors(int argc, char* argv[])
 		if (!test_RGBToRGB_16s8u_P3AC4R_func(roi, formats[x]))
 			return 1;
 
-#if 0
-
 		if (g_TestPrimitivesPerformance)
 		{
 			if (!test_RGBToRGB_16s8u_P3AC4R_speed())
@@ -292,8 +276,6 @@ int TestPrimitivesColors(int argc, char* argv[])
 			if (!test_yCbCrToRGB_16s16s_P3P3_speed())
 				return 1;
 		}
-
-#endif
 	}
 
 	return 0;

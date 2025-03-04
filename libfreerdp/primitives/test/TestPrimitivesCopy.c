@@ -245,21 +245,25 @@ int TestPrimitivesCopy(int argc, char* argv[])
 		FREERDP_KEEP_DST_ALPHA,
 		FREERDP_FLIP_HORIZONTAL,
 		FREERDP_KEEP_DST_ALPHA | FREERDP_FLIP_HORIZONTAL,
-#if 0
-	                         FREERDP_FLIP_VERTICAL,
-	                                                      FREERDP_FLIP_VERTICAL | FREERDP_FLIP_HORIZONTAL,
-	                                                      FREERDP_KEEP_DST_ALPHA | FREERDP_FLIP_VERTICAL,
-	                         FREERDP_KEEP_DST_ALPHA | FREERDP_FLIP_VERTICAL | FREERDP_FLIP_HORIZONTAL
+#if defined(TEST_ALL_FLAGS)
+		FREERDP_FLIP_VERTICAL,
+		FREERDP_FLIP_VERTICAL | FREERDP_FLIP_HORIZONTAL,
+		FREERDP_KEEP_DST_ALPHA | FREERDP_FLIP_VERTICAL,
+		FREERDP_KEEP_DST_ALPHA | FREERDP_FLIP_VERTICAL | FREERDP_FLIP_HORIZONTAL
 #endif
 	};
-	const UINT32 formats[] = {
-		PIXEL_FORMAT_BGRA32,
-		PIXEL_FORMAT_BGRX32,
-		PIXEL_FORMAT_BGR24
-#if 0 /* Only the previous 3 have SIMD optimizations, so skip the rest */
-	                           ,  PIXEL_FORMAT_RGB24,
-		                       PIXEL_FORMAT_ABGR32, PIXEL_FORMAT_ARGB32, PIXEL_FORMAT_XBGR32,
-	                           PIXEL_FORMAT_XRGB32, PIXEL_FORMAT_RGBA32, PIXEL_FORMAT_RGBX32
+	const UINT32 formats[] = { PIXEL_FORMAT_BGRA32,
+		                       PIXEL_FORMAT_BGRX32,
+		                       PIXEL_FORMAT_BGR24
+#if defined(TEST_ALL_FLAGS) /* Only the previous 3 have SIMD optimizations, so skip the rest */
+		                       ,
+		                       PIXEL_FORMAT_RGB24,
+		                       PIXEL_FORMAT_ABGR32,
+		                       PIXEL_FORMAT_ARGB32,
+		                       PIXEL_FORMAT_XBGR32,
+		                       PIXEL_FORMAT_XRGB32,
+		                       PIXEL_FORMAT_RGBA32,
+		                       PIXEL_FORMAT_RGBX32
 #endif
 	};
 
