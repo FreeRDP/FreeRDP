@@ -26,39 +26,7 @@
 #include <string>
 #include <vector>
 
-class CriticalSection
-{
-  public:
-	CriticalSection();
-	CriticalSection(const CriticalSection& other) = delete;
-	CriticalSection(CriticalSection&& other) = delete;
-	~CriticalSection();
-
-	CriticalSection& operator=(const CriticalSection& other) = delete;
-	CriticalSection& operator=(const CriticalSection&& other) = delete;
-
-	void lock();
-	void unlock();
-
-  private:
-	CRITICAL_SECTION _section{};
-};
-
-class WinPREvent
-{
-  public:
-	explicit WinPREvent(bool initial = false);
-	~WinPREvent();
-
-	void set();
-	void clear();
-	[[nodiscard]] bool isSet() const;
-
-	[[nodiscard]] HANDLE handle() const;
-
-  private:
-	HANDLE _handle;
-};
+#include <sdl_common_utils.hpp>
 
 enum
 {
