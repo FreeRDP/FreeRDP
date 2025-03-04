@@ -101,11 +101,13 @@ def write_getter_body(f, values, ret, keys, isPointer, compat_values, typestr, e
                     cast = '(void*)'
             write_getter_case(f, val, cast, None)
     if compat_values:
+        f.write('#if defined(WITH_FREERDP_3x_DEPRECATED)\n')
         for i in range(len(compat_values)):
             val = compat_values[i]
             cast = '(' + entry_type + ')'
             f.write('\t\t// API Compatibility section, remove with FreeRDP 4.x\n')
             write_getter_case(f, val, cast, typestr)
+        f.write('#endif\n')
     f.write('\t\tdefault:\n')
     f.write('\t\t\tWLog_ERR(TAG, "Invalid key index %" PRIuz " [%s|%s]", id, freerdp_settings_get_name_for_key(id), freerdp_settings_get_type_name_for_key(id));\n')
     f.write('\t\t\tWINPR_ASSERT(FALSE);\n')
@@ -217,10 +219,12 @@ def write_setter(f, entry_dict, entry_type, entry_name, postfix, compat_dict):
                     cast = '(' + k + ')'
             write_setter_case(f, val, postfix, isPointer, cast)
     if compat_values:
+        f.write('#if defined(WITH_FREERDP_3x_DEPRECATED)\n')
         for val in compat_values:
             cast = '(int32_t)'
             f.write('\t\t// API Compatibility section, remove with FreeRDP 4.x\n')
             write_setter_case(f, val, postfix, isPointer, cast)
+        f.write('#endif\n')
     f.write('\t\tdefault:\n')
     f.write('\t\t\tWLog_ERR(TAG, "Invalid key index %" PRIuz " [%s|%s]", id, freerdp_settings_get_name_for_key(id), freerdp_settings_get_type_name_for_key(id));\n')
     f.write('\t\t\treturn FALSE;\n')

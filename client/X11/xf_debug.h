@@ -1,8 +1,9 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * X11 Keyboard Mapping
+ * X11 debug helper header
  *
- * Copyright 2009-2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2025 Armin Novak <anovak@thincast.com>
+ * Copyright 2025 Thincast Technologies GmbH
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +18,18 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_LOCALE_KEYBOARD_X11_H
-#define FREERDP_LOCALE_KEYBOARD_X11_H
+#pragma once
 
-#include <freerdp/api.h>
+#include <freerdp/config.h>
+#include <freerdp/log.h>
 
-#if defined(WITH_FREERDP_3x_DEPRECATED)
-FREERDP_LOCAL int freerdp_detect_keyboard_layout_from_xkb(DWORD* keyboardLayoutId);
+#define DBG_TAG CLIENT_TAG("x11")
+
+#ifdef WITH_DEBUG_X11
+#define DEBUG_X11(...) WLog_DBG(DBG_TAG, __VA_ARGS__)
+#else
+#define DEBUG_X11(...) \
+	do                 \
+	{                  \
+	} while (0)
 #endif
-
-#endif /* FREERDP_LOCALE_KEYBOARD_X11_H */

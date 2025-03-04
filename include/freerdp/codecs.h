@@ -86,12 +86,14 @@ extern "C"
 	WINPR_ATTR_MALLOC(freerdp_client_codecs_free, 1)
 	FREERDP_API rdpCodecs* freerdp_client_codecs_new(UINT32 TheadingFlags);
 
+#if defined(WITH_FREERDP_3x_DEPRECATED)
 	WINPR_DEPRECATED_VAR("[since 3.6.0] Use freerdp_client_codecs_free",
 	                     FREERDP_API void codecs_free(rdpCodecs* codecs));
 
 	WINPR_DEPRECATED_VAR("[since 3.6.0] Use freerdp_client_codecs_new",
 	                     WINPR_ATTR_MALLOC(codecs_free, 1)
 	                         FREERDP_API rdpCodecs* codecs_new(rdpContext* context));
+#endif
 
 #ifdef __cplusplus
 }

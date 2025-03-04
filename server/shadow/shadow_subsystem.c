@@ -189,6 +189,7 @@ UINT32 shadow_enum_monitors(MONITOR_DEF* monitors, UINT32 maxMonitors)
  * and andmask data and fill into SHADOW_MSG_OUT_POINTER_ALPHA_UPDATE
  * Caller should free the andMaskData and xorMaskData later.
  */
+#if defined(WITH_FREERDP_3x_DEPRECATED)
 int shadow_subsystem_pointer_convert_alpha_pointer_data(
     const BYTE* WINPR_RESTRICT pixels, BOOL premultiplied, UINT32 width, UINT32 height,
     SHADOW_MSG_OUT_POINTER_ALPHA_UPDATE* WINPR_RESTRICT pointerColor)
@@ -196,6 +197,7 @@ int shadow_subsystem_pointer_convert_alpha_pointer_data(
 	return shadow_subsystem_pointer_convert_alpha_pointer_data_to_format(
 	    pixels, PIXEL_FORMAT_BGRX32, premultiplied, width, height, pointerColor);
 }
+#endif
 
 int shadow_subsystem_pointer_convert_alpha_pointer_data_to_format(
     const BYTE* pixels, UINT32 format, BOOL premultiplied, UINT32 width, UINT32 height,

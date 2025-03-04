@@ -17,13 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_LOCALE_KEYBOARD_X11_H
-#define FREERDP_LOCALE_KEYBOARD_X11_H
+#pragma once
 
 #include <freerdp/api.h>
 
-#if defined(WITH_FREERDP_3x_DEPRECATED)
-FREERDP_LOCAL int freerdp_detect_keyboard_layout_from_xkb(DWORD* keyboardLayoutId);
-#endif
-
-#endif /* FREERDP_LOCALE_KEYBOARD_X11_H */
+int xf_detect_keyboard_layout_from_xkb(DWORD* keyboardLayoutId);

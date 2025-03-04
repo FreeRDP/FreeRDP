@@ -24,7 +24,7 @@
 #include <X11/Xatom.h>
 #include <X11/Xlib.h>
 
-#include "liblocale.h"
+#include "xf_debug.h"
 #include "keyboard_x11.h"
 #include "xkb_layout_ids.h"
 
@@ -111,15 +111,15 @@ static DWORD kbd_layout_id_from_x_property(Display* display, Window root, char* 
 
 	parse_xkb_rule_names(rule, items, &layout, &variant);
 
-	DEBUG_KBD("%s layout: %s, variant: %s", property_name, layout, variant);
-	layout_id = find_keyboard_layout_in_xorg_rules(layout, variant);
+	DEBUG_X11("%s layout: %s, variant: %s", property_name, layout, variant);
+	layout_id = xf_find_keyboard_layout_in_xorg_rules(layout, variant);
 
 	XFree(rule);
 
 	return layout_id;
 }
 
-int freerdp_detect_keyboard_layout_from_xkb(DWORD* keyboardLayoutId)
+int xf_detect_keyboard_layout_from_xkb(DWORD* keyboardLayoutId)
 {
 	Display* display = XOpenDisplay(NULL);
 
