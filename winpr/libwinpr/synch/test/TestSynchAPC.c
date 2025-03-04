@@ -147,27 +147,5 @@ int TestSynchAPC(int argc, char* argv[])
 	if (!userApcArg.called)
 		return 22;
 
-#if 0
-	/* test cleanup of timer completions */
-	memset(&uncleanCloseData, 0, sizeof(uncleanCloseData));
-	uncleanCloseData.timer1 = CreateWaitableTimerA(NULL, FALSE, NULL);
-	if (!uncleanCloseData.timer1)
-		return 31;
-
-	uncleanCloseData.timer2 = CreateWaitableTimerA(NULL, FALSE, NULL);
-	if (!uncleanCloseData.timer2)
-		return 32;
-
-	thread = CreateThread(NULL, 0, closeHandleTest, &uncleanCloseData, 0, NULL);
-	if (!thread)
-		return 33;
-
-    (void)WaitForSingleObject(thread, INFINITE);
-(void)CloseHandle(thread);
-
-	if (uncleanCloseData.timer1Calls != 1 || uncleanCloseData.timer2Calls != 0)
-		return 34;
-(void)CloseHandle(uncleanCloseData.timer1);
-#endif
 	return 0;
 }

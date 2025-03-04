@@ -43,10 +43,9 @@ using scancode_entry_t = struct
 };
 
 #define STR(x) #x
-#define ENTRY(x, y)      \
-	{                    \
-		x, STR(x), y, #y \
-	}
+#define ENTRY(x, y) { x, STR(x), y, #y }
+
+// clang-format off
 static const scancode_entry_t map[] = {
 	ENTRY(SDL_SCANCODE_UNKNOWN, RDP_SCANCODE_UNKNOWN),
 	ENTRY(SDL_SCANCODE_A, RDP_SCANCODE_KEY_A),
@@ -190,7 +189,7 @@ static const scancode_entry_t map[] = {
 	ENTRY(SDL_SCANCODE_AC_FORWARD, RDP_SCANCODE_BROWSER_FORWARD),
 	ENTRY(SDL_SCANCODE_AC_STOP, RDP_SCANCODE_BROWSER_STOP),
 
-#if 1 // TODO: unmapped
+	// TODO: unmapped
 	ENTRY(SDL_SCANCODE_NONUSHASH, RDP_SCANCODE_UNKNOWN),
 	ENTRY(SDL_SCANCODE_APPLICATION, RDP_SCANCODE_UNKNOWN),
 	ENTRY(SDL_SCANCODE_POWER, RDP_SCANCODE_UNKNOWN),
@@ -293,8 +292,8 @@ static const scancode_entry_t map[] = {
 	ENTRY(SDL_SCANCODE_EJECT, RDP_SCANCODE_UNKNOWN),
 	ENTRY(SDL_SCANCODE_AUDIOREWIND, RDP_SCANCODE_UNKNOWN),
 	ENTRY(SDL_SCANCODE_AUDIOFASTFORWARD, RDP_SCANCODE_UNKNOWN)
-#endif
 };
+// clang-format on
 
 static UINT16 sdl_get_kbd_flags()
 {
@@ -390,24 +389,17 @@ BOOL sdlInput::keyboard_set_ime_status(rdpContext* context, UINT16 imeId, UINT32
 uint32_t sdlInput::prefToMask()
 {
 	const std::map<std::string, uint32_t> mapping = {
-		{ "KMOD_LSHIFT", KMOD_LSHIFT },
-		{ "KMOD_RSHIFT", KMOD_RSHIFT },
-		{ "KMOD_LCTRL", KMOD_LCTRL },
-		{ "KMOD_RCTRL", KMOD_RCTRL },
-		{ "KMOD_LALT", KMOD_LALT },
-		{ "KMOD_RALT", KMOD_RALT },
-		{ "KMOD_LGUI", KMOD_LGUI },
-		{ "KMOD_RGUI", KMOD_RGUI },
-		{ "KMOD_NUM", KMOD_NUM },
-		{ "KMOD_CAPS", KMOD_CAPS },
+		{ "KMOD_LSHIFT", KMOD_LSHIFT }, { "KMOD_RSHIFT", KMOD_RSHIFT },
+		{ "KMOD_LCTRL", KMOD_LCTRL },   { "KMOD_RCTRL", KMOD_RCTRL },
+		{ "KMOD_LALT", KMOD_LALT },     { "KMOD_RALT", KMOD_RALT },
+		{ "KMOD_LGUI", KMOD_LGUI },     { "KMOD_RGUI", KMOD_RGUI },
+		{ "KMOD_NUM", KMOD_NUM },       { "KMOD_CAPS", KMOD_CAPS },
 		{ "KMOD_MODE", KMOD_MODE },
 #if SDL_VERSION_ATLEAST(2, 0, 18)
 		{ "KMOD_SCROLL", KMOD_SCROLL },
 #endif
-		{ "KMOD_CTRL", KMOD_CTRL },
-		{ "KMOD_SHIFT", KMOD_SHIFT },
-		{ "KMOD_ALT", KMOD_ALT },
-		{ "KMOD_GUI", KMOD_GUI }
+		{ "KMOD_CTRL", KMOD_CTRL },     { "KMOD_SHIFT", KMOD_SHIFT },
+		{ "KMOD_ALT", KMOD_ALT },       { "KMOD_GUI", KMOD_GUI }
 	};
 	uint32_t mod = KMOD_NONE;
 	for (const auto& val : SdlPref::instance()->get_array("SDL_KeyModMask", { "KMOD_RSHIFT" }))

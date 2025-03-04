@@ -53,80 +53,9 @@ BOOL GetOverlappedResult(WINPR_ATTR_UNUSED HANDLE hFile,
                          WINPR_ATTR_UNUSED LPDWORD lpNumberOfBytesTransferred,
                          WINPR_ATTR_UNUSED BOOL bWait)
 {
-#if 1
 	WLog_ERR(TAG, "Not implemented");
 	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
 	return FALSE;
-#else
-	ULONG Type;
-	WINPR_HANDLE* Object;
-
-	if (!winpr_Handle_GetInfo(hFile, &Type, &Object))
-		return FALSE;
-
-	else if (Type == HANDLE_TYPE_NAMED_PIPE)
-	{
-		int status = -1;
-		DWORD request;
-		PVOID lpBuffer;
-		DWORD nNumberOfBytes;
-		WINPR_NAMED_PIPE* pipe;
-
-		pipe = (WINPR_NAMED_PIPE*)Object;
-
-		if (!(pipe->dwFlagsAndAttributes & FILE_FLAG_OVERLAPPED))
-			return FALSE;
-
-		lpBuffer = lpOverlapped->Pointer;
-		request = (DWORD)lpOverlapped->Internal;
-		nNumberOfBytes = (DWORD)lpOverlapped->InternalHigh;
-
-		if (request == 0)
-		{
-			if (pipe->clientfd == -1)
-				return FALSE;
-
-			status = read(pipe->clientfd, lpBuffer, nNumberOfBytes);
-		}
-		else if (request == 1)
-		{
-			if (pipe->clientfd == -1)
-				return FALSE;
-
-			status = write(pipe->clientfd, lpBuffer, nNumberOfBytes);
-		}
-		else if (request == 2)
-		{
-			socklen_t length;
-			struct sockaddr_un s = { 0 };
-
-			if (pipe->serverfd == -1)
-				return FALSE;
-
-			length = sizeof(struct sockaddr_un);
-
-			status = accept(pipe->serverfd, (struct sockaddr*)&s, &length);
-
-			if (status < 0)
-				return FALSE;
-
-			pipe->clientfd = status;
-			pipe->ServerMode = FALSE;
-
-			status = 0;
-		}
-
-		if (status < 0)
-		{
-			*lpNumberOfBytesTransferred = 0;
-			return FALSE;
-		}
-
-		*lpNumberOfBytesTransferred = status;
-	}
-
-	return TRUE;
-#endif
 }
 
 BOOL GetOverlappedResultEx(WINPR_ATTR_UNUSED HANDLE hFile,
