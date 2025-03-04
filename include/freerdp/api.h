@@ -90,14 +90,13 @@
 			WLog_VRB("com.freerdp.api", "IFCALLRET(" #_cb ") == NULL"); \
 	} while (0)
 
-#if defined(__GNUC__) || defined(__clang__)
+#if 0 // defined(__GNUC__)
 #define IFCALLRESULT(_default_return, _cb, ...)                            \
-	__extension__({                                                        \
-		if (_cb == NULL)                                                   \
-		{                                                                  \
+	({                                                                     \
+		(_cb != NULL) ? _cb(__VA_ARGS__) : ({                              \
 			WLog_VRB("com.freerdp.api", "IFCALLRESULT(" #_cb ") == NULL"); \
-		}                                                                  \
-		((_cb != NULL) ? _cb(__VA_ARGS__) : (_default_return));            \
+			(_default_return);                                             \
+		});                                                                \
 	})
 #else
 #define IFCALLRESULT(_default_return, _cb, ...) \

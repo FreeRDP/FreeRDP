@@ -1303,9 +1303,8 @@ static UINT gdi_SolidFill(RdpgfxClientContext* context, const RDPGFX_SOLID_FILL_
 		const UINT32 nWidth = invalidRect.right - invalidRect.left;
 		const UINT32 nHeight = invalidRect.bottom - invalidRect.top;
 
-		if (!freerdp_image_fill_ex(surface->data, surface->format, surface->scanline,
-		                           invalidRect.left, invalidRect.top, nWidth, nHeight, color,
-		                           FREERDP_IMAGE_FILL_IGNORE_ALPHA))
+		if (!freerdp_image_fill(surface->data, surface->format, surface->scanline, invalidRect.left,
+		                        invalidRect.top, nWidth, nHeight, color))
 			goto fail;
 
 		region16_union_rect(&(surface->invalidRegion), &(surface->invalidRegion), &invalidRect);

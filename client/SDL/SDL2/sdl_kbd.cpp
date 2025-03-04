@@ -24,7 +24,6 @@
 #include "sdl_freerdp.hpp"
 #include "sdl_utils.hpp"
 #include "sdl_prefs.hpp"
-#include "sdl_touch.hpp"
 
 #include <map>
 
@@ -330,24 +329,20 @@ BOOL sdlInput::keyboard_focus_in()
 	freerdp_input_send_focus_in_event(input, WINPR_ASSERTING_INT_CAST(UINT16, syncFlags));
 
 	/* finish with a mouse pointer position like mstsc.exe if required */
-	// TODO: fullscreen/remote app
-	int x = 0;
-	int y = 0;
-	if (_sdl->fullscreen)
-	{
-		SDL_GetGlobalMouseState(&x, &y);
-	}
-	else
-	{
-		SDL_GetMouseState(&x, &y);
-	}
-	auto w = SDL_GetMouseFocus();
-	if (w)
-	{
-		auto id = SDL_GetWindowID(w);
-		sdl_scale_coordinates(_sdl, id, &x, &y, TRUE, TRUE);
-	}
-	return freerdp_client_send_button_event(_sdl->common(), FALSE, PTR_FLAGS_MOVE, x, y);
+#if 0
+    if (xfc->remote_app)
+        return;
+
+    if (XQueryPointer(xfc->display, xfc->window->handle, &w, &w, &d, &d, &x, &y, &state))
+    {
+        if ((x >= 0) && (x < xfc->window->width) && (y >= 0) && (y < xfc->window->height))
+        {
+            xf_event_adjust_coordinates(xfc, &x, &y);
+            freerdp_client_send_button_event(&xfc->common, FALSE, PTR_FLAGS_MOVE, x, y);
+        }
+    }
+#endif
+	return TRUE;
 }
 
 /* This function is called to update the keyboard indicator LED */

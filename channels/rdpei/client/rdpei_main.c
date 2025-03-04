@@ -785,13 +785,15 @@ static UINT rdpei_recv_sc_ready_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStream*
 	if (rdpei->version > protocolVersion)
 		rdpei->version = protocolVersion;
 	rdpei->features = features;
+#if 0
 
-	if (protocolVersion > RDPINPUT_PROTOCOL_V300)
+	if (protocolVersion != RDPINPUT_PROTOCOL_V10)
 	{
-		WLog_Print(rdpei->base.log, WLOG_WARN,
-		           "Unknown [MS-RDPEI] protocolVersion: 0x%08" PRIX32 "", protocolVersion);
+        WLog_Print(rdpei->base.log, WLOG_ERROR,  "Unknown [MS-RDPEI] protocolVersion: 0x%08"PRIX32"", protocolVersion);
+		return -1;
 	}
 
+#endif
 	return CHANNEL_RC_OK;
 }
 
