@@ -104,10 +104,10 @@ static UINT encomsp_recv_change_participant_control_level_pdu(EncomspServerConte
 static UINT encomsp_server_receive_pdu(EncomspServerContext* context, wStream* s)
 {
 	UINT error = CHANNEL_RC_OK;
-	ENCOMSP_ORDER_HEADER header;
 
 	while (Stream_GetRemainingLength(s) > 0)
 	{
+		ENCOMSP_ORDER_HEADER header = { 0 };
 		if ((error = encomsp_read_header(s, &header)))
 		{
 			WLog_ERR(TAG, "encomsp_read_header failed with error %" PRIu32 "!", error);
