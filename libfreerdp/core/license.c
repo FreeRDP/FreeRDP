@@ -1950,7 +1950,6 @@ fail:
 BOOL license_read_platform_challenge_packet(rdpLicense* license, wStream* s)
 {
 	BYTE macData[LICENSING_ENCRYPTION_KEY_LENGTH] = { 0 };
-	UINT32 ConnectFlags = 0;
 
 	WINPR_ASSERT(license);
 
@@ -1959,7 +1958,9 @@ BOOL license_read_platform_challenge_packet(rdpLicense* license, wStream* s)
 	if (!license_check_stream_length(s, 4, "license platform challenge"))
 		return FALSE;
 
-	Stream_Read_UINT32(s, ConnectFlags); /* ConnectFlags, Reserved (4 bytes) */
+	/* [MS-RDPELE] 2.2.2.4 Server Platform Challenge (SERVER_PLATFORM_CHALLENGE)
+	 * reserved field */
+	Stream_Seek_UINT32(s); /* ConnectFlags, Reserved (4 bytes) */
 
 	/* EncryptedPlatformChallenge */
 	license->EncryptedPlatformChallenge->type = BB_ANY_BLOB;

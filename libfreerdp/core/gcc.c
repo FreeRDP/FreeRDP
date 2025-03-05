@@ -1210,7 +1210,6 @@ BOOL gcc_read_client_core_data(wStream* s, rdpMcs* mcs)
 
 	do
 	{
-		UINT16 clientProductIdLen = 0;
 		if (blockLength < 2)
 			break;
 
@@ -1220,14 +1219,36 @@ BOOL gcc_read_client_core_data(wStream* s, rdpMcs* mcs)
 		if (blockLength < 2)
 			break;
 
-		Stream_Read_UINT16(s, clientProductIdLen); /* clientProductID (2 bytes) */
+		const UINT16 clientProductId = Stream_Get_UINT16(s); /* clientProductID (2 bytes) */
 		blockLength -= 2;
+
+		/* [MS-RDPBCGR] 2.2.1.3.2 Client Core Data (TS_UD_CS_CORE)::clientProductId (optional)
+		 * should be initialized to 1
+		 */
+		if (clientProductId != 1)
+		{
+			WLog_WARN(TAG,
+			          "[MS-RDPBCGR] 2.2.1.3.2 Client Core Data (TS_UD_CS_CORE)::clientProductId "
+			          "(optional) expected 1, got %" PRIu32,
+			          clientProductId);
+		}
 
 		if (blockLength < 4)
 			break;
 
-		Stream_Seek_UINT32(s); /* serialNumber (4 bytes) */
+		const UINT32 serialNumber = Stream_Get_UINT32(s); /* serialNumber (4 bytes) */
 		blockLength -= 4;
+
+		/* [MS-RDPBCGR] 2.2.1.3.2 Client Core Data (TS_UD_CS_CORE)::serialNumber (optional)
+		 * should be initialized to 0
+		 */
+		if (serialNumber != 0)
+		{
+			WLog_WARN(TAG,
+			          "[MS-RDPBCGR] 2.2.1.3.2 Client Core Data (TS_UD_CS_CORE)::serialNumber "
+			          "(optional) expected 0, got %" PRIu32,
+			          serialNumber);
+		}
 
 		if (blockLength < 2)
 			break;
@@ -1925,16 +1946,14 @@ BOOL gcc_write_client_network_data(wStream* s, const rdpMcs* mcs)
 BOOL gcc_read_server_network_data(wStream* s, rdpMcs* mcs)
 {
 	UINT16 channelId = 0;
-	UINT16 MCSChannelId = 0;
-	UINT16 channelCount = 0;
 	UINT32 parsedChannelCount = 0;
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(mcs);
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return FALSE;
 
-	Stream_Read_UINT16(s, MCSChannelId); /* MCSChannelId */
-	Stream_Read_UINT16(s, channelCount); /* channelCount */
+	mcs->IOChannelId = Stream_Get_UINT16(s);            /* MCSChannelId */
+	const uint16_t channelCount = Stream_Get_UINT16(s); /* channelCount */
 	parsedChannelCount = channelCount;
 
 	if (channelCount != mcs->channelCount)

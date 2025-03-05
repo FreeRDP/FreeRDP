@@ -131,6 +131,7 @@ struct rdp_mcs
 
 	UINT16 userId;
 	UINT16 baseChannelId;
+	UINT16 IOChannelId;
 	UINT16 messageChannelId;
 
 	UINT32 flags;
