@@ -570,6 +570,8 @@ static UINT drive_process_irp_query_volume_information(DRIVE_DEVICE* drive, IRP*
 			break;
 
 		default:
+			WLog_WARN(TAG, "Unhandled FSInformationClass %s [0x%08" PRIx32 "]",
+			          FSInformationClass2Tag(FsInformationClass), FsInformationClass);
 			irp->IoStatus = STATUS_UNSUCCESSFUL;
 			Stream_Write_UINT32(output, 0); /* Length */
 			break;
@@ -587,15 +589,15 @@ static UINT drive_process_irp_query_volume_information(DRIVE_DEVICE* drive, IRP*
  */
 static UINT drive_process_irp_silent_ignore(DRIVE_DEVICE* drive, IRP* irp)
 {
-	UINT32 FsInformationClass = 0;
-
 	if (!drive || !irp || !irp->output || !irp->Complete)
 		return ERROR_INVALID_PARAMETER;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, irp->input, 4))
 		return ERROR_INVALID_DATA;
 
-	Stream_Read_UINT32(irp->input, FsInformationClass);
+	const uint32_t FsInformationClass = Stream_Get_UINT32(irp->input);
+	WLog_VRB(TAG, "Silently ignore FSInformationClass %s [0x%08" PRIx32 "]",
+	         FSInformationClass2Tag(FsInformationClass), FsInformationClass);
 	Stream_Write_UINT32(irp->output, 0); /* Length */
 	return irp->Complete(irp);
 }
