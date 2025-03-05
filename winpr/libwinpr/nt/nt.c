@@ -62,3 +62,92 @@ PTEB NtCurrentTeb(void)
 	return teb;
 }
 #endif
+
+const char* FSInformationClass2Tag(FILE_INFORMATION_CLASS value)
+{
+	switch (value)
+	{
+		case FileDirectoryInformation:
+			return "FileDirectoryInformation";
+		case FileFullDirectoryInformation:
+			return "FileFullDirectoryInformation";
+		case FileBothDirectoryInformation:
+			return "FileBothDirectoryInformation";
+		case FileBasicInformation:
+			return "FileBasicInformation";
+		case FileStandardInformation:
+			return "FileStandardInformation";
+		case FileInternalInformation:
+			return "FileInternalInformation";
+		case FileEaInformation:
+			return "FileEaInformation";
+		case FileAccessInformation:
+			return "FileAccessInformation";
+		case FileNameInformation:
+			return "FileNameInformation";
+		case FileRenameInformation:
+			return "FileRenameInformation";
+		case FileLinkInformation:
+			return "FileLinkInformation";
+		case FileNamesInformation:
+			return "FileNamesInformation";
+		case FileDispositionInformation:
+			return "FileDispositionInformation";
+		case FilePositionInformation:
+			return "FilePositionInformation";
+		case FileFullEaInformation:
+			return "FileFullEaInformation";
+		case FileModeInformation:
+			return "FileModeInformation";
+		case FileAlignmentInformation:
+			return "FileAlignmentInformation";
+		case FileAllInformation:
+			return "FileAllInformation";
+		case FileAllocationInformation:
+			return "FileAllocationInformation";
+		case FileEndOfFileInformation:
+			return "FileEndOfFileInformation";
+		case FileAlternateNameInformation:
+			return "FileAlternateNameInformation";
+		case FileStreamInformation:
+			return "FileStreamInformation";
+		case FilePipeInformation:
+			return "FilePipeInformation";
+		case FilePipeLocalInformation:
+			return "FilePipeLocalInformation";
+		case FilePipeRemoteInformation:
+			return "FilePipeRemoteInformation";
+		case FileMailslotQueryInformation:
+			return "FileMailslotQueryInformation";
+		case FileMailslotSetInformation:
+			return "FileMailslotSetInformation";
+		case FileCompressionInformation:
+			return "FileCompressionInformation";
+		case FileObjectIdInformation:
+			return "FileObjectIdInformation";
+		case FileUnknownInformation1:
+			return "FileUnknownInformation1";
+		case FileMoveClusterInformation:
+			return "FileMoveClusterInformation";
+		case FileQuotaInformation:
+			return "FileQuotaInformation";
+		case FileReparsePointInformation:
+			return "FileReparsePointInformation";
+		case FileNetworkOpenInformation:
+			return "FileNetworkOpenInformation";
+		case FileAttributeTagInformation:
+			return "FileAttributeTagInformation";
+		case FileTrackingInformation:
+			return "FileTrackingInformation";
+		case FileIdBothDirectoryInformation:
+			return "FileIdBothDirectoryInformation";
+		case FileIdFullDirectoryInformation:
+			return "FileIdFullDirectoryInformation";
+		case FileValidDataLengthInformation:
+			return "FileValidDataLengthInformation";
+		case FileShortNameInformation:
+			return "FileShortNameInformation";
+		default:
+			return "UNKNOWN";
+	}
+}

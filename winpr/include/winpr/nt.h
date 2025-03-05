@@ -1565,6 +1565,15 @@ extern "C"
 	WINPR_API const char* NtStatus2Tag(NTSTATUS ntstatus);
 	WINPR_API const char* Win32ErrorCode2Tag(UINT16 code);
 
+	/** @brief convert a \ref FILE_INFORMATION_CLASS to a string
+	 *
+	 *  @param value The \ref FILE_INFORMATION_CLASS to convert
+	 *
+	 *  @return A string representation of the value or "UNKNOWN" for invalid values
+	 *  @since version 3.13.0
+	 */
+	WINPR_API const char* FSInformationClass2Tag(FILE_INFORMATION_CLASS value);
+
 #ifdef __cplusplus
 }
 #endif
