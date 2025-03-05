@@ -127,7 +127,6 @@ fail:
 static RdpdrDevice* rdpdr_get_device_by_id(RdpdrServerPrivate* priv, UINT32 DeviceId)
 {
 	WINPR_ASSERT(priv);
-
 	return HashTable_GetItemValue(priv->devicelist, &DeviceId);
 }
 
