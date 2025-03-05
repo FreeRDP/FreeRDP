@@ -308,7 +308,6 @@ static BOOL autodetect_send_bandwidth_measure_results(rdpAutoDetect* autodetect,
                                                       UINT16 responseType, UINT16 sequenceNumber)
 {
 	BOOL success = TRUE;
-	wStream* s = NULL;
 	UINT64 timeDelta = GetTickCount64();
 
 	WINPR_ASSERT(autodetect);
@@ -327,7 +326,7 @@ static BOOL autodetect_send_bandwidth_measure_results(rdpAutoDetect* autodetect,
 		timeDelta -= autodetect->bandwidthMeasureStartTime;
 
 	/* Send the result PDU to the server */
-	s = rdp_message_channel_pdu_init(autodetect->context->rdp);
+	wStream* s = rdp_message_channel_pdu_init(autodetect->context->rdp);
 
 	if (!s)
 		return FALSE;
@@ -350,6 +349,7 @@ static BOOL autodetect_send_bandwidth_measure_results(rdpAutoDetect* autodetect,
 	if (!success)
 	{
 		WLog_Print(autodetect->log, WLOG_ERROR, "ClientBandwidthMeasureResult failed");
+		Stream_Release(s);
 		return FALSE;
 	}
 
