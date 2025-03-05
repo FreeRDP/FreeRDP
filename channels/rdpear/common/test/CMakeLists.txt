@@ -18,7 +18,7 @@ add_executable(${MODULE_NAME} ${TEST_RDPEAR_SRCS})
 add_compile_definitions(TESTING_OUTPUT_DIRECTORY="${PROJECT_BINARY_DIR}")
 add_compile_definitions(TESTING_SRC_DIRECTORY="${PROJECT_SOURCE_DIR}")
 
-target_link_libraries(${MODULE_NAME} freerdp winpr freerdp-client)
+target_link_libraries(${MODULE_NAME} freerdp winpr freerdp-client rdpear-common)
 
 set_target_properties(${MODULE_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${TESTING_OUTPUT_DIRECTORY}")
 
