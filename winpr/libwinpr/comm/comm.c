@@ -1498,150 +1498,294 @@ static const char* CommIoCtlToStr(unsigned long int io)
 	switch (io)
 	{
 #if defined(WINPR_HAVE_SERIAL_SUPPORT)
+#if defined(TCGETS)
 		case TCGETS:
 			return "TCGETS";
+#endif
+#if defined(TCSETS)
 		case TCSETS:
 			return "TCSETS";
+#endif
+#if defined(TCSETSW)
 		case TCSETSW:
 			return "TCSETSW";
+#endif
+#if defined(TCSETSF)
 		case TCSETSF:
 			return "TCSETSF";
+#endif
+#if defined(TCGETA)
 		case TCGETA:
 			return "TCGETA";
+#endif
+#if defined(TCSETA)
 		case TCSETA:
 			return "TCSETA";
+#endif
+#if defined(TCSETAW)
 		case TCSETAW:
 			return "TCSETAW";
+#endif
+#if defined(TCSETAF)
 		case TCSETAF:
 			return "TCSETAF";
+#endif
+#if defined(TCSBRK)
 		case TCSBRK:
 			return "TCSBRK";
+#endif
+#if defined(TCXONC)
 		case TCXONC:
 			return "TCXONC";
+#endif
+#if defined(TCFLSH)
 		case TCFLSH:
 			return "TCFLSH";
+#endif
+#if defined(TIOCEXCL)
 		case TIOCEXCL:
 			return "TIOCEXCL";
+#endif
+#if defined(TIOCNXCL)
 		case TIOCNXCL:
 			return "TIOCNXCL";
+#endif
+#if defined(TIOCSCTTY)
 		case TIOCSCTTY:
 			return "TIOCSCTTY";
+#endif
+#if defined(TIOCGPGRP)
 		case TIOCGPGRP:
 			return "TIOCGPGRP";
+#endif
+#if defined(TIOCSPGRP)
 		case TIOCSPGRP:
 			return "TIOCSPGRP";
+#endif
+#if defined(TIOCOUTQ)
 		case TIOCOUTQ:
 			return "TIOCOUTQ";
+#endif
+#if defined(TIOCSTI)
 		case TIOCSTI:
 			return "TIOCSTI";
+#endif
+#if defined(TIOCGWINSZ)
 		case TIOCGWINSZ:
 			return "TIOCGWINSZ";
+#endif
+#if defined(TIOCSWINSZ)
 		case TIOCSWINSZ:
 			return "TIOCSWINSZ";
+#endif
+#if defined(TIOCMGET)
 		case TIOCMGET:
 			return "TIOCMGET";
+#endif
+#if defined(TIOCMBIS)
 		case TIOCMBIS:
 			return "TIOCMBIS";
+#endif
+#if defined(TIOCMBIC)
 		case TIOCMBIC:
 			return "TIOCMBIC";
+#endif
+#if defined(TIOCMSET)
 		case TIOCMSET:
 			return "TIOCMSET";
+#endif
+#if defined(TIOCGSOFTCAR)
 		case TIOCGSOFTCAR:
 			return "TIOCGSOFTCAR";
+#endif
+#if defined(TIOCSSOFTCAR)
 		case TIOCSSOFTCAR:
 			return "TIOCSSOFTCAR";
+#endif
+#if defined(FIONREAD)
 		case FIONREAD:
 			return "FIONREAD/TIOCINQ";
+#endif
+#if defined(TIOCLINUX)
 		case TIOCLINUX:
 			return "TIOCLINUX";
+#endif
+#if defined(TIOCCONS)
 		case TIOCCONS:
 			return "TIOCCONS";
+#endif
+#if defined(TIOCGSERIAL)
 		case TIOCGSERIAL:
 			return "TIOCGSERIAL";
+#endif
+#if defined(TIOCSSERIAL)
 		case TIOCSSERIAL:
 			return "TIOCSSERIAL";
+#endif
+#if defined(TIOCPKT)
 		case TIOCPKT:
 			return "TIOCPKT";
+#endif
+#if defined(FIONBIO)
 		case FIONBIO:
 			return "FIONBIO";
+#endif
+#if defined(TIOCNOTTY)
 		case TIOCNOTTY:
 			return "TIOCNOTTY";
+#endif
+#if defined(TIOCSETD)
 		case TIOCSETD:
 			return "TIOCSETD";
+#endif
+#if defined(TIOCGETD)
 		case TIOCGETD:
 			return "TIOCGETD";
+#endif
+#if defined(TCSBRKP)
 		case TCSBRKP:
 			return "TCSBRKP";
+#endif
+#if defined(TIOCSBRK)
 		case TIOCSBRK:
 			return "TIOCSBRK";
+#endif
+#if defined(TIOCCBRK)
 		case TIOCCBRK:
 			return "TIOCCBRK";
+#endif
+#if defined(TIOCGSID)
 		case TIOCGSID:
 			return "TIOCGSID";
+#endif
+#if defined(TIOCGRS485)
 		case TIOCGRS485:
 			return "TIOCGRS485";
+#endif
+#if defined(TIOCSRS485)
 		case TIOCSRS485:
 			return "TIOCSRS485";
+#endif
+#if defined(TIOCSPTLCK)
 		case TIOCSPTLCK:
 			return "TIOCSPTLCK";
+#endif
+#if defined(TCGETX)
 		case TCGETX:
 			return "TCGETX";
+#endif
+#if defined(TCSETX)
 		case TCSETX:
 			return "TCSETX";
+#endif
+#if defined(TCSETXF)
 		case TCSETXF:
 			return "TCSETXF";
+#endif
+#if defined(TCSETXW)
 		case TCSETXW:
 			return "TCSETXW";
+#endif
+#if defined(TIOCSIG)
 		case TIOCSIG:
 			return "TIOCSIG";
+#endif
+#if defined(TIOCVHANGUP)
 		case TIOCVHANGUP:
 			return "TIOCVHANGUP";
+#endif
+#if defined(TIOCGPTPEER)
 		case TIOCGPTPEER:
 			return "TIOCGPTPEER";
+#endif
+#if defined(FIONCLEX)
 		case FIONCLEX:
 			return "FIONCLEX";
+#endif
+#if defined(FIOCLEX)
 		case FIOCLEX:
 			return "FIOCLEX";
+#endif
+#if defined(FIOASYNC)
 		case FIOASYNC:
 			return "FIOASYNC";
+#endif
+#if defined(TIOCSERCONFIG)
 		case TIOCSERCONFIG:
 			return "TIOCSERCONFIG";
+#endif
+#if defined(TIOCSERGWILD)
 		case TIOCSERGWILD:
 			return "TIOCSERGWILD";
+#endif
+#if defined(TIOCSERSWILD)
 		case TIOCSERSWILD:
 			return "TIOCSERSWILD";
+#endif
+#if defined(TIOCGLCKTRMIOS)
 		case TIOCGLCKTRMIOS:
 			return "TIOCGLCKTRMIOS";
+#endif
+#if defined(TIOCSLCKTRMIOS)
 		case TIOCSLCKTRMIOS:
 			return "TIOCSLCKTRMIOS";
+#endif
+#if defined(TIOCSERGSTRUCT)
 		case TIOCSERGSTRUCT:
 			return "TIOCSERGSTRUCT";
+#endif
+#if defined(TIOCSERGETLSR)
 		case TIOCSERGETLSR:
 			return "TIOCSERGETLSR";
+#endif
+#if defined(TIOCSERGETMULTI)
 		case TIOCSERGETMULTI:
 			return "TIOCSERGETMULTI";
+#endif
+#if defined(TIOCSERSETMULTI)
 		case TIOCSERSETMULTI:
 			return "TIOCSERSETMULTI";
+#endif
+#if defined(TIOCMIWAIT)
 		case TIOCMIWAIT:
 			return "TIOCMIWAIT";
+#endif
+#if defined(TIOCGICOUNT)
 		case TIOCGICOUNT:
 			return "TIOCGICOUNT";
+#endif
+#if defined(FIOQSIZE)
 		case FIOQSIZE:
 			return "FIOQSIZE";
+#endif
+#if defined(TIOCPKT_DATA)
 		case TIOCPKT_DATA:
 			return "TIOCPKT_DATA";
+#endif
+#if defined(TIOCPKT_FLUSHWRITE)
 		case TIOCPKT_FLUSHWRITE:
 			return "TIOCPKT_FLUSHWRITE";
+#endif
+#if defined(TIOCPKT_STOP)
 		case TIOCPKT_STOP:
 			return "TIOCPKT_STOP";
+#endif
+#if defined(TIOCPKT_START)
 		case TIOCPKT_START:
 			return "TIOCPKT_START";
+#endif
+#if defined(TIOCPKT_NOSTOP)
 		case TIOCPKT_NOSTOP:
 			return "TIOCPKT_NOSTOP";
+#endif
+#if defined(TIOCPKT_DOSTOP)
 		case TIOCPKT_DOSTOP:
 			return "TIOCPKT_DOSTOP";
+#endif
+#if defined(TIOCPKT_IOCTL)
 		case TIOCPKT_IOCTL:
 			return "TIOCPKT_IOCTL";
+#endif
 #endif
 		default:
 			return "UNKNOWN";

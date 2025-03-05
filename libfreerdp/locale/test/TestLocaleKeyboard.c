@@ -248,6 +248,7 @@ static DWORD get_random(DWORD offset)
 	return x;
 }
 
+#if defined(WITH_FREERDP_3x_DEPRECATED)
 static BOOL test_scancode_cnv(void)
 {
 	for (DWORD x = 0; x < UINT8_MAX; x++)
@@ -283,6 +284,7 @@ static BOOL test_scancode_cnv(void)
 	}
 	return TRUE;
 }
+#endif
 
 static BOOL test_codepages(void)
 {
@@ -325,6 +327,7 @@ static BOOL test_codepages(void)
 
 static BOOL test_init(void)
 {
+#if defined(WITH_FREERDP_3x_DEPRECATED)
 	const DWORD kbd = freerdp_keyboard_init(0);
 	if (kbd == 0)
 	{
@@ -352,6 +355,7 @@ static BOOL test_init(void)
 	// TODO: Test with valid remap list
 	// TODO: Test with invalid remap list
 	// TODO: Test with defaults != 0
+#endif
 	return TRUE;
 }
 
@@ -382,8 +386,10 @@ int TestLocaleKeyboard(int argc, char* argv[])
 	                 ~(RDP_KEYBOARD_LAYOUT_TYPE_STANDARD | RDP_KEYBOARD_LAYOUT_TYPE_VARIANT |
 	                   RDP_KEYBOARD_LAYOUT_TYPE_IME)))
 		return -1;
+#if defined(WITH_FREERDP_3x_DEPRECATED)
 	if (!test_scancode_cnv())
 		return -1;
+#endif
 	if (!test_codepages())
 		return -1;
 	if (!test_init())

@@ -643,7 +643,8 @@ BOOL rdp_read_header(rdpRdp* rdp, wStream* s, UINT16* length, UINT16* channelId)
 	if (!per_read_integer16(s, channelId, 0)) /* channelId */
 		return FALSE;
 
-	const uint8_t byte = Stream_Get_UINT8(s); /* dataPriority + Segmentation (0x70) */
+	const uint8_t dataPriority = Stream_Get_UINT8(s); /* dataPriority + Segmentation (0x70) */
+	WLog_Print(rdp->log, WLOG_TRACE, "dataPriority=%" PRIu8, dataPriority);
 
 	if (!per_read_length(s, length)) /* userData (OCTET_STRING) */
 		return FALSE;
@@ -991,27 +992,37 @@ static BOOL rdp_recv_server_set_keyboard_indicators_pdu(rdpRdp* rdp, wStream* s)
 		return FALSE;
 
 	const uint16_t unitId = Stream_Get_UINT16(s); /* unitId (2 bytes) */
+	if (unitId != 0)
+	{
+		WLog_Print(rdp->log, WLOG_WARN,
+		           "[MS-RDPBCGR] 2.2.8.2.1.1 Set Keyboard Indicators PDU Data "
+		           "(TS_SET_KEYBOARD_INDICATORS_PDU)::unitId should be 0, is %" PRIu8,
+		           unitId);
+	}
 	const UINT16 ledFlags = Stream_Get_UINT16(s); /* ledFlags (2 bytes) */
 	return IFCALLRESULT(TRUE, context->update->SetKeyboardIndicators, context, ledFlags);
 }
 
 static BOOL rdp_recv_server_set_keyboard_ime_status_pdu(rdpRdp* rdp, wStream* s)
 {
-	UINT16 unitId = 0;
-	UINT32 imeState = 0;
-	UINT32 imeConvMode = 0;
-
 	if (!rdp || !rdp->input)
 		return FALSE;
 
 	if (!Stream_CheckAndLogRequiredLengthWLog(rdp->log, s, 10))
 		return FALSE;
 
-	Stream_Read_UINT16(s, unitId);      /* unitId (2 bytes) */
-	Stream_Read_UINT32(s, imeState);    /* imeState (4 bytes) */
-	Stream_Read_UINT32(s, imeConvMode); /* imeConvMode (4 bytes) */
-	IFCALL(rdp->update->SetKeyboardImeStatus, rdp->context, unitId, imeState, imeConvMode);
-	return TRUE;
+	const uint16_t unitId = Stream_Get_UINT16(s); /* unitId (2 bytes) */
+	if (unitId != 0)
+	{
+		WLog_Print(rdp->log, WLOG_WARN,
+		           "[MS-RDPBCGR] 2.2.8.2.2.1 Set Keyboard IME Status PDU Data "
+		           "(TS_SET_KEYBOARD_IME_STATUS_PDU)::unitId should be 0, is %" PRIu8,
+		           unitId);
+	}
+	const uint32_t imeState = Stream_Get_UINT32(s);    /* imeState (4 bytes) */
+	const uint32_t imeConvMode = Stream_Get_UINT32(s); /* imeConvMode (4 bytes) */
+	return IFCALLRESULT(TRUE, rdp->update->SetKeyboardImeStatus, rdp->context, unitId, imeState,
+	                    imeConvMode);
 }
 
 static BOOL rdp_recv_set_error_info_data_pdu(rdpRdp* rdp, wStream* s)

@@ -4493,7 +4493,9 @@ BOOL rdp_recv_demand_active(rdpRdp* rdp, wStream* s, UINT16 pduSource, UINT16 le
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return FALSE;
 
-	const UINT32 SessionId = Stream_Get_UINT32(s); /* SessionId */
+	/* [MS-RDPBCGR] 2.2.1.13.1.1 Demand Active PDU Data (TS_DEMAND_ACTIVE_PDU)::sessionId
+	 * is ignored by client */
+	Stream_Seek_UINT32(s); /* SessionId */
 
 	{
 		rdp_secondary_update_internal* secondary = secondary_update_cast(rdp->update->secondary);
