@@ -62,6 +62,22 @@ struct s_rdpdr_server_private
 	wLog* log;
 };
 
+static const char* DR_DRIVE_LOCK_REQ2str(uint32_t op)
+{
+	switch (op)
+	{
+		case RDP_LOWIO_OP_SHAREDLOCK:
+			return "RDP_LOWIO_OP_UNLOCK_MULTIPLE";
+		case RDP_LOWIO_OP_EXCLUSIVELOCK:
+			return "RDP_LOWIO_OP_UNLOCK";
+		case RDP_LOWIO_OP_UNLOCK:
+			return "RDP_LOWIO_OP_EXCLUSIVELOCK";
+		case RDP_LOWIO_OP_UNLOCK_MULTIPLE:
+			return "RDP_LOWIO_OP_SHAREDLOCK";
+		default:
+			return "RDP_LOWIO_OP_UNKNOWN";
+	}
+}
 static void rdpdr_device_free(RdpdrDevice* device)
 {
 	if (!device)
@@ -1255,6 +1271,9 @@ static UINT rdpdr_server_receive_io_read_request(RdpdrServerContext* context, wS
 	Stream_Read_UINT64(s, Offset);
 	Stream_Seek(s, 20); /* Padding */
 
+	WLog_Print(context->priv->log, WLOG_DEBUG, "Got Offset [0x%016" PRIx64 "], Length %" PRIu32,
+	           Offset, Length);
+
 	WLog_Print(context->priv->log, WLOG_WARN,
 	           "[MS-RDPEFS] 2.2.1.4.3 Device Read Request (DR_READ_REQ) not implemented");
 	WLog_Print(context->priv->log, WLOG_WARN, "TODO");
@@ -1279,6 +1298,9 @@ static UINT rdpdr_server_receive_io_write_request(RdpdrServerContext* context, w
 	Stream_Read_UINT32(s, Length);
 	Stream_Read_UINT64(s, Offset);
 	Stream_Seek(s, 20); /* Padding */
+
+	WLog_Print(context->priv->log, WLOG_DEBUG, "Got Offset [0x%016" PRIx64 "], Length %" PRIu32,
+	           Offset, Length);
 
 	const BYTE* data = Stream_ConstPointer(s);
 	if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, Length))
@@ -1339,6 +1361,10 @@ static UINT rdpdr_server_receive_io_query_volume_information_request(
 	Stream_Read_UINT32(s, Length);
 	Stream_Seek(s, 24); /* Padding */
 
+	WLog_Print(context->priv->log, WLOG_DEBUG,
+	           "Got FSInformationClass %s [0x%08" PRIx32 "], Length %" PRIu32,
+	           FSInformationClass2Tag(FsInformationClass), FsInformationClass, Length);
+
 	const BYTE* QueryVolumeBuffer = Stream_ConstPointer(s);
 	if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, Length))
 		return ERROR_INVALID_DATA;
@@ -1368,6 +1394,10 @@ static UINT rdpdr_server_receive_io_set_volume_information_request(
 	Stream_Read_UINT32(s, FsInformationClass);
 	Stream_Read_UINT32(s, Length);
 	Stream_Seek(s, 24); /* Padding */
+
+	WLog_Print(context->priv->log, WLOG_DEBUG,
+	           "Got FSInformationClass %s [0x%08" PRIx32 "], Length %" PRIu32,
+	           FSInformationClass2Tag(FsInformationClass), FsInformationClass, Length);
 
 	const BYTE* SetVolumeBuffer = Stream_ConstPointer(s);
 	if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, Length))
@@ -1401,6 +1431,10 @@ static UINT rdpdr_server_receive_io_query_information_request(RdpdrServerContext
 	Stream_Read_UINT32(s, Length);
 	Stream_Seek(s, 24); /* Padding */
 
+	WLog_Print(context->priv->log, WLOG_DEBUG,
+	           "Got FSInformationClass %s [0x%08" PRIx32 "], Length %" PRIu32,
+	           FSInformationClass2Tag(FsInformationClass), FsInformationClass, Length);
+
 	const BYTE* QueryBuffer = Stream_ConstPointer(s);
 	if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, Length))
 		return ERROR_INVALID_DATA;
@@ -1432,6 +1466,10 @@ static UINT rdpdr_server_receive_io_set_information_request(RdpdrServerContext* 
 	Stream_Read_UINT32(s, Length);
 	Stream_Seek(s, 24); /* Padding */
 
+	WLog_Print(context->priv->log, WLOG_DEBUG,
+	           "Got FSInformationClass %s [0x%08" PRIx32 "], Length %" PRIu32,
+	           FSInformationClass2Tag(FsInformationClass), FsInformationClass, Length);
+
 	const BYTE* SetBuffer = Stream_ConstPointer(s);
 	if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, Length))
 		return ERROR_INVALID_DATA;
@@ -1453,7 +1491,6 @@ static UINT rdpdr_server_receive_io_query_directory_request(RdpdrServerContext* 
 	BYTE InitialQuery = 0;
 	UINT32 FsInformationClass = 0;
 	UINT32 PathLength = 0;
-	const WCHAR* Path = NULL;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
@@ -1466,9 +1503,17 @@ static UINT rdpdr_server_receive_io_query_directory_request(RdpdrServerContext* 
 	Stream_Read_UINT32(s, PathLength);
 	Stream_Seek(s, 23); /* Padding */
 
-	Path = rdpdr_read_ustring(context->priv->log, s, PathLength);
-	if (!Path && (PathLength > 0))
+	const WCHAR* wPath = rdpdr_read_ustring(context->priv->log, s, PathLength);
+	if (!wPath && (PathLength > 0))
 		return ERROR_INVALID_DATA;
+
+	char* Path = ConvertWCharNToUtf8Alloc(wPath, PathLength / sizeof(WCHAR), NULL);
+	WLog_Print(context->priv->log, WLOG_DEBUG,
+	           "Got FSInformationClass %s [0x%08" PRIx32 "], InitialQuery [%" PRIu8
+	           "] Path[%" PRIu32 "] %s",
+	           FSInformationClass2Tag(FsInformationClass), FsInformationClass, InitialQuery,
+	           PathLength, Path);
+	free(Path);
 
 	WLog_Print(context->priv->log, WLOG_WARN,
 	           "[MS-RDPEFS] 2.2.3.3.10 Server Drive Query Directory Request "
@@ -1535,22 +1580,22 @@ static UINT rdpdr_server_receive_io_lock_control_request(RdpdrServerContext* con
                                                          WINPR_ATTR_UNUSED UINT32 FileId,
                                                          WINPR_ATTR_UNUSED UINT32 CompletionId)
 {
-	UINT32 Operation = 0;
-	UINT32 Lock = 0;
-	UINT32 NumLocks = 0;
-
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
 
 	if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, 32))
 		return ERROR_INVALID_DATA;
 
-	Stream_Read_UINT32(s, Operation);
-	Stream_Read_UINT32(s, Lock);
-	Stream_Read_UINT32(s, NumLocks);
+	const uint32_t Operation = Stream_Get_UINT32(s);
+	uint32_t Lock = Stream_Get_UINT32(s);
+	const uint32_t NumLocks = Stream_Get_UINT32(s);
 	Stream_Seek(s, 20); /* Padding */
 
-	Lock &= 0x01; /* Only byte 0 is of importance */
+	WLog_Print(context->priv->log, WLOG_DEBUG,
+	           "IRP_MJ_LOCK_CONTROL, Operation=%s, Lock=0x%08" PRIx32 ", NumLocks=%" PRIu32,
+	           DR_DRIVE_LOCK_REQ2str(Operation));
+
+	Lock &= 0x01; /* Only bit 0 is of importance */
 
 	for (UINT32 x = 0; x < NumLocks; x++)
 	{
@@ -1562,6 +1607,9 @@ static UINT rdpdr_server_receive_io_lock_control_request(RdpdrServerContext* con
 
 		Stream_Read_UINT64(s, Length);
 		Stream_Read_UINT64(s, Offset);
+
+		WLog_Print(context->priv->log, WLOG_DEBUG,
+		           "Locking at Offset=0x%08" PRIx64 " [Length %" PRIu64 "]", Offset, Length);
 	}
 
 	WLog_Print(context->priv->log, WLOG_WARN,
