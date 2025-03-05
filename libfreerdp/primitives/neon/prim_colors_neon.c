@@ -32,90 +32,6 @@
 
 static primitives_t* generic = NULL;
 
-static pstatus_t
-neon_yCbCrToRGB_16s16s_P3P3(const INT16* WINPR_RESTRICT pSrc[3], INT32 srcStep,
-                            INT16* WINPR_RESTRICT pDst[3], INT32 dstStep,
-                            const prim_size_t* WINPR_RESTRICT roi) /* region of interest */
-{
-	/* TODO: If necessary, check alignments and call the general version. */
-	int16x8_t zero = vdupq_n_s16(0);
-	int16x8_t max = vdupq_n_s16(255);
-	int16x8_t r_cr = vdupq_n_s16(22986);  //  1.403 << 14
-	int16x8_t g_cb = vdupq_n_s16(-5636);  // -0.344 << 14
-	int16x8_t g_cr = vdupq_n_s16(-11698); // -0.714 << 14
-	int16x8_t b_cb = vdupq_n_s16(28999);  //  1.770 << 14
-	int16x8_t c4096 = vdupq_n_s16(4096);
-	const int16x8_t* y_buf = (const int16x8_t*)pSrc[0];
-	const int16x8_t* cb_buf = (const int16x8_t*)pSrc[1];
-	const int16x8_t* cr_buf = (const int16x8_t*)pSrc[2];
-	int16x8_t* r_buf = (int16x8_t*)pDst[0];
-	int16x8_t* g_buf = (int16x8_t*)pDst[1];
-	int16x8_t* b_buf = (int16x8_t*)pDst[2];
-	int srcbump = srcStep / sizeof(int16x8_t);
-	int dstbump = dstStep / sizeof(int16x8_t);
-	int imax = roi->width * sizeof(INT16) / sizeof(int16x8_t);
-
-	for (int yp = 0; yp < roi->height; ++yp)
-	{
-		for (int i = 0; i < imax; i++)
-		{
-			/*
-			    In order to use NEON signed 16-bit integer multiplication we need to convert
-			    the floating point factors to signed int without losing information.
-			    The result of this multiplication is 32 bit and we have a NEON instruction
-			    that returns the hi word of the saturated double.
-			    Thus we will multiply the factors by the highest possible 2^n, take the
-			    upper 16 bits of the signed 32-bit result (vqdmulhq_s16 followed by a right
-			    shift by 1 to reverse the doubling) and correct	this result by multiplying it
-			    by 2^(16-n).
-			    For the given factors in the conversion matrix the best possible n is 14.
-
-			    Example for calculating r:
-			    r = (y>>5) + 128 + (cr*1.403)>>5                       // our base formula
-			    r = (y>>5) + 128 + (HIWORD(cr*(1.403<<14)<<2))>>5      // see above
-			    r = (y+4096)>>5 + (HIWORD(cr*22986)<<2)>>5             // simplification
-			    r = ((y+4096)>>2 + HIWORD(cr*22986)) >> 3
-			*/
-			/* y = (y_buf[i] + 4096) >> 2 */
-			int16x8_t y = vld1q_s16((INT16*)&y_buf[i]);
-			y = vaddq_s16(y, c4096);
-			y = vshrq_n_s16(y, 2);
-			/* cb = cb_buf[i]; */
-			int16x8_t cb = vld1q_s16((INT16*)&cb_buf[i]);
-			/* cr = cr_buf[i]; */
-			int16x8_t cr = vld1q_s16((INT16*)&cr_buf[i]);
-			/* (y + HIWORD(cr*22986)) >> 3 */
-			int16x8_t r = vaddq_s16(y, vshrq_n_s16(vqdmulhq_s16(cr, r_cr), 1));
-			r = vshrq_n_s16(r, 3);
-			/* r_buf[i] = CLIP(r); */
-			r = vminq_s16(vmaxq_s16(r, zero), max);
-			vst1q_s16((INT16*)&r_buf[i], r);
-			/* (y + HIWORD(cb*-5636) + HIWORD(cr*-11698)) >> 3 */
-			int16x8_t g = vaddq_s16(y, vshrq_n_s16(vqdmulhq_s16(cb, g_cb), 1));
-			g = vaddq_s16(g, vshrq_n_s16(vqdmulhq_s16(cr, g_cr), 1));
-			g = vshrq_n_s16(g, 3);
-			/* g_buf[i] = CLIP(g); */
-			g = vminq_s16(vmaxq_s16(g, zero), max);
-			vst1q_s16((INT16*)&g_buf[i], g);
-			/* (y + HIWORD(cb*28999)) >> 3 */
-			int16x8_t b = vaddq_s16(y, vshrq_n_s16(vqdmulhq_s16(cb, b_cb), 1));
-			b = vshrq_n_s16(b, 3);
-			/* b_buf[i] = CLIP(b); */
-			b = vminq_s16(vmaxq_s16(b, zero), max);
-			vst1q_s16((INT16*)&b_buf[i], b);
-		}
-
-		y_buf += srcbump;
-		cb_buf += srcbump;
-		cr_buf += srcbump;
-		r_buf += dstbump;
-		g_buf += dstbump;
-		b_buf += dstbump;
-	}
-
-	return PRIMITIVES_SUCCESS;
-}
-
 static pstatus_t neon_yCbCrToRGB_16s8u_P3AC4R_X(const INT16* WINPR_RESTRICT pSrc[3], UINT32 srcStep,
                                                 BYTE* WINPR_RESTRICT pDst, UINT32 dstStep,
                                                 const prim_size_t* WINPR_RESTRICT roi, uint8_t rPos,
@@ -351,7 +267,6 @@ void primitives_init_colors_neon_int(primitives_t* WINPR_RESTRICT prims)
 	WLog_VRB(PRIM_TAG, "NEON optimizations");
 	prims->RGBToRGB_16s8u_P3AC4R = neon_RGBToRGB_16s8u_P3AC4R;
 	prims->yCbCrToRGB_16s8u_P3AC4R = neon_yCbCrToRGB_16s8u_P3AC4R;
-	prims->yCbCrToRGB_16s16s_P3P3 = neon_yCbCrToRGB_16s16s_P3P3;
 #else
 	WLog_VRB(PRIM_TAG, "undefined WITH_SIMD or neon intrinsics not available");
 	WINPR_UNUSED(prims);
