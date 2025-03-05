@@ -20,9 +20,11 @@ set(MODULE_PREFIX "FREERDP_LOCALE")
 
 set(SRCS keyboard_layout.c keyboard.c locale.c liblocale.h)
 
-set(X11_SRCS keyboard_x11.c keyboard_x11.h xkb_layout_ids.c xkb_layout_ids.h)
+if(WITH_FREERDP_3x_DEPRECATED)
+  set(X11_SRCS keyboard_x11.c keyboard_x11.h xkb_layout_ids.c xkb_layout_ids.h)
 
-set(XKBFILE_SRCS keyboard_xkbfile.c keyboard_xkbfile.h)
+  set(XKBFILE_SRCS keyboard_xkbfile.c keyboard_xkbfile.h)
+endif()
 
 set(SUN_SRCS keyboard_sun.c keyboard_sun.h)
 
@@ -52,7 +54,7 @@ if(APPLE)
   freerdp_library_add(${CORE_FOUNDATION})
 endif()
 
-if(WITH_X11)
+if(WITH_X11 AND WITH_FREERDP_3x_DEPRECATED)
   find_package(X11 REQUIRED)
 
   freerdp_definition_add(WITH_X11)
@@ -75,7 +77,7 @@ if(WITH_X11)
   endif()
 endif()
 
-if(WITH_WAYLAND)
+if(WITH_WAYLAND AND WITH_FREERDP_3x_DEPRECATED)
   freerdp_definition_add(WITH_WAYLAND)
 endif()
 

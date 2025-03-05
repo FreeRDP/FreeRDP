@@ -48,6 +48,7 @@ set(SRCS
     xf_rail.h
     xf_input.c
     xf_input.h
+    xf_debug.h
     xf_event.c
     xf_event.h
     xf_floatbar.c
@@ -66,6 +67,10 @@ set(SRCS
     xf_graphics.h
     xf_keyboard.c
     xf_keyboard.h
+    keyboard_x11.h
+    keyboard_x11.c
+    xkb_layout_ids.h
+    xkb_layout_ids.c
     xf_video.c
     xf_video.h
     xf_window.c

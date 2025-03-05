@@ -569,14 +569,18 @@ owned by rdpRdp */
 
 	FREERDP_API BOOL freerdp_connect(freerdp* instance);
 
+#if defined(WITH_FREERDP_3x_DEPRECATED)
 	WINPR_DEPRECATED_VAR("use freerdp_abort_connect_context instead",
 	                     FREERDP_API BOOL freerdp_abort_connect(freerdp* instance));
+#endif
 
 	FREERDP_API BOOL freerdp_abort_connect_context(rdpContext* context);
 	FREERDP_API HANDLE freerdp_abort_event(rdpContext* context);
 
+#if defined(WITH_FREERDP_3x_DEPRECATED)
 	WINPR_DEPRECATED_VAR("use freerdp_shall_disconnect_context instead",
 	                     FREERDP_API BOOL freerdp_shall_disconnect(freerdp* instance));
+#endif
 
 	FREERDP_API BOOL freerdp_shall_disconnect_context(const rdpContext* context);
 	FREERDP_API BOOL freerdp_disconnect(freerdp* instance);
@@ -591,8 +595,11 @@ owned by rdpRdp */
 	 */
 	FREERDP_API const char* freerdp_disconnect_reason_string(int reason);
 
+#if defined(WITH_FREERDP_3x_DEPRECATED)
 	WINPR_DEPRECATED_VAR("use freerdp_disconnect_before_reconnect_context instead",
 	                     FREERDP_API BOOL freerdp_disconnect_before_reconnect(freerdp* instance));
+#endif
+
 	FREERDP_API BOOL freerdp_disconnect_before_reconnect_context(rdpContext* context);
 
 	FREERDP_API BOOL freerdp_reconnect(freerdp* instance);

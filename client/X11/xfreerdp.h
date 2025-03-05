@@ -200,7 +200,6 @@ struct xf_context
 	BOOL focused;
 	BOOL mouse_active;
 	BOOL fullscreen_toggle;
-	UINT32 KeyboardLayout;
 	BOOL KeyboardState[256];
 	XModifierKeymap* modifierMap;
 	wArrayList* keyCombinations;
@@ -317,6 +316,7 @@ struct xf_context
 	HANDLE pipethread;
 	wLog* log;
 	FREERDP_REMAP_TABLE* remap_table;
+	DWORD X11_KEYCODE_TO_VIRTUAL_SCANCODE[256];
 };
 
 BOOL xf_create_window(xfContext* xfc);
