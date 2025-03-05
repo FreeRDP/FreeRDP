@@ -126,6 +126,7 @@ static const _SERIAL_IOCTL_NAME S_SERIAL_IOCTL_NAMES[] = {
 
 	{ IOCTL_USBPRINT_GET_1284_ID, "IOCTL_USBPRINT_GET_1284_ID" }
 };
+
 const char* _comm_serial_ioctl_name(ULONG number)
 {
 	for (size_t x = 0; x < ARRAYSIZE(S_SERIAL_IOCTL_NAMES); x++)
@@ -195,14 +196,16 @@ static BOOL CommInitialized(void)
 	return TRUE;
 }
 
-void CommLog_Print(DWORD level, ...)
+void CommLog_PrintEx(DWORD level, const char* file, size_t line, const char* fkt, ...)
 {
 	if (!CommInitialized())
 		return;
 
+	if (!WLog_IsLevelActive(sLog, level))
+		return;
 	va_list ap = { 0 };
-	va_start(ap, level);
-	WLog_PrintVA(sLog, level, ap);
+	va_start(ap, fkt);
+	WLog_PrintMessageVA(sLog, WLOG_MESSAGE_TEXT, level, line, file, fkt, ap);
 	va_end(ap);
 }
 
@@ -501,8 +504,8 @@ BOOL GetCommState(HANDLE hFile, LPDCB lpDCB)
 	lpLocalDcb->fAbortOnError = (handflow.ControlHandShake & SERIAL_ERROR_ABORT) != 0;
 	/* lpLocalDcb->fDummy2 not used */
 	lpLocalDcb->wReserved = 0; /* must be zero */
-	lpLocalDcb->XonLim = handflow.XonLimit;
-	lpLocalDcb->XoffLim = handflow.XoffLimit;
+	lpLocalDcb->XonLim = WINPR_ASSERTING_INT_CAST(WORD, handflow.XonLimit);
+	lpLocalDcb->XoffLim = WINPR_ASSERTING_INT_CAST(WORD, handflow.XoffLimit);
 	SERIAL_LINE_CONTROL lineControl = { 0 };
 
 	if (!CommDeviceIoControl(pComm, IOCTL_SERIAL_GET_LINE_CONTROL, NULL, 0, &lineControl,
@@ -728,7 +731,7 @@ BOOL SetCommState(HANDLE hFile, LPDCB lpDCB)
 
 	if (lpDCB->fBinary)
 	{
-		upcomingTermios.c_lflag &= WINPR_ASSERTING_INT_CAST(tcflag_t, ~ICANON);
+		upcomingTermios.c_lflag &= (tcflag_t)~ICANON;
 	}
 	else
 	{
@@ -742,7 +745,7 @@ BOOL SetCommState(HANDLE hFile, LPDCB lpDCB)
 	}
 	else
 	{
-		upcomingTermios.c_iflag &= WINPR_ASSERTING_INT_CAST(tcflag_t, ~INPCK);
+		upcomingTermios.c_iflag &= (tcflag_t)~INPCK;
 	}
 
 	/* http://msdn.microsoft.com/en-us/library/windows/desktop/aa363423%28v=vs.85%29.aspx
@@ -756,7 +759,7 @@ BOOL SetCommState(HANDLE hFile, LPDCB lpDCB)
 	 * TCSANOW matches the best this definition
 	 */
 
-	if (_comm_ioctl_tcsetattr(pComm->fd, TCSANOW, &upcomingTermios) < 0)
+	if (comm_ioctl_tcsetattr(pComm->fd, TCSANOW, &upcomingTermios) < 0)
 	{
 		SetLastError(ERROR_IO_DEVICE);
 		return FALSE;
@@ -1384,22 +1387,7 @@ HANDLE CommCreateFileA(LPCSTR lpDeviceName, DWORD dwDesiredAccess, DWORD dwShare
 	pComm->serverSerialDriverId = SerialDriverUnknown;
 	InitializeCriticalSection(&pComm->EventsLock);
 
-#if defined(WINPR_HAVE_COMM_COUNTERS)
-	if (ioctl(pComm->fd, TIOCGICOUNT, &(pComm->counters)) < 0)
-	{
-		char ebuffer[256] = { 0 };
-		CommLog_Print(WLOG_WARN, "TIOCGICOUNT ioctl failed, errno=[%d] %s.", errno,
-		              winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
-		CommLog_Print(WLOG_WARN, "could not read counters.");
-		/* could not initialize counters but keep on.
-		 *
-		 * Not all drivers, especially for USB to serial
-		 * adapters (e.g. those based on pl2303), does support
-		 * this call.
-		 */
-		ZeroMemory(&(pComm->counters), sizeof(struct serial_icounter_struct));
-	}
-#endif
+	(void)CommUpdateIOCount(pComm, TRUE);
 
 	/* The binary/raw mode is required for the redirection but
 	 * only flags that are not handle somewhere-else, except
@@ -1412,8 +1400,8 @@ HANDLE CommCreateFileA(LPCSTR lpDeviceName, DWORD dwDesiredAccess, DWORD dwShare
 		goto error_handle;
 	}
 
-	upcomingTermios.c_iflag &= WINPR_ASSERTING_INT_CAST(
-	    tcflag_t, ~(/*IGNBRK |*/ BRKINT | PARMRK | ISTRIP | INLCR | IGNCR | ICRNL /*| IXON*/));
+	upcomingTermios.c_iflag &=
+	    (tcflag_t) ~(/*IGNBRK |*/ BRKINT | PARMRK | ISTRIP | INLCR | IGNCR | ICRNL /*| IXON*/);
 	upcomingTermios.c_oflag = 0; /* <=> &= ~OPOST */
 	upcomingTermios.c_lflag = 0; /* <=> &= ~(ECHO | ECHONL | ICANON | ISIG | IEXTEN); */
 	/* upcomingTermios.c_cflag &= ~(CSIZE | PARENB); */
@@ -1426,7 +1414,7 @@ HANDLE CommCreateFileA(LPCSTR lpDeviceName, DWORD dwDesiredAccess, DWORD dwShare
 	/* a few more settings required for the redirection */
 	upcomingTermios.c_cflag |= CLOCAL | CREAD;
 
-	if (_comm_ioctl_tcsetattr(pComm->fd, TCSANOW, &upcomingTermios) < 0)
+	if (comm_ioctl_tcsetattr(pComm->fd, TCSANOW, &upcomingTermios) < 0)
 	{
 		SetLastError(ERROR_IO_DEVICE);
 		goto error_handle;
@@ -1504,3 +1492,282 @@ int eventfd_write(int fd, eventfd_t value)
 }
 #endif
 #endif
+
+static const char* CommIoCtlToStr(unsigned long int io)
+{
+	switch (io)
+	{
+#if defined(WINPR_HAVE_SERIAL_SUPPORT)
+		case TCGETS:
+			return "TCGETS";
+		case TCSETS:
+			return "TCSETS";
+		case TCSETSW:
+			return "TCSETSW";
+		case TCSETSF:
+			return "TCSETSF";
+		case TCGETA:
+			return "TCGETA";
+		case TCSETA:
+			return "TCSETA";
+		case TCSETAW:
+			return "TCSETAW";
+		case TCSETAF:
+			return "TCSETAF";
+		case TCSBRK:
+			return "TCSBRK";
+		case TCXONC:
+			return "TCXONC";
+		case TCFLSH:
+			return "TCFLSH";
+		case TIOCEXCL:
+			return "TIOCEXCL";
+		case TIOCNXCL:
+			return "TIOCNXCL";
+		case TIOCSCTTY:
+			return "TIOCSCTTY";
+		case TIOCGPGRP:
+			return "TIOCGPGRP";
+		case TIOCSPGRP:
+			return "TIOCSPGRP";
+		case TIOCOUTQ:
+			return "TIOCOUTQ";
+		case TIOCSTI:
+			return "TIOCSTI";
+		case TIOCGWINSZ:
+			return "TIOCGWINSZ";
+		case TIOCSWINSZ:
+			return "TIOCSWINSZ";
+		case TIOCMGET:
+			return "TIOCMGET";
+		case TIOCMBIS:
+			return "TIOCMBIS";
+		case TIOCMBIC:
+			return "TIOCMBIC";
+		case TIOCMSET:
+			return "TIOCMSET";
+		case TIOCGSOFTCAR:
+			return "TIOCGSOFTCAR";
+		case TIOCSSOFTCAR:
+			return "TIOCSSOFTCAR";
+		case FIONREAD:
+			return "FIONREAD/TIOCINQ";
+		case TIOCLINUX:
+			return "TIOCLINUX";
+		case TIOCCONS:
+			return "TIOCCONS";
+		case TIOCGSERIAL:
+			return "TIOCGSERIAL";
+		case TIOCSSERIAL:
+			return "TIOCSSERIAL";
+		case TIOCPKT:
+			return "TIOCPKT";
+		case FIONBIO:
+			return "FIONBIO";
+		case TIOCNOTTY:
+			return "TIOCNOTTY";
+		case TIOCSETD:
+			return "TIOCSETD";
+		case TIOCGETD:
+			return "TIOCGETD";
+		case TCSBRKP:
+			return "TCSBRKP";
+		case TIOCSBRK:
+			return "TIOCSBRK";
+		case TIOCCBRK:
+			return "TIOCCBRK";
+		case TIOCGSID:
+			return "TIOCGSID";
+		case TIOCGRS485:
+			return "TIOCGRS485";
+		case TIOCSRS485:
+			return "TIOCSRS485";
+		case TIOCSPTLCK:
+			return "TIOCSPTLCK";
+		case TCGETX:
+			return "TCGETX";
+		case TCSETX:
+			return "TCSETX";
+		case TCSETXF:
+			return "TCSETXF";
+		case TCSETXW:
+			return "TCSETXW";
+		case TIOCSIG:
+			return "TIOCSIG";
+		case TIOCVHANGUP:
+			return "TIOCVHANGUP";
+		case TIOCGPTPEER:
+			return "TIOCGPTPEER";
+		case FIONCLEX:
+			return "FIONCLEX";
+		case FIOCLEX:
+			return "FIOCLEX";
+		case FIOASYNC:
+			return "FIOASYNC";
+		case TIOCSERCONFIG:
+			return "TIOCSERCONFIG";
+		case TIOCSERGWILD:
+			return "TIOCSERGWILD";
+		case TIOCSERSWILD:
+			return "TIOCSERSWILD";
+		case TIOCGLCKTRMIOS:
+			return "TIOCGLCKTRMIOS";
+		case TIOCSLCKTRMIOS:
+			return "TIOCSLCKTRMIOS";
+		case TIOCSERGSTRUCT:
+			return "TIOCSERGSTRUCT";
+		case TIOCSERGETLSR:
+			return "TIOCSERGETLSR";
+		case TIOCSERGETMULTI:
+			return "TIOCSERGETMULTI";
+		case TIOCSERSETMULTI:
+			return "TIOCSERSETMULTI";
+		case TIOCMIWAIT:
+			return "TIOCMIWAIT";
+		case TIOCGICOUNT:
+			return "TIOCGICOUNT";
+		case FIOQSIZE:
+			return "FIOQSIZE";
+		case TIOCPKT_DATA:
+			return "TIOCPKT_DATA";
+		case TIOCPKT_FLUSHWRITE:
+			return "TIOCPKT_FLUSHWRITE";
+		case TIOCPKT_STOP:
+			return "TIOCPKT_STOP";
+		case TIOCPKT_START:
+			return "TIOCPKT_START";
+		case TIOCPKT_NOSTOP:
+			return "TIOCPKT_NOSTOP";
+		case TIOCPKT_DOSTOP:
+			return "TIOCPKT_DOSTOP";
+		case TIOCPKT_IOCTL:
+			return "TIOCPKT_IOCTL";
+#endif
+		default:
+			return "UNKNOWN";
+	}
+}
+
+static BOOL CommStatusErrorEx(WINPR_COMM* pComm, unsigned long int ctl, const char* file,
+                              const char* fkt, size_t line)
+{
+	WINPR_ASSERT(pComm);
+	BOOL rc = pComm->permissive ? TRUE : FALSE;
+	const DWORD level = rc ? WLOG_DEBUG : WLOG_WARN;
+	char ebuffer[256] = { 0 };
+	const char* str = CommIoCtlToStr(ctl);
+
+	if (CommInitialized())
+	{
+		if (WLog_IsLevelActive(sLog, level))
+		{
+			WLog_PrintMessage(sLog, WLOG_MESSAGE_TEXT, level, line, file, fkt,
+			                  "%s [0x%08" PRIx32 "] ioctl failed, errno=[%d] %s.", str, ctl, errno,
+			                  winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
+		}
+	}
+
+	if (!rc)
+		SetLastError(ERROR_IO_DEVICE);
+
+	return rc;
+}
+
+BOOL CommIoCtl_int(WINPR_COMM* pComm, unsigned long int ctl, void* data, const char* file,
+                   const char* fkt, size_t line)
+{
+	if (ioctl(pComm->fd, ctl, data) < 0)
+	{
+		if (!CommStatusErrorEx(pComm, ctl, file, fkt, line))
+			return FALSE;
+	}
+	return TRUE;
+}
+
+BOOL CommUpdateIOCount(WINPR_ATTR_UNUSED HANDLE handle, WINPR_ATTR_UNUSED BOOL checkSupportStatus)
+{
+	WINPR_COMM* pComm = (WINPR_COMM*)handle;
+	WINPR_ASSERT(pComm);
+
+#if defined(WINPR_HAVE_COMM_COUNTERS)
+	ZeroMemory(&(pComm->counters), sizeof(struct serial_icounter_struct));
+	if (pComm->TIOCGICOUNTSupported || checkSupportStatus)
+	{
+		const int rc = ioctl(pComm->fd, TIOCGICOUNT, &(pComm->counters));
+		if (checkSupportStatus)
+			pComm->TIOCGICOUNTSupported = rc >= 0;
+		else if (rc < 0)
+		{
+			if (!CommStatusErrorEx(pComm, TIOCGICOUNT, __FILE__, __func__, __LINE__))
+				return FALSE;
+		}
+	}
+#endif
+	return TRUE;
+}
+
+static const char* CommSerialEvFlagString(ULONG flag)
+{
+	switch (flag)
+	{
+		case SERIAL_EV_RXCHAR:
+			return "SERIAL_EV_RXCHAR";
+		case SERIAL_EV_RXFLAG:
+			return "SERIAL_EV_RXFLAG";
+		case SERIAL_EV_TXEMPTY:
+			return "SERIAL_EV_TXEMPTY";
+		case SERIAL_EV_CTS:
+			return "SERIAL_EV_CTS ";
+		case SERIAL_EV_DSR:
+			return "SERIAL_EV_DSR ";
+		case SERIAL_EV_RLSD:
+			return "SERIAL_EV_RLSD";
+		case SERIAL_EV_BREAK:
+			return "SERIAL_EV_BREAK";
+		case SERIAL_EV_ERR:
+			return "SERIAL_EV_ERR ";
+		case SERIAL_EV_RING:
+			return "SERIAL_EV_RING";
+		case SERIAL_EV_PERR:
+			return "SERIAL_EV_PERR";
+		case SERIAL_EV_RX80FULL:
+			return "SERIAL_EV_RX80FULL";
+		case SERIAL_EV_EVENT1:
+			return "SERIAL_EV_EVENT1";
+		case SERIAL_EV_EVENT2:
+			return "SERIAL_EV_EVENT2";
+		case SERIAL_EV_WINPR_WAITING:
+			return "SERIAL_EV_WINPR_WAITING";
+		case SERIAL_EV_WINPR_STOP:
+			return "SERIAL_EV_WINPR_STOP";
+		default:
+			return "SERIAL_EV_UNKNOWN";
+	}
+}
+
+const char* CommSerialEvString(ULONG status, char* buffer, size_t size)
+{
+	const ULONG flags[] = { SERIAL_EV_RXCHAR, SERIAL_EV_RXFLAG,        SERIAL_EV_TXEMPTY,
+		                    SERIAL_EV_CTS,    SERIAL_EV_DSR,           SERIAL_EV_RLSD,
+		                    SERIAL_EV_BREAK,  SERIAL_EV_ERR,           SERIAL_EV_RING,
+		                    SERIAL_EV_PERR,   SERIAL_EV_RX80FULL,      SERIAL_EV_EVENT1,
+		                    SERIAL_EV_EVENT2, SERIAL_EV_WINPR_WAITING, SERIAL_EV_WINPR_STOP };
+
+	winpr_str_append("{", buffer, size, "");
+
+	const char* sep = "";
+	for (size_t x = 0; x < ARRAYSIZE(flags); x++)
+	{
+		const ULONG flag = flags[x];
+		if (status & flag)
+		{
+			winpr_str_append(CommSerialEvFlagString(flag), buffer, size, sep);
+			sep = "|";
+		}
+	}
+
+	char number[32] = { 0 };
+	(void)_snprintf(number, sizeof(number), "}[0x%08" PRIx32 "]", status);
+	winpr_str_append(number, buffer, size, "");
+	return buffer;
+}

@@ -77,6 +77,12 @@ struct winpr_comm
 
 	BYTE eventChar;
 	/* NB: CloseHandle() has to free resources */
+	ULONG XOnLimit;
+	ULONG XOffLimit;
+
+#if defined(WINPR_HAVE_COMM_COUNTERS)
+	BOOL TIOCGICOUNTSupported;
+#endif
 };
 
 typedef struct winpr_comm WINPR_COMM;
@@ -100,12 +106,21 @@ typedef struct winpr_comm WINPR_COMM;
 #define WINPR_PURGE_TXABORT 0x00000001 /* abort pending transmission */
 #define WINPR_PURGE_RXABORT 0x00000002 /* abort pending reception */
 
-void CommLog_Print(DWORD wlog_level, ...);
+#define CommLog_Print(level, ...) CommLog_PrintEx(level, __FILE__, __LINE__, __func__, __VA_ARGS__)
+void CommLog_PrintEx(DWORD wlog_level, const char* file, size_t line, const char* fkt, ...);
 
 BOOL CommIsHandled(HANDLE handle);
 BOOL CommIsHandleValid(HANDLE handle);
 BOOL CommCloseHandle(HANDLE handle);
 const HANDLE_CREATOR* GetCommHandleCreator(void);
+
+#define CommIoCtl(pComm, ctl, data) \
+	CommIoCtl_int((pComm), (ctl), (data), __FILE__, __func__, __LINE__)
+BOOL CommIoCtl_int(WINPR_COMM* pComm, unsigned long int ctl, void* data, const char* file,
+                   const char* fkt, size_t line);
+BOOL CommUpdateIOCount(HANDLE handle, BOOL checkSupportStatus);
+
+const char* CommSerialEvString(ULONG status, char* buffer, size_t size);
 
 #if defined(WINPR_HAVE_SYS_EVENTFD_H)
 #ifndef WITH_EVENTFD_READ_WRITE
