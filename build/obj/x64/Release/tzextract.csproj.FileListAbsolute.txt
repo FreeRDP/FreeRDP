@@ -1,0 +1,12 @@
+D:\a\FreeRDP\FreeRDP\build\Release\tzextract.exe
+D:\a\FreeRDP\FreeRDP\build\Release\tzextract.deps.json
+D:\a\FreeRDP\FreeRDP\build\Release\tzextract.runtimeconfig.json
+D:\a\FreeRDP\FreeRDP\build\Release\tzextract.dll
+D:\a\FreeRDP\FreeRDP\build\obj\x64\Release\tzextract.GeneratedMSBuildEditorConfig.editorconfig
+D:\a\FreeRDP\FreeRDP\build\obj\x64\Release\tzextract.AssemblyInfoInputs.cache
+D:\a\FreeRDP\FreeRDP\build\obj\x64\Release\tzextract.AssemblyInfo.cs
+D:\a\FreeRDP\FreeRDP\build\obj\x64\Release\tzextract.csproj.CoreCompileInputs.cache
+D:\a\FreeRDP\FreeRDP\build\obj\x64\Release\tzextract.dll
+D:\a\FreeRDP\FreeRDP\build\obj\x64\Release\refint\tzextract.dll
+D:\a\FreeRDP\FreeRDP\build\obj\x64\Release\tzextract.genruntimeconfig.cache
+D:\a\FreeRDP\FreeRDP\build\obj\x64\Release\ref\tzextract.dll

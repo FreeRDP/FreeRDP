@@ -1,0 +1,374 @@
+﻿
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{2D263FEC-4DB0-3C6F-8D62-876FCA2D3D09}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <Configurations>Debug;Release;MinSizeRel;RelWithDebInfo</Configurations>
+    <EnableDefaultItems>false</EnableDefaultItems>
+    <VCProjectUpgraderObjectName>NoUpgrade</VCProjectUpgraderObjectName>
+    <ManagedAssembly>true</ManagedAssembly>
+    <TargetFramework>net6.0</TargetFramework>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+    <OutputPath>D:\a\FreeRDP\FreeRDP\build\Debug\</OutputPath>
+    <AssemblyName>tzextract</AssemblyName>
+    <DebugType>full</DebugType>
+    <DefineConstants>DEBUG</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <LangVersion>10</LangVersion>
+    <Optimize>false</Optimize>
+    <WarningLevel>3</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <OutputPath>D:\a\FreeRDP\FreeRDP\build\Release\</OutputPath>
+    <AssemblyName>tzextract</AssemblyName>
+    <DebugType>none</DebugType>
+    <DefineConstants></DefineConstants>
+    <ErrorReport>queue</ErrorReport>
+    <LangVersion>10</LangVersion>
+    <Optimize>true</Optimize>
+    <WarningLevel>1</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)' == 'MinSizeRel'">
+    <OutputPath>D:\a\FreeRDP\FreeRDP\build\MinSizeRel\</OutputPath>
+    <AssemblyName>tzextract</AssemblyName>
+    <DebugType>none</DebugType>
+    <DefineConstants></DefineConstants>
+    <LangVersion>10</LangVersion>
+    <Optimize>true</Optimize>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)' == 'RelWithDebInfo'">
+    <OutputPath>D:\a\FreeRDP\FreeRDP\build\RelWithDebInfo\</OutputPath>
+    <AssemblyName>tzextract</AssemblyName>
+    <DebugType>full</DebugType>
+    <DefineConstants></DefineConstants>
+    <LangVersion>10</LangVersion>
+    <Optimize>false</Optimize>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="D:\a\FreeRDP\FreeRDP\winpr\libwinpr\timezone\utils\CMakeLists.txt">
+      <Link>CMakeLists.txt</Link>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <UpToDateCheckInput Include="C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeCSharpCompiler.cmake.in" />
+  </ItemGroup>
+  <ItemGroup>
+    <UpToDateCheckInput Include="C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeCSharpInformation.cmake" />
+  </ItemGroup>
+  <ItemGroup>
+    <UpToDateCheckInput Include="C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeCompilerIdDetection.cmake" />
+  </ItemGroup>
+  <ItemGroup>
+    <UpToDateCheckInput Include="C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeDetermineCSharpCompiler.cmake" />
+  </ItemGroup>
+  <ItemGroup>
+    <UpToDateCheckInput Include="C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeDetermineCompiler.cmake" />
+  </ItemGroup>
+  <ItemGroup>
+    <UpToDateCheckInput Include="C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeDetermineCompilerId.cmake" />
+  </ItemGroup>
+  <ItemGroup>
+    <UpToDateCheckInput Include="C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeDetermineSystem.cmake" />
+  </ItemGroup>
+  <ItemGroup>
+    <UpToDateCheckInput Include="C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeGenericSystem.cmake" />
+  </ItemGroup>
+  <ItemGroup>
+    <UpToDateCheckInput Include="C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeInitializeConfigs.cmake" />
+  </ItemGroup>
+  <ItemGroup>
+    <UpToDateCheckInput Include="C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeSystem.cmake.in" />
+  </ItemGroup>
+  <ItemGroup>
+    <UpToDateCheckInput Include="C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeSystemSpecificInformation.cmake" />
+  </ItemGroup>
+  <ItemGroup>
+    <UpToDateCheckInput Include="C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeSystemSpecificInitialize.cmake" />
+  </ItemGroup>
+  <ItemGroup>
+    <UpToDateCheckInput Include="C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeTestCSharpCompiler.cmake" />
+  </ItemGroup>
+  <ItemGroup>
+    <UpToDateCheckInput Include="C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeTestCompilerCommon.cmake" />
+  </ItemGroup>
+  <ItemGroup>
+    <UpToDateCheckInput Include="C:\Program Files\CMake\share\cmake-3.31\Modules\CompilerId\VS-10.csproj.in" />
+  </ItemGroup>
+  <ItemGroup>
+    <UpToDateCheckInput Include="C:\Program Files\CMake\share\cmake-3.31\Modules\Platform\Windows-Initialize.cmake" />
+  </ItemGroup>
+  <ItemGroup>
+    <UpToDateCheckInput Include="C:\Program Files\CMake\share\cmake-3.31\Modules\Platform\Windows.cmake" />
+  </ItemGroup>
+  <ItemGroup>
+    <UpToDateCheckInput Include="C:\Program Files\CMake\share\cmake-3.31\Modules\Platform\WindowsPaths.cmake" />
+  </ItemGroup>
+  <ItemGroup>
+    <UpToDateCheckInput Include="D:\a\FreeRDP\FreeRDP\build\CMakeFiles\3.31.5\CMakeCSharpCompiler.cmake" />
+  </ItemGroup>
+  <ItemGroup>
+    <UpToDateCheckInput Include="D:\a\FreeRDP\FreeRDP\build\CMakeFiles\3.31.5\CMakeSystem.cmake" />
+  </ItemGroup>
+  <Target Condition="'$(Configuration)' == 'Debug'"
+    Name="CustomCommand_Debug_dec83fd2bc98c9babbaad7d17af99b9a"
+    Inputs="D:/a/FreeRDP/FreeRDP/winpr/libwinpr/timezone/utils/CMakeLists.txt;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeCSharpCompiler.cmake.in;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeCSharpInformation.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeCompilerIdDetection.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeDetermineCSharpCompiler.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeDetermineCompiler.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeDetermineCompilerId.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeDetermineSystem.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeGenericSystem.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeInitializeConfigs.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeSystem.cmake.in;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeSystemSpecificInformation.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeSystemSpecificInitialize.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeTestCSharpCompiler.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeTestCompilerCommon.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\CompilerId\VS-10.csproj.in;C:\Program Files\CMake\share\cmake-3.31\Modules\Platform\Windows-Initialize.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\Platform\Windows.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\Platform\WindowsPaths.cmake;D:\a\FreeRDP\FreeRDP\build\CMakeFiles\3.31.5\CMakeCSharpCompiler.cmake;D:\a\FreeRDP\FreeRDP\build\CMakeFiles\3.31.5\CMakeSystem.cmake"
+    Outputs="D:\a\FreeRDP\FreeRDP\build\CMakeFiles\generate.stamp"
+    BeforeTargets="CoreCompile"
+    DependsOnTargets="PrepareForBuild">
+    <Exec Command="echo Building Custom Rule D:/a/FreeRDP/FreeRDP/winpr/libwinpr/timezone/utils/CMakeLists.txt" />
+    <Exec Command="setlocal&#10;&quot;C:\Program Files\CMake\bin\cmake.exe&quot; -SD:/a/FreeRDP/FreeRDP/winpr/libwinpr/timezone/utils -BD:/a/FreeRDP/FreeRDP/build --check-stamp-file D:/a/FreeRDP/FreeRDP/build/CMakeFiles/generate.stamp&#10;if %errorlevel% neq 0 goto :cmEnd&#10;:cmEnd&#10;endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone&#10;:cmErrorLevel&#10;exit /b %1&#10;:cmDone&#10;if %errorlevel% neq 0 goto :VCEnd&#10;:VCEnd" />
+  </Target>
+  <ItemGroup>
+    <UpToDateCheckInput Include="C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeCSharpCompiler.cmake.in" />
+  </ItemGroup>
+  <ItemGroup>
+    <UpToDateCheckInput Include="C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeCSharpInformation.cmake" />
+  </ItemGroup>
+  <ItemGroup>
+    <UpToDateCheckInput Include="C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeCompilerIdDetection.cmake" />
+  </ItemGroup>
+  <ItemGroup>
+    <UpToDateCheckInput Include="C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeDetermineCSharpCompiler.cmake" />
+  </ItemGroup>
+  <ItemGroup>
+    <UpToDateCheckInput Include="C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeDetermineCompiler.cmake" />
+  </ItemGroup>
+  <ItemGroup>
+    <UpToDateCheckInput Include="C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeDetermineCompilerId.cmake" />
+  </ItemGroup>
+  <ItemGroup>
+    <UpToDateCheckInput Include="C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeDetermineSystem.cmake" />
+  </ItemGroup>
+  <ItemGroup>
+    <UpToDateCheckInput Include="C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeGenericSystem.cmake" />
+  </ItemGroup>
+  <ItemGroup>
+    <UpToDateCheckInput Include="C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeInitializeConfigs.cmake" />
+  </ItemGroup>
+  <ItemGroup>
+    <UpToDateCheckInput Include="C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeSystem.cmake.in" />
+  </ItemGroup>
+  <ItemGroup>
+    <UpToDateCheckInput Include="C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeSystemSpecificInformation.cmake" />
+  </ItemGroup>
+  <ItemGroup>
+    <UpToDateCheckInput Include="C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeSystemSpecificInitialize.cmake" />
+  </ItemGroup>
+  <ItemGroup>
+    <UpToDateCheckInput Include="C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeTestCSharpCompiler.cmake" />
+  </ItemGroup>
+  <ItemGroup>
+    <UpToDateCheckInput Include="C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeTestCompilerCommon.cmake" />
+  </ItemGroup>
+  <ItemGroup>
+    <UpToDateCheckInput Include="C:\Program Files\CMake\share\cmake-3.31\Modules\CompilerId\VS-10.csproj.in" />
+  </ItemGroup>
+  <ItemGroup>
+    <UpToDateCheckInput Include="C:\Program Files\CMake\share\cmake-3.31\Modules\Platform\Windows-Initialize.cmake" />
+  </ItemGroup>
+  <ItemGroup>
+    <UpToDateCheckInput Include="C:\Program Files\CMake\share\cmake-3.31\Modules\Platform\Windows.cmake" />
+  </ItemGroup>
+  <ItemGroup>
+    <UpToDateCheckInput Include="C:\Program Files\CMake\share\cmake-3.31\Modules\Platform\WindowsPaths.cmake" />
+  </ItemGroup>
+  <ItemGroup>
+    <UpToDateCheckInput Include="D:\a\FreeRDP\FreeRDP\build\CMakeFiles\3.31.5\CMakeCSharpCompiler.cmake" />
+  </ItemGroup>
+  <ItemGroup>
+    <UpToDateCheckInput Include="D:\a\FreeRDP\FreeRDP\build\CMakeFiles\3.31.5\CMakeSystem.cmake" />
+  </ItemGroup>
+  <Target Condition="'$(Configuration)' == 'Release'"
+    Name="CustomCommand_Release_dec83fd2bc98c9babbaad7d17af99b9a"
+    Inputs="D:/a/FreeRDP/FreeRDP/winpr/libwinpr/timezone/utils/CMakeLists.txt;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeCSharpCompiler.cmake.in;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeCSharpInformation.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeCompilerIdDetection.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeDetermineCSharpCompiler.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeDetermineCompiler.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeDetermineCompilerId.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeDetermineSystem.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeGenericSystem.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeInitializeConfigs.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeSystem.cmake.in;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeSystemSpecificInformation.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeSystemSpecificInitialize.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeTestCSharpCompiler.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeTestCompilerCommon.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\CompilerId\VS-10.csproj.in;C:\Program Files\CMake\share\cmake-3.31\Modules\Platform\Windows-Initialize.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\Platform\Windows.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\Platform\WindowsPaths.cmake;D:\a\FreeRDP\FreeRDP\build\CMakeFiles\3.31.5\CMakeCSharpCompiler.cmake;D:\a\FreeRDP\FreeRDP\build\CMakeFiles\3.31.5\CMakeSystem.cmake"
+    Outputs="D:\a\FreeRDP\FreeRDP\build\CMakeFiles\generate.stamp"
+    BeforeTargets="CoreCompile"
+    DependsOnTargets="PrepareForBuild">
+    <Exec Command="echo Building Custom Rule D:/a/FreeRDP/FreeRDP/winpr/libwinpr/timezone/utils/CMakeLists.txt" />
+    <Exec Command="setlocal&#10;&quot;C:\Program Files\CMake\bin\cmake.exe&quot; -SD:/a/FreeRDP/FreeRDP/winpr/libwinpr/timezone/utils -BD:/a/FreeRDP/FreeRDP/build --check-stamp-file D:/a/FreeRDP/FreeRDP/build/CMakeFiles/generate.stamp&#10;if %errorlevel% neq 0 goto :cmEnd&#10;:cmEnd&#10;endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone&#10;:cmErrorLevel&#10;exit /b %1&#10;:cmDone&#10;if %errorlevel% neq 0 goto :VCEnd&#10;:VCEnd" />
+  </Target>
+  <ItemGroup>
+    <UpToDateCheckInput Include="C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeCSharpCompiler.cmake.in" />
+  </ItemGroup>
+  <ItemGroup>
+    <UpToDateCheckInput Include="C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeCSharpInformation.cmake" />
+  </ItemGroup>
+  <ItemGroup>
+    <UpToDateCheckInput Include="C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeCompilerIdDetection.cmake" />
+  </ItemGroup>
+  <ItemGroup>
+    <UpToDateCheckInput Include="C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeDetermineCSharpCompiler.cmake" />
+  </ItemGroup>
+  <ItemGroup>
+    <UpToDateCheckInput Include="C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeDetermineCompiler.cmake" />
+  </ItemGroup>
+  <ItemGroup>
+    <UpToDateCheckInput Include="C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeDetermineCompilerId.cmake" />
+  </ItemGroup>
+  <ItemGroup>
+    <UpToDateCheckInput Include="C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeDetermineSystem.cmake" />
+  </ItemGroup>
+  <ItemGroup>
+    <UpToDateCheckInput Include="C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeGenericSystem.cmake" />
+  </ItemGroup>
+  <ItemGroup>
+    <UpToDateCheckInput Include="C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeInitializeConfigs.cmake" />
+  </ItemGroup>
+  <ItemGroup>
+    <UpToDateCheckInput Include="C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeSystem.cmake.in" />
+  </ItemGroup>
+  <ItemGroup>
+    <UpToDateCheckInput Include="C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeSystemSpecificInformation.cmake" />
+  </ItemGroup>
+  <ItemGroup>
+    <UpToDateCheckInput Include="C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeSystemSpecificInitialize.cmake" />
+  </ItemGroup>
+  <ItemGroup>
+    <UpToDateCheckInput Include="C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeTestCSharpCompiler.cmake" />
+  </ItemGroup>
+  <ItemGroup>
+    <UpToDateCheckInput Include="C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeTestCompilerCommon.cmake" />
+  </ItemGroup>
+  <ItemGroup>
+    <UpToDateCheckInput Include="C:\Program Files\CMake\share\cmake-3.31\Modules\CompilerId\VS-10.csproj.in" />
+  </ItemGroup>
+  <ItemGroup>
+    <UpToDateCheckInput Include="C:\Program Files\CMake\share\cmake-3.31\Modules\Platform\Windows-Initialize.cmake" />
+  </ItemGroup>
+  <ItemGroup>
+    <UpToDateCheckInput Include="C:\Program Files\CMake\share\cmake-3.31\Modules\Platform\Windows.cmake" />
+  </ItemGroup>
+  <ItemGroup>
+    <UpToDateCheckInput Include="C:\Program Files\CMake\share\cmake-3.31\Modules\Platform\WindowsPaths.cmake" />
+  </ItemGroup>
+  <ItemGroup>
+    <UpToDateCheckInput Include="D:\a\FreeRDP\FreeRDP\build\CMakeFiles\3.31.5\CMakeCSharpCompiler.cmake" />
+  </ItemGroup>
+  <ItemGroup>
+    <UpToDateCheckInput Include="D:\a\FreeRDP\FreeRDP\build\CMakeFiles\3.31.5\CMakeSystem.cmake" />
+  </ItemGroup>
+  <Target Condition="'$(Configuration)' == 'MinSizeRel'"
+    Name="CustomCommand_MinSizeRel_dec83fd2bc98c9babbaad7d17af99b9a"
+    Inputs="D:/a/FreeRDP/FreeRDP/winpr/libwinpr/timezone/utils/CMakeLists.txt;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeCSharpCompiler.cmake.in;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeCSharpInformation.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeCompilerIdDetection.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeDetermineCSharpCompiler.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeDetermineCompiler.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeDetermineCompilerId.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeDetermineSystem.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeGenericSystem.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeInitializeConfigs.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeSystem.cmake.in;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeSystemSpecificInformation.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeSystemSpecificInitialize.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeTestCSharpCompiler.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeTestCompilerCommon.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\CompilerId\VS-10.csproj.in;C:\Program Files\CMake\share\cmake-3.31\Modules\Platform\Windows-Initialize.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\Platform\Windows.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\Platform\WindowsPaths.cmake;D:\a\FreeRDP\FreeRDP\build\CMakeFiles\3.31.5\CMakeCSharpCompiler.cmake;D:\a\FreeRDP\FreeRDP\build\CMakeFiles\3.31.5\CMakeSystem.cmake"
+    Outputs="D:\a\FreeRDP\FreeRDP\build\CMakeFiles\generate.stamp"
+    BeforeTargets="CoreCompile"
+    DependsOnTargets="PrepareForBuild">
+    <Exec Command="echo Building Custom Rule D:/a/FreeRDP/FreeRDP/winpr/libwinpr/timezone/utils/CMakeLists.txt" />
+    <Exec Command="setlocal&#10;&quot;C:\Program Files\CMake\bin\cmake.exe&quot; -SD:/a/FreeRDP/FreeRDP/winpr/libwinpr/timezone/utils -BD:/a/FreeRDP/FreeRDP/build --check-stamp-file D:/a/FreeRDP/FreeRDP/build/CMakeFiles/generate.stamp&#10;if %errorlevel% neq 0 goto :cmEnd&#10;:cmEnd&#10;endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone&#10;:cmErrorLevel&#10;exit /b %1&#10;:cmDone&#10;if %errorlevel% neq 0 goto :VCEnd&#10;:VCEnd" />
+  </Target>
+  <ItemGroup>
+    <UpToDateCheckInput Include="C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeCSharpCompiler.cmake.in" />
+  </ItemGroup>
+  <ItemGroup>
+    <UpToDateCheckInput Include="C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeCSharpInformation.cmake" />
+  </ItemGroup>
+  <ItemGroup>
+    <UpToDateCheckInput Include="C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeCompilerIdDetection.cmake" />
+  </ItemGroup>
+  <ItemGroup>
+    <UpToDateCheckInput Include="C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeDetermineCSharpCompiler.cmake" />
+  </ItemGroup>
+  <ItemGroup>
+    <UpToDateCheckInput Include="C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeDetermineCompiler.cmake" />
+  </ItemGroup>
+  <ItemGroup>
+    <UpToDateCheckInput Include="C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeDetermineCompilerId.cmake" />
+  </ItemGroup>
+  <ItemGroup>
+    <UpToDateCheckInput Include="C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeDetermineSystem.cmake" />
+  </ItemGroup>
+  <ItemGroup>
+    <UpToDateCheckInput Include="C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeGenericSystem.cmake" />
+  </ItemGroup>
+  <ItemGroup>
+    <UpToDateCheckInput Include="C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeInitializeConfigs.cmake" />
+  </ItemGroup>
+  <ItemGroup>
+    <UpToDateCheckInput Include="C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeSystem.cmake.in" />
+  </ItemGroup>
+  <ItemGroup>
+    <UpToDateCheckInput Include="C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeSystemSpecificInformation.cmake" />
+  </ItemGroup>
+  <ItemGroup>
+    <UpToDateCheckInput Include="C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeSystemSpecificInitialize.cmake" />
+  </ItemGroup>
+  <ItemGroup>
+    <UpToDateCheckInput Include="C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeTestCSharpCompiler.cmake" />
+  </ItemGroup>
+  <ItemGroup>
+    <UpToDateCheckInput Include="C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeTestCompilerCommon.cmake" />
+  </ItemGroup>
+  <ItemGroup>
+    <UpToDateCheckInput Include="C:\Program Files\CMake\share\cmake-3.31\Modules\CompilerId\VS-10.csproj.in" />
+  </ItemGroup>
+  <ItemGroup>
+    <UpToDateCheckInput Include="C:\Program Files\CMake\share\cmake-3.31\Modules\Platform\Windows-Initialize.cmake" />
+  </ItemGroup>
+  <ItemGroup>
+    <UpToDateCheckInput Include="C:\Program Files\CMake\share\cmake-3.31\Modules\Platform\Windows.cmake" />
+  </ItemGroup>
+  <ItemGroup>
+    <UpToDateCheckInput Include="C:\Program Files\CMake\share\cmake-3.31\Modules\Platform\WindowsPaths.cmake" />
+  </ItemGroup>
+  <ItemGroup>
+    <UpToDateCheckInput Include="D:\a\FreeRDP\FreeRDP\build\CMakeFiles\3.31.5\CMakeCSharpCompiler.cmake" />
+  </ItemGroup>
+  <ItemGroup>
+    <UpToDateCheckInput Include="D:\a\FreeRDP\FreeRDP\build\CMakeFiles\3.31.5\CMakeSystem.cmake" />
+  </ItemGroup>
+  <Target Condition="'$(Configuration)' == 'RelWithDebInfo'"
+    Name="CustomCommand_RelWithDebInfo_dec83fd2bc98c9babbaad7d17af99b9a"
+    Inputs="D:/a/FreeRDP/FreeRDP/winpr/libwinpr/timezone/utils/CMakeLists.txt;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeCSharpCompiler.cmake.in;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeCSharpInformation.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeCompilerIdDetection.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeDetermineCSharpCompiler.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeDetermineCompiler.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeDetermineCompilerId.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeDetermineSystem.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeGenericSystem.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeInitializeConfigs.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeSystem.cmake.in;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeSystemSpecificInformation.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeSystemSpecificInitialize.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeTestCSharpCompiler.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeTestCompilerCommon.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\CompilerId\VS-10.csproj.in;C:\Program Files\CMake\share\cmake-3.31\Modules\Platform\Windows-Initialize.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\Platform\Windows.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\Platform\WindowsPaths.cmake;D:\a\FreeRDP\FreeRDP\build\CMakeFiles\3.31.5\CMakeCSharpCompiler.cmake;D:\a\FreeRDP\FreeRDP\build\CMakeFiles\3.31.5\CMakeSystem.cmake"
+    Outputs="D:\a\FreeRDP\FreeRDP\build\CMakeFiles\generate.stamp"
+    BeforeTargets="CoreCompile"
+    DependsOnTargets="PrepareForBuild">
+    <Exec Command="echo Building Custom Rule D:/a/FreeRDP/FreeRDP/winpr/libwinpr/timezone/utils/CMakeLists.txt" />
+    <Exec Command="setlocal&#10;&quot;C:\Program Files\CMake\bin\cmake.exe&quot; -SD:/a/FreeRDP/FreeRDP/winpr/libwinpr/timezone/utils -BD:/a/FreeRDP/FreeRDP/build --check-stamp-file D:/a/FreeRDP/FreeRDP/build/CMakeFiles/generate.stamp&#10;if %errorlevel% neq 0 goto :cmEnd&#10;:cmEnd&#10;endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone&#10;:cmErrorLevel&#10;exit /b %1&#10;:cmDone&#10;if %errorlevel% neq 0 goto :VCEnd&#10;:VCEnd" />
+  </Target>
+  <ItemGroup>
+    <Compile Include="D:\a\FreeRDP\FreeRDP\winpr\libwinpr\timezone\utils\tzextract.cs">
+      <Link>tzextract.cs</Link>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="System">
+      <CopyLocalSatelliteAssemblies>true</CopyLocalSatelliteAssemblies>
+      <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
+    </Reference>
+    <Reference Include="System.Collections.Generic">
+      <CopyLocalSatelliteAssemblies>true</CopyLocalSatelliteAssemblies>
+      <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
+    </Reference>
+    <Reference Include="System.IO">
+      <CopyLocalSatelliteAssemblies>true</CopyLocalSatelliteAssemblies>
+      <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
+    </Reference>
+    <Reference Include="System.Net.Http">
+      <CopyLocalSatelliteAssemblies>true</CopyLocalSatelliteAssemblies>
+      <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
+    </Reference>
+    <Reference Include="System.Linq">
+      <CopyLocalSatelliteAssemblies>true</CopyLocalSatelliteAssemblies>
+      <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
+    </Reference>
+    <Reference Include="System.Threading">
+      <CopyLocalSatelliteAssemblies>true</CopyLocalSatelliteAssemblies>
+      <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
+    </Reference>
+    <Reference Include="System.Threading.Tasks">
+      <CopyLocalSatelliteAssemblies>true</CopyLocalSatelliteAssemblies>
+      <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="D:\a\FreeRDP\FreeRDP\build\ZERO_CHECK.vcxproj">
+      <Project>{026CEF78-CB6C-3CA7-AC98-57D283E6DBC2}</Project>
+      <Name>ZERO_CHECK</Name>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </ProjectReference>
+  </ItemGroup>
+</Project>
