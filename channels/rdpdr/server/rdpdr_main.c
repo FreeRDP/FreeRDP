@@ -62,6 +62,27 @@ struct s_rdpdr_server_private
 	wLog* log;
 };
 
+static const char* fileInformation2str(uint8_t val)
+{
+	switch (val)
+	{
+		case FILE_SUPERSEDED:
+			return "FILE_DOES_NOT_EXIST";
+		case FILE_OPENED:
+			return "FILE_EXISTS";
+		case FILE_CREATED:
+			return "FILE_OVERWRITTEN";
+		case FILE_OVERWRITTEN:
+			return "FILE_CREATED";
+		case FILE_EXISTS:
+			return "FILE_OPENED";
+		case FILE_DOES_NOT_EXIST:
+			return "FILE_SUPERSEDED";
+		default:
+			return "FILE_UNKNOWN";
+	}
+}
+
 static const char* DR_DRIVE_LOCK_REQ2str(uint32_t op)
 {
 	switch (op)
@@ -78,6 +99,7 @@ static const char* DR_DRIVE_LOCK_REQ2str(uint32_t op)
 			return "RDP_LOWIO_OP_UNKNOWN";
 	}
 }
+
 static void rdpdr_device_free(RdpdrDevice* device)
 {
 	if (!device)
@@ -1341,7 +1363,9 @@ static UINT rdpdr_server_receive_io_device_control_request(RdpdrServerContext* c
 
 	WLog_Print(context->priv->log, WLOG_WARN,
 	           "[MS-RDPEFS] 2.2.1.4.5 Device Control Request (DR_CONTROL_REQ) not implemented");
-	WLog_Print(context->priv->log, WLOG_WARN, "TODO: parse %p", InputBuffer);
+	WLog_Print(context->priv->log, WLOG_WARN,
+	           "TODO: parse %p [%" PRIu32 "], OutputBufferLength=%" PRIu32, InputBuffer,
+	           InputBufferLength, OutputBufferLength);
 
 	return CHANNEL_RC_OK;
 }
@@ -2621,8 +2645,6 @@ static UINT rdpdr_server_drive_create_directory_callback1(RdpdrServerContext* co
                                                           RDPDR_IRP* irp, UINT32 deviceId,
                                                           UINT32 completionId, UINT32 ioStatus)
 {
-	UINT32 fileId = 0;
-	UINT8 information = 0;
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
 	WINPR_ASSERT(s);
@@ -2644,8 +2666,11 @@ static UINT rdpdr_server_drive_create_directory_callback1(RdpdrServerContext* co
 	if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, 5))
 		return ERROR_INVALID_DATA;
 
-	Stream_Read_UINT32(s, fileId);     /* FileId (4 bytes) */
-	Stream_Read_UINT8(s, information); /* Information (1 byte) */
+	const uint32_t fileId = Stream_Get_UINT32(s);    /* FileId (4 bytes) */
+	const uint8_t information = Stream_Get_UINT8(s); /* Information (1 byte) */
+	WLog_Print(context->priv->log, WLOG_DEBUG, "fileId [0x%08" PRIx32 "], information %s", fileId,
+	           fileInformation2str(information));
+
 	/* Setup the IRP. */
 	irp->CompletionId = context->priv->NextCompletionId++;
 	irp->Callback = rdpdr_server_drive_create_directory_callback2;
@@ -2742,8 +2767,6 @@ static UINT rdpdr_server_drive_delete_directory_callback1(RdpdrServerContext* co
                                                           RDPDR_IRP* irp, UINT32 deviceId,
                                                           UINT32 completionId, UINT32 ioStatus)
 {
-	UINT32 fileId = 0;
-	UINT8 information = 0;
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
 	WINPR_ASSERT(irp);
@@ -2764,8 +2787,11 @@ static UINT rdpdr_server_drive_delete_directory_callback1(RdpdrServerContext* co
 	if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, 5))
 		return ERROR_INVALID_DATA;
 
-	Stream_Read_UINT32(s, fileId);     /* FileId (4 bytes) */
-	Stream_Read_UINT8(s, information); /* Information (1 byte) */
+	const uint32_t fileId = Stream_Get_UINT32(s);    /* FileId (4 bytes) */
+	const uint8_t information = Stream_Get_UINT8(s); /* Information (1 byte) */
+	WLog_Print(context->priv->log, WLOG_DEBUG, "fileId [0x%08" PRIx32 "], information %s", fileId,
+	           fileInformation2str(information));
+
 	/* Setup the IRP. */
 	irp->CompletionId = context->priv->NextCompletionId++;
 	irp->Callback = rdpdr_server_drive_delete_directory_callback2;
@@ -2911,7 +2937,6 @@ static UINT rdpdr_server_drive_query_directory_callback1(RdpdrServerContext* con
                                                          RDPDR_IRP* irp, UINT32 deviceId,
                                                          UINT32 completionId, UINT32 ioStatus)
 {
-	UINT32 fileId = 0;
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
 	WINPR_ASSERT(irp);
@@ -2932,7 +2957,7 @@ static UINT rdpdr_server_drive_query_directory_callback1(RdpdrServerContext* con
 	if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, 4))
 		return ERROR_INVALID_DATA;
 
-	Stream_Read_UINT32(s, fileId);
+	const uint32_t fileId = Stream_Get_UINT32(s);
 	/* Setup the IRP. */
 	irp->CompletionId = context->priv->NextCompletionId++;
 	irp->Callback = rdpdr_server_drive_query_directory_callback2;
@@ -3004,8 +3029,6 @@ static UINT rdpdr_server_drive_open_file_callback(RdpdrServerContext* context, w
                                                   RDPDR_IRP* irp, UINT32 deviceId,
                                                   UINT32 completionId, UINT32 ioStatus)
 {
-	UINT32 fileId = 0;
-	UINT8 information = 0;
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
 	WINPR_ASSERT(irp);
@@ -3017,8 +3040,11 @@ static UINT rdpdr_server_drive_open_file_callback(RdpdrServerContext* context, w
 	if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, 5))
 		return ERROR_INVALID_DATA;
 
-	Stream_Read_UINT32(s, fileId);     /* FileId (4 bytes) */
-	Stream_Read_UINT8(s, information); /* Information (1 byte) */
+	const uint32_t fileId = Stream_Get_UINT32(s);    /* FileId (4 bytes) */
+	const uint8_t information = Stream_Get_UINT8(s); /* Information (1 byte) */
+	WLog_Print(context->priv->log, WLOG_DEBUG, "fileId [0x%08" PRIx32 "], information %s", fileId,
+	           fileInformation2str(information));
+
 	/* Invoke the open file completion routine. */
 	context->OnDriveOpenFileComplete(context, irp->CallbackData, ioStatus, deviceId, fileId);
 	/* Destroy the IRP. */
@@ -3337,8 +3363,6 @@ static UINT rdpdr_server_drive_delete_file_callback1(RdpdrServerContext* context
                                                      RDPDR_IRP* irp, UINT32 deviceId,
                                                      UINT32 completionId, UINT32 ioStatus)
 {
-	UINT32 fileId = 0;
-	UINT8 information = 0;
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
 	WINPR_ASSERT(irp);
@@ -3359,8 +3383,11 @@ static UINT rdpdr_server_drive_delete_file_callback1(RdpdrServerContext* context
 	if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, 5))
 		return ERROR_INVALID_DATA;
 
-	Stream_Read_UINT32(s, fileId);     /* FileId (4 bytes) */
-	Stream_Read_UINT8(s, information); /* Information (1 byte) */
+	const uint32_t fileId = Stream_Get_UINT32(s);    /* FileId (4 bytes) */
+	const uint8_t information = Stream_Get_UINT8(s); /* Information (1 byte) */
+
+	WLog_Print(context->priv->log, WLOG_DEBUG, "fileId [0x%08" PRIx32 "], information %s", fileId,
+	           fileInformation2str(information));
 	/* Setup the IRP. */
 	irp->CompletionId = context->priv->NextCompletionId++;
 	irp->Callback = rdpdr_server_drive_delete_file_callback2;
@@ -3496,8 +3523,6 @@ static UINT rdpdr_server_drive_rename_file_callback1(RdpdrServerContext* context
                                                      RDPDR_IRP* irp, UINT32 deviceId,
                                                      UINT32 completionId, UINT32 ioStatus)
 {
-	UINT32 fileId = 0;
-	UINT8 information = 0;
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
 	WINPR_ASSERT(irp);
@@ -3518,8 +3543,11 @@ static UINT rdpdr_server_drive_rename_file_callback1(RdpdrServerContext* context
 	if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, 5))
 		return ERROR_INVALID_DATA;
 
-	Stream_Read_UINT32(s, fileId);     /* FileId (4 bytes) */
-	Stream_Read_UINT8(s, information); /* Information (1 byte) */
+	const uint32_t fileId = Stream_Get_UINT32(s);    /* FileId (4 bytes) */
+	const uint8_t information = Stream_Get_UINT8(s); /* Information (1 byte) */
+	WLog_Print(context->priv->log, WLOG_DEBUG, "fileId [0x%08" PRIx32 "], information %s", fileId,
+	           fileInformation2str(information));
+
 	/* Setup the IRP. */
 	irp->CompletionId = context->priv->NextCompletionId++;
 	irp->Callback = rdpdr_server_drive_rename_file_callback2;
