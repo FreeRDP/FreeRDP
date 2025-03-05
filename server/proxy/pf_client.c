@@ -119,16 +119,9 @@ static void pf_client_on_activated(void* ctx, WINPR_ATTR_UNUSED const ActivatedE
 static BOOL pf_client_load_rdpsnd(pClientContext* pc)
 {
 	rdpContext* context = (rdpContext*)pc;
-	pServerContext* ps = NULL;
-	const proxyConfig* config = NULL;
 
 	WINPR_ASSERT(pc);
 	WINPR_ASSERT(pc->pdata);
-	ps = pc->pdata->ps;
-	WINPR_ASSERT(ps);
-	config = pc->pdata->config;
-	WINPR_ASSERT(config);
-
 	/*
 	 * if AudioOutput is enabled in proxy and client connected with rdpsnd, use proxy as rdpsnd
 	 * backend. Otherwise, use sys:fake.
@@ -540,27 +533,16 @@ static BOOL sendQueuedChannelData(pClientContext* pc)
  */
 static BOOL pf_client_post_connect(freerdp* instance)
 {
-	rdpContext* context = NULL;
-	rdpSettings* settings = NULL;
-	rdpUpdate* update = NULL;
-	rdpContext* ps = NULL;
-	pClientContext* pc = NULL;
-	const proxyConfig* config = NULL;
-
 	WINPR_ASSERT(instance);
-	context = instance->context;
+	rdpContext* context = instance->context;
 	WINPR_ASSERT(context);
-	settings = context->settings;
-	WINPR_ASSERT(settings);
-	update = context->update;
+	rdpUpdate* update = context->update;
 	WINPR_ASSERT(update);
-	pc = (pClientContext*)context;
+	pClientContext* pc = (pClientContext*)context;
 	WINPR_ASSERT(pc);
 	WINPR_ASSERT(pc->pdata);
-	ps = (rdpContext*)pc->pdata->ps;
+	rdpContext* ps = (rdpContext*)pc->pdata->ps;
 	WINPR_ASSERT(ps);
-	config = pc->pdata->config;
-	WINPR_ASSERT(config);
 
 	if (!pf_modules_run_hook(pc->pdata->module, HOOK_TYPE_CLIENT_POST_CONNECT, pc->pdata, pc))
 		return FALSE;
@@ -568,7 +550,7 @@ static BOOL pf_client_post_connect(freerdp* instance)
 	if (!gdi_init(instance, PIXEL_FORMAT_BGRA32))
 		return FALSE;
 
-	WINPR_ASSERT(freerdp_settings_get_bool(settings, FreeRDP_SoftwareGdi));
+	WINPR_ASSERT(freerdp_settings_get_bool(context->settings, FreeRDP_SoftwareGdi));
 
 	pf_client_register_update_callbacks(update);
 
@@ -629,19 +611,14 @@ static void pf_client_post_disconnect(freerdp* instance)
 
 static BOOL pf_client_redirect(freerdp* instance)
 {
-	pClientContext* pc = NULL;
-	proxyData* pdata = NULL;
-
 	if (!instance)
 		return FALSE;
 
 	if (!instance->context)
 		return FALSE;
 
-	pc = (pClientContext*)instance->context;
+	pClientContext* pc = (pClientContext*)instance->context;
 	WINPR_ASSERT(pc);
-	pdata = pc->pdata;
-	WINPR_ASSERT(pdata);
 
 #if defined(WITH_PROXY_EMULATE_SMARTCARD)
 	pf_channel_smartcard_client_reset(pc);
