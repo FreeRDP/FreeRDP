@@ -3987,6 +3987,8 @@ static BOOL parse_gateway_cred_option(rdpSettings* settings, const char* value,
 
 static BOOL parse_gateway_type_option(rdpSettings* settings, const char* value)
 {
+	BOOL rc = FALSE;
+
 	WINPR_ASSERT(settings);
 	WINPR_ASSERT(value);
 
@@ -3997,6 +3999,7 @@ static BOOL parse_gateway_type_option(rdpSettings* settings, const char* value)
 		    !freerdp_settings_set_bool(settings, FreeRDP_GatewayHttpUseWebsockets, FALSE) ||
 		    !freerdp_settings_set_bool(settings, FreeRDP_GatewayArmTransport, FALSE))
 			return FALSE;
+		rc = TRUE;
 	}
 	else
 	{
@@ -4006,6 +4009,7 @@ static BOOL parse_gateway_type_option(rdpSettings* settings, const char* value)
 			    !freerdp_settings_set_bool(settings, FreeRDP_GatewayHttpTransport, TRUE) ||
 			    !freerdp_settings_set_bool(settings, FreeRDP_GatewayArmTransport, FALSE))
 				return FALSE;
+			rc = TRUE;
 		}
 		else if (option_equals(value, "auto"))
 		{
@@ -4013,6 +4017,7 @@ static BOOL parse_gateway_type_option(rdpSettings* settings, const char* value)
 			    !freerdp_settings_set_bool(settings, FreeRDP_GatewayHttpTransport, TRUE) ||
 			    !freerdp_settings_set_bool(settings, FreeRDP_GatewayArmTransport, FALSE))
 				return FALSE;
+			rc = TRUE;
 		}
 		else if (option_equals(value, "arm"))
 		{
@@ -4021,9 +4026,10 @@ static BOOL parse_gateway_type_option(rdpSettings* settings, const char* value)
 			    !freerdp_settings_set_bool(settings, FreeRDP_GatewayHttpUseWebsockets, FALSE) ||
 			    !freerdp_settings_set_bool(settings, FreeRDP_GatewayArmTransport, TRUE))
 				return FALSE;
+			rc = TRUE;
 		}
 	}
-	return TRUE;
+	return rc;
 }
 
 static BOOL parse_gateway_usage_option(rdpSettings* settings, const char* value)
