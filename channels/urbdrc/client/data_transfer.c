@@ -327,6 +327,9 @@ static UINT urbdrc_process_internal_io_control(IUDEVICE* pdev, GENERIC_CHANNEL_C
 	if (!pdev || !callback || !s || !udevman)
 		return ERROR_INVALID_PARAMETER;
 
+	URBDRC_PLUGIN* urbdrc = (URBDRC_PLUGIN*)callback->plugin;
+	WINPR_ASSERT(urbdrc);
+
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
 		return ERROR_INVALID_DATA;
 
@@ -343,6 +346,13 @@ static UINT urbdrc_process_internal_io_control(IUDEVICE* pdev, GENERIC_CHANNEL_C
 	// TODO: Implement control code.
 	/** Fixme: Currently this is a FALSE bustime... */
 	frames = GetTickCount();
+
+	if (4 > OutputBufferSize)
+	{
+		WLog_Print(urbdrc->log, WLOG_DEBUG, "out_size %" PRIu32 " > OutputBufferSize %" PRIu32, 4,
+		           OutputBufferSize);
+		return ERROR_BAD_CONFIGURATION;
+	}
 	out = urb_create_iocompletion(InterfaceId, MessageId, RequestId, 4);
 
 	if (!out)
@@ -593,6 +603,14 @@ static UINT urb_select_interface(IUDEVICE* pdev, GENERIC_CHANNEL_CALLBACK* callb
 	MsInterface = MsConfig->MsInterfaces[InterfaceNumber];
 	interface_size = 16 + (MsInterface->NumberOfPipes * 20);
 	out_size = 36 + interface_size;
+	if (out_size > OutputBufferSize)
+	{
+		WLog_Print(urbdrc->log, WLOG_DEBUG, "out_size %" PRIu32 " > OutputBufferSize %" PRIu32,
+		           out_size, OutputBufferSize);
+		msusb_msconfig_free(MsConfig);
+		return ERROR_BAD_CONFIGURATION;
+	}
+
 	out = Stream_New(NULL, out_size);
 
 	if (!out)
@@ -1282,6 +1300,12 @@ static UINT urb_pipe_request(IUDEVICE* pdev, GENERIC_CHANNEL_CALLBACK* callback,
 
 	/** send data */
 	out_size = 36;
+	if (out_size > OutputBufferSize)
+	{
+		WLog_Print(urbdrc->log, WLOG_DEBUG, "out_size %" PRIu32 " > OutputBufferSize %" PRIu32,
+		           out_size, OutputBufferSize);
+		return ERROR_BAD_CONFIGURATION;
+	}
 	out = Stream_New(NULL, out_size);
 
 	if (!out)
@@ -1327,6 +1351,14 @@ static UINT urb_get_current_frame_number(IUDEVICE* pdev, GENERIC_CHANNEL_CALLBAC
 	/** Fixme: Need to fill actual frame number!!*/
 	dummy_frames = GetTickCount();
 	out_size = 40;
+
+	if (out_size > OutputBufferSize)
+	{
+		WLog_Print(urbdrc->log, WLOG_DEBUG, "out_size %" PRIu32 " > OutputBufferSize %" PRIu32,
+		           out_size, OutputBufferSize);
+		return ERROR_BAD_CONFIGURATION;
+	}
+
 	out = Stream_New(NULL, out_size);
 
 	if (!out)
