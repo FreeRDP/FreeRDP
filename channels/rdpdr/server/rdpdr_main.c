@@ -124,6 +124,24 @@ fail:
 	return NULL;
 }
 
+static void* rdpdr_device_key_clone(const void* pvval)
+{
+	const UINT32* val = pvval;
+	if (!val)
+		return NULL;
+
+	UINT32* ptr = calloc(1, sizeof(UINT32));
+	if (!ptr)
+		return NULL;
+	*ptr = *val;
+	return ptr;
+}
+
+static void rdpdr_device_key_free(void* obj)
+{
+	free(obj);
+}
+
 static RdpdrDevice* rdpdr_get_device_by_id(RdpdrServerPrivate* priv, UINT32 DeviceId)
 {
 	WINPR_ASSERT(priv);
@@ -3556,6 +3574,8 @@ static RdpdrServerPrivate* rdpdr_server_private_new(void)
 
 	obj = HashTable_KeyObject(priv->devicelist);
 	obj->fnObjectEquals = rdpdr_device_equal;
+	obj->fnObjectFree = rdpdr_device_key_free;
+	obj->fnObjectNew = rdpdr_device_key_clone;
 
 	return priv;
 fail:
