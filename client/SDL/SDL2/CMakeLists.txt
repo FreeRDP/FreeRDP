@@ -64,7 +64,7 @@ else()
   set_target_properties(SDL2::SDL2 PROPERTIES SYSTEM TRUE)
 endif()
 
-addtargetwithresourcefile(${MODULE_NAME} TRUE "${PROJECT_VERSION}" SRCS)
+addtargetwithresourcefile(${MODULE_NAME} "${WIN32_GUI_FLAG}" "${PROJECT_VERSION}" SRCS)
 
 target_link_libraries(${MODULE_NAME} PRIVATE ${LIBS})
 
