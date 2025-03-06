@@ -99,9 +99,6 @@ static inline BOOL RLEDECOMPRESS(const BYTE* WINPR_RESTRICT pbSrcBuffer, UINT32 
                                  BYTE* WINPR_RESTRICT pbDestBuffer, UINT32 rowDelta, UINT32 width,
                                  UINT32 height)
 {
-#if defined(WITH_DEBUG_CODECS)
-	char sbuffer[128] = { 0 };
-#endif
 	const BYTE* pbSrc = pbSrcBuffer;
 	BYTE* pbDest = pbDestBuffer;
 	PIXEL temp = 0;
@@ -152,8 +149,7 @@ static inline BOOL RLEDECOMPRESS(const BYTE* WINPR_RESTRICT pbSrcBuffer, UINT32 
 		code = ExtractCodeId(*pbSrc);
 
 #if defined(WITH_DEBUG_CODECS)
-		WLog_VRB(TAG, "pbSrc=%p code=%s, rem=%" PRIuz, pbSrc,
-		         rle_code_str_buffer(code, sbuffer, sizeof(sbuffer)), pbEnd - pbSrc);
+		WLog_VRB(TAG, "pbSrc=%p code=%s, rem=%" PRIuz, pbSrc, rle_code_str(code), pbEnd - pbSrc);
 #endif
 
 		/* Handle Background Run Orders. */

@@ -61,7 +61,6 @@ static INLINE pstatus_t avx2_image_copy_bgr24_bgrx32(BYTE* WINPR_RESTRICT pDstDa
 	const SSIZE_T width = nWidth - rem;
 
 	const size_t align = nSrcStep % 32;
-	const BOOL fast = (align == 0) ? TRUE : (align >= 8 - MIN(8, (size_t)rem) ? TRUE : FALSE);
 	for (SSIZE_T y = 0; y < nHeight; y++)
 	{
 		const BYTE* WINPR_RESTRICT srcLine =
@@ -72,29 +71,26 @@ static INLINE pstatus_t avx2_image_copy_bgr24_bgrx32(BYTE* WINPR_RESTRICT pDstDa
 		SSIZE_T x = 0;
 
 		/* Ensure alignment requirements can be met */
-		if (fast)
+		for (; x < width; x += 8)
 		{
-			for (; x < width; x += 8)
-			{
-				const __m256i* src = (const __m256i*)&srcLine[(x + nXSrc) * srcByte];
-				__m256i* dst = (__m256i*)&dstLine[(x + nXDst) * dstByte];
-				const __m256i s0 = _mm256_loadu_si256(src);
-				__m256i s1 = _mm256_shuffle_epi8(s0, smask);
+			const __m256i* src = (const __m256i*)&srcLine[(x + nXSrc) * srcByte];
+			__m256i* dst = (__m256i*)&dstLine[(x + nXDst) * dstByte];
+			const __m256i s0 = _mm256_loadu_si256(src);
+			__m256i s1 = _mm256_shuffle_epi8(s0, smask);
 
-				/* _mm256_shuffle_epi8 can not cross 128bit lanes.
-				 * manually copy these bytes with extract/insert */
-				const __m256i sx = _mm256_broadcastsi128_si256(_mm256_extractf128_si256(s0, 0));
-				const __m256i sxx = _mm256_shuffle_epi8(sx, shelpmask);
-				const __m256i bmask =
-				    _mm256_set_epi32(0x00000000, 0x00000000, 0x000000FF, 0x00FFFFFF, 0x00000000,
-				                     0x00000000, 0x00000000, 0x00000000);
-				const __m256i merged = _mm256_blendv_epi8(s1, sxx, bmask);
+			/* _mm256_shuffle_epi8 can not cross 128bit lanes.
+			 * manually copy these bytes with extract/insert */
+			const __m256i sx = _mm256_broadcastsi128_si256(_mm256_extractf128_si256(s0, 0));
+			const __m256i sxx = _mm256_shuffle_epi8(sx, shelpmask);
+			const __m256i bmask = _mm256_set_epi32(0x00000000, 0x00000000, 0x000000FF, 0x00FFFFFF,
+			                                       0x00000000, 0x00000000, 0x00000000, 0x00000000);
+			const __m256i merged = _mm256_blendv_epi8(s1, sxx, bmask);
 
-				const __m256i s2 = _mm256_loadu_si256(dst);
-				__m256i d0 = _mm256_blendv_epi8(merged, s2, mask);
-				_mm256_storeu_si256(dst, d0);
-			}
+			const __m256i s2 = _mm256_loadu_si256(dst);
+			__m256i d0 = _mm256_blendv_epi8(merged, s2, mask);
+			_mm256_storeu_si256(dst, d0);
 		}
+
 		for (; x < nWidth; x++)
 		{
 			const BYTE* src = &srcLine[(x + nXSrc) * srcByte];
