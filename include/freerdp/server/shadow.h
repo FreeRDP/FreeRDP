@@ -303,7 +303,7 @@ extern "C"
 	FREERDP_API void shadow_subsystem_set_entry_builtin(const char* name);
 	FREERDP_API void shadow_subsystem_set_entry(pfnShadowSubsystemEntry pEntry);
 
-#if defined(WITH_FREERDP_3x_DEPRECATED)
+#if !defined(WITHOUT_FREERDP_3x_DEPRECATED)
 	WINPR_DEPRECATED_VAR(
 	    "[since 3.4.0] Use shadow_subsystem_pointer_convert_alpha_pointer_data_to_format instead",
 	    FREERDP_API int shadow_subsystem_pointer_convert_alpha_pointer_data(
@@ -349,7 +349,7 @@ extern "C"
 
 	FREERDP_API int shadow_capture_align_clip_rect(RECTANGLE_16* rect, const RECTANGLE_16* clip);
 
-#if defined(WITH_FREERDP_3x_DEPRECATED)
+#if !defined(WITHOUT_FREERDP_3x_DEPRECATED)
 	WINPR_DEPRECATED_VAR("[since 3.4.0] Use shadow_capture_compare_with_format",
 	                     FREERDP_API int shadow_capture_compare(
 	                         const BYTE* WINPR_RESTRICT pData1, UINT32 nStep1, UINT32 nWidth,

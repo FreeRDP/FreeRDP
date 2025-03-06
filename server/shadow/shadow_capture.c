@@ -76,7 +76,7 @@ int shadow_capture_align_clip_rect(RECTANGLE_16* rect, const RECTANGLE_16* clip)
 	return 1;
 }
 
-#if defined(WITH_FREERDP_3x_DEPRECATED)
+#if !defined(WITHOUT_FREERDP_3x_DEPRECATED)
 int shadow_capture_compare(const BYTE* WINPR_RESTRICT pData1, UINT32 nStep1, UINT32 nWidth,
                            UINT32 nHeight, const BYTE* WINPR_RESTRICT pData2, UINT32 nStep2,
                            RECTANGLE_16* WINPR_RESTRICT rect)

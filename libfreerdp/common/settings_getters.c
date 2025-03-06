@@ -2002,7 +2002,7 @@ UINT32 freerdp_settings_get_uint32(WINPR_ATTR_UNUSED const rdpSettings* settings
 		case FreeRDP_VCFlags:
 			return settings->VCFlags;
 
-#if defined(WITH_FREERDP_3x_DEPRECATED)
+#if !defined(WITHOUT_FREERDP_3x_DEPRECATED)
 		// API Compatibility section, remove with FreeRDP 4.x
 		case (FreeRDP_Settings_Keys_UInt32)FreeRDP_MonitorLocalShiftX:
 			return (UINT32)settings->MonitorLocalShiftX;
@@ -2533,7 +2533,7 @@ BOOL freerdp_settings_set_uint32(WINPR_ATTR_UNUSED rdpSettings* settings,
 			settings->VCFlags = cnv.c;
 			break;
 
-#if defined(WITH_FREERDP_3x_DEPRECATED)
+#if !defined(WITHOUT_FREERDP_3x_DEPRECATED)
 		// API Compatibility section, remove with FreeRDP 4.x
 		case FreeRDP_MonitorLocalShiftX:
 			settings->MonitorLocalShiftX = (int32_t)cnv.c;

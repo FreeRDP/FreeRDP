@@ -60,7 +60,7 @@ include(CMakeDependentOption)
 find_package(SDL3)
 
 cmake_dependent_option(WITH_CLIENT_SDL_VERSIONED "append sdl version to client binaries" OFF WITH_CLIENT_SDL OFF)
-if(WITH_FREERDP_3x_DEPRECATED)
+if(NOT WITHOUT_FREERDP_3x_DEPRECATED)
   # Require 2.0.20 for ubuntu 22.04.
   # older versions do not have the SDL2::SDL2 et al targets
   find_package(SDL2 2.0.20)
@@ -87,7 +87,7 @@ if((WITH_CLIENT_SDL2 AND SDL2_FOUND) OR (WITH_CLIENT_SDL3 AND SDL3_FOUND))
   include_directories(common)
 endif()
 
-if(WITH_FREERDP_3x_DEPRECATED)
+if(NOT WITHOUT_FREERDP_3x_DEPRECATED)
   if(WITH_CLIENT_SDL2)
     if(SDL2_FOUND)
       add_subdirectory(SDL2)

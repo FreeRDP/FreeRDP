@@ -299,7 +299,7 @@ freerdp_connect_finally:
 	return status;
 }
 
-#if defined(WITH_FREERDP_3x_DEPRECATED)
+#if !defined(WITHOUT_FREERDP_3x_DEPRECATED)
 BOOL freerdp_abort_connect(freerdp* instance)
 {
 	if (!instance)
@@ -638,7 +638,7 @@ BOOL freerdp_disconnect(freerdp* instance)
 	return rc;
 }
 
-#if defined(WITH_FREERDP_3x_DEPRECATED)
+#if !defined(WITHOUT_FREERDP_3x_DEPRECATED)
 BOOL freerdp_disconnect_before_reconnect(freerdp* instance)
 {
 	WINPR_ASSERT(instance);
@@ -673,7 +673,7 @@ BOOL freerdp_reconnect(freerdp* instance)
 	return rdp_client_reconnect(rdp);
 }
 
-#if defined(WITH_FREERDP_3x_DEPRECATED)
+#if !defined(WITHOUT_FREERDP_3x_DEPRECATED)
 BOOL freerdp_shall_disconnect(freerdp* instance)
 {
 	if (!instance)

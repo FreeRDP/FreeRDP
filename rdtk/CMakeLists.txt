@@ -31,7 +31,6 @@ if(NOT FREERDP_UNIFIED_BUILD)
   include(ProjectCStandard)
 
   set(WINPR_VERSION_MAJOR 3)
-  option(BUILD_TESTING_INTERNAL "Build library unit tests" ON)
 
   include(ExportAllSymbols)
 else()

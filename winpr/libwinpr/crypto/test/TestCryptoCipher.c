@@ -23,7 +23,7 @@ static BOOL test_crypto_cipher_aes_128_cbc(BOOL ex)
 	if (ex)
 		ctx = winpr_Cipher_NewEx(WINPR_CIPHER_AES_128_CBC, WINPR_ENCRYPT, key, sizeof(key), iv,
 		                         sizeof(iv));
-#if defined(WITH_FREERDP_3x_DEPRECATED)
+#if !defined(WITHOUT_FREERDP_3x_DEPRECATED)
 	else
 		ctx = winpr_Cipher_New(WINPR_CIPHER_AES_128_CBC, WINPR_ENCRYPT, key, iv);
 #endif
@@ -69,7 +69,7 @@ static BOOL test_crypto_cipher_aes_128_cbc(BOOL ex)
 	if (ex)
 		ctx = winpr_Cipher_NewEx(WINPR_CIPHER_AES_128_CBC, WINPR_DECRYPT, key, sizeof(key), iv,
 		                         sizeof(iv));
-#if defined(WITH_FREERDP_3x_DEPRECATED)
+#if !defined(WITHOUT_FREERDP_3x_DEPRECATED)
 	else
 		ctx = winpr_Cipher_New(WINPR_CIPHER_AES_128_CBC, WINPR_DECRYPT, key, iv);
 
