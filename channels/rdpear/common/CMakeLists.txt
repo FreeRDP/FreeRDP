@@ -17,7 +17,7 @@
 
 add_library(rdpear-common INTERFACE)
 add_library(
-  rdpear-common-obj OBJECT ndr.c rdpear_asn1.c rdpear_common.c rdpear-common/ndr.h rdpear-common/rdpear_asn1.h
+  rdpear-common-obj STATIC ndr.c rdpear_asn1.c rdpear_common.c rdpear-common/ndr.h rdpear-common/rdpear_asn1.h
                            rdpear-common/rdpear_common.h
 )
 
@@ -28,9 +28,10 @@ target_link_options(rdpear-common INTERFACE ${KRB5_LDFLAGS})
 target_include_directories(rdpear-common-obj PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(rdpear-common-obj SYSTEM PRIVATE ${KRB5_INCLUDE_DIRS})
 target_link_directories(rdpear-common INTERFACE ${KRB5_LIBRARY_DIRS})
-target_link_libraries(rdpear-common INTERFACE ${KRB5_LIBRARIES} $<TARGET_OBJECTS:rdpear-common-obj>)
+target_link_libraries(rdpear-common INTERFACE ${KRB5_LIBRARIES} rdpear-common-obj)
 
 channel_install(rdpear-common ${FREERDP_ADDIN_PATH} "FreeRDPTargets")
+channel_install(rdpear-common-obj ${FREERDP_ADDIN_PATH} "FreeRDPTargets")
 
 if(BUILD_TESTING_INTERNAL OR BUILD_TESTING)
   add_subdirectory(test)
