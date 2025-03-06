@@ -233,55 +233,6 @@ BOOL sdl_push_user_event(Uint32 type, ...)
 	return SDL_PushEvent(&ev) == 1;
 }
 
-CriticalSection::CriticalSection()
-{
-	InitializeCriticalSection(&_section);
-}
-
-CriticalSection::~CriticalSection()
-{
-	DeleteCriticalSection(&_section);
-}
-
-void CriticalSection::lock()
-{
-	EnterCriticalSection(&_section);
-}
-
-void CriticalSection::unlock()
-{
-	LeaveCriticalSection(&_section);
-}
-
-WinPREvent::WinPREvent(bool initial) : _handle(CreateEventA(nullptr, TRUE, initial, nullptr))
-{
-}
-
-WinPREvent::~WinPREvent()
-{
-	(void)CloseHandle(_handle);
-}
-
-void WinPREvent::set()
-{
-	(void)SetEvent(_handle);
-}
-
-void WinPREvent::clear()
-{
-	(void)ResetEvent(_handle);
-}
-
-bool WinPREvent::isSet() const
-{
-	return WaitForSingleObject(_handle, 0) == WAIT_OBJECT_0;
-}
-
-HANDLE WinPREvent::handle() const
-{
-	return _handle;
-}
-
 bool sdl_push_quit()
 {
 	SDL_Event ev = {};
