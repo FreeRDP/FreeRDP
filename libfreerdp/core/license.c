@@ -1979,7 +1979,6 @@ BOOL license_read_platform_challenge_packet(rdpLicense* license, wStream* s)
 		return FALSE;
 
 #ifdef WITH_DEBUG_LICENSE
-	WLog_DBG(TAG, "ConnectFlags: 0x%08" PRIX32 "", ConnectFlags);
 	WLog_DBG(TAG, "EncryptedPlatformChallenge:");
 	winpr_HexDump(TAG, WLOG_DEBUG, license->EncryptedPlatformChallenge->data,
 	              license->EncryptedPlatformChallenge->length);
