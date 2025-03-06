@@ -480,14 +480,14 @@ static int load_map_from_xkbfile(xfContext* xfc)
 		char xkb_keyname[XkbKeyNameLength + 1] = { 42, 42, 42, 42,
 			                                       0 }; /* end-of-string at index 5 */
 
-		WLog_Print(xfc->log, WLOG_WARN, "XkbGetNames() == Success, min=%" PRIu8 ", max=%" PRIu8,
+		WLog_Print(xfc->log, WLOG_TRACE, "XkbGetNames() == Success, min=%" PRIu8 ", max=%" PRIu8,
 		           xkb->min_key_code, xkb->max_key_code);
 		for (size_t i = xkb->min_key_code; i < xkb->max_key_code; i++)
 		{
 			BOOL found = FALSE;
 			strncpy(xkb_keyname, xkb->names->keys[i].name, XkbKeyNameLength);
 
-			WLog_Print(xfc->log, WLOG_WARN, "KeyCode %" PRIuz " -> %s", i, xkb_keyname);
+			WLog_Print(xfc->log, WLOG_TRACE, "KeyCode %" PRIuz " -> %s", i, xkb_keyname);
 			if (strnlen(xkb_keyname, ARRAYSIZE(xkb_keyname)) < 1)
 				continue;
 

@@ -559,12 +559,11 @@ static BOOL tf_peer_dump_rfx(freerdp_peer* client)
 	rdpUpdate* update = NULL;
 	rdpPcap* pcap_rfx = NULL;
 	pcap_record record = { 0 };
-	struct server_info* info = NULL;
 
 	WINPR_ASSERT(client);
 	WINPR_ASSERT(client->context);
 
-	info = client->ContextExtra;
+	struct server_info* info = client->ContextExtra;
 	WINPR_ASSERT(info);
 
 	s = Stream_New(NULL, 512);
@@ -798,7 +797,6 @@ static BOOL tf_peer_post_connect(freerdp_peer* client)
 static BOOL tf_peer_activate(freerdp_peer* client)
 {
 	testPeerContext* context = NULL;
-	struct server_info* info = NULL;
 	rdpSettings* settings = NULL;
 
 	WINPR_ASSERT(client);
@@ -809,7 +807,7 @@ static BOOL tf_peer_activate(freerdp_peer* client)
 	settings = client->context->settings;
 	WINPR_ASSERT(settings);
 
-	info = client->ContextExtra;
+	struct server_info* info = client->ContextExtra;
 	WINPR_ASSERT(info);
 
 	context->activated = TRUE;
@@ -1004,9 +1002,6 @@ static int hook_peer_write_pdu(rdpTransport* transport, wStream* s)
 	UINT64 ts = 0;
 	wStream* ls = NULL;
 	UINT64 last_ts = 0;
-	const struct server_info* info = NULL;
-	freerdp_peer* client = NULL;
-	testPeerContext* peerCtx = NULL;
 	size_t offset = 0;
 	UINT32 flags = 0;
 	rdpContext* context = transport_get_context(transport);
@@ -1014,15 +1009,12 @@ static int hook_peer_write_pdu(rdpTransport* transport, wStream* s)
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(s);
 
-	client = context->peer;
+	freerdp_peer* client = context->peer;
 	WINPR_ASSERT(client);
 
-	peerCtx = (testPeerContext*)client->context;
+	testPeerContext* peerCtx = (testPeerContext*)client->context;
 	WINPR_ASSERT(peerCtx);
 	WINPR_ASSERT(peerCtx->io.WritePdu);
-
-	info = client->ContextExtra;
-	WINPR_ASSERT(info);
 
 	/* Let the client authenticate.
 	 * After that is done, we stop the normal operation and send
@@ -1031,7 +1023,6 @@ static int hook_peer_write_pdu(rdpTransport* transport, wStream* s)
 	 * This is fragile and the connecting client needs to use the same
 	 * configuration as the one that recorded the session!
 	 */
-	WINPR_ASSERT(info);
 	CONNECTION_STATE state = freerdp_get_state(context);
 	if (state < CONNECTION_STATE_NEGO)
 		return peerCtx->io.WritePdu(transport, s);
@@ -1077,7 +1068,6 @@ static DWORD WINAPI test_peer_mainloop(LPVOID arg)
 	DWORD count = 0;
 	DWORD status = 0;
 	testPeerContext* context = NULL;
-	struct server_info* info = NULL;
 	rdpSettings* settings = NULL;
 	rdpInput* input = NULL;
 	rdpUpdate* update = NULL;
@@ -1085,7 +1075,7 @@ static DWORD WINAPI test_peer_mainloop(LPVOID arg)
 
 	WINPR_ASSERT(client);
 
-	info = client->ContextExtra;
+	struct server_info* info = client->ContextExtra;
 	WINPR_ASSERT(info);
 
 	if (!test_peer_init(client))
@@ -1273,14 +1263,13 @@ fail:
 static BOOL test_peer_accepted(freerdp_listener* instance, freerdp_peer* client)
 {
 	HANDLE hThread = NULL;
-	struct server_info* info = NULL;
 
 	WINPR_UNUSED(instance);
 
 	WINPR_ASSERT(instance);
 	WINPR_ASSERT(client);
 
-	info = instance->info;
+	struct server_info* info = instance->info;
 	client->ContextExtra = info;
 
 	if (!(hThread = CreateThread(NULL, 0, test_peer_mainloop, (void*)client, 0, NULL)))

@@ -1678,12 +1678,8 @@ BOOL WINAPI FreeRDP_WTSVirtualChannelWrite(HANDLE hChannelHandle, PCHAR Buffer, 
 	}
 	else
 	{
-		rdpContext* context = NULL;
-
 		first = TRUE;
-		WINPR_ASSERT(channel->client);
-		context = channel->client->context;
-		WINPR_ASSERT(context);
+
 		while (Length > 0)
 		{
 			s = Stream_New(NULL, DVC_MAX_DATA_PDU_SIZE);

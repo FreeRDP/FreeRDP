@@ -403,6 +403,15 @@ static UINT urbdrc_exchange_capabilities(GENERIC_CHANNEL_CALLBACK* callback, wSt
 	switch (FunctionId)
 	{
 		case RIM_EXCHANGE_CAPABILITY_REQUEST:
+			if (InterfaceId != 0)
+			{
+				WLog_ERR(
+				    TAG,
+				    "[MS-RDPEUSB] 2.2.3.1 Interface Manipulation Exchange Capabilities Request "
+				    "(RIM_EXCHANGE_CAPABILITY_REQUEST))::InterfaceId expected 0, got %" PRIu32,
+				    InterfaceId);
+				return ERROR_INVALID_DATA;
+			}
 			error = urbdrc_process_capability_request(callback, data, MessageId);
 			break;
 

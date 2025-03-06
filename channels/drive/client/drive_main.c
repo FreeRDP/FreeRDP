@@ -153,13 +153,6 @@ static UINT drive_process_irp_create(DRIVE_DEVICE* drive, IRP* irp)
 	UINT32 FileId = 0;
 	DRIVE_FILE* file = NULL;
 	BYTE Information = 0;
-	UINT32 FileAttributes = 0;
-	UINT32 SharedAccess = 0;
-	UINT32 DesiredAccess = 0;
-	UINT32 CreateDisposition = 0;
-	UINT32 CreateOptions = 0;
-	UINT32 PathLength = 0;
-	UINT64 allocationSize = 0;
 	const WCHAR* path = NULL;
 
 	if (!drive || !irp || !irp->devman || !irp->Complete)
@@ -168,13 +161,13 @@ static UINT drive_process_irp_create(DRIVE_DEVICE* drive, IRP* irp)
 	if (!Stream_CheckAndLogRequiredLength(TAG, irp->input, 6 * 4 + 8))
 		return ERROR_INVALID_DATA;
 
-	Stream_Read_UINT32(irp->input, DesiredAccess);
-	Stream_Read_UINT64(irp->input, allocationSize);
-	Stream_Read_UINT32(irp->input, FileAttributes);
-	Stream_Read_UINT32(irp->input, SharedAccess);
-	Stream_Read_UINT32(irp->input, CreateDisposition);
-	Stream_Read_UINT32(irp->input, CreateOptions);
-	Stream_Read_UINT32(irp->input, PathLength);
+	const uint32_t DesiredAccess = Stream_Get_UINT32(irp->input);
+	const uint64_t allocationSize = Stream_Get_UINT64(irp->input);
+	const uint32_t FileAttributes = Stream_Get_UINT32(irp->input);
+	const uint32_t SharedAccess = Stream_Get_UINT32(irp->input);
+	const uint32_t CreateDisposition = Stream_Get_UINT32(irp->input);
+	const uint32_t CreateOptions = Stream_Get_UINT32(irp->input);
+	const uint32_t PathLength = Stream_Get_UINT32(irp->input);
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, irp->input, PathLength))
 		return ERROR_INVALID_DATA;
@@ -220,6 +213,15 @@ static UINT drive_process_irp_create(DRIVE_DEVICE* drive, IRP* irp)
 			default:
 				Information = 0;
 				break;
+		}
+
+		if (allocationSize > 0)
+		{
+			const BYTE buffer[] = { '\0' };
+			if (!drive_file_seek(file, allocationSize - sizeof(buffer)))
+				return ERROR_INTERNAL_ERROR;
+			if (!drive_file_write(file, buffer, sizeof(buffer)))
+				return ERROR_INTERNAL_ERROR;
 		}
 	}
 
@@ -570,6 +572,8 @@ static UINT drive_process_irp_query_volume_information(DRIVE_DEVICE* drive, IRP*
 			break;
 
 		default:
+			WLog_WARN(TAG, "Unhandled FSInformationClass %s [0x%08" PRIx32 "]",
+			          FSInformationClass2Tag(FsInformationClass), FsInformationClass);
 			irp->IoStatus = STATUS_UNSUCCESSFUL;
 			Stream_Write_UINT32(output, 0); /* Length */
 			break;
@@ -587,15 +591,15 @@ static UINT drive_process_irp_query_volume_information(DRIVE_DEVICE* drive, IRP*
  */
 static UINT drive_process_irp_silent_ignore(DRIVE_DEVICE* drive, IRP* irp)
 {
-	UINT32 FsInformationClass = 0;
-
 	if (!drive || !irp || !irp->output || !irp->Complete)
 		return ERROR_INVALID_PARAMETER;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, irp->input, 4))
 		return ERROR_INVALID_DATA;
 
-	Stream_Read_UINT32(irp->input, FsInformationClass);
+	const uint32_t FsInformationClass = Stream_Get_UINT32(irp->input);
+	WLog_VRB(TAG, "Silently ignore FSInformationClass %s [0x%08" PRIx32 "]",
+	         FSInformationClass2Tag(FsInformationClass), FsInformationClass);
 	Stream_Write_UINT32(irp->output, 0); /* Length */
 	return irp->Complete(irp);
 }

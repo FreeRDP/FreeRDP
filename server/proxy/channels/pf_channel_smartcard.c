@@ -113,7 +113,8 @@ struct thread_arg
 static void queue_free(void* obj);
 static void* queue_copy(const void* obj);
 
-static VOID irp_thread(PTP_CALLBACK_INSTANCE Instance, PVOID Context, PTP_WORK Work)
+static VOID irp_thread(WINPR_ATTR_UNUSED PTP_CALLBACK_INSTANCE Instance, PVOID Context,
+                       PTP_WORK Work)
 {
 	struct thread_arg* arg = Context;
 	pf_channel_client_context* scard = arg->scard;
@@ -187,20 +188,17 @@ BOOL pf_channel_smartcard_client_handle(wLog* log, pClientContext* pc, wStream* 
 		return FALSE;
 	else
 	{
-		UINT32 DeviceId = 0;
-		UINT32 MajorFunction = 0;
-		UINT32 MinorFunction = 0;
-
-		Stream_Read_UINT32(s, DeviceId);      /* DeviceId (4 bytes) */
-		Stream_Read_UINT32(s, FileId);        /* FileId (4 bytes) */
-		Stream_Read_UINT32(s, CompletionId);  /* CompletionId (4 bytes) */
-		Stream_Read_UINT32(s, MajorFunction); /* MajorFunction (4 bytes) */
-		Stream_Read_UINT32(s, MinorFunction); /* MinorFunction (4 bytes) */
+		const uint32_t DeviceId = Stream_Get_UINT32(s);      /* DeviceId (4 bytes) */
+		FileId = Stream_Get_UINT32(s);                       /* FileId (4 bytes) */
+		CompletionId = Stream_Get_UINT32(s);                 /* CompletionId (4 bytes) */
+		const uint32_t MajorFunction = Stream_Get_UINT32(s); /* MajorFunction (4 bytes) */
+		const uint32_t MinorFunction = Stream_Get_UINT32(s); /* MinorFunction (4 bytes) */
 
 		if (MajorFunction != IRP_MJ_DEVICE_CONTROL)
 		{
-			WLog_WARN(TAG, "[%s] Invalid IRP received, expected %s, got %2", SCARD_SVC_CHANNEL_NAME,
-			          rdpdr_irp_string(IRP_MJ_DEVICE_CONTROL), rdpdr_irp_string(MajorFunction));
+			WLog_WARN(TAG, "[%s] Invalid IRP received, expected %s, got %s [0x%08" PRIx32 "]",
+			          SCARD_SVC_CHANNEL_NAME, rdpdr_irp_string(IRP_MJ_DEVICE_CONTROL),
+			          rdpdr_irp_string(MajorFunction), MinorFunction);
 			return FALSE;
 		}
 		e.op.completionID = CompletionId;
@@ -259,7 +257,8 @@ fail:
 	return rc;
 }
 
-BOOL pf_channel_smartcard_server_handle(pServerContext* ps, wStream* s)
+BOOL pf_channel_smartcard_server_handle(WINPR_ATTR_UNUSED pServerContext* ps,
+                                        WINPR_ATTR_UNUSED wStream* s)
 {
 	WLog_ERR(TAG, "TODO: unimplemented");
 	return TRUE;

@@ -701,16 +701,10 @@ static BOOL shadow_client_suppress_output(rdpContext* context, BYTE allow, const
 
 static BOOL shadow_client_activate(freerdp_peer* peer)
 {
-	rdpSettings* settings = NULL;
-	rdpShadowClient* client = NULL;
-
 	WINPR_ASSERT(peer);
 
-	client = (rdpShadowClient*)peer->context;
+	rdpShadowClient* client = (rdpShadowClient*)peer->context;
 	WINPR_ASSERT(client);
-
-	settings = peer->context->settings;
-	WINPR_ASSERT(settings);
 
 	/* Resize client if necessary */
 	if (shadow_client_recalc_desktop_size(client))
@@ -1398,7 +1392,6 @@ static BOOL shadow_client_send_surface_gfx(rdpShadowClient* client, const BYTE* 
 	}
 	else if (freerdp_settings_get_bool(settings, FreeRDP_GfxPlanar))
 	{
-		BOOL rc = 0;
 		const UINT32 w = cmd.right - cmd.left;
 		const UINT32 h = cmd.bottom - cmd.top;
 		const BYTE* src =
@@ -1409,8 +1402,10 @@ static BOOL shadow_client_send_surface_gfx(rdpShadowClient* client, const BYTE* 
 			return FALSE;
 		}
 
-		rc = freerdp_bitmap_planar_context_reset(encoder->planar, w, h);
-		WINPR_ASSERT(rc);
+		const BOOL rc = freerdp_bitmap_planar_context_reset(encoder->planar, w, h);
+		if (!rc)
+			return FALSE;
+
 		freerdp_planar_topdown_image(encoder->planar, TRUE);
 
 		cmd.data = freerdp_bitmap_compress_planar(encoder->planar, src, SrcFormat, w, h, nSrcStep,
@@ -1430,17 +1425,21 @@ static BOOL shadow_client_send_surface_gfx(rdpShadowClient* client, const BYTE* 
 	}
 	else
 	{
-		BOOL rc = 0;
 		const UINT32 w = cmd.right - cmd.left;
 		const UINT32 h = cmd.bottom - cmd.top;
 		const UINT32 length = w * 4 * h;
+
 		BYTE* data = malloc(length);
+		if (!data)
+			return FALSE;
 
-		WINPR_ASSERT(data);
-
-		rc = freerdp_image_copy_no_overlap(data, PIXEL_FORMAT_BGRA32, 0, 0, 0, w, h, pSrcData,
-		                                   SrcFormat, nSrcStep, cmd.left, cmd.top, NULL, 0);
-		WINPR_ASSERT(rc);
+		BOOL rc = freerdp_image_copy_no_overlap(data, PIXEL_FORMAT_BGRA32, 0, 0, 0, w, h, pSrcData,
+		                                        SrcFormat, nSrcStep, cmd.left, cmd.top, NULL, 0);
+		if (!rc)
+		{
+			free(data);
+			return FALSE;
+		}
 
 		cmd.data = data;
 		cmd.length = length;

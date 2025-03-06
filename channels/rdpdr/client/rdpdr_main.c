@@ -1495,15 +1495,10 @@ UINT rdpdr_try_send_device_list_announce_request(rdpdrPlugin* rdpdr)
 
 static UINT dummy_irp_response(rdpdrPlugin* rdpdr, wStream* s)
 {
-	wStream* output = NULL;
-	UINT32 DeviceId = 0;
-	UINT32 FileId = 0;
-	UINT32 CompletionId = 0;
-
 	WINPR_ASSERT(rdpdr);
 	WINPR_ASSERT(s);
 
-	output = StreamPool_Take(rdpdr->pool, 256); // RDPDR_DEVICE_IO_RESPONSE_LENGTH
+	wStream* output = StreamPool_Take(rdpdr->pool, 256); // RDPDR_DEVICE_IO_RESPONSE_LENGTH
 	if (!output)
 	{
 		WLog_Print(rdpdr->log, WLOG_ERROR, "Stream_New failed!");
@@ -1512,10 +1507,14 @@ static UINT dummy_irp_response(rdpdrPlugin* rdpdr, wStream* s)
 
 	Stream_SetPosition(s, 4); /* see "rdpdr_process_receive" */
 
-	Stream_Read_UINT32(s, DeviceId);     /* DeviceId (4 bytes) */
-	Stream_Read_UINT32(s, FileId);       /* FileId (4 bytes) */
-	Stream_Read_UINT32(s, CompletionId); /* CompletionId (4 bytes) */
+	const uint32_t DeviceId = Stream_Get_UINT32(s);     /* DeviceId (4 bytes) */
+	const uint32_t FileId = Stream_Get_UINT32(s);       /* FileId (4 bytes) */
+	const uint32_t CompletionId = Stream_Get_UINT32(s); /* CompletionId (4 bytes) */
 
+	WLog_Print(rdpdr->log, WLOG_ERROR,
+	           "Dummy response {DeviceId=%" PRIu32 ", FileId=%" PRIu32 ", CompletionId=%" PRIu32
+	           "}",
+	           DeviceId, FileId, CompletionId);
 	if (!rdpdr_write_iocompletion_header(output, DeviceId, CompletionId, STATUS_UNSUCCESSFUL))
 		return CHANNEL_RC_NO_MEMORY;
 

@@ -751,18 +751,8 @@ BOOL rdp_server_accept_client_control_pdu(rdpRdp* rdp, wStream* s)
 
 BOOL rdp_server_accept_client_font_list_pdu(rdpRdp* rdp, wStream* s)
 {
-	rdpSettings* settings = NULL;
-	freerdp_peer* peer = NULL;
-
 	WINPR_ASSERT(rdp);
 	WINPR_ASSERT(s);
-
-	settings = rdp->settings;
-	WINPR_ASSERT(settings);
-
-	WINPR_ASSERT(rdp->context);
-	peer = rdp->context->peer;
-	WINPR_ASSERT(peer);
 
 	if (!rdp_recv_client_font_list_pdu(s))
 		return FALSE;
