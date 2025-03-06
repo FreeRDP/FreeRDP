@@ -22,7 +22,7 @@
 
 #include <freerdp/api.h>
 
-#if defined(WITH_FREERDP_3x_DEPRECATED)
+#if !defined(WITHOUT_FREERDP_3x_DEPRECATED)
 FREERDP_LOCAL int freerdp_detect_keyboard_layout_from_xkb(DWORD* keyboardLayoutId);
 #endif
 

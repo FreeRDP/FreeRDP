@@ -86,7 +86,7 @@ extern "C"
 		size_t InterceptCount;
 
 		/* clipboard specific settings */
-#if defined(WITH_FREERDP_3x_DEPRECATED)
+#if !defined(WITHOUT_FREERDP_3x_DEPRECATED)
 		WINPR_DEPRECATED_VAR("[since 3.6.0] Unused, ignore", BOOL TextOnly);
 		WINPR_DEPRECATED_VAR("[since 3.6.0] Unused, ignore", UINT32 MaxTextLength);
 

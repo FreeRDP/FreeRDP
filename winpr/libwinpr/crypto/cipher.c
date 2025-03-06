@@ -574,7 +574,7 @@ mbedtls_cipher_type_t winpr_mbedtls_get_cipher_type(int cipher)
 }
 #endif
 
-#if defined(WITH_FREERDP_3x_DEPRECATED)
+#if !defined(WITHOUT_FREERDP_3x_DEPRECATED)
 WINPR_CIPHER_CTX* winpr_Cipher_New(WINPR_CIPHER_TYPE cipher, WINPR_CRYPTO_OPERATION op,
                                    const void* key, const void* iv)
 {

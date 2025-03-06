@@ -239,7 +239,7 @@ BOOL freerdp_client_codecs_reset(rdpCodecs* codecs, UINT32 flags, UINT32 width, 
 	return rc;
 }
 
-#if defined(WITH_FREERDP_3x_DEPRECATED)
+#if !defined(WITHOUT_FREERDP_3x_DEPRECATED)
 rdpCodecs* codecs_new(rdpContext* context)
 {
 	if (!context || !context->settings)

@@ -47,7 +47,7 @@ if(FREERDP_VENDOR AND WITH_CLIENT)
 
   if(APPLE)
     if(IOS)
-      if(WITH_FREERDP_3x_DEPRECATED)
+      if(NOT WITHOUT_FREERDP_3x_DEPRECATED)
         if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/iOS")
           message(STATUS "Adding iOS client")
           add_subdirectory(iOS)
