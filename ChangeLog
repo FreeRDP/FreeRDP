@@ -1,3 +1,82 @@
+# 2025-03-06 Version 3.13.0
+
+Another bugfix and cleanup release.
+Due to some new functions and fields being introduced the minor version
+has been increased.
+
+New for application developers:
+A new CMake Variable WITH_FREERDP_3x_DEPRECATED (ON by default) allows
+disabling all symbols that have been marked deprecated during the 3.x
+release cycle. Such a build can be used to test compatibility with future
+versions that might drop these symbols entirely.
+
+So, what has been done:
+* Friends of old hardware rejoice, serial port redirection got an update
+  (not kidding you)
+* Android builds have been updated to be usable again
+* Mingw builds now periodically do a shared and static build
+* Fixed some bugs and regressions along the way and improved test coverage as
+  well
+
+Noteworthy Changes:
+* Cmake fix symbol visibility (#11185)
+* Sanity checks (#11186)
+* [locale,keyboard] fix loading from file (#11188)
+* [client,x11] only filter input on floatbar lock (#11190)
+* [core,gcc] improve consistency checks (#11191)
+* [channel,urbdrc] fix urbdrc_udevman_register_devices (#11194)
+* [client,sdl] fix keyboard grab (#11195)
+* Nightly deb sdl3 optional (#11197)
+* Alt arch update (#11199)
+* [ci,alt-arch] split config (#11200)
+* [core,freerdp] send MCS Disconnect Provider Ultimatum PDU (#11202)
+* [macro] fix use of WINPR_DEPRECATED (#11203)
+* [channel,rdpecam] UVC H.264 fix for c922 camera (#11207)
+* [channel,rdpdr] support general caps V1 (#11209)
+* [cmake] fix missing include (#11213)
+* [client,sdl] mark SDL2 as deprecated. (#11223)
+* Cursor test and fixes (#11220)
+* [build,android] add workaround for OpenSSL tag naming (#11224)
+* [core,credssp_auth] Fix faulty string length check in `credssp_auth_client_init_cred_attributes` (#11226)
+* [codec,test] fix type mismatch (#11229)
+* [codec,dsp] ignore encoder errors (#11225)
+* Android fixes (#11230)
+* [channels,rdpsnd] fix android build warnings (#11232)
+* [client,common] improve parsing of TLS options (#11235)
+* [client,x11] reduce verbosity of actionscript log (#11238)
+* CMake: generate a .gitignore file for the build directory (#11241)
+* [winpr,wlog] simplify WLog_* macros (#11237)
+* [client,cmdline] fix port parsing for gateway (#11243)
+* Mingw update (#11242, #11244, #11245)
+* [ci,abi] suppress gdi_graphics_pipeline_init_ex (#11246)
+* [cmake] Enable CMAKE_EXPORT_COMPILE_COMMANDS (#11252)
+* [packaging,flatpak] remove .orig file (#11254)
+* [utils,smartcard] check output buffer length (#11255)
+* [client,x11] improve action script logging (#11257)
+* [warnings] fix -Wunused-macro (#11258)
+* [warnings] fix -Wunused-function (#11260)
+* Redirection && StreamPool usage fixes (#11262)
+* Serial term fixes (#11253)
+* [server,shadow] multi rect BitmapUpdate support (#11268)
+* Redirection && StreamPool usage fixes (#11262)
+* [warnings] eliminate dead code (#11275)
+* Implement stuff (#11277)
+* [dead code] remove some unused code (#11280)
+* [channels,rdpecam] fix libusb include path (#11282)
+* Rdpear test fix (#11284)
+* client: Move buffer pointer after writing RDP settings (#11287)
+* [warnings] eliminate dead code (#11283)
+* [client,x11] implement keyboard mapping (#11273)
+* Serial term fixes (#11253)
+* [core,gateway] add tsg checks (#11288)
+
+New Contributors:
+* @yegorich made their first contribution in (#11241)
+* @THS-on made their first contribution in (#11243)
+
+For a complete and detailed change log since the last release run:
+git log 3.13.0...3.12.0
+
 # 2025-02-14 Version 3.12.0
 
 A bugfix and cleanup release.
