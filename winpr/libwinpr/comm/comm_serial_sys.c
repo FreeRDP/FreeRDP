@@ -1364,7 +1364,7 @@ static BOOL get_commstatus(WINPR_COMM* pComm, SERIAL_STATUS* pCommstatus)
 #if defined(WINPR_HAVE_COMM_COUNTERS)
 	if (currentCounters.tx != pComm->counters.tx)
 	{
-		pComm->PendingEvents |= SERIAL_EV_TXEMPTY;
+		pComm->PendingEvents &= (uint32_t)~SERIAL_EV_TXEMPTY;
 	}
 	else
 	{
