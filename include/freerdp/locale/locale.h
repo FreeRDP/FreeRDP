@@ -262,6 +262,15 @@ extern "C"
 	FREERDP_API const char* freerdp_get_system_locale_name_from_id(DWORD localeId);
 	FREERDP_API int freerdp_detect_keyboard_layout_from_system_locale(DWORD* keyboardLayoutId);
 
+	/** @brief Try to guess the keyboard layout ID from a given locale string (e.g. de_AT)
+	 *
+	 *  @param localestr The locale string to use for detection
+	 *
+	 *  @return \b negative in case of an error, or a keyboard layout id otherwise
+	 *  @since version 3.14.0
+	 */
+	FREERDP_API int64_t freerdp_detect_keyboard_layout_from_locale(const char* localestr);
+
 	/**
 	 * @brief Query the list of supported system locales
 	 * @param count A pointer to hold the number of locales found
