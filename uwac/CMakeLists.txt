@@ -30,8 +30,6 @@ if(NOT FREERDP_UNIFIED_BUILD)
 
   include(ProjectCStandard)
 
-  option(BUILD_TESTING_INTERNAL "Build library unit tests" ON)
-
   include(ExportAllSymbols)
 endif()
 
