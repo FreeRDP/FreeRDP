@@ -740,7 +740,7 @@ static UINT audin_plugin_terminated(IWTSPlugin* pPlugin)
 		if (error != CHANNEL_RC_OK)
 		{
 			WLog_Print(audin->log, WLOG_ERROR, "Free failed with errorcode %" PRIu32 "", error);
-			// dont stop on error
+			// don't stop on error
 		}
 
 		audin->device = NULL;

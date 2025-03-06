@@ -394,7 +394,7 @@ static LRESULT CALLBACK hotplug_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM 
 											if ((error = rdpdr_send_device_list_remove_request(
 											         rdpdr, 1, ids)))
 											{
-												// dont end on error, just report ?
+												// don't end on error, just report ?
 												WLog_Print(
 												    rdpdr->log, WLOG_ERROR,
 												    "rdpdr_send_device_list_remove_request failed "

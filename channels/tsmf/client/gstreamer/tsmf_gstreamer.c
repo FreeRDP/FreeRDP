@@ -718,7 +718,7 @@ static BOOL tsmf_gstreamer_decodeEx(ITSMFDecoder* decoder, const BYTE* data, UIN
 		useTimestamps = FALSE;
 	}
 
-	/* If no timestamps exist then we dont want to look at the timestamp values (bit 7) */
+	/* If no timestamps exist then we don't want to look at the timestamp values (bit 7) */
 	if (extensions & 0x00000040)
 	{
 		DEBUG_TSMF("Ignoring the timestamps - none - bit 7");

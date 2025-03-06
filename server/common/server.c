@@ -185,7 +185,7 @@ void freerdp_server_warn_unmaintained(int argc, char* argv[])
 	WLog_Print_unchecked(
 	    log, log_level,
 	    " Developers hang out in https://matrix.to/#/#FreeRDP:matrix.org?via=matrix.org "
-	    "- dont hesitate to ask some questions. (replies might take some time depending "
+	    "- don't hesitate to ask some questions. (replies might take some time depending "
 	    "on your timezone) - if you intend using this component write us a message");
 }
 
@@ -208,7 +208,7 @@ void freerdp_server_warn_experimental(int argc, char* argv[])
 	WLog_Print_unchecked(
 	    log, log_level,
 	    " Developers hang out in https://matrix.to/#/#FreeRDP:matrix.org?via=matrix.org "
-	    "- dont hesitate to ask some questions. (replies might take some time depending "
+	    "- don't hesitate to ask some questions. (replies might take some time depending "
 	    "on your timezone)");
 }
 
@@ -231,6 +231,6 @@ void freerdp_server_warn_deprecated(int argc, char* argv[])
 	    log, log_level,
 	    "The project is hosted at https://github.com/freerdp/freerdp and "
 	    " developers hang out in https://matrix.to/#/#FreeRDP:matrix.org?via=matrix.org "
-	    "- dont hesitate to ask some questions. (replies might take some time depending "
+	    "- don't hesitate to ask some questions. (replies might take some time depending "
 	    "on your timezone)");
 }

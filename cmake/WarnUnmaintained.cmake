@@ -8,7 +8,7 @@ macro(warn_unmaintained name)
   message(WARNING "[unmaintained] Developers hang out in https://matrix.to/#/#FreeRDP:matrix.org?via=matrix.org")
   message(
     WARNING
-      "[unmaintained] - dont hesitate to ask some questions. (replies might take some time depending on your timezone)"
+      "[unmaintained] - don't hesitate to ask some questions. (replies might take some time depending on your timezone)"
   )
   message(WARNING "[unmaintained] - if you intend using this component write us a message")
 endmacro()
