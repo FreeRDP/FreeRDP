@@ -9,7 +9,7 @@ if(WIN32)
     unset(WEBVIEW2_PACKAGE_DIR CACHE)
   endif()
   find_path(WEBVIEW2_PACKAGE_DIR NAMES "build/native/include/WebView2.h"
-            NO_DEFAULT_PATH NO_CMAKE_FIND_ROOT_PATH # dont prepend CMAKE_PREFIX
+            NO_DEFAULT_PATH NO_CMAKE_FIND_ROOT_PATH # don't prepend CMAKE_PREFIX
   )
   if(NOT WEBVIEW2_PACKAGE_DIR)
     message(WARNING "WebView2 SDK not found locally, downloading ${WEBVIEW2_VERSION} ...")

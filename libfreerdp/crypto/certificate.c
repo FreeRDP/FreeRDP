@@ -724,7 +724,7 @@ static BOOL certificate_process_server_public_signature(rdpCertificate* certific
 	 * allowed under FIPS. Since the validation is not protecting against anything since the
 	 * private/public keys are well known and documented in MS-RDPBCGR section 5.3.3.1, we are not
 	 * gaining any security by using MD5 for signature comparison. Rather then use MD5
-	 * here we just dont do the validation to avoid its use. Historically, freerdp has been ignoring
+	 * here we just don't do the validation to avoid its use. Historically, freerdp has been ignoring
 	 * a failed validation anyways. */
 #if defined(CERT_VALIDATE_MD5)
 
