@@ -49,7 +49,6 @@ static INLINE pstatus_t sse_image_copy_bgr24_bgrx32(BYTE* WINPR_RESTRICT pDstDat
 	const __m128i smask = mm_set_epu32(0xff0b0a09, 0xff080706, 0xff050403, 0xff020100);
 	const UINT32 rem = nWidth % 4;
 
-	const size_t align = nSrcStep % 64;
 	const SSIZE_T width = nWidth - rem;
 	for (SSIZE_T y = 0; y < nHeight; y++)
 	{
