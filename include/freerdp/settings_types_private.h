@@ -835,6 +835,8 @@ struct rdp_settings
 	 * The zone below this point is ABI unstable, and
 	 * is therefore potentially subject to ABI breakage.
 	 */
+
+	SETTINGS_DEPRECATED(ALIGN64 BOOL MinimizeHotkey);          /* 6000 */
 };
 
 #ifdef __cplusplus
