@@ -1759,7 +1759,10 @@ static IUDEVICE* udev_init(URBDRC_PLUGIN* urbdrc, libusb_context* context, LIBUS
 		status = libusb_get_config_descriptor(pdev->libusb_dev, 0, &pdev->LibusbConfig);
 
 	if (status < 0)
+	{
+		log_libusb_result(urbdrc->log, WLOG_ERROR, "libusb_get_config_descriptor", status);
 		goto fail;
+	}
 
 	config_temp = pdev->LibusbConfig;
 	/* get the first interface and first altsetting */
@@ -1816,21 +1819,29 @@ fail:
 size_t udev_new_by_id(URBDRC_PLUGIN* urbdrc, libusb_context* ctx, UINT16 idVendor, UINT16 idProduct,
                       IUDEVICE*** devArray)
 {
-	LIBUSB_DEVICE** libusb_list = NULL;
-	UDEVICE** array = NULL;
-	ssize_t total_device = 0;
-	size_t num = 0;
+	WINPR_ASSERT(urbdrc);
+	WINPR_ASSERT(devArray);
 
-	if (!urbdrc || !devArray)
-		return 0;
+	size_t num = 0;
+	LIBUSB_DEVICE** libusb_list = NULL;
+
+	*devArray = NULL;
 
 	WLog_Print(urbdrc->log, WLOG_INFO, "VID: 0x%04" PRIX16 ", PID: 0x%04" PRIX16 "", idVendor,
 	           idProduct);
-	total_device = libusb_get_device_list(ctx, &libusb_list);
+	const ssize_t total_device = libusb_get_device_list(ctx, &libusb_list);
 	if (total_device < 0)
+	{
+		WLog_Print(urbdrc->log, WLOG_ERROR, "libusb_get_device_list -> [%" PRIdz "]", total_device);
 		return 0;
+	}
+	if (total_device == 0)
+	{
+		WLog_Print(urbdrc->log, WLOG_WARN, "libusb_get_device_list -> [%" PRIdz "]", total_device);
+		return 0;
+	}
 
-	array = (UDEVICE**)calloc((size_t)total_device, sizeof(UDEVICE*));
+	UDEVICE** array = (UDEVICE**)calloc((size_t)total_device, sizeof(UDEVICE*));
 
 	if (!array)
 		goto fail;
@@ -1842,11 +1853,17 @@ size_t udev_new_by_id(URBDRC_PLUGIN* urbdrc, libusb_context* ctx, UINT16 idVendo
 
 		if ((descriptor->idVendor == idVendor) && (descriptor->idProduct == idProduct))
 		{
-			array[num] = (PUDEVICE)udev_init(urbdrc, ctx, dev, libusb_get_bus_number(dev),
-			                                 libusb_get_device_address(dev));
+			const uint8_t nr = libusb_get_bus_number(dev);
+			const uint8_t addr = libusb_get_device_address(dev);
+			array[num] = (PUDEVICE)udev_init(urbdrc, ctx, dev, nr, addr);
 
 			if (array[num] != NULL)
 				num++;
+			else
+			{
+				WLog_Print(urbdrc->log, WLOG_WARN,
+				           "udev_init(nr=%" PRIu8 ", addr=%" PRIu8 ") failed", nr, addr);
+			}
 		}
 		else
 			libusb_unref_device(dev);
