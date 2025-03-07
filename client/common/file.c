@@ -1573,7 +1573,7 @@ static SSIZE_T write_int_parameters(const rdpFile* file, char* buffer, size_t si
 		if (~cur->val)
 		{
 			const SSIZE_T res = freerdp_client_write_setting_to_buffer(
-			    &buffer, &size, "%s:s:%" PRIu32, cur->key, cur->val);
+			    &buffer, &size, "%s:i:%" PRIu32, cur->key, cur->val);
 			if (res < 0)
 				return res;
 			totalSize += res;
