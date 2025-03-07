@@ -430,7 +430,6 @@ static const char* sdl_rdp_scancode_name(UINT32 scancode)
 
 	return "RDP_SCANCODE_UNKNOWN";
 }
-#endif
 
 static UINT32 sdl_rdp_scancode_val(const char* scancodeName)
 {
@@ -442,6 +441,7 @@ static UINT32 sdl_rdp_scancode_val(const char* scancodeName)
 
 	return RDP_SCANCODE_UNKNOWN;
 }
+#endif
 
 static UINT32 sdl_scancode_to_rdp(Uint32 scancode)
 {

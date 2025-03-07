@@ -712,9 +712,11 @@ static UINT rdpsnd_recv_wave2_pdu(rdpsndPlugin* rdpsnd, wStream* s, UINT16 BodyS
 	rdpsnd->waveDataSize = BodySize - 12;
 	rdpsnd->wArrivalTime = GetTickCount64();
 	WLog_Print(rdpsnd->log, WLOG_DEBUG,
-	           "%s Wave2PDU: cBlockNo: %" PRIu8 " wFormatNo: %" PRIu16 " [%s] , align=%hu",
+	           "%s Wave2PDU: cBlockNo: %" PRIu8 " wFormatNo: %" PRIu16
+	           " [%s] , align=%hu wTimeStamp=0x%04" PRIx16 ", dwAudioTimeStamp=0x%08" PRIx32,
 	           rdpsnd_is_dyn_str(rdpsnd->dynamic), rdpsnd->cBlockNo, wFormatNo,
-	           audio_format_get_tag_string(format->wFormatTag), format->nBlockAlign);
+	           audio_format_get_tag_string(format->wFormatTag), format->nBlockAlign,
+	           rdpsnd->wTimeStamp, dwAudioTimeStamp);
 
 	if (!rdpsnd_ensure_device_is_open(rdpsnd, wFormatNo, format))
 		return ERROR_INTERNAL_ERROR;

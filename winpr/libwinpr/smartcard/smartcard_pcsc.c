@@ -982,12 +982,10 @@ static LONG WINAPI PCSC_SCardListReadersW(SCARDCONTEXT hContext, LPCWSTR mszGrou
 	if (!PCSC_LockCardContext(hContext))
 		return SCARD_E_INVALID_HANDLE;
 
-	mszGroups = NULL; /* mszGroups is not supported by pcsc-lite */
-
 	if (mszGroups)
 	{
 		mszGroupsA = ConvertWCharToUtf8Alloc(mszGroups, NULL);
-		if (!mszGroups)
+		if (!mszGroupsA)
 			return SCARD_E_NO_MEMORY;
 	}
 
@@ -999,22 +997,19 @@ static LONG WINAPI PCSC_SCardListReadersW(SCARDCONTEXT hContext, LPCWSTR mszGrou
 	cnv.ppc = &mszReadersA;
 
 	status = PCSC_SCardListReaders_Internal(hContext, mszGroupsA, cnv.pc, pcchReaders);
+	free(mszGroupsA);
 	if (status == SCARD_S_SUCCESS)
 	{
 		size_t size = 0;
 		WCHAR* str = ConvertMszUtf8NToWCharAlloc(mszReadersA, *pcchReaders, &size);
 		PCSC_SCardFreeMemory_Internal(hContext, mszReadersA);
 		if (!str || (size > UINT32_MAX))
-		{
-			free(mszGroupsA);
 			return SCARD_E_NO_MEMORY;
-		}
+
 		*(LPWSTR*)mszReaders = str;
 		*pcchReaders = (DWORD)size;
 		PCSC_AddMemoryBlock(hContext, str);
 	}
-
-	free(mszGroupsA);
 
 	if (!PCSC_UnlockCardContext(hContext))
 		return SCARD_E_INVALID_HANDLE;

@@ -177,6 +177,9 @@ extern "C"
 		 * Only called, when use_dynamic_virtual_channel=TRUE.
 		 */
 		psRdpsndChannelIdAssigned ChannelIdAssigned;
+
+		UINT16 udpPort;  /** @since version 3.14.0 */
+		UINT8 lastblock; /** @since version 3.14.0 */
 	};
 
 	FREERDP_API void rdpsnd_server_context_free(RdpsndServerContext* context);

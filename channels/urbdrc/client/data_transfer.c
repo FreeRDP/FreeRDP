@@ -137,10 +137,15 @@ static UINT urbdrc_process_register_request_callback(IUDEVICE* pdev,
 	if (Stream_GetRemainingLength(s) >= 8)
 	{
 		Stream_Read_UINT32(s, NumRequestCompletion); /** must be 1 */
-		/** RequestCompletion:
-		 *   unique Request Completion interface for the client to use */
-		Stream_Read_UINT32(s, RequestCompletion);
-		pdev->set_ReqCompletion(pdev, RequestCompletion);
+		if (!Stream_CheckAndLogRequiredLength(TAG, s, 4ULL * NumRequestCompletion))
+			return ERROR_INVALID_DATA;
+		for (uint32_t x = 0; x < NumRequestCompletion; x++)
+		{
+			/** RequestCompletion:
+			 *   unique Request Completion interface for the client to use */
+			Stream_Read_UINT32(s, RequestCompletion);
+			pdev->set_ReqCompletion(pdev, RequestCompletion);
+		}
 	}
 	else if (Stream_GetRemainingLength(s) >= 4) /** Unregister the device */
 	{
@@ -316,14 +321,6 @@ static UINT urbdrc_process_io_control(IUDEVICE* pdev, GENERIC_CHANNEL_CALLBACK* 
 static UINT urbdrc_process_internal_io_control(IUDEVICE* pdev, GENERIC_CHANNEL_CALLBACK* callback,
                                                wStream* s, UINT32 MessageId, IUDEVMAN* udevman)
 {
-	wStream* out = NULL;
-	UINT32 IoControlCode = 0;
-	UINT32 InterfaceId = 0;
-	UINT32 InputBufferSize = 0;
-	UINT32 OutputBufferSize = 0;
-	UINT32 RequestId = 0;
-	UINT32 frames = 0;
-
 	if (!pdev || !callback || !s || !udevman)
 		return ERROR_INVALID_PARAMETER;
 
@@ -333,19 +330,28 @@ static UINT urbdrc_process_internal_io_control(IUDEVICE* pdev, GENERIC_CHANNEL_C
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
 		return ERROR_INVALID_DATA;
 
-	Stream_Read_UINT32(s, IoControlCode);
-	Stream_Read_UINT32(s, InputBufferSize);
+	const UINT32 IoControlCode = Stream_Get_UINT32(s);
+	if (IoControlCode != IOCTL_TSUSBGD_IOCTL_USBDI_QUERY_BUS_TIME)
+	{
+		WLog_ERR(
+		    TAG,
+		    "Invalid [MS-RDPEUSB] 2.2.13 USB Internal IO Control Code::IoControlCode0x%08" PRIx32
+		    ", must be IOCTL_TSUSBGD_IOCTL_USBDI_QUERY_BUS_TIME [0x00224000]",
+		    IoControlCode);
+		return ERROR_INVALID_DATA;
+	}
+	const UINT32 InputBufferSize = Stream_Get_UINT32(s);
 
 	if (!Stream_SafeSeek(s, InputBufferSize))
 		return ERROR_INVALID_DATA;
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8ULL))
 		return ERROR_INVALID_DATA;
-	Stream_Read_UINT32(s, OutputBufferSize);
-	Stream_Read_UINT32(s, RequestId);
-	InterfaceId = ((STREAM_ID_PROXY << 30) | pdev->get_ReqCompletion(pdev));
+	const UINT32 OutputBufferSize = Stream_Get_UINT32(s);
+	const UINT32 RequestId = Stream_Get_UINT32(s);
+	const UINT32 InterfaceId = ((STREAM_ID_PROXY << 30) | pdev->get_ReqCompletion(pdev));
 	// TODO: Implement control code.
 	/** Fixme: Currently this is a FALSE bustime... */
-	frames = GetTickCount();
+	const UINT32 frames = GetTickCount();
 
 	if (4 > OutputBufferSize)
 	{
@@ -353,7 +359,7 @@ static UINT urbdrc_process_internal_io_control(IUDEVICE* pdev, GENERIC_CHANNEL_C
 		           OutputBufferSize);
 		return ERROR_BAD_CONFIGURATION;
 	}
-	out = urb_create_iocompletion(InterfaceId, MessageId, RequestId, 4);
+	wStream* out = urb_create_iocompletion(InterfaceId, MessageId, RequestId, 4);
 
 	if (!out)
 		return ERROR_OUTOFMEMORY;
@@ -540,27 +546,66 @@ static UINT urb_select_configuration(IUDEVICE* pdev, GENERIC_CHANNEL_CALLBACK* c
 	return ERROR_SUCCESS;
 }
 
+static UINT urb_select_interface_response(GENERIC_CHANNEL_CALLBACK* callback, UINT32 RequestId,
+                                          UINT32 InterfaceId, UINT32 MessageId,
+                                          MSUSB_INTERFACE_DESCRIPTOR* MsInterface,
+                                          UINT32 OutputBufferSize)
+{
+	WINPR_ASSERT(callback);
+	WINPR_ASSERT(MsInterface);
+
+	URBDRC_PLUGIN* urbdrc = (URBDRC_PLUGIN*)callback->plugin;
+	WINPR_ASSERT(urbdrc);
+
+	const size_t interface_size = 16ULL + (MsInterface->NumberOfPipes * 20ULL);
+	const size_t out_size = 36ULL + interface_size;
+	if (out_size > OutputBufferSize)
+	{
+		WLog_Print(urbdrc->log, WLOG_DEBUG, "out_size %" PRIu32 " > OutputBufferSize %" PRIu32,
+		           out_size, OutputBufferSize);
+		return ERROR_BAD_CONFIGURATION;
+	}
+
+	wStream* out = Stream_New(NULL, out_size);
+
+	if (!out)
+		return ERROR_OUTOFMEMORY;
+
+	Stream_Write_UINT32(out, InterfaceId);            /** interface */
+	Stream_Write_UINT32(out, MessageId);              /** message id */
+	Stream_Write_UINT32(out, URB_COMPLETION_NO_DATA); /** function id */
+	Stream_Write_UINT32(out, RequestId);              /** RequestId */
+	Stream_Write_UINT32(
+	    out, WINPR_ASSERTING_INT_CAST(uint32_t, 8ULL + interface_size)); /** CbTsUrbResult */
+	/** TS_URB_RESULT_HEADER */
+	Stream_Write_UINT16(out, WINPR_ASSERTING_INT_CAST(uint16_t, 8 + interface_size)); /** Size */
+	/** Padding, MUST be ignored upon receipt */
+	Stream_Write_UINT16(out, TS_URB_SELECT_INTERFACE);
+	Stream_Write_UINT32(out, USBD_STATUS_SUCCESS); /** UsbdStatus */
+	/** TS_URB_SELECT_INTERFACE_RESULT */
+	if (!msusb_msinterface_write(MsInterface, out))
+		goto fail;
+	Stream_Write_UINT32(out, 0); /** HResult */
+	Stream_Write_UINT32(out, 0); /** OutputBufferSize */
+
+	return stream_write_and_free(callback->plugin, callback->channel, out);
+fail:
+	Stream_Free(out, TRUE);
+
+	return ERROR_INTERNAL_ERROR;
+}
+
 static UINT urb_select_interface(IUDEVICE* pdev, GENERIC_CHANNEL_CALLBACK* callback, wStream* s,
                                  UINT32 RequestField, UINT32 MessageId, IUDEVMAN* udevman,
                                  int transferDir)
 {
-	MSUSB_CONFIG_DESCRIPTOR* MsConfig = NULL;
-	MSUSB_INTERFACE_DESCRIPTOR* MsInterface = NULL;
-	UINT32 out_size = 0;
-	UINT32 InterfaceId = 0;
-	UINT32 ConfigurationHandle = 0;
-	UINT32 OutputBufferSize = 0;
-	BYTE InterfaceNumber = 0;
-	wStream* out = NULL;
-	UINT32 interface_size = 0;
-	URBDRC_PLUGIN* urbdrc = NULL;
 	const BOOL noAck = (RequestField & 0x80000000U) != 0;
 	const UINT32 RequestId = RequestField & 0x7FFFFFFF;
 
 	if (!callback || !s || !udevman || !pdev)
 		return ERROR_INVALID_PARAMETER;
 
-	urbdrc = (URBDRC_PLUGIN*)callback->plugin;
+	URBDRC_PLUGIN* urbdrc = (URBDRC_PLUGIN*)callback->plugin;
 
 	if (!urbdrc)
 		return ERROR_INVALID_PARAMETER;
@@ -574,9 +619,9 @@ static UINT urb_select_interface(IUDEVICE* pdev, GENERIC_CHANNEL_CALLBACK* callb
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return ERROR_INVALID_DATA;
 
-	InterfaceId = ((STREAM_ID_PROXY << 30) | pdev->get_ReqCompletion(pdev));
-	Stream_Read_UINT32(s, ConfigurationHandle);
-	MsInterface = msusb_msinterface_read(s);
+	const UINT32 InterfaceId = ((STREAM_ID_PROXY << 30) | pdev->get_ReqCompletion(pdev));
+	const UINT32 ConfigurationHandle = Stream_Get_UINT32(s);
+	MSUSB_INTERFACE_DESCRIPTOR* MsInterface = msusb_msinterface_read(s);
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4) || !MsInterface)
 	{
@@ -584,11 +629,11 @@ static UINT urb_select_interface(IUDEVICE* pdev, GENERIC_CHANNEL_CALLBACK* callb
 		return ERROR_INVALID_DATA;
 	}
 
-	Stream_Read_UINT32(s, OutputBufferSize);
+	const UINT32 OutputBufferSize = Stream_Get_UINT32(s);
 	pdev->select_interface(pdev, MsInterface->InterfaceNumber, MsInterface->AlternateSetting);
 	/* replace device's MsInterface */
-	MsConfig = pdev->get_MsConfig(pdev);
-	InterfaceNumber = MsInterface->InterfaceNumber;
+	MSUSB_CONFIG_DESCRIPTOR* MsConfig = pdev->get_MsConfig(pdev);
+	const uint8_t InterfaceNumber = MsInterface->InterfaceNumber;
 	if (!msusb_msinterface_replace(MsConfig, InterfaceNumber, MsInterface))
 	{
 		msusb_msconfig_free(MsConfig);
@@ -596,47 +641,13 @@ static UINT urb_select_interface(IUDEVICE* pdev, GENERIC_CHANNEL_CALLBACK* callb
 	}
 	/* complete configuration setup */
 	if (!pdev->complete_msconfig_setup(pdev, MsConfig))
-	{
-		msusb_msconfig_free(MsConfig);
 		return ERROR_BAD_CONFIGURATION;
-	}
-	MsInterface = MsConfig->MsInterfaces[InterfaceNumber];
-	interface_size = 16 + (MsInterface->NumberOfPipes * 20);
-	out_size = 36 + interface_size;
-	if (out_size > OutputBufferSize)
-	{
-		WLog_Print(urbdrc->log, WLOG_DEBUG, "out_size %" PRIu32 " > OutputBufferSize %" PRIu32,
-		           out_size, OutputBufferSize);
-		msusb_msconfig_free(MsConfig);
-		return ERROR_BAD_CONFIGURATION;
-	}
 
-	out = Stream_New(NULL, out_size);
+	if (noAck)
+		return CHANNEL_RC_OK;
 
-	if (!out)
-		return ERROR_OUTOFMEMORY;
-
-	Stream_Write_UINT32(out, InterfaceId);            /** interface */
-	Stream_Write_UINT32(out, MessageId);              /** message id */
-	Stream_Write_UINT32(out, URB_COMPLETION_NO_DATA); /** function id */
-	Stream_Write_UINT32(out, RequestId);              /** RequestId */
-	Stream_Write_UINT32(out, 8 + interface_size);     /** CbTsUrbResult */
-	/** TS_URB_RESULT_HEADER */
-	Stream_Write_UINT16(out, WINPR_ASSERTING_INT_CAST(uint16_t, 8 + interface_size)); /** Size */
-	/** Padding, MUST be ignored upon receipt */
-	Stream_Write_UINT16(out, TS_URB_SELECT_INTERFACE);
-	Stream_Write_UINT32(out, USBD_STATUS_SUCCESS); /** UsbdStatus */
-	/** TS_URB_SELECT_INTERFACE_RESULT */
-	msusb_msinterface_write(MsInterface, out);
-	Stream_Write_UINT32(out, 0); /** HResult */
-	Stream_Write_UINT32(out, 0); /** OutputBufferSize */
-
-	if (!noAck)
-		return stream_write_and_free(callback->plugin, callback->channel, out);
-	else
-		Stream_Free(out, TRUE);
-
-	return ERROR_SUCCESS;
+	return urb_select_interface_response(callback, RequestId, InterfaceId, MessageId, MsInterface,
+	                                     OutputBufferSize);
 }
 
 static UINT urb_control_transfer(IUDEVICE* pdev, GENERIC_CHANNEL_CALLBACK* callback, wStream* s,
@@ -1628,7 +1639,20 @@ static UINT urbdrc_process_transfer_request(IUDEVICE* pdev, GENERIC_CHANNEL_CALL
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(s, CbTsUrb); /** CbTsUrb */
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4ULL + CbTsUrb))
+		return ERROR_INVALID_DATA;
 	Stream_Read_UINT16(s, Size);    /** size */
+	if (Size != CbTsUrb)
+	{
+		const char* section = (transferDir == USBD_TRANSFER_DIRECTION_IN)
+		                          ? "2.2.6.7 Transfer In Request (TRANSFER_IN_REQUEST)"
+		                          : "2.2.6.8 Transfer Out Request (TRANSFER_OUT_REQUEST)";
+		WLog_ERR(TAG,
+		         "[MS-RDPEUSB] 2.2.9.1.1 TS_URB_HEADER::Size 0x04" PRIx16
+		         " != %s::CbTsUrb 0x%08" PRIx32,
+		         Size, section, CbTsUrb);
+		return ERROR_INVALID_DATA;
+	}
 	Stream_Read_UINT16(s, URB_Function);
 	Stream_Read_UINT32(s, RequestId);
 	WLog_Print(urbdrc->log, WLOG_DEBUG, "URB %s[%" PRIu16 "]", urb_function_string(URB_Function),

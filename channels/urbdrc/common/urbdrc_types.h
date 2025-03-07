@@ -99,6 +99,8 @@
  * device is blocked by the server's policy. */
 #define UsbRetractReason_BlockedByPolicy 0x00000001
 
+#define IOCTL_TSUSBGD_IOCTL_USBDI_QUERY_BUS_TIME 0x00224000
+
 enum device_text_type
 {
 	DeviceTextDescription = 0,

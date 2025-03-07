@@ -60,7 +60,6 @@ static INLINE pstatus_t avx2_image_copy_bgr24_bgrx32(BYTE* WINPR_RESTRICT pDstDa
 	const UINT32 rem = nWidth % 8;
 	const SSIZE_T width = nWidth - rem;
 
-	const size_t align = nSrcStep % 32;
 	for (SSIZE_T y = 0; y < nHeight; y++)
 	{
 		const BYTE* WINPR_RESTRICT srcLine =
