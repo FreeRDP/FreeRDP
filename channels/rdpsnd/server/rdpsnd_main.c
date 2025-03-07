@@ -185,8 +185,6 @@ static UINT rdpsnd_server_recv_quality_mode(RdpsndServerContext* context, wStrea
 static UINT rdpsnd_server_recv_formats(RdpsndServerContext* context, wStream* s)
 {
 	UINT16 num_known_format = 0;
-	UINT16 udpPort = 0;
-	BYTE lastblock = 0;
 	UINT error = CHANNEL_RC_OK;
 
 	WINPR_ASSERT(context);
@@ -197,9 +195,9 @@ static UINT rdpsnd_server_recv_formats(RdpsndServerContext* context, wStream* s)
 	Stream_Read_UINT32(s, context->capsFlags);          /* dwFlags */
 	Stream_Read_UINT32(s, context->initialVolume);      /* dwVolume */
 	Stream_Read_UINT32(s, context->initialPitch);       /* dwPitch */
-	Stream_Read_UINT16(s, udpPort);                     /* wDGramPort */
+	Stream_Read_UINT16(s, context->udpPort);            /* wDGramPort */
 	Stream_Read_UINT16(s, context->num_client_formats); /* wNumberOfFormats */
-	Stream_Read_UINT8(s, lastblock);                    /* cLastBlockConfirmed */
+	Stream_Read_UINT8(s, context->lastblock);           /* cLastBlockConfirmed */
 	Stream_Read_UINT16(s, context->clientVersion);      /* wVersion */
 	Stream_Seek_UINT8(s);                               /* bPad */
 
