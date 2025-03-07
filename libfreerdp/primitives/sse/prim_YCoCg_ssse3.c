@@ -74,27 +74,6 @@ static pstatus_t ssse3_YCoCgRToRGB_8u_AC4R_invert(const BYTE* WINPR_RESTRICT pSr
 	{
 		UINT32 w = width;
 
-		/* Get to a 16-byte destination boundary. */
-		if ((ULONG_PTR)dptr & 0x0f)
-		{
-			pstatus_t status = 0;
-			UINT32 startup = (16 - ((ULONG_PTR)dptr & 0x0f)) / 4;
-
-			if (startup > width)
-				startup = width;
-
-			status = generic->YCoCgToRGB_8u_AC4R(
-			    sptr, WINPR_ASSERTING_INT_CAST(INT32, srcStep), dptr, DstFormat,
-			    WINPR_ASSERTING_INT_CAST(INT32, dstStep), startup, 1, shift, withAlpha);
-
-			if (status != PRIMITIVES_SUCCESS)
-				return status;
-
-			sptr += startup * sizeof(UINT32);
-			dptr += startup * sizeof(UINT32);
-			w -= startup;
-		}
-
 		while (w >= 8)
 		{
 			__m128i R0;
@@ -246,27 +225,6 @@ static pstatus_t ssse3_YCoCgRToRGB_8u_AC4R_no_invert(const BYTE* WINPR_RESTRICT 
 	for (UINT32 h = 0; h < height; h++)
 	{
 		UINT32 w = width;
-
-		/* Get to a 16-byte destination boundary. */
-		if ((ULONG_PTR)dptr & 0x0f)
-		{
-			pstatus_t status = 0;
-			UINT32 startup = (16 - ((ULONG_PTR)dptr & 0x0f)) / 4;
-
-			if (startup > width)
-				startup = width;
-
-			status = generic->YCoCgToRGB_8u_AC4R(
-			    sptr, WINPR_ASSERTING_INT_CAST(INT32, srcStep), dptr, DstFormat,
-			    WINPR_ASSERTING_INT_CAST(INT32, dstStep), startup, 1, shift, withAlpha);
-
-			if (status != PRIMITIVES_SUCCESS)
-				return status;
-
-			sptr += startup * sizeof(UINT32);
-			dptr += startup * sizeof(UINT32);
-			w -= startup;
-		}
 
 		while (w >= 8)
 		{
