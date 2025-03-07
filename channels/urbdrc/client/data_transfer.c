@@ -137,10 +137,15 @@ static UINT urbdrc_process_register_request_callback(IUDEVICE* pdev,
 	if (Stream_GetRemainingLength(s) >= 8)
 	{
 		Stream_Read_UINT32(s, NumRequestCompletion); /** must be 1 */
-		/** RequestCompletion:
-		 *   unique Request Completion interface for the client to use */
-		Stream_Read_UINT32(s, RequestCompletion);
-		pdev->set_ReqCompletion(pdev, RequestCompletion);
+		if (!Stream_CheckAndLogRequiredLength(TAG, s, 4ULL * NumRequestCompletion))
+			return ERROR_INVALID_DATA;
+		for (uint32_t x = 0; x < NumRequestCompletion; x++)
+		{
+			/** RequestCompletion:
+			 *   unique Request Completion interface for the client to use */
+			Stream_Read_UINT32(s, RequestCompletion);
+			pdev->set_ReqCompletion(pdev, RequestCompletion);
+		}
 	}
 	else if (Stream_GetRemainingLength(s) >= 4) /** Unregister the device */
 	{
@@ -1628,7 +1633,20 @@ static UINT urbdrc_process_transfer_request(IUDEVICE* pdev, GENERIC_CHANNEL_CALL
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(s, CbTsUrb); /** CbTsUrb */
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4ULL + CbTsUrb))
+		return ERROR_INVALID_DATA;
 	Stream_Read_UINT16(s, Size);    /** size */
+	if (Size != CbTsUrb)
+	{
+		const char* section = (transferDir == USBD_TRANSFER_DIRECTION_IN)
+		                          ? "2.2.6.7 Transfer In Request (TRANSFER_IN_REQUEST)"
+		                          : "2.2.6.8 Transfer Out Request (TRANSFER_OUT_REQUEST)";
+		WLog_ERR(TAG,
+		         "[MS-RDPEUSB] 2.2.9.1.1 TS_URB_HEADER::Size 0x04" PRIx16
+		         " != %s::CbTsUrb 0x%08" PRIx32,
+		         Size, section, CbTsUrb);
+		return ERROR_INVALID_DATA;
+	}
 	Stream_Read_UINT16(s, URB_Function);
 	Stream_Read_UINT32(s, RequestId);
 	WLog_Print(urbdrc->log, WLOG_DEBUG, "URB %s[%" PRIu16 "]", urb_function_string(URB_Function),
