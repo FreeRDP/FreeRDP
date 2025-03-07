@@ -128,6 +128,7 @@ class sdlClip
 	static bool mime_is_file(const std::string& mime);
 	static bool mime_is_text(const std::string& mime);
 	static bool mime_is_image(const std::string& mime);
+	static bool mime_is_bmp(const std::string& mime);
 	static bool mime_is_html(const std::string& mime);
 
 	SdlContext* _sdl = nullptr;

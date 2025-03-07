@@ -25,6 +25,7 @@
 #include <utility>
 
 #include <winpr/wlog.h>
+#include <winpr/image.h>
 
 #include "sdl_clip.hpp"
 #include "sdl_freerdp.hpp"
@@ -185,11 +186,7 @@ bool sdlClip::handle_update(const SDL_ClipboardEvent& ev)
 	std::vector<std::string> clientFormatNames;
 	std::vector<CLIPRDR_FORMAT> clientFormats;
 
-#if SDL_VERSION_ATLEAST(3, 1, 8)
 	size_t nformats = WINPR_ASSERTING_INT_CAST(size_t, ev.num_mime_types);
-#else
-	size_t nformats = WINPR_ASSERTING_INT_CAST(size_t, ev.n_mime_types);
-#endif
 	const char** clipboard_mime_formats = ev.mime_types;
 
 	WLog_Print(_log, WLOG_TRACE, "SDL has %d formats", nformats);
@@ -199,8 +196,8 @@ bool sdlClip::handle_update(const SDL_ClipboardEvent& ev)
 
 	for (size_t i = 0; i < nformats; i++)
 	{
-		std::string local_mime = clipboard_mime_formats[i];
-		WLog_Print(_log, WLOG_TRACE, " - %s", local_mime.c_str());
+		auto local_mime = clipboard_mime_formats[i];
+		WLog_Print(_log, WLOG_TRACE, " - %s", local_mime);
 
 		if (std::find(s_mime_text().begin(), s_mime_text().end(), local_mime) !=
 		    s_mime_text().end())
@@ -217,7 +214,10 @@ bool sdlClip::handle_update(const SDL_ClipboardEvent& ev)
 		else if (local_mime == mime_html)
 			/* html */
 			clientFormatNames.emplace_back(s_type_HtmlFormat);
-		else if (std::find(mime_bitmap.begin(), mime_bitmap.end(), local_mime) != mime_bitmap.end())
+		else if ((std::find(mime_bitmap.begin(), mime_bitmap.end(), local_mime) !=
+		          mime_bitmap.end()) ||
+		         (std::find(mime_images.begin(), mime_images.end(), local_mime) !=
+		          mime_images.end()))
 		{
 			/* image formats */
 			if (!imgPushed)
@@ -566,6 +566,7 @@ std::shared_ptr<BYTE> sdlClip::ReceiveFormatDataRequestHandle(
 		case CF_DIB:
 		case CF_DIBV5:
 			mime = s_mime_bitmap()[0];
+			localFormatId = ClipboardGetFormatId(clipboard->_system, mime);
 			break;
 
 		case CF_TIFF:
@@ -848,6 +849,18 @@ bool sdlClip::mime_is_text(const std::string& mime)
 bool sdlClip::mime_is_image(const std::string& mime)
 {
 	for (const auto& imime : s_mime_image())
+	{
+		assert(imime != nullptr);
+		if (mime == imime)
+			return true;
+	}
+
+	return false;
+}
+
+bool sdlClip::mime_is_bmp(const std::string& mime)
+{
+	for (const auto& imime : s_mime_bitmap())
 	{
 		assert(imime != nullptr);
 		if (mime == imime)
