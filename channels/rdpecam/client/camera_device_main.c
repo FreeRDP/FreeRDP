@@ -24,23 +24,19 @@
 
 #define TAG CHANNELS_TAG("rdpecam-device.client")
 
-/* supported formats in preference order:
+/* supported camera input formats in preference order:
  * H264, MJPG, I420 (used as input for H264 encoder), other YUV based, RGB based
  */
-static const CAM_MEDIA_FORMAT_INFO supportedFormats[] = {
-/* inputFormat, outputFormat */
+static const CAM_MEDIA_FORMAT supportedFormats[] = {
 #if defined(WITH_INPUT_FORMAT_H264)
-	{ CAM_MEDIA_FORMAT_H264, CAM_MEDIA_FORMAT_H264 }, /* passthrough */
-	{ CAM_MEDIA_FORMAT_MJPG_H264, CAM_MEDIA_FORMAT_H264 },
+	CAM_MEDIA_FORMAT_H264, /* passthrough */
+	CAM_MEDIA_FORMAT_MJPG_H264,
 #endif
 #if defined(WITH_INPUT_FORMAT_MJPG)
-	{ CAM_MEDIA_FORMAT_MJPG, CAM_MEDIA_FORMAT_H264 },
+	CAM_MEDIA_FORMAT_MJPG,
 #endif
-	{ CAM_MEDIA_FORMAT_I420, CAM_MEDIA_FORMAT_H264 },
-	{ CAM_MEDIA_FORMAT_YUY2, CAM_MEDIA_FORMAT_H264 },
-	{ CAM_MEDIA_FORMAT_NV12, CAM_MEDIA_FORMAT_H264 },
-	{ CAM_MEDIA_FORMAT_RGB24, CAM_MEDIA_FORMAT_H264 },
-	{ CAM_MEDIA_FORMAT_RGB32, CAM_MEDIA_FORMAT_H264 },
+	CAM_MEDIA_FORMAT_I420,      CAM_MEDIA_FORMAT_YUY2,  CAM_MEDIA_FORMAT_NV12,
+	CAM_MEDIA_FORMAT_RGB24,     CAM_MEDIA_FORMAT_RGB32,
 };
 static const size_t nSupportedFormats = ARRAYSIZE(supportedFormats);
 
@@ -480,7 +476,7 @@ static UINT ecam_dev_process_media_type_list_request(CameraDevice* dev,
 		goto error;
 	}
 
-	stream->formats = supportedFormats[formatIndex];
+	stream->inputFormat = supportedFormats[formatIndex];
 
 	/* replacing inputFormat with outputFormat in mediaTypes before sending response */
 	for (size_t i = 0; i < nMediaTypes; i++)
