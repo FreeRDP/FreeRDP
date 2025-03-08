@@ -77,7 +77,8 @@ extern "C"
 	                                           BYTE InterfaceNumber,
 	                                           MSUSB_INTERFACE_DESCRIPTOR* NewMsInterface);
 	FREERDP_API MSUSB_INTERFACE_DESCRIPTOR* msusb_msinterface_read(wStream* out);
-	FREERDP_API BOOL msusb_msinterface_write(MSUSB_INTERFACE_DESCRIPTOR* MsInterface, wStream* out);
+	FREERDP_API BOOL msusb_msinterface_write(const MSUSB_INTERFACE_DESCRIPTOR* MsInterface,
+	                                         wStream* out);
 	FREERDP_API void msusb_msinterface_free(MSUSB_INTERFACE_DESCRIPTOR* MsInterface);
 
 	/* MSUSB_CONFIG exported functions */
@@ -88,8 +89,8 @@ extern "C"
 
 	WINPR_ATTR_MALLOC(msusb_msconfig_free, 1)
 	FREERDP_API MSUSB_CONFIG_DESCRIPTOR* msusb_msconfig_read(wStream* s, UINT32 NumInterfaces);
-	FREERDP_API BOOL msusb_msconfig_write(MSUSB_CONFIG_DESCRIPTOR* MsConfg, wStream* out);
-	FREERDP_API void msusb_msconfig_dump(MSUSB_CONFIG_DESCRIPTOR* MsConfg);
+	FREERDP_API BOOL msusb_msconfig_write(const MSUSB_CONFIG_DESCRIPTOR* MsConfg, wStream* out);
+	FREERDP_API void msusb_msconfig_dump(const MSUSB_CONFIG_DESCRIPTOR* MsConfg);
 
 #ifdef __cplusplus
 }

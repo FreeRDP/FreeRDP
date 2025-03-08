@@ -110,6 +110,21 @@ static int func_instance_id_generate(IUDEVICE* pdev, char* strInstanceId, size_t
 	return 0;
 }
 
+/* [MS-RDPEUSB] 2.2.3.2 Interface Manipulation Exchange Capabilities Response
+ * (RIM_EXCHANGE_CAPABILITY_RESPONSE) */
+static UINT urbdrc_send_capability_response(GENERIC_CHANNEL_CALLBACK* callback, UINT32 MessageId,
+                                            UINT32 Version)
+{
+	const UINT32 InterfaceId = ((STREAM_ID_NONE << 30) | CAPABILITIES_NEGOTIATOR);
+	wStream* out = create_shared_message_header_with_functionid(InterfaceId, MessageId, Version, 4);
+
+	if (!out)
+		return ERROR_OUTOFMEMORY;
+
+	Stream_Write_UINT32(out, 0x00000000); /* HRESULT */
+	return stream_write_and_free(callback->plugin, callback->channel, out);
+}
+
 /**
  * Function description
  *
@@ -118,33 +133,45 @@ static int func_instance_id_generate(IUDEVICE* pdev, char* strInstanceId, size_t
 static UINT urbdrc_process_capability_request(GENERIC_CHANNEL_CALLBACK* callback, wStream* s,
                                               UINT32 MessageId)
 {
-	UINT32 InterfaceId = 0;
-	UINT32 Version = 0;
-	UINT32 out_size = 0;
-	wStream* out = NULL;
+	WINPR_ASSERT(callback);
+	URBDRC_PLUGIN* urbdrc = (URBDRC_PLUGIN*)callback->plugin;
+	WINPR_ASSERT(urbdrc);
 
 	if (!callback || !s)
 		return ERROR_INVALID_PARAMETER;
 
-	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
+	if (!Stream_CheckAndLogRequiredLengthWLog(urbdrc->log, s, 4))
 		return ERROR_INVALID_DATA;
 
-	Stream_Read_UINT32(s, Version);
+	UINT32 Version = Stream_Get_UINT32(s);
 
 	if (Version > RIM_CAPABILITY_VERSION_01)
+	{
+		WLog_Print(urbdrc->log, WLOG_WARN, "Unknown capability version %" PRIu32 ", expected %d",
+		           Version, RIM_CAPABILITY_VERSION_01);
 		Version = RIM_CAPABILITY_VERSION_01;
+	}
 
-	InterfaceId = ((STREAM_ID_NONE << 30) | CAPABILITIES_NEGOTIATOR);
-	out_size = 16;
-	out = Stream_New(NULL, out_size);
+	return urbdrc_send_capability_response(callback, MessageId, Version);
+}
+
+/* [MS-RDPEUSB] 2.2.5.1 Channel Created Message (CHANNEL_CREATED) */
+static UINT urbdrc_send_channel_created(GENERIC_CHANNEL_CALLBACK* callback, UINT32 MessageId,
+                                        UINT32 MajorVersion, UINT32 MinorVersion,
+                                        UINT32 Capabilities)
+{
+	WINPR_ASSERT(callback);
+
+	const UINT32 InterfaceId = ((STREAM_ID_PROXY << 30) | CLIENT_CHANNEL_NOTIFICATION);
+	wStream* out =
+	    create_shared_message_header_with_functionid(InterfaceId, MessageId, CHANNEL_CREATED, 12);
 
 	if (!out)
 		return ERROR_OUTOFMEMORY;
 
-	Stream_Write_UINT32(out, InterfaceId); /* interface id */
-	Stream_Write_UINT32(out, MessageId);   /* message id */
-	Stream_Write_UINT32(out, Version);     /* usb protocol version */
-	Stream_Write_UINT32(out, 0x00000000);  /* HRESULT */
+	Stream_Write_UINT32(out, MajorVersion);
+	Stream_Write_UINT32(out, MinorVersion);
+	Stream_Write_UINT32(out, Capabilities); /* capabilities version */
 	return stream_write_and_free(callback->plugin, callback->channel, out);
 }
 
@@ -156,12 +183,9 @@ static UINT urbdrc_process_capability_request(GENERIC_CHANNEL_CALLBACK* callback
 static UINT urbdrc_process_channel_create(GENERIC_CHANNEL_CALLBACK* callback, wStream* s,
                                           UINT32 MessageId)
 {
-	UINT32 InterfaceId = 0;
-	UINT32 out_size = 0;
 	UINT32 MajorVersion = 0;
 	UINT32 MinorVersion = 0;
 	UINT32 Capabilities = 0;
-	wStream* out = NULL;
 	URBDRC_PLUGIN* urbdrc = NULL;
 
 	if (!callback || !s || !callback->plugin)
@@ -185,36 +209,124 @@ static UINT urbdrc_process_channel_create(GENERIC_CHANNEL_CALLBACK* callback, wS
 		MajorVersion = 1;
 		MinorVersion = 0;
 	}
+	if (Capabilities != 0)
+	{
+		WLog_Print(urbdrc->log, WLOG_WARN,
+		           "[MS-RDPEUSB] 2.2.5.1 Channel Created Message (CHANNEL_CREATED) states "
+		           "Capabilities must be 0, got %" PRIu32,
+		           Capabilities);
+		Capabilities = 0;
+	}
 
-	InterfaceId = ((STREAM_ID_PROXY << 30) | CLIENT_CHANNEL_NOTIFICATION);
-	out_size = 24;
-	out = Stream_New(NULL, out_size);
-
-	if (!out)
-		return ERROR_OUTOFMEMORY;
-
-	Stream_Write_UINT32(out, InterfaceId);     /* interface id */
-	Stream_Write_UINT32(out, MessageId);       /* message id */
-	Stream_Write_UINT32(out, CHANNEL_CREATED); /* function id */
-	Stream_Write_UINT32(out, MajorVersion);
-	Stream_Write_UINT32(out, MinorVersion);
-	Stream_Write_UINT32(out, Capabilities); /* capabilities version */
-	return stream_write_and_free(callback->plugin, callback->channel, out);
+	return urbdrc_send_channel_created(callback, MessageId, MajorVersion, MinorVersion,
+	                                   Capabilities);
 }
 
 static UINT urdbrc_send_virtual_channel_add(IWTSPlugin* plugin, IWTSVirtualChannel* channel,
                                             UINT32 MessageId)
 {
 	const UINT32 InterfaceId = ((STREAM_ID_PROXY << 30) | CLIENT_DEVICE_SINK);
-	wStream* out = Stream_New(NULL, 12);
+	wStream* out = create_shared_message_header_with_functionid(InterfaceId, MessageId,
+	                                                            ADD_VIRTUAL_CHANNEL, 0);
 
 	if (!out)
 		return ERROR_OUTOFMEMORY;
 
-	Stream_Write_UINT32(out, InterfaceId);         /* interface */
-	Stream_Write_UINT32(out, MessageId);           /* message id */
-	Stream_Write_UINT32(out, ADD_VIRTUAL_CHANNEL); /* function id */
 	return stream_write_and_free(plugin, channel, out);
+}
+
+static BOOL write_string_block(wStream* s, size_t count, const char** strings, const size_t* length,
+                               BOOL isMultiSZ)
+{
+	size_t len = 0;
+	for (size_t x = 0; x < count; x++)
+	{
+		len += length[x] + 1ULL;
+	}
+
+	if (isMultiSZ)
+		len++;
+
+	if (!Stream_EnsureRemainingCapacity(s, len * sizeof(WCHAR) + sizeof(UINT32)))
+		return FALSE;
+
+	/* Write number of characters (including '\0') of all strings */
+	Stream_Write_UINT32(s, (UINT32)len); /* cchHwIds */
+	                                     /* HardwareIds 1 */
+
+	for (size_t x = 0; x < count; x++)
+	{
+		size_t clength = length[x];
+		const char* str = strings[x];
+
+		const SSIZE_T w = Stream_Write_UTF16_String_From_UTF8(s, clength, str, clength, TRUE);
+		if ((w < 0) || ((size_t)w != clength))
+			return FALSE;
+		Stream_Write_UINT16(s, 0);
+	}
+
+	if (isMultiSZ)
+		Stream_Write_UINT16(s, 0);
+	return TRUE;
+}
+
+/* [MS-RDPEUSB] 2.2.4.2 Add Device Message (ADD_DEVICE) */
+static UINT urbdrc_send_add_device(GENERIC_CHANNEL_CALLBACK* callback, UINT32 UsbDevice,
+                                   UINT32 bcdUSB, const char* strInstanceId, size_t InstanceIdLen,
+                                   size_t nrHwIds, const char* HardwareIds[],
+                                   const size_t HardwareIdsLen[], size_t nrCompatIds,
+                                   const char* CompatibilityIds[],
+                                   const size_t CompatibilityIdsLen[], const char* strContainerId,
+                                   size_t ContainerIdLen)
+{
+	WINPR_ASSERT(callback);
+	WINPR_ASSERT(HardwareIds);
+	WINPR_ASSERT(HardwareIdsLen);
+	WINPR_ASSERT(CompatibilityIds);
+	WINPR_ASSERT(CompatibilityIdsLen);
+
+	const UINT32 InterfaceId = ((STREAM_ID_PROXY << 30) | CLIENT_DEVICE_SINK);
+	wStream* out = create_shared_message_header_with_functionid(InterfaceId, 0, ADD_DEVICE, 8);
+	if (!out)
+		return ERROR_OUTOFMEMORY;
+
+	Stream_Write_UINT32(out, 0x00000001); /* NumUsbDevice */
+	Stream_Write_UINT32(out, UsbDevice);  /* UsbDevice */
+
+	if (!write_string_block(out, 1, &strInstanceId, &InstanceIdLen, FALSE))
+		goto fail;
+
+	if (!write_string_block(out, nrHwIds, HardwareIds, HardwareIdsLen, TRUE))
+		goto fail;
+
+	if (!write_string_block(out, nrCompatIds, CompatibilityIds, CompatibilityIdsLen, TRUE))
+		goto fail;
+
+	if (!write_string_block(out, 1, &strContainerId, &ContainerIdLen, FALSE))
+		goto fail;
+
+	/* USB_DEVICE_CAPABILITIES 28 bytes */
+	if (!Stream_EnsureRemainingCapacity(out, 28))
+		goto fail;
+
+	Stream_Write_UINT32(out, 0x0000001c);                                /* CbSize */
+	Stream_Write_UINT32(out, 2); /* UsbBusInterfaceVersion, 0 ,1 or 2 */ // TODO: Get from libusb
+	Stream_Write_UINT32(out, 0x600); /* USBDI_Version, 0x500 or 0x600 */ // TODO: Get from libusb
+	/* Supported_USB_Version, 0x110,0x110 or 0x200(usb2.0) */
+	Stream_Write_UINT32(out, bcdUSB);
+	Stream_Write_UINT32(out, 0x00000000); /* HcdCapabilities, MUST always be zero */
+
+	if (bcdUSB < 0x200)
+		Stream_Write_UINT32(out, 0x00000000); /* DeviceIsHighSpeed */
+	else
+		Stream_Write_UINT32(out, 0x00000001); /* DeviceIsHighSpeed */
+
+	Stream_Write_UINT32(out, 0x50); /* NoAckIsochWriteJitterBufferSizeInMs, >=10 or <=512 */
+	return stream_write_and_free(callback->plugin, callback->channel, out);
+
+fail:
+	Stream_Free(out, TRUE);
+	return ERROR_INTERNAL_ERROR;
 }
 
 /**
@@ -224,22 +336,18 @@ static UINT urdbrc_send_virtual_channel_add(IWTSPlugin* plugin, IWTSVirtualChann
  */
 static UINT urdbrc_send_usb_device_add(GENERIC_CHANNEL_CALLBACK* callback, IUDEVICE* pdev)
 {
-	wStream* out = NULL;
-	UINT32 InterfaceId = 0;
 	char HardwareIds[2][DEVICE_HARDWARE_ID_SIZE] = { { 0 } };
-	char CompatibilityIds[3][DEVICE_COMPATIBILITY_ID_SIZE] = { { 0 } };
+	const char* CHardwareIds[2] = { HardwareIds[0], HardwareIds[1] };
+	char CompatibilityIds[4][DEVICE_COMPATIBILITY_ID_SIZE] = { { 0 } };
+	const char* CCompatibilityIds[4] = { CompatibilityIds[0], CompatibilityIds[1],
+		                                 CompatibilityIds[2], CompatibilityIds[3] };
 	char strContainerId[DEVICE_CONTAINER_STR_SIZE] = { 0 };
 	char strInstanceId[DEVICE_INSTANCE_STR_SIZE] = { 0 };
-	const char* composite_str = "USB\\COMPOSITE";
-	const size_t composite_len = 13;
-	size_t size = 0;
-	size_t CompatibilityIdLen[3];
-	size_t HardwareIdsLen[2];
-	size_t ContainerIdLen = 0;
-	size_t InstanceIdLen = 0;
-	size_t cchCompatIds = 0;
-	UINT32 bcdUSB = 0;
-	InterfaceId = ((STREAM_ID_PROXY << 30) | CLIENT_DEVICE_SINK);
+	size_t CompatibilityIdLen[4] = { 0 };
+	size_t HardwareIdsLen[2] = { 0 };
+	const size_t nrHwIds = ARRAYSIZE(HardwareIds);
+	size_t nrCompatIds = 3;
+
 	/* USB kernel driver detach!! */
 	pdev->detach_kernel_driver(pdev);
 	{
@@ -270,111 +378,38 @@ static UINT urdbrc_send_usb_device_add(GENERIC_CHANNEL_CALLBACK* callback, IUDEV
 		}
 		else
 		{
+			(void)sprintf_s(CompatibilityIds[3], DEVICE_COMPATIBILITY_ID_SIZE, "USB\\COMPOSITE");
 			(void)sprintf_s(CompatibilityIds[2], DEVICE_COMPATIBILITY_ID_SIZE, "USB\\DevClass_00");
 			(void)sprintf_s(CompatibilityIds[1], DEVICE_COMPATIBILITY_ID_SIZE,
 			                "USB\\DevClass_00&SubClass_00");
 			(void)sprintf_s(CompatibilityIds[0], DEVICE_COMPATIBILITY_ID_SIZE,
 			                "USB\\DevClass_00&SubClass_00&Prot_00");
+			nrCompatIds = 4;
 		}
 	}
 	func_instance_id_generate(pdev, strInstanceId, DEVICE_INSTANCE_STR_SIZE);
 	func_container_id_generate(pdev, strContainerId);
-	CompatibilityIdLen[0] = strnlen(CompatibilityIds[0], sizeof(CompatibilityIds[0]));
-	CompatibilityIdLen[1] = strnlen(CompatibilityIds[1], sizeof(CompatibilityIds[1]));
-	CompatibilityIdLen[2] = strnlen(CompatibilityIds[2], sizeof(CompatibilityIds[2]));
-	HardwareIdsLen[0] = strnlen(HardwareIds[0], sizeof(HardwareIds[0]));
-	HardwareIdsLen[1] = strnlen(HardwareIds[1], sizeof(HardwareIds[1]));
-	cchCompatIds =
-	    CompatibilityIdLen[0] + 1 + CompatibilityIdLen[1] + 1 + CompatibilityIdLen[2] + 2;
-	InstanceIdLen = strnlen(strInstanceId, sizeof(strInstanceId));
-	ContainerIdLen = strnlen(strContainerId, sizeof(strContainerId));
 
-	if (pdev->isCompositeDevice(pdev))
-		cchCompatIds += composite_len + 1;
-
-	size = 24;
-	size += (InstanceIdLen + 1) * 2 + (HardwareIdsLen[0] + 1) * 2 + 4 +
-	        (HardwareIdsLen[1] + 1) * 2 + 2 + 4 + (cchCompatIds)*2 + (ContainerIdLen + 1) * 2 + 4 +
-	        28;
-	out = Stream_New(NULL, size);
-
-	if (!out)
-		return ERROR_OUTOFMEMORY;
-
-	Stream_Write_UINT32(out, InterfaceId); /* interface */
-	Stream_Write_UINT32(out, 0);
-	Stream_Write_UINT32(out, ADD_DEVICE);                /* function id */
-	Stream_Write_UINT32(out, 0x00000001);                /* NumUsbDevice */
-	Stream_Write_UINT32(out, pdev->get_UsbDevice(pdev)); /* UsbDevice */
-	Stream_Write_UINT32(out, (UINT32)InstanceIdLen + 1); /* cchDeviceInstanceId */
-	if (Stream_Write_UTF16_String_From_UTF8(out, InstanceIdLen, strInstanceId, InstanceIdLen,
-	                                        TRUE) < 0)
-		goto fail;
-	Stream_Write_UINT16(out, 0);
-	const size_t len = HardwareIdsLen[0] + HardwareIdsLen[1] + 3;
-	if (len > UINT32_MAX)
-		goto fail;
-	Stream_Write_UINT32(out, (UINT32)len); /* cchHwIds */
-	                                       /* HardwareIds 1 */
-	if (Stream_Write_UTF16_String_From_UTF8(out, HardwareIdsLen[0], HardwareIds[0],
-	                                        HardwareIdsLen[0], TRUE) < 0)
-		goto fail;
-	Stream_Write_UINT16(out, 0);
-	if (Stream_Write_UTF16_String_From_UTF8(out, HardwareIdsLen[1], HardwareIds[1],
-	                                        HardwareIdsLen[1], TRUE) < 0)
-		goto fail;
-	Stream_Write_UINT16(out, 0);
-	Stream_Write_UINT16(out, 0);                    /* add "\0" */
-	Stream_Write_UINT32(out, (UINT32)cchCompatIds); /* cchCompatIds */
-	/* CompatibilityIds */
-	if (Stream_Write_UTF16_String_From_UTF8(out, CompatibilityIdLen[0], CompatibilityIds[0],
-	                                        CompatibilityIdLen[0], TRUE) < 0)
-		goto fail;
-	Stream_Write_UINT16(out, 0);
-	if (Stream_Write_UTF16_String_From_UTF8(out, CompatibilityIdLen[1], CompatibilityIds[1],
-	                                        CompatibilityIdLen[1], TRUE) < 0)
-		goto fail;
-	Stream_Write_UINT16(out, 0);
-	if (Stream_Write_UTF16_String_From_UTF8(out, CompatibilityIdLen[2], CompatibilityIds[2],
-	                                        CompatibilityIdLen[2], TRUE) < 0)
-		goto fail;
-	Stream_Write_UINT16(out, 0);
-
-	if (pdev->isCompositeDevice(pdev))
+	for (size_t x = 0; x < nrHwIds; x++)
 	{
-		if (Stream_Write_UTF16_String_From_UTF8(out, composite_len, composite_str, composite_len,
-		                                        TRUE) < 0)
-			goto fail;
-		Stream_Write_UINT16(out, 0);
+		HardwareIdsLen[x] = strnlen(HardwareIds[x], DEVICE_HARDWARE_ID_SIZE);
 	}
 
-	Stream_Write_UINT16(out, 0x0000);                     /* add "\0" */
-	Stream_Write_UINT32(out, (UINT32)ContainerIdLen + 1); /* cchContainerId */
-	/* ContainerId */
-	if (Stream_Write_UTF16_String_From_UTF8(out, ContainerIdLen, strContainerId, ContainerIdLen,
-	                                        TRUE) < 0)
-		goto fail;
-	Stream_Write_UINT16(out, 0);
-	/* USB_DEVICE_CAPABILITIES 28 bytes */
-	Stream_Write_UINT32(out, 0x0000001c);                                /* CbSize */
-	Stream_Write_UINT32(out, 2); /* UsbBusInterfaceVersion, 0 ,1 or 2 */ // TODO: Get from libusb
-	Stream_Write_UINT32(out, 0x600); /* USBDI_Version, 0x500 or 0x600 */ // TODO: Get from libusb
-	/* Supported_USB_Version, 0x110,0x110 or 0x200(usb2.0) */
-	bcdUSB = WINPR_ASSERTING_INT_CAST(uint32_t, pdev->query_device_descriptor(pdev, BCD_USB));
-	Stream_Write_UINT32(out, bcdUSB);
-	Stream_Write_UINT32(out, 0x00000000); /* HcdCapabilities, MUST always be zero */
+	for (size_t x = 0; x < nrCompatIds; x++)
+	{
+		CompatibilityIdLen[x] = strnlen(CompatibilityIds[x], DEVICE_COMPATIBILITY_ID_SIZE);
+	}
 
-	if (bcdUSB < 0x200)
-		Stream_Write_UINT32(out, 0x00000000); /* DeviceIsHighSpeed */
-	else
-		Stream_Write_UINT32(out, 0x00000001); /* DeviceIsHighSpeed */
+	const size_t InstanceIdLen = strnlen(strInstanceId, sizeof(strInstanceId));
+	const size_t ContainerIdLen = strnlen(strContainerId, sizeof(strContainerId));
 
-	Stream_Write_UINT32(out, 0x50); /* NoAckIsochWriteJitterBufferSizeInMs, >=10 or <=512 */
-	return stream_write_and_free(callback->plugin, callback->channel, out);
-
-fail:
-	Stream_Free(out, TRUE);
-	return ERROR_INTERNAL_ERROR;
+	const UINT32 UsbDevice = pdev->get_UsbDevice(pdev);
+	const UINT32 bcdUSB =
+	    WINPR_ASSERTING_INT_CAST(uint32_t, pdev->query_device_descriptor(pdev, BCD_USB));
+	return urbdrc_send_add_device(callback, UsbDevice, bcdUSB, strInstanceId, InstanceIdLen,
+	                              nrHwIds, CHardwareIds, HardwareIdsLen, nrCompatIds,
+	                              CCompatibilityIds, CompatibilityIdLen, strContainerId,
+	                              ContainerIdLen);
 }
 
 /**

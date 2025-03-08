@@ -179,7 +179,7 @@ out_error:
 	return NULL;
 }
 
-BOOL msusb_msinterface_write(MSUSB_INTERFACE_DESCRIPTOR* MsInterface, wStream* out)
+BOOL msusb_msinterface_write(const MSUSB_INTERFACE_DESCRIPTOR* MsInterface, wStream* out)
 {
 	MSUSB_PIPE_DESCRIPTOR** MsPipes = NULL;
 	MSUSB_PIPE_DESCRIPTOR* MsPipe = NULL;
@@ -260,11 +260,8 @@ fail:
 	return NULL;
 }
 
-BOOL msusb_msconfig_write(MSUSB_CONFIG_DESCRIPTOR* MsConfg, wStream* out)
+BOOL msusb_msconfig_write(const MSUSB_CONFIG_DESCRIPTOR* MsConfg, wStream* out)
 {
-	MSUSB_INTERFACE_DESCRIPTOR** MsInterfaces = NULL;
-	MSUSB_INTERFACE_DESCRIPTOR* MsInterface = NULL;
-
 	if (!MsConfg)
 		return FALSE;
 
@@ -276,11 +273,11 @@ BOOL msusb_msconfig_write(MSUSB_CONFIG_DESCRIPTOR* MsConfg, wStream* out)
 	/* NumInterfaces*/
 	Stream_Write_UINT32(out, MsConfg->NumInterfaces);
 	/* Interfaces */
-	MsInterfaces = MsConfg->MsInterfaces;
+	MSUSB_INTERFACE_DESCRIPTOR** MsInterfaces = MsConfg->MsInterfaces;
 
 	for (UINT32 inum = 0; inum < MsConfg->NumInterfaces; inum++)
 	{
-		MsInterface = MsInterfaces[inum];
+		const MSUSB_INTERFACE_DESCRIPTOR* MsInterface = MsInterfaces[inum];
 
 		if (!msusb_msinterface_write(MsInterface, out))
 			return FALSE;
@@ -343,7 +340,7 @@ fail:
 	return NULL;
 }
 
-void msusb_msconfig_dump(MSUSB_CONFIG_DESCRIPTOR* MsConfig)
+void msusb_msconfig_dump(const MSUSB_CONFIG_DESCRIPTOR* MsConfig)
 {
 	MSUSB_INTERFACE_DESCRIPTOR** MsInterfaces = NULL;
 	MSUSB_INTERFACE_DESCRIPTOR* MsInterface = NULL;
