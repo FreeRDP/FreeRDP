@@ -34,9 +34,10 @@ static INT16 convert(UINT8 raw, int shift)
 }
 
 /* ------------------------------------------------------------------------- */
-static pstatus_t general_YCoCgToRGB_8u_AC4R(const BYTE* pSrc, INT32 srcStep, BYTE* pDst,
-                                            UINT32 DstFormat, INT32 dstStep, UINT32 width,
-                                            UINT32 height, UINT8 shift, BOOL withAlpha)
+static pstatus_t general_YCoCgToRGB_8u_AC4R(const BYTE* WINPR_RESTRICT pSrc, INT32 srcStep,
+                                            BYTE* WINPR_RESTRICT pDst, UINT32 DstFormat,
+                                            INT32 dstStep, UINT32 width, UINT32 height, UINT8 shift,
+                                            BOOL withAlpha)
 {
 	const DWORD formatSize = FreeRDPGetBytesPerPixel(DstFormat);
 	fkt_writePixel writePixel = getPixelWriteFunction(DstFormat, TRUE);

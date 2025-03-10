@@ -45,7 +45,7 @@ extern "C"
 	                                UINT32* WINPR_RESTRICT pDstSize, UINT32 flags);
 	FREERDP_API int zgfx_compress(ZGFX_CONTEXT* WINPR_RESTRICT zgfx,
 	                              const BYTE* WINPR_RESTRICT pSrcData, UINT32 SrcSize,
-	                              BYTE** WINPR_RESTRICT ppDstData, UINT32* pDstSize,
+	                              BYTE** WINPR_RESTRICT ppDstData, UINT32* WINPR_RESTRICT pDstSize,
 	                              UINT32* WINPR_RESTRICT pFlags);
 	FREERDP_API int zgfx_compress_to_stream(ZGFX_CONTEXT* WINPR_RESTRICT zgfx,
 	                                        wStream* WINPR_RESTRICT sDst,

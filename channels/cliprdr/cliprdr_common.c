@@ -116,10 +116,10 @@ static BOOL cliprdr_validate_file_contents_request(const CLIPRDR_FILE_CONTENTS_R
 	return TRUE;
 }
 
-wStream* cliprdr_packet_new(UINT16 msgType, UINT16 msgFlags, UINT32 dataLen)
+wStream* cliprdr_packet_new(UINT16 msgType, UINT16 msgFlags, size_t dataLen)
 {
-	wStream* s = NULL;
-	s = Stream_New(NULL, dataLen + 8);
+	WINPR_ASSERT(dataLen < UINT32_MAX);
+	wStream* s = Stream_New(NULL, dataLen + 8ULL);
 
 	if (!s)
 	{

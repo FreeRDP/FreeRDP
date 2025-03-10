@@ -32,14 +32,18 @@ extern "C"
 {
 #endif
 
-	FREERDP_LOCAL int xcrush_compress(XCRUSH_CONTEXT* xcrush, const BYTE* pSrcData, UINT32 SrcSize,
-	                                  BYTE* pDstBuffer, const BYTE** ppDstData, UINT32* pDstSize,
-	                                  UINT32* pFlags);
-	FREERDP_LOCAL int xcrush_decompress(XCRUSH_CONTEXT* xcrush, const BYTE* pSrcData,
-	                                    UINT32 SrcSize, const BYTE** ppDstData, UINT32* pDstSize,
-	                                    UINT32 flags);
+	FREERDP_LOCAL int xcrush_compress(XCRUSH_CONTEXT* WINPR_RESTRICT xcrush,
+	                                  const BYTE* WINPR_RESTRICT pSrcData, UINT32 SrcSize,
+	                                  BYTE* WINPR_RESTRICT pDstBuffer,
+	                                  const BYTE** WINPR_RESTRICT ppDstData,
+	                                  UINT32* WINPR_RESTRICT pDstSize,
+	                                  UINT32* WINPR_RESTRICT pFlags);
+	FREERDP_LOCAL int xcrush_decompress(XCRUSH_CONTEXT* WINPR_RESTRICT xcrush,
+	                                    const BYTE* WINPR_RESTRICT pSrcData, UINT32 SrcSize,
+	                                    const BYTE** WINPR_RESTRICT ppDstData,
+	                                    UINT32* WINPR_RESTRICT pDstSize, UINT32 flags);
 
-	FREERDP_LOCAL void xcrush_context_reset(XCRUSH_CONTEXT* xcrush, BOOL flush);
+	FREERDP_LOCAL void xcrush_context_reset(XCRUSH_CONTEXT* WINPR_RESTRICT xcrush, BOOL flush);
 
 	FREERDP_LOCAL XCRUSH_CONTEXT* xcrush_context_new(BOOL Compressor);
 	FREERDP_LOCAL void xcrush_context_free(XCRUSH_CONTEXT* xcrush);

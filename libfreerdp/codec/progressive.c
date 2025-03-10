@@ -2379,8 +2379,9 @@ fail:
 	return rc;
 }
 
-BOOL progressive_rfx_write_message_progressive_simple(PROGRESSIVE_CONTEXT* progressive, wStream* s,
-                                                      const RFX_MESSAGE* msg)
+BOOL progressive_rfx_write_message_progressive_simple(
+    PROGRESSIVE_CONTEXT* WINPR_RESTRICT progressive, wStream* WINPR_RESTRICT s,
+    const RFX_MESSAGE* WINPR_RESTRICT msg)
 {
 	RFX_CONTEXT* context = NULL;
 
@@ -2478,7 +2479,7 @@ int progressive_compress(PROGRESSIVE_CONTEXT* WINPR_RESTRICT progressive,
 			r->width = MIN(64, WINPR_ASSERTING_INT_CAST(UINT16, Width - x));
 			r->height = MIN(64, WINPR_ASSERTING_INT_CAST(UINT16, Height - y));
 
-			if (x + 64 >= Width)
+			if (x + 64UL >= Width)
 			{
 				y += 64;
 				x = 0;

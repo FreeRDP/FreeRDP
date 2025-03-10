@@ -75,43 +75,51 @@ extern "C"
 	typedef struct S_RFX_MESSAGE RFX_MESSAGE;
 	typedef struct S_RFX_CONTEXT RFX_CONTEXT;
 
-	FREERDP_API BOOL rfx_process_message(RFX_CONTEXT* context, const BYTE* data, UINT32 length,
-	                                     UINT32 left, UINT32 top, BYTE* dst, UINT32 dstFormat,
-	                                     UINT32 dstStride, UINT32 dstHeight,
-	                                     REGION16* invalidRegion);
+	FREERDP_API BOOL rfx_process_message(RFX_CONTEXT* WINPR_RESTRICT context,
+	                                     const BYTE* WINPR_RESTRICT data, UINT32 length,
+	                                     UINT32 left, UINT32 top, BYTE* WINPR_RESTRICT dst,
+	                                     UINT32 dstFormat, UINT32 dstStride, UINT32 dstHeight,
+	                                     REGION16* WINPR_RESTRICT invalidRegion);
 
-	FREERDP_API UINT32 rfx_message_get_frame_idx(const RFX_MESSAGE* message);
-	FREERDP_API const UINT32* rfx_message_get_quants(const RFX_MESSAGE* message,
-	                                                 UINT16* numQuantVals);
+	FREERDP_API UINT32 rfx_message_get_frame_idx(const RFX_MESSAGE* WINPR_RESTRICT message);
+	FREERDP_API const UINT32* rfx_message_get_quants(const RFX_MESSAGE* WINPR_RESTRICT message,
+	                                                 UINT16* WINPR_RESTRICT numQuantVals);
 
-	FREERDP_API const RFX_TILE** rfx_message_get_tiles(const RFX_MESSAGE* message,
-	                                                   UINT16* numTiles);
-	FREERDP_API UINT16 rfx_message_get_tile_count(const RFX_MESSAGE* message);
+	FREERDP_API const RFX_TILE** rfx_message_get_tiles(const RFX_MESSAGE* WINPR_RESTRICT message,
+	                                                   UINT16* WINPR_RESTRICT numTiles);
+	FREERDP_API UINT16 rfx_message_get_tile_count(const RFX_MESSAGE* WINPR_RESTRICT message);
 
-	FREERDP_API const RFX_RECT* rfx_message_get_rects(const RFX_MESSAGE* message, UINT16* numRects);
-	FREERDP_API UINT16 rfx_message_get_rect_count(const RFX_MESSAGE* message);
+	FREERDP_API const RFX_RECT* rfx_message_get_rects(const RFX_MESSAGE* WINPR_RESTRICT message,
+	                                                  UINT16* WINPR_RESTRICT numRects);
+	FREERDP_API UINT16 rfx_message_get_rect_count(const RFX_MESSAGE* WINPR_RESTRICT message);
 
-	FREERDP_API void rfx_message_free(RFX_CONTEXT* context, RFX_MESSAGE* message);
+	FREERDP_API void rfx_message_free(RFX_CONTEXT* WINPR_RESTRICT context,
+	                                  RFX_MESSAGE* WINPR_RESTRICT message);
 
-	FREERDP_API BOOL rfx_compose_message(RFX_CONTEXT* context, wStream* s, const RFX_RECT* rects,
-	                                     size_t num_rects, const BYTE* image_data, UINT32 width,
+	FREERDP_API BOOL rfx_compose_message(RFX_CONTEXT* WINPR_RESTRICT context,
+	                                     wStream* WINPR_RESTRICT s,
+	                                     const RFX_RECT* WINPR_RESTRICT rects, size_t num_rects,
+	                                     const BYTE* WINPR_RESTRICT image_data, UINT32 width,
 	                                     UINT32 height, UINT32 rowstride);
 
-	FREERDP_API RFX_MESSAGE* rfx_encode_message(RFX_CONTEXT* context, const RFX_RECT* rects,
-	                                            size_t numRects, const BYTE* data, UINT32 width,
-	                                            UINT32 height, size_t scanline);
+	FREERDP_API RFX_MESSAGE* rfx_encode_message(RFX_CONTEXT* WINPR_RESTRICT context,
+	                                            const RFX_RECT* WINPR_RESTRICT rects,
+	                                            size_t numRects, const BYTE* WINPR_RESTRICT data,
+	                                            UINT32 width, UINT32 height, size_t scanline);
 
-	FREERDP_API RFX_MESSAGE_LIST* rfx_encode_messages(RFX_CONTEXT* context, const RFX_RECT* rects,
-	                                                  size_t numRects, const BYTE* data,
-	                                                  UINT32 width, UINT32 height, UINT32 scanline,
-	                                                  size_t* numMessages, size_t maxDataSize);
+	FREERDP_API RFX_MESSAGE_LIST*
+	rfx_encode_messages(RFX_CONTEXT* WINPR_RESTRICT context, const RFX_RECT* WINPR_RESTRICT rects,
+	                    size_t numRects, const BYTE* WINPR_RESTRICT data, UINT32 width,
+	                    UINT32 height, UINT32 scanline, size_t* WINPR_RESTRICT numMessages,
+	                    size_t maxDataSize);
 	FREERDP_API void rfx_message_list_free(RFX_MESSAGE_LIST* messages);
 
-	FREERDP_API const RFX_MESSAGE* rfx_message_list_get(const RFX_MESSAGE_LIST* messages,
-	                                                    size_t idx);
+	FREERDP_API const RFX_MESSAGE*
+	rfx_message_list_get(const RFX_MESSAGE_LIST* WINPR_RESTRICT messages, size_t idx);
 
-	FREERDP_API BOOL rfx_write_message(RFX_CONTEXT* context, wStream* s,
-	                                   const RFX_MESSAGE* message);
+	FREERDP_API BOOL rfx_write_message(RFX_CONTEXT* WINPR_RESTRICT context,
+	                                   wStream* WINPR_RESTRICT s,
+	                                   const RFX_MESSAGE* WINPR_RESTRICT message);
 
 	FREERDP_API void rfx_context_free(RFX_CONTEXT* context);
 
@@ -124,7 +132,7 @@ extern "C"
 	FREERDP_API BOOL rfx_context_reset(RFX_CONTEXT* WINPR_RESTRICT context, UINT32 width,
 	                                   UINT32 height);
 
-	FREERDP_API BOOL rfx_context_set_mode(RFX_CONTEXT* context, RLGR_MODE mode);
+	FREERDP_API BOOL rfx_context_set_mode(RFX_CONTEXT* WINPR_RESTRICT context, RLGR_MODE mode);
 
 	/** Getter for RFX mode
 	 *  @param context The RFX context to query
@@ -170,8 +178,9 @@ extern "C"
 	 *  @since version 3.0.0
 	 *  @return \b TRUE in case of success, \b FALSE for any error
 	 */
-	FREERDP_API BOOL rfx_write_message_progressive_simple(RFX_CONTEXT* rfx, wStream* s,
-	                                                      const RFX_MESSAGE* msg);
+	FREERDP_API BOOL rfx_write_message_progressive_simple(RFX_CONTEXT* WINPR_RESTRICT rfx,
+	                                                      wStream* WINPR_RESTRICT s,
+	                                                      const RFX_MESSAGE* WINPR_RESTRICT msg);
 
 #ifdef __cplusplus
 }

@@ -25,21 +25,21 @@
 #include "prim_set.h"
 
 /* ========================================================================= */
-static pstatus_t general_set_8u(BYTE val, BYTE* pDst, UINT32 len)
+static pstatus_t general_set_8u(BYTE val, BYTE* WINPR_RESTRICT pDst, UINT32 len)
 {
 	memset((void*)pDst, (int)val, (size_t)len);
 	return PRIMITIVES_SUCCESS;
 }
 
 /* ------------------------------------------------------------------------- */
-static pstatus_t general_zero(void* pDst, size_t len)
+static pstatus_t general_zero(void* WINPR_RESTRICT pDst, size_t len)
 {
 	memset(pDst, 0, len);
 	return PRIMITIVES_SUCCESS;
 }
 
 /* ========================================================================= */
-static pstatus_t general_set_32s(INT32 val, INT32* pDst, UINT32 len)
+static pstatus_t general_set_32s(INT32 val, INT32* WINPR_RESTRICT pDst, UINT32 len)
 {
 	INT32* dptr = pDst;
 	size_t span = 0;
@@ -78,7 +78,7 @@ static pstatus_t general_set_32s(INT32 val, INT32* pDst, UINT32 len)
 }
 
 /* ------------------------------------------------------------------------- */
-static pstatus_t general_set_32u(UINT32 val, UINT32* pDst, UINT32 len)
+static pstatus_t general_set_32u(UINT32 val, UINT32* WINPR_RESTRICT pDst, UINT32 len)
 {
 	UINT32* dptr = pDst;
 	size_t span = 0;
