@@ -46,7 +46,9 @@
 #include <freerdp/log.h>
 
 #include <SDL3/SDL.h>
+#if !defined(__MINGW32__)
 #include <SDL3/SDL_main.h>
+#endif
 #include <SDL3/SDL_hints.h>
 #include <SDL3/SDL_video.h>
 #include <SDL3/SDL_oldnames.h>
