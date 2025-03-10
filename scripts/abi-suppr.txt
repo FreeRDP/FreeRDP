@@ -47,3 +47,9 @@ name = freerdp_settings_set_uint32
 [suppress_function]
 change_kind = function-subtype-change
 name = gdi_graphics_pipeline_init_ex
+
+# msusb_msconfig_dump did use MSUSB_CONFIG_DESCRIPTOR* instead of const MSUSB_CONFIG_DESCRIPTOR*
+[suppress_function]
+change_kind = function-subtype-change
+name = msusb_msconfig_dump
+
