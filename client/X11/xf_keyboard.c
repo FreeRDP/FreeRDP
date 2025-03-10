@@ -488,11 +488,19 @@ static int load_map_from_xkbfile(xfContext* xfc)
 			strncpy(xkb_keyname, xkb->names->keys[i].name, XkbKeyNameLength);
 
 			WLog_Print(xfc->log, WLOG_TRACE, "KeyCode %" PRIuz " -> %s", i, xkb_keyname);
-			if (strnlen(xkb_keyname, ARRAYSIZE(xkb_keyname)) < 1)
-				continue;
+			if (strnlen(xkb_keyname, ARRAYSIZE(xkb_keyname)) >= 1)
+				found = try_add(xfc, i, xkb_keyname);
 
-			found = try_add(xfc, i, xkb_keyname);
-
+			if (!found)
+			{
+#if defined(__APPLE__)
+				const DWORD vkcode =
+				    GetVirtualKeyCodeFromKeycode((UINT32)i - 8u, WINPR_KEYCODE_TYPE_APPLE);
+				xfc->X11_KEYCODE_TO_VIRTUAL_SCANCODE[i] =
+				    GetVirtualScanCodeFromVirtualKeyCode(vkcode, WINPR_KBD_TYPE_IBM_ENHANCED);
+				found = TRUE;
+#endif
+			}
 			if (!found)
 			{
 				WLog_Print(xfc->log, WLOG_WARN, "%4s: keycode: 0x%02X -> no RDP scancode found",
