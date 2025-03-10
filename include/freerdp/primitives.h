@@ -140,13 +140,20 @@ typedef pstatus_t (*__copy_no_overlap_t)(BYTE* WINPR_RESTRICT pDstData, DWORD Ds
 	                                     UINT32 nYSrc, const gdiPalette* WINPR_RESTRICT palette,
 	                                     UINT32 flags);
 typedef pstatus_t (*__lShiftC_16s_inplace_t)(INT16* WINPR_RESTRICT pSrcDst, UINT32 val, UINT32 len);
-typedef pstatus_t (*__lShiftC_16s_t)(const INT16* pSrc, UINT32 val, INT16* pSrcDst, UINT32 len);
-typedef pstatus_t (*__lShiftC_16u_t)(const UINT16* pSrc, UINT32 val, UINT16* pSrcDst, UINT32 len);
-typedef pstatus_t (*__rShiftC_16s_t)(const INT16* pSrc, UINT32 val, INT16* pSrcDst, UINT32 len);
-typedef pstatus_t (*__rShiftC_16u_t)(const UINT16* pSrc, UINT32 val, UINT16* pSrcDst, UINT32 len);
-typedef pstatus_t (*__shiftC_16s_t)(const INT16* pSrc, INT32 val, INT16* pSrcDst, UINT32 len);
-typedef pstatus_t (*__shiftC_16u_t)(const UINT16* pSrc, INT32 val, UINT16* pSrcDst, UINT32 len);
-typedef pstatus_t (*__sign_16s_t)(const INT16* pSrc, INT16* pSrcDst, UINT32 len);
+typedef pstatus_t (*__lShiftC_16s_t)(const INT16* WINPR_RESTRICT pSrc, UINT32 val,
+	                                 INT16* WINPR_RESTRICT pSrcDst, UINT32 len);
+typedef pstatus_t (*__lShiftC_16u_t)(const UINT16* WINPR_RESTRICT pSrc, UINT32 val,
+	                                 UINT16* WINPR_RESTRICT pSrcDst, UINT32 len);
+typedef pstatus_t (*__rShiftC_16s_t)(const INT16* WINPR_RESTRICT pSrc, UINT32 val,
+	                                 INT16* WINPR_RESTRICT pSrcDst, UINT32 len);
+typedef pstatus_t (*__rShiftC_16u_t)(const UINT16* WINPR_RESTRICT pSrc, UINT32 val,
+	                                 UINT16* WINPR_RESTRICT pSrcDst, UINT32 len);
+typedef pstatus_t (*__shiftC_16s_t)(const INT16* WINPR_RESTRICT pSrc, INT32 val,
+	                                INT16* WINPR_RESTRICT pSrcDst, UINT32 len);
+typedef pstatus_t (*__shiftC_16u_t)(const UINT16* WINPR_RESTRICT pSrc, INT32 val,
+	                                UINT16* WINPR_RESTRICT pSrcDst, UINT32 len);
+typedef pstatus_t (*__sign_16s_t)(const INT16* WINPR_RESTRICT pSrc, INT16* WINPR_RESTRICT pSrcDst,
+	                              UINT32 len);
 typedef pstatus_t (*__yCbCrToRGB_16s8u_P3AC4R_t)(const INT16* WINPR_RESTRICT pSrc[3],
 	                                             UINT32 srcStep, BYTE* WINPR_RESTRICT pDst,
 	                                             UINT32 dstStep, UINT32 DstFormat,
