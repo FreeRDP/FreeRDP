@@ -84,7 +84,8 @@ static BOOL memory_regions_overlap_2d(const BYTE* p1, int p1Step, int p1Size, co
 }
 
 /* ------------------------------------------------------------------------- */
-static pstatus_t general_copy_8u(const BYTE* pSrc, BYTE* pDst, INT32 len)
+static pstatus_t general_copy_8u(const BYTE* WINPR_RESTRICT pSrc, BYTE* WINPR_RESTRICT pDst,
+                                 INT32 len)
 {
 	if (memory_regions_overlap_1d(pSrc, pDst, (size_t)len))
 	{
@@ -103,8 +104,9 @@ static pstatus_t general_copy_8u(const BYTE* pSrc, BYTE* pDst, INT32 len)
  * The addresses are assumed to have been already offset to the upper-left
  * corners of the source and destination region of interest.
  */
-static pstatus_t general_copy_8u_AC4r(const BYTE* pSrc, INT32 srcStep, BYTE* pDst, INT32 dstStep,
-                                      INT32 width, INT32 height)
+static pstatus_t general_copy_8u_AC4r(const BYTE* WINPR_RESTRICT pSrc, INT32 srcStep,
+                                      BYTE* WINPR_RESTRICT pDst, INT32 dstStep, INT32 width,
+                                      INT32 height)
 {
 	const BYTE* src = pSrc;
 	BYTE* dst = pDst;
@@ -420,7 +422,7 @@ void primitives_init_copy(primitives_t* WINPR_RESTRICT prims)
 	prims->copy_no_overlap = generic_image_copy_no_overlap;
 }
 
-void primitives_init_copy_opt(primitives_t* prims)
+void primitives_init_copy_opt(primitives_t* WINPR_RESTRICT prims)
 {
 	primitives_init_copy_sse41(prims);
 #if defined(WITH_AVX2)

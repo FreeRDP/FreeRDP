@@ -2379,8 +2379,9 @@ fail:
 	return rc;
 }
 
-BOOL progressive_rfx_write_message_progressive_simple(PROGRESSIVE_CONTEXT* progressive, wStream* s,
-                                                      const RFX_MESSAGE* msg)
+BOOL progressive_rfx_write_message_progressive_simple(
+    PROGRESSIVE_CONTEXT* WINPR_RESTRICT progressive, wStream* WINPR_RESTRICT s,
+    const RFX_MESSAGE* WINPR_RESTRICT msg)
 {
 	RFX_CONTEXT* context = NULL;
 

@@ -377,7 +377,8 @@ static void nsc_encode_subsampling_sse2(NSC_CONTEXT* context)
 	}
 }
 
-static BOOL nsc_encode_sse2(NSC_CONTEXT* context, const BYTE* data, UINT32 scanline)
+static BOOL nsc_encode_sse2(NSC_CONTEXT* WINPR_RESTRICT context, const BYTE* WINPR_RESTRICT data,
+                            UINT32 scanline)
 {
 	if (!nsc_encode_argb_to_aycocg_sse2(context, data, scanline))
 		return FALSE;

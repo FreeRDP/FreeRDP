@@ -24,7 +24,8 @@
 /* ----------------------------------------------------------------------------
  * 32-bit AND with a constant.
  */
-static pstatus_t general_andC_32u(const UINT32* pSrc, UINT32 val, UINT32* pDst, INT32 len)
+static pstatus_t general_andC_32u(const UINT32* WINPR_RESTRICT pSrc, UINT32 val,
+                                  UINT32* WINPR_RESTRICT pDst, INT32 len)
 {
 	if (val == 0)
 		return PRIMITIVES_SUCCESS;
@@ -38,7 +39,8 @@ static pstatus_t general_andC_32u(const UINT32* pSrc, UINT32 val, UINT32* pDst, 
 /* ----------------------------------------------------------------------------
  * 32-bit OR with a constant.
  */
-static pstatus_t general_orC_32u(const UINT32* pSrc, UINT32 val, UINT32* pDst, INT32 len)
+static pstatus_t general_orC_32u(const UINT32* WINPR_RESTRICT pSrc, UINT32 val,
+                                 UINT32* WINPR_RESTRICT pDst, INT32 len)
 {
 	if (val == 0)
 		return PRIMITIVES_SUCCESS;

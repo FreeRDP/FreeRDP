@@ -1127,8 +1127,9 @@ BOOL freerdp_image_fill(BYTE* WINPR_RESTRICT pDstData, DWORD DstFormat, UINT32 n
 	return TRUE;
 }
 
-BOOL freerdp_image_fill_ex(BYTE* pDstData, DWORD DstFormat, UINT32 nDstStep, UINT32 nXDst,
-                           UINT32 nYDst, UINT32 nWidth, UINT32 nHeight, UINT32 color, UINT32 flags)
+BOOL freerdp_image_fill_ex(BYTE* WINPR_RESTRICT pDstData, DWORD DstFormat, UINT32 nDstStep,
+                           UINT32 nXDst, UINT32 nYDst, UINT32 nWidth, UINT32 nHeight, UINT32 color,
+                           UINT32 flags)
 {
 	if (FreeRDPColorHasAlpha(DstFormat) && ((flags & FREERDP_IMAGE_FILL_IGNORE_ALPHA) != 0))
 	{

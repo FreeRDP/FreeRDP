@@ -1207,7 +1207,7 @@ error_nsc:
 	return NULL;
 }
 
-void clear_context_free(CLEAR_CONTEXT* clear)
+void clear_context_free(CLEAR_CONTEXT* WINPR_RESTRICT clear)
 {
 	if (!clear)
 		return;

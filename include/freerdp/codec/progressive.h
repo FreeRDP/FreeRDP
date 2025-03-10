@@ -80,7 +80,8 @@ extern "C"
 	 *  @return \b TRUE in case of success, \b FALSE for any error
 	 */
 	FREERDP_API BOOL progressive_rfx_write_message_progressive_simple(
-	    PROGRESSIVE_CONTEXT* progressive, wStream* s, const RFX_MESSAGE* msg);
+	    PROGRESSIVE_CONTEXT* WINPR_RESTRICT progressive, wStream* WINPR_RESTRICT s,
+	    const RFX_MESSAGE* WINPR_RESTRICT msg);
 
 #ifdef __cplusplus
 }
