@@ -38,6 +38,11 @@ extern "C"
 
 	void urbdrc_dump_message(wLog* log, BOOL client, BOOL write, wStream* s);
 
+	wStream* create_shared_message_header_with_functionid(UINT32 InterfaceId, UINT32 MessageId,
+	                                                      UINT32 FunctionId, size_t OutputSize);
+	BOOL write_shared_message_header_with_functionid(wStream* s, UINT32 InterfaceId,
+	                                                 UINT32 MessageId, UINT32 FunctionId);
+
 #ifdef __cplusplus
 }
 #endif
