@@ -373,11 +373,17 @@ static BOOL rts_read_auth_verifier_with_stub(wStream* s, auth_verifier_co_t* aut
 		if (off > header->frag_length)
 			WLog_WARN(TAG,
 			          "Unexpected alloc_hint(%" PRIuz ") for PDU %s: size %" PRIuz
-			          ", offset %" PRIuz,
-			          alloc_hint, rts_pdu_ptype_to_string(header->ptype), header->frag_length, off);
-		*ptr = (BYTE*)sdup(src, size);
-		if (!*ptr)
-			return FALSE;
+			          ", frag_length %" PRIu16 ", offset %" PRIuz,
+			          alloc_hint, rts_pdu_ptype_to_string(header->ptype), size, header->frag_length,
+			          off);
+
+		*ptr = NULL;
+		if (size > 0)
+		{
+			*ptr = (BYTE*)sdup(src, size);
+			if (!*ptr)
+				return FALSE;
+		}
 	}
 
 	return TRUE;
