@@ -742,8 +742,8 @@ static BOOL TestPrimitiveRgbToLumaChroma(primitives_t* prims, prim_size_t roi, U
 	size_t uvwidth = 0;
 	const size_t padding = 0x1000;
 	UINT32 stride = 0;
-	__RGBToAVC444YUV_t fkt = NULL;
-	__RGBToAVC444YUV_t gen = NULL;
+	fn_RGBToAVC444YUV_t fkt = NULL;
+	fn_RGBToAVC444YUV_t gen = NULL;
 	const UINT32 formats[] = { PIXEL_FORMAT_XRGB32, PIXEL_FORMAT_XBGR32, PIXEL_FORMAT_ARGB32,
 		                       PIXEL_FORMAT_ABGR32, PIXEL_FORMAT_RGBA32, PIXEL_FORMAT_RGBX32,
 		                       PIXEL_FORMAT_BGRA32, PIXEL_FORMAT_BGRX32 };

@@ -418,7 +418,7 @@ void primitives_init_copy(primitives_t* WINPR_RESTRICT prims)
 	/* Start with the default. */
 	prims->copy_8u = general_copy_8u;
 	prims->copy_8u_AC4r = general_copy_8u_AC4r;
-	prims->copy = WINPR_FUNC_PTR_CAST(prims->copy_8u, __copy_t);
+	prims->copy = WINPR_FUNC_PTR_CAST(prims->copy_8u, fn_copy_t);
 	prims->copy_no_overlap = generic_image_copy_no_overlap;
 }
 
