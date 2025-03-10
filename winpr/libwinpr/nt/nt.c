@@ -125,8 +125,8 @@ const char* FSInformationClass2Tag(FILE_INFORMATION_CLASS value)
 			return "FileCompressionInformation";
 		case FileObjectIdInformation:
 			return "FileObjectIdInformation";
-		case FileUnknownInformation1:
-			return "FileUnknownInformation1";
+		case FileCompletionInformation:
+			return "FileCompletionInformation";
 		case FileMoveClusterInformation:
 			return "FileMoveClusterInformation";
 		case FileQuotaInformation:

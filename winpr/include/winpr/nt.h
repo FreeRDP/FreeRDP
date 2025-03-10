@@ -1327,7 +1327,7 @@ typedef enum
 	FileMailslotSetInformation,
 	FileCompressionInformation,
 	FileObjectIdInformation,
-	FileUnknownInformation1,
+	FileCompletionInformation,
 	FileMoveClusterInformation,
 	FileQuotaInformation,
 	FileReparsePointInformation,
