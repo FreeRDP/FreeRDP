@@ -2939,7 +2939,7 @@ static int ncrush_generate_tables(NCRUSH_CONTEXT* context)
 	UINT32 cnt = 0;
 	for (BYTE i = 0; i < 28; i++)
 	{
-		for (UINT32 j = 0; j < 1 << LOMBitsLUT[i]; j++)
+		for (UINT32 j = 0; j < 1UL << LOMBitsLUT[i]; j++)
 		{
 			size_t l = (cnt++) + 2ull;
 			context->HuffTableLOM[l] = i;
