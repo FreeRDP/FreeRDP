@@ -1137,7 +1137,7 @@ BOOL freerdp_client_populate_rdp_file_from_settings(rdpFile* file, const rdpSett
 	file->SessionBpp = freerdp_settings_get_uint32(settings, FreeRDP_ColorDepth);
 	file->DesktopScaleFactor = freerdp_settings_get_uint32(settings, FreeRDP_DesktopScaleFactor);
 	file->DynamicResolution = WINPR_ASSERTING_INT_CAST(
-	    UINT32, freerdp_settings_get_bool(settings, FreeRDP_DynamicResolutionUpdate));
+	    UINT32, freerdp_settings_get_bool(settings, FreeRDP_SupportDisplayControl));
 	file->VideoPlaybackMode = WINPR_ASSERTING_INT_CAST(
 	    UINT32, freerdp_settings_get_bool(settings, FreeRDP_SupportVideoOptimized));
 
@@ -2545,11 +2545,8 @@ BOOL freerdp_client_populate_settings_from_rdp_file(const rdpFile* file, rdpSett
 	if (~file->DynamicResolution)
 	{
 		const BOOL val = file->DynamicResolution != 0;
-		if (val)
-		{
-			if (!freerdp_settings_set_bool(settings, FreeRDP_SupportDisplayControl, TRUE))
-				return FALSE;
-		}
+		if (!freerdp_settings_set_bool(settings, FreeRDP_SupportDisplayControl, val))
+			return FALSE;
 		if (!freerdp_settings_set_bool(settings, FreeRDP_DynamicResolutionUpdate, val))
 			return FALSE;
 	}
