@@ -461,7 +461,7 @@ static BOOL vgids_prepare_certificate(const rdpCertificate* cert, BYTE** kxc, DW
 
 	size_t certSize = 0;
 	BYTE* certData = freerdp_certificate_get_der(cert, &certSize);
-	if (!certData || (certSize == 0))
+	if (!certData || (certSize == 0) || (certSize > UINT16_MAX))
 	{
 		WLog_ERR(TAG, "Failed to get certificate size");
 		goto handle_error;
@@ -475,8 +475,9 @@ static BOOL vgids_prepare_certificate(const rdpCertificate* cert, BYTE** kxc, DW
 	}
 
 	/* compress certificate data */
-	destSize = certSize;
-	if (compress(comprData, &destSize, certData, certSize) != Z_OK)
+	destSize = WINPR_ASSERTING_INT_CAST(uint16_t, certSize);
+	if (compress(comprData, &destSize, certData, WINPR_ASSERTING_INT_CAST(uint16_t, certSize)) !=
+	    Z_OK)
 	{
 		WLog_ERR(TAG, "Failed to compress certificate data");
 		goto handle_error;
@@ -485,7 +486,7 @@ static BOOL vgids_prepare_certificate(const rdpCertificate* cert, BYTE** kxc, DW
 	/* Write container data */
 	s = Stream_New(NULL, destSize + 4);
 	Stream_Write_UINT16(s, 0x0001);
-	Stream_Write_UINT16(s, (UINT16)certSize);
+	Stream_Write_UINT16(s, WINPR_ASSERTING_INT_CAST(uint16_t, certSize));
 	Stream_Write(s, comprData, destSize);
 	Stream_SealLength(s);
 

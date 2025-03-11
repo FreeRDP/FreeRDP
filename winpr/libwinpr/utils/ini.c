@@ -181,6 +181,7 @@ static BOOL IniFile_Load_File(wIniFile* ini, const char* filename)
 		goto out_file;
 
 	ini->buffer[fileSize] = '\n';
+	ini->buffer[fileSize + 1] = '\0';
 	IniFile_Load_NextLine(ini, ini->buffer);
 	rc = TRUE;
 

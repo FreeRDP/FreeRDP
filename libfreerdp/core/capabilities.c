@@ -2890,6 +2890,35 @@ static BOOL rdp_write_surface_commands_capability_set(wStream* s, const rdpSetti
 	return rdp_capability_set_finish(s, header, CAPSET_TYPE_SURFACE_COMMANDS);
 }
 
+static bool sUuidEqual(const UUID* Uuid1, const UUID* Uuid2)
+{
+	if (!Uuid1 && !Uuid2)
+		return false;
+
+	if (!Uuid2 && Uuid1)
+		return false;
+
+	if (!Uuid1 && !Uuid2)
+		return true;
+
+	if (Uuid1->Data1 != Uuid2->Data1)
+		return false;
+
+	if (Uuid1->Data2 != Uuid2->Data2)
+		return false;
+
+	if (Uuid1->Data3 != Uuid2->Data3)
+		return false;
+
+	for (int index = 0; index < 8; index++)
+	{
+		if (Uuid1->Data4[index] != Uuid2->Data4[index])
+			return false;
+	}
+
+	return true;
+}
+
 #ifdef WITH_DEBUG_CAPABILITIES
 static BOOL rdp_print_surface_commands_capability_set(wStream* s)
 {
@@ -2921,20 +2950,18 @@ static void rdp_print_bitmap_codec_guid(const GUID* guid)
 
 static char* rdp_get_bitmap_codec_guid_name(const GUID* guid)
 {
-	RPC_STATUS rpc_status = 0;
-
 	WINPR_ASSERT(guid);
-	if (UuidEqual(guid, &CODEC_GUID_REMOTEFX, &rpc_status))
+	if (sUuidEqual(guid, &CODEC_GUID_REMOTEFX))
 		return "CODEC_GUID_REMOTEFX";
-	else if (UuidEqual(guid, &CODEC_GUID_NSCODEC, &rpc_status))
+	else if (sUuidEqual(guid, &CODEC_GUID_NSCODEC))
 		return "CODEC_GUID_NSCODEC";
-	else if (UuidEqual(guid, &CODEC_GUID_IGNORE, &rpc_status))
+	else if (sUuidEqual(guid, &CODEC_GUID_IGNORE))
 		return "CODEC_GUID_IGNORE";
-	else if (UuidEqual(guid, &CODEC_GUID_IMAGE_REMOTEFX, &rpc_status))
+	else if (sUuidEqual(guid, &CODEC_GUID_IMAGE_REMOTEFX))
 		return "CODEC_GUID_IMAGE_REMOTEFX";
 
 #if defined(WITH_JPEG)
-	else if (UuidEqual(guid, &CODEC_GUID_JPEG, &rpc_status))
+	else if (sUuidEqual(guid, &CODEC_GUID_JPEG))
 		return "CODEC_GUID_JPEG";
 
 #endif
@@ -3300,7 +3327,6 @@ static BOOL rdp_read_bitmap_codecs_capability_set(wStream* s, rdpSettings* setti
 {
 	BYTE codecId = 0;
 	GUID codecGuid = { 0 };
-	RPC_STATUS rpc_status = 0;
 	BYTE bitmapCodecCount = 0;
 	UINT16 codecPropertiesLength = 0;
 
@@ -3331,21 +3357,21 @@ static BOOL rdp_read_bitmap_codecs_capability_set(wStream* s, rdpSettings* setti
 
 		if (isServer)
 		{
-			if (UuidEqual(&codecGuid, &CODEC_GUID_REMOTEFX, &rpc_status))
+			if (sUuidEqual(&codecGuid, &CODEC_GUID_REMOTEFX))
 			{
 				guidRemoteFx = TRUE;
 				settings->RemoteFxCodecId = codecId;
 				if (!rdp_read_codec_ts_rfx_clnt_caps_container(sub, settings))
 					return FALSE;
 			}
-			else if (UuidEqual(&codecGuid, &CODEC_GUID_IMAGE_REMOTEFX, &rpc_status))
+			else if (sUuidEqual(&codecGuid, &CODEC_GUID_IMAGE_REMOTEFX))
 			{
 				/* Microsoft RDP servers ignore CODEC_GUID_IMAGE_REMOTEFX codec properties */
 				guidRemoteFxImage = TRUE;
 				if (!Stream_SafeSeek(sub, codecPropertiesLength)) /* codecProperties */
 					return FALSE;
 			}
-			else if (UuidEqual(&codecGuid, &CODEC_GUID_NSCODEC, &rpc_status))
+			else if (sUuidEqual(&codecGuid, &CODEC_GUID_NSCODEC))
 			{
 				BYTE colorLossLevel = 0;
 				BYTE fAllowSubsampling = 0;
@@ -3368,7 +3394,7 @@ static BOOL rdp_read_bitmap_codecs_capability_set(wStream* s, rdpSettings* setti
 				settings->NSCodecAllowSubsampling = fAllowSubsampling;
 				settings->NSCodecColorLossLevel = colorLossLevel;
 			}
-			else if (UuidEqual(&codecGuid, &CODEC_GUID_IGNORE, &rpc_status))
+			else if (sUuidEqual(&codecGuid, &CODEC_GUID_IGNORE))
 			{
 				if (!Stream_SafeSeek(sub, codecPropertiesLength)) /* codecProperties */
 					return FALSE;

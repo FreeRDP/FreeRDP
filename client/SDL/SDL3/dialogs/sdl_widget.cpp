@@ -50,12 +50,12 @@ SdlWidget::SdlWidget([[maybe_unused]] SDL_Renderer* renderer, const SDL_FRect& r
 	auto ops = SDL3ResourceManager::get(SDLResourceManager::typeFonts(),
 	                                    "OpenSans-VariableFont_wdth,wght.ttf");
 	if (!ops)
-		widget_log_error(-1, "SDLResourceManager::get");
+		widget_log_error(false, "SDLResourceManager::get");
 	else
 	{
 		_font = TTF_OpenFontIO(ops, true, 64);
 		if (!_font)
-			widget_log_error(-1, "TTF_OpenFontRW");
+			widget_log_error(false, "TTF_OpenFontRW");
 	}
 }
 
@@ -66,7 +66,7 @@ SdlWidget::SdlWidget(SDL_Renderer* renderer, const SDL_FRect& rect, SDL_IOStream
 	{
 		_image = IMG_LoadTexture_IO(renderer, ops, 1);
 		if (!_image)
-			widget_log_error(-1, "IMG_LoadTexture_IO");
+			widget_log_error(false, "IMG_LoadTexture_IO");
 	}
 }
 #endif
@@ -85,7 +85,7 @@ SDL_Texture* SdlWidget::render_text(SDL_Renderer* renderer, const std::string& t
 	auto surface = TTF_RenderText_Blended(_font, text.c_str(), 0, fgcolor);
 	if (!surface)
 	{
-		widget_log_error(-1, "TTF_RenderText_Blended");
+		widget_log_error(false, "TTF_RenderText_Blended");
 		return nullptr;
 	}
 
@@ -93,7 +93,7 @@ SDL_Texture* SdlWidget::render_text(SDL_Renderer* renderer, const std::string& t
 	SDL_DestroySurface(surface);
 	if (!texture)
 	{
-		widget_log_error(-1, "SDL_CreateTextureFromSurface");
+		widget_log_error(false, "SDL_CreateTextureFromSurface");
 		return nullptr;
 	}
 
@@ -101,7 +101,7 @@ SDL_Texture* SdlWidget::render_text(SDL_Renderer* renderer, const std::string& t
 	    TTF_CreateRendererTextEngine(renderer), TTF_DestroySurfaceTextEngine);
 	if (!engine)
 	{
-		widget_log_error(-1, "TTF_CreateRendererTextEngine");
+		widget_log_error(false, "TTF_CreateRendererTextEngine");
 		return nullptr;
 	}
 
@@ -110,14 +110,14 @@ SDL_Texture* SdlWidget::render_text(SDL_Renderer* renderer, const std::string& t
 
 	if (!txt)
 	{
-		widget_log_error(-1, "TTF_CreateText");
+		widget_log_error(false, "TTF_CreateText");
 		return nullptr;
 	}
 	int w = 0;
 	int h = 0;
 	if (!TTF_GetTextSize(txt.get(), &w, &h))
 	{
-		widget_log_error(-1, "TTF_GetTextSize");
+		widget_log_error(false, "TTF_GetTextSize");
 		return nullptr;
 	}
 
@@ -159,7 +159,7 @@ SDL_Texture* SdlWidget::render_text_wrapped(SDL_Renderer* renderer, const std::s
 	                                              static_cast<int>(_text_width));
 	if (!surface)
 	{
-		widget_log_error(-1, "TTF_RenderText_Blended");
+		widget_log_error(false, "TTF_RenderText_Blended");
 		return nullptr;
 	}
 
@@ -170,7 +170,7 @@ SDL_Texture* SdlWidget::render_text_wrapped(SDL_Renderer* renderer, const std::s
 	SDL_DestroySurface(surface);
 	if (!texture)
 	{
-		widget_log_error(-1, "SDL_CreateTextureFromSurface");
+		widget_log_error(false, "SDL_CreateTextureFromSurface");
 		return nullptr;
 	}
 
@@ -213,11 +213,11 @@ bool SdlWidget::error_ex(bool success, const char* what, const char* file, size_
 
 static bool draw_rect(SDL_Renderer* renderer, const SDL_FRect* rect, SDL_Color color)
 {
-	const int drc = SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
+	const auto drc = SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
 	if (widget_log_error(drc, "SDL_SetRenderDrawColor"))
 		return false;
 
-	const int rc = SDL_RenderFillRect(renderer, rect);
+	const auto rc = SDL_RenderFillRect(renderer, rect);
 	return !widget_log_error(rc, "SDL_RenderFillRect");
 }
 
@@ -287,7 +287,7 @@ bool SdlWidget::update_text(SDL_Renderer* renderer, const std::string& text, SDL
 		auto w = SDL_GetNumberProperty(propId, SDL_PROP_TEXTURE_WIDTH_NUMBER, -1);
 		auto h = SDL_GetNumberProperty(propId, SDL_PROP_TEXTURE_HEIGHT_NUMBER, -1);
 		if (w < 0 || h < 0)
-			widget_log_error(-1, "SDL_GetTextureProperties");
+			widget_log_error(false, "SDL_GetTextureProperties");
 		src.w = static_cast<float>(w);
 		src.h = static_cast<float>(h);
 	}
@@ -298,23 +298,22 @@ bool SdlWidget::update_text(SDL_Renderer* renderer, const std::string& text, SDL
 	if (!texture)
 		return false;
 
-	const int rc = SDL_RenderTexture(renderer, texture, &src, &dst);
+	const auto rc = SDL_RenderTexture(renderer, texture, &src, &dst);
 	if (!_image)
 		SDL_DestroyTexture(texture);
-	if (rc < 0)
-		return !widget_log_error(rc, "SDL_RenderCopy");
-	return true;
+
+	return !widget_log_error(rc, "SDL_RenderCopy");
 }
 
 bool clear_window(SDL_Renderer* renderer)
 {
 	assert(renderer);
 
-	const int drc = SDL_SetRenderDrawColor(renderer, backgroundcolor.r, backgroundcolor.g,
-	                                       backgroundcolor.b, backgroundcolor.a);
+	const auto drc = SDL_SetRenderDrawColor(renderer, backgroundcolor.r, backgroundcolor.g,
+	                                        backgroundcolor.b, backgroundcolor.a);
 	if (widget_log_error(drc, "SDL_SetRenderDrawColor"))
 		return false;
 
-	const int rcls = SDL_RenderClear(renderer);
+	const auto rcls = SDL_RenderClear(renderer);
 	return !widget_log_error(rcls, "SDL_RenderClear");
 }

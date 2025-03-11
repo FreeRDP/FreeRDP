@@ -808,7 +808,7 @@ static int xcrush_decompress_l1(XCRUSH_CONTEXT* WINPR_RESTRICT xcrush,
 	UINT16 MatchIndex = 0;
 	BYTE* OutputPtr = NULL;
 	size_t OutputLength = 0;
-	UINT32 OutputOffset = 0;
+	size_t OutputOffset = 0;
 	BYTE* HistoryPtr = NULL;
 	BYTE* HistoryBuffer = NULL;
 	BYTE* HistoryBufferEnd = NULL;

@@ -511,7 +511,7 @@ static PfChannelResult DynvcTrackerPeekFn(ChannelStateTracker* tracker, BOOL fir
 		size_t extraSize = Stream_GetRemainingLength(s);
 
 		trackerState->CurrentDataFragments++;
-		trackerState->CurrentDataReceived += extraSize;
+		trackerState->CurrentDataReceived += WINPR_ASSERTING_INT_CAST(uint32_t, extraSize);
 
 		if (dynChannel->packetReassembly)
 		{

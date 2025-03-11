@@ -43,21 +43,22 @@ SSE3_SCD_ROUTINE(sse2_lShiftC_16u, UINT16, generic->lShiftC_16u, _mm_slli_epi16,
 SSE3_SCD_ROUTINE(sse2_rShiftC_16u, UINT16, generic->rShiftC_16u, _mm_srli_epi16, int16_t,
                  *dptr++ = *sptr++ >> val)
 
-static pstatus_t sse2_lShiftC_16s_inplace(INT16* WINPR_RESTRICT pSrcDst, UINT32 val, UINT32 len)
+static pstatus_t sse2_lShiftC_16s_inplace(INT16* WINPR_RESTRICT pSrcDst, UINT32 val, UINT32 ulen)
 {
+	size_t len = ulen;
 	const INT32 shifts = 2;
 	if (val == 0)
 		return PRIMITIVES_SUCCESS;
 	if (val >= 16)
 		return -1;
 	if (len < 16) /* pointless if too small */
-		return generic->lShiftC_16s_inplace(pSrcDst, val, len);
+		return generic->lShiftC_16s_inplace(pSrcDst, val, ulen);
 
 	UINT32 offBeatMask = (1 << (shifts - 1)) - 1;
 	if ((ULONG_PTR)pSrcDst & offBeatMask)
 	{
 		/* Incrementing the pointer skips over 16-byte boundary. */
-		return generic->lShiftC_16s_inplace(pSrcDst, val, len);
+		return generic->lShiftC_16s_inplace(pSrcDst, val, ulen);
 	}
 	/* Get to the 16-byte boundary now. */
 	const UINT32 rem = ((UINT_PTR)pSrcDst & 0x0f) / sizeof(INT16);
@@ -72,7 +73,7 @@ static pstatus_t sse2_lShiftC_16s_inplace(INT16* WINPR_RESTRICT pSrcDst, UINT32 
 	}
 
 	/* Use 8 128-bit SSE registers. */
-	uint32_t count = len >> (8 - shifts);
+	size_t count = len >> (8 - shifts);
 	len -= count << (8 - shifts);
 
 	while (count--)
@@ -128,7 +129,7 @@ static pstatus_t sse2_lShiftC_16s_inplace(INT16* WINPR_RESTRICT pSrcDst, UINT32 
 
 	/* Finish off the remainder. */
 	if (len > 0)
-		return generic->lShiftC_16s_inplace(pSrcDst, val, len);
+		return generic->lShiftC_16s_inplace(pSrcDst, val, WINPR_ASSERTING_INT_CAST(uint32_t, len));
 
 	return PRIMITIVES_SUCCESS;
 }

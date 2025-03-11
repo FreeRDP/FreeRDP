@@ -201,8 +201,9 @@
 #define SSE3_SSD_ROUTINE(_name_, _type_, _fallback_, _op_, _slowWay_)                        \
 	static pstatus_t _name_(const _type_* WINPR_RESTRICT pSrc1,                              \
 	                        const _type_* WINPR_RESTRICT pSrc2, _type_* WINPR_RESTRICT pDst, \
-	                        UINT32 len)                                                      \
+	                        UINT32 ulen)                                                     \
 	{                                                                                        \
+		size_t len = ulen;                                                                   \
 		int shifts = 0;                                                                      \
 		const _type_* sptr1 = pSrc1;                                                         \
 		const _type_* sptr2 = pSrc2;                                                         \

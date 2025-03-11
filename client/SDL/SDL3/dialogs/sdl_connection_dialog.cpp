@@ -159,8 +159,8 @@ bool SDLConnectionDialog::clearWindow(SDL_Renderer* renderer)
 {
 	assert(renderer);
 
-	const int drc = SDL_SetRenderDrawColor(renderer, backgroundcolor.r, backgroundcolor.g,
-	                                       backgroundcolor.b, backgroundcolor.a);
+	const auto drc = SDL_SetRenderDrawColor(renderer, backgroundcolor.r, backgroundcolor.g,
+	                                        backgroundcolor.b, backgroundcolor.a);
 	if (widget_log_error(drc, "SDL_SetRenderDrawColor"))
 		return false;
 

@@ -1116,7 +1116,7 @@ BOOL rpc_client_write_call(rdpRpc* rpc, wStream* s, UINT16 opnum)
 	CopyMemory(&buffer[offset], &request_pdu.auth_verifier.auth_type, 8);
 	offset += 8;
 
-	if (offset > UINT32_MAX)
+	if (offset > request_pdu.header.frag_length)
 		goto fail;
 
 	plaintext.pvBuffer = buffer;

@@ -387,7 +387,9 @@ static UINT rdpei_send_pen_frame(RdpeiClientContext* context, RDPINPUT_PEN_FRAME
 		frame->frameOffset = rdpei->currentPenFrameTime - rdpei->previousPenFrameTime;
 	}
 
-	if ((error = rdpei_send_pen_event_pdu(callback, frame->frameOffset, frame, 1)))
+	const size_t off = WINPR_ASSERTING_INT_CAST(size_t, frame->frameOffset);
+	error = rdpei_send_pen_event_pdu(callback, off, frame, 1);
+	if (error)
 		return error;
 
 	rdpei->previousPenFrameTime = rdpei->currentPenFrameTime;
