@@ -442,7 +442,8 @@ BOOL xf_generic_MotionNotify(xfContext* xfc, int x, int y, int state, Window win
 
 	if (xfc->fullscreen && !app)
 	{
-		XSetInputFocus(xfc->display, xfc->window->handle, RevertToPointerRoot, CurrentTime);
+		if (xfc->window)
+			XSetInputFocus(xfc->display, xfc->window->handle, RevertToPointerRoot, CurrentTime);
 	}
 
 	return TRUE;

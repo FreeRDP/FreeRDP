@@ -997,7 +997,8 @@ static BOOL update_recv_notification_icon_info_order(rdpUpdate* update, wStream*
 	return result;
 }
 
-static BOOL update_read_desktop_actively_monitored_order(wStream* s, WINDOW_ORDER_INFO* orderInfo,
+static BOOL update_read_desktop_actively_monitored_order(wStream* s,
+                                                         const WINDOW_ORDER_INFO* orderInfo,
                                                          MONITORED_DESKTOP_ORDER* monitored_desktop)
 {
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_DESKTOP_ACTIVE_WND)
@@ -1016,7 +1017,10 @@ static BOOL update_read_desktop_actively_monitored_order(wStream* s, WINDOW_ORDE
 		Stream_Read_UINT8(s, monitored_desktop->numWindowIds); /* numWindowIds (1 byte) */
 
 		if (!Stream_CheckAndLogRequiredLengthOfSize(TAG, s, monitored_desktop->numWindowIds, 4ull))
+		{
+			monitored_desktop->numWindowIds = 0;
 			return FALSE;
+		}
 
 		if (monitored_desktop->numWindowIds > 0)
 		{
@@ -1027,6 +1031,7 @@ static BOOL update_read_desktop_actively_monitored_order(wStream* s, WINDOW_ORDE
 			{
 				free(monitored_desktop->windowIds);
 				monitored_desktop->windowIds = NULL;
+				monitored_desktop->numWindowIds = 0;
 				return FALSE;
 			}
 
