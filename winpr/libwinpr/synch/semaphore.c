@@ -53,13 +53,13 @@ static int SemaphoreGetFd(HANDLE handle)
 
 static DWORD SemaphoreCleanupHandle(HANDLE handle)
 {
-	SSIZE_T length = 0;
 	WINPR_SEMAPHORE* sem = (WINPR_SEMAPHORE*)handle;
 
 	if (!SemaphoreIsHandled(handle))
 		return WAIT_FAILED;
 
-	length = read(sem->pipe_fd[0], &length, 1);
+	uint8_t val = 0;
+	const SSIZE_T length = read(sem->pipe_fd[0], &val, sizeof(val));
 
 	if (length != 1)
 	{
