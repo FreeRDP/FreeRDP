@@ -29,6 +29,7 @@
 
 #include "urbdrc_types.h"
 #include "data_transfer.h"
+#include "msusb.h"
 
 static void usb_process_get_port_status(IUDEVICE* pdev, wStream* out)
 {

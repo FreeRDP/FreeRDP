@@ -283,7 +283,11 @@ static BOOL wf_pre_connect(freerdp* instance)
 		}
 
 		if (keyboardLayoutId == 0)
-			keyboardLayoutId = ((DWORD)GetKeyboardLayout(0) >> 16) & 0x0000FFFF;
+		{
+			const HKL layout = GetKeyboardLayout(0);
+			const uint32_t masked = (uint32_t)(((uintptr_t)layout >> 16) & 0xFFFF);
+			keyboardLayoutId = masked;
+		}
 	}
 
 	if (keyboardLayoutId == 0)

@@ -104,18 +104,20 @@ static WCHAR* printer_win_get_printjob_name(size_t id)
  */
 static UINT printer_win_write_printjob(rdpPrintJob* printjob, const BYTE* data, size_t size)
 {
-	rdpWinPrinter* printer;
 	LPCVOID pBuf = data;
-	DWORD cbBuf = size;
-	DWORD pcWritten;
+	DWORD pcWritten = 0;
+
+	if (size > UINT32_MAX)
+		return ERROR_BAD_ARGUMENTS;
 
 	if (!printjob || !data)
 		return ERROR_BAD_ARGUMENTS;
 
-	printer = (rdpWinPrinter*)printjob->printer;
+	rdpWinPrinter* printer = (rdpWinPrinter*)printjob->printer;
 	if (!printer)
 		return ERROR_BAD_ARGUMENTS;
 
+	DWORD cbBuf = WINPR_ASSERTING_INT_CAST(uint32_t, size);
 	if (!WritePrinter(printer->hPrinter, pBuf, cbBuf, &pcWritten))
 		return ERROR_INTERNAL_ERROR;
 	return CHANNEL_RC_OK;

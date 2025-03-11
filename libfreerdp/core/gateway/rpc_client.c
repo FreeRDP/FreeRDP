@@ -1008,8 +1008,9 @@ int rpc_in_channel_send_pdu(RpcInChannel* inChannel, const BYTE* buffer, size_t 
 
 	if (header.ptype == PTYPE_REQUEST)
 	{
-		inChannel->BytesSent += status;
-		inChannel->SenderAvailableWindow -= status;
+		const uint32_t ustatus = WINPR_ASSERTING_INT_CAST(uint32_t, status);
+		inChannel->BytesSent += ustatus;
+		inChannel->SenderAvailableWindow -= ustatus;
 	}
 
 	if (status > INT32_MAX)

@@ -1638,7 +1638,7 @@ BOOL WINAPI FreeRDP_WTSVirtualChannelRead(HANDLE hChannelHandle, WINPR_ATTR_UNUS
 	return TRUE;
 }
 
-BOOL WINAPI FreeRDP_WTSVirtualChannelWrite(HANDLE hChannelHandle, PCHAR Buffer, ULONG Length,
+BOOL WINAPI FreeRDP_WTSVirtualChannelWrite(HANDLE hChannelHandle, PCHAR Buffer, ULONG uLength,
                                            PULONG pBytesWritten)
 {
 	wStream* s = NULL;
@@ -1646,7 +1646,7 @@ BOOL WINAPI FreeRDP_WTSVirtualChannelWrite(HANDLE hChannelHandle, PCHAR Buffer, 
 	int cbChId = 0;
 	int first = 0;
 	BYTE* buffer = NULL;
-	UINT32 totalWritten = 0;
+	size_t totalWritten = 0;
 	rdpPeerChannel* channel = (rdpPeerChannel*)hChannelHandle;
 	BOOL ret = FALSE;
 
@@ -1657,8 +1657,7 @@ BOOL WINAPI FreeRDP_WTSVirtualChannelWrite(HANDLE hChannelHandle, PCHAR Buffer, 
 	WINPR_ASSERT(channel->vcm);
 	if (channel->channelType == RDP_PEER_CHANNEL_TYPE_SVC)
 	{
-		const ULONG length = Length;
-		buffer = (BYTE*)malloc(length);
+		buffer = (BYTE*)malloc(uLength);
 
 		if (!buffer)
 		{
@@ -1666,9 +1665,9 @@ BOOL WINAPI FreeRDP_WTSVirtualChannelWrite(HANDLE hChannelHandle, PCHAR Buffer, 
 			goto fail;
 		}
 
-		CopyMemory(buffer, Buffer, length);
-		totalWritten = Length;
-		if (!wts_queue_send_item(channel, buffer, length))
+		CopyMemory(buffer, Buffer, uLength);
+		totalWritten = uLength;
+		if (!wts_queue_send_item(channel, buffer, uLength))
 			goto fail;
 	}
 	else if (!channel->vcm->drdynvc_channel || (channel->vcm->drdynvc_state != DRDYNVC_STATE_READY))
@@ -1680,6 +1679,7 @@ BOOL WINAPI FreeRDP_WTSVirtualChannelWrite(HANDLE hChannelHandle, PCHAR Buffer, 
 	{
 		first = TRUE;
 
+		size_t Length = uLength;
 		while (Length > 0)
 		{
 			s = Stream_New(NULL, DVC_MAX_DATA_PDU_SIZE);
@@ -1697,7 +1697,7 @@ BOOL WINAPI FreeRDP_WTSVirtualChannelWrite(HANDLE hChannelHandle, PCHAR Buffer, 
 
 			if (first && (Length > Stream_GetRemainingLength(s)))
 			{
-				cbLen = wts_write_variable_uint(s, Length);
+				cbLen = wts_write_variable_uint(s, WINPR_ASSERTING_INT_CAST(uint32_t, Length));
 				buffer[0] = ((DATA_FIRST_PDU << 4) | (cbLen << 2) | cbChId) & 0xFF;
 			}
 			else
@@ -1725,7 +1725,7 @@ BOOL WINAPI FreeRDP_WTSVirtualChannelWrite(HANDLE hChannelHandle, PCHAR Buffer, 
 	}
 
 	if (pBytesWritten)
-		*pBytesWritten = totalWritten;
+		*pBytesWritten = WINPR_ASSERTING_INT_CAST(uint32_t, totalWritten);
 
 	ret = TRUE;
 fail:

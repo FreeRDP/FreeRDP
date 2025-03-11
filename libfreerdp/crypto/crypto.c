@@ -202,7 +202,7 @@ char* crypto_read_pem(const char* WINPR_RESTRICT filename, size_t* WINPR_RESTRIC
 	const int rs = _fseeki64(fp, 0, SEEK_END);
 	if (rs < 0)
 		goto fail;
-	const SSIZE_T size = _ftelli64(fp);
+	const int64_t size = _ftelli64(fp);
 	if (size < 0)
 		goto fail;
 	const int rc = _fseeki64(fp, 0, SEEK_SET);
