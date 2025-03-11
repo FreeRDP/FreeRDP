@@ -195,8 +195,8 @@ static int rpc_client_recv_pdu_int(rdpRpc* rpc, RPC_PDU* pdu)
 
 	rdpTsg* tsg = transport_get_tsg(rpc->transport);
 
-	WLog_VRB(TAG, "client state %s, vc state %s", rpc_client_state_str(rpc->State),
-	         rpc_vc_state_str(rpc->VirtualConnection->State));
+	WLog_Print(rpc->log, WLOG_TRACE, "client state %s, vc state %s",
+	           rpc_client_state_str(rpc->State), rpc_vc_state_str(rpc->VirtualConnection->State));
 
 	const BOOL rc = rts_match_pdu_signature_ex(&RTS_PDU_PING_SIGNATURE, pdu->s, NULL, &found, TRUE);
 	rts_print_pdu_signature(rpc->log, WLOG_TRACE, &found);
@@ -216,15 +216,14 @@ static int rpc_client_recv_pdu_int(rdpRpc* rpc, RPC_PDU* pdu)
 			case VIRTUAL_CONNECTION_STATE_WAIT_A3W:
 				if (memcmp(&found, &RTS_PDU_CONN_A3_SIGNATURE, sizeof(found)) != 0)
 				{
-					wLog* log = WLog_Get(TAG);
-					WLog_Print(log, WLOG_ERROR, "unexpected RTS PDU: Expected CONN/A3");
-					rts_print_pdu_signature(log, WLOG_ERROR, &found);
+					WLog_Print(rpc->log, WLOG_ERROR, "unexpected RTS PDU: Expected CONN/A3");
+					rts_print_pdu_signature(rpc->log, WLOG_ERROR, &found);
 					return -1;
 				}
 
 				if (!rts_recv_CONN_A3_pdu(rpc, pdu->s))
 				{
-					WLog_ERR(TAG, "rts_recv_CONN_A3_pdu failure");
+					WLog_Print(rpc->log, WLOG_ERROR, "rts_recv_CONN_A3_pdu failure");
 					return -1;
 				}
 
@@ -236,15 +235,14 @@ static int rpc_client_recv_pdu_int(rdpRpc* rpc, RPC_PDU* pdu)
 			case VIRTUAL_CONNECTION_STATE_WAIT_C2:
 				if (memcmp(&found, &RTS_PDU_CONN_C2_SIGNATURE, sizeof(found)) != 0)
 				{
-					wLog* log = WLog_Get(TAG);
-					WLog_Print(log, WLOG_ERROR, "unexpected RTS PDU: Expected CONN/C2");
-					rts_print_pdu_signature(log, WLOG_ERROR, &found);
+					WLog_Print(rpc->log, WLOG_ERROR, "unexpected RTS PDU: Expected CONN/C2");
+					rts_print_pdu_signature(rpc->log, WLOG_ERROR, &found);
 					return -1;
 				}
 
 				if (!rts_recv_CONN_C2_pdu(rpc, pdu->s))
 				{
-					WLog_ERR(TAG, "rts_recv_CONN_C2_pdu failure");
+					WLog_Print(rpc->log, WLOG_ERROR, "rts_recv_CONN_C2_pdu failure");
 					return -1;
 				}
 
@@ -254,7 +252,7 @@ static int rpc_client_recv_pdu_int(rdpRpc* rpc, RPC_PDU* pdu)
 
 				if (rpc_send_bind_pdu(rpc, TRUE) < 0)
 				{
-					WLog_ERR(TAG, "rpc_send_bind_pdu failure");
+					WLog_Print(rpc->log, WLOG_ERROR, "rpc_send_bind_pdu failure");
 					return -1;
 				}
 
@@ -279,16 +277,16 @@ static int rpc_client_recv_pdu_int(rdpRpc* rpc, RPC_PDU* pdu)
 			{
 				if (!rpc_recv_bind_ack_pdu(rpc, pdu->s))
 				{
-					WLog_ERR(TAG, "rpc_recv_bind_ack_pdu failure");
+					WLog_Print(rpc->log, WLOG_ERROR, "rpc_recv_bind_ack_pdu failure");
 					return -1;
 				}
 			}
 			else
 			{
-				WLog_ERR(TAG,
-				         "RPC_CLIENT_STATE_WAIT_SECURE_BIND_ACK unexpected pdu type: 0x%08" PRIX32
-				         "",
-				         pdu->Type);
+				WLog_Print(rpc->log, WLOG_ERROR,
+				           "RPC_CLIENT_STATE_WAIT_SECURE_BIND_ACK unexpected pdu type: 0x%08" PRIX32
+				           "",
+				           pdu->Type);
 				return -1;
 			}
 
@@ -297,14 +295,15 @@ static int rpc_client_recv_pdu_int(rdpRpc* rpc, RPC_PDU* pdu)
 				case RPC_BIND_STATE_INCOMPLETE:
 					if (rpc_send_bind_pdu(rpc, FALSE) < 0)
 					{
-						WLog_ERR(TAG, "rpc_send_bind_pdu failure");
+						WLog_Print(rpc->log, WLOG_ERROR, "rpc_send_bind_pdu failure");
 						return -1;
 					}
 					break;
 				case RPC_BIND_STATE_LAST_LEG:
 					if (rpc_send_rpc_auth_3_pdu(rpc) < 0)
 					{
-						WLog_ERR(TAG, "rpc_secure_bind: error sending rpc_auth_3 pdu!");
+						WLog_Print(rpc->log, WLOG_ERROR,
+						           "rpc_secure_bind: error sending rpc_auth_3 pdu!");
 						return -1;
 					}
 					/* fallthrough */
@@ -314,7 +313,7 @@ static int rpc_client_recv_pdu_int(rdpRpc* rpc, RPC_PDU* pdu)
 
 					if (!tsg_proxy_begin(tsg))
 					{
-						WLog_ERR(TAG, "tsg_proxy_begin failure");
+						WLog_Print(rpc->log, WLOG_ERROR, "tsg_proxy_begin failure");
 						return -1;
 					}
 					break;
@@ -326,7 +325,7 @@ static int rpc_client_recv_pdu_int(rdpRpc* rpc, RPC_PDU* pdu)
 		}
 		else
 		{
-			WLog_ERR(TAG, "invalid rpc->State: %d", rpc->State);
+			WLog_Print(rpc->log, WLOG_ERROR, "invalid rpc->State: %d", rpc->State);
 		}
 	}
 	else if (rpc->State >= RPC_CLIENT_STATE_CONTEXT_NEGOTIATED)
@@ -349,7 +348,7 @@ static int rpc_client_recv_pdu(rdpRpc* rpc, RPC_PDU* pdu)
 	Stream_SetPosition(pdu->s, 0);
 
 	const size_t before = Stream_GetRemainingLength(pdu->s);
-	WLog_VRB(TAG, "RPC PDU parsing %" PRIuz " bytes", before);
+	WLog_Print(rpc->log, WLOG_TRACE, "RPC PDU parsing %" PRIuz " bytes", before);
 	const int rc = rpc_client_recv_pdu_int(rpc, pdu);
 	if (rc < 0)
 		return rc;
@@ -357,7 +356,8 @@ static int rpc_client_recv_pdu(rdpRpc* rpc, RPC_PDU* pdu)
 	if (after > 0)
 	{
 		/* Just log so we do not fail if we have some unprocessed padding bytes */
-		WLog_WARN(TAG, "Incompletely parsed RPC PDU (%" PRIuz " bytes remain)", after);
+		WLog_Print(rpc->log, WLOG_WARN, "Incompletely parsed RPC PDU (%" PRIuz " bytes remain)",
+		           after);
 	}
 
 	return rc;
