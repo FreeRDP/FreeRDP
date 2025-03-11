@@ -333,13 +333,16 @@ BOOL WLog_PacketMessage_Write(wPcap* pcap, void* data, size_t length, DWORD flag
 	{
 		tcp.SequenceNumber = g_OutboundSequenceNumber;
 		tcp.AcknowledgementNumber = g_InboundSequenceNumber;
-		g_OutboundSequenceNumber += length;
+		WINPR_ASSERT(length + g_OutboundSequenceNumber <= UINT32_MAX);
+		g_OutboundSequenceNumber += WINPR_ASSERTING_INT_CAST(uint32_t, length);
 	}
 	else
 	{
 		tcp.SequenceNumber = g_InboundSequenceNumber;
 		tcp.AcknowledgementNumber = g_OutboundSequenceNumber;
-		g_InboundSequenceNumber += length;
+
+		WINPR_ASSERT(length + g_InboundSequenceNumber <= UINT32_MAX);
+		g_InboundSequenceNumber += WINPR_ASSERTING_INT_CAST(uint32_t, length);
 	}
 
 	tcp.Offset = 5;
@@ -352,8 +355,9 @@ BOOL WLog_PacketMessage_Write(wPcap* pcap, void* data, size_t length, DWORD flag
 	record.length = length;
 	const size_t offset = 14 + 20 + 20;
 	WINPR_ASSERT(record.length <= UINT32_MAX - offset);
-	record.header.incl_len = (UINT32)record.length + offset;
-	record.header.orig_len = (UINT32)record.length + offset;
+	const uint32_t rloff = WINPR_ASSERTING_INT_CAST(uint32_t, record.length + offset);
+	record.header.incl_len = rloff;
+	record.header.orig_len = rloff;
 	record.next = NULL;
 
 	UINT64 ns = winpr_GetUnixTimeNS();

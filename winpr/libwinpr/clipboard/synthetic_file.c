@@ -581,7 +581,9 @@ static BOOL process_files(wClipboard* clipboard, const char* data, UINT32 pSize,
 	if (strncmp(data, prefix, prefix_len) != 0)
 		return FALSE;
 	data += prefix_len;
-	pSize -= prefix_len;
+	if (pSize < prefix_len)
+		return FALSE;
+	pSize -= WINPR_ASSERTING_INT_CAST(uint32_t, prefix_len);
 
 	BOOL rc = FALSE;
 	char* copy = strndup(data, pSize);
@@ -592,10 +594,12 @@ static BOOL process_files(wClipboard* clipboard, const char* data, UINT32 pSize,
 	char* tok = strtok_s(copy, "\n", &endptr);
 	while (tok)
 	{
-		size_t tok_len = strnlen(tok, pSize);
+		const size_t tok_len = strnlen(tok, pSize);
 		if (!process_uri(clipboard, tok, tok_len))
 			goto fail;
-		pSize -= tok_len;
+		if (pSize < tok_len)
+			goto fail;
+		pSize -= WINPR_ASSERTING_INT_CAST(uint32_t, tok_len);
 		tok = strtok_s(NULL, "\n", &endptr);
 	}
 	rc = TRUE;

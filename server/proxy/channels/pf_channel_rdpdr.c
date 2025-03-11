@@ -1078,7 +1078,7 @@ static BOOL pf_channel_rdpdr_rewrite_device_list_to(wStream* s, UINT32 fromVersi
 				const size_t datalen = charCount * sizeof(WCHAR);
 				if (!Stream_EnsureRemainingCapacity(s, datalen + sizeof(UINT32)))
 					goto fail;
-				Stream_Write_UINT32(s, datalen);
+				Stream_Write_UINT32(s, WINPR_ASSERTING_INT_CAST(uint32_t, datalen));
 
 				const SSIZE_T rcw = Stream_Write_UTF16_String_From_UTF8(
 				    s, charCount, device.PreferredDosName, charCount - 1, TRUE);

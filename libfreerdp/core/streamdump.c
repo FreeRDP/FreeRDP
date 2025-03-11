@@ -98,14 +98,16 @@ static
 		*flags = STREAM_MSG_SRV_RX;
 	else
 		*flags = STREAM_MSG_SRV_TX;
-	if (!Stream_EnsureRemainingCapacity(s, size))
+
+	const size_t usize = WINPR_ASSERTING_INT_CAST(size_t, size);
+	if (!Stream_EnsureRemainingCapacity(s, usize))
 		goto fail;
-	r = fread(Stream_Pointer(s), 1, size, fp);
+	r = fread(Stream_Pointer(s), 1, usize, fp);
 	if (r != size)
 		goto fail;
-	if (crc32 != crc32b(Stream_ConstPointer(s), size))
+	if (crc32 != crc32b(Stream_ConstPointer(s), usize))
 		goto fail;
-	Stream_Seek(s, size);
+	Stream_Seek(s, usize);
 
 	if (pOffset)
 	{
@@ -133,13 +135,14 @@ static
 	BOOL rc = FALSE;
 	const UINT64 t = GetTickCount64();
 	const BYTE* data = Stream_Buffer(s);
-	const UINT64 size = Stream_Length(s);
+	const size_t usize = Stream_Length(s);
+	const uint64_t size = (uint64_t)usize;
 
 	if (!fp || !s)
 		return FALSE;
 
 	{
-		const UINT32 crc32 = crc32b(data, size);
+		const UINT32 crc32 = crc32b(data, usize);
 		const BYTE received = flags & STREAM_MSG_SRV_RX;
 		size_t r = fwrite(&t, 1, sizeof(t), fp);
 		if (r != sizeof(t))
@@ -153,8 +156,8 @@ static
 		r = fwrite(&size, 1, sizeof(size), fp);
 		if (r != sizeof(size))
 			goto fail;
-		r = fwrite(data, 1, size, fp);
-		if (r != size)
+		r = fwrite(data, 1, usize, fp);
+		if (r != usize)
 			goto fail;
 	}
 
@@ -217,10 +220,17 @@ SSIZE_T stream_dump_append(const rdpContext* context, UINT32 flags, wStream* s, 
 
 	if (!stream_dump_write_line(fp, flags, s))
 		goto fail;
-	rc = _ftelli64(fp);
-	if (rc < 0)
-		goto fail;
+	{
+		const int64_t rt = _ftelli64(fp);
+		if (rt < 0)
+		{
+			rc = -1;
+			goto fail;
+		}
+		rc = WINPR_ASSERTING_INT_CAST(SSIZE_T, rt);
+	}
 	*offset = (size_t)rc;
+
 fail:
 	if (fp)
 		(void)fclose(fp);
@@ -246,7 +256,10 @@ SSIZE_T stream_dump_get(const rdpContext* context, UINT32* flags, wStream* s, si
 	if (!stream_dump_read_line(fp, s, pts, offset, flags))
 		goto fail;
 
-	rc = _ftelli64(fp);
+	const int64_t rt = _ftelli64(fp);
+	if (rt < 0)
+		goto fail;
+	rc = WINPR_ASSERTING_INT_CAST(SSIZE_T, rt);
 fail:
 	if (fp)
 		(void)fclose(fp);
@@ -364,7 +377,7 @@ static int stream_dump_replay_transport_read(rdpTransport* transport, wStream* s
 
 	if (slp > 0)
 	{
-		size_t duration = slp;
+		uint64_t duration = slp;
 		do
 		{
 			const DWORD actual = (DWORD)MIN(duration, UINT32_MAX);

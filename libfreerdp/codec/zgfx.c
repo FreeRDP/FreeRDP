@@ -156,7 +156,8 @@ static INLINE void zgfx_history_buffer_ring_write(ZGFX_CONTEXT* WINPR_RESTRICT z
 	{
 		CopyMemory(&(zgfx->HistoryBuffer[zgfx->HistoryIndex]), src, count);
 
-		if ((zgfx->HistoryIndex += count) == zgfx->HistoryBufferSize)
+		zgfx->HistoryIndex += WINPR_ASSERTING_INT_CAST(uint32_t, count);
+		if (zgfx->HistoryIndex == zgfx->HistoryBufferSize)
 			zgfx->HistoryIndex = 0;
 	}
 	else

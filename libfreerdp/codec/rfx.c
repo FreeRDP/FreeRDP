@@ -1871,7 +1871,8 @@ skip_encoding_loop:
 			}
 
 			const RFX_TILE* tile = message->tiles[i];
-			message->tilesDataSize += rfx_tile_length(tile);
+			const size_t tlen = rfx_tile_length(tile);
+			message->tilesDataSize += WINPR_ASSERTING_INT_CAST(uint32_t, tlen);
 		}
 
 		region16_uninit(&tilesRegion);
@@ -1972,7 +1973,7 @@ static INLINE RFX_MESSAGE* rfx_split_message(RFX_CONTEXT* WINPR_RESTRICT context
 				goto free_messages;
 		}
 
-		msg->tilesDataSize += tileDataSize;
+		msg->tilesDataSize += WINPR_ASSERTING_INT_CAST(uint32_t, tileDataSize);
 
 		WINPR_ASSERT(msg->numTiles < msg->allocatedTiles);
 		msg->tiles[msg->numTiles++] = message->tiles[i];

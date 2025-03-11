@@ -36,20 +36,20 @@ SSE3_SSD_ROUTINE(sse3_add_16s, INT16, generic->add_16s, _mm_adds_epi16,
                  generic->add_16s(sptr1++, sptr2++, dptr++, 1))
 
 static pstatus_t sse3_add_16s_inplace(INT16* WINPR_RESTRICT pSrcDst1,
-                                      INT16* WINPR_RESTRICT pSrcDst2, UINT32 len)
+                                      INT16* WINPR_RESTRICT pSrcDst2, UINT32 ulen)
 {
 	const int shifts = 2;
 	INT16* dptr1 = pSrcDst1;
 	INT16* dptr2 = pSrcDst2;
 
-	if (len < 16) /* pointless if too small */
-		return generic->add_16s_inplace(pSrcDst1, pSrcDst2, len);
+	if (ulen < 16) /* pointless if too small */
+		return generic->add_16s_inplace(pSrcDst1, pSrcDst2, ulen);
 
 	UINT32 offBeatMask = (1 << (shifts - 1)) - 1;
 	if ((ULONG_PTR)pSrcDst1 & offBeatMask)
 	{
 		/* Incrementing the pointer skips over 16-byte boundary. */
-		return generic->add_16s_inplace(pSrcDst1, pSrcDst2, len);
+		return generic->add_16s_inplace(pSrcDst1, pSrcDst2, ulen);
 	}
 	/* Get to the 16-byte boundary now. */
 	const size_t rem = ((UINT_PTR)dptr1 & 0xf) / sizeof(INT16);
@@ -63,6 +63,7 @@ static pstatus_t sse3_add_16s_inplace(INT16* WINPR_RESTRICT pSrcDst1,
 		dptr2 += add;
 	}
 	/* Use 4 128-bit SSE registers. */
+	size_t len = ulen;
 	size_t count = len >> (7 - shifts);
 	len -= count << (7 - shifts);
 	if (((const ULONG_PTR)dptr1 & 0x0f) || ((const ULONG_PTR)dptr2 & 0x0f))
@@ -164,7 +165,7 @@ static pstatus_t sse3_add_16s_inplace(INT16* WINPR_RESTRICT pSrcDst1,
 	}
 	/* Finish off the remainder. */
 	if (len > 0)
-		return generic->add_16s_inplace(dptr1, dptr2, len);
+		return generic->add_16s_inplace(dptr1, dptr2, WINPR_ASSERTING_INT_CAST(uint32_t, len));
 
 	return PRIMITIVES_SUCCESS;
 }

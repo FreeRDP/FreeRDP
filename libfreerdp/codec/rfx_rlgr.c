@@ -226,7 +226,8 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* WINPR_RESTRICT pSrcData, UINT32 
 				if (cnt > nbits)
 					cnt = nbits;
 
-				vk += cnt;
+				WINPR_ASSERT(cnt + vk <= UINT32_MAX);
+				vk += WINPR_ASSERTING_INT_CAST(uint32_t, cnt);
 			}
 
 			BitStream_Shift(bs, (vk % 32));
@@ -290,7 +291,8 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* WINPR_RESTRICT pSrcData, UINT32 
 				if (cnt > nbits)
 					cnt = nbits;
 
-				vk += cnt;
+				WINPR_ASSERT(cnt + vk <= UINT32_MAX);
+				vk += WINPR_ASSERTING_INT_CAST(uint32_t, cnt);
 			}
 
 			BitStream_Shift(bs, (vk % 32));
@@ -401,7 +403,8 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* WINPR_RESTRICT pSrcData, UINT32 
 				if (cnt > nbits)
 					cnt = nbits;
 
-				vk += cnt;
+				WINPR_ASSERT(cnt + vk <= UINT32_MAX);
+				vk += WINPR_ASSERTING_INT_CAST(uint32_t, cnt);
 			}
 
 			BitStream_Shift(bs, (vk % 32));

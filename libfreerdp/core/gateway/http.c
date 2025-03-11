@@ -849,7 +849,7 @@ static BOOL http_response_parse_header_field(HttpResponse* response, const char*
 		if ((errno != 0) || (val > INT32_MAX))
 			return FALSE;
 
-		response->ContentLength = val;
+		response->ContentLength = WINPR_ASSERTING_INT_CAST(size_t, val);
 	}
 	else if (_stricmp(name, "Content-Type") == 0)
 	{

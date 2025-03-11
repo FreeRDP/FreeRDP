@@ -2136,7 +2136,8 @@ static BOOL update_send_create_offscreen_bitmap_order(
 
 	const size_t em = Stream_GetPosition(s);
 	Stream_SetPosition(s, bm);
-	Stream_Write_UINT8(s, controlFlags); /* controlFlags (1 byte) */
+	Stream_Write_UINT8(s,
+	                   WINPR_ASSERTING_INT_CAST(uint8_t, controlFlags)); /* controlFlags (1 byte) */
 	Stream_SetPosition(s, em);
 	update->numberOrders++;
 	return TRUE;
@@ -2173,7 +2174,8 @@ static BOOL update_send_switch_surface_order(rdpContext* context,
 
 	const size_t em = Stream_GetPosition(s);
 	Stream_SetPosition(s, bm);
-	Stream_Write_UINT8(s, controlFlags); /* controlFlags (1 byte) */
+	Stream_Write_UINT8(s,
+	                   WINPR_ASSERTING_INT_CAST(uint8_t, controlFlags)); /* controlFlags (1 byte) */
 	Stream_SetPosition(s, em);
 	update->numberOrders++;
 	return TRUE;

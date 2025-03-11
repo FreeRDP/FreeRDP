@@ -746,8 +746,8 @@ static INLINE int progressive_rfx_dwt_2d_decode(PROGRESSIVE_CONTEXT* WINPR_RESTR
 	if (!progressive || !buffer || !current)
 		return -1;
 
-	const size_t belements = 4096;
-	const size_t bsize = belements * sizeof(INT16);
+	const uint32_t belements = 4096;
+	const uint32_t bsize = belements * sizeof(INT16);
 	if (reverse)
 		memcpy(buffer, current, bsize);
 	else if (!coeffDiff)
