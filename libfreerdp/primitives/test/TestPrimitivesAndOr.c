@@ -23,7 +23,7 @@
 #define VALUE (0xA5A5A5A5U)
 
 /* ========================================================================= */
-static BOOL test_and_32u_impl(const char* name, __andC_32u_t fkt, const UINT32* src,
+static BOOL test_and_32u_impl(const char* name, fn_andC_32u_t fkt, const UINT32* src,
                               const UINT32 val, UINT32* dst, size_t size)
 {
 	pstatus_t status = fkt(src, val, dst, WINPR_ASSERTING_INT_CAST(int32_t, size));

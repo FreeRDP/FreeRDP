@@ -31,15 +31,16 @@
 
 static primitives_t* generic = NULL;
 
-static pstatus_t sse2_set_8u(BYTE val, BYTE* WINPR_RESTRICT pDst, UINT32 len)
+static pstatus_t sse2_set_8u(BYTE val, BYTE* WINPR_RESTRICT pDst, UINT32 ulen)
 {
+	size_t len = ulen;
 	BYTE byte = 0;
 	BYTE* dptr = NULL;
 	__m128i xmm0;
 	size_t count = 0;
 
 	if (len < 16)
-		return generic->set_8u(val, pDst, len);
+		return generic->set_8u(val, pDst, ulen);
 
 	byte = val;
 	dptr = pDst;
@@ -114,8 +115,9 @@ static pstatus_t sse2_set_8u(BYTE val, BYTE* WINPR_RESTRICT pDst, UINT32 len)
 }
 
 /* ------------------------------------------------------------------------- */
-static pstatus_t sse2_set_32u(UINT32 val, UINT32* WINPR_RESTRICT pDst, UINT32 len)
+static pstatus_t sse2_set_32u(UINT32 val, UINT32* WINPR_RESTRICT pDst, UINT32 ulen)
 {
+	size_t len = ulen;
 	const primitives_t* prim = primitives_get_generic();
 	UINT32* dptr = pDst;
 	__m128i xmm0;
@@ -133,7 +135,7 @@ static pstatus_t sse2_set_32u(UINT32 val, UINT32* WINPR_RESTRICT pDst, UINT32 le
 	/* Assure we can reach 16-byte alignment. */
 	if (((ULONG_PTR)dptr & 0x03) != 0)
 	{
-		return prim->set_32u(val, pDst, len);
+		return prim->set_32u(val, pDst, ulen);
 	}
 
 	/* Seek 16-byte alignment. */

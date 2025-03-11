@@ -31,21 +31,23 @@
 static primitives_t* generic = NULL;
 
 /* ------------------------------------------------------------------------- */
-static pstatus_t ssse3_sign_16s(const INT16* pSrc, INT16* pDst, UINT32 len)
+static pstatus_t ssse3_sign_16s(const INT16* WINPR_RESTRICT pSrc, INT16* WINPR_RESTRICT pDst,
+                                UINT32 ulen)
 {
+	size_t len = ulen;
 	const INT16* sptr = pSrc;
 	INT16* dptr = pDst;
 	size_t count = 0;
 
 	if (len < 16)
 	{
-		return generic->sign_16s(pSrc, pDst, len);
+		return generic->sign_16s(pSrc, pDst, ulen);
 	}
 
 	/* Check for 16-byte alignment (eventually). */
 	if ((ULONG_PTR)pDst & 0x01)
 	{
-		return generic->sign_16s(pSrc, pDst, len);
+		return generic->sign_16s(pSrc, pDst, ulen);
 	}
 
 	/* Seek 16-byte alignment. */
