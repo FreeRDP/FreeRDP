@@ -256,7 +256,7 @@ void* UwacClipboardDataGet(UwacSeat* seat, const char* mime, size_t* size)
 
 		data = tmp;
 
-		if (pos > alloc)
+		if (pos >= alloc)
 			goto fail;
 
 		r = read(pipefd[0], &data[pos], alloc - pos);
