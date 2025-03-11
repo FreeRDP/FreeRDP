@@ -26,6 +26,7 @@
 
 #include "urbdrc_types.h"
 #include "urbdrc_main.h"
+#include "msusb.h"
 
 typedef struct libusb_device LIBUSB_DEVICE;
 typedef struct libusb_device_handle LIBUSB_DEVICE_HANDLE;

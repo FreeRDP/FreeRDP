@@ -130,7 +130,6 @@ char** winpr_win_backtrace_symbols(void* buffer, size_t* used)
 
 char* winpr_win_strerror(DWORD dw, char* dmsg, size_t size)
 {
-	DWORD rc;
 	DWORD nSize = 0;
 	DWORD dwFlags = 0;
 	LPTSTR msg = NULL;
@@ -143,12 +142,12 @@ char* winpr_win_strerror(DWORD dw, char* dmsg, size_t size)
 	nSize = (DWORD)(size * sizeof(WCHAR));
 	msg = (LPTSTR)calloc(nSize, sizeof(WCHAR));
 #endif
-	rc = FormatMessage(dwFlags, NULL, dw, 0, alloc ? (LPTSTR)&msg : msg, nSize, NULL);
+	const DWORD rc = FormatMessage(dwFlags, NULL, dw, 0, alloc ? (LPTSTR)&msg : msg, nSize, NULL);
 
-	if (rc)
+	if (rc > 0)
 	{
 #if defined(UNICODE)
-		WideCharToMultiByte(CP_ACP, 0, msg, rc, dmsg, (int)MIN(size - 1, INT_MAX), NULL, NULL);
+		WideCharToMultiByte(CP_ACP, 0, msg, (int)rc, dmsg, (int)MIN(size - 1, INT_MAX), NULL, NULL);
 #else  /* defined(UNICODE) */
 		memcpy(dmsg, msg, MIN(rc, size - 1));
 #endif /* defined(UNICODE) */

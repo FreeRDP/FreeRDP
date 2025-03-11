@@ -31,6 +31,7 @@
 #include <errno.h>
 
 #include "libusb_udevice.h"
+#include "msusb.h"
 #include "../common/urbdrc_types.h"
 
 #define BASIC_STATE_FUNC_DEFINED(_arg, _type)             \

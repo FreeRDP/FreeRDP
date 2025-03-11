@@ -361,7 +361,6 @@ static LRESULT CALLBACK hotplug_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM 
 					{
 						PDEV_BROADCAST_VOLUME lpdbv = (PDEV_BROADCAST_VOLUME)lpdb;
 						DWORD unitmask = lpdbv->dbcv_unitmask;
-						int count;
 						char drive_name_upper, drive_name_lower;
 						ULONG_PTR* keys = NULL;
 						DEVICE_DRIVE_EXT* device_ext;
@@ -373,9 +372,10 @@ static LRESULT CALLBACK hotplug_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM 
 							{
 								drive_name_upper = 'A' + i;
 								drive_name_lower = 'a' + i;
-								count = ListDictionary_GetKeys(rdpdr->devman->devices, &keys);
+								const size_t count =
+								    ListDictionary_GetKeys(rdpdr->devman->devices, &keys);
 
-								for (int j = 0; j < count; j++)
+								for (size_t j = 0; j < count; j++)
 								{
 									device_ext = (DEVICE_DRIVE_EXT*)ListDictionary_GetItemValue(
 									    rdpdr->devman->devices, (void*)keys[j]);
@@ -388,8 +388,9 @@ static LRESULT CALLBACK hotplug_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM 
 									{
 										if (device_ext->automount)
 										{
-											devman_unregister_device(rdpdr->devman, (void*)keys[j]);
-											ids[0] = keys[j];
+											ULONG_PTR key = keys[j];
+											devman_unregister_device(rdpdr->devman, (void*)key);
+											ids[0] = WINPR_ASSERTING_INT_CAST(uint32_t, key);
 
 											if ((error = rdpdr_send_device_list_remove_request(
 											         rdpdr, 1, ids)))

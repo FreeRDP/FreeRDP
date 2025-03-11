@@ -1225,11 +1225,24 @@ static int transport_default_write(rdpTransport* transport, wStream* s)
 			}
 		}
 
-		length -= (size_t)status;
-		Stream_Seek(s, (size_t)status);
+		const size_t ustatus = (size_t)status;
+		if (ustatus > length)
+		{
+			status = -1;
+			goto out_cleanup;
+		}
+
+		length -= ustatus;
+		Stream_Seek(s, ustatus);
 	}
 
-	transport->written += writtenlength;
+	if (writtenlength + transport->written > UINT32_MAX)
+	{
+		status = -1;
+		goto out_cleanup;
+	}
+
+	transport->written += WINPR_ASSERTING_INT_CAST(uint32_t, writtenlength);
 out_cleanup:
 
 	if (status < 0)

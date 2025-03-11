@@ -2096,9 +2096,10 @@ static SSIZE_T wf_cliprdr_get_filedescriptor(wfClipboard* clipboard, BYTE** pDat
 		for (char* p = (char*)((char*)dropFiles + dropFiles->pFiles); (len = strlen(p)) > 0;
 		     p += len + 1, clipboard->nFiles++)
 		{
-			const int cchWideChar = MultiByteToWideChar(CP_ACP, MB_COMPOSITE, p, len, NULL, 0);
+			const int ilen = WINPR_ASSERTING_INT_CAST(int, len);
+			const int cchWideChar = MultiByteToWideChar(CP_ACP, MB_COMPOSITE, p, ilen, NULL, 0);
 			WCHAR* wFileName = (LPWSTR)calloc(cchWideChar, sizeof(WCHAR));
-			MultiByteToWideChar(CP_ACP, MB_COMPOSITE, p, len, wFileName, cchWideChar);
+			MultiByteToWideChar(CP_ACP, MB_COMPOSITE, p, ilen, wFileName, cchWideChar);
 			wf_cliprdr_process_filename(clipboard, wFileName, cchWideChar);
 			free(wFileName);
 		}
@@ -2139,8 +2140,6 @@ static UINT
 wf_cliprdr_server_format_data_request(CliprdrClientContext* context,
                                       const CLIPRDR_FORMAT_DATA_REQUEST* formatDataRequest)
 {
-	CLIPRDR_FORMAT_DATA_RESPONSE response = { 0 };
-
 	if (!context || !formatDataRequest)
 		return ERROR_INTERNAL_ERROR;
 
@@ -2150,25 +2149,28 @@ wf_cliprdr_server_format_data_request(CliprdrClientContext* context,
 		return ERROR_INTERNAL_ERROR;
 
 	const UINT32 requestedFormatId = formatDataRequest->requestedFormatId;
-
+	BYTE* requestedFormatData = NULL;
+	SSIZE_T res = 0;
 	if (requestedFormatId == RegisterClipboardFormat(CFSTR_FILEDESCRIPTORW))
 	{
-		const SSIZE_T res = wf_cliprdr_get_filedescriptor(clipboard, &response.requestedFormatData);
-		if (res > 0)
-			response.common.dataLen = (UINT32)res;
+		res = wf_cliprdr_get_filedescriptor(clipboard, &requestedFormatData);
 	}
 	else
 	{
-		const SSIZE_T res =
-		    wf_cliprdr_tryopen(clipboard, requestedFormatId, &response.requestedFormatData);
-		if (res > 0)
-			response.common.dataLen = (UINT32)res;
+		res = wf_cliprdr_tryopen(clipboard, requestedFormatId, &requestedFormatData);
 	}
 
-	response.common.msgFlags = CB_RESPONSE_OK;
+	UINT rc = ERROR_INTERNAL_ERROR;
+	if (res >= 0)
+	{
+		CLIPRDR_FORMAT_DATA_RESPONSE response = { .common = { .msgType = CB_FORMAT_DATA_RESPONSE,
+			                                                  .msgFlags = CB_RESPONSE_OK,
+			                                                  .dataLen = (uint32_t)res },
+			                                      .requestedFormatData = requestedFormatData };
 
-	const UINT rc = clipboard->context->ClientFormatDataResponse(clipboard->context, &response);
-	free(response.requestedFormatData);
+		rc = clipboard->context->ClientFormatDataResponse(clipboard->context, &response);
+	}
+	free(requestedFormatData);
 	return rc;
 }
 

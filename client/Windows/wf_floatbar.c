@@ -379,7 +379,9 @@ static BOOL floatbar_paint(wfFloatBar* const floatbar, const HDC hdc)
 	LineTo(hdc, right + 1, top - 1);
 	DeleteObject(hpen);
 	SelectObject(hdc, orig);
-	DrawText(hdc, floatbar->wfc->window_title, wcslen(floatbar->wfc->window_title),
+
+	const size_t wlen = wcslen(floatbar->wfc->window_title);
+	DrawText(hdc, floatbar->wfc->window_title, WINPR_ASSERTING_INT_CAST(int, wlen),
 	         &floatbar->textRect,
 	         DT_CENTER | DT_VCENTER | DT_END_ELLIPSIS | DT_NOPREFIX | DT_SINGLELINE);
 
