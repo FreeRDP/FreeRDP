@@ -24,7 +24,8 @@
 /* ----------------------------------------------------------------------------
  * Set pDst to the sign-value of the 16-bit values in pSrc (-1, 0, or 1).
  */
-static pstatus_t general_sign_16s(const INT16* pSrc, INT16* pDst, UINT32 len)
+static pstatus_t general_sign_16s(const INT16* WINPR_RESTRICT pSrc, INT16* WINPR_RESTRICT pDst,
+                                  UINT32 len)
 {
 	while (len--)
 	{

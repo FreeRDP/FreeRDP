@@ -31,13 +31,13 @@ pstatus_t generic_image_copy_no_overlap_convert(
     BYTE* WINPR_RESTRICT pDstData, DWORD DstFormat, UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst,
     UINT32 nWidth, UINT32 nHeight, const BYTE* WINPR_RESTRICT pSrcData, DWORD SrcFormat,
     UINT32 nSrcStep, UINT32 nXSrc, UINT32 nYSrc, const gdiPalette* WINPR_RESTRICT palette,
-    SSIZE_T srcVMultiplier, SSIZE_T srcVOffset, SSIZE_T dstVMultiplier, SSIZE_T dstVOffset);
+    int64_t srcVMultiplier, int64_t srcVOffset, int64_t dstVMultiplier, int64_t dstVOffset);
 
 pstatus_t generic_image_copy_no_overlap_memcpy(
     BYTE* WINPR_RESTRICT pDstData, DWORD DstFormat, UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst,
     UINT32 nWidth, UINT32 nHeight, const BYTE* WINPR_RESTRICT pSrcData, DWORD SrcFormat,
     UINT32 nSrcStep, UINT32 nXSrc, UINT32 nYSrc, const gdiPalette* WINPR_RESTRICT palette,
-    SSIZE_T srcVMultiplier, SSIZE_T srcVOffset, SSIZE_T dstVMultiplier, SSIZE_T dstVOffset,
+    int64_t srcVMultiplier, int64_t srcVOffset, int64_t dstVMultiplier, int64_t dstVOffset,
     UINT32 flags);
 
 FREERDP_LOCAL void primitives_init_copy_sse41_int(primitives_t* WINPR_RESTRICT prims);

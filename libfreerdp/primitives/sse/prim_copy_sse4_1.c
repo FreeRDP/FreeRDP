@@ -38,26 +38,26 @@ static INLINE pstatus_t sse_image_copy_bgr24_bgrx32(BYTE* WINPR_RESTRICT pDstDat
                                                     UINT32 nHeight,
                                                     const BYTE* WINPR_RESTRICT pSrcData,
                                                     UINT32 nSrcStep, UINT32 nXSrc, UINT32 nYSrc,
-                                                    SSIZE_T srcVMultiplier, SSIZE_T srcVOffset,
-                                                    SSIZE_T dstVMultiplier, SSIZE_T dstVOffset)
+                                                    int64_t srcVMultiplier, int64_t srcVOffset,
+                                                    int64_t dstVMultiplier, int64_t dstVOffset)
 {
 
-	const SSIZE_T srcByte = 3;
-	const SSIZE_T dstByte = 4;
+	const int64_t srcByte = 3;
+	const int64_t dstByte = 4;
 
 	const __m128i mask = mm_set_epu32(0xFF000000, 0xFF000000, 0xFF000000, 0xFF000000);
 	const __m128i smask = mm_set_epu32(0xff0b0a09, 0xff080706, 0xff050403, 0xff020100);
 	const UINT32 rem = nWidth % 4;
 
-	const SSIZE_T width = nWidth - rem;
-	for (SSIZE_T y = 0; y < nHeight; y++)
+	const int64_t width = nWidth - rem;
+	for (int64_t y = 0; y < nHeight; y++)
 	{
 		const BYTE* WINPR_RESTRICT srcLine =
 		    &pSrcData[srcVMultiplier * (y + nYSrc) * nSrcStep + srcVOffset];
 		BYTE* WINPR_RESTRICT dstLine =
 		    &pDstData[dstVMultiplier * (y + nYDst) * nDstStep + dstVOffset];
 
-		SSIZE_T x = 0;
+		int64_t x = 0;
 		/* Ensure alignment requirements can be met */
 		for (; x < width; x += 4)
 		{
@@ -89,26 +89,26 @@ static INLINE pstatus_t sse_image_copy_bgrx32_bgrx32(BYTE* WINPR_RESTRICT pDstDa
                                                      UINT32 nHeight,
                                                      const BYTE* WINPR_RESTRICT pSrcData,
                                                      UINT32 nSrcStep, UINT32 nXSrc, UINT32 nYSrc,
-                                                     SSIZE_T srcVMultiplier, SSIZE_T srcVOffset,
-                                                     SSIZE_T dstVMultiplier, SSIZE_T dstVOffset)
+                                                     int64_t srcVMultiplier, int64_t srcVOffset,
+                                                     int64_t dstVMultiplier, int64_t dstVOffset)
 {
 
-	const SSIZE_T srcByte = 4;
-	const SSIZE_T dstByte = 4;
+	const int64_t srcByte = 4;
+	const int64_t dstByte = 4;
 
 	const __m128i mask = _mm_setr_epi8((char)0xFF, (char)0xFF, (char)0xFF, 0x00, (char)0xFF,
 	                                   (char)0xFF, (char)0xFF, 0x00, (char)0xFF, (char)0xFF,
 	                                   (char)0xFF, 0x00, (char)0xFF, (char)0xFF, (char)0xFF, 0x00);
 	const UINT32 rem = nWidth % 4;
-	const SSIZE_T width = nWidth - rem;
-	for (SSIZE_T y = 0; y < nHeight; y++)
+	const int64_t width = nWidth - rem;
+	for (int64_t y = 0; y < nHeight; y++)
 	{
 		const BYTE* WINPR_RESTRICT srcLine =
 		    &pSrcData[srcVMultiplier * (y + nYSrc) * nSrcStep + srcVOffset];
 		BYTE* WINPR_RESTRICT dstLine =
 		    &pDstData[dstVMultiplier * (y + nYDst) * nDstStep + dstVOffset];
 
-		SSIZE_T x = 0;
+		int64_t x = 0;
 		for (; x < width; x += 4)
 		{
 			const __m128i* src = (const __m128i*)&srcLine[(x + nXSrc) * srcByte];
@@ -136,8 +136,8 @@ static pstatus_t sse_image_copy_no_overlap_dst_alpha(
     BYTE* WINPR_RESTRICT pDstData, DWORD DstFormat, UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst,
     UINT32 nWidth, UINT32 nHeight, const BYTE* WINPR_RESTRICT pSrcData, DWORD SrcFormat,
     UINT32 nSrcStep, UINT32 nXSrc, UINT32 nYSrc, const gdiPalette* WINPR_RESTRICT palette,
-    UINT32 flags, SSIZE_T srcVMultiplier, SSIZE_T srcVOffset, SSIZE_T dstVMultiplier,
-    SSIZE_T dstVOffset)
+    UINT32 flags, int64_t srcVMultiplier, int64_t srcVOffset, int64_t dstVMultiplier,
+    int64_t dstVOffset)
 {
 	WINPR_ASSERT(pDstData);
 	WINPR_ASSERT(pSrcData);
@@ -199,10 +199,10 @@ static pstatus_t sse_image_copy_no_overlap(BYTE* WINPR_RESTRICT pDstData, DWORD 
                                            const gdiPalette* WINPR_RESTRICT palette, UINT32 flags)
 {
 	const BOOL vSrcVFlip = (flags & FREERDP_FLIP_VERTICAL) ? TRUE : FALSE;
-	SSIZE_T srcVOffset = 0;
-	SSIZE_T srcVMultiplier = 1;
-	SSIZE_T dstVOffset = 0;
-	SSIZE_T dstVMultiplier = 1;
+	int64_t srcVOffset = 0;
+	int64_t srcVMultiplier = 1;
+	int64_t dstVOffset = 0;
+	int64_t dstVMultiplier = 1;
 
 	if ((nWidth == 0) || (nHeight == 0))
 		return PRIMITIVES_SUCCESS;
