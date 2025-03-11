@@ -654,6 +654,7 @@ static UINT urb_select_interface(IUDEVICE* pdev, GENERIC_CHANNEL_CALLBACK* callb
 		           "[MS-RDPEUSB] 2.2.9.3 TS_URB_SELECT_INTERFACE::OutputBufferSize must be 0, got "
 		           "%" PRIu32,
 		           OutputBufferSize);
+		msusb_msinterface_free(MsInterface);
 		return ERROR_INVALID_DATA;
 	}
 
