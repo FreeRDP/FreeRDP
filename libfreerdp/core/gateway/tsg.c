@@ -585,6 +585,13 @@ static BOOL tsg_ndr_read_version_caps(wLog* log, wStream* s, UINT32* index,
 	if (!tsg_stream_align(log, s, 4))
 		return FALSE;
 
+	if (caps->numCapabilities > 1)
+	{
+		WLog_ERR(TAG, "TSG_PACKET_VERSIONCAPS::numCapabilities > 1 (%" PRIu32 "), not supported!",
+		         caps->numCapabilities);
+		return FALSE;
+	}
+
 	return tsg_ndr_read_tsg_caps(log, s, &caps->tsgCaps);
 }
 
@@ -600,6 +607,13 @@ static BOOL tsg_ndr_write_version_caps(wLog* log, wStream* s, UINT32* index,
 
 	if (!Stream_EnsureRemainingCapacity(s, 10))
 		return FALSE;
+
+	if (caps->numCapabilities > 1)
+	{
+		WLog_ERR(TAG, "TSG_PACKET_VERSIONCAPS::numCapabilities > 1 (%" PRIu32 "), not supported!",
+		         caps->numCapabilities);
+		return FALSE;
+	}
 	Stream_Write_UINT32(s, caps->numCapabilities);
 	Stream_Write_UINT16(s, caps->majorVersion);
 	Stream_Write_UINT16(s, caps->minorVersion);
@@ -854,6 +868,13 @@ static BOOL tsg_packet_versioncaps_to_string(char** buffer, size_t* length,
 
 	if (!tsg_print(buffer, length, " "))
 		return FALSE;
+
+	if (caps->numCapabilities > 1)
+	{
+		WLog_ERR(TAG, "TSG_PACKET_VERSIONCAPS::numCapabilities > 1 (%" PRIu32 "), not supported!",
+		         caps->numCapabilities);
+		return FALSE;
+	}
 
 	if (!tsg_packet_capabilities_to_string(buffer, length, &caps->tsgCaps, caps->numCapabilities))
 		return FALSE;

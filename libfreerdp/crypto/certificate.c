@@ -1459,7 +1459,13 @@ static BOOL bio_read_pem(BIO* bio, char** ppem, size_t* plength)
 			break;
 		length += blocksize;
 	}
-	pem[offset] = '\0';
+
+	if (pem)
+	{
+		if (offset >= length)
+			goto fail;
+		pem[offset] = '\0';
+	}
 	*ppem = pem;
 	if (plength)
 		*plength = offset;
