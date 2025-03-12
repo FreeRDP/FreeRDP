@@ -42,7 +42,7 @@ static BOOL compareRectangles(const RECTANGLE_16* src1, const RECTANGLE_16* src2
 
 static int test_basic(void)
 {
-	REGION16 region;
+	REGION16 region = { 0 };
 	int retCode = -1;
 	const RECTANGLE_16* rects = NULL;
 	UINT32 nbRects = 0;
@@ -230,7 +230,7 @@ out:
 
 static int test_r1_r6(void)
 {
-	REGION16 region;
+	REGION16 region = { 0 };
 	int retCode = -1;
 	const RECTANGLE_16* rects = NULL;
 	UINT32 nbRects = 0;
