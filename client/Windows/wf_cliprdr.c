@@ -2114,7 +2114,7 @@ exit:
 
 	if (groupDsc)
 	{
-		groupDsc->cItems = clipboard->nFiles;
+		groupDsc->cItems = WINPR_ASSERTING_INT_CAST(UINT, clipboard->nFiles);
 
 		for (size_t i = 0; i < clipboard->nFiles; i++)
 		{

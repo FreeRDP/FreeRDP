@@ -139,7 +139,6 @@
 		int shifts = 0;                                                    \
 		const _type_* sptr = pSrc;                                         \
 		_type_* dptr = pDst;                                               \
-		size_t count;                                                      \
 		__m128i xmm0;                                                      \
 		if (sizeof(_type_) == 1)                                           \
 			shifts = 1;                                                    \
@@ -150,10 +149,10 @@
 		else if (sizeof(_type_) == 8)                                      \
 			shifts = 4;                                                    \
 		/* Use 4 128-bit SSE registers. */                                 \
-		count = len >> (7 - shifts);                                       \
+		size_t count = len >> (7 - shifts);                                \
 		len -= count << (7 - shifts);                                      \
 		xmm0 = mm_set1_epu32(val);                                         \
-		while (count--)                                                    \
+		for (size_t x = 0; x < count; x++)                                 \
 		{                                                                  \
 			__m128i xmm1 = LOAD_SI128(sptr);                               \
 			sptr += (16 / sizeof(_type_));                                 \
@@ -179,7 +178,7 @@
 		/* Use a single 128-bit SSE register. */                           \
 		count = len >> (5 - shifts);                                       \
 		len -= count << (5 - shifts);                                      \
-		while (count--)                                                    \
+		for (size_t x = 0; x < count; x++)                                 \
 		{                                                                  \
 			__m128i xmm1 = LOAD_SI128(sptr);                               \
 			sptr += (16 / sizeof(_type_));                                 \
@@ -188,7 +187,7 @@
 			dptr += (16 / sizeof(_type_));                                 \
 		}                                                                  \
 		/* Finish off the remainder. */                                    \
-		while (len--)                                                      \
+		for (size_t x = 0; x < len; x++)                                   \
 		{                                                                  \
 			_slowWay_;                                                     \
 		}                                                                  \
