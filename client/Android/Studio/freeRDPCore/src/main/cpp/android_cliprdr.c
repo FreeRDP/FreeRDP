@@ -400,7 +400,7 @@ android_cliprdr_server_format_data_response(CliprdrClientContext* cliprdr,
 	if (format->formatName)
 		formatId = ClipboardRegisterFormat(afc->clipboard, format->formatName);
 
-	size_t size = formatDataResponse->common.dataLen;
+	uint32_t size = formatDataResponse->common.dataLen;
 
 	if (!ClipboardSetData(afc->clipboard, formatId, formatDataResponse->requestedFormatData, size))
 		return ERROR_INTERNAL_ERROR;
