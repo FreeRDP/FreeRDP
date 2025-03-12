@@ -5235,6 +5235,11 @@ static int parse_command_line(rdpSettings* settings, const COMMAND_LINE_ARGUMENT
 			if (!freerdp_settings_set_bool(settings, FreeRDP_ToggleFullscreen, enable))
 				return fail_at(arg, COMMAND_LINE_ERROR);
 		}
+		CommandLineSwitchCase(arg, "minimize-hotkey")
+		{
+			if (!freerdp_settings_set_bool(settings, FreeRDP_MinimizeHotkey, enable))
+				return fail_at(arg, COMMAND_LINE_ERROR);
+		}
 		CommandLineSwitchCase(arg, "force-console-callbacks")
 		{
 			if (!freerdp_settings_set_bool(settings, FreeRDP_UseCommonStdioCallbacks, enable))
