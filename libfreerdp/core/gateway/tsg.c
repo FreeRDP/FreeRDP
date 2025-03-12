@@ -1552,11 +1552,10 @@ static BOOL tsg_ndr_read_caps_response(wLog* log, rdpContext* context, wStream* 
 		Stream_Read_UINT32(s, MsgId);              /* MsgId (4 bytes) */
 		Stream_Read_UINT32(s, MsgType);            /* MsgType (4 bytes) */
 		Stream_Read_UINT32(s, IsMessagePresent);   /* IsMessagePresent (4 bytes) */
+		Stream_Read_UINT32(s, MessageSwitchValue); /* MessageSwitchValue (4 bytes) */
+
 		if (IsMessagePresent != 0)
 		{
-
-			Stream_Read_UINT32(s, MessageSwitchValue); /* MessageSwitchValue (4 bytes) */
-
 			(void)MsgId; /* [MS-TSGU] 2.2.9.2.1.9 TSG_PACKET_MSG_RESPONSE MsgId is unused */
 			if (MsgType != MessageSwitchValue)
 			{
