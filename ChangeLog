@@ -1,3 +1,38 @@
+# 2025-03-13 Version 3.14.0
+
+Bugfix and cleanup release.
+Due to some new API functions the minor version has been increased.
+
+So, what has been changed:
+* Fix spelling of 'dont' (#11297)
+* missing ConnectFlags variable in license_read_platform_challenge_packet breaks in WITH_DEBUG_LICENSE builds (#11301)
+* [locale] add freerdp_detect_keyboard_layout_from_locale (#11298)
+* Invert 3x deprecated (#11296)
+* [primitives,copy] remove alignment check (#11302)
+* sdl-common (#11303)
+* [client,sdl3] fix bitmap clipboard copy (#11304)
+* [channels,ubdrc] add some more failure logging (#11306)
+* [client] Fix writing incorrect type for integer values in RDP file (#11307)
+* Urbdrc cleanups (#11308)
+* [winpr,nt] Fix incorrect name in FILE_INFORMATION_CLASS (#11311)
+* [core,gateway] improve rts_read_auth_verifier_with_stub (#11314)
+* [cmake] Fix DLL install directory (#11316)
+* Enable dynamic resolution setting (#11317)
+* [client,x11] add apple keyboard fallback (#11315)
+* [client,sdl] #include <SDL3/SDL_main.h> (#11318)
+* [windows] fix deprecation and int warnings (#11319)
+* Mingw build improvements (#11321)
+* Urbdrc leak fix (#11322)
+* [warnings] fixed integer casts (#11325)
+* [core,gateway] unify TSG_PACKET_MSG_RESPONSE (#11327)
+* [channels,drive] Prefer using handle from IRP_CREATE when possible (#11338)
+
+New Contributors
+* @eduar-hte made their first contribution in (#11301)
+
+For a complete and detailed change log since the last release run:
+git log 3.14.0...3.13.0
+
 # 2025-03-06 Version 3.13.0
 
 Another bugfix and cleanup release.
