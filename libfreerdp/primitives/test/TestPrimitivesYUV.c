@@ -1036,9 +1036,11 @@ static BOOL compare_yuv444_to_rgb(prim_size_t roi, DWORD type)
 	if (!allocate_yuv(yuv, roi) || !rgb1 || !rgb2)
 		goto fail;
 
-	if (soft->YUV444ToRGB_8u_P3AC4R(yuv, yuvStep, rgb1, stride, format, &roi) != PRIMITIVES_SUCCESS)
+	const BYTE* cyuv[] = { yuv[0], yuv[1], yuv[2] };
+	if (soft->YUV444ToRGB_8u_P3AC4R(cyuv, yuvStep, rgb1, stride, format, &roi) !=
+	    PRIMITIVES_SUCCESS)
 		goto fail;
-	if (prims->YUV444ToRGB_8u_P3AC4R(yuv, yuvStep, rgb2, stride, format, &roi) !=
+	if (prims->YUV444ToRGB_8u_P3AC4R(cyuv, yuvStep, rgb2, stride, format, &roi) !=
 	    PRIMITIVES_SUCCESS)
 		goto fail;
 
@@ -1207,9 +1209,11 @@ static BOOL compare_yuv420_to_rgb(prim_size_t roi, DWORD type)
 	if (!allocate_yuv(yuv, roi) || !rgb1 || !rgb2)
 		goto fail;
 
-	if (soft->YUV420ToRGB_8u_P3AC4R(yuv, yuvStep, rgb1, stride, format, &roi) != PRIMITIVES_SUCCESS)
+	const BYTE* cyuv[3] = { yuv[0], yuv[1], yuv[2] };
+	if (soft->YUV420ToRGB_8u_P3AC4R(cyuv, yuvStep, rgb1, stride, format, &roi) !=
+	    PRIMITIVES_SUCCESS)
 		goto fail;
-	if (prims->YUV420ToRGB_8u_P3AC4R(yuv, yuvStep, rgb2, stride, format, &roi) !=
+	if (prims->YUV420ToRGB_8u_P3AC4R(cyuv, yuvStep, rgb2, stride, format, &roi) !=
 	    PRIMITIVES_SUCCESS)
 		goto fail;
 

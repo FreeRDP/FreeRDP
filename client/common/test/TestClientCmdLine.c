@@ -232,13 +232,14 @@ int TestClientCmdLine(int argc, char* argv[])
 
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
-	for (size_t i = 0; i < sizeof(tests) / sizeof(tests[0]); i++)
+	for (size_t i = 0; i < ARRAYSIZE(tests); i++)
 	{
 		const test* current = &tests[i];
 		int failure = 0;
 		char** command_line = string_list_copy(current->command_line);
 
-		if (!testcase(__func__, command_line, string_list_length((const char* const*)command_line),
+		const int len = string_list_length((const char* const*)command_line);
+		if (!testcase(__func__, command_line, WINPR_ASSERTING_INT_CAST(size_t, len),
 		              current->expected_status, current->validate_settings))
 		{
 			TEST_FAILURE("parsing arguments.\n");

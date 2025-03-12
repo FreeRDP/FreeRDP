@@ -30,9 +30,9 @@ extern "C"
 #endif
 
 	WINPR_API void string_list_free(char** string_list);
-	WINPR_API int string_list_length(const char** string_list);
-	WINPR_API char** string_list_copy(const char** string_list);
-	WINPR_API void string_list_print(FILE* out, const char** string_list);
+	WINPR_API int string_list_length(const char* const* string_list);
+	WINPR_API char** string_list_copy(const char* const* string_list);
+	WINPR_API void string_list_print(FILE* out, const char* const* string_list);
 
 #ifdef __cplusplus
 }
