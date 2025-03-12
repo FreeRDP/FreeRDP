@@ -509,6 +509,9 @@ UINT cliprdr_read_format_list(wStream* s, CLIPRDR_FORMAT_LIST* formatList, BOOL 
 
 		while (Stream_GetRemainingLength(sub2) >= 4)
 		{
+			if (index >= formatList->numFormats)
+				goto error_out;
+
 			size_t rest = 0;
 			CLIPRDR_FORMAT* format = &formats[index];
 

@@ -1128,6 +1128,12 @@ BOOL rpc_client_write_call(rdpRpc* rpc, wStream* s, UINT16 opnum)
 	if (!credssp_auth_encrypt(auth, &plaintext, &ciphertext, &size, rpc->SendSeqNum++))
 		goto fail;
 
+	if (offset + size > request_pdu.header.frag_length)
+	{
+		sspi_SecBufferFree(&ciphertext);
+		goto fail;
+	}
+
 	CopyMemory(&buffer[offset], ciphertext.pvBuffer, size);
 	offset += size;
 

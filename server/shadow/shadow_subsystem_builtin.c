@@ -29,12 +29,12 @@ typedef struct
 extern int ShadowSubsystemEntry(RDP_SHADOW_ENTRY_POINTS* pEntryPoints);
 extern const char* ShadowSubsystemName(void);
 
-static RDP_SHADOW_SUBSYSTEM g_Subsystems[] = {
+static const RDP_SHADOW_SUBSYSTEM g_Subsystems[] = {
 
 	{ ShadowSubsystemName, ShadowSubsystemEntry }
 };
 
-static size_t g_SubsystemCount = ARRAYSIZE(g_Subsystems);
+static const size_t g_SubsystemCount = ARRAYSIZE(g_Subsystems);
 
 static pfnShadowSubsystemEntry shadow_subsystem_load_static_entry(const char* name)
 {

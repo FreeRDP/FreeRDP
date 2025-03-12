@@ -1043,6 +1043,11 @@ static BOOL update_read_desktop_actively_monitored_order(wStream* s,
 				Stream_Read_UINT32(s, monitored_desktop->windowIds[i]);
 			}
 		}
+		else
+		{
+			free(monitored_desktop->windowIds);
+			monitored_desktop->windowIds = NULL;
+		}
 	}
 
 	return TRUE;
@@ -1070,6 +1075,7 @@ static void dump_monitored_desktop(wLog* log, const char* msg, const WINDOW_ORDE
 		DUMP_APPEND(buffer, bufferSize, " windows=(");
 		for (UINT32 i = 0; i < monitored->numWindowIds; i++)
 		{
+			WINPR_ASSERT(monitored->windowIds);
 			DUMP_APPEND(buffer, bufferSize, "0x%" PRIx32 ",", monitored->windowIds[i]);
 		}
 		DUMP_APPEND(buffer, bufferSize, ")");

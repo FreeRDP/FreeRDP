@@ -130,12 +130,17 @@ static SECURITY_STATUS NCryptP11StorageProvider_dtor(NCRYPT_HANDLE handle)
 
 static void fix_padded_string(char* str, size_t maxlen)
 {
-	char* ptr = str + maxlen - 1;
+	if (maxlen == 0)
+		return;
 
-	while (ptr > str && *ptr == ' ')
+	WINPR_ASSERT(str);
+	char* ptr = &str[maxlen - 1];
+
+	while ((ptr > str) && (*ptr == ' '))
+	{
+		*ptr = '\0';
 		ptr--;
-	ptr++;
-	*ptr = 0;
+	}
 }
 
 static BOOL attributes_have_unallocated_buffers(CK_ATTRIBUTE_PTR attributes, CK_ULONG count)
