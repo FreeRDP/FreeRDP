@@ -147,7 +147,8 @@ char* winpr_win_strerror(DWORD dw, char* dmsg, size_t size)
 	if (rc > 0)
 	{
 #if defined(UNICODE)
-		WideCharToMultiByte(CP_ACP, 0, msg, (int)rc, dmsg, (int)MIN(size - 1, INT_MAX), NULL, NULL);
+		(void)WideCharToMultiByte(CP_ACP, 0, msg, (int)rc, dmsg, (int)MIN(size - 1, INT_MAX), NULL,
+		                          NULL);
 #else  /* defined(UNICODE) */
 		memcpy(dmsg, msg, MIN(rc, size - 1));
 #endif /* defined(UNICODE) */

@@ -1386,7 +1386,7 @@ static int test_dump(int argc, char* argv[])
 				const RECTANGLE_16* rects = region16_rects(&invalid, &nbRects);
 				for (size_t x = 0; x < nbRects; x++)
 				{
-					RECTANGLE_16* rect = &rects[x];
+					const RECTANGLE_16* rect = &rects[x];
 					const UINT32 w = rect->right - rect->left;
 					const UINT32 h = rect->bottom - rect->top;
 					if (!freerdp_image_copy_no_overlap(output, DstFormat, stride, rect->left,

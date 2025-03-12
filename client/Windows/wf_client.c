@@ -718,7 +718,7 @@ static DWORD wf_is_x509_certificate_trusted(const char* common_name, const char*
 	CERT_CHAIN_POLICY_STATUS PolicyStatus = { 0 };
 	CERT_CHAIN_ENGINE_CONFIG EngineConfig = { 0 };
 
-	DWORD derPubKeyLen = strlen(fingerprint);
+	DWORD derPubKeyLen = WINPR_ASSERTING_INT_CAST(uint32_t, strlen(fingerprint));
 	char* derPubKey = calloc(derPubKeyLen, sizeof(char));
 	if (NULL == derPubKey)
 	{

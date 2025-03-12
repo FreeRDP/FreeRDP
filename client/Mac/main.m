@@ -21,5 +21,5 @@
 
 int main(int argc, char *argv[])
 {
-	return NSApplicationMain(argc, argv);
+	return NSApplicationMain(argc, (const char *const *)argv);
 }

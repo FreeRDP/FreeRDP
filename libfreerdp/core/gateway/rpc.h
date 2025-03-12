@@ -767,7 +767,10 @@ FREERDP_LOCAL size_t rpc_offset_pad(size_t* offset, size_t pad);
 FREERDP_LOCAL BOOL rpc_get_stub_data_info(rdpRpc* rpc, const rpcconn_hdr_t* header, size_t* offset,
                                           size_t* length);
 
-FREERDP_LOCAL SSIZE_T rpc_channel_write(RpcChannel* channel, const BYTE* data, size_t length);
+#define rpc_channel_write(channel, data, length) \
+	rpc_channel_write_int((channel), (data), (length), __FILE__, __LINE__, __func__)
+FREERDP_LOCAL SSIZE_T rpc_channel_write_int(RpcChannel* channel, const BYTE* data, size_t length,
+                                            const char* file, size_t line, const char* fkt);
 
 FREERDP_LOCAL SSIZE_T rpc_channel_read(RpcChannel* channel, wStream* s, size_t length);
 

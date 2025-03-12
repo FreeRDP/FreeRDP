@@ -379,7 +379,7 @@ BOOL BufferPool_Return(wBufferPool* pool, void* buffer)
 
 		if ((pool->size + 1) >= pool->capacity)
 		{
-			SSIZE_T newCapacity = MAX(1, pool->size + (pool->size + 2) / 2 + 1);
+			SSIZE_T newCapacity = MAX(2, pool->size + (pool->size + 2) / 2 + 1);
 			void** newArray = (void**)realloc(
 			    (void*)pool->array, sizeof(void*) * WINPR_ASSERTING_INT_CAST(size_t, newCapacity));
 			if (!newArray)
@@ -416,7 +416,7 @@ BOOL BufferPool_Return(wBufferPool* pool, void* buffer)
 		{
 			if ((pool->aSize + 1) >= pool->aCapacity)
 			{
-				SSIZE_T newCapacity = MAX(1, pool->aSize + (pool->aSize + 2) / 2 + 1);
+				SSIZE_T newCapacity = MAX(2, pool->aSize + (pool->aSize + 2) / 2 + 1);
 				wBufferPoolItem* newArray = (wBufferPoolItem*)realloc(
 				    pool->aArray,
 				    sizeof(wBufferPoolItem) * WINPR_ASSERTING_INT_CAST(size_t, newCapacity));

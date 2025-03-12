@@ -554,7 +554,7 @@ fail:
 BOOL ntlm_construct_authenticate_target_info(NTLM_CONTEXT* context)
 {
 	ULONG AvPairsCount = 0;
-	ULONG AvPairsValueLength = 0;
+	size_t AvPairsValueLength = 0;
 	NTLM_AV_PAIR* AvTimestamp = NULL;
 	NTLM_AV_PAIR* AvNbDomainName = NULL;
 	NTLM_AV_PAIR* AvNbComputerName = NULL;
@@ -575,7 +575,6 @@ BOOL ntlm_construct_authenticate_target_info(NTLM_CONTEXT* context)
 	WINPR_ASSERT(context);
 
 	AvPairsCount = 1;
-	AvPairsValueLength = 0;
 	ChallengeTargetInfo = (NTLM_AV_PAIR*)context->ChallengeTargetInfo.pvBuffer;
 	cbChallengeTargetInfo = context->ChallengeTargetInfo.cbBuffer;
 	AvNbDomainName = ntlm_av_pair_get(ChallengeTargetInfo, cbChallengeTargetInfo, MsvAvNbDomainName,
