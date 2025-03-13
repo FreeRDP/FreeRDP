@@ -42,6 +42,10 @@
 
 #define TAG CHANNELS_TAG("rdpear.client")
 
+#ifndef MAX_KEYTAB_NAME_LEN
+#define MAX_KEYTAB_NAME_LEN 1100 /* Defined in MIT krb5.h */
+#endif
+
 /* defined in libkrb5 */
 krb5_error_code encode_krb5_authenticator(const krb5_authenticator* rep, krb5_data** code_out);
 krb5_error_code encode_krb5_ap_rep(const krb5_ap_rep* rep, krb5_data** code_out);
@@ -515,15 +519,33 @@ static BOOL rdpear_kerb_CreateApReqAuthenticator(RDPEAR_PLUGIN* rdpear, NdrConte
 
 	for (int i = 0; i < client.length; i++)
 	{
-		client.data[i].data = KERB_RPC_UNICODESTR_to_charptr(&req.ClientName->Names[i]);
-		if (!client.data[i].data)
+		krb5_data* cur = &client.data[i];
+		cur->data = KERB_RPC_UNICODESTR_to_charptr(&req.ClientName->Names[i]);
+		if (!cur->data)
 			goto out;
-		client.data[i].length = (unsigned int)strnlen(client.data[i].data, UINT32_MAX);
+		const size_t len = strnlen(cur->data, MAX_KEYTAB_NAME_LEN + 1);
+		if (len > MAX_KEYTAB_NAME_LEN)
+		{
+			WLog_ERR(TAG,
+			         "Invalid ClientName length %" PRIuz
+			         ", limited to %u characters. ClientName: (%s)",
+			         MAX_KEYTAB_NAME_LEN, len, cur->data);
+			goto out;
+		}
+		cur->length = (unsigned int)len;
 	}
 	client.realm.data = KERB_RPC_UNICODESTR_to_charptr(req.ClientRealm);
 	if (!client.realm.data)
 		goto out;
-	client.realm.length = (unsigned int)strnlen(client.realm.data, UINT32_MAX);
+
+	const size_t len = strnlen(client.realm.data, MAX_KEYTAB_NAME_LEN + 1);
+	if (len > MAX_KEYTAB_NAME_LEN)
+	{
+		WLog_ERR(TAG, "Invalid realm length %" PRIuz ", limited to %u characters. Realm: (%s)",
+		         MAX_KEYTAB_NAME_LEN, len, client.realm.data);
+		goto out;
+	}
+	client.realm.length = (unsigned int)len;
 	authent.client = &client;
 
 	krb5_checksum checksum;
