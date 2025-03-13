@@ -624,7 +624,8 @@ static BOOL freerdp_dsp_decode_opus(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
 	if (!Stream_EnsureRemainingCapacity(context->common.buffer, max_size))
 		return FALSE;
 
-	frames = opus_decode(context->opus_decoder, src, size, Stream_Pointer(out), OPUS_MAX_FRAMES, 0);
+	frames = opus_decode(context->opus_decoder, src, WINPR_ASSERTING_INT_CAST(opus_int32, size),
+	                     Stream_Pointer(out), OPUS_MAX_FRAMES, 0);
 	if (frames < 0)
 		return FALSE;
 
@@ -645,10 +646,11 @@ static BOOL freerdp_dsp_encode_opus(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
 	if (!Stream_EnsureRemainingCapacity(context->common.buffer, max_size))
 		return FALSE;
 
-	const int src_frames = size / sizeof(opus_int16) / context->common.format.nChannels;
+	const size_t src_frames = size / sizeof(opus_int16) / context->common.format.nChannels;
 	const opus_int16* src_data = (const opus_int16*)src;
-	const int frames =
-	    opus_encode(context->opus_encoder, src_data, src_frames, Stream_Pointer(out), max_size);
+	const int frames = opus_encode(
+	    context->opus_encoder, src_data, WINPR_ASSERTING_INT_CAST(opus_int32, src_frames),
+	    Stream_Pointer(out), WINPR_ASSERTING_INT_CAST(opus_int32, max_size));
 	if (frames < 0)
 		return FALSE;
 	return Stream_SafeSeek(out, frames * context->common.format.nChannels * sizeof(int16_t));
