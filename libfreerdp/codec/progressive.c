@@ -2279,18 +2279,19 @@ static INLINE BOOL update_tiles(PROGRESSIVE_CONTEXT* WINPR_RESTRICT progressive,
 
 		for (UINT32 j = 0; j < nbUpdateRects; j++)
 		{
+			rc = FALSE;
 			const RECTANGLE_16* rect = &updateRects[j];
 			if (rect->left < updateRect.left)
-				goto fail;
+				break;
 			const UINT32 nXSrc = rect->left - updateRect.left;
 			const UINT32 nYSrc = rect->top - updateRect.top;
 			const UINT32 width = rect->right - rect->left;
 			const UINT32 height = rect->bottom - rect->top;
 
 			if (rect->left + width > surface->width)
-				goto fail;
+				break;
 			if (rect->top + height > surface->height)
-				goto fail;
+				break;
 			rc = freerdp_image_copy_no_overlap(
 			    pDstData, DstFormat, nDstStep, rect->left, rect->top, width, height, tile->data,
 			    progressive->format, tile->stride, nXSrc, nYSrc, NULL, FREERDP_KEEP_DST_ALPHA);
@@ -2302,6 +2303,8 @@ static INLINE BOOL update_tiles(PROGRESSIVE_CONTEXT* WINPR_RESTRICT progressive,
 		}
 
 		region16_uninit(&updateRegion);
+		if (!rc)
+			goto fail;
 		tile->dirty = FALSE;
 	}
 
