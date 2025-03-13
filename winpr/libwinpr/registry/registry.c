@@ -35,6 +35,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/assert.h>
+#include <winpr/string.h>
 
 #include "registry_reg.h"
 
@@ -42,6 +43,24 @@
 #define TAG WINPR_TAG("registry")
 
 static Reg* instance = NULL;
+
+static size_t regsz_length(const char* key, const void* value, bool unicode)
+{
+	/* https://learn.microsoft.com/en-us/windows/win32/sysinfo/registry-element-size-limits
+	 *
+	 * while not strictly limited to this size larger values should be stored to a
+	 * file.
+	 */
+	const size_t limit = 16383;
+	size_t length = 0;
+	if (unicode)
+		length = _wcsnlen((const WCHAR*)value, limit);
+	else
+		length = strnlen((const char*)value, limit);
+	if (length >= limit)
+		WLog_WARN(TAG, "REG_SZ[%s] truncated to size %" PRIuz, key, length);
+	return length;
+}
 
 static Reg* RegGetInstance(void)
 {
@@ -436,7 +455,8 @@ LONG RegQueryValueExW(HKEY hKey, LPCWSTR lpValueName, LPDWORD lpReserved, LPDWOR
 					goto end;
 				case REG_SZ:
 				{
-					const size_t length = strnlen(pValue->data.string, UINT32_MAX) * sizeof(WCHAR);
+					const size_t length =
+					    regsz_length(pValue->name, pValue->data.string, TRUE) * sizeof(WCHAR);
 
 					status = ERROR_SUCCESS;
 					if (lpData != NULL)
@@ -508,7 +528,8 @@ LONG RegQueryValueExA(HKEY hKey, LPCSTR lpValueName, LPDWORD lpReserved, LPDWORD
 					return reg_read_int(pValue, lpData, lpcbData);
 				case REG_SZ:
 				{
-					const size_t length = strnlen(pValue->data.string, UINT32_MAX);
+					const size_t length = regsz_length(pValue->name, pValue->data.string, FALSE);
+
 					char* pData = (char*)lpData;
 
 					if (pData != NULL)
