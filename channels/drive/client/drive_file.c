@@ -587,6 +587,11 @@ BOOL drive_file_query_information(DRIVE_FILE* file, UINT32 FsInformationClass, w
 	if (!file || !output)
 		return FALSE;
 
+	if ((file->file_handle != INVALID_HANDLE_VALUE) &&
+	    GetFileInformationByHandle(file->file_handle, &fileInformation))
+		return drive_file_query_from_handle_information(file, &fileInformation, FsInformationClass,
+		                                                output);
+
 	hFile = CreateFileW(file->fullpath, 0, FILE_SHARE_DELETE, NULL, OPEN_EXISTING,
 	                    FILE_ATTRIBUTE_NORMAL, NULL);
 	if (hFile != INVALID_HANDLE_VALUE)
