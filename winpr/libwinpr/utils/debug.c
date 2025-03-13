@@ -58,7 +58,9 @@ WINPR_PRAGMA_DIAG_POP
 
 #define TAG "com.winpr.utils.debug"
 
-static const char* support_msg = "Invalid stacktrace buffer! check if platform is supported!";
+#define LINE_LENGTH_MAX 2048
+
+static const char support_msg[] = "Invalid stacktrace buffer! check if platform is supported!";
 
 void winpr_backtrace_free(void* buffer)
 {
@@ -93,7 +95,7 @@ void* winpr_backtrace(DWORD size)
 	WLog_FATAL(TAG, "%s", support_msg);
 	/* return a non NULL buffer to allow the backtrace function family to succeed without failing
 	 */
-	return _strdup(support_msg);
+	return strndup(support_msg, sizeof(support_msg));
 #endif
 }
 
@@ -125,7 +127,7 @@ char** winpr_backtrace_symbols(void* buffer, size_t* used)
 	 * 2. The first sizeof(char*) bytes contain the pointer to the string following the pointer.
 	 * 3. The at data + sizeof(char*) contains the actual string
 	 */
-	size_t len = strlen(support_msg);
+	size_t len = strnlen(support_msg, sizeof(support_msg));
 	char* ppmsg = calloc(sizeof(char*) + len + 1, sizeof(char));
 	if (!ppmsg)
 		return NULL;
@@ -158,7 +160,7 @@ void winpr_backtrace_symbols_fd(void* buffer, int fd)
 			return;
 
 		for (size_t i = 0; i < used; i++)
-			(void)_write(fd, lines[i], (unsigned)strnlen(lines[i], UINT32_MAX));
+			(void)_write(fd, lines[i], (unsigned)strnlen(lines[i], LINE_LENGTH_MAX));
 		free((void*)lines);
 	}
 #else
