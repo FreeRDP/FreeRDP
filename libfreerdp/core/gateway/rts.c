@@ -1646,22 +1646,47 @@ fail:
 
 BOOL rts_recv_CONN_A3_pdu(rdpRpc* rpc, wStream* buffer)
 {
+	BOOL rc = FALSE;
 	UINT32 ConnectionTimeout = 0;
 
-	if (!Stream_SafeSeek(buffer, 20))
-		return FALSE;
+	rpcconn_hdr_t header = { 0 };
+	if (!rts_read_pdu_header(buffer, &header))
+		goto fail;
+
+	if (header.rts.Flags != RTS_FLAG_NONE)
+	{
+		WLog_Print(rpc->log, WLOG_ERROR,
+		           "[MS-RPCH] 2.2.4.4 CONN/A3 RTS PDU unexpected Flags=0x%08" PRIx32
+		           ", expected 0x%08" PRIx32,
+		           header.rts.Flags, RTS_FLAG_NONE);
+		goto fail;
+	}
+	if (header.rts.NumberOfCommands != 1)
+	{
+		WLog_Print(rpc->log, WLOG_ERROR,
+		           "[MS-RPCH] 2.2.4.4 CONN/A3 RTS PDU unexpected NumberOfCommands=%" PRIu32
+		           ", expected 1",
+		           header.rts.NumberOfCommands);
+		goto fail;
+	}
 
 	if (!rts_connection_timeout_command_read(rpc, buffer, &ConnectionTimeout))
-		return FALSE;
+		goto fail;
 
-	WLog_DBG(TAG, "Receiving CONN/A3 RTS PDU: ConnectionTimeout: %" PRIu32 "", ConnectionTimeout);
+	WLog_Print(rpc->log, WLOG_DEBUG, "Receiving CONN/A3 RTS PDU: ConnectionTimeout: %" PRIu32 "",
+	           ConnectionTimeout);
 
 	WINPR_ASSERT(rpc);
 	WINPR_ASSERT(rpc->VirtualConnection);
 	WINPR_ASSERT(rpc->VirtualConnection->DefaultInChannel);
 
 	rpc->VirtualConnection->DefaultInChannel->PingOriginator.ConnectionTimeout = ConnectionTimeout;
-	return TRUE;
+
+	rc = TRUE;
+
+fail:
+	rts_free_pdu_header(&header, FALSE);
+	return rc;
 }
 
 /* CONN/B Sequence */
@@ -1737,6 +1762,22 @@ BOOL rts_recv_CONN_C2_pdu(rdpRpc* rpc, wStream* buffer)
 	if (!rts_read_pdu_header(buffer, &header))
 		goto fail;
 
+	if (header.rts.Flags != RTS_FLAG_NONE)
+	{
+		WLog_Print(rpc->log, WLOG_ERROR,
+		           "[MS-RPCH] 2.2.4.9 CONN/C2 RTS PDU unexpected Flags=0x%08" PRIx32
+		           ", expected 0x%08" PRIx32,
+		           header.rts.Flags, RTS_FLAG_NONE);
+		goto fail;
+	}
+	if (header.rts.NumberOfCommands != 3)
+	{
+		WLog_Print(rpc->log, WLOG_ERROR,
+		           "[MS-RPCH] 2.2.4.9 CONN/C2 RTS PDU unexpected NumberOfCommands=%" PRIu32
+		           ", expected 3",
+		           header.rts.NumberOfCommands);
+		goto fail;
+	}
 	if (!rts_version_command_read(rpc, buffer, NULL))
 		goto fail;
 
@@ -1746,10 +1787,10 @@ BOOL rts_recv_CONN_C2_pdu(rdpRpc* rpc, wStream* buffer)
 	if (!rts_connection_timeout_command_read(rpc, buffer, &ConnectionTimeout))
 		goto fail;
 
-	WLog_DBG(TAG,
-	         "Receiving CONN/C2 RTS PDU: ConnectionTimeout: %" PRIu32 " ReceiveWindowSize: %" PRIu32
-	         "",
-	         ConnectionTimeout, ReceiveWindowSize);
+	WLog_Print(rpc->log, WLOG_DEBUG,
+	           "Receiving CONN/C2 RTS PDU: ConnectionTimeout: %" PRIu32
+	           " ReceiveWindowSize: %" PRIu32 "",
+	           ConnectionTimeout, ReceiveWindowSize);
 
 	WINPR_ASSERT(rpc);
 	WINPR_ASSERT(rpc->VirtualConnection);
