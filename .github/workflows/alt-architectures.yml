@@ -41,10 +41,10 @@ jobs:
             apt-get update -q -y
             apt-get install -q -y devscripts clang ninja-build ccache equivs
             echo "working directory: $(pwd)"
-            ls -lah
-            mk-build-deps -i -t "apt-get -o Debug::pkgProblemResolver=yes --no-install-recommends -y" packaging/deb/freerdp-nightly/control
+            find /home -name control -exec mk-build-deps -i -t "apt-get -o Debug::pkgProblemResolver=yes --no-install-recommends -y" {} \;
 
           run: |
+            echo "working directory: $(pwd)"
             cmake -GNinja \
               -C ci/cmake-preloads/config-linux-alt-arch.txt \
               -B ci-build \
