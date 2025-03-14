@@ -36,15 +36,17 @@ jobs:
             CTEST_OUTPUT_ON_FAILURE: 1
             WLOG_LEVEL: 'trace'
           install: |
+            echo "whoami: $(whoami)"
+            echo "working directory: $(pwd)"
             find /etc/apt -name "*.list" -exec sed -i '/deb-src/s/^# //' {} \;
             find /etc/apt -name "*.sources" -exec sed -i '/Types: deb/Types: deb deb-src//' {} \;
             apt-get update -q -y
             apt-get install -q -y devscripts clang ninja-build ccache equivs
-            echo "working directory: $(pwd)"
-            find /home -name control -exec mk-build-deps -i -t "apt-get -o Debug::pkgProblemResolver=yes --no-install-recommends -y" {} \;
 
           run: |
+            echo "whoami: $(whoami)"
             echo "working directory: $(pwd)"
+            find . -name control -exec mk-build-deps -i -t "apt-get -o Debug::pkgProblemResolver=yes --no-install-recommends -y" {} \;
             cmake -GNinja \
               -C ci/cmake-preloads/config-linux-alt-arch.txt \
               -B ci-build \
