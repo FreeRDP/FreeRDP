@@ -31,7 +31,7 @@ jobs:
       - name: "Prepare environment"
         run: |
           sudo apt-get update -q -y
-          sudo apt-get install -q -y devscripts \
+          sudo apt-get install -q -y devscripts equivs \
             clang \
             abigail-tools \
             pylint \
