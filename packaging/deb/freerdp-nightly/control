@@ -11,6 +11,7 @@ Build-Depends:
  pkg-config,
  libssl-dev,
  ninja-build,
+ zlib1g-dev,
  libkrb5-dev | krb5-multidev | heimdal-multidev,
  libxkbcommon-dev,
  libxkbfile-dev,
