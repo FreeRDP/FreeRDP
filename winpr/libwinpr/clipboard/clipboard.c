@@ -436,17 +436,20 @@ void* ClipboardGetData(wClipboard* clipboard, UINT32 formatId, UINT32* pSize)
 	wClipboardFormat* format = NULL;
 	wClipboardSynthesizer* synthesizer = NULL;
 
-	if (!clipboard)
+	if (!clipboard || !pSize)
+	{
+		WLog_ERR(TAG, "Invalid parameters clipboard=%p, pSize=%p", clipboard, pSize);
 		return NULL;
-
-	if (!pSize)
-		return NULL;
+	}
 
 	*pSize = 0;
 	format = ClipboardFindFormat(clipboard, clipboard->formatId, NULL);
 
 	if (!format)
+	{
+		WLog_ERR(TAG, "Format [0x%08" PRIx32 "] not found", clipboard->formatId);
 		return NULL;
+	}
 
 	SrcSize = clipboard->size;
 	pSrcData = clipboard->data;
@@ -467,7 +470,12 @@ void* ClipboardGetData(wClipboard* clipboard, UINT32 formatId, UINT32* pSize)
 		synthesizer = ClipboardFindSynthesizer(format, formatId);
 
 		if (!synthesizer || !synthesizer->pfnSynthesize)
+		{
+			WLog_ERR(TAG, "No synthesizer for format %s [0x%08" PRIx32 "] --> %s [0x%08" PRIx32 "]",
+			         ClipboardGetFormatName(clipboard, clipboard->formatId), clipboard->formatId,
+			         ClipboardGetFormatName(clipboard, formatId), formatId);
 			return NULL;
+		}
 
 		DstSize = SrcSize;
 		pDstData = synthesizer->pfnSynthesize(clipboard, format->formatId, pSrcData, &DstSize);
@@ -475,6 +483,8 @@ void* ClipboardGetData(wClipboard* clipboard, UINT32 formatId, UINT32* pSize)
 			*pSize = DstSize;
 	}
 
+	WLog_DBG(TAG, "getting formatId=%s [0x%08" PRIx32 "] data=%p, size=%" PRIu32,
+	         ClipboardGetFormatName(clipboard, formatId), formatId, pDstData, *pSize);
 	return pDstData;
 }
 
@@ -482,6 +492,8 @@ BOOL ClipboardSetData(wClipboard* clipboard, UINT32 formatId, const void* data, 
 {
 	wClipboardFormat* format = NULL;
 
+	WLog_DBG(TAG, "setting formatId=%s [0x%08" PRIx32 "], size=%" PRIu32,
+	         ClipboardGetFormatName(clipboard, formatId), formatId, size);
 	if (!clipboard)
 		return FALSE;
 

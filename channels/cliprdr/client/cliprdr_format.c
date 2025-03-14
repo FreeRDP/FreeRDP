@@ -120,7 +120,8 @@ UINT cliprdr_process_format_list(cliprdrPlugin* cliprdr, wStream* s, UINT32 data
 	formatList.common.msgFlags = msgFlags;
 	formatList.common.dataLen = dataLen;
 
-	if ((error = cliprdr_read_format_list(s, &formatList, cliprdr->useLongFormatNames)))
+	if ((error =
+	         cliprdr_read_format_list(cliprdr->log, s, &formatList, cliprdr->useLongFormatNames)))
 		goto error_out;
 
 	const UINT32 mask =
@@ -136,7 +137,8 @@ UINT cliprdr_process_format_list(cliprdrPlugin* cliprdr, wStream* s, UINT32 data
 	if (context->ServerFormatList)
 	{
 		if ((error = context->ServerFormatList(context, &filteredFormatList)))
-			WLog_ERR(TAG, "ServerFormatList failed with error %" PRIu32 "", error);
+			WLog_Print(cliprdr->log, WLOG_ERROR, "ServerFormatList failed with error %" PRIu32 "",
+			           error);
 	}
 
 error_out:
@@ -165,7 +167,8 @@ UINT cliprdr_process_format_list_response(cliprdrPlugin* cliprdr, WINPR_ATTR_UNU
 
 	IFCALLRET(context->ServerFormatListResponse, error, context, &formatListResponse);
 	if (error)
-		WLog_ERR(TAG, "ServerFormatListResponse failed with error %" PRIu32 "!", error);
+		WLog_Print(cliprdr->log, WLOG_ERROR,
+		           "ServerFormatListResponse failed with error %" PRIu32 "!", error);
 
 	return error;
 }
@@ -201,7 +204,8 @@ UINT cliprdr_process_format_data_request(cliprdrPlugin* cliprdr, wStream* s, UIN
 	context->lastRequestedFormatId = formatDataRequest.requestedFormatId;
 	IFCALLRET(context->ServerFormatDataRequest, error, context, &formatDataRequest);
 	if (error)
-		WLog_ERR(TAG, "ServerFormatDataRequest failed with error %" PRIu32 "!", error);
+		WLog_Print(cliprdr->log, WLOG_ERROR,
+		           "ServerFormatDataRequest failed with error %" PRIu32 "!", error);
 
 	return error;
 }
@@ -218,7 +222,9 @@ UINT cliprdr_process_format_data_response(cliprdrPlugin* cliprdr, wStream* s, UI
 	CliprdrClientContext* context = cliprdr_get_client_interface(cliprdr);
 	UINT error = CHANNEL_RC_OK;
 
-	WLog_Print(cliprdr->log, WLOG_DEBUG, "ServerFormatDataResponse");
+	WLog_Print(cliprdr->log, WLOG_DEBUG,
+	           "ServerFormatDataResponse: msgFlags=ox%08" PRIx32 ", dataLen=%" PRIu32, msgFlags,
+	           dataLen);
 
 	formatDataResponse.common.msgType = CB_FORMAT_DATA_RESPONSE;
 	formatDataResponse.common.msgFlags = msgFlags;
@@ -231,14 +237,15 @@ UINT cliprdr_process_format_data_response(cliprdrPlugin* cliprdr, wStream* s, UI
 	    freerdp_settings_get_uint32(context->rdpcontext->settings, FreeRDP_ClipboardFeatureMask);
 	if ((mask & (CLIPRDR_FLAG_REMOTE_TO_LOCAL | CLIPRDR_FLAG_REMOTE_TO_LOCAL_FILES)) == 0)
 	{
-		WLog_WARN(TAG,
-		          "Received ServerFormatDataResponse but remote -> local clipboard is disabled");
+		WLog_Print(cliprdr->log, WLOG_WARN,
+		           "Received ServerFormatDataResponse but remote -> local clipboard is disabled");
 		return CHANNEL_RC_OK;
 	}
 
 	IFCALLRET(context->ServerFormatDataResponse, error, context, &formatDataResponse);
 	if (error)
-		WLog_ERR(TAG, "ServerFormatDataResponse failed with error %" PRIu32 "!", error);
+		WLog_Print(cliprdr->log, WLOG_ERROR,
+		           "ServerFormatDataResponse failed with error %" PRIu32 "!", error);
 
 	return error;
 }

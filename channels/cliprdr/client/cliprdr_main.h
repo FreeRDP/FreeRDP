@@ -29,8 +29,6 @@
 #include <freerdp/channels/log.h>
 #include <freerdp/client/cliprdr.h>
 
-#define TAG CHANNELS_TAG("cliprdr.client")
-
 typedef struct
 {
 	CHANNEL_DEF channelDef;

@@ -456,7 +456,10 @@ static void* clipboard_synthesize_image_bmp_to_png(wClipboard* clipboard, UINT32
 	return clipboard_synthesize_image_bmp_to_format(clipboard, formatId, WINPR_IMAGE_PNG, data,
 	                                                pSize);
 }
+#endif
 
+#if defined(WINPR_UTILS_IMAGE_PNG) || defined(WINPR_UTILS_IMAGE_WEBP) || \
+    defined(WINPR_UTILS_IMAGE_JPEG)
 static void* clipboard_synthesize_image_format_to_bmp(wClipboard* clipboard,
                                                       WINPR_ATTR_UNUSED UINT32 srcFormatId,
                                                       const void* data, UINT32* pSize)
@@ -493,7 +496,9 @@ fail:
 		        size - sizeof(WINPR_BITMAP_FILE_HEADER));
 	return dst;
 }
+#endif
 
+#if defined(WINPR_UTILS_IMAGE_PNG)
 static void* clipboard_synthesize_image_png_to_bmp(wClipboard* clipboard, UINT32 formatId,
                                                    const void* data, UINT32* pSize)
 {
