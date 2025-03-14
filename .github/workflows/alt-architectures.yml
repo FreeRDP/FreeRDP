@@ -37,53 +37,9 @@ jobs:
             WLOG_LEVEL: 'trace'
           install: |
             apt-get update -q -y
-            apt-get install -q -y \
-              libxrandr-dev \
-              libxinerama-dev \
-              libusb-1.0-0-dev \
-              xserver-xorg-dev \
-              libswscale-dev \
-              libswresample-dev \
-              libavutil-dev \
-              libavcodec-dev \
-              libcups2-dev \
-              libpulse-dev \
-              libasound2-dev \
-              libpcsclite-dev \
-              libxcb-cursor-dev \
-              libxcursor-dev \
-              libcairo2-dev \
-              libfaad-dev \
-              libgsm1-dev \
-              ninja-build \
-              libxfixes-dev \
-              libxkbcommon-dev \
-              libxkbfile-dev \
-              libwayland-dev \
-              libpam0g-dev \
-              libxdamage-dev \
-              libxcb-damage0-dev \
-              libxtst-dev \
-              libfuse3-dev \
-              libsystemd-dev \
-              libsoxr-dev \
-              libsdl2-dev \
-              libsdl2-ttf-dev \
-              libsdl2-image-dev \
-              libkrb5-dev \
-              libcjson-dev \
-              libpkcs11-helper1-dev \
-              libopus-dev \
-              libwebp-dev \
-              libpng-dev \
-              libjpeg-dev \
-              liburiparser-dev \
-              libssl-dev \
-              opensc-pkcs11 \
-              libv4l-dev \
-              cmake \
-              clang
-            apt-get satisfy -q -y "libwebkit2gtk-4.0-dev | libwebkit2gtk-4.1-dev"
+            apt-get install -q -y devscripts clang ninja-build ccache
+            ./packaging/scripts/prepare_deb_freerdp-nightly.sh
+            mk-build-deps -i
           run: |
             cmake -GNinja \
               -C ci/cmake-preloads/config-linux-alt-arch.txt \

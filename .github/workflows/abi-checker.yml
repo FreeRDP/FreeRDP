@@ -31,55 +31,13 @@ jobs:
       - name: "Prepare environment"
         run: |
           sudo apt-get update -q -y
-          sudo apt-get install -q -y \
-            libxrandr-dev \
-            libxinerama-dev \
-            libusb-1.0-0-dev \
-            xserver-xorg-dev \
-            libswscale-dev \
-            libswresample-dev \
-            libavformat-dev \
-            libavutil-dev \
-            libavcodec-dev \
-            libcups2-dev \
-            libpulse-dev \
-            libasound2-dev \
-            libpcsclite-dev \
-            libxcb-cursor-dev \
-            libxcursor-dev \
-            libcairo2-dev \
-            libfaad-dev \
-            libjpeg-dev \
-            libgsm1-dev \
-            ninja-build \
-            libxfixes-dev \
-            libxkbcommon-dev \
-            libpkcs11-helper1-dev \
-            libwayland-dev \
-            libpam0g-dev \
-            libxdamage-dev \
-            libxcb-damage0-dev \
-            libxtst-dev \
-            libfuse3-dev \
-            libsystemd-dev \
-            libcairo2-dev \
-            libsoxr-dev \
-            libsdl2-dev \
-            libkrb5-dev \
-            libcjson-dev \
-            libsdl2-ttf-dev \
-            libopus-dev \
-            libwebp-dev \
-            libpng-dev \
-            libv4l-dev \
-            libjpeg-dev \
-            liburiparser-dev \
-            cmake \
+          sudo apt-get install -q -y devscripts \
             clang \
             abigail-tools \
             pylint \
             curl
-          sudo apt-get satisfy -q -y "libwebkit2gtk-4.0-dev | libwebkit2gtk-4.1-dev"
+          ./packaging/scripts/prepare_deb_freerdp-nightly.sh
+          sudo mk-build-deps -i
 
       - name: "Prepare configuration"
         run: |
