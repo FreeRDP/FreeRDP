@@ -13,7 +13,7 @@ jobs:
     - name: "Install dependencies"
       run: |
         sudo apt-get update -q -y
-        sudo apt-get install -q -y devscripts clang ccache ninja-build
+        sudo apt-get install -q -y devscripts clang ccache ninja-build equivs
         ./packaging/scripts/prepare_deb_freerdp-nightly.sh
         sudo mk-build-deps -i
 
