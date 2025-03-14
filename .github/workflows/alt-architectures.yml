@@ -38,8 +38,8 @@ jobs:
           install: |
             apt-get update -q -y
             apt-get install -q -y devscripts clang ninja-build ccache equivs
-            ln -s packaging/deb/freerdp-nightly debian
-            mk-build-deps -i -t "apt-get -o Debug::pkgProblemResolver=yes --no-install-recommends -y"
+            mk-build-deps -i -t "apt-get -o Debug::pkgProblemResolver=yes --no-install-recommends -y" packaging/deb/freerdp-nightly/control
+
           run: |
             cmake -GNinja \
               -C ci/cmake-preloads/config-linux-alt-arch.txt \
