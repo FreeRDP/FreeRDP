@@ -496,6 +496,7 @@ BOOL utils_reload_channels(rdpContext* context)
 	freerdp_channels_free(context->channels);
 	context->channels = freerdp_channels_new(context->instance);
 	WINPR_ASSERT(context->channels);
+	freerdp_channels_register_instance(context->channels, context->instance);
 
 	BOOL rc = TRUE;
 	IFCALLRET(context->instance->LoadChannels, rc, context->instance);
