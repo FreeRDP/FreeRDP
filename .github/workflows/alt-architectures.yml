@@ -36,6 +36,7 @@ jobs:
             CTEST_OUTPUT_ON_FAILURE: 1
             WLOG_LEVEL: 'trace'
           install: |
+            sed -i '/deb-src/s/^# //' /etc/apt/sources.list
             apt-get update -q -y
             apt-get install -q -y devscripts clang ninja-build ccache equivs
             mk-build-deps -i -t "apt-get -o Debug::pkgProblemResolver=yes --no-install-recommends -y" packaging/deb/freerdp-nightly/control
