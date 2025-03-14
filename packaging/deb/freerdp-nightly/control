@@ -63,6 +63,10 @@ Build-Depends:
  libjpeg-dev,
  opensc-pkcs11,
  libv4l-dev,
+ ocl-icd-dev,
+ ocl-icd-opencl-dev,
+ opencl-headers,
+ opencl-c-headers,
  libasan5 | libasan6 | libasan8
 Standards-Version: 3.9.5
 Homepage: http://www.freerdp.com/
