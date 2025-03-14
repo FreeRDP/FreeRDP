@@ -10,24 +10,19 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: "Install dependencies"
-      run: |
-        sudo apt-get update -q -y
-        sudo apt-get install -q -y devscripts clang ccache ninja-build equivs
-        ./packaging/scripts/prepare_deb_freerdp-nightly.sh
-        sudo mk-build-deps -i
-
     # Run clang-tidy
-    - uses: ZedThree/clang-tidy-review@v0.19.0
+    - uses: akallabeth/clang-tidy-review@master
       id: review
       with:
         split_workflow: true
         clang_tidy_checks: ''
+        apt_packages: devscripts,equivs
+        install_commands: 'ln -s packaging/deb/freerdp-nightly debian; mk-build-deps -i -t "apt-get -o Debug::pkgProblemResolver=yes --no-install-recommends -y"'
 
         # CMake command to run in order to generate compile_commands.json
         build_dir: tidy
-        cmake_command: cmake -Btidy -S. -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DWITH_DEBUG_ALL=ON -DWITH_INTERNAL_MD4=ON -DWITH_INTERNAL_MD5=ON -DWITH_INTERNAL_RC4=ON -DBUILD_TESTING=ON -DWINPR_UTILS_IMAGE_JPEG=ON -DWINPR_UTILS_IMAGE_PNG=ON -DWINPR_UTILS_IMAGE_WEBP=ON  -DWITH_BINARY_VERSIONING=ON -DWITH_CAIRO=ON -DWITH_DSP_EXPERIMENTAL=ON -DWITH_FAAC=ON -DWITH_FAAD2=ON -DWITH_FREERDP_DEPRECATED=ON -DWITH_FREERDP_DEPRECATED_COMMANDLINE=ON -DWITH_GSM=ON -DWITH_OPUS=ON -DWITH_PROXY_EMULATE_SMARTCARD=ON -DWITH_PULSE=ON -DWITH_SMARTCARD_INSPECT=ON -DWITH_SOXR=ON -DWITH_UNICODE_BUILTIN=ON -DWITH_VAAPI=ON -DWITH_WINPR_DEPRECATED=ON -DWITH_SDL_IMAGE_DIALOGS=ON -DWITH_PROFILER=ON -DWITH_OPENCL=ON -DCHANNEL_TSMF=ON -DWITH_WEBVIEW=OFF
+        cmake_command: cmake -Btidy -S. -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -C ci/cmake-preloads/config-qa.cmake
 
     # Uploads an artefact containing clang_fixes.json
-    - uses: ZedThree/clang-tidy-review/upload@v0.19.0
+    - uses: akallabeth/clang-tidy-review/upload@master
       id: upload-review

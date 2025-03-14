@@ -40,7 +40,7 @@ jobs:
             apt-get install -q -y devscripts clang ninja-build ccache equivs
           run: |
             ./packaging/scripts/prepare_deb_freerdp-nightly.sh
-            mk-build-deps -i
+            sudo mk-build-deps -i
             cmake -GNinja \
               -C ci/cmake-preloads/config-linux-alt-arch.txt \
               -B ci-build \
