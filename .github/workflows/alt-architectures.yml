@@ -37,8 +37,11 @@ jobs:
             WLOG_LEVEL: 'trace'
           install: |
             find /etc/apt -name "*.list" -exec sed -i '/deb-src/s/^# //' {} \;
+            find /etc/apt -name "*.sources" -exec sed -i '/Types: deb/Types: deb deb-src//' {} \;
             apt-get update -q -y
             apt-get install -q -y devscripts clang ninja-build ccache equivs
+            echo "working directory: $(pwd)"
+            ls -lah
             mk-build-deps -i -t "apt-get -o Debug::pkgProblemResolver=yes --no-install-recommends -y" packaging/deb/freerdp-nightly/control
 
           run: |
