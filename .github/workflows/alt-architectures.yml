@@ -38,8 +38,6 @@ jobs:
           install: |
             echo "whoami: $(whoami)"
             echo "working directory: $(pwd)"
-            find /etc/apt -name "*.list" -exec sed -i '/deb-src/s/^# //' {} \;
-            find /etc/apt -name "*.sources" -exec sed -i '/Types: deb/Types: deb deb-src//' {} \;
             apt-get update -q -y
             apt-get install -q -y devscripts clang ninja-build ccache equivs
 
@@ -53,9 +51,6 @@ jobs:
               -S . \
               -DCMAKE_INSTALL_PREFIX=/tmp/ci-test \
               -DCMAKE_C_COMPILER=/usr/bin/clang \
-              -DCMAKE_CXX_COMPILER=/usr/bin/clang++ \
-              -DUSE_UNWIND=OFF \
-              -DUSE_EXECINFO=OFF \
-              -DWITH_SANITIZE_ADDRESS=OFF
+              -DCMAKE_CXX_COMPILER=/usr/bin/clang++
             cmake --build ci-build --parallel $(nproc) --target install
             cmake --build ci-build --parallel $(nproc) --target test
