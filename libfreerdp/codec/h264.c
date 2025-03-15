@@ -756,7 +756,10 @@ void h264_context_free(H264_CONTEXT* h264)
 	if (h264)
 	{
 		if (h264->subsystem)
+		{
+			WINPR_ASSERT(h264->subsystem->Uninit);
 			h264->subsystem->Uninit(h264);
+		}
 
 		for (size_t x = 0; x < 3; x++)
 		{

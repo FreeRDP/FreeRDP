@@ -61,5 +61,6 @@ void primitives_init_andor(primitives_t* WINPR_RESTRICT prims)
 
 void primitives_init_andor_opt(primitives_t* WINPR_RESTRICT prims)
 {
+	primitives_init_andor(prims);
 	primitives_init_andor_sse3(prims);
 }

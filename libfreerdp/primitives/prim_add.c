@@ -78,5 +78,6 @@ void primitives_init_add(primitives_t* WINPR_RESTRICT prims)
 
 void primitives_init_add_opt(primitives_t* WINPR_RESTRICT prims)
 {
+	primitives_init_add(prims);
 	primitives_init_add_sse3(prims);
 }

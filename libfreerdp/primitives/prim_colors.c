@@ -570,6 +570,7 @@ void primitives_init_colors(primitives_t* WINPR_RESTRICT prims)
 /* ------------------------------------------------------------------------- */
 void primitives_init_colors_opt(primitives_t* WINPR_RESTRICT prims)
 {
+	primitives_init_colors(prims);
 	primitives_init_colors_sse2(prims);
 	primitives_init_colors_neon(prims);
 }

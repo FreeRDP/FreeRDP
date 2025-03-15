@@ -45,5 +45,6 @@ void primitives_init_sign(primitives_t* WINPR_RESTRICT prims)
 
 void primitives_init_sign_opt(primitives_t* WINPR_RESTRICT prims)
 {
+	primitives_init_sign(prims);
 	primitives_init_sign_ssse3(prims);
 }

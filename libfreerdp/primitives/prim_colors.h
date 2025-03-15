@@ -32,8 +32,6 @@
 FREERDP_LOCAL void primitives_init_colors_sse2_int(primitives_t* WINPR_RESTRICT prims);
 static inline void primitives_init_colors_sse2(primitives_t* WINPR_RESTRICT prims)
 {
-	primitives_init_colors(prims);
-
 	if (!IsProcessorFeaturePresent(PF_SSE2_INSTRUCTIONS_AVAILABLE) ||
 	    !IsProcessorFeaturePresent(PF_SSE3_INSTRUCTIONS_AVAILABLE))
 		return;
@@ -44,7 +42,6 @@ static inline void primitives_init_colors_sse2(primitives_t* WINPR_RESTRICT prim
 FREERDP_LOCAL void primitives_init_colors_neon_int(primitives_t* WINPR_RESTRICT prims);
 static inline void primitives_init_colors_neon(primitives_t* WINPR_RESTRICT prims)
 {
-	primitives_init_colors(prims);
 	if (!IsProcessorFeaturePresent(PF_ARM_NEON_INSTRUCTIONS_AVAILABLE))
 		return;
 

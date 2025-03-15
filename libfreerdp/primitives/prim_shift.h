@@ -31,8 +31,6 @@
 FREERDP_LOCAL void primitives_init_shift_sse3_int(primitives_t* WINPR_RESTRICT prims);
 static inline void primitives_init_shift_sse3(primitives_t* WINPR_RESTRICT prims)
 {
-	primitives_init_shift(prims);
-
 	if (!IsProcessorFeaturePresent(PF_SSE2_INSTRUCTIONS_AVAILABLE) ||
 	    !IsProcessorFeaturePresent(PF_SSE3_INSTRUCTIONS_AVAILABLE))
 		return;
