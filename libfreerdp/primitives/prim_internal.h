@@ -286,6 +286,17 @@ static INLINE BYTE RGB2V(INT32 R, INT32 G, INT32 B)
 	return WINPR_ASSERTING_INT_CAST(BYTE, val);
 }
 
+static inline BYTE* writeYUVPixel(BYTE* dst, UINT32 DstFormat, INT32 y, INT32 u, INT32 v,
+                                  fkt_writePixel fkt)
+{
+	WINPR_ASSERT(fkt);
+	const BYTE r = YUV2R(y, u, v);
+	const BYTE g = YUV2G(y, u, v);
+	const BYTE b = YUV2B(y, u, v);
+	const DWORD formatSize = FreeRDPGetBytesPerPixel(DstFormat);
+	return fkt(dst, formatSize, DstFormat, r, g, b, 0);
+}
+
 FREERDP_LOCAL void general_RGBToAVC444YUV_BGRX_DOUBLE_ROW(
     size_t offset, const BYTE* WINPR_RESTRICT srcEven, const BYTE* WINPR_RESTRICT srcOdd,
     BYTE* WINPR_RESTRICT b1Even, BYTE* WINPR_RESTRICT b1Odd, BYTE* WINPR_RESTRICT b2,

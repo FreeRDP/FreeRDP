@@ -160,10 +160,7 @@ static inline pstatus_t sse41_YUV420ToRGB_BGRX(const BYTE* WINPR_RESTRICT pSrc[]
 			const BYTE Y = *YData++;
 			const BYTE U = *UData;
 			const BYTE V = *VData;
-			const BYTE r = YUV2R(Y, U, V);
-			const BYTE g = YUV2G(Y, U, V);
-			const BYTE b = YUV2B(Y, U, V);
-			dst = (__m128i*)writePixelBGRX((BYTE*)dst, 4, PIXEL_FORMAT_BGRX32, r, g, b, 0);
+			dst = (__m128i*)writeYUVPixel((BYTE*)dst, PIXEL_FORMAT_BGRX32, Y, U, V, writePixelBGRX);
 
 			if (x % 2)
 			{
@@ -221,10 +218,7 @@ static inline void BGRX_fillRGB(size_t offset, BYTE* WINPR_RESTRICT pRGB[2],
 				V = CONDITIONAL_CLIP(avgV, pV[0][offset]);
 			}
 
-			const BYTE r = YUV2R(Y, U, V);
-			const BYTE g = YUV2G(Y, U, V);
-			const BYTE b = YUV2B(Y, U, V);
-			writePixelBGRX(&pRGB[i][(j + offset) * bpp], bpp, DstFormat, r, g, b, 0);
+			writeYUVPixel(&pRGB[i][(j + offset) * bpp], DstFormat, Y, U, V, writePixelBGRX);
 		}
 	}
 }
@@ -455,7 +449,6 @@ static inline void BGRX_fillRGB_single(size_t offset, BYTE* WINPR_RESTRICT pRGB,
 	WINPR_ASSERT(pU);
 	WINPR_ASSERT(pV);
 
-	const UINT32 DstFormat = PIXEL_FORMAT_BGRX32;
 	const UINT32 bpp = 4;
 
 	for (size_t j = 0; j < 2; j++)
@@ -464,10 +457,7 @@ static inline void BGRX_fillRGB_single(size_t offset, BYTE* WINPR_RESTRICT pRGB,
 		BYTE U = pU[offset + j];
 		BYTE V = pV[offset + j];
 
-		const BYTE r = YUV2R(Y, U, V);
-		const BYTE g = YUV2G(Y, U, V);
-		const BYTE b = YUV2B(Y, U, V);
-		writePixelBGRX(&pRGB[(j + offset) * bpp], bpp, DstFormat, r, g, b, 0);
+		writeYUVPixel(&pRGB[(j + offset) * bpp], PIXEL_FORMAT_BGRX32, Y, U, V, writePixelBGRX);
 	}
 }
 
