@@ -32,8 +32,6 @@
 FREERDP_LOCAL void primitives_init_YCoCg_ssse3_int(primitives_t* WINPR_RESTRICT prims);
 static inline void primitives_init_YCoCg_ssse3(primitives_t* WINPR_RESTRICT prims)
 {
-	primitives_init_YCoCg(prims);
-
 	if (!IsProcessorFeaturePresentEx(PF_EX_SSSE3) ||
 	    !IsProcessorFeaturePresent(PF_SSE2_INSTRUCTIONS_AVAILABLE) ||
 	    !IsProcessorFeaturePresent(PF_SSE3_INSTRUCTIONS_AVAILABLE))
@@ -45,8 +43,6 @@ static inline void primitives_init_YCoCg_ssse3(primitives_t* WINPR_RESTRICT prim
 FREERDP_LOCAL void primitives_init_YCoCg_neon_int(primitives_t* WINPR_RESTRICT prims);
 static inline void primitives_init_YCoCg_neon(primitives_t* WINPR_RESTRICT prims)
 {
-	primitives_init_YCoCg(prims);
-
 	if (!IsProcessorFeaturePresent(PF_ARM_NEON_INSTRUCTIONS_AVAILABLE))
 		return;
 	primitives_init_YCoCg_neon_int(prims);

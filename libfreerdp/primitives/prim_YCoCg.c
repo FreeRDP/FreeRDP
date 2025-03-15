@@ -76,6 +76,7 @@ void primitives_init_YCoCg(primitives_t* WINPR_RESTRICT prims)
 
 void primitives_init_YCoCg_opt(primitives_t* WINPR_RESTRICT prims)
 {
+	primitives_init_YCoCg(prims);
 	primitives_init_YCoCg_ssse3(prims);
 	primitives_init_YCoCg_neon(prims);
 }

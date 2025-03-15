@@ -145,5 +145,6 @@ void primitives_init_shift(primitives_t* WINPR_RESTRICT prims)
 
 void primitives_init_shift_opt(primitives_t* WINPR_RESTRICT prims)
 {
+	primitives_init_shift(prims);
 	primitives_init_shift_sse3(prims);
 }

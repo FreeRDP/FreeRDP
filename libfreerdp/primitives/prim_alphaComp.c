@@ -93,5 +93,6 @@ void primitives_init_alphaComp(primitives_t* WINPR_RESTRICT prims)
 
 void primitives_init_alphaComp_opt(primitives_t* WINPR_RESTRICT prims)
 {
+	primitives_init_alphaComp(prims);
 	primitives_init_alphaComp_sse3(prims);
 }
