@@ -99,110 +99,6 @@ static inline void mm_prefetch_buffer(const void* WINPR_RESTRICT buffer, size_t 
 
 /*---------------------------------------------------------------------------*/
 static pstatus_t
-sse2_yCbCrToRGB_16s16s_P3P3(const INT16* WINPR_RESTRICT pSrc[3], int srcStep,
-                            INT16* WINPR_RESTRICT pDst[3], int dstStep,
-                            const prim_size_t* WINPR_RESTRICT roi) /* region of interest */
-{
-	if (((ULONG_PTR)(pSrc[0]) & 0x0f) || ((ULONG_PTR)(pSrc[1]) & 0x0f) ||
-	    ((ULONG_PTR)(pSrc[2]) & 0x0f) || ((ULONG_PTR)(pDst[0]) & 0x0f) ||
-	    ((ULONG_PTR)(pDst[1]) & 0x0f) || ((ULONG_PTR)(pDst[2]) & 0x0f) || (roi->width & 0x07) ||
-	    (srcStep & 127) || (dstStep & 127))
-	{
-		/* We can't maintain 16-byte alignment. */
-		return generic->yCbCrToRGB_16s16s_P3P3(pSrc, srcStep, pDst, dstStep, roi);
-	}
-
-	const __m128i zero = _mm_setzero_si128();
-	const __m128i max = _mm_set1_epi16(255);
-	const __m128i* y_buf = (const __m128i*)(pSrc[0]);
-	const __m128i* cb_buf = (const __m128i*)(pSrc[1]);
-	const __m128i* cr_buf = (const __m128i*)(pSrc[2]);
-	__m128i* r_buf = (__m128i*)(pDst[0]);
-	__m128i* g_buf = (__m128i*)(pDst[1]);
-	__m128i* b_buf = (__m128i*)(pDst[2]);
-	__m128i r_cr =
-	    _mm_set1_epi16(WINPR_ASSERTING_INT_CAST(int16_t, ycbcr_table[14][0])); /*  1.403 << 14 */
-	__m128i g_cb =
-	    _mm_set1_epi16(WINPR_ASSERTING_INT_CAST(int16_t, ycbcr_table[14][1])); /* -0.344 << 14 */
-	__m128i g_cr =
-	    _mm_set1_epi16(WINPR_ASSERTING_INT_CAST(int16_t, ycbcr_table[14][2])); /* -0.714 << 14 */
-	__m128i b_cb =
-	    _mm_set1_epi16(WINPR_ASSERTING_INT_CAST(int16_t, ycbcr_table[14][3])); /*  1.770 << 14 */
-	__m128i c4096 = _mm_set1_epi16(4096);
-	const size_t srcbump = WINPR_ASSERTING_INT_CAST(size_t, srcStep) / sizeof(__m128i);
-	const size_t dstbump = WINPR_ASSERTING_INT_CAST(size_t, dstStep) / sizeof(__m128i);
-
-	mm_prefetch_buffer(y_buf, roi->width, (size_t)srcStep, roi->height);
-	mm_prefetch_buffer(cb_buf, roi->width, (size_t)srcStep, roi->height);
-	mm_prefetch_buffer(cr_buf, roi->width, (size_t)srcStep, roi->height);
-
-	const size_t imax = roi->width * sizeof(INT16) / sizeof(__m128i);
-
-	for (UINT32 yp = 0; yp < roi->height; ++yp)
-	{
-		for (size_t i = 0; i < imax; i++)
-		{
-			/* In order to use SSE2 signed 16-bit integer multiplication
-			 * we need to convert the floating point factors to signed int
-			 * without losing information.
-			 * The result of this multiplication is 32 bit and we have two
-			 * SSE instructions that return either the hi or lo word.
-			 * Thus we will multiply the factors by the highest possible 2^n,
-			 * take the upper 16 bits of the signed 32-bit result
-			 * (_mm_mulhi_epi16) and correct this result by multiplying
-			 * it by 2^(16-n).
-			 *
-			 * For the given factors in the conversion matrix the best
-			 * possible n is 14.
-			 *
-			 * Example for calculating r:
-			 * r = (y>>5) + 128 + (cr*1.403)>>5             // our base formula
-			 * r = (y>>5) + 128 + (HIWORD(cr*(1.403<<14)<<2))>>5   // see above
-			 * r = (y+4096)>>5 + (HIWORD(cr*22986)<<2)>>5     // simplification
-			 * r = ((y+4096)>>2 + HIWORD(cr*22986)) >> 3
-			 */
-			/* y = (y_r_buf[i] + 4096) >> 2 */
-			__m128i y = LOAD_SI128(y_buf + i);
-			y = _mm_add_epi16(y, c4096);
-			y = _mm_srai_epi16(y, 2);
-			/* cb = cb_g_buf[i]; */
-			__m128i cb = LOAD_SI128(cb_buf + i);
-			/* cr = cr_b_buf[i]; */
-			__m128i cr = LOAD_SI128(cr_buf + i);
-			/* (y + HIWORD(cr*22986)) >> 3 */
-			__m128i r = _mm_add_epi16(y, _mm_mulhi_epi16(cr, r_cr));
-			r = _mm_srai_epi16(r, 3);
-			/* r_buf[i] = CLIP(r); */
-			mm_between_epi16(r, zero, max);
-			STORE_SI128(r_buf + i, r);
-			/* (y + HIWORD(cb*-5636) + HIWORD(cr*-11698)) >> 3 */
-			__m128i g = _mm_add_epi16(y, _mm_mulhi_epi16(cb, g_cb));
-			g = _mm_add_epi16(g, _mm_mulhi_epi16(cr, g_cr));
-			g = _mm_srai_epi16(g, 3);
-			/* g_buf[i] = CLIP(g); */
-			mm_between_epi16(g, zero, max);
-			STORE_SI128(g_buf + i, g);
-			/* (y + HIWORD(cb*28999)) >> 3 */
-			__m128i b = _mm_add_epi16(y, _mm_mulhi_epi16(cb, b_cb));
-			b = _mm_srai_epi16(b, 3);
-			/* b_buf[i] = CLIP(b); */
-			mm_between_epi16(b, zero, max);
-			STORE_SI128(b_buf + i, b);
-		}
-
-		y_buf += srcbump;
-		cb_buf += srcbump;
-		cr_buf += srcbump;
-		r_buf += dstbump;
-		g_buf += dstbump;
-		b_buf += dstbump;
-	}
-
-	return PRIMITIVES_SUCCESS;
-}
-
-/*---------------------------------------------------------------------------*/
-static pstatus_t
 sse2_yCbCrToRGB_16s8u_P3AC4R_BGRX(const INT16* WINPR_RESTRICT pSrc[3],
                                   WINPR_ATTR_UNUSED UINT32 srcStep, BYTE* WINPR_RESTRICT pDst,
                                   UINT32 dstStep,
@@ -1150,7 +1046,6 @@ void primitives_init_colors_sse2_int(primitives_t* WINPR_RESTRICT prims)
 
 	WLog_VRB(PRIM_TAG, "SSE2 optimizations");
 	prims->RGBToRGB_16s8u_P3AC4R = sse2_RGBToRGB_16s8u_P3AC4R;
-	prims->yCbCrToRGB_16s16s_P3P3 = sse2_yCbCrToRGB_16s16s_P3P3;
 	prims->yCbCrToRGB_16s8u_P3AC4R = sse2_yCbCrToRGB_16s8u_P3AC4R;
 	prims->RGBToYCbCr_16s16s_P3P3 = sse2_RGBToYCbCr_16s16s_P3P3;
 
