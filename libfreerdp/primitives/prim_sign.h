@@ -32,7 +32,6 @@
 FREERDP_LOCAL void primitives_init_sign_ssse3_int(primitives_t* WINPR_RESTRICT prims);
 static inline void primitives_init_sign_ssse3(primitives_t* WINPR_RESTRICT prims)
 {
-	primitives_init_sign(prims);
 	if (!IsProcessorFeaturePresentEx(PF_EX_SSSE3) ||
 	    !IsProcessorFeaturePresent(PF_SSE3_INSTRUCTIONS_AVAILABLE))
 		return;

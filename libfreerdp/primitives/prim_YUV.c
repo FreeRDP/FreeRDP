@@ -341,7 +341,6 @@ static inline void general_YUV444ToRGB_DOUBLE_ROW(BYTE* WINPR_RESTRICT pRGB[2], 
                                                   const BYTE* WINPR_RESTRICT pU[2],
                                                   const BYTE* WINPR_RESTRICT pV[2], size_t nWidth)
 {
-	const DWORD formatSize = FreeRDPGetBytesPerPixel(DstFormat);
 	fkt_writePixel writePixel = getPixelWriteFunction(DstFormat, FALSE);
 
 	WINPR_ASSERT(nWidth % 2 == 0);
@@ -364,10 +363,7 @@ static inline void general_YUV444ToRGB_DOUBLE_ROW(BYTE* WINPR_RESTRICT pRGB[2], 
 					const INT32 avgV = ((4 * v) - subV);
 					v = CONDITIONAL_CLIP(avgV, WINPR_ASSERTING_INT_CAST(BYTE, v));
 				}
-				const BYTE r = YUV2R(y, u, v);
-				const BYTE g = YUV2G(y, u, v);
-				const BYTE b = YUV2B(y, u, v);
-				pRGB[i] = writePixel(pRGB[i], formatSize, DstFormat, r, g, b, 0);
+				pRGB[i] = writeYUVPixel(pRGB[i], DstFormat, y, u, v, writePixel);
 			}
 		}
 	}
@@ -379,17 +375,16 @@ static inline void general_YUV444ToRGB_SINGLE_ROW(BYTE* WINPR_RESTRICT pRGB, UIN
                                                   const BYTE* WINPR_RESTRICT pV, size_t nWidth)
 {
 	fkt_writePixel writePixel = getPixelWriteFunction(DstFormat, FALSE);
-	const DWORD formatSize = FreeRDPGetBytesPerPixel(DstFormat);
 
 	WINPR_ASSERT(nWidth % 2 == 0);
 	for (size_t x = 0; x < nWidth; x += 2)
 	{
 		for (size_t j = 0; j < 2; j++)
 		{
-			const BYTE r = YUV2R(pY[x + j], pU[x + j], pV[x + j]);
-			const BYTE g = YUV2G(pY[x + j], pU[x + j], pV[x + j]);
-			const BYTE b = YUV2B(pY[x + j], pU[x + j], pV[x + j]);
-			pRGB = writePixel(pRGB, formatSize, DstFormat, r, g, b, 0);
+			const BYTE y = pY[x + j];
+			const BYTE u = pU[x + j];
+			const BYTE v = pV[x + j];
+			pRGB = writeYUVPixel(pRGB, DstFormat, y, u, v, writePixel);
 		}
 	}
 }
@@ -438,8 +433,6 @@ static inline void general_YUV444ToBGRX_DOUBLE_ROW(BYTE* WINPR_RESTRICT pRGB[2],
                                                    const BYTE* WINPR_RESTRICT pU[2],
                                                    const BYTE* WINPR_RESTRICT pV[2], size_t nWidth)
 {
-	const DWORD formatSize = FreeRDPGetBytesPerPixel(DstFormat);
-
 	WINPR_ASSERT(nWidth % 2 == 0);
 	for (size_t x = 0; x < nWidth; x += 2)
 	{
@@ -457,10 +450,10 @@ static inline void general_YUV444ToBGRX_DOUBLE_ROW(BYTE* WINPR_RESTRICT pRGB[2],
 		{
 			for (size_t j = 0; j < 2; j++)
 			{
-				const BYTE r = YUV2R(pY[i][x + j], U[i][j], V[i][j]);
-				const BYTE g = YUV2G(pY[i][x + j], U[i][j], V[i][j]);
-				const BYTE b = YUV2B(pY[i][x + j], U[i][j], V[i][j]);
-				pRGB[i] = writePixelBGRX(pRGB[i], formatSize, DstFormat, r, g, b, 0);
+				const BYTE y = pY[i][x + j];
+				const BYTE u = U[i][j];
+				const BYTE v = V[i][j];
+				pRGB[i] = writeYUVPixel(pRGB[i], DstFormat, y, u, v, writePixelBGRX);
 			}
 		}
 	}
@@ -471,17 +464,15 @@ static inline void general_YUV444ToBGRX_SINGLE_ROW(BYTE* WINPR_RESTRICT pRGB, UI
                                                    const BYTE* WINPR_RESTRICT pU,
                                                    const BYTE* WINPR_RESTRICT pV, size_t nWidth)
 {
-	const DWORD formatSize = FreeRDPGetBytesPerPixel(DstFormat);
-
 	WINPR_ASSERT(nWidth % 2 == 0);
 	for (size_t x = 0; x < nWidth; x += 2)
 	{
 		for (size_t j = 0; j < 2; j++)
 		{
-			const BYTE r = YUV2R(pY[x + j], pU[x + j], pV[x + j]);
-			const BYTE g = YUV2G(pY[x + j], pU[x + j], pV[x + j]);
-			const BYTE b = YUV2B(pY[x + j], pU[x + j], pV[x + j]);
-			pRGB = writePixelBGRX(pRGB, formatSize, DstFormat, r, g, b, 0);
+			const BYTE Y = pY[x + j];
+			const BYTE U = pU[x + j];
+			const BYTE V = pV[x + j];
+			pRGB = writeYUVPixel(pRGB, DstFormat, Y, U, V, writePixelBGRX);
 		}
 	}
 }
@@ -548,124 +539,90 @@ static pstatus_t general_YUV420ToRGB_8u_P3AC4R(const BYTE* WINPR_RESTRICT pSrc[3
                                                UINT32 dstStep, UINT32 DstFormat,
                                                const prim_size_t* WINPR_RESTRICT roi)
 {
-	UINT32 dstPad = 0;
-	UINT32 srcPad[3];
-	BYTE Y = 0;
-	BYTE U = 0;
-	BYTE V = 0;
-	UINT32 halfWidth = 0;
-	UINT32 halfHeight = 0;
-	const BYTE* pY = NULL;
-	const BYTE* pU = NULL;
-	const BYTE* pV = NULL;
-	BYTE* pRGB = pDst;
-	UINT32 nWidth = 0;
-	UINT32 nHeight = 0;
-	UINT32 lastRow = 0;
-	UINT32 lastCol = 0;
+	WINPR_ASSERT(roi);
 	const DWORD formatSize = FreeRDPGetBytesPerPixel(DstFormat);
 	fkt_writePixel writePixel = getPixelWriteFunction(DstFormat, FALSE);
-	pY = pSrc[0];
-	pU = pSrc[1];
-	pV = pSrc[2];
-	lastCol = roi->width & 0x01;
-	lastRow = roi->height & 0x01;
-	nWidth = (roi->width + 1) & (uint32_t)~0x0001;
-	nHeight = (roi->height + 1) & (uint32_t)~0x0001;
-	halfWidth = nWidth / 2;
-	halfHeight = nHeight / 2;
-	srcPad[0] = (srcStep[0] - nWidth);
-	srcPad[1] = (srcStep[1] - halfWidth);
-	srcPad[2] = (srcStep[2] - halfWidth);
-	dstPad = (dstStep - (nWidth * 4));
+	UINT32 lastCol = roi->width & 0x01;
+	UINT32 lastRow = roi->height & 0x01;
+	const UINT32 nWidth = (roi->width + 1) & (uint32_t)~0x0001;
+	const UINT32 nHeight = (roi->height + 1) & (uint32_t)~0x0001;
+	const UINT32 halfWidth = nWidth / 2;
+	const UINT32 halfHeight = nHeight / 2;
 
-	for (UINT32 y = 0; y < halfHeight;)
+	for (UINT32 y = 0; y < halfHeight; y++)
 	{
-		if (++y == halfHeight)
+		const BYTE* pY = &pSrc[0][2ULL * srcStep[0] * y];
+
+		if (y + 1 == halfHeight)
 			lastRow <<= 1;
 
-		for (UINT32 x = 0; x < halfWidth;)
 		{
-			BYTE r = 0;
-			BYTE g = 0;
-			BYTE b = 0;
-
-			if (++x == halfWidth)
-				lastCol <<= 1;
-
-			U = *pU++;
-			V = *pV++;
-			/* 1st pixel */
-			Y = *pY++;
-			r = YUV2R(Y, U, V);
-			g = YUV2G(Y, U, V);
-			b = YUV2B(Y, U, V);
-			pRGB = writePixel(pRGB, formatSize, DstFormat, r, g, b, 0);
-
-			/* 2nd pixel */
-			if (!(lastCol & 0x02))
+			const BYTE* pU = &pSrc[1][1ULL * srcStep[1] * y];
+			const BYTE* pV = &pSrc[2][1ULL * srcStep[2] * y];
+			BYTE* pRGBeven = &pDst[2ULL * y * dstStep];
+			for (UINT32 x = 0; x < halfWidth;)
 			{
-				Y = *pY++;
-				r = YUV2R(Y, U, V);
-				g = YUV2G(Y, U, V);
-				b = YUV2B(Y, U, V);
-				pRGB = writePixel(pRGB, formatSize, DstFormat, r, g, b, 0);
-			}
-			else
-			{
-				pY++;
-				pRGB += formatSize;
-				lastCol >>= 1;
+				if (++x == halfWidth)
+					lastCol <<= 1;
+
+				const BYTE U = *pU++;
+				const BYTE V = *pV++;
+				/* 1st pixel */
+				{
+					const BYTE Y = *pY++;
+					pRGBeven = writeYUVPixel(pRGBeven, DstFormat, Y, U, V, writePixel);
+				}
+
+				/* 2nd pixel */
+				if (!(lastCol & 0x02))
+				{
+					const BYTE Y1 = *pY++;
+					pRGBeven = writeYUVPixel(pRGBeven, DstFormat, Y1, U, V, writePixel);
+				}
+				else
+				{
+					pY++;
+					pRGBeven += formatSize;
+					lastCol >>= 1;
+				}
 			}
 		}
-
-		pY += srcPad[0];
-		pU -= halfWidth;
-		pV -= halfWidth;
-		pRGB += dstPad;
 
 		if (lastRow & 0x02)
 			break;
 
-		for (UINT32 x = 0; x < halfWidth;)
 		{
-			BYTE r = 0;
-			BYTE g = 0;
-			BYTE b = 0;
+			const BYTE* pU = &pSrc[1][1ULL * srcStep[1] * y];
+			const BYTE* pV = &pSrc[2][1ULL * srcStep[2] * y];
+			BYTE* pRGBodd = &pDst[(2ULL * y + 1ULL) * dstStep];
 
-			if (++x == halfWidth)
-				lastCol <<= 1;
-
-			U = *pU++;
-			V = *pV++;
-			/* 3rd pixel */
-			Y = *pY++;
-			r = YUV2R(Y, U, V);
-			g = YUV2G(Y, U, V);
-			b = YUV2B(Y, U, V);
-			pRGB = writePixel(pRGB, formatSize, DstFormat, r, g, b, 0);
-
-			/* 4th pixel */
-			if (!(lastCol & 0x02))
+			for (UINT32 x = 0; x < halfWidth;)
 			{
-				Y = *pY++;
-				r = YUV2R(Y, U, V);
-				g = YUV2G(Y, U, V);
-				b = YUV2B(Y, U, V);
-				pRGB = writePixel(pRGB, formatSize, DstFormat, r, g, b, 0);
-			}
-			else
-			{
-				pY++;
-				pRGB += formatSize;
-				lastCol >>= 1;
+				if (++x == halfWidth)
+					lastCol <<= 1;
+
+				const BYTE U = *pU++;
+				const BYTE V = *pV++;
+				/* 3rd pixel */
+				{
+					const BYTE Y = *pY++;
+					pRGBodd = writeYUVPixel(pRGBodd, DstFormat, Y, U, V, writePixel);
+				}
+
+				/* 4th pixel */
+				if (!(lastCol & 0x02))
+				{
+					const BYTE Y1 = *pY++;
+					pRGBodd = writeYUVPixel(pRGBodd, DstFormat, Y1, U, V, writePixel);
+				}
+				else
+				{
+					pY++;
+					pRGBodd += formatSize;
+					lastCol >>= 1;
+				}
 			}
 		}
-
-		pY += srcPad[0];
-		pU += srcPad[1];
-		pV += srcPad[2];
-		pRGB += dstPad;
 	}
 
 	return PRIMITIVES_SUCCESS;
@@ -2351,6 +2308,7 @@ void primitives_init_YUV(primitives_t* WINPR_RESTRICT prims)
 
 void primitives_init_YUV_opt(primitives_t* WINPR_RESTRICT prims)
 {
+	primitives_init_YUV(prims);
 	primitives_init_YUV_sse41(prims);
 	primitives_init_YUV_neon(prims);
 }

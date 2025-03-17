@@ -128,5 +128,6 @@ void primitives_init_set(primitives_t* WINPR_RESTRICT prims)
 
 void primitives_init_set_opt(primitives_t* WINPR_RESTRICT prims)
 {
+	primitives_init_set(prims);
 	primitives_init_set_sse2(prims);
 }
