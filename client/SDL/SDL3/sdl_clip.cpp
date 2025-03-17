@@ -576,7 +576,7 @@ std::shared_ptr<BYTE> sdlClip::ReceiveFormatDataRequestHandle(
 		case CF_DIB:
 		case CF_DIBV5:
 			mime = s_mime_bitmap()[0];
-			localFormatId = ClipboardGetFormatId(clipboard->_system, mime);
+			localFormatId = formatId;
 			break;
 
 		case CF_TIFF:
