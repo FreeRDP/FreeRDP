@@ -206,8 +206,8 @@ bool sdlClip::handle_update(const SDL_ClipboardEvent& ev)
 
 	for (size_t i = 0; i < nformats; i++)
 	{
-		auto local_mime = clipboard_mime_formats[i];
-		WLog_Print(_log, WLOG_TRACE, " - %s", local_mime);
+		std::string local_mime = clipboard_mime_formats[i];
+		WLog_Print(_log, WLOG_TRACE, " - %s", local_mime.c_str());
 
 		if (std::find(s_mime_text().begin(), s_mime_text().end(), local_mime) !=
 		    s_mime_text().end())
