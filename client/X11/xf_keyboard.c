@@ -1023,6 +1023,7 @@ BOOL xf_keyboard_handle_special_keys(xfContext* xfc, KeySym keysym)
 				if (mod.Ctrl && mod.Alt)
 				{
 					/* Ctrl-Alt-Enter: toggle full screen */
+					WLog_INFO(TAG, "<ctrl>+<alt>+<enter> pressed, toggling fullscreen state...");
 					xf_toggle_fullscreen(xfc);
 					return TRUE;
 				}
@@ -1038,14 +1039,22 @@ BOOL xf_keyboard_handle_special_keys(xfContext* xfc, KeySym keysym)
 		{
 			case XK_m:
 			case XK_M:
+				WLog_INFO(TAG, "<ctrl>+<alt>+m pressed, minimizing RDP session...");
 				xf_minimize(xfc);
 				return TRUE;
 			case XK_c:
 			case XK_C:
 				/* Ctrl-Alt-C: toggle control */
+				WLog_INFO(TAG, "<ctrl>+<alt>+c pressed, toggle encomps control...");
 				if (freerdp_client_encomsp_toggle_control(xfc->common.encomsp))
 					return TRUE;
 				break;
+			case XK_d:
+			case XK_D:
+				/* <ctrl>+<alt>+d: disconnect session */
+				WLog_INFO(TAG, "<ctrl>+<alt>+d pressed, terminating RDP session...");
+				return freerdp_abort_connect_context(&xfc->common.context);
+
 			default:
 				break;
 		}

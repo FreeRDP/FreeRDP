@@ -20,6 +20,11 @@ Minimizes the application
 toggles remote control in a remote assistance session
 .RE
 .PP
+<CTRL>+<ALT>+<d>
+.RS 4
+Disconnect the session and terminate application
+.RE
+.PP
 Action Script
 .RS 4
 executes a predefined script on key press\&.
