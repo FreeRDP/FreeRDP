@@ -2037,14 +2037,16 @@ BOOL freerdp_settings_update_from_caps(rdpSettings* settings, const BYTE* capsFl
 	WINPR_ASSERT(capsSizes || (capsCount == 0));
 	WINPR_ASSERT(capsCount <= UINT16_MAX);
 
+	wLog* log = WLog_Get(TAG);
+
 	for (UINT32 x = 0; x < capsCount; x++)
 	{
 		if (capsFlags[x])
 		{
-			wStream buffer;
+			wStream buffer = { 0 };
 			wStream* sub = Stream_StaticConstInit(&buffer, capsData[x], capsSizes[x]);
 
-			if (!rdp_read_capability_set(sub, (UINT16)x, settings, serverReceivedCaps))
+			if (!rdp_read_capability_set(log, sub, (UINT16)x, settings, serverReceivedCaps))
 				return FALSE;
 		}
 	}
