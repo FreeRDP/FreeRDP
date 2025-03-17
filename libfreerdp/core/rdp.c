@@ -1415,7 +1415,7 @@ state_run_t rdp_recv_out_of_sequence_pdu(rdpRdp* rdp, wStream* s, UINT16 pduType
 		break;
 	}
 
-	if (!tpkt_ensure_stream_consumed(s, length))
+	if (!tpkt_ensure_stream_consumed(rdp->log, s, length))
 		return STATE_RUN_FAILED;
 	return rc;
 }
@@ -1751,7 +1751,7 @@ static state_run_t rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 	}
 
 out:
-	if (!tpkt_ensure_stream_consumed(s, length))
+	if (!tpkt_ensure_stream_consumed(rdp->log, s, length))
 		return STATE_RUN_FAILED;
 	return rc;
 }

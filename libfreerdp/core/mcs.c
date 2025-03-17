@@ -704,7 +704,7 @@ BOOL mcs_recv_connect_initial(rdpMcs* mcs, wStream* s)
 	                                 &mcs->maximumParameters, &mcs->domainParameters))
 		return FALSE;
 
-	return tpkt_ensure_stream_consumed(s, tlength);
+	return tpkt_ensure_stream_consumed(WLog_Get(TAG), s, tlength);
 }
 
 /**
@@ -926,7 +926,7 @@ BOOL mcs_recv_connect_response(rdpMcs* mcs, wStream* s)
 		return FALSE;
 	}
 
-	return tpkt_ensure_stream_consumed(s, tlength);
+	return tpkt_ensure_stream_consumed(WLog_Get(TAG), s, tlength);
 }
 
 /**
@@ -1028,7 +1028,7 @@ BOOL mcs_recv_erect_domain_request(WINPR_ATTR_UNUSED rdpMcs* mcs, wStream* s)
 	if (!per_read_integer(s, &subInterval)) /* subInterval (INTEGER) */
 		return FALSE;
 
-	return tpkt_ensure_stream_consumed(s, length);
+	return tpkt_ensure_stream_consumed(WLog_Get(TAG), s, length);
 }
 
 /**
@@ -1079,7 +1079,7 @@ BOOL mcs_recv_attach_user_request(rdpMcs* mcs, wStream* s)
 
 	if (!mcs_read_domain_mcspdu_header(s, DomainMCSPDU_AttachUserRequest, &length, NULL))
 		return FALSE;
-	return tpkt_ensure_stream_consumed(s, length);
+	return tpkt_ensure_stream_consumed(WLog_Get(TAG), s, length);
 }
 
 /**
@@ -1132,7 +1132,7 @@ BOOL mcs_recv_attach_user_confirm(rdpMcs* mcs, wStream* s)
 		return FALSE;
 	if (!per_read_integer16(s, &(mcs->userId), MCS_BASE_CHANNEL_ID)) /* initiator (UserId) */
 		return FALSE;
-	return tpkt_ensure_stream_consumed(s, length);
+	return tpkt_ensure_stream_consumed(WLog_Get(TAG), s, length);
 }
 
 /**
@@ -1199,7 +1199,7 @@ BOOL mcs_recv_channel_join_request(rdpMcs* mcs, const rdpSettings* settings, wSt
 	if (!per_read_integer16(s, channelId, 0))
 		return FALSE;
 
-	return tpkt_ensure_stream_consumed(s, length);
+	return tpkt_ensure_stream_consumed(WLog_Get(TAG), s, length);
 }
 
 /**
@@ -1264,7 +1264,7 @@ BOOL mcs_recv_channel_join_confirm(WINPR_ATTR_UNUSED rdpMcs* mcs, wStream* s, UI
 		return FALSE;
 	if (!per_read_integer16(s, channelId, 0)) /* channelId */
 		return FALSE;
-	return tpkt_ensure_stream_consumed(s, length);
+	return tpkt_ensure_stream_consumed(WLog_Get(TAG), s, length);
 }
 
 /**

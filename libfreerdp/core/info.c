@@ -668,7 +668,7 @@ static BOOL rdp_read_info_packet(rdpRdp* rdp, wStream* s, UINT16 tpktlength)
 	UINT32 CompressionLevel = 0;
 	rdpSettings* settings = rdp->settings;
 
-	if (!Stream_CheckAndLogRequiredLength(TAG, s, 18))
+	if (!Stream_CheckAndLogRequiredLengthWLog(rdp->log, s, 18))
 		return FALSE;
 
 	Stream_Read_UINT32(s, settings->KeyboardCodePage); /* CodePage (4 bytes ) */
@@ -730,7 +730,7 @@ static BOOL rdp_read_info_packet(rdpRdp* rdp, wStream* s, UINT16 tpktlength)
 	}
 
 	const size_t xrem = Stream_GetRemainingLength(s);
-	if (!tpkt_ensure_stream_consumed(s, tpktlength))
+	if (!tpkt_ensure_stream_consumed(rdp->log, s, tpktlength))
 		Stream_Seek(s, xrem);
 	return TRUE;
 }

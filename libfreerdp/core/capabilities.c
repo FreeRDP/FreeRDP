@@ -4528,7 +4528,7 @@ BOOL rdp_recv_demand_active(rdpRdp* rdp, wStream* s, UINT16 pduSource, UINT16 le
 		secondary->glyph_v2 = (rdp->settings->GlyphSupportLevel > GLYPH_SUPPORT_FULL);
 	}
 
-	return tpkt_ensure_stream_consumed(s, length);
+	return tpkt_ensure_stream_consumed(rdp->log, s, length);
 }
 
 static BOOL rdp_write_demand_active(wStream* s, rdpSettings* settings)
@@ -4688,7 +4688,7 @@ BOOL rdp_recv_confirm_active(rdpRdp* rdp, wStream* s, UINT16 pduLength)
 		settings->LargePointerFlag = 0;
 	}
 
-	return tpkt_ensure_stream_consumed(s, pduLength);
+	return tpkt_ensure_stream_consumed(rdp->log, s, pduLength);
 }
 
 static BOOL rdp_write_confirm_active(wStream* s, rdpSettings* settings)

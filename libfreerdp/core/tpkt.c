@@ -132,20 +132,21 @@ BOOL tpkt_read_header(wStream* s, UINT16* length)
 	return TRUE;
 }
 
-BOOL tpkt_ensure_stream_consumed_(wStream* s, size_t length, const char* fkt)
+BOOL tpkt_ensure_stream_consumed_(wLog* log, wStream* s, size_t length, const char* fkt)
 {
 	if (length > UINT16_MAX)
 	{
-		WLog_ERR(TAG, "[%s] length %" PRIuz " > %" PRIu16, fkt, length, UINT16_MAX);
+		WLog_Print(log, WLOG_ERROR, "[%s] length %" PRIuz " > %" PRIu16, fkt, length, UINT16_MAX);
 		return FALSE;
 	}
 
 	size_t rem = Stream_GetRemainingLength(s);
 	if (rem > 0)
 	{
-		WLog_ERR(TAG,
-		         "[%s] Received invalid TPKT header length %" PRIu16 ", %" PRIdz " bytes too long!",
-		         fkt, length, rem);
+		WLog_Print(log, WLOG_ERROR,
+		           "[%s] Received invalid TPKT header length %" PRIu16 ", %" PRIdz
+		           " bytes too long!",
+		           fkt, length, rem);
 		return FALSE;
 	}
 	return TRUE;

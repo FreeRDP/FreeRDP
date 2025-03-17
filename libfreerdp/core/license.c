@@ -904,7 +904,7 @@ state_run_t license_client_recv(rdpLicense* license, wStream* s)
 			return STATE_RUN_FAILED;
 	}
 
-	if (!tpkt_ensure_stream_consumed(s, length))
+	if (!tpkt_ensure_stream_consumed(WLog_Get(TAG), s, length))
 		return STATE_RUN_FAILED;
 	return STATE_RUN_SUCCESS;
 }
@@ -989,7 +989,7 @@ state_run_t license_server_recv(rdpLicense* license, wStream* s)
 			goto fail;
 	}
 
-	if (!tpkt_ensure_stream_consumed(s, length))
+	if (!tpkt_ensure_stream_consumed(WLog_Get(TAG), s, length))
 		goto fail;
 
 	if (!state_run_success(rc))

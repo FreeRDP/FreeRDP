@@ -31,7 +31,9 @@
 FREERDP_LOCAL int tpkt_verify_header(wStream* s);
 FREERDP_LOCAL BOOL tpkt_read_header(wStream* s, UINT16* length);
 FREERDP_LOCAL BOOL tpkt_write_header(wStream* s, size_t length);
-#define tpkt_ensure_stream_consumed(s, length) tpkt_ensure_stream_consumed_((s), (length), __func__)
-FREERDP_LOCAL BOOL tpkt_ensure_stream_consumed_(wStream* s, size_t length, const char* fkt);
+#define tpkt_ensure_stream_consumed(log, s, length) \
+	tpkt_ensure_stream_consumed_((log), (s), (length), __func__)
+FREERDP_LOCAL BOOL tpkt_ensure_stream_consumed_(wLog* log, wStream* s, size_t length,
+                                                const char* fkt);
 
 #endif /* FREERDP_LIB_CORE_TPKT_H */

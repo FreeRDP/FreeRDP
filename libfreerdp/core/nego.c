@@ -861,7 +861,7 @@ int nego_recv(WINPR_ATTR_UNUSED rdpTransport* transport, wStream* s, void* extra
 		nego_set_state(nego, NEGO_STATE_FAIL);
 	}
 
-	if (!tpkt_ensure_stream_consumed(s, length))
+	if (!tpkt_ensure_stream_consumed(WLog_Get(TAG), s, length))
 		return -1;
 	return 0;
 }
@@ -1015,7 +1015,7 @@ BOOL nego_read_request(rdpNego* nego, wStream* s)
 			return FALSE;
 	}
 
-	return tpkt_ensure_stream_consumed(s, length);
+	return tpkt_ensure_stream_consumed(WLog_Get(TAG), s, length);
 }
 
 /**
