@@ -28,6 +28,9 @@ message("project ${PROJECT_NAME} is using version ${PROJECT_VERSION}")
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_CURRENT_SOURCE_DIR}/../../cmake/)
 include(CommonConfigOptions)
 
+include(WarnUnmaintained)
+warn_unmaintained(${PROJECT_NAME} "-DWITH_CLIENT_IOS=OFF")
+
 set(MODULE_NAME "iFreeRDP")
 set(MODULE_PREFIX "IFREERDP_CLIENT")
 set(APP_TYPE MACOSX_BUNDLE)

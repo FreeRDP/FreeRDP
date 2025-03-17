@@ -19,6 +19,9 @@
 set(MODULE_NAME "wlfreerdp")
 set(MODULE_PREFIX "FREERDP_CLIENT_WAYLAND")
 
+include(WarnUnmaintained)
+warn_unmaintained(${MODULE_NAME} "-DWITH_CLIENT_WAYLAND=OFF")
+
 include_directories(SYSTEM ${WAYLAND_INCLUDE_DIR})
 
 set(${MODULE_PREFIX}_SRCS

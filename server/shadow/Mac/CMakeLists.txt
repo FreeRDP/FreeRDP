@@ -1,5 +1,5 @@
 include(WarnUnmaintained)
-warn_unmaintained("mac shadow server subsystem")
+warn_unmaintained("mac shadow server subsystem" "-DWITH_SHADOW_SUBSYSTEM=OFF")
 
 find_library(IOKIT IOKit REQUIRED)
 find_library(IOSURFACE IOSurface REQUIRED)

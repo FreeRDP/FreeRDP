@@ -19,7 +19,7 @@ set(MODULE_NAME "wfreerdp-server")
 set(MODULE_PREFIX "FREERDP_SERVER_WINDOWS")
 
 include(WarnUnmaintained)
-warn_unmaintained(${MODULE_NAME})
+warn_unmaintained(${MODULE_NAME} "-DWITH_PLATFORM_SERVER=OFF")
 
 include_directories(.)
 
