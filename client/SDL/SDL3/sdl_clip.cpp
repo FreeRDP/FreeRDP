@@ -183,14 +183,13 @@ bool sdlClip::handle_update(const SDL_ClipboardEvent& ev)
 
 	clearServerFormats();
 
-	std::string mime_html = "text/html";
+	std::string mime_html = s_mime_html;
 
-	std::vector<std::string> mime_bitmap = { "image/bmp", "image/x-bmp", "image/x-MS-bmp",
-		                                     "image/x-win-bitmap" };
-	std::string mime_webp = "image/webp";
-	std::string mime_png = "image/png";
-	std::string mime_jpeg = "image/jpeg";
-	std::string mime_tiff = "image/tiff";
+	std::vector<std::string> mime_bitmap = { BMP_MIME_LIST };
+	std::string mime_webp = s_mime_webp;
+	std::string mime_png = s_mime_png;
+	std::string mime_jpeg = s_mime_jpg;
+	std::string mime_tiff = s_mime_tiff;
 	std::vector<std::string> mime_images = { mime_webp, mime_png, mime_jpeg, mime_tiff };
 
 	std::vector<std::string> clientFormatNames;
@@ -233,7 +232,9 @@ bool sdlClip::handle_update(const SDL_ClipboardEvent& ev)
 			if (!imgPushed)
 			{
 				clientFormats.push_back({ CF_DIB, nullptr });
+#if defined(WINPR_UTILS_IMAGE_DIBv5)
 				clientFormats.push_back({ CF_DIBV5, nullptr });
+#endif
 
 				for (auto& bmp : mime_bitmap)
 					clientFormatNames.push_back(bmp);
@@ -241,6 +242,7 @@ bool sdlClip::handle_update(const SDL_ClipboardEvent& ev)
 				for (auto& img : mime_images)
 					clientFormatNames.push_back(img);
 
+				clientFormatNames.emplace_back(s_type_HtmlFormat);
 				imgPushed = true;
 			}
 		}
@@ -556,6 +558,9 @@ std::shared_ptr<BYTE> sdlClip::ReceiveFormatDataRequestHandle(
 
 	len = 0;
 	auto localFormatId = formatId = formatDataRequest->requestedFormatId;
+	WLog_Print(clipboard->_log, WLOG_DEBUG, "Requesting format %s [0x%08" PRIx32 "] [%s]",
+	           ClipboardGetFormatIdString(localFormatId), localFormatId,
+	           ClipboardGetFormatName(clipboard->_system, localFormatId));
 
 	ClipboardLockGuard give_me_a_name(clipboard->_system);
 	std::lock_guard<CriticalSection> lock(clipboard->_lock);
@@ -591,8 +596,24 @@ std::shared_ptr<BYTE> sdlClip::ReceiveFormatDataRequestHandle(
 			}
 			else if (formatId == htmlFormatId)
 			{
-				localFormatId = ClipboardGetFormatId(clipboard->_system, s_mime_html);
-				mime = s_mime_html;
+				/* In case HTML format was requested but we only have images in local clipboard */
+				if (!SDL_HasClipboardData(s_mime_html))
+				{
+					for (const auto& cmime : s_mime_image())
+					{
+						if (SDL_HasClipboardData(cmime))
+						{
+							localFormatId = ClipboardGetFormatId(clipboard->_system, cmime);
+							mime = cmime;
+							break;
+						}
+					}
+				}
+				else
+				{
+					localFormatId = ClipboardGetFormatId(clipboard->_system, s_mime_html);
+					mime = s_mime_html;
+				}
 			}
 			else
 				return data;
