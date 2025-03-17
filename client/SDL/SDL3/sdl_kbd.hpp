@@ -63,6 +63,8 @@ class sdlInput
 	                                       const std::string& delimiter = ",");
 	static bool extract(const std::string& token, uint32_t& key, uint32_t& value);
 
+	UINT32 scancode_to_rdp(Uint32 scancode);
+
 	SdlContext* _sdl;
 	Uint32 _lastWindowID;
 
