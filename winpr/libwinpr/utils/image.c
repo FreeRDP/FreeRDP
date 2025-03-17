@@ -201,14 +201,16 @@ BYTE* winpr_bitmap_construct_header(size_t width, size_t height, size_t bpp)
 	BYTE* result = NULL;
 	WINPR_BITMAP_FILE_HEADER bf = { 0 };
 	WINPR_BITMAP_INFO_HEADER bi = { 0 };
-	wStream* s = NULL;
-	size_t imgSize = 0;
 
-	imgSize = width * height * (bpp / 8);
+	size_t stride = (width * bpp + 7) / 8;
+	if ((stride % 4) != 0)
+		stride += 4 - (stride % 4);
+
+	size_t imgSize = stride * height;
 	if ((width > INT32_MAX) || (height > INT32_MAX) || (bpp > UINT16_MAX) || (imgSize > UINT32_MAX))
 		return NULL;
 
-	s = Stream_New(NULL, WINPR_IMAGE_BMP_HEADER_LEN);
+	wStream* s = Stream_New(NULL, WINPR_IMAGE_BMP_HEADER_LEN);
 	if (!s)
 		return NULL;
 
@@ -277,7 +279,10 @@ static void* winpr_bitmap_write_buffer(const BYTE* data, WINPR_ATTR_UNUSED size_
 	WINPR_ASSERT(data || (size == 0));
 
 	void* result = NULL;
-	const size_t bpp_stride = 1ull * width * (bpp / 8);
+	size_t bpp_stride = 1ull * width * (bpp / 8);
+	if ((bpp_stride % 4) != 0)
+		bpp_stride += 4 - (bpp_stride % 4);
+
 	if (bpp_stride > UINT32_MAX)
 		return NULL;
 
@@ -293,7 +298,7 @@ static void* winpr_bitmap_write_buffer(const BYTE* data, WINPR_ATTR_UNUSED size_
 		goto fail;
 	Stream_Write(s, bmp_header, WINPR_IMAGE_BMP_HEADER_LEN);
 
-	if (!Stream_EnsureRemainingCapacity(s, 1ULL * stride * height))
+	if (!Stream_EnsureRemainingCapacity(s, 1ULL * bpp_stride * height))
 		goto fail;
 
 	for (size_t y = 0; y < height; y++)
@@ -301,6 +306,7 @@ static void* winpr_bitmap_write_buffer(const BYTE* data, WINPR_ATTR_UNUSED size_
 		const BYTE* line = &data[stride * y];
 
 		Stream_Write(s, line, stride);
+		Stream_Zero(s, bpp_stride - stride);
 	}
 
 	result = Stream_Buffer(s);
@@ -459,33 +465,55 @@ static int winpr_image_bitmap_read_buffer(wImage* image, const BYTE* buffer, siz
 	}
 
 	image->bitsPerPixel = bi.biBitCount;
-	image->bytesPerPixel = (image->bitsPerPixel / 8UL);
 	const size_t bpp = (bi.biBitCount + 7UL) / 8UL;
-	image->scanline =
-	    WINPR_ASSERTING_INT_CAST(uint32_t, bi.biWidth) * WINPR_ASSERTING_INT_CAST(uint32_t, bpp);
+	image->bytesPerPixel = WINPR_ASSERTING_INT_CAST(uint32_t, bpp);
+	image->scanline = WINPR_ASSERTING_INT_CAST(uint32_t, bi.biWidth) * image->bytesPerPixel;
+	if ((image->scanline % 4) != 0)
+		image->scanline += 4 - image->scanline % 4;
+
 	const size_t bmpsize = 1ULL * image->scanline * image->height;
 	if (bmpsize != bi.biSizeImage)
 		WLog_WARN(TAG, "bmpsize=%" PRIuz " != bi.biSizeImage=%" PRIu32, bmpsize, bi.biSizeImage);
+
+	size_t scanline = image->scanline;
 	if (bi.biSizeImage < bmpsize)
-		goto fail;
+	{
+		/* Workaround for unaligned bitmaps */
+		const size_t uscanline = image->width * bpp;
+		const size_t unaligned = image->height * uscanline;
+		if (bi.biSizeImage != unaligned)
+			goto fail;
+		scanline = uscanline;
+	}
 
 	image->data = NULL;
-	if (bi.biSizeImage > 0)
-		image->data = (BYTE*)malloc(bi.biSizeImage);
+	const size_t asize = 1ULL * image->scanline * image->height;
+	if (asize > 0)
+		image->data = (BYTE*)malloc(asize);
 
 	if (!image->data)
 		goto fail;
 
 	if (!vFlip)
-		Stream_Read(s, image->data, bi.biSizeImage);
+	{
+		BYTE* pDstData = image->data;
+
+		for (size_t index = 0; index < image->height; index++)
+		{
+			Stream_Read(s, pDstData, scanline);
+			Stream_Seek(s, image->scanline - scanline);
+			pDstData += scanline;
+		}
+	}
 	else
 	{
 		BYTE* pDstData = &(image->data[(image->height - 1ull) * image->scanline]);
 
 		for (size_t index = 0; index < image->height; index++)
 		{
-			Stream_Read(s, pDstData, image->scanline);
-			pDstData -= image->scanline;
+			Stream_Read(s, pDstData, scanline);
+			Stream_Seek(s, image->scanline - scanline);
+			pDstData -= scanline;
 		}
 	}
 
@@ -634,7 +662,7 @@ static void* winpr_convert_to_jpeg(WINPR_ATTR_UNUSED const void* data,
 	const size_t expect1 = 1ull * stride * height;
 	const size_t bytes = (bpp + 7) / 8;
 	const size_t expect2 = 1ull * width * height * bytes;
-	if (expect1 != expect2)
+	if (expect1 < expect2)
 		return NULL;
 	if (expect1 > size)
 		return NULL;
@@ -867,8 +895,8 @@ static void png_flush(WINPR_ATTR_UNUSED png_structp png_ptr)
 {
 }
 
-static SSIZE_T save_png_to_buffer(UINT32 bpp, UINT32 width, UINT32 height, const uint8_t* data,
-                                  size_t size, void** pDstData)
+static SSIZE_T save_png_to_buffer(UINT32 bpp, UINT32 width, uint32_t stride, UINT32 height,
+                                  const uint8_t* data, size_t size, void** pDstData)
 {
 	SSIZE_T rc = -1;
 	png_structp png_ptr = NULL;
@@ -883,9 +911,7 @@ static SSIZE_T save_png_to_buffer(UINT32 bpp, UINT32 width, UINT32 height, const
 
 	WINPR_ASSERT(pDstData);
 
-	const size_t bytes_per_pixel = (bpp + 7) / 8;
-	const size_t bytes_per_row = width * bytes_per_pixel;
-	if (size < bytes_per_row * height)
+	if (size < (1ULL * stride * height))
 		goto fail;
 
 	/* Initialize the write struct. */
@@ -918,18 +944,19 @@ static SSIZE_T save_png_to_buffer(UINT32 bpp, UINT32 width, UINT32 height, const
 	row_pointers = (png_byte**)png_malloc(png_ptr, height * sizeof(png_byte*));
 	for (size_t y = 0; y < height; ++y)
 	{
-		uint8_t* row = png_malloc(png_ptr, sizeof(uint8_t) * bytes_per_row);
+		const uint8_t* line = &data[y * stride];
+		uint8_t* row = png_malloc(png_ptr, sizeof(uint8_t) * stride);
 		row_pointers[y] = (png_byte*)row;
 		for (size_t x = 0; x < width; ++x)
 		{
 
-			*row++ = *data++;
+			*row++ = *line++;
 			if (bpp > 8)
-				*row++ = *data++;
+				*row++ = *line++;
 			if (bpp > 16)
-				*row++ = *data++;
+				*row++ = *line++;
 			if (bpp > 24)
-				*row++ = *data++;
+				*row++ = *line++;
 		}
 	}
 
@@ -1057,7 +1084,7 @@ static void* winpr_convert_to_png(WINPR_ATTR_UNUSED const void* data, WINPR_ATTR
 
 #if defined(WINPR_UTILS_IMAGE_PNG)
 	void* dst = NULL;
-	SSIZE_T rc = save_png_to_buffer(bpp, width, height, data, size, &dst);
+	SSIZE_T rc = save_png_to_buffer(bpp, width, stride, height, data, size, &dst);
 	if (rc <= 0)
 		return NULL;
 	*pSize = (UINT32)rc;
