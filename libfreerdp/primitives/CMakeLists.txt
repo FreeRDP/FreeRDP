@@ -49,6 +49,9 @@ set(PRIMITIVES_NEON_SRCS neon/prim_colors_neon.c neon/prim_YCoCg_neon.c neon/pri
 set(PRIMITIVES_OPENCL_SRCS opencl/prim_YUV_opencl.c)
 
 if(WITH_OPENCL)
+  include(WarnUnmaintained)
+  warn_unmaintained("OpenCL support for primitives" "-DWITH_OPENCL=OFF")
+
   set(FILENAME "opencl/primitives.cl")
   set_source_files_properties(${FILENAME} PROPERTIES HEADER_FILE_ONLY ON)
   list(APPEND PRIMITIVES_OPENCL_SRCS ${FILENAME})
