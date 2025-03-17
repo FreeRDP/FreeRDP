@@ -1,5 +1,5 @@
 include(WarnUnmaintained)
-warn_unmaintained("windows shadow server subsystem")
+warn_unmaintained("windows shadow server subsystem" "-DWITH_SHADOW_SUBSYSTEM=OFF")
 
 add_compile_definitions(WITH_SHADOW_WIN)
 add_library(

@@ -18,6 +18,9 @@
 set(MODULE_NAME "wfreerdp-client")
 set(MODULE_PREFIX "FREERDP_CLIENT_WINDOWS_CONTROL")
 
+include(WarnUnmaintained)
+warn_unmaintained(${MODULE_NAME} "-DWITH_CLIENT_WINDOWS=OFF")
+
 set(${MODULE_PREFIX}_SRCS
     wf_gdi.c
     wf_gdi.h

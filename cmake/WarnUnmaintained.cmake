@@ -11,4 +11,5 @@ macro(warn_unmaintained name)
       "[unmaintained] - don't hesitate to ask some questions. (replies might take some time depending on your timezone)"
   )
   message(WARNING "[unmaintained] - if you intend using this component write us a message")
+  message(WARNING "[unmaintained] use ${ARGN} to disable")
 endmacro()

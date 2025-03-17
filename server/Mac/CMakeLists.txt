@@ -18,6 +18,9 @@
 set(MODULE_NAME "mfreerdp-server")
 set(MODULE_PREFIX "FREERDP_SERVER_MAC")
 
+include(WarnUnmaintained)
+warn_unmaintained(${MODULE_NAME} "-DWITH_PLATFORM_SERVER=OFF")
+
 find_library(AUDIO_TOOL AudioToolbox)
 find_library(CORE_AUDIO CoreAudio)
 find_library(CORE_VIDEO CoreVideo)
