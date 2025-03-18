@@ -1063,6 +1063,12 @@ BOOL freerdp_client_parse_rdp_file_ex(rdpFile* file, const char* name, rdp_file_
 	return status;
 }
 
+static INLINE BOOL freerdp_client_file_string_reset(char** target)
+{
+	freerdp_client_file_string_check_free(*target);
+	*target = (void*)~((size_t)NULL);
+}
+
 static INLINE BOOL FILE_POPULATE_STRING(char** _target, const rdpSettings* _settings,
                                         FreeRDP_Settings_Keys_String _option)
 {
@@ -1070,8 +1076,7 @@ static INLINE BOOL FILE_POPULATE_STRING(char** _target, const rdpSettings* _sett
 	WINPR_ASSERT(_settings);
 
 	const char* str = freerdp_settings_get_string(_settings, _option);
-	freerdp_client_file_string_check_free(*_target);
-	*_target = (void*)~((size_t)NULL);
+	freerdp_client_file_string_reset(_target);
 	if (str)
 	{
 		char* copy = _strdup(str);
@@ -1321,13 +1326,18 @@ BOOL freerdp_client_populate_rdp_file_from_settings(rdpFile* file, const rdpSett
 
 		file->RedirectCameras = redirectCameras;
 	}
+	else
+		freerdp_client_file_string_reset(&file->RedirectCameras);
+
 #ifdef CHANNEL_URBDRC_CLIENT
 	char* redirectUsb =
 	    freerdp_client_channel_args_to_string(settings, URBDRC_CHANNEL_NAME, "device:");
 	if (redirectUsb)
 		file->UsbDevicesToRedirect = redirectUsb;
-
+	else
+		freerdp_client_file_string_reset(&file->UsbDevicesToRedirect);
 #endif
+
 	file->RedirectClipboard =
 	    freerdp_settings_get_bool(settings, FreeRDP_RedirectClipboard) ? 1 : 0;
 	file->RedirectPrinters = freerdp_settings_get_bool(settings, FreeRDP_RedirectPrinters) ? 1 : 0;
