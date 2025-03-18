@@ -1063,8 +1063,9 @@ BOOL freerdp_client_parse_rdp_file_ex(rdpFile* file, const char* name, rdp_file_
 	return status;
 }
 
-static INLINE BOOL freerdp_client_file_string_reset(char** target)
+static INLINE void freerdp_client_file_string_reset(char** target)
 {
+	WINPR_ASSERT(target);
 	freerdp_client_file_string_check_free(*target);
 	*target = (void*)~((size_t)NULL);
 }
