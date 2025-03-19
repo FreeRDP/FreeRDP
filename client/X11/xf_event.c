@@ -964,7 +964,7 @@ static BOOL xf_event_PropertyNotify(xfContext* xfc, const XPropertyEvent* event,
 	 * when the window has been minimized, maximized, restored locally
 	 * ie. not using the buttons on the rail window itself
 	 */
-	if (((event->atom == xfc->_NET_WM_STATE) && (event->state != PropertyDelete)) ||
+	if (((event->atom == xfc->NET_WM_STATE) && (event->state != PropertyDelete)) ||
 	    ((event->atom == xfc->WM_STATE) && (event->state != PropertyDelete)))
 	{
 		BOOL status = FALSE;
@@ -983,9 +983,9 @@ static BOOL xf_event_PropertyNotify(xfContext* xfc, const XPropertyEvent* event,
 				return TRUE;
 		}
 
-		if (event->atom == xfc->_NET_WM_STATE)
+		if (event->atom == xfc->NET_WM_STATE)
 		{
-			status = xf_GetWindowProperty(xfc, event->window, xfc->_NET_WM_STATE, 12, &nitems,
+			status = xf_GetWindowProperty(xfc, event->window, xfc->NET_WM_STATE, 12, &nitems,
 			                              &bytes, &prop);
 
 			if (status)
