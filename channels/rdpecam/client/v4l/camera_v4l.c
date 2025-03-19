@@ -160,12 +160,9 @@ static int cam_v4l_open_device(const char* deviceId, int flags)
  * @return -1 if error, otherwise index of supportedFormats array and mediaTypes/nMediaTypes filled
  * in
  */
-static INT16 cam_v4l_get_media_type_descriptions(ICamHal* ihal, const char* deviceId,
-                                                 int streamIndex,
-                                                 const CAM_MEDIA_FORMAT_INFO* supportedFormats,
-                                                 size_t nSupportedFormats,
-                                                 CAM_MEDIA_TYPE_DESCRIPTION* mediaTypes,
-                                                 size_t* nMediaTypes)
+static INT16 cam_v4l_get_media_type_descriptions(
+    ICamHal* ihal, const char* deviceId, int streamIndex, const CAM_MEDIA_FORMAT* supportedFormats,
+    size_t nSupportedFormats, CAM_MEDIA_TYPE_DESCRIPTION* mediaTypes, size_t* nMediaTypes)
 {
 	CamV4lHal* hal = (CamV4lHal*)ihal;
 	size_t maxMediaTypes = *nMediaTypes;
@@ -198,7 +195,7 @@ static INT16 cam_v4l_get_media_type_descriptions(ICamHal* ihal, const char* devi
 	for (; formatIndex < nSupportedFormats; formatIndex++)
 	{
 		UINT32 pixelFormat = 0;
-		if (supportedFormats[formatIndex].inputFormat == CAM_MEDIA_FORMAT_MJPG_H264)
+		if (supportedFormats[formatIndex] == CAM_MEDIA_FORMAT_MJPG_H264)
 		{
 			if (stream->h264UnitId > 0)
 				pixelFormat = V4L2_PIX_FMT_MJPEG;
@@ -207,7 +204,7 @@ static INT16 cam_v4l_get_media_type_descriptions(ICamHal* ihal, const char* devi
 		}
 		else
 		{
-			pixelFormat = ecamToV4L2PixFormat(supportedFormats[formatIndex].inputFormat);
+			pixelFormat = ecamToV4L2PixFormat(supportedFormats[formatIndex]);
 		}
 
 		WINPR_ASSERT(pixelFormat != 0);
@@ -227,7 +224,7 @@ static INT16 cam_v4l_get_media_type_descriptions(ICamHal* ihal, const char* devi
 			formatFound = TRUE;
 			mediaTypes->Width = frmsize.discrete.width;
 			mediaTypes->Height = frmsize.discrete.height;
-			mediaTypes->Format = supportedFormats[formatIndex].inputFormat;
+			mediaTypes->Format = supportedFormats[formatIndex];
 
 			/* query frame rate (1st is highest fps supported) */
 			frmival.index = 0;
