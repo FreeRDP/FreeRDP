@@ -1046,7 +1046,8 @@ fail:
 	return rc;
 }
 
-static void http_response_print(wLog* log, DWORD level, const HttpResponse* response)
+static void http_response_print(wLog* log, DWORD level, const HttpResponse* response,
+                                const char* file, size_t line, const char* fkt)
 {
 	char buffer[64] = { 0 };
 
@@ -1057,17 +1058,25 @@ static void http_response_print(wLog* log, DWORD level, const HttpResponse* resp
 		return;
 
 	const long status = http_response_get_status_code(response);
-	WLog_Print(log, level, "HTTP status: %s",
-	           freerdp_http_status_string_format(status, buffer, ARRAYSIZE(buffer)));
+	WLog_PrintMessage(log, WLOG_MESSAGE_TEXT, level, line, file, fkt, "HTTP status: %s",
+	                  freerdp_http_status_string_format(status, buffer, ARRAYSIZE(buffer)));
 
-	for (size_t i = 0; i < response->count; i++)
-		WLog_Print(log, WLOG_DEBUG, "[%" PRIuz "] %s", i, response->lines[i]);
+	if (WLog_IsLevelActive(log, WLOG_DEBUG))
+	{
+		for (size_t i = 0; i < response->count; i++)
+			WLog_PrintMessage(log, WLOG_MESSAGE_TEXT, WLOG_DEBUG, line, file, fkt,
+			                  "[%" PRIuz "] %s", i, response->lines[i]);
+	}
 
 	if (response->ReasonPhrase)
-		WLog_Print(log, level, "[reason] %s", response->ReasonPhrase);
+		WLog_PrintMessage(log, WLOG_MESSAGE_TEXT, level, line, file, fkt, "[reason] %s",
+		                  response->ReasonPhrase);
 
-	WLog_Print(log, WLOG_TRACE, "[body][%" PRIuz "] %s", response->BodyLength,
-	           response->BodyContent);
+	if (WLog_IsLevelActive(log, WLOG_TRACE))
+	{
+		WLog_PrintMessage(log, WLOG_MESSAGE_TEXT, WLOG_TRACE, line, file, fkt,
+		                  "[body][%" PRIuz "] %s", response->BodyLength, response->BodyContent);
+	}
 }
 
 static BOOL http_use_content_length(const char* cur)
@@ -1714,7 +1723,8 @@ out:
 	return isWebsocket;
 }
 
-void http_response_log_error_status(wLog* log, DWORD level, const HttpResponse* response)
+void http_response_log_error_status_(wLog* log, DWORD level, const HttpResponse* response,
+                                     const char* file, size_t line, const char* fkt)
 {
 	WINPR_ASSERT(log);
 	WINPR_ASSERT(response);
@@ -1724,7 +1734,7 @@ void http_response_log_error_status(wLog* log, DWORD level, const HttpResponse* 
 
 	char buffer[64] = { 0 };
 	const long status = http_response_get_status_code(response);
-	WLog_Print(log, level, "Unexpected HTTP status: %s",
-	           freerdp_http_status_string_format(status, buffer, ARRAYSIZE(buffer)));
-	http_response_print(log, level, response);
+	WLog_PrintMessage(log, WLOG_MESSAGE_TEXT, level, line, file, fkt, "Unexpected HTTP status: %s",
+	                  freerdp_http_status_string_format(status, buffer, ARRAYSIZE(buffer)));
+	http_response_print(log, level, response, file, line, fkt);
 }

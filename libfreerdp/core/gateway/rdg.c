@@ -1368,9 +1368,12 @@ static BOOL rdg_establish_data_connection(rdpRdg* rdg, rdpTls* tls, const char* 
 
 		switch (StatusCode)
 		{
+			case HTTP_STATUS_GONE:
+			case HTTP_STATUS_FORBIDDEN:
 			case HTTP_STATUS_NOT_FOUND:
 			{
 				WLog_Print(rdg->log, WLOG_INFO, "RD Gateway does not support HTTP transport.");
+				http_response_log_error_status(rdg->log, WLOG_DEBUG, response);
 				*rpcFallback = TRUE;
 
 				http_response_free(response);
@@ -1378,6 +1381,7 @@ static BOOL rdg_establish_data_connection(rdpRdg* rdg, rdpTls* tls, const char* 
 			}
 			case HTTP_STATUS_OK:
 				break;
+
 			default:
 				http_response_log_error_status(rdg->log, WLOG_WARN, response);
 				break;
