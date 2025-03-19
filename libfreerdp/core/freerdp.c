@@ -1198,7 +1198,8 @@ ULONG freerdp_get_transport_sent(rdpContext* context, BOOL resetCount)
 {
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->rdp);
-	return transport_get_bytes_sent(context->rdp->transport, resetCount);
+	UINT64 rc = transport_get_bytes_sent(context->rdp->transport, resetCount);
+	return WINPR_CXX_COMPAT_CAST(ULONG, MIN(rc, UINT32_MAX));
 }
 
 BOOL freerdp_nla_impersonate(rdpContext* context)
