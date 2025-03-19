@@ -110,10 +110,11 @@ extern "C"
 
 #if !defined(_WIN32) || (defined(_WIN32) && (_WIN32_WINNT < 0x0602)) /* Windows 8 */
 
-	WINPR_API DWORD EnumDynamicTimeZoneInformation(
-	    const DWORD dwIndex, PDYNAMIC_TIME_ZONE_INFORMATION lpTimeZoneInformation);
+	WINPR_API
+	DWORD EnumDynamicTimeZoneInformation(DWORD dwIndex,
+	                                     PDYNAMIC_TIME_ZONE_INFORMATION lpTimeZoneInformation);
 	WINPR_API DWORD GetDynamicTimeZoneInformationEffectiveYears(
-	    const PDYNAMIC_TIME_ZONE_INFORMATION lpTimeZoneInformation, LPDWORD FirstYear,
+	    const DYNAMIC_TIME_ZONE_INFORMATION* lpTimeZoneInformation, LPDWORD FirstYear,
 	    LPDWORD LastYear);
 
 #else

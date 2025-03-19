@@ -882,7 +882,7 @@ DWORD EnumDynamicTimeZoneInformation(const DWORD dwIndex,
 
 // NOLINTBEGIN(readability-non-const-parameter)
 DWORD GetDynamicTimeZoneInformationEffectiveYears(
-    const PDYNAMIC_TIME_ZONE_INFORMATION lpTimeZoneInformation, LPDWORD FirstYear, LPDWORD LastYear)
+    const DYNAMIC_TIME_ZONE_INFORMATION* lpTimeZoneInformation, LPDWORD FirstYear, LPDWORD LastYear)
 // NOLINTEND(readability-non-const-parameter)
 {
 	WINPR_UNUSED(lpTimeZoneInformation);

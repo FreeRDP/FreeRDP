@@ -24,7 +24,6 @@
 #include <winpr/platform.h>
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
-#include <winpr/platform.h>
 
 #ifdef __cplusplus
 extern "C"
