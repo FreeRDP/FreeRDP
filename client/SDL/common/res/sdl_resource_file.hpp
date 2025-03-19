@@ -24,11 +24,11 @@ class SDLResourceFile
 {
   public:
 	SDLResourceFile(const std::string& type, const std::string& id,
-	                const std::vector<unsigned char>& data);
+	                const std::vector<unsigned char>& data) noexcept;
 	virtual ~SDLResourceFile();
 
 	SDLResourceFile(const SDLResourceFile& other) = delete;
-	SDLResourceFile(const SDLResourceFile&& other) = delete;
+	SDLResourceFile(SDLResourceFile&& other) = delete;
 	SDLResourceFile& operator=(const SDLResourceFile& other) = delete;
 	SDLResourceFile& operator=(SDLResourceFile&& other) = delete;
 };

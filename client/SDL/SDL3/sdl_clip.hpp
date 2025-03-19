@@ -91,6 +91,12 @@ class sdlClip
 	explicit sdlClip(SdlContext* sdl);
 	virtual ~sdlClip();
 
+	sdlClip(const sdlClip&) = delete;
+	sdlClip(sdlClip&&) = delete;
+
+	sdlClip& operator=(const sdlClip&) = delete;
+	sdlClip& operator=(sdlClip&&) = delete;
+
 	BOOL init(CliprdrClientContext* clip);
 	BOOL uninit(CliprdrClientContext* clip);
 

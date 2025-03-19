@@ -32,7 +32,6 @@
 #include <freerdp/scancode.h>
 
 #include <freerdp/log.h>
-#define TAG CLIENT_TAG("SDL.kbd")
 
 typedef struct
 {
