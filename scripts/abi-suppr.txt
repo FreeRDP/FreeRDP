@@ -38,21 +38,32 @@ change_kind = function-subtype-change
 name = freerdp_passphrase_read
 return_type_name = const char*
 
-[suppress_function]
+[suppress_type]
 change_kind = enum
-name = FreeRDP_Settings_Keys_Int32
+name = FreeRDP_Settings_Keys_UInt32
 changed_enumerators = FreeRDP_MonitorLocalShiftX, FreeRDP_MonitorLocalShiftY
 
 # gdi_graphics_pipeline_init_ex subtype change (__uint32 to uint32_t)
-[suppress_function]
+[suppress_type]
 change_kind = typedef
 name = UINT
+
+[suppress_type]
+change_kind = typedef
+name = UINT16
+
+[suppress_type]
+change_kind = typedef
+name = UINT32
+
+[suppress_type]
+change_kind = typedef
+name = UINT64
 
 # msusb_msconfig_dump did use MSUSB_CONFIG_DESCRIPTOR* instead of const MSUSB_CONFIG_DESCRIPTOR*
 [suppress_function]
 change_kind = function-subtype-change
 name = msusb_msconfig_dump
-parameter = '0 const MSUSB_CONFIG_DESCRIPTOR*
 
 [suppress_function]
 change_kind = function-subtype-change
@@ -73,3 +84,8 @@ parameter = '1 const GDI_RGN*
 change_kind = function-subtype-change
 name = gdi_PtInRect
 parameter = '0 const GDI_RECT*'
+
+[suppress_function]
+change_kind = function-subtype-change
+name = GetDynamicTimeZoneInformationEffectiveYears
+parameter = '0 const DYNAMIC_TIME_ZONE_INFORMATION*'
