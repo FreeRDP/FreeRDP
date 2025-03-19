@@ -125,8 +125,11 @@ FREERDP_LOCAL TRANSFER_ENCODING http_response_get_transfer_encoding(const HttpRe
 FREERDP_LOCAL BOOL http_response_is_websocket(const HttpContext* http,
                                               const HttpResponse* response);
 
-FREERDP_LOCAL void http_response_log_error_status(wLog* log, DWORD level,
-                                                  const HttpResponse* response);
+#define http_response_log_error_status(log, level, response) \
+	http_response_log_error_status_((log), (level), (response), __FILE__, __LINE__, __func__)
+FREERDP_LOCAL void http_response_log_error_status_(wLog* log, DWORD level,
+                                                   const HttpResponse* response, const char* file,
+                                                   size_t line, const char* fkt);
 
 /* chunked read helper */
 FREERDP_LOCAL int http_chuncked_read(BIO* bio, BYTE* pBuffer, size_t size,
