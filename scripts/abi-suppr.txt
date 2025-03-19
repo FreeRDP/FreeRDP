@@ -12,44 +12,64 @@ has_data_members_inserted_at = end
 [suppress_function]
 change_kind = function-subtype-change
 name = winpr_strerror
+parameter = '0 INT32
 
 # NtStatus2Tag did use unsigned instead of signed NTSTATUS as argument
 [suppress_function]
 change_kind = function-subtype-change
 name = NtStatus2Tag
+parameter = '0 NTSTATUS
 
 # rdpdr_write_iocompletion_header did use unsigned instead of signed NTSTATUS as argument
 [suppress_function]
 change_kind = function-subtype-change
 name = rdpdr_write_iocompletion_header
+parameter = '3 NTSTATUS
 
 # smartcard_irp_device_control_call did use unsigned instead of signed NTSTATUS as argument
 [suppress_function]
 change_kind = function-subtype-change
 name = smartcard_irp_device_control_call
+parameter = '2 NTSTATUS*
 
 # freerdp_passphrase_read did not return const char* but char*
 [suppress_function]
 change_kind = function-subtype-change
 name = freerdp_passphrase_read
+return_type_name = const char*
 
-# freerdp_settings_get_uint32 subtype change (delete MonitorLocalShift[XY]
 [suppress_function]
-change_kind = function-subtype-change
-name = freerdp_settings_get_uint32
-
-# freerdp_settings_set_uint32 subtype change (delete MonitorLocalShift[XY]
-[suppress_function]
-change_kind = function-subtype-change
-name = freerdp_settings_set_uint32
+change_kind = enum
+name = FreeRDP_Settings_Keys_Int32
+changed_enumerators = FreeRDP_MonitorLocalShiftX, FreeRDP_MonitorLocalShiftY
 
 # gdi_graphics_pipeline_init_ex subtype change (__uint32 to uint32_t)
 [suppress_function]
-change_kind = function-subtype-change
-name = gdi_graphics_pipeline_init_ex
+change_kind = typedef
+name = UINT
 
 # msusb_msconfig_dump did use MSUSB_CONFIG_DESCRIPTOR* instead of const MSUSB_CONFIG_DESCRIPTOR*
 [suppress_function]
 change_kind = function-subtype-change
 name = msusb_msconfig_dump
+parameter = '0 const MSUSB_CONFIG_DESCRIPTOR*
 
+[suppress_function]
+change_kind = function-subtype-change
+name = gdi_CopyRect
+parameter = '1 const GDI_RECT*
+
+[suppress_function]
+change_kind = function-subtype-change
+name = gdi_EqualRgn
+parameter = '0 const GDI_RGN* 
+
+[suppress_function]
+change_kind = function-subtype-change
+name = gdi_EqualRgn
+parameter = '1 const GDI_RGN*
+
+[suppress_function]
+change_kind = function-subtype-change
+name = gdi_PtInRect
+parameter = '0 const GDI_RECT*'
