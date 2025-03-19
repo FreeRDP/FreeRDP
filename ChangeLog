@@ -1,3 +1,40 @@
+# 2025-03-24 Version 3.14.1
+
+Bugfix and papercut release.
+Some small improvements in RDP file parsing, logging,
+clipboard support, gateway detection and many more.
+
+## What's Changed
+* [core,gateway] add rts parser checks (#11340)
+* [core,gateway] additional RTS checks (#11341)
+* [ci,workflow] use mk-build-deps to install deps (#11343)
+* [ci,workflow] add equivs dependency (#11344)
+* [clipboard] improve logging, fix image conversions (#11342)
+* core: Set instance pointer after channel reload (#11346)
+* [ci,alt-arch] request sudo for package installation (#11345, #11347, #11348,
+  #11349, #11350, #11351, #11352, #11353, #11355)
+* [channels,printer] Ignore printer settings (#11354)
+* [ci,alt-arch] fix gsm, simplify config (#11356)
+* [primitives] fix detection and refactor yuv420 to RGB (#11358)
+* [client,sdl3] fix clipboard format detection (#11366)
+* [cmake] add explicit instructions to turn off unmaintained modules (#11362)
+* client: Fix population of string settings in rdp file (#11370)
+* [client,common] fix rdp parser (#11372)
+* [core] use dynamic logger where possible (#11360)
+* [client,x11] add <ctrl>+<alt>+d shortcut, log detected shortcuts (#11363)
+* [client] add image as HTML clipboard format, fix bitmap conversions (#11369)
+* [core,gateway] improve RPC fallback detection and logging (#11375)
+* [core,transport] fix transport statistics (#11377)
+* code cleanups and abi-checker improvements (#11378, #11381)
+* refactor GetStdHandle (use global destructor), fix possible rdp2tcp leaks (#11383, #11386)
+* fix a few missing checks in xfreerdp and keyboard remapping for sdl-freerdp (#11406)
+* fix deprecation warnings on macos (#11390)
+* fix capslock and hotkey keyboard state sync (#11410, #11415)
+
+For a complete and detailed change log since the last release run:
+git log 3.14.1...3.14.0
+
+
 # 2025-03-13 Version 3.14.0
 
 Bugfix and cleanup release.
