@@ -87,7 +87,7 @@ struct rdp_transport
 	BOOL GatewayEnabled;
 	CRITICAL_SECTION ReadLock;
 	CRITICAL_SECTION WriteLock;
-	ULONG written;
+	UINT64 written;
 	HANDLE rereadEvent;
 	BOOL haveMoreBytesToRead;
 	wLog* log;
@@ -1236,13 +1236,7 @@ static int transport_default_write(rdpTransport* transport, wStream* s)
 		Stream_Seek(s, ustatus);
 	}
 
-	if (writtenlength + transport->written > UINT32_MAX)
-	{
-		status = -1;
-		goto out_cleanup;
-	}
-
-	transport->written += WINPR_ASSERTING_INT_CAST(uint32_t, writtenlength);
+	transport->written += writtenlength;
 out_cleanup:
 
 	if (status < 0)
@@ -1823,9 +1817,9 @@ wStream* transport_take_from_pool(rdpTransport* transport, size_t size)
 	return StreamPool_Take(transport->ReceivePool, size);
 }
 
-ULONG transport_get_bytes_sent(rdpTransport* transport, BOOL resetCount)
+UINT64 transport_get_bytes_sent(rdpTransport* transport, BOOL resetCount)
 {
-	ULONG rc = 0;
+	UINT64 rc = 0;
 	WINPR_ASSERT(transport);
 	rc = transport->written;
 	if (resetCount)

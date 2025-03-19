@@ -142,7 +142,7 @@ FREERDP_LOCAL rdpTsg* transport_get_tsg(rdpTransport* transport);
 
 FREERDP_LOCAL wStream* transport_take_from_pool(rdpTransport* transport, size_t size);
 
-FREERDP_LOCAL ULONG transport_get_bytes_sent(rdpTransport* transport, BOOL resetCount);
+FREERDP_LOCAL UINT64 transport_get_bytes_sent(rdpTransport* transport, BOOL resetCount);
 
 FREERDP_LOCAL BOOL transport_have_more_bytes_to_read(rdpTransport* transport);
 
