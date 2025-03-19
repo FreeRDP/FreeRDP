@@ -17,7 +17,7 @@
 static int test_gdi_PtInRect(void)
 {
 	int rc = -1;
-	HGDI_RECT hRect = NULL;
+	GDI_RECT* hRect = NULL;
 	UINT32 left = 20;
 	UINT32 top = 40;
 	UINT32 right = 60;
@@ -70,7 +70,7 @@ static int test_gdi_FillRect(void)
 {
 	int rc = -1;
 	HGDI_DC hdc = NULL;
-	HGDI_RECT hRect = NULL;
+	GDI_RECT* hRect = NULL;
 	HGDI_BRUSH hBrush = NULL;
 	HGDI_BITMAP hBitmap = NULL;
 	UINT32 color = 0;

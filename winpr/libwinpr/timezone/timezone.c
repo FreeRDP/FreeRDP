@@ -842,7 +842,7 @@ BOOL TzSpecificLocalTimeToSystemTimeEx(const DYNAMIC_TIME_ZONE_INFORMATION* lpTi
 
 #if !defined(_WIN32)
 
-DWORD EnumDynamicTimeZoneInformation(const DWORD dwIndex,
+DWORD EnumDynamicTimeZoneInformation(DWORD dwIndex,
                                      PDYNAMIC_TIME_ZONE_INFORMATION lpTimeZoneInformation)
 {
 	if (!lpTimeZoneInformation)
@@ -892,7 +892,7 @@ DWORD GetDynamicTimeZoneInformationEffectiveYears(
 }
 
 #elif _WIN32_WINNT < 0x0602 /* Windows 8 */
-DWORD EnumDynamicTimeZoneInformation(const DWORD dwIndex,
+DWORD EnumDynamicTimeZoneInformation(DWORD dwIndex,
                                      PDYNAMIC_TIME_ZONE_INFORMATION lpTimeZoneInformation)
 {
 	WINPR_UNUSED(dwIndex);
@@ -901,7 +901,7 @@ DWORD EnumDynamicTimeZoneInformation(const DWORD dwIndex,
 }
 
 DWORD GetDynamicTimeZoneInformationEffectiveYears(
-    const PDYNAMIC_TIME_ZONE_INFORMATION lpTimeZoneInformation, LPDWORD FirstYear, LPDWORD LastYear)
+    const DYNAMIC_TIME_ZONE_INFORMATION* lpTimeZoneInformation, LPDWORD FirstYear, LPDWORD LastYear)
 {
 	WINPR_UNUSED(lpTimeZoneInformation);
 	WINPR_UNUSED(FirstYear);

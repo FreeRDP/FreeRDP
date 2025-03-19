@@ -292,7 +292,7 @@ fail:
 static int test_gdi_CreateRect(void)
 {
 	int rc = -1;
-	HGDI_RECT hRect = NULL;
+	GDI_RECT* hRect = NULL;
 	INT32 x1 = 32;
 	INT32 y1 = 64;
 	INT32 x2 = 128;

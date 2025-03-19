@@ -30,7 +30,7 @@ extern "C"
 
 	FREERDP_API BOOL gdi_Ellipse(HGDI_DC hdc, int nLeftRect, int nTopRect, int nRightRect,
 	                             int nBottomRect);
-	FREERDP_API BOOL gdi_FillRect(HGDI_DC hdc, const HGDI_RECT rect, HGDI_BRUSH hbr);
+	FREERDP_API BOOL gdi_FillRect(HGDI_DC hdc, const GDI_RECT* rect, HGDI_BRUSH hbr);
 	FREERDP_API BOOL gdi_Polygon(HGDI_DC hdc, GDI_POINT* lpPoints, int nCount);
 	FREERDP_API BOOL gdi_PolyPolygon(HGDI_DC hdc, GDI_POINT* lpPoints, int* lpPolyCounts,
 	                                 int nCount);

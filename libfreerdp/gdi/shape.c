@@ -137,7 +137,7 @@ BOOL gdi_Ellipse(HGDI_DC hdc, int nLeftRect, int nTopRect, int nRightRect, int n
  * @return nonzero if successful, 0 otherwise
  */
 
-BOOL gdi_FillRect(HGDI_DC hdc, const HGDI_RECT rect, HGDI_BRUSH hbr)
+BOOL gdi_FillRect(HGDI_DC hdc, const GDI_RECT* rect, HGDI_BRUSH hbr)
 {
 	UINT32 color = 0;
 	UINT32 dstColor = 0;
