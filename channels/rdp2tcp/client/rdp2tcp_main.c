@@ -47,6 +47,7 @@ typedef struct
 
 static int init_external_addin(Plugin* plugin)
 {
+	int rc = -1;
 	SECURITY_ATTRIBUTES saAttr = { 0 };
 	STARTUPINFOA siStartInfo = { 0 }; /* Using ANSI type to match CreateProcessA */
 	PROCESS_INFORMATION procInfo = { 0 };
@@ -64,29 +65,36 @@ static int init_external_addin(Plugin* plugin)
 	if (!CreatePipe(&plugin->hStdOutputRead, &siStartInfo.hStdOutput, &saAttr, 0))
 	{
 		WLog_ERR(TAG, "stdout CreatePipe");
-		return -1;
+		goto fail;
 	}
 
 	if (!SetHandleInformation(plugin->hStdOutputRead, HANDLE_FLAG_INHERIT, 0))
 	{
 		WLog_ERR(TAG, "stdout SetHandleInformation");
-		return -1;
+		goto fail;
 	}
 
 	if (!CreatePipe(&siStartInfo.hStdInput, &plugin->hStdInputWrite, &saAttr, 0))
 	{
 		WLog_ERR(TAG, "stdin CreatePipe");
-		return -1;
+		goto fail;
 	}
 
 	if (!SetHandleInformation(plugin->hStdInputWrite, HANDLE_FLAG_INHERIT, 0))
 	{
 		WLog_ERR(TAG, "stdin SetHandleInformation");
-		return -1;
+		goto fail;
 	}
 
 	// Execute plugin
-	plugin->commandline = _strdup(plugin->channelEntryPoints.pExtendedData);
+	const ADDIN_ARGV* args = (const ADDIN_ARGV*)plugin->channelEntryPoints.pExtendedData;
+	if (!args || (args->argc < 2))
+	{
+		WLog_ERR(TAG, "missing command line options");
+		goto fail;
+	}
+
+	plugin->commandline = _strdup(args->argv[1]);
 	if (!CreateProcessA(NULL,
 	                    plugin->commandline, // command line
 	                    NULL,                // process security attributes
@@ -100,14 +108,17 @@ static int init_external_addin(Plugin* plugin)
 	                    ))
 	{
 		WLog_ERR(TAG, "fork for addin");
-		return -1;
+		goto fail;
 	}
 
 	plugin->hProcess = procInfo.hProcess;
+
+	rc = 0;
+fail:
 	(void)CloseHandle(procInfo.hThread);
 	(void)CloseHandle(siStartInfo.hStdOutput);
 	(void)CloseHandle(siStartInfo.hStdInput);
-	return 0;
+	return rc;
 }
 
 static DWORD WINAPI copyThread(void* data)
@@ -120,8 +131,8 @@ static DWORD WINAPI copyThread(void* data)
 
 	while (status == WAIT_OBJECT_0)
 	{
+		(void)ResetEvent(plugin->writeComplete);
 
-		HANDLE handles[MAXIMUM_WAIT_OBJECTS] = { 0 };
 		DWORD dwRead = 0;
 		char* buffer = calloc(bufsize, sizeof(char));
 
@@ -147,11 +158,9 @@ static DWORD WINAPI copyThread(void* data)
 			goto fail;
 		}
 
-		handles[0] = plugin->writeComplete;
-		handles[1] = freerdp_abort_event(plugin->channelEntryPoints.context);
-		status = WaitForMultipleObjects(2, handles, FALSE, INFINITE);
-		if (status == WAIT_OBJECT_0)
-			(void)ResetEvent(plugin->writeComplete);
+		HANDLE handles[] = { plugin->writeComplete,
+			                 freerdp_abort_event(plugin->channelEntryPoints.context) };
+		status = WaitForMultipleObjects(ARRAYSIZE(handles), handles, FALSE, INFINITE);
 	}
 
 fail:
@@ -221,7 +230,7 @@ static void channel_terminated(Plugin* plugin)
 		return;
 
 	if (plugin->copyThread)
-		(void)TerminateThread(plugin->copyThread, 0);
+		(void)CloseHandle(plugin->copyThread);
 	if (plugin->writeComplete)
 		(void)CloseHandle(plugin->writeComplete);
 
@@ -236,7 +245,10 @@ static void channel_terminated(Plugin* plugin)
 static void channel_initialized(Plugin* plugin)
 {
 	WINPR_ASSERT(plugin);
+	WINPR_ASSERT(!plugin->writeComplete);
 	plugin->writeComplete = CreateEvent(NULL, TRUE, FALSE, NULL);
+
+	WINPR_ASSERT(!plugin->copyThread);
 	plugin->copyThread = CreateThread(NULL, 0, copyThread, plugin, 0, NULL);
 }
 
@@ -265,6 +277,7 @@ static VOID VCAPITYPE VirtualChannelInitEventEx(LPVOID lpUserParam, LPVOID pInit
 			break;
 
 		case CHANNEL_EVENT_DISCONNECTED:
+			closeChannel(plugin);
 			break;
 
 		case CHANNEL_EVENT_TERMINATED:
@@ -295,7 +308,7 @@ FREERDP_ENTRY_POINT(BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS p
 
 	if (init_external_addin(plugin) < 0)
 	{
-		free(plugin);
+		channel_terminated(plugin);
 		return FALSE;
 	}
 
@@ -307,7 +320,10 @@ FREERDP_ENTRY_POINT(BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS p
 	if (pEntryPointsEx->pVirtualChannelInitEx(plugin, NULL, pInitHandle, &channelDef, 1,
 	                                          VIRTUAL_CHANNEL_VERSION_WIN2000,
 	                                          VirtualChannelInitEventEx) != CHANNEL_RC_OK)
+	{
+		channel_terminated(plugin);
 		return FALSE;
+	}
 
 	return TRUE;
 }
