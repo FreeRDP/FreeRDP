@@ -173,6 +173,7 @@ BOOL sdl_Pointer_Set_Process(SdlContext* sdl)
 
 	SDL_SetCursor(ptr->cursor);
 	SDL_ShowCursor();
+	sdl->setHasCursor(true);
 	return TRUE;
 }
 
