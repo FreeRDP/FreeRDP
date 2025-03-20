@@ -181,8 +181,8 @@ void xf_rail_end_local_move(xfContext* xfc, xfAppWindow* appWindow)
 	WINPR_ASSERT(xfc);
 	WINPR_ASSERT(appWindow);
 
-	if ((appWindow->local_move.direction == _NET_WM_MOVERESIZE_MOVE_KEYBOARD) ||
-	    (appWindow->local_move.direction == _NET_WM_MOVERESIZE_SIZE_KEYBOARD))
+	if ((appWindow->local_move.direction == NET_WM_MOVERESIZE_MOVE_KEYBOARD) ||
+	    (appWindow->local_move.direction == NET_WM_MOVERESIZE_SIZE_KEYBOARD))
 	{
 		RAIL_WINDOW_MOVE_ORDER windowMove = { 0 };
 
@@ -217,8 +217,8 @@ void xf_rail_end_local_move(xfContext* xfc, xfAppWindow* appWindow)
 	              &child_y, &mask);
 
 	/* only send the mouse coordinates if not a keyboard move or size */
-	if ((appWindow->local_move.direction != _NET_WM_MOVERESIZE_MOVE_KEYBOARD) &&
-	    (appWindow->local_move.direction != _NET_WM_MOVERESIZE_SIZE_KEYBOARD))
+	if ((appWindow->local_move.direction != NET_WM_MOVERESIZE_MOVE_KEYBOARD) &&
+	    (appWindow->local_move.direction != NET_WM_MOVERESIZE_SIZE_KEYBOARD))
 	{
 		freerdp_client_send_button_event(&xfc->common, FALSE, PTR_FLAGS_BUTTON1, x, y);
 	}
@@ -607,8 +607,8 @@ static BOOL xf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 
 		if (appWindow->rail_state == WINDOW_SHOW_MAXIMIZED)
 		{
-			xf_SendClientEvent(xfc, appWindow->handle, xfc->_NET_WM_STATE, 4, _NET_WM_STATE_ADD,
-			                   xfc->_NET_WM_STATE_MAXIMIZED_VERT, xfc->_NET_WM_STATE_MAXIMIZED_HORZ,
+			xf_SendClientEvent(xfc, appWindow->handle, xfc->NET_WM_STATE, 4, NET_WM_STATE_ADD,
+			                   xfc->NET_WM_STATE_MAXIMIZED_VERT, xfc->NET_WM_STATE_MAXIMIZED_HORZ,
 			                   0, 0);
 		}
 	}
@@ -756,7 +756,7 @@ static void xf_rail_set_window_icon(xfContext* xfc, xfAppWindow* railWindow, xfR
 {
 	WINPR_ASSERT(xfc);
 
-	LogTagAndXChangeProperty(TAG, xfc->display, railWindow->handle, xfc->_NET_WM_ICON, XA_CARDINAL,
+	LogTagAndXChangeProperty(TAG, xfc->display, railWindow->handle, xfc->NET_WM_ICON, XA_CARDINAL,
 	                         32, replace ? PropModeReplace : PropModeAppend,
 	                         (unsigned char*)icon->data, icon->length);
 	XFlush(xfc->display);
@@ -1004,68 +1004,68 @@ static UINT xf_rail_server_local_move_size(RailClientContext* context,
 	switch (localMoveSize->moveSizeType)
 	{
 		case RAIL_WMSZ_LEFT:
-			direction = _NET_WM_MOVERESIZE_SIZE_LEFT;
+			direction = NET_WM_MOVERESIZE_SIZE_LEFT;
 			x = localMoveSize->posX;
 			y = localMoveSize->posY;
 			break;
 
 		case RAIL_WMSZ_RIGHT:
-			direction = _NET_WM_MOVERESIZE_SIZE_RIGHT;
+			direction = NET_WM_MOVERESIZE_SIZE_RIGHT;
 			x = localMoveSize->posX;
 			y = localMoveSize->posY;
 			break;
 
 		case RAIL_WMSZ_TOP:
-			direction = _NET_WM_MOVERESIZE_SIZE_TOP;
+			direction = NET_WM_MOVERESIZE_SIZE_TOP;
 			x = localMoveSize->posX;
 			y = localMoveSize->posY;
 			break;
 
 		case RAIL_WMSZ_TOPLEFT:
-			direction = _NET_WM_MOVERESIZE_SIZE_TOPLEFT;
+			direction = NET_WM_MOVERESIZE_SIZE_TOPLEFT;
 			x = localMoveSize->posX;
 			y = localMoveSize->posY;
 			break;
 
 		case RAIL_WMSZ_TOPRIGHT:
-			direction = _NET_WM_MOVERESIZE_SIZE_TOPRIGHT;
+			direction = NET_WM_MOVERESIZE_SIZE_TOPRIGHT;
 			x = localMoveSize->posX;
 			y = localMoveSize->posY;
 			break;
 
 		case RAIL_WMSZ_BOTTOM:
-			direction = _NET_WM_MOVERESIZE_SIZE_BOTTOM;
+			direction = NET_WM_MOVERESIZE_SIZE_BOTTOM;
 			x = localMoveSize->posX;
 			y = localMoveSize->posY;
 			break;
 
 		case RAIL_WMSZ_BOTTOMLEFT:
-			direction = _NET_WM_MOVERESIZE_SIZE_BOTTOMLEFT;
+			direction = NET_WM_MOVERESIZE_SIZE_BOTTOMLEFT;
 			x = localMoveSize->posX;
 			y = localMoveSize->posY;
 			break;
 
 		case RAIL_WMSZ_BOTTOMRIGHT:
-			direction = _NET_WM_MOVERESIZE_SIZE_BOTTOMRIGHT;
+			direction = NET_WM_MOVERESIZE_SIZE_BOTTOMRIGHT;
 			x = localMoveSize->posX;
 			y = localMoveSize->posY;
 			break;
 
 		case RAIL_WMSZ_MOVE:
-			direction = _NET_WM_MOVERESIZE_MOVE;
+			direction = NET_WM_MOVERESIZE_MOVE;
 			XTranslateCoordinates(xfc->display, appWindow->handle, RootWindowOfScreen(xfc->screen),
 			                      localMoveSize->posX, localMoveSize->posY, &x, &y, &child_window);
 			break;
 
 		case RAIL_WMSZ_KEYMOVE:
-			direction = _NET_WM_MOVERESIZE_MOVE_KEYBOARD;
+			direction = NET_WM_MOVERESIZE_MOVE_KEYBOARD;
 			x = localMoveSize->posX;
 			y = localMoveSize->posY;
 			/* FIXME: local keyboard moves not working */
 			return CHANNEL_RC_OK;
 
 		case RAIL_WMSZ_KEYSIZE:
-			direction = _NET_WM_MOVERESIZE_SIZE_KEYBOARD;
+			direction = NET_WM_MOVERESIZE_SIZE_KEYBOARD;
 			x = localMoveSize->posX;
 			y = localMoveSize->posY;
 			/* FIXME: local keyboard moves not working */

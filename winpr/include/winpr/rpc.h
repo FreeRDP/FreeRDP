@@ -41,7 +41,6 @@ typedef PCONTEXT_HANDLE PCHANNEL_CONTEXT_HANDLE_SERIALIZE;
 #else
 
 #include <winpr/winpr.h>
-#include <winpr/wtypes.h>
 #include <winpr/sspi.h>
 #include <winpr/spec.h>
 #include <winpr/error.h>

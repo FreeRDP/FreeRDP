@@ -24,8 +24,8 @@ int TestGdiRegion(int argc, char* argv[])
 	INT32 b = 0;
 	HGDI_RGN rgn1 = NULL;
 	HGDI_RGN rgn2 = NULL;
-	HGDI_RECT rect1 = NULL;
-	HGDI_RECT rect2 = NULL;
+	GDI_RECT* rect1 = NULL;
+	GDI_RECT* rect2 = NULL;
 
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);

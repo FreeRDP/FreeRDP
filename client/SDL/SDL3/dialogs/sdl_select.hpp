@@ -31,6 +31,7 @@ class SdlSelectWidget : public SdlWidget
 	SdlSelectWidget(SDL_Renderer* renderer, std::string label, const SDL_FRect& rect);
 	SdlSelectWidget(SdlSelectWidget&& other) noexcept;
 	SdlSelectWidget(const SdlSelectWidget& other) = delete;
+	~SdlSelectWidget() override = default;
 
 	SdlSelectWidget& operator=(const SdlSelectWidget& other) = delete;
 	SdlSelectWidget& operator=(SdlSelectWidget&& other) = delete;

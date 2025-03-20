@@ -333,7 +333,7 @@ static inline DWORD gdi_rop3_code_checked_int(UINT32 code, WINPR_ATTR_UNUSED con
 	return gdi_rop3_code((UINT8)code);
 }
 
-BOOL gdi_decode_color(rdpGdi* gdi, const UINT32 srcColor, UINT32* color, UINT32* format)
+BOOL gdi_decode_color(rdpGdi* gdi, UINT32 srcColor, UINT32* color, UINT32* format)
 {
 	UINT32 SrcFormat = 0;
 
@@ -1278,7 +1278,7 @@ static BOOL gdi_init_primary(rdpGdi* gdi, UINT32 stride, UINT32 format, BYTE* bu
 	gdi->primary->hdc->hwnd->count = 32;
 
 	if (!(gdi->primary->hdc->hwnd->cinvalid =
-	          (HGDI_RGN)calloc(gdi->primary->hdc->hwnd->count, sizeof(GDI_RGN))))
+	          (GDI_RGN*)calloc(gdi->primary->hdc->hwnd->count, sizeof(GDI_RGN))))
 		goto fail_hwnd;
 
 	gdi->primary->hdc->hwnd->ninvalid = 0;

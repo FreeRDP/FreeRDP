@@ -22,12 +22,12 @@
 
 #include "ntlm.h"
 
-SECURITY_STATUS ntlm_read_NegotiateMessage(NTLM_CONTEXT* context, PSecBuffer buffer);
-SECURITY_STATUS ntlm_write_NegotiateMessage(NTLM_CONTEXT* context, const PSecBuffer buffer);
-SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer buffer);
-SECURITY_STATUS ntlm_write_ChallengeMessage(NTLM_CONTEXT* context, const PSecBuffer buffer);
-SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer buffer);
-SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, const PSecBuffer buffer);
+SECURITY_STATUS ntlm_read_NegotiateMessage(NTLM_CONTEXT* context, SecBuffer* buffer);
+SECURITY_STATUS ntlm_write_NegotiateMessage(NTLM_CONTEXT* context, SecBuffer* buffer);
+SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, SecBuffer* buffer);
+SECURITY_STATUS ntlm_write_ChallengeMessage(NTLM_CONTEXT* context, SecBuffer* buffer);
+SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, SecBuffer* buffer);
+SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, SecBuffer* buffer);
 
 SECURITY_STATUS ntlm_server_AuthenticateComplete(NTLM_CONTEXT* context);
 

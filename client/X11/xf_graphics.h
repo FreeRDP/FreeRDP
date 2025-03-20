@@ -25,7 +25,7 @@
 
 BOOL xf_register_pointer(rdpGraphics* graphics);
 
-BOOL xf_decode_color(xfContext* xfc, const UINT32 srcColor, XColor* color);
+BOOL xf_decode_color(xfContext* xfc, UINT32 srcColor, XColor* color);
 UINT32 xf_get_local_color_format(xfContext* xfc, BOOL aligned);
 
 BOOL xf_pointer_update_scale(xfContext* xfc);

@@ -27,7 +27,7 @@
 #define TAG PROXY_TAG("channel")
 
 /** @brief a tracker for channel packets */
-struct _ChannelStateTracker
+struct sChannelStateTracker
 {
 	pServerStaticChannelContext* channel;
 	ChannelTrackerMode mode;

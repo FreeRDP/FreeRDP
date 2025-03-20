@@ -118,7 +118,7 @@ class SDLConnectionDialogHider
 	SDLConnectionDialogHider(const SDLConnectionDialogHider& other) = delete;
 	SDLConnectionDialogHider(SDLConnectionDialogHider&& other) = delete;
 	SDLConnectionDialogHider& operator=(const SDLConnectionDialogHider& other) = delete;
-	SDLConnectionDialogHider& operator=(SDLConnectionDialogHider& other) = delete;
+	SDLConnectionDialogHider& operator=(SDLConnectionDialogHider&& other) = delete;
 
 	~SDLConnectionDialogHider();
 

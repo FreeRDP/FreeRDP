@@ -81,8 +81,8 @@ static INLINE BYTE* gdi_get_brush_pointer(HGDI_DC hdcBrush, UINT32 x, UINT32 y)
 			WINPR_ASSERT(h > 0);
 			x = (x + w - (WINPR_ASSERTING_INT_CAST(UINT32, hdcBrush->brush->nXOrg) % w)) % w;
 			y = (y + h - (WINPR_ASSERTING_INT_CAST(UINT32, hdcBrush->brush->nYOrg) % h)) % h;
-			p = hBmpBrush->data + (y * hBmpBrush->scanline) +
-			    (x * FreeRDPGetBytesPerPixel(hBmpBrush->format));
+			p = hBmpBrush->data + (1ULL * y * hBmpBrush->scanline) +
+			    (1ULL * x * FreeRDPGetBytesPerPixel(hBmpBrush->format));
 			return p;
 		}
 

@@ -90,7 +90,6 @@ WINPR_API INT winpr_inet_pton(INT Family, PCSTR pszAddrString, PVOID pAddrBuf);
 
 #include <winpr/io.h>
 #include <winpr/error.h>
-#include <winpr/platform.h>
 
 #define WSAEVENT HANDLE
 #define LPWSAEVENT LPHANDLE

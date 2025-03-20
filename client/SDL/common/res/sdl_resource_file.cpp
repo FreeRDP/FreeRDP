@@ -19,7 +19,7 @@
 #include "sdl_resource_manager.hpp"
 
 SDLResourceFile::SDLResourceFile(const std::string& type, const std::string& id,
-                                 const std::vector<unsigned char>& data)
+                                 const std::vector<unsigned char>& data) noexcept
 {
 	SDLResourceManager::insert(type, id, data);
 }

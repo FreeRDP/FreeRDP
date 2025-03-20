@@ -38,6 +38,7 @@ class SdlInputWidget
 	               size_t offset, size_t width, size_t height);
 	SdlInputWidget(SdlInputWidget&& other) noexcept;
 	SdlInputWidget(const SdlInputWidget& other) = delete;
+	~SdlInputWidget() = default;
 
 	SdlInputWidget& operator=(const SdlInputWidget& other) = delete;
 	SdlInputWidget& operator=(SdlInputWidget&& other) = delete;

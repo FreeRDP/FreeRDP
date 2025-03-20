@@ -45,7 +45,7 @@ BOOL gdi_SetClipRgn(HGDI_DC hdc, INT32 nXLeft, INT32 nYLeft, INT32 nWidth, INT32
  * @return clipping region
  */
 
-HGDI_RGN gdi_GetClipRgn(HGDI_DC hdc)
+GDI_RGN* gdi_GetClipRgn(HGDI_DC hdc)
 {
 	return hdc->clip;
 }

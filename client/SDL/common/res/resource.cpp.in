@@ -9,17 +9,17 @@
 #include <vector>
 #include "@CLASSNAME@.hpp"
 
-std::string @CLASSNAME@::name() {
+std::string @CLASSNAME@::name() noexcept {
 	return "@FILENAME@";
 }
-std::string @CLASSNAME@::type() {
+std::string @CLASSNAME@::type() noexcept {
 	return "@CLASSTYPE@";
 }
 
 // NOLINTNEXTLINE(clang-diagnostic-global-constructors)
 const SDLResourceFile @CLASSNAME@::_initializer(type(), name(), init());
 
-std::vector<unsigned char> @CLASSNAME@::init() {
+std::vector<unsigned char> @CLASSNAME@::init() noexcept {
 	static const unsigned char data[] = {
 		@FILEDATA@
 	};

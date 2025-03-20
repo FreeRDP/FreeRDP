@@ -29,7 +29,7 @@ typedef enum
 	CHANNEL_TRACKER_DROP  /*!< drop all the fragments of the current packet */
 } ChannelTrackerMode;
 
-typedef struct _ChannelStateTracker ChannelStateTracker;
+typedef struct sChannelStateTracker ChannelStateTracker;
 typedef PfChannelResult (*ChannelTrackerPeekFn)(ChannelStateTracker* tracker, BOOL first,
                                                 BOOL lastPacket);
 

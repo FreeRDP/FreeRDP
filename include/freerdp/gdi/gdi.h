@@ -28,7 +28,6 @@
 #include <freerdp/types.h>
 
 #include <freerdp/log.h>
-#include <freerdp/types.h>
 #include <freerdp/codec/color.h>
 #include <freerdp/codec/region.h>
 
@@ -529,8 +528,7 @@ extern "C"
 	FREERDP_API const char* gdi_rop3_string(DWORD rop);
 
 	FREERDP_API UINT32 gdi_get_pixel_format(UINT32 bitsPerPixel);
-	FREERDP_API BOOL gdi_decode_color(rdpGdi* gdi, const UINT32 srcColor, UINT32* color,
-	                                  UINT32* format);
+	FREERDP_API BOOL gdi_decode_color(rdpGdi* gdi, UINT32 srcColor, UINT32* color, UINT32* format);
 	FREERDP_API BOOL gdi_resize(rdpGdi* gdi, UINT32 width, UINT32 height);
 	FREERDP_API BOOL gdi_resize_ex(rdpGdi* gdi, UINT32 width, UINT32 height, UINT32 stride,
 	                               UINT32 format, BYTE* buffer, void (*pfree)(void*));

@@ -17,11 +17,18 @@ class @CLASSNAME@
 
 public:
 	@CLASSNAME@() = delete;
+	~@CLASSNAME@() = delete;
+	
+	@CLASSNAME@(const @CLASSNAME@&) = delete;
+	@CLASSNAME@(@CLASSNAME@&&) = delete;
 
-	static std::string name();
-	static std::string type();
+	@CLASSNAME@& operator=(const @CLASSNAME@&) = delete;
+	@CLASSNAME@& operator=(@CLASSNAME@&&) = delete;
+
+	static std::string name() noexcept;
+	static std::string type() noexcept;
 
 protected:
-	static std::vector<unsigned char> init();
+	static std::vector<unsigned char> init() noexcept;
 	static const SDLResourceFile _initializer;
 };

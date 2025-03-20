@@ -40,7 +40,7 @@ class SDLConnectionDialog
 	virtual ~SDLConnectionDialog();
 
 	SDLConnectionDialog& operator=(const SDLConnectionDialog& other) = delete;
-	SDLConnectionDialog& operator=(SDLConnectionDialog& other) = delete;
+	SDLConnectionDialog& operator=(SDLConnectionDialog&& other) = delete;
 
 	bool visible() const;
 
@@ -119,7 +119,7 @@ class SDLConnectionDialogHider
 	SDLConnectionDialogHider(const SDLConnectionDialogHider& other) = delete;
 	SDLConnectionDialogHider(SDLConnectionDialogHider&& other) = delete;
 	SDLConnectionDialogHider& operator=(const SDLConnectionDialogHider& other) = delete;
-	SDLConnectionDialogHider& operator=(SDLConnectionDialogHider& other) = delete;
+	SDLConnectionDialogHider& operator=(SDLConnectionDialogHider&& other) = delete;
 
 	~SDLConnectionDialogHider();
 

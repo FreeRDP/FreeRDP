@@ -696,7 +696,7 @@ BOOL WTSIsChannelJoinedByName(freerdp_peer* client, const char* channel_name)
 	                                                                                       : TRUE;
 }
 
-BOOL WTSIsChannelJoinedById(freerdp_peer* client, const UINT16 channel_id)
+BOOL WTSIsChannelJoinedById(freerdp_peer* client, UINT16 channel_id)
 {
 	if (!client || !client->context || !client->context->rdp)
 		return FALSE;
@@ -775,7 +775,7 @@ BOOL WTSChannelSetHandleByName(freerdp_peer* client, const char* channel_name, v
 	return TRUE;
 }
 
-BOOL WTSChannelSetHandleById(freerdp_peer* client, const UINT16 channel_id, void* handle)
+BOOL WTSChannelSetHandleById(freerdp_peer* client, UINT16 channel_id, void* handle)
 {
 	rdpMcsChannel* channel = NULL;
 
@@ -807,7 +807,7 @@ void* WTSChannelGetHandleByName(freerdp_peer* client, const char* channel_name)
 	return channel->handle;
 }
 
-void* WTSChannelGetHandleById(freerdp_peer* client, const UINT16 channel_id)
+void* WTSChannelGetHandleById(freerdp_peer* client, UINT16 channel_id)
 {
 	rdpMcsChannel* channel = NULL;
 
