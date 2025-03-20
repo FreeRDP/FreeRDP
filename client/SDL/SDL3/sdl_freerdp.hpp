@@ -66,9 +66,13 @@ class SdlContext
 	[[nodiscard]] rdpContext* context() const;
 	[[nodiscard]] rdpClientContext* common() const;
 
+	void setHasCursor(bool val);
+	[[nodiscard]] bool hasCursor() const;
+
   private:
 	rdpContext* _context;
 	std::atomic<bool> connected = false;
+	bool cursor = true;
 
   public:
 	wLog* log;

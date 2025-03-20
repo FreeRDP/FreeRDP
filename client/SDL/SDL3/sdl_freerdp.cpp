@@ -999,12 +999,14 @@ static int sdl_run(SdlContext* sdl)
 					break;
 				case SDL_EVENT_USER_POINTER_NULL:
 					SDL_HideCursor();
+					sdl->setHasCursor(false);
 					break;
 				case SDL_EVENT_USER_POINTER_DEFAULT:
 				{
 					SDL_Cursor* def = SDL_GetDefaultCursor();
 					SDL_SetCursor(def);
 					SDL_ShowCursor();
+					sdl->setHasCursor(true);
 				}
 				break;
 				case SDL_EVENT_USER_POINTER_POSITION:
@@ -1808,6 +1810,16 @@ void SdlContext::setConnected(bool val)
 bool SdlContext::isConnected() const
 {
 	return connected;
+}
+
+void SdlContext::setHasCursor(bool val)
+{
+	this->cursor = val;
+}
+
+bool SdlContext::hasCursor() const
+{
+	return cursor;
 }
 
 rdpContext* SdlContext::context() const
