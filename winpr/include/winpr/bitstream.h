@@ -87,13 +87,13 @@ extern "C"
 		WINPR_ASSERT(_bs);
 		const intptr_t diff = _bs->pointer - _bs->buffer;
 		if ((diff + 0) < (intptr_t)_bs->capacity)
-			_bs->pointer[0] = ((UINT32)_bs->accumulator >> 24) & 0xFF;
+			_bs->pointer[0] = (_bs->accumulator >> 24) & 0xFF;
 		if ((diff + 1) < (intptr_t)_bs->capacity)
-			_bs->pointer[1] = ((UINT32)_bs->accumulator >> 16) & 0xFF;
+			_bs->pointer[1] = (_bs->accumulator >> 16) & 0xFF;
 		if ((diff + 2) < (intptr_t)_bs->capacity)
-			_bs->pointer[2] = ((UINT32)_bs->accumulator >> 8) & 0xFF;
+			_bs->pointer[2] = (_bs->accumulator >> 8) & 0xFF;
 		if ((diff + 3) < (intptr_t)_bs->capacity)
-			_bs->pointer[3] = ((UINT32)_bs->accumulator >> 0) & 0xFF;
+			_bs->pointer[3] = (_bs->accumulator >> 0) & 0xFF;
 	}
 
 	static INLINE void BitStream_Shift(wBitStream* _bs, UINT32 _nbits)
