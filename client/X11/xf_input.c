@@ -50,7 +50,8 @@
 
 #define MIN_FINGER_DIST 5
 
-static int xf_input_event(xfContext* xfc, const XEvent* xevent, XIDeviceEvent* event, int evtype);
+static int xf_input_event(xfContext* xfc, WINPR_ATTR_UNUSED const XEvent* xevent,
+                          XIDeviceEvent* event, int evtype);
 
 #ifdef DEBUG_XINPUT
 static const char* xf_input_get_class_string(int class)
@@ -744,26 +745,25 @@ static int xf_input_pens_unhover(xfContext* xfc)
 	return 0;
 }
 
-int xf_input_event(xfContext* xfc, const XEvent* xevent, XIDeviceEvent* event, int evtype)
+static bool xf_use_rel_mouse(xfContext* xfc)
+{
+	if (!freerdp_client_use_relative_mouse_events(&xfc->common))
+		return false;
+	if (!xfc->isCursorHidden)
+		return false;
+	return true;
+}
+
+int xf_input_event(xfContext* xfc, WINPR_ATTR_UNUSED const XEvent* xevent, XIDeviceEvent* event,
+                   int evtype)
 {
 	WINPR_ASSERT(xfc);
 	WINPR_ASSERT(xevent);
 	WINPR_ASSERT(event);
 
-	/* When not running RAILS we only care about events for this window.
-	 * filter out anything else, like floatbar window events
-	 */
-	const Window w = xevent->xany.window;
-
 	xfWindow* window = xfc->window;
 	if (window)
 	{
-		if (w != window->handle)
-		{
-			if (!xfc->remote_app)
-				return 0;
-		}
-
 		if (xf_floatbar_is_locked(window->floatbar))
 			return 0;
 	}
@@ -774,8 +774,7 @@ int xf_input_event(xfContext* xfc, const XEvent* xevent, XIDeviceEvent* event, i
 	{
 		case XI_ButtonPress:
 		case XI_ButtonRelease:
-			xfc->xi_event = !xfc->common.mouse_grabbed ||
-			                !freerdp_client_use_relative_mouse_events(&xfc->common);
+			xfc->xi_event = !xfc->common.mouse_grabbed || !xf_use_rel_mouse(xfc);
 
 			if (xfc->xi_event)
 			{
@@ -785,8 +784,7 @@ int xf_input_event(xfContext* xfc, const XEvent* xevent, XIDeviceEvent* event, i
 			break;
 
 		case XI_Motion:
-			xfc->xi_event = !xfc->common.mouse_grabbed ||
-			                !freerdp_client_use_relative_mouse_events(&xfc->common);
+			xfc->xi_event = !xfc->common.mouse_grabbed || !xf_use_rel_mouse(xfc);
 
 			if (xfc->xi_event)
 			{
@@ -796,8 +794,7 @@ int xf_input_event(xfContext* xfc, const XEvent* xevent, XIDeviceEvent* event, i
 			break;
 		case XI_RawButtonPress:
 		case XI_RawButtonRelease:
-			xfc->xi_rawevent =
-			    xfc->common.mouse_grabbed && freerdp_client_use_relative_mouse_events(&xfc->common);
+			xfc->xi_rawevent = xfc->common.mouse_grabbed && xf_use_rel_mouse(xfc);
 
 			if (xfc->xi_rawevent)
 			{
@@ -807,8 +804,7 @@ int xf_input_event(xfContext* xfc, const XEvent* xevent, XIDeviceEvent* event, i
 			}
 			break;
 		case XI_RawMotion:
-			xfc->xi_rawevent =
-			    xfc->common.mouse_grabbed && freerdp_client_use_relative_mouse_events(&xfc->common);
+			xfc->xi_rawevent = xfc->common.mouse_grabbed && xf_use_rel_mouse(xfc);
 
 			if (xfc->xi_rawevent)
 			{

@@ -380,6 +380,7 @@ static BOOL xf_Pointer_Set(rdpContext* context, rdpPointer* pointer)
 		WLog_WARN(TAG, "handle=%ld", handle);
 	}
 #endif
+	xfc->isCursorHidden = false;
 	return TRUE;
 }
 
@@ -412,6 +413,7 @@ static BOOL xf_Pointer_SetNull(rdpContext* context)
 
 	xf_unlock_x11(xfc);
 #endif
+	xfc->isCursorHidden = true;
 	return TRUE;
 }
 
@@ -429,6 +431,7 @@ static BOOL xf_Pointer_SetDefault(rdpContext* context)
 
 	xf_unlock_x11(xfc);
 #endif
+	xfc->isCursorHidden = false;
 	return TRUE;
 }
 
