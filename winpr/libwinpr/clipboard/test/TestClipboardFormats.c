@@ -126,6 +126,22 @@ int TestClipboardFormats(int argc, char* argv[])
 				goto fail;
 		}
 		{
+			const uint32_t id = ClipboardGetFormatId(clipboard, "HTML Format");
+			UINT32 DstSize = 0;
+			void* pDstData = ClipboardGetData(clipboard, id, &DstSize);
+			if (!pDstData)
+				goto fail;
+			{
+				FILE* fp = fopen("test.html", "w");
+				if (fp)
+				{
+					(void)fwrite(pDstData, 1, DstSize, fp);
+					(void)fclose(fp);
+				}
+			}
+			free(pDstData);
+		}
+		{
 			UINT32 id = ClipboardRegisterFormat(clipboard, "image/bmp");
 
 			UINT32 DstSize = 0;

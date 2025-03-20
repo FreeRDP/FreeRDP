@@ -50,3 +50,6 @@ foreach(test ${${MODULE_PREFIX}_TESTS})
 endforeach()
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "WinPR/Test")
+
+add_executable(img-cnv img-cnv.c)
+target_link_libraries(img-cnv winpr)

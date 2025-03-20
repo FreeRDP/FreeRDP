@@ -69,6 +69,7 @@ typedef struct
 	UINT32 formatToRequest;
 	UINT32 localFormat;
 	char* formatName;
+	BOOL isImage;
 } xfCliprdrFormat;
 
 typedef struct
@@ -141,6 +142,7 @@ struct xf_clipboard
 	CLIPRDR_FORMAT* lastSentFormats;
 	UINT32 lastSentNumFormats;
 	CliprdrFileContext* file;
+	BOOL isImageContent;
 };
 
 static const char mime_text_plain[] = "text/plain";
@@ -373,9 +375,14 @@ static const xfCliprdrFormat* xf_cliprdr_get_client_format_by_id(xfClipboard* cl
 {
 	WINPR_ASSERT(clipboard);
 
+	const BOOL formatIsHtml = formatId == ClipboardGetFormatId(clipboard->system, type_HtmlFormat);
+	const BOOL fetchImage = clipboard->isImageContent && formatIsHtml;
 	for (size_t index = 0; index < clipboard->numClientFormats; index++)
 	{
 		const xfCliprdrFormat* format = &(clipboard->clientFormats[index]);
+
+		if (fetchImage && format->isImage)
+			return format;
 
 		if (format->formatToRequest == formatId)
 			return format;
@@ -678,7 +685,7 @@ static CLIPRDR_FORMAT* xf_cliprdr_get_formats_from_targets(xfClipboard* clipboar
 	Atom atom = None;
 	BYTE* data = NULL;
 	int format_property = 0;
-	unsigned long length = 0;
+	unsigned long proplength = 0;
 	unsigned long bytes_left = 0;
 	CLIPRDR_FORMAT* formats = NULL;
 
@@ -690,10 +697,12 @@ static CLIPRDR_FORMAT* xf_cliprdr_get_formats_from_targets(xfClipboard* clipboar
 
 	*numFormats = 0;
 	LogTagAndXGetWindowProperty(TAG, xfc->display, xfc->drawable, clipboard->property_atom, 0, 200,
-	                            0, XA_ATOM, &atom, &format_property, &length, &bytes_left, &data);
+	                            0, XA_ATOM, &atom, &format_property, &proplength, &bytes_left,
+	                            &data);
 
-	if (length > 0)
+	if (proplength > 0)
 	{
+		unsigned long length = proplength + 1;
 		if (!data)
 		{
 			WLog_ERR(TAG, "XGetWindowProperty set length = %lu but data is NULL", length);
@@ -707,7 +716,10 @@ static CLIPRDR_FORMAT* xf_cliprdr_get_formats_from_targets(xfClipboard* clipboar
 		}
 	}
 
-	for (unsigned long i = 0; i < length; i++)
+	BOOL isImage = FALSE;
+	BOOL hasHtml = FALSE;
+	const uint32_t htmlFormatId = ClipboardRegisterFormat(clipboard->system, type_HtmlFormat);
+	for (unsigned long i = 0; i < proplength; i++)
 	{
 		Atom tatom = ((Atom*)data)[i];
 		const xfCliprdrFormat* format = xf_cliprdr_get_client_format_by_atom(clipboard, tatom);
@@ -716,6 +728,21 @@ static CLIPRDR_FORMAT* xf_cliprdr_get_formats_from_targets(xfClipboard* clipboar
 		{
 			CLIPRDR_FORMAT* cformat = &formats[*numFormats];
 			cformat->formatId = format->formatToRequest;
+
+			/* We do not want to double register a format, so check if HTML was already registered.
+			 */
+			if (cformat->formatId == htmlFormatId)
+				hasHtml = TRUE;
+
+			/* These are standard image types that will always be registered regardless of actual
+			 * image format. */
+			if (cformat->formatId == CF_TIFF)
+				isImage = TRUE;
+			else if (cformat->formatId == CF_DIB)
+				isImage = TRUE;
+			else if (cformat->formatId == CF_DIBV5)
+				isImage = TRUE;
+
 			if (format->formatName)
 			{
 				cformat->formatName = _strdup(format->formatName);
@@ -728,6 +755,15 @@ static CLIPRDR_FORMAT* xf_cliprdr_get_formats_from_targets(xfClipboard* clipboar
 		}
 	}
 
+	clipboard->isImageContent = isImage;
+	if (isImage && !hasHtml)
+	{
+		CLIPRDR_FORMAT* cformat = &formats[*numFormats];
+		cformat->formatId = htmlFormatId;
+		cformat->formatName = _strdup(type_HtmlFormat);
+
+		*numFormats += 1;
+	}
 out:
 
 	if (data)
@@ -970,7 +1006,8 @@ static void xf_cliprdr_process_requested_data(xfClipboard* clipboard, BOOL hasDa
 	if (bSuccess)
 	{
 		DstSize = 0;
-		pDstData = (BYTE*)ClipboardGetData(clipboard->system, format->formatToRequest, &DstSize);
+		pDstData =
+		    (BYTE*)ClipboardGetData(clipboard->system, clipboard->requestedFormatId, &DstSize);
 	}
 	ClipboardUnlock(clipboard->system);
 
@@ -2071,24 +2108,20 @@ static UINT
 xf_cliprdr_server_format_data_request(CliprdrClientContext* context,
                                       const CLIPRDR_FORMAT_DATA_REQUEST* formatDataRequest)
 {
-	BOOL rawTransfer = 0;
 	const xfCliprdrFormat* format = NULL;
-	UINT32 formatId = 0;
-	xfContext* xfc = NULL;
-	xfClipboard* clipboard = NULL;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(formatDataRequest);
 
-	clipboard = cliprdr_file_context_get_context(context->custom);
+	xfClipboard* clipboard = cliprdr_file_context_get_context(context->custom);
 	WINPR_ASSERT(clipboard);
 
-	xfc = clipboard->xfc;
+	xfContext* xfc = clipboard->xfc;
 	WINPR_ASSERT(xfc);
 
-	formatId = formatDataRequest->requestedFormatId;
+	const uint32_t formatId = formatDataRequest->requestedFormatId;
 
-	rawTransfer = xf_cliprdr_is_raw_transfer_available(clipboard);
+	const BOOL rawTransfer = xf_cliprdr_is_raw_transfer_available(clipboard);
 
 	if (rawTransfer)
 	{
@@ -2476,6 +2509,7 @@ xfClipboard* xf_clipboard_new(xfContext* xfc, BOOL relieveFilenameRestriction)
 		clientFormat->localFormat = format;
 		clientFormat->atom = Logging_XInternAtom(xfc->log, xfc->display, mime_bmp, False);
 		clientFormat->formatToRequest = CF_DIB;
+		clientFormat->isImage = TRUE;
 	}
 
 	for (size_t x = 0; x < ARRAYSIZE(mime_images); x++)
@@ -2493,6 +2527,7 @@ xfClipboard* xf_clipboard_new(xfContext* xfc, BOOL relieveFilenameRestriction)
 		clientFormat->localFormat = format;
 		clientFormat->atom = Logging_XInternAtom(xfc->log, xfc->display, mime_bmp, False);
 		clientFormat->formatToRequest = CF_DIB;
+		clientFormat->isImage = TRUE;
 	}
 
 	clientFormat = &clipboard->clientFormats[n++];

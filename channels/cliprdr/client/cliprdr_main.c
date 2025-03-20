@@ -691,6 +691,19 @@ static UINT cliprdr_client_format_list(CliprdrClientContext* context,
 	}
 	cliprdr->initialFormatListSent = TRUE;
 
+	const uint32_t level = WLOG_DEBUG;
+	if (WLog_IsLevelActive(cliprdr->log, level))
+	{
+		WLog_Print(cliprdr->log, level, "ClientFormatList: numFormats: %" PRIu32 "",
+		           formatList->numFormats);
+		for (size_t x = 0; x < filterList.numFormats; x++)
+		{
+			const CLIPRDR_FORMAT* format = &filterList.formats[x];
+			WLog_Print(cliprdr->log, level, "[%" PRIu32 "]: id=0x%08" PRIx32 " [%s]", x,
+			           format->formatId, format->formatName);
+		}
+	}
+
 	s = cliprdr_packet_format_list_new(&filterList, cliprdr->useLongFormatNames, FALSE);
 	cliprdr_free_format_list(&filterList);
 
@@ -700,8 +713,6 @@ static UINT cliprdr_client_format_list(CliprdrClientContext* context,
 		return ERROR_INTERNAL_ERROR;
 	}
 
-	WLog_Print(cliprdr->log, WLOG_DEBUG, "ClientFormatList: numFormats: %" PRIu32 "",
-	           formatList->numFormats);
 	return cliprdr_packet_send(cliprdr, s);
 }
 
