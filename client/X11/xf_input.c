@@ -744,6 +744,15 @@ static int xf_input_pens_unhover(xfContext* xfc)
 	return 0;
 }
 
+static bool xf_use_rel_mouse(xfContext* xfc)
+{
+	if (!freerdp_client_use_relative_mouse_events(&xfc->common))
+		return false;
+	if (xfc->hasCursor)
+		return false;
+	return true;
+}
+
 int xf_input_event(xfContext* xfc, const XEvent* xevent, XIDeviceEvent* event, int evtype)
 {
 	WINPR_ASSERT(xfc);
@@ -774,8 +783,7 @@ int xf_input_event(xfContext* xfc, const XEvent* xevent, XIDeviceEvent* event, i
 	{
 		case XI_ButtonPress:
 		case XI_ButtonRelease:
-			xfc->xi_event = !xfc->common.mouse_grabbed ||
-			                !freerdp_client_use_relative_mouse_events(&xfc->common);
+			xfc->xi_event = !xfc->common.mouse_grabbed || !xf_use_rel_mouse(xfc);
 
 			if (xfc->xi_event)
 			{
@@ -785,8 +793,7 @@ int xf_input_event(xfContext* xfc, const XEvent* xevent, XIDeviceEvent* event, i
 			break;
 
 		case XI_Motion:
-			xfc->xi_event = !xfc->common.mouse_grabbed ||
-			                !freerdp_client_use_relative_mouse_events(&xfc->common);
+			xfc->xi_event = !xfc->common.mouse_grabbed || !xf_use_rel_mouse(xfc);
 
 			if (xfc->xi_event)
 			{
@@ -796,8 +803,7 @@ int xf_input_event(xfContext* xfc, const XEvent* xevent, XIDeviceEvent* event, i
 			break;
 		case XI_RawButtonPress:
 		case XI_RawButtonRelease:
-			xfc->xi_rawevent =
-			    xfc->common.mouse_grabbed && freerdp_client_use_relative_mouse_events(&xfc->common);
+			xfc->xi_rawevent = xfc->common.mouse_grabbed && xf_use_rel_mouse(xfc);
 
 			if (xfc->xi_rawevent)
 			{
@@ -807,8 +813,7 @@ int xf_input_event(xfContext* xfc, const XEvent* xevent, XIDeviceEvent* event, i
 			}
 			break;
 		case XI_RawMotion:
-			xfc->xi_rawevent =
-			    xfc->common.mouse_grabbed && freerdp_client_use_relative_mouse_events(&xfc->common);
+			xfc->xi_rawevent = xfc->common.mouse_grabbed && xf_use_rel_mouse(xfc);
 
 			if (xfc->xi_rawevent)
 			{
