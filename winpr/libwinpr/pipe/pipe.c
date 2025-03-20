@@ -473,18 +473,20 @@ static BOOL InitWinPRPipeModule(void)
 BOOL CreatePipe(PHANDLE hReadPipe, PHANDLE hWritePipe, LPSECURITY_ATTRIBUTES lpPipeAttributes,
                 DWORD nSize)
 {
-	int pipe_fd[2];
+	int pipe_fd[] = { -1, -1 };
 	WINPR_PIPE* pReadPipe = NULL;
 	WINPR_PIPE* pWritePipe = NULL;
 
 	WINPR_UNUSED(lpPipeAttributes);
 	WINPR_UNUSED(nSize);
 
-	pipe_fd[0] = -1;
-	pipe_fd[1] = -1;
-
 	if (pipe(pipe_fd) < 0)
 	{
+		if (pipe_fd[0] >= 0)
+			close(pipe_fd[0]);
+		if (pipe_fd[1] >= 0)
+			close(pipe_fd[1]);
+
 		WLog_ERR(TAG, "failed to create pipe");
 		return FALSE;
 	}
@@ -494,6 +496,10 @@ BOOL CreatePipe(PHANDLE hReadPipe, PHANDLE hWritePipe, LPSECURITY_ATTRIBUTES lpP
 
 	if (!pReadPipe || !pWritePipe)
 	{
+		if (pipe_fd[0] >= 0)
+			close(pipe_fd[0]);
+		if (pipe_fd[1] >= 0)
+			close(pipe_fd[1]);
 		free(pReadPipe);
 		free(pWritePipe);
 		return FALSE;
