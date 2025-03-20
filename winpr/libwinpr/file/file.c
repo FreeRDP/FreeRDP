@@ -56,6 +56,10 @@
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
 #endif
 
+static WINPR_FILE* pStdHandleFile = NULL;
+
+static void GetStdHandle_Uninit(void) __attribute__((destructor));
+
 static BOOL FileIsHandled(HANDLE handle)
 {
 	return WINPR_HANDLE_IS_HANDLED(handle, HANDLE_TYPE_FILE, FALSE);
@@ -71,12 +75,20 @@ static int FileGetFd(HANDLE handle)
 	return fileno(file->fp);
 }
 
-static BOOL FileCloseHandle(HANDLE handle)
+static BOOL FileCloseHandleInt(HANDLE handle, BOOL force)
 {
 	WINPR_FILE* file = (WINPR_FILE*)handle;
 
 	if (!FileIsHandled(handle))
 		return FALSE;
+
+	if (!force)
+	{
+		if (handle == pStdHandleFile)
+		{
+			return FALSE;
+		}
+	}
 
 	if (file->fp)
 	{
@@ -91,6 +103,11 @@ static BOOL FileCloseHandle(HANDLE handle)
 	free(file->lpFileName);
 	free(file);
 	return TRUE;
+}
+
+static BOOL FileCloseHandle(HANDLE handle)
+{
+	return FileCloseHandleInt(handle, FALSE);
 }
 
 static BOOL FileSetEndOfFile(HANDLE hFile)
@@ -1008,10 +1025,14 @@ static WINPR_FILE* FileHandle_New(FILE* fp)
 	return pFile;
 }
 
+void GetStdHandle_Uninit(void)
+{
+	FileCloseHandleInt(pStdHandleFile, TRUE);
+}
+
 HANDLE GetStdHandle(DWORD nStdHandle)
 {
 	FILE* fp = NULL;
-	WINPR_FILE* pFile = NULL;
 
 	switch (nStdHandle)
 	{
@@ -1027,11 +1048,13 @@ HANDLE GetStdHandle(DWORD nStdHandle)
 		default:
 			return INVALID_HANDLE_VALUE;
 	}
-	pFile = FileHandle_New(fp);
-	if (!pFile)
+	if (!pStdHandleFile)
+		pStdHandleFile = FileHandle_New(fp);
+
+	if (!pStdHandleFile)
 		return INVALID_HANDLE_VALUE;
 
-	return (HANDLE)pFile;
+	return (HANDLE)pStdHandleFile;
 }
 
 BOOL SetStdHandle(WINPR_ATTR_UNUSED DWORD nStdHandle, WINPR_ATTR_UNUSED HANDLE hHandle)
