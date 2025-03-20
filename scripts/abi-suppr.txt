@@ -68,24 +68,111 @@ name = msusb_msconfig_dump
 [suppress_function]
 change_kind = function-subtype-change
 name = gdi_CopyRect
+parameter = '0 GDI_RECT*
+
+[suppress_function]
+change_kind = function-subtype-change
+name = gdi_CopyRect
 parameter = '1 const GDI_RECT*
 
 [suppress_function]
 change_kind = function-subtype-change
 name = gdi_EqualRgn
-parameter = '0 const GDI_RGN* 
 
 [suppress_function]
 change_kind = function-subtype-change
-name = gdi_EqualRgn
-parameter = '1 const GDI_RGN*
+name = gdi_CRectToRgn
+parameter = '4 GDI_RGN*
+
+[suppress_function]
+change_kind = function-subtype-change
+name = gdi_CreateRect
+
+[suppress_function]
+change_kind = function-subtype-change
+name = gdi_CreateRectRgn
+
+[suppress_function]
+change_kind = function-subtype-change
+name = gdi_RectToRgn
+parameter = '1 GDI_RGN*
+
+[suppress_function]
+change_kind = function-subtype-change
+name = gdi_SetRgn
+parameter = '0 GDI_RGN*
+
+[suppress_function]
+change_kind = function-subtype-change
+name = gdi_RgnToRect
+parameter = '1 GDI_RGN*
+
+[suppress_function]
+change_kind = function-subtype-change
+name = gdi_SetRectRgn
+parameter = '0 GDI_RGN*
+
+[suppress_function]
+change_kind = function-subtype-change
+name = gdi_SetRect
+parameter = '0 GDI_RECT*
 
 [suppress_function]
 change_kind = function-subtype-change
 name = gdi_PtInRect
-parameter = '0 const GDI_RECT*'
+
+[suppress_function]
+change_kind = function-subtype-change
+name = gdi_FillRect
+
+[suppress_function]
+change_kind = function-subtype-change
+name = gdi_RgnToRect
+parameter = '1 GDI_RECT*
+
+[suppress_function]
+change_kind = function-subtype-change
+name = gdi_CRgnToRect
+parameter = '4 GDI_RECT*
+
+[suppress_function]
+change_kind = function-subtype-change
+name = gdi_RectToCRgn
+
+[suppress_function]
+change_kind = function-subtype-change
+name = gdi_RgnToCRect
+
+[suppress_function]
+change_kind = function-subtype-change
+name = gdi_CRgnToRect
+parameter = '4 GDI_RECT*
+
+[suppress_function]
+change_kind = function-subtype-change
+name = freerdp_client_settings_parse_command_line_arguments_ex
+parameter = '6 freerdp_command_line_handle_option_t
+
+[suppress_function]
+change_kind = function-subtype-change
+name = freerdp_shall_disconnect_context
 
 [suppress_function]
 change_kind = function-subtype-change
 name = GetDynamicTimeZoneInformationEffectiveYears
-parameter = '0 const DYNAMIC_TIME_ZONE_INFORMATION*'
+
+[suppress_type]
+change_kind = typedef
+name = SEC_WINNT_AUTH_IDENTITY_INFO
+
+[suppress_function]
+change_kind = function-subtype-change
+parameter = '0 /.*restrict.*/
+
+[suppress_function]
+change_kind = function-subtype-change
+parameter = '1 /.*restrict.*/
+
+[suppress_function]
+change_kind = function-subtype-change
+parameter = '7 /.*restrict.*/

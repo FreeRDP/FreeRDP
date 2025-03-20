@@ -307,7 +307,7 @@ static void xf_cliprdr_set_raw_transfer_enabled(xfClipboard* clipboard, BOOL ena
 	xfc = clipboard->xfc;
 	WINPR_ASSERT(xfc);
 	LogTagAndXChangeProperty(TAG, xfc->display, xfc->drawable, clipboard->raw_transfer_atom,
-	                         XA_INTEGER, 32, PropModeReplace, (BYTE*)&data, 1);
+	                         XA_INTEGER, 32, PropModeReplace, (const BYTE*)&data, 1);
 }
 
 static BOOL xf_cliprdr_is_raw_transfer_available(xfClipboard* clipboard)
@@ -1202,7 +1202,7 @@ static void xf_cliprdr_provide_targets(xfClipboard* clipboard, const XSelectionE
 	{
 		WINPR_ASSERT(clipboard->numTargets <= INT32_MAX);
 		LogTagAndXChangeProperty(TAG, xfc->display, respond->requestor, respond->property, XA_ATOM,
-		                         32, PropModeReplace, (BYTE*)clipboard->targets,
+		                         32, PropModeReplace, (const BYTE*)clipboard->targets,
 		                         (int)clipboard->numTargets);
 	}
 }
@@ -1220,7 +1220,7 @@ static void xf_cliprdr_provide_timestamp(xfClipboard* clipboard, const XSelectio
 	{
 		LogTagAndXChangeProperty(TAG, xfc->display, respond->requestor, respond->property,
 		                         XA_INTEGER, 32, PropModeReplace,
-		                         (BYTE*)&clipboard->selection_ownership_timestamp, 1);
+		                         (const BYTE*)&clipboard->selection_ownership_timestamp, 1);
 	}
 }
 
@@ -1953,7 +1953,7 @@ static void xf_cliprdr_prepare_to_set_selection_owner(xfContext* xfc, xfClipboar
 	Atom value = clipboard->timestamp_property_atom;
 
 	LogTagAndXChangeProperty(TAG, xfc->display, xfc->drawable, clipboard->timestamp_property_atom,
-	                         XA_ATOM, 32, PropModeReplace, (BYTE*)&value, 1);
+	                         XA_ATOM, 32, PropModeReplace, (const BYTE*)&value, 1);
 	XFlush(xfc->display);
 }
 
@@ -2127,7 +2127,7 @@ xf_cliprdr_server_format_data_request(CliprdrClientContext* context,
 	{
 		format = xf_cliprdr_get_client_format_by_id(clipboard, CF_RAW);
 		LogTagAndXChangeProperty(TAG, xfc->display, xfc->drawable, clipboard->property_atom,
-		                         XA_INTEGER, 32, PropModeReplace, (BYTE*)&formatId, 1);
+		                         XA_INTEGER, 32, PropModeReplace, (const BYTE*)&formatId, 1);
 	}
 	else
 		format = xf_cliprdr_get_client_format_by_id(clipboard, formatId);
