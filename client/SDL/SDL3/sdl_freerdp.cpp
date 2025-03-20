@@ -988,12 +988,14 @@ static int sdl_run(SdlContext* sdl)
 					break;
 				case SDL_EVENT_USER_POINTER_NULL:
 					SDL_HideCursor();
+					sdl->setHasCursor(false);
 					break;
 				case SDL_EVENT_USER_POINTER_DEFAULT:
 				{
 					SDL_Cursor* def = SDL_GetDefaultCursor();
 					SDL_SetCursor(def);
 					SDL_ShowCursor();
+					sdl->setHasCursor(true);
 				}
 				break;
 				case SDL_EVENT_USER_POINTER_POSITION:
@@ -1735,6 +1737,16 @@ SdlContext::SdlContext(rdpContext* context)
 {
 	WINPR_ASSERT(context);
 	grab_kbd_enabled = freerdp_settings_get_bool(context->settings, FreeRDP_GrabKeyboard);
+}
+
+void SdlContext::setHasCursor(bool val)
+{
+	this->cursor = val;
+}
+
+bool SdlContext::hasCursor() const
+{
+	return cursor;
 }
 
 rdpContext* SdlContext::context() const
