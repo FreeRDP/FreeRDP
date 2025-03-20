@@ -98,8 +98,11 @@ install(TARGETS ${MODULE_NAME} COMPONENT libraries EXPORT WinPR-toolsTargets ARC
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "WinPR/Tools")
 
 # Add all command line utilities
-add_subdirectory(makecert-cli)
-add_subdirectory(hash-cli)
+option(WITH_WINPR_TOOLS_CLI "Build winpr-tools cli programs" ON)
+if(WITH_WINPR_TOOLS_CLI)
+  add_subdirectory(makecert-cli)
+  add_subdirectory(hash-cli)
+endif()
 
 include(pkg-config-install-prefix)
 cleaning_configure_file(
