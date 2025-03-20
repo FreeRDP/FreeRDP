@@ -901,25 +901,25 @@ BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
 
 	if (!rdp_read_security_header(rdp, s, &sec_flags, NULL))
 	{
-		WLog_ERR(TAG, "invalid security header");
+		WLog_Print(rdp->log, WLOG_ERROR, "invalid security header");
 		return FALSE;
 	}
 
 	if ((sec_flags & SEC_EXCHANGE_PKT) == 0)
 	{
-		WLog_ERR(TAG, "missing SEC_EXCHANGE_PKT in security header");
+		WLog_Print(rdp->log, WLOG_ERROR, "missing SEC_EXCHANGE_PKT in security header");
 		return FALSE;
 	}
 
 	rdp->do_crypt_license = (sec_flags & SEC_LICENSE_ENCRYPT_SC) != 0 ? TRUE : FALSE;
 
-	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
+	if (!Stream_CheckAndLogRequiredLengthWLog(rdp->log, s, 4))
 		return FALSE;
 
 	Stream_Read_UINT32(s, rand_len);
 
 	/* rand_len already includes 8 bytes of padding */
-	if (!Stream_CheckAndLogRequiredLength(TAG, s, rand_len))
+	if (!Stream_CheckAndLogRequiredLengthWLog(rdp->log, s, rand_len))
 		return FALSE;
 
 	const BYTE* crypt_random = Stream_ConstPointer(s);
@@ -942,7 +942,7 @@ BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
 
 		if (!rdp->fips_encrypt)
 		{
-			WLog_ERR(TAG, "unable to allocate des3 encrypt key");
+			WLog_Print(rdp->log, WLOG_ERROR, "unable to allocate des3 encrypt key");
 			goto end;
 		}
 
@@ -952,7 +952,7 @@ BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
 
 		if (!rdp->fips_decrypt)
 		{
-			WLog_ERR(TAG, "unable to allocate des3 decrypt key");
+			WLog_Print(rdp->log, WLOG_ERROR, "unable to allocate des3 decrypt key");
 			goto end;
 		}
 
@@ -966,7 +966,7 @@ BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
 	if (!rdp_reset_rc4_decrypt_keys(rdp))
 		goto end;
 
-	ret = tpkt_ensure_stream_consumed(s, length);
+	ret = tpkt_ensure_stream_consumed(rdp->log, s, length);
 end:
 
 	if (!ret)
@@ -1177,7 +1177,7 @@ state_run_t rdp_handle_message_channel(rdpRdp* rdp, wStream* s, UINT16 channelId
 	const state_run_t rc = rdp_recv_message_channel_pdu(rdp, s, securityFlags);
 	if (state_run_success(rc))
 	{
-		if (!tpkt_ensure_stream_consumed(s, length))
+		if (!tpkt_ensure_stream_consumed(rdp->log, s, length))
 			return STATE_RUN_FAILED;
 	}
 	return rc;

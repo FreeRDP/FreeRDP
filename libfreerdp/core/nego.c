@@ -35,7 +35,7 @@
 
 #include "transport.h"
 
-#define TAG FREERDP_TAG("core.nego")
+#define NEGO_TAG FREERDP_TAG("core.nego")
 
 struct rdp_nego
 {
@@ -68,6 +68,7 @@ struct rdp_nego
 	BOOL ConnectChildSession;
 
 	rdpTransport* transport;
+	wLog* log;
 };
 
 static const char* nego_state_string(NEGO_STATE state)
@@ -151,14 +152,14 @@ BOOL nego_connect(rdpNego* nego)
 		}
 		else
 		{
-			WLog_ERR(TAG, "No security protocol is enabled");
+			WLog_Print(nego->log, WLOG_ERROR, "No security protocol is enabled");
 			nego_set_state(nego, NEGO_STATE_FAIL);
 			return FALSE;
 		}
 
 		if (!nego->NegotiateSecurityLayer)
 		{
-			WLog_DBG(TAG, "Security Layer Negotiation is disabled");
+			WLog_Print(nego->log, WLOG_DEBUG, "Security Layer Negotiation is disabled");
 			/* attempt only the highest enabled protocol (see nego_attempt_*) */
 			nego->EnabledProtocols[PROTOCOL_RDSAAD] = FALSE;
 			nego->EnabledProtocols[PROTOCOL_HYBRID] = FALSE;
@@ -196,7 +197,8 @@ BOOL nego_connect(rdpNego* nego)
 					SelectedProtocol = PROTOCOL_RDP;
 					break;
 				default:
-					WLog_ERR(TAG, "Invalid NEGO state 0x%08" PRIx32, nego_get_state(nego));
+					WLog_Print(nego->log, WLOG_ERROR, "Invalid NEGO state 0x%08" PRIx32,
+					           nego_get_state(nego));
 					return FALSE;
 			}
 			if (!nego_set_selected_protocol(nego, SelectedProtocol))
@@ -205,7 +207,7 @@ BOOL nego_connect(rdpNego* nego)
 
 		if (!nego_tcp_connect(nego))
 		{
-			WLog_ERR(TAG, "Failed to connect");
+			WLog_Print(nego->log, WLOG_ERROR, "Failed to connect");
 			return FALSE;
 		}
 
@@ -213,7 +215,7 @@ BOOL nego_connect(rdpNego* nego)
 		{
 			if (!nego_send_preconnection_pdu(nego))
 			{
-				WLog_ERR(TAG, "Failed to send preconnection pdu");
+				WLog_Print(nego->log, WLOG_ERROR, "Failed to send preconnection pdu");
 				nego_set_state(nego, NEGO_STATE_FINAL);
 				return FALSE;
 			}
@@ -228,14 +230,14 @@ BOOL nego_connect(rdpNego* nego)
 	{
 		do
 		{
-			WLog_DBG(TAG, "state: %s", nego_state_string(nego_get_state(nego)));
+			WLog_Print(nego->log, WLOG_DEBUG, "state: %s", nego_state_string(nego_get_state(nego)));
 			nego_send(nego);
 
 			if (nego_get_state(nego) == NEGO_STATE_FAIL)
 			{
 				if (freerdp_get_last_error(transport_get_context(nego->transport)) ==
 				    FREERDP_ERROR_SUCCESS)
-					WLog_ERR(TAG, "Protocol Security Negotiation Failure");
+					WLog_Print(nego->log, WLOG_ERROR, "Protocol Security Negotiation Failure");
 
 				nego_set_state(nego, NEGO_STATE_FINAL);
 				return FALSE;
@@ -245,8 +247,8 @@ BOOL nego_connect(rdpNego* nego)
 
 	{
 		char buffer[64] = { 0 };
-		WLog_DBG(TAG, "Negotiated %s security",
-		         nego_protocol_to_str(nego->SelectedProtocol, buffer, sizeof(buffer)));
+		WLog_Print(nego->log, WLOG_DEBUG, "Negotiated %s security",
+		           nego_protocol_to_str(nego->SelectedProtocol, buffer, sizeof(buffer)));
 	}
 
 	/* update settings with negotiated protocol security */
@@ -275,8 +277,8 @@ BOOL nego_connect(rdpNego* nego)
 	if (!nego_security_connect(nego))
 	{
 		char buffer[64] = { 0 };
-		WLog_DBG(TAG, "Failed to connect with %s security",
-		         nego_protocol_to_str(nego->SelectedProtocol, buffer, sizeof(buffer)));
+		WLog_Print(nego->log, WLOG_DEBUG, "Failed to connect with %s security",
+		           nego_protocol_to_str(nego->SelectedProtocol, buffer, sizeof(buffer)));
 		return FALSE;
 	}
 
@@ -297,32 +299,32 @@ static BOOL nego_try_connect(rdpNego* nego)
 	switch (nego->SelectedProtocol)
 	{
 		case PROTOCOL_RDSAAD:
-			WLog_DBG(TAG, "nego_security_connect with PROTOCOL_RDSAAD");
+			WLog_Print(nego->log, WLOG_DEBUG, "nego_security_connect with PROTOCOL_RDSAAD");
 			nego->SecurityConnected = transport_connect_aad(nego->transport);
 			break;
 		case PROTOCOL_RDSTLS:
-			WLog_DBG(TAG, "nego_security_connect with PROTOCOL_RDSTLS");
+			WLog_Print(nego->log, WLOG_DEBUG, "nego_security_connect with PROTOCOL_RDSTLS");
 			nego->SecurityConnected = transport_connect_rdstls(nego->transport);
 			break;
 		case PROTOCOL_HYBRID:
-			WLog_DBG(TAG, "nego_security_connect with PROTOCOL_HYBRID");
+			WLog_Print(nego->log, WLOG_DEBUG, "nego_security_connect with PROTOCOL_HYBRID");
 			nego->SecurityConnected = transport_connect_nla(nego->transport, FALSE);
 			break;
 		case PROTOCOL_HYBRID_EX:
-			WLog_DBG(TAG, "nego_security_connect with PROTOCOL_HYBRID_EX");
+			WLog_Print(nego->log, WLOG_DEBUG, "nego_security_connect with PROTOCOL_HYBRID_EX");
 			nego->SecurityConnected = transport_connect_nla(nego->transport, TRUE);
 			break;
 		case PROTOCOL_SSL:
-			WLog_DBG(TAG, "nego_security_connect with PROTOCOL_SSL");
+			WLog_Print(nego->log, WLOG_DEBUG, "nego_security_connect with PROTOCOL_SSL");
 			nego->SecurityConnected = transport_connect_tls(nego->transport);
 			break;
 		case PROTOCOL_RDP:
-			WLog_DBG(TAG, "nego_security_connect with PROTOCOL_RDP");
+			WLog_Print(nego->log, WLOG_DEBUG, "nego_security_connect with PROTOCOL_RDP");
 			nego->SecurityConnected = transport_connect_rdp(nego->transport);
 			break;
 		default:
-			WLog_ERR(TAG,
-			         "cannot connect security layer because no protocol has been selected yet.");
+			WLog_Print(nego->log, WLOG_ERROR,
+			           "cannot connect security layer because no protocol has been selected yet.");
 			return FALSE;
 	}
 	return nego->SecurityConnected;
@@ -364,9 +366,11 @@ static BOOL nego_tcp_connect(rdpNego* nego)
 			if (nego->GatewayBypassLocal)
 			{
 				/* Attempt a direct connection first, and then fallback to using the gateway */
-				WLog_INFO(TAG,
-				          "Detecting if host can be reached locally. - This might take some time.");
-				WLog_INFO(TAG, "To disable auto detection use /gateway-usage-method:direct");
+				WLog_Print(
+				    nego->log, WLOG_INFO,
+				    "Detecting if host can be reached locally. - This might take some time.");
+				WLog_Print(nego->log, WLOG_INFO,
+				           "To disable auto detection use /gateway-usage-method:direct");
 				transport_set_gateway_enabled(nego->transport, FALSE);
 				nego->TcpConnected = transport_connect(nego->transport, nego->hostname, nego->port,
 				                                       TcpConnectTimeout);
@@ -449,7 +453,7 @@ BOOL nego_send_preconnection_pdu(rdpNego* nego)
 
 	WINPR_ASSERT(nego);
 
-	WLog_DBG(TAG, "Sending preconnection PDU");
+	WLog_Print(nego->log, WLOG_DEBUG, "Sending preconnection PDU");
 
 	if (!nego_tcp_connect(nego))
 		return FALSE;
@@ -476,7 +480,7 @@ BOOL nego_send_preconnection_pdu(rdpNego* nego)
 	if (!s)
 	{
 		free(wszPCB);
-		WLog_ERR(TAG, "Stream_New failed!");
+		WLog_Print(nego->log, WLOG_ERROR, "Stream_New failed!");
 		return FALSE;
 	}
 
@@ -508,7 +512,7 @@ static void nego_attempt_rdstls(rdpNego* nego)
 {
 	WINPR_ASSERT(nego);
 	nego->RequestedProtocols = PROTOCOL_RDSTLS | PROTOCOL_SSL;
-	WLog_DBG(TAG, "Attempting RDSTLS security");
+	WLog_Print(nego->log, WLOG_DEBUG, "Attempting RDSTLS security");
 
 	if (!nego_transport_connect(nego))
 	{
@@ -528,7 +532,7 @@ static void nego_attempt_rdstls(rdpNego* nego)
 		return;
 	}
 
-	WLog_DBG(TAG, "state: %s", nego_state_string(nego_get_state(nego)));
+	WLog_Print(nego->log, WLOG_DEBUG, "state: %s", nego_state_string(nego_get_state(nego)));
 
 	if (nego_get_state(nego) != NEGO_STATE_FINAL)
 	{
@@ -551,7 +555,7 @@ static void nego_attempt_rdsaad(rdpNego* nego)
 {
 	WINPR_ASSERT(nego);
 	nego->RequestedProtocols = PROTOCOL_RDSAAD;
-	WLog_DBG(TAG, "Attempting RDS AAD Auth security");
+	WLog_Print(nego->log, WLOG_DEBUG, "Attempting RDS AAD Auth security");
 
 	if (!nego_transport_connect(nego))
 	{
@@ -571,7 +575,7 @@ static void nego_attempt_rdsaad(rdpNego* nego)
 		return;
 	}
 
-	WLog_DBG(TAG, "state: %s", nego_state_string(nego_get_state(nego)));
+	WLog_Print(nego->log, WLOG_DEBUG, "state: %s", nego_state_string(nego_get_state(nego)));
 
 	if (nego_get_state(nego) != NEGO_STATE_FINAL)
 	{
@@ -594,7 +598,7 @@ static void nego_attempt_ext(rdpNego* nego)
 {
 	WINPR_ASSERT(nego);
 	nego->RequestedProtocols = PROTOCOL_HYBRID | PROTOCOL_SSL | PROTOCOL_HYBRID_EX;
-	WLog_DBG(TAG, "Attempting NLA extended security");
+	WLog_Print(nego->log, WLOG_DEBUG, "Attempting NLA extended security");
 
 	if (!nego_transport_connect(nego))
 	{
@@ -614,7 +618,7 @@ static void nego_attempt_ext(rdpNego* nego)
 		return;
 	}
 
-	WLog_DBG(TAG, "state: %s", nego_state_string(nego_get_state(nego)));
+	WLog_Print(nego->log, WLOG_DEBUG, "state: %s", nego_state_string(nego_get_state(nego)));
 
 	if (nego_get_state(nego) != NEGO_STATE_FINAL)
 	{
@@ -635,7 +639,7 @@ static void nego_attempt_nla(rdpNego* nego)
 {
 	WINPR_ASSERT(nego);
 	nego->RequestedProtocols = PROTOCOL_HYBRID | PROTOCOL_SSL;
-	WLog_DBG(TAG, "Attempting NLA security");
+	WLog_Print(nego->log, WLOG_DEBUG, "Attempting NLA security");
 
 	if (!nego_transport_connect(nego))
 	{
@@ -655,7 +659,7 @@ static void nego_attempt_nla(rdpNego* nego)
 		return;
 	}
 
-	WLog_DBG(TAG, "state: %s", nego_state_string(nego_get_state(nego)));
+	WLog_Print(nego->log, WLOG_DEBUG, "state: %s", nego_state_string(nego_get_state(nego)));
 
 	if (nego_get_state(nego) != NEGO_STATE_FINAL)
 	{
@@ -674,7 +678,7 @@ static void nego_attempt_tls(rdpNego* nego)
 {
 	WINPR_ASSERT(nego);
 	nego->RequestedProtocols = PROTOCOL_SSL;
-	WLog_DBG(TAG, "Attempting TLS security");
+	WLog_Print(nego->log, WLOG_DEBUG, "Attempting TLS security");
 
 	if (!nego_transport_connect(nego))
 	{
@@ -709,7 +713,7 @@ static void nego_attempt_rdp(rdpNego* nego)
 {
 	WINPR_ASSERT(nego);
 	nego->RequestedProtocols = PROTOCOL_RDP;
-	WLog_DBG(TAG, "Attempting RDP security");
+	WLog_Print(nego->log, WLOG_DEBUG, "Attempting RDP security");
 
 	if (!nego_transport_connect(nego))
 	{
@@ -748,7 +752,7 @@ BOOL nego_recv_response(rdpNego* nego)
 
 	if (!s)
 	{
-		WLog_ERR(TAG, "Stream_New failed!");
+		WLog_Print(nego->log, WLOG_ERROR, "Stream_New failed!");
 		return FALSE;
 	}
 
@@ -806,8 +810,9 @@ int nego_recv(WINPR_ATTR_UNUSED rdpTransport* transport, wStream* s, void* extra
 					return -1;
 				{
 					char buffer[64] = { 0 };
-					WLog_DBG(TAG, "selected_protocol: %s",
-					         nego_protocol_to_str(nego->SelectedProtocol, buffer, sizeof(buffer)));
+					WLog_Print(
+					    nego->log, WLOG_DEBUG, "selected_protocol: %s",
+					    nego_protocol_to_str(nego->SelectedProtocol, buffer, sizeof(buffer)));
 				}
 
 				/* enhanced security selected ? */
@@ -848,7 +853,7 @@ int nego_recv(WINPR_ATTR_UNUSED rdpTransport* transport, wStream* s, void* extra
 	}
 	else if (li == 6)
 	{
-		WLog_DBG(TAG, "no rdpNegData");
+		WLog_Print(nego->log, WLOG_DEBUG, "no rdpNegData");
 
 		if (!nego->EnabledProtocols[PROTOCOL_RDP])
 			nego_set_state(nego, NEGO_STATE_FAIL);
@@ -857,11 +862,11 @@ int nego_recv(WINPR_ATTR_UNUSED rdpTransport* transport, wStream* s, void* extra
 	}
 	else
 	{
-		WLog_ERR(TAG, "invalid negotiation response");
+		WLog_Print(nego->log, WLOG_ERROR, "invalid negotiation response");
 		nego_set_state(nego, NEGO_STATE_FAIL);
 	}
 
-	if (!tpkt_ensure_stream_consumed(s, length))
+	if (!tpkt_ensure_stream_consumed(nego->log, s, length))
 		return -1;
 	return 0;
 }
@@ -954,11 +959,13 @@ static BOOL nego_read_request_token_or_cookie(rdpNego* nego, wStream* s)
 	if (!result)
 	{
 		Stream_SetPosition(s, pos);
-		WLog_ERR(TAG, "invalid %s received", isToken ? "routing token" : "cookie");
+		WLog_Print(nego->log, WLOG_ERROR, "invalid %s received",
+		           isToken ? "routing token" : "cookie");
 	}
 	else
 	{
-		WLog_DBG(TAG, "received %s [%s]", isToken ? "routing token" : "cookie", str);
+		WLog_Print(nego->log, WLOG_DEBUG, "received %s [%s]", isToken ? "routing token" : "cookie",
+		           str);
 	}
 
 	return result;
@@ -990,13 +997,13 @@ BOOL nego_read_request(rdpNego* nego, wStream* s)
 
 	if (li != Stream_GetRemainingLength(s) + 6)
 	{
-		WLog_ERR(TAG, "Incorrect TPDU length indicator.");
+		WLog_Print(nego->log, WLOG_ERROR, "Incorrect TPDU length indicator.");
 		return FALSE;
 	}
 
 	if (!nego_read_request_token_or_cookie(nego, s))
 	{
-		WLog_ERR(TAG, "Failed to parse routing token or cookie.");
+		WLog_Print(nego->log, WLOG_ERROR, "Failed to parse routing token or cookie.");
 		return FALSE;
 	}
 
@@ -1007,7 +1014,8 @@ BOOL nego_read_request(rdpNego* nego, wStream* s)
 
 		if (type != TYPE_RDP_NEG_REQ)
 		{
-			WLog_ERR(TAG, "Incorrect negotiation request type %" PRIu8 "", type);
+			WLog_Print(nego->log, WLOG_ERROR, "Incorrect negotiation request type %" PRIu8 "",
+			           type);
 			return FALSE;
 		}
 
@@ -1015,7 +1023,7 @@ BOOL nego_read_request(rdpNego* nego, wStream* s)
 			return FALSE;
 	}
 
-	return tpkt_ensure_stream_consumed(s, length);
+	return tpkt_ensure_stream_consumed(nego->log, s, length);
 }
 
 /**
@@ -1049,7 +1057,7 @@ void nego_send(rdpNego* nego)
 			nego_attempt_rdp(nego);
 			break;
 		default:
-			WLog_ERR(TAG, "invalid negotiation state for sending");
+			WLog_Print(nego->log, WLOG_ERROR, "invalid negotiation state for sending");
 			break;
 	}
 }
@@ -1078,7 +1086,7 @@ BOOL nego_send_negotiation_request(rdpNego* nego)
 	WINPR_ASSERT(nego);
 	if (!s)
 	{
-		WLog_ERR(TAG, "Stream_New failed!");
+		WLog_Print(nego->log, WLOG_ERROR, "Stream_New failed!");
 		return FALSE;
 	}
 
@@ -1096,12 +1104,13 @@ BOOL nego_send_negotiation_request(rdpNego* nego)
 		    (nego->RoutingToken[nego->RoutingTokenLength - 2] == 0x0D) &&
 		    (nego->RoutingToken[nego->RoutingTokenLength - 1] == 0x0A))
 		{
-			WLog_DBG(TAG, "Routing token looks correctly terminated - use verbatim");
+			WLog_Print(nego->log, WLOG_DEBUG,
+			           "Routing token looks correctly terminated - use verbatim");
 			length += nego->RoutingTokenLength;
 		}
 		else
 		{
-			WLog_DBG(TAG, "Adding terminating CRLF to routing token");
+			WLog_Print(nego->log, WLOG_DEBUG, "Adding terminating CRLF to routing token");
 			Stream_Write_UINT8(s, 0x0D); /* CR */
 			Stream_Write_UINT8(s, 0x0A); /* LF */
 			length += nego->RoutingTokenLength + 2;
@@ -1123,8 +1132,8 @@ BOOL nego_send_negotiation_request(rdpNego* nego)
 
 	{
 		char buffer[64] = { 0 };
-		WLog_DBG(TAG, "RequestedProtocols: %s",
-		         nego_protocol_to_str(nego->RequestedProtocols, buffer, sizeof(buffer)));
+		WLog_Print(nego->log, WLOG_DEBUG, "RequestedProtocols: %s",
+		           nego_protocol_to_str(nego->RequestedProtocols, buffer, sizeof(buffer)));
 	}
 
 	if ((nego->RequestedProtocols > PROTOCOL_RDP) || (nego->sendNegoData))
@@ -1167,60 +1176,63 @@ static BOOL nego_process_correlation_info(WINPR_ATTR_UNUSED rdpNego* nego, wStre
 	UINT16 length = 0;
 	BYTE correlationId[16] = { 0 };
 
-	if (!Stream_CheckAndLogRequiredLength(TAG, s, 36))
+	if (!Stream_CheckAndLogRequiredLengthWLog(nego->log, s, 36))
 	{
-		WLog_ERR(TAG, "RDP_NEG_REQ::flags CORRELATION_INFO_PRESENT but data is missing");
+		WLog_Print(nego->log, WLOG_ERROR,
+		           "RDP_NEG_REQ::flags CORRELATION_INFO_PRESENT but data is missing");
 		return FALSE;
 	}
 
 	Stream_Read_UINT8(s, type);
 	if (type != TYPE_RDP_CORRELATION_INFO)
 	{
-		WLog_ERR(TAG, "(RDP_NEG_CORRELATION_INFO::type != TYPE_RDP_CORRELATION_INFO");
+		WLog_Print(nego->log, WLOG_ERROR,
+		           "(RDP_NEG_CORRELATION_INFO::type != TYPE_RDP_CORRELATION_INFO");
 		return FALSE;
 	}
 	Stream_Read_UINT8(s, flags);
 	if (flags != 0)
 	{
-		WLog_ERR(TAG, "(RDP_NEG_CORRELATION_INFO::flags != 0");
+		WLog_Print(nego->log, WLOG_ERROR, "(RDP_NEG_CORRELATION_INFO::flags != 0");
 		return FALSE;
 	}
 	Stream_Read_UINT16(s, length);
 	if (length != 36)
 	{
-		WLog_ERR(TAG, "(RDP_NEG_CORRELATION_INFO::length != 36");
+		WLog_Print(nego->log, WLOG_ERROR, "(RDP_NEG_CORRELATION_INFO::length != 36");
 		return FALSE;
 	}
 
 	Stream_Read(s, correlationId, sizeof(correlationId));
 	if ((correlationId[0] == 0x00) || (correlationId[0] == 0xF4))
 	{
-		WLog_ERR(TAG, "(RDP_NEG_CORRELATION_INFO::correlationId[0] has invalid value 0x%02" PRIx8,
-		         correlationId[0]);
+		WLog_Print(nego->log, WLOG_ERROR,
+		           "(RDP_NEG_CORRELATION_INFO::correlationId[0] has invalid value 0x%02" PRIx8,
+		           correlationId[0]);
 		return FALSE;
 	}
 	for (size_t x = 0; x < ARRAYSIZE(correlationId); x++)
 	{
 		if (correlationId[x] == 0x0D)
 		{
-			WLog_ERR(TAG,
-			         "(RDP_NEG_CORRELATION_INFO::correlationId[%" PRIuz
-			         "] has invalid value 0x%02" PRIx8,
-			         x, correlationId[x]);
+			WLog_Print(nego->log, WLOG_ERROR,
+			           "(RDP_NEG_CORRELATION_INFO::correlationId[%" PRIuz
+			           "] has invalid value 0x%02" PRIx8,
+			           x, correlationId[x]);
 			return FALSE;
 		}
 	}
 	Stream_Seek(s, 16); /* skip reserved bytes */
 
-	WLog_INFO(TAG,
-	          "RDP_NEG_CORRELATION_INFO::correlationId = { %02" PRIx8 ", %02" PRIx8 ", %02" PRIx8
-	          ", %02" PRIx8 ", %02" PRIx8 ", %02" PRIx8 ", %02" PRIx8 ", %02" PRIx8 ", %02" PRIx8
-	          ", %02" PRIx8 ", %02" PRIx8 ", %02" PRIx8 ", %02" PRIx8 ", %02" PRIx8 ", %02" PRIx8
-	          ", %02" PRIx8 " }",
-	          correlationId[0], correlationId[1], correlationId[2], correlationId[3],
-	          correlationId[4], correlationId[5], correlationId[6], correlationId[7],
-	          correlationId[8], correlationId[9], correlationId[10], correlationId[11],
-	          correlationId[12], correlationId[13], correlationId[14], correlationId[15]);
+	WLog_Print(nego->log, WLOG_INFO,
+	           "RDP_NEG_CORRELATION_INFO::correlationId = { %02" PRIx8 ", %02" PRIx8 ", %02" PRIx8
+	           ", %02" PRIx8 ", %02" PRIx8 ", %02" PRIx8 ", %02" PRIx8 ", %02" PRIx8 ", %02" PRIx8
+	           ", %02" PRIx8 ", %02" PRIx8 ", %02" PRIx8 ", %02" PRIx8 ", %02" PRIx8 ", %02" PRIx8
+	           ", %02" PRIx8 " }",
+	           correlationId[0], correlationId[1], correlationId[2], correlationId[3],
+	           correlationId[4], correlationId[5], correlationId[6], correlationId[7],
+	           correlationId[8], correlationId[9], correlationId[10], correlationId[11],
+	           correlationId[12], correlationId[13], correlationId[14], correlationId[15]);
 	return TRUE;
 }
 
@@ -1232,29 +1244,30 @@ BOOL nego_process_negotiation_request(rdpNego* nego, wStream* s)
 	WINPR_ASSERT(nego);
 	WINPR_ASSERT(s);
 
-	if (!Stream_CheckAndLogRequiredLength(TAG, s, 7))
+	if (!Stream_CheckAndLogRequiredLengthWLog(nego->log, s, 7))
 		return FALSE;
 	Stream_Read_UINT8(s, flags);
 	if ((flags & ~(RESTRICTED_ADMIN_MODE_REQUIRED | REDIRECTED_AUTHENTICATION_MODE_REQUIRED |
 	               CORRELATION_INFO_PRESENT)) != 0)
 	{
-		WLog_ERR(TAG, "RDP_NEG_REQ::flags invalid value 0x%02" PRIx8, flags);
+		WLog_Print(nego->log, WLOG_ERROR, "RDP_NEG_REQ::flags invalid value 0x%02" PRIx8, flags);
 		return FALSE;
 	}
 	if (flags & RESTRICTED_ADMIN_MODE_REQUIRED)
-		WLog_INFO(TAG, "RDP_NEG_REQ::flags RESTRICTED_ADMIN_MODE_REQUIRED");
+		WLog_Print(nego->log, WLOG_INFO, "RDP_NEG_REQ::flags RESTRICTED_ADMIN_MODE_REQUIRED");
 
 	if (flags & REDIRECTED_AUTHENTICATION_MODE_REQUIRED)
 	{
 		if (!nego->RemoteCredsGuardSupported)
 		{
-			WLog_ERR(TAG,
-			         "RDP_NEG_REQ::flags REDIRECTED_AUTHENTICATION_MODE_REQUIRED but disabled");
+			WLog_Print(nego->log, WLOG_ERROR,
+			           "RDP_NEG_REQ::flags REDIRECTED_AUTHENTICATION_MODE_REQUIRED but disabled");
 			return FALSE;
 		}
 		else
 		{
-			WLog_INFO(TAG, "RDP_NEG_REQ::flags REDIRECTED_AUTHENTICATION_MODE_REQUIRED");
+			WLog_Print(nego->log, WLOG_INFO,
+			           "RDP_NEG_REQ::flags REDIRECTED_AUTHENTICATION_MODE_REQUIRED");
 		}
 		nego->RemoteCredsGuardActive = TRUE;
 	}
@@ -1262,7 +1275,7 @@ BOOL nego_process_negotiation_request(rdpNego* nego, wStream* s)
 	Stream_Read_UINT16(s, length);
 	if (length != 8)
 	{
-		WLog_ERR(TAG, "RDP_NEG_REQ::length != 8");
+		WLog_Print(nego->log, WLOG_ERROR, "RDP_NEG_REQ::length != 8");
 		return FALSE;
 	}
 	Stream_Read_UINT32(s, nego->RequestedProtocols);
@@ -1275,8 +1288,8 @@ BOOL nego_process_negotiation_request(rdpNego* nego, wStream* s)
 
 	{
 		char buffer[64] = { 0 };
-		WLog_DBG(TAG, "RDP_NEG_REQ: RequestedProtocol: %s",
-		         nego_protocol_to_str(nego->RequestedProtocols, buffer, sizeof(buffer)));
+		WLog_Print(nego->log, WLOG_DEBUG, "RDP_NEG_REQ: RequestedProtocol: %s",
+		           nego_protocol_to_str(nego->RequestedProtocols, buffer, sizeof(buffer)));
 	}
 	nego_set_state(nego, NEGO_STATE_FINAL);
 	return TRUE;
@@ -1312,19 +1325,20 @@ BOOL nego_process_negotiation_response(rdpNego* nego, wStream* s)
 	WINPR_ASSERT(nego);
 	WINPR_ASSERT(s);
 
-	if (!Stream_CheckAndLogRequiredLength(TAG, s, 7))
+	if (!Stream_CheckAndLogRequiredLengthWLog(nego->log, s, 7))
 	{
 		nego_set_state(nego, NEGO_STATE_FAIL);
 		return FALSE;
 	}
 
 	Stream_Read_UINT8(s, nego->flags);
-	WLog_DBG(TAG, "RDP_NEG_RSP::flags = { %s }", nego_rdp_neg_rsp_flags_str(nego->flags));
+	WLog_Print(nego->log, WLOG_DEBUG, "RDP_NEG_RSP::flags = { %s }",
+	           nego_rdp_neg_rsp_flags_str(nego->flags));
 
 	Stream_Read_UINT16(s, length);
 	if (length != 8)
 	{
-		WLog_ERR(TAG, "RDP_NEG_RSP::length != 8");
+		WLog_Print(nego->log, WLOG_ERROR, "RDP_NEG_RSP::length != 8");
 		nego_set_state(nego, NEGO_STATE_FAIL);
 		return FALSE;
 	}
@@ -1353,20 +1367,20 @@ BOOL nego_process_negotiation_failure(rdpNego* nego, wStream* s)
 	WINPR_ASSERT(nego);
 	WINPR_ASSERT(s);
 
-	WLog_DBG(TAG, "RDP_NEG_FAILURE");
-	if (!Stream_CheckAndLogRequiredLength(TAG, s, 7))
+	WLog_Print(nego->log, WLOG_DEBUG, "RDP_NEG_FAILURE");
+	if (!Stream_CheckAndLogRequiredLengthWLog(nego->log, s, 7))
 		return FALSE;
 
 	Stream_Read_UINT8(s, flags);
 	if (flags != 0)
 	{
-		WLog_WARN(TAG, "RDP_NEG_FAILURE::flags = 0x%02" PRIx8, flags);
+		WLog_Print(nego->log, WLOG_ERROR, "RDP_NEG_FAILURE::flags = 0x%02" PRIx8, flags);
 		return FALSE;
 	}
 	Stream_Read_UINT16(s, length);
 	if (length != 8)
 	{
-		WLog_ERR(TAG, "RDP_NEG_FAILURE::length != 8");
+		WLog_Print(nego->log, WLOG_ERROR, "RDP_NEG_FAILURE::length != 8");
 		return FALSE;
 	}
 	Stream_Read_UINT32(s, failureCode);
@@ -1374,29 +1388,30 @@ BOOL nego_process_negotiation_failure(rdpNego* nego, wStream* s)
 	switch (failureCode)
 	{
 		case SSL_REQUIRED_BY_SERVER:
-			WLog_WARN(TAG, "Error: SSL_REQUIRED_BY_SERVER");
+			WLog_Print(nego->log, WLOG_WARN, "Error: SSL_REQUIRED_BY_SERVER");
 			break;
 
 		case SSL_NOT_ALLOWED_BY_SERVER:
-			WLog_WARN(TAG, "Error: SSL_NOT_ALLOWED_BY_SERVER");
+			WLog_Print(nego->log, WLOG_WARN, "Error: SSL_NOT_ALLOWED_BY_SERVER");
 			nego->sendNegoData = TRUE;
 			break;
 
 		case SSL_CERT_NOT_ON_SERVER:
-			WLog_ERR(TAG, "Error: SSL_CERT_NOT_ON_SERVER");
+			WLog_Print(nego->log, WLOG_ERROR, "Error: SSL_CERT_NOT_ON_SERVER");
 			nego->sendNegoData = TRUE;
 			break;
 
 		case INCONSISTENT_FLAGS:
-			WLog_ERR(TAG, "Error: INCONSISTENT_FLAGS");
+			WLog_Print(nego->log, WLOG_ERROR, "Error: INCONSISTENT_FLAGS");
 			break;
 
 		case HYBRID_REQUIRED_BY_SERVER:
-			WLog_WARN(TAG, "Error: HYBRID_REQUIRED_BY_SERVER");
+			WLog_Print(nego->log, WLOG_WARN, "Error: HYBRID_REQUIRED_BY_SERVER");
 			break;
 
 		default:
-			WLog_ERR(TAG, "Error: Unknown protocol security error %" PRIu32 "", failureCode);
+			WLog_Print(nego->log, WLOG_ERROR, "Error: Unknown protocol security error %" PRIu32 "",
+			           failureCode);
 			break;
 	}
 
@@ -1431,7 +1446,7 @@ BOOL nego_send_negotiation_response(rdpNego* nego)
 
 	if (!s)
 	{
-		WLog_ERR(TAG, "Stream_New failed!");
+		WLog_Print(nego->log, WLOG_ERROR, "Stream_New failed!");
 		return FALSE;
 	}
 
@@ -1525,8 +1540,8 @@ BOOL nego_send_negotiation_response(rdpNego* nego)
 					 * 127.0.0.1 or local unix sockets.
 					 * This also affects connections via port tunnels! (e.g. ssh -L)
 					 */
-					WLog_INFO(TAG,
-					          "Turning off encryption for local peer with standard rdp security");
+					WLog_Print(nego->log, WLOG_INFO,
+					           "Turning off encryption for local peer with standard rdp security");
 					if (!freerdp_settings_set_bool(settings, FreeRDP_UseRdpSecurityLayer, FALSE))
 						return FALSE;
 					if (!freerdp_settings_set_uint32(settings, FreeRDP_EncryptionLevel,
@@ -1535,7 +1550,7 @@ BOOL nego_send_negotiation_response(rdpNego* nego)
 				}
 				else if (!freerdp_settings_get_pointer(settings, FreeRDP_RdpServerRsaKey))
 				{
-					WLog_ERR(TAG, "Missing server certificate");
+					WLog_Print(nego->log, WLOG_ERROR, "Missing server certificate");
 					return FALSE;
 				}
 				break;
@@ -1625,6 +1640,8 @@ rdpNego* nego_new(rdpTransport* transport)
 	if (!nego)
 		return NULL;
 
+	nego->log = WLog_Get(NEGO_TAG);
+	WINPR_ASSERT(nego->log);
 	nego->transport = transport;
 	nego_init(nego);
 	return nego;
@@ -1673,8 +1690,8 @@ BOOL nego_set_target(rdpNego* nego, const char* hostname, UINT16 port)
 
 void nego_set_negotiation_enabled(rdpNego* nego, BOOL NegotiateSecurityLayer)
 {
-	WLog_DBG(TAG, "Enabling security layer negotiation: %s",
-	         NegotiateSecurityLayer ? "TRUE" : "FALSE");
+	WLog_Print(nego->log, WLOG_DEBUG, "Enabling security layer negotiation: %s",
+	           NegotiateSecurityLayer ? "TRUE" : "FALSE");
 	nego->NegotiateSecurityLayer = NegotiateSecurityLayer;
 }
 
@@ -1687,8 +1704,8 @@ void nego_set_negotiation_enabled(rdpNego* nego, BOOL NegotiateSecurityLayer)
 
 void nego_set_restricted_admin_mode_required(rdpNego* nego, BOOL RestrictedAdminModeRequired)
 {
-	WLog_DBG(TAG, "Enabling restricted admin mode: %s",
-	         RestrictedAdminModeRequired ? "TRUE" : "FALSE");
+	WLog_Print(nego->log, WLOG_DEBUG, "Enabling restricted admin mode: %s",
+	           RestrictedAdminModeRequired ? "TRUE" : "FALSE");
 	nego->RestrictedAdminModeRequired = RestrictedAdminModeRequired;
 }
 
@@ -1696,7 +1713,8 @@ void nego_set_RCG_required(rdpNego* nego, BOOL enabled)
 {
 	WINPR_ASSERT(nego);
 
-	WLog_DBG(TAG, "Enabling remoteCredentialGuards: %s", enabled ? "TRUE" : "FALSE");
+	WLog_Print(nego->log, WLOG_DEBUG, "Enabling remoteCredentialGuards: %s",
+	           enabled ? "TRUE" : "FALSE");
 	nego->RemoteCredsGuardRequired = enabled;
 }
 
@@ -1738,7 +1756,7 @@ void nego_set_gateway_bypass_local(rdpNego* nego, BOOL GatewayBypassLocal)
 
 void nego_enable_rdp(rdpNego* nego, BOOL enable_rdp)
 {
-	WLog_DBG(TAG, "Enabling RDP security: %s", enable_rdp ? "TRUE" : "FALSE");
+	WLog_Print(nego->log, WLOG_DEBUG, "Enabling RDP security: %s", enable_rdp ? "TRUE" : "FALSE");
 	nego->EnabledProtocols[PROTOCOL_RDP] = enable_rdp;
 }
 
@@ -1750,7 +1768,7 @@ void nego_enable_rdp(rdpNego* nego, BOOL enable_rdp)
 
 void nego_enable_tls(rdpNego* nego, BOOL enable_tls)
 {
-	WLog_DBG(TAG, "Enabling TLS security: %s", enable_tls ? "TRUE" : "FALSE");
+	WLog_Print(nego->log, WLOG_DEBUG, "Enabling TLS security: %s", enable_tls ? "TRUE" : "FALSE");
 	nego->EnabledProtocols[PROTOCOL_SSL] = enable_tls;
 }
 
@@ -1763,7 +1781,7 @@ void nego_enable_tls(rdpNego* nego, BOOL enable_tls)
 
 void nego_enable_nla(rdpNego* nego, BOOL enable_nla)
 {
-	WLog_DBG(TAG, "Enabling NLA security: %s", enable_nla ? "TRUE" : "FALSE");
+	WLog_Print(nego->log, WLOG_DEBUG, "Enabling NLA security: %s", enable_nla ? "TRUE" : "FALSE");
 	nego->EnabledProtocols[PROTOCOL_HYBRID] = enable_nla;
 }
 
@@ -1776,7 +1794,8 @@ void nego_enable_nla(rdpNego* nego, BOOL enable_nla)
 
 void nego_enable_rdstls(rdpNego* nego, BOOL enable_rdstls)
 {
-	WLog_DBG(TAG, "Enabling RDSTLS security: %s", enable_rdstls ? "TRUE" : "FALSE");
+	WLog_Print(nego->log, WLOG_DEBUG, "Enabling RDSTLS security: %s",
+	           enable_rdstls ? "TRUE" : "FALSE");
 	nego->EnabledProtocols[PROTOCOL_RDSTLS] = enable_rdstls;
 }
 
@@ -1789,7 +1808,8 @@ void nego_enable_rdstls(rdpNego* nego, BOOL enable_rdstls)
 
 void nego_enable_ext(rdpNego* nego, BOOL enable_ext)
 {
-	WLog_DBG(TAG, "Enabling NLA extended security: %s", enable_ext ? "TRUE" : "FALSE");
+	WLog_Print(nego->log, WLOG_DEBUG, "Enabling NLA extended security: %s",
+	           enable_ext ? "TRUE" : "FALSE");
 	nego->EnabledProtocols[PROTOCOL_HYBRID_EX] = enable_ext;
 }
 
@@ -1802,14 +1822,16 @@ void nego_enable_ext(rdpNego* nego, BOOL enable_ext)
 
 void nego_enable_aad(rdpNego* nego, BOOL enable_aad)
 {
+	WINPR_ASSERT(nego);
 	if (aad_is_supported())
 	{
-		WLog_DBG(TAG, "Enabling RDS AAD security: %s", enable_aad ? "TRUE" : "FALSE");
+		WLog_Print(nego->log, WLOG_DEBUG, "Enabling RDS AAD security: %s",
+		           enable_aad ? "TRUE" : "FALSE");
 		nego->EnabledProtocols[PROTOCOL_RDSAAD] = enable_aad;
 	}
 	else
 	{
-		WLog_WARN(TAG, "This build does not support AAD security, disabling.");
+		WLog_Print(nego->log, WLOG_WARN, "This build does not support AAD security, disabling.");
 	}
 }
 

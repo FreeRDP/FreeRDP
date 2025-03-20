@@ -518,7 +518,7 @@ static state_run_t peer_recv_tpkt_pdu(freerdp_peer* client, wStream* s)
 		if (!freerdp_channel_peer_process(client, s, channelId))
 			return STATE_RUN_FAILED;
 	}
-	if (!tpkt_ensure_stream_consumed(s, length))
+	if (!tpkt_ensure_stream_consumed(rdp->log, s, length))
 		return STATE_RUN_FAILED;
 
 	return rc;

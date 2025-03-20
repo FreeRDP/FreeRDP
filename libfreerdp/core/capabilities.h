@@ -160,8 +160,8 @@ FREERDP_LOCAL BOOL rdp_send_demand_active(rdpRdp* rdp);
 FREERDP_LOCAL BOOL rdp_recv_confirm_active(rdpRdp* rdp, wStream* s, UINT16 pduLength);
 FREERDP_LOCAL BOOL rdp_send_confirm_active(rdpRdp* rdp);
 
-FREERDP_LOCAL BOOL rdp_read_capability_set(wStream* sub, UINT16 type, rdpSettings* settings,
-                                           BOOL isServer);
+FREERDP_LOCAL BOOL rdp_read_capability_set(wLog* log, wStream* sub, UINT16 type,
+                                           rdpSettings* settings, BOOL isServer);
 
 FREERDP_LOCAL const char* rdp_input_flag_string(UINT16 flags, char* buffer, size_t len);
 

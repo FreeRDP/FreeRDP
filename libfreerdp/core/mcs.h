@@ -148,6 +148,7 @@ struct rdp_mcs
 	UINT32 channelCount;
 	UINT32 channelMaxCount;
 	rdpMcsChannel* channels;
+	wLog* log;
 };
 
 #define MCS_SEND_DATA_HEADER_MAX_LENGTH 8
