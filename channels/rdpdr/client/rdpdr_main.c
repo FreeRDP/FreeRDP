@@ -681,36 +681,30 @@ static void first_hotplug(rdpdrPlugin* rdpdr)
 
 static DWORD WINAPI drive_hotplug_thread_func(LPVOID arg)
 {
-	rdpdrPlugin* rdpdr;
-	FSEventStreamRef fsev;
-	rdpdr = (rdpdrPlugin*)arg;
+	rdpdrPlugin* rdpdr = (rdpdrPlugin*)arg;
+	WINPR_ASSERT(rdpdr);
+	WINPR_ASSERT(rdpdr->stopEvent);
+
 	CFStringRef path = CFSTR("/Volumes/");
 	CFArrayRef pathsToWatch = CFArrayCreate(kCFAllocatorMalloc, (const void**)&path, 1, NULL);
-	FSEventStreamContext ctx = { 0 };
-
-	ctx.info = arg;
-
-	WINPR_ASSERT(!rdpdr->stopEvent);
-	rdpdr->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-	if (!rdpdr->stopEvent)
-		goto out;
-
-	fsev =
+	FSEventStreamContext ctx = {
+		.copyDescription = NULL, .info = arg, .release = NULL, .retain = NULL, .version = 0
+	};
+	FSEventStreamRef fsev =
 	    FSEventStreamCreate(kCFAllocatorMalloc, drive_hotplug_fsevent_callback, &ctx, pathsToWatch,
 	                        kFSEventStreamEventIdSinceNow, 1, kFSEventStreamCreateFlagNone);
 
-	rdpdr->runLoop = CFRunLoopGetCurrent();
-	FSEventStreamScheduleWithRunLoop(fsev, rdpdr->runLoop, kCFRunLoopDefaultMode);
+	dispatch_queue_t queue = dispatch_queue_create(TAG, NULL);
+	FSEventStreamSetDispatchQueue(fsev, queue);
 	FSEventStreamStart(fsev);
-	CFRunLoopRun();
+	WLog_Print(rdpdr->log, WLOG_DEBUG, "Started hotplug watcher");
+	HANDLE handles[] = { rdpdr->stopEvent, freerdp_abort_event(rdpdr->rdpcontext) };
+	WaitForMultipleObjects(ARRAYSIZE(handles), handles, FALSE, INFINITE);
+	WLog_Print(rdpdr->log, WLOG_DEBUG, "Stopped hotplug watcher");
 	FSEventStreamStop(fsev);
 	FSEventStreamRelease(fsev);
+	dispatch_release(queue);
 out:
-	if (rdpdr->stopEvent)
-	{
-		(void)CloseHandle(rdpdr->stopEvent);
-		rdpdr->stopEvent = NULL;
-	}
 	ExitThread(CHANNEL_RC_OK);
 	return CHANNEL_RC_OK;
 }
@@ -1054,11 +1048,7 @@ static DWORD WINAPI drive_hotplug_thread_func(LPVOID arg)
 	rdpdr = (rdpdrPlugin*)arg;
 
 	WINPR_ASSERT(rdpdr);
-
-	WINPR_ASSERT(!rdpdr->stopEvent);
-	rdpdr->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-	if (!rdpdr->stopEvent)
-		goto out;
+	WINPR_ASSERT(rdpdr->stopEvent);
 
 	while (WaitForSingleObject(rdpdr->stopEvent, 1000) == WAIT_TIMEOUT)
 	{
@@ -1084,12 +1074,6 @@ out:
 	if (error && rdpdr->rdpcontext)
 		setChannelError(rdpdr->rdpcontext, error, "reported an error");
 
-	if (rdpdr->stopEvent)
-	{
-		(void)CloseHandle(rdpdr->stopEvent);
-		rdpdr->stopEvent = NULL;
-	}
-
 	ExitThread(error);
 	return error;
 }
@@ -1113,9 +1097,6 @@ static UINT drive_hotplug_thread_terminate(rdpdrPlugin* rdpdr)
 #if !defined(_WIN32)
 		if (rdpdr->stopEvent)
 			(void)SetEvent(rdpdr->stopEvent);
-#endif
-#ifdef __MACOSX__
-		CFRunLoopStop(rdpdr->runLoop);
 #endif
 
 		if (WaitForSingleObject(rdpdr->hotplugThread, INFINITE) == WAIT_FAILED)
@@ -2239,6 +2220,13 @@ static UINT rdpdr_virtual_channel_event_disconnected(rdpdrPlugin* rdpdr)
 static void rdpdr_virtual_channel_event_terminated(rdpdrPlugin* rdpdr)
 {
 	WINPR_ASSERT(rdpdr);
+#if !defined(_WIN32)
+	if (rdpdr->stopEvent)
+	{
+		(void)CloseHandle(rdpdr->stopEvent);
+		rdpdr->stopEvent = NULL;
+	}
+#endif
 	rdpdr->InitHandle = 0;
 	StreamPool_Free(rdpdr->pool);
 	free(rdpdr);
@@ -2261,6 +2249,11 @@ static VOID VCAPITYPE rdpdr_virtual_channel_init_event_ex(LPVOID lpUserParam, LP
 	switch (event)
 	{
 		case CHANNEL_EVENT_INITIALIZED:
+#if !defined(_WIN32)
+			WINPR_ASSERT(!rdpdr->stopEvent);
+			rdpdr->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+			WINPR_ASSERT(rdpdr->stopEvent);
+#endif
 			break;
 
 		case CHANNEL_EVENT_CONNECTED:
