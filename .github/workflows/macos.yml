@@ -1,0 +1,18 @@
+name: macos-builder
+on:
+  workflow_dispatch:
+    branches: [ master, stable* ]
+  schedule:
+    - cron: '30 5 * * SUN'
+
+jobs:
+  build:
+    runs-on: macos-latest
+    name: "Run macos build on mac-latest"
+    steps:
+      - name: "Check out source"
+        uses: actions/checkout@v4
+
+      - name: "Run mingw [shared] build..."
+        run: |
+          ./scripts/mingw.sh
