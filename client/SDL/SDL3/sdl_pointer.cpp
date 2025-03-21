@@ -164,6 +164,7 @@ BOOL sdl_Pointer_Set_Process(SDL_UserEvent* uptr)
 
 	SDL_SetCursor(ptr->cursor);
 	SDL_ShowCursor();
+	sdl->setHasCursor(true);
 	return TRUE;
 }
 

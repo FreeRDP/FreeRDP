@@ -54,8 +54,12 @@ class SdlContext
 	SdlContext& operator=(const SdlContext& other) = delete;
 	SdlContext& operator=(SdlContext&& other) = delete;
 
+	void setHasCursor(bool cursor);
+	bool hasCursor() const;
+
   private:
 	rdpContext* _context;
+	bool cursor = false;
 
   public:
 	wLog* log;
