@@ -1638,8 +1638,6 @@ BOOL gcc_write_client_security_data(wStream* s, const rdpMcs* mcs)
 
 BOOL gcc_read_server_security_data(wStream* s, rdpMcs* mcs)
 {
-	const BYTE* data = NULL;
-	UINT32 length = 0;
 	BOOL validCryptoConfig = FALSE;
 	UINT32 EncryptionMethod = 0;
 	UINT32 EncryptionLevel = 0;
@@ -1779,18 +1777,16 @@ BOOL gcc_read_server_security_data(wStream* s, rdpMcs* mcs)
 
 	Stream_Read(s, settings->ServerCertificate, settings->ServerCertificateLength);
 
-	data = settings->ServerCertificate;
-	length = settings->ServerCertificateLength;
+	const BYTE* data = settings->ServerCertificate;
+	const uint32_t length = settings->ServerCertificateLength;
 
 	if (!freerdp_certificate_read_server_cert(settings->RdpServerCertificate, data, length))
 		goto fail;
 
 	return TRUE;
 fail:
-	free(settings->ServerRandom);
-	free(settings->ServerCertificate);
-	settings->ServerRandom = NULL;
-	settings->ServerCertificate = NULL;
+	(void)freerdp_settings_set_pointer_len(settings, FreeRDP_ServerRandom, NULL, 0);
+	(void)freerdp_settings_set_pointer_len(settings, FreeRDP_ServerCertificate, NULL, 0);
 	return FALSE;
 }
 
