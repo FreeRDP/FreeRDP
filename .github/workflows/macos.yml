@@ -13,6 +13,10 @@ jobs:
       - name: "Check out source"
         uses: actions/checkout@v4
 
+      - name: "Prepare environment"
+        run: |
+          brew install autoconf automake cmake git
+
       - name: "Run mac os build..."
         run: |
           ./scripts/bundle-mac-os.sh
