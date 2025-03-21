@@ -15,7 +15,7 @@ jobs:
 
       - name: "Prepare environment"
         run: |
-          brew install autoconf automake cmake git
+          brew install autoconf automake cmake git libtool
 
       - name: "Run mac os build..."
         run: |
