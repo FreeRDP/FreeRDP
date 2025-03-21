@@ -45,6 +45,8 @@ class sdlDispContext
 
 	BOOL handle_window_event(const SDL_WindowEvent* ev);
 
+	[[nodiscard]] UINT32 scale_factor() const { return _lastSentDesktopScaleFactor;}
+
   private:
 	UINT DisplayControlCaps(UINT32 maxNumMonitors, UINT32 maxMonitorAreaFactorA,
 	                        UINT32 maxMonitorAreaFactorB);

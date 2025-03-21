@@ -1032,6 +1032,7 @@ static int sdl_run(SdlContext* sdl)
 				}
 				break;
 				case SDL_EVENT_USER_POINTER_SET:
+					windowEvent.user.code = static_cast<Sint32>(sdl->disp.scale_factor());
 					sdl_Pointer_Set_Process(&windowEvent.user);
 					break;
 				case SDL_EVENT_CLIPBOARD_UPDATE:
