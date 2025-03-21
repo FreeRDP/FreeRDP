@@ -25,10 +25,12 @@ API documentation: https://pub.freerdp.com/api/
 
 Security policy: https://github.com/FreeRDP/FreeRDP/security/policy
 
-Matrix room : #FreeRDP:matrix.org (main)
-XMPP channel: #FreeRDP#matrix.org@matrix.org (bridged)
-IRC channel : #freerdp @ irc.oftc.net (bridged)
-Mailing list: https://lists.sourceforge.net/lists/listinfo/freerdp-devel
+### Contact
+
+* Matrix room : `#FreeRDP:matrix.org` (main)
+  * XMPP channel: `#FreeRDP#matrix.org@matrix.org` (bridged)
+  * IRC channel : `#freerdp @ irc.oftc.net` (bridged)
+* Mailing list: https://lists.sourceforge.net/lists/listinfo/freerdp-devel
 
 ## Microsoft Open Specifications
 
