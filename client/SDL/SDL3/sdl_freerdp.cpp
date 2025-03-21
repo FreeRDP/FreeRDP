@@ -865,6 +865,15 @@ static int sdl_run(SdlContext* sdl)
 				}
 			}
 
+			auto point2pix = [](Uint32 win_id, auto &x, auto &y){
+				auto win = SDL_GetWindowFromID(win_id);
+				assert(win);
+				auto scale = SDL_GetWindowDisplayScale(win);
+				assert(scale);
+				x = static_cast<int>(static_cast<float>(x) * scale);
+				y = static_cast<int>(static_cast<float>(y) * scale);
+			};
+
 			switch (windowEvent.type)
 			{
 				case SDL_EVENT_QUIT:
@@ -883,15 +892,18 @@ static int sdl_run(SdlContext* sdl)
 				break; // TODO: Switch keyboard layout
 				case SDL_EVENT_MOUSE_MOTION:
 				{
-					const SDL_MouseMotionEvent* ev = &windowEvent.motion;
-					sdl_handle_mouse_motion(sdl, ev);
+					SDL_MouseMotionEvent &ev = windowEvent.motion;
+					point2pix(ev.windowID, ev.x, ev.y);
+					point2pix(ev.windowID, ev.xrel, ev.yrel);
+					sdl_handle_mouse_motion(sdl, &ev);
 				}
 				break;
 				case SDL_EVENT_MOUSE_BUTTON_DOWN:
 				case SDL_EVENT_MOUSE_BUTTON_UP:
 				{
-					const SDL_MouseButtonEvent* ev = &windowEvent.button;
-					sdl_handle_mouse_button(sdl, ev);
+					SDL_MouseButtonEvent &ev = windowEvent.button;
+					point2pix(ev.windowID, ev.x, ev.y);
+					sdl_handle_mouse_button(sdl, &ev);
 				}
 				break;
 				case SDL_EVENT_MOUSE_WHEEL:
