@@ -1079,7 +1079,7 @@ static int sdl_run(SdlContext* sdl)
 								break;
 								case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
 								window->second.fill();
-								window->second.updateSurface();
+								sdl_draw_to_window(sdl, window->second);
 								break;
 								case SDL_EVENT_WINDOW_MOVED:
 								{
