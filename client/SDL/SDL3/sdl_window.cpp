@@ -66,7 +66,7 @@ SDL_Rect SdlWindow::rect() const
 	if (_window)
 	{
 		SDL_GetWindowPosition(_window, &rect.x, &rect.y);
-		SDL_GetWindowSize(_window, &rect.w, &rect.h);
+		SDL_GetWindowSizeInPixels(_window, &rect.w, &rect.h);
 	}
 	return rect;
 }
