@@ -13,6 +13,6 @@ jobs:
       - name: "Check out source"
         uses: actions/checkout@v4
 
-      - name: "Run mingw [shared] build..."
+      - name: "Run mac os build..."
         run: |
-          ./scripts/mingw.sh
+          ./scripts/bundle-mac-os.sh
