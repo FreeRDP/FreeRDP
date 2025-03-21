@@ -133,20 +133,20 @@ CMAKE_ARGS="-DCMAKE_SKIP_INSTALL_ALL_DEPENDENCY=ON \
 if [ ! -d $SRC ]; then
   mkdir -p $SRC
   cd $SRC
-  git clone --depth 1 -b openssl-3.3.1 https://github.com/openssl/openssl.git
+  git clone --depth 1 -b openssl-3.4.1 https://github.com/openssl/openssl.git
   git clone --depth 1 -b v1.3.1 https://github.com/madler/zlib.git
   git clone --depth 1 -b uriparser-0.9.8 https://github.com/uriparser/uriparser.git
   git clone --depth 1 -b v1.7.18 https://github.com/DaveGamble/cJSON.git
-  git clone --depth 1 -b release-2.30.4 https://github.com/libsdl-org/SDL.git
-  git clone --depth 1 --shallow-submodules --recurse-submodules -b release-2.22.0 https://github.com/libsdl-org/SDL_ttf.git
-  git clone --depth 1 --shallow-submodules --recurse-submodules -b release-2.8.2 https://github.com/libsdl-org/SDL_image.git
-  git clone --depth 1 --shallow-submodules --recurse-submodules -b v1.0.27-1 https://github.com/libusb/libusb-cmake.git
-  git clone --depth 1 -b n7.0.1 https://github.com/FFmpeg/FFmpeg.git
+  git clone --depth 1 -b release-3.2.8 https://github.com/libsdl-org/SDL.git
+  git clone --depth 1 --shallow-submodules --recurse-submodules -b release-3.2.0 https://github.com/libsdl-org/SDL_ttf.git
+  git clone --depth 1 --shallow-submodules --recurse-submodules -b release-3.2.4 https://github.com/libsdl-org/SDL_image.git
+  git clone --depth 1 --shallow-submodules --recurse-submodules -b v1.0.28-0 https://github.com/libusb/libusb-cmake.git
+  git clone --depth 1 -b n7.1.1 https://github.com/FFmpeg/FFmpeg.git
   git clone --depth 1 -b v2.4.1 https://github.com/cisco/openh264.git
   git clone --depth 1 -b v1.5.2 https://gitlab.xiph.org/xiph/opus.git
-  git clone --depth 1 -b 2.11.1 https://github.com/knik0/faad2.git
-  git clone --depth 1 -b 1.18.0 https://gitlab.freedesktop.org/cairo/cairo.git
-  git clone --depth 1 -b 1_30 https://github.com/knik0/faac.git
+  git clone --depth 1 -b 2.11.2 https://github.com/knik0/faad2.git
+  git clone --depth 1 -b 1.18.4 https://gitlab.freedesktop.org/cairo/cairo.git
+  git clone --depth 1 -b faac-1.31.1 https://github.com/knik0/faac.git
   cd faac
   ./bootstrap
 fi
@@ -187,12 +187,12 @@ cmake -GNinja -BSDL -S$SRC/SDL $CMAKE_ARGS -DSDL_TEST=OFF -DSDL_TESTS=OFF -DSDL_
 cmake --build SDL
 cmake --install SDL
 
-cmake -GNinja -BSDL_ttf -S$SRC/SDL_ttf $CMAKE_ARGS -DSDL2TTF_HARFBUZZ=ON -DSDL2TTF_FREETYPE=ON -DSDL2TTF_VENDORED=ON \
-  -DFT_DISABLE_ZLIB=OFF -DSDL2TTF_SAMPLES=OFF
+cmake -GNinja -BSDL_ttf -S$SRC/SDL_ttf $CMAKE_ARGS -DSDLTTF_HARFBUZZ=ON -DSDLTTF_FREETYPE=ON -DSDLTTF_VENDORED=ON \
+  -DFT_DISABLE_ZLIB=OFF -DSDLTTF_SAMPLES=OFF
 cmake --build SDL_ttf
 cmake --install SDL_ttf
 
-cmake -GNinja -BSDL_image -S$SRC/SDL_image $CMAKE_ARGS -DSDL2IMAGE_SAMPLES=OFF -DSDL2IMAGE_DEPS_SHARED=OFF
+cmake -GNinja -BSDL_image -S$SRC/SDL_image $CMAKE_ARGS -DSDLIMAGE_SAMPLES=OFF -DSDLIMAGE_DEPS_SHARED=OFF
 cmake --build SDL_image
 cmake --install SDL_image
 
@@ -219,8 +219,8 @@ CFLAGS="$OSSL_FLAGS -U__SSE2__" LDFLAGS=$OSSL_FLAGS make -j install
 
 cd $BUILD
 
-meson setup --prefix="$INSTALL" -Doptimization=3 -Db_lto=true -Db_pie=true -Dc_args="$OSSL_FLAGS" -Dc_link_args="$OSSL_FLAGS" \
-  -Dcpp_args="$OSSL_FLAGS" -Dcpp_link_args="$OSSL_FLAGS" -Dpkgconfig.relocatable=true -Dtests=disabled \
+meson setup --prefix="$INSTALL" -Doptimization=3 -Db_lto=true -Db_pie=true -Dc_args="$OSSL_FLAGS -Wno-error" -Dc_link_args="$OSSL_FLAGS" \
+  -Dcpp_args="$OSSL_FLAGS -Wno-error" -Dcpp_link_args="$OSSL_FLAGS" -Dpkgconfig.relocatable=true -Dtests=disabled -Dwerror=false \
   -Dlibdir=lib openh264 $SRC/openh264
 ninja -C openh264 install
 
@@ -254,6 +254,7 @@ cd $BUILD
 cmake -GNinja -Bfreerdp -S"$SCRIPT_PATH/.." \
   $CMAKE_ARGS \
   -DWITH_PLATFORM_SERVER=OFF \
+  -DWITH_CLIENT_SDL2=OFF \
   -DWITH_SIMD=ON \
   -DWITH_FFMPEG=OFF \
   -DWITH_VERBOSE_WINPR_ASSERT=OFF \

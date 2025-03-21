@@ -31,8 +31,6 @@
 
 #include <freerdp/log.h>
 
-#define CAPS_TAG FREERDP_TAG("core.capabilities")
-
 static const char* const CAPSET_TYPE_STRINGS[] = { "Unknown",
 	                                               "General",
 	                                               "Bitmap",

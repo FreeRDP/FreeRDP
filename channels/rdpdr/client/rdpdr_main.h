@@ -103,9 +103,6 @@ typedef struct
 #ifdef _WIN32
 	HWND hotplug_wnd;
 #endif
-#ifdef __MACOSX__
-	CFRunLoopRef runLoop;
-#endif
 #ifndef _WIN32
 	HANDLE stopEvent;
 #endif
