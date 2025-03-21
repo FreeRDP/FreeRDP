@@ -358,11 +358,8 @@ BOOL sdlDispContext::handle_window_event(const SDL_WindowEvent* ev)
 			return TRUE;
 
 		case SDL_EVENT_WINDOW_RESIZED:
-		case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
-			_targetWidth = ev->data1;
-			_targetHeight = ev->data2;
+			assert(SDL_GetWindowSizeInPixels(it->second.window(), &_targetWidth, &_targetHeight));
 			return addTimer();
-
 		case SDL_EVENT_WINDOW_MOUSE_LEAVE:
 			WINPR_ASSERT(_sdl);
 			_sdl->input.keyboard_grab(ev->windowID, false);
