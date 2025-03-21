@@ -23,7 +23,7 @@ usage() {
 }
 
 check_tools() {
-  for TOOL in mkdir rm mv git dirname pwd find cut basename grep xargs cmake ninja autoconf automake aclocal autoheader glibtoolize lipo otool install_name_tool; do
+  for TOOL in mkdir rm mv git dirname pwd find cut basename grep xargs cmake ninja autoconf automake aclocal autoheader glibtoolize lipo otool install_name_tool meson; do
     set +e
     TOOL_PATH=$(which "$TOOL")
     set -e
