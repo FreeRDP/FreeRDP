@@ -403,6 +403,8 @@ static BOOL sdl_draw_to_window(SdlContext* sdl, SdlWindow& window,
 
 	if (!freerdp_settings_get_bool(context->settings, FreeRDP_SmartSizing))
 	{
+		window.setOffsetX(0);
+		window.setOffsetY(0);
 		if (gdi->width < size.w)
 		{
 			window.setOffsetX((size.w - gdi->width) / 2);
