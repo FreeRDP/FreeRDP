@@ -159,7 +159,6 @@ BOOL sdl_Pointer_Set_Process(SDL_UserEvent* uptr)
 		return FALSE;
 
 	// create a cursor image in 100% display scale to trick SDL into creating the cursor with the correct size
-	// const auto hidpi_scale = SDL_GetWindowDisplayScale(window);
 	const auto hidpi_scale = static_cast<float>(uptr->code) / 100;
 	auto normal = SDL_CreateSurface(static_cast<int>(static_cast<float>(ptr->image->w) / hidpi_scale), static_cast<int>(static_cast<float>(ptr->image->h) / hidpi_scale), ptr->image->format);
 	assert(normal);
