@@ -354,6 +354,7 @@ BOOL sdlDispContext::handle_window_event(const SDL_WindowEvent* ev)
 		case SDL_EVENT_WINDOW_RESTORED:
 			gdi_send_suppress_output(_sdl->context()->gdi, FALSE);
 			return TRUE;
+		case SDL_EVENT_WINDOW_DISPLAY_SCALE_CHANGED:
 		case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
 		{
 			if(freerdp_settings_get_bool(_sdl->context()->settings, FreeRDP_DynamicResolutionUpdate)) {

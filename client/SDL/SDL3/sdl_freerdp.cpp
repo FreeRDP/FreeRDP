@@ -867,13 +867,13 @@ static int sdl_run(SdlContext* sdl)
 				}
 			}
 
-			auto point2pix = [](Uint32 win_id, auto &x, auto &y){
+			auto point2pix = [](Uint32 win_id, float &x, float &y){
 				auto win = SDL_GetWindowFromID(win_id);
 				assert(win);
 				auto scale = SDL_GetWindowDisplayScale(win);
 				assert(scale);
-				x = static_cast<int>(static_cast<float>(x) * scale);
-				y = static_cast<int>(static_cast<float>(y) * scale);
+				x *= scale;
+				y *= scale;
 			};
 
 			switch (windowEvent.type)
@@ -1069,7 +1069,7 @@ static int sdl_run(SdlContext* sdl)
 									assert(scale != 0);
 									auto w_gdi = sdl->context()->gdi->width;
 									auto h_gdi = sdl->context()->gdi->height;
-									auto pix2point = [=](auto pix) {
+									auto pix2point = [=](int pix) {
 										return static_cast<int>(static_cast<float>(pix) / scale);
 									};
 									if(w_pix != w_gdi || h_pix != h_gdi) {
@@ -1078,8 +1078,8 @@ static int sdl_run(SdlContext* sdl)
 								}
 								break;
 								case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
-								window->second.fill();
-								sdl_draw_to_window(sdl, window->second);
+									window->second.fill();
+									sdl_draw_to_window(sdl, window->second);
 								break;
 								case SDL_EVENT_WINDOW_MOVED:
 								{
