@@ -28,6 +28,17 @@ jobs:
           fetch-depth: 0
           ref: ${{steps.pr.outputs.merge_commit_sha}}
 
+      - name: "Prepare abigail-tools"
+        run: |
+          mkdir deb
+          cd deb
+          echo "deb-src http://archive.ubuntu.com/ubuntu/ plucky main restricted universe multiverse" | sudo tee /etc/apt/sources.list.d/plucky.list
+          sudo apt-get build-dep -q -y libabigail
+          apt source libabigail
+          cd libabigail-2.6
+          dpkg-buildpackage
+          sudo dpkg -i ../*.deb
+
       - name: "Prepare environment"
         run: |
           sudo apt-get update -q -y
