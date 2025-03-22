@@ -54,6 +54,8 @@ class SdlContext
 	SdlContext& operator=(const SdlContext& other) = delete;
 	SdlContext& operator=(SdlContext&& other) = delete;
 
+	void updateMonitorLayout();
+
   private:
 	rdpContext* _context;
 
