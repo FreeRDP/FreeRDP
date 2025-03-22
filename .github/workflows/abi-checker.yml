@@ -33,6 +33,7 @@ jobs:
           mkdir deb
           cd deb
           echo "deb-src http://archive.ubuntu.com/ubuntu/ plucky main restricted universe multiverse" | sudo tee /etc/apt/sources.list.d/plucky.list
+          sudo apt-get update -q -y
           sudo apt-get build-dep -q -y libabigail
           apt source libabigail
           cd libabigail-2.6
