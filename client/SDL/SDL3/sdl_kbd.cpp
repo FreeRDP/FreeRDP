@@ -585,6 +585,13 @@ BOOL sdlInput::keyboard_handle_event(const SDL_KeyboardEvent* ev)
 		}
 	}
 
+	if (!_remapTable)
+	{
+		auto list =
+		    freerdp_settings_get_string(_sdl->context()->settings, FreeRDP_KeyboardRemappingList);
+		_remapTable = freerdp_keyboard_remap_string_to_list(list);
+		assert(_remapTable);
+	}
 	auto scancode = freerdp_keyboard_remap_key(_remapTable, rdp_scancode);
 	return freerdp_input_send_keyboard_event_ex(
 	    _sdl->context()->input, ev->type == SDL_EVENT_KEY_DOWN, ev->repeat, scancode);
@@ -626,10 +633,6 @@ BOOL sdlInput::mouse_grab(Uint32 windowID, bool enable)
 sdlInput::sdlInput(SdlContext* sdl)
     : _sdl(sdl), _lastWindowID(UINT32_MAX), _hotkeyModmask(prefToMask())
 {
-	auto list =
-	    freerdp_settings_get_string(_sdl->context()->settings, FreeRDP_KeyboardRemappingList);
-	_remapTable = freerdp_keyboard_remap_string_to_list(list);
-	assert(_remapTable);
 	_hotkeyFullscreen = prefKeyValue("SDL_Fullscreen", SDL_SCANCODE_RETURN);
 	_hotkeyResizable = prefKeyValue("SDL_Resizeable", SDL_SCANCODE_R);
 	_hotkeyGrab = prefKeyValue("SDL_Grab", SDL_SCANCODE_G);
