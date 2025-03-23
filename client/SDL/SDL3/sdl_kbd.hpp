@@ -75,5 +75,5 @@ class sdlInput
 	uint32_t _hotkeyGrab;
 	uint32_t _hotkeyDisconnect;
 	uint32_t _hotkeyMinimize;
-	FREERDP_REMAP_TABLE* _remapTable;
+	FREERDP_REMAP_TABLE* _remapTable = nullptr;
 };

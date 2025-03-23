@@ -675,15 +675,30 @@ void xf_keyboard_send_key(xfContext* xfc, BOOL down, BOOL repeat, const XKeyEven
 				default:
 				{
 					XIM xim = XOpenIM(xfc->display, 0, 0, 0);
-					XIC xic =
-					    XCreateIC(xim, XNInputStyle, XIMPreeditNothing | XIMStatusNothing, NULL);
-
-					KeySym ignore = { 0 };
-					Status return_status = 0;
-					XKeyEvent ev = *event;
-					ev.type = KeyPress;
-					xwc = XwcLookupString(xic, &ev, buffer, ARRAYSIZE(buffer), &ignore,
-					                      &return_status);
+					if (!xim)
+					{
+						WLog_WARN(TAG, "Failed to XOpenIM");
+					}
+					else
+					{
+						XIC xic = XCreateIC(xim, XNInputStyle, XIMPreeditNothing | XIMStatusNothing,
+						                    NULL);
+						if (!xic)
+						{
+							WLog_WARN(TAG, "XCreateIC failed");
+						}
+						else
+						{
+							KeySym ignore = { 0 };
+							Status return_status = 0;
+							XKeyEvent ev = *event;
+							ev.type = KeyPress;
+							xwc = XwcLookupString(xic, &ev, buffer, ARRAYSIZE(buffer), &ignore,
+							                      &return_status);
+							XDestroyIC(xic);
+						}
+						XCloseIM(xim);
+					}
 				}
 				break;
 			}
