@@ -238,7 +238,7 @@ static BOOL TestPrimitiveYUVCombine(primitives_t* prims, prim_size_t roi)
 	awidth = roi.width + 16 - roi.width % 16;
 	aheight = roi.height + 16 - roi.height % 16;
 	(void)fprintf(stderr,
-	              "Running YUVCombine on frame size %" PRIu32 "x%" PRIu32 " [%" PRIu32 "x%" PRIu32
+	              "Running YUVCombine on frame size %" PRIu32 "x%" PRIu32 " [%" PRIuz "x%" PRIuz
 	              "]\n",
 	              roi.width, roi.height, awidth, aheight);
 	PROFILER_CREATE(yuvCombine, "YUV420CombineToYUV444")

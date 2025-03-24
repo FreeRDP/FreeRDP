@@ -45,7 +45,7 @@ int TestArrayList(int argc, char* argv[])
 	ArrayList_Remove(arrayList, (void*)(size_t)100);
 
 	rc = ArrayList_IndexOf(arrayList, (void*)(size_t)6, -1, -1);
-	printf("ArrayList index: %d\n", rc);
+	printf("ArrayList index: %" PRIdz "\n", rc);
 
 	if (rc != 6)
 		goto fail;
@@ -66,7 +66,7 @@ int TestArrayList(int argc, char* argv[])
 	}
 
 	rc = ArrayList_IndexOf(arrayList, (void*)elemsToInsert, -1, -1);
-	printf("ArrayList index: %d\n", rc);
+	printf("ArrayList index: %" PRIdz "\n", rc);
 	if (rc != -1)
 		goto fail;
 
