@@ -51,8 +51,7 @@ BOOL sdlDispContext::settings_changed()
 	    freerdp_settings_get_uint16(settings, FreeRDP_DesktopOrientation))
 		return TRUE;
 
-	if (_lastSentDesktopScaleFactor !=
-	    freerdp_settings_get_uint32(settings, FreeRDP_DesktopScaleFactor))
+	if (_lastSentDesktopScaleFactor != _targetDesktopScaleFactor)
 		return TRUE;
 
 	if (_lastSentDeviceScaleFactor !=
@@ -75,7 +74,7 @@ BOOL sdlDispContext::update_last_sent()
 	_lastSentWidth = _targetWidth;
 	_lastSentHeight = _targetHeight;
 	_lastSentDesktopOrientation = freerdp_settings_get_uint16(settings, FreeRDP_DesktopOrientation);
-	_lastSentDesktopScaleFactor = freerdp_settings_get_uint32(settings, FreeRDP_DesktopScaleFactor);
+	_lastSentDesktopScaleFactor = _targetDesktopScaleFactor;
 	_lastSentDeviceScaleFactor = freerdp_settings_get_uint32(settings, FreeRDP_DeviceScaleFactor);
 	// TODO _fullscreen = _sdl->fullscreen;
 	return TRUE;
@@ -116,8 +115,7 @@ BOOL sdlDispContext::sendResize()
 		layout.Width = WINPR_ASSERTING_INT_CAST(uint32_t, _targetWidth);
 		layout.Height = WINPR_ASSERTING_INT_CAST(uint32_t, _targetHeight);
 		layout.Orientation = freerdp_settings_get_uint16(settings, FreeRDP_DesktopOrientation);
-		layout.DesktopScaleFactor =
-		    freerdp_settings_get_uint32(settings, FreeRDP_DesktopScaleFactor);
+		layout.DesktopScaleFactor = _targetDesktopScaleFactor;
 		layout.DeviceScaleFactor = freerdp_settings_get_uint32(settings, FreeRDP_DeviceScaleFactor);
 		layout.PhysicalWidth = WINPR_ASSERTING_INT_CAST(uint32_t, _targetWidth);
 		layout.PhysicalHeight = WINPR_ASSERTING_INT_CAST(uint32_t, _targetHeight);
@@ -356,13 +354,19 @@ BOOL sdlDispContext::handle_window_event(const SDL_WindowEvent* ev)
 		case SDL_EVENT_WINDOW_RESTORED:
 			gdi_send_suppress_output(_sdl->context()->gdi, FALSE);
 			return TRUE;
-
-		case SDL_EVENT_WINDOW_RESIZED:
+		case SDL_EVENT_WINDOW_DISPLAY_SCALE_CHANGED:
 		case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
-			_targetWidth = ev->data1;
-			_targetHeight = ev->data2;
+		{
+			if (freerdp_settings_get_bool(_sdl->context()->settings,
+			                              FreeRDP_DynamicResolutionUpdate))
+			{
+				const auto& window = _sdl->windows.at(ev->windowID);
+				const auto factor = SDL_GetWindowDisplayScale(window.window());
+				_targetDesktopScaleFactor = static_cast<UINT32>(100 * factor);
+			}
+			assert(SDL_GetWindowSizeInPixels(it->second.window(), &_targetWidth, &_targetHeight));
 			return addTimer();
-
+		}
 		case SDL_EVENT_WINDOW_MOUSE_LEAVE:
 			WINPR_ASSERT(_sdl);
 			_sdl->input.keyboard_grab(ev->windowID, false);
@@ -456,6 +460,8 @@ sdlDispContext::sdlDispContext(SdlContext* sdl) : _sdl(sdl)
 	    int32_t, freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth));
 	_lastSentHeight = _targetHeight = WINPR_ASSERTING_INT_CAST(
 	    int32_t, freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight));
+	_lastSentDesktopScaleFactor = _targetDesktopScaleFactor =
+	    freerdp_settings_get_uint32(settings, FreeRDP_DesktopScaleFactor);
 	PubSub_SubscribeActivated(pubSub, sdlDispContext::OnActivated);
 	PubSub_SubscribeGraphicsReset(pubSub, sdlDispContext::OnGraphicsReset);
 	addTimer();
