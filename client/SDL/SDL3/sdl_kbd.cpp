@@ -602,7 +602,10 @@ BOOL sdlInput::keyboard_grab(Uint32 windowID, bool enable)
 	auto it = _sdl->windows.find(windowID);
 	if (it == _sdl->windows.end())
 		return FALSE;
-	auto status = enable && _sdl->grab_kbd_enabled;
+
+	auto settings = _sdl->context()->settings;
+	auto kbd_enabled = freerdp_settings_get_bool(settings, FreeRDP_GrabKeyboard);
+	auto status = enable && kbd_enabled;
 	_sdl->grab_kbd = status;
 	return it->second.grabKeyboard(status);
 }
