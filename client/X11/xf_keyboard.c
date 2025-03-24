@@ -726,11 +726,6 @@ void xf_keyboard_send_key(xfContext* xfc, BOOL down, BOOL repeat, const XKeyEven
 			WLog_ERR(TAG, "Unknown key with X keycode 0x%02" PRIx8 "", event->keycode);
 		else
 			(void)freerdp_input_send_keyboard_event_ex(input, down, repeat, rdp_scancode);
-
-		if ((rdp_scancode == RDP_SCANCODE_CAPSLOCK) && (down == FALSE))
-		{
-			(void)xf_sync_kbd_state(xfc);
-		}
 	}
 }
 
