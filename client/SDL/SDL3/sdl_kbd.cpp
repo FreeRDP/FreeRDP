@@ -593,6 +593,10 @@ BOOL sdlInput::keyboard_handle_event(const SDL_KeyboardEvent* ev)
 		assert(_remapTable);
 	}
 	auto scancode = freerdp_keyboard_remap_key(_remapTable, rdp_scancode);
+	if ((ev->type == SDL_EVENT_KEY_UP) && (scancode == RDP_SCANCODE_CAPSLOCK))
+	{
+		keyboard_sync_state();
+	}
 	return freerdp_input_send_keyboard_event_ex(
 	    _sdl->context()->input, ev->type == SDL_EVENT_KEY_DOWN, ev->repeat, scancode);
 }
