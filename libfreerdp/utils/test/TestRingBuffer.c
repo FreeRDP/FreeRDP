@@ -131,7 +131,7 @@ int TestRingBuffer(int argc, char* argv[])
 		{
 			(void)fprintf(stderr,
 			              "invalid byte at %" PRIuz ", got %" PRIu8 " instead of %" PRIuz "\n", i,
-			              chunks[0].data[i], i % 5ULL);
+			              chunks[0].data[i], i % 5U);
 			return -1;
 		}
 	}

@@ -34,7 +34,7 @@ static int detect_format(const char* name)
 	const char* dot = strrchr(name, '.');
 	if (!dot)
 	{
-		(void)fprintf(stderr, "'%s' does not have a file extension\n");
+		(void)fprintf(stderr, "'%s' does not have a file extension\n", name);
 		return -1;
 	}
 

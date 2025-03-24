@@ -28,8 +28,8 @@ int TestBufferPool(int argc, char* argv[])
 
 	if (BufferSize != DefaultSize)
 	{
-		printf("BufferPool_GetBufferSize failure: Actual: %d Expected: %" PRIu32 "\n", BufferSize,
-		       DefaultSize);
+		printf("BufferPool_GetBufferSize failure: Actual: %" PRIdz " Expected: %" PRIu32 "\n",
+		       BufferSize, DefaultSize);
 		return -1;
 	}
 
@@ -37,8 +37,8 @@ int TestBufferPool(int argc, char* argv[])
 
 	if (BufferSize != DefaultSize)
 	{
-		printf("BufferPool_GetBufferSize failure: Actual: %d Expected: %" PRIu32 "\n", BufferSize,
-		       DefaultSize);
+		printf("BufferPool_GetBufferSize failure: Actual: %" PRIdz " Expected: %" PRIu32 "\n",
+		       BufferSize, DefaultSize);
 		return -1;
 	}
 
@@ -46,7 +46,7 @@ int TestBufferPool(int argc, char* argv[])
 
 	if (BufferSize != 2048)
 	{
-		printf("BufferPool_GetBufferSize failure: Actual: %d Expected: 2048\n", BufferSize);
+		printf("BufferPool_GetBufferSize failure: Actual: %" PRIdz " Expected: 2048\n", BufferSize);
 		return -1;
 	}
 

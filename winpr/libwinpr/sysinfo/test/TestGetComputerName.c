@@ -74,7 +74,7 @@ static BOOL Test_GetComputerName(void)
 	{
 		(void)fprintf(stderr,
 		              "%s: (5) GetComputerNameA returned wrong size %" PRIu32
-		              " (expected something in the range from 2 to %" PRIu32 ")\n",
+		              " (expected something in the range from 2 to %" PRIuz ")\n",
 		              __func__, dwSize, netbiosBufferSize);
 		return FALSE;
 	}

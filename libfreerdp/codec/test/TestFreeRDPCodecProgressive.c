@@ -1102,7 +1102,7 @@ static BOOL test_encode_decode(const char* path)
 			const DWORD b = FreeRDPReadColor(pd, ColorFormat);
 			if (!colordiff(ColorFormat, a, b))
 			{
-				printf("xxxxxxx [%u:%u] [%s] %08X != %08X\n", x, y,
+				printf("xxxxxxx [%" PRIuz ":%" PRIuz "] [%s] %08X != %08X\n", x, y,
 				       FreeRDPGetColorFormatName(ColorFormat), a, b);
 				goto fail;
 			}
