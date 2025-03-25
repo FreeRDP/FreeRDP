@@ -48,9 +48,12 @@ jobs:
           apt source libabigail
           cd libabigail-2.6
           dpkg-buildpackage
-          cd ..
-          mkdir -p deb
-          mv *.deb deb/
+
+      - name: "Prepare abigail-tools debs"
+        if: always() && steps.cache-abigail-tools-restore.outputs.cache-hit != 'true'
+        run: |
+          mkdir deb
+          find . -name "*.deb" -print -exec mv {} deb \;
 
       - name: Save abigail tools
         id: cache-abigail-tools-save
@@ -62,14 +65,15 @@ jobs:
             deb
 
       - name:  "Install abigail-tools"
+        continue-on-error: true
         run: |
           cd deb
-          ls
           sudo dpkg -i *.deb
 
       - name: "Prepare environment"
         run: |
           sudo apt-get update -q -y
+          sudo apt-get --fix-broken install -q -y
           sudo apt-get install -q -y devscripts equivs \
             clang \
             pylint \
