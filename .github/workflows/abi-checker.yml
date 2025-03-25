@@ -40,8 +40,8 @@ jobs:
       - name: "Prepare abigail-tools"
         if: always() && steps.cache-abigail-tools-restore.outputs.cache-hit != 'true'
         run: |
-          mkdir deb
-          cd deb
+          mkdir deb-build
+          cd deb-build
           echo "deb-src http://archive.ubuntu.com/ubuntu/ plucky main restricted universe multiverse" | sudo tee /etc/apt/sources.list.d/plucky.list
           sudo apt-get update -q -y
           sudo apt-get build-dep -q -y libabigail
@@ -61,6 +61,12 @@ jobs:
           path: |
             deb
 
+      - name:  "Install abigail-tools"
+        run: |
+          cd deb
+          ls
+          sudo dpkg -i *.deb
+
       - name: "Prepare environment"
         run: |
           sudo apt-get update -q -y
@@ -70,7 +76,6 @@ jobs:
             curl
           ./packaging/scripts/prepare_deb_freerdp-nightly.sh
           sudo mk-build-deps -i
-          sudo dpkg -i deb/*.deb
 
       - name: "Prepare configuration"
         run: |
