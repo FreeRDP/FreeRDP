@@ -28,7 +28,17 @@ jobs:
           fetch-depth: 0
           ref: ${{steps.pr.outputs.merge_commit_sha}}
 
+      - name: Restore abigail tools
+        id: cache-abigail-tools-restore
+        if: always() && steps.cache-abigail-tools-restore.outputs.cache-hit != 'true'
+        uses: actions/cache/restore@v4
+        with:
+          key: cache-abigail-tools
+          path: |
+            .
+
       - name: "Prepare abigail-tools"
+        if: always() && steps.cache-abigail-tools-restore.outputs.cache-hit != 'true'
         run: |
           mkdir deb
           cd deb
@@ -39,6 +49,15 @@ jobs:
           cd libabigail-2.6
           dpkg-buildpackage
           sudo dpkg -i ../*.deb
+
+      - name: Save abigail tools
+        id: cache-abigail-tools-save
+        if: always() && steps.cache-abigail-tools-restore.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          key: cache-abigail-tools
+          path: |
+            .
 
       - name: "Prepare environment"
         run: |
