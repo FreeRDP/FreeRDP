@@ -344,16 +344,22 @@ BOOL sdlDispContext::handle_window_event(const SDL_WindowEvent* ev)
 	{
 		case SDL_EVENT_WINDOW_HIDDEN:
 		case SDL_EVENT_WINDOW_MINIMIZED:
-			gdi_send_suppress_output(_sdl->context()->gdi, TRUE);
-
+		{
+			auto ctx = _sdl->context();
+			if (ctx && ctx->gdi)
+				gdi_send_suppress_output(ctx->gdi, TRUE);
 			return TRUE;
-
+		}
 		case SDL_EVENT_WINDOW_EXPOSED:
 		case SDL_EVENT_WINDOW_SHOWN:
 		case SDL_EVENT_WINDOW_MAXIMIZED:
 		case SDL_EVENT_WINDOW_RESTORED:
-			gdi_send_suppress_output(_sdl->context()->gdi, FALSE);
+		{
+			auto ctx = _sdl->context();
+			if (ctx && ctx->gdi)
+				gdi_send_suppress_output(ctx->gdi, FALSE);
 			return TRUE;
+		}
 		case SDL_EVENT_WINDOW_DISPLAY_SCALE_CHANGED:
 		case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
 		{
