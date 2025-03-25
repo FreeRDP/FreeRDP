@@ -663,7 +663,7 @@ BOOL sdlInput::initialize()
 
 	if (freerdp_settings_get_uint32(settings, FreeRDP_KeyboardLayout) == 0)
 	{
-		uint32_t KeyboardLayout = 0;
+		DWORD KeyboardLayout = 0;
 
 		freerdp_detect_keyboard_layout_from_system_locale(&KeyboardLayout);
 		if (KeyboardLayout == 0)
