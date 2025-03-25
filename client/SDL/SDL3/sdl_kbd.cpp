@@ -550,6 +550,7 @@ BOOL sdlInput::keyboard_handle_event(const SDL_KeyboardEvent* ev)
 			{
 				WLog_Print(_sdl->log, WLOG_INFO, "%s+<%s> pressed, toggling fullscreen state",
 				           masktostr(_hotkeyModmask).c_str(), sdl_scancode_name(_hotkeyFullscreen));
+				keyboard_sync_state();
 				_sdl->update_fullscreen(!_sdl->fullscreen);
 				return TRUE;
 			}
@@ -557,6 +558,7 @@ BOOL sdlInput::keyboard_handle_event(const SDL_KeyboardEvent* ev)
 			{
 				WLog_Print(_sdl->log, WLOG_INFO, "%s+<%s> pressed, toggling resizeable state",
 				           masktostr(_hotkeyModmask).c_str(), sdl_scancode_name(_hotkeyResizable));
+				keyboard_sync_state();
 				_sdl->update_resizeable(!_sdl->resizeable);
 				return TRUE;
 			}
@@ -565,6 +567,7 @@ BOOL sdlInput::keyboard_handle_event(const SDL_KeyboardEvent* ev)
 			{
 				WLog_Print(_sdl->log, WLOG_INFO, "%s+<%s> pressed, toggling grab state",
 				           masktostr(_hotkeyModmask).c_str(), sdl_scancode_name(_hotkeyGrab));
+				keyboard_sync_state();
 				keyboard_grab(ev->windowID, !_sdl->grab_kbd);
 				return TRUE;
 			}
@@ -572,6 +575,7 @@ BOOL sdlInput::keyboard_handle_event(const SDL_KeyboardEvent* ev)
 			{
 				WLog_Print(_sdl->log, WLOG_INFO, "%s+<%s> pressed, disconnecting RDP session",
 				           masktostr(_hotkeyModmask).c_str(), sdl_scancode_name(_hotkeyDisconnect));
+				keyboard_sync_state();
 				freerdp_abort_connect_context(_sdl->context());
 				return TRUE;
 			}
@@ -579,6 +583,7 @@ BOOL sdlInput::keyboard_handle_event(const SDL_KeyboardEvent* ev)
 			{
 				WLog_Print(_sdl->log, WLOG_INFO, "%s+<%s> pressed, minimizing client",
 				           masktostr(_hotkeyModmask).c_str(), sdl_scancode_name(_hotkeyMinimize));
+				keyboard_sync_state();
 				_sdl->update_minimize();
 				return TRUE;
 			}
