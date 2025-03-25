@@ -30,6 +30,8 @@
 
 #include <freerdp/utils/string.h>
 #include <freerdp/scancode.h>
+#include <freerdp/locale/keyboard.h>
+#include <freerdp/locale/locale.h>
 
 #include <freerdp/log.h>
 
@@ -590,13 +592,6 @@ BOOL sdlInput::keyboard_handle_event(const SDL_KeyboardEvent* ev)
 		}
 	}
 
-	if (!_remapTable)
-	{
-		auto list =
-		    freerdp_settings_get_string(_sdl->context()->settings, FreeRDP_KeyboardRemappingList);
-		_remapTable = freerdp_keyboard_remap_string_to_list(list);
-		assert(_remapTable);
-	}
 	auto scancode = freerdp_keyboard_remap_key(_remapTable, rdp_scancode);
 	return freerdp_input_send_keyboard_event_ex(
 	    _sdl->context()->input, ev->type == SDL_EVENT_KEY_DOWN, ev->repeat, scancode);
@@ -651,4 +646,31 @@ sdlInput::sdlInput(SdlContext* sdl)
 sdlInput::~sdlInput()
 {
 	freerdp_keyboard_remap_free(_remapTable);
+}
+
+BOOL sdlInput::initialize()
+{
+	auto settings = _sdl->context()->settings;
+	WINPR_ASSERT(settings);
+	WINPR_ASSERT(!_remapTable);
+
+	{
+		auto list = freerdp_settings_get_string(settings, FreeRDP_KeyboardRemappingList);
+		_remapTable = freerdp_keyboard_remap_string_to_list(list);
+		if (!_remapTable)
+			return FALSE;
+	}
+
+	if (freerdp_settings_get_uint32(settings, FreeRDP_KeyboardLayout) == 0)
+	{
+		uint32_t KeyboardLayout = 0;
+
+		freerdp_detect_keyboard_layout_from_system_locale(&KeyboardLayout);
+		if (KeyboardLayout == 0)
+			KeyboardLayout = ENGLISH_UNITED_STATES;
+
+		if (!freerdp_settings_set_uint32(settings, FreeRDP_KeyboardLayout, KeyboardLayout))
+			return FALSE;
+	}
+	return TRUE;
 }
