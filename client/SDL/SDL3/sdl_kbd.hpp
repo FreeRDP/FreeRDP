@@ -42,6 +42,8 @@ class sdlInput
 	sdlInput& operator=(const sdlInput& other) = delete;
 	sdlInput& operator=(sdlInput&& other) = delete;
 
+	BOOL initialize();
+
 	BOOL keyboard_sync_state();
 	BOOL keyboard_focus_in();
 

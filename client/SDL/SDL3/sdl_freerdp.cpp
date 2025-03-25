@@ -644,6 +644,9 @@ static BOOL sdl_pre_connect(freerdp* instance)
 		WLog_Print(sdl->log, WLOG_INFO, "Authentication only. Don't connect SDL.");
 	}
 
+	if (!sdl->input.initialize())
+		return FALSE;
+
 	/* TODO: Any code your client requires */
 	return TRUE;
 }
