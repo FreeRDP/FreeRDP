@@ -913,7 +913,7 @@ TlsHandshakeResult freerdp_tls_connect_ex(rdpTls* tls, BIO* underlying, const SS
 	if (!tls_prepare(tls, underlying, methods, options, TRUE))
 		return 0;
 
-#if !defined(OPENSSL_NO_TLSEXT) && !defined(LIBRESSL_VERSION_NUMBER)
+#if !defined(OPENSSL_NO_TLSEXT)
 	const char* str = tls_get_server_name(tls);
 	void* ptr = WINPR_CAST_CONST_PTR_AWAY(str, void*);
 	SSL_set_tlsext_host_name(tls->ssl, ptr);
