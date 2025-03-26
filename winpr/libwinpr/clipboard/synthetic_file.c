@@ -796,13 +796,14 @@ static void* convert_filedescriptors_to_file_list(wClipboard* clipboard, UINT32 
 		previous_at = curName;
 		while ((stop_at = stop_at_special_chars(previous_at)) != NULL)
 		{
-			char* tmp =
-			    strndup(previous_at, WINPR_ASSERTING_INT_CAST(size_t, stop_at - previous_at));
+			const intptr_t diff = stop_at - previous_at;
+			if (diff < 0)
+				goto loop_fail;
+			char* tmp = strndup(previous_at, WINPR_ASSERTING_INT_CAST(size_t, diff));
 			if (!tmp)
 				goto loop_fail;
 
-			rc = _snprintf(&dst[pos], WINPR_ASSERTING_INT_CAST(size_t, stop_at - previous_at + 1),
-			               "%s", tmp);
+			rc = _snprintf(&dst[pos], WINPR_ASSERTING_INT_CAST(size_t, diff + 1), "%s", tmp);
 			free(tmp);
 			if (rc < 0)
 				goto loop_fail;
