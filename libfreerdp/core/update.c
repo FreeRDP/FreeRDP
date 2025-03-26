@@ -1280,13 +1280,14 @@ static BOOL update_send_refresh_rect(rdpContext* context, BYTE count, const RECT
 	WINPR_ASSERT(rdp->settings);
 	if (rdp->settings->RefreshRect)
 	{
-		wStream* s = rdp_data_pdu_init(rdp);
+		UINT32 sec_flags = 0;
+		wStream* s = rdp_data_pdu_init(rdp, &sec_flags);
 
 		if (!s)
 			return FALSE;
 
 		update_write_refresh_rect(s, count, areas);
-		return rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_REFRESH_RECT, rdp->mcs->userId);
+		return rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_REFRESH_RECT, rdp->mcs->userId, sec_flags);
 	}
 
 	return TRUE;
@@ -1319,14 +1320,16 @@ static BOOL update_send_suppress_output(rdpContext* context, BYTE allow, const R
 	WINPR_ASSERT(rdp->settings);
 	if (rdp->settings->SuppressOutput)
 	{
-		wStream* s = rdp_data_pdu_init(rdp);
+		UINT32 sec_flags = 0;
+		wStream* s = rdp_data_pdu_init(rdp, &sec_flags);
 
 		if (!s)
 			return FALSE;
 
 		update_write_suppress_output(s, allow, area);
 		WINPR_ASSERT(rdp->mcs);
-		return rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_SUPPRESS_OUTPUT, rdp->mcs->userId);
+		return rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_SUPPRESS_OUTPUT, rdp->mcs->userId,
+		                         sec_flags);
 	}
 
 	return TRUE;
@@ -1470,13 +1473,15 @@ static BOOL update_send_frame_acknowledge(rdpContext* context, UINT32 frameId)
 	WINPR_ASSERT(rdp->settings);
 	if (rdp->settings->ReceivedCapabilities[CAPSET_TYPE_FRAME_ACKNOWLEDGE])
 	{
-		wStream* s = rdp_data_pdu_init(rdp);
+		UINT32 sec_flags = 0;
+		wStream* s = rdp_data_pdu_init(rdp, &sec_flags);
 
 		if (!s)
 			return FALSE;
 
 		Stream_Write_UINT32(s, frameId);
-		return rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_FRAME_ACKNOWLEDGE, rdp->mcs->userId);
+		return rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_FRAME_ACKNOWLEDGE, rdp->mcs->userId,
+		                         sec_flags);
 	}
 
 	return TRUE;
@@ -1541,6 +1546,7 @@ out_fail:
 
 static BOOL update_send_play_sound(rdpContext* context, const PLAY_SOUND_UPDATE* play_sound)
 {
+	UINT32 sec_flags = 0;
 	wStream* s = NULL;
 	WINPR_ASSERT(context);
 	rdpRdp* rdp = context->rdp;
@@ -1553,14 +1559,14 @@ static BOOL update_send_play_sound(rdpContext* context, const PLAY_SOUND_UPDATE*
 		return TRUE;
 	}
 
-	s = rdp_data_pdu_init(rdp);
+	s = rdp_data_pdu_init(rdp, &sec_flags);
 
 	if (!s)
 		return FALSE;
 
 	Stream_Write_UINT32(s, play_sound->duration);
 	Stream_Write_UINT32(s, play_sound->frequency);
-	return rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_PLAY_SOUND, rdp->mcs->userId);
+	return rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_PLAY_SOUND, rdp->mcs->userId, sec_flags);
 }
 
 /**
@@ -2454,11 +2460,12 @@ BOOL update_read_suppress_output(rdpUpdate* update, wStream* s)
 
 static BOOL update_send_set_keyboard_indicators(rdpContext* context, UINT16 led_flags)
 {
+	UINT32 sec_flags = 0;
 	wStream* s = NULL;
 
 	WINPR_ASSERT(context);
 	rdpRdp* rdp = context->rdp;
-	s = rdp_data_pdu_init(rdp);
+	s = rdp_data_pdu_init(rdp, &sec_flags);
 
 	if (!s)
 		return FALSE;
@@ -2467,17 +2474,19 @@ static BOOL update_send_set_keyboard_indicators(rdpContext* context, UINT16 led_
 	Stream_Write_UINT16(s, led_flags); /* ledFlags (2 bytes) */
 
 	WINPR_ASSERT(rdp->mcs);
-	return rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_SET_KEYBOARD_INDICATORS, rdp->mcs->userId);
+	return rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_SET_KEYBOARD_INDICATORS, rdp->mcs->userId,
+	                         sec_flags);
 }
 
 static BOOL update_send_set_keyboard_ime_status(rdpContext* context, UINT16 imeId, UINT32 imeState,
                                                 UINT32 imeConvMode)
 {
+	UINT32 sec_flags = 0;
 	wStream* s = NULL;
 
 	WINPR_ASSERT(context);
 	rdpRdp* rdp = context->rdp;
-	s = rdp_data_pdu_init(rdp);
+	s = rdp_data_pdu_init(rdp, &sec_flags);
 
 	if (!s)
 		return FALSE;
@@ -2488,7 +2497,8 @@ static BOOL update_send_set_keyboard_ime_status(rdpContext* context, UINT16 imeI
 	Stream_Write_UINT32(s, imeConvMode);
 
 	WINPR_ASSERT(rdp->mcs);
-	return rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_SET_KEYBOARD_IME_STATUS, rdp->mcs->userId);
+	return rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_SET_KEYBOARD_IME_STATUS, rdp->mcs->userId,
+	                         sec_flags);
 }
 
 static UINT16 update_calculate_new_or_existing_window(const WINDOW_ORDER_INFO* orderInfo,

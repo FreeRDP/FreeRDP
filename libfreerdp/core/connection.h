@@ -76,6 +76,6 @@ FREERDP_LOCAL BOOL rdp_channels_from_mcs(rdpSettings* settings, const rdpRdp* rd
 FREERDP_LOCAL state_run_t rdp_handle_message_channel(rdpRdp* rdp, wStream* s, UINT16 channelId,
                                                      UINT16 length);
 FREERDP_LOCAL BOOL rdp_handle_optional_rdp_decryption(rdpRdp* rdp, wStream* s, UINT16* length,
-                                                      UINT16* pSecurityFlags);
+                                                      UINT32* pSecurityFlags);
 
 #endif /* FREERDP_LIB_CORE_CONNECTION_H */

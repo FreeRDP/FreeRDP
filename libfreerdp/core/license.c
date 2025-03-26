@@ -296,7 +296,7 @@ static const char* licencse_blob_type_string(UINT16 type)
 			return "BB_UNKNOWN";
 	}
 }
-static wStream* license_send_stream_init(rdpLicense* license);
+static wStream* license_send_stream_init(rdpLicense* license, UINT32* sec_flags);
 
 static void license_generate_randoms(rdpLicense* license);
 static BOOL license_generate_keys(rdpLicense* license);
@@ -725,14 +725,15 @@ static BOOL license_write_preamble(wStream* s, BYTE bMsgType, BYTE flags, UINT16
  * @return stream or NULL
  */
 
-wStream* license_send_stream_init(rdpLicense* license)
+wStream* license_send_stream_init(rdpLicense* license, UINT32* sec_flags)
 {
 	WINPR_ASSERT(license);
 	WINPR_ASSERT(license->rdp);
+	WINPR_ASSERT(sec_flags);
 
 	const BOOL do_crypt = license->rdp->do_crypt;
 
-	license->rdp->sec_flags = SEC_LICENSE_PKT;
+	*sec_flags = SEC_LICENSE_PKT;
 
 	/*
 	 * Encryption of licensing packets is optional even if the rdp security
@@ -744,11 +745,11 @@ wStream* license_send_stream_init(rdpLicense* license)
 
 	if (do_crypt)
 	{
-		license->rdp->sec_flags |= SEC_LICENSE_ENCRYPT_CS;
+		*sec_flags |= SEC_LICENSE_ENCRYPT_CS;
 		license->rdp->do_crypt = license->rdp->do_crypt_license;
 	}
 
-	wStream* s = rdp_send_stream_init(license->rdp);
+	wStream* s = rdp_send_stream_init(license->rdp, sec_flags);
 	if (!s)
 		return NULL;
 
@@ -770,7 +771,7 @@ fail:
  * @param s stream
  */
 
-static BOOL license_send(rdpLicense* license, wStream* s, BYTE type)
+static BOOL license_send(rdpLicense* license, wStream* s, BYTE type, UINT32 sec_flags)
 {
 	WINPR_ASSERT(license);
 	WINPR_ASSERT(license->rdp);
@@ -808,8 +809,7 @@ static BOOL license_send(rdpLicense* license, wStream* s, BYTE type)
 	                 wMsgSize);
 #endif
 	Stream_SetPosition(s, length);
-	const BOOL ret = rdp_send(rdp, s, MCS_GLOBAL_CHANNEL_ID);
-	rdp->sec_flags = 0;
+	const BOOL ret = rdp_send(rdp, s, MCS_GLOBAL_CHANNEL_ID, sec_flags);
 	return ret;
 }
 
@@ -828,7 +828,8 @@ BOOL license_write_server_upgrade_license(const rdpLicense* license, wStream* s)
 
 static BOOL license_server_send_new_or_upgrade_license(rdpLicense* license, BOOL upgrade)
 {
-	wStream* s = license_send_stream_init(license);
+	UINT32 sec_flags = 0;
+	wStream* s = license_send_stream_init(license, &sec_flags);
 	const BYTE type = upgrade ? UPGRADE_LICENSE : NEW_LICENSE;
 
 	if (!s)
@@ -837,7 +838,7 @@ static BOOL license_server_send_new_or_upgrade_license(rdpLicense* license, BOOL
 	if (!license_write_server_upgrade_license(license, s))
 		goto fail;
 
-	return license_send(license, s, type);
+	return license_send(license, s, type, sec_flags);
 
 fail:
 	Stream_Release(s);
@@ -1752,7 +1753,8 @@ BOOL license_send_license_info(rdpLicense* license, const LICENSE_BLOB* calBlob,
 	if (!info)
 		return FALSE;
 
-	wStream* s = license_send_stream_init(license);
+	UINT32 sec_flags = 0;
+	wStream* s = license_send_stream_init(license, &sec_flags);
 	if (!s)
 		return FALSE;
 
@@ -1785,7 +1787,7 @@ BOOL license_send_license_info(rdpLicense* license, const LICENSE_BLOB* calBlob,
 		goto error;
 	Stream_Write(s, signature, signature_length);
 
-	return license_send(license, s, LICENSE_INFO);
+	return license_send(license, s, LICENSE_INFO, sec_flags);
 
 error:
 	Stream_Release(s);
@@ -1957,14 +1959,15 @@ BOOL license_write_license_request_packet(const rdpLicense* license, wStream* s)
 
 static BOOL license_send_license_request_packet(rdpLicense* license)
 {
-	wStream* s = license_send_stream_init(license);
+	UINT32 sec_flags = 0;
+	wStream* s = license_send_stream_init(license, &sec_flags);
 	if (!s)
 		return FALSE;
 
 	if (!license_write_license_request_packet(license, s))
 		goto fail;
 
-	return license_send(license, s, LICENSE_REQUEST);
+	return license_send(license, s, LICENSE_REQUEST, sec_flags);
 
 fail:
 	Stream_Release(s);
@@ -2026,7 +2029,8 @@ BOOL license_read_platform_challenge_packet(rdpLicense* license, wStream* s)
 BOOL license_send_error_alert(rdpLicense* license, UINT32 dwErrorCode, UINT32 dwStateTransition,
                               const LICENSE_BLOB* info)
 {
-	wStream* s = license_send_stream_init(license);
+	UINT32 sec_flags = 0;
+	wStream* s = license_send_stream_init(license, &sec_flags);
 
 	if (!s)
 		goto fail;
@@ -2042,7 +2046,7 @@ BOOL license_send_error_alert(rdpLicense* license, UINT32 dwErrorCode, UINT32 dw
 			goto fail;
 	}
 
-	return license_send(license, s, ERROR_ALERT);
+	return license_send(license, s, ERROR_ALERT, sec_flags);
 fail:
 	Stream_Release(s);
 	return FALSE;
@@ -2050,7 +2054,8 @@ fail:
 
 BOOL license_send_platform_challenge_packet(rdpLicense* license)
 {
-	wStream* s = license_send_stream_init(license);
+	UINT32 sec_flags = 0;
+	wStream* s = license_send_stream_init(license, &sec_flags);
 
 	if (!s)
 		goto fail;
@@ -2073,7 +2078,7 @@ BOOL license_send_platform_challenge_packet(rdpLicense* license)
 
 	Stream_Write(s, license->MACData, sizeof(license->MACData));
 
-	return license_send(license, s, PLATFORM_CHALLENGE);
+	return license_send(license, s, PLATFORM_CHALLENGE, sec_flags);
 fail:
 	Stream_Release(s);
 	return FALSE;
@@ -2413,6 +2418,7 @@ BOOL license_read_new_license_request_packet(rdpLicense* license, wStream* s)
 
 BOOL license_answer_license_request(rdpLicense* license)
 {
+	UINT32 sec_flags = 0;
 	wStream* s = NULL;
 	BYTE* license_data = NULL;
 	size_t license_size = 0;
@@ -2461,7 +2467,7 @@ BOOL license_answer_license_request(rdpLicense* license)
 
 	DEBUG_LICENSE("Sending New License Packet");
 
-	s = license_send_stream_init(license);
+	s = license_send_stream_init(license, &sec_flags);
 	if (!s)
 		return FALSE;
 	if (license->rdp->settings->Username != NULL)
@@ -2502,7 +2508,7 @@ BOOL license_answer_license_request(rdpLicense* license)
 		return FALSE;
 	}
 
-	return license_send(license, s, NEW_LICENSE_REQUEST);
+	return license_send(license, s, NEW_LICENSE_REQUEST, sec_flags);
 }
 
 /**
@@ -2585,12 +2591,13 @@ BOOL license_send_platform_challenge_response(rdpLicense* license)
 	winpr_HexLogDump(license->log, WLOG_DEBUG, license->EncryptedHardwareId->data,
 	                 license->EncryptedHardwareId->length);
 #endif
-	wStream* s = license_send_stream_init(license);
+	UINT32 sec_flags = 0;
+	wStream* s = license_send_stream_init(license, &sec_flags);
 	if (!s)
 		return FALSE;
 
 	if (license_write_client_platform_challenge_response(license, s))
-		return license_send(license, s, PLATFORM_CHALLENGE_RESPONSE);
+		return license_send(license, s, PLATFORM_CHALLENGE_RESPONSE, sec_flags);
 
 	Stream_Release(s);
 	return FALSE;

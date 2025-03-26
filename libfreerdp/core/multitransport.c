@@ -96,7 +96,8 @@ static BOOL multitransport_request_send(rdpMultitransport* multi, UINT32 reqId, 
                                         const BYTE* cookie)
 {
 	WINPR_ASSERT(multi);
-	wStream* s = rdp_message_channel_pdu_init(multi->rdp);
+	UINT32 sec_flags = 0;
+	wStream* s = rdp_message_channel_pdu_init(multi->rdp, &sec_flags);
 	if (!s)
 		return FALSE;
 
@@ -111,7 +112,7 @@ static BOOL multitransport_request_send(rdpMultitransport* multi, UINT32 reqId, 
 	Stream_Zero(s, 2);                          /* reserved (2 bytes) */
 	Stream_Write(s, cookie, RDPUDP_COOKIE_LEN); /* securityCookie (16 bytes) */
 
-	return rdp_send_message_channel_pdu(multi->rdp, s, SEC_TRANSPORT_REQ);
+	return rdp_send_message_channel_pdu(multi->rdp, s, sec_flags | SEC_TRANSPORT_REQ);
 }
 
 state_run_t multitransport_server_request(rdpMultitransport* multi, UINT16 reqProto)
@@ -140,7 +141,8 @@ BOOL multitransport_client_send_response(rdpMultitransport* multi, UINT32 reqId,
 {
 	WINPR_ASSERT(multi);
 
-	wStream* s = rdp_message_channel_pdu_init(multi->rdp);
+	UINT32 sec_flags = 0;
+	wStream* s = rdp_message_channel_pdu_init(multi->rdp, &sec_flags);
 	if (!s)
 		return FALSE;
 
@@ -156,7 +158,7 @@ BOOL multitransport_client_send_response(rdpMultitransport* multi, UINT32 reqId,
 	 * UNSIGNED but https://learn.microsoft.com/en-us/windows/win32/learnwin32/error-codes-in-com
 	 * defines this as signed... assume the spec is (implicitly) assuming twos complement. */
 	Stream_Write_INT32(s, hr); /* HResult (4 bytes) */
-	return rdp_send_message_channel_pdu(multi->rdp, s, SEC_TRANSPORT_RSP);
+	return rdp_send_message_channel_pdu(multi->rdp, s, sec_flags | SEC_TRANSPORT_RSP);
 }
 
 state_run_t multitransport_recv_response(rdpMultitransport* multi, wStream* s)

@@ -4695,7 +4695,8 @@ static BOOL rdp_write_demand_active(wLog* log, wStream* s, rdpSettings* settings
 
 BOOL rdp_send_demand_active(rdpRdp* rdp)
 {
-	wStream* s = rdp_send_stream_pdu_init(rdp);
+	UINT32 sec_flags = 0;
+	wStream* s = rdp_send_stream_pdu_init(rdp, &sec_flags);
 	BOOL status = 0;
 
 	if (!s)
@@ -4703,7 +4704,7 @@ BOOL rdp_send_demand_active(rdpRdp* rdp)
 
 	rdp->settings->ShareId = 0x10000 + rdp->mcs->userId;
 	status = rdp_write_demand_active(rdp->log, s, rdp->settings) &&
-	         rdp_send_pdu(rdp, s, PDU_TYPE_DEMAND_ACTIVE, rdp->mcs->userId);
+	         rdp_send_pdu(rdp, s, PDU_TYPE_DEMAND_ACTIVE, rdp->mcs->userId, sec_flags);
 	Stream_Release(s);
 	return status;
 }
@@ -4934,14 +4935,15 @@ static BOOL rdp_write_confirm_active(wLog* log, wStream* s, rdpSettings* setting
 
 BOOL rdp_send_confirm_active(rdpRdp* rdp)
 {
-	wStream* s = rdp_send_stream_pdu_init(rdp);
+	UINT32 sec_flags = 0;
+	wStream* s = rdp_send_stream_pdu_init(rdp, &sec_flags);
 	BOOL status = 0;
 
 	if (!s)
 		return FALSE;
 
 	status = rdp_write_confirm_active(rdp->log, s, rdp->settings) &&
-	         rdp_send_pdu(rdp, s, PDU_TYPE_CONFIRM_ACTIVE, rdp->mcs->userId);
+	         rdp_send_pdu(rdp, s, PDU_TYPE_CONFIRM_ACTIVE, rdp->mcs->userId, sec_flags);
 	Stream_Release(s);
 	return status;
 }

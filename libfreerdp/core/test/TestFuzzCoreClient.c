@@ -38,12 +38,12 @@ static BOOL test_client(const uint8_t* Data, size_t Size)
 
 	{
 		UINT16 length = 0;
-		UINT16 flags = 0;
+		UINT32 flags = 0;
 		UINT16 channelId = 0;
 		UINT16 tpktLength = 0;
 		UINT16 remainingLength = 0;
 		UINT16 type = 0;
-		UINT16 securityFlags = 0;
+		UINT32 securityFlags = 0;
 		UINT32 share_id = 0;
 		BYTE compressed_type = 0;
 		BYTE btype = 0;
