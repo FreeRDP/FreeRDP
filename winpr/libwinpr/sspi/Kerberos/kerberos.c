@@ -675,7 +675,7 @@ static BOOL append(char* dst, size_t dstSize, const char* src)
 	const size_t slen = strlen(src);
 	if (dlen + slen >= dstSize)
 		return FALSE;
-	if (!strncat(dst, src, slen))
+	if (!strncat(dst, src, dstSize - dlen))
 		return FALSE;
 	return TRUE;
 }

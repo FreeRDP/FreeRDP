@@ -33,6 +33,12 @@ SdlWindow::SdlWindow(const std::string& title, Sint32 startupX, Sint32 startupY,
 	// SDL_SetProperty(props, SDL_PROP_WINDOW_CREATE_FL);
 	_window = SDL_CreateWindowWithProperties(props);
 	SDL_DestroyProperties(props);
+
+	auto scale = SDL_GetWindowPixelDensity(_window);
+	const int iscale = static_cast<int>(scale * 100.0f);
+	auto w = 100 * width / iscale;
+	auto h = 100 * height / iscale;
+	SDL_SetWindowSize(_window, w, h);
 }
 
 SdlWindow::SdlWindow(SdlWindow&& other) noexcept

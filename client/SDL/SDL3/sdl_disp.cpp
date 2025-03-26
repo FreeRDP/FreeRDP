@@ -358,10 +358,12 @@ BOOL sdlDispContext::handle_window_event(const SDL_WindowEvent* ev)
 			auto ctx = _sdl->context();
 			if (ctx && ctx->gdi)
 				gdi_send_suppress_output(ctx->gdi, FALSE);
-			return TRUE;
 		}
+			/* fallthrough */
+			WINPR_FALLTHROUGH
 		case SDL_EVENT_WINDOW_DISPLAY_SCALE_CHANGED:
 		case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
+		case SDL_EVENT_WINDOW_RESIZED:
 		{
 			if (freerdp_settings_get_bool(_sdl->context()->settings,
 			                              FreeRDP_DynamicResolutionUpdate))
@@ -370,7 +372,7 @@ BOOL sdlDispContext::handle_window_event(const SDL_WindowEvent* ev)
 				const auto factor = SDL_GetWindowDisplayScale(window.window());
 				_targetDesktopScaleFactor = static_cast<UINT32>(100 * factor);
 			}
-			assert(SDL_GetWindowSizeInPixels(it->second.window(), &_targetWidth, &_targetHeight));
+			SDL_GetWindowSizeInPixels(it->second.window(), &_targetWidth, &_targetHeight);
 			return addTimer();
 		}
 		case SDL_EVENT_WINDOW_MOUSE_LEAVE:
