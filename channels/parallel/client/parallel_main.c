@@ -119,6 +119,7 @@ static UINT parallel_process_irp_create(PARALLEL_DEVICE* parallel, IRP* irp)
 	Stream_Write_UINT32(irp->output, parallel->id);
 	Stream_Write_UINT8(irp->output, 0);
 	free(path);
+	WINPR_ASSERT(irp->Complete);
 	return irp->Complete(irp);
 }
 
@@ -135,6 +136,7 @@ static UINT parallel_process_irp_close(PARALLEL_DEVICE* parallel, IRP* irp)
 	(void)close(parallel->file);
 
 	Stream_Zero(irp->output, 5); /* Padding(5) */
+	WINPR_ASSERT(irp->Complete);
 	return irp->Complete(irp);
 }
 
@@ -196,6 +198,7 @@ static UINT parallel_process_irp_read(PARALLEL_DEVICE* parallel, IRP* irp)
 	}
 
 	free(buffer);
+	WINPR_ASSERT(irp->Complete);
 	return irp->Complete(irp);
 }
 
@@ -244,6 +247,7 @@ static UINT parallel_process_irp_write(PARALLEL_DEVICE* parallel, IRP* irp)
 
 	Stream_Write_UINT32(irp->output, Length);
 	Stream_Write_UINT8(irp->output, 0); /* Padding */
+	WINPR_ASSERT(irp->Complete);
 	return irp->Complete(irp);
 }
 
@@ -299,6 +303,7 @@ static UINT parallel_process_irp(PARALLEL_DEVICE* parallel, IRP* irp)
 
 		default:
 			irp->IoStatus = STATUS_NOT_SUPPORTED;
+			WINPR_ASSERT(irp->Complete);
 			error = irp->Complete(irp);
 			break;
 	}
