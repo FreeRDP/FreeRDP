@@ -1018,6 +1018,8 @@ BOOL fastpath_send_multiple_input_pdu(rdpFastPath* fastpath, wStream* s, size_t 
 {
 	BOOL rc = FALSE;
 	BYTE eventHeader = 0;
+	BOOL should_unlock = FALSE;
+	rdpRdp* rdp = NULL;
 
 	WINPR_ASSERT(iNumEvents > 0);
 	if (!s)
@@ -1026,7 +1028,7 @@ BOOL fastpath_send_multiple_input_pdu(rdpFastPath* fastpath, wStream* s, size_t 
 	if (!fastpath)
 		goto fail;
 
-	rdpRdp* rdp = fastpath->rdp;
+	rdp = fastpath->rdp;
 	WINPR_ASSERT(rdp);
 
 	CONNECTION_STATE state = rdp_get_state(rdp);
@@ -1068,13 +1070,13 @@ BOOL fastpath_send_multiple_input_pdu(rdpFastPath* fastpath, wStream* s, size_t 
 
 	if (sec_flags & SEC_ENCRYPT)
 	{
-		BOOL status = FALSE;
 		if (!security_lock(rdp))
 			goto fail;
+		should_unlock = TRUE;
 
 		const size_t sec_bytes = fastpath_get_sec_bytes(fastpath->rdp);
 		if (sec_bytes + 3ULL > length)
-			goto unlock;
+			goto fail;
 
 		BYTE* fpInputEvents = Stream_PointerAs(s, BYTE) + sec_bytes;
 		const UINT16 fpInputEvents_length = (UINT16)(length - 3 - sec_bytes);
@@ -1092,17 +1094,17 @@ BOOL fastpath_send_multiple_input_pdu(rdpFastPath* fastpath, wStream* s, size_t 
 			Stream_Write_UINT8(s, pad);   /* padding */
 
 			if (!Stream_CheckAndLogRequiredCapacity(TAG, s, 8))
-				goto unlock;
+				goto fail;
 
 			if (!security_hmac_signature(fpInputEvents, fpInputEvents_length, Stream_Pointer(s), 8,
 			                             rdp))
-				goto unlock;
+				goto fail;
 
 			if (pad)
 				memset(fpInputEvents + fpInputEvents_length, 0, pad);
 
 			if (!security_fips_encrypt(fpInputEvents, fpInputEvents_length + pad, rdp))
-				goto unlock;
+				goto fail;
 
 			length += pad;
 		}
@@ -1110,7 +1112,7 @@ BOOL fastpath_send_multiple_input_pdu(rdpFastPath* fastpath, wStream* s, size_t 
 		{
 			BOOL res = 0;
 			if (!Stream_CheckAndLogRequiredCapacity(TAG, s, 8))
-				goto unlock;
+				goto fail;
 			if (sec_flags & SEC_SECURE_CHECKSUM)
 				res = security_salted_mac_signature(rdp, fpInputEvents, fpInputEvents_length, TRUE,
 				                                    Stream_Pointer(s), 8);
@@ -1119,15 +1121,8 @@ BOOL fastpath_send_multiple_input_pdu(rdpFastPath* fastpath, wStream* s, size_t 
 				                             Stream_Pointer(s), 8);
 
 			if (!res || !security_encrypt(fpInputEvents, fpInputEvents_length, rdp))
-				goto unlock;
+				goto fail;
 		}
-
-		status = TRUE;
-	unlock:
-		if (!security_unlock(rdp))
-			goto fail;
-		if (!status)
-			goto fail;
 	}
 
 	/*
@@ -1147,6 +1142,8 @@ BOOL fastpath_send_multiple_input_pdu(rdpFastPath* fastpath, wStream* s, size_t 
 
 	rc = TRUE;
 fail:
+	if (should_unlock && !security_unlock(rdp))
+		rc = FALSE;
 	Stream_Release(s);
 	return rc;
 }
@@ -1244,6 +1241,7 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 		fpUpdateHeader.size = (UINT16)(totalLength > maxLength) ? maxLength : (UINT16)totalLength;
 		const BYTE* pSrcData = Stream_Pointer(s);
 		UINT32 SrcSize = DstSize = fpUpdateHeader.size;
+		BOOL should_unlock = FALSE;
 
 		if (sec_flags & SEC_ENCRYPT)
 			fpUpdatePduHeader.secFlags |= FASTPATH_OUTPUT_ENCRYPTED;
@@ -1323,11 +1321,12 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 		if (pad)
 			Stream_Zero(fs, pad);
 
+		BOOL res = FALSE;
 		if (sec_flags & SEC_ENCRYPT)
 		{
-			BOOL res = FALSE;
 			if (!security_lock(rdp))
 				return FALSE;
+			should_unlock = TRUE;
 			UINT32 dataSize = fpUpdateHeaderSize + DstSize + pad;
 			BYTE* data = Stream_PointerAs(fs, BYTE) - dataSize;
 
@@ -1352,22 +1351,22 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 				if (!status || !security_encrypt(data, dataSize, rdp))
 					goto unlock;
 			}
-			res = TRUE;
-
-		unlock:
-			if (!security_unlock(rdp))
-				return FALSE;
-			if (!res)
-				return FALSE;
 		}
+		res = TRUE;
 
 		Stream_SealLength(fs);
 
 		if (transport_write(rdp->transport, fs) < 0)
 		{
 			status = FALSE;
-			break;
 		}
+
+	unlock:
+		if (should_unlock && !security_unlock(rdp))
+			return FALSE;
+
+		if (!res || !status)
+			return FALSE;
 
 		Stream_Seek(s, SrcSize);
 	}
