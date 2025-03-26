@@ -155,7 +155,7 @@ static UINT drive_process_irp_create(DRIVE_DEVICE* drive, IRP* irp)
 	BYTE Information = 0;
 	const WCHAR* path = NULL;
 
-	if (!drive || !irp || !irp->devman || !irp->Complete)
+	if (!drive || !irp || !irp->devman)
 		return ERROR_INVALID_PARAMETER;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, irp->input, 6 * 4 + 8))
@@ -227,6 +227,8 @@ static UINT drive_process_irp_create(DRIVE_DEVICE* drive, IRP* irp)
 
 	Stream_Write_UINT32(irp->output, FileId);
 	Stream_Write_UINT8(irp->output, Information);
+
+	WINPR_ASSERT(irp->Complete);
 	return irp->Complete(irp);
 }
 
@@ -240,7 +242,7 @@ static UINT drive_process_irp_close(DRIVE_DEVICE* drive, IRP* irp)
 	void* key = NULL;
 	DRIVE_FILE* file = NULL;
 
-	if (!drive || !irp || !irp->Complete || !irp->output)
+	if (!drive || !irp || !irp->output)
 		return ERROR_INVALID_PARAMETER;
 
 	file = drive_get_file_by_id(drive, irp->FileId);
@@ -259,6 +261,8 @@ static UINT drive_process_irp_close(DRIVE_DEVICE* drive, IRP* irp)
 	}
 
 	Stream_Zero(irp->output, 5); /* Padding(5) */
+
+	WINPR_ASSERT(irp->Complete);
 	return irp->Complete(irp);
 }
 
@@ -273,7 +277,7 @@ static UINT drive_process_irp_read(DRIVE_DEVICE* drive, IRP* irp)
 	UINT32 Length = 0;
 	UINT64 Offset = 0;
 
-	if (!drive || !irp || !irp->output || !irp->Complete)
+	if (!drive || !irp || !irp->output)
 		return ERROR_INVALID_PARAMETER;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, irp->input, 12))
@@ -317,6 +321,7 @@ static UINT drive_process_irp_read(DRIVE_DEVICE* drive, IRP* irp)
 		}
 	}
 
+	WINPR_ASSERT(irp->Complete);
 	return irp->Complete(irp);
 }
 
@@ -331,7 +336,7 @@ static UINT drive_process_irp_write(DRIVE_DEVICE* drive, IRP* irp)
 	UINT32 Length = 0;
 	UINT64 Offset = 0;
 
-	if (!drive || !irp || !irp->input || !irp->output || !irp->Complete)
+	if (!drive || !irp || !irp->input || !irp->output)
 		return ERROR_INVALID_PARAMETER;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, irp->input, 32))
@@ -363,6 +368,8 @@ static UINT drive_process_irp_write(DRIVE_DEVICE* drive, IRP* irp)
 
 	Stream_Write_UINT32(irp->output, Length);
 	Stream_Write_UINT8(irp->output, 0); /* Padding */
+
+	WINPR_ASSERT(irp->Complete);
 	return irp->Complete(irp);
 }
 
@@ -376,7 +383,7 @@ static UINT drive_process_irp_query_information(DRIVE_DEVICE* drive, IRP* irp)
 	DRIVE_FILE* file = NULL;
 	UINT32 FsInformationClass = 0;
 
-	if (!drive || !irp || !irp->Complete)
+	if (!drive || !irp)
 		return ERROR_INVALID_PARAMETER;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, irp->input, 4))
@@ -394,6 +401,7 @@ static UINT drive_process_irp_query_information(DRIVE_DEVICE* drive, IRP* irp)
 		irp->IoStatus = drive_map_windows_err(GetLastError());
 	}
 
+	WINPR_ASSERT(irp->Complete);
 	return irp->Complete(irp);
 }
 
@@ -408,7 +416,7 @@ static UINT drive_process_irp_set_information(DRIVE_DEVICE* drive, IRP* irp)
 	UINT32 FsInformationClass = 0;
 	UINT32 Length = 0;
 
-	if (!drive || !irp || !irp->Complete || !irp->input || !irp->output)
+	if (!drive || !irp || !irp->input || !irp->output)
 		return ERROR_INVALID_PARAMETER;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, irp->input, 32))
@@ -432,6 +440,8 @@ static UINT drive_process_irp_set_information(DRIVE_DEVICE* drive, IRP* irp)
 		irp->IoStatus = STATUS_DIRECTORY_NOT_EMPTY;
 
 	Stream_Write_UINT32(irp->output, Length);
+
+	WINPR_ASSERT(irp->Complete);
 	return irp->Complete(irp);
 }
 
@@ -579,6 +589,7 @@ static UINT drive_process_irp_query_volume_information(DRIVE_DEVICE* drive, IRP*
 			break;
 	}
 
+	WINPR_ASSERT(irp->Complete);
 	return irp->Complete(irp);
 }
 
@@ -591,7 +602,7 @@ static UINT drive_process_irp_query_volume_information(DRIVE_DEVICE* drive, IRP*
  */
 static UINT drive_process_irp_silent_ignore(DRIVE_DEVICE* drive, IRP* irp)
 {
-	if (!drive || !irp || !irp->output || !irp->Complete)
+	if (!drive || !irp || !irp->output)
 		return ERROR_INVALID_PARAMETER;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, irp->input, 4))
@@ -601,6 +612,7 @@ static UINT drive_process_irp_silent_ignore(DRIVE_DEVICE* drive, IRP* irp)
 	WLog_VRB(TAG, "Silently ignore FSInformationClass %s [0x%08" PRIx32 "]",
 	         FSInformationClass2Tag(FsInformationClass), FsInformationClass);
 	Stream_Write_UINT32(irp->output, 0); /* Length */
+	WINPR_ASSERT(irp->Complete);
 	return irp->Complete(irp);
 }
 
@@ -617,7 +629,7 @@ static UINT drive_process_irp_query_directory(DRIVE_DEVICE* drive, IRP* irp)
 	UINT32 PathLength = 0;
 	UINT32 FsInformationClass = 0;
 
-	if (!drive || !irp || !irp->Complete)
+	if (!drive || !irp)
 		return ERROR_INVALID_PARAMETER;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, irp->input, 32))
@@ -644,6 +656,7 @@ static UINT drive_process_irp_query_directory(DRIVE_DEVICE* drive, IRP* irp)
 		irp->IoStatus = drive_map_windows_err(GetLastError());
 	}
 
+	WINPR_ASSERT(irp->Complete);
 	return irp->Complete(irp);
 }
 
@@ -668,6 +681,7 @@ static UINT drive_process_irp_directory_control(DRIVE_DEVICE* drive, IRP* irp)
 		default:
 			irp->IoStatus = STATUS_NOT_SUPPORTED;
 			Stream_Write_UINT32(irp->output, 0); /* Length */
+			WINPR_ASSERT(irp->Complete);
 			return irp->Complete(irp);
 	}
 
@@ -685,6 +699,7 @@ static UINT drive_process_irp_device_control(DRIVE_DEVICE* drive, IRP* irp)
 		return ERROR_INVALID_PARAMETER;
 
 	Stream_Write_UINT32(irp->output, 0); /* OutputBufferLength */
+	WINPR_ASSERT(irp->Complete);
 	return irp->Complete(irp);
 }
 
@@ -746,6 +761,7 @@ static UINT drive_process_irp(DRIVE_DEVICE* drive, IRP* irp)
 
 		default:
 			irp->IoStatus = STATUS_NOT_SUPPORTED;
+			WINPR_ASSERT(irp->Complete);
 			error = irp->Complete(irp);
 			break;
 	}

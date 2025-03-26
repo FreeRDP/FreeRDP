@@ -478,6 +478,7 @@ static UINT printer_process_irp_create(PRINTER_DEVICE* printer_dev, IRP* irp)
 		irp->IoStatus = STATUS_PRINT_QUEUE_FULL;
 	}
 
+	WINPR_ASSERT(irp->Complete);
 	return irp->Complete(irp);
 }
 
@@ -509,6 +510,7 @@ static UINT printer_process_irp_close(PRINTER_DEVICE* printer_dev, IRP* irp)
 	}
 
 	Stream_Zero(irp->output, 4); /* Padding(4) */
+	WINPR_ASSERT(irp->Complete);
 	return irp->Complete(irp);
 }
 

@@ -20,5 +20,6 @@ set(SRCS rdpsnd_common.h rdpsnd_common.c)
 
 # Library currently header only
 add_library(rdpsnd-common STATIC ${SRCS})
+set_property(TARGET rdpsnd-common PROPERTY FOLDER "Channels/${CHANNEL_NAME}/Common")
 
 channel_install(rdpsnd-common ${FREERDP_ADDIN_PATH} "FreeRDPTargets")

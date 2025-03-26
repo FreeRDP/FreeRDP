@@ -529,6 +529,7 @@ static DWORD WINAPI irp_thread_func(LPVOID arg)
 	}
 
 	EnterCriticalSection(&data->serial->TerminatingIrpThreadsLock);
+	WINPR_ASSERT(data->irp->Complete);
 	error = data->irp->Complete(data->irp);
 	LeaveCriticalSection(&data->serial->TerminatingIrpThreadsLock);
 error_out:
@@ -697,6 +698,7 @@ error_handle:
 	if (irpThread)
 		(void)CloseHandle(irpThread);
 	irp->IoStatus = STATUS_NO_MEMORY;
+	WINPR_ASSERT(irp->Complete);
 	irp->Complete(irp);
 	free(data);
 }
