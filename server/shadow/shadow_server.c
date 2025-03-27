@@ -244,6 +244,13 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 		{
 			server->mayInteract = arg->Value ? TRUE : FALSE;
 		}
+		CommandLineSwitchCase(arg, "mouse-relative")
+		{
+			const BOOL val = arg->Value ? TRUE : FALSE;
+			if (!freerdp_settings_set_bool(settings, FreeRDP_MouseUseRelativeMove, val) ||
+			    !freerdp_settings_set_bool(settings, FreeRDP_HasRelativeMouseEvent, val))
+				return fail_at(arg, COMMAND_LINE_ERROR);
+		}
 		CommandLineSwitchCase(arg, "max-connections")
 		{
 			errno = 0;

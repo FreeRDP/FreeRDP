@@ -52,6 +52,8 @@ int main(int argc, char** argv)
 		  "Select or list monitors" },
 		{ "max-connections", COMMAND_LINE_VALUE_REQUIRED, "<number>", 0, NULL, -1, NULL,
 		  "maximum connections allowed to server, 0 to deactivate" },
+		{ "mouse-relative", COMMAND_LINE_VALUE_BOOL, NULL, NULL, NULL, -1, NULL,
+		  "enable support for relative mouse events" },
 		{ "rect", COMMAND_LINE_VALUE_REQUIRED, "<x,y,w,h>", NULL, NULL, -1, NULL,
 		  "Select rectangle within monitor to share" },
 		{ "auth", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL,
@@ -140,7 +142,6 @@ int main(int argc, char** argv)
 	    !freerdp_settings_set_bool(settings, FreeRDP_GfxProgressiveV2, TRUE))
 		goto fail;
 
-	/* TODO: We do not implement relative mouse callbacks, so deactivate it for now */
 	if (!freerdp_settings_set_bool(settings, FreeRDP_MouseUseRelativeMove, FALSE) ||
 	    !freerdp_settings_set_bool(settings, FreeRDP_HasRelativeMouseEvent, FALSE))
 		goto fail;
