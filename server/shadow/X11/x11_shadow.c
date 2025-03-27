@@ -625,8 +625,8 @@ static int x11_shadow_query_cursor(x11ShadowSubsystem* subsystem, BOOL getImage)
 
 	if ((x != (INT64)subsystem->common.pointerX) || (y != (INT64)subsystem->common.pointerY))
 	{
-		subsystem->common.pointerX = WINPR_ASSERTING_INT_CAST(UINT32, x);
-		subsystem->common.pointerY = WINPR_ASSERTING_INT_CAST(UINT32, y);
+		subsystem->common.pointerX = (UINT32)MAX(0, x);
+		subsystem->common.pointerY = (UINT32)MAX(0, y);
 		x11_shadow_pointer_position_update(subsystem);
 	}
 
