@@ -516,7 +516,7 @@ static DWORD WINAPI remdesk_server_thread(LPVOID arg)
 
 		if (Stream_GetPosition(s) >= 8)
 		{
-			const BYTE* pHeader = Stream_BufferAs(s, UINT32);
+			const UINT32* pHeader = Stream_BufferAs(s, UINT32);
 			const UINT32 PduLength = pHeader[0] + pHeader[1] + 8;
 
 			if (PduLength >= Stream_GetPosition(s))
