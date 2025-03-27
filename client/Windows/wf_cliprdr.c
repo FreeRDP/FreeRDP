@@ -2163,13 +2163,26 @@ wf_cliprdr_server_format_data_request(CliprdrClientContext* context,
 	UINT rc = ERROR_INTERNAL_ERROR;
 	if (res >= 0)
 	{
-		CLIPRDR_FORMAT_DATA_RESPONSE response = { .common = { .msgType = CB_FORMAT_DATA_RESPONSE,
-			                                                  .msgFlags = CB_RESPONSE_OK,
-			                                                  .dataLen = (uint32_t)res },
-			                                      .requestedFormatData = requestedFormatData };
+		const CLIPRDR_FORMAT_DATA_RESPONSE response = {
+			.common = { .msgType = CB_FORMAT_DATA_RESPONSE,
+			            .msgFlags = CB_RESPONSE_OK,
+			            .dataLen = (uint32_t)res },
+			.requestedFormatData = requestedFormatData
+		};
 
 		rc = clipboard->context->ClientFormatDataResponse(clipboard->context, &response);
 	}
+	else
+	{
+		const CLIPRDR_FORMAT_DATA_RESPONSE response = { .common = { .msgType =
+			                                                            CB_FORMAT_DATA_RESPONSE,
+			                                                        .msgFlags = CB_RESPONSE_FAIL,
+			                                                        .dataLen = 0 },
+			                                            .requestedFormatData = NULL };
+
+		rc = clipboard->context->ClientFormatDataResponse(clipboard->context, &response);
+	}
+
 	free(requestedFormatData);
 	return rc;
 }
