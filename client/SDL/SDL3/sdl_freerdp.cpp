@@ -824,7 +824,7 @@ static int sdl_run(SdlContext* sdl)
 		case WAIT_OBJECT_0:
 			break;
 		default:
-			return -1;
+			return 0;
 	}
 
 	SDL_Init(SDL_INIT_VIDEO);
