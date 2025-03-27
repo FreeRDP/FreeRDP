@@ -1536,7 +1536,7 @@ static BOOL nla_encode_ts_credentials(rdpNla* nla)
 			struct
 			{
 				WinPrAsn1_tagId tag;
-				size_t setting_id;
+				FreeRDP_Settings_Keys_String setting_id;
 			} cspData_fields[] = { { 1, FreeRDP_CardName },
 				                   { 2, FreeRDP_ReaderName },
 				                   { 3, FreeRDP_ContainerName },
@@ -1552,7 +1552,7 @@ static BOOL nla_encode_ts_credentials(rdpNla* nla)
 			octet_string.data =
 			    (BYTE*)freerdp_settings_get_string_as_utf16(settings, FreeRDP_Password, &ss);
 			octet_string.len = ss * sizeof(WCHAR);
-			const BOOL res = WinPrAsn1EncContextualOctetString(enc, 0, &octet_string) > 0;
+			BOOL res = WinPrAsn1EncContextualOctetString(enc, 0, &octet_string) > 0;
 			free(octet_string.data);
 			if (!res)
 				goto out;
@@ -1573,7 +1573,7 @@ static BOOL nla_encode_ts_credentials(rdpNla* nla)
 				size_t len = 0;
 
 				octet_string.data = (BYTE*)freerdp_settings_get_string_as_utf16(
-				    settings, (FreeRDP_Settings_Keys_String)cspData_fields[i].setting_id, &len);
+				    settings, cspData_fields[i].setting_id, &len);
 				octet_string.len = len * sizeof(WCHAR);
 				if (octet_string.len)
 				{
@@ -1588,6 +1588,30 @@ static BOOL nla_encode_ts_credentials(rdpNla* nla)
 			/* End cspData */
 			if (!WinPrAsn1EncEndContainer(enc))
 				goto out;
+
+			/* userHint [2] OCTET STRING OPTIONAL, */
+			if (freerdp_settings_get_string(settings, FreeRDP_Username))
+			{
+				octet_string.data =
+				    (BYTE*)freerdp_settings_get_string_as_utf16(settings, FreeRDP_Username, &ss);
+				octet_string.len = ss * sizeof(WCHAR);
+				res = WinPrAsn1EncContextualOctetString(enc, 2, &octet_string) > 0;
+				free(octet_string.data);
+				if (!res)
+					goto out;
+			}
+
+			/* domainHint [3] OCTET STRING OPTIONAL */
+			if (freerdp_settings_get_string(settings, FreeRDP_Domain))
+			{
+				octet_string.data =
+				    (BYTE*)freerdp_settings_get_string_as_utf16(settings, FreeRDP_Domain, &ss);
+				octet_string.len = ss * sizeof(WCHAR);
+				res = WinPrAsn1EncContextualOctetString(enc, 3, &octet_string) > 0;
+				free(octet_string.data);
+				if (!res)
+					goto out;
+			}
 
 			/* End TSSmartCardCreds */
 			if (!WinPrAsn1EncEndContainer(enc))
