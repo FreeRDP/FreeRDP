@@ -200,7 +200,8 @@ BOOL sdl_handle_mouse_motion(SdlContext* sdl, const SDL_MouseMotionEvent* ev)
 	WINPR_ASSERT(ev);
 
 	sdl->input.mouse_focus(ev->windowID);
-	const BOOL relative = freerdp_client_use_relative_mouse_events(sdl->common());
+	const BOOL relative =
+	    freerdp_client_use_relative_mouse_events(sdl->common()) && !sdl->hasCursor();
 	auto x = static_cast<INT32>(relative ? ev->xrel : ev->x);
 	auto y = static_cast<INT32>(relative ? ev->yrel : ev->y);
 	sdl_scale_coordinates(sdl, ev->windowID, &x, &y, TRUE, TRUE);
@@ -266,7 +267,8 @@ BOOL sdl_handle_mouse_button(SdlContext* sdl, const SDL_MouseButtonEvent* ev)
 			break;
 	}
 
-	const BOOL relative = freerdp_client_use_relative_mouse_events(sdl->common());
+	const BOOL relative =
+	    freerdp_client_use_relative_mouse_events(sdl->common()) && !sdl->hasCursor();
 	auto x = static_cast<INT32>(relative ? 0 : ev->x);
 	auto y = static_cast<INT32>(relative ? 0 : ev->y);
 	sdl_scale_coordinates(sdl, ev->windowID, &x, &y, TRUE, TRUE);
