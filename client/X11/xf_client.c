@@ -117,6 +117,7 @@ struct xf_exit_code_map_t
 	int rc;
 };
 static const struct xf_exit_code_map_t xf_exit_code_map[] = {
+	{ FREERDP_ERROR_SUCCESS, XF_EXIT_SUCCESS },
 	{ FREERDP_ERROR_AUTHENTICATION_FAILED, XF_EXIT_AUTH_FAILURE },
 	{ FREERDP_ERROR_SECURITY_NEGO_CONNECT_FAILED, XF_EXIT_NEGO_FAILURE },
 	{ FREERDP_ERROR_CONNECT_LOGON_FAILURE, XF_EXIT_LOGON_FAILURE },
@@ -161,6 +162,7 @@ static int xf_map_error_to_exit_code(DWORD error)
 
 	return XF_EXIT_CONN_FAILED;
 }
+
 static int (*def_error_handler)(Display*, XErrorEvent*);
 static int xf_error_handler_ex(Display* d, XErrorEvent* ev);
 static void xf_check_extensions(xfContext* context);
