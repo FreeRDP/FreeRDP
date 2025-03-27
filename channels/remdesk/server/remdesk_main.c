@@ -426,22 +426,14 @@ static UINT remdesk_server_receive_pdu(RemdeskServerContext* context, wStream* s
 
 static DWORD WINAPI remdesk_server_thread(LPVOID arg)
 {
-	wStream* s = NULL;
-	DWORD status = 0;
-	DWORD nCount = 0;
 	void* buffer = NULL;
-	UINT32* pHeader = NULL;
-	UINT32 PduLength = 0;
-	HANDLE events[8];
+	HANDLE events[8] = { 0 };
 	HANDLE ChannelEvent = NULL;
 	DWORD BytesReturned = 0;
-	RemdeskServerContext* context = NULL;
 	UINT error = 0;
-	context = (RemdeskServerContext*)arg;
-	buffer = NULL;
-	BytesReturned = 0;
-	ChannelEvent = NULL;
-	s = Stream_New(NULL, 4096);
+	RemdeskServerContext* context = (RemdeskServerContext*)arg;
+	WINPR_ASSERT(context);
+	wStream* s = Stream_New(NULL, 4096);
 
 	if (!s)
 	{
@@ -465,7 +457,7 @@ static DWORD WINAPI remdesk_server_thread(LPVOID arg)
 		goto out;
 	}
 
-	nCount = 0;
+	DWORD nCount = 0;
 	events[nCount++] = ChannelEvent;
 	events[nCount++] = context->priv->StopEvent;
 
@@ -477,7 +469,7 @@ static DWORD WINAPI remdesk_server_thread(LPVOID arg)
 
 	while (1)
 	{
-		status = WaitForMultipleObjects(nCount, events, FALSE, INFINITE);
+		DWORD status = WaitForMultipleObjects(nCount, events, FALSE, INFINITE);
 
 		if (status == WAIT_FAILED)
 		{
@@ -524,8 +516,8 @@ static DWORD WINAPI remdesk_server_thread(LPVOID arg)
 
 		if (Stream_GetPosition(s) >= 8)
 		{
-			pHeader = Stream_BufferAs(s, UINT32);
-			PduLength = pHeader[0] + pHeader[1] + 8;
+			const BYTE* pHeader = Stream_BufferAs(s, UINT32);
+			const UINT32 PduLength = pHeader[0] + pHeader[1] + 8;
 
 			if (PduLength >= Stream_GetPosition(s))
 			{
@@ -544,8 +536,8 @@ static DWORD WINAPI remdesk_server_thread(LPVOID arg)
 		}
 	}
 
-	Stream_Free(s, TRUE);
 out:
+	Stream_Free(s, TRUE);
 
 	if (error && context->rdpcontext)
 		setChannelError(context->rdpcontext, error, "remdesk_server_thread reported an error");
