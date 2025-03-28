@@ -541,7 +541,8 @@ static BOOL convertKeyType(CK_KEY_TYPE k, LPWSTR dest, DWORD len, DWORD* outlen)
 			dest[0] = 0;
 		return FALSE;
 	}
-	else
+
+	if (dest)
 	{
 		if (retLen + 1 > len)
 		{
@@ -549,11 +550,8 @@ static BOOL convertKeyType(CK_KEY_TYPE k, LPWSTR dest, DWORD len, DWORD* outlen)
 			return FALSE;
 		}
 
-		if (dest)
-		{
-			memcpy(dest, r, sizeof(WCHAR) * retLen);
-			dest[retLen] = 0;
-		}
+		memcpy(dest, r, sizeof(WCHAR) * retLen);
+		dest[retLen] = 0;
 	}
 
 	return TRUE;
