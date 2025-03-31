@@ -127,9 +127,6 @@ static const WinPrAsn1_OID kerberos_OID = { 9, (void*)"\x2a\x86\x48\x86\xf7\x12\
 static const WinPrAsn1_OID kerberos_u2u_OID = { 10,
 	                                            (void*)"\x2a\x86\x48\x86\xf7\x12\x01\x02\x02\x03" };
 
-#define krb_log_exec_bool(fkt, ctx, ...)                                                     \
-	kerberos_log_msg(ctx, fkt(ctx, ##__VA_ARGS__) ? KRB5KRB_ERR_GENERIC : 0, #fkt, __FILE__, \
-	                 __func__, __LINE__)
 #define krb_log_exec(fkt, ctx, ...) \
 	kerberos_log_msg(ctx, fkt(ctx, ##__VA_ARGS__), #fkt, __FILE__, __func__, __LINE__)
 #define krb_log_exec_ptr(fkt, ctx, ...) \
@@ -1325,13 +1322,45 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcceptSecurityContext(
 		if (!kerberos_rd_tgt_token(&input_token, &target, NULL))
 			goto bad_token;
 
+		/*
+		 *  we're requested with target="TERMSRV/<host>@<REALM>" but we're gonna look
+		 *  at <host>$@<REALM> in the keytab (notice the $), so we build a new "target"
+		 *  string containing
+		 *
+		 *  sname   realm
+		 *  |       |
+		 *  v       v
+		 *  <host>$@<REALM>
+		 *
+		 */
 		if (target)
 		{
-			if (*target != 0 && *target != '@')
-				sname = target;
+			sname = strchr(target, '/');
+			if (!sname)
+				goto cleanup;
+			sname++;
+
+			/* target goes from TERMSRV/<host>[@<REALM>] to <host>[@<REALM>] */
+			sname = memmove(target, sname, strlen(sname) + 1);
+
 			realm = strchr(target, '@');
 			if (realm)
+			{
+				*realm = '$';
 				realm++;
+
+				size_t len = strlen(realm);
+				memmove(realm + 1, realm, len + 1);
+
+				*realm = '@';
+				realm++;
+			}
+			else
+			{
+				size_t len = strlen(sname);
+				target[len] = '$';
+				target[len + 1] = 0;
+			}
 		}
 
 		if (krb_log_exec(krb5_parse_name_flags, credentials->ctx, sname ? sname : "",
@@ -1356,10 +1385,9 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcceptSecurityContext(
 			if (rv != 0)
 				goto cleanup;
 
-			if ((!sname || krb_log_exec_bool(krb5_principal_compare_any_realm, credentials->ctx,
-			                                 principal, entry.principal)) &&
-			    (!realm || krb_log_exec_bool(krb5_realm_compare, credentials->ctx, principal,
-			                                 entry.principal)))
+			if ((!sname ||
+			     krb5_principal_compare_any_realm(credentials->ctx, principal, entry.principal)) &&
+			    (!realm || krb5_realm_compare(credentials->ctx, principal, entry.principal)))
 				break;
 			const krb5_error_code res =
 			    krb_log_exec(krb5glue_free_keytab_entry_contents, credentials->ctx, &entry);
