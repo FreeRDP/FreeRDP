@@ -202,8 +202,15 @@ BOOL rdp_read_security_header(rdpRdp* rdp, wStream* s, UINT16* flags, UINT16* le
 	if (!Stream_CheckAndLogRequiredLengthWLog(rdp->log, s, 4))
 		return FALSE;
 
-	Stream_Read_UINT16(s, *(UINT16*)flags); /* flags */
-	Stream_Seek(s, 2);             /* flagsHi (unused) */
+	*flags = Stream_Get_UINT16(s);                 /* flags */
+	const uint16_t flagsHi = Stream_Get_UINT16(s); /* flagsHi (unused) */
+	if ((*flags & SEC_FLAGSHI_VALID) != 0)
+	{
+		WLog_Print(rdp->log, WLOG_WARN,
+		           "[MS-RDPBCGR] 2.2.8.1.1.2.1 Basic (TS_SECURITY_HEADER) SEC_FLAGSHI_VALID field "
+		           "set: flagsHi=0x%04" PRIx16,
+		           flagsHi);
+	}
 	WLog_Print(rdp->log, WLOG_TRACE, "%s",
 	           rdp_security_flag_string(*flags, buffer, sizeof(buffer)));
 	if (length)
@@ -1369,8 +1376,6 @@ state_run_t rdp_recv_message_channel_pdu(rdpRdp* rdp, wStream* s, UINT16 securit
 {
 	WINPR_ASSERT(rdp);
 	WINPR_ASSERT(s);
-	WINPR_ASSERT((securityFlags & (0xFFFF0000 | SEC_FLAGSHI_VALID)) ==
-	             0); /* SEC_FLAGSHI_VALID is unsupported */
 
 	if (securityFlags & SEC_AUTODETECT_REQ)
 	{
@@ -1503,8 +1508,6 @@ BOOL rdp_decrypt(rdpRdp* rdp, wStream* s, UINT16* pLength, UINT16 securityFlags)
 	WINPR_ASSERT(rdp->settings);
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(pLength);
-	WINPR_ASSERT((securityFlags & (0xFFFF0000 | SEC_FLAGSHI_VALID)) ==
-	             0); /* SEC_FLAGSHI_VALID is unsupported */
 
 	if (!security_lock(rdp))
 		return FALSE;
