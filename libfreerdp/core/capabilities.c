@@ -4695,7 +4695,7 @@ static BOOL rdp_write_demand_active(wLog* log, wStream* s, rdpSettings* settings
 
 BOOL rdp_send_demand_active(rdpRdp* rdp)
 {
-	UINT32 sec_flags = 0;
+	UINT16 sec_flags = 0;
 	wStream* s = rdp_send_stream_pdu_init(rdp, &sec_flags);
 	BOOL status = 0;
 
@@ -4935,7 +4935,7 @@ static BOOL rdp_write_confirm_active(wLog* log, wStream* s, rdpSettings* setting
 
 BOOL rdp_send_confirm_active(rdpRdp* rdp)
 {
-	UINT32 sec_flags = 0;
+	UINT16 sec_flags = 0;
 	wStream* s = rdp_send_stream_pdu_init(rdp, &sec_flags);
 	BOOL status = 0;
 

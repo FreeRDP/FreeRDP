@@ -296,7 +296,7 @@ static const char* licencse_blob_type_string(UINT16 type)
 			return "BB_UNKNOWN";
 	}
 }
-static wStream* license_send_stream_init(rdpLicense* license, UINT32* sec_flags);
+static wStream* license_send_stream_init(rdpLicense* license, UINT16* sec_flags);
 
 static void license_generate_randoms(rdpLicense* license);
 static BOOL license_generate_keys(rdpLicense* license);
@@ -725,7 +725,7 @@ static BOOL license_write_preamble(wStream* s, BYTE bMsgType, BYTE flags, UINT16
  * @return stream or NULL
  */
 
-wStream* license_send_stream_init(rdpLicense* license, UINT32* sec_flags)
+wStream* license_send_stream_init(rdpLicense* license, UINT16* sec_flags)
 {
 	WINPR_ASSERT(license);
 	WINPR_ASSERT(license->rdp);
@@ -771,7 +771,7 @@ fail:
  * @param s stream
  */
 
-static BOOL license_send(rdpLicense* license, wStream* s, BYTE type, UINT32 sec_flags)
+static BOOL license_send(rdpLicense* license, wStream* s, BYTE type, UINT16 sec_flags)
 {
 	WINPR_ASSERT(license);
 	WINPR_ASSERT(license->rdp);
@@ -828,7 +828,7 @@ BOOL license_write_server_upgrade_license(const rdpLicense* license, wStream* s)
 
 static BOOL license_server_send_new_or_upgrade_license(rdpLicense* license, BOOL upgrade)
 {
-	UINT32 sec_flags = 0;
+	UINT16 sec_flags = 0;
 	wStream* s = license_send_stream_init(license, &sec_flags);
 	const BYTE type = upgrade ? UPGRADE_LICENSE : NEW_LICENSE;
 
@@ -1753,7 +1753,7 @@ BOOL license_send_license_info(rdpLicense* license, const LICENSE_BLOB* calBlob,
 	if (!info)
 		return FALSE;
 
-	UINT32 sec_flags = 0;
+	UINT16 sec_flags = 0;
 	wStream* s = license_send_stream_init(license, &sec_flags);
 	if (!s)
 		return FALSE;
@@ -1959,7 +1959,7 @@ BOOL license_write_license_request_packet(const rdpLicense* license, wStream* s)
 
 static BOOL license_send_license_request_packet(rdpLicense* license)
 {
-	UINT32 sec_flags = 0;
+	UINT16 sec_flags = 0;
 	wStream* s = license_send_stream_init(license, &sec_flags);
 	if (!s)
 		return FALSE;
@@ -2029,7 +2029,7 @@ BOOL license_read_platform_challenge_packet(rdpLicense* license, wStream* s)
 BOOL license_send_error_alert(rdpLicense* license, UINT32 dwErrorCode, UINT32 dwStateTransition,
                               const LICENSE_BLOB* info)
 {
-	UINT32 sec_flags = 0;
+	UINT16 sec_flags = 0;
 	wStream* s = license_send_stream_init(license, &sec_flags);
 
 	if (!s)
@@ -2054,7 +2054,7 @@ fail:
 
 BOOL license_send_platform_challenge_packet(rdpLicense* license)
 {
-	UINT32 sec_flags = 0;
+	UINT16 sec_flags = 0;
 	wStream* s = license_send_stream_init(license, &sec_flags);
 
 	if (!s)
@@ -2418,7 +2418,7 @@ BOOL license_read_new_license_request_packet(rdpLicense* license, wStream* s)
 
 BOOL license_answer_license_request(rdpLicense* license)
 {
-	UINT32 sec_flags = 0;
+	UINT16 sec_flags = 0;
 	wStream* s = NULL;
 	BYTE* license_data = NULL;
 	size_t license_size = 0;
@@ -2591,7 +2591,7 @@ BOOL license_send_platform_challenge_response(rdpLicense* license)
 	winpr_HexLogDump(license->log, WLOG_DEBUG, license->EncryptedHardwareId->data,
 	                 license->EncryptedHardwareId->length);
 #endif
-	UINT32 sec_flags = 0;
+	UINT16 sec_flags = 0;
 	wStream* s = license_send_stream_init(license, &sec_flags);
 	if (!s)
 		return FALSE;

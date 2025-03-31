@@ -779,7 +779,7 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 		goto end;
 	}
 
-	UINT32 sec_flags = SEC_EXCHANGE_PKT | SEC_LICENSE_ENCRYPT_SC;
+	UINT16 sec_flags = SEC_EXCHANGE_PKT | SEC_LICENSE_ENCRYPT_SC;
 	if (!rdp_write_header(rdp, s, length, MCS_GLOBAL_CHANNEL_ID, sec_flags))
 		goto end;
 	if (!rdp_write_security_header(rdp, s, sec_flags))
@@ -886,7 +886,7 @@ BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
 	UINT32 rand_len = 0;
 	UINT16 channel_id = 0;
 	UINT16 length = 0;
-	UINT32 sec_flags = 0;
+	UINT16 sec_flags = 0;
 	BOOL ret = FALSE;
 
 	WINPR_ASSERT(rdp);
@@ -1165,7 +1165,7 @@ state_run_t rdp_handle_message_channel(rdpRdp* rdp, wStream* s, UINT16 channelId
 		return STATE_RUN_FAILED;
 	}
 
-	UINT32 securityFlags = 0;
+	UINT16 securityFlags = 0;
 	if (!rdp_read_security_header(rdp, s, &securityFlags, &length))
 		return STATE_RUN_FAILED;
 
@@ -1221,7 +1221,7 @@ state_run_t rdp_client_connect_license(rdpRdp* rdp, wStream* s)
 	LICENSE_STATE state = LICENSE_STATE_ABORTED;
 	UINT16 length = 0;
 	UINT16 channelId = 0;
-	UINT32 securityFlags = 0;
+	UINT16 securityFlags = 0;
 
 	WINPR_ASSERT(rdp);
 	if (!rdp_read_header(rdp, s, &length, &channelId))
@@ -2192,13 +2192,13 @@ state_run_t rdp_client_connect_confirm_active(rdpRdp* rdp, WINPR_ATTR_UNUSED wSt
 }
 
 BOOL rdp_handle_optional_rdp_decryption(rdpRdp* rdp, wStream* s, UINT16* length,
-                                        UINT32* pSecurityFlags)
+                                        UINT16* pSecurityFlags)
 {
 	BOOL rc = FALSE;
 	WINPR_ASSERT(rdp);
 	WINPR_ASSERT(rdp->settings);
 
-	UINT32 securityFlags = 0;
+	UINT16 securityFlags = 0;
 	if (rdp->settings->UseRdpSecurityLayer)
 	{
 		if (!rdp_read_security_header(rdp, s, &securityFlags, length))

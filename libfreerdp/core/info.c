@@ -977,7 +977,7 @@ BOOL rdp_recv_client_info(rdpRdp* rdp, wStream* s)
 {
 	UINT16 length = 0;
 	UINT16 channelId = 0;
-	UINT32 securityFlags = 0;
+	UINT16 securityFlags = 0;
 
 	WINPR_ASSERT(rdp_get_state(rdp) == CONNECTION_STATE_SECURE_SETTINGS_EXCHANGE);
 
@@ -1016,7 +1016,7 @@ BOOL rdp_recv_client_info(rdpRdp* rdp, wStream* s)
 
 BOOL rdp_send_client_info(rdpRdp* rdp)
 {
-	UINT32 sec_flags = SEC_INFO_PKT;
+	UINT16 sec_flags = SEC_INFO_PKT;
 	wStream* s = NULL;
 	WINPR_ASSERT(rdp);
 	s = rdp_send_stream_init(rdp, &sec_flags);
@@ -1525,7 +1525,7 @@ static BOOL rdp_write_logon_info_ex(wStream* s, logon_info_ex* info)
 
 BOOL rdp_send_save_session_info(rdpContext* context, UINT32 type, void* data)
 {
-	UINT32 sec_flags = 0;
+	UINT16 sec_flags = 0;
 	wStream* s = NULL;
 	BOOL status = 0;
 	rdpRdp* rdp = context->rdp;
@@ -1571,7 +1571,7 @@ BOOL rdp_send_save_session_info(rdpContext* context, UINT32 type, void* data)
 
 BOOL rdp_send_server_status_info(rdpContext* context, UINT32 status)
 {
-	UINT32 sec_flags = 0;
+	UINT16 sec_flags = 0;
 	wStream* s = NULL;
 	rdpRdp* rdp = context->rdp;
 	s = rdp_data_pdu_init(rdp, &sec_flags);

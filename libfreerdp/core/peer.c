@@ -162,7 +162,7 @@ static int freerdp_peer_virtual_channel_write(freerdp_peer* client, HANDLE hChan
 
 	while (length > 0)
 	{
-		UINT32 sec_flags = 0;
+		UINT16 sec_flags = 0;
 		s = rdp_send_stream_init(rdp, &sec_flags);
 
 		if (!s)
@@ -431,23 +431,21 @@ static state_run_t peer_recv_data_pdu(freerdp_peer* client, wStream* s,
 static state_run_t peer_recv_tpkt_pdu(freerdp_peer* client, wStream* s)
 {
 	state_run_t rc = STATE_RUN_SUCCESS;
-	rdpRdp* rdp = NULL;
 	UINT16 length = 0;
 	UINT16 pduType = 0;
 	UINT16 pduSource = 0;
 	UINT16 channelId = 0;
-	UINT32 securityFlags = 0;
-	rdpSettings* settings = NULL;
+	UINT16 securityFlags = 0;
 
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(client);
 	WINPR_ASSERT(client->context);
 
-	rdp = client->context->rdp;
+	rdpRdp* rdp = client->context->rdp;
 	WINPR_ASSERT(rdp);
 	WINPR_ASSERT(rdp->mcs);
 
-	settings = client->context->settings;
+	rdpSettings* settings = client->context->settings;
 	WINPR_ASSERT(settings);
 
 	if (!rdp_read_header(rdp, s, &length, &channelId))
@@ -1248,7 +1246,7 @@ static BOOL freerdp_peer_send_server_redirection_pdu(freerdp_peer* peer,
 	WINPR_ASSERT(peer);
 	WINPR_ASSERT(peer->context);
 
-	UINT32 sec_flags = 0;
+	UINT16 sec_flags = 0;
 	wStream* s = rdp_send_stream_pdu_init(peer->context->rdp, &sec_flags);
 	if (!s)
 		return FALSE;

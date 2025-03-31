@@ -75,7 +75,7 @@ BOOL freerdp_display_send_monitor_layout(rdpContext* context, UINT32 monitorCoun
                                          const MONITOR_DEF* monitorDefArray)
 {
 	rdpRdp* rdp = context->rdp;
-	UINT32 sec_flags = 0;
+	UINT16 sec_flags = 0;
 	wStream* st = rdp_data_pdu_init(rdp, &sec_flags);
 
 	if (!st)

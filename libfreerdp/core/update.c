@@ -1280,7 +1280,7 @@ static BOOL update_send_refresh_rect(rdpContext* context, BYTE count, const RECT
 	WINPR_ASSERT(rdp->settings);
 	if (rdp->settings->RefreshRect)
 	{
-		UINT32 sec_flags = 0;
+		UINT16 sec_flags = 0;
 		wStream* s = rdp_data_pdu_init(rdp, &sec_flags);
 
 		if (!s)
@@ -1320,7 +1320,7 @@ static BOOL update_send_suppress_output(rdpContext* context, BYTE allow, const R
 	WINPR_ASSERT(rdp->settings);
 	if (rdp->settings->SuppressOutput)
 	{
-		UINT32 sec_flags = 0;
+		UINT16 sec_flags = 0;
 		wStream* s = rdp_data_pdu_init(rdp, &sec_flags);
 
 		if (!s)
@@ -1473,7 +1473,7 @@ static BOOL update_send_frame_acknowledge(rdpContext* context, UINT32 frameId)
 	WINPR_ASSERT(rdp->settings);
 	if (rdp->settings->ReceivedCapabilities[CAPSET_TYPE_FRAME_ACKNOWLEDGE])
 	{
-		UINT32 sec_flags = 0;
+		UINT16 sec_flags = 0;
 		wStream* s = rdp_data_pdu_init(rdp, &sec_flags);
 
 		if (!s)
@@ -1546,7 +1546,7 @@ out_fail:
 
 static BOOL update_send_play_sound(rdpContext* context, const PLAY_SOUND_UPDATE* play_sound)
 {
-	UINT32 sec_flags = 0;
+	UINT16 sec_flags = 0;
 	wStream* s = NULL;
 	WINPR_ASSERT(context);
 	rdpRdp* rdp = context->rdp;
@@ -2460,7 +2460,7 @@ BOOL update_read_suppress_output(rdpUpdate* update, wStream* s)
 
 static BOOL update_send_set_keyboard_indicators(rdpContext* context, UINT16 led_flags)
 {
-	UINT32 sec_flags = 0;
+	UINT16 sec_flags = 0;
 	wStream* s = NULL;
 
 	WINPR_ASSERT(context);
@@ -2481,7 +2481,7 @@ static BOOL update_send_set_keyboard_indicators(rdpContext* context, UINT16 led_
 static BOOL update_send_set_keyboard_ime_status(rdpContext* context, UINT16 imeId, UINT32 imeState,
                                                 UINT32 imeConvMode)
 {
-	UINT32 sec_flags = 0;
+	UINT16 sec_flags = 0;
 	wStream* s = NULL;
 
 	WINPR_ASSERT(context);

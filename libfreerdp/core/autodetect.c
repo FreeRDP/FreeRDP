@@ -134,7 +134,7 @@ static BOOL autodetect_send_rtt_measure_request(rdpAutoDetect* autodetect,
                                                 UINT16 sequenceNumber)
 {
 	UINT16 requestType = 0;
-	UINT32 sec_flags = 0;
+	UINT16 sec_flags = 0;
 	wStream* s = NULL;
 
 	WINPR_ASSERT(autodetect);
@@ -161,7 +161,7 @@ static BOOL autodetect_send_rtt_measure_request(rdpAutoDetect* autodetect,
 
 static BOOL autodetect_send_rtt_measure_response(rdpAutoDetect* autodetect, UINT16 sequenceNumber)
 {
-	UINT32 sec_flags = 0;
+	UINT16 sec_flags = 0;
 	wStream* s = NULL;
 
 	WINPR_ASSERT(autodetect);
@@ -188,7 +188,7 @@ static BOOL autodetect_send_bandwidth_measure_start(rdpAutoDetect* autodetect,
                                                     UINT16 sequenceNumber)
 {
 	UINT16 requestType = 0;
-	UINT32 sec_flags = 0;
+	UINT16 sec_flags = 0;
 	wStream* s = NULL;
 
 	WINPR_ASSERT(autodetect);
@@ -218,7 +218,7 @@ autodetect_send_bandwidth_measure_payload(rdpAutoDetect* autodetect,
                                           WINPR_ATTR_UNUSED RDP_TRANSPORT_TYPE transport,
                                           UINT16 sequenceNumber, UINT16 payloadLength)
 {
-	UINT32 sec_flags = 0;
+	UINT16 sec_flags = 0;
 	wStream* s = NULL;
 
 	WINPR_ASSERT(autodetect);
@@ -260,7 +260,7 @@ static BOOL autodetect_send_bandwidth_measure_stop(rdpAutoDetect* autodetect,
                                                    UINT16 sequenceNumber, UINT16 payloadLength)
 {
 	UINT16 requestType = 0;
-	UINT32 sec_flags = 0;
+	UINT16 sec_flags = 0;
 	wStream* s = NULL;
 
 	WINPR_ASSERT(autodetect);
@@ -318,7 +318,7 @@ static BOOL autodetect_send_bandwidth_measure_results(rdpAutoDetect* autodetect,
                                                       UINT16 responseType, UINT16 sequenceNumber)
 {
 	BOOL success = TRUE;
-	UINT32 sec_flags = 0;
+	UINT16 sec_flags = 0;
 	UINT64 timeDelta = GetTickCount64();
 
 	WINPR_ASSERT(autodetect);
@@ -373,7 +373,7 @@ static BOOL autodetect_send_netchar_result(rdpAutoDetect* autodetect,
                                            UINT16 sequenceNumber,
                                            const rdpNetworkCharacteristicsResult* result)
 {
-	UINT32 sec_flags = 0;
+	UINT16 sec_flags = 0;
 	wStream* s = NULL;
 
 	WINPR_ASSERT(autodetect);

@@ -75,7 +75,7 @@ BOOL rdp_recv_server_synchronize_pdu(rdpRdp* rdp, wStream* s)
 
 BOOL rdp_send_server_synchronize_pdu(rdpRdp* rdp)
 {
-	UINT32 sec_flags = 0;
+	UINT16 sec_flags = 0;
 	wStream* s = rdp_data_pdu_init(rdp, &sec_flags);
 	if (!s)
 		return FALSE;
@@ -100,7 +100,7 @@ BOOL rdp_recv_client_synchronize_pdu(rdpRdp* rdp, wStream* s)
 
 BOOL rdp_send_client_synchronize_pdu(rdpRdp* rdp)
 {
-	UINT32 sec_flags = 0;
+	UINT16 sec_flags = 0;
 	wStream* s = rdp_data_pdu_init(rdp, &sec_flags);
 	if (!s)
 		return FALSE;
@@ -177,7 +177,7 @@ BOOL rdp_recv_server_control_pdu(rdpRdp* rdp, wStream* s)
 
 BOOL rdp_send_server_control_cooperate_pdu(rdpRdp* rdp)
 {
-	UINT32 sec_flags = 0;
+	UINT16 sec_flags = 0;
 	wStream* s = rdp_data_pdu_init(rdp, &sec_flags);
 	if (!s)
 		return FALSE;
@@ -196,7 +196,7 @@ BOOL rdp_send_server_control_cooperate_pdu(rdpRdp* rdp)
 
 BOOL rdp_send_server_control_granted_pdu(rdpRdp* rdp)
 {
-	UINT32 sec_flags = 0;
+	UINT16 sec_flags = 0;
 	wStream* s = rdp_data_pdu_init(rdp, &sec_flags);
 	if (!s)
 		return FALSE;
@@ -230,7 +230,7 @@ BOOL rdp_send_client_control_pdu(rdpRdp* rdp, UINT16 action)
 			return FALSE;
 	}
 
-	UINT32 sec_flags = 0;
+	UINT16 sec_flags = 0;
 	wStream* s = rdp_data_pdu_init(rdp, &sec_flags);
 	if (!s)
 		return FALSE;
@@ -408,7 +408,7 @@ BOOL rdp_send_client_persistent_key_list_pdu(rdpRdp* rdp)
 	         info.totalEntriesCache0, info.totalEntriesCache1, info.totalEntriesCache2,
 	         info.totalEntriesCache3, info.totalEntriesCache4);
 
-	UINT32 sec_flags = 0;
+	UINT16 sec_flags = 0;
 	wStream* s = rdp_data_pdu_init(rdp, &sec_flags);
 
 	if (!s)
@@ -521,7 +521,7 @@ static BOOL rdp_write_client_font_list_pdu(wStream* s, UINT16 flags)
 
 BOOL rdp_send_client_font_list_pdu(rdpRdp* rdp, UINT16 flags)
 {
-	UINT32 sec_flags = 0;
+	UINT16 sec_flags = 0;
 	wStream* s = rdp_data_pdu_init(rdp, &sec_flags);
 	if (!s)
 		return FALSE;
@@ -589,7 +589,7 @@ BOOL rdp_recv_font_map_pdu(rdpRdp* rdp, wStream* s)
 
 BOOL rdp_send_server_font_map_pdu(rdpRdp* rdp)
 {
-	UINT32 sec_flags = 0;
+	UINT16 sec_flags = 0;
 	wStream* s = rdp_data_pdu_init(rdp, &sec_flags);
 	if (!s)
 		return FALSE;
@@ -660,7 +660,7 @@ BOOL rdp_recv_deactivate_all(rdpRdp* rdp, wStream* s)
 
 BOOL rdp_send_deactivate_all(rdpRdp* rdp)
 {
-	UINT32 sec_flags = 0;
+	UINT16 sec_flags = 0;
 	wStream* s = rdp_send_stream_pdu_init(rdp, &sec_flags);
 	BOOL status = FALSE;
 

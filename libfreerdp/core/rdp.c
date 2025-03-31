@@ -185,7 +185,7 @@ static BOOL rdp_write_share_data_header(rdpRdp* rdp, wStream* s, size_t length, 
  * @return \b TRUE for success, \b FALSE otherwise
  */
 
-BOOL rdp_read_security_header(rdpRdp* rdp, wStream* s, UINT32* flags, UINT16* length)
+BOOL rdp_read_security_header(rdpRdp* rdp, wStream* s, UINT16* flags, UINT16* length)
 {
 	char buffer[256] = { 0 };
 	WINPR_ASSERT(s);
@@ -221,7 +221,7 @@ BOOL rdp_read_security_header(rdpRdp* rdp, wStream* s, UINT32* flags, UINT16* le
  * @return \b TRUE for success, \b FALSE otherwise
  */
 
-BOOL rdp_write_security_header(rdpRdp* rdp, wStream* s, UINT32 flags)
+BOOL rdp_write_security_header(rdpRdp* rdp, wStream* s, UINT16 flags)
 {
 	char buffer[256] = { 0 };
 	WINPR_ASSERT(s);
@@ -232,8 +232,7 @@ BOOL rdp_write_security_header(rdpRdp* rdp, wStream* s, UINT32 flags)
 
 	WLog_Print(rdp->log, WLOG_TRACE, "%s", rdp_security_flag_string(flags, buffer, sizeof(buffer)));
 	/* Basic Security Header */
-	WINPR_ASSERT((flags & (0xFFFF0000 | SEC_FLAGSHI_VALID)) ==
-	             0);               /* SEC_FLAGSHI_VALID is unsupported */
+	WINPR_ASSERT((flags & SEC_FLAGSHI_VALID) == 0); /* SEC_FLAGSHI_VALID is unsupported */
 	Stream_Write_UINT16(s, flags); /* flags */
 	Stream_Write_UINT16(s, 0);     /* flagsHi (unused) */
 	return TRUE;
@@ -383,7 +382,7 @@ BOOL rdp_write_share_data_header(rdpRdp* rdp, wStream* s, size_t length, BYTE ty
 	return TRUE;
 }
 
-static BOOL rdp_security_stream_init(rdpRdp* rdp, wStream* s, BOOL sec_header, UINT32* sec_flags)
+static BOOL rdp_security_stream_init(rdpRdp* rdp, wStream* s, BOOL sec_header, UINT16* sec_flags)
 {
 	WINPR_ASSERT(rdp);
 	WINPR_ASSERT(s);
@@ -414,7 +413,7 @@ static BOOL rdp_security_stream_init(rdpRdp* rdp, wStream* s, BOOL sec_header, U
 	return TRUE;
 }
 
-wStream* rdp_send_stream_init(rdpRdp* rdp, UINT32* sec_flags)
+wStream* rdp_send_stream_init(rdpRdp* rdp, UINT16* sec_flags)
 {
 	wStream* s = NULL;
 
@@ -438,7 +437,7 @@ fail:
 	return NULL;
 }
 
-wStream* rdp_send_stream_pdu_init(rdpRdp* rdp, UINT32* sec_flags)
+wStream* rdp_send_stream_pdu_init(rdpRdp* rdp, UINT16* sec_flags)
 {
 	wStream* s = rdp_send_stream_init(rdp, sec_flags);
 
@@ -454,7 +453,7 @@ fail:
 	return NULL;
 }
 
-wStream* rdp_data_pdu_init(rdpRdp* rdp, UINT32* sec_flags)
+wStream* rdp_data_pdu_init(rdpRdp* rdp, UINT16* sec_flags)
 {
 	wStream* s = rdp_send_stream_pdu_init(rdp, sec_flags);
 
@@ -506,7 +505,7 @@ BOOL rdp_set_error_info(rdpRdp* rdp, UINT32 errorInfo)
 	return TRUE;
 }
 
-wStream* rdp_message_channel_pdu_init(rdpRdp* rdp, UINT32* sec_flags)
+wStream* rdp_message_channel_pdu_init(rdpRdp* rdp, UINT16* sec_flags)
 {
 	wStream* s = NULL;
 
@@ -668,7 +667,7 @@ BOOL rdp_read_header(rdpRdp* rdp, wStream* s, UINT16* length, UINT16* channelId)
  * @return \b TRUE for success, \b FALSE otherwise
  */
 
-BOOL rdp_write_header(rdpRdp* rdp, wStream* s, size_t length, UINT16 channelId, UINT32 sec_flags)
+BOOL rdp_write_header(rdpRdp* rdp, wStream* s, size_t length, UINT16 channelId, UINT16 sec_flags)
 {
 	WINPR_ASSERT(rdp);
 	WINPR_ASSERT(rdp->settings);
@@ -710,7 +709,7 @@ BOOL rdp_write_header(rdpRdp* rdp, wStream* s, size_t length, UINT16 channelId, 
 	return TRUE;
 }
 
-static BOOL rdp_security_stream_out(rdpRdp* rdp, wStream* s, size_t length, UINT32 sec_flags,
+static BOOL rdp_security_stream_out(rdpRdp* rdp, wStream* s, size_t length, UINT16 sec_flags,
                                     UINT32* pad)
 {
 	BOOL status = 0;
@@ -790,7 +789,7 @@ static BOOL rdp_security_stream_out(rdpRdp* rdp, wStream* s, size_t length, UINT
 	return TRUE;
 }
 
-static UINT32 rdp_get_sec_bytes(rdpRdp* rdp, UINT32 sec_flags)
+static UINT32 rdp_get_sec_bytes(rdpRdp* rdp, UINT16 sec_flags)
 {
 	UINT32 sec_bytes = 0;
 
@@ -820,7 +819,7 @@ static UINT32 rdp_get_sec_bytes(rdpRdp* rdp, UINT32 sec_flags)
  * @param channel_id channel id
  */
 
-BOOL rdp_send(rdpRdp* rdp, wStream* s, UINT16 channel_id, UINT32 sec_flags)
+BOOL rdp_send(rdpRdp* rdp, wStream* s, UINT16 channel_id, UINT16 sec_flags)
 {
 	BOOL rc = FALSE;
 	UINT32 pad = 0;
@@ -862,7 +861,7 @@ fail:
 	return rc;
 }
 
-BOOL rdp_send_pdu(rdpRdp* rdp, wStream* s, UINT16 type, UINT16 channel_id, UINT32 sec_flags)
+BOOL rdp_send_pdu(rdpRdp* rdp, wStream* s, UINT16 type, UINT16 channel_id, UINT16 sec_flags)
 {
 	BOOL rc = FALSE;
 	UINT32 sec_bytes = 0;
@@ -911,7 +910,7 @@ fail:
 	return rc;
 }
 
-BOOL rdp_send_data_pdu(rdpRdp* rdp, wStream* s, BYTE type, UINT16 channel_id, UINT32 sec_flags)
+BOOL rdp_send_data_pdu(rdpRdp* rdp, wStream* s, BYTE type, UINT16 channel_id, UINT16 sec_flags)
 {
 	BOOL rc = FALSE;
 	UINT32 sec_bytes = 0;
@@ -967,7 +966,7 @@ fail:
 	return rc;
 }
 
-BOOL rdp_send_message_channel_pdu(rdpRdp* rdp, wStream* s, UINT32 sec_flags)
+BOOL rdp_send_message_channel_pdu(rdpRdp* rdp, wStream* s, UINT16 sec_flags)
 {
 	BOOL rc = FALSE;
 	UINT32 pad = 0;
@@ -1366,7 +1365,7 @@ out_fail:
 	return STATE_RUN_FAILED;
 }
 
-state_run_t rdp_recv_message_channel_pdu(rdpRdp* rdp, wStream* s, UINT32 securityFlags)
+state_run_t rdp_recv_message_channel_pdu(rdpRdp* rdp, wStream* s, UINT16 securityFlags)
 {
 	WINPR_ASSERT(rdp);
 	WINPR_ASSERT(s);
@@ -1493,7 +1492,7 @@ BOOL rdp_read_flow_control_pdu(rdpRdp* rdp, wStream* s, UINT16* type, UINT16* ch
  * @return \b TRUE for success, \b FALSE otherwise
  */
 
-BOOL rdp_decrypt(rdpRdp* rdp, wStream* s, UINT16* pLength, UINT32 securityFlags)
+BOOL rdp_decrypt(rdpRdp* rdp, wStream* s, UINT16* pLength, UINT16 securityFlags)
 {
 	BOOL res = FALSE;
 	BYTE cmac[8] = { 0 };
@@ -1658,14 +1657,13 @@ static state_run_t rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 	UINT16 pduType = 0;
 	UINT16 pduSource = 0;
 	UINT16 channelId = 0;
-	UINT32 securityFlags = 0;
-	freerdp* instance = NULL;
+	UINT16 securityFlags = 0;
 
 	WINPR_ASSERT(rdp);
 	WINPR_ASSERT(rdp->context);
 	WINPR_ASSERT(s);
 
-	instance = rdp->context->instance;
+	freerdp* instance = rdp->context->instance;
 	WINPR_ASSERT(instance);
 
 	if (!rdp_read_header(rdp, s, &length, &channelId))
@@ -2229,7 +2227,7 @@ BOOL rdp_channel_send_packet(rdpRdp* rdp, UINT16 channelId, size_t totalSize, UI
 
 BOOL rdp_send_error_info(rdpRdp* rdp)
 {
-	UINT32 sec_flags = 0;
+	UINT16 sec_flags = 0;
 	wStream* s = NULL;
 	BOOL status = 0;
 

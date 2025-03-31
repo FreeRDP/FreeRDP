@@ -96,7 +96,7 @@ static BOOL multitransport_request_send(rdpMultitransport* multi, UINT32 reqId, 
                                         const BYTE* cookie)
 {
 	WINPR_ASSERT(multi);
-	UINT32 sec_flags = 0;
+	UINT16 sec_flags = 0;
 	wStream* s = rdp_message_channel_pdu_init(multi->rdp, &sec_flags);
 	if (!s)
 		return FALSE;
@@ -141,7 +141,7 @@ BOOL multitransport_client_send_response(rdpMultitransport* multi, UINT32 reqId,
 {
 	WINPR_ASSERT(multi);
 
-	UINT32 sec_flags = 0;
+	UINT16 sec_flags = 0;
 	wStream* s = rdp_message_channel_pdu_init(multi->rdp, &sec_flags);
 	if (!s)
 		return FALSE;

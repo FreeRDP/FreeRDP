@@ -299,7 +299,7 @@ BOOL freerdp_channel_send_packet(rdpRdp* rdp, UINT16 channelId, size_t totalSize
 	if (totalSize > UINT32_MAX)
 		return FALSE;
 
-	UINT32 sec_flags = 0;
+	UINT16 sec_flags = 0;
 	wStream* s = rdp_send_stream_init(rdp, &sec_flags);
 
 	if (!s)

@@ -58,7 +58,7 @@ state_run_t rdp_recv_heartbeat_packet(rdpRdp* rdp, wStream* s)
 BOOL freerdp_heartbeat_send_heartbeat_pdu(freerdp_peer* peer, BYTE period, BYTE count1, BYTE count2)
 {
 	rdpRdp* rdp = peer->context->rdp;
-	UINT32 sec_flags = 0;
+	UINT16 sec_flags = 0;
 	wStream* s = rdp_message_channel_pdu_init(rdp, &sec_flags);
 
 	if (!s)

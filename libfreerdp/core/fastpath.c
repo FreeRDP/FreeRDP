@@ -970,16 +970,13 @@ static UINT32 fastpath_get_sec_bytes(rdpRdp* rdp)
 	return sec_bytes;
 }
 
-wStream* fastpath_input_pdu_init_header(rdpFastPath* fastpath, UINT32* sec_flags)
+wStream* fastpath_input_pdu_init_header(rdpFastPath* fastpath, UINT16* sec_flags)
 {
-	rdpRdp* rdp = NULL;
-	wStream* s = NULL;
-
 	if (!fastpath || !fastpath->rdp)
 		return NULL;
 
-	rdp = fastpath->rdp;
-	s = transport_send_stream_init(rdp->transport, 256);
+	rdpRdp* rdp = fastpath->rdp;
+	wStream* s = transport_send_stream_init(rdp->transport, 256);
 
 	if (!s)
 		return NULL;
@@ -999,7 +996,7 @@ wStream* fastpath_input_pdu_init_header(rdpFastPath* fastpath, UINT32* sec_flags
 }
 
 wStream* fastpath_input_pdu_init(rdpFastPath* fastpath, BYTE eventFlags, BYTE eventCode,
-                                 UINT32* sec_flags)
+                                 UINT16* sec_flags)
 {
 	wStream* s = NULL;
 	s = fastpath_input_pdu_init_header(fastpath, sec_flags);
@@ -1014,7 +1011,7 @@ wStream* fastpath_input_pdu_init(rdpFastPath* fastpath, BYTE eventFlags, BYTE ev
 }
 
 BOOL fastpath_send_multiple_input_pdu(rdpFastPath* fastpath, wStream* s, size_t iNumEvents,
-                                      UINT32 sec_flags)
+                                      UINT16 sec_flags)
 {
 	BOOL rc = FALSE;
 	BYTE eventHeader = 0;
@@ -1148,7 +1145,7 @@ fail:
 	return rc;
 }
 
-BOOL fastpath_send_input_pdu(rdpFastPath* fastpath, wStream* s, UINT32 sec_flags)
+BOOL fastpath_send_input_pdu(rdpFastPath* fastpath, wStream* s, UINT16 sec_flags)
 {
 	return fastpath_send_multiple_input_pdu(fastpath, s, 1, sec_flags);
 }
@@ -1177,7 +1174,7 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 	UINT32 fpUpdateHeaderSize = 0;
 	FASTPATH_UPDATE_PDU_HEADER fpUpdatePduHeader = { 0 };
 	FASTPATH_UPDATE_HEADER fpUpdateHeader = { 0 };
-	UINT32 sec_flags = 0;
+	UINT16 sec_flags = 0;
 
 	if (!fastpath || !fastpath->rdp || !fastpath->fs || !s)
 		return FALSE;
@@ -1420,7 +1417,7 @@ BOOL fastpath_decrypt(rdpFastPath* fastpath, wStream* s, UINT16* length)
 	WINPR_ASSERT(fastpath);
 	if (fastpath_get_encryption_flags(fastpath) & FASTPATH_OUTPUT_ENCRYPTED)
 	{
-		const UINT32 flags =
+		const UINT16 flags =
 		    (fastpath_get_encryption_flags(fastpath) & FASTPATH_OUTPUT_SECURE_CHECKSUM)
 		        ? SEC_SECURE_CHECKSUM
 		        : 0;
