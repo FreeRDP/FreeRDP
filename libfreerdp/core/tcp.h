@@ -54,9 +54,9 @@
 #define BIO_C_WAIT_WRITE 1108
 #define BIO_C_SET_HANDLE 1109
 
-static INLINE long BIO_set_socket(BIO* b, SOCKET* s, long c)
+static INLINE long BIO_set_socket(BIO* b, SOCKET s, long c)
 {
-	return BIO_ctrl(b, BIO_C_SET_SOCKET, c, s);
+	return BIO_ctrl(b, BIO_C_SET_SOCKET, c, (void*)(intptr_t)s);
 }
 static INLINE long BIO_get_socket(BIO* b, SOCKET* c)
 {
@@ -66,7 +66,7 @@ static INLINE long BIO_get_event(BIO* b, HANDLE* c)
 {
 	return BIO_ctrl(b, BIO_C_GET_EVENT, 0, c);
 }
-static INLINE long BIO_set_handle(BIO* b, HANDLE* h)
+static INLINE long BIO_set_handle(BIO* b, HANDLE h)
 {
 	return BIO_ctrl(b, BIO_C_SET_HANDLE, 0, h);
 }
