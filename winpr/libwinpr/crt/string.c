@@ -181,13 +181,37 @@ int winpr_asprintf(char** s, size_t* slen, WINPR_FORMAT_ARG const char* templ, .
 	return rc;
 }
 
+WINPR_ATTR_FORMAT_ARG(2, 3)
+char* winpr_acsprintf(size_t* plen, WINPR_FORMAT_ARG const char* templ, ...)
+{
+	va_list ap = { 0 };
+
+	va_start(ap, templ);
+	char* s = winpr_vacsprintf(plen, templ, ap);
+	va_end(ap);
+	return s;
+}
+
+WINPR_ATTR_FORMAT_ARG(2, 0)
+char* winpr_vacsprintf(size_t* plen, const char* templ, va_list ap)
+{
+	char* s = NULL;
+	(void)winpr_vasprintf(&s, plen, templ, ap);
+	return s;
+}
+
 WINPR_ATTR_FORMAT_ARG(3, 0)
 int winpr_vasprintf(char** s, size_t* slen, WINPR_FORMAT_ARG const char* templ, va_list oap)
 {
 	va_list ap = { 0 };
 
+	WINPR_ASSERT(s);
+	WINPR_ASSERT(templ);
+
 	*s = NULL;
-	*slen = 0;
+
+	if (slen)
+		*slen = 0;
 
 	va_copy(ap, oap);
 	const int length = vsnprintf(NULL, 0, templ, ap);
@@ -209,7 +233,8 @@ int winpr_vasprintf(char** s, size_t* slen, WINPR_FORMAT_ARG const char* templ, 
 		return -1;
 	}
 	*s = str;
-	*slen = (size_t)length;
+	if (slen)
+		*slen = (size_t)length;
 	return length;
 }
 
