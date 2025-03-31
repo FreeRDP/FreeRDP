@@ -172,7 +172,6 @@ struct rdp_rdp
 	UINT32 encrypt_checksum_use_count;
 	WINPR_CIPHER_CTX* fips_encrypt;
 	WINPR_CIPHER_CTX* fips_decrypt;
-	UINT32 sec_flags;
 	BOOL do_crypt;
 	BOOL do_crypt_license;
 	BOOL do_secure_checksum;
@@ -221,26 +220,29 @@ FREERDP_LOCAL BOOL rdp_read_share_data_header(rdpRdp* rdp, wStream* s, UINT16* l
                                               UINT32* share_id, BYTE* compressed_type,
                                               UINT16* compressed_len);
 
-FREERDP_LOCAL wStream* rdp_send_stream_init(rdpRdp* rdp);
-FREERDP_LOCAL wStream* rdp_send_stream_pdu_init(rdpRdp* rdp);
+FREERDP_LOCAL wStream* rdp_send_stream_init(rdpRdp* rdp, UINT16* sec_flags);
+FREERDP_LOCAL wStream* rdp_send_stream_pdu_init(rdpRdp* rdp, UINT16* sec_flags);
 
 FREERDP_LOCAL BOOL rdp_read_header(rdpRdp* rdp, wStream* s, UINT16* length, UINT16* channel_id);
-FREERDP_LOCAL BOOL rdp_write_header(rdpRdp* rdp, wStream* s, size_t length, UINT16 channel_id);
+FREERDP_LOCAL BOOL rdp_write_header(rdpRdp* rdp, wStream* s, size_t length, UINT16 channel_id,
+                                    UINT16 sec_flags);
 
-FREERDP_LOCAL BOOL rdp_send_pdu(rdpRdp* rdp, wStream* s, UINT16 type, UINT16 channel_id);
+FREERDP_LOCAL BOOL rdp_send_pdu(rdpRdp* rdp, wStream* s, UINT16 type, UINT16 channel_id,
+                                UINT16 sec_flags);
 
-FREERDP_LOCAL wStream* rdp_data_pdu_init(rdpRdp* rdp);
-FREERDP_LOCAL BOOL rdp_send_data_pdu(rdpRdp* rdp, wStream* s, BYTE type, UINT16 channel_id);
+FREERDP_LOCAL wStream* rdp_data_pdu_init(rdpRdp* rdp, UINT16* sec_flags);
+FREERDP_LOCAL BOOL rdp_send_data_pdu(rdpRdp* rdp, wStream* s, BYTE type, UINT16 channel_id,
+                                     UINT16 sec_flags);
 FREERDP_LOCAL state_run_t rdp_recv_data_pdu(rdpRdp* rdp, wStream* s);
 
-FREERDP_LOCAL BOOL rdp_send(rdpRdp* rdp, wStream* s, UINT16 channelId);
+FREERDP_LOCAL BOOL rdp_send(rdpRdp* rdp, wStream* s, UINT16 channelId, UINT16 sec_flags);
 
 FREERDP_LOCAL BOOL rdp_send_channel_data(rdpRdp* rdp, UINT16 channelId, const BYTE* data,
                                          size_t size);
 FREERDP_LOCAL BOOL rdp_channel_send_packet(rdpRdp* rdp, UINT16 channelId, size_t totalSize,
                                            UINT32 flags, const BYTE* data, size_t chunkSize);
 
-FREERDP_LOCAL wStream* rdp_message_channel_pdu_init(rdpRdp* rdp);
+FREERDP_LOCAL wStream* rdp_message_channel_pdu_init(rdpRdp* rdp, UINT16* sec_flags);
 FREERDP_LOCAL BOOL rdp_send_message_channel_pdu(rdpRdp* rdp, wStream* s, UINT16 sec_flags);
 FREERDP_LOCAL state_run_t rdp_recv_message_channel_pdu(rdpRdp* rdp, wStream* s,
                                                        UINT16 securityFlags);

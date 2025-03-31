@@ -970,16 +970,13 @@ static UINT32 fastpath_get_sec_bytes(rdpRdp* rdp)
 	return sec_bytes;
 }
 
-wStream* fastpath_input_pdu_init_header(rdpFastPath* fastpath)
+wStream* fastpath_input_pdu_init_header(rdpFastPath* fastpath, UINT16* sec_flags)
 {
-	rdpRdp* rdp = NULL;
-	wStream* s = NULL;
-
 	if (!fastpath || !fastpath->rdp)
 		return NULL;
 
-	rdp = fastpath->rdp;
-	s = transport_send_stream_init(rdp->transport, 256);
+	rdpRdp* rdp = fastpath->rdp;
+	wStream* s = transport_send_stream_init(rdp->transport, 256);
 
 	if (!s)
 		return NULL;
@@ -988,20 +985,21 @@ wStream* fastpath_input_pdu_init_header(rdpFastPath* fastpath)
 
 	if (rdp->do_crypt)
 	{
-		rdp->sec_flags |= SEC_ENCRYPT;
+		*sec_flags |= SEC_ENCRYPT;
 
 		if (rdp->do_secure_checksum)
-			rdp->sec_flags |= SEC_SECURE_CHECKSUM;
+			*sec_flags |= SEC_SECURE_CHECKSUM;
 	}
 
 	Stream_Seek(s, fastpath_get_sec_bytes(rdp));
 	return s;
 }
 
-wStream* fastpath_input_pdu_init(rdpFastPath* fastpath, BYTE eventFlags, BYTE eventCode)
+wStream* fastpath_input_pdu_init(rdpFastPath* fastpath, BYTE eventFlags, BYTE eventCode,
+                                 UINT16* sec_flags)
 {
 	wStream* s = NULL;
-	s = fastpath_input_pdu_init_header(fastpath);
+	s = fastpath_input_pdu_init_header(fastpath, sec_flags);
 
 	if (!s)
 		return NULL;
@@ -1012,10 +1010,13 @@ wStream* fastpath_input_pdu_init(rdpFastPath* fastpath, BYTE eventFlags, BYTE ev
 	return s;
 }
 
-BOOL fastpath_send_multiple_input_pdu(rdpFastPath* fastpath, wStream* s, size_t iNumEvents)
+BOOL fastpath_send_multiple_input_pdu(rdpFastPath* fastpath, wStream* s, size_t iNumEvents,
+                                      UINT16 sec_flags)
 {
 	BOOL rc = FALSE;
 	BYTE eventHeader = 0;
+	BOOL should_unlock = FALSE;
+	rdpRdp* rdp = NULL;
 
 	WINPR_ASSERT(iNumEvents > 0);
 	if (!s)
@@ -1024,7 +1025,7 @@ BOOL fastpath_send_multiple_input_pdu(rdpFastPath* fastpath, wStream* s, size_t 
 	if (!fastpath)
 		goto fail;
 
-	rdpRdp* rdp = fastpath->rdp;
+	rdp = fastpath->rdp;
 	WINPR_ASSERT(rdp);
 
 	CONNECTION_STATE state = rdp_get_state(rdp);
@@ -1053,10 +1054,10 @@ BOOL fastpath_send_multiple_input_pdu(rdpFastPath* fastpath, wStream* s, size_t 
 	eventHeader = FASTPATH_INPUT_ACTION_FASTPATH;
 	eventHeader |= (iNumEvents << 2); /* numberEvents */
 
-	if (rdp->sec_flags & SEC_ENCRYPT)
+	if (sec_flags & SEC_ENCRYPT)
 		eventHeader |= (FASTPATH_INPUT_ENCRYPTED << 6);
 
-	if (rdp->sec_flags & SEC_SECURE_CHECKSUM)
+	if (sec_flags & SEC_SECURE_CHECKSUM)
 		eventHeader |= (FASTPATH_INPUT_SECURE_CHECKSUM << 6);
 
 	Stream_SetPosition(s, 0);
@@ -1064,15 +1065,15 @@ BOOL fastpath_send_multiple_input_pdu(rdpFastPath* fastpath, wStream* s, size_t 
 	/* Write length later, RDP encryption might add a padding */
 	Stream_Seek(s, 2);
 
-	if (rdp->sec_flags & SEC_ENCRYPT)
+	if (sec_flags & SEC_ENCRYPT)
 	{
-		BOOL status = FALSE;
 		if (!security_lock(rdp))
 			goto fail;
+		should_unlock = TRUE;
 
 		const size_t sec_bytes = fastpath_get_sec_bytes(fastpath->rdp);
 		if (sec_bytes + 3ULL > length)
-			goto unlock;
+			goto fail;
 
 		BYTE* fpInputEvents = Stream_PointerAs(s, BYTE) + sec_bytes;
 		const UINT16 fpInputEvents_length = (UINT16)(length - 3 - sec_bytes);
@@ -1090,17 +1091,17 @@ BOOL fastpath_send_multiple_input_pdu(rdpFastPath* fastpath, wStream* s, size_t 
 			Stream_Write_UINT8(s, pad);   /* padding */
 
 			if (!Stream_CheckAndLogRequiredCapacity(TAG, s, 8))
-				goto unlock;
+				goto fail;
 
 			if (!security_hmac_signature(fpInputEvents, fpInputEvents_length, Stream_Pointer(s), 8,
 			                             rdp))
-				goto unlock;
+				goto fail;
 
 			if (pad)
 				memset(fpInputEvents + fpInputEvents_length, 0, pad);
 
 			if (!security_fips_encrypt(fpInputEvents, fpInputEvents_length + pad, rdp))
-				goto unlock;
+				goto fail;
 
 			length += pad;
 		}
@@ -1108,8 +1109,8 @@ BOOL fastpath_send_multiple_input_pdu(rdpFastPath* fastpath, wStream* s, size_t 
 		{
 			BOOL res = 0;
 			if (!Stream_CheckAndLogRequiredCapacity(TAG, s, 8))
-				goto unlock;
-			if (rdp->sec_flags & SEC_SECURE_CHECKSUM)
+				goto fail;
+			if (sec_flags & SEC_SECURE_CHECKSUM)
 				res = security_salted_mac_signature(rdp, fpInputEvents, fpInputEvents_length, TRUE,
 				                                    Stream_Pointer(s), 8);
 			else
@@ -1117,18 +1118,10 @@ BOOL fastpath_send_multiple_input_pdu(rdpFastPath* fastpath, wStream* s, size_t 
 				                             Stream_Pointer(s), 8);
 
 			if (!res || !security_encrypt(fpInputEvents, fpInputEvents_length, rdp))
-				goto unlock;
+				goto fail;
 		}
-
-		status = TRUE;
-	unlock:
-		if (!security_unlock(rdp))
-			goto fail;
-		if (!status)
-			goto fail;
 	}
 
-	rdp->sec_flags = 0;
 	/*
 	 * We always encode length in two bytes, even though we could use
 	 * only one byte if length <= 0x7F. It is just easier that way,
@@ -1146,13 +1139,15 @@ BOOL fastpath_send_multiple_input_pdu(rdpFastPath* fastpath, wStream* s, size_t 
 
 	rc = TRUE;
 fail:
+	if (should_unlock && !security_unlock(rdp))
+		rc = FALSE;
 	Stream_Release(s);
 	return rc;
 }
 
-BOOL fastpath_send_input_pdu(rdpFastPath* fastpath, wStream* s)
+BOOL fastpath_send_input_pdu(rdpFastPath* fastpath, wStream* s, UINT16 sec_flags)
 {
-	return fastpath_send_multiple_input_pdu(fastpath, s, 1);
+	return fastpath_send_multiple_input_pdu(fastpath, s, 1, sec_flags);
 }
 
 wStream* fastpath_update_pdu_init(rdpFastPath* fastpath)
@@ -1179,6 +1174,7 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 	UINT32 fpUpdateHeaderSize = 0;
 	FASTPATH_UPDATE_PDU_HEADER fpUpdatePduHeader = { 0 };
 	FASTPATH_UPDATE_HEADER fpUpdateHeader = { 0 };
+	UINT16 sec_flags = 0;
 
 	if (!fastpath || !fastpath->rdp || !fastpath->fs || !s)
 		return FALSE;
@@ -1221,10 +1217,10 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 
 	if (rdp->do_crypt)
 	{
-		rdp->sec_flags |= SEC_ENCRYPT;
+		sec_flags |= SEC_ENCRYPT;
 
 		if (rdp->do_secure_checksum)
-			rdp->sec_flags |= SEC_SECURE_CHECKSUM;
+			sec_flags |= SEC_SECURE_CHECKSUM;
 	}
 
 	for (int fragment = 0; (totalLength > 0) || (fragment == 0); fragment++)
@@ -1242,11 +1238,12 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 		fpUpdateHeader.size = (UINT16)(totalLength > maxLength) ? maxLength : (UINT16)totalLength;
 		const BYTE* pSrcData = Stream_Pointer(s);
 		UINT32 SrcSize = DstSize = fpUpdateHeader.size;
+		BOOL should_unlock = FALSE;
 
-		if (rdp->sec_flags & SEC_ENCRYPT)
+		if (sec_flags & SEC_ENCRYPT)
 			fpUpdatePduHeader.secFlags |= FASTPATH_OUTPUT_ENCRYPTED;
 
-		if (rdp->sec_flags & SEC_SECURE_CHECKSUM)
+		if (sec_flags & SEC_SECURE_CHECKSUM)
 			fpUpdatePduHeader.secFlags |= FASTPATH_OUTPUT_SECURE_CHECKSUM;
 
 		if (settings->CompressionEnabled && !skipCompression)
@@ -1285,7 +1282,7 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 		fpUpdatePduHeaderSize = fastpath_get_update_pdu_header_size(&fpUpdatePduHeader, rdp);
 		fpHeaderSize = fpUpdateHeaderSize + fpUpdatePduHeaderSize;
 
-		if (rdp->sec_flags & SEC_ENCRYPT)
+		if (sec_flags & SEC_ENCRYPT)
 		{
 			pSignature = Stream_Buffer(fs) + 3;
 
@@ -1321,11 +1318,12 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 		if (pad)
 			Stream_Zero(fs, pad);
 
-		if (rdp->sec_flags & SEC_ENCRYPT)
+		BOOL res = FALSE;
+		if (sec_flags & SEC_ENCRYPT)
 		{
-			BOOL res = FALSE;
 			if (!security_lock(rdp))
 				return FALSE;
+			should_unlock = TRUE;
 			UINT32 dataSize = fpUpdateHeaderSize + DstSize + pad;
 			BYTE* data = Stream_PointerAs(fs, BYTE) - dataSize;
 
@@ -1341,7 +1339,7 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 			else
 			{
 				// TODO: Ensure stream capacity
-				if (rdp->sec_flags & SEC_SECURE_CHECKSUM)
+				if (sec_flags & SEC_SECURE_CHECKSUM)
 					status =
 					    security_salted_mac_signature(rdp, data, dataSize, TRUE, pSignature, 8);
 				else
@@ -1350,27 +1348,26 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 				if (!status || !security_encrypt(data, dataSize, rdp))
 					goto unlock;
 			}
-			res = TRUE;
-
-		unlock:
-			if (!security_unlock(rdp))
-				return FALSE;
-			if (!res)
-				return FALSE;
 		}
+		res = TRUE;
 
 		Stream_SealLength(fs);
 
 		if (transport_write(rdp->transport, fs) < 0)
 		{
 			status = FALSE;
-			break;
 		}
+
+	unlock:
+		if (should_unlock && !security_unlock(rdp))
+			return FALSE;
+
+		if (!res || !status)
+			return FALSE;
 
 		Stream_Seek(s, SrcSize);
 	}
 
-	rdp->sec_flags = 0;
 	return status;
 }
 

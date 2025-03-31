@@ -779,9 +779,10 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 		goto end;
 	}
 
-	if (!rdp_write_header(rdp, s, length, MCS_GLOBAL_CHANNEL_ID))
+	UINT16 sec_flags = SEC_EXCHANGE_PKT | SEC_LICENSE_ENCRYPT_SC;
+	if (!rdp_write_header(rdp, s, length, MCS_GLOBAL_CHANNEL_ID, sec_flags))
 		goto end;
-	if (!rdp_write_security_header(rdp, s, SEC_EXCHANGE_PKT | SEC_LICENSE_ENCRYPT_SC))
+	if (!rdp_write_security_header(rdp, s, sec_flags))
 		goto end;
 
 	Stream_Write_UINT32(s, info->ModulusLength + 8);

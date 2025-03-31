@@ -1016,10 +1016,10 @@ BOOL rdp_recv_client_info(rdpRdp* rdp, wStream* s)
 
 BOOL rdp_send_client_info(rdpRdp* rdp)
 {
+	UINT16 sec_flags = SEC_INFO_PKT;
 	wStream* s = NULL;
 	WINPR_ASSERT(rdp);
-	rdp->sec_flags |= SEC_INFO_PKT;
-	s = rdp_send_stream_init(rdp);
+	s = rdp_send_stream_init(rdp, &sec_flags);
 
 	if (!s)
 	{
@@ -1032,7 +1032,7 @@ BOOL rdp_send_client_info(rdpRdp* rdp)
 		Stream_Release(s);
 		return FALSE;
 	}
-	return rdp_send(rdp, s, MCS_GLOBAL_CHANNEL_ID);
+	return rdp_send(rdp, s, MCS_GLOBAL_CHANNEL_ID, sec_flags);
 }
 
 static void rdp_free_logon_info(logon_info* info)
@@ -1525,10 +1525,11 @@ static BOOL rdp_write_logon_info_ex(wStream* s, logon_info_ex* info)
 
 BOOL rdp_send_save_session_info(rdpContext* context, UINT32 type, void* data)
 {
+	UINT16 sec_flags = 0;
 	wStream* s = NULL;
 	BOOL status = 0;
 	rdpRdp* rdp = context->rdp;
-	s = rdp_data_pdu_init(rdp);
+	s = rdp_data_pdu_init(rdp, &sec_flags);
 
 	if (!s)
 		return FALSE;
@@ -1560,7 +1561,8 @@ BOOL rdp_send_save_session_info(rdpContext* context, UINT32 type, void* data)
 	}
 
 	if (status)
-		status = rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_SAVE_SESSION_INFO, rdp->mcs->userId);
+		status =
+		    rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_SAVE_SESSION_INFO, rdp->mcs->userId, sec_flags);
 	else
 		Stream_Release(s);
 
@@ -1569,13 +1571,14 @@ BOOL rdp_send_save_session_info(rdpContext* context, UINT32 type, void* data)
 
 BOOL rdp_send_server_status_info(rdpContext* context, UINT32 status)
 {
+	UINT16 sec_flags = 0;
 	wStream* s = NULL;
 	rdpRdp* rdp = context->rdp;
-	s = rdp_data_pdu_init(rdp);
+	s = rdp_data_pdu_init(rdp, &sec_flags);
 
 	if (!s)
 		return FALSE;
 
 	Stream_Write_UINT32(s, status);
-	return rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_STATUS_INFO, rdp->mcs->userId);
+	return rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_STATUS_INFO, rdp->mcs->userId, sec_flags);
 }

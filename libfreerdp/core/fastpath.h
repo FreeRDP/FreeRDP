@@ -132,12 +132,12 @@ FREERDP_LOCAL state_run_t fastpath_recv_inputs(rdpFastPath* fastpath, wStream* s
 
 FREERDP_LOCAL BOOL fastpath_decrypt(rdpFastPath* fastpath, wStream* s, UINT16* length);
 
-FREERDP_LOCAL wStream* fastpath_input_pdu_init_header(rdpFastPath* fastpath);
+FREERDP_LOCAL wStream* fastpath_input_pdu_init_header(rdpFastPath* fastpath, UINT16* sec_flags);
 FREERDP_LOCAL wStream* fastpath_input_pdu_init(rdpFastPath* fastpath, BYTE eventFlags,
-                                               BYTE eventCode);
+                                               BYTE eventCode, UINT16* sec_flags);
 FREERDP_LOCAL BOOL fastpath_send_multiple_input_pdu(rdpFastPath* fastpath, wStream* s,
-                                                    size_t iEventCount);
-FREERDP_LOCAL BOOL fastpath_send_input_pdu(rdpFastPath* fastpath, wStream* s);
+                                                    size_t iEventCount, UINT16 sec_flags);
+FREERDP_LOCAL BOOL fastpath_send_input_pdu(rdpFastPath* fastpath, wStream* s, UINT16 sec_flags);
 
 WINPR_ATTR_MALLOC(Stream_Release, 1)
 FREERDP_LOCAL wStream* fastpath_update_pdu_init(rdpFastPath* fastpath);

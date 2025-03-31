@@ -299,7 +299,8 @@ BOOL freerdp_channel_send_packet(rdpRdp* rdp, UINT16 channelId, size_t totalSize
 	if (totalSize > UINT32_MAX)
 		return FALSE;
 
-	wStream* s = rdp_send_stream_init(rdp);
+	UINT16 sec_flags = 0;
+	wStream* s = rdp_send_stream_init(rdp, &sec_flags);
 
 	if (!s)
 		return FALSE;
@@ -316,5 +317,5 @@ BOOL freerdp_channel_send_packet(rdpRdp* rdp, UINT16 channelId, size_t totalSize
 	Stream_Write(s, data, chunkSize);
 
 	/* WLog_DBG(TAG, "sending data (flags=0x%x size=%d)",  flags, size); */
-	return rdp_send(rdp, s, channelId);
+	return rdp_send(rdp, s, channelId, sec_flags);
 }

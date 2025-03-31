@@ -202,7 +202,7 @@ BOOL rdp_read_security_header(rdpRdp* rdp, wStream* s, UINT16* flags, UINT16* le
 	if (!Stream_CheckAndLogRequiredLengthWLog(rdp->log, s, 4))
 		return FALSE;
 
-	Stream_Read_UINT16(s, *flags); /* flags */
+	Stream_Read_UINT16(s, *(UINT16*)flags); /* flags */
 	Stream_Seek(s, 2);             /* flagsHi (unused) */
 	WLog_Print(rdp->log, WLOG_TRACE, "%s",
 	           rdp_security_flag_string(*flags, buffer, sizeof(buffer)));
@@ -232,6 +232,7 @@ BOOL rdp_write_security_header(rdpRdp* rdp, wStream* s, UINT16 flags)
 
 	WLog_Print(rdp->log, WLOG_TRACE, "%s", rdp_security_flag_string(flags, buffer, sizeof(buffer)));
 	/* Basic Security Header */
+	WINPR_ASSERT((flags & SEC_FLAGSHI_VALID) == 0); /* SEC_FLAGSHI_VALID is unsupported */
 	Stream_Write_UINT16(s, flags); /* flags */
 	Stream_Write_UINT16(s, 0);     /* flagsHi (unused) */
 	return TRUE;
@@ -381,10 +382,11 @@ BOOL rdp_write_share_data_header(rdpRdp* rdp, wStream* s, size_t length, BYTE ty
 	return TRUE;
 }
 
-static BOOL rdp_security_stream_init(rdpRdp* rdp, wStream* s, BOOL sec_header)
+static BOOL rdp_security_stream_init(rdpRdp* rdp, wStream* s, BOOL sec_header, UINT16* sec_flags)
 {
 	WINPR_ASSERT(rdp);
 	WINPR_ASSERT(s);
+	WINPR_ASSERT(sec_flags);
 
 	if (rdp->do_crypt)
 	{
@@ -397,12 +399,12 @@ static BOOL rdp_security_stream_init(rdpRdp* rdp, wStream* s, BOOL sec_header)
 				return FALSE;
 		}
 
-		rdp->sec_flags |= SEC_ENCRYPT;
+		*sec_flags |= SEC_ENCRYPT;
 
 		if (rdp->do_secure_checksum)
-			rdp->sec_flags |= SEC_SECURE_CHECKSUM;
+			*sec_flags |= SEC_SECURE_CHECKSUM;
 	}
-	else if (rdp->sec_flags != 0 || sec_header)
+	else if (*sec_flags != 0 || sec_header)
 	{
 		if (!Stream_SafeSeek(s, 4))
 			return FALSE;
@@ -411,7 +413,7 @@ static BOOL rdp_security_stream_init(rdpRdp* rdp, wStream* s, BOOL sec_header)
 	return TRUE;
 }
 
-wStream* rdp_send_stream_init(rdpRdp* rdp)
+wStream* rdp_send_stream_init(rdpRdp* rdp, UINT16* sec_flags)
 {
 	wStream* s = NULL;
 
@@ -426,7 +428,7 @@ wStream* rdp_send_stream_init(rdpRdp* rdp)
 	if (!Stream_SafeSeek(s, RDP_PACKET_HEADER_MAX_LENGTH))
 		goto fail;
 
-	if (!rdp_security_stream_init(rdp, s, FALSE))
+	if (!rdp_security_stream_init(rdp, s, FALSE, sec_flags))
 		goto fail;
 
 	return s;
@@ -435,9 +437,9 @@ fail:
 	return NULL;
 }
 
-wStream* rdp_send_stream_pdu_init(rdpRdp* rdp)
+wStream* rdp_send_stream_pdu_init(rdpRdp* rdp, UINT16* sec_flags)
 {
-	wStream* s = rdp_send_stream_init(rdp);
+	wStream* s = rdp_send_stream_init(rdp, sec_flags);
 
 	if (!s)
 		return NULL;
@@ -451,9 +453,9 @@ fail:
 	return NULL;
 }
 
-wStream* rdp_data_pdu_init(rdpRdp* rdp)
+wStream* rdp_data_pdu_init(rdpRdp* rdp, UINT16* sec_flags)
 {
-	wStream* s = rdp_send_stream_pdu_init(rdp);
+	wStream* s = rdp_send_stream_pdu_init(rdp, sec_flags);
 
 	if (!s)
 		return NULL;
@@ -503,7 +505,7 @@ BOOL rdp_set_error_info(rdpRdp* rdp, UINT32 errorInfo)
 	return TRUE;
 }
 
-wStream* rdp_message_channel_pdu_init(rdpRdp* rdp)
+wStream* rdp_message_channel_pdu_init(rdpRdp* rdp, UINT16* sec_flags)
 {
 	wStream* s = NULL;
 
@@ -517,7 +519,7 @@ wStream* rdp_message_channel_pdu_init(rdpRdp* rdp)
 	if (!Stream_SafeSeek(s, RDP_PACKET_HEADER_MAX_LENGTH))
 		goto fail;
 
-	if (!rdp_security_stream_init(rdp, s, TRUE))
+	if (!rdp_security_stream_init(rdp, s, TRUE, sec_flags))
 		goto fail;
 
 	return s;
@@ -665,7 +667,7 @@ BOOL rdp_read_header(rdpRdp* rdp, wStream* s, UINT16* length, UINT16* channelId)
  * @return \b TRUE for success, \b FALSE otherwise
  */
 
-BOOL rdp_write_header(rdpRdp* rdp, wStream* s, size_t length, UINT16 channelId)
+BOOL rdp_write_header(rdpRdp* rdp, wStream* s, size_t length, UINT16 channelId, UINT16 sec_flags)
 {
 	WINPR_ASSERT(rdp);
 	WINPR_ASSERT(rdp->settings);
@@ -677,8 +679,7 @@ BOOL rdp_write_header(rdpRdp* rdp, wStream* s, size_t length, UINT16 channelId)
 	DomainMCSPDU MCSPDU = (rdp->settings->ServerMode) ? DomainMCSPDU_SendDataIndication
 	                                                  : DomainMCSPDU_SendDataRequest;
 
-	if ((rdp->sec_flags & SEC_ENCRYPT) &&
-	    (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS))
+	if ((sec_flags & SEC_ENCRYPT) && (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS))
 	{
 		const UINT16 body_length = (UINT16)length - RDP_PACKET_HEADER_MAX_LENGTH;
 		const UINT16 pad = 8 - (body_length % 8);
@@ -708,7 +709,7 @@ BOOL rdp_write_header(rdpRdp* rdp, wStream* s, size_t length, UINT16 channelId)
 	return TRUE;
 }
 
-static BOOL rdp_security_stream_out(rdpRdp* rdp, wStream* s, size_t length, UINT32 sec_flags,
+static BOOL rdp_security_stream_out(rdpRdp* rdp, wStream* s, size_t length, UINT16 sec_flags,
                                     UINT32* pad)
 {
 	BOOL status = 0;
@@ -716,27 +717,22 @@ static BOOL rdp_security_stream_out(rdpRdp* rdp, wStream* s, size_t length, UINT
 	if (length > UINT16_MAX)
 		return FALSE;
 
-	sec_flags |= rdp->sec_flags;
 	*pad = 0;
 
 	if (sec_flags != 0)
 	{
 		WINPR_ASSERT(sec_flags <= UINT16_MAX);
-		if (!rdp_write_security_header(rdp, s, (UINT16)sec_flags))
+		if (!rdp_write_security_header(rdp, s, sec_flags))
 			return FALSE;
 
 		if (sec_flags & SEC_ENCRYPT)
 		{
-			BOOL res = FALSE;
-			if (!security_lock(rdp))
-				return FALSE;
-
 			if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
 			{
 				BYTE* data = Stream_PointerAs(s, BYTE) + 12;
 				const size_t size = WINPR_ASSERTING_INT_CAST(size_t, (data - Stream_Buffer(s)));
 				if (size > length)
-					goto unlock;
+					return FALSE;
 
 				length -= size;
 
@@ -754,24 +750,24 @@ static BOOL rdp_security_stream_out(rdpRdp* rdp, wStream* s, size_t length, UINT
 				Stream_Write_UINT8(s, WINPR_ASSERTING_INT_CAST(uint8_t, *pad));
 
 				if (!Stream_CheckAndLogRequiredCapacityWLog(rdp->log, s, 8))
-					goto unlock;
+					return FALSE;
 				if (!security_hmac_signature(data, length, Stream_Pointer(s), 8, rdp))
-					goto unlock;
+					return FALSE;
 
 				Stream_Seek(s, 8);
 				if (!security_fips_encrypt(data, length + *pad, rdp))
-					goto unlock;
+					return FALSE;
 			}
 			else
 			{
 				const BYTE* data = Stream_PointerAs(s, const BYTE) + 8;
 				const size_t diff = Stream_GetPosition(s) + 8ULL;
 				if (diff > length)
-					goto unlock;
+					return FALSE;
 				length -= diff;
 
 				if (!Stream_CheckAndLogRequiredCapacityWLog(rdp->log, s, 8))
-					goto unlock;
+					return FALSE;
 				if (sec_flags & SEC_SECURE_CHECKSUM)
 					status = security_salted_mac_signature(rdp, data, (UINT32)length, TRUE,
 					                                       Stream_Pointer(s), 8);
@@ -780,24 +776,14 @@ static BOOL rdp_security_stream_out(rdpRdp* rdp, wStream* s, size_t length, UINT
 					                                Stream_PointerAs(s, BYTE), 8);
 
 				if (!status)
-					goto unlock;
+					return FALSE;
 
 				Stream_Seek(s, 8);
 
 				if (!security_encrypt(Stream_Pointer(s), length, rdp))
-					goto unlock;
+					return FALSE;
 			}
-			res = TRUE;
-
-		unlock:
-
-			if (!security_unlock(rdp))
-				return FALSE;
-			if (!res)
-				return FALSE;
 		}
-
-		rdp->sec_flags = 0;
 	}
 
 	return TRUE;
@@ -807,14 +793,14 @@ static UINT32 rdp_get_sec_bytes(rdpRdp* rdp, UINT16 sec_flags)
 {
 	UINT32 sec_bytes = 0;
 
-	if (rdp->sec_flags & SEC_ENCRYPT)
+	if (sec_flags & SEC_ENCRYPT)
 	{
 		sec_bytes = 12;
 
 		if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
 			sec_bytes += 4;
 	}
-	else if (rdp->sec_flags != 0 || sec_flags != 0)
+	else if (sec_flags != 0)
 	{
 		sec_bytes = 4;
 	}
@@ -833,10 +819,11 @@ static UINT32 rdp_get_sec_bytes(rdpRdp* rdp, UINT16 sec_flags)
  * @param channel_id channel id
  */
 
-BOOL rdp_send(rdpRdp* rdp, wStream* s, UINT16 channel_id)
+BOOL rdp_send(rdpRdp* rdp, wStream* s, UINT16 channel_id, UINT16 sec_flags)
 {
 	BOOL rc = FALSE;
 	UINT32 pad = 0;
+	BOOL should_unlock = FALSE;
 
 	if (!s)
 		return FALSE;
@@ -844,12 +831,19 @@ BOOL rdp_send(rdpRdp* rdp, wStream* s, UINT16 channel_id)
 	if (!rdp)
 		goto fail;
 
+	if (sec_flags & SEC_ENCRYPT)
+	{
+		if (!security_lock(rdp))
+			goto fail;
+		should_unlock = TRUE;
+	}
+
 	size_t length = Stream_GetPosition(s);
 	Stream_SetPosition(s, 0);
-	if (!rdp_write_header(rdp, s, length, channel_id))
+	if (!rdp_write_header(rdp, s, length, channel_id, sec_flags))
 		goto fail;
 
-	if (!rdp_security_stream_out(rdp, s, length, 0, &pad))
+	if (!rdp_security_stream_out(rdp, s, length, sec_flags, &pad))
 		goto fail;
 
 	length += pad;
@@ -861,49 +855,19 @@ BOOL rdp_send(rdpRdp* rdp, wStream* s, UINT16 channel_id)
 
 	rc = TRUE;
 fail:
+	if (should_unlock && !security_unlock(rdp))
+		rc = FALSE;
 	Stream_Release(s);
 	return rc;
 }
 
-BOOL rdp_send_pdu(rdpRdp* rdp, wStream* s, UINT16 type, UINT16 channel_id)
-{
-	UINT32 sec_bytes = 0;
-	size_t sec_hold = 0;
-	UINT32 pad = 0;
-
-	if (!rdp || !s)
-		return FALSE;
-
-	size_t length = Stream_GetPosition(s);
-	Stream_SetPosition(s, 0);
-	if (!rdp_write_header(rdp, s, length, MCS_GLOBAL_CHANNEL_ID))
-		return FALSE;
-	sec_bytes = rdp_get_sec_bytes(rdp, 0);
-	sec_hold = Stream_GetPosition(s);
-	Stream_Seek(s, sec_bytes);
-	if (!rdp_write_share_control_header(rdp, s, length - sec_bytes, type, channel_id))
-		return FALSE;
-	Stream_SetPosition(s, sec_hold);
-
-	if (!rdp_security_stream_out(rdp, s, length, 0, &pad))
-		return FALSE;
-
-	length += pad;
-	Stream_SetPosition(s, length);
-	Stream_SealLength(s);
-
-	if (transport_write(rdp->transport, s) < 0)
-		return FALSE;
-
-	return TRUE;
-}
-
-BOOL rdp_send_data_pdu(rdpRdp* rdp, wStream* s, BYTE type, UINT16 channel_id)
+BOOL rdp_send_pdu(rdpRdp* rdp, wStream* s, UINT16 type, UINT16 channel_id, UINT16 sec_flags)
 {
 	BOOL rc = FALSE;
 	UINT32 sec_bytes = 0;
 	size_t sec_hold = 0;
 	UINT32 pad = 0;
+	BOOL should_unlock = FALSE;
 
 	if (!s)
 		return FALSE;
@@ -911,11 +875,67 @@ BOOL rdp_send_data_pdu(rdpRdp* rdp, wStream* s, BYTE type, UINT16 channel_id)
 	if (!rdp)
 		goto fail;
 
+	if (sec_flags & SEC_ENCRYPT)
+	{
+		if (!security_lock(rdp))
+			goto fail;
+		should_unlock = TRUE;
+	}
+
 	size_t length = Stream_GetPosition(s);
 	Stream_SetPosition(s, 0);
-	if (!rdp_write_header(rdp, s, length, MCS_GLOBAL_CHANNEL_ID))
+	if (!rdp_write_header(rdp, s, length, MCS_GLOBAL_CHANNEL_ID, sec_flags))
 		goto fail;
-	sec_bytes = rdp_get_sec_bytes(rdp, 0);
+	sec_bytes = rdp_get_sec_bytes(rdp, sec_flags);
+	sec_hold = Stream_GetPosition(s);
+	Stream_Seek(s, sec_bytes);
+	if (!rdp_write_share_control_header(rdp, s, length - sec_bytes, type, channel_id))
+		goto fail;
+	Stream_SetPosition(s, sec_hold);
+
+	if (!rdp_security_stream_out(rdp, s, length, sec_flags, &pad))
+		goto fail;
+
+	length += pad;
+	Stream_SetPosition(s, length);
+	Stream_SealLength(s);
+
+	if (transport_write(rdp->transport, s) < 0)
+		goto fail;
+
+	rc = TRUE;
+fail:
+	if (should_unlock && !security_unlock(rdp))
+		rc = FALSE;
+	return rc;
+}
+
+BOOL rdp_send_data_pdu(rdpRdp* rdp, wStream* s, BYTE type, UINT16 channel_id, UINT16 sec_flags)
+{
+	BOOL rc = FALSE;
+	UINT32 sec_bytes = 0;
+	size_t sec_hold = 0;
+	UINT32 pad = 0;
+	BOOL should_unlock = FALSE;
+
+	if (!s)
+		return FALSE;
+
+	if (!rdp)
+		goto fail;
+
+	if (sec_flags & SEC_ENCRYPT)
+	{
+		if (!security_lock(rdp))
+			goto fail;
+		should_unlock = TRUE;
+	}
+
+	size_t length = Stream_GetPosition(s);
+	Stream_SetPosition(s, 0);
+	if (!rdp_write_header(rdp, s, length, MCS_GLOBAL_CHANNEL_ID, sec_flags))
+		goto fail;
+	sec_bytes = rdp_get_sec_bytes(rdp, sec_flags);
 	sec_hold = Stream_GetPosition(s);
 	Stream_Seek(s, sec_bytes);
 	if (!rdp_write_share_control_header(rdp, s, length - sec_bytes, PDU_TYPE_DATA, channel_id))
@@ -924,7 +944,7 @@ BOOL rdp_send_data_pdu(rdpRdp* rdp, wStream* s, BYTE type, UINT16 channel_id)
 		goto fail;
 	Stream_SetPosition(s, sec_hold);
 
-	if (!rdp_security_stream_out(rdp, s, length, 0, &pad))
+	if (!rdp_security_stream_out(rdp, s, length, sec_flags, &pad))
 		goto fail;
 
 	length += pad;
@@ -940,6 +960,8 @@ BOOL rdp_send_data_pdu(rdpRdp* rdp, wStream* s, BYTE type, UINT16 channel_id)
 
 	rc = TRUE;
 fail:
+	if (should_unlock && !security_unlock(rdp))
+		rc = FALSE;
 	Stream_Release(s);
 	return rc;
 }
@@ -948,13 +970,21 @@ BOOL rdp_send_message_channel_pdu(rdpRdp* rdp, wStream* s, UINT16 sec_flags)
 {
 	BOOL rc = FALSE;
 	UINT32 pad = 0;
+	BOOL should_unlock = FALSE;
 
 	WINPR_ASSERT(rdp);
 	WINPR_ASSERT(s);
 
+	if (sec_flags & SEC_ENCRYPT)
+	{
+		if (!security_lock(rdp))
+			goto fail;
+		should_unlock = TRUE;
+	}
+
 	size_t length = Stream_GetPosition(s);
 	Stream_SetPosition(s, 0);
-	if (!rdp_write_header(rdp, s, length, rdp->mcs->messageChannelId))
+	if (!rdp_write_header(rdp, s, length, rdp->mcs->messageChannelId, sec_flags))
 		goto fail;
 
 	if (!rdp_security_stream_out(rdp, s, length, sec_flags, &pad))
@@ -969,6 +999,8 @@ BOOL rdp_send_message_channel_pdu(rdpRdp* rdp, wStream* s, UINT16 sec_flags)
 
 	rc = TRUE;
 fail:
+	if (should_unlock && !security_unlock(rdp))
+		rc = FALSE;
 	Stream_Release(s);
 	return rc;
 }
@@ -1337,6 +1369,8 @@ state_run_t rdp_recv_message_channel_pdu(rdpRdp* rdp, wStream* s, UINT16 securit
 {
 	WINPR_ASSERT(rdp);
 	WINPR_ASSERT(s);
+	WINPR_ASSERT((securityFlags & (0xFFFF0000 | SEC_FLAGSHI_VALID)) ==
+	             0); /* SEC_FLAGSHI_VALID is unsupported */
 
 	if (securityFlags & SEC_AUTODETECT_REQ)
 	{
@@ -1469,6 +1503,8 @@ BOOL rdp_decrypt(rdpRdp* rdp, wStream* s, UINT16* pLength, UINT16 securityFlags)
 	WINPR_ASSERT(rdp->settings);
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(pLength);
+	WINPR_ASSERT((securityFlags & (0xFFFF0000 | SEC_FLAGSHI_VALID)) ==
+	             0); /* SEC_FLAGSHI_VALID is unsupported */
 
 	if (!security_lock(rdp))
 		return FALSE;
@@ -1622,13 +1658,12 @@ static state_run_t rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 	UINT16 pduSource = 0;
 	UINT16 channelId = 0;
 	UINT16 securityFlags = 0;
-	freerdp* instance = NULL;
 
 	WINPR_ASSERT(rdp);
 	WINPR_ASSERT(rdp->context);
 	WINPR_ASSERT(s);
 
-	instance = rdp->context->instance;
+	freerdp* instance = rdp->context->instance;
 	WINPR_ASSERT(instance);
 
 	if (!rdp_read_header(rdp, s, &length, &channelId))
@@ -2192,19 +2227,20 @@ BOOL rdp_channel_send_packet(rdpRdp* rdp, UINT16 channelId, size_t totalSize, UI
 
 BOOL rdp_send_error_info(rdpRdp* rdp)
 {
+	UINT16 sec_flags = 0;
 	wStream* s = NULL;
 	BOOL status = 0;
 
 	if (rdp->errorInfo == ERRINFO_SUCCESS)
 		return TRUE;
 
-	s = rdp_data_pdu_init(rdp);
+	s = rdp_data_pdu_init(rdp, &sec_flags);
 
 	if (!s)
 		return FALSE;
 
 	Stream_Write_UINT32(s, rdp->errorInfo); /* error id (4 bytes) */
-	status = rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_SET_ERROR_INFO, 0);
+	status = rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_SET_ERROR_INFO, 0, sec_flags);
 	return status;
 }
 
