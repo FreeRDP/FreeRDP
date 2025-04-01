@@ -204,9 +204,10 @@ cmake --install libusb-cmake
 mkdir -p openssl
 cd openssl
 
+NPROC=$(sysctl -n hw.ncpu)
 CFLAGS=$OSSL_FLAGS LDFLAGS=$OSSL_FLAGS $SRC/openssl/config --prefix=$INSTALL --libdir=lib no-asm no-tests no-docs no-apps zlib
-CFLAGS=$OSSL_FLAGS LDFLAGS=$OSSL_FLAGS make -j build_sw
-CFLAGS=$OSSL_FLAGS LDFLAGS=$OSSL_FLAGS make -j install_sw
+CFLAGS=$OSSL_FLAGS LDFLAGS=$OSSL_FLAGS make -j $NPROC build_sw
+CFLAGS=$OSSL_FLAGS LDFLAGS=$OSSL_FLAGS make -j $NPROC install_sw
 
 cd $BUILD
 mkdir -p faac
@@ -214,8 +215,8 @@ cd faac
 # undefine __SSE2__, symbol clashes with universal build
 CFLAGS="$OSSL_FLAGS -U__SSE2__" LDFLAGS=$OSSL_FLAGS $SRC/faac/configure --prefix=$INSTALL --libdir="$INSTALL/lib" \
   --enable-shared --disable-static
-CFLAGS="$OSSL_FLAGS -U__SSE2__" LDFLAGS=$OSSL_FLAGS make -j
-CFLAGS="$OSSL_FLAGS -U__SSE2__" LDFLAGS=$OSSL_FLAGS make -j install
+CFLAGS="$OSSL_FLAGS -U__SSE2__" LDFLAGS=$OSSL_FLAGS make -j $NPROC
+CFLAGS="$OSSL_FLAGS -U__SSE2__" LDFLAGS=$OSSL_FLAGS make -j $NPROC install
 
 cd $BUILD
 
@@ -232,8 +233,8 @@ for ARCH in $DEPLOYMENT_ARCH; do
   CFLAGS=$FFCFLAGS LDFLAGS=$FFCFLAGS $SRC/FFmpeg/configure --prefix=$FINSTPATH --disable-all \
     --enable-shared --disable-static --enable-swscale --disable-asm --disable-libxcb \
     --disable-securetransport --disable-xlib --enable-cross-compile
-  CFLAGS=$FFCFLAGS LDFLAGS=$FFCFLAGS make -j
-  CFLAGS=$FFCFLAGS LDFLAGS=$FFCFLAGS make -j install
+  CFLAGS=$FFCFLAGS LDFLAGS=$FFCFLAGS make -j $NPROC
+  CFLAGS=$FFCFLAGS LDFLAGS=$FFCFLAGS make -j $NPROC install
   fix_rpath "$FINSTPATH/lib"
 done
 
