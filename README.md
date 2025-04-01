@@ -29,7 +29,7 @@ Security policy: https://github.com/FreeRDP/FreeRDP/security/policy
 ### Contact
 
 * Matrix room : `#FreeRDP:matrix.org` (main)
-  * XMPP channel: `#FreeRDP#matrix.org@matrix.org` (bridged)
+  * ~~XMPP channel: `#FreeRDP#matrix.org@matrix.org` (bridged)~~ no longer available
   * IRC channel : `#freerdp @ irc.oftc.net` (bridged)
 * Mailing list: https://lists.sourceforge.net/lists/listinfo/freerdp-devel
 
