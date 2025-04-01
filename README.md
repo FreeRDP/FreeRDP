@@ -18,10 +18,15 @@ interoperability can finally liberate your computing experience.
 ## Resources
 
 Project website: https://www.freerdp.com/
+
 Issue tracker: https://github.com/FreeRDP/FreeRDP/issues
+
 Sources: https://github.com/FreeRDP/FreeRDP/
+
 Downloads: https://pub.freerdp.com/releases/
+
 Wiki: https://github.com/FreeRDP/FreeRDP/wiki
+
 API documentation: https://pub.freerdp.com/api/
 
 Security policy: https://github.com/FreeRDP/FreeRDP/security/policy
