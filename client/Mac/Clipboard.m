@@ -85,11 +85,14 @@ static int mac_cliprdr_send_client_format_list_response(CliprdrClientContext *cl
 	return 1;
 }
 
-static int mac_cliprdr_send_client_format_data_request(CliprdrClientContext *cliprdr,
-                                                       UINT32 formatId)
+static UINT mac_cliprdr_send_client_format_data_request(CliprdrClientContext *cliprdr,
+                                                        UINT32 formatId)
 {
 	CLIPRDR_FORMAT_DATA_REQUEST formatDataRequest = { 0 };
 	WINPR_ASSERT(cliprdr);
+
+	if (formatId == 0)
+		return CHANNEL_RC_OK;
 
 	mfContext *mfc = (mfContext *)cliprdr->custom;
 	WINPR_ASSERT(mfc);
@@ -101,9 +104,7 @@ static int mac_cliprdr_send_client_format_data_request(CliprdrClientContext *cli
 	mfc->requestedFormatId = formatId;
 	(void)ResetEvent(mfc->clipboardRequestEvent);
 
-	cliprdr->ClientFormatDataRequest(cliprdr, &formatDataRequest);
-
-	return 1;
+	return cliprdr->ClientFormatDataRequest(cliprdr, &formatDataRequest);
 }
 
 static int mac_cliprdr_send_client_capabilities(CliprdrClientContext *cliprdr)
@@ -179,8 +180,10 @@ static UINT mac_cliprdr_server_capabilities(CliprdrClientContext *cliprdr,
 static UINT mac_cliprdr_server_format_list(CliprdrClientContext *cliprdr,
                                            const CLIPRDR_FORMAT_LIST *formatList)
 {
-	CLIPRDR_FORMAT *format;
+	WINPR_ASSERT(cliprdr);
+
 	mfContext *mfc = (mfContext *)cliprdr->custom;
+	WINPR_ASSERT(mfc);
 
 	if (mfc->serverFormats)
 	{
@@ -214,28 +217,26 @@ static UINT mac_cliprdr_server_format_list(CliprdrClientContext *cliprdr,
 
 	mac_cliprdr_send_client_format_list_response(cliprdr, TRUE);
 
+	uint32_t formatId = 0;
 	for (UINT32 index = 0; index < mfc->numServerFormats; index++)
 	{
-		format = &(mfc->serverFormats[index]);
+		const CLIPRDR_FORMAT *format = &(mfc->serverFormats[index]);
 
 		if (format->formatId == CF_UNICODETEXT)
-		{
-			mac_cliprdr_send_client_format_data_request(cliprdr, CF_UNICODETEXT);
-			break;
-		}
+			formatId = format->formatId;
 		else if (format->formatId == CF_OEMTEXT)
 		{
-			mac_cliprdr_send_client_format_data_request(cliprdr, CF_OEMTEXT);
-			break;
+			if (formatId == 0)
+				formatId == CF_OEMTEXT;
 		}
 		else if (format->formatId == CF_TEXT)
 		{
-			mac_cliprdr_send_client_format_data_request(cliprdr, CF_TEXT);
-			break;
+			if (formatId == 0)
+				formatId == CF_TEXT;
 		}
 	}
 
-	return CHANNEL_RC_OK;
+	return mac_cliprdr_send_client_format_data_request(cliprdr, formatId);
 }
 
 /**
