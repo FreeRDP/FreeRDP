@@ -26,6 +26,7 @@
 #include <winpr/assert.h>
 #include <winpr/crt.h>
 #include <winpr/print.h>
+#include <winpr/clipboard.h>
 
 #include <freerdp/types.h>
 #include <freerdp/constants.h>
@@ -699,8 +700,9 @@ static UINT cliprdr_client_format_list(CliprdrClientContext* context,
 		for (size_t x = 0; x < filterList.numFormats; x++)
 		{
 			const CLIPRDR_FORMAT* format = &filterList.formats[x];
-			WLog_Print(cliprdr->log, level, "[%" PRIu32 "]: id=0x%08" PRIx32 " [%s]", x,
-			           format->formatId, format->formatName);
+			WLog_Print(cliprdr->log, level, "[%" PRIu32 "]: id=0x%08" PRIx32 " [%s|%s]", x,
+			           format->formatId, ClipboardGetFormatIdString(format->formatId),
+			           format->formatName);
 		}
 	}
 
@@ -837,8 +839,9 @@ static UINT cliprdr_client_format_data_request(CliprdrClientContext* context,
 	}
 
 	Stream_Write_UINT32(s, formatDataRequest->requestedFormatId); /* requestedFormatId (4 bytes) */
-	WLog_Print(cliprdr->log, WLOG_DEBUG, "ClientFormatDataRequest(0x%08" PRIx32 ")",
-	           formatDataRequest->requestedFormatId);
+	WLog_Print(cliprdr->log, WLOG_DEBUG, "ClientFormatDataRequest(0x%08" PRIx32 " [%s])",
+	           formatDataRequest->requestedFormatId,
+	           ClipboardGetFormatIdString(formatDataRequest->requestedFormatId));
 	return cliprdr_packet_send(cliprdr, s);
 }
 

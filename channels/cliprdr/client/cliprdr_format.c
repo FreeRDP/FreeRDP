@@ -24,6 +24,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/print.h>
+#include <winpr/clipboard.h>
 
 #include <freerdp/types.h>
 #include <freerdp/freerdp.h>
@@ -131,8 +132,29 @@ UINT cliprdr_process_format_list(cliprdrPlugin* cliprdr, wStream* s, UINT32 data
 	if (filteredFormatList.numFormats == 0)
 		goto error_out;
 
-	WLog_Print(cliprdr->log, WLOG_DEBUG, "ServerFormatList: numFormats: %" PRIu32 "",
-	           filteredFormatList.numFormats);
+	const DWORD level = WLOG_DEBUG;
+	if (WLog_IsLevelActive(cliprdr->log, level))
+	{
+		WLog_Print(cliprdr->log, level, "ServerFormatList: numFormats: %" PRIu32 "",
+		           formatList.numFormats);
+		for (size_t x = 0; x < formatList.numFormats; x++)
+		{
+			const CLIPRDR_FORMAT* format = &formatList.formats[x];
+			WLog_Print(cliprdr->log, level, "[%" PRIu32 "]: id=0x%08" PRIx32 " [%s|%s]", x,
+			           format->formatId, ClipboardGetFormatIdString(format->formatId),
+			           format->formatName);
+		}
+
+		WLog_Print(cliprdr->log, level, "ServerFormatList [filtered]: numFormats: %" PRIu32 "",
+		           filteredFormatList.numFormats);
+		for (size_t x = 0; x < filteredFormatList.numFormats; x++)
+		{
+			const CLIPRDR_FORMAT* format = &filteredFormatList.formats[x];
+			WLog_Print(cliprdr->log, level, "[%" PRIu32 "]: id=0x%08" PRIx32 " [%s|%s]", x,
+			           format->formatId, ClipboardGetFormatIdString(format->formatId),
+			           format->formatName);
+		}
+	}
 
 	if (context->ServerFormatList)
 	{
@@ -185,14 +207,16 @@ UINT cliprdr_process_format_data_request(cliprdrPlugin* cliprdr, wStream* s, UIN
 	CliprdrClientContext* context = cliprdr_get_client_interface(cliprdr);
 	UINT error = CHANNEL_RC_OK;
 
-	WLog_Print(cliprdr->log, WLOG_DEBUG, "ServerFormatDataRequest");
-
 	formatDataRequest.common.msgType = CB_FORMAT_DATA_REQUEST;
 	formatDataRequest.common.msgFlags = msgFlags;
 	formatDataRequest.common.dataLen = dataLen;
 
 	if ((error = cliprdr_read_format_data_request(s, &formatDataRequest)))
 		return error;
+
+	WLog_Print(cliprdr->log, WLOG_DEBUG, "ServerFormatDataRequest (0x%08" PRIx32 " [%s])",
+	           formatDataRequest.requestedFormatId,
+	           ClipboardGetFormatIdString(formatDataRequest.requestedFormatId));
 
 	const UINT32 mask =
 	    freerdp_settings_get_uint32(context->rdpcontext->settings, FreeRDP_ClipboardFeatureMask);
@@ -223,7 +247,7 @@ UINT cliprdr_process_format_data_response(cliprdrPlugin* cliprdr, wStream* s, UI
 	UINT error = CHANNEL_RC_OK;
 
 	WLog_Print(cliprdr->log, WLOG_DEBUG,
-	           "ServerFormatDataResponse: msgFlags=ox%08" PRIx32 ", dataLen=%" PRIu32, msgFlags,
+	           "ServerFormatDataResponse: msgFlags=0x%08" PRIx32 ", dataLen=%" PRIu32, msgFlags,
 	           dataLen);
 
 	formatDataResponse.common.msgType = CB_FORMAT_DATA_RESPONSE;
