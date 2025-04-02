@@ -378,13 +378,6 @@ UINT cliprdr_read_file_contents_response(wStream* s, CLIPRDR_FILE_CONTENTS_RESPO
 	return CHANNEL_RC_OK;
 }
 
-static void dump_format(wLog* log, size_t x, const CLIPRDR_FORMAT* format)
-{
-	WINPR_ASSERT(format);
-	WLog_Print(log, WLOG_DEBUG, "[%" PRIuz "] formatId=0x%08" PRIx32 ", name=%s", x,
-	           format->formatId, format->formatName);
-}
-
 UINT cliprdr_read_format_list(wLog* log, wStream* s, CLIPRDR_FORMAT_LIST* formatList,
                               BOOL useLongFormatNames)
 {
@@ -481,7 +474,6 @@ UINT cliprdr_read_format_list(wLog* log, wStream* s, CLIPRDR_FORMAT_LIST* format
 				}
 			}
 
-			dump_format(log, index, format);
 			index++;
 		}
 	}
@@ -543,7 +535,6 @@ UINT cliprdr_read_format_list(wLog* log, wStream* s, CLIPRDR_FORMAT_LIST* format
 					goto error_out;
 			}
 
-			dump_format(log, index, format);
 			index++;
 		}
 	}
