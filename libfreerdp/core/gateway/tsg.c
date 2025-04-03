@@ -718,9 +718,6 @@ static BOOL tsg_ndr_read_packet_response(wLog* log, wStream* s, UINT32* index,
                                          TSG_PACKET_RESPONSE* response)
 {
 	UINT32 ResponseDataPtr = 0;
-	UINT32 MaxSizeValue = 0;
-	UINT32 MaxOffsetValue = 0;
-	UINT32 idleTimeout = 0;
 
 	WINPR_ASSERT(response);
 
@@ -766,8 +763,8 @@ static BOOL tsg_ndr_read_packet_response(wLog* log, wStream* s, UINT32* index,
 	    s,
 	    response->redirectionFlags.pnpRedirectionDisabled); /* PnpRedirectionDisabled (4 bytes) */
 
-	Stream_Read_UINT32(s, MaxSizeValue);   /* (4 bytes) */
-	Stream_Read_UINT32(s, MaxOffsetValue); /* (4 bytes) */
+	const UINT32 MaxSizeValue = Stream_Get_UINT32(s);   /* (4 bytes) */
+	const UINT32 MaxOffsetValue = Stream_Get_UINT32(s); /* (4 bytes) */
 
 	if (MaxSizeValue != response->responseDataLen)
 	{
@@ -779,8 +776,13 @@ static BOOL tsg_ndr_read_packet_response(wLog* log, wStream* s, UINT32* index,
 	if (!Stream_CheckAndLogRequiredLengthWLog(log, s, MaxSizeValue))
 		return FALSE;
 
-	if (MaxSizeValue == 4)
-		Stream_Read_UINT32(s, idleTimeout);
+	if (MaxSizeValue >= 4)
+	{
+		const UINT32 idleTimeout = Stream_Get_UINT32(s);
+		WLog_Print(log, WLOG_DEBUG, "[IDLE_TIMEOUT] idleTimeout=%" PRIu32 ": TODO: unused",
+		           idleTimeout);
+		Stream_Seek(s, MaxSizeValue - 4);
+	}
 	else
 		Stream_Seek(s, MaxSizeValue); /* ResponseData */
 	return TRUE;
