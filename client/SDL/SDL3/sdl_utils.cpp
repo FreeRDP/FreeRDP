@@ -193,7 +193,7 @@ BOOL sdl_log_error_ex(Sint32 res, wLog* log, const char* what, const char* file,
 	return TRUE;
 }
 
-BOOL sdl_push_user_event(Uint32 type, ...)
+bool sdl_push_user_event(Uint32 type, ...)
 {
 	SDL_Event ev = {};
 	SDL_UserEvent* event = &ev.user;
@@ -274,7 +274,7 @@ BOOL sdl_push_user_event(Uint32 type, ...)
 			break;
 		default:
 			va_end(ap);
-			return FALSE;
+			return false;
 	}
 	va_end(ap);
 	return SDL_PushEvent(&ev) == 1;

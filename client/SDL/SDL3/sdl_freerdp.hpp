@@ -54,6 +54,19 @@ class SdlContext
 	SdlContext& operator=(const SdlContext& other) = delete;
 	SdlContext& operator=(SdlContext&& other) = delete;
 
+  public:
+	[[nodiscard]] bool redraw(bool suppress = false);
+
+	void setConnected(bool val);
+	[[nodiscard]] bool isConnected() const;
+
+	[[nodiscard]] bool update_resizeable(bool enable);
+	[[nodiscard]] bool update_fullscreen(bool enter);
+	[[nodiscard]] bool update_minimize();
+
+	[[nodiscard]] rdpContext* context() const;
+	[[nodiscard]] rdpClientContext* common() const;
+
   private:
 	rdpContext* _context;
 
@@ -87,11 +100,5 @@ class SdlContext
 	std::unique_ptr<SDLConnectionDialog> connection_dialog;
 
 	std::atomic<bool> rdp_thread_running;
-
-	BOOL update_resizeable(BOOL enable);
-	BOOL update_fullscreen(BOOL enter);
-	BOOL update_minimize();
-
-	[[nodiscard]] rdpContext* context() const;
-	[[nodiscard]] rdpClientContext* common() const;
+	std::atomic<bool> connected = false;
 };

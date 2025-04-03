@@ -553,16 +553,14 @@ BOOL sdlInput::keyboard_handle_event(const SDL_KeyboardEvent* ev)
 				WLog_Print(_sdl->log, WLOG_INFO, "%s+<%s> pressed, toggling fullscreen state",
 				           masktostr(_hotkeyModmask).c_str(), sdl_scancode_name(_hotkeyFullscreen));
 				keyboard_sync_state();
-				_sdl->update_fullscreen(!_sdl->fullscreen);
-				return TRUE;
+				return _sdl->update_fullscreen(!_sdl->fullscreen);
 			}
 			if (ev->scancode == _hotkeyResizable)
 			{
 				WLog_Print(_sdl->log, WLOG_INFO, "%s+<%s> pressed, toggling resizeable state",
 				           masktostr(_hotkeyModmask).c_str(), sdl_scancode_name(_hotkeyResizable));
 				keyboard_sync_state();
-				_sdl->update_resizeable(!_sdl->resizeable);
-				return TRUE;
+				return _sdl->update_resizeable(!_sdl->resizeable);
 			}
 
 			if (ev->scancode == _hotkeyGrab)

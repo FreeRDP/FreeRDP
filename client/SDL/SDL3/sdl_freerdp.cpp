@@ -1048,7 +1048,7 @@ static int sdl_run(SdlContext* sdl)
 					    (windowEvent.type <= SDL_EVENT_DISPLAY_LAST))
 					{
 						const SDL_DisplayEvent* ev = &windowEvent.display;
-						sdl->disp.handle_display_event(ev);
+						(void)sdl->disp.handle_display_event(ev);
 					}
 					else if ((windowEvent.type >= SDL_EVENT_WINDOW_FIRST) &&
 					         (windowEvent.type <= SDL_EVENT_WINDOW_LAST))
@@ -1057,7 +1057,7 @@ static int sdl_run(SdlContext* sdl)
 						auto window = sdl->windows.find(ev->windowID);
 						if (window != sdl->windows.end())
 						{
-							sdl->disp.handle_window_event(ev);
+							(void)sdl->disp.handle_window_event(ev);
 
 							switch (ev->type)
 							{
@@ -1172,9 +1172,12 @@ static BOOL sdl_post_connect(freerdp* instance)
 	context->update->SetKeyboardIndicators = sdlInput::keyboard_set_indicators;
 	context->update->SetKeyboardImeStatus = sdlInput::keyboard_set_ime_status;
 
-	sdl->update_resizeable(FALSE);
-	sdl->update_fullscreen(freerdp_settings_get_bool(context->settings, FreeRDP_Fullscreen) ||
-	                       freerdp_settings_get_bool(context->settings, FreeRDP_UseMultimon));
+	if (!sdl->update_resizeable(false))
+		return FALSE;
+	if (!sdl->update_fullscreen(freerdp_settings_get_bool(context->settings, FreeRDP_Fullscreen) ||
+	                            freerdp_settings_get_bool(context->settings, FreeRDP_UseMultimon)))
+		return FALSE;
+	sdl->setConnected(true);
 	return TRUE;
 }
 
@@ -1188,6 +1191,9 @@ static void sdl_post_disconnect(freerdp* instance)
 
 	if (!instance->context)
 		return;
+
+	auto sdl = get_context(instance->context);
+	sdl->setConnected(false);
 
 	PubSub_UnsubscribeChannelConnected(instance->context->pubSub,
 	                                   sdl_OnChannelConnectedEventHandler);
@@ -1740,41 +1746,41 @@ int main(int argc, char* argv[])
 	return rc;
 }
 
-BOOL SdlContext::update_fullscreen(BOOL enter)
+bool SdlContext::update_fullscreen(bool enter)
 {
 	std::lock_guard<CriticalSection> lock(critical);
 	for (const auto& window : windows)
 	{
 		if (!sdl_push_user_event(SDL_EVENT_USER_WINDOW_FULLSCREEN, &window.second, enter))
-			return FALSE;
+			return false;
 	}
 	fullscreen = enter;
-	return TRUE;
+	return true;
 }
 
-BOOL SdlContext::update_minimize()
+bool SdlContext::update_minimize()
 {
 	std::lock_guard<CriticalSection> lock(critical);
 	return sdl_push_user_event(SDL_EVENT_USER_WINDOW_MINIMIZE);
 }
 
-BOOL SdlContext::update_resizeable(BOOL enable)
+bool SdlContext::update_resizeable(bool enable)
 {
 	std::lock_guard<CriticalSection> lock(critical);
 
 	const auto settings = context()->settings;
-	const BOOL dyn = freerdp_settings_get_bool(settings, FreeRDP_DynamicResolutionUpdate);
-	const BOOL smart = freerdp_settings_get_bool(settings, FreeRDP_SmartSizing);
-	BOOL use = (dyn && enable) || smart;
+	const bool dyn = freerdp_settings_get_bool(settings, FreeRDP_DynamicResolutionUpdate);
+	const bool smart = freerdp_settings_get_bool(settings, FreeRDP_SmartSizing);
+	bool use = (dyn && enable) || smart;
 
 	for (const auto& window : windows)
 	{
 		if (!sdl_push_user_event(SDL_EVENT_USER_WINDOW_RESIZEABLE, &window.second, use))
-			return FALSE;
+			return false;
 	}
 	resizeable = use;
 
-	return TRUE;
+	return true;
 }
 
 SdlContext::SdlContext(rdpContext* context)
@@ -1784,12 +1790,33 @@ SdlContext::SdlContext(rdpContext* context)
 	WINPR_ASSERT(context);
 }
 
+bool SdlContext::redraw(bool suppress)
+{
+	if (!connected)
+		return true;
+
+	auto gdi = context()->gdi;
+	WINPR_ASSERT(gdi);
+	return gdi_send_suppress_output(gdi, suppress ? TRUE : FALSE);
+}
+
+void SdlContext::setConnected(bool val)
+{
+	connected = val;
+}
+
+bool SdlContext::isConnected() const
+{
+	return connected;
+}
+
 rdpContext* SdlContext::context() const
 {
+	WINPR_ASSERT(_context);
 	return _context;
 }
 
 rdpClientContext* SdlContext::common() const
 {
-	return reinterpret_cast<rdpClientContext*>(_context);
+	return reinterpret_cast<rdpClientContext*>(context());
 }
