@@ -18,13 +18,6 @@
 set(MODULE_NAME "freerdp-server")
 set(MODULE_PREFIX "FREERDP_SERVER")
 
-#  Policy CMP0022: INTERFACE_LINK_LIBRARIES defines the link
-#  interface.  Run "cmake --help-policy CMP0022" for policy details.  Use the
-#  cmake_policy command to set the policy and suppress this warning.
-if(POLICY CMP0022)
-  cmake_policy(SET CMP0022 NEW)
-endif()
-
 set(${MODULE_PREFIX}_SRCS server.c)
 
 foreach(FREERDP_CHANNELS_SERVER_SRC ${FREERDP_CHANNELS_SERVER_SRCS})
