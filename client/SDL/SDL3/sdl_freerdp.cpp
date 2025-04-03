@@ -316,14 +316,6 @@ static BOOL sdl_begin_paint(rdpContext* context)
 	return TRUE;
 }
 
-static BOOL sdl_redraw(SdlContext* sdl)
-{
-	WINPR_ASSERT(sdl);
-
-	auto gdi = sdl->context()->gdi;
-	return gdi_send_suppress_output(gdi, FALSE);
-}
-
 class SdlEventUpdateTriggerGuard
 {
   private:
@@ -938,13 +930,13 @@ static int sdl_run(SdlContext* sdl)
 				break;
 
 				case SDL_EVENT_RENDER_TARGETS_RESET:
-					sdl_redraw(sdl);
+					(void)sdl->redraw();
 					break;
 				case SDL_EVENT_RENDER_DEVICE_RESET:
-					sdl_redraw(sdl);
+					(void)sdl->redraw();
 					break;
 				case SDL_EVENT_WILL_ENTER_FOREGROUND:
-					sdl_redraw(sdl);
+					(void)sdl->redraw();
 					break;
 				case SDL_EVENT_USER_CERT_DIALOG:
 				{

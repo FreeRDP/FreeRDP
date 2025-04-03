@@ -348,7 +348,9 @@ bool sdlDispContext::handle_window_event(const SDL_WindowEvent* ev)
 		case SDL_EVENT_WINDOW_SHOWN:
 		case SDL_EVENT_WINDOW_MAXIMIZED:
 		case SDL_EVENT_WINDOW_RESTORED:
-			(void)_sdl->redraw();
+			if (!_sdl->redraw())
+				return false;
+
 			/* fallthrough */
 			WINPR_FALLTHROUGH
 		case SDL_EVENT_WINDOW_DISPLAY_SCALE_CHANGED:
