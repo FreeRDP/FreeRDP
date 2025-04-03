@@ -584,8 +584,7 @@ BOOL sdlInput::keyboard_handle_event(const SDL_KeyboardEvent* ev)
 				WLog_Print(_sdl->log, WLOG_INFO, "%s+<%s> pressed, minimizing client",
 				           masktostr(_hotkeyModmask).c_str(), sdl_scancode_name(_hotkeyMinimize));
 				keyboard_sync_state();
-				_sdl->update_minimize();
-				return TRUE;
+				return _sdl->update_minimize();
 			}
 		}
 	}
