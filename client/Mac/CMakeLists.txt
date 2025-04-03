@@ -8,9 +8,6 @@ project(MacFreeRDP-library VERSION ${FREERDP_DEFAULT_PROJECT_VERSION})
 
 message("project ${PROJECT_NAME} is using version ${PROJECT_VERSION}")
 
-cmake_policy(SET CMP0026 OLD)
-cmake_policy(SET CMP0045 OLD)
-
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/)
 include(CommonConfigOptions)
 
