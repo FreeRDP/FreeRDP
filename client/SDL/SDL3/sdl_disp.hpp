@@ -38,29 +38,26 @@ class sdlDispContext
 	sdlDispContext& operator=(const sdlDispContext& other) = delete;
 	sdlDispContext& operator=(sdlDispContext&& other) = delete;
 
-	BOOL init(DispClientContext* disp);
-	BOOL uninit(DispClientContext* disp);
+	[[nodiscard]] bool init(DispClientContext* disp);
+	[[nodiscard]] bool uninit(DispClientContext* disp);
 
-	BOOL handle_display_event(const SDL_DisplayEvent* ev);
+	[[nodiscard]] bool handle_display_event(const SDL_DisplayEvent* ev);
 
-	BOOL handle_window_event(const SDL_WindowEvent* ev);
+	[[nodiscard]] bool handle_window_event(const SDL_WindowEvent* ev);
 
-	[[nodiscard]] UINT32 scale_factor() const
-	{
-		return _lastSentDesktopScaleFactor;
-	}
+	[[nodiscard]] UINT32 scale_factor() const;
 
   private:
 	UINT DisplayControlCaps(UINT32 maxNumMonitors, UINT32 maxMonitorAreaFactorA,
 	                        UINT32 maxMonitorAreaFactorB);
-	BOOL set_window_resizable();
+	bool set_window_resizable();
 
-	BOOL sendResize();
-	BOOL settings_changed();
-	BOOL update_last_sent();
+	bool sendResize();
+	bool settings_changed();
+	bool update_last_sent();
 	UINT sendLayout(const rdpMonitor* monitors, size_t nmonitors);
 
-	BOOL addTimer();
+	bool addTimer();
 
 	static UINT DisplayControlCaps(DispClientContext* disp, UINT32 maxNumMonitors,
 	                               UINT32 maxMonitorAreaFactorA, UINT32 maxMonitorAreaFactorB);
@@ -75,8 +72,8 @@ class sdlDispContext
 	UINT64 _lastSentDate = 0;
 	int _targetWidth = -1;
 	int _targetHeight = -1;
-	BOOL _activated = FALSE;
-	BOOL _waitingResize = FALSE;
+	bool _activated = false;
+	bool _waitingResize = false;
 	UINT16 _lastSentDesktopOrientation = 0;
 	UINT32 _lastSentDesktopScaleFactor = 0;
 	UINT32 _lastSentDeviceScaleFactor = 0;
