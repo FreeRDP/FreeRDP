@@ -845,8 +845,8 @@ static int sdl_run(SdlContext* sdl)
 			}
 
 #if defined(WITH_DEBUG_SDL_EVENTS)
-			SDL_Log("got event %s [0x%08" PRIx32 "]", sdl_event_type_str(windowEvent.type),
-			        windowEvent.type);
+			SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "got event %s [0x%08" PRIx32 "]",
+			             sdl_event_type_str(windowEvent.type), windowEvent.type);
 #endif
 			std::lock_guard<CriticalSection> lock(sdl->critical);
 			/* The session might have been disconnected while we were waiting for a new SDL event.
@@ -1090,7 +1090,15 @@ static int sdl_run(SdlContext* sdl)
 								{
 									auto r = window->second.rect();
 									auto id = window->second.id();
-									WLog_DBG(SDL_TAG, "%lu: %dx%d-%dx%d", id, r.x, r.y, r.w, r.h);
+									SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "%u: %dx%d-%dx%d",
+									             id, r.x, r.y, r.w, r.h);
+								}
+								break;
+								case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
+								{
+									SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION,
+									             "Window closed, terminating RDP session...");
+									freerdp_abort_connect_context(sdl->context());
 								}
 								break;
 								default:
