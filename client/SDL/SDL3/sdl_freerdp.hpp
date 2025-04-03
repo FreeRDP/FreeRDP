@@ -54,8 +54,7 @@ class SdlContext
 	SdlContext& operator=(const SdlContext& other) = delete;
 	SdlContext& operator=(SdlContext&& other) = delete;
 
-  public:
-	[[nodiscard]] bool redraw(bool suppress = false);
+	[[nodiscard]] bool redraw(bool suppress = false) const;
 
 	void setConnected(bool val);
 	[[nodiscard]] bool isConnected() const;
@@ -69,6 +68,7 @@ class SdlContext
 
   private:
 	rdpContext* _context;
+	std::atomic<bool> connected = false;
 
   public:
 	wLog* log;
@@ -100,5 +100,4 @@ class SdlContext
 	std::unique_ptr<SDLConnectionDialog> connection_dialog;
 
 	std::atomic<bool> rdp_thread_running;
-	std::atomic<bool> connected = false;
 };

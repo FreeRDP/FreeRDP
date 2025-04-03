@@ -1790,14 +1790,14 @@ SdlContext::SdlContext(rdpContext* context)
 	WINPR_ASSERT(context);
 }
 
-bool SdlContext::redraw(bool suppress)
+bool SdlContext::redraw(bool suppress) const
 {
 	if (!connected)
 		return true;
 
 	auto gdi = context()->gdi;
 	WINPR_ASSERT(gdi);
-	return gdi_send_suppress_output(gdi, suppress ? TRUE : FALSE);
+	return gdi_send_suppress_output(gdi, suppress);
 }
 
 void SdlContext::setConnected(bool val)
