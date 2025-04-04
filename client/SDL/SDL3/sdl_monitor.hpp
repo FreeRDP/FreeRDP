@@ -26,4 +26,3 @@
 
 int sdl_list_monitors(SdlContext* sdl);
 BOOL sdl_detect_monitors(SdlContext* sdl, UINT32* pMaxWidth, UINT32* ppMaxHeight);
-INT64 sdl_monitor_id_for_index(SdlContext* sdl, UINT32 index);

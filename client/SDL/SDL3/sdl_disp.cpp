@@ -36,53 +36,39 @@
 static constexpr UINT64 RESIZE_MIN_DELAY = 200; /* minimum delay in ms between two resizes */
 static constexpr unsigned MAX_RETRIES = 5;
 
-bool sdlDispContext::settings_changed()
+static auto operator==(const DISPLAY_CONTROL_MONITOR_LAYOUT& a,
+                       const DISPLAY_CONTROL_MONITOR_LAYOUT& b)
 {
-	auto settings = _sdl->context()->settings;
-	WINPR_ASSERT(settings);
-
-	if (_lastSentWidth != _targetWidth)
-		return true;
-
-	if (_lastSentHeight != _targetHeight)
-		return true;
-
-	if (_lastSentDesktopOrientation !=
-	    freerdp_settings_get_uint16(settings, FreeRDP_DesktopOrientation))
-		return true;
-
-	if (_lastSentDesktopScaleFactor != _targetDesktopScaleFactor)
-		return true;
-
-	if (_lastSentDeviceScaleFactor !=
-	    freerdp_settings_get_uint32(settings, FreeRDP_DeviceScaleFactor))
-		return true;
-	/* TODO
-	    if (_fullscreen != _sdl->fullscreen)
-	        return true;
-	*/
-	return false;
+	if (a.Flags != b.Flags)
+		return false;
+	if (a.Left != b.Left)
+		return false;
+	if (a.Top != b.Top)
+		return false;
+	if (a.Width != b.Width)
+		return false;
+	if (a.Height != b.Height)
+		return false;
+	if (a.PhysicalWidth != b.PhysicalWidth)
+		return false;
+	if (a.PhysicalHeight != b.PhysicalHeight)
+		return false;
+	if (a.Orientation != b.Orientation)
+		return false;
+	if (a.DesktopScaleFactor != b.DesktopScaleFactor)
+		return false;
+	if (a.DeviceScaleFactor != b.DeviceScaleFactor)
+		return false;
+	return true;
 }
 
-bool sdlDispContext::update_last_sent()
+bool sdlDispContext::settings_changed(const std::vector<DISPLAY_CONTROL_MONITOR_LAYOUT>& layout)
 {
-	WINPR_ASSERT(_sdl);
-
-	auto settings = _sdl->context()->settings;
-	WINPR_ASSERT(settings);
-
-	_lastSentWidth = _targetWidth;
-	_lastSentHeight = _targetHeight;
-	_lastSentDesktopOrientation = freerdp_settings_get_uint16(settings, FreeRDP_DesktopOrientation);
-	_lastSentDesktopScaleFactor = _targetDesktopScaleFactor;
-	_lastSentDeviceScaleFactor = freerdp_settings_get_uint32(settings, FreeRDP_DeviceScaleFactor);
-	// TODO _fullscreen = _sdl->fullscreen;
-	return true;
+	return (layout != _last_sent_layout);
 }
 
 bool sdlDispContext::sendResize()
 {
-	DISPLAY_CONTROL_MONITOR_LAYOUT layout = {};
 	auto settings = _sdl->context()->settings;
 
 	if (!settings)
@@ -96,35 +82,10 @@ bool sdlDispContext::sendResize()
 
 	_lastSentDate = GetTickCount64();
 
-	if (!settings_changed())
-		return true;
-
 	const UINT32 mcount = freerdp_settings_get_uint32(settings, FreeRDP_MonitorCount);
-	if (_sdl->fullscreen && (mcount > 0))
-	{
-		auto monitors = static_cast<const rdpMonitor*>(
-		    freerdp_settings_get_pointer(settings, FreeRDP_MonitorDefArray));
-		if (sendLayout(monitors, mcount) != CHANNEL_RC_OK)
-			return false;
-	}
-	else
-	{
-		_waitingResize = true;
-		layout.Flags = DISPLAY_CONTROL_MONITOR_PRIMARY;
-		layout.Top = layout.Left = 0;
-		layout.Width = WINPR_ASSERTING_INT_CAST(uint32_t, _targetWidth);
-		layout.Height = WINPR_ASSERTING_INT_CAST(uint32_t, _targetHeight);
-		layout.Orientation = freerdp_settings_get_uint16(settings, FreeRDP_DesktopOrientation);
-		layout.DesktopScaleFactor = _targetDesktopScaleFactor;
-		layout.DeviceScaleFactor = freerdp_settings_get_uint32(settings, FreeRDP_DeviceScaleFactor);
-		layout.PhysicalWidth = WINPR_ASSERTING_INT_CAST(uint32_t, _targetWidth);
-		layout.PhysicalHeight = WINPR_ASSERTING_INT_CAST(uint32_t, _targetHeight);
-
-		if (IFCALLRESULT(CHANNEL_RC_OK, _disp->SendMonitorLayout, _disp, 1, &layout) !=
-		    CHANNEL_RC_OK)
-			return false;
-	}
-	return update_last_sent();
+	auto monitors = static_cast<const rdpMonitor*>(
+	    freerdp_settings_get_pointer(settings, FreeRDP_MonitorDefArray));
+	return sendLayout(monitors, mcount) != CHANNEL_RC_OK;
 }
 
 bool sdlDispContext::set_window_resizable()
@@ -211,12 +172,11 @@ Uint32 sdlDispContext::OnTimer(void* param, [[maybe_unused]] SDL_TimerID timerID
 	WLog_Print(sdl->log, WLOG_TRACE, "checking for display changes...");
 	if (!sdlDisp->_activated || freerdp_settings_get_bool(settings, FreeRDP_Fullscreen))
 		return 0;
-	else
-	{
-		auto rc = sdlDisp->sendResize();
-		if (!rc)
-			WLog_Print(sdl->log, WLOG_TRACE, "sent new display layout, result %d", rc);
-	}
+
+	auto rc = sdlDisp->sendResize();
+	if (!rc)
+		WLog_Print(sdl->log, WLOG_TRACE, "sent new display layout, result %d", rc);
+
 	if (sdlDisp->_timer_retries++ >= MAX_RETRIES)
 	{
 		WLog_Print(sdl->log, WLOG_TRACE, "deactivate timer, retries exceeded");
@@ -287,11 +247,17 @@ UINT sdlDispContext::sendLayout(const rdpMonitor* monitors, size_t nmonitors)
 		    freerdp_settings_get_uint32(settings, FreeRDP_DeviceScaleFactor);
 	}
 
+	if (!settings_changed(layouts))
+		return true;
+
 	WINPR_ASSERT(_disp);
 	const size_t len = layouts.size();
 	WINPR_ASSERT(len <= UINT32_MAX);
 	ret = IFCALLRESULT(CHANNEL_RC_OK, _disp->SendMonitorLayout, _disp, static_cast<UINT32>(len),
 	                   layouts.data());
+	if (ret != CHANNEL_RC_OK)
+		return ret;
+	_last_sent_layout = layouts;
 	return ret;
 }
 
@@ -309,6 +275,57 @@ bool sdlDispContext::addTimer()
 	return true;
 }
 
+bool sdlDispContext::updateMonitor(SDL_WindowID id)
+{
+	auto settings = _sdl->context()->settings;
+	if (freerdp_settings_get_bool(settings, FreeRDP_UseMultimon))
+		return updateMonitors(SDL_EVENT_DISPLAY_CURRENT_MODE_CHANGED);
+
+	if (!freerdp_settings_get_bool(_sdl->context()->settings, FreeRDP_DynamicResolutionUpdate))
+		return true;
+
+	const auto& window = _sdl->windows.at(id);
+	auto monitor = window.monitor();
+
+	if (!freerdp_settings_set_monitor_def_array_sorted(settings, &monitor, 1))
+		return false;
+
+	return addTimer();
+}
+
+bool sdlDispContext::updateMonitors(SDL_EventType type)
+{
+	switch (type)
+	{
+		case SDL_EVENT_DISPLAY_ADDED:
+		case SDL_EVENT_DISPLAY_REMOVED:
+		case SDL_EVENT_DISPLAY_MOVED:
+			SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "TODO [%s] Not fully supported yet",
+			            sdl_event_type_str(type));
+			break;
+		default:
+			break;
+	}
+
+	auto settings = _sdl->context()->settings;
+	if (!freerdp_settings_get_bool(settings, FreeRDP_UseMultimon))
+		return true;
+
+	if (!freerdp_settings_get_bool(settings, FreeRDP_DynamicResolutionUpdate))
+		return true;
+
+	std::vector<rdpMonitor> monitors;
+	monitors.reserve(_sdl->windows.size());
+	for (auto& smon : _sdl->windows)
+	{
+		monitors.emplace_back(smon.second.monitor());
+	}
+
+	if (!freerdp_settings_set_monitor_def_array_sorted(settings, monitors.data(), monitors.size()))
+		return false;
+	return addTimer();
+}
+
 bool sdlDispContext::handle_display_event(const SDL_DisplayEvent* ev)
 {
 	WINPR_ASSERT(ev);
@@ -317,13 +334,25 @@ bool sdlDispContext::handle_display_event(const SDL_DisplayEvent* ev)
 	{
 		case SDL_EVENT_DISPLAY_ADDED:
 			SDL_Log("A new display with id %u was connected", ev->displayID);
-			return true;
+			return updateMonitors(ev->type);
 		case SDL_EVENT_DISPLAY_REMOVED:
 			SDL_Log("The display with id %u was disconnected", ev->displayID);
-			return true;
+			return updateMonitors(ev->type);
 		case SDL_EVENT_DISPLAY_ORIENTATION:
 			SDL_Log("The orientation of display with id %u was changed", ev->displayID);
-			return true;
+			return updateMonitors(ev->type);
+		case SDL_EVENT_DISPLAY_MOVED:
+			SDL_Log("The display with id %u was moved", ev->displayID);
+			return updateMonitors(ev->type);
+		case SDL_EVENT_DISPLAY_CONTENT_SCALE_CHANGED:
+			SDL_Log("The display with id %u changed scale", ev->displayID);
+			return updateMonitors(ev->type);
+		case SDL_EVENT_DISPLAY_CURRENT_MODE_CHANGED:
+			SDL_Log("The display with id %u changed mode", ev->displayID);
+			return updateMonitors(ev->type);
+		case SDL_EVENT_DISPLAY_DESKTOP_MODE_CHANGED:
+			SDL_Log("The display with id %u changed desktop mode", ev->displayID);
+			return updateMonitors(ev->type);
 		default:
 			return true;
 	}
@@ -344,6 +373,11 @@ bool sdlDispContext::handle_window_event(const SDL_WindowEvent* ev)
 		case SDL_EVENT_WINDOW_HIDDEN:
 		case SDL_EVENT_WINDOW_MINIMIZED:
 			return _sdl->redraw(true);
+		case SDL_EVENT_WINDOW_ENTER_FULLSCREEN:
+			return updateMonitor(ev->windowID);
+		case SDL_EVENT_WINDOW_LEAVE_FULLSCREEN:
+			return updateMonitor(ev->windowID);
+
 		case SDL_EVENT_WINDOW_EXPOSED:
 		case SDL_EVENT_WINDOW_SHOWN:
 		case SDL_EVENT_WINDOW_MAXIMIZED:
@@ -356,17 +390,7 @@ bool sdlDispContext::handle_window_event(const SDL_WindowEvent* ev)
 		case SDL_EVENT_WINDOW_DISPLAY_SCALE_CHANGED:
 		case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
 		case SDL_EVENT_WINDOW_RESIZED:
-		{
-			if (freerdp_settings_get_bool(_sdl->context()->settings,
-			                              FreeRDP_DynamicResolutionUpdate))
-			{
-				const auto& window = _sdl->windows.at(ev->windowID);
-				const auto factor = SDL_GetWindowDisplayScale(window.window());
-				_targetDesktopScaleFactor = static_cast<UINT32>(100 * factor);
-			}
-			SDL_GetWindowSizeInPixels(it->second.window(), &_targetWidth, &_targetHeight);
-			return addTimer();
-		}
+			return updateMonitor(ev->windowID);
 		case SDL_EVENT_WINDOW_MOUSE_LEAVE:
 			WINPR_ASSERT(_sdl);
 			_sdl->input.keyboard_grab(ev->windowID, false);
@@ -381,11 +405,6 @@ bool sdlDispContext::handle_window_event(const SDL_WindowEvent* ev)
 		default:
 			return true;
 	}
-}
-
-UINT32 sdlDispContext::scale_factor() const
-{
-	return _lastSentDesktopScaleFactor;
 }
 
 UINT sdlDispContext::DisplayControlCaps(DispClientContext* disp, UINT32 maxNumMonitors,
@@ -456,15 +475,8 @@ sdlDispContext::sdlDispContext(SdlContext* sdl) : _sdl(sdl)
 	WINPR_ASSERT(_sdl->context()->settings);
 	WINPR_ASSERT(_sdl->context()->pubSub);
 
-	auto settings = _sdl->context()->settings;
 	auto pubSub = _sdl->context()->pubSub;
 
-	_lastSentWidth = _targetWidth = WINPR_ASSERTING_INT_CAST(
-	    int32_t, freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth));
-	_lastSentHeight = _targetHeight = WINPR_ASSERTING_INT_CAST(
-	    int32_t, freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight));
-	_lastSentDesktopScaleFactor = _targetDesktopScaleFactor =
-	    freerdp_settings_get_uint32(settings, FreeRDP_DesktopScaleFactor);
 	PubSub_SubscribeActivated(pubSub, sdlDispContext::OnActivated);
 	PubSub_SubscribeGraphicsReset(pubSub, sdlDispContext::OnGraphicsReset);
 	addTimer();

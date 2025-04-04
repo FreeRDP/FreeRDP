@@ -68,9 +68,18 @@ class SdlContext
 	[[nodiscard]] rdpContext* context() const;
 	[[nodiscard]] rdpClientContext* common() const;
 
+	void setCursor(rdpPointer* cursor);
+	[[nodiscard]] rdpPointer* cursor() const;
+
+	void setMonitorIds(const std::vector<SDL_DisplayID>& ids);
+	const std::vector<SDL_DisplayID>& monitorIds() const;
+	int64_t monitorId(uint32_t index) const;
+
   private:
 	rdpContext* _context;
 	std::atomic<bool> connected = false;
+	rdpPointer* _cursor = nullptr;
+	std::vector<SDL_DisplayID> _monitorIds;
 
   public:
 	wLog* log;
