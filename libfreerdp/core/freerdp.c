@@ -122,6 +122,9 @@ static int freerdp_connect_begin(freerdp* instance)
 		status = freerdp_settings_enforce_monitor_exists(settings);
 
 	if (status)
+		status = freerdp_settings_enforce_consistency(settings);
+
+	if (status)
 		status = freerdp_settings_check_client_after_preconnect(settings);
 
 	if (status)
