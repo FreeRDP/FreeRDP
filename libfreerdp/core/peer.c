@@ -806,7 +806,9 @@ static state_run_t peer_recv_callback_internal(WINPR_ATTR_UNUSED rdpTransport* t
 	switch (rdp_get_state(rdp))
 	{
 		case CONNECTION_STATE_INITIAL:
-			if (rdp_server_transition_to_state(rdp, CONNECTION_STATE_NEGO))
+			if (!freerdp_settings_enforce_consistency(settings))
+				ret = STATE_RUN_FAILED;
+			else if (rdp_server_transition_to_state(rdp, CONNECTION_STATE_NEGO))
 				ret = STATE_RUN_CONTINUE;
 			break;
 

@@ -1764,3 +1764,19 @@ BOOL freerdp_settings_enforce_monitor_exists(rdpSettings* settings)
 
 	return TRUE;
 }
+
+BOOL freerdp_settings_enforce_consistency(rdpSettings* settings)
+{
+	if (freerdp_settings_get_bool(settings, FreeRDP_BitmapCacheV3Enabled))
+	{
+		settings->OrderSupportFlagsEx |= CACHE_BITMAP_V3_SUPPORT;
+		settings->OrderSupportFlags |= ORDER_FLAGS_EXTRA_SUPPORT;
+	}
+
+	if (settings->FrameMarkerCommandEnabled)
+	{
+		settings->OrderSupportFlagsEx |= ALTSEC_FRAME_MARKER_SUPPORT;
+		settings->OrderSupportFlags |= ORDER_FLAGS_EXTRA_SUPPORT;
+	}
+	return TRUE;
+}

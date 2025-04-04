@@ -653,14 +653,39 @@ static BOOL rdp_write_order_capability_set(wLog* log, wStream* s, const rdpSetti
 
 	if (settings->BitmapCacheV3Enabled)
 	{
-		orderSupportExFlags |= CACHE_BITMAP_V3_SUPPORT;
-		orderFlags |= ORDER_FLAGS_EXTRA_SUPPORT;
+		if ((orderSupportExFlags & CACHE_BITMAP_V3_SUPPORT) == 0)
+		{
+			WLog_Print(log, WLOG_ERROR,
+			           "rdpSettings::BitmapCacheV3Enabled=TRUE, but CACHE_BITMAP_V3_SUPPORT not "
+			           "set in rdpSettings::OrderSupportEx, aborting.");
+			return FALSE;
+		}
+		if ((orderFlags & ORDER_FLAGS_EXTRA_SUPPORT) == 0)
+		{
+			WLog_Print(log, WLOG_ERROR,
+			           "rdpSettings::BitmapCacheV3Enabled=TRUE, but ORDER_FLAGS_EXTRA_SUPPORT not "
+			           "set in rdpSettings::OrderSupport, aborting.");
+			return FALSE;
+		}
 	}
 
 	if (settings->FrameMarkerCommandEnabled)
 	{
-		orderSupportExFlags |= ALTSEC_FRAME_MARKER_SUPPORT;
-		orderFlags |= ORDER_FLAGS_EXTRA_SUPPORT;
+		if ((orderSupportExFlags & ALTSEC_FRAME_MARKER_SUPPORT) == 0)
+		{
+			WLog_Print(
+			    log, WLOG_ERROR,
+			    "rdpSettings::FrameMarkerCommandEnabled=TRUE, but "
+			    "ALTSEC_FRAME_MARKER_SUPPORT not set in rdpSettings::OrderSupportEx, aborting.");
+			return FALSE;
+		}
+		if ((orderFlags & ORDER_FLAGS_EXTRA_SUPPORT) == 0)
+		{
+			WLog_Print(log, WLOG_ERROR,
+			           "rdpSettings::FrameMarkerCommandEnabled=TRUE, but ORDER_FLAGS_EXTRA_SUPPORT "
+			           "not set in rdpSettings::OrderSupport, aborting.");
+			return FALSE;
+		}
 	}
 
 	const char* dsc = freerdp_settings_get_string(settings, FreeRDP_TerminalDescriptor);
