@@ -34,6 +34,9 @@ extern "C"
 	typedef struct s_rdpei_server_context RdpeiServerContext;
 	typedef struct s_rdpei_server_private RdpeiServerPrivate;
 
+	typedef UINT (*psRdpeiServerOpen)(RdpeiServerContext* context);
+	typedef UINT (*psRdpeiServerClose)(RdpeiServerContext* context);
+
 	struct s_rdpei_server_context
 	{
 		HANDLE vcm;
@@ -56,6 +59,20 @@ extern "C"
 		 * Callback, when the channel got its id assigned.
 		 */
 		BOOL (*onChannelIdAssigned)(RdpeiServerContext* context, UINT32 channelId);
+
+		/*** APIs called by the server. ***/
+
+		/**
+		 * Open the input channel.
+		 * @since version 3.15.0
+		 */
+		psRdpeiServerOpen Open;
+
+		/**
+		 * Close the input channel.
+		 * @since version 3.15.0
+		 */
+		psRdpeiServerClose Close;
 	};
 
 	FREERDP_API void rdpei_server_context_free(RdpeiServerContext* context);
