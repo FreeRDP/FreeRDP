@@ -1081,8 +1081,17 @@ static BOOL updateEarlyClientCaps(rdpSettings* settings, UINT32 earlyCapabilityF
 		    (earlyCapabilityFlags & RNS_UD_CS_STRONG_ASYMMETRIC_KEYS) ? TRUE : FALSE;
 
 	if (settings->HasRelativeMouseEvent)
-		settings->HasRelativeMouseEvent =
-		    (earlyCapabilityFlags & RNS_UD_CS_RELATIVE_MOUSE_INPUT) ? TRUE : FALSE;
+	{
+		/* [MS-RDPBCGR] 2.2.7.1.5 Pointer Capability Set (TS_POINTER_CAPABILITYSET)
+		 * the flag must be ignored if the RDP version is < 0x00080011 */
+		if (settings->RdpVersion >= RDP_VERSION_10_12)
+		{
+			settings->HasRelativeMouseEvent =
+			    (earlyCapabilityFlags & RNS_UD_CS_RELATIVE_MOUSE_INPUT) ? TRUE : FALSE;
+		}
+		else
+			settings->HasRelativeMouseEvent = FALSE;
+	}
 
 	if (settings->NetworkAutoDetect)
 		settings->NetworkAutoDetect =

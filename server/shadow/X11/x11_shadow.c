@@ -248,7 +248,8 @@ static BOOL x11_shadow_input_keyboard_event(rdpShadowSubsystem* subsystem, rdpSh
 		XFlush(x11->display);
 		XUnlockDisplay(x11->display);
 	}
-
+#else
+	WLog_WARN(TAG, "KeyboardEvent not supported by backend, ignoring");
 #endif
 	return TRUE;
 }
@@ -336,6 +337,65 @@ static BOOL x11_shadow_input_mouse_event(rdpShadowSubsystem* subsystem, rdpShado
 	XTestGrabControl(x11->display, False);
 	XFlush(x11->display);
 	XUnlockDisplay(x11->display);
+#else
+	WLog_WARN(TAG, "MouseEvent not supported by backend, ignoring");
+#endif
+	return TRUE;
+}
+
+static BOOL x11_shadow_input_rel_mouse_event(rdpShadowSubsystem* subsystem, rdpShadowClient* client,
+                                             UINT16 flags, INT16 xDelta, INT16 yDelta)
+{
+#ifdef WITH_XTEST
+	x11ShadowSubsystem* x11 = (x11ShadowSubsystem*)subsystem;
+	WINPR_ASSERT(x11);
+
+	unsigned int button = 0;
+	BOOL down = FALSE;
+
+	if (!subsystem || !client)
+		return FALSE;
+
+	rdpShadowServer* server = subsystem->server;
+
+	if (!server)
+		return FALSE;
+
+	rdpShadowSurface* surface = server->surface;
+
+	if (!surface)
+		return FALSE;
+
+	x11->lastMouseClient = client;
+
+	XLockDisplay(x11->display);
+	XTestGrabControl(x11->display, True);
+
+	if (flags & PTR_FLAGS_MOVE)
+		XTestFakeRelativeMotionEvent(x11->display, xDelta, yDelta, 0);
+
+	if (flags & PTR_FLAGS_BUTTON1)
+		button = 1;
+	else if (flags & PTR_FLAGS_BUTTON2)
+		button = 3;
+	else if (flags & PTR_FLAGS_BUTTON3)
+		button = 2;
+	else if (flags & PTR_XFLAGS_BUTTON1)
+		button = 4;
+	else if (flags & PTR_XFLAGS_BUTTON2)
+		button = 5;
+
+	if (flags & PTR_FLAGS_DOWN)
+		down = TRUE;
+
+	if (button)
+		XTestFakeButtonEvent(x11->display, button, down, CurrentTime);
+
+	XTestGrabControl(x11->display, False);
+	XFlush(x11->display);
+	XUnlockDisplay(x11->display);
+#else
+	WLog_WARN(TAG, "RelMouseEvent not supported by backend, ignoring");
 #endif
 	return TRUE;
 }
@@ -385,6 +445,8 @@ static BOOL x11_shadow_input_extended_mouse_event(rdpShadowSubsystem* subsystem,
 	XTestGrabControl(x11->display, False);
 	XFlush(x11->display);
 	XUnlockDisplay(x11->display);
+#else
+	WLog_WARN(TAG, "ExtendedMouseEvent not supported by backend, ignoring");
 #endif
 	return TRUE;
 }
@@ -563,8 +625,8 @@ static int x11_shadow_query_cursor(x11ShadowSubsystem* subsystem, BOOL getImage)
 
 	if ((x != (INT64)subsystem->common.pointerX) || (y != (INT64)subsystem->common.pointerY))
 	{
-		subsystem->common.pointerX = WINPR_ASSERTING_INT_CAST(UINT32, x);
-		subsystem->common.pointerY = WINPR_ASSERTING_INT_CAST(UINT32, y);
+		subsystem->common.pointerX = (UINT32)MAX(0, x);
+		subsystem->common.pointerY = (UINT32)MAX(0, y);
 		x11_shadow_pointer_position_update(subsystem);
 	}
 
@@ -1480,6 +1542,7 @@ static rdpShadowSubsystem* x11_shadow_subsystem_new(void)
 	subsystem->common.KeyboardEvent = x11_shadow_input_keyboard_event;
 	subsystem->common.UnicodeKeyboardEvent = x11_shadow_input_unicode_keyboard_event;
 	subsystem->common.MouseEvent = x11_shadow_input_mouse_event;
+	subsystem->common.RelMouseEvent = x11_shadow_input_rel_mouse_event;
 	subsystem->common.ExtendedMouseEvent = x11_shadow_input_extended_mouse_event;
 	subsystem->composite = FALSE;
 	subsystem->use_xshm = FALSE; /* temporarily disabled */

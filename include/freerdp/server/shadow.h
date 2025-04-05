@@ -92,6 +92,10 @@ extern "C"
 	                                              UINT16 code);
 	typedef BOOL (*pfnShadowMouseEvent)(rdpShadowSubsystem* subsystem, rdpShadowClient* client,
 	                                    UINT16 flags, UINT16 x, UINT16 y);
+	typedef BOOL (*pfnShadowRelMouseEvent)(rdpShadowSubsystem* subsystem, rdpShadowClient* client,
+	                                       UINT16 flags, INT16 xDelta,
+	                                       INT16 yDelta); /** @since version 3.15.0 */
+
 	typedef BOOL (*pfnShadowExtendedMouseEvent)(rdpShadowSubsystem* subsystem,
 	                                            rdpShadowClient* client, UINT16 flags, UINT16 x,
 	                                            UINT16 y);
@@ -244,6 +248,8 @@ extern "C"
 		pfnShadowClientCapabilities ClientCapabilities;
 
 		rdpShadowServer* server;
+
+		pfnShadowRelMouseEvent RelMouseEvent; /** @since version 3.15.0 */
 	};
 
 /* Definition of message between subsystem and clients */
