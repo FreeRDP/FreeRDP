@@ -23,6 +23,7 @@
 #include <thread>
 #include <map>
 #include <atomic>
+#include <queue>
 
 #include <freerdp/freerdp.h>
 #include <freerdp/client/rdpei.h>
@@ -85,7 +86,6 @@ class SdlContext
 	std::thread thread;
 	WinPREvent initialize;
 	WinPREvent initialized;
-	WinPREvent update_complete;
 	WinPREvent windows_created;
 	int exit_code = -1;
 
@@ -100,4 +100,6 @@ class SdlContext
 	std::unique_ptr<SDLConnectionDialog> connection_dialog;
 
 	std::atomic<bool> rdp_thread_running;
+
+	std::queue<std::vector<SDL_Rect>> _queue;
 };
