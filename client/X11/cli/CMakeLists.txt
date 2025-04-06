@@ -19,6 +19,7 @@ set(SRCS xfreerdp.c)
 
 addtargetwithresourcefile(${MODULE_NAME} TRUE "${PROJECT_VERSION}" SRCS)
 set_target_properties(${MODULE_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "..")
+set_property(TARGET ${PROJECT_NAME} PROPERTY FOLDER "Client/X11")
 
 list(APPEND LIBS xfreerdp-client)
 

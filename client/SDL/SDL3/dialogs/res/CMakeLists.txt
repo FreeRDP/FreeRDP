@@ -18,6 +18,8 @@
 set(SRCS sdl3_resource_manager.cpp sdl3_resource_manager.hpp)
 
 add_library(sdl3_client_res STATIC ${SRCS})
+set_property(TARGET sdl3_client_res PROPERTY FOLDER "Client/SDL")
+
 if(NOT WITH_SDL_LINK_SHARED)
   target_link_libraries(sdl3_client_res ${SDL3_STATIC_LIBRARIES})
 else()
