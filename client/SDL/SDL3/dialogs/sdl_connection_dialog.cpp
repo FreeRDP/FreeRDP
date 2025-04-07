@@ -493,46 +493,19 @@ Uint32 SDLConnectionDialog::timeout(void* pvthis, [[maybe_unused]] SDL_TimerID t
 }
 
 SDLConnectionDialogHider::SDLConnectionDialogHider(freerdp* instance)
-    : SDLConnectionDialogHider(get(instance))
+    : SDLConnectionDialogHider(instance->context)
 {
 }
 
-SDLConnectionDialogHider::SDLConnectionDialogHider(rdpContext* context)
-    : SDLConnectionDialogHider(get(context))
+SDLConnectionDialogHider::SDLConnectionDialogHider(rdpContext* context) : _context(context)
 {
-}
-
-SDLConnectionDialogHider::SDLConnectionDialogHider(SDLConnectionDialog* dialog) : _dialog(dialog)
-{
-	if (_dialog)
-	{
-		_visible = _dialog->visible();
-		if (_visible)
-		{
-			_dialog->hide();
-		}
-	}
+	auto sdl = get_context(_context);
+	_visible = sdl->dialog.isVisible();
+	sdl->dialog.show(false);
 }
 
 SDLConnectionDialogHider::~SDLConnectionDialogHider()
 {
-	if (_dialog && _visible)
-	{
-		_dialog->show();
-	}
-}
-
-SDLConnectionDialog* SDLConnectionDialogHider::get(freerdp* instance)
-{
-	if (!instance)
-		return nullptr;
-	return get(instance->context);
-}
-
-SDLConnectionDialog* SDLConnectionDialogHider::get(rdpContext* context)
-{
-	auto sdl = get_context(context);
-	if (!sdl)
-		return nullptr;
-	return sdl->connection_dialog.get();
+	auto sdl = get_context(_context);
+	sdl->dialog.show(_visible);
 }

@@ -34,6 +34,15 @@
 class SDLConnectionDialog
 {
   public:
+	enum MsgType
+	{
+		MSG_NONE,
+		MSG_INFO,
+		MSG_WARN,
+		MSG_ERROR,
+		MSG_DISCARD
+	};
+
 	explicit SDLConnectionDialog(rdpContext* context);
 	SDLConnectionDialog(const SDLConnectionDialog& other) = delete;
 	SDLConnectionDialog(const SDLConnectionDialog&& other) = delete;
@@ -58,15 +67,6 @@ class SDLConnectionDialog
 	bool handle(const SDL_Event& event);
 
   private:
-	enum MsgType
-	{
-		MSG_NONE,
-		MSG_INFO,
-		MSG_WARN,
-		MSG_ERROR,
-		MSG_DISCARD
-	};
-
 	bool createWindow();
 	void destroyWindow();
 
@@ -114,8 +114,6 @@ class SDLConnectionDialogHider
 	explicit SDLConnectionDialogHider(freerdp* instance);
 	explicit SDLConnectionDialogHider(rdpContext* context);
 
-	explicit SDLConnectionDialogHider(SDLConnectionDialog* dialog);
-
 	SDLConnectionDialogHider(const SDLConnectionDialogHider& other) = delete;
 	SDLConnectionDialogHider(SDLConnectionDialogHider&& other) = delete;
 	SDLConnectionDialogHider& operator=(const SDLConnectionDialogHider& other) = delete;
@@ -124,9 +122,6 @@ class SDLConnectionDialogHider
 	~SDLConnectionDialogHider();
 
   private:
-	SDLConnectionDialog* get(freerdp* instance);
-	static SDLConnectionDialog* get(rdpContext* context);
-
-	SDLConnectionDialog* _dialog = nullptr;
+	rdpContext* _context = nullptr;
 	bool _visible = false;
 };
