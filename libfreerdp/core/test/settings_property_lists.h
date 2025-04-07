@@ -354,6 +354,7 @@ static const size_t int32_list_indices[] = {
 
 #define have_uint64_list_indices
 static const size_t uint64_list_indices[] = {
+	FreeRDP_MonitorOverrideFlags,
 	FreeRDP_ParentWindowId,
 };
 

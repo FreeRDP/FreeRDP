@@ -46,8 +46,6 @@ class sdlDispContext
 	[[nodiscard]] bool handle_display_event(const SDL_DisplayEvent* ev);
 	[[nodiscard]] bool handle_window_event(const SDL_WindowEvent* ev);
 
-	[[nodiscard]] UINT32 scale_factor() const;
-
   private:
 	UINT DisplayControlCaps(UINT32 maxNumMonitors, UINT32 maxMonitorAreaFactorA,
 	                        UINT32 maxMonitorAreaFactorB);

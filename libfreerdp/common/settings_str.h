@@ -450,6 +450,7 @@ static const struct settings_str_entry settings_map[] = {
 	{ FreeRDP_MonitorLocalShiftY, FREERDP_SETTINGS_TYPE_INT32, "FreeRDP_MonitorLocalShiftY" },
 	{ FreeRDP_XPan, FREERDP_SETTINGS_TYPE_INT32, "FreeRDP_XPan" },
 	{ FreeRDP_YPan, FREERDP_SETTINGS_TYPE_INT32, "FreeRDP_YPan" },
+	{ FreeRDP_MonitorOverrideFlags, FREERDP_SETTINGS_TYPE_UINT64, "FreeRDP_MonitorOverrideFlags" },
 	{ FreeRDP_ParentWindowId, FREERDP_SETTINGS_TYPE_UINT64, "FreeRDP_ParentWindowId" },
 	{ FreeRDP_AadServerHostname, FREERDP_SETTINGS_TYPE_STRING, "FreeRDP_AadServerHostname" },
 	{ FreeRDP_AcceptedCert, FREERDP_SETTINGS_TYPE_STRING, "FreeRDP_AcceptedCert" },

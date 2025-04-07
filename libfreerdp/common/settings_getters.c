@@ -2630,6 +2630,9 @@ UINT64 freerdp_settings_get_uint64(WINPR_ATTR_UNUSED const rdpSettings* settings
 
 	switch (id)
 	{
+		case FreeRDP_MonitorOverrideFlags:
+			return settings->MonitorOverrideFlags;
+
 		case FreeRDP_ParentWindowId:
 			return settings->ParentWindowId;
 
@@ -2658,6 +2661,10 @@ BOOL freerdp_settings_set_uint64(WINPR_ATTR_UNUSED rdpSettings* settings,
 
 	switch (id)
 	{
+		case FreeRDP_MonitorOverrideFlags:
+			settings->MonitorOverrideFlags = cnv.c;
+			break;
+
 		case FreeRDP_ParentWindowId:
 			settings->ParentWindowId = cnv.c;
 			break;
