@@ -34,6 +34,8 @@ set(SRCS
     sdl_selectlist.cpp
     sdl_connection_dialog.cpp
     sdl_connection_dialog.hpp
+    sdl_connection_dialog_wrapper.cpp
+    sdl_connection_dialog_wrapper.hpp
 )
 
 list(APPEND LIBS sdl3_client_res winpr)

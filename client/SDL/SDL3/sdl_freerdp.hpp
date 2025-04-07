@@ -24,6 +24,7 @@
 #include <map>
 #include <atomic>
 #include <queue>
+#include <mutex>
 
 #include <freerdp/freerdp.h>
 #include <freerdp/client/rdpei.h>
@@ -40,7 +41,7 @@
 #include "sdl_clip.hpp"
 #include "sdl_utils.hpp"
 #include "sdl_window.hpp"
-#include "dialogs/sdl_connection_dialog.hpp"
+#include "dialogs/sdl_connection_dialog_wrapper.hpp"
 
 using SDLSurfacePtr = std::unique_ptr<SDL_Surface, decltype(&SDL_DestroySurface)>;
 
@@ -97,9 +98,8 @@ class SdlContext
 
 	SDL_PixelFormat sdl_pixel_format = SDL_PIXELFORMAT_UNKNOWN;
 
-	std::unique_ptr<SDLConnectionDialog> connection_dialog;
-
 	std::atomic<bool> rdp_thread_running;
 
 	std::queue<std::vector<SDL_Rect>> _queue;
+	SdlConnectionDialogWrapper dialog;
 };

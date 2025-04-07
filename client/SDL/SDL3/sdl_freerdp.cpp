@@ -225,14 +225,6 @@ static const struct sdl_exit_code_map_t* sdl_map_entry_by_code(int exit_code)
 	return nullptr;
 }
 
-static void sdl_hide_connection_dialog(SdlContext* sdl)
-{
-	WINPR_ASSERT(sdl);
-	std::lock_guard<CriticalSection> lock(sdl->critical);
-	if (sdl->connection_dialog)
-		sdl->connection_dialog->hide();
-}
-
 static const struct sdl_exit_code_map_t* sdl_map_entry_by_error(UINT32 error)
 {
 	for (const auto& x : sdl_exit_code_map)
@@ -288,12 +280,7 @@ static int error_info_to_error(freerdp* instance, DWORD* pcode, char** msg, size
  * It can be used to reset invalidated areas. */
 static BOOL sdl_begin_paint(rdpContext* context)
 {
-	rdpGdi* gdi = nullptr;
-	auto sdl = get_context(context);
-
-	WINPR_ASSERT(sdl);
-
-	gdi = context->gdi;
+	auto gdi = context->gdi;
 	WINPR_ASSERT(gdi);
 	WINPR_ASSERT(gdi->primary);
 	WINPR_ASSERT(gdi->primary->hdc);
@@ -554,16 +541,14 @@ static BOOL sdl_pre_connect(freerdp* instance)
 		if (!sdl_wait_for_init(sdl))
 			return FALSE;
 
-		std::lock_guard<CriticalSection> lock(sdl->critical);
 		if (!freerdp_settings_get_bool(settings, FreeRDP_UseCommonStdioCallbacks))
-			sdl->connection_dialog = std::make_unique<SDLConnectionDialog>(instance->context);
-		if (sdl->connection_dialog)
 		{
-			sdl->connection_dialog->setTitle("Connecting to '%s'",
-			                                 freerdp_settings_get_server_name(settings));
-			sdl->connection_dialog->showInfo(
-			    "The connection is being established\n\nPlease wait...");
+			sdl->dialog.create(sdl->context());
 		}
+
+		sdl->dialog.setTitle("Connecting to '%s'", freerdp_settings_get_server_name(settings));
+		sdl->dialog.showInfo("The connection is being established\n\nPlease wait...");
+
 		if (!sdl_detect_monitors(sdl, &maxWidth, &maxHeight))
 			return FALSE;
 
@@ -644,7 +629,7 @@ static void sdl_cleanup_sdl(SdlContext* sdl)
 
 	std::lock_guard<CriticalSection> lock(sdl->critical);
 	sdl->windows.clear();
-	sdl->connection_dialog.reset();
+	sdl->dialog.destroy();
 
 	sdl_destroy_primary(sdl);
 
@@ -728,11 +713,12 @@ static BOOL sdl_create_windows(SdlContext* sdl)
 
 static BOOL sdl_wait_create_windows(SdlContext* sdl)
 {
-	std::unique_lock<CriticalSection> lock(sdl->critical);
-	sdl->windows_created.clear();
-	if (!sdl_push_user_event(SDL_EVENT_USER_CREATE_WINDOWS, sdl))
-		return FALSE;
-	lock.unlock();
+	{
+		std::unique_lock<CriticalSection> lock(sdl->critical);
+		sdl->windows_created.clear();
+		if (!sdl_push_user_event(SDL_EVENT_USER_CREATE_WINDOWS, sdl))
+			return FALSE;
+	}
 
 	HANDLE handles[] = { sdl->windows_created.handle(), freerdp_abort_event(sdl->context()) };
 
@@ -753,9 +739,7 @@ static bool shall_abort(SdlContext* sdl)
 	{
 		if (sdl->rdp_thread_running)
 			return false;
-		if (!sdl->connection_dialog)
-			return true;
-		return !sdl->connection_dialog->running();
+		return !sdl->dialog.isRunning();
 	}
 	return false;
 }
@@ -804,18 +788,17 @@ static int sdl_run(SdlContext* sdl)
 			SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "got event %s [0x%08" PRIx32 "]",
 			             sdl_event_type_str(windowEvent.type), windowEvent.type);
 #endif
-			std::lock_guard<CriticalSection> lock(sdl->critical);
-			/* The session might have been disconnected while we were waiting for a new SDL event.
-			 * In that case ignore the SDL event and terminate. */
-			if (freerdp_shall_disconnect_context(sdl->context()))
-				continue;
-
-			if (sdl->connection_dialog)
 			{
-				if (sdl->connection_dialog->handle(windowEvent))
-				{
+				std::lock_guard<CriticalSection> lock(sdl->critical);
+				/* The session might have been disconnected while we were waiting for a new SDL
+				 * event. In that case ignore the SDL event and terminate. */
+				if (freerdp_shall_disconnect_context(sdl->context()))
 					continue;
-				}
+			}
+
+			if (sdl->dialog.handleEvent(windowEvent))
+			{
+				continue;
 			}
 
 			auto point2pix = [](Uint32 win_id, float& x, float& y)
@@ -994,6 +977,9 @@ static int sdl_run(SdlContext* sdl)
 				case SDL_EVENT_CLIPBOARD_UPDATE:
 					sdl->clip.handle_update(windowEvent.clipboard);
 					break;
+				case SDL_EVENT_USER_UPDATE_CONNECT_DIALOG:
+					sdl->dialog.handleShow();
+					break;
 				case SDL_EVENT_USER_QUIT:
 				default:
 					if ((windowEvent.type >= SDL_EVENT_DISPLAY_FIRST) &&
@@ -1095,7 +1081,7 @@ static BOOL sdl_post_connect(freerdp* instance)
 	auto sdl = get_context(context);
 
 	// Retry was successful, discard dialog
-	sdl_hide_connection_dialog(sdl);
+	sdl->dialog.show(false);
 
 	if (freerdp_settings_get_bool(context->settings, FreeRDP_AuthenticationOnly))
 	{
@@ -1197,19 +1183,14 @@ static void sdl_client_cleanup(SdlContext* sdl, int exit_code, const std::string
 				break;
 			default:
 			{
-				std::lock_guard<CriticalSection> lock(sdl->critical);
-				if (sdl->connection_dialog && !error_msg.empty())
-				{
-					sdl->connection_dialog->showError(error_msg.c_str());
-					showError = true;
-				}
+				sdl->dialog.showError(error_msg);
 			}
 			break;
 		}
 	}
 
 	if (!showError)
-		sdl_hide_connection_dialog(sdl);
+		sdl->dialog.show(false);
 
 	sdl->exit_code = exit_code;
 	sdl_push_user_event(SDL_EVENT_USER_QUIT);
@@ -1280,7 +1261,7 @@ static int sdl_client_thread_connect(SdlContext* sdl, std::string& error_msg)
 				exit_code = SDL_EXIT_CONN_FAILED;
 		}
 
-		sdl_hide_connection_dialog(sdl);
+		sdl->dialog.show(false);
 	}
 
 	return exit_code;
@@ -1333,7 +1314,7 @@ static int sdl_client_thread_run(SdlContext* sdl, std::string& error_msg)
 			if (client_auto_reconnect(instance))
 			{
 				// Retry was successful, discard dialog
-				sdl_hide_connection_dialog(sdl);
+				sdl->dialog.show(false);
 				continue;
 			}
 			else
