@@ -68,6 +68,7 @@ add_subdirectory(res)
 
 add_library(sdl3-dialogs STATIC ${SRCS})
 
+set_property(TARGET sdl3-dialogs PROPERTY FOLDER "Client/SDL")
 target_link_libraries(sdl3-dialogs PRIVATE ${LIBS})
 
 if(BUILD_TESTING)

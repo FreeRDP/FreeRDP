@@ -278,7 +278,7 @@ static int error_info_to_error(freerdp* instance, DWORD* pcode, char** msg, size
 
 	winpr_asprintf(msg, len, "Terminate with %s due to ERROR_INFO %s [0x%08" PRIx32 "]: %s",
 	               sdl_map_error_to_code_tag(code), name, code, str);
-	WLog_DBG(SDL_TAG, "%s", *msg);
+	SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "%s", *msg);
 	if (pcode)
 		*pcode = code;
 	return exit_code;
@@ -293,17 +293,6 @@ static BOOL sdl_begin_paint(rdpContext* context)
 
 	WINPR_ASSERT(sdl);
 
-	HANDLE handles[] = { sdl->update_complete.handle(), freerdp_abort_event(context) };
-	const DWORD status = WaitForMultipleObjects(ARRAYSIZE(handles), handles, FALSE, INFINITE);
-	switch (status)
-	{
-		case WAIT_OBJECT_0:
-			break;
-		default:
-			return FALSE;
-	}
-	sdl->update_complete.clear();
-
 	gdi = context->gdi;
 	WINPR_ASSERT(gdi);
 	WINPR_ASSERT(gdi->primary);
@@ -315,25 +304,6 @@ static BOOL sdl_begin_paint(rdpContext* context)
 
 	return TRUE;
 }
-
-class SdlEventUpdateTriggerGuard
-{
-  private:
-	SdlContext* _sdl;
-
-  public:
-	explicit SdlEventUpdateTriggerGuard(SdlContext* sdl) : _sdl(sdl)
-	{
-	}
-	~SdlEventUpdateTriggerGuard()
-	{
-		_sdl->update_complete.set();
-	}
-	SdlEventUpdateTriggerGuard(const SdlEventUpdateTriggerGuard&) = delete;
-	SdlEventUpdateTriggerGuard(SdlEventUpdateTriggerGuard&&) = delete;
-	SdlEventUpdateTriggerGuard& operator=(const SdlEventUpdateTriggerGuard&) = delete;
-	SdlEventUpdateTriggerGuard& operator=(SdlEventUpdateTriggerGuard&&) = delete;
-};
 
 static bool sdl_draw_to_window_rect([[maybe_unused]] SdlContext* sdl, SdlWindow& window,
                                     SDL_Surface* surface, SDL_Point offset, const SDL_Rect& srcRect)
@@ -432,16 +402,16 @@ static BOOL sdl_draw_to_window(SdlContext* sdl, std::map<Uint32, SdlWindow>& win
 	return TRUE;
 }
 
-static BOOL sdl_end_paint_process(rdpContext* context)
+/* This function is called when the library completed composing a new
+ * frame. Read out the changed areas and blit them to your output device.
+ * The image buffer will have the format specified by gdi_init
+ */
+static BOOL sdl_end_paint(rdpContext* context)
 {
-	rdpGdi* gdi = nullptr;
 	auto sdl = get_context(context);
+	WINPR_ASSERT(sdl);
 
-	WINPR_ASSERT(context);
-
-	SdlEventUpdateTriggerGuard guard(sdl);
-
-	gdi = context->gdi;
+	auto gdi = context->gdi;
 	WINPR_ASSERT(gdi);
 	WINPR_ASSERT(gdi->primary);
 	WINPR_ASSERT(gdi->primary->hdc);
@@ -463,22 +433,8 @@ static BOOL sdl_end_paint_process(rdpContext* context)
 		rects.push_back({ rgn.x, rgn.y, rgn.w, rgn.h });
 	}
 
-	return sdl_draw_to_window(sdl, sdl->windows, rects);
-}
-
-/* This function is called when the library completed composing a new
- * frame. Read out the changed areas and blit them to your output device.
- * The image buffer will have the format specified by gdi_init
- */
-static BOOL sdl_end_paint(rdpContext* context)
-{
-	auto sdl = get_context(context);
-	WINPR_ASSERT(sdl);
-
-	std::lock_guard<CriticalSection> lock(sdl->critical);
-	const BOOL rc = sdl_push_user_event(SDL_EVENT_USER_UPDATE, context);
-
-	return rc;
+	sdl->_queue.push(rects);
+	return sdl_push_user_event(SDL_EVENT_USER_UPDATE);
 }
 
 static void sdl_destroy_primary(SdlContext* sdl)
@@ -965,8 +921,12 @@ static int sdl_run(SdlContext* sdl)
 					break;
 				case SDL_EVENT_USER_UPDATE:
 				{
-					auto context = static_cast<rdpContext*>(windowEvent.user.data1);
-					sdl_end_paint_process(context);
+					while (!sdl->_queue.empty())
+					{
+						auto rectangles = sdl->_queue.front();
+						sdl_draw_to_window(sdl, sdl->windows, rectangles);
+						sdl->_queue.pop();
+					}
 				}
 				break;
 				case SDL_EVENT_USER_CREATE_WINDOWS:
@@ -1748,7 +1708,6 @@ int main(int argc, char* argv[])
 
 bool SdlContext::update_fullscreen(bool enter)
 {
-	std::lock_guard<CriticalSection> lock(critical);
 	for (const auto& window : windows)
 	{
 		if (!sdl_push_user_event(SDL_EVENT_USER_WINDOW_FULLSCREEN, &window.second, enter))
@@ -1760,14 +1719,11 @@ bool SdlContext::update_fullscreen(bool enter)
 
 bool SdlContext::update_minimize()
 {
-	std::lock_guard<CriticalSection> lock(critical);
 	return sdl_push_user_event(SDL_EVENT_USER_WINDOW_MINIMIZE);
 }
 
 bool SdlContext::update_resizeable(bool enable)
 {
-	std::lock_guard<CriticalSection> lock(critical);
-
 	const auto settings = context()->settings;
 	const bool dyn = freerdp_settings_get_bool(settings, FreeRDP_DynamicResolutionUpdate);
 	const bool smart = freerdp_settings_get_bool(settings, FreeRDP_SmartSizing);
@@ -1784,8 +1740,8 @@ bool SdlContext::update_resizeable(bool enable)
 }
 
 SdlContext::SdlContext(rdpContext* context)
-    : _context(context), log(WLog_Get(SDL_TAG)), update_complete(true), disp(this), input(this),
-      clip(this), primary(nullptr, SDL_DestroySurface), rdp_thread_running(false)
+    : _context(context), log(WLog_Get(SDL_TAG)), disp(this), input(this), clip(this),
+      primary(nullptr, SDL_DestroySurface), rdp_thread_running(false)
 {
 	WINPR_ASSERT(context);
 }

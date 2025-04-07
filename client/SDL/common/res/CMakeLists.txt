@@ -105,3 +105,4 @@ endif()
 
 add_library(sdl-common-client-res STATIC ${RES_FILES} ${SRCS} ${FACTORY_HDR} ${FACTORY_SRCS})
 set_property(TARGET sdl-common-client-res PROPERTY POSITION_INDEPENDENT_CODE ON)
+set_property(TARGET sdl-common-client-res PROPERTY FOLDER "Client/Common")
