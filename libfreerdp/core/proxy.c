@@ -131,16 +131,12 @@ static BOOL value_to_int(const char* value, LONGLONG* result, LONGLONG min, LONG
 
 static BOOL cidr4_match(const struct in_addr* addr, const struct in_addr* net, BYTE bits)
 {
-	uint32_t mask = 0;
-	uint32_t amask = 0;
-	uint32_t nmask = 0;
-
 	if (bits == 0)
 		return TRUE;
 
-	mask = htonl(0xFFFFFFFFu << (32 - bits));
-	amask = addr->s_addr & mask;
-	nmask = net->s_addr & mask;
+	const uint32_t mask = htonl(0xFFFFFFFFu << (32 - bits));
+	const uint32_t amask = addr->s_addr & mask;
+	const uint32_t nmask = net->s_addr & mask;
 	return amask == nmask;
 }
 
@@ -149,10 +145,8 @@ static BOOL cidr6_match(const struct in6_addr* address, const struct in6_addr* n
 {
 	const uint32_t* a = (const uint32_t*)address;
 	const uint32_t* n = (const uint32_t*)network;
-	size_t bits_whole = 0;
-	size_t bits_incomplete = 0;
-	bits_whole = bits >> 5;
-	bits_incomplete = bits & 0x1F;
+	const size_t bits_whole = bits >> 5;
+	const size_t bits_incomplete = bits & 0x1F;
 
 	if (bits_whole)
 	{
@@ -171,34 +165,138 @@ static BOOL cidr6_match(const struct in6_addr* address, const struct in6_addr* n
 	return TRUE;
 }
 
+static BOOL option_ends_with(const char* str, const char* ext)
+{
+	WINPR_ASSERT(str);
+	WINPR_ASSERT(ext);
+	const size_t strLen = strlen(str);
+	const size_t extLen = strlen(ext);
+
+	if (strLen < extLen)
+		return FALSE;
+
+	return _strnicmp(&str[strLen - extLen], ext, extLen) == 0;
+}
+
+/* no_proxy has no proper definition, so use curl as reference:
+ * https://about.gitlab.com/blog/2021/01/27/we-need-to-talk-no-proxy/
+ */
+static BOOL no_proxy_match_host(const char* val, const char* hostname)
+{
+	WINPR_ASSERT(val);
+	WINPR_ASSERT(hostname);
+
+	/* match all */
+	if (_stricmp("*", val) == 0)
+		return TRUE;
+
+	/* Strip leading . */
+	if (val[0] == '.')
+		val++;
+
+	/* Match suffix */
+	return option_ends_with(hostname, val);
+}
+
+static BOOL starts_with(const char* val, const char* prefix)
+{
+	const size_t plen = strlen(prefix);
+	const size_t vlen = strlen(val);
+	if (vlen < plen)
+		return FALSE;
+	return _strnicmp(val, prefix, plen) == 0;
+}
+
+static BOOL no_proxy_match_ip(const char* val, const char* hostname)
+{
+	WINPR_ASSERT(val);
+	WINPR_ASSERT(hostname);
+
+	struct sockaddr_in sa4 = { 0 };
+	struct sockaddr_in6 sa6 = { 0 };
+
+	if (inet_pton(AF_INET, hostname, &sa4.sin_addr) == 1)
+	{
+		/* Prefix match */
+		if (starts_with(hostname, val))
+			return TRUE;
+
+		char* sub = strchr(val, '/');
+		if (sub)
+			*sub++ = '\0';
+
+		struct sockaddr_in mask = { 0 };
+		if (inet_pton(AF_INET, val, &mask.sin_addr) == 0)
+			return FALSE;
+
+		/* IP address match */
+		if (memcmp(&mask, &sa4, sizeof(mask)) == 0)
+			return TRUE;
+
+		if (sub)
+		{
+			const unsigned long usub = strtoul(sub, NULL, 0);
+			if ((errno == 0) && (usub <= UINT8_MAX))
+				return cidr4_match(&sa4.sin_addr, &mask.sin_addr, (UINT8)usub);
+		}
+	}
+	else if (inet_pton(AF_INET6, hostname, &sa6.sin6_addr) == 1)
+	{
+		if (val[0] == '[')
+			val++;
+
+		char str[INET6_ADDRSTRLEN + 1] = { 0 };
+		strncpy(str, val, INET6_ADDRSTRLEN);
+
+		const size_t len = strnlen(str, INET6_ADDRSTRLEN);
+		if (len > 0)
+		{
+			if (str[len - 1] == ']')
+				str[len - 1] = '\0';
+		}
+
+		/* Prefix match */
+		if (starts_with(hostname, str))
+			return TRUE;
+
+		char* sub = strchr(str, '/');
+		if (sub)
+			*sub++ = '\0';
+
+		struct sockaddr_in6 mask = { 0 };
+		if (inet_pton(AF_INET6, str, &mask.sin6_addr) == 0)
+			return FALSE;
+
+		/* Address match */
+		if (memcmp(&mask, &sa6, sizeof(mask)) == 0)
+			return TRUE;
+
+		if (sub)
+		{
+			const unsigned long usub = strtoul(sub, NULL, 0);
+			if ((errno == 0) && (usub <= UINT8_MAX))
+				return cidr6_match(&sa6.sin6_addr, &mask.sin6_addr, (UINT8)usub);
+		}
+	}
+
+	return FALSE;
+}
+
 static BOOL check_no_proxy(rdpSettings* settings, const char* no_proxy)
 {
-	const char* delimiter = ",";
+	const char* delimiter = ", ";
 	BOOL result = FALSE;
-	char* current = NULL;
-	char* copy = NULL;
 	char* context = NULL;
-	size_t host_len = 0;
-	struct sockaddr_in sa4;
-	struct sockaddr_in6 sa6;
-	BOOL is_ipv4 = FALSE;
-	BOOL is_ipv6 = FALSE;
 
 	if (!no_proxy || !settings)
 		return FALSE;
 
-	if (inet_pton(AF_INET, settings->ServerHostname, &sa4.sin_addr) == 1)
-		is_ipv4 = TRUE;
-	else if (inet_pton(AF_INET6, settings->ServerHostname, &sa6.sin6_addr) == 1)
-		is_ipv6 = TRUE;
-
-	host_len = strlen(settings->ServerHostname);
-	copy = _strdup(no_proxy);
+	char* copy = _strdup(no_proxy);
 
 	if (!copy)
 		return FALSE;
 
-	current = strtok_s(copy, delimiter, &context);
+	char* current = strtok_s(copy, delimiter, &context);
 
 	while (current && !result)
 	{
@@ -208,72 +306,10 @@ static BOOL check_no_proxy(rdpSettings* settings, const char* no_proxy)
 		{
 			WLog_DBG(TAG, "%s => %s (%" PRIdz ")", settings->ServerHostname, current, currentlen);
 
-			/* detect left and right "*" wildcard */
-			if (current[0] == '*')
-			{
-				if (host_len >= currentlen)
-				{
-					const size_t offset = host_len + 1 - currentlen;
-					const char* name = settings->ServerHostname + offset;
-
-					if (strncmp(current + 1, name, currentlen - 1) == 0)
-						result = TRUE;
-				}
-			}
-			else if (current[currentlen - 1] == '*')
-			{
-				if (strncmp(current, settings->ServerHostname, currentlen - 1) == 0)
-					result = TRUE;
-			}
-			else if (current[0] ==
-			         '.') /* Only compare if the no_proxy variable contains a whole domain. */
-			{
-				if (host_len > currentlen)
-				{
-					const size_t offset = host_len - currentlen;
-					const char* name = settings->ServerHostname + offset;
-
-					if (strncmp(current, name, currentlen) == 0)
-						result = TRUE; /* right-aligned match for host names */
-				}
-			}
-			else if (strcmp(current, settings->ServerHostname) == 0)
-				result = TRUE; /* exact match */
-			else if (is_ipv4 || is_ipv6)
-			{
-				char* rangedelim = strchr(current, '/');
-
-				/* Check for IP ranges */
-				if (rangedelim != NULL)
-				{
-					const char* range = rangedelim + 1;
-					const unsigned long sub = strtoul(range, NULL, 0);
-
-					if ((errno == 0) && (sub <= UINT8_MAX))
-					{
-						*rangedelim = '\0';
-
-						if (is_ipv4)
-						{
-							struct sockaddr_in mask;
-
-							if (inet_pton(AF_INET, current, &mask.sin_addr))
-								result = cidr4_match(&sa4.sin_addr, &mask.sin_addr, (UINT8)sub);
-						}
-						else if (is_ipv6)
-						{
-							struct sockaddr_in6 mask;
-
-							if (inet_pton(AF_INET6, current, &mask.sin6_addr))
-								result = cidr6_match(&sa6.sin6_addr, &mask.sin6_addr, (UINT8)sub);
-						}
-					}
-					else
-						WLog_WARN(TAG, "NO_PROXY invalid entry %s", current);
-				}
-				else if (strncmp(current, settings->ServerHostname, currentlen) == 0)
-					result = TRUE; /* left-aligned match for IPs */
-			}
+			if (no_proxy_match_host(current, settings->ServerHostname))
+				result = TRUE;
+			else if (no_proxy_match_ip(current, settings->ServerHostname))
+				result = TRUE;
 		}
 
 		current = strtok_s(NULL, delimiter, &context);
