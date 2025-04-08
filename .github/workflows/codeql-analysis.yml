@@ -19,7 +19,7 @@ on:
   pull_request:
     branches: [ "master", "stable*" ]
   schedule:
-    - cron: '41 2 * * 2'
+    - cron:https://github.com/FreeRDP/FreeRDP.git
 
 jobs:
   analyze:
