@@ -2545,8 +2545,7 @@ static LONG WINAPI PCSC_SCardGetAttrib(SCARDHANDLE hCard, DWORD dwAttrId, LPBYTE
 	if ((dwAttrId == SCARD_ATTR_DEVICE_FRIENDLY_NAME_A) ||
 	    (dwAttrId == SCARD_ATTR_DEVICE_FRIENDLY_NAME_W))
 	{
-		status = PCSC_SCardGetAttrib_FriendlyName(hCard, dwAttrId, pbAttr, pcbAttrLen);
-		return status;
+		return PCSC_SCardGetAttrib_FriendlyName(hCard, dwAttrId, pbAttr, pcbAttrLen);
 	}
 
 	status = PCSC_SCardGetAttrib_Internal(hCard, dwAttrId, pbAttr, pcbAttrLen);
@@ -2582,7 +2581,6 @@ static LONG WINAPI PCSC_SCardGetAttrib(SCARDHANDLE hCard, DWORD dwAttrId, LPBYTE
 	}
 	else
 	{
-
 		if (dwAttrId == SCARD_ATTR_CURRENT_PROTOCOL_TYPE)
 		{
 			if (!pcbAttrLenAlloc)
@@ -2596,10 +2594,11 @@ static LONG WINAPI PCSC_SCardGetAttrib(SCARDHANDLE hCard, DWORD dwAttrId, LPBYTE
 
 				if (status == SCARD_S_SUCCESS)
 				{
-					if (cbAttrLen < sizeof(DWORD))
+					if ((cbAttrLen < sizeof(DWORD)) && pbAttr)
 						return SCARD_E_INSUFFICIENT_BUFFER;
 
-					*(DWORD*)pbAttr = PCSC_ConvertProtocolsToWinSCard(dwProtocol);
+					if (pbAttr)
+						*(DWORD*)pbAttr = PCSC_ConvertProtocolsToWinSCard(dwProtocol);
 					*pcbAttrLen = sizeof(DWORD);
 				}
 			}
@@ -2611,11 +2610,12 @@ static LONG WINAPI PCSC_SCardGetAttrib(SCARDHANDLE hCard, DWORD dwAttrId, LPBYTE
 				UINT32 channelType = 0x20; /* USB */
 				UINT32 channelNumber = 0;
 
-				if (cbAttrLen < sizeof(DWORD))
+				if ((cbAttrLen < sizeof(DWORD)) && pbAttr)
 					return SCARD_E_INSUFFICIENT_BUFFER;
 
 				status = SCARD_S_SUCCESS;
-				*(DWORD*)pbAttr = (channelType << 16u) | channelNumber;
+				if (pbAttr)
+					*(DWORD*)pbAttr = (channelType << 16u) | channelNumber;
 				*pcbAttrLen = sizeof(DWORD);
 			}
 		}
