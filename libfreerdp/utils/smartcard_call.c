@@ -192,7 +192,7 @@ static LONG smartcard_ListReaderGroupsA_Call(scard_call_context* smartcard, wStr
 	cchGroups = SCARD_AUTOALLOCATE;
 	ret.ReturnCode =
 	    wrap(smartcard, SCardListReaderGroupsA, operation->hContext, (LPSTR)&mszGroups, &cchGroups);
-	if (cchGroups == SCARD_AUTOALLOCATE)
+	if ((ret.ReturnCode == SCARD_S_SUCCESS) && (cchGroups == SCARD_AUTOALLOCATE))
 		return SCARD_F_UNKNOWN_ERROR;
 
 	ret.msz = (BYTE*)mszGroups;
@@ -224,7 +224,7 @@ static LONG smartcard_ListReaderGroupsW_Call(scard_call_context* smartcard, wStr
 	cchGroups = SCARD_AUTOALLOCATE;
 	status = ret.ReturnCode = wrap(smartcard, SCardListReaderGroupsW, operation->hContext,
 	                               (LPWSTR)&mszGroups, &cchGroups);
-	if (cchGroups == SCARD_AUTOALLOCATE)
+	if ((ret.ReturnCode == SCARD_S_SUCCESS) && (cchGroups == SCARD_AUTOALLOCATE))
 		return SCARD_F_UNKNOWN_ERROR;
 
 	ret.msz = (BYTE*)mszGroups;
@@ -879,7 +879,7 @@ static LONG smartcard_GetReaderIcon_Call(scard_call_context* smartcard, wStream*
 	ret.ReturnCode = wrap(smartcard, SCardGetReaderIconW, operation->hContext, call->szReaderName,
 	                      (LPBYTE)&ret.pbData, &ret.cbDataLen);
 	scard_log_status_error(TAG, "SCardGetReaderIconW", ret.ReturnCode);
-	if (ret.cbDataLen == SCARD_AUTOALLOCATE)
+	if ((ret.ReturnCode == SCARD_S_SUCCESS) && (ret.cbDataLen == SCARD_AUTOALLOCATE))
 		return SCARD_F_UNKNOWN_ERROR;
 
 	status = smartcard_pack_get_reader_icon_return(out, &ret);
@@ -1256,7 +1256,7 @@ static LONG smartcard_StatusA_Call(scard_call_context* smartcard, wStream* out,
 	         &ret.dwState, &ret.dwProtocol, cbAtrLen ? (BYTE*)&ret.pbAtr : NULL, &cbAtrLen);
 
 	scard_log_status_error(TAG, "SCardStatusA", status);
-	if (cchReaderLen == SCARD_AUTOALLOCATE)
+	if ((ret.ReturnCode == SCARD_S_SUCCESS) && (cchReaderLen == SCARD_AUTOALLOCATE))
 		return SCARD_F_UNKNOWN_ERROR;
 
 	if (status == SCARD_S_SUCCESS)
@@ -1311,7 +1311,7 @@ static LONG smartcard_StatusW_Call(scard_call_context* smartcard, wStream* out,
 	         call->fmszReaderNamesIsNULL ? NULL : (LPWSTR)&mszReaderNames, &ret.cBytes,
 	         &ret.dwState, &ret.dwProtocol, (BYTE*)&ret.pbAtr, &cbAtrLen);
 	scard_log_status_error(TAG, "SCardStatusW", status);
-	if (ret.cBytes == SCARD_AUTOALLOCATE)
+	if ((ret.ReturnCode == SCARD_S_SUCCESS) && (ret.cBytes == SCARD_AUTOALLOCATE))
 		return SCARD_F_UNKNOWN_ERROR;
 
 	if (status == SCARD_S_SUCCESS)
@@ -1443,7 +1443,7 @@ static LONG smartcard_GetAttrib_Call(scard_call_context* smartcard, wStream* out
 	ret.ReturnCode =
 	    wrap(smartcard, SCardGetAttrib, operation->hCard, call->dwAttrId, pbAttr, &cbAttrLen);
 	scard_log_status_error(TAG, "SCardGetAttrib", ret.ReturnCode);
-	if (cbAttrLen == SCARD_AUTOALLOCATE)
+	if ((ret.ReturnCode == SCARD_S_SUCCESS) && (cbAttrLen == SCARD_AUTOALLOCATE))
 		return SCARD_F_UNKNOWN_ERROR;
 
 	ret.cbAttrLen = cbAttrLen;
