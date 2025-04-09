@@ -445,9 +445,9 @@ static BOOL tsg_ndr_read_string(wLog* log, wStream* s, WCHAR** str, UINT32 lengt
 	if (str)
 		*str = Stream_PointerAs(s, WCHAR);
 
-	if (!Stream_CheckAndLogRequiredLengthWLog(log, s, MaxCount))
+	if (!Stream_CheckAndLogRequiredLengthWLog(log, s, ActualCount * sizeof(WCHAR)))
 		return FALSE;
-	Stream_Seek(s, MaxCount);
+	Stream_Seek(s, ActualCount * sizeof(WCHAR));
 	return TRUE;
 }
 
