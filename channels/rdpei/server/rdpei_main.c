@@ -102,9 +102,22 @@ UINT rdpei_server_init(RdpeiServerContext* context)
 	RdpeiServerPrivate* priv = context->priv;
 	UINT32 channelId = 0;
 	BOOL status = TRUE;
+	DWORD BytesReturned = 0;
+	PULONG pSessionId = NULL;
+	DWORD SessionId = 0;
 
-	priv->channelHandle = WTSVirtualChannelOpenEx(WTS_CURRENT_SESSION, RDPEI_DVC_CHANNEL_NAME,
-	                                              WTS_CHANNEL_OPTION_DYNAMIC);
+	if (WTSQuerySessionInformationA(context->vcm, WTS_CURRENT_SESSION, WTSSessionId,
+	                                (LPSTR*)&pSessionId, &BytesReturned) == FALSE)
+	{
+		WLog_ERR(TAG, "WTSQuerySessionInformationA failed!");
+		return ERROR_INTERNAL_ERROR;
+	}
+
+	SessionId = (DWORD)*pSessionId;
+	WTSFreeMemory(pSessionId);
+
+	priv->channelHandle =
+	    WTSVirtualChannelOpenEx(SessionId, RDPEI_DVC_CHANNEL_NAME, WTS_CHANNEL_OPTION_DYNAMIC);
 	if (!priv->channelHandle)
 	{
 		WLog_ERR(TAG, "WTSVirtualChannelOpenEx failed!");
@@ -124,8 +137,7 @@ UINT rdpei_server_init(RdpeiServerContext* context)
 	                            &bytesReturned) ||
 	    (bytesReturned != sizeof(HANDLE)))
 	{
-		WLog_ERR(TAG,
-		         "WTSVirtualChannelQuery failed or invalid returned size(%" PRIu32 ")!",
+		WLog_ERR(TAG, "WTSVirtualChannelQuery failed or invalid returned size(%" PRIu32 ")!",
 		         bytesReturned);
 		if (buffer)
 			WTSFreeMemory(buffer);
@@ -138,6 +150,7 @@ UINT rdpei_server_init(RdpeiServerContext* context)
 
 out_close:
 	(void)WTSVirtualChannelClose(priv->channelHandle);
+	priv->channelHandle = NULL;
 	return CHANNEL_RC_INITIALIZATION_ERROR;
 }
 
