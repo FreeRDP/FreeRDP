@@ -45,7 +45,7 @@
 #include <freerdp/server/cliprdr.h>
 #include <freerdp/server/echo.h>
 #include <freerdp/server/rdpdr.h>
-#if defined(CHANNEL_RAIL_SERVER)
+#if defined(CHANNEL_RDPEI_SERVER)
 #include <freerdp/server/rdpei.h>
 #endif
 #include <freerdp/server/drdynvc.h>
