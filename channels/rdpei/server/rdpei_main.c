@@ -125,7 +125,7 @@ UINT rdpei_server_init(RdpeiServerContext* context)
 	    (bytesReturned != sizeof(HANDLE)))
 	{
 		WLog_ERR(TAG,
-		         "WTSVirtualChannelQuery failed or invalid invalid returned size(%" PRIu32 ")!",
+		         "WTSVirtualChannelQuery failed or invalid returned size(%" PRIu32 ")!",
 		         bytesReturned);
 		if (buffer)
 			WTSFreeMemory(buffer);
