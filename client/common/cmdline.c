@@ -3557,6 +3557,14 @@ static int parse_reconnect_cookie_options(rdpSettings* settings, const COMMAND_L
 	return 0;
 }
 
+static BOOL set_monitor_override(rdpSettings* settings, uint64_t flag)
+{
+	const FreeRDP_Settings_Keys_UInt64 key = FreeRDP_MonitorOverrideFlags;
+	uint64_t mask = freerdp_settings_get_uint64(settings, key);
+	mask |= flag;
+	return freerdp_settings_set_uint64(settings, key, mask);
+}
+
 static int parse_scale_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_A* arg)
 {
 	WINPR_ASSERT(settings);
@@ -3576,6 +3584,9 @@ static int parse_scale_options(rdpSettings* settings, const COMMAND_LINE_ARGUMEN
 				return COMMAND_LINE_ERROR;
 			if (!freerdp_settings_set_uint32(settings, FreeRDP_DeviceScaleFactor, (UINT32)val))
 				return COMMAND_LINE_ERROR;
+			if (!set_monitor_override(settings, FREERDP_MONITOR_OVERRIDE_DESKTOP_SCALE |
+			                                        FREERDP_MONITOR_OVERRIDE_DEVICE_SCALE))
+				return fail_at(arg, COMMAND_LINE_ERROR);
 			break;
 
 		default:
@@ -3601,6 +3612,8 @@ static int parse_scale_device_options(rdpSettings* settings, const COMMAND_LINE_
 		case 180:
 			if (!freerdp_settings_set_uint32(settings, FreeRDP_DeviceScaleFactor, (UINT32)val))
 				return COMMAND_LINE_ERROR;
+			if (!set_monitor_override(settings, FREERDP_MONITOR_OVERRIDE_DEVICE_SCALE))
+				return fail_at(arg, COMMAND_LINE_ERROR);
 			break;
 
 		default:
@@ -5368,6 +5381,8 @@ static int parse_command_line(rdpSettings* settings, const COMMAND_LINE_ARGUMENT
 
 			if (!freerdp_settings_set_uint16(settings, FreeRDP_DesktopOrientation, (UINT16)val))
 				return fail_at(arg, COMMAND_LINE_ERROR);
+			if (!set_monitor_override(settings, FREERDP_MONITOR_OVERRIDE_ORIENTATION))
+				return fail_at(arg, COMMAND_LINE_ERROR);
 		}
 		CommandLineSwitchCase(arg, "old-license")
 		{
@@ -5386,6 +5401,8 @@ static int parse_command_line(rdpSettings* settings, const COMMAND_LINE_ARGUMENT
 			                                                FreeRDP_DesktopScaleFactor, 100, 500);
 			if (rc != 0)
 				return fail_at(arg, rc);
+			if (!set_monitor_override(settings, FREERDP_MONITOR_OVERRIDE_DESKTOP_SCALE))
+				return fail_at(arg, COMMAND_LINE_ERROR);
 		}
 		CommandLineSwitchCase(arg, "scale-device")
 		{

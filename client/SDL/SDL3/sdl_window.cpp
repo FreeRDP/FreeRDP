@@ -69,11 +69,11 @@ Uint32 SdlWindow::id() const
 	return SDL_GetWindowID(_window);
 }
 
-int SdlWindow::displayIndex() const
+SDL_DisplayID SdlWindow::displayIndex() const
 {
 	if (!_window)
 		return 0;
-	return WINPR_ASSERTING_INT_CAST(int, SDL_GetDisplayForWindow(_window));
+	return SDL_GetDisplayForWindow(_window);
 }
 
 SDL_Rect SdlWindow::rect() const
@@ -110,6 +110,46 @@ void SdlWindow::setOffsetY(Sint32 y)
 Sint32 SdlWindow::offsetY() const
 {
 	return _offset_y;
+}
+
+rdpMonitor SdlWindow::monitor() const
+{
+	rdpMonitor mon{};
+
+	const auto factor = SDL_GetWindowDisplayScale(_window);
+	const auto dsf = static_cast<UINT32>(100 * factor);
+	mon.attributes.desktopScaleFactor = dsf;
+	mon.attributes.deviceScaleFactor = 100;
+
+	int pixelWidth = 0;
+	int pixelHeight = 0;
+	auto prc = SDL_GetWindowSizeInPixels(_window, &pixelWidth, &pixelHeight);
+
+	if (prc)
+	{
+		mon.width = pixelWidth;
+		mon.height = pixelHeight;
+
+		mon.attributes.physicalWidth = WINPR_ASSERTING_INT_CAST(uint32_t, pixelWidth);
+		mon.attributes.physicalHeight = WINPR_ASSERTING_INT_CAST(uint32_t, pixelHeight);
+	}
+
+	SDL_Rect rect = {};
+	auto did = SDL_GetDisplayForWindow(_window);
+	auto rc = SDL_GetDisplayBounds(did, &rect);
+
+	if (rc)
+	{
+		mon.x = rect.x;
+		mon.y = rect.y;
+	}
+
+	auto orientation = SDL_DisplayOrientation(did);
+	mon.attributes.orientation = orientaion_to_rdp(orientation);
+
+	mon.is_primary = true;
+	mon.orig_screen = did;
+	return mon;
 }
 
 bool SdlWindow::grabKeyboard(bool enable)
@@ -191,4 +231,20 @@ bool SdlWindow::blit(SDL_Surface* surface, const SDL_Rect& srcRect, SDL_Rect& ds
 void SdlWindow::updateSurface()
 {
 	SDL_UpdateWindowSurface(_window);
+}
+
+UINT32 SdlWindow::orientaion_to_rdp(SDL_DisplayOrientation orientation)
+{
+	switch (orientation)
+	{
+		case SDL_ORIENTATION_LANDSCAPE:
+			return ORIENTATION_LANDSCAPE;
+		case SDL_ORIENTATION_LANDSCAPE_FLIPPED:
+			return ORIENTATION_LANDSCAPE_FLIPPED;
+		case SDL_ORIENTATION_PORTRAIT_FLIPPED:
+			return ORIENTATION_PORTRAIT_FLIPPED;
+		case SDL_ORIENTATION_PORTRAIT:
+		default:
+			return ORIENTATION_PORTRAIT;
+	}
 }

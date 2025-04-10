@@ -98,38 +98,30 @@ static BOOL sdl_Pointer_SetDefault(rdpContext* context)
 
 static BOOL sdl_Pointer_Set(rdpContext* context, rdpPointer* pointer)
 {
-	auto sdl = get_context(context);
-
-	return sdl_push_user_event(SDL_EVENT_USER_POINTER_SET, pointer, sdl);
+	WINPR_UNUSED(context);
+	return sdl_push_user_event(SDL_EVENT_USER_POINTER_SET, pointer);
 }
 
-BOOL sdl_Pointer_Set_Process(SDL_UserEvent* uptr)
+BOOL sdl_Pointer_Set_Process(SdlContext* sdl)
 {
 	INT32 w = 0;
 	INT32 h = 0;
-	INT32 x = 0;
-	INT32 y = 0;
-	INT32 sw = 0;
-	INT32 sh = 0;
 
-	WINPR_ASSERT(uptr);
-
-	auto sdl = static_cast<SdlContext*>(uptr->data2);
 	WINPR_ASSERT(sdl);
 
 	auto context = sdl->context();
-	auto ptr = static_cast<sdlPointer*>(uptr->data1);
-	WINPR_ASSERT(ptr);
-
-	rdpPointer* pointer = &ptr->pointer;
+	auto pointer = sdl->cursor();
+	auto ptr = reinterpret_cast<sdlPointer*>(pointer);
+	if (!ptr)
+		return TRUE;
 
 	rdpGdi* gdi = context->gdi;
 	WINPR_ASSERT(gdi);
 
-	x = static_cast<INT32>(pointer->xPos);
-	y = static_cast<INT32>(pointer->yPos);
-	sw = w = static_cast<INT32>(pointer->width);
-	sh = h = static_cast<INT32>(pointer->height);
+	auto x = static_cast<INT32>(pointer->xPos);
+	auto y = static_cast<INT32>(pointer->yPos);
+	auto sw = w = static_cast<INT32>(pointer->width);
+	auto sh = h = static_cast<INT32>(pointer->height);
 
 	SDL_Window* window = SDL_GetMouseFocus();
 	if (!window)
@@ -160,13 +152,17 @@ BOOL sdl_Pointer_Set_Process(SDL_UserEvent* uptr)
 
 	// create a cursor image in 100% display scale to trick SDL into creating the cursor with the
 	// correct size
-	const auto hidpi_scale = static_cast<float>(uptr->code) / 100;
+	auto it = sdl->windows.begin();
+	if (it == sdl->windows.end())
+		return FALSE;
+
+	const auto hidpi_scale = SDL_GetWindowDisplayScale(it->second.window());
 	auto normal = SDL_CreateSurface(
 	    static_cast<int>(static_cast<float>(ptr->image->w) / hidpi_scale),
 	    static_cast<int>(static_cast<float>(ptr->image->h) / hidpi_scale), ptr->image->format);
 	assert(normal);
 	SDL_BlitSurfaceScaled(ptr->image, nullptr, normal, nullptr,
-	                      SDL_ScaleMode::SDL_SCALEMODE_NEAREST);
+	                      SDL_ScaleMode::SDL_SCALEMODE_LINEAR);
 	SDL_AddSurfaceAlternateImage(normal, ptr->image);
 
 	ptr->cursor = SDL_CreateColorCursor(normal, x, y);

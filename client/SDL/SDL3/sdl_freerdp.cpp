@@ -420,7 +420,7 @@ static BOOL sdl_end_paint(rdpContext* context)
 		rects.push_back({ rgn.x, rgn.y, rgn.w, rgn.h });
 	}
 
-	sdl->_queue.push(rects);
+	sdl->push(std::move(rects));
 	return sdl_push_user_event(SDL_EVENT_USER_UPDATE);
 }
 
@@ -649,7 +649,7 @@ static BOOL sdl_create_windows(SdlContext* sdl)
 
 	for (UINT32 x = 0; x < windowCount; x++)
 	{
-		auto id = sdl_monitor_id_for_index(sdl, x);
+		auto id = sdl->monitorId(x);
 		if (id < 0)
 			return FALSE;
 
@@ -904,12 +904,12 @@ static int sdl_run(SdlContext* sdl)
 					break;
 				case SDL_EVENT_USER_UPDATE:
 				{
-					while (!sdl->_queue.empty())
+					std::vector<SDL_Rect> rectangles;
+					do
 					{
-						auto rectangles = sdl->_queue.front();
+						rectangles = sdl->pop();
 						sdl_draw_to_window(sdl, sdl->windows, rectangles);
-						sdl->_queue.pop();
-					}
+					} while (!rectangles.empty());
 				}
 				break;
 				case SDL_EVENT_USER_CREATE_WINDOWS:
@@ -942,12 +942,14 @@ static int sdl_run(SdlContext* sdl)
 					break;
 				case SDL_EVENT_USER_POINTER_NULL:
 					SDL_HideCursor();
+					sdl->setCursor(nullptr);
 					break;
 				case SDL_EVENT_USER_POINTER_DEFAULT:
 				{
 					SDL_Cursor* def = SDL_GetDefaultCursor();
 					SDL_SetCursor(def);
 					SDL_ShowCursor();
+					sdl->setCursor(nullptr);
 				}
 				break;
 				case SDL_EVENT_USER_POINTER_POSITION:
@@ -971,8 +973,8 @@ static int sdl_run(SdlContext* sdl)
 				}
 				break;
 				case SDL_EVENT_USER_POINTER_SET:
-					windowEvent.user.code = static_cast<Sint32>(sdl->disp.scale_factor());
-					sdl_Pointer_Set_Process(&windowEvent.user);
+					sdl->setCursor(static_cast<rdpPointer*>(windowEvent.user.data1));
+					sdl_Pointer_Set_Process(sdl);
 					break;
 				case SDL_EVENT_CLIPBOARD_UPDATE:
 					sdl->clip.handle_update(windowEvent.clipboard);
@@ -1001,6 +1003,7 @@ static int sdl_run(SdlContext* sdl)
 							{
 								case SDL_EVENT_WINDOW_DISPLAY_SCALE_CHANGED:
 								{
+									sdl_Pointer_Set_Process(sdl);
 									if (freerdp_settings_get_bool(sdl->context()->settings,
 									                              FreeRDP_DynamicResolutionUpdate))
 									{
@@ -1031,6 +1034,7 @@ static int sdl_run(SdlContext* sdl)
 								case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
 									window->second.fill();
 									sdl_draw_to_window(sdl, window->second);
+									sdl_Pointer_Set_Process(sdl);
 									break;
 								case SDL_EVENT_WINDOW_MOVED:
 								{
@@ -1756,4 +1760,55 @@ rdpContext* SdlContext::context() const
 rdpClientContext* SdlContext::common() const
 {
 	return reinterpret_cast<rdpClientContext*>(context());
+}
+
+void SdlContext::setCursor(rdpPointer* cursor)
+{
+	_cursor = cursor;
+}
+
+rdpPointer* SdlContext::cursor() const
+{
+	return _cursor;
+}
+
+void SdlContext::setMonitorIds(const std::vector<SDL_DisplayID>& ids)
+{
+	_monitorIds.clear();
+	for (auto id : ids)
+	{
+		_monitorIds.push_back(id);
+	}
+}
+
+const std::vector<SDL_DisplayID>& SdlContext::monitorIds() const
+{
+	return _monitorIds;
+}
+
+int64_t SdlContext::monitorId(uint32_t index) const
+{
+	if (index >= _monitorIds.size())
+	{
+		return -1;
+	}
+	return _monitorIds[index];
+}
+
+void SdlContext::push(std::vector<SDL_Rect>&& rects)
+{
+	std::unique_lock lock(_queue_mux);
+	_queue.emplace(std::move(rects));
+}
+
+std::vector<SDL_Rect> SdlContext::pop()
+{
+	std::unique_lock lock(_queue_mux);
+	if (_queue.empty())
+	{
+		return {};
+	}
+	auto val = std::move(_queue.front());
+	_queue.pop();
+	return val;
 }

@@ -341,6 +341,11 @@ extern "C"
 	(CLIPRDR_FLAG_LOCAL_TO_REMOTE | CLIPRDR_FLAG_LOCAL_TO_REMOTE_FILES | \
 	 CLIPRDR_FLAG_REMOTE_TO_LOCAL | CLIPRDR_FLAG_REMOTE_TO_LOCAL_FILES)
 
+	/* Commandline helper defines */
+#define FREERDP_MONITOR_OVERRIDE_ORIENTATION (1 << 0)   /** @since version 3.14.2 */
+#define FREERDP_MONITOR_OVERRIDE_DESKTOP_SCALE (1 << 1) /** @since version 3.14.2 */
+#define FREERDP_MONITOR_OVERRIDE_DEVICE_SCALE (1 << 2)  /** @since version 3.14.2 */
+
 	/* ARC_CS_PRIVATE_PACKET */
 	typedef struct
 	{

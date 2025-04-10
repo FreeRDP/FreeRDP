@@ -68,9 +68,23 @@ class SdlContext
 	[[nodiscard]] rdpContext* context() const;
 	[[nodiscard]] rdpClientContext* common() const;
 
+	void setCursor(rdpPointer* cursor);
+	[[nodiscard]] rdpPointer* cursor() const;
+
+	void setMonitorIds(const std::vector<SDL_DisplayID>& ids);
+	const std::vector<SDL_DisplayID>& monitorIds() const;
+	int64_t monitorId(uint32_t index) const;
+
+	void push(std::vector<SDL_Rect>&& rects);
+	std::vector<SDL_Rect> pop();
+
   private:
 	rdpContext* _context;
 	std::atomic<bool> connected = false;
+	rdpPointer* _cursor = nullptr;
+	std::vector<SDL_DisplayID> _monitorIds;
+	std::mutex _queue_mux;
+	std::queue<std::vector<SDL_Rect>> _queue;
 
   public:
 	wLog* log;
@@ -99,7 +113,5 @@ class SdlContext
 	SDL_PixelFormat sdl_pixel_format = SDL_PIXELFORMAT_UNKNOWN;
 
 	std::atomic<bool> rdp_thread_running;
-
-	std::queue<std::vector<SDL_Rect>> _queue;
 	SdlConnectionDialogWrapper dialog;
 };
