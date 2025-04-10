@@ -339,7 +339,7 @@ extern "C"
 	                                                 COMMAND_LINE_ARGUMENT_A* cargs);
 	FREERDP_API int shadow_server_command_line_status_print(rdpShadowServer* server, int argc,
 	                                                        char** argv, int status,
-	                                                        COMMAND_LINE_ARGUMENT_A* cargs);
+	                                                        const COMMAND_LINE_ARGUMENT_A* cargs);
 
 	FREERDP_API int shadow_server_start(rdpShadowServer* server);
 	FREERDP_API int shadow_server_stop(rdpShadowServer* server);
