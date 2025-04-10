@@ -1308,12 +1308,13 @@ BOOL rfx_process_message(RFX_CONTEXT* WINPR_RESTRICT context, const BYTE* WINPR_
 			WINPR_ASSERT(clippingRect.left + rect->width <= UINT16_MAX);
 			WINPR_ASSERT(clippingRect.top + rect->height <= UINT16_MAX);
 
-			const UINT32 rw = 1UL * clippingRect.left + rect->width;
-			const UINT32 rh = 1UL * clippingRect.top + rect->width;
-			const uint16_t right = WINPR_ASSERTING_INT_CAST(UINT16, MIN(rw, dstWidth));
-			const uint16_t bottom = WINPR_ASSERTING_INT_CAST(UINT16, MIN(rh, dstHeight));
 			clippingRect.left = WINPR_ASSERTING_INT_CAST(UINT16, MIN(left + rect->x, dstWidth));
 			clippingRect.top = WINPR_ASSERTING_INT_CAST(UINT16, MIN(top + rect->y, dstHeight));
+
+			const UINT32 rw = 1UL * clippingRect.left + rect->width;
+			const UINT32 rh = 1UL * clippingRect.top + rect->height;
+			const uint16_t right = WINPR_ASSERTING_INT_CAST(UINT16, MIN(rw, dstWidth));
+			const uint16_t bottom = WINPR_ASSERTING_INT_CAST(UINT16, MIN(rh, dstHeight));
 			clippingRect.right = right;
 			clippingRect.bottom = bottom;
 			region16_union_rect(&clippingRects, &clippingRects, &clippingRect);
@@ -1337,13 +1338,14 @@ BOOL rfx_process_message(RFX_CONTEXT* WINPR_RESTRICT context, const BYTE* WINPR_
 
 			for (UINT32 j = 0; j < nbUpdateRects; j++)
 			{
+				const RECTANGLE_16* cur = &updateRects[j];
 				const UINT32 stride = 64 * formatSize;
-				const UINT32 nXDst = updateRects[j].left;
-				const UINT32 nYDst = updateRects[j].top;
+				const UINT32 nXDst = cur->left;
+				const UINT32 nYDst = cur->top;
 				const UINT32 nXSrc = nXDst - updateRect.left;
 				const UINT32 nYSrc = nYDst - updateRect.top;
-				const UINT32 nWidth = updateRects[j].right - updateRects[j].left;
-				const UINT32 nHeight = updateRects[j].bottom - updateRects[j].top;
+				const UINT32 nWidth = cur->right - cur->left;
+				const UINT32 nHeight = cur->bottom - cur->top;
 
 				if (!freerdp_image_copy_no_overlap(dst, dstFormat, dstStride, nXDst, nYDst, nWidth,
 				                                   nHeight, tile->data, context->pixel_format,
@@ -1358,7 +1360,7 @@ BOOL rfx_process_message(RFX_CONTEXT* WINPR_RESTRICT context, const BYTE* WINPR_
 				}
 
 				if (invalidRegion)
-					region16_union_rect(invalidRegion, invalidRegion, &updateRects[j]);
+					region16_union_rect(invalidRegion, invalidRegion, cur);
 			}
 
 			region16_uninit(&updateRegion);
