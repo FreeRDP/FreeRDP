@@ -1068,8 +1068,6 @@ static BOOL gdi_surface_bits(rdpContext* context, const SURFACE_BITS_COMMAND* cm
 	size_t size = 0;
 	REGION16 region;
 	RECTANGLE_16 cmdRect = { 0 };
-	UINT32 nbRects = 0;
-	const RECTANGLE_16* rects = NULL;
 
 	if (!context || !cmd)
 		return FALSE;
@@ -1145,15 +1143,26 @@ static BOOL gdi_surface_bits(rdpContext* context, const SURFACE_BITS_COMMAND* cm
 			break;
 	}
 
-	if (!(rects = region16_rects(&region, &nbRects)))
+	UINT32 nbRects = 0;
+	const RECTANGLE_16* rects = region16_rects(&region, &nbRects);
+	if (!rects && (nbRects > 0))
 		goto out;
 
+	if (nbRects == 0)
+	{
+		const int32_t w = cmdRect.right - cmdRect.left;
+		const int32_t h = cmdRect.bottom - cmdRect.top;
+		if (!gdi_InvalidateRegion(gdi->primary->hdc, cmdRect.left, cmdRect.top, w, h))
+			goto out;
+	}
 	for (UINT32 i = 0; i < nbRects; i++)
 	{
-		UINT32 left = rects[i].left;
-		UINT32 top = rects[i].top;
-		UINT32 width = rects[i].right - rects[i].left;
-		UINT32 height = rects[i].bottom - rects[i].top;
+		const RECTANGLE_16* rect = &rects[i];
+
+		UINT32 left = rect->left;
+		UINT32 top = rect->top;
+		UINT32 width = rect->right - rect->left;
+		UINT32 height = rect->bottom - rect->top;
 
 		if (!gdi_InvalidateRegion(gdi->primary->hdc, WINPR_ASSERTING_INT_CAST(int32_t, left),
 		                          WINPR_ASSERTING_INT_CAST(int32_t, top),
