@@ -90,6 +90,8 @@ static const std::vector<const char*>& s_mime_image()
 static const char s_mime_gnome_copied_files[] = "x-special/gnome-copied-files";
 static const char s_mime_mate_copied_files[] = "x-special/mate-copied-files";
 
+static const char s_mime_freerdp_update[] = "x-special/freerdp-clipboard-update";
+
 static const char* s_type_HtmlFormat = "HTML Format";
 static const char* s_type_FileGroupDescriptorW = "FileGroupDescriptorW";
 
@@ -164,12 +166,23 @@ BOOL sdlClip::uninit(CliprdrClientContext* clip)
 	return TRUE;
 }
 
+static bool contains(const char** mime_types, Sint32 count)
+{
+	for (Sint32 x = 0; x < count; x++)
+	{
+		const auto mime = mime_types[x];
+		if (mime && (strcmp(s_mime_freerdp_update, mime) == 0))
+			return true;
+	}
+	return false;
+}
+
 bool sdlClip::handle_update(const SDL_ClipboardEvent& ev)
 {
 	if (!_ctx || !_sync || ev.owner)
 	{
-		/* TODO: Hack to identify our own updates */
-		if (ev.owner && (ev.reserved == 0x42))
+		_last_timestamp = ev.timestamp;
+		if (!_current_mimetypes.empty())
 		{
 			_cache_data.clear();
 			auto rc =
@@ -178,6 +191,16 @@ bool sdlClip::handle_update(const SDL_ClipboardEvent& ev)
 			_current_mimetypes.clear();
 			return rc;
 		}
+		return true;
+	}
+
+	if (ev.timestamp == _last_timestamp)
+	{
+		return true;
+	}
+
+	if (contains(ev.mime_types, ev.num_mime_types))
+	{
 		return true;
 	}
 
@@ -519,15 +542,15 @@ UINT sdlClip::ReceiveServerFormatList(CliprdrClientContext* context,
 		clipboard->_current_mimetypes.push_back(s_mime_gnome_copied_files);
 		clipboard->_current_mimetypes.push_back(s_mime_mate_copied_files);
 	}
+	clipboard->_current_mimetypes.push_back(s_mime_freerdp_update);
 
 	auto s = clipboard->_current_mimetypes.size();
 	SDL_Event ev = { SDL_EVENT_CLIPBOARD_UPDATE };
 	ev.clipboard.owner = true;
+	ev.clipboard.timestamp = SDL_GetTicksNS();
 	ev.clipboard.num_mime_types = WINPR_ASSERTING_INT_CAST(Sint32, s);
 	ev.clipboard.mime_types = clipboard->_current_mimetypes.data();
 
-	/* TODO: Hack to identify our own updates */
-	ev.clipboard.reserved = 0x42;
 	auto rc = (SDL_PushEvent(&ev) == 1);
 	return clipboard->SendFormatListResponse(rc);
 }
