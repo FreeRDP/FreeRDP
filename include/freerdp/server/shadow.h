@@ -179,6 +179,7 @@ extern "C"
 
 		size_t maxClientsConnected;
 		BOOL SupportMultiRectBitmapUpdates; /** @since version 3.13.0 */
+		BOOL ShowMouseCursor;               /** @since version 3.14.2 */
 	};
 
 	struct rdp_shadow_surface

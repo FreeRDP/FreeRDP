@@ -48,6 +48,8 @@ int main(int argc, char** argv)
 		  NULL, NULL, -1, NULL,
 		  "An address to bind to. Use '[<ipv6>]' for IPv6 addresses, e.g. '[::1]' for "
 		  "localhost" },
+		{ "server-side-cursor", COMMAND_LINE_VALUE_BOOL, NULL, NULL, NULL, -1, NULL,
+		  "hide mouse cursor in RDP client." },
 		{ "monitors", COMMAND_LINE_VALUE_OPTIONAL, "<0,1,2...>", NULL, NULL, -1, NULL,
 		  "Select or list monitors" },
 		{ "max-connections", COMMAND_LINE_VALUE_REQUIRED, "<number>", 0, NULL, -1, NULL,
@@ -148,7 +150,7 @@ int main(int argc, char** argv)
 
 	if ((status = shadow_server_parse_command_line(server, argc, argv, shadow_args)) < 0)
 	{
-		shadow_server_command_line_status_print(server, argc, argv, status, shadow_args);
+		status = shadow_server_command_line_status_print(server, argc, argv, status, shadow_args);
 		goto fail;
 	}
 

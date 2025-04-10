@@ -244,6 +244,10 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 		{
 			server->mayInteract = arg->Value ? TRUE : FALSE;
 		}
+		CommandLineSwitchCase(arg, "server-side-cursor")
+		{
+			server->ShowMouseCursor = arg->Value ? TRUE : FALSE;
+		}
 		CommandLineSwitchCase(arg, "mouse-relative")
 		{
 			const BOOL val = arg->Value ? TRUE : FALSE;
