@@ -219,28 +219,22 @@ static BOOL stream_surface_bits_supported(const rdpSettings* settings)
 	return ((supported & SURFCMDS_STREAM_SURFACE_BITS) != 0);
 }
 
-static BOOL test_peer_draw_background(freerdp_peer* client)
+static BOOL test_peer_draw_background(freerdp_peer* client, const RFX_RECT* rect)
 {
-	size_t size = 0;
-	wStream* s = NULL;
-	RFX_RECT rect;
-	BYTE* rgb_data = NULL;
-	const rdpSettings* settings = NULL;
-	rdpUpdate* update = NULL;
 	SURFACE_BITS_COMMAND cmd = { 0 };
-	testPeerContext* context = NULL;
 	BOOL ret = FALSE;
 	const UINT32 colorFormat = PIXEL_FORMAT_RGB24;
 	const size_t bpp = FreeRDPGetBytesPerPixel(colorFormat);
 
 	WINPR_ASSERT(client);
-	context = (testPeerContext*)client->context;
+
+	testPeerContext* context = (testPeerContext*)client->context;
 	WINPR_ASSERT(context);
 
-	settings = client->context->settings;
+	rdpSettings* settings = client->context->settings;
 	WINPR_ASSERT(settings);
 
-	update = client->context->update;
+	rdpUpdate* update = client->context->update;
 	WINPR_ASSERT(update);
 
 	const BOOL RemoteFxCodec = freerdp_settings_get_bool(settings, FreeRDP_RemoteFxCodec);
@@ -250,14 +244,13 @@ static BOOL test_peer_draw_background(freerdp_peer* client)
 	WINPR_ASSERT(freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth) <= UINT16_MAX);
 	WINPR_ASSERT(freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight) <= UINT16_MAX);
 
-	s = test_peer_stream_init(context);
-	rect.x = 0;
-	rect.y = 0;
-	rect.width = (UINT16)freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth);
-	rect.height = (UINT16)freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight);
-	size = bpp * rect.width * rect.height;
+	wStream* s = test_peer_stream_init(context);
+	const size_t size = bpp * rect->width * rect->height;
+	if (size == 0)
+		return FALSE;
 
-	if (!(rgb_data = malloc(size)))
+	BYTE* rgb_data = malloc(size);
+	if (!rgb_data)
 	{
 		WLog_ERR(TAG, "Problem allocating memory");
 		return FALSE;
@@ -271,8 +264,10 @@ static BOOL test_peer_draw_background(freerdp_peer* client)
 		rfx_context_set_pixel_format(context->rfx_context, colorFormat);
 
 		WINPR_ASSERT(bpp <= UINT16_MAX);
-		if (!rfx_compose_message(context->rfx_context, s, &rect, 1, rgb_data, rect.width,
-		                         rect.height, (UINT32)(bpp * rect.width)))
+		RFX_RECT rrect = { .x = 0, .y = 0, .width = rect->width, .height = rect->height };
+
+		if (!rfx_compose_message(context->rfx_context, s, &rrect, 1, rgb_data, rect->width,
+		                         rect->height, (UINT32)(bpp * rect->width)))
 		{
 			goto out;
 		}
@@ -289,28 +284,27 @@ static BOOL test_peer_draw_background(freerdp_peer* client)
 		nsc_context_set_parameters(context->nsc_context, NSC_COLOR_FORMAT, colorFormat);
 
 		WINPR_ASSERT(bpp <= UINT16_MAX);
-		nsc_compose_message(context->nsc_context, s, rgb_data, rect.width, rect.height,
-		                    (UINT32)(bpp * rect.width));
+		nsc_compose_message(context->nsc_context, s, rgb_data, rect->width, rect->height,
+		                    (UINT32)(bpp * rect->width));
 		const UINT32 NSCodecId = freerdp_settings_get_uint32(settings, FreeRDP_NSCodecId);
 		WINPR_ASSERT(NSCodecId <= UINT16_MAX);
 		cmd.bmp.codecID = (UINT16)NSCodecId;
 		cmd.cmdType = CMDTYPE_SET_SURFACE_BITS;
 	}
 
-	cmd.destLeft = 0;
-	cmd.destTop = 0;
-	cmd.destRight = rect.width;
-	cmd.destBottom = rect.height;
+	cmd.destLeft = rect->x;
+	cmd.destTop = rect->y;
+	cmd.destRight = rect->x + rect->width;
+	cmd.destBottom = rect->y + rect->height;
 	cmd.bmp.bpp = 32;
 	cmd.bmp.flags = 0;
-	cmd.bmp.width = rect.width;
-	cmd.bmp.height = rect.height;
+	cmd.bmp.width = rect->width;
+	cmd.bmp.height = rect->height;
 	WINPR_ASSERT(Stream_GetPosition(s) <= UINT32_MAX);
 	cmd.bmp.bitmapDataLength = (UINT32)Stream_GetPosition(s);
 	cmd.bmp.bitmapData = Stream_Buffer(s);
-	test_peer_begin_frame(client);
+
 	update->SurfaceBits(update->context, &cmd);
-	test_peer_end_frame(client);
 	ret = TRUE;
 out:
 	free(rgb_data);
@@ -377,37 +371,24 @@ out_fail:
 	return FALSE;
 }
 
-static void test_peer_draw_icon(freerdp_peer* client, UINT32 x, UINT32 y)
+static void test_send_cursor_update(freerdp_peer* client, UINT32 x, UINT32 y)
 {
-	wStream* s = NULL;
-	RFX_RECT rect;
-	rdpUpdate* update = NULL;
-	rdpSettings* settings = NULL;
-	SURFACE_BITS_COMMAND cmd = { 0 };
-	testPeerContext* context = NULL;
-
 	WINPR_ASSERT(client);
 
-	context = (testPeerContext*)client->context;
+	testPeerContext* context = (testPeerContext*)client->context;
 	WINPR_ASSERT(context);
 
-	update = client->context->update;
-	WINPR_ASSERT(update);
+	rdpSettings* settings = client->context->settings;
 
-	settings = client->context->settings;
-	WINPR_ASSERT(settings);
-
-	if (freerdp_settings_get_bool(settings, FreeRDP_DumpRemoteFx))
-		return;
+	const BOOL RemoteFxCodec = freerdp_settings_get_bool(settings, FreeRDP_RemoteFxCodec);
 
 	if (context->image->width < 1 || !context->activated)
 		return;
 
-	rect.x = 0;
-	rect.y = 0;
-
-	rect.width = WINPR_ASSERTING_INT_CAST(UINT16, context->image->width);
-	rect.height = WINPR_ASSERTING_INT_CAST(UINT16, context->image->height);
+	RFX_RECT rect = { .x = 0,
+		              .y = 0,
+		              .width = WINPR_ASSERTING_INT_CAST(UINT16, context->image->width),
+		              .height = WINPR_ASSERTING_INT_CAST(UINT16, context->image->height) };
 
 	const UINT32 w = freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth);
 	const UINT32 h = freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight);
@@ -420,9 +401,7 @@ static void test_peer_draw_icon(freerdp_peer* client, UINT32 x, UINT32 y)
 	if (y + context->image->height > h)
 		return;
 
-	test_peer_begin_frame(client);
-
-	const BOOL RemoteFxCodec = freerdp_settings_get_bool(settings, FreeRDP_RemoteFxCodec);
+	SURFACE_BITS_COMMAND cmd = { 0 };
 	if (RemoteFxCodec && stream_surface_bits_supported(settings))
 	{
 		const UINT32 RemoteFxCodecId =
@@ -439,40 +418,7 @@ static void test_peer_draw_icon(freerdp_peer* client, UINT32 x, UINT32 y)
 		cmd.cmdType = CMDTYPE_SET_SURFACE_BITS;
 	}
 
-	if (context->icon_x != UINT32_MAX)
-	{
-		const UINT32 colorFormat = PIXEL_FORMAT_RGB24;
-		const UINT32 bpp = FreeRDPGetBytesPerPixel(colorFormat);
-		s = test_peer_stream_init(context);
-
-		if (RemoteFxCodec)
-		{
-			rfx_context_set_pixel_format(context->rfx_context, colorFormat);
-			rfx_compose_message(context->rfx_context, s, &rect, 1, context->bg_data, rect.width,
-			                    rect.height, rect.width * bpp);
-		}
-		else
-		{
-			nsc_context_set_parameters(context->nsc_context, NSC_COLOR_FORMAT, colorFormat);
-			nsc_compose_message(context->nsc_context, s, context->bg_data, rect.width, rect.height,
-			                    rect.width * bpp);
-		}
-
-		cmd.destLeft = context->icon_x;
-		cmd.destTop = context->icon_y;
-		cmd.destRight = context->icon_x + rect.width;
-		cmd.destBottom = context->icon_y + rect.height;
-		cmd.bmp.bpp = 32;
-		cmd.bmp.flags = 0;
-		cmd.bmp.width = rect.width;
-		cmd.bmp.height = rect.height;
-		cmd.bmp.bitmapDataLength = (UINT32)Stream_GetPosition(s);
-		cmd.bmp.bitmapData = Stream_Buffer(s);
-		WINPR_ASSERT(update->SurfaceBits);
-		update->SurfaceBits(update->context, &cmd);
-	}
-
-	s = test_peer_stream_init(context);
+	wStream* s = test_peer_stream_init(context);
 
 	{
 		const UINT32 colorFormat =
@@ -501,10 +447,38 @@ static void test_peer_draw_icon(freerdp_peer* client, UINT32 x, UINT32 y)
 	cmd.bmp.height = rect.height;
 	cmd.bmp.bitmapDataLength = (UINT32)Stream_GetPosition(s);
 	cmd.bmp.bitmapData = Stream_Buffer(s);
+
+	rdpUpdate* update = client->context->update;
+	WINPR_ASSERT(update);
 	WINPR_ASSERT(update->SurfaceBits);
 	update->SurfaceBits(update->context, &cmd);
 	context->icon_x = x;
 	context->icon_y = y;
+}
+
+static void test_peer_draw_icon(freerdp_peer* client, UINT32 x, UINT32 y)
+{
+	WINPR_ASSERT(client);
+
+	rdpSettings* settings = client->context->settings;
+	WINPR_ASSERT(settings);
+
+	if (freerdp_settings_get_bool(settings, FreeRDP_DumpRemoteFx))
+		return;
+
+	test_peer_begin_frame(client);
+
+	testPeerContext* context = (testPeerContext*)client->context;
+	if ((context->icon_x != UINT32_MAX) && (context->icon_y != UINT32_MAX))
+	{
+		RFX_RECT rect = { .x = WINPR_ASSERTING_INT_CAST(uint16_t, context->icon_x),
+			              .y = WINPR_ASSERTING_INT_CAST(uint16_t, context->icon_y),
+			              .width = WINPR_ASSERTING_INT_CAST(uint16_t, context->image->width),
+			              .height = WINPR_ASSERTING_INT_CAST(uint16_t, context->image->height) };
+
+		test_peer_draw_background(client, &rect);
+	}
+	test_send_cursor_update(client, x, y);
 	test_peer_end_frame(client);
 }
 
@@ -826,7 +800,17 @@ static BOOL tf_peer_activate(freerdp_peer* client)
 			return FALSE;
 	}
 	else
-		test_peer_draw_background(client);
+	{
+		const RFX_RECT rect = {
+			.x = 0,
+			.y = 0,
+			.width = (UINT16)freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth),
+			.height = (UINT16)freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight)
+		};
+		test_peer_begin_frame(client);
+		test_peer_draw_background(client, &rect);
+		test_peer_end_frame(client);
+	}
 
 	return TRUE;
 }
@@ -943,9 +927,43 @@ static BOOL tf_peer_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 
 	WINPR_ASSERT(input);
 	WINPR_ASSERT(input->context);
 
-	// WLog_DBG(TAG, "Client sent a mouse event (flags:0x%04"PRIX16" pos:%"PRIu16",%"PRIu16")",
-	// flags, x, y);
+	WLog_DBG(TAG, "Client sent a mouse event (flags:0x%04" PRIX16 " pos:%" PRIu16 ",%" PRIu16 ")",
+	         flags, x, y);
 	test_peer_draw_icon(input->context->peer, x + 10, y);
+	return TRUE;
+}
+
+static UINT32 add(UINT32 old, UINT32 max, INT16 diff)
+{
+	INT64 val = old;
+	val += diff;
+	if (val > max)
+		val = val % max;
+	else if (val < 0)
+		val = max - val;
+	return WINPR_ASSERTING_INT_CAST(uint32_t, val);
+}
+
+static BOOL tf_peer_rel_mouse_event(rdpInput* input, UINT16 flags, INT16 xDelta, INT16 yDelta)
+{
+	WINPR_UNUSED(flags);
+	WINPR_ASSERT(input);
+	WINPR_ASSERT(input->context);
+
+	const UINT32 w = freerdp_settings_get_uint32(input->context->settings, FreeRDP_DesktopWidth);
+	const UINT32 h = freerdp_settings_get_uint32(input->context->settings, FreeRDP_DesktopHeight);
+
+	static UINT32 xpos = 0;
+	static UINT32 ypos = 0;
+
+	xpos = add(xpos, w, xDelta);
+	ypos = add(ypos, h, yDelta);
+
+	WLog_DBG(TAG,
+	         "Client sent a relative mouse event (flags:0x%04" PRIX16 " pos:%" PRId16 ",%" PRId16
+	         ")",
+	         flags, xDelta, yDelta);
+	test_peer_draw_icon(input->context->peer, xpos + 10, ypos);
 	return TRUE;
 }
 
@@ -955,8 +973,10 @@ static BOOL tf_peer_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x
 	WINPR_ASSERT(input);
 	WINPR_ASSERT(input->context);
 
-	// WLog_DBG(TAG, "Client sent an extended mouse event (flags:0x%04"PRIX16"
-	// pos:%"PRIu16",%"PRIu16")", flags, x, y);
+	WLog_DBG(TAG,
+	         "Client sent an extended mouse event (flags:0x%04" PRIX16 " pos:%" PRIu16 ",%" PRIu16
+	         ")",
+	         flags, x, y);
 	test_peer_draw_icon(input->context->peer, x + 10, y);
 	return TRUE;
 }
@@ -1128,6 +1148,8 @@ static DWORD WINAPI test_peer_mainloop(LPVOID arg)
 		goto fail;
 	if (!freerdp_settings_set_bool(settings, FreeRDP_RefreshRect, TRUE))
 		goto fail;
+	if (!freerdp_settings_set_bool(settings, FreeRDP_HasRelativeMouseEvent, TRUE))
+		goto fail;
 
 	client->PostConnect = tf_peer_post_connect;
 	client->Activate = tf_peer_activate;
@@ -1140,6 +1162,7 @@ static DWORD WINAPI test_peer_mainloop(LPVOID arg)
 	input->KeyboardEvent = tf_peer_keyboard_event;
 	input->UnicodeKeyboardEvent = tf_peer_unicode_keyboard_event;
 	input->MouseEvent = tf_peer_mouse_event;
+	input->RelMouseEvent = tf_peer_rel_mouse_event;
 	input->ExtendedMouseEvent = tf_peer_extended_mouse_event;
 
 	update = client->context->update;
