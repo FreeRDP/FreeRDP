@@ -144,6 +144,7 @@ class sdlClip
 	wClipboard* _system = nullptr;
 	std::atomic<bool> _sync = false;
 	HANDLE _event;
+	Uint64 _last_timestamp = 0;
 
 	std::vector<CliprdrFormat> _serverFormats;
 	CriticalSection _lock;
