@@ -18,6 +18,9 @@
  */
 
 #include <cassert>
+#include <sstream>
+#include <iomanip>
+
 #include "sdl_utils.hpp"
 
 #include "sdl_freerdp.hpp"
@@ -294,4 +297,59 @@ std::string sdl_window_event_str(Uint32 ev)
 		return sdl_event_type_str(ev);
 
 	return "SDL_EVENT_WINDOW_UNKNOWN";
+}
+
+UINT32 sdl::utils::orientaion_to_rdp(SDL_DisplayOrientation orientation)
+{
+	switch (orientation)
+	{
+		case SDL_ORIENTATION_LANDSCAPE:
+			return ORIENTATION_LANDSCAPE;
+		case SDL_ORIENTATION_LANDSCAPE_FLIPPED:
+			return ORIENTATION_LANDSCAPE_FLIPPED;
+		case SDL_ORIENTATION_PORTRAIT_FLIPPED:
+			return ORIENTATION_PORTRAIT_FLIPPED;
+		case SDL_ORIENTATION_PORTRAIT:
+		default:
+			return ORIENTATION_PORTRAIT;
+	}
+}
+
+std::string sdl::utils::sdl_orientation_to_str(SDL_DisplayOrientation orientation)
+{
+	switch (orientation)
+	{
+		case SDL_ORIENTATION_LANDSCAPE:
+			return "SDL_ORIENTATION_LANDSCAPE";
+		case SDL_ORIENTATION_LANDSCAPE_FLIPPED:
+			return "SDL_ORIENTATION_LANDSCAPE_FLIPPED";
+		case SDL_ORIENTATION_PORTRAIT_FLIPPED:
+			return "SDL_ORIENTATION_PORTRAIT_FLIPPED";
+		case SDL_ORIENTATION_PORTRAIT:
+			return "SDL_ORIENTATION_PORTRAIT";
+		default:
+			return "SDL_ORIENTATION_UNKNOWN";
+	}
+}
+
+std::string sdl::utils::rdp_orientation_to_str(uint32_t orientation)
+{
+	switch (orientation)
+	{
+		case ORIENTATION_LANDSCAPE:
+			return "ORIENTATION_LANDSCAPE";
+		case ORIENTATION_LANDSCAPE_FLIPPED:
+			return "ORIENTATION_LANDSCAPE_FLIPPED";
+		case ORIENTATION_PORTRAIT_FLIPPED:
+			return "ORIENTATION_PORTRAIT_FLIPPED";
+		case ORIENTATION_PORTRAIT:
+			return "ORIENTATION_PORTRAIT";
+		default:
+		{
+			std::stringstream ss;
+			ss << "ORIENTATION_UNKNOWN_" << std::hex << std::setfill('0') << std::setw(8)
+			   << orientation;
+			return ss.str();
+		}
+	}
 }
