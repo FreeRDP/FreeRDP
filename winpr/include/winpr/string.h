@@ -45,6 +45,32 @@ extern "C"
 	WINPR_API int winpr_asprintf(char** s, size_t* slen, const char* templ, ...);
 	WINPR_API int winpr_vasprintf(char** s, size_t* slen, const char* templ, va_list ap);
 
+	/** @brief allocating sprintf, returns an allocated string
+	 *
+	 *  @param plen An optional pointer set to strlen(result)
+	 *  @param templ The format string
+	 *  @param ... The arguments for the format string
+	 *
+	 *  @return A '\0' terminated string if successful, \b NULL otherwise.
+	 *
+	 *  @since version 3.15.0
+	 */
+	WINPR_ATTR_MALLOC(free, 1)
+	WINPR_API char* winpr_acsprintf(size_t* plen, const char* templ, ...);
+
+	/** @brief allocating sprintf, returns an allocated string
+	 *
+	 *  @param plen An optional pointer set to strlen(result)
+	 *  @param templ The format string
+	 *  @param ap The arguments for the format string
+	 *
+	 *  @return A '\0' terminated string if successful, \b NULL otherwise.
+	 *
+	 *  @since version 3.15.0
+	 */
+	WINPR_ATTR_MALLOC(free, 1)
+	WINPR_API char* winpr_vacsprintf(size_t* plen, const char* templ, va_list ap);
+
 #ifndef _WIN32
 
 #define CSTR_LESS_THAN 1
