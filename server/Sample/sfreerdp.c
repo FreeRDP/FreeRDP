@@ -1203,9 +1203,6 @@ static DWORD WINAPI test_peer_mainloop(LPVOID arg)
 		if (client->CheckFileDescriptor(client) != TRUE)
 			break;
 
-		if (WaitForSingleObject(channelHandle, 0) != WAIT_OBJECT_0)
-			continue;
-
 		if (WTSVirtualChannelManagerCheckFileDescriptor(context->vcm) != TRUE)
 			break;
 
