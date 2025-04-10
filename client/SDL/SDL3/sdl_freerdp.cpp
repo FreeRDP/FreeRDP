@@ -665,14 +665,9 @@ static BOOL sdl_create_windows(SdlContext* sdl)
 			h = freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight);
 		}
 
-		Uint32 flags = 0;
+		Uint32 flags = SDL_WINDOW_HIGH_PIXEL_DENSITY;
 		auto startupX = SDL_WINDOWPOS_CENTERED_DISPLAY(id);
 		auto startupY = SDL_WINDOWPOS_CENTERED_DISPLAY(id);
-
-		if (monitor->attributes.desktopScaleFactor > 100)
-		{
-			flags |= SDL_WINDOW_HIGH_PIXEL_DENSITY;
-		}
 
 		if (freerdp_settings_get_bool(settings, FreeRDP_Fullscreen) &&
 		    !freerdp_settings_get_bool(settings, FreeRDP_UseMultimon))

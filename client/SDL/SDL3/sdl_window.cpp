@@ -29,7 +29,6 @@ SdlWindow::SdlWindow(const std::string& title, Sint32 startupX, Sint32 startupY,
 	SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_Y_NUMBER, startupY);
 	SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_WIDTH_NUMBER, width);
 	SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_HEIGHT_NUMBER, height);
-	SDL_SetBooleanProperty(props, SDL_PROP_WINDOW_CREATE_HIGH_PIXEL_DENSITY_BOOLEAN, true);
 
 	if (flags & SDL_WINDOW_HIGH_PIXEL_DENSITY)
 		SDL_SetBooleanProperty(props, SDL_PROP_WINDOW_CREATE_HIGH_PIXEL_DENSITY_BOOLEAN, true);
@@ -47,7 +46,7 @@ SdlWindow::SdlWindow(const std::string& title, Sint32 startupX, Sint32 startupY,
 	const int iscale = static_cast<int>(scale * 100.0f);
 	auto w = 100 * width / iscale;
 	auto h = 100 * height / iscale;
-	SDL_SetWindowSize(_window, w, h);
+	(void)SDL_SetWindowSize(_window, w, h);
 	(void)SDL_SyncWindow(_window);
 }
 
@@ -144,10 +143,11 @@ rdpMonitor SdlWindow::monitor() const
 		mon.y = rect.y;
 	}
 
-	auto orientation = SDL_DisplayOrientation(did);
-	mon.attributes.orientation = orientaion_to_rdp(orientation);
+	auto orientation = SDL_GetCurrentDisplayOrientation(did);
+	mon.attributes.orientation = sdl::utils::orientaion_to_rdp(orientation);
 
-	mon.is_primary = true;
+	auto primary = SDL_GetPrimaryDisplay();
+	mon.is_primary = SDL_GetWindowID(_window) == primary;
 	mon.orig_screen = did;
 	return mon;
 }
@@ -231,20 +231,4 @@ bool SdlWindow::blit(SDL_Surface* surface, const SDL_Rect& srcRect, SDL_Rect& ds
 void SdlWindow::updateSurface()
 {
 	SDL_UpdateWindowSurface(_window);
-}
-
-UINT32 SdlWindow::orientaion_to_rdp(SDL_DisplayOrientation orientation)
-{
-	switch (orientation)
-	{
-		case SDL_ORIENTATION_LANDSCAPE:
-			return ORIENTATION_LANDSCAPE;
-		case SDL_ORIENTATION_LANDSCAPE_FLIPPED:
-			return ORIENTATION_LANDSCAPE_FLIPPED;
-		case SDL_ORIENTATION_PORTRAIT_FLIPPED:
-			return ORIENTATION_PORTRAIT_FLIPPED;
-		case SDL_ORIENTATION_PORTRAIT:
-		default:
-			return ORIENTATION_PORTRAIT;
-	}
 }

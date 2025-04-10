@@ -138,22 +138,6 @@ static BOOL sdl_apply_max_size(SdlContext* sdl, UINT32* pMaxWidth, UINT32* pMaxH
 	return TRUE;
 }
 
-static UINT32 sdl_orientaion_to_rdp(SDL_DisplayOrientation orientation)
-{
-	switch (orientation)
-	{
-		case SDL_ORIENTATION_LANDSCAPE:
-			return ORIENTATION_LANDSCAPE;
-		case SDL_ORIENTATION_LANDSCAPE_FLIPPED:
-			return ORIENTATION_LANDSCAPE_FLIPPED;
-		case SDL_ORIENTATION_PORTRAIT_FLIPPED:
-			return ORIENTATION_PORTRAIT_FLIPPED;
-		case SDL_ORIENTATION_PORTRAIT:
-		default:
-			return ORIENTATION_PORTRAIT;
-	}
-}
-
 static Uint32 scale(Uint32 val, float scale)
 {
 	const auto dval = static_cast<float>(val);
@@ -228,7 +212,7 @@ static BOOL sdl_apply_display_properties(SdlContext* sdl)
 		}
 
 		const SDL_DisplayOrientation orientation = SDL_GetCurrentDisplayOrientation(id);
-		const UINT32 rdp_orientation = sdl_orientaion_to_rdp(orientation);
+		const UINT32 rdp_orientation = sdl::utils::orientaion_to_rdp(orientation);
 
 		rdpMonitor monitor = {};
 
