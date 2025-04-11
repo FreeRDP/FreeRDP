@@ -1494,7 +1494,7 @@ static UINT dummy_irp_response(rdpdrPlugin* rdpdr, wStream* s)
 	const uint32_t FileId = Stream_Get_UINT32(s);       /* FileId (4 bytes) */
 	const uint32_t CompletionId = Stream_Get_UINT32(s); /* CompletionId (4 bytes) */
 
-	WLog_Print(rdpdr->log, WLOG_ERROR,
+	WLog_Print(rdpdr->log, WLOG_WARN,
 	           "Dummy response {DeviceId=%" PRIu32 ", FileId=%" PRIu32 ", CompletionId=%" PRIu32
 	           "}",
 	           DeviceId, FileId, CompletionId);
@@ -1521,13 +1521,13 @@ static UINT rdpdr_process_irp(rdpdrPlugin* rdpdr, wStream* s)
 
 	if (!irp)
 	{
-		WLog_Print(rdpdr->log, WLOG_ERROR, "irp_new failed with %" PRIu32 "!", error);
-
-		if (error == CHANNEL_RC_OK || (error == ERROR_DEV_NOT_EXIST && rdpdr->ignoreInvalidDevices))
+		if ((error == CHANNEL_RC_OK) ||
+		    (error == ERROR_DEV_NOT_EXIST && rdpdr->ignoreInvalidDevices))
 		{
 			return dummy_irp_response(rdpdr, s);
 		}
 
+		WLog_Print(rdpdr->log, WLOG_ERROR, "irp_new failed with %" PRIu32 "!", error);
 		return error;
 	}
 
