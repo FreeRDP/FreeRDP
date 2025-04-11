@@ -92,6 +92,10 @@ extern "C"
 	                                              UINT16 code);
 	typedef BOOL (*pfnShadowMouseEvent)(rdpShadowSubsystem* subsystem, rdpShadowClient* client,
 	                                    UINT16 flags, UINT16 x, UINT16 y);
+	typedef BOOL (*pfnShadowRelMouseEvent)(rdpShadowSubsystem* subsystem, rdpShadowClient* client,
+	                                       UINT16 flags, INT16 xDelta,
+	                                       INT16 yDelta); /** @since version 3.15.0 */
+
 	typedef BOOL (*pfnShadowExtendedMouseEvent)(rdpShadowSubsystem* subsystem,
 	                                            rdpShadowClient* client, UINT16 flags, UINT16 x,
 	                                            UINT16 y);
@@ -175,6 +179,7 @@ extern "C"
 
 		size_t maxClientsConnected;
 		BOOL SupportMultiRectBitmapUpdates; /** @since version 3.13.0 */
+		BOOL ShowMouseCursor;               /** @since version 3.15.0 */
 	};
 
 	struct rdp_shadow_surface
@@ -244,6 +249,8 @@ extern "C"
 		pfnShadowClientCapabilities ClientCapabilities;
 
 		rdpShadowServer* server;
+
+		pfnShadowRelMouseEvent RelMouseEvent; /** @since version 3.15.0 */
 	};
 
 /* Definition of message between subsystem and clients */
@@ -332,7 +339,7 @@ extern "C"
 	                                                 COMMAND_LINE_ARGUMENT_A* cargs);
 	FREERDP_API int shadow_server_command_line_status_print(rdpShadowServer* server, int argc,
 	                                                        char** argv, int status,
-	                                                        COMMAND_LINE_ARGUMENT_A* cargs);
+	                                                        const COMMAND_LINE_ARGUMENT_A* cargs);
 
 	FREERDP_API int shadow_server_start(rdpShadowServer* server);
 	FREERDP_API int shadow_server_stop(rdpShadowServer* server);

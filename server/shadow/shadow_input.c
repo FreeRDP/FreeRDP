@@ -16,15 +16,24 @@
  * limitations under the License.
  */
 
+#include <winpr/assert.h>
 #include <freerdp/config.h>
 
+#include <freerdp/log.h>
 #include "shadow.h"
+
+#define TAG SERVER_TAG("shadow.input")
 
 static BOOL shadow_input_synchronize_event(rdpInput* input, UINT32 flags)
 {
+	WINPR_ASSERT(input);
 	rdpShadowClient* client = (rdpShadowClient*)input->context;
+	WINPR_ASSERT(client);
+	WINPR_ASSERT(client->server);
 	rdpShadowSubsystem* subsystem = client->server->subsystem;
+	WINPR_ASSERT(subsystem);
 
+	WLog_DBG(TAG, "[%s] flags=0x%04" PRIx16, client->mayInteract ? "use" : "discard", flags);
 	if (!client->mayInteract)
 		return TRUE;
 
@@ -33,9 +42,14 @@ static BOOL shadow_input_synchronize_event(rdpInput* input, UINT32 flags)
 
 static BOOL shadow_input_keyboard_event(rdpInput* input, UINT16 flags, UINT8 code)
 {
+	WINPR_ASSERT(input);
 	rdpShadowClient* client = (rdpShadowClient*)input->context;
+	WINPR_ASSERT(client);
+	WINPR_ASSERT(client->server);
 	rdpShadowSubsystem* subsystem = client->server->subsystem;
+	WINPR_ASSERT(subsystem);
 
+	WLog_DBG(TAG, "[%s] flags=0x%04" PRIx16, client->mayInteract ? "use" : "discard", flags);
 	if (!client->mayInteract)
 		return TRUE;
 
@@ -44,9 +58,14 @@ static BOOL shadow_input_keyboard_event(rdpInput* input, UINT16 flags, UINT8 cod
 
 static BOOL shadow_input_unicode_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 {
+	WINPR_ASSERT(input);
 	rdpShadowClient* client = (rdpShadowClient*)input->context;
+	WINPR_ASSERT(client);
+	WINPR_ASSERT(client->server);
 	rdpShadowSubsystem* subsystem = client->server->subsystem;
+	WINPR_ASSERT(subsystem);
 
+	WLog_DBG(TAG, "[%s] flags=0x%04" PRIx16, client->mayInteract ? "use" : "discard", flags);
 	if (!client->mayInteract)
 		return TRUE;
 
@@ -55,8 +74,12 @@ static BOOL shadow_input_unicode_keyboard_event(rdpInput* input, UINT16 flags, U
 
 static BOOL shadow_input_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 {
+	WINPR_ASSERT(input);
 	rdpShadowClient* client = (rdpShadowClient*)input->context;
+	WINPR_ASSERT(client);
+	WINPR_ASSERT(client->server);
 	rdpShadowSubsystem* subsystem = client->server->subsystem;
+	WINPR_ASSERT(subsystem);
 
 	if (client->server->shareSubRect)
 	{
@@ -64,7 +87,7 @@ static BOOL shadow_input_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UI
 		y += client->server->subRect.top;
 	}
 
-	if (!(flags & PTR_FLAGS_WHEEL))
+	if ((flags & (PTR_FLAGS_WHEEL | PTR_FLAGS_HWHEEL | PTR_FLAGS_WHEEL_NEGATIVE)) == 0)
 	{
 		client->pointerX = x;
 		client->pointerY = y;
@@ -78,16 +101,47 @@ static BOOL shadow_input_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UI
 		}
 	}
 
+	WLog_DBG(TAG, "[%s] flags=0x%04" PRIx16 ", x=%" PRIu16 ", y=%" PRIu16,
+	         client->mayInteract ? "use" : "discard", flags, x, y);
 	if (!client->mayInteract)
 		return TRUE;
 
 	return IFCALLRESULT(TRUE, subsystem->MouseEvent, subsystem, client, flags, x, y);
 }
 
+static BOOL shadow_input_rel_mouse_event(rdpInput* input, UINT16 flags, INT16 xDelta, INT16 yDelta)
+{
+	WINPR_ASSERT(input);
+
+	rdpShadowClient* client = (rdpShadowClient*)input->context;
+	WINPR_ASSERT(client);
+	WINPR_ASSERT(client->server);
+
+	rdpShadowSubsystem* subsystem = client->server->subsystem;
+	WINPR_ASSERT(subsystem);
+
+	WLog_DBG(TAG, "[%s] flags=0x%04" PRIx16 ", x=%" PRId16 ", y=%" PRId16,
+	         client->mayInteract ? "use" : "discard", flags, xDelta, yDelta);
+	const uint16_t mask = PTR_FLAGS_MOVE | PTR_FLAGS_DOWN | PTR_FLAGS_BUTTON1 | PTR_FLAGS_BUTTON2 |
+	                      PTR_FLAGS_BUTTON3 | PTR_XFLAGS_BUTTON1 | PTR_XFLAGS_BUTTON2;
+	if ((flags & mask) != 0)
+	{
+		WLog_WARN(TAG, "Unknown flags 0x%04" PRIx16, flags & ~mask);
+	}
+	if (!client->mayInteract)
+		return TRUE;
+
+	return IFCALLRESULT(TRUE, subsystem->RelMouseEvent, subsystem, client, flags, xDelta, yDelta);
+}
+
 static BOOL shadow_input_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 {
+	WINPR_ASSERT(input);
 	rdpShadowClient* client = (rdpShadowClient*)input->context;
+	WINPR_ASSERT(client);
+	WINPR_ASSERT(client->server);
 	rdpShadowSubsystem* subsystem = client->server->subsystem;
+	WINPR_ASSERT(subsystem);
 
 	if (client->server->shareSubRect)
 	{
@@ -98,6 +152,8 @@ static BOOL shadow_input_extended_mouse_event(rdpInput* input, UINT16 flags, UIN
 	client->pointerX = x;
 	client->pointerY = y;
 
+	WLog_DBG(TAG, "[%s] flags=0x%04" PRIx16 ", x=%" PRIu16 ", y=%" PRIu16,
+	         client->mayInteract ? "use" : "discard", flags, x, y);
 	if (!client->mayInteract)
 		return TRUE;
 
@@ -106,9 +162,11 @@ static BOOL shadow_input_extended_mouse_event(rdpInput* input, UINT16 flags, UIN
 
 void shadow_input_register_callbacks(rdpInput* input)
 {
+	WINPR_ASSERT(input);
 	input->SynchronizeEvent = shadow_input_synchronize_event;
 	input->KeyboardEvent = shadow_input_keyboard_event;
 	input->UnicodeKeyboardEvent = shadow_input_unicode_keyboard_event;
 	input->MouseEvent = shadow_input_mouse_event;
 	input->ExtendedMouseEvent = shadow_input_extended_mouse_event;
+	input->RelMouseEvent = shadow_input_rel_mouse_event;
 }

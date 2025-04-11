@@ -2179,7 +2179,16 @@ static int shadow_client_subsystem_process_message(rdpShadowClient* client, wMes
 			if (client->activated)
 			{
 				IFCALL(update->pointer->PointerNew, context, &pointerNew);
-				IFCALL(update->pointer->PointerCached, context, &pointerCached);
+				if (client->server->ShowMouseCursor)
+				{
+					IFCALL(update->pointer->PointerCached, context, &pointerCached);
+				}
+				else
+				{
+					POINTER_SYSTEM_UPDATE pointer_system = { 0 };
+					pointer_system.type = SYSPTR_NULL;
+					IFCALL(update->pointer->PointerSystem, context, &pointer_system);
+				}
 			}
 
 			break;

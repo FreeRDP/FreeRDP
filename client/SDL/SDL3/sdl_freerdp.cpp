@@ -938,6 +938,7 @@ static int sdl_run(SdlContext* sdl)
 				case SDL_EVENT_USER_POINTER_NULL:
 					SDL_HideCursor();
 					sdl->setCursor(nullptr);
+					sdl->setHasCursor(false);
 					break;
 				case SDL_EVENT_USER_POINTER_DEFAULT:
 				{
@@ -945,6 +946,7 @@ static int sdl_run(SdlContext* sdl)
 					SDL_SetCursor(def);
 					SDL_ShowCursor();
 					sdl->setCursor(nullptr);
+					sdl->setHasCursor(true);
 				}
 				break;
 				case SDL_EVENT_USER_POINTER_POSITION:
@@ -1726,9 +1728,19 @@ SdlContext::SdlContext(rdpContext* context)
 	WINPR_ASSERT(context);
 }
 
+void SdlContext::setHasCursor(bool val)
+{
+	this->_cursor_visible = val;
+}
+
+bool SdlContext::hasCursor() const
+{
+	return _cursor_visible;
+}
+
 bool SdlContext::redraw(bool suppress) const
 {
-	if (!connected)
+	if (!_connected)
 		return true;
 
 	auto gdi = context()->gdi;
@@ -1738,12 +1750,12 @@ bool SdlContext::redraw(bool suppress) const
 
 void SdlContext::setConnected(bool val)
 {
-	connected = val;
+	_connected = val;
 }
 
 bool SdlContext::isConnected() const
 {
-	return connected;
+	return _connected;
 }
 
 rdpContext* SdlContext::context() const

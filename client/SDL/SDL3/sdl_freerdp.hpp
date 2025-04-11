@@ -78,9 +78,13 @@ class SdlContext
 	void push(std::vector<SDL_Rect>&& rects);
 	std::vector<SDL_Rect> pop();
 
+	void setHasCursor(bool val);
+	[[nodiscard]] bool hasCursor() const;
+
   private:
 	rdpContext* _context;
-	std::atomic<bool> connected = false;
+	std::atomic<bool> _connected = false;
+	bool _cursor_visible = true;
 	rdpPointer* _cursor = nullptr;
 	std::vector<SDL_DisplayID> _monitorIds;
 	std::mutex _queue_mux;

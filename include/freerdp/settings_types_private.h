@@ -116,7 +116,7 @@ struct rdp_settings
 	SETTINGS_DEPRECATED(ALIGN64 BOOL SupportSkipChannelJoin);  /* 152 */
 	SETTINGS_DEPRECATED(ALIGN64 UINT16 SupportedColorDepths);  /* 153 */
 	SETTINGS_DEPRECATED(ALIGN64 UINT64 MonitorOverrideFlags);  /** 154
-		                                                        * @since version 3.14.2
+		                                                        * @since version 3.15.0
 		                                                        */
 	UINT64 padding0192[192 - 155];                             /* 155 */
 
