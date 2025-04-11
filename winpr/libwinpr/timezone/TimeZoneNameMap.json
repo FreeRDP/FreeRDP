@@ -183,13 +183,6 @@
 			"Iana": "America/Grand_Turk"
 		},
 		{
-			"Id": "Paraguay Standard Time",
-			"StandardName": "Paraguay Standard Time",
-			"DisplayName": "(UTC-04:00) Asuncion",
-			"DaylightName": "Paraguay Daylight Time",
-			"Iana": "America/Asuncion"
-		},
-		{
 			"Id": "Atlantic Standard Time",
 			"StandardName": "Atlantic Standard Time",
 			"DisplayName": "(UTC-04:00) Atlantic Time (Canada)",
@@ -237,6 +230,13 @@
 			"DisplayName": "(UTC-03:00) Araguaina",
 			"DaylightName": "Tocantins Daylight Time",
 			"Iana": "America/Araguaina"
+		},
+		{
+			"Id": "Paraguay Standard Time",
+			"StandardName": "Paraguay Standard Time",
+			"DisplayName": "(UTC-03:00) Asuncion",
+			"DaylightName": "Paraguay Daylight Time",
+			"Iana": "America/Asuncion"
 		},
 		{
 			"Id": "E. South America Standard Time",
