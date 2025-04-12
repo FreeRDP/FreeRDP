@@ -24,7 +24,7 @@ if(WITH_V4L)
 
   set(${MODULE_PREFIX}_SRCS camera_v4l.c uvc_h264.c)
 
-  set(${MODULE_PREFIX}_LIBS winpr freerdp ${V4L_TARGETS} ${LIBUSB_1_LIBRARIES})
+  set(${MODULE_PREFIX}_LIBS winpr freerdp ${LIBUSB_1_LIBRARIES})
 
   include_directories(..)
 
