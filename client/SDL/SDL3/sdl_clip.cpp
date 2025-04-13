@@ -19,6 +19,7 @@
  */
 
 #include <string>
+#include <sstream>
 #include <mutex>
 #include <iterator>
 #include <algorithm>
@@ -129,9 +130,14 @@ static bool operator==(const CLIPRDR_FORMAT& lhs, const CLIPRDR_FORMAT& rhs)
 
 sdlClip::sdlClip(SdlContext* sdl)
     : _sdl(sdl), _file(cliprdr_file_context_new(this)), _log(WLog_Get(TAG)),
-      _system(ClipboardCreate()), _event(CreateEventA(nullptr, TRUE, FALSE, nullptr))
+      _system(ClipboardCreate()), _event(CreateEventA(nullptr, TRUE, FALSE, nullptr)),
+      _uuid(sdl::utils::generate_uuid_v4())
 {
 	WINPR_ASSERT(sdl);
+
+	std::stringstream ss;
+	ss << s_mime_freerdp_update << "-" << _uuid;
+	_mime_uuid = ss.str();
 }
 
 sdlClip::~sdlClip()
@@ -166,12 +172,12 @@ BOOL sdlClip::uninit(CliprdrClientContext* clip)
 	return TRUE;
 }
 
-static bool contains(const char** mime_types, Sint32 count)
+bool sdlClip::contains(const char** mime_types, Sint32 count)
 {
 	for (Sint32 x = 0; x < count; x++)
 	{
 		const auto mime = mime_types[x];
-		if (mime && (strcmp(s_mime_freerdp_update, mime) == 0))
+		if (mime && (strcmp(_mime_uuid.c_str(), mime) == 0))
 			return true;
 	}
 	return false;
@@ -542,7 +548,7 @@ UINT sdlClip::ReceiveServerFormatList(CliprdrClientContext* context,
 		clipboard->_current_mimetypes.push_back(s_mime_gnome_copied_files);
 		clipboard->_current_mimetypes.push_back(s_mime_mate_copied_files);
 	}
-	clipboard->_current_mimetypes.push_back(s_mime_freerdp_update);
+	clipboard->_current_mimetypes.push_back(clipboard->_mime_uuid.c_str());
 
 	auto s = clipboard->_current_mimetypes.size();
 	SDL_Event ev = { SDL_EVENT_CLIPBOARD_UPDATE };
