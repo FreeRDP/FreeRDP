@@ -20,6 +20,7 @@
 #include <cassert>
 #include <sstream>
 #include <iomanip>
+#include <random>
 
 #include "sdl_utils.hpp"
 
@@ -352,4 +353,38 @@ std::string sdl::utils::rdp_orientation_to_str(uint32_t orientation)
 			return ss.str();
 		}
 	}
+}
+
+std::string sdl::utils::generate_uuid_v4()
+{
+	static std::random_device rd;
+	static std::mt19937 gen(rd());
+	static std::uniform_int_distribution<> dis(0, 255);
+	std::stringstream ss;
+	ss << std::hex << std::setfill('0') << std::setw(2);
+	for (int i = 0; i < 4; i++)
+	{
+		ss << dis(gen);
+	}
+	ss << "-";
+	for (int i = 0; i < 2; i++)
+	{
+		ss << dis(gen);
+	}
+	ss << "-";
+	for (int i = 0; i < 2; i++)
+	{
+		ss << dis(gen);
+	}
+	ss << "-";
+	for (int i = 0; i < 2; i++)
+	{
+		ss << dis(gen);
+	}
+	ss << "-";
+	for (int i = 0; i < 6; i++)
+	{
+		ss << dis(gen);
+	};
+	return ss.str();
 }
