@@ -296,6 +296,7 @@ bool sdlDispContext::updateMonitor(SDL_WindowID id)
 	const auto& window = _sdl->windows.at(id);
 	auto monitor = window.monitor();
 
+	monitor.is_primary = TRUE;
 	if (!freerdp_settings_set_monitor_def_array_sorted(settings, &monitor, 1))
 		return false;
 
