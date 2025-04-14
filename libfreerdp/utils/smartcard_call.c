@@ -967,7 +967,7 @@ static LONG smartcard_GetStatusChangeA_Call(scard_call_context* smartcard, wStre
 		CopyMemory(&(rout->rgbAtr), cur->rgbAtr, sizeof(rout->rgbAtr));
 	}
 
-	status = smartcard_pack_get_status_change_return(out, &ret, TRUE);
+	status = smartcard_pack_get_status_change_return(out, &ret, FALSE);
 fail:
 	free(ret.rgReaderStates);
 	free(rgReaderStates);
@@ -983,14 +983,13 @@ static LONG smartcard_GetStatusChangeW_Call(scard_call_context* smartcard, wStre
 	DWORD dwTimeOut = 0;
 	const DWORD dwTimeStep = 100;
 	GetStatusChange_Return ret = { 0 };
-	GetStatusChangeW_Call* call = NULL;
 	LPSCARD_READERSTATEW rgReaderStates = NULL;
 
 	WINPR_ASSERT(smartcard);
 	WINPR_ASSERT(out);
 	WINPR_ASSERT(operation);
 
-	call = &operation->call.getStatusChangeW;
+	GetStatusChangeW_Call* call = &operation->call.getStatusChangeW;
 	dwTimeOut = call->dwTimeOut;
 
 	if (call->cReaders > 0)
@@ -1501,7 +1500,6 @@ static LONG smartcard_LocateCardsByATRA_Call(scard_call_context* smartcard, wStr
 {
 	LONG status = 0;
 	GetStatusChange_Return ret = { 0 };
-	LPSCARD_READERSTATEA state = NULL;
 	LPSCARD_READERSTATEA states = NULL;
 	LocateCardsByATRA_Call* call = NULL;
 
@@ -1516,11 +1514,12 @@ static LONG smartcard_LocateCardsByATRA_Call(scard_call_context* smartcard, wStr
 
 	for (UINT32 i = 0; i < call->cReaders; i++)
 	{
-		states[i].szReader = call->rgReaderStates[i].szReader;
-		states[i].dwCurrentState = call->rgReaderStates[i].dwCurrentState;
-		states[i].dwEventState = call->rgReaderStates[i].dwEventState;
-		states[i].cbAtr = call->rgReaderStates[i].cbAtr;
-		CopyMemory(&(states[i].rgbAtr), &(call->rgReaderStates[i].rgbAtr), 36);
+		LPSCARD_READERSTATEA state = &states[i];
+		state->szReader = call->rgReaderStates[i].szReader;
+		state->dwCurrentState = call->rgReaderStates[i].dwCurrentState;
+		state->dwEventState = call->rgReaderStates[i].dwEventState;
+		state->cbAtr = call->rgReaderStates[i].cbAtr;
+		CopyMemory(&(state->rgbAtr), &(call->rgReaderStates[i].rgbAtr), 36);
 	}
 
 	status = ret.ReturnCode = wrap(smartcard, SCardGetStatusChangeA, operation->hContext,
@@ -1558,7 +1557,7 @@ static LONG smartcard_LocateCardsByATRA_Call(scard_call_context* smartcard, wStr
 
 	for (UINT32 i = 0; i < ret.cReaders; i++)
 	{
-		state = &states[i];
+		LPSCARD_READERSTATEA state = &states[i];
 		ret.rgReaderStates[i].dwCurrentState = state->dwCurrentState;
 		ret.rgReaderStates[i].dwEventState = state->dwEventState;
 		ret.rgReaderStates[i].cbAtr = state->cbAtr;
