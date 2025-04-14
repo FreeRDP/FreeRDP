@@ -176,3 +176,9 @@ parameter = '1 /.*restrict.*/
 [suppress_function]
 change_kind = function-subtype-change
 parameter = '7 /.*restrict.*/
+
+[suppress_function]
+change_kind = function-subtype-change
+name = shadow_server_command_line_status_print
+parameter = '4 /.*const.*/
+
