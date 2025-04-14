@@ -385,6 +385,6 @@ std::string sdl::utils::generate_uuid_v4()
 	for (int i = 0; i < 6; i++)
 	{
 		ss << dis(gen);
-	};
+	}
 	return ss.str();
 }
