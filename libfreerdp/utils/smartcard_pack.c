@@ -266,6 +266,7 @@ static LONG smartcard_ndr_write_state(wStream* s, const ReaderState_Return* data
 		const BYTE* data;
 	} cnv;
 
+	WINPR_ASSERT(data || (size == 0));
 	cnv.reader = data;
 	return smartcard_ndr_write(s, cnv.data, size, sizeof(ReaderState_Return), type);
 }
@@ -769,33 +770,42 @@ static void smartcard_trace_get_status_change_return(const GetStatusChange_Retur
 	char* szEventState = NULL;
 	char* szCurrentState = NULL;
 
-	if (!WLog_IsLevelActive(WLog_Get(TAG), g_LogLevel))
+	wLog* log = WLog_Get(TAG);
+	if (!WLog_IsLevelActive(log, g_LogLevel))
 		return;
 
-	WLog_LVL(TAG, g_LogLevel, "GetStatusChange%s_Return {", unicode ? "W" : "A");
-	WLog_LVL(TAG, g_LogLevel, "  ReturnCode: %s (0x%08" PRIX32 ")",
-	         SCardGetErrorString(ret->ReturnCode), ret->ReturnCode);
-	WLog_LVL(TAG, g_LogLevel, "  cReaders: %" PRIu32 "", ret->cReaders);
+	WLog_Print(log, g_LogLevel, "GetStatusChange%s_Return {", unicode ? "W" : "A");
+	WLog_Print(log, g_LogLevel, "  ReturnCode: %s (0x%08" PRIX32 ")",
+	           SCardGetErrorString(ret->ReturnCode), ret->ReturnCode);
+	WLog_Print(log, g_LogLevel, "  cReaders: %" PRIu32 "", ret->cReaders);
 
-	for (UINT32 index = 0; index < ret->cReaders; index++)
+	if (!ret->rgReaderStates && (ret->cReaders > 0))
 	{
-		char buffer[1024];
-		const ReaderState_Return* rgReaderState = &(ret->rgReaderStates[index]);
-		szCurrentState = SCardGetReaderStateString(rgReaderState->dwCurrentState);
-		szEventState = SCardGetReaderStateString(rgReaderState->dwEventState);
-		WLog_LVL(TAG, g_LogLevel, "    [%" PRIu32 "]: dwCurrentState: %s (0x%08" PRIX32 ")", index,
-		         szCurrentState, rgReaderState->dwCurrentState);
-		WLog_LVL(TAG, g_LogLevel, "    [%" PRIu32 "]: dwEventState: %s (0x%08" PRIX32 ")", index,
-		         szEventState, rgReaderState->dwEventState);
-		WLog_LVL(TAG, g_LogLevel, "    [%" PRIu32 "]: cbAtr: %" PRIu32 " rgbAtr: %s", index,
-		         rgReaderState->cbAtr,
-		         smartcard_array_dump(rgReaderState->rgbAtr, rgReaderState->cbAtr, buffer,
-		                              sizeof(buffer)));
-		free(szCurrentState);
-		free(szEventState);
+		WLog_Print(log, g_LogLevel, "    [INVALID STATE] rgReaderStates=NULL, cReaders=%" PRIu32,
+		           ret->cReaders);
+	}
+	else
+	{
+		for (UINT32 index = 0; index < ret->cReaders; index++)
+		{
+			char buffer[1024] = { 0 };
+			const ReaderState_Return* rgReaderState = &(ret->rgReaderStates[index]);
+			szCurrentState = SCardGetReaderStateString(rgReaderState->dwCurrentState);
+			szEventState = SCardGetReaderStateString(rgReaderState->dwEventState);
+			WLog_Print(log, g_LogLevel, "    [%" PRIu32 "]: dwCurrentState: %s (0x%08" PRIX32 ")",
+			           index, szCurrentState, rgReaderState->dwCurrentState);
+			WLog_Print(log, g_LogLevel, "    [%" PRIu32 "]: dwEventState: %s (0x%08" PRIX32 ")",
+			           index, szEventState, rgReaderState->dwEventState);
+			WLog_Print(log, g_LogLevel, "    [%" PRIu32 "]: cbAtr: %" PRIu32 " rgbAtr: %s", index,
+			           rgReaderState->cbAtr,
+			           smartcard_array_dump(rgReaderState->rgbAtr, rgReaderState->cbAtr, buffer,
+			                                sizeof(buffer)));
+			free(szCurrentState);
+			free(szEventState);
+		}
 	}
 
-	WLog_LVL(TAG, g_LogLevel, "}");
+	WLog_Print(log, g_LogLevel, "}");
 }
 
 static void smartcard_trace_context_and_two_strings_a_call(const ContextAndTwoStringA_Call* call)
@@ -1188,8 +1198,15 @@ static void smartcard_trace_get_attrib_return(const GetAttrib_Return* ret, DWORD
 			DWORD* pd;
 		} attr;
 		attr.pb = ret->pbAttr;
-		WLog_LVL(TAG, g_LogLevel, "  dwProtocolType: %s (0x%08" PRIX32 ")",
-		         SCardGetProtocolString(*attr.pd), *attr.pd);
+		if (!ret->pbAttr)
+		{
+			WLog_LVL(TAG, g_LogLevel, "  dwProtocolType: NULL");
+		}
+		else
+		{
+			WLog_LVL(TAG, g_LogLevel, "  dwProtocolType: %s (0x%08" PRIX32 ")",
+			         SCardGetProtocolString(*attr.pd), *attr.pd);
+		}
 	}
 
 	WLog_LVL(TAG, g_LogLevel, "}");
@@ -2436,6 +2453,8 @@ LONG smartcard_unpack_get_status_change_w_call(wStream* s, GetStatusChangeW_Call
 LONG smartcard_pack_get_status_change_return(wStream* s, const GetStatusChange_Return* ret,
                                              BOOL unicode)
 {
+	WINPR_ASSERT(ret);
+
 	LONG status = 0;
 	DWORD cReaders = ret->cReaders;
 	UINT32 index = 0;
