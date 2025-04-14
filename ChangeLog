@@ -1,3 +1,65 @@
+# 2025-04-14 Version 3.15.0
+
+Bugfix release with much improved SDL3 client and relative mouse input support
+
+## What's Changed
+* [client,sdl] fix crash on suppress output (#11421)
+* Refactor checks (#11425)
+* Clean warn, sdl dynamic sizes (#11426)
+* [channels,remdesk] fix possible memory leak (#11428)
+* [client,x11] map exit code success (#11432)
+* nla: send user and domain hints with smartcard logon (#11435)
+* [client,windows] ignore clipboard failures (#11436)
+* Hidef rail checks and deprecation fixes (#11439)
+* Fix child session hanging issue. (#11442)
+* [channels,rdpdr] relax state checks for PAKID_CORE_CLIENTID_CONFIRM (#11433)
+* Standard rdp security network issues (#11446)
+* Various fixes related to smartcard logon server-side (#11443)
+* [core,rdp] fix check for SEC_FLAGSHI_VALID (#11449)
+* [scripts,mac] limit make -j to number of processors (#11450)
+* [readme] deprecate xmpp bridge (#11451)
+* [readme] explicitly link FAQ (#11452)
+* [readme] put links on one line each (#11453)
+* [core,tls] enable SNI when building with libreSSL (#11454)
+* [channels,client] log server format list (#11455)
+* [client,mac] prefer unicode from clipboard (#11456)
+* [cmake] drop legacy and unused cmake_policy (#11457)
+* Sdl suppress output fix (#11458)
+* [client,sdl] unify all gdi_suppress_output calls (#11460)
+* [client,sdl] fix multimonitor fullscreen (#11462)
+* [client,sdl] fix unused result warning (#11463)
+* [client,sdl] quit on window close (#11464)
+* [core,gateway] log tsg timeout (#11465)
+* [core,settings] enforce OrderSupportFlags (#11468)
+* [core,caps] fix rdp_apply_order_capability_set (#11469)
+* Sdl elminiate sdl and rdp thread dependency (#11473)
+* [client,sdl] wrap connection dialog (#11475)
+* [core,proxy] align no_proxy to curl (#11479)
+* [winpr,smartcard] fix SCARD_ATTR_VENDOR_NAME length (#11481)
+* [core,gateway] fix string reading for TSG (#11485)
+* [rdpei/server] fix build and channel init (#11484)
+* [client,sdl] refactor display update (#11472)
+* [client,sdl] fix clipboard updates (#11486)
+* [client,sdl] fix orientation update (#11487)
+* Sample fix (#11488)
+* [timezones] Update definitions (#)11489)
+* Rel mouse change (#11384)
+* [winpr,utils] ignore _Unwind_Backtrace return (#11491)
+* Warn log (#11493)
+* [cmake] simplify v4l detection (#11495)
+* [client,sdl] use a GUID to identify the clipboard (#11496)
+* [utils,smartcard] assert and improve log (#11498)
+* rdpei/server: Add optional threaded handling of messages (#11499)
+
+## New Contributors
+* @poasungoh made their first contribution in https://github.com/FreeRDP/FreeRDP/pull/11442
+* @TolchiIsland made their first contribution in https://github.com/FreeRDP/FreeRDP/pull/11446
+* @mnauw made their first contribution in https://github.com/FreeRDP/FreeRDP/pull/11484
+
+For a complete and detailed change log since the last release run:
+git log 3.15.0...3.14.1
+
+
 # 2025-03-24 Version 3.14.1
 
 Bugfix and papercut release.
