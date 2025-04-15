@@ -605,7 +605,7 @@ static void dump_reader_states_w(wLog* log, const SCARD_READERSTATEW* rgReaderSt
 		char buffer[1024] = { 0 };
 
 		const SCARD_READERSTATEW* readerState = &rgReaderStates[index];
-		ConvertWCharToUtf8(readerState->szReader, buffer, sizeof(buffer));
+		(void)ConvertWCharToUtf8(readerState->szReader, buffer, sizeof(buffer));
 		WLog_Print(log, g_LogLevel, "\t[%" PRIu32 "]: szReader: %s cbAtr: %" PRIu32 "", index,
 		           buffer, readerState->cbAtr);
 		char* szCurrentState = SCardGetReaderStateString(readerState->dwCurrentState);

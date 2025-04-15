@@ -295,6 +295,7 @@ static BOOL sdl_begin_paint(rdpContext* context)
 static bool sdl_draw_to_window_rect([[maybe_unused]] SdlContext* sdl, SdlWindow& window,
                                     SDL_Surface* surface, SDL_Point offset, const SDL_Rect& srcRect)
 {
+	WINPR_ASSERT(surface);
 	SDL_Rect dstRect = { offset.x + srcRect.x, offset.y + srcRect.y, srcRect.w, srcRect.h };
 	return window.blit(surface, srcRect, dstRect);
 }
@@ -345,8 +346,12 @@ static BOOL sdl_draw_to_window(SdlContext* sdl, SdlWindow& window,
 {
 	WINPR_ASSERT(sdl);
 
+	if (!sdl->isConnected())
+		return TRUE;
+
 	auto context = sdl->context();
 	auto gdi = context->gdi;
+	WINPR_ASSERT(gdi);
 
 	auto size = window.rect();
 
