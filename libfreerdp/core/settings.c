@@ -1356,7 +1356,7 @@ static BOOL freerdp_settings_int_buffer_copy(rdpSettings* _settings, const rdpSe
 
 	if (!freerdp_server_license_issuers_copy(_settings, settings->ServerLicenseProductIssuers,
 	                                         settings->ServerLicenseProductIssuersCount))
-		return FALSE;
+		goto out_fail;
 
 	if (settings->RdpServerCertificate)
 	{
@@ -1390,13 +1390,17 @@ static BOOL freerdp_settings_int_buffer_copy(rdpSettings* _settings, const rdpSe
 	                                 freerdp_settings_get_uint32(settings, FreeRDP_ChannelCount)))
 		goto out_fail;
 
-	_settings->OrderSupport = malloc(32);
-	if (!_settings->OrderSupport)
-		goto out_fail;
+	if (settings->OrderSupport)
+	{
+		_settings->OrderSupport = calloc(32, sizeof(BYTE));
+		if (!_settings->OrderSupport)
+			goto out_fail;
 
-	if (!freerdp_capability_buffer_copy(_settings, settings))
-		goto out_fail;
-	CopyMemory(_settings->OrderSupport, settings->OrderSupport, 32);
+		if (!freerdp_capability_buffer_copy(_settings, settings))
+			goto out_fail;
+
+		CopyMemory(_settings->OrderSupport, settings->OrderSupport, 32);
+	}
 
 	const UINT32 glyphCacheCount = 10;
 	const GLYPH_CACHE_DEFINITION* glyphCache =
@@ -1427,7 +1431,8 @@ static BOOL freerdp_settings_int_buffer_copy(rdpSettings* _settings, const rdpSe
 
 	const UINT32 nrports = freerdp_settings_get_uint32(settings, FreeRDP_TargetNetAddressCount);
 	if (!freerdp_target_net_adresses_reset(_settings, nrports))
-		return FALSE;
+		goto out_fail;
+	;
 
 	for (UINT32 i = 0; i < nrports; i++)
 	{
@@ -1436,9 +1441,9 @@ static BOOL freerdp_settings_int_buffer_copy(rdpSettings* _settings, const rdpSe
 		const UINT32* port =
 		    freerdp_settings_get_pointer_array(settings, FreeRDP_TargetNetPorts, i);
 		if (!freerdp_settings_set_pointer_array(_settings, FreeRDP_TargetNetAddresses, i, address))
-			return FALSE;
+			goto out_fail;
 		if (!freerdp_settings_set_pointer_array(_settings, FreeRDP_TargetNetPorts, i, port))
-			return FALSE;
+			goto out_fail;
 	}
 
 	{
