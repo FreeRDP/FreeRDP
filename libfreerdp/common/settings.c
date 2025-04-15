@@ -882,6 +882,9 @@ BOOL freerdp_capability_buffer_copy(rdpSettings* settings, const rdpSettings* sr
 	WINPR_ASSERT(settings);
 	WINPR_ASSERT(src);
 
+	if (src->ReceivedCapabilitiesSize == 0)
+		return TRUE;
+
 	if (!freerdp_capability_buffer_allocate(settings, src->ReceivedCapabilitiesSize))
 		return FALSE;
 
