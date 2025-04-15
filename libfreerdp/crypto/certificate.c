@@ -1158,15 +1158,26 @@ BOOL cert_clone_int(rdpCertificate* dst, const rdpCertificate* src)
 	WINPR_ASSERT(dst);
 	WINPR_ASSERT(src);
 
+	if (!cert_info_clone(&dst->cert_info, &src->cert_info))
+		return FALSE;
+
 	if (src->x509)
 	{
 		dst->x509 = X509_dup(src->x509);
 		if (!dst->x509)
-			return FALSE;
+		{
+			/* Workaround for SSL deprecation issues:
+			 * some security modes use weak RSA ciphers where X509_dup fails.
+			 * In that case recreate the X509 from the raw RSA data
+			 */
+			if (!update_x509_from_info(dst))
+			{
+				WLog_ERR(TAG, "X509_dup failed, SSL configuration bug?");
+				return FALSE;
+			}
+		}
 	}
 
-	if (!cert_info_clone(&dst->cert_info, &src->cert_info))
-		return FALSE;
 	return cert_x509_chain_copy(&dst->x509_cert_chain, &src->x509_cert_chain);
 }
 
