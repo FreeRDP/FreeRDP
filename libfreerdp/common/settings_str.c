@@ -79,11 +79,14 @@ BOOL freerdp_settings_clone_keys(rdpSettings* dst, const rdpSettings* src)
 			break;
 			case FREERDP_SETTINGS_TYPE_POINTER: /* pointer */
 			{
-				const void* sval =
-				    freerdp_settings_get_pointer(src, (FreeRDP_Settings_Keys_Pointer)cur->id);
-				if (!freerdp_settings_set_pointer(dst, (FreeRDP_Settings_Keys_Pointer)cur->id,
-				                                  sval))
-					return FALSE;
+				if (cur->id == FreeRDP_instance)
+				{
+					const void* sval =
+					    freerdp_settings_get_pointer(src, (FreeRDP_Settings_Keys_Pointer)cur->id);
+					if (!freerdp_settings_set_pointer(dst, (FreeRDP_Settings_Keys_Pointer)cur->id,
+					                                  sval))
+						return FALSE;
+				}
 			}
 			break;
 			default:
