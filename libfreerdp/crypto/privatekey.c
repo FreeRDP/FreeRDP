@@ -37,6 +37,7 @@
 #include <openssl/pem.h>
 #include <openssl/rsa.h>
 #include <openssl/bn.h>
+#include <openssl/err.h>
 
 #include "privatekey.h"
 #include "cert_common.h"
@@ -549,4 +550,97 @@ WINPR_DIGEST_CTX* freerdp_key_digest_sign(rdpPrivateKey* key, WINPR_MD_TYPE dige
 		return NULL;
 	}
 	return md_ctx;
+}
+
+static BOOL bio_read_pem(BIO* bio, char** ppem, size_t* plength)
+{
+	BOOL rc = FALSE;
+
+	WINPR_ASSERT(bio);
+	WINPR_ASSERT(ppem);
+
+	const size_t blocksize = 2048;
+	size_t offset = 0;
+	size_t length = blocksize;
+	char* pem = NULL;
+
+	*ppem = NULL;
+	if (plength)
+		*plength = 0;
+
+	while (offset < length)
+	{
+		char* tmp = realloc(pem, length + 1);
+		if (!tmp)
+			goto fail;
+		pem = tmp;
+
+		ERR_clear_error();
+
+		const int status = BIO_read(bio, &pem[offset], (int)(length - offset));
+		if (status < 0)
+		{
+			WLog_ERR(TAG, "failed to read certificate");
+			goto fail;
+		}
+
+		if (status == 0)
+			break;
+
+		offset += (size_t)status;
+		if (length - offset > 0)
+			break;
+		length += blocksize;
+	}
+
+	if (pem)
+	{
+		if (offset >= length)
+			goto fail;
+		pem[offset] = '\0';
+	}
+	*ppem = pem;
+	if (plength)
+		*plength = offset;
+	rc = TRUE;
+fail:
+	if (!rc)
+		free(pem);
+
+	return rc;
+}
+
+char* freerdp_key_get_pem(const rdpPrivateKey* key, size_t* plen)
+{
+	WINPR_ASSERT(key);
+
+	if (!key->evp)
+		return NULL;
+
+	/**
+	 * Don't manage certificates internally, leave it up entirely to the external client
+	 * implementation
+	 */
+	BIO* bio = BIO_new(BIO_s_mem());
+
+	if (!bio)
+	{
+		WLog_ERR(TAG, "BIO_new() failure");
+		return NULL;
+	}
+
+	char* pem = NULL;
+
+	const int status = PEM_write_bio_PrivateKey(bio, key->evp, NULL, NULL, 0, 0, NULL);
+	if (status < 0)
+	{
+		WLog_ERR(TAG, "PEM_write_bio_PrivateKey failure: %d", status);
+		goto fail;
+	}
+
+	(void)bio_read_pem(bio, &pem, plen);
+
+fail:
+	BIO_free_all(bio);
+	return pem;
 }
