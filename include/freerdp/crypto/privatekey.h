@@ -45,6 +45,26 @@ extern "C"
 
 	FREERDP_API size_t freerdp_key_get_bits(const rdpPrivateKey* key);
 
+	/** @brief Create a PEM from a private key
+	 *
+	 *  @param key The key to convert
+	 *  @param plen Optional pointer, value set to strlen of the PEM
+	 *  @return A PEM string or \b NULL in case of errors
+	 *
+	 *  @since version 3.16.0
+	 */
+	WINPR_ATTR_MALLOC(free, 1)
+	FREERDP_API char* freerdp_key_get_pem(const rdpPrivateKey* key, size_t* plen);
+
+	/** @brief Create a new RSA key
+	 *
+	 *  @param key The key to initialize
+	 *  @param bits The RSA key size
+	 *  @return \b TRUE for success, \b FALSE otherwise
+	 *  @since version 3.16.0
+	 */
+	FREERDP_API BOOL freerdp_key_generate(rdpPrivateKey* key, size_t bits);
+
 #ifdef __cplusplus
 }
 #endif

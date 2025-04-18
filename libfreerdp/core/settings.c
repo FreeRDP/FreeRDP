@@ -752,38 +752,6 @@ BOOL freerdp_settings_set_default_order_support(rdpSettings* settings)
 	return TRUE;
 }
 
-BOOL freerdp_capability_buffer_allocate(rdpSettings* settings, UINT32 count)
-{
-	WINPR_ASSERT(settings);
-	WINPR_ASSERT(count > 0);
-	WINPR_ASSERT(count == 32);
-
-	freerdp_capability_buffer_free(settings);
-	WINPR_ASSERT(settings->ReceivedCapabilitiesSize == 0);
-
-	settings->ReceivedCapabilitiesSize = count;
-	void* tmp = realloc(settings->ReceivedCapabilities, count * sizeof(BYTE));
-	if (!tmp)
-		return FALSE;
-	memset(tmp, 0, count * sizeof(BYTE));
-	settings->ReceivedCapabilities = tmp;
-
-	tmp = realloc((void*)settings->ReceivedCapabilityData, count * sizeof(BYTE*));
-	if (!tmp)
-		return FALSE;
-	memset(tmp, 0, count * sizeof(BYTE*));
-	settings->ReceivedCapabilityData = (BYTE**)tmp;
-
-	tmp = realloc(settings->ReceivedCapabilityDataSizes, count * sizeof(UINT32));
-	if (!tmp)
-		return FALSE;
-	memset(tmp, 0, count * sizeof(UINT32));
-	settings->ReceivedCapabilityDataSizes = tmp;
-
-	return (settings->ReceivedCapabilities && settings->ReceivedCapabilityData &&
-	        settings->ReceivedCapabilityDataSizes);
-}
-
 #if !defined(WITH_FULL_CONFIG_PATH)
 static char* freerdp_settings_get_legacy_config_path(void)
 {
@@ -998,7 +966,7 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	if (!freerdp_settings_set_pointer_len(settings, FreeRDP_RdpServerCertificate, NULL, 1))
 		goto out_fail;
 
-	if (!freerdp_capability_buffer_allocate(settings, 32))
+	if (!freerdp_capability_buffer_resize(settings, 32))
 		goto out_fail;
 
 	{
@@ -1396,11 +1364,11 @@ static BOOL freerdp_settings_int_buffer_copy(rdpSettings* _settings, const rdpSe
 		if (!_settings->OrderSupport)
 			goto out_fail;
 
-		if (!freerdp_capability_buffer_copy(_settings, settings))
-			goto out_fail;
-
 		CopyMemory(_settings->OrderSupport, settings->OrderSupport, 32);
 	}
+
+	if (!freerdp_capability_buffer_copy(_settings, settings))
+		goto out_fail;
 
 	const UINT32 glyphCacheCount = 10;
 	const GLYPH_CACHE_DEFINITION* glyphCache =
@@ -1432,7 +1400,6 @@ static BOOL freerdp_settings_int_buffer_copy(rdpSettings* _settings, const rdpSe
 	const UINT32 nrports = freerdp_settings_get_uint32(settings, FreeRDP_TargetNetAddressCount);
 	if (!freerdp_target_net_adresses_reset(_settings, nrports))
 		goto out_fail;
-	;
 
 	for (UINT32 i = 0; i < nrports; i++)
 	{
@@ -1525,34 +1492,6 @@ BOOL freerdp_settings_copy(rdpSettings* _settings, const rdpSettings* settings)
 	/* This copies everything except allocated non string buffers. reset all allocated buffers to
 	 * NULL to fix issues during cleanup */
 	rc = freerdp_settings_clone_keys(_settings, settings);
-
-	_settings->LoadBalanceInfo = NULL;
-	_settings->ServerRandom = NULL;
-	_settings->ClientRandom = NULL;
-	_settings->ServerCertificate = NULL;
-	_settings->RdpServerCertificate = NULL;
-	_settings->RdpServerRsaKey = NULL;
-	_settings->ChannelDefArray = NULL;
-	_settings->MonitorDefArray = NULL;
-	_settings->MonitorIds = NULL;
-	_settings->OrderSupport = NULL;
-	_settings->BitmapCacheV2CellInfo = NULL;
-	_settings->GlyphCache = NULL;
-	_settings->FragCache = NULL;
-	_settings->ClientAutoReconnectCookie = NULL;
-	_settings->ServerAutoReconnectCookie = NULL;
-	_settings->ClientTimeZone = NULL;
-	_settings->RedirectionPassword = NULL;
-	_settings->RedirectionTsvUrl = NULL;
-	_settings->TargetNetAddresses = NULL;
-	_settings->TargetNetPorts = NULL;
-	_settings->RedirectionGuid = NULL;
-	_settings->DeviceArray = NULL;
-	_settings->StaticChannelArray = NULL;
-	_settings->DynamicChannelArray = NULL;
-	_settings->ReceivedCapabilities = NULL;
-	_settings->ReceivedCapabilityData = NULL;
-	_settings->ReceivedCapabilityDataSizes = NULL;
 
 	_settings->ServerLicenseProductIssuersCount = 0;
 	_settings->ServerLicenseProductIssuers = NULL;
@@ -1702,17 +1641,7 @@ BOOL freerdp_target_net_adresses_reset(rdpSettings* settings, size_t size)
 {
 	freerdp_target_net_addresses_free(settings);
 
-	if (size > 0)
-	{
-		if (!freerdp_settings_set_pointer_len_(settings, FreeRDP_TargetNetPorts,
-		                                       FreeRDP_UINT32_UNUSED, NULL, size, sizeof(UINT32)))
-			return FALSE;
-		if (!freerdp_settings_set_pointer_len_(settings, FreeRDP_TargetNetAddresses,
-		                                       FreeRDP_TargetNetAddressCount, NULL, size,
-		                                       sizeof(char*)))
-			return FALSE;
-	}
-	return TRUE;
+	return freerdp_target_net_addresses_resize(settings, size);
 }
 
 BOOL freerdp_settings_enforce_monitor_exists(rdpSettings* settings)
