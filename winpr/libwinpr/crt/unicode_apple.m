@@ -89,7 +89,8 @@ int int_MultiByteToWideChar(UINT CodePage, DWORD dwFlags, LPCSTR lpMultiByteStr,
 		const size_t mlen = MIN((size_t)utf16CharLen, cchWideChar);
 		const size_t len = _wcsnlen(utf16, mlen);
 		memcpy(lpWideCharStr, utf16, len * sizeof(WCHAR));
-		if ((len < (size_t)cchWideChar) && (len > 0) && (lpWideCharStr[len - 1] != '\0'))
+		if ((len < (size_t)cchWideChar) &&
+		    ((len == 0) || ((len > 0) && (lpWideCharStr[len - 1] != '\0'))))
 			lpWideCharStr[len] = '\0';
 		return utf16CharLen;
 	}
