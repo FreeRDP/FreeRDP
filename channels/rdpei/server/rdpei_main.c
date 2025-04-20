@@ -718,7 +718,7 @@ UINT rdpei_server_handle_messages(RdpeiServerContext* context)
 
 		/* header case */
 		Stream_Read_UINT16(s, priv->currentMsgType);
-		Stream_Read_UINT16(s, pduLen);
+		Stream_Read_UINT32(s, pduLen);
 
 		if (pduLen < RDPINPUT_HEADER_LENGTH)
 		{
