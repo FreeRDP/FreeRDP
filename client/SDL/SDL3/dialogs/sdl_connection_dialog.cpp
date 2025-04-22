@@ -63,14 +63,14 @@ bool SDLConnectionDialog::setTitle(const char* fmt, ...)
 	_title = print(fmt, ap);
 	va_end(ap);
 
-	return show(MSG_NONE);
+	return show(SdlConnectionDialogWrapper::MSG_NONE);
 }
 
 bool SDLConnectionDialog::showInfo(const char* fmt, ...)
 {
 	va_list ap = {};
 	va_start(ap, fmt);
-	auto rc = show(MSG_INFO, fmt, ap);
+	auto rc = show(SdlConnectionDialogWrapper::MSG_INFO, fmt, ap);
 	va_end(ap);
 	return rc;
 }
@@ -79,7 +79,7 @@ bool SDLConnectionDialog::showWarn(const char* fmt, ...)
 {
 	va_list ap = {};
 	va_start(ap, fmt);
-	auto rc = show(MSG_WARN, fmt, ap);
+	auto rc = show(SdlConnectionDialogWrapper::MSG_WARN, fmt, ap);
 	va_end(ap);
 	return rc;
 }
@@ -88,7 +88,7 @@ bool SDLConnectionDialog::showError(const char* fmt, ...)
 {
 	va_list ap = {};
 	va_start(ap, fmt);
-	auto rc = show(MSG_ERROR, fmt, ap);
+	auto rc = show(SdlConnectionDialogWrapper::MSG_ERROR, fmt, ap);
 	va_end(ap);
 	if (!rc)
 		return rc;
@@ -104,7 +104,7 @@ bool SDLConnectionDialog::show()
 bool SDLConnectionDialog::hide()
 {
 	std::lock_guard lock(_mux);
-	return show(MSG_DISCARD);
+	return show(SdlConnectionDialogWrapper::MSG_DISCARD);
 }
 
 bool SDLConnectionDialog::running() const
@@ -118,13 +118,13 @@ bool SDLConnectionDialog::update()
 	std::lock_guard lock(_mux);
 	switch (_type)
 	{
-		case MSG_INFO:
-		case MSG_WARN:
-		case MSG_ERROR:
+		case SdlConnectionDialogWrapper::MSG_INFO:
+		case SdlConnectionDialogWrapper::MSG_WARN:
+		case SdlConnectionDialogWrapper::MSG_ERROR:
 			_type_active = _type;
 			createWindow();
 			break;
-		case MSG_DISCARD:
+		case SdlConnectionDialogWrapper::MSG_DISCARD:
 			resetTimer();
 			destroyWindow();
 			break;
@@ -135,7 +135,7 @@ bool SDLConnectionDialog::update()
 			}
 			break;
 	}
-	_type = MSG_NONE;
+	_type = SdlConnectionDialogWrapper::MSG_NONE;
 	return true;
 }
 
@@ -342,16 +342,16 @@ bool SDLConnectionDialog::createWindow()
 	SDL_Color res_bgcolor;
 	switch (_type_active)
 	{
-		case MSG_INFO:
+		case SdlConnectionDialogWrapper::MSG_INFO:
 			res_bgcolor = infocolor;
 			break;
-		case MSG_WARN:
+		case SdlConnectionDialogWrapper::MSG_WARN:
 			res_bgcolor = warncolor;
 			break;
-		case MSG_ERROR:
+		case SdlConnectionDialogWrapper::MSG_ERROR:
 			res_bgcolor = errorcolor;
 			break;
-		case MSG_DISCARD:
+		case SdlConnectionDialogWrapper::MSG_DISCARD:
 		default:
 			res_bgcolor = backgroundcolor;
 			break;
@@ -361,16 +361,16 @@ bool SDLConnectionDialog::createWindow()
 	std::string res_name;
 	switch (_type_active)
 	{
-		case MSG_INFO:
+		case SdlConnectionDialogWrapper::MSG_INFO:
 			res_name = "icon_info.svg";
 			break;
-		case MSG_WARN:
+		case SdlConnectionDialogWrapper::MSG_WARN:
 			res_name = "icon_warning.svg";
 			break;
-		case MSG_ERROR:
+		case SdlConnectionDialogWrapper::MSG_ERROR:
 			res_name = "icon_error.svg";
 			break;
-		case MSG_DISCARD:
+		case SdlConnectionDialogWrapper::MSG_DISCARD:
 		default:
 			res_name = "";
 			break;
@@ -429,14 +429,15 @@ void SDLConnectionDialog::destroyWindow()
 	_window = nullptr;
 }
 
-bool SDLConnectionDialog::show(MsgType type, const char* fmt, va_list ap)
+bool SDLConnectionDialog::show(SdlConnectionDialogWrapper::MsgType type, const char* fmt,
+                               va_list ap)
 {
 	std::lock_guard lock(_mux);
 	_msg = print(fmt, ap);
 	return show(type);
 }
 
-bool SDLConnectionDialog::show(MsgType type)
+bool SDLConnectionDialog::show(SdlConnectionDialogWrapper::MsgType type)
 {
 	_type = type;
 	return sdl_push_user_event(SDL_EVENT_USER_RETRY_DIALOG);

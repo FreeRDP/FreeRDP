@@ -639,7 +639,7 @@ static void sdl_cleanup_sdl(SdlContext* sdl)
 	sdl_destroy_primary(sdl);
 
 	freerdp_del_signal_cleanup_handler(sdl->context(), sdl_term_handler);
-	TTF_Quit();
+	sdl_dialogs_uninit();
 	SDL_Quit();
 }
 
@@ -760,7 +760,8 @@ static int sdl_run(SdlContext* sdl)
 	}
 
 	SDL_Init(SDL_INIT_VIDEO);
-	TTF_Init();
+	sdl_dialogs_init();
+
 	SDL_SetHint(SDL_HINT_ALLOW_ALT_TAB_WHILE_GRABBED, "0");
 	SDL_SetHint(SDL_HINT_VIDEO_X11_NET_WM_BYPASS_COMPOSITOR, "0");
 

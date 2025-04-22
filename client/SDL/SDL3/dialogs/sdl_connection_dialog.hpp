@@ -30,19 +30,11 @@
 
 #include "sdl_widget.hpp"
 #include "sdl_buttons.hpp"
+#include "sdl_connection_dialog_wrapper.hpp"
 
 class SDLConnectionDialog
 {
   public:
-	enum MsgType
-	{
-		MSG_NONE,
-		MSG_INFO,
-		MSG_WARN,
-		MSG_ERROR,
-		MSG_DISCARD
-	};
-
 	explicit SDLConnectionDialog(rdpContext* context);
 	SDLConnectionDialog(const SDLConnectionDialog& other) = delete;
 	SDLConnectionDialog(const SDLConnectionDialog&& other) = delete;
@@ -78,8 +70,8 @@ class SDLConnectionDialog
 
 	bool update(SDL_Renderer* renderer);
 
-	bool show(MsgType type, const char* fmt, va_list ap);
-	bool show(MsgType type);
+	bool show(SdlConnectionDialogWrapper::MsgType type, const char* fmt, va_list ap);
+	bool show(SdlConnectionDialogWrapper::MsgType type);
 
 	static std::string print(const char* fmt, va_list ap);
 	bool setTimer(Uint32 timeoutMS = 15000);
@@ -100,8 +92,8 @@ class SDLConnectionDialog
 	mutable std::mutex _mux;
 	std::string _title;
 	std::string _msg;
-	MsgType _type = MSG_NONE;
-	MsgType _type_active = MSG_NONE;
+	SdlConnectionDialogWrapper::MsgType _type = SdlConnectionDialogWrapper::MSG_NONE;
+	SdlConnectionDialogWrapper::MsgType _type_active = SdlConnectionDialogWrapper::MSG_NONE;
 	SDL_TimerID _timer = 0;
 	bool _running = false;
 	std::vector<widget_cfg_t> _list;

@@ -32,6 +32,7 @@
 #include "sdl_input_widgets.hpp"
 #include "sdl_select.hpp"
 #include "sdl_selectlist.hpp"
+#include "sdl_connection_dialog.hpp"
 
 enum
 {
@@ -615,4 +616,14 @@ BOOL sdl_scard_dialog_show(const char* title, Sint32 count, const char** list)
 	SdlSelectList slist(title, vlist);
 	Sint32 value = slist.run();
 	return sdl_push_user_event(SDL_EVENT_USER_SCARD_RESULT, value);
+}
+
+void sdl_dialogs_uninit()
+{
+	TTF_Quit();
+}
+
+void sdl_dialogs_init()
+{
+	TTF_Init();
 }
