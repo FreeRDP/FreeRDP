@@ -2366,8 +2366,7 @@ BOOL freerdp_settings_set_uint32(WINPR_ATTR_UNUSED rdpSettings* settings,
 			break;
 
 		case FreeRDP_ReceivedCapabilitiesSize:
-			settings->ReceivedCapabilitiesSize = cnv.c;
-			break;
+			return freerdp_capability_buffer_resize(settings, cnv.c);
 
 		case FreeRDP_RedirectedSessionId:
 			settings->RedirectedSessionId = cnv.c;
@@ -2494,8 +2493,7 @@ BOOL freerdp_settings_set_uint32(WINPR_ATTR_UNUSED rdpSettings* settings,
 			break;
 
 		case FreeRDP_TargetNetAddressCount:
-			settings->TargetNetAddressCount = cnv.c;
-			break;
+			return freerdp_target_net_addresses_resize(settings, cnv.c);
 
 		case FreeRDP_TcpAckTimeout:
 			settings->TcpAckTimeout = cnv.c;

@@ -2,6 +2,7 @@
 
 #include <winpr/user.h>
 #include <winpr/crypto.h>
+#include <winpr/json.h>
 
 #include <freerdp/settings.h>
 #include <freerdp/codecs.h>
@@ -256,7 +257,7 @@ static BOOL test_copy(void)
 		goto fail;
 	if (freerdp_settings_print_diff(log, WLOG_WARN, settings, copy))
 		goto fail;
-	if (!freerdp_settings_print_diff(log, WLOG_WARN, settings, modified))
+	if (!freerdp_settings_print_diff(log, WLOG_INFO, settings, modified))
 		goto fail;
 
 	rc = TRUE;
@@ -555,6 +556,16 @@ static BOOL check_key_helpers(size_t key, const char* stype)
 		winpr_RAND(&intEntryType, sizeof(intEntryType));
 		winpr_RAND(&val.u64, sizeof(val.u64));
 
+		switch (key)
+		{
+			case FreeRDP_ReceivedCapabilitiesSize:
+			case FreeRDP_TargetNetAddressCount:
+				val.u64 %= 512;
+				break;
+			default:
+				break;
+		}
+
 		switch (type)
 		{
 			case RDP_SETTINGS_TYPE_BOOL:
@@ -598,8 +609,8 @@ static BOOL check_key_helpers(size_t key, const char* stype)
 		have = freerdp_settings_set_value_for_name(settings, name, value);
 		if (have != expect)
 		{
-			printf("[%s] have[%s] != expect[%s]\n", stype, have ? "TRUE" : "FALSE",
-			       expect ? "TRUE" : "FALSE");
+			printf("[%s] %s=%s have [%s] != expect[%s]\n", stype, name, value,
+			       have ? "TRUE" : "FALSE", expect ? "TRUE" : "FALSE");
 			goto fail;
 		}
 
@@ -1517,6 +1528,342 @@ fail:
 	return rc;
 }
 
+static BOOL test_serialize_with(rdpSettings* src, const char* name)
+{
+	BOOL rc = FALSE;
+	size_t slen = 0;
+	rdpSettings* dst = NULL;
+	char* str = NULL;
+	if (!src)
+		goto fail;
+
+	str = freerdp_settings_serialize(src, TRUE, &slen);
+	if (!str || (slen == 0))
+		goto fail;
+
+	dst = freerdp_settings_deserialize(str, slen);
+	if (!dst)
+		goto fail;
+
+	rc = !freerdp_settings_print_diff(WLog_Get("TestSettings::serialize"), WLOG_WARN, src, dst);
+
+fail:
+	freerdp_settings_free(src);
+	freerdp_settings_free(dst);
+	free(str);
+	printf("Test %s: %s\n", name, rc ? "success" : "failure");
+	return rc;
+}
+
+static BOOL test_serialize_strings(DWORD flags, const char* str)
+{
+	rdpSettings* src = freerdp_settings_new(flags);
+	if (!src)
+		return FALSE;
+
+	for (SSIZE_T x = 0; x < FreeRDP_Settings_StableAPI_MAX; x++)
+	{
+		union
+		{
+			SSIZE_T s;
+			FreeRDP_Settings_Keys_Pointer ptr;
+		} iter;
+		iter.s = x;
+
+		SSIZE_T type = freerdp_settings_get_type_for_key(iter.s);
+		switch (type)
+		{
+			case RDP_SETTINGS_TYPE_STRING:
+				if (!freerdp_settings_set_string(src, iter.ptr, str))
+				{
+					freerdp_settings_free(src);
+					return FALSE;
+				}
+				break;
+			default:
+				break;
+		}
+	}
+
+	char buffer[128] = { 0 };
+	(void)_snprintf(buffer, sizeof(buffer), "%s flags 0x%08" PRIx32 " {%s}", __func__, flags, str);
+	return test_serialize_with(src, buffer);
+}
+
+static BOOL add_argv(rdpSettings* src, size_t argc, const char* argv[])
+{
+	ADDIN_ARGV* val = freerdp_addin_argv_new(argc, argv);
+	if (!val)
+		return FALSE;
+	if (!freerdp_static_channel_collection_add(src, val))
+		return FALSE;
+	if (!freerdp_static_channel_collection_add(src, freerdp_addin_argv_clone(val)))
+		return FALSE;
+	if (!freerdp_dynamic_channel_collection_add(src, freerdp_addin_argv_clone(val)))
+		return FALSE;
+
+	return TRUE;
+}
+
+static BOOL add_dev_argv(rdpSettings* src, size_t argc, const char* argv[])
+{
+	FreeRDP_Settings_Keys_Pointer key = FreeRDP_DeviceArray;
+	size_t count = 6;
+	if (!freerdp_settings_set_pointer_len(src, key, NULL, count))
+		return FALSE;
+
+	const uint32_t types[] = { RDPDR_DTYP_SERIAL, RDPDR_DTYP_PARALLEL, RDPDR_DTYP_PRINT,
+		                       RDPDR_DTYP_FILESYSTEM, RDPDR_DTYP_SMARTCARD };
+
+	for (size_t x = 0; x < count; x++)
+	{
+		const uint32_t type = types[x % ARRAYSIZE(types)];
+		RDPDR_DEVICE* arg = freerdp_device_new(type, argc, argv);
+		if (!arg)
+			return FALSE;
+		const BOOL rc = freerdp_settings_set_pointer_array(src, key, x, arg);
+		freerdp_device_free(arg);
+		if (!rc)
+			return FALSE;
+	}
+	return TRUE;
+}
+
+static BOOL fill_random(rdpSettings* src, FreeRDP_Settings_Keys_Pointer key, size_t elem,
+                        size_t len)
+{
+	if (!freerdp_settings_set_pointer_len(src, key, NULL, len))
+		return FALSE;
+	uint8_t* data = freerdp_settings_get_pointer_writable(src, key);
+	if (!data)
+		return FALSE;
+	winpr_RAND(data, len * elem);
+	return TRUE;
+}
+
+static BOOL fill_random_timezone(rdpSettings* src)
+{
+	FreeRDP_Settings_Keys_Pointer key = FreeRDP_ClientTimeZone;
+	if (!fill_random(src, key, sizeof(TIME_ZONE_INFORMATION), 1))
+		return FALSE;
+
+	TIME_ZONE_INFORMATION* data = freerdp_settings_get_pointer_writable(src, key);
+	if (!data)
+		return FALSE;
+	(void)ConvertUtf8ToWChar("testXXXXDaylight", data->DaylightName, ARRAYSIZE(data->DaylightName));
+	(void)ConvertUtf8ToWChar("testXXXX", data->StandardName, ARRAYSIZE(data->StandardName));
+
+	return TRUE;
+}
+
+static BOOL set_private_key(rdpSettings* src)
+{
+	if (!freerdp_settings_set_pointer_len(src, FreeRDP_RdpServerRsaKey, NULL, 1))
+		return FALSE;
+
+	rdpPrivateKey* key =
+	    freerdp_settings_get_pointer_array_writable(src, FreeRDP_RdpServerRsaKey, 0);
+	if (!key)
+		return FALSE;
+
+	return freerdp_key_generate(key, "RSA", 1, 4096);
+}
+
+static BOOL set_cert(rdpSettings* src, FreeRDP_Settings_Keys_Pointer key)
+{
+	const char pem[] = "-----BEGIN CERTIFICATE-----\n"
+	                   "MIICvTCCAaWgAwIBAgIEZrM9yjANBgkqhkiG9w0BAQsFADAUMRIwEAYDVQQDDAlt\n"
+	                   "b3RvcmhlYWQwHhcNMjUwNDE1MTExMjE5WhcNMjYwNDE1MTExMjE5WjAUMRIwEAYD\n"
+	                   "VQQDDAltb3RvcmhlYWQwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQCw\n"
+	                   "g0tADY3kh5Hi6YsTsQbuaPs50zlTpIv+rCCK3BNIblsIh4cSO1YGdWfB0gP9bUD1\n"
+	                   "L7mPWRnIiAvwrRA/Mgyo+UgiYj/aE3xxN3adB9/QsUzNrI07o6L8MupV4237txMj\n"
+	                   "uxVmarB4c7E4wFgSxwbMQPhQtoNNew3bY+EeqhQBMFfYy4z+rg60xl0QHGcMePY/\n"
+	                   "xz0WMHrIz6FhZfBIr+BGViRtjIchbjcU0HfTSujX+MT0D5MBISe8aiFvrewFItfT\n"
+	                   "vglriDLeNMiB9U/aRLV8OtW+heGNhi5qSC9JXEW70OFeGAoqtwyRHLnSh38Fo2xv\n"
+	                   "fEc90zjkCan8usEDKuzBAgMBAAGjFzAVMBMGA1UdJQQMMAoGCCsGAQUFBwMBMA0G\n"
+	                   "CSqGSIb3DQEBCwUAA4IBAQBY1wkJ6XWduNmTi+UNdcZ5e9GWV/3+SYLtFALwKVrU\n"
+	                   "KQQbsYnGLfyUKXFc7e9JoZ+UCTJgY3EyL+6p79io+cFeTtpp1RVKljibbeRAP01W\n"
+	                   "WbcxcHZFKgBlH1KNSeO7iOAPet3aCaVDKl1XSU7fhxtsfBBI9YTtaMZM5e9WhuHK\n"
+	                   "lL11Un6ePThX+4NG1yYp0X+emqUHd/qaq8IShnU6ajvzoloWGf4vLlDSsuFHJJsK\n"
+	                   "LnshNFOFGAjp1Se4DjhtUSr6Xofdse+kx9cSQazCZ5vFJNeHkxr0B7ojQ4bN37Tg\n"
+	                   "2uyfSclCCLnmjcoRMlIGUiL2bevCPDRNRWiblDgx3tGG\n"
+	                   "-----END CERTIFICATE-----\n";
+
+	rdpCertificate* cert = freerdp_certificate_new_from_pem(pem);
+	if (!cert)
+		return FALSE;
+	return freerdp_settings_set_pointer_len(src, key, cert, 1);
+}
+
+static BOOL set_string_array(rdpSettings* src, FreeRDP_Settings_Keys_Pointer key, uint32_t max)
+{
+	uint32_t count = 0;
+	winpr_RAND(&count, sizeof(count));
+	count = count % max;
+
+	if (!freerdp_settings_set_pointer_len(src, key, NULL, count))
+		return FALSE;
+
+	for (uint32_t x = 0; x < count; x++)
+	{
+		char buffer[32] = { 0 };
+		(void)_snprintf(buffer, sizeof(buffer), "foobar-0x%08" PRIu32, x);
+		if (!freerdp_settings_set_pointer_array(src, key, x, buffer))
+			return FALSE;
+	}
+	return TRUE;
+}
+
+static BOOL test_serialize_pointer(DWORD flags)
+{
+	rdpSettings* src = freerdp_settings_new(flags);
+	if (!src)
+		return FALSE;
+
+	const char* argv1[] = { "foobar", "lala", "haha" };
+	const char* argv2[] = { "lala", "haha" };
+	const char* argv3[] = { "haha" };
+	if (!add_argv(src, ARRAYSIZE(argv1), argv1))
+		goto fail;
+	if (!add_argv(src, ARRAYSIZE(argv2), argv2))
+		goto fail;
+	if (!add_argv(src, ARRAYSIZE(argv3), argv3))
+		goto fail;
+	if (!add_dev_argv(src, ARRAYSIZE(argv3), argv3))
+		goto fail;
+
+	struct key_len_pair
+	{
+		FreeRDP_Settings_Keys_Pointer key;
+		size_t elem;
+		size_t len;
+	};
+
+	const struct key_len_pair keys[] = {
+		{ FreeRDP_ServerRandom, 1, 123 },
+		{ FreeRDP_RedirectionPassword, 1, 13 },
+		{ FreeRDP_ClientRandom, 1, 23 },
+		{ FreeRDP_RedirectionGuid, 1, 22 },
+		{ FreeRDP_LoadBalanceInfo, 1, 21 },
+		{ FreeRDP_ServerCertificate, 1, 512 },
+		{ FreeRDP_RedirectionTsvUrl, 1, 33 },
+		{ FreeRDP_GlyphCache, sizeof(GLYPH_CACHE_DEFINITION), 10 },
+		{ FreeRDP_FragCache, sizeof(GLYPH_CACHE_DEFINITION), 1 },
+		{ FreeRDP_BitmapCacheV2CellInfo, sizeof(BITMAP_CACHE_V2_CELL_INFO), 1 },
+		{ FreeRDP_OrderSupport, 1, 32 },
+		{ FreeRDP_ClientAutoReconnectCookie, sizeof(ARC_CS_PRIVATE_PACKET), 1 },
+		{ FreeRDP_ServerAutoReconnectCookie, sizeof(ARC_SC_PRIVATE_PACKET), 1 },
+		{ FreeRDP_Password51, 1, 54 },
+		{ FreeRDP_MonitorIds, 1, 111 },
+		{ FreeRDP_MonitorDefArray, 1, 7 },
+		{ FreeRDP_ChannelDefArray, 1, 31 },
+		{ FreeRDP_ReceivedCapabilities, sizeof(uint8_t), 33 },
+		{ FreeRDP_ReceivedCapabilityData, sizeof(uint8_t*), 33 },
+		{ FreeRDP_ReceivedCapabilityDataSizes, sizeof(UINT32), 33 }
+	};
+
+	for (size_t x = 0; x < ARRAYSIZE(keys); x++)
+	{
+		const struct key_len_pair* cur = &keys[x];
+		if (!fill_random(src, cur->key, cur->elem, cur->len))
+			goto fail;
+	}
+
+	if (!fill_random_timezone(src))
+		goto fail;
+
+	void* ptr = NULL;
+	winpr_RAND((void*)&ptr, sizeof(void*));
+	if (!freerdp_settings_set_pointer(src, FreeRDP_instance, ptr))
+		return FALSE;
+
+	if (!set_private_key(src))
+		goto fail;
+	if (!set_cert(src, FreeRDP_RedirectionTargetCertificate))
+		goto fail;
+	if (!set_cert(src, FreeRDP_RdpServerCertificate))
+		goto fail;
+
+	if (!set_string_array(src, FreeRDP_ServerLicenseProductIssuers, 43))
+		goto fail;
+
+	char addresses[12][43] = { 0 };
+	char* strptr[12] = { 0 };
+
+	for (size_t x = 0; x < ARRAYSIZE(addresses); x++)
+	{
+		(void)_snprintf(addresses[x], 43, "foobar-0x%08" PRIx32, x);
+		strptr[x] = addresses[x];
+	}
+
+	if (!freerdp_target_net_addresses_copy(src, strptr, ARRAYSIZE(addresses)))
+		goto fail;
+
+	for (size_t x = 0; x < ARRAYSIZE(addresses); x++)
+	{
+		uint32_t port = 0;
+		winpr_RAND(&port, sizeof(port));
+		if (!freerdp_settings_set_pointer_array(src, FreeRDP_TargetNetPorts, x, &port))
+			goto fail;
+	}
+
+	uint32_t count = freerdp_settings_get_uint32(src, FreeRDP_ReceivedCapabilitiesSize);
+	if (count != 33)
+		goto fail;
+
+	void* caps = freerdp_settings_get_pointer_writable(src, FreeRDP_ReceivedCapabilities);
+	if (!caps)
+		goto fail;
+	winpr_RAND(caps, count);
+
+	for (uint32_t x = 0; x < count; x++)
+	{
+		uint8_t* buffer = calloc(64, sizeof(uint8_t));
+		if (!buffer)
+			goto fail;
+		winpr_RAND(buffer, sizeof(buffer));
+		uint32_t blen = (buffer[0] % 52) + 13;
+
+		if (!freerdp_settings_set_pointer_array(src, FreeRDP_ReceivedCapabilityData, x, buffer))
+			goto fail;
+		if (!freerdp_settings_set_pointer_array(src, FreeRDP_ReceivedCapabilityDataSizes, x, &blen))
+			goto fail;
+	}
+
+	char buffer[128] = { 0 };
+	(void)_snprintf(buffer, sizeof(buffer), "%s flags 0x%08" PRIx32, __func__, flags);
+	return test_serialize_with(src, buffer);
+fail:
+	printf("Test %s: (pre)failure\n", __func__);
+	freerdp_settings_free(src);
+	return FALSE;
+}
+
+static BOOL test_serialize(void)
+{
+	if (WINPR_JSON_version(NULL, 0) < 0)
+		return TRUE;
+
+	for (uint32_t flags = 0; flags <= (FREERDP_SETTINGS_SERVER_MODE | FREERDP_SETTINGS_REMOTE_MODE);
+	     flags++)
+	{
+		char buffer[32] = { 0 };
+		(void)_snprintf(buffer, sizeof(buffer), "default (flags 0x%08" PRIx32 ")", flags);
+		if (!test_serialize_with(freerdp_settings_new(flags), buffer))
+			return FALSE;
+		if (!test_serialize_strings(flags, "foobar"))
+			return FALSE;
+		if (!test_serialize_strings(flags, ""))
+			return FALSE;
+		if (!test_serialize_strings(flags, NULL))
+			return FALSE;
+		if (!test_serialize_pointer(flags))
+			return FALSE;
+	}
+
+	return TRUE;
+}
+
 int TestSettings(int argc, char* argv[])
 {
 	int rc = -1;
@@ -1526,6 +1873,8 @@ int TestSettings(int argc, char* argv[])
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
 
+	if (!test_serialize())
+		goto fail;
 	if (!test_dyn_channels())
 		goto fail;
 	if (!test_static_channels())

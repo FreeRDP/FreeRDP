@@ -255,7 +255,7 @@ static BOOL wf_peer_read_settings(freerdp_peer* client)
 	                                   &(PrivateKeyFile)))
 		PrivateKeyFile = _strdup("server.key");
 
-	rdpPrivateKey* key = freerdp_key_new_from_file(PrivateKeyFile);
+	rdpPrivateKey* key = freerdp_key_new_from_file_enc(PrivateKeyFile, NULL);
 	free(PrivateKeyFile);
 
 	if (!key)

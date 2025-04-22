@@ -586,7 +586,7 @@ int aad_recv(rdpAad* aad, wStream* s)
 static BOOL generate_rsa_2048(rdpAad* aad)
 {
 	WINPR_ASSERT(aad);
-	return freerdp_key_generate(aad->key, 2048);
+	return freerdp_key_generate(aad->key, "RSA", 1, 2048);
 }
 
 static char* generate_rsa_digest_base64_str(rdpAad* aad, const char* input, size_t ilen)

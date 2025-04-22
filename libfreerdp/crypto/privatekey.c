@@ -37,6 +37,7 @@
 #include <openssl/pem.h>
 #include <openssl/rsa.h>
 #include <openssl/bn.h>
+#include <openssl/err.h>
 
 #include "privatekey.h"
 #include "cert_common.h"
@@ -118,7 +119,8 @@ fail:
 }
 #endif
 
-static EVP_PKEY* evp_pkey_utils_from_pem(const char* data, size_t len, BOOL fromFile)
+static EVP_PKEY* evp_pkey_utils_from_pem(const char* data, size_t len, BOOL fromFile,
+                                         const char* password)
 {
 	EVP_PKEY* evp = NULL;
 	BIO* bio = NULL;
@@ -137,7 +139,7 @@ static EVP_PKEY* evp_pkey_utils_from_pem(const char* data, size_t len, BOOL from
 		return NULL;
 	}
 
-	evp = PEM_read_bio_PrivateKey(bio, NULL, NULL, 0);
+	evp = PEM_read_bio_PrivateKey(bio, NULL, NULL, WINPR_CAST_CONST_PTR_AWAY(password, void*));
 	BIO_free_all(bio);
 	if (!evp)
 		WLog_ERR(TAG, "PEM_read_bio_PrivateKey returned NULL [input length %" PRIuz "]", len);
@@ -227,10 +229,15 @@ fail:
 
 rdpPrivateKey* freerdp_key_new_from_pem(const char* pem)
 {
+	return freerdp_key_new_from_pem_enc(pem, NULL);
+}
+
+rdpPrivateKey* freerdp_key_new_from_pem_enc(const char* pem, const char* password)
+{
 	rdpPrivateKey* key = freerdp_key_new();
 	if (!key || !pem)
 		goto fail;
-	key->evp = evp_pkey_utils_from_pem(pem, strlen(pem), FALSE);
+	key->evp = evp_pkey_utils_from_pem(pem, strlen(pem), FALSE, password);
 	if (!key->evp)
 		goto fail;
 	if (!key_read_private(key))
@@ -243,12 +250,16 @@ fail:
 
 rdpPrivateKey* freerdp_key_new_from_file(const char* keyfile)
 {
+	return freerdp_key_new_from_file_enc(keyfile, NULL);
+}
 
+rdpPrivateKey* freerdp_key_new_from_file_enc(const char* keyfile, const char* password)
+{
 	rdpPrivateKey* key = freerdp_key_new();
 	if (!key || !keyfile)
 		goto fail;
 
-	key->evp = evp_pkey_utils_from_pem(keyfile, strlen(keyfile), TRUE);
+	key->evp = evp_pkey_utils_from_pem(keyfile, strlen(keyfile), TRUE, password);
 	if (!key->evp)
 		goto fail;
 	if (!key_read_private(key))
@@ -378,9 +389,29 @@ size_t freerdp_key_get_bits(const rdpPrivateKey* key)
 	return WINPR_ASSERTING_INT_CAST(size_t, rc);
 }
 
-BOOL freerdp_key_generate(rdpPrivateKey* key, size_t key_length)
+BOOL freerdp_key_generate(rdpPrivateKey* key, const char* type, size_t count, ...)
 {
 	BOOL rc = FALSE;
+
+	if (!type)
+	{
+		WLog_ERR(TAG, "Invalid argument type=%s", type);
+		return FALSE;
+	}
+	if (strncmp("RSA", type, 4) != 0)
+	{
+		WLog_ERR(TAG, "Argument type=%s is currently not supported, aborting", type);
+		return FALSE;
+	}
+	if (count != 1)
+	{
+		WLog_ERR(TAG, "Argument type=%s requires count=1, got %" PRIuz ", aborting", type, count);
+		return FALSE;
+	}
+	va_list ap;
+	va_start(ap, count);
+	const int key_length = va_arg(ap, int);
+	va_end(ap);
 
 #if !defined(OPENSSL_VERSION_MAJOR) || (OPENSSL_VERSION_MAJOR < 3)
 	RSA* rsa = NULL;
@@ -423,7 +454,7 @@ BOOL freerdp_key_generate(rdpPrivateKey* key, size_t key_length)
 
 	rc = TRUE;
 #else
-	EVP_PKEY_CTX* pctx = EVP_PKEY_CTX_new_from_name(NULL, "RSA", NULL);
+	EVP_PKEY_CTX* pctx = EVP_PKEY_CTX_new_from_name(NULL, type, NULL);
 	if (!pctx)
 		return FALSE;
 
@@ -433,7 +464,7 @@ BOOL freerdp_key_generate(rdpPrivateKey* key, size_t key_length)
 	if (key_length > INT_MAX)
 		goto fail;
 
-	if (EVP_PKEY_CTX_set_rsa_keygen_bits(pctx, (int)key_length) != 1)
+	if (EVP_PKEY_CTX_set_rsa_keygen_bits(pctx, key_length) != 1)
 		goto fail;
 
 	EVP_PKEY_free(key->evp);
@@ -549,4 +580,102 @@ WINPR_DIGEST_CTX* freerdp_key_digest_sign(rdpPrivateKey* key, WINPR_MD_TYPE dige
 		return NULL;
 	}
 	return md_ctx;
+}
+
+static BOOL bio_read_pem(BIO* bio, char** ppem, size_t* plength)
+{
+	BOOL rc = FALSE;
+
+	WINPR_ASSERT(bio);
+	WINPR_ASSERT(ppem);
+
+	const size_t blocksize = 2048;
+	size_t offset = 0;
+	size_t length = blocksize;
+	char* pem = NULL;
+
+	*ppem = NULL;
+	if (plength)
+		*plength = 0;
+
+	while (offset < length)
+	{
+		char* tmp = realloc(pem, length + 1);
+		if (!tmp)
+			goto fail;
+		pem = tmp;
+
+		ERR_clear_error();
+
+		const int status = BIO_read(bio, &pem[offset], (int)(length - offset));
+		if (status < 0)
+		{
+			WLog_ERR(TAG, "failed to read certificate");
+			goto fail;
+		}
+
+		if (status == 0)
+			break;
+
+		offset += (size_t)status;
+		if (length - offset > 0)
+			break;
+		length += blocksize;
+	}
+
+	if (pem)
+	{
+		if (offset >= length)
+			goto fail;
+		pem[offset] = '\0';
+	}
+	*ppem = pem;
+	if (plength)
+		*plength = offset;
+	rc = TRUE;
+fail:
+	if (!rc)
+		free(pem);
+
+	return rc;
+}
+
+char* freerdp_key_get_pem(const rdpPrivateKey* key, size_t* plen, const char* password)
+{
+	WINPR_ASSERT(key);
+
+	if (!key->evp)
+		return NULL;
+
+	/**
+	 * Don't manage certificates internally, leave it up entirely to the external client
+	 * implementation
+	 */
+	BIO* bio = BIO_new(BIO_s_mem());
+
+	if (!bio)
+	{
+		WLog_ERR(TAG, "BIO_new() failure");
+		return NULL;
+	}
+
+	char* pem = NULL;
+
+	const EVP_CIPHER* enc = NULL;
+	if (password)
+		enc = EVP_aes_256_cbc_hmac_sha256();
+
+	const int status = PEM_write_bio_PrivateKey(bio, key->evp, enc, NULL, 0, 0,
+	                                            WINPR_CAST_CONST_PTR_AWAY(password, void*));
+	if (status < 0)
+	{
+		WLog_ERR(TAG, "PEM_write_bio_PrivateKey failure: %d", status);
+		goto fail;
+	}
+
+	(void)bio_read_pem(bio, &pem, plen);
+
+fail:
+	BIO_free_all(bio);
+	return pem;
 }

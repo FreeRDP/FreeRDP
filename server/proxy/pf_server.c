@@ -480,7 +480,7 @@ static BOOL pf_server_initialize_peer_connection(freerdp_peer* peer)
 	pdata->module = server->module;
 	const proxyConfig* config = pdata->config = server->config;
 
-	rdpPrivateKey* key = freerdp_key_new_from_pem(config->PrivateKeyPEM);
+	rdpPrivateKey* key = freerdp_key_new_from_pem_enc(config->PrivateKeyPEM, NULL);
 	if (!key)
 		return FALSE;
 

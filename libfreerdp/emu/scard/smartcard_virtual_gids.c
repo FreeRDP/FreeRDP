@@ -1499,7 +1499,7 @@ BOOL vgids_init(vgidsContext* ctx, const char* cert, const char* privateKey, con
 	if (!ctx->certificate)
 		goto init_failed;
 
-	ctx->privateKey = freerdp_key_new_from_pem(privateKey);
+	ctx->privateKey = freerdp_key_new_from_pem_enc(privateKey, NULL);
 	if (!ctx->privateKey)
 		goto init_failed;
 

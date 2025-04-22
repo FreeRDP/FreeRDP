@@ -773,6 +773,28 @@ extern "C"
 	                                                               const rdpMonitor* monitors,
 	                                                               size_t count);
 
+	/** @brief A function that converts a \b rdpSettings struct to a \b JSON serialized string.
+	 *
+	 *  @param settings The settings instance to serialize
+	 *  @param pretty Format the resulting \b JSON human readable
+	 *  @param plength An optional pointer that receives the length (strlen) of the returned string.
+	 *  @return A \b JSON string representing the serialized form of the \b rdpSettings or \b NULL
+	 * in case of an error.
+	 *  @since version 3.16.0
+	 */
+	FREERDP_API char* freerdp_settings_serialize(const rdpSettings* settings, BOOL pretty,
+	                                             size_t* plength);
+
+	/** @brief A function that converts a \b JSON string to a \b rdpSettings struct
+	 *
+	 *  @param json The \b JSON string
+	 *  @param length The strlen of the \b JSON string
+	 *  @return An allocated \b rdpSettings struct or \b NULL in case of an error
+	 *  @since version 3.16.0
+	 */
+	WINPR_ATTR_MALLOC(freerdp_settings_free, 1)
+	FREERDP_API rdpSettings* freerdp_settings_deserialize(const char* json, size_t length);
+
 #ifdef __cplusplus
 }
 #endif

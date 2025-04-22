@@ -104,7 +104,8 @@ int WINPR_JSON_version(char* buffer, size_t len)
 #elif defined(WITH_CJSON)
 	return _snprintf(buffer, len, "cJSON %s", cJSON_Version());
 #else
-	return _snprintf(buffer, len, "JSON support not available");
+	(void)_snprintf(buffer, len, "JSON support not available");
+	return -1;
 #endif
 }
 
