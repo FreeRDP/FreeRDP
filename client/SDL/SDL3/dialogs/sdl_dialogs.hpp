@@ -51,3 +51,6 @@ BOOL sdl_message_dialog_show(const char* title, const char* message, Sint32 flag
 BOOL sdl_cert_dialog_show(const char* title, const char* message);
 BOOL sdl_scard_dialog_show(const char* title, Sint32 count, const char** list);
 BOOL sdl_auth_dialog_show(const SDL_UserAuthArg* args);
+
+void sdl_dialogs_init();
+void sdl_dialogs_uninit();

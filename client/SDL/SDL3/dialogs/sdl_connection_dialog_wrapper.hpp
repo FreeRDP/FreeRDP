@@ -25,14 +25,26 @@
 #include <string>
 
 #include <winpr/platform.h>
+#include <freerdp/types.h>
 
-#include "sdl_connection_dialog.hpp"
+#include <SDL3/SDL.h>
+
+class SDLConnectionDialog;
 
 class SdlConnectionDialogWrapper
 {
   public:
-	SdlConnectionDialogWrapper() = default;
-	~SdlConnectionDialogWrapper() = default;
+	enum MsgType
+	{
+		MSG_NONE,
+		MSG_INFO,
+		MSG_WARN,
+		MSG_ERROR,
+		MSG_DISCARD
+	};
+
+	SdlConnectionDialogWrapper();
+	~SdlConnectionDialogWrapper();
 
 	SdlConnectionDialogWrapper(const SdlConnectionDialogWrapper& other) = delete;
 	SdlConnectionDialogWrapper(SdlConnectionDialogWrapper&& other) = delete;
@@ -64,7 +76,7 @@ class SdlConnectionDialogWrapper
 	void showError(WINPR_FORMAT_ARG const char* fmt, ...);
 	void showError(const std::string& error);
 
-	void show(SDLConnectionDialog::MsgType type, const std::string& msg);
+	void show(SdlConnectionDialogWrapper::MsgType type, const std::string& msg);
 
 	void show(bool visible = true);
 
@@ -75,6 +87,6 @@ class SdlConnectionDialogWrapper
 	std::string _title;
 	std::string _message;
 	bool _visible = false;
-	SDLConnectionDialog::MsgType _type = SDLConnectionDialog::MSG_NONE;
+	SdlConnectionDialogWrapper::MsgType _type = SdlConnectionDialogWrapper::MSG_NONE;
 	std::unique_ptr<SDLConnectionDialog> _connection_dialog;
 };

@@ -22,6 +22,10 @@
 #include "sdl_connection_dialog.hpp"
 #include "../sdl_utils.hpp"
 
+SdlConnectionDialogWrapper::SdlConnectionDialogWrapper() = default;
+
+SdlConnectionDialogWrapper::~SdlConnectionDialogWrapper() = default;
+
 void SdlConnectionDialogWrapper::create(rdpContext* context)
 {
 	std::unique_lock lock(_mux);
@@ -106,7 +110,7 @@ void SdlConnectionDialogWrapper::showInfo(const char* fmt, ...)
 
 void SdlConnectionDialogWrapper::showInfo(const std::string& info)
 {
-	show(SDLConnectionDialog::MSG_INFO, info);
+	show(MSG_INFO, info);
 }
 
 void SdlConnectionDialogWrapper::showWarn(const char* fmt, ...)
@@ -119,7 +123,7 @@ void SdlConnectionDialogWrapper::showWarn(const char* fmt, ...)
 
 void SdlConnectionDialogWrapper::showWarn(const std::string& info)
 {
-	show(SDLConnectionDialog::MSG_WARN, info);
+	show(MSG_WARN, info);
 }
 
 void SdlConnectionDialogWrapper::showError(const char* fmt, ...)
@@ -132,10 +136,11 @@ void SdlConnectionDialogWrapper::showError(const char* fmt, ...)
 
 void SdlConnectionDialogWrapper::showError(const std::string& error)
 {
-	show(SDLConnectionDialog::MSG_ERROR, error);
+	show(MSG_ERROR, error);
 }
 
-void SdlConnectionDialogWrapper::show(SDLConnectionDialog::MsgType type, const std::string& msg)
+void SdlConnectionDialogWrapper::show(SdlConnectionDialogWrapper::MsgType type,
+                                      const std::string& msg)
 {
 	std::unique_lock lock(_mux);
 	_message = msg;
@@ -166,13 +171,13 @@ void SdlConnectionDialogWrapper::handleShow()
 
 	switch (_type)
 	{
-		case SDLConnectionDialog::MSG_INFO:
+		case SdlConnectionDialogWrapper::MSG_INFO:
 			_connection_dialog->showInfo(_message.c_str());
 			break;
-		case SDLConnectionDialog::MSG_WARN:
+		case SdlConnectionDialogWrapper::MSG_WARN:
 			_connection_dialog->showWarn(_message.c_str());
 			break;
-		case SDLConnectionDialog::MSG_ERROR:
+		case SdlConnectionDialogWrapper::MSG_ERROR:
 			_connection_dialog->showError(_message.c_str());
 			break;
 		default:
