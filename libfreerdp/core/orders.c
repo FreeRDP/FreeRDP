@@ -3808,21 +3808,18 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 	rdp_update_internal* up = update_cast(update);
 	rdpContext* context = update->context;
 	rdp_primary_update_internal* primary = primary_update_cast(update->primary);
-	ORDER_INFO* orderInfo = NULL;
-	rdpSettings* settings = NULL;
-	const char* orderName = NULL;
-	BOOL defaultReturn = 0;
 
 	WINPR_ASSERT(s);
 
-	orderInfo = &(primary->order_info);
+	ORDER_INFO* orderInfo = &(primary->order_info);
 	WINPR_ASSERT(orderInfo);
 	WINPR_ASSERT(context);
 
-	settings = context->settings;
+	const rdpSettings* settings = context->settings;
 	WINPR_ASSERT(settings);
 
-	defaultReturn = freerdp_settings_get_bool(settings, FreeRDP_DeactivateClientDecoding);
+	const BOOL defaultReturn =
+	    freerdp_settings_get_bool(settings, FreeRDP_DeactivateClientDecoding);
 
 	if (flags & ORDER_TYPE_CHANGE)
 	{
@@ -3832,7 +3829,7 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 		Stream_Read_UINT8(s, orderInfo->orderType); /* orderType (1 byte) */
 	}
 
-	orderName = primary_order_string(orderInfo->orderType);
+	const char* orderName = primary_order_string(orderInfo->orderType);
 	WLog_Print(up->log, WLOG_DEBUG, "%s %s", primary_order_str, orderName);
 
 	if (!check_primary_order_supported(up->log, settings, orderInfo->orderType, orderName))
