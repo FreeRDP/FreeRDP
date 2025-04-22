@@ -248,8 +248,9 @@ void GetSystemTime(LPSYSTEMTIME lpSystemTime)
 	struct tm tres;
 	struct tm* stm = NULL;
 	WORD wMilliseconds = 0;
-	ct = time(NULL);
-	wMilliseconds = (WORD)(GetTickCount() % 1000);
+	UINT64 now = winpr_GetUnixTimeNS();
+	ct = WINPR_TIME_NS_TO_S(now);
+	wMilliseconds = (WORD)(WINPR_TIME_NS_REM_MS(now));
 	stm = gmtime_r(&ct, &tres);
 	ZeroMemory(lpSystemTime, sizeof(SYSTEMTIME));
 
@@ -279,8 +280,9 @@ VOID GetLocalTime(LPSYSTEMTIME lpSystemTime)
 	struct tm tres;
 	struct tm* ltm = NULL;
 	WORD wMilliseconds = 0;
-	ct = time(NULL);
-	wMilliseconds = (WORD)(GetTickCount() % 1000);
+	UINT64 now = winpr_GetUnixTimeNS();
+	ct = WINPR_TIME_NS_TO_S(now);
+	wMilliseconds = (WORD)(WINPR_TIME_NS_REM_MS(now));
 	ltm = localtime_r(&ct, &tres);
 	ZeroMemory(lpSystemTime, sizeof(SYSTEMTIME));
 
