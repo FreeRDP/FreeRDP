@@ -925,7 +925,7 @@ static BOOL shadow_server_init_certificate(rdpShadowServer* server)
 	rdpSettings* settings = server->settings;
 	WINPR_ASSERT(settings);
 
-	rdpPrivateKey* key = freerdp_key_new_from_file(server->PrivateKeyFile);
+	rdpPrivateKey* key = freerdp_key_new_from_file_enc(server->PrivateKeyFile, NULL);
 	if (!key)
 		goto out_fail;
 	if (!freerdp_settings_set_pointer_len(settings, FreeRDP_RdpServerRsaKey, key, 1))

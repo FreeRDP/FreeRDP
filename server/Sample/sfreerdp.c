@@ -1115,7 +1115,7 @@ static DWORD WINAPI test_peer_mainloop(LPVOID arg)
 			goto fail;
 	}
 
-	rdpPrivateKey* key = freerdp_key_new_from_file(info->key);
+	rdpPrivateKey* key = freerdp_key_new_from_file_enc(info->key, NULL);
 	if (!key)
 		goto fail;
 	if (!freerdp_settings_set_pointer_len(settings, FreeRDP_RdpServerRsaKey, key, 1))
