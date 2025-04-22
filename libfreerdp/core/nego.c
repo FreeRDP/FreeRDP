@@ -1258,18 +1258,30 @@ BOOL nego_process_negotiation_request(rdpNego* nego, wStream* s)
 
 	if (flags & REDIRECTED_AUTHENTICATION_MODE_REQUIRED)
 	{
-		if (!nego->RemoteCredsGuardSupported)
-		{
-			WLog_Print(nego->log, WLOG_ERROR,
-			           "RDP_NEG_REQ::flags REDIRECTED_AUTHENTICATION_MODE_REQUIRED but disabled");
-			return FALSE;
-		}
-		else
+		if (nego->RemoteCredsGuardSupported)
 		{
 			WLog_Print(nego->log, WLOG_INFO,
 			           "RDP_NEG_REQ::flags REDIRECTED_AUTHENTICATION_MODE_REQUIRED");
+			nego->RemoteCredsGuardActive = TRUE;
 		}
-		nego->RemoteCredsGuardActive = TRUE;
+		else
+		{
+			/* If both RESTRICTED_ADMIN_MODE_REQUIRED and REDIRECTED_AUTHENTICATION_MODE_REQUIRED
+			 * are set, it means one or the other. In this case, don't fail if Remote Guard isn't
+			 * available. */
+			if (flags & RESTRICTED_ADMIN_MODE_REQUIRED)
+			{
+				WLog_Print(nego->log, WLOG_INFO,
+				           "RDP_NEG_REQ::flags REDIRECTED_AUTHENTICATION_MODE_REQUIRED ignored.");
+			}
+			else
+			{
+				WLog_Print(
+				    nego->log, WLOG_ERROR,
+				    "RDP_NEG_REQ::flags REDIRECTED_AUTHENTICATION_MODE_REQUIRED but disabled");
+				return FALSE;
+			}
+		}
 	}
 
 	Stream_Read_UINT16(s, length);
