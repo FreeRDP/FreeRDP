@@ -1718,7 +1718,7 @@ static BOOL test_serialize_pointer(DWORD flags)
 {
 	rdpSettings* src = freerdp_settings_new(flags);
 	if (!src)
-		return FALSE;
+		goto fail;
 
 	const char* argv1[] = { "foobar", "lala", "haha" };
 	const char* argv2[] = { "lala", "haha" };
@@ -1775,7 +1775,7 @@ static BOOL test_serialize_pointer(DWORD flags)
 	void* ptr = NULL;
 	winpr_RAND((void*)&ptr, sizeof(void*));
 	if (!freerdp_settings_set_pointer(src, FreeRDP_instance, ptr))
-		return FALSE;
+		goto fail;
 
 	if (!set_private_key(src))
 		goto fail;
