@@ -3573,11 +3573,11 @@ static BOOL serialize_pointer(const rdpSettings* settings, WINPR_JSON* json,
 		}
 		case FreeRDP_ClientAutoReconnectCookie:
 		{
-			return client_cookie_array_to_json(jval, val, val ? 1 : 0);
+			return client_cookie_array_to_json(jval, val, 1);
 		}
 		case FreeRDP_ServerAutoReconnectCookie:
 		{
-			return server_cookie_array_to_json(jval, val, val ? 1 : 0);
+			return server_cookie_array_to_json(jval, val, 1);
 		}
 		case FreeRDP_Password51:
 		{
