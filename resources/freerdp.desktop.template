@@ -9,6 +9,5 @@ Terminal=true
 Type=Application
 Keywords=remote desktop;rdp;
 Categories=GTK;GNOME;X-GNOME-NetworkSettings;Network;
-MimeType=x-scheme-handler/rdp;
 StartupNotify=true
 StartupWMClass=com.freerdp.FreeRDP
