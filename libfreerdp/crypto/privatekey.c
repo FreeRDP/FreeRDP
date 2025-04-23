@@ -461,9 +461,6 @@ BOOL freerdp_key_generate(rdpPrivateKey* key, const char* type, size_t count, ..
 	if (EVP_PKEY_keygen_init(pctx) != 1)
 		goto fail;
 
-	if (key_length > INT_MAX)
-		goto fail;
-
 	if (EVP_PKEY_CTX_set_rsa_keygen_bits(pctx, key_length) != 1)
 		goto fail;
 
