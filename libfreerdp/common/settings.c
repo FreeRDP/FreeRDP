@@ -2616,7 +2616,8 @@ static BOOL add_string_or_null(WINPR_JSON* json, const char* key, const char* va
 	if (value)
 		return WINPR_JSON_AddStringToObject(json, key, value) != NULL;
 
-	return WINPR_JSON_AddNullToObject(json, key) != NULL;
+	(void)WINPR_JSON_AddNullToObject(json, key);
+	return TRUE;
 }
 
 static WINPR_JSON* json_from_device_item(const RDPDR_DEVICE* val)
