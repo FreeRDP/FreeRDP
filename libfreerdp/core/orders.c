@@ -268,7 +268,7 @@ static BYTE get_bpp_bmf(UINT32 bpp, BOOL* pValid)
 	}
 }
 
-static BOOL check_order_activated(wLog* log, rdpSettings* settings, const char* orderName,
+static BOOL check_order_activated(wLog* log, const rdpSettings* settings, const char* orderName,
                                   BOOL condition, const char* extendedMessage)
 {
 	if (!condition)
@@ -407,7 +407,7 @@ static BOOL check_secondary_order_supported(wLog* log, rdpSettings* settings, BY
 	return check_order_activated(log, settings, orderName, condition, extendedMessage);
 }
 
-static BOOL check_primary_order_supported(wLog* log, rdpSettings* settings, UINT32 orderType,
+static BOOL check_primary_order_supported(wLog* log, const rdpSettings* settings, UINT32 orderType,
                                           const char* orderName)
 {
 	const char* extendedMessage = NULL;
