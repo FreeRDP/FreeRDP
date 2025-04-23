@@ -1445,7 +1445,7 @@ BOOL gcc_write_client_core_data(wStream* s, const rdpMcs* mcs)
 	if (!gcc_write_user_data_header(s, CS_CORE, 234))
 		return FALSE;
 
-	Stream_Write_UINT32(s, settings->RdpVersion);    /* Version */
+	Stream_Write_UINT32(s, settings->RdpVersion); /* Version */
 	Stream_Write_UINT16(
 	    s, WINPR_ASSERTING_INT_CAST(uint16_t, settings->DesktopWidth)); /* DesktopWidth */
 	Stream_Write_UINT16(
@@ -2170,7 +2170,7 @@ BOOL gcc_read_client_monitor_data(wStream* s, rdpMcs* mcs)
 		const INT32 bottom = Stream_Get_INT32(s);  /* bottom */
 		const UINT32 flags = Stream_Get_UINT32(s); /* flags */
 
-		if ((left > right) || (bottom > top))
+		if ((left > right) || (top > bottom))
 			return FALSE;
 
 		const INT64 w = right - left;
@@ -2242,11 +2242,11 @@ BOOL gcc_write_client_monitor_data(wStream* s, const rdpMcs* mcs)
 			         "Monitor[%" PRIu32 "]: top=%" PRId32 ", left=%" PRId32 ", bottom=%" PRId32
 			         ", right=%" PRId32 ", flags=%" PRIu32,
 			         i, top, left, bottom, right, flags);
-			Stream_Write_INT32(s, left);    /* left */
-			Stream_Write_INT32(s, top);     /* top */
-			Stream_Write_INT32(s, right);   /* right */
-			Stream_Write_INT32(s, bottom);  /* bottom */
-			Stream_Write_UINT32(s, flags);  /* flags */
+			Stream_Write_INT32(s, left);   /* left */
+			Stream_Write_INT32(s, top);    /* top */
+			Stream_Write_INT32(s, right);  /* right */
+			Stream_Write_INT32(s, bottom); /* bottom */
+			Stream_Write_UINT32(s, flags); /* flags */
 		}
 	}
 	WLog_DBG(TAG, "FINISHED");
