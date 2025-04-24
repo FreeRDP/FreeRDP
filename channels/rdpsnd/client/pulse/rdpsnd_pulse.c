@@ -46,6 +46,8 @@ typedef struct
 	rdpsndDevicePlugin device;
 
 	char* device_name;
+	char* client_name;
+	char* stream_name;
 	pa_threaded_mainloop* mainloop;
 	pa_context* context;
 	pa_sample_spec sample_spec;
@@ -341,8 +343,10 @@ static BOOL rdpsnd_pulse_set_format_spec(rdpsndPulsePlugin* pulse, const AUDIO_F
 static BOOL rdpsnd_pulse_context_connect(rdpsndDevicePlugin* device)
 {
 	rdpsndPulsePlugin* pulse = (rdpsndPulsePlugin*)device;
+	WINPR_ASSERT(pulse);
 
-	pulse->context = pa_context_new(pa_threaded_mainloop_get_api(pulse->mainloop), "freerdp");
+	pulse->context =
+	    pa_context_new(pa_threaded_mainloop_get_api(pulse->mainloop), pulse->client_name);
 
 	if (!pulse->context)
 		return FALSE;
@@ -362,6 +366,7 @@ static BOOL rdpsnd_pulse_open_stream(rdpsndDevicePlugin* device)
 	pa_buffer_attr buffer_attr = { 0 };
 	char ss[PA_SAMPLE_SPEC_SNPRINT_MAX] = { 0 };
 	rdpsndPulsePlugin* pulse = (rdpsndPulsePlugin*)device;
+	WINPR_ASSERT(pulse);
 
 	if (pa_sample_spec_valid(&pulse->sample_spec) == 0)
 	{
@@ -384,7 +389,7 @@ static BOOL rdpsnd_pulse_open_stream(rdpsndDevicePlugin* device)
 		return FALSE;
 	}
 
-	pulse->stream = pa_stream_new(pulse->context, "freerdp", &pulse->sample_spec, NULL);
+	pulse->stream = pa_stream_new(pulse->context, pulse->stream_name, &pulse->sample_spec, NULL);
 
 	if (!pulse->stream)
 	{
@@ -489,6 +494,8 @@ static void rdpsnd_pulse_free(rdpsndDevicePlugin* device)
 	}
 
 	free(pulse->device_name);
+	free(pulse->client_name);
+	free(pulse->stream_name);
 	free(pulse);
 }
 
@@ -654,32 +661,34 @@ static UINT rdpsnd_pulse_play(rdpsndDevicePlugin* device, const BYTE* data, size
 	return (UINT32)val;
 }
 
-static UINT rdpsnd_pulse_parse_addin_args(rdpsndDevicePlugin* device, const ADDIN_ARGV* args)
+static UINT rdpsnd_pulse_parse_addin_args(rdpsndPulsePlugin* pulse, const ADDIN_ARGV* args)
 {
-	int status = 0;
-	DWORD flags = 0;
-	const COMMAND_LINE_ARGUMENT_A* arg = NULL;
-	rdpsndPulsePlugin* pulse = (rdpsndPulsePlugin*)device;
 	COMMAND_LINE_ARGUMENT_A rdpsnd_pulse_args[] = {
 		{ "dev", COMMAND_LINE_VALUE_REQUIRED, "<device>", NULL, NULL, -1, NULL, "device" },
 		{ "reconnect_delay_seconds", COMMAND_LINE_VALUE_REQUIRED, "<reconnect_delay_seconds>", NULL,
 		  NULL, -1, NULL, "reconnect_delay_seconds" },
+		{ "client_name", COMMAND_LINE_VALUE_REQUIRED, "<client_name>", NULL, NULL, -1, NULL,
+		  "name of pulse client" },
+		{ "stream_name", COMMAND_LINE_VALUE_REQUIRED, "<stream_name>", NULL, NULL, -1, NULL,
+		  "name of pulse stream" },
 		{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
 	};
-	flags =
+	const DWORD flags =
 	    COMMAND_LINE_SIGIL_NONE | COMMAND_LINE_SEPARATOR_COLON | COMMAND_LINE_IGN_UNKNOWN_KEYWORD;
 
 	WINPR_ASSERT(pulse);
 	WINPR_ASSERT(args);
 
-	status = CommandLineParseArgumentsA(args->argc, args->argv, rdpsnd_pulse_args, flags, pulse,
-	                                    NULL, NULL);
+	const int status = CommandLineParseArgumentsA(args->argc, args->argv, rdpsnd_pulse_args, flags,
+	                                              pulse, NULL, NULL);
 
 	if (status < 0)
 		return ERROR_INVALID_DATA;
 
-	arg = rdpsnd_pulse_args;
+	const COMMAND_LINE_ARGUMENT_A* arg = rdpsnd_pulse_args;
 
+	const char* client_name = NULL;
+	const char* stream_name = NULL;
 	do
 	{
 		if (!(arg->Flags & COMMAND_LINE_VALUE_PRESENT))
@@ -701,22 +710,35 @@ static UINT rdpsnd_pulse_parse_addin_args(rdpsndDevicePlugin* device, const ADDI
 
 			pulse->reconnect_delay_seconds = (time_t)val;
 		}
+		CommandLineSwitchCase(arg, "client_name")
+		{
+			client_name = arg->Value;
+		}
+		CommandLineSwitchCase(arg, "stream_name")
+		{
+			stream_name = arg->Value;
+		}
 		CommandLineSwitchEnd(arg)
 	} while ((arg = CommandLineFindNextArgumentA(arg)) != NULL);
 
+	if (!client_name)
+		client_name = "freerdp";
+	if (!stream_name)
+		stream_name = "freerdp";
+
+	pulse->client_name = _strdup(client_name);
+	pulse->stream_name = _strdup(stream_name);
+	if (!pulse->client_name || !pulse->stream_name)
+		return ERROR_OUTOFMEMORY;
 	return CHANNEL_RC_OK;
 }
 
 FREERDP_ENTRY_POINT(UINT VCAPITYPE pulse_freerdp_rdpsnd_client_subsystem_entry(
     PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints))
 {
-	const ADDIN_ARGV* args = NULL;
-	rdpsndPulsePlugin* pulse = NULL;
-	UINT ret = 0;
-
 	WINPR_ASSERT(pEntryPoints);
 
-	pulse = (rdpsndPulsePlugin*)calloc(1, sizeof(rdpsndPulsePlugin));
+	rdpsndPulsePlugin* pulse = (rdpsndPulsePlugin*)calloc(1, sizeof(rdpsndPulsePlugin));
 
 	if (!pulse)
 		return CHANNEL_RC_NO_MEMORY;
@@ -729,18 +751,16 @@ FREERDP_ENTRY_POINT(UINT VCAPITYPE pulse_freerdp_rdpsnd_client_subsystem_entry(
 	pulse->device.Close = rdpsnd_pulse_close;
 	pulse->device.Free = rdpsnd_pulse_free;
 	pulse->device.DefaultFormat = rdpsnd_pulse_default_format;
-	args = pEntryPoints->args;
 
-	if (args->argc > 1)
+	const ADDIN_ARGV* args = pEntryPoints->args;
+	UINT ret = rdpsnd_pulse_parse_addin_args(pulse, args);
+
+	if (ret != CHANNEL_RC_OK)
 	{
-		ret = rdpsnd_pulse_parse_addin_args(&pulse->device, args);
-
-		if (ret != CHANNEL_RC_OK)
-		{
-			WLog_ERR(TAG, "error parsing arguments");
-			goto error;
-		}
+		WLog_ERR(TAG, "error parsing arguments");
+		goto error;
 	}
+
 	pulse->reconnect_delay_seconds = 5;
 	pulse->reconnect_time = time(NULL);
 
