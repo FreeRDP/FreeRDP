@@ -46,6 +46,8 @@ typedef struct
 	rdpsndDevicePlugin device;
 
 	char* device_name;
+	char* client_name;
+	char* stream_name;
 	pa_threaded_mainloop* mainloop;
 	pa_context* context;
 	pa_sample_spec sample_spec;
@@ -341,8 +343,9 @@ static BOOL rdpsnd_pulse_set_format_spec(rdpsndPulsePlugin* pulse, const AUDIO_F
 static BOOL rdpsnd_pulse_context_connect(rdpsndDevicePlugin* device)
 {
 	rdpsndPulsePlugin* pulse = (rdpsndPulsePlugin*)device;
+	char* client_name = pulse->client_name ? pulse->client_name : "freerdp";
 
-	pulse->context = pa_context_new(pa_threaded_mainloop_get_api(pulse->mainloop), "freerdp");
+	pulse->context = pa_context_new(pa_threaded_mainloop_get_api(pulse->mainloop), client_name);
 
 	if (!pulse->context)
 		return FALSE;
@@ -362,6 +365,7 @@ static BOOL rdpsnd_pulse_open_stream(rdpsndDevicePlugin* device)
 	pa_buffer_attr buffer_attr = { 0 };
 	char ss[PA_SAMPLE_SPEC_SNPRINT_MAX] = { 0 };
 	rdpsndPulsePlugin* pulse = (rdpsndPulsePlugin*)device;
+	char* stream_name = pulse->stream_name ? pulse->stream_name : "freerdp";
 
 	if (pa_sample_spec_valid(&pulse->sample_spec) == 0)
 	{
@@ -384,7 +388,7 @@ static BOOL rdpsnd_pulse_open_stream(rdpsndDevicePlugin* device)
 		return FALSE;
 	}
 
-	pulse->stream = pa_stream_new(pulse->context, "freerdp", &pulse->sample_spec, NULL);
+	pulse->stream = pa_stream_new(pulse->context, stream_name, &pulse->sample_spec, NULL);
 
 	if (!pulse->stream)
 	{
@@ -489,6 +493,8 @@ static void rdpsnd_pulse_free(rdpsndDevicePlugin* device)
 	}
 
 	free(pulse->device_name);
+	free(pulse->client_name);
+	free(pulse->stream_name);
 	free(pulse);
 }
 
@@ -664,6 +670,10 @@ static UINT rdpsnd_pulse_parse_addin_args(rdpsndDevicePlugin* device, const ADDI
 		{ "dev", COMMAND_LINE_VALUE_REQUIRED, "<device>", NULL, NULL, -1, NULL, "device" },
 		{ "reconnect_delay_seconds", COMMAND_LINE_VALUE_REQUIRED, "<reconnect_delay_seconds>", NULL,
 		  NULL, -1, NULL, "reconnect_delay_seconds" },
+		{ "client_name", COMMAND_LINE_VALUE_REQUIRED, "<client_name>", NULL, NULL, -1, NULL,
+		  "client_name" },
+		{ "stream_name", COMMAND_LINE_VALUE_REQUIRED, "<stream_name>", NULL, NULL, -1, NULL,
+		  "stream_name" },
 		{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
 	};
 	flags =
@@ -700,6 +710,20 @@ static UINT rdpsnd_pulse_parse_addin_args(rdpsndDevicePlugin* device, const ADDI
 				return ERROR_INVALID_DATA;
 
 			pulse->reconnect_delay_seconds = (time_t)val;
+		}
+		CommandLineSwitchCase(arg, "client_name")
+		{
+			pulse->client_name = _strdup(arg->Value);
+
+			if (!pulse->client_name)
+				return ERROR_OUTOFMEMORY;
+		}
+		CommandLineSwitchCase(arg, "stream_name")
+		{
+			pulse->stream_name = _strdup(arg->Value);
+
+			if (!pulse->stream_name)
+				return ERROR_OUTOFMEMORY;
 		}
 		CommandLineSwitchEnd(arg)
 	} while ((arg = CommandLineFindNextArgumentA(arg)) != NULL);
