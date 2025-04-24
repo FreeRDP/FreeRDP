@@ -19,29 +19,17 @@ set(WITH_WEBVIEW_DEFAULT OFF)
 
 option(WITH_WEBVIEW "Build with WebView support for AAD login popup browser" ${WITH_WEBVIEW_DEFAULT})
 if(WITH_WEBVIEW)
-  option(WITH_WEBVIEW_QT "Build with QtWebEngine support for AAD login broweser popup" OFF)
-
   set(SRCS sdl_webview.hpp webview_impl.hpp sdl_webview.cpp)
   set(LIBS winpr)
 
-  if(WITH_WEBVIEW_QT)
-    find_package(Qt5 COMPONENTS WebEngineWidgets REQUIRED)
+  include(FetchContent)
 
-    list(APPEND SRCS qt/webview_impl.cpp)
+  FetchContent_Declare(webview GIT_REPOSITORY https://github.com/akallabeth/webview GIT_TAG navigation-listener SYSTEM)
+  FetchContent_MakeAvailable(webview)
 
-    list(APPEND LIBS Qt5::WebEngineWidgets)
-  else()
-    include(FetchContent)
+  list(APPEND SRCS wrapper/webview_impl.cpp)
 
-    FetchContent_Declare(
-      webview GIT_REPOSITORY https://github.com/akallabeth/webview GIT_TAG navigation-listener SYSTEM
-    )
-    FetchContent_MakeAvailable(webview)
-
-    list(APPEND SRCS wrapper/webview_impl.cpp)
-
-    list(APPEND LIBS webview::core)
-  endif()
+  list(APPEND LIBS webview::core)
 else()
   set(SRCS dummy.cpp)
 endif()

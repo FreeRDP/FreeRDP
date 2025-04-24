@@ -1,7 +1,5 @@
 #include <iostream>
 #include <fstream>
-
-#include <iostream>
 #include <memory>
 
 #include <winpr/config.h>
