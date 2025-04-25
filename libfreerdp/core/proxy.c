@@ -61,6 +61,8 @@ enum
 	SOCKS_ADDR_IPV6 = 4,
 };
 
+static const char logprefix[] = "SOCKS Proxy:";
+
 /* CONN REQ replies in enum. order */
 static const char* rplstat[] = { "succeeded",
 	                             "general SOCKS server failure",
@@ -798,121 +800,176 @@ static int recv_socks_reply(rdpContext* context, BIO* bufferedBio, BYTE* buf, in
 	return status;
 }
 
+static BOOL socks_proxy_userpass(rdpContext* context, BIO* bufferedBio, const char* proxyUsername,
+                                 const char* proxyPassword)
+{
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(bufferedBio);
+
+	if (!proxyUsername || !proxyPassword)
+	{
+		WLog_ERR(TAG, "%s invalid username (%p) or password (%p)", logprefix, proxyUsername,
+		         proxyPassword);
+		return FALSE;
+	}
+
+	const size_t usernameLen = (BYTE)strnlen(proxyUsername, 256);
+	if (usernameLen > 255)
+	{
+		WLog_ERR(TAG, "%s username too long (%" PRIuz ", max=255)", logprefix, usernameLen);
+		return FALSE;
+	}
+
+	const size_t userpassLen = (BYTE)strnlen(proxyPassword, 256);
+	if (userpassLen > 255)
+	{
+		WLog_ERR(TAG, "%s password too long (%" PRIuz ", max=255)", logprefix, userpassLen);
+		return FALSE;
+	}
+
+	/* user/password v1 method */
+	{
+		BYTE buf[2 * 255 + 3] = { 0 };
+		size_t offset = 0;
+		buf[offset++] = 1;
+
+		buf[offset++] = WINPR_ASSERTING_INT_CAST(uint8_t, usernameLen);
+		memcpy(&buf[offset], proxyUsername, usernameLen);
+		offset += usernameLen;
+
+		buf[offset++] = WINPR_ASSERTING_INT_CAST(uint8_t, userpassLen);
+		memcpy(&buf[offset], proxyPassword, userpassLen);
+		offset += userpassLen;
+
+		ERR_clear_error();
+		const int ioffset = WINPR_ASSERTING_INT_CAST(int, offset);
+		const int status = BIO_write(bufferedBio, buf, ioffset);
+
+		if (status != ioffset)
+		{
+			WLog_ERR(TAG, "%s error writing user/password request", logprefix);
+			return FALSE;
+		}
+	}
+
+	BYTE buf[2] = { 0 };
+	const int status = recv_socks_reply(context, bufferedBio, buf, sizeof(buf), "AUTH REQ", 1);
+
+	if (status < 2)
+		return FALSE;
+
+	if (buf[1] != 0x00)
+	{
+		WLog_ERR(TAG, "%s invalid user/password", logprefix);
+		return FALSE;
+	}
+	return TRUE;
+}
+
 static BOOL socks_proxy_connect(rdpContext* context, BIO* bufferedBio, const char* proxyUsername,
                                 const char* proxyPassword, const char* hostname, UINT16 port)
 {
-	int status = 0;
 	BYTE nauthMethods = 1;
-	int writeLen = 3;
-	BYTE buf[3 + 255 + 255] = { 0 }; /* biggest packet is user/pass auth */
 	const size_t hostnlen = strnlen(hostname, 255);
 
-	if (proxyUsername && proxyPassword)
-	{
+	if (proxyUsername || proxyPassword)
 		nauthMethods++;
-		writeLen++;
-	}
 
 	/* select auth. method */
-	buf[0] = 5;            /* SOCKS version */
-	buf[1] = nauthMethods; /* #of methods offered */
-	buf[2] = AUTH_M_NO_AUTH;
-
-	if (nauthMethods > 1)
-		buf[3] = AUTH_M_USR_PASS;
-
-	ERR_clear_error();
-	status = BIO_write(bufferedBio, buf, writeLen);
-
-	if (status != writeLen)
 	{
-		WLog_ERR(TAG, "SOCKS proxy: failed to write AUTH METHOD request");
-		return FALSE;
+		const BYTE buf[] = { 5,            /* SOCKS version */
+			                 nauthMethods, /* #of methods offered */
+			                 AUTH_M_NO_AUTH, AUTH_M_USR_PASS };
+
+		size_t writeLen = sizeof(buf);
+		if (nauthMethods <= 1)
+			writeLen--;
+
+		ERR_clear_error();
+		const int iwriteLen = WINPR_ASSERTING_INT_CAST(int, writeLen);
+		const int status = BIO_write(bufferedBio, buf, iwriteLen);
+
+		if (status != iwriteLen)
+		{
+			WLog_ERR(TAG, "SOCKS proxy: failed to write AUTH METHOD request", logprefix);
+			return FALSE;
+		}
 	}
 
-	status = recv_socks_reply(context, bufferedBio, buf, 2, "AUTH REQ", 5);
-
-	if (status <= 0)
-		return FALSE;
-
-	switch (buf[1])
 	{
-		case AUTH_M_NO_AUTH:
-			WLog_DBG(TAG, "SOCKS Proxy: (NO AUTH) method was selected");
-			break;
+		BYTE buf[2] = { 0 };
+		const int status = recv_socks_reply(context, bufferedBio, buf, sizeof(buf), "AUTH REQ", 5);
 
-		case AUTH_M_USR_PASS:
-			if (!proxyUsername || !proxyPassword)
-				return FALSE;
-			else
-			{
-				const BYTE usernameLen = (BYTE)strnlen(proxyUsername, 255);
-				const BYTE userpassLen = (BYTE)strnlen(proxyPassword, 255);
-				BYTE* ptr = NULL;
+		if (status <= 0)
+			return FALSE;
 
+		switch (buf[1])
+		{
+			case AUTH_M_NO_AUTH:
+				WLog_DBG(TAG, "%s (NO AUTH) method was selected", logprefix);
+				break;
+
+			case AUTH_M_USR_PASS:
 				if (nauthMethods < 2)
 				{
-					WLog_ERR(TAG, "SOCKS Proxy: USER/PASS method was not proposed to server");
+					WLog_ERR(TAG, "%s USER/PASS method was not proposed to server", logprefix);
 					return FALSE;
 				}
-
-				/* user/password v1 method */
-				ptr = buf + 2;
-				buf[0] = 1;
-				buf[1] = usernameLen;
-				memcpy(ptr, proxyUsername, usernameLen);
-				ptr += usernameLen;
-				*ptr = userpassLen;
-				ptr++;
-				memcpy(ptr, proxyPassword, userpassLen);
-				ERR_clear_error();
-				status = BIO_write(bufferedBio, buf, 3 + usernameLen + userpassLen);
-
-				if (status != 3 + usernameLen + userpassLen)
-				{
-					WLog_ERR(TAG, "SOCKS Proxy: error writing user/password request");
+				if (!socks_proxy_userpass(context, bufferedBio, proxyUsername, proxyPassword))
 					return FALSE;
-				}
-
-				status = recv_socks_reply(context, bufferedBio, buf, 2, "AUTH REQ", 1);
-
-				if (status < 2)
-					return FALSE;
-
-				if (buf[1] != 0x00)
-				{
-					WLog_ERR(TAG, "SOCKS Proxy: invalid user/password");
-					return FALSE;
-				}
-			}
-
-			break;
+				break;
 
 		default:
-			WLog_ERR(TAG, "SOCKS Proxy: unknown method 0x%x was selected by proxy", buf[1]);
+			WLog_ERR(TAG, "%s unknown method 0x%x was selected by proxy", logprefix, buf[1]);
 			return FALSE;
+		}
 	}
-
 	/* CONN request */
-	buf[0] = 5;                 /* SOCKS version */
-	buf[1] = SOCKS_CMD_CONNECT; /* command */
-	buf[2] = 0;                 /* 3rd octet is reserved x00 */
-	buf[3] = SOCKS_ADDR_FQDN;   /* addr.type */
-	buf[4] = (BYTE)hostnlen;    /* DST.ADDR */
-	memcpy(buf + 5, hostname, hostnlen);
-	/* follows DST.PORT in netw. format */
-	buf[hostnlen + 5] = (port >> 8) & 0xff;
-	buf[hostnlen + 6] = port & 0xff;
-	ERR_clear_error();
-	status = BIO_write(bufferedBio, buf, (int)hostnlen + 7);
-
-	if ((status < 0) || ((size_t)status != (hostnlen + 7U)))
 	{
-		WLog_ERR(TAG, "SOCKS proxy: failed to write CONN REQ");
-		return FALSE;
+		BYTE buf[262] = { 0 };
+		size_t offset = 0;
+		buf[offset++] = 5;                 /* SOCKS version */
+		buf[offset++] = SOCKS_CMD_CONNECT; /* command */
+		buf[offset++] = 0;                 /* 3rd octet is reserved x00 */
+
+		if (inet_pton(AF_INET6, hostname, &buf[offset + 1]) == 1)
+		{
+			buf[offset++] = SOCKS_ADDR_IPV6;
+			offset += 4;
+		}
+		else if (inet_pton(AF_INET, hostname, &buf[offset + 1]) == 1)
+		{
+			buf[offset++] = SOCKS_ADDR_IPV4;
+			offset += 16;
+		}
+		else
+		{
+			buf[offset++] = SOCKS_ADDR_FQDN;
+			buf[offset++] = WINPR_ASSERTING_INT_CAST(uint8_t, hostnlen);
+			memcpy(&buf[offset], hostname, hostnlen);
+			offset += hostnlen;
+		}
+
+		if (offset > sizeof(buf) - 2)
+			return FALSE;
+
+		/* follows DST.PORT in netw. format */
+		buf[offset++] = (port >> 8) & 0xff;
+		buf[offset++] = port & 0xff;
+
+		ERR_clear_error();
+		const int ioffset = WINPR_ASSERTING_INT_CAST(int, offset);
+		const int status = BIO_write(bufferedBio, buf, ioffset);
+
+		if ((status < 0) || (status != ioffset))
+		{
+			WLog_ERR(TAG, "SOCKS proxy: failed to write CONN REQ", logprefix);
+			return FALSE;
+		}
 	}
 
-	status = recv_socks_reply(context, bufferedBio, buf, sizeof(buf), "CONN REQ", 5);
+	BYTE buf[255] = { 0 };
+	const int status = recv_socks_reply(context, bufferedBio, buf, sizeof(buf), "CONN REQ", 5);
 
 	if (status < 4)
 		return FALSE;
@@ -923,7 +980,7 @@ static BOOL socks_proxy_connect(rdpContext* context, BIO* bufferedBio, const cha
 		return TRUE;
 	}
 
-	if (buf[1] > 0 && buf[1] < 9)
+	if ((buf[1] > 0) && (buf[1] < 9))
 		WLog_INFO(TAG, "SOCKS Proxy replied: %s", rplstat[buf[1]]);
 	else
 		WLog_INFO(TAG, "SOCKS Proxy replied: %" PRIu8 " status not listed in rfc1928", buf[1]);
