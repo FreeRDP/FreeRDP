@@ -35,14 +35,10 @@ extern "C"
 	WINPR_ATTR_MALLOC(freerdp_key_free, 1)
 	FREERDP_API rdpPrivateKey* freerdp_key_new(void);
 
-	WINPR_DEPRECATED_VAR(
-	    "[since 3.16.0] use freerdp_key_new_from_file_enc",
-	    WINPR_ATTR_MALLOC(freerdp_key_free, 1)
-	        FREERDP_API rdpPrivateKey* freerdp_key_new_from_file(const char* keyfile));
+	FREERDP_API rdpPrivateKey* freerdp_key_new_from_file(const char* keyfile);
 
-	WINPR_DEPRECATED_VAR("[since 3.16.0] use freerdp_key_new_from_pem_enc",
-	                     WINPR_ATTR_MALLOC(freerdp_key_free, 1)
-	                         FREERDP_API rdpPrivateKey* freerdp_key_new_from_pem(const char* pem));
+	WINPR_ATTR_MALLOC(freerdp_key_free, 1)
+	FREERDP_API rdpPrivateKey* freerdp_key_new_from_pem(const char* pem);
 
 	/** @brief Create a private key from file \b keyfile with optional password \b password
 	 *
