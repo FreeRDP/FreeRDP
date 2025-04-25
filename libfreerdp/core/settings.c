@@ -1407,6 +1407,9 @@ static BOOL freerdp_settings_int_buffer_copy(rdpSettings* _settings, const rdpSe
 		    freerdp_settings_get_pointer_array(settings, FreeRDP_TargetNetAddresses, i);
 		const UINT32* port =
 		    freerdp_settings_get_pointer_array(settings, FreeRDP_TargetNetPorts, i);
+		WINPR_ASSERT(address);
+		WINPR_ASSERT(port);
+
 		if (!freerdp_settings_set_pointer_array(_settings, FreeRDP_TargetNetAddresses, i, address))
 			goto out_fail;
 		if (!freerdp_settings_set_pointer_array(_settings, FreeRDP_TargetNetPorts, i, port))
@@ -1414,7 +1417,7 @@ static BOOL freerdp_settings_int_buffer_copy(rdpSettings* _settings, const rdpSe
 	}
 
 	{
-		const UINT32 len = freerdp_settings_get_uint32(_settings, FreeRDP_DeviceArraySize);
+		const UINT32 len = freerdp_settings_get_uint32(settings, FreeRDP_DeviceArraySize);
 		const UINT32 count = freerdp_settings_get_uint32(settings, FreeRDP_DeviceCount);
 
 		if (len < count)
@@ -1428,9 +1431,12 @@ static BOOL freerdp_settings_int_buffer_copy(rdpSettings* _settings, const rdpSe
 		{
 			const RDPDR_DEVICE* argv =
 			    freerdp_settings_get_pointer_array(settings, FreeRDP_DeviceArray, index);
+			WINPR_ASSERT(argv);
 			if (!freerdp_settings_set_pointer_array(_settings, FreeRDP_DeviceArray, index, argv))
 				goto out_fail;
 		}
+		WINPR_ASSERT(_settings->DeviceArray || (len == 0));
+		WINPR_ASSERT(len >= count);
 	}
 	{
 		const UINT32 len = freerdp_settings_get_uint32(_settings, FreeRDP_StaticChannelArraySize);
@@ -1447,6 +1453,7 @@ static BOOL freerdp_settings_int_buffer_copy(rdpSettings* _settings, const rdpSe
 		{
 			const ADDIN_ARGV* argv =
 			    freerdp_settings_get_pointer_array(settings, FreeRDP_StaticChannelArray, index);
+			WINPR_ASSERT(argv);
 			if (!freerdp_settings_set_pointer_array(_settings, FreeRDP_StaticChannelArray, index,
 			                                        argv))
 				goto out_fail;
@@ -1467,6 +1474,7 @@ static BOOL freerdp_settings_int_buffer_copy(rdpSettings* _settings, const rdpSe
 		{
 			const ADDIN_ARGV* argv =
 			    freerdp_settings_get_pointer_array(settings, FreeRDP_DynamicChannelArray, index);
+			WINPR_ASSERT(argv);
 			if (!freerdp_settings_set_pointer_array(_settings, FreeRDP_DynamicChannelArray, index,
 			                                        argv))
 				goto out_fail;

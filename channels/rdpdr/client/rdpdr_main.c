@@ -1159,6 +1159,7 @@ static UINT rdpdr_process_connect(rdpdrPlugin* rdpdr)
 	{
 		const RDPDR_DEVICE* device =
 		    freerdp_settings_get_pointer_array(settings, FreeRDP_DeviceArray, index);
+		WINPR_ASSERT(device);
 
 		if (device->Type == RDPDR_DTYP_FILESYSTEM)
 		{
