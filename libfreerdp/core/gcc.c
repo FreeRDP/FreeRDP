@@ -1498,19 +1498,16 @@ BOOL gcc_write_client_core_data(wStream* s, const rdpMcs* mcs)
 	if (!Stream_EnsureRemainingCapacity(s, 64 + 24))
 		return FALSE;
 
-	/* clientDigProductId (64 bytes, null-terminated unicode, truncated to 31 characters) */
-	size_t clientDigProductIdLength = 0;
-	WCHAR* clientDigProductId =
-	    ConvertUtf8ToWCharAlloc(settings->ClientProductId, &clientDigProductIdLength);
-	if (clientDigProductIdLength >= 32)
+	/* clientDigProductId (64 bytes, assume WCHAR, not \0 terminated */
+	const char* str = freerdp_settings_get_string(settings, FreeRDP_ClientProductId);
+	if (str)
 	{
-		clientDigProductIdLength = 32;
-		clientDigProductId[clientDigProductIdLength - 1] = 0;
+		if (Stream_Write_UTF16_String_From_UTF8(s, 32, str, strnlen(str, 32), TRUE) < 0)
+			return FALSE;
 	}
+	else
+		Stream_Zero(s, 32 * sizeof(WCHAR));
 
-	Stream_Write(s, clientDigProductId, (clientDigProductIdLength * 2));
-	Stream_Zero(s, 64 - (clientDigProductIdLength * 2));
-	free(clientDigProductId);
 	Stream_Write_UINT8(s, connectionType);                   /* connectionType */
 	Stream_Write_UINT8(s, 0);                                /* pad1octet */
 	Stream_Write_UINT32(s, settings->SelectedProtocol);      /* serverSelectedProtocol */

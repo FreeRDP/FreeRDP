@@ -466,19 +466,20 @@ BOOL Stream_CheckAndLogRequiredLengthWLogExVa(wLog* log, DWORD level, wStream* s
 SSIZE_T Stream_Write_UTF16_String_From_UTF8(wStream* s, size_t wcharLength, const char* src,
                                             size_t length, BOOL fill)
 {
+	SSIZE_T rc = 0;
 	WCHAR* str = Stream_PointerAs(s, WCHAR);
 
-	if (length == 0)
-		return 0;
+	if (length != 0)
+	{
+		if (!Stream_CheckAndLogRequiredCapacityOfSize(STREAM_TAG, s, wcharLength, sizeof(WCHAR)))
+			return -1;
 
-	if (!Stream_CheckAndLogRequiredCapacityOfSize(STREAM_TAG, s, wcharLength, sizeof(WCHAR)))
-		return -1;
+		rc = ConvertUtf8NToWChar(src, length, str, wcharLength);
+		if (rc < 0)
+			return -1;
 
-	SSIZE_T rc = ConvertUtf8NToWChar(src, length, str, wcharLength);
-	if (rc < 0)
-		return -1;
-
-	Stream_Seek(s, (size_t)rc * sizeof(WCHAR));
+		Stream_Seek(s, (size_t)rc * sizeof(WCHAR));
+	}
 
 	if (fill)
 		Stream_Zero(s, (wcharLength - (size_t)rc) * sizeof(WCHAR));
