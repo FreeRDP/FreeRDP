@@ -4857,7 +4857,6 @@ static BOOL rdp_write_confirm_active(wLog* log, wStream* s, rdpSettings* setting
 		return FALSE;
 	}
 
-	if (settings->OffscreenSupportLevel)
 	{
 		numberCapabilities++;
 
