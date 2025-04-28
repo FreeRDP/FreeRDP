@@ -384,9 +384,9 @@ static UINT rdpgfx_recv_caps_confirm_pdu(GENERIC_CHANNEL_CALLBACK* callback, wSt
 	Stream_Read_UINT32(s, capsSet.flags);   /* capsData (4 bytes) */
 	gfx->TotalDecodedFrames = 0;
 	gfx->ConnectionCaps = capsSet;
-	DEBUG_RDPGFX(gfx->log,
-	             "RecvCapsConfirmPdu: version: %s [0x%08" PRIX32 "] flags: 0x%08" PRIX32 "",
-	             rdpgfx_caps_version_str(capsSet.version), capsSet.version, capsSet.flags);
+	WLog_Print(gfx->log, WLOG_DEBUG,
+	           "RecvCapsConfirmPdu: version: %s [0x%08" PRIX32 "] flags: 0x%08" PRIX32 "",
+	           rdpgfx_caps_version_str(capsSet.version), capsSet.version, capsSet.flags);
 
 	if (!context)
 		return ERROR_BAD_CONFIGURATION;
@@ -562,9 +562,9 @@ static UINT rdpgfx_recv_reset_graphics_pdu(GENERIC_CHANNEL_CALLBACK* callback, w
 	}
 
 	Stream_Seek(s, pad); /* pad (total size is 340 bytes) */
-	DEBUG_RDPGFX(gfx->log,
-	             "RecvResetGraphicsPdu: width: %" PRIu32 " height: %" PRIu32 " count: %" PRIu32 "",
-	             pdu.width, pdu.height, pdu.monitorCount);
+	WLog_Print(gfx->log, WLOG_DEBUG,
+	           "RecvResetGraphicsPdu: width: %" PRIu32 " height: %" PRIu32 " count: %" PRIu32 "",
+	           pdu.width, pdu.height, pdu.monitorCount);
 
 #if defined(WITH_DEBUG_RDPGFX)
 	for (UINT32 index = 0; index < pdu.monitorCount; index++)
@@ -718,8 +718,8 @@ static UINT rdpgfx_send_cache_import_offer_pdu(RdpgfxClientContext* context,
 	header.flags = 0;
 	header.cmdId = RDPGFX_CMDID_CACHEIMPORTOFFER;
 	header.pduLength = RDPGFX_HEADER_SIZE + 2ul + pdu->cacheEntriesCount * 12ul;
-	DEBUG_RDPGFX(gfx->log, "SendCacheImportOfferPdu: cacheEntriesCount: %" PRIu16 "",
-	             pdu->cacheEntriesCount);
+	WLog_Print(gfx->log, WLOG_DEBUG, "SendCacheImportOfferPdu: cacheEntriesCount: %" PRIu16 "",
+	           pdu->cacheEntriesCount);
 	s = Stream_New(NULL, header.pduLength);
 
 	if (!s)
