@@ -41,6 +41,10 @@ static BOOL similar(const BYTE* src, const BYTE* dst, size_t size)
 static BOOL similarRGB(size_t y, const BYTE* src, const BYTE* dst, size_t size, UINT32 format,
                        BOOL use444)
 {
+	/* Skip YUV420, too lossy */
+	if (!use444)
+		return TRUE;
+
 	const UINT32 bpp = FreeRDPGetBytesPerPixel(format);
 	BYTE fill = PADDING_FILL_VALUE;
 	if (!FreeRDPColorHasAlpha(format))
@@ -595,7 +599,6 @@ static BOOL TestPrimitiveYUV(primitives_t* prims, prim_size_t roi, BOOL use444)
 		    (!check_padding(yuv[2], uvsize, padding, "V")))
 			goto fail;
 
-#if 0 // TODO: lossy conversion, we have a lot of outliers that prevent the check to pass
 		for (size_t y = 0; y < roi.height; y++)
 		{
 			BYTE* srgb = &rgb[y * stride];
@@ -604,7 +607,6 @@ static BOOL TestPrimitiveYUV(primitives_t* prims, prim_size_t roi, BOOL use444)
 			if (!similarRGB(y, srgb, drgb, roi.width, DstFormat, use444))
 				goto fail;
 		}
-#endif
 
 		PROFILER_FREE(rgbToYUV420)
 		PROFILER_FREE(rgbToYUV444)
