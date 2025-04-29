@@ -660,7 +660,7 @@ char* freerdp_key_get_pem(const rdpPrivateKey* key, size_t* plen, const char* pa
 
 	const EVP_CIPHER* enc = NULL;
 	if (password)
-		enc = EVP_aes_256_cbc_hmac_sha256();
+		enc = EVP_aes_256_xts();
 
 	const int status = PEM_write_bio_PrivateKey(bio, key->evp, enc, NULL, 0, 0,
 	                                            WINPR_CAST_CONST_PTR_AWAY(password, void*));
