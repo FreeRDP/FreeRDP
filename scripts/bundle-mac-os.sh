@@ -133,22 +133,18 @@ CMAKE_ARGS="-DCMAKE_SKIP_INSTALL_ALL_DEPENDENCY=ON \
 if [ ! -d $SRC ]; then
   mkdir -p $SRC
   cd $SRC
-  git clone --depth 1 -b openssl-3.4.1 https://github.com/openssl/openssl.git
+  git clone --depth 1 -b openssl-3.5.0 https://github.com/openssl/openssl.git
   git clone --depth 1 -b v1.3.1 https://github.com/madler/zlib.git
   git clone --depth 1 -b uriparser-0.9.8 https://github.com/uriparser/uriparser.git
-  git clone --depth 1 -b v1.7.18 https://github.com/DaveGamble/cJSON.git
-  git clone --depth 1 -b release-3.2.8 https://github.com/libsdl-org/SDL.git
-  git clone --depth 1 --shallow-submodules --recurse-submodules -b release-3.2.0 https://github.com/libsdl-org/SDL_ttf.git
+  git clone --depth 1 -b json-c-0.18-20240915 https://github.com/json-c/json-c.git
+  git clone --depth 1 -b release-3.2.10 https://github.com/libsdl-org/SDL.git
+  git clone --depth 1 --shallow-submodules --recurse-submodules -b release-3.2.2 https://github.com/libsdl-org/SDL_ttf.git
   git clone --depth 1 --shallow-submodules --recurse-submodules -b release-3.2.4 https://github.com/libsdl-org/SDL_image.git
   git clone --depth 1 --shallow-submodules --recurse-submodules -b v1.0.28-0 https://github.com/libusb/libusb-cmake.git
   git clone --depth 1 -b n7.1.1 https://github.com/FFmpeg/FFmpeg.git
   git clone --depth 1 -b v2.4.1 https://github.com/cisco/openh264.git
   git clone --depth 1 -b v1.5.2 https://gitlab.xiph.org/xiph/opus.git
-  git clone --depth 1 -b 2.11.2 https://github.com/knik0/faad2.git
-  git clone --depth 1 -b 1.18.4 https://gitlab.freedesktop.org/cairo/cairo.git
-  git clone --depth 1 -b faac-1.31.1 https://github.com/knik0/faac.git
-  cd faac
-  ./bootstrap
+  git clone --depth 1 -b v2.0.3 https://github.com/mstorsjo/fdk-aac.git
 fi
 
 if [ -d $INSTALL ]; then
@@ -171,17 +167,17 @@ cmake -GNinja -Buriparser -S$SRC/uriparser $CMAKE_ARGS -DURIPARSER_BUILD_DOCS=OF
 cmake --build uriparser
 cmake --install uriparser
 
-cmake -GNinja -BcJSON -S$SRC/cJSON $CMAKE_ARGS -DENABLE_CJSON_TEST=OFF -DBUILD_SHARED_AND_STATIC_LIBS=OFF
-cmake --build cJSON
-cmake --install cJSON
+cmake -GNinja -Bjson-c -S$SRC/json-c $CMAKE_ARGS -DBUILD_APPS=OFF -DBUILD_TESTING=OFF -DBUILD_STATIC_LIBS=OFF
+cmake --build json-c
+cmake --install json-c
 
 cmake -GNinja -Bopus -S$SRC/opus $CMAKE_ARGS -DOPUS_BUILD_SHARED_LIBRARY=ON
 cmake --build opus
 cmake --install opus
 
-cmake -GNinja -Bfaad2 -S$SRC/faad2 $CMAKE_ARGS
-cmake --build faad2
-cmake --install faad2
+cmake -GNinja -Bfdk-aac -S$SRC/fdk-aac $CMAKE_ARGS -DBUILD_PROGRAMS=OFF
+cmake --build fdk-aac
+cmake --install fdk-aac
 
 cmake -GNinja -BSDL -S$SRC/SDL $CMAKE_ARGS -DSDL_TEST=OFF -DSDL_TESTS=OFF -DSDL_STATIC_PIC=ON
 cmake --build SDL
@@ -208,15 +204,6 @@ NPROC=$(sysctl -n hw.ncpu)
 CFLAGS=$OSSL_FLAGS LDFLAGS=$OSSL_FLAGS $SRC/openssl/config --prefix=$INSTALL --libdir=lib no-asm no-tests no-docs no-apps zlib
 CFLAGS=$OSSL_FLAGS LDFLAGS=$OSSL_FLAGS make -j $NPROC build_sw
 CFLAGS=$OSSL_FLAGS LDFLAGS=$OSSL_FLAGS make -j $NPROC install_sw
-
-cd $BUILD
-mkdir -p faac
-cd faac
-# undefine __SSE2__, symbol clashes with universal build
-CFLAGS="$OSSL_FLAGS -U__SSE2__" LDFLAGS=$OSSL_FLAGS $SRC/faac/configure --prefix=$INSTALL --libdir="$INSTALL/lib" \
-  --enable-shared --disable-static
-CFLAGS="$OSSL_FLAGS -U__SSE2__" LDFLAGS=$OSSL_FLAGS make -j $NPROC
-CFLAGS="$OSSL_FLAGS -U__SSE2__" LDFLAGS=$OSSL_FLAGS make -j $NPROC install
 
 cd $BUILD
 
@@ -263,13 +250,14 @@ cmake -GNinja -Bfreerdp -S"$SCRIPT_PATH/.." \
   -DWITH_SWSCALE=ON \
   -DWITH_OPUS=ON \
   -DWITH_WEBVIEW=OFF \
-  -DWITH_FAAD2=ON \
-  -DWITH_FAAC=ON \
+  -DWITH_FAAD2=OFF \
+  -DWITH_FAAC=OFF \
   -DWITH_INTERNAL_RC4=ON \
   -DWITH_INTERNAL_MD4=ON \
   -DWITH_INTERNAL_MD5=ON \
   -DCHANNEL_RDPEAR=OFF \
-  -DWITH_CJSON_REQUIRED=ON
+  -DWITH_FDK_AAC=ON \
+  -DWITH_JSONC_REQUIRED=ON
 
 cmake --build freerdp
 cmake --install freerdp
