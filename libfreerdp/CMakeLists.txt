@@ -109,14 +109,19 @@ endmacro()
 
 option(WITH_FDK_AAC "Enable FDK_AAC support" OFF)
 if(WITH_FDK_AAC)
-  find_package(PkgConfig REQUIRED)
-  pkg_check_modules(FDK_AAC REQUIRED fdk-aac)
+  find_package(fdk-aac)
+  if(TARGET FDK-AAC::fdk-aac)
+    freerdp_library_add(FDK-AAC::fdk-aac)
+  else()
+    find_package(PkgConfig REQUIRED)
+    pkg_check_modules(FDK_AAC REQUIRED fdk-aac)
+    include_directories(SYSTEM ${FDK_AAC_INCLUDE_DIRS})
+
+    link_directories(${FDK_AAC_LIBRARY_DIRS})
+    freerdp_library_add(${FDK_AAC_LIBRARIES})
+  endif()
 
   add_compile_definitions(WITH_FDK_AAC)
-  include_directories(SYSTEM ${FDK_AAC_INCLUDE_DIRS})
-
-  link_directories(${FDK_AAC_LIBRARY_DIRS})
-  freerdp_library_add(${FDK_AAC_LIBRARIES})
 endif()
 
 set(OPUS_DEFAULT OFF)
