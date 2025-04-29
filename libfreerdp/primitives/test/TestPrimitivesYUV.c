@@ -41,6 +41,7 @@ static BOOL similar(const BYTE* src, const BYTE* dst, size_t size)
 static BOOL similarRGB(size_t y, const BYTE* src, const BYTE* dst, size_t size, UINT32 format,
                        BOOL use444)
 {
+	BOOL rc = TRUE;
 	/* Skip YUV420, too lossy */
 	if (!use444)
 		return TRUE;
@@ -94,13 +95,14 @@ static BOOL similarRGB(size_t y, const BYTE* src, const BYTE* dst, size_t size, 
 			const BYTE dV = RGB2V(dR, dG, dB);
 			(void)fprintf(stderr,
 			              "[%s] Color value  mismatch R[%02X %02X], G[%02X %02X], B[%02X %02X] at "
-			              "position %" PRIuz "\n",
-			              use444 ? "AVC444" : "AVC420", sR, dR, sG, dG, sA, dA, x);
+			              "position %" PRIuz "x%" PRIuz "\n",
+			              use444 ? "AVC444" : "AVC420", sR, dR, sG, dG, sA, dA, x, y);
 			(void)fprintf(stderr,
 			              "[%s] Color value  mismatch Y[%02X %02X], U[%02X %02X], V[%02X %02X] at "
-			              "position %" PRIuz "\n",
-			              use444 ? "AVC444" : "AVC420", sY, dY, sU, dU, sV, dV, x);
-			return FALSE;
+			              "position %" PRIuz "x%" PRIuz "\n",
+			              use444 ? "AVC444" : "AVC420", sY, dY, sU, dU, sV, dV, x, y);
+			rc = FALSE;
+			continue;
 		}
 
 		if (dA != fill)
@@ -108,13 +110,14 @@ static BOOL similarRGB(size_t y, const BYTE* src, const BYTE* dst, size_t size, 
 			(void)fprintf(
 			    stderr,
 			    "[%s] Invalid destination alpha value 0x%02X [expected 0x%02X] at position %" PRIuz
-			    "\n",
-			    use444 ? "AVC444" : "AVC420", dA, fill, x);
-			return FALSE;
+			    "x%" PRIuz "\n",
+			    use444 ? "AVC444" : "AVC420", dA, fill, x, y);
+			rc = FALSE;
+			continue;
 		}
 	}
 
-	return TRUE;
+	return rc;
 }
 
 static void get_size(BOOL large, UINT32* width, UINT32* height)
@@ -435,7 +438,7 @@ static BOOL TestPrimitiveYUV(primitives_t* prims, prim_size_t roi, BOOL use444)
 	UINT32 awidth = 0;
 	UINT32 aheight = 0;
 	BYTE* yuv[3] = { 0 };
-	UINT32 yuv_step[3];
+	UINT32 yuv_step[3] = { 0 };
 	BYTE* rgb = NULL;
 	BYTE* rgb_dst = NULL;
 	size_t size = 0;
@@ -599,14 +602,17 @@ static BOOL TestPrimitiveYUV(primitives_t* prims, prim_size_t roi, BOOL use444)
 		    (!check_padding(yuv[2], uvsize, padding, "V")))
 			goto fail;
 
+		BOOL equal = TRUE;
 		for (size_t y = 0; y < roi.height; y++)
 		{
 			BYTE* srgb = &rgb[y * stride];
 			BYTE* drgb = &rgb_dst[y * stride];
 
 			if (!similarRGB(y, srgb, drgb, roi.width, DstFormat, use444))
-				goto fail;
+				equal = FALSE;
 		}
+		if (!equal)
+			goto fail;
 
 		PROFILER_FREE(rgbToYUV420)
 		PROFILER_FREE(rgbToYUV444)
