@@ -1633,8 +1633,6 @@ int main(int argc, char* argv[])
 	int status = 0;
 	RDP_CLIENT_ENTRY_POINTS clientEntryPoints = {};
 
-	freerdp_client_warn_experimental(argc, argv);
-
 	RdpClientEntry(&clientEntryPoints);
 	std::unique_ptr<sdl_rdp_context, void (*)(sdl_rdp_context*)> sdl_rdp(
 	    reinterpret_cast<sdl_rdp_context*>(freerdp_client_context_new(&clientEntryPoints)),

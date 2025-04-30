@@ -69,9 +69,7 @@ if(NOT WITHOUT_FREERDP_3x_DEPRECATED)
     WITH_CLIENT_SDL OFF
   )
 endif()
-cmake_dependent_option(
-  WITH_CLIENT_SDL3 "[experimental] build experimental SDL3 client" ${SDL3_FOUND} WITH_CLIENT_SDL OFF
-)
+cmake_dependent_option(WITH_CLIENT_SDL3 "build SDL3 client" ${SDL3_FOUND} WITH_CLIENT_SDL OFF)
 
 if(WITH_CLIENT_SDL2 AND WITH_CLIENT_SDL3)
   message("Building both, SDL2 and SDL3 clients, forcing WITH_CLIENT_SDL_VERSIONED=ON")
