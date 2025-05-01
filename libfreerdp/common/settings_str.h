@@ -207,6 +207,8 @@ static const struct settings_str_entry settings_map[] = {
 	{ FreeRDP_RemoteFxOnly, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_RemoteFxOnly" },
 	{ FreeRDP_RestrictedAdminModeRequired, FREERDP_SETTINGS_TYPE_BOOL,
 	  "FreeRDP_RestrictedAdminModeRequired" },
+	{ FreeRDP_RestrictedAdminModeSupported, FREERDP_SETTINGS_TYPE_BOOL,
+	  "FreeRDP_RestrictedAdminModeSupported" },
 	{ FreeRDP_SaltedChecksum, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_SaltedChecksum" },
 	{ FreeRDP_SendPreconnectionPdu, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_SendPreconnectionPdu" },
 	{ FreeRDP_ServerLicenseRequired, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_ServerLicenseRequired" },

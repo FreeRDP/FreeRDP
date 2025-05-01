@@ -275,6 +275,8 @@ static BOOL freerdp_peer_initialize(freerdp_peer* client)
 	}
 
 	nego_set_RCG_supported(rdp->nego, settings->RemoteCredentialGuard);
+	nego_set_restricted_admin_mode_supported(rdp->nego, settings->RestrictedAdminModeSupported);
+
 	if (!rdp_server_transition_to_state(rdp, CONNECTION_STATE_INITIAL))
 		return FALSE;
 
