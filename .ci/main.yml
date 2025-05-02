@@ -32,12 +32,16 @@ steps:
 
 - task: NuGetAuthenticate@1
 
+- script: .\.ci\Scripts\install_msvc
+  displayName: install_msvc
+
 - script: |
     call .ci\Scripts\getVars
-   
+    echo on 
     cmake --version
     perl -v
     msbuild -version
+    cl
 
     set
   name: getVersions
@@ -48,6 +52,20 @@ steps:
   displayName: buildOpenSsl
 - script: .\.ci\Scripts\buildFreeRDP Release
   displayName: buildFreeRDP
+
+- task: PublishPipelineArtifact@1
+  name: publishFreeRDPOnly
+  inputs:
+    targetPath: '.'
+    artifactName: 'freeRdpOnly'
+    parallel: true
+
+- task: PublishPipelineArtifact@1
+  name: publishOpenSSL
+  inputs:
+    targetPath: '..\OpenSSL-VC-64'
+    artifactName: 'OpenSSL-VC-64'
+    parallel: true
 
 - task: NuGetCommand@2
   displayName: restore
@@ -109,20 +127,6 @@ steps:
     command: push
     packagesToPush: 'Output\nugets\UiPath.FreeRdpClient.*.nupkg;Output\nugets\UiPath.SessionTools.*.nupkg'
     publishVstsFeed: '5b98d55c-1b14-4a03-893f-7a59746f1246/788028a9-5a01-48ee-b925-3af51ae46294'
-
-- task: PublishPipelineArtifact@1
-  name: publishFreeRDPOnly
-  inputs:
-    targetPath: '.'
-    artifactName: 'freeRdpOnly'
-    parallel: true
-
-- task: PublishPipelineArtifact@1
-  name: publishOpenSSL
-  inputs:
-    targetPath: '..\OpenSSL-VC-64'
-    artifactName: 'OpenSSL-VC-64'
-    parallel: true
 
 - ${{ if and(eq(parameters.PublishNuGets, true), eq(variables['CreateGitTag'], true)) }}:
   - pwsh: |

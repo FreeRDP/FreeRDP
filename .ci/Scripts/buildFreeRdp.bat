@@ -1,10 +1,12 @@
-call "%~dp0\getvars.bat"
 pushd .
-cd %freeRdpDir%
+call "%~dp0\getvars.bat"
+
+cd "%freeRdpDir%"
 git clean -xdff
 
 echo ">>>>>>>>>>>>>> create freerdp sln"
 cmd /c cmake . -B"./Build/x64" -G"Visual Studio 17 2022"^
+	-T v143,version=%vc_ver%^
 	-A x64^
 	-DOPENSSL_ROOT_DIR="../OpenSSL-VC-64"^
 	-DCMAKE_INSTALL_PREFIX="./Install/x64"^

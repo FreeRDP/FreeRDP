@@ -1,7 +1,7 @@
-call %~dp0\getvars.bat
-
 pushd .
-cd %freeRdpDir%\..
+call "%~dp0\getvars.bat"
+
+cd "%freeRdpDir%\.."
 
 rem checkout openssl
 mkdir OpenSSL
