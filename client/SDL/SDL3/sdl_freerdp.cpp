@@ -1019,18 +1019,31 @@ static int sdl_run(SdlContext* sdl)
 									    SDL_GetWindowSizeInPixels(win, &w_pix, &h_pix);
 									assert(rcpix);
 									auto scale = SDL_GetWindowDisplayScale(win);
-									assert(SDL_isnanf(scale) == 0);
-									assert(SDL_isinff(scale) == 0);
-									assert(scale > SDL_FLT_EPSILON);
-									auto w_gdi = sdl->context()->gdi->width;
-									auto h_gdi = sdl->context()->gdi->height;
-									auto pix2point = [=](int pix)
-									{ return static_cast<int>(static_cast<float>(pix) / scale); };
-									if (w_pix != w_gdi || h_pix != h_gdi)
+									if (scale <= SDL_FLT_EPSILON)
 									{
-										[[maybe_unused]] auto ssws = SDL_SetWindowSize(
-										    win, pix2point(w_gdi), pix2point(h_gdi));
-										assert(ssws);
+										auto err = SDL_GetError();
+										SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION,
+										            "SDL_GetWindowDisplayScale() failed with %s",
+										            err);
+									}
+									else
+									{
+										assert(SDL_isnanf(scale) == 0);
+										assert(SDL_isinff(scale) == 0);
+										assert(scale > SDL_FLT_EPSILON);
+										auto w_gdi = sdl->context()->gdi->width;
+										auto h_gdi = sdl->context()->gdi->height;
+										auto pix2point = [=](int pix)
+										{
+											return static_cast<int>(static_cast<float>(pix) /
+											                        scale);
+										};
+										if (w_pix != w_gdi || h_pix != h_gdi)
+										{
+											[[maybe_unused]] auto ssws = SDL_SetWindowSize(
+											    win, pix2point(w_gdi), pix2point(h_gdi));
+											assert(ssws);
+										}
 									}
 								}
 								break;
