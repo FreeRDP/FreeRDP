@@ -1040,9 +1040,15 @@ static int sdl_run(SdlContext* sdl)
 										};
 										if (w_pix != w_gdi || h_pix != h_gdi)
 										{
-											[[maybe_unused]] auto ssws = SDL_SetWindowSize(
+											const auto ssws = SDL_SetWindowSize(
 											    win, pix2point(w_gdi), pix2point(h_gdi));
-											assert(ssws);
+											if (!ssws)
+											{
+												auto err = SDL_GetError();
+												SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION,
+												            "SDL_SetWindowSize() failed with %s",
+												            err);
+											}
 										}
 									}
 								}
