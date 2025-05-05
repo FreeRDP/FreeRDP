@@ -14,7 +14,7 @@ android {
         minSdkVersion rootProject.ext.minApi
         targetSdkVersion rootProject.ext.targetApi
         vectorDrawables.useSupportLibrary = true
-	ndkVersion = "27.2.12479018"
+	ndkVersion = "29.0.13113456"
 
         ndk {
             File jniLibsDirectory = new File(project.projectDir, "src/main/jniLibs")
@@ -28,6 +28,7 @@ android {
             if (new File(jniLibsDirectory, "x86/libfreerdp3.so").exists())
                 abiFiltersList.add("x86")
             
+            //noinspection ChromeOsAbiSupport
             abiFilters = abiFiltersList
         }
 

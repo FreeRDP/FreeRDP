@@ -1,8 +1,8 @@
 #!/bin/bash
 
 SCM_URL=https://github.com/openssl/openssl/releases/download/
-SCM_TAG=openssl-3.3.1
-SCM_HASH=777cd596284c883375a2a7a11bf5d2786fc5413255efab20c50d6ffe6d020b7e
+SCM_TAG=openssl-3.5.0
+SCM_HASH=344d0a79f1a9b08029b0744e2cc401a43f9c90acd1044d09a530b4885a8e9fc0
 
 COMPILER=4.9
 
@@ -19,7 +19,9 @@ function build {
 
   common_run export CC=clang
   common_run export PATH=$(${SCRIPT_PATH}/toolchains_path.py --ndk ${ANDROID_NDK}):$ORG_PATH
-  common_run export ANDROID_NDK
+  common_run export ANDROID_NDK=${ANDROID_NDK}
+  common_run export ANDROID_NDK_ROOT=${ANDROID_NDK}
+  common_run export ANDROID_NDK_HOME=${ANDROID_NDK}
 
   echo "CONFIG=$CONFIG"
   echo "DST_PREFIX=$DST_PREFIX"
