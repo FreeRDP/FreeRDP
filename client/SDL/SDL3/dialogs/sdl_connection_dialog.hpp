@@ -28,11 +28,12 @@
 
 #include <freerdp/freerdp.h>
 
+#include "sdl_widget_list.hpp"
 #include "sdl_widget.hpp"
 #include "sdl_buttons.hpp"
 #include "sdl_connection_dialog_wrapper.hpp"
 
-class SDLConnectionDialog
+class SDLConnectionDialog : public SdlWidgetList
 {
   public:
 	explicit SDLConnectionDialog(rdpContext* context);
@@ -87,8 +88,6 @@ class SDLConnectionDialog
 	};
 
 	rdpContext* _context = nullptr;
-	std::shared_ptr<SDL_Window> _window = nullptr;
-	std::shared_ptr<SDL_Renderer> _renderer = nullptr;
 	mutable std::mutex _mux;
 	std::string _title;
 	std::string _msg;
@@ -96,8 +95,7 @@ class SDLConnectionDialog
 	SdlConnectionDialogWrapper::MsgType _type_active = SdlConnectionDialogWrapper::MSG_NONE;
 	SDL_TimerID _timer = 0;
 	bool _running = false;
-	std::vector<widget_cfg_t> _list;
-	SdlButtonList _buttons;
+	std::vector<widget_cfg_t> _list{};
 };
 
 class SDLConnectionDialogHider

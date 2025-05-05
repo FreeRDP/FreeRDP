@@ -5,11 +5,12 @@
 
 #include <SDL3/SDL.h>
 
+#include "sdl_widget_list.hpp"
 #include "sdl_select.hpp"
 #include "sdl_button.hpp"
 #include "sdl_buttons.hpp"
 
-class SdlSelectList
+class SdlSelectList : public SdlWidgetList
 {
   public:
 	SdlSelectList(const std::string& title, const std::vector<std::string>& labels);
@@ -34,8 +35,5 @@ class SdlSelectList
 	void reset_mouseover();
 	void reset_highlight();
 
-	std::shared_ptr<SDL_Window> _window;
-	std::shared_ptr<SDL_Renderer> _renderer;
 	std::vector<SdlSelectWidget> _list;
-	SdlButtonList _buttons;
 };

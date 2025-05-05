@@ -1,8 +1,28 @@
+/**
+ * FreeRDP: A Remote Desktop Protocol Implementation
+ * SDL Client helper dialogs
+ *
+ * Copyright 2025 Armin Novak <armin.novak@thincast.com>
+ * Copyright 2025 Thincast Technologies GmbH
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 #include <cassert>
 #include <algorithm>
 
 #include <winpr/cast.h>
 
+#include "sdl_widget_list.hpp"
 #include "sdl_input_widgets.hpp"
 
 static const Uint32 vpadding = 5;
@@ -11,7 +31,6 @@ SdlInputWidgetList::SdlInputWidgetList(const std::string& title,
                                        const std::vector<std::string>& labels,
                                        const std::vector<std::string>& initial,
                                        const std::vector<Uint32>& flags)
-    : _window(nullptr), _renderer(nullptr)
 {
 	assert(labels.size() == initial.size());
 	assert(labels.size() == flags.size());
@@ -26,17 +45,8 @@ SdlInputWidgetList::SdlInputWidgetList(const std::string& title,
 	const size_t total_height = input_height + widget_heigth;
 	assert(total_width <= INT32_MAX);
 	assert(total_height <= INT32_MAX);
-	SDL_Renderer* renderer = nullptr;
-	SDL_Window* window = nullptr;
-	auto rc = SDL_CreateWindowAndRenderer(
-	    title.c_str(), total_width, static_cast<int>(total_height),
-	    SDL_WINDOW_HIGH_PIXEL_DENSITY | SDL_WINDOW_MOUSE_FOCUS | SDL_WINDOW_INPUT_FOCUS, &window,
-	    &renderer);
-	_renderer = std::shared_ptr<SDL_Renderer>(renderer, SDL_DestroyRenderer);
-	_window = std::shared_ptr<SDL_Window>(window, SDL_DestroyWindow);
-	if (!rc)
-		widget_log_error(rc, "SDL_CreateWindowAndRenderer");
-	else
+
+	if (reset(title, total_width, total_height))
 	{
 		for (size_t x = 0; x < labels.size(); x++)
 		{
@@ -148,7 +158,7 @@ int SdlInputWidgetList::run(std::vector<std::string>& result)
 		bool running = true;
 		while (running)
 		{
-			if (!clear_window(_renderer))
+			if (!SdlWidget::clear_window(_renderer))
 				throw;
 
 			if (!update(_renderer))

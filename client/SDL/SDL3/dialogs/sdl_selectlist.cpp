@@ -1,30 +1,18 @@
 #include <cassert>
 #include <winpr/cast.h>
 #include "sdl_selectlist.hpp"
+#include "../sdl_utils.hpp"
 
 static const Uint32 vpadding = 5;
 
 SdlSelectList::SdlSelectList(const std::string& title, const std::vector<std::string>& labels)
-    : _window(nullptr), _renderer(nullptr)
 {
 	const size_t widget_height = 50;
 	const size_t widget_width = 600;
 
 	const size_t total_height = labels.size() * (widget_height + vpadding) + vpadding;
 	const size_t height = total_height + widget_height;
-	static_assert(widget_width <= INT32_MAX);
-	assert(height <= INT32_MAX);
-	SDL_Renderer* renderer = nullptr;
-	SDL_Window* window = nullptr;
-	auto rc = SDL_CreateWindowAndRenderer(
-	    title.c_str(), static_cast<int>(widget_width), static_cast<int>(height),
-	    SDL_WINDOW_HIGH_PIXEL_DENSITY | SDL_WINDOW_MOUSE_FOCUS | SDL_WINDOW_INPUT_FOCUS, &window,
-	    &renderer);
-	_renderer = std::shared_ptr<SDL_Renderer>(renderer, SDL_DestroyRenderer);
-	_window = std::shared_ptr<SDL_Window>(window, SDL_DestroyWindow);
-	if (rc != 0)
-		widget_log_error(rc, "SDL_CreateWindowAndRenderer");
-	else
+	if (reset(title, widget_width, height))
 	{
 		SDL_FRect rect = { 0, 0, widget_width, widget_height };
 		for (auto& label : labels)
@@ -60,7 +48,7 @@ int SdlSelectList::run()
 	{
 		while (running)
 		{
-			if (!clear_window(_renderer))
+			if (!SdlWidget::clear_window(_renderer))
 				throw;
 
 			if (!update_text())

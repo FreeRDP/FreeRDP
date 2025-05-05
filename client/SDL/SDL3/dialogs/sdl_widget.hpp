@@ -72,6 +72,13 @@ class SdlWidget
 	static bool error_ex(bool success, const char* what, const char* file, size_t line,
 	                     const char* fkt);
 
+	static bool clear_window(std::shared_ptr<SDL_Renderer>& renderer);
+
+  protected:
+	static bool createWindowAndRenderer(const std::string& title, size_t width, size_t height,
+	                                    std::shared_ptr<SDL_Window>& _window,
+	                                    std::shared_ptr<SDL_Renderer>& _renderer);
+
   private:
 	std::shared_ptr<SDL_Texture> render_text(std::shared_ptr<SDL_Renderer>& renderer,
 	                                         const std::string& text, SDL_Color fgcolor,
@@ -88,5 +95,3 @@ class SdlWidget
 	bool _wrap = false;
 	size_t _text_width = 0;
 };
-
-bool clear_window(std::shared_ptr<SDL_Renderer>& renderer);
