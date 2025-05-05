@@ -24,6 +24,8 @@ set(SRCS
     sdl_dialogs.hpp
     sdl_widget.hpp
     sdl_widget.cpp
+    sdl_widget_list.hpp
+    sdl_widget_list.cpp
     sdl_input.hpp
     sdl_input.cpp
     sdl_input_widgets.cpp

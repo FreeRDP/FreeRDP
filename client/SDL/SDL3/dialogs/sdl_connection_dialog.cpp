@@ -333,24 +333,13 @@ bool SDLConnectionDialog::createWindow()
 {
 	destroyWindow();
 
-	const int widget_height = 50;
-	const int widget_width = 600;
-	const int total_height = 300;
+	const size_t widget_height = 50;
+	const size_t widget_width = 600;
+	const size_t total_height = 300;
 
-	SDL_Renderer* renderer = nullptr;
-	SDL_Window* window = nullptr;
-	auto rc = SDL_CreateWindowAndRenderer(_title.c_str(), widget_width, total_height,
-	                                      SDL_WINDOW_HIGH_PIXEL_DENSITY | SDL_WINDOW_MOUSE_FOCUS |
-	                                          SDL_WINDOW_INPUT_FOCUS,
-	                                      &window, &renderer);
-	_renderer = std::shared_ptr<SDL_Renderer>(renderer, SDL_DestroyRenderer);
-	_window = std::shared_ptr<SDL_Window>(window, SDL_DestroyWindow);
-
-	if (rc != 0)
-	{
-		widget_log_error(rc, "SDL_CreateWindowAndRenderer");
+	if (!reset(_title, widget_width, widget_height))
 		return false;
-	}
+
 	setModal();
 
 	SDL_Color res_bgcolor;
@@ -390,7 +379,7 @@ bool SDLConnectionDialog::createWindow()
 			break;
 	}
 
-	int height = (total_height - 3ul * vpadding) / 2ul;
+	const auto height = (total_height - 3ul * vpadding) / 2ul;
 	SDL_FRect iconRect{ hpadding, vpadding, widget_width / 4ul - 2ul * hpadding,
 		                static_cast<float>(height) };
 	widget_cfg_t icon{ textcolor,

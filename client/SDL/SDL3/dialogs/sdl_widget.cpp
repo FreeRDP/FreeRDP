@@ -218,6 +218,21 @@ bool SdlWidget::error_ex(bool success, const char* what, const char* file, size_
 	return sdl_log_error_ex(-1, log, what, file, line, fkt);
 }
 
+bool SdlWidget::createWindowAndRenderer(const std::string& title, size_t width, size_t height,
+                                        std::shared_ptr<SDL_Window>& _window,
+                                        std::shared_ptr<SDL_Renderer>& _renderer)
+{
+	auto w = WINPR_ASSERTING_INT_CAST(int, width);
+	auto h = WINPR_ASSERTING_INT_CAST(int, height);
+	SDL_Renderer* renderer = nullptr;
+	SDL_Window* window = nullptr;
+	auto rc = SDL_CreateWindowAndRenderer(
+	    title.c_str(), w, h, SDL_WINDOW_MOUSE_FOCUS | SDL_WINDOW_INPUT_FOCUS, &window, &renderer);
+	_renderer = std::shared_ptr<SDL_Renderer>(renderer, SDL_DestroyRenderer);
+	_window = std::shared_ptr<SDL_Window>(window, SDL_DestroyWindow);
+	return rc;
+}
+
 static bool draw_rect(std::shared_ptr<SDL_Renderer>& renderer, const SDL_FRect* rect,
                       SDL_Color color)
 {
@@ -328,7 +343,7 @@ bool SdlWidget::update_text(std::shared_ptr<SDL_Renderer>& renderer, const std::
 	return !widget_log_error(rc, "SDL_RenderCopy");
 }
 
-bool clear_window(std::shared_ptr<SDL_Renderer>& renderer)
+bool SdlWidget::clear_window(std::shared_ptr<SDL_Renderer>& renderer)
 {
 	assert(renderer);
 
