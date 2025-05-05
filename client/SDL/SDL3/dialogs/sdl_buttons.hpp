@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <cstdint>
+#include <memory>
 
 #include "sdl_button.hpp"
 
@@ -16,13 +17,13 @@ class SdlButtonList
 	SdlButtonList& operator=(const SdlButtonList& other) = delete;
 	SdlButtonList& operator=(SdlButtonList&& other) = delete;
 
-	bool populate(SDL_Renderer* renderer, const std::vector<std::string>& labels,
+	bool populate(std::shared_ptr<SDL_Renderer>& renderer, const std::vector<std::string>& labels,
 	              const std::vector<int>& ids, Sint32 total_width, Sint32 offsetY, Sint32 width,
 	              Sint32 height);
 
-	bool update(SDL_Renderer* renderer);
-	SdlButton* get_selected(const SDL_MouseButtonEvent& button);
-	SdlButton* get_selected(float x, float y);
+	bool update(std::shared_ptr<SDL_Renderer>& renderer);
+	std::shared_ptr<SdlButton> get_selected(const SDL_MouseButtonEvent& button);
+	std::shared_ptr<SdlButton> get_selected(float x, float y);
 
 	bool set_highlight_next(bool reset = false);
 	bool set_highlight(size_t index);
@@ -31,8 +32,8 @@ class SdlButtonList
 	void clear();
 
   private:
-	std::vector<SdlButton> _list;
-	SdlButton* _highlighted = nullptr;
+	std::vector<std::shared_ptr<SdlButton>> _list;
+	std::shared_ptr<SdlButton> _highlighted = nullptr;
 	size_t _highlight_index = 0;
-	SdlButton* _mouseover = nullptr;
+	std::shared_ptr<SdlButton> _mouseover = nullptr;
 };

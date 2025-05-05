@@ -34,8 +34,8 @@ class SdlInputWidget
 		SDL_INPUT_READONLY = 2
 	};
 
-	SdlInputWidget(SDL_Renderer* renderer, std::string label, std::string initial, Uint32 flags,
-	               size_t offset, size_t width, size_t height);
+	SdlInputWidget(std::shared_ptr<SDL_Renderer>& renderer, std::string label, std::string initial,
+	               Uint32 flags, size_t offset, size_t width, size_t height);
 	SdlInputWidget(SdlInputWidget&& other) noexcept;
 	SdlInputWidget(const SdlInputWidget& other) = delete;
 	~SdlInputWidget() = default;
@@ -43,17 +43,16 @@ class SdlInputWidget
 	SdlInputWidget& operator=(const SdlInputWidget& other) = delete;
 	SdlInputWidget& operator=(SdlInputWidget&& other) = delete;
 
-	bool fill_label(SDL_Renderer* renderer, SDL_Color color);
-	bool update_label(SDL_Renderer* renderer);
+	bool fill_label(std::shared_ptr<SDL_Renderer>& renderer, SDL_Color color);
+	bool update_label(std::shared_ptr<SDL_Renderer>& renderer);
 
-	bool set_mouseover(SDL_Renderer* renderer, bool mouseOver);
-	bool set_highlight(SDL_Renderer* renderer, bool highlight);
-	bool update_input(SDL_Renderer* renderer);
-	bool resize_input(size_t size);
+	bool set_mouseover(std::shared_ptr<SDL_Renderer>& renderer, bool mouseOver);
+	bool set_highlight(std::shared_ptr<SDL_Renderer>& renderer, bool highlight);
+	bool update_input(std::shared_ptr<SDL_Renderer>& renderer) const;
 
-	bool set_str(SDL_Renderer* renderer, const std::string& text);
-	bool remove_str(SDL_Renderer* renderer, size_t count);
-	bool append_str(SDL_Renderer* renderer, const std::string& text);
+	bool set_str(std::shared_ptr<SDL_Renderer>& renderer, const std::string& text);
+	bool remove_str(std::shared_ptr<SDL_Renderer>& renderer, size_t count);
+	bool append_str(std::shared_ptr<SDL_Renderer>& renderer, const std::string& text);
 
 	[[nodiscard]] const SDL_FRect& input_rect() const;
 	[[nodiscard]] std::string value() const;
@@ -61,10 +60,10 @@ class SdlInputWidget
 	[[nodiscard]] bool readonly() const;
 
   protected:
-	bool update_input(SDL_Renderer* renderer, SDL_Color fgcolor);
+	bool update_input(std::shared_ptr<SDL_Renderer>& renderer, SDL_Color fgcolor) const;
 
   private:
-	Uint32 _flags;
+	Uint32 _flags{};
 	std::string _text;
 	std::string _text_label;
 	SdlWidget _label;

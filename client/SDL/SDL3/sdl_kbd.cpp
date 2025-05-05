@@ -342,7 +342,7 @@ BOOL sdlInput::keyboard_set_indicators(rdpContext* context, UINT16 led_flags)
 {
 	WINPR_UNUSED(context);
 
-	int state = SDL_KMOD_NONE;
+	SDL_Keymod state = SDL_KMOD_NONE;
 
 	if ((led_flags & KBD_SYNC_NUM_LOCK) != 0)
 		state |= SDL_KMOD_NUM;
@@ -350,10 +350,10 @@ BOOL sdlInput::keyboard_set_indicators(rdpContext* context, UINT16 led_flags)
 		state |= SDL_KMOD_CAPS;
 	if ((led_flags & KBD_SYNC_SCROLL_LOCK) != 0)
 		state |= SDL_KMOD_SCROLL;
+	if ((led_flags & KBD_SYNC_KANA_LOCK) != 0)
+		state |= SDL_KMOD_LEVEL5;
 
-	// TODO: KBD_SYNC_KANA_LOCK
-
-	SDL_SetModState(static_cast<SDL_Keymod>(state));
+	SDL_SetModState(state);
 
 	return TRUE;
 }

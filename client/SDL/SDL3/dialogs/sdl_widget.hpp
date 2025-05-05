@@ -20,7 +20,7 @@
 #pragma once
 
 #include <string>
-
+#include <memory>
 #include <vector>
 #include <SDL3/SDL.h>
 #include <SDL3_ttf/SDL_ttf.h>
@@ -48,8 +48,8 @@ typedef SSIZE_T ssize_t;
 class SdlWidget
 {
   public:
-	SdlWidget(SDL_Renderer* renderer, const SDL_FRect& rect, bool input);
-	SdlWidget(SDL_Renderer* renderer, const SDL_FRect& rect, SDL_IOStream* ops);
+	SdlWidget(std::shared_ptr<SDL_Renderer>& renderer, const SDL_FRect& rect, bool input);
+	SdlWidget(std::shared_ptr<SDL_Renderer>& renderer, const SDL_FRect& rect, SDL_IOStream* ops);
 	SdlWidget(const SdlWidget& other) = delete;
 	SdlWidget(SdlWidget&& other) noexcept;
 	virtual ~SdlWidget();
@@ -57,11 +57,12 @@ class SdlWidget
 	SdlWidget& operator=(const SdlWidget& other) = delete;
 	SdlWidget& operator=(SdlWidget&& other) = delete;
 
-	bool fill(SDL_Renderer* renderer, SDL_Color color);
-	bool fill(SDL_Renderer* renderer, const std::vector<SDL_Color>& colors);
-	bool update_text(SDL_Renderer* renderer, const std::string& text, SDL_Color fgcolor);
-	bool update_text(SDL_Renderer* renderer, const std::string& text, SDL_Color fgcolor,
-	                 SDL_Color bgcolor);
+	bool fill(std::shared_ptr<SDL_Renderer>& renderer, SDL_Color color) const;
+	bool fill(std::shared_ptr<SDL_Renderer>& renderer, const std::vector<SDL_Color>& colors) const;
+	bool update_text(std::shared_ptr<SDL_Renderer>& renderer, const std::string& text,
+	                 SDL_Color fgcolor) const;
+	bool update_text(std::shared_ptr<SDL_Renderer>& renderer, const std::string& text,
+	                 SDL_Color fgcolor, SDL_Color bgcolor) const;
 
 	[[nodiscard]] bool wrap() const;
 	bool set_wrap(bool wrap = true, size_t width = 0);
@@ -72,17 +73,20 @@ class SdlWidget
 	                     const char* fkt);
 
   private:
-	SDL_Texture* render_text(SDL_Renderer* renderer, const std::string& text, SDL_Color fgcolor,
-	                         SDL_FRect& src, SDL_FRect& dst);
-	SDL_Texture* render_text_wrapped(SDL_Renderer* renderer, const std::string& text,
-	                                 SDL_Color fgcolor, SDL_FRect& src, SDL_FRect& dst);
+	std::shared_ptr<SDL_Texture> render_text(std::shared_ptr<SDL_Renderer>& renderer,
+	                                         const std::string& text, SDL_Color fgcolor,
+	                                         SDL_FRect& src, SDL_FRect& dst) const;
+	std::shared_ptr<SDL_Texture> render_text_wrapped(std::shared_ptr<SDL_Renderer>& renderer,
+	                                                 const std::string& text, SDL_Color fgcolor,
+	                                                 SDL_FRect& src, SDL_FRect& dst) const;
 
-	TTF_Font* _font = nullptr;
-	SDL_Texture* _image = nullptr;
+	std::shared_ptr<TTF_Font> _font = nullptr;
+	std::shared_ptr<SDL_Texture> _image = nullptr;
+	std::shared_ptr<TTF_TextEngine> _engine = nullptr;
 	SDL_FRect _rect = {};
 	bool _input = false;
 	bool _wrap = false;
 	size_t _text_width = 0;
 };
 
-bool clear_window(SDL_Renderer* renderer);
+bool clear_window(std::shared_ptr<SDL_Renderer>& renderer);

@@ -28,7 +28,8 @@ static const SDL_Color buttonhighlightcolor = { 0xcd, 0xca, 0x35, 0x60 };
 static const SDL_Color buttonmouseovercolor = { 0x66, 0xff, 0x66, 0x60 };
 static const SDL_Color buttonfontcolor = { 0xd1, 0xcf, 0xcd, 0xff };
 
-SdlButton::SdlButton(SDL_Renderer* renderer, std::string label, int id, const SDL_FRect& rect)
+SdlButton::SdlButton(std::shared_ptr<SDL_Renderer>& renderer, std::string label, int id,
+                     const SDL_FRect& rect)
     : SdlWidget(renderer, rect, false), _name(std::move(label)), _id(id)
 {
 	assert(renderer);
@@ -40,7 +41,7 @@ SdlButton::SdlButton(SdlButton&& other) noexcept = default;
 
 SdlButton::~SdlButton() = default;
 
-bool SdlButton::highlight(SDL_Renderer* renderer)
+bool SdlButton::highlight(std::shared_ptr<SDL_Renderer>& renderer)
 {
 	assert(renderer);
 
@@ -50,7 +51,7 @@ bool SdlButton::highlight(SDL_Renderer* renderer)
 	return update_text(renderer, _name, buttonfontcolor);
 }
 
-bool SdlButton::mouseover(SDL_Renderer* renderer)
+bool SdlButton::mouseover(std::shared_ptr<SDL_Renderer>& renderer)
 {
 	std::vector<SDL_Color> colors = { buttonbackgroundcolor, buttonmouseovercolor };
 	if (!fill(renderer, colors))
@@ -58,7 +59,7 @@ bool SdlButton::mouseover(SDL_Renderer* renderer)
 	return update_text(renderer, _name, buttonfontcolor);
 }
 
-bool SdlButton::update(SDL_Renderer* renderer)
+bool SdlButton::update(std::shared_ptr<SDL_Renderer>& renderer)
 {
 	assert(renderer);
 

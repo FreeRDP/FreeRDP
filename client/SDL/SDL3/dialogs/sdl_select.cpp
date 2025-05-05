@@ -36,26 +36,27 @@ static const SDL_Color labelbackgroundcolor = { 0x69, 0x66, 0x63, 0xff };
 static const SDL_Color labelhighlightcolor = { 0xcd, 0xca, 0x35, 0x60 };
 static const SDL_Color labelfontcolor = { 0xd1, 0xcf, 0xcd, 0xff };
 
-SdlSelectWidget::SdlSelectWidget(SDL_Renderer* renderer, std::string label, const SDL_FRect& rect)
+SdlSelectWidget::SdlSelectWidget(std::shared_ptr<SDL_Renderer>& renderer, std::string label,
+                                 const SDL_FRect& rect)
     : SdlWidget(renderer, rect, true), _text(std::move(label)), _mouseover(false), _highlight(false)
 {
 }
 
 SdlSelectWidget::SdlSelectWidget(SdlSelectWidget&& other) noexcept = default;
 
-bool SdlSelectWidget::set_mouseover(SDL_Renderer* renderer, bool mouseOver)
+bool SdlSelectWidget::set_mouseover(std::shared_ptr<SDL_Renderer>& renderer, bool mouseOver)
 {
 	_mouseover = mouseOver;
 	return update_text(renderer);
 }
 
-bool SdlSelectWidget::set_highlight(SDL_Renderer* renderer, bool highlight)
+bool SdlSelectWidget::set_highlight(std::shared_ptr<SDL_Renderer>& renderer, bool highlight)
 {
 	_highlight = highlight;
 	return update_text(renderer);
 }
 
-bool SdlSelectWidget::update_text(SDL_Renderer* renderer)
+bool SdlSelectWidget::update_text(std::shared_ptr<SDL_Renderer>& renderer) const
 {
 	assert(renderer);
 	std::vector<SDL_Color> colors = { labelbackgroundcolor };
