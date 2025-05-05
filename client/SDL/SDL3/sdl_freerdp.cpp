@@ -1005,33 +1005,54 @@ static int sdl_run(SdlContext* sdl)
 							switch (ev->type)
 							{
 								case SDL_EVENT_WINDOW_DISPLAY_SCALE_CHANGED:
-								{
-									sdl_Pointer_Set_Process(sdl);
-									if (freerdp_settings_get_bool(sdl->context()->settings,
-									                              FreeRDP_DynamicResolutionUpdate))
+									if (sdl->isConnected())
 									{
-										break;
-									}
-									auto win = window->second.window();
-									int w_pix{};
-									int h_pix{};
-									[[maybe_unused]] auto rcpix =
-									    SDL_GetWindowSizeInPixels(win, &w_pix, &h_pix);
-									assert(rcpix);
-									auto scale = SDL_GetWindowDisplayScale(win);
-									assert(SDL_isnanf(scale) == 0);
-									assert(SDL_isinff(scale) == 0);
-									assert(scale > SDL_FLT_EPSILON);
-									auto w_gdi = sdl->context()->gdi->width;
-									auto h_gdi = sdl->context()->gdi->height;
-									auto pix2point = [=](int pix)
-									{ return static_cast<int>(static_cast<float>(pix) / scale); };
-									if (w_pix != w_gdi || h_pix != h_gdi)
-									{
-										[[maybe_unused]] auto ssws = SDL_SetWindowSize(
-										    win, pix2point(w_gdi), pix2point(h_gdi));
-										assert(ssws);
-									}
+										sdl_Pointer_Set_Process(sdl);
+										if (freerdp_settings_get_bool(
+										        sdl->context()->settings,
+										        FreeRDP_DynamicResolutionUpdate))
+										{
+											break;
+										}
+										auto win = window->second.window();
+										int w_pix{};
+										int h_pix{};
+										[[maybe_unused]] auto rcpix =
+										    SDL_GetWindowSizeInPixels(win, &w_pix, &h_pix);
+										assert(rcpix);
+										auto scale = SDL_GetWindowDisplayScale(win);
+										if (scale <= SDL_FLT_EPSILON)
+										{
+											auto err = SDL_GetError();
+											SDL_LogWarn(
+											    SDL_LOG_CATEGORY_APPLICATION,
+											    "SDL_GetWindowDisplayScale() failed with %s", err);
+										}
+										else
+										{
+											assert(SDL_isnanf(scale) == 0);
+											assert(SDL_isinff(scale) == 0);
+											assert(scale > SDL_FLT_EPSILON);
+											auto w_gdi = sdl->context()->gdi->width;
+											auto h_gdi = sdl->context()->gdi->height;
+											auto pix2point = [=](int pix)
+											{
+												return static_cast<int>(static_cast<float>(pix) /
+												                        scale);
+											};
+											if (w_pix != w_gdi || h_pix != h_gdi)
+											{
+												const auto ssws = SDL_SetWindowSize(
+												    win, pix2point(w_gdi), pix2point(h_gdi));
+												if (!ssws)
+												{
+													auto err = SDL_GetError();
+													SDL_LogWarn(
+													    SDL_LOG_CATEGORY_APPLICATION,
+													    "SDL_SetWindowSize() failed with %s", err);
+												}
+											}
+										}
 								}
 								break;
 								case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:

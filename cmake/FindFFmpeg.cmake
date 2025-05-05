@@ -96,8 +96,8 @@ macro(find_component _component _pkgconfig _library _header)
     endif()
   endif(NOT WIN32)
 
-  find_path(${_component}_INCLUDE_DIRS ${_header} HINTS ${PC_${_component}_INCLUDEDIR}
-                                                        ${PC_${_component}_INCLUDE_DIRS} PATH_SUFFIXES ffmpeg
+  find_path(${_component}_INCLUDE_DIRS ${_header} HINTS ${PC_${_component}_INCLUDEDIR} ${PC_${_component}_INCLUDE_DIRS}
+            PATH_SUFFIXES ffmpeg
   )
 
   find_library(
