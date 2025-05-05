@@ -34,8 +34,8 @@ class SdlSelectList
 	void reset_mouseover();
 	void reset_highlight();
 
-	SDL_Window* _window;
-	SDL_Renderer* _renderer;
+	std::shared_ptr<SDL_Window> _window;
+	std::shared_ptr<SDL_Renderer> _renderer;
 	std::vector<SdlSelectWidget> _list;
 	SdlButtonList _buttons;
 };

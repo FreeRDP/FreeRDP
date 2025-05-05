@@ -51,7 +51,7 @@ bool SDLConnectionDialog::visible() const
 	if (!_window || !_renderer)
 		return false;
 
-	auto flags = SDL_GetWindowFlags(_window);
+	auto flags = SDL_GetWindowFlags(_window.get());
 	return (flags & (SDL_WINDOW_HIDDEN | SDL_WINDOW_MINIMIZED)) == 0;
 }
 
@@ -131,7 +131,7 @@ bool SDLConnectionDialog::update()
 		default:
 			if (_window)
 			{
-				SDL_SetWindowTitle(_window, _title.c_str());
+				SDL_SetWindowTitle(_window.get(), _title.c_str());
 			}
 			break;
 	}
@@ -148,27 +148,31 @@ bool SDLConnectionDialog::setModal()
 			return true;
 
 		auto parent = sdl->windows.begin()->second.window();
-		SDL_SetWindowParent(_window, parent);
-		SDL_SetWindowModal(_window, true);
-		SDL_RaiseWindow(_window);
+		SDL_SetWindowParent(_window.get(), parent);
+		SDL_SetWindowModal(_window.get(), true);
+		SDL_RaiseWindow(_window.get());
 	}
 	return true;
 }
 
-bool SDLConnectionDialog::clearWindow(SDL_Renderer* renderer)
+bool SDLConnectionDialog::clearWindow(std::shared_ptr<SDL_Renderer>& renderer)
 {
 	assert(renderer);
 
-	const auto drc = SDL_SetRenderDrawColor(renderer, backgroundcolor.r, backgroundcolor.g,
+	const auto rbm = SDL_SetRenderDrawBlendMode(renderer.get(), SDL_BLENDMODE_NONE);
+	if (widget_log_error(rbm, "SDL_SetRenderDrawBlendMode(SDL_BLENDMODE_NONE)"))
+		return false;
+
+	const auto drc = SDL_SetRenderDrawColor(renderer.get(), backgroundcolor.r, backgroundcolor.g,
 	                                        backgroundcolor.b, backgroundcolor.a);
 	if (widget_log_error(drc, "SDL_SetRenderDrawColor"))
 		return false;
 
-	const int rcls = SDL_RenderClear(renderer);
+	const int rcls = SDL_RenderClear(renderer.get());
 	return !widget_log_error(rcls, "SDL_RenderClear");
 }
 
-bool SDLConnectionDialog::update(SDL_Renderer* renderer)
+bool SDLConnectionDialog::update(std::shared_ptr<SDL_Renderer>& renderer)
 {
 	std::lock_guard lock(_mux);
 	if (!renderer)
@@ -186,8 +190,13 @@ bool SDLConnectionDialog::update(SDL_Renderer* renderer)
 	if (!_buttons.update(renderer))
 		return false;
 
-	SDL_RenderPresent(renderer);
-	return true;
+	auto rc = SDL_RenderPresent(_renderer.get());
+	if (!rc)
+	{
+		SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "SDL_RenderPresent failed with %s",
+		            SDL_GetError());
+	}
+	return rc;
 }
 
 bool SDLConnectionDialog::wait(bool ignoreRdpContext)
@@ -209,7 +218,7 @@ bool SDLConnectionDialog::handle(const SDL_Event& event)
 	Uint32 windowID = 0;
 	if (_window)
 	{
-		windowID = SDL_GetWindowID(_window);
+		windowID = SDL_GetWindowID(_window.get());
 	}
 
 	switch (event.type)
@@ -328,10 +337,15 @@ bool SDLConnectionDialog::createWindow()
 	const int widget_width = 600;
 	const int total_height = 300;
 
+	SDL_Renderer* renderer = nullptr;
+	SDL_Window* window = nullptr;
 	auto rc = SDL_CreateWindowAndRenderer(_title.c_str(), widget_width, total_height,
 	                                      SDL_WINDOW_HIGH_PIXEL_DENSITY | SDL_WINDOW_MOUSE_FOCUS |
 	                                          SDL_WINDOW_INPUT_FOCUS,
-	                                      &_window, &_renderer);
+	                                      &window, &renderer);
+	_renderer = std::shared_ptr<SDL_Renderer>(renderer, SDL_DestroyRenderer);
+	_window = std::shared_ptr<SDL_Window>(window, SDL_DestroyWindow);
+
 	if (rc != 0)
 	{
 		widget_log_error(rc, "SDL_CreateWindowAndRenderer");
@@ -413,8 +427,8 @@ bool SDLConnectionDialog::createWindow()
 	                  static_cast<Sint32>(widget_width / 2), static_cast<Sint32>(widget_height));
 	_buttons.set_highlight(0);
 
-	SDL_ShowWindow(_window);
-	SDL_RaiseWindow(_window);
+	SDL_ShowWindow(_window.get());
+	SDL_RaiseWindow(_window.get());
 
 	return true;
 }
@@ -423,8 +437,6 @@ void SDLConnectionDialog::destroyWindow()
 {
 	_buttons.clear();
 	_list.clear();
-	SDL_DestroyRenderer(_renderer);
-	SDL_DestroyWindow(_window);
 	_renderer = nullptr;
 	_window = nullptr;
 }

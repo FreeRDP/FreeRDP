@@ -28,7 +28,8 @@
 class SdlSelectWidget : public SdlWidget
 {
   public:
-	SdlSelectWidget(SDL_Renderer* renderer, std::string label, const SDL_FRect& rect);
+	SdlSelectWidget(std::shared_ptr<SDL_Renderer>& renderer, std::string label,
+	                const SDL_FRect& rect);
 	SdlSelectWidget(SdlSelectWidget&& other) noexcept;
 	SdlSelectWidget(const SdlSelectWidget& other) = delete;
 	~SdlSelectWidget() override = default;
@@ -36,9 +37,9 @@ class SdlSelectWidget : public SdlWidget
 	SdlSelectWidget& operator=(const SdlSelectWidget& other) = delete;
 	SdlSelectWidget& operator=(SdlSelectWidget&& other) = delete;
 
-	virtual bool set_mouseover(SDL_Renderer* renderer, bool mouseOver);
-	virtual bool set_highlight(SDL_Renderer* renderer, bool highlight);
-	virtual bool update_text(SDL_Renderer* renderer);
+	virtual bool set_mouseover(std::shared_ptr<SDL_Renderer>& renderer, bool mouseOver);
+	virtual bool set_highlight(std::shared_ptr<SDL_Renderer>& renderer, bool highlight);
+	virtual bool update_text(std::shared_ptr<SDL_Renderer>& renderer) const;
 
   private:
 	std::string _text;

@@ -66,9 +66,9 @@ class SDLConnectionDialog
 
 	bool setModal();
 
-	static bool clearWindow(SDL_Renderer* renderer);
+	static bool clearWindow(std::shared_ptr<SDL_Renderer>& renderer);
 
-	bool update(SDL_Renderer* renderer);
+	bool update(std::shared_ptr<SDL_Renderer>& renderer);
 
 	bool show(SdlConnectionDialogWrapper::MsgType type, const char* fmt, va_list ap);
 	bool show(SdlConnectionDialogWrapper::MsgType type);
@@ -87,8 +87,8 @@ class SDLConnectionDialog
 	};
 
 	rdpContext* _context = nullptr;
-	SDL_Window* _window = nullptr;
-	SDL_Renderer* _renderer = nullptr;
+	std::shared_ptr<SDL_Window> _window = nullptr;
+	std::shared_ptr<SDL_Renderer> _renderer = nullptr;
 	mutable std::mutex _mux;
 	std::string _title;
 	std::string _msg;

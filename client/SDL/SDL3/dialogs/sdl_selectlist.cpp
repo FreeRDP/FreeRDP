@@ -14,10 +14,14 @@ SdlSelectList::SdlSelectList(const std::string& title, const std::vector<std::st
 	const size_t height = total_height + widget_height;
 	static_assert(widget_width <= INT32_MAX);
 	assert(height <= INT32_MAX);
+	SDL_Renderer* renderer = nullptr;
+	SDL_Window* window = nullptr;
 	auto rc = SDL_CreateWindowAndRenderer(
 	    title.c_str(), static_cast<int>(widget_width), static_cast<int>(height),
-	    SDL_WINDOW_HIGH_PIXEL_DENSITY | SDL_WINDOW_MOUSE_FOCUS | SDL_WINDOW_INPUT_FOCUS, &_window,
-	    &_renderer);
+	    SDL_WINDOW_HIGH_PIXEL_DENSITY | SDL_WINDOW_MOUSE_FOCUS | SDL_WINDOW_INPUT_FOCUS, &window,
+	    &renderer);
+	_renderer = std::shared_ptr<SDL_Renderer>(renderer, SDL_DestroyRenderer);
+	_window = std::shared_ptr<SDL_Window>(window, SDL_DestroyWindow);
 	if (rc != 0)
 		widget_log_error(rc, "SDL_CreateWindowAndRenderer");
 	else
@@ -42,8 +46,6 @@ SdlSelectList::~SdlSelectList()
 {
 	_list.clear();
 	_buttons.clear();
-	SDL_DestroyRenderer(_renderer);
-	SDL_DestroyWindow(_window);
 }
 
 int SdlSelectList::run()
@@ -68,92 +70,97 @@ int SdlSelectList::run()
 				throw;
 
 			SDL_Event event = {};
-			SDL_WaitEvent(&event);
-			switch (event.type)
+			if (!SDL_WaitEvent(&event))
+				throw;
+			do
 			{
-				case SDL_EVENT_KEY_DOWN:
-					switch (event.key.key)
-					{
-						case SDLK_UP:
-						case SDLK_BACKSPACE:
-							if (CurrentActiveTextInput > 0)
-								CurrentActiveTextInput--;
-							else if (_list.empty())
-								CurrentActiveTextInput = 0;
-							else
-							{
-								auto s = _list.size();
-								CurrentActiveTextInput = WINPR_ASSERTING_INT_CAST(ssize_t, s) - 1;
-							}
-							break;
-						case SDLK_DOWN:
-						case SDLK_TAB:
-							if ((CurrentActiveTextInput < 0) || _list.empty())
-								CurrentActiveTextInput = 0;
-							else
-							{
-								auto s = _list.size();
-								CurrentActiveTextInput++;
-								if (s > 0)
+				switch (event.type)
+				{
+					case SDL_EVENT_KEY_DOWN:
+						switch (event.key.key)
+						{
+							case SDLK_UP:
+							case SDLK_BACKSPACE:
+								if (CurrentActiveTextInput > 0)
+									CurrentActiveTextInput--;
+								else if (_list.empty())
+									CurrentActiveTextInput = 0;
+								else
 								{
-									CurrentActiveTextInput = CurrentActiveTextInput %
-									                         WINPR_ASSERTING_INT_CAST(ssize_t, s);
+									auto s = _list.size();
+									CurrentActiveTextInput =
+									    WINPR_ASSERTING_INT_CAST(ssize_t, s) - 1;
 								}
-							}
-							break;
-						case SDLK_RETURN:
-						case SDLK_RETURN2:
-						case SDLK_KP_ENTER:
-							running = false;
-							res = static_cast<int>(CurrentActiveTextInput);
-							break;
-						case SDLK_ESCAPE:
-							running = false;
-							res = INPUT_BUTTON_CANCEL;
-							break;
-						default:
-							break;
+								break;
+							case SDLK_DOWN:
+							case SDLK_TAB:
+								if ((CurrentActiveTextInput < 0) || _list.empty())
+									CurrentActiveTextInput = 0;
+								else
+								{
+									auto s = _list.size();
+									CurrentActiveTextInput++;
+									if (s > 0)
+									{
+										CurrentActiveTextInput =
+										    CurrentActiveTextInput %
+										    WINPR_ASSERTING_INT_CAST(ssize_t, s);
+									}
+								}
+								break;
+							case SDLK_RETURN:
+							case SDLK_RETURN2:
+							case SDLK_KP_ENTER:
+								running = false;
+								res = static_cast<int>(CurrentActiveTextInput);
+								break;
+							case SDLK_ESCAPE:
+								running = false;
+								res = INPUT_BUTTON_CANCEL;
+								break;
+							default:
+								break;
+						}
+						break;
+					case SDL_EVENT_MOUSE_MOTION:
+					{
+						auto TextInputIndex = get_index(event.button);
+						reset_mouseover();
+						if (TextInputIndex >= 0)
+						{
+							auto& cur = _list[WINPR_ASSERTING_INT_CAST(size_t, TextInputIndex)];
+							if (!cur.set_mouseover(_renderer, true))
+								throw;
+						}
+
+						_buttons.set_mouseover(event.button.x, event.button.y);
 					}
 					break;
-				case SDL_EVENT_MOUSE_MOTION:
-				{
-					ssize_t TextInputIndex = get_index(event.button);
-					reset_mouseover();
-					if (TextInputIndex >= 0)
+					case SDL_EVENT_MOUSE_BUTTON_DOWN:
 					{
-						auto& cur = _list[WINPR_ASSERTING_INT_CAST(size_t, TextInputIndex)];
-						if (!cur.set_mouseover(_renderer, true))
-							throw;
-					}
-
-					_buttons.set_mouseover(event.button.x, event.button.y);
-				}
-				break;
-				case SDL_EVENT_MOUSE_BUTTON_DOWN:
-				{
-					auto button = _buttons.get_selected(event.button);
-					if (button)
-					{
-						running = false;
-						if (button->id() == INPUT_BUTTON_CANCEL)
-							res = INPUT_BUTTON_CANCEL;
+						auto button = _buttons.get_selected(event.button);
+						if (button)
+						{
+							running = false;
+							if (button->id() == INPUT_BUTTON_CANCEL)
+								res = INPUT_BUTTON_CANCEL;
+							else
+								res = static_cast<int>(CurrentActiveTextInput);
+						}
 						else
-							res = static_cast<int>(CurrentActiveTextInput);
+						{
+							CurrentActiveTextInput = get_index(event.button);
+						}
 					}
-					else
-					{
-						CurrentActiveTextInput = get_index(event.button);
-					}
+					break;
+					case SDL_EVENT_QUIT:
+						res = INPUT_BUTTON_CANCEL;
+						running = false;
+						break;
+					default:
+						break;
 				}
-				break;
-				case SDL_EVENT_QUIT:
-					res = INPUT_BUTTON_CANCEL;
-					running = false;
-					break;
-				default:
-					break;
-			}
-
+			} while (SDL_PollEvent(&event));
 			reset_highlight();
 			if (CurrentActiveTextInput >= 0)
 			{
@@ -162,7 +169,12 @@ int SdlSelectList::run()
 					throw;
 			}
 
-			SDL_RenderPresent(_renderer);
+			auto rc = SDL_RenderPresent(_renderer.get());
+			if (!rc)
+			{
+				SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "SDL_RenderPresent failed with %s",
+				            SDL_GetError());
+			}
 		}
 	}
 	catch (...)

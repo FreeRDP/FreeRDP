@@ -23,7 +23,7 @@ class SdlInputWidgetList
 	int run(std::vector<std::string>& result);
 
   protected:
-	bool update(SDL_Renderer* renderer);
+	bool update(std::shared_ptr<SDL_Renderer>& renderer);
 	ssize_t get_index(const SDL_MouseButtonEvent& button);
 
   private:
@@ -35,10 +35,10 @@ class SdlInputWidgetList
 
 	ssize_t next(ssize_t current);
 	[[nodiscard]] bool valid(ssize_t current) const;
-	SdlInputWidget* get(ssize_t index);
+	std::shared_ptr<SdlInputWidget> get(ssize_t index);
 
-	SDL_Window* _window;
-	SDL_Renderer* _renderer;
-	std::vector<SdlInputWidget> _list;
+	std::shared_ptr<SDL_Window> _window;
+	std::shared_ptr<SDL_Renderer> _renderer;
+	std::vector<std::shared_ptr<SdlInputWidget>> _list;
 	SdlButtonList _buttons;
 };
