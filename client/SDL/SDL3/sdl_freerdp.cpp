@@ -805,11 +805,13 @@ static int sdl_run(SdlContext* sdl)
 			auto point2pix = [](Uint32 win_id, float& x, float& y)
 			{
 				auto win = SDL_GetWindowFromID(win_id);
-				assert(win);
-				auto scale = SDL_GetWindowDisplayScale(win);
-				assert(scale);
-				x *= scale;
-				y *= scale;
+				if (win)
+				{
+					auto scale = SDL_GetWindowDisplayScale(win);
+					assert(scale);
+					x *= scale;
+					y *= scale;
+				}
 			};
 
 			switch (windowEvent.type)
