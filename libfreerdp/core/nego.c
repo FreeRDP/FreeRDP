@@ -59,7 +59,8 @@ struct rdp_nego
 	UINT32 RequestedProtocols;
 	BOOL NegotiateSecurityLayer;
 	BOOL EnabledProtocols[32];
-	BOOL RestrictedAdminModeRequired;
+	BOOL RestrictedAdminModeRequired;  /* Client-side */
+	BOOL RestrictedAdminModeSupported; /* Server-side */
 	BOOL RemoteCredsGuardRequired;
 	BOOL RemoteCredsGuardActive;
 	BOOL RemoteCredsGuardSupported;
@@ -1254,22 +1255,45 @@ BOOL nego_process_negotiation_request(rdpNego* nego, wStream* s)
 		return FALSE;
 	}
 	if (flags & RESTRICTED_ADMIN_MODE_REQUIRED)
-		WLog_Print(nego->log, WLOG_INFO, "RDP_NEG_REQ::flags RESTRICTED_ADMIN_MODE_REQUIRED");
-
-	if (flags & REDIRECTED_AUTHENTICATION_MODE_REQUIRED)
 	{
-		if (!nego->RemoteCredsGuardSupported)
+		if (nego->RestrictedAdminModeSupported)
 		{
-			WLog_Print(nego->log, WLOG_ERROR,
-			           "RDP_NEG_REQ::flags REDIRECTED_AUTHENTICATION_MODE_REQUIRED but disabled");
-			return FALSE;
+			WLog_Print(nego->log, WLOG_INFO, "RDP_NEG_REQ::flags RESTRICTED_ADMIN_MODE_REQUIRED");
 		}
 		else
 		{
+			WLog_Print(nego->log, WLOG_ERROR,
+			           "RDP_NEG_REQ::flags RESTRICTED_ADMIN_MODE_REQUIRED but disabled");
+			return FALSE;
+		}
+	}
+
+	if (flags & REDIRECTED_AUTHENTICATION_MODE_REQUIRED)
+	{
+		if (nego->RemoteCredsGuardSupported)
+		{
 			WLog_Print(nego->log, WLOG_INFO,
 			           "RDP_NEG_REQ::flags REDIRECTED_AUTHENTICATION_MODE_REQUIRED");
+			nego->RemoteCredsGuardActive = TRUE;
 		}
-		nego->RemoteCredsGuardActive = TRUE;
+		else
+		{
+			/* If both RESTRICTED_ADMIN_MODE_REQUIRED and REDIRECTED_AUTHENTICATION_MODE_REQUIRED
+			 * are set, it means one or the other. In this case, don't fail if Remote Guard isn't
+			 * available. */
+			if (flags & RESTRICTED_ADMIN_MODE_REQUIRED)
+			{
+				WLog_Print(nego->log, WLOG_INFO,
+				           "RDP_NEG_REQ::flags REDIRECTED_AUTHENTICATION_MODE_REQUIRED ignored.");
+			}
+			else
+			{
+				WLog_Print(
+				    nego->log, WLOG_ERROR,
+				    "RDP_NEG_REQ::flags REDIRECTED_AUTHENTICATION_MODE_REQUIRED but disabled");
+				return FALSE;
+			}
+		}
 	}
 
 	Stream_Read_UINT16(s, length);
@@ -1471,7 +1495,7 @@ BOOL nego_send_negotiation_response(rdpNego* nego)
 		if (freerdp_settings_get_bool(settings, FreeRDP_SupportGraphicsPipeline))
 			flags |= DYNVC_GFX_PROTOCOL_SUPPORTED;
 
-		if (freerdp_settings_get_bool(settings, FreeRDP_RestrictedAdminModeRequired))
+		if (nego->RestrictedAdminModeSupported)
 			flags |= RESTRICTED_ADMIN_MODE_SUPPORTED;
 
 		if (nego->RemoteCredsGuardSupported)
@@ -1707,6 +1731,13 @@ void nego_set_restricted_admin_mode_required(rdpNego* nego, BOOL RestrictedAdmin
 	WLog_Print(nego->log, WLOG_DEBUG, "Enabling restricted admin mode: %s",
 	           RestrictedAdminModeRequired ? "TRUE" : "FALSE");
 	nego->RestrictedAdminModeRequired = RestrictedAdminModeRequired;
+}
+
+void nego_set_restricted_admin_mode_supported(rdpNego* nego, BOOL enabled)
+{
+	WINPR_ASSERT(nego);
+
+	nego->RestrictedAdminModeSupported = enabled;
 }
 
 void nego_set_RCG_required(rdpNego* nego, BOOL enabled)

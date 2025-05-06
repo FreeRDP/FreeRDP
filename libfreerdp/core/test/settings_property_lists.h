@@ -148,6 +148,7 @@ static const size_t bool_list_indices[] = {
 	FreeRDP_RemoteFxImageCodec,
 	FreeRDP_RemoteFxOnly,
 	FreeRDP_RestrictedAdminModeRequired,
+	FreeRDP_RestrictedAdminModeSupported,
 	FreeRDP_SaltedChecksum,
 	FreeRDP_SendPreconnectionPdu,
 	FreeRDP_ServerLicenseRequired,

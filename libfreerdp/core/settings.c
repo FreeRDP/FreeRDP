@@ -884,6 +884,7 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	    !freerdp_settings_set_bool(settings, FreeRDP_RdstlsSecurity, FALSE) ||
 	    !freerdp_settings_set_bool(settings, FreeRDP_NegotiateSecurityLayer, TRUE) ||
 	    !freerdp_settings_set_bool(settings, FreeRDP_RestrictedAdminModeRequired, FALSE) ||
+	    !freerdp_settings_set_bool(settings, FreeRDP_RestrictedAdminModeSupported, TRUE) ||
 	    !freerdp_settings_set_bool(settings, FreeRDP_MstscCookieMode, FALSE) ||
 	    !freerdp_settings_set_uint32(settings, FreeRDP_CookieMaxLength,
 	                                 DEFAULT_COOKIE_MAX_LENGTH) ||

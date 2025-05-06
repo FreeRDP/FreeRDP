@@ -493,6 +493,9 @@ BOOL freerdp_settings_get_bool(WINPR_ATTR_UNUSED const rdpSettings* settings,
 		case FreeRDP_RestrictedAdminModeRequired:
 			return settings->RestrictedAdminModeRequired;
 
+		case FreeRDP_RestrictedAdminModeSupported:
+			return settings->RestrictedAdminModeSupported;
+
 		case FreeRDP_SaltedChecksum:
 			return settings->SaltedChecksum;
 
@@ -1243,6 +1246,10 @@ BOOL freerdp_settings_set_bool(WINPR_ATTR_UNUSED rdpSettings* settings,
 
 		case FreeRDP_RestrictedAdminModeRequired:
 			settings->RestrictedAdminModeRequired = cnv.c;
+			break;
+
+		case FreeRDP_RestrictedAdminModeSupported:
+			settings->RestrictedAdminModeSupported = cnv.c;
 			break;
 
 		case FreeRDP_SaltedChecksum:
