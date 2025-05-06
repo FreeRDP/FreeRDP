@@ -601,8 +601,29 @@ static DWORD get_rdp_scancode_from_x11_keycode(xfContext* xfc, DWORD keycode)
 	const DWORD scancode = xfc->X11_KEYCODE_TO_VIRTUAL_SCANCODE[keycode];
 	const DWORD remapped = freerdp_keyboard_remap_key(xfc->remap_table, scancode);
 
+#if defined(WITH_DEBUG_KBD)
+	{
+		const BOOL ex = RDP_SCANCODE_EXTENDED(scancode);
+		const DWORD sc = RDP_SCANCODE_CODE(scancode);
+		WLog_DBG(TAG, "x11 keycode: %02" PRIX32 " -> rdp code: [%04" PRIx16 "] %02" PRIX8 "%s",
+		         keycode, scancode, sc, ex ? " extended" : "");
+	}
+#endif
+
 	if (remapped != 0)
+	{
+#if defined(WITH_DEBUG_KBD)
+		{
+			const BOOL ex = RDP_SCANCODE_EXTENDED(remapped);
+			const DWORD sc = RDP_SCANCODE_CODE(remapped);
+			WLog_DBG(TAG,
+			         "x11 keycode: %02" PRIX32 " -> remapped rdp code: [%04" PRIx16 "] %02" PRIX8
+			         "%s",
+			         keycode, remapped, sc, ex ? " extended" : "");
+		}
+#endif
 		return remapped;
+	}
 
 	return scancode;
 }
