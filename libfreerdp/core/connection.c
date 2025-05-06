@@ -1525,7 +1525,11 @@ BOOL rdp_server_accept_nego(rdpRdp* rdp, wStream* s)
 	SelectedProtocol = nego_get_selected_protocol(nego);
 	status = FALSE;
 
-	if (SelectedProtocol & PROTOCOL_RDSTLS)
+	if (freerdp_settings_get_bool(rdp->settings, FreeRDP_VmConnectMode) &&
+	    SelectedProtocol != PROTOCOL_RDP)
+		/* When behind a Hyper-V proxy, security != RDP is handled by the host. */
+		status = TRUE;
+	else if (SelectedProtocol & PROTOCOL_RDSTLS)
 		status = transport_accept_rdstls(rdp->transport);
 	else if (SelectedProtocol & PROTOCOL_HYBRID)
 		status = transport_accept_nla(rdp->transport);
