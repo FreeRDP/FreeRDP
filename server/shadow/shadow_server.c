@@ -389,6 +389,12 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 			                               arg->Value ? TRUE : FALSE))
 				return fail_at(arg, COMMAND_LINE_ERROR);
 		}
+		CommandLineSwitchCase(arg, "restricted-admin")
+		{
+			if (!freerdp_settings_set_bool(settings, FreeRDP_RestrictedAdminModeSupported,
+			                               arg->Value ? TRUE : FALSE))
+				return fail_at(arg, COMMAND_LINE_ERROR);
+		}
 		CommandLineSwitchCase(arg, "sec")
 		{
 			if (strcmp("rdp", arg->Value) == 0) /* Standard RDP */

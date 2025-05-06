@@ -62,6 +62,8 @@ int main(int argc, char** argv)
 		  "Clients must authenticate" },
 		{ "remote-guard", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL,
 		  "Remote credential guard" },
+		{ "restricted-admin", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL,
+		  "Restricted Admin" },
 		{ "may-view", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL,
 		  "Clients may view without prompt" },
 		{ "may-interact", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL,
