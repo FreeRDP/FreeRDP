@@ -28,10 +28,10 @@
 
 #include "../sdl_freerdp.hpp"
 #include "sdl_dialogs.hpp"
-#include "sdl_input.hpp"
-#include "sdl_input_widgets.hpp"
+#include "sdl_input_widget_pair.hpp"
+#include "sdl_input_widget_pair_list.hpp"
 #include "sdl_select.hpp"
-#include "sdl_selectlist.hpp"
+#include "sdl_select_list.hpp"
 #include "sdl_connection_dialog.hpp"
 
 enum
@@ -89,8 +89,6 @@ BOOL sdl_authenticate_ex(freerdp* instance, char** username, char** password, ch
 {
 	SDL_Event event = {};
 	BOOL res = FALSE;
-
-	SDLConnectionDialogHider hider(instance);
 
 	const char* target = freerdp_settings_get_server_name(instance->context->settings);
 	switch (reason)
@@ -160,7 +158,6 @@ BOOL sdl_choose_smartcard(freerdp* instance, SmartcardCertInfo** cert_list, DWOR
 	WINPR_ASSERT(cert_list);
 	WINPR_ASSERT(choice);
 
-	SDLConnectionDialogHider hider(instance);
 	std::vector<std::string> strlist;
 	std::vector<const char*> list;
 	for (DWORD i = 0; i < count; i++)
@@ -270,7 +267,6 @@ BOOL sdl_present_gateway_message(freerdp* instance, [[maybe_unused]] UINT32 type
 		flags = SHOW_DIALOG_TIMED_ACCEPT;
 	char* message = ConvertWCharNToUtf8Alloc(wmessage, length, nullptr);
 
-	SDLConnectionDialogHider hider(instance);
 	const int rc = sdl_show_dialog(instance->context, title, message, flags);
 	free(title);
 	free(message);
@@ -290,8 +286,6 @@ int sdl_logon_error_info(freerdp* instance, UINT32 data, UINT32 type)
 	if (type == LOGON_MSG_SESSION_CONTINUE)
 		return 0;
 
-	SDLConnectionDialogHider hider(instance);
-
 	char* title = nullptr;
 	size_t tlen = 0;
 	winpr_asprintf(&title, &tlen, "[%s] info",
@@ -310,7 +304,6 @@ int sdl_logon_error_info(freerdp* instance, UINT32 data, UINT32 type)
 static DWORD sdl_show_ceritifcate_dialog(rdpContext* context, const char* title,
                                          const char* message)
 {
-	SDLConnectionDialogHider hider(context);
 	if (!sdl_push_user_event(SDL_EVENT_USER_CERT_DIALOG, title, message))
 		return 0;
 
@@ -356,7 +349,6 @@ DWORD sdl_verify_changed_certificate_ex(freerdp* instance, const char* host, UIN
 	WINPR_ASSERT(instance->context);
 	WINPR_ASSERT(instance->context->settings);
 
-	SDLConnectionDialogHider hider(instance);
 	/* Newer versions of FreeRDP allow exposing the whole PEM by setting
 	 * FreeRDP_CertificateCallbackPreferPEM to TRUE
 	 */
@@ -455,7 +447,6 @@ DWORD sdl_verify_certificate_ex(freerdp* instance, const char* host, UINT16 port
 	    "Please look at the OpenSSL documentation on how to add a private CA to the store.\n",
 	    common_name, subject, issuer, fp_str);
 
-	SDLConnectionDialogHider hider(instance);
 	const DWORD rc = sdl_show_ceritifcate_dialog(instance->context, title, message);
 	free(fp_str);
 	free(title);
@@ -575,15 +566,15 @@ BOOL sdl_auth_dialog_show(const SDL_UserAuthArg* args)
 	if (!prompt.empty())
 	{
 		std::vector<std::string> initial{ args->user ? args->user : "Smartcard", "" };
-		std::vector<Uint32> flags = { SdlInputWidget::SDL_INPUT_READONLY,
-			                          SdlInputWidget::SDL_INPUT_MASK };
+		std::vector<Uint32> flags = { SdlInputWidgetPair::SDL_INPUT_READONLY,
+			                          SdlInputWidgetPair::SDL_INPUT_MASK };
 		if (args->result != AUTH_SMARTCARD_PIN)
 		{
 			initial = { args->user ? args->user : "", args->domain ? args->domain : "",
 				        args->password ? args->password : "" };
-			flags = { 0, 0, SdlInputWidget::SDL_INPUT_MASK };
+			flags = { 0, 0, SdlInputWidgetPair::SDL_INPUT_MASK };
 		}
-		SdlInputWidgetList ilist(args->title, prompt, initial, flags);
+		SdlInputWidgetPairList ilist(args->title, prompt, initial, flags);
 		rc = ilist.run(result);
 	}
 

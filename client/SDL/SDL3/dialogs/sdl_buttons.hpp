@@ -21,7 +21,7 @@ class SdlButtonList
 	              const std::vector<int>& ids, Sint32 total_width, Sint32 offsetY, Sint32 width,
 	              Sint32 height);
 
-	bool update(std::shared_ptr<SDL_Renderer>& renderer);
+	bool update();
 	std::shared_ptr<SdlButton> get_selected(const SDL_MouseButtonEvent& button);
 	std::shared_ptr<SdlButton> get_selected(float x, float y);
 

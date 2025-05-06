@@ -23,6 +23,7 @@
 #include <mutex>
 #include <memory>
 #include <string>
+#include <queue>
 
 #include <winpr/platform.h>
 #include <freerdp/types.h>
@@ -83,10 +84,37 @@ class SdlConnectionDialogWrapper
 	void handleShow();
 
   private:
+	class EventArg
+	{
+	  public:
+		EventArg(bool visible);
+		EventArg(const std::string& title);
+		EventArg(SdlConnectionDialogWrapper::MsgType type, const std::string& msg, bool visible);
+
+		bool hasTitle() const;
+		const std::string& title() const;
+
+		bool hasMessage() const;
+		const std::string& message() const;
+
+		bool hasType() const;
+		SdlConnectionDialogWrapper::MsgType type() const;
+
+		bool hasVisibility() const;
+		bool visible() const;
+
+		std::string str() const;
+
+	  private:
+		std::string _title{};
+		std::string _message{};
+		SdlConnectionDialogWrapper::MsgType _type = MSG_NONE;
+		bool _visible = false;
+		uint32_t _mask = 0;
+	};
+	void push(EventArg&& arg);
+
 	mutable std::mutex _mux;
-	std::string _title;
-	std::string _message;
-	bool _visible = false;
-	SdlConnectionDialogWrapper::MsgType _type = SdlConnectionDialogWrapper::MSG_NONE;
 	std::unique_ptr<SDLConnectionDialog> _connection_dialog;
+	std::queue<EventArg> _queue;
 };

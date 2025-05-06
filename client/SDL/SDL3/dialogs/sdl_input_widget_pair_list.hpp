@@ -24,26 +24,27 @@
 #include <SDL3/SDL.h>
 
 #include "sdl_widget_list.hpp"
-#include "sdl_input.hpp"
+#include "sdl_input_widget_pair.hpp"
 #include "sdl_buttons.hpp"
 
-class SdlInputWidgetList : public SdlWidgetList
+class SdlInputWidgetPairList : public SdlWidgetList
 {
   public:
-	SdlInputWidgetList(const std::string& title, const std::vector<std::string>& labels,
-	                   const std::vector<std::string>& initial, const std::vector<Uint32>& flags);
-	SdlInputWidgetList(const SdlInputWidgetList& other) = delete;
-	SdlInputWidgetList(SdlInputWidgetList&& other) = delete;
+	SdlInputWidgetPairList(const std::string& title, const std::vector<std::string>& labels,
+	                       const std::vector<std::string>& initial,
+	                       const std::vector<Uint32>& flags);
+	SdlInputWidgetPairList(const SdlInputWidgetPairList& other) = delete;
+	SdlInputWidgetPairList(SdlInputWidgetPairList&& other) = delete;
 
-	virtual ~SdlInputWidgetList();
+	virtual ~SdlInputWidgetPairList() override;
 
-	SdlInputWidgetList& operator=(const SdlInputWidgetList& other) = delete;
-	SdlInputWidgetList& operator=(SdlInputWidgetList&& other) = delete;
+	SdlInputWidgetPairList& operator=(const SdlInputWidgetPairList& other) = delete;
+	SdlInputWidgetPairList& operator=(SdlInputWidgetPairList&& other) = delete;
 
 	int run(std::vector<std::string>& result);
 
   protected:
-	bool update(std::shared_ptr<SDL_Renderer>& renderer);
+	bool updateInternal() override;
 	ssize_t get_index(const SDL_MouseButtonEvent& button);
 
   private:
@@ -55,7 +56,7 @@ class SdlInputWidgetList : public SdlWidgetList
 
 	ssize_t next(ssize_t current);
 	[[nodiscard]] bool valid(ssize_t current) const;
-	std::shared_ptr<SdlInputWidget> get(ssize_t index);
+	std::shared_ptr<SdlInputWidgetPair> get(ssize_t index);
 
-	std::vector<std::shared_ptr<SdlInputWidget>> _list;
+	std::vector<std::shared_ptr<SdlInputWidgetPair>> _list;
 };

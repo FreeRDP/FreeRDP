@@ -63,6 +63,7 @@
 #include "sdl_pointer.hpp"
 #include "sdl_prefs.hpp"
 #include "dialogs/sdl_dialogs.hpp"
+#include "dialogs/sdl_connection_dialog_hider.hpp"
 #include "scoped_guard.hpp"
 
 #include <aad/sdl_webview.hpp>
@@ -145,10 +146,7 @@ struct sdl_exit_code_map_t
 	const char* code_tag;
 };
 
-#define ENTRY(x, y) \
-	{               \
-		x, y, #y    \
-	}
+#define ENTRY(x, y) { x, y, #y }
 static const struct sdl_exit_code_map_t sdl_exit_code_map[] = {
 	ENTRY(FREERDP_ERROR_SUCCESS, SDL_EXIT_SUCCESS), ENTRY(FREERDP_ERROR_NONE, SDL_EXIT_DISCONNECT),
 	ENTRY(FREERDP_ERROR_NONE, SDL_EXIT_LOGOFF), ENTRY(FREERDP_ERROR_NONE, SDL_EXIT_IDLE_TIMEOUT),
@@ -546,14 +544,6 @@ static BOOL sdl_pre_connect(freerdp* instance)
 		if (!sdl_wait_for_init(sdl))
 			return FALSE;
 
-		if (!freerdp_settings_get_bool(settings, FreeRDP_UseCommonStdioCallbacks))
-		{
-			sdl->dialog.create(sdl->context());
-		}
-
-		sdl->dialog.setTitle("Connecting to '%s'", freerdp_settings_get_server_name(settings));
-		sdl->dialog.showInfo("The connection is being established\n\nPlease wait...");
-
 		if (!sdl_detect_monitors(sdl, &maxWidth, &maxHeight))
 			return FALSE;
 
@@ -759,13 +749,21 @@ static int sdl_run(SdlContext* sdl)
 			return 0;
 	}
 
-	SDL_Init(SDL_INIT_VIDEO);
+	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS);
 	sdl_dialogs_init();
 
 	SDL_SetHint(SDL_HINT_ALLOW_ALT_TAB_WHILE_GRABBED, "0");
 	SDL_SetHint(SDL_HINT_VIDEO_X11_NET_WM_BYPASS_COMPOSITOR, "0");
 
 	freerdp_add_signal_cleanup_handler(sdl->context(), sdl_term_handler);
+	sdl->dialog.create(sdl->context());
+	sdl->dialog.setTitle("Connecting to '%s'",
+	                     freerdp_settings_get_server_name(sdl->context()->settings));
+	sdl->dialog.showInfo("The connection is being established\n\nPlease wait...");
+	if (!freerdp_settings_get_bool(sdl->context()->settings, FreeRDP_UseCommonStdioCallbacks))
+	{
+		sdl->dialog.show(true);
+	}
 
 	sdl->initialized.set();
 
@@ -882,6 +880,7 @@ static int sdl_run(SdlContext* sdl)
 					break;
 				case SDL_EVENT_USER_CERT_DIALOG:
 				{
+					SDLConnectionDialogHider hider(sdl);
 					auto title = static_cast<const char*>(windowEvent.user.data1);
 					auto msg = static_cast<const char*>(windowEvent.user.data2);
 					sdl_cert_dialog_show(title, msg);
@@ -889,6 +888,7 @@ static int sdl_run(SdlContext* sdl)
 				break;
 				case SDL_EVENT_USER_SHOW_DIALOG:
 				{
+					SDLConnectionDialogHider hider(sdl);
 					auto title = static_cast<const char*>(windowEvent.user.data1);
 					auto msg = static_cast<const char*>(windowEvent.user.data2);
 					sdl_message_dialog_show(title, msg, windowEvent.user.code);
@@ -896,15 +896,19 @@ static int sdl_run(SdlContext* sdl)
 				break;
 				case SDL_EVENT_USER_SCARD_DIALOG:
 				{
+					SDLConnectionDialogHider hider(sdl);
 					auto title = static_cast<const char*>(windowEvent.user.data1);
 					auto msg = static_cast<const char**>(windowEvent.user.data2);
 					sdl_scard_dialog_show(title, windowEvent.user.code, msg);
 				}
 				break;
 				case SDL_EVENT_USER_AUTH_DIALOG:
+				{
+					SDLConnectionDialogHider hider(sdl);
 					sdl_auth_dialog_show(
 					    reinterpret_cast<const SDL_UserAuthArg*>(windowEvent.padding));
-					break;
+				}
+				break;
 				case SDL_EVENT_USER_UPDATE:
 				{
 					std::vector<SDL_Rect> rectangles;
@@ -984,9 +988,6 @@ static int sdl_run(SdlContext* sdl)
 				case SDL_EVENT_CLIPBOARD_UPDATE:
 					sdl->clip.handle_update(windowEvent.clipboard);
 					break;
-				case SDL_EVENT_USER_UPDATE_CONNECT_DIALOG:
-					sdl->dialog.handleShow();
-					break;
 				case SDL_EVENT_USER_QUIT:
 				default:
 					if ((windowEvent.type >= SDL_EVENT_DISPLAY_FIRST) &&
@@ -1055,8 +1056,8 @@ static int sdl_run(SdlContext* sdl)
 												}
 											}
 										}
-								}
-								break;
+									}
+									break;
 								case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
 									window->second.fill();
 									sdl_draw_to_window(sdl, window->second);

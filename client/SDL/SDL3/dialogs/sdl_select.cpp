@@ -29,42 +29,17 @@
 #include "sdl_widget.hpp"
 #include "sdl_button.hpp"
 #include "sdl_buttons.hpp"
-#include "sdl_input_widgets.hpp"
+#include "sdl_input_widget_pair_list.hpp"
 
-static const SDL_Color labelmouseovercolor = { 0, 0x80, 0, 0x60 };
-static const SDL_Color labelbackgroundcolor = { 0x69, 0x66, 0x63, 0xff };
-static const SDL_Color labelhighlightcolor = { 0xcd, 0xca, 0x35, 0x60 };
-static const SDL_Color labelfontcolor = { 0xd1, 0xcf, 0xcd, 0xff };
-
-SdlSelectWidget::SdlSelectWidget(std::shared_ptr<SDL_Renderer>& renderer, std::string label,
+SdlSelectWidget::SdlSelectWidget(std::shared_ptr<SDL_Renderer>& renderer, const std::string& label,
                                  const SDL_FRect& rect)
-    : SdlWidget(renderer, rect, true), _text(std::move(label)), _mouseover(false), _highlight(false)
+    : SdlSelectableWidget(renderer, rect)
 {
+	_backgroundcolor = { 0x69, 0x66, 0x63, 0xff };
+	_fontcolor = { 0xd1, 0xcf, 0xcd, 0xff };
+	update_text(label);
 }
+
+SdlSelectWidget::~SdlSelectWidget() = default;
 
 SdlSelectWidget::SdlSelectWidget(SdlSelectWidget&& other) noexcept = default;
-
-bool SdlSelectWidget::set_mouseover(std::shared_ptr<SDL_Renderer>& renderer, bool mouseOver)
-{
-	_mouseover = mouseOver;
-	return update_text(renderer);
-}
-
-bool SdlSelectWidget::set_highlight(std::shared_ptr<SDL_Renderer>& renderer, bool highlight)
-{
-	_highlight = highlight;
-	return update_text(renderer);
-}
-
-bool SdlSelectWidget::update_text(std::shared_ptr<SDL_Renderer>& renderer) const
-{
-	assert(renderer);
-	std::vector<SDL_Color> colors = { labelbackgroundcolor };
-	if (_highlight)
-		colors.push_back(labelhighlightcolor);
-	if (_mouseover)
-		colors.push_back(labelmouseovercolor);
-	if (!fill(renderer, colors))
-		return false;
-	return SdlWidget::update_text(renderer, _text, labelfontcolor);
-}

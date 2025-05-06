@@ -26,8 +26,6 @@
 
 #include <SDL3/SDL.h>
 
-#include <freerdp/freerdp.h>
-
 #include "sdl_widget_list.hpp"
 #include "sdl_widget.hpp"
 #include "sdl_buttons.hpp"
@@ -39,12 +37,10 @@ class SDLConnectionDialog : public SdlWidgetList
 	explicit SDLConnectionDialog(rdpContext* context);
 	SDLConnectionDialog(const SDLConnectionDialog& other) = delete;
 	SDLConnectionDialog(const SDLConnectionDialog&& other) = delete;
-	virtual ~SDLConnectionDialog();
+	virtual ~SDLConnectionDialog() override;
 
 	SDLConnectionDialog& operator=(const SDLConnectionDialog& other) = delete;
 	SDLConnectionDialog& operator=(SDLConnectionDialog&& other) = delete;
-
-	bool visible() const;
 
 	bool setTitle(const char* fmt, ...);
 	bool showInfo(const char* fmt, ...);
@@ -59,17 +55,18 @@ class SDLConnectionDialog : public SdlWidgetList
 
 	bool handle(const SDL_Event& event);
 
+	bool visible() const override;
+
+  protected:
+	bool updateInternal() override;
+
   private:
 	bool createWindow();
 	void destroyWindow();
 
-	bool update();
+	bool updateMsg(SdlConnectionDialogWrapper::MsgType type);
 
 	bool setModal();
-
-	static bool clearWindow(std::shared_ptr<SDL_Renderer>& renderer);
-
-	bool update(std::shared_ptr<SDL_Renderer>& renderer);
 
 	bool show(SdlConnectionDialogWrapper::MsgType type, const char* fmt, va_list ap);
 	bool show(SdlConnectionDialogWrapper::MsgType type);
@@ -91,27 +88,8 @@ class SDLConnectionDialog : public SdlWidgetList
 	mutable std::mutex _mux;
 	std::string _title;
 	std::string _msg;
-	SdlConnectionDialogWrapper::MsgType _type = SdlConnectionDialogWrapper::MSG_NONE;
 	SdlConnectionDialogWrapper::MsgType _type_active = SdlConnectionDialogWrapper::MSG_NONE;
 	SDL_TimerID _timer = 0;
 	bool _running = false;
 	std::vector<widget_cfg_t> _list{};
-};
-
-class SDLConnectionDialogHider
-{
-  public:
-	explicit SDLConnectionDialogHider(freerdp* instance);
-	explicit SDLConnectionDialogHider(rdpContext* context);
-
-	SDLConnectionDialogHider(const SDLConnectionDialogHider& other) = delete;
-	SDLConnectionDialogHider(SDLConnectionDialogHider&& other) = delete;
-	SDLConnectionDialogHider& operator=(const SDLConnectionDialogHider& other) = delete;
-	SDLConnectionDialogHider& operator=(SDLConnectionDialogHider&& other) = delete;
-
-	~SDLConnectionDialogHider();
-
-  private:
-	rdpContext* _context = nullptr;
-	bool _visible = false;
 };

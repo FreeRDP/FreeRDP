@@ -91,20 +91,16 @@ void SdlButtonList::clear()
 	_highlight_index = 0;
 }
 
-bool SdlButtonList::update(std::shared_ptr<SDL_Renderer>& renderer)
+bool SdlButtonList::update()
 {
-	assert(renderer);
-
 	for (auto& btn : _list)
 	{
-		if (!btn->update(renderer))
+		btn->highlight(btn == _highlighted);
+		btn->mouseover(btn == _mouseover);
+
+		if (!btn->update())
 			return false;
 	}
 
-	if (_highlighted)
-		_highlighted->highlight(renderer);
-
-	if (_mouseover)
-		_mouseover->mouseover(renderer);
 	return true;
 }

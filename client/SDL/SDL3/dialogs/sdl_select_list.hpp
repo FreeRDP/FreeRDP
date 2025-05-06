@@ -16,12 +16,15 @@ class SdlSelectList : public SdlWidgetList
 	SdlSelectList(const std::string& title, const std::vector<std::string>& labels);
 	SdlSelectList(const SdlSelectList& other) = delete;
 	SdlSelectList(SdlSelectList&& other) = delete;
-	virtual ~SdlSelectList();
+	virtual ~SdlSelectList() override;
 
 	SdlSelectList& operator=(const SdlSelectList& other) = delete;
 	SdlSelectList& operator=(SdlSelectList&& other) = delete;
 
 	int run();
+
+  protected:
+	bool updateInternal() override;
 
   private:
 	enum
@@ -31,7 +34,6 @@ class SdlSelectList : public SdlWidgetList
 	};
 
 	ssize_t get_index(const SDL_MouseButtonEvent& button);
-	bool update_text();
 	void reset_mouseover();
 	void reset_highlight();
 
