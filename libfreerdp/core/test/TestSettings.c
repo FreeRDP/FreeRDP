@@ -11,16 +11,26 @@
 #include "../settings.h"
 
 #define log_start() log_start_(__func__)
-static void log_start_(const char* fkt)
+static void log_start_(const char* fkt, ...)
 {
-	(void)fprintf(stderr, "TestSettings [%s] started...\n", fkt);
+	(void)fprintf(stderr, "TestSettings [");
+	va_list ap;
+	va_start(ap, fkt);
+	(void)vfprintf(stderr, fkt, ap);
+	va_end(ap);
+	(void)fprintf(stderr, "] started...\n");
 	(void)fflush(stderr);
 }
 
 #define log_result(value) log_result_((value), __func__)
-static BOOL log_result_(BOOL value, const char* fkt)
+static BOOL log_result_(BOOL value, const char* fkt, ...)
 {
-	(void)fprintf(stderr, "TestSettings [%s] returned %s\n", fkt, value ? "TRUE" : "FALSE");
+	(void)fprintf(stderr, "TestSettings [");
+	va_list ap;
+	va_start(ap, fkt);
+	(void)vfprintf(stderr, fkt, ap);
+	va_end(ap);
+	(void)fprintf(stderr, "] returned %s\n", value ? "TRUE" : "FALSE");
 	(void)fflush(stderr);
 	return value;
 }
@@ -1547,6 +1557,7 @@ fail:
 
 static BOOL test_serialize_with(rdpSettings* src, const char* name)
 {
+	log_start();
 	BOOL rc = FALSE;
 	size_t slen = 0;
 	rdpSettings* dst = NULL;
@@ -1554,14 +1565,17 @@ static BOOL test_serialize_with(rdpSettings* src, const char* name)
 	if (!src)
 		goto fail;
 
+	log_start_("%s-%s-%s", name, __func__, "freerdp_settings_serialize");
 	str = freerdp_settings_serialize(src, TRUE, &slen);
 	if (!str || (slen == 0))
 		goto fail;
 
+	log_start_("%s-%s-%s", name, __func__, "freerdp_settings_deserialize");
 	dst = freerdp_settings_deserialize(str, slen);
 	if (!dst)
 		goto fail;
 
+	log_start_("%s-%s-%s", name, __func__, "freerdp_settings_print_diff");
 	rc = !freerdp_settings_print_diff(WLog_Get("TestSettings::serialize"), WLOG_WARN, src, dst);
 
 fail:
@@ -1569,8 +1583,7 @@ fail:
 	freerdp_settings_free(dst);
 	free(str);
 
-	log_result_(rc, name);
-	return rc;
+	return log_result_(rc, "%s-%s", name, __func__);
 }
 
 static BOOL test_serialize_strings(DWORD flags, const char* str)
