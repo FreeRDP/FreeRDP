@@ -64,6 +64,8 @@ int main(int argc, char** argv)
 		  "Remote credential guard" },
 		{ "restricted-admin", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL,
 		  "Restricted Admin" },
+		{ "vmconnect", COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse,
+		  NULL, -1, NULL, "Hyper-V console server (bind on vsock://1)" },
 		{ "may-view", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL,
 		  "Clients may view without prompt" },
 		{ "may-interact", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL,

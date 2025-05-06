@@ -395,6 +395,12 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 			                               arg->Value ? TRUE : FALSE))
 				return fail_at(arg, COMMAND_LINE_ERROR);
 		}
+		CommandLineSwitchCase(arg, "vmconnect")
+		{
+			if (!freerdp_settings_set_bool(settings, FreeRDP_VmConnectMode,
+			                               arg->Value ? TRUE : FALSE))
+				return fail_at(arg, COMMAND_LINE_ERROR);
+		}
 		CommandLineSwitchCase(arg, "sec")
 		{
 			if (strcmp("rdp", arg->Value) == 0) /* Standard RDP */
@@ -597,7 +603,7 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 	/* If we want to disable authentication we need to ensure that NLA security
 	 * is not activated. Only TLS and RDP security allow anonymous login.
 	 */
-	if (!server->authentication)
+	if (!server->authentication && !freerdp_settings_get_bool(settings, FreeRDP_VmConnectMode))
 	{
 		if (!freerdp_settings_set_bool(settings, FreeRDP_NlaSecurity, FALSE))
 			return COMMAND_LINE_ERROR;
