@@ -1029,7 +1029,7 @@ static UINT drive_register_drive_path(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints,
 		WINPR_ASSERT(obj);
 		obj->fnObjectFree = drive_message_free;
 
-		if ((error = pEntryPoints->RegisterDevice(pEntryPoints->devman, (DEVICE*)drive)))
+		if ((error = pEntryPoints->RegisterDevice(pEntryPoints->devman, &drive->device)))
 		{
 			WLog_ERR(TAG, "RegisterDevice failed with error %" PRIu32 "!", error);
 			goto out_error;
