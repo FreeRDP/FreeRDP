@@ -1,6 +1,6 @@
 #include <cassert>
 #include <winpr/cast.h>
-#include "sdl_selectlist.hpp"
+#include "sdl_select_list.hpp"
 #include "../sdl_utils.hpp"
 
 static const Uint32 vpadding = 5;
@@ -30,11 +30,7 @@ SdlSelectList::SdlSelectList(const std::string& title, const std::vector<std::st
 	}
 }
 
-SdlSelectList::~SdlSelectList()
-{
-	_list.clear();
-	_buttons.clear();
-}
+SdlSelectList::~SdlSelectList() = default;
 
 int SdlSelectList::run()
 {
@@ -48,13 +44,7 @@ int SdlSelectList::run()
 	{
 		while (running)
 		{
-			if (!SdlWidget::clear_window(_renderer))
-				throw;
-
-			if (!update_text())
-				throw;
-
-			if (!_buttons.update(_renderer))
+			if (!update())
 				throw;
 
 			SDL_Event event = {};
@@ -117,7 +107,7 @@ int SdlSelectList::run()
 						if (TextInputIndex >= 0)
 						{
 							auto& cur = _list[WINPR_ASSERTING_INT_CAST(size_t, TextInputIndex)];
-							if (!cur.set_mouseover(_renderer, true))
+							if (!cur.mouseover(true))
 								throw;
 						}
 
@@ -153,16 +143,11 @@ int SdlSelectList::run()
 			if (CurrentActiveTextInput >= 0)
 			{
 				auto& cur = _list[WINPR_ASSERTING_INT_CAST(size_t, CurrentActiveTextInput)];
-				if (!cur.set_highlight(_renderer, true))
+				if (!cur.highlight(true))
 					throw;
 			}
 
-			auto rc = SDL_RenderPresent(_renderer.get());
-			if (!rc)
-			{
-				SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "SDL_RenderPresent failed with %s",
-				            SDL_GetError());
-			}
+			update();
 		}
 	}
 	catch (...)
@@ -170,6 +155,16 @@ int SdlSelectList::run()
 		return -1;
 	}
 	return res;
+}
+
+bool SdlSelectList::updateInternal()
+{
+	for (auto& cur : _list)
+	{
+		if (!cur.update())
+			return false;
+	}
+	return true;
 }
 
 ssize_t SdlSelectList::get_index(const SDL_MouseButtonEvent& button)
@@ -187,22 +182,11 @@ ssize_t SdlSelectList::get_index(const SDL_MouseButtonEvent& button)
 	return -1;
 }
 
-bool SdlSelectList::update_text()
-{
-	for (auto& cur : _list)
-	{
-		if (!cur.update_text(_renderer))
-			return false;
-	}
-
-	return true;
-}
-
 void SdlSelectList::reset_mouseover()
 {
 	for (auto& cur : _list)
 	{
-		cur.set_mouseover(_renderer, false);
+		cur.mouseover(false);
 	}
 }
 
@@ -210,6 +194,6 @@ void SdlSelectList::reset_highlight()
 {
 	for (auto& cur : _list)
 	{
-		cur.set_highlight(_renderer, false);
+		cur.highlight(false);
 	}
 }

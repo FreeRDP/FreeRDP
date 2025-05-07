@@ -479,8 +479,6 @@ bool sdlDispContext::uninit(DispClientContext* disp)
 
 sdlDispContext::sdlDispContext(SdlContext* sdl) : _sdl(sdl)
 {
-	SDL_Init(SDL_INIT_EVENTS | SDL_INIT_VIDEO);
-
 	WINPR_ASSERT(_sdl);
 	WINPR_ASSERT(_sdl->context()->settings);
 	WINPR_ASSERT(_sdl->context()->pubSub);
@@ -500,5 +498,4 @@ sdlDispContext::~sdlDispContext()
 	PubSub_UnsubscribeActivated(pubSub, sdlDispContext::OnActivated);
 	PubSub_UnsubscribeGraphicsReset(pubSub, sdlDispContext::OnGraphicsReset);
 	SDL_RemoveTimer(_timer);
-	SDL_Quit();
 }

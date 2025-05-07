@@ -1,9 +1,8 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * SDL Client Channels
+ * SDL Client helper dialogs
  *
  * Copyright 2023 Armin Novak <armin.novak@thincast.com>
- * Copyright 2023 Thincast Technologies GmbH
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,28 +17,23 @@
  * limitations under the License.
  */
 
-#include <cassert>
-#include <utility>
+#pragma once
 
-#include "sdl_button.hpp"
+#include "../sdl_types.hpp"
 
-SdlButton::SdlButton(std::shared_ptr<SDL_Renderer>& renderer, const std::string& label, int id,
-                     const SDL_FRect& rect)
-    : SdlSelectableWidget(renderer, rect), _id(id)
+class SDLConnectionDialogHider
 {
-	_backgroundcolor = { 0x69, 0x66, 0x63, 0xff };
-	_highlightcolor = { 0xcd, 0xca, 0x35, 0x60 };
-	_mouseovercolor = { 0x66, 0xff, 0x66, 0x60 };
-	_fontcolor = { 0xd1, 0xcf, 0xcd, 0xff };
-	update_text(label);
-	update();
-}
+  public:
+	explicit SDLConnectionDialogHider(SdlContext* sdl);
 
-SdlButton::SdlButton(SdlButton&& other) noexcept = default;
+	SDLConnectionDialogHider(const SDLConnectionDialogHider& other) = delete;
+	SDLConnectionDialogHider(SDLConnectionDialogHider&& other) = delete;
+	SDLConnectionDialogHider& operator=(const SDLConnectionDialogHider& other) = delete;
+	SDLConnectionDialogHider& operator=(SDLConnectionDialogHider&& other) = delete;
 
-SdlButton::~SdlButton() = default;
+	~SDLConnectionDialogHider();
 
-int SdlButton::id() const
-{
-	return _id;
-}
+  private:
+	SdlContext* _sdl = nullptr;
+	bool _visible = false;
+};

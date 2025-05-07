@@ -26,18 +26,24 @@ set(SRCS
     sdl_widget.cpp
     sdl_widget_list.hpp
     sdl_widget_list.cpp
-    sdl_input.hpp
-    sdl_input.cpp
-    sdl_input_widgets.cpp
-    sdl_input_widgets.hpp
+    sdl_input_widget.hpp
+    sdl_input_widget.cpp
+    sdl_input_widget_pair.hpp
+    sdl_input_widget_pair.cpp
+    sdl_input_widget_pair_list.hpp
+    sdl_input_widget_pair_list.cpp
     sdl_select.hpp
     sdl_select.cpp
-    sdl_selectlist.hpp
-    sdl_selectlist.cpp
+    sdl_select_list.hpp
+    sdl_select_list.cpp
+    sdl_selectable_widget.cpp
+    sdl_selectable_widget.hpp
     sdl_connection_dialog.cpp
     sdl_connection_dialog.hpp
     sdl_connection_dialog_wrapper.cpp
     sdl_connection_dialog_wrapper.hpp
+    sdl_blend_mode_guard.cpp
+    sdl_blend_mode_guard.hpp
 )
 
 list(APPEND LIBS sdl3_client_res winpr)
@@ -70,11 +76,12 @@ endif()
 
 add_subdirectory(res)
 
-add_library(sdl3-dialogs STATIC ${SRCS})
+add_library(sdl3-dialogs STATIC ${SRCS} sdl_connection_dialog_hider.hpp sdl_connection_dialog_hider.cpp)
 
 set_property(TARGET sdl3-dialogs PROPERTY FOLDER "Client/SDL")
 target_link_libraries(sdl3-dialogs PRIVATE ${LIBS})
 
-if(BUILD_TESTING)
-  #	add_subdirectory(test)
+option(SDL_DIALOG_TEST "Build dialog test binaries" OFF)
+if(SDL_DIALOG_TEST)
+  add_subdirectory(test)
 endif()

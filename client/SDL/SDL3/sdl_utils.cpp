@@ -235,6 +235,7 @@ bool sdl_push_user_event(Uint32 type, ...)
 		}
 		break;
 		case SDL_EVENT_USER_RETRY_DIALOG:
+			event->code = va_arg(ap, Sint32);
 			break;
 		case SDL_EVENT_USER_SCARD_RESULT:
 		case SDL_EVENT_USER_SHOW_RESULT:
@@ -278,6 +279,7 @@ bool sdl_push_user_event(Uint32 type, ...)
 			break;
 		default:
 			va_end(ap);
+			SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "[%s] unsupported type %u", __func__, type);
 			return false;
 	}
 	va_end(ap);

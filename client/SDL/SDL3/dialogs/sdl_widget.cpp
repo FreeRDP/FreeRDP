@@ -26,6 +26,7 @@
 #include <SDL3_ttf/SDL_ttf.h>
 
 #include "sdl_widget.hpp"
+#include "sdl_blend_mode_guard.hpp"
 #include "../sdl_utils.hpp"
 
 #include "res/sdl3_resource_manager.hpp"
@@ -38,14 +39,12 @@
 
 #define TAG CLIENT_TAG("SDL.widget")
 
-static const SDL_Color backgroundcolor = { 0x38, 0x36, 0x35, 0xff };
-
 static const Uint32 hpadding = 10;
 
-SdlWidget::SdlWidget([[maybe_unused]] std::shared_ptr<SDL_Renderer>& renderer,
-                     const SDL_FRect& rect, bool input)
-    : _engine(TTF_CreateRendererTextEngine(renderer.get()), TTF_DestroySurfaceTextEngine),
-      _rect(rect), _input(input)
+SdlWidget::SdlWidget(std::shared_ptr<SDL_Renderer>& renderer, const SDL_FRect& rect)
+    : _renderer(renderer),
+      _engine(TTF_CreateRendererTextEngine(renderer.get()), TTF_DestroySurfaceTextEngine),
+      _rect(rect)
 {
 	assert(renderer);
 
@@ -64,7 +63,8 @@ SdlWidget::SdlWidget([[maybe_unused]] std::shared_ptr<SDL_Renderer>& renderer,
 #if defined(WITH_SDL_IMAGE_DIALOGS)
 SdlWidget::SdlWidget(std::shared_ptr<SDL_Renderer>& renderer, const SDL_FRect& rect,
                      SDL_IOStream* ops)
-    : _engine(TTF_CreateRendererTextEngine(renderer.get()), TTF_DestroySurfaceTextEngine),
+    : _renderer(renderer),
+      _engine(TTF_CreateRendererTextEngine(renderer.get()), TTF_DestroySurfaceTextEngine),
       _rect(rect)
 {
 	if (ops)
@@ -78,8 +78,9 @@ SdlWidget::SdlWidget(std::shared_ptr<SDL_Renderer>& renderer, const SDL_FRect& r
 #endif
 
 SdlWidget::SdlWidget(SdlWidget&& other) noexcept
-    : _font(std::move(other._font)), _image(std::move(other._image)),
-      _engine(std::move(other._engine)), _rect(other._rect), _input(other._input),
+    : _renderer(std::move(other._renderer)), _backgroundcolor(other._backgroundcolor),
+      _fontcolor(other._fontcolor), _text(std::move(other._text)), _font(std::move(other._font)),
+      _image(std::move(other._image)), _engine(std::move(other._engine)), _rect(other._rect),
       _wrap(other._wrap), _text_width(other._text_width)
 {
 	other._font = nullptr;
@@ -87,8 +88,7 @@ SdlWidget::SdlWidget(SdlWidget&& other) noexcept
 	other._engine = nullptr;
 }
 
-std::shared_ptr<SDL_Texture> SdlWidget::render_text(std::shared_ptr<SDL_Renderer>& renderer,
-                                                    const std::string& text, SDL_Color fgcolor,
+std::shared_ptr<SDL_Texture> SdlWidget::render_text(const std::string& text, SDL_Color fgcolor,
                                                     SDL_FRect& src, SDL_FRect& dst) const
 {
 	auto surface = std::shared_ptr<SDL_Surface>(
@@ -100,7 +100,7 @@ std::shared_ptr<SDL_Texture> SdlWidget::render_text(std::shared_ptr<SDL_Renderer
 	}
 
 	auto texture = std::shared_ptr<SDL_Texture>(
-	    SDL_CreateTextureFromSurface(renderer.get(), surface.get()), SDL_DestroyTexture);
+	    SDL_CreateTextureFromSurface(_renderer.get(), surface.get()), SDL_DestroyTexture);
 	if (!texture)
 	{
 		widget_log_error(false, "SDL_CreateTextureFromSurface");
@@ -158,8 +158,7 @@ static float scale(float dw, float dh)
 	return dr;
 }
 
-std::shared_ptr<SDL_Texture> SdlWidget::render_text_wrapped(std::shared_ptr<SDL_Renderer>& renderer,
-                                                            const std::string& text,
+std::shared_ptr<SDL_Texture> SdlWidget::render_text_wrapped(const std::string& text,
                                                             SDL_Color fgcolor, SDL_FRect& src,
                                                             SDL_FRect& dst) const
 {
@@ -179,7 +178,7 @@ std::shared_ptr<SDL_Texture> SdlWidget::render_text_wrapped(std::shared_ptr<SDL_
 	src.h = static_cast<float>(surface->h);
 
 	auto texture = std::shared_ptr<SDL_Texture>(
-	    SDL_CreateTextureFromSurface(renderer.get(), surface.get()), SDL_DestroyTexture);
+	    SDL_CreateTextureFromSurface(_renderer.get(), surface.get()), SDL_DestroyTexture);
 	if (!texture)
 	{
 		widget_log_error(false, "SDL_CreateTextureFromSurface");
@@ -218,78 +217,41 @@ bool SdlWidget::error_ex(bool success, const char* what, const char* file, size_
 	return sdl_log_error_ex(-1, log, what, file, line, fkt);
 }
 
-bool SdlWidget::createWindowAndRenderer(const std::string& title, size_t width, size_t height,
-                                        std::shared_ptr<SDL_Window>& _window,
-                                        std::shared_ptr<SDL_Renderer>& _renderer)
+bool SdlWidget::updateInternal()
 {
-	auto w = WINPR_ASSERTING_INT_CAST(int, width);
-	auto h = WINPR_ASSERTING_INT_CAST(int, height);
-	SDL_Renderer* renderer = nullptr;
-	SDL_Window* window = nullptr;
-	auto rc = SDL_CreateWindowAndRenderer(
-	    title.c_str(), w, h, SDL_WINDOW_MOUSE_FOCUS | SDL_WINDOW_INPUT_FOCUS, &window, &renderer);
-	_renderer = std::shared_ptr<SDL_Renderer>(renderer, SDL_DestroyRenderer);
-	_window = std::shared_ptr<SDL_Window>(window, SDL_DestroyWindow);
-	return rc;
+	return update_text(_text);
 }
 
-static bool draw_rect(std::shared_ptr<SDL_Renderer>& renderer, const SDL_FRect* rect,
-                      SDL_Color color)
+bool SdlWidget::draw_rect(const SDL_FRect& rect, SDL_Color color) const
 {
-	const auto drc = SDL_SetRenderDrawColor(renderer.get(), color.r, color.g, color.b, color.a);
+	const auto drc = SDL_SetRenderDrawColor(_renderer.get(), color.r, color.g, color.b, color.a);
 	if (widget_log_error(drc, "SDL_SetRenderDrawColor"))
 		return false;
 
-	const auto rc = SDL_RenderFillRect(renderer.get(), rect);
+	const auto rc = SDL_RenderFillRect(_renderer.get(), &rect);
 	return !widget_log_error(rc, "SDL_RenderFillRect");
 }
 
-bool SdlWidget::fill(std::shared_ptr<SDL_Renderer>& renderer, SDL_Color color) const
+bool SdlWidget::fill(SDL_Color color) const
 {
 	std::vector<SDL_Color> colors = { color };
-	return fill(renderer, colors);
+	return fill(colors);
 }
 
-bool SdlWidget::fill(std::shared_ptr<SDL_Renderer>& renderer,
-                     const std::vector<SDL_Color>& colors) const
+bool SdlWidget::fill(const std::vector<SDL_Color>& colors) const
 {
-	assert(renderer);
-	SDL_BlendMode mode = SDL_BLENDMODE_INVALID;
-	const auto rcb = SDL_GetRenderDrawBlendMode(renderer.get(), &mode);
-	if (widget_log_error(rcb, "SDL_GetRenderDrawBlendMode()"))
-		return false;
+	SdlBlendModeGuard guard(_renderer, SDL_BLENDMODE_NONE);
 
-	const auto rbm = SDL_SetRenderDrawBlendMode(renderer.get(), SDL_BLENDMODE_NONE);
-	if (widget_log_error(rbm, "SDL_SetRenderDrawBlendMode(SDL_BLENDMODE_NONE)"))
-		return false;
-
-	SDL_BlendMode cmode = SDL_BLENDMODE_NONE;
 	for (auto color : colors)
 	{
-		if (!draw_rect(renderer, &_rect, color))
+		if (!draw_rect(_rect, color))
 			return false;
 
-		if (cmode == SDL_BLENDMODE_NONE)
-		{
-			const auto rba = SDL_SetRenderDrawBlendMode(renderer.get(), SDL_BLENDMODE_ADD);
-			if (widget_log_error(rba, "SDL_SetRenderDrawBlendMode(SDL_BLENDMODE_NONE)"))
-				return false;
-			cmode = SDL_BLENDMODE_ADD;
-		}
+		if (!guard.update(SDL_BLENDMODE_ADD))
+			return false;
 	}
 
-	const auto rbr = SDL_SetRenderDrawBlendMode(renderer.get(), mode);
-	return !widget_log_error(rbr, "SDL_SetRenderDrawBlendMode(mode)");
-}
-
-bool SdlWidget::update_text(std::shared_ptr<SDL_Renderer>& renderer, const std::string& text,
-                            SDL_Color fgcolor, SDL_Color bgcolor) const
-{
-	assert(renderer);
-
-	if (!fill(renderer, bgcolor))
-		return false;
-	return update_text(renderer, text, fgcolor);
+	return true;
 }
 
 bool SdlWidget::wrap() const
@@ -309,11 +271,34 @@ const SDL_FRect& SdlWidget::rect() const
 	return _rect;
 }
 
-bool SdlWidget::update_text(std::shared_ptr<SDL_Renderer>& renderer, const std::string& text,
-                            SDL_Color fgcolor) const
+bool SdlWidget::clear() const
 {
+	if (!_renderer)
+		return false;
 
-	if (text.empty())
+	SdlBlendModeGuard guard(_renderer, SDL_BLENDMODE_NONE);
+
+	const auto drc = SDL_SetRenderDrawColor(_renderer.get(), _backgroundcolor.r, _backgroundcolor.g,
+	                                        _backgroundcolor.b, _backgroundcolor.a);
+	if (widget_log_error(drc, "SDL_SetRenderDrawColor"))
+		return false;
+
+	const auto rcls = SDL_RenderRect(_renderer.get(), &_rect);
+	return !widget_log_error(rcls, "SDL_RenderRect");
+}
+
+bool SdlWidget::update()
+{
+	if (!clear())
+		return false;
+	// TODO: Draw widget specifics
+	return updateInternal();
+}
+
+bool SdlWidget::update_text(const std::string& text)
+{
+	_text = text;
+	if (_text.empty())
 		return true;
 
 	SDL_FRect src{};
@@ -333,29 +318,12 @@ bool SdlWidget::update_text(std::shared_ptr<SDL_Renderer>& renderer, const std::
 		src.h = static_cast<float>(h);
 	}
 	else if (_wrap)
-		texture = render_text_wrapped(renderer, text, fgcolor, src, dst);
+		texture = render_text_wrapped(_text, _fontcolor, src, dst);
 	else
-		texture = render_text(renderer, text, fgcolor, src, dst);
+		texture = render_text(_text, _fontcolor, src, dst);
 	if (!texture)
 		return false;
 
-	const auto rc = SDL_RenderTexture(renderer.get(), texture.get(), &src, &dst);
+	const auto rc = SDL_RenderTexture(_renderer.get(), texture.get(), &src, &dst);
 	return !widget_log_error(rc, "SDL_RenderCopy");
-}
-
-bool SdlWidget::clear_window(std::shared_ptr<SDL_Renderer>& renderer)
-{
-	assert(renderer);
-
-	const auto rbm = SDL_SetRenderDrawBlendMode(renderer.get(), SDL_BLENDMODE_NONE);
-	if (widget_log_error(rbm, "SDL_SetRenderDrawBlendMode(SDL_BLENDMODE_NONE)"))
-		return false;
-
-	const auto drc = SDL_SetRenderDrawColor(renderer.get(), backgroundcolor.r, backgroundcolor.g,
-	                                        backgroundcolor.b, backgroundcolor.a);
-	if (widget_log_error(drc, "SDL_SetRenderDrawColor"))
-		return false;
-
-	const auto rcls = SDL_RenderClear(renderer.get());
-	return !widget_log_error(rcls, "SDL_RenderClear");
 }

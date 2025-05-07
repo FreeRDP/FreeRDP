@@ -2,7 +2,8 @@
  * FreeRDP: A Remote Desktop Protocol Implementation
  * SDL Client helper dialogs
  *
- * Copyright 2023 Armin Novak <armin.novak@thincast.com>
+ * Copyright 2025 Armin Novak <armin.novak@thincast.com>
+ * Copyright 2025 Thincast Technologies GmbH
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,24 +17,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #pragma once
 
-#include <string>
-#include <vector>
-
-#include <SDL3/SDL.h>
 #include "sdl_selectable_widget.hpp"
 
-class SdlSelectWidget : public SdlSelectableWidget
+class SdlInputWidget : public SdlSelectableWidget
 {
   public:
-	SdlSelectWidget(std::shared_ptr<SDL_Renderer>& renderer, const std::string& label,
-	                const SDL_FRect& rect);
-	SdlSelectWidget(SdlSelectWidget&& other) noexcept;
-	SdlSelectWidget(const SdlSelectWidget& other) = delete;
-	~SdlSelectWidget() override;
+	SdlInputWidget(std::shared_ptr<SDL_Renderer>& renderer, const SDL_FRect& rect);
+	SdlInputWidget(std::shared_ptr<SDL_Renderer>& renderer, const SDL_FRect& rect,
+	               SDL_IOStream* ops);
 
-	SdlSelectWidget& operator=(const SdlSelectWidget& other) = delete;
-	SdlSelectWidget& operator=(SdlSelectWidget&& other) = delete;
+	SdlInputWidget(SdlInputWidget&& other) noexcept;
+	SdlInputWidget(const SdlInputWidget& other) = delete;
+
+	SdlInputWidget& operator=(const SdlInputWidget& other) = delete;
+	SdlInputWidget& operator=(SdlInputWidget&& other) noexcept = delete;
+
+	~SdlInputWidget() override;
+
+	std::string text() const;
+
+  private:
+	void init();
 };
