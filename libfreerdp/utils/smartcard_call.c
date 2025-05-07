@@ -1580,7 +1580,6 @@ LONG smartcard_irp_device_control_call(scard_call_context* smartcard, wStream* o
 {
 	LONG result = 0;
 	UINT32 offset = 0;
-	size_t outputBufferLength = 0;
 	size_t objectBufferLength = 0;
 
 	WINPR_ASSERT(smartcard);
@@ -1839,8 +1838,8 @@ LONG smartcard_irp_device_control_call(scard_call_context* smartcard, wStream* o
 	}
 
 	Stream_SealLength(out);
-	outputBufferLength = Stream_Length(out);
-	WINPR_ASSERT(outputBufferLength >= RDPDR_DEVICE_IO_RESPONSE_LENGTH - 4U);
+	size_t outputBufferLength = Stream_Length(out);
+	WINPR_ASSERT(outputBufferLength >= RDPDR_DEVICE_IO_RESPONSE_LENGTH + 4U);
 	outputBufferLength -= (RDPDR_DEVICE_IO_RESPONSE_LENGTH + 4U);
 	WINPR_ASSERT(outputBufferLength >= RDPDR_DEVICE_IO_RESPONSE_LENGTH);
 	objectBufferLength = outputBufferLength - RDPDR_DEVICE_IO_RESPONSE_LENGTH;
@@ -1848,10 +1847,24 @@ LONG smartcard_irp_device_control_call(scard_call_context* smartcard, wStream* o
 	WINPR_ASSERT(objectBufferLength <= UINT32_MAX);
 	Stream_SetPosition(out, RDPDR_DEVICE_IO_RESPONSE_LENGTH);
 
+	/* [MS-RDPESC] 3.2.5.2 Processing Incoming Replies
+	 *
+	 * if the output buffer is too small, reply with STATUS_BUFFER_TOO_SMALL
+	 * and a outputBufferLength of 0.
+	 * The message should then be retransmitted from the server with a doubled
+	 * buffer size.
+	 */
 	if (outputBufferLength > operation->outputBufferLength)
 	{
-		WLog_WARN(TAG, "IRP warn: expected outputBufferLength %" PRIu32 ", but have %" PRIu32,
+		WLog_WARN(TAG,
+		          "IRP warn: expected outputBufferLength %" PRIu32 ", but current limit %" PRIu32
+		          ", respond with STATUS_BUFFER_TOO_SMALL",
 		          operation->outputBufferLength, outputBufferLength);
+
+		*pIoStatus = STATUS_BUFFER_TOO_SMALL;
+		result = *pIoStatus;
+		outputBufferLength = 0;
+		objectBufferLength = 0;
 	}
 
 	/* Device Control Response */
