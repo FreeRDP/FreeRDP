@@ -41,6 +41,10 @@
 #include <freerdp/client/encomsp.h>
 #endif
 
+#if defined(CHANNEL_RDPDR_CLIENT)
+#include <freerdp/client/rdpdr.h>
+#endif
+
 #ifdef __cplusplus
 extern "C"
 {
