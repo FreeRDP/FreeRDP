@@ -342,6 +342,32 @@ static DWORD FileGetFileSize(HANDLE Object, LPDWORD lpFileSizeHigh)
 	return (UINT32)(size & 0xFFFFFFFF);
 }
 
+static BOOL FileFlushFileBuffers(HANDLE hFile)
+{
+	WINPR_FILE* pFile = (WINPR_FILE*)hFile;
+
+	if (!pFile->fp)
+	{
+		SetLastError(ERROR_INVALID_HANDLE);
+		return FALSE;
+	}
+
+	// See: https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-flushfilebuffers
+	if ((pFile->dwOpenMode & GENERIC_WRITE) == 0)
+	{
+		SetLastError(STATUS_ACCESS_DENIED);
+		return FALSE;
+	}
+
+	if (fflush(pFile->fp) != 0)
+	{
+		SetLastError(map_posix_err(errno));
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
 static BOOL FileGetFileInformationByHandle(HANDLE hFile,
                                            LPBY_HANDLE_FILE_INFORMATION lpFileInformation)
 {
@@ -707,7 +733,7 @@ static HANDLE_OPS fileOps = {
 	NULL, /* FileWriteEx */
 	NULL, /* FileWriteGather */
 	FileGetFileSize,
-	NULL, /*  FlushFileBuffers */
+	FileFlushFileBuffers,
 	FileSetEndOfFile,
 	FileSetFilePointer,
 	FileSetFilePointerEx,
