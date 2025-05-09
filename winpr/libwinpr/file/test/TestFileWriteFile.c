@@ -28,20 +28,15 @@ static BOOL get_tmp(char* path, size_t len)
 	strncmp(path, template, strnlen_s(template, len) + 1);
 	if (!mktemp_s(path))
 		return FALSE;
-	strcat_s(path, len, "\\testfile");
-	if (strnlen_s(path, len) + 10 > len)
-		return FALSE;
+	return winpr_str_append("testfile", path, len, "\\");
 #else
 	const char template[] = "/tmp/tmpdir.XXXXXX";
 	if (!strncpy(path, template, strnlen(template, len) + 1))
 		return FALSE;
 	if (!mkdtemp(path))
 		return FALSE;
-	if (strnlen(path, len) + 10 > len)
-		return FALSE;
-	strcat(path, "/testfile");
+	return winpr_str_append("testfile", path, len, "/");
 #endif
-	return TRUE;
 }
 
 static BOOL test_write(const char* filename, const char* data, size_t datalen)
