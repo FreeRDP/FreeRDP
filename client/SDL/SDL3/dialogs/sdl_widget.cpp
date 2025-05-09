@@ -43,7 +43,7 @@ static const Uint32 hpadding = 10;
 
 SdlWidget::SdlWidget(std::shared_ptr<SDL_Renderer>& renderer, const SDL_FRect& rect)
     : _renderer(renderer),
-      _engine(TTF_CreateRendererTextEngine(renderer.get()), TTF_DestroySurfaceTextEngine),
+      _engine(TTF_CreateRendererTextEngine(renderer.get()), TTF_DestroyRendererTextEngine),
       _rect(rect)
 {
 	assert(renderer);
