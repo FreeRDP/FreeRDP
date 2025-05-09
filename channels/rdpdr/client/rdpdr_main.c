@@ -2265,6 +2265,52 @@ static void rdpdr_virtual_channel_event_terminated(rdpdrPlugin* rdpdr)
 	free(rdpdr);
 }
 
+static UINT rdpdr_register_device(RdpdrClientContext* context, const RDPDR_DEVICE* device,
+                                  uintptr_t* pid)
+{
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(device);
+	WINPR_ASSERT(pid);
+
+	rdpdrPlugin* rdpdr = context->handle;
+	WINPR_ASSERT(rdpdr);
+
+	RDPDR_DEVICE* copy = freerdp_device_clone(device);
+	if (!copy)
+		return ERROR_INVALID_DATA;
+	UINT rc = devman_load_device_service(rdpdr->devman, copy, rdpdr->rdpcontext);
+	*pid = copy->Id;
+	return rc;
+}
+
+static UINT rdpdr_unregister_device(RdpdrClientContext* context, uintptr_t id)
+{
+	WINPR_ASSERT(context);
+
+	rdpdrPlugin* rdpdr = context->handle;
+	WINPR_ASSERT(rdpdr);
+
+	devman_unregister_device(rdpdr->devman, (void*)id);
+	return CHANNEL_RC_OK;
+}
+
+static UINT rdpdr_virtual_channel_event_initialized(rdpdrPlugin* rdpdr,
+                                                    WINPR_ATTR_UNUSED LPVOID pData,
+                                                    WINPR_ATTR_UNUSED UINT32 dataLength)
+{
+	WINPR_ASSERT(rdpdr);
+#if !defined(_WIN32)
+	WINPR_ASSERT(!rdpdr->stopEvent);
+	rdpdr->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+	WINPR_ASSERT(rdpdr->stopEvent);
+#endif
+
+	rdpdr->context.handle = rdpdr;
+	rdpdr->context.RdpdrRegisterDevice = rdpdr_register_device;
+	rdpdr->context.RdpdrUnregisterDevice = rdpdr_unregister_device;
+	return CHANNEL_RC_OK;
+}
+
 static VOID VCAPITYPE rdpdr_virtual_channel_init_event_ex(LPVOID lpUserParam, LPVOID pInitHandle,
                                                           UINT event, LPVOID pData, UINT dataLength)
 {
@@ -2282,11 +2328,7 @@ static VOID VCAPITYPE rdpdr_virtual_channel_init_event_ex(LPVOID lpUserParam, LP
 	switch (event)
 	{
 		case CHANNEL_EVENT_INITIALIZED:
-#if !defined(_WIN32)
-			WINPR_ASSERT(!rdpdr->stopEvent);
-			rdpdr->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-			WINPR_ASSERT(rdpdr->stopEvent);
-#endif
+			error = rdpdr_virtual_channel_event_initialized(rdpdr, pData, dataLength);
 			break;
 
 		case CHANNEL_EVENT_CONNECTED:
@@ -2383,7 +2425,7 @@ FREERDP_ENTRY_POINT(BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS p
 	CopyMemory(&(rdpdr->channelEntryPoints), pEntryPoints, sizeof(CHANNEL_ENTRY_POINTS_FREERDP_EX));
 	rdpdr->InitHandle = pInitHandle;
 	rc = rdpdr->channelEntryPoints.pVirtualChannelInitEx(
-	    rdpdr, NULL, pInitHandle, &rdpdr->channelDef, 1, VIRTUAL_CHANNEL_VERSION_WIN2000,
+	    rdpdr, &rdpdr->context, pInitHandle, &rdpdr->channelDef, 1, VIRTUAL_CHANNEL_VERSION_WIN2000,
 	    rdpdr_virtual_channel_init_event_ex);
 
 	if (CHANNEL_RC_OK != rc)
