@@ -61,14 +61,19 @@ static BOOL sdl_webview_get_rdsaad_access_token(freerdp* instance, const char* s
 	WINPR_ASSERT(token);
 
 	WINPR_UNUSED(instance);
-	WINPR_UNUSED(instance->context);
 
-	auto client_id = from_settings(instance->context->settings, FreeRDP_GatewayAvdClientID);
+	auto context = instance->context;
+	WINPR_UNUSED(context);
+
+	auto settings = context->settings;
+	WINPR_ASSERT(settings);
+
+	auto client_id = from_settings(settings, FreeRDP_GatewayAvdClientID);
 	std::string redirect_uri = "ms-appx-web%3a%2f%2fMicrosoft.AAD.BrokerPlugin%2f" + client_id;
 
 	*token = nullptr;
 
-	auto ep = from_aad_wellknown(instance->context, AAD_WELLKNOWN_authorization_endpoint);
+	auto ep = from_aad_wellknown(context, AAD_WELLKNOWN_authorization_endpoint);
 	auto url = ep + "?client_id=" + client_id + "&response_type=code&scope=" + scope +
 	           "&redirect_uri=" + redirect_uri;
 

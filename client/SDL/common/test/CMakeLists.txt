@@ -3,15 +3,18 @@ set(MODULE_PREFIX "TEST_SDL")
 
 set(${MODULE_PREFIX}_DRIVER ${MODULE_NAME}.cpp)
 
-set(${MODULE_PREFIX}_TESTS TestSDLPrefs.cpp)
+set(${MODULE_PREFIX}_TESTS TestSDLPrefs.cpp TestSDLWebview.cpp)
 
 disable_warnings_for_directory(${CMAKE_CURRENT_BINARY_DIR})
 
 create_test_sourcelist(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_DRIVER} ${${MODULE_PREFIX}_TESTS})
 
+include_directories("${CMAKE_CURRENT_SOURCE_DIR}/../aad")
+include_directories("${CMAKE_CURRENT_BINARY_DIR}/../aad")
+
 add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 
-set(${MODULE_PREFIX}_LIBS freerdp winpr sdl-common-prefs)
+set(${MODULE_PREFIX}_LIBS freerdp freerdp-client winpr sdl-common-prefs sdl-common-aad-view)
 
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 
