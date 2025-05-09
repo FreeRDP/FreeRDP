@@ -355,7 +355,7 @@ static BOOL FileFlushFileBuffers(HANDLE hFile)
 	// See: https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-flushfilebuffers
 	if ((pFile->dwOpenMode & GENERIC_WRITE) == 0)
 	{
-		SetLastError(STATUS_ACCESS_DENIED);
+		SetLastError(ERROR_ACCESS_DENIED);
 		return FALSE;
 	}
 
