@@ -3,8 +3,6 @@ name: Fuzzing testing
 on:
   workflow_dispatch:
     branches: [ master, stable* ]
-  pull_request:
-    branches: [ master, stable* ]
   schedule:
   - cron: "0 3 21 * *"
 
