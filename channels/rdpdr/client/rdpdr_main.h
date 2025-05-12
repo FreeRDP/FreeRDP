@@ -36,6 +36,7 @@
 #include <freerdp/addin.h>
 
 #include <freerdp/channels/rdpdr.h>
+#include <freerdp/client/rdpdr.h>
 #include <freerdp/channels/log.h>
 
 #ifdef __MACOSX__
@@ -113,6 +114,8 @@ typedef struct
 	BOOL capabilities[6];
 	BOOL haveClientId;
 	BOOL haveServerCaps;
+
+	RdpdrClientContext context;
 } rdpdrPlugin;
 
 BOOL rdpdr_state_advance(rdpdrPlugin* rdpdr, enum RDPDR_CHANNEL_STATE next);
