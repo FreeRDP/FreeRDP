@@ -17,7 +17,7 @@
  * limitations under the License.
  */
 
-#include "webview.h"
+#include <webview.h>
 
 #include <cassert>
 #include <string>
@@ -25,45 +25,137 @@
 #include <map>
 #include <regex>
 #include <sstream>
+#include <cctype>
+#include <algorithm>
 #include "../webview_impl.hpp"
 
-static std::vector<std::string> split(const std::string& input, const std::string& regex)
-{
-	// passing -1 as the submatch index parameter performs splitting
-	std::regex re(regex);
-	std::sregex_token_iterator first{ input.begin(), input.end(), re, -1 };
-	std::sregex_token_iterator last;
-	return { first, last };
-}
+#include <winpr/string.h>
+#include <freerdp/log.h>
 
-static std::map<std::string, std::string> urlsplit(const std::string& url)
-{
-	auto pos = url.find('?');
-	if (pos == std::string::npos)
-		return {};
-	auto surl = url.substr(pos);
-	auto args = split(surl, "&");
+#define TAG FREERDP_TAG("client.SDL.common.aad")
 
-	std::map<std::string, std::string> argmap;
-	for (const auto& arg : args)
+class fkt_arg
+{
+  public:
+	fkt_arg(const std::string& url)
 	{
-		auto kv = split(arg, "=");
-		if (kv.size() == 2)
-			argmap.insert({ kv[0], kv[1] });
+		auto args = urlsplit(url);
+		auto redir = args.find("redirect_uri");
+		if (redir == args.end())
+		{
+			WLog_ERR(TAG, "[Webview] url %s does not contain a redirect_uri parameter, aborting.",
+			         url.c_str());
+		}
+		else
+		{
+			_redirect_uri = from_url_encoded_str(redir->second);
+		}
 	}
-	return argmap;
-}
 
-static void fkt(const std::string& url, void* arg)
+	bool valid() const
+	{
+		return !_redirect_uri.empty();
+	}
+
+	bool getCode(std::string& c) const
+	{
+		c = _code;
+		return !c.empty();
+	}
+
+	bool handle(const std::string& uri) const
+	{
+		std::string duri = from_url_encoded_str(uri);
+		if (duri.length() < _redirect_uri.length())
+			return false;
+		auto rc = _strnicmp(duri.c_str(), _redirect_uri.c_str(), _redirect_uri.length());
+		return rc == 0;
+	}
+
+	bool parse(const std::string& uri)
+	{
+		_args = urlsplit(uri);
+		auto err = _args.find("error");
+		if (err != _args.end())
+		{
+			auto suberr = _args.find("error_subcode");
+			WLog_ERR(TAG, "[Webview] %s: %s, %s: %s", err->first.c_str(), err->second.c_str(),
+			         suberr->first.c_str(), suberr->second.c_str());
+			return false;
+		}
+		auto val = _args.find("code");
+		if (val == _args.end())
+		{
+			WLog_ERR(TAG, "[Webview] no code parameter detected in redirect URI %s", uri.c_str());
+			return false;
+		}
+
+		_code = val->second;
+		return true;
+	}
+
+  protected:
+	static std::string from_url_encoded_str(const std::string& str)
+	{
+		std::string cxxstr;
+		auto cstr = winpr_str_url_decode(str.c_str(), str.length());
+		if (cstr)
+		{
+			cxxstr = std::string(cstr);
+			free(cstr);
+		}
+		return cxxstr;
+	}
+
+	static std::vector<std::string> split(const std::string& input, const std::string& regex)
+	{
+		// passing -1 as the submatch index parameter performs splitting
+		std::regex re(regex);
+		std::sregex_token_iterator first{ input.begin(), input.end(), re, -1 };
+		std::sregex_token_iterator last;
+		return { first, last };
+	}
+
+	static std::map<std::string, std::string> urlsplit(const std::string& url)
+	{
+		auto pos = url.find('?');
+		if (pos == std::string::npos)
+			return {};
+
+		pos++; // skip '?'
+		auto surl = url.substr(pos);
+		auto args = split(surl, "&");
+
+		std::map<std::string, std::string> argmap;
+		for (const auto& arg : args)
+		{
+			auto kv = split(arg, "=");
+			if (kv.size() == 2)
+				argmap.insert({ kv[0], kv[1] });
+		}
+
+		return argmap;
+	}
+
+  private:
+	std::string _redirect_uri;
+	std::string _code;
+	std::map<std::string, std::string> _args;
+};
+
+static void fkt(webview_t webview, const char* uri, webview_navigation_event_t type, void* arg)
 {
-	auto args = urlsplit(url);
-	auto val = args.find("code");
-	if (val == args.end())
+	assert(arg);
+	auto rcode = static_cast<fkt_arg*>(arg);
+
+	if (type != WEBVIEW_LOAD_FINISHED)
 		return;
 
-	assert(arg);
-	auto rcode = static_cast<std::string*>(arg);
-	*rcode = val->second;
+	if (!rcode->handle(uri))
+		return;
+
+	(void)rcode->parse(uri);
+	webview_terminate(webview);
 }
 
 bool webview_impl_run(const std::string& title, const std::string& url, std::string& code)
@@ -71,12 +163,15 @@ bool webview_impl_run(const std::string& title, const std::string& url, std::str
 	webview::webview w(false, nullptr);
 
 	w.set_title(title);
-	w.set_size(640, 480, WEBVIEW_HINT_NONE);
+	w.set_size(800, 600, WEBVIEW_HINT_NONE);
 
-	std::string scheme;
-	w.add_scheme_handler("ms-appx-web", fkt, &scheme);
-	w.add_navigate_listener(fkt, &code);
+	fkt_arg arg(url);
+	if (!arg.valid())
+	{
+		return false;
+	}
+	w.add_navigation_listener(fkt, &arg);
 	w.navigate(url);
 	w.run();
-	return !code.empty();
+	return arg.getCode(code);
 }

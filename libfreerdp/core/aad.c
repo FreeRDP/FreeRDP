@@ -52,7 +52,7 @@ struct rdp_aad
 
 #ifdef WITH_AAD
 
-static BOOL aad_fetch_wellknown(rdpAad* aad);
+static BOOL aad_fetch_wellknown(wLog* log, rdpContext* context);
 static BOOL get_encoded_rsa_params(wLog* wlog, rdpPrivateKey* key, char** e, char** n);
 static BOOL generate_pop_key(rdpAad* aad);
 
@@ -180,6 +180,20 @@ static INLINE const char* aad_auth_result_to_string(DWORD code)
 	return "Unknown error";
 }
 
+static BOOL ensure_wellknown(rdpContext* context)
+{
+	if (context->rdp->wellknown)
+		return TRUE;
+
+	rdpAad* aad = context->rdp->aad;
+	if (!aad)
+		return FALSE;
+
+	if (!aad_fetch_wellknown(aad->log, context))
+		return FALSE;
+	return context->rdp->wellknown != NULL;
+}
+
 static BOOL aad_get_nonce(rdpAad* aad)
 {
 	BOOL ret = FALSE;
@@ -193,6 +207,9 @@ static BOOL aad_get_nonce(rdpAad* aad)
 
 	rdpRdp* rdp = aad->rdpcontext->rdp;
 	WINPR_ASSERT(rdp);
+
+	if (!ensure_wellknown(aad->rdpcontext))
+		return FALSE;
 
 	WINPR_JSON* obj = WINPR_JSON_GetObjectItem(rdp->wellknown, "token_endpoint");
 	if (!obj)
@@ -292,7 +309,7 @@ int aad_client_begin(rdpAad* aad)
 		return -1;
 	}
 
-	if (!aad_fetch_wellknown(aad))
+	if (!aad_fetch_wellknown(aad->log, aad->rdpcontext))
 		return -1;
 
 	const BOOL arc = instance->GetAccessToken(instance, ACCESS_TOKEN_TYPE_AAD, &aad->access_token,
@@ -756,12 +773,19 @@ int aad_client_begin(rdpAad* aad)
 	WLog_Print(aad->log, WLOG_ERROR, "AAD security not compiled in, aborting!");
 	return -1;
 }
+
 int aad_recv(rdpAad* aad, wStream* s)
 {
 	WINPR_ASSERT(aad);
 	WLog_Print(aad->log, WLOG_ERROR, "AAD security not compiled in, aborting!");
 	return -1;
 }
+
+static BOOL ensure_wellknown(WINPR_ATTR_UNUSED rdpContext* context)
+{
+	return FALSE;
+}
+
 #endif
 
 rdpAad* aad_new(rdpContext* context, rdpTransport* transport)
@@ -855,26 +879,24 @@ cleanup:
 	return token;
 }
 
-BOOL aad_fetch_wellknown(rdpAad* aad)
+BOOL aad_fetch_wellknown(wLog* log, rdpContext* context)
 {
-	WINPR_ASSERT(aad);
-	WINPR_ASSERT(aad->rdpcontext);
+	WINPR_ASSERT(context);
 
-	rdpRdp* rdp = aad->rdpcontext->rdp;
+	rdpRdp* rdp = context->rdp;
 	WINPR_ASSERT(rdp);
 
 	if (rdp->wellknown)
 		return TRUE;
 
 	const char* base =
-	    freerdp_settings_get_string(aad->rdpcontext->settings, FreeRDP_GatewayAzureActiveDirectory);
+	    freerdp_settings_get_string(context->settings, FreeRDP_GatewayAzureActiveDirectory);
 	const BOOL useTenant =
-	    freerdp_settings_get_bool(aad->rdpcontext->settings, FreeRDP_GatewayAvdUseTenantid);
+	    freerdp_settings_get_bool(context->settings, FreeRDP_GatewayAvdUseTenantid);
 	const char* tenantid = "common";
 	if (useTenant)
-		tenantid =
-		    freerdp_settings_get_string(aad->rdpcontext->settings, FreeRDP_GatewayAvdAadtenantid);
-	rdp->wellknown = freerdp_utils_aad_get_wellknown(aad->log, base, tenantid);
+		tenantid = freerdp_settings_get_string(context->settings, FreeRDP_GatewayAvdAadtenantid);
+	rdp->wellknown = freerdp_utils_aad_get_wellknown(log, base, tenantid);
 	return rdp->wellknown ? TRUE : FALSE;
 }
 
@@ -889,7 +911,7 @@ const char* freerdp_utils_aad_get_wellknown_custom_string(rdpContext* context, c
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->rdp);
 
-	if (!context->rdp->wellknown)
+	if (!ensure_wellknown(context))
 		return NULL;
 
 	WINPR_JSON* obj = WINPR_JSON_GetObjectItem(context->rdp->wellknown, which);
@@ -965,7 +987,7 @@ WINPR_JSON* freerdp_utils_aad_get_wellknown_custom_object(rdpContext* context, c
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->rdp);
 
-	if (!context->rdp->wellknown)
+	if (!ensure_wellknown(context))
 		return NULL;
 
 	return WINPR_JSON_GetObjectItem(context->rdp->wellknown, which);
