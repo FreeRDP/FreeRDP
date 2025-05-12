@@ -374,6 +374,9 @@ BOOL drive_file_free(DRIVE_FILE* file)
 		file->find_handle = INVALID_HANDLE_VALUE;
 	}
 
+	if (file->CreateOptions & FILE_DELETE_ON_CLOSE)
+		file->delete_pending = TRUE;
+
 	if (file->delete_pending)
 	{
 		if (file->is_dir)
