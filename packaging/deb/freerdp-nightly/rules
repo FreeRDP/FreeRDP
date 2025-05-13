@@ -39,6 +39,8 @@ DEB_CMAKE_EXTRA_FLAGS :=  -GNinja \
 						  -DWITH_INTERNAL_RC4=ON \
 						  -DWITH_INTERNAL_MD4=ON \
 						  -DWITH_INTERNAL_MD5=ON \
+						  -DWITH_WEBVIEW=ON \
+						  -DFETCHCONTENT_FULLY_DISCONNECTED=OFF \
 						  -DBUILD_TESTING=ON \
 						  -DWITH_KEYBOARD_LAYOUT_FROM_FILE=ON \
 						  -DWITH_TIMEZONE_FROM_FILE=ON \
@@ -89,15 +91,3 @@ override_dh_strip:
 override_dh_missing:
 	dh_missing --fail-missing
 
-override_dh_install:
-	mkdir -p debian/tmp/opt/freerdp-nightly/lib/cmake/
-	rm -rf debian/tmp/opt/freerdp-nightly/lib/freerdp3/*.a
-
-	dh_install
-
-override_dh_auto_test:
-	dh_auto_test
-
-override_dh_clean:
-	rm -f config.h
-	dh_clean

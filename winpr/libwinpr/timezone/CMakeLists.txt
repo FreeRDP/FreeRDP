@@ -15,6 +15,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+if(${CMAKE_VERSION} GREATER_EQUAL "3.31.0")
+  cmake_policy(SET CMP0177 NEW)
+endif()
+
 option(WITH_TIMEZONE_COMPILED "Use compiled in timezone definitions" ON)
 if(WITH_TIMEZONE_COMPILED)
   winpr_definition_add(WITH_TIMEZONE_COMPILED)

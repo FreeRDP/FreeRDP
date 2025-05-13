@@ -15,9 +15,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-set(WITH_WEBVIEW_DEFAULT OFF)
 
-option(WITH_WEBVIEW "Build with WebView support for AAD login popup browser" ${WITH_WEBVIEW_DEFAULT})
+option(WITH_WEBVIEW "Build with WebView support for AAD login popup browser" OFF)
 if(WITH_WEBVIEW)
   set(SRCS sdl_webview.hpp webview_impl.hpp sdl_webview.cpp)
   set(LIBS winpr)

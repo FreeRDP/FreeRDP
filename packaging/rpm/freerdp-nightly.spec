@@ -5,6 +5,8 @@
 #
 # Bugs and comments https://github.com/FreeRDP/FreeRDP/issues
 
+%global __cmake_builddir 1
+
 %define _build_id_links none
 %define   INSTALL_PREFIX /opt/freerdp-nightly/
 
@@ -104,9 +106,7 @@ BuildRequires: wayland-devel
 BuildRequires: cjson-devel
 BuildRequires: uuid-devel
 BuildRequires: opus-devel
-BuildRequires: SDL2-devel
-BuildRequires: SDL2_ttf-devel
-BuildRequires: SDL2_image-devel
+BuildRequires: ((SDL3-devel and SDL3_ttf-devel and SDL3_image-devel) or (SDL2-devel and SDL2_ttf-devel and SDL2_image-devel))
 BuildRequires: pkgconfig
 BuildRequires: openssl-devel
 BuildRequires: alsa-lib-devel
@@ -116,7 +116,7 @@ BuildRequires: systemd-devel
 BuildRequires: dbus-glib-devel
 BuildRequires: libjpeg-turbo-devel
 BuildRequires: libasan
-BuildRequires: webkit2gtk4.0-devel
+BuildRequires: (webkit2gtk4.1-devel or webkit2gtk4.0-devel)
 BuildRequires: libjpeg-turbo-devel
 BuildRequires: wayland-devel
 %endif
@@ -197,6 +197,11 @@ cp %{_topdir}/SOURCES/source_version freerdp-nightly-%{version}/.source_version
 %if 0%{?rhel} >= 8 || 0%{defined suse_version}
     -DWITH_WEBVIEW=OFF \
 %endif
+%if 0%{?fedora} >= 41
+    -DWITH_CLIENT_SDL3=OFF \
+    -DWITH_WEBVIEW=ON \
+		-DFETCHCONTENT_FULLY_DISCONNECTED=OFF \
+%endif
     -DCMAKE_C_COMPILER=clang \
     -DCMAKE_CXX_COMPILER=clang++ \
     -DWITH_SANITIZE_ADDRESS=ON \
@@ -224,14 +229,10 @@ cp %{_topdir}/SOURCES/source_version freerdp-nightly-%{version}/.source_version
 
 %cmake_build
 
-%check
-%cmake_build --target test
-
-%install
+%ctest
 
 %cmake_install
 
-find %{buildroot} -name "*.a" -delete
 export NO_BRP_CHECK_RPATH true
 
 %files
