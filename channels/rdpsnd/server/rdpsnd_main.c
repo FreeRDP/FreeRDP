@@ -59,6 +59,9 @@ static UINT rdpsnd_server_send_formats(RdpsndServerContext* context)
 	BOOL status = FALSE;
 	ULONG written = 0;
 
+	if (context->num_server_formats == 0)
+		return CHANNEL_RC_OK;
+
 	if (!Stream_EnsureRemainingCapacity(s, 24))
 		return ERROR_OUTOFMEMORY;
 
