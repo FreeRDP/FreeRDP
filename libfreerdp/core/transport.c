@@ -1646,20 +1646,6 @@ rdpTransport* transport_new(rdpContext* context)
 	if (!transport->log)
 		goto fail;
 
-	// transport->io.DataHandler = transport_data_handler;
-	transport->io.TCPConnect = freerdp_tcp_default_connect;
-	transport->io.TLSConnect = transport_default_connect_tls;
-	transport->io.TLSAccept = transport_default_accept_tls;
-	transport->io.TransportAttach = transport_default_attach;
-	transport->io.TransportDisconnect = transport_default_disconnect;
-	transport->io.ReadPdu = transport_default_read_pdu;
-	transport->io.WritePdu = transport_default_write;
-	transport->io.ReadBytes = transport_read_layer;
-	transport->io.GetPublicKey = transport_default_get_public_key;
-	transport->io.SetBlockingMode = transport_default_set_blocking_mode;
-	transport->io.ConnectLayer = transport_default_connect_layer;
-	transport->io.AttachLayer = transport_default_attach_layer;
-
 	transport->context = context;
 	transport->ReceivePool = StreamPool_New(TRUE, BUFFER_SIZE);
 
@@ -1697,6 +1683,20 @@ rdpTransport* transport_new(rdpContext* context)
 
 	if (!InitializeCriticalSectionAndSpinCount(&(transport->WriteLock), 4000))
 		goto fail;
+
+	// transport->io.DataHandler = transport_data_handler;
+	transport->io.TCPConnect = freerdp_tcp_default_connect;
+	transport->io.TLSConnect = transport_default_connect_tls;
+	transport->io.TLSAccept = transport_default_accept_tls;
+	transport->io.TransportAttach = transport_default_attach;
+	transport->io.TransportDisconnect = transport_default_disconnect;
+	transport->io.ReadPdu = transport_default_read_pdu;
+	transport->io.WritePdu = transport_default_write;
+	transport->io.ReadBytes = transport_read_layer;
+	transport->io.GetPublicKey = transport_default_get_public_key;
+	transport->io.SetBlockingMode = transport_default_set_blocking_mode;
+	transport->io.ConnectLayer = transport_default_connect_layer;
+	transport->io.AttachLayer = transport_default_attach_layer;
 
 	return transport;
 fail:
