@@ -2,7 +2,7 @@
 
 RPMBUILD_BASE="~/rpmbuild/SOURCES"
 if [ $# -gt 0 ]; then
-  RPMBUILD_BASE="$1/SOURCES"
+  RPMBUILD_BASE="$1"
 fi
 
 if [ ! -d external/webview ]; then
