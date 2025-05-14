@@ -149,6 +149,8 @@ set(${MODULE_PREFIX}_SRCS
     rdstls.h
     aad.c
     aad.h
+    timer.c
+    timer.h
 )
 
 set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} ${${MODULE_PREFIX}_GATEWAY_SRCS})
