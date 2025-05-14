@@ -23,6 +23,12 @@ if(WITH_WEBVIEW)
 
   include(FetchContent)
 
+  set(FETCHCONTENT_SOURCE_DIR_WEBVIEW "${CMAKE_CURRENT_SOURCE_DIR}/../../../../external/webview")
+  if(IS_DIRECTORY "${FETCHCONTENT_SOURCE_DIR_WEBVIEW}")
+    message("Using existing source from ${FETCHCONTENT_SOURCE_DIR_WEBVIEW}")
+  else()
+    unset(FETCHCONTENT_SOURCE_DIR_WEBVIEW)
+  endif()
   FetchContent_Declare(webview GIT_REPOSITORY https://github.com/akallabeth/webview GIT_TAG navigation-listener SYSTEM)
   FetchContent_MakeAvailable(webview)
 

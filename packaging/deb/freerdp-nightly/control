@@ -8,7 +8,6 @@ Build-Depends:
  dpkg-dev,
  autotools-dev,
  cmake,
- git,
  pkg-config,
  libssl-dev,
  ninja-build,
