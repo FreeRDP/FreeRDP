@@ -21,11 +21,13 @@
 #include <winpr/sysinfo.h>
 #include <winpr/cast.h>
 
+#include <freerdp/timer.h>
+
 #include "wlf_disp.h"
 
 #define TAG CLIENT_TAG("wayland.disp")
 
-#define RESIZE_MIN_DELAY 200 /* minimum delay in ms between two resizes */
+#define RESIZE_MIN_DELAY_NS 200000UL /* minimum delay in ns between two resizes */
 
 struct s_wlfDispContext
 {
@@ -42,8 +44,12 @@ struct s_wlfDispContext
 	UINT16 lastSentDesktopOrientation;
 	UINT32 lastSentDesktopScaleFactor;
 	UINT32 lastSentDeviceScaleFactor;
+	FreeRDP_TimerID timerID;
 };
 
+static BOOL wlf_disp_sendResize(wlfDispContext* wlfDisp, BOOL fromTimer);
+static BOOL wlf_disp_check_context(void* context, wlfContext** ppwlc, wlfDispContext** ppwlfDisp,
+                                   rdpSettings** ppSettings);
 static UINT wlf_disp_sendLayout(DispClientContext* disp, const rdpMonitor* monitors,
                                 size_t nmonitors);
 
@@ -91,6 +97,7 @@ static BOOL wlf_update_last_sent(wlfDispContext* wlfDisp)
 	settings = wlfDisp->wlc->common.context.settings;
 	WINPR_ASSERT(settings);
 
+	wlfDisp->lastSentDate = winpr_GetTickCount64NS();
 	wlfDisp->lastSentWidth = wlfDisp->targetWidth;
 	wlfDisp->lastSentHeight = wlfDisp->targetHeight;
 	wlfDisp->lastSentDesktopOrientation =
@@ -103,7 +110,39 @@ static BOOL wlf_update_last_sent(wlfDispContext* wlfDisp)
 	return TRUE;
 }
 
-static BOOL wlf_disp_sendResize(wlfDispContext* wlfDisp)
+static uint64_t wlf_disp_OnTimer(rdpContext* context, WINPR_ATTR_UNUSED void* userdata,
+                                 WINPR_ATTR_UNUSED FreeRDP_TimerID timerID,
+                                 WINPR_ATTR_UNUSED uint64_t timestamp, uint64_t interval)
+{
+	wlfContext* wlc = NULL;
+	wlfDispContext* wlfDisp = NULL;
+	rdpSettings* settings = NULL;
+
+	if (!wlf_disp_check_context(context, &wlc, &wlfDisp, &settings))
+		return interval;
+
+	if (!wlfDisp->activated || freerdp_settings_get_bool(settings, FreeRDP_Fullscreen))
+		return interval;
+
+	wlf_disp_sendResize(wlfDisp, TRUE);
+	wlfDisp->timerID = 0;
+	return 0;
+}
+
+static BOOL update_timer(wlfDispContext* wlfDisp, uint64_t intervalNS)
+{
+	WINPR_ASSERT(wlfDisp);
+
+	if (wlfDisp->timerID == 0)
+	{
+		rdpContext* context = &wlfDisp->wlc->common.context;
+
+		wlfDisp->timerID = freerdp_timer_add(context, intervalNS, wlf_disp_OnTimer, NULL, true);
+	}
+	return TRUE;
+}
+
+BOOL wlf_disp_sendResize(wlfDispContext* wlfDisp, BOOL fromTimer)
 {
 	DISPLAY_CONTROL_MONITOR_LAYOUT layout;
 	wlfContext* wlc = NULL;
@@ -119,12 +158,15 @@ static BOOL wlf_disp_sendResize(wlfDispContext* wlfDisp)
 		return FALSE;
 
 	if (!wlfDisp->activated || !wlfDisp->disp)
-		return TRUE;
+		return update_timer(wlfDisp, RESIZE_MIN_DELAY_NS);
 
-	if (GetTickCount64() - wlfDisp->lastSentDate < RESIZE_MIN_DELAY)
-		return TRUE;
+	const uint64_t now = winpr_GetTickCount64NS();
+	const uint64_t diff = now - wlfDisp->lastSentDate;
+	if (diff < RESIZE_MIN_DELAY_NS)
+		return update_timer(wlfDisp, RESIZE_MIN_DELAY_NS);
 
-	wlfDisp->lastSentDate = GetTickCount64();
+	if (!fromTimer && (wlfDisp->timerID != 0))
+		return TRUE;
 
 	if (!wlf_disp_settings_changed(wlfDisp))
 		return TRUE;
@@ -164,8 +206,8 @@ static BOOL wlf_disp_set_window_resizable(WINPR_ATTR_UNUSED wlfDispContext* wlfD
 	return TRUE;
 }
 
-static BOOL wlf_disp_check_context(void* context, wlfContext** ppwlc, wlfDispContext** ppwlfDisp,
-                                   rdpSettings** ppSettings)
+BOOL wlf_disp_check_context(void* context, wlfContext** ppwlc, wlfDispContext** ppwlfDisp,
+                            rdpSettings** ppSettings)
 {
 	wlfContext* wlc = NULL;
 
@@ -204,7 +246,7 @@ static void wlf_disp_OnActivated(void* context, const ActivatedEventArgs* e)
 		if (e->firstActivation)
 			return;
 
-		wlf_disp_sendResize(wlfDisp);
+		wlf_disp_sendResize(wlfDisp, FALSE);
 	}
 }
 
@@ -223,24 +265,8 @@ static void wlf_disp_OnGraphicsReset(void* context, const GraphicsResetEventArgs
 	if (wlfDisp->activated && !freerdp_settings_get_bool(settings, FreeRDP_Fullscreen))
 	{
 		wlf_disp_set_window_resizable(wlfDisp);
-		wlf_disp_sendResize(wlfDisp);
+		wlf_disp_sendResize(wlfDisp, FALSE);
 	}
-}
-
-static void wlf_disp_OnTimer(void* context, const TimerEventArgs* e)
-{
-	wlfContext* wlc = NULL;
-	wlfDispContext* wlfDisp = NULL;
-	rdpSettings* settings = NULL;
-
-	WINPR_UNUSED(e);
-	if (!wlf_disp_check_context(context, &wlc, &wlfDisp, &settings))
-		return;
-
-	if (!wlfDisp->activated || freerdp_settings_get_bool(settings, FreeRDP_Fullscreen))
-		return;
-
-	wlf_disp_sendResize(wlfDisp);
 }
 
 wlfDispContext* wlf_disp_new(wlfContext* wlc)
@@ -266,7 +292,6 @@ wlfDispContext* wlf_disp_new(wlfContext* wlc)
 	    WINPR_ASSERTING_INT_CAST(int, freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight));
 	PubSub_SubscribeActivated(pubSub, wlf_disp_OnActivated);
 	PubSub_SubscribeGraphicsReset(pubSub, wlf_disp_OnGraphicsReset);
-	PubSub_SubscribeTimer(pubSub, wlf_disp_OnTimer);
 	return ret;
 }
 
@@ -280,7 +305,6 @@ void wlf_disp_free(wlfDispContext* disp)
 		wPubSub* pubSub = disp->wlc->common.context.pubSub;
 		PubSub_UnsubscribeActivated(pubSub, wlf_disp_OnActivated);
 		PubSub_UnsubscribeGraphicsReset(pubSub, wlf_disp_OnGraphicsReset);
-		PubSub_UnsubscribeTimer(pubSub, wlf_disp_OnTimer);
 	}
 
 	free(disp);
@@ -369,7 +393,7 @@ BOOL wlf_disp_handle_configure(wlfDispContext* disp, int32_t width, int32_t heig
 
 	disp->targetWidth = width;
 	disp->targetHeight = height;
-	return wlf_disp_sendResize(disp);
+	return wlf_disp_sendResize(disp, FALSE);
 }
 
 static UINT wlf_DisplayControlCaps(DispClientContext* disp, UINT32 maxNumMonitors,

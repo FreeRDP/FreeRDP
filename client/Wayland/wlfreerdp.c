@@ -476,11 +476,6 @@ static int wlfreerdp_run(freerdp* instance)
 	wlfContext* context = NULL;
 	HANDLE handles[MAXIMUM_WAIT_OBJECTS] = { 0 };
 	DWORD status = WAIT_ABANDONED;
-	HANDLE timer = NULL;
-	LARGE_INTEGER due = { 0 };
-
-	TimerEventArgs timerEvent;
-	EventArgsInit(&timerEvent, "xfreerdp");
 
 	if (!instance)
 		return -1;
@@ -496,25 +491,9 @@ static int wlfreerdp_run(freerdp* instance)
 		return -1;
 	}
 
-	timer = CreateWaitableTimerA(NULL, FALSE, "mainloop-periodic-timer");
-
-	if (!timer)
-	{
-		WLog_ERR(TAG, "failed to create timer");
-		goto disconnect;
-	}
-
-	due.QuadPart = 0;
-
-	if (!SetWaitableTimer(timer, &due, 20, NULL, NULL, FALSE))
-	{
-		goto disconnect;
-	}
-
 	while (!freerdp_shall_disconnect_context(instance->context))
 	{
 		DWORD count = 0;
-		handles[count++] = timer;
 		handles[count++] = context->displayHandle;
 		count += freerdp_get_event_handles(instance->context, &handles[count],
 		                                   ARRAYSIZE(handles) - count);
@@ -564,17 +543,8 @@ static int wlfreerdp_run(freerdp* instance)
 
 			break;
 		}
-
-		if ((status != WAIT_TIMEOUT) && (status == WAIT_OBJECT_0))
-		{
-			timerEvent.now = GetTickCount64();
-			PubSub_OnTimer(context->common.context.pubSub, context, &timerEvent);
-		}
 	}
 
-disconnect:
-	if (timer)
-		(void)CloseHandle(timer);
 	freerdp_disconnect(instance);
 	return WINPR_ASSERTING_INT_CAST(int, status);
 }
