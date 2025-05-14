@@ -66,8 +66,8 @@ if [ $ARG_SHARED -ne 0 ]; then
 fi
 
 if [ $CLEAN -ne 0 ]; then
-    rm -rf "$BUILD_BASE"
-    rm -rf "$INSTALL_BASE"
+  rm -rf "$BUILD_BASE"
+  rm -rf "$INSTALL_BASE"
 fi
 
 function do_clone {
@@ -96,11 +96,9 @@ function do_download {
   dir=$4
 
   if [ ! -f $file ]; then
-    if command -v curl 2>&1 >/dev/null
-    then
+    if command -v curl 2>&1 >/dev/null; then
       curl -o $file $url/$file
-    elif command -v wget 2>&1 >/dev/null
-    then
+    elif command -v wget 2>&1 >/dev/null; then
       wget -O $file $url/$file
     else
       echo "Could not find wget or curl, exiting"
@@ -109,12 +107,12 @@ function do_download {
   fi
 
   if [ ! -f $file.sha256sum ]; then
-      echo "$hash  $file" > $file.sha256sum
+    echo "$hash  $file" >$file.sha256sum
   fi
 
   sha256sum -c $file.sha256sum
   if [ -d $dir ]; then
-      rm -rf $dir
+    rm -rf $dir
   fi
   mkdir $dir
   tar xf $file --strip-components=1 -C $dir

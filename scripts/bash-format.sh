@@ -25,7 +25,6 @@ if [ $# -ne 0 ]; then
   fi
 fi
 
-
 SCRIPTS=$(find ${SRC_PATH} -name "*.sh" -not -path "${SRC_PATH}/.git/*")
 for script in $SCRIPTS; do
   echo $script
