@@ -12,7 +12,7 @@ fi
 (
   cd external/webview
   mkdir -p "$RPMBUILD_BASE"
-  git archive --format=tar --prefix=webview HEAD --output $RPMBUILD_BASE/webview.tar.bz2
+  git archive --format=tar --prefix=webview/ HEAD --output $RPMBUILD_BASE/webview.tar.bz2
 )
 
 git rev-parse --short HEAD >source_version
