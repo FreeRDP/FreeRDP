@@ -30,6 +30,7 @@ Url:            http://www.freerdp.com
 Group:          Productivity/Networking/Other
 Source0:        %{name}-%{version}.tar.bz2
 Source1:        source_version
+Source2:        webview.tar.bz2
 BuildRequires: clang
 BuildRequires: cmake >= 3.13.0
 BuildRequires: libxkbfile-devel
@@ -149,9 +150,11 @@ based on freerdp and winpr.
 %setup -q
 cd %{_topdir}/BUILD
 %if 0%{?fedora} >= 41
-cp %{_topdir}/SOURCES/source_version freerdp-nightly-%{version}-build/.source_version
+cp %{_topdir}/SOURCES/source_version freerdp-nightly-%{version}-build/freerdp-nightly-3.0/.source_version
+tar xf %{_topdir}/SOURCES/webview.tar.bz2 -C freerdp-nightly-%{version}-build/freerdp-nightly-3.0/external/
 %else
-cp %{_topdir}/SOURCES/source_version freerdp-nightly-%{version}/.source_version
+cp %{_topdir}/SOURCES/source_version freerdp-nightly-%{version}/freerdp-nightly-3.0/.source_version
+tar xf %{_topdir}/SOURCES/webview.tar.bz2 -C freerdp-nightly-%{version}/freerdp-nightly-3.0/external/
 %endif
 
 %build
