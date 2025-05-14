@@ -148,14 +148,10 @@ based on freerdp and winpr.
 
 %prep
 %setup -q
-cd %{_topdir}/BUILD
-%if 0%{?fedora} >= 41
-cp %{_topdir}/SOURCES/source_version freerdp-nightly-%{version}-build/freerdp-nightly-3.0/.source_version
-tar xf %{_topdir}/SOURCES/webview.tar.bz2 -C freerdp-nightly-%{version}-build/freerdp-nightly-3.0/external/
-%else
-cp %{_topdir}/SOURCES/source_version freerdp-nightly-%{version}/freerdp-nightly-3.0/.source_version
-tar xf %{_topdir}/SOURCES/webview.tar.bz2 -C freerdp-nightly-%{version}/freerdp-nightly-3.0/external/
-%endif
+mkdir -p %{_builddir}
+cd %{_builddir}
+cp %{_sourcedir}/source_version freerdp-nightly-%{version}/.source_version
+tar xf %{_sourcedir}/webview.tar.bz2 -C freerdp-nightly-%{version}/external/
 
 %build
 
