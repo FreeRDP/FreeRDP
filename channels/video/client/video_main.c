@@ -42,6 +42,7 @@
 #include <freerdp/channels/log.h>
 #include <freerdp/codec/h264.h>
 #include <freerdp/codec/yuv.h>
+#include <freerdp/timer.h>
 
 #define TAG CHANNELS_TAG("video")
 
@@ -58,6 +59,7 @@ typedef struct
 
 	VideoClientContext* context;
 	BOOL initialized;
+	rdpContext* rdpcontext;
 } VIDEO_PLUGIN;
 
 #define XF_VIDEO_UNLIMITED_RATE 31
@@ -105,6 +107,7 @@ struct s_VideoClientContextPriv
 	UINT32 lastSentRate;
 	UINT64 nextFeedbackTime;
 	PresentationContext* currentPresentation;
+	FreeRDP_TimerID timerID;
 };
 
 static void PresentationContext_unref(PresentationContext** presentation);
@@ -1087,6 +1090,21 @@ static UINT video_data_on_new_channel_connection(IWTSListenerCallback* pListener
 	return CHANNEL_RC_OK;
 }
 
+static uint64_t timer_cb(WINPR_ATTR_UNUSED rdpContext* context, void* userdata,
+                         WINPR_ATTR_UNUSED FreeRDP_TimerID timerID, uint64_t timestamp,
+                         uint64_t interval)
+{
+	VideoClientContext* video = userdata;
+	if (!video)
+		return 0;
+	if (!video->timer)
+		return 0;
+
+	video->timer(video, timestamp);
+
+	return interval;
+}
+
 /**
  * Function description
  *
@@ -1140,7 +1158,12 @@ static UINT video_plugin_initialize(IWTSPlugin* plugin, IWTSVirtualChannelManage
 	if (status == CHANNEL_RC_OK)
 		video->dataListener->pInterface = video->wtsPlugin.pInterface;
 
-	video->initialized = status == CHANNEL_RC_OK;
+	if (status == CHANNEL_RC_OK)
+		video->context->priv->timerID =
+		    freerdp_timer_add(video->rdpcontext, 20000, timer_cb, video->context, true);
+	video->initialized = video->context->priv->timerID != 0;
+	if (!video->initialized)
+		status = ERROR_INTERNAL_ERROR;
 	return status;
 }
 
@@ -1153,6 +1176,7 @@ static UINT video_plugin_terminated(IWTSPlugin* pPlugin)
 {
 	VIDEO_PLUGIN* video = (VIDEO_PLUGIN*)pPlugin;
 
+	freerdp_timer_remove(video->rdpcontext, video->context->priv->timerID);
 	if (video->control_callback)
 	{
 		IWTSVirtualChannelManager* mgr = video->control_callback->channel_mgr;
@@ -1186,7 +1210,7 @@ static UINT video_plugin_terminated(IWTSPlugin* pPlugin)
  */
 FREERDP_ENTRY_POINT(UINT VCAPITYPE video_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints))
 {
-	UINT error = CHANNEL_RC_OK;
+	UINT error = ERROR_INTERNAL_ERROR;
 	VIDEO_PLUGIN* videoPlugin = NULL;
 	VideoClientContext* videoContext = NULL;
 	VideoClientContextPriv* priv = NULL;
@@ -1230,8 +1254,9 @@ FREERDP_ENTRY_POINT(UINT VCAPITYPE video_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* p
 
 		videoPlugin->wtsPlugin.pInterface = (void*)videoContext;
 		videoPlugin->context = videoContext;
-
-		error = pEntryPoints->RegisterPlugin(pEntryPoints, "video", &videoPlugin->wtsPlugin);
+		videoPlugin->rdpcontext = pEntryPoints->GetRdpContext(pEntryPoints);
+		if (videoPlugin->rdpcontext)
+			error = pEntryPoints->RegisterPlugin(pEntryPoints, "video", &videoPlugin->wtsPlugin);
 	}
 	else
 	{

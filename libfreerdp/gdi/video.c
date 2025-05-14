@@ -145,32 +145,17 @@ void gdi_video_control_uninit(rdpGdi* gdi, WINPR_ATTR_UNUSED VideoClientContext*
 	gdi->video = NULL;
 }
 
-static void gdi_video_timer(void* context, const TimerEventArgs* timer)
-{
-	rdpContext* ctx = (rdpContext*)context;
-	rdpGdi* gdi = NULL;
-
-	WINPR_ASSERT(ctx);
-	WINPR_ASSERT(timer);
-
-	gdi = ctx->gdi;
-
-	if (gdi && gdi->video)
-		gdi->video->timer(gdi->video, timer->now);
-}
-
-void gdi_video_data_init(rdpGdi* gdi, WINPR_ATTR_UNUSED VideoClientContext* video)
+void gdi_video_data_init(WINPR_ATTR_UNUSED rdpGdi* gdi, WINPR_ATTR_UNUSED VideoClientContext* video)
 {
 	WINPR_ASSERT(gdi);
 	WINPR_ASSERT(gdi->context);
-	PubSub_SubscribeTimer(gdi->context->pubSub, gdi_video_timer);
 }
 
-void gdi_video_data_uninit(rdpGdi* gdi, WINPR_ATTR_UNUSED VideoClientContext* context)
+void gdi_video_data_uninit(WINPR_ATTR_UNUSED rdpGdi* gdi,
+                           WINPR_ATTR_UNUSED VideoClientContext* context)
 {
 	WINPR_ASSERT(gdi);
 	WINPR_ASSERT(gdi->context);
-	PubSub_UnsubscribeTimer(gdi->context->pubSub, gdi_video_timer);
 }
 
 VideoSurface* VideoClient_CreateCommonContext(size_t size, UINT32 x, UINT32 y, UINT32 w, UINT32 h)
