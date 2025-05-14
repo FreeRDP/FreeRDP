@@ -156,6 +156,7 @@ tar xf %{_sourcedir}/webview.tar.bz2 -C freerdp-nightly-%{version}/external/
 %build
 
 %cmake \
+    -DCMAKE_VERBOSE_MAKEFILE=ON \
     -DCMAKE_SKIP_RPATH=FALSE \
     -DCMAKE_SKIP_INSTALL_RPATH=FALSE \
     -DWITH_FREERDP_DEPRECATED_COMMANDLINE=ON \
