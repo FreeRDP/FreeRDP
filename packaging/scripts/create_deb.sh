@@ -14,7 +14,7 @@ fi
 
 # First create a link to the debian/control folder
 cd "$SCRIPT_PATH/../.."
-ln -sf "packaging/deb/freerdp-nightly" "debian"
+./packaging/scripts/prepare_deb_freerdp-nightly.sh
 
 # Check all dependencies are installed
 $BUILD_DEPS "debian/control"

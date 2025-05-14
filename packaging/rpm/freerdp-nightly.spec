@@ -200,7 +200,6 @@ cp %{_topdir}/SOURCES/source_version freerdp-nightly-%{version}/.source_version
 %if 0%{?fedora} >= 41
     -DWITH_CLIENT_SDL3=OFF \
     -DWITH_WEBVIEW=ON \
-		-DFETCHCONTENT_FULLY_DISCONNECTED=OFF \
 %endif
     -DCMAKE_C_COMPILER=clang \
     -DCMAKE_CXX_COMPILER=clang++ \
