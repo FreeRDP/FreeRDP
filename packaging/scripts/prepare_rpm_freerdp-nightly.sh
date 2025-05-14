@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -xe
 
 RPMBUILD_BASE="~/rpmbuild/SOURCES"
 if [ $# -gt 0 ]; then
