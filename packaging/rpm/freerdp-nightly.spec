@@ -82,28 +82,8 @@ BuildRequires: libopus-devel
 BuildRequires: libjpeg62-devel
 %endif
 
-%if 0%{defined rhel}
-BuildRequires: cjson-devel
-BuildRequires: uuid-devel
-BuildRequires: opus-devel
-BuildRequires: SDL2-devel
-BuildRequires: SDL2_ttf-devel
-BuildRequires: SDL2_image-devel
-BuildRequires: pkgconfig
-BuildRequires: openssl-devel
-BuildRequires: alsa-lib-devel
-BuildRequires: pulseaudio-libs-devel
-BuildRequires: libusbx-devel
-BuildRequires: systemd-devel
-BuildRequires: dbus-glib-devel
-BuildRequires: libjpeg-turbo-devel
-BuildRequires: libasan
-BuildRequires: libjpeg-turbo-devel
-BuildRequires: wayland-devel
-%endif
-
 # fedora 21+
-%if 0%{?fedora} >= 37
+%if 0%{?fedora} >= 37 || 0%{defined rhel}
 BuildRequires: cjson-devel
 BuildRequires: uuid-devel
 BuildRequires: opus-devel
@@ -117,6 +97,7 @@ BuildRequires: systemd-devel
 BuildRequires: dbus-glib-devel
 BuildRequires: libjpeg-turbo-devel
 BuildRequires: libasan
+BuildRequires: compiler-rt
 BuildRequires: (webkit2gtk4.1-devel or webkit2gtk4.0-devel)
 BuildRequires: libjpeg-turbo-devel
 BuildRequires: wayland-devel
@@ -264,6 +245,8 @@ export NO_BRP_CHECK_RPATH true
 %postun -p /sbin/ldconfig
 
 %changelog
+* Thu May 15 2025 FreeRDP Team <team@freerdp.com> - 3.15.0-1
+- update dependencies, fix build paths
 * Thu Oct 10 2024 FreeRDP Team <team@freerdp.com> - 3.10.0-1
 - update resource locations, utilize new settings
 * Wed Apr 10 2024 FreeRDP Team <team@freerdp.com> - 3.0.0-5
