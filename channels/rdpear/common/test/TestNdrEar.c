@@ -1,6 +1,6 @@
 #include <winpr/print.h>
+#include <winpr/ndr.h>
 
-#include <rdpear-common/ndr.h>
 #include <rdpear-common/rdpear_common.h>
 
 #ifndef MAX
@@ -125,20 +125,20 @@ static int TestNdrEarWrite(int argc, char* argv[])
 	if (!s)
 		return -1;
 
-	NdrContext* context = ndr_context_new(FALSE, 1);
+	WinPrNdrContext* context = winpr_ndr_context_new(FALSE, 1);
 	if (!context)
 		goto fail;
 
 	if (!ndr_write_KERB_ASN1_DATA(context, s, NULL, &asn1))
 		goto fail;
-	if (!ndr_treat_deferred_write(context, s))
+	if (!winpr_ndr_treat_deferred_write(context, s))
 		goto fail;
 
 	// winpr_HexDump("", WLOG_DEBUG, Stream_Buffer(s), Stream_GetPosition(s));
 
 	rc = 0;
 fail:
-	ndr_context_destroy(&context);
+	winpr_ndr_context_destroy(&context);
 	Stream_Free(s, TRUE);
 	return rc;
 }
@@ -151,7 +151,7 @@ static int TestNdrEarRead(int argc, char* argv[])
 	int retCode = -2;
 
 	/* ====================================================================== */
-	NdrContext* context = ndr_context_new(FALSE, 1);
+	WinPrNdrContext* context = winpr_ndr_context_new(FALSE, 1);
 	if (!context)
 		return -1;
 
@@ -172,11 +172,11 @@ static int TestNdrEarRead(int argc, char* argv[])
 	s = Stream_StaticInit(&staticS, payload, sizeof(payload));
 
 	KERB_ASN1_DATA asn1 = { 0 };
-	if (!ndr_read_KERB_ASN1_DATA(context, s, NULL, &asn1) || !ndr_treat_deferred_read(context, s) ||
+	if (!ndr_read_KERB_ASN1_DATA(context, s, NULL, &asn1) || !winpr_ndr_treat_deferred_read(context, s) ||
 			asn1.Asn1BufferHints.count != 2 || *asn1.Asn1Buffer != 0x30)
 		goto out;
 	KERB_ASN1_DATA_destroy(context, &asn1);
-	ndr_context_reset(context);
+	winpr_ndr_context_reset(context);
 
 	/* ====================================================================== */
 	BYTE payload2[] = {
@@ -198,10 +198,10 @@ static int TestNdrEarRead(int argc, char* argv[])
 
 	s = Stream_StaticInit(&staticS, payload2, sizeof(payload2));
 	RPC_UNICODE_STRING unicode = { 0 };
-	if (!ndr_read_RPC_UNICODE_STRING(context, s, NULL, &unicode) || !ndr_treat_deferred_read(context, s))
+	if (!ndr_read_RPC_UNICODE_STRING(context, s, NULL, &unicode) || !winpr_ndr_treat_deferred_read(context, s))
 		goto out;
 	RPC_UNICODE_STRING_destroy(context, &unicode);
-	ndr_context_reset(context);
+	winpr_ndr_context_reset(context);
 
 	/* ====================================================================== */
 	BYTE payload3[] = {
@@ -228,10 +228,10 @@ static int TestNdrEarRead(int argc, char* argv[])
 	KERB_RPC_INTERNAL_NAME intName = { 0 };
 	retCode = -4;
 	s = Stream_StaticInit(&staticS, payload3, sizeof(payload3));
-	if (!ndr_read_KERB_RPC_INTERNAL_NAME(context, s, NULL, &intName)  || !ndr_treat_deferred_read(context, s))
+	if (!ndr_read_KERB_RPC_INTERNAL_NAME(context, s, NULL, &intName)  || !winpr_ndr_treat_deferred_read(context, s))
 		goto out;
 	KERB_RPC_INTERNAL_NAME_destroy(context, &intName);
-	ndr_context_reset(context);
+	winpr_ndr_context_reset(context);
 #endif
 
 	/* ====================================================================== */
@@ -350,9 +350,9 @@ static int TestNdrEarRead(int argc, char* argv[])
 
 	CreateApReqAuthenticatorReq createApReqAuthenticatorReq = { 0 };
 	s = Stream_StaticInit(&staticS, payload4, sizeofPayload4);
-	if (!ndr_skip_bytes(context, s, 4) || /* skip union id */
+	if (!winpr_ndr_skip_bytes(context, s, 4) || /* skip union id */
 	    !ndr_read_CreateApReqAuthenticatorReq(context, s, NULL, &createApReqAuthenticatorReq) ||
-	    !ndr_treat_deferred_read(context, s) || createApReqAuthenticatorReq.KeyUsage != 7 ||
+	    !winpr_ndr_treat_deferred_read(context, s) || createApReqAuthenticatorReq.KeyUsage != 7 ||
 	    !createApReqAuthenticatorReq.EncryptionKey || createApReqAuthenticatorReq.SubKey ||
 	    !createApReqAuthenticatorReq.ClientName ||
 	    createApReqAuthenticatorReq.ClientName->nameHints.count != 1 ||
@@ -362,13 +362,13 @@ static int TestNdrEarRead(int argc, char* argv[])
 	    createApReqAuthenticatorReq.SkewTime->QuadPart != 0)
 		goto out;
 	ndr_destroy_CreateApReqAuthenticatorReq(context, NULL, &createApReqAuthenticatorReq);
-	ndr_context_reset(context);
+	winpr_ndr_context_reset(context);
 
 	/* ============ successful end of test =============== */
 	retCode = 0;
 out:
 	free(payload4);
-	ndr_context_destroy(&context);
+	winpr_ndr_context_destroy(&context);
 	return retCode;
 }
 
