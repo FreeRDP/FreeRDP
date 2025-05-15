@@ -29,6 +29,12 @@ if(WITH_WEBVIEW)
   else()
     unset(FETCHCONTENT_SOURCE_DIR_WEBVIEW)
   endif()
+
+  set(WEBVIEW_BUILD_DOCS OFF CACHE INTERNAL "fetchcontent default")
+  set(WEBVIEW_BUILD_SHARED_LIBRARY OFF CACHE INTERNAL "fetchcontent default")
+  set(WEBVIEW_BUILD_STATIC_LIBRARY ON CACHE INTERNAL "fetchcontent default")
+  set(WEBVIEW_BUILD_TESTS OFF CACHE INTERNAL "fetchcontent default")
+  set(WEBVIEW_BUILD_EXAMPLES OFF CACHE INTERNAL "fetchcontent default")
   FetchContent_Declare(webview GIT_REPOSITORY https://github.com/akallabeth/webview GIT_TAG navigation-listener SYSTEM)
   FetchContent_MakeAvailable(webview)
 
