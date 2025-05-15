@@ -202,6 +202,7 @@ set(WINPR_LEVEL2
     dsparse
     smartcard
     nt
+    ndr
     clipboard
 )
 
