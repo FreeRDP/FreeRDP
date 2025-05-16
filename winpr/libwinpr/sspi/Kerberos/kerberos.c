@@ -245,18 +245,42 @@ static BOOL isValidIP(const char* ipAddress)
 	return isValidIPv4(ipAddress) || isValidIPv6(ipAddress);
 }
 
-static int build_krbtgt(krb5_context ctx, krb5_data* realm, krb5_principal* ptarget)
+#if defined(WITH_KRB5_MIT)
+WINPR_ATTR_MALLOC(free, 1)
+static char* get_realm_name(krb5_data realm, size_t* plen)
+{
+	WINPR_ASSERT(plen);
+	*plen = 0;
+	if ((realm.length <= 0) || (!realm.data))
+		return NULL;
+
+	char* name = NULL;
+	(void)winpr_asprintf(&name, plen, "krbtgt/%*s@%*s", realm.length, realm.data, realm.length,
+	                     realm.data);
+	return name;
+}
+#elif defined(WITH_KRB5_HEIMDAL)
+WINPR_ATTR_MALLOC(free, 1)
+static char* get_realm_name(Realm realm, size_t* plen)
+{
+	WINPR_ASSERT(plen);
+	*plen = 0;
+	if (!realm)
+		return NULL;
+
+	char* name = NULL;
+	(void)winpr_asprintf(&name, plen, "krbtgt/%s@%s", realm, realm);
+	return name;
+}
+#endif
+
+static int build_krbtgt(krb5_context ctx, krb5_principal principal, krb5_principal* ptarget)
 {
 	/* "krbtgt/" + realm + "@" + realm */
 	size_t len = 0;
-	char* name = NULL;
 	krb5_error_code rv = KRB5_CC_NOMEM;
 
-	if ((realm->length <= 0) || (!realm->data))
-		goto fail;
-
-	WINPR_ASSERT(strnlen(realm->data, realm->length + 1) <= realm->length);
-	(void)winpr_asprintf(&name, &len, "krbtgt/%s@%s", realm->data, realm->data);
+	char* name = get_realm_name(principal->realm, &len);
 	if (!name || (len == 0))
 		goto fail;
 
@@ -341,6 +365,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleA(
 
 		if (rv)
 			goto cleanup;
+		WINPR_ASSERT(principal);
 	}
 
 	if (krb_settings && krb_settings->cache)
@@ -419,7 +444,8 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleA(
 		matchCreds.times.endtime += 60;
 		matchCreds.client = principal;
 
-		if (krb_log_exec(build_krbtgt, ctx, &principal->realm, &matchCreds.server))
+		WINPR_ASSERT(principal);
+		if (krb_log_exec(build_krbtgt, ctx, principal, &matchCreds.server))
 			goto cleanup;
 
 		int rv = krb5_cc_retrieve_cred(ctx, ccache, matchFlags, &matchCreds, &creds);
@@ -1370,6 +1396,8 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcceptSecurityContext(
 		if (krb_log_exec(krb5_parse_name_flags, credentials->ctx, sname ? sname : "",
 		                 KRB5_PRINCIPAL_PARSE_NO_REALM, &principal))
 			goto cleanup;
+
+		WINPR_ASSERT(principal);
 
 		if (realm)
 		{
