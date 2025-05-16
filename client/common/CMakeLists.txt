@@ -2,6 +2,7 @@
 # FreeRDP Client Common
 #
 # Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+# Copyright 2025 Siemens
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -53,6 +54,16 @@ if(WITH_FUSE)
 endif()
 
 include_directories(SYSTEM ${OPENSSL_INCLUDE_DIR})
+
+option(WITH_SSO_MIB "Build with sso-mib support" OFF)
+if(UNIX AND WITH_SSO_MIB)
+  set(SSO_MIB_EXTERNAL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../external/sso-mib")
+  find_package(SSO_MIB REQUIRED)
+
+  include_directories(${SSO_MIB_INCLUDE_DIRS})
+  add_compile_definitions(WITH_SSO_MIB)
+  list(APPEND LIBS ${SSO_MIB_LIBRARIES})
+endif()
 
 addtargetwithresourcefile(${MODULE_NAME} FALSE "${FREERDP_VERSION}" SRCS)
 

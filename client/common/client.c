@@ -3,6 +3,7 @@
  * FreeRDP Client Common
  *
  * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2025 Siemens
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,6 +67,23 @@
 #ifdef WITH_AAD
 #include <freerdp/utils/http.h>
 #include <freerdp/utils/aad.h>
+#endif
+
+#ifdef WITH_SSO_MIB
+#include <sso-mib/sso-mib.h>
+#include <freerdp/crypto/crypto.h>
+#include <winpr/json.h>
+
+static MIBClientApp* sso_mib_client_app = NULL;
+
+enum sso_mib_state
+{
+	SSO_MIB_STATE_INIT = 0,
+	SSO_MIB_STATE_FAILED = 1,
+	SSO_MIB_STATE_SUCCESS = 2,
+};
+
+static enum sso_mib_state sso_mib_state = SSO_MIB_STATE_INIT;
 #endif
 
 #include <freerdp/log.h>
@@ -163,6 +181,11 @@ void freerdp_client_context_free(rdpContext* context)
 
 	if (!context)
 		return;
+
+#ifdef WITH_SSO_MIB
+	if (sso_mib_client_app)
+		g_object_unref(sso_mib_client_app);
+#endif // WITH_SSO_MIB
 
 	instance = context->instance;
 
@@ -1078,6 +1101,135 @@ cleanup:
 	return rc && (*token != NULL);
 }
 
+#ifdef WITH_SSO_MIB
+static MIBClientApp* get_or_create_mib_client_app(freerdp* instance)
+{
+	if (!sso_mib_client_app)
+	{
+		const char* client_id =
+		    freerdp_settings_get_string(instance->context->settings, FreeRDP_GatewayAvdClientID);
+		sso_mib_client_app = mib_public_client_app_new(client_id, MIB_AUTHORITY_COMMON, NULL, NULL);
+	}
+	return sso_mib_client_app;
+}
+
+static BOOL client_cli_get_avd_access_token_from_sso_mib(freerdp* instance, char** token)
+{
+	WINPR_ASSERT(instance);
+	WINPR_ASSERT(instance->context);
+	WINPR_ASSERT(token);
+
+	MIBAccount* account = NULL;
+	GSList* scopes = NULL;
+
+	BOOL rc = FALSE;
+	*token = NULL;
+
+	MIBClientApp* app = get_or_create_mib_client_app(instance);
+	if (!app)
+	{
+		goto cleanup;
+	}
+
+	account = mib_client_app_get_account_by_upn(app, NULL);
+	if (!account)
+	{
+		goto cleanup;
+	}
+
+	scopes = g_slist_append(scopes, g_strdup("https://www.wvd.microsoft.com/.default"));
+
+	MIBPrt* prt = mib_client_app_acquire_token_silent(app, account, scopes, NULL, NULL, NULL);
+	if (prt)
+	{
+		const char* access_token = mib_prt_get_access_token(prt);
+		if (access_token)
+		{
+			*token = strdup(access_token);
+		}
+		g_object_unref(prt);
+	}
+
+	rc = TRUE && *token != NULL;
+cleanup:
+	if (account)
+		g_object_unref(account);
+	g_slist_free_full(scopes, g_free);
+	return rc;
+}
+
+static BOOL client_cli_get_rdsaad_access_token_from_sso_mib(freerdp* instance, const char* scope,
+                                                            const char* req_cnf, char** token)
+{
+	WINPR_ASSERT(instance);
+	WINPR_ASSERT(instance->context);
+	WINPR_ASSERT(scope);
+	WINPR_ASSERT(token);
+	WINPR_ASSERT(req_cnf);
+
+	GSList* scopes = NULL;
+	WINPR_JSON* json = NULL;
+	MIBPopParams* params = NULL;
+
+	BOOL rc = FALSE;
+	*token = NULL;
+	BYTE* req_cnf_dec = NULL;
+	size_t req_cnf_dec_len;
+
+	MIBClientApp* app = get_or_create_mib_client_app(instance);
+	if (!app)
+	{
+		goto cleanup;
+	}
+
+	scopes = g_slist_append(scopes, g_strdup(scope));
+
+	// Parse the "kid" element from req_cnf
+	crypto_base64_decode(req_cnf, strlen(req_cnf) + 1, &req_cnf_dec, &req_cnf_dec_len);
+	if (!req_cnf_dec)
+	{
+		goto cleanup;
+	}
+
+	json = WINPR_JSON_Parse((const char*)req_cnf_dec);
+	if (!json)
+	{
+		goto cleanup;
+	}
+	WINPR_JSON* prop = WINPR_JSON_GetObjectItem(json, "kid");
+	if (!prop)
+	{
+		goto cleanup;
+	}
+	const char* kid = WINPR_JSON_GetStringValue(prop);
+	if (!kid)
+	{
+		goto cleanup;
+	}
+
+	params = mib_pop_params_new(MIB_AUTH_SCHEME_POP, MIB_REQUEST_METHOD_GET, "");
+	mib_pop_params_set_kid(params, kid);
+	MIBPrt* prt = mib_client_app_acquire_token_interactive(app, scopes, MIB_PROMPT_NONE, NULL, NULL,
+	                                                       NULL, params);
+	if (prt)
+	{
+		*token = strdup(mib_prt_get_access_token(prt));
+		rc = TRUE;
+		g_object_unref(prt);
+	}
+
+cleanup:
+	if (params)
+		g_object_unref(params);
+	if (json)
+		WINPR_JSON_Delete(json);
+	if (req_cnf_dec)
+		free(req_cnf_dec);
+	g_slist_free_full(scopes, g_free);
+	return rc;
+}
+#endif //  WITH_SSO_MIB
+
 static BOOL client_cli_get_avd_access_token(freerdp* instance, char** token)
 {
 	WINPR_ASSERT(instance);
@@ -1095,6 +1247,25 @@ static BOOL client_cli_get_avd_access_token(freerdp* instance, char** token)
 	BOOL rc = FALSE;
 
 	*token = NULL;
+
+#ifdef WITH_SSO_MIB
+	if (sso_mib_state == SSO_MIB_STATE_INIT || sso_mib_state == SSO_MIB_STATE_SUCCESS)
+	{
+		rc = client_cli_get_avd_access_token_from_sso_mib(instance, token);
+		if (rc)
+		{
+			sso_mib_state = SSO_MIB_STATE_SUCCESS;
+			return rc;
+		}
+		else
+		{
+			WLog_WARN(TAG, "Getting AVD token from identity broker failed, falling back to "
+			               "browser-based authentication.");
+			sso_mib_state = SSO_MIB_STATE_FAILED;
+			// Fall through to regular avd access token retrieval
+		}
+	}
+#endif
 
 	const char* client_id =
 	    freerdp_settings_get_string(instance->context->settings, FreeRDP_GatewayAvdClientID);
@@ -1176,7 +1347,41 @@ BOOL client_cli_get_access_token(freerdp* instance, AccessTokenType tokenType, c
 			va_start(ap, count);
 			const char* scope = va_arg(ap, const char*);
 			const char* req_cnf = va_arg(ap, const char*);
-			const BOOL rc = client_cli_get_rdsaad_access_token(instance, scope, req_cnf, token);
+			BOOL rc = FALSE;
+
+#ifdef WITH_SSO_MIB
+			if (sso_mib_state == SSO_MIB_STATE_INIT || sso_mib_state == SSO_MIB_STATE_SUCCESS)
+			{
+				// Setup scope without URL encoding for sso-mib
+				char* scope_copy = winpr_str_url_decode(scope, strlen(scope));
+				if (!scope_copy)
+				{
+					WLog_ERR(TAG, "Failed to decode scope");
+					va_end(ap);
+					return FALSE;
+				}
+
+				rc = client_cli_get_rdsaad_access_token_from_sso_mib(instance, scope_copy, req_cnf,
+				                                                     token);
+				free(scope_copy);
+				if (rc)
+				{
+					sso_mib_state = SSO_MIB_STATE_SUCCESS;
+					va_end(ap);
+					return rc;
+				}
+				else
+				{
+					WLog_WARN(TAG, "Getting RDS token from identity broker failed, falling back to "
+					               "browser-based authentication.");
+					sso_mib_state = SSO_MIB_STATE_FAILED;
+					// Fall through to regular rdsaad access token retrieval
+				}
+			}
+#endif // WITH_SSO_MIB
+
+			rc = client_cli_get_rdsaad_access_token(instance, scope, req_cnf, token);
+
 			va_end(ap);
 			return rc;
 		}
