@@ -61,7 +61,7 @@ FreeRDP_TimerID freerdp_timer_add(rdpContext* context, uint64_t intervalNS,
 		return false;
 
 	const uint64_t cur = winpr_GetTickCount64NS();
-	const timer_entry_t entry = { .id = timer->maxIdx++,
+	const timer_entry_t entry = { .id = ++timer->maxIdx,
 		                          .intervallNS = intervalNS,
 		                          .nextRunTimeNS = cur + intervalNS,
 		                          .cb = callback,
