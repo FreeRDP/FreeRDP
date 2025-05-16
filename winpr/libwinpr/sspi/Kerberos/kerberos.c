@@ -252,6 +252,10 @@ static int build_krbtgt(krb5_context ctx, krb5_data* realm, krb5_principal* ptar
 	char* name = NULL;
 	krb5_error_code rv = KRB5_CC_NOMEM;
 
+	if ((realm->length <= 0) || (!realm->data))
+		goto fail;
+
+	WINPR_ASSERT(strnlen(realm->data, realm->length + 1) <= realm->length);
 	(void)winpr_asprintf(&name, &len, "krbtgt/%s@%s", realm->data, realm->data);
 	if (!name || (len == 0))
 		goto fail;
