@@ -390,16 +390,16 @@ DWORD freerdp_get_event_handles(rdpContext* context, HANDLE* events, DWORD count
 	WINPR_ASSERT(context->rdp);
 	WINPR_ASSERT(events || (count == 0));
 
-	nCount += transport_get_event_handles(context->rdp->transport, events, count);
-
-	if (nCount == 0)
+	const size_t rrc = rdp_get_event_handles(context->rdp, &events[nCount], count - nCount);
+	if (rrc == 0)
 		return 0;
+
+	nCount += WINPR_ASSERTING_INT_CAST(uint32_t, rrc);
 
 	if (events && (nCount < count + 2))
 	{
 		events[nCount++] = freerdp_channels_get_event_handle(context->instance);
 		events[nCount++] = getChannelErrorEventHandle(context);
-		events[nCount++] = utils_get_abort_event(context->rdp);
 	}
 	else
 		return 0;

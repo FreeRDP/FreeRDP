@@ -2279,6 +2279,8 @@ int rdp_check_fds(rdpRdp* rdp)
 
 	if (status < 0)
 		WLog_Print(rdp->log, WLOG_DEBUG, "transport_check_fds() - %i", status);
+	else
+		status = freerdp_timer_poll(rdp->timer);
 
 	return status;
 }
@@ -2301,6 +2303,46 @@ BOOL freerdp_get_stats(rdpRdp* rdp, UINT64* inBytes, UINT64* outBytes, UINT64* i
 	return TRUE;
 }
 
+static bool rdp_new_common(rdpRdp* rdp)
+{
+	WINPR_ASSERT(rdp);
+
+	bool rc = false;
+	rdp->transport = transport_new(rdp->context);
+	if (!rdp->transport)
+		goto fail;
+
+	if (rdp->io)
+	{
+		if (!transport_set_io_callbacks(rdp->transport, rdp->io))
+			goto fail;
+	}
+
+	rdp->aad = aad_new(rdp->context, rdp->transport);
+	if (!rdp->aad)
+		goto fail;
+
+	rdp->nego = nego_new(rdp->transport);
+	if (!rdp->nego)
+		goto fail;
+
+	rdp->mcs = mcs_new(rdp->transport);
+	if (!rdp->mcs)
+		goto fail;
+
+	rdp->license = license_new(rdp);
+	if (!rdp->license)
+		goto fail;
+
+	rdp->fastpath = fastpath_new(rdp);
+	if (!rdp->fastpath)
+		goto fail;
+
+	rc = true;
+fail:
+	return rc;
+}
+
 /**
  * Instantiate new RDP module.
  * @return new RDP module
@@ -2308,9 +2350,8 @@ BOOL freerdp_get_stats(rdpRdp* rdp, UINT64* inBytes, UINT64* outBytes, UINT64* i
 
 rdpRdp* rdp_new(rdpContext* context)
 {
-	rdpRdp* rdp = NULL;
 	DWORD flags = 0;
-	rdp = (rdpRdp*)calloc(1, sizeof(rdpRdp));
+	rdpRdp* rdp = (rdpRdp*)calloc(1, sizeof(rdpRdp));
 
 	if (!rdp)
 		return NULL;
@@ -2356,9 +2397,7 @@ rdpRdp* rdp_new(rdpContext* context)
 #endif
 	}
 
-	rdp->transport = transport_new(context);
-
-	if (!rdp->transport)
+	if (!rdp_new_common(rdp))
 		goto fail;
 
 	{
@@ -2371,15 +2410,6 @@ rdpRdp* rdp_new(rdpContext* context)
 		*rdp->io = *io;
 	}
 
-	rdp->aad = aad_new(context, rdp->transport);
-	if (!rdp->aad)
-		goto fail;
-
-	rdp->license = license_new(rdp);
-
-	if (!rdp->license)
-		goto fail;
-
 	rdp->input = input_new(rdp);
 
 	if (!rdp->input)
@@ -2388,21 +2418,6 @@ rdpRdp* rdp_new(rdpContext* context)
 	rdp->update = update_new(rdp);
 
 	if (!rdp->update)
-		goto fail;
-
-	rdp->fastpath = fastpath_new(rdp);
-
-	if (!rdp->fastpath)
-		goto fail;
-
-	rdp->nego = nego_new(rdp->transport);
-
-	if (!rdp->nego)
-		goto fail;
-
-	rdp->mcs = mcs_new(rdp->transport);
-
-	if (!rdp->mcs)
 		goto fail;
 
 	rdp->redirection = redirection_new();
@@ -2438,6 +2453,11 @@ rdpRdp* rdp_new(rdpContext* context)
 	rdp->abortEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 	if (!rdp->abortEvent)
 		goto fail;
+
+	rdp->timer = freerdp_timer_new(rdp);
+	if (!rdp->timer)
+		goto fail;
+
 	return rdp;
 
 fail:
@@ -2462,12 +2482,14 @@ static void rdp_reset_free(rdpRdp* rdp)
 	rdp->fips_decrypt = NULL;
 	(void)security_unlock(rdp);
 
+	aad_free(rdp->aad);
 	mcs_free(rdp->mcs);
 	nego_free(rdp->nego);
 	license_free(rdp->license);
 	transport_free(rdp->transport);
 	fastpath_free(rdp->fastpath);
 
+	rdp->aad = NULL;
 	rdp->mcs = NULL;
 	rdp->nego = NULL;
 	rdp->license = NULL;
@@ -2478,15 +2500,10 @@ static void rdp_reset_free(rdpRdp* rdp)
 BOOL rdp_reset(rdpRdp* rdp)
 {
 	BOOL rc = TRUE;
-	rdpContext* context = NULL;
-	rdpSettings* settings = NULL;
 
 	WINPR_ASSERT(rdp);
 
-	context = rdp->context;
-	WINPR_ASSERT(context);
-
-	settings = rdp->settings;
+	rdpSettings* settings = rdp->settings;
 	WINPR_ASSERT(settings);
 
 	bulk_reset(rdp->bulk);
@@ -2505,39 +2522,11 @@ BOOL rdp_reset(rdpRdp* rdp)
 	if (!rc)
 		goto fail;
 
-	rc = FALSE;
-	rdp->transport = transport_new(context);
-	if (!rdp->transport)
-		goto fail;
-
-	if (rdp->io)
-	{
-		if (!transport_set_io_callbacks(rdp->transport, rdp->io))
-			goto fail;
-	}
-
-	aad_free(rdp->aad);
-	rdp->aad = aad_new(context, rdp->transport);
-	if (!rdp->aad)
-		goto fail;
-
-	rdp->nego = nego_new(rdp->transport);
-	if (!rdp->nego)
-		goto fail;
-
-	rdp->mcs = mcs_new(rdp->transport);
-	if (!rdp->mcs)
+	rc = rdp_new_common(rdp);
+	if (!rc)
 		goto fail;
 
 	if (!transport_set_layer(rdp->transport, TRANSPORT_LAYER_TCP))
-		goto fail;
-
-	rdp->license = license_new(rdp);
-	if (!rdp->license)
-		goto fail;
-
-	rdp->fastpath = fastpath_new(rdp);
-	if (!rdp->fastpath)
 		goto fail;
 
 	rdp->errorInfo = 0;
@@ -2556,6 +2545,7 @@ void rdp_free(rdpRdp* rdp)
 {
 	if (rdp)
 	{
+		freerdp_timer_free(rdp->timer);
 		rdp_reset_free(rdp);
 
 		freerdp_settings_free(rdp->settings);
@@ -3146,4 +3136,19 @@ void rdp_log_build_warnings(rdpRdp* rdp)
 	log_build_warn(rdp, "runtime-check", "might slow down the application",
 	               option_is_runtime_checks);
 	log_build_warn_ssl(rdp);
+}
+
+size_t rdp_get_event_handles(rdpRdp* rdp, HANDLE* handles, uint32_t count)
+{
+	size_t nCount = transport_get_event_handles(rdp->transport, handles, count);
+
+	if (nCount == 0)
+		return 0;
+
+	if (count < nCount + 2UL)
+		return 0;
+
+	handles[nCount++] = utils_get_abort_event(rdp);
+	handles[nCount++] = freerdp_timer_get_event(rdp->timer);
+	return nCount;
 }

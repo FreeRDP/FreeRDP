@@ -45,6 +45,7 @@
 #include "redirection.h"
 #include "capabilities.h"
 #include "channels.h"
+#include "timer.h"
 
 #include <freerdp/freerdp.h>
 #include <freerdp/settings.h>
@@ -207,6 +208,7 @@ struct rdp_rdp
 	wLog* log;
 	char log_context[64];
 	WINPR_JSON* wellknown;
+	FreeRDPTimer* timer;
 };
 
 FREERDP_LOCAL BOOL rdp_read_security_header(rdpRdp* rdp, wStream* s, UINT16* flags, UINT16* length);
@@ -303,5 +305,7 @@ BOOL rdp_set_backup_settings(rdpRdp* rdp);
 BOOL rdp_reset_runtime_settings(rdpRdp* rdp);
 
 void rdp_log_build_warnings(rdpRdp* rdp);
+
+FREERDP_LOCAL size_t rdp_get_event_handles(rdpRdp* rdp, HANDLE* handles, uint32_t count);
 
 #endif /* FREERDP_LIB_CORE_RDP_H */

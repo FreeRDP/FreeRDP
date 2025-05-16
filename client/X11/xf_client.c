@@ -1553,11 +1553,7 @@ static DWORD WINAPI xf_client_thread(LPVOID param)
 	DWORD exit_code = 0;
 	DWORD waitStatus = 0;
 	HANDLE inputEvent = NULL;
-	HANDLE timer = NULL;
-	LARGE_INTEGER due = { 0 };
-	TimerEventArgs timerEvent = { 0 };
 
-	EventArgsInit(&timerEvent, "xfreerdp");
 	freerdp* instance = (freerdp*)param;
 	WINPR_ASSERT(instance);
 
@@ -1601,27 +1597,12 @@ static DWORD WINAPI xf_client_thread(LPVOID param)
 		goto disconnect;
 	}
 
-	timer = CreateWaitableTimerA(NULL, FALSE, "mainloop-periodic-timer");
-
-	if (!timer)
-	{
-		WLog_ERR(TAG, "failed to create timer");
-		goto disconnect;
-	}
-
-	due.QuadPart = 0;
-
-	if (!SetWaitableTimer(timer, &due, 20, NULL, NULL, FALSE))
-	{
-		goto disconnect;
-	}
 	inputEvent = xfc->x11event;
 
 	while (!freerdp_shall_disconnect_context(instance->context))
 	{
 		HANDLE handles[MAXIMUM_WAIT_OBJECTS] = { 0 };
 		DWORD nCount = 0;
-		handles[nCount++] = timer;
 		handles[nCount++] = inputEvent;
 
 		/*
@@ -1682,12 +1663,6 @@ static DWORD WINAPI xf_client_thread(LPVOID param)
 
 		if (!handle_window_events(instance))
 			break;
-
-		if ((waitStatus != WAIT_TIMEOUT) && (waitStatus == WAIT_OBJECT_0))
-		{
-			timerEvent.now = GetTickCount64();
-			PubSub_OnTimer(context->pubSub, context, &timerEvent);
-		}
 	}
 
 	if (!exit_code)
@@ -1705,9 +1680,6 @@ static DWORD WINAPI xf_client_thread(LPVOID param)
 	}
 
 disconnect:
-
-	if (timer)
-		(void)CloseHandle(timer);
 
 	freerdp_disconnect(instance);
 end:
