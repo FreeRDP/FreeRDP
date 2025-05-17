@@ -1,12 +1,12 @@
-#include <rdpear-common/ndr.h>
+#include <winpr/ndr.h>
 
-int TestNdr(int argc, char* argv[])
+int TestNdrBasic(int argc, char* argv[])
 {
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
 
 	int retCode = -2;
-	NdrContext* context = ndr_context_new(FALSE, 1);
+	WinPrNdrContext* context = winpr_ndr_context_new(FALSE, 1);
 	if (!context)
 		return -1;
 
@@ -20,21 +20,21 @@ int TestNdr(int argc, char* argv[])
 	wStream* s = Stream_StaticInit(&staticS, payload, sizeof(payload));
 
 	BYTE* target = NULL;
-	NdrArrayHints hints = { 2 };
-	NdrDeferredEntry e = { 0x020028, "arrayContent", &hints, (void*)&target,
-		                   ndr_uint8Array_descr() };
+	WinPrNdrArrayHints hints = { 2 };
+	WinPrNdrDeferredEntry e = { 0x020028, "arrayContent", &hints, (void*)&target,
+		                        winpr_ndr_uint8Array_descr() };
 
-	if (!ndr_push_deferreds(context, &e, 1))
+	if (!winpr_ndr_push_deferreds(context, &e, 1))
 		goto out;
 
-	if (!ndr_treat_deferred_read(context, s))
+	if (!winpr_ndr_treat_deferred_read(context, s))
 		goto out;
 
-	NdrMessageType descr = ndr_uint8Array_descr();
+	WinPrNdrMessageType descr = winpr_ndr_uint8Array_descr();
 	descr->destroyFn(context, &hints, target);
 	free(target);
 	retCode = 0;
 out:
-	ndr_context_destroy(&context);
+	winpr_ndr_context_destroy(&context);
 	return retCode;
 }

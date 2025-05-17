@@ -28,8 +28,8 @@
 #include <winpr/asn1.h>
 #include <winpr/sspi.h>
 #include <winpr/collections.h>
+#include <winpr/ndr.h>
 
-#include <rdpear-common/ndr.h>
 #include <rdpear-common/rdpear_common.h>
 #include <rdpear-common/rdpear_asn1.h>
 
@@ -248,15 +248,15 @@ out:
 	return ret;
 }
 
-static BOOL rdpear_prepare_response(NdrContext* rcontext, UINT16 callId, UINT32 status,
-                                    NdrContext** pwcontext, wStream* retStream)
+static BOOL rdpear_prepare_response(WinPrNdrContext* rcontext, UINT16 callId, UINT32 status,
+                                    WinPrNdrContext** pwcontext, wStream* retStream)
 {
 	WINPR_ASSERT(rcontext);
 	WINPR_ASSERT(pwcontext);
 
 	BOOL ret = FALSE;
 	*pwcontext = NULL;
-	NdrContext* wcontext = ndr_context_copy(rcontext);
+	WinPrNdrContext* wcontext = winpr_ndr_context_copy(rcontext);
 	if (!wcontext)
 		return FALSE;
 
@@ -265,28 +265,30 @@ static BOOL rdpear_prepare_response(NdrContext* rcontext, UINT16 callId, UINT32 
 
 	Stream_Write(retStream, payloadHeader, sizeof(payloadHeader));
 
-	if (!ndr_write_header(wcontext, retStream) || !ndr_start_constructed(wcontext, retStream) ||
-	    !ndr_write_pickle(wcontext, retStream) ||         /* pickle header */
-	    !ndr_write_uint16(wcontext, retStream, callId) || /* callId */
-	    !ndr_write_uint16(wcontext, retStream, 0x0000) || /* align padding */
-	    !ndr_write_uint32(wcontext, retStream, status) || /* status */
-	    !ndr_write_uint16(wcontext, retStream, callId) || /* callId */
-	    !ndr_write_uint16(wcontext, retStream, 0x0000))   /* align padding */
+	if (!winpr_ndr_write_header(wcontext, retStream) ||
+	    !winpr_ndr_start_constructed(wcontext, retStream) ||
+	    !winpr_ndr_write_pickle(wcontext, retStream) ||         /* pickle header */
+	    !winpr_ndr_write_uint16(wcontext, retStream, callId) || /* callId */
+	    !winpr_ndr_write_uint16(wcontext, retStream, 0x0000) || /* align padding */
+	    !winpr_ndr_write_uint32(wcontext, retStream, status) || /* status */
+	    !winpr_ndr_write_uint16(wcontext, retStream, callId) || /* callId */
+	    !winpr_ndr_write_uint16(wcontext, retStream, 0x0000))   /* align padding */
 		goto out;
 
 	*pwcontext = wcontext;
 	ret = TRUE;
 out:
 	if (!ret)
-		ndr_context_destroy(&wcontext);
+		winpr_ndr_context_destroy(&wcontext);
 	return ret;
 }
 
-static BOOL rdpear_kerb_version(NdrContext* rcontext, wStream* s, UINT32* pstatus, UINT32* pversion)
+static BOOL rdpear_kerb_version(WinPrNdrContext* rcontext, wStream* s, UINT32* pstatus,
+                                UINT32* pversion)
 {
 	*pstatus = ERROR_INVALID_DATA;
 
-	if (!ndr_read_uint32(rcontext, s, pversion))
+	if (!winpr_ndr_read_uint32(rcontext, s, pversion))
 		return TRUE;
 
 	WLog_DBG(TAG, "-> KerbNegotiateVersion(v=0x%x)", *pversion);
@@ -295,8 +297,8 @@ static BOOL rdpear_kerb_version(NdrContext* rcontext, wStream* s, UINT32* pstatu
 	return TRUE;
 }
 
-static BOOL rdpear_kerb_ComputeTgsChecksum(RDPEAR_PLUGIN* rdpear, NdrContext* rcontext, wStream* s,
-                                           UINT32* pstatus, KERB_ASN1_DATA* resp)
+static BOOL rdpear_kerb_ComputeTgsChecksum(RDPEAR_PLUGIN* rdpear, WinPrNdrContext* rcontext,
+                                           wStream* s, UINT32* pstatus, KERB_ASN1_DATA* resp)
 {
 	ComputeTgsChecksumReq req = { 0 };
 	krb5_checksum checksum = { 0 };
@@ -306,7 +308,7 @@ static BOOL rdpear_kerb_ComputeTgsChecksum(RDPEAR_PLUGIN* rdpear, NdrContext* rc
 	WLog_DBG(TAG, "-> ComputeTgsChecksum");
 
 	if (!ndr_read_ComputeTgsChecksumReq(rcontext, s, NULL, &req) ||
-	    !ndr_treat_deferred_read(rcontext, s))
+	    !winpr_ndr_treat_deferred_read(rcontext, s))
 		goto out;
 	// ComputeTgsChecksumReq_dump(WLog_Get(""), WLOG_DEBUG, &req);
 
@@ -335,7 +337,7 @@ out:
 	return TRUE;
 }
 
-static BOOL rdpear_kerb_BuildEncryptedAuthData(RDPEAR_PLUGIN* rdpear, NdrContext* rcontext,
+static BOOL rdpear_kerb_BuildEncryptedAuthData(RDPEAR_PLUGIN* rdpear, WinPrNdrContext* rcontext,
                                                wStream* s, UINT32* pstatus, KERB_ASN1_DATA* asn1)
 {
 	BuildEncryptedAuthDataReq req = { 0 };
@@ -347,7 +349,7 @@ static BOOL rdpear_kerb_BuildEncryptedAuthData(RDPEAR_PLUGIN* rdpear, NdrContext
 	WLog_DBG(TAG, "-> BuildEncryptedAuthData");
 
 	if (!ndr_read_BuildEncryptedAuthDataReq(rcontext, s, NULL, &req) ||
-	    !ndr_treat_deferred_read(rcontext, s))
+	    !winpr_ndr_treat_deferred_read(rcontext, s))
 		goto out;
 
 	rv = kerb_do_encrypt(rdpear->krbContext, req.Key, (krb5_keyusage)req.KeyUsage,
@@ -457,7 +459,7 @@ static void krb5_free_principal_contents(krb5_context ctx, krb5_principal princi
 	krb5_free_data(ctx, principal->data);
 }
 
-static BOOL rdpear_kerb_CreateApReqAuthenticator(RDPEAR_PLUGIN* rdpear, NdrContext* rcontext,
+static BOOL rdpear_kerb_CreateApReqAuthenticator(RDPEAR_PLUGIN* rdpear, WinPrNdrContext* rcontext,
                                                  wStream* s, UINT32* pstatus,
                                                  CreateApReqAuthenticatorResp* resp)
 {
@@ -473,7 +475,7 @@ static BOOL rdpear_kerb_CreateApReqAuthenticator(RDPEAR_PLUGIN* rdpear, NdrConte
 	WLog_DBG(TAG, "-> CreateApReqAuthenticator");
 
 	if (!ndr_read_CreateApReqAuthenticatorReq(rcontext, s, NULL, &req) ||
-	    !ndr_treat_deferred_read(rcontext, s))
+	    !winpr_ndr_treat_deferred_read(rcontext, s))
 		goto out;
 
 	krb5_authdata authdata = { 0 };
@@ -637,15 +639,16 @@ static BOOL rdpear_findEncryptedData(const KERB_ASN1_DATA* src, int* penctype, k
 	return TRUE;
 }
 
-static BOOL rdpear_kerb_UnpackKdcReplyBody(RDPEAR_PLUGIN* rdpear, NdrContext* rcontext, wStream* s,
-                                           UINT32* pstatus, UnpackKdcReplyBodyResp* resp)
+static BOOL rdpear_kerb_UnpackKdcReplyBody(RDPEAR_PLUGIN* rdpear, WinPrNdrContext* rcontext,
+                                           wStream* s, UINT32* pstatus,
+                                           UnpackKdcReplyBodyResp* resp)
 {
 	UnpackKdcReplyBodyReq req = { 0 };
 
 	*pstatus = ERROR_INVALID_DATA;
 
 	if (!ndr_read_UnpackKdcReplyBodyReq(rcontext, s, NULL, &req) ||
-	    !ndr_treat_deferred_read(rcontext, s))
+	    !winpr_ndr_treat_deferred_read(rcontext, s))
 		goto out;
 
 	if (req.StrengthenKey)
@@ -675,14 +678,14 @@ out:
 	return TRUE;
 }
 
-static BOOL rdpear_kerb_DecryptApReply(RDPEAR_PLUGIN* rdpear, NdrContext* rcontext, wStream* s,
+static BOOL rdpear_kerb_DecryptApReply(RDPEAR_PLUGIN* rdpear, WinPrNdrContext* rcontext, wStream* s,
                                        UINT32* pstatus, KERB_ASN1_DATA* resp)
 {
 	DecryptApReplyReq req = { 0 };
 
 	*pstatus = ERROR_INVALID_DATA;
 	if (!ndr_read_DecryptApReplyReq(rcontext, s, NULL, &req) ||
-	    !ndr_treat_deferred_read(rcontext, s))
+	    !winpr_ndr_treat_deferred_read(rcontext, s))
 		goto out;
 
 	WLog_DBG(TAG, "-> DecryptApReply");
@@ -711,7 +714,7 @@ out:
 	return TRUE;
 }
 
-static BOOL rdpear_kerb_PackApReply(RDPEAR_PLUGIN* rdpear, NdrContext* rcontext, wStream* s,
+static BOOL rdpear_kerb_PackApReply(RDPEAR_PLUGIN* rdpear, WinPrNdrContext* rcontext, wStream* s,
                                     UINT32* pstatus, PackApReplyResp* resp)
 {
 	PackApReplyReq req = { 0 };
@@ -720,7 +723,8 @@ static BOOL rdpear_kerb_PackApReply(RDPEAR_PLUGIN* rdpear, NdrContext* rcontext,
 
 	WLog_DBG(TAG, "-> PackApReply");
 	*pstatus = ERROR_INVALID_DATA;
-	if (!ndr_read_PackApReplyReq(rcontext, s, NULL, &req) || !ndr_treat_deferred_read(rcontext, s))
+	if (!ndr_read_PackApReplyReq(rcontext, s, NULL, &req) ||
+	    !winpr_ndr_treat_deferred_read(rcontext, s))
 		goto out;
 
 	krb5_error_code rv = kerb_do_encrypt(rdpear->krbContext, req.SessionKey,
@@ -752,8 +756,8 @@ static UINT rdpear_decode_payload(RDPEAR_PLUGIN* rdpear,
                                   IWTSVirtualChannelCallback* pChannelCallback, wStream* s)
 {
 	UINT ret = ERROR_INVALID_DATA;
-	NdrContext* context = NULL;
-	NdrContext* wcontext = NULL;
+	WinPrNdrContext* context = NULL;
+	WinPrNdrContext* wcontext = NULL;
 	UINT32 status = 0;
 
 	UINT32 uint32Resp = 0;
@@ -763,7 +767,7 @@ static UINT rdpear_decode_payload(RDPEAR_PLUGIN* rdpear,
 	PackApReplyResp packApReplyResp = { 0 };
 
 	void* resp = NULL;
-	NdrMessageType respDescr = NULL;
+	WinPrNdrMessageType respDescr = NULL;
 
 	wStream* respStream = Stream_New(NULL, 500);
 	if (!respStream)
@@ -775,11 +779,11 @@ static UINT rdpear_decode_payload(RDPEAR_PLUGIN* rdpear,
 	UINT16 callId = 0;
 	UINT16 callId2 = 0;
 
-	context = ndr_read_header(s);
-	if (!context || !ndr_read_constructed(context, s, &commandStream) ||
-	    !ndr_read_pickle(context, &commandStream) ||
-	    !ndr_read_uint16(context, &commandStream, &callId) ||
-	    !ndr_read_uint16(context, &commandStream, &callId2) || (callId != callId2))
+	context = winpr_ndr_read_header(s);
+	if (!context || !winpr_ndr_read_constructed(context, s, &commandStream) ||
+	    !winpr_ndr_read_pickle(context, &commandStream) ||
+	    !winpr_ndr_read_uint16(context, &commandStream, &callId) ||
+	    !winpr_ndr_read_uint16(context, &commandStream, &callId2) || (callId != callId2))
 		goto out;
 
 	ret = CHANNEL_RC_NOT_OPEN;
@@ -787,7 +791,7 @@ static UINT rdpear_decode_payload(RDPEAR_PLUGIN* rdpear,
 	{
 		case RemoteCallKerbNegotiateVersion:
 			resp = &uint32Resp;
-			respDescr = ndr_uint32_descr();
+			respDescr = winpr_ndr_uint32_descr();
 
 			if (rdpear_kerb_version(context, &commandStream, &status, &uint32Resp))
 				ret = CHANNEL_RC_OK;
@@ -857,7 +861,7 @@ static UINT rdpear_decode_payload(RDPEAR_PLUGIN* rdpear,
 		WINPR_ASSERT(respDescr->writeFn);
 
 		BOOL r = respDescr->writeFn(wcontext, respStream, NULL, resp) &&
-		         ndr_treat_deferred_write(wcontext, respStream);
+		         winpr_ndr_treat_deferred_write(wcontext, respStream);
 
 		if (respDescr->destroyFn)
 			respDescr->destroyFn(wcontext, NULL, resp);
@@ -869,7 +873,7 @@ static UINT rdpear_decode_payload(RDPEAR_PLUGIN* rdpear,
 		}
 	}
 
-	if (!ndr_end_constructed(wcontext, respStream) ||
+	if (!winpr_ndr_end_constructed(wcontext, respStream) ||
 	    !rdpear_send_payload(rdpear, pChannelCallback, RDPEAR_PACKAGE_KERBEROS, respStream))
 	{
 		WLog_DBG(TAG, "rdpear_send_payload !!!!!!!!");
@@ -877,10 +881,10 @@ static UINT rdpear_decode_payload(RDPEAR_PLUGIN* rdpear,
 	}
 out:
 	if (context)
-		ndr_context_destroy(&context);
+		winpr_ndr_context_destroy(&context);
 
 	if (wcontext)
-		ndr_context_destroy(&wcontext);
+		winpr_ndr_context_destroy(&wcontext);
 
 	if (respStream)
 		Stream_Free(respStream, TRUE);
