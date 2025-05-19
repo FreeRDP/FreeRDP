@@ -660,6 +660,16 @@ BOOL rdp_recv_deactivate_all(rdpRdp* rdp, wStream* s)
 
 BOOL rdp_send_deactivate_all(rdpRdp* rdp)
 {
+	WINPR_ASSERT(rdp);
+	WINPR_ASSERT(rdp->mcs);
+
+	if (rdp->mcs->userId == 0)
+	{
+		WLog_Print(rdp->log, WLOG_WARN,
+		           "rdpMcs::userId == 0, skip sending PDU_TYPE_DEACTIVATE_ALL");
+		return TRUE;
+	}
+
 	UINT16 sec_flags = 0;
 	wStream* s = rdp_send_stream_pdu_init(rdp, &sec_flags);
 	BOOL status = FALSE;
@@ -667,7 +677,7 @@ BOOL rdp_send_deactivate_all(rdpRdp* rdp)
 	if (!s)
 		return FALSE;
 
-	if (!Stream_CheckAndLogRequiredCapacity(TAG, (s), 7))
+	if (!Stream_CheckAndLogRequiredCapacityWLog(rdp->log, (s), 7))
 		goto fail;
 
 	WINPR_ASSERT(rdp->settings);
