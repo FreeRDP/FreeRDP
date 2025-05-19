@@ -199,7 +199,9 @@ static DWORD WINAPI timer_thread(LPVOID arg)
 
 		const uint64_t diff = next - now;
 		const uint64_t diffMS = diff / 1000;
-		timeout = MIN(INFINITE, (uint32_t)diffMS);
+		timeout = INFINITE;
+		if (diffMS < INFINITE)
+			timeout = (uint32_t)diffMS;
 	}
 	return 0;
 }
