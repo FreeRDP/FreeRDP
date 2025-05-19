@@ -1175,8 +1175,12 @@ static UINT video_plugin_initialize(IWTSPlugin* plugin, IWTSVirtualChannelManage
 static UINT video_plugin_terminated(IWTSPlugin* pPlugin)
 {
 	VIDEO_PLUGIN* video = (VIDEO_PLUGIN*)pPlugin;
+	if (!video)
+		return CHANNEL_RC_INVALID_INSTANCE;
 
-	freerdp_timer_remove(video->rdpcontext, video->context->priv->timerID);
+	if (video->context && video->context->priv)
+		freerdp_timer_remove(video->rdpcontext, video->context->priv->timerID);
+
 	if (video->control_callback)
 	{
 		IWTSVirtualChannelManager* mgr = video->control_callback->channel_mgr;
