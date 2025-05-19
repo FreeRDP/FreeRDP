@@ -853,7 +853,7 @@ fail:
  * @return if the operation completed successfully
  */
 
-state_run_t license_client_recv(rdpLicense* license, wStream* s)
+static state_run_t license_client_recv_int(rdpLicense* license, wStream* s)
 {
 	BYTE flags = 0;
 	BYTE bMsgType = 0;
@@ -920,6 +920,16 @@ state_run_t license_client_recv(rdpLicense* license, wStream* s)
 	if (!tpkt_ensure_stream_consumed(license->log, s, length))
 		return STATE_RUN_FAILED;
 	return STATE_RUN_SUCCESS;
+}
+
+state_run_t license_client_recv(rdpLicense* license, wStream* s)
+{
+	state_run_t rc = license_client_recv_int(license, s);
+	if (state_run_failed(rc))
+	{
+		freerdp_set_last_error(license->rdp->context, ERROR_CTX_LICENSE_CLIENT_INVALID);
+	}
+	return rc;
 }
 
 state_run_t license_server_recv(rdpLicense* license, wStream* s)
