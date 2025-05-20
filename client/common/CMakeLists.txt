@@ -55,10 +55,8 @@ endif()
 
 include_directories(SYSTEM ${OPENSSL_INCLUDE_DIR})
 
-option(WITH_SSO_MIB "Build with sso-mib support" OFF)
-if(UNIX AND WITH_SSO_MIB)
+if(WITH_SSO_MIB)
   set(SSO_MIB_EXTERNAL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../external/sso-mib")
-  find_package(SSO_MIB REQUIRED)
 
   include_directories(${SSO_MIB_INCLUDE_DIRS})
   add_compile_definitions(WITH_SSO_MIB)

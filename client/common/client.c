@@ -74,8 +74,6 @@
 #include <freerdp/crypto/crypto.h>
 #include <winpr/json.h>
 
-static MIBClientApp* sso_mib_client_app = NULL;
-
 enum sso_mib_state
 {
 	SSO_MIB_STATE_INIT = 0,
@@ -83,7 +81,12 @@ enum sso_mib_state
 	SSO_MIB_STATE_SUCCESS = 2,
 };
 
-static enum sso_mib_state sso_mib_state = SSO_MIB_STATE_INIT;
+struct MIBClientWrapper
+{
+	MIBClientApp* app;
+	enum sso_mib_state state;
+};
+
 #endif
 
 #include <freerdp/log.h>
@@ -182,11 +185,6 @@ void freerdp_client_context_free(rdpContext* context)
 	if (!context)
 		return;
 
-#ifdef WITH_SSO_MIB
-	if (sso_mib_client_app)
-		g_object_unref(sso_mib_client_app);
-#endif // WITH_SSO_MIB
-
 	instance = context->instance;
 
 	if (instance)
@@ -212,6 +210,24 @@ int freerdp_client_start(rdpContext* context)
 	if (freerdp_settings_get_bool(context->settings, FreeRDP_UseCommonStdioCallbacks))
 		set_default_callbacks(context->instance);
 
+#ifdef WITH_SSO_MIB
+	rdpClientContext* client_context = (rdpClientContext*)context;
+	client_context->mibClientWrapper = (MIBClientWrapper*)calloc(1, sizeof(MIBClientWrapper));
+	if (!client_context->mibClientWrapper)
+		return ERROR_NOT_ENOUGH_MEMORY;
+	const char* client_id =
+	    freerdp_settings_get_string(context->settings, FreeRDP_GatewayAvdClientID);
+	client_context->mibClientWrapper->app =
+	    mib_public_client_app_new(client_id, MIB_AUTHORITY_COMMON, NULL, NULL);
+	if (!client_context->mibClientWrapper->app)
+	{
+		free(client_context->mibClientWrapper);
+		client_context->mibClientWrapper = NULL;
+		return ERROR_INTERNAL_ERROR;
+	}
+	client_context->mibClientWrapper->state = SSO_MIB_STATE_INIT;
+#endif
+
 	pEntryPoints = context->instance->pClientEntryPoints;
 	return IFCALLRESULT(CHANNEL_RC_OK, pEntryPoints->ClientStart, context);
 }
@@ -222,6 +238,13 @@ int freerdp_client_stop(rdpContext* context)
 
 	if (!context || !context->instance || !context->instance->pClientEntryPoints)
 		return ERROR_BAD_ARGUMENTS;
+
+#ifdef WITH_SSO_MIB
+	rdpClientContext* client_context = (rdpClientContext*)context;
+	if (client_context->mibClientWrapper->app)
+		g_object_unref(client_context->mibClientWrapper->app);
+	free(client_context->mibClientWrapper);
+#endif
 
 	pEntryPoints = context->instance->pClientEntryPoints;
 	return IFCALLRESULT(CHANNEL_RC_OK, pEntryPoints->ClientStop, context);
@@ -1102,21 +1125,13 @@ cleanup:
 }
 
 #ifdef WITH_SSO_MIB
-static MIBClientApp* get_or_create_mib_client_app(freerdp* instance)
-{
-	if (!sso_mib_client_app)
-	{
-		const char* client_id =
-		    freerdp_settings_get_string(instance->context->settings, FreeRDP_GatewayAvdClientID);
-		sso_mib_client_app = mib_public_client_app_new(client_id, MIB_AUTHORITY_COMMON, NULL, NULL);
-	}
-	return sso_mib_client_app;
-}
 
 static BOOL client_cli_get_avd_access_token_from_sso_mib(freerdp* instance, char** token)
 {
 	WINPR_ASSERT(instance);
 	WINPR_ASSERT(instance->context);
+	rdpClientContext* client_context = (rdpClientContext*)instance->context;
+	WINPR_ASSERT(client_context->mibClientWrapper->app);
 	WINPR_ASSERT(token);
 
 	MIBAccount* account = NULL;
@@ -1125,13 +1140,7 @@ static BOOL client_cli_get_avd_access_token_from_sso_mib(freerdp* instance, char
 	BOOL rc = FALSE;
 	*token = NULL;
 
-	MIBClientApp* app = get_or_create_mib_client_app(instance);
-	if (!app)
-	{
-		goto cleanup;
-	}
-
-	account = mib_client_app_get_account_by_upn(app, NULL);
+	account = mib_client_app_get_account_by_upn(client_context->mibClientWrapper->app, NULL);
 	if (!account)
 	{
 		goto cleanup;
@@ -1139,7 +1148,8 @@ static BOOL client_cli_get_avd_access_token_from_sso_mib(freerdp* instance, char
 
 	scopes = g_slist_append(scopes, g_strdup("https://www.wvd.microsoft.com/.default"));
 
-	MIBPrt* prt = mib_client_app_acquire_token_silent(app, account, scopes, NULL, NULL, NULL);
+	MIBPrt* prt = mib_client_app_acquire_token_silent(client_context->mibClientWrapper->app,
+	                                                  account, scopes, NULL, NULL, NULL);
 	if (prt)
 	{
 		const char* access_token = mib_prt_get_access_token(prt);
@@ -1163,6 +1173,8 @@ static BOOL client_cli_get_rdsaad_access_token_from_sso_mib(freerdp* instance, c
 {
 	WINPR_ASSERT(instance);
 	WINPR_ASSERT(instance->context);
+	rdpClientContext* client_context = (rdpClientContext*)instance->context;
+	WINPR_ASSERT(client_context->mibClientWrapper->app);
 	WINPR_ASSERT(scope);
 	WINPR_ASSERT(token);
 	WINPR_ASSERT(req_cnf);
@@ -1175,12 +1187,6 @@ static BOOL client_cli_get_rdsaad_access_token_from_sso_mib(freerdp* instance, c
 	*token = NULL;
 	BYTE* req_cnf_dec = NULL;
 	size_t req_cnf_dec_len;
-
-	MIBClientApp* app = get_or_create_mib_client_app(instance);
-	if (!app)
-	{
-		goto cleanup;
-	}
 
 	scopes = g_slist_append(scopes, g_strdup(scope));
 
@@ -1209,8 +1215,8 @@ static BOOL client_cli_get_rdsaad_access_token_from_sso_mib(freerdp* instance, c
 
 	params = mib_pop_params_new(MIB_AUTH_SCHEME_POP, MIB_REQUEST_METHOD_GET, "");
 	mib_pop_params_set_kid(params, kid);
-	MIBPrt* prt = mib_client_app_acquire_token_interactive(app, scopes, MIB_PROMPT_NONE, NULL, NULL,
-	                                                       NULL, params);
+	MIBPrt* prt = mib_client_app_acquire_token_interactive(
+	    client_context->mibClientWrapper->app, scopes, MIB_PROMPT_NONE, NULL, NULL, NULL, params);
 	if (prt)
 	{
 		*token = strdup(mib_prt_get_access_token(prt));
@@ -1249,19 +1255,21 @@ static BOOL client_cli_get_avd_access_token(freerdp* instance, char** token)
 	*token = NULL;
 
 #ifdef WITH_SSO_MIB
-	if (sso_mib_state == SSO_MIB_STATE_INIT || sso_mib_state == SSO_MIB_STATE_SUCCESS)
+	rdpClientContext* client_context = (rdpClientContext*)instance->context;
+	if (client_context->mibClientWrapper->state == SSO_MIB_STATE_INIT ||
+	    client_context->mibClientWrapper->state == SSO_MIB_STATE_SUCCESS)
 	{
 		rc = client_cli_get_avd_access_token_from_sso_mib(instance, token);
 		if (rc)
 		{
-			sso_mib_state = SSO_MIB_STATE_SUCCESS;
+			client_context->mibClientWrapper->state = SSO_MIB_STATE_SUCCESS;
 			return rc;
 		}
 		else
 		{
 			WLog_WARN(TAG, "Getting AVD token from identity broker failed, falling back to "
 			               "browser-based authentication.");
-			sso_mib_state = SSO_MIB_STATE_FAILED;
+			client_context->mibClientWrapper->state = SSO_MIB_STATE_FAILED;
 			// Fall through to regular avd access token retrieval
 		}
 	}
@@ -1350,7 +1358,9 @@ BOOL client_cli_get_access_token(freerdp* instance, AccessTokenType tokenType, c
 			BOOL rc = FALSE;
 
 #ifdef WITH_SSO_MIB
-			if (sso_mib_state == SSO_MIB_STATE_INIT || sso_mib_state == SSO_MIB_STATE_SUCCESS)
+			rdpClientContext* client_context = (rdpClientContext*)instance->context;
+			if (client_context->mibClientWrapper->state == SSO_MIB_STATE_INIT ||
+			    client_context->mibClientWrapper->state == SSO_MIB_STATE_SUCCESS)
 			{
 				// Setup scope without URL encoding for sso-mib
 				char* scope_copy = winpr_str_url_decode(scope, strlen(scope));
@@ -1366,7 +1376,7 @@ BOOL client_cli_get_access_token(freerdp* instance, AccessTokenType tokenType, c
 				free(scope_copy);
 				if (rc)
 				{
-					sso_mib_state = SSO_MIB_STATE_SUCCESS;
+					client_context->mibClientWrapper->state = SSO_MIB_STATE_SUCCESS;
 					va_end(ap);
 					return rc;
 				}
@@ -1374,7 +1384,7 @@ BOOL client_cli_get_access_token(freerdp* instance, AccessTokenType tokenType, c
 				{
 					WLog_WARN(TAG, "Getting RDS token from identity broker failed, falling back to "
 					               "browser-based authentication.");
-					sso_mib_state = SSO_MIB_STATE_FAILED;
+					client_context->mibClientWrapper->state = SSO_MIB_STATE_FAILED;
 					// Fall through to regular rdsaad access token retrieval
 				}
 			}

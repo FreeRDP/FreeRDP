@@ -3,6 +3,7 @@
  * Client Interface
  *
  * Copyright 2013 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2025 Siemens
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +41,8 @@
 #if defined(CHANNEL_ENCOMSP_CLIENT)
 #include <freerdp/client/encomsp.h>
 #endif
+
+typedef struct MIBClientWrapper MIBClientWrapper;
 
 #ifdef __cplusplus
 extern "C"
@@ -136,7 +139,9 @@ extern "C"
 #endif
 		ALIGN64 FreeRDP_TouchContact contacts[FREERDP_MAX_TOUCH_CONTACTS]; /**< (offset 8) */
 		ALIGN64 FreeRDP_PenDevice pens[FREERDP_MAX_PEN_DEVICES];           /**< (offset 9) */
-		UINT64 reserved[128 - 9];                                          /**< (offset 9) */
+
+		ALIGN64 MIBClientWrapper* mibClientWrapper; /**< (offset 10) */
+		UINT64 reserved[128 - 10];                  /**< (offset 10) */
 	};
 
 	/* Common client functions */
