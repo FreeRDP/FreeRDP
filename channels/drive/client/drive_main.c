@@ -122,6 +122,10 @@ static NTSTATUS drive_map_windows_err(DWORD fs_errno)
 			rc = STATUS_OBJECT_PATH_NOT_FOUND;
 			break;
 
+		case ERROR_DIR_NOT_EMPTY:
+			rc = STATUS_DIRECTORY_NOT_EMPTY;
+			break;
+
 		default:
 			rc = STATUS_UNSUCCESSFUL;
 			WLog_ERR(TAG, "Error code not found: %" PRIu32 "", fs_errno);
@@ -435,9 +439,6 @@ static UINT drive_process_irp_set_information(DRIVE_DEVICE* drive, IRP* irp)
 	{
 		irp->IoStatus = drive_map_windows_err(GetLastError());
 	}
-
-	if (file && file->is_dir && !PathIsDirectoryEmptyW(file->fullpath))
-		irp->IoStatus = STATUS_DIRECTORY_NOT_EMPTY;
 
 	Stream_Write_UINT32(irp->output, Length);
 
