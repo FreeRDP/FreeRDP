@@ -55,15 +55,17 @@ endif()
 
 include_directories(SYSTEM ${OPENSSL_INCLUDE_DIR})
 
+addtargetwithresourcefile(${MODULE_NAME} FALSE "${FREERDP_VERSION}" SRCS)
+
 if(WITH_SSO_MIB)
-  set(SSO_MIB_EXTERNAL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../external/sso-mib")
+  if(SSO_MIB_EXTERNAL_DIR)
+    add_dependencies(${MODULE_NAME} sso-mib-external)
+  endif()
 
   include_directories(${SSO_MIB_INCLUDE_DIRS})
   add_compile_definitions(WITH_SSO_MIB)
   list(APPEND LIBS ${SSO_MIB_LIBRARIES})
 endif()
-
-addtargetwithresourcefile(${MODULE_NAME} FALSE "${FREERDP_VERSION}" SRCS)
 
 list(APPEND LIBS freerdp winpr)
 

@@ -410,7 +410,6 @@ else()
 endif()
 
 if(WITH_SSO_MIB)
-  set(SSO_MIB_EXTERNAL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external/sso-mib")
   find_package(SSO_MIB REQUIRED)
 endif()
 
