@@ -55,6 +55,10 @@ endif()
 
 include_directories(SYSTEM ${OPENSSL_INCLUDE_DIR})
 
+if(WITH_SSO_MIB)
+  list(APPEND SRCS sso_mib_tokens.c)
+endif()
+
 addtargetwithresourcefile(${MODULE_NAME} FALSE "${FREERDP_VERSION}" SRCS)
 
 if(WITH_SSO_MIB)

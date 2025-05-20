@@ -70,23 +70,7 @@
 #endif
 
 #ifdef WITH_SSO_MIB
-#include <sso-mib/sso-mib.h>
-#include <freerdp/crypto/crypto.h>
-#include <winpr/json.h>
-
-enum sso_mib_state
-{
-	SSO_MIB_STATE_INIT = 0,
-	SSO_MIB_STATE_FAILED = 1,
-	SSO_MIB_STATE_SUCCESS = 2,
-};
-
-struct MIBClientWrapper
-{
-	MIBClientApp* app;
-	enum sso_mib_state state;
-};
-
+#include "sso_mib_tokens.h"
 #endif
 
 #include <freerdp/log.h>
@@ -1124,118 +1108,6 @@ cleanup:
 	return rc && (*token != NULL);
 }
 
-#ifdef WITH_SSO_MIB
-
-static BOOL client_cli_get_avd_access_token_from_sso_mib(freerdp* instance, char** token)
-{
-	WINPR_ASSERT(instance);
-	WINPR_ASSERT(instance->context);
-	rdpClientContext* client_context = (rdpClientContext*)instance->context;
-	WINPR_ASSERT(client_context->mibClientWrapper->app);
-	WINPR_ASSERT(token);
-
-	MIBAccount* account = NULL;
-	GSList* scopes = NULL;
-
-	BOOL rc = FALSE;
-	*token = NULL;
-
-	account = mib_client_app_get_account_by_upn(client_context->mibClientWrapper->app, NULL);
-	if (!account)
-	{
-		goto cleanup;
-	}
-
-	scopes = g_slist_append(scopes, g_strdup("https://www.wvd.microsoft.com/.default"));
-
-	MIBPrt* prt = mib_client_app_acquire_token_silent(client_context->mibClientWrapper->app,
-	                                                  account, scopes, NULL, NULL, NULL);
-	if (prt)
-	{
-		const char* access_token = mib_prt_get_access_token(prt);
-		if (access_token)
-		{
-			*token = strdup(access_token);
-		}
-		g_object_unref(prt);
-	}
-
-	rc = TRUE && *token != NULL;
-cleanup:
-	if (account)
-		g_object_unref(account);
-	g_slist_free_full(scopes, g_free);
-	return rc;
-}
-
-static BOOL client_cli_get_rdsaad_access_token_from_sso_mib(freerdp* instance, const char* scope,
-                                                            const char* req_cnf, char** token)
-{
-	WINPR_ASSERT(instance);
-	WINPR_ASSERT(instance->context);
-	rdpClientContext* client_context = (rdpClientContext*)instance->context;
-	WINPR_ASSERT(client_context->mibClientWrapper->app);
-	WINPR_ASSERT(scope);
-	WINPR_ASSERT(token);
-	WINPR_ASSERT(req_cnf);
-
-	GSList* scopes = NULL;
-	WINPR_JSON* json = NULL;
-	MIBPopParams* params = NULL;
-
-	BOOL rc = FALSE;
-	*token = NULL;
-	BYTE* req_cnf_dec = NULL;
-	size_t req_cnf_dec_len;
-
-	scopes = g_slist_append(scopes, g_strdup(scope));
-
-	// Parse the "kid" element from req_cnf
-	crypto_base64_decode(req_cnf, strlen(req_cnf) + 1, &req_cnf_dec, &req_cnf_dec_len);
-	if (!req_cnf_dec)
-	{
-		goto cleanup;
-	}
-
-	json = WINPR_JSON_Parse((const char*)req_cnf_dec);
-	if (!json)
-	{
-		goto cleanup;
-	}
-	WINPR_JSON* prop = WINPR_JSON_GetObjectItem(json, "kid");
-	if (!prop)
-	{
-		goto cleanup;
-	}
-	const char* kid = WINPR_JSON_GetStringValue(prop);
-	if (!kid)
-	{
-		goto cleanup;
-	}
-
-	params = mib_pop_params_new(MIB_AUTH_SCHEME_POP, MIB_REQUEST_METHOD_GET, "");
-	mib_pop_params_set_kid(params, kid);
-	MIBPrt* prt = mib_client_app_acquire_token_interactive(
-	    client_context->mibClientWrapper->app, scopes, MIB_PROMPT_NONE, NULL, NULL, NULL, params);
-	if (prt)
-	{
-		*token = strdup(mib_prt_get_access_token(prt));
-		rc = TRUE;
-		g_object_unref(prt);
-	}
-
-cleanup:
-	if (params)
-		g_object_unref(params);
-	if (json)
-		WINPR_JSON_Delete(json);
-	if (req_cnf_dec)
-		free(req_cnf_dec);
-	g_slist_free_full(scopes, g_free);
-	return rc;
-}
-#endif //  WITH_SSO_MIB
-
 static BOOL client_cli_get_avd_access_token(freerdp* instance, char** token)
 {
 	WINPR_ASSERT(instance);
@@ -1259,7 +1131,7 @@ static BOOL client_cli_get_avd_access_token(freerdp* instance, char** token)
 	if (client_context->mibClientWrapper->state == SSO_MIB_STATE_INIT ||
 	    client_context->mibClientWrapper->state == SSO_MIB_STATE_SUCCESS)
 	{
-		rc = client_cli_get_avd_access_token_from_sso_mib(instance, token);
+		rc = sso_mib_get_avd_access_token(instance, token);
 		if (rc)
 		{
 			client_context->mibClientWrapper->state = SSO_MIB_STATE_SUCCESS;
@@ -1371,8 +1243,7 @@ BOOL client_cli_get_access_token(freerdp* instance, AccessTokenType tokenType, c
 					return FALSE;
 				}
 
-				rc = client_cli_get_rdsaad_access_token_from_sso_mib(instance, scope_copy, req_cnf,
-				                                                     token);
+				rc = sso_mib_get_rdsaad_access_token(instance, scope_copy, req_cnf, token);
 				free(scope_copy);
 				if (rc)
 				{
