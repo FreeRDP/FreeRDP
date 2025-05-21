@@ -789,6 +789,56 @@ BOOL freerdp_context_new(freerdp* instance)
 	return freerdp_context_new_ex(instance, NULL);
 }
 
+static BOOL freerdp_common_context(rdpContext* context, AccessTokenType tokenType, char** token,
+                                   size_t count, ...)
+{
+	BOOL rc = FALSE;
+
+	WINPR_ASSERT(context);
+	if (!context->instance || !context->instance->GetAccessToken)
+		return TRUE;
+
+	va_list ap;
+	va_start(ap, count);
+	switch (tokenType)
+	{
+		case ACCESS_TOKEN_TYPE_AAD:
+			if (count != 2)
+			{
+				WLog_ERR(TAG,
+				         "ACCESS_TOKEN_TYPE_AAD expected 2 additional arguments, but got %" PRIuz
+				         ", aborting",
+				         count);
+			}
+			else
+			{
+				const char* scope = va_arg(ap, const char*);
+				const char* req_cnf = va_arg(ap, const char*);
+				rc = context->instance->GetAccessToken(context->instance, tokenType, token, count,
+				                                       scope, req_cnf);
+			}
+			break;
+		case ACCESS_TOKEN_TYPE_AVD:
+			if (count != 0)
+			{
+				WLog_WARN(TAG,
+				          "ACCESS_TOKEN_TYPE_AVD expected 0 additional arguments, but got %" PRIuz
+				          ", ignoring",
+				          count);
+			}
+			else
+			{
+				rc = context->instance->GetAccessToken(context->instance, tokenType, token, count);
+			}
+			break;
+		default:
+			break;
+	}
+	va_end(ap);
+
+	return rc;
+}
+
 BOOL freerdp_context_new_ex(freerdp* instance, rdpSettings* settings)
 {
 	rdpRdp* rdp = NULL;
@@ -869,10 +919,19 @@ BOOL freerdp_context_new_ex(freerdp* instance, rdpSettings* settings)
 	if (!context->dump)
 		goto fail;
 
+	/* Fallback:
+	 * Client common library might set a function pointer to handle this, but here we provide a
+	 * default implementation that simply calls instance->GetAccessToken.
+	 */
+	if (!freerdp_set_common_access_token(context, freerdp_common_context))
+		goto fail;
+
 	IFCALLRET(instance->ContextNew, ret, instance, context);
 
-	if (ret)
-		return TRUE;
+	if (!ret)
+		goto fail;
+
+	return TRUE;
 
 fail:
 	freerdp_context_free(instance);
@@ -1506,4 +1565,20 @@ const char* freerdp_disconnect_reason_string(int reason)
 		default:
 			return "rn-unknown";
 	}
+}
+
+BOOL freerdp_set_common_access_token(rdpContext* context,
+                                     pGetCommonAccessToken GetCommonAccessToken)
+{
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(context->rdp);
+	context->rdp->GetCommonAccessToken = GetCommonAccessToken;
+	return TRUE;
+}
+
+pGetCommonAccessToken freerdp_get_common_access_token(rdpContext* context)
+{
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(context->rdp);
+	return context->rdp->GetCommonAccessToken;
 }

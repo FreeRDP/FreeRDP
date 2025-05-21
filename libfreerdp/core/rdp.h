@@ -209,6 +209,7 @@ struct rdp_rdp
 	char log_context[64];
 	WINPR_JSON* wellknown;
 	FreeRDPTimer* timer;
+	pGetCommonAccessToken GetCommonAccessToken;
 };
 
 FREERDP_LOCAL BOOL rdp_read_security_header(rdpRdp* rdp, wStream* s, UINT16* flags, UINT16* length);

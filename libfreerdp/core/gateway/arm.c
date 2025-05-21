@@ -194,6 +194,7 @@ static wStream* arm_build_http_request(rdpArm* arm, const char* method,
 	WINPR_ASSERT(content_type);
 
 	WINPR_ASSERT(arm->context);
+	WINPR_ASSERT(arm->context->rdp);
 
 	freerdp* instance = arm->context->instance;
 	WINPR_ASSERT(instance);
@@ -211,7 +212,7 @@ static wStream* arm_build_http_request(rdpArm* arm, const char* method,
 	{
 		char* token = NULL;
 
-		if (!instance->GetAccessToken)
+		if (!arm->context->rdp->GetCommonAccessToken)
 		{
 			WLog_Print(arm->log, WLOG_ERROR, "No authorization token provided");
 			goto out;
@@ -220,7 +221,8 @@ static wStream* arm_build_http_request(rdpArm* arm, const char* method,
 		if (!arm_fetch_wellknown(arm))
 			goto out;
 
-		if (!instance->GetAccessToken(instance, ACCESS_TOKEN_TYPE_AVD, &token, 0))
+		if (!arm->context->rdp->GetCommonAccessToken(arm->context, ACCESS_TOKEN_TYPE_AVD, &token,
+		                                             0))
 		{
 			WLog_Print(arm->log, WLOG_ERROR, "Unable to obtain access token");
 			goto out;

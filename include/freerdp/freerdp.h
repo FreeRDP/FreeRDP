@@ -134,8 +134,34 @@ extern "C"
 		ACCESS_TOKEN_TYPE_AVD  /**!< oauth2 access token for Azure Virtual Desktop */
 	} AccessTokenType;
 
+	/** @brief A function to be implemented by a client. It is called whenever the connection
+	 * requires an access token.
+	 *  @param instance The instance the function is called for
+	 *  @param tokenType The type of token requested
+	 *  @param token A pointer that will hold the (allocated) token string
+	 *  @param count The number of arguments following
+	 *
+	 *  @return \b TRUE for success, \b FALSE otherwise
+	 *  @since version 3.0.0
+	 */
 	typedef BOOL (*pGetAccessToken)(freerdp* instance, AccessTokenType tokenType, char** token,
 	                                size_t count, ...);
+
+	/** @brief The function is called whenever the connection requires an access token.
+	 *  It differs from \ref pGetAccessToken and is not meant to be implemented by a client
+	 * directly. The client-common library will use this to provide common means to retrieve a token
+	 * and only if that fails the instanc->GetAccessToken callback will be called.
+	 *
+	 *  @param context The context the function is called for
+	 *  @param tokenType The type of token requested
+	 *  @param token A pointer that will hold the (allocated) token string
+	 *  @param count The number of arguments following
+	 *
+	 *  @return \b TRUE for success, \b FALSE otherwise
+	 *  @since version 3.16.0
+	 */
+	typedef BOOL (*pGetCommonAccessToken)(rdpContext* context, AccessTokenType tokenType,
+	                                      char** token, size_t count, ...);
 
 	/** @brief Callback used to inform about a reconnection attempt
 	 *
@@ -768,6 +794,25 @@ owned by rdpRdp */
 	 *  \since version 3.12.0
 	 */
 	FREERDP_API BOOL freerdp_persist_credentials(rdpContext* context);
+
+	/** @brief set a new function to be called when an access token is requested.
+	 *
+	 * @param context The rdp context to set the function for. Must not be \b NULL
+	 * @param GetCommonAccessToken The function pointer to set, \b NULL to disable
+	 *
+	 * @return \b TRUE for success, \b FALSE otherwise
+	 * @since version 3.16.0
+	 */
+	FREERDP_API BOOL freerdp_set_common_access_token(rdpContext* context,
+	                                                 pGetCommonAccessToken GetCommonAccessToken);
+
+	/** @brief get the current function pointer set as GetCommonAccessToken
+	 *
+	 *  @param context The rdp context to set the function for. Must not be \b NULL
+	 *  @return The current function pointer set or \b NULL
+	 *  @since version 3.16.0
+	 */
+	FREERDP_API pGetCommonAccessToken freerdp_get_common_access_token(rdpContext* context);
 
 #ifdef __cplusplus
 }
