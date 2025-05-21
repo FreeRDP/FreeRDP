@@ -8,7 +8,7 @@
 		"org.freedesktop.Platform.openh264": {
 			"add-ld-path": ".",
 			"directory": "lib/openh264",
-			"version": "2.5.0"
+			"version": "2.5.1"
 		}
 	},
 	"app-id": "com.freerdp.FreeRDP",
@@ -27,7 +27,7 @@
 		"/share/examples",
 		"/share/man"
 	],
-	"command": "freerdp.sh",
+	"command": "sdl-freerdp",
 	"finish-args": [
 		"--device=dri",
 		"--share=ipc",
@@ -36,7 +36,8 @@
 		"--socket=pulseaudio",
 		"--socket=cups",
 		"--socket=wayland",
-		"--filesystem=xdg-download"
+		"--filesystem=xdg-download",
+		"--env=OPENSSL_CONF=/app/share/legacy-openssl.cnf"
 	],
 	"modules": [
 		"modules/openssl.json",
@@ -59,6 +60,7 @@
 				"-DCMAKE_VERBOSE_MAKEFILE=ON",
 				"-DCMAKE_BUILD_TYPE:STRING=Release",
 				"-DCMAKE_INSTALL_LIBDIR:PATH=lib",
+				"-DWITHOUT_FREERDP_3x_DEPRECATED=ON",
 				"-DWITH_FREERDP_DEPRECATED_COMMANDLINE=ON",
 				"-DCHANNEL_TSMF:BOOL=OFF",
 				"-DCHANNEL_URBDRC:BOOL=ON",
@@ -97,7 +99,7 @@
 		},
 		{
 			"build-commands": [
-				"install -D freerdp.sh /app/bin/freerdp.sh",
+				"install -D legacy-openssl.cnf $FLATPAK_DEST/share/legacy-openssl.cnf",
 				"mkdir -p /app/lib/ffmpeg",
 				"mkdir -p /app/lib/openh264"
 			],
@@ -105,7 +107,7 @@
 			"name": "wrapper",
 			"sources": [
 				{
-					"path": "freerdp.sh",
+					"path": "legacy-openssl.cnf",
 					"type": "file"
 				}
 			]

@@ -17,16 +17,16 @@
 	"name": "SDL3_ttf",
 	"sources": [
 		{
-			"sha256": "0ac7c23d9a037d3e3922ea1027fd8e923f03b0840042a49cca7652d2b49989a6",
+			"sha256": "63547d58d0185c833213885b635a2c0548201cc8f301e6587c0be1a67e1e045d",
 			"type": "archive",
 			"url":
-			    "https://github.com/libsdl-org/SDL_ttf/releases/download/prerelease-3.1.2/SDL3_ttf-3.1.2.tar.gz",
+			    "https://github.com/libsdl-org/SDL_ttf/releases/download/release-3.2.2/SDL3_ttf-3.2.2.tar.gz",
 			"x-checker-data": {
 				"project-id": 4784,
 				"stable-only": true,
 				"type": "anitya",
 				"url-template":
-				    "https://github.com/libsdl-org/SDL_ttf/releases/download/release-${version0}.${version1}.${version2}/SDL3_ttf-${version0}.${version1}.${version2}.tar.gz"
+				    "https://github.com/libsdl-org/SDL_ttf/releases/download/release-${version}/SDL3_ttf-${version}.tar.gz"
 			}
 		}
 	]
