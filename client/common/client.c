@@ -196,20 +196,9 @@ int freerdp_client_start(rdpContext* context)
 
 #ifdef WITH_SSO_MIB
 	rdpClientContext* client_context = (rdpClientContext*)context;
-	client_context->mibClientWrapper = (MIBClientWrapper*)calloc(1, sizeof(MIBClientWrapper));
+	client_context->mibClientWrapper = sso_mib_new(context);
 	if (!client_context->mibClientWrapper)
-		return ERROR_NOT_ENOUGH_MEMORY;
-	const char* client_id =
-	    freerdp_settings_get_string(context->settings, FreeRDP_GatewayAvdClientID);
-	client_context->mibClientWrapper->app =
-	    mib_public_client_app_new(client_id, MIB_AUTHORITY_COMMON, NULL, NULL);
-	if (!client_context->mibClientWrapper->app)
-	{
-		free(client_context->mibClientWrapper);
-		client_context->mibClientWrapper = NULL;
 		return ERROR_INTERNAL_ERROR;
-	}
-	client_context->mibClientWrapper->state = SSO_MIB_STATE_INIT;
 #endif
 
 	pEntryPoints = context->instance->pClientEntryPoints;
@@ -223,15 +212,15 @@ int freerdp_client_stop(rdpContext* context)
 	if (!context || !context->instance || !context->instance->pClientEntryPoints)
 		return ERROR_BAD_ARGUMENTS;
 
+	pEntryPoints = context->instance->pClientEntryPoints;
+	const int rc = IFCALLRESULT(CHANNEL_RC_OK, pEntryPoints->ClientStop, context);
+
 #ifdef WITH_SSO_MIB
 	rdpClientContext* client_context = (rdpClientContext*)context;
-	if (client_context->mibClientWrapper->app)
-		g_object_unref(client_context->mibClientWrapper->app);
-	free(client_context->mibClientWrapper);
-#endif
-
-	pEntryPoints = context->instance->pClientEntryPoints;
-	return IFCALLRESULT(CHANNEL_RC_OK, pEntryPoints->ClientStop, context);
+	sso_mib_free(client_context->mibClientWrapper);
+	client_context->mibClientWrapper = NULL;
+#endif // WITH_SSO_MIB
+	return rc;
 }
 
 freerdp* freerdp_client_get_instance(rdpContext* context)
@@ -1126,27 +1115,6 @@ static BOOL client_cli_get_avd_access_token(freerdp* instance, char** token)
 
 	*token = NULL;
 
-#ifdef WITH_SSO_MIB
-	rdpClientContext* client_context = (rdpClientContext*)instance->context;
-	if (client_context->mibClientWrapper->state == SSO_MIB_STATE_INIT ||
-	    client_context->mibClientWrapper->state == SSO_MIB_STATE_SUCCESS)
-	{
-		rc = sso_mib_get_avd_access_token(instance, token);
-		if (rc)
-		{
-			client_context->mibClientWrapper->state = SSO_MIB_STATE_SUCCESS;
-			return rc;
-		}
-		else
-		{
-			WLog_WARN(TAG, "Getting AVD token from identity broker failed, falling back to "
-			               "browser-based authentication.");
-			client_context->mibClientWrapper->state = SSO_MIB_STATE_FAILED;
-			// Fall through to regular avd access token retrieval
-		}
-	}
-#endif
-
 	const char* client_id =
 	    freerdp_settings_get_string(instance->context->settings, FreeRDP_GatewayAvdClientID);
 	const char* base = freerdp_settings_get_string(instance->context->settings,
@@ -1227,42 +1195,7 @@ BOOL client_cli_get_access_token(freerdp* instance, AccessTokenType tokenType, c
 			va_start(ap, count);
 			const char* scope = va_arg(ap, const char*);
 			const char* req_cnf = va_arg(ap, const char*);
-			BOOL rc = FALSE;
-
-#ifdef WITH_SSO_MIB
-			rdpClientContext* client_context = (rdpClientContext*)instance->context;
-			if (client_context->mibClientWrapper->state == SSO_MIB_STATE_INIT ||
-			    client_context->mibClientWrapper->state == SSO_MIB_STATE_SUCCESS)
-			{
-				// Setup scope without URL encoding for sso-mib
-				char* scope_copy = winpr_str_url_decode(scope, strlen(scope));
-				if (!scope_copy)
-				{
-					WLog_ERR(TAG, "Failed to decode scope");
-					va_end(ap);
-					return FALSE;
-				}
-
-				rc = sso_mib_get_rdsaad_access_token(instance, scope_copy, req_cnf, token);
-				free(scope_copy);
-				if (rc)
-				{
-					client_context->mibClientWrapper->state = SSO_MIB_STATE_SUCCESS;
-					va_end(ap);
-					return rc;
-				}
-				else
-				{
-					WLog_WARN(TAG, "Getting RDS token from identity broker failed, falling back to "
-					               "browser-based authentication.");
-					client_context->mibClientWrapper->state = SSO_MIB_STATE_FAILED;
-					// Fall through to regular rdsaad access token retrieval
-				}
-			}
-#endif // WITH_SSO_MIB
-
-			rc = client_cli_get_rdsaad_access_token(instance, scope, req_cnf, token);
-
+			BOOL rc = client_cli_get_rdsaad_access_token(instance, scope, req_cnf, token);
 			va_end(ap);
 			return rc;
 		}

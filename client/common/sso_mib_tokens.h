@@ -7,24 +7,10 @@
 #define FREERDP_CLIENT_COMMON_SSO_MIB_TOKENS_H
 
 #include <freerdp/freerdp.h>
-#include <sso-mib/sso-mib.h>
 
-enum sso_mib_state
-{
-	SSO_MIB_STATE_INIT = 0,
-	SSO_MIB_STATE_FAILED = 1,
-	SSO_MIB_STATE_SUCCESS = 2,
-};
+void sso_mib_free(MIBClientWrapper* sso);
 
-struct MIBClientWrapper
-{
-	MIBClientApp* app;
-	enum sso_mib_state state;
-};
-
-BOOL sso_mib_get_avd_access_token(freerdp* instance, char** token);
-
-BOOL sso_mib_get_rdsaad_access_token(freerdp* instance, const char* scope, const char* req_cnf,
-                                     char** token);
+WINPR_ATTR_MALLOC(sso_mib_free, 1)
+MIBClientWrapper* sso_mib_new(rdpContext* context);
 
 #endif /* FREERDP_CLIENT_COMMON_SSO_MIB_TOKENS_H */
