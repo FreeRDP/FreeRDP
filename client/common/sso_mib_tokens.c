@@ -123,6 +123,18 @@ BOOL sso_mib_get_access_token(rdpContext* context, AccessTokenType tokenType, ch
 	BOOL rc = FALSE;
 	rdpClientContext* client_context = (rdpClientContext*)context;
 	WINPR_ASSERT(client_context);
+	WINPR_ASSERT(client_context->mibClientWrapper);
+
+	if (!client_context->mibClientWrapper->app)
+	{
+		const char* client_id =
+		    freerdp_settings_get_string(context->settings, FreeRDP_GatewayAvdClientID);
+		client_context->mibClientWrapper->app =
+		    mib_public_client_app_new(client_id, MIB_AUTHORITY_COMMON, NULL, NULL);
+	}
+
+	if (!client_context->mibClientWrapper->app)
+		return ERROR_INTERNAL_ERROR;
 
 	const char* scope = NULL;
 	const char* req_cnf = NULL;

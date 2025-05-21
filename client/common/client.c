@@ -199,16 +199,7 @@ int freerdp_client_start(rdpContext* context)
 	client_context->mibClientWrapper = (MIBClientWrapper*)calloc(1, sizeof(MIBClientWrapper));
 	if (!client_context->mibClientWrapper)
 		return ERROR_NOT_ENOUGH_MEMORY;
-	const char* client_id =
-	    freerdp_settings_get_string(context->settings, FreeRDP_GatewayAvdClientID);
-	client_context->mibClientWrapper->app =
-	    mib_public_client_app_new(client_id, MIB_AUTHORITY_COMMON, NULL, NULL);
-	if (!client_context->mibClientWrapper->app)
-	{
-		free(client_context->mibClientWrapper);
-		client_context->mibClientWrapper = NULL;
-		return ERROR_INTERNAL_ERROR;
-	}
+
 	client_context->mibClientWrapper->GetCommonAccessToken =
 	    freerdp_get_common_access_token(context);
 	if (!freerdp_set_common_access_token(context, sso_mib_get_access_token))
@@ -227,15 +218,20 @@ int freerdp_client_stop(rdpContext* context)
 	if (!context || !context->instance || !context->instance->pClientEntryPoints)
 		return ERROR_BAD_ARGUMENTS;
 
+	pEntryPoints = context->instance->pClientEntryPoints;
+	const int rc = IFCALLRESULT(CHANNEL_RC_OK, pEntryPoints->ClientStop, context);
+
 #ifdef WITH_SSO_MIB
 	rdpClientContext* client_context = (rdpClientContext*)context;
-	if (client_context->mibClientWrapper->app)
-		g_object_unref(client_context->mibClientWrapper->app);
-	free(client_context->mibClientWrapper);
-#endif
-
-	pEntryPoints = context->instance->pClientEntryPoints;
-	return IFCALLRESULT(CHANNEL_RC_OK, pEntryPoints->ClientStop, context);
+	if (client_context->mibClientWrapper)
+	{
+		if (client_context->mibClientWrapper->app)
+			g_object_unref(client_context->mibClientWrapper->app);
+		free(client_context->mibClientWrapper);
+	}
+	client_context->mibClientWrapper = NULL;
+#endif // WITH_SSO_MIB
+	return rc;
 }
 
 freerdp* freerdp_client_get_instance(rdpContext* context)
