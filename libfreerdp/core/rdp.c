@@ -2318,7 +2318,7 @@ static bool rdp_new_common(rdpRdp* rdp)
 			goto fail;
 	}
 
-	rdp->aad = aad_new(rdp->context, rdp->transport, rdp->GetCommonAccessToken);
+	rdp->aad = aad_new(rdp->context, rdp->transport);
 	if (!rdp->aad)
 		goto fail;
 
