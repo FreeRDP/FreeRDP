@@ -48,7 +48,6 @@ struct rdp_aad
 	char* hostname;
 	char* scope;
 	wLog* log;
-	pGetCommonAccessToken GetCommonAccessToken;
 };
 
 #ifdef WITH_AAD
@@ -301,17 +300,18 @@ int aad_client_begin(rdpAad* aad)
 		return -1;
 
 	/* Obtain an oauth authorization code */
-	if (!aad->GetCommonAccessToken)
+	pGetCommonAccessToken GetCommonAccessToken = freerdp_get_common_access_token(aad->rdpcontext);
+	if (!GetCommonAccessToken)
 	{
-		WLog_Print(aad->log, WLOG_ERROR, "aad->rdpcontext->GetCommonAccessToken == NULL");
+		WLog_Print(aad->log, WLOG_ERROR, "GetCommonAccessToken == NULL");
 		return -1;
 	}
 
 	if (!aad_fetch_wellknown(aad->log, aad->rdpcontext))
 		return -1;
 
-	const BOOL arc = aad->GetCommonAccessToken(aad->rdpcontext, ACCESS_TOKEN_TYPE_AAD,
-	                                           &aad->access_token, 2, aad->scope, aad->kid);
+	const BOOL arc = GetCommonAccessToken(aad->rdpcontext, ACCESS_TOKEN_TYPE_AAD,
+	                                      &aad->access_token, 2, aad->scope, aad->kid);
 	if (!arc)
 	{
 		WLog_Print(aad->log, WLOG_ERROR, "Unable to obtain access token");
@@ -786,8 +786,7 @@ static BOOL ensure_wellknown(WINPR_ATTR_UNUSED rdpContext* context)
 
 #endif
 
-rdpAad* aad_new(rdpContext* context, rdpTransport* transport,
-                pGetCommonAccessToken GetCommonAccessToken)
+rdpAad* aad_new(rdpContext* context, rdpTransport* transport)
 {
 	WINPR_ASSERT(transport);
 	WINPR_ASSERT(context);
@@ -798,7 +797,6 @@ rdpAad* aad_new(rdpContext* context, rdpTransport* transport,
 		return NULL;
 
 	aad->log = WLog_Get(FREERDP_TAG("aad"));
-	aad->GetCommonAccessToken = GetCommonAccessToken;
 	aad->key = freerdp_key_new();
 	if (!aad->key)
 		goto fail;
