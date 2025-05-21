@@ -7,10 +7,25 @@
 #include <freerdp/crypto/crypto.h>
 #include <winpr/json.h>
 
+#include <sso-mib/sso-mib.h>
 #include "sso_mib_tokens.h"
 
 #include <freerdp/log.h>
 #define TAG CLIENT_TAG("common.sso")
+
+enum sso_mib_state
+{
+	SSO_MIB_STATE_INIT = 0,
+	SSO_MIB_STATE_FAILED = 1,
+	SSO_MIB_STATE_SUCCESS = 2,
+};
+
+struct MIBClientWrapper
+{
+	MIBClientApp* app;
+	enum sso_mib_state state;
+	pGetCommonAccessToken GetCommonAccessToken;
+};
 
 static BOOL sso_mib_get_avd_access_token(rdpClientContext* client_context, char** token)
 {
@@ -117,8 +132,8 @@ cleanup:
 	return rc;
 }
 
-BOOL sso_mib_get_access_token(rdpContext* context, AccessTokenType tokenType, char** token,
-                              size_t count, ...)
+static BOOL sso_mib_get_access_token(rdpContext* context, AccessTokenType tokenType, char** token,
+                                     size_t count, ...)
 {
 	BOOL rc = FALSE;
 	rdpClientContext* client_context = (rdpClientContext*)context;
@@ -199,4 +214,32 @@ BOOL sso_mib_get_access_token(rdpContext* context, AccessTokenType tokenType, ch
 	va_end(ap);
 
 	return rc;
+}
+
+MIBClientWrapper* sso_mib_new(rdpContext* context)
+{
+
+	MIBClientWrapper* mibClientWrapper = (MIBClientWrapper*)calloc(1, sizeof(MIBClientWrapper));
+	if (!mibClientWrapper)
+		return NULL;
+
+	mibClientWrapper->GetCommonAccessToken = freerdp_get_common_access_token(context);
+	if (!freerdp_set_common_access_token(context, sso_mib_get_access_token))
+	{
+		sso_mib_free(mibClientWrapper);
+		return NULL;
+	}
+	mibClientWrapper->state = SSO_MIB_STATE_INIT;
+	return mibClientWrapper;
+}
+
+void sso_mib_free(MIBClientWrapper* sso)
+{
+	if (!sso)
+		return;
+
+	if (sso->app)
+		g_object_unref(sso->app);
+
+	free(sso);
 }

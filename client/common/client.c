@@ -196,15 +196,9 @@ int freerdp_client_start(rdpContext* context)
 
 #ifdef WITH_SSO_MIB
 	rdpClientContext* client_context = (rdpClientContext*)context;
-	client_context->mibClientWrapper = (MIBClientWrapper*)calloc(1, sizeof(MIBClientWrapper));
+	client_context->mibClientWrapper = sso_mib_new(context);
 	if (!client_context->mibClientWrapper)
-		return ERROR_NOT_ENOUGH_MEMORY;
-
-	client_context->mibClientWrapper->GetCommonAccessToken =
-	    freerdp_get_common_access_token(context);
-	if (!freerdp_set_common_access_token(context, sso_mib_get_access_token))
 		return ERROR_INTERNAL_ERROR;
-	client_context->mibClientWrapper->state = SSO_MIB_STATE_INIT;
 #endif
 
 	pEntryPoints = context->instance->pClientEntryPoints;
@@ -223,12 +217,7 @@ int freerdp_client_stop(rdpContext* context)
 
 #ifdef WITH_SSO_MIB
 	rdpClientContext* client_context = (rdpClientContext*)context;
-	if (client_context->mibClientWrapper)
-	{
-		if (client_context->mibClientWrapper->app)
-			g_object_unref(client_context->mibClientWrapper->app);
-		free(client_context->mibClientWrapper);
-	}
+	sso_mib_free(client_context->mibClientWrapper);
 	client_context->mibClientWrapper = NULL;
 #endif // WITH_SSO_MIB
 	return rc;
