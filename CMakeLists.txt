@@ -5,6 +5,7 @@
 # Copyright 2011 Otavio Salvador <otavio@ossystems.com.br>
 # Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
 # Copyright 2012 HP Development Company, LLC
+# Copyright 2025 Siemens
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -400,6 +401,16 @@ endif()
 
 if(NOT WITHOUT_FREERDP_3x_DEPRECATED)
   find_feature(Wayland ${WAYLAND_FEATURE_TYPE} ${WAYLAND_FEATURE_PURPOSE} ${WAYLAND_FEATURE_DESCRIPTION})
+endif()
+
+if(UNIX)
+  option(WITH_SSO_MIB "Build with sso-mib support" OFF)
+else()
+  set(WITH_SSO_MIB OFF CACHE INTERNAL "unsupported platform")
+endif()
+
+if(WITH_SSO_MIB)
+  find_package(SSO_MIB REQUIRED)
 endif()
 
 option(WITH_LIBRESSL "build with LibreSSL" OFF)
