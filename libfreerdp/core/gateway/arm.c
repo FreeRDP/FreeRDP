@@ -196,9 +196,6 @@ static wStream* arm_build_http_request(rdpArm* arm, const char* method,
 	WINPR_ASSERT(arm->context);
 	WINPR_ASSERT(arm->context->rdp);
 
-	freerdp* instance = arm->context->instance;
-	WINPR_ASSERT(instance);
-
 	uri = http_context_get_uri(arm->http);
 	request = http_request_new();
 

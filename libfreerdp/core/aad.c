@@ -270,9 +270,6 @@ int aad_client_begin(rdpAad* aad)
 	rdpSettings* settings = aad->rdpcontext->settings;
 	WINPR_ASSERT(settings);
 
-	freerdp* instance = aad->rdpcontext->instance;
-	WINPR_ASSERT(instance);
-
 	/* Get the host part of the hostname */
 	const char* hostname = freerdp_settings_get_string(settings, FreeRDP_AadServerHostname);
 	if (!hostname)
