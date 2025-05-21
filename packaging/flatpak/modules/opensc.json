@@ -18,7 +18,7 @@
 				"stable-only": true,
 				"type": "anitya",
 				"url-template":
-				    "https://github.com/OpenSC/OpenSC/tags/${version0}.${version1}.${version2}"
+				    "https://github.com/OpenSC/OpenSC/releases/download/${version}/opensc-${version}.tar.gz"
 			}
 		}
 	]

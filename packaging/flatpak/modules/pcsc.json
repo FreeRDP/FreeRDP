@@ -14,15 +14,15 @@
 	"name": "pcsc",
 	"sources": [
 		{
-			"sha256": "7fcb59f66a323f63cf1ab492579a57d899806835c52ba377af9ac57df68bf39b",
+			"sha256": "00b667aa71504ed1d39a48ad377de048c70dbe47229e8c48a3239ab62979c70f",
 			"type": "archive",
-			"url": "https://github.com/LudovicRousseau/PCSC/archive/refs/tags/2.3.1.tar.gz",
+			"url": "https://github.com/LudovicRousseau/PCSC/archive/refs/tags/2.3.3.tar.gz",
 			"x-checker-data": {
 				"project-id": 2611,
 				"stable-only": true,
 				"type": "anitya",
 				"url-template":
-				    "https://github.com/LudovicRousseau/PCSC/tags/${version0}.${version1}.${version2}"
+				    "https://github.com/LudovicRousseau/PCSC/archive/refs/tags/${version0}.${version1}.${version2}"
 			}
 		}
 	]
