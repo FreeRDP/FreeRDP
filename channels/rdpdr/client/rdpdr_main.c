@@ -1014,7 +1014,8 @@ static BOOL hotplug_delete_foreach(ULONG_PTR key, void* element, void* data)
 	return TRUE;
 }
 
-static UINT handle_hotplug(RdpdrClientContext* context, RdpdrHotplugEventType type)
+static UINT handle_hotplug(RdpdrClientContext* context,
+                           WINPR_ATTR_UNUSED RdpdrHotplugEventType type)
 {
 	WINPR_ASSERT(context);
 	rdpdrPlugin* rdpdr = context->handle;
@@ -2341,7 +2342,8 @@ static UINT rdpdr_unregister_device(RdpdrClientContext* context, size_t count, c
 		const uintptr_t id = ids[x];
 		devman_unregister_device(rdpdr->devman, (void*)id);
 	}
-	return rdpdr_send_device_list_remove_request(rdpdr, count, ids);
+	return rdpdr_send_device_list_remove_request(rdpdr, WINPR_ASSERTING_INT_CAST(uint32_t, count),
+	                                             ids);
 }
 
 static UINT rdpdr_virtual_channel_event_initialized(rdpdrPlugin* rdpdr,
