@@ -1,0 +1,32 @@
+{
+	"builddir": true,
+	"buildsystem": "meson",
+	"cleanup": [
+		"/include",
+		"/lib/pkgconfig",
+		"/bin"
+	],
+	"config-opts": [
+		"-Ddefault_library=shared",
+		"-Db_pie=true",
+		"-Db_lto=true",
+		"-Ddocumentation=false",
+		"-Dexamples=false",
+		"-Dpkgconfig.relocatable=true"
+	],
+	"name": "sso-mib",
+	"sources": [
+		{
+			"sha256": "48c39c76e251ff844e7b8d4c2f1a7cea02fef55dfedd5d87ccf777b6d159db25",
+			"type": "archive",
+			"url": "https://github.com/siemens/sso-mib/archive/refs/tags/v0.5.0.tar.gz",
+			"x-checker-data": {
+				"project-id": 378306,
+				"stable-only": true,
+				"type": "anitya",
+				"url-template":
+				    "https://github.com/siemens/sso-mib/archive/refs/tags/v${version}.tar.gz"
+			}
+		}
+	]
+}
