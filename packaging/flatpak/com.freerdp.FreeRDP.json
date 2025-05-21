@@ -37,6 +37,7 @@
 		"--socket=cups",
 		"--socket=wayland",
 		"--filesystem=xdg-download",
+		"--talk-name=com.microsoft.identity.Broker1",
 		"--env=OPENSSL_CONF=/app/share/legacy-openssl.cnf"
 	],
 	"modules": [
@@ -52,6 +53,7 @@
 		"modules/SDL3.json",
 		"modules/SDL3_image.json",
 		"modules/SDL3_ttf.json",
+		"modules/sso-mib.json",
 		{
 			"builddir": true,
 			"buildsystem": "cmake-ninja",
@@ -61,6 +63,7 @@
 				"-DCMAKE_BUILD_TYPE:STRING=Release",
 				"-DCMAKE_INSTALL_LIBDIR:PATH=lib",
 				"-DWITHOUT_FREERDP_3x_DEPRECATED=ON",
+				"-DWITH_SSO_MIB=ON",
 				"-DWITH_FREERDP_DEPRECATED_COMMANDLINE=ON",
 				"-DCHANNEL_TSMF:BOOL=OFF",
 				"-DCHANNEL_URBDRC:BOOL=ON",
