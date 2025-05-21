@@ -20,11 +20,10 @@ struct MIBClientWrapper
 {
 	MIBClientApp* app;
 	enum sso_mib_state state;
+	pGetCommonAccessToken GetCommonAccessToken;
 };
 
-BOOL sso_mib_get_avd_access_token(freerdp* instance, char** token);
-
-BOOL sso_mib_get_rdsaad_access_token(freerdp* instance, const char* scope, const char* req_cnf,
-                                     char** token);
+BOOL sso_mib_get_access_token(rdpContext* context, AccessTokenType tokenType, char** token,
+                              size_t count, ...);
 
 #endif /* FREERDP_CLIENT_COMMON_SSO_MIB_TOKENS_H */

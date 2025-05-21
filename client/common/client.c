@@ -209,6 +209,10 @@ int freerdp_client_start(rdpContext* context)
 		client_context->mibClientWrapper = NULL;
 		return ERROR_INTERNAL_ERROR;
 	}
+	client_context->mibClientWrapper->GetCommonAccessToken =
+	    freerdp_get_common_access_token(context);
+	if (!freerdp_set_common_access_token(context, sso_mib_get_access_token))
+		return ERROR_INTERNAL_ERROR;
 	client_context->mibClientWrapper->state = SSO_MIB_STATE_INIT;
 #endif
 
@@ -1126,27 +1130,6 @@ static BOOL client_cli_get_avd_access_token(freerdp* instance, char** token)
 
 	*token = NULL;
 
-#ifdef WITH_SSO_MIB
-	rdpClientContext* client_context = (rdpClientContext*)instance->context;
-	if (client_context->mibClientWrapper->state == SSO_MIB_STATE_INIT ||
-	    client_context->mibClientWrapper->state == SSO_MIB_STATE_SUCCESS)
-	{
-		rc = sso_mib_get_avd_access_token(instance, token);
-		if (rc)
-		{
-			client_context->mibClientWrapper->state = SSO_MIB_STATE_SUCCESS;
-			return rc;
-		}
-		else
-		{
-			WLog_WARN(TAG, "Getting AVD token from identity broker failed, falling back to "
-			               "browser-based authentication.");
-			client_context->mibClientWrapper->state = SSO_MIB_STATE_FAILED;
-			// Fall through to regular avd access token retrieval
-		}
-	}
-#endif
-
 	const char* client_id =
 	    freerdp_settings_get_string(instance->context->settings, FreeRDP_GatewayAvdClientID);
 	const char* base = freerdp_settings_get_string(instance->context->settings,
@@ -1227,42 +1210,7 @@ BOOL client_cli_get_access_token(freerdp* instance, AccessTokenType tokenType, c
 			va_start(ap, count);
 			const char* scope = va_arg(ap, const char*);
 			const char* req_cnf = va_arg(ap, const char*);
-			BOOL rc = FALSE;
-
-#ifdef WITH_SSO_MIB
-			rdpClientContext* client_context = (rdpClientContext*)instance->context;
-			if (client_context->mibClientWrapper->state == SSO_MIB_STATE_INIT ||
-			    client_context->mibClientWrapper->state == SSO_MIB_STATE_SUCCESS)
-			{
-				// Setup scope without URL encoding for sso-mib
-				char* scope_copy = winpr_str_url_decode(scope, strlen(scope));
-				if (!scope_copy)
-				{
-					WLog_ERR(TAG, "Failed to decode scope");
-					va_end(ap);
-					return FALSE;
-				}
-
-				rc = sso_mib_get_rdsaad_access_token(instance, scope_copy, req_cnf, token);
-				free(scope_copy);
-				if (rc)
-				{
-					client_context->mibClientWrapper->state = SSO_MIB_STATE_SUCCESS;
-					va_end(ap);
-					return rc;
-				}
-				else
-				{
-					WLog_WARN(TAG, "Getting RDS token from identity broker failed, falling back to "
-					               "browser-based authentication.");
-					client_context->mibClientWrapper->state = SSO_MIB_STATE_FAILED;
-					// Fall through to regular rdsaad access token retrieval
-				}
-			}
-#endif // WITH_SSO_MIB
-
-			rc = client_cli_get_rdsaad_access_token(instance, scope, req_cnf, token);
-
+			BOOL rc = client_cli_get_rdsaad_access_token(instance, scope, req_cnf, token);
 			va_end(ap);
 			return rc;
 		}

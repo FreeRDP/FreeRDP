@@ -9,11 +9,12 @@
 
 #include "sso_mib_tokens.h"
 
-BOOL sso_mib_get_avd_access_token(freerdp* instance, char** token)
+#include <freerdp/log.h>
+#define TAG CLIENT_TAG("common.sso")
+
+static BOOL sso_mib_get_avd_access_token(rdpClientContext* client_context, char** token)
 {
-	WINPR_ASSERT(instance);
-	WINPR_ASSERT(instance->context);
-	rdpClientContext* client_context = (rdpClientContext*)instance->context;
+	WINPR_ASSERT(client_context);
 	WINPR_ASSERT(client_context->mibClientWrapper);
 	WINPR_ASSERT(client_context->mibClientWrapper->app);
 	WINPR_ASSERT(token);
@@ -52,12 +53,10 @@ cleanup:
 	return rc;
 }
 
-BOOL sso_mib_get_rdsaad_access_token(freerdp* instance, const char* scope, const char* req_cnf,
-                                     char** token)
+static BOOL sso_mib_get_rdsaad_access_token(rdpClientContext* client_context, const char* scope,
+                                            const char* req_cnf, char** token)
 {
-	WINPR_ASSERT(instance);
-	WINPR_ASSERT(instance->context);
-	rdpClientContext* client_context = (rdpClientContext*)instance->context;
+	WINPR_ASSERT(client_context);
 	WINPR_ASSERT(client_context->mibClientWrapper);
 	WINPR_ASSERT(client_context->mibClientWrapper->app);
 	WINPR_ASSERT(scope);
@@ -115,5 +114,77 @@ cleanup:
 	WINPR_JSON_Delete(json);
 	free(req_cnf_dec);
 	g_slist_free_full(scopes, g_free);
+	return rc;
+}
+
+BOOL sso_mib_get_access_token(rdpContext* context, AccessTokenType tokenType, char** token,
+                              size_t count, ...)
+{
+	BOOL rc = FALSE;
+	rdpClientContext* client_context = (rdpClientContext*)context;
+	WINPR_ASSERT(client_context);
+
+	const char* scope = NULL;
+	const char* req_cnf = NULL;
+
+	va_list ap;
+	va_start(ap, count);
+
+	if (tokenType == ACCESS_TOKEN_TYPE_AAD)
+	{
+		scope = va_arg(ap, const char*);
+		req_cnf = va_arg(ap, const char*);
+	}
+
+	if ((client_context->mibClientWrapper->state == SSO_MIB_STATE_INIT) ||
+	    (client_context->mibClientWrapper->state == SSO_MIB_STATE_SUCCESS))
+	{
+		switch (tokenType)
+		{
+			case ACCESS_TOKEN_TYPE_AVD:
+			{
+				rc = sso_mib_get_avd_access_token(client_context, token);
+				if (rc)
+					client_context->mibClientWrapper->state = SSO_MIB_STATE_SUCCESS;
+				else
+				{
+					WLog_WARN(TAG, "Getting AVD token from identity broker failed, falling back to "
+					               "browser-based authentication.");
+					client_context->mibClientWrapper->state = SSO_MIB_STATE_FAILED;
+				}
+			}
+			break;
+			case ACCESS_TOKEN_TYPE_AAD:
+			{
+				// Setup scope without URL encoding for sso-mib
+				char* scope_copy = winpr_str_url_decode(scope, strlen(scope));
+				if (!scope_copy)
+					WLog_ERR(TAG, "Failed to decode scope");
+				else
+				{
+					rc =
+					    sso_mib_get_rdsaad_access_token(client_context, scope_copy, req_cnf, token);
+					free(scope_copy);
+					if (rc)
+						client_context->mibClientWrapper->state = SSO_MIB_STATE_SUCCESS;
+					else
+					{
+						WLog_WARN(TAG,
+						          "Getting RDS token from identity broker failed, falling back to "
+						          "browser-based authentication.");
+						client_context->mibClientWrapper->state = SSO_MIB_STATE_FAILED;
+					}
+				}
+			}
+			break;
+			default:
+				break;
+		}
+	}
+	if (!rc && client_context->mibClientWrapper->GetCommonAccessToken)
+		rc = client_context->mibClientWrapper->GetCommonAccessToken(context, tokenType, token,
+		                                                            count, scope, req_cnf);
+	va_end(ap);
+
 	return rc;
 }
