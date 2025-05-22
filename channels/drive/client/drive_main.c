@@ -1068,7 +1068,6 @@ out_error:
 FREERDP_ENTRY_POINT(
     UINT VCAPITYPE drive_DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints))
 {
-	RDPDR_DRIVE* drive = NULL;
 	UINT error = 0;
 #ifdef WIN32
 	int len;
@@ -1079,7 +1078,7 @@ FREERDP_ENTRY_POINT(
 
 	WINPR_ASSERT(pEntryPoints);
 
-	drive = (RDPDR_DRIVE*)pEntryPoints->device;
+	RDPDR_DRIVE* drive = (RDPDR_DRIVE*)pEntryPoints->device;
 	WINPR_ASSERT(drive);
 
 #ifndef WIN32
@@ -1126,7 +1125,7 @@ FREERDP_ENTRY_POINT(
 		}
 
 		error = drive_register_drive_path(pEntryPoints, drive->device.Name, drive->Path,
-		                                  drive->automount);
+		                                  drive->automount, &drive->device.Id);
 	}
 	else if (strcmp(drive->Path, "*") == 0)
 	{
@@ -1159,7 +1158,8 @@ FREERDP_ENTRY_POINT(
 					return CHANNEL_RC_NO_MEMORY;
 				}
 
-				if ((error = drive_register_drive_path(pEntryPoints, bufdup, devdup, TRUE)))
+				if ((error = drive_register_drive_path(pEntryPoints, bufdup, devdup, TRUE,
+				                                       &drive->device.Id)))
 				{
 					break;
 				}
@@ -1169,7 +1169,7 @@ FREERDP_ENTRY_POINT(
 	else
 	{
 		error = drive_register_drive_path(pEntryPoints, drive->device.Name, drive->Path,
-		                                  drive->automount);
+		                                  drive->automount, &drive->device.Id);
 	}
 
 #endif
