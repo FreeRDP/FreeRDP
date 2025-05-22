@@ -21,6 +21,6 @@ jobs:
           sudo apt-get install -q -y \
             cmake-format
 
-      - name: "Run shfmt..."
+      - name: "Run cmake-format..."
         run: |
           ./scripts/cmake-format.sh

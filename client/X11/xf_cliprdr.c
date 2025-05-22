@@ -2039,7 +2039,9 @@ static UINT xf_cliprdr_server_format_list(CliprdrClientContext* context,
 		}
 	}
 
+	ClipboardLock(clipboard->system);
 	ret = cliprdr_file_context_notify_new_server_format_list(clipboard->file);
+	ClipboardUnlock(clipboard->system);
 	if (ret)
 		goto out;
 
@@ -2685,7 +2687,9 @@ void xf_cliprdr_uninit(xfContext* xfc, CliprdrClientContext* cliprdr)
 
 	if (xfc->clipboard)
 	{
+		ClipboardLock(xfc->clipboard->system);
 		cliprdr_file_context_uninit(xfc->clipboard->file, cliprdr);
+		ClipboardUnlock(xfc->clipboard->system);
 		xfc->clipboard->context = NULL;
 	}
 }
