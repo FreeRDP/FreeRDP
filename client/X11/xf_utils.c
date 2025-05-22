@@ -396,3 +396,22 @@ int LogDynAndXSendEvent_ex(wLog* log, const char* file, const char* fkt, size_t 
 	}
 	return rc;
 }
+
+int LogDynAndXFlush_ex(wLog* log, const char* file, const char* fkt, size_t line, Display* display)
+{
+	if (WLog_IsLevelActive(log, log_level))
+	{
+		write_log(log, log_level, file, fkt, line, "XFlush(%p)", display);
+	}
+
+	const int rc = XFlush(display);
+	if (rc < 0)
+	{
+		char buffer[128] = { 0 };
+
+		const DWORD lvl = WLOG_WARN;
+		WLog_Print(log, lvl, "XFlush returned %s",
+		           error_to_string(display, rc, buffer, sizeof(buffer)));
+	}
+	return rc;
+}

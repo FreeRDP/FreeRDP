@@ -127,4 +127,9 @@ extern Status LogDynAndXSendEvent_ex(wLog* log, const char* file, const char* fk
                                      Display* display, Window w, Bool propagate, long event_mask,
                                      XEvent* event_send);
 
+#define LogDynAndXFlush(log, display) \
+	LogDynAndXFlush_ex(log, __FILE__, __func__, __LINE__, (display))
+extern Status LogDynAndXFlush_ex(wLog* log, const char* file, const char* fkt, size_t line,
+                                 Display* display);
+
 BOOL IsGnome(void);
