@@ -186,7 +186,8 @@ static DWORD WINAPI timer_thread(LPVOID arg)
 	DWORD timeout = INFINITE;
 	HANDLE handles[2] = { utils_get_abort_event(timer->rdp), timer->event };
 
-	while (WaitForMultipleObjects(ARRAYSIZE(handles), handles, FALSE, timeout) != WAIT_OBJECT_0)
+	while (timer->running &&
+	       (WaitForMultipleObjects(ARRAYSIZE(handles), handles, FALSE, timeout) != WAIT_OBJECT_0))
 	{
 		(void)ResetEvent(timer->event);
 		const uint64_t next = expire_and_reschedule(timer);
@@ -211,9 +212,10 @@ void freerdp_timer_free(FreeRDPTimer* timer)
 	if (!timer)
 		return;
 
+	timer->running = false;
 	if (timer->event)
 		(void)SetEvent(timer->event);
-	timer->running = false;
+
 	if (timer->thread)
 	{
 		(void)WaitForSingleObject(timer->thread, INFINITE);
