@@ -1273,7 +1273,7 @@ void xf_ShowWindow(xfContext* xfc, xfAppWindow* appWindow, BYTE state)
 
 	/* Save the current rail state of this window */
 	appWindow->rail_state = state;
-	XFlush(xfc->display);
+	LogDynAndXFlush(xfc->log, xfc->display);
 }
 
 void xf_SetWindowRects(xfContext* xfc, xfAppWindow* appWindow, RECTANGLE_16* rects, int nrects)
@@ -1365,7 +1365,7 @@ void xf_UpdateWindowArea(xfContext* xfc, xfAppWindow* appWindow, int x, int y, i
 	LogDynAndXCopyArea(xfc->log, xfc->display, appWindow->pixmap, appWindow->handle, appWindow->gc,
 	                   x, y, WINPR_ASSERTING_INT_CAST(uint32_t, width),
 	                   WINPR_ASSERTING_INT_CAST(uint32_t, height), x, y);
-	XFlush(xfc->display);
+	LogDynAndXFlush(xfc->log, xfc->display);
 	xf_unlock_x11(xfc);
 }
 
@@ -1524,7 +1524,7 @@ UINT xf_AppUpdateWindowFromSurface(xfContext* xfc, gdiGfxSurface* surface)
 
 	rc = CHANNEL_RC_OK;
 fail:
-	XFlush(xfc->display);
+	LogDynAndXFlush(xfc->log, xfc->display);
 	xf_unlock_x11(xfc);
 	return rc;
 }

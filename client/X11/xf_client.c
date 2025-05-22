@@ -471,7 +471,7 @@ static BOOL xf_end_paint(rdpContext* context)
 				return FALSE;
 		}
 
-		XFlush(xfc->display);
+		LogDynAndXFlush(xfc->log, xfc->display);
 		xf_unlock_x11(xfc);
 	}
 
@@ -716,7 +716,7 @@ BOOL xf_create_window(xfContext* xfc)
 	XFillRectangle(xfc->display, xfc->primary, xfc->gc, 0, 0,
 	               freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth),
 	               freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight));
-	XFlush(xfc->display);
+	LogDynAndXFlush(xfc->log, xfc->display);
 
 	return TRUE;
 }

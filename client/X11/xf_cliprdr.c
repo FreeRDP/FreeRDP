@@ -1645,7 +1645,7 @@ static BOOL xf_cliprdr_process_selection_request(xfClipboard* clipboard,
 
 		conv.sev = respond;
 		LogDynAndXSendEvent(xfc->log, xfc->display, xevent->requestor, 0, 0, conv.ev);
-		XFlush(xfc->display);
+		LogDynAndXFlush(xfc->log, xfc->display);
 		free(respond);
 	}
 
@@ -1954,7 +1954,7 @@ static void xf_cliprdr_prepare_to_set_selection_owner(xfContext* xfc, xfClipboar
 
 	LogTagAndXChangeProperty(TAG, xfc->display, xfc->drawable, clipboard->timestamp_property_atom,
 	                         XA_ATOM, 32, PropModeReplace, (const BYTE*)&value, 1);
-	XFlush(xfc->display);
+	LogDynAndXFlush(xfc->log, xfc->display);
 }
 
 static void xf_cliprdr_set_selection_owner(xfContext* xfc, xfClipboard* clipboard, Time timestamp)
@@ -1968,7 +1968,7 @@ static void xf_cliprdr_set_selection_owner(xfContext* xfc, xfClipboard* clipboar
 
 	clipboard->selection_ownership_timestamp = timestamp;
 	XSetSelectionOwner(xfc->display, clipboard->clipboard_atom, xfc->drawable, timestamp);
-	XFlush(xfc->display);
+	LogDynAndXFlush(xfc->log, xfc->display);
 }
 
 /**
@@ -2143,7 +2143,7 @@ xf_cliprdr_server_format_data_request(CliprdrClientContext* context,
 	              format->localFormat, format->formatName);
 	LogTagAndXConvertSelection(TAG, xfc->display, clipboard->clipboard_atom, format->atom,
 	                           clipboard->property_atom, xfc->drawable, CurrentTime);
-	XFlush(xfc->display);
+	LogDynAndXFlush(xfc->log, xfc->display);
 	/* After this point, we expect a SelectionNotify event from the clipboard owner. */
 	return CHANNEL_RC_OK;
 }
@@ -2370,7 +2370,7 @@ xf_cliprdr_server_format_data_response(CliprdrClientContext* context,
 		conv.sev = clipboard->respond;
 
 		LogDynAndXSendEvent(xfc->log, xfc->display, clipboard->respond->requestor, 0, 0, conv.ev);
-		XFlush(xfc->display);
+		LogDynAndXFlush(xfc->log, xfc->display);
 	}
 	free(clipboard->respond);
 	clipboard->respond = NULL;

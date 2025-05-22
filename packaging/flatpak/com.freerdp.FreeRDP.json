@@ -37,7 +37,7 @@
 		"--socket=cups",
 		"--socket=wayland",
 		"--filesystem=xdg-download",
-		"--talk-name=com.microsoft.identity.Broker1",
+		"--talk-name=com.microsoft.identity.broker1",
 		"--env=OPENSSL_CONF=/app/share/legacy-openssl.cnf"
 	],
 	"modules": [
