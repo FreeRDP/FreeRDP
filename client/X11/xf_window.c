@@ -249,8 +249,8 @@ void xf_SendClientEvent(xfContext* xfc, Window window, Atom atom, unsigned int n
 	}
 
 	DEBUG_X11("Send ClientMessage Event: wnd=0x%04lX", (unsigned long)xevent.xclient.window);
-	XSendEvent(xfc->display, RootWindowOfScreen(xfc->screen), False,
-	           SubstructureRedirectMask | SubstructureNotifyMask, &xevent);
+	LogDynAndXSendEvent(xfc->log, xfc->display, RootWindowOfScreen(xfc->screen), False,
+	                    SubstructureRedirectMask | SubstructureNotifyMask, &xevent);
 	XSync(xfc->display, False);
 	va_end(argp);
 }

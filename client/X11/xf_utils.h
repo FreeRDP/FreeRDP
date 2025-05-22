@@ -120,4 +120,11 @@ extern int LogDynAndXCopyArea_ex(wLog* log, const char* file, const char* fkt, s
                                  int src_y, unsigned int width, unsigned int height, int dest_x,
                                  int dest_y);
 
+#define LogDynAndXSendEvent(log, display, w, propagate, event_mask, event_send)            \
+	LogDynAndXSendEvent_ex(log, __FILE__, __func__, __LINE__, (display), (w), (propagate), \
+	                       (event_mask), (event_send))
+extern Status LogDynAndXSendEvent_ex(wLog* log, const char* file, const char* fkt, size_t line,
+                                     Display* display, Window w, Bool propagate, long event_mask,
+                                     XEvent* event_send);
+
 BOOL IsGnome(void);

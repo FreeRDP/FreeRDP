@@ -59,6 +59,21 @@ Atom Logging_XInternAtom(wLog* log, Display* display, _Xconst char* atom_name, B
 	return atom;
 }
 
+static const char* error_to_string(Display* display, int error, char* buffer, size_t size)
+{
+	WINPR_ASSERT(size <= INT32_MAX);
+	const int rc = XGetErrorText(display, error, buffer, (int)size);
+	if (rc != Success)
+		WLog_WARN(TAG, "XGetErrorText returned %d", rc);
+	return buffer;
+}
+
+const char* x11_error_to_string(xfContext* xfc, int error, char* buffer, size_t size)
+{
+	WINPR_ASSERT(xfc);
+	return error_to_string(xfc->display, error, buffer, size);
+}
+
 int LogTagAndXChangeProperty_ex(const char* tag, const char* file, const char* fkt, size_t line,
                                 Display* display, Window w, Atom property, Atom type, int format,
                                 int mode, const unsigned char* data, int nelements)
@@ -82,7 +97,23 @@ int LogDynAndXChangeProperty_ex(wLog* log, const char* file, const char* fkt, si
 		XFree(propstr);
 		XFree(typestr);
 	}
-	return XChangeProperty(display, w, property, type, format, mode, data, nelements);
+	const int rc = XChangeProperty(display, w, property, type, format, mode, data, nelements);
+	if (rc != Success)
+	{
+		char buffer[128] = { 0 };
+
+		char* propstr = Safe_XGetAtomName(log, display, property);
+		char* typestr = Safe_XGetAtomName(log, display, type);
+
+		/* There are lots of requests to atoms that do not exist.
+		 * These are harmless and would only spam the log, so make them trace only */
+		const DWORD lvl = (rc == BadRequest) ? WLOG_DEBUG : WLOG_WARN;
+		WLog_Print(log, lvl, "XChangeProperty(%s, %s) returned %s", propstr, typestr,
+		           error_to_string(display, rc, buffer, sizeof(buffer)));
+		XFree(propstr);
+		XFree(typestr);
+	}
+	return rc;
 }
 
 int LogTagAndXDeleteProperty_ex(const char* tag, const char* file, const char* fkt, size_t line,
@@ -102,7 +133,17 @@ int LogDynAndXDeleteProperty_ex(wLog* log, const char* file, const char* fkt, si
 		          propstr, property);
 		XFree(propstr);
 	}
-	return XDeleteProperty(display, w, property);
+	const int rc = XDeleteProperty(display, w, property);
+	if (rc != Success)
+	{
+		char buffer[128] = { 0 };
+
+		char* propstr = Safe_XGetAtomName(log, display, property);
+		WLog_Print(log, WLOG_WARN, "XDeleteProperty(%s) returned %s", propstr,
+		           error_to_string(display, rc, buffer, sizeof(buffer)));
+		XFree(propstr);
+	}
+	return rc;
 }
 
 int LogTagAndXConvertSelection_ex(const char* tag, const char* file, const char* fkt, size_t line,
@@ -130,7 +171,21 @@ int LogDynAndXConvertSelection_ex(wLog* log, const char* file, const char* fkt, 
 		XFree(targetstr);
 		XFree(selectstr);
 	}
-	return XConvertSelection(display, selection, target, property, requestor, time);
+	const int rc = XConvertSelection(display, selection, target, property, requestor, time);
+	if (rc != Success)
+	{
+		char buffer[128] = { 0 };
+
+		char* selectstr = Safe_XGetAtomName(log, display, selection);
+		char* targetstr = Safe_XGetAtomName(log, display, target);
+		char* propstr = Safe_XGetAtomName(log, display, property);
+		WLog_Print(log, WLOG_WARN, "XConvertSelection(%s, %s, %s) returned %s", selectstr,
+		           targetstr, propstr, error_to_string(display, rc, buffer, sizeof(buffer)));
+		XFree(propstr);
+		XFree(targetstr);
+		XFree(selectstr);
+	}
+	return rc;
 }
 
 int LogTagAndXGetWindowProperty_ex(const char* tag, const char* file, const char* fkt, size_t line,
@@ -165,9 +220,20 @@ int LogDynAndXGetWindowProperty_ex(wLog* log, const char* file, const char* fkt,
 		XFree(propstr);
 		XFree(req_type_str);
 	}
-	return XGetWindowProperty(display, w, property, long_offset, long_length, delete, req_type,
-	                          actual_type_return, actual_format_return, nitems_return,
-	                          bytes_after_return, prop_return);
+	const int rc = XGetWindowProperty(display, w, property, long_offset, long_length, delete,
+	                                  req_type, actual_type_return, actual_format_return,
+	                                  nitems_return, bytes_after_return, prop_return);
+	if (rc != Success)
+	{
+		char buffer[128] = { 0 };
+		char* propstr = Safe_XGetAtomName(log, display, property);
+		char* req_type_str = Safe_XGetAtomName(log, display, req_type);
+		WLog_Print(log, WLOG_WARN, "XGetWindowProperty(%s, %s) returned %s", propstr, req_type_str,
+		           error_to_string(display, rc, buffer, sizeof(buffer)));
+		XFree(propstr);
+		XFree(req_type_str);
+	}
+	return rc;
 }
 
 BOOL IsGnome(void)
@@ -234,16 +300,6 @@ fail:
 	return res;
 }
 
-const char* x11_error_to_string(xfContext* xfc, int error, char* buffer, size_t size)
-{
-	WINPR_ASSERT(xfc);
-	WINPR_ASSERT(size <= INT32_MAX);
-	const int rc = XGetErrorText(xfc->display, error, buffer, (int)size);
-	if (rc)
-		WLog_WARN(TAG, "XGetErrorText returned %d", rc);
-	return buffer;
-}
-
 int LogDynAndXCopyArea_ex(wLog* log, const char* file, const char* fkt, size_t line,
                           Display* display, Pixmap src, Window dest, GC gc, int src_x, int src_y,
                           unsigned int width, unsigned int height, int dest_x, int dest_y)
@@ -254,10 +310,12 @@ int LogDynAndXCopyArea_ex(wLog* log, const char* file, const char* fkt, size_t l
 		const Status rc = XGetWindowAttributes(display, dest, &attr);
 
 		write_log(log, log_level, file, fkt, line,
-		          "XCopyArea(%p, src: {}, dest: [%d]{%lu, %d}, gc: {}, src_x: {%d}, src_y: {%d}, "
+		          "XCopyArea(%p, src: {%lu}, dest: [%d]{%lu, %lu, %d}, gc: {%p}, src_x: {%d}, "
+		          "src_y: {%d}, "
 		          "width: {%d}, "
 		          "height: {%d}, dest_x: {%d}, dest_y: {%d})",
-		          display, rc, attr.root, attr.depth, src_x, src_y, width, height, dest_x, dest_y);
+		          display, src, rc, dest, attr.root, attr.depth, gc, src_x, src_y, width, height,
+		          dest_x, dest_y);
 	}
 
 	if ((width == 0) || (height == 0))
@@ -265,12 +323,20 @@ int LogDynAndXCopyArea_ex(wLog* log, const char* file, const char* fkt, size_t l
 		const DWORD lvl = WLOG_WARN;
 		if (WLog_IsLevelActive(log, lvl))
 			write_log(log, lvl, file, fkt, line, "XCopyArea(width=%d, height=%d) !", width, height);
-		return 0;
+		return Success;
 	}
 
 	const int rc = XCopyArea(display, src, dest, gc, src_x, src_y, width, height, dest_x, dest_y);
-	if (rc != 1)
-		WLog_WARN(TAG, "XCopyArea returned %d", rc);
+	if (rc != Success)
+	{
+		char buffer[128] = { 0 };
+
+		/* TODO: We get BadRequest return values, they are not documented properly and the call
+		 * looks ok... */
+		const DWORD lvl = (rc == BadRequest) ? WLOG_DEBUG : WLOG_WARN;
+		WLog_Print(log, lvl, "XCopyArea returned %s",
+		           error_to_string(display, rc, buffer, sizeof(buffer)));
+	}
 	return rc;
 }
 
@@ -281,11 +347,11 @@ int LogDynAndXPutImage_ex(wLog* log, const char* file, const char* fkt, size_t l
 	if (WLog_IsLevelActive(log, log_level))
 	{
 		write_log(log, log_level, file, fkt, line,
-		          "XPutImage(%p, d: {}, gc: {}, image: [%p]{%d}, src_y: {%d}, dest_x: {%d}, "
+		          "XPutImage(%p, d: {%lu}, gc: {%p}, image: [%p]{%d}, src_y: {%d}, dest_x: {%d}, "
 		          "dest_y: {%d}, width: {%d}, "
 		          "height: {%d})",
-		          display, image, image ? image->depth : -1, src_x, src_y, dest_x, dest_y, width,
-		          height);
+		          display, d, gc, image, image ? image->depth : -1, src_x, src_y, dest_x, dest_y,
+		          width, height);
 	}
 
 	if ((width == 0) || (height == 0))
@@ -293,11 +359,40 @@ int LogDynAndXPutImage_ex(wLog* log, const char* file, const char* fkt, size_t l
 		const DWORD lvl = WLOG_WARN;
 		if (WLog_IsLevelActive(log, lvl))
 			write_log(log, lvl, file, fkt, line, "XPutImage(width=%d, height=%d) !", width, height);
-		return 0;
+		return Success;
 	}
 
 	const int rc = XPutImage(display, d, gc, image, src_x, src_y, dest_x, dest_y, width, height);
-	if (rc)
-		WLog_WARN(TAG, "XPutImage returned %d", rc);
+	if (rc != Success)
+	{
+		char buffer[128] = { 0 };
+		WLog_Print(log, WLOG_WARN, "XPutImage returned %s",
+		           error_to_string(display, rc, buffer, sizeof(buffer)));
+	}
+	return rc;
+}
+
+int LogDynAndXSendEvent_ex(wLog* log, const char* file, const char* fkt, size_t line,
+                           Display* display, Window w, int propagate, long event_mask,
+                           XEvent* event_send)
+{
+	if (WLog_IsLevelActive(log, log_level))
+	{
+		write_log(log, log_level, file, fkt, line,
+		          "XSendEvent(%p, d: {%lu}, w: {%lu}, propagate: {%d}, event_mask: {%d}, "
+		          "event_send: [%p]{TODO})",
+		          display, w, propagate, event_mask, event_send);
+	}
+
+	const int rc = XSendEvent(display, w, propagate, event_mask, event_send);
+	if (rc != Success)
+	{
+		char buffer[128] = { 0 };
+		/* TODO: We get BadRequest return values, they are not documented properly and the call
+		 * looks ok... */
+		const DWORD lvl = (rc == BadRequest) ? WLOG_DEBUG : WLOG_WARN;
+		WLog_Print(log, lvl, "XSendEvent returned %s",
+		           error_to_string(display, rc, buffer, sizeof(buffer)));
+	}
 	return rc;
 }

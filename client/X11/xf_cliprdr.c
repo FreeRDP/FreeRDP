@@ -1644,7 +1644,7 @@ static BOOL xf_cliprdr_process_selection_request(xfClipboard* clipboard,
 		} conv;
 
 		conv.sev = respond;
-		XSendEvent(xfc->display, xevent->requestor, 0, 0, conv.ev);
+		LogDynAndXSendEvent(xfc->log, xfc->display, xevent->requestor, 0, 0, conv.ev);
 		XFlush(xfc->display);
 		free(respond);
 	}
@@ -2369,7 +2369,7 @@ xf_cliprdr_server_format_data_response(CliprdrClientContext* context,
 
 		conv.sev = clipboard->respond;
 
-		XSendEvent(xfc->display, clipboard->respond->requestor, 0, 0, conv.ev);
+		LogDynAndXSendEvent(xfc->log, xfc->display, clipboard->respond->requestor, 0, 0, conv.ev);
 		XFlush(xfc->display);
 	}
 	free(clipboard->respond);
