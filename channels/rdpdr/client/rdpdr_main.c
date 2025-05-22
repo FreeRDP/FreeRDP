@@ -1163,8 +1163,8 @@ static UINT rdpdr_add_devices(rdpdrPlugin* rdpdr)
 	for (UINT32 index = 0; index < freerdp_settings_get_uint32(settings, FreeRDP_DeviceCount);
 	     index++)
 	{
-		const RDPDR_DEVICE* device =
-		    freerdp_settings_get_pointer_array(settings, FreeRDP_DeviceArray, index);
+		RDPDR_DEVICE* device =
+		    freerdp_settings_get_pointer_array_writable(settings, FreeRDP_DeviceArray, index);
 		WINPR_ASSERT(device);
 
 		if (device->Type == RDPDR_DTYP_FILESYSTEM)
@@ -2325,6 +2325,7 @@ static UINT rdpdr_register_device(RdpdrClientContext* context, const RDPDR_DEVIC
 		return ERROR_INVALID_DATA;
 	UINT rc = devman_load_device_service(rdpdr->devman, copy, rdpdr->rdpcontext);
 	*pid = copy->Id;
+	freerdp_device_free(copy);
 	if (rc == CHANNEL_RC_OK)
 		rc = rdpdr_try_send_device_list_announce_request(rdpdr);
 	return rc;

@@ -26,7 +26,7 @@
 #include "rdpdr_main.h"
 
 void devman_unregister_device(DEVMAN* devman, void* key);
-UINT devman_load_device_service(DEVMAN* devman, const RDPDR_DEVICE* device, rdpContext* rdpcontext);
+UINT devman_load_device_service(DEVMAN* devman, RDPDR_DEVICE* device, rdpContext* rdpcontext);
 DEVICE* devman_get_device_by_id(DEVMAN* devman, UINT32 id);
 DEVICE* devman_get_device_by_type(DEVMAN* devman, UINT32 type);
 
