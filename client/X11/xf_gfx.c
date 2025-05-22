@@ -29,6 +29,7 @@
 #include <freerdp/log.h>
 #include "xf_gfx.h"
 #include "xf_rail.h"
+#include "xf_utils.h"
 
 #include <X11/Xutil.h>
 

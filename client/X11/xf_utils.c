@@ -260,8 +260,16 @@ int LogDynAndXCopyArea_ex(wLog* log, const char* file, const char* fkt, size_t l
 		          display, rc, attr.root, attr.depth, src_x, src_y, width, height, dest_x, dest_y);
 	}
 
+	if ((width == 0) || (height == 0))
+	{
+		const DWORD lvl = WLOG_WARN;
+		if (WLog_IsLevelActive(log, lvl))
+			write_log(log, lvl, file, fkt, line, "XCopyArea(width=%d, height=%d) !", width, height);
+		return 0;
+	}
+
 	const int rc = XCopyArea(display, src, dest, gc, src_x, src_y, width, height, dest_x, dest_y);
-	if (rc)
+	if (rc != 1)
 		WLog_WARN(TAG, "XCopyArea returned %d", rc);
 	return rc;
 }
@@ -278,6 +286,14 @@ int LogDynAndXPutImage_ex(wLog* log, const char* file, const char* fkt, size_t l
 		          "height: {%d})",
 		          display, image, image ? image->depth : -1, src_x, src_y, dest_x, dest_y, width,
 		          height);
+	}
+
+	if ((width == 0) || (height == 0))
+	{
+		const DWORD lvl = WLOG_WARN;
+		if (WLog_IsLevelActive(log, lvl))
+			write_log(log, lvl, file, fkt, line, "XPutImage(width=%d, height=%d) !", width, height);
+		return 0;
 	}
 
 	const int rc = XPutImage(display, d, gc, image, src_x, src_y, dest_x, dest_y, width, height);

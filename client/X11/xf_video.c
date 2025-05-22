@@ -23,6 +23,7 @@
 #include <freerdp/gdi/video.h>
 
 #include "xf_video.h"
+#include "xf_utils.h"
 
 #include <freerdp/log.h>
 #define TAG CLIENT_TAG("video")
