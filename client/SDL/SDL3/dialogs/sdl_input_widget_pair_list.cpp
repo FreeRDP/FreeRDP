@@ -293,8 +293,8 @@ int SdlInputWidgetPairList::run(std::vector<std::string>& result)
 			auto rc = SDL_RenderPresent(_renderer.get());
 			if (!rc)
 			{
-				SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "SDL_RenderPresent failed with %s",
-				            SDL_GetError());
+				SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "[%s] SDL_RenderPresent failed with %s",
+				            __func__, SDL_GetError());
 			}
 		}
 
