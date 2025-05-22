@@ -329,8 +329,9 @@ void xf_draw_screen_(xfContext* xfc, int x, int y, int w, int h, const char* fkt
 	}
 
 #endif
-	XCopyArea(xfc->display, xfc->primary, xfc->window->handle, xfc->gc, x, y,
-	          WINPR_ASSERTING_INT_CAST(uint32_t, w), WINPR_ASSERTING_INT_CAST(uint32_t, h), x, y);
+	LogDynAndXCopyArea(xfc->log, xfc->display, xfc->primary, xfc->window->handle, xfc->gc, x, y,
+	                   WINPR_ASSERTING_INT_CAST(uint32_t, w), WINPR_ASSERTING_INT_CAST(uint32_t, h),
+	                   x, y);
 }
 
 static BOOL xf_desktop_resize(rdpContext* context)
@@ -424,9 +425,10 @@ static BOOL xf_paint(xfContext* xfc, const GDI_RGN* region)
 	}
 	else
 	{
-		XPutImage(xfc->display, xfc->primary, xfc->gc, xfc->image, region->x, region->y, region->x,
-		          region->y, WINPR_ASSERTING_INT_CAST(UINT16, region->w),
-		          WINPR_ASSERTING_INT_CAST(UINT16, region->h));
+		LogDynAndXPutImage(xfc->log, xfc->display, xfc->primary, xfc->gc, xfc->image, region->x,
+		                   region->y, region->x, region->y,
+		                   WINPR_ASSERTING_INT_CAST(UINT16, region->w),
+		                   WINPR_ASSERTING_INT_CAST(UINT16, region->h));
 		xf_draw_screen(xfc, region->x, region->y, region->w, region->h);
 	}
 	return TRUE;

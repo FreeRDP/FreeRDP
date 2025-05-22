@@ -1357,14 +1357,14 @@ void xf_UpdateWindowArea(xfContext* xfc, xfAppWindow* appWindow, int x, int y, i
 
 	if (freerdp_settings_get_bool(settings, FreeRDP_SoftwareGdi))
 	{
-		XPutImage(xfc->display, appWindow->pixmap, appWindow->gc, xfc->image, ax, ay, x, y,
-		          WINPR_ASSERTING_INT_CAST(uint32_t, width),
-		          WINPR_ASSERTING_INT_CAST(uint32_t, height));
+		LogDynAndXPutImage(xfc->log, xfc->display, appWindow->pixmap, appWindow->gc, xfc->image, ax,
+		                   ay, x, y, WINPR_ASSERTING_INT_CAST(uint32_t, width),
+		                   WINPR_ASSERTING_INT_CAST(uint32_t, height));
 	}
 
-	XCopyArea(xfc->display, appWindow->pixmap, appWindow->handle, appWindow->gc, x, y,
-	          WINPR_ASSERTING_INT_CAST(uint32_t, width), WINPR_ASSERTING_INT_CAST(uint32_t, height),
-	          x, y);
+	LogDynAndXCopyArea(xfc->log, xfc->display, appWindow->pixmap, appWindow->handle, appWindow->gc,
+	                   x, y, WINPR_ASSERTING_INT_CAST(uint32_t, width),
+	                   WINPR_ASSERTING_INT_CAST(uint32_t, height), x, y);
 	XFlush(xfc->display);
 	xf_unlock_x11(xfc);
 }
@@ -1514,11 +1514,12 @@ UINT xf_AppUpdateWindowFromSurface(xfContext* xfc, gdiGfxSurface* surface)
 		const UINT32 width = rect->right - rect->left;
 		const UINT32 height = rect->bottom - rect->top;
 
-		XPutImage(xfc->display, appWindow->pixmap, appWindow->gc, image, rect->left, rect->top,
-		          rect->left, rect->top, width, height);
+		LogDynAndXPutImage(xfc->log, xfc->display, appWindow->pixmap, appWindow->gc, image,
+		                   rect->left, rect->top, rect->left, rect->top, width, height);
 
-		XCopyArea(xfc->display, appWindow->pixmap, appWindow->handle, appWindow->gc, rect->left,
-		          rect->top, width, height, rect->left, rect->top);
+		LogDynAndXCopyArea(xfc->log, xfc->display, appWindow->pixmap, appWindow->handle,
+		                   appWindow->gc, rect->left, rect->top, width, height, rect->left,
+		                   rect->top);
 	}
 
 	rc = CHANNEL_RC_OK;

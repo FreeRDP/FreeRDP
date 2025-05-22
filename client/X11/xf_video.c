@@ -83,9 +83,9 @@ static BOOL xfVideoShowSurface(VideoClientContext* video, const VideoSurface* su
 	if (freerdp_settings_get_bool(settings, FreeRDP_SmartSizing) ||
 	    freerdp_settings_get_bool(settings, FreeRDP_MultiTouchGestures))
 	{
-		XPutImage(xfc->display, xfc->primary, xfc->gc, xfSurface->image, 0, 0,
-		          WINPR_ASSERTING_INT_CAST(int, surface->x),
-		          WINPR_ASSERTING_INT_CAST(int, surface->y), surface->w, surface->h);
+		LogDynAndXPutImage(xfc->log, xfc->display, xfc->primary, xfc->gc, xfSurface->image, 0, 0,
+		                   WINPR_ASSERTING_INT_CAST(int, surface->x),
+		                   WINPR_ASSERTING_INT_CAST(int, surface->y), surface->w, surface->h);
 		xf_draw_screen(xfc, WINPR_ASSERTING_INT_CAST(int32_t, surface->x),
 		               WINPR_ASSERTING_INT_CAST(int32_t, surface->y),
 		               WINPR_ASSERTING_INT_CAST(int32_t, surface->w),
@@ -94,9 +94,9 @@ static BOOL xfVideoShowSurface(VideoClientContext* video, const VideoSurface* su
 	else
 #endif
 	{
-		XPutImage(xfc->display, xfc->drawable, xfc->gc, xfSurface->image, 0, 0,
-		          WINPR_ASSERTING_INT_CAST(int, surface->x),
-		          WINPR_ASSERTING_INT_CAST(int, surface->y), surface->w, surface->h);
+		LogDynAndXPutImage(xfc->log, xfc->display, xfc->drawable, xfc->gc, xfSurface->image, 0, 0,
+		                   WINPR_ASSERTING_INT_CAST(int, surface->x),
+		                   WINPR_ASSERTING_INT_CAST(int, surface->y), surface->w, surface->h);
 	}
 
 	return TRUE;
