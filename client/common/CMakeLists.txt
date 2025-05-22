@@ -35,6 +35,16 @@ foreach(FREERDP_CHANNELS_CLIENT_SRC ${FREERDP_CHANNELS_CLIENT_SRCS})
   list(APPEND SRCS "${FREERDP_CHANNELS_CLIENT_SRC}")
 endforeach()
 
+if(UNIX)
+	option(WITH_SSO_MIB "Build with sso-mib support" OFF)
+else()
+	set(WITH_SSO_MIB OFF CACHE INTERNAL "unsupported platform")
+endif()
+
+if(WITH_SSO_MIB)
+	find_package(SSO_MIB REQUIRED)
+endif()
+
 if(NOT APPLE AND NOT WIN32 AND NOT ANDROID)
   set(OPT_FUSE_DEFAULT ON)
 else()
