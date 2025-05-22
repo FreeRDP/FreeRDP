@@ -932,8 +932,10 @@ static void drive_message_free(void* obj)
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT drive_register_drive_path(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints, const char* name,
-                                      const char* path, BOOL automount)
+                                      const char* path, BOOL automount, uint32_t* pid)
 {
+	WINPR_ASSERT(pid);
+
 	size_t length = 0;
 	DRIVE_DEVICE* drive = NULL;
 	UINT error = ERROR_INTERNAL_ERROR;
@@ -1035,6 +1037,7 @@ static UINT drive_register_drive_path(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints,
 			WLog_ERR(TAG, "RegisterDevice failed with error %" PRIu32 "!", error);
 			goto out_error;
 		}
+		*pid = drive->device.id;
 
 		drive->async = !freerdp_settings_get_bool(drive->rdpcontext->settings,
 		                                          FreeRDP_SynchronousStaticChannels);
@@ -1104,8 +1107,8 @@ FREERDP_ENTRY_POINT(
 		}
 	}
 
-	error =
-	    drive_register_drive_path(pEntryPoints, drive->device.Name, drive->Path, drive->automount);
+	error = drive_register_drive_path(pEntryPoints, drive->device.Name, drive->Path,
+	                                  drive->automount, &drive->device.Id);
 #else
 	/* Special case: path[0] == '*' -> export all drives */
 	/* Special case: path[0] == '%' -> user home dir */
