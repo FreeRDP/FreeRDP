@@ -103,4 +103,21 @@ int LogDynAndXConvertSelection_ex(wLog* log, const char* file, const char* fkt, 
                                   Display* display, Atom selection, Atom target, Atom property,
                                   Window requestor, Time time);
 
+#define LogDynAndXPutImage(log, display, d, gc, image, src_x, src_y, dest_x, dest_y, width, \
+                           height)                                                          \
+	LogDynAndXPutImage_ex(log, __FILE__, __func__, __LINE__, (display), (d), (gc), (image), \
+	                      (src_x), (src_y), (dest_x), (dest_y), (width), (height))
+int LogDynAndXPutImage_ex(wLog* log, const char* file, const char* fkt, size_t line,
+                          Display* display, Drawable d, GC gc, XImage* image, int src_x, int src_y,
+                          int dest_x, int dest_y, unsigned int width, unsigned int height);
+
+#define LogDynAndXCopyArea(log, display, src, dest, gc, src_x, src_y, width, height, dest_x, \
+                           dest_y)                                                           \
+	LogDynAndXCopyArea_ex(log, __FILE__, __func__, __LINE__, (display), (src), (dest), (gc), \
+	                      (src_x), (src_y), (width), (height), (dest_x), (dest_y))
+extern int LogDynAndXCopyArea_ex(wLog* log, const char* file, const char* fkt, size_t line,
+                                 Display* display, Pixmap src, Window dest, GC gc, int src_x,
+                                 int src_y, unsigned int width, unsigned int height, int dest_x,
+                                 int dest_y);
+
 BOOL IsGnome(void);

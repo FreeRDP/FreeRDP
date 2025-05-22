@@ -94,10 +94,11 @@ static UINT xf_OutputUpdate(xfContext* xfc, xfGfxSurface* surface)
 
 		if (xfc->remote_app)
 		{
-			XPutImage(xfc->display, xfc->primary, xfc->gc, surface->image,
-			          WINPR_ASSERTING_INT_CAST(int, nXSrc), WINPR_ASSERTING_INT_CAST(int, nYSrc),
-			          WINPR_ASSERTING_INT_CAST(int, nXDst), WINPR_ASSERTING_INT_CAST(int, nYDst),
-			          dwidth, dheight);
+			LogDynAndXPutImage(xfc->log, xfc->display, xfc->primary, xfc->gc, surface->image,
+			                   WINPR_ASSERTING_INT_CAST(int, nXSrc),
+			                   WINPR_ASSERTING_INT_CAST(int, nYSrc),
+			                   WINPR_ASSERTING_INT_CAST(int, nXDst),
+			                   WINPR_ASSERTING_INT_CAST(int, nYDst), dwidth, dheight);
 			xf_lock_x11(xfc);
 			xf_rail_paint_surface(xfc, surface->gdi.windowId, rect);
 			xf_unlock_x11(xfc);
@@ -107,10 +108,11 @@ static UINT xf_OutputUpdate(xfContext* xfc, xfGfxSurface* surface)
 		    if (freerdp_settings_get_bool(settings, FreeRDP_SmartSizing) ||
 		        freerdp_settings_get_bool(settings, FreeRDP_MultiTouchGestures))
 		{
-			XPutImage(xfc->display, xfc->primary, xfc->gc, surface->image,
-			          WINPR_ASSERTING_INT_CAST(int, nXSrc), WINPR_ASSERTING_INT_CAST(int, nYSrc),
-			          WINPR_ASSERTING_INT_CAST(int, nXDst), WINPR_ASSERTING_INT_CAST(int, nYDst),
-			          dwidth, dheight);
+			LogDynAndXPutImage(xfc->log, xfc->display, xfc->primary, xfc->gc, surface->image,
+			                   WINPR_ASSERTING_INT_CAST(int, nXSrc),
+			                   WINPR_ASSERTING_INT_CAST(int, nYSrc),
+			                   WINPR_ASSERTING_INT_CAST(int, nXDst),
+			                   WINPR_ASSERTING_INT_CAST(int, nYDst), dwidth, dheight);
 			xf_draw_screen(xfc, WINPR_ASSERTING_INT_CAST(int32_t, nXDst),
 			               WINPR_ASSERTING_INT_CAST(int32_t, nYDst),
 			               WINPR_ASSERTING_INT_CAST(int32_t, dwidth),
@@ -119,10 +121,11 @@ static UINT xf_OutputUpdate(xfContext* xfc, xfGfxSurface* surface)
 		else
 #endif
 		{
-			XPutImage(xfc->display, xfc->drawable, xfc->gc, surface->image,
-			          WINPR_ASSERTING_INT_CAST(int, nXSrc), WINPR_ASSERTING_INT_CAST(int, nYSrc),
-			          WINPR_ASSERTING_INT_CAST(int, nXDst), WINPR_ASSERTING_INT_CAST(int, nYDst),
-			          dwidth, dheight);
+			LogDynAndXPutImage(xfc->log, xfc->display, xfc->drawable, xfc->gc, surface->image,
+			                   WINPR_ASSERTING_INT_CAST(int, nXSrc),
+			                   WINPR_ASSERTING_INT_CAST(int, nYSrc),
+			                   WINPR_ASSERTING_INT_CAST(int, nXDst),
+			                   WINPR_ASSERTING_INT_CAST(int, nYDst), dwidth, dheight);
 		}
 	}
 

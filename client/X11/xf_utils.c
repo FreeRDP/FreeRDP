@@ -243,3 +243,45 @@ const char* x11_error_to_string(xfContext* xfc, int error, char* buffer, size_t 
 		WLog_WARN(TAG, "XGetErrorText returned %d", rc);
 	return buffer;
 }
+
+int LogDynAndXCopyArea_ex(wLog* log, const char* file, const char* fkt, size_t line,
+                          Display* display, Pixmap src, Window dest, GC gc, int src_x, int src_y,
+                          unsigned int width, unsigned int height, int dest_x, int dest_y)
+{
+	if (WLog_IsLevelActive(log, log_level))
+	{
+		XWindowAttributes attr = { 0 };
+		const Status rc = XGetWindowAttributes(display, dest, &attr);
+
+		write_log(log, log_level, file, fkt, line,
+		          "XCopyArea(%p, src: {}, dest: [%d]{%lu, %d}, gc: {}, src_x: {%d}, src_y: {%d}, "
+		          "width: {%d}, "
+		          "height: {%d}, dest_x: {%d}, dest_y: {%d})",
+		          display, rc, attr.root, attr.depth, src_x, src_y, width, height, dest_x, dest_y);
+	}
+
+	const int rc = XCopyArea(display, src, dest, gc, src_x, src_y, width, height, dest_x, dest_y);
+	if (rc)
+		WLog_WARN(TAG, "XCopyArea returned %d", rc);
+	return rc;
+}
+
+int LogDynAndXPutImage_ex(wLog* log, const char* file, const char* fkt, size_t line,
+                          Display* display, Drawable d, GC gc, XImage* image, int src_x, int src_y,
+                          int dest_x, int dest_y, unsigned int width, unsigned int height)
+{
+	if (WLog_IsLevelActive(log, log_level))
+	{
+		write_log(log, log_level, file, fkt, line,
+		          "XPutImage(%p, d: {}, gc: {}, image: [%p]{%d}, src_y: {%d}, dest_x: {%d}, "
+		          "dest_y: {%d}, width: {%d}, "
+		          "height: {%d})",
+		          display, image, image ? image->depth : -1, src_x, src_y, dest_x, dest_y, width,
+		          height);
+	}
+
+	const int rc = XPutImage(display, d, gc, image, src_x, src_y, dest_x, dest_y, width, height);
+	if (rc)
+		WLog_WARN(TAG, "XPutImage returned %d", rc);
+	return rc;
+}
