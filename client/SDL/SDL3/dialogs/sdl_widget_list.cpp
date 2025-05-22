@@ -44,6 +44,9 @@ bool SdlWidgetList::clearWindow()
 
 bool SdlWidgetList::update()
 {
+	if (!visible())
+		return true;
+
 	clearWindow();
 	updateInternal();
 	if (!_buttons.update())
@@ -51,7 +54,7 @@ bool SdlWidgetList::update()
 	auto rc = SDL_RenderPresent(_renderer.get());
 	if (!rc)
 	{
-		SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "SDL_RenderPresent failed with %s",
+		SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "[%s] SDL_RenderPresent failed with %s", __func__,
 		            SDL_GetError());
 	}
 	return rc;

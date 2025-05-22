@@ -491,8 +491,7 @@ RDPDR_DEVICE* freerdp_device_clone(const RDPDR_DEVICE* device)
 
 	if (device->Name)
 	{
-		count = 1;
-		args[0] = device->Name;
+		args[count++] = device->Name;
 	}
 
 	switch (device->Type)
@@ -500,17 +499,14 @@ RDPDR_DEVICE* freerdp_device_clone(const RDPDR_DEVICE* device)
 		case RDPDR_DTYP_FILESYSTEM:
 			if (src.drive->Path)
 			{
-				args[1] = src.drive->Path;
-				count = 2;
+				args[count++] = src.drive->Path;
+				args[count++] = src.drive->automount ? NULL : src.drive->Path;
 			}
 			break;
 
 		case RDPDR_DTYP_PRINT:
 			if (src.printer->DriverName)
-			{
-				args[1] = src.printer->DriverName;
-				count = 2;
-			}
+				args[count++] = src.printer->DriverName;
 			break;
 
 		case RDPDR_DTYP_SMARTCARD:
@@ -518,30 +514,18 @@ RDPDR_DEVICE* freerdp_device_clone(const RDPDR_DEVICE* device)
 
 		case RDPDR_DTYP_SERIAL:
 			if (src.serial->Path)
-			{
-				args[1] = src.serial->Path;
-				count = 2;
-			}
+				args[count++] = src.serial->Path;
 
 			if (src.serial->Driver)
-			{
-				args[2] = src.serial->Driver;
-				count = 3;
-			}
+				args[count++] = src.serial->Driver;
 
 			if (src.serial->Permissive)
-			{
-				args[3] = src.serial->Permissive;
-				count = 4;
-			}
+				args[count++] = src.serial->Permissive;
 			break;
 
 		case RDPDR_DTYP_PARALLEL:
 			if (src.parallel->Path)
-			{
-				args[1] = src.parallel->Path;
-				count = 2;
-			}
+				args[count++] = src.parallel->Path;
 			break;
 		default:
 			WLog_ERR(TAG, "unknown device type %" PRIu32 "", device->Type);
