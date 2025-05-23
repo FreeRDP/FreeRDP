@@ -1061,9 +1061,22 @@ static BOOL client_cli_get_rdsaad_access_token(freerdp* instance, const char* sc
 	    freerdp_settings_get_string(instance->context->settings, FreeRDP_GatewayAvdClientID);
 	if (!client_id)
 		goto cleanup;
+	const char* base = freerdp_settings_get_string(instance->context->settings,
+	                                               FreeRDP_GatewayAzureActiveDirectory);
+	const char* urlFormatString = freerdp_settings_get_string(instance->context->settings,
+	                                                          FreeRDP_GatewayAvdAccessTokenFormat);
+	if (!urlFormatString)
+		goto cleanup;
 
-	winpr_asprintf(&redirect_uri, &redirec_uri_len,
-	               "ms-appx-web%%3a%%2f%%2fMicrosoft.AAD.BrokerPlugin%%2f%s", client_id);
+	const BOOL useTenant =
+	    freerdp_settings_get_bool(instance->context->settings, FreeRDP_GatewayAvdUseTenantid);
+	const char* tenantid = "common";
+	if (useTenant)
+		tenantid =
+		    freerdp_settings_get_string(instance->context->settings, FreeRDP_GatewayAvdAadtenantid);
+	if (!base || !tenantid || !client_id)
+		goto cleanup;
+	winpr_asprintf(&redirect_uri, &redirec_uri_len, urlFormatString, base, tenantid);
 	if (!redirect_uri)
 		goto cleanup;
 
@@ -1107,7 +1120,6 @@ static BOOL client_cli_get_avd_access_token(freerdp* instance, char** token)
 	char* token_request = NULL;
 	char* redirect_uri = NULL;
 	size_t redirec_uri_len = 0;
-	const char* scope = "https%3A%2F%2Fwww.wvd.microsoft.com%2F.default";
 
 	WINPR_ASSERT(token);
 
@@ -1115,6 +1127,10 @@ static BOOL client_cli_get_avd_access_token(freerdp* instance, char** token)
 
 	*token = NULL;
 
+	const char* scope =
+	    freerdp_settings_get_string(instance->context->settings, FreeRDP_GatewayAvdScope);
+	if (!scope)
+		goto cleanup;
 	const char* client_id =
 	    freerdp_settings_get_string(instance->context->settings, FreeRDP_GatewayAvdClientID);
 	const char* base = freerdp_settings_get_string(instance->context->settings,
@@ -1128,8 +1144,12 @@ static BOOL client_cli_get_avd_access_token(freerdp* instance, char** token)
 	if (!base || !tenantid || !client_id)
 		goto cleanup;
 
-	winpr_asprintf(&redirect_uri, &redirec_uri_len,
-	               "https%%3A%%2F%%2F%s%%2F%s%%2Foauth2%%2Fnativeclient", base, tenantid);
+	const char* urlFormatString =
+	    freerdp_settings_get_string(instance->context->settings, FreeRDP_GatewayAvdAccessAadFormat);
+	if (!urlFormatString)
+		goto cleanup;
+
+	winpr_asprintf(&redirect_uri, &redirec_uri_len, urlFormatString, base, tenantid);
 	if (!redirect_uri)
 		goto cleanup;
 
