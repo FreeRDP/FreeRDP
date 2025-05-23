@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include <winpr/wlog.h>
 #include <freerdp/api.h>
 
-int xf_detect_keyboard_layout_from_xkb(DWORD* keyboardLayoutId);
+int xf_detect_keyboard_layout_from_xkb(wLog* log, DWORD* keyboardLayoutId);

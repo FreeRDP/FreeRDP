@@ -204,8 +204,8 @@ static void xf_draw_screen_scaled(xfContext* xfc, int x, int y, int w, int h)
 	const double yScalingFactor = 1.0 *
 	                              freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight) /
 	                              (double)xfc->scaledHeight;
-	XSetFillStyle(xfc->display, xfc->gc, FillSolid);
-	XSetForeground(xfc->display, xfc->gc, 0);
+	LogDynAndXSetFillStyle(xfc->log, xfc->display, xfc->gc, FillSolid);
+	LogDynAndXSetForeground(xfc->log, xfc->display, xfc->gc, 0);
 	/* Black out possible space between desktop and window borders */
 	{
 		XRectangle box1 = { 0, 0, WINPR_ASSERTING_INT_CAST(UINT16, xfc->window->width),
@@ -221,11 +221,11 @@ static void xf_draw_screen_scaled(xfContext* xfc, int x, int y, int w, int h)
 
 		if (XSubtractRegion(reg1, reg2, reg1) && !XEmptyRegion(reg1))
 		{
-			XSetRegion(xfc->display, xfc->gc, reg1);
-			XFillRectangle(xfc->display, xfc->window->handle, xfc->gc, 0, 0,
-			               WINPR_ASSERTING_INT_CAST(UINT16, xfc->window->width),
-			               WINPR_ASSERTING_INT_CAST(UINT16, xfc->window->height));
-			XSetClipMask(xfc->display, xfc->gc, None);
+			LogDynAndXSetRegion(xfc->log, xfc->display, xfc->gc, reg1);
+			LogDynAndXFillRectangle(xfc->log, xfc->display, xfc->window->handle, xfc->gc, 0, 0,
+			                        WINPR_ASSERTING_INT_CAST(UINT16, xfc->window->width),
+			                        WINPR_ASSERTING_INT_CAST(UINT16, xfc->window->height));
+			LogDynAndXSetClipMask(xfc->log, xfc->display, xfc->gc, None);
 		}
 
 		XDestroyRegion(reg1);
@@ -347,14 +347,14 @@ static BOOL xf_desktop_resize(rdpContext* context)
 	if (xfc->primary)
 	{
 		BOOL same = (xfc->primary == xfc->drawing) ? TRUE : FALSE;
-		XFreePixmap(xfc->display, xfc->primary);
+		LogDynAndXFreePixmap(xfc->log, xfc->display, xfc->primary);
 
 		WINPR_ASSERT(xfc->depth != 0);
-		if (!(xfc->primary =
-		          XCreatePixmap(xfc->display, xfc->drawable,
-		                        freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth),
-		                        freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight),
-		                        WINPR_ASSERTING_INT_CAST(uint32_t, xfc->depth))))
+		if (!(xfc->primary = LogDynAndXCreatePixmap(
+		          xfc->log, xfc->display, xfc->drawable,
+		          freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth),
+		          freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight),
+		          WINPR_ASSERTING_INT_CAST(uint32_t, xfc->depth))))
 			return FALSE;
 
 		if (same)
@@ -397,12 +397,12 @@ static BOOL xf_desktop_resize(rdpContext* context)
 			    int, freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight));
 		}
 
-		XSetFunction(xfc->display, xfc->gc, GXcopy);
-		XSetFillStyle(xfc->display, xfc->gc, FillSolid);
-		XSetForeground(xfc->display, xfc->gc, 0);
-		XFillRectangle(xfc->display, xfc->drawable, xfc->gc, 0, 0,
-		               freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth),
-		               freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight));
+		LogDynAndXSetFunction(xfc->log, xfc->display, xfc->gc, GXcopy);
+		LogDynAndXSetFillStyle(xfc->log, xfc->display, xfc->gc, FillSolid);
+		LogDynAndXSetForeground(xfc->log, xfc->display, xfc->gc, 0);
+		LogDynAndXFillRectangle(xfc->log, xfc->display, xfc->drawable, xfc->gc, 0, 0,
+		                        freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth),
+		                        freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight));
 	}
 
 	return TRUE;
@@ -501,9 +501,10 @@ static BOOL xf_sw_desktop_resize(rdpContext* context)
 	}
 
 	WINPR_ASSERT(xfc->depth != 0);
-	if (!(xfc->image = XCreateImage(
-	          xfc->display, xfc->visual, WINPR_ASSERTING_INT_CAST(uint32_t, xfc->depth), ZPixmap, 0,
-	          (char*)gdi->primary_buffer, WINPR_ASSERTING_INT_CAST(uint32_t, gdi->width),
+	if (!(xfc->image = LogDynAndXCreateImage(
+	          xfc->log, xfc->display, xfc->visual, WINPR_ASSERTING_INT_CAST(uint32_t, xfc->depth),
+	          ZPixmap, 0, (char*)gdi->primary_buffer,
+	          WINPR_ASSERTING_INT_CAST(uint32_t, gdi->width),
 	          WINPR_ASSERTING_INT_CAST(uint32_t, gdi->height), xfc->scanline_pad,
 	          WINPR_ASSERTING_INT_CAST(int, gdi->stride))))
 	{
@@ -693,29 +694,32 @@ BOOL xf_create_window(xfContext* xfc)
 	}
 
 	if (!xfc->gc)
-		xfc->gc = XCreateGC(xfc->display, xfc->drawable, GCGraphicsExposures, &gcv);
+		xfc->gc =
+		    LogDynAndXCreateGC(xfc->log, xfc->display, xfc->drawable, GCGraphicsExposures, &gcv);
 
 	WINPR_ASSERT(xfc->depth != 0);
 	if (!xfc->primary)
-		xfc->primary = XCreatePixmap(xfc->display, xfc->drawable,
-		                             freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth),
-		                             freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight),
-		                             WINPR_ASSERTING_INT_CAST(uint32_t, xfc->depth));
+		xfc->primary =
+		    LogDynAndXCreatePixmap(xfc->log, xfc->display, xfc->drawable,
+		                           freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth),
+		                           freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight),
+		                           WINPR_ASSERTING_INT_CAST(uint32_t, xfc->depth));
 
 	xfc->drawing = xfc->primary;
 
 	if (!xfc->bitmap_mono)
-		xfc->bitmap_mono = XCreatePixmap(xfc->display, xfc->drawable, 8, 8, 1);
+		xfc->bitmap_mono = LogDynAndXCreatePixmap(xfc->log, xfc->display, xfc->drawable, 8, 8, 1);
 
 	if (!xfc->gc_mono)
-		xfc->gc_mono = XCreateGC(xfc->display, xfc->bitmap_mono, GCGraphicsExposures, &gcv);
+		xfc->gc_mono =
+		    LogDynAndXCreateGC(xfc->log, xfc->display, xfc->bitmap_mono, GCGraphicsExposures, &gcv);
 
-	XSetFunction(xfc->display, xfc->gc, GXcopy);
-	XSetFillStyle(xfc->display, xfc->gc, FillSolid);
-	XSetForeground(xfc->display, xfc->gc, BlackPixelOfScreen(xfc->screen));
-	XFillRectangle(xfc->display, xfc->primary, xfc->gc, 0, 0,
-	               freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth),
-	               freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight));
+	LogDynAndXSetFunction(xfc->log, xfc->display, xfc->gc, GXcopy);
+	LogDynAndXSetFillStyle(xfc->log, xfc->display, xfc->gc, FillSolid);
+	LogDynAndXSetForeground(xfc->log, xfc->display, xfc->gc, BlackPixelOfScreen(xfc->screen));
+	LogDynAndXFillRectangle(xfc->log, xfc->display, xfc->primary, xfc->gc, 0, 0,
+	                        freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth),
+	                        freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight));
 	LogDynAndXFlush(xfc->log, xfc->display);
 
 	return TRUE;
@@ -731,12 +735,12 @@ BOOL xf_create_image(xfContext* xfc)
 		WINPR_ASSERT(cgdi);
 
 		WINPR_ASSERT(xfc->depth != 0);
-		xfc->image =
-		    XCreateImage(xfc->display, xfc->visual, WINPR_ASSERTING_INT_CAST(uint32_t, xfc->depth),
-		                 ZPixmap, 0, (char*)cgdi->primary_buffer,
-		                 freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth),
-		                 freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight),
-		                 xfc->scanline_pad, WINPR_ASSERTING_INT_CAST(int, cgdi->stride));
+		xfc->image = LogDynAndXCreateImage(
+		    xfc->log, xfc->display, xfc->visual, WINPR_ASSERTING_INT_CAST(uint32_t, xfc->depth),
+		    ZPixmap, 0, (char*)cgdi->primary_buffer,
+		    freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth),
+		    freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight), xfc->scanline_pad,
+		    WINPR_ASSERTING_INT_CAST(int, cgdi->stride));
 		xfc->image->byte_order = LSBFirst;
 		xfc->image->bitmap_bit_order = LSBFirst;
 	}
@@ -768,25 +772,25 @@ static void xf_window_free(xfContext* xfc)
 
 	if (xfc->bitmap_mono)
 	{
-		XFreePixmap(xfc->display, xfc->bitmap_mono);
+		LogDynAndXFreePixmap(xfc->log, xfc->display, xfc->bitmap_mono);
 		xfc->bitmap_mono = 0;
 	}
 
 	if (xfc->gc_mono)
 	{
-		XFreeGC(xfc->display, xfc->gc_mono);
+		LogDynAndXFreeGC(xfc->log, xfc->display, xfc->gc_mono);
 		xfc->gc_mono = 0;
 	}
 
 	if (xfc->primary)
 	{
-		XFreePixmap(xfc->display, xfc->primary);
+		LogDynAndXFreePixmap(xfc->log, xfc->display, xfc->primary);
 		xfc->primary = 0;
 	}
 
 	if (xfc->gc)
 	{
-		XFreeGC(xfc->display, xfc->gc);
+		LogDynAndXFreeGC(xfc->log, xfc->display, xfc->gc);
 		xfc->gc = 0;
 	}
 }
@@ -1833,7 +1837,7 @@ void xf_teardown_x11(xfContext* xfc)
 
 	if (xfc->display)
 	{
-		XCloseDisplay(xfc->display);
+		LogDynAndXCloseDisplay(xfc->log, xfc->display);
 		xfc->display = NULL;
 	}
 
@@ -1921,9 +1925,9 @@ BOOL xf_setup_x11(xfContext* xfc)
 		unsigned long nitems = 0;
 		unsigned long after = 0;
 		unsigned char* data = NULL;
-		int status = LogTagAndXGetWindowProperty(
-		    TAG, xfc->display, RootWindowOfScreen(xfc->screen), xfc->NET_SUPPORTED, 0, 1024, False,
-		    XA_ATOM, &actual_type, &actual_format, &nitems, &after, &data);
+		int status = LogDynAndXGetWindowProperty(
+		    xfc->log, xfc->display, RootWindowOfScreen(xfc->screen), xfc->NET_SUPPORTED, 0, 1024,
+		    False, XA_ATOM, &actual_type, &actual_format, &nitems, &after, &data);
 
 		if ((status == Success) && (actual_type == XA_ATOM) && (actual_format == 32))
 		{

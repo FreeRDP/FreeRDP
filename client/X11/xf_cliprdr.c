@@ -272,7 +272,7 @@ static BOOL xf_cliprdr_update_owner(xfClipboard* clipboard)
 	if (!clipboard->sync)
 		return FALSE;
 
-	Window owner = XGetSelectionOwner(xfc->display, clipboard->clipboard_atom);
+	Window owner = LogDynAndXGetSelectionOwner(xfc->log, xfc->display, clipboard->clipboard_atom);
 	if (clipboard->owner == owner)
 		return FALSE;
 
@@ -294,7 +294,8 @@ static BOOL xf_cliprdr_is_self_owned(xfClipboard* clipboard)
 
 	xfc = clipboard->xfc;
 	WINPR_ASSERT(xfc);
-	return XGetSelectionOwner(xfc->display, clipboard->clipboard_atom) == xfc->drawable;
+	return LogDynAndXGetSelectionOwner(xfc->log, xfc->display, clipboard->clipboard_atom) ==
+	       xfc->drawable;
 }
 
 static void xf_cliprdr_set_raw_transfer_enabled(xfClipboard* clipboard, BOOL enabled)
@@ -306,7 +307,7 @@ static void xf_cliprdr_set_raw_transfer_enabled(xfClipboard* clipboard, BOOL ena
 
 	xfc = clipboard->xfc;
 	WINPR_ASSERT(xfc);
-	LogTagAndXChangeProperty(TAG, xfc->display, xfc->drawable, clipboard->raw_transfer_atom,
+	LogDynAndXChangeProperty(xfc->log, xfc->display, xfc->drawable, clipboard->raw_transfer_atom,
 	                         XA_INTEGER, 32, PropModeReplace, (const BYTE*)&data, 1);
 }
 
@@ -327,13 +328,13 @@ static BOOL xf_cliprdr_is_raw_transfer_available(xfClipboard* clipboard)
 	xfc = clipboard->xfc;
 	WINPR_ASSERT(xfc);
 
-	owner = XGetSelectionOwner(xfc->display, clipboard->clipboard_atom);
+	owner = LogDynAndXGetSelectionOwner(xfc->log, xfc->display, clipboard->clipboard_atom);
 
 	if (owner != None)
 	{
-		result = LogTagAndXGetWindowProperty(TAG, xfc->display, owner, clipboard->raw_transfer_atom,
-		                                     0, 4, 0, XA_INTEGER, &type, &format, &length,
-		                                     &bytes_left, (BYTE**)&data);
+		result = LogDynAndXGetWindowProperty(xfc->log, xfc->display, owner,
+		                                     clipboard->raw_transfer_atom, 0, 4, 0, XA_INTEGER,
+		                                     &type, &format, &length, &bytes_left, (BYTE**)&data);
 	}
 
 	if (data)
@@ -638,10 +639,10 @@ static CLIPRDR_FORMAT* xf_cliprdr_get_raw_server_formats(xfClipboard* clipboard,
 
 	*numFormats = 0;
 
-	Window owner = XGetSelectionOwner(xfc->display, clipboard->clipboard_atom);
-	LogTagAndXGetWindowProperty(TAG, xfc->display, owner, clipboard->raw_format_list_atom, 0, 4096,
-	                            False, clipboard->raw_format_list_atom, &type, &format, &length,
-	                            &remaining, &data);
+	Window owner = LogDynAndXGetSelectionOwner(xfc->log, xfc->display, clipboard->clipboard_atom);
+	LogDynAndXGetWindowProperty(xfc->log, xfc->display, owner, clipboard->raw_format_list_atom, 0,
+	                            4096, False, clipboard->raw_format_list_atom, &type, &format,
+	                            &length, &remaining, &data);
 
 	if (data && length > 0 && format == 8 && type == clipboard->raw_format_list_atom)
 	{
@@ -696,8 +697,8 @@ static CLIPRDR_FORMAT* xf_cliprdr_get_formats_from_targets(xfClipboard* clipboar
 	WINPR_ASSERT(xfc);
 
 	*numFormats = 0;
-	LogTagAndXGetWindowProperty(TAG, xfc->display, xfc->drawable, clipboard->property_atom, 0, 200,
-	                            0, XA_ATOM, &atom, &format_property, &proplength, &bytes_left,
+	LogDynAndXGetWindowProperty(xfc->log, xfc->display, xfc->drawable, clipboard->property_atom, 0,
+	                            200, 0, XA_ATOM, &atom, &format_property, &proplength, &bytes_left,
 	                            &data);
 
 	if (proplength > 0)
@@ -811,13 +812,14 @@ static void xf_cliprdr_provide_server_format_list(xfClipboard* clipboard)
 	{
 		const size_t len = Stream_Length(formats);
 		WINPR_ASSERT(len <= INT32_MAX);
-		LogTagAndXChangeProperty(TAG, xfc->display, xfc->drawable, clipboard->raw_format_list_atom,
-		                         clipboard->raw_format_list_atom, 8, PropModeReplace,
-		                         Stream_Buffer(formats), (int)len);
+		LogDynAndXChangeProperty(xfc->log, xfc->display, xfc->drawable,
+		                         clipboard->raw_format_list_atom, clipboard->raw_format_list_atom,
+		                         8, PropModeReplace, Stream_Buffer(formats), (int)len);
 	}
 	else
 	{
-		LogTagAndXDeleteProperty(TAG, xfc->display, xfc->drawable, clipboard->raw_format_list_atom);
+		LogDynAndXDeleteProperty(xfc->log, xfc->display, xfc->drawable,
+		                         clipboard->raw_format_list_atom);
 	}
 
 	Stream_Free(formats, TRUE);
@@ -1118,8 +1120,8 @@ static BOOL xf_cliprdr_get_requested_data(xfClipboard* clipboard, Atom target)
 	unsigned long length = 0;
 	unsigned long total_bytes = 0;
 	BYTE* property_data = NULL;
-	const int rc = LogTagAndXGetWindowProperty(
-	    TAG, xfc->display, xfc->drawable, clipboard->property_atom, 0, 0, False, target, &type,
+	const int rc = LogDynAndXGetWindowProperty(
+	    xfc->log, xfc->display, xfc->drawable, clipboard->property_atom, 0, 0, False, target, &type,
 	    &format_property, &length, &total_bytes, &property_data);
 	if (rc != Success)
 	{
@@ -1154,8 +1156,8 @@ static BOOL xf_cliprdr_get_requested_data(xfClipboard* clipboard, Atom target)
 			has_data = TRUE;
 		}
 		/* Read incremental data batch */
-		else if (LogTagAndXGetWindowProperty(
-		             TAG, xfc->display, xfc->drawable, clipboard->property_atom, 0,
+		else if (LogDynAndXGetWindowProperty(
+		             xfc->log, xfc->display, xfc->drawable, clipboard->property_atom, 0,
 		             WINPR_ASSERTING_INT_CAST(int32_t, total_bytes), False, target, &type,
 		             &format_property, &incremental_len, &length, &incremental_data) == Success)
 		{
@@ -1167,7 +1169,7 @@ static BOOL xf_cliprdr_get_requested_data(xfClipboard* clipboard, Atom target)
 			XFree(incremental_data);
 	}
 
-	LogTagAndXDeleteProperty(TAG, xfc->display, xfc->drawable, clipboard->property_atom);
+	LogDynAndXDeleteProperty(xfc->log, xfc->display, xfc->drawable, clipboard->property_atom);
 	xf_cliprdr_process_requested_data(clipboard, has_data, clipboard->incr_data, len);
 
 	return TRUE;
@@ -1201,8 +1203,8 @@ static void xf_cliprdr_provide_targets(xfClipboard* clipboard, const XSelectionE
 	if (respond->property != None)
 	{
 		WINPR_ASSERT(clipboard->numTargets <= INT32_MAX);
-		LogTagAndXChangeProperty(TAG, xfc->display, respond->requestor, respond->property, XA_ATOM,
-		                         32, PropModeReplace, (const BYTE*)clipboard->targets,
+		LogDynAndXChangeProperty(xfc->log, xfc->display, respond->requestor, respond->property,
+		                         XA_ATOM, 32, PropModeReplace, (const BYTE*)clipboard->targets,
 		                         (int)clipboard->numTargets);
 	}
 }
@@ -1218,7 +1220,7 @@ static void xf_cliprdr_provide_timestamp(xfClipboard* clipboard, const XSelectio
 
 	if (respond->property != None)
 	{
-		LogTagAndXChangeProperty(TAG, xfc->display, respond->requestor, respond->property,
+		LogDynAndXChangeProperty(xfc->log, xfc->display, respond->requestor, respond->property,
 		                         XA_INTEGER, 32, PropModeReplace,
 		                         (const BYTE*)&clipboard->selection_ownership_timestamp, 1);
 	}
@@ -1236,7 +1238,7 @@ static void xf_cliprdr_provide_data(xfClipboard* clipboard, const XSelectionEven
 
 	if (respond->property != None)
 	{
-		LogTagAndXChangeProperty(TAG, xfc->display, respond->requestor, respond->property,
+		LogDynAndXChangeProperty(xfc->log, xfc->display, respond->requestor, respond->property,
 		                         respond->target, 8, PropModeReplace, data,
 		                         WINPR_ASSERTING_INT_CAST(int32_t, size));
 	}
@@ -1556,9 +1558,9 @@ static BOOL xf_cliprdr_process_selection_request(xfClipboard* clipboard,
 
 			if (formatId == CF_RAW)
 			{
-				if (LogTagAndXGetWindowProperty(
-				        TAG, xfc->display, xevent->requestor, clipboard->property_atom, 0, 4, 0,
-				        XA_INTEGER, &type, &fmt, &length, &bytes_left, &data) != Success)
+				if (LogDynAndXGetWindowProperty(
+				        xfc->log, xfc->display, xevent->requestor, clipboard->property_atom, 0, 4,
+				        0, XA_INTEGER, &type, &fmt, &length, &bytes_left, &data) != Success)
 				{
 				}
 
@@ -1668,7 +1670,8 @@ static BOOL xf_cliprdr_process_selection_clear(xfClipboard* clipboard,
 	if (xf_cliprdr_is_self_owned(clipboard))
 		return FALSE;
 
-	LogTagAndXDeleteProperty(TAG, xfc->display, clipboard->root_window, clipboard->property_atom);
+	LogDynAndXDeleteProperty(xfc->log, xfc->display, clipboard->root_window,
+	                         clipboard->property_atom);
 	return TRUE;
 }
 
@@ -1737,7 +1740,7 @@ void xf_cliprdr_handle_xevent(xfContext* xfc, const XEvent* event)
 			if (se->selection != clipboard->clipboard_atom)
 				return;
 
-			if (XGetSelectionOwner(xfc->display, se->selection) == xfc->drawable)
+			if (LogDynAndXGetSelectionOwner(xfc->log, xfc->display, se->selection) == xfc->drawable)
 				return;
 
 			clipboard->owner = None;
@@ -1830,7 +1833,7 @@ static UINT xf_cliprdr_send_client_format_list(xfClipboard* clipboard, BOOL forc
 	if (clipboard->owner && clipboard->owner != xfc->drawable)
 	{
 		/* Request the owner for TARGETS, and wait for SelectionNotify event */
-		LogTagAndXConvertSelection(TAG, xfc->display, clipboard->clipboard_atom,
+		LogDynAndXConvertSelection(xfc->log, xfc->display, clipboard->clipboard_atom,
 		                           clipboard->targets[1], clipboard->property_atom, xfc->drawable,
 		                           CurrentTime);
 	}
@@ -1952,8 +1955,9 @@ static void xf_cliprdr_prepare_to_set_selection_owner(xfContext* xfc, xfClipboar
 	 * anyway! */
 	Atom value = clipboard->timestamp_property_atom;
 
-	LogTagAndXChangeProperty(TAG, xfc->display, xfc->drawable, clipboard->timestamp_property_atom,
-	                         XA_ATOM, 32, PropModeReplace, (const BYTE*)&value, 1);
+	LogDynAndXChangeProperty(xfc->log, xfc->display, xfc->drawable,
+	                         clipboard->timestamp_property_atom, XA_ATOM, 32, PropModeReplace,
+	                         (const BYTE*)&value, 1);
 	LogDynAndXFlush(xfc->log, xfc->display);
 }
 
@@ -1967,7 +1971,8 @@ static void xf_cliprdr_set_selection_owner(xfContext* xfc, xfClipboard* clipboar
 	 */
 
 	clipboard->selection_ownership_timestamp = timestamp;
-	XSetSelectionOwner(xfc->display, clipboard->clipboard_atom, xfc->drawable, timestamp);
+	LogDynAndXSetSelectionOwner(xfc->log, xfc->display, clipboard->clipboard_atom, xfc->drawable,
+	                            timestamp);
 	LogDynAndXFlush(xfc->log, xfc->display);
 }
 
@@ -2128,7 +2133,7 @@ xf_cliprdr_server_format_data_request(CliprdrClientContext* context,
 	if (rawTransfer)
 	{
 		format = xf_cliprdr_get_client_format_by_id(clipboard, CF_RAW);
-		LogTagAndXChangeProperty(TAG, xfc->display, xfc->drawable, clipboard->property_atom,
+		LogDynAndXChangeProperty(xfc->log, xfc->display, xfc->drawable, clipboard->property_atom,
 		                         XA_INTEGER, 32, PropModeReplace, (const BYTE*)&formatId, 1);
 	}
 	else
@@ -2141,7 +2146,7 @@ xf_cliprdr_server_format_data_request(CliprdrClientContext* context,
 	DEBUG_CLIPRDR("requested format 0x%08" PRIx32 " [%s] {local 0x%08" PRIx32 "} [%s]",
 	              format->formatToRequest, ClipboardGetFormatIdString(format->formatToRequest),
 	              format->localFormat, format->formatName);
-	LogTagAndXConvertSelection(TAG, xfc->display, clipboard->clipboard_atom, format->atom,
+	LogDynAndXConvertSelection(xfc->log, xfc->display, clipboard->clipboard_atom, format->atom,
 	                           clipboard->property_atom, xfc->drawable, CurrentTime);
 	LogDynAndXFlush(xfc->log, xfc->display);
 	/* After this point, we expect a SelectionNotify event from the clipboard owner. */

@@ -756,8 +756,8 @@ static void xf_rail_set_window_icon(xfContext* xfc, xfAppWindow* railWindow, xfR
 {
 	WINPR_ASSERT(xfc);
 
-	LogTagAndXChangeProperty(TAG, xfc->display, railWindow->handle, xfc->NET_WM_ICON, XA_CARDINAL,
-	                         32, replace ? PropModeReplace : PropModeAppend,
+	LogDynAndXChangeProperty(xfc->log, xfc->display, railWindow->handle, xfc->NET_WM_ICON,
+	                         XA_CARDINAL, 32, replace ? PropModeReplace : PropModeAppend,
 	                         (unsigned char*)icon->data, icon->length);
 	LogDynAndXFlush(xfc->log, xfc->display);
 }

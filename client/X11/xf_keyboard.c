@@ -537,7 +537,7 @@ BOOL xf_keyboard_init(xfContext* xfc)
 	UINT32 KeyboardLayout = freerdp_settings_get_uint32(settings, FreeRDP_KeyboardLayout);
 	if (KeyboardLayout == 0)
 	{
-		xf_detect_keyboard_layout_from_xkb(&KeyboardLayout);
+		xf_detect_keyboard_layout_from_xkb(xfc->log, &KeyboardLayout);
 		if (KeyboardLayout == 0)
 			freerdp_detect_keyboard_layout_from_system_locale(&KeyboardLayout);
 		if (KeyboardLayout == 0)

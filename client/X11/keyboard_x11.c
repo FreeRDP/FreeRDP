@@ -27,6 +27,7 @@
 #include "xf_debug.h"
 #include "keyboard_x11.h"
 #include "xkb_layout_ids.h"
+#include "xf_utils.h"
 
 static BOOL parse_xkb_rule_names(char* xkb_rule, unsigned long num_bytes, char** layout,
                                  char** variant)
@@ -84,7 +85,8 @@ static BOOL parse_xkb_rule_names(char* xkb_rule, unsigned long num_bytes, char**
 	return TRUE;
 }
 
-static DWORD kbd_layout_id_from_x_property(Display* display, Window root, char* property_name)
+static DWORD kbd_layout_id_from_x_property(wLog* log, Display* display, Window root,
+                                           char* property_name)
 {
 	char* layout = NULL;
 	char* variant = NULL;
@@ -99,8 +101,9 @@ static DWORD kbd_layout_id_from_x_property(Display* display, Window root, char* 
 	if (property == None)
 		return 0;
 
-	if (XGetWindowProperty(display, root, property, 0, 1024, False, XA_STRING, &type, &item_size,
-	                       &items, &unread_items, (unsigned char**)&rule) != Success)
+	if (LogDynAndXGetWindowProperty(log, display, root, property, 0, 1024, False, XA_STRING, &type,
+	                                &item_size, &items, &unread_items,
+	                                (unsigned char**)&rule) != Success)
 		return 0;
 
 	if (type != XA_STRING || item_size != 8 || unread_items != 0)
@@ -119,7 +122,7 @@ static DWORD kbd_layout_id_from_x_property(Display* display, Window root, char* 
 	return layout_id;
 }
 
-int xf_detect_keyboard_layout_from_xkb(DWORD* keyboardLayoutId)
+int xf_detect_keyboard_layout_from_xkb(wLog* log, DWORD* keyboardLayoutId)
 {
 	Display* display = XOpenDisplay(NULL);
 
@@ -131,14 +134,14 @@ int xf_detect_keyboard_layout_from_xkb(DWORD* keyboardLayoutId)
 		return 0;
 
 	/* We start by looking for _XKB_RULES_NAMES_BACKUP which appears to be used by libxklavier */
-	DWORD id = kbd_layout_id_from_x_property(display, root, "_XKB_RULES_NAMES_BACKUP");
+	DWORD id = kbd_layout_id_from_x_property(log, display, root, "_XKB_RULES_NAMES_BACKUP");
 
 	if (0 == id)
-		id = kbd_layout_id_from_x_property(display, root, "_XKB_RULES_NAMES");
+		id = kbd_layout_id_from_x_property(log, display, root, "_XKB_RULES_NAMES");
 
 	if (0 != id)
 		*keyboardLayoutId = id;
 
-	XCloseDisplay(display);
+	LogDynAndXCloseDisplay(log, display);
 	return (int)id;
 }
