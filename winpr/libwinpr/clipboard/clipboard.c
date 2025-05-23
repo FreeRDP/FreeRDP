@@ -32,7 +32,7 @@
 #include "../log.h"
 #define TAG WINPR_TAG("clipboard")
 
-const char* mime_text_plain = "text/plain";
+const char* const mime_text_plain = "text/plain";
 
 /**
  * Clipboard (Windows):

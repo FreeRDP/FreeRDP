@@ -127,8 +127,8 @@ static int xf_tsmf_xv_video_frame_event(TsmfClientContext* tsmf, TSMF_VIDEO_FRAM
 			width = event->visibleRects[i].right - event->visibleRects[i].left;
 			height = event->visibleRects[i].bottom - event->visibleRects[i].top;
 
-			xrects[i].x = x;
-			xrects[i].y = y;
+			xrects[i].x = WINPR_ASSERTING_INT_CAST(short, x);
+			xrects[i].y = WINPR_ASSERTING_INT_CAST(short, y);
 			xrects[i].width = width;
 			xrects[i].height = height;
 		}
@@ -188,8 +188,8 @@ static int xf_tsmf_xv_video_frame_event(TsmfClientContext* tsmf, TSMF_VIDEO_FRAM
 		return -1003;
 	}
 
-	image = XvShmCreateImage(xfc->display, xv->xv_port, xvpixfmt, 0, event->frameWidth,
-	                         event->frameHeight, &shminfo);
+	image = XvShmCreateImage(xfc->display, xv->xv_port, WINPR_ASSERTING_INT_CAST(int, xvpixfmt), 0,
+	                         event->frameWidth, event->frameHeight, &shminfo);
 
 	if (xv->xv_image_size != image->data_size)
 	{

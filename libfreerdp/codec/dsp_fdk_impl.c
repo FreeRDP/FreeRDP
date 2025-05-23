@@ -480,7 +480,7 @@ int fdk_aac_dsp_impl_config(void* handle, size_t* pbuffersize, int encoder, unsi
 		if (err != AACENC_OK)
 			log(WLOG_WARN, "aacEncClose failed with %s", enc_err_str(err));
 
-		*pbuffersize = info.frameLength * info.inputChannels * sizeof(INT_PCM);
+		*pbuffersize = sizeof(INT_PCM) * info.frameLength * info.inputChannels;
 
 		HANDLE_AACDECODER aacdec = (HANDLE_AACDECODER)handle;
 
@@ -555,14 +555,15 @@ ssize_t fdk_aac_dsp_impl_stream_info(void* handle, int encoder, fdk_log_fkt_t lo
 			return -1;
 		}
 
-		return sizeof(INT_PCM) * info->numChannels * info->frameSize;
+		const size_t rsize = sizeof(INT_PCM) * info->numChannels * info->frameSize;
+		return (ssize_t)rsize;
 	}
 }
 
 ssize_t fdk_aac_dsp_impl_encode(void* handle, const void* data, size_t size, void* dst,
                                 size_t dstSize, fdk_log_fkt_t log)
 {
-	INT inSizes[] = { size };
+	INT inSizes[] = { (INT)size };
 	INT inElSizes[] = { sizeof(INT_PCM) };
 	INT inIdentifiers[] = { IN_AUDIO_DATA };
 	union
@@ -581,7 +582,7 @@ ssize_t fdk_aac_dsp_impl_encode(void* handle, const void* data, size_t size, voi
 		.bufElSizes = inElSizes /* TODO: 8/16 bit input? */
 	};
 
-	INT outSizes[] = { dstSize };
+	INT outSizes[] = { (INT)dstSize };
 	INT outElSizes[] = { 1 };
 	INT outIdentifiers[] = { OUT_BITSTREAM_DATA };
 	void* outBuffers[] = { dst };
@@ -592,7 +593,7 @@ ssize_t fdk_aac_dsp_impl_encode(void* handle, const void* data, size_t size, voi
 		                                .bufElSizes = outElSizes };
 
 	const AACENC_InArgs inArgs = { .numInSamples =
-		                               size / sizeof(INT_PCM), /* TODO: 8/16 bit input? */
+		                               (INT)(size / sizeof(INT_PCM)), /* TODO: 8/16 bit input? */
 		                           .numAncBytes = 0 };
 	AACENC_OutArgs outArgs = { 0 };
 
