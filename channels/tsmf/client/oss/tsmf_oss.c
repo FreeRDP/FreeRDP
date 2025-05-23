@@ -31,7 +31,6 @@
 #include <fcntl.h>
 #include <libgen.h>
 #include <limits.h>
-#include <unistd.h>
 #if defined(__OpenBSD__)
 #include <soundcard.h>
 #else
@@ -131,17 +130,17 @@ static BOOL tsmf_oss_set_format(ITSMFAudioDevice* audio, UINT32 sample_rate, UIN
 	if (ioctl(oss->pcm_handle, SNDCTL_DSP_SETFMT, &tmp) == -1)
 		OSS_LOG_ERR("SNDCTL_DSP_SETFMT failed", errno);
 
-	tmp = channels;
+	tmp = WINPR_ASSERTING_INT_CAST(int, channels);
 
 	if (ioctl(oss->pcm_handle, SNDCTL_DSP_CHANNELS, &tmp) == -1)
 		OSS_LOG_ERR("SNDCTL_DSP_CHANNELS failed", errno);
 
-	tmp = sample_rate;
+	tmp = WINPR_ASSERTING_INT_CAST(int, sample_rate);
 
 	if (ioctl(oss->pcm_handle, SNDCTL_DSP_SPEED, &tmp) == -1)
 		OSS_LOG_ERR("SNDCTL_DSP_SPEED failed", errno);
 
-	tmp = ((bits_per_sample / 8) * channels * sample_rate);
+	tmp = WINPR_ASSERTING_INT_CAST(int, ((bits_per_sample / 8) * channels * sample_rate));
 
 	if (ioctl(oss->pcm_handle, SNDCTL_DSP_SETFRAGMENT, &tmp) == -1)
 		OSS_LOG_ERR("SNDCTL_DSP_SETFRAGMENT failed", errno);
