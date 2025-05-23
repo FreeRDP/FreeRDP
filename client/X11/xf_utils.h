@@ -95,8 +95,8 @@ int LogDynAndXMoveResizeWindow_ex(wLog* log, const char* file, const char* fkt, 
 	LogDynAndXWithdrawWindow_ex((log), __FILE__, __func__, __LINE__, (display), (w), \
 	                            (screen_number))
 
-int LogDynAndXWithdrawWindow_ex(wLog* log, const char* file, const char* fkt, size_t line,
-                                Display* display, Window w, int screen_number);
+Status LogDynAndXWithdrawWindow_ex(wLog* log, const char* file, const char* fkt, size_t line,
+                                   Display* display, Window w, int screen_number);
 
 #define LogDynAndXMoveWindow(log, display, w, x, y) \
 	LogDynAndXMoveWindow_ex((log), __FILE__, __func__, __LINE__, (display), (w), (x), (y))
