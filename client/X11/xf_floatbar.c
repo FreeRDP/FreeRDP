@@ -25,6 +25,7 @@
 #include <winpr/cast.h>
 
 #include "xf_floatbar.h"
+#include "xf_utils.h"
 #include "resource/close.xbm"
 #include "resource/lock.xbm"
 #include "resource/unlock.xbm"
@@ -156,12 +157,14 @@ BOOL xf_floatbar_hide_and_show(xfFloatbar* floatbar)
 		    (floatbar->y > (FLOATBAR_HEIGHT * -1)))
 		{
 			floatbar->y = floatbar->y - 1;
-			XMoveWindow(xfc->display, floatbar->handle, floatbar->x, floatbar->y);
+			LogDynAndXMoveWindow(xfc->log, xfc->display, floatbar->handle, floatbar->x,
+			                     floatbar->y);
 		}
 		else if (floatbar->y < 0 && (floatbar->last_motion_y_root < 10))
 		{
 			floatbar->y = floatbar->y + 1;
-			XMoveWindow(xfc->display, floatbar->handle, floatbar->x, floatbar->y);
+			LogDynAndXMoveWindow(xfc->log, xfc->display, floatbar->handle, floatbar->x,
+			                     floatbar->y);
 		}
 	}
 
@@ -194,9 +197,9 @@ static BOOL create_floatbar(xfFloatbar* floatbar)
 	if (((floatbar->flags & 0x0004) == 0) && !floatbar->locked)
 		floatbar->y = -FLOATBAR_HEIGHT + 1;
 
-	floatbar->handle =
-	    XCreateWindow(xfc->display, floatbar->root_window, floatbar->x, 0, FLOATBAR_DEFAULT_WIDTH,
-	                  FLOATBAR_HEIGHT, 0, CopyFromParent, InputOutput, CopyFromParent, 0, NULL);
+	floatbar->handle = LogDynAndXCreateWindow(
+	    xfc->log, xfc->display, floatbar->root_window, floatbar->x, 0, FLOATBAR_DEFAULT_WIDTH,
+	    FLOATBAR_HEIGHT, 0, CopyFromParent, InputOutput, CopyFromParent, 0, NULL);
 	floatbar->width = FLOATBAR_DEFAULT_WIDTH;
 	floatbar->height = FLOATBAR_HEIGHT;
 	floatbar->mode = XF_FLOATBAR_MODE_NONE;
@@ -238,13 +241,13 @@ BOOL xf_floatbar_toggle_fullscreen(xfFloatbar* floatbar, bool fullscreen)
 		if (!create_floatbar(floatbar))
 			return FALSE;
 
-		XMapWindow(xfc->display, floatbar->handle);
+		LogDynAndXMapWindow(xfc->log, xfc->display, floatbar->handle);
 		size = ARRAYSIZE(floatbar->buttons);
 
 		for (int i = 0; i < size; i++)
 		{
 			xfFloatbarButton* button = floatbar->buttons[i];
-			XMapWindow(xfc->display, button->handle);
+			LogDynAndXMapWindow(xfc->log, xfc->display, button->handle);
 		}
 
 		/* If default is hidden (and not sticky) don't show on fullscreen state changes */
@@ -256,7 +259,7 @@ BOOL xf_floatbar_toggle_fullscreen(xfFloatbar* floatbar, bool fullscreen)
 	else if (floatbar->created)
 	{
 		XUnmapSubwindows(xfc->display, floatbar->handle);
-		XUnmapWindow(xfc->display, floatbar->handle);
+		LogDynAndXUnmapWindow(xfc->log, xfc->display, floatbar->handle);
 	}
 
 	return TRUE;
@@ -302,9 +305,10 @@ xfFloatbarButton* xf_floatbar_new_button(xfFloatbar* floatbar, int type)
 
 	button->y = 0;
 	button->focus = FALSE;
-	button->handle = XCreateWindow(floatbar->xfc->display, floatbar->handle, button->x, 0,
-	                               FLOATBAR_BUTTON_WIDTH, FLOATBAR_BUTTON_WIDTH, 0, CopyFromParent,
-	                               InputOutput, CopyFromParent, 0, NULL);
+	button->handle =
+	    LogDynAndXCreateWindow(floatbar->xfc->log, floatbar->xfc->display, floatbar->handle,
+	                           button->x, 0, FLOATBAR_BUTTON_WIDTH, FLOATBAR_BUTTON_WIDTH, 0,
+	                           CopyFromParent, InputOutput, CopyFromParent, 0, NULL);
 	XSelectInput(floatbar->xfc->display, button->handle,
 	             ExposureMask | ButtonPressMask | ButtonReleaseMask | FocusChangeMask |
 	                 LeaveWindowMask | EnterWindowMask | StructureNotifyMask);
@@ -393,11 +397,11 @@ static void xf_floatbar_event_expose(xfFloatbar* floatbar)
 	WINPR_ASSERT(display);
 
 	/* create the pixmap that we'll use for shaping the window */
-	pmap = XCreatePixmap(display, floatbar->handle,
-	                     WINPR_ASSERTING_INT_CAST(uint32_t, floatbar->width),
-	                     WINPR_ASSERTING_INT_CAST(uint32_t, floatbar->height), 1);
-	gc = XCreateGC(display, floatbar->handle, 0, 0);
-	shape_gc = XCreateGC(display, pmap, 0, 0);
+	pmap = LogDynAndXCreatePixmap(floatbar->xfc->log, display, floatbar->handle,
+	                              WINPR_ASSERTING_INT_CAST(uint32_t, floatbar->width),
+	                              WINPR_ASSERTING_INT_CAST(uint32_t, floatbar->height), 1);
+	gc = LogDynAndXCreateGC(floatbar->xfc->log, display, floatbar->handle, 0, 0);
+	shape_gc = LogDynAndXCreateGC(floatbar->xfc->log, display, pmap, 0, 0);
 	/* points for drawing the floatbar */
 	shape[0].x = 0;
 	shape[0].y = 0;
@@ -421,23 +425,26 @@ static void xf_floatbar_event_expose(xfFloatbar* floatbar)
 	border[4].x = border[0].x;
 	border[4].y = border[0].y;
 	/* Fill all pixels with 0 */
-	XSetForeground(display, shape_gc, 0);
-	XFillRectangle(display, pmap, shape_gc, 0, 0,
-	               WINPR_ASSERTING_INT_CAST(uint32_t, floatbar->width),
-	               WINPR_ASSERTING_INT_CAST(uint32_t, floatbar->height));
+	LogDynAndXSetForeground(floatbar->xfc->log, display, shape_gc, 0);
+	LogDynAndXFillRectangle(floatbar->xfc->log, display, pmap, shape_gc, 0, 0,
+	                        WINPR_ASSERTING_INT_CAST(uint32_t, floatbar->width),
+	                        WINPR_ASSERTING_INT_CAST(uint32_t, floatbar->height));
 	/* Fill all pixels which should be shown with 1 */
-	XSetForeground(display, shape_gc, 1);
+	LogDynAndXSetForeground(floatbar->xfc->log, display, shape_gc, 1);
 	XFillPolygon(display, pmap, shape_gc, shape, 5, 0, CoordModeOrigin);
 	XShapeCombineMask(display, floatbar->handle, ShapeBounding, 0, 0, pmap, ShapeSet);
 	/* draw the float bar */
-	XSetForeground(display, gc, xf_floatbar_get_color(floatbar, FLOATBAR_COLOR_BACKGROUND));
+	LogDynAndXSetForeground(floatbar->xfc->log, display, gc,
+	                        xf_floatbar_get_color(floatbar, FLOATBAR_COLOR_BACKGROUND));
 	XFillPolygon(display, floatbar->handle, gc, shape, 4, 0, CoordModeOrigin);
 	/* draw an border for the floatbar */
-	XSetForeground(display, gc, xf_floatbar_get_color(floatbar, FLOATBAR_COLOR_BORDER));
+	LogDynAndXSetForeground(floatbar->xfc->log, display, gc,
+	                        xf_floatbar_get_color(floatbar, FLOATBAR_COLOR_BORDER));
 	XDrawLines(display, floatbar->handle, gc, border, 5, CoordModeOrigin);
 	/* draw the host name connected to (limit to maximum file name) */
 	const size_t len = strnlen(floatbar->title, MAX_PATH);
-	XSetForeground(display, gc, xf_floatbar_get_color(floatbar, FLOATBAR_COLOR_FOREGROUND));
+	LogDynAndXSetForeground(floatbar->xfc->log, display, gc,
+	                        xf_floatbar_get_color(floatbar, FLOATBAR_COLOR_FOREGROUND));
 
 	WINPR_ASSERT(len <= INT32_MAX / 2);
 	const int fx = floatbar->width / 2 - (int)len * 2;
@@ -450,8 +457,8 @@ static void xf_floatbar_event_expose(xfFloatbar* floatbar)
 	{
 		XDrawString(display, floatbar->handle, gc, fx, 15, floatbar->title, (int)len);
 	}
-	XFreeGC(display, gc);
-	XFreeGC(display, shape_gc);
+	LogDynAndXFreeGC(floatbar->xfc->log, display, gc);
+	LogDynAndXFreeGC(floatbar->xfc->log, display, shape_gc);
 }
 
 static xfFloatbarButton* xf_floatbar_get_button(xfFloatbar* floatbar, Window window)
@@ -505,7 +512,7 @@ static void xf_floatbar_button_update_positon(xfFloatbar* floatbar)
 
 		WINPR_ASSERT(xfc);
 		WINPR_ASSERT(xfc->display);
-		XMoveWindow(xfc->display, button->handle, button->x, button->y);
+		LogDynAndXMoveWindow(xfc->log, xfc->display, button->handle, button->x, button->y);
 		xf_floatbar_event_expose(floatbar);
 	}
 }
@@ -525,7 +532,7 @@ static void xf_floatbar_button_event_expose(xfFloatbar* floatbar, Window window)
 	WINPR_ASSERT(xfc->display);
 	WINPR_ASSERT(xfc->window);
 
-	gc = XCreateGC(xfc->display, button->handle, 0, 0);
+	gc = LogDynAndXCreateGC(xfc->log, xfc->display, button->handle, 0, 0);
 	floatbar = xfc->window->floatbar;
 	WINPR_ASSERT(floatbar);
 
@@ -559,16 +566,18 @@ static void xf_floatbar_button_event_expose(xfFloatbar* floatbar, Window window)
 	                                FLOATBAR_BUTTON_WIDTH, FLOATBAR_BUTTON_WIDTH);
 
 	if (!(button->focus))
-		XSetForeground(xfc->display, gc,
-		               xf_floatbar_get_color(floatbar, FLOATBAR_COLOR_BACKGROUND));
+		LogDynAndXSetForeground(floatbar->xfc->log, xfc->display, gc,
+		                        xf_floatbar_get_color(floatbar, FLOATBAR_COLOR_BACKGROUND));
 	else
-		XSetForeground(xfc->display, gc, xf_floatbar_get_color(floatbar, FLOATBAR_COLOR_BORDER));
+		LogDynAndXSetForeground(floatbar->xfc->log, xfc->display, gc,
+		                        xf_floatbar_get_color(floatbar, FLOATBAR_COLOR_BORDER));
 
-	XSetBackground(xfc->display, gc, xf_floatbar_get_color(floatbar, FLOATBAR_COLOR_FOREGROUND));
+	LogDynAndXSetBackground(xfc->log, xfc->display, gc,
+	                        xf_floatbar_get_color(floatbar, FLOATBAR_COLOR_FOREGROUND));
 	XCopyPlane(xfc->display, pattern, button->handle, gc, 0, 0, FLOATBAR_BUTTON_WIDTH,
 	           FLOATBAR_BUTTON_WIDTH, 0, 0, 1);
-	XFreePixmap(xfc->display, pattern);
-	XFreeGC(xfc->display, gc);
+	LogDynAndXFreePixmap(xfc->log, xfc->display, pattern);
+	LogDynAndXFreeGC(xfc->log, xfc->display, gc);
 }
 
 static void xf_floatbar_button_event_buttonpress(xfFloatbar* floatbar, const XButtonEvent* event)
@@ -666,9 +675,9 @@ static void xf_floatbar_resize(xfFloatbar* floatbar, const XMotionEvent* event)
 	/* only resize and move window if still above minimum width */
 	if (FLOATBAR_MIN_WIDTH < width)
 	{
-		XMoveResizeWindow(xfc->display, floatbar->handle, x, 0,
-		                  WINPR_ASSERTING_INT_CAST(uint32_t, width),
-		                  WINPR_ASSERTING_INT_CAST(uint32_t, floatbar->height));
+		LogDynAndXMoveResizeWindow(xfc->log, xfc->display, floatbar->handle, x, 0,
+		                           WINPR_ASSERTING_INT_CAST(uint32_t, width),
+		                           WINPR_ASSERTING_INT_CAST(uint32_t, floatbar->height));
 		floatbar->x = x;
 		floatbar->width = width;
 	}
@@ -695,7 +704,7 @@ static void xf_floatbar_dragging(xfFloatbar* floatbar, const XMotionEvent* event
 		return;
 
 	/* move window to new x position */
-	XMoveWindow(xfc->display, floatbar->handle, x, 0);
+	LogDynAndXMoveWindow(xfc->log, xfc->display, floatbar->handle, x, 0);
 	/* update struct values for the next event */
 	floatbar->last_motion_x_root = floatbar->last_motion_x_root + movement;
 	floatbar->x = x;
@@ -887,8 +896,8 @@ static void xf_floatbar_button_free(xfContext* xfc, xfFloatbarButton* button)
 	{
 		WINPR_ASSERT(xfc);
 		WINPR_ASSERT(xfc->display);
-		XUnmapWindow(xfc->display, button->handle);
-		XDestroyWindow(xfc->display, button->handle);
+		LogDynAndXUnmapWindow(xfc->log, xfc->display, button->handle);
+		LogDynAndXDestroyWindow(xfc->log, xfc->display, button->handle);
 	}
 
 	free(button);
@@ -917,8 +926,8 @@ void xf_floatbar_free(xfFloatbar* floatbar)
 	if (floatbar->handle)
 	{
 		WINPR_ASSERT(xfc->display);
-		XUnmapWindow(xfc->display, floatbar->handle);
-		XDestroyWindow(xfc->display, floatbar->handle);
+		LogDynAndXUnmapWindow(xfc->log, xfc->display, floatbar->handle);
+		LogDynAndXDestroyWindow(xfc->log, xfc->display, floatbar->handle);
 	}
 
 	free(floatbar);

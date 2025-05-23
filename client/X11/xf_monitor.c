@@ -50,6 +50,7 @@
 #endif
 
 #include "xf_monitor.h"
+#include "xf_utils.h"
 
 /* See MSDN Section on Multiple Display Monitors: http://msdn.microsoft.com/en-us/library/dd145071
  */
@@ -111,7 +112,7 @@ int xf_list_monitors(xfContext* xfc)
 	}
 
 #endif
-		XCloseDisplay(display);
+		LogDynAndXCloseDisplay(xfc->log, display);
 	return 0;
 }
 

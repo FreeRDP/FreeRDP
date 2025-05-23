@@ -59,9 +59,9 @@ static UINT xf_OutputUpdate(xfContext* xfc, xfGfxSurface* surface)
 	surfaceRect.top = 0;
 	surfaceRect.right = WINPR_ASSERTING_INT_CAST(UINT16, surface->gdi.mappedWidth);
 	surfaceRect.bottom = WINPR_ASSERTING_INT_CAST(UINT16, surface->gdi.mappedHeight);
-	XSetClipMask(xfc->display, xfc->gc, None);
-	XSetFunction(xfc->display, xfc->gc, GXcopy);
-	XSetFillStyle(xfc->display, xfc->gc, FillSolid);
+	LogDynAndXSetClipMask(xfc->log, xfc->display, xfc->gc, None);
+	LogDynAndXSetFunction(xfc->log, xfc->display, xfc->gc, GXcopy);
+	LogDynAndXSetFillStyle(xfc->log, xfc->display, xfc->gc, FillSolid);
 	region16_intersect_rect(&(surface->gdi.invalidRegion), &(surface->gdi.invalidRegion),
 	                        &surfaceRect);
 
@@ -133,8 +133,8 @@ static UINT xf_OutputUpdate(xfContext* xfc, xfGfxSurface* surface)
 	rc = CHANNEL_RC_OK;
 fail:
 	region16_clear(&surface->gdi.invalidRegion);
-	XSetClipMask(xfc->display, xfc->gc, None);
-	XSync(xfc->display, False);
+	LogDynAndXSetClipMask(xfc->log, xfc->display, xfc->gc, None);
+	LogDynAndXSync(xfc->log, xfc->display, False);
 	return rc;
 }
 
@@ -344,10 +344,11 @@ static UINT xf_CreateSurface(RdpgfxClientContext* context,
 	if (FreeRDPAreColorFormatsEqualNoAlpha(gdi->dstFormat, surface->gdi.format))
 	{
 		WINPR_ASSERT(xfc->depth != 0);
-		surface->image = XCreateImage(
-		    xfc->display, xfc->visual, WINPR_ASSERTING_INT_CAST(uint32_t, xfc->depth), ZPixmap, 0,
-		    (char*)surface->gdi.data, surface->gdi.mappedWidth, surface->gdi.mappedHeight,
-		    xfc->scanline_pad, WINPR_ASSERTING_INT_CAST(int, surface->gdi.scanline));
+		surface->image = LogDynAndXCreateImage(
+		    xfc->log, xfc->display, xfc->visual, WINPR_ASSERTING_INT_CAST(uint32_t, xfc->depth),
+		    ZPixmap, 0, (char*)surface->gdi.data, surface->gdi.mappedWidth,
+		    surface->gdi.mappedHeight, xfc->scanline_pad,
+		    WINPR_ASSERTING_INT_CAST(int, surface->gdi.scanline));
 	}
 	else
 	{
@@ -367,9 +368,9 @@ static UINT xf_CreateSurface(RdpgfxClientContext* context,
 
 		ZeroMemory(surface->stage, size);
 		WINPR_ASSERT(xfc->depth != 0);
-		surface->image = XCreateImage(
-		    xfc->display, xfc->visual, WINPR_ASSERTING_INT_CAST(uint32_t, xfc->depth), ZPixmap, 0,
-		    (char*)surface->stage, surface->gdi.mappedWidth, surface->gdi.mappedHeight,
+		surface->image = LogDynAndXCreateImage(
+		    xfc->log, xfc->display, xfc->visual, WINPR_ASSERTING_INT_CAST(uint32_t, xfc->depth),
+		    ZPixmap, 0, (char*)surface->stage, surface->gdi.mappedWidth, surface->gdi.mappedHeight,
 		    xfc->scanline_pad, WINPR_ASSERTING_INT_CAST(int, surface->stageScanline));
 	}
 

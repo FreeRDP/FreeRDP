@@ -1332,7 +1332,7 @@ BOOL xf_event_process(freerdp* instance, const XEvent* event)
 	if (!xf_floatbar_check_event(floatbar, event) && !xf_floatbar_is_locked(floatbar))
 		xf_input_handle_event(xfc, event);
 
-	XSync(xfc->display, FALSE);
+	LogDynAndXSync(xfc->log, xfc->display, FALSE);
 	return status;
 }
 

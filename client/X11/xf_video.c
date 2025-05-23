@@ -48,9 +48,10 @@ static VideoSurface* xfVideoCreateSurface(VideoClientContext* video, UINT32 x, U
 	xfc = (xfContext*)video->custom;
 	WINPR_ASSERT(xfc);
 
-	ret->image = XCreateImage(
-	    xfc->display, xfc->visual, WINPR_ASSERTING_INT_CAST(uint32_t, xfc->depth), ZPixmap, 0,
-	    (char*)ret->base.data, width, height, 8, WINPR_ASSERTING_INT_CAST(int, ret->base.scanline));
+	ret->image = LogDynAndXCreateImage(xfc->log, xfc->display, xfc->visual,
+	                                   WINPR_ASSERTING_INT_CAST(uint32_t, xfc->depth), ZPixmap, 0,
+	                                   (char*)ret->base.data, width, height, 8,
+	                                   WINPR_ASSERTING_INT_CAST(int, ret->base.scanline));
 
 	if (!ret->image)
 	{
