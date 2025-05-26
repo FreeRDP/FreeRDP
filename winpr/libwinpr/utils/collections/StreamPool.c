@@ -369,6 +369,7 @@ void StreamPool_Clear(wStreamPool* pool)
 		struct s_StreamPoolEntry* cur = &pool->aArray[x];
 		discard_entry(cur, TRUE);
 	}
+	pool->aSize = 0;
 
 	if (pool->uSize > 0)
 	{
@@ -379,6 +380,7 @@ void StreamPool_Clear(wStreamPool* pool)
 			struct s_StreamPoolEntry* cur = &pool->uArray[x];
 			discard_entry(cur, TRUE);
 		}
+		pool->uSize = 0;
 	}
 
 	StreamPool_Unlock(pool);
