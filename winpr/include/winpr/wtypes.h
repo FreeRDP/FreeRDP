@@ -95,11 +95,13 @@ typedef int32_t BOOL;
 #include <TargetConditionals.h>
 
 /* ensure compatibility with objc libraries */
-#if (defined(TARGET_OS_IPHONE) && (TARGET_OS_IPHONE != 0) && defined(__LP64__)) || \
-    (defined(TARGET_OS_WATCH) && (TARGET_OS_WATCH != 0))
+#if OBJC_BOOL_IS_BOOL
 typedef bool BOOL;
 #else
+#define OBJC_BOOL_IS_CHAR 1
 typedef signed char BOOL;
+// BOOL is explicitly signed so @encode(BOOL) == "c" rather than "C"
+// even if -funsigned-char is used.
 #endif
 #endif /* __APPLE__ */
 #endif /* __OBJC__ */
