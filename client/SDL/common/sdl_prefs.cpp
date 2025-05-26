@@ -41,10 +41,7 @@ namespace fs = std::experimental::filesystem;
 SdlPref::WINPR_JSONPtr SdlPref::get()
 {
 	auto config = get_pref_file();
-
-	std::ifstream ifs(config);
-	std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
-	return { WINPR_JSON_ParseWithLength(content.c_str(), content.size()), WINPR_JSON_Delete };
+	return { WINPR_JSON_ParseFromFile(config.c_str()), WINPR_JSON_Delete };
 }
 
 WINPR_JSON* SdlPref::get_item(const std::string& key)

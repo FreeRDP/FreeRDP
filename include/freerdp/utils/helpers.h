@@ -21,6 +21,8 @@
 #pragma once
 
 #include <winpr/wtypes.h>
+#include <winpr/json.h>
+
 #include <freerdp/api.h>
 
 /** @brief Return the absolute path of a configuration file (the path of the configuration
@@ -38,3 +40,15 @@
  */
 WINPR_ATTR_MALLOC(free, 1)
 FREERDP_API char* freerdp_GetConfigFilePath(BOOL system, const char* filename);
+
+/** @brief return a parsed JSON for a given config file name.
+ *
+ *  @param system a boolean indicating the configuration base, \b TRUE for system configuration,
+ * \b FALSE for user configuration
+ *  @param filename an optional configuration file name to append.
+ *
+ *  @return A parsed \b WINPR_JSON object or \b NULL in case of any failure.
+ *  @since version 3.16.0
+ */
+WINPR_ATTR_MALLOC(WINPR_JSON_Delete, 1)
+FREERDP_API WINPR_JSON* freerdp_GetJSONConfigFile(BOOL system, const char* filename);

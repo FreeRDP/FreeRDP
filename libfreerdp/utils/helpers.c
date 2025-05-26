@@ -59,3 +59,14 @@ char* freerdp_GetConfigFilePath(BOOL system, const char* filename)
 	free(base);
 	return path;
 }
+
+WINPR_JSON* freerdp_GetJSONConfigFile(BOOL system, const char* filename)
+{
+	char* path = freerdp_GetConfigFilePath(system, filename);
+	if (!path)
+		return NULL;
+
+	WINPR_JSON* json = WINPR_JSON_ParseFromFile(path);
+	free(path);
+	return json;
+}
