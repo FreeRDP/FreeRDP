@@ -323,7 +323,8 @@ int LogDynAndXPutImage_ex(wLog* log, const char* file, const char* fkt, size_t l
 	if (WLog_IsLevelActive(log, log_level))
 	{
 		write_log(log, log_level, file, fkt, line,
-		          "XPutImage(%p, d: {%lu}, gc: {%p}, image: [%p]{%d}, src_y: {%d}, dest_x: {%d}, "
+		          "XPutImage(%p, d: {%lu}, gc: {%p}, image: [%p]{%d}, src_x: {%d}, src_y: {%d}, "
+		          "dest_x: {%d}, "
 		          "dest_y: {%d}, width: {%d}, "
 		          "height: {%d})",
 		          display, d, gc, image, image ? image->depth : -1, src_x, src_y, dest_x, dest_y,
