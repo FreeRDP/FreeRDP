@@ -149,54 +149,9 @@ static BOOL tz_parse_json_entry(WINPR_JSON* json, size_t pos, TimeZoneNameMapEnt
 
 static WINPR_JSON* load_timezones_from_file(const char* filename)
 {
-	INT64 jstrlen = 0;
-	char* jstr = NULL;
-	WINPR_JSON* json = NULL;
-	FILE* fp = winpr_fopen(filename, "r");
-	if (!fp)
-	{
-		WLog_WARN(TAG, "Timezone resource file '%s' does not exist or is not readable", filename);
-		return NULL;
-	}
-
-	if (_fseeki64(fp, 0, SEEK_END) < 0)
-	{
-		WLog_WARN(TAG, "Timezone resource file '%s' seek failed", filename);
-		goto end;
-	}
-	jstrlen = _ftelli64(fp);
-	if (jstrlen < 0)
-	{
-		WLog_WARN(TAG, "Timezone resource file '%s' invalid length %" PRId64, filename, jstrlen);
-		goto end;
-	}
-	if (_fseeki64(fp, 0, SEEK_SET) < 0)
-	{
-		WLog_WARN(TAG, "Timezone resource file '%s' seek failed", filename);
-		goto end;
-	}
-
-	jstr = calloc(WINPR_ASSERTING_INT_CAST(size_t, jstrlen + 1), sizeof(char));
-	if (!jstr)
-	{
-		WLog_WARN(TAG, "Timezone resource file '%s' failed to allocate buffer of size %" PRId64,
-		          filename, jstrlen);
-		goto end;
-	}
-
-	if (fread(jstr, WINPR_ASSERTING_INT_CAST(size_t, jstrlen), sizeof(char), fp) != 1)
-	{
-		WLog_WARN(TAG, "Timezone resource file '%s' failed to read buffer of size %" PRId64,
-		          filename, jstrlen);
-		goto end;
-	}
-
-	json = WINPR_JSON_ParseWithLength(jstr, WINPR_ASSERTING_INT_CAST(size_t, jstrlen));
+	WINPR_JSON* json = WINPR_JSON_ParseFromFile(filename);
 	if (!json)
 		WLog_WARN(TAG, "Timezone resource file '%s' is not a valid JSON file", filename);
-end:
-	fclose(fp);
-	free(jstr);
 	return json;
 }
 #endif
