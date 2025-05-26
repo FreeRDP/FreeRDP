@@ -36,4 +36,5 @@
  *
  *  @since version 3.9.0
  */
+WINPR_ATTR_MALLOC(free, 1)
 FREERDP_API char* freerdp_GetConfigFilePath(BOOL system, const char* filename);
