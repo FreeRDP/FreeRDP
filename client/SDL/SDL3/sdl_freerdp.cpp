@@ -353,7 +353,7 @@ static BOOL sdl_draw_to_window(SdlContext* sdl, SdlWindow& window,
 
 	auto size = window.rect();
 
-	if (!freerdp_settings_get_bool(context->settings, FreeRDP_SmartSizing))
+	if (freerdp_settings_get_bool(context->settings, FreeRDP_SmartSizing))
 	{
 		window.setOffsetX(0);
 		window.setOffsetY(0);
@@ -686,7 +686,9 @@ static BOOL sdl_create_windows(SdlContext* sdl)
 		if (!freerdp_settings_get_bool(settings, FreeRDP_Decorations))
 			flags |= SDL_WINDOW_BORDERLESS;
 
-		SdlWindow window{ title,
+		char buffer[MAX_PATH + 64] = {};
+		(void)sprintf_s(buffer, sizeof(buffer), "%s:%" PRIu32, title, x);
+		SdlWindow window{ buffer,
 			              static_cast<int>(startupX),
 			              static_cast<int>(startupY),
 			              static_cast<int>(w),
