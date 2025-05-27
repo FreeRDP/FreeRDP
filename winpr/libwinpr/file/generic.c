@@ -612,9 +612,6 @@ BOOL SetFileAttributesA(LPCSTR lpFileName, DWORD dwFileAttributes)
 {
 	BOOL rc = FALSE;
 #ifdef WINPR_HAVE_FCNTL_H
-	struct stat st = { 0 };
-	int fd = 0;
-
 	if (dwFileAttributes & ~FILE_ATTRIBUTE_READONLY)
 	{
 		char buffer[8192] = { 0 };
@@ -623,10 +620,11 @@ BOOL SetFileAttributesA(LPCSTR lpFileName, DWORD dwFileAttributes)
 		WLog_WARN(TAG, "Unsupported flags %s, ignoring!", flags);
 	}
 
-	fd = open(lpFileName, O_RDONLY);
+	int fd = open(lpFileName, O_RDONLY);
 	if (fd < 0)
 		return FALSE;
 
+	struct stat st = { 0 };
 	if (fstat(fd, &st) != 0)
 		goto fail;
 
@@ -652,20 +650,11 @@ fail:
 BOOL SetFileAttributesW(LPCWSTR lpFileName, DWORD dwFileAttributes)
 {
 	BOOL ret = 0;
-	LPSTR lpCFileName = NULL;
 
 	if (!lpFileName)
 		return FALSE;
 
-	if (dwFileAttributes & ~FILE_ATTRIBUTE_READONLY)
-	{
-		char buffer[8192] = { 0 };
-		const char* flags =
-		    flagsToStr(buffer, sizeof(buffer), dwFileAttributes & ~FILE_ATTRIBUTE_READONLY);
-		WLog_WARN(TAG, "Unsupported flags %s, ignoring!", flags);
-	}
-
-	lpCFileName = ConvertWCharToUtf8Alloc(lpFileName, NULL);
+	char* lpCFileName = ConvertWCharToUtf8Alloc(lpFileName, NULL);
 	if (!lpCFileName)
 	{
 		SetLastError(ERROR_NOT_ENOUGH_MEMORY);

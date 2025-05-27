@@ -303,7 +303,9 @@ static BOOL drive_file_init(DRIVE_FILE* file)
 			                       FORMAT_MESSAGE_IGNORE_INSERTS,
 			                   NULL, errorMessageID, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
 			                   (LPSTR)&messageBuffer, 0, NULL);
-			WLog_ERR(TAG, "Error in drive_file_init: %s %s", messageBuffer, file->fullpath);
+			char fullpath[MAX_PATH] = { 0 };
+			(void)ConvertWCharToUtf8(file->fullpath, fullpath, sizeof(fullpath));
+			WLog_ERR(TAG, "Error in drive_file_init: %s %s", messageBuffer, fullpath);
 			/* Free the buffer. */
 			LocalFree(messageBuffer);
 			/* restore original error code */
@@ -668,8 +670,10 @@ BOOL drive_file_set_information(DRIVE_FILE* file, UINT32 FsInformationClass, UIN
 
 			if (file->file_handle == INVALID_HANDLE_VALUE)
 			{
-				WLog_ERR(TAG, "Unable to set file time %s (%" PRId32 ")", file->fullpath,
-				         GetLastError());
+				char fullpath[MAX_PATH] = { 0 };
+				(void)ConvertWCharToUtf8(file->fullpath, fullpath, sizeof(fullpath) - 1);
+
+				WLog_ERR(TAG, "Unable to set file time %s (%" PRId32 ")", fullpath, GetLastError());
 				return FALSE;
 			}
 
@@ -703,11 +707,20 @@ BOOL drive_file_set_information(DRIVE_FILE* file, UINT32 FsInformationClass, UIN
 
 			DEBUG_WSTR("SetFileTime %s", file->fullpath);
 
-			SetFileAttributesW(file->fullpath, FileAttributes);
+			if (!SetFileAttributesW(file->fullpath, FileAttributes))
+			{
+				char fullpath[MAX_PATH] = { 0 };
+				(void)ConvertWCharToUtf8(file->fullpath, fullpath, sizeof(fullpath));
+				WLog_ERR(TAG, "Unable to set file attributes for %s", fullpath);
+				return FALSE;
+			}
+
 			if (!SetFileTime(file->file_handle, pftCreationTime, pftLastAccessTime,
 			                 pftLastWriteTime))
 			{
-				WLog_ERR(TAG, "Unable to set file time to %s", file->fullpath);
+				char fullpath[MAX_PATH] = { 0 };
+				(void)ConvertWCharToUtf8(file->fullpath, fullpath, sizeof(fullpath));
+				WLog_ERR(TAG, "Unable to set file time for %s", fullpath);
 				return FALSE;
 			}
 
@@ -725,8 +738,10 @@ BOOL drive_file_set_information(DRIVE_FILE* file, UINT32 FsInformationClass, UIN
 
 			if (file->file_handle == INVALID_HANDLE_VALUE)
 			{
-				WLog_ERR(TAG, "Unable to truncate %s to %" PRId64 " (%" PRId32 ")", file->fullpath,
-				         size, GetLastError());
+				char fullpath[MAX_PATH] = { 0 };
+				(void)ConvertWCharToUtf8(file->fullpath, fullpath, sizeof(fullpath));
+				WLog_ERR(TAG, "Unable to truncate %s to %" PRId64 " (%" PRId32 ")", fullpath, size,
+				         GetLastError());
 				return FALSE;
 			}
 
@@ -734,8 +749,10 @@ BOOL drive_file_set_information(DRIVE_FILE* file, UINT32 FsInformationClass, UIN
 
 			if (!SetFilePointerEx(file->file_handle, liSize, NULL, FILE_BEGIN))
 			{
-				WLog_ERR(TAG, "Unable to truncate %s to %" PRId64 " (%" PRId32 ")", file->fullpath,
-				         size, GetLastError());
+				char fullpath[MAX_PATH] = { 0 };
+				(void)ConvertWCharToUtf8(file->fullpath, fullpath, sizeof(fullpath));
+				WLog_ERR(TAG, "Unable to truncate %s to %" PRId64 " (%" PRId32 ")", fullpath, size,
+				         GetLastError());
 				return FALSE;
 			}
 
@@ -743,8 +760,10 @@ BOOL drive_file_set_information(DRIVE_FILE* file, UINT32 FsInformationClass, UIN
 
 			if (SetEndOfFile(file->file_handle) == 0)
 			{
-				WLog_ERR(TAG, "Unable to truncate %s to %" PRId64 " (%" PRId32 ")", file->fullpath,
-				         size, GetLastError());
+				char fullpath[MAX_PATH] = { 0 };
+				(void)ConvertWCharToUtf8(file->fullpath, fullpath, sizeof(fullpath));
+				WLog_ERR(TAG, "Unable to truncate %s to %" PRId64 " (%" PRId32 ")", fullpath, size,
+				         GetLastError());
 				return FALSE;
 			}
 

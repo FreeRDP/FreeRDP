@@ -174,6 +174,7 @@ static DWORD FileSetFilePointer(HANDLE hFile, LONG lDistanceToMove,
 		char ebuffer[256] = { 0 };
 		WLog_ERR(TAG, "_fseeki64(%s) failed with %s [0x%08X]", pFile->lpFileName,
 		         winpr_strerror(errno, ebuffer, sizeof(ebuffer)), errno);
+		SetLastError(map_posix_err(errno));
 		return INVALID_SET_FILE_POINTER;
 	}
 
@@ -209,6 +210,7 @@ static BOOL FileSetFilePointerEx(HANDLE hFile, LARGE_INTEGER liDistanceToMove,
 		char ebuffer[256] = { 0 };
 		WLog_ERR(TAG, "_fseeki64(%s) failed with %s [0x%08X]", pFile->lpFileName,
 		         winpr_strerror(errno, ebuffer, sizeof(ebuffer)), errno);
+		SetLastError(map_posix_err(errno));
 		return FALSE;
 	}
 
@@ -307,6 +309,7 @@ static DWORD FileGetFileSize(HANDLE Object, LPDWORD lpFileSizeHigh)
 		char ebuffer[256] = { 0 };
 		WLog_ERR(TAG, "_ftelli64(%s) failed with %s [0x%08X]", file->lpFileName,
 		         winpr_strerror(errno, ebuffer, sizeof(ebuffer)), errno);
+		SetLastError(map_posix_err(errno));
 		return INVALID_FILE_SIZE;
 	}
 
@@ -315,6 +318,7 @@ static DWORD FileGetFileSize(HANDLE Object, LPDWORD lpFileSizeHigh)
 		char ebuffer[256] = { 0 };
 		WLog_ERR(TAG, "_fseeki64(%s) failed with %s [0x%08X]", file->lpFileName,
 		         winpr_strerror(errno, ebuffer, sizeof(ebuffer)), errno);
+		SetLastError(map_posix_err(errno));
 		return INVALID_FILE_SIZE;
 	}
 
@@ -325,6 +329,7 @@ static DWORD FileGetFileSize(HANDLE Object, LPDWORD lpFileSizeHigh)
 		char ebuffer[256] = { 0 };
 		WLog_ERR(TAG, "_ftelli64(%s) failed with %s [0x%08X]", file->lpFileName,
 		         winpr_strerror(errno, ebuffer, sizeof(ebuffer)), errno);
+		SetLastError(map_posix_err(errno));
 		return INVALID_FILE_SIZE;
 	}
 
@@ -333,6 +338,7 @@ static DWORD FileGetFileSize(HANDLE Object, LPDWORD lpFileSizeHigh)
 		char ebuffer[256] = { 0 };
 		WLog_ERR(TAG, "_ftelli64(%s) failed with %s [0x%08X]", file->lpFileName,
 		         winpr_strerror(errno, ebuffer, sizeof(ebuffer)), errno);
+		SetLastError(map_posix_err(errno));
 		return INVALID_FILE_SIZE;
 	}
 
@@ -386,6 +392,7 @@ static BOOL FileGetFileInformationByHandle(HANDLE hFile,
 		char ebuffer[256] = { 0 };
 		WLog_ERR(TAG, "fstat failed with %s [%#08X]", errno,
 		         winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
+		SetLastError(map_posix_err(errno));
 		return FALSE;
 	}
 
@@ -482,6 +489,7 @@ static BOOL FileLockFileEx(HANDLE hFile, DWORD dwFlags, WINPR_ATTR_UNUSED DWORD 
 		char ebuffer[256] = { 0 };
 		WLog_ERR(TAG, "F_SETLK failed with %s [0x%08X]",
 		         winpr_strerror(errno, ebuffer, sizeof(ebuffer)), errno);
+		SetLastError(map_posix_err(errno));
 		return FALSE;
 	}
 #else
@@ -498,6 +506,7 @@ static BOOL FileLockFileEx(HANDLE hFile, DWORD dwFlags, WINPR_ATTR_UNUSED DWORD 
 		char ebuffer[256] = { 0 };
 		WLog_ERR(TAG, "flock failed with %s [0x%08X]",
 		         winpr_strerror(errno, ebuffer, sizeof(ebuffer)), errno);
+		SetLastError(map_posix_err(errno));
 		return FALSE;
 	}
 #endif
@@ -536,6 +545,7 @@ static BOOL FileUnlockFile(HANDLE hFile, WINPR_ATTR_UNUSED DWORD dwFileOffsetLow
 		char ebuffer[256] = { 0 };
 		WLog_ERR(TAG, "F_UNLCK on %s failed with %s [0x%08X]", pFile->lpFileName,
 		         winpr_strerror(errno, ebuffer, sizeof(ebuffer)), errno);
+		SetLastError(map_posix_err(errno));
 		return FALSE;
 	}
 
@@ -545,6 +555,7 @@ static BOOL FileUnlockFile(HANDLE hFile, WINPR_ATTR_UNUSED DWORD dwFileOffsetLow
 		char ebuffer[256] = { 0 };
 		WLog_ERR(TAG, "flock(LOCK_UN) %s failed with %s [0x%08X]", pFile->lpFileName,
 		         winpr_strerror(errno, ebuffer, sizeof(ebuffer)), errno);
+		SetLastError(map_posix_err(errno));
 		return FALSE;
 	}
 #endif
@@ -588,6 +599,7 @@ static BOOL FileUnlockFileEx(HANDLE hFile, WINPR_ATTR_UNUSED DWORD dwReserved,
 		char ebuffer[256] = { 0 };
 		WLog_ERR(TAG, "F_UNLCK on %s failed with %s [0x%08X]", pFile->lpFileName,
 		         winpr_strerror(errno, ebuffer, sizeof(ebuffer)), errno);
+		SetLastError(map_posix_err(errno));
 		return FALSE;
 	}
 #else
@@ -596,6 +608,7 @@ static BOOL FileUnlockFileEx(HANDLE hFile, WINPR_ATTR_UNUSED DWORD dwReserved,
 		char ebuffer[256] = { 0 };
 		WLog_ERR(TAG, "flock(LOCK_UN) %s failed with %s [0x%08X]", pFile->lpFileName,
 		         winpr_strerror(errno, ebuffer, sizeof(ebuffer)), errno);
+		SetLastError(map_posix_err(errno));
 		return FALSE;
 	}
 #endif
@@ -642,7 +655,13 @@ static BOOL FileSetFileTime(HANDLE hFile, WINPR_ATTR_UNUSED const FILETIME* lpCr
 	// TODO: Creation time can not be handled!
 	const int rc = futimens(fileno(pFile->fp), times);
 	if (rc != 0)
+	{
+		char ebuffer[256] = { 0 };
+		WLog_ERR(TAG, "futimens failed: %s [%d]", winpr_strerror(errno, ebuffer, sizeof(ebuffer)),
+		         errno);
+		SetLastError(map_posix_err(errno));
 		return FALSE;
+	}
 
 	return TRUE;
 }
@@ -687,7 +706,13 @@ static BOOL FileSetFileTime(HANDLE hFile, const FILETIME* lpCreationTime,
 
 	const int rc = fstat(fileno(pFile->fp), &buf);
 	if (rc < 0)
+	{
+		char ebuffer[256] = { 0 };
+		WLog_ERR(TAG, "fstat failed: %s [%d]", winpr_strerror(errno, ebuffer, sizeof(ebuffer)),
+		         errno);
+		SetLastError(map_posix_err(errno));
 		return FALSE;
+	}
 
 	struct timeval timevals[2] = { statToTimeval(&buf), statToTimeval(&buf) };
 	if (lpLastAccessTime)
@@ -700,7 +725,13 @@ static BOOL FileSetFileTime(HANDLE hFile, const FILETIME* lpCreationTime,
 	{
 		const int res = utimes(pFile->lpFileName, timevals);
 		if (res != 0)
+		{
+			char ebuffer[256] = { 0 };
+			WLog_ERR(TAG, "utimes failed: %s [%d]", winpr_strerror(errno, ebuffer, sizeof(ebuffer)),
+			         errno);
+			SetLastError(map_posix_err(errno));
 			return FALSE;
+		}
 	}
 
 	return TRUE;
@@ -1012,7 +1043,12 @@ static HANDLE FileCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dw
 	if (fstat(fileno(pFile->fp), &st) == 0 && dwFlagsAndAttributes & FILE_ATTRIBUTE_READONLY)
 	{
 		st.st_mode &= WINPR_ASSERTING_INT_CAST(mode_t, (mode_t)(~(S_IWUSR | S_IWGRP | S_IWOTH)));
-		fchmod(fileno(pFile->fp), st.st_mode);
+		if (fchmod(fileno(pFile->fp), st.st_mode) != 0)
+		{
+			SetLastError(map_posix_err(errno));
+			FileCloseHandle(pFile);
+			return INVALID_HANDLE_VALUE;
+		}
 	}
 
 	SetLastError(STATUS_SUCCESS);
