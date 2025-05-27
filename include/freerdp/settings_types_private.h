@@ -502,7 +502,16 @@ struct rdp_settings
 	SETTINGS_DEPRECATED(ALIGN64 BOOL GatewayAvdUseTenantid); /** 2020
 		                                                      * @since version 3.10.0
 		                                                      */
-	UINT64 padding2112[2112 - 2021];                         /* 2021 */
+	SETTINGS_DEPRECATED(ALIGN64 char* GatewayAvdScope);      /** 2021
+		                                                      * @since version 3.14.1
+		                                                      */
+	SETTINGS_DEPRECATED(ALIGN64 char* GatewayAvdAccessTokenFormat); /** 2022
+		                                                             * @since version 3.14.1
+		                                                             */
+	SETTINGS_DEPRECATED(ALIGN64 char* GatewayAvdAccessAadFormat);   /** 2023
+		                                                             * @since version 3.14.1
+		                                                             */
+	UINT64 padding2112[2112 - 2024];                                /* 2024 */
 
 	/**
 	 * RemoteApp
