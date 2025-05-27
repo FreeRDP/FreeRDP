@@ -30,6 +30,12 @@
 
 LONG scard_log_status_error(const char* tag, const char* what, LONG status)
 {
+	wLog* log = WLog_Get(tag);
+	return scard_log_status_error_wlog(log, what, status);
+}
+
+LONG scard_log_status_error_wlog(wLog* log, const char* what, LONG status)
+{
 	if (status != SCARD_S_SUCCESS)
 	{
 		DWORD level = WLOG_ERROR;
@@ -44,7 +50,7 @@ LONG scard_log_status_error(const char* tag, const char* what, LONG status)
 			default:
 				break;
 		}
-		WLog_Print(WLog_Get(tag), level, "%s failed with error %s [%" PRId32 "]", what,
+		WLog_Print(log, level, "%s failed with error %s [%" PRId32 "]", what,
 		           SCardGetErrorString(status), status);
 	}
 	return status;
