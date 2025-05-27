@@ -32,6 +32,7 @@ set(${MODULE_PREFIX}_SRCS
     gfx.c
     drdynvc.c
     smartcard_operations.c
+    smartcard_pack.h
     smartcard_pack.c
     smartcard_call.c
     stopwatch.c

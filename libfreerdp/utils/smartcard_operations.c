@@ -221,26 +221,18 @@ static LONG smartcard_LocateCardsW_Decode(wStream* s, SMARTCARD_OPERATION* opera
 
 static LONG smartcard_GetStatusChangeA_Decode(wStream* s, SMARTCARD_OPERATION* operation)
 {
-	LONG status = 0;
-
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(operation);
 
-	status = smartcard_unpack_get_status_change_a_call(s, &operation->call.getStatusChangeA);
-
-	return status;
+	return smartcard_unpack_get_status_change_a_call(s, &operation->call.getStatusChangeA);
 }
 
 static LONG smartcard_GetStatusChangeW_Decode(wStream* s, SMARTCARD_OPERATION* operation)
 {
-	LONG status = 0;
-
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(operation);
 
-	status = smartcard_unpack_get_status_change_w_call(s, &operation->call.getStatusChangeW);
-
-	return status;
+	return smartcard_unpack_get_status_change_w_call(s, &operation->call.getStatusChangeW);
 }
 
 static LONG smartcard_Cancel_Decode(wStream* s, SMARTCARD_OPERATION* operation)
