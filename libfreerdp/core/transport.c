@@ -97,6 +97,12 @@ struct rdp_transport
 	BOOL earlyUserAuth;
 };
 
+typedef struct
+{
+	rdpTransportLayer pub;
+	void* userContextShadowPtr;
+} rdpTransportLayerInt;
+
 static void transport_ssl_cb(const SSL* ssl, int where, int ret)
 {
 	if (where & SSL_CB_ALERT)
@@ -1911,31 +1917,33 @@ void transport_set_early_user_auth_mode(rdpTransport* transport, BOOL EUAMode)
 rdpTransportLayer* transport_layer_new(WINPR_ATTR_UNUSED rdpTransport* transport,
                                        size_t contextSize)
 {
-	rdpTransportLayer* layer = (rdpTransportLayer*)calloc(1, sizeof(rdpTransportLayer));
+	rdpTransportLayerInt* layer = (rdpTransportLayerInt*)calloc(1, sizeof(rdpTransportLayerInt));
 	if (!layer)
 		return NULL;
 
 	if (contextSize)
 	{
-		layer->userContext = calloc(1, contextSize);
-		if (!layer->userContext)
+		layer->userContextShadowPtr = calloc(1, contextSize);
+		if (!layer->userContextShadowPtr)
 		{
 			free(layer);
 			return NULL;
 		}
 	}
+	layer->pub.userContext = layer->userContextShadowPtr;
 
-	return layer;
+	return &layer->pub;
 }
 
 void transport_layer_free(rdpTransportLayer* layer)
 {
+	rdpTransportLayerInt* intern = (rdpTransportLayerInt*)layer;
 	if (!layer)
 		return;
 
-	IFCALL(layer->Close, layer->userContext);
-	free(layer->userContext);
-	free(layer);
+	IFCALL(intern->pub.Close, intern->pub.userContext);
+	free(intern->userContextShadowPtr);
+	free(intern);
 }
 
 static int transport_layer_bio_write(BIO* bio, const char* buf, int size)
