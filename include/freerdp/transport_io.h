@@ -148,8 +148,12 @@ extern "C"
 
 	/**
 	 * @brief Create new transport layer instance
+	 *
+	 * @bug Before 3.16.0 the rdpTransportLayer::userContext was freed unconditionally
+	 *
 	 * @param transport A pointer to the transport instance to use
-	 * @param contextSize The size of the context to use
+	 * @param contextSize The size of the context to use. If \b 0 no rdpTransportLayer::userContext
+	 * is allocated or freed.
 	 * @return A new transport layer instance or \b NULL in case of failure
 	 * @since version 3.9.0
 	 */
