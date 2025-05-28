@@ -1923,6 +1923,7 @@ rdpTransportLayer* transport_layer_new(WINPR_ATTR_UNUSED rdpTransport* transport
 			free(layer);
 			return NULL;
 		}
+		layer->callocUserContext = true;
 	}
 
 	return layer;
@@ -1934,7 +1935,8 @@ void transport_layer_free(rdpTransportLayer* layer)
 		return;
 
 	IFCALL(layer->Close, layer->userContext);
-	free(layer->userContext);
+	if(layer->callocUserContext && layer->userContext)
+        free(layer->userContext);
 	free(layer);
 }
 

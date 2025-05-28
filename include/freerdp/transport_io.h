@@ -67,7 +67,8 @@ extern "C"
 		ALIGN64 pTransportLayerFkt Close;
 		ALIGN64 pTransportLayerWait Wait;
 		ALIGN64 pTransportLayerGetEvent GetEvent;
-		UINT64 reserved[64 - 6]; /* Reserve some space for ABI compatibility */
+		ALIGN64 bool callocUserContext;
+		UINT64 reserved[64 - 7]; /* Reserve some space for ABI compatibility */
 	} rdpTransportLayer;
 
 	typedef int (*pTCPConnect)(rdpContext* context, rdpSettings* settings, const char* hostname,
