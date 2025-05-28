@@ -107,7 +107,7 @@ extern "C"
 		pTCPConnect TCPConnect;
 		pTransportFkt TLSConnect;
 		pTransportFkt TLSAccept;
-		pTransportAttach TransportAttach;
+		pTransportAttach TransportAttach; // This isn't need. will be remove?
 		pTransportFkt TransportDisconnect;
 		pTransportRWFkt ReadPdu;  /* Reads a whole PDU from the transport */
 		pTransportRWFkt WritePdu; /* Writes a whole PDU to the transport */
@@ -149,12 +149,11 @@ extern "C"
 	/**
 	 * @brief Create new transport layer instance
 	 * @param transport A pointer to the transport instance to use
-	 * @param contextSize The size of the context to use
 	 * @return A new transport layer instance or \b NULL in case of failure
 	 * @since version 3.9.0
 	 */
 	WINPR_ATTR_MALLOC(transport_layer_free, 1)
-	FREERDP_API rdpTransportLayer* transport_layer_new(rdpTransport* transport, size_t contextSize);
+	FREERDP_API rdpTransportLayer* transport_layer_new(rdpTransport* transport);
 
 #ifdef __cplusplus
 }

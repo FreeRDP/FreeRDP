@@ -1425,6 +1425,7 @@ static BOOL freerdp_tcp_layer_close(void* userContext)
 	if (tcpLayer->hEvent)
 		(void)CloseHandle(tcpLayer->hEvent);
 
+	free(tcpLayer);
 	return TRUE;
 }
 
@@ -1499,7 +1500,7 @@ rdpTransportLayer* freerdp_tcp_connect_layer(rdpContext* context, const char* ho
 	if (!freerdp_tcp_set_keep_alive_mode(settings, sockfd))
 		goto fail;
 
-	layer = transport_layer_new(freerdp_get_transport(context), sizeof(rdpTcpLayer));
+	layer = transport_layer_new(freerdp_get_transport(context));
 	if (!layer)
 		goto fail;
 
@@ -1509,8 +1510,10 @@ rdpTransportLayer* freerdp_tcp_connect_layer(rdpContext* context, const char* ho
 	layer->Wait = freerdp_tcp_layer_wait;
 	layer->GetEvent = freerdp_tcp_layer_get_event;
 
-	tcpLayer = (rdpTcpLayer*)layer->userContext;
-	WINPR_ASSERT(tcpLayer);
+	tcpLayer = calloc(1, sizeof(rdpTcpLayer));
+	if(!tcpLayer)
+		goto fail;
+	layer->userContext = tcpLayer;
 
 	tcpLayer->sockfd = -1;
 	tcpLayer->hEvent = WSACreateEvent();

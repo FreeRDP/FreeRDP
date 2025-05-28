@@ -1908,22 +1908,11 @@ void transport_set_early_user_auth_mode(rdpTransport* transport, BOOL EUAMode)
 	WLog_Print(transport->log, WLOG_DEBUG, "Early User Auth Mode: %s", EUAMode ? "on" : "off");
 }
 
-rdpTransportLayer* transport_layer_new(WINPR_ATTR_UNUSED rdpTransport* transport,
-                                       size_t contextSize)
+rdpTransportLayer* transport_layer_new(WINPR_ATTR_UNUSED rdpTransport* transport)
 {
 	rdpTransportLayer* layer = (rdpTransportLayer*)calloc(1, sizeof(rdpTransportLayer));
 	if (!layer)
 		return NULL;
-
-	if (contextSize)
-	{
-		layer->userContext = calloc(1, contextSize);
-		if (!layer->userContext)
-		{
-			free(layer);
-			return NULL;
-		}
-	}
 
 	return layer;
 }
@@ -1934,7 +1923,6 @@ void transport_layer_free(rdpTransportLayer* layer)
 		return;
 
 	IFCALL(layer->Close, layer->userContext);
-	free(layer->userContext);
 	free(layer);
 }
 
