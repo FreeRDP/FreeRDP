@@ -628,232 +628,259 @@ out_fail:
 	return FALSE;
 }
 
-BOOL drive_file_set_information(DRIVE_FILE* file, UINT32 FsInformationClass, UINT32 Length,
-                                wStream* input)
+static BOOL drive_file_set_basic_information(DRIVE_FILE* file, UINT32 Length, wStream* input)
 {
-	INT64 size = 0;
-	ULARGE_INTEGER liCreationTime = { 0 };
-	ULARGE_INTEGER liLastAccessTime = { 0 };
-	ULARGE_INTEGER liLastWriteTime = { 0 };
-	ULARGE_INTEGER liChangeTime = { 0 };
-	FILETIME ftCreationTime;
-	FILETIME ftLastAccessTime;
-	FILETIME ftLastWriteTime;
+	WINPR_ASSERT(file);
+
+	const uint32_t expect = 36;
+	if (Length != expect)
+	{
+		WLog_WARN(TAG, "Unexpected Length=%" PRIu32 ", expected %" PRIu32, Length, expect);
+		return FALSE;
+	}
+
+	/* http://msdn.microsoft.com/en-us/library/cc232094.aspx */
+	const ULARGE_INTEGER liCreationTime = { .QuadPart = Stream_Get_UINT64(input) };
+	const ULARGE_INTEGER liLastAccessTime = { .QuadPart = Stream_Get_UINT64(input) };
+	const ULARGE_INTEGER liLastWriteTime = { .QuadPart = Stream_Get_UINT64(input) };
+	const ULARGE_INTEGER liChangeTime = { .QuadPart = Stream_Get_UINT64(input) };
+	const uint32_t FileAttributes = Stream_Get_UINT32(input);
+
+	if (!PathFileExistsW(file->fullpath))
+		return FALSE;
+
+	if (file->file_handle == INVALID_HANDLE_VALUE)
+	{
+		char fullpath[MAX_PATH] = { 0 };
+		(void)ConvertWCharToUtf8(file->fullpath, fullpath, sizeof(fullpath) - 1);
+
+		WLog_ERR(TAG, "Unable to set file time %s (%" PRId32 ")", fullpath, GetLastError());
+		return FALSE;
+	}
+
+	FILETIME ftCreationTime = { 0 };
+	FILETIME ftLastAccessTime = { 0 };
+	FILETIME ftLastWriteTime = { 0 };
 	FILETIME* pftCreationTime = NULL;
 	FILETIME* pftLastAccessTime = NULL;
 	FILETIME* pftLastWriteTime = NULL;
-	UINT32 FileAttributes = 0;
-	UINT32 FileNameLength = 0;
-	LARGE_INTEGER liSize = { 0 };
-	UINT8 delete_pending = 0;
-	UINT8 ReplaceIfExists = 0;
-	DWORD attr = 0;
+	if (liCreationTime.QuadPart != 0)
+	{
+		ftCreationTime.dwHighDateTime = liCreationTime.u.HighPart;
+		ftCreationTime.dwLowDateTime = liCreationTime.u.LowPart;
+		pftCreationTime = &ftCreationTime;
+	}
 
+	if (liLastAccessTime.QuadPart != 0)
+	{
+		ftLastAccessTime.dwHighDateTime = liLastAccessTime.u.HighPart;
+		ftLastAccessTime.dwLowDateTime = liLastAccessTime.u.LowPart;
+		pftLastAccessTime = &ftLastAccessTime;
+	}
+
+	if (liLastWriteTime.QuadPart != 0)
+	{
+		ftLastWriteTime.dwHighDateTime = liLastWriteTime.u.HighPart;
+		ftLastWriteTime.dwLowDateTime = liLastWriteTime.u.LowPart;
+		pftLastWriteTime = &ftLastWriteTime;
+	}
+
+	if (liChangeTime.QuadPart != 0 && liChangeTime.QuadPart > liLastWriteTime.QuadPart)
+	{
+		ftLastWriteTime.dwHighDateTime = liChangeTime.u.HighPart;
+		ftLastWriteTime.dwLowDateTime = liChangeTime.u.LowPart;
+		pftLastWriteTime = &ftLastWriteTime;
+	}
+
+	DEBUG_WSTR("SetFileTime %s", file->fullpath);
+
+	if (!SetFileAttributesW(file->fullpath, FileAttributes))
+	{
+		char fullpath[MAX_PATH] = { 0 };
+		(void)ConvertWCharToUtf8(file->fullpath, fullpath, sizeof(fullpath));
+		WLog_ERR(TAG, "Unable to set file attributes for %s", fullpath);
+		return FALSE;
+	}
+
+	if (!SetFileTime(file->file_handle, pftCreationTime, pftLastAccessTime, pftLastWriteTime))
+	{
+		char fullpath[MAX_PATH] = { 0 };
+		(void)ConvertWCharToUtf8(file->fullpath, fullpath, sizeof(fullpath));
+		WLog_ERR(TAG, "Unable to set file time for %s", fullpath);
+		return FALSE;
+	}
+	return TRUE;
+}
+
+static BOOL drive_file_set_alloc_information(DRIVE_FILE* file, UINT32 Length, wStream* input)
+{
+	WINPR_ASSERT(file);
+	const uint32_t expect = 8;
+	if (Length != expect)
+	{
+		WLog_WARN(TAG, "Unexpected Length=%" PRIu32 ", expected %" PRIu32, Length, expect);
+		return FALSE;
+	}
+
+	/* http://msdn.microsoft.com/en-us/library/cc232076.aspx */
+	const int64_t size = Stream_Get_INT64(input);
+
+	if (file->file_handle == INVALID_HANDLE_VALUE)
+	{
+		char fullpath[MAX_PATH] = { 0 };
+		(void)ConvertWCharToUtf8(file->fullpath, fullpath, sizeof(fullpath));
+		WLog_ERR(TAG, "Unable to truncate %s to %" PRId64 " (%" PRId32 ")", fullpath, size,
+		         GetLastError());
+		return FALSE;
+	}
+
+	LARGE_INTEGER liSize = { .QuadPart = size };
+
+	if (!SetFilePointerEx(file->file_handle, liSize, NULL, FILE_BEGIN))
+	{
+		char fullpath[MAX_PATH] = { 0 };
+		(void)ConvertWCharToUtf8(file->fullpath, fullpath, sizeof(fullpath));
+		WLog_ERR(TAG, "Unable to truncate %s to %" PRId64 " (%" PRId32 ")", fullpath, size,
+		         GetLastError());
+		return FALSE;
+	}
+
+	DEBUG_WSTR("Truncate %s", file->fullpath);
+
+	if (SetEndOfFile(file->file_handle) == 0)
+	{
+		char fullpath[MAX_PATH] = { 0 };
+		(void)ConvertWCharToUtf8(file->fullpath, fullpath, sizeof(fullpath));
+		WLog_ERR(TAG, "Unable to truncate %s to %" PRId64 " (%" PRId32 ")", fullpath, size,
+		         GetLastError());
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+static BOOL drive_file_set_disposition_information(DRIVE_FILE* file, UINT32 Length, wStream* input)
+{
+	WINPR_ASSERT(file);
+	uint8_t delete_pending = 0;
+	/* http://msdn.microsoft.com/en-us/library/cc232098.aspx */
+	/* http://msdn.microsoft.com/en-us/library/cc241371.aspx */
+	if (file->is_dir && !PathIsDirectoryEmptyW(file->fullpath))
+	{
+		SetLastError(ERROR_DIR_NOT_EMPTY);
+		return FALSE;
+	}
+
+	if (Length)
+	{
+		const uint32_t expect = 1;
+		if (Length != expect)
+		{
+			WLog_WARN(TAG, "Unexpected Length=%" PRIu32 ", expected %" PRIu32, Length, expect);
+			return FALSE;
+		}
+
+		delete_pending = Stream_Get_UINT8(input);
+	}
+	else
+		delete_pending = 1;
+
+	if (delete_pending)
+	{
+		DEBUG_WSTR("SetDeletePending %s", file->fullpath);
+		const uint32_t attr = GetFileAttributesW(file->fullpath);
+
+		if (attr & FILE_ATTRIBUTE_READONLY)
+		{
+			SetLastError(ERROR_ACCESS_DENIED);
+			return FALSE;
+		}
+	}
+
+	file->delete_pending = delete_pending;
+	return TRUE;
+}
+
+static BOOL drive_file_set_rename_information(DRIVE_FILE* file, UINT32 Length, wStream* input)
+{
+	WINPR_ASSERT(file);
+
+	const uint32_t expect = 6;
+	if (Length != expect)
+	{
+		WLog_WARN(TAG, "Unexpected Length=%" PRIu32 ", expected %" PRIu32, Length, expect);
+		return FALSE;
+	}
+
+	/* http://msdn.microsoft.com/en-us/library/cc232085.aspx */
+	const uint8_t ReplaceIfExists = Stream_Get_UINT8(input);
+	Stream_Seek_UINT8(input); /* RootDirectory */
+	const uint32_t FileNameLength = Stream_Get_UINT32(input);
+
+	if (!Stream_CheckAndLogRequiredLength(TAG, input, FileNameLength))
+		return FALSE;
+
+	WCHAR* fullpath = drive_file_combine_fullpath(file->basepath, Stream_ConstPointer(input),
+	                                              FileNameLength / sizeof(WCHAR));
+
+	if (!fullpath)
+		return FALSE;
+
+#ifdef _WIN32
+
+	if (file->file_handle != INVALID_HANDLE_VALUE)
+	{
+		(void)CloseHandle(file->file_handle);
+		file->file_handle = INVALID_HANDLE_VALUE;
+	}
+
+#endif
+	DEBUG_WSTR("MoveFileExW %s", file->fullpath);
+
+	if (MoveFileExW(file->fullpath, fullpath,
+	                MOVEFILE_COPY_ALLOWED | (ReplaceIfExists ? MOVEFILE_REPLACE_EXISTING : 0)))
+	{
+		const BOOL rc = drive_file_set_fullpath(file, fullpath);
+		free(fullpath);
+		if (!rc)
+			return FALSE;
+	}
+	else
+	{
+		free(fullpath);
+		return FALSE;
+	}
+
+#ifdef _WIN32
+	drive_file_init(file);
+#endif
+	return TRUE;
+}
+
+BOOL drive_file_set_information(DRIVE_FILE* file, UINT32 FsInformationClass, UINT32 Length,
+                                wStream* input)
+{
 	if (!file || !input)
+		return FALSE;
+
+	if (!Stream_CheckAndLogRequiredLength(TAG, input, Length))
 		return FALSE;
 
 	switch (FsInformationClass)
 	{
 		case FileBasicInformation:
-			if (!Stream_CheckAndLogRequiredLength(TAG, input, 36))
-				return FALSE;
-
-			/* http://msdn.microsoft.com/en-us/library/cc232094.aspx */
-			Stream_Read_UINT64(input, liCreationTime.QuadPart);
-			Stream_Read_UINT64(input, liLastAccessTime.QuadPart);
-			Stream_Read_UINT64(input, liLastWriteTime.QuadPart);
-			Stream_Read_UINT64(input, liChangeTime.QuadPart);
-			Stream_Read_UINT32(input, FileAttributes);
-
-			if (!PathFileExistsW(file->fullpath))
-				return FALSE;
-
-			if (file->file_handle == INVALID_HANDLE_VALUE)
-			{
-				char fullpath[MAX_PATH] = { 0 };
-				(void)ConvertWCharToUtf8(file->fullpath, fullpath, sizeof(fullpath) - 1);
-
-				WLog_ERR(TAG, "Unable to set file time %s (%" PRId32 ")", fullpath, GetLastError());
-				return FALSE;
-			}
-
-			if (liCreationTime.QuadPart != 0)
-			{
-				ftCreationTime.dwHighDateTime = liCreationTime.u.HighPart;
-				ftCreationTime.dwLowDateTime = liCreationTime.u.LowPart;
-				pftCreationTime = &ftCreationTime;
-			}
-
-			if (liLastAccessTime.QuadPart != 0)
-			{
-				ftLastAccessTime.dwHighDateTime = liLastAccessTime.u.HighPart;
-				ftLastAccessTime.dwLowDateTime = liLastAccessTime.u.LowPart;
-				pftLastAccessTime = &ftLastAccessTime;
-			}
-
-			if (liLastWriteTime.QuadPart != 0)
-			{
-				ftLastWriteTime.dwHighDateTime = liLastWriteTime.u.HighPart;
-				ftLastWriteTime.dwLowDateTime = liLastWriteTime.u.LowPart;
-				pftLastWriteTime = &ftLastWriteTime;
-			}
-
-			if (liChangeTime.QuadPart != 0 && liChangeTime.QuadPart > liLastWriteTime.QuadPart)
-			{
-				ftLastWriteTime.dwHighDateTime = liChangeTime.u.HighPart;
-				ftLastWriteTime.dwLowDateTime = liChangeTime.u.LowPart;
-				pftLastWriteTime = &ftLastWriteTime;
-			}
-
-			DEBUG_WSTR("SetFileTime %s", file->fullpath);
-
-			if (!SetFileAttributesW(file->fullpath, FileAttributes))
-			{
-				char fullpath[MAX_PATH] = { 0 };
-				(void)ConvertWCharToUtf8(file->fullpath, fullpath, sizeof(fullpath));
-				WLog_ERR(TAG, "Unable to set file attributes for %s", fullpath);
-				return FALSE;
-			}
-
-			if (!SetFileTime(file->file_handle, pftCreationTime, pftLastAccessTime,
-			                 pftLastWriteTime))
-			{
-				char fullpath[MAX_PATH] = { 0 };
-				(void)ConvertWCharToUtf8(file->fullpath, fullpath, sizeof(fullpath));
-				WLog_ERR(TAG, "Unable to set file time for %s", fullpath);
-				return FALSE;
-			}
-
-			break;
+			return drive_file_set_basic_information(file, Length, input);
 
 		case FileEndOfFileInformation:
-
 		/* http://msdn.microsoft.com/en-us/library/cc232067.aspx */
 		case FileAllocationInformation:
-			if (!Stream_CheckAndLogRequiredLength(TAG, input, 8))
-				return FALSE;
-
-			/* http://msdn.microsoft.com/en-us/library/cc232076.aspx */
-			Stream_Read_INT64(input, size);
-
-			if (file->file_handle == INVALID_HANDLE_VALUE)
-			{
-				char fullpath[MAX_PATH] = { 0 };
-				(void)ConvertWCharToUtf8(file->fullpath, fullpath, sizeof(fullpath));
-				WLog_ERR(TAG, "Unable to truncate %s to %" PRId64 " (%" PRId32 ")", fullpath, size,
-				         GetLastError());
-				return FALSE;
-			}
-
-			liSize.QuadPart = size;
-
-			if (!SetFilePointerEx(file->file_handle, liSize, NULL, FILE_BEGIN))
-			{
-				char fullpath[MAX_PATH] = { 0 };
-				(void)ConvertWCharToUtf8(file->fullpath, fullpath, sizeof(fullpath));
-				WLog_ERR(TAG, "Unable to truncate %s to %" PRId64 " (%" PRId32 ")", fullpath, size,
-				         GetLastError());
-				return FALSE;
-			}
-
-			DEBUG_WSTR("Truncate %s", file->fullpath);
-
-			if (SetEndOfFile(file->file_handle) == 0)
-			{
-				char fullpath[MAX_PATH] = { 0 };
-				(void)ConvertWCharToUtf8(file->fullpath, fullpath, sizeof(fullpath));
-				WLog_ERR(TAG, "Unable to truncate %s to %" PRId64 " (%" PRId32 ")", fullpath, size,
-				         GetLastError());
-				return FALSE;
-			}
-
-			break;
+			return drive_file_set_alloc_information(file, Length, input);
 
 		case FileDispositionInformation:
-
-			/* http://msdn.microsoft.com/en-us/library/cc232098.aspx */
-			/* http://msdn.microsoft.com/en-us/library/cc241371.aspx */
-			if (file->is_dir && !PathIsDirectoryEmptyW(file->fullpath))
-			{
-				SetLastError(ERROR_DIR_NOT_EMPTY);
-				return FALSE;
-			}
-
-			if (Length)
-			{
-				if (!Stream_CheckAndLogRequiredLength(TAG, input, 1))
-					return FALSE;
-
-				Stream_Read_UINT8(input, delete_pending);
-			}
-			else
-				delete_pending = 1;
-
-			if (delete_pending)
-			{
-				DEBUG_WSTR("SetDeletePending %s", file->fullpath);
-				attr = GetFileAttributesW(file->fullpath);
-
-				if (attr & FILE_ATTRIBUTE_READONLY)
-				{
-					SetLastError(ERROR_ACCESS_DENIED);
-					return FALSE;
-				}
-			}
-
-			file->delete_pending = delete_pending;
-			break;
+			return drive_file_set_disposition_information(file, Length, input);
 
 		case FileRenameInformation:
-		{
-			if (!Stream_CheckAndLogRequiredLength(TAG, input, 6))
-				return FALSE;
-
-			/* http://msdn.microsoft.com/en-us/library/cc232085.aspx */
-			Stream_Read_UINT8(input, ReplaceIfExists);
-			Stream_Seek_UINT8(input); /* RootDirectory */
-			Stream_Read_UINT32(input, FileNameLength);
-
-			if (!Stream_CheckAndLogRequiredLength(TAG, input, FileNameLength))
-				return FALSE;
-
-			WCHAR* fullpath = drive_file_combine_fullpath(
-			    file->basepath, Stream_ConstPointer(input), FileNameLength / sizeof(WCHAR));
-
-			if (!fullpath)
-				return FALSE;
-
-#ifdef _WIN32
-
-			if (file->file_handle != INVALID_HANDLE_VALUE)
-			{
-				(void)CloseHandle(file->file_handle);
-				file->file_handle = INVALID_HANDLE_VALUE;
-			}
-
-#endif
-			DEBUG_WSTR("MoveFileExW %s", file->fullpath);
-
-			if (MoveFileExW(file->fullpath, fullpath,
-			                MOVEFILE_COPY_ALLOWED |
-			                    (ReplaceIfExists ? MOVEFILE_REPLACE_EXISTING : 0)))
-			{
-				const BOOL rc = drive_file_set_fullpath(file, fullpath);
-				free(fullpath);
-				if (!rc)
-					return FALSE;
-			}
-			else
-			{
-				free(fullpath);
-				return FALSE;
-			}
-
-#ifdef _WIN32
-			drive_file_init(file);
-#endif
-		}
-		break;
+			return drive_file_set_rename_information(file, Length, input);
 
 		default:
 			WLog_WARN(TAG, "Unhandled FSInformationClass %s [0x%08" PRIx32 "]",
