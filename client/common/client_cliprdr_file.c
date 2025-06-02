@@ -172,7 +172,6 @@ struct cliprdr_file_context
 	wHashTable* clip_data_table;
 	wHashTable* request_table;
 
-	CliprdrFuseFile* root_dir;
 	CliprdrFuseClipDataEntry* clip_data_entry_without_id;
 	UINT32 current_clip_data_id;
 
@@ -198,6 +197,8 @@ struct cliprdr_file_context
 };
 
 #if defined(WITH_FUSE)
+static CliprdrFuseFile* get_fuse_file_by_ino(CliprdrFileContext* file_context, fuse_ino_t fuse_ino);
+
 static void fuse_file_free(void* data)
 {
 	CliprdrFuseFile* fuse_file = data;
@@ -442,13 +443,9 @@ static void clear_selection(CliprdrFileContext* file_context, BOOL all_selection
                             CliprdrFuseClipDataEntry* clip_data_entry)
 {
 	FuseFileClearContext clear_context = { 0 };
-	CliprdrFuseFile* root_dir = NULL;
 	CliprdrFuseFile* clip_data_dir = NULL;
 
 	WINPR_ASSERT(file_context);
-
-	root_dir = file_context->root_dir;
-	WINPR_ASSERT(root_dir);
 
 	clear_context.file_context = file_context;
 	clear_context.fuse_files = ArrayList_New(FALSE);
@@ -465,7 +462,9 @@ static void clear_selection(CliprdrFileContext* file_context, BOOL all_selection
 
 		WINPR_ASSERT(clip_data_dir);
 
-		ArrayList_Remove(root_dir->children, clip_data_dir);
+		CliprdrFuseFile* root_dir = get_fuse_file_by_ino(file_context, FUSE_ROOT_ID);
+		if (root_dir)
+			ArrayList_Remove(root_dir->children, clip_data_dir);
 
 		clear_context.has_clip_data_id = clip_data_dir->has_clip_data_id;
 		clear_context.clip_data_id = clip_data_dir->clip_data_id;
@@ -494,11 +493,11 @@ static void clear_selection(CliprdrFileContext* file_context, BOOL all_selection
 		 * operations with -ENOENT until the invalidation process is complete.
 		 */
 		ArrayList_ForEach(clear_context.fuse_files, invalidate_inode, file_context);
-		if (clip_data_dir)
+		CliprdrFuseFile* root_dir = get_fuse_file_by_ino(file_context, FUSE_ROOT_ID);
+		if (clip_data_dir && root_dir)
 		{
-			fuse_lowlevel_notify_delete(file_context->fuse_sess, file_context->root_dir->ino,
-			                            clip_data_dir->ino, clip_data_dir->filename,
-			                            clip_data_dir->filename_len);
+			fuse_lowlevel_notify_delete(file_context->fuse_sess, root_dir->ino, clip_data_dir->ino,
+			                            clip_data_dir->filename, clip_data_dir->filename_len);
 		}
 	}
 	ArrayList_Free(clear_context.fuse_files);
@@ -653,6 +652,7 @@ static void writelog(wLog* log, DWORD level, const char* fname, const char* fkt,
 }
 
 #if defined(WITH_FUSE)
+static CliprdrFuseFile* fuse_file_new_root(CliprdrFileContext* file_context);
 static void cliprdr_file_fuse_lookup(fuse_req_t req, fuse_ino_t parent, const char* name);
 static void cliprdr_file_fuse_getattr(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info* fi);
 static void cliprdr_file_fuse_readdir(fuse_req_t req, fuse_ino_t ino, size_t size, off_t off,
@@ -671,7 +671,7 @@ static const struct fuse_lowlevel_ops cliprdr_file_fuse_oper = {
 	.opendir = cliprdr_file_fuse_opendir,
 };
 
-static CliprdrFuseFile* get_fuse_file_by_ino(CliprdrFileContext* file_context, fuse_ino_t fuse_ino)
+CliprdrFuseFile* get_fuse_file_by_ino(CliprdrFileContext* file_context, fuse_ino_t fuse_ino)
 {
 	WINPR_ASSERT(file_context);
 
@@ -1625,6 +1625,10 @@ BOOL cliprdr_file_context_init(CliprdrFileContext* file, CliprdrClientContext* c
 	cliprdr->ServerFileContentsRequest = cliprdr_file_context_server_file_contents_request;
 #if defined(WITH_FUSE)
 	cliprdr->ServerFileContentsResponse = cliprdr_file_context_server_file_contents_response;
+
+	CliprdrFuseFile* root_dir = fuse_file_new_root(file);
+	if (!root_dir)
+		return FALSE;
 #endif
 
 	return TRUE;
@@ -1662,6 +1666,7 @@ BOOL cliprdr_file_context_uninit(CliprdrFileContext* file, CliprdrClientContext*
 	HashTable_Clear(file->local_streams);
 
 	file->context = NULL;
+
 #if defined(WITH_FUSE)
 	cliprdr->ServerFileContentsResponse = NULL;
 #endif
@@ -1715,8 +1720,6 @@ static fuse_ino_t get_next_free_inode(CliprdrFileContext* file_context)
 static CliprdrFuseFile* clip_data_dir_new(CliprdrFileContext* file_context, BOOL has_clip_data_id,
                                           UINT32 clip_data_id)
 {
-	CliprdrFuseFile* root_dir = NULL;
-
 	WINPR_ASSERT(file_context);
 
 	UINT64 data_id = clip_data_id;
@@ -1733,7 +1736,13 @@ static CliprdrFuseFile* clip_data_dir_new(CliprdrFileContext* file_context, BOOL
 	clip_data_dir->has_clip_data_id = has_clip_data_id;
 	clip_data_dir->clip_data_id = clip_data_id;
 
-	root_dir = file_context->root_dir;
+	CliprdrFuseFile* root_dir = get_fuse_file_by_ino(file_context, FUSE_ROOT_ID);
+	if (!root_dir)
+	{
+		WLog_Print(file_context->log, WLOG_ERROR, "FUSE root directory missing");
+		fuse_file_free(clip_data_dir);
+		return NULL;
+	}
 	if (!ArrayList_Append(root_dir->children, clip_data_dir))
 	{
 		WLog_Print(file_context->log, WLOG_ERROR, "Failed to append FUSE file");
@@ -2064,12 +2073,6 @@ void cliprdr_file_context_free(CliprdrFileContext* file)
 		return;
 
 #if defined(WITH_FUSE)
-	if (file->inode_table)
-	{
-		clear_no_cdi_entry(file);
-		clear_all_selections(file);
-	}
-
 	if (file->fuse_thread)
 	{
 		WINPR_ASSERT(file->fuse_stop_sync);
@@ -2089,6 +2092,7 @@ void cliprdr_file_context_free(CliprdrFileContext* file)
 	HashTable_Free(file->request_table);
 	HashTable_Free(file->clip_data_table);
 	HashTable_Free(file->inode_table);
+
 #endif
 	HashTable_Free(file->local_streams);
 	winpr_RemoveDirectory(file->path);
@@ -2358,11 +2362,9 @@ static void* UINTPointerClone(const void* other)
 }
 
 #if defined(WITH_FUSE)
-static CliprdrFuseFile* fuse_file_new_root(CliprdrFileContext* file_context)
+CliprdrFuseFile* fuse_file_new_root(CliprdrFileContext* file_context)
 {
-	CliprdrFuseFile* root_dir = NULL;
-
-	root_dir = fuse_file_new("/");
+	CliprdrFuseFile* root_dir = fuse_file_new("/");
 	if (!root_dir)
 		return NULL;
 
@@ -2423,10 +2425,6 @@ CliprdrFileContext* cliprdr_file_context_new(void* context)
 		WINPR_ASSERT(ctobj);
 		ctobj->fnObjectFree = clip_data_entry_free;
 	}
-
-	file->root_dir = fuse_file_new_root(file);
-	if (!file->root_dir)
-		goto fail;
 #endif
 
 	if (!create_base_path(file))
