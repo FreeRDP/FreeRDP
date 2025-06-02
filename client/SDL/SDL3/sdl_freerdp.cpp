@@ -353,7 +353,7 @@ static BOOL sdl_draw_to_window(SdlContext* sdl, SdlWindow& window,
 
 	auto size = window.rect();
 
-	if (!freerdp_settings_get_bool(context->settings, FreeRDP_SmartSizing))
+	if (freerdp_settings_get_bool(context->settings, FreeRDP_SmartSizing))
 	{
 		window.setOffsetX(0);
 		window.setOffsetY(0);
@@ -365,17 +365,11 @@ static BOOL sdl_draw_to_window(SdlContext* sdl, SdlWindow& window,
 		{
 			window.setOffsetY((size.h - gdi->height) / 2);
 		}
-
-		auto surface = sdl->primary.get();
-		if (!sdl_draw_to_window_rect(sdl, window, surface, { window.offsetX(), window.offsetY() },
-		                             rects))
-			return FALSE;
 	}
-	else
-	{
-		if (!sdl_draw_to_window_scaled_rect(sdl, window, sdl->primary.get(), rects))
-			return FALSE;
-	}
+	auto surface = sdl->primary.get();
+	if (!sdl_draw_to_window_rect(sdl, window, surface, { window.offsetX(), window.offsetY() },
+	                             rects))
+		return FALSE;
 	window.updateSurface();
 	return TRUE;
 }
@@ -642,6 +636,20 @@ static BOOL sdl_create_windows(SdlContext* sdl)
 
 	UINT32 windowCount = freerdp_settings_get_uint32(settings, FreeRDP_MonitorCount);
 
+	Sint32 originX = 0, originY = 0;
+	for (UINT32 x = 0; x < windowCount; x++)
+	{
+		auto id = sdl->monitorId(x);
+		if (id < 0)
+			return FALSE;
+
+		auto monitor = static_cast<rdpMonitor*>(
+		    freerdp_settings_get_pointer_array_writable(settings, FreeRDP_MonitorDefArray, x));
+
+		originX = std::min<Sint32>(monitor->x, originX);
+		originY = std::min<Sint32>(monitor->y, originY);
+	}
+
 	for (UINT32 x = 0; x < windowCount; x++)
 	{
 		auto id = sdl->monitorId(x);
@@ -678,7 +686,9 @@ static BOOL sdl_create_windows(SdlContext* sdl)
 		if (!freerdp_settings_get_bool(settings, FreeRDP_Decorations))
 			flags |= SDL_WINDOW_BORDERLESS;
 
-		SdlWindow window{ title,
+		char buffer[MAX_PATH + 64] = {};
+		(void)sprintf_s(buffer, sizeof(buffer), "%s:%" PRIu32, title, x);
+		SdlWindow window{ buffer,
 			              static_cast<int>(startupX),
 			              static_cast<int>(startupY),
 			              static_cast<int>(w),
@@ -690,9 +700,8 @@ static BOOL sdl_create_windows(SdlContext* sdl)
 
 		if (freerdp_settings_get_bool(settings, FreeRDP_UseMultimon))
 		{
-			auto r = window.rect();
-			window.setOffsetX(0 - r.x);
-			window.setOffsetY(0 - r.y);
+			window.setOffsetX(originX - monitor->x);
+			window.setOffsetY(originY - monitor->y);
 		}
 
 		sdl->windows.insert({ window.id(), std::move(window) });
