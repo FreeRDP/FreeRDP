@@ -31,7 +31,7 @@ class SdlSelectableWidget : public SdlWidget
 #endif
 	SdlSelectableWidget(SdlSelectableWidget&& other) noexcept;
 	SdlSelectableWidget(const SdlSelectableWidget& other) = delete;
-	virtual ~SdlSelectableWidget() override;
+	~SdlSelectableWidget() override;
 
 	SdlSelectableWidget& operator=(const SdlSelectableWidget& other) = delete;
 	SdlSelectableWidget& operator=(SdlSelectableWidget&& other) = delete;

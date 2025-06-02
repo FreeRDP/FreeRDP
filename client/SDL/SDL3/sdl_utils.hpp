@@ -86,4 +86,4 @@ namespace sdl::utils
 	UINT32 orientaion_to_rdp(SDL_DisplayOrientation orientation);
 
 	std::string generate_uuid_v4();
-}
+} // namespace sdl::utils

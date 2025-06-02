@@ -74,7 +74,7 @@ class SdlWidget
 	                     const char* fkt);
 
   protected:
-	std::shared_ptr<SDL_Renderer> _renderer{};
+	std::shared_ptr<SDL_Renderer> _renderer;
 	SDL_Color _backgroundcolor = { 0x56, 0x56, 0x56, 0xff };
 	SDL_Color _fontcolor = { 0xd1, 0xcf, 0xcd, 0xff };
 	mutable std::string _text;

@@ -64,7 +64,6 @@ class SdlWindow
   private:
 	static UINT32 orientaion_to_rdp(SDL_DisplayOrientation orientation);
 
-  private:
 	SDL_Window* _window = nullptr;
 	Sint32 _offset_x = 0;
 	Sint32 _offset_y = 0;

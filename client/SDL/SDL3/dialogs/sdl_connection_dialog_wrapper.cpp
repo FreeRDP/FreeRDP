@@ -20,9 +20,9 @@
 
 #include <sstream>
 
-#include "sdl_connection_dialog_wrapper.hpp"
-#include "sdl_connection_dialog.hpp"
 #include "../sdl_utils.hpp"
+#include "sdl_connection_dialog.hpp"
+#include "sdl_connection_dialog_wrapper.hpp"
 
 SdlConnectionDialogWrapper::SdlConnectionDialogWrapper() = default;
 
@@ -93,7 +93,7 @@ void SdlConnectionDialogWrapper::setTitle(const char* fmt, ...)
 
 void SdlConnectionDialogWrapper::setTitle(const std::string& title)
 {
-	push({ title });
+	push(EventArg{ title });
 }
 
 void SdlConnectionDialogWrapper::showInfo(const char* fmt, ...)
@@ -143,7 +143,7 @@ void SdlConnectionDialogWrapper::show(SdlConnectionDialogWrapper::MsgType type,
 
 void SdlConnectionDialogWrapper::show(bool visible)
 {
-	push({ visible });
+	push(EventArg{ visible });
 }
 
 void SdlConnectionDialogWrapper::handleShow()

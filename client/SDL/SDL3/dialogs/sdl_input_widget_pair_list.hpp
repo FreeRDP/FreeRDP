@@ -36,7 +36,7 @@ class SdlInputWidgetPairList : public SdlWidgetList
 	SdlInputWidgetPairList(const SdlInputWidgetPairList& other) = delete;
 	SdlInputWidgetPairList(SdlInputWidgetPairList&& other) = delete;
 
-	virtual ~SdlInputWidgetPairList() override;
+	~SdlInputWidgetPairList() override;
 
 	SdlInputWidgetPairList& operator=(const SdlInputWidgetPairList& other) = delete;
 	SdlInputWidgetPairList& operator=(SdlInputWidgetPairList&& other) = delete;
