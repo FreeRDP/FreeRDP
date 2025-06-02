@@ -87,27 +87,27 @@ class SdlConnectionDialogWrapper
 	class EventArg
 	{
 	  public:
-		EventArg(bool visible);
-		EventArg(const std::string& title);
+		explicit EventArg(bool visible);
+		explicit EventArg(const std::string& title);
 		EventArg(SdlConnectionDialogWrapper::MsgType type, const std::string& msg, bool visible);
 
-		bool hasTitle() const;
-		const std::string& title() const;
+		[[nodiscard]] bool hasTitle() const;
+		[[nodiscard]] const std::string& title() const;
 
-		bool hasMessage() const;
-		const std::string& message() const;
+		[[nodiscard]] bool hasMessage() const;
+		[[nodiscard]] const std::string& message() const;
 
-		bool hasType() const;
-		SdlConnectionDialogWrapper::MsgType type() const;
+		[[nodiscard]] bool hasType() const;
+		[[nodiscard]] SdlConnectionDialogWrapper::MsgType type() const;
 
-		bool hasVisibility() const;
-		bool visible() const;
+		[[nodiscard]] bool hasVisibility() const;
+		[[nodiscard]] bool visible() const;
 
-		std::string str() const;
+		[[nodiscard]] std::string str() const;
 
 	  private:
-		std::string _title{};
-		std::string _message{};
+		std::string _title;
+		std::string _message;
 		SdlConnectionDialogWrapper::MsgType _type = MSG_NONE;
 		bool _visible = false;
 		uint32_t _mask = 0;

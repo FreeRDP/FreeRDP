@@ -17,9 +17,9 @@
  * limitations under the License.
  */
 
+#include <iostream>
 #include <memory>
 #include <mutex>
-#include <iostream>
 
 #include <freerdp/config.h>
 
@@ -27,44 +27,44 @@
 #include <cstdio>
 #include <cstring>
 
-#include <freerdp/freerdp.h>
 #include <freerdp/constants.h>
+#include <freerdp/freerdp.h>
 #include <freerdp/gdi/gdi.h>
 #include <freerdp/streamdump.h>
 #include <freerdp/utils/signal.h>
 
-#include <freerdp/client/file.h>
-#include <freerdp/client/cmdline.h>
-#include <freerdp/client/cliprdr.h>
-#include <freerdp/client/channels.h>
 #include <freerdp/channels/channels.h>
+#include <freerdp/client/channels.h>
+#include <freerdp/client/cliprdr.h>
+#include <freerdp/client/cmdline.h>
+#include <freerdp/client/file.h>
 
-#include <winpr/crt.h>
-#include <winpr/config.h>
-#include <winpr/assert.h>
-#include <winpr/synch.h>
 #include <freerdp/log.h>
+#include <winpr/assert.h>
+#include <winpr/config.h>
+#include <winpr/crt.h>
+#include <winpr/synch.h>
 
 #include <SDL3/SDL.h>
 #if !defined(__MINGW32__)
 #include <SDL3/SDL_main.h>
 #endif
 #include <SDL3/SDL_hints.h>
-#include <SDL3/SDL_video.h>
 #include <SDL3/SDL_oldnames.h>
+#include <SDL3/SDL_video.h>
 
+#include "dialogs/sdl_connection_dialog_hider.hpp"
+#include "dialogs/sdl_dialogs.hpp"
+#include "scoped_guard.hpp"
 #include "sdl_channels.hpp"
-#include "sdl_freerdp.hpp"
-#include "sdl_utils.hpp"
 #include "sdl_disp.hpp"
-#include "sdl_monitor.hpp"
+#include "sdl_freerdp.hpp"
 #include "sdl_kbd.hpp"
-#include "sdl_touch.hpp"
+#include "sdl_monitor.hpp"
 #include "sdl_pointer.hpp"
 #include "sdl_prefs.hpp"
-#include "dialogs/sdl_dialogs.hpp"
-#include "dialogs/sdl_connection_dialog_hider.hpp"
-#include "scoped_guard.hpp"
+#include "sdl_touch.hpp"
+#include "sdl_utils.hpp"
 
 #include <aad/sdl_webview.hpp>
 
@@ -312,31 +312,6 @@ static bool sdl_draw_to_window_rect(SdlContext* sdl, SdlWindow& window, SDL_Surf
 			return false;
 	}
 	return true;
-}
-
-static bool sdl_draw_to_window_scaled_rect(SdlContext* sdl, SdlWindow& window, SDL_Surface* surface,
-                                           const SDL_Rect& srcRect)
-{
-	SDL_Rect dstRect = srcRect;
-	sdl_scale_coordinates(sdl, window.id(), &dstRect.x, &dstRect.y, FALSE, TRUE);
-	sdl_scale_coordinates(sdl, window.id(), &dstRect.w, &dstRect.h, FALSE, TRUE);
-	return window.blit(surface, srcRect, dstRect);
-}
-
-static BOOL sdl_draw_to_window_scaled_rect(SdlContext* sdl, SdlWindow& window, SDL_Surface* surface,
-                                           const std::vector<SDL_Rect>& rects = {})
-{
-	if (rects.empty())
-	{
-		return sdl_draw_to_window_scaled_rect(sdl, window, surface,
-		                                      { 0, 0, surface->w, surface->h });
-	}
-	for (const auto& srcRect : rects)
-	{
-		if (!sdl_draw_to_window_scaled_rect(sdl, window, surface, srcRect))
-			return FALSE;
-	}
-	return TRUE;
 }
 
 static BOOL sdl_draw_to_window(SdlContext* sdl, SdlWindow& window,
@@ -636,7 +611,8 @@ static BOOL sdl_create_windows(SdlContext* sdl)
 
 	UINT32 windowCount = freerdp_settings_get_uint32(settings, FreeRDP_MonitorCount);
 
-	Sint32 originX = 0, originY = 0;
+	Sint32 originX = 0;
+	Sint32 originY = 0;
 	for (UINT32 x = 0; x < windowCount; x++)
 	{
 		auto id = sdl->monitorId(x);
@@ -781,8 +757,8 @@ static int sdl_run(SdlContext* sdl)
 		SDL_Event windowEvent = {};
 		while (!shall_abort(sdl) && SDL_WaitEventTimeout(nullptr, 1000))
 		{
-			/* Only poll standard SDL events and SDL_EVENT_USERS meant to create dialogs.
-			 * do not process the dialog return value events here.
+			/* Only poll standard SDL events and SDL_EVENT_USERS meant to create
+			 * dialogs. do not process the dialog return value events here.
 			 */
 			const int prc = SDL_PeepEvents(&windowEvent, 1, SDL_GETEVENT, SDL_EVENT_FIRST,
 			                               SDL_EVENT_USER_RETRY_DIALOG);
@@ -798,8 +774,8 @@ static int sdl_run(SdlContext* sdl)
 #endif
 			{
 				std::lock_guard<CriticalSection> lock(sdl->critical);
-				/* The session might have been disconnected while we were waiting for a new SDL
-				 * event. In that case ignore the SDL event and terminate. */
+				/* The session might have been disconnected while we were waiting for a
+				 * new SDL event. In that case ignore the SDL event and terminate. */
 				if (freerdp_shall_disconnect_context(sdl->context()))
 					continue;
 			}

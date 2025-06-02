@@ -22,7 +22,10 @@ else()
   set(SSO_MIB_EXTERNAL_DIR ${CMAKE_BINARY_DIR}/sso-mib-external)
 
   set(SSO_MIB_URL https://github.com/siemens/sso-mib.git)
-  set(SSO_MIB_VERSION v0.5.0)
+  set(SSO_MIB_VERSION_MAJOR 0)
+  set(SSO_MIB_VERSION_MINOR 5)
+  set(SSO_MIB_VERSION_PATCH 0)
+  set(SSO_MIB_VERSION v${SSO_MIB_VERSION_MAJOR}.${SSO_MIB_VERSION_MINOR}.${SSO_MIB_VERSION_PATCH})
   message(STATUS "Adding sso-mib as ExternalProject from ${SSO_MIB_URL}, version ${SSO_MIB_VERSION}")
 
   ExternalProject_Add(
@@ -47,6 +50,13 @@ else()
 
   set(SSO_MIB_INCLUDE_DIRS ${SSO_MIB_EXTERNAL_DIR}/install/include ${PC_SSO_MIB_INCLUDE_DIRS})
   set(SSO_MIB_LIBRARIES ${SSO_MIB_EXTERNAL_DIR}/install/lib/libsso-mib.so ${PC_SSO_MIB_LIBRARIES})
+  if(BUILD_SHARED_LIBS)
+    set(SSO_MIB_INSTALL_LIBRARIES
+        ${SSO_MIB_EXTERNAL_DIR}/install/lib/libsso-mib.so
+        ${SSO_MIB_EXTERNAL_DIR}/install/lib/libsso-mib.so.${SSO_MIB_VERSION_MAJOR}
+        ${SSO_MIB_EXTERNAL_DIR}/install/lib/libsso-mib.so.${SSO_MIB_VERSION_MAJOR}.${SSO_MIB_VERSION_MINOR}.${SSO_MIB_VERSION_PATCH}
+    )
+  endif()
 endif()
 
 mark_as_advanced(SSO_MIB_INCLUDE_DIR SSO_MIB_LIBRARY)

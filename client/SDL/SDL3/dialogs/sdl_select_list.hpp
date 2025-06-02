@@ -16,7 +16,7 @@ class SdlSelectList : public SdlWidgetList
 	SdlSelectList(const std::string& title, const std::vector<std::string>& labels);
 	SdlSelectList(const SdlSelectList& other) = delete;
 	SdlSelectList(SdlSelectList&& other) = delete;
-	virtual ~SdlSelectList() override;
+	~SdlSelectList() override;
 
 	SdlSelectList& operator=(const SdlSelectList& other) = delete;
 	SdlSelectList& operator=(SdlSelectList&& other) = delete;

@@ -42,5 +42,5 @@ class SdlBlendModeGuard
   private:
 	SDL_BlendMode _restore_mode = SDL_BLENDMODE_INVALID;
 	SDL_BlendMode _current_mode = SDL_BLENDMODE_INVALID;
-	std::shared_ptr<SDL_Renderer> _renderer{};
+	std::shared_ptr<SDL_Renderer> _renderer;
 };

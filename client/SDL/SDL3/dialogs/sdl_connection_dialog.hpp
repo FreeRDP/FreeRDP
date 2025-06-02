@@ -26,10 +26,10 @@
 
 #include <SDL3/SDL.h>
 
-#include "sdl_widget_list.hpp"
-#include "sdl_widget.hpp"
 #include "sdl_buttons.hpp"
 #include "sdl_connection_dialog_wrapper.hpp"
+#include "sdl_widget.hpp"
+#include "sdl_widget_list.hpp"
 
 class SDLConnectionDialog : public SdlWidgetList
 {
@@ -37,7 +37,7 @@ class SDLConnectionDialog : public SdlWidgetList
 	explicit SDLConnectionDialog(rdpContext* context);
 	SDLConnectionDialog(const SDLConnectionDialog& other) = delete;
 	SDLConnectionDialog(const SDLConnectionDialog&& other) = delete;
-	virtual ~SDLConnectionDialog() override;
+	~SDLConnectionDialog() override;
 
 	SDLConnectionDialog& operator=(const SDLConnectionDialog& other) = delete;
 	SDLConnectionDialog& operator=(SDLConnectionDialog&& other) = delete;
@@ -91,5 +91,5 @@ class SDLConnectionDialog : public SdlWidgetList
 	SdlConnectionDialogWrapper::MsgType _type_active = SdlConnectionDialogWrapper::MSG_NONE;
 	SDL_TimerID _timer = 0;
 	bool _running = false;
-	std::vector<widget_cfg_t> _list{};
+	std::vector<widget_cfg_t> _list;
 };

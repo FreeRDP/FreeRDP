@@ -20,16 +20,15 @@ class SdlWidgetList
 
 	virtual bool reset(const std::string& title, size_t width, size_t height);
 
-	virtual bool visible() const;
+	[[nodiscard]] virtual bool visible() const;
 
   protected:
 	bool update();
 	virtual bool clearWindow();
 	virtual bool updateInternal() = 0;
 
-  protected:
-	std::shared_ptr<SDL_Window> _window{};
-	std::shared_ptr<SDL_Renderer> _renderer{};
+	std::shared_ptr<SDL_Window> _window;
+	std::shared_ptr<SDL_Renderer> _renderer;
 	SdlButtonList _buttons;
 	SDL_Color _backgroundcolor{ 0x38, 0x36, 0x35, 0xff };
 };
