@@ -806,9 +806,9 @@ static BOOL drive_file_set_rename_information(DRIVE_FILE* file, UINT32 Length, w
 	WINPR_ASSERT(file);
 
 	const uint32_t expect = 6;
-	if (Length != expect)
+	if (Length < expect)
 	{
-		WLog_WARN(TAG, "Unexpected Length=%" PRIu32 ", expected %" PRIu32, Length, expect);
+		WLog_WARN(TAG, "Unexpected Length=%" PRIu32 ", expected at least %" PRIu32, Length, expect);
 		return FALSE;
 	}
 
@@ -817,8 +817,12 @@ static BOOL drive_file_set_rename_information(DRIVE_FILE* file, UINT32 Length, w
 	Stream_Seek_UINT8(input); /* RootDirectory */
 	const uint32_t FileNameLength = Stream_Get_UINT32(input);
 
-	if (!Stream_CheckAndLogRequiredLength(TAG, input, FileNameLength))
+	if (Length != expect + FileNameLength)
+	{
+		WLog_WARN(TAG, "Unexpected Length=%" PRIu32 ", expected %" PRIu32, Length,
+		          expect + FileNameLength);
 		return FALSE;
+	}
 
 	WCHAR* fullpath = drive_file_combine_fullpath(file->basepath, Stream_ConstPointer(input),
 	                                              FileNameLength / sizeof(WCHAR));
