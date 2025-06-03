@@ -787,7 +787,7 @@ static BOOL rdp_write_info_packet(rdpRdp* rdp, wStream* s)
 	{
 		if (settings->HiDefRemoteApp)
 		{
-			if (settings->RdpVersion >= RDP_VERSION_10_0)
+			if (settings->RdpVersion >= RDP_VERSION_5_PLUS)
 				flags |= INFO_HIDEF_RAIL_SUPPORTED;
 		}
 
