@@ -40,6 +40,10 @@ if(NOT DEFINED PRODUCT)
   set(PRODUCT "FreeRDP" CACHE STRING "FreeRDP package name")
 endif()
 
+if(NOT DEFINED PROJECT_URL)
+  set(PROJECT_URL "https://freerdp.com" CACHE STRING "FreeRDP package url")
+endif()
+
 if(NOT DEFINED FREERDP_VENDOR)
   set(FREERDP_VENDOR 1)
 endif()

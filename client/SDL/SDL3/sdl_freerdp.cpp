@@ -53,6 +53,8 @@
 #include <SDL3/SDL_oldnames.h>
 #include <SDL3/SDL_video.h>
 
+#include <sdl_config.hpp>
+
 #include "dialogs/sdl_connection_dialog_hider.hpp"
 #include "dialogs/sdl_dialogs.hpp"
 #include "scoped_guard.hpp"
@@ -1739,6 +1741,14 @@ SdlContext::SdlContext(rdpContext* context)
       primary(nullptr, SDL_DestroySurface), rdp_thread_running(false)
 {
 	WINPR_ASSERT(context);
+
+	SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_NAME_STRING, SDL_CLIENT_NAME);
+	SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_VERSION_STRING, SDL_CLIENT_VERSION);
+	SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_IDENTIFIER_STRING, SDL_CLIENT_UUID);
+	SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_CREATOR_STRING, SDL_CLIENT_VENDOR);
+	SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_COPYRIGHT_STRING, SDL_CLIENT_COPYRIGHT);
+	SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_URL_STRING, SDL_CLIENT_URL);
+	SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_TYPE_STRING, SDL_CLIENT_TYPE);
 }
 
 void SdlContext::setHasCursor(bool val)

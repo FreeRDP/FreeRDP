@@ -49,7 +49,7 @@ cleaning_configure_file(sdl_config.hpp.in sdl_config.hpp @ONLY)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 add_library(sdl-common-aad-view STATIC ${SRCS})
-set_property(TARGET sdl-common-aad-view PROPERTY FOLDER "Client/Common")
+set_property(TARGET sdl-common-aad-view PROPERTY FOLDER "Client/SDL/Common")
 
 target_include_directories(sdl-common-aad-view PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
 target_link_libraries(sdl-common-aad-view PRIVATE ${LIBS})
