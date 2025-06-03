@@ -1003,25 +1003,28 @@ static int pollAndHandshake(rdpTls* tls)
 
 	do
 	{
-		HANDLE event = NULL;
+		HANDLE events[] = { freerdp_abort_event(tls->context), NULL };
 		DWORD status = 0;
-		if (BIO_get_event(tls->bio, &event) < 0)
+		if (BIO_get_event(tls->bio, &events[1]) < 0)
 		{
 			WLog_ERR(TAG, "unable to retrieve BIO associated event");
 			return -1;
 		}
 
-		if (!event)
+		if (!events[1])
 		{
 			WLog_ERR(TAG, "unable to retrieve BIO event");
 			return -1;
 		}
 
-		status = WaitForSingleObjectEx(event, 50, TRUE);
+		status = WaitForMultipleObjectsEx(ARRAYSIZE(events), events, FALSE, INFINITE, TRUE);
 		switch (status)
 		{
-			case WAIT_OBJECT_0:
+			case WAIT_OBJECT_0 + 1:
 				break;
+			case WAIT_OBJECT_0:
+				WLog_DBG(TAG, "Abort event set, cancel connect");
+				return -1;
 			case WAIT_TIMEOUT:
 			case WAIT_IO_COMPLETION:
 				continue;

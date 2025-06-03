@@ -296,8 +296,7 @@ static DWORD WINAPI audin_server_thread_func(LPVOID arg)
 
 	while (1)
 	{
-		if ((status = WaitForMultipleObjects(nCount, events, FALSE, 100)) == WAIT_OBJECT_0)
-			goto out;
+		status = WaitForMultipleObjects(nCount, events, FALSE, 100);
 
 		if (status == WAIT_FAILED)
 		{

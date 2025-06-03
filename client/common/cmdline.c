@@ -645,6 +645,10 @@ BOOL freerdp_client_print_command_line_help_ex(int argc, char** argv,
 	       "/v:192.168.1.100\n",
 	       name);
 	printf("    %s /u:\\AzureAD\\user@corp.example /p:pwd /v:host\n", name);
+	printf("Use a generic pipe as transport:");
+	printf("    %s /v:/path/to/pipe\n", name);
+	printf("Use a external socket:");
+	printf("    %s /v:|:1234\n", name);
 	printf("\n");
 	printf("Clipboard Redirection: +clipboard\n");
 	printf("\n");
