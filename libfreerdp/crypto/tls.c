@@ -1003,32 +1003,12 @@ static int pollAndHandshake(rdpTls* tls)
 
 	do
 	{
-		HANDLE event = NULL;
 		DWORD status = 0;
-		if (BIO_get_event(tls->bio, &event) < 0)
-		{
-			WLog_ERR(TAG, "unable to retrieve BIO associated event");
-			return -1;
-		}
-
-		if (!event)
-		{
-			WLog_ERR(TAG, "unable to retrieve BIO event");
-			return -1;
-		}
-
-		status = WaitForSingleObjectEx(event, 50, TRUE);
-		switch (status)
-		{
-			case WAIT_OBJECT_0:
-				break;
-			case WAIT_TIMEOUT:
-			case WAIT_IO_COMPLETION:
-				continue;
-			default:
-				WLog_ERR(TAG, "error during WaitForSingleObject(): 0x%08" PRIX32 "", status);
-				return -1;
-		}
+		status = BIO_wait_read(tls->bio, 50);
+		if(status < 0)
+			WLog_ERR(TAG, "BIO_wait_read fail: 0x%08", status);
+		else if(0 == status) // Timeout
+			continue;
 
 		TlsHandshakeResult result = freerdp_tls_handshake(tls);
 		switch (result)
