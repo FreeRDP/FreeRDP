@@ -68,7 +68,9 @@
 #include "sdl_touch.hpp"
 #include "sdl_utils.hpp"
 
+#if defined(WITH_WEBVIEW)
 #include <aad/sdl_webview.hpp>
+#endif
 
 #define SDL_TAG CLIENT_TAG("SDL")
 

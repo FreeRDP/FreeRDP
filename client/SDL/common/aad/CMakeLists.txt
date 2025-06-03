@@ -38,19 +38,18 @@ if(WITH_WEBVIEW)
   FetchContent_Declare(webview GIT_REPOSITORY https://github.com/akallabeth/webview GIT_TAG navigation-listener SYSTEM)
   FetchContent_MakeAvailable(webview)
 
-  list(APPEND SRCS wrapper/webview_impl.cpp)
+  list(APPEND SRCS webview_impl.cpp)
 
   list(APPEND LIBS webview::core)
+
+  include_directories(${CMAKE_CURRENT_BINARY_DIR})
+
+  add_library(sdl-common-aad-view STATIC ${SRCS})
+  set_property(TARGET sdl-common-aad-view PROPERTY FOLDER "Client/SDL/Common")
+
+  target_include_directories(sdl-common-aad-view PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
+  target_link_libraries(sdl-common-aad-view PRIVATE ${LIBS})
+  target_compile_definitions(sdl-common-aad-view PUBLIC ${DEFINITIONS})
 else()
-  set(SRCS dummy.cpp)
+  add_library(sdl-common-aad-view STATIC dummy.cpp)
 endif()
-
-cleaning_configure_file(sdl_config.hpp.in sdl_config.hpp @ONLY)
-include_directories(${CMAKE_CURRENT_BINARY_DIR})
-
-add_library(sdl-common-aad-view STATIC ${SRCS})
-set_property(TARGET sdl-common-aad-view PROPERTY FOLDER "Client/SDL/Common")
-
-target_include_directories(sdl-common-aad-view PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
-target_link_libraries(sdl-common-aad-view PRIVATE ${LIBS})
-target_compile_definitions(sdl-common-aad-view PUBLIC ${DEFINITIONS})

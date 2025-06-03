@@ -19,18 +19,18 @@
 
 #include <webview.h>
 
+#include "webview_impl.hpp"
+#include <algorithm>
 #include <cassert>
-#include <string>
-#include <vector>
+#include <cctype>
 #include <map>
 #include <regex>
 #include <sstream>
-#include <cctype>
-#include <algorithm>
-#include "../webview_impl.hpp"
+#include <string>
+#include <vector>
 
-#include <winpr/string.h>
 #include <freerdp/log.h>
+#include <winpr/string.h>
 
 #define TAG FREERDP_TAG("client.SDL.common.aad")
 
@@ -43,7 +43,9 @@ class fkt_arg
 		auto redir = args.find("redirect_uri");
 		if (redir == args.end())
 		{
-			WLog_ERR(TAG, "[Webview] url %s does not contain a redirect_uri parameter, aborting.",
+			WLog_ERR(TAG,
+			         "[Webview] url %s does not contain a redirect_uri parameter, "
+			         "aborting.",
 			         url.c_str());
 		}
 		else
