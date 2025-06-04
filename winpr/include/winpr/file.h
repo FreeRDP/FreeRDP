@@ -461,6 +461,12 @@ typedef struct
 
 WINPR_API BOOL ValidFileNameComponent(LPCWSTR lpFileName);
 
+#if defined(_UWP) || !defined(_WIN32)
+WINPR_API DWORD GetLogicalDriveStringsA(DWORD nBufferLength, LPSTR lpBuffer);
+
+WINPR_API DWORD GetLogicalDriveStringsW(DWORD nBufferLength, LPWSTR lpBuffer);
+#endif
+
 #ifdef _UWP
 
 #ifdef __cplusplus
@@ -496,10 +502,6 @@ extern "C"
 	WINPR_API BOOL GetDiskFreeSpaceW(LPCWSTR lpRootPathName, LPDWORD lpSectorsPerCluster,
 	                                 LPDWORD lpBytesPerSector, LPDWORD lpNumberOfFreeClusters,
 	                                 LPDWORD lpTotalNumberOfClusters);
-
-	WINPR_API DWORD GetLogicalDriveStringsA(DWORD nBufferLength, LPSTR lpBuffer);
-
-	WINPR_API DWORD GetLogicalDriveStringsW(DWORD nBufferLength, LPWSTR lpBuffer);
 
 	WINPR_API BOOL PathIsDirectoryEmptyA(LPCSTR pszPath);
 

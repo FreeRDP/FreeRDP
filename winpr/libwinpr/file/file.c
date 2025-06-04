@@ -1585,3 +1585,37 @@ cleanup:
 	return result;
 #endif
 }
+
+#if !defined(_UWP) && !defined(_WIN32)
+DWORD GetLogicalDriveStringsW(DWORD nBufferLength, LPWSTR lpBuffer)
+{
+	char* buffer = NULL;
+	if (nBufferLength > 0)
+	{
+		buffer = calloc(nBufferLength, sizeof(char));
+		if (!buffer)
+			return 0;
+	}
+
+	const DWORD rc = GetLogicalDriveStringsA(nBufferLength, buffer);
+	if (buffer)
+		ConvertMszUtf8NToWChar(buffer, rc, lpBuffer, nBufferLength);
+	free(buffer);
+	return rc;
+}
+
+DWORD GetLogicalDriveStringsA(DWORD nBufferLength, LPSTR lpBuffer)
+{
+	/* format is '<name1>\0<name2>\0...<nameX>\0\0'
+	 * for details see
+	 * https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-getlogicaldrivestringsa
+	 */
+	const char path[] = "/\0";
+	const size_t len = sizeof(path);
+	if (nBufferLength < len)
+		return WINPR_ASSERTING_INT_CAST(DWORD, len);
+
+	memcpy(lpBuffer, path, len);
+	return len - 1;
+}
+#endif
