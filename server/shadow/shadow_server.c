@@ -914,7 +914,7 @@ static BOOL shadow_server_init_certificate(rdpShadowServer* server)
 
 	if (!winpr_PathFileExists(filepath) && !winpr_PathMakePath(filepath, 0))
 	{
-		if (!CreateDirectoryA(filepath, 0))
+		if (!winpr_PathMakePath(filepath, NULL))
 		{
 			WLog_ERR(TAG, "Failed to create directory '%s'", filepath);
 			goto out_fail;

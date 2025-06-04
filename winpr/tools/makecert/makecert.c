@@ -1102,7 +1102,7 @@ int makecert_context_process(MAKECERT_CONTEXT* context, int argc, char** argv)
 	{
 		if (!winpr_PathFileExists(context->output_path))
 		{
-			if (!CreateDirectoryA(context->output_path, NULL))
+			if (!winpr_PathMakePath(context->output_path, NULL))
 				return -1;
 		}
 

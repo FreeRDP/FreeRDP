@@ -760,11 +760,10 @@ BOOL winpr_DeleteFile(const char* lpFileName)
 	BOOL result = FALSE;
 
 	if (lpFileName)
-	{
 		lpFileNameW = ConvertUtf8ToWCharAlloc(lpFileName, NULL);
-		if (!lpFileNameW)
-			goto cleanup;
-	}
+
+	if (!lpFileNameW)
+		goto cleanup;
 
 	result = DeleteFileW(lpFileNameW);
 
@@ -783,11 +782,10 @@ BOOL winpr_RemoveDirectory(LPCSTR lpPathName)
 	BOOL result = FALSE;
 
 	if (lpPathName)
-	{
 		lpPathNameW = ConvertUtf8ToWCharAlloc(lpPathName, NULL);
-		if (!lpPathNameW)
-			goto cleanup;
-	}
+
+	if (!lpPathNameW)
+		goto cleanup;
 
 	result = RemoveDirectoryW(lpPathNameW);
 
