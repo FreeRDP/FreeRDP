@@ -19,6 +19,8 @@
  */
 #pragma once
 
+#cmakedefine WITH_WEBVIEW
+
 static const char SDL_CLIENT_NAME[] = "@SDL_CLIENT_BINARY_NAME@";
 static const char SDL_CLIENT_VERSION[] = "@FREERDP_VERSION_FULL@ (@GIT_REVISION@)";
 static const char SDL_CLIENT_VENDOR[] = "@VENDOR@";
