@@ -58,6 +58,24 @@ static char* GetPath_XDG_RUNTIME_DIR(void);
  * http://msdn.microsoft.com/en-us/library/windows/desktop/bb762188/
  */
 
+#if defined(WIN32) && !defined(_UWP)
+
+static char* win_get_known_folder(REFKNOWNFOLDERID id, BOOL currentUser)
+{
+	WCHAR* wpath = NULL;
+	HANDLE handle = currentUser ? NULL : (HANDLE)-1;
+	if (FAILED(SHGetKnownFolderPath(id, 0, handle, &wpath)))
+		return NULL;
+
+	if (!wpath)
+		return NULL;
+
+	char* path = ConvertWCharToUtf8Alloc(wpath, NULL);
+	CoTaskMemFree(wpath);
+	return path;
+}
+#endif
+
 /**
  * XDG Base Directory Specification:
  * http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html
@@ -165,16 +183,8 @@ static char* GetPath_XDG_CONFIG_HOME(void)
 {
 	char* path = NULL;
 #if defined(WIN32) && !defined(_UWP)
-	path = calloc(MAX_PATH, sizeof(char));
 
-	if (!path)
-		return NULL;
-
-	if (FAILED(SHGetFolderPathA(0, CSIDL_APPDATA, NULL, SHGFP_TYPE_CURRENT, path)))
-	{
-		free(path);
-		return NULL;
-	}
+	path = win_get_known_folder(&FOLDERID_RoamingAppData, TRUE);
 
 #elif defined(__IOS__)
 	path = ios_get_data();
@@ -222,13 +232,7 @@ static char* GetPath_SYSTEM_CONFIG_HOME(void)
 	char* path = NULL;
 #if defined(WIN32) && !defined(_UWP)
 
-	WCHAR* wpath = NULL;
-	if (FAILED(SHGetKnownFolderPath(&FOLDERID_ProgramData, 0, (HANDLE)-1, &wpath)))
-		return NULL;
-
-	if (wpath)
-		path = ConvertWCharToUtf8Alloc(wpath, NULL);
-	CoTaskMemFree(wpath);
+	path = win_get_known_folder(&FOLDERID_ProgramData, FALSE);
 
 #elif defined(__IOS__)
 	path = ios_get_data();
@@ -250,7 +254,7 @@ static char* GetPath_XDG_CACHE_HOME(void)
 			path = GetCombinedPath(home, "cache");
 
 			if (!winpr_PathFileExists(path))
-				if (!CreateDirectoryA(path, NULL))
+				if (!winpr_PathMakePath(path, NULL))
 					path = NULL;
 		}
 
@@ -297,16 +301,8 @@ char* GetPath_XDG_RUNTIME_DIR(void)
 {
 	char* path = NULL;
 #if defined(WIN32) && !defined(_UWP)
-	path = calloc(MAX_PATH, sizeof(char));
 
-	if (!path)
-		return NULL;
-
-	if (FAILED(SHGetFolderPathA(0, CSIDL_LOCAL_APPDATA, NULL, SHGFP_TYPE_CURRENT, path)))
-	{
-		free(path);
-		return NULL;
-	}
+	path = win_get_known_folder(&FOLDERID_LocalAppData, TRUE);
 
 #else
 	/**
