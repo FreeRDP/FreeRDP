@@ -165,10 +165,10 @@ static UINT serial_process_irp_create(SERIAL_DEVICE* serial, IRP* irp)
 	SharedAccess = 0;
 	CreateDisposition = OPEN_EXISTING;
 #endif
-	serial->hComm =
-	    CreateFile(serial->device.name, DesiredAccess, SharedAccess, NULL, /* SecurityAttributes */
-	               CreateDisposition, 0,                                   /* FlagsAndAttributes */
-	               NULL);                                                  /* TemplateFile */
+	serial->hComm = winpr_CreateFile(serial->device.name, DesiredAccess, SharedAccess,
+	                                 NULL,                 /* SecurityAttributes */
+	                                 CreateDisposition, 0, /* FlagsAndAttributes */
+	                                 NULL);                /* TemplateFile */
 
 	if (!serial->hComm || (serial->hComm == INVALID_HANDLE_VALUE))
 	{

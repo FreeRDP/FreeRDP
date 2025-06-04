@@ -78,7 +78,7 @@ static BOOL test_SetFileAttributesA(void)
 	rc = TRUE;
 
 fail:
-	DeleteFileA(name);
+	winpr_DeleteFile(name);
 	free(name);
 	return rc;
 }

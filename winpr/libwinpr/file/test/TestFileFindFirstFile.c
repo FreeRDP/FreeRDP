@@ -248,7 +248,7 @@ static int TestFileFindFirstFileA(const char* str)
 
 	rc = 0;
 fail:
-	DeleteFileA(FilePath);
+	winpr_DeleteFile(FilePath);
 	cleanup_layout(BasePath);
 	ArrayList_Free(files);
 	return rc;

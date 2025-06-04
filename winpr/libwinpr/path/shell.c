@@ -35,6 +35,8 @@
 #include <winpr/path.h>
 #include <winpr/wlog.h>
 
+#include "../file/file.h"
+
 #include "../log.h"
 #define TAG WINPR_TAG("path.shell")
 
@@ -697,36 +699,39 @@ fail:
 
 BOOL winpr_MoveFile(LPCSTR lpExistingFileName, LPCSTR lpNewFileName)
 {
-#ifndef _WIN32
-	return MoveFileA(lpExistingFileName, lpNewFileName);
-#else
-	BOOL result = FALSE;
-	LPWSTR lpExistingFileNameW = NULL;
-	LPWSTR lpNewFileNameW = NULL;
-
-	if (!lpExistingFileName || !lpNewFileName)
-		return FALSE;
-
-	lpExistingFileNameW = ConvertUtf8ToWCharAlloc(lpExistingFileName, NULL);
-	if (!lpExistingFileNameW)
-		goto cleanup;
-	lpNewFileNameW = ConvertUtf8ToWCharAlloc(lpNewFileName, NULL);
-	if (!lpNewFileNameW)
-		goto cleanup;
-
-	result = MoveFileW(lpExistingFileNameW, lpNewFileNameW);
-
-cleanup:
-	free(lpExistingFileNameW);
-	free(lpNewFileNameW);
-	return result;
-#endif
+	return winpr_MoveFileEx(lpExistingFileName, lpNewFileName, 0);
 }
 
 BOOL winpr_MoveFileEx(LPCSTR lpExistingFileName, LPCSTR lpNewFileName, DWORD dwFlags)
 {
 #ifndef _WIN32
-	return MoveFileExA(lpExistingFileName, lpNewFileName, dwFlags);
+	struct stat st;
+	int ret = 0;
+	ret = stat(lpNewFileName, &st);
+
+	if ((dwFlags & MOVEFILE_REPLACE_EXISTING) == 0)
+	{
+		if (ret == 0)
+		{
+			SetLastError(ERROR_ALREADY_EXISTS);
+			return FALSE;
+		}
+	}
+	else
+	{
+		if (ret == 0 && (st.st_mode & S_IWUSR) == 0)
+		{
+			SetLastError(ERROR_ACCESS_DENIED);
+			return FALSE;
+		}
+	}
+
+	ret = rename(lpExistingFileName, lpNewFileName);
+
+	if (ret != 0)
+		SetLastError(map_posix_err(errno));
+
+	return ret == 0;
 #else
 	BOOL result = FALSE;
 	LPWSTR lpExistingFileNameW = NULL;
@@ -754,7 +759,11 @@ cleanup:
 BOOL winpr_DeleteFile(const char* lpFileName)
 {
 #ifndef _WIN32
-	return DeleteFileA(lpFileName);
+	if (!lpFileName)
+		return FALSE;
+
+	const int status = unlink(lpFileName);
+	return (status != -1) ? TRUE : FALSE;
 #else
 	LPWSTR lpFileNameW = NULL;
 	BOOL result = FALSE;
@@ -776,7 +785,14 @@ cleanup:
 BOOL winpr_RemoveDirectory(LPCSTR lpPathName)
 {
 #ifndef _WIN32
-	return RemoveDirectoryA(lpPathName);
+	int ret = rmdir(lpPathName);
+
+	if (ret != 0)
+		SetLastError(map_posix_err(errno));
+	else
+		SetLastError(STATUS_SUCCESS);
+
+	return ret == 0;
 #else
 	LPWSTR lpPathNameW = NULL;
 	BOOL result = FALSE;

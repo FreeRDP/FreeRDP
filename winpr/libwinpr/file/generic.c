@@ -231,6 +231,14 @@ HANDLE CreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode,
                    LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition,
                    DWORD dwFlagsAndAttributes, HANDLE hTemplateFile)
 {
+	return winpr_CreateFile(lpFileName, dwDesiredAccess, dwShareMode, lpSecurityAttributes,
+	                        dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
+}
+
+HANDLE winpr_CreateFile(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode,
+                        LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition,
+                        DWORD dwFlagsAndAttributes, HANDLE hTemplateFile)
+{
 	if (!lpFileName)
 		return INVALID_HANDLE_VALUE;
 
@@ -281,8 +289,8 @@ HANDLE CreateFileW(LPCWSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode,
 		goto fail;
 	}
 
-	hdl = CreateFileA(lpFileNameA, dwDesiredAccess, dwShareMode, lpSecurityAttributes,
-	                  dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
+	hdl = winpr_CreateFile(lpFileNameA, dwDesiredAccess, dwShareMode, lpSecurityAttributes,
+	                       dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
 fail:
 	free(lpFileNameA);
 	return hdl;
@@ -290,9 +298,7 @@ fail:
 
 BOOL DeleteFileA(LPCSTR lpFileName)
 {
-	int status = 0;
-	status = unlink(lpFileName);
-	return (status != -1) ? TRUE : FALSE;
+	return winpr_DeleteFile(lpFileName);
 }
 
 BOOL DeleteFileW(LPCWSTR lpFileName)
@@ -300,13 +306,7 @@ BOOL DeleteFileW(LPCWSTR lpFileName)
 	if (!lpFileName)
 		return FALSE;
 	LPSTR lpFileNameA = ConvertWCharToUtf8Alloc(lpFileName, NULL);
-	BOOL rc = FALSE;
-
-	if (!lpFileNameA)
-		goto fail;
-
-	rc = DeleteFileA(lpFileNameA);
-fail:
+	BOOL rc = winpr_DeleteFile(lpFileNameA);
 	free(lpFileNameA);
 	return rc;
 }
@@ -1254,14 +1254,7 @@ fail:
 
 BOOL RemoveDirectoryA(LPCSTR lpPathName)
 {
-	int ret = rmdir(lpPathName);
-
-	if (ret != 0)
-		SetLastError(map_posix_err(errno));
-	else
-		SetLastError(STATUS_SUCCESS);
-
-	return ret == 0;
+	return winpr_RemoveDirectory(lpPathName);
 }
 
 BOOL RemoveDirectoryW(LPCWSTR lpPathName)
@@ -1277,7 +1270,7 @@ BOOL RemoveDirectoryW(LPCWSTR lpPathName)
 		goto fail;
 	}
 
-	ret = RemoveDirectoryA(utfPathName);
+	ret = winpr_RemoveDirectory(utfPathName);
 fail:
 	free(utfPathName);
 	return ret;
@@ -1285,33 +1278,7 @@ fail:
 
 BOOL MoveFileExA(LPCSTR lpExistingFileName, LPCSTR lpNewFileName, DWORD dwFlags)
 {
-	struct stat st;
-	int ret = 0;
-	ret = stat(lpNewFileName, &st);
-
-	if ((dwFlags & MOVEFILE_REPLACE_EXISTING) == 0)
-	{
-		if (ret == 0)
-		{
-			SetLastError(ERROR_ALREADY_EXISTS);
-			return FALSE;
-		}
-	}
-	else
-	{
-		if (ret == 0 && (st.st_mode & S_IWUSR) == 0)
-		{
-			SetLastError(ERROR_ACCESS_DENIED);
-			return FALSE;
-		}
-	}
-
-	ret = rename(lpExistingFileName, lpNewFileName);
-
-	if (ret != 0)
-		SetLastError(map_posix_err(errno));
-
-	return ret == 0;
+	return winpr_MoveFileEx(lpExistingFileName, lpNewFileName, dwFlags);
 }
 
 BOOL MoveFileExW(LPCWSTR lpExistingFileName, LPCWSTR lpNewFileName, DWORD dwFlags)
@@ -1329,7 +1296,7 @@ BOOL MoveFileExW(LPCWSTR lpExistingFileName, LPCWSTR lpNewFileName, DWORD dwFlag
 		goto fail;
 	}
 
-	ret = MoveFileExA(lpCExistingFileName, lpCNewFileName, dwFlags);
+	ret = winpr_MoveFileEx(lpCExistingFileName, lpCNewFileName, dwFlags);
 fail:
 	free(lpCNewFileName);
 	free(lpCExistingFileName);
@@ -1338,7 +1305,7 @@ fail:
 
 BOOL MoveFileA(LPCSTR lpExistingFileName, LPCSTR lpNewFileName)
 {
-	return MoveFileExA(lpExistingFileName, lpNewFileName, 0);
+	return winpr_MoveFileEx(lpExistingFileName, lpNewFileName, 0);
 }
 
 BOOL MoveFileW(LPCWSTR lpExistingFileName, LPCWSTR lpNewFileName)
@@ -1385,3 +1352,19 @@ int UnixChangeFileMode(const char* filename, int flags)
 	return rc;
 #endif
 }
+
+#if defined(_WIN32) || defined(_UWP)
+HANDLE winpr_CreateFile(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode,
+                        LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition,
+                        DWORD dwFlagsAndAttributes, HANDLE hTemplateFile)
+{
+	char* filename = ConvertUtf8ToWCharAlloc(lpFileName, NULL);
+	if (!filename)
+		return NULL;
+
+	HANDLE hdl = CreateFileW(filename, dwDesiredAccess, dwShareMode, lpSecurityAttributes,
+	                         dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
+	free(filename);
+	return hdl;
+}
+#endif
