@@ -1060,6 +1060,76 @@ out_error:
 	return error;
 }
 
+static BOOL drive_filtered(const WCHAR* drive)
+{
+	const WCHAR a[] = { 'A', '\0' };
+	const WCHAR b[] = { 'B', '\0' };
+	const WCHAR la[] = { 'a', '\0' };
+	const WCHAR lb[] = { 'b', '\0' };
+	const WCHAR* list[] = { a, b, la, lb };
+
+	for (size_t x = 0; x < ARRAYSIZE(list); x++)
+	{
+		const WCHAR* cur = list[x];
+		if (_wcsncmp(drive, cur, 2) == 0)
+			return TRUE;
+	}
+	return FALSE;
+}
+
+static UINT handle_all_drives(RDPDR_DRIVE* drive, PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
+{
+	UINT error = ERROR_INTERNAL_ERROR;
+
+	WINPR_ASSERT(drive);
+	WINPR_ASSERT(pEntryPoints);
+
+	/* Enumerate all devices: */
+	const DWORD dlen = GetLogicalDriveStringsW(0, NULL);
+
+	WCHAR* devlist = calloc(dlen, sizeof(WCHAR));
+	if (!devlist)
+		return ERROR_OUTOFMEMORY;
+
+	const DWORD rc = GetLogicalDriveStringsW(dlen, devlist);
+	if (rc >= dlen)
+		goto fail;
+
+	size_t len = 0;
+	for (size_t offset = 0; offset < rc; offset += len + 1)
+	{
+		len = _wcsnlen(&devlist[offset], rc - offset);
+
+		const WCHAR* dev = &devlist[offset];
+		if (!drive_filtered(dev))
+		{
+			char* bufdup = NULL;
+			char* devdup = ConvertWCharNToUtf8Alloc(dev, len, NULL);
+			if (!devdup)
+			{
+				error = ERROR_OUTOFMEMORY;
+				goto fail;
+			}
+			size_t size = 0;
+			winpr_asprintf(&bufdup, &size, "%s_%s", drive->device.Name, devdup);
+
+			error =
+			    drive_register_drive_path(pEntryPoints, bufdup, devdup, TRUE, &drive->device.Id);
+			free(devdup);
+			free(bufdup);
+			if (error != CHANNEL_RC_OK)
+				goto fail;
+		}
+	}
+
+	error = CHANNEL_RC_OK;
+
+fail:
+	free(devlist);
+
+	return error;
+}
+
 /**
  * Function description
  *
@@ -1069,32 +1139,19 @@ FREERDP_ENTRY_POINT(
     UINT VCAPITYPE drive_DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints))
 {
 	UINT error = 0;
-#ifdef WIN32
-	int len;
-	char devlist[512], buf[512];
-	char* bufdup;
-	char* devdup;
-#endif
 
 	WINPR_ASSERT(pEntryPoints);
 
 	RDPDR_DRIVE* drive = (RDPDR_DRIVE*)pEntryPoints->device;
 	WINPR_ASSERT(drive);
 
-#ifndef WIN32
-	if (strcmp(drive->Path, "*") == 0)
+	const char all[] = "*";
+	const char home[] = "%";
+	if (strncmp(drive->Path, all, sizeof(all)) == 0)
 	{
-		/* all drives */
-		free(drive->Path);
-		drive->Path = _strdup("/");
-
-		if (!drive->Path)
-		{
-			WLog_ERR(TAG, "_strdup failed!");
-			return CHANNEL_RC_NO_MEMORY;
-		}
+		error = handle_all_drives(drive, pEntryPoints);
 	}
-	else if (strcmp(drive->Path, "%") == 0)
+	else if (strncmp(drive->Path, home, sizeof(home)) == 0)
 	{
 		free(drive->Path);
 		drive->Path = GetKnownPath(KNOWN_PATH_HOME);
@@ -1104,74 +1161,13 @@ FREERDP_ENTRY_POINT(
 			WLog_ERR(TAG, "_strdup failed!");
 			return CHANNEL_RC_NO_MEMORY;
 		}
-	}
-
-	error = drive_register_drive_path(pEntryPoints, drive->device.Name, drive->Path,
-	                                  drive->automount, &drive->device.Id);
-#else
-	/* Special case: path[0] == '*' -> export all drives */
-	/* Special case: path[0] == '%' -> user home dir */
-	if (strcmp(drive->Path, "%") == 0)
-	{
-		GetEnvironmentVariableA("USERPROFILE", buf, sizeof(buf));
-		PathCchAddBackslashA(buf, sizeof(buf));
-		free(drive->Path);
-		drive->Path = _strdup(buf);
-
-		if (!drive->Path)
-		{
-			WLog_ERR(TAG, "_strdup failed!");
-			return CHANNEL_RC_NO_MEMORY;
-		}
-
 		error = drive_register_drive_path(pEntryPoints, drive->device.Name, drive->Path,
 		                                  drive->automount, &drive->device.Id);
-	}
-	else if (strcmp(drive->Path, "*") == 0)
-	{
-		/* Enumerate all devices: */
-		GetLogicalDriveStringsA(sizeof(devlist) - 1, devlist);
-
-		for (size_t i = 0;; i++)
-		{
-			char* dev = &devlist[i * 4];
-			if (!*dev)
-				break;
-			if (*dev > 'B')
-			{
-				/* Suppress disk drives A and B to avoid pesty messages */
-				len = sprintf_s(buf, sizeof(buf) - 4, "%s", drive->device.Name);
-				buf[len] = '_';
-				buf[len + 1] = dev[0];
-				buf[len + 2] = 0;
-				buf[len + 3] = 0;
-
-				if (!(bufdup = _strdup(buf)))
-				{
-					WLog_ERR(TAG, "_strdup failed!");
-					return CHANNEL_RC_NO_MEMORY;
-				}
-
-				if (!(devdup = _strdup(dev)))
-				{
-					WLog_ERR(TAG, "_strdup failed!");
-					return CHANNEL_RC_NO_MEMORY;
-				}
-
-				if ((error = drive_register_drive_path(pEntryPoints, bufdup, devdup, TRUE,
-				                                       &drive->device.Id)))
-				{
-					break;
-				}
-			}
-		}
 	}
 	else
 	{
 		error = drive_register_drive_path(pEntryPoints, drive->device.Name, drive->Path,
 		                                  drive->automount, &drive->device.Id);
 	}
-
-#endif
 	return error;
 }
