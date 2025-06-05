@@ -34,6 +34,7 @@
 #include <winpr/thread.h>
 #include <winpr/stream.h>
 #include <winpr/interlocked.h>
+#include <winpr/file.h>
 #include <winpr/path.h>
 
 #include <freerdp/channels/rdpdr.h>
