@@ -16,6 +16,15 @@
  * permissions and limitations under the License.
  */
 
+typedef struct
+{
+	unsigned x;
+	unsigned y;
+	uchar r;
+	uchar g;
+	uchar b;
+} cl_color_t;
+
 uchar clamp_uc(int v, short l, short h)
 {
 	if (v > h)
@@ -27,12 +36,20 @@ uchar clamp_uc(int v, short l, short h)
 
 short avgUV(__global const uchar* buf, unsigned stride, unsigned x, unsigned y)
 {
-	const short U00 = buf[y * stride];
+	const short U00 = buf[y * stride + x];
 	if ((x != 0) || (y != 0))
 		return U00;
-	const short U01 = buf[y * stride + 1];
-	const short U10 = buf[(y + 1) * stride];
-	const short U11 = buf[(y + 1) * stride + 1];
+	const unsigned width = get_global_size(0);
+	if (x + 1 >= width)
+		return U00;
+	const unsigned height = get_global_size(1);
+	if (y + 1 >= height)
+		return U00;
+
+	const short U10 = buf[(y + 1) * stride + x];
+	const short U01 = buf[y * stride + x + 1];
+	const short U11 = buf[(y + 1) * stride + x + 1];
+
 	const short avg = U00 * 4 - U01 - U10 - U11;
 	const short avgU = clamp_uc(avg, 0, 255);
 	const short diff = abs(U00 - avgU);
@@ -41,220 +58,48 @@ short avgUV(__global const uchar* buf, unsigned stride, unsigned x, unsigned y)
 	return avgU;
 }
 
+cl_color_t yuv420_to_rgb(__global const uchar* bufY, unsigned strideY, __global const uchar* bufU,
+                         unsigned strideU, __global const uchar* bufV, unsigned strideV)
+{
+	const unsigned int x = get_global_id(0);
+	const unsigned int y = get_global_id(1);
+
+	const short Y = bufY[y * strideY + x];
+	const short Udim = bufU[(y / 2) * strideU + (x / 2)] - 128;
+	const short Vdim = bufV[(y / 2) * strideV + (x / 2)] - 128;
+
+	/**
+	 * | R |   ( | 256     0    403 | |    Y    | )
+	 * | G | = ( | 256   -48   -120 | | U - 128 | ) >> 8
+	 * | B |   ( | 256   475      0 | | V - 128 | )
+	 */
+	const int y256 = 256 * Y;
+	const int r256 = (y256 + (403 * Vdim));
+	const int g256 = (y256 - (48 * Udim) - (120 * Vdim));
+	const int b256 = (y256 + (475 * Udim));
+	const short r = r256 >> 8;
+	const short g = g256 >> 8;
+	const short b = b256 >> 8;
+	const cl_color_t color = {
+		.x = x,
+		.y = y,
+		.r = clamp_uc(r, 0, 255), /* R */
+		.g = clamp_uc(g, 0, 255), /* G */
+		.b = clamp_uc(b, 0, 255)  /* B */
+	};
+	return color;
+}
+
 __kernel void yuv420_to_rgba_1b(__global const uchar* bufY, unsigned strideY,
                                 __global const uchar* bufU, unsigned strideU,
                                 __global const uchar* bufV, unsigned strideV, __global uchar* dest,
                                 unsigned strideDest)
 {
-	unsigned int x = get_global_id(0);
-	unsigned int y = get_global_id(1);
-
-	short Y = bufY[y * strideY + x];
-	short Udim = bufU[(y / 2) * strideU + (x / 2)] - 128;
-	short Vdim = bufV[(y / 2) * strideV + (x / 2)] - 128;
-
-	__global uchar* destPtr = dest + (strideDest * y) + (x * 4);
-
-	/**
-	 * | R |   ( | 256     0    403 | |    Y    | )
-	 * | G | = ( | 256   -48   -120 | | U - 128 | ) >> 8
-	 * | B |   ( | 256   475      0 | | V - 128 | )
-	 */
-	int y256 = 256 * Y;
-	destPtr[0] = clamp_uc((y256 + (403 * Vdim)) >> 8, 0, 255);               /* R */
-	destPtr[1] = clamp_uc((y256 - (48 * Udim) - (120 * Vdim)) >> 8, 0, 255); /* G */
-	destPtr[2] = clamp_uc((y256 + (475 * Udim)) >> 8, 0, 255);               /* B */
-	                                                                         /* A */
-}
-
-__kernel void yuv420_to_abgr_1b(__global const uchar* bufY, unsigned strideY,
-                                __global const uchar* bufU, unsigned strideU,
-                                __global const uchar* bufV, unsigned strideV, __global uchar* dest,
-                                unsigned strideDest)
-{
-	unsigned int x = get_global_id(0);
-	unsigned int y = get_global_id(1);
-
-	short Y = bufY[y * strideY + x];
-	short U = bufU[(y / 2) * strideU + (x / 2)] - 128;
-	short V = bufV[(y / 2) * strideV + (x / 2)] - 128;
-
-	__global uchar* destPtr = dest + (strideDest * y) + (x * 4);
-
-	/**
-	 * | R |   ( | 256     0    403 | |    Y    | )
-	 * | G | = ( | 256   -48   -120 | | U - 128 | ) >> 8
-	 * | B |   ( | 256   475      0 | | V - 128 | )
-	 */
-	int y256 = 256 * Y;
-	/* A */
-	destPtr[1] = clamp_uc((y256 + (475 * U)) >> 8, 0, 255);            /* B */
-	destPtr[2] = clamp_uc((y256 - (48 * U) - (120 * V)) >> 8, 0, 255); /* G */
-	destPtr[3] = clamp_uc((y256 + (403 * V)) >> 8, 0, 255);            /* R */
-}
-
-__kernel void yuv444_to_abgr_1b(__global const uchar* bufY, unsigned strideY,
-                                __global const uchar* bufU, unsigned strideU,
-                                __global const uchar* bufV, unsigned strideV, __global uchar* dest,
-                                unsigned strideDest)
-{
-	unsigned int x = get_global_id(0);
-	unsigned int y = get_global_id(1);
-
-	short Y = bufY[y * strideY + x];
-	short U = avgUV(bufU, strideU, x, y);
-	short V = avgUV(bufV, strideV, x, y);
-	short D = U - 128;
-	short E = V - 128;
-
-	__global uchar* destPtr = dest + (strideDest * y) + (x * 4);
-
-	/**
-	 * | R |   ( | 256     0    403 | |    Y    | )
-	 * | G | = ( | 256   -48   -120 | | U - 128 | ) >> 8
-	 * | B |   ( | 256   475      0 | | V - 128 | )
-	 */
-	int y256 = 256 * Y;
-	/* A */
-	destPtr[1] = clamp_uc((y256 + (475 * D)) >> 8, 0, 255);            /* B */
-	destPtr[2] = clamp_uc((y256 - (48 * D) - (120 * E)) >> 8, 0, 255); /* G */
-	destPtr[3] = clamp_uc((y256 + (403 * E)) >> 8, 0, 255);            /* R */
-}
-
-__kernel void yuv444_to_rgba_1b(__global const uchar* bufY, unsigned strideY,
-                                __global const uchar* bufU, unsigned strideU,
-                                __global const uchar* bufV, unsigned strideV, __global uchar* dest,
-                                unsigned strideDest)
-{
-	unsigned int x = get_global_id(0);
-	unsigned int y = get_global_id(1);
-
-	short Y = bufY[y * strideY + x];
-	short U = avgUV(bufU, strideU, x, y);
-	short V = avgUV(bufV, strideV, x, y);
-	short D = U - 128;
-	short E = V - 128;
-
-	__global uchar* destPtr = dest + (strideDest * y) + (x * 4);
-
-	/**
-	 * | R |   ( | 256     0    403 | |    Y    | )
-	 * | G | = ( | 256   -48   -120 | | U - 128 | ) >> 8
-	 * | B |   ( | 256   475      0 | | V - 128 | )
-	 */
-	int y256 = 256 * Y;
-	destPtr[0] = clamp_uc((y256 + (403 * E)) >> 8, 0, 255);            /* R */
-	destPtr[1] = clamp_uc((y256 - (48 * D) - (120 * E)) >> 8, 0, 255); /* G */
-	destPtr[2] = clamp_uc((y256 + (475 * D)) >> 8, 0, 255);            /* B */
-	                                                                   /* A */
-}
-
-__kernel void yuv420_to_rgbx_1b(__global const uchar* bufY, unsigned strideY,
-                                __global const uchar* bufU, unsigned strideU,
-                                __global const uchar* bufV, unsigned strideV, __global uchar* dest,
-                                unsigned strideDest)
-{
-	unsigned int x = get_global_id(0);
-	unsigned int y = get_global_id(1);
-
-	short Y = bufY[y * strideY + x];
-	short Udim = bufU[(y / 2) * strideU + (x / 2)] - 128;
-	short Vdim = bufV[(y / 2) * strideV + (x / 2)] - 128;
-
-	__global uchar* destPtr = dest + (strideDest * y) + (x * 4);
-
-	/**
-	 * | R |   ( | 256     0    403 | |    Y    | )
-	 * | G | = ( | 256   -48   -120 | | U - 128 | ) >> 8
-	 * | B |   ( | 256   475      0 | | V - 128 | )
-	 */
-	int y256 = 256 * Y;
-	destPtr[0] = clamp_uc((y256 + (403 * Vdim)) >> 8, 0, 255);               /* R */
-	destPtr[1] = clamp_uc((y256 - (48 * Udim) - (120 * Vdim)) >> 8, 0, 255); /* G */
-	destPtr[2] = clamp_uc((y256 + (475 * Udim)) >> 8, 0, 255);               /* B */
-	destPtr[3] = 0xff;                                                       /* A */
-}
-
-__kernel void yuv420_to_xbgr_1b(__global const uchar* bufY, unsigned strideY,
-                                __global const uchar* bufU, unsigned strideU,
-                                __global const uchar* bufV, unsigned strideV, __global uchar* dest,
-                                unsigned strideDest)
-{
-	unsigned int x = get_global_id(0);
-	unsigned int y = get_global_id(1);
-
-	short Y = bufY[y * strideY + x];
-	short U = bufU[(y / 2) * strideU + (x / 2)] - 128;
-	short V = bufV[(y / 2) * strideV + (x / 2)] - 128;
-
-	__global uchar* destPtr = dest + (strideDest * y) + (x * 4);
-
-	/**
-	 * | R |   ( | 256     0    403 | |    Y    | )
-	 * | G | = ( | 256   -48   -120 | | U - 128 | ) >> 8
-	 * | B |   ( | 256   475      0 | | V - 128 | )
-	 */
-	int y256 = 256 * Y;
-	destPtr[0] = 0xff;                                                 /* A */
-	destPtr[1] = clamp_uc((y256 + (475 * U)) >> 8, 0, 255);            /* B */
-	destPtr[2] = clamp_uc((y256 - (48 * U) - (120 * V)) >> 8, 0, 255); /* G */
-	destPtr[3] = clamp_uc((y256 + (403 * V)) >> 8, 0, 255);            /* R */
-}
-
-__kernel void yuv444_to_xbgr_1b(__global const uchar* bufY, unsigned strideY,
-                                __global const uchar* bufU, unsigned strideU,
-                                __global const uchar* bufV, unsigned strideV, __global uchar* dest,
-                                unsigned strideDest)
-{
-	unsigned int x = get_global_id(0);
-	unsigned int y = get_global_id(1);
-
-	short Y = bufY[y * strideY + x];
-	short U = avgUV(bufU, strideU, x, y);
-	short V = avgUV(bufV, strideV, x, y);
-	short D = U - 128;
-	short E = V - 128;
-
-	__global uchar* destPtr = dest + (strideDest * y) + (x * 4);
-
-	/**
-	 * | R |   ( | 256     0    403 | |    Y    | )
-	 * | G | = ( | 256   -48   -120 | | U - 128 | ) >> 8
-	 * | B |   ( | 256   475      0 | | V - 128 | )
-	 */
-	int y256 = 256 * Y;
-	destPtr[0] = 0xff;                                                 /* A */
-	destPtr[1] = clamp_uc((y256 + (475 * U)) >> 8, 0, 255);            /* B */
-	destPtr[2] = clamp_uc((y256 - (48 * D) - (120 * E)) >> 8, 0, 255); /* G */
-	destPtr[3] = clamp_uc((y256 + (403 * E)) >> 8, 0, 255);            /* R */
-}
-
-__kernel void yuv444_to_rgbx_1b(__global const uchar* bufY, unsigned strideY,
-                                __global const uchar* bufU, unsigned strideU,
-                                __global const uchar* bufV, unsigned strideV, __global uchar* dest,
-                                unsigned strideDest)
-{
-	unsigned int x = get_global_id(0);
-	unsigned int y = get_global_id(1);
-
-	short Y = bufY[y * strideY + x];
-	short U = avgUV(bufU, strideU, x, y);
-	short V = avgUV(bufV, strideV, x, y);
-	short D = U - 128;
-	short E = V - 128;
-
-	__global uchar* destPtr = dest + (strideDest * y) + (x * 4);
-
-	/**
-	 * | R |   ( | 256     0    403 | |    Y    | )
-	 * | G | = ( | 256   -48   -120 | | U - 128 | ) >> 8
-	 * | B |   ( | 256   475      0 | | V - 128 | )
-	 */
-	int y256 = 256 * Y;
-	destPtr[0] = clamp_uc((y256 + (403 * E)) >> 8, 0, 255);            /* R */
-	destPtr[1] = clamp_uc((y256 - (48 * D) - (120 * E)) >> 8, 0, 255); /* G */
-	destPtr[2] = clamp_uc((y256 + (475 * D)) >> 8, 0, 255);            /* B */
-	destPtr[3] = 0xff;                                                 /* A */
+	cl_color_t color = yuv420_to_rgb(bufY, strideY, bufU, strideU, bufV, strideV);
+	__global uchar* destPtr = dest + (strideDest * color.y) + (color.x * 4);
+	destPtr[0] = color.r; /* R */
+	destPtr[1] = color.g; /* G */
+	destPtr[2] = color.b; /* B */
 }
 
 __kernel void yuv420_to_argb_1b(__global const uchar* bufY, unsigned strideY,
@@ -262,25 +107,11 @@ __kernel void yuv420_to_argb_1b(__global const uchar* bufY, unsigned strideY,
                                 __global const uchar* bufV, unsigned strideV, __global uchar* dest,
                                 unsigned strideDest)
 {
-	unsigned int x = get_global_id(0);
-	unsigned int y = get_global_id(1);
-
-	short Y = bufY[y * strideY + x];
-	short Udim = bufU[(y / 2) * strideU + (x / 2)] - 128;
-	short Vdim = bufV[(y / 2) * strideV + (x / 2)] - 128;
-
-	__global uchar* destPtr = dest + (strideDest * y) + (x * 4);
-
-	/**
-	 * | R |   ( | 256     0    403 | |    Y    | )
-	 * | G | = ( | 256   -48   -120 | | U - 128 | ) >> 8
-	 * | B |   ( | 256   475      0 | | V - 128 | )
-	 */
-	int y256 = 256 * Y;
-	/* A */
-	destPtr[1] = clamp_uc((y256 + (403 * Vdim)) >> 8, 0, 255);               /* R */
-	destPtr[2] = clamp_uc((y256 - (48 * Udim) - (120 * Vdim)) >> 8, 0, 255); /* G */
-	destPtr[3] = clamp_uc((y256 + (475 * Udim)) >> 8, 0, 255);               /* B */
+	cl_color_t color = yuv420_to_rgb(bufY, strideY, bufU, strideU, bufV, strideV);
+	__global uchar* destPtr = dest + (strideDest * color.y) + (color.x * 4);
+	destPtr[1] = color.r; /* R */
+	destPtr[2] = color.g; /* G */
+	destPtr[3] = color.b; /* B */
 }
 
 __kernel void yuv420_to_bgra_1b(__global const uchar* bufY, unsigned strideY,
@@ -288,25 +119,83 @@ __kernel void yuv420_to_bgra_1b(__global const uchar* bufY, unsigned strideY,
                                 __global const uchar* bufV, unsigned strideV, __global uchar* dest,
                                 unsigned strideDest)
 {
-	unsigned int x = get_global_id(0);
-	unsigned int y = get_global_id(1);
+	cl_color_t color = yuv420_to_rgb(bufY, strideY, bufU, strideU, bufV, strideV);
+	__global uchar* destPtr = dest + (strideDest * color.y) + (color.x * 4);
+	destPtr[0] = color.b; /* B */
+	destPtr[1] = color.g; /* G */
+	destPtr[2] = color.r; /* R */
+}
 
-	short Y = bufY[y * strideY + x];
-	short U = bufU[(y / 2) * strideU + (x / 2)] - 128;
-	short V = bufV[(y / 2) * strideV + (x / 2)] - 128;
+__kernel void yuv420_to_abgr_1b(__global const uchar* bufY, unsigned strideY,
+                                __global const uchar* bufU, unsigned strideU,
+                                __global const uchar* bufV, unsigned strideV, __global uchar* dest,
+                                unsigned strideDest)
+{
+	cl_color_t color = yuv420_to_rgb(bufY, strideY, bufU, strideU, bufV, strideV);
+	__global uchar* destPtr = dest + (strideDest * color.y) + (color.x * 4);
+	destPtr[1] = color.b; /* B */
+	destPtr[2] = color.g; /* G */
+	destPtr[3] = color.r; /* R */
+}
 
-	__global uchar* destPtr = dest + (strideDest * y) + (x * 4);
+cl_color_t yuv444_to_rgb(__global const uchar* bufY, unsigned strideY, __global const uchar* bufU,
+                         unsigned strideU, __global const uchar* bufV, unsigned strideV)
+{
+	const unsigned int x = get_global_id(0);
+	const unsigned int y = get_global_id(1);
+
+	const short Y = bufY[y * strideY + x];
+	const short U = avgUV(bufU, strideU, x, y);
+	const short V = avgUV(bufV, strideV, x, y);
+	const short D = U - 128;
+	const short E = V - 128;
 
 	/**
 	 * | R |   ( | 256     0    403 | |    Y    | )
 	 * | G | = ( | 256   -48   -120 | | U - 128 | ) >> 8
 	 * | B |   ( | 256   475      0 | | V - 128 | )
 	 */
-	int y256 = 256 * Y;
-	destPtr[0] = clamp_uc((y256 + (475 * U)) >> 8, 0, 255);            /* B */
-	destPtr[1] = clamp_uc((y256 - (48 * U) - (120 * V)) >> 8, 0, 255); /* G */
-	destPtr[2] = clamp_uc((y256 + (403 * V)) >> 8, 0, 255);            /* R */
-	                                                                   /* A */
+	const int y256 = 256 * Y;
+	const int r256 = (y256 + (403 * E));
+	const int g256 = (y256 - (48 * D) - (120 * E));
+	const int b256 = (y256 + (475 * D));
+	const short r = r256 >> 8;
+	const short g = g256 >> 8;
+	const short b = b256 >> 8;
+	const cl_color_t color = {
+		.x = x,
+		.y = y,
+		.r = clamp_uc(r, 0, 255), /* R */
+		.g = clamp_uc(g, 0, 255), /* G */
+		.b = clamp_uc(b, 0, 255)  /* B */
+	};
+	return color;
+}
+
+__kernel void yuv444_to_abgr_1b(__global const uchar* bufY, unsigned strideY,
+                                __global const uchar* bufU, unsigned strideU,
+                                __global const uchar* bufV, unsigned strideV, __global uchar* dest,
+                                unsigned strideDest)
+{
+	cl_color_t color = yuv444_to_rgb(bufY, strideY, bufU, strideU, bufV, strideV);
+
+	__global uchar* destPtr = dest + (strideDest * color.y) + (color.x * 4);
+	destPtr[1] = color.b; /* B */
+	destPtr[2] = color.g; /* G */
+	destPtr[3] = color.r; /* R */
+}
+
+__kernel void yuv444_to_rgba_1b(__global const uchar* bufY, unsigned strideY,
+                                __global const uchar* bufU, unsigned strideU,
+                                __global const uchar* bufV, unsigned strideV, __global uchar* dest,
+                                unsigned strideDest)
+{
+	cl_color_t color = yuv444_to_rgb(bufY, strideY, bufU, strideU, bufV, strideV);
+
+	__global uchar* destPtr = dest + (strideDest * color.y) + (color.x * 4);
+	destPtr[0] = color.r; /* R */
+	destPtr[1] = color.g; /* G */
+	destPtr[2] = color.b; /* B */
 }
 
 __kernel void yuv444_to_bgra_1b(__global const uchar* bufY, unsigned strideY,
@@ -314,27 +203,12 @@ __kernel void yuv444_to_bgra_1b(__global const uchar* bufY, unsigned strideY,
                                 __global const uchar* bufV, unsigned strideV, __global uchar* dest,
                                 unsigned strideDest)
 {
-	unsigned int x = get_global_id(0);
-	unsigned int y = get_global_id(1);
+	cl_color_t color = yuv444_to_rgb(bufY, strideY, bufU, strideU, bufV, strideV);
 
-	short Y = bufY[y * strideY + x];
-	short U = avgUV(bufU, strideU, x, y);
-	short V = avgUV(bufV, strideV, x, y);
-	short D = U - 128;
-	short E = V - 128;
-
-	__global uchar* destPtr = dest + (strideDest * y) + (x * 4);
-
-	/**
-	 * | R |   ( | 256     0    403 | |    Y    | )
-	 * | G | = ( | 256   -48   -120 | | U - 128 | ) >> 8
-	 * | B |   ( | 256   475      0 | | V - 128 | )
-	 */
-	int y256 = 256 * Y;
-	destPtr[0] = clamp_uc((y256 + (475 * D)) >> 8, 0, 255);            /* B */
-	destPtr[1] = clamp_uc((y256 - (48 * D) - (120 * E)) >> 8, 0, 255); /* G */
-	destPtr[2] = clamp_uc((y256 + (403 * E)) >> 8, 0, 255);            /* R */
-	                                                                   /* A */
+	__global uchar* destPtr = dest + (strideDest * color.y) + (color.x * 4);
+	destPtr[0] = color.b; /* B */
+	destPtr[1] = color.g; /* G */
+	destPtr[2] = color.r; /* R */
 }
 
 __kernel void yuv444_to_argb_1b(__global const uchar* bufY, unsigned strideY,
@@ -342,133 +216,10 @@ __kernel void yuv444_to_argb_1b(__global const uchar* bufY, unsigned strideY,
                                 __global const uchar* bufV, unsigned strideV, __global uchar* dest,
                                 unsigned strideDest)
 {
-	unsigned int x = get_global_id(0);
-	unsigned int y = get_global_id(1);
+	cl_color_t color = yuv444_to_rgb(bufY, strideY, bufU, strideU, bufV, strideV);
 
-	short Y = bufY[y * strideY + x];
-	short U = avgUV(bufU, strideU, x, y);
-	short V = avgUV(bufV, strideV, x, y);
-	short D = U - 128;
-	short E = V - 128;
-
-	__global uchar* destPtr = dest + (strideDest * y) + (x * 4);
-
-	/**
-	 * | R |   ( | 256     0    403 | |    Y    | )
-	 * | G | = ( | 256   -48   -120 | | U - 128 | ) >> 8
-	 * | B |   ( | 256   475      0 | | V - 128 | )
-	 */
-	int y256 = 256 * Y;
-	destPtr[3] = clamp_uc((y256 + (475 * D)) >> 8, 0, 255);            /* B */
-	destPtr[2] = clamp_uc((y256 - (48 * D) - (120 * E)) >> 8, 0, 255); /* G */
-	destPtr[1] = clamp_uc((y256 + (403 * E)) >> 8, 0, 255);            /* R */
-	                                                                   /* A */
-}
-
-__kernel void yuv420_to_xrgb_1b(__global const uchar* bufY, unsigned strideY,
-                                __global const uchar* bufU, unsigned strideU,
-                                __global const uchar* bufV, unsigned strideV, __global uchar* dest,
-                                unsigned strideDest)
-{
-	unsigned int x = get_global_id(0);
-	unsigned int y = get_global_id(1);
-
-	short Y = bufY[y * strideY + x];
-	short Udim = bufU[(y / 2) * strideU + (x / 2)] - 128;
-	short Vdim = bufV[(y / 2) * strideV + (x / 2)] - 128;
-
-	__global uchar* destPtr = dest + (strideDest * y) + (x * 4);
-
-	/**
-	 * | R |   ( | 256     0    403 | |    Y    | )
-	 * | G | = ( | 256   -48   -120 | | U - 128 | ) >> 8
-	 * | B |   ( | 256   475      0 | | V - 128 | )
-	 */
-	int y256 = 256 * Y;
-	destPtr[0] = 0xff;                                                       /* A */
-	destPtr[1] = clamp_uc((y256 + (403 * Vdim)) >> 8, 0, 255);               /* R */
-	destPtr[2] = clamp_uc((y256 - (48 * Udim) - (120 * Vdim)) >> 8, 0, 255); /* G */
-	destPtr[3] = clamp_uc((y256 + (475 * Udim)) >> 8, 0, 255);               /* B */
-}
-
-__kernel void yuv420_to_bgrx_1b(__global const uchar* bufY, unsigned strideY,
-                                __global const uchar* bufU, unsigned strideU,
-                                __global const uchar* bufV, unsigned strideV, __global uchar* dest,
-                                unsigned strideDest)
-{
-	unsigned int x = get_global_id(0);
-	unsigned int y = get_global_id(1);
-
-	short Y = bufY[y * strideY + x];
-	short U = bufU[(y / 2) * strideU + (x / 2)] - 128;
-	short V = bufV[(y / 2) * strideV + (x / 2)] - 128;
-
-	__global uchar* destPtr = dest + (strideDest * y) + (x * 4);
-
-	/**
-	 * | R |   ( | 256     0    403 | |    Y    | )
-	 * | G | = ( | 256   -48   -120 | | U - 128 | ) >> 8
-	 * | B |   ( | 256   475      0 | | V - 128 | )
-	 */
-	int y256 = 256 * Y;
-	destPtr[0] = clamp_uc((y256 + (475 * U)) >> 8, 0, 255);            /* B */
-	destPtr[1] = clamp_uc((y256 - (48 * U) - (120 * V)) >> 8, 0, 255); /* G */
-	destPtr[2] = clamp_uc((y256 + (403 * V)) >> 8, 0, 255);            /* R */
-	destPtr[3] = 0xff;                                                 /* A */
-}
-
-__kernel void yuv444_to_bgrx_1b(__global const uchar* bufY, unsigned strideY,
-                                __global const uchar* bufU, unsigned strideU,
-                                __global const uchar* bufV, unsigned strideV, __global uchar* dest,
-                                unsigned strideDest)
-{
-	unsigned int x = get_global_id(0);
-	unsigned int y = get_global_id(1);
-
-	short Y = bufY[y * strideY + x];
-	short U = avgUV(bufU, strideU, x, y);
-	short V = avgUV(bufV, strideV, x, y);
-	short D = U - 128;
-	short E = V - 128;
-
-	__global uchar* destPtr = dest + (strideDest * y) + (x * 4);
-
-	/**
-	 * | R |   ( | 256     0    403 | |    Y    | )
-	 * | G | = ( | 256   -48   -120 | | U - 128 | ) >> 8
-	 * | B |   ( | 256   475      0 | | V - 128 | )
-	 */
-	int y256 = 256 * Y;
-	destPtr[0] = clamp_uc((y256 + (475 * D)) >> 8, 0, 255);            /* B */
-	destPtr[1] = clamp_uc((y256 - (48 * D) - (120 * E)) >> 8, 0, 255); /* G */
-	destPtr[2] = clamp_uc((y256 + (403 * E)) >> 8, 0, 255);            /* R */
-	destPtr[3] = 0xff;                                                 /* A */
-}
-
-__kernel void yuv444_to_xrgb_1b(__global const uchar* bufY, unsigned strideY,
-                                __global const uchar* bufU, unsigned strideU,
-                                __global const uchar* bufV, unsigned strideV, __global uchar* dest,
-                                unsigned strideDest)
-{
-	unsigned int x = get_global_id(0);
-	unsigned int y = get_global_id(1);
-
-	short Y = bufY[y * strideY + x];
-	short U = avgUV(bufU, strideU, x, y);
-	short V = avgUV(bufV, strideV, x, y);
-	short D = U - 128;
-	short E = V - 128;
-
-	__global uchar* destPtr = dest + (strideDest * y) + (x * 4);
-
-	/**
-	 * | R |   ( | 256     0    403 | |    Y    | )
-	 * | G | = ( | 256   -48   -120 | | U - 128 | ) >> 8
-	 * | B |   ( | 256   475      0 | | V - 128 | )
-	 */
-	int y256 = 256 * Y;
-	destPtr[3] = clamp_uc((y256 + (475 * D)) >> 8, 0, 255);            /* B */
-	destPtr[2] = clamp_uc((y256 - (48 * D) - (120 * E)) >> 8, 0, 255); /* G */
-	destPtr[1] = clamp_uc((y256 + (403 * E)) >> 8, 0, 255);            /* R */
-	destPtr[0] = 0xff;                                                 /* A */
+	__global uchar* destPtr = dest + (strideDest * color.y) + (color.x * 4);
+	destPtr[1] = color.r; /* R */
+	destPtr[2] = color.g; /* G */
+	destPtr[3] = color.b; /* B */
 }
