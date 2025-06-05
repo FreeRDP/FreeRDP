@@ -70,6 +70,7 @@ void sdl_OnChannelDisconnectedEventHandler(void* context, const ChannelDisconnec
 	{
 		auto clip = reinterpret_cast<CliprdrClientContext*>(e->pInterface);
 		WINPR_ASSERT(clip);
+		(void)sdl->clip.uninit(clip);
 		clip->custom = nullptr;
 	}
 	else if (strcmp(e->name, DISP_DVC_CHANNEL_NAME) == 0)
