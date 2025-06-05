@@ -263,12 +263,6 @@ extern "C"
 {
 #endif
 
-	WINPR_ATTR_MALLOC(CloseHandle, 1)
-	WINPR_API HANDLE winpr_CreateFile(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode,
-	                                  LPSECURITY_ATTRIBUTES lpSecurityAttributes,
-	                                  DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes,
-	                                  HANDLE hTemplateFile);
-
 	WINPR_DEPRECATED_VAR("since 3.16.0, Use winpr_CreateFile",
 	                     WINPR_ATTR_MALLOC(CloseHandle, 1) WINPR_API HANDLE CreateFileA(
 	                         LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode,
@@ -472,12 +466,26 @@ typedef struct
 
 #endif /* _WIN32 */
 
-WINPR_API BOOL ValidFileNameComponent(LPCWSTR lpFileName);
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+	WINPR_API BOOL ValidFileNameComponent(LPCWSTR lpFileName);
 
 #if defined(_UWP) || !defined(_WIN32)
 WINPR_API DWORD GetLogicalDriveStringsA(DWORD nBufferLength, LPSTR lpBuffer);
 
 WINPR_API DWORD GetLogicalDriveStringsW(DWORD nBufferLength, LPWSTR lpBuffer);
+#endif
+
+WINPR_ATTR_MALLOC(CloseHandle, 1)
+WINPR_API HANDLE winpr_CreateFile(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode,
+	                              LPSECURITY_ATTRIBUTES lpSecurityAttributes,
+	                              DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes,
+	                              HANDLE hTemplateFile);
+
+#ifdef __cplusplus
+}
 #endif
 
 #ifdef _UWP
