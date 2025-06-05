@@ -35,6 +35,8 @@
 #include <winpr/path.h>
 #include <winpr/wlog.h>
 
+#include "../file/file.h"
+
 #include "../log.h"
 #define TAG WINPR_TAG("path.shell")
 
@@ -57,6 +59,24 @@ static char* GetPath_XDG_RUNTIME_DIR(void);
  * SHGetKnownFolderPath function:
  * http://msdn.microsoft.com/en-us/library/windows/desktop/bb762188/
  */
+
+#if defined(WIN32) && !defined(_UWP)
+
+static char* win_get_known_folder(REFKNOWNFOLDERID id, BOOL currentUser)
+{
+	WCHAR* wpath = NULL;
+	HANDLE handle = currentUser ? NULL : (HANDLE)-1;
+	if (FAILED(SHGetKnownFolderPath(id, 0, handle, &wpath)))
+		return NULL;
+
+	if (!wpath)
+		return NULL;
+
+	char* path = ConvertWCharToUtf8Alloc(wpath, NULL);
+	CoTaskMemFree(wpath);
+	return path;
+}
+#endif
 
 /**
  * XDG Base Directory Specification:
@@ -165,16 +185,8 @@ static char* GetPath_XDG_CONFIG_HOME(void)
 {
 	char* path = NULL;
 #if defined(WIN32) && !defined(_UWP)
-	path = calloc(MAX_PATH, sizeof(char));
 
-	if (!path)
-		return NULL;
-
-	if (FAILED(SHGetFolderPathA(0, CSIDL_APPDATA, NULL, SHGFP_TYPE_CURRENT, path)))
-	{
-		free(path);
-		return NULL;
-	}
+	path = win_get_known_folder(&FOLDERID_RoamingAppData, TRUE);
 
 #elif defined(__IOS__)
 	path = ios_get_data();
@@ -222,13 +234,7 @@ static char* GetPath_SYSTEM_CONFIG_HOME(void)
 	char* path = NULL;
 #if defined(WIN32) && !defined(_UWP)
 
-	WCHAR* wpath = NULL;
-	if (FAILED(SHGetKnownFolderPath(&FOLDERID_ProgramData, 0, (HANDLE)-1, &wpath)))
-		return NULL;
-
-	if (wpath)
-		path = ConvertWCharToUtf8Alloc(wpath, NULL);
-	CoTaskMemFree(wpath);
+	path = win_get_known_folder(&FOLDERID_ProgramData, FALSE);
 
 #elif defined(__IOS__)
 	path = ios_get_data();
@@ -250,7 +256,7 @@ static char* GetPath_XDG_CACHE_HOME(void)
 			path = GetCombinedPath(home, "cache");
 
 			if (!winpr_PathFileExists(path))
-				if (!CreateDirectoryA(path, NULL))
+				if (!winpr_PathMakePath(path, NULL))
 					path = NULL;
 		}
 
@@ -297,16 +303,8 @@ char* GetPath_XDG_RUNTIME_DIR(void)
 {
 	char* path = NULL;
 #if defined(WIN32) && !defined(_UWP)
-	path = calloc(MAX_PATH, sizeof(char));
 
-	if (!path)
-		return NULL;
-
-	if (FAILED(SHGetFolderPathA(0, CSIDL_LOCAL_APPDATA, NULL, SHGFP_TYPE_CURRENT, path)))
-	{
-		free(path);
-		return NULL;
-	}
+	path = win_get_known_folder(&FOLDERID_LocalAppData, TRUE);
 
 #else
 	/**
@@ -701,36 +699,39 @@ fail:
 
 BOOL winpr_MoveFile(LPCSTR lpExistingFileName, LPCSTR lpNewFileName)
 {
-#ifndef _WIN32
-	return MoveFileA(lpExistingFileName, lpNewFileName);
-#else
-	BOOL result = FALSE;
-	LPWSTR lpExistingFileNameW = NULL;
-	LPWSTR lpNewFileNameW = NULL;
-
-	if (!lpExistingFileName || !lpNewFileName)
-		return FALSE;
-
-	lpExistingFileNameW = ConvertUtf8ToWCharAlloc(lpExistingFileName, NULL);
-	if (!lpExistingFileNameW)
-		goto cleanup;
-	lpNewFileNameW = ConvertUtf8ToWCharAlloc(lpNewFileName, NULL);
-	if (!lpNewFileNameW)
-		goto cleanup;
-
-	result = MoveFileW(lpExistingFileNameW, lpNewFileNameW);
-
-cleanup:
-	free(lpExistingFileNameW);
-	free(lpNewFileNameW);
-	return result;
-#endif
+	return winpr_MoveFileEx(lpExistingFileName, lpNewFileName, 0);
 }
 
 BOOL winpr_MoveFileEx(LPCSTR lpExistingFileName, LPCSTR lpNewFileName, DWORD dwFlags)
 {
 #ifndef _WIN32
-	return MoveFileExA(lpExistingFileName, lpNewFileName, dwFlags);
+	struct stat st;
+	int ret = 0;
+	ret = stat(lpNewFileName, &st);
+
+	if ((dwFlags & MOVEFILE_REPLACE_EXISTING) == 0)
+	{
+		if (ret == 0)
+		{
+			SetLastError(ERROR_ALREADY_EXISTS);
+			return FALSE;
+		}
+	}
+	else
+	{
+		if (ret == 0 && (st.st_mode & S_IWUSR) == 0)
+		{
+			SetLastError(ERROR_ACCESS_DENIED);
+			return FALSE;
+		}
+	}
+
+	ret = rename(lpExistingFileName, lpNewFileName);
+
+	if (ret != 0)
+		SetLastError(map_posix_err(errno));
+
+	return ret == 0;
 #else
 	BOOL result = FALSE;
 	LPWSTR lpExistingFileNameW = NULL;
@@ -758,17 +759,20 @@ cleanup:
 BOOL winpr_DeleteFile(const char* lpFileName)
 {
 #ifndef _WIN32
-	return DeleteFileA(lpFileName);
+	if (!lpFileName)
+		return FALSE;
+
+	const int status = unlink(lpFileName);
+	return (status != -1) ? TRUE : FALSE;
 #else
 	LPWSTR lpFileNameW = NULL;
 	BOOL result = FALSE;
 
 	if (lpFileName)
-	{
 		lpFileNameW = ConvertUtf8ToWCharAlloc(lpFileName, NULL);
-		if (!lpFileNameW)
-			goto cleanup;
-	}
+
+	if (!lpFileNameW)
+		goto cleanup;
 
 	result = DeleteFileW(lpFileNameW);
 
@@ -781,17 +785,23 @@ cleanup:
 BOOL winpr_RemoveDirectory(LPCSTR lpPathName)
 {
 #ifndef _WIN32
-	return RemoveDirectoryA(lpPathName);
+	int ret = rmdir(lpPathName);
+
+	if (ret != 0)
+		SetLastError(map_posix_err(errno));
+	else
+		SetLastError(STATUS_SUCCESS);
+
+	return ret == 0;
 #else
 	LPWSTR lpPathNameW = NULL;
 	BOOL result = FALSE;
 
 	if (lpPathName)
-	{
 		lpPathNameW = ConvertUtf8ToWCharAlloc(lpPathName, NULL);
-		if (!lpPathNameW)
-			goto cleanup;
-	}
+
+	if (!lpPathNameW)
+		goto cleanup;
 
 	result = RemoveDirectoryW(lpPathNameW);
 

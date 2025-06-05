@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <winpr/crt.h>
 #include <winpr/file.h>
+#include <winpr/path.h>
 #include <winpr/windows.h>
 
 #if !defined(_WIN32)
@@ -36,7 +37,7 @@ int TestFileDeleteFile(int argc, char* argv[])
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
 
-	rc = DeleteFileA(invalidA);
+	rc = winpr_DeleteFile(invalidA);
 	if (rc)
 		return -1;
 
@@ -48,7 +49,7 @@ int TestFileDeleteFile(int argc, char* argv[])
 	if (fd < 0)
 		return -1;
 
-	rc = DeleteFileA(validA);
+	rc = winpr_DeleteFile(validA);
 	if (!rc)
 		return -1;
 

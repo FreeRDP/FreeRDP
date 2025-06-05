@@ -113,7 +113,8 @@ static BOOL printer_write_setting(const char* path, prn_conf_t type, const void*
 		return FALSE;
 	}
 
-	file = CreateFileA(abs, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+	file =
+	    winpr_CreateFile(abs, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 	free(abs);
 
 	if (file == INVALID_HANDLE_VALUE)
@@ -177,7 +178,7 @@ static BOOL printer_read_setting(const char* path, prn_conf_t type, void** data,
 		return FALSE;
 
 	HANDLE file =
-	    CreateFileA(abs, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+	    winpr_CreateFile(abs, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 	free(abs);
 
 	if (file == INVALID_HANDLE_VALUE)

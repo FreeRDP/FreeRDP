@@ -41,6 +41,10 @@ if(ANDROID)
   endif()
 endif()
 
+# Assume source files are utf-8 when compiling with MSVC
+add_compile_options("$<$<C_COMPILER_ID:MSVC>:/utf-8>")
+add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/utf-8>")
+
 set(CMAKE_C_FLAGS ${CMAKE_C_FLAGS} CACHE STRING "default CFLAGS")
 message("Using CFLAGS ${CMAKE_C_FLAGS}")
 message("Using CFLAGS_RELEASE ${CMAKE_C_FLAGS_RELEASE}")

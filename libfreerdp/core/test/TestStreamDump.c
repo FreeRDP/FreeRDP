@@ -87,7 +87,7 @@ fail:
 	if (fp)
 		(void)fclose(fp);
 	if (name)
-		DeleteFileA(name);
+		winpr_DeleteFile(name);
 	free(name);
 	(void)fprintf(stderr, "xxxxxxxxxxxxx %d\n", rc);
 	return rc;
