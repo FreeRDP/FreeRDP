@@ -1203,9 +1203,14 @@ void xf_MoveWindow(xfContext* xfc, xfAppWindow* appWindow, int x, int y, int wid
 	appWindow->height = height;
 
 	if (resize)
+	{
+		if (!xf_AppWindowResize(xfc, appWindow))
+			return;
+
 		LogDynAndXMoveResizeWindow(xfc->log, xfc->display, appWindow->handle, x, y,
 		                           WINPR_ASSERTING_INT_CAST(uint32_t, width),
 		                           WINPR_ASSERTING_INT_CAST(uint32_t, height));
+	}
 	else
 		LogDynAndXMoveWindow(xfc->log, xfc->display, appWindow->handle, x, y);
 
