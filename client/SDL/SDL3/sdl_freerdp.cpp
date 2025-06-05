@@ -1161,10 +1161,6 @@ static void sdl_post_disconnect(freerdp* instance)
 	auto sdl = get_context(instance->context);
 	sdl->setConnected(false);
 
-	PubSub_UnsubscribeChannelConnected(instance->context->pubSub,
-	                                   sdl_OnChannelConnectedEventHandler);
-	PubSub_UnsubscribeChannelDisconnected(instance->context->pubSub,
-	                                      sdl_OnChannelDisconnectedEventHandler);
 	gdi_free(instance);
 }
 
@@ -1175,6 +1171,11 @@ static void sdl_post_final_disconnect(freerdp* instance)
 
 	if (!instance->context)
 		return;
+
+	PubSub_UnsubscribeChannelConnected(instance->context->pubSub,
+	                                   sdl_OnChannelConnectedEventHandler);
+	PubSub_UnsubscribeChannelDisconnected(instance->context->pubSub,
+	                                      sdl_OnChannelDisconnectedEventHandler);
 }
 
 static void sdl_client_cleanup(SdlContext* sdl, int exit_code, const std::string& error_msg)
