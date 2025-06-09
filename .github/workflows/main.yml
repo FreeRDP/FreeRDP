@@ -1,0 +1,15 @@
+name: Windows RDP
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - name: Enable RDP
+      run: |
+        net user runneradmin YourPassword123!
+        Enable-ComputerRestore -Drive "C:\"
+        Set-ItemProperty -Path "HKLM:\System\CurrentControlSet\Control\Terminal Server" -Name "fDenyTSConnections" -Value 0
+        Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
