@@ -1881,7 +1881,7 @@ BOOL gcc_read_client_network_data(wStream* s, rdpMcs* mcs)
 
 	Stream_Read_UINT32(s, mcs->channelCount); /* channelCount */
 
-	if (!Stream_CheckAndLogRequiredLengthWLog(mcs->log, s, mcs->channelCount * 12))
+	if (!Stream_CheckAndLogRequiredLengthOfSizeWLog(mcs->log, s, mcs->channelCount, 12ull))
 		return FALSE;
 
 	if (mcs->channelCount > CHANNEL_MAX_COUNT)

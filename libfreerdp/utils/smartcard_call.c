@@ -1319,6 +1319,7 @@ static LONG smartcard_StatusW_Call(scard_call_context* smartcard, wStream* out,
 	if ((ret.ReturnCode == SCARD_S_SUCCESS) && (ret.cBytes == SCARD_AUTOALLOCATE))
 		return SCARD_F_UNKNOWN_ERROR;
 
+	size_t blen = 0;
 	if (status == SCARD_S_SUCCESS)
 	{
 		if (!call->fmszReaderNamesIsNULL)
@@ -1327,11 +1328,14 @@ static LONG smartcard_StatusW_Call(scard_call_context* smartcard, wStream* out,
 		ret.cbAtrLen = cbAtrLen;
 	}
 
-	/* SCardStatusW returns number of characters, we need number of bytes */
-	WINPR_ASSERT(ret.cBytes < SCARD_AUTOALLOCATE / sizeof(WCHAR));
-	const size_t blen = sizeof(WCHAR) * ret.cBytes;
-	WINPR_ASSERT(blen <= UINT32_MAX);
-	ret.cBytes = (UINT32)blen;
+	if (ret.cBytes != SCARD_AUTOALLOCATE)
+	{
+		/* SCardStatusW returns number of characters, we need number of bytes */
+		WINPR_ASSERT(ret.cBytes < SCARD_AUTOALLOCATE / sizeof(WCHAR));
+		blen = sizeof(WCHAR) * ret.cBytes;
+		WINPR_ASSERT(blen <= UINT32_MAX);
+		ret.cBytes = (UINT32)blen;
+	}
 
 	status = smartcard_pack_status_return(out, &ret, TRUE);
 	if (status != SCARD_S_SUCCESS)
