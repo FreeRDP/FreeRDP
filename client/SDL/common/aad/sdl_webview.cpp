@@ -20,6 +20,8 @@
 #include <string>
 #include <sstream>
 #include <cstdlib>
+#include <memory>
+
 #include <winpr/string.h>
 #include <freerdp/log.h>
 #include <freerdp/utils/aad.h>
@@ -68,25 +70,21 @@ static BOOL sdl_webview_get_rdsaad_access_token(freerdp* instance, const char* s
 	auto settings = context->settings;
 	WINPR_ASSERT(settings);
 
-	auto client_id = from_settings(settings, FreeRDP_GatewayAvdClientID);
-	std::string redirect_uri = "ms-appx-web%3a%2f%2fMicrosoft.AAD.BrokerPlugin%2f" + client_id;
-
-	*token = nullptr;
-
-	auto ep = from_aad_wellknown(context, AAD_WELLKNOWN_authorization_endpoint);
-	auto url = ep + "?client_id=" + client_id + "&response_type=code&scope=" + scope +
-	           "&redirect_uri=" + redirect_uri;
-
+	std::shared_ptr<char> request(freerdp_client_get_aad_url((rdpClientContext*)instance->context,
+	                                                         FREERDP_CLIENT_AAD_AUTH_REQUEST,
+	                                                         scope),
+	                              free);
 	const std::string title = "FreeRDP WebView - AAD access token";
 	std::string code;
-	auto rc = webview_impl_run(title, url, code);
+	auto rc = webview_impl_run(title, request.get(), code);
 	if (!rc || code.empty())
 		return FALSE;
 
-	auto token_request = "grant_type=authorization_code&code=" + code + "&client_id=" + client_id +
-	                     "&scope=" + scope + "&redirect_uri=" + redirect_uri +
-	                     "&req_cnf=" + req_cnf;
-	return client_common_get_access_token(instance, token_request.c_str(), token);
+	std::shared_ptr<char> token_request(
+	    freerdp_client_get_aad_url((rdpClientContext*)instance->context,
+	                               FREERDP_CLIENT_AAD_TOKEN_REQUEST, scope, code.c_str(), req_cnf),
+	    free);
+	return client_common_get_access_token(instance, token_request.get(), token);
 }
 
 static BOOL sdl_webview_get_avd_access_token(freerdp* instance, char** token)
@@ -95,24 +93,21 @@ static BOOL sdl_webview_get_avd_access_token(freerdp* instance, char** token)
 	WINPR_ASSERT(instance);
 	WINPR_ASSERT(instance->context);
 
-	auto client_id = from_settings(instance->context->settings, FreeRDP_GatewayAvdClientID);
-	std::string redirect_uri = "ms-appx-web%3a%2f%2fMicrosoft.AAD.BrokerPlugin%2f" + client_id;
-	std::string scope = "https%3A%2F%2Fwww.wvd.microsoft.com%2F.default";
+	std::shared_ptr<char> request(freerdp_client_get_aad_url((rdpClientContext*)instance->context,
+	                                                         FREERDP_CLIENT_AAD_AVD_AUTH_REQUEST),
+	                              free);
 
-	*token = nullptr;
-
-	auto ep = from_aad_wellknown(instance->context, AAD_WELLKNOWN_authorization_endpoint);
-	auto url = ep + "?client_id=" + client_id + "&response_type=code&scope=" + scope +
-	           "&redirect_uri=" + redirect_uri;
 	const std::string title = "FreeRDP WebView - AVD access token";
 	std::string code;
-	auto rc = webview_impl_run(title, url, code);
+	auto rc = webview_impl_run(title, request.get(), code);
 	if (!rc || code.empty())
 		return FALSE;
 
-	auto token_request = "grant_type=authorization_code&code=" + code + "&client_id=" + client_id +
-	                     "&scope=" + scope + "&redirect_uri=" + redirect_uri;
-	return client_common_get_access_token(instance, token_request.c_str(), token);
+	std::shared_ptr<char> token_request(
+	    freerdp_client_get_aad_url((rdpClientContext*)instance->context,
+	                               FREERDP_CLIENT_AAD_AVD_TOKEN_REQUEST, code.c_str()),
+	    free);
+	return client_common_get_access_token(instance, token_request.get(), token);
 }
 
 BOOL sdl_webview_get_access_token(freerdp* instance, AccessTokenType tokenType, char** token,

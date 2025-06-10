@@ -318,6 +318,27 @@ extern "C"
 	                                                    BOOL control);
 #endif
 
+	/** @brief type of AAD request
+	 * @since version 3.16.0
+	 */
+	typedef enum
+	{
+		FREERDP_CLIENT_AAD_AUTH_REQUEST,
+		FREERDP_CLIENT_AAD_TOKEN_REQUEST,
+		FREERDP_CLIENT_AAD_AVD_AUTH_REQUEST,
+		FREERDP_CLIENT_AAD_AVD_TOKEN_REQUEST,
+	} freerdp_client_aad_type;
+
+	/** @brief helper function to construct a connection URL for AAD authentication
+	 *
+	 *  @param cctx The client context to use
+	 *  @return An allocated string that can be used to connect
+	 *  @since version 3.16.0
+	 */
+	WINPR_ATTR_MALLOC(free, 1)
+	FREERDP_API char* freerdp_client_get_aad_url(rdpClientContext* cctx,
+	                                             freerdp_client_aad_type type, ...);
+
 #ifdef __cplusplus
 }
 #endif
