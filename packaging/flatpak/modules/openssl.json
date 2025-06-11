@@ -1,8 +1,8 @@
 {
 	"build-commands": [
 		"./config --prefix=/app --openssldir=/app --libdir=lib shared",
-		"make -j build_sw",
-		"make -j install_sw"
+		"make -j ${FLATPAK_BUILDER_N_JOBS} build_sw",
+		"make -j ${FLATPAK_BUILDER_N_JOBS} install_sw"
 	],
 	"buildsystem": "simple",
 	"cleanup": [],
