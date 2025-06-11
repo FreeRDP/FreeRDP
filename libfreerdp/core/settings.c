@@ -1683,7 +1683,8 @@ BOOL freerdp_settings_enforce_monitor_exists(rdpSettings* settings)
 
 	if (nrIds == 0)
 	{
-		if (!freerdp_settings_set_uint32(settings, FreeRDP_NumMonitorIds, 1))
+		const UINT32 dsize = freerdp_settings_get_uint32(settings, FreeRDP_MonitorDefArraySize);
+		if (!freerdp_settings_set_pointer_len(settings, FreeRDP_MonitorIds, NULL, dsize))
 			return FALSE;
 	}
 	if (!useMonitors || (count == 0))
