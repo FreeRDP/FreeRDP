@@ -2235,6 +2235,7 @@ BOOL freerdp_client_use_relative_mouse_events(rdpClientContext* ccontext)
 	return useRelative && (haveRelative || ainput);
 }
 
+#if defined(WITH_AAD)
 static char* avd_auth_request(rdpClientContext* cctx, WINPR_ATTR_UNUSED va_list ap)
 {
 	const rdpSettings* settings = cctx->context.settings;
@@ -2365,6 +2366,7 @@ static char* aad_token_request(rdpClientContext* cctx, WINPR_ATTR_UNUSED va_list
 	free(redirect_uri);
 	return url;
 }
+#endif
 
 char* freerdp_client_get_aad_url(rdpClientContext* cctx, freerdp_client_aad_type type, ...)
 {
@@ -2375,6 +2377,7 @@ char* freerdp_client_get_aad_url(rdpClientContext* cctx, freerdp_client_aad_type
 	va_start(ap, type);
 	switch (type)
 	{
+#if defined(WITH_AAD)
 		case FREERDP_CLIENT_AAD_AUTH_REQUEST:
 			str = aad_auth_request(cctx, ap);
 			break;
@@ -2387,6 +2390,7 @@ char* freerdp_client_get_aad_url(rdpClientContext* cctx, freerdp_client_aad_type
 		case FREERDP_CLIENT_AAD_AVD_TOKEN_REQUEST:
 			str = avd_token_request(cctx, ap);
 			break;
+#endif
 		default:
 			break;
 	}
