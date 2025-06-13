@@ -42,7 +42,7 @@ static inline void primitives_init_YUV_sse41(primitives_t* WINPR_RESTRICT prims)
 FREERDP_LOCAL void primitives_init_YUV_neon_int(primitives_t* WINPR_RESTRICT prims);
 static inline void primitives_init_YUV_neon(primitives_t* WINPR_RESTRICT prims)
 {
-	if (!IsProcessorFeaturePresentEx(PF_EX_SSE41))
+	if (!IsProcessorFeaturePresent(PF_ARM_NEON_INSTRUCTIONS_AVAILABLE))
 		return;
 
 	primitives_init_YUV_neon_int(prims);
