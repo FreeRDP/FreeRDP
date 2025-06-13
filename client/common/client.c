@@ -1047,7 +1047,6 @@ static BOOL client_cli_get_rdsaad_access_token(freerdp* instance, const char* sc
 	size_t size = 0;
 	char* url = NULL;
 	char* token_request = NULL;
-	char* redirect_uri = NULL;
 
 	WINPR_ASSERT(scope);
 	WINPR_ASSERT(req_cnf);
@@ -1079,7 +1078,6 @@ static BOOL client_cli_get_rdsaad_access_token(freerdp* instance, const char* sc
 	rc = client_common_get_access_token(instance, token_request, token);
 
 cleanup:
-	free(redirect_uri);
 	free(token_request);
 	free(url);
 	return rc && (*token != NULL);
@@ -1093,7 +1091,6 @@ static BOOL client_cli_get_avd_access_token(freerdp* instance, char** token)
 	size_t size = 0;
 	char* url = NULL;
 	char* token_request = NULL;
-	char* redirect_uri = NULL;
 
 	WINPR_ASSERT(token);
 
@@ -1125,7 +1122,6 @@ static BOOL client_cli_get_avd_access_token(freerdp* instance, char** token)
 	rc = client_common_get_access_token(instance, token_request, token);
 
 cleanup:
-	free(redirect_uri);
 	free(token_request);
 	free(url);
 	return rc && (*token != NULL);
@@ -1142,6 +1138,14 @@ BOOL client_cli_get_access_token(freerdp* instance, AccessTokenType tokenType, c
 	WLog_ERR(TAG, "Build does not support AAD authentication");
 	return FALSE;
 #else
+	BOOL rc = FALSE;
+	WINPR_ASSERT(instance->context);
+	const BOOL saved =
+	    freerdp_settings_get_bool(instance->context->settings, FreeRDP_UseCommonStdioCallbacks);
+	if (!freerdp_settings_set_bool(instance->context->settings, FreeRDP_UseCommonStdioCallbacks,
+	                               TRUE))
+		return FALSE;
+
 	switch (tokenType)
 	{
 		case ACCESS_TOKEN_TYPE_AAD:
@@ -1163,21 +1167,27 @@ BOOL client_cli_get_access_token(freerdp* instance, AccessTokenType tokenType, c
 			va_start(ap, count);
 			const char* scope = va_arg(ap, const char*);
 			const char* req_cnf = va_arg(ap, const char*);
-			BOOL rc = client_cli_get_rdsaad_access_token(instance, scope, req_cnf, token);
+			rc = client_cli_get_rdsaad_access_token(instance, scope, req_cnf, token);
 			va_end(ap);
-			return rc;
 		}
+		break;
 		case ACCESS_TOKEN_TYPE_AVD:
 			if (count != 0)
 				WLog_WARN(TAG,
 				          "ACCESS_TOKEN_TYPE_AVD expected 0 additional arguments, but got %" PRIuz
 				          ", ignoring",
 				          count);
-			return client_cli_get_avd_access_token(instance, token);
+			rc = client_cli_get_avd_access_token(instance, token);
+			break;
 		default:
 			WLog_ERR(TAG, "Unexpected value for AccessTokenType [%" PRIuz "], aborting", tokenType);
-			return FALSE;
+			break;
 	}
+
+	if (!freerdp_settings_set_bool(instance->context->settings, FreeRDP_UseCommonStdioCallbacks,
+	                               saved))
+		return FALSE;
+	return rc;
 #endif
 }
 
@@ -2236,23 +2246,53 @@ BOOL freerdp_client_use_relative_mouse_events(rdpClientContext* ccontext)
 }
 
 #if defined(WITH_AAD)
+WINPR_ATTR_MALLOC(free, 1)
+static char* get_redirect_uri(const rdpSettings* settings)
+{
+	char* redirect_uri = NULL;
+	const bool cli = freerdp_settings_get_bool(settings, FreeRDP_UseCommonStdioCallbacks);
+	if (cli)
+	{
+		const char* redirect_fmt =
+		    freerdp_settings_get_string(settings, FreeRDP_GatewayAvdAccessAadFormat);
+		const BOOL useTenant = freerdp_settings_get_bool(settings, FreeRDP_GatewayAvdUseTenantid);
+		const char* tenantid = "common";
+		if (useTenant)
+			tenantid = freerdp_settings_get_string(settings, FreeRDP_GatewayAvdAadtenantid);
+
+		if (tenantid && redirect_fmt)
+		{
+			const char* url =
+			    freerdp_settings_get_string(settings, FreeRDP_GatewayAzureActiveDirectory);
+
+			size_t redirect_len = 0;
+			winpr_asprintf(&redirect_uri, &redirect_len, redirect_fmt, url, tenantid);
+		}
+	}
+	else
+	{
+		const char* client_id = freerdp_settings_get_string(settings, FreeRDP_GatewayAvdClientID);
+		const char* redirect_fmt =
+		    freerdp_settings_get_string(settings, FreeRDP_GatewayAvdAccessTokenFormat);
+
+		size_t redirect_len = 0;
+		winpr_asprintf(&redirect_uri, &redirect_len, redirect_fmt, client_id);
+	}
+	return redirect_uri;
+}
+
 static char* avd_auth_request(rdpClientContext* cctx, WINPR_ATTR_UNUSED va_list ap)
 {
 	const rdpSettings* settings = cctx->context.settings;
 	const char* client_id = freerdp_settings_get_string(settings, FreeRDP_GatewayAvdClientID);
 	const char* ep = freerdp_utils_aad_get_wellknown_string(&cctx->context,
 	                                                        AAD_WELLKNOWN_authorization_endpoint);
-	const char* redirect_fmt =
-	    freerdp_settings_get_string(settings, FreeRDP_GatewayAvdAccessTokenFormat);
 	const char* scope = freerdp_settings_get_string(settings, FreeRDP_GatewayAvdScope);
 
-	if (!client_id || !ep || !redirect_fmt || !scope)
+	if (!client_id || !ep || !scope)
 		return NULL;
 
-	char* redirect_uri = NULL;
-	size_t redirect_len = 0;
-	winpr_asprintf(&redirect_uri, &redirect_len, redirect_fmt, client_id);
-
+	char* redirect_uri = get_redirect_uri(settings);
 	if (!redirect_uri)
 		return NULL;
 
@@ -2270,17 +2310,12 @@ static char* avd_token_request(rdpClientContext* cctx, WINPR_ATTR_UNUSED va_list
 	const char* client_id = freerdp_settings_get_string(settings, FreeRDP_GatewayAvdClientID);
 	const char* ep = freerdp_utils_aad_get_wellknown_string(&cctx->context,
 	                                                        AAD_WELLKNOWN_authorization_endpoint);
-	const char* redirect_fmt =
-	    freerdp_settings_get_string(settings, FreeRDP_GatewayAvdAccessTokenFormat);
 	const char* scope = freerdp_settings_get_string(settings, FreeRDP_GatewayAvdScope);
 
-	if (!client_id || !ep || !redirect_fmt || !scope)
+	if (!client_id || !ep || !scope)
 		return NULL;
 
-	char* redirect_uri = NULL;
-	size_t redirect_len = 0;
-	winpr_asprintf(&redirect_uri, &redirect_len, redirect_fmt, client_id);
-
+	char* redirect_uri = get_redirect_uri(settings);
 	if (!redirect_uri)
 		return NULL;
 
@@ -2300,28 +2335,13 @@ static char* aad_auth_request(rdpClientContext* cctx, WINPR_ATTR_UNUSED va_list 
 	const rdpSettings* settings = cctx->context.settings;
 	char* url = NULL;
 	size_t urllen = 0;
-	char* redirect_uri = NULL;
-	size_t redirect_len = 0;
+	char* redirect_uri = get_redirect_uri(settings);
 
 	const char* client_id = freerdp_settings_get_string(settings, FreeRDP_GatewayAvdClientID);
-	if (!client_id)
+	if (!client_id || !redirect_uri)
 		goto cleanup;
-	const char* base = freerdp_settings_get_string(settings, FreeRDP_GatewayAzureActiveDirectory);
-	const char* urlFormatString =
-	    freerdp_settings_get_string(settings, FreeRDP_GatewayAvdAccessTokenFormat);
 	const char* scope = va_arg(ap, const char*);
-	if (!urlFormatString || !scope)
-		goto cleanup;
-
-	const BOOL useTenant = freerdp_settings_get_bool(settings, FreeRDP_GatewayAvdUseTenantid);
-	const char* tenantid = "common";
-	if (useTenant)
-		tenantid = freerdp_settings_get_string(settings, FreeRDP_GatewayAvdAadtenantid);
-	if (!base || !tenantid || !client_id)
-		goto cleanup;
-
-	winpr_asprintf(&redirect_uri, &redirect_len, urlFormatString, base, tenantid);
-	if (!redirect_uri)
+	if (!scope)
 		goto cleanup;
 
 	const char* ep = freerdp_utils_aad_get_wellknown_string(&cctx->context,
@@ -2340,19 +2360,14 @@ static char* aad_token_request(rdpClientContext* cctx, WINPR_ATTR_UNUSED va_list
 	const char* client_id = freerdp_settings_get_string(settings, FreeRDP_GatewayAvdClientID);
 	const char* ep = freerdp_utils_aad_get_wellknown_string(&cctx->context,
 	                                                        AAD_WELLKNOWN_authorization_endpoint);
-	const char* redirect_fmt =
-	    freerdp_settings_get_string(settings, FreeRDP_GatewayAvdAccessTokenFormat);
 	const char* scope = va_arg(ap, const char*);
 	const char* code = va_arg(ap, const char*);
 	const char* req_cnf = va_arg(ap, const char*);
 
-	if (!client_id || !ep || !redirect_fmt || !scope || !code || !req_cnf)
+	if (!client_id || !ep || !scope || !code || !req_cnf)
 		return NULL;
 
-	char* redirect_uri = NULL;
-	size_t redirect_len = 0;
-	winpr_asprintf(&redirect_uri, &redirect_len, redirect_fmt, client_id);
-
+	char* redirect_uri = get_redirect_uri(settings);
 	if (!redirect_uri)
 		return NULL;
 
