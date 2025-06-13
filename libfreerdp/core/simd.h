@@ -21,6 +21,9 @@
 #pragma once
 
 #include <freerdp/config.h>
+#include <freerdp/log.h>
+
+#define PRIM_TAG FREERDP_TAG("primitives")
 
 /* https://sourceforge.net/p/predef/wiki/Architectures/
  *

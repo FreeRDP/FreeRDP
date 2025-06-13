@@ -21,6 +21,7 @@
 #include <winpr/platform.h>
 #include <winpr/sysinfo.h>
 #include <freerdp/config.h>
+#include <freerdp/codec/nsc.h>
 #include <freerdp/log.h>
 
 #include "../nsc_types.h"
@@ -36,5 +37,7 @@ void nsc_init_neon_int(WINPR_ATTR_UNUSED NSC_CONTEXT* WINPR_RESTRICT context)
 {
 #if defined(NEON_INTRINSICS_ENABLED)
 	WLog_WARN(TAG, "TODO: Implement neon optimized version of this function");
+#else
+	WLog_VRB(PRIM_TAG, "undefined WITH_SIMD or NEON intrinsics not available");
 #endif
 }

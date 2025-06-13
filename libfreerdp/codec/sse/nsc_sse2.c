@@ -393,9 +393,11 @@ static BOOL nsc_encode_sse2(NSC_CONTEXT* WINPR_RESTRICT context, const BYTE* WIN
 void nsc_init_sse2_int(NSC_CONTEXT* WINPR_RESTRICT context)
 {
 #if defined(SSE_AVX_INTRINSICS_ENABLED)
+	WLog_VRB(PRIM_TAG, "SSE2/SSE3 optimizations");
 	PROFILER_RENAME(context->priv->prof_nsc_encode, "nsc_encode_sse2")
 	context->encode = nsc_encode_sse2;
 #else
+	WLog_VRB(PRIM_TAG, "undefined WITH_SIMD or SSE2 intrinsics not available");
 	WINPR_UNUSED(context);
 #endif
 }
