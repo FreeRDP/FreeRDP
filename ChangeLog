@@ -1,3 +1,85 @@
+# 2025-06-16 Version 3.16.0
+
+Bugfix release with (again) much improved SDL3 and X11 client
+
+## What's Changed
+* Lots of improvements for the SDL3 client (#11502,#11504,#11516,#11546,#11552,
+  #11553,#11556,#11560,#11568,#11587,#11613,#11643,#11635,#11648,#11653,#11654,
+  #11661)
+* Various X11 client improvements (#11619,#11612,#11620,#11624,#11625,#11660)
+* Various Ci build fixes (#11543,#11554,#11570,#11571,#11575,#11577,#11579,
+  #11580,#11581,#11582,#11583,#11584,#11585,#11586)
+* [utils,smartcard] Better logging and handling of output buffer too small
+  (#11503,#11565,#11636)
+* Add a timer implementation (#11578,#11592,#11615)
+* Various bugfixed for drive channel (#11569,#11601,#11637,#11647,#11659)
+* add login through MS identity broker via sso-mib interface (#11600,#11608)
+* Update flatpak build script in repo (#11609,#11610,#11621,#11670)
+* Various AAD/Azure/Entra improvements (#11606,#11607,#11371,#11518)
+* YUV420 primitives fixes (#11673,#11539)
+* GCC Fixes (#11538)
+* [core,settings] fix freerdp_device_collection_add (#11533)
+* [core,proxy] detect address type (#11534)
+* [core,test] refactor TestSettings (#11558)
+* [core,test] improve settings test log (#11559)
+* [core,activation] skip sending PDU_TYPE_DEACTIVATE_ALL (#11603)
+* [core,transport] only free userContext if userContextSize > 0 (#11642)
+* [core,info] Allow INFO_HIDEF_RAIL_SUPPORTED with RDP version RDP_VERS… (#11652)
+* [core,gcc] use dynamic logger from rdpMcs (#11669)
+* [core,settings] default MonitorIds size to MonitorDefArray size (#11671)
+* Rdp security fixes (#11506)
+* rdpei/server: Fix incorrect PDU length read (#11510)
+* [winpr] Put '\0' when converting empty string to wstr (#11511)
+* [common,settings] new settings (de)serialization API (#11508)
+* [cache,glyph] fix GLYPH_FRAGMENT_USE (#11517)
+* [winpr,sysinfo] use a single clock to provide System and Local time (#11520)
+* [common,settings] fix add_string_or_null (#11522)
+* Compiler warning fixes (#11523)
+* fix [resources]: remove MimeType from desktop file (#11525)
+* gcc: fix server-side connection with multiple monitor (#11527)
+* [rdpsnd/client] add parameters to pulse snd device plugin (#11530)
+* [crypto,key] do not deprecate new_from* (#11535)
+* [winpr,file] Fix assert fail always when removing flags (#11540)
+* FF_PROFILE Depreciation (#11542)
+* [cmake] Fix finding ffmpeg under nonstandard prefixes (#11548)
+* [client,android] update (#11555)
+* Support 'Restrict Credential Delegation' mode (#11547)
+* Support NLA in shadow server when running behind a Hyper-V proxy (#11549)
+* [winpr,file] Add implementation of FileFlushFileBuffers (#11566)
+* [winpr,file] add TestFileWriteFile testcase (#11567)
+* [channels,rdpdr] expose device add/remove for clients (#11564)
+* Deb & RPM update (#11572)
+* Transport fix (#11573)
+* [winpr,sspi] add kerberos string len checks (#11590)
+* [winpr,sspi] assert kerberos principal (#11591)
+* [channels,video] fix NULL dereference (#11597)
+* Reconnect strict (#11599)
+* [rdpdr,hotplug] fix passing of device::Id back to caller (#11617)
+* [client,common] lock clipboard on update (#11618)
+* [client,cliprdr] refactor file clipboard (#11627)
+* [winpr,wtypes] align BOOL typedef with objc.h header (#11632)
+* [stream] reset pool array size after clearing (#11631)
+* fix compile errors: xfc not defined even if with WITH_XCURSOR=ON (#11629)
+* [utils,helpers] add missing WINPR_ATTR_MALLOC (#11633)
+* JSON configuration helpers (#11634)
+* [client,common] (re)initialize fuse root in cliprdr_file_context_init (#11646)
+* [WaitForXXObject] use infinite timeout where possible (#11651)
+* [channels,printer] fix missing include (#11663)
+* [winpr,file] fix definition of winpr_CreateFile (#11664)
+
+## New Contributors
+* @lazy5f made their first contribution in #11511
+* @EndlessEden made their first contribution in #11542
+* @thestr4ng3r made their first contribution in #11548
+* @ljaeh0121 made their first contribution in #11566
+* @rupran made their first contribution in #11600
+* @asterwyx made their first contribution in #11631
+* @ligangcc made their first contribution in #11629
+* @motor-dev made their first contribution in #11635
+
+For a complete and detailed change log since the last release run:
+git log 3.16.0...3.15.0
+
 # 2025-04-14 Version 3.15.0
 
 Bugfix release with much improved SDL3 client and relative mouse input support
