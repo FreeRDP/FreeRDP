@@ -42,6 +42,9 @@
 #include <freerdp/client/encomsp.h>
 #endif
 
+/** @brief Opaqye handle for AAD wrapper
+ * @since version 3.16.0
+ */
 typedef struct MIBClientWrapper MIBClientWrapper;
 
 #ifdef __cplusplus
@@ -140,8 +143,8 @@ extern "C"
 		ALIGN64 FreeRDP_TouchContact contacts[FREERDP_MAX_TOUCH_CONTACTS]; /**< (offset 8) */
 		ALIGN64 FreeRDP_PenDevice pens[FREERDP_MAX_PEN_DEVICES];           /**< (offset 9) */
 
-		ALIGN64 MIBClientWrapper* mibClientWrapper; /**< (offset 10) */
-		UINT64 reserved[128 - 10];                  /**< (offset 10) */
+		ALIGN64 MIBClientWrapper* mibClientWrapper; /**< (offset 10) @since version 3.16.0 */
+		UINT64 reserved[129 - 11];                  /**< (offset 11) */
 	};
 
 	/* Common client functions */

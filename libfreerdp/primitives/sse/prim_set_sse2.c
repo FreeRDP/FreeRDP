@@ -223,7 +223,7 @@ void primitives_init_set_sse2_int(primitives_t* WINPR_RESTRICT prims)
 
 	/* Pick tuned versions if possible. */
 
-	WLog_VRB(PRIM_TAG, "SSE2 optimizations");
+	WLog_VRB(PRIM_TAG, "SSE2/SSE3 optimizations");
 	prims->set_8u = sse2_set_8u;
 	prims->set_32s = sse2_set_32s;
 	prims->set_32u = sse2_set_32u;

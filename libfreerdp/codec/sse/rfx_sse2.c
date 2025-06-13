@@ -454,6 +454,7 @@ static void rfx_dwt_2d_encode_sse2(INT16* WINPR_RESTRICT buffer, INT16* WINPR_RE
 void rfx_init_sse2_int(RFX_CONTEXT* WINPR_RESTRICT context)
 {
 #if defined(SSE_AVX_INTRINSICS_ENABLED)
+	WLog_VRB(PRIM_TAG, "SSE2/SSE3 optimizations");
 	PROFILER_RENAME(context->priv->prof_rfx_quantization_decode, "rfx_quantization_decode_sse2")
 	PROFILER_RENAME(context->priv->prof_rfx_quantization_encode, "rfx_quantization_encode_sse2")
 	PROFILER_RENAME(context->priv->prof_rfx_dwt_2d_decode, "rfx_dwt_2d_decode_sse2")
@@ -464,5 +465,6 @@ void rfx_init_sse2_int(RFX_CONTEXT* WINPR_RESTRICT context)
 	context->dwt_2d_encode = rfx_dwt_2d_encode_sse2;
 #else
 	WINPR_UNUSED(context);
+	WLog_VRB(PRIM_TAG, "undefined WITH_SIMD or SSE2 intrinsics not available");
 #endif
 }
