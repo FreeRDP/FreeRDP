@@ -289,8 +289,8 @@ struct rdp_settings
 	SETTINGS_DEPRECATED(ALIGN64 BOOL AadSecurity);                  /* 1112 */
 	SETTINGS_DEPRECATED(ALIGN64 char* WinSCardModule);              /* 1113 */
 	SETTINGS_DEPRECATED(ALIGN64 BOOL RemoteCredentialGuard);        /* 1114 */
-	SETTINGS_DEPRECATED(
-		ALIGN64 BOOL RestrictedAdminModeSupported); /** 1115 @since version 3.16.0 */
+	SETTINGS_DEPRECATED(ALIGN64 BOOL RestrictedAdminModeSupported); /** 1115
+		                                                             * @since version 3.16.0 */
 	UINT64 padding1152[1152 - 1116];                                /* 1116 */
 
 	/* Connection Cookie */
