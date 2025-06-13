@@ -22,9 +22,16 @@
 #include <winpr/collections.h>
 
 #include <freerdp/timer.h>
+#include <freerdp/log.h>
 #include "rdp.h"
 #include "utils.h"
 #include "timer.h"
+
+#define TAG FREERDP_TAG("timer")
+
+#if !defined(EMSCRIPTEN)
+#define FREERDP_TIMER_SUPPORTED
+#endif
 
 typedef ALIGN64 struct
 {
@@ -54,6 +61,15 @@ FreeRDP_TimerID freerdp_timer_add(rdpContext* context, uint64_t intervalNS,
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->rdp);
 
+#if !defined(FREERDP_TIMER_SUPPORTED)
+	WINPR_UNUSED(context);
+	WINPR_UNUSED(intervalNS);
+	WINPR_UNUSED(callback);
+	WINPR_UNUSED(userdata);
+	WINPR_UNUSED(mainloop);
+	WLog_WARN(TAG, "Platform does not support freerdp_timer_* API");
+	return 0;
+#else
 	FreeRDPTimer* timer = context->rdp->timer;
 	WINPR_ASSERT(timer);
 
@@ -73,6 +89,7 @@ FreeRDP_TimerID freerdp_timer_add(rdpContext* context, uint64_t intervalNS,
 		return 0;
 	(void)SetEvent(timer->event);
 	return entry.id;
+#endif
 }
 
 static BOOL foreach_entry(void* data, WINPR_ATTR_UNUSED size_t index, va_list ap)
@@ -143,6 +160,7 @@ static BOOL runExpiredTimer(void* data, WINPR_ATTR_UNUSED size_t index,
 	return TRUE;
 }
 
+#if defined(FREERDP_TIMER_SUPPORTED)
 static uint64_t expire_and_reschedule(FreeRDPTimer* timer)
 {
 	WINPR_ASSERT(timer);
@@ -206,6 +224,7 @@ static DWORD WINAPI timer_thread(LPVOID arg)
 	}
 	return 0;
 }
+#endif
 
 void freerdp_timer_free(FreeRDPTimer* timer)
 {
@@ -266,10 +285,12 @@ FreeRDPTimer* freerdp_timer_new(rdpRdp* rdp)
 	if (!timer->mainevent)
 		goto fail;
 
+#if defined(FREERDP_TIMER_SUPPORTED)
 	timer->running = true;
 	timer->thread = CreateThread(NULL, 0, timer_thread, timer, 0, NULL);
 	if (!timer->thread)
 		goto fail;
+#endif
 	return timer;
 
 fail:
