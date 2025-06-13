@@ -1048,7 +1048,6 @@ static BOOL client_cli_get_rdsaad_access_token(freerdp* instance, const char* sc
 	char* url = NULL;
 	char* token_request = NULL;
 	char* redirect_uri = NULL;
-	size_t redirec_uri_len = 0;
 
 	WINPR_ASSERT(scope);
 	WINPR_ASSERT(req_cnf);

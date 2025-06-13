@@ -27,10 +27,10 @@
 #include "utils.h"
 #include "timer.h"
 
-#define TAG FREERDP_TAG("timer")
-
 #if !defined(EMSCRIPTEN)
 #define FREERDP_TIMER_SUPPORTED
+#else
+#define TAG FREERDP_TAG("timer")
 #endif
 
 typedef ALIGN64 struct
