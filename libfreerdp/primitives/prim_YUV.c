@@ -534,6 +534,70 @@ static pstatus_t general_YUV444ToRGB_8u_P3AC4R(const BYTE* WINPR_RESTRICT pSrc[3
  * | G | = ( | 256   -48   -120 | | U - 128 | ) >> 8
  * | B |   ( | 256   475      0 | | V - 128 | )
  */
+static void general_YUV420ToRGB_8u_P3AC4R_double_line(BYTE* WINPR_RESTRICT pEven,
+                                                      BYTE* WINPR_RESTRICT pOdd, UINT32 DstFormat,
+                                                      const BYTE* WINPR_RESTRICT pYeven,
+                                                      const BYTE* WINPR_RESTRICT pYodd,
+                                                      const BYTE* WINPR_RESTRICT pU,
+                                                      const BYTE* WINPR_RESTRICT pV, UINT32 width,
+                                                      fkt_writePixel writePixel, UINT32 formatSize)
+{
+
+	UINT32 x = 0;
+	for (; x < width / 2; x++)
+	{
+		const BYTE U = pU[x];
+		const BYTE V = pV[x];
+		const BYTE eY0 = pYeven[2ULL * x + 0];
+		const BYTE eY1 = pYeven[2ULL * x + 1];
+		writeYUVPixel(&pEven[2ULL * x * formatSize], DstFormat, eY0, U, V, writePixel);
+		writeYUVPixel(&pEven[(2ULL * x + 1) * formatSize], DstFormat, eY1, U, V, writePixel);
+
+		const BYTE oY0 = pYodd[2ULL * x + 0];
+		const BYTE oY1 = pYodd[2ULL * x + 1];
+		writeYUVPixel(&pOdd[2ULL * x * formatSize], DstFormat, oY0, U, V, writePixel);
+		writeYUVPixel(&pOdd[(2ULL * x + 1) * formatSize], DstFormat, oY1, U, V, writePixel);
+	}
+
+	for (; x < (width + 1) / 2; x++)
+	{
+		const BYTE U = pU[x];
+		const BYTE V = pV[x];
+		const BYTE eY0 = pYeven[2ULL * x + 0];
+		writeYUVPixel(&pEven[2ULL * x * formatSize], DstFormat, eY0, U, V, writePixel);
+
+		const BYTE oY0 = pYodd[2ULL * x + 0];
+		writeYUVPixel(&pOdd[2ULL * x * formatSize], DstFormat, oY0, U, V, writePixel);
+	}
+}
+
+static void general_YUV420ToRGB_8u_P3AC4R_single_line(BYTE* WINPR_RESTRICT pEven, UINT32 DstFormat,
+                                                      const BYTE* WINPR_RESTRICT pYeven,
+                                                      const BYTE* WINPR_RESTRICT pU,
+                                                      const BYTE* WINPR_RESTRICT pV, UINT32 width,
+                                                      fkt_writePixel writePixel, UINT32 formatSize)
+{
+
+	UINT32 x = 0;
+	for (; x < width / 2; x++)
+	{
+		const BYTE U = pU[x];
+		const BYTE V = pV[x];
+		const BYTE eY0 = pYeven[2ULL * x + 0];
+		const BYTE eY1 = pYeven[2ULL * x + 1];
+		writeYUVPixel(&pEven[2ULL * x * formatSize], DstFormat, eY0, U, V, writePixel);
+		writeYUVPixel(&pEven[(2ULL * x + 1) * formatSize], DstFormat, eY1, U, V, writePixel);
+	}
+
+	for (; x < (width + 1) / 2; x++)
+	{
+		const BYTE U = pU[x];
+		const BYTE V = pV[x];
+		const BYTE eY0 = pYeven[2ULL * x + 0];
+		writeYUVPixel(&pEven[2ULL * x * formatSize], DstFormat, eY0, U, V, writePixel);
+	}
+}
+
 static pstatus_t general_YUV420ToRGB_8u_P3AC4R(const BYTE* WINPR_RESTRICT pSrc[3],
                                                const UINT32 srcStep[3], BYTE* WINPR_RESTRICT pDst,
                                                UINT32 dstStep, UINT32 DstFormat,
@@ -542,87 +606,32 @@ static pstatus_t general_YUV420ToRGB_8u_P3AC4R(const BYTE* WINPR_RESTRICT pSrc[3
 	WINPR_ASSERT(roi);
 	const DWORD formatSize = FreeRDPGetBytesPerPixel(DstFormat);
 	fkt_writePixel writePixel = getPixelWriteFunction(DstFormat, FALSE);
-	UINT32 lastCol = roi->width & 0x01;
-	UINT32 lastRow = roi->height & 0x01;
-	const UINT32 nWidth = (roi->width + 1) & (uint32_t)~0x0001;
-	const UINT32 nHeight = (roi->height + 1) & (uint32_t)~0x0001;
-	const UINT32 halfWidth = nWidth / 2;
-	const UINT32 halfHeight = nHeight / 2;
+	const UINT32 nWidth = roi->width;
+	const UINT32 nHeight = roi->height;
 
-	for (UINT32 y = 0; y < halfHeight; y++)
+	UINT32 y = 0;
+	for (; y < nHeight / 2; y++)
+	{
+		const BYTE* pYe = &pSrc[0][(2ULL * y + 0) * srcStep[0]];
+		const BYTE* pYo = &pSrc[0][(2ULL * y + 1) * srcStep[0]];
+		const BYTE* pU = &pSrc[1][1ULL * srcStep[1] * y];
+		const BYTE* pV = &pSrc[2][1ULL * srcStep[2] * y];
+		BYTE* pRGBeven = &pDst[2ULL * y * dstStep];
+		BYTE* pRGBodd = &pDst[(2ULL * y + 1) * dstStep];
+		general_YUV420ToRGB_8u_P3AC4R_double_line(pRGBeven, pRGBodd, DstFormat, pYe, pYo, pU, pV,
+		                                          nWidth, writePixel, formatSize);
+	}
+
+	// Last row (if odd)
+	for (; y < (nHeight + 1) / 2; y++)
 	{
 		const BYTE* pY = &pSrc[0][2ULL * srcStep[0] * y];
+		const BYTE* pU = &pSrc[1][1ULL * srcStep[1] * y];
+		const BYTE* pV = &pSrc[2][1ULL * srcStep[2] * y];
+		BYTE* pEven = &pDst[2ULL * y * dstStep];
 
-		if (y + 1 == halfHeight)
-			lastRow <<= 1;
-
-		{
-			const BYTE* pU = &pSrc[1][1ULL * srcStep[1] * y];
-			const BYTE* pV = &pSrc[2][1ULL * srcStep[2] * y];
-			BYTE* pRGBeven = &pDst[2ULL * y * dstStep];
-			for (UINT32 x = 0; x < halfWidth;)
-			{
-				if (++x == halfWidth)
-					lastCol <<= 1;
-
-				const BYTE U = *pU++;
-				const BYTE V = *pV++;
-				/* 1st pixel */
-				{
-					const BYTE Y = *pY++;
-					pRGBeven = writeYUVPixel(pRGBeven, DstFormat, Y, U, V, writePixel);
-				}
-
-				/* 2nd pixel */
-				if (!(lastCol & 0x02))
-				{
-					const BYTE Y1 = *pY++;
-					pRGBeven = writeYUVPixel(pRGBeven, DstFormat, Y1, U, V, writePixel);
-				}
-				else
-				{
-					pY++;
-					pRGBeven += formatSize;
-					lastCol >>= 1;
-				}
-			}
-		}
-
-		if (lastRow & 0x02)
-			break;
-
-		{
-			const BYTE* pU = &pSrc[1][1ULL * srcStep[1] * y];
-			const BYTE* pV = &pSrc[2][1ULL * srcStep[2] * y];
-			BYTE* pRGBodd = &pDst[(2ULL * y + 1ULL) * dstStep];
-
-			for (UINT32 x = 0; x < halfWidth;)
-			{
-				if (++x == halfWidth)
-					lastCol <<= 1;
-
-				const BYTE U = *pU++;
-				const BYTE V = *pV++;
-				/* 3rd pixel */
-				{
-					const BYTE Y = *pY++;
-					pRGBodd = writeYUVPixel(pRGBodd, DstFormat, Y, U, V, writePixel);
-				}
-
-				/* 4th pixel */
-				if (!(lastCol & 0x02))
-				{
-					const BYTE Y1 = *pY++;
-					pRGBodd = writeYUVPixel(pRGBodd, DstFormat, Y1, U, V, writePixel);
-				}
-				else
-				{
-					pY++;
-					pRGBodd += formatSize;
-					lastCol >>= 1;
-				}
-			}
-		}
+		general_YUV420ToRGB_8u_P3AC4R_single_line(pEven, DstFormat, pY, pU, pV, nWidth, writePixel,
+		                                          formatSize);
 	}
 
 	return PRIMITIVES_SUCCESS;
