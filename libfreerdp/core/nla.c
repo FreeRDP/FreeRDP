@@ -386,10 +386,11 @@ static BOOL nla_client_setup_identity(rdpNla* nla)
 
 		if (settings->RedirectionPassword && (settings->RedirectionPasswordLength > 0))
 		{
-			if (!identity_set_from_settings_with_pwd(
-			        nla->identity, settings, FreeRDP_Username, FreeRDP_Domain,
-			        (const WCHAR*)settings->RedirectionPassword,
-			        settings->RedirectionPasswordLength / sizeof(WCHAR)))
+			const WCHAR* wstr = (const WCHAR*)settings->RedirectionPassword;
+			const size_t len = _wcsnlen(wstr, settings->RedirectionPasswordLength / sizeof(WCHAR));
+
+			if (!identity_set_from_settings_with_pwd(nla->identity, settings, FreeRDP_Username,
+			                                         FreeRDP_Domain, wstr, len))
 				return FALSE;
 
 			usePassword = FALSE;
