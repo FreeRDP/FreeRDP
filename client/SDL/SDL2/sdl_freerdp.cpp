@@ -61,7 +61,11 @@
 #include "dialogs/sdl_dialogs.hpp"
 #include "scoped_guard.hpp"
 
+#include <sdl_config.hpp>
+
+#if defined(WITH_WEBVIEW)
 #include <aad/sdl_webview.hpp>
+#endif
 
 #define SDL_TAG CLIENT_TAG("SDL")
 
@@ -141,10 +145,7 @@ struct sdl_exit_code_map_t
 	const char* code_tag;
 };
 
-#define ENTRY(x, y) \
-	{               \
-		x, y, #y    \
-	}
+#define ENTRY(x, y) { x, y, #y }
 static const struct sdl_exit_code_map_t sdl_exit_code_map[] = {
 	ENTRY(FREERDP_ERROR_SUCCESS, SDL_EXIT_SUCCESS), ENTRY(FREERDP_ERROR_NONE, SDL_EXIT_DISCONNECT),
 	ENTRY(FREERDP_ERROR_NONE, SDL_EXIT_LOGOFF), ENTRY(FREERDP_ERROR_NONE, SDL_EXIT_IDLE_TIMEOUT),
@@ -1455,7 +1456,7 @@ static BOOL sdl_client_new(freerdp* instance, rdpContext* context)
 	instance->ChooseSmartcard = sdl_choose_smartcard;
 	instance->RetryDialog = sdl_retry_dialog;
 
-#ifdef WITH_WEBVIEW
+#if defined(WITH_WEBVIEW)
 	instance->GetAccessToken = sdl_webview_get_access_token;
 #else
 	instance->GetAccessToken = client_cli_get_access_token;
