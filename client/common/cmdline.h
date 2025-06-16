@@ -330,7 +330,7 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	{ "monitors", COMMAND_LINE_VALUE_REQUIRED, "<id>[,<id>[,...]]", NULL, NULL, -1, NULL,
 	  "Select monitors to use (only effective in fullscreen or multimonitor mode)" },
 	{ "mouse-motion", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL,
-	  "Send mouse motion" },
+	  "Send mouse motion events" },
 	{ "mouse-relative", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL,
 	  "Send mouse motion with relative addressing" },
 	{ "mouse", COMMAND_LINE_VALUE_REQUIRED, "[relative:[on|off],grab:[on|off]]", NULL, NULL, -1,
