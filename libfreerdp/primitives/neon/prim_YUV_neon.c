@@ -156,15 +156,13 @@ static INLINE void neon_write_pixel(BYTE* pRGB, BYTE Y, BYTE U, BYTE V, const ui
 	pRGB[bPos] = b;
 }
 
-static INLINE pstatus_t neon_YUV420ToX_DOUBLE_ROW(const BYTE* WINPR_RESTRICT pY[2],
-                                                  const BYTE* WINPR_RESTRICT pU,
-                                                  const BYTE* WINPR_RESTRICT pV,
-                                                  BYTE* WINPR_RESTRICT pRGB[2], size_t width,
-                                                  const uint8_t rPos, const uint8_t gPos,
-                                                  const uint8_t bPos, const uint8_t aPos)
+static INLINE void neon_YUV420ToX_DOUBLE_ROW(const BYTE* WINPR_RESTRICT pY[2],
+                                             const BYTE* WINPR_RESTRICT pU,
+                                             const BYTE* WINPR_RESTRICT pV,
+                                             BYTE* WINPR_RESTRICT pRGB[2], size_t width,
+                                             const uint8_t rPos, const uint8_t gPos,
+                                             const uint8_t bPos, const uint8_t aPos)
 {
-	WINPR_ASSERT((width % 2) == 0);
-
 	UINT32 x = 0;
 
 	for (; x < width - width % 16; x += 16)
@@ -180,7 +178,7 @@ static INLINE pstatus_t neon_YUV420ToX_DOUBLE_ROW(const BYTE* WINPR_RESTRICT pY[
 		neon_YuvToRgbPixel(&pRGB[1][4ULL * x], Y1, D, E, rPos, gPos, bPos, aPos);
 	}
 
-	for (; x < width; x += 2)
+	for (; x < width - width % 2; x += 2)
 	{
 		const BYTE U = pU[x / 2];
 		const BYTE V = pV[x / 2];
@@ -191,7 +189,49 @@ static INLINE pstatus_t neon_YUV420ToX_DOUBLE_ROW(const BYTE* WINPR_RESTRICT pY[
 		neon_write_pixel(&pRGB[1][4 * (1ULL + x)], pY[1][1ULL + x], U, V, rPos, gPos, bPos, aPos);
 	}
 
-	return PRIMITIVES_SUCCESS;
+	for (; x < width; x++)
+	{
+		const BYTE U = pU[x / 2];
+		const BYTE V = pV[x / 2];
+
+		neon_write_pixel(&pRGB[0][4 * x], pY[0][x], U, V, rPos, gPos, bPos, aPos);
+		neon_write_pixel(&pRGB[1][4 * x], pY[1][x], U, V, rPos, gPos, bPos, aPos);
+	}
+}
+
+static INLINE void neon_YUV420ToX_SINGLE_ROW(const BYTE* WINPR_RESTRICT pY,
+                                             const BYTE* WINPR_RESTRICT pU,
+                                             const BYTE* WINPR_RESTRICT pV,
+                                             BYTE* WINPR_RESTRICT pRGB, size_t width,
+                                             const uint8_t rPos, const uint8_t gPos,
+                                             const uint8_t bPos, const uint8_t aPos)
+{
+	UINT32 x = 0;
+
+	for (; x < width - width % 16; x += 16)
+	{
+		const uint8x16_t Y0raw = vld1q_u8(&pY[x]);
+		const uint8x8x2_t Y0 = { { vget_low_u8(Y0raw), vget_high_u8(Y0raw) } };
+		const int16x8x2_t D = loadUV(pU, x);
+		const int16x8x2_t E = loadUV(pV, x);
+		neon_YuvToRgbPixel(&pRGB[4ULL * x], Y0, D, E, rPos, gPos, bPos, aPos);
+	}
+
+	for (; x < width - width % 2; x += 2)
+	{
+		const BYTE U = pU[x / 2];
+		const BYTE V = pV[x / 2];
+
+		neon_write_pixel(&pRGB[4 * x], pY[x], U, V, rPos, gPos, bPos, aPos);
+		neon_write_pixel(&pRGB[4 * (1ULL + x)], pY[1ULL + x], U, V, rPos, gPos, bPos, aPos);
+	}
+	for (; x < width; x++)
+	{
+		const BYTE U = pU[x / 2];
+		const BYTE V = pV[x / 2];
+
+		neon_write_pixel(&pRGB[4 * x], pY[x], U, V, rPos, gPos, bPos, aPos);
+	}
 }
 
 static INLINE pstatus_t neon_YUV420ToX(const BYTE* WINPR_RESTRICT pSrc[3], const UINT32 srcStep[3],
@@ -202,20 +242,26 @@ static INLINE pstatus_t neon_YUV420ToX(const BYTE* WINPR_RESTRICT pSrc[3], const
 	const UINT32 nWidth = roi->width;
 	const UINT32 nHeight = roi->height;
 
-	WINPR_ASSERT((nHeight % 2) == 0);
-	for (UINT32 y = 0; y < nHeight; y += 2)
+	WINPR_ASSERT(nHeight > 0);
+	UINT32 y = 0;
+	for (; y < (nHeight - 1); y += 2)
 	{
 		const uint8_t* pY[2] = { pSrc[0] + y * srcStep[0], pSrc[0] + (1ULL + y) * srcStep[0] };
 		const uint8_t* pU = pSrc[1] + (y / 2) * srcStep[1];
 		const uint8_t* pV = pSrc[2] + (y / 2) * srcStep[2];
 		uint8_t* pRGB[2] = { pDst + y * dstStep, pDst + (1ULL + y) * dstStep };
 
-		const pstatus_t rc =
-		    neon_YUV420ToX_DOUBLE_ROW(pY, pU, pV, pRGB, nWidth, rPos, gPos, bPos, aPos);
-		if (rc != PRIMITIVES_SUCCESS)
-			return rc;
+		neon_YUV420ToX_DOUBLE_ROW(pY, pU, pV, pRGB, nWidth, rPos, gPos, bPos, aPos);
 	}
+	for (; y < nHeight; y++)
+	{
+		const uint8_t* pY = pSrc[0] + y * srcStep[0];
+		const uint8_t* pU = pSrc[1] + (y / 2) * srcStep[1];
+		const uint8_t* pV = pSrc[2] + (y / 2) * srcStep[2];
+		uint8_t* pRGB = pDst + y * dstStep;
 
+		neon_YUV420ToX_SINGLE_ROW(pY, pU, pV, pRGB, nWidth, rPos, gPos, bPos, aPos);
+	}
 	return PRIMITIVES_SUCCESS;
 }
 

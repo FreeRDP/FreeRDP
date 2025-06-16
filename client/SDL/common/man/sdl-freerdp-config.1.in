@@ -94,7 +94,11 @@ A string as defined at
 .RS 4
 .PP
 .RS 4
-Toggles keyboard and mouse grab state\&.
+Toggles keyboard and mouse grab state.
+.br
+If keyboard is grabbed the local system shortcuts do no longer work and are sent to the remote system.
+.br
+If the Mouse is grabbed (optional) local gesture detection does not work and the mouse might not be able to leave the RDP window. Mouse events are not altered.\&.
 .br
 
 Default
