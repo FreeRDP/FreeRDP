@@ -881,9 +881,6 @@ UINT freerdp_channels_disconnect(rdpChannels* channels, freerdp* instance)
 			                                            CHANNEL_EVENT_DISCONNECTED, 0, 0);
 		}
 
-		if (getChannelError(instance->context) != CHANNEL_RC_OK)
-			continue;
-
 		pChannelOpenData = &channels->openDataList[index];
 		EventArgsInit(&e, "freerdp");
 		e.name = pChannelOpenData->name;
