@@ -1,10 +1,17 @@
 .SH "ENVIRONMENT VARIABLES"
 .PP
-wlog environment variable
+wlog environment variables
 .RS 4
 @MANPAGE_NAME@ uses wLog as its log facility, you can refer to the corresponding man page (wlog(7)) for more information\&. Arguments passed via the
 \fI/log\-level\fR
 or
 \fI/log\-filters\fR
 have precedence over the environment variables\&.
+.br
+.RE
+
+.PP
+FREERDP_ASKPASS
+.RS 4
+\fISet a program to ask for passwords similar to SSH_ASKPASS\fR
 .RE
