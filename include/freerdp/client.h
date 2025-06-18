@@ -144,7 +144,8 @@ extern "C"
 		ALIGN64 FreeRDP_PenDevice pens[FREERDP_MAX_PEN_DEVICES];           /**< (offset 9) */
 
 		ALIGN64 MIBClientWrapper* mibClientWrapper; /**< (offset 10) @since version 3.16.0 */
-		UINT64 reserved[129 - 11];                  /**< (offset 11) */
+		ALIGN64 BOOL pressed_buttons[5];            /**< (offset 11) @since version 3.17.0 */
+		UINT64 reserved[129 - 16];                  /**< (offset 16) */
 	};
 
 	/* Common client functions */
@@ -291,9 +292,6 @@ extern "C"
 	FREERDP_API BOOL freerdp_client_pen_cancel_all(rdpClientContext* cctx);
 
 	FREERDP_API BOOL freerdp_client_send_wheel_event(rdpClientContext* cctx, UINT16 mflags);
-
-	FREERDP_API BOOL freerdp_client_send_mouse_event(rdpClientContext* cctx, UINT64 mflags, INT32 x,
-	                                                 INT32 y);
 
 	/** @brief this function checks if relative mouse events are supported and enabled for this
 	 * session.

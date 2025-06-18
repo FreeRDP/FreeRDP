@@ -788,8 +788,8 @@ int xf_input_event(xfContext* xfc, WINPR_ATTR_UNUSED const XEvent* xevent, XIDev
 
 			if (xfc->xi_event)
 			{
-				xf_generic_MotionNotify(xfc, (int)event->event_x, (int)event->event_y,
-				                        event->detail, event->event, xfc->remote_app);
+				xf_generic_MotionNotify(xfc, (int)event->event_x, (int)event->event_y, event->event,
+				                        xfc->remote_app);
 			}
 			break;
 		case XI_RawButtonPress:
