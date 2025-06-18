@@ -413,18 +413,12 @@ static BOOL xf_event_VisibilityNotify(xfContext* xfc, const XVisibilityEvent* ev
 	return TRUE;
 }
 
-BOOL xf_generic_MotionNotify(xfContext* xfc, int x, int y, int state, Window window, BOOL app)
+BOOL xf_generic_MotionNotify(xfContext* xfc, int x, int y, Window window, BOOL app)
 {
 	Window childWindow = None;
 
 	WINPR_ASSERT(xfc);
 	WINPR_ASSERT(xfc->common.context.settings);
-
-	if (!freerdp_settings_get_bool(xfc->common.context.settings, FreeRDP_MouseMotion))
-	{
-		if ((state & (Button1Mask | Button2Mask | Button3Mask)) == 0)
-			return TRUE;
-	}
 
 	if (app)
 	{
@@ -474,8 +468,7 @@ static BOOL xf_event_MotionNotify(xfContext* xfc, const XMotionEvent* event, BOO
 	    (xfc->common.mouse_grabbed && freerdp_client_use_relative_mouse_events(&xfc->common)))
 		return TRUE;
 
-	return xf_generic_MotionNotify(xfc, event->x, event->y,
-	                               WINPR_ASSERTING_INT_CAST(int, event->state), event->window, app);
+	return xf_generic_MotionNotify(xfc, event->x, event->y, event->window, app);
 }
 
 BOOL xf_generic_ButtonEvent(xfContext* xfc, int x, int y, int button, Window window, BOOL app,

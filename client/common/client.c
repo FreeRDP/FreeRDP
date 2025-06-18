@@ -1646,12 +1646,38 @@ static INLINE BOOL ainput_send_diff_event(rdpClientContext* cctx, UINT64 flags, 
 }
 #endif
 
+static bool button_pressed(const rdpClientContext* cctx)
+{
+	WINPR_ASSERT(cctx);
+	for (size_t x = 0; x < ARRAYSIZE(cctx->pressed_buttons); x++)
+	{
+		const BOOL cur = cctx->pressed_buttons[x];
+		if (cur)
+			return true;
+	}
+	return false;
+}
+
 BOOL freerdp_client_send_button_event(rdpClientContext* cctx, BOOL relative, UINT16 mflags, INT32 x,
                                       INT32 y)
 {
 	BOOL handled = FALSE;
 
 	WINPR_ASSERT(cctx);
+
+	if (mflags & PTR_FLAGS_BUTTON1)
+		cctx->pressed_buttons[0] = mflags & PTR_FLAGS_DOWN;
+	if (mflags & PTR_FLAGS_BUTTON2)
+		cctx->pressed_buttons[1] = mflags & PTR_FLAGS_DOWN;
+	if (mflags & PTR_FLAGS_BUTTON3)
+		cctx->pressed_buttons[2] = mflags & PTR_FLAGS_DOWN;
+
+	if (((mflags & PTR_FLAGS_MOVE) != 0) &&
+	    !freerdp_settings_get_bool(cctx->context.settings, FreeRDP_MouseMotion))
+	{
+		if (!button_pressed(cctx))
+			return TRUE;
+	}
 
 	const BOOL haveRelative =
 	    freerdp_settings_get_bool(cctx->context.settings, FreeRDP_HasRelativeMouseEvent);
@@ -1711,6 +1737,11 @@ BOOL freerdp_client_send_extended_button_event(rdpClientContext* cctx, BOOL rela
 {
 	BOOL handled = FALSE;
 	WINPR_ASSERT(cctx);
+
+	if (mflags & PTR_XFLAGS_BUTTON1)
+		cctx->pressed_buttons[3] = mflags & PTR_XFLAGS_DOWN;
+	if (mflags & PTR_XFLAGS_BUTTON2)
+		cctx->pressed_buttons[4] = mflags & PTR_XFLAGS_DOWN;
 
 	const BOOL haveRelative =
 	    freerdp_settings_get_bool(cctx->context.settings, FreeRDP_HasRelativeMouseEvent);

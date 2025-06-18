@@ -37,7 +37,7 @@ void xf_event_SendClientEvent(xfContext* xfc, xfWindow* window, Atom atom, unsig
 void xf_event_adjust_coordinates(xfContext* xfc, int* x, int* y);
 void xf_adjust_coordinates_to_screen(xfContext* xfc, UINT32* x, UINT32* y);
 
-BOOL xf_generic_MotionNotify(xfContext* xfc, int x, int y, int state, Window window, BOOL app);
+BOOL xf_generic_MotionNotify(xfContext* xfc, int x, int y, Window window, BOOL app);
 BOOL xf_generic_RawMotionNotify(xfContext* xfc, int x, int y, Window window, BOOL app);
 BOOL xf_generic_ButtonEvent(xfContext* xfc, int x, int y, int button, Window window, BOOL app,
                             BOOL down);
