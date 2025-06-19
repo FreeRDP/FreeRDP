@@ -919,9 +919,9 @@ static BOOL socks_proxy_connect(rdpContext* context, BIO* bufferedBio, const cha
 					return FALSE;
 				break;
 
-		default:
-			WLog_ERR(TAG, "%s unknown method 0x%x was selected by proxy", logprefix, buf[1]);
-			return FALSE;
+			default:
+				WLog_ERR(TAG, "%s unknown method 0x%x was selected by proxy", logprefix, buf[1]);
+				return FALSE;
 		}
 	}
 	/* CONN request */
@@ -935,12 +935,12 @@ static BOOL socks_proxy_connect(rdpContext* context, BIO* bufferedBio, const cha
 		if (inet_pton(AF_INET6, hostname, &buf[offset + 1]) == 1)
 		{
 			buf[offset++] = SOCKS_ADDR_IPV6;
-			offset += 4;
+			offset += 16;
 		}
 		else if (inet_pton(AF_INET, hostname, &buf[offset + 1]) == 1)
 		{
 			buf[offset++] = SOCKS_ADDR_IPV4;
-			offset += 16;
+			offset += 4;
 		}
 		else
 		{
