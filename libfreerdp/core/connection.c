@@ -1196,10 +1196,13 @@ BOOL rdp_client_connect_auto_detect(rdpRdp* rdp, wStream* s)
 	if (rdp_read_header(rdp, s, &length, &channelId))
 	{
 		const UINT16 messageChannelId = rdp->mcs->messageChannelId;
+		const UINT16 IOChannelId = rdp->mcs->IOChannelId;
+
 		/* If the MCS message channel has been joined... */
 
 		/* Process any MCS message channel PDUs. */
-		if (rdp->mcs->messageChannelJoined && (channelId == messageChannelId))
+		if (rdp->mcs->messageChannelJoined &&
+		    ((channelId == messageChannelId) || (channelId == IOChannelId)))
 		{
 			const state_run_t rc = rdp_handle_message_channel(rdp, s, channelId, length);
 			return state_run_success(rc);
