@@ -1382,6 +1382,10 @@ static BOOL rdg_establish_data_connection(rdpRdg* rdg, rdpTls* tls, const char* 
 			case HTTP_STATUS_OK:
 				break;
 
+			case HTTP_STATUS_DENIED:
+				http_response_log_error_status(rdg->log, WLOG_DEBUG, response);
+				break;
+
 			default:
 				http_response_log_error_status(rdg->log, WLOG_WARN, response);
 				break;
