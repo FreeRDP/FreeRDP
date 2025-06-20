@@ -1037,7 +1037,7 @@ void license_generate_randoms(rdpLicense* license)
 #ifdef LICENSE_NULL_CLIENT_RANDOM
 	ZeroMemory(license->ClientRandom, sizeof(license->ClientRandom)); /* ClientRandom */
 #else
-	winpr_RAND(license->ClientRandom, sizeof(license->ClientRandom));       /* ClientRandom */
+	winpr_RAND(license->ClientRandom, sizeof(license->ClientRandom)); /* ClientRandom */
 #endif
 
 	winpr_RAND(license->ServerRandom, sizeof(license->ServerRandom)); /* ServerRandom */
@@ -1490,7 +1490,7 @@ BOOL license_read_binary_blob_data(wLog* log, LICENSE_BLOB* blob, UINT16 wBlobTy
 	 */
 	if ((blob->type != BB_ANY_BLOB) && (blob->length == 0))
 	{
-		WLog_Print(log, WLOG_WARN, "license binary blob::type %s, length=0, skipping.",
+		WLog_Print(log, WLOG_DEBUG, "license binary blob::type %s, length=0, skipping.",
 		           licencse_blob_type_string(blob->type));
 		return TRUE;
 	}
@@ -1577,7 +1577,7 @@ static BOOL license_write_encrypted_premaster_secret_blob(wLog* log, wStream* s,
 
 	if (!Stream_EnsureRemainingCapacity(s, length + 4))
 		return FALSE;
-	Stream_Write_UINT16(s, blob->type); /* wBlobType (2 bytes) */
+	Stream_Write_UINT16(s, blob->type);     /* wBlobType (2 bytes) */
 	Stream_Write_UINT16(s, (UINT16)length); /* wBlobLen (2 bytes) */
 
 	if (blob->length > 0)
@@ -2387,7 +2387,7 @@ BOOL license_read_new_license_request_packet(rdpLicense* license, wStream* s)
 	if (!license_check_preferred_alg(license, PreferredKeyExchangeAlg, "new license request"))
 		return FALSE;
 
-	Stream_Read_UINT32(s, license->PlatformId);                  /* PlatformId (4 bytes) */
+	Stream_Read_UINT32(s, license->PlatformId); /* PlatformId (4 bytes) */
 	Stream_Read(s, license->ClientRandom,
 	            sizeof(license->ClientRandom)); /* ClientRandom (32 bytes) */
 

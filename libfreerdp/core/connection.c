@@ -1184,7 +1184,7 @@ state_run_t rdp_handle_message_channel(rdpRdp* rdp, wStream* s, UINT16 channelId
 	return rc;
 }
 
-BOOL rdp_client_connect_auto_detect(rdpRdp* rdp, wStream* s)
+BOOL rdp_client_connect_auto_detect(rdpRdp* rdp, wStream* s, DWORD logLevel)
 {
 	WINPR_ASSERT(rdp);
 	WINPR_ASSERT(rdp->mcs);
@@ -1206,8 +1206,9 @@ BOOL rdp_client_connect_auto_detect(rdpRdp* rdp, wStream* s)
 		}
 		else
 		{
-			WLog_WARN(TAG, "expected messageChannelId=%" PRIu16 ", got %" PRIu16, messageChannelId,
-			          channelId);
+			wLog* log = WLog_Get(TAG);
+			WLog_Print(log, logLevel, "expected messageChannelId=%" PRIu16 ", got %" PRIu16,
+			           messageChannelId, channelId);
 		}
 	}
 
