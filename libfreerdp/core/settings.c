@@ -1668,7 +1668,6 @@ BOOL freerdp_target_net_adresses_reset(rdpSettings* settings, size_t size)
 
 BOOL freerdp_settings_enforce_monitor_exists(rdpSettings* settings)
 {
-	const UINT32 nrIds = freerdp_settings_get_uint32(settings, FreeRDP_NumMonitorIds);
 	const UINT32 count = freerdp_settings_get_uint32(settings, FreeRDP_MonitorCount);
 	const BOOL fullscreen = freerdp_settings_get_bool(settings, FreeRDP_Fullscreen);
 	const BOOL multimon = freerdp_settings_get_bool(settings, FreeRDP_UseMultimon);
@@ -1681,12 +1680,6 @@ BOOL freerdp_settings_enforce_monitor_exists(rdpSettings* settings)
 			return FALSE;
 	}
 
-	if (nrIds == 0)
-	{
-		const UINT32 dsize = freerdp_settings_get_uint32(settings, FreeRDP_MonitorDefArraySize);
-		if (!freerdp_settings_set_pointer_len(settings, FreeRDP_MonitorIds, NULL, dsize))
-			return FALSE;
-	}
 	if (!useMonitors || (count == 0))
 	{
 		const UINT32 width = freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth);
