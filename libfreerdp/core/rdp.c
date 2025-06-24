@@ -240,8 +240,8 @@ BOOL rdp_write_security_header(rdpRdp* rdp, wStream* s, UINT16 flags)
 	WLog_Print(rdp->log, WLOG_TRACE, "%s", rdp_security_flag_string(flags, buffer, sizeof(buffer)));
 	/* Basic Security Header */
 	WINPR_ASSERT((flags & SEC_FLAGSHI_VALID) == 0); /* SEC_FLAGSHI_VALID is unsupported */
-	Stream_Write_UINT16(s, flags); /* flags */
-	Stream_Write_UINT16(s, 0);     /* flagsHi (unused) */
+	Stream_Write_UINT16(s, flags);                  /* flags */
+	Stream_Write_UINT16(s, 0);                      /* flagsHi (unused) */
 	return TRUE;
 }
 
@@ -383,9 +383,9 @@ BOOL rdp_write_share_data_header(rdpRdp* rdp, wStream* s, size_t length, BYTE ty
 	Stream_Write_UINT8(s, STREAM_LOW); /* streamId (1 byte) */
 	Stream_Write_UINT16(
 	    s, WINPR_ASSERTING_INT_CAST(uint16_t, length)); /* uncompressedLength (2 bytes) */
-	Stream_Write_UINT8(s, type);       /* pduType2, Data PDU Type (1 byte) */
-	Stream_Write_UINT8(s, 0);          /* compressedType (1 byte) */
-	Stream_Write_UINT16(s, 0);         /* compressedLength (2 bytes) */
+	Stream_Write_UINT8(s, type);                        /* pduType2, Data PDU Type (1 byte) */
+	Stream_Write_UINT8(s, 0);                           /* compressedType (1 byte) */
+	Stream_Write_UINT16(s, 0);                          /* compressedLength (2 bytes) */
 	return TRUE;
 }
 
@@ -2081,7 +2081,7 @@ static state_run_t rdp_recv_callback_int(WINPR_ATTR_UNUSED rdpTransport* transpo
 			break;
 
 		case CONNECTION_STATE_CONNECT_TIME_AUTO_DETECT_REQUEST:
-			if (!rdp_client_connect_auto_detect(rdp, s))
+			if (!rdp_client_connect_auto_detect(rdp, s, WLOG_DEBUG))
 			{
 				if (!rdp_client_transition_to_state(rdp, CONNECTION_STATE_LICENSING))
 					status = STATE_RUN_FAILED;
@@ -2104,7 +2104,7 @@ static state_run_t rdp_recv_callback_int(WINPR_ATTR_UNUSED rdpTransport* transpo
 			break;
 
 		case CONNECTION_STATE_MULTITRANSPORT_BOOTSTRAPPING_REQUEST:
-			if (!rdp_client_connect_auto_detect(rdp, s))
+			if (!rdp_client_connect_auto_detect(rdp, s, WLOG_DEBUG))
 			{
 				(void)rdp_client_transition_to_state(
 				    rdp, CONNECTION_STATE_CAPABILITIES_EXCHANGE_DEMAND_ACTIVE);
