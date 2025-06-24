@@ -1593,11 +1593,11 @@ static BOOL test_serialize_strings(DWORD flags, const char* str)
 	if (!src)
 		return FALSE;
 
-	for (SSIZE_T x = 0; x < FreeRDP_Settings_StableAPI_MAX; x++)
+	for (int x = 0; x < FreeRDP_Settings_StableAPI_MAX; x++)
 	{
 		union
 		{
-			SSIZE_T s;
+			int s;
 			FreeRDP_Settings_Keys_Pointer ptr;
 		} iter;
 		iter.s = x;

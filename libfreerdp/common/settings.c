@@ -3723,13 +3723,12 @@ char* freerdp_settings_serialize(const rdpSettings* settings, BOOL pretty, size_
 	if (!jpointer)
 		goto fail;
 
-	for (SSIZE_T x = 0; x < FreeRDP_Settings_StableAPI_MAX; x++)
+	for (int x = 0; x < FreeRDP_Settings_StableAPI_MAX; x++)
 	{
 		union
 		{
 
-			int i;
-			SSIZE_T s;
+			int s;
 			FreeRDP_Settings_Keys_Bool b;
 			FreeRDP_Settings_Keys_Int16 i16;
 			FreeRDP_Settings_Keys_UInt16 u16;
@@ -4340,13 +4339,12 @@ rdpSettings* freerdp_settings_deserialize(const char* jstr, size_t length)
 	if (!jpointer)
 		goto fail;
 
-	for (SSIZE_T x = 0; x < FreeRDP_Settings_StableAPI_MAX; x++)
+	for (int x = 0; x < FreeRDP_Settings_StableAPI_MAX; x++)
 	{
 		union
 		{
 
-			int i;
-			SSIZE_T s;
+			int s;
 			FreeRDP_Settings_Keys_Bool b;
 			FreeRDP_Settings_Keys_Int16 i16;
 			FreeRDP_Settings_Keys_UInt16 u16;
@@ -4371,13 +4369,12 @@ rdpSettings* freerdp_settings_deserialize(const char* jstr, size_t length)
 		}
 	}
 
-	for (SSIZE_T x = 0; x < FreeRDP_Settings_StableAPI_MAX; x++)
+	for (int x = 0; x < FreeRDP_Settings_StableAPI_MAX; x++)
 	{
 		union
 		{
 
-			int i;
-			SSIZE_T s;
+			int s;
 			FreeRDP_Settings_Keys_Bool b;
 			FreeRDP_Settings_Keys_Int16 i16;
 			FreeRDP_Settings_Keys_UInt16 u16;
