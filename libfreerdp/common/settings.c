@@ -2432,7 +2432,6 @@ BOOL freerdp_settings_set_monitor_def_array_sorted(rdpSettings* settings,
 		if (!freerdp_settings_set_pointer_len(settings, FreeRDP_MonitorDefArray, NULL, 0))
 			return FALSE;
 		return freerdp_settings_set_uint32(settings, FreeRDP_MonitorCount, 0);
-		return TRUE;
 	}
 
 	// Find primary or alternatively the monitor at 0/0

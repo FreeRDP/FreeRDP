@@ -739,6 +739,8 @@ static int sdl_run(SdlContext* sdl)
 	}
 
 	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS);
+	auto backend = SDL_GetCurrentVideoDriver();
+	WLog_Print(sdl->log, WLOG_DEBUG, "client is using backend '%s'", backend);
 	sdl_dialogs_init();
 
 	SDL_SetHint(SDL_HINT_ALLOW_ALT_TAB_WHILE_GRABBED, "0");
