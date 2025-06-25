@@ -1686,8 +1686,14 @@ int tls_verify_certificate(rdpTls* tls, const rdpCertificate* cert, const char* 
 		}
 	}
 	/* ignore certificate verification if user explicitly required it (discouraged) */
-	else if (tls->context->settings->IgnoreCertificate)
+	else if (freerdp_settings_get_bool(tls->context->settings, FreeRDP_IgnoreCertificate))
+	{
+		WLog_WARN(TAG, "[DANGER] Certificate not checked, /cert:ignore in use.");
+		WLog_WARN(TAG, "[DANGER] This prevents MITM attacks from being detected!");
+		WLog_WARN(TAG,
+		          "[DANGER] Avoid using this unless in a secure LAN (=no internet) environment");
 		verification_status = 1; /* success! */
+	}
 	else if (!tls->isGatewayTransport && (tls->context->settings->AuthenticationLevel == 0))
 		verification_status = 1; /* success! */
 	else
