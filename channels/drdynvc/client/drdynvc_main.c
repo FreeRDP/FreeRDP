@@ -433,12 +433,9 @@ static void check_open_close_receive(DVCMAN_CHANNEL* channel)
 	const UINT32 id = channel->channel_id;
 
 	WINPR_ASSERT(cb);
-	if (cb->OnOpen || cb->OnClose)
-	{
-		if (!cb->OnOpen || !cb->OnClose)
-			WLog_WARN(TAG, "{%s:%" PRIu32 "} OnOpen=%p, OnClose=%p", name, id, cb->OnOpen,
-			          cb->OnClose);
-	}
+	if (!cb->OnOpen || !cb->OnClose || !cb->OnDataReceived)
+		WLog_VRB(TAG, "{%s:%" PRIu32 "} OnOpen=%p, OnClose=%p, OnDataReceived=%p", name, id,
+		         cb->OnOpen, cb->OnClose, cb->OnDataReceived);
 }
 
 static UINT dvcman_call_on_receive(DVCMAN_CHANNEL* channel, wStream* data)
