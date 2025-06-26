@@ -61,10 +61,11 @@ BOOL sdl_scale_coordinates(SdlContext* sdl, Uint32 windowId, INT32* px, INT32* p
 			continue;
 		}
 
-		auto size = window.rect();
+		int logical_w, logical_h;
+		SDL_GetWindowSize(window.window(), &logical_w, &logical_h);
 
-		sx = size.w / static_cast<double>(gdi->width);
-		sy = size.h / static_cast<double>(gdi->height);
+		sx = static_cast<double>(logical_w) / static_cast<double>(gdi->width);
+		sy = static_cast<double>(logical_h) / static_cast<double>(gdi->height);
 		offset_x = window.offsetX();
 		offset_y = window.offsetY();
 		break;
@@ -202,8 +203,18 @@ BOOL sdl_handle_mouse_motion(SdlContext* sdl, const SDL_MouseMotionEvent* ev)
 	sdl->input.mouse_focus(ev->windowID);
 	const BOOL relative =
 	    freerdp_client_use_relative_mouse_events(sdl->common()) && !sdl->hasCursor();
-	auto x = static_cast<INT32>(relative ? ev->xrel : ev->x);
-	auto y = static_cast<INT32>(relative ? ev->yrel : ev->y);
+
+	// Get the window and its display scale
+	SDL_Window* window = SDL_GetWindowFromID(ev->windowID);
+	if (!window)
+		return FALSE;
+
+	float display_scale = SDL_GetWindowDisplayScale(window);
+
+	// Convert physical pixel coordinates to logical coordinates
+	auto x = static_cast<INT32>(relative ? ev->xrel : ev->x / display_scale);
+	auto y = static_cast<INT32>(relative ? ev->yrel : ev->y / display_scale);
+
 	sdl_scale_coordinates(sdl, ev->windowID, &x, &y, TRUE, TRUE);
 	return freerdp_client_send_button_event(sdl->common(), relative, PTR_FLAGS_MOVE, x, y);
 }
@@ -269,8 +280,17 @@ BOOL sdl_handle_mouse_button(SdlContext* sdl, const SDL_MouseButtonEvent* ev)
 
 	const BOOL relative =
 	    freerdp_client_use_relative_mouse_events(sdl->common()) && !sdl->hasCursor();
-	auto x = static_cast<INT32>(relative ? 0 : ev->x);
-	auto y = static_cast<INT32>(relative ? 0 : ev->y);
+
+	// Get the window and its display scale
+	SDL_Window* window = SDL_GetWindowFromID(ev->windowID);
+	if (!window)
+		return FALSE;
+
+	float display_scale = SDL_GetWindowDisplayScale(window);
+
+	// Convert physical pixel coordinates to logical coordinates
+	auto x = static_cast<INT32>(relative ? 0 : ev->x / display_scale);
+	auto y = static_cast<INT32>(relative ? 0 : ev->y / display_scale);
 	sdl_scale_coordinates(sdl, ev->windowID, &x, &y, TRUE, TRUE);
 	if ((flags & (~PTR_FLAGS_DOWN)) != 0)
 		return freerdp_client_send_button_event(sdl->common(), relative, flags, x, y);
