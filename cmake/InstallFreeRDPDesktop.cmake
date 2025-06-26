@@ -6,6 +6,12 @@ set(DESKTOP_RESOURCE_DIR "${CMAKE_CURRENT_LIST_DIR}/../resources" CACHE INTERNAL
 
 function(install_freerdp_desktop name)
   if(WITH_INSTALL_CLIENT_DESKTOP_FILES)
+    if(${ARGC} GREATER 1)
+      set(FREERDP_STARTUP_CLASS ${ARGV1})
+    else()
+      set(FREERDP_STARTUP_CLASS ${name})
+    endif()
+
     get_target_property(FREERDP_APP_NAME ${name} OUTPUT_NAME)
     set(FREERDP_BIN_NAME "${CMAKE_INSTALL_FULL_BINDIR}/${FREERDP_APP_NAME}")
     set(FREERDP_DESKTOP_NAME "${CMAKE_CURRENT_BINARY_DIR}/${FREERDP_BIN_NAME}.desktop")

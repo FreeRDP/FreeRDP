@@ -10,4 +10,4 @@ Type=Application
 Keywords=remote desktop;rdp;
 Categories=GTK;GNOME;X-GNOME-NetworkSettings;Network;
 StartupNotify=true
-StartupWMClass=com.freerdp.FreeRDP
+StartupWMClass=@FREERDP_STARTUP_CLASS@
