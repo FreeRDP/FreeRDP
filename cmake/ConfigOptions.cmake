@@ -153,8 +153,6 @@ if(WITH_VAAPI_H264_ENCODING)
   add_definitions("-DWITH_VAAPI_H264_ENCODING")
 endif()
 
-option(USE_VERSION_FROM_GIT_TAG "Extract FreeRDP version from git tag." ON)
-
 option(WITH_CAIRO "Use CAIRO image library for screen resizing" OFF)
 option(WITH_SWSCALE "Use SWScale image library for screen resizing" ON)
 

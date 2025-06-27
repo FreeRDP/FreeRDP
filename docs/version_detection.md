@@ -14,6 +14,8 @@ all sub-projects as WinPR.
 
 As default both variables are equal.
 
+The whole detection has been encapsulated in cmake/GetProjectVersion.cmake
+
 For nightly or development builds it is often of advantage to have the actual version from git
 instead of having the hard coded value set in CMakeLists.txt. For this the cmake variable `USE_VERSION_FROM_GIT_TAG`
 can be set. In order for this to work you need a) source checkout and b) git command line utility.
