@@ -48,7 +48,8 @@ FREERDP_LOCAL BOOL freerdp_settings_set_string_(rdpSettings* settings,
 FREERDP_LOCAL BOOL freerdp_settings_set_string_copy_(rdpSettings* settings,
                                                      FreeRDP_Settings_Keys_String id,
                                                      const char* val, size_t len, BOOL cleanup);
-FREERDP_LOCAL BOOL freerdp_capability_buffer_resize(rdpSettings* settings, size_t count);
+FREERDP_LOCAL BOOL freerdp_capability_buffer_resize(rdpSettings* settings, size_t count,
+                                                    BOOL force);
 
 FREERDP_LOCAL BOOL identity_set_from_settings_with_pwd(SEC_WINNT_AUTH_IDENTITY_W* identity,
                                                        const rdpSettings* settings,

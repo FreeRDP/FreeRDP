@@ -980,7 +980,7 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	if (!freerdp_settings_set_pointer_len(settings, FreeRDP_RdpServerCertificate, NULL, 1))
 		goto out_fail;
 
-	if (!freerdp_capability_buffer_resize(settings, 32))
+	if (!freerdp_capability_buffer_resize(settings, 32, FALSE))
 		goto out_fail;
 
 	{
