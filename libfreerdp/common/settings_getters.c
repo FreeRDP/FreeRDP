@@ -2373,7 +2373,7 @@ BOOL freerdp_settings_set_uint32(WINPR_ATTR_UNUSED rdpSettings* settings,
 			break;
 
 		case FreeRDP_ReceivedCapabilitiesSize:
-			return freerdp_capability_buffer_resize(settings, cnv.c);
+			return freerdp_capability_buffer_resize(settings, cnv.c, FALSE);
 
 		case FreeRDP_RedirectedSessionId:
 			settings->RedirectedSessionId = cnv.c;
