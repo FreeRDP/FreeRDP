@@ -170,3 +170,12 @@ Activate multimedia redirection using device
 Activate USB device redirection for the device identified by
 \fI054c:0268\fR
 .RE
+.PP
+\fB/kbd:remap:29=58,remap:58=29\fR
+.RS 4
+Swap left Control (\
+\fI29\fR\
+) and Caps Lock (\
+\fI58\fR\
+).
+.RE
