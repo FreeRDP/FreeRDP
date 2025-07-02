@@ -1281,6 +1281,108 @@ static SECURITY_STATUS SEC_ENTRY kerberos_InitializeSecurityContextW(
 	return status;
 }
 
+#ifdef WITH_KRB5
+static BOOL retrieveTgtForPrincipal(KRB_CREDENTIALS* credentials, krb5_principal principal,
+                                    krb5_creds* creds)
+{
+	BOOL ret = FALSE;
+	krb5_kt_cursor cur = { 0 };
+	krb5_keytab_entry entry = { 0 };
+	if (krb_log_exec(krb5_kt_start_seq_get, credentials->ctx, credentials->keytab, &cur))
+		goto cleanup;
+
+	do
+	{
+		krb5_error_code rv =
+		    krb_log_exec(krb5_kt_next_entry, credentials->ctx, credentials->keytab, &entry, &cur);
+		if (rv == KRB5_KT_END)
+			break;
+		if (rv != 0)
+			goto cleanup;
+
+		if (krb5_principal_compare(credentials->ctx, principal, entry.principal))
+			break;
+		rv = krb_log_exec(krb5glue_free_keytab_entry_contents, credentials->ctx, &entry);
+		memset(&entry, 0, sizeof(entry));
+		if (rv)
+			goto cleanup;
+	} while (1);
+
+	if (krb_log_exec(krb5_kt_end_seq_get, credentials->ctx, credentials->keytab, &cur))
+		goto cleanup;
+
+	if (!entry.principal)
+		goto cleanup;
+
+	/* Get the TGT */
+	if (krb_log_exec(krb5_get_init_creds_keytab, credentials->ctx, creds, entry.principal,
+	                 credentials->keytab, 0, NULL, NULL))
+		goto cleanup;
+
+	ret = TRUE;
+
+cleanup:
+	return ret;
+}
+
+static BOOL retrieveSomeTgt(KRB_CREDENTIALS* credentials, const char* target, krb5_creds* creds)
+{
+	BOOL ret = TRUE;
+	krb5_principal target_princ = { 0 };
+	char* default_realm = NULL;
+
+	krb5_error_code rv =
+	    krb_log_exec(krb5_parse_name_flags, credentials->ctx, target, 0, &target_princ);
+	if (rv)
+		return FALSE;
+
+	if (!target_princ->realm.length)
+	{
+		rv = krb_log_exec(krb5_get_default_realm, credentials->ctx, &default_realm);
+		if (rv)
+			goto out;
+
+		target_princ->realm.data = default_realm;
+		target_princ->realm.length = (unsigned int)strlen(default_realm);
+	}
+
+	/*
+	 * First try with the account service. We were requested with something like
+	 * TERMSRV/<host>@<realm>, let's see if we have that in our keytab and if we're able
+	 * to retrieve a TGT with that entry
+	 *
+	 */
+	if (retrieveTgtForPrincipal(credentials, target_princ, creds))
+		goto out;
+
+	ret = FALSE;
+
+	/*
+	 * if it's not working let's try with <host>$@<REALM> (note the dollar)
+	 */
+	char hostDollar[300] = { 0 };
+	if (target_princ->length < 2)
+		goto out;
+
+	(void)snprintf(hostDollar, sizeof(hostDollar) - 1, "%s$@%s", target_princ->data[1].data,
+	               target_princ->realm.data);
+	krb5_free_principal(credentials->ctx, target_princ);
+
+	rv = krb_log_exec(krb5_parse_name_flags, credentials->ctx, hostDollar, 0, &target_princ);
+	if (rv)
+		return FALSE;
+
+	ret = retrieveTgtForPrincipal(credentials, target_princ, creds);
+
+out:
+	if (default_realm)
+		krb5_free_default_realm(credentials->ctx, default_realm);
+
+	krb5_free_principal(credentials->ctx, target_princ);
+	return ret;
+}
+#endif
+
 static SECURITY_STATUS SEC_ENTRY kerberos_AcceptSecurityContext(
     PCredHandle phCredential, PCtxtHandle phContext, PSecBufferDesc pInput,
     WINPR_ATTR_UNUSED ULONG fContextReq, WINPR_ATTR_UNUSED ULONG TargetDataRep,
@@ -1299,11 +1401,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcceptSecurityContext(
 	krb5_flags ap_flags = 0;
 	krb5glue_authenticator authenticator = NULL;
 	char* target = NULL;
-	char* sname = NULL;
-	char* realm = NULL;
-	krb5_kt_cursor cur = { 0 };
 	krb5_keytab_entry entry = { 0 };
-	krb5_principal principal = NULL;
 	krb5_creds creds = { 0 };
 
 	/* behave like windows SSPIs that don't want empty context */
@@ -1352,91 +1450,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcceptSecurityContext(
 		if (!kerberos_rd_tgt_token(&input_token, &target, NULL))
 			goto bad_token;
 
-		/*
-		 *  we're requested with target="TERMSRV/<host>@<REALM>" but we're gonna look
-		 *  at <host>$@<REALM> in the keytab (notice the $), so we build a new "target"
-		 *  string containing
-		 *
-		 *  sname   realm
-		 *  |       |
-		 *  v       v
-		 *  <host>$@<REALM>
-		 *
-		 */
-		if (target)
-		{
-			sname = strchr(target, '/');
-			if (!sname)
-				goto cleanup;
-			sname++;
-
-			/* target goes from TERMSRV/<host>[@<REALM>] to <host>[@<REALM>] */
-			sname = memmove(target, sname, strlen(sname) + 1);
-
-			realm = strchr(target, '@');
-			if (realm)
-			{
-				*realm = '$';
-				realm++;
-
-				size_t len = strlen(realm);
-				memmove(realm + 1, realm, len + 1);
-
-				*realm = '@';
-				realm++;
-			}
-			else
-			{
-				size_t len = strlen(sname);
-				target[len] = '$';
-				target[len + 1] = 0;
-			}
-		}
-
-		if (krb_log_exec(krb5_parse_name_flags, credentials->ctx, sname ? sname : "",
-		                 KRB5_PRINCIPAL_PARSE_NO_REALM, &principal))
-			goto cleanup;
-
-		WINPR_ASSERT(principal);
-
-		if (realm)
-		{
-			if (krb_log_exec(krb5glue_set_principal_realm, credentials->ctx, principal, realm))
-				goto cleanup;
-		}
-
-		if (krb_log_exec(krb5_kt_start_seq_get, credentials->ctx, credentials->keytab, &cur))
-			goto cleanup;
-
-		do
-		{
-			krb5_error_code rv = krb_log_exec(krb5_kt_next_entry, credentials->ctx,
-			                                  credentials->keytab, &entry, &cur);
-			if (rv == KRB5_KT_END)
-				break;
-			if (rv != 0)
-				goto cleanup;
-
-			if ((!sname ||
-			     krb5_principal_compare_any_realm(credentials->ctx, principal, entry.principal)) &&
-			    (!realm || krb5_realm_compare(credentials->ctx, principal, entry.principal)))
-				break;
-			const krb5_error_code res =
-			    krb_log_exec(krb5glue_free_keytab_entry_contents, credentials->ctx, &entry);
-			memset(&entry, 0, sizeof(entry));
-			if (res != 0)
-				goto cleanup;
-		} while (1);
-
-		if (krb_log_exec(krb5_kt_end_seq_get, credentials->ctx, credentials->keytab, &cur))
-			goto cleanup;
-
-		if (!entry.principal)
-			goto cleanup;
-
-		/* Get the TGT */
-		if (krb_log_exec(krb5_get_init_creds_keytab, credentials->ctx, &creds, entry.principal,
-		                 credentials->keytab, 0, NULL, NULL))
+		if (!retrieveSomeTgt(credentials, target, &creds))
 			goto cleanup;
 
 		if (!kerberos_mk_tgt_token(output_buffer, KRB_TGT_REP, NULL, NULL, &creds.ticket))
