@@ -1112,7 +1112,7 @@ static BOOL set_creds_octetstring_to_settings(WinPrAsn1Decoder* dec, WinPrAsn1_t
 	if (optional)
 	{
 		WinPrAsn1_tagId itemTag = 0;
-		if (!WinPrAsn1DecPeekTag(dec, &itemTag) || (itemTag != tagId))
+		if (!WinPrAsn1DecPeekTag(dec, &itemTag) || (itemTag != (ER_TAG_CONTEXTUAL | tagId)))
 			return TRUE;
 	}
 
