@@ -22,14 +22,17 @@
 #include <winpr/winpr.h>
 
 #ifdef _WIN32
+#include <windows.h>
 #include <wincred.h>
 #else
+
+#include <winpr/wtypes.h>
 
 #define CERT_HASH_LENGTH 20
 
 typedef enum
 {
-	CertCredential,
+	CertCredential = 1,
 	UsernameTargetCredential,
 	BinaryBlobCredential,
 	UsernameForPackedCredentials,
@@ -43,7 +46,91 @@ typedef struct
 	UCHAR rgbHashOfCert[CERT_HASH_LENGTH];
 } CERT_CREDENTIAL_INFO, *PCERT_CREDENTIAL_INFO;
 
-#if 0 /* shall we implement these ? */
+typedef struct
+{
+	LPSTR Keyword;
+	DWORD Flags;
+	DWORD ValueSize;
+	LPBYTE Value;
+} CREDENTIAL_ATTRIBUTEA, *PCREDENTIAL_ATTRIBUTEA;
+
+typedef struct
+{
+	LPWSTR Keyword;
+	DWORD Flags;
+	DWORD ValueSize;
+	LPBYTE Value;
+} CREDENTIAL_ATTRIBUTEW, *PCREDENTIAL_ATTRIBUTEW;
+
+typedef struct
+{
+	DWORD Flags;
+	DWORD Type;
+	LPSTR TargetName;
+	LPSTR Comment;
+	FILETIME LastWritten;
+	DWORD CredentialBlobSize;
+	LPBYTE CredentialBlob;
+	DWORD Persist;
+	DWORD AttributeCount;
+	PCREDENTIAL_ATTRIBUTEA Attributes;
+	LPSTR TargetAlias;
+	LPSTR UserName;
+} CREDENTIALA, *PCREDENTIALA;
+
+typedef struct
+{
+	DWORD Flags;
+	DWORD Type;
+	LPWSTR TargetName;
+	LPWSTR Comment;
+	FILETIME LastWritten;
+	DWORD CredentialBlobSize;
+	LPBYTE CredentialBlob;
+	DWORD Persist;
+	DWORD AttributeCount;
+	PCREDENTIAL_ATTRIBUTEA Attributes;
+	LPWSTR TargetAlias;
+	LPWSTR UserName;
+} CREDENTIALW, *PCREDENTIALW;
+
+typedef struct
+{
+	LPSTR TargetName;
+	LPSTR NetbiosServerName;
+	LPSTR DnsServerName;
+	LPSTR NetbiosDomainName;
+	LPSTR DnsDomainName;
+	LPSTR DnsTreeName;
+	LPSTR PackageName;
+	ULONG Flags;
+	DWORD CredTypeCount;
+	LPDWORD CredTypes;
+} CREDENTIAL_TARGET_INFORMATIONA, *PCREDENTIAL_TARGET_INFORMATIONA;
+
+typedef struct
+{
+	LPWSTR TargetName;
+	LPWSTR NetbiosServerName;
+	LPWSTR DnsServerName;
+	LPWSTR NetbiosDomainName;
+	LPWSTR DnsDomainName;
+	LPWSTR DnsTreeName;
+	LPWSTR PackageName;
+	ULONG Flags;
+	DWORD CredTypeCount;
+	LPDWORD CredTypes;
+} CREDENTIAL_TARGET_INFORMATIONW, *PCREDENTIAL_TARGET_INFORMATIONW;
+
+typedef enum
+{
+	CredUnprotected,
+	CredUserProtection,
+	CredTrustedProtection,
+	CredForSystemProtection
+} CRED_PROTECTION_TYPE,
+    *PCRED_PROTECTION_TYPE;
+
 WINPR_API BOOL CredMarshalCredentialA(CRED_MARSHAL_TYPE CredType, PVOID Credential,
                                       LPSTR* MarshaledCredential);
 WINPR_API BOOL CredMarshalCredentialW(CRED_MARSHAL_TYPE CredType, PVOID Credential,
@@ -55,7 +142,21 @@ WINPR_API BOOL CredMarshalCredentialW(CRED_MARSHAL_TYPE CredType, PVOID Credenti
 #define CredMarshalCredential CredMarshalCredentialA
 #endif
 
-#endif /* 0 */
+WINPR_API BOOL CredUnmarshalCredentialW(LPCWSTR cred, PCRED_MARSHAL_TYPE CredType,
+                                        PVOID* Credential);
+
+WINPR_API BOOL CredUnmarshalCredentialA(LPCSTR cred, PCRED_MARSHAL_TYPE CredType,
+                                        PVOID* Credential);
+
+#ifdef UNICODE
+#define CredUnmarshalCredential CredUnmarshalCredentialW
+#else
+#define CredUnmarshalCredential CredUnmarshalCredentialA
+#endif
+
+WINPR_API BOOL CredIsMarshaledCredentialA(LPCSTR MarshaledCredential);
+WINPR_API BOOL CredIsMarshaledCredentialW(LPCWSTR MarshaledCredential);
+WINPR_API VOID CredFree(PVOID Buffer);
 
 #endif /* _WIN32 */
 
