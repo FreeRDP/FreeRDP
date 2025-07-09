@@ -20,6 +20,11 @@ include(CMakeDependentOption)
 
 winpr_include_directory_add(${CMAKE_CURRENT_SOURCE_DIR})
 
+option(WITH_DEBUG_UTILS_CMDLINE_DUMP "build with excessive command line parser logging" OFF)
+if(WITH_DEBUG_UTILS_CMDLINE_DUMP)
+  winpr_definition_add(-DWITH_DEBUG_UTILS_CMDLINE_DUMP)
+endif()
+
 option(WITH_STREAMPOOL_DEBUG "build with extensive streampool logging" OFF)
 if(WITH_STREAMPOOL_DEBUG)
   winpr_definition_add(-DWITH_STREAMPOOL_DEBUG)
