@@ -47,10 +47,54 @@
  *
  */
 
-static void log_error(DWORD flags, LPCSTR message, int index, LPCSTR argv)
+#if !defined(WITH_DEBUG_UTILS_CMDLINE_DUMP)
+static const char censoredmessage[] =
+    "<censored: build with -DWITH_DEBUG_UTILS_CMDLINE_DUMP=ON for details>";
+#endif
+
+#define log_error(flags, msg, index, arg) \
+	log_error_((flags), (msg), (index), (arg), __FILE__, __func__, __LINE__)
+static void log_error_(DWORD flags, LPCSTR message, int index, WINPR_ATTR_UNUSED LPCSTR argv,
+                       const char* file, const char* fkt, size_t line)
 {
 	if ((flags & COMMAND_LINE_SILENCE_PARSER) == 0)
-		WLog_ERR(TAG, message, index, argv);
+	{
+		const DWORD level = WLOG_ERROR;
+		static wLog* log = NULL;
+		if (!WLog_IsLevelActive(log, level))
+			return;
+
+		WLog_PrintMessage(log, WLOG_MESSAGE_TEXT, level, line, file, fkt,
+		                  "Failed at index %d [%s]: %s", index,
+#if defined(WITH_DEBUG_UTILS_CMDLINE_DUMP)
+		                  argv
+#else
+		                  censoredmessage
+#endif
+		                  ,
+		                  message);
+	}
+}
+
+#define log_comma_error(msg, arg) log_comma_error_((msg), (arg), __FILE__, __func__, __LINE__)
+static void log_comma_error_(const char* message, WINPR_ATTR_UNUSED const char* argument,
+                             const char* file, const char* fkt, size_t line)
+{
+	const DWORD level = WLOG_ERROR;
+	static wLog* log = NULL;
+	if (!log)
+		log = WLog_Get(TAG);
+
+	if (!WLog_IsLevelActive(log, level))
+		return;
+
+	WLog_PrintMessage(log, WLOG_MESSAGE_TEXT, level, line, file, fkt, "%s [%s]", message,
+#if defined(WITH_DEBUG_UTILS_CMDLINE_DUMP)
+	                  argument
+#else
+	                  censoredmessage
+#endif
+	);
 }
 
 int CommandLineParseArgumentsA(int argc, LPSTR* argv, COMMAND_LINE_ARGUMENT_A* options, DWORD flags,
@@ -523,7 +567,7 @@ static size_t get_element_count(const char* list, BOOL* failed, BOOL fullquoted)
 			case '\0':
 				if (quoted != 0)
 				{
-					WLog_ERR(TAG, "Invalid argument (missing closing quote) '%s'", list);
+					log_comma_error("Invalid argument (missing closing quote)", list);
 					*failed = TRUE;
 					return 0;
 				}
@@ -550,7 +594,7 @@ static size_t get_element_count(const char* list, BOOL* failed, BOOL fullquoted)
 			case ',':
 				if (first)
 				{
-					WLog_ERR(TAG, "Invalid argument (empty list elements) '%s'", list);
+					log_comma_error("Invalid argument (empty list elements)", list);
 					*failed = TRUE;
 					return 0;
 				}
@@ -592,7 +636,7 @@ static char* get_next_comma(char* string, BOOL fullquoted)
 		{
 			case '\0':
 				if (quoted != 0)
-					WLog_ERR(TAG, "Invalid quoted argument '%s'", log);
+					log_comma_error("Invalid quoted argument", log);
 				return NULL;
 
 			case '\\':
@@ -609,7 +653,7 @@ static char* get_next_comma(char* string, BOOL fullquoted)
 					int now = is_quoted(cur);
 					if ((quoted == 0) && !first)
 					{
-						WLog_ERR(TAG, "Invalid quoted argument '%s'", log);
+						log_comma_error("Invalid quoted argument", log);
 						return NULL;
 					}
 					if (now == quoted)
@@ -622,7 +666,7 @@ static char* get_next_comma(char* string, BOOL fullquoted)
 			case ',':
 				if (first)
 				{
-					WLog_ERR(TAG, "Invalid argument (empty list elements) '%s'", log);
+					log_comma_error("Invalid argument (empty list elements)", log);
 					return NULL;
 				}
 				if (quoted == 0)
@@ -709,7 +753,7 @@ char** CommandLineParseCommaSeparatedValuesEx(const char* name, const char* list
 			{
 				if (start != end)
 				{
-					WLog_ERR(TAG, "invalid argument (quote mismatch) '%s'", list);
+					log_comma_error("Invalid argument (quote mismatch)", list);
 					goto fail;
 				}
 				if (!is_valid_fullquoted(unquoted))
@@ -791,7 +835,7 @@ char** CommandLineParseCommaSeparatedValuesEx(const char* name, const char* list
 			{
 				if (lastQuote != quote)
 				{
-					WLog_ERR(TAG, "invalid argument (quote mismatch) '%s'", list);
+					log_comma_error("Invalid argument (quote mismatch)", list);
 					goto fail;
 				}
 				else if (lastQuote != 0)
