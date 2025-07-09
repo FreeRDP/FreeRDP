@@ -4087,8 +4087,43 @@ static BOOL parse_gateway_usage_option(rdpSettings* settings, const char* value)
 	return freerdp_set_gateway_usage_method(settings, type);
 }
 
+static char* unescape(const char* str)
+{
+	char* copy = strdup(str);
+	if (!copy)
+		return NULL;
+
+	bool escaped = false;
+	char* dst = copy;
+	while (*str != '\0')
+	{
+		char cur = *str++;
+
+		switch (cur)
+		{
+			case '\\':
+				if (!escaped)
+				{
+					escaped = true;
+					continue;
+				}
+				// fallthrough
+				WINPR_FALLTHROUGH
+			default:
+				*dst++ = cur;
+				escaped = false;
+				break;
+		}
+	}
+
+	*dst = '\0';
+
+	return copy;
+}
+
 static BOOL parse_gateway_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_A* arg)
 {
+	char* argval = NULL;
 	BOOL rc = FALSE;
 
 	WINPR_ASSERT(settings);
@@ -4107,9 +4142,10 @@ static BOOL parse_gateway_options(rdpSettings* settings, const COMMAND_LINE_ARGU
 	for (size_t x = 0; x < count; x++)
 	{
 		BOOL validOption = FALSE;
-		const char* argval = ptr[x];
-
-		WINPR_ASSERT(argval);
+		free(argval);
+		argval = unescape(ptr[x]);
+		if (!argval)
+			goto fail;
 
 		const char* gw = option_starts_with("g:", argval);
 		if (gw)
@@ -4216,6 +4252,7 @@ static BOOL parse_gateway_options(rdpSettings* settings, const COMMAND_LINE_ARGU
 
 	rc = TRUE;
 fail:
+	free(argval);
 	CommandLineParserFree(ptr);
 	return rc;
 }
