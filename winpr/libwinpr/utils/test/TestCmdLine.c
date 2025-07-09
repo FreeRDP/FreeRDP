@@ -21,8 +21,19 @@ static const char* testArgv[] = { "mstsc.exe",
 
 static const char testListAppName[] = "test app name";
 static const char* testListArgs[] = {
-	"a,b,c,d", "a:,\"b:xxx, yyy\",c", "a:,,,b",      "a:,\",b",       "\"a,b,c,d d d,fff\"", "",
-	NULL,      "'a,b,\",c'",          "\"a,b,',c\"", "', a, ', b,c'", "\"a,b,\",c\""
+	"g:some.gateway.server,u:some\\\"user,p:some\\\"password,d:some\\\"domain,type:auto",
+	"a,b,c,d",
+	"a:,\"b:xxx, yyy\",c",
+	"a:,,,b",
+	"a:,\",b",
+	"\"a,b,c,d d d,fff\"",
+	"",
+	NULL,
+	"'a,b,\",c'",
+	"\"a,b,',c\"",
+	"', a, ', b,c'",
+	"\"a,b,\",c\"",
+
 };
 
 static const char* testListArgs1[] = { testListAppName, "a", "b", "c", "d" };
@@ -36,30 +47,32 @@ static const char* testListArgs8[] = { testListAppName, "a", "b", "\"", "c" };
 static const char* testListArgs9[] = { testListAppName, "a", "b", "'", "c" };
 // static const char* testListArgs10[] = {};
 // static const char* testListArgs11[] = {};
+static const char* testListArgs12[] = { testListAppName,    "g:some.gateway.server",
+	                                    "u:some\\\"user",   "p:some\\\"password",
+	                                    "d:some\\\"domain", "type:auto" };
 
-static const char** testListArgsResult[] = { testListArgs1,
-	                                         testListArgs2,
-	                                         NULL /* testListArgs3 */,
-	                                         NULL /* testListArgs4 */,
-	                                         testListArgs5,
-	                                         testListArgs6,
-	                                         testListArgs7,
-	                                         testListArgs8,
-	                                         testListArgs9,
-	                                         NULL /* testListArgs10 */,
-	                                         NULL /* testListArgs11 */ };
+static const char** testListArgsResult[] = {
+	testListArgs12,
+	testListArgs1,
+	testListArgs2,
+	NULL /* testListArgs3 */,
+	NULL /* testListArgs4 */,
+	testListArgs5,
+	testListArgs6,
+	testListArgs7,
+	testListArgs8,
+	testListArgs9,
+	NULL /* testListArgs10 */,
+	NULL /* testListArgs11 */
+};
 static const size_t testListArgsCount[] = {
-	ARRAYSIZE(testListArgs1),
-	ARRAYSIZE(testListArgs2),
-	0 /* ARRAYSIZE(testListArgs3) */,
-	0 /* ARRAYSIZE(testListArgs4) */,
-	ARRAYSIZE(testListArgs5),
-	ARRAYSIZE(testListArgs6),
-	ARRAYSIZE(testListArgs7),
-	ARRAYSIZE(testListArgs8),
-	ARRAYSIZE(testListArgs9),
-	0 /* ARRAYSIZE(testListArgs10) */,
-	0 /* ARRAYSIZE(testListArgs11) */
+	ARRAYSIZE(testListArgs12),         ARRAYSIZE(testListArgs1),
+	ARRAYSIZE(testListArgs2),          0 /* ARRAYSIZE(testListArgs3) */,
+	0 /* ARRAYSIZE(testListArgs4) */,  ARRAYSIZE(testListArgs5),
+	ARRAYSIZE(testListArgs6),          ARRAYSIZE(testListArgs7),
+	ARRAYSIZE(testListArgs8),          ARRAYSIZE(testListArgs9),
+	0 /* ARRAYSIZE(testListArgs10) */, 0 /* ARRAYSIZE(testListArgs11) */
+
 };
 
 static BOOL checkResult(size_t index, char** actual, size_t actualCount)

@@ -495,6 +495,7 @@ static size_t get_element_count(const char* list, BOOL* failed, BOOL fullquoted)
 {
 	size_t count = 0;
 	int quoted = 0;
+	bool escaped = false;
 	BOOL finished = FALSE;
 	BOOL first = TRUE;
 	const char* it = list;
@@ -507,7 +508,17 @@ static size_t get_element_count(const char* list, BOOL* failed, BOOL fullquoted)
 	while (!finished)
 	{
 		BOOL nextFirst = FALSE;
-		switch (*it)
+
+		const char cur = *it++;
+
+		/* Ignore the symbol that was escaped. */
+		if (escaped)
+		{
+			escaped = false;
+			continue;
+		}
+
+		switch (cur)
 		{
 			case '\0':
 				if (quoted != 0)
@@ -518,11 +529,18 @@ static size_t get_element_count(const char* list, BOOL* failed, BOOL fullquoted)
 				}
 				finished = TRUE;
 				break;
+			case '\\':
+				if (!escaped)
+				{
+					escaped = true;
+					continue;
+				}
+				break;
 			case '\'':
 			case '"':
 				if (!fullquoted)
 				{
-					int now = is_quoted(*it);
+					int now = is_quoted(cur) && !escaped;
 					if (now == quoted)
 						quoted = 0;
 					else if (quoted == 0)
@@ -547,7 +565,6 @@ static size_t get_element_count(const char* list, BOOL* failed, BOOL fullquoted)
 		}
 
 		first = nextFirst;
-		it++;
 	}
 	return count + 1;
 }
@@ -556,24 +573,40 @@ static char* get_next_comma(char* string, BOOL fullquoted)
 {
 	const char* log = string;
 	int quoted = 0;
-	BOOL first = TRUE;
+	bool first = true;
+	bool escaped = false;
 
 	WINPR_ASSERT(string);
 
 	while (TRUE)
 	{
-		switch (*string)
+		char* last = string;
+		const char cur = *string++;
+		if (escaped)
+		{
+			escaped = false;
+			continue;
+		}
+
+		switch (cur)
 		{
 			case '\0':
 				if (quoted != 0)
 					WLog_ERR(TAG, "Invalid quoted argument '%s'", log);
 				return NULL;
 
+			case '\\':
+				if (!escaped)
+				{
+					escaped = true;
+					continue;
+				}
+				break;
 			case '\'':
 			case '"':
 				if (!fullquoted)
 				{
-					int now = is_quoted(*string);
+					int now = is_quoted(cur);
 					if ((quoted == 0) && !first)
 					{
 						WLog_ERR(TAG, "Invalid quoted argument '%s'", log);
@@ -593,14 +626,13 @@ static char* get_next_comma(char* string, BOOL fullquoted)
 					return NULL;
 				}
 				if (quoted == 0)
-					return string;
+					return last;
 				break;
 
 			default:
 				break;
 		}
 		first = FALSE;
-		string++;
 	}
 
 	return NULL;
