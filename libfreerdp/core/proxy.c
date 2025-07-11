@@ -696,12 +696,6 @@ static BOOL http_proxy_connect(rdpContext* context, BIO* bufferedBio, const char
 			}
 			Sleep(10);
 		}
-		else
-		{
-			/* Error? */
-			WLog_ERR(TAG, "Failed reading reply from HTTP proxy (BIO_read returned zero)");
-			goto fail;
-		}
 
 		resultsize += WINPR_ASSERTING_INT_CAST(size_t, status);
 	}

@@ -1354,29 +1354,17 @@ static int freerdp_tcp_layer_read(void* userContext, void* data, int bytes)
 
 	rdpTcpLayer* tcpLayer = (rdpTcpLayer*)userContext;
 
-	int error = 0;
-	int status = 0;
-
 	(void)WSAResetEvent(tcpLayer->hEvent);
-	status = _recv((SOCKET)tcpLayer->sockfd, data, bytes, 0);
+	const int status = _recv((SOCKET)tcpLayer->sockfd, data, bytes, 0);
 
 	if (status > 0)
 		return status;
 
-	if (status == 0)
-		return -1; /* socket closed */
-
-	error = WSAGetLastError();
+	const int error = WSAGetLastError();
 
 	if ((error == WSAEWOULDBLOCK) || (error == WSAEINTR) || (error == WSAEINPROGRESS) ||
 	    (error == WSAEALREADY))
-	{
-		status = 0;
-	}
-	else
-	{
-		status = -1;
-	}
+		errno = EAGAIN;
 
 	return status;
 }
@@ -1390,25 +1378,15 @@ static int freerdp_tcp_layer_write(void* userContext, const void* data, int byte
 
 	rdpTcpLayer* tcpLayer = (rdpTcpLayer*)userContext;
 
-	int error = 0;
-	int status = 0;
+	const int status = _send((SOCKET)tcpLayer->sockfd, data, bytes, 0);
+	if (status > 0)
+		return status;
 
-	status = _send((SOCKET)tcpLayer->sockfd, data, bytes, 0);
+	const int error = WSAGetLastError();
 
-	if (status <= 0)
-	{
-		error = WSAGetLastError();
-
-		if ((error == WSAEWOULDBLOCK) || (error == WSAEINTR) || (error == WSAEINPROGRESS) ||
-		    (error == WSAEALREADY))
-		{
-			status = 0;
-		}
-		else
-		{
-			status = -1;
-		}
-	}
+	if ((error == WSAEWOULDBLOCK) || (error == WSAEINTR) || (error == WSAEINPROGRESS) ||
+	    (error == WSAEALREADY))
+		errno = EAGAIN;
 
 	return status;
 }

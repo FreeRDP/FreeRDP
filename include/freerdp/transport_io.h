@@ -38,7 +38,10 @@ extern "C"
 	 * @param userContext user defined context passed by @ref freerdp_set_io_callback_context
 	 * @param data a buffer to read to
 	 * @param bytes the size of the buffer
-	 * @return the number of bytes read or <0 for failures
+	 * @return the number of bytes read. Negative numbers indicate an error
+	 * occurred. \b errno is set accordingly (see man 2 read)
+	 * @bug Before 3.18.0 the function did return \b -1 for transport closed and \b 0 for retry
+	 * events.
 	 * @since version 3.9.0
 	 */
 	typedef int (*pTransportLayerRead)(void* userContext, void* data, int bytes);
@@ -48,7 +51,10 @@ extern "C"
 	 * @param userContext user defined context passed by @ref freerdp_set_io_callback_context
 	 * @param data a buffer to write
 	 * @param bytes the size of the buffer
-	 * @return the number of bytes written or <0 for failures
+	 * @return the number of bytes written. Negative numbers indicate an error
+	 * occurred. \b errno is set accordingly (see man 2 send)
+	 * @bug Before 3.18.0 the function did return \b -1 for transport closed and \b 0 for retry
+	 * events.
 	 * @since version 3.9.0
 	 */
 	typedef int (*pTransportLayerWrite)(void* userContext, const void* data, int bytes);
@@ -109,14 +115,14 @@ extern "C"
 		pTransportFkt TLSAccept;
 		pTransportAttach TransportAttach;
 		pTransportFkt TransportDisconnect;
-		pTransportRWFkt ReadPdu;  /* Reads a whole PDU from the transport */
-		pTransportRWFkt WritePdu; /* Writes a whole PDU to the transport */
-		pTransportRead ReadBytes; /* Reads up to a requested amount of bytes */
+		pTransportRWFkt ReadPdu;                   /* Reads a whole PDU from the transport */
+		pTransportRWFkt WritePdu;                  /* Writes a whole PDU to the transport */
+		pTransportRead ReadBytes;                  /* Reads up to a requested amount of bytes */
 		pTransportGetPublicKey GetPublicKey;       /** @since version 3.2.0 */
 		pTransportSetBlockingMode SetBlockingMode; /** @since version 3.3.0 */
 		pTransportConnectLayer ConnectLayer;       /** @since 3.9.0 */
 		pTransportAttachLayer AttachLayer;         /** @since 3.9.0 */
-		UINT64 reserved[64 - 12]; /* Reserve some space for ABI compatibility */
+		UINT64 reserved[64 - 12];                  /* Reserve some space for ABI compatibility */
 	};
 	typedef struct rdp_transport_io rdpTransportIo;
 

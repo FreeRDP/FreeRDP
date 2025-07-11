@@ -1961,10 +1961,20 @@ static int transport_layer_bio_write(BIO* bio, const char* buf, int size)
 
 	BIO_clear_flags(bio, BIO_FLAGS_WRITE | BIO_FLAGS_SHOULD_RETRY);
 
-	int status = IFCALLRESULT(-1, layer->Write, layer->userContext, buf, size);
+	errno = 0;
+	const int status = IFCALLRESULT(-1, layer->Write, layer->userContext, buf, size);
 
 	if (status >= 0 && status < size)
 		BIO_set_flags(bio, (BIO_FLAGS_WRITE | BIO_FLAGS_SHOULD_RETRY));
+
+	switch (errno)
+	{
+		case EAGAIN:
+			BIO_set_flags(bio, (BIO_FLAGS_WRITE | BIO_FLAGS_SHOULD_RETRY));
+			break;
+		default:
+			break;
+	}
 
 	return status;
 }
@@ -1983,11 +1993,17 @@ static int transport_layer_bio_read(BIO* bio, char* buf, int size)
 		return -1;
 
 	BIO_clear_flags(bio, BIO_FLAGS_READ | BIO_FLAGS_SHOULD_RETRY);
+	errno = 0;
+	const int status = IFCALLRESULT(-1, layer->Read, layer->userContext, buf, size);
 
-	int status = IFCALLRESULT(-1, layer->Read, layer->userContext, buf, size);
-
-	if (status == 0)
-		BIO_set_flags(bio, (BIO_FLAGS_READ | BIO_FLAGS_SHOULD_RETRY));
+	switch (errno)
+	{
+		case EAGAIN:
+			BIO_set_flags(bio, (BIO_FLAGS_READ | BIO_FLAGS_SHOULD_RETRY));
+			break;
+		default:
+			break;
+	}
 
 	return status;
 }
