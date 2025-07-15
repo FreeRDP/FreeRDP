@@ -165,6 +165,7 @@ set(WINPR_CORE
     library
     file
     comm
+    credentials
     pipe
     interlocked
     security
