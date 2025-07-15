@@ -149,7 +149,7 @@ static BOOL sso_mib_get_access_token(rdpContext* context, AccessTokenType tokenT
 	}
 
 	if (!client_context->mibClientWrapper->app)
-		return ERROR_INTERNAL_ERROR;
+		return FALSE;
 
 	const char* scope = NULL;
 	const char* req_cnf = NULL;
