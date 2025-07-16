@@ -42,4 +42,11 @@ addtargetwithresourcefile(${PROJECT_NAME} FALSE "${PROJECT_VERSION}" SRCS FALSE)
 
 target_link_libraries(${PROJECT_NAME} winpr freerdp)
 
+# Fix RPATH for proxy plugins in subdirectory
+if(NOT WIN32 AND NOT APPLE AND NOT FREEBSD)
+  set_target_properties(${PROJECT_NAME} PROPERTIES
+    INSTALL_RPATH "\$ORIGIN/../../${CMAKE_INSTALL_LIBDIR}:\$ORIGIN/../.."
+  )
+endif()
+
 install(TARGETS ${PROJECT_NAME} DESTINATION ${FREERDP_PROXY_PLUGINDIR})
