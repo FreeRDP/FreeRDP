@@ -150,7 +150,7 @@ macro(channel_install _targets _destination _export_target)
     foreach(_target_name IN ITEMS ${_targets})
       target_include_directories(${_target_name} INTERFACE $<INSTALL_INTERFACE:include>)
     endforeach()
-    install(TARGETS ${_targets} DESTINATION ${_destination} EXPORT ${_export_target})
+    installwithrpath(TARGETS ${_targets} DESTINATION ${_destination} EXPORT ${_export_target})
   endif()
 endmacro(channel_install)
 

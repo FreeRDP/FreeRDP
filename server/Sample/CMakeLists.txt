@@ -58,6 +58,6 @@ list(APPEND LIBS freerdp-server)
 list(APPEND LIBS winpr freerdp)
 
 target_link_libraries(${MODULE_NAME} ${LIBS})
-install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT server)
+installwithrpath(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT server)
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Server/Sample")
