@@ -26,5 +26,5 @@ list(APPEND LIBS freerdp-shadow-subsystem freerdp-shadow freerdp winpr)
 
 target_link_libraries(${MODULE_NAME} PRIVATE ${LIBS})
 
-install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT server)
+installwithrpath(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT server)
 generate_and_install_freerdp_man_from_template(${MODULE_NAME} "1" "${FREERDP_API_VERSION}")

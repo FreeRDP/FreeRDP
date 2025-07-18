@@ -84,7 +84,7 @@ string(TIMESTAMP SDL_CLIENT_YEAR "%Y")
 set(SDL_CLIENT_UUID "com.freerdp.client.sdl3")
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/sdl_config.hpp.in ${CMAKE_CURRENT_BINARY_DIR}/sdl_config.hpp @ONLY)
 
-install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT client)
+installwithrpath(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT client)
 install_freerdp_desktop("${MODULE_NAME}" "${SDL_CLIENT_UUID}")
 
 add_subdirectory(man)
