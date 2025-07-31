@@ -27,6 +27,7 @@
 #include <unistd.h>
 
 #include <winpr/string.h>
+#include <winpr/synch.h>
 #include "timezone.h"
 
 typedef struct
@@ -229,20 +230,21 @@ static void TimeZoneIanaAbbrevCleanup(void)
 	TimeZoneIanaAbbrevMapSize = 0;
 }
 
-static void TimeZoneIanaAbbrevInitialize(void)
+static BOOL CALLBACK TimeZoneIanaAbbrevInitialize(WINPR_ATTR_UNUSED PINIT_ONCE once,
+                                                  WINPR_ATTR_UNUSED PVOID param,
+                                                  WINPR_ATTR_UNUSED PVOID* context)
 {
-	static BOOL initialized = FALSE;
-	if (initialized)
-		return;
-
 	iterate_subdir_recursive(zonepath, NULL, NULL);
 	(void)atexit(TimeZoneIanaAbbrevCleanup);
-	initialized = TRUE;
+
+	return TRUE;
 }
 
 size_t TimeZoneIanaAbbrevGet(const char* abbrev, const char** list, size_t listsize)
 {
-	TimeZoneIanaAbbrevInitialize();
+	static INIT_ONCE init_guard = INIT_ONCE_STATIC_INIT;
+
+	InitOnceExecuteOnce(&init_guard, TimeZoneIanaAbbrevInitialize, NULL, NULL);
 
 	size_t rc = 0;
 	for (size_t x = 0; x < TimeZoneIanaAbbrevMapSize; x++)
