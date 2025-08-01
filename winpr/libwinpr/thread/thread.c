@@ -29,6 +29,13 @@
 
 #include <winpr/thread.h>
 
+#if defined(__MACOSX__) || defined(__FreeBSD__)
+#include <pthread_np.h>
+#elif defined(__linux__)
+#include <sys/syscall.h>
+
+#endif
+
 #ifndef MIN
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
 #endif
@@ -911,11 +918,20 @@ HANDLE _GetCurrentThread(VOID)
 
 DWORD GetCurrentThreadId(VOID)
 {
+#if defined(__FreeBSD__) || defined(__MACOSX__)
+	int tid = pthread_getthreadid_np();
+	return tid;
+#elif defined(__linux__)
+	pid_t tid = syscall(SYS_gettid);
+	return tid;
+#else
+#warning Using possibly broken GetCurrentThreadId
 	pthread_t tid = pthread_self();
 	/* Since pthread_t can be 64-bits on some systems, take just the    */
 	/* lower 32-bits of it for the thread ID returned by this function. */
 	uintptr_t ptid = WINPR_REINTERPRET_CAST(tid, pthread_t, uintptr_t);
-	return ptid & UINT32_MAX;
+	return (ptid & UINT32_MAX) ^ (ptid >> 32);
+#endif
 }
 
 typedef struct
