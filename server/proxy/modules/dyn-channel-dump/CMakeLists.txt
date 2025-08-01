@@ -41,4 +41,4 @@ addtargetwithresourcefile(${PROJECT_NAME} FALSE "${PROJECT_VERSION}" SRCS FALSE)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE winpr freerdp freerdp-client freerdp-server freerdp-server-proxy)
 
-install(TARGETS ${PROJECT_NAME} DESTINATION ${FREERDP_PROXY_PLUGINDIR})
+installwithrpath(TARGETS ${PROJECT_NAME} DESTINATION ${FREERDP_PROXY_PLUGINDIR})
