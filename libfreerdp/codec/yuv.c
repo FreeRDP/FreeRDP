@@ -167,7 +167,8 @@ BOOL yuv_context_reset(YUV_CONTEXT* WINPR_RESTRICT context, UINT32 width, UINT32
 
 	context->width = width;
 	context->height = height;
-	context->heightStep = (height / context->nthreads);
+
+	context->heightStep = height > context->nthreads ? (height / context->nthreads) : 1;
 
 	if (context->useThreads)
 	{
