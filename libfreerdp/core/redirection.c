@@ -339,7 +339,7 @@ static BOOL rdp_target_cert_write_element(wStream* s, UINT32 Type, UINT32 Encodi
 	Stream_Write_UINT32(s, Encoding);
 	Stream_Write_UINT32(s, (UINT32)length);
 
-	if (!Stream_CheckAndLogRequiredCapacity(TAG, s, length))
+	if (!Stream_EnsureRemainingCapacity(s, length))
 		return FALSE;
 
 	Stream_Write(s, data, length);
