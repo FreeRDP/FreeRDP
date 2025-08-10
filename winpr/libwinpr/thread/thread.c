@@ -918,10 +918,10 @@ HANDLE _GetCurrentThread(VOID)
 DWORD GetCurrentThreadId(VOID)
 {
 #if defined(__FreeBSD__)
-	int tid = pthread_getthreadid_np();
+	int tid = WINPR_CXX_COMPAT_CAST(DWORD, pthread_getthreadid_np());
 	return tid;
 #elif defined(__linux__)
-	pid_t tid = syscall(SYS_gettid);
+	pid_t tid = WINPR_CXX_COMPAT_CAST(DWORD, syscall(SYS_gettid));
 	return tid;
 #else
 	pthread_t tid = pthread_self();
