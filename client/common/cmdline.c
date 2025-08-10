@@ -1026,6 +1026,9 @@ static BOOL parseSubOptions(rdpSettings* settings, const CmdLineSubOptions* opts
 static int fail_at_(const COMMAND_LINE_ARGUMENT_A* arg, int rc, const char* file, const char* fkt,
                     size_t line)
 {
+	if (rc == 0)
+		return rc;
+
 	const DWORD level = WLOG_ERROR;
 	wLog* log = WLog_Get(TAG);
 	if (WLog_IsLevelActive(log, level))
