@@ -33,6 +33,7 @@ WINPR_PRAGMA_DIAG_PUSH
 WINPR_PRAGMA_DIAG_IGNORED_RESERVED_ID_MACRO
 
 #ifndef _WINSCARD_H_
+// NOLINTNEXTLINE(bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
 #define _WINSCARD_H_ /* do not include winscard.h */
 #endif
 

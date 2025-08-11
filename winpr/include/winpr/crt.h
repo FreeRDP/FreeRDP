@@ -33,6 +33,7 @@
 
 WINPR_PRAGMA_DIAG_PUSH
 WINPR_PRAGMA_DIAG_IGNORED_RESERVED_IDENTIFIER
+// NOLINTBEGIN(bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
 
 #ifndef _WIN32
 
@@ -235,6 +236,7 @@ extern "C"
 #define winpr_aligned_calloc(count, size, alignment) _aligned_recalloc(NULL, count, size, alignment)
 #endif /* defined(_WIN32) && (!defined(__MINGW32__) || defined(_UCRT)) */
 
+// NOLINTEND(bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
 WINPR_PRAGMA_DIAG_POP
 
 #endif /* WINPR_CRT_H */

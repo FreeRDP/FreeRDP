@@ -62,6 +62,8 @@ extern "C"
 
 	FREERDP_API void er_read_length(wStream* s, int* length);
 	FREERDP_API int er_write_length(wStream* s, int length, BOOL flag);
+
+	// NOLINTNEXTLINE(bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
 	FREERDP_API int _er_skip_length(int length);
 	FREERDP_API int er_get_content_length(int length);
 	FREERDP_API BOOL er_read_universal_tag(wStream* s, BYTE tag, BOOL pc);

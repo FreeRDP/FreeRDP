@@ -485,6 +485,7 @@ typedef struct
 	LARGE_INTEGER DisconnectTime;
 	LARGE_INTEGER LastInputTime;
 	LARGE_INTEGER LogonTime;
+	// NOLINTNEXTLINE(bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
 	LARGE_INTEGER _CurrentTime; /* Conflicts with X11 headers */
 } WTSINFOW, *PWTSINFOW;
 
@@ -505,6 +506,7 @@ typedef struct
 	LARGE_INTEGER DisconnectTime;
 	LARGE_INTEGER LastInputTime;
 	LARGE_INTEGER LogonTime;
+	// NOLINTNEXTLINE(bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
 	LARGE_INTEGER _CurrentTime; /* Conflicts with X11 headers */
 } WTSINFOA, *PWTSINFOA;
 
@@ -524,6 +526,7 @@ typedef struct
 	LARGE_INTEGER ConnectTime;
 	LARGE_INTEGER DisconnectTime;
 	LARGE_INTEGER LastInputTime;
+	// NOLINTNEXTLINE(bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
 	LARGE_INTEGER _CurrentTime; /* Conflicts with X11 headers */
 	DWORD IncomingBytes;
 	DWORD OutgoingBytes;
@@ -545,6 +548,7 @@ typedef struct
 	LARGE_INTEGER ConnectTime;
 	LARGE_INTEGER DisconnectTime;
 	LARGE_INTEGER LastInputTime;
+	// NOLINTNEXTLINE(bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
 	LARGE_INTEGER _CurrentTime; /* Conflicts with X11 headers */
 	DWORD IncomingBytes;
 	DWORD OutgoingBytes;

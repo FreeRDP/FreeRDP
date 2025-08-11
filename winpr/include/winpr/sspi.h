@@ -61,6 +61,7 @@ WINPR_PRAGMA_DIAG_IGNORED_RESERVED_ID_MACRO
 
 #ifndef __SECSTATUS_DEFINED__
 typedef LONG SECURITY_STATUS;
+// NOLINTNEXTLINE(bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
 #define __SECSTATUS_DEFINED__
 #endif /* __SECSTATUS_DEFINED__ */
 
@@ -671,6 +672,7 @@ WINPR_PRAGMA_DIAG_PUSH
 WINPR_PRAGMA_DIAG_IGNORED_RESERVED_ID_MACRO
 
 #ifndef _AUTH_IDENTITY_DEFINED
+// NOLINTNEXTLINE(bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
 #define _AUTH_IDENTITY_DEFINED
 
 typedef struct
@@ -772,6 +774,7 @@ typedef struct
 #endif /* SEC_WINNT_AUTH_IDENTITY_VERSION_2 */
 
 #ifndef _AUTH_IDENTITY_INFO_DEFINED
+// NOLINTNEXTLINE(bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
 #define _AUTH_IDENTITY_INFO_DEFINED
 
 // https://docs.microsoft.com/en-us/windows/win32/api/sspi/ns-sspi-sec_winnt_auth_identity_info

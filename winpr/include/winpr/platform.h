@@ -227,6 +227,7 @@ WINPR_PRAGMA_DIAG_IGNORED_RESERVED_ID_MACRO
 #if defined(__amd64) || defined(__amd64__) || defined(__x86_64) || defined(__x86_64__) || \
     defined(_M_X64)
 #ifndef _M_AMD64
+// NOLINTNEXTLINE(bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
 #define _M_AMD64 1
 #endif
 #endif
@@ -234,6 +235,7 @@ WINPR_PRAGMA_DIAG_IGNORED_RESERVED_ID_MACRO
 /* Intel ia64 */
 #if defined(__ia64) || defined(__ia64__) || defined(_M_IA64)
 #ifndef _M_IA64
+// NOLINTNEXTLINE(bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
 #define _M_IA64 1
 #endif
 #endif
@@ -242,6 +244,7 @@ WINPR_PRAGMA_DIAG_IGNORED_RESERVED_ID_MACRO
 
 #if defined(_M_IX86) || defined(_M_AMD64)
 #ifndef _M_IX86_AMD64
+// NOLINTNEXTLINE(bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
 #define _M_IX86_AMD64 1
 #endif
 #endif
@@ -251,6 +254,7 @@ WINPR_PRAGMA_DIAG_IGNORED_RESERVED_ID_MACRO
 #if defined(__arm__) || defined(__thumb__) || defined(__TARGET_ARCH_ARM) || \
     defined(__TARGET_ARCH_THUMB)
 #ifndef _M_ARM
+// NOLINTNEXTLINE(bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
 #define _M_ARM 1
 #endif
 #endif
@@ -267,6 +271,7 @@ WINPR_PRAGMA_DIAG_IGNORED_RESERVED_ID_MACRO
 
 #if defined(mips) || defined(__mips) || defined(__mips__) || defined(__MIPS__)
 #ifndef _M_MIPS
+// NOLINTNEXTLINE(bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
 #define _M_MIPS 1
 #endif
 #endif
@@ -275,6 +280,7 @@ WINPR_PRAGMA_DIAG_IGNORED_RESERVED_ID_MACRO
 
 #if defined(mips64) || defined(__mips64) || defined(__mips64__) || defined(__MIPS64__)
 #ifndef _M_MIPS64
+// NOLINTNEXTLINE(bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
 #define _M_MIPS64 1
 #endif
 #endif
@@ -284,6 +290,7 @@ WINPR_PRAGMA_DIAG_IGNORED_RESERVED_ID_MACRO
 #if defined(__ppc__) || defined(__powerpc) || defined(__powerpc__) || defined(__POWERPC__) || \
     defined(_ARCH_PPC)
 #ifndef _M_PPC
+// NOLINTNEXTLINE(bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
 #define _M_PPC 1
 #endif
 #endif
@@ -292,6 +299,7 @@ WINPR_PRAGMA_DIAG_IGNORED_RESERVED_ID_MACRO
 
 #if defined(__ia64) || defined(__ia64__) || defined(_IA64) || defined(__IA64__)
 #ifndef _M_IA64
+// NOLINTNEXTLINE(bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
 #define _M_IA64 1
 #endif
 #endif
@@ -300,6 +308,7 @@ WINPR_PRAGMA_DIAG_IGNORED_RESERVED_ID_MACRO
 
 #if defined(__alpha) || defined(__alpha__)
 #ifndef _M_ALPHA
+// NOLINTNEXTLINE(bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
 #define _M_ALPHA 1
 #endif
 #endif
@@ -308,6 +317,7 @@ WINPR_PRAGMA_DIAG_IGNORED_RESERVED_ID_MACRO
 
 #if defined(__sparc) || defined(__sparc__)
 #ifndef _M_SPARC
+// NOLINTNEXTLINE(bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
 #define _M_SPARC 1
 #endif
 #endif
@@ -316,6 +326,7 @@ WINPR_PRAGMA_DIAG_IGNORED_RESERVED_ID_MACRO
 
 #if defined(__e2k__)
 #ifndef _M_E2K
+// NOLINTNEXTLINE(bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
 #define _M_E2K 1
 #endif
 #endif
@@ -332,6 +343,7 @@ WINPR_PRAGMA_DIAG_IGNORED_RESERVED_ID_MACRO
 #if defined(WINAPI_FAMILY)
 #if (WINAPI_FAMILY == WINAPI_FAMILY_APP)
 #ifndef _WINRT
+// NOLINTNEXTLINE(bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
 #define _WINRT 1
 #endif
 #endif
@@ -339,6 +351,7 @@ WINPR_PRAGMA_DIAG_IGNORED_RESERVED_ID_MACRO
 
 #if defined(__cplusplus_winrt)
 #ifndef _WINRT
+// NOLINTNEXTLINE(bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
 #define _WINRT 1
 #endif
 #endif
@@ -364,6 +377,7 @@ WINPR_PRAGMA_DIAG_IGNORED_RESERVED_ID_MACRO
 /* iOS (__IOS__) */
 
 #ifndef __IOS__
+// NOLINTNEXTLINE(bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
 #define __IOS__ 1
 #endif
 
@@ -372,6 +386,7 @@ WINPR_PRAGMA_DIAG_IGNORED_RESERVED_ID_MACRO
 /* Mac OS X (__MACOSX__) */
 
 #ifndef __MACOSX__
+// NOLINTNEXTLINE(bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
 #define __MACOSX__ 1
 #endif
 
@@ -394,6 +409,7 @@ WINPR_PRAGMA_DIAG_IGNORED_RESERVED_ID_MACRO
 
 #if defined(sun)
 #ifndef __sun
+// NOLINTNEXTLINE(bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
 #define __sun 1
 #endif
 #endif
@@ -402,6 +418,7 @@ WINPR_PRAGMA_DIAG_IGNORED_RESERVED_ID_MACRO
 
 #if defined(sgi)
 #ifndef __sgi
+// NOLINTNEXTLINE(bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
 #define __sgi 1
 #endif
 #endif
@@ -410,6 +427,7 @@ WINPR_PRAGMA_DIAG_IGNORED_RESERVED_ID_MACRO
 
 #if defined(__TOS_AIX__)
 #ifndef _AIX
+// NOLINTNEXTLINE(bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
 #define _AIX 1
 #endif
 #endif
@@ -418,6 +436,7 @@ WINPR_PRAGMA_DIAG_IGNORED_RESERVED_ID_MACRO
 
 #if defined(hpux) || defined(_hpux)
 #ifndef __hpux
+// NOLINTNEXTLINE(bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
 #define __hpux 1
 #endif
 #endif
@@ -446,6 +465,7 @@ WINPR_PRAGMA_DIAG_IGNORED_RESERVED_ID_MACRO
 
 #if (__BYTE_ORDER == __BIG_ENDIAN)
 #ifndef __BIG_ENDIAN__
+// NOLINTNEXTLINE(bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
 #define __BIG_ENDIAN__ 1
 #endif
 #endif
@@ -455,6 +475,7 @@ WINPR_PRAGMA_DIAG_IGNORED_RESERVED_ID_MACRO
 #if defined(__ARMEB__) || defined(__THUMBEB__) || defined(__AARCH64EB__) || defined(_MIPSEB) || \
     defined(__MIPSEB) || defined(__MIPSEB__)
 #ifndef __BIG_ENDIAN__
+// NOLINTNEXTLINE(bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
 #define __BIG_ENDIAN__ 1
 #endif
 #endif
@@ -467,6 +488,7 @@ WINPR_PRAGMA_DIAG_IGNORED_RESERVED_ID_MACRO
 
 #if (__BYTE_ORDER == __LITTLE_ENDIAN)
 #ifndef __LITTLE_ENDIAN__
+// NOLINTNEXTLINE(bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
 #define __LITTLE_ENDIAN__ 1
 #endif
 #endif
@@ -476,6 +498,7 @@ WINPR_PRAGMA_DIAG_IGNORED_RESERVED_ID_MACRO
 #if defined(__ARMEL__) || defined(__THUMBEL__) || defined(__AARCH64EL__) || defined(_MIPSEL) || \
     defined(__MIPSEL) || defined(__MIPSEL__) || defined(__e2k__)
 #ifndef __LITTLE_ENDIAN__
+// NOLINTNEXTLINE(bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
 #define __LITTLE_ENDIAN__ 1
 #endif
 #endif

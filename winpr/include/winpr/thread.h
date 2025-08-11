@@ -181,6 +181,7 @@ extern "C"
 	WINPR_PRAGMA_DIAG_PUSH
 	WINPR_PRAGMA_DIAG_IGNORED_RESERVED_IDENTIFIER
 
+	// NOLINTNEXTLINE(bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
 	WINPR_API HANDLE _GetCurrentProcess(void);
 
 	WINPR_PRAGMA_DIAG_POP
@@ -246,6 +247,7 @@ extern "C"
 
 	WINPR_PRAGMA_DIAG_PUSH
 	WINPR_PRAGMA_DIAG_IGNORED_RESERVED_IDENTIFIER
+	// NOLINTNEXTLINE(bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
 	WINPR_API HANDLE _GetCurrentThread(void);
 	WINPR_PRAGMA_DIAG_POP
 
