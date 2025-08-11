@@ -41,5 +41,5 @@ set(LIBS freerdp-client freerdp winpr)
 target_link_libraries(${PROJECT_NAME} PRIVATE ${LIBS})
 
 set_property(TARGET ${PROJECT_NAME} PROPERTY FOLDER "Client/Sample")
-install(TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT client)
+installwithrpath(TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT client)
 install_freerdp_desktop("${PROJECT_NAME}")
