@@ -142,17 +142,15 @@ HMODULE LoadLibraryA(LPCSTR lpLibFileName)
 
 HMODULE LoadLibraryW(LPCWSTR lpLibFileName)
 {
-	if (!lpLibFileName)
-		return NULL;
 #if defined(_UWP)
 	return LoadPackagedLibrary(lpLibFileName, 0);
 #else
-	HMODULE module = NULL;
-	char* name = ConvertWCharToUtf8Alloc(lpLibFileName, NULL);
-	if (!name)
-		return NULL;
+	char* name = NULL;
 
-	module = LoadLibraryA(name);
+	if (lpLibFileName)
+		name = ConvertWCharToUtf8Alloc(lpLibFileName, NULL);
+
+	HMODULE module = LoadLibraryA(name);
 	free(name);
 	return module;
 #endif
@@ -398,15 +396,14 @@ DWORD GetModuleFileNameA(HMODULE hModule, LPSTR lpFilename, DWORD nSize)
 
 HMODULE LoadLibraryX(LPCSTR lpLibFileName)
 {
-	if (!lpLibFileName)
-		return NULL;
-
 #if defined(_WIN32)
 	HMODULE hm = NULL;
-	WCHAR* wstr = ConvertUtf8ToWCharAlloc(lpLibFileName, NULL);
+	WCHAR* wstr = NULL;
 
-	if (wstr)
-		hm = LoadLibraryW(wstr);
+	if (lpLibFileName)
+		wstr = ConvertUtf8ToWCharAlloc(lpLibFileName, NULL);
+
+	hm = LoadLibraryW(wstr);
 	free(wstr);
 	return hm;
 #else
