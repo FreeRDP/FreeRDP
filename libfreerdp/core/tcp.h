@@ -64,7 +64,7 @@ static INLINE long BIO_get_socket(BIO* b, SOCKET* c)
 }
 static INLINE long BIO_get_event(BIO* b, HANDLE* c)
 {
-	return BIO_ctrl(b, BIO_C_GET_EVENT, 0, c);
+	return BIO_ctrl(b, BIO_C_GET_EVENT, 0, (void*)c);
 }
 static INLINE long BIO_set_handle(BIO* b, HANDLE h)
 {

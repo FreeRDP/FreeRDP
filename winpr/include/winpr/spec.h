@@ -72,6 +72,7 @@ WINPR_PRAGMA_DIAG_IGNORED_RESERVED_IDENTIFIER
 #endif
 
 #if (defined(_M_AMD64) || defined(_M_ARM)) && !defined(_WIN32)
+// NOLINTNEXTLINE(bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
 #define _UNALIGNED __unaligned
 #else
 #define _UNALIGNED
@@ -95,6 +96,7 @@ WINPR_PRAGMA_DIAG_IGNORED_RESERVED_IDENTIFIER
 
 #ifdef __GNUC__
 #ifndef __declspec
+// NOLINTNEXTLINE(bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
 #define __declspec(e) __attribute__((e))
 #endif
 #endif
@@ -112,6 +114,7 @@ WINPR_PRAGMA_DIAG_IGNORED_RESERVED_IDENTIFIER
  * http://msdn.microsoft.com/en-us/library/windows/desktop/aa383701/
  */
 
+// NOLINTBEGIN(bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
 #define __field_bcount(size) __notnull __byte_writableTo(size)
 #define __field_ecount(size) __notnull __elem_writableTo(size)
 #define __post_invalid _Post_ __notvalid
@@ -855,7 +858,7 @@ WINPR_PRAGMA_DIAG_IGNORED_RESERVED_IDENTIFIER
 #define __deref_out_opt
 #define __ecount(size)
 #define __ecount_opt(size)
-//#define __in			/* Conflicts with libstdc++ header macros */
+// #define __in			/* Conflicts with libstdc++ header macros */
 #define __in_bcount(size)
 #define __in_bcount_opt(size)
 #define __in_ecount(size)
@@ -875,7 +878,7 @@ WINPR_PRAGMA_DIAG_IGNORED_RESERVED_IDENTIFIER
 #define __inout_ecount_part(size, length)
 #define __inout_ecount_part_opt(size, length)
 #define __inout_opt
-//#define __out			/* Conflicts with libstdc++ header macros */
+// #define __out			/* Conflicts with libstdc++ header macros */
 #define __out_bcount(size)
 #define __out_bcount_full(size)
 #define __out_bcount_full_opt(size)
@@ -899,9 +902,11 @@ WINPR_PRAGMA_DIAG_IGNORED_RESERVED_IDENTIFIER
 #define __nullterminated
 #define __out_awcount(expr, size)
 #define __override
-//#define __reserved			/* Conflicts with header included by CarbonCore.h on OS X */
+// #define __reserved			/* Conflicts with header included by CarbonCore.h on OS X */
 #define __success(expr)
 #define __typefix(ctype)
+
+// NOLINTEND(bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
 
 #ifndef _countof
 #ifndef __cplusplus
@@ -953,6 +958,7 @@ extern "C++"
 #define RTL_NUMBER_OF(A) RTL_NUMBER_OF_V1(A)
 
 #define ARRAYSIZE(A) RTL_NUMBER_OF_V2(A)
+// NOLINTNEXTLINE(bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
 #define _ARRAYSIZE(A) RTL_NUMBER_OF_V1(A)
 
 #define RTL_FIELD_TYPE(type, field) (((type*)0)->field)

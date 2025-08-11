@@ -30,6 +30,7 @@
 
 WINPR_PRAGMA_DIAG_PUSH
 WINPR_PRAGMA_DIAG_IGNORED_RESERVED_IDENTIFIER
+// NOLINTBEGIN(bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
 
 #ifdef __cplusplus
 extern "C"
@@ -85,6 +86,7 @@ extern "C"
 	WINPR_API WCHAR* wcstok_s(WCHAR* strToken, const WCHAR* strDelimit, WCHAR** context);
 
 	WINPR_API WCHAR* _wcsncat(WCHAR* dst, const WCHAR* src, size_t sz);
+
 #else
 
 #define _wcscmp wcscmp
@@ -450,6 +452,7 @@ extern "C"
 }
 #endif
 
+// NOLINTEND(bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
 WINPR_PRAGMA_DIAG_POP
 
 #endif /* WINPR_CRT_STRING_H */

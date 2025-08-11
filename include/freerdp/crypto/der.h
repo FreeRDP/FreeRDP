@@ -27,6 +27,7 @@ extern "C"
 {
 #endif
 
+	// NOLINTNEXTLINE(bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
 	FREERDP_API int _der_skip_length(int length);
 	FREERDP_API int der_write_length(wStream* s, int length);
 	FREERDP_API int der_get_content_length(int length);

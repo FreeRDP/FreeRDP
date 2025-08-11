@@ -59,6 +59,8 @@ extern "C"
 
 	FREERDP_API BOOL ber_read_length(wStream* s, size_t* length);
 	FREERDP_API size_t ber_write_length(wStream* s, size_t length);
+
+	// NOLINTNEXTLINE(bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
 	FREERDP_API size_t _ber_sizeof_length(size_t length);
 	FREERDP_API BOOL ber_read_universal_tag(wStream* s, BYTE tag, BOOL pc);
 	FREERDP_API size_t ber_write_universal_tag(wStream* s, BYTE tag, BOOL pc);

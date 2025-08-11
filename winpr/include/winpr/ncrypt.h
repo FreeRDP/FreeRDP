@@ -33,6 +33,7 @@ WINPR_PRAGMA_DIAG_IGNORED_RESERVED_ID_MACRO
 
 #ifndef __SECSTATUS_DEFINED__
 typedef LONG SECURITY_STATUS;
+// NOLINTNEXTLINE(bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
 #define __SECSTATUS_DEFINED__
 #endif
 

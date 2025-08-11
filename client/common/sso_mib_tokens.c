@@ -7,7 +7,6 @@
 #include <freerdp/crypto/crypto.h>
 #include <winpr/json.h>
 
-#include <sso-mib/sso-mib.h>
 #include "sso_mib_tokens.h"
 
 #include <freerdp/log.h>
