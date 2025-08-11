@@ -479,9 +479,52 @@ void pf_modules_list_loaded_plugins(proxyModule* module)
 	ArrayList_ForEach(module->plugins, pf_modules_print_ArrayList_ForEachFkt);
 }
 
-static BOOL pf_modules_load_module(const char* module_path, proxyModule* module, void* userdata)
+static BOOL pf_modules_load_static_module(const char* module_name, proxyModule* module,
+                                          void* userdata)
 {
 	WINPR_ASSERT(module);
+
+	HANDLE handle = LoadLibraryX(NULL);
+
+	if (handle == NULL)
+	{
+		WLog_ERR(TAG, "failed loading static library: %s", module_name);
+		return FALSE;
+	}
+
+	char name[256] = { 0 };
+	(void)_snprintf(name, sizeof(name), "%s_%s", module_name, MODULE_ENTRY_POINT);
+	for (size_t x = 0; x < strnlen(name, sizeof(name)); x++)
+	{
+		if (name[x] == '-')
+			name[x] = '_';
+	}
+
+	proxyModuleEntryPoint pEntryPoint = GetProcAddressAs(handle, name, proxyModuleEntryPoint);
+	if (!pEntryPoint)
+	{
+		WLog_ERR(TAG, "GetProcAddress failed for static %s (module %s)", name, module_name);
+		goto error;
+	}
+	if (!ArrayList_Append(module->handles, handle))
+	{
+		WLog_ERR(TAG, "ArrayList_Append failed!");
+		goto error;
+	}
+	return pf_modules_add(module, pEntryPoint, userdata);
+
+error:
+	FreeLibrary(handle);
+	return FALSE;
+}
+
+static BOOL pf_modules_load_module(const char* module_path, const char* module_name,
+                                   proxyModule* module, void* userdata)
+{
+	WINPR_ASSERT(module);
+
+	if (pf_modules_load_static_module(module_name, module, userdata))
+		return TRUE;
 
 	HANDLE handle = LoadLibraryX(module_path);
 
@@ -585,7 +628,6 @@ proxyModule* pf_modules_new(const char* root_dir, const char** modules, size_t c
 			if (!winpr_PathMakePath(path, NULL))
 			{
 				WLog_ERR(TAG, "error occurred while creating modules directory: %s", root_dir);
-				goto error;
 			}
 		}
 
@@ -599,7 +641,7 @@ proxyModule* pf_modules_new(const char* root_dir, const char** modules, size_t c
 			(void)_snprintf(name, sizeof(name), "proxy-%s-plugin%s", modules[i],
 			                FREERDP_SHARED_LIBRARY_SUFFIX);
 			fullpath = GetCombinedPath(path, name);
-			pf_modules_load_module(fullpath, module, NULL);
+			pf_modules_load_module(fullpath, modules[i], module, NULL);
 			free(fullpath);
 		}
 	}
