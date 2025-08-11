@@ -6,15 +6,21 @@ git clean -xdff
 
 echo ">>>>>>>>>>>>>> create freerdp sln"
 cmd /c cmake . -B"./Build/x64" -G"Visual Studio 17 2022"^
-	-T v143,version=%vc_ver%^
-	-A x64^
-	-DOPENSSL_ROOT_DIR="../OpenSSL-VC-64"^
-	-DCMAKE_INSTALL_PREFIX="./Install/x64"^
-	-DMSVC_RUNTIME="static"^
-	-DBUILD_SHARED_LIBS=OFF^
-	-DWITH_CLIENT_INTERFACE=ON^
-	-DCHANNEL_URBDRC=OFF^
-	-DWITH_MEDIA_FOUNDATION=OFF^
+    -T v143,version=%vc_ver%^
+    -A x64^
+    -DOPENSSL_ROOT_DIR="../OpenSSL-VC-64"^
+    -DCMAKE_INSTALL_PREFIX="./Install/x64"^
+    -DMSVC_RUNTIME="static"^
+    -DBUILD_SHARED_LIBS=OFF^
+    -DWITH_CLIENT_INTERFACE=ON^
+    -DCHANNEL_URBDRC=OFF^
+    -DWITH_MEDIA_FOUNDATION=OFF^
+    -DWITH_SMARTCARD_EMULATE=OFF^
+    -DWITH_FFMPEG=OFF^
+    -DWITH_VIDEO_FFMPEG=OFF^
+    -DWITH_DSP_FFMPEG=OFF^
+    -DWITH_SWSCALE=OFF^
+    -DWITH_SHADOW=OFF^
 
 rem build freerdp libs
 set Configuration=%1

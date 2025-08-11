@@ -2,10 +2,10 @@
 #include "FreeRdpWrapper.h"
 #include "Logging.h"
 
-#pragma warning(disable : 4324 4201 4245)
+#pragma warning(disable : 4324 4201 4245 4996)
 #include <freerdp/freerdp.h>
-#include <freerdp/cache/cache.h>
-#pragma warning(default : 4324 4201 4245)
+#include <cache/cache.h>
+#pragma warning(default : 4324 4201 4245 4996)
 #pragma once
 using namespace Logging;
 using namespace FreeRdpClient;
@@ -182,7 +182,7 @@ namespace FreeRdpClient
 
 		Logging::RegisterCurrentThreadScope(instanceData->scopeName);
 
-		context->cache = cache_new(context->instance->settings);
+		context->cache = cache_new(context);
 
 		HANDLE handles[64]{};
 		handles[0] = instanceData->transportStopEvent;

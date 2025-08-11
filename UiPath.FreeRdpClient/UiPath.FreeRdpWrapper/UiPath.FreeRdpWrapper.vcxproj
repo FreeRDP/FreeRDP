@@ -65,7 +65,7 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>Create</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>..\..\include;..\..\winpr\include;..\..\Build\$(PlatformTarget)\winpr\include;..\..\Build\$(PlatformTarget)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\libfreerdp;..\..\include;..\..\winpr\include;..\..\Build\$(PlatformTarget)\winpr\include;..\..\Build\$(PlatformTarget)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN$(PlatformArchitecture);FREERDP_EXPORTS;_WINDOWS;_USRDLL;APP_VERSION="$(AppVersion)";%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
@@ -73,8 +73,8 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
-      <AdditionalDependencies>comsuppw.lib;comsupp.lib;freerdp2.lib;winpr2.lib;libcrypto.lib;libssl.lib;Dbghelp.lib;Secur32.lib;ntdsapi.lib;Rpcrt4.lib;Crypt32.lib;ncrypt.lib;Userenv.lib;ws2_32.lib;ntdll.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\..\..\OpenSSL-VC-$(PlatformArchitecture)\lib;..\..\Build\$(PlatformTarget)\$(Configuration)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>comsuppw.lib;comsupp.lib;freerdp3.lib;winpr3.lib;libcrypto.lib;libssl.lib;Dbghelp.lib;Secur32.lib;ntdsapi.lib;Rpcrt4.lib;Crypt32.lib;ncrypt.lib;Userenv.lib;ws2_32.lib;Shlwapi.lib;ntdll.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\..\..\OpenSSL-VC-$(PlatformArchitecture)\lib;..\..\Build\$(PlatformTarget)\libfreerdp\$(Configuration);..\..\Build\$(PlatformTarget)\winpr\libwinpr\$(Configuration)</AdditionalLibraryDirectories>
       <ModuleDefinitionFile>
       </ModuleDefinitionFile>
     </Link>
@@ -91,7 +91,7 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>Create</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>..\..\include;..\..\winpr\include;..\..\Build\$(PlatformTarget)\winpr\include;..\..\Build\$(PlatformTarget)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\libfreerdp;..\..\include;..\..\winpr\include;..\..\Build\$(PlatformTarget)\winpr\include;..\..\Build\$(PlatformTarget)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN$(PlatformArchitecture);FREERDP_EXPORTS;_WINDOWS;_USRDLL;APP_VERSION="$(AppVersion)";%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <WholeProgramOptimization>false</WholeProgramOptimization>
@@ -102,8 +102,8 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
-      <AdditionalDependencies>comsuppw.lib;comsupp.lib;freerdp2.lib;winpr2.lib;libcrypto.lib;libssl.lib;Dbghelp.lib;Secur32.lib;ntdsapi.lib;Rpcrt4.lib;Crypt32.lib;ncrypt.lib;Userenv.lib;ws2_32.lib;ntdll.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\..\..\OpenSSL-VC-$(PlatformArchitecture)\lib;..\..\Build\$(PlatformTarget)\$(Configuration)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>comsuppw.lib;comsupp.lib;freerdp3.lib;winpr3.lib;libcrypto.lib;libssl.lib;Dbghelp.lib;Secur32.lib;ntdsapi.lib;Rpcrt4.lib;Crypt32.lib;ncrypt.lib;Userenv.lib;ws2_32.lib;Shlwapi.lib;ntdll.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\..\..\OpenSSL-VC-$(PlatformArchitecture)\lib;..\..\Build\$(PlatformTarget)\libfreerdp\$(Configuration);..\..\Build\$(PlatformTarget)\winpr\libwinpr\$(Configuration)</AdditionalLibraryDirectories>
       <ModuleDefinitionFile>
       </ModuleDefinitionFile>
     </Link>

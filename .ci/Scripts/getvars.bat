@@ -16,8 +16,8 @@ for /f "usebackq delims=" %%i in (`%vswhere% -prerelease -latest -property insta
   set vsDir=%%i
 )
 
-set vc_ver_short=14.40
-set vc_ver=14.40.17.10
+set vc_ver_short=14.44
+set vc_ver=14.44.17.14
 set __call_SetupBuildEnvironment=(call "%vsdir%\VC\Auxiliary\Build\vcvarsall.bat" x64 -vcvars_ver=%vc_ver_short%)
 %__call_SetupBuildEnvironment%
 

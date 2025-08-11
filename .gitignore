@@ -5,9 +5,9 @@ build.ninja
 rules.ninja
 
 # CMake
-CMakeFiles/
+**/CMakeFiles
 CMakeScripts/
-CMakeCache.txt
+**/CMakeCache.txt
 config.h
 install_manifest*.txt
 CTestTestfile.cmake

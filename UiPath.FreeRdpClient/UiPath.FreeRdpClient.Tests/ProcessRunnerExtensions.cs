@@ -6,12 +6,16 @@ namespace UiPath.FreeRdp.Tests;
 
 public static class ProcessRunnerExtensions
 {
-    public static Task CreateRDPRedirect(this ProcessRunner processRunner, int listenPort, CancellationToken ct = default)
-    => processRunner.Run(
-        "cmd",
-        $"/c netsh interface portproxy add v4tov4 listenaddress=127.0.0.1 listenport={listenPort} connectaddress=127.0.0.1 connectport=3389",
-        throwOnNonZero: true,
-        ct: ct);        
+    public static Task ChangeRdpPort(this ProcessRunner processRunner, int port, CancellationToken ct = default)
+    {
+        var rdpRegistryPath = @"HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp";
+
+        var changeRdpPortCommand = $"Set-ItemProperty -Path '{rdpRegistryPath}' -Name 'PortNumber' -Value {port}";
+        var restartRdpCommand = "Restart-Service -Name TermService -Force";
+        var powershellCommand = $"-Command \"{changeRdpPortCommand}; {restartRdpCommand}\"";
+
+        return processRunner.Run("powershell", powershellCommand, throwOnNonZero: true, ct: ct);
+    }
 
     public static async Task<bool> PortWithStateExists(this ProcessRunner processRunner, int port, string state, CancellationToken ct = default)
     => await processRunner.PortWithStateExists(port, state, processId: null, ct);
