@@ -939,3 +939,17 @@ BOOL xf_floatbar_is_locked(xfFloatbar* floatbar)
 		return FALSE;
 	return floatbar->mode != XF_FLOATBAR_MODE_NONE;
 }
+
+BOOL xf_floatbar_is_window(xfFloatbar* floatbar, Window window)
+{
+	if (!floatbar)
+		return FALSE;
+	return floatbar->handle == window;
+}
+
+BOOL xfc_is_floatbar_window(xfContext* xfc, Window window)
+{
+	if (!xfc || !xfc->window)
+		return FALSE;
+	return xf_floatbar_is_window(xfc->window->floatbar, window);
+}
