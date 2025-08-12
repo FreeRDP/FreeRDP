@@ -1131,8 +1131,8 @@ static BOOL rdp_read_pointer_capability_set(wLog* log, wStream* s, rdpSettings* 
 	{
 		WLog_Print(log, WLOG_WARN,
 		           "[MS-RDPBCGR] 2.2.7.1.5 Pointer Capability Set "
-		           "(TS_POINTER_CAPABILITYSET)::colorPointerFlag received is %" PRIu16
-		           ". Value is ignored and always assumed to be TRUE");
+		           "(TS_POINTER_CAPABILITYSET)::colorPointerFlag received is 0. "
+		           "Value is ignored and always assumed to be TRUE");
 	}
 
 	/* pointerCacheSize is optional */
