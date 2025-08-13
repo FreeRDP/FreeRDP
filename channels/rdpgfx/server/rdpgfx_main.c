@@ -53,9 +53,10 @@ static BOOL checkCapsAreExchangedInt(RdpgfxServerContext* context, const char* f
 	const DWORD level = WLOG_TRACE;
 	if (WLog_IsLevelActive(context->priv->log, level))
 	{
-		WLog_PrintMessage(context->priv->log, WLOG_MESSAGE_TEXT, level, line, file, fkt,
-		                  "activeCapSet{Version=0x%08" PRIx32 ", flags=0x%08" PRIx32 "}",
-		                  context->priv->activeCapSet.version, context->priv->activeCapSet.flags);
+		WLog_PrintTextMessage(context->priv->log, level, line, file, fkt,
+		                      "activeCapSet{Version=0x%08" PRIx32 ", flags=0x%08" PRIx32 "}",
+		                      context->priv->activeCapSet.version,
+		                      context->priv->activeCapSet.flags);
 	}
 	return context->priv->activeCapSet.version > 0;
 }

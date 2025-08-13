@@ -1569,8 +1569,8 @@ static BOOL rts_send_buffer_int(RpcChannel* channel, wStream* s, size_t frag_len
 	const DWORD level = WLOG_TRACE;
 	if (WLog_IsLevelActive(channel->rpc->log, level))
 	{
-		WLog_PrintMessage(channel->rpc->log, WLOG_MESSAGE_TEXT, level, line, file, fkt,
-		                  "Sending [%s] %" PRIuz " bytes", fkt, Stream_Length(s));
+		WLog_PrintTextMessage(channel->rpc->log, level, line, file, fkt,
+		                      "Sending [%s] %" PRIuz " bytes", fkt, Stream_Length(s));
 	}
 	if (Stream_Length(s) < sizeof(rpcconn_common_hdr_t))
 		goto fail;

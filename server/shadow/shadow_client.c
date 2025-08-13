@@ -75,8 +75,8 @@ static BOOL BitmapUpdateProxyEx(rdpShadowClient* client, const BITMAP_UPDATE* bi
 			wLog* log = WLog_Get(TAG);
 			if (WLog_IsLevelActive(log, log_level))
 			{
-				WLog_PrintMessage(log, WLOG_MESSAGE_TEXT, log_level, line, file, fkt,
-				                  "BitmapUpdate[count %" PRIu32 "] failed", bitmap->number);
+				WLog_PrintTextMessage(log, log_level, line, file, fkt,
+				                      "BitmapUpdate[count %" PRIu32 "] failed", bitmap->number);
 			}
 			return FALSE;
 		}
@@ -97,8 +97,8 @@ static BOOL BitmapUpdateProxyEx(rdpShadowClient* client, const BITMAP_UPDATE* bi
 				wLog* log = WLog_Get(TAG);
 				if (WLog_IsLevelActive(log, log_level))
 				{
-					WLog_PrintMessage(log, WLOG_MESSAGE_TEXT, log_level, line, file, fkt,
-					                  "BitmapUpdate[count 1, at %" PRIu32 "] failed", x);
+					WLog_PrintTextMessage(log, log_level, line, file, fkt,
+					                      "BitmapUpdate[count 1, at %" PRIu32 "] failed", x);
 				}
 				return FALSE;
 			}

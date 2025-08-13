@@ -723,10 +723,10 @@ static BOOL rdstls_check_state_requirements_(rdpRdstls* rdstls, RDSTLS_STATE exp
 
 	const DWORD log_level = WLOG_ERROR;
 	if (WLog_IsLevelActive(rdstls->log, log_level))
-		WLog_PrintMessage(rdstls->log, WLOG_MESSAGE_TEXT, log_level, line, file, fkt,
-		                  "Unexpected rdstls state %s [%d], expected %s [%d]",
-		                  rdstls_get_state_str(current), current, rdstls_get_state_str(expected),
-		                  expected);
+		WLog_PrintTextMessage(rdstls->log, log_level, line, file, fkt,
+		                      "Unexpected rdstls state %s [%d], expected %s [%d]",
+		                      rdstls_get_state_str(current), current,
+		                      rdstls_get_state_str(expected), expected);
 
 	return FALSE;
 }

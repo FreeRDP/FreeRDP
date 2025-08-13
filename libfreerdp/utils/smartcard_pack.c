@@ -1785,8 +1785,9 @@ static LONG smartcard_context_supported_(wLog* log, uint32_t size, const char* f
 			const uint32_t level = WLOG_WARN;
 			if (WLog_IsLevelActive(log, level))
 			{
-				WLog_PrintMessage(log, WLOG_MESSAGE_TEXT, level, line, file, fkt,
-				                  "REDIR_SCARDCONTEXT length is not 0, 4 or 8: %" PRIu32 "", size);
+				WLog_PrintTextMessage(log, level, line, file, fkt,
+				                      "REDIR_SCARDCONTEXT length is not 0, 4 or 8: %" PRIu32 "",
+				                      size);
 			}
 			return STATUS_INVALID_PARAMETER;
 		}

@@ -1639,8 +1639,8 @@ static void SDLCALL winpr_LogOutputFunction(void* userdata, int category, SDL_Lo
 	if (!WLog_IsLevelActive(log, level))
 		return;
 
-	WLog_PrintMessage(log, WLOG_MESSAGE_TEXT, level, __LINE__, __FILE__, __func__, "[%s] %s",
-	                  category2str(category), message);
+	WLog_PrintTextMessage(log, level, __LINE__, __FILE__, __func__, "[%s] %s",
+	                      category2str(category), message);
 }
 
 int main(int argc, char* argv[])

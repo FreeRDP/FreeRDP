@@ -24,7 +24,8 @@
 #include <freerdp/log.h>
 #define TAG FREERDP_TAG("dsp.fdk")
 
-static void write_log(unsigned log_level, const char* fmt, ...)
+WINPR_ATTR_FORMAT_ARG(2, 3)
+static void write_log(unsigned log_level, WINPR_FORMAT_ARG const char* fmt, ...)
 {
 	wLog* log = WLog_Get(TAG);
 
@@ -37,8 +38,7 @@ static void write_log(unsigned log_level, const char* fmt, ...)
 		(void)vsnprintf(buffer, sizeof(buffer), fmt, ap);
 		va_end(ap);
 
-		WLog_PrintMessage(log, WLOG_MESSAGE_TEXT, log_level, __LINE__, __FILE__, __func__, "%s",
-		                  buffer);
+		WLog_PrintTextMessage(log, log_level, __LINE__, __FILE__, __func__, "%s", buffer);
 	}
 }
 

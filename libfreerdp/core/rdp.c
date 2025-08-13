@@ -132,9 +132,9 @@ static BOOL rdp_check_monitor_layout_pdu_state_(const rdpRdp* rdp, BOOL expected
 		const DWORD log_level = WLOG_ERROR;
 		if (WLog_IsLevelActive(rdp->log, log_level))
 		{
-			WLog_PrintMessage(rdp->log, WLOG_MESSAGE_TEXT, log_level, line, file, fkt,
-			                  "Expected rdp->monitor_layout_pdu == %s",
-			                  expected ? "TRUE" : "FALSE");
+			WLog_PrintTextMessage(rdp->log, log_level, line, file, fkt,
+			                      "Expected rdp->monitor_layout_pdu == %s",
+			                      expected ? "TRUE" : "FALSE");
 		}
 		return FALSE;
 	}
@@ -153,8 +153,8 @@ static BOOL rdp_set_monitor_layout_pdu_state_(rdpRdp* rdp, BOOL value, const cha
 		const DWORD log_level = WLOG_WARN;
 		if (WLog_IsLevelActive(rdp->log, log_level))
 		{
-			WLog_PrintMessage(rdp->log, WLOG_MESSAGE_TEXT, log_level, line, file, fkt,
-			                  "rdp->monitor_layout_pdu == TRUE, expected FALSE");
+			WLog_PrintTextMessage(rdp->log, log_level, line, file, fkt,
+			                      "rdp->monitor_layout_pdu == TRUE, expected FALSE");
 		}
 		return FALSE;
 	}
@@ -2982,10 +2982,10 @@ static void print_first_line_int(wLog* log, log_line_t* firstLine, const char* w
 		const DWORD level = WLOG_WARN;
 		if (WLog_IsLevelActive(log, level))
 		{
-			WLog_PrintMessage(log, WLOG_MESSAGE_TEXT, level, line, file, fkt,
-			                  "*************************************************");
-			WLog_PrintMessage(log, WLOG_MESSAGE_TEXT, level, line, file, fkt,
-			                  "[SSL] {%s} build or configuration missing:", what);
+			WLog_PrintTextMessage(log, level, line, file, fkt,
+			                      "*************************************************");
+			WLog_PrintTextMessage(log, level, line, file, fkt,
+			                      "[SSL] {%s} build or configuration missing:", what);
 		}
 		firstLine->line = line;
 		firstLine->file = file;
@@ -3000,9 +3000,9 @@ static void print_last_line(wLog* log, const log_line_t* firstLine)
 	if (firstLine->fkt)
 	{
 		if (WLog_IsLevelActive(log, firstLine->level))
-			WLog_PrintMessage(log, WLOG_MESSAGE_TEXT, firstLine->level, firstLine->line,
-			                  firstLine->file, firstLine->fkt,
-			                  "*************************************************");
+			WLog_PrintTextMessage(log, firstLine->level, firstLine->line, firstLine->file,
+			                      firstLine->fkt,
+			                      "*************************************************");
 	}
 }
 

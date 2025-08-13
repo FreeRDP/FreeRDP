@@ -64,15 +64,14 @@ static void log_error_(DWORD flags, LPCSTR message, int index, WINPR_ATTR_UNUSED
 		if (!WLog_IsLevelActive(log, level))
 			return;
 
-		WLog_PrintMessage(log, WLOG_MESSAGE_TEXT, level, line, file, fkt,
-		                  "Failed at index %d [%s]: %s", index,
+		WLog_PrintTextMessage(log, level, line, file, fkt, "Failed at index %d [%s]: %s", index,
 #if defined(WITH_DEBUG_UTILS_CMDLINE_DUMP)
-		                  argv
+		                      argv
 #else
-		                  censoredmessage
+		                      censoredmessage
 #endif
-		                  ,
-		                  message);
+		                      ,
+		                      message);
 	}
 }
 
@@ -88,11 +87,11 @@ static void log_comma_error_(const char* message, WINPR_ATTR_UNUSED const char* 
 	if (!WLog_IsLevelActive(log, level))
 		return;
 
-	WLog_PrintMessage(log, WLOG_MESSAGE_TEXT, level, line, file, fkt, "%s [%s]", message,
+	WLog_PrintTextMessage(log, level, line, file, fkt, "%s [%s]", message,
 #if defined(WITH_DEBUG_UTILS_CMDLINE_DUMP)
-	                  argument
+	                      argument
 #else
-	                  censoredmessage
+	                      censoredmessage
 #endif
 	);
 }

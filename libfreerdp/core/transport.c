@@ -757,8 +757,8 @@ static void transport_bio_error_log(rdpTransport* transport, LPCSTR biofunc,
 		const char* fmt = "%s returned a system error %d: %s";
 		if (saveerrno == 0)
 			fmt = "%s retries exceeded";
-		WLog_PrintMessage(transport->log, WLOG_MESSAGE_TEXT, level, line, file, func, fmt, biofunc,
-		                  saveerrno, winpr_strerror(saveerrno, ebuffer, sizeof(ebuffer)));
+		WLog_PrintTextMessage(transport->log, level, line, file, func, fmt, biofunc, saveerrno,
+		                      winpr_strerror(saveerrno, ebuffer, sizeof(ebuffer)));
 		return;
 	}
 
@@ -768,8 +768,7 @@ static void transport_bio_error_log(rdpTransport* transport, LPCSTR biofunc,
 		const char* fmt = "%s returned an error: %s";
 
 		ERR_error_string_n(sslerr, buf, 120);
-		WLog_PrintMessage(transport->log, WLOG_MESSAGE_TEXT, level, line, file, func, fmt, biofunc,
-		                  buf);
+		WLog_PrintTextMessage(transport->log, level, line, file, func, fmt, biofunc, buf);
 	}
 }
 

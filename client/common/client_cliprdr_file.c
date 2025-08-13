@@ -640,14 +640,16 @@ static CliprdrLocalStream* cliprdr_local_stream_new(CliprdrFileContext* context,
 static void cliprdr_file_session_terminate(CliprdrFileContext* file, BOOL stop_thread);
 static BOOL local_stream_discard(const void* key, void* value, void* arg);
 
-static void writelog(wLog* log, DWORD level, const char* fname, const char* fkt, size_t line, ...)
+WINPR_ATTR_FORMAT_ARG(6, 7)
+static void writelog(wLog* log, DWORD level, const char* fname, const char* fkt, size_t line,
+                     WINPR_FORMAT_ARG const char* fmt, ...)
 {
 	if (!WLog_IsLevelActive(log, level))
 		return;
 
 	va_list ap = { 0 };
-	va_start(ap, line);
-	WLog_PrintMessageVA(log, WLOG_MESSAGE_TEXT, level, line, fname, fkt, ap);
+	va_start(ap, fmt);
+	WLog_PrintTextMessageVA(log, level, line, fname, fkt, fmt, ap);
 	va_end(ap);
 }
 

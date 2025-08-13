@@ -42,11 +42,13 @@ static const char* error_to_string(wLog* log, Display* display, int error, char*
 	return buffer;
 }
 
-static void write_log(wLog* log, DWORD level, const char* fname, const char* fkt, size_t line, ...)
+WINPR_ATTR_FORMAT_ARG(6, 7)
+static void write_log(wLog* log, DWORD level, const char* fname, const char* fkt, size_t line,
+                      WINPR_FORMAT_ARG const char* fmt, ...)
 {
 	va_list ap = { 0 };
-	va_start(ap, line);
-	WLog_PrintMessageVA(log, WLOG_MESSAGE_TEXT, level, line, fname, fkt, ap);
+	va_start(ap, fmt);
+	WLog_PrintTextMessageVA(log, level, line, fname, fkt, fmt, ap);
 	va_end(ap);
 }
 
@@ -74,8 +76,8 @@ static int write_result_log_va(wLog* log, DWORD level, const char* fname, const 
 
 		if (WLog_IsLevelActive(log, level))
 		{
-			WLog_PrintMessage(log, WLOG_MESSAGE_TEXT, level, line, fname, fkt, "%s returned %s",
-			                  name, error_to_string(log, display, rc, buffer, sizeof(buffer)));
+			WLog_PrintTextMessage(log, level, line, fname, fkt, "%s returned %s", name,
+			                      error_to_string(log, display, rc, buffer, sizeof(buffer)));
 		}
 	}
 	return rc;

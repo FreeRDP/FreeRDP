@@ -592,14 +592,16 @@ static char* systemtime2str(const SYSTEMTIME* t, char* buffer, size_t len)
 	return buffer;
 }
 
-static void log_print(wLog* log, DWORD level, const char* file, const char* fkt, size_t line, ...)
+WINPR_ATTR_FORMAT_ARG(6, 7)
+static void log_print(wLog* log, DWORD level, const char* file, const char* fkt, size_t line,
+                      WINPR_FORMAT_ARG const char* fmt, ...)
 {
 	if (!WLog_IsLevelActive(log, level))
 		return;
 
 	va_list ap = { 0 };
-	va_start(ap, line);
-	WLog_PrintMessageVA(log, WLOG_MESSAGE_TEXT, level, line, file, fkt, ap);
+	va_start(ap, fmt);
+	WLog_PrintTextMessageVA(log, level, line, file, fkt, fmt, ap);
 	va_end(ap);
 }
 

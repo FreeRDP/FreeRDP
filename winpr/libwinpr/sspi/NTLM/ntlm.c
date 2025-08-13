@@ -53,8 +53,7 @@ static BOOL check_context_(NTLM_CONTEXT* context, const char* file, const char* 
 	if (!context)
 	{
 		if (WLog_IsLevelActive(log, log_level))
-			WLog_PrintMessage(log, WLOG_MESSAGE_TEXT, log_level, line, file, fkt,
-			                  "invalid context");
+			WLog_PrintTextMessage(log, log_level, line, file, fkt, "invalid context");
 
 		return FALSE;
 	}
@@ -62,44 +61,42 @@ static BOOL check_context_(NTLM_CONTEXT* context, const char* file, const char* 
 	if (!context->RecvRc4Seal)
 	{
 		if (WLog_IsLevelActive(log, log_level))
-			WLog_PrintMessage(log, WLOG_MESSAGE_TEXT, log_level, line, file, fkt,
-			                  "invalid context->RecvRc4Seal");
+			WLog_PrintTextMessage(log, log_level, line, file, fkt, "invalid context->RecvRc4Seal");
 		rc = FALSE;
 	}
 	if (!context->SendRc4Seal)
 	{
 		if (WLog_IsLevelActive(log, log_level))
-			WLog_PrintMessage(log, WLOG_MESSAGE_TEXT, log_level, line, file, fkt,
-			                  "invalid context->SendRc4Seal");
+			WLog_PrintTextMessage(log, log_level, line, file, fkt, "invalid context->SendRc4Seal");
 		rc = FALSE;
 	}
 
 	if (!context->SendSigningKey)
 	{
 		if (WLog_IsLevelActive(log, log_level))
-			WLog_PrintMessage(log, WLOG_MESSAGE_TEXT, log_level, line, file, fkt,
-			                  "invalid context->SendSigningKey");
+			WLog_PrintTextMessage(log, log_level, line, file, fkt,
+			                      "invalid context->SendSigningKey");
 		rc = FALSE;
 	}
 	if (!context->RecvSigningKey)
 	{
 		if (WLog_IsLevelActive(log, log_level))
-			WLog_PrintMessage(log, WLOG_MESSAGE_TEXT, log_level, line, file, fkt,
-			                  "invalid context->RecvSigningKey");
+			WLog_PrintTextMessage(log, log_level, line, file, fkt,
+			                      "invalid context->RecvSigningKey");
 		rc = FALSE;
 	}
 	if (!context->SendSealingKey)
 	{
 		if (WLog_IsLevelActive(log, log_level))
-			WLog_PrintMessage(log, WLOG_MESSAGE_TEXT, log_level, line, file, fkt,
-			                  "invalid context->SendSealingKey");
+			WLog_PrintTextMessage(log, log_level, line, file, fkt,
+			                      "invalid context->SendSealingKey");
 		rc = FALSE;
 	}
 	if (!context->RecvSealingKey)
 	{
 		if (WLog_IsLevelActive(log, log_level))
-			WLog_PrintMessage(log, WLOG_MESSAGE_TEXT, log_level, line, file, fkt,
-			                  "invalid context->RecvSealingKey");
+			WLog_PrintTextMessage(log, log_level, line, file, fkt,
+			                      "invalid context->RecvSealingKey");
 		rc = FALSE;
 	}
 	return rc;
