@@ -3740,12 +3740,11 @@ static int parse_aad_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_
 			SSIZE_T id;
 			int (*fkt)(rdpSettings* settings, const char* value);
 		};
-		const struct app_map amap[] = {
-			{ "tenantid:", FreeRDP_GatewayAvdAadtenantid, parse_app_option_program },
-			{ "ad:", FreeRDP_GatewayAzureActiveDirectory, NULL },
-			{ "avd-access:", FreeRDP_GatewayAvdAccessAadFormat, NULL },
-			{ "avd-token:", FreeRDP_GatewayAvdAccessTokenFormat, NULL },
-			{ "avd-scope:", FreeRDP_GatewayAvdScope, NULL }
+		const struct app_map amap[] = { { "tenantid:", FreeRDP_GatewayAvdAadtenantid, NULL },
+			                            { "ad:", FreeRDP_GatewayAzureActiveDirectory, NULL },
+			                            { "avd-access:", FreeRDP_GatewayAvdAccessAadFormat, NULL },
+			                            { "avd-token:", FreeRDP_GatewayAvdAccessTokenFormat, NULL },
+			                            { "avd-scope:", FreeRDP_GatewayAvdScope, NULL }
 
 		};
 		for (size_t x = 0; x < count; x++)
