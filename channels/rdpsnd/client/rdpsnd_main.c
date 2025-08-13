@@ -623,7 +623,7 @@ static UINT rdpsnd_treat_wave(rdpsndPlugin* rdpsnd, wStream* s, size_t size)
 	const BYTE* data = Stream_ConstPointer(s);
 	format = &rdpsnd->ClientFormats[rdpsnd->wCurrentFormatNo];
 	WLog_Print(rdpsnd->log, WLOG_DEBUG,
-	           "%s Wave: cBlockNo: %" PRIu8 " wTimeStamp: %" PRIu16 ", size: %" PRIdz,
+	           "%s Wave: cBlockNo: %" PRIu8 " wTimeStamp: %" PRIu16 ", size: %" PRIuz,
 	           rdpsnd_is_dyn_str(rdpsnd->dynamic), rdpsnd->cBlockNo, rdpsnd->wTimeStamp, size);
 
 	if (rdpsnd->device && rdpsnd->attached && !rdpsnd_detect_overrun(rdpsnd, format, size))

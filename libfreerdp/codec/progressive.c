@@ -1628,8 +1628,8 @@ static INLINE SSIZE_T progressive_process_tiles(
 
 		if (blockLen < 6)
 		{
-			WLog_Print(progressive->log, WLOG_ERROR, "Expected >= %" PRIu32 " remaining %" PRIuz, 6,
-			           blockLen);
+			WLog_Print(progressive->log, WLOG_ERROR, "Expected >= %" PRIu32 " remaining %" PRIu32,
+			           6u, blockLen);
 			return -1003;
 		}
 		if (!Stream_CheckAndLogRequiredLength(TAG, s, blockLen - 6))
@@ -1758,7 +1758,7 @@ static INLINE SSIZE_T progressive_wb_sync(PROGRESSIVE_CONTEXT* WINPR_RESTRICT pr
 	{
 		WLog_Print(progressive->log, WLOG_ERROR,
 		           "PROGRESSIVE_BLOCK_SYNC::blockLen = 0x%08" PRIx32 " != 0x%08" PRIx32,
-		           sync.blockLen, 12);
+		           sync.blockLen, 12u);
 		return -1005;
 	}
 
@@ -1808,7 +1808,7 @@ static INLINE SSIZE_T progressive_wb_frame_begin(PROGRESSIVE_CONTEXT* WINPR_REST
 	{
 		WLog_Print(progressive->log, WLOG_ERROR,
 		           " RFX_PROGRESSIVE_FRAME_BEGIN::blockLen = 0x%08" PRIx32 " != 0x%08" PRIx32,
-		           frameBegin.blockLen, 12);
+		           frameBegin.blockLen, 12u);
 		return -1005;
 	}
 
@@ -1860,15 +1860,15 @@ static INLINE SSIZE_T progressive_wb_frame_end(PROGRESSIVE_CONTEXT* WINPR_RESTRI
 	{
 		WLog_Print(progressive->log, WLOG_ERROR,
 		           " RFX_PROGRESSIVE_FRAME_END::blockLen = 0x%08" PRIx32 " != 0x%08" PRIx32,
-		           frameEnd.blockLen, 6);
+		           frameEnd.blockLen, 6u);
 		return -1005;
 	}
 
 	if (Stream_GetRemainingLength(s) != 0)
 	{
 		WLog_Print(progressive->log, WLOG_ERROR,
-		           "ProgressiveFrameEnd short %" PRIuz ", expected %" PRIuz,
-		           Stream_GetRemainingLength(s), 0);
+		           "ProgressiveFrameEnd short %" PRIuz ", expected %u",
+		           Stream_GetRemainingLength(s), 0U);
 		return -1008;
 	}
 
@@ -1896,8 +1896,8 @@ static INLINE SSIZE_T progressive_wb_context(PROGRESSIVE_CONTEXT* WINPR_RESTRICT
 	if (context->blockLen != 10)
 	{
 		WLog_Print(progressive->log, WLOG_ERROR,
-		           "RFX_PROGRESSIVE_CONTEXT::blockLen = 0x%08" PRIx32 " != 0x%08" PRIx32,
-		           context->blockLen, 10);
+		           "RFX_PROGRESSIVE_CONTEXT::blockLen = 0x%08" PRIx32 " != 0x%08x",
+		           context->blockLen, 10u);
 		return -1005;
 	}
 
@@ -1955,8 +1955,7 @@ static INLINE SSIZE_T progressive_wb_read_region_header(
 	if (region->tileSize != 64)
 	{
 		WLog_Print(progressive->log, WLOG_ERROR,
-		           "ProgressiveRegion tile size %" PRIu8 ", expected %" PRIuz, region->tileSize,
-		           64);
+		           "ProgressiveRegion tile size %" PRIu8 ", expected %u", region->tileSize, 64U);
 		return -1012;
 	}
 
@@ -1970,8 +1969,8 @@ static INLINE SSIZE_T progressive_wb_read_region_header(
 	if (region->numQuant > 7)
 	{
 		WLog_Print(progressive->log, WLOG_ERROR,
-		           "ProgressiveRegion quant count too high %" PRIu8 ", expected < %" PRIuz,
-		           region->numQuant, 7);
+		           "ProgressiveRegion quant count too high %" PRIu8 ", expected < %u",
+		           region->numQuant, 7U);
 		return -1014;
 	}
 

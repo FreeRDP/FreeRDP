@@ -400,7 +400,7 @@ static PfChannelResult DynvcTrackerPeekFn(ChannelStateTracker* tracker, BOOL fir
 					return PF_CHANNEL_RESULT_ERROR;
 				}
 
-				WLog_Print(dynChannelContext->log, WLOG_DEBUG, "Adding channel '%s'[%d]",
+				WLog_Print(dynChannelContext->log, WLOG_DEBUG, "Adding channel '%s'[%" PRIu32 "]",
 				           dynChannel->channelName, dynChannel->channelId);
 				if (!HashTable_Insert(dynChannelContext->channels, &dynChannel->channelId,
 				                      dynChannel))
@@ -587,7 +587,7 @@ static PfChannelResult DynvcTrackerPeekFn(ChannelStateTracker* tracker, BOOL fir
 			}
 			break;
 		default:
-			WLog_Print(dynChannelContext->log, WLOG_ERROR, "unknown channel mode %d",
+			WLog_Print(dynChannelContext->log, WLOG_ERROR, "unknown channel mode %u",
 			           dynChannel->channelMode);
 			result = PF_CHANNEL_RESULT_ERROR;
 			break;

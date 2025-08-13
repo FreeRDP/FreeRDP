@@ -136,7 +136,7 @@ BOOL tpkt_ensure_stream_consumed_(wLog* log, wStream* s, size_t length, const ch
 {
 	if (length > UINT16_MAX)
 	{
-		WLog_Print(log, WLOG_ERROR, "[%s] length %" PRIuz " > %" PRIu16, fkt, length, UINT16_MAX);
+		WLog_Print(log, WLOG_ERROR, "[%s] length %" PRIuz " > %d", fkt, length, UINT16_MAX);
 		return FALSE;
 	}
 
@@ -144,7 +144,7 @@ BOOL tpkt_ensure_stream_consumed_(wLog* log, wStream* s, size_t length, const ch
 	if (rem > 0)
 	{
 		WLog_Print(log, WLOG_ERROR,
-		           "[%s] Received invalid TPKT header length %" PRIu16 ", %" PRIdz
+		           "[%s] Received invalid TPKT header length %" PRIuz ", %" PRIuz
 		           " bytes too long!",
 		           fkt, length, rem);
 		return FALSE;

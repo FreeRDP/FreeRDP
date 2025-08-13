@@ -229,7 +229,7 @@ void ndr_dump_RPC_UNICODE_STRING(wLog* logger, UINT32 lvl, size_t indentLevel,
                                  const RPC_UNICODE_STRING* obj)
 {
 	WINPR_UNUSED(indentLevel);
-	WLog_Print(logger, lvl, "\tLength=%d MaximumLength=%d", obj->lenHints.length,
+	WLog_Print(logger, lvl, "\tLength=%u MaximumLength=%u", obj->lenHints.length,
 	           obj->lenHints.maxLength);
 	winpr_HexLogDump(logger, lvl, obj->Buffer, obj->lenHints.length);
 }

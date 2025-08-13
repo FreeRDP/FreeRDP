@@ -393,7 +393,7 @@ static UINT urbdrc_process_internal_io_control(IUDEVICE* pdev, GENERIC_CHANNEL_C
 
 	if (4 > OutputBufferSize)
 	{
-		WLog_Print(urbdrc->log, WLOG_DEBUG, "out_size %" PRIu32 " > OutputBufferSize %" PRIu32, 4,
+		WLog_Print(urbdrc->log, WLOG_DEBUG, "out_size %" PRIu32 " > OutputBufferSize %" PRIu32, 4u,
 		           OutputBufferSize);
 		return ERROR_BAD_CONFIGURATION;
 	}
@@ -1314,7 +1314,7 @@ static UINT urb_pipe_request(IUDEVICE* pdev, GENERIC_CHANNEL_CALLBACK* callback,
 			                                PIPE_CANCEL);
 
 			if (rc < 0)
-				WLog_Print(urbdrc->log, WLOG_DEBUG, "PIPE SET HALT: error %d", ret);
+				WLog_Print(urbdrc->log, WLOG_DEBUG, "PIPE SET HALT: error %u", ret);
 			else
 				ret = USBD_STATUS_SUCCESS;
 
@@ -1327,7 +1327,7 @@ static UINT urb_pipe_request(IUDEVICE* pdev, GENERIC_CHANNEL_CALLBACK* callback,
 			                                PIPE_RESET);
 
 			if (rc < 0)
-				WLog_Print(urbdrc->log, WLOG_DEBUG, "PIPE RESET: error %d", ret);
+				WLog_Print(urbdrc->log, WLOG_DEBUG, "PIPE RESET: error %u", ret);
 			else
 				ret = USBD_STATUS_SUCCESS;
 
@@ -1409,7 +1409,8 @@ static UINT urb_get_current_frame_number(IUDEVICE* pdev, GENERIC_CHANNEL_CALLBAC
 	const UINT32 OutputBufferSize = Stream_Get_UINT32(s);
 	if (OutputBufferSize != 0)
 	{
-		WLog_Print(urbdrc->log, WLOG_WARN, "OutputBufferSize=%" PRIu32 ", expected 0");
+		WLog_Print(urbdrc->log, WLOG_WARN, "OutputBufferSize=%" PRIu32 ", expected 0",
+		           OutputBufferSize);
 	}
 	/** Fixme: Need to fill actual frame number!!*/
 	const UINT32 dummy_frames = GetTickCount();

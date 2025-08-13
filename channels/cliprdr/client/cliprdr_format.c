@@ -140,7 +140,7 @@ UINT cliprdr_process_format_list(cliprdrPlugin* cliprdr, wStream* s, UINT32 data
 		for (size_t x = 0; x < formatList.numFormats; x++)
 		{
 			const CLIPRDR_FORMAT* format = &formatList.formats[x];
-			WLog_Print(cliprdr->log, level, "[%" PRIu32 "]: id=0x%08" PRIx32 " [%s|%s]", x,
+			WLog_Print(cliprdr->log, level, "[%" PRIuz "]: id=0x%08" PRIx32 " [%s|%s]", x,
 			           format->formatId, ClipboardGetFormatIdString(format->formatId),
 			           format->formatName);
 		}
@@ -150,7 +150,7 @@ UINT cliprdr_process_format_list(cliprdrPlugin* cliprdr, wStream* s, UINT32 data
 		for (size_t x = 0; x < filteredFormatList.numFormats; x++)
 		{
 			const CLIPRDR_FORMAT* format = &filteredFormatList.formats[x];
-			WLog_Print(cliprdr->log, level, "[%" PRIu32 "]: id=0x%08" PRIx32 " [%s|%s]", x,
+			WLog_Print(cliprdr->log, level, "[%" PRIuz "]: id=0x%08" PRIx32 " [%s|%s]", x,
 			           format->formatId, ClipboardGetFormatIdString(format->formatId),
 			           format->formatName);
 		}

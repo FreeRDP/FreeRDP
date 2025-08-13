@@ -506,7 +506,7 @@ static int aad_send_auth_request(rdpAad* aad, const char* ts_nonce)
 
 	if (transport_write(aad->transport, s) < 0)
 	{
-		WLog_Print(aad->log, WLOG_ERROR, "transport_write [%" PRIdz " bytes] failed",
+		WLog_Print(aad->log, WLOG_ERROR, "transport_write [%" PRIuz " bytes] failed",
 		           Stream_Length(s));
 	}
 	else
@@ -593,7 +593,7 @@ int aad_recv(rdpAad* aad, wStream* s)
 			return aad_parse_state_auth(aad, s);
 		case AAD_STATE_FINAL:
 		default:
-			WLog_Print(aad->log, WLOG_ERROR, "Invalid AAD_STATE %d", aad->state);
+			WLog_Print(aad->log, WLOG_ERROR, "Invalid AAD_STATE %u", aad->state);
 			return -1;
 	}
 }

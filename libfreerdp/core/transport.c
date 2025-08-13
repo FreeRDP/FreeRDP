@@ -754,21 +754,24 @@ static void transport_bio_error_log(rdpTransport* transport, LPCSTR biofunc,
 	if (ERR_peek_error() == 0)
 	{
 		char ebuffer[256] = { 0 };
-		const char* fmt = "%s returned a system error %d: %s";
+
 		if (saveerrno == 0)
-			fmt = "%s retries exceeded";
-		WLog_PrintTextMessage(transport->log, level, line, file, func, fmt, biofunc, saveerrno,
-		                      winpr_strerror(saveerrno, ebuffer, sizeof(ebuffer)));
+			WLog_PrintTextMessage(transport->log, level, line, file, func, "%s retries exceeded",
+			                      biofunc);
+		else
+			WLog_PrintTextMessage(transport->log, level, line, file, func,
+			                      "%s returned a system error %d: %s", biofunc, saveerrno,
+			                      winpr_strerror(saveerrno, ebuffer, sizeof(ebuffer)));
 		return;
 	}
 
 	while ((sslerr = ERR_get_error()))
 	{
 		char buf[120] = { 0 };
-		const char* fmt = "%s returned an error: %s";
 
 		ERR_error_string_n(sslerr, buf, 120);
-		WLog_PrintTextMessage(transport->log, level, line, file, func, fmt, biofunc, buf);
+		WLog_PrintTextMessage(transport->log, level, line, file, func, "%s returned an error: %s",
+		                      biofunc, buf);
 	}
 }
 

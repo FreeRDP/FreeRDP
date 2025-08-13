@@ -503,8 +503,9 @@ static int load_map_from_xkbfile(xfContext* xfc)
 			}
 			if (!found)
 			{
-				WLog_Print(xfc->log, WLOG_WARN, "%4s: keycode: 0x%02X -> no RDP scancode found",
-				           xkb_keyname, i);
+				WLog_Print(xfc->log, WLOG_WARN,
+				           "%4s: keycode: 0x%02" PRIx32 " -> no RDP scancode found", xkb_keyname,
+				           WINPR_ASSERTING_INT_CAST(UINT32, i));
 			}
 			else
 				status = 0;

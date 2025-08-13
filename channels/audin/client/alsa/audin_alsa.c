@@ -193,8 +193,8 @@ static DWORD WINAPI audin_alsa_thread_func(LPVOID arg)
 
 		if (error)
 		{
-			WLog_Print(alsa->log, WLOG_ERROR, "audin_alsa_thread_receive failed with error %ld",
-			           error);
+			WLog_Print(alsa->log, WLOG_ERROR,
+			           "audin_alsa_thread_receive failed with error %" PRIu32, error);
 			break;
 		}
 	}

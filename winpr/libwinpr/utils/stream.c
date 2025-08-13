@@ -358,7 +358,7 @@ BOOL Stream_CheckAndLogRequiredCapacityWLogExVa(wLog* log, DWORD level, wStream*
 		(void)vsnprintf(prefix, sizeof(prefix), fmt, args);
 
 		WLog_Print(log, level,
-		           "[%s] invalid remaining capacity, got %" PRIuz ", require at least %" PRIu64
+		           "[%s] invalid remaining capacity, got %" PRIuz ", require at least %" PRIuz
 		           " [element size=%" PRIuz "]",
 		           prefix, actual, nmemb, size);
 		winpr_log_backtrace_ex(log, level, 20);

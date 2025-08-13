@@ -645,7 +645,7 @@ BOOL SetCommState(HANDLE hFile, LPDCB lpDCB)
 			break;
 
 		default:
-			CommLog_Print(WLOG_WARN, "Unexpected fDtrControl value: %" PRIu32 "\n",
+			CommLog_Print(WLOG_WARN, "Unexpected fDtrControl value: %" PRId32 "\n",
 			              lpDCB->fDtrControl);
 			return FALSE;
 	}
@@ -700,7 +700,7 @@ BOOL SetCommState(HANDLE hFile, LPDCB lpDCB)
 			break;
 
 		default:
-			CommLog_Print(WLOG_WARN, "Unexpected fRtsControl value: %" PRIu32 "\n",
+			CommLog_Print(WLOG_WARN, "Unexpected fRtsControl value: %" PRId32 "\n",
 			              lpDCB->fRtsControl);
 			return FALSE;
 	}
@@ -1808,8 +1808,8 @@ static BOOL CommStatusErrorEx(WINPR_COMM* pComm, unsigned long int ctl, const ch
 		if (WLog_IsLevelActive(sLog, level))
 		{
 			WLog_PrintTextMessage(sLog, level, line, file, fkt,
-			                      "%s [0x%08" PRIx32 "] ioctl failed, errno=[%d] %s.", str, ctl,
-			                      errno, winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
+			                      "%s [0x%08lx] ioctl failed, errno=[%d] %s.", str, ctl, errno,
+			                      winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 		}
 	}
 

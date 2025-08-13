@@ -814,7 +814,7 @@ static UINT audin_server_open_reply_default(audin_server_context* context,
 	WINPR_ASSERT(open_reply);
 
 	/* TODO: Implement failure handling */
-	WLog_Print(audin->log, WLOG_DEBUG, "Open Reply PDU: Result: %i", open_reply->Result);
+	WLog_Print(audin->log, WLOG_DEBUG, "Open Reply PDU: Result: %" PRIu32, open_reply->Result);
 	return CHANNEL_RC_OK;
 }
 

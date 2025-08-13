@@ -172,7 +172,7 @@ static BOOL check_transition(wLog* log, RDSTLS_STATE current, RDSTLS_STATE expec
 	if (requested != expected)
 	{
 		WLog_Print(log, WLOG_ERROR,
-		           "Unexpected rdstls state transition from %s [%d] to %s [%d], expected %s [%d]",
+		           "Unexpected rdstls state transition from %s [%u] to %s [%u], expected %s [%u]",
 		           rdstls_get_state_str(current), current, rdstls_get_state_str(requested),
 		           requested, rdstls_get_state_str(expected), expected);
 		return FALSE;
@@ -207,7 +207,7 @@ static BOOL rdstls_set_state(rdpRdstls* rdstls, RDSTLS_STATE state)
 			break;
 		default:
 			WLog_Print(rdstls->log, WLOG_ERROR,
-			           "Invalid rdstls state %s [%d], requested transition to %s [%d]",
+			           "Invalid rdstls state %s [%u], requested transition to %s [%u]",
 			           rdstls_get_state_str(rdstls->state), rdstls->state,
 			           rdstls_get_state_str(state), state);
 			break;
@@ -335,8 +335,8 @@ static BOOL rdstls_process_capabilities(rdpRdstls* rdstls, wStream* s)
 	if (dataType != RDSTLS_DATA_CAPABILITIES)
 	{
 		WLog_Print(rdstls->log, WLOG_ERROR,
-		           "received invalid DataType=0x%04" PRIX16 ", expected 0x%04" PRIX16, dataType,
-		           RDSTLS_DATA_CAPABILITIES);
+		           "received invalid DataType=0x%04" PRIX16 ", expected 0x%04" PRIX32, dataType,
+		           WINPR_CXX_COMPAT_CAST(UINT32, RDSTLS_DATA_CAPABILITIES));
 		return FALSE;
 	}
 
@@ -344,8 +344,8 @@ static BOOL rdstls_process_capabilities(rdpRdstls* rdstls, wStream* s)
 	if ((supportedVersions & RDSTLS_VERSION_1) == 0)
 	{
 		WLog_Print(rdstls->log, WLOG_ERROR,
-		           "received invalid supportedVersions=0x%04" PRIX16 ", expected 0x%04" PRIX16,
-		           supportedVersions, RDSTLS_VERSION_1);
+		           "received invalid supportedVersions=0x%04" PRIX16 ", expected 0x%04" PRIX32,
+		           supportedVersions, WINPR_CXX_COMPAT_CAST(UINT32, RDSTLS_VERSION_1));
 		return FALSE;
 	}
 
@@ -540,9 +540,10 @@ static BOOL rdstls_process_authentication_request(rdpRdstls* rdstls, wStream* s)
 			break;
 		default:
 			WLog_Print(rdstls->log, WLOG_ERROR,
-			           "received invalid DataType=0x%04" PRIX16 ", expected 0x%04" PRIX16
-			           " or 0x%04" PRIX16,
-			           dataType, RDSTLS_DATA_PASSWORD_CREDS, RDSTLS_DATA_AUTORECONNECT_COOKIE);
+			           "received invalid DataType=0x%04" PRIX16 ", expected 0x%04" PRIX32
+			           " or 0x%04" PRIX32,
+			           dataType, WINPR_CXX_COMPAT_CAST(UINT32, RDSTLS_DATA_PASSWORD_CREDS),
+			           WINPR_CXX_COMPAT_CAST(UINT32, RDSTLS_DATA_AUTORECONNECT_COOKIE));
 			return FALSE;
 	}
 
@@ -561,8 +562,8 @@ static BOOL rdstls_process_authentication_response(rdpRdstls* rdstls, wStream* s
 	if (dataType != RDSTLS_DATA_RESULT_CODE)
 	{
 		WLog_Print(rdstls->log, WLOG_ERROR,
-		           "received invalid DataType=0x%04" PRIX16 ", expected 0x%04" PRIX16, dataType,
-		           RDSTLS_DATA_RESULT_CODE);
+		           "received invalid DataType=0x%04" PRIX16 ", expected 0x%04" PRIX32, dataType,
+		           WINPR_CXX_COMPAT_CAST(UINT32, RDSTLS_DATA_RESULT_CODE));
 		return FALSE;
 	}
 
@@ -655,7 +656,7 @@ static BOOL rdstls_send(WINPR_ATTR_UNUSED rdpTransport* transport, wStream* s, v
 				return FALSE;
 			break;
 		default:
-			WLog_Print(rdstls->log, WLOG_ERROR, "Invalid rdstls state %s [%d]",
+			WLog_Print(rdstls->log, WLOG_ERROR, "Invalid rdstls state %s [%" PRIu32 "]",
 			           rdstls_get_state_str(state), state);
 			return FALSE;
 	}
@@ -684,7 +685,7 @@ static int rdstls_recv(WINPR_ATTR_UNUSED rdpTransport* transport, wStream* s, vo
 	{
 		WLog_Print(rdstls->log, WLOG_ERROR,
 		           "received invalid RDSTLS Version=0x%04" PRIX16 ", expected 0x%04" PRIX16,
-		           version, RDSTLS_VERSION_1);
+		           version, WINPR_CXX_COMPAT_CAST(UINT32, RDSTLS_VERSION_1));
 		return -1;
 	}
 
@@ -724,7 +725,7 @@ static BOOL rdstls_check_state_requirements_(rdpRdstls* rdstls, RDSTLS_STATE exp
 	const DWORD log_level = WLOG_ERROR;
 	if (WLog_IsLevelActive(rdstls->log, log_level))
 		WLog_PrintTextMessage(rdstls->log, log_level, line, file, fkt,
-		                      "Unexpected rdstls state %s [%d], expected %s [%d]",
+		                      "Unexpected rdstls state %s [%u], expected %s [%u]",
 		                      rdstls_get_state_str(current), current,
 		                      rdstls_get_state_str(expected), expected);
 

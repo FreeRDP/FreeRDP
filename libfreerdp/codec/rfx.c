@@ -922,8 +922,8 @@ static INLINE BOOL rfx_process_message_tileset(RFX_CONTEXT* WINPR_RESTRICT conte
 		*quants++ = (quant & 0x0F);
 		*quants++ = (quant >> 4);
 		WLog_Print(context->priv->log, WLOG_DEBUG,
-		           "quant %d (%" PRIu32 " %" PRIu32 " %" PRIu32 " %" PRIu32 " %" PRIu32 " %" PRIu32
-		           " %" PRIu32 " %" PRIu32 " %" PRIu32 " %" PRIu32 ").",
+		           "quant %" PRIuz " (%" PRIu32 " %" PRIu32 " %" PRIu32 " %" PRIu32 " %" PRIu32
+		           " %" PRIu32 " %" PRIu32 " %" PRIu32 " %" PRIu32 " %" PRIu32 ").",
 		           i, context->quants[i * 10], context->quants[i * 10 + 1],
 		           context->quants[i * 10 + 2], context->quants[i * 10 + 3],
 		           context->quants[i * 10 + 4], context->quants[i * 10 + 5],
@@ -985,8 +985,8 @@ static INLINE BOOL rfx_process_message_tileset(RFX_CONTEXT* WINPR_RESTRICT conte
 			if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, 6))
 			{
 				WLog_Print(context->priv->log, WLOG_ERROR,
-				           "RfxMessageTileSet packet too small to read tile %d/%" PRIu16 "", i,
-				           message->numTiles);
+				           "RfxMessageTileSet packet too small to read tile %" PRIuz "/%" PRIu16 "",
+				           i, message->numTiles);
 				rc = FALSE;
 				break;
 			}
@@ -1005,7 +1005,7 @@ static INLINE BOOL rfx_process_message_tileset(RFX_CONTEXT* WINPR_RESTRICT conte
 			    (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, sub, blockLen - 6)))
 			{
 				WLog_Print(context->priv->log, WLOG_ERROR,
-				           "RfxMessageTileSet not enough bytes to read tile %d/%" PRIu16
+				           "RfxMessageTileSet not enough bytes to read tile %" PRIuz "/%" PRIu16
 				           " with blocklen=%" PRIu32 "",
 				           i, message->numTiles, blockLen);
 				rc = FALSE;
@@ -1222,7 +1222,7 @@ BOOL rfx_process_message(RFX_CONTEXT* WINPR_RESTRICT context, const BYTE* WINPR_
 		if (blockLenNoHeader < extraBlockLen)
 		{
 			WLog_Print(context->priv->log, WLOG_ERROR,
-			           "blockLen too small(%" PRIu32 "), must be >= 6 + %" PRIu16, blockLen,
+			           "blockLen too small(%" PRIu32 "), must be >= 6 + %" PRIuz, blockLen,
 			           extraBlockLen);
 			return FALSE;
 		}

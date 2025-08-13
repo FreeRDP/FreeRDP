@@ -204,7 +204,8 @@ static UINT urbdrc_process_channel_create(GENERIC_CHANNEL_CALLBACK* callback, wS
 	if ((MajorVersion != 1) || (MinorVersion != 0))
 	{
 		WLog_Print(urbdrc->log, WLOG_WARN,
-		           "server supports USB channel version %" PRIu32 ".%" PRIu32);
+		           "server supports USB channel version %" PRIu32 ".%" PRIu32, MajorVersion,
+		           MinorVersion);
 		WLog_Print(urbdrc->log, WLOG_WARN, "we only support channel version 1.0");
 		MajorVersion = 1;
 		MinorVersion = 0;

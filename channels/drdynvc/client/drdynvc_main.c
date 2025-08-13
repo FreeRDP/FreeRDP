@@ -34,6 +34,21 @@
 
 #define TAG CHANNELS_TAG("drdynvc.client")
 
+static const char* channel_state2str(DVC_CHANNEL_STATE state)
+{
+	switch (state)
+	{
+		case DVC_CHANNEL_INIT:
+			return "DVC_CHANNEL_INIT";
+		case DVC_CHANNEL_RUNNING:
+			return "DVC_CHANNEL_RUNNING";
+		case DVC_CHANNEL_CLOSED:
+			return "DVC_CHANNEL_CLOSED";
+		default:
+			return "DVC_CHANNEL_UNKNOWN";
+	}
+}
+
 static void dvcman_channel_free(DVCMAN_CHANNEL* channel);
 static UINT dvcman_channel_close(DVCMAN_CHANNEL* channel, BOOL perRequest, BOOL fromHashTableFn);
 static void dvcman_free(drdynvcPlugin* drdynvc, IWTSVirtualChannelManager* pChannelMgr);
@@ -474,11 +489,14 @@ static UINT dvcman_channel_close(DVCMAN_CHANNEL* channel, BOOL perRequest, BOOL 
 				error = dvcchannel_send_close(channel);
 				if (error != CHANNEL_RC_OK)
 				{
-					const char* msg = "error when sending close confirm for '%s'";
 					if (perRequest)
-						msg = "error when sending closeRequest for '%s'";
-
-					WLog_Print(drdynvc->log, WLOG_DEBUG, msg, channel->channel_name);
+						WLog_Print(drdynvc->log, WLOG_DEBUG,
+						           "error when sending closeRequest for '%s'",
+						           channel->channel_name);
+					else
+						WLog_Print(drdynvc->log, WLOG_DEBUG,
+						           "error when sending close confirm for '%s'",
+						           channel->channel_name);
 				}
 			}
 
@@ -688,10 +706,12 @@ static DVCMAN_CHANNEL* dvcman_create_channel(drdynvcPlugin* drdynvc,
 			case DVC_CHANNEL_CLOSED:
 			case DVC_CHANNEL_INIT:
 			default:
-				WLog_Print(drdynvc->log, WLOG_ERROR, "not expecting a createChannel from state %d",
-				           channel->state);
+			{
+				WLog_Print(drdynvc->log, WLOG_ERROR, "not expecting a createChannel from state %s",
+				           channel_state2str(channel->state));
 				*res = CHANNEL_RC_INITIALIZATION_ERROR;
 				goto out;
+			}
 		}
 	}
 	else

@@ -325,7 +325,7 @@ static int rpc_client_recv_pdu_int(rdpRpc* rpc, RPC_PDU* pdu)
 		}
 		else
 		{
-			WLog_Print(rpc->log, WLOG_ERROR, "invalid rpc->State: %d", rpc->State);
+			WLog_Print(rpc->log, WLOG_ERROR, "invalid rpc->State: %u", rpc->State);
 		}
 	}
 	else if (rpc->State >= RPC_CLIENT_STATE_CONTEXT_NEGOTIATED)

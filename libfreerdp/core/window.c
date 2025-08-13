@@ -802,7 +802,7 @@ static void dump_window_state_order(wLog* log, const char* msg, const WINDOW_ORD
 		DUMP_APPEND(buffer, bufferSize, " appBarEdge=%s", appBarEdgeStr);
 	}
 
-	WLog_Print(log, WLOG_DEBUG, buffer);
+	WLog_Print(log, WLOG_DEBUG, "%s", buffer);
 }
 
 static BOOL update_recv_window_info_order(rdpUpdate* update, wStream* s,
@@ -1080,7 +1080,7 @@ static void dump_monitored_desktop(wLog* log, const char* msg, const WINDOW_ORDE
 		}
 		DUMP_APPEND(buffer, bufferSize, ")");
 	}
-	WLog_Print(log, WLOG_DEBUG, buffer);
+	WLog_Print(log, WLOG_DEBUG, "%s", buffer);
 }
 
 static BOOL update_recv_desktop_info_order(rdpUpdate* update, wStream* s,

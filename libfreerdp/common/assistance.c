@@ -1468,9 +1468,9 @@ void freerdp_assistance_print_file(rdpAssistanceFile* file, wLog* log, DWORD lev
 		if (x < ArrayList_Count(file->MachineUris))
 			uri = ArrayList_GetItem(file->MachineUris, x);
 
-		WLog_Print(log, level, "MachineAddress [%" PRIdz ": %s", x, addr);
-		WLog_Print(log, level, "MachinePort    [%" PRIdz ": %" PRIu32, x, port);
-		WLog_Print(log, level, "MachineURI     [%" PRIdz ": %s", x, uri);
+		WLog_Print(log, level, "MachineAddress [%" PRIuz ": %s", x, addr);
+		WLog_Print(log, level, "MachinePort    [%" PRIuz ": %" PRIu32, x, port);
+		WLog_Print(log, level, "MachineURI     [%" PRIuz ": %s", x, uri);
 	}
 }
 

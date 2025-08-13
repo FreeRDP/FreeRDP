@@ -236,7 +236,7 @@ static DWORD rdp_version_common(wLog* log, DWORD serverVersion, DWORD clientVers
 
 		default:
 			WLog_Print(log, WLOG_ERROR,
-			           "Invalid client [%" PRId32 "] and server [%" PRId32 "] versions",
+			           "Invalid client [%" PRIu32 "] and server [%" PRIu32 "] versions",
 			           serverVersion, clientVersion);
 			return version;
 	}
@@ -1886,7 +1886,7 @@ BOOL gcc_read_client_network_data(wStream* s, rdpMcs* mcs)
 
 	if (mcs->channelCount > CHANNEL_MAX_COUNT)
 	{
-		WLog_Print(mcs->log, WLOG_ERROR, "rdpMcs::channelCount %" PRIu32 " > maximum %" PRIu32,
+		WLog_Print(mcs->log, WLOG_ERROR, "rdpMcs::channelCount %" PRIu32 " > maximum %d",
 		           mcs->channelCount, CHANNEL_MAX_COUNT);
 		return FALSE;
 	}
