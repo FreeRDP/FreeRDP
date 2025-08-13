@@ -47,13 +47,16 @@ extern "C"
 #define WLOG_OFF 6
 #define WLOG_LEVEL_INHERIT 0xFFFF
 
-/**
- * Log Message
+/** @defgroup LogMessageTypes Log Message
+ *  @{
  */
 #define WLOG_MESSAGE_TEXT 0
 #define WLOG_MESSAGE_DATA 1
 #define WLOG_MESSAGE_IMAGE 2
 #define WLOG_MESSAGE_PACKET 3
+/**
+ * @}
+ */
 
 /**
  * Log Appenders
@@ -106,8 +109,69 @@ extern "C"
 #define WLOG_PACKET_INBOUND 1
 #define WLOG_PACKET_OUTBOUND 2
 
+	/** @brief specialized function to print text log messages.
+	 *  Same as @ref WLog_PrintMessage with \b type = WLOG_MESSAGE_TEXT but with compile time checks
+	 * for issues in format string.
+	 *
+	 *  @param log A pointer to the logger to use
+	 *  @param line the file line the log message originates from
+	 *  @param file the file name the log message originates from
+	 *  @param function the function name the log message originates from
+	 *  @param fmt the printf style format string
+	 *
+	 *  @return \b TRUE for success, \b FALSE otherwise.
+	 *  @since version 3.17.0
+	 */
+	WINPR_ATTR_FORMAT_ARG(6, 7)
+	WINPR_API BOOL WLog_PrintTextMessage(wLog* log, DWORD level, size_t line, const char* file,
+	                                     const char* function, WINPR_FORMAT_ARG const char* fmt,
+	                                     ...);
+
+	/** @brief specialized function to print text log messages.
+	 *  Same as @ref WLog_PrintMessageVA with \b type = WLOG_MESSAGE_TEXT but with compile time
+	 * checks for issues in format string.
+	 *
+	 *  @param log A pointer to the logger to use
+	 *  @param line the file line the log message originates from
+	 *  @param file the file name the log message originates from
+	 *  @param function the function name the log message originates from
+	 *  @param fmt the printf style format string
+	 *
+	 *  @return \b TRUE for success, \b FALSE otherwise.
+	 *  @since version 3.17.0
+	 */
+	WINPR_ATTR_FORMAT_ARG(6, 0)
+	WINPR_API BOOL WLog_PrintTextMessageVA(wLog* log, DWORD level, size_t line, const char* file,
+	                                       const char* function, WINPR_FORMAT_ARG const char* fmt,
+	                                       va_list args);
+
+	/** @brief log something of a specified type.
+	 *  @bug For /b WLOG_MESSAGE_TEXT the format string is not validated at compile time. Use \ref
+	 * WLog_PrintTextMessage instead.
+	 *
+	 *  @param log A pointer to the logger to use
+	 *  @param type The type of message to log, can be any of \ref LogMessageTypes
+	 *  @param line the file line the log message originates from
+	 *  @param file the file name the log message originates from
+	 *  @param function the function name the log message originates from
+	 *
+	 *  @return \b TRUE for success, \b FALSE otherwise.
+	 */
 	WINPR_API BOOL WLog_PrintMessage(wLog* log, DWORD type, DWORD level, size_t line,
 	                                 const char* file, const char* function, ...);
+
+	/** @brief log something of a specified type.
+	 *  @bug For /b WLOG_MESSAGE_TEXT the format string is not validated at compile time. Use \ref
+	 * WLog_PrintTextMessageVA instead.
+	 *
+	 *  @param log A pointer to the logger to use
+	 *  @param type The type of message to log, can be any of \ref LogMessageTypes
+	 *  @param line the file line the log message originates from
+	 *  @param file the file name the log message originates from
+	 *  @param function the function name the log message originates from
+	 *
+	 *  @return \b TRUE for success, \b FALSE otherwise.
+	 */
 	WINPR_API BOOL WLog_PrintMessageVA(wLog* log, DWORD type, DWORD level, size_t line,
 	                                   const char* file, const char* function, va_list args);
 
@@ -128,11 +192,10 @@ extern "C"
 	 */
 	WINPR_API BOOL WLog_SetContext(wLog* log, const char* (*fkt)(void*), void* context);
 
-#define WLog_Print_unchecked(_log, _log_level, ...)                                          \
-	do                                                                                       \
-	{                                                                                        \
-		WLog_PrintMessage(_log, WLOG_MESSAGE_TEXT, _log_level, __LINE__, __FILE__, __func__, \
-		                  __VA_ARGS__);                                                      \
+#define WLog_Print_unchecked(_log, _log_level, ...)                                         \
+	do                                                                                      \
+	{                                                                                       \
+		WLog_PrintTextMessage(_log, _log_level, __LINE__, __FILE__, __func__, __VA_ARGS__); \
 	} while (0)
 
 #define WLog_Print(_log, _log_level, ...)                        \
@@ -153,11 +216,10 @@ extern "C"
 		WLog_Print(_log_cached_ptr, _log_level, __VA_ARGS__); \
 	} while (0)
 
-#define WLog_PrintVA_unchecked(_log, _log_level, _args)                                        \
-	do                                                                                         \
-	{                                                                                          \
-		WLog_PrintMessageVA(_log, WLOG_MESSAGE_TEXT, _log_level, __LINE__, __FILE__, __func__, \
-		                    _args);                                                            \
+#define WLog_PrintVA_unchecked(_log, _log_level, _args)                                 \
+	do                                                                                  \
+	{                                                                                   \
+		WLog_PrintTextMessageVA(_log, _log_level, __LINE__, __FILE__, __func__, _args); \
 	} while (0)
 
 #define WLog_PrintVA(_log, _log_level, _args)                \
