@@ -1335,12 +1335,51 @@ fail:
 	return NULL;
 }
 
+STACK_OF(X509)* extract_chain_from_pem(const char* pem)
+{
+	if (!pem)
+	{
+		return NULL;
+	}
+
+	BIO* bio = BIO_new_mem_buf(pem, strlen(pem));
+	if (!bio)
+	{
+		return NULL;
+	}
+
+
+	X509* leaf = PEM_read_bio_X509(bio, NULL, NULL, NULL);
+	if (!leaf)
+	{
+		BIO_free(bio);
+		return NULL;
+	}
+
+
+	STACK_OF(X509)* chain = sk_X509_new_null();
+	if (!chain)
+	{
+		X509_free(leaf);
+		BIO_free(bio);
+		return NULL;
+	}
+
+	X509* cert = NULL;
+	while ((cert = PEM_read_bio_X509(bio, NULL, NULL, NULL)) != NULL)
+	{
+		sk_X509_push(chain, cert);
+	}
+
+	return chain;
+}
+
 static rdpCertificate* freerdp_certificate_new_from(const char* file, BOOL isFile)
 {
 	X509* x509 = x509_utils_from_pem(file, strlen(file), isFile);
 	if (!x509)
 		return NULL;
-	rdpCertificate* cert = freerdp_certificate_new_from_x509(x509, NULL);
+	rdpCertificate* cert = freerdp_certificate_new_from_x509(x509, extract_chain_from_pem(file));
 	X509_free(x509);
 	return cert;
 }
