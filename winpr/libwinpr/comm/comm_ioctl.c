@@ -101,7 +101,7 @@ static BOOL s_CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID 
 
 		case SerialDriverUnknown:
 		default:
-			CommLog_Print(WLOG_DEBUG, "Unknown remote serial driver (%d), using SerCx2.sys",
+			CommLog_Print(WLOG_DEBUG, "Unknown remote serial driver (%u), using SerCx2.sys",
 			              pComm->serverSerialDriverId);
 			pServerSerialDriver = SerCx2Sys_s();
 			break;

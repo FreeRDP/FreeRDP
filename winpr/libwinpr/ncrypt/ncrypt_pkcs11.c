@@ -366,9 +366,8 @@ static void log_(const char* tag, const char* msg, CK_RV rv, CK_ULONG index, CK_
 	if (!WLog_IsLevelActive(log_cached_ptr, log_level))
 		return;
 
-	WLog_PrintMessage(log_cached_ptr, WLOG_MESSAGE_TEXT, log_level, line, file, fkt,
-	                  "%s for slot #%" PRIu32 "(%" PRIu32 "), rv=%s", msg, index, slot,
-	                  CK_RV_error_string(rv));
+	WLog_PrintTextMessage(log_cached_ptr, log_level, line, file, fkt,
+	                      "%s for slot #%lu(%lu), rv=%s", msg, index, slot, CK_RV_error_string(rv));
 }
 
 static SECURITY_STATUS collect_keys(NCryptP11ProviderHandle* provider, P11EnumKeysState* state)

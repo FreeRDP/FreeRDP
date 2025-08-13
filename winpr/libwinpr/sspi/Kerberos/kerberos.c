@@ -147,8 +147,7 @@ static krb5_error_code kerberos_log_msg(krb5_context ctx, krb5_error_code code, 
 			if (WLog_IsLevelActive(log, level))
 			{
 				const char* msg = krb5_get_error_message(ctx, code);
-				WLog_PrintMessage(log, WLOG_MESSAGE_TEXT, level, line, file, fkt, "%s (%s [%d])",
-				                  what, msg, code);
+				WLog_PrintTextMessage(log, level, line, file, fkt, "%s (%s [%d])", what, msg, code);
 				krb5_free_error_message(ctx, msg);
 			}
 		}

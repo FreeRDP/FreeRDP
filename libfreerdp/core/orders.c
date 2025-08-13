@@ -87,16 +87,16 @@ static inline BOOL check_val_fits_int16_int(INT32 value, WINPR_ATTR_UNUSED const
 	if (value < INT16_MIN)
 	{
 		if (WLog_IsLevelActive(log, level))
-			WLog_PrintMessage(log, WLOG_MESSAGE_TEXT, level, line, file, fkt,
-			                  "value %" PRId32 " < %d", INT16_MIN);
+			WLog_PrintTextMessage(log, level, line, file, fkt, "value %" PRId32 " < %d", INT16_MIN,
+			                      value);
 		return FALSE;
 	}
 
 	if (value > INT16_MAX)
 	{
 		if (WLog_IsLevelActive(log, level))
-			WLog_PrintMessage(log, WLOG_MESSAGE_TEXT, level, line, file, fkt,
-			                  "value %" PRId32 " > %d", INT16_MAX);
+			WLog_PrintTextMessage(log, level, line, file, fkt, "value %" PRId32 " > %d", INT16_MAX,
+			                      value);
 		return FALSE;
 	}
 
@@ -631,8 +631,8 @@ static INLINE BOOL update_write_coord_int(wStream* s, INT32 coord, const char* n
 		wLog* log = WLog_Get(TAG);
 		if (WLog_IsLevelActive(log, level))
 		{
-			WLog_PrintMessage(log, WLOG_MESSAGE_TEXT, level, line, file, fkt,
-			                  "[%s] 0 <= %" PRId32 " <= %" PRIu16, name, coord, UINT16_MAX);
+			WLog_PrintTextMessage(log, level, line, file, fkt, "[%s] 0 <= %" PRId32 " <= %d", name,
+			                      coord, UINT16_MAX);
 		}
 		return FALSE;
 	}

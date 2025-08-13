@@ -225,7 +225,7 @@ static const WCHAR* rdpdr_read_ustring(wLog* log, wStream* s, size_t bytelen)
 		return NULL;
 	if (_wcsnlen(str, charlen) == charlen)
 	{
-		WLog_Print(log, WLOG_WARN, "[rdpdr] unicode string not '\0' terminated");
+		WLog_Print(log, WLOG_WARN, "[rdpdr] unicode string not '\\0' terminated");
 		return NULL;
 	}
 	Stream_Seek(s, bytelen);
@@ -1331,7 +1331,7 @@ static UINT rdpdr_server_receive_io_write_request(RdpdrServerContext* context, w
 
 	WLog_Print(context->priv->log, WLOG_WARN,
 	           "[MS-RDPEFS] 2.2.1.4.4 Device Write Request (DR_WRITE_REQ) not implemented");
-	WLog_Print(context->priv->log, WLOG_WARN, "TODO: parse %p", data);
+	WLog_Print(context->priv->log, WLOG_WARN, "TODO: parse %p", (const void*)data);
 
 	return CHANNEL_RC_OK;
 }
@@ -1364,8 +1364,8 @@ static UINT rdpdr_server_receive_io_device_control_request(RdpdrServerContext* c
 	WLog_Print(context->priv->log, WLOG_WARN,
 	           "[MS-RDPEFS] 2.2.1.4.5 Device Control Request (DR_CONTROL_REQ) not implemented");
 	WLog_Print(context->priv->log, WLOG_WARN,
-	           "TODO: parse %p [%" PRIu32 "], OutputBufferLength=%" PRIu32, InputBuffer,
-	           InputBufferLength, OutputBufferLength);
+	           "TODO: parse %p [%" PRIu32 "], OutputBufferLength=%" PRIu32,
+	           (const void*)InputBuffer, InputBufferLength, OutputBufferLength);
 
 	return CHANNEL_RC_OK;
 }
@@ -1397,7 +1397,7 @@ static UINT rdpdr_server_receive_io_query_volume_information_request(
 	WLog_Print(context->priv->log, WLOG_WARN,
 	           "[MS-RDPEFS] 2.2.3.3.6 Server Drive Query Volume Information Request "
 	           "(DR_DRIVE_QUERY_VOLUME_INFORMATION_REQ) not implemented");
-	WLog_Print(context->priv->log, WLOG_WARN, "TODO: parse %p", QueryVolumeBuffer);
+	WLog_Print(context->priv->log, WLOG_WARN, "TODO: parse %p", (const void*)QueryVolumeBuffer);
 
 	return CHANNEL_RC_OK;
 }
@@ -1431,7 +1431,7 @@ static UINT rdpdr_server_receive_io_set_volume_information_request(
 	WLog_Print(context->priv->log, WLOG_WARN,
 	           "[MS-RDPEFS] 2.2.3.3.7 Server Drive Set Volume Information Request "
 	           "(DR_DRIVE_SET_VOLUME_INFORMATION_REQ) not implemented");
-	WLog_Print(context->priv->log, WLOG_WARN, "TODO: parse %p", SetVolumeBuffer);
+	WLog_Print(context->priv->log, WLOG_WARN, "TODO: parse %p", (const void*)SetVolumeBuffer);
 
 	return CHANNEL_RC_OK;
 }
@@ -1467,7 +1467,7 @@ static UINT rdpdr_server_receive_io_query_information_request(RdpdrServerContext
 	WLog_Print(context->priv->log, WLOG_WARN,
 	           "[MS-RDPEFS] 2.2.3.3.8 Server Drive Query Information Request "
 	           "(DR_DRIVE_QUERY_INFORMATION_REQ) not implemented");
-	WLog_Print(context->priv->log, WLOG_WARN, "TODO: parse %p", QueryBuffer);
+	WLog_Print(context->priv->log, WLOG_WARN, "TODO: parse %p", (const void*)QueryBuffer);
 
 	return CHANNEL_RC_OK;
 }
@@ -1502,7 +1502,7 @@ static UINT rdpdr_server_receive_io_set_information_request(RdpdrServerContext* 
 	WLog_Print(context->priv->log, WLOG_WARN,
 	           "[MS-RDPEFS] 2.2.3.3.9 Server Drive Set Information Request "
 	           "(DR_DRIVE_SET_INFORMATION_REQ) not implemented");
-	WLog_Print(context->priv->log, WLOG_WARN, "TODO: parse %p", SetBuffer);
+	WLog_Print(context->priv->log, WLOG_WARN, "TODO: parse %p", (const void*)SetBuffer);
 
 	return CHANNEL_RC_OK;
 }
@@ -1617,7 +1617,7 @@ static UINT rdpdr_server_receive_io_lock_control_request(RdpdrServerContext* con
 
 	WLog_Print(context->priv->log, WLOG_DEBUG,
 	           "IRP_MJ_LOCK_CONTROL, Operation=%s, Lock=0x%08" PRIx32 ", NumLocks=%" PRIu32,
-	           DR_DRIVE_LOCK_REQ2str(Operation));
+	           DR_DRIVE_LOCK_REQ2str(Operation), Lock, NumLocks);
 
 	Lock &= 0x01; /* Only bit 0 is of importance */
 
@@ -1865,7 +1865,7 @@ static UINT rdpdr_server_receive_prn_cache_update_printer(RdpdrServerContext* co
 	WLog_Print(
 	    context->priv->log, WLOG_WARN,
 	    "[MS-RDPEPC] 2.2.2.4 Update Printer Cachedata (DR_PRN_UPDATE_CACHEDATA) not implemented");
-	WLog_Print(context->priv->log, WLOG_WARN, "TODO: parse %p", config);
+	WLog_Print(context->priv->log, WLOG_WARN, "TODO: parse %p", (const void*)config);
 	return CHANNEL_RC_OK;
 }
 

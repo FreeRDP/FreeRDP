@@ -70,7 +70,7 @@ void winpr_HexLogDump(wLog* log, UINT32 level, const void* data, size_t length)
 	if (!buffer)
 	{
 		char ebuffer[256] = { 0 };
-		WLog_Print(log, WLOG_ERROR, "malloc(%" PRIuz ") failed with [%" PRIuz "] %s", blen, errno,
+		WLog_Print(log, WLOG_ERROR, "malloc(%" PRIuz ") failed with [%d] %s", blen, errno,
 		           winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 		return;
 	}

@@ -216,7 +216,8 @@ static BOOL rdp_read_general_capability_set(wLog* log, wStream* s, rdpSettings* 
 		WLog_Print(log, WLOG_ERROR,
 		           "TS_GENERAL_CAPABILITYSET::protocolVersion(0x%04" PRIx16
 		           ") != TS_CAPS_PROTOCOLVERSION(0x%04" PRIx32 ")",
-		           settings->CapsProtocolVersion, TS_CAPS_PROTOCOLVERSION);
+		           settings->CapsProtocolVersion,
+		           WINPR_CXX_COMPAT_CAST(UINT32, TS_CAPS_PROTOCOLVERSION));
 		if (settings->CapsProtocolVersion == 0x0000)
 		{
 			WLog_Print(log, WLOG_WARN,
@@ -284,8 +285,9 @@ static BOOL rdp_write_general_capability_set(wLog* log, wStream* s, const rdpSet
 	{
 		WLog_Print(log, WLOG_ERROR,
 		           "OsMajorType=%08" PRIx32 ", OsMinorType=%08" PRIx32
-		           " they need to be smaller %04" PRIx16,
-		           settings->OsMajorType, settings->OsMinorType, UINT16_MAX);
+		           " they need to be smaller %04" PRIx32,
+		           settings->OsMajorType, settings->OsMinorType,
+		           WINPR_CXX_COMPAT_CAST(UINT32, UINT16_MAX));
 		return FALSE;
 	}
 	if (settings->CapsProtocolVersion != TS_CAPS_PROTOCOLVERSION)
@@ -293,7 +295,8 @@ static BOOL rdp_write_general_capability_set(wLog* log, wStream* s, const rdpSet
 		WLog_Print(log, WLOG_ERROR,
 		           "TS_GENERAL_CAPABILITYSET::protocolVersion(0x%04" PRIx16
 		           ") != TS_CAPS_PROTOCOLVERSION(0x%04" PRIx32 ")",
-		           settings->CapsProtocolVersion, TS_CAPS_PROTOCOLVERSION);
+		           settings->CapsProtocolVersion,
+		           WINPR_CXX_COMPAT_CAST(UINT32, TS_CAPS_PROTOCOLVERSION));
 		return FALSE;
 	}
 	Stream_Write_UINT16(s, (UINT16)settings->OsMajorType); /* osMajorType (2 bytes) */
@@ -1132,7 +1135,8 @@ static BOOL rdp_read_pointer_capability_set(wLog* log, wStream* s, rdpSettings* 
 		WLog_Print(log, WLOG_WARN,
 		           "[MS-RDPBCGR] 2.2.7.1.5 Pointer Capability Set "
 		           "(TS_POINTER_CAPABILITYSET)::colorPointerFlag received is %" PRIu16
-		           ". Value is ignored and always assumed to be TRUE");
+		           ". Value is ignored and always assumed to be TRUE",
+		           colorPointerFlag);
 	}
 
 	/* pointerCacheSize is optional */
@@ -2874,7 +2878,8 @@ static BOOL rdp_read_large_pointer_capability_set(wLog* log, wStream* s, rdpSett
 		WLog_Print(
 		    log, WLOG_WARN,
 		    "TS_LARGE_POINTER_CAPABILITYSET with unsupported flags %04X (all flags %04X) received",
-		    largePointerSupportFlags & ~(LARGE_POINTER_FLAG_96x96 | LARGE_POINTER_FLAG_384x384),
+		    WINPR_CXX_COMPAT_CAST(UINT32, largePointerSupportFlags & ~(LARGE_POINTER_FLAG_96x96 |
+		                                                               LARGE_POINTER_FLAG_384x384)),
 		    largePointerSupportFlags);
 	}
 	return TRUE;
@@ -3156,7 +3161,7 @@ static BOOL rdp_read_codec_ts_rfx_icap(wLog* log, wStream* sub, rdpSettings* set
 		WLog_Print(log, WLOG_ERROR,
 		           "[MS-RDPRFX] 2.2.1.1.1.1.1 TS_RFX_ICAP size %" PRIu16
 		           " unsupported, expecting size %" PRIu16 " not supported",
-		           icapLen, 8);
+		           icapLen, 8u);
 		return FALSE;
 	}
 
@@ -3234,8 +3239,8 @@ static BOOL rdp_read_codec_ts_rfx_icap(wLog* log, wStream* sub, rdpSettings* set
 	else if ((codecFlags & ~CODEC_MODE) != 0)
 		WLog_Print(log, WLOG_WARN,
 		           "[MS-RDPRFX] 2.2.1.1.1.1.1 TS_RFX_ICAP::flags unknown value "
-		           "0x%02" PRIx8,
-		           (codecFlags & ~CODEC_MODE));
+		           "0x%02" PRIx32,
+		           WINPR_CXX_COMPAT_CAST(UINT32, (codecFlags & ~CODEC_MODE)));
 
 	switch (entropyBits)
 	{
@@ -3362,7 +3367,7 @@ static BOOL rdp_read_codec_ts_rfx_caps(wLog* log, wStream* sub, rdpSettings* set
 	if (numCapsets != 1)
 	{
 		WLog_Print(log, WLOG_ERROR,
-		           "[MS_RDPRFX] 2.2.1.1.1.1 TS_RFX_CAPSET::numIcaps[" PRIu16 "] != 1", numCapsets);
+		           "[MS_RDPRFX] 2.2.1.1.1.1 TS_RFX_CAPSET::numIcaps[%" PRIu16 "] != 1", numCapsets);
 		return FALSE;
 	}
 
@@ -4562,7 +4567,7 @@ static BOOL rdp_read_capability_sets(wLog* log, wStream* s, rdpSettings* setting
 
 	if (len > totalLength)
 	{
-		WLog_Print(log, WLOG_ERROR, "Capability length expected %" PRIu16 ", actual %" PRIdz,
+		WLog_Print(log, WLOG_ERROR, "Capability length expected %" PRIu16 ", actual %" PRIuz,
 		           totalLength, len);
 		goto fail;
 	}

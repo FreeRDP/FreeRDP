@@ -1254,9 +1254,10 @@ static BOOL rts_receive_window_size_command_read(rdpRpc* rpc, wStream* buffer,
 	if (CommandType != RTS_CMD_RECEIVE_WINDOW_SIZE)
 	{
 		WLog_Print(rpc->log, WLOG_ERROR,
-		           "[MS-RPCH] 2.2.3.5.1 ReceiveWindowSize::CommandType must be 0x08" PRIx32 ", got "
+		           "[MS-RPCH] 2.2.3.5.1 ReceiveWindowSize::CommandType must be 0x%08" PRIx32
+		           ", got "
 		           "0x%08" PRIx32,
-		           RTS_CMD_RECEIVE_WINDOW_SIZE, CommandType);
+		           WINPR_CXX_COMPAT_CAST(UINT32, RTS_CMD_RECEIVE_WINDOW_SIZE), CommandType);
 		return FALSE;
 	}
 	const UINT32 val = Stream_Get_UINT32(buffer);
@@ -1354,9 +1355,10 @@ static BOOL rts_connection_timeout_command_read(WINPR_ATTR_UNUSED rdpRpc* rpc, w
 	if (CommandType != RTS_CMD_CONNECTION_TIMEOUT)
 	{
 		WLog_Print(rpc->log, WLOG_ERROR,
-		           "[MS-RPCH] 2.2.3.5.3 ConnectionTimeout::CommandType must be 0x08" PRIx32 ", got "
+		           "[MS-RPCH] 2.2.3.5.3 ConnectionTimeout::CommandType must be 0x%08" PRIx32
+		           ", got "
 		           "0x%08" PRIx32,
-		           RTS_CMD_CONNECTION_TIMEOUT, CommandType);
+		           WINPR_CXX_COMPAT_CAST(UINT32, RTS_CMD_CONNECTION_TIMEOUT), CommandType);
 		return FALSE;
 	}
 	const UINT32 val = Stream_Get_UINT32(buffer);
@@ -1422,9 +1424,9 @@ static BOOL rts_version_command_read(rdpRpc* rpc, wStream* buffer, uint32_t* pve
 	if (CommandType != RTS_CMD_VERSION)
 	{
 		WLog_Print(rpc->log, WLOG_ERROR,
-		           "[MS-RPCH] 2.2.3.5.7 Version::CommandType must be 0x08" PRIx32 ", got "
+		           "[MS-RPCH] 2.2.3.5.7 Version::CommandType must be 0x%08" PRIx32 ", got "
 		           "0x%08" PRIx32,
-		           RTS_CMD_VERSION, CommandType);
+		           WINPR_CXX_COMPAT_CAST(UINT32, RTS_CMD_VERSION), CommandType);
 		return FALSE;
 	}
 	const uint32_t version = Stream_Get_UINT32(buffer); /* Version (4 bytes) */
@@ -1569,8 +1571,8 @@ static BOOL rts_send_buffer_int(RpcChannel* channel, wStream* s, size_t frag_len
 	const DWORD level = WLOG_TRACE;
 	if (WLog_IsLevelActive(channel->rpc->log, level))
 	{
-		WLog_PrintMessage(channel->rpc->log, WLOG_MESSAGE_TEXT, level, line, file, fkt,
-		                  "Sending [%s] %" PRIuz " bytes", fkt, Stream_Length(s));
+		WLog_PrintTextMessage(channel->rpc->log, level, line, file, fkt,
+		                      "Sending [%s] %" PRIuz " bytes", fkt, Stream_Length(s));
 	}
 	if (Stream_Length(s) < sizeof(rpcconn_common_hdr_t))
 		goto fail;
@@ -1658,7 +1660,7 @@ BOOL rts_recv_CONN_A3_pdu(rdpRpc* rpc, wStream* buffer)
 		WLog_Print(rpc->log, WLOG_ERROR,
 		           "[MS-RPCH] 2.2.4.4 CONN/A3 RTS PDU unexpected Flags=0x%08" PRIx32
 		           ", expected 0x%08" PRIx32,
-		           header.rts.Flags, RTS_FLAG_NONE);
+		           header.rts.Flags, WINPR_CXX_COMPAT_CAST(UINT32, RTS_FLAG_NONE));
 		goto fail;
 	}
 	if (header.rts.NumberOfCommands != 1)
@@ -1767,7 +1769,7 @@ BOOL rts_recv_CONN_C2_pdu(rdpRpc* rpc, wStream* buffer)
 		WLog_Print(rpc->log, WLOG_ERROR,
 		           "[MS-RPCH] 2.2.4.9 CONN/C2 RTS PDU unexpected Flags=0x%08" PRIx32
 		           ", expected 0x%08" PRIx32,
-		           header.rts.Flags, RTS_FLAG_NONE);
+		           header.rts.Flags, WINPR_CXX_COMPAT_CAST(UINT32, RTS_FLAG_NONE));
 		goto fail;
 	}
 	if (header.rts.NumberOfCommands != 3)

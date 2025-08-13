@@ -409,8 +409,8 @@ static WINPR_CIPHER_CTX* treatAuthBlob(wLog* log, const BYTE* pbInput, size_t cb
 	Stream_Read_UINT32(s, dwVersion);
 	if (dwVersion != BCRYPT_KEY_DATA_BLOB_VERSION1)
 	{
-		WLog_Print(log, WLOG_ERROR, "unsupported authBlob version %d, expecting %d", dwVersion,
-		           BCRYPT_KEY_DATA_BLOB_VERSION1);
+		WLog_Print(log, WLOG_ERROR, "unsupported authBlob version %" PRIu32 ", expecting %d",
+		           dwVersion, BCRYPT_KEY_DATA_BLOB_VERSION1);
 		return NULL;
 	}
 

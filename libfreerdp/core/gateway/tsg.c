@@ -1570,7 +1570,7 @@ static BOOL tsg_ndr_read_TSG_PACKET_MSG_RESPONSE(wLog* log, rdpContext* context,
 	if (MsgPtr == 0)
 	{
 		WLog_Print(log, WLOG_DEBUG,
-		           "Message {0x%08" PRIx32 "} [%s]::isMsgPresent=%" PRIu32 ", MsgPtr=0x%08" PRIx32,
+		           "Message {0x%08" PRIx32 "} [%s]::isMsgPresent=%" PRId32 ", MsgPtr=0x%08" PRIx32,
 		           pkg->msgType, tsg_packet_id_to_string(pkg->msgType), pkg->isMsgPresent, MsgPtr);
 		return TRUE;
 	}

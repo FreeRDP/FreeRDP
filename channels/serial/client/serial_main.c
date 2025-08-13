@@ -506,7 +506,7 @@ static UINT serial_process_irp(SERIAL_DEVICE* serial, IRP* irp)
 	           "[%s|0x%08" PRIx32 "] completed with %s [0x%08" PRIx32 "] (IoStatus %s [0x%08" PRIx32
 	           "])",
 	           rdpdr_irp_string(irp->MajorFunction), irp->MajorFunction, WTSErrorToString(error),
-	           error, NtStatus2Tag(irp->IoStatus), irp->IoStatus);
+	           error, NtStatus2Tag(irp->IoStatus), WINPR_CXX_COMPAT_CAST(UINT32, irp->IoStatus));
 
 	return error;
 }
@@ -947,7 +947,7 @@ FREERDP_ENTRY_POINT(
 			}
 		}
 
-		WLog_Print(serial->log, WLOG_DEBUG, "Server's serial driver: %s (id: %d)", driver,
+		WLog_Print(serial->log, WLOG_DEBUG, "Server's serial driver: %s (id: %u)", driver,
 		           serial->ServerSerialDriverId);
 
 		serial->MainIrpQueue = MessageQueue_New(NULL);

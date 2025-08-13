@@ -107,7 +107,9 @@ typedef struct winpr_comm WINPR_COMM;
 #define WINPR_PURGE_RXABORT 0x00000002 /* abort pending reception */
 
 #define CommLog_Print(level, ...) CommLog_PrintEx(level, __FILE__, __LINE__, __func__, __VA_ARGS__)
-void CommLog_PrintEx(DWORD wlog_level, const char* file, size_t line, const char* fkt, ...);
+WINPR_ATTR_FORMAT_ARG(5, 6)
+void CommLog_PrintEx(DWORD level, const char* file, size_t line, const char* fkt,
+                     WINPR_FORMAT_ARG const char* fmt, ...);
 
 BOOL CommIsHandled(HANDLE handle);
 BOOL CommIsHandleValid(HANDLE handle);

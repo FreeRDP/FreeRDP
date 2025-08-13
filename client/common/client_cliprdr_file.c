@@ -640,14 +640,16 @@ static CliprdrLocalStream* cliprdr_local_stream_new(CliprdrFileContext* context,
 static void cliprdr_file_session_terminate(CliprdrFileContext* file, BOOL stop_thread);
 static BOOL local_stream_discard(const void* key, void* value, void* arg);
 
-static void writelog(wLog* log, DWORD level, const char* fname, const char* fkt, size_t line, ...)
+WINPR_ATTR_FORMAT_ARG(6, 7)
+static void writelog(wLog* log, DWORD level, const char* fname, const char* fkt, size_t line,
+                     WINPR_FORMAT_ARG const char* fmt, ...)
 {
 	if (!WLog_IsLevelActive(log, level))
 		return;
 
 	va_list ap = { 0 };
-	va_start(ap, line);
-	WLog_PrintMessageVA(log, WLOG_MESSAGE_TEXT, level, line, fname, fkt, ap);
+	va_start(ap, fmt);
+	WLog_PrintTextMessageVA(log, level, line, fname, fkt, fmt, ap);
 	va_end(ap);
 }
 
@@ -1351,8 +1353,8 @@ static BOOL dump_streams(const void* key, void* value, WINPR_ATTR_UNUSED void* a
 	for (size_t x = 0; x < cur->count; x++)
 	{
 		const CliprdrLocalFile* file = &cur->files[x];
-		writelog(cur->context->log, WLOG_WARN, __FILE__, __func__, __LINE__, "file [%" PRIuz "] ",
-		         x, file->name, file->size);
+		writelog(cur->context->log, WLOG_WARN, __FILE__, __func__, __LINE__,
+		         "file [%" PRIuz "] %s: %" PRId64, x, file->name, file->size);
 	}
 	return TRUE;
 }
@@ -1373,7 +1375,7 @@ static CliprdrLocalFile* file_info_for_request(CliprdrFileContext* file, UINT32 
 		else
 		{
 			writelog(file->log, WLOG_WARN, __FILE__, __func__, __LINE__,
-			         "invalid entry index for lockID %" PRIu32 ", index %" PRIu32 " [count %" PRIu32
+			         "invalid entry index for lockID %" PRIu32 ", index %" PRIu32 " [count %" PRIuz
 			         "] [locked %d]",
 			         lockId, listIndex, cur->count, cur->locked);
 		}
@@ -2495,7 +2497,7 @@ BOOL cliprdr_file_context_update_client_data(CliprdrFileContext* file, const cha
 	HashTable_Lock(file->local_streams);
 	CliprdrLocalStream* stream = HashTable_GetItemValue(file->local_streams, &lockId);
 
-	WLog_Print(file->log, WLOG_DEBUG, "update client file list (stream=%p)...", stream);
+	WLog_Print(file->log, WLOG_DEBUG, "update client file list (stream=%p)...", (void*)stream);
 	if (stream)
 		rc = cliprdr_local_stream_update(stream, data, size);
 	else

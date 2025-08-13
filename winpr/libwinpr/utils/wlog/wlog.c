@@ -415,6 +415,42 @@ BOOL WLog_PrintMessageVA(wLog* log, DWORD type, DWORD level, size_t line, const 
 	return status;
 }
 
+BOOL WLog_PrintTextMessageVA(wLog* log, DWORD level, size_t line, const char* file,
+                             const char* function, const char* fmt, va_list args)
+{
+	BOOL status = FALSE;
+	wLogMessage message = { 0 };
+	message.Type = WLOG_MESSAGE_TEXT;
+	message.Level = level;
+	message.LineNumber = line;
+	message.FileName = file;
+	message.FunctionName = function;
+
+	message.FormatString = fmt;
+
+	if (!strchr(message.FormatString, '%'))
+	{
+		message.TextString = message.FormatString;
+		status = WLog_Write(log, &message);
+	}
+	else
+	{
+		char formattedLogMessage[WLOG_MAX_STRING_SIZE] = { 0 };
+
+		WINPR_PRAGMA_DIAG_PUSH
+		WINPR_PRAGMA_DIAG_IGNORED_FORMAT_NONLITERAL
+		if (vsnprintf(formattedLogMessage, WLOG_MAX_STRING_SIZE - 1, message.FormatString, args) <
+		    0)
+			return FALSE;
+		WINPR_PRAGMA_DIAG_POP
+
+		message.TextString = formattedLogMessage;
+		status = WLog_Write(log, &message);
+	}
+
+	return status;
+}
+
 BOOL WLog_PrintMessage(wLog* log, DWORD type, DWORD level, size_t line, const char* file,
                        const char* function, ...)
 {
@@ -422,6 +458,17 @@ BOOL WLog_PrintMessage(wLog* log, DWORD type, DWORD level, size_t line, const ch
 	va_list args;
 	va_start(args, function);
 	status = WLog_PrintMessageVA(log, type, level, line, file, function, args);
+	va_end(args);
+	return status;
+}
+
+BOOL WLog_PrintTextMessage(wLog* log, DWORD level, size_t line, const char* file,
+                           const char* function, const char* fmt, ...)
+{
+	BOOL status = 0;
+	va_list args;
+	va_start(args, fmt);
+	status = WLog_PrintTextMessageVA(log, level, line, file, function, fmt, args);
 	va_end(args);
 	return status;
 }

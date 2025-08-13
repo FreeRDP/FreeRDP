@@ -1151,13 +1151,13 @@ static BOOL set_queue_size(WINPR_ATTR_UNUSED WINPR_COMM* pComm, const SERIAL_QUE
 	if (pQueueSize->InSize > N_TTY_BUF_SIZE)
 		CommLog_Print(WLOG_WARN,
 		              "Requested an incompatible input buffer size: %" PRIu32
-		              ", keeping on with a %" PRIu32 " bytes buffer.",
+		              ", keeping on with a %d bytes buffer.",
 		              pQueueSize->InSize, N_TTY_BUF_SIZE);
 
 	if (pQueueSize->OutSize > N_TTY_BUF_SIZE)
 		CommLog_Print(WLOG_WARN,
 		              "Requested an incompatible output buffer size: %" PRIu32
-		              ", keeping on with a %" PRIu32 " bytes buffer.",
+		              ", keeping on with a %d bytes buffer.",
 		              pQueueSize->OutSize, N_TTY_BUF_SIZE);
 
 	SetLastError(ERROR_CANCELLED);

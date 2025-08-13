@@ -746,7 +746,7 @@ static const struct
 	                          { 1, 4 }, { 5, 4 }, { 2, 0 }, { 6, 0 }, { 2, 4 }, { 6, 4 },
 	                          { 3, 0 }, { 7, 0 }, { 3, 4 }, { 7, 4 } };
 
-static BYTE dsp_encode_ima_adpcm_sample(ADPCM* WINPR_RESTRICT adpcm, int channel, INT16 sample)
+static BYTE dsp_encode_ima_adpcm_sample(ADPCM* WINPR_RESTRICT adpcm, size_t channel, INT16 sample)
 {
 	INT32 ss = ima_step_size_table[adpcm->ima.last_step[channel]];
 	INT32 e = sample - adpcm->ima.last_sample[channel];
@@ -892,7 +892,7 @@ static const INT32 ms_adpcm_coeffs1[7] = { 256, 512, 0, 192, 240, 460, 392 };
 static const INT32 ms_adpcm_coeffs2[7] = { 0, -256, 0, 64, 0, -208, -232 };
 
 static INLINE INT16 freerdp_dsp_decode_ms_adpcm_sample(ADPCM* WINPR_RESTRICT adpcm, BYTE sample,
-                                                       int channel)
+                                                       size_t channel)
 {
 	const INT8 nibble = (sample & 0x08 ? (INT8)sample - 16 : (INT8)sample);
 	INT32 presample =

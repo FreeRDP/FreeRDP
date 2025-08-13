@@ -132,9 +132,9 @@ static BOOL rdp_check_monitor_layout_pdu_state_(const rdpRdp* rdp, BOOL expected
 		const DWORD log_level = WLOG_ERROR;
 		if (WLog_IsLevelActive(rdp->log, log_level))
 		{
-			WLog_PrintMessage(rdp->log, WLOG_MESSAGE_TEXT, log_level, line, file, fkt,
-			                  "Expected rdp->monitor_layout_pdu == %s",
-			                  expected ? "TRUE" : "FALSE");
+			WLog_PrintTextMessage(rdp->log, log_level, line, file, fkt,
+			                      "Expected rdp->monitor_layout_pdu == %s",
+			                      expected ? "TRUE" : "FALSE");
 		}
 		return FALSE;
 	}
@@ -153,8 +153,8 @@ static BOOL rdp_set_monitor_layout_pdu_state_(rdpRdp* rdp, BOOL value, const cha
 		const DWORD log_level = WLOG_WARN;
 		if (WLog_IsLevelActive(rdp->log, log_level))
 		{
-			WLog_PrintMessage(rdp->log, WLOG_MESSAGE_TEXT, log_level, line, file, fkt,
-			                  "rdp->monitor_layout_pdu == TRUE, expected FALSE");
+			WLog_PrintTextMessage(rdp->log, log_level, line, file, fkt,
+			                      "rdp->monitor_layout_pdu == TRUE, expected FALSE");
 		}
 		return FALSE;
 	}
@@ -276,9 +276,9 @@ BOOL rdp_read_share_control_header(rdpRdp* rdp, wStream* s, UINT16* tpktLength,
 
 		char buffer[128] = { 0 };
 		WLog_Print(rdp->log, WLOG_DEBUG,
-		           "[Flow control PDU] type=%s, tpktLength=%" PRIuz ", remainingLength=%" PRIuz,
-		           pdu_type_to_str(*type, buffer, sizeof(buffer)), tpktLength ? *tpktLength : 0,
-		           remainingLength ? *remainingLength : 0);
+		           "[Flow control PDU] type=%s, tpktLength=%" PRIu16 ", remainingLength=%" PRIu16,
+		           pdu_type_to_str(*type, buffer, sizeof(buffer)), tpktLength ? *tpktLength : 0u,
+		           remainingLength ? *remainingLength : 0u);
 		return TRUE;
 	}
 
@@ -311,7 +311,7 @@ BOOL rdp_read_share_control_header(rdpRdp* rdp, wStream* s, UINT16* tpktLength,
 		*channel_id = 0; /* Windows XP can send such short DEACTIVATE_ALL PDUs. */
 
 	char buffer[128] = { 0 };
-	WLog_Print(rdp->log, WLOG_DEBUG, "type=%s, tpktLength=%" PRIuz ", remainingLength=%" PRIuz,
+	WLog_Print(rdp->log, WLOG_DEBUG, "type=%s, tpktLength=%" PRIu16 ", remainingLength=%" PRIuz,
 	           pdu_type_to_str(*type, buffer, sizeof(buffer)), len, remLen);
 	if (remainingLength)
 	{
@@ -502,7 +502,7 @@ BOOL rdp_set_error_info(rdpRdp* rdp, UINT32 errorInfo)
 			}
 		}
 		else
-			WLog_Print(rdp->log, WLOG_ERROR, "missing context=%p", context);
+			WLog_Print(rdp->log, WLOG_ERROR, "missing context=%p", (void*)context);
 	}
 	else
 	{
@@ -1035,7 +1035,7 @@ static BOOL rdp_recv_server_set_keyboard_indicators_pdu(rdpRdp* rdp, wStream* s)
 	{
 		WLog_Print(rdp->log, WLOG_WARN,
 		           "[MS-RDPBCGR] 2.2.8.2.1.1 Set Keyboard Indicators PDU Data "
-		           "(TS_SET_KEYBOARD_INDICATORS_PDU)::unitId should be 0, is %" PRIu8,
+		           "(TS_SET_KEYBOARD_INDICATORS_PDU)::unitId should be 0, is %" PRIu16,
 		           unitId);
 	}
 	const UINT16 ledFlags = Stream_Get_UINT16(s); /* ledFlags (2 bytes) */
@@ -1055,7 +1055,7 @@ static BOOL rdp_recv_server_set_keyboard_ime_status_pdu(rdpRdp* rdp, wStream* s)
 	{
 		WLog_Print(rdp->log, WLOG_WARN,
 		           "[MS-RDPBCGR] 2.2.8.2.2.1 Set Keyboard IME Status PDU Data "
-		           "(TS_SET_KEYBOARD_IME_STATUS_PDU)::unitId should be 0, is %" PRIu8,
+		           "(TS_SET_KEYBOARD_IME_STATUS_PDU)::unitId should be 0, is %" PRIu16,
 		           unitId);
 	}
 	const uint32_t imeState = Stream_Get_UINT32(s);    /* imeState (4 bytes) */
@@ -1774,7 +1774,7 @@ static state_run_t rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 			{
 				char buffer[256] = { 0 };
 				WLog_Print(rdp->log, WLOG_WARN,
-				           "pduType %s not properly parsed, %" PRIdz
+				           "pduType %s not properly parsed, %" PRIuz
 				           " bytes remaining unhandled. Skipping.",
 				           pdu_type_to_str(pduType, buffer, sizeof(buffer)), diff);
 			}
@@ -2171,7 +2171,7 @@ static state_run_t rdp_recv_callback_int(WINPR_ATTR_UNUSED rdpTransport* transpo
 			break;
 
 		default:
-			WLog_Print(rdp->log, WLOG_ERROR, "%s state %d", rdp_get_state_string(rdp),
+			WLog_Print(rdp->log, WLOG_ERROR, "%s state %u", rdp_get_state_string(rdp),
 			           rdp_get_state(rdp));
 			status = STATE_RUN_FAILED;
 			break;
@@ -2963,7 +2963,7 @@ static void log_build_warn(rdpRdp* rdp, const char* what, const char* msg,
 				WLog_Print(rdp->log, WLOG_WARN, "* '%s'", tok);
 				tok = strtok_s(NULL, " ", &saveptr);
 			}
-			WLog_Print(rdp->log, WLOG_WARN, "");
+			WLog_Print(rdp->log, WLOG_WARN, "*");
 			WLog_Print(rdp->log, WLOG_WARN, "[%s] build options %s", what, msg);
 			WLog_Print(rdp->log, WLOG_WARN, "*************************************************");
 		}
@@ -2982,10 +2982,10 @@ static void print_first_line_int(wLog* log, log_line_t* firstLine, const char* w
 		const DWORD level = WLOG_WARN;
 		if (WLog_IsLevelActive(log, level))
 		{
-			WLog_PrintMessage(log, WLOG_MESSAGE_TEXT, level, line, file, fkt,
-			                  "*************************************************");
-			WLog_PrintMessage(log, WLOG_MESSAGE_TEXT, level, line, file, fkt,
-			                  "[SSL] {%s} build or configuration missing:", what);
+			WLog_PrintTextMessage(log, level, line, file, fkt,
+			                      "*************************************************");
+			WLog_PrintTextMessage(log, level, line, file, fkt,
+			                      "[SSL] {%s} build or configuration missing:", what);
 		}
 		firstLine->line = line;
 		firstLine->file = file;
@@ -3000,9 +3000,9 @@ static void print_last_line(wLog* log, const log_line_t* firstLine)
 	if (firstLine->fkt)
 	{
 		if (WLog_IsLevelActive(log, firstLine->level))
-			WLog_PrintMessage(log, WLOG_MESSAGE_TEXT, firstLine->level, firstLine->line,
-			                  firstLine->file, firstLine->fkt,
-			                  "*************************************************");
+			WLog_PrintTextMessage(log, firstLine->level, firstLine->line, firstLine->file,
+			                      firstLine->fkt,
+			                      "*************************************************");
 	}
 }
 

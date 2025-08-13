@@ -42,11 +42,13 @@ static const char* error_to_string(wLog* log, Display* display, int error, char*
 	return buffer;
 }
 
-static void write_log(wLog* log, DWORD level, const char* fname, const char* fkt, size_t line, ...)
+WINPR_ATTR_FORMAT_ARG(6, 7)
+static void write_log(wLog* log, DWORD level, const char* fname, const char* fkt, size_t line,
+                      WINPR_FORMAT_ARG const char* fmt, ...)
 {
 	va_list ap = { 0 };
-	va_start(ap, line);
-	WLog_PrintMessageVA(log, WLOG_MESSAGE_TEXT, level, line, fname, fkt, ap);
+	va_start(ap, fmt);
+	WLog_PrintTextMessageVA(log, level, line, fname, fkt, fmt, ap);
 	va_end(ap);
 }
 
@@ -74,8 +76,8 @@ static int write_result_log_va(wLog* log, DWORD level, const char* fname, const 
 
 		if (WLog_IsLevelActive(log, level))
 		{
-			WLog_PrintMessage(log, WLOG_MESSAGE_TEXT, level, line, fname, fkt, "%s returned %s",
-			                  name, error_to_string(log, display, rc, buffer, sizeof(buffer)));
+			WLog_PrintTextMessage(log, level, line, fname, fkt, "%s returned %s", name,
+			                      error_to_string(log, display, rc, buffer, sizeof(buffer)));
 		}
 	}
 	return rc;
@@ -106,19 +108,9 @@ static int write_result_log_expect_one(wLog* log, DWORD level, const char* fname
 	return rc;
 }
 
-static int write_result_log_ex(wLog* log, DWORD level, const char* fname, const char* fkt,
-                               size_t line, Display* display, char* name, int rc, size_t count, ...)
-{
-	va_list ap;
-	va_start(ap, count);
-	(void)write_result_log_va(log, level, fname, fkt, line, display, name, rc, count, ap);
-	va_end(ap);
-	return rc;
-}
-
 char* Safe_XGetAtomNameEx(wLog* log, Display* display, Atom atom, const char* varname)
 {
-	WLog_Print(log, log_level, "XGetAtomName(%s, 0x%08" PRIx32 ")", varname, atom);
+	WLog_Print(log, log_level, "XGetAtomName(%s, 0x%08lx)", varname, atom);
 	if (atom == None)
 		return strdup("Atom_None");
 	return XGetAtomName(display, atom);
@@ -129,8 +121,9 @@ Atom Logging_XInternAtom(wLog* log, Display* display, _Xconst char* atom_name, B
 	Atom atom = XInternAtom(display, atom_name, only_if_exists);
 	if (WLog_IsLevelActive(log, log_level))
 	{
-		WLog_Print(log, log_level, "XInternAtom(0x%08" PRIx32 ", %s, %s) -> 0x%08" PRIx32, display,
-		           atom_name, only_if_exists ? "True" : "False", atom);
+		WLog_Print(log, log_level, "XInternAtom(%p, %s, %s) -> 0x%08" PRIx32, (void*)display,
+		           atom_name, only_if_exists ? "True" : "False",
+		           WINPR_CXX_COMPAT_CAST(UINT32, atom));
 	}
 	return atom;
 }
@@ -150,8 +143,8 @@ int LogDynAndXChangeProperty_ex(wLog* log, const char* file, const char* fkt, si
 		char* propstr = Safe_XGetAtomName(log, display, property);
 		char* typestr = Safe_XGetAtomName(log, display, type);
 		write_log(log, log_level, file, fkt, line,
-		          "XChangeProperty(%p, %d, %s [%d], %s [%d], %d, %d, %p, %d)", display, w, propstr,
-		          property, typestr, type, format, mode, data, nelements);
+		          "XChangeProperty(%p, %lu, %s [%lu], %s [%lu], %d, %d, %p, %d)", (void*)display, w,
+		          propstr, property, typestr, type, format, mode, (const void*)data, nelements);
 		XFree(propstr);
 		XFree(typestr);
 	}
@@ -166,8 +159,8 @@ int LogDynAndXDeleteProperty_ex(wLog* log, const char* file, const char* fkt, si
 	if (WLog_IsLevelActive(log, log_level))
 	{
 		char* propstr = Safe_XGetAtomName(log, display, property);
-		write_log(log, log_level, file, fkt, line, "XDeleteProperty(%p, %d, %s [%d])", display, w,
-		          propstr, property);
+		write_log(log, log_level, file, fkt, line, "XDeleteProperty(%p, %lu, %s [%lu])",
+		          (void*)display, w, propstr, property);
 		XFree(propstr);
 	}
 	const int rc = XDeleteProperty(display, w, property);
@@ -185,8 +178,8 @@ int LogDynAndXConvertSelection_ex(wLog* log, const char* file, const char* fkt, 
 		char* targetstr = Safe_XGetAtomName(log, display, target);
 		char* propstr = Safe_XGetAtomName(log, display, property);
 		write_log(log, log_level, file, fkt, line,
-		          "XConvertSelection(%p, %s [%d], %s [%d], %s [%d], %d, %lu)", display, selectstr,
-		          selection, targetstr, target, propstr, property, requestor, time);
+		          "XConvertSelection(%p, %s [%lu], %s [%lu], %s [%lu], %lu, %lu)", (void*)display,
+		          selectstr, selection, targetstr, target, propstr, property, requestor, time);
 		XFree(propstr);
 		XFree(targetstr);
 		XFree(selectstr);
@@ -207,11 +200,12 @@ int LogDynAndXGetWindowProperty_ex(wLog* log, const char* file, const char* fkt,
 	{
 		char* propstr = Safe_XGetAtomName(log, display, property);
 		char* req_type_str = Safe_XGetAtomName(log, display, req_type);
-		write_log(log, log_level, file, fkt, line,
-		          "XGetWindowProperty(%p, %d, %s [%d], %ld, %ld, %d, %s [%d], %p, %p, %p, %p, %p)",
-		          display, w, propstr, property, long_offset, long_length, delete, req_type_str,
-		          req_type, actual_type_return, actual_format_return, nitems_return,
-		          bytes_after_return, prop_return);
+		write_log(
+		    log, log_level, file, fkt, line,
+		    "XGetWindowProperty(%p, %lu, %s [%lu], %ld, %ld, %d, %s [%lu], %p, %p, %p, %p, %p)",
+		    (void*)display, w, propstr, property, long_offset, long_length, delete, req_type_str,
+		    req_type, (void*)actual_type_return, (void*)actual_format_return, (void*)nitems_return,
+		    (void*)bytes_after_return, (void*)prop_return);
 		XFree(propstr);
 		XFree(req_type_str);
 	}
@@ -298,17 +292,17 @@ int LogDynAndXCopyArea_ex(wLog* log, const char* file, const char* fkt, size_t l
 		write_log(log, log_level, file, fkt, line,
 		          "XCopyArea(%p, src: {%lu}, dest: [%d]{%lu, %lu, %d}, gc: {%p}, src_x: {%d}, "
 		          "src_y: {%d}, "
-		          "width: {%d}, "
-		          "height: {%d}, dest_x: {%d}, dest_y: {%d})",
-		          display, src, rc, dest, attr.root, attr.depth, gc, src_x, src_y, width, height,
-		          dest_x, dest_y);
+		          "width: {%u}, "
+		          "height: {%u}, dest_x: {%d}, dest_y: {%d})",
+		          (void*)display, src, rc, dest, attr.root, attr.depth, (void*)gc, src_x, src_y,
+		          width, height, dest_x, dest_y);
 	}
 
 	if ((width == 0) || (height == 0))
 	{
 		const DWORD lvl = WLOG_WARN;
 		if (WLog_IsLevelActive(log, lvl))
-			write_log(log, lvl, file, fkt, line, "XCopyArea(width=%d, height=%d) !", width, height);
+			write_log(log, lvl, file, fkt, line, "XCopyArea(width=%u, height=%u) !", width, height);
 		return Success;
 	}
 
@@ -325,17 +319,17 @@ int LogDynAndXPutImage_ex(wLog* log, const char* file, const char* fkt, size_t l
 		write_log(log, log_level, file, fkt, line,
 		          "XPutImage(%p, d: {%lu}, gc: {%p}, image: [%p]{%d}, src_x: {%d}, src_y: {%d}, "
 		          "dest_x: {%d}, "
-		          "dest_y: {%d}, width: {%d}, "
-		          "height: {%d})",
-		          display, d, gc, image, image ? image->depth : -1, src_x, src_y, dest_x, dest_y,
-		          width, height);
+		          "dest_y: {%d}, width: {%u}, "
+		          "height: {%u})",
+		          (void*)display, d, (void*)gc, (void*)image, image ? image->depth : -1, src_x,
+		          src_y, dest_x, dest_y, width, height);
 	}
 
 	if ((width == 0) || (height == 0))
 	{
 		const DWORD lvl = WLOG_WARN;
 		if (WLog_IsLevelActive(log, lvl))
-			write_log(log, lvl, file, fkt, line, "XPutImage(width=%d, height=%d) !", width, height);
+			write_log(log, lvl, file, fkt, line, "XPutImage(width=%u, height=%u) !", width, height);
 		return Success;
 	}
 
@@ -354,9 +348,9 @@ Status LogDynAndXSendEvent_ex(wLog* log, const char* file, const char* fkt, size
 	if (WLog_IsLevelActive(log, log_level))
 	{
 		write_log(log, log_level, file, fkt, line,
-		          "XSendEvent(%p, d: {%lu}, w: {%lu}, propagate: {%d}, event_mask: {%d}, "
+		          "XSendEvent(d: {%p}, w: {%lu}, propagate: {%d}, event_mask: {%ld}, "
 		          "event_send: [%p]{TODO})",
-		          display, w, propagate, event_mask, event_send);
+		          (void*)display, w, propagate, event_mask, (void*)event_send);
 	}
 
 	const int rc = XSendEvent(display, w, propagate, event_mask, event_send);
@@ -367,7 +361,7 @@ int LogDynAndXFlush_ex(wLog* log, const char* file, const char* fkt, size_t line
 {
 	if (WLog_IsLevelActive(log, log_level))
 	{
-		write_log(log, log_level, file, fkt, line, "XFlush(%p)", display);
+		write_log(log, log_level, file, fkt, line, "XFlush(%p)", (void*)display);
 	}
 
 	const int rc = XFlush(display);
@@ -380,7 +374,7 @@ Window LogDynAndXGetSelectionOwner_ex(wLog* log, const char* file, const char* f
 	if (WLog_IsLevelActive(log, log_level))
 	{
 		char* selectionstr = Safe_XGetAtomName(log, display, selection);
-		write_log(log, log_level, file, fkt, line, "XGetSelectionOwner(%p, %s)", display,
+		write_log(log, log_level, file, fkt, line, "XGetSelectionOwner(%p, %s)", (void*)display,
 		          selectionstr);
 		XFree(selectionstr);
 	}
@@ -392,7 +386,8 @@ int LogDynAndXDestroyWindow_ex(wLog* log, const char* file, const char* fkt, siz
 {
 	if (WLog_IsLevelActive(log, log_level))
 	{
-		write_log(log, log_level, file, fkt, line, "XDestroyWindow(%p, %lu)", display, window);
+		write_log(log, log_level, file, fkt, line, "XDestroyWindow(%p, %lu)", (void*)display,
+		          window);
 	}
 	const int rc = XDestroyWindow(display, window);
 	return write_result_log_expect_one(log, WLOG_WARN, file, fkt, line, display, "XDestroyWindow",
@@ -404,7 +399,7 @@ int LogDynAndXSync_ex(wLog* log, const char* file, const char* fkt, size_t line,
 {
 	if (WLog_IsLevelActive(log, log_level))
 	{
-		write_log(log, log_level, file, fkt, line, "XSync(%p, %d)", display, discard);
+		write_log(log, log_level, file, fkt, line, "XSync(%p, %d)", (void*)display, discard);
 	}
 	const int rc = XSync(display, discard);
 	return write_result_log_expect_one(log, WLOG_WARN, file, fkt, line, display, "XSync", rc);
@@ -417,7 +412,7 @@ int LogDynAndXChangeWindowAttributes_ex(wLog* log, const char* file, const char*
 	if (WLog_IsLevelActive(log, log_level))
 	{
 		write_log(log, log_level, file, fkt, line, "XChangeWindowAttributes(%p, %lu, 0x%08lu, %p)",
-		          display, window, valuemask, attributes);
+		          (void*)display, window, valuemask, (void*)attributes);
 	}
 	const int rc = XChangeWindowAttributes(display, window, valuemask, attributes);
 	return write_result_log_expect_one(log, WLOG_WARN, file, fkt, line, display,
@@ -429,8 +424,8 @@ int LogDynAndXSetTransientForHint_ex(wLog* log, const char* file, const char* fk
 {
 	if (WLog_IsLevelActive(log, log_level))
 	{
-		write_log(log, log_level, file, fkt, line, "XSetTransientForHint(%p, %lu, %lu)", display,
-		          window, prop_window);
+		write_log(log, log_level, file, fkt, line, "XSetTransientForHint(%p, %lu, %lu)",
+		          (void*)display, window, prop_window);
 	}
 	const int rc = XSetTransientForHint(display, window, prop_window);
 	return write_result_log_expect_one(log, WLOG_WARN, file, fkt, line, display,
@@ -442,7 +437,7 @@ int LogDynAndXCloseDisplay_ex(wLog* log, const char* file, const char* fkt, size
 {
 	if (WLog_IsLevelActive(log, log_level))
 	{
-		write_log(log, log_level, file, fkt, line, "XCloseDisplay(%p)", display);
+		write_log(log, log_level, file, fkt, line, "XCloseDisplay(%p)", (void*)display);
 	}
 	const int rc = XCloseDisplay(display);
 	return write_result_log_expect_success(log, WLOG_WARN, file, fkt, line, display,
@@ -456,7 +451,7 @@ XImage* LogDynAndXCreateImage_ex(wLog* log, const char* file, const char* fkt, s
 {
 	if (WLog_IsLevelActive(log, log_level))
 	{
-		write_log(log, log_level, file, fkt, line, "XCreateImage(%p)", display);
+		write_log(log, log_level, file, fkt, line, "XCreateImage(%p)", (void*)display);
 	}
 	return XCreateImage(display, visual, depth, format, offset, data, width, height, bitmap_pad,
 	                    bytes_per_line);
@@ -470,7 +465,7 @@ Window LogDynAndXCreateWindow_ex(wLog* log, const char* file, const char* fkt, s
 {
 	if (WLog_IsLevelActive(log, log_level))
 	{
-		write_log(log, log_level, file, fkt, line, "XCreateWindow(%p)", display);
+		write_log(log, log_level, file, fkt, line, "XCreateWindow(%p)", (void*)display);
 	}
 	return XCreateWindow(display, parent, x, y, width, height, border_width, depth, class, visual,
 	                     valuemask, attributes);
@@ -481,7 +476,7 @@ GC LogDynAndXCreateGC_ex(wLog* log, const char* file, const char* fkt, size_t li
 {
 	if (WLog_IsLevelActive(log, log_level))
 	{
-		write_log(log, log_level, file, fkt, line, "XCreateGC(%p)", display);
+		write_log(log, log_level, file, fkt, line, "XCreateGC(%p)", (void*)display);
 	}
 	return XCreateGC(display, d, valuemask, values);
 }
@@ -491,7 +486,7 @@ int LogDynAndXFreeGC_ex(wLog* log, const char* file, const char* fkt, size_t lin
 {
 	if (WLog_IsLevelActive(log, log_level))
 	{
-		write_log(log, log_level, file, fkt, line, "XFreeGC(%p)", display);
+		write_log(log, log_level, file, fkt, line, "XFreeGC(%p)", (void*)display);
 	}
 	const int rc = XFreeGC(display, gc);
 	return write_result_log_expect_one(log, WLOG_WARN, file, fkt, line, display, "XFreeGC", rc);
@@ -504,7 +499,7 @@ Pixmap LogDynAndXCreatePixmap_ex(wLog* log, const char* file, const char* fkt, s
 	if (WLog_IsLevelActive(log, log_level))
 	{
 		write_log(log, log_level, file, fkt, line, "XCreatePixmap(%p, 0x%08lu, %u, %u, %u)",
-		          display, d, width, height, depth);
+		          (void*)display, d, width, height, depth);
 	}
 	return XCreatePixmap(display, d, width, height, depth);
 }
@@ -514,7 +509,7 @@ int LogDynAndXFreePixmap_ex(wLog* log, const char* file, const char* fkt, size_t
 {
 	if (WLog_IsLevelActive(log, log_level))
 	{
-		write_log(log, log_level, file, fkt, line, "XFreePixmap(%p)", display);
+		write_log(log, log_level, file, fkt, line, "XFreePixmap(%p)", (void*)display);
 	}
 	const int rc = XFreePixmap(display, pixmap);
 	return write_result_log_expect_one(log, WLOG_WARN, file, fkt, line, display, "XFreePixmap", rc);
@@ -527,7 +522,7 @@ int LogDynAndXSetSelectionOwner_ex(wLog* log, const char* file, const char* fkt,
 	{
 		char* selectionstr = Safe_XGetAtomName(log, display, selection);
 		write_log(log, log_level, file, fkt, line, "XSetSelectionOwner(%p, %s, 0x%08lu, %lu)",
-		          display, selectionstr, owner, time);
+		          (void*)display, selectionstr, owner, time);
 		XFree(selectionstr);
 	}
 	const int rc = XSetSelectionOwner(display, selection, owner, time);
@@ -540,8 +535,8 @@ int LogDynAndXSetForeground_ex(wLog* log, const char* file, const char* fkt, siz
 {
 	if (WLog_IsLevelActive(log, log_level))
 	{
-		write_log(log, log_level, file, fkt, line, "XSetForeground(%p, %p, 0x%08lu)", display, gc,
-		          foreground);
+		write_log(log, log_level, file, fkt, line, "XSetForeground(%p, %p, 0x%08lu)",
+		          (void*)display, (void*)gc, foreground);
 	}
 	const int rc = XSetForeground(display, gc, foreground);
 	return write_result_log_expect_one(log, WLOG_WARN, file, fkt, line, display, "XSetForeground",
@@ -553,8 +548,8 @@ int LogDynAndXMoveWindow_ex(wLog* log, const char* file, const char* fkt, size_t
 {
 	if (WLog_IsLevelActive(log, log_level))
 	{
-		write_log(log, log_level, file, fkt, line, "XMoveWindow(%p, 0x%08lu, %d, %d)", display, w,
-		          x, y);
+		write_log(log, log_level, file, fkt, line, "XMoveWindow(%p, 0x%08lu, %d, %d)",
+		          (void*)display, w, x, y);
 	}
 	const int rc = XMoveWindow(display, w, x, y);
 	return write_result_log_expect_one(log, WLOG_WARN, file, fkt, line, display, "XMoveWindow", rc);
@@ -565,8 +560,8 @@ int LogDynAndXSetFillStyle_ex(wLog* log, const char* file, const char* fkt, size
 {
 	if (WLog_IsLevelActive(log, log_level))
 	{
-		write_log(log, log_level, file, fkt, line, "XSetFillStyle(%p, %p, %d)", display, gc,
-		          fill_style);
+		write_log(log, log_level, file, fkt, line, "XSetFillStyle(%p, %p, %d)", (void*)display,
+		          (void*)gc, fill_style);
 	}
 	const int rc = XSetFillStyle(display, gc, fill_style);
 	return write_result_log_expect_one(log, WLOG_WARN, file, fkt, line, display, "XSetFillStyle",
@@ -578,8 +573,8 @@ int LogDynAndXSetFunction_ex(wLog* log, const char* file, const char* fkt, size_
 {
 	if (WLog_IsLevelActive(log, log_level))
 	{
-		write_log(log, log_level, file, fkt, line, "XSetFunction(%p, %p, %d)", display, gc,
-		          function);
+		write_log(log, log_level, file, fkt, line, "XSetFunction(%p, %p, %d)", (void*)display,
+		          (void*)gc, function);
 	}
 	const int rc = XSetFunction(display, gc, function);
 	return write_result_log_expect_one(log, WLOG_WARN, file, fkt, line, display, "XSetFunction",
@@ -591,7 +586,7 @@ int LogDynAndXRaiseWindow_ex(wLog* log, const char* file, const char* fkt, size_
 {
 	if (WLog_IsLevelActive(log, log_level))
 	{
-		write_log(log, log_level, file, fkt, line, "XRaiseWindow(%p, %lu)", display, w);
+		write_log(log, log_level, file, fkt, line, "XRaiseWindow(%p, %lu)", (void*)display, w);
 	}
 	const int rc = XRaiseWindow(display, w);
 	return write_result_log_expect_one(log, WLOG_WARN, file, fkt, line, display, "XRaiseWindow",
@@ -603,7 +598,7 @@ int LogDynAndXMapWindow_ex(wLog* log, const char* file, const char* fkt, size_t 
 {
 	if (WLog_IsLevelActive(log, log_level))
 	{
-		write_log(log, log_level, file, fkt, line, "XMapWindow(%p, %lu)", display, w);
+		write_log(log, log_level, file, fkt, line, "XMapWindow(%p, %lu)", (void*)display, w);
 	}
 	const int rc = XMapWindow(display, w);
 	return write_result_log_expect_one(log, WLOG_WARN, file, fkt, line, display, "XMapWindow", rc);
@@ -614,7 +609,7 @@ int LogDynAndXUnmapWindow_ex(wLog* log, const char* file, const char* fkt, size_
 {
 	if (WLog_IsLevelActive(log, log_level))
 	{
-		write_log(log, log_level, file, fkt, line, "XUnmapWindow(%p, %lu)", display, w);
+		write_log(log, log_level, file, fkt, line, "XUnmapWindow(%p, %lu)", (void*)display, w);
 	}
 	const int rc = XUnmapWindow(display, w);
 	return write_result_log_expect_one(log, WLOG_WARN, file, fkt, line, display, "XUnmapWindow",
@@ -628,7 +623,7 @@ int LogDynAndXMoveResizeWindow_ex(wLog* log, const char* file, const char* fkt, 
 	if (WLog_IsLevelActive(log, log_level))
 	{
 		write_log(log, log_level, file, fkt, line, "XMoveResizeWindow(%p, %lu, %d, %d, %u, %u)",
-		          display, w, x, y, width, height);
+		          (void*)display, w, x, y, width, height);
 	}
 	const int rc = XMoveResizeWindow(display, w, x, y, width, height);
 	return write_result_log_expect_one(log, WLOG_WARN, file, fkt, line, display,
@@ -640,8 +635,8 @@ Status LogDynAndXWithdrawWindow_ex(wLog* log, const char* file, const char* fkt,
 {
 	if (WLog_IsLevelActive(log, log_level))
 	{
-		write_log(log, log_level, file, fkt, line, "XWithdrawWindow(%p, %lu, %d)", display, w,
-		          screen_number);
+		write_log(log, log_level, file, fkt, line, "XWithdrawWindow(%p, %lu, %d)", (void*)display,
+		          w, screen_number);
 	}
 	const Status rc = XWithdrawWindow(display, w, screen_number);
 	return write_result_log_expect_one(log, WLOG_WARN, file, fkt, line, display, "XWithdrawWindow",
@@ -653,8 +648,8 @@ int LogDynAndXResizeWindow_ex(wLog* log, const char* file, const char* fkt, size
 {
 	if (WLog_IsLevelActive(log, log_level))
 	{
-		write_log(log, log_level, file, fkt, line, "XResizeWindow(%p, %lu, %u, %u)", display, w,
-		          width, height);
+		write_log(log, log_level, file, fkt, line, "XResizeWindow(%p, %lu, %u, %u)", (void*)display,
+		          w, width, height);
 	}
 	const int rc = XResizeWindow(display, w, width, height);
 	return write_result_log_expect_one(log, WLOG_WARN, file, fkt, line, display, "XResizeWindow",
@@ -666,7 +661,7 @@ int LogDynAndXClearWindow_ex(wLog* log, const char* file, const char* fkt, size_
 {
 	if (WLog_IsLevelActive(log, log_level))
 	{
-		write_log(log, log_level, file, fkt, line, "XClearWindow(%p, %lu)", display, w);
+		write_log(log, log_level, file, fkt, line, "XClearWindow(%p, %lu)", (void*)display, w);
 	}
 	const int rc = XClearWindow(display, w);
 	return write_result_log_expect_one(log, WLOG_WARN, file, fkt, line, display, "XClearWindow",
@@ -678,8 +673,8 @@ int LogDynAndXSetBackground_ex(wLog* log, const char* file, const char* fkt, siz
 {
 	if (WLog_IsLevelActive(log, log_level))
 	{
-		write_log(log, log_level, file, fkt, line, "XSetBackground(%p, %p, %lu)", display, gc,
-		          background);
+		write_log(log, log_level, file, fkt, line, "XSetBackground(%p, %p, %lu)", (void*)display,
+		          (void*)gc, background);
 	}
 	const int rc = XSetBackground(display, gc, background);
 	return write_result_log_expect_one(log, WLOG_WARN, file, fkt, line, display, "XSetBackground",
@@ -691,8 +686,8 @@ int LogDynAndXSetClipMask_ex(wLog* log, const char* file, const char* fkt, size_
 {
 	if (WLog_IsLevelActive(log, log_level))
 	{
-		write_log(log, log_level, file, fkt, line, "XSetClipMask(%p, %p, %lu)", display, gc,
-		          pixmap);
+		write_log(log, log_level, file, fkt, line, "XSetClipMask(%p, %p, %lu)", (void*)display,
+		          (void*)gc, pixmap);
 	}
 	const int rc = XSetClipMask(display, gc, pixmap);
 	return write_result_log_expect_one(log, WLOG_WARN, file, fkt, line, display, "XSetClipMask",
@@ -706,7 +701,7 @@ int LogDynAndXFillRectangle_ex(wLog* log, const char* file, const char* fkt, siz
 	if (WLog_IsLevelActive(log, log_level))
 	{
 		write_log(log, log_level, file, fkt, line, "XFillRectangle(%p, %lu, %p, %d, %d, %u, %u)",
-		          display, w, gc, x, y, width, height);
+		          (void*)display, w, (void*)gc, x, y, width, height);
 	}
 	const int rc = XFillRectangle(display, w, gc, x, y, width, height);
 	return write_result_log_expect_one(log, WLOG_WARN, file, fkt, line, display, "XFillRectangle",
@@ -718,7 +713,8 @@ int LogDynAndXSetRegion_ex(wLog* log, const char* file, const char* fkt, size_t 
 {
 	if (WLog_IsLevelActive(log, log_level))
 	{
-		write_log(log, log_level, file, fkt, line, "XSetRegion(%p, %p, %lu)", display, gc, r);
+		write_log(log, log_level, file, fkt, line, "XSetRegion(%p, %p, %p)", (void*)display,
+		          (void*)gc, (void*)r);
 	}
 	const int rc = XSetRegion(display, gc, r);
 	return write_result_log_expect_one(log, WLOG_WARN, file, fkt, line, display, "XSetRegion", rc);
@@ -729,8 +725,8 @@ int LogDynAndXReparentWindow_ex(wLog* log, const char* file, const char* fkt, si
 {
 	if (WLog_IsLevelActive(log, log_level))
 	{
-		write_log(log, log_level, file, fkt, line, "XReparentWindow(%p, %lu, %lu, %d, %d)", display,
-		          w, parent, x, y);
+		write_log(log, log_level, file, fkt, line, "XReparentWindow(%p, %lu, %lu, %d, %d)",
+		          (void*)display, w, parent, x, y);
 	}
 	const int rc = XReparentWindow(display, w, parent, x, y);
 	return write_result_log_expect_one(log, WLOG_WARN, file, fkt, line, display, "XReparentWindow",

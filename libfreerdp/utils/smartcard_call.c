@@ -1835,7 +1835,7 @@ LONG smartcard_irp_device_control_call(scard_call_context* smartcard, wStream* o
 		WLog_Print(smartcard->log, WLOG_WARN,
 		           "IRP failure: %s (0x%08" PRIX32 "), status: %s (0x%08" PRIX32 ")",
 		           scard_get_ioctl_string(ioControlCode, TRUE), ioControlCode,
-		           SCardGetErrorString(result), result);
+		           SCardGetErrorString(result), WINPR_CXX_COMPAT_CAST(UINT32, result));
 	}
 
 	*pIoStatus = STATUS_SUCCESS;
@@ -1846,7 +1846,8 @@ LONG smartcard_irp_device_control_call(scard_call_context* smartcard, wStream* o
 		*pIoStatus = result;
 		WLog_Print(smartcard->log, WLOG_WARN,
 		           "IRP failure: %s (0x%08" PRIX32 "), ntstatus: 0x%08" PRIX32 "",
-		           scard_get_ioctl_string(ioControlCode, TRUE), ioControlCode, result);
+		           scard_get_ioctl_string(ioControlCode, TRUE), ioControlCode,
+		           WINPR_CXX_COMPAT_CAST(UINT32, result));
 	}
 
 	Stream_SealLength(out);
@@ -1869,7 +1870,7 @@ LONG smartcard_irp_device_control_call(scard_call_context* smartcard, wStream* o
 	if (outputBufferLength > operation->outputBufferLength)
 	{
 		WLog_Print(smartcard->log, WLOG_WARN,
-		           "IRP warn: expected outputBufferLength %" PRIu32 ", but current limit %" PRIu32
+		           "IRP warn: expected outputBufferLength %" PRIu32 ", but current limit %" PRIuz
 		           ", respond with STATUS_BUFFER_TOO_SMALL",
 		           operation->outputBufferLength, outputBufferLength);
 

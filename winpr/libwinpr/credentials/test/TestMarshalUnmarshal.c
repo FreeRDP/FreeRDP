@@ -42,8 +42,8 @@ static int TestUnmarshal(int argc, char** argv)
 		CRED_MARSHAL_TYPE t = BinaryBlobForSystem;
 		CERT_CREDENTIAL_INFO* certInfo = NULL;
 
-		if (!CredUnmarshalCredentialA(testValues[i].marshalled, &t, &certInfo) || !certInfo ||
-		    t != CertCredential)
+		if (!CredUnmarshalCredentialA(testValues[i].marshalled, &t, (void**)&certInfo) ||
+		    !certInfo || t != CertCredential)
 			return -1;
 
 		BOOL ok = memcmp(testValues[i].source, certInfo->rgbHashOfCert,

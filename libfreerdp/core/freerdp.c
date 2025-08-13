@@ -1142,26 +1142,26 @@ void freerdp_set_last_error_ex(rdpContext* context, UINT32 lastError, const char
 	{
 		if (WLog_IsLevelActive(context->log, WLOG_ERROR))
 		{
-			WLog_PrintMessage(context->log, WLOG_MESSAGE_TEXT, WLOG_ERROR, (size_t)line, file, fkt,
-			                  "%s [0x%08" PRIX32 "]", freerdp_get_last_error_name(lastError),
-			                  lastError);
+			WLog_PrintTextMessage(context->log, WLOG_ERROR, (size_t)line, file, fkt,
+			                      "%s [0x%08" PRIX32 "]", freerdp_get_last_error_name(lastError),
+			                      lastError);
 		}
 	}
 
 	if (lastError == FREERDP_ERROR_SUCCESS)
 	{
 		if (WLog_IsLevelActive(context->log, WLOG_DEBUG))
-			WLog_PrintMessage(context->log, WLOG_MESSAGE_TEXT, WLOG_DEBUG, (size_t)line, file, fkt,
-			                  "resetting error state");
+			WLog_PrintTextMessage(context->log, WLOG_DEBUG, (size_t)line, file, fkt,
+			                      "resetting error state");
 	}
 	else if (context->LastError != FREERDP_ERROR_SUCCESS)
 	{
 		if (WLog_IsLevelActive(context->log, WLOG_ERROR))
 		{
-			WLog_PrintMessage(context->log, WLOG_MESSAGE_TEXT, WLOG_ERROR, (size_t)line, file, fkt,
-			                  "TODO: Trying to set error code %s, but %s already set!",
-			                  freerdp_get_last_error_name(lastError),
-			                  freerdp_get_last_error_name(context->LastError));
+			WLog_PrintTextMessage(context->log, WLOG_ERROR, (size_t)line, file, fkt,
+			                      "TODO: Trying to set error code %s, but %s already set!",
+			                      freerdp_get_last_error_name(lastError),
+			                      freerdp_get_last_error_name(context->LastError));
 		}
 	}
 	context->LastError = lastError;

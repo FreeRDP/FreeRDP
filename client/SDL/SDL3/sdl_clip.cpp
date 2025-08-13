@@ -227,7 +227,7 @@ bool sdlClip::handle_update(const SDL_ClipboardEvent& ev)
 	size_t nformats = WINPR_ASSERTING_INT_CAST(size_t, ev.num_mime_types);
 	const char** clipboard_mime_formats = ev.mime_types;
 
-	WLog_Print(_log, WLOG_TRACE, "SDL has %d formats", nformats);
+	WLog_Print(_log, WLOG_TRACE, "SDL has %" PRIuz " formats", nformats);
 
 	bool textPushed = false;
 	bool imgPushed = false;

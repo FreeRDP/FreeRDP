@@ -592,14 +592,16 @@ static char* systemtime2str(const SYSTEMTIME* t, char* buffer, size_t len)
 	return buffer;
 }
 
-static void log_print(wLog* log, DWORD level, const char* file, const char* fkt, size_t line, ...)
+WINPR_ATTR_FORMAT_ARG(6, 7)
+static void log_print(wLog* log, DWORD level, const char* file, const char* fkt, size_t line,
+                      WINPR_FORMAT_ARG const char* fmt, ...)
 {
 	if (!WLog_IsLevelActive(log, level))
 		return;
 
 	va_list ap = { 0 };
-	va_start(ap, line);
-	WLog_PrintMessageVA(log, WLOG_MESSAGE_TEXT, level, line, file, fkt, ap);
+	va_start(ap, fmt);
+	WLog_PrintTextMessageVA(log, level, line, file, fkt, fmt, ap);
 	va_end(ap);
 }
 
@@ -614,20 +616,20 @@ static void log_timezone_(const DYNAMIC_TIME_ZONE_INFORMATION* tzif, DWORD resul
 	wLog* log = WLog_Get(TAG);
 	log_print(log, level, file, fkt, line, "DYNAMIC_TIME_ZONE_INFORMATION {");
 
-	log_print(log, level, file, fkt, line, "  Bias=%" PRIu32, tzif->Bias);
+	log_print(log, level, file, fkt, line, "  Bias=%" PRId32, tzif->Bias);
 	(void)ConvertWCharNToUtf8(tzif->StandardName, ARRAYSIZE(tzif->StandardName), buffer,
 	                          ARRAYSIZE(buffer));
 	log_print(log, level, file, fkt, line, "  StandardName=%s", buffer);
 	log_print(log, level, file, fkt, line, "  StandardDate=%s",
 	          systemtime2str(&tzif->StandardDate, buffer, sizeof(buffer)));
-	log_print(log, level, file, fkt, line, "  StandardBias=%" PRIu32, tzif->StandardBias);
+	log_print(log, level, file, fkt, line, "  StandardBias=%" PRId32, tzif->StandardBias);
 
 	(void)ConvertWCharNToUtf8(tzif->DaylightName, ARRAYSIZE(tzif->DaylightName), buffer,
 	                          ARRAYSIZE(buffer));
 	log_print(log, level, file, fkt, line, "  DaylightName=%s", buffer);
 	log_print(log, level, file, fkt, line, "  DaylightDate=%s",
 	          systemtime2str(&tzif->DaylightDate, buffer, sizeof(buffer)));
-	log_print(log, level, file, fkt, line, "  DaylightBias=%" PRIu32, tzif->DaylightBias);
+	log_print(log, level, file, fkt, line, "  DaylightBias=%" PRId32, tzif->DaylightBias);
 	(void)ConvertWCharNToUtf8(tzif->TimeZoneKeyName, ARRAYSIZE(tzif->TimeZoneKeyName), buffer,
 	                          ARRAYSIZE(buffer));
 	log_print(log, level, file, fkt, line, "  TimeZoneKeyName=%s", buffer);

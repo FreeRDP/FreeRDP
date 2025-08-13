@@ -1058,24 +1058,23 @@ static void http_response_print(wLog* log, DWORD level, const HttpResponse* resp
 		return;
 
 	const long status = http_response_get_status_code(response);
-	WLog_PrintMessage(log, WLOG_MESSAGE_TEXT, level, line, file, fkt, "HTTP status: %s",
-	                  freerdp_http_status_string_format(status, buffer, ARRAYSIZE(buffer)));
+	WLog_PrintTextMessage(log, level, line, file, fkt, "HTTP status: %s",
+	                      freerdp_http_status_string_format(status, buffer, ARRAYSIZE(buffer)));
 
 	if (WLog_IsLevelActive(log, WLOG_DEBUG))
 	{
 		for (size_t i = 0; i < response->count; i++)
-			WLog_PrintMessage(log, WLOG_MESSAGE_TEXT, WLOG_DEBUG, line, file, fkt,
-			                  "[%" PRIuz "] %s", i, response->lines[i]);
+			WLog_PrintTextMessage(log, WLOG_DEBUG, line, file, fkt, "[%" PRIuz "] %s", i,
+			                      response->lines[i]);
 	}
 
 	if (response->ReasonPhrase)
-		WLog_PrintMessage(log, WLOG_MESSAGE_TEXT, level, line, file, fkt, "[reason] %s",
-		                  response->ReasonPhrase);
+		WLog_PrintTextMessage(log, level, line, file, fkt, "[reason] %s", response->ReasonPhrase);
 
 	if (WLog_IsLevelActive(log, WLOG_TRACE))
 	{
-		WLog_PrintMessage(log, WLOG_MESSAGE_TEXT, WLOG_TRACE, line, file, fkt,
-		                  "[body][%" PRIuz "] %s", response->BodyLength, response->BodyContent);
+		WLog_PrintTextMessage(log, WLOG_TRACE, line, file, fkt, "[body][%" PRIuz "] %s",
+		                      response->BodyLength, response->BodyContent);
 	}
 }
 
@@ -1251,8 +1250,8 @@ static BOOL sleep_or_timeout_(rdpTls* tls, UINT64 startMS, UINT32 timeoutMS, con
 		DWORD level = WLOG_ERROR;
 		wLog* log = WLog_Get(TAG);
 		if (WLog_IsLevelActive(log, level))
-			WLog_PrintMessage(log, WLOG_MESSAGE_TEXT, level, line, file, fkt,
-			                  "timeout [%" PRIu32 "ms] exceeded", timeoutMS);
+			WLog_PrintTextMessage(log, level, line, file, fkt, "timeout [%" PRIu32 "ms] exceeded",
+			                      timeoutMS);
 		return TRUE;
 	}
 	if (!BIO_should_retry(tls->bio))
@@ -1261,7 +1260,7 @@ static BOOL sleep_or_timeout_(rdpTls* tls, UINT64 startMS, UINT32 timeoutMS, con
 		wLog* log = WLog_Get(TAG);
 		if (WLog_IsLevelActive(log, level))
 		{
-			WLog_PrintMessage(log, WLOG_MESSAGE_TEXT, level, line, file, fkt, "Retries exceeded");
+			WLog_PrintTextMessage(log, level, line, file, fkt, "Retries exceeded");
 			ERR_print_errors_cb(print_bio_error, log);
 		}
 		return TRUE;
@@ -1734,7 +1733,7 @@ void http_response_log_error_status_(wLog* log, DWORD level, const HttpResponse*
 
 	char buffer[64] = { 0 };
 	const long status = http_response_get_status_code(response);
-	WLog_PrintMessage(log, WLOG_MESSAGE_TEXT, level, line, file, fkt, "Unexpected HTTP status: %s",
-	                  freerdp_http_status_string_format(status, buffer, ARRAYSIZE(buffer)));
+	WLog_PrintTextMessage(log, level, line, file, fkt, "Unexpected HTTP status: %s",
+	                      freerdp_http_status_string_format(status, buffer, ARRAYSIZE(buffer)));
 	http_response_print(log, level, response, file, line, fkt);
 }

@@ -313,8 +313,8 @@ static void window_state_log_style_int(wLog* log, const WINDOW_STATE_ORDER* wind
 
 		window_styles_to_string(windowState->style, buffer1, sizeof(buffer1));
 		window_styles_ex_to_string(windowState->extendedStyle, buffer2, sizeof(buffer2));
-		WLog_PrintMessage(log, WLOG_MESSAGE_TEXT, log_level, line, file, fkt,
-		                  "windowStyle={%s, %s}", buffer1, buffer2);
+		WLog_PrintTextMessage(log, log_level, line, file, fkt, "windowStyle={%s, %s}", buffer1,
+		                      buffer2);
 	}
 }
 

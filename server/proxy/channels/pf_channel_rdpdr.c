@@ -319,7 +319,7 @@ static BOOL rdpdr_check_version(BOOL server, wLog* log, UINT16 versionMajor, UIN
 {
 	if (versionMajor != RDPDR_VERSION_MAJOR)
 	{
-		RX_LOG(server, log, WLOG_WARN, "[%s | %s] expected MajorVersion %" PRIu16 ", got %" PRIu16,
+		RX_LOG(server, log, WLOG_WARN, "[%s | %s] expected MajorVersion %d, got %" PRIu16,
 		       rdpdr_component_string(component), rdpdr_packetid_string(PacketId),
 		       RDPDR_VERSION_MAJOR, versionMajor);
 		return FALSE;
@@ -466,7 +466,7 @@ static UINT rdpdr_process_client_name_request(pf_channel_server_context* rdpdr, 
 	if (!Stream_CheckAndLogRequiredLengthSrv(rdpdr->log, s, rdpdr->common.computerNameLen))
 	{
 		SERVER_RX_LOG(
-		    rdpdr->log, WLOG_WARN, "[%s | %s]: missing data, got %" PRIu32 ", expected %" PRIu32,
+		    rdpdr->log, WLOG_WARN, "[%s | %s]: missing data, got %" PRIuz ", expected %" PRIu32,
 		    rdpdr_component_string(RDPDR_CTYP_CORE), rdpdr_packetid_string(PAKID_CORE_CLIENT_NAME),
 		    Stream_GetRemainingLength(s), rdpdr->common.computerNameLen);
 		return ERROR_INVALID_DATA;

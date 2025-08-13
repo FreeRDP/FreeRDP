@@ -405,7 +405,7 @@ LONG WINAPI Emulate_SCardEstablishContext(SmartcardEmulationContext* smartcard, 
 
 	WLog_Print(smartcard->log, smartcard->log_default_level,
 	           "SCardEstablishContext } status: %s (0x%08" PRIX32 ")", SCardGetErrorString(status),
-	           status);
+	           WINPR_CXX_COMPAT_CAST(UINT32, status));
 
 	if (status != SCARD_S_SUCCESS)
 		scard_context_free(ctx);
@@ -432,7 +432,7 @@ LONG WINAPI Emulate_SCardReleaseContext(SmartcardEmulationContext* smartcard, SC
 
 	WLog_Print(smartcard->log, smartcard->log_default_level,
 	           "SCardReleaseContext } status: %s (0x%08" PRIX32 ")", SCardGetErrorString(status),
-	           status);
+	           WINPR_CXX_COMPAT_CAST(UINT32, status));
 
 	return status;
 }
@@ -459,7 +459,7 @@ LONG WINAPI Emulate_SCardIsValidContext(SmartcardEmulationContext* smartcard, SC
 
 	WLog_Print(smartcard->log, smartcard->log_default_level,
 	           "SCardIsValidContext } status: %s (0x%08" PRIX32 ")", SCardGetErrorString(status),
-	           status);
+	           WINPR_CXX_COMPAT_CAST(UINT32, status));
 
 	return status;
 }
@@ -482,7 +482,7 @@ LONG WINAPI Emulate_SCardListReaderGroupsA(
 
 	WLog_Print(smartcard->log, smartcard->log_default_level,
 	           "SCardListReaderGroupsA } status: %s (0x%08" PRIX32 ")", SCardGetErrorString(status),
-	           status);
+	           WINPR_CXX_COMPAT_CAST(UINT32, status));
 
 	return status;
 }
@@ -505,7 +505,7 @@ LONG WINAPI Emulate_SCardListReaderGroupsW(
 
 	WLog_Print(smartcard->log, smartcard->log_default_level,
 	           "SCardListReaderGroupsW } status: %s (0x%08" PRIX32 ")", SCardGetErrorString(status),
-	           status);
+	           WINPR_CXX_COMPAT_CAST(UINT32, status));
 
 	return status;
 }
@@ -544,7 +544,7 @@ LONG WINAPI Emulate_SCardListReadersA(SmartcardEmulationContext* smartcard, SCAR
 
 	WLog_Print(smartcard->log, smartcard->log_default_level,
 	           "SCardListReadersA } status: %s (0x%08" PRIX32 ")", SCardGetErrorString(status),
-	           status);
+	           WINPR_CXX_COMPAT_CAST(UINT32, status));
 
 	return status;
 }
@@ -588,7 +588,7 @@ LONG WINAPI Emulate_SCardListReadersW(SmartcardEmulationContext* smartcard, SCAR
 
 	WLog_Print(smartcard->log, smartcard->log_default_level,
 	           "SCardListReadersW } status: %s (0x%08" PRIX32 ")", SCardGetErrorString(status),
-	           status);
+	           WINPR_CXX_COMPAT_CAST(UINT32, status));
 
 	return status;
 }
@@ -616,7 +616,7 @@ LONG WINAPI Emulate_SCardListCardsA(SmartcardEmulationContext* smartcard, SCARDC
 
 	WLog_Print(smartcard->log, smartcard->log_default_level,
 	           "SCardListCardsA } status: %s (0x%08" PRIX32 ")", SCardGetErrorString(status),
-	           status);
+	           WINPR_CXX_COMPAT_CAST(UINT32, status));
 
 	return status;
 }
@@ -644,7 +644,7 @@ LONG WINAPI Emulate_SCardListCardsW(SmartcardEmulationContext* smartcard, SCARDC
 
 	WLog_Print(smartcard->log, smartcard->log_default_level,
 	           "SCardListCardsW } status: %s (0x%08" PRIX32 ")", SCardGetErrorString(status),
-	           status);
+	           WINPR_CXX_COMPAT_CAST(UINT32, status));
 
 	return status;
 }
@@ -668,7 +668,7 @@ LONG WINAPI Emulate_SCardListInterfacesA(
 
 	WLog_Print(smartcard->log, smartcard->log_default_level,
 	           "SCardListInterfacesA } status: %s (0x%08" PRIX32 ")", SCardGetErrorString(status),
-	           status);
+	           WINPR_CXX_COMPAT_CAST(UINT32, status));
 
 	return status;
 }
@@ -692,7 +692,7 @@ LONG WINAPI Emulate_SCardListInterfacesW(
 
 	WLog_Print(smartcard->log, smartcard->log_default_level,
 	           "SCardListInterfacesW } status: %s (0x%08" PRIX32 ")", SCardGetErrorString(status),
-	           status);
+	           WINPR_CXX_COMPAT_CAST(UINT32, status));
 
 	return status;
 }
@@ -714,7 +714,7 @@ LONG WINAPI Emulate_SCardGetProviderIdA(SmartcardEmulationContext* smartcard, SC
 
 	WLog_Print(smartcard->log, smartcard->log_default_level,
 	           "SCardGetProviderIdA } status: %s (0x%08" PRIX32 ")", SCardGetErrorString(status),
-	           status);
+	           WINPR_CXX_COMPAT_CAST(UINT32, status));
 
 	return status;
 }
@@ -736,7 +736,7 @@ LONG WINAPI Emulate_SCardGetProviderIdW(SmartcardEmulationContext* smartcard, SC
 
 	WLog_Print(smartcard->log, smartcard->log_default_level,
 	           "SCardGetProviderIdW } status: %s (0x%08" PRIX32 ")", SCardGetErrorString(status),
-	           status);
+	           WINPR_CXX_COMPAT_CAST(UINT32, status));
 
 	return status;
 }
@@ -762,7 +762,7 @@ LONG WINAPI Emulate_SCardGetCardTypeProviderNameA(
 
 	WLog_Print(smartcard->log, smartcard->log_default_level,
 	           "SCardGetCardTypeProviderNameA } status: %s (0x%08" PRIX32 ")",
-	           SCardGetErrorString(status), status);
+	           SCardGetErrorString(status), WINPR_CXX_COMPAT_CAST(UINT32, status));
 
 	return status;
 }
@@ -788,7 +788,7 @@ LONG WINAPI Emulate_SCardGetCardTypeProviderNameW(
 
 	WLog_Print(smartcard->log, smartcard->log_default_level,
 	           "SCardGetCardTypeProviderNameW } status: %s (0x%08" PRIX32 ")",
-	           SCardGetErrorString(status), status);
+	           SCardGetErrorString(status), WINPR_CXX_COMPAT_CAST(UINT32, status));
 
 	return status;
 }
@@ -809,7 +809,7 @@ LONG WINAPI Emulate_SCardIntroduceReaderGroupA(SmartcardEmulationContext* smartc
 
 	WLog_Print(smartcard->log, smartcard->log_default_level,
 	           "SCardIntroduceReaderGroupA } status: %s (0x%08" PRIX32 ")",
-	           SCardGetErrorString(status), status);
+	           SCardGetErrorString(status), WINPR_CXX_COMPAT_CAST(UINT32, status));
 
 	return status;
 }
@@ -830,7 +830,7 @@ LONG WINAPI Emulate_SCardIntroduceReaderGroupW(SmartcardEmulationContext* smartc
 
 	WLog_Print(smartcard->log, smartcard->log_default_level,
 	           "SCardIntroduceReaderGroupW } status: %s (0x%08" PRIX32 ")",
-	           SCardGetErrorString(status), status);
+	           SCardGetErrorString(status), WINPR_CXX_COMPAT_CAST(UINT32, status));
 
 	return status;
 }
@@ -851,7 +851,7 @@ LONG WINAPI Emulate_SCardForgetReaderGroupA(SmartcardEmulationContext* smartcard
 
 	WLog_Print(smartcard->log, smartcard->log_default_level,
 	           "SCardForgetReaderGroupA } status: %s (0x%08" PRIX32 ")",
-	           SCardGetErrorString(status), status);
+	           SCardGetErrorString(status), WINPR_CXX_COMPAT_CAST(UINT32, status));
 
 	return status;
 }
@@ -872,7 +872,7 @@ LONG WINAPI Emulate_SCardForgetReaderGroupW(SmartcardEmulationContext* smartcard
 
 	WLog_Print(smartcard->log, smartcard->log_default_level,
 	           "SCardForgetReaderGroupW } status: %s (0x%08" PRIX32 ")",
-	           SCardGetErrorString(status), status);
+	           SCardGetErrorString(status), WINPR_CXX_COMPAT_CAST(UINT32, status));
 
 	return status;
 }
@@ -897,7 +897,7 @@ LONG WINAPI Emulate_SCardIntroduceReaderA(SmartcardEmulationContext* smartcard,
 
 	WLog_Print(smartcard->log, smartcard->log_default_level,
 	           "SCardIntroduceReaderA } status: %s (0x%08" PRIX32 ")", SCardGetErrorString(status),
-	           status);
+	           WINPR_CXX_COMPAT_CAST(UINT32, status));
 
 	return status;
 }
@@ -922,7 +922,7 @@ LONG WINAPI Emulate_SCardIntroduceReaderW(SmartcardEmulationContext* smartcard,
 
 	WLog_Print(smartcard->log, smartcard->log_default_level,
 	           "SCardIntroduceReaderW } status: %s (0x%08" PRIX32 ")", SCardGetErrorString(status),
-	           status);
+	           WINPR_CXX_COMPAT_CAST(UINT32, status));
 
 	return status;
 }
@@ -944,7 +944,7 @@ LONG WINAPI Emulate_SCardForgetReaderA(SmartcardEmulationContext* smartcard, SCA
 
 	WLog_Print(smartcard->log, smartcard->log_default_level,
 	           "SCardForgetReaderA } status: %s (0x%08" PRIX32 ")", SCardGetErrorString(status),
-	           status);
+	           WINPR_CXX_COMPAT_CAST(UINT32, status));
 
 	return status;
 }
@@ -966,7 +966,7 @@ LONG WINAPI Emulate_SCardForgetReaderW(SmartcardEmulationContext* smartcard, SCA
 
 	WLog_Print(smartcard->log, smartcard->log_default_level,
 	           "SCardForgetReaderW } status: %s (0x%08" PRIX32 ")", SCardGetErrorString(status),
-	           status);
+	           WINPR_CXX_COMPAT_CAST(UINT32, status));
 
 	return status;
 }
@@ -991,7 +991,7 @@ LONG WINAPI Emulate_SCardAddReaderToGroupA(SmartcardEmulationContext* smartcard,
 
 	WLog_Print(smartcard->log, smartcard->log_default_level,
 	           "SCardAddReaderToGroupA } status: %s (0x%08" PRIX32 ")", SCardGetErrorString(status),
-	           status);
+	           WINPR_CXX_COMPAT_CAST(UINT32, status));
 
 	return status;
 }
@@ -1016,7 +1016,7 @@ LONG WINAPI Emulate_SCardAddReaderToGroupW(SmartcardEmulationContext* smartcard,
 
 	WLog_Print(smartcard->log, smartcard->log_default_level,
 	           "SCardAddReaderToGroupW } status: %s (0x%08" PRIX32 ")", SCardGetErrorString(status),
-	           status);
+	           WINPR_CXX_COMPAT_CAST(UINT32, status));
 
 	return status;
 }
@@ -1041,7 +1041,7 @@ LONG WINAPI Emulate_SCardRemoveReaderFromGroupA(SmartcardEmulationContext* smart
 
 	WLog_Print(smartcard->log, smartcard->log_default_level,
 	           "SCardRemoveReaderFromGroupA } status: %s (0x%08" PRIX32 ")",
-	           SCardGetErrorString(status), status);
+	           SCardGetErrorString(status), WINPR_CXX_COMPAT_CAST(UINT32, status));
 
 	return status;
 }
@@ -1066,7 +1066,7 @@ LONG WINAPI Emulate_SCardRemoveReaderFromGroupW(SmartcardEmulationContext* smart
 
 	WLog_Print(smartcard->log, smartcard->log_default_level,
 	           "SCardRemoveReaderFromGroupW } status: %s (0x%08" PRIX32 ")",
-	           SCardGetErrorString(status), status);
+	           SCardGetErrorString(status), WINPR_CXX_COMPAT_CAST(UINT32, status));
 
 	return status;
 }
@@ -1096,7 +1096,7 @@ LONG WINAPI Emulate_SCardIntroduceCardTypeA(SmartcardEmulationContext* smartcard
 
 	WLog_Print(smartcard->log, smartcard->log_default_level,
 	           "SCardIntroduceCardTypeA } status: %s (0x%08" PRIX32 ")",
-	           SCardGetErrorString(status), status);
+	           SCardGetErrorString(status), WINPR_CXX_COMPAT_CAST(UINT32, status));
 
 	return status;
 }
@@ -1126,7 +1126,7 @@ LONG WINAPI Emulate_SCardIntroduceCardTypeW(SmartcardEmulationContext* smartcard
 
 	WLog_Print(smartcard->log, smartcard->log_default_level,
 	           "SCardIntroduceCardTypeW } status: %s (0x%08" PRIX32 ")",
-	           SCardGetErrorString(status), status);
+	           SCardGetErrorString(status), WINPR_CXX_COMPAT_CAST(UINT32, status));
 
 	return status;
 }
@@ -1150,7 +1150,7 @@ LONG WINAPI Emulate_SCardSetCardTypeProviderNameA(SmartcardEmulationContext* sma
 
 	WLog_Print(smartcard->log, smartcard->log_default_level,
 	           "SCardSetCardTypeProviderNameA } status: %s (0x%08" PRIX32 ")",
-	           SCardGetErrorString(status), status);
+	           SCardGetErrorString(status), WINPR_CXX_COMPAT_CAST(UINT32, status));
 
 	return status;
 }
@@ -1174,7 +1174,7 @@ LONG WINAPI Emulate_SCardSetCardTypeProviderNameW(SmartcardEmulationContext* sma
 
 	WLog_Print(smartcard->log, smartcard->log_default_level,
 	           "SCardSetCardTypeProviderNameW } status: %s (0x%08" PRIX32 ")",
-	           SCardGetErrorString(status), status);
+	           SCardGetErrorString(status), WINPR_CXX_COMPAT_CAST(UINT32, status));
 
 	return status;
 }
@@ -1195,7 +1195,7 @@ LONG WINAPI Emulate_SCardForgetCardTypeA(SmartcardEmulationContext* smartcard,
 
 	WLog_Print(smartcard->log, smartcard->log_default_level,
 	           "SCardForgetCardTypeA } status: %s (0x%08" PRIX32 ")", SCardGetErrorString(status),
-	           status);
+	           WINPR_CXX_COMPAT_CAST(UINT32, status));
 
 	return status;
 }
@@ -1216,7 +1216,7 @@ LONG WINAPI Emulate_SCardForgetCardTypeW(SmartcardEmulationContext* smartcard,
 
 	WLog_Print(smartcard->log, smartcard->log_default_level,
 	           "SCardForgetCardTypeW } status: %s (0x%08" PRIX32 ")", SCardGetErrorString(status),
-	           status);
+	           WINPR_CXX_COMPAT_CAST(UINT32, status));
 
 	return status;
 }
@@ -1239,7 +1239,7 @@ LONG WINAPI Emulate_SCardFreeMemory(SmartcardEmulationContext* smartcard, SCARDC
 
 	WLog_Print(smartcard->log, smartcard->log_default_level,
 	           "SCardFreeMemory } status: %s (0x%08" PRIX32 ")", SCardGetErrorString(status),
-	           status);
+	           WINPR_CXX_COMPAT_CAST(UINT32, status));
 
 	return status;
 }
@@ -1291,7 +1291,7 @@ LONG WINAPI Emulate_SCardLocateCardsA(SmartcardEmulationContext* smartcard, SCAR
 
 	WLog_Print(smartcard->log, smartcard->log_default_level,
 	           "SCardLocateCardsA } status: %s (0x%08" PRIX32 ")", SCardGetErrorString(status),
-	           status);
+	           WINPR_CXX_COMPAT_CAST(UINT32, status));
 
 	return status;
 }
@@ -1315,7 +1315,7 @@ LONG WINAPI Emulate_SCardLocateCardsW(SmartcardEmulationContext* smartcard, SCAR
 
 	WLog_Print(smartcard->log, smartcard->log_default_level,
 	           "SCardLocateCardsW } status: %s (0x%08" PRIX32 ")", SCardGetErrorString(status),
-	           status);
+	           WINPR_CXX_COMPAT_CAST(UINT32, status));
 
 	return status;
 }
@@ -1341,7 +1341,7 @@ LONG WINAPI Emulate_SCardLocateCardsByATRA(SmartcardEmulationContext* smartcard,
 
 	WLog_Print(smartcard->log, smartcard->log_default_level,
 	           "SCardLocateCardsByATRA } status: %s (0x%08" PRIX32 ")", SCardGetErrorString(status),
-	           status);
+	           WINPR_CXX_COMPAT_CAST(UINT32, status));
 
 	return status;
 }
@@ -1367,7 +1367,7 @@ LONG WINAPI Emulate_SCardLocateCardsByATRW(SmartcardEmulationContext* smartcard,
 
 	WLog_Print(smartcard->log, smartcard->log_default_level,
 	           "SCardLocateCardsByATRW } status: %s (0x%08" PRIX32 ")", SCardGetErrorString(status),
-	           status);
+	           WINPR_CXX_COMPAT_CAST(UINT32, status));
 
 	return status;
 }
@@ -1449,7 +1449,7 @@ LONG WINAPI Emulate_SCardGetStatusChangeA(SmartcardEmulationContext* smartcard,
 
 	WLog_Print(smartcard->log, smartcard->log_default_level,
 	           "SCardGetStatusChangeA } status: %s (0x%08" PRIX32 ")", SCardGetErrorString(status),
-	           status);
+	           WINPR_CXX_COMPAT_CAST(UINT32, status));
 
 	return status;
 }
@@ -1530,7 +1530,7 @@ LONG WINAPI Emulate_SCardGetStatusChangeW(SmartcardEmulationContext* smartcard,
 
 	WLog_Print(smartcard->log, smartcard->log_default_level,
 	           "SCardGetStatusChangeW } status: %s (0x%08" PRIX32 ")", SCardGetErrorString(status),
-	           status);
+	           WINPR_CXX_COMPAT_CAST(UINT32, status));
 
 	return status;
 }
@@ -1550,7 +1550,8 @@ LONG WINAPI Emulate_SCardCancel(SmartcardEmulationContext* smartcard, SCARDCONTE
 	}
 
 	WLog_Print(smartcard->log, smartcard->log_default_level,
-	           "SCardCancel } status: %s (0x%08" PRIX32 ")", SCardGetErrorString(status), status);
+	           "SCardCancel } status: %s (0x%08" PRIX32 ")", SCardGetErrorString(status),
+	           WINPR_CXX_COMPAT_CAST(UINT32, status));
 
 	return status;
 }
@@ -1649,7 +1650,8 @@ LONG WINAPI Emulate_SCardConnectA(SmartcardEmulationContext* smartcard, SCARDCON
 	}
 
 	WLog_Print(smartcard->log, smartcard->log_default_level,
-	           "SCardConnectA } status: %s (0x%08" PRIX32 ")", SCardGetErrorString(status), status);
+	           "SCardConnectA } status: %s (0x%08" PRIX32 ")", SCardGetErrorString(status),
+	           WINPR_CXX_COMPAT_CAST(UINT32, status));
 
 	return status;
 }
@@ -1674,7 +1676,8 @@ LONG WINAPI Emulate_SCardConnectW(SmartcardEmulationContext* smartcard, SCARDCON
 	}
 
 	WLog_Print(smartcard->log, smartcard->log_default_level,
-	           "SCardConnectW } status: %s (0x%08" PRIX32 ")", SCardGetErrorString(status), status);
+	           "SCardConnectW } status: %s (0x%08" PRIX32 ")", SCardGetErrorString(status),
+	           WINPR_CXX_COMPAT_CAST(UINT32, status));
 
 	return status;
 }
@@ -1706,7 +1709,7 @@ LONG WINAPI Emulate_SCardReconnect(SmartcardEmulationContext* smartcard, SCARDHA
 
 	WLog_Print(smartcard->log, smartcard->log_default_level,
 	           "SCardReconnect } status: %s (0x%08" PRIX32 ")", SCardGetErrorString(status),
-	           status);
+	           WINPR_CXX_COMPAT_CAST(UINT32, status));
 
 	return status;
 }
@@ -1733,7 +1736,7 @@ LONG WINAPI Emulate_SCardDisconnect(SmartcardEmulationContext* smartcard, SCARDH
 
 	WLog_Print(smartcard->log, smartcard->log_default_level,
 	           "SCardDisconnect } status: %s (0x%08" PRIX32 ")", SCardGetErrorString(status),
-	           status);
+	           WINPR_CXX_COMPAT_CAST(UINT32, status));
 
 	return status;
 }
@@ -1757,7 +1760,7 @@ LONG WINAPI Emulate_SCardBeginTransaction(SmartcardEmulationContext* smartcard, 
 
 	WLog_Print(smartcard->log, smartcard->log_default_level,
 	           "SCardBeginTransaction } status: %s (0x%08" PRIX32 ")", SCardGetErrorString(status),
-	           status);
+	           WINPR_CXX_COMPAT_CAST(UINT32, status));
 
 	return status;
 }
@@ -1784,7 +1787,7 @@ LONG WINAPI Emulate_SCardEndTransaction(SmartcardEmulationContext* smartcard, SC
 
 	WLog_Print(smartcard->log, smartcard->log_default_level,
 	           "SCardEndTransaction } status: %s (0x%08" PRIX32 ")", SCardGetErrorString(status),
-	           status);
+	           WINPR_CXX_COMPAT_CAST(UINT32, status));
 
 	return status;
 }
@@ -1808,7 +1811,7 @@ LONG WINAPI Emulate_SCardCancelTransaction(SmartcardEmulationContext* smartcard,
 
 	WLog_Print(smartcard->log, smartcard->log_default_level,
 	           "SCardCancelTransaction } status: %s (0x%08" PRIX32 ")", SCardGetErrorString(status),
-	           status);
+	           WINPR_CXX_COMPAT_CAST(UINT32, status));
 
 	return status;
 }
@@ -1866,7 +1869,8 @@ LONG WINAPI Emulate_SCardState(SmartcardEmulationContext* smartcard, SCARDHANDLE
 	}
 
 	WLog_Print(smartcard->log, smartcard->log_default_level,
-	           "SCardState } status: %s (0x%08" PRIX32 ")", SCardGetErrorString(status), status);
+	           "SCardState } status: %s (0x%08" PRIX32 ")", SCardGetErrorString(status),
+	           WINPR_CXX_COMPAT_CAST(UINT32, status));
 
 	return status;
 }
@@ -1914,7 +1918,8 @@ LONG WINAPI Emulate_SCardStatusA(SmartcardEmulationContext* smartcard, SCARDHAND
 	}
 
 	WLog_Print(smartcard->log, smartcard->log_default_level,
-	           "SCardStatusA } status: %s (0x%08" PRIX32 ")", SCardGetErrorString(status), status);
+	           "SCardStatusA } status: %s (0x%08" PRIX32 ")", SCardGetErrorString(status),
+	           WINPR_CXX_COMPAT_CAST(UINT32, status));
 
 	return status;
 }
@@ -1961,7 +1966,8 @@ LONG WINAPI Emulate_SCardStatusW(SmartcardEmulationContext* smartcard, SCARDHAND
 	}
 
 	WLog_Print(smartcard->log, smartcard->log_default_level,
-	           "SCardStatusW } status: %s (0x%08" PRIX32 ")", SCardGetErrorString(status), status);
+	           "SCardStatusW } status: %s (0x%08" PRIX32 ")", SCardGetErrorString(status),
+	           WINPR_CXX_COMPAT_CAST(UINT32, status));
 
 	return status;
 }
@@ -2007,7 +2013,8 @@ LONG WINAPI Emulate_SCardTransmit(SmartcardEmulationContext* smartcard, SCARDHAN
 	}
 
 	WLog_Print(smartcard->log, smartcard->log_default_level,
-	           "SCardTransmit } status: %s (0x%08" PRIX32 ")", SCardGetErrorString(status), status);
+	           "SCardTransmit } status: %s (0x%08" PRIX32 ")", SCardGetErrorString(status),
+	           WINPR_CXX_COMPAT_CAST(UINT32, status));
 
 	return status;
 }
@@ -2033,7 +2040,7 @@ LONG WINAPI Emulate_SCardGetTransmitCount(SmartcardEmulationContext* smartcard, 
 
 	WLog_Print(smartcard->log, smartcard->log_default_level,
 	           "SCardGetTransmitCount } status: %s (0x%08" PRIX32 ")", SCardGetErrorString(status),
-	           status);
+	           WINPR_CXX_COMPAT_CAST(UINT32, status));
 
 	return status;
 }
@@ -2062,7 +2069,8 @@ LONG WINAPI Emulate_SCardControl(
 	}
 
 	WLog_Print(smartcard->log, smartcard->log_default_level,
-	           "SCardControl } status: %s (0x%08" PRIX32 ")", SCardGetErrorString(status), status);
+	           "SCardControl } status: %s (0x%08" PRIX32 ")", SCardGetErrorString(status),
+	           WINPR_CXX_COMPAT_CAST(UINT32, status));
 
 	return status;
 }
@@ -2087,7 +2095,7 @@ LONG WINAPI Emulate_SCardGetAttrib(SmartcardEmulationContext* smartcard, SCARDHA
 
 	WLog_Print(smartcard->log, smartcard->log_default_level,
 	           "SCardGetAttrib } status: %s (0x%08" PRIX32 ")", SCardGetErrorString(status),
-	           status);
+	           WINPR_CXX_COMPAT_CAST(UINT32, status));
 
 	return status;
 }
@@ -2110,7 +2118,7 @@ LONG WINAPI Emulate_SCardSetAttrib(SmartcardEmulationContext* smartcard, SCARDHA
 
 	WLog_Print(smartcard->log, smartcard->log_default_level,
 	           "SCardSetAttrib } status: %s (0x%08" PRIX32 ")", SCardGetErrorString(status),
-	           status);
+	           WINPR_CXX_COMPAT_CAST(UINT32, status));
 
 	return status;
 }
@@ -2131,7 +2139,7 @@ LONG WINAPI Emulate_SCardUIDlgSelectCardA(SmartcardEmulationContext* smartcard,
 
 	WLog_Print(smartcard->log, smartcard->log_default_level,
 	           "SCardUIDlgSelectCardA } status: %s (0x%08" PRIX32 ")", SCardGetErrorString(status),
-	           status);
+	           WINPR_CXX_COMPAT_CAST(UINT32, status));
 
 	return status;
 }
@@ -2152,7 +2160,7 @@ LONG WINAPI Emulate_SCardUIDlgSelectCardW(SmartcardEmulationContext* smartcard,
 
 	WLog_Print(smartcard->log, smartcard->log_default_level,
 	           "SCardUIDlgSelectCardW } status: %s (0x%08" PRIX32 ")", SCardGetErrorString(status),
-	           status);
+	           WINPR_CXX_COMPAT_CAST(UINT32, status));
 
 	return status;
 }
@@ -2173,7 +2181,7 @@ LONG WINAPI Emulate_GetOpenCardNameA(SmartcardEmulationContext* smartcard,
 
 	WLog_Print(smartcard->log, smartcard->log_default_level,
 	           "GetOpenCardNameA } status: %s (0x%08" PRIX32 ")", SCardGetErrorString(status),
-	           status);
+	           WINPR_CXX_COMPAT_CAST(UINT32, status));
 
 	return status;
 }
@@ -2194,7 +2202,7 @@ LONG WINAPI Emulate_GetOpenCardNameW(SmartcardEmulationContext* smartcard,
 
 	WLog_Print(smartcard->log, smartcard->log_default_level,
 	           "GetOpenCardNameW } status: %s (0x%08" PRIX32 ")", SCardGetErrorString(status),
-	           status);
+	           WINPR_CXX_COMPAT_CAST(UINT32, status));
 
 	return status;
 }
@@ -2212,7 +2220,7 @@ LONG WINAPI Emulate_SCardDlgExtendedError(SmartcardEmulationContext* smartcard)
 
 	WLog_Print(smartcard->log, smartcard->log_default_level,
 	           "SCardDlgExtendedError } status: %s (0x%08" PRIX32 ")", SCardGetErrorString(status),
-	           status);
+	           WINPR_CXX_COMPAT_CAST(UINT32, status));
 
 	return status;
 }
@@ -2256,7 +2264,7 @@ LONG WINAPI Emulate_SCardReadCacheA(SmartcardEmulationContext* smartcard, SCARDC
 
 	WLog_Print(smartcard->log, smartcard->log_default_level,
 	           "SCardReadCacheA } status: %s (0x%08" PRIX32 ")", SCardGetErrorString(status),
-	           status);
+	           WINPR_CXX_COMPAT_CAST(UINT32, status));
 
 	return status;
 }
@@ -2299,7 +2307,7 @@ LONG WINAPI Emulate_SCardReadCacheW(SmartcardEmulationContext* smartcard, SCARDC
 
 	WLog_Print(smartcard->log, smartcard->log_default_level,
 	           "SCardReadCacheW } status: %s (0x%08" PRIX32 ")", SCardGetErrorString(status),
-	           status);
+	           WINPR_CXX_COMPAT_CAST(UINT32, status));
 
 	return status;
 }
@@ -2373,7 +2381,7 @@ LONG WINAPI Emulate_SCardWriteCacheA(SmartcardEmulationContext* smartcard, SCARD
 
 	WLog_Print(smartcard->log, smartcard->log_default_level,
 	           "SCardWriteCacheA } status: %s (0x%08" PRIX32 ")", SCardGetErrorString(status),
-	           status);
+	           WINPR_CXX_COMPAT_CAST(UINT32, status));
 
 	return status;
 }
@@ -2407,7 +2415,7 @@ LONG WINAPI Emulate_SCardWriteCacheW(SmartcardEmulationContext* smartcard, SCARD
 
 	WLog_Print(smartcard->log, smartcard->log_default_level,
 	           "SCardWriteCacheW } status: %s (0x%08" PRIX32 ")", SCardGetErrorString(status),
-	           status);
+	           WINPR_CXX_COMPAT_CAST(UINT32, status));
 
 	return status;
 }
@@ -2440,7 +2448,7 @@ LONG WINAPI Emulate_SCardGetReaderIconA(SmartcardEmulationContext* smartcard, SC
 
 	WLog_Print(smartcard->log, smartcard->log_default_level,
 	           "SCardGetReaderIconA } status: %s (0x%08" PRIX32 ")", SCardGetErrorString(status),
-	           status);
+	           WINPR_CXX_COMPAT_CAST(UINT32, status));
 
 	return status;
 }
@@ -2473,7 +2481,7 @@ LONG WINAPI Emulate_SCardGetReaderIconW(SmartcardEmulationContext* smartcard, SC
 
 	WLog_Print(smartcard->log, smartcard->log_default_level,
 	           "SCardGetReaderIconW } status: %s (0x%08" PRIX32 ")", SCardGetErrorString(status),
-	           status);
+	           WINPR_CXX_COMPAT_CAST(UINT32, status));
 
 	return status;
 }
@@ -2500,7 +2508,7 @@ LONG WINAPI Emulate_SCardGetDeviceTypeIdA(SmartcardEmulationContext* smartcard,
 
 	WLog_Print(smartcard->log, smartcard->log_default_level,
 	           "SCardGetDeviceTypeIdA } status: %s (0x%08" PRIX32 ")", SCardGetErrorString(status),
-	           status);
+	           WINPR_CXX_COMPAT_CAST(UINT32, status));
 
 	return status;
 }
@@ -2527,7 +2535,7 @@ LONG WINAPI Emulate_SCardGetDeviceTypeIdW(SmartcardEmulationContext* smartcard,
 
 	WLog_Print(smartcard->log, smartcard->log_default_level,
 	           "SCardGetDeviceTypeIdW } status: %s (0x%08" PRIX32 ")", SCardGetErrorString(status),
-	           status);
+	           WINPR_CXX_COMPAT_CAST(UINT32, status));
 
 	return status;
 }
@@ -2554,7 +2562,7 @@ LONG WINAPI Emulate_SCardGetReaderDeviceInstanceIdA(
 
 	WLog_Print(smartcard->log, smartcard->log_default_level,
 	           "SCardGetReaderDeviceInstanceIdA } status: %s (0x%08" PRIX32 ")",
-	           SCardGetErrorString(status), status);
+	           SCardGetErrorString(status), WINPR_CXX_COMPAT_CAST(UINT32, status));
 
 	return status;
 }
@@ -2581,7 +2589,7 @@ LONG WINAPI Emulate_SCardGetReaderDeviceInstanceIdW(
 
 	WLog_Print(smartcard->log, smartcard->log_default_level,
 	           "SCardGetReaderDeviceInstanceIdW } status: %s (0x%08" PRIX32 ")",
-	           SCardGetErrorString(status), status);
+	           SCardGetErrorString(status), WINPR_CXX_COMPAT_CAST(UINT32, status));
 
 	return status;
 }
@@ -2606,7 +2614,7 @@ LONG WINAPI Emulate_SCardListReadersWithDeviceInstanceIdA(
 
 	WLog_Print(smartcard->log, smartcard->log_default_level,
 	           "SCardListReadersWithDeviceInstanceIdA } status: %s (0x%08" PRIX32 ")",
-	           SCardGetErrorString(status), status);
+	           SCardGetErrorString(status), WINPR_CXX_COMPAT_CAST(UINT32, status));
 
 	return status;
 }
@@ -2630,7 +2638,7 @@ LONG WINAPI Emulate_SCardListReadersWithDeviceInstanceIdW(
 
 	WLog_Print(smartcard->log, smartcard->log_default_level,
 	           "SCardListReadersWithDeviceInstanceIdW } status: %s (0x%08" PRIX32 ")",
-	           SCardGetErrorString(status), status);
+	           SCardGetErrorString(status), WINPR_CXX_COMPAT_CAST(UINT32, status));
 
 	return status;
 }
@@ -2650,7 +2658,8 @@ LONG WINAPI Emulate_SCardAudit(SmartcardEmulationContext* smartcard, SCARDCONTEX
 		status = SCARD_E_UNSUPPORTED_FEATURE;
 
 	WLog_Print(smartcard->log, smartcard->log_default_level,
-	           "SCardAudit } status: %s (0x%08" PRIX32 ")", SCardGetErrorString(status), status);
+	           "SCardAudit } status: %s (0x%08" PRIX32 ")", SCardGetErrorString(status),
+	           WINPR_CXX_COMPAT_CAST(UINT32, status));
 
 	return status;
 }
