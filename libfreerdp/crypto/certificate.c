@@ -1335,7 +1335,7 @@ fail:
 	return NULL;
 }
 
-STACK_OF(X509)* extract_chain_from_pem(const char* pem)
+static STACK_OF(X509)* extract_chain_from_pem(const char* pem)
 {
 	if (!pem)
 	{
