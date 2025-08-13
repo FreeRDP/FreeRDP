@@ -1371,6 +1371,8 @@ static STACK_OF(X509)* extract_chain_from_pem(const char* pem)
 		sk_X509_push(chain, cert);
 	}
 
+	X509_free(leaf);
+	BIO_free(bio);
 	return chain;
 }
 
