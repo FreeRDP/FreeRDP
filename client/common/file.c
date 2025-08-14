@@ -1750,12 +1750,54 @@ fail:
 	return NULL;
 }
 
-BOOL freerdp_client_populate_settings_from_rdp_file(const rdpFile* file, rdpSettings* settings)
+BOOL freerdp_client_populate_settings_from_rdp_file_unchecked(const rdpFile* file,
+                                                              rdpSettings* settings)
 {
-	BOOL setDefaultConnectionType = TRUE;
-
 	if (!file || !settings)
 		return FALSE;
+
+	/* Start with connection type.
+	 * This setting initializes certain defaults which might be overridden by later options.
+	 */
+	if (~file->BandwidthAutoDetect)
+	{
+		if (file->BandwidthAutoDetect != 0)
+		{
+			if ((~file->NetworkAutoDetect) && (file->NetworkAutoDetect == 0))
+			{
+				WLog_WARN(TAG,
+				          "Got networkautodetect:i:%" PRIu32 " and bandwidthautodetect:i:%" PRIu32
+				          ". Correcting to networkautodetect:i:1",
+				          file->NetworkAutoDetect, file->BandwidthAutoDetect);
+				WLog_WARN(TAG,
+				          "Add networkautodetect:i:1 to your RDP file to eliminate this warning.");
+			}
+		}
+		if (!freerdp_settings_set_bool(settings, FreeRDP_NetworkAutoDetect,
+		                               (file->BandwidthAutoDetect != 0) ||
+		                                   (file->NetworkAutoDetect != 0)))
+			return FALSE;
+	}
+
+	if (~file->NetworkAutoDetect)
+	{
+		if (file->NetworkAutoDetect != 0)
+		{
+			if ((~file->BandwidthAutoDetect) && (file->BandwidthAutoDetect == 0))
+			{
+				WLog_WARN(TAG,
+				          "Got networkautodetect:i:%" PRIu32 " and bandwidthautodetect:i:%" PRIu32
+				          ". Correcting to bandwidthautodetect:i:1",
+				          file->NetworkAutoDetect, file->BandwidthAutoDetect);
+				WLog_WARN(
+				    TAG, "Add bandwidthautodetect:i:1 to your RDP file to eliminate this warning.");
+			}
+		}
+		if (!freerdp_settings_set_bool(settings, FreeRDP_NetworkAutoDetect,
+		                               (file->BandwidthAutoDetect != 0) ||
+		                                   (file->NetworkAutoDetect != 0)))
+			return FALSE;
+	}
 
 	if (~((size_t)file->Domain))
 	{
@@ -2013,9 +2055,8 @@ BOOL freerdp_client_populate_settings_from_rdp_file(const rdpFile* file, rdpSett
 
 	if (~file->ConnectionType)
 	{
-		if (!freerdp_set_connection_type(settings, file->ConnectionType))
+		if (!freerdp_settings_set_uint32(settings, FreeRDP_ConnectionType, file->ConnectionType))
 			return FALSE;
-		setDefaultConnectionType = FALSE;
 	}
 
 	if (~file->AudioMode)
@@ -2273,55 +2314,6 @@ BOOL freerdp_client_populate_settings_from_rdp_file(const rdpFile* file, rdpSett
 	{
 		if (!freerdp_settings_set_bool(settings, FreeRDP_DisableRemoteAppCapsCheck,
 		                               file->DisableRemoteAppCapsCheck != 0))
-			return FALSE;
-	}
-
-	if (~file->BandwidthAutoDetect)
-	{
-		if (file->BandwidthAutoDetect != 0)
-		{
-			if ((~file->NetworkAutoDetect) && (file->NetworkAutoDetect == 0))
-			{
-				WLog_WARN(TAG,
-				          "Got networkautodetect:i:%" PRIu32 " and bandwidthautodetect:i:%" PRIu32
-				          ". Correcting to networkautodetect:i:1",
-				          file->NetworkAutoDetect, file->BandwidthAutoDetect);
-				WLog_WARN(TAG,
-				          "Add networkautodetect:i:1 to your RDP file to eliminate this warning.");
-			}
-
-			if (!freerdp_set_connection_type(settings, CONNECTION_TYPE_AUTODETECT))
-				return FALSE;
-			setDefaultConnectionType = FALSE;
-		}
-		if (!freerdp_settings_set_bool(settings, FreeRDP_NetworkAutoDetect,
-		                               (file->BandwidthAutoDetect != 0) ||
-		                                   (file->NetworkAutoDetect != 0)))
-			return FALSE;
-	}
-
-	if (~file->NetworkAutoDetect)
-	{
-		if (file->NetworkAutoDetect != 0)
-		{
-			if ((~file->BandwidthAutoDetect) && (file->BandwidthAutoDetect == 0))
-			{
-				WLog_WARN(TAG,
-				          "Got networkautodetect:i:%" PRIu32 " and bandwidthautodetect:i:%" PRIu32
-				          ". Correcting to bandwidthautodetect:i:1",
-				          file->NetworkAutoDetect, file->BandwidthAutoDetect);
-				WLog_WARN(
-				    TAG, "Add bandwidthautodetect:i:1 to your RDP file to eliminate this warning.");
-			}
-
-			if (!freerdp_set_connection_type(settings, CONNECTION_TYPE_AUTODETECT))
-				return FALSE;
-
-			setDefaultConnectionType = FALSE;
-		}
-		if (!freerdp_settings_set_bool(settings, FreeRDP_NetworkAutoDetect,
-		                               (file->BandwidthAutoDetect != 0) ||
-		                                   (file->NetworkAutoDetect != 0)))
 			return FALSE;
 	}
 
@@ -2628,13 +2620,21 @@ BOOL freerdp_client_populate_settings_from_rdp_file(const rdpFile* file, rdpSett
 			return FALSE;
 	}
 
-	if (setDefaultConnectionType)
-	{
-		if (!freerdp_set_connection_type(settings, CONNECTION_TYPE_AUTODETECT))
-			return FALSE;
-	}
-
 	return TRUE;
+}
+
+BOOL freerdp_client_populate_settings_from_rdp_file(const rdpFile* file, rdpSettings* settings)
+{
+	if (!freerdp_client_populate_settings_from_rdp_file_unchecked(file, settings))
+		return FALSE;
+
+	DWORD type = freerdp_settings_get_uint32(settings, FreeRDP_ConnectionType);
+	if ((~file->ConnectionType) == 0)
+	{
+		if (freerdp_settings_get_bool(settings, FreeRDP_NetworkAutoDetect))
+			type = CONNECTION_TYPE_AUTODETECT;
+	}
+	return freerdp_set_connection_type(settings, type);
 }
 
 static rdpFileLine* freerdp_client_rdp_file_find_line_by_name(const rdpFile* file, const char* name)
