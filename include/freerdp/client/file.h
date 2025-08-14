@@ -47,6 +47,26 @@ extern "C"
 	                                                      size_t size);
 	FREERDP_API BOOL freerdp_client_parse_rdp_file_buffer_ex(rdpFile* file, const BYTE* buffer,
 	                                                         size_t size, rdp_file_fkt_parse parse);
+
+	/** @brief Populate \b settings from RDP \b file. Do only notify about inconsistencies and not
+	 * correct them.
+	 *
+	 *  @param file A pointer to the RDP file to use
+	 *  @param settings A pointer to the settings to update
+	 *
+	 *  @return \b TRUE for success, \b FALSE otherwise
+	 *  @version since 3.17.0
+	 */
+	FREERDP_API BOOL freerdp_client_populate_settings_from_rdp_file_unchecked(
+	    const rdpFile* file, rdpSettings* settings);
+
+	/** @brief Populate \b settings from RDP \b file. Do correct inconsistencies detected.
+	 *
+	 *  @param file A pointer to the RDP file to use
+	 *  @param settings A pointer to the settings to update
+	 *
+	 *  @return \b TRUE for success, \b FALSE otherwise
+	 */
 	FREERDP_API BOOL freerdp_client_populate_settings_from_rdp_file(const rdpFile* file,
 	                                                                rdpSettings* settings);
 
