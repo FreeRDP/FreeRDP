@@ -2623,6 +2623,108 @@ BOOL freerdp_client_populate_settings_from_rdp_file_unchecked(const rdpFile* fil
 	return TRUE;
 }
 
+static BOOL freerdp_apply_connection_type_from_file(const rdpFile* file, rdpSettings* settings,
+                                                    UINT32 type)
+{
+	struct network_settings
+	{
+		FreeRDP_Settings_Keys_Bool id;
+		BOOL apply;
+		BOOL value[7];
+	};
+	WINPR_ASSERT(file);
+
+	const struct network_settings config[] = { { FreeRDP_DisableWallpaper,
+		                                         (~file->DisableWallpaper) == 0,
+		                                         { TRUE, TRUE, TRUE, TRUE, FALSE, FALSE, FALSE } },
+		                                       { FreeRDP_AllowFontSmoothing,
+		                                         (~file->AllowFontSmoothing) == 0,
+		                                         { FALSE, FALSE, FALSE, FALSE, TRUE, TRUE, TRUE } },
+		                                       { FreeRDP_AllowDesktopComposition,
+		                                         (~file->AllowDesktopComposition) == 0,
+		                                         { FALSE, FALSE, TRUE, TRUE, TRUE, TRUE, TRUE } },
+		                                       { FreeRDP_DisableFullWindowDrag,
+		                                         (~file->DisableFullWindowDrag) == 0,
+		                                         { TRUE, TRUE, TRUE, TRUE, FALSE, FALSE, FALSE } },
+		                                       { FreeRDP_DisableMenuAnims,
+		                                         (~file->DisableMenuAnims) == 0,
+		                                         { TRUE, TRUE, TRUE, TRUE, FALSE, FALSE, FALSE } },
+		                                       { FreeRDP_DisableThemes,
+		                                         (~file->DisableThemes) == 0,
+		                                         { TRUE, FALSE, FALSE, FALSE, FALSE, FALSE,
+		                                           FALSE } } };
+
+	switch (type)
+	{
+		case CONNECTION_TYPE_INVALID:
+			return TRUE;
+
+		case CONNECTION_TYPE_MODEM:
+		case CONNECTION_TYPE_BROADBAND_LOW:
+		case CONNECTION_TYPE_BROADBAND_HIGH:
+		case CONNECTION_TYPE_SATELLITE:
+		case CONNECTION_TYPE_WAN:
+		case CONNECTION_TYPE_LAN:
+		case CONNECTION_TYPE_AUTODETECT:
+			break;
+		default:
+			WLog_WARN(TAG, "Unknown ConnectionType %" PRIu32 ", aborting", type);
+			return FALSE;
+	}
+
+	for (size_t x = 0; x < ARRAYSIZE(config); x++)
+	{
+		const struct network_settings* cur = &config[x];
+		if (!cur->apply)
+			continue;
+
+		if (!freerdp_settings_set_bool(settings, cur->id, cur->value[type - 1]))
+			return FALSE;
+	}
+	return TRUE;
+}
+
+static BOOL freerdp_set_connection_type_from_file(const rdpFile* file, rdpSettings* settings,
+                                                  UINT32 type)
+{
+	WINPR_ASSERT(file);
+	if (!freerdp_settings_set_uint32(settings, FreeRDP_ConnectionType, type))
+		return FALSE;
+
+	switch (type)
+	{
+		case CONNECTION_TYPE_INVALID:
+		case CONNECTION_TYPE_MODEM:
+		case CONNECTION_TYPE_BROADBAND_LOW:
+		case CONNECTION_TYPE_SATELLITE:
+		case CONNECTION_TYPE_BROADBAND_HIGH:
+		case CONNECTION_TYPE_WAN:
+		case CONNECTION_TYPE_LAN:
+			if (!freerdp_apply_connection_type_from_file(file, settings, type))
+				return FALSE;
+			break;
+		case CONNECTION_TYPE_AUTODETECT:
+			if (!freerdp_apply_connection_type_from_file(file, settings, type))
+				return FALSE;
+			/* Automatically activate GFX and RFX codec support */
+#ifdef WITH_GFX_H264
+			if (!freerdp_settings_set_bool(settings, FreeRDP_GfxAVC444v2, TRUE) ||
+			    !freerdp_settings_set_bool(settings, FreeRDP_GfxAVC444, TRUE) ||
+			    !freerdp_settings_set_bool(settings, FreeRDP_GfxH264, TRUE))
+				return FALSE;
+#endif
+			if (!freerdp_settings_set_bool(settings, FreeRDP_RemoteFxCodec, TRUE) ||
+			    !freerdp_settings_set_bool(settings, FreeRDP_SupportGraphicsPipeline, TRUE))
+				return FALSE;
+			break;
+		default:
+			WLog_WARN(TAG, "Unknown ConnectionType %" PRIu32 ", aborting", type);
+			return FALSE;
+	}
+
+	return TRUE;
+}
+
 BOOL freerdp_client_populate_settings_from_rdp_file(const rdpFile* file, rdpSettings* settings)
 {
 	if (!freerdp_client_populate_settings_from_rdp_file_unchecked(file, settings))
@@ -2634,7 +2736,7 @@ BOOL freerdp_client_populate_settings_from_rdp_file(const rdpFile* file, rdpSett
 		if (freerdp_settings_get_bool(settings, FreeRDP_NetworkAutoDetect))
 			type = CONNECTION_TYPE_AUTODETECT;
 	}
-	return freerdp_set_connection_type(settings, type);
+	return freerdp_set_connection_type_from_file(file, settings, type);
 }
 
 static rdpFileLine* freerdp_client_rdp_file_find_line_by_name(const rdpFile* file, const char* name)
