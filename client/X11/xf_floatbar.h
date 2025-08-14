@@ -27,11 +27,14 @@ void xf_floatbar_free(xfFloatbar* floatbar);
 WINPR_ATTR_MALLOC(xf_floatbar_free, 1)
 xfFloatbar* xf_floatbar_new(xfContext* xfc, Window window, const char* title, DWORD flags);
 
+BOOL xf_floatbar_is_window(xfFloatbar* floatbar, Window window);
 BOOL xf_floatbar_is_locked(xfFloatbar* floatbar);
 BOOL xf_floatbar_event_process(xfFloatbar* floatbar, const XEvent* event);
 BOOL xf_floatbar_check_event(xfFloatbar* floatbar, const XEvent* event);
 BOOL xf_floatbar_toggle_fullscreen(xfFloatbar* floatbar, bool fullscreen);
 BOOL xf_floatbar_hide_and_show(xfFloatbar* floatbar);
 BOOL xf_floatbar_set_root_y(xfFloatbar* floatbar, int y);
+
+BOOL xfc_is_floatbar_window(xfContext* xfc, Window window);
 
 #endif /* FREERDP_CLIENT_X11_FLOATBAR_H */
