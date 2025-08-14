@@ -445,16 +445,7 @@ static BOOL filter_server_session_end(proxyPlugin* plugin, proxyData* pdata, voi
 	return TRUE;
 }
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-	FREERDP_API BOOL proxy_module_entry_point(proxyPluginsManager* plugins_manager, void* userdata);
-#ifdef __cplusplus
-}
-#endif
-
-BOOL proxy_module_entry_point(proxyPluginsManager* plugins_manager, void* userdata)
+static BOOL int_proxy_module_entry_point(proxyPluginsManager* plugins_manager, void* userdata)
 {
 	proxyPlugin plugin = {};
 
@@ -477,3 +468,26 @@ BOOL proxy_module_entry_point(proxyPluginsManager* plugins_manager, void* userda
 
 	return plugins_manager->RegisterPlugin(plugins_manager, &plugin);
 }
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+#if defined(BUILD_SHARED_LIBS)
+	FREERDP_API BOOL proxy_module_entry_point(proxyPluginsManager* plugins_manager, void* userdata);
+
+	BOOL proxy_module_entry_point(proxyPluginsManager* plugins_manager, void* userdata)
+	{
+		return int_proxy_module_entry_point(plugins_manager, userdata);
+	}
+#else
+FREERDP_API BOOL demo_proxy_module_entry_point(proxyPluginsManager* plugins_manager,
+                                               void* userdata);
+BOOL bitmap_filter_proxy_module_entry_point(proxyPluginsManager* plugins_manager, void* userdata)
+{
+	return int_proxy_module_entry_point(plugins_manager, userdata);
+}
+#endif
+#ifdef __cplusplus
+}
+#endif
