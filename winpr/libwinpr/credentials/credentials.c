@@ -201,6 +201,9 @@ BOOL CredMarshalCredentialA(CRED_MARSHAL_TYPE CredType, PVOID Credential,
 	if (!CredMarshalCredentialW(CredType, Credential, &b) || !b)
 		return FALSE;
 
+#ifdef __BIG_ENDIAN__
+	ByteSwapUnicode(b, _wcslen(b));
+#endif
 	*MarshaledCredential = ConvertWCharNToUtf8Alloc(b, _wcslen(b), NULL);
 	free(b);
 	return (*MarshaledCredential != NULL);
@@ -259,6 +262,9 @@ BOOL CredUnmarshalCredentialA(LPCSTR cred, PCRED_MARSHAL_TYPE CredType, PVOID* C
 	if (!b)
 		return FALSE;
 
+#ifdef __BIG_ENDIAN__
+	ByteSwapUnicode(b, _wcslen(b));
+#endif
 	BOOL ret = CredUnmarshalCredentialW(b, CredType, Credential);
 	free(b);
 	return ret;
