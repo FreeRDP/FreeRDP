@@ -484,7 +484,7 @@ static BOOL pf_modules_load_static_module(const char* module_name, proxyModule* 
 {
 	WINPR_ASSERT(module);
 
-	HANDLE handle = LoadLibraryX(NULL);
+	HANDLE handle = GetModuleHandleA(NULL);
 
 	if (handle == NULL)
 	{
