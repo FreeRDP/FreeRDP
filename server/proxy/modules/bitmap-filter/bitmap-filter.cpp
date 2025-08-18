@@ -387,8 +387,11 @@ static BOOL filter_dyn_channel_intercept(proxyPlugin* plugin, proxyData* pdata, 
 
 		if (state->skip())
 		{
-			if (!state->skip(inputDataLength))
+			if (state->skip(inputDataLength))
+			{
+				WLog_WARN(TAG, "skipping data, but %" PRIuz " bytes left", state->remaining());
 				return FALSE;
+			}
 
 			if (state->drop())
 			{
