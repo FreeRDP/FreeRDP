@@ -70,6 +70,12 @@ static const char* pf_modules_get_filter_type_string(PF_FILTER_TYPE result)
 			return "FILTER_TYPE_SERVER_PEER_LOGON";
 		case FILTER_TYPE_CLIENT_PASSTHROUGH_CHANNEL_CREATE:
 			return "FILTER_TYPE_CLIENT_PASSTHROUGH_CHANNEL_CREATE";
+		case FILTER_TYPE_STATIC_INTERCEPT_LIST:
+			return "FILTER_TYPE_STATIC_INTERCEPT_LIST";
+		case FILTER_TYPE_DYN_INTERCEPT_LIST:
+			return "FILTER_TYPE_DYN_INTERCEPT_LIST";
+		case FILTER_TYPE_INTERCEPT_CHANNEL:
+			return "FILTER_TYPE_INTERCEPT_CHANNEL";
 		case FILTER_LAST:
 			return "FILTER_LAST";
 		default:
@@ -484,7 +490,7 @@ static BOOL pf_modules_load_static_module(const char* module_name, proxyModule* 
 {
 	WINPR_ASSERT(module);
 
-	HANDLE handle = LoadLibraryX(NULL);
+	HANDLE handle = GetModuleHandleA(NULL);
 
 	if (handle == NULL)
 	{

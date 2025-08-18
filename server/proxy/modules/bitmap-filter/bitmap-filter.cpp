@@ -387,8 +387,11 @@ static BOOL filter_dyn_channel_intercept(proxyPlugin* plugin, proxyData* pdata, 
 
 		if (state->skip())
 		{
-			if (!state->skip(inputDataLength))
+			if (state->skip(inputDataLength))
+			{
+				WLog_WARN(TAG, "skipping data, but %" PRIuz " bytes left", state->remaining());
 				return FALSE;
+			}
 
 			if (state->drop())
 			{
@@ -481,8 +484,8 @@ extern "C"
 		return int_proxy_module_entry_point(plugins_manager, userdata);
 	}
 #else
-FREERDP_API BOOL demo_proxy_module_entry_point(proxyPluginsManager* plugins_manager,
-                                               void* userdata);
+FREERDP_API BOOL bitmap_filter_proxy_module_entry_point(proxyPluginsManager* plugins_manager,
+                                                        void* userdata);
 BOOL bitmap_filter_proxy_module_entry_point(proxyPluginsManager* plugins_manager, void* userdata)
 {
 	return int_proxy_module_entry_point(plugins_manager, userdata);
