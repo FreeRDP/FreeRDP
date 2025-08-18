@@ -4091,7 +4091,7 @@ static BOOL parse_gateway_usage_option(rdpSettings* settings, const char* value)
 
 static char* unescape(const char* str)
 {
-	char* copy = strdup(str);
+	char* copy = _strdup(str);
 	if (!copy)
 		return NULL;
 
