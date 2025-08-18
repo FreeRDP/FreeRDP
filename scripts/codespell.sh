@@ -11,6 +11,6 @@ SCRIPT_PATH=$(realpath "$SCRIPT_PATH")
 codespell --version
 codespell \
   -I "$SCRIPT_PATH/codespell.ignore" \
-  -S ".git,*.ai,*.svg,*.rtf,*/assets/de_*,*/res/values-*,*/protocols/xdg*,*/test/*" \
+  -S ".git,*.ai,*.svg,*.rtf,*/assets/de_*,*/res/values-*,*/protocols/xdg*,*/test/*,*/external/*" \
   --ignore-regex "\b[a-zA-Z][a-zA-Z]\b|\bp[A-Z].*|\\\\[a-z][a-zA-Z].*" \
   --count $SCRIPT_PATH/..
