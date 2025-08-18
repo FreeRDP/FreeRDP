@@ -481,8 +481,8 @@ extern "C"
 		return int_proxy_module_entry_point(plugins_manager, userdata);
 	}
 #else
-FREERDP_API BOOL demo_proxy_module_entry_point(proxyPluginsManager* plugins_manager,
-                                               void* userdata);
+FREERDP_API BOOL bitmap_filter_proxy_module_entry_point(proxyPluginsManager* plugins_manager,
+                                                        void* userdata);
 BOOL bitmap_filter_proxy_module_entry_point(proxyPluginsManager* plugins_manager, void* userdata)
 {
 	return int_proxy_module_entry_point(plugins_manager, userdata);
