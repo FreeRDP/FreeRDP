@@ -576,6 +576,8 @@ static BOOL xf_event_ButtonPress(xfContext* xfc, const XButtonEvent* event, BOOL
 	if (xfc->xi_event ||
 	    (xfc->common.mouse_grabbed && freerdp_client_use_relative_mouse_events(&xfc->common)))
 		return TRUE;
+	if (!app && xfc_is_floatbar_window(xfc, event->window))
+		return TRUE;
 	return xf_generic_ButtonEvent(xfc, event->x, event->y,
 	                              WINPR_ASSERTING_INT_CAST(int, event->button), event->window, app,
 	                              TRUE);

@@ -778,8 +778,12 @@ int xf_input_event(xfContext* xfc, WINPR_ATTR_UNUSED const XEvent* xevent, XIDev
 
 			if (xfc->xi_event)
 			{
-				xf_generic_ButtonEvent(xfc, (int)event->event_x, (int)event->event_y, event->detail,
-				                       event->event, xfc->remote_app, evtype == XI_ButtonPress);
+				if (!xfc_is_floatbar_window(xfc, event->event) || (evtype != XI_ButtonPress))
+				{
+					xf_generic_ButtonEvent(xfc, (int)event->event_x, (int)event->event_y,
+					                       event->detail, event->event, xfc->remote_app,
+					                       evtype == XI_ButtonPress);
+				}
 			}
 			break;
 
