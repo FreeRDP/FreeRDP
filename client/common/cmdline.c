@@ -4091,7 +4091,7 @@ static BOOL parse_gateway_usage_option(rdpSettings* settings, const char* value)
 
 static char* unescape(const char* str)
 {
-	char* copy = strdup(str);
+	char* copy = _strdup(str);
 	if (!copy)
 		return NULL;
 
@@ -5500,14 +5500,14 @@ static int parse_command_line(rdpSettings* settings, const COMMAND_LINE_ARGUMENT
 	return 0;
 }
 
-static void warn_credential_args(const COMMAND_LINE_ARGUMENT* args)
+static void warn_credential_args(const COMMAND_LINE_ARGUMENT_A* args)
 {
 	WINPR_ASSERT(args);
 	bool insecureArgFound = false;
 	for (size_t x = 0; x < ARRAYSIZE(credential_args); x++)
 	{
 		const char* cred = credential_args[x];
-		const COMMAND_LINE_ARGUMENT* arg = CommandLineFindArgumentA(args, cred);
+		const COMMAND_LINE_ARGUMENT_A* arg = CommandLineFindArgumentA(args, cred);
 		if (!arg)
 			continue;
 		if ((arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT) == 0)

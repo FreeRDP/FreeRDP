@@ -1178,6 +1178,13 @@ BOOL cert_clone_int(rdpCertificate* dst, const rdpCertificate* src)
 		}
 	}
 
+	if (src->chain)
+	{
+		if (dst->chain)
+			sk_X509_pop_free(dst->chain, X509_free);
+
+		dst->chain = sk_X509_deep_copy(src->chain, X509_const_dup, X509_free);
+	}
 	return cert_x509_chain_copy(&dst->x509_cert_chain, &src->x509_cert_chain);
 }
 
@@ -1335,12 +1342,62 @@ fail:
 	return NULL;
 }
 
+static STACK_OF(X509) * extract_chain_from_pem(const char* pem, BOOL isFile)
+{
+	if (!pem)
+	{
+		return NULL;
+	}
+
+	BIO* bio = NULL;
+	if (isFile)
+		bio = BIO_new_file(pem, "rb");
+	else
+	{
+		const size_t len = strlen(pem);
+		bio = BIO_new_mem_buf(pem, WINPR_ASSERTING_INT_CAST(int, len));
+	}
+
+	if (!bio)
+	{
+		return NULL;
+	}
+
+	X509* leaf = PEM_read_bio_X509(bio, NULL, NULL, NULL);
+	if (!leaf)
+	{
+		BIO_free(bio);
+		return NULL;
+	}
+
+	STACK_OF(X509)* chain = sk_X509_new_null();
+	if (!chain)
+	{
+		X509_free(leaf);
+		BIO_free(bio);
+		return NULL;
+	}
+
+	X509* cert = NULL;
+	while ((cert = PEM_read_bio_X509(bio, NULL, NULL, NULL)) != NULL)
+	{
+		sk_X509_push(chain, cert);
+	}
+
+	X509_free(leaf);
+	BIO_free(bio);
+	return chain;
+}
+
 static rdpCertificate* freerdp_certificate_new_from(const char* file, BOOL isFile)
 {
 	X509* x509 = x509_utils_from_pem(file, strlen(file), isFile);
 	if (!x509)
 		return NULL;
-	rdpCertificate* cert = freerdp_certificate_new_from_x509(x509, NULL);
+	STACK_OF(X509)* chain = extract_chain_from_pem(file, isFile);
+	rdpCertificate* cert = freerdp_certificate_new_from_x509(x509, chain);
+	if (chain)
+		sk_X509_pop_free(chain, X509_free);
 	X509_free(x509);
 	return cert;
 }
@@ -1826,4 +1883,21 @@ fail:
 	BN_free(bn);
 #endif
 	return rc;
+}
+
+size_t freerdp_certificate_get_chain_len(rdpCertificate* certificate)
+{
+	WINPR_ASSERT(certificate);
+	if (!certificate->chain)
+		return 0;
+
+	return WINPR_ASSERTING_INT_CAST(size_t, sk_X509_num(certificate->chain));
+}
+
+X509* freerdp_certificate_get_chain_at(rdpCertificate* certificate, size_t offset)
+{
+	WINPR_ASSERT(certificate);
+	WINPR_ASSERT(freerdp_certificate_get_chain_len(certificate) > offset);
+	const int ioff = WINPR_ASSERTING_INT_CAST(int, offset);
+	return sk_X509_value(certificate->chain, ioff);
 }

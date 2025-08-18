@@ -59,6 +59,9 @@ FREERDP_LOCAL const rdpCertInfo* freerdp_certificate_get_info(const rdpCertifica
  */
 FREERDP_LOCAL X509* freerdp_certificate_get_x509(rdpCertificate* certificate);
 
+FREERDP_LOCAL size_t freerdp_certificate_get_chain_len(rdpCertificate* certificate);
+FREERDP_LOCAL X509* freerdp_certificate_get_chain_at(rdpCertificate* certificate, size_t offset);
+
 FREERDP_LOCAL BOOL freerdp_certificate_publickey_encrypt(const rdpCertificate* cert,
                                                          const BYTE* input, size_t cbInput,
                                                          BYTE** poutput, size_t* pcbOutput);

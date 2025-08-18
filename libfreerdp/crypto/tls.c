@@ -1202,6 +1202,19 @@ TlsHandshakeResult freerdp_tls_accept_ex(rdpTls* tls, BIO* underlying, rdpSettin
 		return TLS_HANDSHAKE_ERROR;
 	}
 
+	const size_t cnt = freerdp_certificate_get_chain_len(cert);
+	for (size_t x = 0; x < cnt; x++)
+	{
+		X509* xcert = freerdp_certificate_get_chain_at(cert, x);
+		WINPR_ASSERT(xcert);
+		const long rc = SSL_add1_chain_cert(tls->ssl, xcert);
+		if (rc != 1)
+		{
+			WLog_ERR(TAG, "SSL_add1_chain_cert failed");
+			return TLS_HANDSHAKE_ERROR;
+		}
+	}
+
 #if defined(MICROSOFT_IOS_SNI_BUG) && !defined(OPENSSL_NO_TLSEXT) && \
     !defined(LIBRESSL_VERSION_NUMBER)
 	SSL_set_tlsext_debug_callback(tls->ssl, tls_openssl_tlsext_debug_callback);

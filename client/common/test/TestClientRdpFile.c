@@ -307,7 +307,7 @@ fail:
 	}
 
 	if (fp)
-		fclose(fp);
+		(void)fclose(fp);
 	return json;
 }
 

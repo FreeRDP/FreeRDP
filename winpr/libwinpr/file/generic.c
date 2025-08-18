@@ -1358,7 +1358,7 @@ HANDLE winpr_CreateFile(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareM
                         LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition,
                         DWORD dwFlagsAndAttributes, HANDLE hTemplateFile)
 {
-	char* filename = ConvertUtf8ToWCharAlloc(lpFileName, NULL);
+	WCHAR* filename = ConvertUtf8ToWCharAlloc(lpFileName, NULL);
 	if (!filename)
 		return NULL;
 
