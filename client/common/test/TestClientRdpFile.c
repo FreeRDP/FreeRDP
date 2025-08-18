@@ -1,6 +1,8 @@
 #include <freerdp/config.h>
 
 #include <stdio.h>
+#include <errno.h>
+
 #include <winpr/crt.h>
 #include <winpr/windows.h>
 #include <winpr/path.h>
@@ -275,20 +277,37 @@ static FILE* test_fopen(const char* name, const char* mode)
 
 static void* read_rdp_data(const char* name, size_t* plen)
 {
+	BOOL success = FALSE;
+	char* json = NULL;
 	FILE* fp = test_fopen(name, "r");
 	if (!fp)
-		return NULL;
-	fseek(fp, 0, SEEK_END);
-	const size_t pos = _ftelli64(fp);
-	fseek(fp, 0, SEEK_SET);
-	char* json = calloc(pos + 1, sizeof(char));
+		goto fail;
+	if (fseek(fp, 0, SEEK_END) != 0)
+		goto fail;
+	const size_t pos = WINPR_ASSERTING_INT_CAST(size_t, _ftelli64(fp));
+	if (fseek(fp, 0, SEEK_SET) != 0)
+		goto fail;
+
+	json = calloc(pos + 1, sizeof(char));
 	if (!json)
 		goto fail;
-	fread(json, 1, pos, fp);
-	*plen = pos;
-fail:
-	fclose(fp);
+	if (fread(json, 1, pos, fp) != pos)
+		goto fail;
 
+	*plen = pos;
+	success = TRUE;
+fail:
+	if (!success)
+	{
+		char buffer[128] = { 0 };
+		WLog_ERR(__func__, "failed to read data from '%s': %s", name,
+		         winpr_strerror(errno, buffer, sizeof(buffer)));
+		free(json);
+		json = NULL;
+	}
+
+	if (fp)
+		fclose(fp);
 	return json;
 }
 
