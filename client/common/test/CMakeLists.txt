@@ -10,6 +10,7 @@ set(${MODULE_PREFIX}_TESTS TestClientRdpFile.c TestClientChannels.c TestClientCm
 create_test_sourcelist(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_DRIVER} ${${MODULE_PREFIX}_TESTS})
 
 add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
+target_compile_definitions(${MODULE_NAME} PRIVATE TEST_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
 
 set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp-client freerdp)
 

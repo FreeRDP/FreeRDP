@@ -46,6 +46,13 @@ macro(define_channel_options)
     option(${CHANNEL_OPTION} "${CHANNEL_OPTION_DOC}" ${CHANNEL_DEFAULT})
   endif()
 
+  # If the channel was enabled before the client/server options will stay ensure
+  # they are deleted if the channel is gone.
+  if(NOT ${CHANNEL_OPTION})
+    unset(${CHANNEL_CLIENT_OPTION} CACHE)
+    unset(${CHANNEL_SERVER_OPTION} CACHE)
+  endif()
+
   cmake_dependent_option(
     ${CHANNEL_CLIENT_OPTION} "${CHANNEL_CLIENT_OPTION_DOC}" ${CHANNEL_CLIENT_DEFAULT} "${CHANNEL_OPTION}" OFF
   )

@@ -1,0 +1,1377 @@
+{
+	"FREERDP_SETTINGS_TYPE_BOOL": {
+		"FreeRDP_ServerMode": false,
+		"FreeRDP_WaitForOutputBufferFlush": true,
+		"FreeRDP_NetworkAutoDetect": true,
+		"FreeRDP_SupportAsymetricKeys": false,
+		"FreeRDP_SupportErrorInfoPdu": false,
+		"FreeRDP_SupportStatusInfoPdu": false,
+		"FreeRDP_SupportMonitorLayoutPdu": false,
+		"FreeRDP_SupportGraphicsPipeline": false,
+		"FreeRDP_SupportDynamicTimeZone": true,
+		"FreeRDP_SupportHeartbeatPdu": true,
+		"FreeRDP_SupportEdgeActionV1": false,
+		"FreeRDP_SupportEdgeActionV2": false,
+		"FreeRDP_SupportSkipChannelJoin": true,
+		"FreeRDP_UseRdpSecurityLayer": false,
+		"FreeRDP_ServerLicenseRequired": false,
+		"FreeRDP_ConsoleSession": false,
+		"FreeRDP_SpanMonitors": false,
+		"FreeRDP_UseMultimon": false,
+		"FreeRDP_ForceMultimon": false,
+		"FreeRDP_ListMonitors": false,
+		"FreeRDP_HasMonitorAttributes": false,
+		"FreeRDP_SupportMultitransport": true,
+		"FreeRDP_AutoLogonEnabled": false,
+		"FreeRDP_CompressionEnabled": true,
+		"FreeRDP_DisableCtrlAltDel": false,
+		"FreeRDP_EnableWindowsKey": false,
+		"FreeRDP_MaximizeShell": false,
+		"FreeRDP_LogonNotify": true,
+		"FreeRDP_LogonErrors": false,
+		"FreeRDP_MouseAttached": false,
+		"FreeRDP_MouseHasWheel": false,
+		"FreeRDP_RemoteConsoleAudio": false,
+		"FreeRDP_AudioPlayback": false,
+		"FreeRDP_AudioCapture": false,
+		"FreeRDP_VideoDisable": false,
+		"FreeRDP_PasswordIsSmartcardPin": false,
+		"FreeRDP_UsingSavedCredentials": false,
+		"FreeRDP_ForceEncryptedCsPdu": false,
+		"FreeRDP_HiDefRemoteApp": true,
+		"FreeRDP_IPv6Enabled": false,
+		"FreeRDP_AutoReconnectionEnabled": false,
+		"FreeRDP_PrintReconnectCookie": false,
+		"FreeRDP_AutoReconnectionPacketSupported": false,
+		"FreeRDP_DynamicDaylightTimeDisabled": false,
+		"FreeRDP_AllowFontSmoothing": true,
+		"FreeRDP_DisableWallpaper": false,
+		"FreeRDP_DisableFullWindowDrag": true,
+		"FreeRDP_DisableMenuAnims": true,
+		"FreeRDP_DisableThemes": false,
+		"FreeRDP_DisableCursorShadow": false,
+		"FreeRDP_DisableCursorBlinking": false,
+		"FreeRDP_AllowDesktopComposition": false,
+		"FreeRDP_RemoteAssistanceMode": false,
+		"FreeRDP_EncomspVirtualChannel": false,
+		"FreeRDP_RemdeskVirtualChannel": false,
+		"FreeRDP_LyncRdpMode": false,
+		"FreeRDP_RemoteAssistanceRequestControl": false,
+		"FreeRDP_TlsSecurity": true,
+		"FreeRDP_NlaSecurity": true,
+		"FreeRDP_RdpSecurity": true,
+		"FreeRDP_ExtSecurity": false,
+		"FreeRDP_Authentication": true,
+		"FreeRDP_NegotiateSecurityLayer": true,
+		"FreeRDP_RestrictedAdminModeRequired": false,
+		"FreeRDP_DisableCredentialsDelegation": false,
+		"FreeRDP_VmConnectMode": false,
+		"FreeRDP_FIPSMode": false,
+		"FreeRDP_RdstlsSecurity": false,
+		"FreeRDP_AadSecurity": false,
+		"FreeRDP_RemoteCredentialGuard": false,
+		"FreeRDP_RestrictedAdminModeSupported": true,
+		"FreeRDP_MstscCookieMode": false,
+		"FreeRDP_SendPreconnectionPdu": false,
+		"FreeRDP_SmartcardLogon": false,
+		"FreeRDP_PromptForCredentials": false,
+		"FreeRDP_SmartcardEmulation": false,
+		"FreeRDP_KerberosRdgIsProxy": false,
+		"FreeRDP_IgnoreCertificate": false,
+		"FreeRDP_ExternalCertificateManagement": false,
+		"FreeRDP_AutoAcceptCertificate": false,
+		"FreeRDP_AutoDenyCertificate": false,
+		"FreeRDP_CertificateCallbackPreferPEM": false,
+		"FreeRDP_Workarea": false,
+		"FreeRDP_Fullscreen": false,
+		"FreeRDP_GrabKeyboard": true,
+		"FreeRDP_Decorations": true,
+		"FreeRDP_MouseMotion": true,
+		"FreeRDP_AsyncUpdate": false,
+		"FreeRDP_AsyncChannels": false,
+		"FreeRDP_ToggleFullscreen": true,
+		"FreeRDP_EmbeddedWindow": false,
+		"FreeRDP_SmartSizing": false,
+		"FreeRDP_PercentScreenUseWidth": false,
+		"FreeRDP_PercentScreenUseHeight": false,
+		"FreeRDP_DynamicResolutionUpdate": false,
+		"FreeRDP_GrabMouse": false,
+		"FreeRDP_SoftwareGdi": true,
+		"FreeRDP_LocalConnection": false,
+		"FreeRDP_AuthenticationOnly": false,
+		"FreeRDP_CredentialsFromStdin": false,
+		"FreeRDP_UnmapButtons": false,
+		"FreeRDP_OldLicenseBehaviour": false,
+		"FreeRDP_MouseUseRelativeMove": false,
+		"FreeRDP_UseCommonStdioCallbacks": false,
+		"FreeRDP_ConnectChildSession": false,
+		"FreeRDP_DumpRemoteFx": false,
+		"FreeRDP_PlayRemoteFx": false,
+		"FreeRDP_TransportDump": false,
+		"FreeRDP_TransportDumpReplay": false,
+		"FreeRDP_DeactivateClientDecoding": false,
+		"FreeRDP_TransportDumpReplayNodelay": false,
+		"FreeRDP_GatewayUseSameCredentials": false,
+		"FreeRDP_GatewayEnabled": false,
+		"FreeRDP_GatewayBypassLocal": false,
+		"FreeRDP_GatewayRpcTransport": true,
+		"FreeRDP_GatewayHttpTransport": true,
+		"FreeRDP_GatewayUdpTransport": true,
+		"FreeRDP_GatewayHttpUseWebsockets": true,
+		"FreeRDP_GatewayHttpExtAuthSspiNtlm": false,
+		"FreeRDP_GatewayArmTransport": false,
+		"FreeRDP_GatewayIgnoreRedirectionPolicy": false,
+		"FreeRDP_GatewayAvdUseTenantid": false,
+		"FreeRDP_RemoteApplicationMode": false,
+		"FreeRDP_DisableRemoteAppCapsCheck": false,
+		"FreeRDP_RemoteAppLanguageBarSupported": false,
+		"FreeRDP_RefreshRect": true,
+		"FreeRDP_SuppressOutput": true,
+		"FreeRDP_FastPathOutput": true,
+		"FreeRDP_SaltedChecksum": true,
+		"FreeRDP_LongCredentialsSupported": true,
+		"FreeRDP_NoBitmapCompressionHeader": true,
+		"FreeRDP_BitmapCompressionDisabled": false,
+		"FreeRDP_DesktopResize": true,
+		"FreeRDP_DrawAllowDynamicColorFidelity": true,
+		"FreeRDP_DrawAllowColorSubsampling": false,
+		"FreeRDP_DrawAllowSkipAlpha": true,
+		"FreeRDP_BitmapCacheV3Enabled": false,
+		"FreeRDP_AltSecFrameMarkerSupport": false,
+		"FreeRDP_AllowUnanouncedOrdersFromServer": false,
+		"FreeRDP_BitmapCacheEnabled": false,
+		"FreeRDP_AllowCacheWaitingList": true,
+		"FreeRDP_BitmapCachePersistEnabled": false,
+		"FreeRDP_UnicodeInput": true,
+		"FreeRDP_FastPathInput": true,
+		"FreeRDP_MultiTouchInput": false,
+		"FreeRDP_MultiTouchGestures": false,
+		"FreeRDP_HasHorizontalWheel": true,
+		"FreeRDP_HasExtendedMouseEvent": true,
+		"FreeRDP_SuspendInput": false,
+		"FreeRDP_HasRelativeMouseEvent": true,
+		"FreeRDP_HasQoeEvent": true,
+		"FreeRDP_SoundBeepsEnabled": true,
+		"FreeRDP_SurfaceCommandsEnabled": false,
+		"FreeRDP_FrameMarkerCommandEnabled": true,
+		"FreeRDP_SurfaceFrameMarkerEnabled": true,
+		"FreeRDP_RemoteFxOnly": false,
+		"FreeRDP_RemoteFxCodec": false,
+		"FreeRDP_RemoteFxImageCodec": false,
+		"FreeRDP_NSCodec": false,
+		"FreeRDP_NSCodecAllowSubsampling": true,
+		"FreeRDP_NSCodecAllowDynamicColorFidelity": true,
+		"FreeRDP_JpegCodec": false,
+		"FreeRDP_GfxThinClient": false,
+		"FreeRDP_GfxSmallCache": true,
+		"FreeRDP_GfxProgressive": false,
+		"FreeRDP_GfxProgressiveV2": false,
+		"FreeRDP_GfxH264": false,
+		"FreeRDP_GfxAVC444": false,
+		"FreeRDP_GfxSendQoeAck": false,
+		"FreeRDP_GfxAVC444v2": false,
+		"FreeRDP_GfxPlanar": true,
+		"FreeRDP_GfxSuspendFrameAck": false,
+		"FreeRDP_DrawNineGridEnabled": false,
+		"FreeRDP_DrawGdiPlusEnabled": false,
+		"FreeRDP_DrawGdiPlusCacheEnabled": false,
+		"FreeRDP_DeviceRedirection": false,
+		"FreeRDP_IgnoreInvalidDevices": false,
+		"FreeRDP_RedirectDrives": false,
+		"FreeRDP_RedirectHomeDrive": false,
+		"FreeRDP_RedirectSmartCards": false,
+		"FreeRDP_RedirectWebAuthN": false,
+		"FreeRDP_RedirectPrinters": false,
+		"FreeRDP_RedirectSerialPorts": false,
+		"FreeRDP_RedirectParallelPorts": false,
+		"FreeRDP_PreferIPv6OverIPv4": false,
+		"FreeRDP_RedirectClipboard": true,
+		"FreeRDP_SynchronousStaticChannels": false,
+		"FreeRDP_SupportDynamicChannels": false,
+		"FreeRDP_SynchronousDynamicChannels": false,
+		"FreeRDP_SupportEchoChannel": false,
+		"FreeRDP_SupportDisplayControl": true,
+		"FreeRDP_SupportGeometryTracking": false,
+		"FreeRDP_SupportSSHAgentChannel": false,
+		"FreeRDP_SupportVideoOptimized": false,
+		"FreeRDP_TcpKeepAlive": true
+	},
+	"FREERDP_SETTINGS_TYPE_UINT16": {
+		"FreeRDP_DesktopOrientation": 0.0,
+		"FreeRDP_SupportedColorDepths": 15.0,
+		"FreeRDP_TLSMinVersion": 769.0,
+		"FreeRDP_TLSMaxVersion": 0.0,
+		"FreeRDP_ProxyPort": 0.0,
+		"FreeRDP_CapsProtocolVersion": 512.0,
+		"FreeRDP_CapsGeneralCompressionTypes": 0.0,
+		"FreeRDP_CapsUpdateCapabilityFlag": 0.0,
+		"FreeRDP_CapsRemoteUnshareFlag": 0.0,
+		"FreeRDP_CapsGeneralCompressionLevel": 0.0,
+		"FreeRDP_OrderSupportFlags": 42.0,
+		"FreeRDP_OrderSupportFlagsEx": 0.0,
+		"FreeRDP_TextANSICodePage": 65001.0
+	},
+	"FREERDP_SETTINGS_TYPE_INT16": {},
+	"FREERDP_SETTINGS_TYPE_UINT32": {
+		"FreeRDP_ShareId": 0.0,
+		"FreeRDP_PduSource": 0.0,
+		"FreeRDP_ServerPort": 3389.0,
+		"FreeRDP_AcceptedCertLength": 0.0,
+		"FreeRDP_ThreadingFlags": 0.0,
+		"FreeRDP_RdpVersion": 524305.0,
+		"FreeRDP_DesktopWidth": 1024.0,
+		"FreeRDP_DesktopHeight": 768.0,
+		"FreeRDP_ColorDepth": 32.0,
+		"FreeRDP_ConnectionType": 7.0,
+		"FreeRDP_ClientBuild": 18363.0,
+		"FreeRDP_EarlyCapabilityFlags": 0.0,
+		"FreeRDP_DesktopPhysicalWidth": 1000.0,
+		"FreeRDP_DesktopPhysicalHeight": 1000.0,
+		"FreeRDP_DesktopScaleFactor": 100.0,
+		"FreeRDP_DeviceScaleFactor": 100.0,
+		"FreeRDP_EncryptionMethods": 0.0,
+		"FreeRDP_ExtEncryptionMethods": 0.0,
+		"FreeRDP_EncryptionLevel": 0.0,
+		"FreeRDP_ServerRandomLength": 0.0,
+		"FreeRDP_ServerCertificateLength": 0.0,
+		"FreeRDP_ClientRandomLength": 0.0,
+		"FreeRDP_ServerLicenseProductVersion": 1.0,
+		"FreeRDP_ServerLicenseProductIssuersCount": 2.0,
+		"FreeRDP_ChannelCount": 0.0,
+		"FreeRDP_ChannelDefArraySize": 31.0,
+		"FreeRDP_ClusterInfoFlags": 1.0,
+		"FreeRDP_RedirectedSessionId": 0.0,
+		"FreeRDP_MonitorCount": 0.0,
+		"FreeRDP_MonitorDefArraySize": 32.0,
+		"FreeRDP_DesktopPosX": 4294967295.0,
+		"FreeRDP_DesktopPosY": 4294967295.0,
+		"FreeRDP_NumMonitorIds": 0.0,
+		"FreeRDP_MonitorFlags": 0.0,
+		"FreeRDP_MonitorAttributeFlags": 0.0,
+		"FreeRDP_MultitransportFlags": 1.0,
+		"FreeRDP_CompressionLevel": 3.0,
+		"FreeRDP_ClientSessionId": 0.0,
+		"FreeRDP_AutoReconnectMaxRetries": 20.0,
+		"FreeRDP_PerformanceFlags": 0.0,
+		"FreeRDP_RequestedProtocols": 0.0,
+		"FreeRDP_SelectedProtocol": 0.0,
+		"FreeRDP_NegotiationFlags": 0.0,
+		"FreeRDP_AuthenticationLevel": 2.0,
+		"FreeRDP_TlsSecLevel": 1.0,
+		"FreeRDP_CookieMaxLength": 255.0,
+		"FreeRDP_PreconnectionId": 0.0,
+		"FreeRDP_RedirectionFlags": 0.0,
+		"FreeRDP_LoadBalanceInfoLength": 0.0,
+		"FreeRDP_RedirectionPasswordLength": 0.0,
+		"FreeRDP_RedirectionTsvUrlLength": 0.0,
+		"FreeRDP_TargetNetAddressCount": 0.0,
+		"FreeRDP_RedirectionAcceptedCertLength": 0.0,
+		"FreeRDP_RedirectionPreferType": 0.0,
+		"FreeRDP_RedirectionGuidLength": 0.0,
+		"FreeRDP_Password51Length": 0.0,
+		"FreeRDP_KeySpec": 1.0,
+		"FreeRDP_PercentScreen": 0.0,
+		"FreeRDP_SmartSizingWidth": 0.0,
+		"FreeRDP_SmartSizingHeight": 0.0,
+		"FreeRDP_GatewayUsageMethod": 0.0,
+		"FreeRDP_GatewayPort": 443.0,
+		"FreeRDP_GatewayCredentialsSource": 0.0,
+		"FreeRDP_GatewayAcceptedCertLength": 0.0,
+		"FreeRDP_ProxyType": 0.0,
+		"FreeRDP_RemoteApplicationExpandCmdLine": 0.0,
+		"FreeRDP_RemoteApplicationExpandWorkingDir": 0.0,
+		"FreeRDP_RemoteAppNumIconCaches": 3.0,
+		"FreeRDP_RemoteAppNumIconCacheEntries": 12.0,
+		"FreeRDP_RemoteWndSupportLevel": 3.0,
+		"FreeRDP_RemoteApplicationSupportLevel": 0.0,
+		"FreeRDP_RemoteApplicationSupportMask": 255.0,
+		"FreeRDP_ReceivedCapabilitiesSize": 32.0,
+		"FreeRDP_OsMajorType": 0.0,
+		"FreeRDP_OsMinorType": 0.0,
+		"FreeRDP_BitmapCacheVersion": 0.0,
+		"FreeRDP_BitmapCacheV2NumCells": 5.0,
+		"FreeRDP_ColorPointerCacheSize": 128.0,
+		"FreeRDP_PointerCacheSize": 128.0,
+		"FreeRDP_KeyboardCodePage": 0.0,
+		"FreeRDP_KeyboardLayout": 0.0,
+		"FreeRDP_KeyboardType": 4.0,
+		"FreeRDP_KeyboardSubType": 0.0,
+		"FreeRDP_KeyboardFunctionKey": 12.0,
+		"FreeRDP_KeyboardHook": 2.0,
+		"FreeRDP_BrushSupportLevel": 2.0,
+		"FreeRDP_GlyphSupportLevel": 0.0,
+		"FreeRDP_OffscreenSupportLevel": 0.0,
+		"FreeRDP_OffscreenCacheSize": 7680.0,
+		"FreeRDP_OffscreenCacheEntries": 2000.0,
+		"FreeRDP_VCFlags": 0.0,
+		"FreeRDP_VCChunkSize": 1600.0,
+		"FreeRDP_MultifragMaxRequestSize": 608299.0,
+		"FreeRDP_LargePointerFlag": 3.0,
+		"FreeRDP_CompDeskSupportLevel": 0.0,
+		"FreeRDP_SurfaceCommandsSupported": 82.0,
+		"FreeRDP_RemoteFxCodecId": 0.0,
+		"FreeRDP_RemoteFxCodecMode": 0.0,
+		"FreeRDP_RemoteFxCaptureFlags": 0.0,
+		"FreeRDP_RemoteFxRlgrMode": 1.0,
+		"FreeRDP_NSCodecId": 0.0,
+		"FreeRDP_FrameAcknowledge": 2.0,
+		"FreeRDP_NSCodecColorLossLevel": 3.0,
+		"FreeRDP_JpegCodecId": 0.0,
+		"FreeRDP_JpegQuality": 0.0,
+		"FreeRDP_GfxCapsFilter": 0.0,
+		"FreeRDP_BitmapCacheV3CodecId": 0.0,
+		"FreeRDP_DrawNineGridCacheSize": 2560.0,
+		"FreeRDP_DrawNineGridCacheEntries": 256.0,
+		"FreeRDP_DeviceCount": 0.0,
+		"FreeRDP_DeviceArraySize": 0.0,
+		"FreeRDP_ForceIPvX": 0.0,
+		"FreeRDP_ClipboardFeatureMask": 51.0,
+		"FreeRDP_StaticChannelCount": 0.0,
+		"FreeRDP_StaticChannelArraySize": 0.0,
+		"FreeRDP_DynamicChannelCount": 0.0,
+		"FreeRDP_DynamicChannelArraySize": 0.0,
+		"FreeRDP_TcpKeepAliveRetries": 3.0,
+		"FreeRDP_TcpKeepAliveDelay": 5.0,
+		"FreeRDP_TcpKeepAliveInterval": 2.0,
+		"FreeRDP_TcpAckTimeout": 9000.0,
+		"FreeRDP_Floatbar": 0.0,
+		"FreeRDP_TcpConnectTimeout": 15000.0,
+		"FreeRDP_FakeMouseMotionInterval": 0.0
+	},
+	"FREERDP_SETTINGS_TYPE_INT32": {
+		"FreeRDP_MonitorLocalShiftX": 0.0,
+		"FreeRDP_MonitorLocalShiftY": 0.0,
+		"FreeRDP_XPan": 0.0,
+		"FreeRDP_YPan": 0.0
+	},
+	"FREERDP_SETTINGS_TYPE_UINT64": {
+		"FreeRDP_MonitorOverrideFlags": 0.0,
+		"FreeRDP_ParentWindowId": 0.0
+	},
+	"FREERDP_SETTINGS_TYPE_INT64": {},
+	"FREERDP_SETTINGS_TYPE_STRING": {
+		"FreeRDP_ServerHostname": null,
+		"FreeRDP_Username": null,
+		"FreeRDP_Password": null,
+		"FreeRDP_Domain": null,
+		"FreeRDP_PasswordHash": null,
+		"FreeRDP_AcceptedCert": null,
+		"FreeRDP_UserSpecifiedServerName": null,
+		"FreeRDP_AadServerHostname": null,
+		"FreeRDP_ClientHostname": "somecomputername",
+		"FreeRDP_ClientProductId": "",
+		"FreeRDP_ServerLicenseCompanyName": "FreeRDP",
+		"FreeRDP_ServerLicenseProductName": "FreeRDP-licensing-server",
+		"FreeRDP_AlternateShell": null,
+		"FreeRDP_ShellWorkingDirectory": null,
+		"FreeRDP_ClientAddress": null,
+		"FreeRDP_ClientDir": "C:\\Windows\\System32\\mstscax.dll",
+		"FreeRDP_DynamicDSTTimeZoneKeyName": "W. Europe Standard Time",
+		"FreeRDP_RemoteAssistanceSessionId": null,
+		"FreeRDP_RemoteAssistancePassStub": null,
+		"FreeRDP_RemoteAssistancePassword": null,
+		"FreeRDP_RemoteAssistanceRCTicket": null,
+		"FreeRDP_AuthenticationServiceClass": null,
+		"FreeRDP_AllowedTlsCiphers": null,
+		"FreeRDP_NtlmSamFile": null,
+		"FreeRDP_SspiModule": null,
+		"FreeRDP_TlsSecretsFile": null,
+		"FreeRDP_AuthenticationPackageList": null,
+		"FreeRDP_WinSCardModule": null,
+		"FreeRDP_PreconnectionBlob": null,
+		"FreeRDP_TargetNetAddress": null,
+		"FreeRDP_RedirectionUsername": null,
+		"FreeRDP_RedirectionDomain": null,
+		"FreeRDP_RedirectionTargetFQDN": null,
+		"FreeRDP_RedirectionTargetNetBiosName": null,
+		"FreeRDP_RedirectionAcceptedCert": null,
+		"FreeRDP_SmartcardCertificate": null,
+		"FreeRDP_SmartcardPrivateKey": null,
+		"FreeRDP_Pkcs11Module": null,
+		"FreeRDP_PkinitAnchors": null,
+		"FreeRDP_CardName": null,
+		"FreeRDP_ReaderName": null,
+		"FreeRDP_ContainerName": null,
+		"FreeRDP_CspName": null,
+		"FreeRDP_KerberosKdcUrl": null,
+		"FreeRDP_KerberosRealm": null,
+		"FreeRDP_KerberosStartTime": null,
+		"FreeRDP_KerberosLifeTime": null,
+		"FreeRDP_KerberosRenewableLifeTime": null,
+		"FreeRDP_KerberosCache": null,
+		"FreeRDP_KerberosArmor": null,
+		"FreeRDP_KerberosKeytab": null,
+		"FreeRDP_CertificateName": null,
+		"FreeRDP_CertificateAcceptedFingerprints": null,
+		"FreeRDP_WindowTitle": null,
+		"FreeRDP_WmClass": null,
+		"FreeRDP_ComputerName": "somecomputername",
+		"FreeRDP_ConnectionFile": null,
+		"FreeRDP_AssistanceFile": null,
+		"FreeRDP_HomePath": "\/home\/username",
+		"FreeRDP_ConfigPath": "\/home\/username\/.config\/freerdp",
+		"FreeRDP_CurrentPath": null,
+		"FreeRDP_DumpRemoteFxFile": null,
+		"FreeRDP_PlayRemoteFxFile": null,
+		"FreeRDP_TransportDumpFile": null,
+		"FreeRDP_GatewayHostname": null,
+		"FreeRDP_GatewayUsername": null,
+		"FreeRDP_GatewayPassword": null,
+		"FreeRDP_GatewayDomain": null,
+		"FreeRDP_GatewayAccessToken": null,
+		"FreeRDP_GatewayAcceptedCert": null,
+		"FreeRDP_GatewayHttpExtAuthBearer": null,
+		"FreeRDP_GatewayUrl": null,
+		"FreeRDP_GatewayAvdWvdEndpointPool": null,
+		"FreeRDP_GatewayAvdGeo": null,
+		"FreeRDP_GatewayAvdArmpath": null,
+		"FreeRDP_GatewayAvdAadtenantid": "common",
+		"FreeRDP_GatewayAvdDiagnosticserviceurl": null,
+		"FreeRDP_GatewayAvdHubdiscoverygeourl": null,
+		"FreeRDP_GatewayAvdActivityhint": null,
+		"FreeRDP_GatewayAvdClientID": "a85cf173-4192-42f8-81fa-777a763e6e2c",
+		"FreeRDP_GatewayAzureActiveDirectory": "login.microsoftonline.com",
+		"FreeRDP_ProxyHostname": null,
+		"FreeRDP_ProxyUsername": null,
+		"FreeRDP_ProxyPassword": null,
+		"FreeRDP_GatewayAvdScope": "https%3A%2F%2Fwww.wvd.microsoft.com%2F.default",
+		"FreeRDP_GatewayAvdAccessTokenFormat":
+		    "ms-appx-web%%3a%%2f%%2fMicrosoft.AAD.BrokerPlugin%%2f%s",
+		"FreeRDP_GatewayAvdAccessAadFormat": "https%%3A%%2F%%2F%s%%2F%s%%2Foauth2%%2Fnativeclient",
+		"FreeRDP_RemoteApplicationName": null,
+		"FreeRDP_RemoteApplicationIcon": null,
+		"FreeRDP_RemoteApplicationProgram": null,
+		"FreeRDP_RemoteApplicationFile": null,
+		"FreeRDP_RemoteApplicationGuid": null,
+		"FreeRDP_RemoteApplicationCmdLine": null,
+		"FreeRDP_RemoteApplicationWorkingDir": null,
+		"FreeRDP_TerminalDescriptor": null,
+		"FreeRDP_BitmapCachePersistFile": null,
+		"FreeRDP_KeyboardRemappingList": null,
+		"FreeRDP_ImeFileName": null,
+		"FreeRDP_KeyboardPipeName": null,
+		"FreeRDP_DrivesToRedirect": null,
+		"FreeRDP_ClipboardUseSelection": null,
+		"FreeRDP_RDP2TCPArgs": null,
+		"FreeRDP_ActionScript": "\/home\/username\/.config\/freerdp\/action.sh"
+	},
+	"FREERDP_SETTINGS_TYPE_POINTER": {
+		"FreeRDP_instance": [],
+		"FreeRDP_ServerRandom": [],
+		"FreeRDP_ServerCertificate": [],
+		"FreeRDP_ClientRandom": [],
+		"FreeRDP_ServerLicenseProductIssuers": [
+			"FreeRDP",
+			"FreeRDP-licenser"
+		],
+		"FreeRDP_ChannelDefArray": [
+			{
+				"name": "",
+				"options": 0.0
+			},
+			{
+				"name": "",
+				"options": 0.0
+			},
+			{
+				"name": "",
+				"options": 0.0
+			},
+			{
+				"name": "",
+				"options": 0.0
+			},
+			{
+				"name": "",
+				"options": 0.0
+			},
+			{
+				"name": "",
+				"options": 0.0
+			},
+			{
+				"name": "",
+				"options": 0.0
+			},
+			{
+				"name": "",
+				"options": 0.0
+			},
+			{
+				"name": "",
+				"options": 0.0
+			},
+			{
+				"name": "",
+				"options": 0.0
+			},
+			{
+				"name": "",
+				"options": 0.0
+			},
+			{
+				"name": "",
+				"options": 0.0
+			},
+			{
+				"name": "",
+				"options": 0.0
+			},
+			{
+				"name": "",
+				"options": 0.0
+			},
+			{
+				"name": "",
+				"options": 0.0
+			},
+			{
+				"name": "",
+				"options": 0.0
+			},
+			{
+				"name": "",
+				"options": 0.0
+			},
+			{
+				"name": "",
+				"options": 0.0
+			},
+			{
+				"name": "",
+				"options": 0.0
+			},
+			{
+				"name": "",
+				"options": 0.0
+			},
+			{
+				"name": "",
+				"options": 0.0
+			},
+			{
+				"name": "",
+				"options": 0.0
+			},
+			{
+				"name": "",
+				"options": 0.0
+			},
+			{
+				"name": "",
+				"options": 0.0
+			},
+			{
+				"name": "",
+				"options": 0.0
+			},
+			{
+				"name": "",
+				"options": 0.0
+			},
+			{
+				"name": "",
+				"options": 0.0
+			},
+			{
+				"name": "",
+				"options": 0.0
+			},
+			{
+				"name": "",
+				"options": 0.0
+			},
+			{
+				"name": "",
+				"options": 0.0
+			},
+			{
+				"name": "",
+				"options": 0.0
+			}
+		],
+		"FreeRDP_MonitorDefArray": [
+			{
+				"x": 0.0,
+				"y": 0.0,
+				"width": 0.0,
+				"height": 0.0,
+				"is_primary": false,
+				"orig_screen": 0.0,
+				"attributes": {
+					"physicalWidth": 0.0,
+					"physicalHeight": 0.0,
+					"orientation": 0.0,
+					"desktopScaleFactor": 0.0,
+					"deviceScaleFactor": 0.0
+				}
+			},
+			{
+				"x": 0.0,
+				"y": 0.0,
+				"width": 0.0,
+				"height": 0.0,
+				"is_primary": false,
+				"orig_screen": 0.0,
+				"attributes": {
+					"physicalWidth": 0.0,
+					"physicalHeight": 0.0,
+					"orientation": 0.0,
+					"desktopScaleFactor": 0.0,
+					"deviceScaleFactor": 0.0
+				}
+			},
+			{
+				"x": 0.0,
+				"y": 0.0,
+				"width": 0.0,
+				"height": 0.0,
+				"is_primary": false,
+				"orig_screen": 0.0,
+				"attributes": {
+					"physicalWidth": 0.0,
+					"physicalHeight": 0.0,
+					"orientation": 0.0,
+					"desktopScaleFactor": 0.0,
+					"deviceScaleFactor": 0.0
+				}
+			},
+			{
+				"x": 0.0,
+				"y": 0.0,
+				"width": 0.0,
+				"height": 0.0,
+				"is_primary": false,
+				"orig_screen": 0.0,
+				"attributes": {
+					"physicalWidth": 0.0,
+					"physicalHeight": 0.0,
+					"orientation": 0.0,
+					"desktopScaleFactor": 0.0,
+					"deviceScaleFactor": 0.0
+				}
+			},
+			{
+				"x": 0.0,
+				"y": 0.0,
+				"width": 0.0,
+				"height": 0.0,
+				"is_primary": false,
+				"orig_screen": 0.0,
+				"attributes": {
+					"physicalWidth": 0.0,
+					"physicalHeight": 0.0,
+					"orientation": 0.0,
+					"desktopScaleFactor": 0.0,
+					"deviceScaleFactor": 0.0
+				}
+			},
+			{
+				"x": 0.0,
+				"y": 0.0,
+				"width": 0.0,
+				"height": 0.0,
+				"is_primary": false,
+				"orig_screen": 0.0,
+				"attributes": {
+					"physicalWidth": 0.0,
+					"physicalHeight": 0.0,
+					"orientation": 0.0,
+					"desktopScaleFactor": 0.0,
+					"deviceScaleFactor": 0.0
+				}
+			},
+			{
+				"x": 0.0,
+				"y": 0.0,
+				"width": 0.0,
+				"height": 0.0,
+				"is_primary": false,
+				"orig_screen": 0.0,
+				"attributes": {
+					"physicalWidth": 0.0,
+					"physicalHeight": 0.0,
+					"orientation": 0.0,
+					"desktopScaleFactor": 0.0,
+					"deviceScaleFactor": 0.0
+				}
+			},
+			{
+				"x": 0.0,
+				"y": 0.0,
+				"width": 0.0,
+				"height": 0.0,
+				"is_primary": false,
+				"orig_screen": 0.0,
+				"attributes": {
+					"physicalWidth": 0.0,
+					"physicalHeight": 0.0,
+					"orientation": 0.0,
+					"desktopScaleFactor": 0.0,
+					"deviceScaleFactor": 0.0
+				}
+			},
+			{
+				"x": 0.0,
+				"y": 0.0,
+				"width": 0.0,
+				"height": 0.0,
+				"is_primary": false,
+				"orig_screen": 0.0,
+				"attributes": {
+					"physicalWidth": 0.0,
+					"physicalHeight": 0.0,
+					"orientation": 0.0,
+					"desktopScaleFactor": 0.0,
+					"deviceScaleFactor": 0.0
+				}
+			},
+			{
+				"x": 0.0,
+				"y": 0.0,
+				"width": 0.0,
+				"height": 0.0,
+				"is_primary": false,
+				"orig_screen": 0.0,
+				"attributes": {
+					"physicalWidth": 0.0,
+					"physicalHeight": 0.0,
+					"orientation": 0.0,
+					"desktopScaleFactor": 0.0,
+					"deviceScaleFactor": 0.0
+				}
+			},
+			{
+				"x": 0.0,
+				"y": 0.0,
+				"width": 0.0,
+				"height": 0.0,
+				"is_primary": false,
+				"orig_screen": 0.0,
+				"attributes": {
+					"physicalWidth": 0.0,
+					"physicalHeight": 0.0,
+					"orientation": 0.0,
+					"desktopScaleFactor": 0.0,
+					"deviceScaleFactor": 0.0
+				}
+			},
+			{
+				"x": 0.0,
+				"y": 0.0,
+				"width": 0.0,
+				"height": 0.0,
+				"is_primary": false,
+				"orig_screen": 0.0,
+				"attributes": {
+					"physicalWidth": 0.0,
+					"physicalHeight": 0.0,
+					"orientation": 0.0,
+					"desktopScaleFactor": 0.0,
+					"deviceScaleFactor": 0.0
+				}
+			},
+			{
+				"x": 0.0,
+				"y": 0.0,
+				"width": 0.0,
+				"height": 0.0,
+				"is_primary": false,
+				"orig_screen": 0.0,
+				"attributes": {
+					"physicalWidth": 0.0,
+					"physicalHeight": 0.0,
+					"orientation": 0.0,
+					"desktopScaleFactor": 0.0,
+					"deviceScaleFactor": 0.0
+				}
+			},
+			{
+				"x": 0.0,
+				"y": 0.0,
+				"width": 0.0,
+				"height": 0.0,
+				"is_primary": false,
+				"orig_screen": 0.0,
+				"attributes": {
+					"physicalWidth": 0.0,
+					"physicalHeight": 0.0,
+					"orientation": 0.0,
+					"desktopScaleFactor": 0.0,
+					"deviceScaleFactor": 0.0
+				}
+			},
+			{
+				"x": 0.0,
+				"y": 0.0,
+				"width": 0.0,
+				"height": 0.0,
+				"is_primary": false,
+				"orig_screen": 0.0,
+				"attributes": {
+					"physicalWidth": 0.0,
+					"physicalHeight": 0.0,
+					"orientation": 0.0,
+					"desktopScaleFactor": 0.0,
+					"deviceScaleFactor": 0.0
+				}
+			},
+			{
+				"x": 0.0,
+				"y": 0.0,
+				"width": 0.0,
+				"height": 0.0,
+				"is_primary": false,
+				"orig_screen": 0.0,
+				"attributes": {
+					"physicalWidth": 0.0,
+					"physicalHeight": 0.0,
+					"orientation": 0.0,
+					"desktopScaleFactor": 0.0,
+					"deviceScaleFactor": 0.0
+				}
+			},
+			{
+				"x": 0.0,
+				"y": 0.0,
+				"width": 0.0,
+				"height": 0.0,
+				"is_primary": false,
+				"orig_screen": 0.0,
+				"attributes": {
+					"physicalWidth": 0.0,
+					"physicalHeight": 0.0,
+					"orientation": 0.0,
+					"desktopScaleFactor": 0.0,
+					"deviceScaleFactor": 0.0
+				}
+			},
+			{
+				"x": 0.0,
+				"y": 0.0,
+				"width": 0.0,
+				"height": 0.0,
+				"is_primary": false,
+				"orig_screen": 0.0,
+				"attributes": {
+					"physicalWidth": 0.0,
+					"physicalHeight": 0.0,
+					"orientation": 0.0,
+					"desktopScaleFactor": 0.0,
+					"deviceScaleFactor": 0.0
+				}
+			},
+			{
+				"x": 0.0,
+				"y": 0.0,
+				"width": 0.0,
+				"height": 0.0,
+				"is_primary": false,
+				"orig_screen": 0.0,
+				"attributes": {
+					"physicalWidth": 0.0,
+					"physicalHeight": 0.0,
+					"orientation": 0.0,
+					"desktopScaleFactor": 0.0,
+					"deviceScaleFactor": 0.0
+				}
+			},
+			{
+				"x": 0.0,
+				"y": 0.0,
+				"width": 0.0,
+				"height": 0.0,
+				"is_primary": false,
+				"orig_screen": 0.0,
+				"attributes": {
+					"physicalWidth": 0.0,
+					"physicalHeight": 0.0,
+					"orientation": 0.0,
+					"desktopScaleFactor": 0.0,
+					"deviceScaleFactor": 0.0
+				}
+			},
+			{
+				"x": 0.0,
+				"y": 0.0,
+				"width": 0.0,
+				"height": 0.0,
+				"is_primary": false,
+				"orig_screen": 0.0,
+				"attributes": {
+					"physicalWidth": 0.0,
+					"physicalHeight": 0.0,
+					"orientation": 0.0,
+					"desktopScaleFactor": 0.0,
+					"deviceScaleFactor": 0.0
+				}
+			},
+			{
+				"x": 0.0,
+				"y": 0.0,
+				"width": 0.0,
+				"height": 0.0,
+				"is_primary": false,
+				"orig_screen": 0.0,
+				"attributes": {
+					"physicalWidth": 0.0,
+					"physicalHeight": 0.0,
+					"orientation": 0.0,
+					"desktopScaleFactor": 0.0,
+					"deviceScaleFactor": 0.0
+				}
+			},
+			{
+				"x": 0.0,
+				"y": 0.0,
+				"width": 0.0,
+				"height": 0.0,
+				"is_primary": false,
+				"orig_screen": 0.0,
+				"attributes": {
+					"physicalWidth": 0.0,
+					"physicalHeight": 0.0,
+					"orientation": 0.0,
+					"desktopScaleFactor": 0.0,
+					"deviceScaleFactor": 0.0
+				}
+			},
+			{
+				"x": 0.0,
+				"y": 0.0,
+				"width": 0.0,
+				"height": 0.0,
+				"is_primary": false,
+				"orig_screen": 0.0,
+				"attributes": {
+					"physicalWidth": 0.0,
+					"physicalHeight": 0.0,
+					"orientation": 0.0,
+					"desktopScaleFactor": 0.0,
+					"deviceScaleFactor": 0.0
+				}
+			},
+			{
+				"x": 0.0,
+				"y": 0.0,
+				"width": 0.0,
+				"height": 0.0,
+				"is_primary": false,
+				"orig_screen": 0.0,
+				"attributes": {
+					"physicalWidth": 0.0,
+					"physicalHeight": 0.0,
+					"orientation": 0.0,
+					"desktopScaleFactor": 0.0,
+					"deviceScaleFactor": 0.0
+				}
+			},
+			{
+				"x": 0.0,
+				"y": 0.0,
+				"width": 0.0,
+				"height": 0.0,
+				"is_primary": false,
+				"orig_screen": 0.0,
+				"attributes": {
+					"physicalWidth": 0.0,
+					"physicalHeight": 0.0,
+					"orientation": 0.0,
+					"desktopScaleFactor": 0.0,
+					"deviceScaleFactor": 0.0
+				}
+			},
+			{
+				"x": 0.0,
+				"y": 0.0,
+				"width": 0.0,
+				"height": 0.0,
+				"is_primary": false,
+				"orig_screen": 0.0,
+				"attributes": {
+					"physicalWidth": 0.0,
+					"physicalHeight": 0.0,
+					"orientation": 0.0,
+					"desktopScaleFactor": 0.0,
+					"deviceScaleFactor": 0.0
+				}
+			},
+			{
+				"x": 0.0,
+				"y": 0.0,
+				"width": 0.0,
+				"height": 0.0,
+				"is_primary": false,
+				"orig_screen": 0.0,
+				"attributes": {
+					"physicalWidth": 0.0,
+					"physicalHeight": 0.0,
+					"orientation": 0.0,
+					"desktopScaleFactor": 0.0,
+					"deviceScaleFactor": 0.0
+				}
+			},
+			{
+				"x": 0.0,
+				"y": 0.0,
+				"width": 0.0,
+				"height": 0.0,
+				"is_primary": false,
+				"orig_screen": 0.0,
+				"attributes": {
+					"physicalWidth": 0.0,
+					"physicalHeight": 0.0,
+					"orientation": 0.0,
+					"desktopScaleFactor": 0.0,
+					"deviceScaleFactor": 0.0
+				}
+			},
+			{
+				"x": 0.0,
+				"y": 0.0,
+				"width": 0.0,
+				"height": 0.0,
+				"is_primary": false,
+				"orig_screen": 0.0,
+				"attributes": {
+					"physicalWidth": 0.0,
+					"physicalHeight": 0.0,
+					"orientation": 0.0,
+					"desktopScaleFactor": 0.0,
+					"deviceScaleFactor": 0.0
+				}
+			},
+			{
+				"x": 0.0,
+				"y": 0.0,
+				"width": 0.0,
+				"height": 0.0,
+				"is_primary": false,
+				"orig_screen": 0.0,
+				"attributes": {
+					"physicalWidth": 0.0,
+					"physicalHeight": 0.0,
+					"orientation": 0.0,
+					"desktopScaleFactor": 0.0,
+					"deviceScaleFactor": 0.0
+				}
+			},
+			{
+				"x": 0.0,
+				"y": 0.0,
+				"width": 0.0,
+				"height": 0.0,
+				"is_primary": false,
+				"orig_screen": 0.0,
+				"attributes": {
+					"physicalWidth": 0.0,
+					"physicalHeight": 0.0,
+					"orientation": 0.0,
+					"desktopScaleFactor": 0.0,
+					"deviceScaleFactor": 0.0
+				}
+			}
+		],
+		"FreeRDP_MonitorIds": [],
+		"FreeRDP_ClientAutoReconnectCookie": [
+			{
+				"cbLen": 0.0,
+				"version": 0.0,
+				"logonId": 0.0,
+				"securityVerifier": [
+					0.0,
+					0.0,
+					0.0,
+					0.0,
+					0.0,
+					0.0,
+					0.0,
+					0.0,
+					0.0,
+					0.0,
+					0.0,
+					0.0,
+					0.0,
+					0.0,
+					0.0,
+					0.0
+				]
+			}
+		],
+		"FreeRDP_ServerAutoReconnectCookie": [
+			{
+				"cbLen": 0.0,
+				"version": 0.0,
+				"logonId": 0.0,
+				"arcRandomBits": [
+					0.0,
+					0.0,
+					0.0,
+					0.0,
+					0.0,
+					0.0,
+					0.0,
+					0.0,
+					0.0,
+					0.0,
+					0.0,
+					0.0,
+					0.0,
+					0.0,
+					0.0,
+					0.0
+				]
+			}
+		],
+		"FreeRDP_ClientTimeZone": [
+			{
+				"Bias": -60.0,
+				"StandardName": "W. Europe Standard Time",
+				"StandardDate": {
+					"wYear": 0.0,
+					"wMonth": 10.0,
+					"wDayOfWeek": 0.0,
+					"wDay": 5.0,
+					"wHour": 3.0,
+					"wMinute": 0.0,
+					"wSecond": 0.0,
+					"wMilliseconds": 0.0
+				},
+				"StandardBias": -60.0,
+				"DaylightName": "W. Europe Daylight Time",
+				"DaylightDate": {
+					"wYear": 0.0,
+					"wMonth": 3.0,
+					"wDayOfWeek": 0.0,
+					"wDay": 5.0,
+					"wHour": 3.0,
+					"wMinute": 0.0,
+					"wSecond": 0.0,
+					"wMilliseconds": 0.0
+				},
+				"DaylightBias": -60.0
+			}
+		],
+		"FreeRDP_LoadBalanceInfo": [],
+		"FreeRDP_RedirectionPassword": [],
+		"FreeRDP_RedirectionTsvUrl": [],
+		"FreeRDP_TargetNetAddresses": [],
+		"FreeRDP_TargetNetPorts": [],
+		"FreeRDP_RedirectionGuid": [],
+		"FreeRDP_RedirectionTargetCertificate": [],
+		"FreeRDP_Password51": [],
+		"FreeRDP_RdpServerRsaKey": [],
+		"FreeRDP_RdpServerCertificate": [
+			""
+		],
+		"FreeRDP_ReceivedCapabilities": [
+			0.0,
+			0.0,
+			0.0,
+			0.0,
+			0.0,
+			0.0,
+			0.0,
+			0.0,
+			0.0,
+			0.0,
+			0.0,
+			0.0,
+			0.0,
+			0.0,
+			0.0,
+			0.0,
+			0.0,
+			0.0,
+			0.0,
+			0.0,
+			0.0,
+			0.0,
+			0.0,
+			0.0,
+			0.0,
+			0.0,
+			0.0,
+			0.0,
+			0.0,
+			0.0,
+			0.0,
+			0.0
+		],
+		"FreeRDP_ReceivedCapabilityData": [
+			[],
+			[],
+			[],
+			[],
+			[],
+			[],
+			[],
+			[],
+			[],
+			[],
+			[],
+			[],
+			[],
+			[],
+			[],
+			[],
+			[],
+			[],
+			[],
+			[],
+			[],
+			[],
+			[],
+			[],
+			[],
+			[],
+			[],
+			[],
+			[],
+			[],
+			[],
+			[]
+		],
+		"FreeRDP_ReceivedCapabilityDataSizes": [
+			0.0,
+			0.0,
+			0.0,
+			0.0,
+			0.0,
+			0.0,
+			0.0,
+			0.0,
+			0.0,
+			0.0,
+			0.0,
+			0.0,
+			0.0,
+			0.0,
+			0.0,
+			0.0,
+			0.0,
+			0.0,
+			0.0,
+			0.0,
+			0.0,
+			0.0,
+			0.0,
+			0.0,
+			0.0,
+			0.0,
+			0.0,
+			0.0,
+			0.0,
+			0.0,
+			0.0,
+			0.0
+		],
+		"FreeRDP_OrderSupport": [
+			1.0,
+			1.0,
+			1.0,
+			0.0,
+			0.0,
+			0.0,
+			0.0,
+			0.0,
+			1.0,
+			0.0,
+			1.0,
+			0.0,
+			0.0,
+			0.0,
+			0.0,
+			0.0,
+			0.0,
+			0.0,
+			1.0,
+			0.0,
+			0.0,
+			0.0,
+			1.0,
+			0.0,
+			0.0,
+			0.0,
+			0.0,
+			0.0,
+			0.0,
+			0.0,
+			0.0,
+			0.0
+		],
+		"FreeRDP_BitmapCacheV2CellInfo": [
+			{
+				"numEntries": 600.0,
+				"persistent": false
+			},
+			{
+				"numEntries": 600.0,
+				"persistent": false
+			},
+			{
+				"numEntries": 2048.0,
+				"persistent": false
+			},
+			{
+				"numEntries": 4096.0,
+				"persistent": false
+			},
+			{
+				"numEntries": 2048.0,
+				"persistent": false
+			}
+		],
+		"FreeRDP_GlyphCache": [
+			{
+				"cacheEntries": 254.0,
+				"cacheMaximumCellSize": 4.0
+			},
+			{
+				"cacheEntries": 254.0,
+				"cacheMaximumCellSize": 4.0
+			},
+			{
+				"cacheEntries": 254.0,
+				"cacheMaximumCellSize": 8.0
+			},
+			{
+				"cacheEntries": 254.0,
+				"cacheMaximumCellSize": 8.0
+			},
+			{
+				"cacheEntries": 254.0,
+				"cacheMaximumCellSize": 16.0
+			},
+			{
+				"cacheEntries": 254.0,
+				"cacheMaximumCellSize": 32.0
+			},
+			{
+				"cacheEntries": 254.0,
+				"cacheMaximumCellSize": 64.0
+			},
+			{
+				"cacheEntries": 254.0,
+				"cacheMaximumCellSize": 128.0
+			},
+			{
+				"cacheEntries": 254.0,
+				"cacheMaximumCellSize": 256.0
+			},
+			{
+				"cacheEntries": 254.0,
+				"cacheMaximumCellSize": 256.0
+			}
+		],
+		"FreeRDP_FragCache": [
+			{
+				"cacheEntries": 256.0,
+				"cacheMaximumCellSize": 256.0
+			}
+		],
+		"FreeRDP_DeviceArray": [],
+		"FreeRDP_StaticChannelArray": [],
+		"FreeRDP_DynamicChannelArray": []
+	}
+}

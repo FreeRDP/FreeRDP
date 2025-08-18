@@ -1,6 +1,8 @@
 #include <freerdp/config.h>
 
 #include <stdio.h>
+#include <errno.h>
+
 #include <winpr/crt.h>
 #include <winpr/windows.h>
 #include <winpr/path.h>
@@ -261,6 +263,272 @@ static char* append(const char* fmt, ...)
 	return dst;
 }
 
+static FILE* test_fopen(const char* name, const char* mode)
+{
+#ifndef TEST_SOURCE_DIR
+#error "TEST_SOURCE_DIR must be defined to the test source directory"
+#endif
+
+	char* path = GetCombinedPath(TEST_SOURCE_DIR, name);
+	FILE* fp = winpr_fopen(path, mode);
+	free(path);
+	return fp;
+}
+
+static void* read_rdp_data(const char* name, size_t* plen)
+{
+	BOOL success = FALSE;
+	char* json = NULL;
+	FILE* fp = test_fopen(name, "r");
+	if (!fp)
+		goto fail;
+	if (fseek(fp, 0, SEEK_END) != 0)
+		goto fail;
+	const size_t pos = WINPR_ASSERTING_INT_CAST(size_t, _ftelli64(fp));
+	if (fseek(fp, 0, SEEK_SET) != 0)
+		goto fail;
+
+	json = calloc(pos + 1, sizeof(char));
+	if (!json)
+		goto fail;
+	if (fread(json, 1, pos, fp) != pos)
+		goto fail;
+
+	*plen = pos;
+	success = TRUE;
+fail:
+	if (!success)
+	{
+		char buffer[128] = { 0 };
+		WLog_ERR(__func__, "failed to read data from '%s': %s", name,
+		         winpr_strerror(errno, buffer, sizeof(buffer)));
+		free(json);
+		json = NULL;
+	}
+
+	if (fp)
+		fclose(fp);
+	return json;
+}
+
+static bool save_settings(const rdpSettings* settings, const char* name)
+{
+	bool rc = false;
+	size_t datalen = 0;
+	char* data = freerdp_settings_serialize(settings, TRUE, &datalen);
+	if (!data)
+		return false;
+
+	FILE* fp = test_fopen(name, "w");
+	if (fp)
+	{
+		const size_t res = fwrite(data, 1, datalen, fp);
+		(void)fclose(fp);
+		rc = res == datalen;
+	}
+
+	free(data);
+	return rc;
+}
+
+static char* get_json_name(const char* base, bool unchecked)
+{
+	size_t namelen = 0;
+	char* name = NULL;
+	winpr_asprintf(&name, &namelen, "%s%s.json", base, unchecked ? ".unchecked" : "");
+	return name;
+}
+
+static rdpSettings* read_json(const char* name)
+{
+	size_t datalen = 0;
+	void* data = read_rdp_data(name, &datalen);
+	rdpSettings* settings = freerdp_settings_deserialize(data, datalen);
+fail:
+	free(data);
+	return settings;
+}
+
+static rdpSettings* load_from(const void* data, size_t len, bool unchecked)
+{
+	BOOL rc = false;
+	rdpFile* file = freerdp_client_rdp_file_new();
+	rdpSettings* settings = read_json("default-settings.json");
+	if (!settings)
+	{
+		settings = freerdp_settings_new(0);
+		if (settings)
+		{
+			save_settings(settings, "default-settings.json");
+		}
+	}
+	if (!file || !settings)
+		goto fail;
+
+	if (!freerdp_client_parse_rdp_file_buffer(file, data, len))
+		goto fail;
+
+	if (unchecked)
+	{
+		if (!freerdp_client_populate_settings_from_rdp_file_unchecked(file, settings))
+			goto fail;
+	}
+	else
+	{
+		if (!freerdp_client_populate_settings_from_rdp_file(file, settings))
+			goto fail;
+	}
+
+	rc = true;
+fail:
+	freerdp_client_rdp_file_free(file);
+	if (!rc)
+	{
+		freerdp_settings_free(settings);
+		return NULL;
+	}
+	return settings;
+}
+
+static rdpSettings* load_from_file(const char* name, bool unchecked)
+{
+	size_t datalen = 0;
+	void* data = read_rdp_data(name, &datalen);
+	if (!data)
+		return NULL;
+	rdpSettings* settings = load_from(data, datalen, unchecked);
+	free(data);
+	return settings;
+}
+
+static bool test_data(const char* json, const void* data, size_t len, bool unchecked)
+{
+	bool rc = false;
+
+	rdpSettings* settings = load_from(data, len, unchecked);
+	rdpSettings* expect = read_json(json);
+	if (!settings || !expect)
+		goto fail;
+
+	wLog* log = WLog_Get(__func__);
+	WLog_Print(log, WLOG_INFO, "Test cast '%s'", json);
+	if (freerdp_settings_print_diff(log, WLOG_ERROR, expect, settings))
+		goto fail;
+	rc = true;
+fail:
+	freerdp_settings_free(settings);
+	freerdp_settings_free(expect);
+	return rc;
+}
+
+static HANDLE FindFirstFileUTF8(LPCSTR pszSearchPath, WIN32_FIND_DATAW* FindData)
+{
+	HANDLE hdl = INVALID_HANDLE_VALUE;
+	if (!pszSearchPath)
+		return hdl;
+	WCHAR* wpath = ConvertUtf8ToWCharAlloc(pszSearchPath, NULL);
+	if (!wpath)
+		return hdl;
+
+	hdl = FindFirstFileW(wpath, FindData);
+	free(wpath);
+
+	return hdl;
+}
+
+static bool test_rdp_file(const char* base, bool allowCreate, bool unchecked)
+{
+	bool rc = false;
+
+	size_t rdplen = 0;
+	char* rdp = NULL;
+	winpr_asprintf(&rdp, &rdplen, "%s.rdp", base);
+	char* json = get_json_name(base, unchecked);
+	size_t datalen = 0;
+	void* data = read_rdp_data(rdp, &datalen);
+
+	if (!data)
+		goto fail;
+
+	rc = test_data(json, data, datalen, unchecked);
+	if (!rc && allowCreate)
+	{
+		rdpSettings* expect = read_json(json);
+		if (expect)
+		{
+			freerdp_settings_free(expect);
+			goto fail;
+		}
+
+		rdpSettings* settings = load_from_file(rdp, unchecked);
+		if (!settings)
+			goto fail;
+
+		rc = save_settings(settings, json);
+	}
+fail:
+	free(data);
+	free(json);
+	free(rdp);
+	return rc;
+}
+
+static bool test_rdp_files(bool allowCreate)
+{
+	bool rc = false;
+	/* Load RDP files from directory, compare to JSON in same directory.
+	 * If JSON does not exist, create it.
+	 */
+#ifndef TEST_SOURCE_DIR
+#error "TEST_SOURCE_DIR must be defined to the test source directory"
+#endif
+
+	HANDLE hdl = INVALID_HANDLE_VALUE;
+	char* path = GetCombinedPath(TEST_SOURCE_DIR, "rdp-testcases/*.rdp");
+	if (!path)
+		goto fail;
+
+	WIN32_FIND_DATAW FindData = { 0 };
+	hdl = FindFirstFileUTF8(path, &FindData);
+
+	if (hdl == INVALID_HANDLE_VALUE)
+	{
+		WLog_INFO(
+		    __func__,
+		    "no RDP files found in %s. Add RDP files to generate settings JSON for comparison.",
+		    path);
+		rc = true;
+		goto fail;
+	}
+
+	do
+	{
+		if ((FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0)
+		{
+			char cFileName[6 * MAX_PATH] = { 0 };
+			char rdp[6 * MAX_PATH] = { 0 };
+			ConvertWCharToUtf8(FindData.cFileName, cFileName, sizeof(cFileName));
+			const size_t len = strnlen(cFileName, sizeof(cFileName));
+			if (len < 4)
+				continue;
+			strcpy(rdp, "rdp-testcases/");
+			strncpy(&rdp[14], cFileName, len - 4);
+
+			if (!test_rdp_file(rdp, allowCreate, false))
+				goto fail;
+			if (!test_rdp_file(rdp, allowCreate, true))
+				goto fail;
+		}
+	} while (FindNextFileW(hdl, &FindData));
+
+	rc = true;
+
+fail:
+	FindClose(hdl);
+	free(path);
+	return rc;
+}
+
 int TestClientRdpFile(int argc, char* argv[])
 {
 	int rc = -1;
@@ -280,56 +548,29 @@ int TestClientRdpFile(int argc, char* argv[])
 	WINPR_UNUSED(argv);
 	winpr_RAND(&id, sizeof(id));
 
+	/* UTF8 */
+#if defined(CHANNEL_URBDRC_CLIENT) && defined(CHANNEL_RDPECAM_CLIENT)
+	if (!test_data("testRdpFileUTF8.json", testRdpFileUTF8, sizeof(testRdpFileUTF8), false))
+		return -1;
+	if (!test_data("testRdpFileUTF8.unchecked.json", testRdpFileUTF8, sizeof(testRdpFileUTF8),
+	               true))
+		return -1;
+#endif
+
 	/* Unicode */
-	file = freerdp_client_rdp_file_new();
-	settings = freerdp_settings_new(0);
+#if defined(CHANNEL_URBDRC_CLIENT)
+	if (!test_data("testRdpFileUTF16.json", testRdpFileUTF16, sizeof(testRdpFileUTF16), false))
+		return -1;
+	if (!test_data("testRdpFileUTF16.unchecked.json", testRdpFileUTF16, sizeof(testRdpFileUTF16),
+	               true))
+		return -1;
+#endif
 
-	if (!file || !settings)
-	{
-		printf("rdp_file_new failed\n");
-		goto fail;
-	}
+#if defined(CHANNEL_URBDRC_CLIENT) && defined(CHANNEL_RDPECAM_CLIENT)
+	if (!test_rdp_files(argc > 1))
+		return -1;
+#endif
 
-	if (!freerdp_client_parse_rdp_file_buffer(file, testRdpFileUTF16, sizeof(testRdpFileUTF16)))
-		goto fail;
-
-	if (!freerdp_client_populate_settings_from_rdp_file(file, settings))
-		goto fail;
-
-	if (freerdp_settings_get_bool(settings, FreeRDP_UseMultimon))
-	{
-		printf("UseMultiMon mismatch: Actual: %" PRIu32 ", Expected: 0\n",
-		       freerdp_settings_get_bool(settings, FreeRDP_UseMultimon));
-		goto fail;
-	}
-
-	if (!freerdp_settings_get_bool(settings, FreeRDP_Fullscreen))
-	{
-		printf("ScreenModeId mismatch: Actual: %" PRIu32 ", Expected: TRUE\n",
-		       freerdp_settings_get_bool(settings, FreeRDP_Fullscreen));
-		goto fail;
-	}
-
-	if (strcmp(freerdp_settings_get_string(settings, FreeRDP_GatewayHostname),
-	           "LAB1-W2K8R2-GW.lab1.awake.local") != 0)
-	{
-		printf("GatewayHostname mismatch: Actual: %s, Expected: %s\n",
-		       freerdp_settings_get_string(settings, FreeRDP_GatewayHostname),
-		       "LAB1-W2K8R2-GW.lab1.awake.local");
-		goto fail;
-	}
-
-	if (strcmp(freerdp_settings_get_string(settings, FreeRDP_ServerHostname),
-	           "LAB1-W7-DM-01.lab1.awake.local") != 0)
-	{
-		printf("ServerHostname mismatch: Actual: %s, Expected: %s\n",
-		       freerdp_settings_get_string(settings, FreeRDP_ServerHostname),
-		       "LAB1-W7-DM-01.lab1.awake.local");
-		goto fail;
-	}
-
-	freerdp_client_rdp_file_free(file);
-	freerdp_settings_free(settings);
 	/* Ascii */
 	file = freerdp_client_rdp_file_new();
 	settings = freerdp_settings_new(0);
