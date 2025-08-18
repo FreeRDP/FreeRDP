@@ -118,7 +118,7 @@ static UINT printer_win_write_printjob(rdpPrintJob* printjob, const BYTE* data, 
 		return ERROR_BAD_ARGUMENTS;
 
 	DWORD cbBuf = WINPR_ASSERTING_INT_CAST(uint32_t, size);
-	if (!WritePrinter(printer->hPrinter, pBuf, cbBuf, &pcWritten))
+	if (!WritePrinter(printer->hPrinter, WINPR_CAST_CONST_PTR_AWAY(pBuf, void*), cbBuf, &pcWritten))
 		return ERROR_INTERNAL_ERROR;
 	return CHANNEL_RC_OK;
 }
@@ -267,7 +267,7 @@ static rdpPrinter* printer_win_new_printer(rdpWinPrinterDriver* win_driver, cons
 	win_printer->printer.AddRef = printer_win_add_ref_printer;
 	win_printer->printer.ReleaseRef = printer_win_release_ref_printer;
 
-	if (!OpenPrinter(name, &(win_printer->hPrinter), NULL))
+	if (!OpenPrinter(WINPR_CAST_CONST_PTR_AWAY(name, WCHAR*), &(win_printer->hPrinter), NULL))
 		goto fail;
 
 	/* How many memory should be allocated for printer data */
