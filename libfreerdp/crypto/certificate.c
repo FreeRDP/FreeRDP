@@ -1898,5 +1898,6 @@ X509* freerdp_certificate_get_chain_at(rdpCertificate* certificate, size_t offse
 {
 	WINPR_ASSERT(certificate);
 	WINPR_ASSERT(freerdp_certificate_get_chain_len(certificate) > offset);
-	return sk_X509_value(certificate->chain, offset);
+	const int ioff = WINPR_ASSERTING_INT_CAST(int, offset);
+	return sk_X509_value(certificate->chain, ioff);
 }
