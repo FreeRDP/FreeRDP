@@ -76,7 +76,7 @@
 		"FreeRDP_SmartcardLogon": false,
 		"FreeRDP_PromptForCredentials": false,
 		"FreeRDP_SmartcardEmulation": false,
-		"FreeRDP_KerberosRdgIsProxy": false,
+		"FreeRDP_KerberosRdgIsProxy": true,
 		"FreeRDP_IgnoreCertificate": false,
 		"FreeRDP_ExternalCertificateManagement": false,
 		"FreeRDP_AutoAcceptCertificate": false,

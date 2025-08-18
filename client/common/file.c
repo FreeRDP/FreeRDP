@@ -2594,7 +2594,7 @@ BOOL freerdp_client_populate_settings_from_rdp_file_unchecked(const rdpFile* fil
 			return FALSE;
 	}
 
-	if (~((size_t)file->RdgIsKdcProxy))
+	if (~file->RdgIsKdcProxy)
 	{
 		if (!freerdp_settings_set_bool(settings, FreeRDP_KerberosRdgIsProxy,
 		                               file->RdgIsKdcProxy != 0))
