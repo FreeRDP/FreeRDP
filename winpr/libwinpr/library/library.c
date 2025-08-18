@@ -109,13 +109,13 @@ BOOL SetDefaultDllDirectories(WINPR_ATTR_UNUSED DWORD DirectoryFlags)
 
 HMODULE LoadLibraryA(LPCSTR lpLibFileName)
 {
+	if (!lpLibFileName)
+		return NULL;
+
 #if defined(_UWP)
 	int status;
 	HMODULE hModule = NULL;
 	WCHAR* filenameW = NULL;
-
-	if (!lpLibFileName)
-		return NULL;
 
 	filenameW = ConvertUtf8ToWCharAlloc(lpLibFileName, NULL);
 	if (filenameW)
@@ -125,8 +125,7 @@ HMODULE LoadLibraryA(LPCSTR lpLibFileName)
 	free(filenameW);
 	return hModule;
 #else
-	HMODULE library = NULL;
-	library = dlopen(lpLibFileName, RTLD_LOCAL | RTLD_LAZY);
+	HMODULE library = dlopen(lpLibFileName, RTLD_LOCAL | RTLD_LAZY);
 
 	if (!library)
 	{
@@ -208,20 +207,19 @@ BOOL FreeLibrary(HMODULE hLibModule)
 	return TRUE;
 }
 
-HMODULE GetModuleHandleA(WINPR_ATTR_UNUSED LPCSTR lpModuleName)
+HMODULE GetModuleHandleA(LPCSTR lpModuleName)
 {
-	/* TODO: Implement */
-	WLog_ERR(TAG, "not implemented");
-	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-	return NULL;
+	return dlopen(lpModuleName, RTLD_NOLOAD | RTLD_LOCAL | RTLD_LAZY);
 }
 
-HMODULE GetModuleHandleW(WINPR_ATTR_UNUSED LPCWSTR lpModuleName)
+HMODULE GetModuleHandleW(LPCWSTR lpModuleName)
 {
-	/* TODO: Implement */
-	WLog_ERR(TAG, "not implemented");
-	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-	return NULL;
+	char* name = NULL;
+	if (lpModuleName)
+		name = ConvertWCharToUtf8Alloc(lpModuleName, NULL);
+	HANDLE hdl = GetModuleHandleA(name);
+	free(name);
+	return hdl;
 }
 
 /**
