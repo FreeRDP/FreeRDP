@@ -124,6 +124,26 @@ static const uint32_t offsetsFromUTF8[6] = { 0x00000000UL, 0x00003080UL, 0x000E2
  */
 static const uint8_t firstByteMark[7] = { 0x00, 0x00, 0xC0, 0xE0, 0xF0, 0xF8, 0xFC };
 
+/* We always need UTF-16LE, even on big endian systems! */
+static WCHAR setWcharFrom(WCHAR w)
+{
+#if defined(__BIG_ENDIAN__)
+	union
+	{
+		WCHAR w;
+		char c[2];
+	} cnv;
+
+	cnv.w = w;
+	const char c = cnv.c[0];
+	cnv.c[0] = cnv.c[1];
+	cnv.c[1] = c;
+	return cnv.w;
+#else
+	return w;
+#endif
+}
+
 /* --------------------------------------------------------------------- */
 
 /* The interface converts a whole buffer to avoid function-call overhead.
@@ -155,7 +175,7 @@ static ConversionResult winpr_ConvertUTF16toUTF8_Internal(const uint16_t** sourc
 		const uint16_t* oldSource =
 		    source; /* In case we have to back up because of target overflow. */
 
-		ch = *source++;
+		ch = setWcharFrom(*source++);
 
 		/* If we have a surrogate pair, convert to UTF32 first. */
 		if (ch >= UNI_SUR_HIGH_START && ch <= UNI_SUR_HIGH_END)
@@ -163,7 +183,7 @@ static ConversionResult winpr_ConvertUTF16toUTF8_Internal(const uint16_t** sourc
 			/* If the 16 bits following the high surrogate are in the source buffer... */
 			if (source < sourceEnd)
 			{
-				uint32_t ch2 = *source;
+				uint32_t ch2 = setWcharFrom(*source);
 
 				/* If it's a low surrogate, convert to UTF32. */
 				if (ch2 >= UNI_SUR_LOW_START && ch2 <= UNI_SUR_LOW_END)
@@ -472,7 +492,7 @@ static ConversionResult winpr_ConvertUTF8toUTF16_Internal(const uint8_t** source
 				else
 				{
 					if (!computeLength)
-						*target++ = UNI_REPLACEMENT_CHAR;
+						*target++ = setWcharFrom(UNI_REPLACEMENT_CHAR);
 					else
 						target++;
 				}
@@ -480,7 +500,7 @@ static ConversionResult winpr_ConvertUTF8toUTF16_Internal(const uint8_t** source
 			else
 			{
 				if (!computeLength)
-					*target++ = (uint16_t)ch; /* normal case */
+					*target++ = setWcharFrom((WCHAR)ch); /* normal case */
 				else
 					target++;
 			}
@@ -496,7 +516,7 @@ static ConversionResult winpr_ConvertUTF8toUTF16_Internal(const uint8_t** source
 			else
 			{
 				if (!computeLength)
-					*target++ = UNI_REPLACEMENT_CHAR;
+					*target++ = setWcharFrom(UNI_REPLACEMENT_CHAR);
 				else
 					target++;
 			}
@@ -515,8 +535,8 @@ static ConversionResult winpr_ConvertUTF8toUTF16_Internal(const uint8_t** source
 
 			if (!computeLength)
 			{
-				*target++ = (uint16_t)((ch >> halfShift) + UNI_SUR_HIGH_START);
-				*target++ = (uint16_t)((ch & halfMask) + UNI_SUR_LOW_START);
+				*target++ = setWcharFrom((WCHAR)((ch >> halfShift) + UNI_SUR_HIGH_START));
+				*target++ = setWcharFrom((WCHAR)((ch & halfMask) + UNI_SUR_LOW_START));
 			}
 			else
 			{
