@@ -118,7 +118,7 @@ static BOOL pf_server_get_target_info(rdpContext* context, rdpSettings* settings
 		return FALSE;
 	}
 
-	settings->ServerPort = config->TargetPort > 0 ? 3389 : settings->ServerPort;
+	settings->ServerPort = config->TargetPort > 0 ? config->TargetPort : 3389;
 	return TRUE;
 }
 
