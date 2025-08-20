@@ -34,7 +34,7 @@
 
 #ifndef _WIN32
 
-static BYTE wchar_decode(WCHAR c)
+static BYTE char_decode(char c)
 {
 	if (c >= 'A' && c <= 'Z')
 		return (BYTE)(c - 'A');
@@ -49,26 +49,26 @@ static BYTE wchar_decode(WCHAR c)
 	return 64;
 }
 
-static BOOL cred_decode(const WCHAR* cred, size_t len, BYTE* buf)
+static BOOL cred_decode(const char* cred, size_t len, BYTE* buf)
 {
 	size_t i = 0;
-	const WCHAR* p = cred;
+	const char* p = cred;
 
 	while (len >= 4)
 	{
-		BYTE c0 = wchar_decode(p[0]);
+		BYTE c0 = char_decode(p[0]);
 		if (c0 > 63)
 			return FALSE;
 
-		BYTE c1 = wchar_decode(p[1]);
+		BYTE c1 = char_decode(p[1]);
 		if (c1 > 63)
 			return FALSE;
 
-		BYTE c2 = wchar_decode(p[2]);
+		BYTE c2 = char_decode(p[2]);
 		if (c2 > 63)
 			return FALSE;
 
-		BYTE c3 = wchar_decode(p[3]);
+		BYTE c3 = char_decode(p[3]);
 		if (c3 > 63)
 			return FALSE;
 
@@ -82,15 +82,15 @@ static BOOL cred_decode(const WCHAR* cred, size_t len, BYTE* buf)
 
 	if (len == 3)
 	{
-		BYTE c0 = wchar_decode(p[0]);
+		BYTE c0 = char_decode(p[0]);
 		if (c0 > 63)
 			return FALSE;
 
-		BYTE c1 = wchar_decode(p[1]);
+		BYTE c1 = char_decode(p[1]);
 		if (c1 > 63)
 			return FALSE;
 
-		BYTE c2 = wchar_decode(p[2]);
+		BYTE c2 = char_decode(p[2]);
 		if (c2 > 63)
 			return FALSE;
 
@@ -99,11 +99,11 @@ static BOOL cred_decode(const WCHAR* cred, size_t len, BYTE* buf)
 	}
 	else if (len == 2)
 	{
-		BYTE c0 = wchar_decode(p[0]);
+		BYTE c0 = char_decode(p[0]);
 		if (c0 > 63)
 			return FALSE;
 
-		BYTE c1 = wchar_decode(p[1]);
+		BYTE c1 = char_decode(p[1]);
 		if (c1 > 63)
 			return FALSE;
 
@@ -117,54 +117,72 @@ static BOOL cred_decode(const WCHAR* cred, size_t len, BYTE* buf)
 	return TRUE;
 }
 
-static size_t cred_encode(const BYTE* bin, size_t len, WCHAR* cred)
+static size_t cred_encode(const BYTE* bin, size_t len, char* cred, size_t credlen)
 {
-	static const WCHAR encodingChars[] = {
-		/* ABCDEFGHIJKLMNOPQRSTUVWXYZ */
-		0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48, 0x49, 0x4A, 0x4B, 0x4C, 0x4D, 0x4E, 0x4F,
-		0x50, 0x51, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57, 0x58, 0x59, 0x5A,
-		/* abcdefghijklmnopqrstuvwxyz */
-		0x61, 0x62, 0x63, 0x64, 0x65, 0x66, 0x67, 0x68, 0x69, 0x6A, 0x6B, 0x6C, 0x6D, 0x6E, 0x6F,
-		0x70, 0x71, 0x72, 0x73, 0x74, 0x75, 0x76, 0x77, 0x78, 0x79, 0x7A,
-		/* 0123456789 */
-		0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39,
-		/* #- */
-		0x23, 0x2d
-	};
+	static const char encodingChars[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	                                    "abcdefghijklmnopqrstuvwxyz"
+	                                    "0123456789"
+	                                    "#-";
 	size_t n = 0;
-
-	while (len > 0)
+	size_t offset = 0;
+	while (offset < len)
 	{
-		cred[n++] = encodingChars[bin[0] & 0x3f];
-		BYTE x = (bin[0] & 0xc0) >> 6;
-		if (len == 1)
+		if (n >= credlen)
+			break;
+
+		cred[n++] = encodingChars[bin[offset] & 0x3f];
+		BYTE x = (bin[offset] & 0xc0) >> 6;
+		offset++;
+
+		if (offset >= len)
 		{
 			cred[n++] = encodingChars[x];
 			break;
 		}
 
-		cred[n++] = encodingChars[((bin[1] & 0xf) << 2) | x];
-		x = (bin[1] & 0xf0) >> 4;
-		if (len == 2)
+		if (n >= credlen)
+			break;
+		cred[n++] = encodingChars[((bin[offset] & 0xf) << 2) | x];
+		x = (bin[offset] & 0xf0) >> 4;
+		offset++;
+
+		if (offset >= len)
 		{
 			cred[n++] = encodingChars[x];
 			break;
 		}
 
-		cred[n++] = encodingChars[((bin[2] & 0x3) << 4) | x];
-		cred[n++] = encodingChars[(bin[2] & 0xfc) >> 2];
-		bin += 3;
-		len -= 3;
+		if (n >= credlen)
+			break;
+		cred[n++] = encodingChars[((bin[offset] & 0x3) << 4) | x];
+
+		if (n >= credlen)
+			break;
+		cred[n++] = encodingChars[(bin[offset] & 0xfc) >> 2];
+		offset++;
 	}
 	return n;
 }
 
-BOOL CredMarshalCredentialW(CRED_MARSHAL_TYPE CredType, PVOID cred, LPWSTR* MarshaledCredential)
+BOOL CredMarshalCredentialW(CRED_MARSHAL_TYPE CredType, PVOID Credential,
+                            LPWSTR* MarshaledCredential)
 {
-	CERT_CREDENTIAL_INFO* cert = cred;
-	WCHAR* p = NULL;
+	char* b = NULL;
+	if (!CredMarshalCredentialA(CredType, Credential, &b) || !b)
+		return FALSE;
 
-	if (!cred || (CredType == CertCredential && cert->cbSize < sizeof(*cert)))
+	*MarshaledCredential = ConvertUtf8ToWCharAlloc(b, NULL);
+	free(b);
+	return (*MarshaledCredential != NULL);
+}
+
+BOOL CredMarshalCredentialA(CRED_MARSHAL_TYPE CredType, PVOID Credential,
+                            LPSTR* MarshaledCredential)
+{
+	CERT_CREDENTIAL_INFO* cert = Credential;
+
+	if (!cert || ((CredType == CertCredential) && (cert->cbSize < sizeof(CERT_CREDENTIAL_INFO))) ||
+	    !MarshaledCredential)
 	{
 		SetLastError(ERROR_INVALID_PARAMETER);
 		return FALSE;
@@ -174,94 +192,84 @@ BOOL CredMarshalCredentialW(CRED_MARSHAL_TYPE CredType, PVOID cred, LPWSTR* Mars
 	{
 		case CertCredential:
 		{
-			size_t size = (sizeof(cert->rgbHashOfCert) + 2) * 4 / 3;
-			if (!(p = malloc((size + 4) * sizeof(WCHAR))))
-				return FALSE;
-			p[0] = '@';
-			p[1] = '@';
-			p[2] = (WCHAR)('A' + CredType);
-			size_t len = cred_encode(cert->rgbHashOfCert, sizeof(cert->rgbHashOfCert), p + 3);
-			p[len + 3] = 0;
-			break;
+			char buffer[3ULL + (sizeof(cert->rgbHashOfCert) * 4 / 3) +
+			            1ULL /* rounding error */] = { 0 };
+
+			const char c = WINPR_ASSERTING_INT_CAST(char, 'A' + CredType);
+			(void)_snprintf(buffer, sizeof(buffer), "@@%c", c);
+			size_t len = cred_encode(cert->rgbHashOfCert, sizeof(cert->rgbHashOfCert), &buffer[3],
+			                         sizeof(buffer) - 3);
+			*MarshaledCredential = strndup(buffer, len + 3);
+			return TRUE;
 		}
 		default:
 			WLog_ERR(TAG, "unhandled type 0x%x", CredType);
 			SetLastError(ERROR_INVALID_PARAMETER);
 			return FALSE;
 	}
-
-	*MarshaledCredential = p;
-	return TRUE;
-}
-
-BOOL CredMarshalCredentialA(CRED_MARSHAL_TYPE CredType, PVOID Credential,
-                            LPSTR* MarshaledCredential)
-{
-	WCHAR* b = NULL;
-	if (!CredMarshalCredentialW(CredType, Credential, &b) || !b)
-		return FALSE;
-
-	*MarshaledCredential = ConvertWCharNToUtf8Alloc(b, _wcslen(b), NULL);
-	free(b);
-	return (*MarshaledCredential != NULL);
 }
 
 BOOL CredUnmarshalCredentialW(LPCWSTR cred, PCRED_MARSHAL_TYPE pcredType, PVOID* out)
 {
-	if (!cred || !pcredType || !out || cred[0] != '@' || cred[1] != '@')
+	char* str = NULL;
+	if (cred)
+		str = ConvertWCharToUtf8Alloc(cred, NULL);
+	const BOOL rc = CredUnmarshalCredentialA(str, pcredType, out);
+	free(str);
+	return rc;
+}
+
+BOOL CredUnmarshalCredentialA(LPCSTR cred, PCRED_MARSHAL_TYPE CredType, PVOID* Credential)
+{
+	if (!cred)
 	{
 		SetLastError(ERROR_INVALID_PARAMETER);
 		return FALSE;
 	}
 
-	BYTE b = wchar_decode(cred[2]);
-	if (!b || b > BinaryBlobForSystem)
+	const size_t len = strlen(cred);
+	if ((len < 3) || !CredType || !Credential || (cred[0] != '@') || (cred[1] != '@'))
 	{
 		SetLastError(ERROR_INVALID_PARAMETER);
 		return FALSE;
 	}
 
-	*pcredType = (CRED_MARSHAL_TYPE)b;
+	BYTE b = char_decode(cred[2]);
+	if (!b || (b > BinaryBlobForSystem))
+	{
+		SetLastError(ERROR_INVALID_PARAMETER);
+		return FALSE;
+	}
 
-	size_t len = _wcslen(cred + 3);
-	switch (*pcredType)
+	*CredType = (CRED_MARSHAL_TYPE)b;
+
+	switch (*CredType)
 	{
 		case CertCredential:
 		{
-			BYTE hash[CERT_HASH_LENGTH];
+			BYTE hash[CERT_HASH_LENGTH] = { 0 };
 
-			if (len != 27 || !cred_decode(cred + 3, len, hash))
+			if ((len != 30) || !cred_decode(&cred[3], len - 3, hash))
 			{
 				SetLastError(ERROR_INVALID_PARAMETER);
 				return FALSE;
 			}
 
-			CERT_CREDENTIAL_INFO* cert = malloc(sizeof(*cert));
+			CERT_CREDENTIAL_INFO* cert = calloc(1, sizeof(CERT_CREDENTIAL_INFO));
 			if (!cert)
 				return FALSE;
 
+			cert->cbSize = sizeof(CERT_CREDENTIAL_INFO);
 			memcpy(cert->rgbHashOfCert, hash, sizeof(cert->rgbHashOfCert));
-			cert->cbSize = sizeof(*cert);
-			*out = cert;
+			*Credential = cert;
 			break;
 		}
 		default:
-			WLog_ERR(TAG, "unhandled credType 0x%x", *pcredType);
+			WLog_ERR(TAG, "unhandled credType 0x%x", *CredType);
 			SetLastError(ERROR_INVALID_PARAMETER);
 			return FALSE;
 	}
 	return TRUE;
-}
-
-BOOL CredUnmarshalCredentialA(LPCSTR cred, PCRED_MARSHAL_TYPE CredType, PVOID* Credential)
-{
-	WCHAR* b = ConvertUtf8NToWCharAlloc(cred, strlen(cred), NULL);
-	if (!b)
-		return FALSE;
-
-	BOOL ret = CredUnmarshalCredentialW(b, CredType, Credential);
-	free(b);
-	return ret;
 }
 
 BOOL CredIsMarshaledCredentialW(LPCWSTR MarshaledCredential)

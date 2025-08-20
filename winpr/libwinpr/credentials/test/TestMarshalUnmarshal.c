@@ -25,29 +25,32 @@ typedef struct
 	BYTE source[CERT_HASH_LENGTH];
 } TestItem;
 
-static TestItem testValues[] = { { "@@BQ9eNR0KWVU-CT8sPCp8z37POZHJ",
-	                               { 0x50, 0xef, 0x35, 0x11, 0xad, 0x58, 0x15, 0xf5, 0x0b, 0x13,
-	                                 0xcf, 0x3e, 0x42, 0xca, 0xcf, 0xf7, 0xfe, 0x38, 0xd9, 0x91 } },
-	                             { "@@BKay-HwJsFZzclXAWZ#nO6Eluc7P",
-	                               { 0x8a, 0x26, 0xff, 0x07, 0x9c, 0xb0, 0x45, 0x36, 0x73, 0xe5,
-	                                 0x05, 0x58, 0x99, 0x7f, 0x3a, 0x3a, 0x51, 0xba, 0xdc, 0xfe }
+static const TestItem testValues[] = {
+	{ "@@BQ9eNR0KWVU-CT8sPCp8z37POZHJ",
+	  { 0x50, 0xef, 0x35, 0x11, 0xad, 0x58, 0x15, 0xf5, 0x0b, 0x13,
+	    0xcf, 0x3e, 0x42, 0xca, 0xcf, 0xf7, 0xfe, 0x38, 0xd9, 0x91 } },
+	{ "@@BKay-HwJsFZzclXAWZ#nO6Eluc7P",
+	  { 0x8a, 0x26, 0xff, 0x07, 0x9c, 0xb0, 0x45, 0x36, 0x73, 0xe5,
+	    0x05, 0x58, 0x99, 0x7f, 0x3a, 0x3a, 0x51, 0xba, 0xdc, 0xfe }
 
-	                             } };
+	}
+};
 
-static int TestUnmarshal(int argc, char** argv)
+static int TestUnmarshal(WINPR_ATTR_UNUSED int argc, WINPR_ATTR_UNUSED char** argv)
 {
 
-	for (int i = 0; i < ARRAYSIZE(testValues); i++)
+	for (size_t i = 0; i < ARRAYSIZE(testValues); i++)
 	{
 		CRED_MARSHAL_TYPE t = BinaryBlobForSystem;
 		CERT_CREDENTIAL_INFO* certInfo = NULL;
+		const TestItem* const val = &testValues[i];
 
-		if (!CredUnmarshalCredentialA(testValues[i].marshalled, &t, (void**)&certInfo) ||
-		    !certInfo || t != CertCredential)
+		if (!CredUnmarshalCredentialA(val->marshalled, &t, (void**)&certInfo) || !certInfo ||
+		    (t != CertCredential))
 			return -1;
 
-		BOOL ok = memcmp(testValues[i].source, certInfo->rgbHashOfCert,
-		                 sizeof(certInfo->rgbHashOfCert)) == 0;
+		const BOOL ok =
+		    memcmp(val->source, certInfo->rgbHashOfCert, sizeof(certInfo->rgbHashOfCert)) == 0;
 
 		free(certInfo);
 
@@ -57,20 +60,21 @@ static int TestUnmarshal(int argc, char** argv)
 	return 0;
 }
 
-static int TestMarshal(int argc, char** argv)
+static int TestMarshal(WINPR_ATTR_UNUSED int argc, WINPR_ATTR_UNUSED char** argv)
 {
 
-	for (int i = 0; i < ARRAYSIZE(testValues); i++)
+	for (size_t i = 0; i < ARRAYSIZE(testValues); i++)
 	{
-		CRED_MARSHAL_TYPE t = BinaryBlobForSystem;
 		CERT_CREDENTIAL_INFO certInfo = { sizeof(certInfo), { 0 } };
-		memcpy(certInfo.rgbHashOfCert, testValues[i].source, sizeof(certInfo.rgbHashOfCert));
+		const TestItem* const val = &testValues[i];
+
+		memcpy(certInfo.rgbHashOfCert, val->source, sizeof(certInfo.rgbHashOfCert));
 		LPSTR out = NULL;
 
 		if (!CredMarshalCredentialA(CertCredential, &certInfo, &out) || !out)
 			return -1;
 
-		BOOL ok = (strcmp(testValues[i].marshalled, out) == 0);
+		BOOL ok = (strcmp(val->marshalled, out) == 0);
 
 		free(out);
 
