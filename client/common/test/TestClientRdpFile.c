@@ -288,7 +288,7 @@ static void* read_rdp_data(const char* name, size_t* plen)
 	if (fseek(fp, 0, SEEK_SET) != 0)
 		goto fail;
 
-	json = calloc(pos + 1, sizeof(char));
+	json = calloc(pos + 1ULL, sizeof(char));
 	if (!json)
 		goto fail;
 	if (fread(json, 1, pos, fp) != pos)

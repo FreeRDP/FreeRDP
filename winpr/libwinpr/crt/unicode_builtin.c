@@ -158,7 +158,8 @@ static WCHAR setWcharFrom(WCHAR w)
 
 static ConversionResult winpr_ConvertUTF16toUTF8_Internal(const uint16_t** sourceStart,
                                                           const uint16_t* sourceEnd,
-                                                          uint8_t** targetStart, uint8_t* targetEnd,
+                                                          uint8_t** targetStart,
+                                                          const uint8_t* targetEnd,
                                                           ConversionFlags flags)
 {
 	bool computeLength = (!targetEnd) ? true : false;
@@ -276,6 +277,9 @@ static ConversionResult winpr_ConvertUTF16toUTF8_Internal(const uint16_t** sourc
 
 				case 1:
 					*--target = (uint8_t)(ch | firstByteMark[bytesToWrite]);
+					break;
+				default:
+					return sourceIllegal;
 			}
 		}
 		else
@@ -300,6 +304,9 @@ static ConversionResult winpr_ConvertUTF16toUTF8_Internal(const uint16_t** sourc
 
 				case 1:
 					--target;
+					break;
+				default:
+					return sourceIllegal;
 			}
 		}
 
@@ -402,7 +409,7 @@ static bool isLegalUTF8(const uint8_t* source, int length)
 static ConversionResult winpr_ConvertUTF8toUTF16_Internal(const uint8_t** sourceStart,
                                                           const uint8_t* sourceEnd,
                                                           uint16_t** targetStart,
-                                                          uint16_t* targetEnd,
+                                                          const uint16_t* targetEnd,
                                                           ConversionFlags flags)
 {
 	bool computeLength = (!targetEnd) ? true : false;
@@ -466,6 +473,9 @@ static ConversionResult winpr_ConvertUTF8toUTF16_Internal(const uint8_t** source
 
 			case 0:
 				ch += *source++;
+				break;
+			default:
+				return sourceIllegal;
 		}
 
 		ch -= offsetsFromUTF8[extraBytesToRead];
