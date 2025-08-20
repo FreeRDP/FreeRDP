@@ -40,7 +40,7 @@ extern "C"
 	 * @param bytes the size of the buffer
 	 * @return the number of bytes read. Negative numbers indicate an error
 	 * occurred. \b errno is set accordingly (see man 2 read)
-	 * @bug Before 3.18.0 the function did return \b -1 for transport closed and \b 0 for retry
+	 * @bug Before 3.17.0 the function did return \b -1 for transport closed and \b 0 for retry
 	 * events.
 	 * @since version 3.9.0
 	 */
@@ -53,7 +53,7 @@ extern "C"
 	 * @param bytes the size of the buffer
 	 * @return the number of bytes written. Negative numbers indicate an error
 	 * occurred. \b errno is set accordingly (see man 2 send)
-	 * @bug Before 3.18.0 the function did return \b -1 for transport closed and \b 0 for retry
+	 * @bug Before 3.17.0 the function did return \b -1 for transport closed and \b 0 for retry
 	 * events.
 	 * @since version 3.9.0
 	 */
