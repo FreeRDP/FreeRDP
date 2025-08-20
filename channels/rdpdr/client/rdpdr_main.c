@@ -377,7 +377,6 @@ static LRESULT CALLBACK hotplug_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM 
 						char drive_name_upper, drive_name_lower;
 						ULONG_PTR* keys = NULL;
 						DEVICE_DRIVE_EXT* device_ext;
-						UINT32 ids[1];
 
 						for (int i = 0; i < 26; i++)
 						{

@@ -25,8 +25,13 @@
 #include <winpr/crypto.h>
 #include <freerdp/utils/encoded_types.h>
 
+#ifndef MIN
 #define MIN(x, y) ((x) < (y)) ? (x) : (y)
+#endif
+
+#ifndef MAX
 #define MAX(x, y) ((x) > (y)) ? (x) : (y)
+#endif
 
 static BOOL test_signed_integer_read_write_equal(INT32 value)
 {

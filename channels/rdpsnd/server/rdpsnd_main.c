@@ -184,7 +184,6 @@ static UINT rdpsnd_server_recv_quality_mode(RdpsndServerContext* context, wStrea
  */
 static UINT rdpsnd_server_recv_formats(RdpsndServerContext* context, wStream* s)
 {
-	UINT16 num_known_format = 0;
 	UINT error = CHANNEL_RC_OK;
 
 	WINPR_ASSERT(context);
@@ -246,13 +245,6 @@ static UINT rdpsnd_server_recv_formats(RdpsndServerContext* context, wStream* s)
 				error = ERROR_INTERNAL_ERROR;
 				goto out_free;
 			}
-		}
-
-		if (format->wFormatTag != 0)
-		{
-			// lets call this a known format
-			// TODO: actually look through our own list of known formats
-			num_known_format++;
 		}
 	}
 
