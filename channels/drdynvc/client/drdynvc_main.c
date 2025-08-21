@@ -498,6 +498,8 @@ static UINT dvcman_channel_close(DVCMAN_CHANNEL* channel, BOOL perRequest, BOOL 
 						           "error when sending close confirm for '%s'",
 						           channel->channel_name);
 				}
+				WLog_Print(drdynvc->log, WLOG_DEBUG, "listener %s destroyed channel %" PRIu32 "",
+				           channel->channel_name, channel->channel_id);
 			}
 
 			channel->state = DVC_CHANNEL_CLOSED;
