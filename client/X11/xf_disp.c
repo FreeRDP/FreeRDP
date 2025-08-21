@@ -488,6 +488,9 @@ BOOL xf_disp_handle_xevent(xfContext* xfc, const XEvent* event)
 		return TRUE;
 
 #endif
+
+	WLog_DBG(TAG, "RRScreenChangeNotify event");
+
 	xf_detect_monitors(xfc, &maxWidth, &maxHeight);
 	const rdpMonitor* monitors = freerdp_settings_get_pointer(settings, FreeRDP_MonitorDefArray);
 	const UINT32 mcount = freerdp_settings_get_uint32(settings, FreeRDP_MonitorCount);
@@ -506,6 +509,7 @@ BOOL xf_disp_handle_configureNotify(xfContext* xfc, int width, int height)
 	if (!xfDisp)
 		return FALSE;
 
+	WLog_DBG(TAG, "ConfigureNotify (%dx%d)", width, height);
 	return xf_disp_queueResize(xfDisp, WINPR_ASSERTING_INT_CAST(uint32_t, width),
 	                           WINPR_ASSERTING_INT_CAST(uint32_t, height));
 }
@@ -569,6 +573,7 @@ BOOL xf_disp_init(xfDispContext* xfDisp, DispClientContext* disp)
 #endif
 	}
 
+	WLog_DBG(TAG, "Channel %s opened", DISP_CHANNEL_NAME);
 	return TRUE;
 }
 
@@ -577,6 +582,7 @@ BOOL xf_disp_uninit(xfDispContext* xfDisp, DispClientContext* disp)
 	if (!xfDisp || !disp)
 		return FALSE;
 
+	WLog_DBG(TAG, "Channel %s closed", DISP_CHANNEL_NAME);
 	xfDisp->disp = NULL;
 	return TRUE;
 }
