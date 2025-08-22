@@ -707,6 +707,8 @@ static BOOL sdl_create_windows(SdlContext* sdl)
 	auto settings = sdl->context()->settings;
 	auto title = sdl_window_get_title(settings);
 
+	ScopeGuard guard([&]() { sdl->windows_created.set(); });
+
 	UINT32 windowCount = freerdp_settings_get_uint32(settings, FreeRDP_MonitorCount);
 
 	for (UINT32 x = 0; x < windowCount; x++)
@@ -757,8 +759,6 @@ static BOOL sdl_create_windows(SdlContext* sdl)
 			              static_cast<int>(w),
 			              static_cast<int>(h),
 			              flags };
-
-		ScopeGuard guard([&]() { sdl->windows_created.set(); });
 
 		if (!window.window())
 			return FALSE;
