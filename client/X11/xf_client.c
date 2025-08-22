@@ -336,12 +336,11 @@ void xf_draw_screen_(xfContext* xfc, int x, int y, int w, int h, const char* fkt
 
 static BOOL xf_desktop_resize(rdpContext* context)
 {
-	rdpSettings* settings = NULL;
 	xfContext* xfc = (xfContext*)context;
 
 	WINPR_ASSERT(xfc);
 
-	settings = context->settings;
+	rdpSettings* settings = context->settings;
 	WINPR_ASSERT(settings);
 
 	if (xfc->primary)
@@ -437,16 +436,22 @@ static BOOL xf_paint(xfContext* xfc, const GDI_RGN* region)
 static BOOL xf_end_paint(rdpContext* context)
 {
 	xfContext* xfc = (xfContext*)context;
+	WINPR_ASSERT(xfc);
+
 	rdpGdi* gdi = context->gdi;
+	WINPR_ASSERT(gdi);
 
 	if (gdi->suppressOutput)
 		return TRUE;
 
 	HGDI_DC hdc = gdi->primary->hdc;
+	if (!hdc->hwnd)
+		return TRUE;
 
+	HGDI_WND hwnd = hdc->hwnd;
 	if (!xfc->complex_regions)
 	{
-		const GDI_RGN* rgn = hdc->hwnd->invalid;
+		const GDI_RGN* rgn = hwnd->invalid;
 		if (rgn->null)
 			return TRUE;
 		xf_lock_x11(xfc);
@@ -456,10 +461,10 @@ static BOOL xf_end_paint(rdpContext* context)
 	}
 	else
 	{
-		const INT32 ninvalid = hdc->hwnd->ninvalid;
-		const GDI_RGN* cinvalid = hdc->hwnd->cinvalid;
+		const INT32 ninvalid = hwnd->ninvalid;
+		const GDI_RGN* cinvalid = hwnd->cinvalid;
 
-		if (hdc->hwnd->ninvalid < 1)
+		if (hwnd->ninvalid < 1)
 			return TRUE;
 
 		xf_lock_x11(xfc);
@@ -475,25 +480,35 @@ static BOOL xf_end_paint(rdpContext* context)
 		xf_unlock_x11(xfc);
 	}
 
-	hdc->hwnd->invalid->null = TRUE;
-	hdc->hwnd->ninvalid = 0;
+	hwnd->invalid->null = TRUE;
+	hwnd->ninvalid = 0;
 	return TRUE;
 }
 
 static BOOL xf_sw_desktop_resize(rdpContext* context)
 {
+	WINPR_ASSERT(context);
+
 	rdpGdi* gdi = context->gdi;
+	WINPR_ASSERT(gdi);
+
 	xfContext* xfc = (xfContext*)context;
 	rdpSettings* settings = context->settings;
+	WINPR_ASSERT(settings);
+
 	BOOL ret = FALSE;
 
+	/* There is a possible race here.
+	 * Ensure that the drawing thread does not update the screen during a
+	 * resize. */
+	const BOOL suppress = gdi->suppressOutput;
+	gdi->suppressOutput = TRUE;
+
+	xf_lock_x11(xfc);
 	if (!gdi_resize(gdi, freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth),
 	                freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight)))
-		return FALSE;
+		goto out;
 
-	/* Do not lock during gdi_resize, there might still be drawing operations in progress.
-	 * locking will deadlock. */
-	xf_lock_x11(xfc);
 	if (xfc->image)
 	{
 		xfc->image->data = NULL;
@@ -516,6 +531,7 @@ static BOOL xf_sw_desktop_resize(rdpContext* context)
 	ret = xf_desktop_resize(context);
 out:
 	xf_unlock_x11(xfc);
+	gdi->suppressOutput = suppress;
 	return ret;
 }
 
