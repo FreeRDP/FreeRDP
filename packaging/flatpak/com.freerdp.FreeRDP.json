@@ -29,7 +29,7 @@
 	],
 	"command": "sdl-freerdp",
 	"finish-args": [
-		"--device=dri",
+		"--device=all",
 		"--share=ipc",
 		"--socket=x11",
 		"--share=network",
@@ -67,6 +67,7 @@
 				"-DWITH_FREERDP_DEPRECATED_COMMANDLINE=ON",
 				"-DCHANNEL_TSMF:BOOL=OFF",
 				"-DCHANNEL_URBDRC:BOOL=ON",
+				"-DCHANNEL_RDPECAM_CLIENT:BOOL=ON",
 				"-DBUILD_TESTING:BOOL=OFF",
 				"-DWITH_MANPAGES:BOOL=OFF",
 				"-DWITH_KRB5:BOOL=ON",
