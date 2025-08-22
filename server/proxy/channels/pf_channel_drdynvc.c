@@ -229,6 +229,104 @@ static DynvcReadResult dynvc_read_varInt(wLog* log, wStream* s, size_t len, UINT
 	return DYNCVC_READ_OK;
 }
 
+static PfChannelResult DynvcTrackerHandleCreate(ChannelStateTracker* tracker, wStream* s,
+                                                DWORD flags,
+                                                pServerDynamicChannelContext* dynChannel,
+                                                UINT64 dynChannelId)
+{
+	WINPR_ASSERT(tracker);
+	WINPR_ASSERT(s);
+
+	DynChannelContext* dynChannelContext =
+	    (DynChannelContext*)channelTracker_getCustomData(tracker);
+	WINPR_ASSERT(dynChannelContext);
+
+	const BOOL lastPacket = (flags & CHANNEL_FLAG_LAST) ? TRUE : FALSE;
+	const BOOL firstPacket = (flags & CHANNEL_FLAG_FIRST) ? TRUE : FALSE;
+	const BOOL isBackData = (tracker == dynChannelContext->backTracker);
+	const char* direction = isBackData ? "B->F" : "F->B";
+	UINT32 creationStatus = 0;
+
+	proxyData* pdata = channelTracker_getPData(tracker);
+	WINPR_ASSERT(pdata);
+
+	/* we only want the full packet */
+	if (!lastPacket)
+		return PF_CHANNEL_RESULT_DROP;
+
+	if (isBackData)
+	{
+		proxyChannelDataEventInfo dev = { 0 };
+		const char* name = Stream_ConstPointer(s);
+		const size_t nameLen = Stream_GetRemainingLength(s);
+
+		const size_t len = strnlen(name, nameLen);
+		if ((len == 0) || (len == nameLen) || (dynChannelId > UINT16_MAX))
+			return PF_CHANNEL_RESULT_ERROR;
+
+		wStream* currentPacket = channelTracker_getCurrentPacket(tracker);
+		dev.channel_id = (UINT16)dynChannelId;
+		dev.channel_name = name;
+		dev.data = Stream_Buffer(s);
+		dev.data_len = Stream_GetPosition(currentPacket);
+		dev.flags = flags;
+		dev.total_size = Stream_GetPosition(currentPacket);
+
+		if (dynChannel)
+		{
+			WLog_Print(dynChannelContext->log, WLOG_WARN,
+			           "Reusing channel id %" PRIu32 ", previously %s [state %s, mode %s], now %s",
+			           dynChannel->channelId, dynChannel->channelName,
+			           openstatus2str(dynChannel->openStatus),
+			           pf_utils_channel_mode_string(dynChannel->channelMode), dev.channel_name);
+
+			HashTable_Remove(dynChannelContext->channels, &dynChannel->channelId);
+		}
+
+		if (!pf_modules_run_filter(pdata->module, FILTER_TYPE_CLIENT_PASSTHROUGH_DYN_CHANNEL_CREATE,
+		                           pdata, &dev))
+			return PF_CHANNEL_RESULT_DROP; /* Silently drop */
+
+		dynChannel = DynamicChannelContext_new(dynChannelContext->log, pdata->ps, name,
+		                                       (UINT32)dynChannelId);
+		if (!dynChannel)
+		{
+			WLog_Print(dynChannelContext->log, WLOG_ERROR,
+			           "unable to create dynamic channel context data");
+			return PF_CHANNEL_RESULT_ERROR;
+		}
+
+		WLog_Print(dynChannelContext->log, WLOG_DEBUG, "Adding channel '%s'[%" PRIu32 "]",
+		           dynChannel->channelName, dynChannel->channelId);
+		if (!HashTable_Insert(dynChannelContext->channels, &dynChannel->channelId, dynChannel))
+		{
+			WLog_Print(dynChannelContext->log, WLOG_ERROR,
+			           "unable register dynamic channel context data");
+			DynamicChannelContext_free(dynChannel);
+			return PF_CHANNEL_RESULT_ERROR;
+		}
+
+		dynChannel->openStatus = CHANNEL_OPENSTATE_WAITING_OPEN_STATUS;
+
+		// NOLINTNEXTLINE(clang-analyzer-unix.Malloc): HashTable_Insert owns dynChannel
+		return channelTracker_flushCurrent(tracker, firstPacket, lastPacket, FALSE);
+	}
+
+	/* CREATE_REQUEST_PDU response */
+	if (!Stream_CheckAndLogRequiredLengthWLog(dynChannelContext->log, s, 4))
+		return PF_CHANNEL_RESULT_ERROR;
+
+	Stream_Read_UINT32(s, creationStatus);
+	WLog_Print(dynChannelContext->log, WLOG_DEBUG,
+	           "DynvcTracker(%" PRIu64 ",%s): %s CREATE_RESPONSE openStatus=%" PRIu32, dynChannelId,
+	           dynChannel->channelName, direction, creationStatus);
+
+	if (creationStatus == 0)
+		dynChannel->openStatus = CHANNEL_OPENSTATE_OPENED;
+
+	return channelTracker_flushCurrent(tracker, firstPacket, lastPacket, TRUE);
+}
+
 static PfChannelResult DynvcTrackerPeekFn(ChannelStateTracker* tracker, BOOL firstPacket,
                                           BOOL lastPacket)
 {
@@ -252,6 +350,8 @@ static PfChannelResult DynvcTrackerPeekFn(ChannelStateTracker* tracker, BOOL fir
 	DynChannelTrackerState* trackerState = NULL;
 
 	UINT32 flags = lastPacket ? CHANNEL_FLAG_LAST : 0;
+	if (firstPacket)
+		flags |= CHANNEL_FLAG_FIRST;
 	proxyData* pdata = channelTracker_getPData(tracker);
 	WINPR_ASSERT(pdata);
 
@@ -349,88 +449,7 @@ static PfChannelResult DynvcTrackerPeekFn(ChannelStateTracker* tracker, BOOL fir
 			return PF_CHANNEL_RESULT_PASS;
 
 		case CREATE_REQUEST_PDU:
-		{
-			UINT32 creationStatus = 0;
-
-			/* we only want the full packet */
-			if (!lastPacket)
-				return PF_CHANNEL_RESULT_DROP;
-
-			if (isBackData)
-			{
-				proxyChannelDataEventInfo dev = { 0 };
-				const char* name = Stream_ConstPointer(s);
-				const size_t nameLen = Stream_GetRemainingLength(s);
-
-				const size_t len = strnlen(name, nameLen);
-				if ((len == 0) || (len == nameLen) || (dynChannelId > UINT16_MAX))
-					return PF_CHANNEL_RESULT_ERROR;
-
-				wStream* currentPacket = channelTracker_getCurrentPacket(tracker);
-				dev.channel_id = (UINT16)dynChannelId;
-				dev.channel_name = name;
-				dev.data = Stream_Buffer(s);
-				dev.data_len = Stream_GetPosition(currentPacket);
-				dev.flags = flags;
-				dev.total_size = Stream_GetPosition(currentPacket);
-
-				if (dynChannel)
-				{
-					WLog_Print(
-					    dynChannelContext->log, WLOG_WARN,
-					    "Reusing channel id %" PRIu32 ", previously %s [state %s, mode %s], now %s",
-					    dynChannel->channelId, dynChannel->channelName,
-					    openstatus2str(dynChannel->openStatus),
-					    pf_utils_channel_mode_string(dynChannel->channelMode), dev.channel_name);
-
-					HashTable_Remove(dynChannelContext->channels, &dynChannel->channelId);
-				}
-
-				if (!pf_modules_run_filter(pdata->module,
-				                           FILTER_TYPE_CLIENT_PASSTHROUGH_DYN_CHANNEL_CREATE, pdata,
-				                           &dev))
-					return PF_CHANNEL_RESULT_DROP; /* Silently drop */
-
-				dynChannel = DynamicChannelContext_new(dynChannelContext->log, pdata->ps, name,
-				                                       (UINT32)dynChannelId);
-				if (!dynChannel)
-				{
-					WLog_Print(dynChannelContext->log, WLOG_ERROR,
-					           "unable to create dynamic channel context data");
-					return PF_CHANNEL_RESULT_ERROR;
-				}
-
-				WLog_Print(dynChannelContext->log, WLOG_DEBUG, "Adding channel '%s'[%" PRIu32 "]",
-				           dynChannel->channelName, dynChannel->channelId);
-				if (!HashTable_Insert(dynChannelContext->channels, &dynChannel->channelId,
-				                      dynChannel))
-				{
-					WLog_Print(dynChannelContext->log, WLOG_ERROR,
-					           "unable register dynamic channel context data");
-					DynamicChannelContext_free(dynChannel);
-					return PF_CHANNEL_RESULT_ERROR;
-				}
-
-				dynChannel->openStatus = CHANNEL_OPENSTATE_WAITING_OPEN_STATUS;
-
-				// NOLINTNEXTLINE(clang-analyzer-unix.Malloc): HashTable_Insert owns dynChannel
-				return channelTracker_flushCurrent(tracker, firstPacket, lastPacket, FALSE);
-			}
-
-			/* CREATE_REQUEST_PDU response */
-			if (!Stream_CheckAndLogRequiredLengthWLog(dynChannelContext->log, s, 4))
-				return PF_CHANNEL_RESULT_ERROR;
-
-			Stream_Read_UINT32(s, creationStatus);
-			WLog_Print(dynChannelContext->log, WLOG_DEBUG,
-			           "DynvcTracker(%" PRIu64 ",%s): %s CREATE_RESPONSE openStatus=%" PRIu32,
-			           dynChannelId, dynChannel->channelName, direction, creationStatus);
-
-			if (creationStatus == 0)
-				dynChannel->openStatus = CHANNEL_OPENSTATE_OPENED;
-
-			return channelTracker_flushCurrent(tracker, firstPacket, lastPacket, TRUE);
-		}
+			return DynvcTrackerHandleCreate(tracker, s, flags, dynChannel, dynChannelId);
 
 		case CLOSE_REQUEST_PDU:
 			if (!lastPacket)
@@ -483,8 +502,9 @@ static PfChannelResult DynvcTrackerPeekFn(ChannelStateTracker* tracker, BOOL fir
 	if (dynChannel->openStatus != CHANNEL_OPENSTATE_OPENED)
 	{
 		WLog_Print(dynChannelContext->log, WLOG_ERROR,
-		           "DynvcTracker(%s [%s]): channel is not opened", dynChannel->channelName,
-		           drdynvc_get_packet_type(cmd));
+		           "DynvcTracker(%s [%s]): channel is not opened {state %s}",
+		           dynChannel->channelName, drdynvc_get_packet_type(cmd),
+		           openstatus2str(dynChannel->openStatus));
 		return PF_CHANNEL_RESULT_ERROR;
 	}
 
@@ -535,8 +555,10 @@ static PfChannelResult DynvcTrackerPeekFn(ChannelStateTracker* tracker, BOOL fir
 			Stream_Write(trackerState->currentPacket, Stream_ConstPointer(s), extraSize);
 		}
 		WLog_Print(dynChannelContext->log, WLOG_DEBUG,
-		           "DynvcTracker(%s [%s]): %s frags=%" PRIu32 " received=%" PRIu32 "(%" PRIu32 ")",
-		           dynChannel->channelName, drdynvc_get_packet_type(cmd), direction,
+		           "DynvcTracker(%s [%s]{state %s}): %s frags=%" PRIu32 " received=%" PRIu32
+		           "(%" PRIu32 ")",
+		           dynChannel->channelName, drdynvc_get_packet_type(cmd),
+		           openstatus2str(dynChannel->openStatus), direction,
 		           trackerState->CurrentDataFragments, trackerState->CurrentDataReceived,
 		           trackerState->currentDataLength);
 	}
@@ -548,9 +570,10 @@ static PfChannelResult DynvcTrackerPeekFn(ChannelStateTracker* tracker, BOOL fir
 			if (trackerState->CurrentDataReceived > trackerState->currentDataLength)
 			{
 				WLog_Print(dynChannelContext->log, WLOG_ERROR,
-				           "DynvcTracker (%s  [%s]): reassembled packet (%" PRIu32
+				           "DynvcTracker (%s  [%s]{stte %s}): reassembled packet (%" PRIu32
 				           ") is bigger than announced length (%" PRIu32 ")",
 				           dynChannel->channelName, drdynvc_get_packet_type(cmd),
+				           openstatus2str(dynChannel->openStatus),
 				           trackerState->CurrentDataReceived, trackerState->currentDataLength);
 				return PF_CHANNEL_RESULT_ERROR;
 			}
