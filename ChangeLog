@@ -1,3 +1,59 @@
+# 2025-08-22 Version 3.17.0
+
+Bugfix release with (lots) of format string issues along with a few minor parser
+issues fixed. Most notable (user visible) change is full X509 chain support for
+client/server.
+
+## What's Changed
+* [client,sdl2] fix build with webview (#11685)
+* [core,nla] use wcslen for password length (#11687)
+* Clear channel error prior to call channel init event proc (#11688)
+* Warn args (#11689)
+* [client,common] fix -mouse-motion (#11690)
+* [core,proxy] fix IPv4 and IPv6 length (#11692)
+* Regression fix2 (#11696)
+* Log fixes (#11693)
+* [common,settings] fix int casts (#11699)
+* [core,connection] fix log level of several messages (#11697)
+* [client,sdl] print current video driver (#11701)
+* [crypto,tls] print big warning for /cert:ignore (#11704)
+* [client,desktop] fix StartupWMClass setting (#11708)
+* [cmake] unify version creation (#11711)
+* [common,settings] force reallocation on caps copy (#11715)
+* [manpages] Add example of keyboard remapping (#11718)
+* Some fixes in Negotiate and NLA (#11722)
+* [client,x11] fix clipboard issues (#11724)
+* kerberos: do various tries for TGT retrieval in u2u (#11723)
+* Cmdline escape strings (#11735)
+* [winpr,utils] do not log command line arguments (#11736)
+* [api,doc] Add stylesheed for doxygen (#11738)
+* [core,proxy] fix BIO read methods (#11739)
+* [client,common] fix sso_mib_get_access_token return value in error case (#11741)
+* [crypto,tls] do not use context->settings->instance (#11749)
+* winpr: re-introduce the credentials module (#11734)
+* [winpr,timezone] ensure thread-safe initialization (#11754)
+* core/redirection: Ensure stream has enough space for the certificate (#11762)
+* [client,common] do not log success (#11766)
+* Clean up bugs exposed on systems with high core counts (#11761)
+* [cmake] add installWithRPATH (#11747)
+* [clang-tidy] fix various warnings (#11769)
+* Wlog improve type checks (#11774)
+* [client,common] fix tenantid command line parsing (#11779)
+* Proxy module static and shared linking support (#11768)
+* LoadLibrary Null fix (#11786)
+* [client,common] add freerdp_client_populate_settings_from_rdp_file_un… (#11780)
+* Fullchain support (#11787)
+* [client,x11] ignore floatbar events (#11771)
+* [winpr,credentials] prefer utf-8 over utf-16-LE #11790
+* [proxy,modules] ignore bitmap-filter skip remaining #11789
+
+## New Contributors
+* @steelman made their first contribution in #11718
+* @pvachon made their first contribution in #11761
+
+For a complete and detailed change log since the last release run:
+git log 3.17.0...3.16.0
+
 # 2025-06-16 Version 3.16.0
 
 Bugfix release with (again) much improved SDL3 and X11 client
