@@ -508,9 +508,9 @@ static PfChannelResult DynvcTrackerHandleCmdDATA(ChannelStateTracker* tracker,
 	    isBackData ? &dynChannel->backTracker : &dynChannel->frontTracker;
 	if (dynChannel->openStatus != CHANNEL_OPENSTATE_OPENED)
 	{
-		DynvcTrackerLog(dynChannelContext->log, WLOG_ERROR, dynChannel, cmd, isBackData,
-		                "channel is not opened");
-		return PF_CHANNEL_RESULT_ERROR;
+		DynvcTrackerLog(dynChannelContext->log, WLOG_WARN, dynChannel, cmd, isBackData,
+		                "channel is not opened, dropping packet");
+		return PF_CHANNEL_RESULT_DROP;
 	}
 
 	switch (cmd)
@@ -673,6 +673,8 @@ static PfChannelResult DynvcTrackerHandleCmd(ChannelStateTracker* tracker,
 			return channelTracker_flushCurrent(tracker, firstPacket, lastPacket, !isBackData);
 
 		default:
+			DynvcTrackerLog(dynChannelContext->log, WLOG_ERROR, dynChannel, cmd, isBackData,
+			                "Invalid command ID");
 			return PF_CHANNEL_RESULT_ERROR;
 	}
 }
