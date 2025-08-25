@@ -29,7 +29,7 @@
 	],
 	"command": "sdl-freerdp",
 	"finish-args": [
-		"--device=all",
+		"--device=dri",
 		"--share=ipc",
 		"--socket=x11",
 		"--share=network",
