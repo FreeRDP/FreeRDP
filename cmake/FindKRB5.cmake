@@ -19,6 +19,12 @@ include(CheckIncludeFile)
 include(CheckIncludeFiles)
 include(CheckTypeSize)
 
+set(KRB5_ROOT_CONFIG "${KRB5_ROOT_CONFIG}" CACHE STRING
+                                                 "Force kerberos implementation by setting full path to krb5-config"
+)
+set(KRB5_ROOT_FLAVOUR "${KRB5_ROOT_FLAVOUR}"
+    CACHE STRING "Force kerberos implementation by setting [mit|Heimdal]. Empty for default"
+)
 set(_KRB5_REQUIRED_VARS KRB5_FOUND KRB5_VERSION KRB5_FLAVOUR KRB5_INCLUDE_DIRS KRB5_LIBRARIES)
 
 macro(PROVIDES_KRB5)
