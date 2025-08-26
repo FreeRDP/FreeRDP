@@ -58,8 +58,7 @@ jobs:
             openh264 \
             alsa-lib \
             cairo \
-            ocl-icd \
-            security/heimdal
+            ocl-icd
 
         run: |
           export LD_LIBRARY_PATH=/usr/lib/clang/18/lib/freebsd

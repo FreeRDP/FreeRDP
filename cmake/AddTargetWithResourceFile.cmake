@@ -76,7 +76,7 @@ macro(AddTargetWithResourceFile nameAndTarget is_exe version sources)
     message("add_library(${target}) [${lib_options}]")
     add_library(${target} ${lib_options} ${${sources}})
 
-    if(VERSIONING)
+    if(WITH_LIBRARY_SOVERSIONING)
       set_target_properties(${target} PROPERTIES VERSION ${version} SOVERSION ${RC_VERSION_MAJOR})
     else()
       set_target_properties(${target} PROPERTIES PREFIX "")
