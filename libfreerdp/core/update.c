@@ -273,7 +273,7 @@ static BOOL update_write_bitmap_update(rdpUpdate* update, wStream* s,
 	if (!Stream_EnsureRemainingCapacity(s, 32))
 		return FALSE;
 
-	Stream_Write_UINT16(s, UPDATE_TYPE_BITMAP);   /* updateType */
+	Stream_Write_UINT16(s, UPDATE_TYPE_BITMAP); /* updateType */
 	Stream_Write_UINT16(s, WINPR_ASSERTING_INT_CAST(
 	                           uint16_t, bitmapUpdate->number)); /* numberRectangles (2 bytes) */
 
@@ -1471,6 +1471,8 @@ static BOOL update_send_frame_acknowledge(rdpContext* context, UINT32 frameId)
 
 	WINPR_ASSERT(rdp);
 	WINPR_ASSERT(rdp->settings);
+	WINPR_ASSERT(rdp->settings->ReceivedCapabilities);
+	WINPR_ASSERT(rdp->settings->ReceivedCapabilitiesSize > CAPSET_TYPE_FRAME_ACKNOWLEDGE);
 	if (rdp->settings->ReceivedCapabilities[CAPSET_TYPE_FRAME_ACKNOWLEDGE])
 	{
 		UINT16 sec_flags = 0;
@@ -1554,6 +1556,8 @@ static BOOL update_send_play_sound(rdpContext* context, const PLAY_SOUND_UPDATE*
 	WINPR_ASSERT(rdp);
 	WINPR_ASSERT(rdp->settings);
 	WINPR_ASSERT(play_sound);
+	WINPR_ASSERT(rdp->settings->ReceivedCapabilities);
+	WINPR_ASSERT(rdp->settings->ReceivedCapabilitiesSize > CAPSET_TYPE_SOUND);
 	if (!rdp->settings->ReceivedCapabilities[CAPSET_TYPE_SOUND])
 	{
 		return TRUE;
@@ -2826,7 +2830,7 @@ static BOOL update_send_window_icon(rdpContext* context, const WINDOW_ORDER_INFO
 	    s, WINPR_ASSERTING_INT_CAST(uint16_t, iconInfo->cbBitsMask)); /* CbBitsMask (2 bytes) */
 	Stream_Write_UINT16(
 	    s, WINPR_ASSERTING_INT_CAST(uint16_t, iconInfo->cbBitsColor)); /* CbBitsColor (2 bytes) */
-	Stream_Write(s, iconInfo->bitsMask, iconInfo->cbBitsMask); /* BitsMask (variable) */
+	Stream_Write(s, iconInfo->bitsMask, iconInfo->cbBitsMask);         /* BitsMask (variable) */
 
 	if (iconInfo->bpp <= 8)
 	{

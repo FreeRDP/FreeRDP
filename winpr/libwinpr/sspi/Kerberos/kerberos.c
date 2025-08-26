@@ -1335,6 +1335,16 @@ static BOOL retrieveSomeTgt(KRB_CREDENTIALS* credentials, const char* target, kr
 	if (rv)
 		return FALSE;
 
+#if defined(WITH_KRB5_HEIMDAL)
+	if (!target_princ->realm)
+	{
+		rv = krb_log_exec(krb5_get_default_realm, credentials->ctx, &default_realm);
+		if (rv)
+			goto out;
+
+		target_princ->realm = default_realm;
+	}
+#else
 	if (!target_princ->realm.length)
 	{
 		rv = krb_log_exec(krb5_get_default_realm, credentials->ctx, &default_realm);
@@ -1344,6 +1354,7 @@ static BOOL retrieveSomeTgt(KRB_CREDENTIALS* credentials, const char* target, kr
 		target_princ->realm.data = default_realm;
 		target_princ->realm.length = (unsigned int)strlen(default_realm);
 	}
+#endif
 
 	/*
 	 * First try with the account service. We were requested with something like
@@ -1356,6 +1367,7 @@ static BOOL retrieveSomeTgt(KRB_CREDENTIALS* credentials, const char* target, kr
 
 	ret = FALSE;
 
+#if defined(WITH_KRB5_MIT)
 	/*
 	 * if it's not working let's try with <host>$@<REALM> (note the dollar)
 	 */
@@ -1372,6 +1384,7 @@ static BOOL retrieveSomeTgt(KRB_CREDENTIALS* credentials, const char* target, kr
 		return FALSE;
 
 	ret = retrieveTgtForPrincipal(credentials, target_princ, creds);
+#endif
 
 out:
 	if (default_realm)

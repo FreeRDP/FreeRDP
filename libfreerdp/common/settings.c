@@ -897,7 +897,7 @@ BOOL freerdp_capability_buffer_resize(rdpSettings* settings, size_t count, BOOL 
 		return TRUE;
 	}
 
-	const size_t oldsize = force ? 0 : settings->ReceivedCapabilitiesSize;
+	const size_t oldsize = settings->ReceivedCapabilitiesSize;
 	if (!resize_setting(settings, FreeRDP_ReceivedCapabilityDataSizes, oldsize, count,
 	                    sizeof(uint32_t)))
 		return FALSE;

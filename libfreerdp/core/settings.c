@@ -1289,6 +1289,14 @@ static void freerdp_settings_free_internal(rdpSettings* settings)
 	freerdp_settings_free_keys(settings, TRUE);
 }
 
+static void freerdp_settings_free_internal_ensure_reset(rdpSettings* settings)
+{
+	settings->ServerLicenseProductIssuersCount = 0;
+	settings->ServerLicenseProductIssuers = NULL;
+
+	settings->ReceivedCapabilitiesSize = 0;
+}
+
 void freerdp_settings_free(rdpSettings* settings)
 {
 	if (!settings)
@@ -1511,15 +1519,13 @@ BOOL freerdp_settings_copy(rdpSettings* _settings, const rdpSettings* settings)
 
 	/* This is required to free all non string buffers */
 	freerdp_settings_free_internal(_settings);
+
 	/* This copies everything except allocated non string buffers. reset all allocated buffers to
 	 * NULL to fix issues during cleanup */
 	rc = freerdp_settings_clone_keys(_settings, settings);
-
-	_settings->ServerLicenseProductIssuersCount = 0;
-	_settings->ServerLicenseProductIssuers = NULL;
-
 	if (!rc)
 		goto out_fail;
+	freerdp_settings_free_internal_ensure_reset(_settings);
 
 	/* Begin copying */
 	if (!freerdp_settings_int_buffer_copy(_settings, settings))
