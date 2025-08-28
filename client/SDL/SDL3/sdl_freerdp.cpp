@@ -1744,7 +1744,7 @@ bool SdlContext::update_resizeable(bool enable)
 
 SdlContext::SdlContext(rdpContext* context)
     : _context(context), log(WLog_Get(SDL_TAG)), disp(this), input(this), clip(this),
-      primary(nullptr, SDL_DestroySurface), rdp_thread_running(false)
+      primary(nullptr, SDL_DestroySurface), rdp_thread_running(false), dialog(log)
 {
 	WINPR_ASSERT(context);
 

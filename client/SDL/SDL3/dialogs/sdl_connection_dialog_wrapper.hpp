@@ -25,6 +25,7 @@
 #include <string>
 #include <queue>
 
+#include <winpr/wlog.h>
 #include <winpr/platform.h>
 #include <freerdp/types.h>
 
@@ -44,7 +45,7 @@ class SdlConnectionDialogWrapper
 		MSG_DISCARD
 	};
 
-	SdlConnectionDialogWrapper();
+	explicit SdlConnectionDialogWrapper(wLog* log);
 	~SdlConnectionDialogWrapper();
 
 	SdlConnectionDialogWrapper(const SdlConnectionDialogWrapper& other) = delete;
@@ -115,6 +116,7 @@ class SdlConnectionDialogWrapper
 	void push(EventArg&& arg);
 
 	mutable std::mutex _mux;
-	std::unique_ptr<SDLConnectionDialog> _connection_dialog;
-	std::queue<EventArg> _queue;
+	std::unique_ptr<SDLConnectionDialog> _connection_dialog{};
+	std::queue<EventArg> _queue{};
+	wLog* _log = nullptr;
 };
