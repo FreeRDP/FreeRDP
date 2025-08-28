@@ -289,3 +289,5 @@ extern int LogDynAndXSetFunction_ex(wLog* log, const char* file, const char* fkt
                                     Display* display, GC gc, int function);
 
 BOOL IsGnome(void);
+
+char* getConfigOption(BOOL system, const char* option);
