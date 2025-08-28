@@ -23,11 +23,11 @@
 #include <winpr/asn1.h>
 #include <winpr/wlog.h>
 #include <winpr/sspi.h>
+#include <winpr/ndr.h>
 
 #include <freerdp/api.h>
 
-#include <rdpear-common/ndr.h>
-
+/** @brief kind of EAR package */
 typedef enum
 {
 	RDPEAR_PACKAGE_KERBEROS,
@@ -83,12 +83,13 @@ FREERDP_LOCAL RdpEarPackageType rdpear_packageType_from_name(WinPrAsn1_OctetStri
 FREERDP_LOCAL wStream* rdpear_encodePayload(RdpEarPackageType packageType, wStream* payload);
 
 #define RDPEAR_COMMON_MESSAGE_DECL(V)                                                            \
-	FREERDP_LOCAL BOOL ndr_read_##V(NdrContext* context, wStream* s, const void* hints, V* obj); \
-	FREERDP_LOCAL BOOL ndr_write_##V(NdrContext* context, wStream* s, const void* hints,         \
-	                                 const V* obj);                                              \
-	FREERDP_LOCAL void ndr_destroy_##V(NdrContext* context, const void* hints, V* obj);          \
+	FREERDP_LOCAL BOOL ndr_decoder_read_##V(WinPrNdrDecoder* context, wStream* s,                \
+	                                        const void* hints, V* obj);                          \
+	FREERDP_LOCAL BOOL ndr_encoder_write_##V(WinPrNdrEncoder* context, wStream* s,               \
+	                                         const void* hints, const V* obj);                   \
+	FREERDP_LOCAL void ndr_destroy_##V(const void* hints, V* obj);                               \
 	FREERDP_LOCAL void ndr_dump_##V(wLog* logger, UINT32 lvl, size_t indentLevel, const V* obj); \
-	FREERDP_LOCAL NdrMessageType ndr_##V##_descr(void)
+	FREERDP_LOCAL WinPrNdrMessageType ndr_##V##_descr(void)
 
 /** @brief 2.2.1.2.2 KERB_RPC_OCTET_STRING */
 typedef struct
@@ -103,7 +104,7 @@ RDPEAR_COMMON_MESSAGE_DECL(KERB_RPC_OCTET_STRING);
 typedef struct
 {
 	UINT32 Pdu;
-	NdrArrayHints Asn1BufferHints;
+	WinPrNdrArrayHints Asn1BufferHints;
 	BYTE* Asn1Buffer;
 } KERB_ASN1_DATA;
 
@@ -112,7 +113,7 @@ RDPEAR_COMMON_MESSAGE_DECL(KERB_ASN1_DATA);
 /** @brief 2.3.10 RPC_UNICODE_STRING (MS-DTYP) */
 typedef struct
 {
-	NdrVaryingArrayHints lenHints;
+	WinPrNdrVaryingArrayHints lenHints;
 	UINT32 strLength;
 	WCHAR* Buffer;
 } RPC_UNICODE_STRING;
@@ -123,7 +124,7 @@ RDPEAR_COMMON_MESSAGE_DECL(RPC_UNICODE_STRING);
 typedef struct
 {
 	UINT16 NameType;
-	NdrArrayHints nameHints;
+	WinPrNdrArrayHints nameHints;
 	RPC_UNICODE_STRING* Names;
 } KERB_RPC_INTERNAL_NAME;
 
@@ -225,7 +226,7 @@ RDPEAR_COMMON_MESSAGE_DECL(PackApReplyReq);
 
 typedef struct
 {
-	NdrArrayHints PackedReplyHints;
+	WinPrNdrArrayHints PackedReplyHints;
 	BYTE* PackedReply;
 } PackApReplyResp;
 
