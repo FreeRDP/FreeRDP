@@ -48,24 +48,40 @@ SdlPref::WINPR_JSONPtr SdlPref::get(bool systemConfigOnly) const
 
 WINPR_JSON* SdlPref::get_item(const std::string& key, bool systemConfigOnly) const
 {
+	/* If we request a system setting or user settings are disabled */
 	if (systemConfigOnly || !is_user_config_enabled())
-	{
-		if (!_system_config)
-			return nullptr;
-		return WINPR_JSON_GetObjectItem(_system_config.get(), key.c_str());
-	}
-	if (!_config)
-		return nullptr;
+		return get_item(_system_config, key);
 
-	return WINPR_JSON_GetObjectItem(_config.get(), key.c_str());
+	/* Get the user setting */
+	auto res = get_item(_config, key);
+
+	/* User setting does not exist, fall back to system setting */
+	if (!res)
+		res = get_item(_system_config, key);
+	return res;
+}
+
+WINPR_JSON* SdlPref::get_item(const WINPR_JSONPtr& config, const std::string& key) const
+{
+	if (!config)
+		return nullptr;
+	return WINPR_JSON_GetObjectItem(config.get(), key.c_str());
+}
+
+bool SdlPref::get_bool(const WINPR_JSONPtr& config, const std::string& key, bool fallback) const
+{
+	auto item = get_item(config, key);
+	if (!item || !WINPR_JSON_IsBool(item))
+		return fallback;
+	return WINPR_JSON_IsTrue(item);
 }
 
 bool SdlPref::is_user_config_enabled() const
 {
-	auto config = get(true);
+	auto& config = _system_config;
 	if (!config)
 		return true;
-	return get_bool("isUserConfigEnabled", true);
+	return get_bool(config, "isUserConfigEnabled", true);
 }
 
 std::string SdlPref::item_to_str(WINPR_JSON* item, const std::string& fallback)
@@ -87,10 +103,8 @@ std::string SdlPref::get_string(const std::string& key, const std::string& fallb
 
 bool SdlPref::get_bool(const std::string& key, bool fallback, bool systemConfigOnly) const
 {
-	auto item = get_item(key, systemConfigOnly);
-	if (!item || !WINPR_JSON_IsBool(item))
-		return fallback;
-	return WINPR_JSON_IsTrue(item);
+	auto& config = systemConfigOnly ? _system_config : _config;
+	return get_bool(config, key, fallback);
 }
 
 int64_t SdlPref::get_int(const std::string& key, int64_t fallback, bool systemConfigOnly) const
