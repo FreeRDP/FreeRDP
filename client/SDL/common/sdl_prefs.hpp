@@ -55,7 +55,11 @@ class SdlPref
 	explicit SdlPref(std::string file);
 
 	[[nodiscard]] WINPR_JSON* get_item(const std::string& key, bool systemConfigOnly) const;
+	[[nodiscard]] WINPR_JSON* get_item(const WINPR_JSONPtr& config, const std::string& key) const;
+
 	[[nodiscard]] WINPR_JSONPtr get(bool systemConfigOnly) const;
+	[[nodiscard]] bool get_bool(const WINPR_JSONPtr& config, const std::string& key,
+	                            bool fallback = false) const;
 
 	[[nodiscard]] bool is_user_config_enabled() const;
 
