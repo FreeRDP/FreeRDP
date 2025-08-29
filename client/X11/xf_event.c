@@ -190,6 +190,15 @@ BOOL xf_event_action_script_init(xfContext* xfc)
 
 	xf_event_action_script_free(xfc);
 
+	char* val = getConfigOption(TRUE, "isActionScriptAllowed");
+
+	/* We default to enabled if there is no global config file. */
+	xfc->isActionScriptAllowed = !val || (_stricmp(val, "true") == 0);
+	free(val);
+
+	if (!xfc->isActionScriptAllowed)
+		return TRUE;
+
 	xfc->xevents = ArrayList_New(TRUE);
 
 	if (!xfc->xevents)
@@ -216,6 +225,9 @@ static BOOL action_script_run(xfContext* xfc, const char* buffer, size_t size, v
                               const char* what, const char* arg)
 {
 	WINPR_UNUSED(xfc);
+	if (!xfc->isActionScriptAllowed)
+		return TRUE;
+
 	WINPR_UNUSED(what);
 	WINPR_UNUSED(arg);
 	WINPR_ASSERT(user);

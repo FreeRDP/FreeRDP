@@ -18,14 +18,24 @@
  * limitations under the License.
  */
 
+#include <ctype.h>
+
 #include <freerdp/utils/helpers.h>
 
 #include <winpr/path.h>
 #include <freerdp/version.h>
 #include <freerdp/build-config.h>
 
-#if defined(WITH_RESOURCE_VERSIONING)
-#define STR(x) #x
+#if !defined(WITH_FULL_CONFIG_PATH)
+static char* freerdp_settings_get_legacy_config_path(void)
+{
+	char product[sizeof(FREERDP_PRODUCT_STRING)] = { 0 };
+
+	for (size_t i = 0; i < sizeof(product); i++)
+		product[i] = (char)tolower(FREERDP_PRODUCT_STRING[i]);
+
+	return GetKnownSubPath(KNOWN_PATH_XDG_CONFIG_HOME, product);
+}
 #endif
 
 char* freerdp_GetConfigFilePath(BOOL system, const char* filename)
@@ -35,15 +45,20 @@ char* freerdp_GetConfigFilePath(BOOL system, const char* filename)
 #if defined(FREERDP_USE_VENDOR_PRODUCT_CONFIG_DIR)
 	char* vendor = GetKnownSubPath(id, FREERDP_VENDOR_STRING);
 #else
+#if !defined(WITH_FULL_CONFIG_PATH)
+	if (!system && (_stricmp(FREERDP_VENDOR_STRING, FREERDP_PRODUCT_STRING) == 0))
+		return freerdp_settings_get_legacy_config_path();
+#endif
+
 	char* vendor = GetKnownPath(id);
 #endif
 	if (!vendor)
 		return NULL;
 
 #if defined(WITH_RESOURCE_VERSIONING)
-	char* verstr = FREERDP_PRODUCT_STRING STR(FREERDP_VERSION_MAJOR);
+	const char* verstr = FREERDP_PRODUCT_STRING FREERDP_API_VERSION;
 #else
-	char* verstr = FREERDP_PRODUCT_STRING;
+	const char* verstr = FREERDP_PRODUCT_STRING;
 #endif
 
 	char* base = GetCombinedPath(vendor, verstr);

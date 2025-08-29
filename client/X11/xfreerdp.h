@@ -318,6 +318,7 @@ struct xf_context
 	FREERDP_REMAP_TABLE* remap_table;
 	DWORD X11_KEYCODE_TO_VIRTUAL_SCANCODE[256];
 	bool isCursorHidden;
+	bool isActionScriptAllowed;
 };
 
 BOOL xf_create_window(xfContext* xfc);

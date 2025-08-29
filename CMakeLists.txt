@@ -93,6 +93,7 @@ include(InstallFreeRDPMan)
 include(GetGitRevisionDescription)
 include(SetFreeRDPCMakeInstallDir)
 include(Doxygen)
+include(GetSysconfDir)
 
 # Soname versioning
 set(BUILD_NUMBER 0)

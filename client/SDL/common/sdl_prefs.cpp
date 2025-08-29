@@ -34,21 +34,38 @@ namespace fs = std::experimental::filesystem;
 
 #include <winpr/path.h>
 #include <winpr/config.h>
-#include <freerdp/version.h>
 #include <winpr/json.h>
-#include <freerdp/settings.h>
 
-SdlPref::WINPR_JSONPtr SdlPref::get()
+#include <freerdp/version.h>
+#include <freerdp/settings.h>
+#include <freerdp/utils/helpers.h>
+
+SdlPref::WINPR_JSONPtr SdlPref::get(bool systemConfigOnly) const
 {
-	auto config = get_pref_file();
+	auto config = get_pref_file(systemConfigOnly);
 	return { WINPR_JSON_ParseFromFile(config.c_str()), WINPR_JSON_Delete };
 }
 
-WINPR_JSON* SdlPref::get_item(const std::string& key)
+WINPR_JSON* SdlPref::get_item(const std::string& key, bool systemConfigOnly) const
 {
+	if (systemConfigOnly || !is_user_config_enabled())
+	{
+		if (!_system_config)
+			return nullptr;
+		return WINPR_JSON_GetObjectItem(_system_config.get(), key.c_str());
+	}
 	if (!_config)
 		return nullptr;
+
 	return WINPR_JSON_GetObjectItem(_config.get(), key.c_str());
+}
+
+bool SdlPref::is_user_config_enabled() const
+{
+	auto config = get(true);
+	if (!config)
+		return true;
+	return get_bool("isUserConfigEnabled", true);
 }
 
 std::string SdlPref::item_to_str(WINPR_JSON* item, const std::string& fallback)
@@ -61,23 +78,24 @@ std::string SdlPref::item_to_str(WINPR_JSON* item, const std::string& fallback)
 	return str;
 }
 
-std::string SdlPref::get_string(const std::string& key, const std::string& fallback)
+std::string SdlPref::get_string(const std::string& key, const std::string& fallback,
+                                bool systemConfigOnly) const
 {
-	auto item = get_item(key);
+	auto item = get_item(key, systemConfigOnly);
 	return item_to_str(item, fallback);
 }
 
-bool SdlPref::get_bool(const std::string& key, bool fallback)
+bool SdlPref::get_bool(const std::string& key, bool fallback, bool systemConfigOnly) const
 {
-	auto item = get_item(key);
+	auto item = get_item(key, systemConfigOnly);
 	if (!item || !WINPR_JSON_IsBool(item))
 		return fallback;
 	return WINPR_JSON_IsTrue(item);
 }
 
-int64_t SdlPref::get_int(const std::string& key, int64_t fallback)
+int64_t SdlPref::get_int(const std::string& key, int64_t fallback, bool systemConfigOnly) const
 {
-	auto item = get_item(key);
+	auto item = get_item(key, systemConfigOnly);
 	if (!item || !WINPR_JSON_IsNumber(item))
 		return fallback;
 	auto val = WINPR_JSON_GetNumberValue(item);
@@ -85,9 +103,10 @@ int64_t SdlPref::get_int(const std::string& key, int64_t fallback)
 }
 
 std::vector<std::string> SdlPref::get_array(const std::string& key,
-                                            const std::vector<std::string>& fallback)
+                                            const std::vector<std::string>& fallback,
+                                            bool systemConfigOnly) const
 {
-	auto item = get_item(key);
+	auto item = get_item(key, systemConfigOnly);
 	if (!item || !WINPR_JSON_IsArray(item))
 		return fallback;
 
@@ -105,6 +124,24 @@ void SdlPref::print_config_file_help(int version)
 {
 #if defined(WITH_WINPR_JSON)
 	const std::string url = "https://wiki.libsdl.org/SDL" + std::to_string(version);
+	std::cout << "GLOBAL CONFIGURATION FILE" << std::endl;
+	std::cout << std::endl;
+	std::cout << "  The SDL client supports some system defined configuration options."
+	          << std::endl;
+	std::cout << "  Settings are stored in JSON format" << std::endl;
+	std::cout << "  The location is a system configuration file. Location for current machine is "
+	          << SdlPref::instance()->get_pref_file(true) << std::endl;
+	std::cout << std::endl;
+	std::cout << "  The following configuration options are supported:" << std::endl;
+	std::cout << std::endl;
+	std::cout << "    isUserConfigEnabled" << std::endl;
+	std::cout << "      Allows to enable/disable user specific configuration files." << std::endl;
+	std::cout << "      Default enabled" << std::endl;
+	std::cout << std::endl;
+	std::cout << "    All options of the following user configuration file are also supported here."
+	          << std::endl;
+	std::cout << std::endl;
+
 	std::cout << "CONFIGURATION FILE" << std::endl;
 	std::cout << std::endl;
 	std::cout << "  The SDL client supports some user defined configuration options." << std::endl;
@@ -157,17 +194,20 @@ void SdlPref::print_config_file_help(int version)
 	std::cout << "      Disconnects from the RDP session." << std::endl;
 	std::cout << "      Default SDL_SCANCODE_D." << std::endl;
 	std::cout << "      A string as defined at " << url << "/SDLScancodeLookup" << std::endl;
+
 #endif
 }
 
-SdlPref::SdlPref(std::string file) : _name(std::move(file)), _config(get())
+SdlPref::SdlPref(std::string file)
+    : _name(std::move(file)), _system_name(get_default_file(true)), _config(get(false)),
+      _system_config(get(true))
 {
 }
 
-std::string SdlPref::get_pref_dir()
+std::string SdlPref::get_pref_dir(bool systemConfigOnly)
 {
 	using CStringPtr = std::unique_ptr<char, decltype(&free)>;
-	CStringPtr path(freerdp_settings_get_config_path(), free);
+	CStringPtr path(freerdp_GetConfigFilePath(systemConfigOnly, ""), free);
 	if (!path)
 		return {};
 
@@ -175,9 +215,9 @@ std::string SdlPref::get_pref_dir()
 	return config.string();
 }
 
-std::string SdlPref::get_default_file()
+std::string SdlPref::get_default_file(bool systemConfigOnly)
 {
-	fs::path config{ SdlPref::get_pref_dir() };
+	fs::path config{ SdlPref::get_pref_dir(systemConfigOnly) };
 	config /= "sdl-freerdp.json";
 	return config.string();
 }
@@ -190,7 +230,10 @@ std::shared_ptr<SdlPref> SdlPref::instance(const std::string& name)
 	return _instance;
 }
 
-std::string SdlPref::get_pref_file()
+std::string SdlPref::get_pref_file(bool systemConfigOnly) const
 {
+	if (systemConfigOnly)
+		return _system_name;
+
 	return _name;
 }

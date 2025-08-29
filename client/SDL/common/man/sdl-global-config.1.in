@@ -1,0 +1,24 @@
+.SH "GLOBAL CONFIGURATION (SDL3 client)"
+.PP
+The SDL3 client configuration location is
+\fI@SYSCONF_DIR@/sdl-freerdp\&.json\fR
+.br
+
+File format is JSON
+.RE
+.PP
+Supported options:
+.RS 4
+.PP
+\fIisUserConfigEnabled\fR
+.RS 4
+.PP
+.RS 4
+\fIJSON boolean\fR
+.br
+
+Allow or block per user configuration file support.
+.RE
+.RE
+.PP
+All user level options from \fBCONFIGURATION FILE\fR can be set here too

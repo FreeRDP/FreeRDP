@@ -1,0 +1,22 @@
+.SH "GLOBAL CONFIGURATION (X11 client)"
+.PP
+The X11 client configuration location is
+\fI@SYSCONF_DIR@/xfreerdp\&.json\fR
+.br
+
+File format is JSON
+.RE
+.PP
+Supported options:
+.RS 4
+.PP
+\fIisActionScriptAllowed\fR
+.RS 4
+.PP
+.RS 4
+\fIJSON boolean\fR
+.br
+
+Allow or block action scripts. Default (if option is not set) is to allow action scripts.
+.RE
+.RE

@@ -27,15 +27,20 @@
 class SdlPref
 {
   public:
-	static std::shared_ptr<SdlPref> instance(const std::string& name = SdlPref::get_default_file());
+	static std::shared_ptr<SdlPref>
+	instance(const std::string& name = SdlPref::get_default_file(false));
 
-	std::string get_pref_file();
+	[[nodiscard]] std::string get_pref_file(bool systemConfigOnly = false) const;
 
-	std::string get_string(const std::string& key, const std::string& fallback = "");
-	int64_t get_int(const std::string& key, int64_t fallback = 0);
-	bool get_bool(const std::string& key, bool fallback = false);
-	std::vector<std::string> get_array(const std::string& key,
-	                                   const std::vector<std::string>& fallback = {});
+	[[nodiscard]] std::string get_string(const std::string& key, const std::string& fallback = "",
+	                                     bool systemConfigOnly = false) const;
+	[[nodiscard]] int64_t get_int(const std::string& key, int64_t fallback = 0,
+	                              bool systemConfigOnly = false) const;
+	[[nodiscard]] bool get_bool(const std::string& key, bool fallback = false,
+	                            bool systemConfigOnly = false) const;
+	[[nodiscard]] std::vector<std::string> get_array(const std::string& key,
+	                                                 const std::vector<std::string>& fallback = {},
+	                                                 bool systemConfigOnly = false) const;
 
 	static void print_config_file_help(int version);
 
@@ -43,14 +48,18 @@ class SdlPref
 	using WINPR_JSONPtr = std::unique_ptr<WINPR_JSON, decltype(&WINPR_JSON_Delete)>;
 
 	std::string _name;
+	std::string _system_name;
 	WINPR_JSONPtr _config;
+	WINPR_JSONPtr _system_config;
 
 	explicit SdlPref(std::string file);
 
-	WINPR_JSON* get_item(const std::string& key);
-	WINPR_JSONPtr get();
+	[[nodiscard]] WINPR_JSON* get_item(const std::string& key, bool systemConfigOnly) const;
+	[[nodiscard]] WINPR_JSONPtr get(bool systemConfigOnly) const;
 
-	static std::string get_pref_dir();
-	static std::string get_default_file();
+	[[nodiscard]] bool is_user_config_enabled() const;
+
+	static std::string get_pref_dir(bool systemConfigOnly);
+	static std::string get_default_file(bool systemConfigOnly);
 	static std::string item_to_str(WINPR_JSON* item, const std::string& fallback = "");
 };

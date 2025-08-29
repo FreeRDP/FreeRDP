@@ -26,6 +26,7 @@
 #include "xf_utils.h"
 #include "xfreerdp.h"
 
+#include <freerdp/utils/helpers.h>
 #include <freerdp/log.h>
 
 #define TAG CLIENT_TAG("xfreerdp.utils")
@@ -731,4 +732,23 @@ int LogDynAndXReparentWindow_ex(wLog* log, const char* file, const char* fkt, si
 	const int rc = XReparentWindow(display, w, parent, x, y);
 	return write_result_log_expect_one(log, WLOG_WARN, file, fkt, line, display, "XReparentWindow",
 	                                   rc);
+}
+
+char* getConfigOption(BOOL system, const char* option)
+{
+	char* res = NULL;
+	WINPR_JSON* file = freerdp_GetJSONConfigFile(system, "xfreerdp.json");
+	if (!file)
+		return NULL;
+
+	WINPR_JSON* obj = WINPR_JSON_GetObjectItem(file, option);
+	if (obj)
+	{
+		const char* val = WINPR_JSON_GetStringValue(obj);
+		if (val)
+			res = _strdup(val);
+	}
+	WINPR_JSON_Delete(file);
+
+	return res;
 }

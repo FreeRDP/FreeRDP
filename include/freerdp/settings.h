@@ -748,6 +748,7 @@ extern "C"
 	/** \brief return the configuration directory for the library
 	 *  @return The current configuration path or \b NULL
 	 *  @since version 3.6.0
+	 *  @note Since 3.17.1 this is a wrapper for \ref freerdp_GetConfigFilePath(FALSE, "")
 	 */
 	WINPR_ATTR_MALLOC(free, 1)
 	FREERDP_API char* freerdp_settings_get_config_path(void);

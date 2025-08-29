@@ -35,6 +35,7 @@
 #include <winpr/wtsapi.h>
 
 #include <freerdp/settings.h>
+#include <freerdp/utils/helpers.h>
 #include <freerdp/build-config.h>
 
 #include "../crypto/certificate.h"
@@ -752,35 +753,9 @@ BOOL freerdp_settings_set_default_order_support(rdpSettings* settings)
 	return TRUE;
 }
 
-#if !defined(WITH_FULL_CONFIG_PATH)
-static char* freerdp_settings_get_legacy_config_path(void)
-{
-	char product[sizeof(FREERDP_PRODUCT_STRING)] = { 0 };
-
-	for (size_t i = 0; i < sizeof(product); i++)
-		product[i] = (char)tolower(FREERDP_PRODUCT_STRING[i]);
-
-	return GetKnownSubPath(KNOWN_PATH_XDG_CONFIG_HOME, product);
-}
-#endif
-
 char* freerdp_settings_get_config_path(void)
 {
-	char* path = NULL;
-	/* For default FreeRDP continue using same config directory
-	 * as in old releases.
-	 * Custom builds use <Vendor>/<Product> as config folder. */
-#if !defined(WITH_FULL_CONFIG_PATH)
-	if (_stricmp(FREERDP_VENDOR_STRING, FREERDP_PRODUCT_STRING) == 0)
-		return freerdp_settings_get_legacy_config_path();
-#endif
-
-	char* base = GetKnownSubPath(KNOWN_PATH_XDG_CONFIG_HOME, FREERDP_VENDOR_STRING);
-	if (base)
-		path = GetCombinedPath(base, FREERDP_PRODUCT_STRING);
-	free(base);
-
-	return path;
+	return freerdp_GetConfigFilePath(FALSE, "");
 }
 
 rdpSettings* freerdp_settings_new(DWORD flags)

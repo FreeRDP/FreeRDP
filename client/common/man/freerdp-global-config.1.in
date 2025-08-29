@@ -1,12 +1,12 @@
-.SH "GLOBAL CONFIGURATION"
+.SH "GLOBAL CONFIGURATION (client common)"
 .PP
 Format and Location:
 .RS 4
-The configuration file is stored in global system configuration\&.
+The configuration files are stored in global system configuration\&.
 .br
 
-The location is
-\fI@CMAKE_INSTALL_FULL_SYSCONFDIR@/@VENDOR@/@PRODUCT@/certificates\&.json\fR
+The common certificate settings location is
+\fI@SYSCONF_DIR@/certificates\&.json\fR
 .br
 
 File format is JSON
