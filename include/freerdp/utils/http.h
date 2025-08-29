@@ -66,10 +66,20 @@ typedef enum
 	HTTP_STATUS_VERSION_NOT_SUP = 505
 } FREERDP_HTTP_STATUS;
 
-FREERDP_API BOOL freerdp_http_request(const char* url, const char* body, long* status_code,
-                                      BYTE** response, size_t* response_length);
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 
-FREERDP_API const char* freerdp_http_status_string(long status);
-FREERDP_API const char* freerdp_http_status_string_format(long status, char* buffer, size_t size);
+	FREERDP_API BOOL freerdp_http_request(const char* url, const char* body, long* status_code,
+	                                      BYTE** response, size_t* response_length);
+
+	FREERDP_API const char* freerdp_http_status_string(long status);
+	FREERDP_API const char* freerdp_http_status_string_format(long status, char* buffer,
+	                                                          size_t size);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* FREERDP_UTILS_HTTP_H */

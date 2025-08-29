@@ -41,6 +41,11 @@
 static const char NEGO_REG_KEY[] =
     "Software\\" WINPR_VENDOR_STRING "\\" WINPR_PRODUCT_STRING "\\SSPI\\Negotiate";
 
+static const char PACKAGE_NAME_DISABLE_ALL[] = "none";
+static const char PACKAGE_NAME_NTLM[] = "ntlm";
+static const char PACKAGE_NAME_KERBEROS[] = "kerberos";
+static const char PACKAGE_NAME_KERBEROS_U2U[] = "u2u";
+
 typedef struct
 {
 	const TCHAR* name;
@@ -252,18 +257,18 @@ static BOOL negotiate_get_dword(HKEY hKey, const char* subkey, DWORD* pdwValue)
 static BOOL negotiate_get_config_from_auth_package_list(void* pAuthData, BOOL* kerberos, BOOL* ntlm,
                                                         BOOL* u2u)
 {
+	BOOL rc = FALSE;
 	char* tok_ctx = NULL;
-	char* tok_ptr = NULL;
 	char* PackageList = NULL;
 
 	if (!sspi_CopyAuthPackageListA((const SEC_WINNT_AUTH_IDENTITY_INFO*)pAuthData, &PackageList))
 		return FALSE;
 
-	tok_ptr = strtok_s(PackageList, ",", &tok_ctx);
+	char* tok_ptr = strtok_s(PackageList, ",", &tok_ctx);
 
 	while (tok_ptr)
 	{
-		char* PackageName = tok_ptr;
+		const char* PackageName = tok_ptr;
 		BOOL PackageInclude = TRUE;
 
 		if (PackageName[0] == '!')
@@ -272,28 +277,42 @@ static BOOL negotiate_get_config_from_auth_package_list(void* pAuthData, BOOL* k
 			PackageInclude = FALSE;
 		}
 
-		if (_stricmp(PackageName, "ntlm") == 0)
+		if (_stricmp(PackageName, PACKAGE_NAME_NTLM) == 0)
 		{
 			*ntlm = PackageInclude;
 		}
-		else if (_stricmp(PackageName, "kerberos") == 0)
+		else if (_stricmp(PackageName, PACKAGE_NAME_KERBEROS) == 0)
 		{
 			*kerberos = PackageInclude;
 		}
-		else if (_stricmp(PackageName, "u2u") == 0)
+		else if (_stricmp(PackageName, PACKAGE_NAME_KERBEROS_U2U) == 0)
 		{
 			*u2u = PackageInclude;
 		}
+		else if (_stricmp(PackageName, PACKAGE_NAME_DISABLE_ALL) == 0)
+		{
+			*kerberos = FALSE;
+			*ntlm = FALSE;
+			*u2u = FALSE;
+
+			if (PackageName != PackageList)
+			{
+				WLog_WARN(TAG, "Special keyword '%s' not first in list, aborting", PackageName);
+				goto fail;
+			}
+		}
 		else
 		{
-			WLog_WARN(TAG, "Unknown authentication package name: %s", PackageName);
+			WLog_WARN(TAG, "Unknown authentication package name: %s, ignoring", PackageName);
 		}
 
 		tok_ptr = strtok_s(NULL, ",", &tok_ctx);
 	}
 
+	rc = TRUE;
+fail:
 	free(PackageList);
-	return TRUE;
+	return rc;
 }
 
 static BOOL negotiate_get_config(void* pAuthData, BOOL* kerberos, BOOL* ntlm, BOOL* u2u)
@@ -328,11 +347,14 @@ static BOOL negotiate_get_config(void* pAuthData, BOOL* kerberos, BOOL* ntlm, BO
 	{
 		DWORD dwValue = 0;
 
-		if (negotiate_get_dword(hKey, "kerberos", &dwValue))
+		if (negotiate_get_dword(hKey, PACKAGE_NAME_KERBEROS, &dwValue))
 			*kerberos = (dwValue != 0) ? TRUE : FALSE;
 
+		if (negotiate_get_dword(hKey, PACKAGE_NAME_KERBEROS_U2U, &dwValue))
+			*u2u = (dwValue != 0) ? TRUE : FALSE;
+
 #if !defined(WITH_KRB5_NO_NTLM_FALLBACK)
-		if (negotiate_get_dword(hKey, "ntlm", &dwValue))
+		if (negotiate_get_dword(hKey, PACKAGE_NAME_NTLM, &dwValue))
 			*ntlm = (dwValue != 0) ? TRUE : FALSE;
 #endif
 

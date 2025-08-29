@@ -66,8 +66,11 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  "Audio output mode" },
 	{ "auth-only", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL,
 	  "Authenticate only" },
-	{ "auth-pkg-list", COMMAND_LINE_VALUE_REQUIRED, "<!ntlm,kerberos>", NULL, NULL, -1, NULL,
-	  "Authentication package filter (comma-separated list, use '!' to exclude)" },
+	{ "auth-pkg-list", COMMAND_LINE_VALUE_REQUIRED, "[[none],]<!ntlm,kerberos,!u2u>", NULL, NULL,
+	  -1, NULL,
+	  "Authentication package filter (comma-separated list, use '!' to disable). By default "
+	  "all methods are enabled. Use explicit 'none' as first argument to disable all methods, "
+	  "selectively enabling only the ones following." },
 	{ "authentication", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL,
 	  "Authentication (experimental)" },
 	{ "auto-reconnect", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL,
