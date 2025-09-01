@@ -203,12 +203,12 @@ static BOOL rdp_redirection_write_data(wStream* s, size_t length, const void* da
 	WINPR_ASSERT(data || (length == 0));
 	WINPR_ASSERT(length <= UINT32_MAX);
 
-	if (!Stream_CheckAndLogRequiredCapacity(TAG, s, 4))
+	if (!Stream_EnsureRemainingCapacity(s, 4))
 		return FALSE;
 
 	Stream_Write_UINT32(s, (UINT32)length);
 
-	if (!Stream_CheckAndLogRequiredCapacity(TAG, s, length))
+	if (!Stream_EnsureRemainingCapacity(s, length))
 		return FALSE;
 
 	Stream_Write(s, data, length);
@@ -332,7 +332,7 @@ static BOOL rdp_target_cert_write_element(wStream* s, UINT32 Type, UINT32 Encodi
 	WINPR_ASSERT(data || (length == 0));
 	WINPR_ASSERT(length <= UINT32_MAX);
 
-	if (!Stream_CheckAndLogRequiredCapacity(TAG, s, 12))
+	if (!Stream_EnsureRemainingCapacity(s, 12))
 		return FALSE;
 
 	Stream_Write_UINT32(s, Type);
