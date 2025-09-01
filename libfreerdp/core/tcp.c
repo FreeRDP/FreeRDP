@@ -174,7 +174,7 @@ static int transport_bio_simple_read(BIO* bio, char* buf, int size)
 
 static int transport_bio_simple_puts(WINPR_ATTR_UNUSED BIO* bio, WINPR_ATTR_UNUSED const char* str)
 {
-	return 1;
+	return -2;
 }
 
 static int transport_bio_simple_gets(WINPR_ATTR_UNUSED BIO* bio, WINPR_ATTR_UNUSED char* str,

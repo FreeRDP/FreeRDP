@@ -256,7 +256,11 @@ static int transport_bio_named_puts(BIO* bio, const char* str)
 	WINPR_ASSERT(bio);
 	WINPR_ASSERT(str);
 
-	return transport_bio_named_write(bio, str, (int)strnlen(str, INT32_MAX));
+	const int max = (INT_MAX > SIZE_MAX) ? SIZE_MAX : INT_MAX;
+	const size_t len = strnlen(str, max);
+	if (len >= max)
+		return -1;
+	return transport_bio_named_write(bio, str, WINPR_ASSERTING_INT_CAST(int, len));
 }
 
 static int transport_bio_named_gets(BIO* bio, char* str, int size)

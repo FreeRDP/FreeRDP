@@ -2012,7 +2012,7 @@ static int transport_layer_bio_read(BIO* bio, char* buf, int size)
 
 static int transport_layer_bio_puts(WINPR_ATTR_UNUSED BIO* bio, WINPR_ATTR_UNUSED const char* str)
 {
-	return 1;
+	return -2;
 }
 
 static int transport_layer_bio_gets(WINPR_ATTR_UNUSED BIO* bio, WINPR_ATTR_UNUSED char* str,
