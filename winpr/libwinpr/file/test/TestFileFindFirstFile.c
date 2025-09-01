@@ -10,6 +10,16 @@
 
 static const CHAR testFile1A[] = "TestFile1A";
 
+static BOOL create_file(const char* FilePath)
+{
+	HANDLE hdl =
+	    CreateFileA(FilePath, GENERIC_ALL, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+	if (hdl == INVALID_HANDLE_VALUE)
+		return FALSE;
+	(void)CloseHandle(hdl);
+	return TRUE;
+}
+
 static BOOL create_layout_files(size_t level, const char* BasePath, wArrayList* files)
 {
 	for (size_t x = 0; x < 10; x++)
@@ -21,12 +31,8 @@ static BOOL create_layout_files(size_t level, const char* BasePath, wArrayList* 
 		(void)_snprintf(name, ARRAYSIZE(name), "%zd-TestFile%zd", level, x);
 		NativePathCchAppendA(FilePath, PATHCCH_MAX_CCH, name);
 
-		HANDLE hdl =
-		    CreateFileA(FilePath, GENERIC_ALL, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-		if (hdl == INVALID_HANDLE_VALUE)
-			return FALSE;
-		ArrayList_Append(files, FilePath);
-		(void)CloseHandle(hdl);
+		if (create_file(FilePath))
+			ArrayList_Append(files, FilePath);
 	}
 	return TRUE;
 }
@@ -276,6 +282,9 @@ static int TestFileFindFirstFileW(const char* str)
 
 	CHAR FilePathA[PATHCCH_MAX_CCH] = { 0 };
 	(void)ConvertWCharNToUtf8(FilePath, ARRAYSIZE(FilePath), FilePathA, ARRAYSIZE(FilePathA));
+	if (!create_file(FilePathA))
+		return -1;
+
 	printf("Finding file: %s\n", FilePathA);
 
 	WIN32_FIND_DATAW FindData = { 0 };
@@ -319,7 +328,7 @@ int TestFileFindFirstFile(int argc, char* argv[])
 	if (winpr_PathMakePath(str, NULL))
 	{
 		rc1 = TestFileFindFirstFileA(str);
-		rc2 = 0; // TestFileFindFirstFileW(str);
+		rc2 = TestFileFindFirstFileW(str);
 		winpr_RemoveDirectory(str);
 	}
 	free(str);
