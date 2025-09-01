@@ -2961,7 +2961,7 @@ static int transport_bio_tsg_puts(BIO* bio, const char* str)
 {
 	WINPR_UNUSED(bio);
 	WINPR_UNUSED(str);
-	return 1;
+	return -2;
 }
 
 // NOLINTNEXTLINE(readability-non-const-parameter)

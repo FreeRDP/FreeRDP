@@ -437,7 +437,7 @@ static PfChannelResult DynvcTrackerHandleCreateFront(ChannelStateTracker* tracke
                                                      WINPR_ATTR_UNUSED proxyData* pdata,
                                                      pServerDynamicChannelContext* dynChannel,
                                                      DynChannelContext* dynChannelContext,
-                                                     UINT64 dynChannelId)
+                                                     WINPR_ATTR_UNUSED UINT64 dynChannelId)
 {
 	const BOOL isBackData = (tracker == dynChannelContext->backTracker);
 	const BYTE cmd = CREATE_REQUEST_PDU;

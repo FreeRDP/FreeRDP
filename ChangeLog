@@ -1,7 +1,37 @@
-# 2025-XX-XX Version 3.XX.X
+# 2025-09-01 Version 3.17.1
+
+Minor improvements and bugfix release.
+
+* most notably a memory leak was addressed
+* fixed header files missing C++ guards
+* xfreerdp as well as the SDL clients now support a system wide configuration file
+* Heimdal kerberos support was improved
+* builds with [MS-RDPEAR] now properly abort at configure if Heimdal is used
+  (this configuration was never supported, so ensure nobody compiles it that way)
+
+## What's Changed
+* [client,sdl] always set sdl->windows_created (#11807)
+* [winpr,synch] increase timeout for TestSynchCritical (#11808)
+* Enable RDPECAM client in flatpak release (#11809)
+* [proxy,channels] refactor dynamic channel (#11812)
+* [core,settings] fix ReceivedCapabilities reset (#11814)
+* Freebsd build fixes (#11815)
+* [client,sdl] disable connection dialog (#11820)
+* audin_oss: do not reset mic volume on capture start (#11822)
+* add-x11-config-file (#11823)
+* [client,sdl] fix global config evaluation (#11825)
+* [sspi,negotiate] improve /auth-pkg-list parsing (#11826)
+* Geometry channel fixes (#)11828)
+* core/redirection: Ensure stream has enough space for all parameters (#11830)
 
 ## New Contributors
 * @omatasas made their first contribution in #11787
+* @sharkcz made their first contribution in #11808
+* @cvpcs made their first contribution in #11809
+* @Defenso-QTH made their first contribution in #11822
+
+For a complete and detailed change log since the last release run:
+git log 3.17.1...3.17.0
 
 # 2025-08-22 Version 3.17.0
 
