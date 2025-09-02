@@ -6,37 +6,42 @@
 #define PATH_CCH_APPEND		PathCchAppendA
 */
 
-#if DEFINE_UNICODE
+#include <string.h>
+
+#include <winpr/wtypes.h>
+#include <winpr/error.h>
+#include <winpr/path.h>
+
+#if defined(DEFINE_UNICODE) && (DEFINE_UNICODE != 0)
 
 HRESULT PATH_CCH_APPEND(PWSTR pszPath, size_t cchPath, PCWSTR pszMore)
 {
-	BOOL pathBackslash;
-	BOOL moreBackslash;
-	size_t pszMoreLength;
-	size_t pszPathLength;
-
 	if (!pszPath)
 		return E_INVALIDARG;
 
 	if (!pszMore)
 		return E_INVALIDARG;
 
-	if (cchPath == 0 || cchPath > PATHCCH_MAX_CCH)
+	if ((cchPath == 0) || (cchPath > PATHCCH_MAX_CCH))
 		return E_INVALIDARG;
 
-	pszMoreLength = _wcslen(pszMore);
-	pszPathLength = _wcslen(pszPath);
+	const size_t pszMoreLength = _wcsnlen(pszMore, cchPath);
+	const size_t pszPathLength = _wcsnlen(pszPath, cchPath);
 
-	pathBackslash = (pszPath[pszPathLength - 1] == CUR_PATH_SEPARATOR_CHR) ? TRUE : FALSE;
-	moreBackslash = (pszMore[0] == CUR_PATH_SEPARATOR_CHR) ? TRUE : FALSE;
+	const BOOL pathBackslash =
+	    (pszPath[pszPathLength - 1] == CUR_PATH_SEPARATOR_CHR) ? TRUE : FALSE;
+	const BOOL moreBackslash = (pszMore[0] == CUR_PATH_SEPARATOR_CHR) ? TRUE : FALSE;
 
 	if (pathBackslash && moreBackslash)
 	{
+		if (pszMoreLength < 1)
+			return E_INVALIDARG;
+
 		if ((pszPathLength + pszMoreLength - 1) < cchPath)
 		{
 			WCHAR* ptr = &pszPath[pszPathLength];
 			*ptr = '\0';
-			_wcsncat(ptr, &pszMore[1], _wcslen(&pszMore[1]));
+			_wcsncat(ptr, &pszMore[1], pszMoreLength - 1);
 			return S_OK;
 		}
 	}
@@ -46,7 +51,7 @@ HRESULT PATH_CCH_APPEND(PWSTR pszPath, size_t cchPath, PCWSTR pszMore)
 		{
 			WCHAR* ptr = &pszPath[pszPathLength];
 			*ptr = '\0';
-			_wcsncat(ptr, pszMore, _wcslen(pszMore));
+			_wcsncat(ptr, pszMore, pszMoreLength);
 			return S_OK;
 		}
 	}
@@ -54,11 +59,11 @@ HRESULT PATH_CCH_APPEND(PWSTR pszPath, size_t cchPath, PCWSTR pszMore)
 	{
 		if ((pszPathLength + pszMoreLength + 1) < cchPath)
 		{
-			const WCHAR sep[] = CUR_PATH_SEPARATOR_STR;
 			WCHAR* ptr = &pszPath[pszPathLength];
 			*ptr = '\0';
-			_wcsncat(ptr, sep, _wcslen(sep));
-			_wcsncat(ptr, pszMore, _wcslen(pszMore));
+			_wcsncat(ptr, CUR_PATH_SEPARATOR_STR,
+			         _wcsnlen(CUR_PATH_SEPARATOR_STR, ARRAYSIZE(CUR_PATH_SEPARATOR_STR)));
+			_wcsncat(ptr, pszMore, pszMoreLength);
 			return S_OK;
 		}
 	}
@@ -72,8 +77,6 @@ HRESULT PATH_CCH_APPEND(PSTR pszPath, size_t cchPath, PCSTR pszMore)
 {
 	BOOL pathBackslash = FALSE;
 	BOOL moreBackslash = FALSE;
-	size_t pszMoreLength;
-	size_t pszPathLength;
 
 	if (!pszPath)
 		return E_INVALIDARG;
@@ -81,14 +84,14 @@ HRESULT PATH_CCH_APPEND(PSTR pszPath, size_t cchPath, PCSTR pszMore)
 	if (!pszMore)
 		return E_INVALIDARG;
 
-	if (cchPath == 0 || cchPath > PATHCCH_MAX_CCH)
+	if ((cchPath == 0) || (cchPath > PATHCCH_MAX_CCH))
 		return E_INVALIDARG;
 
-	pszPathLength = strlen(pszPath);
+	const size_t pszPathLength = strnlen(pszPath, cchPath);
 	if (pszPathLength > 0)
 		pathBackslash = (pszPath[pszPathLength - 1] == CUR_PATH_SEPARATOR_CHR) ? TRUE : FALSE;
 
-	pszMoreLength = strlen(pszMore);
+	const size_t pszMoreLength = strnlen(pszMore, cchPath);
 	if (pszMoreLength > 0)
 		moreBackslash = (pszMore[0] == CUR_PATH_SEPARATOR_CHR) ? TRUE : FALSE;
 
@@ -112,8 +115,8 @@ HRESULT PATH_CCH_APPEND(PSTR pszPath, size_t cchPath, PCSTR pszMore)
 	{
 		if ((pszPathLength + pszMoreLength + 1) < cchPath)
 		{
-			sprintf_s(&pszPath[pszPathLength], cchPath - pszPathLength, CUR_PATH_SEPARATOR_STR "%s",
-			          pszMore);
+			sprintf_s(&pszPath[pszPathLength], cchPath - pszPathLength, "%s%s",
+			          CUR_PATH_SEPARATOR_STR, pszMore);
 			return S_OK;
 		}
 	}
