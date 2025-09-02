@@ -92,6 +92,9 @@
 	WINPR_DO_PRAGMA(clang diagnostic ignored "-Wunused-macros")
 #define WINPR_PRAGMA_DIAG_IGNORED_UNKNOWN_PRAGMAS \
 	WINPR_DO_PRAGMA(clang diagnostic ignored "-Wunknown-pragmas") /** @since version 3.10.0 */
+#define WINPR_PRAGMA_DIAG_IGNORED_DEPRECATED_DECL \
+	WINPR_DO_PRAGMA(clang diagnostic ignored      \
+	                "-Wdeprecated-declarations") /** @since version 3.17.2 */
 
 #if __clang_major__ >= 13
 #define WINPR_PRAGMA_DIAG_IGNORED_RESERVED_IDENTIFIER \
@@ -147,6 +150,9 @@
 	WINPR_DO_PRAGMA(GCC diagnostic ignored "-Wunused-macros")
 #define WINPR_PRAGMA_DIAG_IGNORED_UNKNOWN_PRAGMAS \
 	WINPR_DO_PRAGMA(GCC diagnostic ignored "-Wunknown-pragmas") /** @since version 3.10.0 */
+#define WINPR_PRAGMA_DIAG_IGNORED_DEPRECATED_DECL                                                 \
+	WINPR_DO_PRAGMA(GCC diagnostic ignored "-Wdeprecated-declarations") /** @since version 3.17.2 \
+	                                                                     */
 
 #define WINPR_PRAGMA_DIAG_IGNORED_RESERVED_IDENTIFIER
 /* not supported	WINPR_DO_PRAGMA(GCC diagnostic ignored "-Wreserved-identifier") */
@@ -182,14 +188,15 @@
 #define WINPR_PRAGMA_DIAG_IGNORED_RESERVED_ID_MACRO
 #define WINPR_PRAGMA_DIAG_IGNORED_UNUSED_MACRO
 #define WINPR_PRAGMA_DIAG_IGNORED_UNKNOWN_PRAGMAS /** @since version 3.10.0 */
+#define WINPR_PRAGMA_DIAG_IGNORED_DEPRECATED_DECL /** @since version 3.17.2 */
 #define WINPR_PRAGMA_DIAG_IGNORED_RESERVED_IDENTIFIER
 #define WINPR_PRAGMA_DIAG_IGNORED_ATOMIC_SEQ_CST
 #define WINPR_PRAGMA_DIAG_IGNORED_UNUSED_CONST_VAR
 #define WINPR_PRAGMA_DIAG_IGNORED_FORMAT_SECURITY
 #define WINPR_PRAGMA_DIAG_TAUTOLOGICAL_CONSTANT_OUT_OF_RANGE_COMPARE /** @since version 3.9.0 */
 #define WINPR_PRAGMA_DIAG_TAUTOLOGICAL_VALUE_RANGE_COMPARE           /** @since version 3.10.0 */
-#define WINPR_PRAGMA_DIAG_IGNORED_FORMAT_NONLITERAL  /** @since version 3.9.0 */
-#define WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC /** @since version 3.3.0 */
+#define WINPR_PRAGMA_DIAG_IGNORED_FORMAT_NONLITERAL                  /** @since version 3.9.0 */
+#define WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC                 /** @since version 3.3.0 */
 #define WINPR_PRAGMA_DIAG_POP
 #define WINPR_PRAGMA_UNROLL_LOOP /** @since version 3.6.0 */
 #endif
