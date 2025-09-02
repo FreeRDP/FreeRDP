@@ -775,10 +775,7 @@ static BOOL drive_file_set_disposition_information(DRIVE_FILE* file, UINT32 Leng
 	{
 		const uint32_t expect = 1;
 		if (Length != expect)
-		{
-			WLog_WARN(TAG, "Unexpected Length=%" PRIu32 ", expected %" PRIu32, Length, expect);
-			return FALSE;
-		}
+			WLog_DBG(TAG, "Unexpected Length=%" PRIu32 ", expected %" PRIu32, Length, expect);
 
 		delete_pending = Stream_Get_UINT8(input);
 	}
