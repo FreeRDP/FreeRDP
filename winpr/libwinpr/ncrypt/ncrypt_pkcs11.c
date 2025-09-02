@@ -82,6 +82,11 @@ typedef struct
 	BYTE tag[3];
 } piv_cert_tags_t;
 static const piv_cert_tags_t piv_cert_tags[] = {
+	{ "X.509 Certificate for PIV Authentication", "\x5F\xC1\x05" },
+	{ "X.509 Certificate for Digital Signature", "\x5F\xC1\x0A" },
+	{ "X.509 Certificate for Key Management", "\x5F\xC1\x0B" },
+	{ "X.509 Certificate for Card Authentication", "\x5F\xC1\x01" },
+
 	{ "Certificate for PIV Authentication", "\x5F\xC1\x05" },
 	{ "Certificate for Digital Signature", "\x5F\xC1\x0A" },
 	{ "Certificate for Key Management", "\x5F\xC1\x0B" },
