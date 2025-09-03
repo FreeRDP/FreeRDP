@@ -1698,9 +1698,8 @@ static INLINE SSIZE_T progressive_process_tiles(
 
 		if (progressive->rfx_context->priv->UseThreads)
 		{
-			progressive->work_objects[idx] =
-			    CreateThreadpoolWork(progressive_process_tiles_tile_work_callback, (void*)param,
-			                         &progressive->rfx_context->priv->ThreadPoolEnv);
+			progressive->work_objects[idx] = CreateThreadpoolWork(
+			    progressive_process_tiles_tile_work_callback, (void*)param, NULL);
 			if (!progressive->work_objects[idx])
 			{
 				WLog_Print(progressive->log, WLOG_ERROR,

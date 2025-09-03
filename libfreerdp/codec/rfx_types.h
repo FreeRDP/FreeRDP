@@ -69,12 +69,6 @@ struct S_RFX_CONTEXT_PRIV
 	PTP_WORK* workObjects;
 	RFX_TILE_COMPOSE_WORK_PARAM* tileWorkParams;
 
-	DWORD MinThreadCount;
-	DWORD MaxThreadCount;
-
-	PTP_POOL ThreadPool;
-	TP_CALLBACK_ENVIRON ThreadPoolEnv;
-
 	wBufferPool* BufferPool;
 
 	/* profilers */
