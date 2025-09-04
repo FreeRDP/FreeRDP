@@ -717,7 +717,10 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextW(
 			WINPR_ASSERT(pkg->table_w);
 
 			if (!cred->valid)
+			{
+				WLog_DBG(TAG, "Unavailable mechanism: %s", negotiate_mech_name(cred->mech->oid));
 				continue;
+			}
 
 			/* Send an optimistic token for the first valid mechanism */
 			if (!init_context.mech)
