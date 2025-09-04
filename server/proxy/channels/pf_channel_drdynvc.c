@@ -337,12 +337,11 @@ static PfChannelResult DynvcTrackerHandleClose(ChannelStateTracker* tracker,
                                                DynChannelContext* dynChannelContext,
                                                BOOL firstPacket, BOOL lastPacket)
 {
-	WINPR_ASSERT(dynChannel);
 	WINPR_ASSERT(dynChannelContext);
 
 	const BOOL isBackData = (tracker == dynChannelContext->backTracker);
 
-	if (!lastPacket)
+	if (!lastPacket || !dynChannel)
 		return PF_CHANNEL_RESULT_DROP;
 
 	DynvcTrackerLog(dynChannelContext->log, WLOG_DEBUG, dynChannel, CLOSE_REQUEST_PDU, isBackData,
@@ -380,7 +379,7 @@ static PfChannelResult DynvcTrackerHandleCreateBack(ChannelStateTracker* tracker
 		DynvcTrackerLog(dynChannelContext->log, WLOG_ERROR, dynChannel, cmd, isBackData,
 		                "channel id %" PRIu64 ", name=%s [%" PRIuz "|%" PRIuz "], status=%s",
 		                dynChannelId, namebuffer, len, nameLen,
-		                openstatus2str(dynChannel->openStatus));
+		                dynChannel ? openstatus2str(dynChannel->openStatus) : "NULL");
 		return PF_CHANNEL_RESULT_ERROR;
 	}
 
@@ -450,7 +449,7 @@ static PfChannelResult DynvcTrackerHandleCreateFront(ChannelStateTracker* tracke
 	DynvcTrackerLog(dynChannelContext->log, WLOG_DEBUG, dynChannel, cmd, isBackData,
 	                "CREATE_RESPONSE openStatus=%" PRIu32, creationStatus);
 
-	if (creationStatus == 0)
+	if (dynChannel && (creationStatus == 0))
 		dynChannel->openStatus = CHANNEL_OPENSTATE_OPENED;
 
 	const BOOL firstPacket = (flags & CHANNEL_FLAG_FIRST) ? TRUE : FALSE;
@@ -495,7 +494,6 @@ static PfChannelResult DynvcTrackerHandleCmdDATA(ChannelStateTracker* tracker,
                                                  BOOL firstPacket, BOOL lastPacket)
 {
 	WINPR_ASSERT(tracker);
-	WINPR_ASSERT(dynChannel);
 	WINPR_ASSERT(s);
 
 	DynChannelContext* dynChannelContext =
@@ -503,6 +501,13 @@ static PfChannelResult DynvcTrackerHandleCmdDATA(ChannelStateTracker* tracker,
 	WINPR_ASSERT(dynChannelContext);
 
 	const BOOL isBackData = (tracker == dynChannelContext->backTracker);
+
+	if (!dynChannel)
+	{
+		DynvcTrackerLog(dynChannelContext->log, WLOG_WARN, dynChannel, cmd, isBackData,
+		                "channel is NULL, dropping packet");
+		return PF_CHANNEL_RESULT_DROP;
+	}
 
 	DynChannelTrackerState* trackerState =
 	    isBackData ? &dynChannel->backTracker : &dynChannel->frontTracker;
