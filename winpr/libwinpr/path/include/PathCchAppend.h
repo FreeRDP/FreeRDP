@@ -28,8 +28,10 @@ HRESULT PATH_CCH_APPEND(PWSTR pszPath, size_t cchPath, PCWSTR pszMore)
 	const size_t pszMoreLength = _wcsnlen(pszMore, cchPath);
 	const size_t pszPathLength = _wcsnlen(pszPath, cchPath);
 
-	const BOOL pathBackslash =
-	    (pszPath[pszPathLength - 1] == CUR_PATH_SEPARATOR_CHR) ? TRUE : FALSE;
+	BOOL pathBackslash = FALSE;
+	if (pszPathLength > 0)
+		pathBackslash = (pszPath[pszPathLength - 1] == CUR_PATH_SEPARATOR_CHR) ? TRUE : FALSE;
+
 	const BOOL moreBackslash = (pszMore[0] == CUR_PATH_SEPARATOR_CHR) ? TRUE : FALSE;
 
 	if (pathBackslash && moreBackslash)
