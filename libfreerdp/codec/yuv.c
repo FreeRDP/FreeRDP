@@ -763,6 +763,14 @@ static INLINE YUV_ENCODE_WORK_PARAM pool_encode_fill(
 	return current;
 }
 
+static uint32_t getSteps(uint32_t height, uint32_t step)
+{
+	const uint32_t steps = (height + step / 2 + 1) / step;
+	if (steps < 1)
+		return 1;
+	return steps;
+}
+
 static BOOL pool_encode(YUV_CONTEXT* WINPR_RESTRICT context, PTP_WORK_CALLBACK cb,
                         const BYTE* WINPR_RESTRICT pSrcData, UINT32 nSrcStep, UINT32 SrcFormat,
                         const UINT32 iStride[], BYTE* WINPR_RESTRICT pYUVLumaData[],
@@ -803,7 +811,7 @@ static BOOL pool_encode(YUV_CONTEXT* WINPR_RESTRICT context, PTP_WORK_CALLBACK c
 	{
 		const RECTANGLE_16* rect = &regionRects[x];
 		const UINT32 height = rect->bottom - rect->top;
-		const UINT32 steps = (height + context->heightStep / 2) / context->heightStep;
+		const UINT32 steps = getSteps(height, context->heightStep);
 
 		waitCount += steps;
 	}
@@ -812,7 +820,7 @@ static BOOL pool_encode(YUV_CONTEXT* WINPR_RESTRICT context, PTP_WORK_CALLBACK c
 	{
 		const RECTANGLE_16* rect = &regionRects[x];
 		const UINT32 height = rect->bottom - rect->top;
-		const UINT32 steps = (height + context->heightStep / 2) / context->heightStep;
+		const UINT32 steps = getSteps(height, context->heightStep);
 
 		for (UINT32 y = 0; y < steps; y++)
 		{
