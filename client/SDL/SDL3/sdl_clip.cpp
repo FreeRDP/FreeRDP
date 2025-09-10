@@ -591,7 +591,7 @@ std::shared_ptr<BYTE> sdlClip::ReceiveFormatDataRequestHandle(
 	           ClipboardGetFormatIdString(localFormatId), localFormatId,
 	           ClipboardGetFormatName(clipboard->_system, localFormatId));
 
-	ClipboardLockGuard give_me_a_name(clipboard->_system);
+	ClipboardLockGuard systemlock(clipboard->_system);
 	std::lock_guard<CriticalSection> lock(clipboard->_lock);
 
 	const UINT32 fileFormatId =
@@ -724,7 +724,7 @@ UINT sdlClip::ReceiveFormatDataResponse(CliprdrClientContext* context,
 	    cliprdr_file_context_get_context(static_cast<CliprdrFileContext*>(context->custom)));
 	WINPR_ASSERT(clipboard);
 
-	ClipboardLockGuard give_me_a_name(clipboard->_system);
+	ClipboardLockGuard systemlock(clipboard->_system);
 	std::lock_guard<CriticalSection> lock(clipboard->_lock);
 	if (clipboard->_request_queue.empty())
 	{
@@ -789,10 +789,15 @@ UINT sdlClip::ReceiveFormatDataResponse(CliprdrClientContext* context,
 			WLog_Print(clipboard->_log, WLOG_ERROR, "error when setting clipboard data");
 			return ERROR_INTERNAL_ERROR;
 		}
+		WLog_Print(clipboard->_log, WLOG_DEBUG, "updated clipboard data %s [0x%08" PRIx32 "]",
+		           ClipboardGetFormatName(clipboard->_system, srcFormatId), srcFormatId);
 	} while (false);
 
 	if (!SetEvent(clipboard->_event))
+	{
+		WLog_Print(clipboard->_log, WLOG_ERROR, "error when setting clipboard event");
 		return ERROR_INTERNAL_ERROR;
+	}
 
 	return CHANNEL_RC_OK;
 }
@@ -811,7 +816,7 @@ const void* sdlClip::ClipDataCb(void* userdata, const char* mime_type, size_t* s
 		mime_type = "text/plain";
 
 	{
-		ClipboardLockGuard give_me_a_name(clip->_system);
+		ClipboardLockGuard systemlock(clip->_system);
 		std::lock_guard<CriticalSection> lock(clip->_lock);
 
 		/* check if we already used this mime type */
@@ -841,8 +846,8 @@ const void* sdlClip::ClipDataCb(void* userdata, const char* mime_type, size_t* s
 			}
 		}
 
-		WLog_Print(clip->_log, WLOG_INFO, "requesting format %s [0x%08" PRIx32 "]", mime_type,
-		           formatID);
+		WLog_Print(clip->_log, WLOG_DEBUG, "requesting format %s [%s 0x%08" PRIx32 "]", mime_type,
+		           ClipboardGetFormatName(clip->_system, formatID), formatID);
 		if (clip->SendDataRequest(formatID, mime_type))
 			return nullptr;
 	}
@@ -865,7 +870,7 @@ const void* sdlClip::ClipDataCb(void* userdata, const char* mime_type, size_t* s
 	}
 
 	{
-		ClipboardLockGuard give_me_a_name(clip->_system);
+		ClipboardLockGuard systemlock(clip->_system);
 		std::lock_guard<CriticalSection> lock(clip->_lock);
 		auto request = clip->_request_queue.front();
 		clip->_request_queue.pop();
