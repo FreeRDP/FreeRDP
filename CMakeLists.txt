@@ -66,6 +66,7 @@ endif()
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake/)
 
 include(ProjectCStandard)
+include(PkgConfigHelpers)
 
 # Check for cmake compatibility (enable/disable features)
 include(CheckCmakeCompat)
@@ -544,6 +545,9 @@ if(WITH_THIRD_PARTY)
   endif()
 endif()
 
+# used in libfreerdp subfolder as well
+setfreerdpcmakeinstalldir(FREERDP_CMAKE_INSTALL_DIR "FreeRDP${FREERDP_VERSION_MAJOR}")
+
 add_subdirectory(libfreerdp)
 
 if(WITH_CHANNELS)
@@ -557,6 +561,9 @@ endif()
 if(WITH_SERVER)
   add_subdirectory(server)
 endif()
+
+# must be after all targets have been added in libfreerdp and channel
+install(EXPORT FreeRDPTargets DESTINATION ${FREERDP_CMAKE_INSTALL_DIR})
 
 # Packaging
 

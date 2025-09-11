@@ -43,3 +43,9 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE $<$<BOOL:${BUILD_SHARED_LIBS}
 target_link_libraries(${PROJECT_NAME} PRIVATE winpr freerdp freerdp-client freerdp-server freerdp-server-proxy)
 
 installwithrpath(TARGETS ${PROJECT_NAME} DESTINATION ${FREERDP_PROXY_PLUGINDIR})
+
+set(PROJECT_PC_REQUIRES_PRIVATE
+    "winpr${FREERDP_API_VERSION} freerdp${FREERDP_API_VERSION} freerdp-server${FREERDP_API_VERSION} freerdp-client${FREERDP_API_VERSION} freerdp-server-proxy${FREERDP_API_VERSION}"
+)
+include(ProxyModuleConfig)
+generate_proxy_module_config()

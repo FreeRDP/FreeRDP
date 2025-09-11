@@ -18,6 +18,7 @@
 define_channel_client_subsystem("audin" "pulse" "")
 
 find_package(PulseAudio REQUIRED)
+freerdp_client_pc_add_requires_private("libpulse")
 
 set(${MODULE_PREFIX}_SRCS audin_pulse.c)
 

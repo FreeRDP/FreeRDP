@@ -18,6 +18,7 @@
 define_channel_client_subsystem("tsmf" "pulse" "audio")
 
 find_package(PulseAudio REQUIRED)
+freerdp_client_pc_add_requires_private("libpulse")
 
 set(${MODULE_PREFIX}_SRCS tsmf_pulse.c)
 

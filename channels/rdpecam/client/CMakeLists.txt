@@ -20,6 +20,7 @@ define_channel_client("rdpecam")
 if(NOT WITH_SWSCALE OR NOT WITH_FFMPEG)
   message(FATAL_ERROR "WITH_FFMPEG and WITH_SWSCALE required for CHANNEL_RDPECAM_CLIENT")
 endif()
+freerdp_client_pc_add_requires_private("libswscale")
 
 # currently camera redirect client supported for platforms with Video4Linux only
 find_package(FFmpeg REQUIRED COMPONENTS SWSCALE)

@@ -21,4 +21,5 @@ set(SRCS urbdrc_types.h urbdrc_helpers.h urbdrc_helpers.c msusb.h msusb.c)
 add_library(urbdrc-common STATIC ${SRCS})
 set_property(TARGET urbdrc-common PROPERTY FOLDER "Channels/${CHANNEL_NAME}/Common")
 
+freerdp_client_pc_add_library_private(urbdrc-common)
 channel_install(urbdrc-common ${FREERDP_ADDIN_PATH} "FreeRDPTargets")

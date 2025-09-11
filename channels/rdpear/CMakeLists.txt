@@ -20,6 +20,7 @@ if(NOT IOS AND NOT WIN32 AND NOT ANDROID)
 
   if(KRB5_FOUND)
     define_channel("rdpear")
+    freerdp_client_pc_add_requires_private("mit-krb5")
 
     if(KRB5_FLAVOUR STREQUAL "Heimdal")
       message(FATAL_ERROR "krb5 implementation Heimdal not supported with -DCHANNEL_RDPEAR=ON")

@@ -23,6 +23,8 @@ set(${MODULE_PREFIX}_SRCS audin_alsa.c)
 
 set(${MODULE_PREFIX}_LIBS winpr freerdp ${ALSA_LIBRARIES})
 
+freerdp_client_pc_add_requires_private("alsa")
+
 include_directories(..)
 include_directories(SYSTEM ${ALSA_INCLUDE_DIRS})
 

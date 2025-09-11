@@ -30,6 +30,8 @@ target_include_directories(rdpear-common-obj SYSTEM PRIVATE ${KRB5_INCLUDE_DIRS}
 target_link_directories(rdpear-common INTERFACE ${KRB5_LIBRARY_DIRS})
 target_link_libraries(rdpear-common INTERFACE ${KRB5_LIBRARIES} rdpear-common-obj)
 
+freerdp_client_pc_add_library_private(rdpear-common-obj)
+
 channel_install(rdpear-common ${FREERDP_ADDIN_PATH} "FreeRDPTargets")
 channel_install(rdpear-common-obj ${FREERDP_ADDIN_PATH} "FreeRDPTargets")
 

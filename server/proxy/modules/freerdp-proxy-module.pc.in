@@ -1,0 +1,16 @@
+prefix=@PKG_CONFIG_INSTALL_PREFIX@
+exec_prefix=${prefix}
+libdir=${prefix}/@CMAKE_INSTALL_LIBDIR@
+includedir=${prefix}/@WINPR_INCLUDE_DIR@
+plugindir=${libdir}/@FREERDP_MAJOR_DIR@
+proxy_plugindir=${plugindir}/proxy
+
+Name: @PROJECT_NAME@
+Description: FreeRDP proxy module
+URL: http://www.freerdp.com/
+Version: @PROJECT_VERSION@
+Requires:
+Requires.private: @PROJECT_PC_REQUIRES_PRIVATE@ 
+Libs: -L${libdir}
+Libs.private: -Wl,--whole-archive \${proxy_plugindir}/@PROJECT_LIBRARY_NAME@ -u @PROJECT_SHORT_NAME_UNDERSCORE@_proxy_module_entry_point -Wl,--no-whole-archive
+Cflags: -I${includedir}
