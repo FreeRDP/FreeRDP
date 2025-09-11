@@ -77,6 +77,12 @@ installwithrpath(
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Server/Proxy")
 
 # pkg-config
+# Do not set Requires.Private if not a static build
+if(NOT BUILD_SHARED_LIBS)
+  set(FREERDP_PROXY_PC_REQUIRES_PRIVATE "freerdp-client${FREERDP_API_VERSION} freerdp-server${FREERDP_API_VERSION}")
+  set(FREERDP_PROXY_PC_LIBS_PRIVATE "-ldl -lpthread")
+endif()
+
 include(pkg-config-install-prefix)
 cleaning_configure_file(
   ${CMAKE_CURRENT_SOURCE_DIR}/freerdp-proxy.pc.in ${CMAKE_CURRENT_BINARY_DIR}/${MODULE_NAME}${FREERDP_VERSION_MAJOR}.pc

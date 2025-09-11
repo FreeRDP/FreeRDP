@@ -268,6 +268,8 @@ set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "FreeRDP/libfreerdp")
 
 include(pkg-config-install-prefix)
 
+freerdp_pc_add_requires_private(winpr${FREERDP_API_VERSION})
+
 list(REMOVE_DUPLICATES FREERDP_PC_REQUIRES_PRIVATE)
 list(JOIN FREERDP_PC_REQUIRES_PRIVATE " " FREERDP_PC_REQUIRES_PRIVATE)
 
@@ -276,6 +278,13 @@ list(JOIN FREERDP_PC_LIBRARY_PRIVATE " -l" FREERDP_PC_LIBRARY_PRIVATE)
 if(FREERDP_PC_LIBRARY_PRIVATE)
   string(PREPEND FREERDP_PC_LIBRARY_PRIVATE "-l")
 endif()
+
+# Do not set Requires.Private if not a static build
+if(BUILD_SHARED_LIBS)
+  set(FREERDP_PC_REQUIRES_PRIVATE "")
+  set(FREERDP_PC_LIBRARY_PRIVATE "")
+endif()
+
 cleaning_configure_file(
   ${CMAKE_CURRENT_SOURCE_DIR}/freerdp.pc.in ${CMAKE_CURRENT_BINARY_DIR}/freerdp${FREERDP_VERSION_MAJOR}.pc @ONLY
 )

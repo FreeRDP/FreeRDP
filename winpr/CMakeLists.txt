@@ -343,6 +343,14 @@ add_subdirectory(libwinpr)
 list(REMOVE_DUPLICATES WINPR_PC_REQUIRES_PRIVATE)
 list(JOIN WINPR_PC_REQUIRES_PRIVATE " " WINPR_PC_REQUIRES_PRIVATE)
 
+set(WINPR_PC_LIBRARY_PRIVATE "-ldl -lrt -lm -lpthread")
+
+# Do not set Requires.Private if not a static build
+if(BUILD_SHARED_LIBS)
+  set(WINPR_PC_REQUIRES_PRIVATE "")
+  set(WINPR_PC_LIBRARY_PRIVATE "")
+endif()
+
 if(WITH_WINPR_TOOLS)
   add_subdirectory(tools)
 endif()

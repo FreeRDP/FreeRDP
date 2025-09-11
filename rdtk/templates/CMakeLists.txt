@@ -35,6 +35,11 @@ cleaning_configure_file(
 cleaning_configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/../include/rdtk/config.h)
 
 if(NOT RDTK_FORCE_STATIC_BUILD)
+  # Do not set Requires.Private if not a static build
+  if(NOT BUILD_SHARED_LIBS)
+    set(RDTK_PC_REQUIRES_PRIVATE "winpr${WINPR_VERSION_MAJOR} libssl")
+    set(RDTK_PC_LIBRARY_PRIVATE "")
+  endif()
   cleaning_configure_file(
     ${CMAKE_CURRENT_SOURCE_DIR}/rdtk.pc.in ${CMAKE_CURRENT_BINARY_DIR}/rdtk${RDTK_VERSION_MAJOR}.pc @ONLY
   )
