@@ -555,9 +555,12 @@ static UINT ecam_dev_process_activate_device_request(CameraDevice* dev,
                                                      WINPR_ATTR_UNUSED wStream* s)
 {
 	WINPR_ASSERT(dev);
+	UINT32 errorCode = 0;
 
-	/* TODO: TBD if this is required */
-	return ecam_channel_send_generic_msg(dev->ecam, hchannel, CAM_MSG_ID_SuccessResponse);
+	if (dev->ihal->Activate(dev->ihal, dev->deviceId, &errorCode))
+		return ecam_channel_send_generic_msg(dev->ecam, hchannel, CAM_MSG_ID_SuccessResponse);
+
+	return ecam_channel_send_error_response(dev->ecam, hchannel, errorCode);
 }
 
 /**
@@ -575,7 +578,11 @@ static UINT ecam_dev_process_deactivate_device_request(CameraDevice* dev,
 	for (size_t i = 0; i < ECAM_DEVICE_MAX_STREAMS; i++)
 		ecam_dev_stop_stream(dev, i);
 
-	return ecam_channel_send_generic_msg(dev->ecam, hchannel, CAM_MSG_ID_SuccessResponse);
+	UINT32 errorCode = 0;
+	if (dev->ihal->Deactivate(dev->ihal, dev->deviceId, &errorCode))
+		return ecam_channel_send_generic_msg(dev->ecam, hchannel, CAM_MSG_ID_SuccessResponse);
+
+	return ecam_channel_send_error_response(dev->ecam, hchannel, errorCode);
 }
 
 /**

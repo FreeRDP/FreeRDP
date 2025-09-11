@@ -154,6 +154,24 @@ static int cam_v4l_open_device(const char* deviceId, int flags)
 	return fd;
 }
 
+static BOOL cam_v4l_activate(ICamHal* ihal, const char* deviceId, UINT32* errorCode)
+{
+	WINPR_UNUSED(ihal);
+	WINPR_UNUSED(deviceId);
+
+	*errorCode = 0;
+	return TRUE;
+}
+
+static BOOL cam_v4l_deactivate(ICamHal* ihal, const char* deviceId, UINT32* errorCode)
+{
+	WINPR_UNUSED(ihal);
+	WINPR_UNUSED(deviceId);
+
+	*errorCode = 0;
+	return TRUE;
+}
+
 /**
  * Function description
  *
@@ -781,6 +799,8 @@ FREERDP_ENTRY_POINT(UINT VCAPITYPE v4l_freerdp_rdpecam_client_subsystem_entry(
 
 	hal->iHal.Enumerate = cam_v4l_enumerate;
 	hal->iHal.GetMediaTypeDescriptions = cam_v4l_get_media_type_descriptions;
+	hal->iHal.Activate = cam_v4l_activate;
+	hal->iHal.Deactivate = cam_v4l_deactivate;
 	hal->iHal.StartStream = cam_v4l_stream_start;
 	hal->iHal.StopStream = cam_v4l_stream_stop_by_device_id;
 	hal->iHal.Free = cam_v4l_free;

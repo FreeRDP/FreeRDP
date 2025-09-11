@@ -153,20 +153,85 @@ typedef UINT (*ICamHalEnumCallback)(CameraPlugin* ecam, GENERIC_CHANNEL_CALLBACK
 typedef UINT (*ICamHalSampleCapturedCallback)(CameraDevice* dev, int streamIndex,
                                               const BYTE* sample, size_t size);
 
+/** @brief interface to implement for the camera HAL*/
 struct s_ICamHal
 {
+	/** callback to enumerate available camera calling callback for each found item
+	 *
+	 * @param ihal the hal interface
+	 * @param callback the enum callback
+	 * @param ecam the camera plugin
+	 * @param hchannel the generic freerdp channel
+	 * @return the number of found cameras
+	 */
 	UINT(*Enumerate)
 	(ICamHal* ihal, ICamHalEnumCallback callback, CameraPlugin* ecam,
 	 GENERIC_CHANNEL_CALLBACK* hchannel);
+
+	/**
+	 * callback to activate a given camera device
+	 * @param ihal the hal interface
+	 * @param deviceId the name of the device
+	 * @param errorCode a pointer to an error code set if the call failed
+	 * @return if the operation was successful
+	 * @since 3.18.0
+	 */
+	BOOL (*Activate)(ICamHal* ihal, const char* deviceId, UINT32* errorCode);
+
+	/**
+	 * callback to deactivate a given camera device
+	 * @param ihal the hal interface
+	 * @param deviceId the name of the device
+	 * @param errorCode a pointer to an error code set if the call failed
+	 * @return if the operation was successful
+	 * @since 3.18.0
+	 */
+	BOOL (*Deactivate)(ICamHal* ihal, const char* deviceId, UINT32* errorCode);
+
+	/**
+	 * callback that returns the list of compatible media types given a set of supported formats
+	 * @param ihal the hal interface
+	 * @param deviceId the name of the device
+	 * @param streamIndex stream index number
+	 * @param supportedFormats a pointer to supported formats
+	 * @param nSupportedFormats number of supported formats
+	 * @param mediaTypes resulting media type descriptors
+	 * @param nMediaTypes output number of media descriptors
+	 * @return number of matched supported formats
+	 */
 	INT16(*GetMediaTypeDescriptions)
 	(ICamHal* ihal, const char* deviceId, int streamIndex,
 	 const CAM_MEDIA_FORMAT_INFO* supportedFormats, size_t nSupportedFormats,
 	 CAM_MEDIA_TYPE_DESCRIPTION* mediaTypes, size_t* nMediaTypes);
+
+	/**
+	 * callback to start a stream
+	 * @param ihal the hal interface
+	 * @param dev
+	 * @param streamIndex stream index number
+	 * @param mediaType
+	 * @param callback
+	 * @return 0 on success, a CAM_Error otherwise
+	 */
 	UINT(*StartStream)
 	(ICamHal* ihal, CameraDevice* dev, int streamIndex, const CAM_MEDIA_TYPE_DESCRIPTION* mediaType,
 	 ICamHalSampleCapturedCallback callback);
+
+	/**
+	 * callback to stop a stream
+	 * @param ihal the hal interface
+	 * @param deviceId the name of the device
+	 * @param streamIndex stream index number
+	 * @return 0 on success, a CAM_Error otherwise
+	 */
 	UINT (*StopStream)(ICamHal* ihal, const char* deviceId, int streamIndex);
-	UINT (*Free)(ICamHal* hal);
+
+	/**
+	 * callback to free the ICamHal
+	 * @param hal the hal interface
+	 * @return 0 on success, a CAM_Error otherwise
+	 */
+	UINT (*Free)(ICamHal* ihal);
 };
 
 typedef UINT (*PREGISTERCAMERAHAL)(IWTSPlugin* plugin, ICamHal* hal);
