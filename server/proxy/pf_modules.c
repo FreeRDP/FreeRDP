@@ -26,6 +26,8 @@
 #include <winpr/wlog.h>
 #include <winpr/path.h>
 #include <winpr/library.h>
+
+#include <freerdp/version.h>
 #include <freerdp/api.h>
 #include <freerdp/build-config.h>
 
@@ -428,6 +430,7 @@ static BOOL pf_modules_register_plugin(proxyPluginsManager* mgr,
 		WLog_ERR(TAG, "failed adding plugin to list: %s", plugin_to_register->name);
 		return FALSE;
 	}
+	WLog_INFO(TAG, "Successfully registered proxy plugin '%s'", plugin_to_register->name);
 
 	return TRUE;
 }
@@ -494,7 +497,7 @@ static BOOL pf_modules_load_static_module(const char* module_name, proxyModule* 
 
 	if (handle == NULL)
 	{
-		WLog_ERR(TAG, "failed loading static library: %s", module_name);
+		WLog_DBG(TAG, "failed loading static library: %s", module_name);
 		return FALSE;
 	}
 
@@ -509,7 +512,7 @@ static BOOL pf_modules_load_static_module(const char* module_name, proxyModule* 
 	proxyModuleEntryPoint pEntryPoint = GetProcAddressAs(handle, name, proxyModuleEntryPoint);
 	if (!pEntryPoint)
 	{
-		WLog_ERR(TAG, "GetProcAddress failed for static %s (module %s)", name, module_name);
+		WLog_DBG(TAG, "GetProcAddress failed for static %s (module %s)", name, module_name);
 		goto error;
 	}
 	if (!ArrayList_Append(module->handles, handle))
@@ -524,19 +527,14 @@ error:
 	return FALSE;
 }
 
-static BOOL pf_modules_load_module(const char* module_path, const char* module_name,
-                                   proxyModule* module, void* userdata)
+static BOOL pf_modules_load_dynamic_module(const char* module_path, proxyModule* module,
+                                           void* userdata)
 {
-	WINPR_ASSERT(module);
-
-	if (pf_modules_load_static_module(module_name, module, userdata))
-		return TRUE;
-
 	HANDLE handle = LoadLibraryX(module_path);
 
 	if (handle == NULL)
 	{
-		WLog_ERR(TAG, "failed loading external library: %s", module_path);
+		WLog_DBG(TAG, "failed loading external library: %s", module_path);
 		return FALSE;
 	}
 
@@ -544,7 +542,7 @@ static BOOL pf_modules_load_module(const char* module_path, const char* module_n
 	    GetProcAddressAs(handle, MODULE_ENTRY_POINT, proxyModuleEntryPoint);
 	if (!pEntryPoint)
 	{
-		WLog_ERR(TAG, "GetProcAddress failed while loading %s", module_path);
+		WLog_DBG(TAG, "GetProcAddress failed while loading %s", module_path);
 		goto error;
 	}
 	if (!ArrayList_Append(module->handles, handle))
@@ -557,6 +555,53 @@ static BOOL pf_modules_load_module(const char* module_path, const char* module_n
 error:
 	FreeLibrary(handle);
 	return FALSE;
+}
+
+static BOOL pf_modules_try_load_dynamic_module(const char* module_path, proxyModule* module,
+                                               void* userdata, size_t count, const char* names[])
+{
+	for (size_t x = 0; x < count; x++)
+	{
+		const char* name = names[x];
+
+		char* fullpath = GetCombinedPath(module_path, name);
+		if (!fullpath)
+			continue;
+
+		const BOOL rc = pf_modules_load_dynamic_module(fullpath, module, userdata);
+		free(fullpath);
+		if (rc)
+			return TRUE;
+	}
+	return FALSE;
+}
+
+static BOOL pf_modules_load_module(const char* module_path, const char* module_name,
+                                   proxyModule* module, void* userdata)
+{
+	WINPR_ASSERT(module);
+
+	if (pf_modules_load_static_module(module_name, module, userdata))
+		return TRUE;
+
+	char names[5][MAX_PATH] = { 0 };
+	(void)_snprintf(names[0], sizeof(names[0]), "proxy-%s-plugin%s", module_name,
+	                FREERDP_SHARED_LIBRARY_SUFFIX);
+	(void)_snprintf(names[1], sizeof(names[1]), "%sproxy-%s-plugin%s",
+	                FREERDP_SHARED_LIBRARY_PREFIX, module_name, FREERDP_SHARED_LIBRARY_SUFFIX);
+	(void)_snprintf(names[2], sizeof(names[2]), "%sproxy-%s-plugin%s.%d",
+	                FREERDP_SHARED_LIBRARY_PREFIX, module_name, FREERDP_SHARED_LIBRARY_SUFFIX,
+	                FREERDP_VERSION_MAJOR);
+	(void)_snprintf(names[3], sizeof(names[3]), "%sproxy-%s-plugin%d%s",
+	                FREERDP_SHARED_LIBRARY_PREFIX, module_name, FREERDP_VERSION_MAJOR,
+	                FREERDP_SHARED_LIBRARY_SUFFIX);
+	(void)_snprintf(names[4], sizeof(names[4]), "%sproxy-%s-plugin%d%s.%d",
+	                FREERDP_SHARED_LIBRARY_PREFIX, module_name, FREERDP_VERSION_MAJOR,
+	                FREERDP_SHARED_LIBRARY_SUFFIX, FREERDP_VERSION_MAJOR);
+
+	const char* cnames[5] = { names[0], names[1], names[2], names[3], names[4] };
+	return pf_modules_try_load_dynamic_module(module_path, module, userdata, ARRAYSIZE(cnames),
+	                                          cnames);
 }
 
 static void free_handle(void* obj)
@@ -642,13 +687,11 @@ proxyModule* pf_modules_new(const char* root_dir, const char** modules, size_t c
 
 		for (size_t i = 0; i < count; i++)
 		{
-			char name[8192] = { 0 };
-			char* fullpath = NULL;
-			(void)_snprintf(name, sizeof(name), "proxy-%s-plugin%s", modules[i],
-			                FREERDP_SHARED_LIBRARY_SUFFIX);
-			fullpath = GetCombinedPath(path, name);
-			pf_modules_load_module(fullpath, modules[i], module, NULL);
-			free(fullpath);
+			const char* module_name = modules[i];
+			if (!pf_modules_load_module(path, module_name, module, NULL))
+				WLog_WARN(TAG, "Failed to load proxy module '%s'", module_name);
+			else
+				WLog_INFO(TAG, "Successfully loaded proxy module '%s'", module_name);
 		}
 	}
 
