@@ -118,6 +118,12 @@ if(WITH_WINPR_TOOLS_CLI)
   add_subdirectory(hash-cli)
 endif()
 
+# Do not set Requires.Private if not a static build
+if(NOT BUILD_SHARED_LIBS)
+  set(WINPR_TOOLS_PC_REQUIRES_PRIVATE "winpr${WINPR_API_VERSION} libssl")
+  set(WINPR_TOOLS_PC_LIBRARY_PRIVATE "crypto")
+endif()
+
 include(pkg-config-install-prefix)
 cleaning_configure_file(
   ${CMAKE_CURRENT_SOURCE_DIR}/winpr-tools.pc.in ${CMAKE_CURRENT_BINARY_DIR}/winpr-tools${WINPR_TOOLS_VERSION_MAJOR}.pc

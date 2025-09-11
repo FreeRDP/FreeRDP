@@ -9,7 +9,7 @@ Description: rdtk:
 URL: http://www.freerdp.com/
 Version: @RDTK_VERSION@
 Requires:
-Requires.private: winpr@WINPR_VERSION_MAJOR@
+Requires.private: @RDTK_PC_REQUIRES_PRIVATE@
 Libs: -L${libdir} ${libs}
-Libs.private: 
+Libs.private: @RDTK_PC_LIBRARY_PRIVATE@
 Cflags: -I${includedir}

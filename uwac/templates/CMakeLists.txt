@@ -37,6 +37,12 @@ cleaning_configure_file(build-config.h.in ${CMAKE_CURRENT_BINARY_DIR}/../include
 cleaning_configure_file(config.h.in ${CMAKE_CURRENT_BINARY_DIR}/../include/uwac/config.h)
 
 if(NOT UWAC_FORCE_STATIC_BUILD)
+  # Do not set Requires.Private if not a static build
+  if(NOT BUILD_SHARED_LIBS)
+    set(UWAC_PC_REQUIRES_PRIVATE "wayland-client xkbcommon freerdp${FREERDP_VERSION_MAJOR}")
+    set(UWAC_PC_LIBRARY_PRIVATE "")
+  endif()
+
   include(pkg-config-install-prefix)
   cleaning_configure_file(uwac.pc.in ${CMAKE_CURRENT_BINARY_DIR}/uwac${UWAC_VERSION_MAJOR}.pc @ONLY)
 
