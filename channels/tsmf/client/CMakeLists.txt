@@ -23,6 +23,7 @@ message(DEPRECATION "TSMF channel is no longer maintained. Use [MS-RDPEVOR] (/vi
 find_package(PkgConfig)
 if(PkgConfig_FOUND)
   pkg_check_modules(gstreamer gstreamer-1.0)
+  freerdp_client_pc_add_requires_private("gstreamer-1.0")
 endif()
 
 if(WITH_GSTREAMER_1_0)

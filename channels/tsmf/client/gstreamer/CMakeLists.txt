@@ -26,6 +26,7 @@ set(SRC "tsmf_gstreamer.c")
 pkg_check_modules(gstreamerbase gstreamer-base-1.0 REQUIRED)
 pkg_check_modules(gstreamervideo gstreamer-video-1.0 REQUIRED)
 pkg_check_modules(gstreamerapp gstreamer-app-1.0 REQUIRED)
+freerdp_client_pc_add_requires_private("gstreamer-base-1.0;gstreamer-video-1.0;gstreamer-app-1.0")
 
 set(LIBS ${gstreamer_LIBRARIES} ${gstreamerbase_LIBRARIES} ${gstreamervideo_LIBRARIES} ${gstreamerapp_LIBRARIES})
 include_directories(
@@ -37,6 +38,7 @@ if(ANDROID)
   set(SRC ${SRC} tsmf_android.c)
 else()
   find_package(X11 REQUIRED)
+  freerdp_client_pc_add_requires_private("x11")
 
   list(APPEND SRC tsmf_X11.c)
   list(APPEND LIBS ${X11_LIBRARIES} ${X11_Xext_LIB})

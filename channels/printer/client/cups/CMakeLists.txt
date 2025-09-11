@@ -18,6 +18,7 @@
 define_channel_client_subsystem("printer" "cups" "")
 
 find_package(Cups 2.0 REQUIRED)
+freerdp_client_pc_add_requires_private("cups")
 set(${MODULE_PREFIX}_SRCS printer_cups.c)
 
 set(${MODULE_PREFIX}_LIBS winpr freerdp ${CUPS_LIBRARIES})

@@ -20,6 +20,7 @@ if(WITH_V4L)
   define_channel_client_subsystem("rdpecam" "v4l" "")
 
   find_package(libusb-1.0 REQUIRED)
+  freerdp_client_pc_add_requires_private("libusb-1.0")
   include_directories(SYSTEM ${LIBUSB_1_INCLUDE_DIRS})
 
   set(${MODULE_PREFIX}_SRCS camera_v4l.c uvc_h264.c)

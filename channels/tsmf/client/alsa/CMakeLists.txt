@@ -18,6 +18,7 @@
 define_channel_client_subsystem("tsmf" "alsa" "audio")
 
 find_package(ALSA REQUIRED)
+freerdp_client_pc_add_requires_private("alsa")
 
 set(${MODULE_PREFIX}_SRCS tsmf_alsa.c)
 

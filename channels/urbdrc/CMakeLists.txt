@@ -24,6 +24,7 @@ if(WITH_CLIENT_CHANNELS)
   option(WITH_DEBUG_URBDRC "Dump data send/received in URBDRC channel" ${DEFAULT_DEBUG_OPTION})
 
   find_package(libusb-1.0 REQUIRED)
+  freerdp_client_pc_add_requires_private("libusb-1.0")
   include_directories(SYSTEM ${LIBUSB_1_INCLUDE_DIRS})
 
   add_channel_client(${MODULE_PREFIX} ${CHANNEL_NAME})
