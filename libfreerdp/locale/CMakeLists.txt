@@ -56,6 +56,7 @@ endif()
 
 if(WITH_X11 AND NOT WITHOUT_FREERDP_3x_DEPRECATED)
   find_package(X11 REQUIRED)
+  freerdp_pc_add_requires_private("x11")
 
   freerdp_definition_add(WITH_X11)
   freerdp_include_directory_add(${X11_INCLUDE_DIR})
@@ -68,6 +69,7 @@ if(WITH_X11 AND NOT WITHOUT_FREERDP_3x_DEPRECATED)
   endif()
 
   if(X11_Xkbfile_FOUND AND (NOT APPLE))
+    freerdp_pc_add_requires_private("xkbfile")
     freerdp_definition_add(WITH_XKBFILE)
     freerdp_include_directory_add(${X11_Xkbfile_INCLUDE_PATH})
     list(APPEND SRCS ${XKBFILE_SRCS})

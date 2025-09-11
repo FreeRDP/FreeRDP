@@ -53,6 +53,7 @@ check_library_exists(m pow "" HAVE_LIB_M)
 
 if(HAVE_LIB_M)
   freerdp_library_add(m)
+  freerdp_pc_add_library_private("m")
 endif()
 
 if(BUILD_TESTING_INTERNAL OR BUILD_TESTING)

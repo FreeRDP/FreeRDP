@@ -66,6 +66,7 @@ if(WITH_OPENCL)
   include_directories(${CMAKE_CURRENT_BINARY_DIR}/opencl)
   freerdp_include_directory_add(${OpenCL_INCLUDE_DIRS})
   freerdp_library_add(OpenCL::OpenCL)
+  freerdp_pc_add_requires_private("OpenCL")
 endif()
 
 set(PRIMITIVES_OPT_SRCS ${PRIMITIVES_NEON_SRCS} ${PRIMITIVES_SSE3_SRCS} ${PRIMITIVES_SSSE3_SRCS}
