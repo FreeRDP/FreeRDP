@@ -1,3 +1,46 @@
+# 2025-09-19 Version 3.17.2
+
+Minor improvements and bugfix release.
+Most notably resource usage (file handles) has been greatly reduced and
+static build pkg-config have been fixed.
+For users of xfreerdp RAILS/RemoteApp mode the switch to DesktopSession
+mode has been fixed (working UAC screen)
+
+## What's Changed
+* Findfirst fix (#11833)
+* [channels,drive] tolerate drive_file_set_disposition_information (#11834)
+* endianness fixes (#11835)
+* fix(winpr): ncrypt_pkcs11: set correct PIV certificate labels (#11837)
+* [cmake] fix versioning regression (#11832)
+* Limit threadpool (#11840)
+* [winpr,path] fix missing length check (#11841)
+* [proxy,channels] better NULL checks (#11842)
+* [codec,yuv] wrap step calculation (#11843)
+* [winpr,sspi] log mechanisms not valid (#11844)
+* settings: remove duplicate setting of GatewayAvdScope (#11845)
+* [client,sdl] improve clipboard logging (#11849)
+* rdpecam: add some new callbacks to the HAL (#11851)
+* [proxy,modules] generate pkg-config files for modules (#11848)
+* [cmake] static build: populate private (#11852)
+* [proxy,modules] extend dynamic module loader (#11854)
+* [winpr,threadpool] default minimum thread count (#11855)
+* [core,tcp] unify setting of TCP_NODELAY (#11856)
+* Planar fix (#11857)
+* Fix quote parsing (#11858)
+* Sdl mod: disable hotkeys (#11862)
+* Aad auth fail (#11863)
+* [clients] add checks from #11804 to all clients (#11865)
+* [client,x11] fix rails/desktop switch (#11866)
+* [client,x11] disable output during rail/desktop switch (#11867)
+* [core,gateway] automatically accept ARM redirection (#11870)
+* Update android deps (#11871)
+
+## New Contributors
+* @TheBestTvarynka made their first contribution in #11837)
+
+For a complete and detailed change log since the last release run:
+git log 3.17.2...3.17.1
+
 # 2025-09-01 Version 3.17.1
 
 Minor improvements and bugfix release.
