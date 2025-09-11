@@ -51,6 +51,14 @@ if(NOT FREERDP_UNIFIED_BUILD)
   add_compile_definitions(NONAMELESSUNION)
 endif()
 
+set(WINPR_PC_REQUIRES_PRIVATE "" CACHE INTERNAL "dependencies")
+macro(winpr_pc_add_requires_private)
+  foreach(_lib ${ARGN})
+    list(APPEND WINPR_PC_REQUIRES_PRIVATE ${_lib})
+  endforeach()
+  set(WINPR_PC_REQUIRES_PRIVATE ${WINPR_PC_REQUIRES_PRIVATE} CACHE INTERNAL "dependencies")
+endmacro()
+
 if(WIN32 AND NOT UWP)
   set(NATIVE_SSPI ON)
 endif()
@@ -294,6 +302,7 @@ endif()
 
 if(WITH_OPENSSL AND OPENSSL_FOUND)
   add_compile_definitions("WITH_OPENSSL")
+  winpr_pc_add_requires_private("libssl")
 endif()
 
 if(WITH_MBEDTLS AND MBEDTLS_FOUND)
@@ -330,6 +339,9 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR}/include)
 set(WINPR_INCLUDE_DIR "include/winpr${WINPR_VERSION_MAJOR}")
 
 add_subdirectory(libwinpr)
+
+list(REMOVE_DUPLICATES WINPR_PC_REQUIRES_PRIVATE)
+list(JOIN WINPR_PC_REQUIRES_PRIVATE " " WINPR_PC_REQUIRES_PRIVATE)
 
 if(WITH_WINPR_TOOLS)
   add_subdirectory(tools)

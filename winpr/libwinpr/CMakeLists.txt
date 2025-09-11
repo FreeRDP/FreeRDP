@@ -137,6 +137,7 @@ if(WITH_URIPARSER)
     winpr_library_add_private(${uriparser_LIBRARIES})
   endif()
   add_compile_definitions("WITH_URIPARSER")
+  winpr_pc_add_requires_private("liburiparser")
 endif()
 
 if(NOT IOS)
