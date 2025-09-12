@@ -1115,8 +1115,6 @@ int freerdp_tcp_default_connect(rdpContext* context, rdpSettings* settings, cons
                                 int port, DWORD timeout)
 {
 	int sockfd = 0;
-	UINT32 optval = 0;
-	socklen_t optlen = 0;
 	BOOL ipcSocket = FALSE;
 	BOOL useExternalDefinedSocket = FALSE;
 
@@ -1287,16 +1285,14 @@ int freerdp_tcp_default_connect(rdpContext* context, rdpSettings* settings, cons
 		}
 	}
 
-	optval = 1;
-	optlen = sizeof(optval);
-
 	if (!ipcSocket && !useExternalDefinedSocket)
 	{
-		if (setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, (void*)&optval, optlen) < 0)
-			WLog_ERR(TAG, "unable to set TCP_NODELAY");
+		(void)freerdp_tcp_set_nodelay(WLog_Get(TAG), WLOG_ERROR, sockfd);
 	}
 
 	/* receive buffer must be a least 32 K */
+	UINT32 optval = 0;
+	socklen_t optlen = 0;
 	if (getsockopt(sockfd, SOL_SOCKET, SO_RCVBUF, (void*)&optval, &optlen) == 0)
 	{
 		if (optval < (1024 * 32))
@@ -1511,4 +1507,42 @@ fail:
 		closesocket((SOCKET)sockfd);
 	transport_layer_free(layer);
 	return NULL;
+}
+
+BOOL freerdp_tcp_set_nodelay(wLog* log, DWORD level, int sockfd)
+{
+	WINPR_ASSERT(log);
+
+	int type = -1;
+	socklen_t typelen = sizeof(type);
+	const int rc = getsockopt(sockfd, SOL_SOCKET, SO_TYPE, &type, &typelen);
+	if (rc < 0)
+	{
+		char buffer[128] = { 0 };
+		WLog_Print(log, level, "can't get SOL_SOCKET|SO_TYPE (%s)",
+		           winpr_strerror(errno, buffer, sizeof(buffer)));
+		return FALSE;
+	}
+	else if (type == SOCK_STREAM)
+	{
+		int option_value = -1;
+		const socklen_t option_len = sizeof(option_value);
+		const int sr =
+		    setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, (void*)&option_value, option_len);
+		if (sr < 0)
+		{
+			/* local unix sockets don't have the TCP_NODELAY implemented, so don't make this
+			 * error fatal */
+			char buffer[128] = { 0 };
+			WLog_Print(log, level, "can't set TCP_NODELAY (%s)",
+			           winpr_strerror(errno, buffer, sizeof(buffer)));
+			return FALSE;
+		}
+	}
+	else
+	{
+		WLog_Print(log, level, "Socket SOL_SOCKET|SO_TYPE %d unsupported", type);
+		return FALSE;
+	}
+	return TRUE;
 }

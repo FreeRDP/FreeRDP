@@ -706,8 +706,6 @@ static PfChannelResult DynvcTrackerPeekFn(ChannelStateTracker* tracker, BOOL fir
 	UINT32 flags = lastPacket ? CHANNEL_FLAG_LAST : 0;
 	if (firstPacket)
 		flags |= CHANNEL_FLAG_FIRST;
-	proxyData* pdata = channelTracker_getPData(tracker);
-	WINPR_ASSERT(pdata);
 
 	{
 		wStream* currentPacket = channelTracker_getCurrentPacket(tracker);
