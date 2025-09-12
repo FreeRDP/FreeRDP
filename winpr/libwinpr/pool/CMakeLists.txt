@@ -16,7 +16,9 @@
 # limitations under the License.
 
 set(WINPR_THREADPOOL_DEFAULT_MAX_COUNT "16" CACHE STRING "The maximum (default) number of threads in a pool")
+set(WINPR_THREADPOOL_DEFAULT_MIN_COUNT "4" CACHE STRING "The minimum (default) number of threads in a pool")
 winpr_definition_add(WINPR_THREADPOOL_DEFAULT_MAX_COUNT=${WINPR_THREADPOOL_DEFAULT_MAX_COUNT})
+winpr_definition_add(WINPR_THREADPOOL_DEFAULT_MIN_COUNT=${WINPR_THREADPOOL_DEFAULT_MIN_COUNT})
 winpr_module_add(
   synch.c
   work.c

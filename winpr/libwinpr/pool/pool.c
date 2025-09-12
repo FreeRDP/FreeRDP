@@ -127,10 +127,15 @@ static BOOL InitializeThreadpool(PTP_POOL pool)
 	obj = ArrayList_Object(pool->Threads);
 	obj->fnObjectFree = threads_close;
 
+#if !defined(WINPR_THREADPOOL_DEFAULT_MIN_COUNT)
+#error "WINPR_THREADPOOL_DEFAULT_MIN_COUNT must be defined"
+#endif
+
 	SYSTEM_INFO info = { 0 };
 	GetSystemInfo(&info);
-	if (info.dwNumberOfProcessors < 1)
-		info.dwNumberOfProcessors = 1;
+	if (info.dwNumberOfProcessors < WINPR_THREADPOOL_DEFAULT_MIN_COUNT)
+		info.dwNumberOfProcessors = WINPR_THREADPOOL_DEFAULT_MIN_COUNT;
+
 	if (!SetThreadpoolThreadMinimum(pool, info.dwNumberOfProcessors))
 		goto fail;
 
