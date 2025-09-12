@@ -31,6 +31,10 @@ static const char* test_args_line_7 = "app.exe a\\\\\\\\\"b c\" d e f\\\\\\\\\"g
 
 static const char* test_args_list_7[] = { "app.exe", "a\\\\b c", "d", "e", "f\\\\g h", "i", "j" };
 
+static const char* test_args_line_8 = "app.exe arg1 \"arg2\"";
+
+static const char* test_args_list_8[] = { "app.exe", "arg1", "arg2" };
+
 static BOOL test_command_line_parsing_case(const char* line, const char** list, size_t expect)
 {
 	BOOL rc = FALSE;
@@ -103,6 +107,9 @@ int TestThreadCommandLineToArgv(int argc, char* argv[])
 		return -1;
 	if (!test_command_line_parsing_case(test_args_line_7, test_args_list_7,
 	                                    ARRAYSIZE(test_args_list_7)))
+		return -1;
+	if (!test_command_line_parsing_case(test_args_line_8, test_args_list_8,
+	                                    ARRAYSIZE(test_args_list_8)))
 		return -1;
 
 	return 0;
