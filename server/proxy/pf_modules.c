@@ -530,6 +530,12 @@ error:
 static BOOL pf_modules_load_dynamic_module(const char* module_path, proxyModule* module,
                                            void* userdata)
 {
+	if (!winpr_PathFileExists(module_path))
+	{
+		WLog_DBG(TAG, "failed loading external library: file '%s' does not exist", module_path);
+		return FALSE;
+	}
+
 	HANDLE handle = LoadLibraryX(module_path);
 
 	if (handle == NULL)
