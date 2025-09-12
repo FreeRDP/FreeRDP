@@ -1443,44 +1443,14 @@ const char* freerdp_peer_os_minor_type_string(freerdp_peer* client)
 
 freerdp_peer* freerdp_peer_new(int sockfd)
 {
-	UINT32 option_value = 0;
-	socklen_t option_len = 0;
 	freerdp_peer* client = (freerdp_peer*)calloc(1, sizeof(freerdp_peer));
 
 	if (!client)
 		return NULL;
 
-	option_value = TRUE;
-	option_len = sizeof(option_value);
-
 	if (sockfd >= 0)
 	{
-		int type = -1;
-		socklen_t typelen = sizeof(type);
-		const int rc = getsockopt(sockfd, SOL_SOCKET, SO_TYPE, &type, &typelen);
-		if (rc < 0)
-		{
-			char buffer[128] = { 0 };
-			WLog_DBG(TAG, "can't get SOL_SOCKET|SO_TYPE, continuing anyway (%s)",
-			         winpr_strerror(errno, buffer, sizeof(buffer)));
-		}
-		else if (type == SOCK_STREAM)
-		{
-			const int sr =
-			    setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, (void*)&option_value, option_len);
-			if (sr < 0)
-			{
-				/* local unix sockets don't have the TCP_NODELAY implemented, so don't make this
-				 * error fatal */
-				char buffer[128] = { 0 };
-				WLog_DBG(TAG, "can't set TCP_NODELAY, continuing anyway (%s)",
-				         winpr_strerror(errno, buffer, sizeof(buffer)));
-			}
-		}
-		else
-		{
-			WLog_DBG(TAG, "Socket SOL_SOCKET|SO_TYPE %d unsupported, continuing anyway", type);
-		}
+		(void)freerdp_tcp_set_nodelay(WLog_Get(TAG), WLOG_DEBUG, sockfd);
 	}
 
 	if (client)
