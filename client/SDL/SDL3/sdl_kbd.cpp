@@ -542,49 +542,57 @@ BOOL sdlInput::keyboard_handle_event(const SDL_KeyboardEvent* ev)
 {
 	WINPR_ASSERT(ev);
 	const UINT32 rdp_scancode = scancode_to_rdp(ev->scancode);
-	const SDL_Keymod mods = SDL_GetModState();
 
-	if ((mods & _hotkeyModmask) == _hotkeyModmask)
+	if (_hotkeysEnabled)
 	{
-		if (ev->type == SDL_EVENT_KEY_DOWN)
-		{
-			if (ev->scancode == _hotkeyFullscreen)
-			{
-				WLog_Print(_sdl->log, WLOG_INFO, "%s+<%s> pressed, toggling fullscreen state",
-				           masktostr(_hotkeyModmask).c_str(), sdl_scancode_name(_hotkeyFullscreen));
-				keyboard_sync_state();
-				return _sdl->update_fullscreen(!_sdl->fullscreen);
-			}
-			if (ev->scancode == _hotkeyResizable)
-			{
-				WLog_Print(_sdl->log, WLOG_INFO, "%s+<%s> pressed, toggling resizeable state",
-				           masktostr(_hotkeyModmask).c_str(), sdl_scancode_name(_hotkeyResizable));
-				keyboard_sync_state();
-				return _sdl->update_resizeable(!_sdl->resizeable);
-			}
+		const SDL_Keymod mods = SDL_GetModState();
 
-			if (ev->scancode == _hotkeyGrab)
+		if ((mods & _hotkeyModmask) == _hotkeyModmask)
+		{
+			if (ev->type == SDL_EVENT_KEY_DOWN)
 			{
-				WLog_Print(_sdl->log, WLOG_INFO, "%s+<%s> pressed, toggling grab state",
-				           masktostr(_hotkeyModmask).c_str(), sdl_scancode_name(_hotkeyGrab));
-				keyboard_sync_state();
-				keyboard_grab(ev->windowID, !_sdl->grab_kbd);
-				return TRUE;
-			}
-			if (ev->scancode == _hotkeyDisconnect)
-			{
-				WLog_Print(_sdl->log, WLOG_INFO, "%s+<%s> pressed, disconnecting RDP session",
-				           masktostr(_hotkeyModmask).c_str(), sdl_scancode_name(_hotkeyDisconnect));
-				keyboard_sync_state();
-				freerdp_abort_connect_context(_sdl->context());
-				return TRUE;
-			}
-			if (ev->scancode == _hotkeyMinimize)
-			{
-				WLog_Print(_sdl->log, WLOG_INFO, "%s+<%s> pressed, minimizing client",
-				           masktostr(_hotkeyModmask).c_str(), sdl_scancode_name(_hotkeyMinimize));
-				keyboard_sync_state();
-				return _sdl->update_minimize();
+				if (ev->scancode == _hotkeyFullscreen)
+				{
+					WLog_Print(_sdl->log, WLOG_INFO, "%s+<%s> pressed, toggling fullscreen state",
+					           masktostr(_hotkeyModmask).c_str(),
+					           sdl_scancode_name(_hotkeyFullscreen));
+					keyboard_sync_state();
+					return _sdl->update_fullscreen(!_sdl->fullscreen);
+				}
+				if (ev->scancode == _hotkeyResizable)
+				{
+					WLog_Print(_sdl->log, WLOG_INFO, "%s+<%s> pressed, toggling resizeable state",
+					           masktostr(_hotkeyModmask).c_str(),
+					           sdl_scancode_name(_hotkeyResizable));
+					keyboard_sync_state();
+					return _sdl->update_resizeable(!_sdl->resizeable);
+				}
+
+				if (ev->scancode == _hotkeyGrab)
+				{
+					WLog_Print(_sdl->log, WLOG_INFO, "%s+<%s> pressed, toggling grab state",
+					           masktostr(_hotkeyModmask).c_str(), sdl_scancode_name(_hotkeyGrab));
+					keyboard_sync_state();
+					keyboard_grab(ev->windowID, !_sdl->grab_kbd);
+					return TRUE;
+				}
+				if (ev->scancode == _hotkeyDisconnect)
+				{
+					WLog_Print(_sdl->log, WLOG_INFO, "%s+<%s> pressed, disconnecting RDP session",
+					           masktostr(_hotkeyModmask).c_str(),
+					           sdl_scancode_name(_hotkeyDisconnect));
+					keyboard_sync_state();
+					freerdp_abort_connect_context(_sdl->context());
+					return TRUE;
+				}
+				if (ev->scancode == _hotkeyMinimize)
+				{
+					WLog_Print(_sdl->log, WLOG_INFO, "%s+<%s> pressed, minimizing client",
+					           masktostr(_hotkeyModmask).c_str(),
+					           sdl_scancode_name(_hotkeyMinimize));
+					keyboard_sync_state();
+					return _sdl->update_minimize();
+				}
 			}
 		}
 	}
@@ -651,7 +659,9 @@ BOOL sdlInput::mouse_grab(Uint32 windowID, bool enable)
 }
 
 sdlInput::sdlInput(SdlContext* sdl)
-    : _sdl(sdl), _lastWindowID(UINT32_MAX), _hotkeyModmask(prefToMask())
+    : _sdl(sdl), _lastWindowID(UINT32_MAX),
+      _hotkeysEnabled(SdlPref::instance()->get_bool("EnableHotkeys", true)),
+      _hotkeyModmask(prefToMask())
 {
 	_hotkeyFullscreen = prefKeyValue("SDL_Fullscreen", SDL_SCANCODE_RETURN);
 	_hotkeyResizable = prefKeyValue("SDL_Resizeable", SDL_SCANCODE_R);

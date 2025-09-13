@@ -71,6 +71,7 @@ class sdlInput
 	Uint32 _lastWindowID;
 
 	// hotkey handling
+	bool _hotkeysEnabled;
 	uint32_t _hotkeyModmask; // modifier keys mask
 	uint32_t _hotkeyFullscreen;
 	uint32_t _hotkeyResizable;
