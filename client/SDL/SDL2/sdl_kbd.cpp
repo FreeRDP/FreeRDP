@@ -481,37 +481,40 @@ BOOL sdlInput::keyboard_handle_event(const SDL_KeyboardEvent* ev)
 {
 	WINPR_ASSERT(ev);
 	const UINT32 rdp_scancode = sdl_scancode_to_rdp(ev->keysym.scancode);
-	const SDL_Keymod mods = SDL_GetModState();
 
-	if ((mods & _hotkeyModmask) == _hotkeyModmask)
+	if (_hotkeysEnabled)
 	{
-		if (ev->type == SDL_KEYDOWN)
+		const SDL_Keymod mods = SDL_GetModState();
+		if ((mods & _hotkeyModmask) == _hotkeyModmask)
 		{
-			if (ev->keysym.scancode == _hotkeyFullscreen)
+			if (ev->type == SDL_KEYDOWN)
 			{
-				_sdl->update_fullscreen(!_sdl->fullscreen);
-				return TRUE;
-			}
-			if (ev->keysym.scancode == _hotkeyResizable)
-			{
-				_sdl->update_resizeable(!_sdl->resizeable);
-				return TRUE;
-			}
+				if (ev->keysym.scancode == _hotkeyFullscreen)
+				{
+					_sdl->update_fullscreen(!_sdl->fullscreen);
+					return TRUE;
+				}
+				if (ev->keysym.scancode == _hotkeyResizable)
+				{
+					_sdl->update_resizeable(!_sdl->resizeable);
+					return TRUE;
+				}
 
-			if (ev->keysym.scancode == _hotkeyGrab)
-			{
-				keyboard_grab(ev->windowID, !_sdl->grab_kbd);
-				return TRUE;
-			}
-			if (ev->keysym.scancode == _hotkeyDisconnect)
-			{
-				freerdp_abort_connect_context(_sdl->context());
-				return TRUE;
-			}
-			if (ev->keysym.scancode == _hotkeyMinimize)
-			{
-				_sdl->update_minimize();
-				return TRUE;
+				if (ev->keysym.scancode == _hotkeyGrab)
+				{
+					keyboard_grab(ev->windowID, !_sdl->grab_kbd);
+					return TRUE;
+				}
+				if (ev->keysym.scancode == _hotkeyDisconnect)
+				{
+					freerdp_abort_connect_context(_sdl->context());
+					return TRUE;
+				}
+				if (ev->keysym.scancode == _hotkeyMinimize)
+				{
+					_sdl->update_minimize();
+					return TRUE;
+				}
 			}
 		}
 	}
@@ -556,7 +559,9 @@ BOOL sdlInput::mouse_grab(Uint32 windowID, SDL_bool enable)
 }
 
 sdlInput::sdlInput(SdlContext* sdl)
-    : _sdl(sdl), _lastWindowID(UINT32_MAX), _hotkeyModmask(prefToMask())
+    : _sdl(sdl), _lastWindowID(UINT32_MAX),
+      _hotkeysEnabled(SdlPref::instance()->get_bool("EnableHotkeys", true)),
+      _hotkeyModmask(prefToMask())
 {
 	auto list =
 	    freerdp_settings_get_string(_sdl->context()->settings, FreeRDP_KeyboardRemappingList);
