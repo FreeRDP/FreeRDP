@@ -415,7 +415,7 @@ bool sdlInput::prefToEnabled()
 		if (it != m.end())
 		{
 			if (it->second == KMOD_NONE)
-				enabled = false;
+				enable = false;
 		}
 		else
 		{
