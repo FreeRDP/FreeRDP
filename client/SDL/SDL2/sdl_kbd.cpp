@@ -389,17 +389,26 @@ BOOL sdlInput::keyboard_set_ime_status(rdpContext* context, UINT16 imeId, UINT32
 static const std::map<std::string, uint32_t>& getSdlMap()
 {
 	static std::map<std::string, uint32_t> s_map = {
-		{ "KMOD_LSHIFT", KMOD_LSHIFT }, { "KMOD_RSHIFT", KMOD_RSHIFT },
-		{ "KMOD_LCTRL", KMOD_LCTRL },   { "KMOD_RCTRL", KMOD_RCTRL },
-		{ "KMOD_LALT", KMOD_LALT },     { "KMOD_RALT", KMOD_RALT },
-		{ "KMOD_LGUI", KMOD_LGUI },     { "KMOD_RGUI", KMOD_RGUI },
-		{ "KMOD_NUM", KMOD_NUM },       { "KMOD_CAPS", KMOD_CAPS },
+		{ "KMOD_LSHIFT", KMOD_LSHIFT },     { "KMOD_RSHIFT", KMOD_RSHIFT },
+		{ "KMOD_LCTRL", KMOD_LCTRL },       { "KMOD_RCTRL", KMOD_RCTRL },
+		{ "KMOD_LALT", KMOD_LALT },         { "KMOD_RALT", KMOD_RALT },
+		{ "KMOD_LGUI", KMOD_LGUI },         { "KMOD_RGUI", KMOD_RGUI },
+		{ "KMOD_NUM", KMOD_NUM },           { "KMOD_CAPS", KMOD_CAPS },
+		{ "KMOD_MODE", KMOD_MODE },
 #if SDL_VERSION_ATLEAST(2, 0, 18)
 		{ "KMOD_SCROLL", KMOD_SCROLL },
 #endif
-		{ "KMOD_CTRL", KMOD_CTRL },     { "KMOD_SHIFT", KMOD_SHIFT },
-		{ "KMOD_ALT", KMOD_ALT },       { "KMOD_GUI", KMOD_GUI },
-		{ "KMOD_NONE", KMOD_NONE }
+		{ "KMOD_CTRL", KMOD_CTRL },         { "KMOD_SHIFT", KMOD_SHIFT },
+		{ "KMOD_ALT", KMOD_ALT },           { "KMOD_GUI", KMOD_GUI },
+		{ "KMOD_NONE", KMOD_NONE },         { "SDL_KMOD_LSHIFT", KMOD_LSHIFT },
+		{ "SDL_KMOD_RSHIFT", KMOD_RSHIFT }, { "SDL_KMOD_LCTRL", KMOD_LCTRL },
+		{ "SDL_KMOD_RCTRL", KMOD_RCTRL },   { "SDL_KMOD_LALT", KMOD_LALT },
+		{ "SDL_KMOD_RALT", KMOD_RALT },     { "SDL_KMOD_LGUI", KMOD_LGUI },
+		{ "SDL_KMOD_RGUI", KMOD_RGUI },     { "SDL_KMOD_NUM", KMOD_NUM },
+		{ "SDL_KMOD_CAPS", KMOD_CAPS },     { "SDL_KMOD_MODE", KMOD_MODE },
+		{ "SDL_KMOD_SCROLL", KMOD_SCROLL }, { "SDL_KMOD_CTRL", KMOD_CTRL },
+		{ "SDL_KMOD_SHIFT", KMOD_SHIFT },   { "SDL_KMOD_ALT", KMOD_ALT },
+		{ "SDL_KMOD_GUI", KMOD_GUI },       { "SDL_KMOD_NONE", KMOD_NONE }
 	};
 
 	return s_map;
