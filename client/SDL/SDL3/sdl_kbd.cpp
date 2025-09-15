@@ -383,7 +383,8 @@ static const std::map<std::string, uint32_t>& getSdlMap()
 		{ "KMOD_NUM", SDL_KMOD_NUM },       { "KMOD_CAPS", SDL_KMOD_CAPS },
 		{ "KMOD_MODE", SDL_KMOD_MODE },     { "KMOD_SCROLL", SDL_KMOD_SCROLL },
 		{ "KMOD_CTRL", SDL_KMOD_CTRL },     { "KMOD_SHIFT", SDL_KMOD_SHIFT },
-		{ "KMOD_ALT", SDL_KMOD_ALT },       { "KMOD_GUI", SDL_KMOD_GUI }
+		{ "KMOD_ALT", SDL_KMOD_ALT },       { "KMOD_GUI", SDL_KMOD_GUI },
+		{ "KMOD_NONE", SDL_KMOD_NONE }
 	};
 
 	return s_map;
@@ -424,17 +425,38 @@ static std::string masktostr(uint32_t mask)
 	return str;
 }
 
-uint32_t sdlInput::prefToMask()
+bool sdlInput::prefToEnabled()
 {
-	auto m = getSdlMap();
-	uint32_t mod = SDL_KMOD_NONE;
+	bool enabled = true;
+	const auto& m = getSdlMap();
 	for (const auto& val : SdlPref::instance()->get_array("SDL_KeyModMask", { "KMOD_RSHIFT" }))
 	{
 		auto it = m.find(val);
 		if (it != m.end())
 		{
-			mod |= it->second;
+			if (it->second == SDL_KMOD_NONE)
+				enabled = false;
 		}
+		else
+		{
+			WLog_Print(_sdl->log, WLOG_WARN,
+			           "Invalid config::SDL_KeyModMask entry value '%s', disabling hotkeys",
+			           val.c_str());
+			enabled = false;
+		}
+	}
+	return enabled;
+}
+
+uint32_t sdlInput::prefToMask()
+{
+	const auto& m = getSdlMap();
+	uint32_t mod = SDL_KMOD_NONE;
+	for (const auto& val : SdlPref::instance()->get_array("SDL_KeyModMask", { "KMOD_RSHIFT" }))
+	{
+		auto it = m.find(val);
+		if (it != m.end())
+			mod |= it->second;
 	}
 	return mod;
 }
@@ -544,7 +566,7 @@ BOOL sdlInput::keyboard_handle_event(const SDL_KeyboardEvent* ev)
 	const UINT32 rdp_scancode = scancode_to_rdp(ev->scancode);
 	const SDL_Keymod mods = SDL_GetModState();
 
-	if ((mods & _hotkeyModmask) == _hotkeyModmask)
+	if (_hotkeysEnabled && (mods & _hotkeyModmask) == _hotkeyModmask)
 	{
 		if (ev->type == SDL_EVENT_KEY_DOWN)
 		{
@@ -651,7 +673,8 @@ BOOL sdlInput::mouse_grab(Uint32 windowID, bool enable)
 }
 
 sdlInput::sdlInput(SdlContext* sdl)
-    : _sdl(sdl), _lastWindowID(UINT32_MAX), _hotkeyModmask(prefToMask())
+    : _sdl(sdl), _lastWindowID(UINT32_MAX), _hotkeysEnabled(prefToEnabled()),
+      _hotkeyModmask(prefToMask())
 {
 	_hotkeyFullscreen = prefKeyValue("SDL_Fullscreen", SDL_SCANCODE_RETURN);
 	_hotkeyResizable = prefKeyValue("SDL_Resizeable", SDL_SCANCODE_R);
