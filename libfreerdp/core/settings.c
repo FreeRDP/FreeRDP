@@ -1401,8 +1401,6 @@ static BOOL freerdp_settings_int_buffer_copy(rdpSettings* _settings, const rdpSe
 		    freerdp_settings_get_pointer_array(settings, FreeRDP_TargetNetAddresses, i);
 		const UINT32* port =
 		    freerdp_settings_get_pointer_array(settings, FreeRDP_TargetNetPorts, i);
-		WINPR_ASSERT(address);
-		WINPR_ASSERT(port);
 
 		if (!freerdp_settings_set_pointer_array(_settings, FreeRDP_TargetNetAddresses, i, address))
 			goto out_fail;

@@ -836,6 +836,9 @@ static BOOL freerdp_common_context(rdpContext* context, AccessTokenType tokenTyp
 	}
 	va_end(ap);
 
+	if (!rc)
+		freerdp_set_last_error_if_not(context, FREERDP_ERROR_CONNECT_ACCESS_DENIED);
+
 	return rc;
 }
 
