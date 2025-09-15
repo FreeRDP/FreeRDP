@@ -57,7 +57,8 @@ class sdlInput
 	static BOOL keyboard_set_ime_status(rdpContext* context, UINT16 imeId, UINT32 imeState,
 	                                    UINT32 imeConvMode);
 
-	static uint32_t prefToMask();
+	bool prefToEnabled();
+	uint32_t prefToMask();
 	static uint32_t prefKeyValue(const std::string& key, uint32_t fallback = SDL_SCANCODE_UNKNOWN);
 
   private:
@@ -71,6 +72,7 @@ class sdlInput
 	Uint32 _lastWindowID;
 
 	// hotkey handling
+	bool _hotkeysEnabled;
 	uint32_t _hotkeyModmask; // modifier keys mask
 	uint32_t _hotkeyFullscreen;
 	uint32_t _hotkeyResizable;

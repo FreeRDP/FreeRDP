@@ -386,29 +386,65 @@ BOOL sdlInput::keyboard_set_ime_status(rdpContext* context, UINT16 imeId, UINT32
 	return TRUE;
 }
 
-uint32_t sdlInput::prefToMask()
+static const std::map<std::string, uint32_t>& getSdlMap()
 {
-	const std::map<std::string, uint32_t> mapping = {
-		{ "KMOD_LSHIFT", KMOD_LSHIFT }, { "KMOD_RSHIFT", KMOD_RSHIFT },
-		{ "KMOD_LCTRL", KMOD_LCTRL },   { "KMOD_RCTRL", KMOD_RCTRL },
-		{ "KMOD_LALT", KMOD_LALT },     { "KMOD_RALT", KMOD_RALT },
-		{ "KMOD_LGUI", KMOD_LGUI },     { "KMOD_RGUI", KMOD_RGUI },
-		{ "KMOD_NUM", KMOD_NUM },       { "KMOD_CAPS", KMOD_CAPS },
+	static std::map<std::string, uint32_t> s_map = {
+		{ "KMOD_LSHIFT", KMOD_LSHIFT },     { "KMOD_RSHIFT", KMOD_RSHIFT },
+		{ "KMOD_LCTRL", KMOD_LCTRL },       { "KMOD_RCTRL", KMOD_RCTRL },
+		{ "KMOD_LALT", KMOD_LALT },         { "KMOD_RALT", KMOD_RALT },
+		{ "KMOD_LGUI", KMOD_LGUI },         { "KMOD_RGUI", KMOD_RGUI },
+		{ "KMOD_NUM", KMOD_NUM },           { "KMOD_CAPS", KMOD_CAPS },
 		{ "KMOD_MODE", KMOD_MODE },
 #if SDL_VERSION_ATLEAST(2, 0, 18)
 		{ "KMOD_SCROLL", KMOD_SCROLL },
 #endif
-		{ "KMOD_CTRL", KMOD_CTRL },     { "KMOD_SHIFT", KMOD_SHIFT },
-		{ "KMOD_ALT", KMOD_ALT },       { "KMOD_GUI", KMOD_GUI }
+		{ "KMOD_CTRL", KMOD_CTRL },         { "KMOD_SHIFT", KMOD_SHIFT },
+		{ "KMOD_ALT", KMOD_ALT },           { "KMOD_GUI", KMOD_GUI },
+		{ "KMOD_NONE", KMOD_NONE },         { "SDL_KMOD_LSHIFT", KMOD_LSHIFT },
+		{ "SDL_KMOD_RSHIFT", KMOD_RSHIFT }, { "SDL_KMOD_LCTRL", KMOD_LCTRL },
+		{ "SDL_KMOD_RCTRL", KMOD_RCTRL },   { "SDL_KMOD_LALT", KMOD_LALT },
+		{ "SDL_KMOD_RALT", KMOD_RALT },     { "SDL_KMOD_LGUI", KMOD_LGUI },
+		{ "SDL_KMOD_RGUI", KMOD_RGUI },     { "SDL_KMOD_NUM", KMOD_NUM },
+		{ "SDL_KMOD_CAPS", KMOD_CAPS },     { "SDL_KMOD_MODE", KMOD_MODE },
+		{ "SDL_KMOD_SCROLL", KMOD_SCROLL }, { "SDL_KMOD_CTRL", KMOD_CTRL },
+		{ "SDL_KMOD_SHIFT", KMOD_SHIFT },   { "SDL_KMOD_ALT", KMOD_ALT },
+		{ "SDL_KMOD_GUI", KMOD_GUI },       { "SDL_KMOD_NONE", KMOD_NONE }
 	};
+
+	return s_map;
+}
+
+bool sdlInput::prefToEnabled()
+{
+	bool enable = true;
+	const auto& m = getSdlMap();
+	for (const auto& val : SdlPref::instance()->get_array("SDL_KeyModMask", { "KMOD_RSHIFT" }))
+	{
+		auto it = m.find(val);
+		if (it != m.end())
+		{
+			if (it->second == KMOD_NONE)
+				enable = false;
+		}
+		else
+		{
+			WLog_WARN(TAG, "Invalid config::SDL_KeyModMask entry value '%s', disabling hotkeys",
+			          val.c_str());
+			enable = false;
+		}
+	}
+	return enable;
+}
+
+uint32_t sdlInput::prefToMask()
+{
+	const auto& mapping = getSdlMap();
 	uint32_t mod = KMOD_NONE;
 	for (const auto& val : SdlPref::instance()->get_array("SDL_KeyModMask", { "KMOD_RSHIFT" }))
 	{
 		auto it = mapping.find(val);
 		if (it != mapping.end())
-		{
 			mod |= it->second;
-		}
 	}
 	return mod;
 }
@@ -483,7 +519,7 @@ BOOL sdlInput::keyboard_handle_event(const SDL_KeyboardEvent* ev)
 	const UINT32 rdp_scancode = sdl_scancode_to_rdp(ev->keysym.scancode);
 	const SDL_Keymod mods = SDL_GetModState();
 
-	if ((mods & _hotkeyModmask) == _hotkeyModmask)
+	if (_hotkeysEnabled && (mods & _hotkeyModmask) == _hotkeyModmask)
 	{
 		if (ev->type == SDL_KEYDOWN)
 		{
@@ -556,7 +592,8 @@ BOOL sdlInput::mouse_grab(Uint32 windowID, SDL_bool enable)
 }
 
 sdlInput::sdlInput(SdlContext* sdl)
-    : _sdl(sdl), _lastWindowID(UINT32_MAX), _hotkeyModmask(prefToMask())
+    : _sdl(sdl), _lastWindowID(UINT32_MAX), _hotkeysEnabled(prefToEnabled()),
+      _hotkeyModmask(prefToMask())
 {
 	auto list =
 	    freerdp_settings_get_string(_sdl->context()->settings, FreeRDP_KeyboardRemappingList);
