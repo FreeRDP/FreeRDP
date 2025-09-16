@@ -296,3 +296,5 @@ extern int LogDynAndXRestackWindows_ex(wLog* log, const char* file, const char* 
 BOOL IsGnome(void);
 
 char* getConfigOption(BOOL system, const char* option);
+
+const char* request_code_2_str(int code);
