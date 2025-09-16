@@ -129,20 +129,50 @@ DWORD ios_ui_verify_changed_certificate_ex(freerdp *instance, const char *host, 
 
 BOOL ios_ui_begin_paint(rdpContext *context)
 {
+	WINPR_ASSERT(context);
+
 	rdpGdi *gdi = context->gdi;
-	gdi->primary->hdc->hwnd->invalid->null = TRUE;
+	WINPR_ASSERT(gdi);
+	WINPR_ASSERT(gdi->primary);
+
+	HGDI_DC hdc = gdi->primary->hdc;
+	WINPR_ASSERT(hdc);
+	if (!hdc->hwnd)
+		return TRUE;
+
+	HGDI_WND hwnd = hdc->hwnd;
+	if (!hwnd->invalid)
+		return TRUE;
+	hwnd->invalid->null = TRUE;
 	return TRUE;
 }
 
 BOOL ios_ui_end_paint(rdpContext *context)
 {
-	mfInfo *mfi = MFI_FROM_INSTANCE(context->instance);
-	rdpGdi *gdi = context->gdi;
-	CGRect dirty_rect =
-	    CGRectMake(gdi->primary->hdc->hwnd->invalid->x, gdi->primary->hdc->hwnd->invalid->y,
-	               gdi->primary->hdc->hwnd->invalid->w, gdi->primary->hdc->hwnd->invalid->h);
+	WINPR_ASSERT(context);
 
-	if (!gdi->primary->hdc->hwnd->invalid->null)
+	mfInfo *mfi = MFI_FROM_INSTANCE(context->instance);
+	WINPR_ASSERT(mfi);
+
+	rdpGdi *gdi = context->gdi;
+	WINPR_ASSERT(gdi);
+	WINPR_ASSERT(gdi->primary);
+
+	HGDI_DC hdc = gdi->primary->hdc;
+	WINPR_ASSERT(hdc);
+	if (!hdc->hwnd)
+		return TRUE;
+
+	HGDI_WND hwnd = hdc->hwnd;
+	WINPR_ASSERT(hwnd->invalid || (hwnd->ninvalid == 0));
+
+	if (hwnd->invalid->null)
+		return TRUE;
+
+	CGRect dirty_rect =
+	    CGRectMake(hwnd->invalid->x, hwnd->invalid->y, hwnd->invalid->w, hwnd->invalid->h);
+
+	if (!hwnd->invalid->null)
 		[mfi->session performSelectorOnMainThread:@selector(setNeedsDisplayInRectAsValue:)
 		                               withObject:[NSValue valueWithCGRect:dirty_rect]
 		                            waitUntilDone:NO];

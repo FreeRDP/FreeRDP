@@ -1400,29 +1400,37 @@ BOOL mac_begin_paint(rdpContext *context)
 
 BOOL mac_end_paint(rdpContext *context)
 {
-	rdpGdi *gdi;
-	HGDI_RGN invalid;
 	NSRect newDrawRect;
-	int ww, wh, dw, dh;
-	mfContext *mfc = (mfContext *)context;
-	MRDPView *view = (MRDPView *)mfc->view;
-	gdi = context->gdi;
-
-	if (!gdi)
-		return FALSE;
-
-	ww = mfc->client_width;
-	wh = mfc->client_height;
-	dw = freerdp_settings_get_uint32(mfc->common.context.settings, FreeRDP_DesktopWidth);
-	dh = freerdp_settings_get_uint32(mfc->common.context.settings, FreeRDP_DesktopHeight);
 
 	if ((!context) || (!context->gdi))
 		return FALSE;
 
-	if (context->gdi->primary->hdc->hwnd->invalid->null)
+	mfContext *mfc = (mfContext *)context;
+	MRDPView *view = (MRDPView *)mfc->view;
+	WINPR_ASSERT(view);
+
+	rdpGdi *gdi = context->gdi;
+
+	if (!gdi)
+		return FALSE;
+
+	const int ww = mfc->client_width;
+	const int wh = mfc->client_height;
+	const int dw = freerdp_settings_get_uint32(mfc->common.context.settings, FreeRDP_DesktopWidth);
+	const int dh = freerdp_settings_get_uint32(mfc->common.context.settings, FreeRDP_DesktopHeight);
+
+	HGDI_DC hdc = gdi->primary->hdc;
+	WINPR_ASSERT(hdc);
+	if (!hdc->hwnd)
 		return TRUE;
 
-	invalid = gdi->primary->hdc->hwnd->invalid;
+	HGDI_WND hwnd = hdc->hwnd;
+	WINPR_ASSERT(hwnd->invalid || (hwnd->ninvalid == 0));
+
+	if (hwnd->invalid->null)
+		return TRUE;
+
+	HGDI_RGN invalid = gdi->primary->hdc->hwnd->invalid;
 	newDrawRect.origin.x = invalid->x;
 	newDrawRect.origin.y = invalid->y;
 	newDrawRect.size.width = invalid->w;

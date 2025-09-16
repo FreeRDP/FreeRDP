@@ -83,17 +83,30 @@ static BOOL wf_has_console(void)
 
 static BOOL wf_end_paint(rdpContext* context)
 {
-	rdpGdi* gdi;
-	int ninvalid;
-	RECT updateRect;
-	HGDI_RGN cinvalid;
-	REGION16 invalidRegion;
-	RECTANGLE_16 invalidRect;
-	const RECTANGLE_16* extents;
+	RECT updateRect = { 0 };
+	REGION16 invalidRegion = { 0 };
+	RECTANGLE_16 invalidRect = { 0 };
+	const RECTANGLE_16* extents = NULL;
+
+	WINPR_ASSERT(context);
+
 	wfContext* wfc = (wfContext*)context;
-	gdi = context->gdi;
-	ninvalid = gdi->primary->hdc->hwnd->ninvalid;
-	cinvalid = gdi->primary->hdc->hwnd->cinvalid;
+	rdpGdi* gdi = context->gdi;
+	WINPR_ASSERT(gdi);
+
+	HGDI_DC hdc = gdi->primary->hdc;
+	WINPR_ASSERT(hdc);
+	if (!hdc->hwnd)
+		return TRUE;
+
+	HGDI_WND hwnd = hdc->hwnd;
+	WINPR_ASSERT(hwnd->invalid || (hwnd->ninvalid == 0));
+
+	if (hwnd->invalid->null)
+		return TRUE;
+
+	const int ninvalid = hwnd->ninvalid;
+	const HGDI_RGN cinvalid = hwnd->cinvalid;
 
 	if (ninvalid < 1)
 		return TRUE;
