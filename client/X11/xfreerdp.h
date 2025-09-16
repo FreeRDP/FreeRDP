@@ -322,6 +322,8 @@ struct xf_context
 };
 
 BOOL xf_create_window(xfContext* xfc);
+void xf_destroy_window(xfContext* xfc);
+
 BOOL xf_create_image(xfContext* xfc);
 void xf_toggle_fullscreen(xfContext* xfc);
 void xf_minimize(xfContext* xfc);

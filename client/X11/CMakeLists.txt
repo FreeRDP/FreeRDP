@@ -42,6 +42,7 @@ include_directories(SYSTEM ${OPENSSL_INCLUDE_DIR})
 set(SRCS
     xf_utils.h
     xf_utils.c
+    xf_x11_utils.c
     xf_gfx.c
     xf_gfx.h
     xf_rail.c

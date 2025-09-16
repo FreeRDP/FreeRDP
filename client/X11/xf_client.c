@@ -166,7 +166,6 @@ static int xf_map_error_to_exit_code(DWORD error)
 static int (*def_error_handler)(Display*, XErrorEvent*);
 static int xf_error_handler_ex(Display* d, XErrorEvent* ev);
 static void xf_check_extensions(xfContext* context);
-static void xf_window_free(xfContext* xfc);
 static BOOL xf_get_pixmap_info(xfContext* xfc);
 
 #ifdef WITH_XRENDER
@@ -763,7 +762,7 @@ BOOL xf_create_image(xfContext* xfc)
 	return TRUE;
 }
 
-static void xf_window_free(xfContext* xfc)
+void xf_destroy_window(xfContext* xfc)
 {
 	if (xfc->window)
 	{
@@ -912,12 +911,9 @@ static int xf_error_handler(Display* d, XErrorEvent* ev)
 {
 	char buf[256] = { 0 };
 	XGetErrorText(d, ev->error_code, buf, sizeof(buf));
-	WLog_ERR(TAG, "%s", buf);
+	const char* what = request_code_2_str(ev->request_code);
+	WLog_ERR(TAG, "%s: %s", what, buf);
 	winpr_log_backtrace(TAG, WLOG_ERROR, 20);
-
-	if (def_error_handler)
-		return def_error_handler(d, ev);
-
 	return 0;
 }
 
@@ -928,9 +924,10 @@ static int xf_error_handler_ex(Display* d, XErrorEvent* ev)
 	 * another window. This make xf_error_handler() a potential
 	 * debugger breakpoint.
 	 */
-
+#if defined(WITH_DEBUG_X11)
 	XUngrabKeyboard(d, CurrentTime);
 	XUngrabPointer(d, CurrentTime);
+#endif
 	return xf_error_handler(d, ev);
 }
 
@@ -1520,7 +1517,7 @@ static void xf_post_disconnect(freerdp* instance)
 	freerdp_keyboard_remap_free(xfc->remap_table);
 	xfc->remap_table = NULL;
 
-	xf_window_free(xfc);
+	xf_destroy_window(xfc);
 }
 
 static void xf_post_final_disconnect(freerdp* instance)

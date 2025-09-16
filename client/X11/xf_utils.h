@@ -288,6 +288,13 @@ extern int LogDynAndXFillRectangle_ex(wLog* log, const char* file, const char* f
 extern int LogDynAndXSetFunction_ex(wLog* log, const char* file, const char* fkt, size_t line,
                                     Display* display, GC gc, int function);
 
+#define LogDynAndXRestackWindows(log, display, windows, count) \
+	LogDynAndXRestackWindows_ex(log, __FILE__, __func__, __LINE__, (display), (windows), (count))
+extern int LogDynAndXRestackWindows_ex(wLog* log, const char* file, const char* fkt, size_t line,
+                                       Display* display, Window* windows, int nwindows);
+
 BOOL IsGnome(void);
 
 char* getConfigOption(BOOL system, const char* option);
+
+const char* request_code_2_str(int code);

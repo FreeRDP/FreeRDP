@@ -94,6 +94,7 @@ void xf_rail_disable_remoteapp_mode(xfContext* xfc)
 	{
 		xfc->remote_app = FALSE;
 		xf_DestroyDummyWindow(xfc, xfc->drawable);
+		xf_destroy_window(xfc);
 		xf_create_window(xfc);
 		xf_create_image(xfc);
 	}
@@ -780,14 +781,15 @@ static BOOL xf_rail_window_icon(rdpContext* context, const WINDOW_ORDER_INFO* or
 
 	if (!icon)
 	{
-		WLog_WARN(TAG, "failed to get icon from cache %02X:%04X", windowIcon->iconInfo->cacheId,
-		          windowIcon->iconInfo->cacheEntry);
+		WLog_Print(xfc->log, WLOG_WARN, "failed to get icon from cache %02X:%04X",
+		           windowIcon->iconInfo->cacheId, windowIcon->iconInfo->cacheEntry);
 		return FALSE;
 	}
 
 	if (!convert_rail_icon(windowIcon->iconInfo, icon))
 	{
-		WLog_WARN(TAG, "failed to convert icon for window %08X", orderInfo->windowId);
+		WLog_Print(xfc->log, WLOG_WARN, "failed to convert icon for window %08X",
+		           orderInfo->windowId);
 		return FALSE;
 	}
 
@@ -816,8 +818,8 @@ static BOOL xf_rail_window_cached_icon(rdpContext* context, const WINDOW_ORDER_I
 
 	if (!icon)
 	{
-		WLog_WARN(TAG, "failed to get icon from cache %02X:%04X",
-		          windowCachedIcon->cachedIcon.cacheId, windowCachedIcon->cachedIcon.cacheEntry);
+		WLog_Print(xfc->log, WLOG_WARN, "failed to get icon from cache %02X:%04X",
+		           windowCachedIcon->cachedIcon.cacheId, windowCachedIcon->cachedIcon.cacheEntry);
 		return FALSE;
 	}
 
@@ -883,7 +885,50 @@ xf_rail_monitored_desktop(WINPR_ATTR_UNUSED rdpContext* context,
                           WINPR_ATTR_UNUSED const WINDOW_ORDER_INFO* orderInfo,
                           WINPR_ATTR_UNUSED const MONITORED_DESKTOP_ORDER* monitoredDesktop)
 {
-	WLog_ERR("TODO", "TODO: implement");
+	const UINT32 mask = WINDOW_ORDER_TYPE_DESKTOP | WINDOW_ORDER_FIELD_DESKTOP_HOOKED |
+	                    WINDOW_ORDER_FIELD_DESKTOP_ARC_BEGAN |
+	                    WINDOW_ORDER_FIELD_DESKTOP_ARC_COMPLETED |
+	                    WINDOW_ORDER_FIELD_DESKTOP_ACTIVE_WND | WINDOW_ORDER_FIELD_DESKTOP_ZORDER;
+	xfContext* xfc = (xfContext*)context;
+
+	if (!context || !orderInfo || !monitoredDesktop)
+		return FALSE;
+
+	if ((orderInfo->fieldFlags & WINDOW_ORDER_TYPE_DESKTOP) == 0)
+	{
+		WLog_Print(xfc->log, WLOG_WARN, "WINDOW_ORDER_TYPE_DESKTOP flag missing!");
+		return FALSE;
+	}
+
+	if ((orderInfo->fieldFlags & WINDOW_ORDER_FIELD_DESKTOP_ARC_BEGAN) &&
+	    (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_DESKTOP_HOOKED))
+	{
+		// discard all windows/notify icons
+		WLog_Print(xfc->log, WLOG_WARN,
+		           "TODO: implement WINDOW_ORDER_FIELD_DESKTOP_ARC_BEGAN && "
+		           "WINDOW_ORDER_FIELD_DESKTOP_HOOKED");
+	}
+	else if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_DESKTOP_HOOKED)
+	{
+		WLog_Print(xfc->log, WLOG_WARN, "TODO: implement WINDOW_ORDER_FIELD_DESKTOP_HOOKED");
+	}
+	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_DESKTOP_ARC_COMPLETED)
+	{
+		WLog_DBG(TAG, "WINDOW_ORDER_FIELD_DESKTOP_ARC_COMPLETED -> switch to RAILS mode");
+		xf_rail_enable_remoteapp_mode(xfc);
+	}
+	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_DESKTOP_ACTIVE_WND)
+	{
+		WLog_Print(xfc->log, WLOG_WARN, "TODO: implement WINDOW_ORDER_FIELD_DESKTOP_ACTIVE_WND");
+	}
+	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_DESKTOP_ZORDER)
+	{
+		WLog_Print(xfc->log, WLOG_WARN, "TODO: implement WINDOW_ORDER_FIELD_DESKTOP_ZORDER");
+	}
+	if (orderInfo->fieldFlags & ~mask)
+	{
+		WLog_Print(xfc->log, WLOG_WARN, "unknown flags 0x%08" PRIx32 "!", orderInfo->fieldFlags);
+	}
 	return TRUE;
 }
 
@@ -891,6 +936,25 @@ static BOOL xf_rail_non_monitored_desktop(rdpContext* context,
                                           WINPR_ATTR_UNUSED const WINDOW_ORDER_INFO* orderInfo)
 {
 	xfContext* xfc = (xfContext*)context;
+	const UINT32 mask = WINDOW_ORDER_TYPE_DESKTOP | WINDOW_ORDER_FIELD_DESKTOP_NONE;
+
+	if (!context || !orderInfo)
+		return FALSE;
+
+	if ((orderInfo->fieldFlags & WINDOW_ORDER_TYPE_DESKTOP) == 0)
+	{
+		WLog_Print(xfc->log, WLOG_WARN, "TODO: implement WINDOW_ORDER_TYPE_DESKTOP");
+		return FALSE;
+	}
+	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_DESKTOP_NONE)
+	{
+		WLog_Print(xfc->log, WLOG_WARN, "TODO: implement WINDOW_ORDER_FIELD_DESKTOP_NONE");
+	}
+	if (orderInfo->fieldFlags & ~mask)
+	{
+		WLog_Print(xfc->log, WLOG_WARN, "unknown flags 0x%08" PRIx32 "!", orderInfo->fieldFlags);
+	}
+
 	xf_rail_disable_remoteapp_mode(xfc);
 	return TRUE;
 }
@@ -935,10 +999,6 @@ static UINT xf_rail_server_execute_result(RailClientContext* context,
 		WLog_ERR(TAG, "RAIL exec error: execResult=%s NtError=0x%X\n",
 		         error_code_names[execResult->execResult], execResult->rawResult);
 		freerdp_abort_connect_context(&xfc->common.context);
-	}
-	else
-	{
-		xf_rail_enable_remoteapp_mode(xfc);
 	}
 
 	return CHANNEL_RC_OK;

@@ -752,3 +752,16 @@ char* getConfigOption(BOOL system, const char* option)
 
 	return res;
 }
+
+int LogDynAndXRestackWindows_ex(wLog* log, const char* file, const char* fkt, size_t line,
+                                Display* display, Window* windows, int nwindows)
+{
+	if (WLog_IsLevelActive(log, log_level))
+	{
+		write_log(log, log_level, file, fkt, line, "XRestackWindows(%p, %p, %d)", (void*)display,
+		          (const void*)windows, nwindows);
+	}
+	const int rc = XRestackWindows(display, windows, nwindows);
+	return write_result_log_expect_one(log, WLOG_WARN, file, fkt, line, display, "XRestackWindows",
+	                                   rc);
+}
