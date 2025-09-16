@@ -80,10 +80,17 @@ void xf_rail_enable_remoteapp_mode(xfContext* xfc)
 	WINPR_ASSERT(xfc);
 	if (!xfc->remote_app)
 	{
+		rdpGdi* gdi = xfc->common.context.gdi;
+		WINPR_ASSERT(gdi);
+
+		const BOOL old = gdi->suppressOutput;
+		gdi->suppressOutput = TRUE;
 		xfc->remote_app = TRUE;
 		xfc->drawable = xf_CreateDummyWindow(xfc);
 		xf_DestroyDesktopWindow(xfc, xfc->window);
 		xfc->window = NULL;
+
+		gdi->suppressOutput = old;
 	}
 }
 
@@ -92,11 +99,19 @@ void xf_rail_disable_remoteapp_mode(xfContext* xfc)
 	WINPR_ASSERT(xfc);
 	if (xfc->remote_app)
 	{
+		rdpGdi* gdi = xfc->common.context.gdi;
+		WINPR_ASSERT(gdi);
+
+		const BOOL old = gdi->suppressOutput;
+		gdi->suppressOutput = TRUE;
+
 		xfc->remote_app = FALSE;
 		xf_DestroyDummyWindow(xfc, xfc->drawable);
 		xf_destroy_window(xfc);
 		xf_create_window(xfc);
 		xf_create_image(xfc);
+
+		gdi->suppressOutput = old;
 	}
 }
 
