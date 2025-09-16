@@ -285,7 +285,6 @@ static int error_info_to_error(freerdp* instance, DWORD* pcode, char** msg, size
  * It can be used to reset invalidated areas. */
 static BOOL sdl_begin_paint(rdpContext* context)
 {
-	rdpGdi* gdi = nullptr;
 	auto sdl = get_context(context);
 
 	WINPR_ASSERT(sdl);
@@ -301,14 +300,19 @@ static BOOL sdl_begin_paint(rdpContext* context)
 	}
 	sdl->update_complete.clear();
 
-	gdi = context->gdi;
+	auto gdi = context->gdi;
 	WINPR_ASSERT(gdi);
 	WINPR_ASSERT(gdi->primary);
-	WINPR_ASSERT(gdi->primary->hdc);
-	WINPR_ASSERT(gdi->primary->hdc->hwnd);
-	WINPR_ASSERT(gdi->primary->hdc->hwnd->invalid);
-	gdi->primary->hdc->hwnd->invalid->null = TRUE;
-	gdi->primary->hdc->hwnd->ninvalid = 0;
+
+	HGDI_DC hdc = gdi->primary->hdc;
+	WINPR_ASSERT(hdc);
+	if (!hdc->hwnd)
+		return TRUE;
+
+	HGDI_WND hwnd = hdc->hwnd;
+	WINPR_ASSERT(hwnd->invalid);
+	hwnd->invalid->null = TRUE;
+	hwnd->ninvalid = 0;
 
 	return TRUE;
 }
@@ -437,24 +441,33 @@ static BOOL sdl_draw_to_window(SdlContext* sdl, std::map<Uint32, SdlWindow>& win
 
 static BOOL sdl_end_paint_process(rdpContext* context)
 {
-	rdpGdi* gdi = nullptr;
 	auto sdl = get_context(context);
 
 	WINPR_ASSERT(context);
 
 	SdlEventUpdateTriggerGuard guard(sdl);
 
-	gdi = context->gdi;
+	auto gdi = context->gdi;
 	WINPR_ASSERT(gdi);
 	WINPR_ASSERT(gdi->primary);
-	WINPR_ASSERT(gdi->primary->hdc);
-	WINPR_ASSERT(gdi->primary->hdc->hwnd);
-	WINPR_ASSERT(gdi->primary->hdc->hwnd->invalid);
-	if (gdi->suppressOutput || gdi->primary->hdc->hwnd->invalid->null)
+
+	HGDI_DC hdc = gdi->primary->hdc;
+	WINPR_ASSERT(hdc);
+	if (!hdc->hwnd)
 		return TRUE;
 
-	const INT32 ninvalid = gdi->primary->hdc->hwnd->ninvalid;
-	const GDI_RGN* cinvalid = gdi->primary->hdc->hwnd->cinvalid;
+	HGDI_WND hwnd = hdc->hwnd;
+	WINPR_ASSERT(hwnd->invalid || (hwnd->ninvalid == 0));
+
+	if (hwnd->invalid->null)
+		return TRUE;
+
+	WINPR_ASSERT(hwnd->invalid);
+	if (gdi->suppressOutput || hwnd->invalid->null)
+		return TRUE;
+
+	const INT32 ninvalid = hwnd->ninvalid;
+	const GDI_RGN* cinvalid = hwnd->cinvalid;
 
 	if (ninvalid < 1)
 		return TRUE;

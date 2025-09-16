@@ -120,33 +120,33 @@ fail:
 
 static BOOL wl_end_paint(rdpContext* context)
 {
-	rdpGdi* gdi = NULL;
-	wlfContext* context_w = NULL;
-	INT32 x = 0;
-	INT32 y = 0;
-	INT32 w = 0;
-	INT32 h = 0;
-
 	if (!context || !context->gdi || !context->gdi->primary)
 		return FALSE;
 
-	gdi = context->gdi;
-
-	if (gdi->primary->hdc->hwnd->invalid->null)
+	rdpGdi* gdi = context->gdi;
+	HGDI_DC hdc = gdi->primary->hdc;
+	WINPR_ASSERT(hdc);
+	if (!hdc->hwnd)
 		return TRUE;
 
-	x = gdi->primary->hdc->hwnd->invalid->x;
-	y = gdi->primary->hdc->hwnd->invalid->y;
-	w = gdi->primary->hdc->hwnd->invalid->w;
-	h = gdi->primary->hdc->hwnd->invalid->h;
-	context_w = (wlfContext*)context;
+	HGDI_WND hwnd = hdc->hwnd;
+	WINPR_ASSERT(hwnd->invalid || (hwnd->ninvalid == 0));
+
+	if (hwnd->invalid->null)
+		return TRUE;
+
+	const INT32 x = hwnd->invalid->x;
+	const INT32 y = hwnd->invalid->y;
+	const INT32 w = hwnd->invalid->w;
+	const INT32 h = hwnd->invalid->h;
+	wlfContext* context_w = (wlfContext*)context;
 	if (!wl_update_buffer(context_w, x, y, w, h))
 	{
 		return FALSE;
 	}
 
-	gdi->primary->hdc->hwnd->invalid->null = TRUE;
-	gdi->primary->hdc->hwnd->ninvalid = 0;
+	hwnd->invalid->null = TRUE;
+	hwnd->ninvalid = 0;
 	return TRUE;
 }
 

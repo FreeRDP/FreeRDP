@@ -78,11 +78,16 @@ static BOOL tf_end_paint(rdpContext* context)
 	gdi = context->gdi;
 	WINPR_ASSERT(gdi);
 	WINPR_ASSERT(gdi->primary);
-	WINPR_ASSERT(gdi->primary->hdc);
-	WINPR_ASSERT(gdi->primary->hdc->hwnd);
-	WINPR_ASSERT(gdi->primary->hdc->hwnd->invalid);
 
-	if (gdi->primary->hdc->hwnd->invalid->null)
+	HGDI_DC hdc = gdi->primary->hdc;
+	WINPR_ASSERT(hdc);
+	if (!hdc->hwnd)
+		return TRUE;
+
+	HGDI_WND hwnd = hdc->hwnd;
+	WINPR_ASSERT(hwnd->invalid || (hwnd->ninvalid == 0));
+
+	if (hwnd->invalid->null)
 		return TRUE;
 
 	return TRUE;

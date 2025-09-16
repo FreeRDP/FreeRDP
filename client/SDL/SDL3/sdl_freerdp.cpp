@@ -285,11 +285,16 @@ static BOOL sdl_begin_paint(rdpContext* context)
 	auto gdi = context->gdi;
 	WINPR_ASSERT(gdi);
 	WINPR_ASSERT(gdi->primary);
-	WINPR_ASSERT(gdi->primary->hdc);
-	WINPR_ASSERT(gdi->primary->hdc->hwnd);
-	WINPR_ASSERT(gdi->primary->hdc->hwnd->invalid);
-	gdi->primary->hdc->hwnd->invalid->null = TRUE;
-	gdi->primary->hdc->hwnd->ninvalid = 0;
+
+	HGDI_DC hdc = gdi->primary->hdc;
+	WINPR_ASSERT(hdc);
+	if (!hdc->hwnd)
+		return TRUE;
+
+	HGDI_WND hwnd = hdc->hwnd;
+	WINPR_ASSERT(hwnd->invalid);
+	hwnd->invalid->null = TRUE;
+	hwnd->ninvalid = 0;
 
 	return TRUE;
 }
@@ -377,14 +382,24 @@ static BOOL sdl_end_paint(rdpContext* context)
 	auto gdi = context->gdi;
 	WINPR_ASSERT(gdi);
 	WINPR_ASSERT(gdi->primary);
-	WINPR_ASSERT(gdi->primary->hdc);
-	WINPR_ASSERT(gdi->primary->hdc->hwnd);
-	WINPR_ASSERT(gdi->primary->hdc->hwnd->invalid);
-	if (gdi->suppressOutput || gdi->primary->hdc->hwnd->invalid->null)
+
+	HGDI_DC hdc = gdi->primary->hdc;
+	WINPR_ASSERT(hdc);
+	if (!hdc->hwnd)
 		return TRUE;
 
-	const INT32 ninvalid = gdi->primary->hdc->hwnd->ninvalid;
-	const GDI_RGN* cinvalid = gdi->primary->hdc->hwnd->cinvalid;
+	HGDI_WND hwnd = hdc->hwnd;
+	WINPR_ASSERT(hwnd->invalid || (hwnd->ninvalid == 0));
+
+	if (hwnd->invalid->null)
+		return TRUE;
+
+	WINPR_ASSERT(hwnd->invalid);
+	if (gdi->suppressOutput || hwnd->invalid->null)
+		return TRUE;
+
+	const INT32 ninvalid = hwnd->ninvalid;
+	const GDI_RGN* cinvalid = hwnd->cinvalid;
 
 	if (ninvalid < 1)
 		return TRUE;
