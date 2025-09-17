@@ -796,12 +796,12 @@ out:
 	return ret;
 }
 
-static BOOL arm_fill_rdstls(rdpArm* arm, rdpSettings* settings, const WINPR_JSON* json)
+static BOOL arm_fill_rdstls(rdpArm* arm, rdpSettings* settings, const WINPR_JSON* json,
+                            const rdpCertificate* redirectedServerCert)
 {
 	BOOL ret = TRUE;
 	BYTE* cert = NULL;
 	BYTE* authBlob = NULL;
-	rdpCertificate* redirectedServerCert = NULL;
 
 	do
 	{
@@ -837,14 +837,6 @@ static BOOL arm_fill_rdstls(rdpArm* arm, rdpSettings* settings, const WINPR_JSON
 			goto endOfFunction;
 		}
 
-		/* redirectedServerCert */
-		size_t certLen = 0;
-		if (!arm_pick_base64Utf16Field(arm->log, json, "redirectedServerCert", &cert, &certLen))
-			break;
-
-		if (!rdp_redirection_read_target_cert(&redirectedServerCert, cert, certLen))
-			break;
-
 		/* redirectedAuthBlob */
 		size_t authBlobLen = 0;
 		if (!arm_pick_base64Utf16Field(arm->log, json, "redirectedAuthBlob", &authBlob,
@@ -865,7 +857,6 @@ static BOOL arm_fill_rdstls(rdpArm* arm, rdpSettings* settings, const WINPR_JSON
 	} while (FALSE);
 
 	free(cert);
-	freerdp_certificate_free(redirectedServerCert);
 	free(authBlob);
 
 endOfFunction:
@@ -878,6 +869,7 @@ static BOOL arm_fill_gateway_parameters(rdpArm* arm, const char* message, size_t
 	WINPR_ASSERT(arm->context);
 	WINPR_ASSERT(message);
 
+	rdpCertificate* redirectedServerCert = NULL;
 	WINPR_JSON* json = WINPR_JSON_ParseWithLength(message, len);
 	BOOL status = FALSE;
 	if (!json)
@@ -890,9 +882,7 @@ static BOOL arm_fill_gateway_parameters(rdpArm* arm, const char* message, size_t
 	{
 		WLog_Print(arm->log, WLOG_DEBUG, "extracted target url %s", gwurlstr);
 		if (!freerdp_settings_set_string(settings, FreeRDP_GatewayUrl, gwurlstr))
-			status = FALSE;
-		else
-			status = TRUE;
+			goto fail;
 	}
 
 	WINPR_JSON* serverNameNode = WINPR_JSON_GetObjectItem(json, "redirectedServerName");
@@ -900,7 +890,10 @@ static BOOL arm_fill_gateway_parameters(rdpArm* arm, const char* message, size_t
 	{
 		const char* serverName = WINPR_JSON_GetStringValue(serverNameNode);
 		if (serverName)
-			status = freerdp_settings_set_string(settings, FreeRDP_ServerHostname, serverName);
+		{
+			if (!freerdp_settings_set_string(settings, FreeRDP_ServerHostname, serverName))
+				goto fail;
+		}
 	}
 
 	WINPR_JSON* azureMeta = WINPR_JSON_GetObjectItem(json, "azureInstanceNetworkMetadata");
@@ -910,7 +903,21 @@ static BOOL arm_fill_gateway_parameters(rdpArm* arm, const char* message, size_t
 		                                            settings))
 		{
 			WLog_Print(arm->log, WLOG_ERROR, "error when treating azureInstanceNetworkMetadata");
+			goto fail;
 		}
+	}
+
+	/* redirectedServerCert */
+	size_t certLen = 0;
+	BYTE* cert = NULL;
+	if (arm_pick_base64Utf16Field(arm->log, json, "redirectedServerCert", &cert, &certLen))
+	{
+		const BOOL rc = rdp_redirection_read_target_cert(&redirectedServerCert, cert, certLen);
+		free(cert);
+		if (!rc)
+			goto fail;
+		else if (!rdp_set_target_certificate(settings, redirectedServerCert))
+			goto fail;
 	}
 
 	if (freerdp_settings_get_string(settings, FreeRDP_Password))
@@ -918,10 +925,13 @@ static BOOL arm_fill_gateway_parameters(rdpArm* arm, const char* message, size_t
 		/* note: we retrieve some more fields for RDSTLS only if we have a password provided by the
 		 * user, otherwise these are useless: we will not be able to do RDSTLS
 		 */
-		status = arm_fill_rdstls(arm, settings, json);
+		status = arm_fill_rdstls(arm, settings, json, redirectedServerCert);
 	}
-
+	else
+		status = TRUE;
+fail:
 	WINPR_JSON_Delete(json);
+	freerdp_certificate_free(redirectedServerCert);
 	return status;
 }
 

@@ -1343,6 +1343,9 @@ static BOOL is_redirected(rdpTls* tls)
 {
 	rdpSettings* settings = tls->context->settings;
 
+	if (settings->GatewayArmTransport)
+		return TRUE;
+
 	if (LB_NOREDIRECT & settings->RedirectionFlags)
 		return FALSE;
 

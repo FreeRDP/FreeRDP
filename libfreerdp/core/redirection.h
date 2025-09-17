@@ -45,6 +45,8 @@ rdp_write_enhanced_security_redirection_packet(wStream* s, const rdpRedirection*
 FREERDP_LOCAL BOOL rdp_redirection_read_target_cert(rdpCertificate** ptargetCertificate,
                                                     const BYTE* data, size_t length);
 
+FREERDP_LOCAL BOOL rdp_set_target_certificate(rdpSettings* settings, const rdpCertificate* tcert);
+
 #define REDIR_TAG FREERDP_TAG("core.redirection")
 #ifdef WITH_DEBUG_REDIR
 #define DEBUG_REDIR(...) WLog_DBG(REDIR_TAG, __VA_ARGS__)

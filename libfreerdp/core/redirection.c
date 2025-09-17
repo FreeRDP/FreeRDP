@@ -453,6 +453,27 @@ static BOOL rdp_redirection_read_target_cert_stream(wStream* s, rdpRedirection* 
 	return rc;
 }
 
+BOOL rdp_set_target_certificate(rdpSettings* settings, const rdpCertificate* tcert)
+{
+	rdpCertificate* cert = freerdp_certificate_clone(tcert);
+	if (!freerdp_settings_set_pointer(settings, FreeRDP_RedirectionTargetCertificate, cert))
+		return FALSE;
+
+	BOOL pres = FALSE;
+	size_t length = 0;
+	char* pem = freerdp_certificate_get_pem(cert, &length);
+	if (pem && (length <= UINT32_MAX))
+	{
+		pres =
+		    freerdp_settings_set_string_len(settings, FreeRDP_RedirectionAcceptedCert, pem, length);
+		if (pres)
+			pres = freerdp_settings_set_uint32(settings, FreeRDP_RedirectionAcceptedCertLength,
+			                                   (UINT32)length);
+	}
+	free(pem);
+	return pres;
+}
+
 int rdp_redirection_apply_settings(rdpRdp* rdp)
 {
 	rdpSettings* settings = NULL;
@@ -610,23 +631,7 @@ int rdp_redirection_apply_settings(rdpRdp* rdp)
 
 	if (settings->RedirectionFlags & LB_TARGET_CERTIFICATE)
 	{
-		rdpCertificate* cert = freerdp_certificate_clone(redirection->TargetCertificate);
-		if (!freerdp_settings_set_pointer(settings, FreeRDP_RedirectionTargetCertificate, cert))
-			return -1;
-
-		BOOL pres = FALSE;
-		size_t length = 0;
-		char* pem = freerdp_certificate_get_pem(cert, &length);
-		if (pem && (length <= UINT32_MAX))
-		{
-			pres = freerdp_settings_set_string_len(settings, FreeRDP_RedirectionAcceptedCert, pem,
-			                                       length);
-			if (pres)
-				pres = freerdp_settings_set_uint32(settings, FreeRDP_RedirectionAcceptedCertLength,
-				                                   (UINT32)length);
-		}
-		free(pem);
-		if (!pres)
+		if (!rdp_set_target_certificate(settings, redirection->TargetCertificate))
 			return -1;
 	}
 
