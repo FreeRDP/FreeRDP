@@ -227,4 +227,10 @@
  */
 #cmakedefine HAVE_AF_VSOCK_H
 
+/** If library is build without these do permanently hide symbols
+ *
+ * \since version 3.17.2
+ */
+#cmakedefine WITHOUT_FREERDP_3x_DEPRECATED
+
 #endif /* FREERDP_CONFIG_H */
