@@ -42,7 +42,6 @@ android {
         }
         debug {
             jniDebuggable true
-            renderscriptDebuggable true
         }
     }
 }
