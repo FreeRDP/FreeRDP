@@ -38,13 +38,19 @@ static const char PATH_BACKSLASH_CHR = '\\';
 static const char PATH_BACKSLASH_STR[] = "\\";
 
 #ifdef _WIN32
+static const WCHAR PATH_SLASH_CHR_W = L'/';
+static const WCHAR PATH_BACKSLASH_CHR_W = L'\\';
 static const WCHAR PATH_SLASH_STR_W[] = L"/";
 static const WCHAR PATH_BACKSLASH_STR_W[] = L"\\";
 #else
 #if defined(__BIG_ENDIAN__)
+static const WCHAR PATH_SLASH_CHR_W = 0x2f00;
+static const WCHAR PATH_BACKSLASH_CHR_W = 0x5c00;
 static const WCHAR PATH_SLASH_STR_W[] = { 0x2f00, '\0' };
 static const WCHAR PATH_BACKSLASH_STR_W[] = { 0x5c00, '\0' };
 #else
+static const WCHAR PATH_SLASH_CHR_W = '/';
+static const WCHAR PATH_BACKSLASH_CHR_W = '\\';
 static const WCHAR PATH_SLASH_STR_W[] = { '/', '\0' };
 static const WCHAR PATH_BACKSLASH_STR_W[] = { '\\', '\0' };
 #endif
@@ -53,10 +59,12 @@ static const WCHAR PATH_BACKSLASH_STR_W[] = { '\\', '\0' };
 #ifdef _WIN32
 #define PATH_SEPARATOR_CHR PATH_BACKSLASH_CHR
 #define PATH_SEPARATOR_STR PATH_BACKSLASH_STR
+#define PATH_SEPARATOR_CHR_W PATH_BACKSLASH_CHR_W
 #define PATH_SEPARATOR_STR_W PATH_BACKSLASH_STR_W
 #else
 #define PATH_SEPARATOR_CHR PATH_SLASH_CHR
 #define PATH_SEPARATOR_STR PATH_SLASH_STR
+#define PATH_SEPARATOR_CHR_W PATH_SLASH_CHR_W
 #define PATH_SEPARATOR_STR_W PATH_SLASH_STR_W
 #endif
 
@@ -78,7 +86,7 @@ static const WCHAR PATH_BACKSLASH_STR_W[] = { '\\', '\0' };
 #undef PATH_CCH_ADD_SEPARATOR
 
 #define DEFINE_UNICODE TRUE
-#define CUR_PATH_SEPARATOR_CHR PATH_BACKSLASH_CHR
+#define CUR_PATH_SEPARATOR_CHR PATH_BACKSLASH_CHR_W
 #define PATH_CCH_ADD_SEPARATOR PathCchAddBackslashW
 #include "include/PathCchAddSeparator.h"
 #undef DEFINE_UNICODE
@@ -96,7 +104,7 @@ static const WCHAR PATH_BACKSLASH_STR_W[] = { '\\', '\0' };
 #undef PATH_CCH_ADD_SEPARATOR
 
 #define DEFINE_UNICODE TRUE
-#define CUR_PATH_SEPARATOR_CHR PATH_SLASH_CHR
+#define CUR_PATH_SEPARATOR_CHR PATH_SLASH_CHR_W
 #define PATH_CCH_ADD_SEPARATOR PathCchAddSlashW
 #include "include/PathCchAddSeparator.h"
 #undef DEFINE_UNICODE
@@ -114,7 +122,7 @@ static const WCHAR PATH_BACKSLASH_STR_W[] = { '\\', '\0' };
 #undef PATH_CCH_ADD_SEPARATOR
 
 #define DEFINE_UNICODE TRUE
-#define CUR_PATH_SEPARATOR_CHR PATH_SEPARATOR_CHR
+#define CUR_PATH_SEPARATOR_CHR PATH_SEPARATOR_CHR_W
 #define PATH_CCH_ADD_SEPARATOR PathCchAddSeparatorW
 #include "include/PathCchAddSeparator.h"
 #undef DEFINE_UNICODE
@@ -152,7 +160,7 @@ HRESULT PathCchRemoveBackslashW(WINPR_ATTR_UNUSED PWSTR pszPath, WINPR_ATTR_UNUS
 #undef PATH_CCH_ADD_SEPARATOR_EX
 
 #define DEFINE_UNICODE TRUE
-#define CUR_PATH_SEPARATOR_CHR PATH_BACKSLASH_CHR
+#define CUR_PATH_SEPARATOR_CHR PATH_BACKSLASH_CHR_W
 #define PATH_CCH_ADD_SEPARATOR_EX PathCchAddBackslashExW
 #include "include/PathCchAddSeparatorEx.h"
 #undef DEFINE_UNICODE
@@ -170,7 +178,7 @@ HRESULT PathCchRemoveBackslashW(WINPR_ATTR_UNUSED PWSTR pszPath, WINPR_ATTR_UNUS
 #undef PATH_CCH_ADD_SEPARATOR_EX
 
 #define DEFINE_UNICODE TRUE
-#define CUR_PATH_SEPARATOR_CHR PATH_SLASH_CHR
+#define CUR_PATH_SEPARATOR_CHR PATH_SLASH_CHR_W
 #define PATH_CCH_ADD_SEPARATOR_EX PathCchAddSlashExW
 #include "include/PathCchAddSeparatorEx.h"
 #undef DEFINE_UNICODE
@@ -188,7 +196,7 @@ HRESULT PathCchRemoveBackslashW(WINPR_ATTR_UNUSED PWSTR pszPath, WINPR_ATTR_UNUS
 #undef PATH_CCH_ADD_SEPARATOR_EX
 
 #define DEFINE_UNICODE TRUE
-#define CUR_PATH_SEPARATOR_CHR PATH_SEPARATOR_CHR
+#define CUR_PATH_SEPARATOR_CHR PATH_SEPARATOR_CHR_W
 #define PATH_CCH_ADD_SEPARATOR_EX PathCchAddSeparatorExW
 #include "include/PathCchAddSeparatorEx.h"
 #undef DEFINE_UNICODE
@@ -226,7 +234,7 @@ HRESULT PathCchRemoveBackslashExW(WINPR_ATTR_UNUSED PWSTR pszPath, WINPR_ATTR_UN
 #undef PATH_CCH_ADD_EXTENSION
 
 #define DEFINE_UNICODE TRUE
-#define CUR_PATH_SEPARATOR_CHR PATH_BACKSLASH_CHR
+#define CUR_PATH_SEPARATOR_CHR PATH_BACKSLASH_CHR_W
 #define PATH_CCH_ADD_EXTENSION PathCchAddExtensionW
 #include "include/PathCchAddExtension.h"
 #undef DEFINE_UNICODE
@@ -244,7 +252,7 @@ HRESULT PathCchRemoveBackslashExW(WINPR_ATTR_UNUSED PWSTR pszPath, WINPR_ATTR_UN
 #undef PATH_CCH_ADD_EXTENSION
 
 #define DEFINE_UNICODE TRUE
-#define CUR_PATH_SEPARATOR_CHR PATH_SLASH_CHR
+#define CUR_PATH_SEPARATOR_CHR PATH_SLASH_CHR_W
 #define PATH_CCH_ADD_EXTENSION UnixPathCchAddExtensionW
 #include "include/PathCchAddExtension.h"
 #undef DEFINE_UNICODE
@@ -262,7 +270,7 @@ HRESULT PathCchRemoveBackslashExW(WINPR_ATTR_UNUSED PWSTR pszPath, WINPR_ATTR_UN
 #undef PATH_CCH_ADD_EXTENSION
 
 #define DEFINE_UNICODE TRUE
-#define CUR_PATH_SEPARATOR_CHR PATH_SEPARATOR_CHR
+#define CUR_PATH_SEPARATOR_CHR PATH_SEPARATOR_CHR_W
 #define PATH_CCH_ADD_EXTENSION NativePathCchAddExtensionW
 #include "include/PathCchAddExtension.h"
 #undef DEFINE_UNICODE
@@ -286,7 +294,7 @@ HRESULT PathCchRemoveBackslashExW(WINPR_ATTR_UNUSED PWSTR pszPath, WINPR_ATTR_UN
 #undef PATH_CCH_APPEND
 
 #define DEFINE_UNICODE TRUE
-#define CUR_PATH_SEPARATOR_CHR PATH_BACKSLASH_CHR
+#define CUR_PATH_SEPARATOR_CHR PATH_BACKSLASH_CHR_W
 #define CUR_PATH_SEPARATOR_STR PATH_BACKSLASH_STR_W
 #define PATH_CCH_APPEND PathCchAppendW
 #include "include/PathCchAppend.h"
@@ -308,7 +316,7 @@ HRESULT PathCchRemoveBackslashExW(WINPR_ATTR_UNUSED PWSTR pszPath, WINPR_ATTR_UN
 #undef PATH_CCH_APPEND
 
 #define DEFINE_UNICODE TRUE
-#define CUR_PATH_SEPARATOR_CHR PATH_SLASH_CHR
+#define CUR_PATH_SEPARATOR_CHR PATH_SLASH_CHR_W
 #define CUR_PATH_SEPARATOR_STR PATH_SLASH_STR_W
 #define PATH_CCH_APPEND UnixPathCchAppendW
 #include "include/PathCchAppend.h"
@@ -330,7 +338,7 @@ HRESULT PathCchRemoveBackslashExW(WINPR_ATTR_UNUSED PWSTR pszPath, WINPR_ATTR_UN
 #undef PATH_CCH_APPEND
 
 #define DEFINE_UNICODE TRUE
-#define CUR_PATH_SEPARATOR_CHR PATH_SEPARATOR_CHR
+#define CUR_PATH_SEPARATOR_CHR PATH_SEPARATOR_CHR_W
 #define CUR_PATH_SEPARATOR_STR PATH_SEPARATOR_STR_W
 #define PATH_CCH_APPEND NativePathCchAppendW
 #include "include/PathCchAppend.h"
@@ -473,7 +481,7 @@ HRESULT PathCchCombineExW(WINPR_ATTR_UNUSED PWSTR pszPathOut, WINPR_ATTR_UNUSED 
 #undef PATH_ALLOC_COMBINE
 
 #define DEFINE_UNICODE TRUE
-#define CUR_PATH_SEPARATOR_CHR PATH_BACKSLASH_CHR
+#define CUR_PATH_SEPARATOR_CHR PATH_BACKSLASH_CHR_W
 #define CUR_PATH_SEPARATOR_STR PATH_BACKSLASH_STR_W
 #define PATH_ALLOC_COMBINE PathAllocCombineW
 #include "include/PathAllocCombine.h"
@@ -495,7 +503,7 @@ HRESULT PathCchCombineExW(WINPR_ATTR_UNUSED PWSTR pszPathOut, WINPR_ATTR_UNUSED 
 #undef PATH_ALLOC_COMBINE
 
 #define DEFINE_UNICODE TRUE
-#define CUR_PATH_SEPARATOR_CHR PATH_SLASH_CHR
+#define CUR_PATH_SEPARATOR_CHR PATH_SLASH_CHR_W
 #define CUR_PATH_SEPARATOR_STR PATH_SLASH_STR_W
 #define PATH_ALLOC_COMBINE UnixPathAllocCombineW
 #include "include/PathAllocCombine.h"
@@ -517,7 +525,7 @@ HRESULT PathCchCombineExW(WINPR_ATTR_UNUSED PWSTR pszPathOut, WINPR_ATTR_UNUSED 
 #undef PATH_ALLOC_COMBINE
 
 #define DEFINE_UNICODE TRUE
-#define CUR_PATH_SEPARATOR_CHR PATH_SEPARATOR_CHR
+#define CUR_PATH_SEPARATOR_CHR PATH_SEPARATOR_CHR_W
 #define CUR_PATH_SEPARATOR_STR PATH_SEPARATOR_STR_W
 #define PATH_ALLOC_COMBINE NativePathAllocCombineW
 #include "include/PathAllocCombine.h"
@@ -856,38 +864,38 @@ HRESULT PathCchConvertStyleW(PWSTR pszPath, size_t cchPath, unsigned long dwFlag
 	{
 		for (size_t index = 0; index < cchPath; index++)
 		{
-			if (pszPath[index] == PATH_SLASH_CHR)
-				pszPath[index] = PATH_BACKSLASH_CHR;
+			if (pszPath[index] == PATH_SLASH_CHR_W)
+				pszPath[index] = PATH_BACKSLASH_CHR_W;
 		}
 	}
 	else if (dwFlags == PATH_STYLE_UNIX)
 	{
 		for (size_t index = 0; index < cchPath; index++)
 		{
-			if (pszPath[index] == PATH_BACKSLASH_CHR)
-				pszPath[index] = PATH_SLASH_CHR;
+			if (pszPath[index] == PATH_BACKSLASH_CHR_W)
+				pszPath[index] = PATH_SLASH_CHR_W;
 		}
 	}
 	else if (dwFlags == PATH_STYLE_NATIVE)
 	{
-		if (PATH_SEPARATOR_CHR == PATH_BACKSLASH_CHR)
+		if (PATH_SEPARATOR_CHR == PATH_BACKSLASH_CHR_W)
 		{
 			/* Unix-style to Windows-style */
 
 			for (size_t index = 0; index < cchPath; index++)
 			{
-				if (pszPath[index] == PATH_SLASH_CHR)
-					pszPath[index] = PATH_BACKSLASH_CHR;
+				if (pszPath[index] == PATH_SLASH_CHR_W)
+					pszPath[index] = PATH_BACKSLASH_CHR_W;
 			}
 		}
-		else if (PATH_SEPARATOR_CHR == PATH_SLASH_CHR)
+		else if (PATH_SEPARATOR_CHR == PATH_SLASH_CHR_W)
 		{
 			/* Windows-style to Unix-style */
 
 			for (size_t index = 0; index < cchPath; index++)
 			{
-				if (pszPath[index] == PATH_BACKSLASH_CHR)
-					pszPath[index] = PATH_SLASH_CHR;
+				if (pszPath[index] == PATH_BACKSLASH_CHR_W)
+					pszPath[index] = PATH_SLASH_CHR_W;
 			}
 		}
 		else

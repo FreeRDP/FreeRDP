@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <winpr/crypto.h>
+#include <freerdp/config.h>
 #include <freerdp/locale/keyboard.h>
 
 static BOOL test_scancode_name(void)
