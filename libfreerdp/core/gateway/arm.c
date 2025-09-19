@@ -896,6 +896,14 @@ static BOOL arm_fill_gateway_parameters(rdpArm* arm, const char* message, size_t
 		}
 	}
 
+	WINPR_JSON* userNameNode = WINPR_JSON_GetObjectItem(json, "redirectedUserName");
+	if (userNameNode)
+	{
+		const char* userName = WINPR_JSON_GetStringValue(userNameNode);
+		if (!freerdp_settings_set_string(settings, FreeRDP_Username, userName))
+			goto fail;
+	}
+
 	WINPR_JSON* azureMeta = WINPR_JSON_GetObjectItem(json, "azureInstanceNetworkMetadata");
 	if (azureMeta && WINPR_JSON_IsString(azureMeta))
 	{
