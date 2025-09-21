@@ -8,7 +8,7 @@ Name: FreeRDP server
 Description: FreeRDP: A Remote Desktop Protocol Implementation
 URL: http://www.freerdp.com/
 Version: @FREERDP_VERSION@
-Requires: 
+Requires: @FREERDP_SERVER_PC_REQUIRES@
 Requires.private: @FREERDP_SERVER_PC_REQUIRES_PRIVATE@
 Libs: -L${libdir} ${libs}
 Libs.private: @FREERDP_SERVER_PC_LIBRARY_PRIVATE@
