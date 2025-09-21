@@ -123,6 +123,7 @@ if(NOT BUILD_SHARED_LIBS)
   set(WINPR_TOOLS_PC_REQUIRES_PRIVATE "winpr${WINPR_API_VERSION} libssl")
   set(WINPR_TOOLS_PC_LIBRARY_PRIVATE "crypto")
 endif()
+set(WINPR_TOOLS_PC_REQUIRES winpr${WINPR_API_VERSION})
 
 include(pkg-config-install-prefix)
 cleaning_configure_file(

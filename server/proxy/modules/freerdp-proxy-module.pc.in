@@ -9,7 +9,7 @@ Name: @PROJECT_NAME@
 Description: FreeRDP proxy module
 URL: http://www.freerdp.com/
 Version: @PROJECT_VERSION@
-Requires:
+Requires: @PROJECT_PC_REQUIRES@ 
 Requires.private: @PROJECT_PC_REQUIRES_PRIVATE@ 
 Libs: -L${libdir}
 Libs.private: -Wl,--whole-archive \${proxy_plugindir}/@PROJECT_LIBRARY_NAME@ -u @PROJECT_SHORT_NAME_UNDERSCORE@_proxy_module_entry_point -Wl,--no-whole-archive

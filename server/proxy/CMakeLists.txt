@@ -82,6 +82,7 @@ if(NOT BUILD_SHARED_LIBS)
   set(FREERDP_PROXY_PC_REQUIRES_PRIVATE "freerdp-client${FREERDP_API_VERSION} freerdp-server${FREERDP_API_VERSION}")
   set(FREERDP_PROXY_PC_LIBS_PRIVATE "-ldl -lpthread")
 endif()
+set(FREERDP_PROXY_PC_REQUIRES freerdp-server${FREERDP_API_VERSION})
 
 include(pkg-config-install-prefix)
 cleaning_configure_file(

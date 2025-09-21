@@ -8,7 +8,7 @@ Name: WinPR
 Description: WinPR: Windows Portable Runtime
 URL: http://www.freerdp.com/
 Version: @WINPR_TOOLS_VERSION@
-Requires:
+Requires: @WINPR_TOOLS_PC_REQUIRES@
 Requires.private: @WINPR_TOOLS_PC_REQUIRES_PRIVATE@
 Libs: -L${libdir} ${libs}
 Libs.private: @WINPR_TOOLS_PC_LIBRARY_PRIVATE@

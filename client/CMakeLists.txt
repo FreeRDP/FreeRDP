@@ -119,6 +119,7 @@ if(BUILD_SHARED_LIBS)
   set(FREERDP_CLIENT_PC_REQUIRES_PRIVATE "")
   set(FREERDP_CLIENT_PC_LIBRARY_PRIVATE "")
 endif()
+set(FREERDP_CLIENT_PC_REQUIRES freerdp${FREERDP_API_VERSION})
 
 include(pkg-config-install-prefix)
 cleaning_configure_file(

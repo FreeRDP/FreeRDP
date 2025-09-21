@@ -166,6 +166,7 @@ if(NOT BUILD_SHARED_LIBS)
   set(FREERDP_SHADOW_PC_REQUIRES_PRIVATE "freerdp${FREERDP_API_VERSION}")
   set(FREERDP_SHADOW_PC_LIBRARY_PRIVATE "-ldl -lpthread")
 endif()
+set(FREERDP_SHADOW_PC_REQUIRES freerdp-server${FREERDP_API_VERSION})
 
 include(pkg-config-install-prefix)
 cleaning_configure_file(
