@@ -1324,9 +1324,9 @@ static int test_dump(int argc, char* argv[])
 				{
 					const UINT64 start = winpr_GetTickCount64NS();
 
-					if (!planar_decompress(codecs->planar, cmd.data, cmd.length, cmd.width,
-					                       cmd.height, dst, DstFormat, stride, cmd.left, cmd.top,
-					                       cmd.width, cmd.height, FALSE))
+					if (!freerdp_bitmap_decompress_planar(
+					        codecs->planar, cmd.data, cmd.length, cmd.width, cmd.height, dst,
+					        DstFormat, stride, cmd.left, cmd.top, cmd.width, cmd.height, FALSE))
 						success = -1;
 
 					const RECTANGLE_16 invalidRect = { .left = (UINT16)MIN(UINT16_MAX, cmd.left),

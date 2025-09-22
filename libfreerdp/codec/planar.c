@@ -96,6 +96,20 @@ struct S_BITMAP_PLANAR_CONTEXT
 	BOOL topdown;
 };
 
+static inline BYTE PLANAR_CONTROL_BYTE(UINT32 nRunLength, UINT32 cRawBytes)
+{
+	return WINPR_ASSERTING_INT_CAST(UINT8, ((nRunLength & 0x0F) | ((cRawBytes & 0x0F) << 4)));
+}
+
+static inline BYTE PLANAR_CONTROL_BYTE_RUN_LENGTH(UINT32 controlByte)
+{
+	return (controlByte & 0x0F);
+}
+static inline BYTE PLANAR_CONTROL_BYTE_RAW_BYTES(UINT32 controlByte)
+{
+	return ((controlByte >> 4) & 0x0F);
+}
+
 static INLINE UINT32 planar_invert_format(BITMAP_PLANAR_CONTEXT* WINPR_RESTRICT planar, BOOL alpha,
                                           UINT32 DstFormat)
 {
@@ -687,11 +701,25 @@ static BOOL planar_subsample_expand(const BYTE* WINPR_RESTRICT plane, size_t pla
 	return TRUE;
 }
 
+#if !defined(WITHOUT_FREERDP_3x_DEPRECATED)
 BOOL planar_decompress(BITMAP_PLANAR_CONTEXT* WINPR_RESTRICT planar,
                        const BYTE* WINPR_RESTRICT pSrcData, UINT32 SrcSize, UINT32 nSrcWidth,
                        UINT32 nSrcHeight, BYTE* WINPR_RESTRICT pDstData, UINT32 DstFormat,
                        UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst, UINT32 nDstWidth,
                        UINT32 nDstHeight, BOOL vFlip)
+{
+	return freerdp_bitmap_decompress_planar(planar, pSrcData, SrcSize, nSrcWidth, nSrcHeight,
+	                                        pDstData, DstFormat, nDstStep, nXDst, nYDst, nDstWidth,
+	                                        nDstHeight, vFlip);
+}
+#endif
+
+BOOL freerdp_bitmap_decompress_planar(BITMAP_PLANAR_CONTEXT* WINPR_RESTRICT planar,
+                                      const BYTE* WINPR_RESTRICT pSrcData, UINT32 SrcSize,
+                                      UINT32 nSrcWidth, UINT32 nSrcHeight,
+                                      BYTE* WINPR_RESTRICT pDstData, UINT32 DstFormat,
+                                      UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst, UINT32 nDstWidth,
+                                      UINT32 nDstHeight, BOOL vFlip)
 {
 	BOOL useAlpha = FALSE;
 	INT32 status = 0;

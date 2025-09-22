@@ -540,9 +540,10 @@ static UINT gdi_SurfaceCommand_Planar(rdpGdi* gdi, RdpgfxClientContext* context,
 	if (!is_within_surface(surface, cmd))
 		return ERROR_INVALID_DATA;
 
-	if (!planar_decompress(surface->codecs->planar, cmd->data, cmd->length, cmd->width, cmd->height,
-	                       DstData, surface->format, surface->scanline, cmd->left, cmd->top,
-	                       cmd->width, cmd->height, FALSE))
+	if (!freerdp_bitmap_decompress_planar(surface->codecs->planar, cmd->data, cmd->length,
+	                                      cmd->width, cmd->height, DstData, surface->format,
+	                                      surface->scanline, cmd->left, cmd->top, cmd->width,
+	                                      cmd->height, FALSE))
 		return ERROR_INTERNAL_ERROR;
 
 	invalidRect.left = (UINT16)MIN(UINT16_MAX, cmd->left);
