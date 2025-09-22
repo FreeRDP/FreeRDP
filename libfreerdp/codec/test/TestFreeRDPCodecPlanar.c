@@ -1,5 +1,6 @@
 
 #include <math.h>
+#include <errno.h>
 
 #include <winpr/crt.h>
 #include <winpr/print.h>
@@ -112,6 +113,30 @@ static char* get_path(const char* type, const char* name)
 	return s2;
 }
 
+static FILE* open_path(const char* type, const char* name, const char* mode)
+{
+	WINPR_ASSERT(type);
+	WINPR_ASSERT(name);
+	WINPR_ASSERT(mode);
+
+	char* path = get_path(type, name);
+	if (!path)
+	{
+		(void)printf("%s: get_path %s %s failed\n", __func__, type, name);
+		return NULL;
+	}
+
+	FILE* fp = winpr_fopen(path, mode);
+	if (!fp)
+	{
+		char buffer[128] = { 0 };
+		(void)printf("%s: %s %s: fopen(%s, %s) failed: %s\n", __func__, type, name, path, mode,
+		             winpr_strerror(errno, buffer, sizeof(buffer)));
+	}
+	free(path);
+	return fp;
+}
+
 static void* read_data(const char* type, const char* name, size_t* plength)
 {
 	WINPR_ASSERT(type);
@@ -122,14 +147,9 @@ static void* read_data(const char* type, const char* name, size_t* plength)
 	void* cmp = NULL;
 
 	*plength = 0;
-	char* path = get_path(type, name);
-	if (!path)
-		return NULL;
-
-	FILE* fp = winpr_fopen(path, "rb");
-	free(path);
+	FILE* fp = open_path(type, name, "rb");
 	if (!fp)
-		return NULL;
+		goto fail;
 
 	if (_fseeki64(fp, 0, SEEK_END) != 0)
 		goto fail;
@@ -151,22 +171,16 @@ static void* read_data(const char* type, const char* name, size_t* plength)
 	cmp = NULL;
 
 fail:
+	(void)printf("%s: %s %s -> %p\n", __func__, type, name, cmp);
 	free(cmp);
-	(void)fclose(fp);
+	if (fp)
+		(void)fclose(fp);
 	return rc;
 }
 
 static void write_data(const char* type, const char* name, const void* data, size_t length)
 {
-	WINPR_ASSERT(type);
-	WINPR_ASSERT(name);
-
-	char* path = get_path(type, name);
-	if (!path)
-		return;
-
-	FILE* fp = winpr_fopen(path, "wb");
-	free(path);
+	FILE* fp = open_path(type, name, "wb");
 	if (!fp)
 		return;
 
@@ -190,6 +204,7 @@ static BOOL compare(const char* type, const char* name, const void* data, size_t
 		goto fail;
 	rc = TRUE;
 fail:
+	(void)printf("%s: %s %s -> %s\n", __func__, type, name, rc ? "SUCCESS" : "FAILED");
 	free(cmp);
 	return rc;
 }
@@ -229,9 +244,9 @@ static BOOL RunTestPlanar(BITMAP_PLANAR_CONTEXT* encplanar, BITMAP_PLANAR_CONTEX
 	if (!planar_decompress(decplanar, compressedBitmap, dstSize, width, height, decompressedBitmap,
 	                       dstFormat, 0, 0, 0, width, height, FALSE))
 	{
-		printf("failed to decompress experimental bitmap 01: width: %" PRIu32 " height: %" PRIu32
-		       "\n",
-		       width, height);
+		(void)printf("failed to decompress experimental bitmap 01: width: %" PRIu32
+		             " height: %" PRIu32 "\n",
+		             width, height);
 		goto fail;
 	}
 
@@ -253,9 +268,10 @@ fail:
 	free(compressedBitmap);
 	free(decompressedBitmap);
 	(void)printf("\n");
-	(void)printf("%s [%s]: %s", __func__, name, rc ? "SUCCESS" : "FAILED");
+	(void)printf("%s [%s]: %s\n", __func__, name, rc ? "SUCCESS" : "FAILED");
 	(void)printf("----------------------   end %s [%s] ----------------------\n", __func__, name);
 	(void)fflush(stdout);
+	(void)fflush(stderr);
 	return rc;
 }
 
@@ -266,6 +282,7 @@ static BOOL RunTestPlanarSingleColor(BITMAP_PLANAR_CONTEXT* planar, const UINT32
 	(void)printf("%s: [%s] --> [%s]: ", __func__, FreeRDPGetColorFormatName(srcFormat),
 	             FreeRDPGetColorFormatName(dstFormat));
 	(void)fflush(stdout);
+	(void)fflush(stderr);
 
 	for (UINT32 j = 0; j < 32; j += 8)
 	{
@@ -328,9 +345,10 @@ static BOOL RunTestPlanarSingleColor(BITMAP_PLANAR_CONTEXT* planar, const UINT32
 	rc = TRUE;
 fail:
 	(void)printf("\n");
-	(void)printf("%s [%s->%s]: %s", __func__, FreeRDPGetColorFormatName(srcFormat),
+	(void)printf("%s [%s->%s]: %s\n", __func__, FreeRDPGetColorFormatName(srcFormat),
 	             FreeRDPGetColorFormatName(dstFormat), rc ? "SUCCESS" : "FAILED");
 	(void)fflush(stdout);
+	(void)fflush(stderr);
 	return rc;
 }
 
@@ -485,9 +503,10 @@ static BOOL FuzzPlanar(void)
 fail:
 	freerdp_bitmap_planar_context_free(planar);
 	(void)printf("\n");
-	(void)printf("%s: %s", __func__, rc ? "SUCCESS" : "FAILED");
+	(void)printf("%s: %s\n", __func__, rc ? "SUCCESS" : "FAILED");
 	(void)printf("----------------------   end %s ----------------------\n", __func__);
 	(void)fflush(stdout);
+	(void)fflush(stderr);
 	return rc;
 }
 
