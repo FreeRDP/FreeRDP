@@ -171,7 +171,7 @@ static void* read_data(const char* type, const char* name, size_t* plength)
 	cmp = NULL;
 
 fail:
-	(void)printf("%s: %s %s -> %p\n", __func__, type, name, cmp);
+	(void)printf("%s: %s %s -> %p\n", __func__, type, name, rc);
 	free(cmp);
 	if (fp)
 		(void)fclose(fp);
@@ -199,9 +199,18 @@ static BOOL compare(const char* type, const char* name, const void* data, size_t
 	if (!cmp)
 		goto fail;
 	if (cmplen != length)
+	{
+		(void)printf("%s: %s %s: length mismatch: %" PRIuz " vs %" PRIuz "\n", __func__, type, name,
+		             cmplen, length);
 		goto fail;
+	}
 	if (memcmp(data, cmp, length) != 0)
+	{
+		(void)printf("%s: %s %s: data mismatch\n", __func__, type, name);
+		winpr_HexDump(__func__, WLOG_WARN, data, length);
+		winpr_HexDump(__func__, WLOG_WARN, cmp, cmplen);
 		goto fail;
+	}
 	rc = TRUE;
 fail:
 	(void)printf("%s: %s %s -> %s\n", __func__, type, name, rc ? "SUCCESS" : "FAILED");
@@ -228,10 +237,6 @@ static BOOL RunTestPlanar(BITMAP_PLANAR_CONTEXT* encplanar, BITMAP_PLANAR_CONTEX
 	BYTE* decompressedBitmap =
 	    (BYTE*)calloc(height, 1ULL * width * FreeRDPGetBytesPerPixel(dstFormat));
 
-	if (!compare("bmp", name, srcBitmap,
-	             1ull * width * height * FreeRDPGetBytesPerPixel(srcFormat)))
-		goto fail;
-
 	if (!compare("enc", name, compressedBitmap, dstSize))
 		goto fail;
 
@@ -241,8 +246,9 @@ static BOOL RunTestPlanar(BITMAP_PLANAR_CONTEXT* encplanar, BITMAP_PLANAR_CONTEX
 	if (!compressedBitmap || !decompressedBitmap)
 		goto fail;
 
-	if (!planar_decompress(decplanar, compressedBitmap, dstSize, width, height, decompressedBitmap,
-	                       dstFormat, 0, 0, 0, width, height, FALSE))
+	if (!freerdp_bitmap_decompress_planar(decplanar, compressedBitmap, dstSize, width, height,
+	                                      decompressedBitmap, dstFormat, 0, 0, 0, width, height,
+	                                      FALSE))
 	{
 		(void)printf("failed to decompress experimental bitmap 01: width: %" PRIu32
 		             " height: %" PRIu32 "\n",
@@ -321,8 +327,9 @@ static BOOL RunTestPlanarSingleColor(BITMAP_PLANAR_CONTEXT* planar, const UINT32
 			if (!compressedBitmap)
 				goto fail_loop;
 
-			if (!planar_decompress(planar, compressedBitmap, compressedSize, width, height,
-			                       decompressedBitmap, dstFormat, 0, 0, 0, width, height, FALSE))
+			if (!freerdp_bitmap_decompress_planar(planar, compressedBitmap, compressedSize, width,
+			                                      height, decompressedBitmap, dstFormat, 0, 0, 0,
+			                                      width, height, FALSE))
 				goto fail_loop;
 
 			if (!CompareBitmap(decompressedBitmap, dstFormat, bmp, srcFormat, width, height))
@@ -494,9 +501,9 @@ static BOOL FuzzPlanar(void)
 		       FreeRDPGetColorFormatName(DstFormat), nXDst, nYDst, nDstWidth, nDstHeight, nDstStep,
 		       sizeof(dstData));
 		freerdp_planar_switch_bgr(planar, ((prand(2) % 2) != 0) ? TRUE : FALSE);
-		planar_decompress(planar, data, dataSize, prand(4096), prand(4096), dstData, DstFormat,
-		                  nDstStep, nXDst, nYDst, nDstWidth, nDstHeight,
-		                  ((prand(2) % 2) != 0) ? TRUE : FALSE);
+		freerdp_bitmap_decompress_planar(planar, data, dataSize, prand(4096), prand(4096), dstData,
+		                                 DstFormat, nDstStep, nXDst, nYDst, nDstWidth, nDstHeight,
+		                                 ((prand(2) % 2) != 0) ? TRUE : FALSE);
 	}
 
 	rc = TRUE;
