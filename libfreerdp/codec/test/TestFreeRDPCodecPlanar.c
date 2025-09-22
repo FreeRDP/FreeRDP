@@ -203,6 +203,7 @@ static BOOL RunTestPlanar(BITMAP_PLANAR_CONTEXT* encplanar, BITMAP_PLANAR_CONTEX
 	BOOL rc = FALSE;
 	UINT32 dstSize = 0;
 	size_t srclen = 0;
+	(void)printf("---------------------- start %s [%s] ----------------------\n", __func__, name);
 	BYTE* srcBitmap = read_data("bmp", name, &srclen);
 	if (!srcBitmap)
 		return FALSE;
@@ -246,13 +247,14 @@ static BOOL RunTestPlanar(BITMAP_PLANAR_CONTEXT* encplanar, BITMAP_PLANAR_CONTEX
     }
 #endif
 
-	printf("SUCCESS");
 	rc = TRUE;
 fail:
 	free(srcBitmap);
 	free(compressedBitmap);
 	free(decompressedBitmap);
 	(void)printf("\n");
+	(void)printf("%s [%s]: %s", __func__, name, rc ? "SUCCESS" : "FAILED");
+	(void)printf("----------------------   end %s [%s] ----------------------\n", __func__, name);
 	(void)fflush(stdout);
 	return rc;
 }
@@ -323,10 +325,11 @@ static BOOL RunTestPlanarSingleColor(BITMAP_PLANAR_CONTEXT* planar, const UINT32
 		}
 	}
 
-	(void)printf("SUCCESS");
 	rc = TRUE;
 fail:
 	(void)printf("\n");
+	(void)printf("%s [%s->%s]: %s", __func__, FreeRDPGetColorFormatName(srcFormat),
+	             FreeRDPGetColorFormatName(dstFormat), rc ? "SUCCESS" : "FAILED");
 	(void)fflush(stdout);
 	return rc;
 }
@@ -381,6 +384,7 @@ static UINT32 prand(UINT32 max)
 
 static BOOL FuzzPlanar(void)
 {
+	(void)printf("---------------------- start %s ----------------------\n", __func__);
 	BOOL rc = FALSE;
 	const DWORD planarFlags = PLANAR_FORMAT_HEADER_NA | PLANAR_FORMAT_HEADER_RLE;
 	BITMAP_PLANAR_CONTEXT* planar = freerdp_bitmap_planar_context_new(planarFlags, 64, 64);
@@ -480,6 +484,10 @@ static BOOL FuzzPlanar(void)
 	rc = TRUE;
 fail:
 	freerdp_bitmap_planar_context_free(planar);
+	(void)printf("\n");
+	(void)printf("%s: %s", __func__, rc ? "SUCCESS" : "FAILED");
+	(void)printf("----------------------   end %s ----------------------\n", __func__);
+	(void)fflush(stdout);
 	return rc;
 }
 
