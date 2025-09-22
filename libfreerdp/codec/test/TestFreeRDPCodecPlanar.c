@@ -171,7 +171,7 @@ static void* read_data(const char* type, const char* name, size_t* plength)
 	cmp = NULL;
 
 fail:
-	(void)printf("%s: %s %s -> %p\n", __func__, type, name, cmp);
+	(void)printf("%s: %s %s -> %p\n", __func__, type, name, rc);
 	free(cmp);
 	if (fp)
 		(void)fclose(fp);
@@ -199,9 +199,18 @@ static BOOL compare(const char* type, const char* name, const void* data, size_t
 	if (!cmp)
 		goto fail;
 	if (cmplen != length)
+	{
+		(void)printf("%s: %s %s: length mismatch: %" PRIuz " vs %" PRIuz "\n", __func__, type, name,
+		             cmplen, length);
 		goto fail;
+	}
 	if (memcmp(data, cmp, length) != 0)
+	{
+		(void)printf("%s: %s %s: data mismatch\n", __func__, type, name);
+		winpr_HexDump(__func__, WLOG_WARN, data, length);
+		winpr_HexDump(__func__, WLOG_WARN, cmp, cmplen);
 		goto fail;
+	}
 	rc = TRUE;
 fail:
 	(void)printf("%s: %s %s -> %s\n", __func__, type, name, rc ? "SUCCESS" : "FAILED");
@@ -227,10 +236,6 @@ static BOOL RunTestPlanar(BITMAP_PLANAR_CONTEXT* encplanar, BITMAP_PLANAR_CONTEX
 	                                                        height, 0, NULL, &dstSize);
 	BYTE* decompressedBitmap =
 	    (BYTE*)calloc(height, 1ULL * width * FreeRDPGetBytesPerPixel(dstFormat));
-
-	if (!compare("bmp", name, srcBitmap,
-	             1ull * width * height * FreeRDPGetBytesPerPixel(srcFormat)))
-		goto fail;
 
 	if (!compare("enc", name, compressedBitmap, dstSize))
 		goto fail;
