@@ -28,7 +28,7 @@
 
 #include "rfx_dwt.h"
 
-static INLINE void rfx_dwt_2d_decode_block(INT16* WINPR_RESTRICT buffer, INT16* WINPR_RESTRICT idwt,
+static inline void rfx_dwt_2d_decode_block(INT16* WINPR_RESTRICT buffer, INT16* WINPR_RESTRICT idwt,
                                            size_t subband_width)
 {
 	const size_t total_width = subband_width << 1;

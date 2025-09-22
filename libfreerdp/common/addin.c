@@ -34,7 +34,7 @@
 #include <freerdp/log.h>
 #define TAG FREERDP_TAG("addin")
 
-static INLINE BOOL is_path_required(LPCSTR path, size_t len)
+static inline BOOL is_path_required(LPCSTR path, size_t len)
 {
 	if (!path || (len <= 1))
 		return FALSE;

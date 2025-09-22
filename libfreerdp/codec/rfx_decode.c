@@ -35,7 +35,7 @@
 
 #include "rfx_decode.h"
 
-static INLINE void rfx_decode_component(RFX_CONTEXT* WINPR_RESTRICT context,
+static inline void rfx_decode_component(RFX_CONTEXT* WINPR_RESTRICT context,
                                         const UINT32* WINPR_RESTRICT quantization_values,
                                         const BYTE* WINPR_RESTRICT data, size_t size,
                                         INT16* WINPR_RESTRICT buffer)

@@ -233,7 +233,7 @@ static void rfx_dwt_2d_decode_NEON(INT16* buffer, INT16* dwt_buffer)
 	rfx_dwt_2d_decode_block_NEON(buffer, dwt_buffer, 32);
 }
 
-static INLINE void rfx_idwt_extrapolate_horiz_neon(INT16* restrict pLowBand, size_t nLowStep,
+static inline void rfx_idwt_extrapolate_horiz_neon(INT16* restrict pLowBand, size_t nLowStep,
                                                    const INT16* restrict pHighBand,
                                                    size_t nHighStep, INT16* restrict pDstBand,
                                                    size_t nDstStep, size_t nLowCount,
@@ -317,7 +317,7 @@ static INLINE void rfx_idwt_extrapolate_horiz_neon(INT16* restrict pLowBand, siz
 	}
 }
 
-static INLINE void rfx_idwt_extrapolate_vert_neon(const INT16* restrict pLowBand, size_t nLowStep,
+static inline void rfx_idwt_extrapolate_vert_neon(const INT16* restrict pLowBand, size_t nLowStep,
                                                   const INT16* restrict pHighBand, size_t nHighStep,
                                                   INT16* restrict pDstBand, size_t nDstStep,
                                                   size_t nLowCount, size_t nHighCount,
@@ -458,12 +458,12 @@ static INLINE void rfx_idwt_extrapolate_vert_neon(const INT16* restrict pLowBand
 	}
 }
 
-static INLINE size_t prfx_get_band_l_count(size_t level)
+static inline size_t prfx_get_band_l_count(size_t level)
 {
 	return (64 >> level) + 1;
 }
 
-static INLINE size_t prfx_get_band_h_count(size_t level)
+static inline size_t prfx_get_band_h_count(size_t level)
 {
 	if (level == 1)
 		return (64 >> 1) - 1;
@@ -471,7 +471,7 @@ static INLINE size_t prfx_get_band_h_count(size_t level)
 		return (64 + (1 << (level - 1))) >> level;
 }
 
-static INLINE void rfx_dwt_2d_decode_extrapolate_block_neon(INT16* buffer, INT16* temp,
+static inline void rfx_dwt_2d_decode_extrapolate_block_neon(INT16* buffer, INT16* temp,
                                                             size_t level)
 {
 	size_t nDstStepX;

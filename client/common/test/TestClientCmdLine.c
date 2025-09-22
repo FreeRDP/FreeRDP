@@ -40,7 +40,7 @@ static void print_test_title(int argc, char** argv)
 	printf("\n");
 }
 
-static INLINE BOOL testcase(const char* name, char** argv, size_t argc, int expected_return,
+static inline BOOL testcase(const char* name, char** argv, size_t argc, int expected_return,
                             validate_settings_pr validate_settings)
 {
 	int status = 0;

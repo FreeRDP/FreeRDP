@@ -766,7 +766,7 @@ static int xcrush_generate_output(XCRUSH_CONTEXT* WINPR_RESTRICT xcrush,
 	return 1;
 }
 
-static INLINE size_t xcrush_copy_bytes_no_overlap(BYTE* WINPR_RESTRICT dst,
+static inline size_t xcrush_copy_bytes_no_overlap(BYTE* WINPR_RESTRICT dst,
                                                   const BYTE* WINPR_RESTRICT src, size_t num)
 {
 	// src and dst overlaps
@@ -784,7 +784,7 @@ static INLINE size_t xcrush_copy_bytes_no_overlap(BYTE* WINPR_RESTRICT dst,
 	return num;
 }
 
-static INLINE size_t xcrush_copy_bytes(BYTE* dst, const BYTE* src, size_t num)
+static inline size_t xcrush_copy_bytes(BYTE* dst, const BYTE* src, size_t num)
 {
 	WINPR_ASSERT(dst);
 	WINPR_ASSERT(src);

@@ -70,12 +70,12 @@ static BOOL checkCapsAreExchangedInt(RdpgfxServerContext* context, const char* f
  *
  * @return new stream
  */
-static INLINE UINT32 rdpgfx_pdu_length(UINT32 dataLen)
+static inline UINT32 rdpgfx_pdu_length(UINT32 dataLen)
 {
 	return RDPGFX_HEADER_SIZE + dataLen;
 }
 
-static INLINE UINT rdpgfx_server_packet_init_header(wStream* s, UINT16 cmdId, UINT32 pduLength)
+static inline UINT rdpgfx_server_packet_init_header(wStream* s, UINT16 cmdId, UINT32 pduLength)
 {
 	RDPGFX_HEADER header;
 	header.flags = 0;
@@ -93,7 +93,7 @@ static INLINE UINT rdpgfx_server_packet_init_header(wStream* s, UINT16 cmdId, UI
  * @param s stream
  * @param start saved start pos of the packet in the stream
  */
-static INLINE BOOL rdpgfx_server_packet_complete_header(wStream* s, size_t start)
+static inline BOOL rdpgfx_server_packet_complete_header(wStream* s, size_t start)
 {
 	const size_t current = Stream_GetPosition(s);
 	const size_t cap = Stream_Capacity(s);
@@ -215,7 +215,7 @@ error:
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static INLINE UINT rdpgfx_server_single_packet_send(RdpgfxServerContext* context, wStream* s)
+static inline UINT rdpgfx_server_single_packet_send(RdpgfxServerContext* context, wStream* s)
 {
 	/* Fill actual length */
 	rdpgfx_server_packet_complete_header(s, 0);
@@ -439,7 +439,7 @@ static UINT rdpgfx_send_delete_surface_pdu(RdpgfxServerContext* context,
 	return rdpgfx_server_single_packet_send(context, s);
 }
 
-static INLINE BOOL rdpgfx_write_start_frame_pdu(wStream* s, const RDPGFX_START_FRAME_PDU* pdu)
+static inline BOOL rdpgfx_write_start_frame_pdu(wStream* s, const RDPGFX_START_FRAME_PDU* pdu)
 {
 	if (!Stream_EnsureRemainingCapacity(s, 8))
 		return FALSE;
@@ -448,7 +448,7 @@ static INLINE BOOL rdpgfx_write_start_frame_pdu(wStream* s, const RDPGFX_START_F
 	return TRUE;
 }
 
-static INLINE BOOL rdpgfx_write_end_frame_pdu(wStream* s, const RDPGFX_END_FRAME_PDU* pdu)
+static inline BOOL rdpgfx_write_end_frame_pdu(wStream* s, const RDPGFX_END_FRAME_PDU* pdu)
 {
 	if (!Stream_EnsureRemainingCapacity(s, 4))
 		return FALSE;
@@ -507,7 +507,7 @@ static UINT rdpgfx_send_end_frame_pdu(RdpgfxServerContext* context, const RDPGFX
  *
  * @return estimated size
  */
-static INLINE UINT32 rdpgfx_estimate_h264_avc420(const RDPGFX_AVC420_BITMAP_STREAM* havc420)
+static inline UINT32 rdpgfx_estimate_h264_avc420(const RDPGFX_AVC420_BITMAP_STREAM* havc420)
 {
 	/* H264 metadata + H264 stream. See rdpgfx_write_h264_avc420 */
 	return sizeof(UINT32) /* numRegionRects */
@@ -522,7 +522,7 @@ static INLINE UINT32 rdpgfx_estimate_h264_avc420(const RDPGFX_AVC420_BITMAP_STRE
  *
  * @return estimated size
  */
-static INLINE UINT32 rdpgfx_estimate_surface_command(const RDPGFX_SURFACE_COMMAND* cmd)
+static inline UINT32 rdpgfx_estimate_surface_command(const RDPGFX_SURFACE_COMMAND* cmd)
 {
 	RDPGFX_AVC420_BITMAP_STREAM* havc420 = NULL;
 	RDPGFX_AVC444_BITMAP_STREAM* havc444 = NULL;
@@ -568,7 +568,7 @@ static INLINE UINT32 rdpgfx_estimate_surface_command(const RDPGFX_SURFACE_COMMAN
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static INLINE UINT16 rdpgfx_surface_command_cmdid(const RDPGFX_SURFACE_COMMAND* cmd)
+static inline UINT16 rdpgfx_surface_command_cmdid(const RDPGFX_SURFACE_COMMAND* cmd)
 {
 	if (cmd->codecId == RDPGFX_CODECID_CAPROGRESSIVE ||
 	    cmd->codecId == RDPGFX_CODECID_CAPROGRESSIVE_V2)
@@ -626,7 +626,7 @@ static UINT rdpgfx_write_h264_metablock(wLog* log, wStream* s, const RDPGFX_H264
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static INLINE UINT rdpgfx_write_h264_avc420(wLog* log, wStream* s,
+static inline UINT rdpgfx_write_h264_avc420(wLog* log, wStream* s,
                                             RDPGFX_AVC420_BITMAP_STREAM* havc420)
 {
 	UINT error = CHANNEL_RC_OK;

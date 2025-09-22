@@ -532,11 +532,7 @@ WINPR_PRAGMA_DIAG_POP
 #define WINPR_NORETURN(obj) obj
 #endif
 
-#ifdef _WIN32
-#define INLINE __inline
-#else
 #define INLINE inline
-#endif
 
 #ifdef WINPR_DLL
 #if defined _WIN32 || defined __CYGWIN__

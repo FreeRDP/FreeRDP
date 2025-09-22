@@ -104,7 +104,7 @@ void HashTable_StringFree(void* str)
 	winpr_ObjectStringFree(str);
 }
 
-static INLINE BOOL HashTable_IsProbablePrime(size_t oddNumber)
+static inline BOOL HashTable_IsProbablePrime(size_t oddNumber)
 {
 	for (size_t i = 3; i < 51; i += 2)
 	{
@@ -117,7 +117,7 @@ static INLINE BOOL HashTable_IsProbablePrime(size_t oddNumber)
 	return TRUE; /* maybe */
 }
 
-static INLINE size_t HashTable_CalculateIdealNumOfBuckets(wHashTable* table)
+static inline size_t HashTable_CalculateIdealNumOfBuckets(wHashTable* table)
 {
 	WINPR_ASSERT(table);
 
@@ -136,7 +136,7 @@ static INLINE size_t HashTable_CalculateIdealNumOfBuckets(wHashTable* table)
 	return idealNumOfBuckets;
 }
 
-static INLINE void HashTable_Rehash(wHashTable* table, size_t numOfBuckets)
+static inline void HashTable_Rehash(wHashTable* table, size_t numOfBuckets)
 {
 	UINT32 hashValue = 0;
 	wKeyValuePair* nextPair = NULL;
@@ -179,7 +179,7 @@ static INLINE void HashTable_Rehash(wHashTable* table, size_t numOfBuckets)
 	table->numOfBuckets = numOfBuckets;
 }
 
-static INLINE BOOL HashTable_Equals(wHashTable* table, const wKeyValuePair* pair, const void* key)
+static inline BOOL HashTable_Equals(wHashTable* table, const wKeyValuePair* pair, const void* key)
 {
 	WINPR_ASSERT(table);
 	WINPR_ASSERT(pair);
@@ -187,7 +187,7 @@ static INLINE BOOL HashTable_Equals(wHashTable* table, const wKeyValuePair* pair
 	return table->key.fnObjectEquals(key, pair->key);
 }
 
-static INLINE wKeyValuePair* HashTable_Get(wHashTable* table, const void* key)
+static inline wKeyValuePair* HashTable_Get(wHashTable* table, const void* key)
 {
 	UINT32 hashValue = 0;
 	wKeyValuePair* pair = NULL;
@@ -205,21 +205,21 @@ static INLINE wKeyValuePair* HashTable_Get(wHashTable* table, const void* key)
 	return pair;
 }
 
-static INLINE void disposeKey(wHashTable* table, void* key)
+static inline void disposeKey(wHashTable* table, void* key)
 {
 	WINPR_ASSERT(table);
 	if (table->key.fnObjectFree)
 		table->key.fnObjectFree(key);
 }
 
-static INLINE void disposeValue(wHashTable* table, void* value)
+static inline void disposeValue(wHashTable* table, void* value)
 {
 	WINPR_ASSERT(table);
 	if (table->value.fnObjectFree)
 		table->value.fnObjectFree(value);
 }
 
-static INLINE void disposePair(wHashTable* table, wKeyValuePair* pair)
+static inline void disposePair(wHashTable* table, wKeyValuePair* pair)
 {
 	WINPR_ASSERT(table);
 	if (!pair)
@@ -229,7 +229,7 @@ static INLINE void disposePair(wHashTable* table, wKeyValuePair* pair)
 	free(pair);
 }
 
-static INLINE void setKey(wHashTable* table, wKeyValuePair* pair, const void* key)
+static inline void setKey(wHashTable* table, wKeyValuePair* pair, const void* key)
 {
 	WINPR_ASSERT(table);
 	if (!pair)
@@ -249,7 +249,7 @@ static INLINE void setKey(wHashTable* table, wKeyValuePair* pair, const void* ke
 	}
 }
 
-static INLINE void setValue(wHashTable* table, wKeyValuePair* pair, const void* value)
+static inline void setValue(wHashTable* table, wKeyValuePair* pair, const void* value)
 {
 	WINPR_ASSERT(table);
 	if (!pair)

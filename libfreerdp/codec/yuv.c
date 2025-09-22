@@ -64,7 +64,7 @@ struct S_YUV_CONTEXT
 	YUV_COMBINE_WORK_PARAM* work_combined_params;
 };
 
-static INLINE BOOL avc420_yuv_to_rgb(const BYTE* WINPR_RESTRICT pYUVData[3],
+static inline BOOL avc420_yuv_to_rgb(const BYTE* WINPR_RESTRICT pYUVData[3],
                                      const UINT32 iStride[3],
                                      const RECTANGLE_16* WINPR_RESTRICT rect, UINT32 nDstStep,
                                      BYTE* WINPR_RESTRICT pDstData, DWORD DstFormat)
@@ -97,7 +97,7 @@ static INLINE BOOL avc420_yuv_to_rgb(const BYTE* WINPR_RESTRICT pYUVData[3],
 	return TRUE;
 }
 
-static INLINE BOOL avc444_yuv_to_rgb(const BYTE* WINPR_RESTRICT pYUVData[3],
+static inline BOOL avc444_yuv_to_rgb(const BYTE* WINPR_RESTRICT pYUVData[3],
                                      const UINT32 iStride[3],
                                      const RECTANGLE_16* WINPR_RESTRICT rect, UINT32 nDstStep,
                                      BYTE* WINPR_RESTRICT pDstData, DWORD DstFormat)
@@ -257,7 +257,7 @@ void yuv_context_free(YUV_CONTEXT* context)
 	winpr_aligned_free(context);
 }
 
-static INLINE YUV_PROCESS_WORK_PARAM pool_decode_param(const RECTANGLE_16* WINPR_RESTRICT rect,
+static inline YUV_PROCESS_WORK_PARAM pool_decode_param(const RECTANGLE_16* WINPR_RESTRICT rect,
                                                        YUV_CONTEXT* WINPR_RESTRICT context,
                                                        const BYTE* WINPR_RESTRICT pYUVData[3],
                                                        const UINT32 iStride[3], UINT32 DstFormat,
@@ -442,7 +442,7 @@ fail:
 	return rc;
 }
 
-static INLINE BOOL check_rect(const YUV_CONTEXT* WINPR_RESTRICT yuv,
+static inline BOOL check_rect(const YUV_CONTEXT* WINPR_RESTRICT yuv,
                               const RECTANGLE_16* WINPR_RESTRICT rect, UINT32 nDstWidth,
                               UINT32 nDstHeight)
 {
@@ -495,7 +495,7 @@ static void CALLBACK yuv444_combine_work_callback(PTP_CALLBACK_INSTANCE instance
 		WLog_WARN(TAG, "YUV420CombineToYUV444 failed");
 }
 
-static INLINE YUV_COMBINE_WORK_PARAM
+static inline YUV_COMBINE_WORK_PARAM
 pool_decode_rect_param(const RECTANGLE_16* WINPR_RESTRICT rect, YUV_CONTEXT* WINPR_RESTRICT context,
                        BYTE type, const BYTE* WINPR_RESTRICT pYUVData[3], const UINT32 iStride[3],
                        BYTE* WINPR_RESTRICT pYUVDstData[3], const UINT32 iDstStride[3])
@@ -728,10 +728,11 @@ static void CALLBACK yuv444v2_encode_work_callback(PTP_CALLBACK_INSTANCE instanc
 	}
 }
 
-static INLINE YUV_ENCODE_WORK_PARAM pool_encode_fill(
-    const RECTANGLE_16* WINPR_RESTRICT rect, YUV_CONTEXT* WINPR_RESTRICT context,
-    const BYTE* WINPR_RESTRICT pSrcData, UINT32 nSrcStep, UINT32 SrcFormat, const UINT32 iStride[],
-    BYTE* WINPR_RESTRICT pYUVLumaData[], BYTE* WINPR_RESTRICT pYUVChromaData[])
+static inline YUV_ENCODE_WORK_PARAM
+pool_encode_fill(const RECTANGLE_16* WINPR_RESTRICT rect, YUV_CONTEXT* WINPR_RESTRICT context,
+                 const BYTE* WINPR_RESTRICT pSrcData, UINT32 nSrcStep, UINT32 SrcFormat,
+                 const UINT32 iStride[], BYTE* WINPR_RESTRICT pYUVLumaData[],
+                 BYTE* WINPR_RESTRICT pYUVChromaData[])
 {
 	YUV_ENCODE_WORK_PARAM current = { 0 };
 

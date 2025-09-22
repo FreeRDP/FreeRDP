@@ -92,7 +92,7 @@ void apc_register(WINPR_THREAD* thread, WINPR_APC_ITEM* addItem)
 	pthread_mutex_unlock(&apc->mutex);
 }
 
-static INLINE void apc_item_remove(APC_QUEUE* apc, WINPR_APC_ITEM* item)
+static inline void apc_item_remove(APC_QUEUE* apc, WINPR_APC_ITEM* item)
 {
 	WINPR_ASSERT(apc);
 	WINPR_ASSERT(item);

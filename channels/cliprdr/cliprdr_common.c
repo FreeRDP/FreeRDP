@@ -148,7 +148,7 @@ static void cliprdr_write_file_contents_request(wStream* s,
 		Stream_Write_UINT32(s, request->clipDataId); /* clipDataId (4 bytes) */
 }
 
-static INLINE void cliprdr_write_lock_unlock_clipdata(wStream* s, UINT32 clipDataId)
+static inline void cliprdr_write_lock_unlock_clipdata(wStream* s, UINT32 clipDataId)
 {
 	Stream_Write_UINT32(s, clipDataId);
 }

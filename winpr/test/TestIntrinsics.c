@@ -6,7 +6,7 @@
 
 static BOOL g_LZCNT = FALSE;
 
-static INLINE UINT32 lzcnt_s(UINT32 x)
+static inline UINT32 lzcnt_s(UINT32 x)
 {
 	if (!x)
 		return 32;

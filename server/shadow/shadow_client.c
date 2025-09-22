@@ -108,7 +108,7 @@ static BOOL BitmapUpdateProxyEx(rdpShadowClient* client, const BITMAP_UPDATE* bi
 	return TRUE;
 }
 
-static INLINE BOOL shadow_client_rdpgfx_new_surface(rdpShadowClient* client)
+static inline BOOL shadow_client_rdpgfx_new_surface(rdpShadowClient* client)
 {
 	UINT error = CHANNEL_RC_OK;
 	RDPGFX_CREATE_SURFACE_PDU createSurface;
@@ -151,7 +151,7 @@ static INLINE BOOL shadow_client_rdpgfx_new_surface(rdpShadowClient* client)
 	return TRUE;
 }
 
-static INLINE BOOL shadow_client_rdpgfx_release_surface(rdpShadowClient* client)
+static inline BOOL shadow_client_rdpgfx_release_surface(rdpShadowClient* client)
 {
 	UINT error = CHANNEL_RC_OK;
 	RDPGFX_DELETE_SURFACE_PDU pdu;
@@ -174,7 +174,7 @@ static INLINE BOOL shadow_client_rdpgfx_release_surface(rdpShadowClient* client)
 	return TRUE;
 }
 
-static INLINE BOOL shadow_client_rdpgfx_reset_graphic(rdpShadowClient* client)
+static inline BOOL shadow_client_rdpgfx_reset_graphic(rdpShadowClient* client)
 {
 	UINT error = CHANNEL_RC_OK;
 	RDPGFX_RESET_GRAPHICS_PDU pdu = { 0 };
@@ -206,7 +206,7 @@ static INLINE BOOL shadow_client_rdpgfx_reset_graphic(rdpShadowClient* client)
 	return TRUE;
 }
 
-static INLINE void shadow_client_free_queued_message(void* obj)
+static inline void shadow_client_free_queued_message(void* obj)
 {
 	wMessage* message = (wMessage*)obj;
 
@@ -345,7 +345,7 @@ fail:
 	return FALSE;
 }
 
-static INLINE void shadow_client_mark_invalid(rdpShadowClient* client, UINT32 numRects,
+static inline void shadow_client_mark_invalid(rdpShadowClient* client, UINT32 numRects,
                                               const RECTANGLE_16* rects)
 {
 	RECTANGLE_16 screenRegion;
@@ -387,7 +387,7 @@ static INLINE void shadow_client_mark_invalid(rdpShadowClient* client, UINT32 nu
  *
  * @return TRUE if width/height changed.
  */
-static INLINE BOOL shadow_client_recalc_desktop_size(rdpShadowClient* client)
+static inline BOOL shadow_client_recalc_desktop_size(rdpShadowClient* client)
 {
 	INT32 width = 0;
 	INT32 height = 0;
@@ -592,7 +592,7 @@ static BOOL shadow_client_post_connect(freerdp_peer* peer)
 }
 
 /* Convert rects in sub rect coordinate to client/surface coordinate */
-static INLINE void shadow_client_convert_rects(rdpShadowClient* client, RECTANGLE_16* dst,
+static inline void shadow_client_convert_rects(rdpShadowClient* client, RECTANGLE_16* dst,
                                                const RECTANGLE_16* src, UINT32 numRects)
 {
 	WINPR_ASSERT(client);
@@ -794,7 +794,7 @@ fail:
 	return rc;
 }
 
-static INLINE void shadow_client_common_frame_acknowledge(rdpShadowClient* client, UINT32 frameId)
+static inline void shadow_client_common_frame_acknowledge(rdpShadowClient* client, UINT32 frameId)
 {
 	/*
 	 * Record the last client acknowledged frame id to
@@ -1130,7 +1130,7 @@ static UINT shadow_client_rdpgfx_caps_advertise(RdpgfxServerContext* context,
 	return CHANNEL_RC_UNSUPPORTED_VERSION;
 }
 
-static INLINE UINT32 rdpgfx_estimate_h264_avc420(RDPGFX_AVC420_BITMAP_STREAM* havc420)
+static inline UINT32 rdpgfx_estimate_h264_avc420(RDPGFX_AVC420_BITMAP_STREAM* havc420)
 {
 	/* H264 metadata + H264 stream. See rdpgfx_write_h264_avc420 */
 	WINPR_ASSERT(havc420);
@@ -2095,7 +2095,7 @@ static BOOL shadow_client_surface_update(rdpShadowClient* client, REGION16* regi
  *
  * @return TRUE on success
  */
-static INLINE BOOL shadow_client_no_surface_update(rdpShadowClient* client,
+static inline BOOL shadow_client_no_surface_update(rdpShadowClient* client,
                                                    SHADOW_GFX_STATUS* pStatus)
 {
 	rdpShadowServer* server = NULL;

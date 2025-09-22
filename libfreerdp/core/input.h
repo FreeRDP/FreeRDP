@@ -43,7 +43,7 @@ typedef struct
 	UINT16 lastY;
 } rdp_input_internal;
 
-static INLINE rdp_input_internal* input_cast(rdpInput* input)
+static inline rdp_input_internal* input_cast(rdpInput* input)
 {
 	union
 	{

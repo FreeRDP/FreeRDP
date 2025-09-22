@@ -33,7 +33,7 @@
 #include <emmintrin.h>
 #include <immintrin.h>
 
-static INLINE pstatus_t sse_image_copy_bgr24_bgrx32(BYTE* WINPR_RESTRICT pDstData, UINT32 nDstStep,
+static inline pstatus_t sse_image_copy_bgr24_bgrx32(BYTE* WINPR_RESTRICT pDstData, UINT32 nDstStep,
                                                     UINT32 nXDst, UINT32 nYDst, UINT32 nWidth,
                                                     UINT32 nHeight,
                                                     const BYTE* WINPR_RESTRICT pSrcData,
@@ -84,7 +84,7 @@ static INLINE pstatus_t sse_image_copy_bgr24_bgrx32(BYTE* WINPR_RESTRICT pDstDat
 	return PRIMITIVES_SUCCESS;
 }
 
-static INLINE pstatus_t sse_image_copy_bgrx32_bgrx32(BYTE* WINPR_RESTRICT pDstData, UINT32 nDstStep,
+static inline pstatus_t sse_image_copy_bgrx32_bgrx32(BYTE* WINPR_RESTRICT pDstData, UINT32 nDstStep,
                                                      UINT32 nXDst, UINT32 nYDst, UINT32 nWidth,
                                                      UINT32 nHeight,
                                                      const BYTE* WINPR_RESTRICT pSrcData,

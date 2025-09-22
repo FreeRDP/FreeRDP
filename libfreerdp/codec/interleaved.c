@@ -151,7 +151,7 @@ static const char* rle_code_str(UINT32 code)
 
 #define buffer_within_range(pbSrc, size, pbEnd) \
 	buffer_within_range_((pbSrc), (size), (pbEnd), __func__, __FILE__, __LINE__)
-static INLINE BOOL buffer_within_range_(const void* pbSrc, size_t size, const void* pbEnd,
+static inline BOOL buffer_within_range_(const void* pbSrc, size_t size, const void* pbEnd,
                                         const char* fkt, const char* file, size_t line)
 {
 	WINPR_UNUSED(file);
@@ -171,7 +171,7 @@ static INLINE BOOL buffer_within_range_(const void* pbSrc, size_t size, const vo
  * Reads the supplied order header and extracts the compression
  * order code ID.
  */
-static INLINE UINT32 ExtractCodeId(BYTE bOrderHdr)
+static inline UINT32 ExtractCodeId(BYTE bOrderHdr)
 {
 	if ((bOrderHdr & 0xC0U) != 0xC0U)
 	{
@@ -312,7 +312,7 @@ static UINT ExtractRunLengthLite(const BYTE* pbOrderHdr, const BYTE* pbEnd, UINT
 	return runLength;
 }
 
-static INLINE UINT32 ExtractRunLength(UINT32 code, const BYTE* pbOrderHdr, const BYTE* pbEnd,
+static inline UINT32 ExtractRunLength(UINT32 code, const BYTE* pbOrderHdr, const BYTE* pbEnd,
                                       UINT32* advance)
 {
 	UINT32 runLength = 0;
@@ -375,7 +375,7 @@ static INLINE UINT32 ExtractRunLength(UINT32 code, const BYTE* pbOrderHdr, const
 
 #define ensure_capacity(start, end, size, base) \
 	ensure_capacity_((start), (end), (size), (base), __func__, __FILE__, __LINE__)
-static INLINE BOOL ensure_capacity_(const BYTE* start, const BYTE* end, size_t size, size_t base,
+static inline BOOL ensure_capacity_(const BYTE* start, const BYTE* end, size_t size, size_t base,
                                     const char* fkt, WINPR_ATTR_UNUSED const char* file,
                                     size_t line)
 {
@@ -391,13 +391,13 @@ static INLINE BOOL ensure_capacity_(const BYTE* start, const BYTE* end, size_t s
 	return res;
 }
 
-static INLINE void write_pixel_8(BYTE* _buf, BYTE _pix)
+static inline void write_pixel_8(BYTE* _buf, BYTE _pix)
 {
 	WINPR_ASSERT(_buf);
 	*_buf = _pix;
 }
 
-static INLINE void write_pixel_24(BYTE* _buf, UINT32 _pix)
+static inline void write_pixel_24(BYTE* _buf, UINT32 _pix)
 {
 	WINPR_ASSERT(_buf);
 	(_buf)[0] = (BYTE)(_pix);
@@ -405,7 +405,7 @@ static INLINE void write_pixel_24(BYTE* _buf, UINT32 _pix)
 	(_buf)[2] = (BYTE)((_pix) >> 16);
 }
 
-static INLINE void write_pixel_16(BYTE* _buf, UINT16 _pix)
+static inline void write_pixel_16(BYTE* _buf, UINT16 _pix)
 {
 	WINPR_ASSERT(_buf);
 	_buf[0] = _pix & 0xFF;

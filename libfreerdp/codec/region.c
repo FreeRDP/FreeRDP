@@ -109,7 +109,7 @@ const RECTANGLE_16* region16_rects(const REGION16* region, UINT32* nbRects)
 	return data->rects;
 }
 
-static INLINE RECTANGLE_16* region16_rects_noconst(REGION16* region)
+static inline RECTANGLE_16* region16_rects_noconst(REGION16* region)
 {
 	WINPR_ASSERT(region);
 

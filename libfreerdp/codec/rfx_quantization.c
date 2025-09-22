@@ -44,7 +44,7 @@
  * LL3		4032		8x8		64
  */
 
-static INLINE void rfx_quantization_decode_block(const primitives_t* WINPR_RESTRICT prims,
+static inline void rfx_quantization_decode_block(const primitives_t* WINPR_RESTRICT prims,
                                                  INT16* WINPR_RESTRICT buffer, UINT32 buffer_size,
                                                  UINT32 factor)
 {
@@ -72,7 +72,7 @@ void rfx_quantization_decode(INT16* WINPR_RESTRICT buffer, const UINT32* WINPR_R
 	rfx_quantization_decode_block(prims, &buffer[4032], 64, quantVals[0] - 1);   /* LL3 */
 }
 
-static INLINE void rfx_quantization_encode_block(INT16* WINPR_RESTRICT buffer, size_t buffer_size,
+static inline void rfx_quantization_encode_block(INT16* WINPR_RESTRICT buffer, size_t buffer_size,
                                                  UINT32 factor)
 {
 	if (factor == 0)

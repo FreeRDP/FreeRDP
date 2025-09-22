@@ -27,7 +27,7 @@
 /* ----------------------------------------------------------------------------
  * 16-bit signed add with saturation (under and over).
  */
-static INLINE INT16 add(INT16 a, INT16 b)
+static inline INT16 add(INT16 a, INT16 b)
 {
 	INT32 k = (INT32)a + (INT32)b;
 

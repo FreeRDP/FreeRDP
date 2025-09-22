@@ -330,7 +330,7 @@ general_RGBToYCbCr_16s16s_P3P3(const INT16* WINPR_RESTRICT pSrc[3], INT32 srcSte
 	return PRIMITIVES_SUCCESS;
 }
 
-static INLINE void writeScanlineGeneric(BYTE* dst, DWORD formatSize, UINT32 DstFormat,
+static inline void writeScanlineGeneric(BYTE* dst, DWORD formatSize, UINT32 DstFormat,
                                         const INT16* r, const INT16* g, const INT16* b, DWORD width)
 {
 	fkt_writePixel writePixel = getPixelWriteFunction(DstFormat, FALSE);
@@ -347,7 +347,7 @@ static INLINE void writeScanlineGeneric(BYTE* dst, DWORD formatSize, UINT32 DstF
 	}
 }
 
-static INLINE void writeScanlineRGB(BYTE* dst, DWORD formatSize, UINT32 DstFormat, const INT16* r,
+static inline void writeScanlineRGB(BYTE* dst, DWORD formatSize, UINT32 DstFormat, const INT16* r,
                                     const INT16* g, const INT16* b, DWORD width)
 {
 	WINPR_UNUSED(formatSize);
@@ -364,7 +364,7 @@ static INLINE void writeScanlineRGB(BYTE* dst, DWORD formatSize, UINT32 DstForma
 	}
 }
 
-static INLINE void writeScanlineBGR(BYTE* dst, DWORD formatSize, UINT32 DstFormat, const INT16* r,
+static inline void writeScanlineBGR(BYTE* dst, DWORD formatSize, UINT32 DstFormat, const INT16* r,
                                     const INT16* g, const INT16* b, DWORD width)
 {
 	WINPR_UNUSED(formatSize);
@@ -381,7 +381,7 @@ static INLINE void writeScanlineBGR(BYTE* dst, DWORD formatSize, UINT32 DstForma
 	}
 }
 
-static INLINE void writeScanlineBGRX(BYTE* dst, DWORD formatSize, UINT32 DstFormat, const INT16* r,
+static inline void writeScanlineBGRX(BYTE* dst, DWORD formatSize, UINT32 DstFormat, const INT16* r,
                                      const INT16* g, const INT16* b, DWORD width)
 {
 	WINPR_UNUSED(formatSize);
@@ -399,7 +399,7 @@ static INLINE void writeScanlineBGRX(BYTE* dst, DWORD formatSize, UINT32 DstForm
 	}
 }
 
-static INLINE void writeScanlineRGBX(BYTE* dst, DWORD formatSize, UINT32 DstFormat, const INT16* r,
+static inline void writeScanlineRGBX(BYTE* dst, DWORD formatSize, UINT32 DstFormat, const INT16* r,
                                      const INT16* g, const INT16* b, DWORD width)
 {
 	WINPR_UNUSED(formatSize);
@@ -417,7 +417,7 @@ static INLINE void writeScanlineRGBX(BYTE* dst, DWORD formatSize, UINT32 DstForm
 	}
 }
 
-static INLINE void writeScanlineXBGR(BYTE* dst, DWORD formatSize, UINT32 DstFormat, const INT16* r,
+static inline void writeScanlineXBGR(BYTE* dst, DWORD formatSize, UINT32 DstFormat, const INT16* r,
                                      const INT16* g, const INT16* b, DWORD width)
 {
 	WINPR_UNUSED(formatSize);
@@ -435,7 +435,7 @@ static INLINE void writeScanlineXBGR(BYTE* dst, DWORD formatSize, UINT32 DstForm
 	}
 }
 
-static INLINE void writeScanlineXRGB(BYTE* dst, DWORD formatSize, UINT32 DstFormat, const INT16* r,
+static inline void writeScanlineXRGB(BYTE* dst, DWORD formatSize, UINT32 DstFormat, const INT16* r,
                                      const INT16* g, const INT16* b, DWORD width)
 {
 	WINPR_UNUSED(formatSize);
@@ -456,7 +456,7 @@ static INLINE void writeScanlineXRGB(BYTE* dst, DWORD formatSize, UINT32 DstForm
 typedef void (*fkt_writeScanline)(BYTE*, DWORD, UINT32, const INT16*, const INT16*, const INT16*,
                                   DWORD);
 
-static INLINE fkt_writeScanline getScanlineWriteFunction(DWORD format)
+static inline fkt_writeScanline getScanlineWriteFunction(DWORD format)
 {
 	switch (format)
 	{

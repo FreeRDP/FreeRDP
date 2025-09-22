@@ -800,7 +800,7 @@ static UINT32 srefImage
 #define FORMAT_SIZE 4ULL
 #define FORMAT PIXEL_FORMAT_XRGB32
 
-static INLINE size_t fuzzyCompare(BYTE b1, BYTE b2)
+static inline size_t fuzzyCompare(BYTE b1, BYTE b2)
 {
 	if (b1 > b2)
 		return b1 - b2;
