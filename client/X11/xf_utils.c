@@ -741,7 +741,7 @@ char* getConfigOption(BOOL system, const char* option)
 	if (!file)
 		return NULL;
 
-	WINPR_JSON* obj = WINPR_JSON_GetObjectItem(file, option);
+	WINPR_JSON* obj = WINPR_JSON_GetObjectItemCaseSensitive(file, option);
 	if (obj)
 	{
 		const char* val = WINPR_JSON_GetStringValue(obj);

@@ -1021,7 +1021,7 @@ static char* get_object_str(WINPR_JSON* json, size_t pos, const char* name)
 		          name);
 		return NULL;
 	}
-	WINPR_JSON* obj = WINPR_JSON_GetObjectItem(json, name);
+	WINPR_JSON* obj = WINPR_JSON_GetObjectItemCaseSensitive(json, name);
 	WINPR_ASSERT(obj);
 	if (!WINPR_JSON_IsString(obj))
 	{
@@ -1051,7 +1051,7 @@ static UINT32 get_object_integer(WINPR_JSON* json, size_t pos, const char* name)
 		          name);
 		return 0;
 	}
-	WINPR_JSON* obj = WINPR_JSON_GetObjectItem(json, name);
+	WINPR_JSON* obj = WINPR_JSON_GetObjectItemCaseSensitive(json, name);
 	WINPR_ASSERT(obj);
 	if (!WINPR_JSON_IsNumber(obj))
 	{
@@ -1249,17 +1249,17 @@ static BOOL CALLBACK load_layouts(PINIT_ONCE once, PVOID param, PVOID* context)
 
 	clear_layout_tables();
 	{
-		WINPR_JSON* obj = WINPR_JSON_GetObjectItem(json, "KeyboardLayouts");
+		WINPR_JSON* obj = WINPR_JSON_GetObjectItemCaseSensitive(json, "KeyboardLayouts");
 		if (!parse_layout_entries(obj, filename))
 			goto end;
 	}
 	{
-		WINPR_JSON* obj = WINPR_JSON_GetObjectItem(json, "KeyboardVariants");
+		WINPR_JSON* obj = WINPR_JSON_GetObjectItemCaseSensitive(json, "KeyboardVariants");
 		if (!parse_variant_entries(obj, filename))
 			goto end;
 	}
 	{
-		WINPR_JSON* obj = WINPR_JSON_GetObjectItem(json, "KeyboardIme");
+		WINPR_JSON* obj = WINPR_JSON_GetObjectItemCaseSensitive(json, "KeyboardIme");
 		if (!parse_ime_entries(obj, filename))
 			goto end;
 	}

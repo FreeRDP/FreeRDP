@@ -626,7 +626,7 @@ static BOOL arm_pick_base64Utf16Field(wLog* log, const WINPR_JSON* json, const c
 static size_t arm_parse_ipvx_count(WINPR_JSON* ipvX)
 {
 	WINPR_ASSERT(ipvX);
-	WINPR_JSON* ipAddress = WINPR_JSON_GetObjectItem(ipvX, "ipAddress");
+	WINPR_JSON* ipAddress = WINPR_JSON_GetObjectItemCaseSensitive(ipvX, "ipAddress");
 	if (!ipAddress || !WINPR_JSON_IsArray(ipAddress))
 		return 0;
 	return WINPR_JSON_GetArraySize(ipAddress);
@@ -641,7 +641,7 @@ static BOOL arm_parse_ipv6(rdpSettings* settings, WINPR_JSON* ipv6, size_t* pAdd
 	if (!freerdp_settings_get_bool(settings, FreeRDP_IPv6Enabled))
 		return TRUE;
 
-	WINPR_JSON* ipAddress = WINPR_JSON_GetObjectItem(ipv6, "ipAddress");
+	WINPR_JSON* ipAddress = WINPR_JSON_GetObjectItemCaseSensitive(ipv6, "ipAddress");
 	if (!ipAddress || !WINPR_JSON_IsArray(ipAddress))
 		return TRUE;
 	const size_t naddresses = WINPR_JSON_GetArraySize(ipAddress);
@@ -667,7 +667,7 @@ static BOOL arm_parse_ipv4(rdpSettings* settings, WINPR_JSON* ipv4, size_t* pAdd
 	WINPR_ASSERT(ipv4);
 	WINPR_ASSERT(pAddressIdx);
 
-	WINPR_JSON* ipAddress = WINPR_JSON_GetObjectItem(ipv4, "ipAddress");
+	WINPR_JSON* ipAddress = WINPR_JSON_GetObjectItemCaseSensitive(ipv4, "ipAddress");
 	if (!ipAddress || !WINPR_JSON_IsArray(ipAddress))
 		return TRUE;
 
@@ -678,7 +678,8 @@ static BOOL arm_parse_ipv4(rdpSettings* settings, WINPR_JSON* ipv4, size_t* pAdd
 		if (!adressN)
 			continue;
 
-		WINPR_JSON* publicIpNode = WINPR_JSON_GetObjectItem(adressN, "publicIpAddress");
+		WINPR_JSON* publicIpNode =
+		    WINPR_JSON_GetObjectItemCaseSensitive(adressN, "publicIpAddress");
 		if (publicIpNode && WINPR_JSON_IsString(publicIpNode))
 		{
 			const char* publicIp = WINPR_JSON_GetStringValue(publicIpNode);
@@ -690,7 +691,8 @@ static BOOL arm_parse_ipv4(rdpSettings* settings, WINPR_JSON* ipv4, size_t* pAdd
 			}
 		}
 
-		WINPR_JSON* privateIpNode = WINPR_JSON_GetObjectItem(adressN, "privateIpAddress");
+		WINPR_JSON* privateIpNode =
+		    WINPR_JSON_GetObjectItemCaseSensitive(adressN, "privateIpAddress");
 		if (privateIpNode && WINPR_JSON_IsString(privateIpNode))
 		{
 			const char* privateIp = WINPR_JSON_GetStringValue(privateIpNode);
@@ -722,7 +724,7 @@ static BOOL arm_treat_azureInstanceNetworkMetadata(wLog* log, const char* metada
 		return FALSE;
 	}
 
-	WINPR_JSON* iface = WINPR_JSON_GetObjectItem(json, "interface");
+	WINPR_JSON* iface = WINPR_JSON_GetObjectItemCaseSensitive(json, "interface");
 	if (!iface)
 	{
 		ret = TRUE;
@@ -750,11 +752,11 @@ static BOOL arm_treat_azureInstanceNetworkMetadata(wLog* log, const char* metada
 		if (!interN)
 			continue;
 
-		WINPR_JSON* ipv6 = WINPR_JSON_GetObjectItem(interN, "ipv6");
+		WINPR_JSON* ipv6 = WINPR_JSON_GetObjectItemCaseSensitive(interN, "ipv6");
 		if (ipv6)
 			count += arm_parse_ipvx_count(ipv6);
 
-		WINPR_JSON* ipv4 = WINPR_JSON_GetObjectItem(interN, "ipv4");
+		WINPR_JSON* ipv4 = WINPR_JSON_GetObjectItemCaseSensitive(interN, "ipv4");
 		if (ipv4)
 			count += arm_parse_ipvx_count(ipv4);
 	}
@@ -769,14 +771,14 @@ static BOOL arm_treat_azureInstanceNetworkMetadata(wLog* log, const char* metada
 		if (!interN)
 			continue;
 
-		WINPR_JSON* ipv6 = WINPR_JSON_GetObjectItem(interN, "ipv6");
+		WINPR_JSON* ipv6 = WINPR_JSON_GetObjectItemCaseSensitive(interN, "ipv6");
 		if (ipv6)
 		{
 			if (!arm_parse_ipv6(settings, ipv6, &addressIdx))
 				goto out;
 		}
 
-		WINPR_JSON* ipv4 = WINPR_JSON_GetObjectItem(interN, "ipv4");
+		WINPR_JSON* ipv4 = WINPR_JSON_GetObjectItemCaseSensitive(interN, "ipv4");
 		if (ipv4)
 		{
 			if (!arm_parse_ipv4(settings, ipv4, &addressIdx))
@@ -885,7 +887,8 @@ static BOOL arm_fill_gateway_parameters(rdpArm* arm, const char* message, size_t
 			goto fail;
 	}
 
-	WINPR_JSON* serverNameNode = WINPR_JSON_GetObjectItem(json, "redirectedServerName");
+	WINPR_JSON* serverNameNode =
+	    WINPR_JSON_GetObjectItemCaseSensitive(json, "redirectedServerName");
 	if (serverNameNode)
 	{
 		const char* serverName = WINPR_JSON_GetStringValue(serverNameNode);
@@ -896,15 +899,21 @@ static BOOL arm_fill_gateway_parameters(rdpArm* arm, const char* message, size_t
 		}
 	}
 
-	WINPR_JSON* userNameNode = WINPR_JSON_GetObjectItem(json, "redirectedUserName");
-	if (userNameNode)
 	{
-		const char* userName = WINPR_JSON_GetStringValue(userNameNode);
-		if (!freerdp_settings_set_string(settings, FreeRDP_Username, userName))
-			goto fail;
+		const char key[] = "redirectedUsername";
+		if (WINPR_JSON_HasObjectItem(json, key))
+		{
+			const char* userName = NULL;
+			WINPR_JSON* userNameNode = WINPR_JSON_GetObjectItemCaseSensitive(json, key);
+			if (userNameNode)
+				userName = WINPR_JSON_GetStringValue(userNameNode);
+			if (!freerdp_settings_set_string(settings, FreeRDP_Username, userName))
+				goto fail;
+		}
 	}
 
-	WINPR_JSON* azureMeta = WINPR_JSON_GetObjectItem(json, "azureInstanceNetworkMetadata");
+	WINPR_JSON* azureMeta =
+	    WINPR_JSON_GetObjectItemCaseSensitive(json, "azureInstanceNetworkMetadata");
 	if (azureMeta && WINPR_JSON_IsString(azureMeta))
 	{
 		if (!arm_treat_azureInstanceNetworkMetadata(arm->log, WINPR_JSON_GetStringValue(azureMeta),

@@ -1509,7 +1509,7 @@ static BOOL tls_extract_full_pem(const rdpCertificate* cert, BYTE** PublicKey,
 
 static int tls_config_parse_bool(WINPR_JSON* json, const char* opt)
 {
-	WINPR_JSON* val = WINPR_JSON_GetObjectItem(json, opt);
+	WINPR_JSON* val = WINPR_JSON_GetObjectItemCaseSensitive(json, opt);
 	if (!val || !WINPR_JSON_IsBool(val))
 		return -1;
 
@@ -1525,7 +1525,7 @@ static int tls_config_check_allowed_hashed(const char* configfile, const rdpCert
 	WINPR_ASSERT(cert);
 	WINPR_ASSERT(json);
 
-	WINPR_JSON* db = WINPR_JSON_GetObjectItem(json, "certificate-db");
+	WINPR_JSON* db = WINPR_JSON_GetObjectItemCaseSensitive(json, "certificate-db");
 	if (!db || !WINPR_JSON_IsArray(db))
 		return 0;
 
@@ -1540,7 +1540,7 @@ static int tls_config_check_allowed_hashed(const char* configfile, const rdpCert
 			continue;
 		}
 
-		WINPR_JSON* key = WINPR_JSON_GetObjectItem(cur, "type");
+		WINPR_JSON* key = WINPR_JSON_GetObjectItemCaseSensitive(cur, "type");
 		if (!key || !WINPR_JSON_IsString(key))
 		{
 			WLog_WARN(TAG,
@@ -1549,7 +1549,7 @@ static int tls_config_check_allowed_hashed(const char* configfile, const rdpCert
 			          configfile, x);
 			continue;
 		}
-		WINPR_JSON* val = WINPR_JSON_GetObjectItem(cur, "hash");
+		WINPR_JSON* val = WINPR_JSON_GetObjectItemCaseSensitive(cur, "hash");
 		if (!val || !WINPR_JSON_IsString(val))
 		{
 			WLog_WARN(TAG,

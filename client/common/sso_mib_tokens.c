@@ -100,7 +100,7 @@ static BOOL sso_mib_get_rdsaad_access_token(rdpClientContext* client_context, co
 	{
 		goto cleanup;
 	}
-	WINPR_JSON* prop = WINPR_JSON_GetObjectItem(json, "kid");
+	WINPR_JSON* prop = WINPR_JSON_GetObjectItemCaseSensitive(json, "kid");
 	if (!prop)
 	{
 		goto cleanup;
