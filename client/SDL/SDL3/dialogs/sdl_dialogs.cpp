@@ -93,6 +93,7 @@ BOOL sdl_authenticate_ex(freerdp* instance, char** username, char** password, ch
 	const char* target = freerdp_settings_get_server_name(instance->context->settings);
 	switch (reason)
 	{
+		case AUTH_RDSTLS:
 		case AUTH_NLA:
 			break;
 
@@ -547,6 +548,7 @@ BOOL sdl_auth_dialog_show(const SDL_UserAuthArg* args)
 		case AUTH_SMARTCARD_PIN:
 			prompt = std::move(authPin);
 			break;
+		case AUTH_RDSTLS:
 		case AUTH_TLS:
 		case AUTH_RDP:
 		case AUTH_NLA:

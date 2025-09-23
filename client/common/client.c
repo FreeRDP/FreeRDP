@@ -479,6 +479,7 @@ static BOOL client_cli_authenticate_raw(freerdp* instance, rdp_auth_reason reaso
 			break;
 		case AUTH_TLS:
 		case AUTH_RDP:
+		case AUTH_RDSTLS:
 		case AUTH_NLA:
 			prompt = auth;
 			break;
@@ -571,6 +572,7 @@ BOOL client_cli_authenticate_ex(freerdp* instance, char** username, char** passw
 
 	switch (reason)
 	{
+		case AUTH_RDSTLS:
 		case AUTH_NLA:
 			break;
 
