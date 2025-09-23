@@ -65,7 +65,7 @@ WINPR_JSON* SdlPref::get_item(const WINPR_JSONPtr& config, const std::string& ke
 {
 	if (!config)
 		return nullptr;
-	return WINPR_JSON_GetObjectItem(config.get(), key.c_str());
+	return WINPR_JSON_GetObjectItemCaseSensitive(config.get(), key.c_str());
 }
 
 bool SdlPref::get_bool(const WINPR_JSONPtr& config, const std::string& key, bool fallback) const

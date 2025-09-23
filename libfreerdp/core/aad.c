@@ -92,7 +92,7 @@ static BOOL json_get_object(wLog* wlog, WINPR_JSON* json, const char* key, WINPR
 		return FALSE;
 	}
 
-	WINPR_JSON* prop = WINPR_JSON_GetObjectItem(json, key);
+	WINPR_JSON* prop = WINPR_JSON_GetObjectItemCaseSensitive(json, key);
 	if (!prop)
 	{
 		WLog_Print(wlog, WLOG_ERROR, "[json] object for key '%s' is NULL", key);
@@ -211,7 +211,7 @@ static BOOL aad_get_nonce(rdpAad* aad)
 	if (!ensure_wellknown(aad->rdpcontext))
 		return FALSE;
 
-	WINPR_JSON* obj = WINPR_JSON_GetObjectItem(rdp->wellknown, "token_endpoint");
+	WINPR_JSON* obj = WINPR_JSON_GetObjectItemCaseSensitive(rdp->wellknown, "token_endpoint");
 	if (!obj)
 	{
 		WLog_Print(aad->log, WLOG_ERROR, "wellknown does not have 'token_endpoint', aborting");
@@ -856,7 +856,7 @@ char* freerdp_utils_aad_get_access_token(wLog* log, const char* data, size_t len
 		goto cleanup;
 	}
 
-	access_token_prop = WINPR_JSON_GetObjectItem(json, "access_token");
+	access_token_prop = WINPR_JSON_GetObjectItemCaseSensitive(json, "access_token");
 	if (!access_token_prop)
 	{
 		WLog_Print(log, WLOG_ERROR, "Response has no \"access_token\" property");
@@ -912,7 +912,7 @@ const char* freerdp_utils_aad_get_wellknown_custom_string(rdpContext* context, c
 	if (!ensure_wellknown(context))
 		return NULL;
 
-	WINPR_JSON* obj = WINPR_JSON_GetObjectItem(context->rdp->wellknown, which);
+	WINPR_JSON* obj = WINPR_JSON_GetObjectItemCaseSensitive(context->rdp->wellknown, which);
 	if (!obj)
 		return NULL;
 
@@ -988,7 +988,7 @@ WINPR_JSON* freerdp_utils_aad_get_wellknown_custom_object(rdpContext* context, c
 	if (!ensure_wellknown(context))
 		return NULL;
 
-	return WINPR_JSON_GetObjectItem(context->rdp->wellknown, which);
+	return WINPR_JSON_GetObjectItemCaseSensitive(context->rdp->wellknown, which);
 }
 
 WINPR_ATTR_MALLOC(WINPR_JSON_Delete, 1)

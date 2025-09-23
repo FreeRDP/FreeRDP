@@ -2714,7 +2714,7 @@ static BOOL wchar_from_json(WCHAR* wstr, size_t len, const WINPR_JSON* obj, cons
 {
 	if (!obj || !WINPR_JSON_IsObject(obj))
 		return FALSE;
-	WINPR_JSON* item = WINPR_JSON_GetObjectItem(obj, key);
+	WINPR_JSON* item = WINPR_JSON_GetObjectItemCaseSensitive(obj, key);
 	if (!item || !WINPR_JSON_IsString(item))
 		return FALSE;
 
@@ -2761,7 +2761,7 @@ static int64_t int_from_json(const WINPR_JSON* obj, const char* key, int64_t min
 		errno = EINVAL;
 		return 0;
 	}
-	WINPR_JSON* item = WINPR_JSON_GetObjectItem(obj, key);
+	WINPR_JSON* item = WINPR_JSON_GetObjectItemCaseSensitive(obj, key);
 	return int_from_json_item(item, min, max);
 }
 
@@ -2797,7 +2797,7 @@ static uint64_t uint_from_json(const WINPR_JSON* obj, const char* key, uint64_t 
 		return 0;
 	}
 
-	WINPR_JSON* item = WINPR_JSON_GetObjectItem(obj, key);
+	WINPR_JSON* item = WINPR_JSON_GetObjectItemCaseSensitive(obj, key);
 	return uint_from_json_item(item, max);
 }
 
@@ -2839,7 +2839,7 @@ static BOOL systemtime_from_json(const WINPR_JSON* pobj, const char* key, SYSTEM
 	if (!pobj || !WINPR_JSON_IsObject(pobj))
 		return FALSE;
 
-	WINPR_JSON* obj = WINPR_JSON_GetObjectItem(pobj, key);
+	WINPR_JSON* obj = WINPR_JSON_GetObjectItemCaseSensitive(pobj, key);
 	if (!obj || !WINPR_JSON_IsObject(obj))
 		return FALSE;
 
@@ -3017,7 +3017,7 @@ static BOOL bitmap_cache_v2_from_json(BITMAP_CACHE_V2_CELL_INFO* info, const WIN
 	if (errno != 0)
 		return FALSE;
 
-	WINPR_JSON* item = WINPR_JSON_GetObjectItem(json, "persistent");
+	WINPR_JSON* item = WINPR_JSON_GetObjectItemCaseSensitive(json, "persistent");
 	if (!item || !WINPR_JSON_IsBool(item))
 		return FALSE;
 
@@ -3061,7 +3061,7 @@ static BOOL client_cookie_from_json(ARC_CS_PRIVATE_PACKET* cookie, const WINPR_J
 	if (errno != 0)
 		return FALSE;
 
-	WINPR_JSON* item = WINPR_JSON_GetObjectItem(json, "securityVerifier");
+	WINPR_JSON* item = WINPR_JSON_GetObjectItemCaseSensitive(json, "securityVerifier");
 	if (!item || !WINPR_JSON_IsArray(item))
 		return FALSE;
 
@@ -3113,7 +3113,7 @@ static BOOL server_cookie_from_json(ARC_SC_PRIVATE_PACKET* cookie, const WINPR_J
 	if (errno != 0)
 		return FALSE;
 
-	WINPR_JSON* item = WINPR_JSON_GetObjectItem(json, "arcRandomBits");
+	WINPR_JSON* item = WINPR_JSON_GetObjectItemCaseSensitive(json, "arcRandomBits");
 	if (!item || !WINPR_JSON_IsArray(item))
 		return FALSE;
 
@@ -3163,7 +3163,7 @@ static BOOL channel_def_from_json(CHANNEL_DEF* cookie, const WINPR_JSON* json)
 	if (errno != 0)
 		return FALSE;
 
-	WINPR_JSON* item = WINPR_JSON_GetObjectItem(json, "name");
+	WINPR_JSON* item = WINPR_JSON_GetObjectItemCaseSensitive(json, "name");
 	if (!item || !WINPR_JSON_IsString(item))
 		return FALSE;
 
@@ -3203,7 +3203,7 @@ static BOOL monitor_attributes_from_json(MONITOR_ATTRIBUTES* attributes, const W
 	if (!json || !WINPR_JSON_IsObject(json))
 		return FALSE;
 
-	WINPR_JSON* obj = WINPR_JSON_GetObjectItem(json, "attributes");
+	WINPR_JSON* obj = WINPR_JSON_GetObjectItemCaseSensitive(json, "attributes");
 	if (!obj || !WINPR_JSON_IsObject(obj))
 		return FALSE;
 
@@ -3233,7 +3233,7 @@ static BOOL monitor_def_from_json(rdpMonitor* monitor, const WINPR_JSON* json)
 	if (errno != 0)
 		return FALSE;
 
-	WINPR_JSON* item = WINPR_JSON_GetObjectItem(json, "is_primary");
+	WINPR_JSON* item = WINPR_JSON_GetObjectItemCaseSensitive(json, "is_primary");
 	if (!item)
 		return FALSE;
 	if (!WINPR_JSON_IsBool(item))
@@ -4022,8 +4022,8 @@ static BOOL addin_argv_from_json(rdpSettings* settings, const WINPR_JSON* json,
 		WINPR_JSON* val = WINPR_JSON_GetArrayItem(json, x);
 		if (val && WINPR_JSON_IsObject(val))
 		{
-			WINPR_JSON* jargc = WINPR_JSON_GetObjectItem(val, "argc");
-			WINPR_JSON* array = WINPR_JSON_GetObjectItem(val, "argv");
+			WINPR_JSON* jargc = WINPR_JSON_GetObjectItemCaseSensitive(val, "argc");
+			WINPR_JSON* array = WINPR_JSON_GetObjectItemCaseSensitive(val, "argv");
 			if (!jargc || !array)
 				continue;
 			if (!WINPR_JSON_IsNumber(jargc) || !WINPR_JSON_IsArray(array))
@@ -4067,7 +4067,7 @@ static BOOL addin_argv_from_json(rdpSettings* settings, const WINPR_JSON* json,
 
 static char* get_string(const WINPR_JSON* json, const char* key)
 {
-	WINPR_JSON* item = WINPR_JSON_GetObjectItem(json, key);
+	WINPR_JSON* item = WINPR_JSON_GetObjectItemCaseSensitive(json, key);
 	if (!item || !WINPR_JSON_IsString(item))
 		return NULL;
 	const char* str = WINPR_JSON_GetStringValue(item);
@@ -4076,7 +4076,7 @@ static char* get_string(const WINPR_JSON* json, const char* key)
 
 static BOOL get_bool(const WINPR_JSON* json, const char* key)
 {
-	WINPR_JSON* item = WINPR_JSON_GetObjectItem(json, key);
+	WINPR_JSON* item = WINPR_JSON_GetObjectItemCaseSensitive(json, key);
 	if (!item || !WINPR_JSON_IsBool(item))
 		return FALSE;
 	return WINPR_JSON_IsTrue(item);
@@ -4197,7 +4197,7 @@ static BOOL deserialize_pointer(const WINPR_JSON* json, rdpSettings* settings,
 	if (!WINPR_JSON_HasObjectItem(json, name))
 		return FALSE;
 
-	WINPR_JSON* jval = WINPR_JSON_GetObjectItem(json, name);
+	WINPR_JSON* jval = WINPR_JSON_GetObjectItemCaseSensitive(json, name);
 	if (!WINPR_JSON_IsNull(jval) && !WINPR_JSON_IsArray(jval))
 		return FALSE;
 
@@ -4304,39 +4304,39 @@ rdpSettings* freerdp_settings_deserialize(const char* jstr, size_t length)
 	if (!settings)
 		goto fail;
 
-	WINPR_JSON* jbool = WINPR_JSON_GetObjectItem(
+	WINPR_JSON* jbool = WINPR_JSON_GetObjectItemCaseSensitive(
 	    json, freerdp_settings_get_type_name_for_type(RDP_SETTINGS_TYPE_BOOL));
 	if (!jbool)
 		goto fail;
-	WINPR_JSON* juint16 = WINPR_JSON_GetObjectItem(
+	WINPR_JSON* juint16 = WINPR_JSON_GetObjectItemCaseSensitive(
 	    json, freerdp_settings_get_type_name_for_type(RDP_SETTINGS_TYPE_UINT16));
 	if (!juint16)
 		goto fail;
-	WINPR_JSON* jint16 = WINPR_JSON_GetObjectItem(
+	WINPR_JSON* jint16 = WINPR_JSON_GetObjectItemCaseSensitive(
 	    json, freerdp_settings_get_type_name_for_type(RDP_SETTINGS_TYPE_INT16));
 	if (!jint16)
 		goto fail;
-	WINPR_JSON* juint32 = WINPR_JSON_GetObjectItem(
+	WINPR_JSON* juint32 = WINPR_JSON_GetObjectItemCaseSensitive(
 	    json, freerdp_settings_get_type_name_for_type(RDP_SETTINGS_TYPE_UINT32));
 	if (!juint32)
 		goto fail;
-	WINPR_JSON* jint32 = WINPR_JSON_GetObjectItem(
+	WINPR_JSON* jint32 = WINPR_JSON_GetObjectItemCaseSensitive(
 	    json, freerdp_settings_get_type_name_for_type(RDP_SETTINGS_TYPE_INT32));
 	if (!jint32)
 		goto fail;
-	WINPR_JSON* juint64 = WINPR_JSON_GetObjectItem(
+	WINPR_JSON* juint64 = WINPR_JSON_GetObjectItemCaseSensitive(
 	    json, freerdp_settings_get_type_name_for_type(RDP_SETTINGS_TYPE_UINT64));
 	if (!juint64)
 		goto fail;
-	WINPR_JSON* jint64 = WINPR_JSON_GetObjectItem(
+	WINPR_JSON* jint64 = WINPR_JSON_GetObjectItemCaseSensitive(
 	    json, freerdp_settings_get_type_name_for_type(RDP_SETTINGS_TYPE_INT64));
 	if (!jint64)
 		goto fail;
-	WINPR_JSON* jstring = WINPR_JSON_GetObjectItem(
+	WINPR_JSON* jstring = WINPR_JSON_GetObjectItemCaseSensitive(
 	    json, freerdp_settings_get_type_name_for_type(RDP_SETTINGS_TYPE_STRING));
 	if (!jstring)
 		goto fail;
-	WINPR_JSON* jpointer = WINPR_JSON_GetObjectItem(
+	WINPR_JSON* jpointer = WINPR_JSON_GetObjectItemCaseSensitive(
 	    json, freerdp_settings_get_type_name_for_type(RDP_SETTINGS_TYPE_POINTER));
 	if (!jpointer)
 		goto fail;
@@ -4395,7 +4395,7 @@ rdpSettings* freerdp_settings_deserialize(const char* jstr, size_t length)
 		{
 			case RDP_SETTINGS_TYPE_BOOL:
 			{
-				WINPR_JSON* item = WINPR_JSON_GetObjectItem(jbool, name);
+				WINPR_JSON* item = WINPR_JSON_GetObjectItemCaseSensitive(jbool, name);
 				if (!item)
 					goto fail;
 				if (!WINPR_JSON_IsBool(item))
@@ -4407,7 +4407,7 @@ rdpSettings* freerdp_settings_deserialize(const char* jstr, size_t length)
 			break;
 			case RDP_SETTINGS_TYPE_UINT16:
 			{
-				WINPR_JSON* item = WINPR_JSON_GetObjectItem(juint16, name);
+				WINPR_JSON* item = WINPR_JSON_GetObjectItemCaseSensitive(juint16, name);
 				const uint16_t val = (uint16_t)uint_from_json_item(item, UINT16_MAX);
 				if (errno != 0)
 					goto fail;
@@ -4417,7 +4417,7 @@ rdpSettings* freerdp_settings_deserialize(const char* jstr, size_t length)
 			break;
 			case RDP_SETTINGS_TYPE_INT16:
 			{
-				WINPR_JSON* item = WINPR_JSON_GetObjectItem(jint16, name);
+				WINPR_JSON* item = WINPR_JSON_GetObjectItemCaseSensitive(jint16, name);
 				const int16_t val = (int16_t)int_from_json_item(item, INT16_MIN, INT16_MAX);
 				if (errno != 0)
 					goto fail;
@@ -4427,7 +4427,7 @@ rdpSettings* freerdp_settings_deserialize(const char* jstr, size_t length)
 			break;
 			case RDP_SETTINGS_TYPE_UINT32:
 			{
-				WINPR_JSON* item = WINPR_JSON_GetObjectItem(juint32, name);
+				WINPR_JSON* item = WINPR_JSON_GetObjectItemCaseSensitive(juint32, name);
 				const uint32_t val = (uint32_t)uint_from_json_item(item, UINT32_MAX);
 				if (errno != 0)
 					goto fail;
@@ -4455,7 +4455,7 @@ rdpSettings* freerdp_settings_deserialize(const char* jstr, size_t length)
 			break;
 			case RDP_SETTINGS_TYPE_INT64:
 			{
-				WINPR_JSON* item = WINPR_JSON_GetObjectItem(jint64, name);
+				WINPR_JSON* item = WINPR_JSON_GetObjectItemCaseSensitive(jint64, name);
 				const int64_t val = int_from_json_item(item, INT64_MIN, INT64_MAX);
 				if (errno != 0)
 					goto fail;
@@ -4466,7 +4466,7 @@ rdpSettings* freerdp_settings_deserialize(const char* jstr, size_t length)
 			case RDP_SETTINGS_TYPE_STRING:
 			{
 				const char* val = NULL;
-				WINPR_JSON* item = WINPR_JSON_GetObjectItem(jstring, name);
+				WINPR_JSON* item = WINPR_JSON_GetObjectItemCaseSensitive(jstring, name);
 				if (item && !WINPR_JSON_IsNull(item))
 				{
 					if (!WINPR_JSON_IsString(item))

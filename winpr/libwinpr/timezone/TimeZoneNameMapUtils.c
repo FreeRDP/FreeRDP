@@ -103,7 +103,7 @@ static char* tz_get_object_str(WINPR_JSON* json, size_t pos, const char* name)
 		          name);
 		return NULL;
 	}
-	WINPR_JSON* obj = WINPR_JSON_GetObjectItem(json, name);
+	WINPR_JSON* obj = WINPR_JSON_GetObjectItemCaseSensitive(json, name);
 	WINPR_ASSERT(obj);
 	if (!WINPR_JSON_IsString(obj))
 	{
@@ -207,7 +207,7 @@ static BOOL CALLBACK load_timezones(PINIT_ONCE once, PVOID param, PVOID* pvconte
 			goto end;
 		}
 
-		WINPR_JSON* obj = WINPR_JSON_GetObjectItem(json, "TimeZoneNameMap");
+		WINPR_JSON* obj = WINPR_JSON_GetObjectItemCaseSensitive(json, "TimeZoneNameMap");
 		if (!WINPR_JSON_IsArray(obj))
 		{
 			WLog_WARN(TAG, "Invalid top level JSON type in file %s, expected an array", filename);
