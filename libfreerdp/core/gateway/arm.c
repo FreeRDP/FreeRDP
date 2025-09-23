@@ -798,70 +798,103 @@ out:
 	return ret;
 }
 
+static void zfree(char* str)
+{
+	if (str)
+	{
+		char* cur = str;
+		while (*cur != '\0')
+			*cur++ = '\0';
+	}
+	free(str);
+}
+
 static BOOL arm_fill_rdstls(rdpArm* arm, rdpSettings* settings, const WINPR_JSON* json,
                             const rdpCertificate* redirectedServerCert)
 {
-	BOOL ret = TRUE;
-	BYTE* cert = NULL;
+	WINPR_ASSERT(arm);
+	BOOL ret = FALSE;
 	BYTE* authBlob = NULL;
 
-	do
+	if (!freerdp_settings_get_string(settings, FreeRDP_Username) ||
+	    !freerdp_settings_get_string(settings, FreeRDP_Password))
 	{
-		/* redirectedAuthGuid */
-		WINPR_JSON* redirectedAuthGuidNode =
-		    WINPR_JSON_GetObjectItemCaseSensitive(json, "redirectedAuthGuid");
-		if (!redirectedAuthGuidNode || !WINPR_JSON_IsString(redirectedAuthGuidNode))
-			break;
+		WINPR_ASSERT(arm->context);
+		WINPR_ASSERT(arm->context->instance);
 
-		const char* redirectedAuthGuid = WINPR_JSON_GetStringValue(redirectedAuthGuidNode);
-		if (!redirectedAuthGuid)
-			break;
+		const char* redirUser = freerdp_settings_get_string(settings, FreeRDP_RedirectionUsername);
+		const char* redirDomain = freerdp_settings_get_string(settings, FreeRDP_RedirectionDomain);
 
-		WCHAR wGUID[72] = {
-			0
-		}; /* A GUID string is between 32 and 68 characters as string, depending on representation.
-		      Add a few extra bytes for braces et al */
-		const SSIZE_T wGUID_len = ConvertUtf8ToWChar(redirectedAuthGuid, wGUID, ARRAYSIZE(wGUID));
-		if (wGUID_len < 0)
+		char* username = NULL;
+		char* password = NULL;
+		char* domain = NULL;
+		if (redirUser)
+			username = _strdup(redirUser);
+		if (redirDomain)
+			domain = _strdup(redirDomain);
+
+		const BOOL rc =
+		    IFCALLRESULT(FALSE, arm->context->instance->AuthenticateEx, arm->context->instance,
+		                 &username, &password, &domain, AUTH_RDSTLS);
+
+		const BOOL rc1 = freerdp_settings_set_string(settings, FreeRDP_Username, username);
+		const BOOL rc2 = freerdp_settings_set_string(settings, FreeRDP_Password, password);
+		const BOOL rc3 = freerdp_settings_set_string(settings, FreeRDP_Domain, domain);
+		zfree(username);
+		zfree(password);
+		zfree(domain);
+		if (!rc || !rc1 || !rc2 || !rc3)
 		{
-			WLog_Print(arm->log, WLOG_ERROR, "unable to allocate space for redirectedAuthGuid");
-			ret = FALSE;
-			goto endOfFunction;
+			goto end;
 		}
+	}
 
-		BOOL status = freerdp_settings_set_pointer_len(
-		    settings, FreeRDP_RedirectionGuid, wGUID,
-		    WINPR_ASSERTING_INT_CAST(size_t, (wGUID_len + 1)) * sizeof(WCHAR));
-		if (!status)
-		{
-			WLog_Print(arm->log, WLOG_ERROR, "unable to set RedirectionGuid");
-			ret = FALSE;
-			goto endOfFunction;
-		}
+	/* redirectedAuthGuid */
+	WINPR_JSON* redirectedAuthGuidNode =
+	    WINPR_JSON_GetObjectItemCaseSensitive(json, "redirectedAuthGuid");
+	if (!redirectedAuthGuidNode || !WINPR_JSON_IsString(redirectedAuthGuidNode))
+		goto end;
 
-		/* redirectedAuthBlob */
-		size_t authBlobLen = 0;
-		if (!arm_pick_base64Utf16Field(arm->log, json, "redirectedAuthBlob", &authBlob,
-		                               &authBlobLen))
-			break;
+	const char* redirectedAuthGuid = WINPR_JSON_GetStringValue(redirectedAuthGuidNode);
+	if (!redirectedAuthGuid)
+		goto end;
 
-		WINPR_CIPHER_CTX* cipher = treatAuthBlob(arm->log, authBlob, authBlobLen);
-		if (!cipher)
-			break;
+	WCHAR wGUID[72] = { 0 }; /* A GUID string is between 32 and 68 characters as string, depending
+	                            on representation. Add a few extra bytes for braces et al */
+	const SSIZE_T wGUID_len = ConvertUtf8ToWChar(redirectedAuthGuid, wGUID, ARRAYSIZE(wGUID));
+	if (wGUID_len < 0)
+	{
+		WLog_Print(arm->log, WLOG_ERROR, "unable to allocate space for redirectedAuthGuid");
+		goto end;
+	}
 
-		const BOOL rerp =
-		    arm_encodeRedirectPasswd(arm->log, settings, redirectedServerCert, cipher);
-		winpr_Cipher_Free(cipher);
-		if (!rerp)
-			break;
+	const BOOL status = freerdp_settings_set_pointer_len(
+	    settings, FreeRDP_RedirectionGuid, wGUID,
+	    WINPR_ASSERTING_INT_CAST(size_t, (wGUID_len + 1)) * sizeof(WCHAR));
+	if (!status)
+	{
+		WLog_Print(arm->log, WLOG_ERROR, "unable to set RedirectionGuid");
+		goto end;
+	}
 
-		ret = TRUE;
-	} while (FALSE);
+	/* redirectedAuthBlob */
+	size_t authBlobLen = 0;
+	if (!arm_pick_base64Utf16Field(arm->log, json, "redirectedAuthBlob", &authBlob, &authBlobLen))
+		goto end;
 
-	free(cert);
+	WINPR_CIPHER_CTX* cipher = treatAuthBlob(arm->log, authBlob, authBlobLen);
+	if (!cipher)
+		goto end;
+
+	const BOOL rerp = arm_encodeRedirectPasswd(arm->log, settings, redirectedServerCert, cipher);
+	winpr_Cipher_Free(cipher);
+	if (!rerp)
+		goto end;
+
+	ret = TRUE;
+
+end:
 	free(authBlob);
-
-endOfFunction:
 	return ret;
 }
 
@@ -907,7 +940,7 @@ static BOOL arm_fill_gateway_parameters(rdpArm* arm, const char* message, size_t
 			WINPR_JSON* userNameNode = WINPR_JSON_GetObjectItemCaseSensitive(json, key);
 			if (userNameNode)
 				userName = WINPR_JSON_GetStringValue(userNameNode);
-			if (!freerdp_settings_set_string(settings, FreeRDP_Username, userName))
+			if (!freerdp_settings_set_string(settings, FreeRDP_RedirectionUsername, userName))
 				goto fail;
 		}
 	}
@@ -937,15 +970,8 @@ static BOOL arm_fill_gateway_parameters(rdpArm* arm, const char* message, size_t
 			goto fail;
 	}
 
-	if (freerdp_settings_get_string(settings, FreeRDP_Password))
-	{
-		/* note: we retrieve some more fields for RDSTLS only if we have a password provided by the
-		 * user, otherwise these are useless: we will not be able to do RDSTLS
-		 */
-		status = arm_fill_rdstls(arm, settings, json, redirectedServerCert);
-	}
-	else
-		status = TRUE;
+	status = arm_fill_rdstls(arm, settings, json, redirectedServerCert);
+
 fail:
 	WINPR_JSON_Delete(json);
 	freerdp_certificate_free(redirectedServerCert);
