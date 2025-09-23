@@ -899,12 +899,17 @@ static BOOL arm_fill_gateway_parameters(rdpArm* arm, const char* message, size_t
 		}
 	}
 
-	WINPR_JSON* userNameNode = WINPR_JSON_GetObjectItemCaseSensitive(json, "redirectedUserName");
-	if (userNameNode)
 	{
-		const char* userName = WINPR_JSON_GetStringValue(userNameNode);
-		if (!freerdp_settings_set_string(settings, FreeRDP_Username, userName))
-			goto fail;
+		const char key[] = "redirectedUsername";
+		if (WINPR_JSON_HasObjectItem(json, key))
+		{
+			const char* userName = NULL;
+			WINPR_JSON* userNameNode = WINPR_JSON_GetObjectItemCaseSensitive(json, key);
+			if (userNameNode)
+				userName = WINPR_JSON_GetStringValue(userNameNode);
+			if (!freerdp_settings_set_string(settings, FreeRDP_Username, userName))
+				goto fail;
+		}
 	}
 
 	WINPR_JSON* azureMeta =
