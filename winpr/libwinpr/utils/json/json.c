@@ -184,7 +184,18 @@ size_t WINPR_JSON_GetArraySize(const WINPR_JSON* array)
 WINPR_JSON* WINPR_JSON_GetObjectItem(const WINPR_JSON* object, const char* string)
 {
 #if defined(WITH_JSONC)
-	return json_object_object_get((const json_object*)object, string);
+	struct json_object_iterator it = json_object_iter_begin((const json_object*)object);
+	struct json_object_iterator itEnd = json_object_iter_end((const json_object*)object);
+	while (!json_object_iter_equal(&it, &itEnd))
+	{
+		const char* key = json_object_iter_peek_name(&it);
+		if (_stricmp(key, string) == 0)
+		{
+			return json_object_iter_peek_value(&it);
+		}
+		json_object_iter_next(&it);
+	}
+	return NULL;
 #elif defined(WITH_CJSON)
 	return cJSON_GetObjectItem((const cJSON*)object, string);
 #else
