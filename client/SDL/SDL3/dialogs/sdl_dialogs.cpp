@@ -93,6 +93,7 @@ BOOL sdl_authenticate_ex(freerdp* instance, char** username, char** password, ch
 	const char* target = freerdp_settings_get_server_name(instance->context->settings);
 	switch (reason)
 	{
+		case AUTH_RDSTLS:
 		case AUTH_NLA:
 			break;
 
@@ -535,27 +536,32 @@ BOOL sdl_message_dialog_show(const char* title, const char* message, Sint32 flag
 
 BOOL sdl_auth_dialog_show(const SDL_UserAuthArg* args)
 {
-	std::vector<std::string> auth = { "Username:        ", "Domain:          ",
-		                              "Password:        " };
-	std::vector<std::string> authPin = { "Device:       ", "PIN:        " };
-	std::vector<std::string> gw = { "GatewayUsername: ", "GatewayDomain:   ", "GatewayPassword: " };
+	const std::vector<std::string> auth = { "Username:        ", "Domain:          ",
+		                                    "Password:        " };
+	const std::vector<std::string> rdsauth = { "Username:        ", "Password:        " };
+	const std::vector<std::string> authPin = { "Device:       ", "PIN:        " };
+	const std::vector<std::string> gw = { "GatewayUsername: ", "GatewayDomain:   ",
+		                                  "GatewayPassword: " };
 	std::vector<std::string> prompt;
 	Sint32 rc = -1;
 
 	switch (args->result)
 	{
 		case AUTH_SMARTCARD_PIN:
-			prompt = std::move(authPin);
+			prompt = authPin;
+			break;
+		case AUTH_RDSTLS:
+			prompt = rdsauth;
 			break;
 		case AUTH_TLS:
 		case AUTH_RDP:
 		case AUTH_NLA:
-			prompt = std::move(auth);
+			prompt = auth;
 			break;
 		case GW_AUTH_HTTP:
 		case GW_AUTH_RDG:
 		case GW_AUTH_RPC:
-			prompt = std::move(gw);
+			prompt = gw;
 			break;
 		default:
 			break;
@@ -570,9 +576,17 @@ BOOL sdl_auth_dialog_show(const SDL_UserAuthArg* args)
 			                          SdlInputWidgetPair::SDL_INPUT_MASK };
 		if (args->result != AUTH_SMARTCARD_PIN)
 		{
-			initial = { args->user ? args->user : "", args->domain ? args->domain : "",
-				        args->password ? args->password : "" };
-			flags = { 0, 0, SdlInputWidgetPair::SDL_INPUT_MASK };
+			if (args->result == AUTH_RDSTLS)
+			{
+				initial = { args->user ? args->user : "", args->password ? args->password : "" };
+				flags = { 0, SdlInputWidgetPair::SDL_INPUT_MASK };
+			}
+			else
+			{
+				initial = { args->user ? args->user : "", args->domain ? args->domain : "",
+					        args->password ? args->password : "" };
+				flags = { 0, 0, SdlInputWidgetPair::SDL_INPUT_MASK };
+			}
 		}
 		SdlInputWidgetPairList ilist(args->title, prompt, initial, flags);
 		rc = ilist.run(result);

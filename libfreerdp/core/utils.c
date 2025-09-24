@@ -181,6 +181,7 @@ auth_status utils_authenticate(freerdp* instance, rdp_auth_reason reason, BOOL o
 			if (settings->SmartcardLogon)
 				reason = AUTH_SMARTCARD_PIN;
 			break;
+		case AUTH_RDSTLS:
 		default:
 			break;
 	}

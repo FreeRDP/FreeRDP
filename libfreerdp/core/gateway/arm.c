@@ -362,51 +362,52 @@ arm_create_cleanup:
  * @param cbInput size of pbInput
  * @return the corresponding WINPR_CIPHER_CTX if success, NULL otherwise
  */
-static WINPR_CIPHER_CTX* treatAuthBlob(wLog* log, const BYTE* pbInput, size_t cbInput)
+static WINPR_CIPHER_CTX* treatAuthBlob(wLog* log, const BYTE* pbInput, size_t cbInput,
+                                       size_t* pBlockSize)
 {
 	WINPR_CIPHER_CTX* ret = NULL;
 	char algoName[100] = { 0 };
 
+	WINPR_ASSERT(pBlockSize);
 	SSIZE_T algoSz = ConvertWCharNToUtf8((const WCHAR*)pbInput, cbInput / sizeof(WCHAR), algoName,
-	                                     sizeof(algoName));
+	                                     sizeof(algoName) - 1);
 	if (algoSz <= 0)
 	{
 		WLog_Print(log, WLOG_ERROR, "invalid algoName");
 		return NULL;
 	}
 
-	algoName[algoSz] = 0;
 	if (strcmp(algoName, "AES") != 0)
 	{
 		WLog_Print(log, WLOG_ERROR, "only AES is supported for now");
 		return NULL;
 	}
 
-	cbInput -= WINPR_ASSERTING_INT_CAST(size_t, (algoSz + 1)) * sizeof(WCHAR);
-
-	if (cbInput < 12)
+	*pBlockSize = WINPR_AES_BLOCK_SIZE;
+	const size_t algoLen = WINPR_ASSERTING_INT_CAST(size_t, (algoSz + 1)) * sizeof(WCHAR);
+	if (cbInput < algoLen)
 	{
 		WLog_Print(log, WLOG_ERROR, "invalid AuthBlob size");
 		return NULL;
 	}
 
+	cbInput -= algoLen;
+
 	/* BCRYPT_KEY_DATA_BLOB_HEADER */
 	wStream staticStream = { 0 };
-	wStream* s = Stream_StaticConstInit(
-	    &staticStream, pbInput + WINPR_ASSERTING_INT_CAST(size_t, (algoSz + 1)) * sizeof(WCHAR),
-	    cbInput);
+	wStream* s = Stream_StaticConstInit(&staticStream, &pbInput[algoLen], cbInput);
 
-	UINT32 dwMagic = 0;
-	Stream_Read_UINT32(s, dwMagic);
+	if (!Stream_CheckAndLogRequiredLengthWLog(log, s, 12))
+		return NULL;
 
+	const UINT32 dwMagic = Stream_Get_UINT32(s);
 	if (dwMagic != BCRYPT_KEY_DATA_BLOB_MAGIC)
 	{
 		WLog_Print(log, WLOG_ERROR, "unsupported authBlob type");
 		return NULL;
 	}
 
-	UINT32 dwVersion = 0;
-	Stream_Read_UINT32(s, dwVersion);
+	const UINT32 dwVersion = Stream_Get_UINT32(s);
 	if (dwVersion != BCRYPT_KEY_DATA_BLOB_VERSION1)
 	{
 		WLog_Print(log, WLOG_ERROR, "unsupported authBlob version %" PRIu32 ", expecting %d",
@@ -414,11 +415,8 @@ static WINPR_CIPHER_CTX* treatAuthBlob(wLog* log, const BYTE* pbInput, size_t cb
 		return NULL;
 	}
 
-	UINT32 cbKeyData = 0;
-	Stream_Read_UINT32(s, cbKeyData);
-	cbInput -= 12;
-
-	if (cbKeyData > cbInput)
+	const UINT32 cbKeyData = Stream_Get_UINT32(s);
+	if (!Stream_CheckAndLogRequiredLengthWLog(log, s, cbKeyData))
 	{
 		WLog_Print(log, WLOG_ERROR, "invalid authBlob size");
 		return NULL;
@@ -481,7 +479,7 @@ static BOOL arm_stringEncodeW(const BYTE* pin, size_t cbIn, BYTE** ppOut, size_t
 }
 
 static BOOL arm_encodeRedirectPasswd(wLog* log, rdpSettings* settings, const rdpCertificate* cert,
-                                     WINPR_CIPHER_CTX* cipher)
+                                     WINPR_CIPHER_CTX* cipher, size_t blockSize)
 {
 	BOOL ret = FALSE;
 	BYTE* output = NULL;
@@ -499,13 +497,21 @@ static BOOL arm_encodeRedirectPasswd(wLog* log, rdpSettings* settings, const rdp
 		return FALSE;
 	}
 
-	size_t wpasswdBytes = (wpasswdLen + 1) * sizeof(WCHAR);
-	BYTE* encryptedPass = calloc(1, wpasswdBytes + 16); /* 16: block size of AES (padding) */
+	const size_t wpasswdBytes = (wpasswdLen + 1) * sizeof(WCHAR);
+	BYTE* encryptedPass = calloc(1, wpasswdBytes + blockSize); /* 16: block size of AES (padding) */
+
+	if (!encryptedPass)
+		goto out;
+
 	size_t encryptedPassLen = 0;
+	if (!winpr_Cipher_Update(cipher, wpasswd, wpasswdBytes, encryptedPass, &encryptedPassLen))
+		goto out;
+
+	if (encryptedPassLen > wpasswdBytes)
+		goto out;
+
 	size_t finalLen = 0;
-	if (!encryptedPass ||
-	    !winpr_Cipher_Update(cipher, wpasswd, wpasswdBytes, encryptedPass, &encryptedPassLen) ||
-	    !winpr_Cipher_Final(cipher, encryptedPass + encryptedPassLen, &finalLen))
+	if (!winpr_Cipher_Final(cipher, &encryptedPass[encryptedPassLen], &finalLen))
 	{
 		WLog_Print(log, WLOG_ERROR, "error when ciphering password");
 		goto out;
@@ -514,7 +520,6 @@ static BOOL arm_encodeRedirectPasswd(wLog* log, rdpSettings* settings, const rdp
 
 	/* then encrypt(cipheredPass, publicKey(redirectedServerCert) */
 	size_t output_length = 0;
-
 	if (!freerdp_certificate_publickey_encrypt(cert, encryptedPass, encryptedPassLen, &output,
 	                                           &output_length))
 	{
@@ -798,70 +803,111 @@ out:
 	return ret;
 }
 
+static void zfree(char* str)
+{
+	if (str)
+	{
+		char* cur = str;
+		while (*cur != '\0')
+			*cur++ = '\0';
+	}
+	free(str);
+}
+
 static BOOL arm_fill_rdstls(rdpArm* arm, rdpSettings* settings, const WINPR_JSON* json,
                             const rdpCertificate* redirectedServerCert)
 {
-	BOOL ret = TRUE;
-	BYTE* cert = NULL;
+	WINPR_ASSERT(arm);
+	BOOL ret = FALSE;
 	BYTE* authBlob = NULL;
+	WCHAR* wGUID = NULL;
 
-	do
+	/* Azure/Entra requires the domain field to be set to 'AzureAD' */
+	const char* redirDomain = "AzureAD";
+	if (!freerdp_settings_get_string(settings, FreeRDP_Username) ||
+	    !freerdp_settings_get_string(settings, FreeRDP_Password))
 	{
-		/* redirectedAuthGuid */
-		WINPR_JSON* redirectedAuthGuidNode =
-		    WINPR_JSON_GetObjectItemCaseSensitive(json, "redirectedAuthGuid");
-		if (!redirectedAuthGuidNode || !WINPR_JSON_IsString(redirectedAuthGuidNode))
-			break;
+		WINPR_ASSERT(arm->context);
+		WINPR_ASSERT(arm->context->instance);
 
-		const char* redirectedAuthGuid = WINPR_JSON_GetStringValue(redirectedAuthGuidNode);
-		if (!redirectedAuthGuid)
-			break;
+		const char* redirUser = freerdp_settings_get_string(settings, FreeRDP_RedirectionUsername);
 
-		WCHAR wGUID[72] = {
-			0
-		}; /* A GUID string is between 32 and 68 characters as string, depending on representation.
-		      Add a few extra bytes for braces et al */
-		const SSIZE_T wGUID_len = ConvertUtf8ToWChar(redirectedAuthGuid, wGUID, ARRAYSIZE(wGUID));
-		if (wGUID_len < 0)
-		{
-			WLog_Print(arm->log, WLOG_ERROR, "unable to allocate space for redirectedAuthGuid");
-			ret = FALSE;
-			goto endOfFunction;
-		}
+		char* username = NULL;
+		char* password = NULL;
 
-		BOOL status = freerdp_settings_set_pointer_len(
-		    settings, FreeRDP_RedirectionGuid, wGUID,
-		    WINPR_ASSERTING_INT_CAST(size_t, (wGUID_len + 1)) * sizeof(WCHAR));
-		if (!status)
-		{
-			WLog_Print(arm->log, WLOG_ERROR, "unable to set RedirectionGuid");
-			ret = FALSE;
-			goto endOfFunction;
-		}
+		/* Provide a domain argument, even if unused. The API was defined as this being non NULL.
+		 * Set to AzureAD to have some indication of a default for clients not yet supporting
+		 * AUTH_RDSTLS
+		 */
+		char* domain = _strdup(redirDomain);
+		if (redirUser)
+			username = _strdup(redirUser);
 
-		/* redirectedAuthBlob */
-		size_t authBlobLen = 0;
-		if (!arm_pick_base64Utf16Field(arm->log, json, "redirectedAuthBlob", &authBlob,
-		                               &authBlobLen))
-			break;
+		const BOOL rc =
+		    IFCALLRESULT(FALSE, arm->context->instance->AuthenticateEx, arm->context->instance,
+		                 &username, &password, &domain, AUTH_RDSTLS);
 
-		WINPR_CIPHER_CTX* cipher = treatAuthBlob(arm->log, authBlob, authBlobLen);
-		if (!cipher)
-			break;
+		const BOOL rc1 = freerdp_settings_set_string(settings, FreeRDP_Username, username);
+		const BOOL rc2 = freerdp_settings_set_string(settings, FreeRDP_Password, password);
+		zfree(username);
+		zfree(password);
+		zfree(domain);
+		if (!rc || !rc1 || !rc2)
+			goto end;
+	}
 
-		const BOOL rerp =
-		    arm_encodeRedirectPasswd(arm->log, settings, redirectedServerCert, cipher);
-		winpr_Cipher_Free(cipher);
-		if (!rerp)
-			break;
+	const BOOL rc = freerdp_settings_set_string(settings, FreeRDP_Domain, redirDomain);
+	if (!rc)
+		goto end;
 
-		ret = TRUE;
-	} while (FALSE);
+	/* redirectedAuthGuid */
+	WINPR_JSON* redirectedAuthGuidNode =
+	    WINPR_JSON_GetObjectItemCaseSensitive(json, "redirectedAuthGuid");
+	if (!redirectedAuthGuidNode || !WINPR_JSON_IsString(redirectedAuthGuidNode))
+		goto end;
 
-	free(cert);
+	const char* redirectedAuthGuid = WINPR_JSON_GetStringValue(redirectedAuthGuidNode);
+	if (!redirectedAuthGuid)
+		goto end;
+
+	size_t wGUID_len = 0;
+	wGUID = ConvertUtf8ToWCharAlloc(redirectedAuthGuid, &wGUID_len);
+	if (!wGUID || (wGUID_len == 0))
+	{
+		WLog_Print(arm->log, WLOG_ERROR, "unable to allocate space for redirectedAuthGuid");
+		goto end;
+	}
+
+	const BOOL status = freerdp_settings_set_pointer_len(settings, FreeRDP_RedirectionGuid, wGUID,
+	                                                     (wGUID_len + 1) * sizeof(WCHAR));
+
+	if (!status)
+	{
+		WLog_Print(arm->log, WLOG_ERROR, "unable to set RedirectionGuid");
+		goto end;
+	}
+
+	/* redirectedAuthBlob */
+	size_t authBlobLen = 0;
+	if (!arm_pick_base64Utf16Field(arm->log, json, "redirectedAuthBlob", &authBlob, &authBlobLen))
+		goto end;
+
+	size_t blockSize = 0;
+	WINPR_CIPHER_CTX* cipher = treatAuthBlob(arm->log, authBlob, authBlobLen, &blockSize);
+	if (!cipher)
+		goto end;
+
+	const BOOL rerp =
+	    arm_encodeRedirectPasswd(arm->log, settings, redirectedServerCert, cipher, blockSize);
+	winpr_Cipher_Free(cipher);
+	if (!rerp)
+		goto end;
+
+	ret = TRUE;
+
+end:
+	free(wGUID);
 	free(authBlob);
-
-endOfFunction:
 	return ret;
 }
 
@@ -907,7 +953,7 @@ static BOOL arm_fill_gateway_parameters(rdpArm* arm, const char* message, size_t
 			WINPR_JSON* userNameNode = WINPR_JSON_GetObjectItemCaseSensitive(json, key);
 			if (userNameNode)
 				userName = WINPR_JSON_GetStringValue(userNameNode);
-			if (!freerdp_settings_set_string(settings, FreeRDP_Username, userName))
+			if (!freerdp_settings_set_string(settings, FreeRDP_RedirectionUsername, userName))
 				goto fail;
 		}
 	}
@@ -937,15 +983,11 @@ static BOOL arm_fill_gateway_parameters(rdpArm* arm, const char* message, size_t
 			goto fail;
 	}
 
-	if (freerdp_settings_get_string(settings, FreeRDP_Password))
-	{
-		/* note: we retrieve some more fields for RDSTLS only if we have a password provided by the
-		 * user, otherwise these are useless: we will not be able to do RDSTLS
-		 */
-		status = arm_fill_rdstls(arm, settings, json, redirectedServerCert);
-	}
-	else
+	if (freerdp_settings_get_bool(settings, FreeRDP_AadSecurity))
 		status = TRUE;
+	else
+		status = arm_fill_rdstls(arm, settings, json, redirectedServerCert);
+
 fail:
 	WINPR_JSON_Delete(json);
 	freerdp_certificate_free(redirectedServerCert);

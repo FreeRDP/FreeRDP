@@ -84,7 +84,8 @@ extern "C"
 		GW_AUTH_HTTP,
 		GW_AUTH_RDG,
 		GW_AUTH_RPC,
-		AUTH_SMARTCARD_PIN
+		AUTH_SMARTCARD_PIN,
+		AUTH_RDSTLS
 	} rdp_auth_reason;
 
 	typedef BOOL (*pContextNew)(freerdp* instance, rdpContext* context);
@@ -113,10 +114,12 @@ extern "C"
 	 *
 	 * \param instance A pointer to the instance to work on
 	 * \param username A pointer to the username string. On input the current username, on output
-	 * the username that should be used. Must not be NULL. \param password A pointer to the password
-	 * string. On input the current password, on output the password that sohould be used. Must not
-	 * be NULL. \param domain A pointer to the domain string. On input the current domain, on output
-	 * the domain that sohould be used. Must not be NULL. \param reason The reason the callback was
+	 * the username that should be used. Must not be NULL.
+	 * \param password A pointer to the password string. On input the current password, on output
+	 * the password that sohould be used. Must not be NULL.
+	 * \param domain A pointer to the domain string. On input the current domain, on output the
+	 * domain that sohould be used. Must not be NULL.
+	 * \param reason The reason the callback was
 	 * called. (e.g. NLA, TLS, RDP, GATEWAY, ...)
 	 *
 	 * \return \b FALSE to abort the connection, \b TRUE otherwise.

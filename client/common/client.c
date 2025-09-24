@@ -444,27 +444,28 @@ out:
 	return ret;
 }
 
-/** Callback set in the rdp_freerdp structure, and used to get the user's password,
+/** @brief Callback set in the rdp_freerdp structure, and used to get the user's password,
  *  if required to establish the connection.
  *  This function is actually called in credssp_ntlmssp_client_init()
+ *
  *  @see rdp_server_accept_nego() and rdp_check_fds()
- *  @param instance - pointer to the rdp_freerdp structure that contains the connection settings
- *  @param username - unused
- *  @param password - on return: pointer to a character string that will be filled by the password
- * entered by the user. Note that this character string will be allocated inside the function, and
- * needs to be deallocated by the caller using free(), even in case this function fails.
- *  @param domain - unused
+ *  @param instance pointer to the rdp_freerdp structure that contains the connection settings
+ *  @param username on input can contain a suggestion (must be allocated and is released by \b free
+ * ). On output the allocated username entered by the user.
+ *  @param password on input can contain a suggestion (must be allocated and is released by \b free
+ * ). On output the allocated password entered by the user.
+ *  @param idomain on input can contain a suggestion (must be allocated and is released by \b free
+ * ). On output the allocated domain entered by the user.
  *  @return TRUE if a password was successfully entered. See freerdp_passphrase_read() for more
  * details.
  */
 static BOOL client_cli_authenticate_raw(freerdp* instance, rdp_auth_reason reason, char** username,
-                                        char** password, char** domain)
+                                        char** password, char** idomain)
 {
 	static const size_t password_size = 512;
-	const char* auth[] = { "Username:        ", "Domain:          ", "Password:        " };
-	const char* authPin[] = { "Username:        ", "Domain:          ", "Smartcard-Pin:   " };
-	const char* gw[] = { "GatewayUsername: ", "GatewayDomain:   ", "GatewayPassword: " };
-	const char** prompt = NULL;
+	const char* userAuth = "Username:        ";
+	const char* domainAuth = "Domain:          ";
+	const char* pwdAuth = "Password:        ";
 	BOOL pinOnly = FALSE;
 
 	WINPR_ASSERT(instance);
@@ -474,30 +475,41 @@ static BOOL client_cli_authenticate_raw(freerdp* instance, rdp_auth_reason reaso
 	switch (reason)
 	{
 		case AUTH_SMARTCARD_PIN:
-			prompt = authPin;
+			pwdAuth = "Smartcard-Pin:   ";
 			pinOnly = TRUE;
+			break;
+		case AUTH_RDSTLS:
 			break;
 		case AUTH_TLS:
 		case AUTH_RDP:
 		case AUTH_NLA:
-			prompt = auth;
 			break;
 		case GW_AUTH_HTTP:
 		case GW_AUTH_RDG:
 		case GW_AUTH_RPC:
-			prompt = gw;
+			userAuth = "GatewayUsername: ";
+			domainAuth = "GatewayDomain:   ";
+			pwdAuth = "GatewayPassword: ";
 			break;
 		default:
 			return FALSE;
 	}
 
-	if (!username || !password || !domain)
+	if (!username || !password)
 		return FALSE;
+
+	char** domain = NULL;
+	if (reason != AUTH_RDSTLS)
+	{
+		if (!idomain)
+			return FALSE;
+		domain = idomain;
+	}
 
 	if (!*username && !pinOnly)
 	{
 		size_t username_size = 0;
-		printf("%s", prompt[0]);
+		printf("%s", userAuth);
 		(void)fflush(stdout);
 
 		if (freerdp_interruptible_get_line(instance->context, username, &username_size, stdin) < 0)
@@ -515,10 +527,10 @@ static BOOL client_cli_authenticate_raw(freerdp* instance, rdp_auth_reason reaso
 		}
 	}
 
-	if (!*domain && !pinOnly)
+	if (domain && !*domain && !pinOnly)
 	{
 		size_t domain_size = 0;
-		printf("%s", prompt[1]);
+		printf("%s", domainAuth);
 		(void)fflush(stdout);
 
 		if (freerdp_interruptible_get_line(instance->context, domain, &domain_size, stdin) < 0)
@@ -545,7 +557,7 @@ static BOOL client_cli_authenticate_raw(freerdp* instance, rdp_auth_reason reaso
 
 		const BOOL fromStdin =
 		    freerdp_settings_get_bool(instance->context->settings, FreeRDP_CredentialsFromStdin);
-		if (freerdp_passphrase_read(instance->context, prompt[2], *password, password_size,
+		if (freerdp_passphrase_read(instance->context, pwdAuth, *password, password_size,
 		                            fromStdin) == NULL)
 			goto fail;
 	}
@@ -553,10 +565,13 @@ static BOOL client_cli_authenticate_raw(freerdp* instance, rdp_auth_reason reaso
 	return TRUE;
 fail:
 	free(*username);
-	free(*domain);
+	if (domain)
+	{
+		free(*domain);
+		*domain = NULL;
+	}
 	free(*password);
 	*username = NULL;
-	*domain = NULL;
 	*password = NULL;
 	return FALSE;
 }
@@ -571,6 +586,7 @@ BOOL client_cli_authenticate_ex(freerdp* instance, char** username, char** passw
 
 	switch (reason)
 	{
+		case AUTH_RDSTLS:
 		case AUTH_NLA:
 			break;
 
