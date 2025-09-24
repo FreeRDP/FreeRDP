@@ -19,6 +19,8 @@
  */
 
 // Do not include! X11 has conflicting defines #include "xf_utils.h"
+const char* request_code_2_str(int code);
+
 #include <X11/Xproto.h>
 
 const char* request_code_2_str(int code)
