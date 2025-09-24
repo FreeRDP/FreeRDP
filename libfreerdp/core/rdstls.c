@@ -278,6 +278,26 @@ static BOOL rdstls_write_data(wStream* s, UINT32 length, const BYTE* data)
 	return TRUE;
 }
 
+static BOOL rdstls_write_cookie(wStream* s, const ARC_SC_PRIVATE_PACKET* cookie)
+{
+	WINPR_ASSERT(cookie);
+	const uint16_t length = 28;
+
+	if (!Stream_EnsureRemainingCapacity(s, 2))
+		return FALSE;
+
+	Stream_Write_UINT16(s, length);
+
+	if (!Stream_EnsureRemainingCapacity(s, length))
+		return FALSE;
+
+	Stream_Write_UINT32(s, cookie->cbLen);
+	Stream_Write_UINT32(s, cookie->version);
+	Stream_Write_UINT32(s, cookie->logonId);
+	Stream_Write(s, cookie->arcRandomBits, sizeof(cookie->arcRandomBits));
+	return TRUE;
+}
+
 static BOOL rdstls_write_authentication_request_with_password(rdpRdstls* rdstls, wStream* s)
 {
 	WINPR_ASSERT(rdstls);
@@ -310,8 +330,23 @@ static BOOL rdstls_write_authentication_request_with_password(rdpRdstls* rdstls,
 static BOOL rdstls_write_authentication_request_with_cookie(WINPR_ATTR_UNUSED rdpRdstls* rdstls,
                                                             WINPR_ATTR_UNUSED wStream* s)
 {
-	// TODO
-	return FALSE;
+	WINPR_ASSERT(rdstls);
+	WINPR_ASSERT(rdstls->context);
+
+	rdpSettings* settings = rdstls->context->settings;
+	WINPR_ASSERT(settings);
+
+	if (!Stream_EnsureRemainingCapacity(s, 8))
+		return FALSE;
+
+	Stream_Write_UINT16(s, RDSTLS_TYPE_AUTHREQ);
+	Stream_Write_UINT16(s, RDSTLS_DATA_AUTORECONNECT_COOKIE);
+	Stream_Write_UINT32(s, settings->RedirectedSessionId);
+
+	if (!rdstls_write_cookie(s, settings->ServerAutoReconnectCookie))
+		return FALSE;
+
+	return TRUE;
 }
 
 static BOOL rdstls_write_authentication_response(rdpRdstls* rdstls, wStream* s)
