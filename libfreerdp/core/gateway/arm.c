@@ -362,51 +362,52 @@ arm_create_cleanup:
  * @param cbInput size of pbInput
  * @return the corresponding WINPR_CIPHER_CTX if success, NULL otherwise
  */
-static WINPR_CIPHER_CTX* treatAuthBlob(wLog* log, const BYTE* pbInput, size_t cbInput)
+static WINPR_CIPHER_CTX* treatAuthBlob(wLog* log, const BYTE* pbInput, size_t cbInput,
+                                       size_t* pBlockSize)
 {
 	WINPR_CIPHER_CTX* ret = NULL;
 	char algoName[100] = { 0 };
 
+	WINPR_ASSERT(pBlockSize);
 	SSIZE_T algoSz = ConvertWCharNToUtf8((const WCHAR*)pbInput, cbInput / sizeof(WCHAR), algoName,
-	                                     sizeof(algoName));
+	                                     sizeof(algoName) - 1);
 	if (algoSz <= 0)
 	{
 		WLog_Print(log, WLOG_ERROR, "invalid algoName");
 		return NULL;
 	}
 
-	algoName[algoSz] = 0;
 	if (strcmp(algoName, "AES") != 0)
 	{
 		WLog_Print(log, WLOG_ERROR, "only AES is supported for now");
 		return NULL;
 	}
 
-	cbInput -= WINPR_ASSERTING_INT_CAST(size_t, (algoSz + 1)) * sizeof(WCHAR);
-
-	if (cbInput < 12)
+	*pBlockSize = WINPR_AES_BLOCK_SIZE;
+	const size_t algoLen = WINPR_ASSERTING_INT_CAST(size_t, (algoSz + 1)) * sizeof(WCHAR);
+	if (cbInput < algoLen)
 	{
 		WLog_Print(log, WLOG_ERROR, "invalid AuthBlob size");
 		return NULL;
 	}
 
+	cbInput -= algoLen;
+
 	/* BCRYPT_KEY_DATA_BLOB_HEADER */
 	wStream staticStream = { 0 };
-	wStream* s = Stream_StaticConstInit(
-	    &staticStream, pbInput + WINPR_ASSERTING_INT_CAST(size_t, (algoSz + 1)) * sizeof(WCHAR),
-	    cbInput);
+	wStream* s = Stream_StaticConstInit(&staticStream, &pbInput[algoLen], cbInput);
 
-	UINT32 dwMagic = 0;
-	Stream_Read_UINT32(s, dwMagic);
+	if (!Stream_CheckAndLogRequiredLengthWLog(log, s, 12))
+		return NULL;
 
+	const UINT32 dwMagic = Stream_Get_UINT32(s);
 	if (dwMagic != BCRYPT_KEY_DATA_BLOB_MAGIC)
 	{
 		WLog_Print(log, WLOG_ERROR, "unsupported authBlob type");
 		return NULL;
 	}
 
-	UINT32 dwVersion = 0;
-	Stream_Read_UINT32(s, dwVersion);
+	const UINT32 dwVersion = Stream_Get_UINT32(s);
 	if (dwVersion != BCRYPT_KEY_DATA_BLOB_VERSION1)
 	{
 		WLog_Print(log, WLOG_ERROR, "unsupported authBlob version %" PRIu32 ", expecting %d",
@@ -414,11 +415,8 @@ static WINPR_CIPHER_CTX* treatAuthBlob(wLog* log, const BYTE* pbInput, size_t cb
 		return NULL;
 	}
 
-	UINT32 cbKeyData = 0;
-	Stream_Read_UINT32(s, cbKeyData);
-	cbInput -= 12;
-
-	if (cbKeyData > cbInput)
+	const UINT32 cbKeyData = Stream_Get_UINT32(s);
+	if (!Stream_CheckAndLogRequiredLengthWLog(log, s, cbKeyData))
 	{
 		WLog_Print(log, WLOG_ERROR, "invalid authBlob size");
 		return NULL;
@@ -481,7 +479,7 @@ static BOOL arm_stringEncodeW(const BYTE* pin, size_t cbIn, BYTE** ppOut, size_t
 }
 
 static BOOL arm_encodeRedirectPasswd(wLog* log, rdpSettings* settings, const rdpCertificate* cert,
-                                     WINPR_CIPHER_CTX* cipher)
+                                     WINPR_CIPHER_CTX* cipher, size_t blockSize)
 {
 	BOOL ret = FALSE;
 	BYTE* output = NULL;
@@ -499,13 +497,21 @@ static BOOL arm_encodeRedirectPasswd(wLog* log, rdpSettings* settings, const rdp
 		return FALSE;
 	}
 
-	size_t wpasswdBytes = (wpasswdLen + 1) * sizeof(WCHAR);
-	BYTE* encryptedPass = calloc(1, wpasswdBytes + 16); /* 16: block size of AES (padding) */
+	const size_t wpasswdBytes = (wpasswdLen + 1) * sizeof(WCHAR);
+	BYTE* encryptedPass = calloc(1, wpasswdBytes + blockSize); /* 16: block size of AES (padding) */
+
+	if (!encryptedPass)
+		goto out;
+
 	size_t encryptedPassLen = 0;
+	if (!winpr_Cipher_Update(cipher, wpasswd, wpasswdBytes, encryptedPass, &encryptedPassLen))
+		goto out;
+
+	if (encryptedPassLen > wpasswdBytes)
+		goto out;
+
 	size_t finalLen = 0;
-	if (!encryptedPass ||
-	    !winpr_Cipher_Update(cipher, wpasswd, wpasswdBytes, encryptedPass, &encryptedPassLen) ||
-	    !winpr_Cipher_Final(cipher, encryptedPass + encryptedPassLen, &finalLen))
+	if (!winpr_Cipher_Final(cipher, &encryptedPass[encryptedPassLen], &finalLen))
 	{
 		WLog_Print(log, WLOG_ERROR, "error when ciphering password");
 		goto out;
@@ -514,7 +520,6 @@ static BOOL arm_encodeRedirectPasswd(wLog* log, rdpSettings* settings, const rdp
 
 	/* then encrypt(cipheredPass, publicKey(redirectedServerCert) */
 	size_t output_length = 0;
-
 	if (!freerdp_certificate_publickey_encrypt(cert, encryptedPass, encryptedPassLen, &output,
 	                                           &output_length))
 	{
@@ -815,6 +820,7 @@ static BOOL arm_fill_rdstls(rdpArm* arm, rdpSettings* settings, const WINPR_JSON
 	WINPR_ASSERT(arm);
 	BOOL ret = FALSE;
 	BYTE* authBlob = NULL;
+	WCHAR* wGUID = NULL;
 
 	if (!freerdp_settings_get_string(settings, FreeRDP_Username) ||
 	    !freerdp_settings_get_string(settings, FreeRDP_Password))
@@ -839,15 +845,17 @@ static BOOL arm_fill_rdstls(rdpArm* arm, rdpSettings* settings, const WINPR_JSON
 
 		const BOOL rc1 = freerdp_settings_set_string(settings, FreeRDP_Username, username);
 		const BOOL rc2 = freerdp_settings_set_string(settings, FreeRDP_Password, password);
-		const BOOL rc3 = freerdp_settings_set_string(settings, FreeRDP_Domain, domain);
 		zfree(username);
 		zfree(password);
 		zfree(domain);
-		if (!rc || !rc1 || !rc2 || !rc3)
-		{
+		if (!rc || !rc1 || !rc2)
 			goto end;
-		}
 	}
+
+	/* Azure/Entra requires the domain field to be set to be set to 'AzureAD' */
+	const BOOL rc = freerdp_settings_set_string(settings, FreeRDP_Domain, "AzureAD");
+	if (!rc)
+		goto end;
 
 	/* redirectedAuthGuid */
 	WINPR_JSON* redirectedAuthGuidNode =
@@ -859,18 +867,17 @@ static BOOL arm_fill_rdstls(rdpArm* arm, rdpSettings* settings, const WINPR_JSON
 	if (!redirectedAuthGuid)
 		goto end;
 
-	WCHAR wGUID[72] = { 0 }; /* A GUID string is between 32 and 68 characters as string, depending
-	                            on representation. Add a few extra bytes for braces et al */
-	const SSIZE_T wGUID_len = ConvertUtf8ToWChar(redirectedAuthGuid, wGUID, ARRAYSIZE(wGUID));
-	if (wGUID_len < 0)
+	size_t wGUID_len = 0;
+	wGUID = ConvertUtf8ToWCharAlloc(redirectedAuthGuid, &wGUID_len);
+	if (!wGUID || (wGUID_len == 0))
 	{
 		WLog_Print(arm->log, WLOG_ERROR, "unable to allocate space for redirectedAuthGuid");
 		goto end;
 	}
 
-	const BOOL status = freerdp_settings_set_pointer_len(
-	    settings, FreeRDP_RedirectionGuid, wGUID,
-	    WINPR_ASSERTING_INT_CAST(size_t, (wGUID_len + 1)) * sizeof(WCHAR));
+	const BOOL status = freerdp_settings_set_pointer_len(settings, FreeRDP_RedirectionGuid, wGUID,
+	                                                     (wGUID_len + 1) * sizeof(WCHAR));
+
 	if (!status)
 	{
 		WLog_Print(arm->log, WLOG_ERROR, "unable to set RedirectionGuid");
@@ -882,11 +889,13 @@ static BOOL arm_fill_rdstls(rdpArm* arm, rdpSettings* settings, const WINPR_JSON
 	if (!arm_pick_base64Utf16Field(arm->log, json, "redirectedAuthBlob", &authBlob, &authBlobLen))
 		goto end;
 
-	WINPR_CIPHER_CTX* cipher = treatAuthBlob(arm->log, authBlob, authBlobLen);
+	size_t blockSize = 0;
+	WINPR_CIPHER_CTX* cipher = treatAuthBlob(arm->log, authBlob, authBlobLen, &blockSize);
 	if (!cipher)
 		goto end;
 
-	const BOOL rerp = arm_encodeRedirectPasswd(arm->log, settings, redirectedServerCert, cipher);
+	const BOOL rerp =
+	    arm_encodeRedirectPasswd(arm->log, settings, redirectedServerCert, cipher, blockSize);
 	winpr_Cipher_Free(cipher);
 	if (!rerp)
 		goto end;
@@ -894,6 +903,7 @@ static BOOL arm_fill_rdstls(rdpArm* arm, rdpSettings* settings, const WINPR_JSON
 	ret = TRUE;
 
 end:
+	free(wGUID);
 	free(authBlob);
 	return ret;
 }
