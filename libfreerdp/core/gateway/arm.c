@@ -822,6 +822,8 @@ static BOOL arm_fill_rdstls(rdpArm* arm, rdpSettings* settings, const WINPR_JSON
 	BYTE* authBlob = NULL;
 	WCHAR* wGUID = NULL;
 
+	/* Azure/Entra requires the domain field to be set to 'AzureAD' */
+	const char* redirDomain = "AzureAD";
 	if (!freerdp_settings_get_string(settings, FreeRDP_Username) ||
 	    !freerdp_settings_get_string(settings, FreeRDP_Password))
 	{
@@ -829,15 +831,17 @@ static BOOL arm_fill_rdstls(rdpArm* arm, rdpSettings* settings, const WINPR_JSON
 		WINPR_ASSERT(arm->context->instance);
 
 		const char* redirUser = freerdp_settings_get_string(settings, FreeRDP_RedirectionUsername);
-		const char* redirDomain = freerdp_settings_get_string(settings, FreeRDP_RedirectionDomain);
 
 		char* username = NULL;
 		char* password = NULL;
-		char* domain = NULL;
+
+		/* Provide a domain argument, even if unused. The API was defined as this being non NULL.
+		 * Set to AzureAD to have some indication of a default for clients not yet supporting
+		 * AUTH_RDSTLS
+		 */
+		char* domain = _strdup(redirDomain);
 		if (redirUser)
 			username = _strdup(redirUser);
-		if (redirDomain)
-			domain = _strdup(redirDomain);
 
 		const BOOL rc =
 		    IFCALLRESULT(FALSE, arm->context->instance->AuthenticateEx, arm->context->instance,
@@ -852,8 +856,7 @@ static BOOL arm_fill_rdstls(rdpArm* arm, rdpSettings* settings, const WINPR_JSON
 			goto end;
 	}
 
-	/* Azure/Entra requires the domain field to be set to be set to 'AzureAD' */
-	const BOOL rc = freerdp_settings_set_string(settings, FreeRDP_Domain, "AzureAD");
+	const BOOL rc = freerdp_settings_set_string(settings, FreeRDP_Domain, redirDomain);
 	if (!rc)
 		goto end;
 
