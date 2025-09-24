@@ -983,7 +983,10 @@ static BOOL arm_fill_gateway_parameters(rdpArm* arm, const char* message, size_t
 			goto fail;
 	}
 
-	status = arm_fill_rdstls(arm, settings, json, redirectedServerCert);
+	if (freerdp_settings_get_bool(settings, FreeRDP_AadSecurity))
+		status = TRUE;
+	else
+		status = arm_fill_rdstls(arm, settings, json, redirectedServerCert);
 
 fail:
 	WINPR_JSON_Delete(json);
