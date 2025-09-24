@@ -282,19 +282,25 @@ static void* read_rdp_data(const char* name, size_t* plen)
 	FILE* fp = test_fopen(name, "r");
 	if (!fp)
 		goto fail;
+
 	if (fseek(fp, 0, SEEK_END) != 0)
 		goto fail;
-	const size_t pos = WINPR_ASSERTING_INT_CAST(size_t, _ftelli64(fp));
+
+	const INT64 pos = _ftelli64(fp);
+	if (pos < 0)
+		goto fail;
+
 	if (fseek(fp, 0, SEEK_SET) != 0)
 		goto fail;
 
-	json = calloc(1ULL + pos, sizeof(char));
+	const size_t upos = WINPR_CXX_COMPAT_CAST(size_t, pos);
+	json = calloc(1ULL + upos, sizeof(char));
 	if (!json)
 		goto fail;
 	if (fread(json, 1, pos, fp) != pos)
 		goto fail;
 
-	*plen = pos;
+	*plen = upos;
 	success = TRUE;
 fail:
 	if (!success)
