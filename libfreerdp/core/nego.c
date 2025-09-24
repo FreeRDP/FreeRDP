@@ -1321,6 +1321,9 @@ BOOL nego_process_negotiation_request(rdpNego* nego, wStream* s)
 
 static const char* nego_rdp_neg_rsp_flags_str(UINT32 flags)
 {
+	const uint32_t mask =
+	    (EXTENDED_CLIENT_DATA_SUPPORTED | DYNVC_GFX_PROTOCOL_SUPPORTED | RDP_NEGRSP_RESERVED |
+	     RESTRICTED_ADMIN_MODE_SUPPORTED | REDIRECTED_AUTHENTICATION_MODE_SUPPORTED);
 	static char buffer[1024] = { 0 };
 
 	(void)_snprintf(buffer, ARRAYSIZE(buffer), "[0x%02" PRIx32 "] ", flags);
@@ -1334,10 +1337,12 @@ static const char* nego_rdp_neg_rsp_flags_str(UINT32 flags)
 		winpr_str_append("RESTRICTED_ADMIN_MODE_SUPPORTED", buffer, sizeof(buffer), "|");
 	if (flags & REDIRECTED_AUTHENTICATION_MODE_SUPPORTED)
 		winpr_str_append("REDIRECTED_AUTHENTICATION_MODE_SUPPORTED", buffer, sizeof(buffer), "|");
-	if ((flags & (uint32_t)~(EXTENDED_CLIENT_DATA_SUPPORTED | DYNVC_GFX_PROTOCOL_SUPPORTED |
-	                         RDP_NEGRSP_RESERVED | RESTRICTED_ADMIN_MODE_SUPPORTED |
-	                         REDIRECTED_AUTHENTICATION_MODE_SUPPORTED)))
-		winpr_str_append("UNKNOWN", buffer, sizeof(buffer), "|");
+	if (flags & ~mask)
+	{
+		char buffer2[32] = { 0 };
+		(void)_snprintf(buffer2, sizeof(buffer2), "UNKNOWN[0x%04" PRIx32 "]", flags & ~mask);
+		winpr_str_append(buffer2, buffer, sizeof(buffer), "|");
+	}
 
 	return buffer;
 }
