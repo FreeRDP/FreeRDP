@@ -1563,6 +1563,7 @@ BOOL rdg_connect(rdpRdg* rdg, DWORD timeout, BOOL* rpcFallback)
 	BOOL rpcFallbackLocal = FALSE;
 
 	WINPR_ASSERT(rdg != NULL);
+	freerdp_set_last_error(rdg->context, ERROR_SUCCESS);
 	status = rdg_establish_data_connection(rdg, rdg->tlsOut, "RDG_OUT_DATA", NULL, timeout,
 	                                       &rpcFallbackLocal);
 

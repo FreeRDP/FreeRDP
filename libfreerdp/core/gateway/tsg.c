@@ -2678,21 +2678,19 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port, DWORD timeout)
 	UINT64 looptimeout = timeout * 1000ULL;
 	DWORD nCount = 0;
 	HANDLE events[MAXIMUM_WAIT_OBJECTS] = { 0 };
-	rdpRpc* rpc = NULL;
-	rdpContext* context = NULL;
-	rdpSettings* settings = NULL;
-	rdpTransport* transport = NULL;
 
 	WINPR_ASSERT(tsg);
 
-	rpc = tsg->rpc;
+	rdpRpc* rpc = tsg->rpc;
 	WINPR_ASSERT(rpc);
 
-	transport = rpc->transport;
-	context = transport_get_context(transport);
+	rdpTransport* transport = rpc->transport;
+	rdpContext* context = transport_get_context(transport);
 	WINPR_ASSERT(context);
 
-	settings = context->settings;
+	rdpSettings* settings = context->settings;
+
+	freerdp_set_last_error(context, ERROR_SUCCESS);
 
 	tsg->Port = port;
 	tsg->transport = transport;
