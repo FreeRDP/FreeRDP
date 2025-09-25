@@ -164,17 +164,15 @@ static BOOL wst_set_auth_header(rdpCredsspAuth* auth, HttpRequest* request)
 static BOOL wst_recv_auth_token(rdpCredsspAuth* auth, HttpResponse* response)
 {
 	size_t len = 0;
-	const char* token64 = NULL;
 	size_t authTokenLength = 0;
 	BYTE* authTokenData = NULL;
 	SecBuffer authToken = { 0 };
-	long StatusCode = 0;
 	int rc = 0;
 
 	if (!auth || !response)
 		return FALSE;
 
-	StatusCode = http_response_get_status_code(response);
+	const UINT16 StatusCode = http_response_get_status_code(response);
 	switch (StatusCode)
 	{
 		case HTTP_STATUS_DENIED:
@@ -185,7 +183,7 @@ static BOOL wst_recv_auth_token(rdpCredsspAuth* auth, HttpResponse* response)
 			return FALSE;
 	}
 
-	token64 = http_response_get_auth_token(response, credssp_auth_pkg_name(auth));
+	const char* token64 = http_response_get_auth_token(response, credssp_auth_pkg_name(auth));
 
 	if (!token64)
 		return FALSE;
@@ -349,7 +347,7 @@ static BOOL wst_send_http_request(rdpWst* wst, rdpTls* tls)
 }
 
 static BOOL wst_handle_ok_or_forbidden(rdpWst* wst, HttpResponse** ppresponse, DWORD timeout,
-                                       long* pStatusCode)
+                                       UINT16* pStatusCode)
 {
 	WINPR_ASSERT(wst);
 	WINPR_ASSERT(ppresponse);
@@ -405,7 +403,7 @@ static BOOL wst_handle_ok_or_forbidden(rdpWst* wst, HttpResponse** ppresponse, D
 	return TRUE;
 }
 
-static BOOL wst_handle_denied(rdpWst* wst, HttpResponse** ppresponse, long* pStatusCode)
+static BOOL wst_handle_denied(rdpWst* wst, HttpResponse** ppresponse, UINT16* pStatusCode)
 {
 	WINPR_ASSERT(wst);
 	WINPR_ASSERT(ppresponse);
@@ -445,14 +443,54 @@ static BOOL wst_handle_denied(rdpWst* wst, HttpResponse** ppresponse, long* pSta
 	return TRUE;
 }
 
+static BOOL wst_handle_http_code(rdpWst* wst, UINT16 StatusCode)
+{
+	switch (StatusCode)
+	{
+		case HTTP_STATUS_PAYMENT_REQ:
+		case HTTP_STATUS_FORBIDDEN:
+		case HTTP_STATUS_DENIED:
+			freerdp_set_last_error_if_not(wst->context, FREERDP_ERROR_CONNECT_ACCESS_DENIED);
+			break;
+		case HTTP_STATUS_MOVED:
+		case HTTP_STATUS_USE_PROXY:
+		case HTTP_STATUS_BAD_REQUEST:
+		case HTTP_STATUS_NOT_FOUND:
+		case HTTP_STATUS_GONE:
+			freerdp_set_last_error_if_not(wst->context, FREERDP_ERROR_CONNECT_TRANSPORT_FAILED);
+			break;
+		case HTTP_STATUS_SERVER_ERROR:
+		case HTTP_STATUS_NOT_SUPPORTED:
+		case HTTP_STATUS_BAD_GATEWAY:
+		case HTTP_STATUS_SERVICE_UNAVAIL:
+		case HTTP_STATUS_VERSION_NOT_SUP:
+			freerdp_set_last_error_if_not(wst->context, FREERDP_ERROR_CONNECT_TRANSPORT_FAILED);
+			break;
+		case HTTP_STATUS_GATEWAY_TIMEOUT:
+			freerdp_set_last_error_if_not(wst->context, FREERDP_ERROR_CONNECT_ACTIVATION_TIMEOUT);
+			break;
+		default:
+			break;
+	}
+
+	char buffer[64] = { 0 };
+	WLog_ERR(TAG, "Unexpected HTTP status: %s",
+	         freerdp_http_status_string_format(StatusCode, buffer, ARRAYSIZE(buffer)));
+	freerdp_set_last_error_if_not(wst->context, FREERDP_ERROR_CONNECT_FAILED);
+	return FALSE;
+}
+
 BOOL wst_connect(rdpWst* wst, DWORD timeout)
 {
-	HttpResponse* response = NULL;
-	long StatusCode = 0;
-
 	WINPR_ASSERT(wst);
+	WINPR_ASSERT(wst->context);
+
 	if (!wst_tls_connect(wst, wst->tls, timeout))
+	{
+		freerdp_set_last_error_if_not(wst->context, FREERDP_ERROR_CONNECT_FAILED);
 		return FALSE;
+	}
+
 	if (freerdp_settings_get_bool(wst->context->settings, FreeRDP_GatewayArmTransport))
 	{
 		/*
@@ -463,15 +501,19 @@ BOOL wst_connect(rdpWst* wst, DWORD timeout)
 		http_context_enable_websocket_upgrade(wst->http, FALSE);
 	}
 	if (!wst_send_http_request(wst, wst->tls))
-		return FALSE;
-
-	response = http_response_recv(wst->tls, TRUE);
-	if (!response)
 	{
+		freerdp_set_last_error_if_not(wst->context, FREERDP_ERROR_CONNECT_FAILED);
 		return FALSE;
 	}
 
-	StatusCode = http_response_get_status_code(response);
+	HttpResponse* response = http_response_recv(wst->tls, TRUE);
+	if (!response)
+	{
+		freerdp_set_last_error_if_not(wst->context, FREERDP_ERROR_CONNECT_FAILED);
+		return FALSE;
+	}
+
+	UINT16 StatusCode = http_response_get_status_code(response);
 	BOOL success = TRUE;
 	switch (StatusCode)
 	{
@@ -491,17 +533,12 @@ BOOL wst_connect(rdpWst* wst, DWORD timeout)
 	const BOOL isWebsocket = http_response_is_websocket(wst->http, response);
 	http_response_free(response);
 	if (!success)
-		return FALSE;
+		return wst_handle_http_code(wst, StatusCode);
 
 	if (isWebsocket)
 		return websocket_context_reset(wst->wscontext);
-	else
-	{
-		char buffer[64] = { 0 };
-		WLog_ERR(TAG, "Unexpected HTTP status: %s",
-		         freerdp_http_status_string_format(StatusCode, buffer, ARRAYSIZE(buffer)));
-	}
-	return FALSE;
+
+	return wst_handle_http_code(wst, StatusCode);
 }
 
 DWORD wst_get_event_handles(rdpWst* wst, HANDLE* events, DWORD count)

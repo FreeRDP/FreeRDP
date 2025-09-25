@@ -707,17 +707,15 @@ out:
 static BOOL rdg_recv_auth_token(wLog* log, rdpCredsspAuth* auth, HttpResponse* response)
 {
 	size_t len = 0;
-	const char* token64 = NULL;
 	size_t authTokenLength = 0;
 	BYTE* authTokenData = NULL;
 	SecBuffer authToken = { 0 };
-	long StatusCode = 0;
 	int rc = 0;
 
 	if (!auth || !response)
 		return FALSE;
 
-	StatusCode = http_response_get_status_code(response);
+	const UINT16 StatusCode = http_response_get_status_code(response);
 	switch (StatusCode)
 	{
 		case HTTP_STATUS_DENIED:
@@ -729,8 +727,7 @@ static BOOL rdg_recv_auth_token(wLog* log, rdpCredsspAuth* auth, HttpResponse* r
 			return FALSE;
 	}
 
-	token64 = http_response_get_auth_token(response, credssp_auth_pkg_name(auth));
-
+	const char* token64 = http_response_get_auth_token(response, credssp_auth_pkg_name(auth));
 	if (!token64)
 		return FALSE;
 
@@ -1364,8 +1361,7 @@ static BOOL rdg_establish_data_connection(rdpRdg* rdg, rdpTls* tls, const char* 
 			return FALSE;
 		}
 
-		const long StatusCode = http_response_get_status_code(response);
-
+		const UINT16 StatusCode = http_response_get_status_code(response);
 		switch (StatusCode)
 		{
 			case HTTP_STATUS_GONE:
@@ -1436,7 +1432,7 @@ static BOOL rdg_establish_data_connection(rdpRdg* rdg, rdpTls* tls, const char* 
 		}
 	}
 
-	const long statusCode = http_response_get_status_code(response);
+	const UINT16 statusCode = http_response_get_status_code(response);
 	const size_t bodyLength = http_response_get_body_length(response);
 	const TRANSFER_ENCODING encoding = http_response_get_transfer_encoding(response);
 	const BOOL isWebsocket = http_response_is_websocket(rdg->http, response);
@@ -1563,6 +1559,7 @@ BOOL rdg_connect(rdpRdg* rdg, DWORD timeout, BOOL* rpcFallback)
 	BOOL rpcFallbackLocal = FALSE;
 
 	WINPR_ASSERT(rdg != NULL);
+	freerdp_set_last_error(rdg->context, ERROR_SUCCESS);
 	status = rdg_establish_data_connection(rdg, rdg->tlsOut, "RDG_OUT_DATA", NULL, timeout,
 	                                       &rpcFallbackLocal);
 
