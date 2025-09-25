@@ -46,7 +46,7 @@ Build-Depends:
  libdbus-glib-1-dev,
  libpam0g-dev,
  uuid-dev, 
- libjson-c-dev | libcjson-dev,
+ libjansson-dev | libjson-c-dev | libcjson-dev,
  libsdl2-2.0-0,
  libsdl2-dev,
  libsdl2-ttf-dev,

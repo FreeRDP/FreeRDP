@@ -27,7 +27,7 @@
 
 /** @defgroup WINPR_JSON WinPR JSON wrapper
  *  @since version 3.6.0
- *  @brief Wrapper around cJSON or JSONC libraries
+ *  @brief Wrapper around cJSON, JSONC or jansson libraries
  *  @{
  */
 
