@@ -646,8 +646,7 @@ static SSIZE_T rpc_client_default_out_channel_recv(rdpRpc* rpc)
 		if (!response)
 			return -1;
 
-		const INT16 statusCode = http_response_get_status_code(response);
-
+		const UINT16 statusCode = http_response_get_status_code(response);
 		if (statusCode != HTTP_STATUS_OK)
 		{
 			http_response_log_error_status(WLog_Get(TAG), WLOG_ERROR, response);

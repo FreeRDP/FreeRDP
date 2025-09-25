@@ -164,17 +164,15 @@ static BOOL wst_set_auth_header(rdpCredsspAuth* auth, HttpRequest* request)
 static BOOL wst_recv_auth_token(rdpCredsspAuth* auth, HttpResponse* response)
 {
 	size_t len = 0;
-	const char* token64 = NULL;
 	size_t authTokenLength = 0;
 	BYTE* authTokenData = NULL;
 	SecBuffer authToken = { 0 };
-	long StatusCode = 0;
 	int rc = 0;
 
 	if (!auth || !response)
 		return FALSE;
 
-	StatusCode = http_response_get_status_code(response);
+	const UINT16 StatusCode = http_response_get_status_code(response);
 	switch (StatusCode)
 	{
 		case HTTP_STATUS_DENIED:
@@ -185,7 +183,7 @@ static BOOL wst_recv_auth_token(rdpCredsspAuth* auth, HttpResponse* response)
 			return FALSE;
 	}
 
-	token64 = http_response_get_auth_token(response, credssp_auth_pkg_name(auth));
+	const char* token64 = http_response_get_auth_token(response, credssp_auth_pkg_name(auth));
 
 	if (!token64)
 		return FALSE;
@@ -349,7 +347,7 @@ static BOOL wst_send_http_request(rdpWst* wst, rdpTls* tls)
 }
 
 static BOOL wst_handle_ok_or_forbidden(rdpWst* wst, HttpResponse** ppresponse, DWORD timeout,
-                                       long* pStatusCode)
+                                       UINT16* pStatusCode)
 {
 	WINPR_ASSERT(wst);
 	WINPR_ASSERT(ppresponse);
@@ -405,7 +403,7 @@ static BOOL wst_handle_ok_or_forbidden(rdpWst* wst, HttpResponse** ppresponse, D
 	return TRUE;
 }
 
-static BOOL wst_handle_denied(rdpWst* wst, HttpResponse** ppresponse, long* pStatusCode)
+static BOOL wst_handle_denied(rdpWst* wst, HttpResponse** ppresponse, UINT16* pStatusCode)
 {
 	WINPR_ASSERT(wst);
 	WINPR_ASSERT(ppresponse);
@@ -447,10 +445,9 @@ static BOOL wst_handle_denied(rdpWst* wst, HttpResponse** ppresponse, long* pSta
 
 BOOL wst_connect(rdpWst* wst, DWORD timeout)
 {
-	HttpResponse* response = NULL;
-	long StatusCode = 0;
-
 	WINPR_ASSERT(wst);
+	WINPR_ASSERT(wst->context);
+
 	if (!wst_tls_connect(wst, wst->tls, timeout))
 		return FALSE;
 	if (freerdp_settings_get_bool(wst->context->settings, FreeRDP_GatewayArmTransport))
@@ -465,13 +462,13 @@ BOOL wst_connect(rdpWst* wst, DWORD timeout)
 	if (!wst_send_http_request(wst, wst->tls))
 		return FALSE;
 
-	response = http_response_recv(wst->tls, TRUE);
+	HttpResponse* response = http_response_recv(wst->tls, TRUE);
 	if (!response)
 	{
 		return FALSE;
 	}
 
-	StatusCode = http_response_get_status_code(response);
+	UINT16 StatusCode = http_response_get_status_code(response);
 	BOOL success = TRUE;
 	switch (StatusCode)
 	{
