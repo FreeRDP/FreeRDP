@@ -813,7 +813,7 @@ static BOOL http_response_parse_header_status_line(HttpResponse* response, const
 		if ((errno != 0) || (val < 0) || (val > INT16_MAX))
 			goto fail;
 
-		response->StatusCode = (INT16)val;
+		response->StatusCode = (UINT16)val;
 	}
 	response->ReasonPhrase = reason_phrase;
 
