@@ -444,6 +444,46 @@ out:
 	return ret;
 }
 
+static int client_cli_read_string(freerdp* instance, const char* what, const char* suggestion,
+                                  char** result)
+{
+	WINPR_ASSERT(instance);
+	WINPR_ASSERT(what);
+	WINPR_ASSERT(result);
+
+	size_t size = 0;
+	printf("%s", what);
+	(void)fflush(stdout);
+
+	char* line = NULL;
+	if (suggestion && strlen(suggestion) > 0)
+	{
+		line = _strdup(suggestion);
+		size = strlen(suggestion);
+	}
+
+	const SSIZE_T rc = freerdp_interruptible_get_line(instance->context, &line, &size, stdin);
+	if (rc < 0)
+	{
+		char ebuffer[256] = { 0 };
+		WLog_ERR(TAG, "freerdp_interruptible_get_line returned %s [%d]",
+		         winpr_strerror(errno, ebuffer, sizeof(ebuffer)), errno);
+		free(line);
+		return -1;
+	}
+
+	free(*result);
+	*result = NULL;
+
+	if (line)
+	{
+		line = StrSep(&line, "\r");
+		line = StrSep(&line, "\n");
+		*result = line;
+	}
+	return 0;
+}
+
 /** @brief Callback set in the rdp_freerdp structure, and used to get the user's password,
  *  if required to establish the connection.
  *  This function is actually called in credssp_ntlmssp_client_init()
@@ -454,13 +494,13 @@ out:
  * ). On output the allocated username entered by the user.
  *  @param password on input can contain a suggestion (must be allocated and is released by \b free
  * ). On output the allocated password entered by the user.
- *  @param idomain on input can contain a suggestion (must be allocated and is released by \b free
+ *  @param domain on input can contain a suggestion (must be allocated and is released by \b free
  * ). On output the allocated domain entered by the user.
  *  @return TRUE if a password was successfully entered. See freerdp_passphrase_read() for more
  * details.
  */
 static BOOL client_cli_authenticate_raw(freerdp* instance, rdp_auth_reason reason, char** username,
-                                        char** password, char** idomain)
+                                        char** password, char** domain)
 {
 	static const size_t password_size = 512;
 	const char* userAuth = "Username:        ";
@@ -479,7 +519,6 @@ static BOOL client_cli_authenticate_raw(freerdp* instance, rdp_auth_reason reaso
 			pinOnly = TRUE;
 			break;
 		case AUTH_RDSTLS:
-			break;
 		case AUTH_TLS:
 		case AUTH_RDP:
 		case AUTH_NLA:
@@ -495,83 +534,51 @@ static BOOL client_cli_authenticate_raw(freerdp* instance, rdp_auth_reason reaso
 			return FALSE;
 	}
 
-	if (!username || !password)
+	if (!username || !password || !domain)
 		return FALSE;
 
-	char** domain = NULL;
-	if (reason != AUTH_RDSTLS)
+	if (!pinOnly)
 	{
-		if (!idomain)
-			return FALSE;
-		domain = idomain;
-	}
-
-	if (!*username && !pinOnly)
-	{
-		size_t username_size = 0;
-		printf("%s", userAuth);
-		(void)fflush(stdout);
-
-		if (freerdp_interruptible_get_line(instance->context, username, &username_size, stdin) < 0)
-		{
-			char ebuffer[256] = { 0 };
-			WLog_ERR(TAG, "freerdp_interruptible_get_line returned %s [%d]",
-			         winpr_strerror(errno, ebuffer, sizeof(ebuffer)), errno);
+		const int rc = client_cli_read_string(instance, userAuth, *username, username);
+		if (rc < 0)
 			goto fail;
-		}
-
-		if (*username)
-		{
-			*username = StrSep(username, "\r");
-			*username = StrSep(username, "\n");
-		}
 	}
 
-	if (domain && !*domain && !pinOnly)
+	if (!pinOnly)
 	{
-		size_t domain_size = 0;
-		printf("%s", domainAuth);
-		(void)fflush(stdout);
-
-		if (freerdp_interruptible_get_line(instance->context, domain, &domain_size, stdin) < 0)
-		{
-			char ebuffer[256] = { 0 };
-			WLog_ERR(TAG, "freerdp_interruptible_get_line returned %s [%d]",
-			         winpr_strerror(errno, ebuffer, sizeof(ebuffer)), errno);
+		const int rc = client_cli_read_string(instance, domainAuth, *domain, domain);
+		if (rc < 0)
 			goto fail;
-		}
-
-		if (*domain)
-		{
-			*domain = StrSep(domain, "\r");
-			*domain = StrSep(domain, "\n");
-		}
 	}
 
-	if (!*password)
 	{
-		*password = calloc(password_size, sizeof(char));
+		printf("%s", pwdAuth);
+		char* line = calloc(password_size, sizeof(char));
 
-		if (!*password)
+		if (!line)
 			goto fail;
 
 		const BOOL fromStdin =
 		    freerdp_settings_get_bool(instance->context->settings, FreeRDP_CredentialsFromStdin);
-		if (freerdp_passphrase_read(instance->context, pwdAuth, *password, password_size,
-		                            fromStdin) == NULL)
+		const char* rc =
+		    freerdp_passphrase_read(instance->context, pwdAuth, line, password_size, fromStdin);
+		if (rc == NULL)
 			goto fail;
+
+		if (password_size > 0)
+		{
+			free(*password);
+			*password = line;
+		}
 	}
 
 	return TRUE;
 fail:
 	free(*username);
-	if (domain)
-	{
-		free(*domain);
-		*domain = NULL;
-	}
+	free(*domain);
 	free(*password);
 	*username = NULL;
+	*domain = NULL;
 	*password = NULL;
 	return FALSE;
 }

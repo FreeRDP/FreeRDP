@@ -538,7 +538,6 @@ BOOL sdl_auth_dialog_show(const SDL_UserAuthArg* args)
 {
 	const std::vector<std::string> auth = { "Username:        ", "Domain:          ",
 		                                    "Password:        " };
-	const std::vector<std::string> rdsauth = { "Username:        ", "Password:        " };
 	const std::vector<std::string> authPin = { "Device:       ", "PIN:        " };
 	const std::vector<std::string> gw = { "GatewayUsername: ", "GatewayDomain:   ",
 		                                  "GatewayPassword: " };
@@ -551,8 +550,6 @@ BOOL sdl_auth_dialog_show(const SDL_UserAuthArg* args)
 			prompt = authPin;
 			break;
 		case AUTH_RDSTLS:
-			prompt = rdsauth;
-			break;
 		case AUTH_TLS:
 		case AUTH_RDP:
 		case AUTH_NLA:

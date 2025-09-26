@@ -822,26 +822,40 @@ static BOOL arm_fill_rdstls(rdpArm* arm, rdpSettings* settings, const WINPR_JSON
 	BYTE* authBlob = NULL;
 	WCHAR* wGUID = NULL;
 
-	/* Azure/Entra requires the domain field to be set to 'AzureAD' */
-	const char* redirDomain = "AzureAD";
-	if (!freerdp_settings_get_string(settings, FreeRDP_Username) ||
-	    !freerdp_settings_get_string(settings, FreeRDP_Password))
+	const char* redirUser = freerdp_settings_get_string(settings, FreeRDP_RedirectionUsername);
+	if (redirUser)
+	{
+		if (!freerdp_settings_set_string(settings, FreeRDP_Username, redirUser))
+			goto end;
+	}
+
+	/* Azure/Entra requires the domain field to be set to 'AzureAD' in most cases.
+	 * Some setups have been reported to require a different one, so only supply the suggested
+	 * default if there was no other domain provided.
+	 */
+	const char* redirDomain = freerdp_settings_get_string(settings, FreeRDP_Domain);
+	if (!redirDomain)
+	{
+		if (!freerdp_settings_set_string(settings, FreeRDP_Domain, "AzureAD"))
+			goto end;
+	}
+
+	const char* duser = freerdp_settings_get_string(settings, FreeRDP_Username);
+	const char* ddomain = freerdp_settings_get_string(settings, FreeRDP_Domain);
+	const char* dpwd = freerdp_settings_get_string(settings, FreeRDP_Password);
+	if (!duser || !dpwd)
 	{
 		WINPR_ASSERT(arm->context);
 		WINPR_ASSERT(arm->context->instance);
 
-		const char* redirUser = freerdp_settings_get_string(settings, FreeRDP_RedirectionUsername);
-
 		char* username = NULL;
 		char* password = NULL;
+		char* domain = NULL;
 
-		/* Provide a domain argument, even if unused. The API was defined as this being non NULL.
-		 * Set to AzureAD to have some indication of a default for clients not yet supporting
-		 * AUTH_RDSTLS
-		 */
-		char* domain = _strdup(redirDomain);
-		if (redirUser)
-			username = _strdup(redirUser);
+		if (ddomain)
+			domain = _strdup(ddomain);
+		if (duser)
+			username = _strdup(duser);
 
 		const BOOL rc =
 		    IFCALLRESULT(FALSE, arm->context->instance->AuthenticateEx, arm->context->instance,
@@ -849,16 +863,13 @@ static BOOL arm_fill_rdstls(rdpArm* arm, rdpSettings* settings, const WINPR_JSON
 
 		const BOOL rc1 = freerdp_settings_set_string(settings, FreeRDP_Username, username);
 		const BOOL rc2 = freerdp_settings_set_string(settings, FreeRDP_Password, password);
+		const BOOL rc3 = freerdp_settings_set_string(settings, FreeRDP_Domain, domain);
 		zfree(username);
 		zfree(password);
 		zfree(domain);
-		if (!rc || !rc1 || !rc2)
+		if (!rc || !rc1 || !rc2 || !rc3)
 			goto end;
 	}
-
-	const BOOL rc = freerdp_settings_set_string(settings, FreeRDP_Domain, redirDomain);
-	if (!rc)
-		goto end;
 
 	/* redirectedAuthGuid */
 	WINPR_JSON* redirectedAuthGuidNode =
