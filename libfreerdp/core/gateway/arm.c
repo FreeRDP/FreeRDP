@@ -1049,6 +1049,7 @@ static BOOL arm_handle_bad_request(rdpArm* arm, const HttpResponse* response, BO
 			WLog_WARN(TAG, "Starting your VM. It may take up to 5 minutes");
 		else
 			WLog_WARN(TAG, "%s", msgstr);
+		freerdp_set_last_error_if_not(arm->context, FREERDP_ERROR_CONNECT_TARGET_BOOTING);
 	}
 	else
 	{

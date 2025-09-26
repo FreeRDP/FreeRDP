@@ -478,6 +478,17 @@ BOOL transport_connect_aad(rdpTransport* transport)
 	return rdp_client_transition_to_state(rdp, CONNECTION_STATE_AAD);
 }
 
+static BOOL transport_can_retry(const rdpContext* context, BOOL status)
+{
+	switch (freerdp_get_last_error(context))
+	{
+		case FREERDP_ERROR_CONNECT_TARGET_BOOTING:
+			return FALSE;
+		default:
+			return status;
+	}
+}
+
 BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 port, DWORD timeout)
 {
 	BOOL status = FALSE;
@@ -519,7 +530,7 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 por
 				transport->wst = NULL;
 			}
 		}
-		if (!status && settings->GatewayHttpTransport)
+		if (transport_can_retry(transport->context, status) && settings->GatewayHttpTransport)
 		{
 			WINPR_ASSERT(!transport->rdg);
 			transport->rdg = rdg_new(context);
@@ -544,7 +555,8 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 por
 			}
 		}
 
-		if (!status && settings->GatewayRpcTransport && rpcFallback)
+		if (transport_can_retry(transport->context, status) && settings->GatewayRpcTransport &&
+		    rpcFallback)
 		{
 			WINPR_ASSERT(!transport->tsg);
 			transport->tsg = tsg_new(transport);
