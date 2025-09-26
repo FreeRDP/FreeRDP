@@ -31,9 +31,46 @@ extern "C"
 {
 #endif
 
-	FREERDP_API int freerdp_interruptible_getc(rdpContext* context, FILE* file);
+	/** @brief Read a single character from a stream.
+	 * This function will check \ref freerdp_shall_disconnect_context and abort when the session
+	 * terminates.
+	 *
+	 * The function will abort on any of <ctrl>+[cdz] or end of stream conditions as well as when
+	 * the RDP session terminates
+	 *
+	 * @param context The RDP context to work on
+	 * @param stream the \ref FILE to read the data from
+	 *
+	 * @return The character read or \ref EOF in case of any failures
+	 */
+	FREERDP_API int freerdp_interruptible_getc(rdpContext* context, FILE* stream);
+
+	/** @brief read a line from \ref stream with (optinal) default value that can be manipulated.
+	 * This function will check \ref freerdp_shall_disconnect_context and abort when the session
+	 * terminates.
+	 *
+	 * @param context The RDP context to work on
+	 * @param lineptr on input a suggested default value, on output the result. Must be an allocated
+	 * string on input, free the memory later with \ref free
+	 * @param size on input the \ref strlen of the suggested default, on output \ref strlen of the
+	 * result
+	 * @param stream the \ref FILE to read the data from
+	 *
+	 * @return \b -1 in case of failure, otherwise \ref strlen of the result
+	 */
 	FREERDP_API SSIZE_T freerdp_interruptible_get_line(rdpContext* context, char** lineptr,
 	                                                   size_t* size, FILE* stream);
+
+	/** @brief similar to \ref freerdp_interruptible_get_line but disables echo to terminal.
+	 *
+	 * @param context The RDP context to work on
+	 * @param prompt The prompt to show to the user
+	 * @param buf A pointer to a buffer that will receive the output
+	 * @param bufsiz The size of the buffer in bytes
+	 * @param from_stdin
+	 *
+	 * @return A pointer to \ref buf containing the password or \ref NULL in case of an error.
+	 */
 	FREERDP_API const char* freerdp_passphrase_read(rdpContext* context, const char* prompt,
 	                                                char* buf, size_t bufsiz, int from_stdin);
 

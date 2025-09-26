@@ -76,13 +76,15 @@ const char* freerdp_passphrase_read(rdpContext* context, const char* prompt, cha
 #include <termios.h>
 #include <unistd.h>
 #include <freerdp/utils/signal.h>
-
+#include <freerdp/log.h>
 #if defined(WINPR_HAVE_POLL_H) && !defined(__APPLE__)
 #include <poll.h>
 #else
 #include <time.h>
 #include <sys/select.h>
 #endif
+
+#define TAG FREERDP_TAG("utils.passphrase")
 
 static int wait_for_fd(int fd, int timeout)
 {
@@ -265,13 +267,92 @@ const char* freerdp_passphrase_read(rdpContext* context, const char* prompt, cha
 		return freerdp_passphrase_read_tty(context, prompt, buf, bufsiz, from_stdin);
 }
 
-int freerdp_interruptible_getc(rdpContext* context, FILE* f)
+static BOOL set_termianl_nonblock(int ifd, BOOL nonblock);
+
+static void restore_terminal(void)
+{
+	(void)set_termianl_nonblock(-1, FALSE);
+}
+
+BOOL set_termianl_nonblock(int ifd, BOOL nonblock)
+{
+	static int fd = -1;
+	static bool registered = false;
+	static int orig = 0;
+	static struct termios termios = { 0 };
+
+	if (ifd >= 0)
+		fd = ifd;
+
+	if (fd < 0)
+		return FALSE;
+
+	if (nonblock)
+	{
+		if (!registered)
+		{
+			(void)atexit(restore_terminal);
+			registered = true;
+		}
+
+		const int rc1 = fcntl(fd, F_SETFL, orig | O_NONBLOCK);
+		if (rc1 != 0)
+		{
+			char buffer[128] = { 0 };
+			WLog_ERR(TAG, "fcntl(F_SETFL) failed with %s",
+			         winpr_strerror(errno, buffer, sizeof(buffer)));
+			return FALSE;
+		}
+		const int rc2 = tcgetattr(fd, &termios);
+		if (rc2 != 0)
+		{
+			char buffer[128] = { 0 };
+			WLog_ERR(TAG, "tcgetattr() failed with %s",
+			         winpr_strerror(errno, buffer, sizeof(buffer)));
+			return FALSE;
+		}
+
+		struct termios now = termios;
+		cfmakeraw(&now);
+		const int rc3 = tcsetattr(fd, TCSANOW, &now);
+		if (rc3 != 0)
+		{
+			char buffer[128] = { 0 };
+			WLog_ERR(TAG, "tcsetattr(TCSANOW) failed with %s",
+			         winpr_strerror(errno, buffer, sizeof(buffer)));
+			return FALSE;
+		}
+	}
+	else
+	{
+		const int rc1 = tcsetattr(fd, TCSANOW, &termios);
+		if (rc1 != 0)
+		{
+			char buffer[128] = { 0 };
+			WLog_ERR(TAG, "tcsetattr(TCSANOW) failed with %s",
+			         winpr_strerror(errno, buffer, sizeof(buffer)));
+			return FALSE;
+		}
+		const int rc2 = fcntl(fd, F_SETFL, orig);
+		if (rc2 != 0)
+		{
+			char buffer[128] = { 0 };
+			WLog_ERR(TAG, "fcntl(F_SETFL) failed with %s",
+			         winpr_strerror(errno, buffer, sizeof(buffer)));
+			return FALSE;
+		}
+		fd = -1;
+	}
+	return TRUE;
+}
+
+int freerdp_interruptible_getc(rdpContext* context, FILE* stream)
 {
 	int rc = EOF;
-	const int fd = fileno(f);
+	const int fd = fileno(stream);
 
-	const int orig = fcntl(fd, F_GETFL);
-	(void)fcntl(fd, F_SETFL, orig | O_NONBLOCK);
+	if (!set_termianl_nonblock(fd, TRUE))
+		return EOF;
 	do
 	{
 		const int res = wait_for_fd(fd, 10);
@@ -280,12 +361,22 @@ int freerdp_interruptible_getc(rdpContext* context, FILE* f)
 			char c = 0;
 			const ssize_t rd = read(fd, &c, 1);
 			if (rd == 1)
+			{
+				if (c == 3) /* ctrl + c */
+					return EOF;
+				if (c == 4) /* ctrl + d */
+					return EOF;
+				if (c == 26) /* ctrl + z */
+					return EOF;
 				rc = (int)c;
+			}
 			break;
 		}
 	} while (!freerdp_shall_disconnect_context(context));
 
-	(void)fcntl(fd, F_SETFL, orig);
+	if (!set_termianl_nonblock(fd, FALSE))
+		return EOF;
+
 	return rc;
 }
 
@@ -319,6 +410,29 @@ SSIZE_T freerdp_interruptible_get_line(rdpContext* context, char** plineptr, siz
 		return -1;
 	}
 
+	bool echo = true;
+#if !defined(_WIN32) && !defined(ANDROID)
+	{
+		const int fd = fileno(stream);
+
+		struct termios termios = { 0 };
+		if (tcgetattr(fd, &termios) != 0)
+			return -1;
+		echo = (termios.c_lflag & ECHO) != 0;
+	}
+#endif
+
+	if (*plineptr && (*psize > 0))
+	{
+		ptr = *plineptr;
+		used = *psize;
+		if (echo)
+		{
+			printf("%s", ptr);
+			(void)fflush(stdout);
+		}
+	}
+
 	do
 	{
 		if (used + 2 >= len)
@@ -335,10 +449,31 @@ SSIZE_T freerdp_interruptible_get_line(rdpContext* context, char** plineptr, siz
 		}
 
 		c = freerdp_interruptible_getc(context, stream);
+		if (c == 127)
+		{
+			if (used > 0)
+			{
+				ptr[used--] = '\0';
+				if (echo)
+				{
+					printf("\b");
+					printf(" ");
+					printf("\b");
+					(void)fflush(stdout);
+				}
+			}
+			continue;
+		}
+		if (echo)
+		{
+			printf("%c", c);
+			(void)fflush(stdout);
+		}
 		if (c != EOF)
 			ptr[used++] = (char)c;
 	} while ((c != '\n') && (c != '\r') && (c != EOF));
 
+	printf("\n");
 	ptr[used] = '\0';
 	if (c == EOF)
 	{
