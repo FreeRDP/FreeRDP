@@ -665,7 +665,7 @@ void credssp_auth_take_input_buffer(rdpCredsspAuth* auth, SecBuffer* buffer)
 	*buffer = empty;
 }
 
-const SecBuffer* credssp_auth_get_output_buffer(rdpCredsspAuth* auth)
+const SecBuffer* credssp_auth_get_output_buffer(const rdpCredsspAuth* auth)
 {
 	WINPR_ASSERT(auth);
 	return &auth->output_buffer;
@@ -677,25 +677,25 @@ BOOL credssp_auth_have_output_token(rdpCredsspAuth* auth)
 	return auth->output_buffer.cbBuffer ? TRUE : FALSE;
 }
 
-BOOL credssp_auth_is_complete(rdpCredsspAuth* auth)
+BOOL credssp_auth_is_complete(const rdpCredsspAuth* auth)
 {
 	WINPR_ASSERT(auth);
 	return auth->state == AUTH_STATE_FINAL;
 }
 
-size_t credssp_auth_trailer_size(rdpCredsspAuth* auth)
+size_t credssp_auth_trailer_size(const rdpCredsspAuth* auth)
 {
 	WINPR_ASSERT(auth);
 	return auth->sizes.cbSecurityTrailer;
 }
 
-const char* credssp_auth_pkg_name(rdpCredsspAuth* auth)
+const char* credssp_auth_pkg_name(const rdpCredsspAuth* auth)
 {
 	WINPR_ASSERT(auth && auth->info);
 	return auth->pkgNameA;
 }
 
-INT32 credssp_auth_sspi_error(rdpCredsspAuth* auth)
+INT32 credssp_auth_sspi_error(const rdpCredsspAuth* auth)
 {
 	WINPR_ASSERT(auth);
 	return auth->sspi_error;

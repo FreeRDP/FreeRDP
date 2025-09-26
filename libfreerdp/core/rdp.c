@@ -2285,7 +2285,7 @@ int rdp_check_fds(rdpRdp* rdp)
 	return status;
 }
 
-BOOL freerdp_get_stats(rdpRdp* rdp, UINT64* inBytes, UINT64* outBytes, UINT64* inPackets,
+BOOL freerdp_get_stats(const rdpRdp* rdp, UINT64* inBytes, UINT64* outBytes, UINT64* inPackets,
                        UINT64* outPackets)
 {
 	if (!rdp)

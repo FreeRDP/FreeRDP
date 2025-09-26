@@ -677,7 +677,7 @@ BOOL freerdp_reconnect(freerdp* instance)
 }
 
 #if !defined(WITHOUT_FREERDP_3x_DEPRECATED)
-BOOL freerdp_shall_disconnect(freerdp* instance)
+BOOL freerdp_shall_disconnect(const freerdp* instance)
 {
 	if (!instance)
 		return FALSE;
@@ -1015,13 +1015,13 @@ void freerdp_context_free(freerdp* instance)
 	instance->heartbeat = NULL; /* owned by rdpRdp */
 }
 
-int freerdp_get_disconnect_ultimatum(rdpContext* context)
+int freerdp_get_disconnect_ultimatum(const rdpContext* context)
 {
 	WINPR_ASSERT(context);
 	return context->disconnectUltimatum;
 }
 
-UINT32 freerdp_error_info(freerdp* instance)
+UINT32 freerdp_error_info(const freerdp* instance)
 {
 	WINPR_ASSERT(instance);
 	WINPR_ASSERT(instance->context);
@@ -1045,7 +1045,7 @@ BOOL freerdp_send_error_info(rdpRdp* rdp)
 	return rdp_send_error_info(rdp);
 }
 
-UINT32 freerdp_get_last_error(rdpContext* context)
+UINT32 freerdp_get_last_error(const rdpContext* context)
 {
 	WINPR_ASSERT(context);
 	return context->LastError;
@@ -1259,7 +1259,7 @@ void freerdp_free(freerdp* instance)
 	free(instance);
 }
 
-ULONG freerdp_get_transport_sent(rdpContext* context, BOOL resetCount)
+ULONG freerdp_get_transport_sent(const rdpContext* context, BOOL resetCount)
 {
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->rdp);
@@ -1301,14 +1301,13 @@ BOOL freerdp_nla_revert_to_self(rdpContext* context)
 	return nla_revert_to_self(nla);
 }
 
-UINT32 freerdp_get_nla_sspi_error(rdpContext* context)
+UINT32 freerdp_get_nla_sspi_error(const rdpContext* context)
 {
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->rdp);
 	WINPR_ASSERT(context->rdp->transport);
 
 	rdpNla* nla = transport_get_nla(context->rdp->transport);
-
 	return (UINT32)nla_get_sspi_error(nla);
 }
 
@@ -1363,13 +1362,13 @@ BOOL checkChannelErrorEvent(rdpContext* context)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT getChannelError(rdpContext* context)
+UINT getChannelError(const rdpContext* context)
 {
 	WINPR_ASSERT(context);
 	return context->channelErrorNum;
 }
 
-const char* getChannelErrorDescription(rdpContext* context)
+const char* getChannelErrorDescription(const rdpContext* context)
 {
 	WINPR_ASSERT(context);
 	return context->errorDescription;
@@ -1397,7 +1396,7 @@ void setChannelError(rdpContext* context, UINT errorNum, WINPR_FORMAT_ARG const 
 	(void)SetEvent(context->channelErrorEvent);
 }
 
-const char* freerdp_nego_get_routing_token(rdpContext* context, DWORD* length)
+const char* freerdp_nego_get_routing_token(const rdpContext* context, DWORD* length)
 {
 	if (!context || !context->rdp)
 		return NULL;
@@ -1579,7 +1578,7 @@ BOOL freerdp_set_common_access_token(rdpContext* context,
 	return TRUE;
 }
 
-pGetCommonAccessToken freerdp_get_common_access_token(rdpContext* context)
+pGetCommonAccessToken freerdp_get_common_access_token(const rdpContext* context)
 {
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->rdp);

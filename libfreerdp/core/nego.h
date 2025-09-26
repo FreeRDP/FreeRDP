@@ -119,7 +119,7 @@ FREERDP_LOCAL void nego_set_restricted_admin_mode_required(rdpNego* nego,
 FREERDP_LOCAL void nego_set_restricted_admin_mode_supported(rdpNego* nego, BOOL enabled);
 FREERDP_LOCAL void nego_set_RCG_required(rdpNego* nego, BOOL enabled);
 FREERDP_LOCAL void nego_set_RCG_supported(rdpNego* nego, BOOL enabled);
-FREERDP_LOCAL BOOL nego_get_remoteCredentialGuard(rdpNego* nego);
+FREERDP_LOCAL BOOL nego_get_remoteCredentialGuard(const rdpNego* nego);
 FREERDP_LOCAL void nego_set_childsession_enabled(rdpNego* nego, BOOL ChildSessionEnabled);
 FREERDP_LOCAL void nego_set_gateway_enabled(rdpNego* nego, BOOL GatewayEnabled);
 FREERDP_LOCAL void nego_set_gateway_bypass_local(rdpNego* nego, BOOL GatewayBypassLocal);
@@ -129,7 +129,7 @@ FREERDP_LOCAL void nego_enable_nla(rdpNego* nego, BOOL enable_nla);
 FREERDP_LOCAL void nego_enable_rdstls(rdpNego* nego, BOOL enable_rdstls);
 FREERDP_LOCAL void nego_enable_aad(rdpNego* nego, BOOL enable_aad);
 FREERDP_LOCAL void nego_enable_ext(rdpNego* nego, BOOL enable_ext);
-FREERDP_LOCAL const BYTE* nego_get_routing_token(rdpNego* nego, DWORD* RoutingTokenLength);
+FREERDP_LOCAL const BYTE* nego_get_routing_token(const rdpNego* nego, DWORD* RoutingTokenLength);
 FREERDP_LOCAL BOOL nego_set_routing_token(rdpNego* nego, const void* RoutingToken,
                                           DWORD RoutingTokenLength);
 FREERDP_LOCAL BOOL nego_set_cookie(rdpNego* nego, const char* cookie);
@@ -138,16 +138,16 @@ FREERDP_LOCAL void nego_set_send_preconnection_pdu(rdpNego* nego, BOOL SendPreco
 FREERDP_LOCAL void nego_set_preconnection_id(rdpNego* nego, UINT32 PreconnectionId);
 FREERDP_LOCAL void nego_set_preconnection_blob(rdpNego* nego, const char* PreconnectionBlob);
 
-FREERDP_LOCAL UINT32 nego_get_selected_protocol(rdpNego* nego);
+FREERDP_LOCAL UINT32 nego_get_selected_protocol(const rdpNego* nego);
 FREERDP_LOCAL BOOL nego_set_selected_protocol(rdpNego* nego, UINT32 SelectedProtocol);
 
-FREERDP_LOCAL UINT32 nego_get_requested_protocols(rdpNego* nego);
+FREERDP_LOCAL UINT32 nego_get_requested_protocols(const rdpNego* nego);
 FREERDP_LOCAL BOOL nego_set_requested_protocols(rdpNego* nego, UINT32 RequestedProtocols);
 
 FREERDP_LOCAL BOOL nego_update_settings_from_state(rdpNego* nego, rdpSettings* settings);
 
 FREERDP_LOCAL BOOL nego_set_state(rdpNego* nego, NEGO_STATE state);
-FREERDP_LOCAL NEGO_STATE nego_get_state(rdpNego* nego);
+FREERDP_LOCAL NEGO_STATE nego_get_state(const rdpNego* nego);
 
 FREERDP_LOCAL SEC_WINNT_AUTH_IDENTITY* nego_get_identity(rdpNego* nego);
 
