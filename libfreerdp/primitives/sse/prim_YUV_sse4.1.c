@@ -597,7 +597,7 @@ static inline void sse41_BGRX_TO_YUV(const BYTE* WINPR_RESTRICT pLine1, BYTE* WI
 
 /* compute the luma (Y) component from a single rgb source line */
 
-static INLINE void sse41_RGBToYUV420_BGRX_Y(const BYTE* WINPR_RESTRICT src, BYTE* dst, UINT32 width)
+static inline void sse41_RGBToYUV420_BGRX_Y(const BYTE* WINPR_RESTRICT src, BYTE* dst, UINT32 width)
 {
 	const __m128i y_factors = BGRX_Y_FACTORS;
 	const __m128i* argb = (const __m128i*)src;
@@ -641,7 +641,7 @@ static INLINE void sse41_RGBToYUV420_BGRX_Y(const BYTE* WINPR_RESTRICT src, BYTE
 
 /* compute the chrominance (UV) components from two rgb source lines */
 
-static INLINE void sse41_RGBToYUV420_BGRX_UV(const BYTE* WINPR_RESTRICT src1,
+static inline void sse41_RGBToYUV420_BGRX_UV(const BYTE* WINPR_RESTRICT src1,
                                              const BYTE* WINPR_RESTRICT src2,
                                              BYTE* WINPR_RESTRICT dst1, BYTE* WINPR_RESTRICT dst2,
                                              UINT32 width)
@@ -782,7 +782,7 @@ static pstatus_t sse41_RGBToYUV420(const BYTE* WINPR_RESTRICT pSrc, UINT32 srcFo
 /* sse41 RGB -> AVC444-YUV conversion                                      **/
 /****************************************************************************/
 
-static INLINE void sse41_RGBToAVC444YUV_BGRX_DOUBLE_ROW(
+static inline void sse41_RGBToAVC444YUV_BGRX_DOUBLE_ROW(
     const BYTE* WINPR_RESTRICT srcEven, const BYTE* WINPR_RESTRICT srcOdd,
     BYTE* WINPR_RESTRICT b1Even, BYTE* WINPR_RESTRICT b1Odd, BYTE* WINPR_RESTRICT b2,
     BYTE* WINPR_RESTRICT b3, BYTE* WINPR_RESTRICT b4, BYTE* WINPR_RESTRICT b5,
@@ -1070,7 +1070,7 @@ static pstatus_t sse41_RGBToAVC444YUV(const BYTE* WINPR_RESTRICT pSrc, UINT32 sr
  * b8              -> vChromaDst1
  * b9              -> vChromaDst2
  */
-static INLINE void sse41_RGBToAVC444YUVv2_BGRX_DOUBLE_ROW(
+static inline void sse41_RGBToAVC444YUVv2_BGRX_DOUBLE_ROW(
     const BYTE* WINPR_RESTRICT srcEven, const BYTE* WINPR_RESTRICT srcOdd,
     BYTE* WINPR_RESTRICT yLumaDstEven, BYTE* WINPR_RESTRICT yLumaDstOdd,
     BYTE* WINPR_RESTRICT uLumaDst, BYTE* WINPR_RESTRICT vLumaDst,

@@ -110,7 +110,7 @@ static inline BYTE PLANAR_CONTROL_BYTE_RAW_BYTES(UINT32 controlByte)
 	return ((controlByte >> 4) & 0x0F);
 }
 
-static INLINE UINT32 planar_invert_format(BITMAP_PLANAR_CONTEXT* WINPR_RESTRICT planar, BOOL alpha,
+static inline UINT32 planar_invert_format(BITMAP_PLANAR_CONTEXT* WINPR_RESTRICT planar, BOOL alpha,
                                           UINT32 DstFormat)
 {
 	WINPR_ASSERT(planar);
@@ -173,15 +173,15 @@ static INLINE UINT32 planar_invert_format(BITMAP_PLANAR_CONTEXT* WINPR_RESTRICT 
 	return DstFormat;
 }
 
-static INLINE BOOL freerdp_bitmap_planar_compress_plane_rle(const BYTE* WINPR_RESTRICT inPlane,
+static inline BOOL freerdp_bitmap_planar_compress_plane_rle(const BYTE* WINPR_RESTRICT inPlane,
                                                             UINT32 width, UINT32 height,
                                                             BYTE* WINPR_RESTRICT outPlane,
                                                             UINT32* WINPR_RESTRICT dstSize);
-static INLINE BYTE* freerdp_bitmap_planar_delta_encode_plane(const BYTE* WINPR_RESTRICT inPlane,
+static inline BYTE* freerdp_bitmap_planar_delta_encode_plane(const BYTE* WINPR_RESTRICT inPlane,
                                                              UINT32 width, UINT32 height,
                                                              BYTE* WINPR_RESTRICT outPlane);
 
-static INLINE INT32 planar_skip_plane_rle(const BYTE* WINPR_RESTRICT pSrcData, UINT32 SrcSize,
+static inline INT32 planar_skip_plane_rle(const BYTE* WINPR_RESTRICT pSrcData, UINT32 SrcSize,
                                           UINT32 nWidth, UINT32 nHeight)
 {
 	UINT32 used = 0;
@@ -246,7 +246,7 @@ static inline UINT8 clamp(INT16 val)
 	return (UINT8)val;
 }
 
-static INLINE INT32 planar_decompress_plane_rle_only(const BYTE* WINPR_RESTRICT pSrcData,
+static inline INT32 planar_decompress_plane_rle_only(const BYTE* WINPR_RESTRICT pSrcData,
                                                      UINT32 SrcSize, BYTE* WINPR_RESTRICT pDstData,
                                                      UINT32 nWidth, UINT32 nHeight)
 {
@@ -360,7 +360,7 @@ static INLINE INT32 planar_decompress_plane_rle_only(const BYTE* WINPR_RESTRICT 
 	return (INT32)(srcp - pSrcData);
 }
 
-static INLINE INT32 planar_decompress_plane_rle(const BYTE* WINPR_RESTRICT pSrcData, UINT32 SrcSize,
+static inline INT32 planar_decompress_plane_rle(const BYTE* WINPR_RESTRICT pSrcData, UINT32 SrcSize,
                                                 BYTE* WINPR_RESTRICT pDstData, UINT32 nDstStep,
                                                 UINT32 nXDst, UINT32 nYDst, UINT32 nWidth,
                                                 UINT32 nHeight, UINT32 nChannel, BOOL vFlip)
@@ -493,7 +493,7 @@ static INLINE INT32 planar_decompress_plane_rle(const BYTE* WINPR_RESTRICT pSrcD
 	return (INT32)(srcp - pSrcData);
 }
 
-static INLINE INT32 planar_set_plane(BYTE bValue, BYTE* pDstData, UINT32 nDstStep, UINT32 nXDst,
+static inline INT32 planar_set_plane(BYTE bValue, BYTE* pDstData, UINT32 nDstStep, UINT32 nXDst,
                                      UINT32 nYDst, UINT32 nWidth, UINT32 nHeight, UINT32 nChannel,
                                      BOOL vFlip)
 {
@@ -527,7 +527,7 @@ static INLINE INT32 planar_set_plane(BYTE bValue, BYTE* pDstData, UINT32 nDstSte
 	return 0;
 }
 
-static INLINE BOOL writeLine(BYTE** WINPR_RESTRICT ppRgba, UINT32 DstFormat, UINT32 width,
+static inline BOOL writeLine(BYTE** WINPR_RESTRICT ppRgba, UINT32 DstFormat, UINT32 width,
                              const BYTE** WINPR_RESTRICT ppR, const BYTE** WINPR_RESTRICT ppG,
                              const BYTE** WINPR_RESTRICT ppB, const BYTE** WINPR_RESTRICT ppA)
 {
@@ -589,7 +589,7 @@ static INLINE BOOL writeLine(BYTE** WINPR_RESTRICT ppRgba, UINT32 DstFormat, UIN
 	}
 }
 
-static INLINE BOOL planar_decompress_planes_raw(const BYTE* WINPR_RESTRICT pSrcData[4],
+static inline BOOL planar_decompress_planes_raw(const BYTE* WINPR_RESTRICT pSrcData[4],
                                                 BYTE* WINPR_RESTRICT pDstData, UINT32 DstFormat,
                                                 UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst,
                                                 UINT32 nWidth, UINT32 nHeight, BOOL vFlip,
@@ -1119,7 +1119,7 @@ BOOL freerdp_bitmap_decompress_planar(BITMAP_PLANAR_CONTEXT* WINPR_RESTRICT plan
 	return TRUE;
 }
 
-static INLINE BOOL freerdp_split_color_planes(BITMAP_PLANAR_CONTEXT* WINPR_RESTRICT planar,
+static inline BOOL freerdp_split_color_planes(BITMAP_PLANAR_CONTEXT* WINPR_RESTRICT planar,
                                               const BYTE* WINPR_RESTRICT data, UINT32 format,
                                               UINT32 width, UINT32 height, UINT32 scanline,
                                               BYTE* WINPR_RESTRICT planes[4])
@@ -1170,7 +1170,7 @@ static INLINE BOOL freerdp_split_color_planes(BITMAP_PLANAR_CONTEXT* WINPR_RESTR
 	return TRUE;
 }
 
-static INLINE UINT32 freerdp_bitmap_planar_write_rle_bytes(const BYTE* WINPR_RESTRICT pInBuffer,
+static inline UINT32 freerdp_bitmap_planar_write_rle_bytes(const BYTE* WINPR_RESTRICT pInBuffer,
                                                            UINT32 cRawBytes, UINT32 nRunLength,
                                                            BYTE* WINPR_RESTRICT pOutBuffer,
                                                            UINT32 outBufferSize)
@@ -1286,7 +1286,7 @@ static INLINE UINT32 freerdp_bitmap_planar_write_rle_bytes(const BYTE* WINPR_RES
 	return (UINT32)diff;
 }
 
-static INLINE UINT32 freerdp_bitmap_planar_encode_rle_bytes(const BYTE* WINPR_RESTRICT pInBuffer,
+static inline UINT32 freerdp_bitmap_planar_encode_rle_bytes(const BYTE* WINPR_RESTRICT pInBuffer,
                                                             UINT32 inBufferSize,
                                                             BYTE* WINPR_RESTRICT pOutBuffer,
                                                             UINT32 outBufferSize)
@@ -1394,7 +1394,7 @@ BOOL freerdp_bitmap_planar_compress_plane_rle(const BYTE* WINPR_RESTRICT inPlane
 	return TRUE;
 }
 
-static INLINE BOOL freerdp_bitmap_planar_compress_planes_rle(BYTE* WINPR_RESTRICT inPlanes[4],
+static inline BOOL freerdp_bitmap_planar_compress_planes_rle(BYTE* WINPR_RESTRICT inPlanes[4],
                                                              UINT32 width, UINT32 height,
                                                              BYTE* WINPR_RESTRICT outPlanes,
                                                              UINT32* WINPR_RESTRICT dstSizes,
@@ -1483,7 +1483,7 @@ BYTE* freerdp_bitmap_planar_delta_encode_plane(const BYTE* WINPR_RESTRICT inPlan
 	return outPlane;
 }
 
-static INLINE BOOL freerdp_bitmap_planar_delta_encode_planes(BYTE* WINPR_RESTRICT inPlanes[4],
+static inline BOOL freerdp_bitmap_planar_delta_encode_planes(BYTE* WINPR_RESTRICT inPlanes[4],
                                                              UINT32 width, UINT32 height,
                                                              BYTE* WINPR_RESTRICT outPlanes[4])
 {

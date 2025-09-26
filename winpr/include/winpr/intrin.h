@@ -33,13 +33,13 @@
 
 #if (__GNUC__ > 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 2))
 
-static INLINE UINT32 __lzcnt(UINT32 _val32)
+static inline UINT32 __lzcnt(UINT32 _val32)
 {
 	return ((UINT32)__builtin_clz(_val32));
 }
 
 #if !(defined(__MINGW32__) && defined(__clang__))
-static INLINE UINT16 __lzcnt16(UINT16 _val16)
+static inline UINT16 __lzcnt16(UINT16 _val16)
 {
 	return ((UINT16)(__builtin_clz((UINT32)_val16) - 16));
 }
@@ -47,7 +47,7 @@ static INLINE UINT16 __lzcnt16(UINT16 _val16)
 
 #else /* (__GNUC__ > 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 2) */
 
-static INLINE UINT32 __lzcnt(UINT32 x)
+static inline UINT32 __lzcnt(UINT32 x)
 {
 	unsigned y;
 	int n = 32;
@@ -81,7 +81,7 @@ static INLINE UINT32 __lzcnt(UINT32 x)
 	return n - x;
 }
 
-static INLINE UINT16 __lzcnt16(UINT16 x)
+static inline UINT16 __lzcnt16(UINT16 x)
 {
 	return ((UINT16)__lzcnt((UINT32)x));
 }

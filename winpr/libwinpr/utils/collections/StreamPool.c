@@ -87,7 +87,7 @@ static struct s_StreamPoolEntry add_entry(wStream* s)
  * Lock the stream pool
  */
 
-static INLINE void StreamPool_Lock(wStreamPool* pool)
+static inline void StreamPool_Lock(wStreamPool* pool)
 {
 	WINPR_ASSERT(pool);
 	if (pool->synchronized)
@@ -98,7 +98,7 @@ static INLINE void StreamPool_Lock(wStreamPool* pool)
  * Unlock the stream pool
  */
 
-static INLINE void StreamPool_Unlock(wStreamPool* pool)
+static inline void StreamPool_Unlock(wStreamPool* pool)
 {
 	WINPR_ASSERT(pool);
 	if (pool->synchronized)

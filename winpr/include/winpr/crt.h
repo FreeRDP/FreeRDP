@@ -52,28 +52,28 @@ WINPR_PRAGMA_DIAG_IGNORED_RESERVED_IDENTIFIER
 #endif /* _strtoi64 */
 
 #ifndef _rotl
-static INLINE UINT32 _rotl(UINT32 value, int shift)
+static inline UINT32 _rotl(UINT32 value, int shift)
 {
 	return (value << shift) | (value >> (32 - shift));
 }
 #endif /* _rotl */
 
 #ifndef _rotl64
-static INLINE UINT64 _rotl64(UINT64 value, int shift)
+static inline UINT64 _rotl64(UINT64 value, int shift)
 {
 	return (value << shift) | (value >> (64 - shift));
 }
 #endif /* _rotl64 */
 
 #ifndef _rotr
-static INLINE UINT32 _rotr(UINT32 value, int shift)
+static inline UINT32 _rotr(UINT32 value, int shift)
 {
 	return (value >> shift) | (value << (32 - shift));
 }
 #endif /* _rotr */
 
 #ifndef _rotr64
-static INLINE UINT64 _rotr64(UINT64 value, int shift)
+static inline UINT64 _rotr64(UINT64 value, int shift)
 {
 	return (value >> shift) | (value << (64 - shift));
 }
@@ -86,13 +86,13 @@ static INLINE UINT64 _rotr64(UINT64 value, int shift)
 
 #else
 
-static INLINE UINT32 _byteswap_ulong(UINT32 _val)
+static inline UINT32 _byteswap_ulong(UINT32 _val)
 {
 	return (((_val) >> 24) | (((_val)&0x00FF0000) >> 8) | (((_val)&0x0000FF00) << 8) |
 	        ((_val) << 24));
 }
 
-static INLINE UINT64 _byteswap_uint64(UINT64 _val)
+static inline UINT64 _byteswap_uint64(UINT64 _val)
 {
 	return (((_val) << 56) | (((_val) << 40) & 0xFF000000000000) |
 	        (((_val) << 24) & 0xFF0000000000) | (((_val) << 8) & 0xFF00000000) |
@@ -108,7 +108,7 @@ static INLINE UINT64 _byteswap_uint64(UINT64 _val)
 
 #else
 
-static INLINE UINT16 _byteswap_ushort(UINT16 _val)
+static inline UINT16 _byteswap_ushort(UINT16 _val)
 {
 	return WINPR_CXX_COMPAT_CAST(UINT16, ((_val) >> 8U) | ((_val) << 8U));
 }

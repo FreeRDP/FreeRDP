@@ -247,29 +247,29 @@ extern "C"
 
 	/* Callback Environment */
 
-	static INLINE VOID InitializeThreadpoolEnvironment(PTP_CALLBACK_ENVIRON pcbe)
+	static inline VOID InitializeThreadpoolEnvironment(PTP_CALLBACK_ENVIRON pcbe)
 	{
 		const TP_CALLBACK_ENVIRON empty = { 0 };
 		*pcbe = empty;
 		pcbe->Version = 1;
 	}
 
-	static INLINE VOID DestroyThreadpoolEnvironment(WINPR_ATTR_UNUSED PTP_CALLBACK_ENVIRON pcbe)
+	static inline VOID DestroyThreadpoolEnvironment(WINPR_ATTR_UNUSED PTP_CALLBACK_ENVIRON pcbe)
 	{
 		/* no actions, this may change in a future release. */
 	}
 
-	static INLINE VOID SetThreadpoolCallbackPool(PTP_CALLBACK_ENVIRON pcbe, PTP_POOL ptpp)
+	static inline VOID SetThreadpoolCallbackPool(PTP_CALLBACK_ENVIRON pcbe, PTP_POOL ptpp)
 	{
 		pcbe->Pool = ptpp;
 	}
 
-	static INLINE VOID SetThreadpoolCallbackRunsLong(PTP_CALLBACK_ENVIRON pcbe)
+	static inline VOID SetThreadpoolCallbackRunsLong(PTP_CALLBACK_ENVIRON pcbe)
 	{
 		pcbe->u.s.LongFunction = 1;
 	}
 
-	static INLINE VOID SetThreadpoolCallbackLibrary(PTP_CALLBACK_ENVIRON pcbe, PVOID mod)
+	static inline VOID SetThreadpoolCallbackLibrary(PTP_CALLBACK_ENVIRON pcbe, PVOID mod)
 	{
 		pcbe->RaceDll = mod;
 	}

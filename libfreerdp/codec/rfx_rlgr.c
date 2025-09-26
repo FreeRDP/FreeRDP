@@ -98,7 +98,7 @@ static BOOL CALLBACK rfx_rlgr_init(PINIT_ONCE once, PVOID param, PVOID* context)
 	return TRUE;
 }
 
-static INLINE UINT32 lzcnt_s(UINT32 x)
+static inline UINT32 lzcnt_s(UINT32 x)
 {
 	if (!x)
 		return 32;

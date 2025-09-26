@@ -1918,7 +1918,7 @@ static const UINT32 LOMBaseLUT[30] = {
 	0x2    /* 29 */
 };
 
-static INLINE UINT16 get_word(const BYTE* data)
+static inline UINT16 get_word(const BYTE* data)
 {
 	UINT16 tmp = 0;
 
@@ -1928,7 +1928,7 @@ static INLINE UINT16 get_word(const BYTE* data)
 	return tmp;
 }
 
-static INLINE UINT32 get_dword(const BYTE* data)
+static inline UINT32 get_dword(const BYTE* data)
 {
 	UINT32 tmp = 0;
 	WINPR_ASSERT(data);
@@ -1939,7 +1939,7 @@ static INLINE UINT32 get_dword(const BYTE* data)
 	return tmp;
 }
 
-static INLINE BOOL NCrushFetchBits(const BYTE** SrcPtr, const BYTE** SrcEnd, INT32* nbits,
+static inline BOOL NCrushFetchBits(const BYTE** SrcPtr, const BYTE** SrcEnd, INT32* nbits,
                                    UINT32* bits)
 {
 	WINPR_ASSERT(SrcPtr);
@@ -1976,7 +1976,7 @@ static INLINE BOOL NCrushFetchBits(const BYTE** SrcPtr, const BYTE** SrcEnd, INT
 	return TRUE;
 }
 
-static INLINE void NCrushWriteStart(UINT32* bits, UINT32* offset, UINT32* accumulator)
+static inline void NCrushWriteStart(UINT32* bits, UINT32* offset, UINT32* accumulator)
 {
 	WINPR_ASSERT(bits);
 	WINPR_ASSERT(offset);
@@ -1987,7 +1987,7 @@ static INLINE void NCrushWriteStart(UINT32* bits, UINT32* offset, UINT32* accumu
 	*accumulator = 0;
 }
 
-static INLINE void NCrushWriteBits(BYTE** DstPtr, UINT32* accumulator, UINT32* offset, UINT32 _bits,
+static inline void NCrushWriteBits(BYTE** DstPtr, UINT32* accumulator, UINT32* offset, UINT32 _bits,
                                    UINT32 _nbits)
 {
 	WINPR_ASSERT(DstPtr);
@@ -2006,7 +2006,7 @@ static INLINE void NCrushWriteBits(BYTE** DstPtr, UINT32* accumulator, UINT32* o
 	}
 }
 
-static INLINE void NCrushWriteFinish(BYTE** DstPtr, UINT32 accumulator)
+static inline void NCrushWriteFinish(BYTE** DstPtr, UINT32 accumulator)
 {
 	WINPR_ASSERT(DstPtr);
 

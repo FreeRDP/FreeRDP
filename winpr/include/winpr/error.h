@@ -148,7 +148,7 @@ WINPR_PRAGMA_DIAG_IGNORED_RESERVED_ID_MACRO
 
 #define ERROR_CAST(t, val) WINPR_CXX_COMPAT_CAST(t, val)
 
-static INLINE HRESULT HRESULT_FROM_WIN32(unsigned long x)
+static inline HRESULT HRESULT_FROM_WIN32(unsigned long x)
 {
 	HRESULT hx = ERROR_CAST(HRESULT, x);
 	if (hx <= 0)

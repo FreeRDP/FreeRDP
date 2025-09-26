@@ -320,7 +320,7 @@ BOOL freerdp_image_copy_from_monochrome(BYTE* WINPR_RESTRICT pDstData, UINT32 Ds
 	return TRUE;
 }
 
-static INLINE UINT32 freerdp_image_inverted_pointer_color(UINT32 x, UINT32 y, UINT32 format)
+static inline UINT32 freerdp_image_inverted_pointer_color(UINT32 x, UINT32 y, UINT32 format)
 {
 	/**
 	 * Inverted pointer colors (where individual pixels can change their
@@ -362,12 +362,12 @@ static void fill_gdi_palette_for_icon(const BYTE* colorTable, UINT16 cbColorTabl
 	}
 }
 
-static INLINE UINT32 div_ceil(UINT32 a, UINT32 b)
+static inline UINT32 div_ceil(UINT32 a, UINT32 b)
 {
 	return (a + (b - 1)) / b;
 }
 
-static INLINE UINT32 round_up(UINT32 a, UINT32 b)
+static inline UINT32 round_up(UINT32 a, UINT32 b)
 {
 	return b * div_ceil(a, b);
 }
@@ -773,7 +773,7 @@ BOOL freerdp_image_copy_from_pointer_data(BYTE* WINPR_RESTRICT pDstData, UINT32 
 	                                                andMask, andMaskLength, xorBpp, palette);
 }
 
-static INLINE BOOL overlapping(const BYTE* pDstData, UINT32 nYDst, UINT32 nDstStep,
+static inline BOOL overlapping(const BYTE* pDstData, UINT32 nYDst, UINT32 nDstStep,
                                const BYTE* pSrcData, UINT32 nYSrc, UINT32 nSrcStep, UINT32 nHeight)
 {
 	const uintptr_t src = (uintptr_t)pSrcData;
@@ -792,7 +792,7 @@ static INLINE BOOL overlapping(const BYTE* pDstData, UINT32 nYDst, UINT32 nDstSt
 	return FALSE;
 }
 
-static INLINE BOOL freerdp_image_copy_bgr24_bgrx32(BYTE* WINPR_RESTRICT pDstData, UINT32 nDstStep,
+static inline BOOL freerdp_image_copy_bgr24_bgrx32(BYTE* WINPR_RESTRICT pDstData, UINT32 nDstStep,
                                                    UINT32 nXDst, UINT32 nYDst, UINT32 nWidth,
                                                    UINT32 nHeight,
                                                    const BYTE* WINPR_RESTRICT pSrcData,
@@ -822,7 +822,7 @@ static INLINE BOOL freerdp_image_copy_bgr24_bgrx32(BYTE* WINPR_RESTRICT pDstData
 	return TRUE;
 }
 
-static INLINE BOOL freerdp_image_copy_bgrx32_bgrx32(BYTE* WINPR_RESTRICT pDstData, UINT32 nDstStep,
+static inline BOOL freerdp_image_copy_bgrx32_bgrx32(BYTE* WINPR_RESTRICT pDstData, UINT32 nDstStep,
                                                     UINT32 nXDst, UINT32 nYDst, UINT32 nWidth,
                                                     UINT32 nHeight,
                                                     const BYTE* WINPR_RESTRICT pSrcData,
@@ -852,7 +852,7 @@ static INLINE BOOL freerdp_image_copy_bgrx32_bgrx32(BYTE* WINPR_RESTRICT pDstDat
 	return TRUE;
 }
 
-static INLINE BOOL freerdp_image_copy_generic(
+static inline BOOL freerdp_image_copy_generic(
     BYTE* WINPR_RESTRICT pDstData, UINT32 DstFormat, UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst,
     UINT32 nWidth, UINT32 nHeight, const BYTE* WINPR_RESTRICT pSrcData, UINT32 SrcFormat,
     UINT32 nSrcStep, UINT32 nXSrc, UINT32 nYSrc, const gdiPalette* WINPR_RESTRICT palette,
@@ -894,7 +894,7 @@ static INLINE BOOL freerdp_image_copy_generic(
 	return TRUE;
 }
 
-static INLINE BOOL freerdp_image_copy_no_overlap_dst_alpha(
+static inline BOOL freerdp_image_copy_no_overlap_dst_alpha(
     BYTE* WINPR_RESTRICT pDstData, DWORD DstFormat, UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst,
     UINT32 nWidth, UINT32 nHeight, const BYTE* WINPR_RESTRICT pSrcData, DWORD SrcFormat,
     UINT32 nSrcStep, UINT32 nXSrc, UINT32 nYSrc, const gdiPalette* WINPR_RESTRICT palette,

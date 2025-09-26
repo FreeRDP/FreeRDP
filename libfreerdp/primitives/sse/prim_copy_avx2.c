@@ -39,7 +39,7 @@ static inline __m256i mm256_set_epu32(uint32_t i0, uint32_t i1, uint32_t i2, uin
 	                        (int32_t)i5, (int32_t)i6, (int32_t)i7);
 }
 
-static INLINE pstatus_t avx2_image_copy_bgr24_bgrx32(BYTE* WINPR_RESTRICT pDstData, UINT32 nDstStep,
+static inline pstatus_t avx2_image_copy_bgr24_bgrx32(BYTE* WINPR_RESTRICT pDstData, UINT32 nDstStep,
                                                      UINT32 nXDst, UINT32 nYDst, UINT32 nWidth,
                                                      UINT32 nHeight,
                                                      const BYTE* WINPR_RESTRICT pSrcData,
@@ -103,7 +103,7 @@ static INLINE pstatus_t avx2_image_copy_bgr24_bgrx32(BYTE* WINPR_RESTRICT pDstDa
 	return PRIMITIVES_SUCCESS;
 }
 
-static INLINE pstatus_t avx2_image_copy_bgrx32_bgrx32(BYTE* WINPR_RESTRICT pDstData,
+static inline pstatus_t avx2_image_copy_bgrx32_bgrx32(BYTE* WINPR_RESTRICT pDstData,
                                                       UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst,
                                                       UINT32 nWidth, UINT32 nHeight,
                                                       const BYTE* WINPR_RESTRICT pSrcData,

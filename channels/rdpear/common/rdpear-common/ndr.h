@@ -122,7 +122,7 @@ extern "C"
 
 	void ndr_context_free(NdrContext* context);
 
-	static INLINE void ndr_context_destroy(NdrContext** pcontext)
+	static inline void ndr_context_destroy(NdrContext** pcontext)
 	{
 		WINPR_ASSERT(pcontext);
 		ndr_context_free(*pcontext);

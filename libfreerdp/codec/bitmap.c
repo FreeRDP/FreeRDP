@@ -25,13 +25,13 @@
 #include <freerdp/codec/bitmap.h>
 #include <freerdp/codec/planar.h>
 
-static INLINE UINT16 GETPIXEL16(const void* WINPR_RESTRICT d, UINT32 x, UINT32 y, UINT32 w)
+static inline UINT16 GETPIXEL16(const void* WINPR_RESTRICT d, UINT32 x, UINT32 y, UINT32 w)
 {
 	const BYTE* WINPR_RESTRICT src = (const BYTE*)d + ((y * w + x) * sizeof(UINT16));
 	return WINPR_ASSERTING_INT_CAST(UINT16, ((UINT16)src[1] << 8) | (UINT16)src[0]);
 }
 
-static INLINE UINT32 GETPIXEL32(const void* WINPR_RESTRICT d, UINT32 x, UINT32 y, UINT32 w)
+static inline UINT32 GETPIXEL32(const void* WINPR_RESTRICT d, UINT32 x, UINT32 y, UINT32 w)
 {
 	const BYTE* WINPR_RESTRICT src = (const BYTE*)d + ((y * w + x) * sizeof(UINT32));
 	return (((UINT32)src[3]) << 24) | (((UINT32)src[2]) << 16) | (((UINT32)src[1]) << 8) |
@@ -39,7 +39,7 @@ static INLINE UINT32 GETPIXEL32(const void* WINPR_RESTRICT d, UINT32 x, UINT32 y
 }
 
 /*****************************************************************************/
-static INLINE UINT16 IN_PIXEL16(const void* WINPR_RESTRICT in_ptr, UINT32 in_x, UINT32 in_y,
+static inline UINT16 IN_PIXEL16(const void* WINPR_RESTRICT in_ptr, UINT32 in_x, UINT32 in_y,
                                 UINT32 in_w, UINT16 in_last_pixel)
 {
 	if (in_ptr == 0)
@@ -51,7 +51,7 @@ static INLINE UINT16 IN_PIXEL16(const void* WINPR_RESTRICT in_ptr, UINT32 in_x, 
 }
 
 /*****************************************************************************/
-static INLINE UINT32 IN_PIXEL32(const void* WINPR_RESTRICT in_ptr, UINT32 in_x, UINT32 in_y,
+static inline UINT32 IN_PIXEL32(const void* WINPR_RESTRICT in_ptr, UINT32 in_x, UINT32 in_y,
                                 UINT32 in_w, UINT32 in_last_pixel)
 {
 	if (in_ptr == 0)
@@ -64,7 +64,7 @@ static INLINE UINT32 IN_PIXEL32(const void* WINPR_RESTRICT in_ptr, UINT32 in_x, 
 
 /*****************************************************************************/
 /* color */
-static INLINE UINT16 out_color_count_2(UINT16 in_count, wStream* WINPR_RESTRICT in_s,
+static inline UINT16 out_color_count_2(UINT16 in_count, wStream* WINPR_RESTRICT in_s,
                                        UINT16 in_data)
 {
 	if (in_count > 0)
@@ -96,7 +96,7 @@ static INLINE UINT16 out_color_count_2(UINT16 in_count, wStream* WINPR_RESTRICT 
 
 /*****************************************************************************/
 /* color */
-static INLINE UINT16 out_color_count_3(UINT16 in_count, wStream* WINPR_RESTRICT in_s,
+static inline UINT16 out_color_count_3(UINT16 in_count, wStream* WINPR_RESTRICT in_s,
                                        UINT32 in_data)
 {
 	if (in_count > 0)
@@ -132,7 +132,7 @@ static INLINE UINT16 out_color_count_3(UINT16 in_count, wStream* WINPR_RESTRICT 
 
 /*****************************************************************************/
 /* copy */
-static INLINE UINT16 out_copy_count_2(UINT16 in_count, wStream* WINPR_RESTRICT in_s,
+static inline UINT16 out_copy_count_2(UINT16 in_count, wStream* WINPR_RESTRICT in_s,
                                       wStream* WINPR_RESTRICT in_data)
 
 {
@@ -165,7 +165,7 @@ static INLINE UINT16 out_copy_count_2(UINT16 in_count, wStream* WINPR_RESTRICT i
 	in_count = out_copy_count_2(in_count, in_s, in_data)
 /*****************************************************************************/
 /* copy */
-static INLINE UINT16 out_copy_count_3(UINT16 in_count, wStream* WINPR_RESTRICT in_s,
+static inline UINT16 out_copy_count_3(UINT16 in_count, wStream* WINPR_RESTRICT in_s,
                                       wStream* WINPR_RESTRICT in_data)
 {
 	if (in_count > 0)
@@ -198,7 +198,7 @@ static INLINE UINT16 out_copy_count_3(UINT16 in_count, wStream* WINPR_RESTRICT i
 
 /*****************************************************************************/
 /* bicolor */
-static INLINE UINT16 out_bicolor_count_2(UINT16 in_count, wStream* WINPR_RESTRICT in_s,
+static inline UINT16 out_bicolor_count_2(UINT16 in_count, wStream* WINPR_RESTRICT in_s,
                                          UINT16 in_color1, UINT16 in_color2)
 {
 	if (in_count > 0)
@@ -232,7 +232,7 @@ static INLINE UINT16 out_bicolor_count_2(UINT16 in_count, wStream* WINPR_RESTRIC
 
 /*****************************************************************************/
 /* bicolor */
-static INLINE UINT16 out_bicolor_count_3(UINT16 in_count, wStream* WINPR_RESTRICT in_s,
+static inline UINT16 out_bicolor_count_3(UINT16 in_count, wStream* WINPR_RESTRICT in_s,
                                          UINT32 in_color1, UINT32 in_color2)
 {
 	if (in_count > 0)
@@ -270,7 +270,7 @@ static INLINE UINT16 out_bicolor_count_3(UINT16 in_count, wStream* WINPR_RESTRIC
 
 /*****************************************************************************/
 /* fill */
-static INLINE UINT16 out_fill_count_2(UINT16 in_count, wStream* WINPR_RESTRICT in_s)
+static inline UINT16 out_fill_count_2(UINT16 in_count, wStream* WINPR_RESTRICT in_s)
 {
 	if (in_count > 0)
 	{
@@ -298,7 +298,7 @@ static INLINE UINT16 out_fill_count_2(UINT16 in_count, wStream* WINPR_RESTRICT i
 
 /*****************************************************************************/
 /* fill */
-static INLINE UINT16 out_fill_count_3(UINT16 in_count, wStream* WINPR_RESTRICT in_s)
+static inline UINT16 out_fill_count_3(UINT16 in_count, wStream* WINPR_RESTRICT in_s)
 {
 	if (in_count > 0)
 	{
@@ -325,7 +325,7 @@ static INLINE UINT16 out_fill_count_3(UINT16 in_count, wStream* WINPR_RESTRICT i
 
 /*****************************************************************************/
 /* mix */
-static INLINE UINT16 out_mix_count_2(UINT16 in_count, wStream* WINPR_RESTRICT in_s)
+static inline UINT16 out_mix_count_2(UINT16 in_count, wStream* WINPR_RESTRICT in_s)
 {
 	if (in_count > 0)
 	{
@@ -353,7 +353,7 @@ static INLINE UINT16 out_mix_count_2(UINT16 in_count, wStream* WINPR_RESTRICT in
 
 /*****************************************************************************/
 /* mix */
-static INLINE UINT16 out_mix_count_3(UINT16 in_count, wStream* WINPR_RESTRICT in_s)
+static inline UINT16 out_mix_count_3(UINT16 in_count, wStream* WINPR_RESTRICT in_s)
 {
 	if (in_count > 0)
 	{
@@ -382,7 +382,7 @@ static INLINE UINT16 out_mix_count_3(UINT16 in_count, wStream* WINPR_RESTRICT in
 
 /*****************************************************************************/
 /* fom */
-static INLINE UINT16 out_from_count_2(UINT16 in_count, wStream* WINPR_RESTRICT in_s,
+static inline UINT16 out_from_count_2(UINT16 in_count, wStream* WINPR_RESTRICT in_s,
                                       const int8_t* WINPR_RESTRICT in_mask, size_t in_mask_len)
 {
 	if (in_count > 0)
@@ -414,7 +414,7 @@ static INLINE UINT16 out_from_count_2(UINT16 in_count, wStream* WINPR_RESTRICT i
 
 /*****************************************************************************/
 /* fill or mix (fom) */
-static INLINE UINT16 out_from_count_3(UINT16 in_count, wStream* WINPR_RESTRICT in_s,
+static inline UINT16 out_from_count_3(UINT16 in_count, wStream* WINPR_RESTRICT in_s,
                                       const int8_t* WINPR_RESTRICT in_mask, size_t in_mask_len)
 {
 	if (in_count > 0)
@@ -464,7 +464,7 @@ static INLINE UINT16 out_from_count_3(UINT16 in_count, wStream* WINPR_RESTRICT i
 		bicolor_spin = FALSE; \
 	} while (0)
 
-static INLINE SSIZE_T freerdp_bitmap_compress_24(const void* WINPR_RESTRICT srcData, UINT32 width,
+static inline SSIZE_T freerdp_bitmap_compress_24(const void* WINPR_RESTRICT srcData, UINT32 width,
                                                  WINPR_ATTR_UNUSED UINT32 height,
                                                  wStream* WINPR_RESTRICT s, UINT32 byte_limit,
                                                  UINT32 start_line, wStream* WINPR_RESTRICT temp_s,
@@ -774,7 +774,7 @@ static INLINE SSIZE_T freerdp_bitmap_compress_24(const void* WINPR_RESTRICT srcD
 	return lines_sent;
 }
 
-static INLINE SSIZE_T freerdp_bitmap_compress_16(const void* WINPR_RESTRICT srcData, UINT32 width,
+static inline SSIZE_T freerdp_bitmap_compress_16(const void* WINPR_RESTRICT srcData, UINT32 width,
                                                  WINPR_ATTR_UNUSED UINT32 height,
                                                  wStream* WINPR_RESTRICT s, UINT32 bpp,
                                                  UINT32 byte_limit, UINT32 start_line,

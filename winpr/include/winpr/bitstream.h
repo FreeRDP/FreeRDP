@@ -48,7 +48,7 @@ extern "C"
 {
 #endif
 
-	static INLINE void BitStream_Prefetch(wBitStream* _bs)
+	static inline void BitStream_Prefetch(wBitStream* _bs)
 	{
 		WINPR_ASSERT(_bs);
 
@@ -65,7 +65,7 @@ extern "C"
 			(_bs->prefetch) |= ((UINT32)_bs->pointer[7] << 0);
 	}
 
-	static INLINE void BitStream_Fetch(wBitStream* _bs)
+	static inline void BitStream_Fetch(wBitStream* _bs)
 	{
 		WINPR_ASSERT(_bs);
 		(_bs->accumulator) = 0;
@@ -82,7 +82,7 @@ extern "C"
 		BitStream_Prefetch(_bs);
 	}
 
-	static INLINE void BitStream_Flush(wBitStream* _bs)
+	static inline void BitStream_Flush(wBitStream* _bs)
 	{
 		WINPR_ASSERT(_bs);
 		const intptr_t diff = _bs->pointer - _bs->buffer;
@@ -96,7 +96,7 @@ extern "C"
 			_bs->pointer[3] = (_bs->accumulator >> 0) & 0xFF;
 	}
 
-	static INLINE void BitStream_Shift(wBitStream* _bs, UINT32 _nbits)
+	static inline void BitStream_Shift(wBitStream* _bs, UINT32 _nbits)
 	{
 		WINPR_ASSERT(_bs);
 		if (_nbits == 0)
@@ -135,14 +135,14 @@ extern "C"
 		}
 	}
 
-	static INLINE void BitStream_Shift32(wBitStream* _bs)
+	static inline void BitStream_Shift32(wBitStream* _bs)
 	{
 		WINPR_ASSERT(_bs);
 		BitStream_Shift(_bs, 16);
 		BitStream_Shift(_bs, 16);
 	}
 
-	static INLINE void BitStream_Write_Bits(wBitStream* _bs, UINT32 _bits, UINT32 _nbits)
+	static inline void BitStream_Write_Bits(wBitStream* _bs, UINT32 _bits, UINT32 _nbits)
 	{
 		WINPR_ASSERT(_bs);
 		_bs->position += _nbits;
@@ -167,7 +167,7 @@ extern "C"
 		}
 	}
 
-	static INLINE size_t BitStream_GetRemainingLength(wBitStream* _bs)
+	static inline size_t BitStream_GetRemainingLength(wBitStream* _bs)
 	{
 		WINPR_ASSERT(_bs);
 		return (_bs->length - _bs->position);

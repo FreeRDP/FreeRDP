@@ -48,7 +48,7 @@ struct rdp_bulk
 };
 
 #if defined(WITH_BULK_DEBUG)
-static INLINE const char* bulk_get_compression_flags_string(UINT32 flags)
+static inline const char* bulk_get_compression_flags_string(UINT32 flags)
 {
 	flags &= BULK_COMPRESSION_FLAGS_MASK;
 
@@ -96,7 +96,7 @@ UINT16 bulk_compression_max_size(rdpBulk* WINPR_RESTRICT bulk)
 }
 
 #if defined(WITH_BULK_DEBUG)
-static INLINE int bulk_compress_validate(rdpBulk* bulk, const BYTE* pSrcData, UINT32 SrcSize,
+static inline int bulk_compress_validate(rdpBulk* bulk, const BYTE* pSrcData, UINT32 SrcSize,
                                          const BYTE* pDstData, UINT32 DstSize, UINT32 Flags)
 {
 	int status;

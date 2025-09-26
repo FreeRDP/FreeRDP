@@ -302,7 +302,7 @@ static const signed char dec_base64[] = {
 	-1, /* 127        177	7F	01111111	DEL	&#127;	 	Delete */
 };
 
-static INLINE char* base64_encode_ex(const BYTE* WINPR_RESTRICT alphabet,
+static inline char* base64_encode_ex(const BYTE* WINPR_RESTRICT alphabet,
                                      const BYTE* WINPR_RESTRICT data, size_t length, BOOL pad,
                                      BOOL crLf, size_t lineSize)
 {
@@ -392,13 +392,13 @@ static INLINE char* base64_encode_ex(const BYTE* WINPR_RESTRICT alphabet,
 	return ret;
 }
 
-static INLINE char* base64_encode(const BYTE* WINPR_RESTRICT alphabet,
+static inline char* base64_encode(const BYTE* WINPR_RESTRICT alphabet,
                                   const BYTE* WINPR_RESTRICT data, size_t length, BOOL pad)
 {
 	return base64_encode_ex(alphabet, data, length, pad, FALSE, 64);
 }
 
-static INLINE int base64_decode_char(const signed char* WINPR_RESTRICT alphabet, char c)
+static inline int base64_decode_char(const signed char* WINPR_RESTRICT alphabet, char c)
 {
 	if (c <= '\0')
 		return -1;
@@ -406,7 +406,7 @@ static INLINE int base64_decode_char(const signed char* WINPR_RESTRICT alphabet,
 	return alphabet[(size_t)c];
 }
 
-static INLINE void* base64_decode(const signed char* WINPR_RESTRICT alphabet,
+static inline void* base64_decode(const signed char* WINPR_RESTRICT alphabet,
                                   const char* WINPR_RESTRICT s, size_t length,
                                   size_t* WINPR_RESTRICT data_len, BOOL pad)
 {

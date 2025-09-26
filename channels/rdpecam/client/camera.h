@@ -122,11 +122,11 @@ typedef struct
 
 } CameraDeviceStream;
 
-static INLINE CAM_MEDIA_FORMAT streamInputFormat(CameraDeviceStream* stream)
+static inline CAM_MEDIA_FORMAT streamInputFormat(CameraDeviceStream* stream)
 {
 	return stream->formats.inputFormat;
 }
-static INLINE CAM_MEDIA_FORMAT streamOutputFormat(CameraDeviceStream* stream)
+static inline CAM_MEDIA_FORMAT streamOutputFormat(CameraDeviceStream* stream)
 {
 	return stream->formats.outputFormat;
 }
