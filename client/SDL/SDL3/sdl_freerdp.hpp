@@ -81,6 +81,8 @@ class SdlContext
 	void setHasCursor(bool val);
 	[[nodiscard]] bool hasCursor() const;
 
+	void setMetadata();
+
   private:
 	rdpContext* _context;
 	std::atomic<bool> _connected = false;
