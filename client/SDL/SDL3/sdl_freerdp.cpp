@@ -1678,6 +1678,7 @@ int main(int argc, char* argv[])
 	WINPR_ASSERT(settings);
 
 	status = freerdp_client_settings_parse_command_line(settings, argc, argv, FALSE);
+	sdl_rdp->sdl->setMetadata();
 	if (status)
 	{
 		rc = freerdp_client_settings_command_line_status_print(settings, status, argc, argv);
@@ -1762,14 +1763,7 @@ SdlContext::SdlContext(rdpContext* context)
       primary(nullptr, SDL_DestroySurface), rdp_thread_running(false), dialog(log)
 {
 	WINPR_ASSERT(context);
-
-	SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_NAME_STRING, SDL_CLIENT_NAME);
-	SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_VERSION_STRING, SDL_CLIENT_VERSION);
-	SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_IDENTIFIER_STRING, SDL_CLIENT_UUID);
-	SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_CREATOR_STRING, SDL_CLIENT_VENDOR);
-	SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_COPYRIGHT_STRING, SDL_CLIENT_COPYRIGHT);
-	SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_URL_STRING, SDL_CLIENT_URL);
-	SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_TYPE_STRING, SDL_CLIENT_TYPE);
+	setMetadata();
 }
 
 void SdlContext::setHasCursor(bool val)
@@ -1780,6 +1774,21 @@ void SdlContext::setHasCursor(bool val)
 bool SdlContext::hasCursor() const
 {
 	return _cursor_visible;
+}
+
+void SdlContext::setMetadata()
+{
+	auto wmclass = freerdp_settings_get_string(_context->settings, FreeRDP_WmClass);
+	if (!wmclass || (strlen(wmclass) == 0))
+		wmclass = SDL_CLIENT_UUID;
+
+	SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_IDENTIFIER_STRING, wmclass);
+	SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_NAME_STRING, SDL_CLIENT_NAME);
+	SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_VERSION_STRING, SDL_CLIENT_VERSION);
+	SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_CREATOR_STRING, SDL_CLIENT_VENDOR);
+	SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_COPYRIGHT_STRING, SDL_CLIENT_COPYRIGHT);
+	SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_URL_STRING, SDL_CLIENT_URL);
+	SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_TYPE_STRING, SDL_CLIENT_TYPE);
 }
 
 bool SdlContext::redraw(bool suppress) const
