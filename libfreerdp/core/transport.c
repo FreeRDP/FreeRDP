@@ -1767,7 +1767,7 @@ BOOL transport_set_io_callbacks(rdpTransport* transport, const rdpTransportIo* i
 	return TRUE;
 }
 
-const rdpTransportIo* transport_get_io_callbacks(rdpTransport* transport)
+const rdpTransportIo* transport_get_io_callbacks(const rdpTransport* transport)
 {
 	if (!transport)
 		return NULL;
@@ -1874,7 +1874,7 @@ BOOL transport_set_recv_callbacks(rdpTransport* transport, TransportRecv recv, v
 	return TRUE;
 }
 
-BOOL transport_get_blocking(rdpTransport* transport)
+BOOL transport_get_blocking(const rdpTransport* transport)
 {
 	WINPR_ASSERT(transport);
 	return transport->blocking;

@@ -127,7 +127,7 @@ FREERDP_LOCAL int transport_drain_output_buffer(rdpTransport* transport);
 
 FREERDP_LOCAL BOOL transport_io_callback_set_event(rdpTransport* transport, BOOL set);
 
-FREERDP_LOCAL const rdpTransportIo* transport_get_io_callbacks(rdpTransport* transport);
+FREERDP_LOCAL const rdpTransportIo* transport_get_io_callbacks(const rdpTransport* transport);
 FREERDP_LOCAL BOOL transport_set_io_callbacks(rdpTransport* transport,
                                               const rdpTransportIo* io_callbacks);
 
@@ -149,7 +149,7 @@ FREERDP_LOCAL BOOL transport_have_more_bytes_to_read(rdpTransport* transport);
 FREERDP_LOCAL TRANSPORT_LAYER transport_get_layer(rdpTransport* transport);
 FREERDP_LOCAL BOOL transport_set_layer(rdpTransport* transport, TRANSPORT_LAYER layer);
 
-FREERDP_LOCAL BOOL transport_get_blocking(rdpTransport* transport);
+FREERDP_LOCAL BOOL transport_get_blocking(const rdpTransport* transport);
 FREERDP_LOCAL BOOL transport_set_blocking(rdpTransport* transport, BOOL blocking);
 
 FREERDP_LOCAL BOOL transport_set_connected_event(rdpTransport* transport);

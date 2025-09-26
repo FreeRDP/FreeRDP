@@ -1761,7 +1761,7 @@ void nego_set_RCG_supported(rdpNego* nego, BOOL enabled)
 	nego->RemoteCredsGuardSupported = enabled;
 }
 
-BOOL nego_get_remoteCredentialGuard(rdpNego* nego)
+BOOL nego_get_remoteCredentialGuard(const rdpNego* nego)
 {
 	WINPR_ASSERT(nego);
 
@@ -1967,7 +1967,7 @@ void nego_set_preconnection_blob(rdpNego* nego, const char* PreconnectionBlob)
 	nego->PreconnectionBlob = PreconnectionBlob;
 }
 
-UINT32 nego_get_selected_protocol(rdpNego* nego)
+UINT32 nego_get_selected_protocol(const rdpNego* nego)
 {
 	if (!nego)
 		return 0;
@@ -1982,7 +1982,7 @@ BOOL nego_set_selected_protocol(rdpNego* nego, UINT32 SelectedProtocol)
 	return TRUE;
 }
 
-UINT32 nego_get_requested_protocols(rdpNego* nego)
+UINT32 nego_get_requested_protocols(const rdpNego* nego)
 {
 	if (!nego)
 		return 0;
@@ -1999,7 +1999,7 @@ BOOL nego_set_requested_protocols(rdpNego* nego, UINT32 RequestedProtocols)
 	return TRUE;
 }
 
-NEGO_STATE nego_get_state(rdpNego* nego)
+NEGO_STATE nego_get_state(const rdpNego* nego)
 {
 	if (!nego)
 		return NEGO_STATE_FAIL;
@@ -2034,7 +2034,7 @@ void nego_free_nla(rdpNego* nego)
 	transport_set_nla(nego->transport, NULL);
 }
 
-const BYTE* nego_get_routing_token(rdpNego* nego, DWORD* RoutingTokenLength)
+const BYTE* nego_get_routing_token(const rdpNego* nego, DWORD* RoutingTokenLength)
 {
 	if (!nego)
 		return NULL;

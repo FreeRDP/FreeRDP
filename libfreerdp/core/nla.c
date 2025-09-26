@@ -2169,7 +2169,7 @@ SEC_WINNT_AUTH_IDENTITY* nla_get_identity(rdpNla* nla)
 	return nla->identity;
 }
 
-NLA_STATE nla_get_state(rdpNla* nla)
+NLA_STATE nla_get_state(const rdpNla* nla)
 {
 	if (!nla)
 		return NLA_STATE_FINAL;
@@ -2227,14 +2227,14 @@ const char* nla_get_state_str(NLA_STATE state)
 	}
 }
 
-DWORD nla_get_error(rdpNla* nla)
+DWORD nla_get_error(const rdpNla* nla)
 {
 	if (!nla)
 		return ERROR_INTERNAL_ERROR;
 	return (UINT32)nla->errorCode;
 }
 
-INT32 nla_get_sspi_error(rdpNla* nla)
+INT32 nla_get_sspi_error(const rdpNla* nla)
 {
 	WINPR_ASSERT(nla);
 	return credssp_auth_sspi_error(nla->auth);
