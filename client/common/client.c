@@ -454,13 +454,13 @@ out:
  * ). On output the allocated username entered by the user.
  *  @param password on input can contain a suggestion (must be allocated and is released by \b free
  * ). On output the allocated password entered by the user.
- *  @param idomain on input can contain a suggestion (must be allocated and is released by \b free
+ *  @param domain on input can contain a suggestion (must be allocated and is released by \b free
  * ). On output the allocated domain entered by the user.
  *  @return TRUE if a password was successfully entered. See freerdp_passphrase_read() for more
  * details.
  */
 static BOOL client_cli_authenticate_raw(freerdp* instance, rdp_auth_reason reason, char** username,
-                                        char** password, char** idomain)
+                                        char** password, char** domain)
 {
 	static const size_t password_size = 512;
 	const char* userAuth = "Username:        ";
@@ -479,7 +479,6 @@ static BOOL client_cli_authenticate_raw(freerdp* instance, rdp_auth_reason reaso
 			pinOnly = TRUE;
 			break;
 		case AUTH_RDSTLS:
-			break;
 		case AUTH_TLS:
 		case AUTH_RDP:
 		case AUTH_NLA:
@@ -495,16 +494,8 @@ static BOOL client_cli_authenticate_raw(freerdp* instance, rdp_auth_reason reaso
 			return FALSE;
 	}
 
-	if (!username || !password)
+	if (!username || !password || !domain)
 		return FALSE;
-
-	char** domain = NULL;
-	if (reason != AUTH_RDSTLS)
-	{
-		if (!idomain)
-			return FALSE;
-		domain = idomain;
-	}
 
 	if (!*username && !pinOnly)
 	{

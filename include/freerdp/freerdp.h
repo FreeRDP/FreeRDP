@@ -110,24 +110,48 @@ extern "C"
 	typedef BOOL (*pAuthenticate)(freerdp* instance, char** username, char** password,
 	                              char** domain);
 
-	/** \brief Extended authentication callback function pointer definition
+	/** @brief Extended authentication callback function pointer definition
 	 *
-	 * \param instance A pointer to the instance to work on
-	 * \param username A pointer to the username string. On input the current username, on output
-	 * the username that should be used. Must not be NULL.
-	 * \param password A pointer to the password string. On input the current password, on output
-	 * the password that sohould be used. Must not be NULL.
-	 * \param domain A pointer to the domain string. On input the current domain, on output the
-	 * domain that sohould be used. Must not be NULL.
-	 * \param reason The reason the callback was
-	 * called. (e.g. NLA, TLS, RDP, GATEWAY, ...)
+	 *  This function is called whenever not all required credentials have been supplied or the
+	 * supplied credentials were rejected.
 	 *
-	 * \return \b FALSE to abort the connection, \b TRUE otherwise.
-	 * \note To not provide valid credentials and not abort the connection return \b TRUE and empty
-	 * (as in empty string) credentials
+	 * @param instance A pointer to the instance to work on
+	 * @param username A pointer to the username string. On input the current username, on output
+	 *          the username that should be used instead. Must not be NULL.
+	 * @param password A pointer to the password string. On input the current password, on output
+	 *          the password that sohould be used. Must not be NULL.
+	 * @param domain A pointer to the domain string. On input the current domain, on output the
+	 *          domain that sohould be used. Must not be NULL.
+	 * @param reason The reason the callback was called. (e.g. NLA, TLS, RDP, GATEWAY, ...)
+	 *
+	 * @return \b FALSE to abort the connection, \b TRUE otherwise.
+	 *
+	 * @attention All strings are allocated (on input and output) and \ref free needs to be called
+	 *          before replacing the input with the output values.
+	 * @note To not provide valid credentials and not abort the connection return \b TRUE and empty
+	 *          (as in empty string) credentials
 	 */
 	typedef BOOL (*pAuthenticateEx)(freerdp* instance, char** username, char** password,
 	                                char** domain, rdp_auth_reason reason);
+
+	/** @brief Callback to select a smartcard certificate from a list of detected ones.
+	 *
+	 *  This function is called when smartcard authentication (NLA) is used and more than one
+	 * smartcard certificate is detected that could be used. The purpose of this callback is to
+	 * present the user with a list of available options and then return the selection.
+	 *
+	 *  @param instance A pointer to the instance to work on
+	 *  @param cert_list A list of smartcard certificates
+	 *  @param count The number of smartcard certificates in the list
+	 *  @param choice A pointer to an integer that will represent the selected certificate index.
+	 * Must not be \b NULL
+	 *  @param gateway A indicator if the authentication is for a session (\b FALSE) or a gateway
+	 * (\b TRUE)
+	 *
+	 *  @return \b FALSE if the selection was aborted, \b TRUE if a selection was accepted.
+	 *
+	 *  @since version 3.0.0
+	 */
 	typedef BOOL (*pChooseSmartcard)(freerdp* instance, SmartcardCertInfo** cert_list, DWORD count,
 	                                 DWORD* choice, BOOL gateway);
 
