@@ -485,7 +485,7 @@ static BOOL transport_can_retry(const rdpContext* context, BOOL status)
 		case FREERDP_ERROR_CONNECT_TARGET_BOOTING:
 			return FALSE;
 		default:
-			return status;
+			return !status;
 	}
 }
 
