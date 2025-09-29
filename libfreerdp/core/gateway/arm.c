@@ -634,7 +634,9 @@ static size_t arm_parse_ipvx_count(WINPR_JSON* ipvX)
 	WINPR_JSON* ipAddress = WINPR_JSON_GetObjectItemCaseSensitive(ipvX, "ipAddress");
 	if (!ipAddress || !WINPR_JSON_IsArray(ipAddress))
 		return 0;
-	return WINPR_JSON_GetArraySize(ipAddress);
+
+	/* Each entry might contain a public and a private address */
+	return WINPR_JSON_GetArraySize(ipAddress) * 2;
 }
 
 static BOOL arm_parse_ipv6(rdpSettings* settings, WINPR_JSON* ipv6, size_t* pAddressIdx)
@@ -650,6 +652,7 @@ static BOOL arm_parse_ipv6(rdpSettings* settings, WINPR_JSON* ipv6, size_t* pAdd
 	if (!ipAddress || !WINPR_JSON_IsArray(ipAddress))
 		return TRUE;
 	const size_t naddresses = WINPR_JSON_GetArraySize(ipAddress);
+	const uint32_t count = freerdp_settings_get_uint32(settings, FreeRDP_TargetNetAddressCount);
 	for (size_t j = 0; j < naddresses; j++)
 	{
 		WINPR_JSON* adressN = WINPR_JSON_GetArrayItem(ipAddress, j);
@@ -659,6 +662,13 @@ static BOOL arm_parse_ipv6(rdpSettings* settings, WINPR_JSON* ipv6, size_t* pAdd
 		const char* addr = WINPR_JSON_GetStringValue(adressN);
 		if (utils_str_is_empty(addr))
 			continue;
+
+		if (*pAddressIdx >= count)
+		{
+			WLog_ERR(TAG, "Exceeded TargetNetAddresses, parsing failed");
+			return FALSE;
+		}
+
 		if (!freerdp_settings_set_pointer_array(settings, FreeRDP_TargetNetAddresses,
 		                                        (*pAddressIdx)++, addr))
 			return FALSE;
@@ -677,6 +687,7 @@ static BOOL arm_parse_ipv4(rdpSettings* settings, WINPR_JSON* ipv4, size_t* pAdd
 		return TRUE;
 
 	const size_t naddresses = WINPR_JSON_GetArraySize(ipAddress);
+	const uint32_t count = freerdp_settings_get_uint32(settings, FreeRDP_TargetNetAddressCount);
 	for (size_t j = 0; j < naddresses; j++)
 	{
 		WINPR_JSON* adressN = WINPR_JSON_GetArrayItem(ipAddress, j);
@@ -690,6 +701,11 @@ static BOOL arm_parse_ipv4(rdpSettings* settings, WINPR_JSON* ipv4, size_t* pAdd
 			const char* publicIp = WINPR_JSON_GetStringValue(publicIpNode);
 			if (!utils_str_is_empty(publicIp))
 			{
+				if (*pAddressIdx >= count)
+				{
+					WLog_ERR(TAG, "Exceeded TargetNetAddresses, parsing failed");
+					return FALSE;
+				}
 				if (!freerdp_settings_set_pointer_array(settings, FreeRDP_TargetNetAddresses,
 				                                        (*pAddressIdx)++, publicIp))
 					return FALSE;
@@ -703,6 +719,11 @@ static BOOL arm_parse_ipv4(rdpSettings* settings, WINPR_JSON* ipv4, size_t* pAdd
 			const char* privateIp = WINPR_JSON_GetStringValue(privateIpNode);
 			if (!utils_str_is_empty(privateIp))
 			{
+				if (*pAddressIdx >= count)
+				{
+					WLog_ERR(TAG, "Exceeded TargetNetAddresses, parsing failed");
+					return FALSE;
+				}
 				if (!freerdp_settings_set_pointer_array(settings, FreeRDP_TargetNetAddresses,
 				                                        (*pAddressIdx)++, privateIp))
 					return FALSE;
@@ -796,7 +817,7 @@ static BOOL arm_treat_azureInstanceNetworkMetadata(wLog* log, const char* metada
 	if (!freerdp_settings_set_uint32(settings, FreeRDP_TargetNetAddressCount, (UINT32)addressIdx))
 		goto out;
 
-	ret = freerdp_settings_get_uint32(settings, FreeRDP_TargetNetAddressCount) > 0;
+	ret = addressIdx > 0;
 
 out:
 	WINPR_JSON_Delete(json);

@@ -552,7 +552,6 @@ static BOOL client_cli_authenticate_raw(freerdp* instance, rdp_auth_reason reaso
 	}
 
 	{
-		printf("%s", pwdAuth);
 		char* line = calloc(password_size, sizeof(char));
 
 		if (!line)
