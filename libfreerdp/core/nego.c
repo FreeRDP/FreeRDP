@@ -1379,6 +1379,27 @@ BOOL nego_process_negotiation_response(rdpNego* nego, wStream* s)
 	return nego_set_state(nego, NEGO_STATE_FINAL);
 }
 
+static const char* nego_rdp_neg_fail_str(uint32_t what)
+{
+	switch (what)
+	{
+		case SSL_REQUIRED_BY_SERVER:
+			return "SSL_REQUIRED_BY_SERVER";
+		case SSL_NOT_ALLOWED_BY_SERVER:
+			return "SSL_NOT_ALLOWED_BY_SERVER";
+		case SSL_CERT_NOT_ON_SERVER:
+			return "SSL_CERT_NOT_ON_SERVER";
+		case INCONSISTENT_FLAGS:
+			return "INCONSISTENT_FLAGS";
+		case HYBRID_REQUIRED_BY_SERVER:
+			return "HYBRID_REQUIRED_BY_SERVER";
+		case SSL_WITH_USER_AUTH_REQUIRED_BY_SERVER:
+			return "SSL_WITH_USER_AUTH_REQUIRED_BY_SERVER";
+		default:
+			return "UNKNOWN";
+	}
+}
+
 /**
  * Process Negotiation Failure from Connection Confirm message.
  * @param nego A pointer to the NEGO struct
@@ -1391,7 +1412,6 @@ BOOL nego_process_negotiation_failure(rdpNego* nego, wStream* s)
 {
 	BYTE flags = 0;
 	UINT16 length = 0;
-	UINT32 failureCode = 0;
 
 	WINPR_ASSERT(nego);
 	WINPR_ASSERT(s);
@@ -1412,38 +1432,36 @@ BOOL nego_process_negotiation_failure(rdpNego* nego, wStream* s)
 		WLog_Print(nego->log, WLOG_ERROR, "RDP_NEG_FAILURE::length != 8");
 		return FALSE;
 	}
-	Stream_Read_UINT32(s, failureCode);
-
+	const uint32_t failureCode = Stream_Get_UINT32(s);
+	const char* failureStr = nego_rdp_neg_fail_str(failureCode);
+	DWORD level = WLOG_WARN;
 	switch (failureCode)
 	{
 		case SSL_REQUIRED_BY_SERVER:
-			WLog_Print(nego->log, WLOG_WARN, "Error: SSL_REQUIRED_BY_SERVER");
 			break;
 
 		case SSL_NOT_ALLOWED_BY_SERVER:
-			WLog_Print(nego->log, WLOG_WARN, "Error: SSL_NOT_ALLOWED_BY_SERVER");
 			nego->sendNegoData = TRUE;
 			break;
 
 		case SSL_CERT_NOT_ON_SERVER:
-			WLog_Print(nego->log, WLOG_ERROR, "Error: SSL_CERT_NOT_ON_SERVER");
+			level = WLOG_ERROR;
 			nego->sendNegoData = TRUE;
 			break;
 
 		case INCONSISTENT_FLAGS:
-			WLog_Print(nego->log, WLOG_ERROR, "Error: INCONSISTENT_FLAGS");
+			level = WLOG_ERROR;
 			break;
 
 		case HYBRID_REQUIRED_BY_SERVER:
-			WLog_Print(nego->log, WLOG_WARN, "Error: HYBRID_REQUIRED_BY_SERVER");
 			break;
 
 		default:
-			WLog_Print(nego->log, WLOG_ERROR, "Error: Unknown protocol security error %" PRIu32 "",
-			           failureCode);
+			level = WLOG_ERROR;
 			break;
 	}
 
+	WLog_Print(nego->log, level, "Error: %s [0x%08" PRIx32 "]", failureStr, failureCode);
 	nego_set_state(nego, NEGO_STATE_FAIL);
 	return TRUE;
 }
