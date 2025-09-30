@@ -211,7 +211,7 @@ BOOL WINPR_JSON_IsArray(const WINPR_JSON* item)
 
 BOOL WINPR_JSON_IsObject(const WINPR_JSON* item)
 {
-	return json_is_array(ccast(item));
+	return json_is_object(ccast(item));
 }
 
 WINPR_JSON* WINPR_JSON_CreateNull(void)

@@ -67,7 +67,7 @@ extern "C"
 	 * @param prompt The prompt to show to the user
 	 * @param buf A pointer to a buffer that will receive the output
 	 * @param bufsiz The size of the buffer in bytes
-	 * @param from_stdin
+	 * @param from_stdin \b 0 if a terminal is expected, != 0 if data is read from stdin
 	 *
 	 * @return A pointer to \ref buf containing the password or \ref NULL in case of an error.
 	 */
