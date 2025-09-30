@@ -5,6 +5,8 @@
 
 #include <winpr/crt.h>
 #include <winpr/print.h>
+#include <winpr/json.h>
+#include <winpr/path.h>
 
 #include <freerdp/freerdp.h>
 #include <freerdp/codec/color.h>
@@ -13,7 +15,11 @@
 #include <winpr/crypto.h>
 #include <freerdp/utils/profiler.h>
 
-static BOOL run_encode_decode_single(UINT16 bpp, BITMAP_INTERLEAVED_CONTEXT* encoder,
+#include "TestFreeRDPHelpers.h"
+
+// #define CREATE_TEST_OUTPUT
+
+static bool run_encode_decode_single(UINT16 bpp, BITMAP_INTERLEAVED_CONTEXT* encoder,
                                      BITMAP_INTERLEAVED_CONTEXT* decoder
 #if defined(WITH_PROFILER)
                                      ,
@@ -21,8 +27,8 @@ static BOOL run_encode_decode_single(UINT16 bpp, BITMAP_INTERLEAVED_CONTEXT* enc
 #endif
 )
 {
-	BOOL rc2 = FALSE;
-	BOOL rc = 0;
+	bool rc2 = false;
+	bool rc = 0;
 	const UINT32 w = 64;
 	const UINT32 h = 64;
 	const UINT32 x = 0;
@@ -90,7 +96,7 @@ static BOOL run_encode_decode_single(UINT16 bpp, BITMAP_INTERLEAVED_CONTEXT* enc
 		}
 	}
 
-	rc2 = TRUE;
+	rc2 = true;
 fail:
 	free(pSrcData);
 	free(pDstData);
@@ -98,7 +104,7 @@ fail:
 	return rc2;
 }
 
-static const char* get_profiler_name(BOOL encode, UINT16 bpp)
+static const char* get_profiler_name(bool encode, UINT16 bpp)
 {
 	switch (bpp)
 	{
@@ -125,14 +131,14 @@ static const char* get_profiler_name(BOOL encode, UINT16 bpp)
 	}
 }
 
-static BOOL run_encode_decode(UINT16 bpp, BITMAP_INTERLEAVED_CONTEXT* encoder,
+static bool run_encode_decode(UINT16 bpp, BITMAP_INTERLEAVED_CONTEXT* encoder,
                               BITMAP_INTERLEAVED_CONTEXT* decoder)
 {
-	BOOL rc = FALSE;
+	bool rc = false;
 	PROFILER_DEFINE(profiler_comp)
 	PROFILER_DEFINE(profiler_decomp)
-	PROFILER_CREATE(profiler_comp, get_profiler_name(TRUE, bpp))
-	PROFILER_CREATE(profiler_decomp, get_profiler_name(FALSE, bpp))
+	PROFILER_CREATE(profiler_comp, get_profiler_name(true, bpp))
+	PROFILER_CREATE(profiler_decomp, get_profiler_name(false, bpp))
 
 	for (UINT32 x = 0; x < 50; x++)
 	{
@@ -145,7 +151,7 @@ static BOOL run_encode_decode(UINT16 bpp, BITMAP_INTERLEAVED_CONTEXT* encoder,
 			goto fail;
 	}
 
-	rc = TRUE;
+	rc = true;
 fail:
 	PROFILER_PRINT_HEADER
 	PROFILER_PRINT(profiler_comp)
@@ -156,7 +162,7 @@ fail:
 	return rc;
 }
 
-static BOOL TestColorConversion(void)
+static bool TestColorConversion(void)
 {
 	const UINT32 formats[] = { PIXEL_FORMAT_RGB15,  PIXEL_FORMAT_BGR15, PIXEL_FORMAT_ABGR15,
 		                       PIXEL_FORMAT_ARGB15, PIXEL_FORMAT_BGR16, PIXEL_FORMAT_RGB16 };
@@ -176,14 +182,239 @@ static BOOL TestColorConversion(void)
 		BYTE a = 0;
 		FreeRDPSplitColor(colorLow32, dstFormat, &r, &g, &b, &a, NULL);
 		if ((r != 0) || (g != 0) || (b != 0))
-			return FALSE;
+			return false;
 
 		FreeRDPSplitColor(colorHigh32, dstFormat, &r, &g, &b, &a, NULL);
 		if ((r != 255) || (g != 255) || (b != 255))
-			return FALSE;
+			return false;
 	}
 
-	return TRUE;
+	return true;
+}
+
+static bool RunEncoderTest(const char* name, uint32_t format, uint32_t width, uint32_t height,
+                           uint32_t step, uint32_t bpp)
+{
+	bool rc = false;
+	void* data = NULL;
+	void* encdata = NULL;
+	BITMAP_INTERLEAVED_CONTEXT* encoder = bitmap_interleaved_context_new(true);
+	if (!encoder)
+		goto fail;
+
+	size_t srclen = 0;
+	data = test_codec_helper_read_data("interleaved", "bmp", name, &srclen);
+	if (!data)
+		goto fail;
+
+	encdata = calloc(srclen, 1);
+	if (!encdata)
+		goto fail;
+
+	for (size_t x = 0; x < 42; x++)
+	{
+		uint32_t enclen = WINPR_ASSERTING_INT_CAST(uint32_t, srclen);
+		if (!interleaved_compress(encoder, encdata, &enclen, width, height, data, format, step, 0,
+		                          0, NULL, bpp))
+			goto fail;
+
+		char encname[128] = { 0 };
+		(void)_snprintf(encname, sizeof(encname), "enc-%" PRIu32, bpp);
+#if defined(CREATE_TEST_OUTPUT)
+		test_codec_helper_write_data("interleaved", encname, name, encdata, enclen);
+#else
+		if (!test_codec_helper_compare("interleaved", encname, name, encdata, enclen))
+			goto fail;
+#endif
+	}
+
+	rc = true;
+
+fail:
+	free(data);
+	free(encdata);
+	bitmap_interleaved_context_free(encoder);
+	return rc;
+}
+
+static bool RunDecoderTest(const char* name, uint32_t format, uint32_t width, uint32_t height,
+                           uint32_t step, uint32_t bpp)
+{
+	bool rc = false;
+	void* data = NULL;
+	void* decdata = NULL;
+	BITMAP_INTERLEAVED_CONTEXT* decoder = bitmap_interleaved_context_new(false);
+	if (!decoder)
+		goto fail;
+
+	char encname[128] = { 0 };
+	(void)_snprintf(encname, sizeof(encname), "enc-%" PRIu32, bpp);
+
+	size_t srclen = 0;
+	data = test_codec_helper_read_data("interleaved", encname, name, &srclen);
+	if (!data)
+		goto fail;
+
+	const size_t declen = 1ULL * step * height;
+	decdata = calloc(step, height);
+	if (!decdata)
+		goto fail;
+
+	for (size_t x = 0; x < 42; x++)
+	{
+		if (!interleaved_decompress(decoder, data, WINPR_ASSERTING_INT_CAST(uint32_t, srclen),
+		                            width, height, bpp, decdata, format, step, 0, 0, width, height,
+		                            NULL))
+			goto fail;
+
+		char decname[128] = { 0 };
+		(void)_snprintf(decname, sizeof(decname), "dec-%s", encname);
+#if defined(CREATE_TEST_OUTPUT)
+		test_codec_helper_write_data("interleaved", decname, name, decdata, declen);
+#else
+		if (!test_codec_helper_compare("interleaved", decname, name, decdata, declen))
+			goto fail;
+#endif
+	}
+
+	rc = true;
+
+fail:
+	free(data);
+	free(decdata);
+	bitmap_interleaved_context_free(decoder);
+	return rc;
+}
+
+/* The encoder expects a JSON that describes a test cast:
+ *
+ * [
+ * {
+ *   "name": "somestring",
+ *   "format": "somestring",
+ *   "width": <someint>,
+ *   "height": <someint>,
+ *   "step": <someint>,
+ *   "bpp": <someint>
+ * },
+ * {...},
+ * ...
+ * ]
+ */
+static bool isObjectValid(const WINPR_JSON* obj)
+{
+	if (!obj || !WINPR_JSON_IsObject(obj))
+		return false;
+
+	const char* strvalues[] = { "name", "format" };
+	for (size_t x = 0; x < ARRAYSIZE(strvalues); x++)
+	{
+		const char* val = strvalues[x];
+
+		if (!WINPR_JSON_HasObjectItem(obj, val))
+			return false;
+
+		WINPR_JSON* jval = WINPR_JSON_GetObjectItem(obj, val);
+		if (!jval)
+			return false;
+
+		if (!WINPR_JSON_IsString(jval))
+			return false;
+	}
+
+	const char* values[] = { "width", "height", "step" };
+	for (size_t x = 0; x < ARRAYSIZE(values); x++)
+	{
+		const char* val = values[x];
+		if (!WINPR_JSON_HasObjectItem(obj, val))
+			return false;
+		WINPR_JSON* jval = WINPR_JSON_GetObjectItem(obj, val);
+		if (!jval)
+			return false;
+		if (!WINPR_JSON_IsNumber(jval))
+			return false;
+		const double dval = WINPR_JSON_GetNumberValue(jval);
+		if (dval <= 0.0)
+			return false;
+	}
+
+	{
+		const char* val = "bpp";
+
+		if (!WINPR_JSON_HasObjectItem(obj, val))
+			return false;
+
+		WINPR_JSON* jval = WINPR_JSON_GetObjectItem(obj, val);
+		if (!jval)
+			return false;
+
+		if (!WINPR_JSON_IsArray(jval))
+			return false;
+
+		for (size_t x = 0; x < WINPR_JSON_GetArraySize(jval); x++)
+		{
+			WINPR_JSON* aval = WINPR_JSON_GetArrayItem(jval, x);
+			if (!jval || !WINPR_JSON_IsNumber(aval))
+				return false;
+		}
+	}
+	return true;
+}
+
+static bool TestEncoder(void)
+{
+	bool rc = false;
+	WINPR_JSON* json = NULL;
+	char* file = NULL;
+	char* path = GetCombinedPath(CMAKE_CURRENT_SOURCE_DIR, "interleaved");
+	if (!path)
+		goto fail;
+	file = GetCombinedPath(path, "encoder.json");
+	if (!file)
+		goto fail;
+
+	json = WINPR_JSON_ParseFromFile(file);
+	if (!json)
+		goto fail;
+
+	if (!WINPR_JSON_IsArray(json))
+		goto fail;
+
+	for (size_t x = 0; x < WINPR_JSON_GetArraySize(json); x++)
+	{
+		WINPR_JSON* obj = WINPR_JSON_GetArrayItem(json, x);
+		if (!isObjectValid(obj))
+			goto fail;
+
+		const char* name = WINPR_JSON_GetStringValue(WINPR_JSON_GetObjectItem(obj, "name"));
+		const uint32_t format = WINPR_ASSERTING_INT_CAST(
+		    uint32_t, FreeRDPGetColorFromatFromName(
+		                  WINPR_JSON_GetStringValue(WINPR_JSON_GetObjectItem(obj, "format"))));
+		const uint32_t width = WINPR_ASSERTING_INT_CAST(
+		    uint32_t, WINPR_JSON_GetNumberValue(WINPR_JSON_GetObjectItem(obj, "width")));
+		const uint32_t height = WINPR_ASSERTING_INT_CAST(
+		    uint32_t, WINPR_JSON_GetNumberValue(WINPR_JSON_GetObjectItem(obj, "height")));
+		const uint32_t step = WINPR_ASSERTING_INT_CAST(
+		    uint32_t, WINPR_JSON_GetNumberValue(WINPR_JSON_GetObjectItem(obj, "step")));
+
+		WINPR_JSON* jbpp = WINPR_JSON_GetObjectItem(obj, "bpp");
+		for (size_t x = 0; x < WINPR_JSON_GetArraySize(jbpp); x++)
+		{
+			const uint32_t bpp = WINPR_ASSERTING_INT_CAST(
+			    uint32_t, WINPR_JSON_GetNumberValue(WINPR_JSON_GetArrayItem(jbpp, x)));
+			if (!RunEncoderTest(name, format, width, height, step, bpp))
+				goto fail;
+			if (!RunDecoderTest(name, format, width, height, step, bpp))
+				goto fail;
+		}
+	}
+
+	rc = true;
+fail:
+	WINPR_JSON_Delete(json);
+	free(path);
+	free(file);
+	return rc;
 }
 
 int TestFreeRDPCodecInterleaved(int argc, char* argv[])
@@ -193,8 +424,8 @@ int TestFreeRDPCodecInterleaved(int argc, char* argv[])
 	int rc = -1;
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
-	encoder = bitmap_interleaved_context_new(TRUE);
-	decoder = bitmap_interleaved_context_new(FALSE);
+	encoder = bitmap_interleaved_context_new(true);
+	decoder = bitmap_interleaved_context_new(false);
 
 	if (!encoder || !decoder)
 		goto fail;
@@ -209,6 +440,9 @@ int TestFreeRDPCodecInterleaved(int argc, char* argv[])
 		goto fail;
 
 	if (!TestColorConversion())
+		goto fail;
+
+	if (!TestEncoder())
 		goto fail;
 
 	rc = 0;
