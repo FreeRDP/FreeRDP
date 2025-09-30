@@ -878,6 +878,35 @@ static BOOL resize_setting(rdpSettings* settings, FreeRDP_Settings_Keys_Pointer 
 	return freerdp_settings_set_pointer(settings, id, ptr);
 }
 
+static BOOL resize_setting_ptr(rdpSettings* settings, FreeRDP_Settings_Keys_Pointer id,
+                               size_t oldsize, size_t size, size_t base)
+{
+	WINPR_ASSERT(base == sizeof(void*));
+
+	uint8_t* old = freerdp_settings_get_pointer_writable(settings, id);
+	if (size < oldsize)
+	{
+		uint8_t** optr = WINPR_REINTERPRET_CAST(old, uint8_t*, uint8_t**);
+		for (size_t x = size; x < oldsize; x++)
+		{
+			uint8_t* ptr = optr[x];
+			free(ptr);
+		}
+	}
+	uint8_t* ptr = realloc(old, size * base);
+	if (!ptr)
+		return FALSE;
+
+	uint8_t** optr = WINPR_REINTERPRET_CAST(ptr, uint8_t*, uint8_t**);
+	for (size_t x = oldsize; x < size; x++)
+	{
+		optr[x] = NULL;
+	}
+
+	// NOLINTNEXTLINE(clang-analyzer-unix.Malloc
+	return freerdp_settings_set_pointer(settings, id, ptr);
+}
+
 BOOL freerdp_capability_buffer_resize(rdpSettings* settings, size_t count, BOOL force)
 {
 	WINPR_ASSERT(settings);
@@ -901,7 +930,8 @@ BOOL freerdp_capability_buffer_resize(rdpSettings* settings, size_t count, BOOL 
 	if (!resize_setting(settings, FreeRDP_ReceivedCapabilityDataSizes, oldsize, count,
 	                    sizeof(uint32_t)))
 		return FALSE;
-	if (!resize_setting(settings, FreeRDP_ReceivedCapabilityData, oldsize, count, sizeof(uint8_t*)))
+	if (!resize_setting_ptr(settings, FreeRDP_ReceivedCapabilityData, oldsize, count,
+	                        sizeof(uint8_t*)))
 		return FALSE;
 	if (!resize_setting(settings, FreeRDP_ReceivedCapabilities, oldsize, count, sizeof(uint32_t)))
 		return FALSE;
@@ -988,13 +1018,7 @@ BOOL freerdp_target_net_addresses_resize(rdpSettings* settings, size_t count)
 	}
 
 	const uint32_t len = settings->TargetNetAddressCount;
-	size_t offset = 0;
-	if (len > count)
-		offset = count;
-
-	target_net_addresses_free(settings, offset);
-
-	if (!resize_setting(settings, FreeRDP_TargetNetAddresses, len, count, sizeof(char*)))
+	if (!resize_setting_ptr(settings, FreeRDP_TargetNetAddresses, len, count, sizeof(char*)))
 		return FALSE;
 	if (!resize_setting(settings, FreeRDP_TargetNetPorts, len, count, sizeof(uint32_t)))
 		return FALSE;
