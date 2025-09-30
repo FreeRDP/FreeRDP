@@ -134,6 +134,15 @@ typedef struct gdi_palette gdiPalette;
 #endif
 	FREERDP_API const char* FreeRDPGetColorFormatName(UINT32 format);
 
+	/** @brief convert a string to a \ref PIXEL_FORMAT
+	 *
+	 *  @param name The string representing the format
+	 *
+	 *  @return the \ref PIXEL_FORMAT value or \b 0 for failure
+	 *  @since version 3.18.0
+	 */
+	FREERDP_API uint32_t FreeRDPGetColorFromatFromName(const char* name);
+
 	/***
 	 *
 	 * Converts a pixel color in internal representation to its red, green, blue

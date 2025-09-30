@@ -153,7 +153,7 @@ const char* WINPR_JSON_GetStringValue(WINPR_JSON* item)
 
 double WINPR_JSON_GetNumberValue(const WINPR_JSON* item)
 {
-	return json_real_value(ccast(item));
+	return json_number_value(ccast(item));
 }
 
 BOOL WINPR_JSON_IsInvalid(const WINPR_JSON* json)

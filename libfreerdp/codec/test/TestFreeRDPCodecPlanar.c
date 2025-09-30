@@ -12,6 +12,8 @@
 #include <freerdp/codec/bitmap.h>
 #include <freerdp/codec/planar.h>
 
+#include "TestFreeRDPHelpers.h"
+
 static const UINT32 colorFormatList[] = {
 	PIXEL_FORMAT_RGB15,  PIXEL_FORMAT_BGR15,  PIXEL_FORMAT_RGB16,  PIXEL_FORMAT_BGR16,
 	PIXEL_FORMAT_RGB24,  PIXEL_FORMAT_BGR24,  PIXEL_FORMAT_ARGB32, PIXEL_FORMAT_ABGR32,
@@ -100,124 +102,6 @@ static BOOL CompareBitmap(const BYTE* srcA, UINT32 srcAFormat, const BYTE* srcB,
 	return TRUE;
 }
 
-static char* get_path(const char* type, const char* name)
-{
-	char path[500] = { 0 };
-	(void)snprintf(path, sizeof(path), "planar-%s-%s.bin", type, name);
-	char* s1 = GetCombinedPath(CMAKE_CURRENT_SOURCE_DIR, "planar");
-	if (!s1)
-		return NULL;
-
-	char* s2 = GetCombinedPath(s1, path);
-	free(s1);
-	return s2;
-}
-
-static FILE* open_path(const char* type, const char* name, const char* mode)
-{
-	WINPR_ASSERT(type);
-	WINPR_ASSERT(name);
-	WINPR_ASSERT(mode);
-
-	char* path = get_path(type, name);
-	if (!path)
-	{
-		(void)printf("%s: get_path %s %s failed\n", __func__, type, name);
-		return NULL;
-	}
-
-	FILE* fp = winpr_fopen(path, mode);
-	if (!fp)
-	{
-		char buffer[128] = { 0 };
-		(void)printf("%s: %s %s: fopen(%s, %s) failed: %s\n", __func__, type, name, path, mode,
-		             winpr_strerror(errno, buffer, sizeof(buffer)));
-	}
-	free(path);
-	return fp;
-}
-
-static void* read_data(const char* type, const char* name, size_t* plength)
-{
-	WINPR_ASSERT(type);
-	WINPR_ASSERT(name);
-	WINPR_ASSERT(plength);
-
-	void* rc = NULL;
-	void* cmp = NULL;
-
-	*plength = 0;
-	FILE* fp = open_path(type, name, "rb");
-	if (!fp)
-		goto fail;
-
-	if (_fseeki64(fp, 0, SEEK_END) != 0)
-		goto fail;
-
-	const size_t pos = _ftelli64(fp);
-
-	if (_fseeki64(fp, 0, SEEK_SET) != 0)
-		goto fail;
-
-	cmp = calloc(pos, 1);
-	if (!cmp)
-		goto fail;
-
-	if (fread(cmp, 1, pos, fp) != pos)
-		goto fail;
-
-	*plength = pos;
-	rc = cmp;
-	cmp = NULL;
-
-fail:
-	(void)printf("%s: %s %s -> %p\n", __func__, type, name, rc);
-	free(cmp);
-	if (fp)
-		(void)fclose(fp);
-	return rc;
-}
-
-static void write_data(const char* type, const char* name, const void* data, size_t length)
-{
-	FILE* fp = open_path(type, name, "wb");
-	if (!fp)
-		return;
-
-	if (fwrite(data, 1, length, fp) != length)
-		goto fail;
-
-fail:
-	fclose(fp);
-}
-
-static BOOL compare(const char* type, const char* name, const void* data, size_t length)
-{
-	BOOL rc = FALSE;
-	size_t cmplen = 0;
-	void* cmp = read_data(type, name, &cmplen);
-	if (!cmp)
-		goto fail;
-	if (cmplen != length)
-	{
-		(void)printf("%s: %s %s: length mismatch: %" PRIuz " vs %" PRIuz "\n", __func__, type, name,
-		             cmplen, length);
-		goto fail;
-	}
-	if (memcmp(data, cmp, length) != 0)
-	{
-		(void)printf("%s: %s %s: data mismatch\n", __func__, type, name);
-		winpr_HexDump(__func__, WLOG_WARN, data, length);
-		winpr_HexDump(__func__, WLOG_WARN, cmp, cmplen);
-		goto fail;
-	}
-	rc = TRUE;
-fail:
-	(void)printf("%s: %s %s -> %s\n", __func__, type, name, rc ? "SUCCESS" : "FAILED");
-	free(cmp);
-	return rc;
-}
-
 static BOOL RunTestPlanar(BITMAP_PLANAR_CONTEXT* encplanar, BITMAP_PLANAR_CONTEXT* decplanar,
                           const char* name, const UINT32 srcFormat, const UINT32 dstFormat,
                           const UINT32 width, const UINT32 height)
@@ -228,7 +112,7 @@ static BOOL RunTestPlanar(BITMAP_PLANAR_CONTEXT* encplanar, BITMAP_PLANAR_CONTEX
 	UINT32 dstSize = 0;
 	size_t srclen = 0;
 	(void)printf("---------------------- start %s [%s] ----------------------\n", __func__, name);
-	BYTE* srcBitmap = read_data("bmp", name, &srclen);
+	BYTE* srcBitmap = test_codec_helper_read_data("planar", "bmp", name, &srclen);
 	if (!srcBitmap)
 		return FALSE;
 
@@ -237,7 +121,7 @@ static BOOL RunTestPlanar(BITMAP_PLANAR_CONTEXT* encplanar, BITMAP_PLANAR_CONTEX
 	BYTE* decompressedBitmap =
 	    (BYTE*)calloc(height, 1ULL * width * FreeRDPGetBytesPerPixel(dstFormat));
 
-	if (!compare("enc", name, compressedBitmap, dstSize))
+	if (!test_codec_helper_compare("planar", "enc", name, compressedBitmap, dstSize))
 		goto fail;
 
 	(void)printf("%s [%s] --> [%s]: ", __func__, FreeRDPGetColorFormatName(srcFormat),

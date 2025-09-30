@@ -1,0 +1,122 @@
+[
+	{
+		"name": "encoder_test_01",
+		"format": "PIXEL_FORMAT_BGRA32",
+		"width": 64,
+		"height": 64,
+		"step": 256,
+		"bpp": [
+			24,
+			16,
+			15
+		]
+	},
+	{
+		"name": "encoder_test_02",
+		"format": "PIXEL_FORMAT_BGRX32",
+		"width": 64,
+		"height": 64,
+		"step": 256,
+		"bpp": [
+			24,
+			16,
+			15
+		]
+	},
+	{
+		"name": "encoder_test_03",
+		"format": "PIXEL_FORMAT_RGBA32",
+		"width": 64,
+		"height": 64,
+		"step": 256,
+		"bpp": [
+			24,
+			16,
+			15
+		]
+	},
+	{
+		"name": "encoder_test_04",
+		"format": "PIXEL_FORMAT_RGBX32",
+		"width": 64,
+		"height": 64,
+		"step": 256,
+		"bpp": [
+			24,
+			16,
+			15
+		]
+	},
+	{
+		"name": "encoder_test_05",
+		"format": "PIXEL_FORMAT_ABGR32",
+		"width": 64,
+		"height": 64,
+		"step": 256,
+		"bpp": [
+			24,
+			16,
+			15
+		]
+	},
+	{
+		"name": "encoder_test_06",
+		"format": "PIXEL_FORMAT_XBGR32",
+		"width": 64,
+		"height": 64,
+		"step": 256,
+		"bpp": [
+			24,
+			16,
+			15
+		]
+	},
+	{
+		"name": "encoder_test_07",
+		"format": "PIXEL_FORMAT_ARGB32",
+		"width": 64,
+		"height": 64,
+		"step": 256,
+		"bpp": [
+			24,
+			16,
+			15
+		]
+	},
+	{
+		"name": "encoder_test_08",
+		"format": "PIXEL_FORMAT_XRGB32",
+		"width": 64,
+		"height": 64,
+		"step": 256,
+		"bpp": [
+			24,
+			16,
+			15
+		]
+	},
+	{
+		"name": "encoder_test_09",
+		"format": "PIXEL_FORMAT_RGB24",
+		"width": 64,
+		"height": 64,
+		"step": 256,
+		"bpp": [
+			24,
+			16,
+			15
+		]
+	},
+	{
+		"name": "encoder_test_10",
+		"format": "PIXEL_FORMAT_BGR24",
+		"width": 64,
+		"height": 64,
+		"step": 256,
+		"bpp": [
+			24,
+			16,
+			15
+		]
+	}
+]
