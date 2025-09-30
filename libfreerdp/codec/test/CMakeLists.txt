@@ -7,6 +7,7 @@ set(DRIVER ${MODULE_NAME}.c)
 
 set(TESTS
     TestFreeRDPRegion.c
+    TestFreeRDPCodecColor.c
     TestFreeRDPCodecZGfx.c
     TestFreeRDPCodecPlanar.c
     TestFreeRDPCodecCopy.c
