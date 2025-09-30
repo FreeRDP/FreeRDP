@@ -2277,6 +2277,103 @@ fail:
 	return log_result(rc);
 }
 
+#if defined(BUILD_TESTING_INTERNAL)
+static FreeRDP_Settings_Keys_UInt32 getLenForKey(FreeRDP_Settings_Keys_Pointer key)
+{
+	return FreeRDP_TargetNetAddressCount;
+}
+
+static bool fillTargetBuffer(rdpSettings* settings, FreeRDP_Settings_Keys_Pointer key)
+{
+	const size_t count = freerdp_settings_get_uint32(settings, getLenForKey(key));
+	for (size_t x = 0; x < count; x++)
+	{
+		char test[128] = { 0 };
+		(void)_snprintf(test, sizeof(test), "test_value_%" PRIuz, x);
+		if (!freerdp_settings_set_pointer_array(settings, key, x, test))
+			return false;
+	}
+	return true;
+}
+
+static bool checkTargetBuffer(rdpSettings* settings, FreeRDP_Settings_Keys_Pointer key,
+                              size_t count)
+{
+	for (size_t x = 0; x < count; x++)
+	{
+		char test[128] = { 0 };
+		(void)_snprintf(test, sizeof(test), "test_value_%" PRIuz, x);
+		const char* cmp = freerdp_settings_get_pointer_array(settings, key, x);
+		if (!cmp)
+			return false;
+		if (strncmp(test, cmp, sizeof(test)) != 0)
+			return false;
+	}
+	return true;
+}
+
+static bool checkTargetBufferResized(rdpSettings* settings, FreeRDP_Settings_Keys_Pointer key,
+                                     size_t count, size_t newSize)
+{
+	if (count > newSize)
+		count = newSize;
+
+	if (!checkTargetBuffer(settings, key, count))
+		return false;
+
+	for (size_t x = count; x < newSize; x++)
+	{
+		const char* cmp = freerdp_settings_get_pointer_array(settings, key, x);
+		if (cmp != NULL)
+			return false;
+	}
+	return true;
+}
+
+static bool testSize(rdpSettings* settings, FreeRDP_Settings_Keys_Pointer key, size_t newSize)
+{
+	if (!fillTargetBuffer(settings, key))
+		return false;
+	const size_t count = freerdp_settings_get_uint32(settings, getLenForKey(key));
+	if (!checkTargetBuffer(settings, key, count))
+		return false;
+	if (key == FreeRDP_TargetNetAddresses)
+	{
+		if (!freerdp_target_net_addresses_resize(settings, newSize))
+			return false;
+	}
+	else
+	{
+		return false;
+	}
+	if (!checkTargetBufferResized(settings, key, count, newSize))
+		return false;
+	return true;
+}
+
+static bool testBufferResize(FreeRDP_Settings_Keys_Pointer key)
+{
+	bool rc = false;
+	rdpSettings* settings = freerdp_settings_new(0);
+	if (!settings)
+		return false;
+
+	if (!testSize(settings, key, 10))
+		goto fail;
+	if (!testSize(settings, key, 23))
+		goto fail;
+	if (!testSize(settings, key, 13))
+		goto fail;
+	if (!testSize(settings, key, 0))
+		goto fail;
+
+	rc = true;
+fail:
+	freerdp_settings_free(settings);
+	return rc;
+}
+#endif
+
 int TestSettings(int argc, char* argv[])
 {
 	int rc = -1;
@@ -2301,7 +2398,11 @@ int TestSettings(int argc, char* argv[])
 		goto fail;
 	if (!test_all())
 		goto fail;
-
+#if defined(BUILD_TESTING_INTERNAL)
+	// freerdp_target_net_addresses_resize
+	if (!testBufferResize(FreeRDP_TargetNetAddresses))
+		goto fail;
+#endif
 	rc = 0;
 
 fail:
