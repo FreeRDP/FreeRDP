@@ -308,7 +308,7 @@ WINPR_JSON* WINPR_JSON_AddObjectToObject(WINPR_JSON* object, const char* name)
 
 BOOL WINPR_JSON_AddItemToArray(WINPR_JSON* array, WINPR_JSON* item)
 {
-	return json_array_append(cast(array), item) == 0;
+	return json_array_append_new(cast(array), item) == 0;
 }
 
 WINPR_JSON* WINPR_JSON_AddArrayToObject(WINPR_JSON* object, const char* name)
