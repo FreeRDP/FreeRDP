@@ -333,6 +333,49 @@ static BOOL get_devpath_from_device(libusb_device* device, char* path, size_t si
 	return TRUE;
 }
 
+static uint8_t get_guid_unit_id_from_config_descriptor(struct libusb_config_descriptor* config,
+                                                       const uint8_t* guid,
+                                                       const struct libusb_device_descriptor* ddesc)
+{
+	WINPR_ASSERT(config);
+	WINPR_ASSERT(guid);
+	WINPR_ASSERT(ddesc);
+
+	for (uint8_t j = 0; j < config->bNumInterfaces; j++)
+	{
+		const struct libusb_interface* cfg = &config->interface[j];
+		for (int k = 0; k < cfg->num_altsetting; k++)
+		{
+			const struct libusb_interface_descriptor* interface = &cfg->altsetting[k];
+			if (interface->bInterfaceClass != LIBUSB_CLASS_VIDEO ||
+			    interface->bInterfaceSubClass != USB_VIDEO_CONTROL)
+				continue;
+
+			const uint8_t* ptr = interface->extra;
+			while (ptr < interface->extra + interface->extra_length)
+			{
+				const xu_descriptor* desc = (const xu_descriptor*)ptr;
+				if (desc->bDescriptorType == USB_VIDEO_CONTROL_INTERFACE &&
+				    desc->bDescriptorSubType == USB_VIDEO_CONTROL_XU_TYPE &&
+				    memcmp(desc->guidExtensionCode, guid, 16) == 0)
+				{
+					int8_t unit_id = desc->bUnitID;
+
+					WLog_DBG(TAG,
+					         "For camera %04" PRIx16 ":%04" PRIx16
+					         " found UVCX H264 UnitID %" PRId8,
+					         ddesc->idVendor, ddesc->idProduct, unit_id);
+					if (unit_id < 0)
+						return 0;
+					return WINPR_CXX_COMPAT_CAST(uint8_t, unit_id);
+				}
+				ptr += desc->bLength;
+			}
+		}
+	}
+	return 0;
+}
+
 /*
  * get GUID unit id from libusb_device, if any
  *
@@ -354,6 +397,7 @@ static uint8_t get_guid_unit_id_from_device(libusb_device* device, const uint8_t
 
 	for (uint8_t i = 0; i < ddesc.bNumConfigurations; ++i)
 	{
+		uint8_t rc = 0;
 		struct libusb_config_descriptor* config = NULL;
 
 		if (libusb_get_config_descriptor(device, i, &config) != 0)
@@ -362,41 +406,13 @@ static uint8_t get_guid_unit_id_from_device(libusb_device* device, const uint8_t
 			         "Couldn't get config descriptor for "
 			         "configuration %" PRIu8,
 			         i);
-			continue;
 		}
+		else
+			rc = get_guid_unit_id_from_config_descriptor(config, guid, &ddesc);
 
-		for (uint8_t j = 0; j < config->bNumInterfaces; j++)
-		{
-			const struct libusb_interface* cfg = &config->interface[j];
-			for (int k = 0; k < cfg->num_altsetting; k++)
-			{
-				const struct libusb_interface_descriptor* interface = &cfg->altsetting[k];
-				if (interface->bInterfaceClass != LIBUSB_CLASS_VIDEO ||
-				    interface->bInterfaceSubClass != USB_VIDEO_CONTROL)
-					continue;
-
-				const uint8_t* ptr = interface->extra;
-				while (ptr < interface->extra + interface->extra_length)
-				{
-					const xu_descriptor* desc = (const xu_descriptor*)ptr;
-					if (desc->bDescriptorType == USB_VIDEO_CONTROL_INTERFACE &&
-					    desc->bDescriptorSubType == USB_VIDEO_CONTROL_XU_TYPE &&
-					    memcmp(desc->guidExtensionCode, guid, 16) == 0)
-					{
-						int8_t unit_id = desc->bUnitID;
-
-						WLog_DBG(TAG,
-						         "For camera %04" PRIx16 ":%04" PRIx16
-						         " found UVCX H264 UnitID %" PRId8,
-						         ddesc.idVendor, ddesc.idProduct, unit_id);
-						if (unit_id < 0)
-							return 0;
-						return WINPR_CXX_COMPAT_CAST(uint8_t, unit_id);
-					}
-					ptr += desc->bLength;
-				}
-			}
-		}
+		libusb_free_config_descriptor(config);
+		if (rc != 0)
+			return rc;
 	}
 
 	/* no match found */
