@@ -259,7 +259,6 @@ static WINPR_JSON* add_to_object(WINPR_JSON* object, const char* name, json_t* o
 	if (!obj)
 		return NULL;
 	const BOOL rc = (json_object_set_new(cast(object), name, obj) != 0);
-	json_decref(obj);
 	if (!rc)
 		return NULL;
 	return revcast(obj);
