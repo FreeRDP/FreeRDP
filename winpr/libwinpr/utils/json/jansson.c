@@ -26,6 +26,10 @@
 #endif
 #include <jansson.h>
 
+#if !defined(JANSSON_VERSION_HEX) || (JANSSON_VERSION_HEX < 0x020d00)
+#error "The library detected is too old, need >= 2.13.0"
+#endif
+
 #if defined(WITH_DEBUG_JANSSON)
 #include "../log.h"
 #define TAG WINPR_TAG("jansson")
