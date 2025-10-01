@@ -1340,12 +1340,14 @@ BOOL client_auto_reconnect_ex(freerdp* instance, BOOL (*window_events)(freerdp* 
 			WLog_INFO(TAG, "Network disconnect!");
 			break;
 		default:
+			WLog_DBG(TAG, "Other error: %s", freerdp_get_error_info_string(error));
 			return FALSE;
 	}
 
 	if (!freerdp_settings_get_bool(settings, FreeRDP_AutoReconnectionEnabled))
 	{
 		/* No auto-reconnect - just quit */
+		WLog_DBG(TAG, "AutoReconnect not enabled, quitting.");
 		return FALSE;
 	}
 
@@ -1364,13 +1366,15 @@ BOOL client_auto_reconnect_ex(freerdp* instance, BOOL (*window_events)(freerdp* 
 		/* Quit retrying if max retries has been exceeded */
 		if ((maxRetries > 0) && (numRetries++ >= maxRetries))
 		{
+			WLog_DBG(TAG, "AutoReconnect retries exceeded.");
 			return FALSE;
 		}
 
 		/* Attempt the next reconnect */
 		WLog_INFO(TAG, "Attempting reconnect (%" PRIu32 " of %" PRIu32 ")", numRetries, maxRetries);
 
-		IFCALL(instance->RetryDialog, instance, "connection", numRetries, NULL);
+		const SSIZE_T delay =
+		    IFCALLRESULT(5000, instance->RetryDialog, instance, "connection", numRetries, NULL);
 
 		if (freerdp_reconnect(instance))
 			return TRUE;
@@ -1383,10 +1387,13 @@ BOOL client_auto_reconnect_ex(freerdp* instance, BOOL (*window_events)(freerdp* 
 			default:
 				break;
 		}
-		for (UINT32 x = 0; x < 50; x++)
+		for (UINT32 x = 0; x < delay / 10; x++)
 		{
 			if (!IFCALLRESULT(TRUE, window_events, instance))
+			{
+				WLog_ERR(TAG, "window_events failed!");
 				return FALSE;
+			}
 
 			Sleep(10);
 		}
