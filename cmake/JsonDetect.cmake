@@ -1,9 +1,9 @@
 function(detect_package name)
   set(options REQUIRED)
-  set(oneValueArgs HEADER LIBRARY PKGCONFIG CMAKE)
+  set(oneValueArgs HEADER LIBRARY PKGCONFIG CMAKE VERSION VERSION_STR)
   cmake_parse_arguments(PARSE_ARGV 0 arg "${options}" "${oneValueArgs}" "${multiValueArgs}")
 
-  find_package(${name})
+  find_package(${name} ${arg_VERSION})
   if(NOT ${name}_FOUND)
     # Fallback detection:
     # some distributions only ship pkg-config and skip CMake config files.
@@ -13,6 +13,9 @@ function(detect_package name)
         set(module ${arg_PKGCONFIG})
       else()
         set(module ${name})
+      endif()
+      if(arg_VERSION)
+        string(APPEND module ">=${arg_VERSION}")
       endif()
       pkg_check_modules(${name} ${module})
     endif()
@@ -34,8 +37,28 @@ function(detect_package name)
         set(${name}_LINK_LIBRARIES "${${name}_LIBRARY}")
         set(${name}_INCLUDE_DIRS "${${name}_HEADER}")
         get_filename_component(${name}_LIB_FILE "${${name}_LIBRARY}" NAME_WE)
-        set(regex "^${CMAKE_SHARED_LIBRARY_SUFFIX}")
-        string(REGEX REPLACE ${regex} ${name}_LIBRARIES "${${name}_LIB_FILE}")
+        set(regex "^${CMAKE_SHARED_LIBRARY_PREFIX}")
+        string(REGEX REPLACE "${regex}" "" ${name}_LIBRARIES "${${name}_LIB_FILE}")
+        if(arg_VERSION)
+          find_file(HEADER NAMES ${arg_HEADER} ${name}.h ${arg_PKGCONFIG}.h ${arg_CMAKE}.h
+                    PATH_SUFFIXES ${name} ${arg_PKGCONFIG} ${arg_CMAKE} PATHS ${name}_HEADER
+          )
+          file(STRINGS ${HEADER} file_data REGEX "[ \t ]${arg_VERSION_STR}[ \t ]")
+          string(REGEX MATCH "([0-9]+\\.[0-9]+(\\.[0-9]+)?)" file_version "${file_data}")
+          if(file_version)
+            if(file_version GREATER_EQUAL "${arg_VERSION}")
+              set(${name}_FOUND ON)
+            else()
+              if(arg_REQUIRED)
+                message(FATAL_ERROR "${name} has version ${file_version}, but >= ${arg_VERSION} required")
+              else()
+                message(WARNING "${name} has version ${file_version}, but >= ${arg_VERSION} required")
+              endif()
+            endif()
+          endif()
+        else()
+          set(${name}_FOUND ON)
+        endif()
       endif()
     endif()
 
@@ -86,7 +109,18 @@ unset(cJSON_FOUND CACHE)
 unset(jansson_FOUND CACHE)
 if(NOT WITH_JSON_DISABLED)
   if(WITH_JANSSON_REQUIRED)
-    detect_package(jansson CMAKE jansson::jansson HEADER jansson.h REQUIRED)
+    detect_package(
+      jansson
+      CMAKE
+      jansson::jansson
+      HEADER
+      jansson.h
+      VERSION
+      2.13
+      VERSION_STR
+      JANSSON_VERSION
+      REQUIRED
+    )
   elseif(WITH_JSONC_REQUIRED)
     detect_package(json-c CMAKE json-c::json-c HEADER json-c/json.h REQUIRED)
   elseif(WITH_CJSON_REQUIRED)
@@ -102,7 +136,17 @@ if(NOT WITH_JSON_DISABLED)
     )
   else()
     # nothing required, so do a non fatal check for all
-    detect_package(jansson CMAKE jansson::jansson HEADER jansson.h)
+    detect_package(
+      jansson
+      CMAKE
+      jansson::jansson
+      HEADER
+      jansson.h
+      VERSION
+      2.13
+      VERSION_STR
+      JANSSON_VERSION
+    )
     detect_package(json-c CMAKE json-c::json-c HEADER json-c/json.h)
     detect_package(
       cJSON
