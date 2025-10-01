@@ -4,6 +4,7 @@
 #include <winpr/crypto.h>
 #include <winpr/json.h>
 
+#include <freerdp/crypto/crypto.h>
 #include <freerdp/settings.h>
 #include <freerdp/codecs.h>
 
@@ -1669,7 +1670,15 @@ static BOOL fill_random(rdpSettings* src, FreeRDP_Settings_Keys_Pointer key, siz
 	uint8_t* data = freerdp_settings_get_pointer_writable(src, key);
 	if (!data)
 		return FALSE;
-	winpr_RAND(data, len * elem);
+
+	const size_t size = len * elem;
+	char* random = calloc(len, elem);
+	if (!random)
+		return FALSE;
+	char* b64 = crypto_base64_encode(random, size);
+	free(random);
+	memcpy(data, b64, size);
+	free(b64);
 	return TRUE;
 }
 
