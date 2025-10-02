@@ -303,6 +303,8 @@ static BOOL rdstls_write_authentication_request_with_password(rdpRdstls* rdstls,
 	WINPR_ASSERT(rdstls);
 	WINPR_ASSERT(rdstls->context);
 
+	WLog_Print(rdstls->log, WLOG_DEBUG, "Writing RDSTLS password authentication message");
+
 	rdpSettings* settings = rdstls->context->settings;
 	WINPR_ASSERT(settings);
 
@@ -332,6 +334,8 @@ static BOOL rdstls_write_authentication_request_with_cookie(WINPR_ATTR_UNUSED rd
 {
 	WINPR_ASSERT(rdstls);
 	WINPR_ASSERT(rdstls->context);
+
+	WLog_Print(rdstls->log, WLOG_DEBUG, "Writing RDSTLS cookie authentication message");
 
 	rdpSettings* settings = rdstls->context->settings;
 	WINPR_ASSERT(settings);
@@ -365,7 +369,7 @@ static BOOL rdstls_write_authentication_response(rdpRdstls* rdstls, wStream* s)
 static BOOL rdstls_process_capabilities(rdpRdstls* rdstls, wStream* s)
 {
 	WINPR_ASSERT(rdstls);
-	if (Stream_GetRemainingLength(s) < 4)
+	if (!Stream_CheckAndLogRequiredLengthWLog(rdstls->log, s, 4))
 		return FALSE;
 
 	const UINT16 dataType = Stream_Get_UINT16(s);
@@ -393,12 +397,12 @@ static BOOL rdstls_read_unicode_string(WINPR_ATTR_UNUSED wLog* log, wStream* s, 
 {
 	WINPR_ASSERT(str);
 
-	if (Stream_GetRemainingLength(s) < 2)
+	if (!Stream_CheckAndLogRequiredLengthWLog(log, s, 2))
 		return FALSE;
 
 	const UINT16 length = Stream_Get_UINT16(s);
 
-	if (Stream_GetRemainingLength(s) < length)
+	if (!Stream_CheckAndLogRequiredLengthWLog(log, s, length))
 		return FALSE;
 
 	if (length <= 2)
@@ -422,12 +426,12 @@ static BOOL rdstls_read_data(WINPR_ATTR_UNUSED wLog* log, wStream* s, UINT16* pL
 
 	*pData = NULL;
 	*pLength = 0;
-	if (Stream_GetRemainingLength(s) < 2)
+	if (!Stream_CheckAndLogRequiredLengthWLog(log, s, 2))
 		return FALSE;
 
 	const UINT16 length = Stream_Get_UINT16(s);
 
-	if (Stream_GetRemainingLength(s) < length)
+	if (!Stream_CheckAndLogRequiredLengthWLog(log, s, length))
 		return FALSE;
 
 	if (length <= 2)
@@ -549,12 +553,13 @@ static BOOL rdstls_process_authentication_request_with_cookie(WINPR_ATTR_UNUSED 
                                                               WINPR_ATTR_UNUSED wStream* s)
 {
 	// TODO
+	WLog_Print(rdstls->log, WLOG_ERROR, "TODO: RDSTLS Cookie authentication not implemented");
 	return FALSE;
 }
 
 static BOOL rdstls_process_authentication_request(rdpRdstls* rdstls, wStream* s)
 {
-	if (Stream_GetRemainingLength(s) < 2)
+	if (!Stream_CheckAndLogRequiredLengthWLog(rdstls->log, s, 2))
 		return FALSE;
 
 	const UINT16 dataType = Stream_Get_UINT16(s);
@@ -582,7 +587,7 @@ static BOOL rdstls_process_authentication_request(rdpRdstls* rdstls, wStream* s)
 
 static BOOL rdstls_process_authentication_response(rdpRdstls* rdstls, wStream* s)
 {
-	if (Stream_GetRemainingLength(s) < 6)
+	if (!Stream_CheckAndLogRequiredLengthWLog(rdstls->log, s, 6))
 		return FALSE;
 
 	const UINT16 dataType = Stream_Get_UINT16(s);
@@ -706,8 +711,8 @@ static int rdstls_recv(WINPR_ATTR_UNUSED rdpTransport* transport, wStream* s, vo
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(rdstls);
 
-	if (Stream_GetRemainingLength(s) < 4)
-		return FALSE;
+	if (!Stream_CheckAndLogRequiredLengthWLog(rdstls->log, s, 4))
+		return -1;
 
 	const UINT16 version = Stream_Get_UINT16(s);
 	if (version != RDSTLS_VERSION_1)
