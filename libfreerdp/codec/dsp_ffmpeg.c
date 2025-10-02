@@ -219,6 +219,34 @@ static void ffmpeg_close_context(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context)
 	}
 }
 
+static void ffmpeg_setup_resample_frame(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
+                                        AUDIO_FORMAT* WINPR_RESTRICT format)
+{
+	if (context->resampled->buf[0] != NULL)
+		av_frame_unref(context->resampled);
+
+	if (context->common.encoder)
+	{
+		context->resampled->format = context->context->sample_fmt;
+		context->resampled->sample_rate = context->context->sample_rate;
+	}
+	else
+	{
+		context->resampled->format = AV_SAMPLE_FMT_S16;
+
+		WINPR_ASSERT(format->nSamplesPerSec <= INT_MAX);
+		context->resampled->sample_rate = (int)format->nSamplesPerSec;
+	}
+
+#if LIBAVUTIL_VERSION_INT >= AV_VERSION_INT(57, 28, 100)
+	av_channel_layout_default(&context->resampled->ch_layout, format->nChannels);
+#else
+	const int64_t layout = av_get_default_channel_layout(format->nChannels);
+	context->resampled->channel_layout = layout;
+	context->resampled->channels = format->nChannels;
+#endif
+}
+
 static BOOL ffmpeg_open_context(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context)
 {
 	int ret = 0;
@@ -329,25 +357,7 @@ static BOOL ffmpeg_open_context(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context)
 	context->frame->sample_rate = (int)format->nSamplesPerSec;
 	context->frame->format = AV_SAMPLE_FMT_S16;
 
-	if (context->common.encoder)
-	{
-		context->resampled->format = context->context->sample_fmt;
-		context->resampled->sample_rate = context->context->sample_rate;
-	}
-	else
-	{
-		context->resampled->format = AV_SAMPLE_FMT_S16;
-
-		WINPR_ASSERT(format->nSamplesPerSec <= INT_MAX);
-		context->resampled->sample_rate = (int)format->nSamplesPerSec;
-	}
-
-#if LIBAVUTIL_VERSION_INT >= AV_VERSION_INT(57, 28, 100)
-	av_channel_layout_default(&context->resampled->ch_layout, format->nChannels);
-#else
-	context->resampled->channel_layout = layout;
-	context->resampled->channels = format->nChannels;
-#endif
+	ffmpeg_setup_resample_frame(context, format);
 
 	if (context->context->frame_size > 0)
 	{
@@ -814,6 +824,7 @@ BOOL freerdp_dsp_ffmpeg_encode(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
 	if (!ffmpeg_fill_frame(context->frame, format, data, length))
 		return FALSE;
 
+	ffmpeg_setup_resample_frame(context, format);
 	/* Resample to desired format. */
 	if (!ffmpeg_resample_frame(context->rcontext, context->frame, context->resampled))
 		return FALSE;
