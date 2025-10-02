@@ -600,7 +600,7 @@ static BOOL rdstls_process_authentication_response(rdpRdstls* rdstls, wStream* s
 		WLog_Print(rdstls->log, WLOG_ERROR, "resultCode: %s [0x%08" PRIX32 "]",
 		           rdstls_result_code_str(resultCode), resultCode);
 
-		UINT32 error = ERROR_INTERNAL_ERROR;
+		UINT32 error = FREERDP_ERROR_CONNECT_UNDEFINED;
 		switch (resultCode)
 		{
 			case RDSTLS_RESULT_ACCESS_DENIED:
@@ -625,7 +625,11 @@ static BOOL rdstls_process_authentication_response(rdpRdstls* rdstls, wStream* s
 				error = FREERDP_ERROR_CONNECT_PASSWORD_MUST_CHANGE;
 				break;
 			default:
-				error = ERROR_INVALID_PARAMETER;
+				WLog_Print(rdstls->log, WLOG_ERROR,
+				           "Unexpected resultCode: [0x%08" PRIX32 "], NTSTATUS=%s, Win32Error=%s",
+				           resultCode, GetSecurityStatusString((SECURITY_STATUS)resultCode),
+				           Win32ErrorCode2Tag(resultCode & 0xFFFF));
+				error = FREERDP_ERROR_CONNECT_UNDEFINED;
 				break;
 		}
 
