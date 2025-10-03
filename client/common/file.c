@@ -1957,15 +1957,8 @@ BOOL freerdp_client_populate_settings_from_rdp_file_unchecked(const rdpFile* fil
 
 	if (~file->EnableRdsAadAuth)
 	{
-		if (!freerdp_settings_set_bool(settings, FreeRDP_AadSecurity, file->EnableRdsAadAuth != 0))
-			return FALSE;
-		if (!freerdp_settings_set_bool(settings, FreeRDP_RdstlsSecurity, TRUE))
-			return FALSE;
-		if (!freerdp_settings_set_bool(settings, FreeRDP_RdpSecurity, FALSE))
-			return FALSE;
-		if (!freerdp_settings_set_bool(settings, FreeRDP_TlsSecurity, FALSE))
-			return FALSE;
-		if (!freerdp_settings_set_bool(settings, FreeRDP_NlaSecurity, FALSE))
+		const BOOL val = file->EnableRdsAadAuth != 0;
+		if (!freerdp_settings_set_bool(settings, FreeRDP_AadSecurity, val))
 			return FALSE;
 	}
 
