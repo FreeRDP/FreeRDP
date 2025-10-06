@@ -220,7 +220,7 @@ static void ffmpeg_close_context(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context)
 }
 
 static void ffmpeg_setup_resample_frame(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
-                                        AUDIO_FORMAT* WINPR_RESTRICT format)
+                                        const AUDIO_FORMAT* WINPR_RESTRICT format)
 {
 	if (context->resampled->buf[0] != NULL)
 		av_frame_unref(context->resampled);
