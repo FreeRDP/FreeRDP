@@ -31,6 +31,7 @@
 #include <freerdp/api.h>
 #include <freerdp/log.h>
 #include <freerdp/freerdp.h>
+#include <freerdp/codecs.h>
 
 #include <freerdp/gdi/gdi.h>
 #include <freerdp/gdi/dc.h>
@@ -1073,13 +1074,14 @@ static BOOL gdi_surface_bits(rdpContext* context, const SURFACE_BITS_COMMAND* cm
 		return FALSE;
 
 	gdi = context->gdi;
-	WLog_Print(
-	    gdi->log, WLOG_DEBUG,
-	    "destLeft %" PRIu32 " destTop %" PRIu32 " destRight %" PRIu32 " destBottom %" PRIu32 " "
-	    "bpp %" PRIu8 " flags %" PRIx8 " codecID %" PRIu16 " width %" PRIu16 " height %" PRIu16
-	    " length %" PRIu32 "",
-	    cmd->destLeft, cmd->destTop, cmd->destRight, cmd->destBottom, cmd->bmp.bpp, cmd->bmp.flags,
-	    cmd->bmp.codecID, cmd->bmp.width, cmd->bmp.height, cmd->bmp.bitmapDataLength);
+	WLog_Print(gdi->log, WLOG_DEBUG,
+	           "destLeft %" PRIu32 " destTop %" PRIu32 " destRight %" PRIu32 " destBottom %" PRIu32
+	           " "
+	           "bpp %" PRIu8 " flags %" PRIx8 " codecID %s [0x%04" PRIu16 "] width %" PRIu16
+	           " height %" PRIu16 " length %" PRIu32 "",
+	           cmd->destLeft, cmd->destTop, cmd->destRight, cmd->destBottom, cmd->bmp.bpp,
+	           cmd->bmp.flags, freerdp_codec_id_to_str(cmd->bmp.codecID), cmd->bmp.codecID,
+	           cmd->bmp.width, cmd->bmp.height, cmd->bmp.bitmapDataLength);
 	region16_init(&region);
 
 	if (!intersect_rect(gdi, cmd, &cmdRect))

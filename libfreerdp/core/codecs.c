@@ -276,3 +276,21 @@ void freerdp_client_codecs_free(rdpCodecs* codecs)
 
 	free(codecs);
 }
+
+const char* freerdp_codec_id_to_str(enum RDP_CODEC_ID id)
+{
+#define ENTRY(x) \
+	case x:      \
+		return #x
+	switch (id)
+	{
+		ENTRY(RDP_CODEC_ID_NONE);
+		ENTRY(RDP_CODEC_ID_NSCODEC);
+		ENTRY(RDP_CODEC_ID_JPEG);
+		ENTRY(RDP_CODEC_ID_REMOTEFX);
+		ENTRY(RDP_CODEC_ID_IMAGE_REMOTEFX);
+		default:
+			return "RDP_CODEC_ID_UNKNOWN";
+	}
+#undef ENTRY
+}

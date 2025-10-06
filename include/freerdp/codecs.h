@@ -95,6 +95,13 @@ extern "C"
 	                         FREERDP_API rdpCodecs* codecs_new(rdpContext* context));
 #endif
 
+	/** @brief return a string representation of the given codecid
+	 * 	 *  @param id The codec to stringify
+	 *  @return The name of the codecid
+	 *  @since version 3.18.0
+	 */
+	FREERDP_API const char* freerdp_codec_id_to_str(enum RDP_CODEC_ID id);
+
 #ifdef __cplusplus
 }
 #endif
