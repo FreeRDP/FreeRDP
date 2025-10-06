@@ -1291,8 +1291,8 @@ int freerdp_tcp_default_connect(rdpContext* context, rdpSettings* settings, cons
 	}
 
 	/* receive buffer must be a least 32 K */
-	UINT32 optval = 0;
-	socklen_t optlen = 0;
+	UINT32 optval = 1;
+	socklen_t optlen = sizeof(optval);
 	if (getsockopt(sockfd, SOL_SOCKET, SO_RCVBUF, (void*)&optval, &optlen) == 0)
 	{
 		if (optval < (1024 * 32))
