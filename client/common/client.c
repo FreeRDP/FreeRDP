@@ -1862,7 +1862,7 @@ static BOOL freerdp_handle_touch_up(rdpClientContext* cctx, const FreeRDP_TouchC
 	}
 #else
 	WLog_WARN(TAG, "Touch event detected but RDPEI support not compiled in. Recompile with "
-	               "-DWITH_CHANNELS=ON");
+	               "-DCHANNEL_RDPEI_CLIENT=ON");
 #endif
 
 	return TRUE;
@@ -1910,7 +1910,7 @@ static BOOL freerdp_handle_touch_down(rdpClientContext* cctx, const FreeRDP_Touc
 	}
 #else
 	WLog_WARN(TAG, "Touch event detected but RDPEI support not compiled in. Recompile with "
-	               "-DWITH_CHANNELS=ON");
+	               "-DCHANNEL_RDPEI_CLIENT=ON");
 #endif
 
 	return TRUE;
@@ -1955,7 +1955,7 @@ static BOOL freerdp_handle_touch_motion(rdpClientContext* cctx, const FreeRDP_To
 	}
 #else
 	WLog_WARN(TAG, "Touch event detected but RDPEI support not compiled in. Recompile with "
-	               "-DWITH_CHANNELS=ON");
+	               "-DCHANNEL_RDPEI_CLIENT=ON");
 #endif
 
 	return TRUE;
@@ -2098,6 +2098,7 @@ static BOOL freerdp_client_register_pen(rdpClientContext* cctx, UINT32 flags, IN
 
 BOOL freerdp_client_handle_pen(rdpClientContext* cctx, UINT32 flags, INT32 deviceid, ...)
 {
+#if defined(CHANNEL_RDPEI_CLIENT)
 	if ((flags & FREERDP_PEN_REGISTER) != 0)
 	{
 		va_list args;
@@ -2248,6 +2249,11 @@ BOOL freerdp_client_handle_pen(rdpClientContext* cctx, UINT32 flags, INT32 devic
 	}
 
 	WLog_WARN(TAG, "Invalid pen %" PRId32 " flags 0x%08" PRIx32, deviceid, flags);
+#else
+	WLog_WARN(TAG, "Pen event detected but RDPEI support not compiled in. Recompile with "
+	               "-DCHANNEL_RDPEI_CLIENT=ON");
+#endif
+
 	return FALSE;
 }
 
@@ -2255,6 +2261,7 @@ BOOL freerdp_client_pen_cancel_all(rdpClientContext* cctx)
 {
 	WINPR_ASSERT(cctx);
 
+#if defined(CHANNEL_RDPEI_CLIENT)
 	RdpeiClientContext* rdpei = cctx->rdpei;
 
 	if (!rdpei)
@@ -2271,6 +2278,11 @@ BOOL freerdp_client_pen_cancel_all(rdpClientContext* cctx)
 		}
 	}
 	return TRUE;
+#else
+	WLog_WARN(TAG, "Pen event detected but RDPEI support not compiled in. Recompile with "
+	               "-DCHANNEL_RDPEI_CLIENT=ON");
+	return FALSE;
+#endif
 }
 
 BOOL freerdp_client_is_pen(rdpClientContext* cctx, INT32 deviceid)
