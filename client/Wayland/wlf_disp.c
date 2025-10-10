@@ -27,7 +27,7 @@
 
 #define TAG CLIENT_TAG("wayland.disp")
 
-#define RESIZE_MIN_DELAY_NS 200000UL /* minimum delay in ns between two resizes */
+#define RESIZE_MIN_DELAY_NS 200000000UL /* minimum delay in ns between two resizes */
 
 struct s_wlfDispContext
 {
