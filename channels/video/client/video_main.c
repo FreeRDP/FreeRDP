@@ -1160,7 +1160,7 @@ static UINT video_plugin_initialize(IWTSPlugin* plugin, IWTSVirtualChannelManage
 
 	if (status == CHANNEL_RC_OK)
 		video->context->priv->timerID =
-		    freerdp_timer_add(video->rdpcontext, 20000, timer_cb, video->context, true);
+		    freerdp_timer_add(video->rdpcontext, 20000000, timer_cb, video->context, true);
 	video->initialized = video->context->priv->timerID != 0;
 	if (!video->initialized)
 		status = ERROR_INTERNAL_ERROR;
