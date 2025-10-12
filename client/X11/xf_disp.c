@@ -40,7 +40,7 @@
 
 #include <freerdp/log.h>
 #define TAG CLIENT_TAG("x11disp")
-#define RESIZE_MIN_DELAY_NS 200000UL /* minimum delay in ms between two resizes */
+#define RESIZE_MIN_DELAY_NS 200000000UL /* minimum delay in ms between two resizes */
 
 struct s_xfDispContext
 {
