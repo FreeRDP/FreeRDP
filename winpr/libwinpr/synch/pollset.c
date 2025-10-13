@@ -7,6 +7,10 @@
 #include <winpr/assert.h>
 #include "../log.h"
 
+#if defined(__EMSCRIPTEN__)
+#include <emscripten.h>
+#endif
+
 #define TAG WINPR_TAG("sync.pollset")
 
 #ifdef WINPR_HAVE_POLL_H
@@ -142,7 +146,14 @@ int pollset_poll(WINPR_POLL_SET* set, DWORD dwMilliseconds)
 
 		ret = poll(set->pollset, set->fillIndex, timeout);
 		if (ret >= 0)
+		{
+#if defined(__EMSCRIPTEN__)
+			/* Yield in emscripten so event handlers can be processed */
+			if (ret == 0)
+				emscripten_sleep(0);
+#endif
 			return ret;
+		}
 
 		if (errno != EINTR)
 			return -1;
