@@ -453,7 +453,7 @@
 			"StandardName": "South Sudan Standard Time",
 			"DisplayName": "(UTC+02:00) Juba",
 			"DaylightName": "South Sudan Daylight Time",
-			"Iana": ""
+			"Iana": "Africa/Juba"
 		},
 		{
 			"Id": "Kaliningrad Standard Time",

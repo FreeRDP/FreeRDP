@@ -134,7 +134,7 @@ static const TimeZoneNameMapEntry TimeZoneNameMap[] = {
 	{ "Israel Standard Time", "Jerusalem Standard Time", "(UTC+02:00) Jerusalem",
 	  "Jerusalem Daylight Time", "Asia/Jerusalem" },
 	{ "South Sudan Standard Time", "South Sudan Standard Time", "(UTC+02:00) Juba",
-	  "South Sudan Daylight Time", "" },
+	  "South Sudan Daylight Time", "Africa/Juba" },
 	{ "Kaliningrad Standard Time", "Russia TZ 1 Standard Time", "(UTC+02:00) Kaliningrad",
 	  "Russia TZ 1 Daylight Time", "Europe/Kaliningrad" },
 	{ "Sudan Standard Time", "Sudan Standard Time", "(UTC+02:00) Khartoum", "Sudan Daylight Time",
