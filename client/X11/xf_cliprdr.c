@@ -911,6 +911,7 @@ static UINT xf_cliprdr_send_format_list(xfClipboard* clipboard, const CLIPRDR_FO
 	WINPR_ASSERT(clipboard);
 	WINPR_ASSERT(formats || (numFormats == 0));
 
+	xf_cliprdr_clear_cached_data(clipboard);
 	if (!force && !xf_clipboard_changed(clipboard, formats, numFormats))
 		return CHANNEL_RC_OK;
 
@@ -926,8 +927,6 @@ static UINT xf_cliprdr_send_format_list(xfClipboard* clipboard, const CLIPRDR_FO
 	xf_clipboard_copy_formats(clipboard, formats, numFormats);
 	/* Ensure all pending requests are answered. */
 	xf_cliprdr_send_data_response(clipboard, NULL, NULL, 0);
-
-	xf_cliprdr_clear_cached_data(clipboard);
 
 	ret = cliprdr_file_context_notify_new_client_format_list(clipboard->file);
 	if (ret)
