@@ -7,7 +7,7 @@ endif()
 project(tzextract VERSION 1.0.0 LANGUAGES CSharp)
 
 set(CMAKE_CSharp_FLAGS "/langversion:10")
-set(CMAKE_DOTNET_TARGET_FRAMEWORK "net6.0")
+set(CMAKE_DOTNET_TARGET_FRAMEWORK "net8.0")
 set(CMAKE_DOTNET_SDK "Microsoft.NET.Sdk")
 
 add_executable(${PROJECT_NAME} tzextract.cs)
