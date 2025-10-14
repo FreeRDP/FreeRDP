@@ -28,9 +28,6 @@
 
 #include <freerdp/config.h>
 #include <freerdp/locale/keyboard.h>
-#if defined(CHANNEL_RDPEI_CLIENT)
-#include <freerdp/client/rdpei.h>
-#endif
 #include <uwac/uwac.h>
 
 #include "wlfreerdp.h"
