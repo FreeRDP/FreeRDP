@@ -311,16 +311,19 @@ public class LibFreeRDP
 		if (flags.getRemoteFX())
 		{
 			args.add("/rfx");
+			args.add("/network:auto");
 		}
 
 		if (flags.getGfx())
 		{
 			args.add("/gfx");
+			args.add("/network:auto");
 		}
 
 		if (flags.getH264() && mHasH264)
 		{
 			args.add("/gfx:AVC444");
+			args.add("/network:auto");
 		}
 
 		args.add(addFlag("wallpaper", flags.getWallpaper()));
@@ -358,23 +361,25 @@ public class LibFreeRDP
 			ManualBookmark.GatewaySettings gateway =
 			    bookmark.<ManualBookmark>get().getGatewaySettings();
 
-			args.add(String.format("/g:%s:%d", gateway.getHostname(), gateway.getPort()));
+			String carg =
+			    String.format("/gateway:g:%s:%d", gateway.getHostname(), gateway.getPort());
 
 			arg = gateway.getUsername();
 			if (!arg.isEmpty())
 			{
-				args.add("/gu:" + arg);
+				carg.append(",u:" + arg);
 			}
 			arg = gateway.getDomain();
 			if (!arg.isEmpty())
 			{
-				args.add("/gd:" + arg);
+				carg.append(",d:" + arg);
 			}
 			arg = gateway.getPassword();
 			if (!arg.isEmpty())
 			{
-				args.add("/gp:" + arg);
+				cargs.append(",p:" + arg);
 			}
+			args.add(String.format("/gateway:g:%s:%d", gateway.getHostname(), gateway.getPort()));
 		}
 
 		/* 0 ... local
