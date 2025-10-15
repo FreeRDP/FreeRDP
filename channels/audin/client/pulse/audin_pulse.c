@@ -208,6 +208,8 @@ static UINT audin_pulse_free(IAudinDevice* device)
 		pulse->mainloop = NULL;
 	}
 
+	free(pulse->client_name);
+	free(pulse->stream_name);
 	free(pulse);
 	return CHANNEL_RC_OK;
 }
