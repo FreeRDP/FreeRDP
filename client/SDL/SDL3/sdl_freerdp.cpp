@@ -325,6 +325,31 @@ static bool sdl_draw_to_window_rect(SdlContext* sdl, SdlWindow& window, SDL_Surf
 	return true;
 }
 
+static bool sdl_draw_to_window_scaled_rect(SdlContext* sdl, SdlWindow& window, SDL_Surface* surface,
+                                           const SDL_Rect& srcRect)
+{
+	SDL_Rect dstRect = srcRect;
+	sdl_scale_coordinates(sdl, window.id(), &dstRect.x, &dstRect.y, FALSE, TRUE);
+	sdl_scale_coordinates(sdl, window.id(), &dstRect.w, &dstRect.h, FALSE, TRUE);
+	return window.blit(surface, srcRect, dstRect);
+}
+
+static BOOL sdl_draw_to_window_scaled_rect(SdlContext* sdl, SdlWindow& window, SDL_Surface* surface,
+                                           const std::vector<SDL_Rect>& rects = {})
+{
+	if (rects.empty())
+	{
+		return sdl_draw_to_window_scaled_rect(sdl, window, surface,
+		                                      { 0, 0, surface->w, surface->h });
+	}
+	for (const auto& srcRect : rects)
+	{
+		if (!sdl_draw_to_window_scaled_rect(sdl, window, surface, srcRect))
+			return FALSE;
+	}
+	return TRUE;
+}
+
 static BOOL sdl_draw_to_window(SdlContext* sdl, SdlWindow& window,
                                const std::vector<SDL_Rect>& rects = {})
 {
@@ -339,6 +364,7 @@ static BOOL sdl_draw_to_window(SdlContext* sdl, SdlWindow& window,
 
 	auto size = window.rect();
 
+	auto surface = sdl->primary.get();
 	if (freerdp_settings_get_bool(context->settings, FreeRDP_SmartSizing))
 	{
 		window.setOffsetX(0);
@@ -351,11 +377,17 @@ static BOOL sdl_draw_to_window(SdlContext* sdl, SdlWindow& window,
 		{
 			window.setOffsetY((size.h - gdi->height) / 2);
 		}
+		if (!sdl_draw_to_window_scaled_rect(sdl, window, surface, rects))
+			return FALSE;
 	}
-	auto surface = sdl->primary.get();
-	if (!sdl_draw_to_window_rect(sdl, window, surface, { window.offsetX(), window.offsetY() },
-	                             rects))
-		return FALSE;
+	else
+	{
+
+		if (!sdl_draw_to_window_rect(sdl, window, surface, { window.offsetX(), window.offsetY() },
+		                             rects))
+			return FALSE;
+	}
+
 	window.updateSurface();
 	return TRUE;
 }
