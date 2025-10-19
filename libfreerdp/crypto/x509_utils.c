@@ -22,6 +22,7 @@
 #include <openssl/objects.h>
 #include <openssl/x509v3.h>
 #include <openssl/pem.h>
+#include <openssl/rsa.h>
 #include <openssl/err.h>
 
 #include <freerdp/config.h>
