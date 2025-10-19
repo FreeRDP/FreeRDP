@@ -361,8 +361,9 @@ public class LibFreeRDP
 			ManualBookmark.GatewaySettings gateway =
 			    bookmark.<ManualBookmark>get().getGatewaySettings();
 
-			String carg =
-			    String.format("/gateway:g:%s:%d", gateway.getHostname(), gateway.getPort());
+			StringBuilder carg = new StringBuilder();
+			carg.append(
+			    String.format("/gateway:g:%s:%d", gateway.getHostname(), gateway.getPort()));
 
 			arg = gateway.getUsername();
 			if (!arg.isEmpty())
@@ -377,9 +378,9 @@ public class LibFreeRDP
 			arg = gateway.getPassword();
 			if (!arg.isEmpty())
 			{
-				cargs.append(",p:" + arg);
+				carg.append(",p:" + arg);
 			}
-			args.add(String.format("/gateway:g:%s:%d", gateway.getHostname(), gateway.getPort()));
+			args.add(carg.toString());
 		}
 
 		/* 0 ... local
