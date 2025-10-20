@@ -93,7 +93,7 @@ static void tls_print_certificate_name_mismatch_error(const char* hostname, UINT
                                                       const char* common_name, char** alt_names,
                                                       size_t alt_names_count);
 static void tls_print_new_certificate_warn(rdpCertificateStore* store, const char* hostname,
-                                           UINT16 port, const char* fingerprint);
+                                           UINT16 port, const char* type, const char* fingerprint);
 static void tls_print_certificate_error(rdpCertificateStore* store, rdpCertificateData* stored_data,
                                         const char* hostname, UINT16 port, const char* fingerprint);
 
@@ -1650,12 +1650,17 @@ int tls_verify_certificate(rdpTls* tls, const rdpCertificate* cert, const char* 
 	DWORD flags = VERIFY_CERT_FLAG_NONE;
 
 	WINPR_ASSERT(tls);
-	WINPR_ASSERT(tls->context);
 
-	freerdp* instance = tls->context->instance;
+	rdpContext* context = tls->context;
+	WINPR_ASSERT(context);
+
+	freerdp* instance = context->instance;
 	WINPR_ASSERT(instance);
 
-	if (freerdp_shall_disconnect_context(instance->context))
+	const rdpSettings* settings = context->settings;
+	WINPR_ASSERT(settings);
+
+	if (freerdp_shall_disconnect_context(context))
 		return -1;
 
 	if (!tls_extract_full_pem(cert, &pemCert, &length))
@@ -1668,7 +1673,7 @@ int tls_verify_certificate(rdpTls* tls, const rdpCertificate* cert, const char* 
 		goto end;
 	}
 
-	if (is_accepted_fingerprint(cert, tls->context->settings->CertificateAcceptedFingerprints))
+	if (is_accepted_fingerprint(cert, settings->CertificateAcceptedFingerprints))
 	{
 		verification_status = 1;
 		goto end;
@@ -1684,7 +1689,7 @@ int tls_verify_certificate(rdpTls* tls, const rdpCertificate* cert, const char* 
 		flags |= VERIFY_CERT_FLAG_REDIRECT;
 
 	/* Certificate management is done by the application */
-	if (tls->context->settings->ExternalCertificateManagement)
+	if (settings->ExternalCertificateManagement)
 	{
 		if (instance->VerifyX509Certificate)
 			verification_status =
@@ -1702,7 +1707,7 @@ int tls_verify_certificate(rdpTls* tls, const rdpCertificate* cert, const char* 
 		}
 	}
 	/* ignore certificate verification if user explicitly required it (discouraged) */
-	else if (freerdp_settings_get_bool(tls->context->settings, FreeRDP_IgnoreCertificate))
+	else if (freerdp_settings_get_bool(settings, FreeRDP_IgnoreCertificate))
 	{
 		WLog_WARN(TAG, "[DANGER] Certificate not checked, /cert:ignore in use.");
 		WLog_WARN(TAG, "[DANGER] This prevents MITM attacks from being detected!");
@@ -1710,13 +1715,13 @@ int tls_verify_certificate(rdpTls* tls, const rdpCertificate* cert, const char* 
 		          "[DANGER] Avoid using this unless in a secure LAN (=no internet) environment");
 		verification_status = 1; /* success! */
 	}
-	else if (!tls->isGatewayTransport && (tls->context->settings->AuthenticationLevel == 0))
+	else if (!tls->isGatewayTransport && (settings->AuthenticationLevel == 0))
 		verification_status = 1; /* success! */
 	else
 	{
 		/* if user explicitly specified a certificate name, use it instead of the hostname */
-		if (!tls->isGatewayTransport && tls->context->settings->CertificateName)
-			hostname = tls->context->settings->CertificateName;
+		if (!tls->isGatewayTransport && settings->CertificateName)
+			hostname = settings->CertificateName;
 
 		/* attempt verification using OpenSSL and the ~/.freerdp/certs certificate store */
 		certificate_status = freerdp_certificate_verify(
@@ -1789,18 +1794,29 @@ int tls_verify_certificate(rdpTls* tls, const rdpCertificate* cert, const char* 
 					                                          dns_names, dns_names_count);
 
 				{
+					const char* type = "";
+					if (freerdp_settings_get_bool(settings, FreeRDP_AutoAcceptCertificate))
+						type = "tofo (auto-accept)";
+
+					if (freerdp_settings_get_bool(settings, FreeRDP_AutoDenyCertificate))
+						type = "strict (auto-deny)";
+
+					if (freerdp_settings_get_bool(settings, FreeRDP_IgnoreCertificate))
+						type = "ignore (no check)";
+
 					char* efp = freerdp_certificate_get_fingerprint(cert);
-					tls_print_new_certificate_warn(tls->certificate_store, hostname, port, efp);
+					tls_print_new_certificate_warn(tls->certificate_store, hostname, port, type,
+					                               efp);
 					free(efp);
 				}
 
 				/* Automatically accept certificate on first use */
-				if (tls->context->settings->AutoAcceptCertificate)
+				if (settings->AutoAcceptCertificate)
 				{
 					WLog_INFO(TAG, "No certificate stored, automatically accepting.");
 					accept_certificate = 1;
 				}
-				else if (tls->context->settings->AutoDenyCertificate)
+				else if (settings->AutoDenyCertificate)
 				{
 					WLog_INFO(TAG, "No certificate stored, automatically denying.");
 					accept_certificate = 0;
@@ -1819,8 +1835,8 @@ int tls_verify_certificate(rdpTls* tls, const rdpCertificate* cert, const char* 
 				}
 				else if (instance->VerifyCertificateEx)
 				{
-					const BOOL use_pem = freerdp_settings_get_bool(
-					    tls->context->settings, FreeRDP_CertificateCallbackPreferPEM);
+					const BOOL use_pem =
+					    freerdp_settings_get_bool(settings, FreeRDP_CertificateCallbackPreferPEM);
 					char* fp = NULL;
 					DWORD cflags = flags;
 					if (use_pem)
@@ -1865,7 +1881,7 @@ int tls_verify_certificate(rdpTls* tls, const rdpCertificate* cert, const char* 
 					WLog_WARN(TAG, "Failed to get certificate entry for %s:%" PRIu16 "", hostname,
 					          port);
 
-				if (tls->context->settings->AutoDenyCertificate)
+				if (settings->AutoDenyCertificate)
 				{
 					WLog_INFO(TAG, "No certificate stored, automatically denying.");
 					accept_certificate = 0;
@@ -1892,8 +1908,7 @@ int tls_verify_certificate(rdpTls* tls, const rdpCertificate* cert, const char* 
 					const char* old_pem = freerdp_certificate_data_get_pem(stored_data);
 					const BOOL fpIsAllocated =
 					    !old_pem ||
-					    !freerdp_settings_get_bool(tls->context->settings,
-					                               FreeRDP_CertificateCallbackPreferPEM);
+					    !freerdp_settings_get_bool(settings, FreeRDP_CertificateCallbackPreferPEM);
 					char* fp = NULL;
 					if (!fpIsAllocated)
 					{
@@ -1975,7 +1990,7 @@ end:
 }
 
 void tls_print_new_certificate_warn(rdpCertificateStore* store, const char* hostname, UINT16 port,
-                                    const char* fingerprint)
+                                    const char* type, const char* fingerprint)
 {
 	char* path = freerdp_certificate_store_get_cert_path(store, hostname, port);
 
@@ -1989,7 +2004,8 @@ void tls_print_new_certificate_warn(rdpCertificateStore* store, const char* host
 	WLog_ERR(TAG, "The fingerprint for the host key sent by the remote host is %s", fingerprint);
 	WLog_ERR(TAG, "Please contact your system administrator.");
 	WLog_ERR(TAG, "Add correct host key in %s to get rid of this message.", path);
-	WLog_ERR(TAG, "Host key for %s has changed and you have requested strict checking.", hostname);
+	WLog_ERR(TAG, "Host key for %s has changed and you have requested %s checking.", hostname,
+	         type);
 	WLog_ERR(TAG, "Host key verification failed.");
 
 	free(path);
