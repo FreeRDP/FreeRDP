@@ -479,7 +479,7 @@ static void CALLBACK yuv444_combine_work_callback(PTP_CALLBACK_INSTANCE instance
 	const RECTANGLE_16* rect = &param->rect;
 	WINPR_ASSERT(rect);
 
-	const UINT32 alignedWidth = yuv->width + ((yuv->width % 16 != 0) ? 16 - yuv->width % 16 : 0);
+	const UINT32 alignedWidth = yuv->width + ((yuv->width % 32 != 0) ? 32 - yuv->width % 32 : 0);
 	const UINT32 alignedHeight =
 	    yuv->height + ((yuv->height % 16 != 0) ? 16 - yuv->height % 16 : 0);
 
