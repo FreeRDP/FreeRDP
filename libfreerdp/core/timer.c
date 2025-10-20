@@ -190,8 +190,6 @@ static uint64_t expire_and_reschedule(FreeRDPTimer* timer)
 	}
 	ArrayList_Unlock(timer->entries);
 
-	if (next == UINT64_MAX)
-		return 0;
 	return next;
 }
 
@@ -210,12 +208,17 @@ static DWORD WINAPI timer_thread(LPVOID arg)
 		(void)ResetEvent(timer->event);
 		const uint64_t next = expire_and_reschedule(timer);
 		const uint64_t now = winpr_GetTickCount64NS();
-		if (now >= next)
+		if (next == UINT64_MAX)
 		{
 			timeout = INFINITE;
 			continue;
 		}
 
+		if (next <= now)
+		{
+			timeout = 0;
+			continue;
+		}
 		const uint64_t diff = next - now;
 		const uint64_t diffMS = diff / 1000000ull;
 		timeout = INFINITE;
