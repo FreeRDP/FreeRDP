@@ -5972,28 +5972,54 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 #if defined(CHANNEL_AINPUT_CLIENT)
 		{ FreeRDP_BOOL_UNUSED, AINPUT_CHANNEL_NAME, NULL }, /* always loaded */
 #endif
+#ifdef CHANNEL_AUDIN_CLIENT
 		{ FreeRDP_AudioCapture, AUDIN_CHANNEL_NAME, NULL },
+#endif
+#ifdef CHANNEL_RPDSND_CLIENT
 		{ FreeRDP_AudioPlayback, RDPSND_CHANNEL_NAME, NULL },
+#endif
 #ifdef CHANNEL_RDPEI_CLIENT
 		{ FreeRDP_MultiTouchInput, RDPEI_CHANNEL_NAME, NULL },
 #endif
+#ifdef CHANNEL_RDPGFX_CLIENT
 		{ FreeRDP_SupportGraphicsPipeline, RDPGFX_CHANNEL_NAME, NULL },
+#endif
+#ifdef CHANNEL_ECHO_CLIENT
 		{ FreeRDP_SupportEchoChannel, ECHO_CHANNEL_NAME, NULL },
+#endif
+#ifdef CHANNEL_SSHAGENT_CLIENT
 		{ FreeRDP_SupportSSHAgentChannel, "sshagent", NULL },
+#endif
+#ifdef CHANNEL_DISP_CLIENT
 		{ FreeRDP_SupportDisplayControl, DISP_CHANNEL_NAME, NULL },
+#endif
+#ifdef CHANNEL_GEOMETRY_CLIENT
 		{ FreeRDP_SupportGeometryTracking, GEOMETRY_CHANNEL_NAME, NULL },
+#endif
+#ifdef CHANNEL_VIDEO_CLIENT
 		{ FreeRDP_SupportVideoOptimized, VIDEO_CHANNEL_NAME, NULL },
+#endif
+#ifdef CHANNEL_RDPEAR_CLIENT
 		{ FreeRDP_RemoteCredentialGuard, RDPEAR_CHANNEL_NAME, NULL },
+#endif
 	};
 
 	ChannelToLoad staticChannels[] = {
+#if defined(CHANNEL_RPDSND_CLIENT)
 		{ FreeRDP_AudioPlayback, RDPSND_CHANNEL_NAME, NULL },
+#endif
+#if defined(CHANNEL_CLIPRDR_CLIENT)
 		{ FreeRDP_RedirectClipboard, CLIPRDR_SVC_CHANNEL_NAME, NULL },
+#endif
 #if defined(CHANNEL_ENCOMSP_CLIENT)
 		{ FreeRDP_EncomspVirtualChannel, ENCOMSP_SVC_CHANNEL_NAME, settings },
 #endif
+#if defined(CHANNEL_REMDESK_CLIENT)
 		{ FreeRDP_RemdeskVirtualChannel, REMDESK_SVC_CHANNEL_NAME, settings },
+#endif
+#if defined(CHANNEL_RAIL_CLIENT)
 		{ FreeRDP_RemoteApplicationMode, RAIL_SVC_CHANNEL_NAME, settings }
+#endif
 	};
 
 	/**
