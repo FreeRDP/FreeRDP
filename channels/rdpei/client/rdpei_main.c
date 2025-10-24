@@ -1041,6 +1041,10 @@ static UINT rdpei_add_contact(RdpeiClientContext* context, const RDPINPUT_CONTAC
 
 	EnterCriticalSection(&rdpei->lock);
 	contactPoint = &rdpei->contactPoints[contact->contactId];
+
+	if (contactPoint->dirty && contactPoint->data.contactFlags != contact->contactFlags)
+		rdpei_add_frame(context);
+
 	contactPoint->data = *contact;
 	contactPoint->dirty = TRUE;
 	(void)SetEvent(rdpei->event);
