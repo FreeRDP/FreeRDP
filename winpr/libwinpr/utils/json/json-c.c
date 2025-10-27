@@ -274,6 +274,17 @@ WINPR_JSON* WINPR_JSON_AddNumberToObject(WINPR_JSON* object, const char* name, d
 	return obj;
 }
 
+WINPR_JSON* WINPR_JSON_AddIntegerToObject(WINPR_JSON* object, const char* name, int64_t number)
+{
+	struct json_object* obj = json_object_new_int64(number);
+	if (json_object_object_add((json_object*)object, name, obj) != 0)
+	{
+		json_object_put(obj);
+		return NULL;
+	}
+	return obj;
+}
+
 WINPR_JSON* WINPR_JSON_AddStringToObject(WINPR_JSON* object, const char* name, const char* string)
 {
 	struct json_object* obj = json_object_new_string(string);

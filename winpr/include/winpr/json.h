@@ -347,6 +347,16 @@ extern "C"
 	                                                   double number);
 
 	/**
+	 * @brief WINPR_JSON_AddIntegerToObject
+	 * @param object The JSON object the new item is added to
+	 * @param name The name of the object
+	 * @return the new JSON item added
+	 * @since version 3.6.0
+	 */
+	WINPR_API WINPR_JSON* WINPR_JSON_AddIntegerToObject(WINPR_JSON* object, const char* name,
+	                                                    int64_t number);
+
+	/**
 	 * @brief WINPR_JSON_AddStringToObject
 	 * @param object The JSON object the new item is added to
 	 * @param name The name of the object

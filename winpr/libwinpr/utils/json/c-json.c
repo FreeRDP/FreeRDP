@@ -259,6 +259,13 @@ WINPR_JSON* WINPR_JSON_AddNumberToObject(WINPR_JSON* object, const char* name, d
 	return cJSON_AddNumberToObject((cJSON*)object, name, number);
 }
 
+WINPR_JSON* WINPR_JSON_AddIntegerToObject(WINPR_JSON* object, const char* name, int64_t number)
+{
+	char str[64] = { 0 };
+	(void)_snprintf(str, sizeof(str), "%" PRId64, number);
+	return cJSON_AddRawToObject((cJSON*)object, name, str);
+}
+
 WINPR_JSON* WINPR_JSON_AddStringToObject(WINPR_JSON* object, const char* name, const char* string)
 {
 	return cJSON_AddStringToObject((cJSON*)object, name, string);
