@@ -568,6 +568,17 @@ char* x509_utils_get_issuer(const X509* xcert)
 	return issuer;
 }
 
+static int asn1_object_cmp(const ASN1_OBJECT* const* a, const ASN1_OBJECT* const* b)
+{
+	if (!a || !b)
+		return (a == b) ? 0 : (a ? 1 : -1);
+	
+	if (!*a || !*b)
+		return (*a == *b) ? 0 : (*a ? 1 : -1);
+
+	return OBJ_cmp(*a, *b);
+}
+
 BOOL x509_utils_check_eku(const X509* xcert, int nid)
 {
 	BOOL ret = FALSE;
@@ -585,6 +596,7 @@ BOOL x509_utils_check_eku(const X509* xcert, int nid)
 	if (!oid_stack)
 		return FALSE;
 
+	sk_ASN1_OBJECT_set_cmp_func(oid_stack, asn1_object_cmp);
 	if (sk_ASN1_OBJECT_find(oid_stack, oid) >= 0)
 		ret = TRUE;
 
