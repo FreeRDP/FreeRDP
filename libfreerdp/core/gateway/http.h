@@ -104,6 +104,10 @@ FREERDP_LOCAL BOOL http_request_set_transfer_encoding(HttpRequest* request,
 
 FREERDP_LOCAL wStream* http_request_write(HttpContext* context, HttpRequest* request);
 
+WINPR_ATTR_FORMAT_ARG(3, 4)
+FREERDP_LOCAL BOOL http_request_append_header(wStream* stream, const char* param,
+                                              WINPR_FORMAT_ARG const char* value, ...);
+
 /* HTTP response */
 typedef struct s_http_response HttpResponse;
 

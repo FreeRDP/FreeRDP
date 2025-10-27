@@ -1486,7 +1486,7 @@ HttpResponse* http_response_recv(rdpTls* tls, BOOL readContentLength)
 		WINPR_ASSERT(response->BodyLength == 0);
 		bodyLength = response->BodyLength; /* expected body length */
 
-		if (readContentLength)
+		if (readContentLength && (response->BodyLength > 0))
 		{
 			const char* cur = response->ContentType;
 
@@ -1736,4 +1736,19 @@ void http_response_log_error_status_(wLog* log, DWORD level, const HttpResponse*
 	WLog_PrintTextMessage(log, level, line, file, fkt, "Unexpected HTTP status: %s",
 	                      freerdp_http_status_string_format(status, buffer, ARRAYSIZE(buffer)));
 	http_response_print(log, level, response, file, line, fkt);
+}
+
+WINPR_ATTR_FORMAT_ARG(3, 4)
+BOOL http_request_append_header(wStream* stream, const char* param,
+                                WINPR_FORMAT_ARG const char* value, ...)
+{
+	va_list ap;
+	va_start(ap, value);
+	char* str = NULL;
+	size_t slen = 0;
+	winpr_vasprintf(&str, &slen, value, ap);
+	va_end(ap);
+	const BOOL rc = http_encode_body_line(stream, param, str);
+	free(str);
+	return rc;
 }
