@@ -573,7 +573,7 @@ static int asn1_object_cmp(const ASN1_OBJECT* const* a, const ASN1_OBJECT* const
 {
 	if (!a || !b)
 		return (a == b) ? 0 : (a ? 1 : -1);
-	
+
 	if (!*a || !*b)
 		return (*a == *b) ? 0 : (*a ? 1 : -1);
 
