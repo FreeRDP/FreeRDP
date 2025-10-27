@@ -2373,7 +2373,8 @@ BOOL freerdp_settings_set_uint32(WINPR_ATTR_UNUSED rdpSettings* settings,
 			break;
 
 		case FreeRDP_ReceivedCapabilitiesSize:
-			return freerdp_capability_buffer_resize(settings, cnv.c, FALSE);
+			settings->ReceivedCapabilitiesSize = cnv.c;
+			break;
 
 		case FreeRDP_RedirectedSessionId:
 			settings->RedirectedSessionId = cnv.c;
@@ -2500,7 +2501,8 @@ BOOL freerdp_settings_set_uint32(WINPR_ATTR_UNUSED rdpSettings* settings,
 			break;
 
 		case FreeRDP_TargetNetAddressCount:
-			return freerdp_target_net_addresses_resize(settings, cnv.c);
+			settings->TargetNetAddressCount = cnv.c;
+			break;
 
 		case FreeRDP_TcpAckTimeout:
 			settings->TcpAckTimeout = cnv.c;
@@ -2863,6 +2865,15 @@ const char* freerdp_settings_get_string(WINPR_ATTR_UNUSED const rdpSettings* set
 		case FreeRDP_GatewayHttpExtAuthBearer:
 			return settings->GatewayHttpExtAuthBearer;
 
+		case FreeRDP_GatewayHttpMsUserAgent:
+			return settings->GatewayHttpMsUserAgent;
+
+		case FreeRDP_GatewayHttpReferer:
+			return settings->GatewayHttpReferer;
+
+		case FreeRDP_GatewayHttpUserAgent:
+			return settings->GatewayHttpUserAgent;
+
 		case FreeRDP_GatewayPassword:
 			return settings->GatewayPassword;
 
@@ -3186,6 +3197,15 @@ char* freerdp_settings_get_string_writable(rdpSettings* settings, FreeRDP_Settin
 
 		case FreeRDP_GatewayHttpExtAuthBearer:
 			return settings->GatewayHttpExtAuthBearer;
+
+		case FreeRDP_GatewayHttpMsUserAgent:
+			return settings->GatewayHttpMsUserAgent;
+
+		case FreeRDP_GatewayHttpReferer:
+			return settings->GatewayHttpReferer;
+
+		case FreeRDP_GatewayHttpUserAgent:
+			return settings->GatewayHttpUserAgent;
 
 		case FreeRDP_GatewayPassword:
 			return settings->GatewayPassword;
@@ -3521,6 +3541,15 @@ BOOL freerdp_settings_set_string_(WINPR_ATTR_UNUSED rdpSettings* settings,
 
 		case FreeRDP_GatewayHttpExtAuthBearer:
 			return update_string_(&settings->GatewayHttpExtAuthBearer, cnv.c, len);
+
+		case FreeRDP_GatewayHttpMsUserAgent:
+			return update_string_(&settings->GatewayHttpMsUserAgent, cnv.c, len);
+
+		case FreeRDP_GatewayHttpReferer:
+			return update_string_(&settings->GatewayHttpReferer, cnv.c, len);
+
+		case FreeRDP_GatewayHttpUserAgent:
+			return update_string_(&settings->GatewayHttpUserAgent, cnv.c, len);
 
 		case FreeRDP_GatewayPassword:
 			return update_string_(&settings->GatewayPassword, cnv.c, len);
@@ -3876,6 +3905,15 @@ BOOL freerdp_settings_set_string_copy_(WINPR_ATTR_UNUSED rdpSettings* settings,
 
 		case FreeRDP_GatewayHttpExtAuthBearer:
 			return update_string_copy_(&settings->GatewayHttpExtAuthBearer, cnv.cc, len, cleanup);
+
+		case FreeRDP_GatewayHttpMsUserAgent:
+			return update_string_copy_(&settings->GatewayHttpMsUserAgent, cnv.cc, len, cleanup);
+
+		case FreeRDP_GatewayHttpReferer:
+			return update_string_copy_(&settings->GatewayHttpReferer, cnv.cc, len, cleanup);
+
+		case FreeRDP_GatewayHttpUserAgent:
+			return update_string_copy_(&settings->GatewayHttpUserAgent, cnv.cc, len, cleanup);
 
 		case FreeRDP_GatewayPassword:
 			return update_string_copy_(&settings->GatewayPassword, cnv.cc, len, cleanup);

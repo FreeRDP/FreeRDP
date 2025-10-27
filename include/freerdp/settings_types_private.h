@@ -512,7 +512,16 @@ struct rdp_settings
 	SETTINGS_DEPRECATED(ALIGN64 char* GatewayAvdAccessAadFormat);   /** 2023
 		                                                             * @since version 3.16.0
 		                                                             */
-	UINT64 padding2112[2112 - 2024];                                /* 2024 */
+	SETTINGS_DEPRECATED(ALIGN64 char* GatewayHttpReferer);          /** 2024
+		                                                             * @since version 3.18.0
+		                                                             */
+	SETTINGS_DEPRECATED(ALIGN64 char* GatewayHttpUserAgent);        /** 2025
+		                                                             * @since version 3.18.0
+		                                                             */
+	SETTINGS_DEPRECATED(ALIGN64 char* GatewayHttpMsUserAgent);      /** 2026
+		                                                             * @since version 3.18.0
+		                                                             */
+	UINT64 padding2112[2112 - 2027];                                /* 2027 */
 
 	/**
 	 * RemoteApp

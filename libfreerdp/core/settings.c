@@ -34,6 +34,7 @@
 #include <winpr/registry.h>
 #include <winpr/wtsapi.h>
 
+#include <freerdp/version.h>
 #include <freerdp/settings.h>
 #include <freerdp/utils/helpers.h>
 #include <freerdp/build-config.h>
@@ -770,6 +771,15 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 
 	if (!server && !remote)
 	{
+		if (!freerdp_settings_set_string(settings, FreeRDP_GatewayHttpUserAgent,
+		                                 FREERDP_USER_AGENT))
+			goto out_fail;
+		if (!freerdp_settings_set_string(settings, FreeRDP_GatewayHttpMsUserAgent,
+		                                 FREERDP_USER_AGENT))
+			goto out_fail;
+
+		if (!freerdp_settings_set_string(settings, FreeRDP_GatewayHttpReferer, ""))
+			goto out_fail;
 		if (!freerdp_settings_set_string(settings, FreeRDP_GatewayAvdAccessTokenFormat,
 		                                 "ms-appx-web%%3a%%2f%%2fMicrosoft.AAD.BrokerPlugin%%2f%s"))
 			goto out_fail;
@@ -777,7 +787,8 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 		                                 "https%%3A%%2F%%2F%s%%2F%s%%2Foauth2%%2Fnativeclient"))
 			goto out_fail;
 		if (!freerdp_settings_set_string(settings, FreeRDP_GatewayAvdScope,
-		                                 "https%3A%2F%2Fwww.wvd.microsoft.com%2F.default"))
+		                                 "https%3A%2F%2Fwww.wvd.microsoft.com%2F.default%20openid%"
+		                                 "20profile%20offline_access"))
 
 			goto out_fail;
 		if (!freerdp_settings_set_string(settings, FreeRDP_GatewayAvdClientID,
