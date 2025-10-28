@@ -55,6 +55,9 @@ struct winpr_poll_set
 #endif
 	size_t fillIndex;
 	size_t size;
+#if defined(__EMSCRIPTEN__)
+	size_t yieldCounter;
+#endif
 };
 
 typedef struct winpr_poll_set WINPR_POLL_SET;

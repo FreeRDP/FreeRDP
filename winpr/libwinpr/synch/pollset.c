@@ -148,9 +148,18 @@ int pollset_poll(WINPR_POLL_SET* set, DWORD dwMilliseconds)
 		if (ret >= 0)
 		{
 #if defined(__EMSCRIPTEN__)
-			/* Yield in emscripten so event handlers can be processed */
+			/* If we have tried 10 times unsuccessfully we will yield in emscripten so pending event
+			 * handlers might be run */
 			if (ret == 0)
-				emscripten_sleep(0);
+			{
+				if (++set->yieldCounter > 10)
+				{
+					emscripten_sleep(0);
+					set->yieldCounter = 0;
+				}
+			}
+			else
+				set->yieldCounter = 0;
 #endif
 			return ret;
 		}
