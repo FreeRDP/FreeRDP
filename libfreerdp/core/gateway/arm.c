@@ -186,8 +186,6 @@ static wStream* arm_build_http_request(rdpArm* arm, const char* method,
                                        size_t content_length)
 {
 	wStream* s = NULL;
-	HttpRequest* request = NULL;
-	const char* uri = NULL;
 
 	WINPR_ASSERT(arm);
 	WINPR_ASSERT(method);
@@ -196,16 +194,18 @@ static wStream* arm_build_http_request(rdpArm* arm, const char* method,
 	WINPR_ASSERT(arm->context);
 	WINPR_ASSERT(arm->context->rdp);
 
-	uri = http_context_get_uri(arm->http);
-	request = http_request_new();
+	const char* uri = http_context_get_uri(arm->http);
+	HttpRequest* request = http_request_new();
 
 	if (!request)
 		return NULL;
 
+	rdpSettings* settings = arm->context->settings;
+
 	if (!http_request_set_method(request, method) || !http_request_set_uri(request, uri))
 		goto out;
 
-	if (!freerdp_settings_get_string(arm->context->settings, FreeRDP_GatewayHttpExtAuthBearer))
+	if (!freerdp_settings_get_string(settings, FreeRDP_GatewayHttpExtAuthBearer))
 	{
 		char* token = NULL;
 
@@ -225,8 +225,7 @@ static wStream* arm_build_http_request(rdpArm* arm, const char* method,
 			goto out;
 		}
 
-		if (!freerdp_settings_set_string(arm->context->settings, FreeRDP_GatewayHttpExtAuthBearer,
-		                                 token))
+		if (!freerdp_settings_set_string(settings, FreeRDP_GatewayHttpExtAuthBearer, token))
 		{
 			free(token);
 			goto out;
@@ -236,8 +235,7 @@ static wStream* arm_build_http_request(rdpArm* arm, const char* method,
 
 	if (!http_request_set_auth_scheme(request, "Bearer") ||
 	    !http_request_set_auth_param(
-	        request,
-	        freerdp_settings_get_string(arm->context->settings, FreeRDP_GatewayHttpExtAuthBearer)))
+	        request, freerdp_settings_get_string(settings, FreeRDP_GatewayHttpExtAuthBearer)))
 		goto out;
 
 	if (!http_request_set_transfer_encoding(request, transferEncoding) ||
@@ -246,6 +244,39 @@ static wStream* arm_build_http_request(rdpArm* arm, const char* method,
 		goto out;
 
 	s = http_request_write(arm->http, request);
+	if (!s)
+		goto out;
+
+	const char* referer = freerdp_settings_get_string(settings, FreeRDP_GatewayHttpReferer);
+	if (referer && (strlen(referer) > 0))
+	{
+		if (!http_request_append_header(s, "Referer", "%s", referer))
+			goto out;
+	}
+
+	const char* tenantId = freerdp_settings_get_string(settings, FreeRDP_GatewayAvdAadtenantid);
+	if (!http_request_append_header(s, "x-ms-tenant-id", "%s", tenantId))
+		goto out;
+
+	const char* wvd = freerdp_settings_get_string(settings, FreeRDP_GatewayAvdWvdEndpointPool);
+	if (!wvd)
+		goto out;
+
+	if (!http_request_append_header(s, "MS-WVD-Activity-Hint", "ms-wvd-hp:%s", wvd))
+		goto out;
+
+	const char* armpath = freerdp_settings_get_string(settings, FreeRDP_GatewayAvdArmpath);
+	if (!armpath)
+		goto out;
+
+	char* value = crypto_base64url_encode((const BYTE*)armpath, strlen(armpath));
+	if (!value)
+		goto out;
+	const BOOL rc = http_request_append_header(s, "x-ms-opsarmpath64", "%s", value);
+	free(value);
+
+	if (!rc)
+		goto out;
 out:
 	http_request_free(request);
 
@@ -1046,10 +1077,16 @@ static BOOL arm_handle_bad_request(rdpArm* arm, const HttpResponse* response, BO
 
 	BOOL rc = FALSE;
 
+	http_response_log_error_status(WLog_Get(TAG), WLOG_ERROR, response);
+
 	const size_t len = http_response_get_body_length(response);
 	const char* msg = (const char*)http_response_get_body(response);
-	if (strnlen(msg, len + 1) > len)
+	if (msg && (strnlen(msg, len + 1) > len))
+	{
+		WLog_Print(arm->log, WLOG_ERROR, "Got HTTP Response data, but length is invalid");
+
 		return FALSE;
+	}
 
 	WLog_Print(arm->log, WLOG_DEBUG, "Got HTTP Response data: %s", msg);
 
@@ -1062,31 +1099,31 @@ static BOOL arm_handle_bad_request(rdpArm* arm, const HttpResponse* response, BO
 
 		return FALSE;
 	}
-
-	WINPR_JSON* gateway_code_obj = WINPR_JSON_GetObjectItemCaseSensitive(json, "Code");
-	const char* gw_code_str = WINPR_JSON_GetStringValue(gateway_code_obj);
-	if (gw_code_str == NULL)
-	{
-		WLog_Print(arm->log, WLOG_ERROR, "Response has no \"Code\" property");
-		http_response_log_error_status(WLog_Get(TAG), WLOG_ERROR, response);
-		goto fail;
-	}
-
-	if (strcmp(gw_code_str, "E_PROXY_ORCHESTRATION_LB_SESSIONHOST_DEALLOCATED") == 0)
-	{
-		*retry = TRUE;
-		WINPR_JSON* message = WINPR_JSON_GetObjectItemCaseSensitive(json, "Message");
-		const char* msgstr = WINPR_JSON_GetStringValue(message);
-		if (!msgstr)
-			WLog_WARN(TAG, "Starting your VM. It may take up to 5 minutes");
-		else
-			WLog_WARN(TAG, "%s", msgstr);
-		freerdp_set_last_error_if_not(arm->context, FREERDP_ERROR_CONNECT_TARGET_BOOTING);
-	}
 	else
 	{
-		http_response_log_error_status(WLog_Get(TAG), WLOG_ERROR, response);
-		goto fail;
+		WINPR_JSON* gateway_code_obj = WINPR_JSON_GetObjectItemCaseSensitive(json, "Code");
+		const char* gw_code_str = WINPR_JSON_GetStringValue(gateway_code_obj);
+		if (gw_code_str == NULL)
+		{
+			WLog_Print(arm->log, WLOG_ERROR, "Response has no \"Code\" property");
+			goto fail;
+		}
+
+		if (strcmp(gw_code_str, "E_PROXY_ORCHESTRATION_LB_SESSIONHOST_DEALLOCATED") == 0)
+		{
+			*retry = TRUE;
+			WINPR_JSON* message = WINPR_JSON_GetObjectItemCaseSensitive(json, "Message");
+			const char* msgstr = WINPR_JSON_GetStringValue(message);
+			if (!msgstr)
+				WLog_WARN(TAG, "Starting your VM. It may take up to 5 minutes");
+			else
+				WLog_WARN(TAG, "%s", msgstr);
+			freerdp_set_last_error_if_not(arm->context, FREERDP_ERROR_CONNECT_TARGET_BOOTING);
+		}
+		else
+		{
+			goto fail;
+		}
 	}
 
 	rc = TRUE;
@@ -1113,13 +1150,17 @@ static BOOL arm_handle_request(rdpArm* arm, BOOL* retry, DWORD timeout)
 	HttpResponse* response = NULL;
 	long StatusCode = 0;
 
-	if (!http_context_set_uri(arm->http, "/api/arm/v2/connections/") ||
+	const char* useragent =
+	    freerdp_settings_get_string(arm->context->settings, FreeRDP_GatewayHttpUserAgent);
+	const char* msuseragent =
+	    freerdp_settings_get_string(arm->context->settings, FreeRDP_GatewayHttpMsUserAgent);
+	if (!http_context_set_uri(arm->http, "/api/arm/v2/connections") ||
 	    !http_context_set_accept(arm->http, "application/json") ||
 	    !http_context_set_cache_control(arm->http, "no-cache") ||
 	    !http_context_set_pragma(arm->http, "no-cache") ||
 	    !http_context_set_connection(arm->http, "Keep-Alive") ||
-	    !http_context_set_user_agent(arm->http, FREERDP_USER_AGENT) ||
-	    !http_context_set_x_ms_user_agent(arm->http, FREERDP_USER_AGENT) ||
+	    !http_context_set_user_agent(arm->http, useragent) ||
+	    !http_context_set_x_ms_user_agent(arm->http, msuseragent) ||
 	    !http_context_set_host(arm->http, freerdp_settings_get_string(arm->context->settings,
 	                                                                  FreeRDP_GatewayHostname)))
 		goto arm_error;

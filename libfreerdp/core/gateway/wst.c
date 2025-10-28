@@ -68,7 +68,7 @@ struct rdp_wst
 	websocket_context* wscontext;
 };
 
-static const char arm_query_param[] = "%s%cClmTk=Bearer%%20%s&X-MS-User-Agent=FreeRDP%%2F3.0";
+static const char arm_query_param[] = "%s%cClmTk=Bearer%%20%s&X-MS-User-Agent=%s";
 
 static BOOL wst_get_gateway_credentials(rdpContext* context, rdp_auth_reason reason)
 {
@@ -356,10 +356,16 @@ static BOOL wst_handle_ok_or_forbidden(rdpWst* wst, HttpResponse** ppresponse, D
 
 	/* AVD returns a 403 response with a ARRAffinity cookie set. retry with that cookie */
 	const char* affinity = http_response_get_setcookie(*ppresponse, "ARRAffinity");
-	if (affinity && freerdp_settings_get_bool(wst->context->settings, FreeRDP_GatewayArmTransport))
+	const char* samesite = http_response_get_setcookie(*ppresponse, "ARRAffinitySameSite");
+	if ((affinity || samesite) &&
+	    freerdp_settings_get_bool(wst->context->settings, FreeRDP_GatewayArmTransport))
 	{
-		WLog_DBG(TAG, "Got Affinity cookie %s", affinity);
-		http_context_set_cookie(wst->http, "ARRAffinity", affinity);
+		WLog_INFO(TAG, "Got ARRAffinity cookie         %s", affinity);
+		WLog_INFO(TAG, "Got ARRAffinitySameSite cookie %s", samesite);
+		if (affinity)
+			http_context_set_cookie(wst->http, "ARRAffinity", affinity);
+		if (samesite)
+			http_context_set_cookie(wst->http, "ARRAffinitySameSite", samesite);
 		http_response_free(*ppresponse);
 		*ppresponse = NULL;
 		/* Terminate this connection and make a new one with the Loadbalancing Cookie */
@@ -378,9 +384,12 @@ static BOOL wst_handle_ok_or_forbidden(rdpWst* wst, HttpResponse** ppresponse, D
 			char* urlWithAuth = NULL;
 			size_t urlLen = 0;
 			char firstParam = (strchr(wst->gwpath, '?') != NULL) ? '&' : '?';
-			winpr_asprintf(&urlWithAuth, &urlLen, arm_query_param, wst->gwpath, firstParam,
-			               freerdp_settings_get_string(wst->context->settings,
-			                                           FreeRDP_GatewayHttpExtAuthBearer));
+			const char* bearer = freerdp_settings_get_string(wst->context->settings,
+			                                                 FreeRDP_GatewayHttpExtAuthBearer);
+			const char* ua =
+			    freerdp_settings_get_string(wst->context->settings, FreeRDP_GatewayHttpMsUserAgent);
+			winpr_asprintf(&urlWithAuth, &urlLen, arm_query_param, wst->gwpath, firstParam, bearer,
+			               ua);
 			if (!urlWithAuth)
 				return FALSE;
 			free(wst->gwpath);
@@ -838,13 +847,17 @@ rdpWst* wst_new(rdpContext* context)
 	if (!wst->http)
 		goto wst_alloc_error;
 
+	const char* useragent =
+	    freerdp_settings_get_string(context->settings, FreeRDP_GatewayHttpUserAgent);
+	const char* msuseragent =
+	    freerdp_settings_get_string(context->settings, FreeRDP_GatewayHttpMsUserAgent);
 	if (!http_context_set_uri(wst->http, wst->gwpath) ||
 	    !http_context_set_accept(wst->http, "*/*") ||
 	    !http_context_set_cache_control(wst->http, "no-cache") ||
 	    !http_context_set_pragma(wst->http, "no-cache") ||
 	    !http_context_set_connection(wst->http, "Keep-Alive") ||
-	    !http_context_set_user_agent(wst->http, FREERDP_USER_AGENT) ||
-	    !http_context_set_x_ms_user_agent(wst->http, FREERDP_USER_AGENT) ||
+	    !http_context_set_user_agent(wst->http, useragent) ||
+	    !http_context_set_x_ms_user_agent(wst->http, msuseragent) ||
 	    !http_context_set_host(wst->http, wst->gwhostname) ||
 	    !http_context_enable_websocket_upgrade(wst->http, TRUE))
 	{

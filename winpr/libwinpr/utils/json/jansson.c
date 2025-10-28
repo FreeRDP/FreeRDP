@@ -298,6 +298,12 @@ WINPR_JSON* WINPR_JSON_AddNumberToObject(WINPR_JSON* object, const char* name, d
 	return add_to_object(object, name, obj);
 }
 
+WINPR_JSON* WINPR_JSON_AddIntegerToObject(WINPR_JSON* object, const char* name, int64_t number)
+{
+	json_t* obj = json_integer(number);
+	return add_to_object(object, name, obj);
+}
+
 WINPR_JSON* WINPR_JSON_AddStringToObject(WINPR_JSON* object, const char* name, const char* string)
 {
 	json_t* obj = json_string(string);
