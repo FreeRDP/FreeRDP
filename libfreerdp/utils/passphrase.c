@@ -351,8 +351,8 @@ int freerdp_interruptible_getc(rdpContext* context, FILE* stream)
 	int rc = EOF;
 	const int fd = fileno(stream);
 
-	if (!set_termianl_nonblock(fd, TRUE))
-		return EOF;
+	(void)set_termianl_nonblock(fd, TRUE);
+
 	do
 	{
 		const int res = wait_for_fd(fd, 10);
@@ -374,8 +374,7 @@ int freerdp_interruptible_getc(rdpContext* context, FILE* stream)
 		}
 	} while (!freerdp_shall_disconnect_context(context));
 
-	if (!set_termianl_nonblock(fd, FALSE))
-		return EOF;
+	(void)set_termianl_nonblock(fd, FALSE);
 
 	return rc;
 }
@@ -416,9 +415,11 @@ SSIZE_T freerdp_interruptible_get_line(rdpContext* context, char** plineptr, siz
 		const int fd = fileno(stream);
 
 		struct termios termios = { 0 };
-		if (tcgetattr(fd, &termios) != 0)
-			return -1;
-		echo = (termios.c_lflag & ECHO) != 0;
+		/* This might fail if /from-stdin is used. */
+		if (tcgetattr(fd, &termios) == 0)
+			echo = (termios.c_lflag & ECHO) != 0;
+		else
+			echo = false;
 	}
 #endif
 
