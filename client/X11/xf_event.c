@@ -488,8 +488,7 @@ static BOOL xf_event_MotionNotify(xfContext* xfc, const XMotionEvent* event, BOO
 	if (xfc->window)
 		xf_floatbar_set_root_y(xfc->window->floatbar, event->y);
 
-	if (xfc->xi_event ||
-	    (xfc->common.mouse_grabbed && freerdp_client_use_relative_mouse_events(&xfc->common)))
+	if (xfc->xi_event || xfc->xi_rawevent || (xfc->common.mouse_grabbed && xf_use_rel_mouse(xfc)))
 		return TRUE;
 
 	return xf_generic_MotionNotify(xfc, event->x, event->y, event->window, app);
@@ -602,8 +601,7 @@ static BOOL xf_event_ButtonPress(xfContext* xfc, const XButtonEvent* event, BOOL
 {
 	xf_grab_mouse(xfc);
 
-	if (xfc->xi_event ||
-	    (xfc->common.mouse_grabbed && freerdp_client_use_relative_mouse_events(&xfc->common)))
+	if (xfc->xi_event || xfc->xi_rawevent || (xfc->common.mouse_grabbed && xf_use_rel_mouse(xfc)))
 		return TRUE;
 	if (!app && xfc_is_floatbar_window(xfc, event->window))
 		return TRUE;
@@ -616,8 +614,7 @@ static BOOL xf_event_ButtonRelease(xfContext* xfc, const XButtonEvent* event, BO
 {
 	xf_grab_mouse(xfc);
 
-	if (xfc->xi_event ||
-	    (xfc->common.mouse_grabbed && freerdp_client_use_relative_mouse_events(&xfc->common)))
+	if (xfc->xi_event || xfc->xi_rawevent || (xfc->common.mouse_grabbed && xf_use_rel_mouse(xfc)))
 		return TRUE;
 	return xf_generic_ButtonEvent(xfc, event->x, event->y,
 	                              WINPR_ASSERTING_INT_CAST(int, event->button), event->window, app,

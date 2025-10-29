@@ -29,5 +29,6 @@
 
 int xf_input_init(xfContext* xfc, Window window);
 int xf_input_handle_event(xfContext* xfc, const XEvent* event);
+bool xf_use_rel_mouse(xfContext* xfc);
 
 #endif /* FREERDP_CLIENT_X11_INPUT_H */
