@@ -145,8 +145,8 @@ static void fatal_handler(int signum)
 
 static const int term_signals[] = { SIGINT, SIGKILL, SIGQUIT, SIGSTOP, SIGTERM };
 
-static const int fatal_signals[] = { SIGABRT,   SIGALRM, SIGBUS,  SIGFPE,  SIGHUP,  SIGILL,
-	                                 SIGSEGV,   SIGTTIN, SIGTTOU, SIGUSR1, SIGUSR2,
+static const int fatal_signals[] = { SIGABRT,   SIGALRM, SIGBUS,  SIGFPE,  SIGHUP,
+	                                 SIGILL,    SIGSEGV, SIGTTIN, SIGTTOU,
 #ifdef SIGPOLL
 	                                 SIGPOLL,
 #endif
