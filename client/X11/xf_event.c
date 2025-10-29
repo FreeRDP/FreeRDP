@@ -55,6 +55,8 @@
 			(y) = 0;            \
 	} while (0)
 
+static const DWORD mouseLogLevel = WLOG_TRACE;
+
 const char* x11_event_string(int event)
 {
 	switch (event)
@@ -425,9 +427,15 @@ static BOOL xf_event_VisibilityNotify(xfContext* xfc, const XVisibilityEvent* ev
 	return TRUE;
 }
 
-BOOL xf_generic_MotionNotify(xfContext* xfc, int x, int y, Window window, BOOL app)
+BOOL xf_generic_MotionNotify_(xfContext* xfc, int x, int y, Window window, BOOL app,
+                              const char* file, const char* fkt, size_t line)
 {
 	Window childWindow = None;
+
+	if (WLog_IsLevelActive(xfc->log, mouseLogLevel))
+		WLog_PrintTextMessage(xfc->log, mouseLogLevel, line, file, fkt,
+		                      "%s: x=%d, y=%d, window=0x%08lx, app=%d", __func__, x, y, window,
+		                      app);
 
 	WINPR_ASSERT(xfc);
 	WINPR_ASSERT(xfc->common.context.settings);
@@ -455,10 +463,15 @@ BOOL xf_generic_MotionNotify(xfContext* xfc, int x, int y, Window window, BOOL a
 	return TRUE;
 }
 
-BOOL xf_generic_RawMotionNotify(xfContext* xfc, int x, int y, WINPR_ATTR_UNUSED Window window,
-                                BOOL app)
+BOOL xf_generic_RawMotionNotify_(xfContext* xfc, int x, int y, WINPR_ATTR_UNUSED Window window,
+                                 BOOL app, const char* file, const char* fkt, size_t line)
 {
 	WINPR_ASSERT(xfc);
+
+	if (WLog_IsLevelActive(xfc->log, mouseLogLevel))
+		WLog_PrintTextMessage(xfc->log, mouseLogLevel, line, file, fkt,
+		                      "%s: x=%d, y=%d, window=0x%08lx, app=%d", __func__, x, y, window,
+		                      app);
 
 	if (app)
 	{
@@ -483,11 +496,16 @@ static BOOL xf_event_MotionNotify(xfContext* xfc, const XMotionEvent* event, BOO
 	return xf_generic_MotionNotify(xfc, event->x, event->y, event->window, app);
 }
 
-BOOL xf_generic_ButtonEvent(xfContext* xfc, int x, int y, int button, Window window, BOOL app,
-                            BOOL down)
+BOOL xf_generic_ButtonEvent_(xfContext* xfc, int x, int y, int button, Window window, BOOL app,
+                             BOOL down, const char* file, const char* fkt, size_t line)
 {
 	UINT16 flags = 0;
 	Window childWindow = None;
+
+	if (WLog_IsLevelActive(xfc->log, mouseLogLevel))
+		WLog_PrintTextMessage(xfc->log, mouseLogLevel, line, file, fkt,
+		                      "%s: x=%d, y=%d, button=%d, window=0x%08lx, app=%d, down=%d",
+		                      __func__, x, y, button, window, app, down);
 
 	WINPR_ASSERT(xfc);
 	if (button < 0)
@@ -1343,9 +1361,14 @@ BOOL xf_event_process(freerdp* instance, const XEvent* event)
 	return status;
 }
 
-BOOL xf_generic_RawButtonEvent(xfContext* xfc, int button, BOOL app, BOOL down)
+BOOL xf_generic_RawButtonEvent_(xfContext* xfc, int button, BOOL app, BOOL down, const char* file,
+                                const char* fkt, size_t line)
 {
 	UINT16 flags = 0;
+
+	if (WLog_IsLevelActive(xfc->log, mouseLogLevel))
+		WLog_PrintTextMessage(xfc->log, mouseLogLevel, line, file, fkt,
+		                      "%s: button=%d, app=%d, down=%d", __func__, button, app, down);
 
 	if (app || (button < 0))
 		return FALSE;

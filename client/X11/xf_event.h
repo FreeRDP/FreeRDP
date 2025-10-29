@@ -37,10 +37,25 @@ void xf_event_SendClientEvent(xfContext* xfc, xfWindow* window, Atom atom, unsig
 void xf_event_adjust_coordinates(xfContext* xfc, int* x, int* y);
 void xf_adjust_coordinates_to_screen(xfContext* xfc, UINT32* x, UINT32* y);
 
-BOOL xf_generic_MotionNotify(xfContext* xfc, int x, int y, Window window, BOOL app);
-BOOL xf_generic_RawMotionNotify(xfContext* xfc, int x, int y, Window window, BOOL app);
-BOOL xf_generic_ButtonEvent(xfContext* xfc, int x, int y, int button, Window window, BOOL app,
-                            BOOL down);
-BOOL xf_generic_RawButtonEvent(xfContext* xfc, int button, BOOL app, BOOL down);
+#define xf_generic_MotionNotify(xfc, x, y, window, app) \
+	xf_generic_MotionNotify_((xfc), (x), (y), (window), (app), __FILE__, __func__, __LINE__)
+BOOL xf_generic_MotionNotify_(xfContext* xfc, int x, int y, Window window, BOOL app,
+                              const char* file, const char* fkt, size_t line);
+
+#define xf_generic_RawMotionNotify(xfc, x, y, window, app) \
+	xf_generic_RawMotionNotify_((xfc), (x), (y), (window), (app), __FILE__, __func__, __LINE__)
+BOOL xf_generic_RawMotionNotify_(xfContext* xfc, int x, int y, Window window, BOOL app,
+                                 const char* file, const char* fkt, size_t line);
+
+#define xf_generic_ButtonEvent(xfc, x, y, button, window, app, down)                      \
+	xf_generic_ButtonEvent_((xfc), (x), (y), (button), (window), (app), (down), __FILE__, \
+	                        __func__, __LINE__)
+BOOL xf_generic_ButtonEvent_(xfContext* xfc, int x, int y, int button, Window window, BOOL app,
+                             BOOL down, const char* file, const char* fkt, size_t line);
+
+#define xf_generic_RawButtonEvent(xfc, button, app, down) \
+	xf_generic_RawButtonEvent_((xfc), (button), (app), (down), __FILE__, __func__, __LINE__)
+BOOL xf_generic_RawButtonEvent_(xfContext* xfc, int button, BOOL app, BOOL down, const char* file,
+                                const char* fkt, size_t line);
 
 #endif /* FREERDP_CLIENT_X11_EVENT_H */
