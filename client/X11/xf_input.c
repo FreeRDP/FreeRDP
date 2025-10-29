@@ -745,7 +745,7 @@ static int xf_input_pens_unhover(xfContext* xfc)
 	return 0;
 }
 
-static bool xf_use_rel_mouse(xfContext* xfc)
+bool xf_use_rel_mouse(xfContext* xfc)
 {
 	if (!freerdp_client_use_relative_mouse_events(&xfc->common))
 		return false;
