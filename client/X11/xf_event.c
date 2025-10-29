@@ -44,8 +44,6 @@
 #include "xf_debug.h"
 #include "xf_event.h"
 
-#define TAG CLIENT_TAG("x11")
-
 #define CLAMP_COORDINATES(x, y) \
 	do                          \
 	{                           \
@@ -237,7 +235,7 @@ static BOOL action_script_run(xfContext* xfc, const char* buffer, size_t size, v
 
 	if (size == 0)
 	{
-		WLog_WARN(TAG, "ActionScript xevent: script did not return data");
+		WLog_Print(xfc->log, WLOG_WARN, "ActionScript xevent: script did not return data");
 		return FALSE;
 	}
 
@@ -253,20 +251,20 @@ static BOOL action_script_run(xfContext* xfc, const char* buffer, size_t size, v
 		free(cmd);
 		if (!fp)
 		{
-			WLog_ERR(TAG, "Failed to execute '%s'", buffer);
+			WLog_Print(xfc->log, WLOG_ERROR, "Failed to execute '%s'", buffer);
 			return FALSE;
 		}
 
 		*pstatus = pclose(fp);
 		if (*pstatus < 0)
 		{
-			WLog_ERR(TAG, "Command '%s' returned %d", buffer, *pstatus);
+			WLog_Print(xfc->log, WLOG_ERROR, "Command '%s' returned %d", buffer, *pstatus);
 			return FALSE;
 		}
 	}
 	else
 	{
-		WLog_WARN(TAG, "ActionScript xevent: No such file '%s'", buffer);
+		WLog_Print(xfc->log, WLOG_WARN, "ActionScript xevent: No such file '%s'", buffer);
 		return FALSE;
 	}
 
@@ -475,7 +473,8 @@ BOOL xf_generic_RawMotionNotify_(xfContext* xfc, int x, int y, WINPR_ATTR_UNUSED
 
 	if (app)
 	{
-		WLog_ERR(TAG, "Relative mouse input is not supported with remoate app mode!");
+		WLog_Print(xfc->log, WLOG_ERROR,
+		           "Relative mouse input is not supported with remoate app mode!");
 		return FALSE;
 	}
 
@@ -744,17 +743,17 @@ static BOOL xf_event_MappingNotify(xfContext* xfc, const XMappingEvent* event, B
 		case MappingModifier:
 			return xf_keyboard_update_modifier_map(xfc);
 		case MappingKeyboard:
-			WLog_VRB(TAG, "[%d] MappingKeyboard", event->request);
+			WLog_Print(xfc->log, WLOG_TRACE, "[%d] MappingKeyboard", event->request);
 			return xf_keyboard_init(xfc);
 		case MappingPointer:
-			WLog_VRB(TAG, "[%d] MappingPointer", event->request);
+			WLog_Print(xfc->log, WLOG_TRACE, "[%d] MappingPointer", event->request);
 			xf_button_map_init(xfc);
 			return TRUE;
 		default:
-			WLog_WARN(TAG,
-			          "[%d] Unsupported MappingNotify::request, must be one "
-			          "of[MappingModifier(%d), MappingKeyboard(%d), MappingPointer(%d)]",
-			          event->request, MappingModifier, MappingKeyboard, MappingPointer);
+			WLog_Print(xfc->log, WLOG_WARN,
+			           "[%d] Unsupported MappingNotify::request, must be one "
+			           "of[MappingModifier(%d), MappingKeyboard(%d), MappingPointer(%d)]",
+			           event->request, MappingModifier, MappingKeyboard, MappingPointer);
 			return FALSE;
 	}
 }
@@ -840,8 +839,8 @@ static BOOL xf_event_ConfigureNotify(xfContext* xfc, const XConfigureEvent* even
 	const rdpSettings* settings = xfc->common.context.settings;
 	WINPR_ASSERT(settings);
 
-	WLog_DBG(TAG, "x=%" PRId32 ", y=%" PRId32 ", w=%" PRId32 ", h=%" PRId32, event->x, event->y,
-	         event->width, event->height);
+	WLog_Print(xfc->log, WLOG_DEBUG, "x=%" PRId32 ", y=%" PRId32 ", w=%" PRId32 ", h=%" PRId32,
+	           event->x, event->y, event->width, event->height);
 
 	if (!app)
 	{
