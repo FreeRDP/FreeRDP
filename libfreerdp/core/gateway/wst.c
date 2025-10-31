@@ -406,6 +406,7 @@ static BOOL wst_handle_ok_or_forbidden(rdpWst* wst, HttpResponse** ppresponse, D
 		if (!*ppresponse)
 			return FALSE;
 
+		(void)http_response_extract_cookies(*ppresponse, wst->http);
 		*pStatusCode = http_response_get_status_code(*ppresponse);
 	}
 
@@ -432,6 +433,8 @@ static BOOL wst_handle_denied(rdpWst* wst, HttpResponse** ppresponse, UINT16* pS
 	if (!*ppresponse)
 		return FALSE;
 
+	(void)http_response_extract_cookies(*ppresponse, wst->http);
+
 	while (!credssp_auth_is_complete(wst->auth))
 	{
 		if (!wst_recv_auth_token(wst->auth, *ppresponse))
@@ -446,6 +449,7 @@ static BOOL wst_handle_denied(rdpWst* wst, HttpResponse** ppresponse, UINT16* pS
 			*ppresponse = http_response_recv(wst->tls, TRUE);
 			if (!*ppresponse)
 				return FALSE;
+			(void)http_response_extract_cookies(*ppresponse, wst->http);
 		}
 	}
 	*pStatusCode = http_response_get_status_code(*ppresponse);
@@ -521,6 +525,7 @@ BOOL wst_connect(rdpWst* wst, DWORD timeout)
 		freerdp_set_last_error_if_not(wst->context, FREERDP_ERROR_CONNECT_FAILED);
 		return FALSE;
 	}
+	(void)http_response_extract_cookies(response, wst->http);
 
 	UINT16 StatusCode = http_response_get_status_code(response);
 	BOOL success = TRUE;

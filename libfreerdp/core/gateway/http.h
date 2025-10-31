@@ -116,6 +116,7 @@ FREERDP_LOCAL void http_response_free(HttpResponse* response);
 WINPR_ATTR_MALLOC(http_response_free, 1)
 FREERDP_LOCAL HttpResponse* http_response_new(void);
 
+WINPR_ATTR_MALLOC(http_response_free, 1)
 FREERDP_LOCAL HttpResponse* http_response_recv(rdpTls* tls, BOOL readContentLength);
 
 FREERDP_LOCAL UINT16 http_response_get_status_code(const HttpResponse* response);
@@ -125,6 +126,8 @@ FREERDP_LOCAL const char* http_response_get_auth_token(const HttpResponse* respo
                                                        const char* method);
 FREERDP_LOCAL const char* http_response_get_setcookie(const HttpResponse* response,
                                                       const char* cookie);
+FREERDP_LOCAL BOOL http_response_extract_cookies(const HttpResponse* response,
+                                                 HttpContext* context);
 FREERDP_LOCAL TRANSFER_ENCODING http_response_get_transfer_encoding(const HttpResponse* response);
 FREERDP_LOCAL BOOL http_response_is_websocket(const HttpContext* http,
                                               const HttpResponse* response);
