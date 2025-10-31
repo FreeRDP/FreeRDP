@@ -1819,6 +1819,38 @@ BOOL freerdp_client_send_extended_button_event(rdpClientContext* cctx, BOOL rela
 	return TRUE;
 }
 
+static BOOL freerdp_handle_touch_to_mouse(rdpClientContext* cctx, BOOL down,
+                                          const FreeRDP_TouchContact* contact)
+{
+	const UINT16 flags = PTR_FLAGS_MOVE | (down ? PTR_FLAGS_DOWN : 0);
+	const UINT16 xflags = down ? PTR_XFLAGS_DOWN : 0;
+	WINPR_ASSERT(contact);
+	WINPR_ASSERT(contact->x <= UINT16_MAX);
+	WINPR_ASSERT(contact->y <= UINT16_MAX);
+
+	switch (contact->count)
+	{
+		case 1:
+			return freerdp_client_send_button_event(cctx, FALSE, flags | PTR_FLAGS_BUTTON1,
+			                                        contact->x, contact->y);
+		case 2:
+			return freerdp_client_send_button_event(cctx, FALSE, flags | PTR_FLAGS_BUTTON2,
+			                                        contact->x, contact->y);
+		case 3:
+			return freerdp_client_send_button_event(cctx, FALSE, flags | PTR_FLAGS_BUTTON3,
+			                                        contact->x, contact->y);
+		case 4:
+			return freerdp_client_send_extended_button_event(
+			    cctx, FALSE, xflags | PTR_XFLAGS_BUTTON1, contact->x, contact->y);
+		case 5:
+			return freerdp_client_send_extended_button_event(
+			    cctx, FALSE, xflags | PTR_XFLAGS_BUTTON1, contact->x, contact->y);
+		default:
+			/* unmapped events, ignore */
+			return TRUE;
+	}
+}
+
 static BOOL freerdp_handle_touch_up(rdpClientContext* cctx, const FreeRDP_TouchContact* contact)
 {
 	WINPR_ASSERT(cctx);
@@ -1828,44 +1860,35 @@ static BOOL freerdp_handle_touch_up(rdpClientContext* cctx, const FreeRDP_TouchC
 	RdpeiClientContext* rdpei = cctx->rdpei;
 
 	if (!rdpei)
-	{
-		UINT16 flags = 0;
-		flags |= PTR_FLAGS_BUTTON1;
+		return freerdp_handle_touch_to_mouse(cctx, FALSE, contact);
 
-		WINPR_ASSERT(contact->x <= UINT16_MAX);
-		WINPR_ASSERT(contact->y <= UINT16_MAX);
-		return freerdp_client_send_button_event(cctx, FALSE, flags, contact->x, contact->y);
+	int contactId = 0;
+
+	if (rdpei->TouchRawEvent)
+	{
+		const UINT32 flags = RDPINPUT_CONTACT_FLAG_UP;
+		const UINT32 contactFlags = ((contact->flags & FREERDP_TOUCH_HAS_PRESSURE) != 0)
+		                                ? CONTACT_DATA_PRESSURE_PRESENT
+		                                : 0;
+		// Ensure contact position is unchanged from "engaged" to "out of range" state
+		rdpei->TouchRawEvent(rdpei, contact->id, contact->x, contact->y, &contactId,
+		                     RDPINPUT_CONTACT_FLAG_UPDATE | RDPINPUT_CONTACT_FLAG_INRANGE |
+		                         RDPINPUT_CONTACT_FLAG_INCONTACT,
+		                     contactFlags, contact->pressure);
+		rdpei->TouchRawEvent(rdpei, contact->id, contact->x, contact->y, &contactId, flags,
+		                     contactFlags, contact->pressure);
 	}
 	else
 	{
-		int contactId = 0;
-
-		if (rdpei->TouchRawEvent)
-		{
-			const UINT32 flags = RDPINPUT_CONTACT_FLAG_UP;
-			const UINT32 contactFlags = ((contact->flags & FREERDP_TOUCH_HAS_PRESSURE) != 0)
-			                                ? CONTACT_DATA_PRESSURE_PRESENT
-			                                : 0;
-			// Ensure contact position is unchanged from "engaged" to "out of range" state
-			rdpei->TouchRawEvent(rdpei, contact->id, contact->x, contact->y, &contactId,
-			                     RDPINPUT_CONTACT_FLAG_UPDATE | RDPINPUT_CONTACT_FLAG_INRANGE |
-			                         RDPINPUT_CONTACT_FLAG_INCONTACT,
-			                     contactFlags, contact->pressure);
-			rdpei->TouchRawEvent(rdpei, contact->id, contact->x, contact->y, &contactId, flags,
-			                     contactFlags, contact->pressure);
-		}
-		else
-		{
-			WINPR_ASSERT(rdpei->TouchEnd);
-			rdpei->TouchEnd(rdpei, contact->id, contact->x, contact->y, &contactId);
-		}
+		WINPR_ASSERT(rdpei->TouchEnd);
+		rdpei->TouchEnd(rdpei, contact->id, contact->x, contact->y, &contactId);
 	}
+	return TRUE;
 #else
 	WLog_WARN(TAG, "Touch event detected but RDPEI support not compiled in. Recompile with "
 	               "-DCHANNEL_RDPEI_CLIENT=ON");
+	return freerdp_handle_touch_to_mouse(cctx, FALSE, contact);
 #endif
-
-	return TRUE;
 }
 
 static BOOL freerdp_handle_touch_down(rdpClientContext* cctx, const FreeRDP_TouchContact* contact)
@@ -1878,42 +1901,43 @@ static BOOL freerdp_handle_touch_down(rdpClientContext* cctx, const FreeRDP_Touc
 
 	// Emulate mouse click if touch is not possible, like in login screen
 	if (!rdpei)
-	{
-		UINT16 flags = 0;
-		flags |= PTR_FLAGS_DOWN;
-		flags |= PTR_FLAGS_MOVE;
-		flags |= PTR_FLAGS_BUTTON1;
+		return freerdp_handle_touch_to_mouse(cctx, TRUE, contact);
 
-		WINPR_ASSERT(contact->x <= UINT16_MAX);
-		WINPR_ASSERT(contact->y <= UINT16_MAX);
-		return freerdp_client_send_button_event(cctx, FALSE, flags, contact->x, contact->y);
+	int contactId = 0;
+
+	if (rdpei->TouchRawEvent)
+	{
+		const UINT32 flags = RDPINPUT_CONTACT_FLAG_DOWN | RDPINPUT_CONTACT_FLAG_INRANGE |
+		                     RDPINPUT_CONTACT_FLAG_INCONTACT;
+		const UINT32 contactFlags = ((contact->flags & FREERDP_TOUCH_HAS_PRESSURE) != 0)
+		                                ? CONTACT_DATA_PRESSURE_PRESENT
+		                                : 0;
+		rdpei->TouchRawEvent(rdpei, contact->id, contact->x, contact->y, &contactId, flags,
+		                     contactFlags, contact->pressure);
 	}
 	else
 	{
-		int contactId = 0;
-
-		if (rdpei->TouchRawEvent)
-		{
-			const UINT32 flags = RDPINPUT_CONTACT_FLAG_DOWN | RDPINPUT_CONTACT_FLAG_INRANGE |
-			                     RDPINPUT_CONTACT_FLAG_INCONTACT;
-			const UINT32 contactFlags = ((contact->flags & FREERDP_TOUCH_HAS_PRESSURE) != 0)
-			                                ? CONTACT_DATA_PRESSURE_PRESENT
-			                                : 0;
-			rdpei->TouchRawEvent(rdpei, contact->id, contact->x, contact->y, &contactId, flags,
-			                     contactFlags, contact->pressure);
-		}
-		else
-		{
-			WINPR_ASSERT(rdpei->TouchBegin);
-			rdpei->TouchBegin(rdpei, contact->id, contact->x, contact->y, &contactId);
-		}
+		WINPR_ASSERT(rdpei->TouchBegin);
+		rdpei->TouchBegin(rdpei, contact->id, contact->x, contact->y, &contactId);
 	}
+
+	return TRUE;
 #else
 	WLog_WARN(TAG, "Touch event detected but RDPEI support not compiled in. Recompile with "
 	               "-DCHANNEL_RDPEI_CLIENT=ON");
+	return freerdp_handle_touch_to_mouse(cctx, TRUE, contact);
 #endif
+}
 
-	return TRUE;
+static BOOL freerdp_handle_touch_motion_to_mouse(rdpClientContext* cctx,
+                                                 const FreeRDP_TouchContact* contact)
+{
+	const UINT16 flags = PTR_FLAGS_MOVE;
+
+	WINPR_ASSERT(contact);
+	WINPR_ASSERT(contact->x <= UINT16_MAX);
+	WINPR_ASSERT(contact->y <= UINT16_MAX);
+	return freerdp_client_send_button_event(cctx, FALSE, flags, contact->x, contact->y);
 }
 
 static BOOL freerdp_handle_touch_motion(rdpClientContext* cctx, const FreeRDP_TouchContact* contact)
@@ -1925,40 +1949,32 @@ static BOOL freerdp_handle_touch_motion(rdpClientContext* cctx, const FreeRDP_To
 	RdpeiClientContext* rdpei = cctx->rdpei;
 
 	if (!rdpei)
-	{
-		UINT16 flags = 0;
-		flags |= PTR_FLAGS_MOVE;
+		return freerdp_handle_touch_motion_to_mouse(cctx, contact);
 
-		WINPR_ASSERT(contact->x <= UINT16_MAX);
-		WINPR_ASSERT(contact->y <= UINT16_MAX);
-		return freerdp_client_send_button_event(cctx, FALSE, flags, contact->x, contact->y);
+	int contactId = 0;
+
+	if (rdpei->TouchRawEvent)
+	{
+		const UINT32 flags = RDPINPUT_CONTACT_FLAG_UPDATE | RDPINPUT_CONTACT_FLAG_INRANGE |
+		                     RDPINPUT_CONTACT_FLAG_INCONTACT;
+		const UINT32 contactFlags = ((contact->flags & FREERDP_TOUCH_HAS_PRESSURE) != 0)
+		                                ? CONTACT_DATA_PRESSURE_PRESENT
+		                                : 0;
+		rdpei->TouchRawEvent(rdpei, contact->id, contact->x, contact->y, &contactId, flags,
+		                     contactFlags, contact->pressure);
 	}
 	else
 	{
-		int contactId = 0;
-
-		if (rdpei->TouchRawEvent)
-		{
-			const UINT32 flags = RDPINPUT_CONTACT_FLAG_UPDATE | RDPINPUT_CONTACT_FLAG_INRANGE |
-			                     RDPINPUT_CONTACT_FLAG_INCONTACT;
-			const UINT32 contactFlags = ((contact->flags & FREERDP_TOUCH_HAS_PRESSURE) != 0)
-			                                ? CONTACT_DATA_PRESSURE_PRESENT
-			                                : 0;
-			rdpei->TouchRawEvent(rdpei, contact->id, contact->x, contact->y, &contactId, flags,
-			                     contactFlags, contact->pressure);
-		}
-		else
-		{
-			WINPR_ASSERT(rdpei->TouchUpdate);
-			rdpei->TouchUpdate(rdpei, contact->id, contact->x, contact->y, &contactId);
-		}
+		WINPR_ASSERT(rdpei->TouchUpdate);
+		rdpei->TouchUpdate(rdpei, contact->id, contact->x, contact->y, &contactId);
 	}
+
+	return TRUE;
 #else
 	WLog_WARN(TAG, "Touch event detected but RDPEI support not compiled in. Recompile with "
 	               "-DCHANNEL_RDPEI_CLIENT=ON");
+	return freerdp_handle_touch_motion_to_mouse(cctx, contact);
 #endif
-
-	return TRUE;
 }
 
 static BOOL freerdp_client_touch_update(rdpClientContext* cctx, UINT32 flags, INT32 touchId,
