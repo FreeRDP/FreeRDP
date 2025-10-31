@@ -96,8 +96,8 @@ struct s_http_response
 	size_t BodyLength;
 	BYTE* BodyContent;
 
-	wListDictionary* Authenticates;
-	wListDictionary* SetCookie;
+	wHashTable* Authenticates;
+	wHashTable* SetCookie;
 	wStream* data;
 };
 
@@ -910,10 +910,10 @@ static BOOL http_response_parse_header_field(HttpResponse* response, const char*
 			if (!authScheme)
 				return FALSE;
 
-			authValue = NULL;
+			authValue = "";
 		}
 
-		status = ListDictionary_Add(response->Authenticates, authScheme, authValue);
+		status = HashTable_Insert(response->Authenticates, authScheme, authValue);
 	}
 	else if (_stricmp(name, "Set-Cookie") == 0)
 	{
@@ -961,7 +961,7 @@ static BOOL http_response_parse_header_field(HttpResponse* response, const char*
 			return FALSE;
 		}
 
-		status = ListDictionary_Add(response->SetCookie, CookieName, CookieValue);
+		status = HashTable_Insert(response->SetCookie, CookieName, CookieValue);
 	}
 
 	return status;
@@ -1539,16 +1539,20 @@ const BYTE* http_response_get_body(const HttpResponse* response)
 	return response->BodyContent;
 }
 
-static BOOL set_compare(wListDictionary* dict)
+static wHashTable* HashTable_New_String(void)
 {
-	WINPR_ASSERT(dict);
-	wObject* key = ListDictionary_KeyObject(dict);
-	wObject* value = ListDictionary_KeyObject(dict);
-	if (!key || !value)
-		return FALSE;
-	key->fnObjectEquals = strings_equals_nocase;
-	value->fnObjectEquals = strings_equals_nocase;
-	return TRUE;
+	wHashTable* table = HashTable_New(FALSE);
+	if (!table)
+		return NULL;
+
+	if (!HashTable_SetupForStringData(table, TRUE))
+	{
+		HashTable_Free(table);
+		return NULL;
+	}
+	HashTable_KeyObject(table)->fnObjectEquals = strings_equals_nocase;
+	HashTable_ValueObject(table)->fnObjectEquals = strings_equals_nocase;
+	return table;
 }
 
 HttpResponse* http_response_new(void)
@@ -1558,20 +1562,14 @@ HttpResponse* http_response_new(void)
 	if (!response)
 		return NULL;
 
-	response->Authenticates = ListDictionary_New(FALSE);
+	response->Authenticates = HashTable_New_String();
 
 	if (!response->Authenticates)
 		goto fail;
 
-	if (!set_compare(response->Authenticates))
-		goto fail;
-
-	response->SetCookie = ListDictionary_New(FALSE);
+	response->SetCookie = HashTable_New_String();
 
 	if (!response->SetCookie)
-		goto fail;
-
-	if (!set_compare(response->SetCookie))
 		goto fail;
 
 	response->data = Stream_New(NULL, 2048);
@@ -1595,8 +1593,8 @@ void http_response_free(HttpResponse* response)
 		return;
 
 	free((void*)response->lines);
-	ListDictionary_Free(response->Authenticates);
-	ListDictionary_Free(response->SetCookie);
+	HashTable_Free(response->Authenticates);
+	HashTable_Free(response->SetCookie);
 	Stream_Free(response->data, TRUE);
 	free(response);
 }
@@ -1645,10 +1643,7 @@ const char* http_response_get_auth_token(const HttpResponse* response, const cha
 	if (!response || !method)
 		return NULL;
 
-	if (!ListDictionary_Contains(response->Authenticates, method))
-		return NULL;
-
-	return ListDictionary_GetItemValue(response->Authenticates, method);
+	return HashTable_GetItemValue(response->Authenticates, method);
 }
 
 const char* http_response_get_setcookie(const HttpResponse* response, const char* cookie)
@@ -1656,10 +1651,7 @@ const char* http_response_get_setcookie(const HttpResponse* response, const char
 	if (!response || !cookie)
 		return NULL;
 
-	if (!ListDictionary_Contains(response->SetCookie, cookie))
-		return NULL;
-
-	return ListDictionary_GetItemValue(response->SetCookie, cookie);
+	return HashTable_GetItemValue(response->SetCookie, cookie);
 }
 
 TRANSFER_ENCODING http_response_get_transfer_encoding(const HttpResponse* response)
@@ -1751,4 +1743,25 @@ BOOL http_request_append_header(wStream* stream, const char* param,
 	const BOOL rc = http_encode_body_line(stream, param, str);
 	free(str);
 	return rc;
+}
+
+static BOOL extract_cookie(const void* pkey, void* pvalue, void* arg)
+{
+	const char* key = pkey;
+	const char* value = pvalue;
+	HttpContext* context = arg;
+
+	WINPR_ASSERT(arg);
+	WINPR_ASSERT(key);
+	WINPR_ASSERT(value);
+
+	return http_context_set_cookie(context, key, value);
+}
+
+BOOL http_response_extract_cookies(const HttpResponse* response, HttpContext* context)
+{
+	WINPR_ASSERT(response);
+	WINPR_ASSERT(context);
+
+	return HashTable_Foreach(response->SetCookie, extract_cookie, context);
 }

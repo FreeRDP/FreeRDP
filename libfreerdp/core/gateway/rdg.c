@@ -1361,6 +1361,8 @@ static BOOL rdg_establish_data_connection(rdpRdg* rdg, rdpTls* tls, const char* 
 			return FALSE;
 		}
 
+		(void)http_response_extract_cookies(response, rdg->http);
+
 		const UINT16 StatusCode = http_response_get_status_code(response);
 		switch (StatusCode)
 		{
@@ -1409,6 +1411,7 @@ static BOOL rdg_establish_data_connection(rdpRdg* rdg, rdpTls* tls, const char* 
 					*rpcFallback = TRUE;
 					return FALSE;
 				}
+				(void)http_response_extract_cookies(response, rdg->http);
 			}
 		}
 		credssp_auth_free(rdg->auth);
@@ -1430,6 +1433,7 @@ static BOOL rdg_establish_data_connection(rdpRdg* rdg, rdpTls* tls, const char* 
 			*rpcFallback = TRUE;
 			return FALSE;
 		}
+		(void)http_response_extract_cookies(response, rdg->http);
 	}
 
 	const UINT16 statusCode = http_response_get_status_code(response);
