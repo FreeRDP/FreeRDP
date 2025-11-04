@@ -415,6 +415,11 @@ static XKB_KEYNAME XKB_KEYNAME_TABLE[] = {
 
 	//	{ "AE13",	VK_BACKSLASH_JP }, // JP
 	//	{ "LVL3",	0x54}
+
+	/* Korean */
+	
+	{ "HNGL", VK_HANGUL },
+	{ "HNCV", VK_HANJA },
 };
 
 const char* GetVirtualKeyName(DWORD vkcode)
