@@ -78,23 +78,19 @@ static BOOL update_process_glyph(rdpContext* context, const BYTE* data, UINT32 c
 {
 	INT32 sx = 0;
 	INT32 sy = 0;
-	INT32 dx = 0;
-	INT32 dy = 0;
-	rdpGlyph* glyph = NULL;
-	rdpGlyphCache* glyph_cache = NULL;
 
 	if (!context || !data || !x || !y || !context->graphics || !context->cache ||
 	    !context->cache->glyph)
 		return FALSE;
 
-	glyph_cache = context->cache->glyph;
-	glyph = glyph_cache_get(glyph_cache, cacheId, cacheIndex);
+	rdpGlyphCache* glyph_cache = context->cache->glyph;
+	rdpGlyph* glyph = glyph_cache_get(glyph_cache, cacheId, cacheIndex);
 
 	if (!glyph)
 		return FALSE;
 
-	dx = glyph->x + *x;
-	dy = glyph->y + *y;
+	INT32 dx = glyph->x + *x;
+	INT32 dy = glyph->y + *y;
 
 	if (dx < bound->x)
 	{
@@ -554,28 +550,25 @@ static BOOL update_gdi_cache_glyph_v2(rdpContext* context, const CACHE_GLYPH_V2_
 
 rdpGlyph* glyph_cache_get(rdpGlyphCache* glyphCache, UINT32 id, UINT32 index)
 {
-	rdpGlyph* glyph = NULL;
-
 	WINPR_ASSERT(glyphCache);
 
 	WLog_Print(glyphCache->log, WLOG_DEBUG, "GlyphCacheGet: id: %" PRIu32 " index: %" PRIu32 "", id,
 	           index);
 
-	if (id > 9)
+	if (id >= ARRAYSIZE(glyphCache->glyphCache))
 	{
 		WLog_ERR(TAG, "invalid glyph cache id: %" PRIu32 "", id);
 		return NULL;
 	}
 
-	WINPR_ASSERT(glyphCache->glyphCache);
-	if (index > glyphCache->glyphCache[id].number)
+	GLYPH_CACHE* cache = &glyphCache->glyphCache[id];
+	if (index > cache->number)
 	{
 		WLog_ERR(TAG, "index %" PRIu32 " out of range for cache id: %" PRIu32 "", index, id);
 		return NULL;
 	}
 
-	glyph = glyphCache->glyphCache[id].entries[index];
-
+	rdpGlyph* glyph = cache->entries[index];
 	if (!glyph)
 		WLog_ERR(TAG, "no glyph found at cache index: %" PRIu32 " in cache id: %" PRIu32 "", index,
 		         id);
@@ -585,18 +578,16 @@ rdpGlyph* glyph_cache_get(rdpGlyphCache* glyphCache, UINT32 id, UINT32 index)
 
 BOOL glyph_cache_put(rdpGlyphCache* glyphCache, UINT32 id, UINT32 index, rdpGlyph* glyph)
 {
-	rdpGlyph* prevGlyph = NULL;
-
 	WINPR_ASSERT(glyphCache);
 
-	if (id > 9)
+	if (id >= ARRAYSIZE(glyphCache->glyphCache))
 	{
 		WLog_ERR(TAG, "invalid glyph cache id: %" PRIu32 "", id);
 		return FALSE;
 	}
 
-	WINPR_ASSERT(glyphCache->glyphCache);
-	if (index >= glyphCache->glyphCache[id].number)
+	GLYPH_CACHE* cache = &glyphCache->glyphCache[id];
+	if (index >= cache->number)
 	{
 		WLog_ERR(TAG, "invalid glyph cache index: %" PRIu32 " in cache id: %" PRIu32 "", index, id);
 		return FALSE;
@@ -604,7 +595,7 @@ BOOL glyph_cache_put(rdpGlyphCache* glyphCache, UINT32 id, UINT32 index, rdpGlyp
 
 	WLog_Print(glyphCache->log, WLOG_DEBUG, "GlyphCachePut: id: %" PRIu32 " index: %" PRIu32 "", id,
 	           index);
-	prevGlyph = glyphCache->glyphCache[id].entries[index];
+	rdpGlyph* prevGlyph = cache->entries[index];
 
 	if (prevGlyph)
 	{
@@ -612,7 +603,7 @@ BOOL glyph_cache_put(rdpGlyphCache* glyphCache, UINT32 id, UINT32 index, rdpGlyp
 		prevGlyph->Free(glyphCache->context, prevGlyph);
 	}
 
-	glyphCache->glyphCache[id].entries[index] = glyph;
+	cache->entries[index] = glyph;
 	return TRUE;
 }
 
