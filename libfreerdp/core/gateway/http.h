@@ -128,7 +128,7 @@ FREERDP_LOCAL HttpResponse* http_response_recv(rdpTls* tls, BOOL readContentLeng
 
 FREERDP_LOCAL UINT16 http_response_get_status_code(const HttpResponse* response);
 FREERDP_LOCAL size_t http_response_get_body_length(const HttpResponse* response);
-FREERDP_LOCAL const BYTE* http_response_get_body(const HttpResponse* response);
+FREERDP_LOCAL const char* http_response_get_body(const HttpResponse* response);
 FREERDP_LOCAL const char* http_response_get_auth_token(const HttpResponse* response,
                                                        const char* method);
 FREERDP_LOCAL const char* http_response_get_setcookie(const HttpResponse* response,
