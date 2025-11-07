@@ -401,6 +401,7 @@ extern "C"
 	 * @return A string representation of the JSON instance or \b NULL
 	 * @since version 3.6.0
 	 */
+	WINPR_ATTR_MALLOC(free, 1)
 	WINPR_API char* WINPR_JSON_Print(WINPR_JSON* item);
 
 	/**
@@ -411,6 +412,7 @@ extern "C"
 	 * @return A string representation of the JSON instance or \b NULL
 	 * @since version 3.6.0
 	 */
+	WINPR_ATTR_MALLOC(free, 1)
 	WINPR_API char* WINPR_JSON_PrintUnformatted(WINPR_JSON* item);
 
 #ifdef __cplusplus
