@@ -783,6 +783,7 @@ extern "C"
 	 * in case of an error.
 	 *  @since version 3.16.0
 	 */
+	WINPR_ATTR_MALLOC(free, 1)
 	FREERDP_API char* freerdp_settings_serialize(const rdpSettings* settings, BOOL pretty,
 	                                             size_t* plength);
 

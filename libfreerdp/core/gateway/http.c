@@ -88,7 +88,7 @@ struct s_http_response
 	const char* SecWebsocketAccept;
 
 	size_t BodyLength;
-	BYTE* BodyContent;
+	char* BodyContent;
 
 	wHashTable* Authenticates;
 	wHashTable* SetCookie;
@@ -1303,7 +1303,7 @@ static BOOL http_response_recv_body(rdpTls* tls, HttpResponse* response, BOOL re
 		} while (ctx.state != ChunkStateEnd);
 		response->BodyLength = WINPR_ASSERTING_INT_CAST(uint32_t, full_len);
 		if (response->BodyLength > 0)
-			response->BodyContent = &(Stream_Buffer(response->data))[payloadOffset];
+			response->BodyContent = &(Stream_BufferAs(response->data, char))[payloadOffset];
 	}
 	else
 	{
@@ -1339,7 +1339,7 @@ static BOOL http_response_recv_body(rdpTls* tls, HttpResponse* response, BOOL re
 		}
 
 		if (response->BodyLength > 0)
-			response->BodyContent = &(Stream_Buffer(response->data))[payloadOffset];
+			response->BodyContent = &(Stream_BufferAs(response->data, char))[payloadOffset];
 
 		if (bodyLength != response->BodyLength)
 		{
@@ -1467,7 +1467,7 @@ out_error:
 	return NULL;
 }
 
-const BYTE* http_response_get_body(const HttpResponse* response)
+const char* http_response_get_body(const HttpResponse* response)
 {
 	if (!response)
 		return NULL;
