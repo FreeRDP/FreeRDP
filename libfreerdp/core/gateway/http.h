@@ -77,6 +77,14 @@ FREERDP_LOCAL BOOL http_context_set_rdg_connection_id(HttpContext* context,
                                                       const GUID* RdgConnectionId);
 FREERDP_LOCAL BOOL http_context_set_rdg_correlation_id(HttpContext* context,
                                                        const GUID* RdgConnectionId);
+
+WINPR_ATTR_FORMAT_ARG(3, 4)
+FREERDP_LOCAL BOOL http_context_set_header(HttpContext* context, const char* key,
+                                           WINPR_FORMAT_ARG const char* value, ...);
+WINPR_ATTR_FORMAT_ARG(3, 0)
+FREERDP_LOCAL BOOL http_context_set_header_va(HttpContext* context, const char* key,
+                                              WINPR_FORMAT_ARG const char* value, va_list ap);
+
 FREERDP_LOCAL BOOL http_context_set_rdg_auth_scheme(HttpContext* context,
                                                     const char* RdgAuthScheme);
 FREERDP_LOCAL BOOL http_context_enable_websocket_upgrade(HttpContext* context, BOOL enable);
@@ -102,11 +110,10 @@ FREERDP_LOCAL BOOL http_request_set_auth_param(HttpRequest* request, const char*
 FREERDP_LOCAL BOOL http_request_set_transfer_encoding(HttpRequest* request,
                                                       TRANSFER_ENCODING TransferEncoding);
 
-FREERDP_LOCAL wStream* http_request_write(HttpContext* context, HttpRequest* request);
-
 WINPR_ATTR_FORMAT_ARG(3, 4)
-FREERDP_LOCAL BOOL http_request_append_header(wStream* stream, const char* param,
-                                              WINPR_FORMAT_ARG const char* value, ...);
+FREERDP_LOCAL BOOL http_request_set_header(HttpRequest* request, const char* key,
+                                           WINPR_FORMAT_ARG const char* value, ...);
+FREERDP_LOCAL wStream* http_request_write(HttpContext* context, HttpRequest* request);
 
 /* HTTP response */
 typedef struct s_http_response HttpResponse;

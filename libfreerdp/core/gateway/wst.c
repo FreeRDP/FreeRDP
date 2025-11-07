@@ -66,11 +66,12 @@ struct rdp_wst
 	uint16_t gwport;
 	char* gwpath;
 	websocket_context* wscontext;
+	wLog* log;
 };
 
-static const char arm_query_param[] = "%s%cClmTk=Bearer%%20%s&X-MS-User-Agent=%s";
+static const char arm_query_param[] = "%s%cClmTk=Bearer%%20%s";
 
-static BOOL wst_get_gateway_credentials(rdpContext* context, rdp_auth_reason reason)
+static BOOL wst_get_gateway_credentials(wLog* log, rdpContext* context, rdp_auth_reason reason)
 {
 	WINPR_ASSERT(context);
 	freerdp* instance = context->instance;
@@ -85,7 +86,7 @@ static BOOL wst_get_gateway_credentials(rdpContext* context, rdp_auth_reason rea
 			freerdp_set_last_error_log(instance->context, FREERDP_ERROR_CONNECT_CANCELLED);
 			return FALSE;
 		case AUTH_NO_CREDENTIALS:
-			WLog_INFO(TAG, "No credentials provided - using NULL identity");
+			WLog_Print(log, WLOG_INFO, "No credentials provided - using NULL identity");
 			return TRUE;
 		case AUTH_FAILED:
 		default:
@@ -108,7 +109,7 @@ static BOOL wst_auth_init(rdpWst* wst, rdpTls* tls, TCHAR* authPkg)
 	if (!credssp_auth_init(wst->auth, authPkg, tls->Bindings))
 		return FALSE;
 
-	if (!wst_get_gateway_credentials(context, GW_AUTH_RDG))
+	if (!wst_get_gateway_credentials(wst->log, context, GW_AUTH_RDG))
 		return FALSE;
 
 	if (!identity_set_from_settings(&identity, settings, FreeRDP_GatewayUsername,
@@ -226,7 +227,7 @@ static BOOL wst_tls_connect(rdpWst* wst, rdpTls* tls, UINT32 timeout)
 
 	sockfd = freerdp_tcp_connect(wst->context, peerHostname, peerPort, timeout);
 
-	WLog_DBG(TAG, "connecting to %s %d", peerHostname, peerPort);
+	WLog_Print(wst->log, WLOG_DEBUG, "connecting to %s %d", peerHostname, peerPort);
 	if (sockfd < 0)
 	{
 		return FALSE;
@@ -340,8 +341,9 @@ static BOOL wst_send_http_request(rdpWst* wst, rdpTls* tls)
 		return FALSE;
 
 	const size_t sz = Stream_Length(s);
-	int status = freerdp_tls_write_all(tls, Stream_Buffer(s), sz);
+	WLog_Print(wst->log, WLOG_TRACE, "header [%" PRIuz "]: %s", sz, Stream_Buffer(s));
 
+	const int status = freerdp_tls_write_all(tls, Stream_Buffer(s), sz);
 	Stream_Free(s, TRUE);
 	return (status >= 0);
 }
@@ -360,8 +362,8 @@ static BOOL wst_handle_ok_or_forbidden(rdpWst* wst, HttpResponse** ppresponse, D
 	if ((affinity || samesite) &&
 	    freerdp_settings_get_bool(wst->context->settings, FreeRDP_GatewayArmTransport))
 	{
-		WLog_INFO(TAG, "Got ARRAffinity cookie         %s", affinity);
-		WLog_INFO(TAG, "Got ARRAffinitySameSite cookie %s", samesite);
+		WLog_Print(wst->log, WLOG_INFO, "Got ARRAffinity cookie         %s", affinity);
+		WLog_Print(wst->log, WLOG_INFO, "Got ARRAffinitySameSite cookie %s", samesite);
 		if (affinity)
 			http_context_set_cookie(wst->http, "ARRAffinity", affinity);
 		if (samesite)
@@ -394,6 +396,16 @@ static BOOL wst_handle_ok_or_forbidden(rdpWst* wst, HttpResponse** ppresponse, D
 				return FALSE;
 			free(wst->gwpath);
 			wst->gwpath = urlWithAuth;
+			if (!utils_str_is_empty(ua))
+			{
+				size_t ualen = 0;
+				char* uastr = NULL;
+				winpr_asprintf(&uastr, &ualen, "%s&X-MS-User-Agent=%s", wst->gwpath, ua);
+				if (!uastr)
+					return FALSE;
+				free(wst->gwpath);
+				wst->gwpath = uastr;
+			}
 			if (!http_context_set_uri(wst->http, wst->gwpath))
 				return FALSE;
 			if (!http_context_enable_websocket_upgrade(wst->http, TRUE))
@@ -487,8 +499,8 @@ static BOOL wst_handle_http_code(rdpWst* wst, UINT16 StatusCode)
 	}
 
 	char buffer[64] = { 0 };
-	WLog_ERR(TAG, "Unexpected HTTP status: %s",
-	         freerdp_http_status_string_format(StatusCode, buffer, ARRAYSIZE(buffer)));
+	WLog_Print(wst->log, WLOG_ERROR, "Unexpected HTTP status: %s",
+	           freerdp_http_status_string_format(StatusCode, buffer, ARRAYSIZE(buffer)));
 	freerdp_set_last_error_if_not(wst->context, FREERDP_ERROR_CONNECT_FAILED);
 	return FALSE;
 }
@@ -779,7 +791,8 @@ static BOOL wst_parse_url(rdpWst* wst, const char* url)
 	{
 		if (strncmp("https://", url, 8) != 0)
 		{
-			WLog_ERR(TAG, "Websocket URL is invalid. Only wss:// or https:// URLs are supported");
+			WLog_Print(wst->log, WLOG_ERROR,
+			           "Websocket URL is invalid. Only wss:// or https:// URLs are supported");
 			return FALSE;
 		}
 		else
@@ -834,6 +847,7 @@ rdpWst* wst_new(rdpContext* context)
 	if (!wst)
 		return NULL;
 
+	wst->log = WLog_Get(TAG);
 	wst->context = context;
 
 	wst->gwhostname = NULL;

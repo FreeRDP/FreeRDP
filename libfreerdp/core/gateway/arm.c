@@ -264,6 +264,8 @@ static BOOL arm_send_http_request(rdpArm* arm, rdpTls* tls, const char* method,
 		return FALSE;
 
 	const size_t sz = Stream_Length(s);
+	WLog_Print(arm->log, WLOG_TRACE, "header [%" PRIuz "]: %s", sz, Stream_Buffer(s));
+	WLog_Print(arm->log, WLOG_TRACE, "body   [%" PRIuz "]: %s", content_length, data);
 	status = freerdp_tls_write_all(tls, Stream_Buffer(s), sz);
 
 	Stream_Free(s, TRUE);
@@ -954,7 +956,9 @@ static BOOL arm_fill_gateway_parameters(rdpArm* arm, const char* message, size_t
 		return FALSE;
 
 	rdpSettings* settings = arm->context->settings;
-	WINPR_JSON* gwurl = WINPR_JSON_GetObjectItemCaseSensitive(json, "gatewayLocation");
+	WINPR_JSON* gwurl = WINPR_JSON_GetObjectItemCaseSensitive(json, "gatewayLocationPreWebSocket");
+	if (!gwurl)
+		gwurl = WINPR_JSON_GetObjectItemCaseSensitive(json, "gatewayLocation");
 	const char* gwurlstr = WINPR_JSON_GetStringValue(gwurl);
 	if (gwurlstr != NULL)
 	{
@@ -1122,7 +1126,7 @@ static BOOL arm_handle_request(rdpArm* arm, BOOL* retry, DWORD timeout)
 	const char* msuseragent =
 	    freerdp_settings_get_string(arm->context->settings, FreeRDP_GatewayHttpMsUserAgent);
 	if (!http_context_set_uri(arm->http, "/api/arm/v2/connections") ||
-	    !http_context_set_accept(arm->http, "application/json") ||
+	    !http_context_set_accept(arm->http, "*/*") ||
 	    !http_context_set_cache_control(arm->http, "no-cache") ||
 	    !http_context_set_pragma(arm->http, "no-cache") ||
 	    !http_context_set_connection(arm->http, "Keep-Alive") ||
