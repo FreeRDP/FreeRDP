@@ -69,7 +69,7 @@ struct rdp_wst
 	wLog* log;
 };
 
-static const char arm_query_param[] = "%s%cClmTk=Bearer%%20%s&X-MS-User-Agent=%s";
+static const char arm_query_param[] = "%s%cClmTk=Bearer%%20%s";
 
 static BOOL wst_get_gateway_credentials(wLog* log, rdpContext* context, rdp_auth_reason reason)
 {
@@ -396,6 +396,16 @@ static BOOL wst_handle_ok_or_forbidden(rdpWst* wst, HttpResponse** ppresponse, D
 				return FALSE;
 			free(wst->gwpath);
 			wst->gwpath = urlWithAuth;
+			if (!utils_str_is_empty(ua))
+			{
+				size_t ualen = 0;
+				char* uastr = NULL;
+				winpr_asprintf(&uastr, &ualen, "%s&X-MS-User-Agent=%s", wst->gwpath, ua);
+				if (!uastr)
+					return FALSE;
+				free(wst->gwpath);
+				wst->gwpath = uastr;
+			}
 			if (!http_context_set_uri(wst->http, wst->gwpath))
 				return FALSE;
 			if (!http_context_enable_websocket_upgrade(wst->http, TRUE))
