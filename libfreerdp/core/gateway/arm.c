@@ -953,7 +953,17 @@ static BOOL arm_fill_gateway_parameters(rdpArm* arm, const char* message, size_t
 	WINPR_JSON* json = WINPR_JSON_ParseWithLength(message, len);
 	BOOL status = FALSE;
 	if (!json)
+	{
+		WLog_Print(arm->log, WLOG_ERROR, "Response data is not valid JSON");
 		return FALSE;
+	}
+
+	if (WLog_IsLevelActive(arm->log, WLOG_DEBUG))
+	{
+		char* str = WINPR_JSON_PrintUnformatted(json);
+		WLog_Print(arm->log, WLOG_DEBUG, "Got HTTP Response data: %s", str);
+		free(str);
+	}
 
 	rdpSettings* settings = arm->context->settings;
 	WINPR_JSON* gwurl = WINPR_JSON_GetObjectItemCaseSensitive(json, "gatewayLocationPreWebSocket");
@@ -1039,7 +1049,6 @@ static BOOL arm_handle_request_ok(rdpArm* arm, const HttpResponse* response)
 		return FALSE;
 	}
 
-	WLog_Print(arm->log, WLOG_DEBUG, "Got HTTP Response data: [%" PRIuz "] %s", len, msg);
 	return arm_fill_gateway_parameters(arm, msg, len);
 }
 
