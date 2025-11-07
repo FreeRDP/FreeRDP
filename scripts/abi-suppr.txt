@@ -182,3 +182,43 @@ change_kind = function-subtype-change
 name = shadow_server_command_line_status_print
 parameter = '4 /.*const.*/
 
+[suppress_function]
+change_kind = function-subtype-change
+name = freerdp_error_info
+parameter = '1 /.*const.*/
+
+[suppress_function]
+change_kind = function-subtype-change
+name = freerdp_get_disconnect_ultimatum
+parameter = '1 /.*const.*/
+
+[suppress_function]
+change_kind = function-subtype-change
+name = freerdp_get_last_error
+parameter = '1 /.*const.*/
+
+[suppress_function]
+change_kind = function-subtype-change
+name = freerdp_get_transport_sent
+parameter = ' /.*const.*/
+
+[suppress_function]
+change_kind = function-subtype-change
+name = freerdp_nego_get_routing_token
+parameter = '1 /.*const.*/
+
+[suppress_function]
+change_kind = function-subtype-change
+name = freerdp_shall_disconnect
+parameter = '1 /.*const.*/
+
+[suppress_function]
+change_kind = function-subtype-change
+name = getChannelError
+parameter = '1 /.*const.*/
+
+[suppress_function]
+change_kind = function-subtype-change
+name = getChannelErrorDescription
+parameter = '1 /.*const.*/
+
