@@ -244,39 +244,6 @@ static wStream* arm_build_http_request(rdpArm* arm, const char* method,
 		goto out;
 
 	s = http_request_write(arm->http, request);
-	if (!s)
-		goto out;
-
-	const char* referer = freerdp_settings_get_string(settings, FreeRDP_GatewayHttpReferer);
-	if (referer && (strlen(referer) > 0))
-	{
-		if (!http_request_append_header(s, "Referer", "%s", referer))
-			goto out;
-	}
-
-	const char* tenantId = freerdp_settings_get_string(settings, FreeRDP_GatewayAvdAadtenantid);
-	if (!http_request_append_header(s, "x-ms-tenant-id", "%s", tenantId))
-		goto out;
-
-	const char* wvd = freerdp_settings_get_string(settings, FreeRDP_GatewayAvdWvdEndpointPool);
-	if (!wvd)
-		goto out;
-
-	if (!http_request_append_header(s, "MS-WVD-Activity-Hint", "ms-wvd-hp:%s", wvd))
-		goto out;
-
-	const char* armpath = freerdp_settings_get_string(settings, FreeRDP_GatewayAvdArmpath);
-	if (!armpath)
-		goto out;
-
-	char* value = crypto_base64url_encode((const BYTE*)armpath, strlen(armpath));
-	if (!value)
-		goto out;
-	const BOOL rc = http_request_append_header(s, "x-ms-opsarmpath64", "%s", value);
-	free(value);
-
-	if (!rc)
-		goto out;
 out:
 	http_request_free(request);
 
