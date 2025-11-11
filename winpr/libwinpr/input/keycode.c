@@ -698,35 +698,36 @@ static DWORD KEYCODE_TO_VKCODE_XKB[256] = {
 	VK_SNAPSHOT | KBDEXT, /* <PRSC> 107 */
 	VK_RMENU | KBDEXT,    /* <RALT> <ALGR> 108 */
 #endif
-	0,                             /* <LNFD> KEY_LINEFEED 109 */
-	VK_HOME | KBDEXT,              /* <HOME> 110 */
-	VK_UP | KBDEXT,                /* <UP> 111 */
-	VK_PRIOR | KBDEXT,             /* <PGUP> 112 */
-	VK_LEFT | KBDEXT,              /* <LEFT> 113 */
-	VK_RIGHT | KBDEXT,             /* <RGHT> 114 */
-	VK_END | KBDEXT,               /* <END> 115 */
-	VK_DOWN | KBDEXT,              /* <DOWN> 116 */
-	VK_NEXT | KBDEXT,              /* <PGDN> 117 */
-	VK_INSERT | KBDEXT,            /* <INS> 118 */
-	VK_DELETE | KBDEXT,            /* <DELE> 119 */
-	0,                             /* <I120> KEY_MACRO 120 */
-	VK_VOLUME_MUTE | KBDEXT,       /* <MUTE> 121 */
-	VK_VOLUME_DOWN | KBDEXT,       /* <VOL-> 122 */
-	VK_VOLUME_UP | KBDEXT,         /* <VOL+> 123 */
-	0,                             /* <POWR> 124 */
-	0,                             /* <KPEQ> 125 */
-	0,                             /* <I126> KEY_KPPLUSMINUS 126 */
-	VK_PAUSE | KBDEXT,             /* <PAUS> 127 */
-	0,                             /* <I128> KEY_SCALE 128 */
-	VK_ABNT_C2,                    /* <I129> <KPPT> KEY_KPCOMMA 129 */
-	VK_HANGUL,                     /* <HNGL> 130 */
-	VK_HANJA,                      /* <HJCV> 131 */
-	VK_OEM_8,                      /* <AE13> 132 */
-	VK_LWIN | KBDEXT,              /* <LWIN> <LMTA> 133 */
-	VK_RWIN | KBDEXT,              /* <RWIN> <RMTA> 134 */
-	VK_APPS | KBDEXT,              /* <COMP> <MENU> 135 */
-	0,                             /* <STOP> 136 */
-	0,                             /* <AGAI> 137 */
+	0,                       /* <LNFD> KEY_LINEFEED 109 */
+	VK_HOME | KBDEXT,        /* <HOME> 110 */
+	VK_UP | KBDEXT,          /* <UP> 111 */
+	VK_PRIOR | KBDEXT,       /* <PGUP> 112 */
+	VK_LEFT | KBDEXT,        /* <LEFT> 113 */
+	VK_RIGHT | KBDEXT,       /* <RGHT> 114 */
+	VK_END | KBDEXT,         /* <END> 115 */
+	VK_DOWN | KBDEXT,        /* <DOWN> 116 */
+	VK_NEXT | KBDEXT,        /* <PGDN> 117 */
+	VK_INSERT | KBDEXT,      /* <INS> 118 */
+	VK_DELETE | KBDEXT,      /* <DELE> 119 */
+	0,                       /* <I120> KEY_MACRO 120 */
+	VK_VOLUME_MUTE | KBDEXT, /* <MUTE> 121 */
+	VK_VOLUME_DOWN | KBDEXT, /* <VOL-> 122 */
+	VK_VOLUME_UP | KBDEXT,   /* <VOL+> 123 */
+	0,                       /* <POWR> 124 */
+	0,                       /* <KPEQ> 125 */
+	0,                       /* <I126> KEY_KPPLUSMINUS 126 */
+	VK_PAUSE | KBDEXT,       /* <PAUS> 127 */
+	0,                       /* <I128> KEY_SCALE 128 */
+	VK_ABNT_C2,              /* <I129> <KPPT> KEY_KPCOMMA 129 */
+	VK_HANGUL,               /* <HNGL> 130 */
+	VK_HANJA,                /* <HJCV> 131 */
+	VK_OEM_8,                /* <AE13> 132 */
+	VK_LWIN | KBDEXT,        /* <LWIN> <LMTA> 133 */
+	VK_RWIN | KBDEXT,        /* <RWIN> <RMTA> 134 */
+	VK_APPS | KBDEXT,        /* <COMP> <MENU> 135 */
+	0,                       /* <STOP> 136 */
+	0,
+	/* <AGAI> 137 */               // codespell:ignore
 	0,                             /* <PROP> 138 */
 	0,                             /* <UNDO> 139 */
 	0,                             /* <FRNT> 140 */

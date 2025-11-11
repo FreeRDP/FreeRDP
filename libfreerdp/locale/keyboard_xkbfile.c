@@ -176,7 +176,8 @@ static const XKB_KEY_NAME_SCANCODE XKB_KEY_NAME_SCANCODE_TABLE[] = {
 	{ "RWIN", RDP_SCANCODE_RWIN },                /* 134: RWIN [Super_R] */
 	{ "COMP", RDP_SCANCODE_APPS },                /* 135: COMP [Menu] */
 	{ "STOP", RDP_SCANCODE_BROWSER_STOP },        /* 136: STOP [Cancel] */
-	{ "AGAI", RDP_SCANCODE_UNKNOWN },             /* 137: AGAI [Redo] */
+	{ "AGAI" /* codespell:ignore */, RDP_SCANCODE_UNKNOWN },
+	/* 137: AGAI [Redo] */                        /* codespell:ignore */
 	{ "PROP", RDP_SCANCODE_UNKNOWN },             /* 138: PROP [SunProps] */
 	{ "UNDO", RDP_SCANCODE_UNKNOWN },             /* 139: UNDO [Undo] */
 	{ "FRNT", RDP_SCANCODE_UNKNOWN },             /* 140: FRNT [SunFront] */
