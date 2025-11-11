@@ -29,7 +29,7 @@
 
 typedef struct
 {
-	WLOG_APPENDER_COMMON();
+	wLogAppender common;
 
 	char* FileName;
 	char* FilePath;
@@ -126,24 +126,21 @@ static BOOL WLog_FileAppender_Close(wLog* log, wLogAppender* appender)
 	return TRUE;
 }
 
-static BOOL WLog_FileAppender_WriteMessage(wLog* log, wLogAppender* appender, wLogMessage* message)
+static BOOL WLog_FileAppender_WriteMessage(wLog* log, wLogAppender* appender,
+                                           const wLogMessage* cmessage)
 {
-	FILE* fp = NULL;
-	char prefix[WLOG_MAX_PREFIX_SIZE] = { 0 };
-	wLogFileAppender* fileAppender = NULL;
-
-	if (!log || !appender || !message)
+	if (!log || !appender || !cmessage)
 		return FALSE;
 
-	fileAppender = (wLogFileAppender*)appender;
-	fp = fileAppender->FileDescriptor;
+	wLogFileAppender* fileAppender = (wLogFileAppender*)appender;
+	FILE* fp = fileAppender->FileDescriptor;
 
 	if (!fp)
 		return FALSE;
 
-	message->PrefixString = prefix;
-	WLog_Layout_GetMessagePrefix(log, appender->Layout, message);
-	(void)fprintf(fp, "%s%s\n", message->PrefixString, message->TextString);
+	char prefix[WLOG_MAX_PREFIX_SIZE] = { 0 };
+	WLog_Layout_GetMessagePrefix(log, appender->Layout, cmessage, prefix, sizeof(prefix));
+	(void)fprintf(fp, "%s%s\n", prefix, cmessage->TextString);
 	(void)fflush(fp); /* slow! */
 	return TRUE;
 }
@@ -151,7 +148,7 @@ static BOOL WLog_FileAppender_WriteMessage(wLog* log, wLogAppender* appender, wL
 static int g_DataId = 0;
 
 static BOOL WLog_FileAppender_WriteDataMessage(wLog* log, wLogAppender* appender,
-                                               wLogMessage* message)
+                                               const wLogMessage* message)
 {
 	int DataId = 0;
 	char* FullFileName = NULL;
@@ -169,7 +166,7 @@ static BOOL WLog_FileAppender_WriteDataMessage(wLog* log, wLogAppender* appender
 static int g_ImageId = 0;
 
 static BOOL WLog_FileAppender_WriteImageMessage(wLog* log, wLogAppender* appender,
-                                                wLogMessage* message)
+                                                const wLogMessage* message)
 {
 	int ImageId = 0;
 	char* FullFileName = NULL;
@@ -227,14 +224,14 @@ wLogAppender* WLog_FileAppender_New(WINPR_ATTR_UNUSED wLog* log)
 	if (!FileAppender)
 		return NULL;
 
-	FileAppender->Type = WLOG_APPENDER_FILE;
-	FileAppender->Open = WLog_FileAppender_Open;
-	FileAppender->Close = WLog_FileAppender_Close;
-	FileAppender->WriteMessage = WLog_FileAppender_WriteMessage;
-	FileAppender->WriteDataMessage = WLog_FileAppender_WriteDataMessage;
-	FileAppender->WriteImageMessage = WLog_FileAppender_WriteImageMessage;
-	FileAppender->Free = WLog_FileAppender_Free;
-	FileAppender->Set = WLog_FileAppender_Set;
+	FileAppender->common.Type = WLOG_APPENDER_FILE;
+	FileAppender->common.Open = WLog_FileAppender_Open;
+	FileAppender->common.Close = WLog_FileAppender_Close;
+	FileAppender->common.WriteMessage = WLog_FileAppender_WriteMessage;
+	FileAppender->common.WriteDataMessage = WLog_FileAppender_WriteDataMessage;
+	FileAppender->common.WriteImageMessage = WLog_FileAppender_WriteImageMessage;
+	FileAppender->common.Free = WLog_FileAppender_Free;
+	FileAppender->common.Set = WLog_FileAppender_Set;
 	name = "WLOG_FILEAPPENDER_OUTPUT_FILE_PATH";
 	nSize = GetEnvironmentVariableA(name, NULL, 0);
 

@@ -96,7 +96,7 @@ endif()
 
 find_package(libsystemd)
 option(WITH_SYSTEMD "allows to export wLog to systemd journal" ${libsystemd_FOUND})
-if(WITH_LIBSYSTEMD)
+if(WITH_SYSTEMD)
   find_package(libsystemd REQUIRED)
   winpr_pc_add_requires_private("libsystemd")
   set(WINPR_HAVE_JOURNALD_H TRUE)

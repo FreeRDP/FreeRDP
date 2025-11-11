@@ -56,7 +56,12 @@ struct format_option
 	const char* replace;
 	size_t replacelen;
 	const char* (*fkt)(void*);
-	void* arg;
+	union
+	{
+		void* pv;
+		const void* cpv;
+		size_t s;
+	} arg;
 	const char* (*ext)(const struct format_option* opt, const char* str, size_t* preplacelen,
 	                   size_t* pskiplen);
 	struct format_option_recurse* recurse;
@@ -68,7 +73,7 @@ struct format_option_recurse
 	size_t nroptions;
 	wLog* log;
 	wLogLayout* layout;
-	wLogMessage* message;
+	const wLogMessage* message;
 	char buffer[WLOG_MAX_PREFIX_SIZE];
 };
 
@@ -76,20 +81,19 @@ struct format_option_recurse
  * Log Layout
  */
 WINPR_ATTR_FORMAT_ARG(3, 0)
-static void WLog_PrintMessagePrefixVA(WINPR_ATTR_UNUSED wLog* log, wLogMessage* message,
+static void WLog_PrintMessagePrefixVA(char* prefix, size_t prefixlen,
                                       WINPR_FORMAT_ARG const char* format, va_list args)
 {
-	WINPR_ASSERT(message);
-	(void)vsnprintf(message->PrefixString, WLOG_MAX_PREFIX_SIZE - 1, format, args);
+	(void)vsnprintf(prefix, prefixlen, format, args);
 }
 
 WINPR_ATTR_FORMAT_ARG(3, 4)
-static void WLog_PrintMessagePrefix(wLog* log, wLogMessage* message,
+static void WLog_PrintMessagePrefix(char* prefix, size_t prefixlen,
                                     WINPR_FORMAT_ARG const char* format, ...)
 {
 	va_list args;
 	va_start(args, format);
-	WLog_PrintMessagePrefixVA(log, message, format, args);
+	WLog_PrintMessagePrefixVA(prefix, prefixlen, format, args);
 	va_end(args);
 }
 
@@ -158,7 +162,7 @@ static const char* skip_if_null(const struct format_option* opt, const char* fmt
 		return NULL;
 	*pskiplen = WINPR_ASSERTING_INT_CAST(size_t, end - fmt) + opt->replacelen;
 
-	if (!opt->arg)
+	if (!opt->arg.cpv)
 		return NULL;
 
 	const size_t replacelen = WINPR_ASSERTING_INT_CAST(size_t, end - str);
@@ -192,12 +196,12 @@ static BOOL replace_format_string(const char* FormatString, struct format_option
 			size_t replacelen = opt->replacelen;
 			size_t fmtlen = opt->fmtlen;
 			const char* replace = opt->replace;
-			const void* arg = opt->arg;
+			const void* arg = opt->arg.cpv;
 
 			if (opt->ext)
 				replace = opt->ext(opt, FormatString, &replacelen, &fmtlen);
 			if (opt->fkt)
-				arg = opt->fkt(opt->arg);
+				arg = opt->fkt(opt->arg.pv);
 
 			if (replace && (replacelen > 0))
 			{
@@ -231,12 +235,14 @@ static BOOL replace_format_string(const char* FormatString, struct format_option
 	return TRUE;
 }
 
-BOOL WLog_Layout_GetMessagePrefix(wLog* log, wLogLayout* layout, wLogMessage* message)
+BOOL WLog_Layout_GetMessagePrefix(wLog* log, wLogLayout* layout, const wLogMessage* message,
+                                  char* prefix, size_t prefixlen)
 {
 	char format[WLOG_MAX_PREFIX_SIZE] = { 0 };
 
 	WINPR_ASSERT(layout);
 	WINPR_ASSERT(message);
+	WINPR_ASSERT(prefix);
 
 	struct format_tid_arg targ = { 0 };
 
@@ -249,37 +255,77 @@ BOOL WLog_Layout_GetMessagePrefix(wLog* log, wLogLayout* layout, wLogMessage* me
 
 #define ENTRY(x) x, sizeof(x) - 1
 	struct format_option options[] = {
-		{ ENTRY("%ctx"), ENTRY("%s"), log->custom, log->context, NULL, &recurse }, /* log context */
-		{ ENTRY("%dw"), ENTRY("%u"), NULL, (void*)(size_t)localTime.wDayOfWeek, NULL,
+		{ ENTRY("%ctx"),
+		  ENTRY("%s"),
+		  log->custom,
+		  { .pv = log->context },
+		  NULL,
+		  &recurse }, /* log context */
+		{ ENTRY("%dw"),
+		  ENTRY("%u"),
+		  NULL,
+		  { .s = localTime.wDayOfWeek },
+		  NULL,
 		  &recurse }, /* day of week */
-		{ ENTRY("%dy"), ENTRY("%u"), NULL, (void*)(size_t)localTime.wDay, NULL,
-		  &recurse }, /* day of year */
-		{ ENTRY("%fl"), ENTRY("%s"), NULL, WINPR_CAST_CONST_PTR_AWAY(message->FileName, void*),
-		  NULL, &recurse }, /* file */
-		{ ENTRY("%fn"), ENTRY("%s"), NULL, WINPR_CAST_CONST_PTR_AWAY(message->FunctionName, void*),
-		  NULL, &recurse }, /* function */
-		{ ENTRY("%hr"), ENTRY("%02u"), NULL, (void*)(size_t)localTime.wHour, NULL,
-		  &recurse }, /* hours */
-		{ ENTRY("%ln"), ENTRY("%" PRIuz), NULL, (void*)message->LineNumber, NULL,
+		{ ENTRY("%dy"), ENTRY("%u"), NULL, { .s = localTime.wDay }, NULL, &recurse }, /* day of year
+		                                                                               */
+		{ ENTRY("%fl"), ENTRY("%s"), NULL, { .cpv = message->FileName }, NULL, &recurse }, /* file
+		                                                                                    */
+		{ ENTRY("%fn"),
+		  ENTRY("%s"),
+		  NULL,
+		  { .cpv = message->FunctionName },
+		  NULL,
+		  &recurse },                                                                    /* function
+		                                                                                  */
+		{ ENTRY("%hr"), ENTRY("%02u"), NULL, { .s = localTime.wHour }, NULL, &recurse }, /* hours */
+		{ ENTRY("%ln"),
+		  ENTRY("%" PRIuz),
+		  NULL,
+		  { .s = message->LineNumber },
+		  NULL,
 		  &recurse }, /* line number */
-		{ ENTRY("%lv"), ENTRY("%s"), NULL,
-		  WINPR_CAST_CONST_PTR_AWAY(WLOG_LEVELS[message->Level], void*), NULL,
+		{ ENTRY("%lv"),
+		  ENTRY("%s"),
+		  NULL,
+		  { .cpv = WLOG_LEVELS[message->Level] },
+		  NULL,
 		  &recurse }, /* log level */
-		{ ENTRY("%mi"), ENTRY("%02u"), NULL, (void*)(size_t)localTime.wMinute, NULL,
-		  &recurse }, /* minutes */
-		{ ENTRY("%ml"), ENTRY("%03u"), NULL, (void*)(size_t)localTime.wMilliseconds, NULL,
-		  &recurse },                                                   /* milliseconds */
-		{ ENTRY("%mn"), ENTRY("%s"), NULL, log->Name, NULL, &recurse }, /* module name */
-		{ ENTRY("%mo"), ENTRY("%u"), NULL, (void*)(size_t)localTime.wMonth, NULL,
-		  &recurse }, /* month */
-		{ ENTRY("%pid"), ENTRY("%u"), NULL, (void*)(size_t)GetCurrentProcessId(), NULL,
+		{ ENTRY("%mi"),
+		  ENTRY("%02u"),
+		  NULL,
+		  { .s = localTime.wMinute },
+		  NULL,
+		  &recurse }, /* minutes
+		               */
+		{ ENTRY("%ml"),
+		  ENTRY("%03u"),
+		  NULL,
+		  { .s = localTime.wMilliseconds },
+		  NULL,
+		  &recurse }, /* milliseconds */
+		{ ENTRY("%mn"), ENTRY("%s"), NULL, { .cpv = log->Name }, NULL, &recurse }, /* module name */
+		{ ENTRY("%mo"), ENTRY("%u"), NULL, { .s = localTime.wMonth }, NULL, &recurse }, /* month */
+		{ ENTRY("%pid"),
+		  ENTRY("%u"),
+		  NULL,
+		  { .s = GetCurrentProcessId() },
+		  NULL,
 		  &recurse }, /* process id */
-		{ ENTRY("%se"), ENTRY("%02u"), NULL, (void*)(size_t)localTime.wSecond, NULL,
-		  &recurse },                                                   /* seconds */
-		{ ENTRY("%tid"), ENTRY("%s"), get_tid, &targ, NULL, &recurse }, /* thread id */
-		{ ENTRY("%yr"), ENTRY("%u"), NULL, (void*)(size_t)localTime.wYear, NULL,
-		  &recurse }, /* year */
-		{ ENTRY("%{"), ENTRY("%}"), NULL, log->context, skip_if_null,
+		{ ENTRY("%se"),
+		  ENTRY("%02u"),
+		  NULL,
+		  { .s = localTime.wSecond },
+		  NULL,
+		  &recurse },                                                             /* seconds
+		                                                                           */
+		{ ENTRY("%tid"), ENTRY("%s"), get_tid, { .pv = &targ }, NULL, &recurse }, /* thread id */
+		{ ENTRY("%yr"), ENTRY("%u"), NULL, { .s = localTime.wYear }, NULL, &recurse }, /* year */
+		{ ENTRY("%{"),
+		  ENTRY("%}"),
+		  NULL,
+		  { .pv = log->context },
+		  skip_if_null,
 		  &recurse }, /* skip if no context */
 	};
 
@@ -292,7 +338,7 @@ BOOL WLog_Layout_GetMessagePrefix(wLog* log, wLogLayout* layout, wLogMessage* me
 	WINPR_PRAGMA_DIAG_PUSH
 	WINPR_PRAGMA_DIAG_IGNORED_FORMAT_SECURITY
 
-	WLog_PrintMessagePrefix(log, message, format);
+	WLog_PrintMessagePrefix(prefix, prefixlen, format);
 
 	WINPR_PRAGMA_DIAG_POP
 

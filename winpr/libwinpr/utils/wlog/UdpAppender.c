@@ -28,7 +28,7 @@
 
 typedef struct
 {
-	WLOG_APPENDER_COMMON();
+	wLogAppender common;
 	char* host;
 	struct sockaddr targetAddr;
 	int targetAddrLen;
@@ -87,22 +87,21 @@ static BOOL WLog_UdpAppender_Close(wLog* log, wLogAppender* appender)
 	return TRUE;
 }
 
-static BOOL WLog_UdpAppender_WriteMessage(wLog* log, wLogAppender* appender, wLogMessage* message)
+static BOOL WLog_UdpAppender_WriteMessage(wLog* log, wLogAppender* appender,
+                                          const wLogMessage* cmessage)
 {
-	char prefix[WLOG_MAX_PREFIX_SIZE] = { 0 };
-	wLogUdpAppender* udpAppender = NULL;
-
-	if (!log || !appender || !message)
+	if (!log || !appender || !cmessage)
 		return FALSE;
 
-	udpAppender = (wLogUdpAppender*)appender;
-	message->PrefixString = prefix;
-	WLog_Layout_GetMessagePrefix(log, appender->Layout, message);
-	(void)_sendto(udpAppender->sock, message->PrefixString,
-	              (int)strnlen(message->PrefixString, INT_MAX), 0, &udpAppender->targetAddr,
-	              udpAppender->targetAddrLen);
-	(void)_sendto(udpAppender->sock, message->TextString,
-	              (int)strnlen(message->TextString, INT_MAX), 0, &udpAppender->targetAddr,
+	wLogUdpAppender* udpAppender = (wLogUdpAppender*)appender;
+
+	char prefix[WLOG_MAX_PREFIX_SIZE] = { 0 };
+	WLog_Layout_GetMessagePrefix(log, appender->Layout, cmessage, prefix, sizeof(prefix));
+
+	(void)_sendto(udpAppender->sock, prefix, (int)strnlen(prefix, ARRAYSIZE(prefix)), 0,
+	              &udpAppender->targetAddr, udpAppender->targetAddrLen);
+	(void)_sendto(udpAppender->sock, cmessage->TextString,
+	              (int)strnlen(cmessage->TextString, INT_MAX), 0, &udpAppender->targetAddr,
 	              udpAppender->targetAddrLen);
 	(void)_sendto(udpAppender->sock, "\n", 1, 0, &udpAppender->targetAddr,
 	              udpAppender->targetAddrLen);
@@ -110,7 +109,7 @@ static BOOL WLog_UdpAppender_WriteMessage(wLog* log, wLogAppender* appender, wLo
 }
 
 static BOOL WLog_UdpAppender_WriteDataMessage(wLog* log, wLogAppender* appender,
-                                              wLogMessage* message)
+                                              const wLogMessage* message)
 {
 	if (!log || !appender || !message)
 		return FALSE;
@@ -119,7 +118,7 @@ static BOOL WLog_UdpAppender_WriteDataMessage(wLog* log, wLogAppender* appender,
 }
 
 static BOOL WLog_UdpAppender_WriteImageMessage(wLog* log, wLogAppender* appender,
-                                               wLogMessage* message)
+                                               const wLogMessage* message)
 {
 	if (!log || !appender || !message)
 		return FALSE;
@@ -169,22 +168,21 @@ static void WLog_UdpAppender_Free(wLogAppender* appender)
 
 wLogAppender* WLog_UdpAppender_New(wLog* log)
 {
-	wLogUdpAppender* appender = NULL;
 	DWORD nSize = 0;
 	LPCSTR name = NULL;
-	appender = (wLogUdpAppender*)calloc(1, sizeof(wLogUdpAppender));
+	wLogUdpAppender* appender = (wLogUdpAppender*)calloc(1, sizeof(wLogUdpAppender));
 
 	if (!appender)
 		return NULL;
 
-	appender->Type = WLOG_APPENDER_UDP;
-	appender->Open = WLog_UdpAppender_Open;
-	appender->Close = WLog_UdpAppender_Close;
-	appender->WriteMessage = WLog_UdpAppender_WriteMessage;
-	appender->WriteDataMessage = WLog_UdpAppender_WriteDataMessage;
-	appender->WriteImageMessage = WLog_UdpAppender_WriteImageMessage;
-	appender->Free = WLog_UdpAppender_Free;
-	appender->Set = WLog_UdpAppender_Set;
+	appender->common.Type = WLOG_APPENDER_UDP;
+	appender->common.Open = WLog_UdpAppender_Open;
+	appender->common.Close = WLog_UdpAppender_Close;
+	appender->common.WriteMessage = WLog_UdpAppender_WriteMessage;
+	appender->common.WriteDataMessage = WLog_UdpAppender_WriteDataMessage;
+	appender->common.WriteImageMessage = WLog_UdpAppender_WriteImageMessage;
+	appender->common.Free = WLog_UdpAppender_Free;
+	appender->common.Set = WLog_UdpAppender_Set;
 	appender->sock = _socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 
 	if (appender->sock == INVALID_SOCKET)
@@ -214,7 +212,7 @@ wLogAppender* WLog_UdpAppender_New(wLog* log)
 			goto error_open;
 	}
 
-	return (wLogAppender*)appender;
+	return &appender->common;
 error_open:
 	free(appender->host);
 	closesocket(appender->sock);

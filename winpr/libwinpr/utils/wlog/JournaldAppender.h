@@ -26,6 +26,6 @@
 
 #include "wlog.h"
 
-wLogAppender* WLog_JournaldAppender_New(wLog* log);
+WINPR_LOCAL wLogAppender* WLog_JournaldAppender_New(wLog* log);
 
 #endif /* WINPR_LIBWINPR_UTILS_WLOG_JOURNALDAPPENDER_H_ */

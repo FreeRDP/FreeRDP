@@ -25,7 +25,7 @@
 
 typedef struct
 {
-	WLOG_APPENDER_COMMON();
+	wLogAppender common;
 } wLogSyslogAppender;
 
 static int getSyslogLevel(DWORD level)
@@ -66,7 +66,7 @@ static BOOL WLog_SyslogAppender_Close(wLog* log, wLogAppender* appender)
 }
 
 static BOOL WLog_SyslogAppender_WriteMessage(wLog* log, wLogAppender* appender,
-                                             wLogMessage* message)
+                                             const wLogMessage* message)
 {
 	int syslogLevel = 0;
 
@@ -81,7 +81,7 @@ static BOOL WLog_SyslogAppender_WriteMessage(wLog* log, wLogAppender* appender,
 }
 
 static BOOL WLog_SyslogAppender_WriteDataMessage(wLog* log, wLogAppender* appender,
-                                                 wLogMessage* message)
+                                                 const wLogMessage* message)
 {
 	int syslogLevel = 0;
 
@@ -96,7 +96,7 @@ static BOOL WLog_SyslogAppender_WriteDataMessage(wLog* log, wLogAppender* append
 }
 
 static BOOL WLog_SyslogAppender_WriteImageMessage(wLog* log, wLogAppender* appender,
-                                                  wLogMessage* message)
+                                                  const wLogMessage* message)
 {
 	int syslogLevel = 0;
 
@@ -118,20 +118,18 @@ static void WLog_SyslogAppender_Free(wLogAppender* appender)
 
 wLogAppender* WLog_SyslogAppender_New(WINPR_ATTR_UNUSED wLog* log)
 {
-	wLogSyslogAppender* appender = NULL;
-
-	appender = (wLogSyslogAppender*)calloc(1, sizeof(wLogSyslogAppender));
+	wLogSyslogAppender* appender = (wLogSyslogAppender*)calloc(1, sizeof(wLogSyslogAppender));
 	if (!appender)
 		return NULL;
 
-	appender->Type = WLOG_APPENDER_SYSLOG;
+	appender->common.Type = WLOG_APPENDER_SYSLOG;
 
-	appender->Open = WLog_SyslogAppender_Open;
-	appender->Close = WLog_SyslogAppender_Close;
-	appender->WriteMessage = WLog_SyslogAppender_WriteMessage;
-	appender->WriteDataMessage = WLog_SyslogAppender_WriteDataMessage;
-	appender->WriteImageMessage = WLog_SyslogAppender_WriteImageMessage;
-	appender->Free = WLog_SyslogAppender_Free;
+	appender->common.Open = WLog_SyslogAppender_Open;
+	appender->common.Close = WLog_SyslogAppender_Close;
+	appender->common.WriteMessage = WLog_SyslogAppender_WriteMessage;
+	appender->common.WriteDataMessage = WLog_SyslogAppender_WriteDataMessage;
+	appender->common.WriteImageMessage = WLog_SyslogAppender_WriteImageMessage;
+	appender->common.Free = WLog_SyslogAppender_Free;
 
-	return (wLogAppender*)appender;
+	return &appender->common;
 }
