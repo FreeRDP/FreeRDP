@@ -31,7 +31,7 @@
 
 typedef struct
 {
-	WLOG_APPENDER_COMMON();
+	wLogAppender common;
 	char* identifier;
 	FILE* stream;
 } wLogJournaldAppender;
@@ -72,18 +72,15 @@ static BOOL WLog_JournaldAppender_Close(wLog* log, wLogAppender* appender)
 }
 
 static BOOL WLog_JournaldAppender_WriteMessage(wLog* log, wLogAppender* appender,
-                                               wLogMessage* message)
+                                               const wLogMessage* cmessage)
 {
-	char* formatStr = NULL;
-	wLogJournaldAppender* journaldAppender = NULL;
-	char prefix[WLOG_MAX_PREFIX_SIZE] = { 0 };
-
-	if (!log || !appender || !message)
+	if (!log || !appender || !cmessage)
 		return FALSE;
 
-	journaldAppender = (wLogJournaldAppender*)appender;
+	wLogJournaldAppender* journaldAppender = (wLogJournaldAppender*)appender;
 
-	switch (message->Level)
+	const char* formatStr = NULL;
+	switch (cmessage->Level)
 	{
 		case WLOG_TRACE:
 		case WLOG_DEBUG:
@@ -104,25 +101,25 @@ static BOOL WLog_JournaldAppender_WriteMessage(wLog* log, wLogAppender* appender
 		case WLOG_OFF:
 			return TRUE;
 		default:
-			(void)fprintf(stderr, "%s: unknown level %" PRIu32 "\n", __func__, message->Level);
+			(void)fprintf(stderr, "%s: unknown level %" PRIu32 "\n", __func__, cmessage->Level);
 			return FALSE;
 	}
 
-	message->PrefixString = prefix;
-	WLog_Layout_GetMessagePrefix(log, appender->Layout, message);
+	char prefix[WLOG_MAX_PREFIX_SIZE] = { 0 };
+	WLog_Layout_GetMessagePrefix(log, appender->Layout, cmessage, prefix, sizeof(prefix));
 
-	if (message->Level != WLOG_OFF)
+	if (cmessage->Level != WLOG_OFF)
 	{
 		WINPR_PRAGMA_DIAG_PUSH
 		WINPR_PRAGMA_DIAG_IGNORED_FORMAT_NONLITERAL(void)
-		fprintf(journaldAppender->stream, formatStr, message->PrefixString, message->TextString);
+		fprintf(journaldAppender->stream, formatStr, prefix, cmessage->TextString);
 		WINPR_PRAGMA_DIAG_POP
 	}
 	return TRUE;
 }
 
 static BOOL WLog_JournaldAppender_WriteDataMessage(wLog* log, wLogAppender* appender,
-                                                   wLogMessage* message)
+                                                   const wLogMessage* message)
 {
 	if (!log || !appender || !message)
 		return FALSE;
@@ -131,7 +128,7 @@ static BOOL WLog_JournaldAppender_WriteDataMessage(wLog* log, wLogAppender* appe
 }
 
 static BOOL WLog_JournaldAppender_WriteImageMessage(wLog* log, wLogAppender* appender,
-                                                    wLogMessage* message)
+                                                    const wLogMessage* message)
 {
 	if (!log || !appender || !message)
 		return FALSE;
@@ -175,24 +172,22 @@ static void WLog_JournaldAppender_Free(wLogAppender* appender)
 
 wLogAppender* WLog_JournaldAppender_New(wLog* log)
 {
-	wLogJournaldAppender* appender = NULL;
-	DWORD nSize = 0;
 	LPCSTR name = "WLOG_JOURNALD_ID";
 
-	appender = (wLogJournaldAppender*)calloc(1, sizeof(wLogJournaldAppender));
+	wLogJournaldAppender* appender = (wLogJournaldAppender*)calloc(1, sizeof(wLogJournaldAppender));
 	if (!appender)
 		return NULL;
 
-	appender->Type = WLOG_APPENDER_JOURNALD;
-	appender->Open = WLog_JournaldAppender_Open;
-	appender->Close = WLog_JournaldAppender_Close;
-	appender->WriteMessage = WLog_JournaldAppender_WriteMessage;
-	appender->WriteDataMessage = WLog_JournaldAppender_WriteDataMessage;
-	appender->WriteImageMessage = WLog_JournaldAppender_WriteImageMessage;
-	appender->Set = WLog_JournaldAppender_Set;
-	appender->Free = WLog_JournaldAppender_Free;
+	appender->common.Type = WLOG_APPENDER_JOURNALD;
+	appender->common.Open = WLog_JournaldAppender_Open;
+	appender->common.Close = WLog_JournaldAppender_Close;
+	appender->common.WriteMessage = WLog_JournaldAppender_WriteMessage;
+	appender->common.WriteDataMessage = WLog_JournaldAppender_WriteDataMessage;
+	appender->common.WriteImageMessage = WLog_JournaldAppender_WriteImageMessage;
+	appender->common.Set = WLog_JournaldAppender_Set;
+	appender->common.Free = WLog_JournaldAppender_Free;
 
-	nSize = GetEnvironmentVariableA(name, NULL, 0);
+	const DWORD nSize = GetEnvironmentVariableA(name, NULL, 0);
 	if (nSize)
 	{
 		appender->identifier = (LPSTR)malloc(nSize);

@@ -38,6 +38,8 @@
 
 #include "wlog.h"
 
+#define WLOG_MAX_STRING_SIZE 16384
+
 typedef struct
 {
 	DWORD Level;
@@ -225,11 +227,10 @@ out:
 	return status;
 }
 
-static BOOL WLog_Write(wLog* log, wLogMessage* message)
+static BOOL WLog_Write(wLog* log, const wLogMessage* message)
 {
 	BOOL status = FALSE;
-	wLogAppender* appender = NULL;
-	appender = WLog_GetLogAppender(log);
+	wLogAppender* appender = WLog_GetLogAppender(log);
 
 	if (!appender)
 		return FALSE;
@@ -256,11 +257,10 @@ static BOOL WLog_Write(wLog* log, wLogMessage* message)
 	return status;
 }
 
-static BOOL WLog_WriteData(wLog* log, wLogMessage* message)
+static BOOL WLog_WriteData(wLog* log, const wLogMessage* message)
 {
 	BOOL status = 0;
-	wLogAppender* appender = NULL;
-	appender = WLog_GetLogAppender(log);
+	wLogAppender* appender = WLog_GetLogAppender(log);
 
 	if (!appender)
 		return FALSE;
@@ -349,6 +349,24 @@ static BOOL WLog_WritePacket(wLog* log, wLogMessage* message)
 	return status;
 }
 
+static BOOL WLog_PrintTextMessageInternal(wLog* log, const wLogMessage* cmessage, va_list args)
+{
+	assert(cmessage);
+
+	char formattedLogMessage[WLOG_MAX_STRING_SIZE] = { 0 };
+	wLogMessage message = *cmessage;
+	message.TextString = formattedLogMessage;
+
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_FORMAT_NONLITERAL
+	if (vsnprintf(formattedLogMessage, ARRAYSIZE(formattedLogMessage) - 1, cmessage->FormatString,
+	              args) < 0)
+		return FALSE;
+	WINPR_PRAGMA_DIAG_POP
+
+	return WLog_Write(log, &message);
+}
+
 BOOL WLog_PrintMessageVA(wLog* log, DWORD type, DWORD level, size_t line, const char* file,
                          const char* function, va_list args)
 {
@@ -365,26 +383,7 @@ BOOL WLog_PrintMessageVA(wLog* log, DWORD type, DWORD level, size_t line, const 
 		case WLOG_MESSAGE_TEXT:
 			message.FormatString = va_arg(args, const char*);
 
-			if (!strchr(message.FormatString, '%'))
-			{
-				message.TextString = message.FormatString;
-				status = WLog_Write(log, &message);
-			}
-			else
-			{
-				char formattedLogMessage[WLOG_MAX_STRING_SIZE] = { 0 };
-
-				WINPR_PRAGMA_DIAG_PUSH
-				WINPR_PRAGMA_DIAG_IGNORED_FORMAT_NONLITERAL
-				if (vsnprintf(formattedLogMessage, WLOG_MAX_STRING_SIZE - 1, message.FormatString,
-				              args) < 0)
-					return FALSE;
-				WINPR_PRAGMA_DIAG_POP
-
-				message.TextString = formattedLogMessage;
-				status = WLog_Write(log, &message);
-			}
-
+			status = WLog_PrintTextMessageInternal(log, &message, args);
 			break;
 
 		case WLOG_MESSAGE_DATA:
@@ -418,7 +417,6 @@ BOOL WLog_PrintMessageVA(wLog* log, DWORD type, DWORD level, size_t line, const 
 BOOL WLog_PrintTextMessageVA(wLog* log, DWORD level, size_t line, const char* file,
                              const char* function, const char* fmt, va_list args)
 {
-	BOOL status = FALSE;
 	wLogMessage message = { 0 };
 	message.Type = WLOG_MESSAGE_TEXT;
 	message.Level = level;
@@ -428,27 +426,7 @@ BOOL WLog_PrintTextMessageVA(wLog* log, DWORD level, size_t line, const char* fi
 
 	message.FormatString = fmt;
 
-	if (!strchr(message.FormatString, '%'))
-	{
-		message.TextString = message.FormatString;
-		status = WLog_Write(log, &message);
-	}
-	else
-	{
-		char formattedLogMessage[WLOG_MAX_STRING_SIZE] = { 0 };
-
-		WINPR_PRAGMA_DIAG_PUSH
-		WINPR_PRAGMA_DIAG_IGNORED_FORMAT_NONLITERAL
-		if (vsnprintf(formattedLogMessage, WLOG_MAX_STRING_SIZE - 1, message.FormatString, args) <
-		    0)
-			return FALSE;
-		WINPR_PRAGMA_DIAG_POP
-
-		message.TextString = formattedLogMessage;
-		status = WLog_Write(log, &message);
-	}
-
-	return status;
+	return WLog_PrintTextMessageInternal(log, &message, args);
 }
 
 BOOL WLog_PrintMessage(wLog* log, DWORD type, DWORD level, size_t line, const char* file,

@@ -1064,7 +1064,7 @@ static BOOL arm_handle_bad_request(rdpArm* arm, const HttpResponse* response, BO
 	http_response_log_error_status(WLog_Get(TAG), WLOG_ERROR, response);
 
 	const size_t len = http_response_get_body_length(response);
-	const char* msg = (const char*)http_response_get_body(response);
+	const char* msg = http_response_get_body(response);
 	if (msg && (strnlen(msg, len + 1) > len))
 	{
 		WLog_Print(arm->log, WLOG_ERROR, "Got HTTP Response data, but length is invalid");

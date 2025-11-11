@@ -30,7 +30,7 @@
 
 typedef struct
 {
-	WLOG_APPENDER_COMMON();
+	wLogAppender common;
 
 	char* FileName;
 	char* FilePath;
@@ -104,7 +104,7 @@ static BOOL WLog_BinaryAppender_Close(WINPR_ATTR_UNUSED wLog* log, wLogAppender*
 }
 
 static BOOL WLog_BinaryAppender_WriteMessage(wLog* log, wLogAppender* appender,
-                                             wLogMessage* message)
+                                             const wLogMessage* message)
 {
 	FILE* fp = NULL;
 	wStream* s = NULL;
@@ -169,14 +169,14 @@ static BOOL WLog_BinaryAppender_WriteMessage(wLog* log, wLogAppender* appender,
 
 static BOOL WLog_BinaryAppender_WriteDataMessage(WINPR_ATTR_UNUSED wLog* log,
                                                  WINPR_ATTR_UNUSED wLogAppender* appender,
-                                                 WINPR_ATTR_UNUSED wLogMessage* message)
+                                                 WINPR_ATTR_UNUSED const wLogMessage* message)
 {
 	return TRUE;
 }
 
 static BOOL WLog_BinaryAppender_WriteImageMessage(WINPR_ATTR_UNUSED wLog* log,
                                                   WINPR_ATTR_UNUSED wLogAppender* appender,
-                                                  WINPR_ATTR_UNUSED wLogMessage* message)
+                                                  WINPR_ATTR_UNUSED const wLogMessage* message)
 {
 	return TRUE;
 }
@@ -222,20 +222,18 @@ static void WLog_BinaryAppender_Free(wLogAppender* appender)
 
 wLogAppender* WLog_BinaryAppender_New(WINPR_ATTR_UNUSED wLog* log)
 {
-	wLogBinaryAppender* BinaryAppender = NULL;
-
-	BinaryAppender = (wLogBinaryAppender*)calloc(1, sizeof(wLogBinaryAppender));
+	wLogBinaryAppender* BinaryAppender = (wLogBinaryAppender*)calloc(1, sizeof(wLogBinaryAppender));
 	if (!BinaryAppender)
 		return NULL;
 
-	BinaryAppender->Type = WLOG_APPENDER_BINARY;
-	BinaryAppender->Open = WLog_BinaryAppender_Open;
-	BinaryAppender->Close = WLog_BinaryAppender_Close;
-	BinaryAppender->WriteMessage = WLog_BinaryAppender_WriteMessage;
-	BinaryAppender->WriteDataMessage = WLog_BinaryAppender_WriteDataMessage;
-	BinaryAppender->WriteImageMessage = WLog_BinaryAppender_WriteImageMessage;
-	BinaryAppender->Free = WLog_BinaryAppender_Free;
-	BinaryAppender->Set = WLog_BinaryAppender_Set;
+	BinaryAppender->common.Type = WLOG_APPENDER_BINARY;
+	BinaryAppender->common.Open = WLog_BinaryAppender_Open;
+	BinaryAppender->common.Close = WLog_BinaryAppender_Close;
+	BinaryAppender->common.WriteMessage = WLog_BinaryAppender_WriteMessage;
+	BinaryAppender->common.WriteDataMessage = WLog_BinaryAppender_WriteDataMessage;
+	BinaryAppender->common.WriteImageMessage = WLog_BinaryAppender_WriteImageMessage;
+	BinaryAppender->common.Free = WLog_BinaryAppender_Free;
+	BinaryAppender->common.Set = WLog_BinaryAppender_Set;
 
-	return (wLogAppender*)BinaryAppender;
+	return &BinaryAppender->common;
 }

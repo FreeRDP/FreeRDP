@@ -22,7 +22,7 @@
 
 #include "wlog.h"
 
-void WLog_Appender_Free(wLog* log, wLogAppender* appender);
+WINPR_LOCAL void WLog_Appender_Free(wLog* log, wLogAppender* appender);
 
 #include "FileAppender.h"
 #include "ConsoleAppender.h"
