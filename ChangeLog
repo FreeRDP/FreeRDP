@@ -1,3 +1,83 @@
+# 2025-11-12 Version 3.18.0
+
+Minor improvements and bugfix release.
+Some user visible changes:
+* Fix a regression reading passwords from stdin
+* Fix a timer regression (µs instead of ms)
+* Improved multitouch support
+* Fix a bug with PLANAR codec (used with /bpp:32 or sometimes with /gfx)
+* Better error handling for ARM transport (Entra)
+* Fix audio encoder lag (microphone/AAC) with FFMPEG
+* Support for janssen JSON library
+
+## What's Changed
+* [core,arm] extract redirected username (#11873)
+* [winpr,path] fix endianness issues (#11875)
+* [cmake,pkg-config] properly set requires fields (#11876)
+* [codec,planar] make test output verbose (#11877)
+* [codec,planar] more test output (#11878)
+* Planar fix sign (#11880)
+* Entra fixes (#11881, #11882)
+* Warn fixes cast (#11884)
+* wst error handling (#11885)
+* [winpr,json] add jansson support (#11886)
+* [client,sdl] set metadata after command line parsing (#11890)
+* [core,arm] add TARGET_BOOTING error code (#11889)
+* [core] fix const correctness (#11891)
+* [c,standard] use C99 inline (#11879)
+* [winpr,pool] limit minimum threadpool size (#11897)
+* Azure domain (#11892)
+* [core,arm] fix TargetNetAddress size and checks (#11899)
+* [winpr,json] fix a memory leak with jansson (#11901)
+* Jansson fix (#11902)
+* Bitmap fixes and unit tests (#11903)
+* [channels,rdpecam] fix a memory leak (#11907)
+* [common,settings] fix resize of TargetNetAddressess (#11905)
+* Jansson ref count (#11908)
+* [winpr,json] fix WINPR_JSON_AddItemToArray (#11909)
+* [client,common] improve retry handling (#11910)
+* Janssen version limit (#11911)
+* Rdstls error code mapping (#11913)
+* dsp_ffmpeg: fix latency buildup during resampling (#11912)
+* [core,rdstls] improve logging (#11914)
+* [client,common] fix parsing of enablerdsaadauth (#11915)
+* Codec stringify (#11918)
+* [core,tcp] fix a regression (#11919)
+* [core,timer] fix reschedule interval (#11921)
+* [winpr,timezone] update dotnet version for tzextract (#11927)
+* [timezones] Update definitions by @github-actions[bot] in (#11928)
+* [winpr,synch] Yield after a poll timeout in emscripten (#11929)
+* [channels,audin] fix a leak in pulse backend (#11933)
+* [crypto,x509] add missing OpenSSL include for d2i_RSA_PSS_PARAMS (#11942)
+* [client,android] fix wrong type of variable (#11945)
+* Revert smart sizing (#11946)
+* Align width and height for AVC444 decoding to 32 (#11930)
+* [crypto,tls] make cert warning more accurate (#11947)
+* [core,timer] ensure all scheduled timers are handled (#11948)
+* Fix build and run with optional channels (#11941)
+* [channels,rdpei] fix not sending essential touch events (#11955)
+* [CMake] mark WITH_VAAPI experimental (#11956)
+* Config extension (#11961)
+* [winpr,synch] Fix starvation in pollset_poll caused by emscripten_sleep (#11962)
+* [utils] fix from-stdin (#11965)
+* [client,x11] log mouse event types and call stack (#11966)
+* libfreerdp: remove SIGUSR1 and SIGUSR2 from fatal signals (#11968)
+* [input, virtualkey] Add Korean keys in XKB_KEYNAME_TABLE (#11977)
+* [cache,glyph] overallocate to compensate for off by one (#11980)
+* [client,common] improve multitouch mouse emulation (#11970)
+* [core,gateway] improve response cookie handling (#11971)
+* Revert "[core,gateway] improve arm transport" (#11983)
+* Http request improvements (#11984)
+* Log improve (#11985)
+* [client,sdl] sdl2 dialog auth: remove std::move (#11986)
+
+## New Contributors
+* @FriederHannenheim made their first contribution in (#11912)
+* @ploosin made their first contribution in (#11955)
+
+For a complete and detailed change log since the last release run:
+git log 3.18.0...3.17.2
+
 # 2025-09-19 Version 3.17.2
 
 Minor improvements and bugfix release.
