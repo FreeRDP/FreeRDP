@@ -246,7 +246,7 @@ SSIZE_T sdl_retry_dialog(freerdp* instance, const char* what, size_t current,
 
 	sdl->dialog.showInfo("[%s] retry %" PRIuz "/%" PRIuz ", delaying %" PRIuz
 	                     "ms before next attempt",
-	                     what, current, max, delay);
+	                     what, current + 1, max, delay);
 	return WINPR_ASSERTING_INT_CAST(ssize_t, delay);
 }
 

@@ -1299,7 +1299,7 @@ SSIZE_T client_common_retry_dialog(freerdp* instance, const char* what, size_t c
 	}
 
 	WLog_INFO(TAG, "[%s] retry %" PRIuz "/%" PRIuz ", delaying %" PRIuz "ms before next attempt",
-	          what, current, max, delay);
+	          what, current + 1, max, delay);
 	return WINPR_ASSERTING_INT_CAST(SSIZE_T, delay);
 }
 
@@ -1364,7 +1364,7 @@ BOOL client_auto_reconnect_ex(freerdp* instance, BOOL (*window_events)(freerdp* 
 	while (retry)
 	{
 		/* Quit retrying if max retries has been exceeded */
-		if ((maxRetries > 0) && (numRetries++ >= maxRetries))
+		if ((maxRetries > 0) && (numRetries >= maxRetries))
 		{
 			WLog_DBG(TAG, "AutoReconnect retries exceeded.");
 			return FALSE;
@@ -1375,6 +1375,9 @@ BOOL client_auto_reconnect_ex(freerdp* instance, BOOL (*window_events)(freerdp* 
 
 		const SSIZE_T delay =
 		    IFCALLRESULT(5000, instance->RetryDialog, instance, "connection", numRetries, NULL);
+		if (delay < 0)
+			return FALSE;
+		numRetries++;
 
 		if (freerdp_reconnect(instance))
 			return TRUE;
