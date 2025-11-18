@@ -286,8 +286,10 @@ static BOOL ffmpeg_open_context(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context)
 		case AV_CODEC_ID_AAC:
 #if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(60, 31, 102)
 			context->context->profile = FF_PROFILE_AAC_MAIN;
-#else
+#elif LIBAVCODEC_VERSION_INT < AV_VERSION_INT(62, 11, 100)
 			context->context->profile = AV_PROFILE_AAC_MAIN;
+#else
+			context->context->profile = AV_PROFILE_AAC_LOW;
 #endif
 			break;
 
