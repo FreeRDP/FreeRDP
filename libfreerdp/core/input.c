@@ -40,6 +40,53 @@
 #define INPUT_EVENT_MOUSEX 0x8002
 #define INPUT_EVENT_MOUSEREL 0x8004
 
+static const char* SyncEventFlag2Str(enum KBD_SYNC_FLAGS flag)
+{
+	if (flag == KBD_SYNC_SCROLL_LOCK)
+		return "SYNC_SCROLL_LOCK";
+	if (flag == KBD_SYNC_NUM_LOCK)
+		return "SYNC_NUM_LOCK";
+	if (flag == KBD_SYNC_CAPS_LOCK)
+		return "SYNC_CAPS_LOCK";
+	if (flag == KBD_SYNC_KANA_LOCK)
+		return "SYNC_KANA_LOCK";
+	return "SYNC_UNKNOWN";
+}
+
+static const char* SyncEventFlags2Str(const char* prefix, uint32_t flags, char* buffer, size_t len)
+{
+	const uint32_t tflags[] = { KBD_SYNC_SCROLL_LOCK, KBD_SYNC_NUM_LOCK, KBD_SYNC_CAPS_LOCK,
+		                        KBD_SYNC_KANA_LOCK };
+
+	if (len <= 2)
+		return NULL;
+
+	if (!winpr_str_append("{", buffer, len, ""))
+		return NULL;
+
+	/* Strip initial symbol so we do not get duplicate separators */
+	for (size_t x = 0; x < ARRAYSIZE(tflags); x++)
+	{
+		const uint32_t flag = tflags[x];
+		if (flags & flag)
+		{
+			char ibuffer[64] = { 0 };
+			(void)_snprintf(ibuffer, sizeof(ibuffer), "%s%s", prefix, SyncEventFlag2Str(flag));
+			if (!winpr_str_append(ibuffer, &buffer[1], len - 2, "|"))
+				return NULL;
+		}
+	}
+	if (!winpr_str_append("}", &buffer[1], len - 2, ""))
+		return NULL;
+
+	return buffer;
+}
+
+const char* freerdp_input_keyboard_flags_string(uint32_t flags, char* buffer, size_t len)
+{
+	return SyncEventFlags2Str("KBD_", flags, buffer, len);
+}
+
 static void rdp_write_client_input_pdu_header(wStream* s, UINT16 number)
 {
 	WINPR_ASSERT(s);
@@ -929,7 +976,13 @@ BOOL freerdp_input_send_synchronize_event(rdpInput* input, UINT32 flags)
 	if (!input || !input->context)
 		return FALSE;
 
-	if (freerdp_settings_get_bool(input->context->settings, FreeRDP_SuspendInput))
+	rdp_input_internal* in = input_cast(input);
+	const BOOL suspended =
+	    freerdp_settings_get_bool(input->context->settings, FreeRDP_SuspendInput);
+	char buffer[128] = { 0 };
+	WLog_Print(in->log, WLOG_DEBUG, "Keyboard {Sync, suspend: %d} [%s]", suspended,
+	           freerdp_input_keyboard_flags_string(flags, buffer, sizeof(buffer)));
+	if (suspended)
 		return TRUE;
 
 	return IFCALLRESULT(TRUE, input->SynchronizeEvent, input, flags);
@@ -1025,7 +1078,14 @@ BOOL freerdp_input_send_focus_in_event(rdpInput* input, UINT16 toggleStates)
 	if (!input || !input->context)
 		return FALSE;
 
-	if (freerdp_settings_get_bool(input->context->settings, FreeRDP_SuspendInput))
+	rdp_input_internal* in = input_cast(input);
+	const BOOL suspended =
+	    freerdp_settings_get_bool(input->context->settings, FreeRDP_SuspendInput);
+	char buffer[128] = { 0 };
+	WLog_Print(in->log, WLOG_DEBUG, "Keyboard {FocusIn, suspend: %s} [%s]",
+	           suspended ? "true" : "false",
+	           freerdp_input_keyboard_flags_string(toggleStates, buffer, sizeof(buffer)));
+	if (suspended)
 		return TRUE;
 
 	return IFCALLRESULT(TRUE, input->FocusInEvent, input, toggleStates);
@@ -1036,7 +1096,11 @@ BOOL freerdp_input_send_keyboard_pause_event(rdpInput* input)
 	if (!input || !input->context)
 		return FALSE;
 
-	if (freerdp_settings_get_bool(input->context->settings, FreeRDP_SuspendInput))
+	rdp_input_internal* in = input_cast(input);
+	const BOOL suspended =
+	    freerdp_settings_get_bool(input->context->settings, FreeRDP_SuspendInput);
+	WLog_Print(in->log, WLOG_DEBUG, "Keyboard {Pause, suspend: %s}", suspended ? "true" : "false");
+	if (suspended)
 		return TRUE;
 
 	return IFCALLRESULT(TRUE, input->KeyboardPauseEvent, input);
@@ -1068,6 +1132,7 @@ rdpInput* input_new(rdpRdp* rdp)
 
 	input->common.context = rdp->context;
 	input->queue = MessageQueue_New(&cb);
+	input->log = WLog_Get(TAG);
 
 	if (!input->queue)
 	{

@@ -41,6 +41,7 @@ typedef struct
 	UINT64 lastInputTimestamp;
 	UINT16 lastX;
 	UINT16 lastY;
+	wLog* log;
 } rdp_input_internal;
 
 static inline rdp_input_internal* input_cast(rdpInput* input)
@@ -55,6 +56,7 @@ static inline rdp_input_internal* input_cast(rdpInput* input)
 	cnv.pub = input;
 	return cnv.internal;
 }
+
 FREERDP_LOCAL BOOL input_recv(rdpInput* input, wStream* s);
 
 FREERDP_LOCAL int input_process_events(rdpInput* input);

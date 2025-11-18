@@ -52,10 +52,13 @@
 #define PTR_XFLAGS_BUTTON2 0x0002
 
 /* Keyboard Toggle Flags */
-#define KBD_SYNC_SCROLL_LOCK 0x00000001
-#define KBD_SYNC_NUM_LOCK 0x00000002
-#define KBD_SYNC_CAPS_LOCK 0x00000004
-#define KBD_SYNC_KANA_LOCK 0x00000008
+enum KBD_SYNC_FLAGS
+{
+	KBD_SYNC_SCROLL_LOCK = 0x00000001,
+	KBD_SYNC_NUM_LOCK = 0x00000002,
+	KBD_SYNC_CAPS_LOCK = 0x00000004,
+	KBD_SYNC_KANA_LOCK = 0x00000008
+};
 
 #define RDP_CLIENT_INPUT_PDU_HEADER_LENGTH 4
 
@@ -115,6 +118,18 @@ extern "C"
 	FREERDP_API BOOL freerdp_input_send_extended_mouse_event(rdpInput* input, UINT16 flags,
 	                                                         UINT16 x, UINT16 y);
 	FREERDP_API BOOL freerdp_input_send_focus_in_event(rdpInput* input, UINT16 toggleStates);
+
+	/** @brief stringify \b enum KBD_SYNC_FLAGS
+	 *
+	 *  @param flags \b enum KBD_SYNC_FLAGS flags
+	 *  @param buffer A buffer to store the resulting string
+	 *  @param len The length of the buffer in bytes
+	 *
+	 *  @return A pointer to \ref buffer or \b NULL in case of failure
+	 *  @since version 3.19.0
+	 */
+	FREERDP_API const char* freerdp_input_keyboard_flags_string(uint32_t flags, char* buffer,
+	                                                            size_t len);
 
 #ifdef __cplusplus
 }
