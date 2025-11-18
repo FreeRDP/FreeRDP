@@ -717,7 +717,6 @@ static BOOL gdi_opaque_rect(rdpContext* context, const OPAQUE_RECT_ORDER* opaque
 	INT32 y = opaque_rect->nTopRect;
 	INT32 w = opaque_rect->nWidth;
 	INT32 h = opaque_rect->nHeight;
-	gdi_ClipCoords(gdi->drawing->hdc, &x, &y, &w, &h, NULL, NULL);
 	gdi_CRgnToRect(x, y, w, h, &rect);
 
 	if (!gdi_decode_color(gdi, opaque_rect->color, &brush_color, NULL))
@@ -751,11 +750,11 @@ static BOOL gdi_multi_opaque_rect(rdpContext* context,
 	for (UINT32 i = 0; i < multi_opaque_rect->numRectangles; i++)
 	{
 		const DELTA_RECT* rectangle = &multi_opaque_rect->rectangles[i];
-		INT32 x = rectangle->left;
-		INT32 y = rectangle->top;
-		INT32 w = rectangle->width;
-		INT32 h = rectangle->height;
-		gdi_ClipCoords(gdi->drawing->hdc, &x, &y, &w, &h, NULL, NULL);
+		const INT32 x = rectangle->left;
+		const INT32 y = rectangle->top;
+		const INT32 w = rectangle->width;
+		const INT32 h = rectangle->height;
+
 		gdi_CRgnToRect(x, y, w, h, &rect);
 		ret = gdi_FillRect(gdi->drawing->hdc, &rect, hBrush);
 
@@ -770,15 +769,21 @@ static BOOL gdi_multi_opaque_rect(rdpContext* context,
 static BOOL gdi_line_to(rdpContext* context, const LINE_TO_ORDER* lineTo)
 {
 	UINT32 color = 0;
-	HGDI_PEN hPen = NULL;
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(lineTo);
+
 	rdpGdi* gdi = context->gdi;
+	WINPR_ASSERT(gdi);
 
 	if (!gdi_decode_color(gdi, lineTo->penColor, &color, NULL))
 		return FALSE;
 
-	if (!(hPen = gdi_CreatePen(lineTo->penStyle, lineTo->penWidth, color, gdi->drawing->hdc->format,
-	                           &gdi->palette)))
+	HGDI_PEN hPen = gdi_CreatePen(lineTo->penStyle, lineTo->penWidth, color,
+	                              gdi->drawing->hdc->format, &gdi->palette);
+	if (!hPen)
 		return FALSE;
+
+	WINPR_ASSERT(gdi->drawing);
 
 	gdi_SelectObject(gdi->drawing->hdc, (HGDIOBJECT)hPen);
 	gdi_SetROP2(gdi->drawing->hdc, WINPR_ASSERTING_INT_CAST(int32_t, lineTo->bRop2));
@@ -790,25 +795,29 @@ static BOOL gdi_line_to(rdpContext* context, const LINE_TO_ORDER* lineTo)
 
 static BOOL gdi_polyline(rdpContext* context, const POLYLINE_ORDER* polyline)
 {
-	INT32 x = 0;
-	INT32 y = 0;
-	UINT32 color = 0;
-	HGDI_PEN hPen = NULL;
-	DELTA_POINT* points = NULL;
-	rdpGdi* gdi = context->gdi;
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(polyline);
 
+	rdpGdi* gdi = context->gdi;
+	WINPR_ASSERT(gdi);
+
+	UINT32 color = 0;
 	if (!gdi_decode_color(gdi, polyline->penColor, &color, NULL))
 		return FALSE;
 
-	if (!(hPen = gdi_CreatePen(GDI_PS_SOLID, 1, color, gdi->drawing->hdc->format, &gdi->palette)))
+	WINPR_ASSERT(gdi->drawing);
+	WINPR_ASSERT(gdi->drawing->hdc);
+
+	HGDI_PEN hPen = gdi_CreatePen(GDI_PS_SOLID, 1, color, gdi->drawing->hdc->format, &gdi->palette);
+	if (!hPen)
 		return FALSE;
 
 	gdi_SelectObject(gdi->drawing->hdc, (HGDIOBJECT)hPen);
 	gdi_SetROP2(gdi->drawing->hdc, WINPR_ASSERTING_INT_CAST(int32_t, polyline->bRop2));
-	x = polyline->xStart;
-	y = polyline->yStart;
+	INT32 x = polyline->xStart;
+	INT32 y = polyline->yStart;
 	gdi_MoveToEx(gdi->drawing->hdc, x, y, NULL);
-	points = polyline->points;
+	DELTA_POINT* points = polyline->points;
 
 	for (UINT32 i = 0; i < polyline->numDeltaEntries; i++)
 	{

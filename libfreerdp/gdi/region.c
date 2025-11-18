@@ -143,11 +143,12 @@ GDI_RECT* gdi_CreateRect(INT32 xLeft, INT32 yTop, INT32 xRight, INT32 yBottom)
 
 BOOL gdi_RectToRgn(const GDI_RECT* rect, GDI_RGN* rgn)
 {
+	WINPR_ASSERT(rect);
+	WINPR_ASSERT(rgn);
+
 	BOOL rc = TRUE;
-	INT64 w = 0;
-	INT64 h = 0;
-	w = rect->right - rect->left + 1ll;
-	h = rect->bottom - rect->top + 1ll;
+	INT64 w = rect->right - rect->left + 1ll;
+	INT64 h = rect->bottom - rect->top + 1ll;
 
 	if ((w < 0) || (h < 0) || (w > INT32_MAX) || (h > INT32_MAX))
 	{
