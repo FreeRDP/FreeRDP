@@ -1421,7 +1421,7 @@ HttpResponse* http_response_recv(rdpTls* tls, BOOL readContentLength)
 		WINPR_ASSERT(response->BodyLength == 0);
 		bodyLength = response->BodyLength; /* expected body length */
 
-		if (readContentLength && (response->BodyLength > 0))
+		if (readContentLength && (response->ContentLength > 0))
 		{
 			const char* cur = response->ContentType;
 
