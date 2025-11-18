@@ -689,7 +689,7 @@ BOOL freerdp_client_print_command_line_help_ex(int argc, char** argv,
 #else
 	printf("    export https_proxy=http://proxy.contoso.com:3128/\n");
 #endif
-	printf("    %s /g:rdp.contoso.com ...\n", name);
+	printf("    %s /gateway:g:rdp.contoso.com ...\n", name);
 	printf("\n");
 	printf("More documentation is coming, in the meantime consult source files\n");
 	printf("\n");
