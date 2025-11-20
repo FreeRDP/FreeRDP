@@ -182,6 +182,10 @@ static pthread_once_t HandleCreatorsInitialized = PTHREAD_ONCE_INIT;
 #include "../comm/comm.h"
 #include "namedPipeClient.h"
 
+static DWORD FileAttributesFromStat(const char* path, const struct stat* fileStat);
+static BOOL FindDataFromStat(const char* path, const struct stat* fileStat,
+                             LPWIN32_FIND_DATAA lpFindFileData);
+
 static void HandleCreatorsInit(void)
 {
 	WINPR_ASSERT(HandleCreators == NULL);
@@ -476,16 +480,17 @@ BOOL WINAPI GetFileAttributesExA(LPCSTR lpFileName,
                                  LPVOID lpFileInformation)
 {
 	LPWIN32_FILE_ATTRIBUTE_DATA fd = lpFileInformation;
-	WIN32_FIND_DATAA findFileData = { 0 };
-
 	if (!fd)
 		return FALSE;
 
-	HANDLE hFind = FindFirstFileA(lpFileName, &findFileData);
-	if (hFind == INVALID_HANDLE_VALUE)
+	struct stat fileStat = { 0 };
+	if (stat(lpFileName, &fileStat) != 0)
 		return FALSE;
 
-	FindClose(hFind);
+	WIN32_FIND_DATAA findFileData = { 0 };
+	if (!FindDataFromStat(lpFileName, &fileStat, &findFileData))
+		return FALSE;
+
 	fd->dwFileAttributes = findFileData.dwFileAttributes;
 	fd->ftCreationTime = findFileData.ftCreationTime;
 	fd->ftLastAccessTime = findFileData.ftLastAccessTime;
@@ -516,14 +521,11 @@ BOOL WINAPI GetFileAttributesExW(LPCWSTR lpFileName, GET_FILEEX_INFO_LEVELS fInf
 
 DWORD WINAPI GetFileAttributesA(LPCSTR lpFileName)
 {
-	WIN32_FIND_DATAA findFileData = { 0 };
-	HANDLE hFind = FindFirstFileA(lpFileName, &findFileData);
-
-	if (hFind == INVALID_HANDLE_VALUE)
+	struct stat fileStat = { 0 };
+	if (stat(lpFileName, &fileStat) != 0)
 		return INVALID_FILE_ATTRIBUTES;
 
-	FindClose(hFind);
-	return findFileData.dwFileAttributes;
+	return FileAttributesFromStat(lpFileName, &fileStat);
 }
 
 DWORD WINAPI GetFileAttributesW(LPCWSTR lpFileName)
@@ -935,32 +937,39 @@ static BOOL is_valid_file_search_handle(HANDLE handle)
 		return FALSE;
 	return TRUE;
 }
-static BOOL FindDataFromStat(const char* path, const struct stat* fileStat,
-                             LPWIN32_FIND_DATAA lpFindFileData)
+
+static DWORD FileAttributesFromStat(const char* path, const struct stat* fileStat)
 {
-	UINT64 ft = 0;
 	char* lastSep = NULL;
-	lpFindFileData->dwFileAttributes = 0;
+	DWORD dwFileAttributes = 0;
 
 	if (S_ISDIR(fileStat->st_mode))
-		lpFindFileData->dwFileAttributes |= FILE_ATTRIBUTE_DIRECTORY;
+		dwFileAttributes |= FILE_ATTRIBUTE_DIRECTORY;
 
-	if (lpFindFileData->dwFileAttributes == 0)
-		lpFindFileData->dwFileAttributes = FILE_ATTRIBUTE_ARCHIVE;
+	if (dwFileAttributes == 0)
+		dwFileAttributes = FILE_ATTRIBUTE_ARCHIVE;
 
 	lastSep = strrchr(path, '/');
-
 	if (lastSep)
 	{
 		const char* name = lastSep + 1;
 		const size_t namelen = strlen(name);
 
 		if ((namelen > 1) && (name[0] == '.') && (name[1] != '.'))
-			lpFindFileData->dwFileAttributes |= FILE_ATTRIBUTE_HIDDEN;
+			dwFileAttributes |= FILE_ATTRIBUTE_HIDDEN;
 	}
 
 	if (!(fileStat->st_mode & S_IWUSR))
-		lpFindFileData->dwFileAttributes |= FILE_ATTRIBUTE_READONLY;
+		dwFileAttributes |= FILE_ATTRIBUTE_READONLY;
+
+	return dwFileAttributes;
+}
+
+static BOOL FindDataFromStat(const char* path, const struct stat* fileStat,
+                             LPWIN32_FIND_DATAA lpFindFileData)
+{
+	UINT64 ft = 0;
+	lpFindFileData->dwFileAttributes = FileAttributesFromStat(path, fileStat);
 
 #ifdef _DARWIN_FEATURE_64_BIT_INODE
 	ft = STAT_TIME_TO_FILETIME(fileStat->st_birthtime);
@@ -1205,9 +1214,9 @@ BOOL FindClose(HANDLE hFindFile)
 	if (!pFileSearch)
 		return FALSE;
 
-		/* Since INVALID_HANDLE_VALUE != NULL the analyzer guesses that there
-		 * is a initialized HANDLE that is not freed properly.
-		 * Disable this return to stop confusing the analyzer. */
+	/* Since INVALID_HANDLE_VALUE != NULL the analyzer guesses that there
+	 * is a initialized HANDLE that is not freed properly.
+	 * Disable this return to stop confusing the analyzer. */
 #ifndef __clang_analyzer__
 	if (!is_valid_file_search_handle(hFindFile))
 		return FALSE;
