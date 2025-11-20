@@ -587,7 +587,6 @@ BOOL drive_file_query_information(DRIVE_FILE* file, UINT32 FsInformationClass, w
 {
 	BY_HANDLE_FILE_INFORMATION fileInformation = { 0 };
 	BOOL status = 0;
-	HANDLE hFile = NULL;
 
 	if (!file || !output)
 		return FALSE;
@@ -597,20 +596,23 @@ BOOL drive_file_query_information(DRIVE_FILE* file, UINT32 FsInformationClass, w
 		return drive_file_query_from_handle_information(file, &fileInformation, FsInformationClass,
 		                                                output);
 
-	hFile = CreateFileW(file->fullpath, 0, FILE_SHARE_DELETE, NULL, OPEN_EXISTING,
-	                    FILE_ATTRIBUTE_NORMAL, NULL);
-	if (hFile != INVALID_HANDLE_VALUE)
+	if (!file->is_dir)
 	{
-		status = GetFileInformationByHandle(hFile, &fileInformation);
-		(void)CloseHandle(hFile);
-		if (!status)
-			goto out_fail;
+		HANDLE hFile = CreateFileW(file->fullpath, 0, FILE_SHARE_DELETE, NULL, OPEN_EXISTING,
+		                           FILE_ATTRIBUTE_NORMAL, NULL);
+		if (hFile != INVALID_HANDLE_VALUE)
+		{
+			status = GetFileInformationByHandle(hFile, &fileInformation);
+			(void)CloseHandle(hFile);
+			if (!status)
+				goto out_fail;
 
-		if (!drive_file_query_from_handle_information(file, &fileInformation, FsInformationClass,
-		                                              output))
-			goto out_fail;
+			if (!drive_file_query_from_handle_information(file, &fileInformation,
+			                                              FsInformationClass, output))
+				goto out_fail;
 
-		return TRUE;
+			return TRUE;
+		}
 	}
 
 	/* If we failed before (i.e. if information for a drive is queried) fall back to
