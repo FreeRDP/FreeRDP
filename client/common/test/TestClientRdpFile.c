@@ -416,6 +416,12 @@ static bool test_data(const char* json, const void* data, size_t len, bool unche
 	if (!settings || !expect)
 		goto fail;
 
+#ifndef WITH_GFX_H264
+	if (!freerdp_settings_set_bool(expect, FreeRDP_GfxH264, FALSE) ||
+	    !freerdp_settings_set_bool(expect, FreeRDP_GfxAVC444, FALSE) ||
+	    !freerdp_settings_set_bool(expect, FreeRDP_GfxAVC444v2, FALSE))
+		goto fail;
+#endif
 	wLog* log = WLog_Get(__func__);
 	WLog_Print(log, WLOG_INFO, "Test cast '%s'", json);
 	if (freerdp_settings_print_diff(log, WLOG_ERROR, expect, settings))
