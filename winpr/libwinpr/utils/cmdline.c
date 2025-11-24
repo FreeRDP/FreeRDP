@@ -61,6 +61,9 @@ static void log_error_(DWORD flags, LPCSTR message, int index, WINPR_ATTR_UNUSED
 	{
 		const DWORD level = WLOG_ERROR;
 		static wLog* log = NULL;
+		if (!log)
+			log = WLog_Get(TAG);
+
 		if (!WLog_IsLevelActive(log, level))
 			return;
 
@@ -136,8 +139,7 @@ int CommandLineParseArgumentsA(int argc, LPSTR* argv, COMMAND_LINE_ARGUMENT_A* o
 
 			if (count < 0)
 			{
-				log_error(flags, "Failed for index %d [%s]: PreFilter rule could not be applied", i,
-				          argv[i]);
+				log_error(flags, "PreFilter rule could not be applied", i, argv[i]);
 				status = COMMAND_LINE_ERROR;
 				return status;
 			}
@@ -182,7 +184,7 @@ int CommandLineParseArgumentsA(int argc, LPSTR* argv, COMMAND_LINE_ARGUMENT_A* o
 		{
 			if (notescaped)
 			{
-				log_error(flags, "Failed at index %d [%s]: Unescaped sigil", i, argv[i]);
+				log_error(flags, "Unescaped sigil", i, argv[i]);
 				return COMMAND_LINE_ERROR;
 			}
 
@@ -192,7 +194,7 @@ int CommandLineParseArgumentsA(int argc, LPSTR* argv, COMMAND_LINE_ARGUMENT_A* o
 		}
 		else
 		{
-			log_error(flags, "Failed at index %d [%s]: Invalid sigil", i, argv[i]);
+			log_error(flags, "Invalid sigil", i, argv[i]);
 			return COMMAND_LINE_ERROR;
 		}
 
@@ -204,6 +206,7 @@ int CommandLineParseArgumentsA(int argc, LPSTR* argv, COMMAND_LINE_ARGUMENT_A* o
 				if ((flags & COMMAND_LINE_IGN_UNKNOWN_KEYWORD))
 					continue;
 
+				log_error(flags, "Unexpected keyword", i, argv[i]);
 				return COMMAND_LINE_ERROR_NO_KEYWORD;
 			}
 
@@ -246,7 +249,7 @@ int CommandLineParseArgumentsA(int argc, LPSTR* argv, COMMAND_LINE_ARGUMENT_A* o
 			{
 				if (length < keyword_index)
 				{
-					log_error(flags, "Failed at index %d [%s]: Argument required", i, argv[i]);
+					log_error(flags, "Argument required", i, argv[i]);
 					return COMMAND_LINE_ERROR;
 				}
 
@@ -323,7 +326,7 @@ int CommandLineParseArgumentsA(int argc, LPSTR* argv, COMMAND_LINE_ARGUMENT_A* o
 					}
 					else if (!value_present && argument)
 					{
-						log_error(flags, "Failed at index %d [%s]: Argument required", i, argv[i]);
+						log_error(flags, "Argument required", i, argv[i]);
 						return COMMAND_LINE_ERROR;
 					}
 				}
@@ -332,7 +335,7 @@ int CommandLineParseArgumentsA(int argc, LPSTR* argv, COMMAND_LINE_ARGUMENT_A* o
 				{
 					if (value && (cur->Flags & COMMAND_LINE_VALUE_FLAG))
 					{
-						log_error(flags, "Failed at index %d [%s]: Unexpected value", i, argv[i]);
+						log_error(flags, "Unexpected value", i, argv[i]);
 						return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 					}
 				}
@@ -347,7 +350,7 @@ int CommandLineParseArgumentsA(int argc, LPSTR* argv, COMMAND_LINE_ARGUMENT_A* o
 
 				if (!value && (cur->Flags & COMMAND_LINE_VALUE_REQUIRED))
 				{
-					log_error(flags, "Failed at index %d [%s]: Missing value", i, argv[i]);
+					log_error(flags, "Missing value", i, argv[i]);
 					status = COMMAND_LINE_ERROR_MISSING_VALUE;
 					return status;
 				}
@@ -358,7 +361,7 @@ int CommandLineParseArgumentsA(int argc, LPSTR* argv, COMMAND_LINE_ARGUMENT_A* o
 				{
 					if (!(cur->Flags & (COMMAND_LINE_VALUE_OPTIONAL | COMMAND_LINE_VALUE_REQUIRED)))
 					{
-						log_error(flags, "Failed at index %d [%s]: Unexpected value", i, argv[i]);
+						log_error(flags, "Unexpected value", i, argv[i]);
 						return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 					}
 
@@ -403,9 +406,7 @@ int CommandLineParseArgumentsA(int argc, LPSTR* argv, COMMAND_LINE_ARGUMENT_A* o
 
 					if (count < 0)
 					{
-						log_error(flags,
-						          "Failed at index %d [%s]: PostFilter rule could not be applied",
-						          i, argv[i]);
+						log_error(flags, "PostFilter rule could not be applied", i, argv[i]);
 						status = COMMAND_LINE_ERROR;
 						return status;
 					}
@@ -423,7 +424,7 @@ int CommandLineParseArgumentsA(int argc, LPSTR* argv, COMMAND_LINE_ARGUMENT_A* o
 
 			if (!found && (flags & COMMAND_LINE_IGN_UNKNOWN_KEYWORD) == 0)
 			{
-				log_error(flags, "Failed at index %d [%s]: Unexpected keyword", i, argv[i]);
+				log_error(flags, "Unexpected keyword", i, argv[i]);
 				return COMMAND_LINE_ERROR_NO_KEYWORD;
 			}
 		}
