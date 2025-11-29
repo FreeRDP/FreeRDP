@@ -33,6 +33,7 @@
 #include <freerdp/addin.h>
 #include <freerdp/channels/log.h>
 #include <freerdp/client/drdynvc.h>
+#include <freerdp/codec/zgfx.h>
 #include <freerdp/freerdp.h>
 
 typedef struct drdynvc_plugin drdynvcPlugin;
@@ -91,6 +92,7 @@ typedef struct
 
 	wStream* dvc_data;
 	UINT32 dvc_data_length;
+	ZGFX_CONTEXT* decompressor;
 	CRITICAL_SECTION lock;
 } DVCMAN_CHANNEL;
 

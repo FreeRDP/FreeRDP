@@ -29,6 +29,7 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/channels/drdynvc.h>
 #include <freerdp/utils/drdynvc.h>
+#include <freerdp/codec/zgfx.h>
 
 #include "drdynvc_main.h"
 
@@ -405,6 +406,7 @@ static void dvcman_channel_free(DVCMAN_CHANNEL* channel)
 	if (channel->dvc_data)
 		Stream_Release(channel->dvc_data);
 
+	zgfx_context_free(channel->decompressor);
 	DeleteCriticalSection(&(channel->lock));
 	free(channel->channel_name);
 	free(channel);
@@ -552,8 +554,11 @@ static DVCMAN_CHANNEL* dvcman_channel_new(WINPR_ATTR_UNUSED drdynvcPlugin* drdyn
 	channel->refCounter = 1;
 	channel->state = DVC_CHANNEL_INIT;
 	channel->channel_name = _strdup(ChannelName);
-
 	if (!channel->channel_name)
+		goto fail;
+
+	channel->decompressor = zgfx_context_new(FALSE);
+	if (!channel->decompressor)
 		goto fail;
 
 	if (!InitializeCriticalSectionEx(&(channel->lock), 0, 0))
@@ -1294,25 +1299,20 @@ static UINT drdynvc_process_create_request(drdynvcPlugin* drdynvc, UINT8 Sp, UIN
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT drdynvc_process_data_first(drdynvcPlugin* drdynvc, int Sp, int cbChId, wStream* s,
-                                       UINT32 ThreadingFlags)
+                                       BOOL compressed, UINT32 ThreadingFlags)
 {
-	UINT status = CHANNEL_RC_OK;
-	UINT32 Length = 0;
-	UINT32 ChannelId = 0;
-	DVCMAN_CHANNEL* channel = NULL;
-
 	WINPR_ASSERT(drdynvc);
 	if (!Stream_CheckAndLogRequiredLength(
 	        TAG, s, drdynvc_cblen_to_bytes(cbChId) + drdynvc_cblen_to_bytes(Sp)))
 		return ERROR_INVALID_DATA;
 
-	ChannelId = drdynvc_read_variable_uint(s, cbChId);
-	Length = drdynvc_read_variable_uint(s, Sp);
+	UINT32 ChannelId = drdynvc_read_variable_uint(s, cbChId);
+	UINT32 Length = drdynvc_read_variable_uint(s, Sp);
 	WLog_Print(drdynvc->log, WLOG_TRACE,
 	           "process_data_first: Sp=%d cbChId=%d, ChannelId=%" PRIu32 " Length=%" PRIu32 "", Sp,
 	           cbChId, ChannelId, Length);
 
-	channel = dvcman_get_channel_by_id(drdynvc->channel_mgr, ChannelId, TRUE);
+	DVCMAN_CHANNEL* channel = dvcman_get_channel_by_id(drdynvc->channel_mgr, ChannelId, TRUE);
 	if (!channel)
 	{
 		/**
@@ -1324,8 +1324,35 @@ static UINT drdynvc_process_data_first(drdynvcPlugin* drdynvc, int Sp, int cbChI
 		return CHANNEL_RC_OK;
 	}
 
+	UINT status = CHANNEL_RC_OK;
+	BOOL shouldFree = FALSE;
 	if (channel->state != DVC_CHANNEL_RUNNING)
 		goto out;
+
+	if (compressed)
+	{
+		BYTE* data = NULL;
+		UINT32 dataSize = 0;
+		if (zgfx_decompress(channel->decompressor, Stream_Pointer(s),
+		                    WINPR_ASSERTING_INT_CAST(UINT32, Stream_GetRemainingLength(s)), &data,
+		                    &dataSize, 0) < 0)
+		{
+			status = ERROR_INVALID_DATA;
+			WLog_Print(drdynvc->log, WLOG_ERROR, "error de-compressing first packet");
+			goto out;
+		}
+
+		s = Stream_New(data, dataSize);
+		if (!s)
+		{
+			status = CHANNEL_RC_NO_MEMORY;
+			WLog_Print(drdynvc->log, WLOG_ERROR, "error allocating new Stream(len=%" PRIu32 ")",
+			           dataSize);
+			free(data);
+			goto out;
+		}
+		shouldFree = TRUE;
+	}
 
 	status = dvcman_receive_channel_data_first(channel, Length);
 
@@ -1336,6 +1363,8 @@ static UINT drdynvc_process_data_first(drdynvcPlugin* drdynvc, int Sp, int cbChI
 		status = dvcman_channel_close(channel, FALSE, FALSE);
 
 out:
+	if (shouldFree)
+		Stream_Free(s, TRUE);
 	dvcman_channel_unref(channel);
 	return status;
 }
@@ -1346,21 +1375,17 @@ out:
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT drdynvc_process_data(drdynvcPlugin* drdynvc, int Sp, int cbChId, wStream* s,
-                                 UINT32 ThreadingFlags)
+                                 BOOL compressed, UINT32 ThreadingFlags)
 {
-	UINT32 ChannelId = 0;
-	DVCMAN_CHANNEL* channel = NULL;
-	UINT status = CHANNEL_RC_OK;
-
 	WINPR_ASSERT(drdynvc);
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, drdynvc_cblen_to_bytes(cbChId)))
 		return ERROR_INVALID_DATA;
 
-	ChannelId = drdynvc_read_variable_uint(s, cbChId);
+	UINT32 ChannelId = drdynvc_read_variable_uint(s, cbChId);
 	WLog_Print(drdynvc->log, WLOG_TRACE, "process_data: Sp=%d cbChId=%d, ChannelId=%" PRIu32 "", Sp,
 	           cbChId, ChannelId);
 
-	channel = dvcman_get_channel_by_id(drdynvc->channel_mgr, ChannelId, TRUE);
+	DVCMAN_CHANNEL* channel = dvcman_get_channel_by_id(drdynvc->channel_mgr, ChannelId, TRUE);
 	if (!channel)
 	{
 		/**
@@ -1372,14 +1397,44 @@ static UINT drdynvc_process_data(drdynvcPlugin* drdynvc, int Sp, int cbChId, wSt
 		return CHANNEL_RC_OK;
 	}
 
+	BOOL shouldFree = FALSE;
+	UINT status = CHANNEL_RC_OK;
 	if (channel->state != DVC_CHANNEL_RUNNING)
 		goto out;
+
+	if (compressed)
+	{
+		BYTE* data = NULL;
+		UINT32 dataSize = 0;
+
+		if (zgfx_decompress(channel->decompressor, Stream_Pointer(s),
+		                    WINPR_ASSERTING_INT_CAST(UINT32, Stream_GetRemainingLength(s)), &data,
+		                    &dataSize, 0) < 0)
+		{
+			status = ERROR_INVALID_DATA;
+			WLog_Print(drdynvc->log, WLOG_ERROR, "error de-compressing data packet");
+			goto out;
+		}
+
+		s = Stream_New(data, dataSize);
+		if (!s)
+		{
+			status = CHANNEL_RC_NO_MEMORY;
+			WLog_Print(drdynvc->log, WLOG_ERROR, "error allocating new Stream(len=%" PRIu32 ")",
+			           dataSize);
+			free(data);
+			goto out;
+		}
+		shouldFree = TRUE;
+	}
 
 	status = dvcman_receive_channel_data(channel, s, ThreadingFlags);
 	if (status != CHANNEL_RC_OK)
 		status = dvcman_channel_close(channel, FALSE, FALSE);
 
 out:
+	if (shouldFree)
+		Stream_Free(s, TRUE);
 	dvcman_channel_unref(channel);
 	return status;
 }
@@ -1423,13 +1478,11 @@ static UINT drdynvc_process_close_request(drdynvcPlugin* drdynvc, int Sp, int cb
  */
 static UINT drdynvc_order_recv(drdynvcPlugin* drdynvc, wStream* s, UINT32 ThreadingFlags)
 {
-	UINT8 value = 0;
-
 	WINPR_ASSERT(drdynvc);
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 1))
 		return ERROR_INVALID_DATA;
 
-	Stream_Read_UINT8(s, value);
+	UINT8 value = Stream_Get_UINT8(s);
 	const UINT8 Cmd = (value & 0xf0) >> 4;
 	const UINT8 Sp = (value & 0x0c) >> 2;
 	const UINT8 cbChId = (value & 0x03) >> 0;
@@ -1445,13 +1498,22 @@ static UINT drdynvc_order_recv(drdynvcPlugin* drdynvc, wStream* s, UINT32 Thread
 			return drdynvc_process_create_request(drdynvc, Sp, cbChId, s);
 
 		case DATA_FIRST_PDU:
-			return drdynvc_process_data_first(drdynvc, Sp, cbChId, s, ThreadingFlags);
+		case DATA_FIRST_COMPRESSED_PDU:
+			return drdynvc_process_data_first(drdynvc, Sp, cbChId, s,
+			                                  (Cmd == DATA_FIRST_COMPRESSED_PDU), ThreadingFlags);
 
 		case DATA_PDU:
-			return drdynvc_process_data(drdynvc, Sp, cbChId, s, ThreadingFlags);
+		case DATA_COMPRESSED_PDU:
+			return drdynvc_process_data(drdynvc, Sp, cbChId, s, (Cmd == DATA_COMPRESSED_PDU),
+			                            ThreadingFlags);
 
 		case CLOSE_REQUEST_PDU:
 			return drdynvc_process_close_request(drdynvc, Sp, cbChId, s);
+
+		case SOFT_SYNC_RESPONSE_PDU:
+			WLog_Print(drdynvc->log, WLOG_ERROR,
+			           "not expecting a SOFT_SYNC_RESPONSE_PDU as a client");
+			return ERROR_INTERNAL_ERROR;
 
 		default:
 			WLog_Print(drdynvc->log, WLOG_ERROR, "unknown drdynvc cmd 0x%x", Cmd);
