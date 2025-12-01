@@ -442,8 +442,8 @@ static UINT ecam_dev_process_media_type_list_request(CameraDevice* dev,
 {
 	UINT error = CHANNEL_RC_OK;
 	BYTE streamIndex = 0;
-	CAM_MEDIA_TYPE_DESCRIPTION* mediaTypes = NULL;
-	size_t nMediaTypes = ECAM_MAX_MEDIA_TYPE_DESCRIPTORS;
+	CAM_MEDIA_TYPE_DESCRIPTION mediaTypes[ECAM_MAX_MEDIA_TYPE_DESCRIPTORS] = { 0 };
+	size_t nMediaTypes = ARRAYSIZE(mediaTypes);
 
 	WINPR_ASSERT(dev);
 
@@ -460,24 +460,17 @@ static UINT ecam_dev_process_media_type_list_request(CameraDevice* dev,
 	}
 	CameraDeviceStream* stream = &dev->streams[streamIndex];
 
-	mediaTypes =
-	    (CAM_MEDIA_TYPE_DESCRIPTION*)calloc(nMediaTypes, sizeof(CAM_MEDIA_TYPE_DESCRIPTION));
-	if (!mediaTypes)
-	{
-		WLog_ERR(TAG, "calloc failed");
-		ecam_channel_send_error_response(dev->ecam, hchannel, CAM_ERROR_CODE_OutOfMemory);
-		return CHANNEL_RC_NO_MEMORY;
-	}
-
 	INT16 formatIndex =
 	    dev->ihal->GetMediaTypeDescriptions(dev->ihal, dev->deviceId, streamIndex, supportedFormats,
 	                                        nSupportedFormats, mediaTypes, &nMediaTypes);
-	if (formatIndex == -1 || nMediaTypes == 0)
+	if ((formatIndex < 0) || (nMediaTypes == 0))
 	{
-		WLog_ERR(TAG, "Camera doesn't support any compatible video formats");
+		WLog_ERR(TAG,
+		         "Camera doesn't support any compatible video formats [streamIndex=%" PRIu32
+		         ", formatIndex=%" PRId16 ", nMediaTypes=%" PRIu32 "]",
+		         streamIndex, formatIndex, nMediaTypes);
 		ecam_channel_send_error_response(dev->ecam, hchannel, CAM_ERROR_CODE_ItemNotFound);
-		error = ERROR_DEVICE_FEATURE_NOT_SUPPORTED;
-		goto error;
+		return ERROR_DEVICE_FEATURE_NOT_SUPPORTED;
 	}
 
 	stream->formats = supportedFormats[formatIndex];
@@ -495,11 +488,7 @@ static UINT ecam_dev_process_media_type_list_request(CameraDevice* dev,
 		stream->currMediaType = mediaTypes[0];
 	}
 
-	error = ecam_dev_send_media_type_list_response(dev, hchannel, mediaTypes, nMediaTypes);
-
-error:
-	free(mediaTypes);
-	return error;
+	return ecam_dev_send_media_type_list_response(dev, hchannel, mediaTypes, nMediaTypes);
 }
 
 /**
