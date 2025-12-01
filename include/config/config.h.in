@@ -89,6 +89,7 @@
 #cmakedefine CHANNEL_DRIVE
 #cmakedefine CHANNEL_DRIVE_CLIENT
 #cmakedefine CHANNEL_DRIVE_SERVER
+
 #cmakedefine CHANNEL_ECHO
 #cmakedefine CHANNEL_ECHO_CLIENT
 #cmakedefine CHANNEL_ECHO_SERVER
@@ -134,6 +135,9 @@
 #cmakedefine CHANNEL_RDPECAM
 #cmakedefine CHANNEL_RDPECAM_CLIENT
 #cmakedefine CHANNEL_RDPECAM_SERVER
+#cmakedefine CHANNEL_RDPEAR
+#cmakedefine CHANNEL_RDPEAR_CLIENT
+#cmakedefine CHANNEL_RDPEAR_SERVER
 #cmakedefine CHANNEL_RDPEI
 #cmakedefine CHANNEL_RDPEI_CLIENT
 #cmakedefine CHANNEL_RDPEI_SERVER

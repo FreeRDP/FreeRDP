@@ -404,8 +404,10 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  "connecting to a buggy server" },
 	{ "restricted-admin", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, "restrictedAdmin",
 	  "Restricted admin mode" },
+#ifndef CHANNEL_RDPEAR_CLIENT
 	{ "remoteGuard", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, "remoteGuard",
 	  "Remote guard credentials" },
+#endif
 	{ "rfx", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "RemoteFX" },
 	{ "rfx-mode", COMMAND_LINE_VALUE_REQUIRED, "[image|video]", NULL, NULL, -1, NULL,
 	  "RemoteFX mode" },
