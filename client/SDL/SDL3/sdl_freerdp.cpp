@@ -495,7 +495,7 @@ static BOOL sdl_desktop_resize(rdpContext* context)
 	settings = context->settings;
 	WINPR_ASSERT(settings);
 
-	std::lock_guard<CriticalSection> lock(sdl->critical);
+	std::scoped_lock lock(sdl->critical);
 	gdi = context->gdi;
 	if (!gdi_resize(gdi, freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth),
 	                freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight)))
@@ -644,7 +644,7 @@ static void sdl_cleanup_sdl(SdlContext* sdl)
 	if (!sdl)
 		return;
 
-	std::lock_guard<CriticalSection> lock(sdl->critical);
+	std::scoped_lock lock(sdl->critical);
 	sdl->windows.clear();
 	sdl->dialog.destroy();
 
@@ -763,7 +763,7 @@ static BOOL sdl_wait_create_windows(SdlContext* sdl)
 
 static bool shall_abort(SdlContext* sdl)
 {
-	std::lock_guard<CriticalSection> lock(sdl->critical);
+	std::scoped_lock lock(sdl->critical);
 	if (freerdp_shall_disconnect_context(sdl->context()))
 	{
 		if (sdl->rdp_thread_running)
@@ -829,7 +829,7 @@ static int sdl_run(SdlContext* sdl)
 			             sdl_event_type_str(windowEvent.type), windowEvent.type);
 #endif
 			{
-				std::lock_guard<CriticalSection> lock(sdl->critical);
+				std::scoped_lock lock(sdl->critical);
 				/* The session might have been disconnected while we were waiting for a
 				 * new SDL event. In that case ignore the SDL event and terminate. */
 				if (freerdp_shall_disconnect_context(sdl->context()))

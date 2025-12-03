@@ -103,7 +103,7 @@ class ChannelData
 
 	bool add(const std::string& name, WINPR_ATTR_UNUSED bool back)
 	{
-		std::lock_guard<std::mutex> guard(_mux);
+		std::scoped_lock guard(_mux);
 		if (_map.find(name) == _map.end())
 		{
 			WLog_INFO(TAG, "adding '%s' to dump list", name.c_str());
@@ -114,7 +114,7 @@ class ChannelData
 
 	std::ofstream stream(const std::string& name, bool back)
 	{
-		std::lock_guard<std::mutex> guard(_mux);
+		std::scoped_lock guard(_mux);
 		auto& atom = _map[name];
 		auto count = atom++;
 		auto path = filepath(name, back, count);

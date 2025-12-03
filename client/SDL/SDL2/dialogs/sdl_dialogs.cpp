@@ -211,7 +211,7 @@ SSIZE_T sdl_retry_dialog(freerdp* instance, const char* what, size_t current,
 	auto sdl = get_context(instance->context);
 	auto settings = instance->context->settings;
 	const size_t delay = freerdp_settings_get_uint32(settings, FreeRDP_TcpConnectTimeout);
-	std::lock_guard<CriticalSection> lock(sdl->critical);
+	std::scoped_lock lock(sdl->critical);
 	if (!sdl->connection_dialog)
 		return WINPR_ASSERTING_INT_CAST(SSIZE_T, delay);
 

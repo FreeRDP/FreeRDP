@@ -225,7 +225,7 @@ static const struct sdl_exit_code_map_t* sdl_map_entry_by_code(int exit_code)
 static void sdl_hide_connection_dialog(SdlContext* sdl)
 {
 	WINPR_ASSERT(sdl);
-	std::lock_guard<CriticalSection> lock(sdl->critical);
+	std::scoped_lock lock(sdl->critical);
 	if (sdl->connection_dialog)
 		sdl->connection_dialog->hide();
 }
@@ -491,7 +491,7 @@ static BOOL sdl_end_paint(rdpContext* context)
 	auto sdl = get_context(context);
 	WINPR_ASSERT(sdl);
 
-	std::lock_guard<CriticalSection> lock(sdl->critical);
+	std::scoped_lock lock(sdl->critical);
 	const BOOL rc = sdl_push_user_event(SDL_USEREVENT_UPDATE, context);
 
 	return rc;
@@ -546,7 +546,7 @@ static BOOL sdl_desktop_resize(rdpContext* context)
 	settings = context->settings;
 	WINPR_ASSERT(settings);
 
-	std::lock_guard<CriticalSection> lock(sdl->critical);
+	std::scoped_lock lock(sdl->critical);
 	gdi = context->gdi;
 	if (!gdi_resize(gdi, freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth),
 	                freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight)))
@@ -617,7 +617,7 @@ static BOOL sdl_pre_connect(freerdp* instance)
 		if (!sdl_wait_for_init(sdl))
 			return FALSE;
 
-		std::lock_guard<CriticalSection> lock(sdl->critical);
+		std::scoped_lock lock(sdl->critical);
 		if (!freerdp_settings_get_bool(settings, FreeRDP_UseCommonStdioCallbacks))
 			sdl->connection_dialog = std::make_unique<SDLConnectionDialog>(instance->context);
 		if (sdl->connection_dialog)
@@ -702,7 +702,7 @@ static void sdl_cleanup_sdl(SdlContext* sdl)
 	if (!sdl)
 		return;
 
-	std::lock_guard<CriticalSection> lock(sdl->critical);
+	std::scoped_lock lock(sdl->critical);
 	sdl->windows.clear();
 	sdl->connection_dialog.reset();
 
@@ -791,7 +791,7 @@ static BOOL sdl_create_windows(SdlContext* sdl)
 
 static BOOL sdl_wait_create_windows(SdlContext* sdl)
 {
-	std::lock_guard<CriticalSection> lock(sdl->critical);
+	std::scoped_lock lock(sdl->critical);
 	sdl->windows_created.clear();
 	if (!sdl_push_user_event(SDL_USEREVENT_CREATE_WINDOWS, sdl))
 		return FALSE;
@@ -810,7 +810,7 @@ static BOOL sdl_wait_create_windows(SdlContext* sdl)
 
 static bool shall_abort(SdlContext* sdl)
 {
-	std::lock_guard<CriticalSection> lock(sdl->critical);
+	std::scoped_lock lock(sdl->critical);
 	if (freerdp_shall_disconnect_context(sdl->context()))
 	{
 		if (sdl->rdp_thread_running)
@@ -870,7 +870,7 @@ static int sdl_run(SdlContext* sdl)
 			SDL_Log("got event %s [0x%08" PRIx32 "]", sdl_event_type_str(windowEvent.type),
 			        windowEvent.type);
 #endif
-			std::lock_guard<CriticalSection> lock(sdl->critical);
+			std::scoped_lock lock(sdl->critical);
 			/* The session might have been disconnected while we were waiting for a new SDL event.
 			 * In that case ignore the SDL event and terminate. */
 			if (freerdp_shall_disconnect_context(sdl->context()))
@@ -1209,7 +1209,7 @@ static void sdl_client_cleanup(SdlContext* sdl, int exit_code, const std::string
 				break;
 			default:
 			{
-				std::lock_guard<CriticalSection> lock(sdl->critical);
+				std::scoped_lock lock(sdl->critical);
 				if (sdl->connection_dialog && !error_msg.empty())
 				{
 					sdl->connection_dialog->showError(error_msg.c_str());
@@ -1723,7 +1723,7 @@ int main(int argc, char* argv[])
 
 BOOL SdlContext::update_fullscreen(BOOL enter)
 {
-	std::lock_guard<CriticalSection> lock(critical);
+	std::scoped_lock lock(critical);
 	for (const auto& window : windows)
 	{
 		if (!sdl_push_user_event(SDL_USEREVENT_WINDOW_FULLSCREEN, &window.second, enter))
@@ -1735,13 +1735,13 @@ BOOL SdlContext::update_fullscreen(BOOL enter)
 
 BOOL SdlContext::update_minimize()
 {
-	std::lock_guard<CriticalSection> lock(critical);
+	std::scoped_lock lock(critical);
 	return sdl_push_user_event(SDL_USEREVENT_WINDOW_MINIMIZE);
 }
 
 BOOL SdlContext::update_resizeable(BOOL enable)
 {
-	std::lock_guard<CriticalSection> lock(critical);
+	std::scoped_lock lock(critical);
 
 	const auto settings = context()->settings;
 	const BOOL dyn = freerdp_settings_get_bool(settings, FreeRDP_DynamicResolutionUpdate);
