@@ -116,7 +116,7 @@ class SdlConnectionDialogWrapper
 	void push(EventArg&& arg);
 
 	mutable std::mutex _mux;
-	std::unique_ptr<SDLConnectionDialog> _connection_dialog{};
-	std::queue<EventArg> _queue{};
+	std::unique_ptr<SDLConnectionDialog> _connection_dialog;
+	std::queue<EventArg> _queue;
 	wLog* _log = nullptr;
 };

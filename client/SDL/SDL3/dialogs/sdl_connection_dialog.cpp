@@ -45,7 +45,7 @@ SDLConnectionDialog::~SDLConnectionDialog()
 
 bool SDLConnectionDialog::setTitle(const char* fmt, ...)
 {
-	std::lock_guard lock(_mux);
+	std::scoped_lock lock(_mux);
 	va_list ap = {};
 	va_start(ap, fmt);
 	_title = print(fmt, ap);
@@ -85,19 +85,19 @@ bool SDLConnectionDialog::showError(const char* fmt, ...)
 
 bool SDLConnectionDialog::show()
 {
-	std::lock_guard lock(_mux);
+	std::scoped_lock lock(_mux);
 	return show(_type_active);
 }
 
 bool SDLConnectionDialog::hide()
 {
-	std::lock_guard lock(_mux);
+	std::scoped_lock lock(_mux);
 	return show(SdlConnectionDialogWrapper::MSG_DISCARD);
 }
 
 bool SDLConnectionDialog::running() const
 {
-	std::lock_guard lock(_mux);
+	std::scoped_lock lock(_mux);
 	return _running;
 }
 
@@ -143,7 +143,7 @@ bool SDLConnectionDialog::setModal()
 
 bool SDLConnectionDialog::updateInternal()
 {
-	std::lock_guard lock(_mux);
+	std::scoped_lock lock(_mux);
 	for (auto& btn : _list)
 	{
 		if (!btn.widget.update_text(_msg))
@@ -179,7 +179,7 @@ bool SDLConnectionDialog::handle(const SDL_Event& event)
 	{
 		case SDL_EVENT_USER_RETRY_DIALOG:
 		{
-			std::lock_guard lock(_mux);
+			std::scoped_lock lock(_mux);
 			auto type = static_cast<SdlConnectionDialogWrapper::MsgType>(event.user.code);
 			return updateMsg(type);
 		}
@@ -289,7 +289,7 @@ bool SDLConnectionDialog::handle(const SDL_Event& event)
 
 bool SDLConnectionDialog::visible() const
 {
-	std::lock_guard lock(_mux);
+	std::scoped_lock lock(_mux);
 	return SdlWidgetList::visible();
 }
 
@@ -397,7 +397,7 @@ void SDLConnectionDialog::destroyWindow()
 bool SDLConnectionDialog::show(SdlConnectionDialogWrapper::MsgType type, const char* fmt,
                                va_list ap)
 {
-	std::lock_guard lock(_mux);
+	std::scoped_lock lock(_mux);
 	_msg = print(fmt, ap);
 	return show(type);
 }
@@ -436,7 +436,7 @@ std::string SDLConnectionDialog::print(const char* fmt, va_list ap)
 
 bool SDLConnectionDialog::setTimer(Uint32 timeoutMS)
 {
-	std::lock_guard lock(_mux);
+	std::scoped_lock lock(_mux);
 	resetTimer();
 
 	_timer = SDL_AddTimer(timeoutMS, &SDLConnectionDialog::timeout, this);

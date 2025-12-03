@@ -592,7 +592,7 @@ std::shared_ptr<BYTE> sdlClip::ReceiveFormatDataRequestHandle(
 	           ClipboardGetFormatName(clipboard->_system, localFormatId));
 
 	ClipboardLockGuard systemlock(clipboard->_system);
-	std::lock_guard<CriticalSection> lock(clipboard->_lock);
+	std::scoped_lock lock(clipboard->_lock);
 
 	const UINT32 fileFormatId =
 	    ClipboardGetFormatId(clipboard->_system, s_type_FileGroupDescriptorW);
@@ -725,7 +725,7 @@ UINT sdlClip::ReceiveFormatDataResponse(CliprdrClientContext* context,
 	WINPR_ASSERT(clipboard);
 
 	ClipboardLockGuard systemlock(clipboard->_system);
-	std::lock_guard<CriticalSection> lock(clipboard->_lock);
+	std::scoped_lock lock(clipboard->_lock);
 	if (clipboard->_request_queue.empty())
 	{
 		WLog_Print(clipboard->_log, WLOG_ERROR, "no pending format request");
@@ -817,7 +817,7 @@ const void* sdlClip::ClipDataCb(void* userdata, const char* mime_type, size_t* s
 
 	{
 		ClipboardLockGuard systemlock(clip->_system);
-		std::lock_guard<CriticalSection> lock(clip->_lock);
+		std::scoped_lock lock(clip->_lock);
 
 		/* check if we already used this mime type */
 		auto cache = clip->_cache_data.find(mime_type);
@@ -858,7 +858,7 @@ const void* sdlClip::ClipDataCb(void* userdata, const char* mime_type, size_t* s
 
 		if (status != WAIT_OBJECT_0 + 1)
 		{
-			std::lock_guard<CriticalSection> lock(clip->_lock);
+			std::scoped_lock lock(clip->_lock);
 			clip->_request_queue.pop();
 
 			if (status == WAIT_TIMEOUT)
@@ -871,7 +871,7 @@ const void* sdlClip::ClipDataCb(void* userdata, const char* mime_type, size_t* s
 
 	{
 		ClipboardLockGuard systemlock(clip->_system);
-		std::lock_guard<CriticalSection> lock(clip->_lock);
+		std::scoped_lock lock(clip->_lock);
 		auto request = clip->_request_queue.front();
 		clip->_request_queue.pop();
 
@@ -903,7 +903,7 @@ void sdlClip::ClipCleanCb(void* userdata)
 	auto clip = static_cast<sdlClip*>(userdata);
 	WINPR_ASSERT(clip);
 	ClipboardLockGuard give_me_a_name(clip->_system);
-	std::lock_guard<CriticalSection> lock(clip->_lock);
+	std::scoped_lock lock(clip->_lock);
 	ClipboardEmpty(clip->_system);
 }
 
