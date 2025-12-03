@@ -1400,6 +1400,22 @@ static const char* nego_rdp_neg_fail_str(uint32_t what)
 	}
 }
 
+static void nego_disable_all_except(rdpNego* nego, uint32_t what)
+{
+	WINPR_ASSERT(nego);
+
+	char buffer[32] = { 0 };
+	WLog_Print(nego->log, WLOG_DEBUG, "Disabling all modes except %s",
+	           nego_protocol_to_str(what, buffer, sizeof(buffer)));
+
+	for (size_t x = 0; x < ARRAYSIZE(nego->EnabledProtocols); x++)
+	{
+		if (x == what)
+			continue;
+		nego->EnabledProtocols[x] = FALSE;
+	}
+}
+
 /**
  * Process Negotiation Failure from Connection Confirm message.
  * @param nego A pointer to the NEGO struct
@@ -1438,9 +1454,11 @@ BOOL nego_process_negotiation_failure(rdpNego* nego, wStream* s)
 	switch (failureCode)
 	{
 		case SSL_REQUIRED_BY_SERVER:
+			nego_disable_all_except(nego, PROTOCOL_SSL);
 			break;
 
 		case SSL_NOT_ALLOWED_BY_SERVER:
+			nego_disable_all_except(nego, PROTOCOL_RDP);
 			nego->sendNegoData = TRUE;
 			break;
 
@@ -1454,6 +1472,7 @@ BOOL nego_process_negotiation_failure(rdpNego* nego, wStream* s)
 			break;
 
 		case HYBRID_REQUIRED_BY_SERVER:
+			nego_disable_all_except(nego, PROTOCOL_HYBRID);
 			break;
 
 		default:
