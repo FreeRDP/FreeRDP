@@ -44,6 +44,7 @@ Checks: >
     -cppcoreguidelines-pro-type-reinterpret-cast,
     -cppcoreguidelines-pro-bounds-pointer-arithmetic,
     -cppcoreguidelines-no-malloc,
+    -cppcoreguidelines-use-enum-class,
     -google-readability-braces-around-statements,
     -google-readability-todo,
     -hicpp-avoid-c-arrays,
@@ -80,9 +81,11 @@ Checks: >
     -readability-suspicious-call-argument,
     -readability-string-compare,
     -readability-uppercase-literal-suffix,
+    -readability-use-concise-preprocessor-directives,
     -performance-no-int-to-ptr,
     -performance-enum-size,
-    -performance-avoid-endl
+    -performance-avoid-endl,
+    -portability-avoid-pragma-once
 WarningsAsErrors: ''
 HeaderFilterRegex: ''
 FormatStyle:     file
