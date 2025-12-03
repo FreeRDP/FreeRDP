@@ -117,7 +117,7 @@ BOOL sdl_authenticate_ex(freerdp* instance, char** username, char** password, ch
 	size_t titlesize = 0;
 	winpr_asprintf(&title, &titlesize, "Credentials required for %s", target);
 
-	std::unique_ptr<char, decltype(&free)> guard(title, free);
+	CStringPtr guard(title, free);
 	char* u = nullptr;
 	char* d = nullptr;
 	char* p = nullptr;

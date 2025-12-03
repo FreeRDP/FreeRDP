@@ -63,7 +63,6 @@ class SdlPref
 
 	[[nodiscard]] bool is_user_config_enabled() const;
 
-	static std::string get_pref_dir(bool systemConfigOnly);
 	static std::string get_default_file(bool systemConfigOnly);
 	static std::string item_to_str(WINPR_JSON* item, const std::string& fallback = "");
 };

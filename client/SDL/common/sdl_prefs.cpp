@@ -31,6 +31,7 @@ namespace fs = std::experimental::filesystem;
 #endif
 
 #include "sdl_prefs.hpp"
+#include "sdl_common_utils.hpp"
 
 #include <winpr/path.h>
 #include <winpr/config.h>
@@ -218,21 +219,10 @@ SdlPref::SdlPref(std::string file)
 {
 }
 
-std::string SdlPref::get_pref_dir(bool systemConfigOnly)
-{
-	using CStringPtr = std::unique_ptr<char, decltype(&free)>;
-	CStringPtr path(freerdp_GetConfigFilePath(systemConfigOnly, ""), free);
-	if (!path)
-		return {};
-
-	fs::path config{ path.get() };
-	return config.string();
-}
-
 std::string SdlPref::get_default_file(bool systemConfigOnly)
 {
-	fs::path config{ SdlPref::get_pref_dir(systemConfigOnly) };
-	config /= "sdl-freerdp.json";
+	CStringPtr name(freerdp_GetConfigFilePath(systemConfigOnly, "sdl-freerdp.json"), free);
+	fs::path config{ name.get() };
 	return config.string();
 }
 
