@@ -19,7 +19,11 @@
  */
 #pragma once
 
+#include <memory>
+
 #include <freerdp/settings_types.h>
+
+using CStringPtr = std::unique_ptr<char, decltype(std::free)*>;
 
 bool operator==(const MONITOR_ATTRIBUTES& l, const MONITOR_ATTRIBUTES& r);
 bool operator==(const rdpMonitor& l, const rdpMonitor& r);
