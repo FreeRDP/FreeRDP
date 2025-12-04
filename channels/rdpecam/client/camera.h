@@ -101,7 +101,10 @@ typedef struct
 	CAM_MEDIA_TYPE_DESCRIPTION currMediaType;
 
 	GENERIC_CHANNEL_CALLBACK* hSampleReqChannel;
-	INT nSampleCredits;
+	CRITICAL_SECTION lock;
+	volatile LONG samplesRequested;
+	wStream* pendingSample;
+	volatile BOOL haveSample;
 	wStream* sampleRespBuffer;
 
 	H264_CONTEXT* h264;
