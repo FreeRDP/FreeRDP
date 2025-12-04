@@ -56,8 +56,18 @@ extern "C"
 	typedef BOOL (*psPeerHasMoreToRead)(freerdp_peer* peer);
 	typedef BOOL (*psPeerClose)(freerdp_peer* peer);
 	typedef void (*psPeerDisconnect)(freerdp_peer* peer);
+
+	/** callback called when we receive remote credential guard credentials during NLA
+	 * @param peer the associated freerdp_peer
+	 * @param logonCreds the KERB_TICKET_LOGON containing the TGT and the host service ticket
+	 * @param suppCreds some MSV1_0_REMOTE_SUPPLEMENTAL_CREDENTIAL containing NTLM hashes
+	 * @return if the treatment was successful
+	 * @bug before 3.19.0 suppCreds were a pointer to MSV1_0_SUPPLEMENTAL_CREDENTIAL, not
+	 * 		MSV1_0_REMOTE_SUPPLEMENTAL_CREDENTIAL as now
+	 */
 	typedef BOOL (*psPeerRemoteCredentials)(freerdp_peer* peer, KERB_TICKET_LOGON* logonCreds,
-	                                        MSV1_0_SUPPLEMENTAL_CREDENTIAL* suppCreds);
+	                                        MSV1_0_REMOTE_SUPPLEMENTAL_CREDENTIAL* suppCreds);
+
 	typedef BOOL (*psPeerCapabilities)(freerdp_peer* peer);
 	typedef BOOL (*psPeerPostConnect)(freerdp_peer* peer);
 	typedef BOOL (*psPeerActivate)(freerdp_peer* peer);

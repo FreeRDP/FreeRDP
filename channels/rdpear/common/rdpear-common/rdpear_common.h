@@ -79,8 +79,9 @@ typedef enum
 	// End NTLM remote calls
 } RemoteGuardCallId;
 
-FREERDP_LOCAL RdpEarPackageType rdpear_packageType_from_name(WinPrAsn1_OctetString* package);
-FREERDP_LOCAL wStream* rdpear_encodePayload(RdpEarPackageType packageType, wStream* payload);
+FREERDP_LOCAL RdpEarPackageType rdpear_packageType_from_name(const WinPrAsn1_OctetString* package);
+WINPR_ATTR_MALLOC(Stream_Free, 1)
+FREERDP_LOCAL wStream* rdpear_encodePayload(BOOL isKerb, wStream* payload);
 
 #define RDPEAR_COMMON_MESSAGE_DECL(V)                                                            \
 	FREERDP_LOCAL BOOL ndr_read_##V(NdrContext* context, wStream* s, const void* hints, V* obj); \

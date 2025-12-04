@@ -70,6 +70,37 @@ typedef struct
 
 #define MSV1_0_CRED_VERSION_REMOTE 0xffff0002
 
+typedef enum _MSV1_0_CREDENTIAL_KEY_TYPE
+{
+	InvalidCredKey,
+	DeprecatedIUMCredKey,
+	DomainUserCredKey,
+	LocalUserCredKey,
+	ExternallySuppliedCredKey
+} MSV1_0_CREDENTIAL_KEY_TYPE;
+
+#define MSV1_0_CREDENTIAL_KEY_LENGTH 20
+#define MSV1_0_CRED_LM_PRESENT 0x1
+#define MSV1_0_CRED_NT_PRESENT 0x2
+#define MSV1_0_CRED_REMOVED 0x4
+#define MSV1_0_CRED_CREDKEY_PRESENT 0x8
+#define MSV1_0_CRED_SHA_PRESENT 0x10
+
+typedef struct
+{
+	UCHAR Data[MSV1_0_CREDENTIAL_KEY_LENGTH];
+} MSV1_0_CREDENTIAL_KEY, *PMSV1_0_CREDENTIAL_KEY;
+
+typedef struct
+{
+	ULONG Version;
+	ULONG Flags;
+	MSV1_0_CREDENTIAL_KEY CredentialKey;
+	MSV1_0_CREDENTIAL_KEY_TYPE CredentialKeyType;
+	ULONG EncryptedCredsSize;
+	UCHAR EncryptedCreds[1];
+} MSV1_0_REMOTE_SUPPLEMENTAL_CREDENTIAL, *PMSV1_0_REMOTE_SUPPLEMENTAL_CREDENTIAL;
+
 #endif /* _WIN32 */
 
 #ifndef KERB_LOGON_FLAG_REDIRECTED

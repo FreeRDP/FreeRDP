@@ -31,7 +31,7 @@ static char kerberosPackageName[] = {
 };
 static char ntlmPackageName[] = { 'N', 0, 'T', 0, 'L', 0, 'M', 0 };
 
-RdpEarPackageType rdpear_packageType_from_name(WinPrAsn1_OctetString* package)
+RdpEarPackageType rdpear_packageType_from_name(const WinPrAsn1_OctetString* package)
 {
 	if (package->len == sizeof(kerberosPackageName) &&
 	    memcmp(package->data, kerberosPackageName, package->len) == 0)
@@ -44,7 +44,7 @@ RdpEarPackageType rdpear_packageType_from_name(WinPrAsn1_OctetString* package)
 	return RDPEAR_PACKAGE_UNKNOWN;
 }
 
-wStream* rdpear_encodePayload(RdpEarPackageType packageType, wStream* payload)
+wStream* rdpear_encodePayload(BOOL isKerb, wStream* payload)
 {
 	wStream* ret = NULL;
 	WinPrAsn1Encoder* enc = WinPrAsn1Encoder_New(WINPR_ASN1_DER);
@@ -57,18 +57,15 @@ wStream* rdpear_encodePayload(RdpEarPackageType packageType, wStream* payload)
 
 	/* packageName [1] OCTET STRING */
 	WinPrAsn1_OctetString packageOctetString;
-	switch (packageType)
+	if (isKerb)
 	{
-		case RDPEAR_PACKAGE_KERBEROS:
-			packageOctetString.data = (BYTE*)kerberosPackageName;
-			packageOctetString.len = sizeof(kerberosPackageName);
-			break;
-		case RDPEAR_PACKAGE_NTLM:
-			packageOctetString.data = (BYTE*)ntlmPackageName;
-			packageOctetString.len = sizeof(ntlmPackageName);
-			break;
-		default:
-			goto out;
+		packageOctetString.data = (BYTE*)kerberosPackageName;
+		packageOctetString.len = sizeof(kerberosPackageName);
+	}
+	else
+	{
+		packageOctetString.data = (BYTE*)ntlmPackageName;
+		packageOctetString.len = sizeof(ntlmPackageName);
 	}
 
 	if (!WinPrAsn1EncContextualOctetString(enc, 1, &packageOctetString))

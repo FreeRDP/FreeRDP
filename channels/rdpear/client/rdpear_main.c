@@ -193,13 +193,13 @@ out:
 }
 
 static BOOL rdpear_send_payload(RDPEAR_PLUGIN* rdpear, IWTSVirtualChannelCallback* pChannelCallback,
-                                RdpEarPackageType packageType, wStream* payload)
+                                BOOL isKerb, wStream* payload)
 {
 	GENERIC_CHANNEL_CALLBACK* callback = (GENERIC_CHANNEL_CALLBACK*)pChannelCallback;
 	BOOL ret = FALSE;
 	wStream* finalStream = NULL;
 	SecBuffer cryptedBuffer = { 0 };
-	wStream* unencodedContent = rdpear_encodePayload(packageType, payload);
+	wStream* unencodedContent = rdpear_encodePayload(isKerb, payload);
 	if (!unencodedContent)
 		goto out;
 
@@ -248,7 +248,7 @@ out:
 	return ret;
 }
 
-static BOOL rdpear_prepare_response(NdrContext* rcontext, UINT16 callId, UINT32 status,
+static BOOL rdpear_prepare_response(NdrContext* rcontext, BOOL isKerb, UINT16 callId, UINT32 status,
                                     NdrContext** pwcontext, wStream* retStream)
 {
 	WINPR_ASSERT(rcontext);
@@ -266,8 +266,17 @@ static BOOL rdpear_prepare_response(NdrContext* rcontext, UINT16 callId, UINT32 
 	Stream_Write(retStream, payloadHeader, sizeof(payloadHeader));
 
 	if (!ndr_write_header(wcontext, retStream) || !ndr_start_constructed(wcontext, retStream) ||
-	    !ndr_write_pickle(wcontext, retStream) ||         /* pickle header */
-	    !ndr_write_uint16(wcontext, retStream, callId) || /* callId */
+	    !ndr_write_pickle(wcontext, retStream)) /* pickle header */
+		goto out;
+	if (isKerb)
+	{
+		/* for some reason there's 4 zero undocumented bytes here after the pickle record
+		 * in the kerberos package packets */
+		UINT32 v = 0;
+		if (!ndr_write_uint32(wcontext, retStream, v))
+			goto out;
+	}
+	if (!ndr_write_uint16(wcontext, retStream, callId) || /* callId */
 	    !ndr_write_uint16(wcontext, retStream, 0x0000) || /* align padding */
 	    !ndr_write_uint32(wcontext, retStream, status) || /* status */
 	    !ndr_write_uint16(wcontext, retStream, callId) || /* callId */
@@ -748,8 +757,22 @@ out:
 	return TRUE;
 }
 
+static BOOL rdpear_ntlm_version(NdrContext* rcontext, wStream* s, UINT32* pstatus, UINT32* pversion)
+{
+	*pstatus = ERROR_INVALID_DATA;
+
+	if (!ndr_read_uint32(rcontext, s, pversion))
+		return TRUE;
+
+	WLog_DBG(TAG, "-> NtlmNegotiateVersion(v=0x%x)", *pversion);
+	*pstatus = 0;
+
+	return TRUE;
+}
+
 static UINT rdpear_decode_payload(RDPEAR_PLUGIN* rdpear,
-                                  IWTSVirtualChannelCallback* pChannelCallback, wStream* s)
+                                  IWTSVirtualChannelCallback* pChannelCallback,
+                                  const WinPrAsn1_OctetString* packageName, wStream* s)
 {
 	UINT ret = ERROR_INVALID_DATA;
 	NdrContext* context = NULL;
@@ -761,7 +784,6 @@ static UINT rdpear_decode_payload(RDPEAR_PLUGIN* rdpear,
 	CreateApReqAuthenticatorResp createApReqAuthenticatorResp = { 0 };
 	UnpackKdcReplyBodyResp unpackKdcReplyBodyResp = { 0 };
 	PackApReplyResp packApReplyResp = { 0 };
-
 	void* resp = NULL;
 	NdrMessageType respDescr = NULL;
 
@@ -769,16 +791,40 @@ static UINT rdpear_decode_payload(RDPEAR_PLUGIN* rdpear,
 	if (!respStream)
 		goto out;
 
-	Stream_Seek(s, 16); /* skip first 16 bytes */
+	BOOL isKerb = FALSE;
+	switch (rdpear_packageType_from_name(packageName))
+	{
+		case RDPEAR_PACKAGE_KERBEROS:
+			isKerb = TRUE;
+			break;
+		case RDPEAR_PACKAGE_NTLM:
+			isKerb = FALSE;
+			break;
+		default:
+			WLog_ERR(TAG, "unknown package type");
+			goto out;
+	}
 
+	Stream_Seek(s, 16); /* skip first 16 bytes */
 	wStream commandStream = { 0 };
 	UINT16 callId = 0;
 	UINT16 callId2 = 0;
 
 	context = ndr_read_header(s);
 	if (!context || !ndr_read_constructed(context, s, &commandStream) ||
-	    !ndr_read_pickle(context, &commandStream) ||
-	    !ndr_read_uint16(context, &commandStream, &callId) ||
+	    !ndr_read_pickle(context, &commandStream))
+		goto out;
+
+	if (isKerb)
+	{
+		/* for some reason there's 4 zero undocumented bytes here after the pickle record
+		 * in the kerberos package packets */
+		UINT32 v = 0;
+		if (!ndr_read_uint32(context, &commandStream, &v))
+			goto out;
+	}
+
+	if (!ndr_read_uint16(context, &commandStream, &callId) ||
 	    !ndr_read_uint16(context, &commandStream, &callId2) || (callId != callId2))
 		goto out;
 
@@ -837,9 +883,12 @@ static UINT rdpear_decode_payload(RDPEAR_PLUGIN* rdpear,
 			if (rdpear_kerb_PackApReply(rdpear, context, &commandStream, &status, &packApReplyResp))
 				ret = CHANNEL_RC_OK;
 			break;
-
 		case RemoteCallNtlmNegotiateVersion:
-			WLog_ERR(TAG, "don't wanna support NTLM");
+			resp = &uint32Resp;
+			respDescr = ndr_uint32_descr();
+
+			if (rdpear_ntlm_version(context, &commandStream, &status, &uint32Resp))
+				ret = CHANNEL_RC_OK;
 			break;
 
 		default:
@@ -849,7 +898,7 @@ static UINT rdpear_decode_payload(RDPEAR_PLUGIN* rdpear,
 			break;
 	}
 
-	if (!rdpear_prepare_response(context, callId, status, &wcontext, respStream))
+	if (!rdpear_prepare_response(context, isKerb, callId, status, &wcontext, respStream))
 		goto out;
 
 	if (resp && respDescr)
@@ -870,7 +919,7 @@ static UINT rdpear_decode_payload(RDPEAR_PLUGIN* rdpear,
 	}
 
 	if (!ndr_end_constructed(wcontext, respStream) ||
-	    !rdpear_send_payload(rdpear, pChannelCallback, RDPEAR_PACKAGE_KERBEROS, respStream))
+	    !rdpear_send_payload(rdpear, pChannelCallback, isKerb, respStream))
 	{
 		WLog_DBG(TAG, "rdpear_send_payload !!!!!!!!");
 		goto out;
@@ -946,7 +995,7 @@ static UINT rdpear_on_data_received(IWTSVirtualChannelCallback* pChannelCallback
 	wStream payloadStream = { 0 };
 	Stream_StaticInit(&payloadStream, payload.data, payload.len);
 
-	ret = rdpear_decode_payload(rdpear, pChannelCallback, &payloadStream);
+	ret = rdpear_decode_payload(rdpear, pChannelCallback, &packageName, &payloadStream);
 out:
 	sspi_SecBufferFree(&decrypted);
 	return ret;
