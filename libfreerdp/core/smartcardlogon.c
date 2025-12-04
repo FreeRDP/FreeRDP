@@ -581,8 +581,8 @@ static BOOL smartcard_hw_enumerateCerts(const rdpSettings* settings, LPCWSTR csp
 		if (!scopeStr)
 			goto out;
 
-		(void)_snprintf(scopeStr, readerSz + 5, "\\\\.\\%s\\", reader);
-		scope = ConvertUtf8NToWCharAlloc(scopeStr, readerSz + 5, NULL);
+		(void)_snprintf(scopeStr, readerSz + 6, "\\\\.\\%s\\", reader);
+		scope = ConvertUtf8NToWCharAlloc(scopeStr, readerSz + 6, NULL);
 		free(scopeStr);
 
 		if (!scope)
