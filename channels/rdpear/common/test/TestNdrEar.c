@@ -322,7 +322,7 @@ static int TestNdrEarRead(int argc, char* argv[])
 	};
 	size_t sizeofPayload4 = sizeof(payload4);
 #endif
-#if 1
+
 	size_t sizeofPayload4 = 0;
 	BYTE* payload4 = parseHexBlock("03 01 03 01 \
 		04 00 02 00 38 9e ef 6b 0c 00 02 00 18 00 02 00 \
@@ -346,7 +346,6 @@ static int TestNdrEarRead(int argc, char* argv[])
 
 	if (!payload4)
 		goto out;
-#endif
 
 	CreateApReqAuthenticatorReq createApReqAuthenticatorReq = { 0 };
 	s = Stream_StaticInit(&staticS, payload4, sizeofPayload4);

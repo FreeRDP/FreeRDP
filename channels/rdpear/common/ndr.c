@@ -216,7 +216,7 @@ BOOL ndr_read_pickle(NdrContext* context, wStream* s)
 	if (!ndr_read_uint32(context, s, &v) || v != 0x20000)
 		return FALSE;
 
-	return ndr_read_uint32(context, s, &v); // padding
+	return TRUE;
 }
 
 BOOL ndr_write_pickle(NdrContext* context, wStream* s)
@@ -227,7 +227,6 @@ BOOL ndr_write_pickle(NdrContext* context, wStream* s)
 	if (!ndr_write_uint32(context, s, 0x20000))
 		return FALSE;
 
-	ndr_write_uint32(context, s, 0); /* padding */
 	return TRUE;
 }
 
