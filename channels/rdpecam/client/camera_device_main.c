@@ -123,13 +123,20 @@ static BOOL mediaSupportDrops(CAM_MEDIA_FORMAT format)
 
 static UINT ecam_dev_send_pending(CameraDevice* dev, int streamIndex, CameraDeviceStream* stream)
 {
-	BYTE* encodedSample = NULL;
-	size_t encodedSize = 0;
+	WINPR_ASSERT(dev);
+	WINPR_ASSERT(stream);
 
+	if (stream->samplesRequested <= 0)
+	{
+		WLog_DBG(TAG, "Frame drop: No sample requested");
+		return CHANNEL_RC_OK;
+	}
+
+	BYTE* encodedSample = Stream_Buffer(stream->pendingSample);
+	size_t encodedSize = Stream_Length(stream->pendingSample);
 	if (streamInputFormat(stream) != streamOutputFormat(stream))
 	{
-		if (!ecam_encoder_compress(stream, Stream_Buffer(stream->pendingSample),
-		                           Stream_Length(stream->pendingSample), &encodedSample,
+		if (!ecam_encoder_compress(stream, encodedSample, encodedSize, &encodedSample,
 		                           &encodedSize))
 		{
 			WLog_DBG(TAG, "Frame drop or error in ecam_encoder_compress");
@@ -138,11 +145,6 @@ static UINT ecam_dev_send_pending(CameraDevice* dev, int streamIndex, CameraDevi
 
 		if (!stream->streaming)
 			return CHANNEL_RC_OK;
-	}
-	else /* passthrough */
-	{
-		encodedSample = Stream_Buffer(stream->pendingSample);
-		encodedSize = Stream_Length(stream->pendingSample);
 	}
 
 	stream->samplesRequested--;
@@ -213,9 +215,7 @@ static UINT ecam_dev_sample_captured_callback(CameraDevice* dev, int streamIndex
 	Stream_SealLength(stream->pendingSample);
 	stream->haveSample = TRUE;
 
-	ret = CHANNEL_RC_OK;
-	if (stream->samplesRequested)
-		ret = ecam_dev_send_pending(dev, streamIndex, stream);
+	ret = ecam_dev_send_pending(dev, streamIndex, stream);
 
 out:
 	LeaveCriticalSection(&stream->lock);
