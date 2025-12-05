@@ -351,7 +351,7 @@ static UINT ecam_dev_process_start_streams_request(CameraDevice* dev,
 		return ERROR_INVALID_DATA;
 	}
 
-	stream->pendingSample = Stream_New(NULL, mediaType.Width * mediaType.Height * 4ull);
+	stream->pendingSample = Stream_New(NULL, 4ull * mediaType.Width * mediaType.Height);
 	if (!stream->pendingSample)
 	{
 		WLog_ERR(TAG, "pending stream failed");
