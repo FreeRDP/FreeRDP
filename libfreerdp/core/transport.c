@@ -103,10 +103,44 @@ typedef struct
 	void* userContextShadowPtr;
 } rdpTransportLayerInt;
 
+static const char* where2str(int where, char* ibuffer, size_t ilen)
+{
+	if (!ibuffer || (ilen < 2))
+		return NULL;
+
+	ibuffer[0] = '[';
+	size_t len = ilen - 1;
+	char* buffer = &ibuffer[1];
+	if (where & SSL_CB_ALERT)
+		winpr_str_append("SSL_CB_ALERT", buffer, len, "|");
+	if (where & SSL_ST_ACCEPT)
+		winpr_str_append("SSL_ST_ACCEPT", buffer, len, "|");
+	if (where & SSL_ST_CONNECT)
+		winpr_str_append("SSL_ST_CONNECT", buffer, len, "|");
+	if (where & SSL_CB_HANDSHAKE_DONE)
+		winpr_str_append("SSL_CB_HANDSHAKE_DONE", buffer, len, "|");
+	if (where & SSL_CB_HANDSHAKE_START)
+		winpr_str_append("SSL_CB_HANDSHAKE_START", buffer, len, "|");
+	if (where & SSL_CB_WRITE)
+		winpr_str_append("SSL_CB_WRITE", buffer, len, "|");
+	if (where & SSL_CB_READ)
+		winpr_str_append("SSL_CB_READ", buffer, len, "|");
+	if (where & SSL_CB_EXIT)
+		winpr_str_append("SSL_CB_EXIT", buffer, len, "|");
+	if (where & SSL_CB_LOOP)
+		winpr_str_append("SSL_CB_LOOP", buffer, len, "|");
+
+	char nr[32] = { 0 };
+	(void)_snprintf(nr, sizeof(nr), "]{0x%08" PRIx32 "}", where);
+	winpr_str_append(nr, buffer, len, "");
+	return buffer;
+}
+
 static void transport_ssl_cb(const SSL* ssl, int where, int ret)
 {
 	if (where & SSL_CB_ALERT)
 	{
+		char buffer[128] = { 0 };
 		rdpTransport* transport = (rdpTransport*)SSL_get_app_data(ssl);
 		WINPR_ASSERT(transport);
 
@@ -116,7 +150,8 @@ static void transport_ssl_cb(const SSL* ssl, int where, int ret)
 			{
 				if (!freerdp_get_last_error(transport_get_context(transport)))
 				{
-					WLog_Print(transport->log, WLOG_ERROR, "ACCESS DENIED");
+					WLog_Print(transport->log, WLOG_ERROR, "where=%s ACCESS DENIED",
+					           where2str(where, buffer, sizeof(buffer)));
 					freerdp_set_last_error_log(transport_get_context(transport),
 					                           FREERDP_ERROR_AUTHENTICATION_FAILED);
 				}
@@ -125,6 +160,10 @@ static void transport_ssl_cb(const SSL* ssl, int where, int ret)
 
 			case (SSL3_AL_FATAL << 8) | SSL_AD_INTERNAL_ERROR:
 			{
+				WLog_Print(transport->log, WLOG_WARN, "SSL error (where=%s, ret=%d [%s, %s])",
+				           where2str(where, buffer, sizeof(buffer)), ret,
+				           SSL_alert_type_string_long(ret), SSL_alert_desc_string_long(ret));
+
 				if (transport->NlaMode)
 				{
 					if (!freerdp_get_last_error(transport_get_context(transport)))
@@ -137,18 +176,21 @@ static void transport_ssl_cb(const SSL* ssl, int where, int ret)
 						freerdp_set_last_error_log(transport_get_context(transport), kret);
 					}
 				}
+			}
+			break;
 
+			case (SSL3_AL_WARNING << 8) | SSL3_AD_CLOSE_NOTIFY:
+				WLog_Print(transport->log, WLOG_DEBUG, "SSL warning (where=%s, ret=%d [%s, %s])",
+				           where2str(where, buffer, sizeof(buffer)), ret,
+				           SSL_alert_type_string_long(ret), SSL_alert_desc_string_long(ret));
 				break;
 
-				case (SSL3_AL_WARNING << 8) | SSL3_AD_CLOSE_NOTIFY:
-					break;
-
-				default:
-					WLog_Print(transport->log, WLOG_WARN,
-					           "Unhandled SSL error (where=%d, ret=%d [%s, %s])", where, ret,
-					           SSL_alert_type_string_long(ret), SSL_alert_desc_string_long(ret));
-					break;
-			}
+			default:
+				WLog_Print(transport->log, WLOG_WARN,
+				           "Unhandled SSL error (where=%s, ret=%d [%s, %s])",
+				           where2str(where, buffer, sizeof(buffer)), ret,
+				           SSL_alert_type_string_long(ret), SSL_alert_desc_string_long(ret));
+				break;
 		}
 	}
 }
