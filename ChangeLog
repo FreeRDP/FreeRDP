@@ -1,3 +1,38 @@
+# 2025-12-05 Version 3.19.0
+
+Release addressing a regression (gateway transport failing) and some bugfixes
+
+## What's Changed
+* [ci] add git-archive ignore list (#11994)
+* [client,common] fix retry counter (#11996)
+* [cmake] fix aarch64 neon detection (#11998)
+* Fix response body existence check when using RDP Gateway (#12002)
+* fix line clipping issue (#12005)
+* Clip coord fix (#12006)
+* [core,input] Add debug log to keyboard state sync (#12008)
+* Update command line usage for gateway option (#12011)
+* [codec,ffmpeg] 8.0 dropped AV_PROFILE_AAC_MAIN (#12012)
+* [channels,audin] fix pulse memory leak (#12013)
+* [channels,drive] Small performance improvements in drive channel (#12014)
+* [winpr,utils] fix command line error logging (#12021)
+* [common,test] Adjust AVC and H264 expectations. (#12020)
+* drdynvc: implement compressed packet (#12028)
+* [channels,rdpecam] improve log messages (#12029)
+* Fix remote credential guard channel loading (#12031)
+* Fix inverted ifdef (#12032)
+* [core,nego] disable all enabled modes except the one requested (#12035)
+* rdpear: handle basic NTLM commands and fix server-side (#12039)
+* [smartcardlogon] Fix off-by-one error in `smartcard_hw_enumerateCerts` (#12042)
+* rdpecam: fix camera sample grabbing (#12041)
+
+## New Contributors
+* @kov-serg made their first contribution in (#12005)
+* @alexiri made their first contribution in (#12011)
+* @nteodosio made their first contribution in (#12020)
+
+For a complete and detailed change log since the last release run:
+git log 3.19.0...3.18.0
+
 # 2025-11-12 Version 3.18.0
 
 Minor improvements and bugfix release.
