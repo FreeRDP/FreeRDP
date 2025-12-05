@@ -84,11 +84,17 @@ static BOOL freerdp_listener_open_from_vsock(WINPR_ATTR_UNUSED freerdp_listener*
 	unsigned long val = strtoul(bind_address, &ptr, 10);
 	if (errno || (val > UINT32_MAX))
 	{
-		char ebuffer[256] = { 0 };
-		WLog_ERR(TAG, "could not extract port from '%s', value=%ul, error=%s", bind_address, val,
-		         winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
-		close(sockfd);
-		return FALSE;
+		/* handle VMADDR_CID_ANY (-1U) */
+		if ((val == ULONG_MAX) && (errno == 0))
+			val = UINT32_MAX;
+		else
+		{
+			char ebuffer[256] = { 0 };
+			WLog_ERR(TAG, "could not extract port from '%s', value=%ul, error=%s", bind_address,
+			         val, winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
+			close(sockfd);
+			return FALSE;
+		}
 	}
 	addr.svm_cid = WINPR_ASSERTING_INT_CAST(unsigned int, val);
 	if (bind(sockfd, (struct sockaddr*)&addr, sizeof(struct sockaddr_vm)) == -1)
