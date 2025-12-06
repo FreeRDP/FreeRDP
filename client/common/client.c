@@ -462,14 +462,16 @@ static int client_cli_read_string(freerdp* instance, const char* what, const cha
 		size = strlen(suggestion);
 	}
 
-	const SSIZE_T rc = freerdp_interruptible_get_line(instance->context, &line, &size, stdin);
-	if (rc < 0)
-	{
-		char ebuffer[256] = { 0 };
-		WLog_ERR(TAG, "freerdp_interruptible_get_line returned %s [%d]",
-		         winpr_strerror(errno, ebuffer, sizeof(ebuffer)), errno);
-		free(line);
-		return -1;
+        if (!freerdp_settings_get_bool(instance->context->settings, FreeRDP_CredentialsFromStdin)) {
+		const SSIZE_T rc = freerdp_interruptible_get_line(instance->context, &line, &size, stdin);
+		if (rc < 0)
+		{
+			char ebuffer[256] = { 0 };
+			WLog_ERR(TAG, "freerdp_interruptible_get_line returned %s [%d]",
+                                 winpr_strerror(errno, ebuffer, sizeof(ebuffer)), errno);
+			free(line);
+			return -1;
+		}
 	}
 
 	free(*result);
