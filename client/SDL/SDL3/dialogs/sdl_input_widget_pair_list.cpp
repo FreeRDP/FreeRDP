@@ -52,14 +52,14 @@ SdlInputWidgetPairList::SdlInputWidgetPairList(const std::string& title,
 		{
 			std::shared_ptr<SdlInputWidgetPair> widget(new SdlInputWidgetPair(
 			    _renderer, labels[x], initial[x], flags[x], x, widget_width, widget_heigth));
-			_list.emplace_back(widget);
+			m_list.emplace_back(widget);
 		}
 
 		_buttons.populate(_renderer, buttonlabels, buttonids, total_width,
 		                  static_cast<Sint32>(input_height), static_cast<Sint32>(widget_width),
 		                  static_cast<Sint32>(widget_heigth));
 		_buttons.set_highlight(0);
-		_CurrentActiveTextInput = selected;
+		m_currentActiveTextInput = selected;
 	}
 }
 
@@ -70,7 +70,7 @@ ssize_t SdlInputWidgetPairList::next(ssize_t current)
 
 	do
 	{
-		if (iteration >= _list.size())
+		if (iteration >= m_list.size())
 			return -1;
 
 		if (iteration == 0)
@@ -83,7 +83,7 @@ ssize_t SdlInputWidgetPairList::next(ssize_t current)
 		else
 			val++;
 		iteration++;
-		val %= _list.size();
+		val %= m_list.size();
 	} while (!valid(static_cast<ssize_t>(val)));
 	return static_cast<ssize_t>(val);
 }
@@ -93,9 +93,9 @@ bool SdlInputWidgetPairList::valid(ssize_t current) const
 	if (current < 0)
 		return false;
 	auto s = static_cast<size_t>(current);
-	if (s >= _list.size())
+	if (s >= m_list.size())
 		return false;
-	return !_list[s]->readonly();
+	return !m_list[s]->readonly();
 }
 
 std::shared_ptr<SdlInputWidgetPair> SdlInputWidgetPairList::get(ssize_t index)
@@ -103,20 +103,20 @@ std::shared_ptr<SdlInputWidgetPair> SdlInputWidgetPairList::get(ssize_t index)
 	if (index < 0)
 		return nullptr;
 	auto s = static_cast<size_t>(index);
-	if (s >= _list.size())
+	if (s >= m_list.size())
 		return nullptr;
-	return _list[s];
+	return m_list[s];
 }
 
 SdlInputWidgetPairList::~SdlInputWidgetPairList()
 {
-	_list.clear();
+	m_list.clear();
 	_buttons.clear();
 }
 
 bool SdlInputWidgetPairList::updateInternal()
 {
-	for (auto& btn : _list)
+	for (auto& btn : m_list)
 	{
 		if (!btn->update())
 			return false;
@@ -131,9 +131,9 @@ ssize_t SdlInputWidgetPairList::get_index(const SDL_MouseButtonEvent& button)
 {
 	const auto x = button.x;
 	const auto y = button.y;
-	for (size_t i = 0; i < _list.size(); i++)
+	for (size_t i = 0; i < m_list.size(); i++)
 	{
-		auto& cur = _list[i];
+		auto& cur = m_list[i];
 		auto r = cur->input_rect();
 
 		if ((x >= r.x) && (x <= r.x + r.w) && (y >= r.y) && (y <= r.y + r.h))
@@ -146,7 +146,7 @@ int SdlInputWidgetPairList::run(std::vector<std::string>& result)
 {
 	int res = -1;
 	ssize_t LastActiveTextInput = -1;
-	_CurrentActiveTextInput = next(_CurrentActiveTextInput);
+	m_currentActiveTextInput = next(m_currentActiveTextInput);
 
 	if (!_window || !_renderer)
 		return -2;
@@ -175,7 +175,7 @@ int SdlInputWidgetPairList::run(std::vector<std::string>& result)
 						{
 							case SDLK_BACKSPACE:
 							{
-								auto cur = get(_CurrentActiveTextInput);
+								auto cur = get(m_currentActiveTextInput);
 								if (cur)
 								{
 									if ((event.key.mod & SDL_KMOD_CTRL) != 0)
@@ -192,7 +192,7 @@ int SdlInputWidgetPairList::run(std::vector<std::string>& result)
 							}
 							break;
 							case SDLK_TAB:
-								_CurrentActiveTextInput = next(_CurrentActiveTextInput);
+								m_currentActiveTextInput = next(m_currentActiveTextInput);
 								break;
 							case SDLK_RETURN:
 							case SDLK_RETURN2:
@@ -207,7 +207,7 @@ int SdlInputWidgetPairList::run(std::vector<std::string>& result)
 							case SDLK_V:
 								if ((event.key.mod & SDL_KMOD_CTRL) != 0)
 								{
-									auto cur = get(_CurrentActiveTextInput);
+									auto cur = get(m_currentActiveTextInput);
 									if (cur)
 									{
 										auto text = SDL_GetClipboardText();
@@ -222,7 +222,7 @@ int SdlInputWidgetPairList::run(std::vector<std::string>& result)
 					break;
 					case SDL_EVENT_TEXT_INPUT:
 					{
-						auto cur = get(_CurrentActiveTextInput);
+						auto cur = get(m_currentActiveTextInput);
 						if (cur)
 						{
 							if (!cur->append_str(event.text.text))
@@ -233,14 +233,14 @@ int SdlInputWidgetPairList::run(std::vector<std::string>& result)
 					case SDL_EVENT_MOUSE_MOTION:
 					{
 						auto TextInputIndex = get_index(event.button);
-						for (auto& cur : _list)
+						for (auto& cur : m_list)
 						{
 							if (!cur->set_mouseover(false))
 								throw;
 						}
 						if (TextInputIndex >= 0)
 						{
-							auto& cur = _list[static_cast<size_t>(TextInputIndex)];
+							auto& cur = m_list[static_cast<size_t>(TextInputIndex)];
 							if (!cur->set_mouseover(true))
 								throw;
 						}
@@ -252,7 +252,7 @@ int SdlInputWidgetPairList::run(std::vector<std::string>& result)
 					{
 						auto val = get_index(event.button);
 						if (valid(val))
-							_CurrentActiveTextInput = val;
+							m_currentActiveTextInput = val;
 
 						auto button = _buttons.get_selected(event.button);
 						if (button)
@@ -274,17 +274,17 @@ int SdlInputWidgetPairList::run(std::vector<std::string>& result)
 				}
 			} while (SDL_PollEvent(&event));
 
-			if (LastActiveTextInput != _CurrentActiveTextInput)
+			if (LastActiveTextInput != m_currentActiveTextInput)
 			{
-				LastActiveTextInput = _CurrentActiveTextInput;
+				LastActiveTextInput = m_currentActiveTextInput;
 			}
 
-			for (auto& cur : _list)
+			for (auto& cur : m_list)
 			{
 				if (!cur->set_highlight(false))
 					throw;
 			}
-			auto cur = get(_CurrentActiveTextInput);
+			auto cur = get(m_currentActiveTextInput);
 			if (cur)
 			{
 				if (!cur->set_highlight(true))
@@ -299,7 +299,7 @@ int SdlInputWidgetPairList::run(std::vector<std::string>& result)
 			}
 		}
 
-		for (auto& cur : _list)
+		for (auto& cur : m_list)
 			result.push_back(cur->value());
 	}
 	catch (...)

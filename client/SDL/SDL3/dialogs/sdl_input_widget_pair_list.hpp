@@ -58,6 +58,6 @@ class SdlInputWidgetPairList : public SdlWidgetList
 	[[nodiscard]] bool valid(ssize_t current) const;
 	std::shared_ptr<SdlInputWidgetPair> get(ssize_t index);
 
-	std::vector<std::shared_ptr<SdlInputWidgetPair>> _list;
-	ssize_t _CurrentActiveTextInput = -1;
+	std::vector<std::shared_ptr<SdlInputWidgetPair>> m_list;
+	ssize_t m_currentActiveTextInput = -1;
 };
