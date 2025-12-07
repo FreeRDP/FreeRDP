@@ -30,7 +30,7 @@ static const Uint32 vpadding = 5;
 SdlInputWidgetPairList::SdlInputWidgetPairList(const std::string& title,
                                                const std::vector<std::string>& labels,
                                                const std::vector<std::string>& initial,
-                                               const std::vector<Uint32>& flags)
+                                               const std::vector<Uint32>& flags, ssize_t selected)
 {
 	assert(labels.size() == initial.size());
 	assert(labels.size() == flags.size());
@@ -59,6 +59,7 @@ SdlInputWidgetPairList::SdlInputWidgetPairList(const std::string& title,
 		                  static_cast<Sint32>(input_height), static_cast<Sint32>(widget_width),
 		                  static_cast<Sint32>(widget_heigth));
 		_buttons.set_highlight(0);
+		_CurrentActiveTextInput = selected;
 	}
 }
 
@@ -145,7 +146,7 @@ int SdlInputWidgetPairList::run(std::vector<std::string>& result)
 {
 	int res = -1;
 	ssize_t LastActiveTextInput = -1;
-	ssize_t CurrentActiveTextInput = next(-1);
+	_CurrentActiveTextInput = next(_CurrentActiveTextInput);
 
 	if (!_window || !_renderer)
 		return -2;
@@ -174,7 +175,7 @@ int SdlInputWidgetPairList::run(std::vector<std::string>& result)
 						{
 							case SDLK_BACKSPACE:
 							{
-								auto cur = get(CurrentActiveTextInput);
+								auto cur = get(_CurrentActiveTextInput);
 								if (cur)
 								{
 									if ((event.key.mod & SDL_KMOD_CTRL) != 0)
@@ -191,7 +192,7 @@ int SdlInputWidgetPairList::run(std::vector<std::string>& result)
 							}
 							break;
 							case SDLK_TAB:
-								CurrentActiveTextInput = next(CurrentActiveTextInput);
+								_CurrentActiveTextInput = next(_CurrentActiveTextInput);
 								break;
 							case SDLK_RETURN:
 							case SDLK_RETURN2:
@@ -206,7 +207,7 @@ int SdlInputWidgetPairList::run(std::vector<std::string>& result)
 							case SDLK_V:
 								if ((event.key.mod & SDL_KMOD_CTRL) != 0)
 								{
-									auto cur = get(CurrentActiveTextInput);
+									auto cur = get(_CurrentActiveTextInput);
 									if (cur)
 									{
 										auto text = SDL_GetClipboardText();
@@ -221,7 +222,7 @@ int SdlInputWidgetPairList::run(std::vector<std::string>& result)
 					break;
 					case SDL_EVENT_TEXT_INPUT:
 					{
-						auto cur = get(CurrentActiveTextInput);
+						auto cur = get(_CurrentActiveTextInput);
 						if (cur)
 						{
 							if (!cur->append_str(event.text.text))
@@ -251,7 +252,7 @@ int SdlInputWidgetPairList::run(std::vector<std::string>& result)
 					{
 						auto val = get_index(event.button);
 						if (valid(val))
-							CurrentActiveTextInput = val;
+							_CurrentActiveTextInput = val;
 
 						auto button = _buttons.get_selected(event.button);
 						if (button)
@@ -273,9 +274,9 @@ int SdlInputWidgetPairList::run(std::vector<std::string>& result)
 				}
 			} while (SDL_PollEvent(&event));
 
-			if (LastActiveTextInput != CurrentActiveTextInput)
+			if (LastActiveTextInput != _CurrentActiveTextInput)
 			{
-				LastActiveTextInput = CurrentActiveTextInput;
+				LastActiveTextInput = _CurrentActiveTextInput;
 			}
 
 			for (auto& cur : _list)
@@ -283,7 +284,7 @@ int SdlInputWidgetPairList::run(std::vector<std::string>& result)
 				if (!cur->set_highlight(false))
 					throw;
 			}
-			auto cur = get(CurrentActiveTextInput);
+			auto cur = get(_CurrentActiveTextInput);
 			if (cur)
 			{
 				if (!cur->set_highlight(true))
