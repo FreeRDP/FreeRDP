@@ -27,14 +27,22 @@
 #include <freerdp/build-config.h>
 
 #if !defined(WITH_FULL_CONFIG_PATH)
-static char* freerdp_settings_get_legacy_config_path(void)
+WINPR_ATTR_MALLOC(free, 1)
+static char* freerdp_settings_get_legacy_config_path(const char* filename)
 {
 	char product[sizeof(FREERDP_PRODUCT_STRING)] = { 0 };
 
 	for (size_t i = 0; i < sizeof(product); i++)
 		product[i] = (char)tolower(FREERDP_PRODUCT_STRING[i]);
 
-	return GetKnownSubPath(KNOWN_PATH_XDG_CONFIG_HOME, product);
+	char* path = GetKnownSubPath(KNOWN_PATH_XDG_CONFIG_HOME, product);
+
+	if (!path)
+		return NULL;
+
+	char* filepath = GetCombinedPath(path, filename);
+	free(path);
+	return filepath;
 }
 #endif
 
@@ -47,7 +55,7 @@ char* freerdp_GetConfigFilePath(BOOL system, const char* filename)
 #else
 #if !defined(WITH_FULL_CONFIG_PATH)
 	if (!system && (_stricmp(FREERDP_VENDOR_STRING, FREERDP_PRODUCT_STRING) == 0))
-		return freerdp_settings_get_legacy_config_path();
+		return freerdp_settings_get_legacy_config_path(filename);
 #endif
 
 	char* vendor = GetKnownPath(id);
