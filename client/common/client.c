@@ -507,6 +507,7 @@ static BOOL client_cli_authenticate_raw(freerdp* instance, rdp_auth_reason reaso
 	const char* domainAuth = "Domain:          ";
 	const char* pwdAuth = "Password:        ";
 	BOOL pinOnly = FALSE;
+	BOOL queryAll = FALSE;
 
 	WINPR_ASSERT(instance);
 	WINPR_ASSERT(instance->context);
@@ -519,6 +520,8 @@ static BOOL client_cli_authenticate_raw(freerdp* instance, rdp_auth_reason reaso
 			pinOnly = TRUE;
 			break;
 		case AUTH_RDSTLS:
+			queryAll = TRUE;
+			break;
 		case AUTH_TLS:
 		case AUTH_RDP:
 		case AUTH_NLA:
@@ -539,16 +542,24 @@ static BOOL client_cli_authenticate_raw(freerdp* instance, rdp_auth_reason reaso
 
 	if (!pinOnly)
 	{
-		const int rc = client_cli_read_string(instance, userAuth, *username, username);
-		if (rc < 0)
-			goto fail;
+		const char* suggest = *username;
+		if (queryAll || !suggest)
+		{
+			const int rc = client_cli_read_string(instance, userAuth, suggest, username);
+			if (rc < 0)
+				goto fail;
+		}
 	}
 
 	if (!pinOnly)
 	{
-		const int rc = client_cli_read_string(instance, domainAuth, *domain, domain);
-		if (rc < 0)
-			goto fail;
+		const char* suggest = *domain;
+		if (queryAll || !suggest)
+		{
+			const int rc = client_cli_read_string(instance, domainAuth, suggest, domain);
+			if (rc < 0)
+				goto fail;
+		}
 	}
 
 	{

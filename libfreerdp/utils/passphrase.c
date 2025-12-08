@@ -443,6 +443,8 @@ SSIZE_T freerdp_interruptible_get_line(rdpContext* context, char** plineptr, siz
 
 			if (!n)
 			{
+				free(ptr);
+				*plineptr = NULL;
 				return -1;
 			}
 
@@ -479,6 +481,7 @@ SSIZE_T freerdp_interruptible_get_line(rdpContext* context, char** plineptr, siz
 	if (c == EOF)
 	{
 		free(ptr);
+		*plineptr = NULL;
 		return EOF;
 	}
 	*plineptr = ptr;

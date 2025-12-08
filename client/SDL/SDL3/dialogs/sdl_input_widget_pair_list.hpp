@@ -32,7 +32,7 @@ class SdlInputWidgetPairList : public SdlWidgetList
   public:
 	SdlInputWidgetPairList(const std::string& title, const std::vector<std::string>& labels,
 	                       const std::vector<std::string>& initial,
-	                       const std::vector<Uint32>& flags);
+	                       const std::vector<Uint32>& flags, ssize_t selected = -1);
 	SdlInputWidgetPairList(const SdlInputWidgetPairList& other) = delete;
 	SdlInputWidgetPairList(SdlInputWidgetPairList&& other) = delete;
 
@@ -58,5 +58,6 @@ class SdlInputWidgetPairList : public SdlWidgetList
 	[[nodiscard]] bool valid(ssize_t current) const;
 	std::shared_ptr<SdlInputWidgetPair> get(ssize_t index);
 
-	std::vector<std::shared_ptr<SdlInputWidgetPair>> _list;
+	std::vector<std::shared_ptr<SdlInputWidgetPair>> m_list;
+	ssize_t m_currentActiveTextInput = -1;
 };

@@ -585,7 +585,23 @@ BOOL sdl_auth_dialog_show(const SDL_UserAuthArg* args)
 				flags = { 0, 0, SdlInputWidgetPair::SDL_INPUT_MASK };
 			}
 		}
-		SdlInputWidgetPairList ilist(args->title, prompt, initial, flags);
+
+		ssize_t selected = -1;
+		switch (args->result)
+		{
+			case AUTH_SMARTCARD_PIN:
+			case AUTH_RDSTLS:
+				break;
+			default:
+				if (args->user)
+				{
+					selected++;
+					if (args->domain)
+						selected++;
+				}
+				break;
+		}
+		SdlInputWidgetPairList ilist(args->title, prompt, initial, flags, selected);
 		rc = ilist.run(result);
 	}
 
@@ -606,6 +622,7 @@ BOOL sdl_auth_dialog_show(const SDL_UserAuthArg* args)
 			pwd = _strdup(result[2].c_str());
 		}
 	}
+
 	return sdl_push_user_event(SDL_EVENT_USER_AUTH_RESULT, user, domain, pwd, rc);
 }
 
