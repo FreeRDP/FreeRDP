@@ -58,11 +58,34 @@ static char* ensure_lowercase(char* str, size_t length)
 		str[x] = (char)tolower(str[x]);
 	return str;
 }
+
+static char* ensure_valid_charset(char* str, size_t length)
+{
+	const size_t len = strnlen(str, length);
+	for (size_t x = 0; x < len; x++)
+	{
+		char cur = str[x];
+		switch (cur)
+		{
+			case ':':
+				str[x] = '.';
+				break;
+			case '/':
+			case '\\':
+				str[x] = '_';
+				break;
+			default:
+				break;
+		}
+	}
+	return str;
+}
+
 static const char* freerdp_certificate_data_hash_(const char* hostname, UINT16 port, char* name,
                                                   size_t length)
 {
 	(void)_snprintf(name, length, "%s_%" PRIu16 ".pem", hostname, port);
-	return ensure_lowercase(name, length);
+	return ensure_lowercase(ensure_valid_charset(name, length), length);
 }
 
 static BOOL freerdp_certificate_data_load_cache(rdpCertificateData* data)
