@@ -322,7 +322,7 @@ set(OPENSSL_FEATURE_DESCRIPTION "encryption, certificate validation, hashing fun
 
 set(MBEDTLS_FEATURE_TYPE "OPTIONAL")
 set(MBEDTLS_FEATURE_PURPOSE "cryptography")
-set(MBEDTLS_FEATURE_DESCRIPTION "encryption, certificate validation, hashing functions")
+set(MBEDTLS_FEATURE_DESCRIPTION "[experimental] encryption, certificate validation, hashing functions")
 
 set(PCSC_FEATURE_TYPE "RECOMMENDED")
 set(PCSC_FEATURE_PURPOSE "smart card")
@@ -373,8 +373,11 @@ if(NOT WITHOUT_FREERDP_3x_DEPRECATED)
   find_feature(Wayland ${WAYLAND_FEATURE_TYPE} ${WAYLAND_FEATURE_PURPOSE} ${WAYLAND_FEATURE_DESCRIPTION})
 endif()
 
-option(WITH_LIBRESSL "build with LibreSSL" OFF)
+option(WITH_LIBRESSL "[experimental] build with LibreSSL" OFF)
 if(WITH_LIBRESSL)
+  message(WARNING "-DWITH_LIBRESSL=ON: LibreSSL enabled. Expect incompatibilities.")
+  message(WARNING "Only OpenSSL is tested on each release, other implementations depend on external contributions")
+
   find_package(LibreSSL REQUIRED)
   include_directories(SYSTEM ${LibreSSL_INCLUDE_DIRS})
   set(OPENSSL_INCLUDE_DIR ${LIBRESSL_INCLUDE_DIR})
@@ -435,6 +438,8 @@ if(OPENSSL_FOUND)
 endif()
 
 if(MBEDTLS_FOUND)
+  message(WARNING "-DWITH_MBEDTLS=ON: Mbed-TLS enabled. Expect incompatibilities")
+  message(WARNING "Only OpenSSL is tested on each release, other implementations depend on external contributions")
   add_compile_definitions("WITH_MBEDTLS")
 endif()
 
