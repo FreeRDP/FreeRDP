@@ -1594,6 +1594,7 @@ static UINT drdynvc_virtual_channel_event_data_received(drdynvcPlugin* drdynvc, 
 			{
 				WLog_Print(drdynvc->log, WLOG_WARN,
 				           "drdynvc_order_recv failed with error %" PRIu32 "!", error);
+				return error;
 			}
 		}
 	}
