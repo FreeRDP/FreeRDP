@@ -954,7 +954,8 @@ static BOOL arm_fill_gateway_parameters(rdpArm* arm, const char* message, size_t
 	BOOL status = FALSE;
 	if (!json)
 	{
-		WLog_Print(arm->log, WLOG_ERROR, "Response data is not valid JSON");
+		WLog_Print(arm->log, WLOG_ERROR, "Response data is not valid JSON: %s",
+		           WINPR_JSON_GetErrorPtr());
 		return FALSE;
 	}
 
@@ -1078,8 +1079,7 @@ static BOOL arm_handle_bad_request(rdpArm* arm, const HttpResponse* response, BO
 	if (json == NULL)
 	{
 		const char* error_ptr = WINPR_JSON_GetErrorPtr();
-		if (error_ptr != NULL)
-			WLog_Print(arm->log, WLOG_ERROR, "NullPoException: %s", error_ptr);
+		WLog_Print(arm->log, WLOG_ERROR, "WINPR_JSON_ParseWithLength: %s", error_ptr);
 
 		return FALSE;
 	}

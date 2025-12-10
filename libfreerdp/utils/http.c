@@ -288,6 +288,8 @@ BOOL freerdp_http_request(const char* url, const char* body, long* status_code, 
 		}
 	}
 
+	WLog_Print(log, WLOG_DEBUG, "response[%" PRIuz "]:\n%s", *response_length,
+	           (const char*)(*response));
 	ret = TRUE;
 
 out:

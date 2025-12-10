@@ -244,7 +244,8 @@ static BOOL aad_get_nonce(rdpAad* aad)
 	json = WINPR_JSON_ParseWithLength((const char*)response, response_length);
 	if (!json)
 	{
-		WLog_Print(aad->log, WLOG_ERROR, "Failed to parse nonce response");
+		WLog_Print(aad->log, WLOG_ERROR, "Failed to parse nonce response: %s",
+		           WINPR_JSON_GetErrorPtr());
 		goto fail;
 	}
 
@@ -536,7 +537,11 @@ static int aad_parse_state_initial(rdpAad* aad, wStream* s)
 
 	json = WINPR_JSON_ParseWithLength(jstr, jlen);
 	if (!json)
+	{
+		WLog_Print(aad->log, WLOG_ERROR, "WINPR_JSON_ParseWithLength failed: %s",
+		           WINPR_JSON_GetErrorPtr());
 		goto fail;
+	}
 
 	if (!json_get_const_string(aad->log, json, "ts_nonce", &ts_nonce))
 		goto fail;
@@ -561,7 +566,11 @@ static int aad_parse_state_auth(rdpAad* aad, wStream* s)
 
 	json = WINPR_JSON_ParseWithLength(jstr, jlength);
 	if (!json)
+	{
+		WLog_Print(aad->log, WLOG_ERROR, "WINPR_JSON_ParseWithLength: %s",
+		           WINPR_JSON_GetErrorPtr());
 		goto fail;
+	}
 
 	if (!json_get_number(aad->log, json, "authentication_result", &result))
 		goto fail;
@@ -851,8 +860,9 @@ char* freerdp_utils_aad_get_access_token(wLog* log, const char* data, size_t len
 	WINPR_JSON* json = WINPR_JSON_ParseWithLength(data, length);
 	if (!json)
 	{
-		WLog_Print(log, WLOG_ERROR, "Failed to parse access token response [got %" PRIuz " bytes",
-		           length);
+		WLog_Print(log, WLOG_ERROR,
+		           "Failed to parse access token response [got %" PRIuz " bytes: %s", length,
+		           WINPR_JSON_GetErrorPtr());
 		goto cleanup;
 	}
 
@@ -1026,7 +1036,8 @@ WINPR_JSON* freerdp_utils_aad_get_wellknown(wLog* log, const char* base, const c
 	free(response);
 
 	if (!json)
-		WLog_Print(log, WLOG_ERROR, "failed to parse response as JSON");
+		WLog_Print(log, WLOG_ERROR, "failed to parse response as JSON: %s",
+		           WINPR_JSON_GetErrorPtr());
 
 	return json;
 }

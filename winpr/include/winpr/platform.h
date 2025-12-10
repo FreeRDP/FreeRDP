@@ -595,7 +595,12 @@ WINPR_PRAGMA_DIAG_POP
 // WARNING: *do not* use thread-local storage for new code because it is not portable
 // It is only used for VirtualChannelInit, and all FreeRDP channels use VirtualChannelInitEx
 // The old virtual channel API is only realistically used on Windows where TLS is available
-#if defined _WIN32 || defined __CYGWIN__
+#if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201112L) && \
+    !defined(__STDC_NO_THREADS__) // C11
+#include <threads.h>
+
+#define WINPR_TLS thread_local
+#elif defined _WIN32 || defined __CYGWIN__
 #ifdef __GNUC__
 #define WINPR_TLS __thread
 #else

@@ -30,6 +30,8 @@
 #error "The library detected is too old, need >= 2.13.0"
 #endif
 
+static WINPR_TLS char lasterror[256] = { 0 };
+
 #if defined(WITH_DEBUG_JANSSON)
 #include "../log.h"
 #define TAG WINPR_TAG("jansson")
@@ -94,16 +96,28 @@ int WINPR_JSON_version(char* buffer, size_t len)
 	return _snprintf(buffer, len, "jansson %s", jansson_version_str());
 }
 
+static WINPR_JSON* updateError(WINPR_JSON* json, const json_error_t* error)
+{
+	lasterror[0] = '\0';
+	if (!json)
+		(void)_snprintf(lasterror, sizeof(lasterror), "[%d:%d:%d] %s [%s]", error->line,
+		                error->column, error->position, error->text, error->source);
+	return json;
+}
+
 WINPR_JSON* WINPR_JSON_Parse(const char* value)
 {
 	json_error_t error = { 0 };
-	return revcast(json_loads(value, JSON_DECODE_ANY, &error));
+	WINPR_JSON* json = revcast(json_loads(value, JSON_DECODE_ANY, &error));
+	return updateError(json, &error);
 }
 
 WINPR_JSON* WINPR_JSON_ParseWithLength(const char* value, size_t buffer_length)
 {
 	json_error_t error = { 0 };
-	return revcast(json_loadb(value, buffer_length, JSON_DECODE_ANY, &error));
+	const size_t slen = strnlen(value, buffer_length);
+	WINPR_JSON* json = revcast(json_loadb(value, slen, JSON_DECODE_ANY, &error));
+	return updateError(json, &error);
 }
 
 void WINPR_JSON_Delete(WINPR_JSON* item)
@@ -147,7 +161,7 @@ BOOL WINPR_JSON_HasObjectItem(const WINPR_JSON* object, const char* string)
 
 const char* WINPR_JSON_GetErrorPtr(void)
 {
-	return NULL;
+	return lasterror;
 }
 
 const char* WINPR_JSON_GetStringValue(WINPR_JSON* item)
