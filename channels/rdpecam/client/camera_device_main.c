@@ -451,7 +451,7 @@ static UINT ecam_dev_process_sample_request(CameraDevice* dev, GENERIC_CHANNEL_C
 
 	UINT ret = CHANNEL_RC_OK;
 	stream->samplesRequested++;
-	if (stream->pendingSample)
+	if (stream->haveSample)
 		ret = ecam_dev_send_pending(dev, streamIndex, stream);
 
 	LeaveCriticalSection(&stream->lock);
