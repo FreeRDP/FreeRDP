@@ -36,6 +36,7 @@ static const CAM_MEDIA_FORMAT_INFO supportedFormats[] = {
 #endif
 #if defined(WITH_INPUT_FORMAT_MJPG)
 	{ CAM_MEDIA_FORMAT_MJPG, CAM_MEDIA_FORMAT_H264 },
+	{ CAM_MEDIA_FORMAT_MJPG, CAM_MEDIA_FORMAT_MJPG },
 #endif
 	{ CAM_MEDIA_FORMAT_I420, CAM_MEDIA_FORMAT_H264 },
 	{ CAM_MEDIA_FORMAT_YUY2, CAM_MEDIA_FORMAT_H264 },
@@ -114,7 +115,6 @@ static BOOL mediaSupportDrops(CAM_MEDIA_FORMAT format)
 	switch (format)
 	{
 		case CAM_MEDIA_FORMAT_H264:
-		case CAM_MEDIA_FORMAT_MJPG:
 			return FALSE;
 		default:
 			return TRUE;
@@ -128,7 +128,13 @@ static UINT ecam_dev_send_pending(CameraDevice* dev, int streamIndex, CameraDevi
 
 	if (stream->samplesRequested <= 0)
 	{
-		WLog_DBG(TAG, "Frame drop: No sample requested");
+		WLog_VRB(TAG, "Frame delayed: No sample requested");
+		return CHANNEL_RC_OK;
+	}
+
+	if (!stream->haveSample)
+	{
+		WLog_VRB(TAG, "Frame response delayed: No sample available");
 		return CHANNEL_RC_OK;
 	}
 
@@ -139,12 +145,16 @@ static UINT ecam_dev_send_pending(CameraDevice* dev, int streamIndex, CameraDevi
 		if (!ecam_encoder_compress(stream, encodedSample, encodedSize, &encodedSample,
 		                           &encodedSize))
 		{
-			WLog_DBG(TAG, "Frame drop or error in ecam_encoder_compress");
+			WLog_DBG(TAG, "Frame dropped: error in ecam_encoder_compress");
+			stream->haveSample = FALSE;
 			return CHANNEL_RC_OK;
 		}
 
 		if (!stream->streaming)
+		{
+			WLog_DBG(TAG, "Frame delayed/dropped: stream stopped");
 			return CHANNEL_RC_OK;
+		}
 	}
 
 	stream->samplesRequested--;
@@ -165,7 +175,10 @@ static UINT ecam_dev_sample_captured_callback(CameraDevice* dev, int streamIndex
 	CameraDeviceStream* stream = &dev->streams[streamIndex];
 
 	if (!stream->streaming)
+	{
+		WLog_DBG(TAG, "Frame drop: stream not running");
 		return CHANNEL_RC_OK;
+	}
 
 	EnterCriticalSection(&stream->lock);
 	UINT ret = CHANNEL_RC_NO_MEMORY;
@@ -202,6 +215,7 @@ static UINT ecam_dev_sample_captured_callback(CameraDevice* dev, int streamIndex
 
 		if (!stream->streaming)
 		{
+			WLog_DBG(TAG, "Frame drop: stream not running");
 			ret = CHANNEL_RC_OK;
 			goto out;
 		}
@@ -239,17 +253,11 @@ static void ecam_dev_stop_stream(CameraDevice* dev, size_t streamIndex)
 		DeleteCriticalSection(&stream->lock);
 	}
 
-	if (stream->sampleRespBuffer)
-	{
-		Stream_Free(stream->sampleRespBuffer, TRUE);
-		stream->sampleRespBuffer = NULL;
-	}
+	Stream_Free(stream->sampleRespBuffer, TRUE);
+	stream->sampleRespBuffer = NULL;
 
-	if (stream->pendingSample)
-	{
-		Stream_Free(stream->pendingSample, TRUE);
-		stream->pendingSample = NULL;
-	}
+	Stream_Free(stream->pendingSample, TRUE);
+	stream->pendingSample = NULL;
 
 	ecam_encoder_context_free(stream);
 }
@@ -449,10 +457,8 @@ static UINT ecam_dev_process_sample_request(CameraDevice* dev, GENERIC_CHANNEL_C
 	if (stream->hSampleReqChannel != hchannel)
 		stream->hSampleReqChannel = hchannel;
 
-	UINT ret = CHANNEL_RC_OK;
 	stream->samplesRequested++;
-	if (stream->haveSample)
-		ret = ecam_dev_send_pending(dev, streamIndex, stream);
+	const UINT ret = ecam_dev_send_pending(dev, streamIndex, stream);
 
 	LeaveCriticalSection(&stream->lock);
 	return ret;
