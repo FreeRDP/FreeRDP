@@ -39,7 +39,6 @@ jobs:
             v4l_compat \
             libv4l \
             uriparser \
-            pkcs11-helper \
             ffmpeg \
             pulseaudio \
             pcsc-lite \
