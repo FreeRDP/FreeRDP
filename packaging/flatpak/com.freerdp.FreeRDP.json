@@ -45,7 +45,6 @@
 		"modules/libusb.json",
 		"modules/uriparser.json",
 		"modules/cJSON.json",
-		"modules/xprop.json",
 		"modules/pcsc.json",
 		"modules/krb5.json",
 		"modules/opensc.json",
