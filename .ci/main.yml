@@ -1,7 +1,9 @@
 name: $(Date:yyyyMMdd)$(Rev:-rr)
 
-trigger: 
-  - uipath
+trigger:
+  branches:
+    include:
+      - uipath*
 
 parameters:
   - name: PublishNuGets
@@ -10,7 +12,7 @@ parameters:
     default: false
 
 variables:
-  ${{ if eq(variables['Build.SourceBranchName'], 'uipath') }}:
+  ${{ if startsWith(variables['Build.SourceBranchName'], 'uipath') }}:
     CreateGitTag: true
     PackageVersionSuffix: '$(Build.BuildNumber)'
   ${{ else }}:
