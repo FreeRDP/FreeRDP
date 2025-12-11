@@ -114,6 +114,9 @@ WINPR_JSON* WINPR_JSON_Parse(const char* value)
 
 WINPR_JSON* WINPR_JSON_ParseWithLength(const char* value, size_t buffer_length)
 {
+	if (!value || (buffer_length == 0))
+		return NULL;
+
 	json_error_t error = { 0 };
 	const size_t slen = strnlen(value, buffer_length);
 	WINPR_JSON* json = revcast(json_loadb(value, slen, JSON_DECODE_ANY, &error));
