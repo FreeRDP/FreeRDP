@@ -2344,7 +2344,7 @@ static UINT rdpdr_server_read_file_directory_information(wLog* log, wStream* s,
 	if (fileNameLength / sizeof(WCHAR) > ARRAYSIZE(fdi->FileName))
 		return ERROR_INVALID_DATA;
 
-#if defined(__MINGW32__)
+#if defined(__MINGW32__) || defined(WITH_WCHAR_FILE_DIRECTORY_INFORMATION)
 	if (Stream_Read_UTF16_String(s, fdi->FileName, fileNameLength / sizeof(WCHAR)))
 		return ERROR_INVALID_DATA;
 #else
