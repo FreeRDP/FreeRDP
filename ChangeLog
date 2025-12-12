@@ -1,3 +1,21 @@
+# 2025-12-12 Version 3.19.1
+
+## What's Changed
+* [core,transport] improve SSL error logging (#12045)
+* [utils,helpers] fix freerdp_settings_get_legacy_config_path (#12052)
+* From stdin and sdl-creds improve (#12050)
+* [crypto,certificate] sanitize hostnames (#12055)
+* [channels,drdynvc] propagate error in dynamic channel (#12057)
+* [CMake] make Mbed-TLS and LibreSSL experimental (#12058)
+* Json fix (#12060)
+* rdpecam: send sample only if it's available (#12061)
+* [channels,rdpecam] allow MJPEG frame skip and direct passthrough (#12059)
+* [winpr,utils] explicit NULL checks in jansson WINPR_JSON_ParseWithLength (#12064)
+* [packaging,flatpak] remove xprop (#12065)
+
+For a complete and detailed change log since the last release run:
+git log 3.19.1...3.19.0
+
 # 2025-12-05 Version 3.19.0
 
 Release addressing a regression (gateway transport failing) and some bugfixes
