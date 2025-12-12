@@ -2469,8 +2469,8 @@ static int parse_codec_cache_options(rdpSettings* settings, const COMMAND_LINE_A
 
 static BOOL check_kbd_remap_valid(const char* token)
 {
-	DWORD key = 0;
-	DWORD value = 0;
+	UINT32 key = 0;
+	UINT32 value = 0;
 
 	WINPR_ASSERT(token);
 	/* The remapping is only allowed for scancodes, so maximum is 999=999 */

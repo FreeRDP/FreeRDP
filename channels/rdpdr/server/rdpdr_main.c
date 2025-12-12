@@ -2341,9 +2341,17 @@ static UINT rdpdr_server_read_file_directory_information(wLog* log, wStream* s,
 	if (!Stream_CheckAndLogRequiredLengthWLog(log, s, fileNameLength))
 		return ERROR_INVALID_DATA;
 
+	if (fileNameLength / sizeof(WCHAR) > ARRAYSIZE(fdi->FileName))
+		return ERROR_INVALID_DATA;
+
+#if defined(__MINGW32__)
+	if (Stream_Read_UTF16_String(s, fdi->FileName, fileNameLength / sizeof(WCHAR)))
+		return ERROR_INVALID_DATA;
+#else
 	if (Stream_Read_UTF16_String_As_UTF8_Buffer(s, fileNameLength / sizeof(WCHAR), fdi->FileName,
 	                                            ARRAYSIZE(fdi->FileName)) < 0)
 		return ERROR_INVALID_DATA;
+#endif
 	return CHANNEL_RC_OK;
 }
 

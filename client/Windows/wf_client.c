@@ -281,7 +281,7 @@ static BOOL wf_pre_connect(freerdp* instance)
 			return FALSE;
 	}
 
-	uint32_t keyboardLayoutId = freerdp_settings_get_uint32(settings, FreeRDP_KeyboardLayout);
+	DWORD keyboardLayoutId = freerdp_settings_get_uint32(settings, FreeRDP_KeyboardLayout);
 
 	{
 		CHAR name[KL_NAMELENGTH + 1] = { 0 };

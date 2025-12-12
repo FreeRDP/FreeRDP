@@ -28,6 +28,8 @@
 #include <freerdp/log.h>
 #include <freerdp/api.h>
 
+#include "opensslcompat.h"
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -40,7 +42,7 @@ extern "C"
 	FREERDP_LOCAL BOOL cert_info_read_modulus(rdpCertInfo* info, size_t size, wStream* s);
 	FREERDP_LOCAL BOOL cert_info_read_exponent(rdpCertInfo* info, size_t size, wStream* s);
 
-	FREERDP_LOCAL BOOL read_bignum(BYTE** dst, UINT32* length, const BIGNUM* num, BOOL alloc);
+	FREERDP_LOCAL BOOL read_bignum(BYTE** dst, DWORD* length, const BIGNUM* num, BOOL alloc);
 
 #if !defined(OPENSSL_VERSION_MAJOR) || (OPENSSL_VERSION_MAJOR < 3)
 	FREERDP_LOCAL X509* x509_from_rsa(const RSA* rsa);

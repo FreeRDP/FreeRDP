@@ -382,8 +382,8 @@ FREERDP_REMAP_TABLE* freerdp_keyboard_remap_string_to_list(const char* list)
 	char* token = strtok_s(copy, ",", &context);
 	while (token)
 	{
-		DWORD key = 0;
-		DWORD value = 0;
+		UINT32 key = 0;
+		UINT32 value = 0;
 		if (!freerdp_extract_key_value(token, &key, &value))
 			goto fail;
 		if (key >= remap_table_size)

@@ -330,7 +330,7 @@ static char* guid2str(const GUID* guid, char* buffer, size_t len)
 {
 	if (!guid)
 		return NULL;
-	char* strguid = NULL;
+	RPC_CSTR strguid = NULL;
 
 	RPC_STATUS rpcStatus = UuidToStringA(guid, &strguid);
 
