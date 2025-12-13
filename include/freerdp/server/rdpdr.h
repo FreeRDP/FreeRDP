@@ -24,6 +24,7 @@
 #define FREERDP_CHANNEL_RDPDR_SERVER_RDPDR_H
 
 #include <freerdp/api.h>
+#include <freerdp/config.h>
 #include <freerdp/types.h>
 #include <freerdp/channels/wtsvc.h>
 #include <freerdp/channels/rdpdr.h>
@@ -59,7 +60,11 @@ typedef struct
 	LARGE_INTEGER EndOfFile;
 	LARGE_INTEGER AllocationSize;
 	UINT32 FileAttributes;
+#if defined(WITH_WCHAR_FILE_DIRECTORY_INFORMATION)
+	WCHAR FileName[512];
+#else
 	char FileName[512];
+#endif
 } FILE_DIRECTORY_INFORMATION;
 #endif
 

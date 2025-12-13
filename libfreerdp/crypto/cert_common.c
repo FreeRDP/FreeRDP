@@ -46,7 +46,7 @@
 
 static BOOL cert_info_allocate(rdpCertInfo* info, size_t size);
 
-BOOL read_bignum(BYTE** dst, UINT32* length, const BIGNUM* num, BOOL alloc)
+BOOL read_bignum(BYTE** dst, DWORD* length, const BIGNUM* num, BOOL alloc)
 {
 	WINPR_ASSERT(dst);
 	WINPR_ASSERT(length);
@@ -97,7 +97,7 @@ BOOL cert_info_create(rdpCertInfo* dst, const BIGNUM* rsa, const BIGNUM* rsa_e)
 	if (!read_bignum(&dst->Modulus, &dst->ModulusLength, rsa, TRUE))
 		goto fail;
 
-	UINT32 len = sizeof(dst->exponent);
+	DWORD len = sizeof(dst->exponent);
 	BYTE* ptr = &dst->exponent[0];
 	if (!read_bignum(&ptr, &len, rsa_e, FALSE))
 		goto fail;

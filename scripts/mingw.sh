@@ -141,19 +141,19 @@ if [ $CLONE -ne 0 ]; then
   do_clone v1.3.1 https://github.com/madler/zlib.git zlib
   do_clone uriparser-0.9.8 https://github.com/uriparser/uriparser.git uriparser
   do_clone json-c-0.18-20240915 https://github.com/json-c/json-c.git json-c
-  do_clone release-3.2.10 https://github.com/libsdl-org/SDL.git SDL
+  do_clone release-3.2.28 https://github.com/libsdl-org/SDL.git SDL
   if [ $FFMPEG -ne 0 ]; then
-    do_clone n7.1.1 https://github.com/FFmpeg/FFmpeg.git FFmpeg
+    do_clone n8.0.1 https://github.com/FFmpeg/FFmpeg.git FFmpeg
   fi
   if [ $OPENH264 -ne 0 ]; then
     do_clone v2.6.0 https://github.com/cisco/openh264.git openh264
   fi
-  do_clone v1.0.28-0 https://github.com/libusb/libusb-cmake.git libusb-cmake
+  do_clone v1.0.29-0 https://github.com/libusb/libusb-cmake.git libusb-cmake
   do_clone release-3.2.4 https://github.com/libsdl-org/SDL_image.git SDL_image
   do_clone release-3.2.2 https://github.com/libsdl-org/SDL_ttf.git SDL_ttf
   do_clone v2.0.3 https://github.com/mstorsjo/fdk-aac.git fdk-aac
   do_clone v1.5.2 https://gitlab.xiph.org/xiph/opus.git opus
-  do_download https://ftp.openbsd.org/pub/OpenBSD/LibreSSL/ libressl-4.0.0.tar.gz 4d841955f0acc3dfc71d0e3dd35f283af461222350e26843fea9731c0246a1e4 libressl
+  do_download https://ftp.openbsd.org/pub/OpenBSD/LibreSSL/ libressl-4.2.1.tar.gz 6d5c2f58583588ea791f4c8645004071d00dfa554a5bf788a006ca1eb5abd70b libressl
 fi
 
 if [ $BUILD -eq 0 ]; then
@@ -267,6 +267,7 @@ fi
 do_cmake_build \
   "$BUILD_BASE/freerdp" \
   -S "$SCRIPT_PATH/.." \
+  -DWITHOUT_FREERDP_3x_DEPRECATED=ON \
   -DWITH_SERVER=ON \
   -DWITH_SHADOW=OFF \
   -DWITH_PLATFORM_SERVER=OFF \

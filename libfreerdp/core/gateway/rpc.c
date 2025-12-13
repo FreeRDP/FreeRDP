@@ -539,7 +539,7 @@ static int rpc_channel_rpch_init(RpcClient* client, RpcChannel* channel, const c
 
 		if (guid)
 		{
-			char* strguid = NULL;
+			RPC_CSTR strguid = NULL;
 			RPC_STATUS rpcStatus = UuidToStringA(guid, &strguid);
 
 			if (rpcStatus != RPC_S_OK)

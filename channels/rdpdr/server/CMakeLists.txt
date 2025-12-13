@@ -21,4 +21,5 @@ set(${MODULE_PREFIX}_SRCS rdpdr_main.c rdpdr_main.h)
 
 set(${MODULE_PREFIX}_LIBS freerdp)
 
+option(WITH_WCHAR_FILE_DIRECTORY_INFORMATION "Build with WCHAR FILE_DIRECTORY_INFORMATION::FileName" OFF)
 add_channel_server_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} FALSE "VirtualChannelEntry")

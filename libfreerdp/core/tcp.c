@@ -1515,7 +1515,8 @@ BOOL freerdp_tcp_set_nodelay(wLog* log, DWORD level, int sockfd)
 
 	int type = -1;
 	socklen_t typelen = sizeof(type);
-	const int rc = getsockopt(sockfd, SOL_SOCKET, SO_TYPE, &type, &typelen);
+	char* ptype = (char*)&type;
+	const int rc = getsockopt(sockfd, SOL_SOCKET, SO_TYPE, ptype, &typelen);
 	if (rc < 0)
 	{
 		char buffer[128] = { 0 };

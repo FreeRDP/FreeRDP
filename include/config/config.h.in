@@ -239,4 +239,10 @@
 #cmakedefine WITHOUT_FREERDP_3x_DEPRECATED
 #endif
 
+/** Build FILE_DIRECTORY_INFORMATION::FileName with type WCHAR instead of char
+ *
+ * @since version 3.20.0
+ */
+#cmakedefine WITH_WCHAR_FILE_DIRECTORY_INFORMATION
+
 #endif /* FREERDP_CONFIG_H */

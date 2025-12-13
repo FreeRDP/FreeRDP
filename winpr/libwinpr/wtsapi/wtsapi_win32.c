@@ -72,7 +72,7 @@ typedef HANDLE(WINAPI* fnWinStationVirtualOpenEx)(HANDLE hServer, DWORD SessionI
 static fnWinStationVirtualOpen pfnWinStationVirtualOpen = NULL;
 static fnWinStationVirtualOpenEx pfnWinStationVirtualOpenEx = NULL;
 
-BOOL WINAPI Win32_WTSVirtualChannelClose(HANDLE hChannel);
+static BOOL WINAPI Win32_WTSVirtualChannelClose(HANDLE hChannel);
 
 /**
  * NOTE !!
@@ -116,7 +116,7 @@ static void _wts_free(void* ptr)
 #endif
 }
 
-BOOL Win32_WTSVirtualChannelReadAsync(WTSAPI_CHANNEL* pChannel)
+static BOOL Win32_WTSVirtualChannelReadAsync(WTSAPI_CHANNEL* pChannel)
 {
 	BOOL status = TRUE;
 	DWORD numBytes = 0;
@@ -170,8 +170,8 @@ BOOL Win32_WTSVirtualChannelReadAsync(WTSAPI_CHANNEL* pChannel)
 	return TRUE;
 }
 
-HANDLE WINAPI Win32_WTSVirtualChannelOpen_Internal(HANDLE hServer, DWORD SessionId,
-                                                   LPSTR pVirtualName, DWORD flags)
+static HANDLE WINAPI Win32_WTSVirtualChannelOpen_Internal(HANDLE hServer, DWORD SessionId,
+                                                          LPSTR pVirtualName, DWORD flags)
 {
 	HANDLE hFile;
 	HANDLE hChannel;
@@ -245,17 +245,18 @@ HANDLE WINAPI Win32_WTSVirtualChannelOpen_Internal(HANDLE hServer, DWORD Session
 	return hChannel;
 }
 
-HANDLE WINAPI Win32_WTSVirtualChannelOpen(HANDLE hServer, DWORD SessionId, LPSTR pVirtualName)
+static HANDLE WINAPI Win32_WTSVirtualChannelOpen(HANDLE hServer, DWORD SessionId,
+                                                 LPSTR pVirtualName)
 {
 	return Win32_WTSVirtualChannelOpen_Internal(hServer, SessionId, pVirtualName, 0);
 }
 
-HANDLE WINAPI Win32_WTSVirtualChannelOpenEx(DWORD SessionId, LPSTR pVirtualName, DWORD flags)
+static HANDLE WINAPI Win32_WTSVirtualChannelOpenEx(DWORD SessionId, LPSTR pVirtualName, DWORD flags)
 {
 	return Win32_WTSVirtualChannelOpen_Internal(0, SessionId, pVirtualName, flags);
 }
 
-BOOL WINAPI Win32_WTSVirtualChannelClose(HANDLE hChannel)
+static BOOL WINAPI Win32_WTSVirtualChannelClose(HANDLE hChannel)
 {
 	BOOL status = TRUE;
 	WTSAPI_CHANNEL* pChannel = (WTSAPI_CHANNEL*)hChannel;
@@ -302,9 +303,10 @@ BOOL WINAPI Win32_WTSVirtualChannelClose(HANDLE hChannel)
 	return status;
 }
 
-BOOL WINAPI Win32_WTSVirtualChannelRead_Static(WTSAPI_CHANNEL* pChannel, DWORD dwMilliseconds,
-                                               LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
-                                               LPDWORD lpNumberOfBytesTransferred)
+static BOOL WINAPI Win32_WTSVirtualChannelRead_Static(WTSAPI_CHANNEL* pChannel,
+                                                      DWORD dwMilliseconds, LPVOID lpBuffer,
+                                                      DWORD nNumberOfBytesToRead,
+                                                      LPDWORD lpNumberOfBytesTransferred)
 {
 	if (pChannel->readDone)
 	{
@@ -449,9 +451,10 @@ BOOL WINAPI Win32_WTSVirtualChannelRead_Static(WTSAPI_CHANNEL* pChannel, DWORD d
 	return FALSE;
 }
 
-BOOL WINAPI Win32_WTSVirtualChannelRead_Dynamic(WTSAPI_CHANNEL* pChannel, DWORD dwMilliseconds,
-                                                LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
-                                                LPDWORD lpNumberOfBytesTransferred)
+static BOOL WINAPI Win32_WTSVirtualChannelRead_Dynamic(WTSAPI_CHANNEL* pChannel,
+                                                       DWORD dwMilliseconds, LPVOID lpBuffer,
+                                                       DWORD nNumberOfBytesToRead,
+                                                       LPDWORD lpNumberOfBytesTransferred)
 {
 	if (pChannel->readSync)
 	{
@@ -567,9 +570,9 @@ BOOL WINAPI Win32_WTSVirtualChannelRead_Dynamic(WTSAPI_CHANNEL* pChannel, DWORD 
 	return FALSE;
 }
 
-BOOL WINAPI Win32_WTSVirtualChannelRead(HANDLE hChannel, DWORD dwMilliseconds, LPVOID lpBuffer,
-                                        DWORD nNumberOfBytesToRead,
-                                        LPDWORD lpNumberOfBytesTransferred)
+static BOOL WINAPI Win32_WTSVirtualChannelRead(HANDLE hChannel, DWORD dwMilliseconds,
+                                               PCHAR lpBuffer, DWORD nNumberOfBytesToRead,
+                                               LPDWORD lpNumberOfBytesTransferred)
 {
 	WTSAPI_CHANNEL* pChannel = (WTSAPI_CHANNEL*)hChannel;
 
@@ -625,9 +628,9 @@ BOOL WINAPI Win32_WTSVirtualChannelRead(HANDLE hChannel, DWORD dwMilliseconds, L
 	return FALSE;
 }
 
-BOOL WINAPI Win32_WTSVirtualChannelWrite(HANDLE hChannel, LPCVOID lpBuffer,
-                                         DWORD nNumberOfBytesToWrite,
-                                         LPDWORD lpNumberOfBytesTransferred)
+static BOOL WINAPI Win32_WTSVirtualChannelWrite(HANDLE hChannel, PCHAR lpBuffer,
+                                                DWORD nNumberOfBytesToWrite,
+                                                LPDWORD lpNumberOfBytesTransferred)
 {
 	OVERLAPPED overlapped = { 0 };
 	WTSAPI_CHANNEL* pChannel = (WTSAPI_CHANNEL*)hChannel;
@@ -652,7 +655,7 @@ BOOL WINAPI Win32_WTSVirtualChannelWrite(HANDLE hChannel, LPCVOID lpBuffer,
 #define FILE_DEVICE_TERMSRV 0x00000038
 #endif
 
-BOOL Win32_WTSVirtualChannelPurge_Internal(HANDLE hChannelHandle, ULONG IoControlCode)
+static BOOL Win32_WTSVirtualChannelPurge_Internal(HANDLE hChannelHandle, ULONG IoControlCode)
 {
 	IO_STATUS_BLOCK ioStatusBlock = { 0 };
 	WTSAPI_CHANNEL* pChannel = (WTSAPI_CHANNEL*)hChannelHandle;
@@ -698,20 +701,21 @@ BOOL Win32_WTSVirtualChannelPurge_Internal(HANDLE hChannelHandle, ULONG IoContro
 	return TRUE;
 }
 
-BOOL WINAPI Win32_WTSVirtualChannelPurgeInput(HANDLE hChannelHandle)
+static BOOL WINAPI Win32_WTSVirtualChannelPurgeInput(HANDLE hChannelHandle)
 {
 	return Win32_WTSVirtualChannelPurge_Internal(hChannelHandle,
 	                                             (FILE_DEVICE_TERMSRV << 16) | 0x0107);
 }
 
-BOOL WINAPI Win32_WTSVirtualChannelPurgeOutput(HANDLE hChannelHandle)
+static BOOL WINAPI Win32_WTSVirtualChannelPurgeOutput(HANDLE hChannelHandle)
 {
 	return Win32_WTSVirtualChannelPurge_Internal(hChannelHandle,
 	                                             (FILE_DEVICE_TERMSRV << 16) | 0x010B);
 }
 
-BOOL WINAPI Win32_WTSVirtualChannelQuery(HANDLE hChannelHandle, WTS_VIRTUAL_CLASS WtsVirtualClass,
-                                         PVOID* ppBuffer, DWORD* pBytesReturned)
+static BOOL WINAPI Win32_WTSVirtualChannelQuery(HANDLE hChannelHandle,
+                                                WTS_VIRTUAL_CLASS WtsVirtualClass, PVOID* ppBuffer,
+                                                DWORD* pBytesReturned)
 {
 	WTSAPI_CHANNEL* pChannel = (WTSAPI_CHANNEL*)hChannelHandle;
 
@@ -764,19 +768,19 @@ BOOL WINAPI Win32_WTSVirtualChannelQuery(HANDLE hChannelHandle, WTS_VIRTUAL_CLAS
 	return TRUE;
 }
 
-VOID WINAPI Win32_WTSFreeMemory(PVOID pMemory)
+static VOID WINAPI Win32_WTSFreeMemory(PVOID pMemory)
 {
 	_wts_free(pMemory);
 }
 
-BOOL WINAPI Win32_WTSFreeMemoryExW(WTS_TYPE_CLASS WTSTypeClass, PVOID pMemory,
-                                   ULONG NumberOfEntries)
+static BOOL WINAPI Win32_WTSFreeMemoryExW(WTS_TYPE_CLASS WTSTypeClass, PVOID pMemory,
+                                          ULONG NumberOfEntries)
 {
 	return FALSE;
 }
 
-BOOL WINAPI Win32_WTSFreeMemoryExA(WTS_TYPE_CLASS WTSTypeClass, PVOID pMemory,
-                                   ULONG NumberOfEntries)
+static BOOL WINAPI Win32_WTSFreeMemoryExA(WTS_TYPE_CLASS WTSTypeClass, PVOID pMemory,
+                                          ULONG NumberOfEntries)
 {
 	return WTSFreeMemoryExW(WTSTypeClass, pMemory, NumberOfEntries);
 }
