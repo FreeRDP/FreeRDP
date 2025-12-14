@@ -33,6 +33,8 @@
 #include <freerdp/crypto/certificate_data.h>
 
 #include "certificate.h"
+#include <freerdp/log.h>
+#define TAG FREERDP_TAG("crypto.certificate_data")
 
 struct rdp_certificate_data
 {
@@ -95,8 +97,9 @@ static BOOL freerdp_certificate_data_load_cache(rdpCertificateData* data)
 	WINPR_ASSERT(data);
 
 	freerdp_certificate_data_hash_(data->hostname, data->port, data->cached_hash,
-	                               sizeof(data->cached_hash));
-	if (strnlen(data->cached_hash, sizeof(data->cached_hash)) == 0)
+	                               sizeof(data->cached_hash) - 1);
+	const size_t len = strnlen(data->cached_hash, sizeof(data->cached_hash));
+	if ((len == 0) || (len >= sizeof(data->cached_hash)))
 		goto fail;
 
 	data->cached_subject = freerdp_certificate_get_subject(data->cert);
@@ -133,6 +136,11 @@ static rdpCertificateData* freerdp_certificate_data_new_nocopy(const char* hostn
 
 	if (!hostname || !xcert)
 		goto fail;
+	if (strnlen(hostname, MAX_PATH) >= MAX_PATH)
+	{
+		WLog_ERR(TAG, "hostname exceeds length limits");
+		goto fail;
+	}
 
 	certdata = (rdpCertificateData*)calloc(1, sizeof(rdpCertificateData));
 
@@ -295,5 +303,5 @@ char* freerdp_certificate_data_hash(const char* hostname, UINT16 port)
 {
 	char name[MAX_PATH + 10] = { 0 };
 	freerdp_certificate_data_hash_(hostname, port, name, sizeof(name));
-	return _strdup(name);
+	return strndup(name, sizeof(name));
 }
