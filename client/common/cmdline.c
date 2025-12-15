@@ -5977,7 +5977,7 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 #ifdef CHANNEL_AUDIN_CLIENT
 		{ FreeRDP_AudioCapture, AUDIN_CHANNEL_NAME, NULL },
 #endif
-#ifdef CHANNEL_RPDSND_CLIENT
+#ifdef CHANNEL_RDPSND_CLIENT
 		{ FreeRDP_AudioPlayback, RDPSND_CHANNEL_NAME, NULL },
 #endif
 #ifdef CHANNEL_RDPEI_CLIENT
@@ -6007,7 +6007,7 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 	};
 
 	ChannelToLoad staticChannels[] = {
-#if defined(CHANNEL_RPDSND_CLIENT)
+#if defined(CHANNEL_RDPSND_CLIENT)
 		{ FreeRDP_AudioPlayback, RDPSND_CHANNEL_NAME, NULL },
 #endif
 #if defined(CHANNEL_CLIPRDR_CLIENT)
