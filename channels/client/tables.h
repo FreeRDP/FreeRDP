@@ -17,6 +17,8 @@
  * limitations under the License.
  */
 
+#pragma once
+
 #include <winpr/platform.h>
 #include <winpr/wtsapi.h>
 #include <freerdp/svc.h>
