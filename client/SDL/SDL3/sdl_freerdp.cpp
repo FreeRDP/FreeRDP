@@ -795,6 +795,10 @@ static int sdl_run(SdlContext* sdl)
 
 	SDL_SetHint(SDL_HINT_ALLOW_ALT_TAB_WHILE_GRABBED, "0");
 	SDL_SetHint(SDL_HINT_VIDEO_X11_NET_WM_BYPASS_COMPOSITOR, "0");
+	SDL_SetHint(SDL_HINT_PEN_MOUSE_EVENTS, "0");
+	SDL_SetHint(SDL_HINT_TOUCH_MOUSE_EVENTS, "0");
+	SDL_SetHint(SDL_HINT_PEN_TOUCH_EVENTS, "1");
+	SDL_SetHint(SDL_HINT_TRACKPAD_IS_TOUCH_ONLY, "1");
 
 	freerdp_add_signal_cleanup_handler(sdl->context(), sdl_term_handler);
 	sdl->dialog.create(sdl->context());
