@@ -227,3 +227,15 @@ change_kind = function-subtype-change
 name = freerdp_get_nla_sspi_error
 parameter = '0 /^const.*/
 
+[suppress_function]
+change_kind = function-subtype-change
+name = msusb_msconfig_free
+
+[suppress_function]
+change_kind = function-subtype-change
+name = msusb_msconfig_new
+
+[suppress_function]
+change_kind = function-subtype-change
+name = msusb_msinterface_free
+
