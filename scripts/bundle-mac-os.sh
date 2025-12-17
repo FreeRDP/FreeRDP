@@ -133,17 +133,17 @@ CMAKE_ARGS="-DCMAKE_SKIP_INSTALL_ALL_DEPENDENCY=ON \
 if [ ! -d $SRC ]; then
   mkdir -p $SRC
   cd $SRC
-  git clone --depth 1 -b openssl-3.5.0 https://github.com/openssl/openssl.git
-  git clone --depth 1 -b v1.3.1 https://github.com/madler/zlib.git
-  git clone --depth 1 -b uriparser-0.9.8 https://github.com/uriparser/uriparser.git
+  git clone --depth 1 -b openssl-3.6.0 https://github.com/openssl/openssl.git
+  git clone --depth 1 -b v1.3.1.2 https://github.com/madler/zlib.git
+  git clone --depth 1 -b uriparser-1.0.0 https://github.com/uriparser/uriparser.git
   git clone --depth 1 -b json-c-0.18-20240915 https://github.com/json-c/json-c.git
-  git clone --depth 1 -b release-3.2.10 https://github.com/libsdl-org/SDL.git
+  git clone --depth 1 -b release-3.2.28 https://github.com/libsdl-org/SDL.git
   git clone --depth 1 --shallow-submodules --recurse-submodules -b release-3.2.2 https://github.com/libsdl-org/SDL_ttf.git
   git clone --depth 1 --shallow-submodules --recurse-submodules -b release-3.2.4 https://github.com/libsdl-org/SDL_image.git
-  git clone --depth 1 --shallow-submodules --recurse-submodules -b v1.0.28-0 https://github.com/libusb/libusb-cmake.git
-  git clone --depth 1 -b n7.1.1 https://github.com/FFmpeg/FFmpeg.git
-  git clone --depth 1 -b v2.4.1 https://github.com/cisco/openh264.git
-  git clone --depth 1 -b v1.5.2 https://gitlab.xiph.org/xiph/opus.git
+  git clone --depth 1 --shallow-submodules --recurse-submodules -b v1.0.29-0 https://github.com/libusb/libusb-cmake.git
+  git clone --depth 1 -b n8.0.1 https://github.com/FFmpeg/FFmpeg.git
+  git clone --depth 1 -b v2.6.0 https://github.com/cisco/openh264.git
+  git clone --depth 1 -b v1.6 https://gitlab.xiph.org/xiph/opus.git
   git clone --depth 1 -b v2.0.3 https://github.com/mstorsjo/fdk-aac.git
 fi
 

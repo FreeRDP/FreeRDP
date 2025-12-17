@@ -139,7 +139,7 @@ mkdir -p "$BUILD_BASE"
 cd "$SRC_BASE"
 if [ $CLONE -ne 0 ]; then
   do_clone v1.3.1 https://github.com/madler/zlib.git zlib
-  do_clone uriparser-0.9.8 https://github.com/uriparser/uriparser.git uriparser
+  do_clone uriparser-1.0.0 https://github.com/uriparser/uriparser.git uriparser
   do_clone json-c-0.18-20240915 https://github.com/json-c/json-c.git json-c
   do_clone release-3.2.28 https://github.com/libsdl-org/SDL.git SDL
   if [ $FFMPEG -ne 0 ]; then
@@ -152,7 +152,7 @@ if [ $CLONE -ne 0 ]; then
   do_clone release-3.2.4 https://github.com/libsdl-org/SDL_image.git SDL_image
   do_clone release-3.2.2 https://github.com/libsdl-org/SDL_ttf.git SDL_ttf
   do_clone v2.0.3 https://github.com/mstorsjo/fdk-aac.git fdk-aac
-  do_clone v1.5.2 https://gitlab.xiph.org/xiph/opus.git opus
+  do_clone v1.6 https://gitlab.xiph.org/xiph/opus.git opus
   do_download https://ftp.openbsd.org/pub/OpenBSD/LibreSSL/ libressl-4.2.1.tar.gz 6d5c2f58583588ea791f4c8645004071d00dfa554a5bf788a006ca1eb5abd70b libressl
 fi
 
