@@ -28,53 +28,11 @@ jobs:
           fetch-depth: 0
           ref: ${{steps.pr.outputs.merge_commit_sha}}
 
-      - name: Restore abigail tools
-        id: cache-abigail-tools-restore
-        if: always() && steps.cache-abigail-tools-restore.outputs.cache-hit != 'true'
-        uses: actions/cache/restore@v4
-        with:
-          key: cache-abigail-tools
-          path: |
-            deb
-
-      - name: "Prepare abigail-tools"
-        if: always() && steps.cache-abigail-tools-restore.outputs.cache-hit != 'true'
-        run: |
-          mkdir deb-build
-          cd deb-build
-          echo "deb-src http://archive.ubuntu.com/ubuntu/ plucky main restricted universe multiverse" | sudo tee /etc/apt/sources.list.d/plucky.list
-          sudo apt-get update -q -y
-          sudo apt-get build-dep -q -y libabigail
-          apt source libabigail
-          cd libabigail-2.6
-          dpkg-buildpackage
-
-      - name: "Prepare abigail-tools debs"
-        if: always() && steps.cache-abigail-tools-restore.outputs.cache-hit != 'true'
-        run: |
-          mkdir deb
-          find . -name "*.deb" -print -exec mv {} deb \;
-
-      - name: Save abigail tools
-        id: cache-abigail-tools-save
-        if: always() && steps.cache-abigail-tools-restore.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v4
-        with:
-          key: cache-abigail-tools
-          path: |
-            deb
-
-      - name:  "Install abigail-tools"
-        continue-on-error: true
-        run: |
-          cd deb
-          sudo dpkg -i *.deb
-
       - name: "Prepare environment"
         run: |
           sudo apt-get update -q -y
           sudo apt-get --fix-broken install -q -y
-          sudo apt-get install -q -y devscripts equivs \
+          sudo apt-get install -q -y devscripts equivs abigail-tools \
             clang \
             pylint \
             curl
