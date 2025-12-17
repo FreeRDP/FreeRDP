@@ -185,40 +185,45 @@ parameter = '4 /.*const.*/
 [suppress_function]
 change_kind = function-subtype-change
 name = freerdp_error_info
-parameter = '1 /.*const.*/
+parameter = '0 /^const.*/
 
 [suppress_function]
 change_kind = function-subtype-change
 name = freerdp_get_disconnect_ultimatum
-parameter = '1 /.*const.*/
+parameter = '0 /^const.*/
 
 [suppress_function]
 change_kind = function-subtype-change
 name = freerdp_get_last_error
-parameter = '1 /.*const.*/
+parameter = '0 /^const.*/
 
 [suppress_function]
 change_kind = function-subtype-change
 name = freerdp_get_transport_sent
-parameter = ' /.*const.*/
+parameter = '0 /^const.*/
 
 [suppress_function]
 change_kind = function-subtype-change
 name = freerdp_nego_get_routing_token
-parameter = '1 /.*const.*/
+parameter = '0 /^const.*/
 
 [suppress_function]
 change_kind = function-subtype-change
 name = freerdp_shall_disconnect
-parameter = '1 /.*const.*/
+parameter = '0 /^const.*/
 
 [suppress_function]
 change_kind = function-subtype-change
 name = getChannelError
-parameter = '1 /.*const.*/
+parameter = '0 /^const.*/
 
 [suppress_function]
 change_kind = function-subtype-change
 name = getChannelErrorDescription
-parameter = '1 /.*const.*/
+parameter = '0 /^const.*/
+
+[suppress_function]
+change_kind = function-subtype-change
+name = freerdp_get_nla_sspi_error
+parameter = '0 /^const.*/
 
