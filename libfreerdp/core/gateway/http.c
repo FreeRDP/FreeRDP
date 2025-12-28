@@ -79,13 +79,13 @@ struct s_http_response
 	char** lines;
 
 	UINT16 StatusCode;
-	const char* ReasonPhrase;
+	char* ReasonPhrase;
 
 	size_t ContentLength;
-	const char* ContentType;
+	char* ContentType;
 	TRANSFER_ENCODING TransferEncoding;
-	const char* SecWebsocketVersion;
-	const char* SecWebsocketAccept;
+	char* SecWebsocketVersion;
+	char* SecWebsocketAccept;
 
 	size_t BodyLength;
 	char* BodyContent;
@@ -97,7 +97,7 @@ struct s_http_response
 
 static wHashTable* HashTable_New_String(void);
 
-static char* string_strnstr(char* str1, const char* str2, size_t slen)
+static const char* string_strnstr(const char* str1, const char* str2, size_t slen)
 {
 	char c = 0;
 	char sc = 0;
@@ -722,7 +722,6 @@ static BOOL http_response_parse_header_status_line(HttpResponse* response, const
 	BOOL rc = FALSE;
 	char* separator = NULL;
 	char* status_code = NULL;
-	char* reason_phrase = NULL;
 
 	if (!response)
 		goto fail;
@@ -739,7 +738,7 @@ static BOOL http_response_parse_header_status_line(HttpResponse* response, const
 	if (!separator)
 		goto fail;
 
-	reason_phrase = separator + 1;
+	const char* reason_phrase = separator + 1;
 	*separator = '\0';
 	errno = 0;
 	{
@@ -750,7 +749,8 @@ static BOOL http_response_parse_header_status_line(HttpResponse* response, const
 
 		response->StatusCode = (UINT16)val;
 	}
-	response->ReasonPhrase = reason_phrase;
+	free(response->ReasonPhrase);
+	response->ReasonPhrase = _strdup(reason_phrase);
 
 	if (!response->ReasonPhrase)
 		goto fail;
@@ -788,7 +788,10 @@ static BOOL http_response_parse_header_field(HttpResponse* response, const char*
 	}
 	else if (_stricmp(name, "Content-Type") == 0)
 	{
-		response->ContentType = value;
+		if (!value)
+			return FALSE;
+		free(response->ContentType);
+		response->ContentType = _strdup(value);
 
 		if (!response->ContentType)
 			return FALSE;
@@ -804,14 +807,20 @@ static BOOL http_response_parse_header_field(HttpResponse* response, const char*
 	}
 	else if (_stricmp(name, "Sec-WebSocket-Version") == 0)
 	{
-		response->SecWebsocketVersion = value;
+		if (!value)
+			return FALSE;
+		free(response->SecWebsocketVersion);
+		response->SecWebsocketVersion = _strdup(value);
 
 		if (!response->SecWebsocketVersion)
 			return FALSE;
 	}
 	else if (_stricmp(name, "Sec-WebSocket-Accept") == 0)
 	{
-		response->SecWebsocketAccept = value;
+		if (!value)
+			return FALSE;
+		free(response->SecWebsocketAccept);
+		response->SecWebsocketAccept = _strdup(value);
 
 		if (!response->SecWebsocketAccept)
 			return FALSE;
@@ -1361,6 +1370,22 @@ out_error:
 	return rc;
 }
 
+static void clear_lines(HttpResponse* response)
+{
+	WINPR_ASSERT(response);
+
+	for (size_t x = 0; x < response->count; x++)
+	{
+		WINPR_ASSERT(response->lines);
+		char* line = response->lines[x];
+		free(line);
+	}
+
+	free((void*)response->lines);
+	response->lines = NULL;
+	response->count = 0;
+}
+
 HttpResponse* http_response_recv(rdpTls* tls, BOOL readContentLength)
 {
 	size_t bodyLength = 0;
@@ -1379,7 +1404,7 @@ HttpResponse* http_response_recv(rdpTls* tls, BOOL readContentLength)
 	{
 		size_t count = 0;
 		char* buffer = Stream_BufferAs(response->data, char);
-		char* line = Stream_BufferAs(response->data, char);
+		const char* line = Stream_BufferAs(response->data, char);
 		char* context = NULL;
 
 		while ((line = string_strnstr(line, "\r\n",
@@ -1390,6 +1415,7 @@ HttpResponse* http_response_recv(rdpTls* tls, BOOL readContentLength)
 			count++;
 		}
 
+		clear_lines(response);
 		response->count = count;
 
 		if (count)
@@ -1407,7 +1433,9 @@ HttpResponse* http_response_recv(rdpTls* tls, BOOL readContentLength)
 
 		while (line && (response->count > count))
 		{
-			response->lines[count] = line;
+			response->lines[count] = _strdup(line);
+			if (!response->lines[count])
+				goto out_error;
 			line = strtok_s(NULL, "\r\n", &context);
 			count++;
 		}
@@ -1528,7 +1556,11 @@ void http_response_free(HttpResponse* response)
 	if (!response)
 		return;
 
-	free((void*)response->lines);
+	clear_lines(response);
+	free(response->ReasonPhrase);
+	free(response->ContentType);
+	free(response->SecWebsocketAccept);
+	free(response->SecWebsocketVersion);
 	HashTable_Free(response->Authenticates);
 	HashTable_Free(response->SetCookie);
 	Stream_Free(response->data, TRUE);
