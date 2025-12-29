@@ -222,14 +222,13 @@ static const char* pf_config_get_str(wIniFile* ini, const char* section, const c
 
 static BOOL pf_config_load_server(wIniFile* ini, proxyConfig* config)
 {
-	const char* host = NULL;
-
 	WINPR_ASSERT(config);
-	host = pf_config_get_str(ini, section_server, key_host, FALSE);
+	const char* host = pf_config_get_str(ini, section_server, key_host, FALSE);
 
 	if (!host)
 		return TRUE;
 
+	free(config->Host);
 	config->Host = _strdup(host);
 
 	if (!config->Host)
@@ -262,6 +261,7 @@ static BOOL pf_config_load_target(wIniFile* ini, proxyConfig* config)
 		if (!target_value)
 			return FALSE;
 
+		free(config->TargetHost);
 		config->TargetHost = _strdup(target_value);
 		if (!config->TargetHost)
 			return FALSE;
@@ -270,6 +270,7 @@ static BOOL pf_config_load_target(wIniFile* ini, proxyConfig* config)
 	target_value = pf_config_get_str(ini, section_target, key_target_user, FALSE);
 	if (target_value)
 	{
+		free(config->TargetUser);
 		config->TargetUser = _strdup(target_value);
 		if (!config->TargetUser)
 			return FALSE;
@@ -278,6 +279,7 @@ static BOOL pf_config_load_target(wIniFile* ini, proxyConfig* config)
 	target_value = pf_config_get_str(ini, section_target, key_target_pwd, FALSE);
 	if (target_value)
 	{
+		free(config->TargetPassword);
 		config->TargetPassword = _strdup(target_value);
 		if (!config->TargetPassword)
 			return FALSE;
@@ -286,6 +288,7 @@ static BOOL pf_config_load_target(wIniFile* ini, proxyConfig* config)
 	target_value = pf_config_get_str(ini, section_target, key_target_domain, FALSE);
 	if (target_value)
 	{
+		free(config->TargetDomain);
 		config->TargetDomain = _strdup(target_value);
 		if (!config->TargetDomain)
 			return FALSE;
@@ -839,27 +842,45 @@ void pf_server_config_print(const proxyConfig* config)
 	CONFIG_PRINT_STR_CONTENT(config, PrivateKeyContent);
 }
 
+static void zfree(char* str)
+{
+	if (!str)
+		return;
+	const size_t len = strlen(str);
+	memset(str, 0, len);
+	free(str);
+}
+
+static void znfree(char* str, size_t len)
+{
+	if (!str)
+		return;
+	memset(str, 0, len);
+	free(str);
+}
+
 void pf_server_config_free(proxyConfig* config)
 {
 	if (config == NULL)
 		return;
 
+	free(config->Host);
+	free(config->TargetHost);
+	free(config->TargetUser);
+	free(config->TargetDomain);
+	free(config->TargetPassword);
+
 	CommandLineParserFree(config->Passthrough);
 	CommandLineParserFree(config->Intercept);
-	CommandLineParserFree(config->RequiredPlugins);
 	CommandLineParserFree(config->Modules);
-	free(config->TargetHost);
-	free(config->Host);
+	CommandLineParserFree(config->RequiredPlugins);
+
 	free(config->CertificateFile);
-	free(config->CertificateContent);
-	if (config->CertificatePEM)
-		memset(config->CertificatePEM, 0, config->CertificatePEMLength);
-	free(config->CertificatePEM);
+	zfree(config->CertificateContent);
+	znfree(config->CertificatePEM, config->CertificatePEMLength);
 	free(config->PrivateKeyFile);
-	free(config->PrivateKeyContent);
-	if (config->PrivateKeyPEM)
-		memset(config->PrivateKeyPEM, 0, config->PrivateKeyPEMLength);
-	free(config->PrivateKeyPEM);
+	zfree(config->PrivateKeyContent);
+	znfree(config->PrivateKeyPEM, config->PrivateKeyPEMLength);
 	IniFile_Free(config->ini);
 	free(config);
 }
