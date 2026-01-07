@@ -22,6 +22,7 @@ if(ENABLE_WARNING_VERBOSE)
       -Wno-covered-switch-default
       -Wno-disabled-macro-expansion
       -Wno-used-but-marked-unused
+      -Wno-implicit-void-ptr-cast
     )
   endif()
 endif()
