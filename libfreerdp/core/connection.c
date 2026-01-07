@@ -789,7 +789,9 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 	Stream_Write(s, crypt_client_random, info->ModulusLength);
 	Stream_Zero(s, 8);
 	Stream_SealLength(s);
-	status = transport_write(rdp->mcs->transport, s);
+
+	rdpTransport* transport = freerdp_get_transport(rdp->context);
+	status = transport_write(transport, s);
 
 	if (status < 0)
 		goto end;

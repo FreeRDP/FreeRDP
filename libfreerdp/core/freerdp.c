@@ -1473,22 +1473,18 @@ static void test_mcs_free(rdpMcs* mcs)
 	if (!mcs)
 		return;
 
-	rdpTransport* transport = mcs->transport;
-	rdpContext* context = transport_get_context(transport);
-	if (context)
+	if (mcs->context)
 	{
-		rdpSettings* settings = context->settings;
+		rdpSettings* settings = mcs->context->settings;
 		freerdp_settings_free(settings);
 	}
-	free(context);
-	transport_free(transport);
+	free(mcs->context);
 
 	mcs_free(mcs);
 }
 
 static rdpMcs* test_mcs_new(void)
 {
-	rdpTransport* transport = NULL;
 	rdpSettings* settings = freerdp_settings_new(0);
 	rdpContext* context = calloc(1, sizeof(rdpContext));
 
@@ -1500,13 +1496,9 @@ static rdpMcs* test_mcs_new(void)
 	if (!context)
 		goto fail;
 	context->settings = settings;
-	transport = transport_new(context);
-	if (!transport)
-		goto fail;
-	return mcs_new(transport);
+	return mcs_new(context);
 
 fail:
-	transport_free(transport);
 	free(context);
 	freerdp_settings_free(settings);
 

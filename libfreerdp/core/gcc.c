@@ -121,21 +121,17 @@ static BOOL gcc_write_server_multitransport_channel_data(wStream* s, const rdpMc
 static rdpSettings* mcs_get_settings(rdpMcs* mcs)
 {
 	WINPR_ASSERT(mcs);
+	WINPR_ASSERT(mcs->context);
 
-	rdpContext* context = transport_get_context(mcs->transport);
-	WINPR_ASSERT(context);
-
-	return context->settings;
+	return mcs->context->settings;
 }
 
 static const rdpSettings* mcs_get_const_settings(const rdpMcs* mcs)
 {
 	WINPR_ASSERT(mcs);
+	WINPR_ASSERT(mcs->context);
 
-	const rdpContext* context = transport_get_context(mcs->transport);
-	WINPR_ASSERT(context);
-
-	return context->settings;
+	return mcs->context->settings;
 }
 
 static char* rdp_early_server_caps_string(UINT32 flags, char* buffer, size_t size)
