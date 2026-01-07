@@ -108,8 +108,9 @@
  * @return The casted integer
  * @since version 3.10.1
  */
-#define WINPR_ASSERTING_INT_CAST(type, var)                                                     \
+#define WINPR_ASSERTING_INT_CAST(type, ivar)                                                    \
 	__extension__({                                                                             \
+		__typeof(ivar) var = ivar;                                                              \
 		WINPR_ASSERT((var) ==                                                                   \
 		             WINPR_CXX_COMPAT_CAST(__typeof(var), WINPR_CXX_COMPAT_CAST(type, (var)))); \
 		WINPR_ASSERT((((var) > 0) && (WINPR_CXX_COMPAT_CAST(type, (var)) > 0)) ||               \
