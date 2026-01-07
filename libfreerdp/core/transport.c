@@ -133,7 +133,7 @@ static const char* where2str(int where, char* ibuffer, size_t ilen)
 		winpr_str_append("SSL_CB_LOOP", buffer, len, "|");
 
 	char nr[32] = { 0 };
-	(void)_snprintf(nr, sizeof(nr), "]{0x%08" PRIx32 "}", where);
+	(void)_snprintf(nr, sizeof(nr), "]{0x%08" PRIx32 "}", (unsigned)where);
 	winpr_str_append(nr, buffer, len, "");
 	return buffer;
 }
