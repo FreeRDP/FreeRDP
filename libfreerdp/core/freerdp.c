@@ -318,17 +318,6 @@ BOOL freerdp_abort_connect_context(rdpContext* context)
 		return FALSE;
 
 	freerdp_set_last_error_if_not(context, FREERDP_ERROR_CONNECT_CANCELLED);
-
-	/* Try to send a [MS-RDPBCGR] 1.3.1.4.1 User-Initiated on Client PDU, we don't care about
-	 * success */
-	if (context->rdp && context->rdp->mcs)
-	{
-		if (!context->ServerMode)
-		{
-			(void)mcs_send_disconnect_provider_ultimatum(context->rdp->mcs,
-			                                             Disconnect_Ultimatum_user_requested);
-		}
-	}
 	return utils_abort_connect(context->rdp);
 }
 
@@ -608,29 +597,45 @@ static BOOL freerdp_send_channel_packet(freerdp* instance, UINT16 channelId, siz
 BOOL freerdp_disconnect(freerdp* instance)
 {
 	BOOL rc = TRUE;
-	rdpRdp* rdp = NULL;
-	rdp_update_internal* up = NULL;
 
 	if (!instance || !instance->context)
 		return FALSE;
 
-	rdp = instance->context->rdp;
+	rdpRdp* rdp = instance->context->rdp;
+	if (rdp)
+	{
+		/* Try to send a [MS-RDPBCGR] 1.3.1.4.1 User-Initiated on Client PDU, we don't care about
+		 * success */
+		if (freerdp_get_last_error(instance->context) == FREERDP_ERROR_CONNECT_CANCELLED)
+		{
+			(void)mcs_send_disconnect_provider_ultimatum(rdp->mcs,
+			                                             Disconnect_Ultimatum_user_requested);
+		}
+	}
+
 	utils_abort_connect(rdp);
 
 	if (!rdp_client_disconnect(rdp))
 		rc = FALSE;
 
-	up = update_cast(rdp->update);
+	rdp_update_internal* up = NULL;
+	if (rdp && rdp->update)
+	{
+		up = update_cast(rdp->update);
 
-	update_post_disconnect(rdp->update);
+		update_post_disconnect(rdp->update);
+	}
 
 	IFCALL(instance->PostDisconnect, instance);
 
-	if (up->pcap_rfx)
+	if (up)
 	{
-		up->dump_rfx = FALSE;
-		pcap_close(up->pcap_rfx);
-		up->pcap_rfx = NULL;
+		if (up->pcap_rfx)
+		{
+			up->dump_rfx = FALSE;
+			pcap_close(up->pcap_rfx);
+			up->pcap_rfx = NULL;
+		}
 	}
 
 	freerdp_channels_close(instance->context->channels, instance);
