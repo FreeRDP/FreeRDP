@@ -142,7 +142,7 @@ if [ ! -d $SRC ]; then
   git clone --depth 1 --shallow-submodules --recurse-submodules -b release-3.2.4 https://github.com/libsdl-org/SDL_image.git
   git clone --depth 1 --shallow-submodules --recurse-submodules -b v1.0.29-0 https://github.com/libusb/libusb-cmake.git
   git clone --depth 1 -b n8.0.1 https://github.com/FFmpeg/FFmpeg.git
-  git clone --depth 1 -b v2.6.0 https://github.com/cisco/openh264.git
+  git clone --depth 1 -b master https://github.com/cisco/openh264.git
   git clone --depth 1 -b v1.6 https://gitlab.xiph.org/xiph/opus.git
   git clone --depth 1 -b v2.0.3 https://github.com/mstorsjo/fdk-aac.git
 fi
