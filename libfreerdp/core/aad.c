@@ -40,7 +40,6 @@ struct rdp_aad
 {
 	AAD_STATE state;
 	rdpContext* rdpcontext;
-	rdpTransport* transport;
 	char* access_token;
 	rdpPrivateKey* key;
 	char* kid;
@@ -505,7 +504,8 @@ static int aad_send_auth_request(rdpAad* aad, const char* ts_nonce)
 
 	Stream_SealLength(s);
 
-	if (transport_write(aad->transport, s) < 0)
+	rdpTransport* transport = freerdp_get_transport(aad->rdpcontext);
+	if (transport_write(transport, s) < 0)
 	{
 		WLog_Print(aad->log, WLOG_ERROR, "transport_write [%" PRIuz " bytes] failed",
 		           Stream_Length(s));
@@ -795,9 +795,8 @@ static BOOL ensure_wellknown(WINPR_ATTR_UNUSED rdpContext* context)
 
 #endif
 
-rdpAad* aad_new(rdpContext* context, rdpTransport* transport)
+rdpAad* aad_new(rdpContext* context)
 {
-	WINPR_ASSERT(transport);
 	WINPR_ASSERT(context);
 
 	rdpAad* aad = (rdpAad*)calloc(1, sizeof(rdpAad));
@@ -810,7 +809,6 @@ rdpAad* aad_new(rdpContext* context, rdpTransport* transport)
 	if (!aad->key)
 		goto fail;
 	aad->rdpcontext = context;
-	aad->transport = transport;
 
 	return aad;
 fail:

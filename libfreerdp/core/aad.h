@@ -42,6 +42,6 @@ FREERDP_LOCAL AAD_STATE aad_get_state(rdpAad* aad);
 FREERDP_LOCAL void aad_free(rdpAad* aad);
 
 WINPR_ATTR_MALLOC(aad_free, 1)
-FREERDP_LOCAL rdpAad* aad_new(rdpContext* context, rdpTransport* transport);
+FREERDP_LOCAL rdpAad* aad_new(rdpContext* context);
 
 #endif /* FREERDP_LIB_CORE_AAD_H */
