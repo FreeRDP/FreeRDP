@@ -300,19 +300,17 @@ out_fail:
 
 pClientContext* pf_context_create_client_context(const rdpSettings* clientSettings)
 {
-	RDP_CLIENT_ENTRY_POINTS clientEntryPoints;
-	pClientContext* pc = NULL;
-	rdpContext* context = NULL;
+	RDP_CLIENT_ENTRY_POINTS clientEntryPoints = { 0 };
 
 	WINPR_ASSERT(clientSettings);
 
 	RdpClientEntry(&clientEntryPoints);
-	context = freerdp_client_context_new(&clientEntryPoints);
+	rdpContext* context = freerdp_client_context_new(&clientEntryPoints);
 
 	if (!context)
 		return NULL;
 
-	pc = (pClientContext*)context;
+	pClientContext* pc = (pClientContext*)context;
 
 	if (!pf_context_copy_settings(context->settings, clientSettings))
 		goto error;
