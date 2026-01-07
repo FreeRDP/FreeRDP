@@ -85,7 +85,9 @@ struct rdp_transport
 	BOOL AadMode;
 	BOOL blocking;
 	BOOL GatewayEnabled;
+	BOOL haveReadLock;
 	CRITICAL_SECTION ReadLock;
+	BOOL haveWriteLock;
 	CRITICAL_SECTION WriteLock;
 	UINT64 written;
 	HANDLE rereadEvent;
@@ -131,7 +133,7 @@ static const char* where2str(int where, char* ibuffer, size_t ilen)
 		winpr_str_append("SSL_CB_LOOP", buffer, len, "|");
 
 	char nr[32] = { 0 };
-	(void)_snprintf(nr, sizeof(nr), "]{0x%08" PRIx32 "}", where);
+	(void)_snprintf(nr, sizeof(nr), "]{0x%08" PRIx32 "}", (unsigned)where);
 	winpr_str_append(nr, buffer, len, "");
 	return buffer;
 }
@@ -1709,6 +1711,11 @@ rdpTransport* transport_new(rdpContext* context)
 		goto fail;
 
 	transport->context = context;
+	transport->haveReadLock = InitializeCriticalSectionAndSpinCount(&(transport->ReadLock), 4000);
+	transport->haveWriteLock = InitializeCriticalSectionAndSpinCount(&(transport->WriteLock), 4000);
+	if (!transport->haveReadLock || !transport->haveWriteLock)
+		goto fail;
+
 	transport->ReceivePool = StreamPool_New(TRUE, BUFFER_SIZE);
 
 	if (!transport->ReceivePool)
@@ -1740,12 +1747,6 @@ rdpTransport* transport_new(rdpContext* context)
 	transport->GatewayEnabled = FALSE;
 	transport->layer = TRANSPORT_LAYER_TCP;
 
-	if (!InitializeCriticalSectionAndSpinCount(&(transport->ReadLock), 4000))
-		goto fail;
-
-	if (!InitializeCriticalSectionAndSpinCount(&(transport->WriteLock), 4000))
-		goto fail;
-
 	// transport->io.DataHandler = transport_data_handler;
 	transport->io.TCPConnect = freerdp_tcp_default_connect;
 	transport->io.TLSConnect = transport_default_connect_tls;
@@ -1776,15 +1777,23 @@ void transport_free(rdpTransport* transport)
 
 	transport_disconnect(transport);
 
-	EnterCriticalSection(&(transport->ReadLock));
+	if (transport->haveReadLock)
+		EnterCriticalSection(&(transport->ReadLock));
+
 	if (transport->ReceiveBuffer)
 		Stream_Release(transport->ReceiveBuffer);
-	LeaveCriticalSection(&(transport->ReadLock));
 
-	(void)StreamPool_WaitForReturn(transport->ReceivePool, INFINITE);
+	if (transport->haveReadLock)
+		LeaveCriticalSection(&(transport->ReadLock));
 
-	EnterCriticalSection(&(transport->ReadLock));
-	EnterCriticalSection(&(transport->WriteLock));
+	if (transport->ReceivePool)
+		(void)StreamPool_WaitForReturn(transport->ReceivePool, INFINITE);
+
+	if (transport->haveReadLock)
+		EnterCriticalSection(&(transport->ReadLock));
+
+	if (transport->haveWriteLock)
+		EnterCriticalSection(&(transport->WriteLock));
 
 	nla_free(transport->nla);
 	StreamPool_Free(transport->ReceivePool);
@@ -1792,10 +1801,12 @@ void transport_free(rdpTransport* transport)
 	(void)CloseHandle(transport->rereadEvent);
 	(void)CloseHandle(transport->ioEvent);
 
-	LeaveCriticalSection(&(transport->ReadLock));
+	if (transport->haveReadLock)
+		LeaveCriticalSection(&(transport->ReadLock));
 	DeleteCriticalSection(&(transport->ReadLock));
 
-	LeaveCriticalSection(&(transport->WriteLock));
+	if (transport->haveWriteLock)
+		LeaveCriticalSection(&(transport->WriteLock));
 	DeleteCriticalSection(&(transport->WriteLock));
 	free(transport);
 }

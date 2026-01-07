@@ -105,7 +105,7 @@ PfChannelResult channelTracker_update(ChannelStateTracker* tracker, const BYTE* 
 	if (flags & CHANNEL_FLAG_FIRST)
 	{
 		if (!channelTracker_resetCurrentPacket(tracker))
-			return FALSE;
+			return PF_CHANNEL_RESULT_ERROR;
 		channelTracker_setCurrentPacketSize(tracker, totalSize);
 		tracker->currentPacketReceived = 0;
 		tracker->currentPacketFragments = 0;

@@ -130,6 +130,8 @@ DWORD SetCriticalSectionSpinCount(WINPR_ATTR_UNUSED LPCRITICAL_SECTION lpCritica
 static VOID WaitForCriticalSection(LPCRITICAL_SECTION lpCriticalSection)
 {
 	WINPR_ASSERT(lpCriticalSection);
+	WINPR_ASSERT(lpCriticalSection->LockSemaphore);
+
 #if defined(__APPLE__)
 	semaphore_wait(*((winpr_sem_t*)lpCriticalSection->LockSemaphore));
 #else
@@ -140,6 +142,7 @@ static VOID WaitForCriticalSection(LPCRITICAL_SECTION lpCriticalSection)
 static VOID UnWaitCriticalSection(LPCRITICAL_SECTION lpCriticalSection)
 {
 	WINPR_ASSERT(lpCriticalSection);
+	WINPR_ASSERT(lpCriticalSection->LockSemaphore);
 #if defined __APPLE__
 	semaphore_signal(*((winpr_sem_t*)lpCriticalSection->LockSemaphore));
 #else
