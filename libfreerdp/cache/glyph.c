@@ -143,7 +143,7 @@ static BOOL update_process_glyph_fragments(rdpContext* context, const BYTE* data
 	BOOL rc = FALSE;
 
 	if (!context || !data || !context->graphics || !context->cache || !context->cache->glyph)
-		goto fail;
+		return FALSE;
 
 	rdpGraphics* graphics = context->graphics;
 	WINPR_ASSERT(graphics);
@@ -152,139 +152,142 @@ static BOOL update_process_glyph_fragments(rdpContext* context, const BYTE* data
 	rdpGlyphCache* glyph_cache = context->cache->glyph;
 	WINPR_ASSERT(glyph_cache);
 
-	rdpGlyph* glyph = graphics->Glyph_Prototype;
-
-	if (!glyph)
-		goto fail;
-
-	/* Limit op rectangle to visible screen. */
-	if (opX < 0)
 	{
-		opWidth += opX;
-		opX = 0;
-	}
+		rdpGlyph* glyph = graphics->Glyph_Prototype;
+		if (!glyph)
+			goto fail;
 
-	if (opY < 0)
-	{
-		opHeight += opY;
-		opY = 0;
-	}
-
-	if (opWidth < 0)
-		opWidth = 0;
-
-	if (opHeight < 0)
-		opHeight = 0;
-
-	/* Limit bk rectangle to visible screen. */
-	if (bkX < 0)
-	{
-		bkWidth += bkX;
-		bkX = 0;
-	}
-
-	if (bkY < 0)
-	{
-		bkHeight += bkY;
-		bkY = 0;
-	}
-
-	if (bkWidth < 0)
-		bkWidth = 0;
-
-	if (bkHeight < 0)
-		bkHeight = 0;
-
-	const UINT32 w = freerdp_settings_get_uint32(context->settings, FreeRDP_DesktopWidth);
-	if (opX + opWidth > (INT64)w)
-	{
-		/**
-		 * Some Microsoft servers send erroneous high values close to the
-		 * sint16 maximum in the OpRight field of the GlyphIndex, FastIndex and
-		 * FastGlyph drawing orders, probably a result of applications trying to
-		 * clear the text line to the very right end.
-		 * One example where this can be seen is typing in notepad.exe within
-		 * a RDP session to Windows XP Professional SP3.
-		 * This workaround prevents resulting problems in the UI callbacks.
-		 */
-		opWidth = WINPR_ASSERTING_INT_CAST(int, w) - opX;
-	}
-
-	if (bkX + bkWidth > (INT64)w)
-	{
-		/**
-		 * Some Microsoft servers send erroneous high values close to the
-		 * sint16 maximum in the OpRight field of the GlyphIndex, FastIndex and
-		 * FastGlyph drawing orders, probably a result of applications trying to
-		 * clear the text line to the very right end.
-		 * One example where this can be seen is typing in notepad.exe within
-		 * a RDP session to Windows XP Professional SP3.
-		 * This workaround prevents resulting problems in the UI callbacks.
-		 */
-		bkWidth = WINPR_ASSERTING_INT_CAST(int, w) - bkX;
-	}
-
-	bound.x = WINPR_ASSERTING_INT_CAST(INT16, bkX);
-	bound.y = WINPR_ASSERTING_INT_CAST(INT16, bkY);
-	bound.width = WINPR_ASSERTING_INT_CAST(INT16, bkWidth);
-	bound.height = WINPR_ASSERTING_INT_CAST(INT16, bkHeight);
-
-	if (!glyph->BeginDraw(context, opX, opY, opWidth, opHeight, bgcolor, fgcolor, fOpRedundant))
-		goto fail;
-
-	if (!IFCALLRESULT(TRUE, glyph->SetBounds, context, bkX, bkY, bkWidth, bkHeight))
-		goto fail;
-
-	while (index < length)
-	{
-		const UINT32 op = data[index++];
-
-		switch (op)
+		/* Limit op rectangle to visible screen. */
+		if (opX < 0)
 		{
-			case GLYPH_FRAGMENT_USE:
-				if (index + 1 > length)
-					goto fail;
+			opWidth += opX;
+			opX = 0;
+		}
 
-				id = data[index++];
-				fragments = (const BYTE*)glyph_cache_fragment_get(glyph_cache, id, &size);
+		if (opY < 0)
+		{
+			opHeight += opY;
+			opY = 0;
+		}
 
-				if (fragments == NULL)
-					goto fail;
+		if (opWidth < 0)
+			opWidth = 0;
 
-				for (UINT32 n = 0; n < size;)
-				{
-					const UINT32 fop = fragments[n++];
-					n = update_glyph_offset(fragments, size, n, &x, &y, ulCharInc, flAccel);
+		if (opHeight < 0)
+			opHeight = 0;
 
-					if (!update_process_glyph(context, fragments, fop, &x, &y, cacheId, flAccel,
+		/* Limit bk rectangle to visible screen. */
+		if (bkX < 0)
+		{
+			bkWidth += bkX;
+			bkX = 0;
+		}
+
+		if (bkY < 0)
+		{
+			bkHeight += bkY;
+			bkY = 0;
+		}
+
+		if (bkWidth < 0)
+			bkWidth = 0;
+
+		if (bkHeight < 0)
+			bkHeight = 0;
+
+		{
+			const UINT32 w = freerdp_settings_get_uint32(context->settings, FreeRDP_DesktopWidth);
+			if (opX + opWidth > (INT64)w)
+			{
+				/**
+				 * Some Microsoft servers send erroneous high values close to the
+				 * sint16 maximum in the OpRight field of the GlyphIndex, FastIndex and
+				 * FastGlyph drawing orders, probably a result of applications trying to
+				 * clear the text line to the very right end.
+				 * One example where this can be seen is typing in notepad.exe within
+				 * a RDP session to Windows XP Professional SP3.
+				 * This workaround prevents resulting problems in the UI callbacks.
+				 */
+				opWidth = WINPR_ASSERTING_INT_CAST(int, w) - opX;
+			}
+
+			if (bkX + bkWidth > (INT64)w)
+			{
+				/**
+				 * Some Microsoft servers send erroneous high values close to the
+				 * sint16 maximum in the OpRight field of the GlyphIndex, FastIndex and
+				 * FastGlyph drawing orders, probably a result of applications trying to
+				 * clear the text line to the very right end.
+				 * One example where this can be seen is typing in notepad.exe within
+				 * a RDP session to Windows XP Professional SP3.
+				 * This workaround prevents resulting problems in the UI callbacks.
+				 */
+				bkWidth = WINPR_ASSERTING_INT_CAST(int, w) - bkX;
+			}
+		}
+
+		bound.x = WINPR_ASSERTING_INT_CAST(INT16, bkX);
+		bound.y = WINPR_ASSERTING_INT_CAST(INT16, bkY);
+		bound.width = WINPR_ASSERTING_INT_CAST(INT16, bkWidth);
+		bound.height = WINPR_ASSERTING_INT_CAST(INT16, bkHeight);
+
+		if (!glyph->BeginDraw(context, opX, opY, opWidth, opHeight, bgcolor, fgcolor, fOpRedundant))
+			goto fail;
+
+		if (!IFCALLRESULT(TRUE, glyph->SetBounds, context, bkX, bkY, bkWidth, bkHeight))
+			goto fail;
+
+		while (index < length)
+		{
+			const UINT32 op = data[index++];
+
+			switch (op)
+			{
+				case GLYPH_FRAGMENT_USE:
+					if (index + 1 > length)
+						goto fail;
+
+					id = data[index++];
+					fragments = (const BYTE*)glyph_cache_fragment_get(glyph_cache, id, &size);
+
+					if (fragments == NULL)
+						goto fail;
+
+					for (UINT32 n = 0; n < size;)
+					{
+						const UINT32 fop = fragments[n++];
+						n = update_glyph_offset(fragments, size, n, &x, &y, ulCharInc, flAccel);
+
+						if (!update_process_glyph(context, fragments, fop, &x, &y, cacheId, flAccel,
+						                          fOpRedundant, &bound))
+							goto fail;
+					}
+
+					break;
+
+				case GLYPH_FRAGMENT_ADD:
+					if (index + 2 > length)
+						goto fail;
+
+					id = data[index++];
+					size = data[index++];
+					glyph_cache_fragment_put(glyph_cache, id, size, data);
+					break;
+
+				default:
+					index = update_glyph_offset(data, length, index, &x, &y, ulCharInc, flAccel);
+
+					if (!update_process_glyph(context, data, op, &x, &y, cacheId, flAccel,
 					                          fOpRedundant, &bound))
 						goto fail;
-				}
 
-				break;
-
-			case GLYPH_FRAGMENT_ADD:
-				if (index + 2 > length)
-					goto fail;
-
-				id = data[index++];
-				size = data[index++];
-				glyph_cache_fragment_put(glyph_cache, id, size, data);
-				break;
-
-			default:
-				index = update_glyph_offset(data, length, index, &x, &y, ulCharInc, flAccel);
-
-				if (!update_process_glyph(context, data, op, &x, &y, cacheId, flAccel, fOpRedundant,
-				                          &bound))
-					goto fail;
-
-				break;
+					break;
+			}
 		}
-	}
 
-	if (!glyph->EndDraw(context, opX, opY, opWidth, opHeight, bgcolor, fgcolor))
-		goto fail;
+		if (!glyph->EndDraw(context, opX, opY, opWidth, opHeight, bgcolor, fgcolor))
+			goto fail;
+	}
 
 	rc = TRUE;
 
@@ -331,7 +334,7 @@ static BOOL update_gdi_fast_index(rdpContext* context, const FAST_INDEX_ORDER* f
 	BOOL rc = FALSE;
 
 	if (!context || !fastIndex || !context->cache)
-		goto fail;
+		return FALSE;
 
 	INT32 opLeft = fastIndex->opLeft;
 	INT32 opTop = fastIndex->opTop;
