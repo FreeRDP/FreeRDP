@@ -419,14 +419,20 @@ static void* clipboard_prepend_bmp_header(const WINPR_BITMAP_INFO_HEADER* pInfoH
 	if (!Stream_EnsureRemainingCapacity(s, size))
 		goto fail;
 	Stream_Write(s, data, size);
-	const size_t len = Stream_GetPosition(s);
-	if (len != DstSize)
-		goto fail;
+
+	{
+		const size_t len = Stream_GetPosition(s);
+		if (len != DstSize)
+			goto fail;
+	}
+
 	*pSize = (UINT32)DstSize;
 
-	BYTE* dst = Stream_Buffer(s);
-	Stream_Free(s, FALSE);
-	return dst;
+	{
+		BYTE* dst = Stream_Buffer(s);
+		Stream_Free(s, FALSE);
+		return dst;
+	}
 
 fail:
 	Stream_Free(s, TRUE);
@@ -807,14 +813,15 @@ static void* clipboard_wrap_format_to_html(uint32_t bmpFormat, const char* idata
 	if (winpr_image_read_buffer(img, (const BYTE*)idata, ilength) <= 0)
 		goto fail;
 
-	size_t bmpsize = 0;
-	void* bmp = winpr_image_write_buffer(img, bmpFormat, &bmpsize);
-	if (!bmp)
-		goto fail;
+	{
+		size_t bmpsize = 0;
+		void* bmp = winpr_image_write_buffer(img, bmpFormat, &bmpsize);
+		if (!bmp)
+			goto fail;
 
-	res = clipboard_wrap_html(winpr_image_format_mime(bmpFormat), bmp, bmpsize, plen);
-	free(bmp);
-
+		res = clipboard_wrap_html(winpr_image_format_mime(bmpFormat), bmp, bmpsize, plen);
+		free(bmp);
+	}
 fail:
 	winpr_image_free(img, TRUE);
 	return res;
