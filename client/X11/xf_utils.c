@@ -244,34 +244,38 @@ BOOL run_action_script(xfContext* xfc, const char* what, const char* arg, fn_act
 		goto fail;
 	}
 
-	char command[2048] = { 0 };
-	(void)sprintf_s(command, sizeof(command), "%s %s", ActionScript, what);
-	keyScript = popen(command, "r");
-
-	if (!keyScript)
 	{
-		WLog_ERR(TAG, "[ActionScript] Failed to execute '%s'", command);
-		goto fail;
-	}
+		char command[2048] = { 0 };
+		(void)sprintf_s(command, sizeof(command), "%s %s", ActionScript, what);
+		keyScript = popen(command, "r");
 
-	BOOL read_data = FALSE;
-	char buffer[2048] = { 0 };
-	while (fgets(buffer, sizeof(buffer), keyScript) != NULL)
-	{
-		char* context = NULL;
-		(void)strtok_s(buffer, "\n", &context);
-
-		if (fkt)
+		if (!keyScript)
 		{
-			if (!fkt(xfc, buffer, strnlen(buffer, sizeof(buffer)), user, what, arg))
-				goto fail;
+			WLog_ERR(TAG, "[ActionScript] Failed to execute '%s'", command);
+			goto fail;
 		}
-		read_data = TRUE;
-	}
 
-	rc = read_data;
-	if (!rc)
-		WLog_ERR(TAG, "[ActionScript] No data returned from command '%s'", command);
+		{
+			BOOL read_data = FALSE;
+			char buffer[2048] = { 0 };
+			while (fgets(buffer, sizeof(buffer), keyScript) != NULL)
+			{
+				char* context = NULL;
+				(void)strtok_s(buffer, "\n", &context);
+
+				if (fkt)
+				{
+					if (!fkt(xfc, buffer, strnlen(buffer, sizeof(buffer)), user, what, arg))
+						goto fail;
+				}
+				read_data = TRUE;
+			}
+
+			rc = read_data;
+		}
+		if (!rc)
+			WLog_ERR(TAG, "[ActionScript] No data returned from command '%s'", command);
+	}
 fail:
 	if (keyScript)
 		pclose(keyScript);
