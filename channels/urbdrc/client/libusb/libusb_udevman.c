@@ -916,10 +916,12 @@ FREERDP_ENTRY_POINT(UINT VCAPITYPE libusb_freerdp_urbdrc_client_subsystem_entry(
 
 	udevman->next_device_id = BASE_USBDEVICE_NUM;
 	udevman->iface.plugin = pEntryPoints->plugin;
-	const int res = libusb_init(&udevman->context);
 
-	if (res != LIBUSB_SUCCESS)
-		goto fail;
+	{
+		const int res = libusb_init(&udevman->context);
+		if (res != LIBUSB_SUCCESS)
+			goto fail;
+	}
 
 #ifdef _WIN32
 #if LIBUSB_API_VERSION >= 0x01000106
