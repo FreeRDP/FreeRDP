@@ -339,8 +339,8 @@ static DWORD rdp_version_common(wLog* log, DWORD serverVersion, DWORD clientVers
  */
 static const BYTE t124_02_98_oid[6] = { 0, 0, 20, 124, 0, 1 };
 
-static const BYTE h221_cs_key[4] = "Duca";
-static const BYTE h221_sc_key[4] = "McDn";
+static const BYTE h221_cs_key[4] = { 'D', 'u', 'c', 'a' };
+static const BYTE h221_sc_key[4] = { 'M', 'c', 'D', 'n' };
 
 /**
  * Read a GCC Conference Create Request.

@@ -166,8 +166,8 @@
  *
  */
 
-static const BYTE callingDomainSelector[1] = "\x01";
-static const BYTE calledDomainSelector[1] = "\x01";
+static const BYTE callingDomainSelector[1] = { 0x01 };
+static const BYTE calledDomainSelector[1] = { 0x01 };
 
 /*
 static const char* const mcs_result_enumerated[] =
