@@ -1518,11 +1518,13 @@ HANDLE WINAPI FreeRDP_WTSVirtualChannelOpenEx(DWORD SessionId, LPSTR pVirtualNam
 	if (!wts_write_drdynvc_create_request(s, channel->channelId, pVirtualName))
 		goto fail;
 
-	const size_t pos = Stream_GetPosition(s);
-	WINPR_ASSERT(pos <= UINT32_MAX);
-	if (!WTSVirtualChannelWrite(vcm->drdynvc_channel, Stream_BufferAs(s, char), (UINT32)pos,
-	                            &written))
-		goto fail;
+	{
+		const size_t pos = Stream_GetPosition(s);
+		WINPR_ASSERT(pos <= UINT32_MAX);
+		if (!WTSVirtualChannelWrite(vcm->drdynvc_channel, Stream_BufferAs(s, char), (UINT32)pos,
+		                            &written))
+			goto fail;
+	}
 
 	Stream_Free(s, TRUE);
 	return channel;
