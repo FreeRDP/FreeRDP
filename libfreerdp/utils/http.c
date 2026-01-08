@@ -117,105 +117,112 @@ BOOL freerdp_http_request(const char* url, const char* body, long* status_code, 
 		goto out;
 	}
 
-	const size_t len = WINPR_ASSERTING_INT_CAST(size_t, path - (url + 8));
-	hostname = strndup(&url[8], len);
+	{
+		const size_t len = WINPR_ASSERTING_INT_CAST(size_t, path - (url + 8));
+		hostname = strndup(&url[8], len);
+	}
 	if (!hostname)
 		return FALSE;
 
-	size_t blen = 0;
-	if (body)
 	{
-		blen = strlen(body);
-		if (winpr_asprintf(&headers, &size, post_header_fmt, path, hostname, blen) < 0)
+		size_t blen = 0;
+		if (body)
 		{
-			free(hostname);
-			return FALSE;
+			blen = strlen(body);
+			if (winpr_asprintf(&headers, &size, post_header_fmt, path, hostname, blen) < 0)
+			{
+				free(hostname);
+				return FALSE;
+			}
 		}
-	}
-	else
-	{
-		if (winpr_asprintf(&headers, &size, get_header_fmt, path, hostname) < 0)
+		else
 		{
-			free(hostname);
-			return FALSE;
+			if (winpr_asprintf(&headers, &size, get_header_fmt, path, hostname) < 0)
+			{
+				free(hostname);
+				return FALSE;
+			}
 		}
-	}
 
-	ssl_ctx = SSL_CTX_new(TLS_client_method());
+		ssl_ctx = SSL_CTX_new(TLS_client_method());
 
-	if (!ssl_ctx)
-	{
-		log_errors(log, "could not set up ssl context");
-		goto out;
-	}
-
-	if (!SSL_CTX_set_default_verify_paths(ssl_ctx))
-	{
-		log_errors(log, "could not set ssl context verify paths");
-		goto out;
-	}
-
-	SSL_CTX_set_mode(ssl_ctx, SSL_MODE_AUTO_RETRY);
-
-	bio = BIO_new_ssl_connect(ssl_ctx);
-	if (!bio)
-	{
-		log_errors(log, "could not set up connection");
-		goto out;
-	}
-
-	if (BIO_set_conn_port(bio, "https") <= 0)
-	{
-		log_errors(log, "could not set port");
-		goto out;
-	}
-
-	if (!BIO_set_conn_hostname(bio, hostname))
-	{
-		log_errors(log, "could not set hostname");
-		goto out;
-	}
-
-	BIO_get_ssl(bio, &ssl);
-	if (!ssl)
-	{
-		log_errors(log, "could not get ssl");
-		goto out;
-	}
-
-	if (!SSL_set_tlsext_host_name(ssl, hostname))
-	{
-		log_errors(log, "could not set sni hostname");
-		goto out;
-	}
-
-	WLog_Print(log, WLOG_DEBUG, "headers:\n%s", headers);
-	ERR_clear_error();
-	const size_t hlen = strnlen(headers, size);
-	if (hlen > INT32_MAX)
-		goto out;
-
-	if (BIO_write(bio, headers, (int)hlen) < 0)
-	{
-		log_errors(log, "could not write headers");
-		goto out;
-	}
-
-	if (body)
-	{
-		WLog_Print(log, WLOG_DEBUG, "body:\n%s", body);
-
-		if (blen > INT_MAX)
+		if (!ssl_ctx)
 		{
-			WLog_Print(log, WLOG_ERROR, "body too long!");
+			log_errors(log, "could not set up ssl context");
 			goto out;
 		}
 
+		if (!SSL_CTX_set_default_verify_paths(ssl_ctx))
+		{
+			log_errors(log, "could not set ssl context verify paths");
+			goto out;
+		}
+
+		SSL_CTX_set_mode(ssl_ctx, SSL_MODE_AUTO_RETRY);
+
+		bio = BIO_new_ssl_connect(ssl_ctx);
+		if (!bio)
+		{
+			log_errors(log, "could not set up connection");
+			goto out;
+		}
+
+		if (BIO_set_conn_port(bio, "https") <= 0)
+		{
+			log_errors(log, "could not set port");
+			goto out;
+		}
+
+		if (!BIO_set_conn_hostname(bio, hostname))
+		{
+			log_errors(log, "could not set hostname");
+			goto out;
+		}
+
+		BIO_get_ssl(bio, &ssl);
+		if (!ssl)
+		{
+			log_errors(log, "could not get ssl");
+			goto out;
+		}
+
+		if (!SSL_set_tlsext_host_name(ssl, hostname))
+		{
+			log_errors(log, "could not set sni hostname");
+			goto out;
+		}
+
+		WLog_Print(log, WLOG_DEBUG, "headers:\n%s", headers);
 		ERR_clear_error();
-		if (BIO_write(bio, body, (int)blen) < 0)
+
 		{
-			log_errors(log, "could not write body");
-			goto out;
+			const size_t hlen = strnlen(headers, size);
+			if (hlen > INT32_MAX)
+				goto out;
+
+			if (BIO_write(bio, headers, (int)hlen) < 0)
+			{
+				log_errors(log, "could not write headers");
+				goto out;
+			}
+
+			if (body)
+			{
+				WLog_Print(log, WLOG_DEBUG, "body:\n%s", body);
+
+				if (blen > INT_MAX)
+				{
+					WLog_Print(log, WLOG_ERROR, "body too long!");
+					goto out;
+				}
+
+				ERR_clear_error();
+				if (BIO_write(bio, body, (int)blen) < 0)
+				{
+					log_errors(log, "could not write body");
+					goto out;
+				}
+			}
 		}
 	}
 
