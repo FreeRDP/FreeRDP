@@ -341,27 +341,33 @@ static BOOL freerdp_assistance_parse_connection_string1(rdpAssistanceFile* file)
 	if (!str)
 		goto error;
 
-	const size_t length = strlen(str);
-
-	int count = 1;
-	for (size_t i = 0; i < length; i++)
 	{
-		if (str[i] == ',')
-			count++;
-	}
+		const size_t length = strlen(str);
 
-	if (count != 8)
-		goto error;
-
-	count = 0;
-	tokens[count++] = str;
-
-	for (size_t i = 0; i < length; i++)
-	{
-		if (str[i] == ',')
 		{
-			str[i] = '\0';
-			tokens[count++] = &str[i + 1];
+			int count = 1;
+			for (size_t i = 0; i < length; i++)
+			{
+				if (str[i] == ',')
+					count++;
+			}
+
+			if (count != 8)
+				goto error;
+		}
+
+		{
+			size_t count = 0;
+			tokens[count++] = str;
+
+			for (size_t i = 0; i < length; i++)
+			{
+				if (str[i] == ',')
+				{
+					str[i] = '\0';
+					tokens[count++] = &str[i + 1];
+				}
+			}
 		}
 	}
 
@@ -747,38 +753,41 @@ static BOOL freerdp_assistance_parse_connection_string2(rdpAssistanceFile* file)
 	if (!str)
 		goto out_fail;
 
-	char* e = NULL;
-	size_t elen = 0;
-	if (!freerdp_assistance_consume_input_and_get_element(str, "E", &e, &elen))
-		goto out_fail;
+	{
+		char* e = NULL;
+		size_t elen = 0;
+		if (!freerdp_assistance_consume_input_and_get_element(str, "E", &e, &elen))
+			goto out_fail;
 
-	if (!e || (elen == 0))
-		goto out_fail;
+		if (!e || (elen == 0))
+			goto out_fail;
+		{
+			char* a = NULL;
+			size_t alen = 0;
+			if (!freerdp_assistance_get_element(e, elen, "A", &a, &alen))
+				goto out_fail;
 
-	char* a = NULL;
-	size_t alen = 0;
-	if (!freerdp_assistance_get_element(e, elen, "A", &a, &alen))
-		goto out_fail;
+			if (!a || (alen == 0))
+				goto out_fail;
 
-	if (!a || (alen == 0))
-		goto out_fail;
+			if (!freerdp_assistance_parse_find_elements_of_c(file, e, elen))
+				goto out_fail;
 
-	if (!freerdp_assistance_parse_find_elements_of_c(file, e, elen))
-		goto out_fail;
+			/* '\0' terminate the detected XML elements so
+			 * the parser can continue with terminated strings
+			 */
+			a[alen] = '\0';
 
-	/* '\0' terminate the detected XML elements so
-	 * the parser can continue with terminated strings
-	 */
-	a[alen] = '\0';
-	if (!freerdp_assistance_parse_attr_str(&file->RASpecificParams, "KH", a))
-		goto out_fail;
+			if (!freerdp_assistance_parse_attr_str(&file->RASpecificParams, "KH", a))
+				goto out_fail;
 
-	if (!freerdp_assistance_parse_attr_str(&file->RASpecificParams2, "KH2", a))
-		goto out_fail;
+			if (!freerdp_assistance_parse_attr_str(&file->RASpecificParams2, "KH2", a))
+				goto out_fail;
 
-	if (!freerdp_assistance_parse_attr_str(&file->RASessionId, "ID", a))
-		goto out_fail;
-
+			if (!freerdp_assistance_parse_attr_str(&file->RASessionId, "ID", a))
+				goto out_fail;
+		}
+	}
 	rc = TRUE;
 out_fail:
 	free(str);
