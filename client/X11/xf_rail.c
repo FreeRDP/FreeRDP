@@ -741,23 +741,25 @@ static BOOL convert_rail_icon(const ICON_INFO* iconInfo, xfRailIcon* railIcon)
 	        WINPR_ASSERTING_INT_CAST(UINT16, iconInfo->cbColorTable), iconInfo->bpp))
 		goto error;
 
-	const UINT32 nelements = 2 + iconInfo->width * iconInfo->height;
-	pixels = realloc(railIcon->data, nelements * sizeof(long));
-
-	if (!pixels)
-		goto error;
-
-	railIcon->data = pixels;
-
-	railIcon->length = WINPR_ASSERTING_INT_CAST(int, nelements);
-	pixels[0] = iconInfo->width;
-	pixels[1] = iconInfo->height;
-	nextPixel = argbPixels;
-
-	for (UINT32 i = 2; i < nelements; i++)
 	{
-		pixels[i] = FreeRDPReadColor(nextPixel, PIXEL_FORMAT_BGRA32);
-		nextPixel += 4;
+		const UINT32 nelements = 2 + iconInfo->width * iconInfo->height;
+		pixels = realloc(railIcon->data, nelements * sizeof(long));
+
+		if (!pixels)
+			goto error;
+
+		railIcon->data = pixels;
+
+		railIcon->length = WINPR_ASSERTING_INT_CAST(int, nelements);
+		pixels[0] = iconInfo->width;
+		pixels[1] = iconInfo->height;
+		nextPixel = argbPixels;
+
+		for (UINT32 i = 2; i < nelements; i++)
+		{
+			pixels[i] = FreeRDPReadColor(nextPixel, PIXEL_FORMAT_BGRA32);
+			nextPixel += 4;
+		}
 	}
 
 	free(argbPixels);
