@@ -1244,33 +1244,35 @@ int freerdp_tcp_default_connect(rdpContext* context, rdpSettings* settings, cons
 			do
 			{
 				sockfd = socket(addr->ai_family, addr->ai_socktype, addr->ai_protocol);
+				if (sockfd >= 0)
+				{
+					if ((peerAddress = freerdp_tcp_address_to_string(
+					         (const struct sockaddr_storage*)addr->ai_addr, NULL)) != NULL)
+					{
+						WLog_DBG(TAG, "connecting to peer %s", peerAddress);
+						free(peerAddress);
+					}
+
+					if (!freerdp_tcp_connect_timeout(context, sockfd, addr->ai_addr,
+					                                 addr->ai_addrlen, timeout))
+					{
+						close(sockfd);
+						sockfd = -1;
+					}
+				}
+
 				if (sockfd < 0)
 				{
 					const int lrc = get_next_addrinfo(context, addr->ai_next, &addr,
 					                                  FREERDP_ERROR_CONNECT_FAILED);
 					if (lrc < 0)
+					{
+						freerdp_set_last_error_if_not(context, FREERDP_ERROR_CONNECT_FAILED);
+						WLog_ERR(TAG, "failed to connect to %s", hostname);
 						return lrc;
+					}
 				}
 			} while (sockfd < 0);
-
-			if ((peerAddress = freerdp_tcp_address_to_string(
-			         (const struct sockaddr_storage*)addr->ai_addr, NULL)) != NULL)
-			{
-				WLog_DBG(TAG, "connecting to peer %s", peerAddress);
-				free(peerAddress);
-			}
-
-			if (!freerdp_tcp_connect_timeout(context, sockfd, addr->ai_addr, addr->ai_addrlen,
-			                                 timeout))
-			{
-				freeaddrinfo(result);
-				close(sockfd);
-
-				freerdp_set_last_error_if_not(context, FREERDP_ERROR_CONNECT_FAILED);
-
-				WLog_ERR(TAG, "failed to connect to %s", hostname);
-				return -1;
-			}
 
 			freeaddrinfo(result);
 		}
