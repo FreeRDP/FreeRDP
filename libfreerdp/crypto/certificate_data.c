@@ -106,15 +106,19 @@ static BOOL freerdp_certificate_data_load_cache(rdpCertificateData* data)
 	if (!data->cached_subject)
 		data->cached_subject = calloc(1, 1);
 
-	size_t pemlen = 0;
-	data->cached_pem = freerdp_certificate_get_pem_ex(data->cert, &pemlen, FALSE);
+	{
+		size_t pemlen = 0;
+		data->cached_pem = freerdp_certificate_get_pem_ex(data->cert, &pemlen, FALSE);
+	}
 	if (!data->cached_pem)
 		goto fail;
 
-	size_t pemchainlen = 0;
-	data->cached_pem_chain = freerdp_certificate_get_pem_ex(data->cert, &pemchainlen, TRUE);
-	if (!data->cached_pem_chain)
-		goto fail;
+	{
+		size_t pemchainlen = 0;
+		data->cached_pem_chain = freerdp_certificate_get_pem_ex(data->cert, &pemchainlen, TRUE);
+		if (!data->cached_pem_chain)
+			goto fail;
+	}
 
 	data->cached_fingerprint = freerdp_certificate_get_fingerprint(data->cert);
 	if (!data->cached_fingerprint)
