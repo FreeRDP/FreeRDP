@@ -129,29 +129,31 @@ static WCHAR* drive_file_combine_fullpath(const WCHAR* base_path, const WCHAR* p
 	if (!base_path || (!path && (PathWCharLength > 0)))
 		goto fail;
 
-	const size_t base_path_length = _wcsnlen(base_path, MAX_PATH);
-	const size_t length = base_path_length + PathWCharLength + 1;
-	fullpath = (WCHAR*)calloc(length, sizeof(WCHAR));
-
-	if (!fullpath)
-		goto fail;
-
-	CopyMemory(fullpath, base_path, base_path_length * sizeof(WCHAR));
-	if (path)
-		CopyMemory(&fullpath[base_path_length], path, PathWCharLength * sizeof(WCHAR));
-
-	if (!drive_file_fix_path(fullpath, length))
-		goto fail;
-
-	/* Ensure the path does not contain sequences like '..' */
-	if (contains_dotdot(&fullpath[base_path_length], base_path_length, PathWCharLength))
 	{
-		char abuffer[MAX_PATH] = { 0 };
-		(void)ConvertWCharToUtf8(&fullpath[base_path_length], abuffer, ARRAYSIZE(abuffer));
+		const size_t base_path_length = _wcsnlen(base_path, MAX_PATH);
+		const size_t length = base_path_length + PathWCharLength + 1;
+		fullpath = (WCHAR*)calloc(length, sizeof(WCHAR));
 
-		WLog_WARN(TAG, "[rdpdr] received invalid file path '%s' from server, aborting!",
-		          &abuffer[base_path_length]);
-		goto fail;
+		if (!fullpath)
+			goto fail;
+
+		CopyMemory(fullpath, base_path, base_path_length * sizeof(WCHAR));
+		if (path)
+			CopyMemory(&fullpath[base_path_length], path, PathWCharLength * sizeof(WCHAR));
+
+		if (!drive_file_fix_path(fullpath, length))
+			goto fail;
+
+		/* Ensure the path does not contain sequences like '..' */
+		if (contains_dotdot(&fullpath[base_path_length], base_path_length, PathWCharLength))
+		{
+			char abuffer[MAX_PATH] = { 0 };
+			(void)ConvertWCharToUtf8(&fullpath[base_path_length], abuffer, ARRAYSIZE(abuffer));
+
+			WLog_WARN(TAG, "[rdpdr] received invalid file path '%s' from server, aborting!",
+			          &abuffer[base_path_length]);
+			goto fail;
+		}
 	}
 
 	ok = TRUE;
@@ -617,12 +619,14 @@ BOOL drive_file_query_information(DRIVE_FILE* file, UINT32 FsInformationClass, w
 
 	/* If we failed before (i.e. if information for a drive is queried) fall back to
 	 * GetFileAttributesExW */
-	WIN32_FILE_ATTRIBUTE_DATA fileAttributes = { 0 };
-	if (!GetFileAttributesExW(file->fullpath, GetFileExInfoStandard, &fileAttributes))
-		goto out_fail;
+	{
+		WIN32_FILE_ATTRIBUTE_DATA fileAttributes = { 0 };
+		if (!GetFileAttributesExW(file->fullpath, GetFileExInfoStandard, &fileAttributes))
+			goto out_fail;
 
-	if (!drive_file_query_from_attributes(file, &fileAttributes, FsInformationClass, output))
-		goto out_fail;
+		if (!drive_file_query_from_attributes(file, &fileAttributes, FsInformationClass, output))
+			goto out_fail;
+	}
 
 	return TRUE;
 out_fail:
