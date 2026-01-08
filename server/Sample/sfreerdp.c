@@ -128,8 +128,10 @@ static BOOL test_peer_context_new(freerdp_peer* client, rdpContext* ctx)
 	                       SAMPLE_SERVER_DEFAULT_HEIGHT))
 		goto fail;
 
-	const UINT32 rlgr = freerdp_settings_get_uint32(ctx->settings, FreeRDP_RemoteFxRlgrMode);
-	rfx_context_set_mode(context->rfx_context, rlgr);
+	{
+		const UINT32 rlgr = freerdp_settings_get_uint32(ctx->settings, FreeRDP_RemoteFxRlgrMode);
+		rfx_context_set_mode(context->rfx_context, rlgr);
+	}
 
 	if (!(context->nsc_context = nsc_context_new()))
 		goto fail;
@@ -1115,16 +1117,20 @@ static DWORD WINAPI test_peer_mainloop(LPVOID arg)
 			goto fail;
 	}
 
-	rdpPrivateKey* key = freerdp_key_new_from_file_enc(info->key, NULL);
-	if (!key)
-		goto fail;
-	if (!freerdp_settings_set_pointer_len(settings, FreeRDP_RdpServerRsaKey, key, 1))
-		goto fail;
-	rdpCertificate* cert = freerdp_certificate_new_from_file(info->cert);
-	if (!cert)
-		goto fail;
-	if (!freerdp_settings_set_pointer_len(settings, FreeRDP_RdpServerCertificate, cert, 1))
-		goto fail;
+	{
+		rdpPrivateKey* key = freerdp_key_new_from_file_enc(info->key, NULL);
+		if (!key)
+			goto fail;
+		if (!freerdp_settings_set_pointer_len(settings, FreeRDP_RdpServerRsaKey, key, 1))
+			goto fail;
+	}
+	{
+		rdpCertificate* cert = freerdp_certificate_new_from_file(info->cert);
+		if (!cert)
+			goto fail;
+		if (!freerdp_settings_set_pointer_len(settings, FreeRDP_RdpServerCertificate, cert, 1))
+			goto fail;
+	}
 
 	if (!freerdp_settings_set_bool(settings, FreeRDP_RdpSecurity, TRUE))
 		goto fail;
