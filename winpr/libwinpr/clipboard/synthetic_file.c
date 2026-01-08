@@ -284,7 +284,7 @@ static BOOL add_directory_contents_to_list(wClipboard* clipboard, const WCHAR* l
 		const char* c;
 		const WCHAR* w;
 	} wildcard;
-	const char buffer[6] = "/\0*\0\0\0";
+	const char buffer[6] = { '/', '\0', '*', '\0', '\0', '\0' };
 	wildcard.c = buffer;
 	const size_t wildcardLen = ARRAYSIZE(buffer) / sizeof(WCHAR);
 

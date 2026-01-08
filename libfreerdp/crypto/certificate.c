@@ -182,7 +182,7 @@ struct rdp_certificate
  *
  */
 
-static const char rsa_magic[4] = "RSA1";
+static const char rsa_magic[4] = { 'R', 'S', 'A', '1' };
 
 static const char* certificate_read_errors[] = { "Certificate tag",
 	                                             "TBSCertificate",
