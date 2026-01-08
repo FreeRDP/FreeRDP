@@ -306,24 +306,26 @@ static UINT16 rdp_load_persistent_key_list(rdpRdp* rdp, UINT64** pKeyList)
 	if (status < 1)
 		goto error;
 
-	const int count = persistent_cache_get_count(persistent);
-	if ((count < 0) || (count > UINT16_MAX))
-		goto error;
-
-	keyCount = (UINT16)count;
-	keyList = (UINT64*)calloc(keyCount, sizeof(UINT64));
-
-	if (!keyList)
-		goto error;
-
-	for (int index = 0; index < count; index++)
 	{
-		PERSISTENT_CACHE_ENTRY cacheEntry = { 0 };
+		const int count = persistent_cache_get_count(persistent);
+		if ((count < 0) || (count > UINT16_MAX))
+			goto error;
 
-		if (persistent_cache_read_entry(persistent, &cacheEntry) < 1)
-			continue;
+		keyCount = (UINT16)count;
+		keyList = (UINT64*)calloc(keyCount, sizeof(UINT64));
 
-		keyList[index] = cacheEntry.key64;
+		if (!keyList)
+			goto error;
+
+		for (int index = 0; index < count; index++)
+		{
+			PERSISTENT_CACHE_ENTRY cacheEntry = { 0 };
+
+			if (persistent_cache_read_entry(persistent, &cacheEntry) < 1)
+				continue;
+
+			keyList[index] = cacheEntry.key64;
+		}
 	}
 
 	*pKeyList = keyList;
@@ -681,10 +683,12 @@ BOOL rdp_send_deactivate_all(rdpRdp* rdp)
 		goto fail;
 
 	WINPR_ASSERT(rdp->settings);
-	const UINT32 ShareId = freerdp_settings_get_uint32(rdp->settings, FreeRDP_ShareId);
-	Stream_Write_UINT32(s, ShareId); /* shareId (4 bytes) */
-	Stream_Write_UINT16(s, 1);       /* lengthSourceDescriptor (2 bytes) */
-	Stream_Write_UINT8(s, 0);        /* sourceDescriptor (should be 0x00) */
+	{
+		const UINT32 ShareId = freerdp_settings_get_uint32(rdp->settings, FreeRDP_ShareId);
+		Stream_Write_UINT32(s, ShareId); /* shareId (4 bytes) */
+	}
+	Stream_Write_UINT16(s, 1); /* lengthSourceDescriptor (2 bytes) */
+	Stream_Write_UINT8(s, 0);  /* sourceDescriptor (should be 0x00) */
 
 	WINPR_ASSERT(rdp->mcs);
 	status = rdp_send_pdu(rdp, s, PDU_TYPE_DEACTIVATE_ALL, rdp->mcs->userId, sec_flags);
