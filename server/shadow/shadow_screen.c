@@ -36,43 +36,48 @@ rdpShadowScreen* shadow_screen_new(rdpShadowServer* server)
 		goto fail;
 
 	screen->server = server;
-	rdpShadowSubsystem* subsystem = server->subsystem;
 
-	if (!InitializeCriticalSectionAndSpinCount(&(screen->lock), 4000))
-		goto fail;
+	{
+		rdpShadowSubsystem* subsystem = server->subsystem;
+		if (!InitializeCriticalSectionAndSpinCount(&(screen->lock), 4000))
+			goto fail;
 
-	region16_init(&(screen->invalidRegion));
+		region16_init(&(screen->invalidRegion));
 
-	WINPR_ASSERT(subsystem->selectedMonitor < ARRAYSIZE(subsystem->monitors));
-	const MONITOR_DEF* primary = &(subsystem->monitors[subsystem->selectedMonitor]);
-	WINPR_ASSERT(primary);
+		{
+			WINPR_ASSERT(subsystem->selectedMonitor < ARRAYSIZE(subsystem->monitors));
+			const MONITOR_DEF* primary = &(subsystem->monitors[subsystem->selectedMonitor]);
+			WINPR_ASSERT(primary);
 
-	INT64 x = primary->left;
-	INT64 y = primary->top;
-	INT64 width = primary->right - primary->left + 1;
-	INT64 height = primary->bottom - primary->top + 1;
+			const INT64 x = primary->left;
+			const INT64 y = primary->top;
+			const INT64 width = primary->right - primary->left + 1;
+			const INT64 height = primary->bottom - primary->top + 1;
 
-	WINPR_ASSERT(x >= 0);
-	WINPR_ASSERT(x <= UINT16_MAX);
-	WINPR_ASSERT(y >= 0);
-	WINPR_ASSERT(y <= UINT16_MAX);
-	WINPR_ASSERT(width >= 0);
-	WINPR_ASSERT(width <= UINT16_MAX);
-	WINPR_ASSERT(height >= 0);
-	WINPR_ASSERT(height <= UINT16_MAX);
+			WINPR_ASSERT(x >= 0);
+			WINPR_ASSERT(x <= UINT16_MAX);
+			WINPR_ASSERT(y >= 0);
+			WINPR_ASSERT(y <= UINT16_MAX);
+			WINPR_ASSERT(width >= 0);
+			WINPR_ASSERT(width <= UINT16_MAX);
+			WINPR_ASSERT(height >= 0);
+			WINPR_ASSERT(height <= UINT16_MAX);
 
-	screen->width = (UINT16)width;
-	screen->height = (UINT16)height;
+			screen->width = (UINT16)width;
+			screen->height = (UINT16)height;
 
-	screen->primary =
-	    shadow_surface_new(server, (UINT16)x, (UINT16)y, (UINT16)width, (UINT16)height);
+			screen->primary =
+			    shadow_surface_new(server, (UINT16)x, (UINT16)y, (UINT16)width, (UINT16)height);
 
-	if (!screen->primary)
-		goto fail;
+			if (!screen->primary)
+				goto fail;
 
-	server->surface = screen->primary;
+			server->surface = screen->primary;
 
-	screen->lobby = shadow_surface_new(server, (UINT16)x, (UINT16)y, (UINT16)width, (UINT16)height);
+			screen->lobby =
+			    shadow_surface_new(server, (UINT16)x, (UINT16)y, (UINT16)width, (UINT16)height);
+		}
+	}
 
 	if (!screen->lobby)
 		goto fail;
