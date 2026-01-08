@@ -72,6 +72,6 @@ size_t udev_new_by_id(URBDRC_PLUGIN* urbdrc, libusb_context* ctx, UINT16 idVendo
                       IUDEVICE*** devArray);
 IUDEVICE* udev_new_by_addr(URBDRC_PLUGIN* urbdrc, libusb_context* context, BYTE bus_number,
                            BYTE dev_number);
-const char* usb_interface_class_to_string(uint8_t class);
+const char* usb_interface_class_to_string(uint8_t c_class);
 
 #endif /* FREERDP_CHANNEL_URBDRC_CLIENT_LIBUSB_UDEVICE_H */

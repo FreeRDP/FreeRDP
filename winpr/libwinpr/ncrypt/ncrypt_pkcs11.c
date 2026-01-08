@@ -82,15 +82,15 @@ typedef struct
 	BYTE tag[3];
 } piv_cert_tags_t;
 static const piv_cert_tags_t piv_cert_tags[] = {
-	{ "X.509 Certificate for PIV Authentication", "\x5F\xC1\x05" },
-	{ "X.509 Certificate for Digital Signature", "\x5F\xC1\x0A" },
-	{ "X.509 Certificate for Key Management", "\x5F\xC1\x0B" },
-	{ "X.509 Certificate for Card Authentication", "\x5F\xC1\x01" },
+	{ "X.509 Certificate for PIV Authentication", { 0x5F, 0xC1, 0x05 } },
+	{ "X.509 Certificate for Digital Signature", { 0x5F, 0xC1, 0x0A } },
+	{ "X.509 Certificate for Key Management", { 0x5F, 0xC1, 0x0B } },
+	{ "X.509 Certificate for Card Authentication", { 0x5F, 0xC1, 0x01 } },
 
-	{ "Certificate for PIV Authentication", "\x5F\xC1\x05" },
-	{ "Certificate for Digital Signature", "\x5F\xC1\x0A" },
-	{ "Certificate for Key Management", "\x5F\xC1\x0B" },
-	{ "Certificate for Card Authentication", "\x5F\xC1\x01" },
+	{ "Certificate for PIV Authentication", { 0x5F, 0xC1, 0x05 } },
+	{ "Certificate for Digital Signature", { 0x5F, 0xC1, 0x0A } },
+	{ "Certificate for Key Management", { 0x5F, 0xC1, 0x0B } },
+	{ "Certificate for Card Authentication", { 0x5F, 0xC1, 0x01 } },
 };
 
 static const BYTE APDU_PIV_SELECT_AID[] = { 0x00, 0xA4, 0x04, 0x00, 0x09, 0xA0, 0x00, 0x00,

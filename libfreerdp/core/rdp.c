@@ -2318,7 +2318,7 @@ static bool rdp_new_common(rdpRdp* rdp)
 			goto fail;
 	}
 
-	rdp->aad = aad_new(rdp->context, rdp->transport);
+	rdp->aad = aad_new(rdp->context);
 	if (!rdp->aad)
 		goto fail;
 
@@ -2326,7 +2326,7 @@ static bool rdp_new_common(rdpRdp* rdp)
 	if (!rdp->nego)
 		goto fail;
 
-	rdp->mcs = mcs_new(rdp->transport);
+	rdp->mcs = mcs_new(rdp->context);
 	if (!rdp->mcs)
 		goto fail;
 

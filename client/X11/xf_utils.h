@@ -62,7 +62,7 @@ int LogDynAndXFreePixmap_ex(wLog* log, const char* file, const char* fkt, size_t
 Window LogDynAndXCreateWindow_ex(wLog* log, const char* file, const char* fkt, size_t line,
                                  Display* display, Window parent, int x, int y, unsigned int width,
                                  unsigned int height, unsigned int border_width, int depth,
-                                 unsigned int class, Visual* visual, unsigned long valuemask,
+                                 unsigned int c_class, Visual* visual, unsigned long valuemask,
                                  XSetWindowAttributes* attributes);
 
 #define LogDynAndXRaiseWindow(log, display, w) \
@@ -127,7 +127,7 @@ int LogDynAndXClearWindow_ex(wLog* log, const char* file, const char* fkt, size_
 
 int LogDynAndXGetWindowProperty_ex(wLog* log, const char* file, const char* fkt, size_t line,
                                    Display* display, Window w, Atom property, long long_offset,
-                                   long long_length, Bool delete, Atom req_type,
+                                   long long_length, Bool c_delete, Atom req_type,
                                    Atom* actual_type_return, int* actual_format_return,
                                    unsigned long* nitems_return, unsigned long* bytes_after_return,
                                    unsigned char** prop_return);

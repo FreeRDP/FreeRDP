@@ -101,14 +101,14 @@ static BOOL register_input_events(xfContext* xfc, Window window)
 
 		for (int j = 0; j < dev->num_classes; j++)
 		{
-			const XIAnyClassInfo* class = dev->classes[j];
+			const XIAnyClassInfo* c_class = dev->classes[j];
 
-			switch (class->type)
+			switch (c_class->type)
 			{
 				case XITouchClass:
 					if (freerdp_settings_get_bool(settings, FreeRDP_MultiTouchInput))
 					{
-						const XITouchClassInfo* t = (const XITouchClassInfo*)class;
+						const XITouchClassInfo* t = (const XITouchClassInfo*)c_class;
 						if (t->mode == XIDirectTouch)
 						{
 							WLog_DBG(
@@ -124,7 +124,7 @@ static BOOL register_input_events(xfContext* xfc, Window window)
 					break;
 				case XIButtonClass:
 				{
-					const XIButtonClassInfo* t = (const XIButtonClassInfo*)class;
+					const XIButtonClassInfo* t = (const XIButtonClassInfo*)c_class;
 					WLog_DBG(TAG, "%s button device (id: %d, mode: %d)", dev->name, dev->deviceid,
 					         t->num_buttons);
 					XISetMask(masks[nmasks], XI_ButtonPress);
@@ -139,7 +139,7 @@ static BOOL register_input_events(xfContext* xfc, Window window)
 					if (!log)
 						log = WLog_Get(TAG);
 
-					const XIValuatorClassInfo* t = (const XIValuatorClassInfo*)class;
+					const XIValuatorClassInfo* t = (const XIValuatorClassInfo*)c_class;
 					char* name = t->label ? Safe_XGetAtomName(log, xfc->display, t->label) : NULL;
 
 					WLog_Print(log, WLOG_DEBUG,

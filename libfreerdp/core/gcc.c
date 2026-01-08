@@ -121,21 +121,17 @@ static BOOL gcc_write_server_multitransport_channel_data(wStream* s, const rdpMc
 static rdpSettings* mcs_get_settings(rdpMcs* mcs)
 {
 	WINPR_ASSERT(mcs);
+	WINPR_ASSERT(mcs->context);
 
-	rdpContext* context = transport_get_context(mcs->transport);
-	WINPR_ASSERT(context);
-
-	return context->settings;
+	return mcs->context->settings;
 }
 
 static const rdpSettings* mcs_get_const_settings(const rdpMcs* mcs)
 {
 	WINPR_ASSERT(mcs);
+	WINPR_ASSERT(mcs->context);
 
-	const rdpContext* context = transport_get_context(mcs->transport);
-	WINPR_ASSERT(context);
-
-	return context->settings;
+	return mcs->context->settings;
 }
 
 static char* rdp_early_server_caps_string(UINT32 flags, char* buffer, size_t size)
@@ -343,8 +339,8 @@ static DWORD rdp_version_common(wLog* log, DWORD serverVersion, DWORD clientVers
  */
 static const BYTE t124_02_98_oid[6] = { 0, 0, 20, 124, 0, 1 };
 
-static const BYTE h221_cs_key[4] = "Duca";
-static const BYTE h221_sc_key[4] = "McDn";
+static const BYTE h221_cs_key[4] = { 'D', 'u', 'c', 'a' };
+static const BYTE h221_sc_key[4] = { 'M', 'c', 'D', 'n' };
 
 /**
  * Read a GCC Conference Create Request.
