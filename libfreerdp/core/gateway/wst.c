@@ -866,21 +866,23 @@ rdpWst* wst_new(rdpContext* context)
 	if (!wst->http)
 		goto wst_alloc_error;
 
-	const char* useragent =
-	    freerdp_settings_get_string(context->settings, FreeRDP_GatewayHttpUserAgent);
-	const char* msuseragent =
-	    freerdp_settings_get_string(context->settings, FreeRDP_GatewayHttpMsUserAgent);
-	if (!http_context_set_uri(wst->http, wst->gwpath) ||
-	    !http_context_set_accept(wst->http, "*/*") ||
-	    !http_context_set_cache_control(wst->http, "no-cache") ||
-	    !http_context_set_pragma(wst->http, "no-cache") ||
-	    !http_context_set_connection(wst->http, "Keep-Alive") ||
-	    !http_context_set_user_agent(wst->http, useragent) ||
-	    !http_context_set_x_ms_user_agent(wst->http, msuseragent) ||
-	    !http_context_set_host(wst->http, wst->gwhostname) ||
-	    !http_context_enable_websocket_upgrade(wst->http, TRUE))
 	{
-		goto wst_alloc_error;
+		const char* useragent =
+		    freerdp_settings_get_string(context->settings, FreeRDP_GatewayHttpUserAgent);
+		const char* msuseragent =
+		    freerdp_settings_get_string(context->settings, FreeRDP_GatewayHttpMsUserAgent);
+		if (!http_context_set_uri(wst->http, wst->gwpath) ||
+		    !http_context_set_accept(wst->http, "*/*") ||
+		    !http_context_set_cache_control(wst->http, "no-cache") ||
+		    !http_context_set_pragma(wst->http, "no-cache") ||
+		    !http_context_set_connection(wst->http, "Keep-Alive") ||
+		    !http_context_set_user_agent(wst->http, useragent) ||
+		    !http_context_set_x_ms_user_agent(wst->http, msuseragent) ||
+		    !http_context_set_host(wst->http, wst->gwhostname) ||
+		    !http_context_enable_websocket_upgrade(wst->http, TRUE))
+		{
+			goto wst_alloc_error;
+		}
 	}
 
 	wst->frontBio = BIO_new(BIO_s_wst());
