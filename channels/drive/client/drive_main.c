@@ -1095,8 +1095,7 @@ static UINT handle_all_drives(RDPDR_DRIVE* drive, PDEVICE_SERVICE_ENTRY_POINTS p
 	if (rc >= dlen)
 		goto fail;
 
-	size_t len = 0;
-	for (size_t offset = 0; offset < rc; offset += len + 1)
+	for (size_t offset = 0, len = 0; offset < rc; offset += len + 1)
 	{
 		len = _wcsnlen(&devlist[offset], rc - offset);
 
