@@ -1032,66 +1032,71 @@ static BOOL pf_channel_rdpdr_rewrite_device_list_to(wStream* s, UINT32 fromVersi
 	wStream* clone = Stream_New(NULL, cap);
 	if (!clone)
 		goto fail;
-	const size_t pos = Stream_GetPosition(s);
-	Stream_Copy(s, clone, cap);
-	Stream_SealLength(clone);
 
-	Stream_SetPosition(clone, 0);
-	Stream_SetPosition(s, pos);
+	{
+		const size_t pos = Stream_GetPosition(s);
+		Stream_Copy(s, clone, cap);
+		Stream_SealLength(clone);
+
+		Stream_SetPosition(clone, 0);
+		Stream_SetPosition(s, pos);
+	}
 
 	/* Skip device count */
 	if (!Stream_SafeSeek(s, 4))
 		goto fail;
 
-	UINT32 count = 0;
-	if (Stream_GetRemainingLength(clone) < 4)
-		goto fail;
-	Stream_Read_UINT32(clone, count);
-
-	for (UINT32 x = 0; x < count; x++)
 	{
-		RdpdrDevice device = { 0 };
-		const size_t charCount = ARRAYSIZE(device.PreferredDosName);
-		if (Stream_GetRemainingLength(clone) < 20)
+		UINT32 count = 0;
+		if (Stream_GetRemainingLength(clone) < 4)
 			goto fail;
+		Stream_Read_UINT32(clone, count);
 
-		Stream_Read_UINT32(clone, device.DeviceType);           /* DeviceType (4 bytes) */
-		Stream_Read_UINT32(clone, device.DeviceId);             /* DeviceId (4 bytes) */
-		Stream_Read(clone, device.PreferredDosName, charCount); /* PreferredDosName (8 bytes) */
-		Stream_Read_UINT32(clone, device.DeviceDataLength);     /* DeviceDataLength (4 bytes) */
-		device.DeviceData = Stream_Pointer(clone);
-		if (!Stream_SafeSeek(clone, device.DeviceDataLength))
-			goto fail;
-
-		if (!Stream_EnsureRemainingCapacity(s, 20))
-			goto fail;
-		Stream_Write_UINT32(s, device.DeviceType);
-		Stream_Write_UINT32(s, device.DeviceId);
-		Stream_Write(s, device.PreferredDosName, charCount);
-
-		if (device.DeviceType == RDPDR_DTYP_FILESYSTEM)
+		for (UINT32 x = 0; x < count; x++)
 		{
-			if (toVersion == DRIVE_CAPABILITY_VERSION_01)
-				Stream_Write_UINT32(s, 0); /* No unicode name */
+			RdpdrDevice device = { 0 };
+			const size_t charCount = ARRAYSIZE(device.PreferredDosName);
+			if (Stream_GetRemainingLength(clone) < 20)
+				goto fail;
+
+			Stream_Read_UINT32(clone, device.DeviceType);           /* DeviceType (4 bytes) */
+			Stream_Read_UINT32(clone, device.DeviceId);             /* DeviceId (4 bytes) */
+			Stream_Read(clone, device.PreferredDosName, charCount); /* PreferredDosName (8 bytes) */
+			Stream_Read_UINT32(clone, device.DeviceDataLength);     /* DeviceDataLength (4 bytes) */
+			device.DeviceData = Stream_Pointer(clone);
+			if (!Stream_SafeSeek(clone, device.DeviceDataLength))
+				goto fail;
+
+			if (!Stream_EnsureRemainingCapacity(s, 20))
+				goto fail;
+			Stream_Write_UINT32(s, device.DeviceType);
+			Stream_Write_UINT32(s, device.DeviceId);
+			Stream_Write(s, device.PreferredDosName, charCount);
+
+			if (device.DeviceType == RDPDR_DTYP_FILESYSTEM)
+			{
+				if (toVersion == DRIVE_CAPABILITY_VERSION_01)
+					Stream_Write_UINT32(s, 0); /* No unicode name */
+				else
+				{
+					const size_t datalen = charCount * sizeof(WCHAR);
+					if (!Stream_EnsureRemainingCapacity(s, datalen + sizeof(UINT32)))
+						goto fail;
+					Stream_Write_UINT32(s, WINPR_ASSERTING_INT_CAST(uint32_t, datalen));
+
+					const SSIZE_T rcw = Stream_Write_UTF16_String_From_UTF8(
+					    s, charCount, device.PreferredDosName, charCount - 1, TRUE);
+					if (rcw < 0)
+						goto fail;
+				}
+			}
 			else
 			{
-				const size_t datalen = charCount * sizeof(WCHAR);
-				if (!Stream_EnsureRemainingCapacity(s, datalen + sizeof(UINT32)))
+				Stream_Write_UINT32(s, device.DeviceDataLength);
+				if (!Stream_EnsureRemainingCapacity(s, device.DeviceDataLength))
 					goto fail;
-				Stream_Write_UINT32(s, WINPR_ASSERTING_INT_CAST(uint32_t, datalen));
-
-				const SSIZE_T rcw = Stream_Write_UTF16_String_From_UTF8(
-				    s, charCount, device.PreferredDosName, charCount - 1, TRUE);
-				if (rcw < 0)
-					goto fail;
+				Stream_Write(s, device.DeviceData, device.DeviceDataLength);
 			}
-		}
-		else
-		{
-			Stream_Write_UINT32(s, device.DeviceDataLength);
-			if (!Stream_EnsureRemainingCapacity(s, device.DeviceDataLength))
-				goto fail;
-			Stream_Write(s, device.DeviceData, device.DeviceDataLength);
 		}
 	}
 
