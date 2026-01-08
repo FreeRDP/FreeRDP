@@ -1782,12 +1782,13 @@ BOOL gcc_read_server_security_data(wStream* s, rdpMcs* mcs)
 
 	Stream_Read(s, settings->ServerCertificate, settings->ServerCertificateLength);
 
-	const BYTE* data = settings->ServerCertificate;
-	const uint32_t length = settings->ServerCertificateLength;
+	{
+		const BYTE* data = settings->ServerCertificate;
+		const uint32_t length = settings->ServerCertificateLength;
 
-	if (!freerdp_certificate_read_server_cert(settings->RdpServerCertificate, data, length))
-		goto fail;
-
+		if (!freerdp_certificate_read_server_cert(settings->RdpServerCertificate, data, length))
+			goto fail;
+	}
 	return TRUE;
 fail:
 	(void)freerdp_settings_set_pointer_len(settings, FreeRDP_ServerRandom, NULL, 0);
