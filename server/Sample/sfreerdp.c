@@ -1345,7 +1345,12 @@ static const struct
 	const char slocal_only[13];
 	const char scert[7];
 	const char skey[6];
-} options = { "--pcap=", "--fast", "--port=", "--local-only", "--cert=", "--key=" };
+} options = { { '-', '-', 'p', 'c', 'a', 'p', '=' },
+	          { '-', '-', 'f', 'a', 's', 't' },
+	          { '-', '-', 'p', 'o', 'r', 't', '=' },
+	          { '-', '-', 'l', 'o', 'c', 'a', 'l', '-', 'o', 'n', 'l', 'y' },
+	          { '-', '-', 'c', 'e', 'r', 't', '=' },
+	          { '-', '-', 'k', 'e', 'y', '=' } };
 
 WINPR_PRAGMA_DIAG_PUSH
 WINPR_PRAGMA_DIAG_IGNORED_FORMAT_NONLITERAL
