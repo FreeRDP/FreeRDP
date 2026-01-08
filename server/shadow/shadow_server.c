@@ -934,29 +934,35 @@ static BOOL shadow_server_init_certificate(rdpShadowServer* server)
 			goto out_fail;
 	}
 
-	rdpSettings* settings = server->settings;
-	WINPR_ASSERT(settings);
-
-	rdpPrivateKey* key = freerdp_key_new_from_file_enc(server->PrivateKeyFile, NULL);
-	if (!key)
-		goto out_fail;
-	if (!freerdp_settings_set_pointer_len(settings, FreeRDP_RdpServerRsaKey, key, 1))
-		goto out_fail;
-
-	rdpCertificate* cert = freerdp_certificate_new_from_file(server->CertificateFile);
-	if (!cert)
-		goto out_fail;
-
-	if (!freerdp_settings_set_pointer_len(settings, FreeRDP_RdpServerCertificate, cert, 1))
-		goto out_fail;
-
-	if (!freerdp_certificate_is_rdp_security_compatible(cert))
 	{
-		if (!freerdp_settings_set_bool(settings, FreeRDP_UseRdpSecurityLayer, FALSE))
-			goto out_fail;
-		if (!freerdp_settings_set_bool(settings, FreeRDP_RdpSecurity, FALSE))
-			goto out_fail;
+		rdpSettings* settings = server->settings;
+		WINPR_ASSERT(settings);
+
+		{
+			rdpPrivateKey* key = freerdp_key_new_from_file_enc(server->PrivateKeyFile, NULL);
+			if (!key)
+				goto out_fail;
+			if (!freerdp_settings_set_pointer_len(settings, FreeRDP_RdpServerRsaKey, key, 1))
+				goto out_fail;
+		}
+		{
+			rdpCertificate* cert = freerdp_certificate_new_from_file(server->CertificateFile);
+			if (!cert)
+				goto out_fail;
+
+			if (!freerdp_settings_set_pointer_len(settings, FreeRDP_RdpServerCertificate, cert, 1))
+				goto out_fail;
+
+			if (!freerdp_certificate_is_rdp_security_compatible(cert))
+			{
+				if (!freerdp_settings_set_bool(settings, FreeRDP_UseRdpSecurityLayer, FALSE))
+					goto out_fail;
+				if (!freerdp_settings_set_bool(settings, FreeRDP_RdpSecurity, FALSE))
+					goto out_fail;
+			}
+		}
 	}
+
 	ret = TRUE;
 out_fail:
 	free(filepath);
