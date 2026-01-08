@@ -979,8 +979,7 @@ FREERDP_ENTRY_POINT(UINT VCAPITYPE audin_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* p
 		char* device;
 	};
 	UINT error = CHANNEL_RC_INITIALIZATION_ERROR;
-	struct SubsystemEntry entries[] =
-	{
+	struct SubsystemEntry entries[] = {
 #if defined(WITH_PULSE)
 		{ "pulse", "" },
 #endif
@@ -1046,50 +1045,53 @@ FREERDP_ENTRY_POINT(UINT VCAPITYPE audin_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* p
 	audin->iface.Attached = audin_plugin_attached;
 	audin->iface.Detached = audin_plugin_detached;
 
-	const ADDIN_ARGV* args = pEntryPoints->GetPluginData(pEntryPoints);
-	audin->rdpcontext = pEntryPoints->GetRdpContext(pEntryPoints);
-
-	if (args)
 	{
-		if (!audin_process_addin_args(audin, args))
-			goto out;
-	}
+		const ADDIN_ARGV* args = pEntryPoints->GetPluginData(pEntryPoints);
+		audin->rdpcontext = pEntryPoints->GetRdpContext(pEntryPoints);
 
-	if (audin->subsystem)
-	{
-		if ((error = audin_load_device_plugin(audin, audin->subsystem, args)))
+		if (args)
 		{
-			WLog_Print(
-			    audin->log, WLOG_ERROR,
-			    "Unable to load microphone redirection subsystem %s because of error %" PRIu32 "",
-			    audin->subsystem, error);
-			goto out;
+			if (!audin_process_addin_args(audin, args))
+				goto out;
 		}
-	}
-	else
-	{
-		while (entry && entry->subsystem && !audin->device)
-		{
-			if ((error = audin_set_subsystem(audin, entry->subsystem)))
-			{
-				WLog_Print(audin->log, WLOG_ERROR,
-				           "audin_set_subsystem for %s failed with error %" PRIu32 "!",
-				           entry->subsystem, error);
-			}
-			else if ((error = audin_set_device_name(audin, entry->device)))
-			{
-				WLog_Print(audin->log, WLOG_ERROR,
-				           "audin_set_device_name for %s failed with error %" PRIu32 "!",
-				           entry->subsystem, error);
-			}
-			else if ((error = audin_load_device_plugin(audin, audin->subsystem, args)))
-			{
-				WLog_Print(audin->log, WLOG_ERROR,
-				           "audin_load_device_plugin %s failed with error %" PRIu32 "!",
-				           entry->subsystem, error);
-			}
 
-			entry++;
+		if (audin->subsystem)
+		{
+			if ((error = audin_load_device_plugin(audin, audin->subsystem, args)))
+			{
+				WLog_Print(
+				    audin->log, WLOG_ERROR,
+				    "Unable to load microphone redirection subsystem %s because of error %" PRIu32
+				    "",
+				    audin->subsystem, error);
+				goto out;
+			}
+		}
+		else
+		{
+			while (entry && entry->subsystem && !audin->device)
+			{
+				if ((error = audin_set_subsystem(audin, entry->subsystem)))
+				{
+					WLog_Print(audin->log, WLOG_ERROR,
+					           "audin_set_subsystem for %s failed with error %" PRIu32 "!",
+					           entry->subsystem, error);
+				}
+				else if ((error = audin_set_device_name(audin, entry->device)))
+				{
+					WLog_Print(audin->log, WLOG_ERROR,
+					           "audin_set_device_name for %s failed with error %" PRIu32 "!",
+					           entry->subsystem, error);
+				}
+				else if ((error = audin_load_device_plugin(audin, audin->subsystem, args)))
+				{
+					WLog_Print(audin->log, WLOG_ERROR,
+					           "audin_load_device_plugin %s failed with error %" PRIu32 "!",
+					           entry->subsystem, error);
+				}
+
+				entry++;
+			}
 		}
 	}
 
