@@ -1204,6 +1204,18 @@ static int freerdp_host_connect(rdpContext* context, const char* hostname, int p
 	do
 	{
 		sockfd = socket(addr->ai_family, addr->ai_socktype, addr->ai_protocol);
+		if (sockfd >= 0)
+		{
+			log_connection_address(hostname, addr);
+
+			if (!freerdp_tcp_connect_timeout(context, sockfd, addr->ai_addr, addr->ai_addrlen,
+			                                 timeout))
+			{
+				close(sockfd);
+				sockfd = -1;
+			}
+		}
+
 		if (sockfd < 0)
 		{
 			const int lrc =
@@ -1212,19 +1224,6 @@ static int freerdp_host_connect(rdpContext* context, const char* hostname, int p
 				goto fail;
 		}
 	} while (sockfd < 0);
-
-	log_connection_address(hostname, addr);
-
-	if (!freerdp_tcp_connect_timeout(context, sockfd, addr->ai_addr, addr->ai_addrlen, timeout))
-	{
-		close(sockfd);
-		sockfd = -1;
-
-		freerdp_set_last_error_if_not(context, FREERDP_ERROR_CONNECT_FAILED);
-
-		WLog_ERR(TAG, "failed to connect to %s", hostname);
-		goto fail;
-	}
 
 fail:
 	freeaddrinfo(result);
