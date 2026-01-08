@@ -1223,84 +1223,86 @@ static int transport_default_write(rdpTransport* transport, wStream* s)
 	if (!transport->frontBio)
 		goto out_cleanup;
 
-	size_t length = Stream_GetPosition(s);
-	size_t writtenlength = length;
-	Stream_SetPosition(s, 0);
-
-	if (length > 0)
 	{
-		rdp->outBytes += length;
-		WLog_Packet(transport->log, WLOG_TRACE, Stream_Buffer(s), length, WLOG_PACKET_OUTBOUND);
-	}
+		size_t length = Stream_GetPosition(s);
+		size_t writtenlength = length;
+		Stream_SetPosition(s, 0);
 
-	while (length > 0)
-	{
-		ERR_clear_error();
-		const int towrite = (length > INT32_MAX) ? INT32_MAX : (int)length;
-		status = BIO_write(transport->frontBio, Stream_ConstPointer(s), towrite);
-
-		if (status <= 0)
+		if (length > 0)
 		{
-			/* the buffered BIO that is at the end of the chain always says OK for writing,
-			 * so a retry means that for any reason we need to read. The most probable
-			 * is a SSL or TSG BIO in the chain.
-			 */
-			if (!BIO_should_retry(transport->frontBio))
+			rdp->outBytes += length;
+			WLog_Packet(transport->log, WLOG_TRACE, Stream_Buffer(s), length, WLOG_PACKET_OUTBOUND);
+		}
+
+		while (length > 0)
+		{
+			ERR_clear_error();
+			const int towrite = (length > INT32_MAX) ? INT32_MAX : (int)length;
+			status = BIO_write(transport->frontBio, Stream_ConstPointer(s), towrite);
+
+			if (status <= 0)
 			{
-				WLog_ERR_BIO(transport, "BIO_should_retry", transport->frontBio);
-				goto out_cleanup;
+				/* the buffered BIO that is at the end of the chain always says OK for writing,
+				 * so a retry means that for any reason we need to read. The most probable
+				 * is a SSL or TSG BIO in the chain.
+				 */
+				if (!BIO_should_retry(transport->frontBio))
+				{
+					WLog_ERR_BIO(transport, "BIO_should_retry", transport->frontBio);
+					goto out_cleanup;
+				}
+
+				/* non-blocking can live with blocked IOs */
+				if (!transport->blocking)
+				{
+					WLog_ERR_BIO(transport, "BIO_write", transport->frontBio);
+					goto out_cleanup;
+				}
+
+				if (BIO_wait_write(transport->frontBio, 100) < 0)
+				{
+					WLog_ERR_BIO(transport, "BIO_wait_write", transport->frontBio);
+					status = -1;
+					goto out_cleanup;
+				}
+
+				continue;
 			}
 
-			/* non-blocking can live with blocked IOs */
-			if (!transport->blocking)
+			WINPR_ASSERT(context->settings);
+			if (transport->blocking || context->settings->WaitForOutputBufferFlush)
 			{
-				WLog_ERR_BIO(transport, "BIO_write", transport->frontBio);
-				goto out_cleanup;
+				while (BIO_write_blocked(transport->frontBio))
+				{
+					if (BIO_wait_write(transport->frontBio, 100) < 0)
+					{
+						WLog_Print(transport->log, WLOG_ERROR, "error when selecting for write");
+						status = -1;
+						goto out_cleanup;
+					}
+
+					if (BIO_flush(transport->frontBio) < 1)
+					{
+						WLog_Print(transport->log, WLOG_ERROR, "error when flushing outputBuffer");
+						status = -1;
+						goto out_cleanup;
+					}
+				}
 			}
 
-			if (BIO_wait_write(transport->frontBio, 100) < 0)
+			const size_t ustatus = (size_t)status;
+			if (ustatus > length)
 			{
-				WLog_ERR_BIO(transport, "BIO_wait_write", transport->frontBio);
 				status = -1;
 				goto out_cleanup;
 			}
 
-			continue;
+			length -= ustatus;
+			Stream_Seek(s, ustatus);
 		}
 
-		WINPR_ASSERT(context->settings);
-		if (transport->blocking || context->settings->WaitForOutputBufferFlush)
-		{
-			while (BIO_write_blocked(transport->frontBio))
-			{
-				if (BIO_wait_write(transport->frontBio, 100) < 0)
-				{
-					WLog_Print(transport->log, WLOG_ERROR, "error when selecting for write");
-					status = -1;
-					goto out_cleanup;
-				}
-
-				if (BIO_flush(transport->frontBio) < 1)
-				{
-					WLog_Print(transport->log, WLOG_ERROR, "error when flushing outputBuffer");
-					status = -1;
-					goto out_cleanup;
-				}
-			}
-		}
-
-		const size_t ustatus = (size_t)status;
-		if (ustatus > length)
-		{
-			status = -1;
-			goto out_cleanup;
-		}
-
-		length -= ustatus;
-		Stream_Seek(s, ustatus);
+		transport->written += writtenlength;
 	}
-
-	transport->written += writtenlength;
 out_cleanup:
 
 	if (status < 0)
@@ -1598,19 +1600,20 @@ static BOOL transport_default_attach_layer(rdpTransport* transport, rdpTransport
 	if (!layerBio)
 		goto fail;
 
-	BIO* bufferedBio = BIO_new(BIO_s_buffered_socket());
-	if (!bufferedBio)
-		goto fail;
+	{
+		BIO* bufferedBio = BIO_new(BIO_s_buffered_socket());
+		if (!bufferedBio)
+			goto fail;
 
-	bufferedBio = BIO_push(bufferedBio, layerBio);
-	if (!bufferedBio)
-		goto fail;
+		bufferedBio = BIO_push(bufferedBio, layerBio);
+		if (!bufferedBio)
+			goto fail;
 
-	/* BIO takes over the layer reference at this point. */
-	BIO_set_data(layerBio, layer);
+		/* BIO takes over the layer reference at this point. */
+		BIO_set_data(layerBio, layer);
 
-	transport->frontBio = bufferedBio;
-
+		transport->frontBio = bufferedBio;
+	}
 	return TRUE;
 
 fail:
