@@ -97,10 +97,12 @@ BOOL cert_info_create(rdpCertInfo* dst, const BIGNUM* rsa, const BIGNUM* rsa_e)
 	if (!read_bignum(&dst->Modulus, &dst->ModulusLength, rsa, TRUE))
 		goto fail;
 
-	DWORD len = sizeof(dst->exponent);
-	BYTE* ptr = &dst->exponent[0];
-	if (!read_bignum(&ptr, &len, rsa_e, FALSE))
-		goto fail;
+	{
+		DWORD len = sizeof(dst->exponent);
+		BYTE* ptr = &dst->exponent[0];
+		if (!read_bignum(&ptr, &len, rsa_e, FALSE))
+			goto fail;
+	}
 	return TRUE;
 
 fail:
