@@ -300,19 +300,26 @@ static inline RFX_PROGRESSIVE_TILE* progressive_tile_new(void)
 	tile->height = 64;
 	tile->stride = 4 * tile->width;
 
-	size_t dataLen = 1ull * tile->stride * tile->height;
-	tile->data = (BYTE*)winpr_aligned_malloc(dataLen, 16);
-	if (!tile->data)
-		goto fail;
-	memset(tile->data, 0xFF, dataLen);
+	{
+		const size_t dataLen = 1ull * tile->stride * tile->height;
+		tile->data = (BYTE*)winpr_aligned_malloc(dataLen, 16);
+		if (!tile->data)
+			goto fail;
+		memset(tile->data, 0xFF, dataLen);
+	}
 
-	size_t signLen = (8192ULL + 32ULL) * 3ULL;
-	tile->sign = (BYTE*)winpr_aligned_malloc(signLen, 16);
+	{
+		const size_t signLen = (8192ULL + 32ULL) * 3ULL;
+		tile->sign = (BYTE*)winpr_aligned_malloc(signLen, 16);
+	}
+
 	if (!tile->sign)
 		goto fail;
 
-	size_t currentLen = (8192ULL + 32ULL) * 3ULL;
-	tile->current = (BYTE*)winpr_aligned_malloc(currentLen, 16);
+	{
+		const size_t currentLen = (8192ULL + 32ULL) * 3ULL;
+		tile->current = (BYTE*)winpr_aligned_malloc(currentLen, 16);
+	}
 	if (!tile->current)
 		goto fail;
 
@@ -965,9 +972,11 @@ progressive_decompress_tile_first(PROGRESSIVE_CONTEXT* WINPR_RESTRICT progressiv
 	if (rc < 0)
 		goto fail;
 
-	const INT16** ptr = WINPR_REINTERPRET_CAST(pSrcDst, INT16**, const INT16**);
-	rc = prims->yCbCrToRGB_16s8u_P3AC4R(ptr, 64 * 2, tile->data, tile->stride, progressive->format,
-	                                    &roi_64x64);
+	{
+		const INT16** ptr = WINPR_REINTERPRET_CAST(pSrcDst, INT16**, const INT16**);
+		rc = prims->yCbCrToRGB_16s8u_P3AC4R(ptr, 64 * 2, tile->data, tile->stride,
+		                                    progressive->format, &roi_64x64);
+	}
 fail:
 	BufferPool_Return(progressive->bufferPool, pBuffer);
 	return rc;
@@ -1417,9 +1426,11 @@ progressive_decompress_tile_upgrade(PROGRESSIVE_CONTEXT* WINPR_RESTRICT progress
 	if (status < 0)
 		goto fail;
 
-	const INT16** ptr = WINPR_REINTERPRET_CAST(pSrcDst, INT16**, const INT16**);
-	status = prims->yCbCrToRGB_16s8u_P3AC4R(ptr, 64 * 2, tile->data, tile->stride,
-	                                        progressive->format, &roi_64x64);
+	{
+		const INT16** ptr = WINPR_REINTERPRET_CAST(pSrcDst, INT16**, const INT16**);
+		status = prims->yCbCrToRGB_16s8u_P3AC4R(ptr, 64 * 2, tile->data, tile->stride,
+		                                        progressive->format, &roi_64x64);
+	}
 fail:
 	BufferPool_Return(progressive->bufferPool, pBuffer);
 	return status;
@@ -2366,14 +2377,16 @@ INT32 progressive_decompress(PROGRESSIVE_CONTEXT* WINPR_RESTRICT progressive,
 			goto fail;
 	}
 
-	const size_t end = Stream_GetPosition(s);
-	if ((end - start) != SrcSize)
 	{
-		WLog_Print(progressive->log, WLOG_ERROR,
-		           "total block len %" PRIuz " does not match read data %" PRIu32, end - start,
-		           SrcSize);
-		rc = -1041;
-		goto fail;
+		const size_t end = Stream_GetPosition(s);
+		if ((end - start) != SrcSize)
+		{
+			WLog_Print(progressive->log, WLOG_ERROR,
+			           "total block len %" PRIuz " does not match read data %" PRIu32, end - start,
+			           SrcSize);
+			rc = -1041;
+			goto fail;
+		}
 	}
 
 	if (!update_tiles(progressive, surface, pDstData, DstFormat, nDstStep, nXDst, nYDst, region,
@@ -2518,9 +2531,11 @@ int progressive_compress(PROGRESSIVE_CONTEXT* WINPR_RESTRICT progressive,
 	if (!rc)
 		goto fail;
 
-	const size_t pos = Stream_GetPosition(s);
-	WINPR_ASSERT(pos <= UINT32_MAX);
-	*pDstSize = (UINT32)pos;
+	{
+		const size_t pos = Stream_GetPosition(s);
+		WINPR_ASSERT(pos <= UINT32_MAX);
+		*pDstSize = (UINT32)pos;
+	}
 	*ppDstData = Stream_Buffer(s);
 	res = 1;
 fail:
