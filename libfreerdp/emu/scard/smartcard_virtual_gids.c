@@ -1179,34 +1179,37 @@ static BOOL vgids_perform_decrypt(vgidsContext* context)
 		goto decrypt_failed;
 
 	/* Determine buffer length */
-	const size_t inlen = Stream_Length(context->commandData);
-	size_t outlen = 0;
-	res = EVP_PKEY_decrypt(ctx, NULL, &outlen, Stream_Buffer(context->commandData), inlen);
-	if (res < 0)
 	{
-		WLog_ERR(TAG, "Failed to decrypt data");
-		goto decrypt_failed;
+		const size_t inlen = Stream_Length(context->commandData);
+		size_t outlen = 0;
+		res = EVP_PKEY_decrypt(ctx, NULL, &outlen, Stream_Buffer(context->commandData), inlen);
+		if (res < 0)
+		{
+			WLog_ERR(TAG, "Failed to decrypt data");
+			goto decrypt_failed;
+		}
+
+		/* Prepare output buffer */
+		context->responseData = Stream_New(NULL, outlen);
+
+		if (!context->responseData)
+		{
+			WLog_ERR(TAG, "Failed to create decryption buffer");
+			goto decrypt_failed;
+		}
+
+		/* Decrypt */
+		res = EVP_PKEY_decrypt(ctx, Stream_Buffer(context->responseData), &outlen,
+		                       Stream_Buffer(context->commandData), inlen);
+
+		if (res < 0)
+		{
+			WLog_ERR(TAG, "Failed to decrypt data");
+			goto decrypt_failed;
+		}
+
+		Stream_SetLength(context->responseData, outlen);
 	}
-
-	/* Prepare output buffer */
-	context->responseData = Stream_New(NULL, outlen);
-	if (!context->responseData)
-	{
-		WLog_ERR(TAG, "Failed to create decryption buffer");
-		goto decrypt_failed;
-	}
-
-	/* Decrypt */
-	res = EVP_PKEY_decrypt(ctx, Stream_Buffer(context->responseData), &outlen,
-	                       Stream_Buffer(context->commandData), inlen);
-
-	if (res < 0)
-	{
-		WLog_ERR(TAG, "Failed to decrypt data");
-		goto decrypt_failed;
-	}
-
-	Stream_SetLength(context->responseData, outlen);
 	rc = TRUE;
 
 decrypt_failed:
@@ -1529,11 +1532,13 @@ BOOL vgids_init(vgidsContext* ctx, const char* cert, const char* privateKey, con
 		goto init_failed;
 
 	/* write container map DO */
-	const size_t size = get_rsa_key_size(ctx->privateKey);
-	if ((size == 0) || (size > UINT16_MAX / 8))
-		goto init_failed;
+	{
+		const size_t size = get_rsa_key_size(ctx->privateKey);
+		if ((size == 0) || (size > UINT16_MAX / 8))
+			goto init_failed;
 
-	cmrec.wKeyExchangeKeySizeBits = (WORD)size * 8;
+		cmrec.wKeyExchangeKeySizeBits = (WORD)size * 8;
+	}
 	if (!vgids_ef_write_do(commonEF, VGIDS_DO_CMAPFILE, &cmrec, sizeof(cmrec)))
 		goto init_failed;
 
