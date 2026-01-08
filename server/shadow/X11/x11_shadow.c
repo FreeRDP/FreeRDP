@@ -1322,7 +1322,7 @@ static int x11_shadow_subsystem_init(rdpShadowSubsystem* sub)
 	char** extensions = NULL;
 	XVisualInfo* vi = NULL;
 	XVisualInfo* vis = NULL;
-	XVisualInfo template = { 0 };
+	XVisualInfo xtemplate = { 0 };
 	XPixmapFormatValues* pf = NULL;
 	XPixmapFormatValues* pfs = NULL;
 
@@ -1382,9 +1382,9 @@ static int x11_shadow_subsystem_init(rdpShadowSubsystem* sub)
 	}
 
 	XFree(pfs);
-	template.class = TrueColor;
-	template.screen = subsystem->number;
-	vis = XGetVisualInfo(subsystem->display, VisualClassMask | VisualScreenMask, &template,
+	xtemplate.class = TrueColor;
+	xtemplate.screen = subsystem->number;
+	vis = XGetVisualInfo(subsystem->display, VisualClassMask | VisualScreenMask, &xtemplate,
 	                     &vi_count);
 
 	if (!vis)

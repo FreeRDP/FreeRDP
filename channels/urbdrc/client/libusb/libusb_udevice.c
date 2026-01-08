@@ -157,9 +157,9 @@ static BOOL log_libusb_result_(wLog* log, DWORD lvl, WINPR_FORMAT_ARG const char
 #define log_libusb_result(log, lvl, fmt, error, ...) \
 	log_libusb_result_((log), (lvl), (fmt), __func__, __FILE__, __LINE__, error, ##__VA_ARGS__)
 
-const char* usb_interface_class_to_string(uint8_t class)
+const char* usb_interface_class_to_string(uint8_t c_class)
 {
-	switch (class)
+	switch (c_class)
 	{
 		case LIBUSB_CLASS_PER_INTERFACE:
 			return "LIBUSB_CLASS_PER_INTERFACE";
