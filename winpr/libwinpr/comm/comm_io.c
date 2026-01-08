@@ -409,24 +409,27 @@ BOOL CommWriteFile(HANDLE hDevice, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite
 	}
 #endif
 
-	/* ms */
-	LONGLONG Tmax = 1ll * nNumberOfBytesToWrite * pComm->timeouts.WriteTotalTimeoutMultiplier +
-	                1ll * pComm->timeouts.WriteTotalTimeoutConstant;
-	/* NB: select() may update the timeout argument to indicate
-	 * how much time was left. Keep the timeout variable out of
-	 * the while() */
-	pTmaxTimeout = &tmaxTimeout;
-	ZeroMemory(pTmaxTimeout, sizeof(struct timeval));
+	{
+		/* ms */
+		const LONGLONG Tmax =
+		    1ll * nNumberOfBytesToWrite * pComm->timeouts.WriteTotalTimeoutMultiplier +
+		    1ll * pComm->timeouts.WriteTotalTimeoutConstant;
+		/* NB: select() may update the timeout argument to indicate
+		 * how much time was left. Keep the timeout variable out of
+		 * the while() */
+		pTmaxTimeout = &tmaxTimeout;
+		ZeroMemory(pTmaxTimeout, sizeof(struct timeval));
 
-	if (Tmax > 0)
-	{
-		pTmaxTimeout->tv_sec = Tmax / 1000;           /* s */
-		pTmaxTimeout->tv_usec = (Tmax % 1000) * 1000; /* us */
-	}
-	else if ((pComm->timeouts.WriteTotalTimeoutMultiplier == 0) &&
-	         (pComm->timeouts.WriteTotalTimeoutConstant == 0))
-	{
-		pTmaxTimeout = NULL;
+		if (Tmax > 0)
+		{
+			pTmaxTimeout->tv_sec = Tmax / 1000;           /* s */
+			pTmaxTimeout->tv_usec = (Tmax % 1000) * 1000; /* us */
+		}
+		else if ((pComm->timeouts.WriteTotalTimeoutMultiplier == 0) &&
+		         (pComm->timeouts.WriteTotalTimeoutConstant == 0))
+		{
+			pTmaxTimeout = NULL;
+		}
 	}
 
 	/* else return immdiately */
