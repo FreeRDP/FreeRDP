@@ -226,14 +226,16 @@ static CliprdrFuseFile* fuse_file_new(WINPR_FORMAT_ARG const char* fmt, ...)
 
 	WINPR_ASSERT(fmt);
 
-	va_list ap;
-	va_start(ap, fmt);
-	const int rc =
-	    winpr_vasprintf(&file->filename_with_root, &file->filename_with_root_len, fmt, ap);
-	va_end(ap);
+	{
+		va_list ap;
+		va_start(ap, fmt);
+		const int rc =
+		    winpr_vasprintf(&file->filename_with_root, &file->filename_with_root_len, fmt, ap);
+		va_end(ap);
 
-	if (rc < 0)
-		goto fail;
+		if (rc < 0)
+			goto fail;
+	}
 
 	if (file->filename_with_root && (file->filename_with_root_len > 0))
 	{
@@ -1501,13 +1503,16 @@ static UINT cliprdr_file_context_server_file_range_request(
 	if (!data)
 		goto fail;
 
-	const size_t r = fread(data, 1, fileContentsRequest->cbRequested, rfile->fp);
-	const UINT rc = cliprdr_file_context_send_contents_response(file, fileContentsRequest, data, r);
-	free(data);
+	{
+		const size_t r = fread(data, 1, fileContentsRequest->cbRequested, rfile->fp);
+		const UINT rc =
+		    cliprdr_file_context_send_contents_response(file, fileContentsRequest, data, r);
+		free(data);
 
-	cliprdr_local_file_try_close(rfile, rc, offset, fileContentsRequest->cbRequested);
-	HashTable_Unlock(file->local_streams);
-	return rc;
+		cliprdr_local_file_try_close(rfile, rc, offset, fileContentsRequest->cbRequested);
+		HashTable_Unlock(file->local_streams);
+		return rc;
+	}
 fail:
 	if (rfile)
 		cliprdr_local_file_try_close(rfile, ERROR_INTERNAL_ERROR, offset,
@@ -2400,15 +2405,19 @@ CliprdrFileContext* cliprdr_file_context_new(void* context)
 	if (!HashTable_SetHashFunction(file->local_streams, UINTPointerHash))
 		goto fail;
 
-	wObject* hkobj = HashTable_KeyObject(file->local_streams);
-	WINPR_ASSERT(hkobj);
-	hkobj->fnObjectEquals = UINTPointerCompare;
-	hkobj->fnObjectFree = free;
-	hkobj->fnObjectNew = UINTPointerClone;
+	{
+		wObject* hkobj = HashTable_KeyObject(file->local_streams);
+		WINPR_ASSERT(hkobj);
+		hkobj->fnObjectEquals = UINTPointerCompare;
+		hkobj->fnObjectFree = free;
+		hkobj->fnObjectNew = UINTPointerClone;
+	}
 
-	wObject* hobj = HashTable_ValueObject(file->local_streams);
-	WINPR_ASSERT(hobj);
-	hobj->fnObjectFree = cliprdr_local_stream_free;
+	{
+		wObject* hobj = HashTable_ValueObject(file->local_streams);
+		WINPR_ASSERT(hobj);
+		hobj->fnObjectFree = cliprdr_local_stream_free;
+	}
 
 #if defined(WITH_FUSE)
 	file->inode_table = HashTable_New(FALSE);
