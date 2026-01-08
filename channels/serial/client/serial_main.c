@@ -194,10 +194,12 @@ static UINT serial_process_irp_create(SERIAL_DEVICE* serial, IRP* irp)
 	WLog_Print(serial->log, WLOG_DEBUG, "%s (DeviceId: %" PRIu32 ", FileId: %" PRIu32 ") created.",
 	           serial->device.name, irp->device->id, irp->FileId);
 
-	DWORD BytesReturned = 0;
-	if (!CommDeviceIoControl(serial->hComm, IOCTL_SERIAL_RESET_DEVICE, NULL, 0, NULL, 0,
-	                         &BytesReturned, NULL))
-		goto error_handle;
+	{
+		DWORD BytesReturned = 0;
+		if (!CommDeviceIoControl(serial->hComm, IOCTL_SERIAL_RESET_DEVICE, NULL, 0, NULL, 0,
+		                         &BytesReturned, NULL))
+			goto error_handle;
+	}
 
 error_handle:
 	Stream_Write_UINT32(irp->output, irp->FileId); /* FileId (4 bytes) */
@@ -254,9 +256,9 @@ static UINT serial_process_irp_read(SERIAL_DEVICE* serial, IRP* irp)
 
 	Stream_Read_UINT32(irp->input, Length); /* Length (4 bytes) */
 	Stream_Read_UINT64(irp->input, Offset); /* Offset (8 bytes) */
-	(void)Offset; /* [MS-RDPESP] 3.2.5.1.4 Processing a Server Read Request Message
-	               * ignored */
-	Stream_Seek(irp->input, 20);            /* Padding (20 bytes) */
+	(void)Offset;                /* [MS-RDPESP] 3.2.5.1.4 Processing a Server Read Request Message
+	                              * ignored */
+	Stream_Seek(irp->input, 20); /* Padding (20 bytes) */
 	buffer = (BYTE*)calloc(Length, sizeof(BYTE));
 
 	if (buffer == NULL)
@@ -321,7 +323,7 @@ static UINT serial_process_irp_write(SERIAL_DEVICE* serial, IRP* irp)
 	Stream_Read_UINT64(irp->input, Offset); /* Offset (8 bytes) */
 	(void)Offset; /* [MS-RDPESP] 3.2.5.1.4 Processing a Server Read Request Message
 	               * ignored */
-	if (!Stream_SafeSeek(irp->input, 20))   /* Padding (20 bytes) */
+	if (!Stream_SafeSeek(irp->input, 20)) /* Padding (20 bytes) */
 		return ERROR_INVALID_DATA;
 
 	/* MS-RDPESP 3.2.5.1.5: The Offset field is ignored
