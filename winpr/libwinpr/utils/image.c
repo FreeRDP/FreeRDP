@@ -310,10 +310,12 @@ static void* winpr_bitmap_write_buffer(const BYTE* data, WINPR_ATTR_UNUSED size_
 	}
 
 	result = Stream_Buffer(s);
-	const size_t pos = Stream_GetPosition(s);
-	if (pos > UINT32_MAX)
-		goto fail;
-	*pSize = (UINT32)pos;
+	{
+		const size_t pos = Stream_GetPosition(s);
+		if (pos > UINT32_MAX)
+			goto fail;
+		*pSize = (UINT32)pos;
+	}
 fail:
 	Stream_Free(s, result == NULL);
 	free(bmp_header);
@@ -341,22 +343,26 @@ int winpr_bitmap_write_ex(const char* filename, const BYTE* data, size_t stride,
 	if (stride == 0)
 		stride = bpp_stride;
 
-	UINT32 bmpsize = 0;
-	const size_t size = stride * 1ull * height;
-	bmpdata = winpr_bitmap_write_buffer(data, size, (UINT32)width, (UINT32)height, (UINT32)stride,
-	                                    (UINT32)bpp, &bmpsize);
-	if (!bmpdata)
-		goto fail;
-
-	fp = winpr_fopen(filename, "w+b");
-	if (!fp)
 	{
-		WLog_ERR(TAG, "failed to open file %s", filename);
-		goto fail;
-	}
+		UINT32 bmpsize = 0;
+		{
+			const size_t size = stride * 1ull * height;
+			bmpdata = winpr_bitmap_write_buffer(data, size, (UINT32)width, (UINT32)height,
+			                                    (UINT32)stride, (UINT32)bpp, &bmpsize);
+		}
+		if (!bmpdata)
+			goto fail;
 
-	if (fwrite(bmpdata, bmpsize, 1, fp) != 1)
-		goto fail;
+		fp = winpr_fopen(filename, "w+b");
+		if (!fp)
+		{
+			WLog_ERR(TAG, "failed to open file %s", filename);
+			goto fail;
+		}
+
+		if (fwrite(bmpdata, bmpsize, 1, fp) != 1)
+			goto fail;
+	}
 
 	ret = 0;
 fail:
@@ -372,14 +378,17 @@ static int write_and_free(const char* filename, void* data, size_t size)
 	if (!data)
 		goto fail;
 
-	FILE* fp = winpr_fopen(filename, "w+b");
-	if (!fp)
-		goto fail;
+	{
+		FILE* fp = winpr_fopen(filename, "w+b");
+		if (!fp)
+			goto fail;
 
-	size_t w = fwrite(data, 1, size, fp);
-	(void)fclose(fp);
-
-	status = (w == size) ? 1 : -1;
+		{
+			const size_t w = fwrite(data, 1, size, fp);
+			(void)fclose(fp);
+			status = (w == size) ? 1 : -1;
+		}
+	}
 fail:
 	free(data);
 	return status;
@@ -426,14 +435,15 @@ static int winpr_image_bitmap_read_buffer(wImage* image, const BYTE* buffer, siz
 
 	image->type = WINPR_IMAGE_BITMAP;
 
-	const size_t pos = Stream_GetPosition(s);
-	const size_t expect = bf.bfOffBits;
-
-	if (pos != expect)
 	{
-		WLog_WARN(TAG, "pos=%" PRIuz ", expected %" PRIuz ", offset=" PRIuz, pos, expect,
-		          bmpoffset);
-		goto fail;
+		const size_t pos = Stream_GetPosition(s);
+		const size_t expect = bf.bfOffBits;
+		if (pos != expect)
+		{
+			WLog_WARN(TAG, "pos=%" PRIuz ", expected %" PRIuz ", offset=" PRIuz, pos, expect,
+			          bmpoffset);
+			goto fail;
+		}
 	}
 
 	if (!Stream_CheckAndLogRequiredCapacity(TAG, s, bi.biSizeImage))
@@ -465,55 +475,65 @@ static int winpr_image_bitmap_read_buffer(wImage* image, const BYTE* buffer, siz
 	}
 
 	image->bitsPerPixel = bi.biBitCount;
-	const size_t bpp = (bi.biBitCount + 7UL) / 8UL;
-	image->bytesPerPixel = WINPR_ASSERTING_INT_CAST(uint32_t, bpp);
-	image->scanline = WINPR_ASSERTING_INT_CAST(uint32_t, bi.biWidth) * image->bytesPerPixel;
-	if ((image->scanline % 4) != 0)
-		image->scanline += 4 - image->scanline % 4;
-
-	const size_t bmpsize = 1ULL * image->scanline * image->height;
-	if (bmpsize != bi.biSizeImage)
-		WLog_WARN(TAG, "bmpsize=%" PRIuz " != bi.biSizeImage=%" PRIu32, bmpsize, bi.biSizeImage);
-
-	size_t scanline = image->scanline;
-	if (bi.biSizeImage < bmpsize)
 	{
-		/* Workaround for unaligned bitmaps */
-		const size_t uscanline = image->width * bpp;
-		const size_t unaligned = image->height * uscanline;
-		if (bi.biSizeImage != unaligned)
-			goto fail;
-		scanline = uscanline;
-	}
+		const size_t bpp = (bi.biBitCount + 7UL) / 8UL;
+		image->bytesPerPixel = WINPR_ASSERTING_INT_CAST(uint32_t, bpp);
 
-	image->data = NULL;
-	const size_t asize = 1ULL * image->scanline * image->height;
-	if (asize > 0)
-		image->data = (BYTE*)malloc(asize);
+		image->scanline = WINPR_ASSERTING_INT_CAST(uint32_t, bi.biWidth) * image->bytesPerPixel;
+		if ((image->scanline % 4) != 0)
+			image->scanline += 4 - image->scanline % 4;
 
-	if (!image->data)
-		goto fail;
-
-	if (!vFlip)
-	{
-		BYTE* pDstData = image->data;
-
-		for (size_t index = 0; index < image->height; index++)
 		{
-			Stream_Read(s, pDstData, scanline);
-			Stream_Seek(s, image->scanline - scanline);
-			pDstData += scanline;
-		}
-	}
-	else
-	{
-		BYTE* pDstData = &(image->data[(image->height - 1ull) * image->scanline]);
+			const size_t bmpsize = 1ULL * image->scanline * image->height;
+			if (bmpsize != bi.biSizeImage)
+				WLog_WARN(TAG, "bmpsize=%" PRIuz " != bi.biSizeImage=%" PRIu32, bmpsize,
+				          bi.biSizeImage);
 
-		for (size_t index = 0; index < image->height; index++)
-		{
-			Stream_Read(s, pDstData, scanline);
-			Stream_Seek(s, image->scanline - scanline);
-			pDstData -= scanline;
+			{
+				size_t scanline = image->scanline;
+				if (bi.biSizeImage < bmpsize)
+				{
+					/* Workaround for unaligned bitmaps */
+					const size_t uscanline = image->width * bpp;
+					const size_t unaligned = image->height * uscanline;
+					if (bi.biSizeImage != unaligned)
+						goto fail;
+					scanline = uscanline;
+				}
+
+				image->data = NULL;
+				{
+					const size_t asize = 1ULL * image->scanline * image->height;
+					if (asize > 0)
+						image->data = (BYTE*)malloc(asize);
+				}
+
+				if (!image->data)
+					goto fail;
+
+				if (!vFlip)
+				{
+					BYTE* pDstData = image->data;
+
+					for (size_t index = 0; index < image->height; index++)
+					{
+						Stream_Read(s, pDstData, scanline);
+						Stream_Seek(s, image->scanline - scanline);
+						pDstData += scanline;
+					}
+				}
+				else
+				{
+					BYTE* pDstData = &(image->data[(image->height - 1ull) * image->scanline]);
+
+					for (size_t index = 0; index < image->height; index++)
+					{
+						Stream_Read(s, pDstData, scanline);
+						Stream_Seek(s, image->scanline - scanline);
+						pDstData -= scanline;
+					}
+				}
+			}
 		}
 	}
 
