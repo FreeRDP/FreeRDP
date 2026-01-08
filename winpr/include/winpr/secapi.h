@@ -70,7 +70,7 @@ typedef struct
 
 #define MSV1_0_CRED_VERSION_REMOTE 0xffff0002
 
-typedef enum _MSV1_0_CREDENTIAL_KEY_TYPE
+typedef enum
 {
 	InvalidCredKey,
 	DeprecatedIUMCredKey,
