@@ -879,8 +879,11 @@ static BOOL mcs_send_connect_initial(rdpMcs* mcs)
 	Stream_SetPosition(s, em);
 	Stream_SealLength(s);
 
-	rdpTransport* transport = freerdp_get_transport(mcs->context);
-	status = transport_write(transport, s);
+	{
+		rdpTransport* transport = freerdp_get_transport(mcs->context);
+		status = transport_write(transport, s);
+	}
+
 out:
 	Stream_Free(s, TRUE);
 	Stream_Free(gcc_CCrq, TRUE);
@@ -995,8 +998,11 @@ BOOL mcs_send_connect_response(rdpMcs* mcs)
 	Stream_SetPosition(s, em);
 	Stream_SealLength(s);
 
-	rdpTransport* transport = freerdp_get_transport(mcs->context);
-	status = transport_write(transport, s);
+	{
+		rdpTransport* transport = freerdp_get_transport(mcs->context);
+		status = transport_write(transport, s);
+	}
+
 out:
 	Stream_Free(s, TRUE);
 	Stream_Free(gcc_CCrsp, TRUE);
@@ -1302,8 +1308,11 @@ BOOL mcs_send_channel_join_confirm(rdpMcs* mcs, UINT16 channelId)
 		goto fail;
 	Stream_SealLength(s);
 
-	rdpTransport* transport = freerdp_get_transport(mcs->context);
-	status = transport_write(transport, s);
+	{
+		rdpTransport* transport = freerdp_get_transport(mcs->context);
+		status = transport_write(transport, s);
+	}
+
 fail:
 	Stream_Free(s, TRUE);
 	return (status < 0) ? FALSE : TRUE;
@@ -1383,8 +1392,11 @@ BOOL mcs_send_disconnect_provider_ultimatum(rdpMcs* mcs, enum Disconnect_Ultimat
 	if (!per_write_enumerated(s, 0x80, WINPR_ASSERTING_INT_CAST(BYTE, reason)))
 		goto fail;
 
-	rdpTransport* transport = freerdp_get_transport(mcs->context);
-	status = transport_write(transport, s);
+	{
+		rdpTransport* transport = freerdp_get_transport(mcs->context);
+		status = transport_write(transport, s);
+	}
+
 fail:
 	WLog_Print(mcs->log, WLOG_DEBUG, "sending DisconnectProviderUltimatum(%s)",
 	           freerdp_disconnect_reason_string((int)reason));
