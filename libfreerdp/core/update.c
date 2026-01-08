@@ -3329,40 +3329,50 @@ rdpUpdate* update_new(rdpRdp* rdp)
 	if (!update->common.pointer)
 		goto fail;
 
-	rdp_primary_update_internal* primary =
-	    (rdp_primary_update_internal*)calloc(1, sizeof(rdp_primary_update_internal));
+	{
+		rdp_primary_update_internal* primary =
+		    (rdp_primary_update_internal*)calloc(1, sizeof(rdp_primary_update_internal));
 
-	if (!primary)
-		goto fail;
-	update->common.primary = &primary->common;
+		if (!primary)
+			goto fail;
+		update->common.primary = &primary->common;
+	}
 
-	rdp_secondary_update_internal* secondary =
-	    (rdp_secondary_update_internal*)calloc(1, sizeof(rdp_secondary_update_internal));
+	{
+		rdp_secondary_update_internal* secondary =
+		    (rdp_secondary_update_internal*)calloc(1, sizeof(rdp_secondary_update_internal));
 
-	if (!secondary)
-		goto fail;
-	update->common.secondary = &secondary->common;
+		if (!secondary)
+			goto fail;
+		update->common.secondary = &secondary->common;
+	}
 
-	rdp_altsec_update_internal* altsec =
-	    (rdp_altsec_update_internal*)calloc(1, sizeof(rdp_altsec_update_internal));
+	{
+		rdp_altsec_update_internal* altsec =
+		    (rdp_altsec_update_internal*)calloc(1, sizeof(rdp_altsec_update_internal));
 
-	if (!altsec)
-		goto fail;
+		if (!altsec)
+			goto fail;
 
-	update->common.altsec = &altsec->common;
-	update->common.window = (rdpWindowUpdate*)calloc(1, sizeof(rdpWindowUpdate));
+		update->common.altsec = &altsec->common;
 
-	if (!update->common.window)
-		goto fail;
+		update->common.window = (rdpWindowUpdate*)calloc(1, sizeof(rdpWindowUpdate));
 
-	OFFSCREEN_DELETE_LIST* deleteList = &(altsec->create_offscreen_bitmap.deleteList);
-	deleteList->sIndices = 64;
-	deleteList->indices = calloc(deleteList->sIndices, 2);
+		if (!update->common.window)
+			goto fail;
 
-	if (!deleteList->indices)
-		goto fail;
+		{
+			OFFSCREEN_DELETE_LIST* deleteList = &(altsec->create_offscreen_bitmap.deleteList);
+			deleteList->sIndices = 64;
+			deleteList->indices = calloc(deleteList->sIndices, 2);
 
-	deleteList->cIndices = 0;
+			if (!deleteList->indices)
+				goto fail;
+
+			deleteList->cIndices = 0;
+		}
+	}
+
 	update->common.SuppressOutput = update_send_suppress_output;
 	update->initialState = TRUE;
 	update->common.autoCalculateBitmapData = TRUE;
