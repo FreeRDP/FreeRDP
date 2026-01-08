@@ -134,22 +134,24 @@ static BOOL InitializeThreadpool(PTP_POOL pool)
 #error "WINPR_THREADPOOL_DEFAULT_MAX_COUNT must be defined"
 #endif
 
-	SYSTEM_INFO info = { 0 };
-	GetSystemInfo(&info);
+	{
+		SYSTEM_INFO info = { 0 };
+		GetSystemInfo(&info);
 
-	DWORD min = info.dwNumberOfProcessors;
-	DWORD max = info.dwNumberOfProcessors;
-	if (info.dwNumberOfProcessors < WINPR_THREADPOOL_DEFAULT_MIN_COUNT)
-		min = WINPR_THREADPOOL_DEFAULT_MIN_COUNT;
-	if (info.dwNumberOfProcessors > WINPR_THREADPOOL_DEFAULT_MAX_COUNT)
-		max = WINPR_THREADPOOL_DEFAULT_MAX_COUNT;
-	if (min > max)
-		min = max;
+		DWORD min = info.dwNumberOfProcessors;
+		DWORD max = info.dwNumberOfProcessors;
+		if (info.dwNumberOfProcessors < WINPR_THREADPOOL_DEFAULT_MIN_COUNT)
+			min = WINPR_THREADPOOL_DEFAULT_MIN_COUNT;
+		if (info.dwNumberOfProcessors > WINPR_THREADPOOL_DEFAULT_MAX_COUNT)
+			max = WINPR_THREADPOOL_DEFAULT_MAX_COUNT;
+		if (min > max)
+			min = max;
 
-	if (!SetThreadpoolThreadMinimum(pool, min))
-		goto fail;
+		if (!SetThreadpoolThreadMinimum(pool, min))
+			goto fail;
 
-	SetThreadpoolThreadMaximum(pool, max);
+		SetThreadpoolThreadMaximum(pool, max);
+	}
 
 	rc = TRUE;
 
