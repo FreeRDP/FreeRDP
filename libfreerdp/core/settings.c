@@ -1229,18 +1229,19 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	if (!freerdp_settings_set_default_order_support(settings))
 		goto out_fail;
 
-	const BOOL enable = freerdp_settings_get_bool(settings, FreeRDP_ServerMode);
-
 	{
-		const FreeRDP_Settings_Keys_Bool keys[] = { FreeRDP_SupportGraphicsPipeline,
-			                                        FreeRDP_SupportStatusInfoPdu,
-			                                        FreeRDP_SupportErrorInfoPdu,
-			                                        FreeRDP_SupportAsymetricKeys };
-
-		for (size_t x = 0; x < ARRAYSIZE(keys); x++)
+		const BOOL enable = freerdp_settings_get_bool(settings, FreeRDP_ServerMode);
 		{
-			if (!freerdp_settings_set_bool(settings, keys[x], enable))
-				goto out_fail;
+			const FreeRDP_Settings_Keys_Bool keys[] = { FreeRDP_SupportGraphicsPipeline,
+				                                        FreeRDP_SupportStatusInfoPdu,
+				                                        FreeRDP_SupportErrorInfoPdu,
+				                                        FreeRDP_SupportAsymetricKeys };
+
+			for (size_t x = 0; x < ARRAYSIZE(keys); x++)
+			{
+				if (!freerdp_settings_set_bool(settings, keys[x], enable))
+					goto out_fail;
+			}
 		}
 	}
 
@@ -1375,18 +1376,23 @@ static BOOL freerdp_settings_int_buffer_copy(rdpSettings* _settings, const rdpSe
 	if (!freerdp_capability_buffer_copy(_settings, settings))
 		goto out_fail;
 
-	const UINT32 glyphCacheCount = 10;
-	const GLYPH_CACHE_DEFINITION* glyphCache =
-	    freerdp_settings_get_pointer(settings, FreeRDP_GlyphCache);
-	if (!freerdp_settings_set_pointer_len(_settings, FreeRDP_GlyphCache, glyphCache,
-	                                      glyphCacheCount))
-		goto out_fail;
+	{
+		const UINT32 glyphCacheCount = 10;
+		const GLYPH_CACHE_DEFINITION* glyphCache =
+		    freerdp_settings_get_pointer(settings, FreeRDP_GlyphCache);
+		if (!freerdp_settings_set_pointer_len(_settings, FreeRDP_GlyphCache, glyphCache,
+		                                      glyphCacheCount))
+			goto out_fail;
+	}
 
-	const UINT32 fragCacheCount = 1;
-	const GLYPH_CACHE_DEFINITION* fragCache =
-	    freerdp_settings_get_pointer(settings, FreeRDP_FragCache);
-	if (!freerdp_settings_set_pointer_len(_settings, FreeRDP_FragCache, fragCache, fragCacheCount))
-		goto out_fail;
+	{
+		const UINT32 fragCacheCount = 1;
+		const GLYPH_CACHE_DEFINITION* fragCache =
+		    freerdp_settings_get_pointer(settings, FreeRDP_FragCache);
+		if (!freerdp_settings_set_pointer_len(_settings, FreeRDP_FragCache, fragCache,
+		                                      fragCacheCount))
+			goto out_fail;
+	}
 
 	if (!freerdp_settings_set_pointer_len(
 	        _settings, FreeRDP_ClientAutoReconnectCookie,
@@ -1397,26 +1403,31 @@ static BOOL freerdp_settings_int_buffer_copy(rdpSettings* _settings, const rdpSe
 	        freerdp_settings_get_pointer(settings, FreeRDP_ServerAutoReconnectCookie), 1))
 		goto out_fail;
 
-	const TIME_ZONE_INFORMATION* tz =
-	    freerdp_settings_get_pointer(settings, FreeRDP_ClientTimeZone);
-	if (!freerdp_settings_set_pointer_len(_settings, FreeRDP_ClientTimeZone, tz, 1))
-		goto out_fail;
-
-	const UINT32 nrports = freerdp_settings_get_uint32(settings, FreeRDP_TargetNetAddressCount);
-	if (!freerdp_target_net_adresses_reset(_settings, nrports))
-		goto out_fail;
-
-	for (UINT32 i = 0; i < nrports; i++)
 	{
-		const char* address =
-		    freerdp_settings_get_pointer_array(settings, FreeRDP_TargetNetAddresses, i);
-		const UINT32* port =
-		    freerdp_settings_get_pointer_array(settings, FreeRDP_TargetNetPorts, i);
+		const TIME_ZONE_INFORMATION* tz =
+		    freerdp_settings_get_pointer(settings, FreeRDP_ClientTimeZone);
+		if (!freerdp_settings_set_pointer_len(_settings, FreeRDP_ClientTimeZone, tz, 1))
+			goto out_fail;
+	}
 
-		if (!freerdp_settings_set_pointer_array(_settings, FreeRDP_TargetNetAddresses, i, address))
+	{
+		const UINT32 nrports = freerdp_settings_get_uint32(settings, FreeRDP_TargetNetAddressCount);
+		if (!freerdp_target_net_adresses_reset(_settings, nrports))
 			goto out_fail;
-		if (!freerdp_settings_set_pointer_array(_settings, FreeRDP_TargetNetPorts, i, port))
-			goto out_fail;
+
+		for (UINT32 i = 0; i < nrports; i++)
+		{
+			const char* address =
+			    freerdp_settings_get_pointer_array(settings, FreeRDP_TargetNetAddresses, i);
+			const UINT32* port =
+			    freerdp_settings_get_pointer_array(settings, FreeRDP_TargetNetPorts, i);
+
+			if (!freerdp_settings_set_pointer_array(_settings, FreeRDP_TargetNetAddresses, i,
+			                                        address))
+				goto out_fail;
+			if (!freerdp_settings_set_pointer_array(_settings, FreeRDP_TargetNetPorts, i, port))
+				goto out_fail;
+		}
 	}
 
 	{
