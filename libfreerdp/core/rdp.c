@@ -845,17 +845,19 @@ BOOL rdp_send(rdpRdp* rdp, wStream* s, UINT16 channel_id, UINT16 sec_flags)
 		should_unlock = TRUE;
 	}
 
-	size_t length = Stream_GetPosition(s);
-	Stream_SetPosition(s, 0);
-	if (!rdp_write_header(rdp, s, length, channel_id, sec_flags))
-		goto fail;
+	{
+		size_t length = Stream_GetPosition(s);
+		Stream_SetPosition(s, 0);
+		if (!rdp_write_header(rdp, s, length, channel_id, sec_flags))
+			goto fail;
 
-	if (!rdp_security_stream_out(rdp, s, length, sec_flags, &pad))
-		goto fail;
+		if (!rdp_security_stream_out(rdp, s, length, sec_flags, &pad))
+			goto fail;
 
-	length += pad;
-	Stream_SetPosition(s, length);
-	Stream_SealLength(s);
+		length += pad;
+		Stream_SetPosition(s, length);
+		Stream_SealLength(s);
+	}
 
 	if (transport_write(rdp->transport, s) < 0)
 		goto fail;
@@ -889,23 +891,25 @@ BOOL rdp_send_pdu(rdpRdp* rdp, wStream* s, UINT16 type, UINT16 channel_id, UINT1
 		should_unlock = TRUE;
 	}
 
-	size_t length = Stream_GetPosition(s);
-	Stream_SetPosition(s, 0);
-	if (!rdp_write_header(rdp, s, length, MCS_GLOBAL_CHANNEL_ID, sec_flags))
-		goto fail;
-	sec_bytes = rdp_get_sec_bytes(rdp, sec_flags);
-	sec_hold = Stream_GetPosition(s);
-	Stream_Seek(s, sec_bytes);
-	if (!rdp_write_share_control_header(rdp, s, length - sec_bytes, type, channel_id))
-		goto fail;
-	Stream_SetPosition(s, sec_hold);
+	{
+		size_t length = Stream_GetPosition(s);
+		Stream_SetPosition(s, 0);
+		if (!rdp_write_header(rdp, s, length, MCS_GLOBAL_CHANNEL_ID, sec_flags))
+			goto fail;
+		sec_bytes = rdp_get_sec_bytes(rdp, sec_flags);
+		sec_hold = Stream_GetPosition(s);
+		Stream_Seek(s, sec_bytes);
+		if (!rdp_write_share_control_header(rdp, s, length - sec_bytes, type, channel_id))
+			goto fail;
+		Stream_SetPosition(s, sec_hold);
 
-	if (!rdp_security_stream_out(rdp, s, length, sec_flags, &pad))
-		goto fail;
+		if (!rdp_security_stream_out(rdp, s, length, sec_flags, &pad))
+			goto fail;
 
-	length += pad;
-	Stream_SetPosition(s, length);
-	Stream_SealLength(s);
+		length += pad;
+		Stream_SetPosition(s, length);
+		Stream_SealLength(s);
+	}
 
 	if (transport_write(rdp->transport, s) < 0)
 		goto fail;
@@ -938,25 +942,27 @@ BOOL rdp_send_data_pdu(rdpRdp* rdp, wStream* s, BYTE type, UINT16 channel_id, UI
 		should_unlock = TRUE;
 	}
 
-	size_t length = Stream_GetPosition(s);
-	Stream_SetPosition(s, 0);
-	if (!rdp_write_header(rdp, s, length, MCS_GLOBAL_CHANNEL_ID, sec_flags))
-		goto fail;
-	sec_bytes = rdp_get_sec_bytes(rdp, sec_flags);
-	sec_hold = Stream_GetPosition(s);
-	Stream_Seek(s, sec_bytes);
-	if (!rdp_write_share_control_header(rdp, s, length - sec_bytes, PDU_TYPE_DATA, channel_id))
-		goto fail;
-	if (!rdp_write_share_data_header(rdp, s, length - sec_bytes, type, rdp->settings->ShareId))
-		goto fail;
-	Stream_SetPosition(s, sec_hold);
+	{
+		size_t length = Stream_GetPosition(s);
+		Stream_SetPosition(s, 0);
+		if (!rdp_write_header(rdp, s, length, MCS_GLOBAL_CHANNEL_ID, sec_flags))
+			goto fail;
+		sec_bytes = rdp_get_sec_bytes(rdp, sec_flags);
+		sec_hold = Stream_GetPosition(s);
+		Stream_Seek(s, sec_bytes);
+		if (!rdp_write_share_control_header(rdp, s, length - sec_bytes, PDU_TYPE_DATA, channel_id))
+			goto fail;
+		if (!rdp_write_share_data_header(rdp, s, length - sec_bytes, type, rdp->settings->ShareId))
+			goto fail;
+		Stream_SetPosition(s, sec_hold);
 
-	if (!rdp_security_stream_out(rdp, s, length, sec_flags, &pad))
-		goto fail;
+		if (!rdp_security_stream_out(rdp, s, length, sec_flags, &pad))
+			goto fail;
 
-	length += pad;
-	Stream_SetPosition(s, length);
-	Stream_SealLength(s);
+		length += pad;
+		Stream_SetPosition(s, length);
+		Stream_SealLength(s);
+	}
 	WLog_Print(rdp->log, WLOG_DEBUG,
 	           "sending data (type=0x%x size=%" PRIuz " channelId=%" PRIu16 ")", type,
 	           Stream_Length(s), channel_id);
@@ -989,16 +995,18 @@ BOOL rdp_send_message_channel_pdu(rdpRdp* rdp, wStream* s, UINT16 sec_flags)
 		should_unlock = TRUE;
 	}
 
-	size_t length = Stream_GetPosition(s);
-	Stream_SetPosition(s, 0);
-	if (!rdp_write_header(rdp, s, length, rdp->mcs->messageChannelId, sec_flags))
-		goto fail;
+	{
+		size_t length = Stream_GetPosition(s);
+		Stream_SetPosition(s, 0);
+		if (!rdp_write_header(rdp, s, length, rdp->mcs->messageChannelId, sec_flags))
+			goto fail;
 
-	if (!rdp_security_stream_out(rdp, s, length, sec_flags, &pad))
-		goto fail;
+		if (!rdp_security_stream_out(rdp, s, length, sec_flags, &pad))
+			goto fail;
 
-	length += pad;
-	Stream_SetPosition(s, length);
+		length += pad;
+		Stream_SetPosition(s, length);
+	}
 	Stream_SealLength(s);
 
 	if (transport_write(rdp->transport, s) < 0)
