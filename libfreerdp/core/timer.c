@@ -275,10 +275,13 @@ FreeRDPTimer* freerdp_timer_new(rdpRdp* rdp)
 	timer->entries = ArrayList_New(TRUE);
 	if (!timer->entries)
 		goto fail;
-	wObject* obj = ArrayList_Object(timer->entries);
-	WINPR_ASSERT(obj);
-	obj->fnObjectNew = entry_new;
-	obj->fnObjectFree = free;
+
+	{
+		wObject* obj = ArrayList_Object(timer->entries);
+		WINPR_ASSERT(obj);
+		obj->fnObjectNew = entry_new;
+		obj->fnObjectFree = free;
+	}
 
 	timer->event = CreateEventA(NULL, TRUE, FALSE, NULL);
 	if (!timer->event)
