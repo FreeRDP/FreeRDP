@@ -30,7 +30,7 @@ function build {
   BASE=$(pwd)
   DST_DIR=$BUILD_DST/$DST_PREFIX
   common_run cd $BUILD_SRC
-  common_run ./Configure ${CONFIG} -D__ANDROID_API__=$NDK_TARGET
+  common_run ./Configure ${CONFIG} -U__ANDROID_API__ -D__ANDROID_API__=$NDK_TARGET
   common_run make SHLIB_EXT=.so -j build_libs
 
   if [ ! -d $DST_DIR ]; then
