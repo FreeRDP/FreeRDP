@@ -301,26 +301,27 @@ static UINT remdesk_send_ctl_authenticate_pdu(remdeskPlugin* remdesk)
 	if (error)
 		goto out;
 
-	wStream* s = Stream_New(NULL, REMDESK_CHANNEL_CTL_SIZE + ctlHeader.ch.DataLength);
-
-	if (!s)
 	{
-		WLog_ERR(TAG, "Stream_New failed!");
-		error = CHANNEL_RC_NO_MEMORY;
-		goto out;
-	}
+		wStream* s = Stream_New(NULL, REMDESK_CHANNEL_CTL_SIZE + ctlHeader.ch.DataLength);
+		if (!s)
+		{
+			WLog_ERR(TAG, "Stream_New failed!");
+			error = CHANNEL_RC_NO_MEMORY;
+			goto out;
+		}
 
-	error = remdesk_write_ctl_header(s, &ctlHeader);
-	if (error)
-	{
-		Stream_Free(s, TRUE);
-		goto out;
-	}
-	Stream_Write(s, raConnectionStringW, cbRaConnectionStringW);
-	Stream_Write(s, expertBlobW, cbExpertBlobW);
-	Stream_SealLength(s);
+		error = remdesk_write_ctl_header(s, &ctlHeader);
+		if (error)
+		{
+			Stream_Free(s, TRUE);
+			goto out;
+		}
+		Stream_Write(s, raConnectionStringW, cbRaConnectionStringW);
+		Stream_Write(s, expertBlobW, cbExpertBlobW);
+		Stream_SealLength(s);
 
-	error = remdesk_virtual_channel_write(remdesk, s);
+		error = remdesk_virtual_channel_write(remdesk, s);
+	}
 	if (error)
 		WLog_ERR(TAG, "remdesk_virtual_channel_write failed with error %" PRIu32 "!", error);
 
@@ -360,26 +361,28 @@ static UINT remdesk_send_ctl_remote_control_desktop_pdu(remdeskPlugin* remdesk)
 	if (error != CHANNEL_RC_OK)
 		goto out;
 
-	wStream* s = Stream_New(NULL, REMDESK_CHANNEL_CTL_SIZE + ctlHeader.ch.DataLength);
-
-	if (!s)
 	{
-		WLog_ERR(TAG, "Stream_New failed!");
-		error = CHANNEL_RC_NO_MEMORY;
-		goto out;
-	}
+		wStream* s = Stream_New(NULL, REMDESK_CHANNEL_CTL_SIZE + ctlHeader.ch.DataLength);
 
-	error = remdesk_write_ctl_header(s, &ctlHeader);
-	if (error)
-	{
-		Stream_Free(s, TRUE);
-		goto out;
-	}
-	Stream_Write(s, raConnectionStringW, cbRaConnectionStringW);
-	Stream_SealLength(s);
+		if (!s)
+		{
+			WLog_ERR(TAG, "Stream_New failed!");
+			error = CHANNEL_RC_NO_MEMORY;
+			goto out;
+		}
 
-	if ((error = remdesk_virtual_channel_write(remdesk, s)))
-		WLog_ERR(TAG, "remdesk_virtual_channel_write failed with error %" PRIu32 "!", error);
+		error = remdesk_write_ctl_header(s, &ctlHeader);
+		if (error)
+		{
+			Stream_Free(s, TRUE);
+			goto out;
+		}
+		Stream_Write(s, raConnectionStringW, cbRaConnectionStringW);
+		Stream_SealLength(s);
+
+		if ((error = remdesk_virtual_channel_write(remdesk, s)))
+			WLog_ERR(TAG, "remdesk_virtual_channel_write failed with error %" PRIu32 "!", error);
+	}
 
 out:
 	free(raConnectionStringW);
@@ -418,25 +421,28 @@ static UINT remdesk_send_ctl_verify_password_pdu(remdeskPlugin* remdesk)
 	if (error)
 		goto out;
 
-	wStream* s = Stream_New(NULL, 1ULL * REMDESK_CHANNEL_CTL_SIZE + pdu.ctlHeader.ch.DataLength);
-
-	if (!s)
 	{
-		WLog_ERR(TAG, "Stream_New failed!");
-		error = CHANNEL_RC_NO_MEMORY;
-		goto out;
-	}
+		wStream* s =
+		    Stream_New(NULL, 1ULL * REMDESK_CHANNEL_CTL_SIZE + pdu.ctlHeader.ch.DataLength);
 
-	error = remdesk_write_ctl_header(s, &(pdu.ctlHeader));
-	if (error)
-	{
-		Stream_Free(s, TRUE);
-		goto out;
-	}
-	Stream_Write(s, expertBlobW, cbExpertBlobW);
-	Stream_SealLength(s);
+		if (!s)
+		{
+			WLog_ERR(TAG, "Stream_New failed!");
+			error = CHANNEL_RC_NO_MEMORY;
+			goto out;
+		}
 
-	error = remdesk_virtual_channel_write(remdesk, s);
+		error = remdesk_write_ctl_header(s, &(pdu.ctlHeader));
+		if (error)
+		{
+			Stream_Free(s, TRUE);
+			goto out;
+		}
+		Stream_Write(s, expertBlobW, cbExpertBlobW);
+		Stream_SealLength(s);
+
+		error = remdesk_virtual_channel_write(remdesk, s);
+	}
 	if (error)
 		WLog_ERR(TAG, "remdesk_virtual_channel_write failed with error %" PRIu32 "!", error);
 
