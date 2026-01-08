@@ -704,17 +704,21 @@ char* freerdp_tcp_address_to_string(const struct sockaddr_storage* addr, BOOL* p
 	return _strdup(ipAddress);
 }
 
-static char* freerdp_tcp_get_ip_address(int sockfd, BOOL* pIPv6)
+static bool freerdp_tcp_get_ip_address(rdpSettings* settings, int sockfd)
 {
+	WINPR_ASSERT(settings);
+
 	struct sockaddr_storage saddr = { 0 };
 	socklen_t length = sizeof(struct sockaddr_storage);
 
+	if (!freerdp_settings_set_string(settings, FreeRDP_ClientAddress, NULL))
+		return false;
+	if (sockfd < 0)
+		return false;
 	if (getsockname(sockfd, (struct sockaddr*)&saddr, &length) != 0)
-	{
-		return NULL;
-	}
-
-	return freerdp_tcp_address_to_string(&saddr, pIPv6);
+		return false;
+	settings->ClientAddress = freerdp_tcp_address_to_string(&saddr, &settings->IPv6Enabled);
+	return settings->ClientAddress != NULL;
 }
 
 char* freerdp_tcp_get_peer_address(SOCKET sockfd)
@@ -853,11 +857,17 @@ static BOOL freerdp_tcp_connect_timeout(rdpContext* context, int sockfd, struct 
 	}
 
 	{
-		const SSIZE_T res = recv(sockfd, NULL, 0, 0);
-		if (res == SOCKET_ERROR)
+		INT32 optval = 0;
+		socklen_t optlen = sizeof(optval);
+		if (getsockopt(sockfd, SOL_SOCKET, SO_ERROR, &optval, &optlen) < 0)
+			goto fail;
+
+		if (optval != 0)
 		{
-			if (WSAGetLastError() == WSAECONNRESET)
-				goto fail;
+			char ebuffer[256] = { 0 };
+			WLog_DBG(TAG, "connect failed with error: %s [%" PRIu32 "]",
+			         winpr_strerror(optval, ebuffer, sizeof(ebuffer)), optval);
+			goto fail;
 		}
 	}
 
@@ -1071,6 +1081,53 @@ int freerdp_tcp_connect(rdpContext* context, const char* hostname, int port, DWO
 	return transport_tcp_connect(context->rdp->transport, hostname, port, timeout);
 }
 
+static struct addrinfo* reorder_addrinfo_by_preference(rdpContext* context, struct addrinfo* addr)
+{
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(addr);
+
+	const BOOL preferIPv6 =
+	    freerdp_settings_get_bool(context->settings, FreeRDP_PreferIPv6OverIPv4);
+	if (!preferIPv6)
+		return addr;
+
+	struct addrinfo* ipv6Head = NULL;
+	struct addrinfo* ipv6Tail = NULL;
+	struct addrinfo* otherHead = NULL;
+	struct addrinfo* otherTail = NULL;
+
+	/* Partition the list into IPv6 and other addresses */
+	while (addr)
+	{
+		struct addrinfo* next = addr->ai_next;
+		addr->ai_next = NULL;
+
+		if (addr->ai_family == AF_INET6)
+		{
+			if (!ipv6Head)
+				ipv6Head = addr;
+			else
+				ipv6Tail->ai_next = addr;
+			ipv6Tail = addr;
+		}
+		else
+		{
+			if (!otherHead)
+				otherHead = addr;
+			else
+				otherTail->ai_next = addr;
+			otherTail = addr;
+		}
+		addr = next;
+	}
+
+	/* Concatenate the lists */
+	if (ipv6Tail)
+		ipv6Tail->ai_next = otherHead;
+
+	return ipv6Head ? ipv6Head : otherHead;
+}
+
 static int get_next_addrinfo(rdpContext* context, struct addrinfo* input, struct addrinfo** result,
                              UINT32 errorCode)
 {
@@ -1080,14 +1137,6 @@ static int get_next_addrinfo(rdpContext* context, struct addrinfo* input, struct
 	struct addrinfo* addr = input;
 	if (!addr)
 		goto fail;
-
-	if (freerdp_settings_get_bool(context->settings, FreeRDP_PreferIPv6OverIPv4))
-	{
-		while (addr && (addr->ai_family != AF_INET6))
-			addr = addr->ai_next;
-		if (!addr)
-			addr = input;
-	}
 
 	/* We want to force IPvX, abort if not detected */
 	{
@@ -1116,13 +1165,122 @@ static int get_next_addrinfo(rdpContext* context, struct addrinfo* input, struct
 fail:
 	freerdp_set_last_error_if_not(context, errorCode);
 	freeaddrinfo(input);
+	*result = NULL;
 	return -1;
+}
+
+static int freerdp_vsock_connect(rdpContext* context, const char* hostname, int port)
+{
+#if defined(HAVE_AF_VSOCK_H)
+	int sockfd = socket(AF_VSOCK, SOCK_STREAM, 0);
+	if (sockfd < 0)
+	{
+		char buffer[256] = { 0 };
+		WLog_WARN(TAG, "socket(AF_VSOCK, SOCK_STREAM, 0) failed with %s [%d]",
+		          winpr_strerror(errno, buffer, sizeof(buffer)));
+		freerdp_set_last_error_if_not(context, FREERDP_ERROR_CONNECT_FAILED);
+		return -1;
+	}
+
+	struct sockaddr_vm addr = { 0 };
+
+	addr.svm_family = AF_VSOCK;
+	addr.svm_port = WINPR_ASSERTING_INT_CAST(typeof(addr.svm_port), port);
+
+	errno = 0;
+	char* ptr = NULL;
+	unsigned long val = strtoul(hostname, &ptr, 10);
+	if (errno || (val > UINT32_MAX))
+	{
+		char ebuffer[256] = { 0 };
+		WLog_ERR(TAG, "could not extract port from '%s', value=%ul, error=%s", hostname, val,
+		         winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
+		return -1;
+	}
+	addr.svm_cid = WINPR_ASSERTING_INT_CAST(typeof(addr.svm_cid), val);
+	if (addr.svm_cid == 2)
+	{
+		addr.svm_flags = VMADDR_FLAG_TO_HOST;
+	}
+	if ((connect(sockfd, (struct sockaddr*)&addr, sizeof(struct sockaddr_vm))) == -1)
+	{
+		WLog_ERR(TAG, "failed to connect to %s", hostname);
+		return -1;
+	}
+	return sockfd;
+#else
+	WLog_ERR(TAG, "Compiled without AF_VSOCK, '%s' not supported", hostname);
+	return -1;
+#endif
+}
+
+static void log_connection_address(const char* hostname, struct addrinfo* addr)
+{
+	WINPR_ASSERT(addr);
+
+	char* peerAddress =
+	    freerdp_tcp_address_to_string((const struct sockaddr_storage*)addr->ai_addr, NULL);
+	if (peerAddress)
+		WLog_DBG(TAG, "resolved %s: try to connect to %s", hostname, peerAddress);
+	free(peerAddress);
+}
+
+static int freerdp_host_connect(rdpContext* context, const char* hostname, int port, DWORD timeout)
+{
+	int sockfd = -1;
+	struct addrinfo* addr = NULL;
+	struct addrinfo* result = freerdp_tcp_resolve_host(hostname, port, 0);
+
+	if (!result)
+	{
+		freerdp_set_last_error_if_not(context, FREERDP_ERROR_DNS_NAME_NOT_FOUND);
+		return -1;
+	}
+	freerdp_set_last_error_log(context, 0);
+
+	/* By default we take the first returned entry.
+	 * If PreferIPv6OverIPv4 = TRUE we reorder addresses by preference:
+	 * IPv6 addresses come first, then other addresses.
+	 */
+	result = reorder_addrinfo_by_preference(context, result);
+
+	const int rc = get_next_addrinfo(context, result, &addr, FREERDP_ERROR_DNS_NAME_NOT_FOUND);
+	if (rc < 0)
+		goto fail;
+
+	do
+	{
+		sockfd = socket(addr->ai_family, addr->ai_socktype, addr->ai_protocol);
+		if (sockfd >= 0)
+		{
+			log_connection_address(hostname, addr);
+
+			if (!freerdp_tcp_connect_timeout(context, sockfd, addr->ai_addr, addr->ai_addrlen,
+			                                 timeout))
+			{
+				close(sockfd);
+				sockfd = -1;
+			}
+		}
+
+		if (sockfd < 0)
+		{
+			const int lrc =
+			    get_next_addrinfo(context, addr->ai_next, &addr, FREERDP_ERROR_CONNECT_FAILED);
+			if (lrc < 0)
+				goto fail;
+		}
+	} while (sockfd < 0);
+
+fail:
+	freeaddrinfo(result);
+	return sockfd;
 }
 
 int freerdp_tcp_default_connect(rdpContext* context, rdpSettings* settings, const char* hostname,
                                 int port, DWORD timeout)
 {
-	int sockfd = 0;
+	int sockfd = -1;
 	BOOL ipcSocket = FALSE;
 	BOOL useExternalDefinedSocket = FALSE;
 
@@ -1153,53 +1311,9 @@ int freerdp_tcp_default_connect(rdpContext* context, rdpSettings* settings, cons
 	else if (useExternalDefinedSocket)
 		sockfd = port;
 	else if (vsock)
-	{
-#if defined(HAVE_AF_VSOCK_H)
-		hostname = vsock;
-		sockfd = socket(AF_VSOCK, SOCK_STREAM, 0);
-		if (sockfd < 0)
-		{
-			char buffer[256] = { 0 };
-			WLog_WARN(TAG, "socket(AF_VSOCK, SOCK_STREAM, 0) failed with %s [%d]",
-			          winpr_strerror(errno, buffer, sizeof(buffer)));
-			freerdp_set_last_error_if_not(context, FREERDP_ERROR_CONNECT_FAILED);
-			return -1;
-		}
-
-		struct sockaddr_vm addr = { 0 };
-
-		addr.svm_family = AF_VSOCK;
-		addr.svm_port = WINPR_ASSERTING_INT_CAST(typeof(addr.svm_port), port);
-
-		errno = 0;
-		char* ptr = NULL;
-		unsigned long val = strtoul(hostname, &ptr, 10);
-		if (errno || (val > UINT32_MAX))
-		{
-			char ebuffer[256] = { 0 };
-			WLog_ERR(TAG, "could not extract port from '%s', value=%ul, error=%s", hostname, val,
-			         winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
-			return -1;
-		}
-		addr.svm_cid = WINPR_ASSERTING_INT_CAST(typeof(addr.svm_cid), val);
-		if (addr.svm_cid == 2)
-		{
-			addr.svm_flags = VMADDR_FLAG_TO_HOST;
-		}
-		if ((connect(sockfd, (struct sockaddr*)&addr, sizeof(struct sockaddr_vm))) == -1)
-		{
-			WLog_ERR(TAG, "failed to connect to %s", hostname);
-			return -1;
-		}
-#else
-		WLog_ERR(TAG, "Compiled without AF_VSOCK, '%s' not supported", hostname);
-		return -1;
-#endif
-	}
+		sockfd = freerdp_vsock_connect(context, vsock, port);
 	else
 	{
-		sockfd = -1;
-
 		if (!settings->GatewayEnabled)
 		{
 			if (!freerdp_tcp_is_hostname_resolvable(context, hostname) ||
@@ -1216,72 +1330,12 @@ int freerdp_tcp_default_connect(rdpContext* context, rdpSettings* settings, cons
 		}
 
 		if (sockfd <= 0)
-		{
-			char* peerAddress = NULL;
-			struct addrinfo* addr = NULL;
-			struct addrinfo* result = NULL;
-
-			result = freerdp_tcp_resolve_host(hostname, port, 0);
-
-			if (!result)
-			{
-				freerdp_set_last_error_if_not(context, FREERDP_ERROR_DNS_NAME_NOT_FOUND);
-
-				return -1;
-			}
-			freerdp_set_last_error_log(context, 0);
-
-			/* By default we take the first returned entry.
-			 *
-			 * If PreferIPv6OverIPv4 = TRUE we force to IPv6 if there
-			 * is such an address available, but fall back to first if not found
-			 */
-			const int rc =
-			    get_next_addrinfo(context, result, &addr, FREERDP_ERROR_DNS_NAME_NOT_FOUND);
-			if (rc < 0)
-				return rc;
-
-			do
-			{
-				sockfd = socket(addr->ai_family, addr->ai_socktype, addr->ai_protocol);
-				if (sockfd < 0)
-				{
-					const int lrc = get_next_addrinfo(context, addr->ai_next, &addr,
-					                                  FREERDP_ERROR_CONNECT_FAILED);
-					if (lrc < 0)
-						return lrc;
-				}
-			} while (sockfd < 0);
-
-			if ((peerAddress = freerdp_tcp_address_to_string(
-			         (const struct sockaddr_storage*)addr->ai_addr, NULL)) != NULL)
-			{
-				WLog_DBG(TAG, "connecting to peer %s", peerAddress);
-				free(peerAddress);
-			}
-
-			if (!freerdp_tcp_connect_timeout(context, sockfd, addr->ai_addr, addr->ai_addrlen,
-			                                 timeout))
-			{
-				freeaddrinfo(result);
-				close(sockfd);
-
-				freerdp_set_last_error_if_not(context, FREERDP_ERROR_CONNECT_FAILED);
-
-				WLog_ERR(TAG, "failed to connect to %s", hostname);
-				return -1;
-			}
-
-			freeaddrinfo(result);
-		}
+			sockfd = freerdp_host_connect(context, hostname, port, timeout);
 	}
 
 	if (!vsock)
 	{
-		free(settings->ClientAddress);
-		settings->ClientAddress = freerdp_tcp_get_ip_address(sockfd, &settings->IPv6Enabled);
-
-		if (!settings->ClientAddress)
+		if (!freerdp_tcp_get_ip_address(settings, sockfd))
 		{
 			if (!useExternalDefinedSocket)
 				close(sockfd);
