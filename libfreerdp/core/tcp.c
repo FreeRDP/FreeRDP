@@ -1077,6 +1077,53 @@ int freerdp_tcp_connect(rdpContext* context, const char* hostname, int port, DWO
 	return transport_tcp_connect(context->rdp->transport, hostname, port, timeout);
 }
 
+static struct addrinfo* reorder_addrinfo_by_preference(rdpContext* context, struct addrinfo* addr)
+{
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(addr);
+
+	const BOOL preferIPv6 =
+	    freerdp_settings_get_bool(context->settings, FreeRDP_PreferIPv6OverIPv4);
+	if (!preferIPv6)
+		return addr;
+
+	struct addrinfo* ipv6Head = NULL;
+	struct addrinfo* ipv6Tail = NULL;
+	struct addrinfo* otherHead = NULL;
+	struct addrinfo* otherTail = NULL;
+
+	/* Partition the list into IPv6 and other addresses */
+	while (addr)
+	{
+		struct addrinfo* next = addr->ai_next;
+		addr->ai_next = NULL;
+
+		if (addr->ai_family == AF_INET6)
+		{
+			if (!ipv6Head)
+				ipv6Head = addr;
+			else
+				ipv6Tail->ai_next = addr;
+			ipv6Tail = addr;
+		}
+		else
+		{
+			if (!otherHead)
+				otherHead = addr;
+			else
+				otherTail->ai_next = addr;
+			otherTail = addr;
+		}
+		addr = next;
+	}
+
+	/* Concatenate the lists */
+	if (ipv6Tail)
+		ipv6Tail->ai_next = otherHead;
+
+	return ipv6Head ? ipv6Head : otherHead;
+}
+
 static int get_next_addrinfo(rdpContext* context, struct addrinfo* input, struct addrinfo** result,
                              UINT32 errorCode)
 {
@@ -1086,14 +1133,6 @@ static int get_next_addrinfo(rdpContext* context, struct addrinfo* input, struct
 	struct addrinfo* addr = input;
 	if (!addr)
 		goto fail;
-
-	if (freerdp_settings_get_bool(context->settings, FreeRDP_PreferIPv6OverIPv4))
-	{
-		while (addr && (addr->ai_family != AF_INET6))
-			addr = addr->ai_next;
-		if (!addr)
-			addr = input;
-	}
 
 	/* We want to force IPvX, abort if not detected */
 	{
@@ -1239,9 +1278,11 @@ int freerdp_tcp_default_connect(rdpContext* context, rdpSettings* settings, cons
 
 			/* By default we take the first returned entry.
 			 *
-			 * If PreferIPv6OverIPv4 = TRUE we force to IPv6 if there
-			 * is such an address available, but fall back to first if not found
+			 * If PreferIPv6OverIPv4 = TRUE we reorder addresses by preference:
+			 * IPv6 addresses come first, then other addresses.
 			 */
+			result = reorder_addrinfo_by_preference(context, result);
+
 			const int rc =
 			    get_next_addrinfo(context, result, &addr, FREERDP_ERROR_DNS_NAME_NOT_FOUND);
 			if (rc < 0)
