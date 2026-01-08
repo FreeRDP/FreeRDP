@@ -125,34 +125,39 @@ UINT cliprdr_process_format_list(cliprdrPlugin* cliprdr, wStream* s, UINT32 data
 	         cliprdr_read_format_list(cliprdr->log, s, &formatList, cliprdr->useLongFormatNames)))
 		goto error_out;
 
-	const UINT32 mask =
-	    freerdp_settings_get_uint32(context->rdpcontext->settings, FreeRDP_ClipboardFeatureMask);
-	filteredFormatList = cliprdr_filter_format_list(
-	    &formatList, mask, CLIPRDR_FLAG_REMOTE_TO_LOCAL | CLIPRDR_FLAG_REMOTE_TO_LOCAL_FILES);
+	{
+		const UINT32 mask = freerdp_settings_get_uint32(context->rdpcontext->settings,
+		                                                FreeRDP_ClipboardFeatureMask);
+		filteredFormatList = cliprdr_filter_format_list(
+		    &formatList, mask, CLIPRDR_FLAG_REMOTE_TO_LOCAL | CLIPRDR_FLAG_REMOTE_TO_LOCAL_FILES);
+	}
+
 	if (filteredFormatList.numFormats == 0)
 		goto error_out;
 
-	const DWORD level = WLOG_DEBUG;
-	if (WLog_IsLevelActive(cliprdr->log, level))
 	{
-		WLog_Print(cliprdr->log, level, "ServerFormatList: numFormats: %" PRIu32 "",
-		           formatList.numFormats);
-		for (size_t x = 0; x < formatList.numFormats; x++)
+		const DWORD level = WLOG_DEBUG;
+		if (WLog_IsLevelActive(cliprdr->log, level))
 		{
-			const CLIPRDR_FORMAT* format = &formatList.formats[x];
-			WLog_Print(cliprdr->log, level, "[%" PRIuz "]: id=0x%08" PRIx32 " [%s|%s]", x,
-			           format->formatId, ClipboardGetFormatIdString(format->formatId),
-			           format->formatName);
-		}
+			WLog_Print(cliprdr->log, level, "ServerFormatList: numFormats: %" PRIu32 "",
+			           formatList.numFormats);
+			for (size_t x = 0; x < formatList.numFormats; x++)
+			{
+				const CLIPRDR_FORMAT* format = &formatList.formats[x];
+				WLog_Print(cliprdr->log, level, "[%" PRIuz "]: id=0x%08" PRIx32 " [%s|%s]", x,
+				           format->formatId, ClipboardGetFormatIdString(format->formatId),
+				           format->formatName);
+			}
 
-		WLog_Print(cliprdr->log, level, "ServerFormatList [filtered]: numFormats: %" PRIu32 "",
-		           filteredFormatList.numFormats);
-		for (size_t x = 0; x < filteredFormatList.numFormats; x++)
-		{
-			const CLIPRDR_FORMAT* format = &filteredFormatList.formats[x];
-			WLog_Print(cliprdr->log, level, "[%" PRIuz "]: id=0x%08" PRIx32 " [%s|%s]", x,
-			           format->formatId, ClipboardGetFormatIdString(format->formatId),
-			           format->formatName);
+			WLog_Print(cliprdr->log, level, "ServerFormatList [filtered]: numFormats: %" PRIu32 "",
+			           filteredFormatList.numFormats);
+			for (size_t x = 0; x < filteredFormatList.numFormats; x++)
+			{
+				const CLIPRDR_FORMAT* format = &filteredFormatList.formats[x];
+				WLog_Print(cliprdr->log, level, "[%" PRIuz "]: id=0x%08" PRIx32 " [%s|%s]", x,
+				           format->formatId, ClipboardGetFormatIdString(format->formatId),
+				           format->formatName);
+			}
 		}
 	}
 
