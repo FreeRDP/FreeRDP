@@ -585,7 +585,9 @@ static DWORD WINAPI pf_server_handle_peer(LPVOID arg)
 	proxyServer* server = (proxyServer*)client->ContextExtra;
 	WINPR_ASSERT(server);
 
+	ArrayList_Lock(server->peer_list);
 	size_t count = ArrayList_Count(server->peer_list);
+	ArrayList_Unlock(server->peer_list);
 
 	if (!pf_context_init_server_context(client))
 		goto out_free_peer;
@@ -763,12 +765,19 @@ static BOOL pf_server_start_peer(freerdp_peer* client)
 
 	hThread = CreateThread(NULL, 0, pf_server_handle_peer, args, CREATE_SUSPENDED, NULL);
 	if (!hThread)
+	{
+		free(args);
 		return FALSE;
+	}
 
 	args->thread = hThread;
-	if (!ArrayList_Append(server->peer_list, hThread))
+	ArrayList_Lock(server->peer_list);
+	const BOOL appended = ArrayList_Append(server->peer_list, hThread);
+	ArrayList_Unlock(server->peer_list);
+	if (!appended)
 	{
 		(void)CloseHandle(hThread);
+		free(args);
 		return FALSE;
 	}
 
