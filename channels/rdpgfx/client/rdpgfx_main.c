@@ -2101,28 +2101,30 @@ static UINT rdpgfx_on_close(IWTSVirtualChannelCallback* pChannelCallback)
 	if (!gfx)
 		goto fail;
 
-	RdpgfxClientContext* context = gfx->context;
-
-	DEBUG_RDPGFX(gfx->log, "OnClose");
-	error = rdpgfx_save_persistent_cache(gfx);
-
-	if (error)
 	{
-		// print error, but don't consider this a hard failure
-		WLog_Print(gfx->log, WLOG_ERROR,
-		           "rdpgfx_save_persistent_cache failed with error %" PRIu32 "", error);
-	}
+		RdpgfxClientContext* context = gfx->context;
 
-	free_surfaces(context, gfx->SurfaceTable);
-	evict_cache_slots(context, gfx->MaxCacheSlots, gfx->CacheSlots);
+		DEBUG_RDPGFX(gfx->log, "OnClose");
+		error = rdpgfx_save_persistent_cache(gfx);
 
-	free(callback);
-	gfx->UnacknowledgedFrames = 0;
-	gfx->TotalDecodedFrames = 0;
+		if (error)
+		{
+			// print error, but don't consider this a hard failure
+			WLog_Print(gfx->log, WLOG_ERROR,
+			           "rdpgfx_save_persistent_cache failed with error %" PRIu32 "", error);
+		}
 
-	if (context)
-	{
-		IFCALL(context->OnClose, context);
+		free_surfaces(context, gfx->SurfaceTable);
+		evict_cache_slots(context, gfx->MaxCacheSlots, gfx->CacheSlots);
+
+		free(callback);
+		gfx->UnacknowledgedFrames = 0;
+		gfx->TotalDecodedFrames = 0;
+
+		if (context)
+		{
+			IFCALL(context->OnClose, context);
+		}
 	}
 
 fail:
