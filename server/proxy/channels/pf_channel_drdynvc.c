@@ -843,13 +843,17 @@ static DynChannelContext* DynChannelContext_new(proxyData* pdata,
 	if (!HashTable_SetHashFunction(dyn->channels, ChannelId_Hash))
 		goto fail;
 
-	wObject* kobj = HashTable_KeyObject(dyn->channels);
-	WINPR_ASSERT(kobj);
-	kobj->fnObjectEquals = ChannelId_Compare;
+	{
+		wObject* kobj = HashTable_KeyObject(dyn->channels);
+		WINPR_ASSERT(kobj);
+		kobj->fnObjectEquals = ChannelId_Compare;
+	}
 
-	wObject* vobj = HashTable_ValueObject(dyn->channels);
-	WINPR_ASSERT(vobj);
-	vobj->fnObjectFree = DynamicChannelContext_free;
+	{
+		wObject* vobj = HashTable_ValueObject(dyn->channels);
+		WINPR_ASSERT(vobj);
+		vobj->fnObjectFree = DynamicChannelContext_free;
+	}
 
 	return dyn;
 
