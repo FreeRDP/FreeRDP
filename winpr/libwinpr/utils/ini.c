@@ -160,28 +160,29 @@ static BOOL IniFile_Load_File(wIniFile* ini, const char* filename)
 	if (_fseeki64(fp, 0, SEEK_END) < 0)
 		goto out_file;
 
-	const INT64 fileSize = _ftelli64(fp);
+	{
+		const INT64 fileSize = _ftelli64(fp);
+		if (fileSize < 0)
+			goto out_file;
 
-	if (fileSize < 0)
-		goto out_file;
+		if (_fseeki64(fp, 0, SEEK_SET) < 0)
+			goto out_file;
 
-	if (_fseeki64(fp, 0, SEEK_SET) < 0)
-		goto out_file;
+		ini->line = NULL;
+		ini->nextLine = NULL;
 
-	ini->line = NULL;
-	ini->nextLine = NULL;
+		if (fileSize < 1)
+			goto out_file;
 
-	if (fileSize < 1)
-		goto out_file;
+		if (!IniFile_BufferResize(ini, (size_t)fileSize + 2))
+			goto out_file;
 
-	if (!IniFile_BufferResize(ini, (size_t)fileSize + 2))
-		goto out_file;
+		if (fread(ini->buffer, (size_t)fileSize, 1ul, fp) != 1)
+			goto out_file;
 
-	if (fread(ini->buffer, (size_t)fileSize, 1ul, fp) != 1)
-		goto out_file;
-
-	ini->buffer[fileSize] = '\n';
-	ini->buffer[fileSize + 1] = '\0';
+		ini->buffer[fileSize] = '\n';
+		ini->buffer[fileSize + 1] = '\0';
+	}
 	IniFile_Load_NextLine(ini, ini->buffer);
 	rc = TRUE;
 
