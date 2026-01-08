@@ -1153,43 +1153,45 @@ BOOL winpr_RemoveDirectory_RecursiveA(LPCSTR lpPathName)
 	if (FAILED(hr))
 		goto fail;
 
-	WIN32_FIND_DATAA findFileData = { 0 };
-	dir = FindFirstFileA(path_slash, &findFileData);
-
-	if (dir == INVALID_HANDLE_VALUE)
-		goto fail;
-
-	ret = TRUE;
-	path_slash[path_slash_len - 1] = '\0'; /* remove trailing '*' */
-	do
 	{
-		const size_t len = strnlen(findFileData.cFileName, ARRAYSIZE(findFileData.cFileName));
+		WIN32_FIND_DATAA findFileData = { 0 };
+		dir = FindFirstFileA(path_slash, &findFileData);
 
-		if ((len == 1 && findFileData.cFileName[0] == '.') ||
-		    (len == 2 && findFileData.cFileName[0] == '.' && findFileData.cFileName[1] == '.'))
-		{
-			continue;
-		}
-
-		char* fullpath = concat(path_slash, path_slash_len, findFileData.cFileName, len);
-		if (!fullpath)
+		if (dir == INVALID_HANDLE_VALUE)
 			goto fail;
 
-		if (findFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-			ret = winpr_RemoveDirectory_RecursiveA(fullpath);
-		else
+		ret = TRUE;
+		path_slash[path_slash_len - 1] = '\0'; /* remove trailing '*' */
+		do
 		{
-			WINPR_PRAGMA_DIAG_PUSH
-			WINPR_PRAGMA_DIAG_IGNORED_DEPRECATED_DECL
-			ret = DeleteFileA(fullpath);
-			WINPR_PRAGMA_DIAG_POP
-		}
+			const size_t len = strnlen(findFileData.cFileName, ARRAYSIZE(findFileData.cFileName));
 
-		free(fullpath);
+			if ((len == 1 && findFileData.cFileName[0] == '.') ||
+			    (len == 2 && findFileData.cFileName[0] == '.' && findFileData.cFileName[1] == '.'))
+			{
+				continue;
+			}
 
-		if (!ret)
-			break;
-	} while (ret && FindNextFileA(dir, &findFileData) != 0);
+			char* fullpath = concat(path_slash, path_slash_len, findFileData.cFileName, len);
+			if (!fullpath)
+				goto fail;
+
+			if (findFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+				ret = winpr_RemoveDirectory_RecursiveA(fullpath);
+			else
+			{
+				WINPR_PRAGMA_DIAG_PUSH
+				WINPR_PRAGMA_DIAG_IGNORED_DEPRECATED_DECL
+				ret = DeleteFileA(fullpath);
+				WINPR_PRAGMA_DIAG_POP
+			}
+
+			free(fullpath);
+
+			if (!ret)
+				break;
+		} while (ret && FindNextFileA(dir, &findFileData) != 0);
+	}
 
 	if (ret)
 	{
