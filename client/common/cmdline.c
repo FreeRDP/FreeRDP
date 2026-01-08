@@ -4140,116 +4140,121 @@ static BOOL parse_gateway_options(rdpSettings* settings, const COMMAND_LINE_ARGU
 	if (!freerdp_settings_set_bool(settings, FreeRDP_GatewayEnabled, TRUE))
 		goto fail;
 
-	BOOL allowHttpOpts = FALSE;
-	for (size_t x = 0; x < count; x++)
 	{
-		BOOL validOption = FALSE;
-		free(argval);
-		argval = unescape(ptr[x]);
-		if (!argval)
-			goto fail;
-
-		const char* gw = option_starts_with("g:", argval);
-		if (gw)
+		BOOL allowHttpOpts = FALSE;
+		for (size_t x = 0; x < count; x++)
 		{
-			if (!parse_gateway_host_option(settings, gw))
+			BOOL validOption = FALSE;
+			free(argval);
+			argval = unescape(ptr[x]);
+			if (!argval)
 				goto fail;
-			validOption = TRUE;
-			allowHttpOpts = FALSE;
-		}
 
-		const char* gu = option_starts_with("u:", argval);
-		if (gu)
-		{
-			if (!parse_gateway_cred_option(settings, gu, FreeRDP_GatewayUsername))
-				goto fail;
-			validOption = TRUE;
-			allowHttpOpts = FALSE;
-		}
-
-		const char* gd = option_starts_with("d:", argval);
-		if (gd)
-		{
-			if (!parse_gateway_cred_option(settings, gd, FreeRDP_GatewayDomain))
-				goto fail;
-			validOption = TRUE;
-			allowHttpOpts = FALSE;
-		}
-
-		const char* gp = option_starts_with("p:", argval);
-		if (gp)
-		{
-			if (!parse_gateway_cred_option(settings, gp, FreeRDP_GatewayPassword))
-				goto fail;
-			validOption = TRUE;
-			allowHttpOpts = FALSE;
-		}
-
-		const char* gt = option_starts_with("type:", argval);
-		if (gt)
-		{
-			if (!parse_gateway_type_option(settings, gt))
-				goto fail;
-			validOption = TRUE;
-			allowHttpOpts = freerdp_settings_get_bool(settings, FreeRDP_GatewayHttpTransport);
-		}
-
-		const char* gat = option_starts_with("access-token:", argval);
-		if (gat)
-		{
-			if (!freerdp_settings_set_string(settings, FreeRDP_GatewayAccessToken, gat))
-				goto fail;
-			validOption = TRUE;
-			allowHttpOpts = FALSE;
-		}
-
-		const char* bearer = option_starts_with("bearer:", argval);
-		if (bearer)
-		{
-			if (!freerdp_settings_set_string(settings, FreeRDP_GatewayHttpExtAuthBearer, bearer))
-				goto fail;
-			validOption = TRUE;
-			allowHttpOpts = FALSE;
-		}
-
-		const char* gwurl = option_starts_with("url:", argval);
-		if (gwurl)
-		{
-			if (!freerdp_settings_set_string(settings, FreeRDP_GatewayUrl, gwurl))
-				goto fail;
-			if (!freerdp_set_gateway_usage_method(settings, TSC_PROXY_MODE_DIRECT))
-				goto fail;
-			validOption = TRUE;
-			allowHttpOpts = FALSE;
-		}
-
-		const char* um = option_starts_with("usage-method:", argval);
-		if (um)
-		{
-			if (!parse_gateway_usage_option(settings, um))
-				goto fail;
-			validOption = TRUE;
-			allowHttpOpts = FALSE;
-		}
-
-		if (allowHttpOpts)
-		{
-			if (option_equals(argval, "no-websockets"))
+			const char* gw = option_starts_with("g:", argval);
+			if (gw)
 			{
-				if (!freerdp_settings_set_bool(settings, FreeRDP_GatewayHttpUseWebsockets, FALSE))
+				if (!parse_gateway_host_option(settings, gw))
 					goto fail;
 				validOption = TRUE;
+				allowHttpOpts = FALSE;
 			}
-			else if (option_equals(argval, "extauth-sspi-ntlm"))
+
+			const char* gu = option_starts_with("u:", argval);
+			if (gu)
 			{
-				if (!freerdp_settings_set_bool(settings, FreeRDP_GatewayHttpExtAuthSspiNtlm, TRUE))
+				if (!parse_gateway_cred_option(settings, gu, FreeRDP_GatewayUsername))
 					goto fail;
 				validOption = TRUE;
+				allowHttpOpts = FALSE;
 			}
-		}
 
-		if (!validOption)
-			goto fail;
+			const char* gd = option_starts_with("d:", argval);
+			if (gd)
+			{
+				if (!parse_gateway_cred_option(settings, gd, FreeRDP_GatewayDomain))
+					goto fail;
+				validOption = TRUE;
+				allowHttpOpts = FALSE;
+			}
+
+			const char* gp = option_starts_with("p:", argval);
+			if (gp)
+			{
+				if (!parse_gateway_cred_option(settings, gp, FreeRDP_GatewayPassword))
+					goto fail;
+				validOption = TRUE;
+				allowHttpOpts = FALSE;
+			}
+
+			const char* gt = option_starts_with("type:", argval);
+			if (gt)
+			{
+				if (!parse_gateway_type_option(settings, gt))
+					goto fail;
+				validOption = TRUE;
+				allowHttpOpts = freerdp_settings_get_bool(settings, FreeRDP_GatewayHttpTransport);
+			}
+
+			const char* gat = option_starts_with("access-token:", argval);
+			if (gat)
+			{
+				if (!freerdp_settings_set_string(settings, FreeRDP_GatewayAccessToken, gat))
+					goto fail;
+				validOption = TRUE;
+				allowHttpOpts = FALSE;
+			}
+
+			const char* bearer = option_starts_with("bearer:", argval);
+			if (bearer)
+			{
+				if (!freerdp_settings_set_string(settings, FreeRDP_GatewayHttpExtAuthBearer,
+				                                 bearer))
+					goto fail;
+				validOption = TRUE;
+				allowHttpOpts = FALSE;
+			}
+
+			const char* gwurl = option_starts_with("url:", argval);
+			if (gwurl)
+			{
+				if (!freerdp_settings_set_string(settings, FreeRDP_GatewayUrl, gwurl))
+					goto fail;
+				if (!freerdp_set_gateway_usage_method(settings, TSC_PROXY_MODE_DIRECT))
+					goto fail;
+				validOption = TRUE;
+				allowHttpOpts = FALSE;
+			}
+
+			const char* um = option_starts_with("usage-method:", argval);
+			if (um)
+			{
+				if (!parse_gateway_usage_option(settings, um))
+					goto fail;
+				validOption = TRUE;
+				allowHttpOpts = FALSE;
+			}
+
+			if (allowHttpOpts)
+			{
+				if (option_equals(argval, "no-websockets"))
+				{
+					if (!freerdp_settings_set_bool(settings, FreeRDP_GatewayHttpUseWebsockets,
+					                               FALSE))
+						goto fail;
+					validOption = TRUE;
+				}
+				else if (option_equals(argval, "extauth-sspi-ntlm"))
+				{
+					if (!freerdp_settings_set_bool(settings, FreeRDP_GatewayHttpExtAuthSspiNtlm,
+					                               TRUE))
+						goto fail;
+					validOption = TRUE;
+				}
+			}
+
+			if (!validOption)
+				goto fail;
+		}
 	}
 
 	rc = TRUE;
@@ -5823,34 +5828,41 @@ static BOOL args_from_env(const char* name, int* aargc, char** aargv[], const ch
 		goto cleanup;
 	}
 
-	const DWORD size = GetEnvironmentVariableX(name, env, 0);
-	if (size == 0)
 	{
-		WLog_ERR(TAG, "%s - no environment variable '%s'", arg, name);
-		goto cleanup;
-	}
-	env = calloc(size + 1, sizeof(char));
-	if (!env)
-		goto cleanup;
-	const DWORD rc = GetEnvironmentVariableX(name, env, size);
-	if (rc != size - 1)
-		goto cleanup;
-	if (rc == 0)
-	{
-		WLog_ERR(TAG, "%s - environment variable '%s' is empty", arg);
-		goto cleanup;
+		const DWORD size = GetEnvironmentVariableX(name, env, 0);
+		if (size == 0)
+		{
+			WLog_ERR(TAG, "%s - no environment variable '%s'", arg, name);
+			goto cleanup;
+		}
+		env = calloc(size + 1, sizeof(char));
+		if (!env)
+			goto cleanup;
+
+		{
+			const DWORD rc = GetEnvironmentVariableX(name, env, size);
+			if (rc != size - 1)
+				goto cleanup;
+			if (rc == 0)
+			{
+				WLog_ERR(TAG, "%s - environment variable '%s' is empty", arg);
+				goto cleanup;
+			}
+		}
 	}
 
 	if (!argv_append_dup(aargc, aargv, cmd))
 		goto cleanup;
 
-	char* context = NULL;
-	char* tok = strtok_s(env, "\n", &context);
-	while (tok)
 	{
-		if (!argv_append_dup(aargc, aargv, tok))
-			goto cleanup;
-		tok = strtok_s(NULL, "\n", &context);
+		char* context = NULL;
+		char* tok = strtok_s(env, "\n", &context);
+		while (tok)
+		{
+			if (!argv_append_dup(aargc, aargv, tok))
+				goto cleanup;
+			tok = strtok_s(NULL, "\n", &context);
+		}
 	}
 
 	success = TRUE;
