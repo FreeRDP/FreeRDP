@@ -395,13 +395,15 @@ int main(int argc, char* argv[])
 	if (!context)
 		goto fail;
 
-	const int status =
-	    freerdp_client_settings_parse_command_line(context->settings, argc, argv, FALSE);
-	if (status)
 	{
-		rc = freerdp_client_settings_command_line_status_print(context->settings, status, argc,
-		                                                       argv);
-		goto fail;
+		const int status =
+		    freerdp_client_settings_parse_command_line(context->settings, argc, argv, FALSE);
+		if (status)
+		{
+			rc = freerdp_client_settings_command_line_status_print(context->settings, status, argc,
+			                                                       argv);
+			goto fail;
+		}
 	}
 
 	if (!stream_dump_register_handlers(context, CONNECTION_STATE_MCS_CREATE_REQUEST, FALSE))
@@ -410,8 +412,10 @@ int main(int argc, char* argv[])
 	if (freerdp_client_start(context) != 0)
 		goto fail;
 
-	const DWORD res = tf_client_thread_proc(context->instance);
-	rc = (int)res;
+	{
+		const DWORD res = tf_client_thread_proc(context->instance);
+		rc = (int)res;
+	}
 
 	if (freerdp_client_stop(context) != 0)
 		rc = -1;
