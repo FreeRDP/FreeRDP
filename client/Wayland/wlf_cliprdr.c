@@ -793,24 +793,26 @@ wlf_cliprdr_server_format_data_request(CliprdrClientContext* context,
 			goto fail;
 	}
 
-	const BOOL res = ClipboardSetData(clipboard->system, localFormatId, data, (UINT32)size);
-	free(data);
-
-	UINT32 len = 0;
-	data = NULL;
-	if (res)
-		data = ClipboardGetData(clipboard->system, formatId, &len);
-
-	if (!res || !data)
-		goto fail;
-
-	if (fileFormatId == formatId)
 	{
-		const UINT32 flags = cliprdr_file_context_remote_get_flags(clipboard->file);
-		const UINT32 error = cliprdr_serialize_file_list_ex(
-		    flags, (const FILEDESCRIPTORW*)data, len / sizeof(FILEDESCRIPTORW), &ddata, &dsize);
-		if (error)
+		const BOOL res = ClipboardSetData(clipboard->system, localFormatId, data, (UINT32)size);
+		free(data);
+
+		UINT32 len = 0;
+		data = NULL;
+		if (res)
+			data = ClipboardGetData(clipboard->system, formatId, &len);
+
+		if (!res || !data)
 			goto fail;
+
+		if (fileFormatId == formatId)
+		{
+			const UINT32 flags = cliprdr_file_context_remote_get_flags(clipboard->file);
+			const UINT32 error = cliprdr_serialize_file_list_ex(
+			    flags, (const FILEDESCRIPTORW*)data, len / sizeof(FILEDESCRIPTORW), &ddata, &dsize);
+			if (error)
+				goto fail;
+		}
 	}
 fail:
 	ClipboardUnlock(clipboard->system);
@@ -855,70 +857,76 @@ wlf_cliprdr_server_format_data_response(CliprdrClientContext* context,
 
 	ClipboardLock(clipboard->system);
 	EnterCriticalSection(&clipboard->lock);
-
-	BYTE* cdata = NULL;
-	UINT32 srcFormatId = 0;
-	UINT32 dstFormatId = 0;
-	switch (request->responseFormat)
 	{
-		case CF_TEXT:
-		case CF_OEMTEXT:
-		case CF_UNICODETEXT:
-			srcFormatId = request->responseFormat;
-			dstFormatId = ClipboardGetFormatId(clipboard->system, request->responseMime);
-			break;
-
-		case CF_DIB:
-		case CF_DIBV5:
-			srcFormatId = request->responseFormat;
-			dstFormatId = ClipboardGetFormatId(clipboard->system, request->responseMime);
-			break;
-
-		default:
+		BYTE* cdata = NULL;
+		UINT32 srcFormatId = 0;
+		UINT32 dstFormatId = 0;
+		switch (request->responseFormat)
 		{
-			const char* name = wlf_get_server_format_name(clipboard, request->responseFormat);
-			if (name)
-			{
-				if (strcmp(type_FileGroupDescriptorW, name) == 0)
-				{
-					srcFormatId =
-					    ClipboardGetFormatId(clipboard->system, type_FileGroupDescriptorW);
-					dstFormatId = ClipboardGetFormatId(clipboard->system, request->responseMime);
+			case CF_TEXT:
+			case CF_OEMTEXT:
+			case CF_UNICODETEXT:
+				srcFormatId = request->responseFormat;
+				dstFormatId = ClipboardGetFormatId(clipboard->system, request->responseMime);
+				break;
 
-					if (!cliprdr_file_context_update_server_data(clipboard->file, clipboard->system,
-					                                             data, size))
-						goto unlock;
-				}
-				else if (strcmp(type_HtmlFormat, name) == 0)
+			case CF_DIB:
+			case CF_DIBV5:
+				srcFormatId = request->responseFormat;
+				dstFormatId = ClipboardGetFormatId(clipboard->system, request->responseMime);
+				break;
+
+			default:
+			{
+				const char* name = wlf_get_server_format_name(clipboard, request->responseFormat);
+				if (name)
 				{
-					srcFormatId = ClipboardGetFormatId(clipboard->system, type_HtmlFormat);
-					dstFormatId = ClipboardGetFormatId(clipboard->system, request->responseMime);
+					if (strcmp(type_FileGroupDescriptorW, name) == 0)
+					{
+						srcFormatId =
+						    ClipboardGetFormatId(clipboard->system, type_FileGroupDescriptorW);
+						dstFormatId =
+						    ClipboardGetFormatId(clipboard->system, request->responseMime);
+
+						if (!cliprdr_file_context_update_server_data(clipboard->file,
+						                                             clipboard->system, data, size))
+							goto unlock;
+					}
+					else if (strcmp(type_HtmlFormat, name) == 0)
+					{
+						srcFormatId = ClipboardGetFormatId(clipboard->system, type_HtmlFormat);
+						dstFormatId =
+						    ClipboardGetFormatId(clipboard->system, request->responseMime);
+					}
 				}
 			}
+			break;
 		}
-		break;
+		{
+			UINT32 len = 0;
+
+			{
+				const BOOL sres = ClipboardSetData(clipboard->system, srcFormatId, data, size);
+				if (sres)
+					cdata = ClipboardGetData(clipboard->system, dstFormatId, &len);
+
+				if (!sres || !cdata)
+					goto unlock;
+			}
+
+			if (request->responseFile)
+			{
+				const size_t res = fwrite(cdata, 1, len, request->responseFile);
+				if (res == len)
+					rc = CHANNEL_RC_OK;
+			}
+			else
+				rc = CHANNEL_RC_OK;
+		}
+
+	unlock:
+		free(cdata);
 	}
-
-	UINT32 len = 0;
-
-	const BOOL sres = ClipboardSetData(clipboard->system, srcFormatId, data, size);
-	if (sres)
-		cdata = ClipboardGetData(clipboard->system, dstFormatId, &len);
-
-	if (!sres || !cdata)
-		goto unlock;
-
-	if (request->responseFile)
-	{
-		const size_t res = fwrite(cdata, 1, len, request->responseFile);
-		if (res == len)
-			rc = CHANNEL_RC_OK;
-	}
-	else
-		rc = CHANNEL_RC_OK;
-
-unlock:
-	free(cdata);
 	ClipboardUnlock(clipboard->system);
 	LeaveCriticalSection(&clipboard->lock);
 fail:
@@ -958,10 +966,12 @@ wfClipboard* wlf_clipboard_new(wlfContext* wfc)
 	if (!clipboard->request_queue)
 		goto fail;
 
-	wObject* obj = Queue_Object(clipboard->request_queue);
-	WINPR_ASSERT(obj);
-	obj->fnObjectFree = wlf_request_free;
-	obj->fnObjectNew = wlf_request_clone;
+	{
+		wObject* obj = Queue_Object(clipboard->request_queue);
+		WINPR_ASSERT(obj);
+		obj->fnObjectFree = wlf_request_free;
+		obj->fnObjectNew = wlf_request_clone;
+	}
 
 	return clipboard;
 
