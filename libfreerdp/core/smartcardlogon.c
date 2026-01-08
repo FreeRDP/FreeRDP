@@ -729,49 +729,54 @@ static SmartcardCertInfo* smartcardCertInfo_New(const char* privKeyPEM, const ch
 	if (!cert)
 		goto fail;
 
-	SmartcardKeyInfo* info = cert->key_info = calloc(1, sizeof(SmartcardKeyInfo));
-	if (!info)
-		goto fail;
-
-	cert->certificate = freerdp_certificate_new_from_pem(certPEM);
-	if (!cert->certificate)
 	{
-		WLog_ERR(TAG, "unable to read smartcard certificate");
-		goto fail;
+		SmartcardKeyInfo* info = cert->key_info = calloc(1, sizeof(SmartcardKeyInfo));
+		if (!info)
+			goto fail;
+
+		cert->certificate = freerdp_certificate_new_from_pem(certPEM);
+		if (!cert->certificate)
+		{
+			WLog_ERR(TAG, "unable to read smartcard certificate");
+			goto fail;
+		}
+
+		if (!treat_sc_cert(cert))
+		{
+			WLog_ERR(TAG, "unable to treat smartcard certificate");
+			goto fail;
+		}
+
+		cert->reader = ConvertUtf8ToWCharAlloc("FreeRDP Emulator", NULL);
+		if (!cert->reader)
+			goto fail;
+
+		cert->containerName = ConvertUtf8ToWCharAlloc("Private Key 00", NULL);
+		if (!cert->containerName)
+			goto fail;
+
+		/* compute PKINIT args FILE:<cert file>,<key file>
+		 *
+		 * We need files for PKINIT to read, so write the certificate to some
+		 * temporary location and use that.
+		 */
+		info->keyPath = create_temporary_file();
+		WLog_DBG(TAG, "writing PKINIT key to %s", info->keyPath);
+		if (!crypto_write_pem(info->keyPath, privKeyPEM, strlen(privKeyPEM)))
+			goto fail;
+
+		info->certPath = create_temporary_file();
+		WLog_DBG(TAG, "writing PKINIT cert to %s", info->certPath);
+		if (!crypto_write_pem(info->certPath, certPEM, strlen(certPEM)))
+			goto fail;
+
+		{
+			const int res = winpr_asprintf(&cert->pkinitArgs, &size, "FILE:%s,%s", info->certPath,
+			                               info->keyPath);
+			if (res <= 0)
+				goto fail;
+		}
 	}
-
-	if (!treat_sc_cert(cert))
-	{
-		WLog_ERR(TAG, "unable to treat smartcard certificate");
-		goto fail;
-	}
-
-	cert->reader = ConvertUtf8ToWCharAlloc("FreeRDP Emulator", NULL);
-	if (!cert->reader)
-		goto fail;
-
-	cert->containerName = ConvertUtf8ToWCharAlloc("Private Key 00", NULL);
-	if (!cert->containerName)
-		goto fail;
-
-	/* compute PKINIT args FILE:<cert file>,<key file>
-	 *
-	 * We need files for PKINIT to read, so write the certificate to some
-	 * temporary location and use that.
-	 */
-	info->keyPath = create_temporary_file();
-	WLog_DBG(TAG, "writing PKINIT key to %s", info->keyPath);
-	if (!crypto_write_pem(info->keyPath, privKeyPEM, strlen(privKeyPEM)))
-		goto fail;
-
-	info->certPath = create_temporary_file();
-	WLog_DBG(TAG, "writing PKINIT cert to %s", info->certPath);
-	if (!crypto_write_pem(info->certPath, certPEM, strlen(certPEM)))
-		goto fail;
-
-	int res = winpr_asprintf(&cert->pkinitArgs, &size, "FILE:%s,%s", info->certPath, info->keyPath);
-	if (res <= 0)
-		goto fail;
 
 	return cert;
 fail:
