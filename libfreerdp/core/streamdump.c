@@ -66,8 +66,7 @@ static UINT32 crc32b(const BYTE* data, size_t length)
 #if !defined(BUILD_TESTING_INTERNAL)
 static
 #endif
-    BOOL
-    stream_dump_read_line(FILE* fp, wStream* s, UINT64* pts, size_t* pOffset, UINT32* flags)
+    BOOL stream_dump_read_line(FILE* fp, wStream* s, UINT64* pts, size_t* pOffset, UINT32* flags)
 {
 	BOOL rc = FALSE;
 	UINT64 ts = 0;
@@ -99,15 +98,17 @@ static
 	else
 		*flags = STREAM_MSG_SRV_TX;
 
-	const size_t usize = WINPR_ASSERTING_INT_CAST(size_t, size);
-	if (!Stream_EnsureRemainingCapacity(s, usize))
-		goto fail;
-	r = fread(Stream_Pointer(s), 1, usize, fp);
-	if (r != size)
-		goto fail;
-	if (crc32 != crc32b(Stream_ConstPointer(s), usize))
-		goto fail;
-	Stream_Seek(s, usize);
+	{
+		const size_t usize = WINPR_ASSERTING_INT_CAST(size_t, size);
+		if (!Stream_EnsureRemainingCapacity(s, usize))
+			goto fail;
+		r = fread(Stream_Pointer(s), 1, usize, fp);
+		if (r != size)
+			goto fail;
+		if (crc32 != crc32b(Stream_ConstPointer(s), usize))
+			goto fail;
+		Stream_Seek(s, usize);
+	}
 
 	if (pOffset)
 	{
@@ -129,8 +130,7 @@ fail:
 #if !defined(BUILD_TESTING_INTERNAL)
 static
 #endif
-    BOOL
-    stream_dump_write_line(FILE* fp, UINT32 flags, wStream* s)
+    BOOL stream_dump_write_line(FILE* fp, UINT32 flags, wStream* s)
 {
 	BOOL rc = FALSE;
 	const UINT64 t = GetTickCount64();
@@ -256,10 +256,13 @@ SSIZE_T stream_dump_get(const rdpContext* context, UINT32* flags, wStream* s, si
 	if (!stream_dump_read_line(fp, s, pts, offset, flags))
 		goto fail;
 
-	const int64_t rt = _ftelli64(fp);
-	if (rt < 0)
-		goto fail;
-	rc = WINPR_ASSERTING_INT_CAST(SSIZE_T, rt);
+	{
+		const int64_t rt = _ftelli64(fp);
+		if (rt < 0)
+			goto fail;
+		rc = WINPR_ASSERTING_INT_CAST(SSIZE_T, rt);
+	}
+
 fail:
 	if (fp)
 		(void)fclose(fp);

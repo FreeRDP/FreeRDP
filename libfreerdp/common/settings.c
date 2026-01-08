@@ -3714,39 +3714,24 @@ char* freerdp_settings_serialize(const rdpSettings* settings, BOOL pretty, size_
 
 	WINPR_JSON* jbool = WINPR_JSON_AddObjectToObject(
 	    json, freerdp_settings_get_type_name_for_type(RDP_SETTINGS_TYPE_BOOL));
-	if (!jbool)
-		goto fail;
 	WINPR_JSON* juint16 = WINPR_JSON_AddObjectToObject(
 	    json, freerdp_settings_get_type_name_for_type(RDP_SETTINGS_TYPE_UINT16));
-	if (!juint16)
-		goto fail;
 	WINPR_JSON* jint16 = WINPR_JSON_AddObjectToObject(
 	    json, freerdp_settings_get_type_name_for_type(RDP_SETTINGS_TYPE_INT16));
-	if (!jint16)
-		goto fail;
 	WINPR_JSON* juint32 = WINPR_JSON_AddObjectToObject(
 	    json, freerdp_settings_get_type_name_for_type(RDP_SETTINGS_TYPE_UINT32));
-	if (!juint32)
-		goto fail;
 	WINPR_JSON* jint32 = WINPR_JSON_AddObjectToObject(
 	    json, freerdp_settings_get_type_name_for_type(RDP_SETTINGS_TYPE_INT32));
-	if (!jint32)
-		goto fail;
 	WINPR_JSON* juint64 = WINPR_JSON_AddObjectToObject(
 	    json, freerdp_settings_get_type_name_for_type(RDP_SETTINGS_TYPE_UINT64));
-	if (!juint64)
-		goto fail;
 	WINPR_JSON* jint64 = WINPR_JSON_AddObjectToObject(
 	    json, freerdp_settings_get_type_name_for_type(RDP_SETTINGS_TYPE_INT64));
-	if (!jint64)
-		goto fail;
 	WINPR_JSON* jstring = WINPR_JSON_AddObjectToObject(
 	    json, freerdp_settings_get_type_name_for_type(RDP_SETTINGS_TYPE_STRING));
-	if (!jstring)
-		goto fail;
 	WINPR_JSON* jpointer = WINPR_JSON_AddObjectToObject(
 	    json, freerdp_settings_get_type_name_for_type(RDP_SETTINGS_TYPE_POINTER));
-	if (!jpointer)
+	if (!jbool || !juint16 || !jint16 || !juint32 || !jint32 || !juint64 || !jint64 || !jstring ||
+	    !jpointer)
 		goto fail;
 
 	for (int x = 0; x < FreeRDP_Settings_StableAPI_MAX; x++)
@@ -4324,45 +4309,31 @@ rdpSettings* freerdp_settings_deserialize(const char* jstr, size_t length)
 	WINPR_JSON* json = WINPR_JSON_ParseWithLength(jstr, length);
 	if (!json)
 		return NULL;
-	rdpSettings* settings = freerdp_settings_new(0);
-	if (!settings)
-		goto fail;
 
 	WINPR_JSON* jbool = WINPR_JSON_GetObjectItemCaseSensitive(
 	    json, freerdp_settings_get_type_name_for_type(RDP_SETTINGS_TYPE_BOOL));
-	if (!jbool)
-		goto fail;
 	WINPR_JSON* juint16 = WINPR_JSON_GetObjectItemCaseSensitive(
 	    json, freerdp_settings_get_type_name_for_type(RDP_SETTINGS_TYPE_UINT16));
-	if (!juint16)
-		goto fail;
 	WINPR_JSON* jint16 = WINPR_JSON_GetObjectItemCaseSensitive(
 	    json, freerdp_settings_get_type_name_for_type(RDP_SETTINGS_TYPE_INT16));
-	if (!jint16)
-		goto fail;
 	WINPR_JSON* juint32 = WINPR_JSON_GetObjectItemCaseSensitive(
 	    json, freerdp_settings_get_type_name_for_type(RDP_SETTINGS_TYPE_UINT32));
-	if (!juint32)
-		goto fail;
 	WINPR_JSON* jint32 = WINPR_JSON_GetObjectItemCaseSensitive(
 	    json, freerdp_settings_get_type_name_for_type(RDP_SETTINGS_TYPE_INT32));
-	if (!jint32)
-		goto fail;
 	WINPR_JSON* juint64 = WINPR_JSON_GetObjectItemCaseSensitive(
 	    json, freerdp_settings_get_type_name_for_type(RDP_SETTINGS_TYPE_UINT64));
-	if (!juint64)
-		goto fail;
 	WINPR_JSON* jint64 = WINPR_JSON_GetObjectItemCaseSensitive(
 	    json, freerdp_settings_get_type_name_for_type(RDP_SETTINGS_TYPE_INT64));
-	if (!jint64)
-		goto fail;
 	WINPR_JSON* jstring = WINPR_JSON_GetObjectItemCaseSensitive(
 	    json, freerdp_settings_get_type_name_for_type(RDP_SETTINGS_TYPE_STRING));
-	if (!jstring)
-		goto fail;
 	WINPR_JSON* jpointer = WINPR_JSON_GetObjectItemCaseSensitive(
 	    json, freerdp_settings_get_type_name_for_type(RDP_SETTINGS_TYPE_POINTER));
-	if (!jpointer)
+
+	rdpSettings* settings = freerdp_settings_new(0);
+	if (!settings)
+		goto fail;
+	if (!jbool || !juint16 || !jint16 || !juint32 || !jint32 || !juint64 || !jint64 || !jstring ||
+	    !jpointer)
 		goto fail;
 
 	for (int x = 0; x < FreeRDP_Settings_StableAPI_MAX; x++)

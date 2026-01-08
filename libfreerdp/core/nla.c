@@ -1553,8 +1553,10 @@ static BOOL nla_write_TSRemoteGuardNtlmCred(rdpNla* nla, WinPrAsn1Encoder* enc,
 	Stream_Write(s, pntlm->EncryptedCreds, pntlm->EncryptedCredsSize);
 	Stream_Zero(s, 6 + 16 * 4 + 14);
 
-	WinPrAsn1_OctetString credBuffer = { Stream_GetPosition(s), Stream_Buffer(s) };
-	ret = WinPrAsn1EncContextualOctetString(enc, 1, &credBuffer) != 0;
+	{
+		WinPrAsn1_OctetString credBuffer = { Stream_GetPosition(s), Stream_Buffer(s) };
+		ret = WinPrAsn1EncContextualOctetString(enc, 1, &credBuffer) != 0;
+	}
 
 out:
 	Stream_Free(s, TRUE);

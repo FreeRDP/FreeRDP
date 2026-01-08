@@ -1055,63 +1055,70 @@ BOOL rpc_client_write_call(rdpRpc* rpc, wStream* s, UINT16 opnum)
 		goto fail;
 
 	Stream_SealLength(s);
-	const size_t length = Stream_Length(s);
-	if (length > UINT32_MAX)
-		goto fail;
 
-	const size_t asize = credssp_auth_trailer_size(auth);
-
-	request_pdu.header = rpc_pdu_header_init(rpc);
-	request_pdu.header.ptype = PTYPE_REQUEST;
-	request_pdu.header.pfc_flags = PFC_FIRST_FRAG | PFC_LAST_FRAG;
-	request_pdu.header.auth_length = (UINT16)asize;
-	request_pdu.header.call_id = rpc->CallId++;
-	request_pdu.alloc_hint = (UINT32)length;
-	request_pdu.p_cont_id = 0x0000;
-	request_pdu.opnum = opnum;
-	clientCall = rpc_client_call_new(request_pdu.header.call_id, request_pdu.opnum);
-
-	if (!clientCall)
-		goto fail;
-
-	if (!ArrayList_Append(rpc->client->ClientCallList, clientCall))
 	{
-		rpc_client_call_free(clientCall);
-		goto fail;
+		const size_t length = Stream_Length(s);
+		if (length > UINT32_MAX)
+			goto fail;
+
+		{
+			const size_t asize = credssp_auth_trailer_size(auth);
+			request_pdu.header = rpc_pdu_header_init(rpc);
+			request_pdu.header.ptype = PTYPE_REQUEST;
+			request_pdu.header.pfc_flags = PFC_FIRST_FRAG | PFC_LAST_FRAG;
+			request_pdu.header.auth_length = (UINT16)asize;
+		}
+		request_pdu.header.call_id = rpc->CallId++;
+		request_pdu.alloc_hint = (UINT32)length;
+		request_pdu.p_cont_id = 0x0000;
+		request_pdu.opnum = opnum;
+		clientCall = rpc_client_call_new(request_pdu.header.call_id, request_pdu.opnum);
+
+		if (!clientCall)
+			goto fail;
+
+		if (!ArrayList_Append(rpc->client->ClientCallList, clientCall))
+		{
+			rpc_client_call_free(clientCall);
+			goto fail;
+		}
+
+		// NOLINTNEXTLINE(clang-analyzer-unix.Malloc): ArrayList_Append takes ownership
+		if (request_pdu.opnum == TsProxySetupReceivePipeOpnum)
+			rpc->PipeCallId = request_pdu.header.call_id;
+
+		request_pdu.stub_data = Stream_Buffer(s);
+		offset = 24;
+		stub_data_pad = rpc_offset_align(&offset, 8);
+		offset += length;
+
+		{
+			const size_t alg = rpc_offset_align(&offset, 4);
+			WINPR_ASSERT(alg <= UINT8_MAX);
+			request_pdu.auth_verifier.auth_pad_length = (UINT8)alg;
+		}
+		request_pdu.auth_verifier.auth_type =
+		    rpc_auth_pkg_to_security_provider(credssp_auth_pkg_name(rpc->auth));
+		request_pdu.auth_verifier.auth_level = RPC_C_AUTHN_LEVEL_PKT_INTEGRITY;
+		request_pdu.auth_verifier.auth_reserved = 0x00;
+		request_pdu.auth_verifier.auth_context_id = 0x00000000;
+		offset += (8 + request_pdu.header.auth_length);
+
+		if (offset > UINT16_MAX)
+			goto fail;
+		request_pdu.header.frag_length = (UINT16)offset;
+		buffer = (BYTE*)calloc(1, request_pdu.header.frag_length);
+
+		if (!buffer)
+			goto fail;
+
+		CopyMemory(buffer, &request_pdu, 24);
+		offset = 24;
+		rpc_offset_pad(&offset, stub_data_pad);
+		CopyMemory(&buffer[offset], request_pdu.stub_data, length);
+		offset += length;
 	}
 
-	// NOLINTNEXTLINE(clang-analyzer-unix.Malloc): ArrayList_Append takes ownership of clientCall
-	if (request_pdu.opnum == TsProxySetupReceivePipeOpnum)
-		rpc->PipeCallId = request_pdu.header.call_id;
-
-	request_pdu.stub_data = Stream_Buffer(s);
-	offset = 24;
-	stub_data_pad = rpc_offset_align(&offset, 8);
-	offset += length;
-
-	const size_t alg = rpc_offset_align(&offset, 4);
-	WINPR_ASSERT(alg <= UINT8_MAX);
-	request_pdu.auth_verifier.auth_pad_length = (UINT8)alg;
-	request_pdu.auth_verifier.auth_type =
-	    rpc_auth_pkg_to_security_provider(credssp_auth_pkg_name(rpc->auth));
-	request_pdu.auth_verifier.auth_level = RPC_C_AUTHN_LEVEL_PKT_INTEGRITY;
-	request_pdu.auth_verifier.auth_reserved = 0x00;
-	request_pdu.auth_verifier.auth_context_id = 0x00000000;
-	offset += (8 + request_pdu.header.auth_length);
-
-	if (offset > UINT16_MAX)
-		goto fail;
-	request_pdu.header.frag_length = (UINT16)offset;
-	buffer = (BYTE*)calloc(1, request_pdu.header.frag_length);
-
-	if (!buffer)
-		goto fail;
-
-	CopyMemory(buffer, &request_pdu, 24);
-	offset = 24;
-	rpc_offset_pad(&offset, stub_data_pad);
-	CopyMemory(&buffer[offset], request_pdu.stub_data, length);
-	offset += length;
 	rpc_offset_pad(&offset, request_pdu.auth_verifier.auth_pad_length);
 	CopyMemory(&buffer[offset], &request_pdu.auth_verifier.auth_type, 8);
 	offset += 8;
@@ -1123,18 +1130,20 @@ BOOL rpc_client_write_call(rdpRpc* rpc, wStream* s, UINT16 opnum)
 	plaintext.cbBuffer = (UINT32)offset;
 	plaintext.BufferType = SECBUFFER_READONLY;
 
-	size_t size = 0;
-	if (!credssp_auth_encrypt(auth, &plaintext, &ciphertext, &size, rpc->SendSeqNum++))
-		goto fail;
-
-	if (offset + size > request_pdu.header.frag_length)
 	{
-		sspi_SecBufferFree(&ciphertext);
-		goto fail;
-	}
+		size_t size = 0;
+		if (!credssp_auth_encrypt(auth, &plaintext, &ciphertext, &size, rpc->SendSeqNum++))
+			goto fail;
 
-	CopyMemory(&buffer[offset], ciphertext.pvBuffer, size);
-	offset += size;
+		if (offset + size > request_pdu.header.frag_length)
+		{
+			sspi_SecBufferFree(&ciphertext);
+			goto fail;
+		}
+
+		CopyMemory(&buffer[offset], ciphertext.pvBuffer, size);
+		offset += size;
+	}
 
 	sspi_SecBufferFree(&ciphertext);
 

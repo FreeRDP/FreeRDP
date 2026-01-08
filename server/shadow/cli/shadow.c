@@ -125,32 +125,34 @@ int main(int argc, char** argv)
 		goto fail;
 	}
 
-	rdpSettings* settings = server->settings;
-	WINPR_ASSERT(settings);
+	{
+		rdpSettings* settings = server->settings;
+		WINPR_ASSERT(settings);
 
-	if (!freerdp_settings_set_bool(settings, FreeRDP_NlaSecurity, TRUE) ||
-	    !freerdp_settings_set_bool(settings, FreeRDP_TlsSecurity, TRUE) ||
-	    !freerdp_settings_set_bool(settings, FreeRDP_RdpSecurity, TRUE))
-		goto fail;
+		if (!freerdp_settings_set_bool(settings, FreeRDP_NlaSecurity, TRUE) ||
+		    !freerdp_settings_set_bool(settings, FreeRDP_TlsSecurity, TRUE) ||
+		    !freerdp_settings_set_bool(settings, FreeRDP_RdpSecurity, TRUE))
+			goto fail;
 
-	/* By default allow all GFX modes.
-	 * This can be changed with command line flags [+|-]gfx-CODEC
-	 */
-	if (!freerdp_settings_set_uint32(settings, FreeRDP_ColorDepth, 32) ||
-	    !freerdp_settings_set_bool(settings, FreeRDP_NSCodec, TRUE) ||
-	    !freerdp_settings_set_bool(settings, FreeRDP_RemoteFxCodec, TRUE) ||
-	    !freerdp_settings_set_bool(settings, FreeRDP_RemoteFxImageCodec, TRUE) ||
-	    !freerdp_settings_set_uint32(settings, FreeRDP_RemoteFxRlgrMode, RLGR3) ||
-	    !freerdp_settings_set_bool(settings, FreeRDP_GfxH264, TRUE) ||
-	    !freerdp_settings_set_bool(settings, FreeRDP_GfxAVC444, TRUE) ||
-	    !freerdp_settings_set_bool(settings, FreeRDP_GfxAVC444v2, TRUE) ||
-	    !freerdp_settings_set_bool(settings, FreeRDP_GfxProgressive, TRUE) ||
-	    !freerdp_settings_set_bool(settings, FreeRDP_GfxProgressiveV2, TRUE))
-		goto fail;
+		/* By default allow all GFX modes.
+		 * This can be changed with command line flags [+|-]gfx-CODEC
+		 */
+		if (!freerdp_settings_set_uint32(settings, FreeRDP_ColorDepth, 32) ||
+		    !freerdp_settings_set_bool(settings, FreeRDP_NSCodec, TRUE) ||
+		    !freerdp_settings_set_bool(settings, FreeRDP_RemoteFxCodec, TRUE) ||
+		    !freerdp_settings_set_bool(settings, FreeRDP_RemoteFxImageCodec, TRUE) ||
+		    !freerdp_settings_set_uint32(settings, FreeRDP_RemoteFxRlgrMode, RLGR3) ||
+		    !freerdp_settings_set_bool(settings, FreeRDP_GfxH264, TRUE) ||
+		    !freerdp_settings_set_bool(settings, FreeRDP_GfxAVC444, TRUE) ||
+		    !freerdp_settings_set_bool(settings, FreeRDP_GfxAVC444v2, TRUE) ||
+		    !freerdp_settings_set_bool(settings, FreeRDP_GfxProgressive, TRUE) ||
+		    !freerdp_settings_set_bool(settings, FreeRDP_GfxProgressiveV2, TRUE))
+			goto fail;
 
-	if (!freerdp_settings_set_bool(settings, FreeRDP_MouseUseRelativeMove, FALSE) ||
-	    !freerdp_settings_set_bool(settings, FreeRDP_HasRelativeMouseEvent, FALSE))
-		goto fail;
+		if (!freerdp_settings_set_bool(settings, FreeRDP_MouseUseRelativeMove, FALSE) ||
+		    !freerdp_settings_set_bool(settings, FreeRDP_HasRelativeMouseEvent, FALSE))
+			goto fail;
+	}
 
 	if ((status = shadow_server_parse_command_line(server, argc, argv, shadow_args)) < 0)
 	{

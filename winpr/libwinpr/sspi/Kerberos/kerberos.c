@@ -283,9 +283,11 @@ static int build_krbtgt(krb5_context ctx, krb5_principal principal, krb5_princip
 	if (!name || (len == 0))
 		goto fail;
 
-	krb5_principal target = { 0 };
-	rv = krb5_parse_name(ctx, name, &target);
-	*ptarget = target;
+	{
+		krb5_principal target = { 0 };
+		rv = krb5_parse_name(ctx, name, &target);
+		*ptarget = target;
+	}
 fail:
 	free(name);
 	return rv;
@@ -716,39 +718,45 @@ static BOOL kerberos_rd_tgt_req_tag2(WinPrAsn1Decoder* dec, char* buf, size_t le
 		goto end;
 
 	/* name-type [0] INTEGER */
-	BOOL error = FALSE;
-	WinPrAsn1_INTEGER val = 0;
-	if (!WinPrAsn1DecReadContextualInteger(&seq, 0, &error, &val))
-		goto end;
-
-	/* name-string [1] SEQUENCE OF GeneralString */
-	if (!WinPrAsn1DecReadContextualSequence(&seq, 1, &error, dec))
-		goto end;
-
-	WinPrAsn1_tag tag = 0;
-	BOOL first = TRUE;
-	while (WinPrAsn1DecPeekTag(dec, &tag))
 	{
-		BOOL success = FALSE;
-		char* lstr = NULL;
-		if (!WinPrAsn1DecReadGeneralString(dec, &lstr))
-			goto fail;
-
-		if (!first)
+		BOOL error = FALSE;
 		{
-			if (!append(buf, len, "/"))
-				goto fail;
+			WinPrAsn1_INTEGER val = 0;
+			if (!WinPrAsn1DecReadContextualInteger(&seq, 0, &error, &val))
+				goto end;
 		}
-		first = FALSE;
 
-		if (!append(buf, len, lstr))
-			goto fail;
-
-		success = TRUE;
-	fail:
-		free(lstr);
-		if (!success)
+		/* name-string [1] SEQUENCE OF GeneralString */
+		if (!WinPrAsn1DecReadContextualSequence(&seq, 1, &error, dec))
 			goto end;
+	}
+
+	{
+		WinPrAsn1_tag tag = 0;
+		BOOL first = TRUE;
+		while (WinPrAsn1DecPeekTag(dec, &tag))
+		{
+			BOOL success = FALSE;
+			char* lstr = NULL;
+			if (!WinPrAsn1DecReadGeneralString(dec, &lstr))
+				goto fail;
+
+			if (!first)
+			{
+				if (!append(buf, len, "/"))
+					goto fail;
+			}
+			first = FALSE;
+
+			if (!append(buf, len, lstr))
+				goto fail;
+
+			success = TRUE;
+		fail:
+			free(lstr);
+			if (!success)
+				goto end;
+		}
 	}
 
 	rc = TRUE;
@@ -1371,18 +1379,19 @@ static BOOL retrieveSomeTgt(KRB_CREDENTIALS* credentials, const char* target, kr
 	/*
 	 * if it's not working let's try with <host>$@<REALM> (note the dollar)
 	 */
-	char hostDollar[300] = { 0 };
-	if (target_princ->length < 2)
-		goto out;
+	{
+		char hostDollar[300] = { 0 };
+		if (target_princ->length < 2)
+			goto out;
 
-	(void)snprintf(hostDollar, sizeof(hostDollar) - 1, "%s$@%s", target_princ->data[1].data,
-	               target_princ->realm.data);
-	krb5_free_principal(credentials->ctx, target_princ);
+		(void)snprintf(hostDollar, sizeof(hostDollar) - 1, "%s$@%s", target_princ->data[1].data,
+		               target_princ->realm.data);
+		krb5_free_principal(credentials->ctx, target_princ);
 
-	rv = krb_log_exec(krb5_parse_name_flags, credentials->ctx, hostDollar, 0, &target_princ);
-	if (rv)
-		return FALSE;
-
+		rv = krb_log_exec(krb5_parse_name_flags, credentials->ctx, hostDollar, 0, &target_princ);
+		if (rv)
+			return FALSE;
+	}
 	ret = retrieveTgtForPrincipal(credentials, target_princ, creds);
 #endif
 
@@ -1732,26 +1741,28 @@ again:
 	if (krb_log_exec(krb5_auth_con_init, credentials->ctx, &authContext))
 		goto out;
 
-	krb5_data derOut = { 0 };
-	if (krb_log_exec(krb5_fwd_tgt_creds, credentials->ctx, authContext, context->targetHost,
-	                 matchCred.client, matchCred.server, credentials->ccache, 1, &derOut))
 	{
-		ret = SEC_E_LOGON_DENIED;
-		goto out;
+		krb5_data derOut = { 0 };
+		if (krb_log_exec(krb5_fwd_tgt_creds, credentials->ctx, authContext, context->targetHost,
+		                 matchCred.client, matchCred.server, credentials->ccache, 1, &derOut))
+		{
+			ret = SEC_E_LOGON_DENIED;
+			goto out;
+		}
+
+		ticketLogon->MessageType = KerbTicketLogon;
+		ticketLogon->Flags = KERB_LOGON_FLAG_REDIRECTED;
+
+		if (!copy_krb5_data(&hostCred->ticket, &ticketLogon->ServiceTicket,
+		                    &ticketLogon->ServiceTicketLength))
+		{
+			krb5_free_data(credentials->ctx, &derOut);
+			goto out;
+		}
+
+		ticketLogon->TicketGrantingTicketLength = derOut.length;
+		ticketLogon->TicketGrantingTicket = (PUCHAR)derOut.data;
 	}
-
-	ticketLogon->MessageType = KerbTicketLogon;
-	ticketLogon->Flags = KERB_LOGON_FLAG_REDIRECTED;
-
-	if (!copy_krb5_data(&hostCred->ticket, &ticketLogon->ServiceTicket,
-	                    &ticketLogon->ServiceTicketLength))
-	{
-		krb5_free_data(credentials->ctx, &derOut);
-		goto out;
-	}
-
-	ticketLogon->TicketGrantingTicketLength = derOut.length;
-	ticketLogon->TicketGrantingTicket = (PUCHAR)derOut.data;
 
 	ret = SEC_E_OK;
 out:

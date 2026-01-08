@@ -3651,15 +3651,20 @@ static RdpdrServerPrivate* rdpdr_server_private_new(void)
 		goto fail;
 
 	HashTable_SetHashFunction(priv->devicelist, rdpdr_deviceid_hash);
-	wObject* obj = HashTable_ValueObject(priv->devicelist);
-	WINPR_ASSERT(obj);
-	obj->fnObjectFree = rdpdr_device_free_h;
-	obj->fnObjectNew = rdpdr_device_clone;
 
-	obj = HashTable_KeyObject(priv->devicelist);
-	obj->fnObjectEquals = rdpdr_device_equal;
-	obj->fnObjectFree = rdpdr_device_key_free;
-	obj->fnObjectNew = rdpdr_device_key_clone;
+	{
+		wObject* obj = HashTable_ValueObject(priv->devicelist);
+		WINPR_ASSERT(obj);
+		obj->fnObjectFree = rdpdr_device_free_h;
+		obj->fnObjectNew = rdpdr_device_clone;
+	}
+
+	{
+		wObject* obj = HashTable_KeyObject(priv->devicelist);
+		obj->fnObjectEquals = rdpdr_device_equal;
+		obj->fnObjectFree = rdpdr_device_key_free;
+		obj->fnObjectNew = rdpdr_device_key_clone;
+	}
 
 	return priv;
 fail:

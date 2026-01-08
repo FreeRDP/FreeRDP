@@ -347,16 +347,20 @@ xfFloatbar* xf_floatbar_new(xfContext* xfc, Window window, const char* name, DWO
 	floatbar->xfc = xfc;
 	floatbar->locked = (flags & 0x0002) != 0 ? TRUE : FALSE;
 	xf_floatbar_toggle_fullscreen(floatbar, FALSE);
-	char** missingList = NULL;
-	int missingCount = 0;
-	char* defString = NULL;
-	floatbar->fontSet = XCreateFontSet(floatbar->xfc->display, "-*-*-*-*-*-*-*-*-*-*-*-*-*-*",
-	                                   &missingList, &missingCount, &defString);
-	if (floatbar->fontSet == NULL)
+
 	{
-		WLog_ERR(TAG, "Failed to create fontset");
+		char** missingList = NULL;
+		int missingCount = 0;
+		char* defString = NULL;
+		floatbar->fontSet = XCreateFontSet(floatbar->xfc->display, "-*-*-*-*-*-*-*-*-*-*-*-*-*-*",
+		                                   &missingList, &missingCount, &defString);
+
+		if (floatbar->fontSet == NULL)
+		{
+			WLog_ERR(TAG, "Failed to create fontset");
+		}
+		XFreeStringList(missingList);
 	}
-	XFreeStringList(missingList);
 	return floatbar;
 fail:
 	WINPR_PRAGMA_DIAG_PUSH

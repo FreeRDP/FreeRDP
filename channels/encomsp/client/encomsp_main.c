@@ -1279,14 +1279,17 @@ FREERDP_ENTRY_POINT(BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS_E
 	CopyMemory(&(encomsp->channelEntryPoints), pEntryPoints,
 	           sizeof(CHANNEL_ENTRY_POINTS_FREERDP_EX));
 	encomsp->InitHandle = pInitHandle;
-	const UINT rc = encomsp->channelEntryPoints.pVirtualChannelInitEx(
-	    encomsp, context, pInitHandle, &encomsp->channelDef, 1, VIRTUAL_CHANNEL_VERSION_WIN2000,
-	    encomsp_virtual_channel_init_event_ex);
 
-	if (CHANNEL_RC_OK != rc)
 	{
-		WLog_ERR(TAG, "failed with %s [%08" PRIX32 "]", WTSErrorToString(rc), rc);
-		goto error_out;
+		const UINT rc = encomsp->channelEntryPoints.pVirtualChannelInitEx(
+		    encomsp, context, pInitHandle, &encomsp->channelDef, 1, VIRTUAL_CHANNEL_VERSION_WIN2000,
+		    encomsp_virtual_channel_init_event_ex);
+
+		if (CHANNEL_RC_OK != rc)
+		{
+			WLog_ERR(TAG, "failed with %s [%08" PRIX32 "]", WTSErrorToString(rc), rc);
+			goto error_out;
+		}
 	}
 
 	encomsp->channelEntryPoints.pInterface = context;

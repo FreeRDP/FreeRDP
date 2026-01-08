@@ -1028,11 +1028,13 @@ BOOL fastpath_send_multiple_input_pdu(rdpFastPath* fastpath, wStream* s, size_t 
 	rdp = fastpath->rdp;
 	WINPR_ASSERT(rdp);
 
-	CONNECTION_STATE state = rdp_get_state(rdp);
-	if (!rdp_is_active_state(rdp))
 	{
-		WLog_WARN(TAG, "called before activation [%s]", rdp_state_string(state));
-		goto fail;
+		const CONNECTION_STATE state = rdp_get_state(rdp);
+		if (!rdp_is_active_state(rdp))
+		{
+			WLog_WARN(TAG, "called before activation [%s]", rdp_state_string(state));
+			goto fail;
+		}
 	}
 
 	/*
@@ -1043,96 +1045,98 @@ BOOL fastpath_send_multiple_input_pdu(rdpFastPath* fastpath, wStream* s, size_t 
 	if (iNumEvents > 15)
 		goto fail;
 
-	size_t length = Stream_GetPosition(s);
-
-	if (length >= (2 << 14))
 	{
-		WLog_ERR(TAG, "Maximum FastPath PDU length is 32767");
-		goto fail;
-	}
+		size_t length = Stream_GetPosition(s);
 
-	eventHeader = FASTPATH_INPUT_ACTION_FASTPATH;
-	eventHeader |= (iNumEvents << 2); /* numberEvents */
-
-	if (sec_flags & SEC_ENCRYPT)
-		eventHeader |= (FASTPATH_INPUT_ENCRYPTED << 6);
-
-	if (sec_flags & SEC_SECURE_CHECKSUM)
-		eventHeader |= (FASTPATH_INPUT_SECURE_CHECKSUM << 6);
-
-	Stream_SetPosition(s, 0);
-	Stream_Write_UINT8(s, eventHeader);
-	/* Write length later, RDP encryption might add a padding */
-	Stream_Seek(s, 2);
-
-	if (sec_flags & SEC_ENCRYPT)
-	{
-		if (!security_lock(rdp))
-			goto fail;
-		should_unlock = TRUE;
-
-		const size_t sec_bytes = fastpath_get_sec_bytes(fastpath->rdp);
-		if (sec_bytes + 3ULL > length)
-			goto fail;
-
-		BYTE* fpInputEvents = Stream_PointerAs(s, BYTE) + sec_bytes;
-		const UINT16 fpInputEvents_length = (UINT16)(length - 3 - sec_bytes);
-
-		WINPR_ASSERT(rdp->settings);
-		if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
+		if (length >= (2 << 14))
 		{
-			BYTE pad = 0;
-
-			if ((pad = 8 - (fpInputEvents_length % 8)) == 8)
-				pad = 0;
-
-			Stream_Write_UINT16(s, 0x10); /* length */
-			Stream_Write_UINT8(s, 0x1);   /* TSFIPS_VERSION 1*/
-			Stream_Write_UINT8(s, pad);   /* padding */
-
-			if (!Stream_CheckAndLogRequiredCapacity(TAG, s, 8))
-				goto fail;
-
-			if (!security_hmac_signature(fpInputEvents, fpInputEvents_length, Stream_Pointer(s), 8,
-			                             rdp))
-				goto fail;
-
-			if (pad)
-				memset(fpInputEvents + fpInputEvents_length, 0, pad);
-
-			if (!security_fips_encrypt(fpInputEvents, fpInputEvents_length + pad, rdp))
-				goto fail;
-
-			length += pad;
+			WLog_ERR(TAG, "Maximum FastPath PDU length is 32767");
+			goto fail;
 		}
-		else
+
+		eventHeader = FASTPATH_INPUT_ACTION_FASTPATH;
+		eventHeader |= (iNumEvents << 2); /* numberEvents */
+
+		if (sec_flags & SEC_ENCRYPT)
+			eventHeader |= (FASTPATH_INPUT_ENCRYPTED << 6);
+
+		if (sec_flags & SEC_SECURE_CHECKSUM)
+			eventHeader |= (FASTPATH_INPUT_SECURE_CHECKSUM << 6);
+
+		Stream_SetPosition(s, 0);
+		Stream_Write_UINT8(s, eventHeader);
+		/* Write length later, RDP encryption might add a padding */
+		Stream_Seek(s, 2);
+
+		if (sec_flags & SEC_ENCRYPT)
 		{
-			BOOL res = 0;
-			if (!Stream_CheckAndLogRequiredCapacity(TAG, s, 8))
+			if (!security_lock(rdp))
 				goto fail;
-			if (sec_flags & SEC_SECURE_CHECKSUM)
-				res = security_salted_mac_signature(rdp, fpInputEvents, fpInputEvents_length, TRUE,
-				                                    Stream_Pointer(s), 8);
+			should_unlock = TRUE;
+
+			const size_t sec_bytes = fastpath_get_sec_bytes(fastpath->rdp);
+			if (sec_bytes + 3ULL > length)
+				goto fail;
+
+			BYTE* fpInputEvents = Stream_PointerAs(s, BYTE) + sec_bytes;
+			const UINT16 fpInputEvents_length = (UINT16)(length - 3 - sec_bytes);
+
+			WINPR_ASSERT(rdp->settings);
+			if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
+			{
+				BYTE pad = 0;
+
+				if ((pad = 8 - (fpInputEvents_length % 8)) == 8)
+					pad = 0;
+
+				Stream_Write_UINT16(s, 0x10); /* length */
+				Stream_Write_UINT8(s, 0x1);   /* TSFIPS_VERSION 1*/
+				Stream_Write_UINT8(s, pad);   /* padding */
+
+				if (!Stream_CheckAndLogRequiredCapacity(TAG, s, 8))
+					goto fail;
+
+				if (!security_hmac_signature(fpInputEvents, fpInputEvents_length, Stream_Pointer(s),
+				                             8, rdp))
+					goto fail;
+
+				if (pad)
+					memset(fpInputEvents + fpInputEvents_length, 0, pad);
+
+				if (!security_fips_encrypt(fpInputEvents, fpInputEvents_length + pad, rdp))
+					goto fail;
+
+				length += pad;
+			}
 			else
-				res = security_mac_signature(rdp, fpInputEvents, fpInputEvents_length,
-				                             Stream_Pointer(s), 8);
+			{
+				BOOL res = 0;
+				if (!Stream_CheckAndLogRequiredCapacity(TAG, s, 8))
+					goto fail;
+				if (sec_flags & SEC_SECURE_CHECKSUM)
+					res = security_salted_mac_signature(rdp, fpInputEvents, fpInputEvents_length,
+					                                    TRUE, Stream_Pointer(s), 8);
+				else
+					res = security_mac_signature(rdp, fpInputEvents, fpInputEvents_length,
+					                             Stream_Pointer(s), 8);
 
-			if (!res || !security_encrypt(fpInputEvents, fpInputEvents_length, rdp))
-				goto fail;
+				if (!res || !security_encrypt(fpInputEvents, fpInputEvents_length, rdp))
+					goto fail;
+			}
 		}
-	}
 
-	/*
-	 * We always encode length in two bytes, even though we could use
-	 * only one byte if length <= 0x7F. It is just easier that way,
-	 * because we can leave room for fixed-length header, store all
-	 * the data first and then store the header.
-	 */
-	WINPR_ASSERT(length < UINT16_MAX);
-	Stream_SetPosition(s, 1);
-	Stream_Write_UINT16_BE(s, 0x8000 | (UINT16)length);
-	Stream_SetPosition(s, length);
-	Stream_SealLength(s);
+		/*
+		 * We always encode length in two bytes, even though we could use
+		 * only one byte if length <= 0x7F. It is just easier that way,
+		 * because we can leave room for fixed-length header, store all
+		 * the data first and then store the header.
+		 */
+		WINPR_ASSERT(length < UINT16_MAX);
+		Stream_SetPosition(s, 1);
+		Stream_Write_UINT16_BE(s, 0x8000 | (UINT16)length);
+		Stream_SetPosition(s, length);
+		Stream_SealLength(s);
+	}
 
 	if (transport_write(rdp->transport, s) < 0)
 		goto fail;

@@ -1327,28 +1327,30 @@ static BOOL get_commstatus(WINPR_COMM* pComm, SERIAL_STATUS* pCommstatus)
 		pComm->PendingEvents |= SERIAL_EV_RXFLAG | SERIAL_EV_RXCHAR;
 
 	/* AmountInInQueue */
-	int available = 0;
-	if (!CommIoCtl(pComm, FIONREAD, &available))
-		goto fail;
+	{
+		int available = 0;
+		if (!CommIoCtl(pComm, FIONREAD, &available))
+			goto fail;
 
 #if defined(__linux__)
-	if (!CommIoCtl(pComm, TIOCINQ, &pCommstatus->AmountInInQueue))
-		goto fail;
+		if (!CommIoCtl(pComm, TIOCINQ, &pCommstatus->AmountInInQueue))
+			goto fail;
 #endif
 
-	/*  AmountInOutQueue */
+		/*  AmountInOutQueue */
 
-	if (!CommIoCtl(pComm, TIOCOUTQ, &pCommstatus->AmountInOutQueue))
-		goto fail;
+		if (!CommIoCtl(pComm, TIOCOUTQ, &pCommstatus->AmountInOutQueue))
+			goto fail;
 
-	/*  BOOLEAN EofReceived; FIXME: once EofChar supported */
+		/*  BOOLEAN EofReceived; FIXME: once EofChar supported */
 
-	/*  BOOLEAN WaitForImmediate; TODO: once IOCTL_SERIAL_IMMEDIATE_CHAR fully supported */
+		/*  BOOLEAN WaitForImmediate; TODO: once IOCTL_SERIAL_IMMEDIATE_CHAR fully supported */
 
-	/* other events based on counters */
+		/* other events based on counters */
 
-	if (available > 0)
-		pComm->PendingEvents |= SERIAL_EV_RXFLAG | SERIAL_EV_RXCHAR;
+		if (available > 0)
+			pComm->PendingEvents |= SERIAL_EV_RXFLAG | SERIAL_EV_RXCHAR;
+	}
 
 	if (pCommstatus->AmountInOutQueue == 0) /* output buffer is now empty */
 	{

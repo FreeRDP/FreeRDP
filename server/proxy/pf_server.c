@@ -423,36 +423,38 @@ static BOOL pf_server_receive_channel_data_hook(freerdp_peer* peer, UINT16 chann
 	if (!pc)
 		goto original_cb;
 
-	const pServerStaticChannelContext* channel =
-	    HashTable_GetItemValue(ps->channelsByFrontId, &channelId64);
-	if (!channel)
 	{
-		PROXY_LOG_ERR(TAG, ps, "channel id=%" PRIu64 " not registered here, dropping", channelId64);
-		return TRUE;
-	}
-
-	WINPR_ASSERT(channel->onFrontData);
-	switch (channel->onFrontData(pdata, channel, data, size, flags, totalSize))
-	{
-		case PF_CHANNEL_RESULT_PASS:
+		const pServerStaticChannelContext* channel =
+		    HashTable_GetItemValue(ps->channelsByFrontId, &channelId64);
+		if (!channel)
 		{
-			proxyChannelDataEventInfo ev = { 0 };
-
-			ev.channel_id = channelId;
-			ev.channel_name = channel->channel_name;
-			ev.data = data;
-			ev.data_len = size;
-			ev.flags = flags;
-			ev.total_size = totalSize;
-			return IFCALLRESULT(TRUE, pc->sendChannelData, pc, &ev);
-		}
-		case PF_CHANNEL_RESULT_DROP:
+			PROXY_LOG_ERR(TAG, ps, "channel id=%" PRIu64 " not registered here, dropping",
+			              channelId64);
 			return TRUE;
-		case PF_CHANNEL_RESULT_ERROR:
-		default:
-			return FALSE;
-	}
+		}
 
+		WINPR_ASSERT(channel->onFrontData);
+		switch (channel->onFrontData(pdata, channel, data, size, flags, totalSize))
+		{
+			case PF_CHANNEL_RESULT_PASS:
+			{
+				proxyChannelDataEventInfo ev = { 0 };
+
+				ev.channel_id = channelId;
+				ev.channel_name = channel->channel_name;
+				ev.data = data;
+				ev.data_len = size;
+				ev.flags = flags;
+				ev.total_size = totalSize;
+				return IFCALLRESULT(TRUE, pc->sendChannelData, pc, &ev);
+			}
+			case PF_CHANNEL_RESULT_DROP:
+				return TRUE;
+			case PF_CHANNEL_RESULT_ERROR:
+			default:
+				return FALSE;
+		}
+	}
 original_cb:
 	WINPR_ASSERT(pdata->server_receive_channel_data_original);
 	return pdata->server_receive_channel_data_original(peer, channelId, data, size, flags,

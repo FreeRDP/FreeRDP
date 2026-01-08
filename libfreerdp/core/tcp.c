@@ -826,42 +826,48 @@ static BOOL freerdp_tcp_connect_timeout(rdpContext* context, int sockfd, struct 
 	}
 
 	handles[count++] = utils_get_abort_event(context->rdp);
-	const int constatus = _connect((SOCKET)sockfd, addr, WINPR_ASSERTING_INT_CAST(int, addrlen));
 
-	if (constatus < 0)
 	{
-		const int estatus = WSAGetLastError();
-
-		switch (estatus)
+		const int constatus =
+		    _connect((SOCKET)sockfd, addr, WINPR_ASSERTING_INT_CAST(int, addrlen));
+		if (constatus < 0)
 		{
-			case WSAEINPROGRESS:
-			case WSAEWOULDBLOCK:
-				break;
+			const int estatus = WSAGetLastError();
 
-			default:
+			switch (estatus)
+			{
+				case WSAEINPROGRESS:
+				case WSAEWOULDBLOCK:
+					break;
+
+				default:
+					goto fail;
+			}
+		}
+	}
+
+	{
+		const DWORD wstatus = WaitForMultipleObjects(count, handles, FALSE, tout);
+		if (WAIT_OBJECT_0 != wstatus)
+			goto fail;
+	}
+
+	{
+		const SSIZE_T res = recv(sockfd, NULL, 0, 0);
+		if (res == SOCKET_ERROR)
+		{
+			if (WSAGetLastError() == WSAECONNRESET)
 				goto fail;
 		}
 	}
 
-	const DWORD wstatus = WaitForMultipleObjects(count, handles, FALSE, tout);
-
-	if (WAIT_OBJECT_0 != wstatus)
-		goto fail;
-
-	const SSIZE_T res = recv(sockfd, NULL, 0, 0);
-
-	if (res == SOCKET_ERROR)
 	{
-		if (WSAGetLastError() == WSAECONNRESET)
+		const int status = WSAEventSelect((SOCKET)sockfd, handles[0], 0);
+		if (status < 0)
+		{
+			WLog_ERR(TAG, "WSAEventSelect failed with %d", WSAGetLastError());
 			goto fail;
-	}
-
-	const int status = WSAEventSelect((SOCKET)sockfd, handles[0], 0);
-
-	if (status < 0)
-	{
-		WLog_ERR(TAG, "WSAEventSelect failed with %d", WSAGetLastError());
-		goto fail;
+		}
 	}
 
 	if (_ioctlsocket((SOCKET)sockfd, FIONBIO, &arg) != 0)
@@ -1084,19 +1090,21 @@ static int get_next_addrinfo(rdpContext* context, struct addrinfo* input, struct
 	}
 
 	/* We want to force IPvX, abort if not detected */
-	const UINT32 IPvX = freerdp_settings_get_uint32(context->settings, FreeRDP_ForceIPvX);
-	switch (IPvX)
 	{
-		case 4:
-		case 6:
+		const UINT32 IPvX = freerdp_settings_get_uint32(context->settings, FreeRDP_ForceIPvX);
+		switch (IPvX)
 		{
-			const int family = (IPvX == 4) ? AF_INET : AF_INET6;
-			while (addr && (addr->ai_family != family))
-				addr = addr->ai_next;
-		}
-		break;
-		default:
+			case 4:
+			case 6:
+			{
+				const int family = (IPvX == 4) ? AF_INET : AF_INET6;
+				while (addr && (addr->ai_family != family))
+					addr = addr->ai_next;
+			}
 			break;
+			default:
+				break;
+		}
 	}
 
 	if (!addr)

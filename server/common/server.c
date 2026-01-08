@@ -142,18 +142,20 @@ size_t server_rdpsnd_get_formats(AUDIO_FORMAT** dst_formats)
 	if (!supported_audio_formats)
 		goto fail;
 
-	size_t y = 0;
-	for (size_t x = 0; x < ARRAYSIZE(default_supported_audio_formats); x++)
 	{
-		const AUDIO_FORMAT* format = &default_supported_audio_formats[x];
+		size_t y = 0;
+		for (size_t x = 0; x < ARRAYSIZE(default_supported_audio_formats); x++)
+		{
+			const AUDIO_FORMAT* format = &default_supported_audio_formats[x];
 
-		if (freerdp_dsp_supports_format(format, TRUE))
-			supported_audio_formats[y++] = *format;
+			if (freerdp_dsp_supports_format(format, TRUE))
+				supported_audio_formats[y++] = *format;
+		}
+
+		/* Set default audio formats. */
+		*dst_formats = supported_audio_formats;
+		return y;
 	}
-
-	/* Set default audio formats. */
-	*dst_formats = supported_audio_formats;
-	return y;
 fail:
 	audio_formats_free(supported_audio_formats, ARRAYSIZE(default_supported_audio_formats));
 

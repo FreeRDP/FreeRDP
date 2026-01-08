@@ -65,15 +65,15 @@ static UINT rdpsnd_server_send_formats(RdpsndServerContext* context)
 	Stream_Write_UINT8(s, SNDC_FORMATS);
 	Stream_Write_UINT8(s, 0);
 	Stream_Seek_UINT16(s);
-	Stream_Write_UINT32(s, 0);                           /* dwFlags */
-	Stream_Write_UINT32(s, 0);                           /* dwVolume */
-	Stream_Write_UINT32(s, 0);                           /* dwPitch */
-	Stream_Write_UINT16(s, 0);                           /* wDGramPort */
+	Stream_Write_UINT32(s, 0); /* dwFlags */
+	Stream_Write_UINT32(s, 0); /* dwVolume */
+	Stream_Write_UINT32(s, 0); /* dwPitch */
+	Stream_Write_UINT16(s, 0); /* wDGramPort */
 	Stream_Write_UINT16(
 	    s, WINPR_ASSERTING_INT_CAST(uint16_t, context->num_server_formats)); /* wNumberOfFormats */
-	Stream_Write_UINT8(s, context->block_no);            /* cLastBlockConfirmed */
-	Stream_Write_UINT16(s, CHANNEL_VERSION_WIN_MAX);     /* wVersion */
-	Stream_Write_UINT8(s, 0);                            /* bPad */
+	Stream_Write_UINT8(s, context->block_no);        /* cLastBlockConfirmed */
+	Stream_Write_UINT16(s, CHANNEL_VERSION_WIN_MAX); /* wVersion */
+	Stream_Write_UINT8(s, 0);                        /* bPad */
 
 	for (size_t i = 0; i < context->num_server_formats; i++)
 	{
@@ -83,20 +83,22 @@ static UINT rdpsnd_server_send_formats(RdpsndServerContext* context)
 			goto fail;
 	}
 
-	const size_t pos = Stream_GetPosition(s);
-	if (pos > UINT16_MAX)
-		goto fail;
+	{
+		const size_t pos = Stream_GetPosition(s);
+		if (pos > UINT16_MAX)
+			goto fail;
 
-	WINPR_ASSERT(pos >= 4);
-	Stream_SetPosition(s, 2);
-	Stream_Write_UINT16(s, (UINT16)(pos - 4));
-	Stream_SetPosition(s, pos);
+		WINPR_ASSERT(pos >= 4);
+		Stream_SetPosition(s, 2);
+		Stream_Write_UINT16(s, (UINT16)(pos - 4));
+		Stream_SetPosition(s, pos);
 
-	WINPR_ASSERT(context->priv);
+		WINPR_ASSERT(context->priv);
 
-	status = WTSVirtualChannelWrite(context->priv->ChannelHandle, Stream_BufferAs(s, char),
-	                                (UINT32)pos, &written);
-	Stream_SetPosition(s, 0);
+		status = WTSVirtualChannelWrite(context->priv->ChannelHandle, Stream_BufferAs(s, char),
+		                                (UINT32)pos, &written);
+		Stream_SetPosition(s, 0);
+	}
 fail:
 	return status ? CHANNEL_RC_OK : ERROR_INTERNAL_ERROR;
 }
@@ -632,24 +634,27 @@ static UINT rdpsnd_server_send_wave2_pdu(RdpsndServerContext* context, UINT16 fo
 		}
 	}
 
-	const size_t end = Stream_GetPosition(s);
-	if (end > UINT16_MAX + 4)
 	{
-		error = ERROR_INTERNAL_ERROR;
-		goto out;
-	}
+		const size_t end = Stream_GetPosition(s);
+		if (end > UINT16_MAX + 4)
+		{
+			error = ERROR_INTERNAL_ERROR;
+			goto out;
+		}
 
-	Stream_SetPosition(s, 2);
-	Stream_Write_UINT16(s, (UINT16)(end - 4));
+		Stream_SetPosition(s, 2);
+		Stream_Write_UINT16(s, (UINT16)(end - 4));
 
-	status = WTSVirtualChannelWrite(context->priv->ChannelHandle, Stream_BufferAs(s, char),
-	                                (UINT32)end, &written);
+		status = WTSVirtualChannelWrite(context->priv->ChannelHandle, Stream_BufferAs(s, char),
+		                                (UINT32)end, &written);
 
-	if (!status || (end != written))
-	{
-		WLog_ERR(TAG, "WTSVirtualChannelWrite failed! [stream length=%" PRIuz " - written=%" PRIu32,
-		         end, written);
-		error = ERROR_INTERNAL_ERROR;
+		if (!status || (end != written))
+		{
+			WLog_ERR(TAG,
+			         "WTSVirtualChannelWrite failed! [stream length=%" PRIuz " - written=%" PRIu32,
+			         end, written);
+			error = ERROR_INTERNAL_ERROR;
+		}
 	}
 
 	context->block_no = (context->block_no + 1) % 256;

@@ -192,16 +192,19 @@ static const char* freerdp_passphrase_read_tty(rdpContext* context, const char* 
 	(void)fprintf(fout, "%s", prompt);
 	(void)fflush(fout);
 
-	char* ptr = NULL;
-	size_t ptr_len = 0;
+	{
+		char* ptr = NULL;
+		size_t ptr_len = 0;
+		const SSIZE_T res = freerdp_interruptible_get_line(context, &ptr, &ptr_len, fp);
+		if (res < 0)
+			goto error;
 
-	const SSIZE_T res = freerdp_interruptible_get_line(context, &ptr, &ptr_len, fp);
-	if (res < 0)
-		goto error;
-	replace_char(ptr, ptr_len, "\r\n");
+		replace_char(ptr, ptr_len, "\r\n");
 
-	strncpy(buf, ptr, MIN(bufsiz, ptr_len));
-	free(ptr);
+		strncpy(buf, ptr, MIN(bufsiz, ptr_len));
+		free(ptr);
+	}
+
 	if (terminal_needs_reset)
 	{
 		if (tcsetattr(terminal_fildes, TCSAFLUSH, &orig_flags) == -1)

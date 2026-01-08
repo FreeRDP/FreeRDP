@@ -113,59 +113,64 @@ int main(int argc, char* argv[])
 		goto fail;
 	}
 
-	const char* arg = argv[1];
-
-	if (_stricmp(arg, "-h") == 0)
 	{
-		status = usage(argv[0]);
-		goto fail;
-	}
-	else if (_stricmp(arg, "--help") == 0)
-	{
-		status = usage(argv[0]);
-		goto fail;
-	}
-	else if (_stricmp(arg, "--buildconfig") == 0)
-	{
-		status = buildconfig(argv[0]);
-		goto fail;
-	}
-	else if (_stricmp(arg, "--dump-config") == 0)
-	{
-		if (argc != 3)
+		const char* arg = argv[1];
+		if (_stricmp(arg, "-h") == 0)
 		{
 			status = usage(argv[0]);
 			goto fail;
 		}
-		status = pf_server_config_dump(argv[2]) ? 0 : -1;
-		goto fail;
+		else if (_stricmp(arg, "--help") == 0)
+		{
+			status = usage(argv[0]);
+			goto fail;
+		}
+		else if (_stricmp(arg, "--buildconfig") == 0)
+		{
+			status = buildconfig(argv[0]);
+			goto fail;
+		}
+		else if (_stricmp(arg, "--dump-config") == 0)
+		{
+			if (argc != 3)
+			{
+				status = usage(argv[0]);
+				goto fail;
+			}
+			status = pf_server_config_dump(argv[2]) ? 0 : -1;
+			goto fail;
+		}
+		else if (_stricmp(arg, "-v") == 0)
+		{
+			status = version(argv[0]);
+			goto fail;
+		}
+		else if (_stricmp(arg, "--version") == 0)
+		{
+			status = version(argv[0]);
+			goto fail;
+		}
 	}
-	else if (_stricmp(arg, "-v") == 0)
+
 	{
-		status = version(argv[0]);
-		goto fail;
+		const char* config_path = argv[1];
+		if (argc != 2)
+		{
+			status = usage(argv[0]);
+			goto fail;
+		}
+
+		{
+			proxyConfig* config = pf_server_config_load_file(config_path);
+			if (!config)
+				goto fail;
+
+			pf_server_config_print(config);
+
+			server = pf_server_new(config);
+			pf_server_config_free(config);
+		}
 	}
-	else if (_stricmp(arg, "--version") == 0)
-	{
-		status = version(argv[0]);
-		goto fail;
-	}
-
-	const char* config_path = argv[1];
-	if (argc != 2)
-	{
-		status = usage(argv[0]);
-		goto fail;
-	}
-
-	proxyConfig* config = pf_server_config_load_file(config_path);
-	if (!config)
-		goto fail;
-
-	pf_server_config_print(config);
-
-	server = pf_server_new(config);
-	pf_server_config_free(config);
 
 	if (!server)
 		goto fail;

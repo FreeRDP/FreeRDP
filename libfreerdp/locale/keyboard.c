@@ -378,18 +378,20 @@ FREERDP_REMAP_TABLE* freerdp_keyboard_remap_string_to_list(const char* list)
 	if (!copy)
 		goto fail;
 
-	char* context = NULL;
-	char* token = strtok_s(copy, ",", &context);
-	while (token)
 	{
-		UINT32 key = 0;
-		UINT32 value = 0;
-		if (!freerdp_extract_key_value(token, &key, &value))
-			goto fail;
-		if (key >= remap_table_size)
-			goto fail;
-		remap_table->table[key] = value;
-		token = strtok_s(NULL, ",", &context);
+		char* context = NULL;
+		char* token = strtok_s(copy, ",", &context);
+		while (token)
+		{
+			UINT32 key = 0;
+			UINT32 value = 0;
+			if (!freerdp_extract_key_value(token, &key, &value))
+				goto fail;
+			if (key >= remap_table_size)
+				goto fail;
+			remap_table->table[key] = value;
+			token = strtok_s(NULL, ",", &context);
+		}
 	}
 
 	success = TRUE;

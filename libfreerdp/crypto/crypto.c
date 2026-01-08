@@ -199,26 +199,37 @@ char* crypto_read_pem(const char* WINPR_RESTRICT filename, size_t* WINPR_RESTRIC
 	fp = winpr_fopen(filename, "r");
 	if (!fp)
 		goto fail;
-	const int rs = _fseeki64(fp, 0, SEEK_END);
-	if (rs < 0)
-		goto fail;
-	const int64_t size = _ftelli64(fp);
-	if (size < 0)
-		goto fail;
-	const int rc = _fseeki64(fp, 0, SEEK_SET);
-	if (rc < 0)
-		goto fail;
 
-	pem = calloc(WINPR_ASSERTING_INT_CAST(size_t, size) + 1, sizeof(char));
-	if (!pem)
-		goto fail;
+	{
+		const int rs = _fseeki64(fp, 0, SEEK_END);
+		if (rs < 0)
+			goto fail;
+	}
 
-	const size_t fr = fread(pem, (size_t)size, 1, fp);
-	if (fr != 1)
-		goto fail;
+	{
+		const int64_t size = _ftelli64(fp);
+		if (size < 0)
+			goto fail;
 
-	if (plength)
-		*plength = strnlen(pem, WINPR_ASSERTING_INT_CAST(size_t, size));
+		{
+			const int rc = _fseeki64(fp, 0, SEEK_SET);
+			if (rc < 0)
+				goto fail;
+		}
+
+		pem = calloc(WINPR_ASSERTING_INT_CAST(size_t, size) + 1, sizeof(char));
+		if (!pem)
+			goto fail;
+
+		{
+			const size_t fr = fread(pem, (size_t)size, 1, fp);
+			if (fr != 1)
+				goto fail;
+		}
+
+		if (plength)
+			*plength = strnlen(pem, WINPR_ASSERTING_INT_CAST(size_t, size));
+	}
 	(void)fclose(fp);
 	return pem;
 

@@ -510,11 +510,12 @@ BOOL ntlm_construct_challenge_target_info(NTLM_CONTEXT* context)
 	AvPairsCount = 5;
 	AvPairsLength = NbDomainName.Length + NbComputerName.Length + DnsDomainName.Length +
 	                DnsComputerName.Length + 8;
-	const size_t length = ntlm_av_pair_list_size(AvPairsCount, AvPairsLength);
-
-	if (!sspi_SecBufferAlloc(&context->ChallengeTargetInfo,
-	                         WINPR_ASSERTING_INT_CAST(uint32_t, length)))
-		goto fail;
+	{
+		const size_t length = ntlm_av_pair_list_size(AvPairsCount, AvPairsLength);
+		if (!sspi_SecBufferAlloc(&context->ChallengeTargetInfo,
+		                         WINPR_ASSERTING_INT_CAST(uint32_t, length)))
+			goto fail;
+	}
 
 	pAvPairList = (NTLM_AV_PAIR*)context->ChallengeTargetInfo.pvBuffer;
 	cbAvPairList = context->ChallengeTargetInfo.cbBuffer;
@@ -673,14 +674,15 @@ BOOL ntlm_construct_authenticate_target_info(NTLM_CONTEXT* context)
 		}
 	}
 
-	size_t size = ntlm_av_pair_list_size(AvPairsCount, AvPairsValueLength);
+	{
+		size_t size = ntlm_av_pair_list_size(AvPairsCount, AvPairsValueLength);
+		if (context->NTLMv2)
+			size += 8; /* unknown 8-byte padding */
 
-	if (context->NTLMv2)
-		size += 8; /* unknown 8-byte padding */
-
-	if (!sspi_SecBufferAlloc(&context->AuthenticateTargetInfo,
-	                         WINPR_ASSERTING_INT_CAST(uint32_t, size)))
-		goto fail;
+		if (!sspi_SecBufferAlloc(&context->AuthenticateTargetInfo,
+		                         WINPR_ASSERTING_INT_CAST(uint32_t, size)))
+			goto fail;
+	}
 
 	AuthenticateTargetInfo = (NTLM_AV_PAIR*)context->AuthenticateTargetInfo.pvBuffer;
 	cbAuthenticateTargetInfo = context->AuthenticateTargetInfo.cbBuffer;

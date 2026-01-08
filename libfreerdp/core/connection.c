@@ -724,7 +724,6 @@ static const BYTE fips_ivec[8] = { 0x12, 0x34, 0x56, 0x78, 0x90, 0xAB, 0xCD, 0xE
 static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 {
 	wStream* s = NULL;
-	int status = 0;
 	BOOL ret = FALSE;
 
 	WINPR_ASSERT(rdp);
@@ -779,22 +778,26 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 		goto end;
 	}
 
-	UINT16 sec_flags = SEC_EXCHANGE_PKT | SEC_LICENSE_ENCRYPT_SC;
-	if (!rdp_write_header(rdp, s, length, MCS_GLOBAL_CHANNEL_ID, sec_flags))
-		goto end;
-	if (!rdp_write_security_header(rdp, s, sec_flags))
-		goto end;
+	{
+		const UINT16 sec_flags = SEC_EXCHANGE_PKT | SEC_LICENSE_ENCRYPT_SC;
+		if (!rdp_write_header(rdp, s, length, MCS_GLOBAL_CHANNEL_ID, sec_flags))
+			goto end;
+		if (!rdp_write_security_header(rdp, s, sec_flags))
+			goto end;
+	}
 
 	Stream_Write_UINT32(s, info->ModulusLength + 8);
 	Stream_Write(s, crypt_client_random, info->ModulusLength);
 	Stream_Zero(s, 8);
 	Stream_SealLength(s);
 
-	rdpTransport* transport = freerdp_get_transport(rdp->context);
-	status = transport_write(transport, s);
+	{
+		rdpTransport* transport = freerdp_get_transport(rdp->context);
+		const int status = transport_write(transport, s);
 
-	if (status < 0)
-		goto end;
+		if (status < 0)
+			goto end;
+	}
 
 	rdp->do_crypt_license = TRUE;
 

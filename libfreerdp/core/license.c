@@ -1850,19 +1850,22 @@ BOOL license_read_license_info(rdpLicense* license, wStream* s)
 	Stream_Read(s, license->ClientRandom, sizeof(license->ClientRandom));
 
 	/* Licensing Binary Blob with EncryptedPreMasterSecret: */
-	UINT32 ModulusLength = 0;
-	if (!license_read_encrypted_premaster_secret_blob(
-	        license->log, s, license->EncryptedPremasterSecret, &ModulusLength))
-		goto error;
-
-	if (ModulusLength != info->ModulusLength)
 	{
-		WLog_Print(license->log, WLOG_WARN,
-		           "EncryptedPremasterSecret,::ModulusLength[%" PRIu32
-		           "] != rdpCertInfo::ModulusLength[%" PRIu32 "]",
-		           ModulusLength, info->ModulusLength);
-		goto error;
+		UINT32 ModulusLength = 0;
+		if (!license_read_encrypted_premaster_secret_blob(
+		        license->log, s, license->EncryptedPremasterSecret, &ModulusLength))
+			goto error;
+
+		if (ModulusLength != info->ModulusLength)
+		{
+			WLog_Print(license->log, WLOG_WARN,
+			           "EncryptedPremasterSecret,::ModulusLength[%" PRIu32
+			           "] != rdpCertInfo::ModulusLength[%" PRIu32 "]",
+			           ModulusLength, info->ModulusLength);
+			goto error;
+		}
 	}
+
 	/* Licensing Binary Blob with LicenseInfo: */
 	if (!license_read_binary_blob(license->log, s, license->LicenseInfo))
 		goto error;

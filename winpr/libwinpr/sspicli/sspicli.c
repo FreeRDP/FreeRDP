@@ -153,29 +153,34 @@ BOOL LogonUserA(LPCSTR lpszUsername, LPCSTR lpszDomain, WINPR_ATTR_UNUSED LPCSTR
 			goto fail;
 	}
 
-	long buflen = sysconf(_SC_GETPW_R_SIZE_MAX);
-	if (buflen < 0)
-		buflen = 8196;
-
-	const size_t s = 1ULL + (size_t)buflen;
-	char* buf = (char*)calloc(s, sizeof(char));
-	if (!buf)
-		goto fail;
-
-	struct passwd pwd = { 0 };
-	struct passwd* pw = NULL;
-	const int rc =
-	    getpwnam_r(lpszUsername, &pwd, buf, WINPR_ASSERTING_INT_CAST(size_t, buflen), &pw);
-	free(buf);
-	if ((rc == 0) && pw)
 	{
-		token->UserId = (DWORD)pw->pw_uid;
-		token->GroupId = (DWORD)pw->pw_gid;
+		long buflen = sysconf(_SC_GETPW_R_SIZE_MAX);
+		if (buflen < 0)
+			buflen = 8196;
+
+		{
+			const size_t s = 1ULL + (size_t)buflen;
+			char* buf = (char*)calloc(s, sizeof(char));
+			if (!buf)
+				goto fail;
+
+			{
+				struct passwd pwd = { 0 };
+				struct passwd* pw = NULL;
+				const int rc = getpwnam_r(lpszUsername, &pwd, buf,
+				                          WINPR_ASSERTING_INT_CAST(size_t, buflen), &pw);
+				free(buf);
+				if ((rc == 0) && pw)
+				{
+					token->UserId = (DWORD)pw->pw_uid;
+					token->GroupId = (DWORD)pw->pw_gid;
+				}
+
+				*((ULONG_PTR*)phToken) = (ULONG_PTR)token;
+				return TRUE;
+			}
+		}
 	}
-
-	*((ULONG_PTR*)phToken) = (ULONG_PTR)token;
-	return TRUE;
-
 fail:
 	free(token->Username);
 	free(token->Domain);
@@ -245,10 +250,12 @@ BOOL GetUserNameExA(EXTENDED_NAME_FORMAT NameFormat, LPSTR lpNameBuffer, PULONG 
 			strncpy(lpNameBuffer, name, strnlen(name, *nSize));
 		}
 #endif
-			const size_t len = strnlen(lpNameBuffer, *nSize);
-			if (len > UINT32_MAX)
-				return FALSE;
-			*nSize = (ULONG)len;
+			{
+				const size_t len = strnlen(lpNameBuffer, *nSize);
+				if (len > UINT32_MAX)
+					return FALSE;
+				*nSize = (ULONG)len;
+			}
 			return TRUE;
 
 		case NameFullyQualifiedDN:
@@ -283,11 +290,13 @@ BOOL GetUserNameExW(EXTENDED_NAME_FORMAT NameFormat, LPWSTR lpNameBuffer, PULONG
 	if (!GetUserNameExA(NameFormat, name, nSize))
 		goto fail;
 
-	const SSIZE_T res = ConvertUtf8ToWChar(name, lpNameBuffer, *nSize);
-	if ((res < 0) || (res >= UINT32_MAX))
-		goto fail;
+	{
+		const SSIZE_T res = ConvertUtf8ToWChar(name, lpNameBuffer, *nSize);
+		if ((res < 0) || (res >= UINT32_MAX))
+			goto fail;
 
-	*nSize = (UINT32)res + 1;
+		*nSize = (UINT32)res + 1;
+	}
 	rc = TRUE;
 fail:
 	free(name);

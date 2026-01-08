@@ -770,18 +770,23 @@ SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer buf
 
 	ntlm_generate_timestamp(context); /* Timestamp */
 
-	const SECURITY_STATUS rc = ntlm_compute_lm_v2_response(context); /* LmChallengeResponse */
-	if (rc != SEC_E_OK)
 	{
-		status = rc;
-		goto fail;
+		const SECURITY_STATUS rc = ntlm_compute_lm_v2_response(context); /* LmChallengeResponse */
+		if (rc != SEC_E_OK)
+		{
+			status = rc;
+			goto fail;
+		}
 	}
 
-	const SECURITY_STATUS rc2 = ntlm_compute_ntlm_v2_response(context); /* NtChallengeResponse */
-	if (rc2 != SEC_E_OK)
 	{
-		status = rc2;
-		goto fail;
+		const SECURITY_STATUS rc2 =
+		    ntlm_compute_ntlm_v2_response(context); /* NtChallengeResponse */
+		if (rc2 != SEC_E_OK)
+		{
+			status = rc2;
+			goto fail;
+		}
 	}
 
 	ntlm_generate_key_exchange_key(context);     /* KeyExchangeKey */
@@ -1111,9 +1116,11 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 			return rc;
 	}
 
-	const SECURITY_STATUS rc = ntlm_compute_ntlm_v2_response(context); /* NtChallengeResponse */
-	if (rc != SEC_E_OK)
-		return rc;
+	{
+		const SECURITY_STATUS rc = ntlm_compute_ntlm_v2_response(context); /* NtChallengeResponse */
+		if (rc != SEC_E_OK)
+			return rc;
+	}
 
 	/* KeyExchangeKey */
 	ntlm_generate_key_exchange_key(context);

@@ -683,11 +683,13 @@ static SecPkgContext_Bindings* tls_get_channel_bindings(const rdpCertificate* ce
 	if (!ContextBindings)
 		goto out_free;
 
-	const size_t slen = sizeof(SEC_CHANNEL_BINDINGS) + ChannelBindingTokenLength;
-	if (slen > UINT32_MAX)
-		goto out_free;
+	{
+		const size_t slen = sizeof(SEC_CHANNEL_BINDINGS) + ChannelBindingTokenLength;
+		if (slen > UINT32_MAX)
+			goto out_free;
 
-	ContextBindings->BindingsLength = (UINT32)slen;
+		ContextBindings->BindingsLength = (UINT32)slen;
+	}
 	ChannelBindings = (SEC_CHANNEL_BINDINGS*)calloc(1, ContextBindings->BindingsLength);
 
 	if (!ChannelBindings)
@@ -1448,11 +1450,13 @@ static BOOL is_accepted_fingerprint(const rdpCertificate* cert,
 			if (!h)
 				goto next;
 
-			const char* fp = h + strlen(h) + 1;
-			if (compare_fingerprint_all(fp, h, cert))
 			{
-				rc = TRUE;
-				break;
+				const char* fp = h + strlen(h) + 1;
+				if (compare_fingerprint_all(fp, h, cert))
+				{
+					rc = TRUE;
+					break;
+				}
 			}
 		next:
 			cur = strtok_s(NULL, ",", &context);

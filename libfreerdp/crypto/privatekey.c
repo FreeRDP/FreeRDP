@@ -546,19 +546,24 @@ BYTE* freerdp_key_get_param(const rdpPrivateKey* key, enum FREERDP_KEY_PARAM par
 	if (length < 0)
 		goto fail;
 
-	const size_t alloc_size = (size_t)length + 1ull;
-	buf = calloc(alloc_size, sizeof(BYTE));
+	{
+		const size_t alloc_size = (size_t)length + 1ull;
+		buf = calloc(alloc_size, sizeof(BYTE));
+	}
+
 	if (!buf)
 		goto fail;
 
-	const int bnlen = BN_bn2bin(bn, buf);
-	if (bnlen != length)
 	{
-		free(buf);
-		buf = NULL;
+		const int bnlen = BN_bn2bin(bn, buf);
+		if (bnlen != length)
+		{
+			free(buf);
+			buf = NULL;
+		}
+		else
+			*plength = WINPR_ASSERTING_INT_CAST(size_t, length);
 	}
-	else
-		*plength = WINPR_ASSERTING_INT_CAST(size_t, length);
 
 fail:
 	BN_free(bn);

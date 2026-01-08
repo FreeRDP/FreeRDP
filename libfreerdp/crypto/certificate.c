@@ -182,7 +182,7 @@ struct rdp_certificate
  *
  */
 
-static const char rsa_magic[4] = "RSA1";
+static const char rsa_magic[4] = { 'R', 'S', 'A', '1' };
 
 static const char* certificate_read_errors[] = { "Certificate tag",
 	                                             "TBSCertificate",
@@ -496,22 +496,29 @@ static OSSL_PARAM* get_params(const BIGNUM* e, const BIGNUM* mod)
 		goto fail;
 	}
 
-	UINT ie = 0;
-	const int ne = BN_bn2nativepad(e, (BYTE*)&ie, sizeof(ie));
-	if ((ne < 0) || (ne > 4))
 	{
-		WLog_ERR(TAG, "BN_bn2nativepad(e, (BYTE*)&ie, sizeof(ie)) out of range: 0<= %d <= 4", ne);
-		goto fail;
-	}
-	if (OSSL_PARAM_BLD_push_BN(param, OSSL_PKEY_PARAM_RSA_N, mod) != 1)
-	{
-		WLog_ERR(TAG, "OSSL_PARAM_BLD_push_BN(param, OSSL_PKEY_PARAM_RSA_N, mod) failed");
-		goto fail;
-	}
-	if (OSSL_PARAM_BLD_push_uint(param, OSSL_PKEY_PARAM_RSA_E, ie) != 1)
-	{
-		WLog_ERR(TAG, "OSSL_PARAM_BLD_push_uint(param, OSSL_PKEY_PARAM_RSA_E, ie) failed");
-		goto fail;
+		UINT ie = 0;
+		{
+			const int ne = BN_bn2nativepad(e, (BYTE*)&ie, sizeof(ie));
+			if ((ne < 0) || (ne > 4))
+			{
+				WLog_ERR(TAG,
+				         "BN_bn2nativepad(e, (BYTE*)&ie, sizeof(ie)) out of range: 0<= %d <= 4",
+				         ne);
+				goto fail;
+			}
+		}
+
+		if (OSSL_PARAM_BLD_push_BN(param, OSSL_PKEY_PARAM_RSA_N, mod) != 1)
+		{
+			WLog_ERR(TAG, "OSSL_PARAM_BLD_push_BN(param, OSSL_PKEY_PARAM_RSA_N, mod) failed");
+			goto fail;
+		}
+		if (OSSL_PARAM_BLD_push_uint(param, OSSL_PKEY_PARAM_RSA_E, ie) != 1)
+		{
+			WLog_ERR(TAG, "OSSL_PARAM_BLD_push_uint(param, OSSL_PKEY_PARAM_RSA_E, ie) failed");
+			goto fail;
+		}
 	}
 
 	parameters = OSSL_PARAM_BLD_to_param(param);
@@ -575,48 +582,59 @@ static BOOL update_x509_from_info(rdpCertificate* cert)
 
 	cert->x509 = x509_from_rsa(rsa);
 #else
-	EVP_PKEY* pkey = NULL;
-	EVP_PKEY_CTX* ctx = EVP_PKEY_CTX_new_id(EVP_PKEY_RSA, NULL);
-	if (!ctx)
 	{
-		WLog_ERR(TAG, "EVP_PKEY_CTX_new_id(EVP_PKEY_RSA, NULL) failed");
-		goto fail2;
-	}
-	const int xx = EVP_PKEY_fromdata_init(ctx);
-	if (xx != 1)
-	{
-		WLog_ERR(TAG, "EVP_PKEY_fromdata_init(ctx) failed");
-		goto fail2;
-	}
+		EVP_PKEY* pkey = NULL;
+		EVP_PKEY_CTX* ctx = EVP_PKEY_CTX_new_id(EVP_PKEY_RSA, NULL);
+		if (!ctx)
+		{
+			WLog_ERR(TAG, "EVP_PKEY_CTX_new_id(EVP_PKEY_RSA, NULL) failed");
+			goto fail2;
+		}
 
-	OSSL_PARAM* parameters = get_params(e, mod);
-	if (!parameters)
-		goto fail2;
+		{
+			const int xx = EVP_PKEY_fromdata_init(ctx);
+			if (xx != 1)
+			{
+				WLog_ERR(TAG, "EVP_PKEY_fromdata_init(ctx) failed");
+				goto fail2;
+			}
+		}
 
-	const int rc2 = EVP_PKEY_fromdata(ctx, &pkey, EVP_PKEY_PUBLIC_KEY, parameters);
-	OSSL_PARAM_free(parameters);
-	if (rc2 <= 0)
-	{
-		WLog_ERR(TAG, "EVP_PKEY_fromdata(ctx, &pkey, EVP_PKEY_PUBLIC_KEY, parameters) failed");
-		goto fail2;
-	}
+		{
+			OSSL_PARAM* parameters = get_params(e, mod);
+			if (!parameters)
+				goto fail2;
 
-	cert->x509 = X509_new();
-	if (!cert->x509)
-	{
-		WLog_ERR(TAG, "X509_new() failed");
-		goto fail2;
-	}
+			{
+				const int rc2 = EVP_PKEY_fromdata(ctx, &pkey, EVP_PKEY_PUBLIC_KEY, parameters);
+				OSSL_PARAM_free(parameters);
+				if (rc2 <= 0)
+				{
+					WLog_ERR(
+					    TAG,
+					    "EVP_PKEY_fromdata(ctx, &pkey, EVP_PKEY_PUBLIC_KEY, parameters) failed");
+					goto fail2;
+				}
+			}
+		}
 
-	if (X509_set_pubkey(cert->x509, pkey) != 1)
-	{
-		WLog_ERR(TAG, "X509_set_pubkey(cert->x509, pkey) failed");
-		X509_free(cert->x509);
-		cert->x509 = NULL;
+		cert->x509 = X509_new();
+		if (!cert->x509)
+		{
+			WLog_ERR(TAG, "X509_new() failed");
+			goto fail2;
+		}
+
+		if (X509_set_pubkey(cert->x509, pkey) != 1)
+		{
+			WLog_ERR(TAG, "X509_set_pubkey(cert->x509, pkey) failed");
+			X509_free(cert->x509);
+			cert->x509 = NULL;
+		}
+	fail2:
+		EVP_PKEY_free(pkey);
+		EVP_PKEY_CTX_free(ctx);
 	}
-fail2:
-	EVP_PKEY_free(pkey);
-	EVP_PKEY_CTX_free(ctx);
 #endif
 	if (!cert->x509)
 		goto fail;
@@ -724,8 +742,8 @@ static BOOL certificate_process_server_public_signature(rdpCertificate* certific
 	 * allowed under FIPS. Since the validation is not protecting against anything since the
 	 * private/public keys are well known and documented in MS-RDPBCGR section 5.3.3.1, we are not
 	 * gaining any security by using MD5 for signature comparison. Rather then use MD5
-	 * here we just don't do the validation to avoid its use. Historically, freerdp has been ignoring
-	 * a failed validation anyways. */
+	 * here we just don't do the validation to avoid its use. Historically, freerdp has been
+	 * ignoring a failed validation anyways. */
 #if defined(CERT_VALIDATE_MD5)
 
 	if (!winpr_Digest(WINPR_MD_MD5, sigdata, sigdatalen, md5hash, sizeof(md5hash)))
@@ -737,7 +755,7 @@ static BOOL certificate_process_server_public_signature(rdpCertificate* certific
 	if (siglen < 8)
 		return FALSE;
 
-		/* Last 8 bytes shall be all zero. */
+	/* Last 8 bytes shall be all zero. */
 #if defined(CERT_VALIDATE_PADDING)
 	{
 		size_t sum = 0;
@@ -1305,8 +1323,12 @@ rdpCertificate* freerdp_certificate_new_from_der(const BYTE* data, size_t length
 
 	if (!cert || !data || (length == 0) || (length > INT_MAX))
 		goto fail;
-	const BYTE* ptr = data;
-	cert->x509 = d2i_X509(NULL, &ptr, (int)length);
+
+	{
+		const BYTE* ptr = data;
+		cert->x509 = d2i_X509(NULL, &ptr, (int)length);
+	}
+
 	if (!cert->x509)
 		goto fail;
 	if (!freerdp_rsa_from_x509(cert))
@@ -1462,21 +1484,23 @@ char* freerdp_certificate_get_fingerprint_by_hash_ex(const rdpCertificate* cert,
 
 	pos = 0;
 
-	size_t i = 0;
-	for (; i < (fp_len - 1); i++)
 	{
-		int rc = 0;
-		char* p = &fp_buffer[pos];
-		if (separator)
-			rc = sprintf_s(p, size - pos, "%02" PRIx8 ":", fp[i]);
-		else
-			rc = sprintf_s(p, size - pos, "%02" PRIx8, fp[i]);
-		if (rc <= 0)
-			goto fail;
-		pos += (size_t)rc;
-	}
+		size_t i = 0;
+		for (; i < (fp_len - 1); i++)
+		{
+			int rc = 0;
+			char* p = &fp_buffer[pos];
+			if (separator)
+				rc = sprintf_s(p, size - pos, "%02" PRIx8 ":", fp[i]);
+			else
+				rc = sprintf_s(p, size - pos, "%02" PRIx8, fp[i]);
+			if (rc <= 0)
+				goto fail;
+			pos += (size_t)rc;
+		}
 
-	(void)sprintf_s(&fp_buffer[pos], size - pos, "%02" PRIx8 "", fp[i]);
+		(void)sprintf_s(&fp_buffer[pos], size - pos, "%02" PRIx8 "", fp[i]);
+	}
 
 	free(fp);
 
@@ -1669,10 +1693,12 @@ BOOL freerdp_certificate_get_public_key(const rdpCertificate* cert, BYTE** Publi
 	if (!ptr)
 		goto exit;
 
-	const int length2 = i2d_PublicKey(pkey, &ptr);
-	if (length != length2)
-		goto exit;
-	*PublicKeyLength = (DWORD)length2;
+	{
+		const int length2 = i2d_PublicKey(pkey, &ptr);
+		if (length != length2)
+			goto exit;
+		*PublicKeyLength = (DWORD)length2;
+	}
 	status = TRUE;
 exit:
 

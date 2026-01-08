@@ -520,30 +520,31 @@ static BOOL rdstls_process_authentication_request_with_password(rdpRdstls* rdstl
 	if (!rdstls_read_unicode_string(rdstls->log, s, &clientPassword))
 		goto fail;
 
-	const BYTE* serverRedirectionGuid =
-	    freerdp_settings_get_pointer(settings, FreeRDP_RedirectionGuid);
-	const UINT32 serverRedirectionGuidLength =
-	    freerdp_settings_get_uint32(settings, FreeRDP_RedirectionGuidLength);
-	const char* serverUsername = freerdp_settings_get_string(settings, FreeRDP_Username);
-	const char* serverDomain = freerdp_settings_get_string(settings, FreeRDP_Domain);
-	const char* serverPassword = freerdp_settings_get_string(settings, FreeRDP_Password);
+	{
+		const BYTE* serverRedirectionGuid =
+		    freerdp_settings_get_pointer(settings, FreeRDP_RedirectionGuid);
+		const UINT32 serverRedirectionGuidLength =
+		    freerdp_settings_get_uint32(settings, FreeRDP_RedirectionGuidLength);
+		const char* serverUsername = freerdp_settings_get_string(settings, FreeRDP_Username);
+		const char* serverDomain = freerdp_settings_get_string(settings, FreeRDP_Domain);
+		const char* serverPassword = freerdp_settings_get_string(settings, FreeRDP_Password);
 
-	rdstls->resultCode = RDSTLS_RESULT_SUCCESS;
+		rdstls->resultCode = RDSTLS_RESULT_SUCCESS;
 
-	if (!rdstls_cmp_data(rdstls->log, "RedirectionGuid", serverRedirectionGuid,
-	                     serverRedirectionGuidLength, clientRedirectionGuid,
-	                     clientRedirectionGuidLength))
-		rdstls->resultCode = RDSTLS_RESULT_ACCESS_DENIED;
+		if (!rdstls_cmp_data(rdstls->log, "RedirectionGuid", serverRedirectionGuid,
+		                     serverRedirectionGuidLength, clientRedirectionGuid,
+		                     clientRedirectionGuidLength))
+			rdstls->resultCode = RDSTLS_RESULT_ACCESS_DENIED;
 
-	if (!rdstls_cmp_str(rdstls->log, "UserName", serverUsername, clientUsername))
-		rdstls->resultCode = RDSTLS_RESULT_LOGON_FAILURE;
+		if (!rdstls_cmp_str(rdstls->log, "UserName", serverUsername, clientUsername))
+			rdstls->resultCode = RDSTLS_RESULT_LOGON_FAILURE;
 
-	if (!rdstls_cmp_str(rdstls->log, "Domain", serverDomain, clientDomain))
-		rdstls->resultCode = RDSTLS_RESULT_LOGON_FAILURE;
+		if (!rdstls_cmp_str(rdstls->log, "Domain", serverDomain, clientDomain))
+			rdstls->resultCode = RDSTLS_RESULT_LOGON_FAILURE;
 
-	if (!rdstls_cmp_str(rdstls->log, "Password", serverPassword, clientPassword))
-		rdstls->resultCode = RDSTLS_RESULT_LOGON_FAILURE;
-
+		if (!rdstls_cmp_str(rdstls->log, "Password", serverPassword, clientPassword))
+			rdstls->resultCode = RDSTLS_RESULT_LOGON_FAILURE;
+	}
 	rc = TRUE;
 fail:
 	return rc;
@@ -801,15 +802,18 @@ static BOOL rdstls_recv_authentication_request(rdpRdstls* rdstls)
 		goto fail;
 
 	WINPR_ASSERT(rdstls);
-	const int res = transport_read_pdu(rdstls->transport, s);
 
-	if (res < 0)
-		goto fail;
+	{
+		const int res = transport_read_pdu(rdstls->transport, s);
+		if (res < 0)
+			goto fail;
+	}
 
-	const int status = rdstls_recv(rdstls->transport, s, rdstls);
-
-	if (status < 0)
-		goto fail;
+	{
+		const int status = rdstls_recv(rdstls->transport, s, rdstls);
+		if (status < 0)
+			goto fail;
+	}
 
 	rc = rdstls_set_state(rdstls, RDSTLS_STATE_AUTH_RSP);
 fail:
@@ -850,15 +854,18 @@ static BOOL rdstls_recv_capabilities(rdpRdstls* rdstls)
 		goto fail;
 
 	WINPR_ASSERT(rdstls);
-	const int res = transport_read_pdu(rdstls->transport, s);
 
-	if (res < 0)
-		goto fail;
+	{
+		const int res = transport_read_pdu(rdstls->transport, s);
+		if (res < 0)
+			goto fail;
+	}
 
-	const int status = rdstls_recv(rdstls->transport, s, rdstls);
-
-	if (status < 0)
-		goto fail;
+	{
+		const int status = rdstls_recv(rdstls->transport, s, rdstls);
+		if (status < 0)
+			goto fail;
+	}
 
 	rc = rdstls_set_state(rdstls, RDSTLS_STATE_AUTH_REQ);
 fail:
@@ -900,15 +907,17 @@ static BOOL rdstls_recv_authentication_response(rdpRdstls* rdstls)
 	if (!s)
 		goto fail;
 
-	const int res = transport_read_pdu(rdstls->transport, s);
+	{
+		const int res = transport_read_pdu(rdstls->transport, s);
+		if (res < 0)
+			goto fail;
+	}
 
-	if (res < 0)
-		goto fail;
-
-	const int status = rdstls_recv(rdstls->transport, s, rdstls);
-
-	if (status < 0)
-		goto fail;
+	{
+		const int status = rdstls_recv(rdstls->transport, s, rdstls);
+		if (status < 0)
+			goto fail;
+	}
 
 	rc = rdstls_set_state(rdstls, RDSTLS_STATE_FINAL);
 fail:
@@ -1062,13 +1071,14 @@ SSIZE_T rdstls_parse_pdu(wLog* log, wStream* stream)
 			pduLength = 8;
 			break;
 		case RDSTLS_TYPE_AUTHREQ:
+		{
 			if (Stream_GetRemainingLength(s) < 2)
 				return 0;
 
 			const UINT16 dataType = Stream_Get_UINT16(s);
 			pduLength = rdstls_parse_pdu_data_type(log, dataType, s);
-
-			break;
+		}
+		break;
 		case RDSTLS_TYPE_AUTHRSP:
 			pduLength = 10;
 			break;

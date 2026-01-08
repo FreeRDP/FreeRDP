@@ -442,39 +442,42 @@ static SECURITY_STATUS collect_keys(NCryptP11ProviderHandle* provider, P11EnumKe
 			goto cleanup_FindObjectsInit;
 		}
 
-		CK_ULONG nslotObjects = 0;
-		WINPR_ASSERT(p11->C_FindObjects);
-		rv = p11->C_FindObjects(session, &slotObjects[0], ARRAYSIZE(slotObjects), &nslotObjects);
-		if (rv != CKR_OK)
 		{
-			loge(TAG, "unable to findObjects", rv, i, state->slots[i]);
-			goto cleanup_FindObjects;
-		}
-
-		WLog_DBG(TAG, "slot has %d objects", nslotObjects);
-		for (CK_ULONG j = 0; j < nslotObjects; j++)
-		{
-			NCryptKeyEnum* key = &state->keys[state->nKeys];
-			CK_OBJECT_CLASS dataClass = CKO_PUBLIC_KEY;
-			CK_ATTRIBUTE key_or_certAttrs[] = {
-				{ CKA_ID, &key->id, sizeof(key->id) },
-				{ CKA_CLASS, &dataClass, sizeof(dataClass) },
-				{ CKA_LABEL, &key->keyLabel, sizeof(key->keyLabel) },
-				{ CKA_KEY_TYPE, &key->keyType, sizeof(key->keyType) }
-			};
-
-			rv = object_load_attributes(provider, session, slotObjects[j], key_or_certAttrs,
-			                            ARRAYSIZE(key_or_certAttrs));
+			CK_ULONG nslotObjects = 0;
+			WINPR_ASSERT(p11->C_FindObjects);
+			rv =
+			    p11->C_FindObjects(session, &slotObjects[0], ARRAYSIZE(slotObjects), &nslotObjects);
 			if (rv != CKR_OK)
 			{
-				WLog_ERR(TAG, "error getting attributes, rv=%s", CK_RV_error_string(rv));
-				continue;
+				loge(TAG, "unable to findObjects", rv, i, state->slots[i]);
+				goto cleanup_FindObjects;
 			}
 
-			key->idLen = key_or_certAttrs[0].ulValueLen;
-			key->slotId = state->slots[i];
-			key->slotInfo = slotInfo;
-			state->nKeys++;
+			WLog_DBG(TAG, "slot has %d objects", nslotObjects);
+			for (CK_ULONG j = 0; j < nslotObjects; j++)
+			{
+				NCryptKeyEnum* key = &state->keys[state->nKeys];
+				CK_OBJECT_CLASS dataClass = CKO_PUBLIC_KEY;
+				CK_ATTRIBUTE key_or_certAttrs[] = {
+					{ CKA_ID, &key->id, sizeof(key->id) },
+					{ CKA_CLASS, &dataClass, sizeof(dataClass) },
+					{ CKA_LABEL, &key->keyLabel, sizeof(key->keyLabel) },
+					{ CKA_KEY_TYPE, &key->keyType, sizeof(key->keyType) }
+				};
+
+				rv = object_load_attributes(provider, session, slotObjects[j], key_or_certAttrs,
+				                            ARRAYSIZE(key_or_certAttrs));
+				if (rv != CKR_OK)
+				{
+					WLog_ERR(TAG, "error getting attributes, rv=%s", CK_RV_error_string(rv));
+					continue;
+				}
+
+				key->idLen = key_or_certAttrs[0].ulValueLen;
+				key->slotId = state->slots[i];
+				key->slotInfo = slotInfo;
+				state->nKeys++;
+			}
 		}
 
 	cleanup_FindObjects:
@@ -1307,16 +1310,18 @@ SECURITY_STATUS NCryptOpenP11StorageProviderEx(NCRYPT_PROV_HANDLE* phProvider,
 			goto out_load_library;
 		}
 
-		c_get_function_list_t c_get_function_list =
-		    GetProcAddressAs(library, "C_GetFunctionList", c_get_function_list_t);
-
-		if (!c_get_function_list)
 		{
-			status = NTE_PROV_TYPE_ENTRY_BAD;
-			goto out_load_library;
-		}
+			c_get_function_list_t c_get_function_list =
+			    GetProcAddressAs(library, "C_GetFunctionList", c_get_function_list_t);
 
-		status = initialize_pkcs11(library, c_get_function_list, phProvider);
+			if (!c_get_function_list)
+			{
+				status = NTE_PROV_TYPE_ENTRY_BAD;
+				goto out_load_library;
+			}
+
+			status = initialize_pkcs11(library, c_get_function_list, phProvider);
+		}
 		if (status != ERROR_SUCCESS)
 		{
 			status = NTE_PROVIDER_DLL_FAIL;

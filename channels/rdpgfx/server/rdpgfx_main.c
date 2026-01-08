@@ -145,15 +145,16 @@ static UINT rdpgfx_server_packet_send(RdpgfxServerContext* context, wStream* s)
 		goto out;
 	}
 
-	const size_t pos = Stream_GetPosition(fs);
-
-	WINPR_ASSERT(pos <= UINT32_MAX);
-	if (!WTSVirtualChannelWrite(context->priv->rdpgfx_channel, Stream_BufferAs(fs, char),
-	                            (UINT32)pos, &written))
 	{
-		WLog_Print(context->priv->log, WLOG_ERROR, "WTSVirtualChannelWrite failed!");
-		error = ERROR_INTERNAL_ERROR;
-		goto out;
+		const size_t pos = Stream_GetPosition(fs);
+		WINPR_ASSERT(pos <= UINT32_MAX);
+		if (!WTSVirtualChannelWrite(context->priv->rdpgfx_channel, Stream_BufferAs(fs, char),
+		                            (UINT32)pos, &written))
+		{
+			WLog_Print(context->priv->log, WLOG_ERROR, "WTSVirtualChannelWrite failed!");
+			error = ERROR_INTERNAL_ERROR;
+			goto out;
+		}
 	}
 
 	if (written < Stream_GetPosition(fs))
@@ -303,11 +304,11 @@ static UINT rdpgfx_send_reset_graphics_pdu(RdpgfxServerContext* context,
 	for (UINT32 index = 0; index < pdu->monitorCount; index++)
 	{
 		const MONITOR_DEF* monitor = &(pdu->monitorDefArray[index]);
-		Stream_Write_INT32(s, monitor->left);    /* left (4 bytes) */
-		Stream_Write_INT32(s, monitor->top);     /* top (4 bytes) */
-		Stream_Write_INT32(s, monitor->right);   /* right (4 bytes) */
-		Stream_Write_INT32(s, monitor->bottom);  /* bottom (4 bytes) */
-		Stream_Write_UINT32(s, monitor->flags);  /* flags (4 bytes) */
+		Stream_Write_INT32(s, monitor->left);   /* left (4 bytes) */
+		Stream_Write_INT32(s, monitor->top);    /* top (4 bytes) */
+		Stream_Write_INT32(s, monitor->right);  /* right (4 bytes) */
+		Stream_Write_INT32(s, monitor->bottom); /* bottom (4 bytes) */
+		Stream_Write_UINT32(s, monitor->flags); /* flags (4 bytes) */
 	}
 
 	/* pad (total size must be 340 bytes) */
@@ -685,9 +686,9 @@ static UINT rdpgfx_write_surface_command(wLog* log, wStream* s, const RDPGFX_SUR
 		    s, WINPR_ASSERTING_INT_CAST(uint16_t, cmd->surfaceId)); /* surfaceId (2 bytes) */
 		Stream_Write_UINT16(
 		    s, WINPR_ASSERTING_INT_CAST(uint16_t, cmd->codecId)); /* codecId (2 bytes) */
-		Stream_Write_UINT32(s, cmd->contextId); /* codecContextId (4 bytes) */
-		Stream_Write_UINT8(s, pixelFormat);     /* pixelFormat (1 byte) */
-		Stream_Write_UINT32(s, cmd->length);    /* bitmapDataLength (4 bytes) */
+		Stream_Write_UINT32(s, cmd->contextId);                   /* codecContextId (4 bytes) */
+		Stream_Write_UINT8(s, pixelFormat);                       /* pixelFormat (1 byte) */
+		Stream_Write_UINT32(s, cmd->length);                      /* bitmapDataLength (4 bytes) */
 		Stream_Write(s, cmd->data, cmd->length);
 	}
 	else
@@ -699,14 +700,14 @@ static UINT rdpgfx_write_surface_command(wLog* log, wStream* s, const RDPGFX_SUR
 		    s, WINPR_ASSERTING_INT_CAST(uint16_t, cmd->surfaceId)); /* surfaceId (2 bytes) */
 		Stream_Write_UINT16(
 		    s, WINPR_ASSERTING_INT_CAST(uint16_t, cmd->codecId)); /* codecId (2 bytes) */
-		Stream_Write_UINT8(s, pixelFormat);     /* pixelFormat (1 byte) */
+		Stream_Write_UINT8(s, pixelFormat);                       /* pixelFormat (1 byte) */
 		Stream_Write_UINT16(s, WINPR_ASSERTING_INT_CAST(uint16_t, cmd->left)); /* left (2 bytes) */
 		Stream_Write_UINT16(s, WINPR_ASSERTING_INT_CAST(uint16_t, cmd->top));  /* top (2 bytes) */
 		Stream_Write_UINT16(s,
 		                    WINPR_ASSERTING_INT_CAST(uint16_t, cmd->right)); /* right (2 bytes) */
 		Stream_Write_UINT16(s,
 		                    WINPR_ASSERTING_INT_CAST(uint16_t, cmd->bottom)); /* bottom (2 bytes) */
-		Stream_Write_UINT32(s, cmd->length);    /* bitmapDataLength (4 bytes) */
+		Stream_Write_UINT32(s, cmd->length); /* bitmapDataLength (4 bytes) */
 		const size_t bitmapDataStart = Stream_GetPosition(s);
 
 		if (cmd->codecId == RDPGFX_CODECID_AVC420)
@@ -867,27 +868,29 @@ static UINT rdpgfx_send_surface_frame_command(RdpgfxServerContext* context,
 	}
 
 	/* Write RDPGFX_CMDID_WIRETOSURFACE_1 or RDPGFX_CMDID_WIRETOSURFACE_2 */
-	const size_t pos = Stream_GetPosition(s);
-	error = rdpgfx_server_packet_init_header(s, rdpgfx_surface_command_cmdid(cmd),
-	                                         0); // Actual length will be filled later
-
-	if (error != CHANNEL_RC_OK)
 	{
-		WLog_Print(context->priv->log, WLOG_ERROR, "Failed to init header with error %" PRIu32 "!",
-		           error);
-		goto error;
+		const size_t pos = Stream_GetPosition(s);
+		error = rdpgfx_server_packet_init_header(s, rdpgfx_surface_command_cmdid(cmd),
+		                                         0); // Actual length will be filled later
+
+		if (error != CHANNEL_RC_OK)
+		{
+			WLog_Print(context->priv->log, WLOG_ERROR,
+			           "Failed to init header with error %" PRIu32 "!", error);
+			goto error;
+		}
+
+		error = rdpgfx_write_surface_command(context->priv->log, s, cmd);
+
+		if (error != CHANNEL_RC_OK)
+		{
+			WLog_Print(context->priv->log, WLOG_ERROR, "rdpgfx_write_surface_command failed!");
+			goto error;
+		}
+
+		if (!rdpgfx_server_packet_complete_header(s, pos))
+			goto error;
 	}
-
-	error = rdpgfx_write_surface_command(context->priv->log, s, cmd);
-
-	if (error != CHANNEL_RC_OK)
-	{
-		WLog_Print(context->priv->log, WLOG_ERROR, "rdpgfx_write_surface_command failed!");
-		goto error;
-	}
-
-	if (!rdpgfx_server_packet_complete_header(s, pos))
-		goto error;
 
 	/* Write end frame if exists */
 	if (endFrame)
@@ -1758,8 +1761,11 @@ RdpgfxServerContext* rdpgfx_server_context_new(HANDLE vcm)
 	priv->isReady = FALSE;
 	priv->ownThread = TRUE;
 
-	const RDPGFX_CAPSET empty = { 0 };
-	priv->activeCapSet = empty;
+	{
+		const RDPGFX_CAPSET empty = { 0 };
+		priv->activeCapSet = empty;
+	}
+
 	return context;
 fail:
 	WINPR_PRAGMA_DIAG_PUSH

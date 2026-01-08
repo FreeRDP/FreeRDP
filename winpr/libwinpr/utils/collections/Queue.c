@@ -218,11 +218,13 @@ BOOL Queue_Enqueue(wQueue* queue, const void* obj)
 	}
 	queue->tail = (queue->tail + 1) % queue->capacity;
 
-	const BOOL signalSet = queue->size == 0;
-	queue->size++;
+	{
+		const BOOL signalSet = queue->size == 0;
+		queue->size++;
 
-	if (signalSet)
-		(void)SetEvent(queue->event);
+		if (signalSet)
+			(void)SetEvent(queue->event);
+	}
 out:
 
 	Queue_Unlock(queue);

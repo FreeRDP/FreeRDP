@@ -508,32 +508,38 @@ BOOL GetCommState(HANDLE hFile, LPDCB lpDCB)
 	lpLocalDcb->wReserved = 0; /* must be zero */
 	lpLocalDcb->XonLim = WINPR_ASSERTING_INT_CAST(WORD, handflow.XonLimit);
 	lpLocalDcb->XoffLim = WINPR_ASSERTING_INT_CAST(WORD, handflow.XoffLimit);
-	SERIAL_LINE_CONTROL lineControl = { 0 };
 
-	if (!CommDeviceIoControl(pComm, IOCTL_SERIAL_GET_LINE_CONTROL, NULL, 0, &lineControl,
-	                         sizeof(SERIAL_LINE_CONTROL), &bytesReturned, NULL))
 	{
-		CommLog_Print(WLOG_WARN, "GetCommState failure: could not get the control settings.");
-		goto error_handle;
+		SERIAL_LINE_CONTROL lineControl = { 0 };
+
+		if (!CommDeviceIoControl(pComm, IOCTL_SERIAL_GET_LINE_CONTROL, NULL, 0, &lineControl,
+		                         sizeof(SERIAL_LINE_CONTROL), &bytesReturned, NULL))
+		{
+			CommLog_Print(WLOG_WARN, "GetCommState failure: could not get the control settings.");
+			goto error_handle;
+		}
+
+		lpLocalDcb->ByteSize = lineControl.WordLength;
+		lpLocalDcb->Parity = lineControl.Parity;
+		lpLocalDcb->StopBits = lineControl.StopBits;
 	}
 
-	lpLocalDcb->ByteSize = lineControl.WordLength;
-	lpLocalDcb->Parity = lineControl.Parity;
-	lpLocalDcb->StopBits = lineControl.StopBits;
-	SERIAL_CHARS serialChars;
-
-	if (!CommDeviceIoControl(pComm, IOCTL_SERIAL_GET_CHARS, NULL, 0, &serialChars,
-	                         sizeof(SERIAL_CHARS), &bytesReturned, NULL))
 	{
-		CommLog_Print(WLOG_WARN, "GetCommState failure: could not get the serial chars.");
-		goto error_handle;
-	}
+		SERIAL_CHARS serialChars = { 0 };
 
-	lpLocalDcb->XonChar = serialChars.XonChar;
-	lpLocalDcb->XoffChar = serialChars.XoffChar;
-	lpLocalDcb->ErrorChar = serialChars.ErrorChar;
-	lpLocalDcb->EofChar = serialChars.EofChar;
-	lpLocalDcb->EvtChar = serialChars.EventChar;
+		if (!CommDeviceIoControl(pComm, IOCTL_SERIAL_GET_CHARS, NULL, 0, &serialChars,
+		                         sizeof(SERIAL_CHARS), &bytesReturned, NULL))
+		{
+			CommLog_Print(WLOG_WARN, "GetCommState failure: could not get the serial chars.");
+			goto error_handle;
+		}
+
+		lpLocalDcb->XonChar = serialChars.XonChar;
+		lpLocalDcb->XoffChar = serialChars.XoffChar;
+		lpLocalDcb->ErrorChar = serialChars.ErrorChar;
+		lpLocalDcb->EofChar = serialChars.EofChar;
+		lpLocalDcb->EvtChar = serialChars.EventChar;
+	}
 	memcpy(lpDCB, lpLocalDcb, lpDCB->DCBlength);
 	free(lpLocalDcb);
 	return TRUE;
@@ -1051,42 +1057,44 @@ BOOL DefineCommDevice(/* DWORD dwFlags,*/ LPCTSTR lpDeviceName, LPCTSTR lpTarget
 		goto error_handle;
 	}
 
-	int i = 0;
-	for (; i < COMM_DEVICE_MAX; i++)
 	{
-		if (sCommDevices[i] != NULL)
+		int i = 0;
+		for (; i < COMM_DEVICE_MAX; i++)
 		{
-			if (_tcscmp(sCommDevices[i]->name, storedDeviceName) == 0)
+			if (sCommDevices[i] != NULL)
 			{
-				/* take over the emplacement */
-				free(sCommDevices[i]->name);
-				free(sCommDevices[i]->path);
+				if (_tcscmp(sCommDevices[i]->name, storedDeviceName) == 0)
+				{
+					/* take over the emplacement */
+					free(sCommDevices[i]->name);
+					free(sCommDevices[i]->path);
+					sCommDevices[i]->name = storedDeviceName;
+					sCommDevices[i]->path = storedTargetPath;
+					break;
+				}
+			}
+			else
+			{
+				/* new emplacement */
+				sCommDevices[i] = (COMM_DEVICE*)calloc(1, sizeof(COMM_DEVICE));
+
+				if (sCommDevices[i] == NULL)
+				{
+					SetLastError(ERROR_OUTOFMEMORY);
+					goto error_handle;
+				}
+
 				sCommDevices[i]->name = storedDeviceName;
 				sCommDevices[i]->path = storedTargetPath;
 				break;
 			}
 		}
-		else
+
+		if (i == COMM_DEVICE_MAX)
 		{
-			/* new emplacement */
-			sCommDevices[i] = (COMM_DEVICE*)calloc(1, sizeof(COMM_DEVICE));
-
-			if (sCommDevices[i] == NULL)
-			{
-				SetLastError(ERROR_OUTOFMEMORY);
-				goto error_handle;
-			}
-
-			sCommDevices[i]->name = storedDeviceName;
-			sCommDevices[i]->path = storedTargetPath;
-			break;
+			SetLastError(ERROR_OUTOFMEMORY);
+			goto error_handle;
 		}
-	}
-
-	if (i == COMM_DEVICE_MAX)
-	{
-		SetLastError(ERROR_OUTOFMEMORY);
-		goto error_handle;
 	}
 
 	LeaveCriticalSection(&sCommDevicesLock);

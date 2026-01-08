@@ -341,27 +341,33 @@ static BOOL freerdp_assistance_parse_connection_string1(rdpAssistanceFile* file)
 	if (!str)
 		goto error;
 
-	const size_t length = strlen(str);
-
-	int count = 1;
-	for (size_t i = 0; i < length; i++)
 	{
-		if (str[i] == ',')
-			count++;
-	}
+		const size_t length = strlen(str);
 
-	if (count != 8)
-		goto error;
-
-	count = 0;
-	tokens[count++] = str;
-
-	for (size_t i = 0; i < length; i++)
-	{
-		if (str[i] == ',')
 		{
-			str[i] = '\0';
-			tokens[count++] = &str[i + 1];
+			int count = 1;
+			for (size_t i = 0; i < length; i++)
+			{
+				if (str[i] == ',')
+					count++;
+			}
+
+			if (count != 8)
+				goto error;
+		}
+
+		{
+			size_t count = 0;
+			tokens[count++] = str;
+
+			for (size_t i = 0; i < length; i++)
+			{
+				if (str[i] == ',')
+				{
+					str[i] = '\0';
+					tokens[count++] = &str[i + 1];
+				}
+			}
 		}
 	}
 
@@ -747,38 +753,41 @@ static BOOL freerdp_assistance_parse_connection_string2(rdpAssistanceFile* file)
 	if (!str)
 		goto out_fail;
 
-	char* e = NULL;
-	size_t elen = 0;
-	if (!freerdp_assistance_consume_input_and_get_element(str, "E", &e, &elen))
-		goto out_fail;
+	{
+		char* e = NULL;
+		size_t elen = 0;
+		if (!freerdp_assistance_consume_input_and_get_element(str, "E", &e, &elen))
+			goto out_fail;
 
-	if (!e || (elen == 0))
-		goto out_fail;
+		if (!e || (elen == 0))
+			goto out_fail;
+		{
+			char* a = NULL;
+			size_t alen = 0;
+			if (!freerdp_assistance_get_element(e, elen, "A", &a, &alen))
+				goto out_fail;
 
-	char* a = NULL;
-	size_t alen = 0;
-	if (!freerdp_assistance_get_element(e, elen, "A", &a, &alen))
-		goto out_fail;
+			if (!a || (alen == 0))
+				goto out_fail;
 
-	if (!a || (alen == 0))
-		goto out_fail;
+			if (!freerdp_assistance_parse_find_elements_of_c(file, e, elen))
+				goto out_fail;
 
-	if (!freerdp_assistance_parse_find_elements_of_c(file, e, elen))
-		goto out_fail;
+			/* '\0' terminate the detected XML elements so
+			 * the parser can continue with terminated strings
+			 */
+			a[alen] = '\0';
 
-	/* '\0' terminate the detected XML elements so
-	 * the parser can continue with terminated strings
-	 */
-	a[alen] = '\0';
-	if (!freerdp_assistance_parse_attr_str(&file->RASpecificParams, "KH", a))
-		goto out_fail;
+			if (!freerdp_assistance_parse_attr_str(&file->RASpecificParams, "KH", a))
+				goto out_fail;
 
-	if (!freerdp_assistance_parse_attr_str(&file->RASpecificParams2, "KH2", a))
-		goto out_fail;
+			if (!freerdp_assistance_parse_attr_str(&file->RASpecificParams2, "KH2", a))
+				goto out_fail;
 
-	if (!freerdp_assistance_parse_attr_str(&file->RASessionId, "ID", a))
-		goto out_fail;
-
+			if (!freerdp_assistance_parse_attr_str(&file->RASessionId, "ID", a))
+				goto out_fail;
+		}
+	}
 	rc = TRUE;
 out_fail:
 	free(str);
@@ -805,14 +814,19 @@ char* freerdp_assistance_construct_expert_blob(const char* name, const char* pas
 
 char* freerdp_assistance_generate_pass_stub(WINPR_ATTR_UNUSED DWORD flags)
 {
-	UINT32 nums[14];
-	char* passStub = NULL;
-	char set1[64] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789*_";
-	char set2[12] = "!@#$&^*()-+=";
-	char set3[10] = "0123456789";
-	char set4[26] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-	char set5[26] = "abcdefghijklmnopqrstuvwxyz";
-	passStub = (char*)malloc(15);
+	UINT32 nums[14] = { 0 };
+	const char set1[64] = { 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
+		                    'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
+		                    'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
+		                    'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
+		                    '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '*', '_' };
+	const char set2[12] = { '!', '@', '#', '$', '&', '^', '*', '(', ')', '-', '+', '=' };
+	const char set3[10] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' };
+	const char set4[26] = { 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
+		                    'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z' };
+	const char set5[26] = { 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
+		                    'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z' };
+	char* passStub = calloc(15, sizeof(char));
 
 	if (!passStub)
 		return NULL;
@@ -834,16 +848,9 @@ char* freerdp_assistance_generate_pass_stub(WINPR_ATTR_UNUSED DWORD flags)
 	passStub[2] = set3[nums[2] % sizeof(set3)];   /* character 2 */
 	passStub[3] = set4[nums[3] % sizeof(set4)];   /* character 3 */
 	passStub[4] = set5[nums[4] % sizeof(set5)];   /* character 4 */
-	passStub[5] = set1[nums[5] % sizeof(set1)];   /* character 5 */
-	passStub[6] = set1[nums[6] % sizeof(set1)];   /* character 6 */
-	passStub[7] = set1[nums[7] % sizeof(set1)];   /* character 7 */
-	passStub[8] = set1[nums[8] % sizeof(set1)];   /* character 8 */
-	passStub[9] = set1[nums[9] % sizeof(set1)];   /* character 9 */
-	passStub[10] = set1[nums[10] % sizeof(set1)]; /* character 10 */
-	passStub[11] = set1[nums[11] % sizeof(set1)]; /* character 11 */
-	passStub[12] = set1[nums[12] % sizeof(set1)]; /* character 12 */
-	passStub[13] = set1[nums[13] % sizeof(set1)]; /* character 13 */
-	passStub[14] = '\0';
+
+	for (size_t x = 5; x < ARRAYSIZE(nums); x++)
+		passStub[x] = set1[nums[x] % sizeof(set1)]; /* character 5 - 13 */
 	return passStub;
 }
 
@@ -1030,7 +1037,7 @@ char* freerdp_assistance_bin_to_hex_string(const void* raw, size_t size)
 static int freerdp_assistance_parse_uploadinfo(rdpAssistanceFile* file, char* uploadinfo,
                                                size_t uploadinfosize)
 {
-	const char escalated[9] = "Escalated";
+	const char escalated[9] = { 'E', 's', 'c', 'a', 'l', 'a', 't', 'e', 'd' };
 	const size_t esclen = sizeof(escalated);
 	const char* typestr = NULL;
 	size_t typelen = 0;

@@ -108,7 +108,7 @@ static WINPR_RC4_CTX* winpr_RC4_New_Internal(const BYTE* key, size_t keylen, BOO
 	if (EVP_EncryptInit_ex(ctx->ctx, evp, NULL, NULL, NULL) != 1)
 		goto fail;
 
-		/* EVP_CIPH_FLAG_NON_FIPS_ALLOW does not exist before openssl 1.0.1 */
+	/* EVP_CIPH_FLAG_NON_FIPS_ALLOW does not exist before openssl 1.0.1 */
 #if !(OPENSSL_VERSION_NUMBER < 0x10001000L)
 
 	if (override_fips == TRUE)
@@ -609,10 +609,11 @@ WINPR_API WINPR_CIPHER_CTX* winpr_Cipher_NewEx(WINPR_CIPHER_TYPE cipher, WINPR_C
 	if (!ctx->ectx)
 		goto fail;
 
-	const int operation = (op == WINPR_ENCRYPT) ? 1 : 0;
-
-	if (EVP_CipherInit_ex(ctx->ectx, evp, NULL, key, iv, operation) != 1)
-		goto fail;
+	{
+		const int operation = (op == WINPR_ENCRYPT) ? 1 : 0;
+		if (EVP_CipherInit_ex(ctx->ectx, evp, NULL, key, iv, operation) != 1)
+			goto fail;
+	}
 
 	EVP_CIPHER_CTX_set_padding(ctx->ectx, 0);
 

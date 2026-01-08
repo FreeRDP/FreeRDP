@@ -148,8 +148,8 @@ static inline BOOL winpr_Handle_GetInfo(HANDLE handle, ULONG* pType, WINPR_HANDL
 	if (handle == NULL)
 		return FALSE;
 
-		/* INVALID_HANDLE_VALUE is an invalid value for every handle, but it
-		 * confuses the clang scanbuild analyzer. */
+	/* INVALID_HANDLE_VALUE is an invalid value for every handle, but it
+	 * confuses the clang scanbuild analyzer. */
 #ifndef __clang_analyzer__
 	if (handle == INVALID_HANDLE_VALUE)
 		return FALSE;
@@ -158,7 +158,7 @@ static inline BOOL winpr_Handle_GetInfo(HANDLE handle, ULONG* pType, WINPR_HANDL
 	wHandle = (WINPR_HANDLE*)handle;
 
 	*pType = wHandle->Type;
-	*pObject = handle;
+	*pObject = wHandle;
 
 	return TRUE;
 }

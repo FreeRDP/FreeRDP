@@ -457,85 +457,87 @@ static DWORD WINAPI remdesk_server_thread(LPVOID arg)
 		goto out;
 	}
 
-	DWORD nCount = 0;
-	events[nCount++] = ChannelEvent;
-	events[nCount++] = context->priv->StopEvent;
-
-	if ((error = remdesk_send_ctl_version_info_pdu(context)))
 	{
-		WLog_ERR(TAG, "remdesk_send_ctl_version_info_pdu failed with error %" PRIu32 "!", error);
-		goto out;
-	}
+		DWORD nCount = 0;
+		events[nCount++] = ChannelEvent;
+		events[nCount++] = context->priv->StopEvent;
 
-	while (1)
-	{
-		DWORD status = WaitForMultipleObjects(nCount, events, FALSE, INFINITE);
-
-		if (status == WAIT_FAILED)
+		if ((error = remdesk_send_ctl_version_info_pdu(context)))
 		{
-			error = GetLastError();
-			WLog_ERR(TAG, "WaitForMultipleObjects failed with error %" PRIu32 "", error);
-			break;
+			WLog_ERR(TAG, "remdesk_send_ctl_version_info_pdu failed with error %" PRIu32 "!",
+			         error);
+			goto out;
 		}
 
-		status = WaitForSingleObject(context->priv->StopEvent, 0);
+		while (1)
+		{
+			DWORD status = WaitForMultipleObjects(nCount, events, FALSE, INFINITE);
 
-		if (status == WAIT_FAILED)
-		{
-			error = GetLastError();
-			WLog_ERR(TAG, "WaitForSingleObject failed with error %" PRIu32 "", error);
-			break;
-		}
-
-		if (status == WAIT_OBJECT_0)
-		{
-			break;
-		}
-
-		const size_t len = Stream_Capacity(s);
-		if (len > UINT32_MAX)
-		{
-			error = ERROR_INTERNAL_ERROR;
-			break;
-		}
-		if (WTSVirtualChannelRead(context->priv->ChannelHandle, 0, Stream_BufferAs(s, char),
-		                          (UINT32)len, &BytesReturned))
-		{
-			if (BytesReturned)
-				Stream_Seek(s, BytesReturned);
-		}
-		else
-		{
-			if (!Stream_EnsureRemainingCapacity(s, BytesReturned))
+			if (status == WAIT_FAILED)
 			{
-				WLog_ERR(TAG, "Stream_EnsureRemainingCapacity failed!");
-				error = CHANNEL_RC_NO_MEMORY;
+				error = GetLastError();
+				WLog_ERR(TAG, "WaitForMultipleObjects failed with error %" PRIu32 "", error);
 				break;
 			}
-		}
 
-		if (Stream_GetPosition(s) >= 8)
-		{
-			const UINT32* pHeader = Stream_BufferAs(s, UINT32);
-			const UINT32 PduLength = pHeader[0] + pHeader[1] + 8;
+			status = WaitForSingleObject(context->priv->StopEvent, 0);
 
-			if (PduLength >= Stream_GetPosition(s))
+			if (status == WAIT_FAILED)
 			{
-				Stream_SealLength(s);
-				Stream_SetPosition(s, 0);
+				error = GetLastError();
+				WLog_ERR(TAG, "WaitForSingleObject failed with error %" PRIu32 "", error);
+				break;
+			}
 
-				if ((error = remdesk_server_receive_pdu(context, s)))
+			if (status == WAIT_OBJECT_0)
+			{
+				break;
+			}
+
+			const size_t len = Stream_Capacity(s);
+			if (len > UINT32_MAX)
+			{
+				error = ERROR_INTERNAL_ERROR;
+				break;
+			}
+			if (WTSVirtualChannelRead(context->priv->ChannelHandle, 0, Stream_BufferAs(s, char),
+			                          (UINT32)len, &BytesReturned))
+			{
+				if (BytesReturned)
+					Stream_Seek(s, BytesReturned);
+			}
+			else
+			{
+				if (!Stream_EnsureRemainingCapacity(s, BytesReturned))
 				{
-					WLog_ERR(TAG, "remdesk_server_receive_pdu failed with error %" PRIu32 "!",
-					         error);
+					WLog_ERR(TAG, "Stream_EnsureRemainingCapacity failed!");
+					error = CHANNEL_RC_NO_MEMORY;
 					break;
 				}
+			}
 
-				Stream_SetPosition(s, 0);
+			if (Stream_GetPosition(s) >= 8)
+			{
+				const UINT32* pHeader = Stream_BufferAs(s, UINT32);
+				const UINT32 PduLength = pHeader[0] + pHeader[1] + 8;
+
+				if (PduLength >= Stream_GetPosition(s))
+				{
+					Stream_SealLength(s);
+					Stream_SetPosition(s, 0);
+
+					if ((error = remdesk_server_receive_pdu(context, s)))
+					{
+						WLog_ERR(TAG, "remdesk_server_receive_pdu failed with error %" PRIu32 "!",
+						         error);
+						break;
+					}
+
+					Stream_SetPosition(s, 0);
+				}
 			}
 		}
 	}
-
 out:
 	Stream_Free(s, TRUE);
 

@@ -186,12 +186,14 @@ static UINT location_on_data_received(IWTSVirtualChannelCallback* pChannelCallba
 					break;
 			}
 
-			char cbuffer[64] = { 0 };
-			char sbuffer[64] = { 0 };
-			WLog_Print(plugin->baseDynPlugin.log, WLOG_DEBUG,
-			           "Server version %s, client version %s",
-			           location_version_str(callback->serverVersion, sbuffer, sizeof(sbuffer)),
-			           location_version_str(callback->clientVersion, cbuffer, sizeof(cbuffer)));
+			{
+				char cbuffer[64] = { 0 };
+				char sbuffer[64] = { 0 };
+				WLog_Print(plugin->baseDynPlugin.log, WLOG_DEBUG,
+				           "Server version %s, client version %s",
+				           location_version_str(callback->serverVersion, sbuffer, sizeof(sbuffer)),
+				           location_version_str(callback->clientVersion, cbuffer, sizeof(cbuffer)));
+			}
 
 			if (!plugin->context.LocationStart)
 			{
@@ -199,10 +201,13 @@ static UINT location_on_data_received(IWTSVirtualChannelCallback* pChannelCallba
 				           "LocationStart=NULL, no location data will be sent");
 				return CHANNEL_RC_OK;
 			}
-			const UINT res =
-			    plugin->context.LocationStart(&plugin->context, callback->clientVersion, 0);
-			if (res != CHANNEL_RC_OK)
-				return res;
+
+			{
+				const UINT res =
+				    plugin->context.LocationStart(&plugin->context, callback->clientVersion, 0);
+				if (res != CHANNEL_RC_OK)
+					return res;
+			}
 			return location_send_client_ready_pdu(callback);
 		default:
 			WLog_WARN(TAG, "invalid pduType=%s");

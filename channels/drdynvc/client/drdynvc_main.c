@@ -506,11 +506,13 @@ static UINT dvcman_channel_close(DVCMAN_CHANNEL* channel, BOOL perRequest, BOOL 
 
 			channel->state = DVC_CHANNEL_CLOSED;
 
-			IWTSVirtualChannelCallback* cb = channel->channel_callback;
-			if (cb)
 			{
-				check_open_close_receive(channel);
-				IFCALL(cb->OnClose, cb);
+				IWTSVirtualChannelCallback* cb = channel->channel_callback;
+				if (cb)
+				{
+					check_open_close_receive(channel);
+					IFCALL(cb->OnClose, cb);
+				}
 			}
 
 			channel->channel_callback = NULL;

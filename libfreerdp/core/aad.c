@@ -139,11 +139,13 @@ static BOOL json_get_const_string(wLog* wlog, WINPR_JSON* json, const char* key,
 		goto fail;
 	}
 
-	const char* str = WINPR_JSON_GetStringValue(prop);
-	if (!str)
-		WLog_Print(wlog, WLOG_ERROR, "[json] object for key '%s' is NULL", key);
-	*result = str;
-	rc = str != NULL;
+	{
+		const char* str = WINPR_JSON_GetStringValue(prop);
+		if (!str)
+			WLog_Print(wlog, WLOG_ERROR, "[json] object for key '%s' is NULL", key);
+		*result = str;
+		rc = str != NULL;
+	}
 
 fail:
 	return rc;
@@ -418,22 +420,26 @@ static char* aad_final_digest(rdpAad* aad, WINPR_DIGEST_CTX* ctx)
 		goto fail;
 	}
 
-	size_t fsiglen = siglen;
-	const int dsf2 = winpr_DigestSign_Final(ctx, (BYTE*)buffer, &fsiglen);
-	if (dsf2 <= 0)
 	{
-		WLog_Print(aad->log, WLOG_ERROR, "winpr_DigestSign_Final failed with %d", dsf2);
-		goto fail;
+		size_t fsiglen = siglen;
+		const int dsf2 = winpr_DigestSign_Final(ctx, (BYTE*)buffer, &fsiglen);
+		if (dsf2 <= 0)
+		{
+			WLog_Print(aad->log, WLOG_ERROR, "winpr_DigestSign_Final failed with %d", dsf2);
+			goto fail;
+		}
+
+		if (siglen != fsiglen)
+		{
+			WLog_Print(aad->log, WLOG_ERROR,
+			           "winpr_DigestSignFinal returned different sizes, first %" PRIuz
+			           " then %" PRIuz,
+			           siglen, fsiglen);
+			goto fail;
+		}
+		jws_signature = crypto_base64url_encode((const BYTE*)buffer, fsiglen);
 	}
 
-	if (siglen != fsiglen)
-	{
-		WLog_Print(aad->log, WLOG_ERROR,
-		           "winpr_DigestSignFinal returned different sizes, first %" PRIuz " then %" PRIuz,
-		           siglen, fsiglen);
-		goto fail;
-	}
-	jws_signature = crypto_base64url_encode((const BYTE*)buffer, fsiglen);
 fail:
 	free(buffer);
 	return jws_signature;
@@ -504,17 +510,20 @@ static int aad_send_auth_request(rdpAad* aad, const char* ts_nonce)
 
 	Stream_SealLength(s);
 
-	rdpTransport* transport = freerdp_get_transport(aad->rdpcontext);
-	if (transport_write(transport, s) < 0)
 	{
-		WLog_Print(aad->log, WLOG_ERROR, "transport_write [%" PRIuz " bytes] failed",
-		           Stream_Length(s));
+		rdpTransport* transport = freerdp_get_transport(aad->rdpcontext);
+		if (transport_write(transport, s) < 0)
+		{
+			WLog_Print(aad->log, WLOG_ERROR, "transport_write [%" PRIuz " bytes] failed",
+			           Stream_Length(s));
+		}
+		else
+		{
+			ret = 1;
+			aad->state = AAD_STATE_AUTH;
+		}
 	}
-	else
-	{
-		ret = 1;
-		aad->state = AAD_STATE_AUTH;
-	}
+
 fail:
 	Stream_Free(s, TRUE);
 	free(jws_header);
@@ -635,15 +644,17 @@ static char* generate_rsa_digest_base64_str(rdpAad* aad, const char* input, size
 		goto fail;
 	}
 
-	BYTE hash[WINPR_SHA256_DIGEST_LENGTH] = { 0 };
-	if (!winpr_Digest_Final(digest, hash, sizeof(hash)))
 	{
-		WLog_Print(aad->log, WLOG_ERROR, "winpr_Digest_Final(%" PRIuz ") failed", sizeof(hash));
-		goto fail;
-	}
+		BYTE hash[WINPR_SHA256_DIGEST_LENGTH] = { 0 };
+		if (!winpr_Digest_Final(digest, hash, sizeof(hash)))
+		{
+			WLog_Print(aad->log, WLOG_ERROR, "winpr_Digest_Final(%" PRIuz ") failed", sizeof(hash));
+			goto fail;
+		}
 
-	/* Base64url encode the hash */
-	b64 = crypto_base64url_encode(hash, sizeof(hash));
+		/* Base64url encode the hash */
+		b64 = crypto_base64url_encode(hash, sizeof(hash));
+	}
 
 fail:
 	winpr_Digest_Free(digest);
@@ -690,16 +701,18 @@ BOOL generate_pop_key(rdpAad* aad)
 	if (!get_encoded_rsa_params(aad->log, aad->key, &e, &n))
 		goto fail;
 
-	size_t blen = 0;
-	const int alen =
-	    winpr_asprintf(&buffer, &blen, "{\"e\":\"%s\",\"kty\":\"RSA\",\"n\":\"%s\"}", e, n);
-	if (alen < 0)
-		goto fail;
+	{
+		size_t blen = 0;
+		const int alen =
+		    winpr_asprintf(&buffer, &blen, "{\"e\":\"%s\",\"kty\":\"RSA\",\"n\":\"%s\"}", e, n);
+		if (alen < 0)
+			goto fail;
 
-	/* Hash the encoded public key */
-	b64_hash = generate_rsa_digest_base64_str(aad, buffer, blen);
-	if (!b64_hash)
-		goto fail;
+		/* Hash the encoded public key */
+		b64_hash = generate_rsa_digest_base64_str(aad, buffer, blen);
+		if (!b64_hash)
+			goto fail;
+	}
 
 	/* Encode a JSON object with a single property "kid" whose value is the encoded hash */
 	ret = generate_json_base64_str(aad, b64_hash);

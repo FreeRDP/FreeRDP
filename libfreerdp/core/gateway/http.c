@@ -147,15 +147,17 @@ HttpContext* http_context_new(void)
 	if (!context->cookies)
 		goto fail;
 
-	wObject* key = ListDictionary_KeyObject(context->cookies);
-	wObject* value = ListDictionary_ValueObject(context->cookies);
-	if (!key || !value)
-		goto fail;
+	{
+		wObject* key = ListDictionary_KeyObject(context->cookies);
+		wObject* value = ListDictionary_ValueObject(context->cookies);
+		if (!key || !value)
+			goto fail;
 
-	key->fnObjectFree = winpr_ObjectStringFree;
-	key->fnObjectNew = winpr_ObjectStringClone;
-	value->fnObjectFree = winpr_ObjectStringFree;
-	value->fnObjectNew = winpr_ObjectStringClone;
+		key->fnObjectFree = winpr_ObjectStringFree;
+		key->fnObjectNew = winpr_ObjectStringClone;
+		value->fnObjectFree = winpr_ObjectStringFree;
+		value->fnObjectNew = winpr_ObjectStringClone;
+	}
 
 	return context;
 
@@ -280,19 +282,21 @@ static BOOL list_append(HttpContext* context, WINPR_FORMAT_ARG const char* str, 
 	if (size <= 0)
 		goto fail;
 
-	char* sstr = NULL;
-	size_t slen = 0;
-	if (context->Pragma)
 	{
-		winpr_asprintf(&sstr, &slen, "%s, %s", context->Pragma, Pragma);
-		free(Pragma);
-	}
-	else
-		sstr = Pragma;
-	Pragma = NULL;
+		char* sstr = NULL;
+		size_t slen = 0;
+		if (context->Pragma)
+		{
+			winpr_asprintf(&sstr, &slen, "%s, %s", context->Pragma, Pragma);
+			free(Pragma);
+		}
+		else
+			sstr = Pragma;
+		Pragma = NULL;
 
-	free(context->Pragma);
-	context->Pragma = sstr;
+		free(context->Pragma);
+		context->Pragma = sstr;
+	}
 
 	rc = TRUE;
 
@@ -738,19 +742,21 @@ static BOOL http_response_parse_header_status_line(HttpResponse* response, const
 	if (!separator)
 		goto fail;
 
-	const char* reason_phrase = separator + 1;
-	*separator = '\0';
-	errno = 0;
 	{
-		long val = strtol(status_code, NULL, 0);
+		const char* reason_phrase = separator + 1;
+		*separator = '\0';
+		errno = 0;
+		{
+			long val = strtol(status_code, NULL, 0);
 
-		if ((errno != 0) || (val < 0) || (val > INT16_MAX))
-			goto fail;
+			if ((errno != 0) || (val < 0) || (val > INT16_MAX))
+				goto fail;
 
-		response->StatusCode = (UINT16)val;
+			response->StatusCode = (UINT16)val;
+		}
+		free(response->ReasonPhrase);
+		response->ReasonPhrase = _strdup(reason_phrase);
 	}
-	free(response->ReasonPhrase);
-	response->ReasonPhrase = _strdup(reason_phrase);
 
 	if (!response->ReasonPhrase)
 		goto fail;
