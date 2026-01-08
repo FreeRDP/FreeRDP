@@ -857,11 +857,17 @@ static BOOL freerdp_tcp_connect_timeout(rdpContext* context, int sockfd, struct 
 	}
 
 	{
-		const SSIZE_T res = recv(sockfd, NULL, 0, 0);
-		if (res == SOCKET_ERROR)
+		INT32 optval = 0;
+		socklen_t optlen = sizeof(optval);
+		if (getsockopt(sockfd, SOL_SOCKET, SO_ERROR, &optval, &optlen) < 0)
+			goto fail;
+
+		if (optval != 0)
 		{
-			if (WSAGetLastError() == WSAECONNRESET)
-				goto fail;
+			char ebuffer[256] = { 0 };
+			WLog_DBG(TAG, "connect failed with error: %s [%" PRIu32 "]",
+			         winpr_strerror(optval, ebuffer, sizeof(ebuffer)), optval);
+			goto fail;
 		}
 	}
 
