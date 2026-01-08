@@ -102,8 +102,10 @@ static struct synthetic_file* make_synthetic_file(const WCHAR* local_name, const
 	if (!file->remote_name)
 		goto fail;
 
-	const size_t len = _wcslen(file->remote_name);
-	PathCchConvertStyleW(file->remote_name, len, PATH_STYLE_WINDOWS);
+	{
+		const size_t len = _wcslen(file->remote_name);
+		PathCchConvertStyleW(file->remote_name, len, PATH_STYLE_WINDOWS);
+	}
 
 	file->dwFileAttributes = fd.dwFileAttributes;
 	file->ftCreationTime = fd.ftCreationTime;
@@ -590,18 +592,21 @@ static BOOL process_files(wClipboard* clipboard, const char* data, UINT32 pSize,
 	if (!copy)
 		goto fail;
 
-	char* endptr = NULL;
-	char* tok = strtok_s(copy, "\n", &endptr);
-	while (tok)
 	{
-		const size_t tok_len = strnlen(tok, pSize);
-		if (!process_uri(clipboard, tok, tok_len))
-			goto fail;
-		if (pSize < tok_len)
-			goto fail;
-		pSize -= WINPR_ASSERTING_INT_CAST(uint32_t, tok_len);
-		tok = strtok_s(NULL, "\n", &endptr);
+		char* endptr = NULL;
+		char* tok = strtok_s(copy, "\n", &endptr);
+		while (tok)
+		{
+			const size_t tok_len = strnlen(tok, pSize);
+			if (!process_uri(clipboard, tok, tok_len))
+				goto fail;
+			if (pSize < tok_len)
+				goto fail;
+			pSize -= WINPR_ASSERTING_INT_CAST(uint32_t, tok_len);
+			tok = strtok_s(NULL, "\n", &endptr);
+		}
 	}
+
 	rc = TRUE;
 
 fail:
