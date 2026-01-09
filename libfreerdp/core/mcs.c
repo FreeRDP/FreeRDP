@@ -354,7 +354,9 @@ BOOL mcs_read_domain_mcspdu_header(wLog* log, wStream* s, DomainMCSPDU domainMCS
 	if (!per_read_choice(s, &choice))
 		return FALSE;
 
-	const DomainMCSPDU MCSPDU = (choice >> 2);
+	const BYTE val = choice >> 2;
+	const DomainMCSPDU MCSPDU =
+	    (val > DomainMCSPDU_enum_length) ? DomainMCSPDU_invalid : (DomainMCSPDU)(val);
 	if (actual)
 		*actual = MCSPDU;
 
