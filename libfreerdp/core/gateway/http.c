@@ -774,11 +774,9 @@ fail:
 static BOOL http_response_parse_header_field(HttpResponse* response, const char* name,
                                              const char* value)
 {
-	BOOL status = TRUE;
-
 	WINPR_ASSERT(response);
 
-	if (!name)
+	if (!name || !value)
 		return FALSE;
 
 	if (_stricmp(name, "Content-Length") == 0)
@@ -791,18 +789,18 @@ static BOOL http_response_parse_header_field(HttpResponse* response, const char*
 			return FALSE;
 
 		response->ContentLength = WINPR_ASSERTING_INT_CAST(size_t, val);
+		return TRUE;
 	}
-	else if (_stricmp(name, "Content-Type") == 0)
+
+	if (_stricmp(name, "Content-Type") == 0)
 	{
-		if (!value)
-			return FALSE;
 		free(response->ContentType);
 		response->ContentType = _strdup(value);
 
-		if (!response->ContentType)
-			return FALSE;
+		return response->ContentType != NULL;
 	}
-	else if (_stricmp(name, "Transfer-Encoding") == 0)
+
+	if (_stricmp(name, "Transfer-Encoding") == 0)
 	{
 		if (_stricmp(value, "identity") == 0)
 			response->TransferEncoding = TransferEncodingIdentity;
@@ -810,33 +808,31 @@ static BOOL http_response_parse_header_field(HttpResponse* response, const char*
 			response->TransferEncoding = TransferEncodingChunked;
 		else
 			response->TransferEncoding = TransferEncodingUnknown;
+
+		return TRUE;
 	}
-	else if (_stricmp(name, "Sec-WebSocket-Version") == 0)
+
+	if (_stricmp(name, "Sec-WebSocket-Version") == 0)
 	{
-		if (!value)
-			return FALSE;
 		free(response->SecWebsocketVersion);
 		response->SecWebsocketVersion = _strdup(value);
 
-		if (!response->SecWebsocketVersion)
-			return FALSE;
+		return response->SecWebsocketVersion != NULL;
 	}
-	else if (_stricmp(name, "Sec-WebSocket-Accept") == 0)
+
+	if (_stricmp(name, "Sec-WebSocket-Accept") == 0)
 	{
-		if (!value)
-			return FALSE;
 		free(response->SecWebsocketAccept);
 		response->SecWebsocketAccept = _strdup(value);
 
-		if (!response->SecWebsocketAccept)
-			return FALSE;
+		return response->SecWebsocketAccept != NULL;
 	}
-	else if (_stricmp(name, "WWW-Authenticate") == 0)
+
+	if (_stricmp(name, "WWW-Authenticate") == 0)
 	{
-		char* separator = NULL;
-		const char* authScheme = NULL;
-		char* authValue = NULL;
-		separator = strchr(value, ' ');
+		const char* authScheme = value;
+		const char* authValue = "";
+		char* separator = strchr(value, ' ');
 
 		if (separator)
 		{
@@ -847,30 +843,18 @@ static BOOL http_response_parse_header_field(HttpResponse* response, const char*
 			 * 					opaque="5ccc069c403ebaf9f0171e9517f40e41"
 			 */
 			*separator = '\0';
-			authScheme = value;
 			authValue = separator + 1;
 
-			if (!authScheme || !authValue)
+			if (!authValue)
 				return FALSE;
 		}
-		else
-		{
-			authScheme = value;
 
-			if (!authScheme)
-				return FALSE;
-
-			authValue = "";
-		}
-
-		status = HashTable_Insert(response->Authenticates, authScheme, authValue);
+		return HashTable_Insert(response->Authenticates, authScheme, authValue);
 	}
-	else if (_stricmp(name, "Set-Cookie") == 0)
+
+	if (_stricmp(name, "Set-Cookie") == 0)
 	{
-		char* separator = NULL;
-		const char* CookieName = NULL;
-		char* CookieValue = NULL;
-		separator = strchr(value, '=');
+		char* separator = strchr(value, '=');
 
 		if (separator)
 		{
@@ -879,8 +863,8 @@ static BOOL http_response_parse_header_field(HttpResponse* response, const char*
 			 * Set-Cookie: name="value with spaces"; Attribute=value
 			 */
 			*separator = '\0';
-			CookieName = value;
-			CookieValue = separator + 1;
+			const char* CookieName = value;
+			char* CookieValue = separator + 1;
 
 			if (!CookieName || !CookieValue)
 				return FALSE;
@@ -905,16 +889,11 @@ static BOOL http_response_parse_header_field(HttpResponse* response, const char*
 				}
 				*p = '\0';
 			}
+			return HashTable_Insert(response->SetCookie, CookieName, CookieValue);
 		}
-		else
-		{
-			return FALSE;
-		}
-
-		status = HashTable_Insert(response->SetCookie, CookieName, CookieValue);
 	}
 
-	return status;
+	return FALSE;
 }
 
 static BOOL http_response_parse_header(HttpResponse* response)
