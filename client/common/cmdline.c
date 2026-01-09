@@ -4865,7 +4865,7 @@ static int parse_command_line(rdpSettings* settings, const COMMAND_LINE_ARGUMENT
 			if (!freerdp_settings_set_bool(settings, FreeRDP_RestrictedAdminModeRequired, enable))
 				return fail_at(arg, COMMAND_LINE_ERROR);
 		}
-#ifndef CHANNEL_RDPEAR_CLIENT
+#ifdef CHANNEL_RDPEAR_CLIENT
 		CommandLineSwitchCase(arg, "remoteGuard")
 		{
 			if (!freerdp_settings_set_bool(settings, FreeRDP_RemoteCredentialGuard, TRUE))
