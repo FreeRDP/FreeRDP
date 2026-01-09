@@ -130,7 +130,7 @@ static BOOL test_peer_context_new(freerdp_peer* client, rdpContext* ctx)
 
 	{
 		const UINT32 rlgr = freerdp_settings_get_uint32(ctx->settings, FreeRDP_RemoteFxRlgrMode);
-		rfx_context_set_mode(context->rfx_context, rlgr);
+		rfx_context_set_mode(context->rfx_context, WINPR_ASSERTING_INT_CAST(RLGR_MODE, rlgr));
 	}
 
 	if (!(context->nsc_context = nsc_context_new()))
