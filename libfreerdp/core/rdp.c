@@ -1880,7 +1880,7 @@ static state_run_t rdp_client_exchange_monitor_layout(rdpRdp* rdp, wStream* s)
 	WINPR_ASSERT(rdp);
 
 	if (!rdp_check_monitor_layout_pdu_state(rdp, FALSE))
-		return FALSE;
+		return STATE_RUN_FAILED;
 
 	/* We might receive unrelated messages from the server (channel traffic),
 	 * so only proceed if some flag changed
@@ -1939,7 +1939,7 @@ static state_run_t rdp_recv_callback_int(WINPR_ATTR_UNUSED rdpTransport* transpo
 				nego_recv(rdp->transport, s, (void*)rdp->nego);
 
 				if (!nego_update_settings_from_state(rdp->nego, rdp->settings))
-					return FALSE;
+					return STATE_RUN_FAILED;
 
 				if (nego_get_state(rdp->nego) != NEGO_STATE_FINAL)
 				{
