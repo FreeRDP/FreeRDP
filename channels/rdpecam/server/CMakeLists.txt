@@ -17,7 +17,7 @@
 
 define_channel_server("rdpecam")
 
-set(${MODULE_PREFIX}_SRCS camera_device_enumerator_main.c camera_device_main.c)
+set(${MODULE_PREFIX}_SRCS camera_device_enumerator_main.c camera_device_main.c rdpecam-utils.h)
 
 set(${MODULE_PREFIX}_LIBS freerdp)
 

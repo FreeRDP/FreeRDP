@@ -25,6 +25,8 @@
 #include <freerdp/channels/log.h>
 #include <freerdp/server/rdpecam-enumerator.h>
 
+#include "rdpecam-utils.h"
+
 #define TAG CHANNELS_TAG("rdpecam-enumerator.server")
 
 typedef enum
@@ -301,7 +303,12 @@ static UINT enumerator_process_message(enumerator_server* enumerator)
 		return ERROR_NO_DATA;
 
 	Stream_Read_UINT8(s, header.Version);
-	Stream_Read_UINT8(s, header.MessageId);
+	{
+		const UINT8 id = Stream_Get_UINT8(s);
+		if (!rdpecam_valid_messageId(id))
+			return ERROR_INVALID_DATA;
+		header.MessageId = (CAM_MSG_ID)id;
+	}
 
 	switch (header.MessageId)
 	{

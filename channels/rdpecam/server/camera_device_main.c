@@ -25,6 +25,8 @@
 #include <freerdp/channels/log.h>
 #include <freerdp/server/rdpecam.h>
 
+#include "rdpecam-utils.h"
+
 #define TAG CHANNELS_TAG("rdpecam.server")
 
 typedef enum
@@ -156,7 +158,12 @@ static UINT device_server_recv_error_response(CameraDeviceServerContext* context
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return ERROR_NO_DATA;
 
-	Stream_Read_UINT32(s, pdu.ErrorCode);
+	{
+		const UINT32 val = Stream_Get_UINT32(s);
+		if (!rdpecam_valid_CamErrorCode(val))
+			return ERROR_INVALID_DATA;
+		pdu.ErrorCode = (CAM_ERROR_CODE)val;
+	}
 
 	IFCALLRET(context->ErrorResponse, error, context, &pdu);
 	if (error)
@@ -188,8 +195,18 @@ static UINT device_server_recv_stream_list_response(CameraDeviceServerContext* c
 	{
 		CAM_STREAM_DESCRIPTION* StreamDescription = &pdu.StreamDescriptions[i];
 
-		Stream_Read_UINT16(s, StreamDescription->FrameSourceTypes);
-		Stream_Read_UINT8(s, StreamDescription->StreamCategory);
+		{
+			const UINT16 val = Stream_Get_UINT16(s);
+			if (!rdpecam_valid_CamStreamFrameSourceType(val))
+				return ERROR_INVALID_DATA;
+			StreamDescription->FrameSourceTypes = (CAM_STREAM_FRAME_SOURCE_TYPES)val;
+		}
+		{
+			const UINT8 val = Stream_Get_UINT8(s);
+			if (!rdpecam_valid_CamStreamCategory(val))
+				return ERROR_INVALID_DATA;
+			StreamDescription->StreamCategory = (CAM_STREAM_CATEGORY)val;
+		}
 		Stream_Read_UINT8(s, StreamDescription->Selected);
 		Stream_Read_UINT8(s, StreamDescription->CanBeShared);
 	}
@@ -230,14 +247,30 @@ static UINT device_server_recv_media_type_list_response(CameraDeviceServerContex
 	{
 		CAM_MEDIA_TYPE_DESCRIPTION* MediaTypeDescriptions = &pdu.MediaTypeDescriptions[i];
 
-		Stream_Read_UINT8(s, MediaTypeDescriptions->Format);
+		{
+			const UINT8 val = Stream_Get_UINT8(s);
+			if (!rdpecam_valid_CamMediaFormat(val))
+			{
+				free(pdu.MediaTypeDescriptions);
+				return ERROR_INVALID_DATA;
+			}
+			MediaTypeDescriptions->Format = (CAM_MEDIA_FORMAT)val;
+		}
 		Stream_Read_UINT32(s, MediaTypeDescriptions->Width);
 		Stream_Read_UINT32(s, MediaTypeDescriptions->Height);
 		Stream_Read_UINT32(s, MediaTypeDescriptions->FrameRateNumerator);
 		Stream_Read_UINT32(s, MediaTypeDescriptions->FrameRateDenominator);
 		Stream_Read_UINT32(s, MediaTypeDescriptions->PixelAspectRatioNumerator);
 		Stream_Read_UINT32(s, MediaTypeDescriptions->PixelAspectRatioDenominator);
-		Stream_Read_UINT8(s, MediaTypeDescriptions->Flags);
+		{
+			const UINT8 val = Stream_Get_UINT8(s);
+			if (!rdpecam_valid_MediaTypeDescriptionFlags(val))
+			{
+				free(pdu.MediaTypeDescriptions);
+				return ERROR_INVALID_DATA;
+			}
+			MediaTypeDescriptions->Flags = (CAM_MEDIA_TYPE_DESCRIPTION_FLAGS)val;
+		}
 	}
 
 	IFCALLRET(context->MediaTypeListResponse, error, context, &pdu);
@@ -264,14 +297,25 @@ static UINT device_server_recv_current_media_type_response(CameraDeviceServerCon
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 26))
 		return ERROR_NO_DATA;
 
-	Stream_Read_UINT8(s, pdu.MediaTypeDescription.Format);
+	{
+		const UINT8 val = Stream_Get_UINT8(s);
+		if (!rdpecam_valid_CamMediaFormat(val))
+			return ERROR_INVALID_DATA;
+		pdu.MediaTypeDescription.Format = (CAM_MEDIA_FORMAT)val;
+	}
+
 	Stream_Read_UINT32(s, pdu.MediaTypeDescription.Width);
 	Stream_Read_UINT32(s, pdu.MediaTypeDescription.Height);
 	Stream_Read_UINT32(s, pdu.MediaTypeDescription.FrameRateNumerator);
 	Stream_Read_UINT32(s, pdu.MediaTypeDescription.FrameRateDenominator);
 	Stream_Read_UINT32(s, pdu.MediaTypeDescription.PixelAspectRatioNumerator);
 	Stream_Read_UINT32(s, pdu.MediaTypeDescription.PixelAspectRatioDenominator);
-	Stream_Read_UINT8(s, pdu.MediaTypeDescription.Flags);
+	{
+		const UINT8 val = Stream_Get_UINT8(s);
+		if (!rdpecam_valid_MediaTypeDescriptionFlags(val))
+			return ERROR_INVALID_DATA;
+		pdu.MediaTypeDescription.Flags = (CAM_MEDIA_TYPE_DESCRIPTION_FLAGS)val;
+	}
 
 	IFCALLRET(context->CurrentMediaTypeResponse, error, context, &pdu);
 	if (error)
@@ -321,7 +365,12 @@ static UINT device_server_recv_sample_error_response(CameraDeviceServerContext* 
 		return ERROR_NO_DATA;
 
 	Stream_Read_UINT8(s, pdu.StreamIndex);
-	Stream_Read_UINT32(s, pdu.ErrorCode);
+	{
+		const UINT32 val = Stream_Get_UINT32(s);
+		if (!rdpecam_valid_CamErrorCode(val))
+			return ERROR_INVALID_DATA;
+		pdu.ErrorCode = (CAM_ERROR_CODE)val;
+	}
 
 	IFCALLRET(context->SampleErrorResponse, error, context, &pdu);
 	if (error)
@@ -356,13 +405,30 @@ static UINT device_server_recv_property_list_response(CameraDeviceServerContext*
 
 		for (size_t i = 0; i < pdu.N_Properties; ++i)
 		{
-			Stream_Read_UINT8(s, pdu.Properties[i].PropertySet);
-			Stream_Read_UINT8(s, pdu.Properties[i].PropertyId);
-			Stream_Read_UINT8(s, pdu.Properties[i].Capabilities);
-			Stream_Read_INT32(s, pdu.Properties[i].MinValue);
-			Stream_Read_INT32(s, pdu.Properties[i].MaxValue);
-			Stream_Read_INT32(s, pdu.Properties[i].Step);
-			Stream_Read_INT32(s, pdu.Properties[i].DefaultValue);
+			CAM_PROPERTY_DESCRIPTION* cur = &pdu.Properties[i];
+			{
+				const UINT8 val = Stream_Get_UINT8(s);
+				if (!rdpecam_valid_CamPropertySet(val))
+				{
+					free(pdu.Properties);
+					return ERROR_INVALID_DATA;
+				}
+				cur->PropertySet = (CAM_PROPERTY_SET)val;
+			}
+			Stream_Read_UINT8(s, cur->PropertyId);
+			{
+				const UINT8 val = Stream_Get_UINT8(s);
+				if (!rdpecam_valid_CamPropertyCapabilities(val))
+				{
+					free(pdu.Properties);
+					return ERROR_INVALID_DATA;
+				}
+				cur->Capabilities = (CAM_PROPERTY_CAPABILITIES)val;
+			}
+			Stream_Read_INT32(s, cur->MinValue);
+			Stream_Read_INT32(s, cur->MaxValue);
+			Stream_Read_INT32(s, cur->Step);
+			Stream_Read_INT32(s, cur->DefaultValue);
 		}
 	}
 
@@ -390,7 +456,13 @@ static UINT device_server_recv_property_value_response(CameraDeviceServerContext
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 5))
 		return ERROR_NO_DATA;
 
-	Stream_Read_UINT8(s, pdu.PropertyValue.Mode);
+	{
+		const UINT8 val = Stream_Get_UINT8(s);
+		if (!rdpecam_valid_CamPropertyMode(val))
+			return ERROR_INVALID_DATA;
+		pdu.PropertyValue.Mode = (CAM_PROPERTY_MODE)val;
+	}
+
 	Stream_Read_INT32(s, pdu.PropertyValue.Value);
 
 	IFCALLRET(context->PropertyValueResponse, error, context, &pdu);
@@ -444,7 +516,12 @@ static UINT device_process_message(device_server* device)
 		return ERROR_NO_DATA;
 
 	Stream_Read_UINT8(s, header.Version);
-	Stream_Read_UINT8(s, header.MessageId);
+	{
+		const UINT8 id = Stream_Get_UINT8(s);
+		if (!rdpecam_valid_messageId(id))
+			return ERROR_INVALID_DATA;
+		header.MessageId = (CAM_MSG_ID)id;
+	}
 
 	switch (header.MessageId)
 	{
