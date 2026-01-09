@@ -81,7 +81,25 @@ static UINT audin_server_recv_version(audin_server_context* context, wStream* s,
 	if (!Stream_CheckAndLogRequiredLengthWLog(audin->log, s, 4))
 		return ERROR_NO_DATA;
 
-	Stream_Read_UINT32(s, pdu.Version);
+	{
+		const UINT32 version = Stream_Get_UINT32(s);
+		switch (version)
+		{
+			case SNDIN_VERSION_Version_1:
+				pdu.Version = SNDIN_VERSION_Version_1;
+				break;
+			case SNDIN_VERSION_Version_2:
+				pdu.Version = SNDIN_VERSION_Version_2;
+				break;
+			default:
+				pdu.Version = SNDIN_VERSION_Version_2;
+				WLog_Print(audin->log, WLOG_WARN,
+				           "Received unsupported channel version %" PRIu32
+				           ", using highest supported version %u",
+				           version, pdu.Version);
+				break;
+		}
+	}
 
 	IFCALLRET(context->ReceiveVersion, error, context, &pdu);
 	if (error)
