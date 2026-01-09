@@ -1195,6 +1195,7 @@ static int freerdp_vsock_connect(rdpContext* context, const char* hostname, int 
 		char ebuffer[256] = { 0 };
 		WLog_ERR(TAG, "could not extract port from '%s', value=%ul, error=%s", hostname, val,
 		         winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
+		close(sockfd);
 		return -1;
 	}
 	addr.svm_cid = WINPR_ASSERTING_INT_CAST(typeof(addr.svm_cid), val);
@@ -1205,6 +1206,7 @@ static int freerdp_vsock_connect(rdpContext* context, const char* hostname, int 
 	if ((connect(sockfd, (struct sockaddr*)&addr, sizeof(struct sockaddr_vm))) == -1)
 	{
 		WLog_ERR(TAG, "failed to connect to %s", hostname);
+		close(sockfd);
 		return -1;
 	}
 	return sockfd;
