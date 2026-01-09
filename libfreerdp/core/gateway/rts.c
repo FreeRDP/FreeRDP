@@ -732,9 +732,33 @@ static BOOL rts_read_result(wStream* s, p_result_t* result, BOOL silent)
 
 	if (!Stream_ConditionalCheckAndLogRequiredLength(TAG, s, 2, silent))
 		return FALSE;
-	Stream_Read_UINT16(s, result->result);
-	Stream_Read_UINT16(s, result->reason);
 
+	const UINT16 res = Stream_Get_UINT16(s);
+	switch (res)
+	{
+		case acceptance:
+		case user_rejection:
+		case provider_rejection:
+			break;
+		default:
+			WLog_ERR(TAG, "Invalid p_cont_def_result_t %" PRIu16, res);
+			return FALSE;
+	}
+	result->result = (p_cont_def_result_t)res;
+
+	const UINT16 reason = Stream_Get_UINT16(s);
+	switch (reason)
+	{
+		case reason_not_specified:
+		case abstract_syntax_not_supported:
+		case proposed_transfer_syntaxes_not_supported:
+		case local_limit_exceeded:
+			break;
+		default:
+			WLog_ERR(TAG, "Invalid p_provider_reason_t %" PRIu16, reason);
+			return FALSE;
+	}
+	result->reason = (p_provider_reason_t)reason;
 	return rts_read_syntax_id(s, &result->transfer_syntax, silent);
 }
 

@@ -140,8 +140,11 @@ static int shadow_encoder_init_rfx(rdpShadowEncoder* encoder)
 	if (!rfx_context_reset(encoder->rfx, encoder->width, encoder->height))
 		goto fail;
 
-	rfx_context_set_mode(encoder->rfx, freerdp_settings_get_uint32(encoder->server->settings,
-	                                                               FreeRDP_RemoteFxRlgrMode));
+	{
+		const UINT32 mode =
+		    freerdp_settings_get_uint32(encoder->server->settings, FreeRDP_RemoteFxRlgrMode);
+		rfx_context_set_mode(encoder->rfx, WINPR_ASSERTING_INT_CAST(RLGR_MODE, mode));
+	}
 	rfx_context_set_pixel_format(encoder->rfx, PIXEL_FORMAT_BGRX32);
 	encoder->codecs |= FREERDP_CODEC_REMOTEFX;
 	return 1;

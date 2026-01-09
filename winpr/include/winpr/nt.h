@@ -1572,7 +1572,7 @@ extern "C"
 	 *  @return A string representation of the value or "UNKNOWN" for invalid values
 	 *  @since version 3.13.0
 	 */
-	WINPR_API const char* FSInformationClass2Tag(FILE_INFORMATION_CLASS value);
+	WINPR_API const char* FSInformationClass2Tag(UINT32 value);
 
 #ifdef __cplusplus
 }

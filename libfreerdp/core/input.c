@@ -40,7 +40,7 @@
 #define INPUT_EVENT_MOUSEX 0x8002
 #define INPUT_EVENT_MOUSEREL 0x8004
 
-static const char* SyncEventFlag2Str(enum KBD_SYNC_FLAGS flag)
+static const char* SyncEventFlag2Str(uint32_t flag)
 {
 	if (flag == KBD_SYNC_SCROLL_LOCK)
 		return "SYNC_SCROLL_LOCK";

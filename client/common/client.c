@@ -1403,7 +1403,7 @@ BOOL client_auto_reconnect_ex(freerdp* instance, BOOL (*window_events)(freerdp* 
 			default:
 				break;
 		}
-		for (UINT32 x = 0; x < delay / 10; x++)
+		for (SSIZE_T x = 0; x < delay / 10; x++)
 		{
 			if (!IFCALLRESULT(TRUE, window_events, instance))
 			{

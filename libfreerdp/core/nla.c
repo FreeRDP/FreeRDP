@@ -1154,6 +1154,37 @@ static BOOL nla_read_TSCspDataDetail(WinPrAsn1Decoder* dec, rdpSettings* setting
 	return set_creds_octetstring_to_settings(dec, 4, TRUE, FreeRDP_CspName, settings);
 }
 
+static BOOL nla_messageTypeValid(UINT32 type)
+{
+	switch (type)
+	{
+		case KerbInvalidValue:
+		case KerbInteractiveLogon:
+		case KerbSmartCardLogon:
+		case KerbWorkstationUnlockLogon:
+		case KerbSmartCardUnlockLogon:
+		case KerbProxyLogon:
+		case KerbTicketLogon:
+		case KerbTicketUnlockLogon:
+#if !defined(_WIN32_WINNT) || (_WIN32_WINNT >= 0x0501)
+		case KerbS4ULogon:
+#endif
+#if !defined(_WIN32_WINNT) || (_WIN32_WINNT >= 0x0600)
+		case KerbCertificateLogon:
+		case KerbCertificateS4ULogon:
+		case KerbCertificateUnlockLogon:
+#endif
+#if !defined(_WIN32_WINNT) || (_WIN32_WINNT >= 0x0602)
+		case KerbNoElevationLogon:
+		case KerbLuidLogon:
+#endif
+			return TRUE;
+		default:
+			WLog_ERR(TAG, "Invalid message type %" PRIu32, type);
+			return FALSE;
+	}
+}
+
 static BOOL nla_read_KERB_TICKET_LOGON(WINPR_ATTR_UNUSED rdpNla* nla, wStream* s,
                                        KERB_TICKET_LOGON* ticket)
 {
@@ -1166,7 +1197,13 @@ static BOOL nla_read_KERB_TICKET_LOGON(WINPR_ATTR_UNUSED rdpNla* nla, wStream* s
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 16 + 16))
 		return FALSE;
 
-	Stream_Read_UINT32(s, ticket->MessageType);
+	{
+		const UINT32 type = Stream_Get_UINT32(s);
+		if (!nla_messageTypeValid(type))
+			return FALSE;
+
+		ticket->MessageType = (KERB_LOGON_SUBMIT_TYPE)type;
+	}
 	Stream_Read_UINT32(s, ticket->Flags);
 	Stream_Read_UINT32(s, ticket->ServiceTicketLength);
 	Stream_Read_UINT32(s, ticket->TicketGrantingTicketLength);
@@ -1196,6 +1233,22 @@ static BOOL nla_read_KERB_TICKET_LOGON(WINPR_ATTR_UNUSED rdpNla* nla, wStream* s
 	return TRUE;
 }
 
+static BOOL nla_credentialTypeValid(UINT32 type)
+{
+	switch (type)
+	{
+		case InvalidCredKey:
+		case DeprecatedIUMCredKey:
+		case DomainUserCredKey:
+		case LocalUserCredKey:
+		case ExternallySuppliedCredKey:
+			return TRUE;
+		default:
+			WLog_ERR(TAG, "Invalid credential type %" PRIu32, type);
+			return FALSE;
+	}
+}
+
 WINPR_ATTR_MALLOC(free, 1)
 static MSV1_0_REMOTE_SUPPLEMENTAL_CREDENTIAL* nla_read_NtlmCreds(WINPR_ATTR_UNUSED rdpNla* nla,
                                                                  wStream* s)
@@ -1223,7 +1276,15 @@ static MSV1_0_REMOTE_SUPPLEMENTAL_CREDENTIAL* nla_read_NtlmCreds(WINPR_ATTR_UNUS
 	ret->Version = Stream_Get_UINT32(s);
 	ret->Flags = Stream_Get_UINT32(s);
 	Stream_Read(s, ret->CredentialKey.Data, MSV1_0_CREDENTIAL_KEY_LENGTH);
-	ret->CredentialKeyType = Stream_Get_UINT32(s);
+	{
+		const UINT32 val = Stream_Get_UINT32(s);
+		if (!nla_credentialTypeValid(val))
+		{
+			free(ret);
+			return NULL;
+		}
+		ret->CredentialKeyType = WINPR_ASSERTING_INT_CAST(MSV1_0_CREDENTIAL_KEY_TYPE, val);
+	}
 	ret->EncryptedCredsSize = EncryptedCredsSize;
 	Stream_Read(s, ret->EncryptedCreds, EncryptedCredsSize);
 

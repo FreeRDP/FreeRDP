@@ -283,6 +283,27 @@ static BOOL ntlm_av_pair_add(NTLM_AV_PAIR* pAvPairList, size_t cbAvPairList, NTL
 	return ntlm_av_pair_list_init(pAvPair, cbAvPair);
 }
 
+static BOOL ntlm_av_pair_valid(UINT16 pair)
+{
+	switch (pair)
+	{
+		case MsvAvEOL:
+		case MsvAvNbComputerName:
+		case MsvAvNbDomainName:
+		case MsvAvDnsComputerName:
+		case MsvAvDnsDomainName:
+		case MsvAvDnsTreeName:
+		case MsvAvFlags:
+		case MsvAvTimestamp:
+		case MsvAvSingleHost:
+		case MsvAvTargetName:
+		case MsvAvChannelBindings:
+			return TRUE;
+		default:
+			return FALSE;
+	}
+}
+
 static BOOL ntlm_av_pair_add_copy(NTLM_AV_PAIR* pAvPairList, size_t cbAvPairList,
                                   NTLM_AV_PAIR* pAvPair, size_t cbAvPair)
 {
@@ -298,8 +319,11 @@ static BOOL ntlm_av_pair_add_copy(NTLM_AV_PAIR* pAvPairList, size_t cbAvPairList
 	if (!ntlm_av_pair_get_len(pAvPair, cbAvPair, &avLen))
 		return FALSE;
 
+	if (!ntlm_av_pair_valid(pair))
+		return FALSE;
+
 	WINPR_ASSERT(avLen <= UINT16_MAX);
-	return ntlm_av_pair_add(pAvPairList, cbAvPairList, pair,
+	return ntlm_av_pair_add(pAvPairList, cbAvPairList, WINPR_ASSERTING_INT_CAST(NTLM_AV_ID, pair),
 	                        ntlm_av_pair_get_value_pointer(pAvPair), (UINT16)avLen);
 }
 

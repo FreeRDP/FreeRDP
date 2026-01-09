@@ -425,7 +425,7 @@ static WINPR_CIPHER_CTX* treatAuthBlob(wLog* log, const BYTE* pbInput, size_t cb
 		return NULL;
 	}
 
-	WINPR_CIPHER_TYPE cipherType = 0;
+	WINPR_CIPHER_TYPE cipherType = WINPR_CIPHER_NONE;
 	switch (cbKeyData)
 	{
 		case 16:

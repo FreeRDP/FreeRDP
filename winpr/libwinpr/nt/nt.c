@@ -63,7 +63,7 @@ PTEB NtCurrentTeb(void)
 }
 #endif
 
-const char* FSInformationClass2Tag(FILE_INFORMATION_CLASS value)
+const char* FSInformationClass2Tag(UINT32 value)
 {
 	switch (value)
 	{

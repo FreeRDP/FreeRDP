@@ -45,7 +45,7 @@ char* winpr_str_url_decode(const char* str, size_t len)
 	if (!dst)
 		return NULL;
 
-	if (!uriUnescapeInPlaceExA(dst, URI_FALSE, URI_FALSE))
+	if (!uriUnescapeInPlaceExA(dst, URI_FALSE, URI_BR_DONT_TOUCH))
 	{
 		free(dst);
 		return NULL;

@@ -393,20 +393,20 @@ static BOOL freerdp_dsp_decode_ima_adpcm(FREERDP_DSP_CONTEXT* WINPR_RESTRICT con
 			{
 				BYTE* dst = Stream_Pointer(out);
 
-				const int channel = (i < 4 ? 0 : 1);
+				const unsigned channel = (i < 4 ? 0 : 1);
 				{
 					const BYTE sample = ((*src) & 0x0f);
 					const UINT16 decoded =
 					    dsp_decode_ima_adpcm_sample(&context->adpcm, channel, sample);
-					dst[((i & 3) << 3) + (channel << 1)] = (decoded & 0xFF);
-					dst[((i & 3) << 3) + (channel << 1) + 1] = (decoded >> 8);
+					dst[((i & 3) << 3) + (channel << 1u)] = (decoded & 0xFF);
+					dst[((i & 3) << 3) + (channel << 1u) + 1] = (decoded >> 8);
 				}
 				{
 					const BYTE sample = ((*src) >> 4);
 					const UINT16 decoded =
 					    dsp_decode_ima_adpcm_sample(&context->adpcm, channel, sample);
-					dst[((i & 3) << 3) + (channel << 1) + 4] = (decoded & 0xFF);
-					dst[((i & 3) << 3) + (channel << 1) + 5] = (decoded >> 8);
+					dst[((i & 3) << 3) + (channel << 1u) + 4] = (decoded & 0xFF);
+					dst[((i & 3) << 3) + (channel << 1u) + 5] = (decoded >> 8);
 				}
 				src++;
 			}

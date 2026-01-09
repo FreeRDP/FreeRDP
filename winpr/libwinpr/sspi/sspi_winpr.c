@@ -51,9 +51,6 @@ static const SecPkgInfoW* SecPkgInfoW_LIST[] = { &NTLM_SecPkgInfoW, &KERBEROS_Se
 	                                             &NEGOTIATE_SecPkgInfoW, &CREDSSP_SecPkgInfoW,
 	                                             &SCHANNEL_SecPkgInfoW };
 
-static SecurityFunctionTableA winpr_SecurityFunctionTableA;
-static SecurityFunctionTableW winpr_SecurityFunctionTableW;
-
 typedef struct
 {
 	const SEC_CHAR* Name;
@@ -1168,16 +1165,6 @@ static void FreeContextBuffer_EnumerateSecurityPackages(void* contextBuffer)
 	free(pPackageInfo);
 }
 
-SecurityFunctionTableW* SEC_ENTRY winpr_InitSecurityInterfaceW(void)
-{
-	return &winpr_SecurityFunctionTableW;
-}
-
-SecurityFunctionTableA* SEC_ENTRY winpr_InitSecurityInterfaceA(void)
-{
-	return &winpr_SecurityFunctionTableA;
-}
-
 static SECURITY_STATUS SEC_ENTRY winpr_QuerySecurityPackageInfoW(SEC_WCHAR* pszPackageName,
                                                                  PSecPkgInfoW* ppPackageInfo)
 {
@@ -2236,3 +2223,13 @@ static SecurityFunctionTableW winpr_SecurityFunctionTableW = {
 	winpr_SetContextAttributesW,       /* SetContextAttributes */
 	winpr_SetCredentialsAttributesW,   /* SetCredentialsAttributes */
 };
+
+SecurityFunctionTableW* SEC_ENTRY winpr_InitSecurityInterfaceW(void)
+{
+	return &winpr_SecurityFunctionTableW;
+}
+
+SecurityFunctionTableA* SEC_ENTRY winpr_InitSecurityInterfaceA(void)
+{
+	return &winpr_SecurityFunctionTableA;
+}

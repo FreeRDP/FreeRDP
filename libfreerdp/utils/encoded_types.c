@@ -80,8 +80,8 @@ BOOL freerdp_read_four_byte_signed_integer(wStream* s, INT32* value)
 
 	Stream_Read_UINT8(s, byte);
 
-	si.c = (byte & 0xC0) >> 6;
-	si.s = (byte & 0x20) >> 5;
+	si.c = (EncodedTypeByteCount)((byte & 0xC0) >> 6);
+	si.s = (EncodedTypeSign)((byte & 0x20) >> 5);
 	si.val1 = (byte & 0x1F);
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, si.c))
@@ -226,8 +226,8 @@ BOOL freerdp_read_four_byte_float_exp(wStream* s, double* value, BYTE* exp)
 
 	Stream_Read_UINT8(s, byte);
 
-	f.c = (byte & 0xC0) >> 6;
-	f.s = (byte & 0x20) >> 5;
+	f.c = (EncodedTypeByteCount)((byte & 0xC0) >> 6);
+	f.s = (EncodedTypeSign)((byte & 0x20) >> 5);
 	f.e = (byte & 0x1C) >> 2;
 	f.val1 = (byte & 0x03);
 
