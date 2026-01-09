@@ -914,7 +914,7 @@ TlsHandshakeResult freerdp_tls_connect_ex(rdpTls* tls, BIO* underlying, const SS
 	adjustSslOptions(&options);
 
 	if (!tls_prepare(tls, underlying, methods, options, TRUE))
-		return 0;
+		return TLS_HANDSHAKE_ERROR;
 
 #if !defined(OPENSSL_NO_TLSEXT)
 	const char* str = tls_get_server_name(tls);
