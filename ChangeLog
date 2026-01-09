@@ -1,3 +1,53 @@
+# 2026-01-14 Version 3.20.1
+
+New years cleanup release. Fixes some issues reported and does a cleaning sweep
+to bring down warnings.
+Thanks to @ehdgks0627 doing some code review/testing we've uncovered the following
+(medium) vulnerabilities:
+* CVE-2026-22851
+* CVE-2026-22852
+* CVE-2026-22853
+* CVE-2026-22854
+* CVE-2026-22855
+* CVE-2026-22856
+* CVE-2026-22857
+* CVE-2026-22858
+* CVE-2026-22859
+
+These affect FreeRDP based clients only, with the exception of CVE-2026-22858
+also affecting FreeRDP proxy. FreeRDP based servers are not affected.
+
+## What's Changed
+* [ci,abi] use abigail-tools from repo (#12079)
+* [ci,abi] fix missing ABI suppressions (#12080)
+* [ci,abi] add missing functions to suppression list (#12081)
+* [core,gateway] fix http response (#12095)
+* [ci,mac] build openh264 from master branch (#12104)
+* [client,sdl] lock primary while used (#12103)
+* [client,sdl] show file selection dialog (#12083)
+* Proxy fixes (#12106)
+* [core,freerdp] fix race in freerdp_abort_connect_context (#12107)
+* [server,proxy] make peer_list access thread-safe and fix leaks (#12108)
+* Clang warning fixes (#12109)
+* Tidy nsc (#12110)
+* Clang warn fixes (#12105)
+* Tcp refactor (#12113)
+* [enum,cast] fix implicit enum casts (#12111)
+* [client,common] fix /remoteGuard (#12115)
+* Coverity warning fixes (#12116)
+* [channels,rdpei] properly clean up server channel (#12119)
+* [core,gateway] ignore unknown http headers (#12120)
+* Asan fixes (#12121, #12124, #12124)
+* [crypto,base64] do proper length checks (#12122)
+* [core,gcc] fix integer promotion issue (#12126)
+* [core,orders] fix brush update decoding (#12130)
+* [client,sdl] fix +workarea (#12131)
+* [channels,rdpear] add checks for itemSize (#12127)
+* Fix dead lock in smartcard when using smartcard logon with emulated smartcard (#12132)
+
+For a complete and detailed change log since the last release run:
+git log 3.20.1...3.20.0
+
 # 2025-12-17 Version 3.20.0
 
 ## What's Changed
