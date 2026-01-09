@@ -541,8 +541,21 @@ static BOOL negotiate_read_neg_token(PSecBuffer input, NegToken* token)
 					WinPrAsn1_ENUMERATED rd = 0;
 					if (!WinPrAsn1DecReadEnumerated(&dec2, &rd))
 						return FALSE;
-					token->negState = rd;
-					WLog_DBG(TAG, "\tnegState [0] (%d)", token->negState);
+					switch (rd)
+					{
+						case NOSTATE:
+						case ACCEPT_COMPLETED:
+						case ACCEPT_INCOMPLETE:
+						case REJECT:
+						case REQUEST_MIC:
+							break;
+						default:
+							WLog_ERR(TAG, "Invalid negState enumeration value %d", rd);
+							return FALSE;
+					}
+
+					token->negState = WINPR_ASSERTING_INT_CAST(enum NegState, rd);
+					WLog_DBG(TAG, "\tnegState [0] (%d)", rd);
 				}
 				break;
 			case 1:
