@@ -296,7 +296,7 @@ RdpeiServerContext* rdpei_server_context_new(HANDLE vcm)
 		goto fail;
 
 	ret->priv->outputStream = Stream_New(NULL, 200);
-	if (!ret->priv->inputStream)
+	if (!ret->priv->outputStream)
 		goto fail;
 
 	ret->vcm = vcm;
@@ -350,16 +350,15 @@ void rdpei_server_context_reset(RdpeiServerContext* context)
 
 void rdpei_server_context_free(RdpeiServerContext* context)
 {
-	RdpeiServerPrivate* priv = NULL;
-
 	if (!context)
 		return;
-	priv = context->priv;
+	RdpeiServerPrivate* priv = context->priv;
 	if (priv)
 	{
 		if (priv->channelHandle && priv->channelHandle != INVALID_HANDLE_VALUE)
 			(void)WTSVirtualChannelClose(priv->channelHandle);
 		Stream_Free(priv->inputStream, TRUE);
+		Stream_Free(priv->outputStream, TRUE);
 	}
 	free(priv);
 	free(context);
