@@ -1164,7 +1164,6 @@ static int get_next_addrinfo(rdpContext* context, struct addrinfo* input, struct
 
 fail:
 	freerdp_set_last_error_if_not(context, errorCode);
-	freeaddrinfo(input);
 	*result = NULL;
 	return -1;
 }
