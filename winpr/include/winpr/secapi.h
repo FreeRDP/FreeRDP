@@ -23,6 +23,7 @@
 #ifdef _WIN32
 #define _NTDEF_
 #include <ntsecapi.h>
+#define KerbInvalidValue 0
 #else
 
 #include <winpr/wtypes.h>
@@ -37,12 +38,12 @@ typedef enum
 	KerbProxyLogon = 9,
 	KerbTicketLogon = 10,
 	KerbTicketUnlockLogon = 11,
-	KerbS4ULogon = 12,
-	KerbCertificateLogon = 13,
-	KerbCertificateS4ULogon = 14,
-	KerbCertificateUnlockLogon = 15,
-	KerbNoElevationLogon = 83,
-	KerbLuidLogon = 84
+	KerbS4ULogon = 12,               /** @since _WIN32_WINNT >= 0x0501 */
+	KerbCertificateLogon = 13,       /** @since _WIN32_WINNT >= 0x0600 */
+	KerbCertificateS4ULogon = 14,    /** @since _WIN32_WINNT >= 0x0600 */
+	KerbCertificateUnlockLogon = 15, /** @since _WIN32_WINNT >= 0x0600 */
+	KerbNoElevationLogon = 83,       /** @since _WIN32_WINNT >= 0x0602 */
+	KerbLuidLogon = 84               /** @since _WIN32_WINNT >= 0x0602 */
 } KERB_LOGON_SUBMIT_TYPE,
     *PKERB_LOGON_SUBMIT_TYPE;
 
