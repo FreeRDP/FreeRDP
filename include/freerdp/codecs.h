@@ -100,7 +100,7 @@ extern "C"
 	 *  @return The name of the codecid
 	 *  @since version 3.18.0
 	 */
-	FREERDP_API const char* freerdp_codec_id_to_str(enum RDP_CODEC_ID id);
+	FREERDP_API const char* freerdp_codec_id_to_str(UINT32 id);
 
 #ifdef __cplusplus
 }

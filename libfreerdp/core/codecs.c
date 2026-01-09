@@ -277,7 +277,7 @@ void freerdp_client_codecs_free(rdpCodecs* codecs)
 	free(codecs);
 }
 
-const char* freerdp_codec_id_to_str(enum RDP_CODEC_ID id)
+const char* freerdp_codec_id_to_str(UINT32 id)
 {
 #define ENTRY(x) \
 	case x:      \
