@@ -140,7 +140,7 @@ static enum AVCodecID ffmpeg_get_avcodec(const AUDIO_FORMAT* WINPR_RESTRICT form
 	}
 }
 
-static int ffmpeg_sample_format(const AUDIO_FORMAT* WINPR_RESTRICT format)
+static enum AVSampleFormat ffmpeg_sample_format(const AUDIO_FORMAT* WINPR_RESTRICT format)
 {
 	switch (format->wFormatTag)
 	{
@@ -154,7 +154,7 @@ static int ffmpeg_sample_format(const AUDIO_FORMAT* WINPR_RESTRICT format)
 					return AV_SAMPLE_FMT_S16;
 
 				default:
-					return FALSE;
+					return AV_SAMPLE_FMT_NONE;
 			}
 
 		case WAVE_FORMAT_DVI_ADPCM:
@@ -176,7 +176,7 @@ static int ffmpeg_sample_format(const AUDIO_FORMAT* WINPR_RESTRICT format)
 			return AV_SAMPLE_FMT_S16;
 
 		default:
-			return FALSE;
+			return AV_SAMPLE_FMT_NONE;
 	}
 }
 

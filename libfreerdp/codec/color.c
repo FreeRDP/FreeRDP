@@ -1160,7 +1160,7 @@ BOOL freerdp_image_fill_ex(BYTE* WINPR_RESTRICT pDstData, DWORD DstFormat, UINT3
 }
 
 #if defined(WITH_SWSCALE)
-static int av_format_for_buffer(UINT32 format)
+static enum AVPixelFormat av_format_for_buffer(UINT32 format)
 {
 	switch (format)
 	{
@@ -1212,8 +1212,8 @@ BOOL freerdp_image_scale(BYTE* WINPR_RESTRICT pDstData, DWORD DstFormat, UINT32 
 	{
 		int res = 0;
 		struct SwsContext* resize = NULL;
-		int srcFormat = av_format_for_buffer(SrcFormat);
-		int dstFormat = av_format_for_buffer(DstFormat);
+		enum AVPixelFormat srcFormat = av_format_for_buffer(SrcFormat);
+		enum AVPixelFormat dstFormat = av_format_for_buffer(DstFormat);
 		const int srcStep[1] = { (int)nSrcStep };
 		const int dstStep[1] = { (int)nDstStep };
 
