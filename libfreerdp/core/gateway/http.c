@@ -844,9 +844,6 @@ static BOOL http_response_parse_header_field(HttpResponse* response, const char*
 			 */
 			*separator = '\0';
 			authValue = separator + 1;
-
-			if (!authValue)
-				return FALSE;
 		}
 
 		return HashTable_Insert(response->Authenticates, authScheme, authValue);
@@ -856,44 +853,42 @@ static BOOL http_response_parse_header_field(HttpResponse* response, const char*
 	{
 		char* separator = strchr(value, '=');
 
-		if (separator)
+		if (!separator)
+			return FALSE;
+
+		/* Set-Cookie: name=value
+		 * Set-Cookie: name=value; Attribute=value
+		 * Set-Cookie: name="value with spaces"; Attribute=value
+		 */
+		*separator = '\0';
+		const char* CookieName = value;
+		char* CookieValue = separator + 1;
+
+		if (*CookieValue == '"')
 		{
-			/* Set-Cookie: name=value
-			 * Set-Cookie: name=value; Attribute=value
-			 * Set-Cookie: name="value with spaces"; Attribute=value
-			 */
-			*separator = '\0';
-			const char* CookieName = value;
-			char* CookieValue = separator + 1;
-
-			if (!CookieName || !CookieValue)
-				return FALSE;
-
-			if (*CookieValue == '"')
+			char* p = CookieValue;
+			while (*p != '"' && *p != '\0')
 			{
-				char* p = CookieValue;
-				while (*p != '"' && *p != '\0')
-				{
+				p++;
+				if (*p == '\\')
 					p++;
-					if (*p == '\\')
-						p++;
-				}
-				*p = '\0';
 			}
-			else
-			{
-				char* p = CookieValue;
-				while (*p != ';' && *p != '\0' && *p != ' ')
-				{
-					p++;
-				}
-				*p = '\0';
-			}
-			return HashTable_Insert(response->SetCookie, CookieName, CookieValue);
+			*p = '\0';
 		}
+		else
+		{
+			char* p = CookieValue;
+			while (*p != ';' && *p != '\0' && *p != ' ')
+			{
+				p++;
+			}
+			*p = '\0';
+		}
+		return HashTable_Insert(response->SetCookie, CookieName, CookieValue);
 	}
 
-	return FALSE;
+	/* Ignore unknown lines */
+	return TRUE;
 }
 
 static BOOL http_response_parse_header(HttpResponse* response)
