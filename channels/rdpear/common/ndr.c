@@ -574,8 +574,10 @@ BOOL ndr_read_uconformant_array(NdrContext* context, wStream* s, const NdrArrayH
 	WINPR_ASSERT(itemType);
 	WINPR_ASSERT(vtarget);
 
-	UINT32 count = 0;
+	if (itemType->itemSize == 0)
+		return FALSE;
 
+	UINT32 count = 0;
 	if (!ndr_read_uint32(context, s, &count))
 		return FALSE;
 
@@ -910,6 +912,8 @@ BOOL ndr_read_pointedMessageEx(NdrContext* context, wStream* s, ndr_refid ptrId,
 	if (!ret)
 	{
 		size_t itemCount = ndr_hintsCount(descr, hints);
+		if (itemCount == 0)
+			return FALSE;
 		ret = calloc(itemCount, descr->itemSize);
 		if (!ret)
 			return FALSE;
