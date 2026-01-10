@@ -454,14 +454,12 @@ static void func_select_all_interface_for_msconfig(IUDEVICE* pdev,
                                                    MSUSB_CONFIG_DESCRIPTOR* MsConfig)
 {
 	MSUSB_INTERFACE_DESCRIPTOR** MsInterfaces = MsConfig->MsInterfaces;
-	BYTE InterfaceNumber = 0;
-	BYTE AlternateSetting = 0;
 	UINT32 NumInterfaces = MsConfig->NumInterfaces;
 
 	for (UINT32 inum = 0; inum < NumInterfaces; inum++)
 	{
-		InterfaceNumber = MsInterfaces[inum]->InterfaceNumber;
-		AlternateSetting = MsInterfaces[inum]->AlternateSetting;
+		const BYTE InterfaceNumber = MsInterfaces[inum]->InterfaceNumber;
+		const BYTE AlternateSetting = MsInterfaces[inum]->AlternateSetting;
 		pdev->select_interface(pdev, InterfaceNumber, AlternateSetting);
 	}
 }
