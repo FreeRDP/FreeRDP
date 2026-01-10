@@ -134,6 +134,8 @@ BOOL msusb_msinterface_replace(MSUSB_CONFIG_DESCRIPTOR* MsConfig, BYTE Interface
 {
 	if (!MsConfig || !MsConfig->MsInterfaces)
 		return FALSE;
+	if (MsConfig->NumInterfaces <= InterfaceNumber)
+		return FALSE;
 
 	msusb_msinterface_free(MsConfig->MsInterfaces[InterfaceNumber]);
 	MsConfig->MsInterfaces[InterfaceNumber] = NewMsInterface;
@@ -142,12 +144,10 @@ BOOL msusb_msinterface_replace(MSUSB_CONFIG_DESCRIPTOR* MsConfig, BYTE Interface
 
 MSUSB_INTERFACE_DESCRIPTOR* msusb_msinterface_read(wStream* s)
 {
-	MSUSB_INTERFACE_DESCRIPTOR* MsInterface = NULL;
-
 	if (!Stream_CheckAndLogRequiredCapacity(TAG, (s), 12))
 		return NULL;
 
-	MsInterface = msusb_msinterface_new();
+	MSUSB_INTERFACE_DESCRIPTOR* MsInterface = msusb_msinterface_new();
 
 	if (!MsInterface)
 		return NULL;

@@ -400,7 +400,8 @@ static inline char* base64_encode(const BYTE* WINPR_RESTRICT alphabet,
 
 static inline int base64_decode_char(const signed char* WINPR_RESTRICT alphabet, char c)
 {
-	if (c <= '\0')
+	/* ensure char is signed for this check */
+	if ((int)c <= '\0')
 		return -1;
 
 	return alphabet[(size_t)c];

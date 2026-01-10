@@ -32,6 +32,7 @@ if(ENABLE_WARNING_ERROR)
 endif()
 
 list(APPEND COMMON_COMPILER_FLAGS -fno-omit-frame-pointer -Wredundant-decls)
+list(APPEND COMMON_COMPILER_FLAGS -fsigned-char)
 
 include(ExportAllSymbols)
 include(CompilerSanitizerOptions)
