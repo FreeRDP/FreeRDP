@@ -516,17 +516,18 @@ static UINT serial_process_irp(SERIAL_DEVICE* serial, IRP* irp)
 static DWORD WINAPI irp_thread_func(LPVOID arg)
 {
 	IRP_THREAD_DATA* data = (IRP_THREAD_DATA*)arg;
-	UINT error = 0;
 
 	WINPR_ASSERT(data);
 	WINPR_ASSERT(data->serial);
 	WINPR_ASSERT(data->irp);
 
 	/* blocks until the end of the request */
-	if ((error = serial_process_irp(data->serial, data->irp)))
+	UINT error = serial_process_irp(data->serial, data->irp);
+	if (error)
 	{
 		WLog_Print(data->serial->log, WLOG_ERROR,
 		           "serial_process_irp failed with error %" PRIu32 "", error);
+		data->irp->Discard(data->irp);
 		goto error_out;
 	}
 
@@ -538,9 +539,6 @@ error_out:
 
 	if (error && data->serial->rdpcontext)
 		setChannelError(data->serial->rdpcontext, error, "irp_thread_func reported an error");
-
-	if (error)
-		data->irp->Discard(data->irp);
 
 	/* NB: At this point, the server might already being reusing
 	 * the CompletionId whereas the thread is not yet
