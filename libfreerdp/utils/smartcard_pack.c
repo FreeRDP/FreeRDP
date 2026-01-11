@@ -111,8 +111,8 @@ static BOOL smartcard_ndr_pointer_read_(wLog* log, wStream* s, UINT32* index, UI
 	return TRUE;
 }
 
-static LONG smartcard_ndr_read(wLog* log, wStream* s, BYTE** data, size_t min, size_t elementSize,
-                               ndr_ptr_t type)
+static LONG smartcard_ndr_read_ex(wLog* log, wStream* s, BYTE** data, size_t min,
+                                  size_t elementSize, ndr_ptr_t type, size_t* plen)
 {
 	size_t len = 0;
 	size_t offset = 0;
@@ -121,6 +121,9 @@ static LONG smartcard_ndr_read(wLog* log, wStream* s, BYTE** data, size_t min, s
 	size_t required = 0;
 
 	*data = NULL;
+	if (plen)
+		*plen = 0;
+
 	switch (type)
 	{
 		case NDR_PTR_FULL:
@@ -196,9 +199,18 @@ static LONG smartcard_ndr_read(wLog* log, wStream* s, BYTE** data, size_t min, s
 	if (!r)
 		return SCARD_E_NO_MEMORY;
 	Stream_Read(s, r, len);
-	smartcard_unpack_read_size_align(s, len, 4);
+	const LONG pad = smartcard_unpack_read_size_align(s, len, 4);
+	len += (size_t)pad;
 	*data = r;
+	if (plen)
+		*plen = len;
 	return STATUS_SUCCESS;
+}
+
+static LONG smartcard_ndr_read(wLog* log, wStream* s, BYTE** data, size_t min, size_t elementSize,
+                               ndr_ptr_t type)
+{
+	return smartcard_ndr_read_ex(log, s, data, min, elementSize, type, NULL);
 }
 
 static BOOL smartcard_ndr_pointer_write(wStream* s, UINT32* index, DWORD length)
@@ -3507,12 +3519,15 @@ LONG smartcard_unpack_set_attrib_call(wStream* s, SetAttrib_Call* call)
 
 	if (ndrPtr)
 	{
-		// TODO: call->cbAttrLen was larger than the pointer value.
-		// TODO: Maybe need to refine the checks?
-		status = smartcard_ndr_read(log, s, &call->pbAttr, 0, 1, NDR_PTR_SIMPLE);
+		size_t len = 0;
+		status = smartcard_ndr_read_ex(log, s, &call->pbAttr, 0, 1, NDR_PTR_SIMPLE, &len);
 		if (status != SCARD_S_SUCCESS)
 			return status;
+		if (call->cbAttrLen > len)
+			call->cbAttrLen = WINPR_ASSERTING_INT_CAST(DWORD, len);
 	}
+	else
+		call->cbAttrLen = 0;
 	smartcard_trace_set_attrib_call(log, call);
 	return SCARD_S_SUCCESS;
 }
