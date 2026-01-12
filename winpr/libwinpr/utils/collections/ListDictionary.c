@@ -77,7 +77,7 @@ size_t ListDictionary_Count(wListDictionary* listDictionary)
 	WINPR_ASSERT(listDictionary);
 
 	if (listDictionary->synchronized)
-		EnterCriticalSection(&listDictionary->lock);
+		ListDictionary_Lock(listDictionary);
 
 	if (listDictionary->head)
 	{
@@ -91,7 +91,7 @@ size_t ListDictionary_Count(wListDictionary* listDictionary)
 	}
 
 	if (listDictionary->synchronized)
-		LeaveCriticalSection(&listDictionary->lock);
+		ListDictionary_Unlock(listDictionary);
 
 	return count;
 }
@@ -135,7 +135,7 @@ size_t ListDictionary_GetKeys(wListDictionary* listDictionary, ULONG_PTR** ppKey
 		return 0;
 
 	if (listDictionary->synchronized)
-		EnterCriticalSection(&listDictionary->lock);
+		ListDictionary_Lock(listDictionary);
 
 	size_t count = 0;
 
@@ -157,7 +157,7 @@ size_t ListDictionary_GetKeys(wListDictionary* listDictionary, ULONG_PTR** ppKey
 		if (!pKeys)
 		{
 			if (listDictionary->synchronized)
-				LeaveCriticalSection(&listDictionary->lock);
+				ListDictionary_Unlock(listDictionary);
 
 			return 0;
 		}
@@ -179,7 +179,7 @@ size_t ListDictionary_GetKeys(wListDictionary* listDictionary, ULONG_PTR** ppKey
 	*ppKeys = pKeys;
 
 	if (listDictionary->synchronized)
-		LeaveCriticalSection(&listDictionary->lock);
+		ListDictionary_Unlock(listDictionary);
 
 	return count;
 }
@@ -248,7 +248,7 @@ BOOL ListDictionary_Add(wListDictionary* listDictionary, const void* key, const 
 	WINPR_ASSERT(listDictionary);
 
 	if (listDictionary->synchronized)
-		EnterCriticalSection(&listDictionary->lock);
+		ListDictionary_Lock(listDictionary);
 
 	wListDictionaryItem* item = new_item(listDictionary, key, value);
 
@@ -273,7 +273,7 @@ BOOL ListDictionary_Add(wListDictionary* listDictionary, const void* key, const 
 out_error:
 
 	if (listDictionary->synchronized)
-		LeaveCriticalSection(&listDictionary->lock);
+		ListDictionary_Unlock(listDictionary);
 
 	return ret;
 }
@@ -290,7 +290,7 @@ void ListDictionary_Clear(wListDictionary* listDictionary)
 	WINPR_ASSERT(listDictionary);
 
 	if (listDictionary->synchronized)
-		EnterCriticalSection(&listDictionary->lock);
+		ListDictionary_Lock(listDictionary);
 
 	if (listDictionary->head)
 	{
@@ -308,7 +308,7 @@ void ListDictionary_Clear(wListDictionary* listDictionary)
 	}
 
 	if (listDictionary->synchronized)
-		LeaveCriticalSection(&listDictionary->lock);
+		ListDictionary_Unlock(listDictionary);
 }
 
 /**
@@ -323,7 +323,7 @@ BOOL ListDictionary_Contains(wListDictionary* listDictionary, const void* key)
 	WINPR_ASSERT(listDictionary);
 
 	if (listDictionary->synchronized)
-		EnterCriticalSection(&(listDictionary->lock));
+		ListDictionary_Lock(listDictionary);
 
 	keyEquals = listDictionary->objectKey.fnObjectEquals;
 	item = listDictionary->head;
@@ -337,7 +337,7 @@ BOOL ListDictionary_Contains(wListDictionary* listDictionary, const void* key)
 	}
 
 	if (listDictionary->synchronized)
-		LeaveCriticalSection(&(listDictionary->lock));
+		ListDictionary_Unlock(listDictionary);
 
 	return (item) ? TRUE : FALSE;
 }
@@ -357,7 +357,7 @@ static void* ListDictionary_RemoveOrTake(wListDictionary* listDictionary, const 
 	WINPR_ASSERT(listDictionary);
 
 	if (listDictionary->synchronized)
-		EnterCriticalSection(&listDictionary->lock);
+		ListDictionary_Lock(listDictionary);
 
 	keyEquals = listDictionary->objectKey.fnObjectEquals;
 	item = listDictionary->head;
@@ -386,7 +386,7 @@ static void* ListDictionary_RemoveOrTake(wListDictionary* listDictionary, const 
 	}
 
 	if (listDictionary->synchronized)
-		LeaveCriticalSection(&listDictionary->lock);
+		ListDictionary_Unlock(listDictionary);
 
 	return value;
 }
@@ -413,7 +413,7 @@ static void* ListDictionary_Remove_Or_Take_Head(wListDictionary* listDictionary,
 	WINPR_ASSERT(listDictionary);
 
 	if (listDictionary->synchronized)
-		EnterCriticalSection(&listDictionary->lock);
+		ListDictionary_Lock(listDictionary);
 
 	if (listDictionary->head)
 	{
@@ -428,7 +428,7 @@ static void* ListDictionary_Remove_Or_Take_Head(wListDictionary* listDictionary,
 	}
 
 	if (listDictionary->synchronized)
-		LeaveCriticalSection(&listDictionary->lock);
+		ListDictionary_Unlock(listDictionary);
 
 	return value;
 }
@@ -456,7 +456,7 @@ void* ListDictionary_GetItemValue(wListDictionary* listDictionary, const void* k
 	WINPR_ASSERT(listDictionary);
 
 	if (listDictionary->synchronized)
-		EnterCriticalSection(&listDictionary->lock);
+		ListDictionary_Lock(listDictionary);
 
 	keyEquals = listDictionary->objectKey.fnObjectEquals;
 
@@ -476,7 +476,7 @@ void* ListDictionary_GetItemValue(wListDictionary* listDictionary, const void* k
 	value = (item) ? item->value : NULL;
 
 	if (listDictionary->synchronized)
-		LeaveCriticalSection(&listDictionary->lock);
+		ListDictionary_Unlock(listDictionary);
 
 	return value;
 }
@@ -495,7 +495,7 @@ BOOL ListDictionary_SetItemValue(wListDictionary* listDictionary, const void* ke
 	WINPR_ASSERT(listDictionary);
 
 	if (listDictionary->synchronized)
-		EnterCriticalSection(&listDictionary->lock);
+		ListDictionary_Lock(listDictionary);
 
 	keyEquals = listDictionary->objectKey.fnObjectEquals;
 
@@ -518,7 +518,7 @@ BOOL ListDictionary_SetItemValue(wListDictionary* listDictionary, const void* ke
 	}
 
 	if (listDictionary->synchronized)
-		LeaveCriticalSection(&listDictionary->lock);
+		ListDictionary_Unlock(listDictionary);
 
 	return status;
 }
