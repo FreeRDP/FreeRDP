@@ -2175,8 +2175,8 @@ BOOL gcc_read_client_monitor_data(wStream* s, rdpMcs* mcs)
 			return FALSE;
 		}
 
-		const INT64 w = right - left;
-		const INT64 h = bottom - top;
+		const INT64 w = 1ll * right - left;
+		const INT64 h = 1ll * bottom - top;
 		if ((w >= INT32_MAX) || (h >= INT32_MAX) || (w < 0) || (h < 0))
 		{
 			WLog_Print(mcs->log, WLOG_ERROR,
