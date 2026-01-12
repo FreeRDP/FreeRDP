@@ -584,6 +584,7 @@ void close_terminated_irp_thread_handles(SERIAL_DEVICE* serial, BOOL forceClose)
 
 	EnterCriticalSection(&serial->TerminatingIrpThreadsLock);
 
+	ListDictionary_Lock(serial->IrpThreads);
 	ULONG_PTR* ids = NULL;
 	const size_t nbIds = ListDictionary_GetKeys(serial->IrpThreads, &ids);
 
@@ -597,6 +598,7 @@ void close_terminated_irp_thread_handles(SERIAL_DEVICE* serial, BOOL forceClose)
 	}
 
 	free(ids);
+	ListDictionary_Unlock(serial->IrpThreads);
 
 	LeaveCriticalSection(&serial->TerminatingIrpThreadsLock);
 }
@@ -650,19 +652,6 @@ static void create_irp_thread(SERIAL_DEVICE* serial, IRP* irp)
 		return;
 	}
 
-	if (ListDictionary_Count(serial->IrpThreads) >= MAX_IRP_THREADS)
-	{
-		WLog_Print(serial->log, WLOG_WARN,
-		           "Number of IRP threads threshold reached: %" PRIuz ", keep on anyway",
-		           ListDictionary_Count(serial->IrpThreads));
-		WINPR_ASSERT(FALSE); /* unimplemented */
-		                     /* TODO: MAX_IRP_THREADS has been thought to avoid a
-		                      * flooding of pending requests. Use
-		                      * WaitForMultipleObjects() when available in winpr
-		                      * for threads.
-		                      */
-	}
-
 	/* error_handle to be used ... */
 	data = (IRP_THREAD_DATA*)calloc(1, sizeof(IRP_THREAD_DATA));
 
@@ -685,7 +674,23 @@ static void create_irp_thread(SERIAL_DEVICE* serial, IRP* irp)
 
 	key = irp->CompletionId + 1ull;
 
-	if (!ListDictionary_Add(serial->IrpThreads, (void*)key, irpThread))
+	ListDictionary_Lock(serial->IrpThreads);
+	if (ListDictionary_Count(serial->IrpThreads) >= MAX_IRP_THREADS)
+	{
+		WLog_Print(serial->log, WLOG_WARN,
+		           "Number of IRP threads threshold reached: %" PRIuz ", keep on anyway",
+		           ListDictionary_Count(serial->IrpThreads));
+		WINPR_ASSERT(FALSE); /* unimplemented */
+		                     /* TODO: MAX_IRP_THREADS has been thought to avoid a
+		                      * flooding of pending requests. Use
+		                      * WaitForMultipleObjects() when available in winpr
+		                      * for threads.
+		                      */
+	}
+	const BOOL added = ListDictionary_Add(serial->IrpThreads, (void*)key, irpThread);
+	ListDictionary_Unlock(serial->IrpThreads);
+
+	if (!added)
 	{
 		WLog_Print(serial->log, WLOG_ERROR, "ListDictionary_Add failed!");
 		goto error_handle;
@@ -966,7 +971,7 @@ FREERDP_ENTRY_POINT(
 		}
 
 		/* IrpThreads content only modified by create_irp_thread() */
-		serial->IrpThreads = ListDictionary_New(FALSE);
+		serial->IrpThreads = ListDictionary_New(TRUE);
 
 		if (!serial->IrpThreads)
 		{
