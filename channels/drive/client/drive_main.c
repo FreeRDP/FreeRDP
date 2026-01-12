@@ -302,7 +302,7 @@ static UINT drive_process_irp_read(DRIVE_DEVICE* drive, IRP* irp)
 		Length = 0;
 	}
 
-	if (!Stream_EnsureRemainingCapacity(irp->output, Length + 4))
+	if (!Stream_EnsureRemainingCapacity(irp->output, 4ull + Length))
 	{
 		WLog_ERR(TAG, "Stream_EnsureRemainingCapacity failed!");
 		return ERROR_INTERNAL_ERROR;
