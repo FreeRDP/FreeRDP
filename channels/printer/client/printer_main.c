@@ -83,7 +83,10 @@ static char* get_printer_hash(const WCHAR* name, size_t length)
 	BYTE hash[WINPR_SHA256_DIGEST_LENGTH] = { 0 };
 
 	if (!winpr_Digest(WINPR_MD_SHA256, (void*)name, length, hash, sizeof(hash)))
-		return crypto_base64_encode((const BYTE*)name, length);
+	{
+		WLog_ERR(TAG, "get_printer_hash failed to create hash of printer name");
+		return NULL;
+	}
 
 	return crypto_base64_encode(hash, sizeof(hash));
 }
@@ -93,6 +96,12 @@ static char* get_printer_config_path(const rdpSettings* settings, const WCHAR* n
 	const char* path = freerdp_settings_get_string(settings, FreeRDP_ConfigPath);
 	char* dir = GetCombinedPath(path, "printers");
 	char* bname = get_printer_hash(name, length);
+	if (!bname)
+	{
+		free(dir);
+		return NULL;
+	}
+
 	char* config = GetCombinedPath(dir, bname);
 
 	if (config && !winpr_PathFileExists(config))
