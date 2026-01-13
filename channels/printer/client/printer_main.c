@@ -36,6 +36,7 @@
 #include <winpr/interlocked.h>
 #include <winpr/file.h>
 #include <winpr/path.h>
+#include <winpr/print.h>
 
 #include <freerdp/channels/rdpdr.h>
 #include <freerdp/crypto/crypto.h>
@@ -77,12 +78,29 @@ typedef enum
 static const char* filemap[] = { "PortDosName", "PnPName", "DriverName",
 	                             "CachedPrinterConfigData" };
 
+WINPR_ATTR_MALLOC(free, 1)
+static char* get_printer_hash(const WCHAR* name, size_t length)
+{
+	BYTE hash[WINPR_SHA256_DIGEST_LENGTH] = { 0 };
+
+	if (!winpr_Digest(WINPR_MD_SHA256, name, length, hash, sizeof(hash)))
+		return NULL;
+
+	return winpr_BinToHexString(hash, sizeof(hash), FALSE);
+}
+
+WINPR_ATTR_MALLOC(free, 1)
 static char* get_printer_config_path(const rdpSettings* settings, const WCHAR* name, size_t length)
 {
+	char* config = NULL;
 	const char* path = freerdp_settings_get_string(settings, FreeRDP_ConfigPath);
 	char* dir = GetCombinedPath(path, "printers");
-	char* bname = crypto_base64_encode((const BYTE*)name, length);
-	char* config = GetCombinedPath(dir, bname);
+	if (!dir)
+		return NULL;
+	char* bname = get_printer_hash(name, length);
+	if (!bname)
+		goto fail;
+	config = GetCombinedPath(dir, bname);
 
 	if (config && !winpr_PathFileExists(config))
 	{
@@ -93,6 +111,7 @@ static char* get_printer_config_path(const rdpSettings* settings, const WCHAR* n
 		}
 	}
 
+fail:
 	free(dir);
 	free(bname);
 	return config;
@@ -101,6 +120,9 @@ static char* get_printer_config_path(const rdpSettings* settings, const WCHAR* n
 static BOOL printer_write_setting(const char* path, prn_conf_t type, const void* data,
                                   size_t length)
 {
+	if (!path)
+		return FALSE;
+
 	DWORD written = 0;
 	BOOL rc = FALSE;
 	HANDLE file = NULL;
