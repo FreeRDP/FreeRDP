@@ -227,6 +227,7 @@ void smartcard_context_free(void* pCtx)
 	/* cancel blocking calls like SCardGetStatusChange */
 	WINPR_ASSERT(pContext->smartcard);
 	smartcard_call_cancel_context(pContext->smartcard->callctx, pContext->hContext);
+	smartcard_call_context_signal_stop(pContext->smartcard->callctx, FALSE);
 
 	if (pContext->IrpQueue)
 	{
