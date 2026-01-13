@@ -289,7 +289,7 @@ static VOID VCAPITYPE VirtualChannelInitEventEx(LPVOID lpUserParam, LPVOID pInit
 }
 
 #define VirtualChannelEntryEx rdp2tcp_VirtualChannelEntryEx
-FREERDP_ENTRY_POINT(BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS pEntryPoints,
+FREERDP_ENTRY_POINT(BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS_EX pEntryPoints,
                                                          PVOID pInitHandle))
 {
 	CHANNEL_ENTRY_POINTS_FREERDP_EX* pEntryPointsEx =

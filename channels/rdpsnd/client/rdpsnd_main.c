@@ -1567,8 +1567,8 @@ fail:
 	return NULL;
 }
 /* rdpsnd is always built-in */
-FREERDP_ENTRY_POINT(BOOL VCAPITYPE rdpsnd_VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS pEntryPoints,
-                                                                PVOID pInitHandle))
+FREERDP_ENTRY_POINT(BOOL VCAPITYPE rdpsnd_VirtualChannelEntryEx(
+    PCHANNEL_ENTRY_POINTS_EX pEntryPoints, PVOID pInitHandle))
 {
 	UINT rc = 0;
 	rdpsndPlugin* rdpsnd = NULL;
