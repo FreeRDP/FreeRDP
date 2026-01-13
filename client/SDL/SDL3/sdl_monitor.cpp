@@ -145,7 +145,7 @@ static Uint32 scale(Uint32 val, float scale)
 	return static_cast<Uint32>(sval);
 }
 
-static BOOL sdl_apply_monitor_properties(rdpMonitor& monitor, SDL_DisplayID id, BOOL isPrimary)
+static BOOL sdl_apply_monitor_properties(rdpMonitor& monitor, SDL_DisplayID id, bool isPrimary)
 {
 
 	float dpi = SDL_GetDisplayContentScale(id);
@@ -241,11 +241,8 @@ static BOOL sdl_apply_display_properties(SdlContext* sdl)
 		}
 		return TRUE;
 	}
-	const auto& ids = sdl->monitorIds();
-
-	for (UINT32 x = 0; x < ids.size(); x++)
+	for (const auto& id : sdl->monitorIds())
 	{
-		auto id = ids[x];
 		rdpMonitor monitor = {};
 		const auto primary = SDL_GetPrimaryDisplay();
 		if (!sdl_apply_monitor_properties(monitor, id, id == primary))
