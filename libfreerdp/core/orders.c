@@ -3038,7 +3038,7 @@ static BOOL update_decompress_brush(wStream* s, BYTE* output, size_t outSize, BY
 	if (!Stream_CheckAndLogRequiredLengthOfSize(TAG, s, 4ULL + bytesPerPixel, 4ULL))
 		return FALSE;
 
-	for (size_t y = 0; y < 7; y++)
+	for (size_t y = 0; y < 8; y++)
 	{
 		for (size_t x = 0; x < 8; x++)
 		{
