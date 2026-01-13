@@ -1385,8 +1385,6 @@ static BOOL freerdp_channels_is_loaded_ex(rdpChannels* channels, PVIRTUALCHANNEL
 int freerdp_channels_client_load(rdpChannels* channels, WINPR_ATTR_UNUSED rdpSettings* settings,
                                  PVIRTUALCHANNELENTRY entry, void* data)
 {
-	int status = 0;
-	CHANNEL_ENTRY_POINTS_FREERDP EntryPoints = { 0 };
 	CHANNEL_CLIENT_DATA* pChannelClientData = NULL;
 
 	WINPR_ASSERT(channels);
@@ -1409,19 +1407,29 @@ int freerdp_channels_client_load(rdpChannels* channels, WINPR_ATTR_UNUSED rdpSet
 	pChannelClientData = &channels->clientDataList[channels->clientDataCount];
 	pChannelClientData->entry = entry;
 
-	EntryPoints.cbSize = sizeof(EntryPoints);
-	EntryPoints.protocolVersion = VIRTUAL_CHANNEL_VERSION_WIN2000;
-	EntryPoints.pVirtualChannelInit = FreeRDP_VirtualChannelInit;
-	EntryPoints.pVirtualChannelOpen = FreeRDP_VirtualChannelOpen;
-	EntryPoints.pVirtualChannelClose = FreeRDP_VirtualChannelClose;
-	EntryPoints.pVirtualChannelWrite = FreeRDP_VirtualChannelWrite;
-	EntryPoints.MagicNumber = FREERDP_CHANNEL_MAGIC_NUMBER;
-	EntryPoints.pExtendedData = data;
-	EntryPoints.context = channels->instance->context;
+	CHANNEL_ENTRY_POINTS_FREERDP EntryPoints = { .cbSize = sizeof(EntryPoints),
+		                                         .protocolVersion = VIRTUAL_CHANNEL_VERSION_WIN2000,
+		                                         .pVirtualChannelInit = FreeRDP_VirtualChannelInit,
+		                                         .pVirtualChannelOpen = FreeRDP_VirtualChannelOpen,
+		                                         .pVirtualChannelClose =
+		                                             FreeRDP_VirtualChannelClose,
+		                                         .pVirtualChannelWrite =
+		                                             FreeRDP_VirtualChannelWrite,
+		                                         .MagicNumber = FREERDP_CHANNEL_MAGIC_NUMBER,
+		                                         .pExtendedData = data,
+		                                         .context = channels->instance->context };
 	/* enable VirtualChannelInit */
+	union
+	{
+		PCHANNEL_ENTRY_POINTS_FREERDP pfx;
+		PCHANNEL_ENTRY_POINTS px;
+	} ptr;
+
+	ptr.pfx = &EntryPoints;
+
 	channels->can_call_init = TRUE;
 	EnterCriticalSection(&channels->channelsLock);
-	status = pChannelClientData->entry((PCHANNEL_ENTRY_POINTS)&EntryPoints);
+	const BOOL status = pChannelClientData->entry(ptr.px);
 	LeaveCriticalSection(&channels->channelsLock);
 	/* disable MyVirtualChannelInit */
 	channels->can_call_init = FALSE;
@@ -1438,12 +1446,6 @@ int freerdp_channels_client_load(rdpChannels* channels, WINPR_ATTR_UNUSED rdpSet
 int freerdp_channels_client_load_ex(rdpChannels* channels, WINPR_ATTR_UNUSED rdpSettings* settings,
                                     PVIRTUALCHANNELENTRYEX entryEx, void* data)
 {
-	int status = 0;
-	void* pInitHandle = NULL;
-	CHANNEL_ENTRY_POINTS_FREERDP_EX EntryPointsEx = { 0 };
-	CHANNEL_INIT_DATA* pChannelInitData = NULL;
-	CHANNEL_CLIENT_DATA* pChannelClientData = NULL;
-
 	WINPR_ASSERT(channels);
 	WINPR_ASSERT(channels->instance);
 	WINPR_ASSERT(channels->instance->context);
@@ -1461,24 +1463,37 @@ int freerdp_channels_client_load_ex(rdpChannels* channels, WINPR_ATTR_UNUSED rdp
 		return 0;
 	}
 
-	pChannelClientData = &channels->clientDataList[channels->clientDataCount];
+	CHANNEL_CLIENT_DATA* pChannelClientData = &channels->clientDataList[channels->clientDataCount];
 	pChannelClientData->entryEx = entryEx;
-	pChannelInitData = &(channels->initDataList[channels->initDataCount++]);
-	pInitHandle = pChannelInitData;
+
+	CHANNEL_INIT_DATA* pChannelInitData = &(channels->initDataList[channels->initDataCount++]);
+	void* pInitHandle = pChannelInitData;
 	pChannelInitData->channels = channels;
-	EntryPointsEx.cbSize = sizeof(EntryPointsEx);
-	EntryPointsEx.protocolVersion = VIRTUAL_CHANNEL_VERSION_WIN2000;
-	EntryPointsEx.pVirtualChannelInitEx = FreeRDP_VirtualChannelInitEx;
-	EntryPointsEx.pVirtualChannelOpenEx = FreeRDP_VirtualChannelOpenEx;
-	EntryPointsEx.pVirtualChannelCloseEx = FreeRDP_VirtualChannelCloseEx;
-	EntryPointsEx.pVirtualChannelWriteEx = FreeRDP_VirtualChannelWriteEx;
-	EntryPointsEx.MagicNumber = FREERDP_CHANNEL_MAGIC_NUMBER;
-	EntryPointsEx.pExtendedData = data;
-	EntryPointsEx.context = channels->instance->context;
+
+	CHANNEL_ENTRY_POINTS_FREERDP_EX EntryPointsEx = {
+		.cbSize = sizeof(EntryPointsEx),
+		.protocolVersion = VIRTUAL_CHANNEL_VERSION_WIN2000,
+		.pVirtualChannelInitEx = FreeRDP_VirtualChannelInitEx,
+		.pVirtualChannelOpenEx = FreeRDP_VirtualChannelOpenEx,
+		.pVirtualChannelCloseEx = FreeRDP_VirtualChannelCloseEx,
+		.pVirtualChannelWriteEx = FreeRDP_VirtualChannelWriteEx,
+		.MagicNumber = FREERDP_CHANNEL_MAGIC_NUMBER,
+		.pExtendedData = data,
+		.context = channels->instance->context
+	};
+
+	union
+	{
+		PCHANNEL_ENTRY_POINTS_FREERDP_EX pfx;
+		PCHANNEL_ENTRY_POINTS_EX px;
+	} ptr;
+
+	ptr.pfx = &EntryPointsEx;
+
 	/* enable VirtualChannelInit */
 	channels->can_call_init = TRUE;
 	EnterCriticalSection(&channels->channelsLock);
-	status = pChannelClientData->entryEx((PCHANNEL_ENTRY_POINTS_EX)&EntryPointsEx, pInitHandle);
+	const BOOL status = pChannelClientData->entryEx(ptr.px, pInitHandle);
 	LeaveCriticalSection(&channels->channelsLock);
 	/* disable MyVirtualChannelInit */
 	channels->can_call_init = FALSE;

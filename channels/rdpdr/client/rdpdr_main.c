@@ -2420,17 +2420,13 @@ static VOID VCAPITYPE rdpdr_virtual_channel_init_event_ex(LPVOID lpUserParam, LP
 /* rdpdr is always built-in */
 #define VirtualChannelEntryEx rdpdr_VirtualChannelEntryEx
 
-FREERDP_ENTRY_POINT(BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS pEntryPoints,
+FREERDP_ENTRY_POINT(BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS_EX pEntryPoints,
                                                          PVOID pInitHandle))
 {
-	UINT rc = 0;
-	rdpdrPlugin* rdpdr = NULL;
-	CHANNEL_ENTRY_POINTS_FREERDP_EX* pEntryPointsEx = NULL;
-
 	WINPR_ASSERT(pEntryPoints);
 	WINPR_ASSERT(pInitHandle);
 
-	rdpdr = (rdpdrPlugin*)calloc(1, sizeof(rdpdrPlugin));
+	rdpdrPlugin* rdpdr = (rdpdrPlugin*)calloc(1, sizeof(rdpdrPlugin));
 
 	if (!rdpdr)
 	{
@@ -2463,7 +2459,8 @@ FREERDP_ENTRY_POINT(BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS p
 	(void)sprintf_s(rdpdr->channelDef.name, ARRAYSIZE(rdpdr->channelDef.name),
 	                RDPDR_SVC_CHANNEL_NAME);
 	rdpdr->sequenceId = 0;
-	pEntryPointsEx = (CHANNEL_ENTRY_POINTS_FREERDP_EX*)pEntryPoints;
+	CHANNEL_ENTRY_POINTS_FREERDP_EX* pEntryPointsEx =
+	    (CHANNEL_ENTRY_POINTS_FREERDP_EX*)pEntryPoints;
 
 	if ((pEntryPointsEx->cbSize >= sizeof(CHANNEL_ENTRY_POINTS_FREERDP_EX)) &&
 	    (pEntryPointsEx->MagicNumber == FREERDP_CHANNEL_MAGIC_NUMBER))
@@ -2476,7 +2473,7 @@ FREERDP_ENTRY_POINT(BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS p
 
 	CopyMemory(&(rdpdr->channelEntryPoints), pEntryPoints, sizeof(CHANNEL_ENTRY_POINTS_FREERDP_EX));
 	rdpdr->InitHandle = pInitHandle;
-	rc = rdpdr->channelEntryPoints.pVirtualChannelInitEx(
+	const UINT rc = rdpdr->channelEntryPoints.pVirtualChannelInitEx(
 	    rdpdr, &rdpdr->context, pInitHandle, &rdpdr->channelDef, 1, VIRTUAL_CHANNEL_VERSION_WIN2000,
 	    rdpdr_virtual_channel_init_event_ex);
 

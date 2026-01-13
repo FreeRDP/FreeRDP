@@ -676,7 +676,7 @@ static VOID VCAPITYPE rail_virtual_channel_init_event_ex(LPVOID lpUserParam, LPV
 /* rail is always built-in */
 #define VirtualChannelEntryEx rail_VirtualChannelEntryEx
 
-FREERDP_ENTRY_POINT(BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS pEntryPoints,
+FREERDP_ENTRY_POINT(BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS_EX pEntryPoints,
                                                          PVOID pInitHandle))
 {
 	UINT rc = 0;

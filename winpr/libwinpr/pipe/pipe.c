@@ -251,17 +251,9 @@ BOOL NamedPipeRead(PVOID Object, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
                    LPDWORD lpNumberOfBytesRead, LPOVERLAPPED lpOverlapped)
 {
 	SSIZE_T io_status = 0;
-	WINPR_NAMED_PIPE* pipe = NULL;
 	BOOL status = TRUE;
 
-	if (lpOverlapped)
-	{
-		WLog_ERR(TAG, "WinPR does not support the lpOverlapped parameter");
-		SetLastError(ERROR_NOT_SUPPORTED);
-		return FALSE;
-	}
-
-	pipe = (WINPR_NAMED_PIPE*)Object;
+	WINPR_NAMED_PIPE* pipe = (WINPR_NAMED_PIPE*)Object;
 
 	if (!(pipe->dwFlagsAndAttributes & FILE_FLAG_OVERLAPPED))
 	{
@@ -301,7 +293,11 @@ BOOL NamedPipeRead(PVOID Object, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 	{
 		/* Overlapped I/O */
 		if (!lpOverlapped)
+		{
+			WLog_ERR(TAG, "%s requires lpOverlapped != NULL as FILE_FLAG_OVERLAPPED is set");
+			SetLastError(ERROR_NOT_SUPPORTED);
 			return FALSE;
+		}
 
 		if (pipe->clientfd == -1)
 			return FALSE;
