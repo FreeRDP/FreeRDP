@@ -626,7 +626,10 @@ static void create_irp_thread(SERIAL_DEVICE* serial, IRP* irp)
 	 * observed with FreeRDP).
 	 */
 	key = irp->CompletionId + 1ull;
+
+	ListDictionary_Lock(serial->IrpThreads);
 	previousIrpThread = ListDictionary_GetItemValue(serial->IrpThreads, (void*)key);
+	ListDictionary_Unlock(serial->IrpThreads);
 
 	if (previousIrpThread)
 	{
@@ -742,7 +745,10 @@ static DWORD WINAPI serial_thread_func(LPVOID arg)
 			create_irp_thread(serial, irp);
 	}
 
+	ListDictionary_Lock(serial->IrpThreads);
 	ListDictionary_Clear(serial->IrpThreads);
+	ListDictionary_Unlock(serial->IrpThreads);
+
 	if (error && serial->rdpcontext)
 		setChannelError(serial->rdpcontext, error, "serial_thread_func reported an error");
 
@@ -971,7 +977,7 @@ FREERDP_ENTRY_POINT(
 		}
 
 		/* IrpThreads content only modified by create_irp_thread() */
-		serial->IrpThreads = ListDictionary_New(TRUE);
+		serial->IrpThreads = ListDictionary_New(FALSE);
 
 		if (!serial->IrpThreads)
 		{

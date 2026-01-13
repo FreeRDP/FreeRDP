@@ -145,90 +145,111 @@ static Uint32 scale(Uint32 val, float scale)
 	return static_cast<Uint32>(sval);
 }
 
+static BOOL sdl_apply_monitor_properties(rdpMonitor& monitor, SDL_DisplayID id, BOOL isPrimary)
+{
+
+	float dpi = SDL_GetDisplayContentScale(id);
+	float hdpi = dpi;
+	float vdpi = dpi;
+	SDL_Rect rect = {};
+
+	if (!SDL_GetDisplayBounds(id, &rect))
+		return FALSE;
+
+	WINPR_ASSERT(rect.w > 0);
+	WINPR_ASSERT(rect.h > 0);
+
+	bool highDpi = dpi > 100;
+
+	if (highDpi)
+	{
+		// HighDPI is problematic with SDL: We can only get native resolution by creating a
+		// window. Work around this by checking the supported resolutions (and keep maximum)
+		// Also scale the DPI
+		const SDL_Rect scaleRect = rect;
+		int count = 0;
+		auto modes = SDL_GetFullscreenDisplayModes(id, &count);
+		for (int i = 0; i < count; i++)
+		{
+			auto mode = modes[i];
+			if (!mode)
+				break;
+
+			if (mode->w > rect.w)
+			{
+				rect.w = mode->w;
+				rect.h = mode->h;
+			}
+			else if (mode->w == rect.w)
+			{
+				if (mode->h > rect.h)
+				{
+					rect.w = mode->w;
+					rect.h = mode->h;
+				}
+			}
+		}
+		SDL_free(static_cast<void*>(modes));
+
+		const float dw = 1.0f * static_cast<float>(rect.w) / static_cast<float>(scaleRect.w);
+		const float dh = 1.0f * static_cast<float>(rect.h) / static_cast<float>(scaleRect.h);
+		hdpi /= dw;
+		vdpi /= dh;
+	}
+
+	const SDL_DisplayOrientation orientation = SDL_GetCurrentDisplayOrientation(id);
+	const UINT32 rdp_orientation = sdl::utils::orientaion_to_rdp(orientation);
+
+	/* windows uses 96 dpi as 'default' and the scale factors are in percent. */
+	const auto factor = dpi / 96.0f * 100.0f;
+	monitor.orig_screen = id;
+	monitor.x = rect.x;
+	monitor.y = rect.y;
+	monitor.width = rect.w;
+	monitor.height = rect.h;
+	monitor.is_primary = isPrimary;
+	monitor.attributes.desktopScaleFactor = static_cast<UINT32>(factor);
+	monitor.attributes.deviceScaleFactor = 100;
+	monitor.attributes.orientation = rdp_orientation;
+	monitor.attributes.physicalWidth = scale(WINPR_ASSERTING_INT_CAST(uint32_t, rect.w), hdpi);
+	monitor.attributes.physicalHeight = scale(WINPR_ASSERTING_INT_CAST(uint32_t, rect.h), vdpi);
+	return TRUE;
+}
+
 static BOOL sdl_apply_display_properties(SdlContext* sdl)
 {
 	WINPR_ASSERT(sdl);
 
 	rdpSettings* settings = sdl->context()->settings;
 	WINPR_ASSERT(settings);
-	if (!freerdp_settings_get_bool(settings, FreeRDP_Fullscreen) &&
-	    !freerdp_settings_get_bool(settings, FreeRDP_UseMultimon))
-		return TRUE;
 
 	std::vector<rdpMonitor> monitors;
+	if (!freerdp_settings_get_bool(settings, FreeRDP_Fullscreen) &&
+	    !freerdp_settings_get_bool(settings, FreeRDP_UseMultimon))
+	{
+		if (freerdp_settings_get_bool(settings, FreeRDP_Workarea))
+		{
+			if (sdl->monitorIds().empty())
+				return FALSE;
+			const auto id = sdl->monitorIds().front();
+			rdpMonitor monitor = {};
+			if (!sdl_apply_monitor_properties(monitor, id, TRUE))
+				return FALSE;
+			monitors.emplace_back(monitor);
+			return freerdp_settings_set_monitor_def_array_sorted(settings, monitors.data(),
+			                                                     monitors.size());
+		}
+		return TRUE;
+	}
 	const auto& ids = sdl->monitorIds();
 
 	for (UINT32 x = 0; x < ids.size(); x++)
 	{
 		auto id = ids[x];
-
-		float dpi = SDL_GetDisplayContentScale(id);
-		float hdpi = dpi;
-		float vdpi = dpi;
-		SDL_Rect rect = {};
-
-		if (!SDL_GetDisplayBounds(id, &rect))
-			return FALSE;
-
-		WINPR_ASSERT(rect.w > 0);
-		WINPR_ASSERT(rect.h > 0);
-
-		bool highDpi = dpi > 100;
-
-		if (highDpi)
-		{
-			// HighDPI is problematic with SDL: We can only get native resolution by creating a
-			// window. Work around this by checking the supported resolutions (and keep maximum)
-			// Also scale the DPI
-			const SDL_Rect scaleRect = rect;
-			int count = 0;
-			auto modes = SDL_GetFullscreenDisplayModes(x, &count);
-			for (int i = 0; i < count; i++)
-			{
-				auto mode = modes[i];
-				if (!mode)
-					break;
-
-				if (mode->w > rect.w)
-				{
-					rect.w = mode->w;
-					rect.h = mode->h;
-				}
-				else if (mode->w == rect.w)
-				{
-					if (mode->h > rect.h)
-					{
-						rect.w = mode->w;
-						rect.h = mode->h;
-					}
-				}
-			}
-			SDL_free(static_cast<void*>(modes));
-
-			const float dw = 1.0f * static_cast<float>(rect.w) / static_cast<float>(scaleRect.w);
-			const float dh = 1.0f * static_cast<float>(rect.h) / static_cast<float>(scaleRect.h);
-			hdpi /= dw;
-			vdpi /= dh;
-		}
-
-		const SDL_DisplayOrientation orientation = SDL_GetCurrentDisplayOrientation(id);
-		const UINT32 rdp_orientation = sdl::utils::orientaion_to_rdp(orientation);
-
 		rdpMonitor monitor = {};
-
-		/* windows uses 96 dpi as 'default' and the scale factors are in percent. */
-		const auto factor = dpi / 96.0f * 100.0f;
-		monitor.orig_screen = x;
-		monitor.x = rect.x;
-		monitor.y = rect.y;
-		monitor.width = rect.w;
-		monitor.height = rect.h;
-		monitor.is_primary = x == 0;
-		monitor.attributes.desktopScaleFactor = static_cast<UINT32>(factor);
-		monitor.attributes.deviceScaleFactor = 100;
-		monitor.attributes.orientation = rdp_orientation;
-		monitor.attributes.physicalWidth = scale(WINPR_ASSERTING_INT_CAST(uint32_t, rect.w), hdpi);
-		monitor.attributes.physicalHeight = scale(WINPR_ASSERTING_INT_CAST(uint32_t, rect.h), vdpi);
+		const auto primary = SDL_GetPrimaryDisplay();
+		if (!sdl_apply_monitor_properties(monitor, id, id == primary))
+			return FALSE;
 		monitors.emplace_back(monitor);
 	}
 	return freerdp_settings_set_monitor_def_array_sorted(settings, monitors.data(),
