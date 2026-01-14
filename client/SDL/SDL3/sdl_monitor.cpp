@@ -81,6 +81,42 @@ int sdl_list_monitors([[maybe_unused]] SdlContext* sdl)
 	return 0;
 }
 
+static BOOL sdl_apply_mon_max_size(SdlContext* sdl, UINT32* pMaxWidth, UINT32* pMaxHeight)
+{
+	int32_t left = 0;
+	int32_t right = 0;
+	int32_t top = 0;
+	int32_t bottom = 0;
+
+	WINPR_ASSERT(pMaxWidth);
+	WINPR_ASSERT(pMaxHeight);
+
+	auto settings = sdl->context()->settings;
+	WINPR_ASSERT(settings);
+
+	for (size_t x = 0; x < freerdp_settings_get_uint32(settings, FreeRDP_MonitorCount); x++)
+	{
+		auto monitor = static_cast<const rdpMonitor*>(
+		    freerdp_settings_get_pointer_array(settings, FreeRDP_MonitorDefArray, x));
+		if (monitor->x < left)
+			left = monitor->x;
+		if (monitor->y < top)
+			top = monitor->y;
+
+		if (monitor->x + monitor->width > right)
+			right = monitor->x + monitor->width;
+		if (monitor->y + monitor->height > bottom)
+			bottom = monitor->y + monitor->height;
+	}
+
+	const int32_t w = right - left;
+	const int32_t h = bottom - top;
+
+	*pMaxWidth = WINPR_ASSERTING_INT_CAST(uint32_t, w);
+	*pMaxHeight = WINPR_ASSERTING_INT_CAST(uint32_t, h);
+	return TRUE;
+}
+
 static BOOL sdl_apply_max_size(SdlContext* sdl, UINT32* pMaxWidth, UINT32* pMaxHeight)
 {
 	WINPR_ASSERT(sdl);
@@ -285,7 +321,7 @@ static BOOL sdl_detect_single_window(SdlContext* sdl, UINT32* pMaxWidth, UINT32*
 			return FALSE;
 		return sdl_apply_max_size(sdl, pMaxWidth, pMaxHeight);
 	}
-	return TRUE;
+	return sdl_apply_mon_max_size(sdl, pMaxWidth, pMaxHeight);
 }
 
 BOOL sdl_detect_monitors(SdlContext* sdl, UINT32* pMaxWidth, UINT32* pMaxHeight)
