@@ -190,20 +190,21 @@ static UINT mouse_cursor_server_recv_cs_caps_advertise(MouseCursorServerContext*
                                                        wStream* s,
                                                        const RDP_MOUSE_CURSOR_HEADER* header)
 {
-	RDP_MOUSE_CURSOR_CAPS_ADVERTISE_PDU pdu = { 0 };
 	UINT error = CHANNEL_RC_OK;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(header);
 
-	pdu.header = *header;
-
 	/* There must be at least one capability set present */
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 12))
 		return ERROR_NO_DATA;
 
-	pdu.capsSets = ArrayList_New(FALSE);
+	RDP_MOUSE_CURSOR_CAPS_ADVERTISE_PDU pdu = {
+		.header = *header,
+		.capsSets = ArrayList_New(FALSE),
+	};
+
 	if (!pdu.capsSets)
 	{
 		WLog_ERR(TAG, "Failed to allocate arraylist");
@@ -237,7 +238,6 @@ static UINT mouse_cursor_process_message(mouse_cursor_server* mouse_cursor)
 	BOOL rc = 0;
 	UINT error = ERROR_INTERNAL_ERROR;
 	ULONG BytesReturned = 0;
-	RDP_MOUSE_CURSOR_HEADER header = { 0 };
 	wStream* s = NULL;
 
 	WINPR_ASSERT(mouse_cursor);
@@ -293,9 +293,10 @@ static UINT mouse_cursor_process_message(mouse_cursor_server* mouse_cursor)
 				         updateType);
 				return ERROR_INVALID_DATA;
 		}
-		header.updateType = (TS_UPDATETYPE_MOUSEPTR)updateType;
 
-		Stream_Read_UINT16(s, header.reserved);
+		RDP_MOUSE_CURSOR_HEADER header = { .updateType = (TS_UPDATETYPE_MOUSEPTR)updateType,
+			                               .reserved = Stream_Get_UINT16(s),
+			                               .pduType = PDUTYPE_EMSC_RESERVED };
 
 		switch (pduType)
 		{
