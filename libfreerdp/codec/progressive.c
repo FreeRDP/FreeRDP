@@ -1099,13 +1099,25 @@ progressive_rfx_upgrade_state_finish(RFX_PROGRESSIVE_UPGRADE_STATE* WINPR_RESTRI
 	return 1;
 }
 
+static inline int16_t rawShift(wBitStream* raw, UINT32 numBits)
+{
+	WINPR_ASSERT(raw);
+	WINPR_ASSERT(numBits > 0);
+
+	raw->mask = ((1 << numBits) - 1);
+	BitStream_Shift(raw, numBits);
+	const unsigned input = ((raw->accumulator >> (32 - numBits)) & raw->mask);
+	int16_t val = (int16_t)input;
+	return val;
+}
+
 static inline int progressive_rfx_upgrade_block(RFX_PROGRESSIVE_UPGRADE_STATE* WINPR_RESTRICT state,
                                                 INT16* WINPR_RESTRICT buffer,
                                                 INT16* WINPR_RESTRICT sign, UINT32 length,
                                                 UINT32 shift, WINPR_ATTR_UNUSED UINT32 bitPos,
                                                 UINT32 numBits)
 {
-	if (!numBits)
+	if (numBits < 1)
 		return 1;
 
 	wBitStream* raw = state->raw;
@@ -1115,9 +1127,7 @@ static inline int progressive_rfx_upgrade_block(RFX_PROGRESSIVE_UPGRADE_STATE* W
 	{
 		for (UINT32 index = 0; index < length; index++)
 		{
-			raw->mask = ((1 << numBits) - 1);
-			input = (INT16)((raw->accumulator >> (32 - numBits)) & raw->mask);
-			BitStream_Shift(raw, numBits);
+			input = rawShift(raw, numBits);
 
 			const int32_t shifted = input << shift;
 			const int32_t val = buffer[index] + shifted;
@@ -1133,26 +1143,25 @@ static inline int progressive_rfx_upgrade_block(RFX_PROGRESSIVE_UPGRADE_STATE* W
 		if (sign[index] > 0)
 		{
 			/* sign > 0, read from raw */
-			raw->mask = ((1 << numBits) - 1);
-			input = (INT16)((raw->accumulator >> (32 - numBits)) & raw->mask);
-			BitStream_Shift(raw, numBits);
+			input = rawShift(raw, numBits);
 		}
 		else if (sign[index] < 0)
 		{
 			/* sign < 0, read from raw */
-			raw->mask = ((1 << numBits) - 1);
-			input = (INT16)((raw->accumulator >> (32 - numBits)) & raw->mask);
-			BitStream_Shift(raw, numBits);
-			input *= -1;
+			input = rawShift(raw, numBits);
 		}
 		else
 		{
 			/* sign == 0, read from srl */
 			input = progressive_rfx_srl_read(state, numBits);
 			sign[index] = WINPR_ASSERTING_INT_CAST(int16_t, input);
+			if (sign[index] < 0)
+				input *= -1;
 		}
 
-		const int32_t val = input << shift;
+		int32_t val = input << shift;
+		if (sign[index] < 0)
+			val *= -1;
 		const int32_t ival = buffer[index] + val;
 		buffer[index] = WINPR_ASSERTING_INT_CAST(INT16, ival);
 	}
