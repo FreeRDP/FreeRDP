@@ -542,14 +542,16 @@ static BOOL ffmpeg_fill_frame(AVFrame* WINPR_RESTRICT frame,
 	frame->sample_rate = (int)inputFormat->nSamplesPerSec;
 	frame->format = ffmpeg_sample_format(inputFormat);
 
-	const int bpp = av_get_bytes_per_sample(frame->format);
+	const int bpp =
+	    av_get_bytes_per_sample(WINPR_ASSERTING_INT_CAST(enum AVSampleFormat, frame->format));
 	WINPR_ASSERT(bpp >= 0);
 	WINPR_ASSERT(size <= INT_MAX);
 	const size_t nb_samples = size / inputFormat->nChannels / (size_t)bpp;
 	frame->nb_samples = (int)nb_samples;
 
-	if ((ret = avcodec_fill_audio_frame(frame, inputFormat->nChannels, frame->format, data,
-	                                    (int)size, 1)) < 0)
+	if ((ret = avcodec_fill_audio_frame(
+	         frame, inputFormat->nChannels,
+	         WINPR_ASSERTING_INT_CAST(enum AVSampleFormat, frame->format), data, (int)size, 1)) < 0)
 	{
 		const char* err = av_err2str(ret);
 		WLog_ERR(TAG, "Error during audio frame fill %s [%d]", err, ret);
