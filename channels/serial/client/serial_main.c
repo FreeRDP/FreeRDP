@@ -690,13 +690,16 @@ static void create_irp_thread(SERIAL_DEVICE* serial, IRP* irp)
 		                      * for threads.
 		                      */
 	}
-	const BOOL added = ListDictionary_Add(serial->IrpThreads, (void*)key, irpThread);
-	ListDictionary_Unlock(serial->IrpThreads);
 
-	if (!added)
 	{
-		WLog_Print(serial->log, WLOG_ERROR, "ListDictionary_Add failed!");
-		goto error_handle;
+		const BOOL added = ListDictionary_Add(serial->IrpThreads, (void*)key, irpThread);
+		ListDictionary_Unlock(serial->IrpThreads);
+
+		if (!added)
+		{
+			WLog_Print(serial->log, WLOG_ERROR, "ListDictionary_Add failed!");
+			goto error_handle;
+		}
 	}
 
 	ResumeThread(irpThread);
