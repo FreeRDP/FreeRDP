@@ -206,7 +206,8 @@ typedef enum
 {
 	acceptance,
 	user_rejection,
-	provider_rejection
+	provider_rejection,
+	negotiate_ack
 } p_cont_def_result_t;
 
 typedef enum
@@ -253,14 +254,19 @@ typedef struct
 	char* port_spec; /* port string spec; size_is(length) */
 } port_any_t;
 
-#define REASON_NOT_SPECIFIED 0
-#define TEMPORARY_CONGESTION 1
-#define LOCAL_LIMIT_EXCEEDED 2
-#define CALLED_PADDR_UNKNOWN 3
-#define PROTOCOL_VERSION_NOT_SUPPORTED 4
-#define DEFAULT_CONTEXT_NOT_SUPPORTED 5
-#define USER_DATA_NOT_READABLE 6
-#define NO_PSAP_AVAILABLE 7
+typedef enum
+{
+	REASON_NOT_SPECIFIED = 0,
+	TEMPORARY_CONGESTION = 1,
+	LOCAL_LIMIT_EXCEEDED = 2,
+	CALLED_PADDR_UNKNOWN = 3,
+	PROTOCOL_VERSION_NOT_SUPPORTED = 4,
+	DEFAULT_CONTEXT_NOT_SUPPORTED = 5,
+	USER_DATA_NOT_READABLE = 6,
+	NO_PSAP_AVAILABLE = 7,
+	authentication_type_not_recognized = 8,
+	invalid_checksum = 9
+} bind_rejection_t;
 
 typedef UINT16 rpcrt_reason_code_t;
 
