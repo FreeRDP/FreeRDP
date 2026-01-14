@@ -1356,8 +1356,8 @@ typedef enum
 
 static BOOL nla_read_ts_credentials(rdpNla* nla, SecBuffer* data)
 {
-	WinPrAsn1Decoder dec = { 0 };
-	WinPrAsn1Decoder dec2 = { 0 };
+	WinPrAsn1Decoder dec = { .encoding = WINPR_ASN1_BER, { 0 } };
+	WinPrAsn1Decoder dec2 = { .encoding = WINPR_ASN1_BER, { 0 } };
 	WinPrAsn1_OctetString credentials = { 0 };
 	BOOL error = FALSE;
 	WinPrAsn1_INTEGER credType = -1;
@@ -1424,7 +1424,7 @@ static BOOL nla_read_ts_credentials(rdpNla* nla, SecBuffer* data)
 			settings->PasswordIsSmartcardPin = TRUE;
 
 			/* cspData [1] TSCspDataDetail */
-			WinPrAsn1Decoder cspDetails = { 0 };
+			WinPrAsn1Decoder cspDetails = { .encoding = WINPR_ASN1_BER, { 0 } };
 			if (!WinPrAsn1DecReadContextualSequence(&dec, 1, &error, &cspDetails) && error)
 				return FALSE;
 			if (!nla_read_TSCspDataDetail(&cspDetails, settings))
@@ -1444,8 +1444,15 @@ static BOOL nla_read_ts_credentials(rdpNla* nla, SecBuffer* data)
 				return FALSE;
 
 			/* logonCred[0] TSRemoteGuardPackageCred */
-			KERB_TICKET_LOGON kerbLogon = { 0 };
-			WinPrAsn1Decoder logonCredsSeq = { 0 };
+			KERB_TICKET_LOGON kerbLogon = { .MessageType = KerbInvalidValue,
+				                            .Flags = 0,
+				                            .ServiceTicketLength = 0,
+				                            .TicketGrantingTicketLength = 0,
+				                            .ServiceTicket = NULL,
+				                            .TicketGrantingTicket = NULL };
+
+			WinPrAsn1Decoder logonCredsSeq = { .encoding = WINPR_ASN1_BER, { 0 } };
+
 			if (!WinPrAsn1DecReadContextualSequence(&dec2, 0, &error, &logonCredsSeq) || error)
 				return FALSE;
 
@@ -1468,16 +1475,16 @@ static BOOL nla_read_ts_credentials(rdpNla* nla, SecBuffer* data)
 
 			/* supplementalCreds [1] SEQUENCE OF TSRemoteGuardPackageCred OPTIONAL, */
 			MSV1_0_REMOTE_SUPPLEMENTAL_CREDENTIAL* suppCreds = NULL;
-			WinPrAsn1Decoder suppCredsSeq = { 0 };
+			WinPrAsn1Decoder suppCredsSeq = { .encoding = WINPR_ASN1_BER, { 0 } };
 
 			if (WinPrAsn1DecReadContextualSequence(&dec2, 1, &error, &suppCredsSeq) &&
 			    Stream_GetRemainingLength(&suppCredsSeq.source))
 			{
-				WinPrAsn1Decoder ntlmCredsSeq = { 0 };
+				WinPrAsn1Decoder ntlmCredsSeq = { .encoding = WINPR_ASN1_BER, { 0 } };
 				if (!WinPrAsn1DecReadSequence(&suppCredsSeq, &ntlmCredsSeq))
 					return FALSE;
 
-				RemoteGuardPackageCredType suppCredsType = { 0 };
+				RemoteGuardPackageCredType suppCredsType = RCG_TYPE_NONE;
 				wStream ntlmPayload = { 0 };
 				if (!nla_read_TSRemoteGuardPackageCred(nla, &ntlmCredsSeq, &suppCredsType,
 				                                       &ntlmPayload))
@@ -2059,8 +2066,8 @@ fail:
 
 static int nla_decode_ts_request(rdpNla* nla, wStream* s)
 {
-	WinPrAsn1Decoder dec = { 0 };
-	WinPrAsn1Decoder dec2 = { 0 };
+	WinPrAsn1Decoder dec = { .encoding = WINPR_ASN1_BER, { 0 } };
+	WinPrAsn1Decoder dec2 = { .encoding = WINPR_ASN1_BER, { 0 } };
 	BOOL error = FALSE;
 	WinPrAsn1_tagId tag = { 0 };
 	WinPrAsn1_INTEGER val = { 0 };
@@ -2102,7 +2109,7 @@ static int nla_decode_ts_request(rdpNla* nla, wStream* s)
 
 	while (WinPrAsn1DecReadContextualTag(&dec, &tag, &dec2) != 0)
 	{
-		WinPrAsn1Decoder dec3 = { 0 };
+		WinPrAsn1Decoder dec3 = { .encoding = WINPR_ASN1_BER, { 0 } };
 		WinPrAsn1_OctetString octet_string = { 0 };
 
 		switch (tag)

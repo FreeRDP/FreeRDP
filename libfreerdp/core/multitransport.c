@@ -184,7 +184,9 @@ state_run_t multitransport_recv_response(rdpMultitransport* multi, wStream* s)
 	Stream_Read_UINT32(s, requestId); /* requestId (4 bytes) */
 	Stream_Read_UINT32(s, hr);        /* hrResponse (4 bytes) */
 
-	return IFCALLRESULT(STATE_RUN_SUCCESS, multi->MtResponse, multi, requestId, hr);
+	state_run_t res = STATE_RUN_SUCCESS;
+	IFCALLRET(multi->MtResponse, res, multi, requestId, hr);
+	return res;
 }
 
 static state_run_t multitransport_no_udp(rdpMultitransport* multi, UINT32 reqId,

@@ -711,7 +711,7 @@ static BOOL append(char* dst, size_t dstSize, const char* src)
 static BOOL kerberos_rd_tgt_req_tag2(WinPrAsn1Decoder* dec, char* buf, size_t len)
 {
 	BOOL rc = FALSE;
-	WinPrAsn1Decoder seq = { 0 };
+	WinPrAsn1Decoder seq = { .encoding = WINPR_ASN1_BER, { 0 } };
 
 	/* server-name [2] PrincipalName (SEQUENCE) */
 	if (!WinPrAsn1DecReadSequence(dec, &seq))
@@ -796,7 +796,7 @@ static BOOL kerberos_rd_tgt_req(WinPrAsn1Decoder* dec, char** target)
 	if (len == 0)
 		return TRUE;
 
-	WinPrAsn1Decoder dec2 = { 0 };
+	WinPrAsn1Decoder dec2 = { .encoding = WINPR_ASN1_BER, { 0 } };
 	WinPrAsn1_tagId tag = 0;
 	if (WinPrAsn1DecReadContextualTag(dec, &tag, &dec2) == 0)
 		return FALSE;
@@ -842,7 +842,7 @@ static BOOL kerberos_rd_tgt_rep(WinPrAsn1Decoder* dec, krb5_data* ticket)
 		return FALSE;
 
 	/* ticket [2] Ticket */
-	WinPrAsn1Decoder asnTicket = { 0 };
+	WinPrAsn1Decoder asnTicket = { .encoding = WINPR_ASN1_BER, { 0 } };
 	WinPrAsn1_tagId tag = 0;
 	if (WinPrAsn1DecReadContextualTag(dec, &tag, &asnTicket) == 0)
 		return FALSE;
@@ -870,11 +870,11 @@ static BOOL kerberos_rd_tgt_token(const sspi_gss_data* token, char** target, krb
 	if (target)
 		*target = NULL;
 
-	WinPrAsn1Decoder der = { 0 };
+	WinPrAsn1Decoder der = { .encoding = WINPR_ASN1_BER, { 0 } };
 	WinPrAsn1Decoder_InitMem(&der, WINPR_ASN1_DER, (BYTE*)token->data, token->length);
 
 	/* KERB-TGT-REQUEST (SEQUENCE) */
-	WinPrAsn1Decoder seq = { 0 };
+	WinPrAsn1Decoder seq = { .encoding = WINPR_ASN1_BER, { 0 } };
 	if (!WinPrAsn1DecReadSequence(&der, &seq))
 		return FALSE;
 

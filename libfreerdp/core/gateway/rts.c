@@ -739,6 +739,7 @@ static BOOL rts_read_result(wStream* s, p_result_t* result, BOOL silent)
 		case acceptance:
 		case user_rejection:
 		case provider_rejection:
+		case negotiate_ack:
 			break;
 		default:
 			WLog_ERR(TAG, "Invalid p_cont_def_result_t %" PRIu16, res);

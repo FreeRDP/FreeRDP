@@ -358,14 +358,18 @@ static UINT location_send(LocationClientContext* context, LOCATION_PDUTYPE type,
 				res = ERROR_INVALID_PARAMETER;
 			else
 			{
-				RDPLOCATION_BASE_LOCATION3D_PDU pdu = { 0 };
 				LOCATIONSOURCE source = LOCATIONSOURCE_IP;
 				double speed = FP_NAN;
 				double heading = FP_NAN;
 				double horizontalAccuracy = FP_NAN;
-				pdu.latitude = va_arg(ap, double);
-				pdu.longitude = va_arg(ap, double);
-				pdu.altitude = va_arg(ap, INT32);
+				RDPLOCATION_BASE_LOCATION3D_PDU pdu = { .latitude = va_arg(ap, double),
+					                                    .longitude = va_arg(ap, double),
+					                                    .altitude = va_arg(ap, INT32),
+					                                    .speed = NULL,
+					                                    .heading = NULL,
+					                                    .horizontalAccuracy = NULL,
+					                                    .source = NULL };
+
 				if ((count > 3) && (callback->clientVersion >= RDPLOCATION_PROTOCOL_VERSION_200))
 				{
 					speed = va_arg(ap, double);
@@ -385,10 +389,10 @@ static UINT location_send(LocationClientContext* context, LOCATION_PDUTYPE type,
 				res = ERROR_INVALID_PARAMETER;
 			else
 			{
-				RDPLOCATION_LOCATION2D_DELTA_PDU pdu = { 0 };
-
-				pdu.latitudeDelta = va_arg(ap, double);
-				pdu.longitudeDelta = va_arg(ap, double);
+				RDPLOCATION_LOCATION2D_DELTA_PDU pdu = { .latitudeDelta = va_arg(ap, double),
+					                                     .longitudeDelta = va_arg(ap, double),
+					                                     .speedDelta = NULL,
+					                                     .headingDelta = NULL };
 
 				double speedDelta = FP_NAN;
 				double headingDelta = FP_NAN;
@@ -407,13 +411,14 @@ static UINT location_send(LocationClientContext* context, LOCATION_PDUTYPE type,
 				res = ERROR_INVALID_PARAMETER;
 			else
 			{
-				RDPLOCATION_LOCATION3D_DELTA_PDU pdu = { 0 };
 				double speedDelta = FP_NAN;
 				double headingDelta = FP_NAN;
 
-				pdu.latitudeDelta = va_arg(ap, double);
-				pdu.longitudeDelta = va_arg(ap, double);
-				pdu.altitudeDelta = va_arg(ap, INT32);
+				RDPLOCATION_LOCATION3D_DELTA_PDU pdu = { .latitudeDelta = va_arg(ap, double),
+					                                     .longitudeDelta = va_arg(ap, double),
+					                                     .altitudeDelta = va_arg(ap, INT32),
+					                                     pdu.speedDelta = NULL,
+					                                     .headingDelta = NULL };
 				if ((count > 3) && (callback->clientVersion >= RDPLOCATION_PROTOCOL_VERSION_200))
 				{
 					speedDelta = va_arg(ap, double);
