@@ -32,7 +32,7 @@ typedef struct
 	BYTE* pYUVDstData[3];
 	UINT32 iDstStride[3];
 	RECTANGLE_16 rect;
-	BYTE type;
+	avc444_frame_type type;
 } YUV_COMBINE_WORK_PARAM;
 
 typedef struct
@@ -522,7 +522,7 @@ pool_decode_rect_param(const RECTANGLE_16* WINPR_RESTRICT rect, YUV_CONTEXT* WIN
 	current.iDstStride[0] = iDstStride[0];
 	current.iDstStride[1] = iDstStride[1];
 	current.iDstStride[2] = iDstStride[2];
-	current.type = type;
+	current.type = WINPR_ASSERTING_INT_CAST(avc444_frame_type, type);
 	current.rect = *rect;
 	return current;
 }
