@@ -676,7 +676,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextW(
     PCtxtHandle phNewContext, PSecBufferDesc pOutput, PULONG pfContextAttr, PTimeStamp ptsExpiry)
 {
 	NEGOTIATE_CONTEXT* context = NULL;
-	NEGOTIATE_CONTEXT init_context = { 0 };
+	NEGOTIATE_CONTEXT init_context = NEGOTIATE_CONTEXT_init();
 	MechCred* creds = NULL;
 	PCtxtHandle sub_context = NULL;
 	PCredHandle sub_cred = NULL;
@@ -1022,7 +1022,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_AcceptSecurityContext(
     PTimeStamp ptsTimeStamp)
 {
 	NEGOTIATE_CONTEXT* context = NULL;
-	NEGOTIATE_CONTEXT init_context = { 0 };
+	NEGOTIATE_CONTEXT init_context = NEGOTIATE_CONTEXT_init();
 	MechCred* creds = NULL;
 	PCredHandle sub_cred = NULL;
 	NegToken input_token = empty_neg_token;
