@@ -1,3 +1,13 @@
+# 2026-01-14 Version 3.20.2
+
+Patch release fixing a regression with gateway connections introduced with 3.20.1
+
+## What's Changed
+* Warnings and missing enumeration types (#12137)
+
+For a complete and detailed change log since the last release run:
+git log 3.20.2...3.20.1
+
 # 2026-01-14 Version 3.20.1
 
 New years cleanup release. Fixes some issues reported and does a cleaning sweep
