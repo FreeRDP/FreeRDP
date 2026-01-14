@@ -773,6 +773,13 @@ static BOOL tsg_ndr_read_packet_response(wLog* log, wStream* s, UINT32* index,
 		return FALSE;
 	}
 
+	if (MaxOffsetValue != 0)
+	{
+		WLog_Print(log, WLOG_ERROR, "Unexpected offset value: %" PRIu32 ", expected: 0",
+		           MaxOffsetValue);
+		return FALSE;
+	}
+
 	if (!Stream_CheckAndLogRequiredLengthWLog(log, s, MaxSizeValue))
 		return FALSE;
 
