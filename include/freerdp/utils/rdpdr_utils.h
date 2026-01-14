@@ -76,6 +76,28 @@ extern "C"
 	FREERDP_API UINT rdpdr_write_capset_header(wLog* log, wStream* s,
 	                                           const RDPDR_CAPABILITY_HEADER* header);
 
+	/** @brief convert a constant of type \ref RDPDR_CAPS_IRP_MJ to string
+	 *
+	 *  @param ioCode1 A \ref RDPDR_CAPS_IRP_MJ value
+	 *  @return A string representation of the constant or \b RDPDR_IRP_MJ_UNKNOWN for unknown
+	 * values
+	 *
+	 *  @since version 3.21.0
+	 */
+	FREERDP_API const char* rdpdr_irp_val2str(UINT32 ioCode1);
+
+	/** @brief convert a mask of \ref RDPDR_CAPS_IRP_MJ type values to string
+	 *
+	 *  @param ioCode1Mask A \ref RDPDR_CAPS_IRP_MJ value
+	 *  @param buffer A pointer to a buffer that can hold the string representation
+	 *  @param len The length of the buffer in bytes.
+	 *  @return A string representation of the constant mask or \b NULL in case the buffer is too
+	 * small
+	 *
+	 *  @since version 3.21.0
+	 */
+	FREERDP_API const char* rdpdr_irp_mask2str(UINT32 ioCode1Mask, char* buffer, size_t len);
+
 #ifdef __cplusplus
 }
 #endif

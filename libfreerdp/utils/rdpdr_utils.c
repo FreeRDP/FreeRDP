@@ -601,3 +601,69 @@ UINT rdpdr_write_capset_header(wLog* log, wStream* s, const RDPDR_CAPABILITY_HEA
 	Stream_Write_UINT32(s, header->Version);          /* Version (4 bytes) */
 	return CHANNEL_RC_OK;
 }
+
+const char* rdpdr_irp_val2str(UINT32 ioCode1)
+{
+	switch (ioCode1)
+	{
+		case RDPDR_IRP_MJ_CREATE:
+			return "MJ_CREATE";
+		case RDPDR_IRP_MJ_CLEANUP:
+			return "MJ_CLEANUP";
+		case RDPDR_IRP_MJ_CLOSE:
+			return "MJ_CLOSE";
+		case RDPDR_IRP_MJ_READ:
+			return "MJ_READ";
+		case RDPDR_IRP_MJ_WRITE:
+			return "MJ_WRITE";
+		case RDPDR_IRP_MJ_FLUSH_BUFFERS:
+			return "MJ_FLUSH_BUFFERS";
+		case RDPDR_IRP_MJ_SHUTDOWN:
+			return "MJ_SHUTDOWN";
+		case RDPDR_IRP_MJ_DEVICE_CONTROL:
+			return "MJ_DEVICE_CONTROL";
+		case RDPDR_IRP_MJ_QUERY_VOLUME_INFORMATION:
+			return "MJ_QUERY_VOLUME_INFORMATION";
+		case RDPDR_IRP_MJ_SET_VOLUME_INFORMATION:
+			return "MJ_SET_VOLUME_INFORMATION";
+		case RDPDR_IRP_MJ_QUERY_INFORMATION:
+			return "MJ_QUERY_INFORMATION";
+		case RDPDR_IRP_MJ_SET_INFORMATION:
+			return "MJ_SET_INFORMATION";
+		case RDPDR_IRP_MJ_DIRECTORY_CONTROL:
+			return "MJ_DIRECTORY_CONTROL";
+		case RDPDR_IRP_MJ_LOCK_CONTROL:
+			return "MJ_LOCK_CONTROL";
+		case RDPDR_IRP_MJ_QUERY_SECURITY:
+			return "MJ_QUERY_SECURITY";
+		case RDPDR_IRP_MJ_SET_SECURITY:
+			return "MJ_SET_SECURITY";
+		default:
+			return "IRP_MJ_UNKNOWN";
+	}
+}
+
+const char* rdpdr_irp_mask2str(UINT32 ioCode1Mask, char* buffer, size_t len)
+{
+	if (len < 1)
+		return NULL;
+
+	if (!winpr_str_append("{", buffer, len, NULL))
+		return NULL;
+
+	for (size_t x = 0; x < 32; x++)
+	{
+		const UINT32 mask = (1 << x);
+		if (ioCode1Mask & mask)
+		{
+			if (!winpr_str_append(rdpdr_irp_val2str(mask), &buffer[1], len - 1, "|"))
+				return NULL;
+		}
+	}
+
+	char number[16] = { 0 };
+	(void)_snprintf(number, sizeof(number), "}[0x%08" PRIx32 "]", ioCode1Mask);
+	if (!winpr_str_append(number, buffer, len, NULL))
+		return NULL;
+	return buffer;
+}
