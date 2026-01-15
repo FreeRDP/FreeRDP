@@ -397,7 +397,12 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleA(
 				goto cleanup;
 		}
 		else
+		{
+			if (krb_log_exec(krb5_cc_default, ctx, &ccache))
+				goto cleanup;
 			own_ccache = FALSE;
+		}
+		WINPR_ASSERT(ccache);
 	}
 	else if (fCredentialUse & SECPKG_CRED_OUTBOUND)
 	{
@@ -406,6 +411,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleA(
 			goto cleanup;
 		if (krb_log_exec(krb5_cc_get_principal, ctx, ccache, &principal))
 			goto cleanup;
+		WINPR_ASSERT(ccache);
 		own_ccache = FALSE;
 	}
 	else
@@ -420,6 +426,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleA(
 			if (krb_log_exec(krb5_cc_resolve, ctx, krb_settings->cache, &ccache))
 				goto cleanup;
 		}
+		WINPR_ASSERT(ccache);
 	}
 
 	if (krb_settings && krb_settings->keytab)
@@ -446,6 +453,8 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleA(
 		matchCreds.client = principal;
 
 		WINPR_ASSERT(principal);
+		WINPR_ASSERT(ctx);
+		WINPR_ASSERT(ccache);
 		if (krb_log_exec(build_krbtgt, ctx, principal, &matchCreds.server))
 			goto cleanup;
 
