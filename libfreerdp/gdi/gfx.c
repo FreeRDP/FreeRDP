@@ -1335,8 +1335,6 @@ static UINT gdi_SurfaceToSurface(RdpgfxClientContext* context,
 {
 	UINT status = ERROR_INTERNAL_ERROR;
 	BOOL sameSurface = 0;
-	UINT32 nWidth = 0;
-	UINT32 nHeight = 0;
 	const RECTANGLE_16* rectSrc = NULL;
 	RECTANGLE_16 invalidRect;
 	gdiGfxSurface* surfaceSrc = NULL;
@@ -1362,8 +1360,8 @@ static UINT gdi_SurfaceToSurface(RdpgfxClientContext* context,
 	if (!is_rect_valid(rectSrc, surfaceSrc->width, surfaceSrc->height))
 		goto fail;
 
-	nWidth = rectSrc->right - rectSrc->left;
-	nHeight = rectSrc->bottom - rectSrc->top;
+	const UINT32 nWidth = rectSrc->right - rectSrc->left;
+	const UINT32 nHeight = rectSrc->bottom - rectSrc->top;
 
 	for (UINT16 index = 0; index < surfaceToSurface->destPtsCount; index++)
 	{
@@ -1374,8 +1372,10 @@ static UINT gdi_SurfaceToSurface(RdpgfxClientContext* context,
 		if (!is_rect_valid(&rect, surfaceDst->width, surfaceDst->height))
 			goto fail;
 
+		const UINT32 rwidth = rect.right - rect.left;
+		const UINT32 rheight = rect.bottom - rect.top;
 		if (!freerdp_image_copy(surfaceDst->data, surfaceDst->format, surfaceDst->scanline,
-		                        destPt->x, destPt->y, nWidth, nHeight, surfaceSrc->data,
+		                        destPt->x, destPt->y, rwidth, rheight, surfaceSrc->data,
 		                        surfaceSrc->format, surfaceSrc->scanline, rectSrc->left,
 		                        rectSrc->top, NULL, FREERDP_FLIP_NONE))
 			goto fail;
