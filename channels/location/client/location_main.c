@@ -417,7 +417,7 @@ static UINT location_send(LocationClientContext* context, LOCATION_PDUTYPE type,
 				RDPLOCATION_LOCATION3D_DELTA_PDU pdu = { .latitudeDelta = va_arg(ap, double),
 					                                     .longitudeDelta = va_arg(ap, double),
 					                                     .altitudeDelta = va_arg(ap, INT32),
-					                                     pdu.speedDelta = NULL,
+					                                     .speedDelta = NULL,
 					                                     .headingDelta = NULL };
 				if ((count > 3) && (callback->clientVersion >= RDPLOCATION_PROTOCOL_VERSION_200))
 				{
