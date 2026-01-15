@@ -727,6 +727,11 @@ BOOL freerdp_bitmap_decompress_planar(BITMAP_PLANAR_CONTEXT* WINPR_RESTRICT plan
 	WINPR_ASSERT(planar);
 	WINPR_ASSERT(prims);
 
+	if (planar->maxWidth < nSrcWidth)
+		return FALSE;
+	if (planar->maxHeight < nSrcHeight)
+		return FALSE;
+
 	if (nDstStep <= 0)
 		nDstStep = nDstWidth * FreeRDPGetBytesPerPixel(DstFormat);
 
