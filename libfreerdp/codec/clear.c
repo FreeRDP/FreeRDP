@@ -1139,8 +1139,10 @@ INT32 clear_decompress(CLEAR_CONTEXT* WINPR_RESTRICT clear, const BYTE* WINPR_RE
 
 	if (glyphData)
 	{
-		if (!freerdp_image_copy_no_overlap(glyphData, clear->format, 0, 0, 0, nWidth, nHeight,
-		                                   pDstData, DstFormat, nDstStep, nXDst, nYDst, palette,
+		const uint32_t w = MIN(nWidth, nDstWidth);
+		const uint32_t h = MIN(nHeight, nDstHeight);
+		if (!freerdp_image_copy_no_overlap(glyphData, clear->format, 0, 0, 0, w, h, pDstData,
+		                                   DstFormat, nDstStep, nXDst, nYDst, palette,
 		                                   FREERDP_KEEP_DST_ALPHA))
 			goto fail;
 	}
