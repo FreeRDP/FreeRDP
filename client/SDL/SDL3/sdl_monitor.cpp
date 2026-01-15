@@ -98,15 +98,11 @@ static BOOL sdl_apply_mon_max_size(SdlContext* sdl, UINT32* pMaxWidth, UINT32* p
 	{
 		auto monitor = static_cast<const rdpMonitor*>(
 		    freerdp_settings_get_pointer_array(settings, FreeRDP_MonitorDefArray, x));
-		if (monitor->x < left)
-			left = monitor->x;
-		if (monitor->y < top)
-			top = monitor->y;
 
-		if (monitor->x + monitor->width > right)
-			right = monitor->x + monitor->width;
-		if (monitor->y + monitor->height > bottom)
-			bottom = monitor->y + monitor->height;
+		left = std::min(monitor->x, left);
+		top = std::min(monitor->y, top);
+		right = std::max(monitor->x + monitor->width, right);
+		bottom = std::max(monitor->y + monitor->height, bottom);
 	}
 
 	const int32_t w = right - left;
