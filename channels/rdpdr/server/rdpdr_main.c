@@ -60,6 +60,9 @@ struct s_rdpdr_server_private
 
 	wHashTable* devicelist;
 	wLog* log;
+	UINT32 SpecialDeviceTypeCap;
+	UINT32 IoCode1;
+	UINT32 ExtendedPDU;
 };
 
 static const char* fileInformation2str(uint8_t val)
@@ -488,12 +491,6 @@ static UINT rdpdr_server_write_capability_set_header_cb(RdpdrServerContext* cont
 static UINT rdpdr_server_read_general_capability_set(RdpdrServerContext* context, wStream* s,
                                                      const RDPDR_CAPABILITY_HEADER* header)
 {
-	UINT32 ioCode1 = 0;
-	UINT32 extraFlags1 = 0;
-	UINT32 extendedPdu = 0;
-	UINT16 VersionMajor = 0;
-	UINT16 VersionMinor = 0;
-	UINT32 SpecialTypeDeviceCap = 0;
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
 	WINPR_ASSERT(header);
@@ -501,15 +498,29 @@ static UINT rdpdr_server_read_general_capability_set(RdpdrServerContext* context
 	if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, 32))
 		return ERROR_INVALID_DATA;
 
-	Stream_Seek_UINT32(s);               /* osType (4 bytes), ignored on receipt */
-	Stream_Seek_UINT32(s);               /* osVersion (4 bytes), unused and must be set to zero */
-	Stream_Read_UINT16(s, VersionMajor); /* protocolMajorVersion (2 bytes) */
-	Stream_Read_UINT16(s, VersionMinor); /* protocolMinorVersion (2 bytes) */
-	Stream_Read_UINT32(s, ioCode1);      /* ioCode1 (4 bytes) */
-	Stream_Seek_UINT32(s); /* ioCode2 (4 bytes), must be set to zero, reserved for future use */
-	Stream_Read_UINT32(s, extendedPdu); /* extendedPdu (4 bytes) */
-	Stream_Read_UINT32(s, extraFlags1); /* extraFlags1 (4 bytes) */
-	Stream_Seek_UINT32(s); /* extraFlags2 (4 bytes), must be set to zero, reserved for future use */
+	const UINT32 OsType = Stream_Get_UINT32(s); /* osType (4 bytes), ignored on receipt */
+	const UINT32 OsVersion =
+	    Stream_Get_UINT32(s); /* osVersion (4 bytes), unused and must be set to zero */
+	const UINT32 VersionMajor = Stream_Get_UINT16(s); /* protocolMajorVersion (2 bytes) */
+	const UINT32 VersionMinor = Stream_Get_UINT16(s); /* protocolMinorVersion (2 bytes) */
+	const UINT32 IoCode1 = Stream_Get_UINT32(s);      /* ioCode1 (4 bytes) */
+	const UINT32 IoCode2 =
+	    Stream_Get_UINT32(s); /* ioCode2 (4 bytes), must be set to zero, reserved for future use */
+	const UINT32 ExtendedPdu = Stream_Get_UINT32(s); /* extendedPdu (4 bytes) */
+	const UINT32 ExtraFlags1 = Stream_Get_UINT32(s); /* extraFlags1 (4 bytes) */
+	const UINT32 ExtraFlags2 = Stream_Get_UINT32(
+	    s); /* extraFlags2 (4 bytes), must be set to zero, reserved for future use */
+
+	{
+		char buffer[1024] = { 0 };
+		WLog_Print(context->priv->log, WLOG_TRACE,
+		           "OsType=%" PRIu32 ", OsVersion=%" PRIu32 ", VersionMajor=%" PRIu32
+		           ", VersionMinor=%" PRIu32 ", IoCode1=%s, IoCode2=%" PRIu32
+		           ", ExtendedPdu=%" PRIu32 ", ExtraFlags1=%" PRIu32 ", ExtraFlags2=%" PRIu32,
+		           OsType, OsVersion, VersionMajor, VersionMinor,
+		           rdpdr_irp_mask2str(IoCode1, buffer, sizeof(buffer)), IoCode2, ExtendedPdu,
+		           ExtraFlags1, ExtraFlags2);
+	}
 
 	if (VersionMajor != RDPDR_MAJOR_RDP_VERSION)
 	{
@@ -533,15 +544,58 @@ static UINT rdpdr_server_read_general_capability_set(RdpdrServerContext* context
 			break;
 	}
 
+	UINT32 SpecialTypeDeviceCap = 0;
 	if (header->Version == GENERAL_CAPABILITY_VERSION_02)
 	{
 		if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, 4))
 			return ERROR_INVALID_DATA;
 
-		Stream_Read_UINT32(s, SpecialTypeDeviceCap); /* SpecialTypeDeviceCap (4 bytes) */
+		SpecialTypeDeviceCap = Stream_Get_UINT32(s); /* SpecialTypeDeviceCap (4 bytes) */
+	}
+	context->priv->SpecialDeviceTypeCap = SpecialTypeDeviceCap;
+
+	const UINT32 mask =
+	    RDPDR_IRP_MJ_CREATE | RDPDR_IRP_MJ_CLEANUP | RDPDR_IRP_MJ_CLOSE | RDPDR_IRP_MJ_READ |
+	    RDPDR_IRP_MJ_WRITE | RDPDR_IRP_MJ_FLUSH_BUFFERS | RDPDR_IRP_MJ_SHUTDOWN |
+	    RDPDR_IRP_MJ_DEVICE_CONTROL | RDPDR_IRP_MJ_QUERY_VOLUME_INFORMATION |
+	    RDPDR_IRP_MJ_SET_VOLUME_INFORMATION | RDPDR_IRP_MJ_QUERY_INFORMATION |
+	    RDPDR_IRP_MJ_SET_INFORMATION | RDPDR_IRP_MJ_DIRECTORY_CONTROL | RDPDR_IRP_MJ_LOCK_CONTROL;
+
+	if ((IoCode1 & mask) == 0)
+	{
+		char buffer[1024] = { 0 };
+		WLog_Print(context->priv->log, WLOG_ERROR, "Missing IRP mask values %s",
+		           rdpdr_irp_mask2str(IoCode1 & mask, buffer, sizeof(buffer)));
+		return ERROR_INVALID_DATA;
+	}
+	context->priv->IoCode1 = IoCode1;
+
+	if (IoCode2 != 0)
+	{
+		WLog_Print(context->priv->log, WLOG_WARN,
+		           "[MS-RDPEFS] 2.2.2.7.1 General Capability Set (GENERAL_CAPS_SET) ioCode2 is "
+		           "reserved for future use, expected value 0 got %" PRIu32,
+		           IoCode2);
 	}
 
-	context->priv->UserLoggedOnPdu = (extendedPdu & RDPDR_USER_LOGGEDON_PDU) ? TRUE : FALSE;
+	if ((ExtendedPdu & RDPDR_CLIENT_DISPLAY_NAME_PDU) == 0)
+	{
+		WLog_Print(context->priv->log, WLOG_WARN,
+		           "[MS-RDPEFS] 2.2.2.7.1 General Capability Set (GENERAL_CAPS_SET) extendedPDU "
+		           "should always set RDPDR_CLIENT_DISPLAY_NAME_PDU[0x00000002]");
+	}
+
+	context->priv->ExtendedPDU = ExtendedPdu;
+	context->priv->UserLoggedOnPdu = (ExtendedPdu & RDPDR_USER_LOGGEDON_PDU) ? TRUE : FALSE;
+
+	if (ExtraFlags2 != 0)
+	{
+		WLog_Print(context->priv->log, WLOG_WARN,
+		           "[MS-RDPEFS] 2.2.2.7.1 General Capability Set (GENERAL_CAPS_SET) ExtraFlags2 is "
+		           "reserved for future use, expected value 0 got %" PRIu32,
+		           ExtraFlags2);
+	}
+
 	return CHANNEL_RC_OK;
 }
 
@@ -3583,10 +3637,9 @@ static UINT rdpdr_server_drive_rename_file(RdpdrServerContext* context, void* ca
                                            UINT32 deviceId, const char* oldPath,
                                            const char* newPath)
 {
-	RDPDR_IRP* irp = NULL;
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
-	irp = rdpdr_server_irp_new();
+	RDPDR_IRP* irp = rdpdr_server_irp_new();
 
 	if (!irp)
 	{
