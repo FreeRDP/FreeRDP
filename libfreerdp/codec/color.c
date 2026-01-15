@@ -36,7 +36,11 @@
 #endif
 
 #if defined(WITH_SWSCALE)
+#if defined(WITH_SWSCALE_LOADING)
+#include "swscale_loader.h"
+#else
 #include <libswscale/swscale.h>
+#endif
 #endif
 
 #include "color.h"
@@ -1210,6 +1214,16 @@ BOOL freerdp_image_scale(BYTE* WINPR_RESTRICT pDstData, DWORD DstFormat, UINT32 
 	else
 #if defined(WITH_SWSCALE)
 	{
+#if defined(WITH_SWSCALE_LOADING)
+		/* Check if swscale is available at runtime */
+		if (!freerdp_swscale_available())
+		{
+			/* Gracefully degrade - no scaling support */
+			WLog_WARN(TAG, "swscale not available - cannot scale image");
+			return FALSE;
+		}
+#endif
+
 		int res = 0;
 		struct SwsContext* resize = NULL;
 		enum AVPixelFormat srcFormat = av_format_for_buffer(SrcFormat);
@@ -1220,16 +1234,30 @@ BOOL freerdp_image_scale(BYTE* WINPR_RESTRICT pDstData, DWORD DstFormat, UINT32 
 		if ((srcFormat == AV_PIX_FMT_NONE) || (dstFormat == AV_PIX_FMT_NONE))
 			return FALSE;
 
+#if defined(WITH_SWSCALE_LOADING)
+		resize = freerdp_sws_getContext((int)nSrcWidth, (int)nSrcHeight, srcFormat,
+		                                (int)nDstWidth, (int)nDstHeight, dstFormat, SWS_BILINEAR,
+		                                NULL, NULL, NULL);
+#else
 		resize = sws_getContext((int)nSrcWidth, (int)nSrcHeight, srcFormat, (int)nDstWidth,
 		                        (int)nDstHeight, dstFormat, SWS_BILINEAR, NULL, NULL, NULL);
+#endif
 
 		if (!resize)
 			goto fail;
 
+#if defined(WITH_SWSCALE_LOADING)
+		res = freerdp_sws_scale(resize, &src, srcStep, 0, (int)nSrcHeight, &dst, dstStep);
+#else
 		res = sws_scale(resize, &src, srcStep, 0, (int)nSrcHeight, &dst, dstStep);
+#endif
 		rc = (res == ((int)nDstHeight));
 	fail:
+#if defined(WITH_SWSCALE_LOADING)
+		freerdp_sws_freeContext(resize);
+#else
 		sws_freeContext(resize);
+#endif
 	}
 
 #elif defined(WITH_CAIRO)

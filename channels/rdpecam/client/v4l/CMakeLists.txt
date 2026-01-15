@@ -29,6 +29,7 @@ if(WITH_V4L)
 
   include_directories(..)
 
+  # TRUE = build as static subsystem (linked into parent), not dynamic plugin
   add_channel_client_subsystem_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} "" TRUE "")
 
 endif()

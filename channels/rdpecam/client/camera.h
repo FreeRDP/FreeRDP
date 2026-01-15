@@ -25,12 +25,19 @@
 #include <stdlib.h>
 #include <string.h>
 
-#if defined(WITH_INPUT_FORMAT_MJPG)
+/* libavcodec is only available when NOT using runtime loading (MJPG disabled with runtime loading) */
+#if defined(WITH_INPUT_FORMAT_MJPG) && !defined(WITH_SWSCALE_LOADING)
 #include <libavcodec/avcodec.h>
 #endif
 
+#if defined(WITH_SWSCALE_LOADING)
+/* Runtime loading - use wrapper that loads FFmpeg at runtime */
+#include "../../libfreerdp/codec/swscale_loader.h"
+#else
+/* Direct linking - use FFmpeg headers */
 #include <libswscale/swscale.h>
 #include <libavutil/imgutils.h>
+#endif
 
 #include <winpr/wlog.h>
 #include <winpr/wtypes.h>
@@ -109,7 +116,8 @@ typedef struct
 
 	H264_CONTEXT* h264;
 
-#if defined(WITH_INPUT_FORMAT_MJPG)
+/* MJPG codec context only available when NOT using runtime loading */
+#if defined(WITH_INPUT_FORMAT_MJPG) && !defined(WITH_SWSCALE_LOADING)
 	AVCodecContext* avContext;
 	AVPacket* avInputPkt;
 	AVFrame* avOutFrame;
