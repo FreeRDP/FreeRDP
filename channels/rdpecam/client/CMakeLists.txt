@@ -17,13 +17,11 @@
 
 define_channel_client("rdpecam")
 
-if(NOT WITH_SWSCALE OR NOT WITH_FFMPEG)
-  message(FATAL_ERROR "WITH_FFMPEG and WITH_SWSCALE required for CHANNEL_RDPECAM_CLIENT")
+if(NOT WITH_SWSCALE)
+  message(FATAL_ERROR "WITH_SWSCALE required for CHANNEL_RDPECAM_CLIENT")
 endif()
-freerdp_client_pc_add_requires_private("libswscale")
 
 # currently camera redirect client supported for platforms with Video4Linux only
-find_package(FFmpeg REQUIRED COMPONENTS SWSCALE)
 find_package(V4L)
 if(V4L_FOUND)
   set(WITH_V4L ON)
@@ -32,22 +30,40 @@ else()
   message(FATAL_ERROR "libv4l-dev required for CHANNEL_RDPECAM_CLIENT")
 endif()
 
+include(CMakeDependentOption)
+
 option(RDPECAM_INPUT_FORMAT_H264 "[MS-RDPECAM] Enable H264 camera format (passthrough)" ON)
 if(RDPECAM_INPUT_FORMAT_H264)
   add_compile_definitions("WITH_INPUT_FORMAT_H264")
 endif()
 
-option(RDPECAM_INPUT_FORMAT_MJPG "[MS-RDPECAM] Enable MJPG camera format" ON)
+if(NOT WITH_SWSCALE_LOADING)
+  if(NOT WITH_FFMPEG AND NOT TARGET FFmpeg::avcodec)
+    set(MJPEG_AVAILABLE OFF)
+  else()
+    set(MJPEG_AVAILABLE ON)
+  endif()
+else()
+  set(MJPEG_AVAILABLE OFF)
+endif()
+
+cmake_dependent_option(
+  RDPECAM_INPUT_FORMAT_MJPG
+  "[MS-RDPECAM] Enable MJPG camera format (requires direct FFmpeg linking)"
+  ON
+  "MJPEG_AVAILABLE"
+  OFF
+)
+
 if(RDPECAM_INPUT_FORMAT_MJPG)
   add_compile_definitions("WITH_INPUT_FORMAT_MJPG")
 endif()
 
-include_directories(SYSTEM ${SWSCALE_INCLUDE_DIRS})
+set(${MODULE_PREFIX}_LIBS freerdp winpr)
 
 set(${MODULE_PREFIX}_SRCS camera_device_enum_main.c camera_device_main.c encoding.c)
 
-set(${MODULE_PREFIX}_LIBS freerdp winpr ${SWSCALE_LIBRARIES} ${FFMPEG_LIBRARIES})
-
+# TRUE = build as static addin (linked into libfreerdp-client), not dynamic plugin (.so)
 add_channel_client_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} TRUE "DVCPluginEntry")
 
 if(V4L_FOUND)

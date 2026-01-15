@@ -25,12 +25,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#if defined(WITH_INPUT_FORMAT_MJPG)
-#include <libavcodec/avcodec.h>
-#endif
-
-#include <libswscale/swscale.h>
-#include <libavutil/imgutils.h>
+/* Use FreeRDP video codec wrappers for MJPEG and color space conversion */
+#include <freerdp/codec/video.h>
 
 #include <winpr/wlog.h>
 #include <winpr/wtypes.h>
@@ -108,22 +104,12 @@ typedef struct
 	wStream* sampleRespBuffer;
 
 	H264_CONTEXT* h264;
-
-#if defined(WITH_INPUT_FORMAT_MJPG)
-	AVCodecContext* avContext;
-	AVPacket* avInputPkt;
-	AVFrame* avOutFrame;
-#endif
+	FREERDP_VIDEO_CONTEXT* video;
 
 #if defined(WITH_INPUT_FORMAT_H264)
 	size_t h264FrameMaxSize;
 	BYTE* h264Frame;
 #endif
-
-	/* sws_scale */
-	uint32_t swsWidth;
-	uint32_t swsHeight;
-	struct SwsContext* sws;
 
 } CameraDeviceStream;
 
