@@ -58,7 +58,7 @@ struct S_CLEAR_CONTEXT
 	NSC_CONTEXT* nsc;
 	UINT32 seqNumber;
 	BYTE* TempBuffer;
-	UINT32 TempSize;
+	size_t TempSize;
 	UINT32 nTempStep;
 	UINT32 TempFormat;
 	UINT32 format;
@@ -328,16 +328,17 @@ static BOOL clear_decompress_subcode_rlex(wStream* WINPR_RESTRICT s, UINT32 bitm
 
 static BOOL clear_resize_buffer(CLEAR_CONTEXT* WINPR_RESTRICT clear, UINT32 width, UINT32 height)
 {
-	UINT32 size = 0;
-
 	if (!clear)
 		return FALSE;
 
-	size = ((width + 16) * (height + 16) * FreeRDPGetBytesPerPixel(clear->format));
+	const UINT64 size = 1ull * (width + 16ull) * (height + 16ull);
+	const size_t bpp = FreeRDPGetBytesPerPixel(clear->format);
+	if (size > UINT32_MAX / bpp)
+		return FALSE;
 
-	if (size > clear->TempSize)
+	if (size > clear->TempSize / bpp)
 	{
-		BYTE* tmp = (BYTE*)winpr_aligned_recalloc(clear->TempBuffer, size, sizeof(BYTE), 32);
+		BYTE* tmp = (BYTE*)winpr_aligned_recalloc(clear->TempBuffer, size, bpp, 32);
 
 		if (!tmp)
 		{
@@ -346,7 +347,7 @@ static BOOL clear_resize_buffer(CLEAR_CONTEXT* WINPR_RESTRICT clear, UINT32 widt
 			return FALSE;
 		}
 
-		clear->TempSize = size;
+		clear->TempSize = size * bpp;
 		clear->TempBuffer = tmp;
 	}
 
