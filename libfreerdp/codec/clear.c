@@ -876,12 +876,12 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* WINPR_RESTRICT clear,
 				if (count > nHeight)
 					count = nHeight;
 
-				if (nXDstRel + i > nDstWidth)
+				if (nXDstRel + i >= nDstWidth)
 					return FALSE;
 
 				for (UINT32 y = 0; y < count; y++)
 				{
-					if (nYDstRel + y > nDstHeight)
+					if (nYDstRel + y >= nDstHeight)
 						return FALSE;
 
 					BYTE* pDstPixel8 =
