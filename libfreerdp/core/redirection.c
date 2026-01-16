@@ -385,13 +385,14 @@ BOOL rdp_redirection_read_target_cert(rdpCertificate** ptargetCertificate, const
 				else
 				{
 					WLog_ERR(TAG,
-					         "TargetCertificate data in unknown encoding %" PRIu32 " detected!");
+					         "TargetCertificate data in unknown encoding %" PRIu32 " detected!",
+					         encoding);
 				}
 				break;
 			default: /* ignore unknown fields */
 				WLog_VRB(TAG,
 				         "Unknown TargetCertificate field type %" PRIu32 ", encoding %" PRIu32
-				         " of length %" PRIu32,
+				         " of length %" PRIuz,
 				         type, encoding, plength);
 				break;
 		}
@@ -781,7 +782,7 @@ static state_run_t rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 			/* Ensure the text password is '\0' terminated */
 			if (_wcsnlen((const WCHAR*)redirection->Password, charLen) == charLen)
 			{
-				WLog_ERR(TAG, "LB_PASSWORD: missing '\0' termination");
+				WLog_ERR(TAG, "LB_PASSWORD: missing '\\0' termination");
 				return STATE_RUN_FAILED;
 			}
 		}
