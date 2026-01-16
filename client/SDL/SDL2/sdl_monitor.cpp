@@ -334,9 +334,8 @@ BOOL sdl_detect_monitors(SdlContext* sdl, UINT32* pMaxWidth, UINT32* pMaxHeight)
 		/* There were more IDs supplied than there are monitors */
 		if (nr > static_cast<UINT32>(numDisplays))
 		{
-			WLog_ERR(TAG,
-			         "Found %" PRIu32 " monitor IDs, but only have %" PRIu32 " monitors connected",
-			         nr, numDisplays);
+			WLog_ERR(TAG, "Found %" PRIu32 " monitor IDs, but only have %d monitors connected", nr,
+			         numDisplays);
 			return FALSE;
 		}
 

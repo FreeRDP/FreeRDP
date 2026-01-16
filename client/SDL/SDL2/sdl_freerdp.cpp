@@ -969,7 +969,7 @@ static int sdl_run(SdlContext* sdl)
 							{
 								auto r = window->second.rect();
 								auto id = window->second.id();
-								WLog_DBG(SDL_TAG, "%lu: %dx%d-%dx%d", id, r.x, r.y, r.w, r.h);
+								WLog_DBG(SDL_TAG, "%u: %dx%d-%dx%d", id, r.x, r.y, r.w, r.h);
 							}
 						}
 						break;
