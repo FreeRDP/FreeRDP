@@ -126,7 +126,7 @@ static BOOL shadow_input_rel_mouse_event(rdpInput* input, UINT16 flags, INT16 xD
 	                      PTR_FLAGS_BUTTON3 | PTR_XFLAGS_BUTTON1 | PTR_XFLAGS_BUTTON2;
 	if ((flags & mask) != 0)
 	{
-		WLog_WARN(TAG, "Unknown flags 0x%04" PRIx16, flags & ~mask);
+		WLog_WARN(TAG, "Unknown flags 0x%04x", WINPR_CXX_COMPAT_CAST(unsigned, flags & ~mask));
 	}
 	if (!client->mayInteract)
 		return TRUE;
