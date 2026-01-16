@@ -436,21 +436,18 @@ void ainput_server_context_free(ainput_server_context* context)
 
 static UINT ainput_process_message(ainput_server* ainput)
 {
-	BOOL rc = 0;
 	UINT error = ERROR_INTERNAL_ERROR;
 	ULONG BytesReturned = 0;
 	ULONG ActualBytesReturned = 0;
-	UINT16 MessageId = 0;
-	wStream* s = NULL;
 
 	WINPR_ASSERT(ainput);
 	WINPR_ASSERT(ainput->ainput_channel);
 
-	s = ainput->buffer;
+	wStream* s = ainput->buffer;
 	WINPR_ASSERT(s);
 
 	Stream_SetPosition(s, 0);
-	rc = WTSVirtualChannelRead(ainput->ainput_channel, 0, NULL, 0, &BytesReturned);
+	const BOOL rc = WTSVirtualChannelRead(ainput->ainput_channel, 0, NULL, 0, &BytesReturned);
 	if (!rc)
 		goto out;
 
@@ -482,7 +479,7 @@ static UINT ainput_process_message(ainput_server* ainput)
 	}
 
 	Stream_SetLength(s, ActualBytesReturned);
-	Stream_Read_UINT16(s, MessageId);
+	const UINT16 MessageId = Stream_Get_UINT16(s);
 
 	switch (MessageId)
 	{
@@ -491,7 +488,7 @@ static UINT ainput_process_message(ainput_server* ainput)
 			break;
 
 		default:
-			WLog_ERR(TAG, "audin_server_thread_func: unknown MessageId %" PRIu8 "", MessageId);
+			WLog_ERR(TAG, "audin_server_thread_func: unknown MessageId %" PRIu16 "", MessageId);
 			break;
 	}
 

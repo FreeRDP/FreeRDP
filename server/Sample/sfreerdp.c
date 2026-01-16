@@ -692,7 +692,6 @@ static BOOL tf_peer_post_connect(freerdp_peer* client)
 		/* A real server may perform OS login here if NLA is not executed previously. */
 	}
 
-	WLog_DBG(TAG, "");
 	WLog_DBG(TAG, "Client requested desktop: %" PRIu32 "x%" PRIu32 "x%" PRIu32 "",
 	         freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth),
 	         freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight),
