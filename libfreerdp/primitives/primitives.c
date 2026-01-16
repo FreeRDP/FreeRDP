@@ -344,7 +344,7 @@ BOOL primitives_init(primitives_t* p, primitive_hints hints)
 			return TRUE;
 #endif
 		default:
-			WLog_ERR(TAG, "unknown hint %d", hints);
+			WLog_ERR(TAG, "unknown hint %u", hints);
 			return FALSE;
 	}
 }
