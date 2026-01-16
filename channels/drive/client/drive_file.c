@@ -660,7 +660,7 @@ static BOOL drive_file_set_basic_information(DRIVE_FILE* file, UINT32 Length, wS
 		char fullpath[MAX_PATH] = { 0 };
 		(void)ConvertWCharToUtf8(file->fullpath, fullpath, sizeof(fullpath) - 1);
 
-		WLog_ERR(TAG, "Unable to set file time %s (%" PRId32 ")", fullpath, GetLastError());
+		WLog_ERR(TAG, "Unable to set file time %s (%" PRIu32 ")", fullpath, GetLastError());
 		return FALSE;
 	}
 
@@ -735,7 +735,7 @@ static BOOL drive_file_set_alloc_information(DRIVE_FILE* file, UINT32 Length, wS
 	{
 		char fullpath[MAX_PATH] = { 0 };
 		(void)ConvertWCharToUtf8(file->fullpath, fullpath, sizeof(fullpath));
-		WLog_ERR(TAG, "Unable to truncate %s to %" PRId64 " (%" PRId32 ")", fullpath, size,
+		WLog_ERR(TAG, "Unable to truncate %s to %" PRId64 " (%" PRIu32 ")", fullpath, size,
 		         GetLastError());
 		return FALSE;
 	}
@@ -746,7 +746,7 @@ static BOOL drive_file_set_alloc_information(DRIVE_FILE* file, UINT32 Length, wS
 	{
 		char fullpath[MAX_PATH] = { 0 };
 		(void)ConvertWCharToUtf8(file->fullpath, fullpath, sizeof(fullpath));
-		WLog_ERR(TAG, "Unable to truncate %s to %" PRId64 " (%" PRId32 ")", fullpath, size,
+		WLog_ERR(TAG, "Unable to truncate %s to %" PRId64 " (%" PRIu32 ")", fullpath, size,
 		         GetLastError());
 		return FALSE;
 	}
@@ -757,7 +757,7 @@ static BOOL drive_file_set_alloc_information(DRIVE_FILE* file, UINT32 Length, wS
 	{
 		char fullpath[MAX_PATH] = { 0 };
 		(void)ConvertWCharToUtf8(file->fullpath, fullpath, sizeof(fullpath));
-		WLog_ERR(TAG, "Unable to truncate %s to %" PRId64 " (%" PRId32 ")", fullpath, size,
+		WLog_ERR(TAG, "Unable to truncate %s to %" PRId64 " (%" PRIu32 ")", fullpath, size,
 		         GetLastError());
 		return FALSE;
 	}
