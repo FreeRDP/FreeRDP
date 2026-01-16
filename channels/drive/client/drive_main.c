@@ -942,8 +942,10 @@ static UINT drive_register_drive_path(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints,
 
 	if (!pEntryPoints || !name || !path)
 	{
-		WLog_ERR(TAG, "[%s] Invalid parameters: pEntryPoints=%p, name=%p, path=%p", pEntryPoints,
-		         name, path);
+		WLog_ERR(TAG, "Invalid parameters: pEntryPoints=%p, name=%p, path=%p",
+		         WINPR_CXX_COMPAT_CAST(const void*, pEntryPoints),
+		         WINPR_CXX_COMPAT_CAST(const void*, name),
+		         WINPR_CXX_COMPAT_CAST(const void*, path));
 		return ERROR_INVALID_PARAMETER;
 	}
 
