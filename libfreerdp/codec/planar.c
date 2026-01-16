@@ -226,7 +226,7 @@ static inline INT32 planar_skip_plane_rle(const BYTE* WINPR_RESTRICT pSrcData, U
 
 			if (used > SrcSize)
 			{
-				WLog_ERR(TAG, "planar plane used %" PRIu32 " exceeds SrcSize %" PRIu32, used,
+				WLog_ERR(TAG, "planar plane used %" PRIu32 " exceeds SrcSize %" PRId32, used,
 				         INT32_MAX);
 				return -1;
 			}
@@ -835,8 +835,9 @@ BOOL freerdp_bitmap_decompress_planar(BITMAP_PLANAR_CONTEXT* WINPR_RESTRICT plan
 
 			if ((planes[2] + rawSizes[2]) > &pSrcData[SrcSize])
 			{
-				WLog_ERR(TAG, "plane size mismatch %p + %" PRIu32 " > %p", planes[2], rawSizes[2],
-				         &pSrcData[SrcSize]);
+				WLog_ERR(TAG, "plane size mismatch %p + %" PRIu32 " > %p",
+				         WINPR_CXX_COMPAT_CAST(const void*, planes[2]), rawSizes[2],
+				         WINPR_CXX_COMPAT_CAST(const void*, &pSrcData[SrcSize]));
 				return FALSE;
 			}
 		}
@@ -844,7 +845,7 @@ BOOL freerdp_bitmap_decompress_planar(BITMAP_PLANAR_CONTEXT* WINPR_RESTRICT plan
 		{
 			if ((SrcSize - diff) < base)
 			{
-				WLog_ERR(TAG, "plane size mismatch %" PRIu32 " < %" PRIu32, SrcSize - diff, base);
+				WLog_ERR(TAG, "plane size mismatch %" PRIuz " < %" PRIu32, SrcSize - diff, base);
 				return FALSE;
 			}
 
@@ -854,8 +855,9 @@ BOOL freerdp_bitmap_decompress_planar(BITMAP_PLANAR_CONTEXT* WINPR_RESTRICT plan
 
 			if ((planes[2] + rawSizes[2]) > &pSrcData[SrcSize])
 			{
-				WLog_ERR(TAG, "plane size mismatch %p + %" PRIu32 " > %p", planes[2], rawSizes[2],
-				         &pSrcData[SrcSize]);
+				WLog_ERR(TAG, "plane size mismatch %p + %" PRIu32 " > %p",
+				         WINPR_CXX_COMPAT_CAST(const void*, planes[2]), rawSizes[2],
+				         WINPR_CXX_COMPAT_CAST(const void*, &pSrcData[SrcSize]));
 				return FALSE;
 			}
 		}
