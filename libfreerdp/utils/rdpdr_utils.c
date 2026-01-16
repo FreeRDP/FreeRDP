@@ -653,7 +653,7 @@ const char* rdpdr_irp_mask2str(UINT32 ioCode1Mask, char* buffer, size_t len)
 
 	for (size_t x = 0; x < 32; x++)
 	{
-		const UINT32 mask = (1 << x);
+		const UINT32 mask = (1u << x);
 		if (ioCode1Mask & mask)
 		{
 			if (!winpr_str_append(rdpdr_irp_val2str(mask), &buffer[1], len - 1, "|"))
