@@ -65,7 +65,7 @@ static BOOL rdpsnd_check_pulse(rdpsndPulsePlugin* pulse, BOOL haveStream)
 
 	if (!pulse->context)
 	{
-		WLog_WARN(TAG, "pulse->context=%p", WINPR_CXX_COMPAT_CAST(const void*, pulse->context));
+		WLog_WARN(TAG, "pulse->context=NULL");
 		rc = FALSE;
 	}
 

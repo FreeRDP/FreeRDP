@@ -304,7 +304,7 @@ void xf_draw_screen_(xfContext* xfc, int x, int y, int w, int h, const char* fkt
 {
 	if (!xfc)
 	{
-		WLog_DBG(TAG, "called from [%s] xfc=%p", fkt, WINPR_CXX_COMPAT_CAST(const void*, xfc));
+		WLog_DBG(TAG, "called from [%s] xfc=NULL", fkt);
 		return;
 	}
 
@@ -316,7 +316,7 @@ void xf_draw_screen_(xfContext* xfc, int x, int y, int w, int h, const char* fkt
 
 	if (!xfc->window)
 	{
-		WLog_WARN(TAG, "invalid xfc->window=%p", WINPR_CXX_COMPAT_CAST(const void*, xfc->window));
+		WLog_WARN(TAG, "invalid xfc->window=NULL");
 		return;
 	}
 

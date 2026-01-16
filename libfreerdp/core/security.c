@@ -831,8 +831,7 @@ BOOL security_encrypt(BYTE* data, size_t length, rdpRdp* rdp)
 	WINPR_ASSERT(rdp);
 	if (!rdp->rc4_encrypt_key)
 	{
-		WLog_ERR(TAG, "rdp->rc4_encrypt_key=%p",
-		         WINPR_CXX_COMPAT_CAST(const void*, rdp->rc4_encrypt_key));
+		WLog_ERR(TAG, "rdp->rc4_encrypt_key=NULL");
 		goto fail;
 	}
 
@@ -864,8 +863,7 @@ BOOL security_decrypt(BYTE* data, size_t length, rdpRdp* rdp)
 
 	if (!rdp->rc4_decrypt_key)
 	{
-		WLog_ERR(TAG, "rdp->rc4_decrypt_key=%p",
-		         WINPR_CXX_COMPAT_CAST(const void*, rdp->rc4_decrypt_key));
+		WLog_ERR(TAG, "rdp->rc4_decrypt_key=NULL");
 		goto fail;
 	}
 
