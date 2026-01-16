@@ -228,7 +228,7 @@ BOOL pollset_isSignaled(WINPR_POLL_SET* set, size_t idx)
 
 	if (idx > set->fillIndex)
 	{
-		WLog_ERR(TAG, "index=%d out of pollset(fillIndex=%" PRIuz ")", idx, set->fillIndex);
+		WLog_ERR(TAG, "index=%" PRIuz " out of pollset(fillIndex=%" PRIuz ")", idx, set->fillIndex);
 		return FALSE;
 	}
 
@@ -255,7 +255,7 @@ BOOL pollset_isReadSignaled(WINPR_POLL_SET* set, size_t idx)
 
 	if (idx > set->fillIndex)
 	{
-		WLog_ERR(TAG, "index=%d out of pollset(fillIndex=%" PRIuz ")", idx, set->fillIndex);
+		WLog_ERR(TAG, "index=%" PRIuz " out of pollset(fillIndex=%" PRIuz ")", idx, set->fillIndex);
 		return FALSE;
 	}
 
@@ -276,7 +276,7 @@ BOOL pollset_isWriteSignaled(WINPR_POLL_SET* set, size_t idx)
 
 	if (idx > set->fillIndex)
 	{
-		WLog_ERR(TAG, "index=%d out of pollset(fillIndex=%" PRIuz ")", idx, set->fillIndex);
+		WLog_ERR(TAG, "index=%" PRIuz " out of pollset(fillIndex=%" PRIuz ")", idx, set->fillIndex);
 		return FALSE;
 	}
 
