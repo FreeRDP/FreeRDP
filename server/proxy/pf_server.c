@@ -197,7 +197,7 @@ static BOOL pf_server_get_target_info(rdpContext* context, rdpSettings* settings
 			return freerdp_settings_set_uint32(settings, FreeRDP_ServerPort, ev.target_port);
 		}
 		default:
-			PROXY_LOG_ERR(TAG, ps, "unknown target fetch method: %d", ev.fetch_method);
+			PROXY_LOG_ERR(TAG, ps, "unknown target fetch method: %u", ev.fetch_method);
 			return FALSE;
 	}
 
