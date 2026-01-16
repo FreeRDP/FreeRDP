@@ -94,6 +94,33 @@ static BOOL parseKerberosDeltat(const char* value, INT32* dest, const char* mess
 static BOOL credssp_auth_setup_identity(rdpCredsspAuth* auth);
 static SecurityFunctionTable* auth_resolve_sspi_table(const rdpSettings* settings);
 
+#define log_status(status, level, ...) \
+	log_status_((status), (level), __FILE__, __func__, __LINE__, __VA_ARGS__)
+
+WINPR_ATTR_FORMAT_ARG(6, 7)
+static BOOL log_status_(SECURITY_STATUS status, DWORD level, const char* file, const char* fkt,
+                        size_t line, WINPR_FORMAT_ARG const char* what, ...)
+{
+	static wLog* log = NULL;
+	if (!log)
+		log = WLog_Get(TAG);
+
+	if (WLog_IsLevelActive(log, level))
+	{
+		char fwhat[128] = { 0 };
+		va_list ap;
+		va_start(ap, what);
+		(void)vsnprintf(fwhat, sizeof(fwhat) - 1, what, ap);
+		va_end(ap);
+
+		WLog_PrintTextMessage(log, level, line, file, fkt, "%s status %s [0x%08" PRIx32 "]", fwhat,
+		                      GetSecurityStatusString(status),
+		                      WINPR_CXX_COMPAT_CAST(uint32_t, status));
+	}
+
+	return FALSE;
+}
+
 static BOOL credssp_auth_update_name_cache(rdpCredsspAuth* auth, TCHAR* name)
 {
 	WINPR_ASSERT(auth);
@@ -140,11 +167,8 @@ BOOL credssp_auth_init(rdpCredsspAuth* auth, TCHAR* pkg_name, SecPkgContext_Bind
 	WINPR_ASSERT(auth->table->QuerySecurityPackageInfo);
 	const SECURITY_STATUS status = auth->table->QuerySecurityPackageInfo(pkg_name, &auth->info);
 	if (status != SEC_E_OK)
-	{
-		WLog_ERR(TAG, "QuerySecurityPackageInfo (%s) failed with %s [0x%08X]",
-		         credssp_auth_pkg_name(auth), GetSecurityStatusString(status), status);
-		return FALSE;
-	}
+		return log_status(status, WLOG_ERROR, "QuerySecurityPackageInfo (%s)",
+		                  credssp_auth_pkg_name(auth));
 
 	if (!credssp_auth_update_name_cache(auth, auth->info->Name))
 		return FALSE;
@@ -298,11 +322,7 @@ BOOL credssp_auth_setup_client(rdpCredsspAuth* auth, const char* target_service,
 	                                          pAuthData, NULL, NULL, &auth->credentials, NULL);
 
 	if (status != SEC_E_OK)
-	{
-		WLog_ERR(TAG, "AcquireCredentialsHandleA failed with %s [0x%08X]",
-		         GetSecurityStatusString(status), status);
-		return FALSE;
-	}
+		return log_status(status, WLOG_ERROR, "AcquireCredentialsHandleA");
 
 	if (!credssp_auth_client_init_cred_attributes(auth))
 	{
@@ -338,11 +358,7 @@ BOOL credssp_auth_setup_server(rdpCredsspAuth* auth)
 	    auth->table->AcquireCredentialsHandle(NULL, auth->info->Name, SECPKG_CRED_INBOUND, NULL,
 	                                          pAuthData, NULL, NULL, &auth->credentials, NULL);
 	if (status != SEC_E_OK)
-	{
-		WLog_ERR(TAG, "AcquireCredentialsHandleA failed with %s [0x%08X]",
-		         GetSecurityStatusString(status), status);
-		return FALSE;
-	}
+		return log_status(status, WLOG_ERROR, "AcquireCredentialsHandleA");
 
 	auth->state = AUTH_STATE_CREDS;
 	WLog_DBG(TAG, "Acquired server credentials");
@@ -470,9 +486,8 @@ int credssp_auth_authenticate(rdpCredsspAuth* auth)
 		WINPR_ASSERT(auth->table->QueryContextAttributes);
 		status =
 		    auth->table->QueryContextAttributes(&auth->context, SECPKG_ATTR_SIZES, &auth->sizes);
-		WLog_DBG(TAG, "QueryContextAttributes returned %s [0x%08" PRIx32 "]",
-		         GetSecurityStatusString(status), status);
-		WLog_DBG(TAG, "Context sizes: cbMaxSignature=%d, cbSecurityTrailer=%d",
+		(void)log_status(status, WLOG_DEBUG, "QueryContextAttributes");
+		WLog_DBG(TAG, "Context sizes: cbMaxSignature=%" PRIu32 ", cbSecurityTrailer=%" PRIu32 "",
 		         auth->sizes.cbMaxSignature, auth->sizes.cbSecurityTrailer);
 
 		return 1;
@@ -486,9 +501,8 @@ int credssp_auth_authenticate(rdpCredsspAuth* auth)
 	}
 	else
 	{
-		WLog_ERR(TAG, "%s failed with %s [0x%08X]",
-		         auth->server ? "AcceptSecurityContext" : "InitializeSecurityContext",
-		         GetSecurityStatusString(status), status);
+		(void)log_status(status, WLOG_ERROR,
+		                 auth->server ? "AcceptSecurityContext" : "InitializeSecurityContext");
 		auth->sspi_error = status;
 		return -1;
 	}
@@ -536,10 +550,8 @@ BOOL credssp_auth_encrypt(rdpCredsspAuth* auth, const SecBuffer* plaintext, SecB
 	status = auth->table->EncryptMessage(&auth->context, 0, &buffer_desc, sequence);
 	if (status != SEC_E_OK)
 	{
-		WLog_ERR(TAG, "EncryptMessage failed with %s [0x%08X]", GetSecurityStatusString(status),
-		         status);
 		free(buf);
-		return FALSE;
+		return log_status(status, WLOG_ERROR, "EncryptMessage");
 	}
 
 	if (buffers[0].cbBuffer < auth->sizes.cbSecurityTrailer)
@@ -605,8 +617,8 @@ BOOL credssp_auth_decrypt(rdpCredsspAuth* auth, const SecBuffer* ciphertext, Sec
 	    auth->table->DecryptMessage(&auth->context, &buffer_desc, sequence, &fqop);
 	if (status != SEC_E_OK)
 	{
-		WLog_ERR(TAG, "DecryptMessage failed with %s [0x%08X]", GetSecurityStatusString(status),
-		         status);
+		WLog_ERR(TAG, "DecryptMessage failed with %s [0x%08" PRIx32 "]",
+		         GetSecurityStatusString(status), WINPR_CXX_COMPAT_CAST(uint32_t, status));
 		sspi_SecBufferFree(&buffers[1]);
 		return FALSE;
 	}
@@ -625,8 +637,8 @@ BOOL credssp_auth_impersonate(rdpCredsspAuth* auth)
 
 	if (status != SEC_E_OK)
 	{
-		WLog_ERR(TAG, "ImpersonateSecurityContext failed with %s [0x%08X]",
-		         GetSecurityStatusString(status), status);
+		WLog_ERR(TAG, "ImpersonateSecurityContext failed with %s [0x%08" PRIx32 "]",
+		         GetSecurityStatusString(status), WINPR_CXX_COMPAT_CAST(uint32_t, status));
 		return FALSE;
 	}
 
@@ -642,8 +654,8 @@ BOOL credssp_auth_revert_to_self(rdpCredsspAuth* auth)
 
 	if (status != SEC_E_OK)
 	{
-		WLog_ERR(TAG, "RevertSecurityContext failed with %s [0x%08X]",
-		         GetSecurityStatusString(status), status);
+		WLog_ERR(TAG, "RevertSecurityContext failed with %s [0x%08" PRIx32 "]",
+		         GetSecurityStatusString(status), WINPR_CXX_COMPAT_CAST(uint32_t, status));
 		return FALSE;
 	}
 
