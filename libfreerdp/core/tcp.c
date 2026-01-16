@@ -808,7 +808,7 @@ static BOOL freerdp_tcp_is_hostname_resolvable(rdpContext* context, const char* 
 }
 
 static BOOL freerdp_tcp_connect_timeout(rdpContext* context, int sockfd, struct sockaddr* addr,
-                                        socklen_t addrlen, UINT32 timeout)
+                                        size_t addrlen, UINT32 timeout)
 {
 	BOOL rc = FALSE;
 	HANDLE handles[2] = { 0 };
