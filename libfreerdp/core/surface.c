@@ -313,7 +313,7 @@ BOOL update_write_surfcmd_surface_bits(wStream* s, const SURFACE_BITS_COMMAND* c
 			          cmdType, defaultCmdType);
 			cmdType = defaultCmdType;
 		}
-		    break;
+		break;
 	}
 
 	Stream_Write_UINT16(s, WINPR_ASSERTING_INT_CAST(uint16_t, cmdType));
