@@ -440,7 +440,7 @@ static UINT rdpsnd_alsa_play(rdpsndDevicePlugin* device, const BYTE* data, size_
 
 		if (status < 0)
 		{
-			WLog_ERR(TAG, "status: %d\n", status);
+			WLog_ERR(TAG, "status: %ld\n", status);
 			rdpsnd_alsa_close(device);
 			rdpsnd_alsa_open(device, NULL, alsa->latency);
 			break;
