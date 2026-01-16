@@ -476,7 +476,7 @@ static UINT ainput_process_message(ainput_server* ainput)
 
 	if (BytesReturned != ActualBytesReturned)
 	{
-		WLog_ERR(TAG, "WTSVirtualChannelRead size mismatch %" PRId32 ", expected %" PRId32,
+		WLog_ERR(TAG, "WTSVirtualChannelRead size mismatch %" PRIu32 ", expected %" PRIu32,
 		         ActualBytesReturned, BytesReturned);
 		goto out;
 	}
@@ -576,7 +576,7 @@ UINT ainput_server_context_poll_int(ainput_server_context* context)
 			break;
 
 		default:
-			WLog_ERR(TAG, "AINPUT channel is in invalid state %d", ainput->state);
+			WLog_ERR(TAG, "AINPUT channel is in invalid state %u", ainput->state);
 			break;
 	}
 
