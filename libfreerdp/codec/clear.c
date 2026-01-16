@@ -1139,8 +1139,54 @@ INT32 clear_decompress(CLEAR_CONTEXT* WINPR_RESTRICT clear, const BYTE* WINPR_RE
 
 	if (glyphData)
 	{
-		const uint32_t w = MIN(nWidth, nDstWidth);
-		const uint32_t h = MIN(nHeight, nDstHeight);
+		uint32_t w = MIN(nWidth, nDstWidth);
+		if (nXDst > nDstWidth)
+		{
+			WLog_WARN(TAG, "glyphData copy area x exceeds destination: x=%" PRIu32 " > %" PRIu32,
+			          nXDst, nDstWidth);
+			w = 0;
+		}
+		else if (nXDst + w > nDstWidth)
+		{
+			WLog_WARN(TAG,
+			          "glyphData copy area x + width exceeds destination: x=%" PRIu32 " + %" PRIu32
+			          " > %" PRIu32,
+			          nXDst, w, nDstWidth);
+			w = nDstWidth - nXDst;
+		}
+
+		if (w != nWidth)
+		{
+			WLog_WARN(TAG,
+			          "glyphData copy area width truncated: requested=%" PRIu32
+			          ", truncated to %" PRIu32,
+			          nWidth, w);
+		}
+
+		uint32_t h = MIN(nHeight, nDstHeight);
+		if (nYDst > nDstHeight)
+		{
+			WLog_WARN(TAG, "glyphData copy area y exceeds destination: y=%" PRIu32 " > %" PRIu32,
+			          nYDst, nDstHeight);
+			h = 0;
+		}
+		else if (nYDst + h > nDstHeight)
+		{
+			WLog_WARN(TAG,
+			          "glyphData copy area y + height exceeds destination: x=%" PRIu32 " + %" PRIu32
+			          " > %" PRIu32,
+			          nYDst, h, nDstHeight);
+			h = nDstHeight - nYDst;
+		}
+
+		if (h != nHeight)
+		{
+			WLog_WARN(TAG,
+			          "glyphData copy area height truncated: requested=%" PRIu32
+			          ", truncated to %" PRIu32,
+			          nHeight, h);
+		}
+
 		if (!freerdp_image_copy_no_overlap(glyphData, clear->format, 0, 0, 0, w, h, pDstData,
 		                                   DstFormat, nDstStep, nXDst, nYDst, palette,
 		                                   FREERDP_KEEP_DST_ALPHA))

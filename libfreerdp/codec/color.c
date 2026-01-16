@@ -242,14 +242,33 @@ fail:
 }
 #endif
 
+#if !defined(WITHOUT_FREERDP_3x_DEPRECATED)
 BYTE* freerdp_glyph_convert(UINT32 width, UINT32 height, const BYTE* WINPR_RESTRICT data)
+{
+	const size_t scanline = (width + 7ull) / 8ull;
+	const size_t required = scanline * height;
+	return freerdp_glyph_convert_ex(width, height, data, required);
+}
+#endif
+
+BYTE* freerdp_glyph_convert_ex(UINT32 width, UINT32 height, const BYTE* WINPR_RESTRICT data,
+                               size_t len)
 {
 	/*
 	 * converts a 1-bit-per-pixel glyph to a one-byte-per-pixel glyph:
 	 * this approach uses a little more memory, but provides faster
 	 * means of accessing individual pixels in blitting operations
 	 */
-	const UINT32 scanline = (width + 7) / 8;
+	const size_t scanline = (width + 7ull) / 8ull;
+	const size_t required = scanline * height;
+	if (len < required)
+		return NULL;
+
+	if ((len == 0) || (width == 0) || (height == 0))
+		return NULL;
+
+	WINPR_ASSERT(data);
+
 	BYTE* dstData = (BYTE*)winpr_aligned_malloc(1ull * width * height, 16);
 
 	if (!dstData)

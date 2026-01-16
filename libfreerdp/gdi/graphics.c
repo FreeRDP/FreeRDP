@@ -270,20 +270,17 @@ static BOOL gdi_Bitmap_SetSurface(rdpContext* context, rdpBitmap* bitmap, BOOL p
 /* Glyph Class */
 static BOOL gdi_Glyph_New(rdpContext* context, rdpGlyph* glyph)
 {
-	BYTE* data = NULL;
-	gdiGlyph* gdi_glyph = NULL;
-
 	if (!context || !glyph)
 		return FALSE;
 
-	gdi_glyph = (gdiGlyph*)glyph;
+	gdiGlyph* gdi_glyph = (gdiGlyph*)glyph;
 	gdi_glyph->hdc = gdi_GetDC();
 
 	if (!gdi_glyph->hdc)
 		return FALSE;
 
 	gdi_glyph->hdc->format = PIXEL_FORMAT_MONO;
-	data = freerdp_glyph_convert(glyph->cx, glyph->cy, glyph->aj);
+	BYTE* data = freerdp_glyph_convert_ex(glyph->cx, glyph->cy, glyph->aj, glyph->cb);
 
 	if (!data)
 	{
