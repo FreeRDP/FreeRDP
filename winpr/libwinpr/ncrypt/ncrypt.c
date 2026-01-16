@@ -36,7 +36,7 @@ SECURITY_STATUS checkNCryptHandle(NCRYPT_HANDLE handle, NCryptHandleType matchTy
 {
 	if (!handle)
 	{
-		WLog_VRB(TAG, "invalid handle '%p'", handle);
+		WLog_VRB(TAG, "invalid handle '%p'", WINPR_CXX_COMPAT_CAST(const void*, handle));
 		return ERROR_INVALID_PARAMETER;
 	}
 
@@ -49,7 +49,8 @@ SECURITY_STATUS checkNCryptHandle(NCRYPT_HANDLE handle, NCryptHandleType matchTy
 		memcpy(magic1, base->magic, ARRAYSIZE(NCRYPT_MAGIC));
 		memcpy(magic2, NCRYPT_MAGIC, ARRAYSIZE(NCRYPT_MAGIC));
 
-		WLog_VRB(TAG, "handle '%p' invalid magic '%s' instead of '%s'", base, magic1, magic2);
+		WLog_VRB(TAG, "handle '%p' invalid magic '%s' instead of '%s'",
+		         WINPR_CXX_COMPAT_CAST(const void*, base), magic1, magic2);
 		return ERROR_INVALID_PARAMETER;
 	}
 
@@ -59,13 +60,17 @@ SECURITY_STATUS checkNCryptHandle(NCRYPT_HANDLE handle, NCryptHandleType matchTy
 		case WINPR_NCRYPT_KEY:
 			break;
 		default:
-			WLog_VRB(TAG, "handle '%p' invalid type %d", base, base->type);
+			WLog_VRB(TAG, "handle '%p' invalid type %d", WINPR_CXX_COMPAT_CAST(const void*, base),
+			         WINPR_CXX_COMPAT_CAST(int32_t, base->type));
 			return ERROR_INVALID_PARAMETER;
 	}
 
 	if ((matchType != WINPR_NCRYPT_INVALID) && (base->type != matchType))
 	{
-		WLog_VRB(TAG, "handle '%p' invalid type %d, expected %d", base, base->type, matchType);
+		WLog_VRB(TAG, "handle '%p' invalid type %d, expected %d",
+		         WINPR_CXX_COMPAT_CAST(const void*, base),
+		         WINPR_CXX_COMPAT_CAST(int32_t, base->type),
+		         WINPR_CXX_COMPAT_CAST(int32_t, matchType));
 		return ERROR_INVALID_PARAMETER;
 	}
 	return ERROR_SUCCESS;
