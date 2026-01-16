@@ -493,7 +493,7 @@ static state_run_t peer_recv_tpkt_pdu(freerdp_peer* client, wStream* s)
 			case PDU_TYPE_FLOW_TEST:
 				if (!Stream_SafeSeek(s, remain))
 				{
-					WLog_WARN(TAG, "Short PDU, need %" PRIuz " bytes, got %" PRIuz, remain,
+					WLog_WARN(TAG, "Short PDU, need %" PRIu16 " bytes, got %" PRIuz, remain,
 					          Stream_GetRemainingLength(s));
 					return STATE_RUN_FAILED;
 				}
@@ -759,7 +759,7 @@ static state_run_t rdp_peer_handle_state_active(freerdp_peer* client)
 	}
 	if (!client->connected)
 	{
-		WLog_ERR(TAG, "PostConnect for peer %p failed", client);
+		WLog_ERR(TAG, "PostConnect for peer %p failed", WINPR_CXX_COMPAT_CAST(const void*, client));
 		ret = STATE_RUN_FAILED;
 	}
 	else if (!client->activated)
@@ -774,7 +774,8 @@ static state_run_t rdp_peer_handle_state_active(freerdp_peer* client)
 
 		if (!activated)
 		{
-			WLog_ERR(TAG, "Activate for peer %p failed", client);
+			WLog_ERR(TAG, "Activate for peer %p failed",
+			         WINPR_CXX_COMPAT_CAST(const void*, client));
 			ret = STATE_RUN_FAILED;
 		}
 		else
@@ -1148,7 +1149,8 @@ static state_run_t peer_recv_callback_internal(WINPR_ATTR_UNUSED rdpTransport* t
 		case CONNECTION_STATE_FINALIZATION_CLIENT_GRANTED_CONTROL:
 		case CONNECTION_STATE_FINALIZATION_CLIENT_FONT_MAP:
 		default:
-			WLog_ERR(TAG, "%s state %d", rdp_get_state_string(rdp), rdp_get_state(rdp));
+			WLog_ERR(TAG, "%s state %" PRId32, rdp_get_state_string(rdp),
+			         WINPR_CXX_COMPAT_CAST(int32_t, rdp_get_state(rdp)));
 			break;
 	}
 
