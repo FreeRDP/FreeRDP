@@ -696,10 +696,7 @@ UINT channel_client_post_message(void* MsgsHandle, LPVOID pData, UINT32 dataLeng
 	{
 		if (Stream_Capacity(data_in) != Stream_GetPosition(data_in))
 		{
-			char msg[128];
-			(void)_snprintf(msg, 127, "%s_plugin_process_received: read error",
-			                internals->channel_name);
-			WLog_ERR(TAG, msg);
+			WLog_ERR(TAG, "%s_plugin_process_received: read error", internals->channel_name);
 			return ERROR_INTERNAL_ERROR;
 		}
 
