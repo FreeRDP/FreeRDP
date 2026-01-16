@@ -190,12 +190,12 @@ static BOOL android_pre_connect(freerdp* instance)
 	if (!settings)
 		return FALSE;
 
-	const int rc = PubSub_SubscribeChannelConnected(instance->context->pubSub,
-	                                                android_OnChannelConnectedEventHandler);
+	int rc = PubSub_SubscribeChannelConnected(instance->context->pubSub,
+	                                          android_OnChannelConnectedEventHandler);
 
 	if (rc != CHANNEL_RC_OK)
 	{
-		WLog_ERR(TAG, "Could not subscribe to connect event handler [%08lX]", rc);
+		WLog_ERR(TAG, "Could not subscribe to connect event handler [%08X]", rc);
 		return FALSE;
 	}
 
@@ -204,7 +204,7 @@ static BOOL android_pre_connect(freerdp* instance)
 
 	if (rc != CHANNEL_RC_OK)
 	{
-		WLog_ERR(TAG, "Could not subscribe to disconnect event handler [%08lX]", rc);
+		WLog_ERR(TAG, "Could not subscribe to disconnect event handler [%08X]", rc);
 		return FALSE;
 	}
 
@@ -445,7 +445,7 @@ static int android_freerdp_run(freerdp* instance)
 
 		if (status == WAIT_FAILED)
 		{
-			WLog_ERR(TAG, "WaitForMultipleObjects failed with %" PRIu32 " [%08lX]", status,
+			WLog_ERR(TAG, "WaitForMultipleObjects failed with %u [%08X]", status,
 			         (unsigned)GetLastError());
 			break;
 		}
@@ -732,7 +732,7 @@ JNIEXPORT jboolean JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_free
 
 	if (!inst || !inst->context)
 	{
-		WLog_FATAL(TAG, "(env=%p, cls=%p, instance=%ld", (void*)env, (void*)cls, instance);
+		WLog_FATAL(TAG, "(env=%p, cls=%p, instance=%lld", (void*)env, (void*)cls, instance);
 		return JNI_FALSE;
 	}
 
@@ -753,7 +753,7 @@ JNIEXPORT jboolean JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_free
 
 	if (!inst || !inst->context || !cls || !env)
 	{
-		WLog_FATAL(TAG, "(env=%p, cls=%p, instance=%ld", (void*)env, (void*)cls, instance);
+		WLog_FATAL(TAG, "(env=%p, cls=%p, instance=%lld", (void*)env, (void*)cls, instance);
 		return JNI_FALSE;
 	}
 
@@ -792,7 +792,7 @@ Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1update_1graphics(JNIEn
 
 	if (!env || !cls || !inst)
 	{
-		WLog_FATAL(TAG, "(env=%p, cls=%p, instance=%d", (void*)env, (void*)cls, instance);
+		WLog_FATAL(TAG, "(env=%p, cls=%p, instance=%lld", (void*)env, (void*)cls, instance);
 		return JNI_FALSE;
 	}
 
