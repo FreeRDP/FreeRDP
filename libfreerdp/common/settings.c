@@ -1550,8 +1550,7 @@ BOOL freerdp_settings_set_pointer_len(rdpSettings* settings, FreeRDP_Settings_Ke
 		case FreeRDP_ChannelDefArray:
 			if ((len > 0) && (len < CHANNEL_MAX_COUNT))
 				WLog_WARN(TAG,
-				          "FreeRDP_ChannelDefArray::len expected to be >= %" PRIu32
-				          ", but have %" PRIu32,
+				          "FreeRDP_ChannelDefArray::len expected to be >= %d, but have %" PRIuz,
 				          CHANNEL_MAX_COUNT, len);
 			return freerdp_settings_set_pointer_len_(settings, FreeRDP_ChannelDefArray,
 			                                         FreeRDP_ChannelDefArraySize, data, len,
@@ -1648,7 +1647,7 @@ BOOL freerdp_settings_set_pointer_len(rdpSettings* settings, FreeRDP_Settings_Ke
 				freerdp_settings_set_pointer(settings, id, NULL);
 			}
 			else
-				WLog_WARN(TAG, "Invalid id %" PRIuz, id);
+				WLog_WARN(TAG, "Invalid id %d", id);
 			return FALSE;
 	}
 }
@@ -1805,12 +1804,12 @@ void* freerdp_settings_get_pointer_array_writable(const rdpSettings* settings,
 			WINPR_ASSERT(settings->ReceivedCapabilityDataSizes);
 			return &settings->ReceivedCapabilityDataSizes[offset];
 		default:
-			WLog_WARN(TAG, "Invalid id %s [%" PRIuz "]", freerdp_settings_get_name_for_key(id), id);
+			WLog_WARN(TAG, "Invalid id %s [%d]", freerdp_settings_get_name_for_key(id), id);
 			return NULL;
 	}
 
 fail:
-	WLog_WARN(TAG, "Invalid offset for %s [%" PRIuz "]: size=%" PRIuz ", offset=%" PRIuz,
+	WLog_WARN(TAG, "Invalid offset for %s [%d]: size=%" PRIuz ", offset=%" PRIuz,
 	          freerdp_settings_get_name_for_key(id), id, max, offset);
 	return NULL;
 }
@@ -1992,7 +1991,7 @@ BOOL freerdp_settings_set_pointer_array(rdpSettings* settings, FreeRDP_Settings_
 			settings->ReceivedCapabilityDataSizes[offset] = *(const uint32_t*)data;
 			return TRUE;
 		default:
-			WLog_WARN(TAG, "Invalid id %s [%" PRIuz "]", freerdp_settings_get_name_for_key(id), id);
+			WLog_WARN(TAG, "Invalid id %s [%d]", freerdp_settings_get_name_for_key(id), id);
 			return FALSE;
 	}
 
