@@ -781,7 +781,7 @@ RPC_STATUS RpcBindingServerFromClient(WINPR_ATTR_UNUSED RPC_BINDING_HANDLE Clien
 
 void RpcRaiseException(RPC_STATUS exception)
 {
-	WLog_ERR(TAG, "RpcRaiseException: 0x%08luX", exception);
+	WLog_ERR(TAG, "RpcRaiseException: 0x%08lx", WINPR_CXX_COMPAT_CAST(unsigned long, exception));
 	// NOLINTNEXTLINE(concurrency-mt-unsafe)
 	exit((int)exception);
 }
