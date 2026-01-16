@@ -5845,7 +5845,7 @@ static BOOL args_from_env(const char* name, int* aargc, char** aargv[], const ch
 				goto cleanup;
 			if (rc == 0)
 			{
-				WLog_ERR(TAG, "%s - environment variable '%s' is empty", arg);
+				WLog_ERR(TAG, "environment variable '%s' is empty", arg);
 				goto cleanup;
 			}
 		}
