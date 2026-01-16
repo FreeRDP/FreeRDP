@@ -101,7 +101,7 @@ static BOOL cliprdr_validate_file_contents_request(const CLIPRDR_FILE_CONTENTS_R
 	{
 		if (request->cbRequested != sizeof(UINT64))
 		{
-			WLog_ERR(TAG, "cbRequested must be %" PRIu32 ", got %" PRIu32 "", sizeof(UINT64),
+			WLog_ERR(TAG, "cbRequested must be %" PRIuz ", got %" PRIu32 "", sizeof(UINT64),
 			         request->cbRequested);
 			return FALSE;
 		}
