@@ -343,7 +343,7 @@ DWORD WaitForMultipleObjectsEx(DWORD nCount, const HANDLE* lpHandles, BOOL bWait
 
 	if (!pollset_init(&pollset, nCount + extraFds))
 	{
-		WLog_ERR(TAG, "unable to initialize pollset for nCount=%" PRIu32 " extraCount=%" PRIu32 "",
+		WLog_ERR(TAG, "unable to initialize pollset for nCount=%" PRIu32 " extraCount=%" PRIuz "",
 		         nCount, extraFds);
 		return WAIT_FAILED;
 	}
