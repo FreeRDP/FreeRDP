@@ -66,7 +66,8 @@ static void sig_abort_connect(int signum, const char* signame, void* ctx)
 {
 	rdpContext* context = (rdpContext*)ctx;
 
-	WLog_INFO(TAG, "Signal %s [%d], terminating session %p", signame, signum, context);
+	WLog_INFO(TAG, "Signal %s [%d], terminating session %p", signame, signum,
+	          WINPR_CXX_COMPAT_CAST(const void*, context));
 	if (context)
 		freerdp_abort_connect_context(context);
 }
