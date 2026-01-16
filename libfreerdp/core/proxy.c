@@ -306,7 +306,7 @@ static BOOL check_no_proxy(rdpSettings* settings, const char* no_proxy)
 
 		if (currentlen > 0)
 		{
-			WLog_DBG(TAG, "%s => %s (%" PRIdz ")", settings->ServerHostname, current, currentlen);
+			WLog_DBG(TAG, "%s => %s (%" PRIuz ")", settings->ServerHostname, current, currentlen);
 
 			if (no_proxy_match_host(current, settings->ServerHostname))
 				result = TRUE;
@@ -813,8 +813,9 @@ static BOOL socks_proxy_userpass(rdpContext* context, BIO* bufferedBio, const ch
 
 	if (!proxyUsername || !proxyPassword)
 	{
-		WLog_ERR(TAG, "%s invalid username (%p) or password (%p)", logprefix, proxyUsername,
-		         proxyPassword);
+		WLog_ERR(TAG, "%s invalid username (%p) or password (%p)", logprefix,
+		         WINPR_CXX_COMPAT_CAST(const void*, proxyUsername),
+		         WINPR_CXX_COMPAT_CAST(const void*, proxyPassword));
 		return FALSE;
 	}
 
@@ -896,7 +897,7 @@ static BOOL socks_proxy_connect(rdpContext* context, BIO* bufferedBio, const cha
 
 		if (status != iwriteLen)
 		{
-			WLog_ERR(TAG, "SOCKS proxy: failed to write AUTH METHOD request", logprefix);
+			WLog_ERR(TAG, "%s SOCKS proxy: failed to write AUTH METHOD request", logprefix);
 			return FALSE;
 		}
 	}
@@ -968,7 +969,7 @@ static BOOL socks_proxy_connect(rdpContext* context, BIO* bufferedBio, const cha
 
 		if ((status < 0) || (status != ioffset))
 		{
-			WLog_ERR(TAG, "SOCKS proxy: failed to write CONN REQ", logprefix);
+			WLog_ERR(TAG, "%s SOCKS proxy: failed to write CONN REQ", logprefix);
 			return FALSE;
 		}
 	}
