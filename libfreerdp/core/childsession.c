@@ -58,7 +58,7 @@ static int transport_bio_named_write(BIO* bio, const char* buf, int size)
 	BIO_clear_flags(bio, BIO_FLAGS_WRITE);
 	DWORD written = 0;
 
-	UINT64 start = GetTickCount64();
+	const UINT64 start = GetTickCount64();
 	BOOL ret = WriteFile(ptr->hFile, buf, WINPR_ASSERTING_INT_CAST(uint32_t, size), &written, NULL);
 	// winpr_HexDump(TAG, WLOG_DEBUG, buf, size);
 
@@ -68,7 +68,8 @@ static int transport_bio_named_write(BIO* bio, const char* buf, int size)
 		return 0;
 	}
 
-	WLog_VRB(TAG, "(%d)=%d written=%d duration=%d", size, ret, written, GetTickCount64() - start);
+	WLog_VRB(TAG, "(%d)=%d written=%" PRIu32 " duration=%" PRIu64, size, ret, written,
+	         GetTickCount64() - start);
 
 	if (written == 0)
 	{
@@ -493,7 +494,8 @@ static BOOL createChildSessionTransport(HANDLE* pFile)
 				HRESULT hStatus = createChildSessionFn(pipePath, 0x80);
 				if (!SUCCEEDED(hStatus))
 				{
-					WLog_ERR(TAG, "error 0x%x when creating childSessionTransport", hStatus);
+					WLog_ERR(TAG, "error 0x%08x when creating childSessionTransport",
+					         WINPR_CXX_COMPAT_CAST(unsigned, hStatus));
 					goto out;
 				}
 			}
