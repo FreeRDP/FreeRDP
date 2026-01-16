@@ -37,7 +37,7 @@ static inline BYTE* WRITEFGBGIMAGE(BYTE* WINPR_RESTRICT pbDest,
 
 	if (cBits > 8)
 	{
-		WLog_ERR(TAG, "cBits %d > 8", cBits);
+		WLog_ERR(TAG, "cBits %" PRIu32 " > 8", cBits);
 		return NULL;
 	}
 
@@ -71,7 +71,7 @@ static inline BYTE* WRITEFIRSTLINEFGBGIMAGE(BYTE* WINPR_RESTRICT pbDest,
 
 	if (cBits > 8)
 	{
-		WLog_ERR(TAG, "cBits %d > 8", cBits);
+		WLog_ERR(TAG, "cBits %" PRIu32 " > 8", cBits);
 		return NULL;
 	}
 
@@ -122,8 +122,9 @@ static inline BOOL RLEDECOMPRESS(const BYTE* WINPR_RESTRICT pbSrcBuffer, UINT32 
 
 	if (!pbSrcBuffer || !pbDestBuffer)
 	{
-		WLog_ERR(TAG, "Invalid arguments: pbSrcBuffer=%p, pbDestBuffer=%p", pbSrcBuffer,
-		         pbDestBuffer);
+		WLog_ERR(TAG, "Invalid arguments: pbSrcBuffer=%p, pbDestBuffer=%p",
+		         WINPR_CXX_COMPAT_CAST(const void*, pbSrcBuffer),
+		         WINPR_CXX_COMPAT_CAST(const void*, pbDestBuffer));
 		return FALSE;
 	}
 
@@ -442,7 +443,9 @@ static inline BOOL RLEDECOMPRESS(const BYTE* WINPR_RESTRICT pbSrcBuffer, UINT32 
 
 			default:
 				WLog_ERR(TAG, "invalid code 0x%08" PRIx32 ", pbSrcBuffer=%p, pbSrc=%p, pbEnd=%p",
-				         code, pbSrcBuffer, pbSrc, pbEnd);
+				         code, WINPR_CXX_COMPAT_CAST(const void*, pbSrcBuffer),
+				         WINPR_CXX_COMPAT_CAST(const void*, pbSrc),
+				         WINPR_CXX_COMPAT_CAST(const void*, pbEnd));
 				return FALSE;
 		}
 	}
