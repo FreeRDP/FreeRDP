@@ -251,8 +251,7 @@ BOOL ber_read_contextual_tag(wStream* s, BYTE tag, size_t* length, BOOL pc)
 
 	if (Stream_GetRemainingLength(s) < 1)
 	{
-		WLog_VRB(TAG, "short data, got %" PRIuz ", expected %" PRIuz, Stream_GetRemainingLength(s),
-		         1);
+		WLog_VRB(TAG, "short data, got %" PRIuz ", expected %u", Stream_GetRemainingLength(s), 1u);
 		return FALSE;
 	}
 
@@ -333,7 +332,7 @@ BOOL ber_read_enumerated(wStream* s, BYTE* enumerated, BYTE count)
 
 	if (length != 1)
 	{
-		WLog_WARN(TAG, "short data, got %" PRIuz ", expected %" PRIuz, length, 1);
+		WLog_WARN(TAG, "short data, got %" PRIuz ", expected %u", length, 1u);
 		return FALSE;
 	}
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 1))
@@ -549,7 +548,7 @@ BOOL ber_read_BOOL(wStream* s, BOOL* value)
 
 	if (length != 1)
 	{
-		WLog_WARN(TAG, "short data, got %" PRIuz ", expected %" PRIuz, length, 1);
+		WLog_WARN(TAG, "short data, got %" PRIuz ", expected %u", length, 1u);
 		return FALSE;
 	}
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 1))
