@@ -438,7 +438,9 @@ void* ClipboardGetData(wClipboard* clipboard, UINT32 formatId, UINT32* pSize)
 
 	if (!clipboard || !pSize)
 	{
-		WLog_ERR(TAG, "Invalid parameters clipboard=%p, pSize=%p", clipboard, pSize);
+		WLog_ERR(TAG, "Invalid parameters clipboard=%p, pSize=%p",
+		         WINPR_CXX_COMPAT_CAST(const void*, clipboard),
+		         WINPR_CXX_COMPAT_CAST(const void*, pSize));
 		return NULL;
 	}
 
@@ -654,7 +656,7 @@ char* parse_uri_to_local_file(const char* uri, size_t uri_len)
 
 	WINPR_ASSERT(uri || (uri_len == 0));
 
-	WLog_VRB(TAG, "processing URI: %.*s", uri_len, uri);
+	WLog_VRB(TAG, "processing URI: %.*s", WINPR_ASSERTING_INT_CAST(int, uri_len), uri);
 
 	if ((uri_len <= prefixLen) || strncmp(uri, prefix, prefixLen) != 0)
 	{
