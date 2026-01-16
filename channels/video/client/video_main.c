@@ -937,7 +937,7 @@ static UINT video_VideoData(VideoClientContext* context, const TSMM_VIDEO_DATA* 
 			}
 
 			// NOLINTNEXTLINE(clang-analyzer-unix.Malloc): Queue_Enqueue owns frame
-			WLog_DBG(TAG, "scheduling frame in %" PRIu32 " ms", (frame->publishTime - startTime));
+			WLog_DBG(TAG, "scheduling frame in %" PRIu64 " ms", (frame->publishTime - startTime));
 		}
 	}
 
