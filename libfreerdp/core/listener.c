@@ -90,7 +90,7 @@ static BOOL freerdp_listener_open_from_vsock(WINPR_ATTR_UNUSED freerdp_listener*
 		else
 		{
 			char ebuffer[256] = { 0 };
-			WLog_ERR(TAG, "could not extract port from '%s', value=%ul, error=%s", bind_address,
+			WLog_ERR(TAG, "could not extract port from '%s', value=%lu, error=%s", bind_address,
 			         val, winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 			close(sockfd);
 			return FALSE;
@@ -100,7 +100,7 @@ static BOOL freerdp_listener_open_from_vsock(WINPR_ATTR_UNUSED freerdp_listener*
 	if (bind(sockfd, (struct sockaddr*)&addr, sizeof(struct sockaddr_vm)) == -1)
 	{
 		char ebuffer[256] = { 0 };
-		WLog_ERR(TAG, "Error binding vsock at cid %d port %d: %s", addr.svm_cid, port,
+		WLog_ERR(TAG, "Error binding vsock at cid %u port %d: %s", addr.svm_cid, port,
 		         winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 		close(sockfd);
 		return FALSE;
@@ -109,7 +109,7 @@ static BOOL freerdp_listener_open_from_vsock(WINPR_ATTR_UNUSED freerdp_listener*
 	if (listen(sockfd, 10) == -1)
 	{
 		char ebuffer[256] = { 0 };
-		WLog_ERR(TAG, "Error listening to socket at cid %d port %d: %s", addr.svm_cid, port,
+		WLog_ERR(TAG, "Error listening to socket at cid %u port %d: %s", addr.svm_cid, port,
 		         winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 		close(sockfd);
 		return FALSE;
