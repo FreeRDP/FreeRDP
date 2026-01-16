@@ -831,7 +831,8 @@ BOOL security_encrypt(BYTE* data, size_t length, rdpRdp* rdp)
 	WINPR_ASSERT(rdp);
 	if (!rdp->rc4_encrypt_key)
 	{
-		WLog_ERR(TAG, "rdp->rc4_encrypt_key=%p", rdp->rc4_encrypt_key);
+		WLog_ERR(TAG, "rdp->rc4_encrypt_key=%p",
+		         WINPR_CXX_COMPAT_CAST(const void*, rdp->rc4_encrypt_key));
 		goto fail;
 	}
 
@@ -863,7 +864,8 @@ BOOL security_decrypt(BYTE* data, size_t length, rdpRdp* rdp)
 
 	if (!rdp->rc4_decrypt_key)
 	{
-		WLog_ERR(TAG, "rdp->rc4_decrypt_key=%p", rdp->rc4_decrypt_key);
+		WLog_ERR(TAG, "rdp->rc4_decrypt_key=%p",
+		         WINPR_CXX_COMPAT_CAST(const void*, rdp->rc4_decrypt_key));
 		goto fail;
 	}
 
@@ -945,7 +947,8 @@ BOOL security_fips_decrypt(BYTE* data, size_t length, rdpRdp* rdp)
 
 	if (!rdp || !rdp->fips_decrypt)
 	{
-		WLog_ERR(TAG, "rdp=%p, rdp->fips_decrypt=%p", rdp, rdp ? rdp->fips_decrypt : NULL);
+		WLog_ERR(TAG, "rdp=%p, rdp->fips_decrypt=%p", WINPR_CXX_COMPAT_CAST(const void*, rdp),
+		         WINPR_CXX_COMPAT_CAST(const void*, rdp ? rdp->fips_decrypt : NULL));
 		return FALSE;
 	}
 
