@@ -122,11 +122,11 @@ int int_MultiByteToWideChar(UINT CodePage, DWORD dwFlags, LPCSTR lpMultiByteStr,
 				break;
 			default:
 				WLog_WARN(TAG, "unexpected ICU error code %s [0x%08" PRIx32 "]", u_errorName(error),
-				          error);
+				          WINPR_CXX_COMPAT_CAST(unsigned, error));
 				if (U_FAILURE(error))
 				{
 					WLog_ERR(TAG, "unexpected ICU error code %s [0x%08" PRIx32 "] is fatal",
-					         u_errorName(error), error);
+					         u_errorName(error), WINPR_CXX_COMPAT_CAST(unsigned, error));
 					cchWideChar = 0;
 					SetLastError(ERROR_NO_UNICODE_TRANSLATION);
 				}
@@ -217,11 +217,11 @@ int int_WideCharToMultiByte(UINT CodePage, WINPR_ATTR_UNUSED DWORD dwFlags, LPCW
 				break;
 			default:
 				WLog_WARN(TAG, "unexpected ICU error code %s [0x%08" PRIx32 "]", u_errorName(error),
-				          error);
+				          WINPR_CXX_COMPAT_CAST(unsigned, error));
 				if (U_FAILURE(error))
 				{
 					WLog_ERR(TAG, "unexpected ICU error code %s [0x%08" PRIx32 "] is fatal",
-					         u_errorName(error), error);
+					         u_errorName(error), WINPR_CXX_COMPAT_CAST(unsigned, error));
 					cbMultiByte = 0;
 					SetLastError(ERROR_NO_UNICODE_TRANSLATION);
 				}
