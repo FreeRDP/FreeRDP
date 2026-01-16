@@ -210,7 +210,7 @@ static UINT location_on_data_received(IWTSVirtualChannelCallback* pChannelCallba
 			}
 			return location_send_client_ready_pdu(callback);
 		default:
-			WLog_WARN(TAG, "invalid pduType=%s");
+			WLog_WARN(TAG, "invalid pduType=%" PRIu16, pduType);
 			return ERROR_INVALID_DATA;
 	}
 }
@@ -229,8 +229,9 @@ static UINT location_send_base_location3d(IWTSVirtualChannel* channel,
 		WLog_DBG(TAG,
 		         "latitude=%lf, longitude=%lf, altitude=%" PRId32
 		         ", speed=%lf, heading=%lf, haccuracy=%lf, source=%" PRIu8,
-		         pdu->latitude, pdu->longitude, pdu->altitude, pdu->speed, pdu->heading,
-		         pdu->horizontalAccuracy, *pdu->source);
+		         pdu->latitude, pdu->longitude, pdu->altitude, pdu->speed ? *pdu->speed : FP_NAN,
+		         pdu->heading ? *pdu->heading : FP_NAN,
+		         pdu->horizontalAccuracy ? *pdu->horizontalAccuracy : FP_NAN, *pdu->source);
 	else
 		WLog_DBG(TAG, "latitude=%lf, longitude=%lf, altitude=%" PRId32, pdu->latitude,
 		         pdu->longitude, pdu->altitude);
@@ -271,7 +272,8 @@ static UINT location_send_location2d_delta(IWTSVirtualChannel* channel,
 
 	if (ext)
 		WLog_DBG(TAG, "latitude=%lf, longitude=%lf, speed=%lf, heading=%lf", pdu->latitudeDelta,
-		         pdu->longitudeDelta, pdu->speedDelta, pdu->headingDelta);
+		         pdu->longitudeDelta, pdu->speedDelta ? *pdu->speedDelta : FP_NAN,
+		         pdu->headingDelta ? *pdu->headingDelta : FP_NAN);
 	else
 		WLog_DBG(TAG, "latitude=%lf, longitude=%lf", pdu->latitudeDelta, pdu->longitudeDelta);
 
@@ -307,8 +309,9 @@ static UINT location_send_location3d_delta(IWTSVirtualChannel* channel,
 
 	if (ext)
 		WLog_DBG(TAG, "latitude=%lf, longitude=%lf, altitude=%" PRId32 ", speed=%lf, heading=%lf",
-		         pdu->latitudeDelta, pdu->longitudeDelta, pdu->altitudeDelta, pdu->speedDelta,
-		         pdu->headingDelta);
+		         pdu->latitudeDelta, pdu->longitudeDelta, pdu->altitudeDelta,
+		         pdu->speedDelta ? *pdu->speedDelta : FP_NAN,
+		         pdu->headingDelta ? *pdu->headingDelta : FP_NAN);
 	else
 		WLog_DBG(TAG, "latitude=%lf, longitude=%lf, altitude=%" PRId32, pdu->latitudeDelta,
 		         pdu->longitudeDelta, pdu->altitudeDelta);

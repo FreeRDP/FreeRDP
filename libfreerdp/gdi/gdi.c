@@ -488,8 +488,10 @@ BOOL gdi_bitmap_update(rdpContext* context, const BITMAP_UPDATE* bitmapUpdate)
 		WLog_ERR(TAG,
 		         "Invalid arguments: context=%p, bitmapUpdate=%p, context->gdi=%p, "
 		         "context->codecs=%p",
-		         context, bitmapUpdate, context ? context->gdi : NULL,
-		         context ? context->codecs : NULL);
+		         WINPR_CXX_COMPAT_CAST(const void*, context),
+		         WINPR_CXX_COMPAT_CAST(const void*, bitmapUpdate),
+		         WINPR_CXX_COMPAT_CAST(const void*, context ? context->gdi : NULL),
+		         WINPR_CXX_COMPAT_CAST(const void*, context ? context->codecs : NULL));
 		return FALSE;
 	}
 

@@ -363,7 +363,7 @@ static long bio_rdp_tls_ctrl(BIO* bio, int cmd, long num, void* ptr)
 			BIO_clear_retry_flags(bio);
 			status = BIO_ctrl(ssl_wbio, cmd, num, ptr);
 			if (status != 1)
-				WLog_DBG(TAG, "BIO_ctrl returned %d", status);
+				WLog_DBG(TAG, "BIO_ctrl returned %ld", status);
 			BIO_copy_next_retry(bio);
 			status = 1;
 			break;
@@ -795,13 +795,13 @@ static BOOL tls_prepare(rdpTls* tls, BIO* underlying, SSL_METHOD* method, int op
 	UINT16 version = freerdp_settings_get_uint16(settings, FreeRDP_TLSMinVersion);
 	if (!SSL_CTX_set_min_proto_version(tls->ctx, version))
 	{
-		WLog_ERR(TAG, "SSL_CTX_set_min_proto_version %s failed", version);
+		WLog_ERR(TAG, "SSL_CTX_set_min_proto_version %" PRIu16 " failed", version);
 		return FALSE;
 	}
 	version = freerdp_settings_get_uint16(settings, FreeRDP_TLSMaxVersion);
 	if (!SSL_CTX_set_max_proto_version(tls->ctx, version))
 	{
-		WLog_ERR(TAG, "SSL_CTX_set_max_proto_version %s failed", version);
+		WLog_ERR(TAG, "SSL_CTX_set_max_proto_version %" PRIu16 " failed", version);
 		return FALSE;
 	}
 #endif

@@ -181,14 +181,14 @@ BOOL readBitmapInfoHeader(wStream* s, WINPR_BITMAP_INFO_HEADER* bi, size_t* poff
 
 	if (bi->biSizeImage == 0)
 	{
-		WLog_ERR(TAG, "invalid biSizeImage %" PRIuz, bi->biSizeImage);
+		WLog_ERR(TAG, "invalid biSizeImage %" PRIu32, bi->biSizeImage);
 		return FALSE;
 	}
 
 	const size_t pos = Stream_GetPosition(s) - start;
 	if (bi->biSize < pos)
 	{
-		WLog_ERR(TAG, "invalid biSize %" PRIuz " < (actual) offset %" PRIuz, bi->biSize, pos);
+		WLog_ERR(TAG, "invalid biSize %" PRIu32 " < (actual) offset %" PRIuz, bi->biSize, pos);
 		return FALSE;
 	}
 
@@ -440,7 +440,7 @@ static int winpr_image_bitmap_read_buffer(wImage* image, const BYTE* buffer, siz
 		const size_t expect = bf.bfOffBits;
 		if (pos != expect)
 		{
-			WLog_WARN(TAG, "pos=%" PRIuz ", expected %" PRIuz ", offset=" PRIuz, pos, expect,
+			WLog_WARN(TAG, "pos=%" PRIuz ", expected %" PRIuz ", offset=%" PRIuz, pos, expect,
 			          bmpoffset);
 			goto fail;
 		}

@@ -418,9 +418,9 @@ static BOOL list_provider_keys(WINPR_ATTR_UNUSED const rdpSettings* settings,
 		if (status != ERROR_SUCCESS)
 		{
 			WLog_DBG(TAG,
-			         "unable to NCryptOpenKey(dwLegacyKeySpec=0x%" PRIx32 " dwFlags=0x%" PRIx32
+			         "unable to NCryptOpenKey(dwLegacyKeySpec=0x%08" PRIx32 " dwFlags=0x%08" PRIx32
 			         "), status=%s, skipping",
-			         status, keyName->dwLegacyKeySpec, keyName->dwFlags,
+			         keyName->dwLegacyKeySpec, keyName->dwFlags,
 			         winpr_NCryptSecurityStatusError(status));
 			goto endofloop;
 		}
@@ -493,8 +493,8 @@ static BOOL list_provider_keys(WINPR_ATTR_UNUSED const rdpSettings* settings,
 		if (status != ERROR_SUCCESS)
 		{
 			/* can happen that key don't have certificates */
-			WLog_DBG(TAG, "unable to retrieve certificate property len, status=0x%lx, skipping",
-			         status);
+			WLog_DBG(TAG, "unable to retrieve certificate property len, status=%s, skipping",
+			         winpr_NCryptSecurityStatusError(status));
 			goto endofloop;
 		}
 

@@ -215,7 +215,7 @@ static enum AVPixelFormat ecamToAVPixFormat(CAM_MEDIA_FORMAT ecamFormat)
 		case CAM_MEDIA_FORMAT_RGB32:
 			return AV_PIX_FMT_RGB32;
 		default:
-			WLog_ERR(TAG, "Unsupported ecamFormat %d", ecamFormat);
+			WLog_ERR(TAG, "Unsupported ecamFormat %u", ecamFormat);
 			return AV_PIX_FMT_NONE;
 	}
 }
@@ -568,7 +568,7 @@ BOOL ecam_encoder_context_init(CameraDeviceStream* stream)
 			return ecam_encoder_context_init_h264(stream);
 
 		default:
-			WLog_ERR(TAG, "Unsupported output format %d", format);
+			WLog_ERR(TAG, "Unsupported output format %u", format);
 			return FALSE;
 	}
 }
@@ -607,7 +607,7 @@ BOOL ecam_encoder_compress(CameraDeviceStream* stream, const BYTE* srcData, size
 		case CAM_MEDIA_FORMAT_H264:
 			return ecam_encoder_compress_h264(stream, srcData, srcSize, ppDstData, pDstSize);
 		default:
-			WLog_ERR(TAG, "Unsupported output format %d", format);
+			WLog_ERR(TAG, "Unsupported output format %u", format);
 			return FALSE;
 	}
 }

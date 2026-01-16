@@ -332,8 +332,11 @@ HANDLE CreateEventExW(LPSECURITY_ATTRIBUTES lpEventAttributes, LPCWSTR lpName, D
 		manual = TRUE;
 
 	if (dwDesiredAccess != 0)
-		WLog_WARN(TAG, "[%s] does not support dwDesiredAccess 0x%08" PRIx32, lpName,
-		          dwDesiredAccess);
+	{
+		char name[MAX_PATH] = { 0 };
+		ConvertWCharToUtf8(lpName, name, sizeof(name) - 1);
+		WLog_WARN(TAG, "[%s] does not support dwDesiredAccess 0x%08" PRIx32, name, dwDesiredAccess);
+	}
 
 	return CreateEventW(lpEventAttributes, manual, initial, lpName);
 }

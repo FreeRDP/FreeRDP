@@ -313,8 +313,7 @@ BOOL per_read_integer16(wStream* s, UINT16* integer, UINT16 min)
 
 	if (*integer > UINT16_MAX - min)
 	{
-		WLog_WARN(TAG, "PER uint16 invalid value %" PRIu16 " > %" PRIu16, *integer,
-		          UINT16_MAX - min);
+		WLog_WARN(TAG, "PER uint16 invalid value %" PRIu16 " > %d", *integer, UINT16_MAX - min);
 		return FALSE;
 	}
 
@@ -489,7 +488,7 @@ BOOL per_read_octet_string(wStream* s, const BYTE* oct_str, UINT16 length, UINT1
 
 	if (mlength + min != length)
 	{
-		WLog_ERR(TAG, "length mismatch: %" PRIu16 "!= %" PRIu16, mlength + min, length);
+		WLog_ERR(TAG, "length mismatch: %d!= %" PRIu16, mlength + min, length);
 		return FALSE;
 	}
 

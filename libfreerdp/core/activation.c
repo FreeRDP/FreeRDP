@@ -58,7 +58,7 @@ static BOOL rdp_recv_sync_pdu(rdpRdp* rdp, wStream* s, const char* what)
 	if (msgType != SYNCMSGTYPE_SYNC)
 	{
 		WLog_WARN(TAG, "%s: Invalid messageType=0x%04" PRIx16 ", expected 0x%04" PRIx16, what,
-		          msgType, SYNCMSGTYPE_SYNC);
+		          msgType, WINPR_CXX_COMPAT_CAST(uint16_t, SYNCMSGTYPE_SYNC));
 		return FALSE;
 	}
 	Stream_Read_UINT16(s, targetUser);

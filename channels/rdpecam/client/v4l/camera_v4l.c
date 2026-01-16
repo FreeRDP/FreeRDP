@@ -92,7 +92,7 @@ static UINT32 ecamToV4L2PixFormat(CAM_MEDIA_FORMAT ecamFormat)
 		case CAM_MEDIA_FORMAT_RGB32:
 			return V4L2_PIX_FMT_RGB32;
 		default:
-			WLog_ERR(TAG, "Unsupported CAM_MEDIA_FORMAT %d", ecamFormat);
+			WLog_ERR(TAG, "Unsupported CAM_MEDIA_FORMAT %u", ecamFormat);
 			return 0;
 	}
 }
@@ -279,7 +279,7 @@ static INT16 cam_v4l_get_media_type_descriptions(ICamHal* ihal, const char* devi
 
 			if (nTypes == maxMediaTypes)
 			{
-				WLog_ERR(TAG, "Media types reached buffer maximum %" PRIu32 "", maxMediaTypes);
+				WLog_ERR(TAG, "Media types reached buffer maximum %" PRIuz "", maxMediaTypes);
 				goto error;
 			}
 		}
@@ -375,7 +375,7 @@ static size_t cam_v4l_stream_alloc_buffers(CamV4lStream* stream)
 	if (ioctl(stream->fd, VIDIOC_REQBUFS, &rbuffer) < 0 || rbuffer.count == 0)
 	{
 		char buffer[64] = { 0 };
-		WLog_ERR(TAG, "Failure in VIDIOC_REQBUFS, errno  %s [%d], count %d",
+		WLog_ERR(TAG, "Failure in VIDIOC_REQBUFS, errno  %s [%d], count %u",
 		         winpr_strerror(errno, buffer, sizeof(buffer)), errno, rbuffer.count);
 		return 0;
 	}
@@ -420,7 +420,7 @@ static size_t cam_v4l_stream_alloc_buffers(CamV4lStream* stream)
 
 		stream->buffers[i].length = vbuffer.length;
 
-		WLog_DBG(TAG, "Buffer %d mapped, size: %d", i, vbuffer.length);
+		WLog_DBG(TAG, "Buffer %u mapped, size: %u", i, vbuffer.length);
 
 		if (ioctl(stream->fd, VIDIOC_QBUF, &vbuffer) < 0)
 		{

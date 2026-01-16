@@ -294,7 +294,7 @@ BOOL NamedPipeRead(PVOID Object, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 		/* Overlapped I/O */
 		if (!lpOverlapped)
 		{
-			WLog_ERR(TAG, "%s requires lpOverlapped != NULL as FILE_FLAG_OVERLAPPED is set");
+			WLog_ERR(TAG, "requires lpOverlapped != NULL as FILE_FLAG_OVERLAPPED is set");
 			SetLastError(ERROR_NOT_SUPPORTED);
 			return FALSE;
 		}

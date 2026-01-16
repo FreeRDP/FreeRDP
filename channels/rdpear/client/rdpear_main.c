@@ -536,8 +536,8 @@ static BOOL rdpear_kerb_CreateApReqAuthenticator(RDPEAR_PLUGIN* rdpear, NdrConte
 		if (len > MAX_KEYTAB_NAME_LEN)
 		{
 			WLog_ERR(TAG,
-			         "Invalid ClientName length %" PRIuz
-			         ", limited to %u characters. ClientName: (%s)",
+			         "Invalid ClientName length %d, limited to %" PRIuz
+			         " characters. ClientName: (%s)",
 			         MAX_KEYTAB_NAME_LEN, len, cur->data);
 			goto out;
 		}
@@ -550,7 +550,7 @@ static BOOL rdpear_kerb_CreateApReqAuthenticator(RDPEAR_PLUGIN* rdpear, NdrConte
 	const size_t len = strnlen(client.realm.data, MAX_KEYTAB_NAME_LEN + 1);
 	if (len > MAX_KEYTAB_NAME_LEN)
 	{
-		WLog_ERR(TAG, "Invalid realm length %" PRIuz ", limited to %u characters. Realm: (%s)",
+		WLog_ERR(TAG, "Invalid realm length %d, limited to %" PRIuz " characters. Realm: (%s)",
 		         MAX_KEYTAB_NAME_LEN, len, client.realm.data);
 		goto out;
 	}

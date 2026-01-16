@@ -1215,7 +1215,7 @@ BOOL client_cli_get_access_token(freerdp* instance, AccessTokenType tokenType, c
 			rc = client_cli_get_avd_access_token(instance, token);
 			break;
 		default:
-			WLog_ERR(TAG, "Unexpected value for AccessTokenType [%" PRIuz "], aborting", tokenType);
+			WLog_ERR(TAG, "Unexpected value for AccessTokenType [%u], aborting", tokenType);
 			break;
 	}
 
@@ -2048,7 +2048,7 @@ BOOL freerdp_client_handle_touch(rdpClientContext* cctx, UINT32 flags, INT32 fin
 		case FREERDP_TOUCH_MOTION:
 			return freerdp_handle_touch_motion(cctx, &contact);
 		default:
-			WLog_WARN(TAG, "Unhandled FreeRDPTouchEventType %d, ignoring", flags);
+			WLog_WARN(TAG, "Unhandled FreeRDPTouchEventType %" PRIu32 ", ignoring", flags);
 			return FALSE;
 	}
 }

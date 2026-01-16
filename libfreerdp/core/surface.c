@@ -169,10 +169,10 @@ static BOOL update_recv_surfcmd_frame_marker(rdpUpdate* update, wStream* s)
 	Stream_Read_UINT16(s, marker.frameAction);
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		WLog_WARN(TAG,
-		          "[SERVER-BUG]: got %" PRIuz ", expected %" PRIuz
+		          "[SERVER-BUG]: got %" PRIuz ", expected %u"
 		          " bytes. [MS-RDPBCGR] 2.2.9.2.3 Frame Marker Command (TS_FRAME_MARKER) is "
 		          "missing frameId, ignoring",
-		          Stream_GetRemainingLength(s), 4);
+		          Stream_GetRemainingLength(s), 4u);
 	else
 		Stream_Read_UINT32(s, marker.frameId);
 	WLog_Print(up->log, WLOG_DEBUG, "SurfaceFrameMarker: action: %s (%" PRIu32 ") id: %" PRIu32 "",
@@ -305,12 +305,15 @@ BOOL update_write_surfcmd_surface_bits(wStream* s, const SURFACE_BITS_COMMAND* c
 		case CMDTYPE_STREAM_SURFACE_BITS:
 			break;
 		default:
+		{
+			const UINT16 defaultCmdType = CMDTYPE_STREAM_SURFACE_BITS;
 			WLog_WARN(TAG,
 			          "SURFACE_BITS_COMMAND->cmdType 0x%04" PRIx16
 			          " not allowed, correcting to 0x%04" PRIx16,
-			          cmdType, CMDTYPE_STREAM_SURFACE_BITS);
-			cmdType = CMDTYPE_STREAM_SURFACE_BITS;
-			break;
+			          cmdType, defaultCmdType);
+			cmdType = defaultCmdType;
+		}
+		break;
 	}
 
 	Stream_Write_UINT16(s, WINPR_ASSERTING_INT_CAST(uint16_t, cmdType));

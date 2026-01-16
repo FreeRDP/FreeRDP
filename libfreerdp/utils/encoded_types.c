@@ -377,7 +377,7 @@ BOOL freerdp_write_four_byte_float(wStream* s, double value)
 	}
 	else
 	{
-		WLog_ERR(TAG, "Invalid byte count for value %ld", value);
+		WLog_ERR(TAG, "Invalid byte count for value %lf", value);
 		return FALSE;
 	}
 

@@ -304,7 +304,7 @@ void xf_draw_screen_(xfContext* xfc, int x, int y, int w, int h, const char* fkt
 {
 	if (!xfc)
 	{
-		WLog_DBG(TAG, "called from [%s] xfc=%p", fkt, xfc);
+		WLog_DBG(TAG, "called from [%s] xfc=%p", fkt, WINPR_CXX_COMPAT_CAST(const void*, xfc));
 		return;
 	}
 
@@ -316,7 +316,7 @@ void xf_draw_screen_(xfContext* xfc, int x, int y, int w, int h, const char* fkt
 
 	if (!xfc->window)
 	{
-		WLog_WARN(TAG, "invalid xfc->window=%p", xfc->window);
+		WLog_WARN(TAG, "invalid xfc->window=%p", WINPR_CXX_COMPAT_CAST(const void*, xfc->window));
 		return;
 	}
 
@@ -1045,7 +1045,8 @@ static void xf_get_x11_button_map(xfContext* xfc, unsigned char* x11_map)
 		/* otherwise leave unchanged.                                            */
 		if (ptr_dev)
 		{
-			WLog_DBG(TAG, "Pointer device: %d", ptr_dev->device_id);
+			WLog_DBG(TAG, "Pointer device: %" PRIu32,
+			         WINPR_CXX_COMPAT_CAST(uint32_t, ptr_dev->device_id));
 			XGetDeviceButtonMapping(xfc->display, ptr_dev, x11_map, NUM_BUTTONS_MAPPED);
 			XCloseDevice(xfc->display, ptr_dev);
 		}

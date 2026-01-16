@@ -49,14 +49,16 @@ BYTE* x509_utils_get_hash(const X509* xcert, const char* hash, size_t* length)
 	}
 	if (!xcert || !length)
 	{
-		WLog_ERR(TAG, "Invalid arguments: xcert=%p, length=%p", xcert, length);
+		WLog_ERR(TAG, "Invalid arguments: xcert=%p, length=%p",
+		         WINPR_CXX_COMPAT_CAST(const void*, xcert),
+		         WINPR_CXX_COMPAT_CAST(const void*, length));
 		return NULL;
 	}
 
 	fp = calloc(fp_len + 1, sizeof(BYTE));
 	if (!fp)
 	{
-		WLog_ERR(TAG, "could not allocate %" PRIuz " bytes", fp_len);
+		WLog_ERR(TAG, "could not allocate %" PRIu32 " bytes", fp_len);
 		return NULL;
 	}
 
@@ -106,7 +108,7 @@ char* x509_utils_get_subject(const X509* xcert)
 	char* subject = NULL;
 	if (!xcert)
 	{
-		WLog_ERR(TAG, "Invalid certificate %p", xcert);
+		WLog_ERR(TAG, "Invalid certificate %p", WINPR_CXX_COMPAT_CAST(const void*, xcert));
 		return NULL;
 	}
 	subject = crypto_print_name(X509_get_subject_name(xcert));
@@ -560,7 +562,7 @@ char* x509_utils_get_issuer(const X509* xcert)
 	char* issuer = NULL;
 	if (!xcert)
 	{
-		WLog_ERR(TAG, "Invalid certificate %p", xcert);
+		WLog_ERR(TAG, "Invalid certificate %p", WINPR_CXX_COMPAT_CAST(const void*, xcert));
 		return NULL;
 	}
 	issuer = crypto_print_name(X509_get_issuer_name(xcert));

@@ -332,10 +332,6 @@ static float tsmf_stream_read_float(wStream* s)
 UINT tsmf_ifman_set_source_video_rect(TSMF_IFMAN* ifman)
 {
 	UINT status = CHANNEL_RC_OK;
-	float Left = NAN;
-	float Top = NAN;
-	float Right = NAN;
-	float Bottom = NAN;
 	TSMF_PRESENTATION* presentation = NULL;
 	DEBUG_TSMF("");
 
@@ -352,10 +348,10 @@ UINT tsmf_ifman_set_source_video_rect(TSMF_IFMAN* ifman)
 	else
 	{
 #ifdef WITH_DEBUG_TSMF
-		Left = tsmf_stream_read_float(ifman->input);   /* Left (4 bytes) */
-		Top = tsmf_stream_read_float(ifman->input);    /* Top (4 bytes) */
-		Right = tsmf_stream_read_float(ifman->input);  /* Right (4 bytes) */
-		Bottom = tsmf_stream_read_float(ifman->input); /* Bottom (4 bytes) */
+		const float Left = tsmf_stream_read_float(ifman->input);   /* Left (4 bytes) */
+		const float Top = tsmf_stream_read_float(ifman->input);    /* Top (4 bytes) */
+		const float Right = tsmf_stream_read_float(ifman->input);  /* Right (4 bytes) */
+		const float Bottom = tsmf_stream_read_float(ifman->input); /* Bottom (4 bytes) */
 		DEBUG_TSMF("SetSourceVideoRect: Left: %f Top: %f Right: %f Bottom: %f", Left, Top, Right,
 		           Bottom);
 #endif

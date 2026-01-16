@@ -529,7 +529,8 @@ static void* thread_launcher(void* arg)
 
 	if (!TlsSetValue(currentThreadTlsIndex, thread))
 	{
-		WLog_ERR(TAG, "thread %d, unable to set current thread value", pthread_self());
+		WLog_ERR(TAG, "thread %" PRIu64 ", unable to set current thread value",
+		         WINPR_CXX_COMPAT_CAST(uint64_t, pthread_self()));
 		goto exit;
 	}
 

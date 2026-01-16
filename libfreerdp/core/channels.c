@@ -121,7 +121,7 @@ BOOL freerdp_channel_process(freerdp* instance, wStream* s, UINT16 channelId, si
 
 	if (packetLength < 8)
 	{
-		WLog_ERR(TAG, "Header length %" PRIdz " bytes promised, none available", packetLength);
+		WLog_ERR(TAG, "Header length %" PRIuz " bytes promised, none available", packetLength);
 		return FALSE;
 	}
 	packetLength -= 8;
@@ -139,7 +139,7 @@ BOOL freerdp_channel_process(freerdp* instance, wStream* s, UINT16 channelId, si
 	chunkLength = Stream_GetRemainingLength(s);
 	if (packetLength != chunkLength)
 	{
-		WLog_ERR(TAG, "Header length %" PRIdz " != actual length %" PRIdz, packetLength,
+		WLog_ERR(TAG, "Header length %" PRIuz " != actual length %" PRIuz, packetLength,
 		         chunkLength);
 		return FALSE;
 	}

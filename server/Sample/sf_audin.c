@@ -42,7 +42,7 @@ static UINT sf_peer_audin_data(WINPR_ATTR_UNUSED audin_server_context* audin,
 	WINPR_ASSERT(data);
 
 	WLog_WARN(TAG, "not implemented");
-	WLog_DBG(TAG, "receive %" PRIdz " bytes.", Stream_Length(data->Data));
+	WLog_DBG(TAG, "receive %" PRIuz " bytes.", Stream_Length(data->Data));
 	return CHANNEL_RC_OK;
 }
 

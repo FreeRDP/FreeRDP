@@ -255,8 +255,9 @@ BOOL tpdu_read_data(wStream* s, UINT16* LI, UINT16 tpktlength)
 
 	if (code != X224_TPDU_DATA)
 	{
-		WLog_ERR(TAG, "tpdu got code 0x%02" PRIx8 " expected X224_TPDU_DATA [0x%02x]", code,
-		         X224_TPDU_DATA);
+		const BYTE dCode = X224_TPDU_DATA;
+		WLog_ERR(TAG, "tpdu got code 0x%02" PRIx8 " expected X224_TPDU_DATA [0x%02" PRIx8 "]", code,
+		         dCode);
 		return FALSE;
 	}
 

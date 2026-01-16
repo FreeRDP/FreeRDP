@@ -175,12 +175,13 @@ BOOL cert_info_read_exponent(rdpCertInfo* info, size_t size, wStream* s)
 		return FALSE;
 	if (size > 4)
 	{
-		WLog_ERR(TAG, "exponent size %" PRIuz " exceeds limit of %" PRIu32, size, 4);
+		WLog_ERR(TAG, "exponent size %" PRIuz " exceeds limit of %" PRIu32, size, 4u);
 		return FALSE;
 	}
 	if (!info->Modulus || (info->ModulusLength == 0))
 	{
-		WLog_ERR(TAG, "invalid modulus=%p [%" PRIu32 "]", info->Modulus, info->ModulusLength);
+		WLog_ERR(TAG, "invalid modulus=%p [%" PRIu32 "]",
+		         WINPR_CXX_COMPAT_CAST(const void*, info->Modulus), info->ModulusLength);
 		return FALSE;
 	}
 	Stream_Read(s, &info->exponent[4 - size], size);

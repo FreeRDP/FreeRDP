@@ -177,7 +177,7 @@ static UINT gfxredir_server_receive_pdu(GfxRedirServerContext* context, wStream*
 
 	if (end != (beg + header.length))
 	{
-		WLog_ERR(TAG, "Unexpected GFXREDIR pdu end: Actual: %d, Expected: %" PRIu32 "", end,
+		WLog_ERR(TAG, "Unexpected GFXREDIR pdu end: Actual: %" PRIuz ", Expected: %" PRIuz "", end,
 		         (beg + header.length));
 		Stream_SetPosition(s, (beg + header.length));
 	}

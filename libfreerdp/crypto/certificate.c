@@ -555,7 +555,8 @@ static BOOL update_x509_from_info(rdpCertificate* cert)
 
 	if (!mod || !e)
 	{
-		WLog_ERR(TAG, "failure: mod=%p, e=%p", mod, e);
+		WLog_ERR(TAG, "failure: mod=%p, e=%p", WINPR_CXX_COMPAT_CAST(const void*, mod),
+		         WINPR_CXX_COMPAT_CAST(const void*, e));
 		goto fail;
 	}
 
@@ -702,8 +703,8 @@ static BOOL certificate_process_server_public_key(rdpCertificate* cert, wStream*
 	}
 	if (datalen != (bitlen / 8ull) - 1ull)
 	{
-		WLog_ERR(TAG, "Invalid RSA key datalen %" PRIu32 ", expected %" PRIu32, datalen,
-		         (bitlen / 8ull) - 1ull);
+		WLog_ERR(TAG, "Invalid RSA key datalen %" PRIu32 ", expected %llu", datalen,
+		         (1ull * bitlen / 8ull) - 1ull);
 		return FALSE;
 	}
 	info->ModulusLength = keylen - 8;
@@ -1462,12 +1463,13 @@ char* freerdp_certificate_get_fingerprint_by_hash_ex(const rdpCertificate* cert,
 	char* fp_buffer = NULL;
 	if (!cert || !cert->x509)
 	{
-		WLog_ERR(TAG, "Invalid certificate [%p, %p]", cert, cert ? cert->x509 : NULL);
+		WLog_ERR(TAG, "Invalid certificate [%p, %p]", WINPR_CXX_COMPAT_CAST(const void*, cert),
+		         WINPR_CXX_COMPAT_CAST(const void*, cert ? cert->x509 : NULL));
 		return NULL;
 	}
 	if (!hash)
 	{
-		WLog_ERR(TAG, "Invalid certificate hash %p", hash);
+		WLog_ERR(TAG, "Invalid certificate hash %p", WINPR_CXX_COMPAT_CAST(const void*, hash));
 		return NULL;
 	}
 	fp = x509_utils_get_hash(cert->x509, hash, &fp_len);

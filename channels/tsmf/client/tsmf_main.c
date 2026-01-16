@@ -65,7 +65,7 @@ BOOL tsmf_send_eos_response(IWTSVirtualChannelCallback* pChannelCallback, UINT32
 
 		if (status)
 		{
-			WLog_ERR(TAG, "response error %d", status);
+			WLog_ERR(TAG, "response error %" PRId32, WINPR_CXX_COMPAT_CAST(int32_t, status));
 		}
 
 		Stream_Free(s, TRUE);
@@ -100,19 +100,21 @@ BOOL tsmf_playback_ack(IWTSVirtualChannelCallback* pChannelCallback, UINT32 mess
 
 	if (!callback->channel || !callback->channel->Write)
 	{
-		WLog_ERR(TAG, "callback=%p, channel=%p, write=%p", callback,
-		         (callback ? callback->channel : NULL),
-		         (callback && callback->channel ? callback->channel->Write : NULL));
+		WLog_ERR(TAG, "callback=%p, channel=%p, write=%p",
+		         WINPR_CXX_COMPAT_CAST(const void*, callback),
+		         WINPR_CXX_COMPAT_CAST(const void*, callback ? callback->channel : NULL),
+		         WINPR_CXX_COMPAT_CAST(
+		             const void*, callback && callback->channel ? callback->channel->Write : NULL));
 	}
 	else
 	{
-		WINPR_ASSERT(pos <= UINT32_MAX);
-		status = callback->channel->Write(callback->channel, (UINT32)pos, Stream_Buffer(s), NULL);
+		status = callback->channel->Write(
+		    callback->channel, WINPR_ASSERTING_INT_CAST(uint32_t, pos), Stream_Buffer(s), NULL);
 	}
 
 	if (status)
 	{
-		WLog_ERR(TAG, "response error %d", status);
+		WLog_ERR(TAG, "response error %" PRId32, WINPR_CXX_COMPAT_CAST(int32_t, status));
 	}
 
 	Stream_Free(s, TRUE);

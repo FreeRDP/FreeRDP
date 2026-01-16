@@ -1672,7 +1672,7 @@ static UINT urbdrc_process_transfer_request(IUDEVICE* pdev, GENERIC_CHANNEL_CALL
 		                          ? "2.2.6.7 Transfer In Request (TRANSFER_IN_REQUEST)"
 		                          : "2.2.6.8 Transfer Out Request (TRANSFER_OUT_REQUEST)";
 		WLog_ERR(TAG,
-		         "[MS-RDPEUSB] 2.2.9.1.1 TS_URB_HEADER::Size 0x04" PRIx16
+		         "[MS-RDPEUSB] 2.2.9.1.1 TS_URB_HEADER::Size 0x%04" PRIx16
 		         " != %s::CbTsUrb 0x%08" PRIx32,
 		         Size, section, CbTsUrb);
 		return ERROR_INVALID_DATA;

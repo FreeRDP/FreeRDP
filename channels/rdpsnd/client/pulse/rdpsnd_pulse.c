@@ -65,7 +65,7 @@ static BOOL rdpsnd_check_pulse(rdpsndPulsePlugin* pulse, BOOL haveStream)
 
 	if (!pulse->context)
 	{
-		WLog_WARN(TAG, "pulse->context=%p", pulse->context);
+		WLog_WARN(TAG, "pulse->context=%p", WINPR_CXX_COMPAT_CAST(const void*, pulse->context));
 		rc = FALSE;
 	}
 
@@ -73,14 +73,14 @@ static BOOL rdpsnd_check_pulse(rdpsndPulsePlugin* pulse, BOOL haveStream)
 	{
 		if (!pulse->stream)
 		{
-			WLog_WARN(TAG, "pulse->stream=%p", pulse->stream);
+			WLog_WARN(TAG, "pulse->stream=%p", WINPR_CXX_COMPAT_CAST(const void*, pulse->stream));
 			rc = FALSE;
 		}
 	}
 
 	if (!pulse->mainloop)
 	{
-		WLog_WARN(TAG, "pulse->mainloop=%p", pulse->mainloop);
+		WLog_WARN(TAG, "pulse->mainloop=%p", WINPR_CXX_COMPAT_CAST(const void*, pulse->mainloop));
 		rc = FALSE;
 	}
 
@@ -584,7 +584,7 @@ static BOOL rdpsnd_pulse_set_volume(rdpsndDevicePlugin* device, UINT32 value)
 
 	if (!rdpsnd_check_pulse(pulse, TRUE))
 	{
-		WLog_WARN(TAG, "%s called before pulse backend was initialized");
+		WLog_WARN(TAG, "called before pulse backend was initialized");
 		return FALSE;
 	}
 

@@ -1492,8 +1492,10 @@ BOOL vgids_init(vgidsContext* ctx, const char* cert, const char* privateKey, con
 	/* Check params */
 	if (!cert || !privateKey || !pin)
 	{
-		WLog_DBG(TAG, "Passed invalid NULL argument: cert=%p, privateKey=%p, pin=%p", cert,
-		         privateKey, pin);
+		WLog_DBG(TAG, "Passed invalid NULL argument: cert=%p, privateKey=%p, pin=%p",
+		         WINPR_CXX_COMPAT_CAST(const void*, cert),
+		         WINPR_CXX_COMPAT_CAST(const void*, privateKey),
+		         WINPR_CXX_COMPAT_CAST(const void*, pin));
 		goto init_failed;
 	}
 

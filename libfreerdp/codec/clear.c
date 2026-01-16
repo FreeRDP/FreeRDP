@@ -259,8 +259,7 @@ static BOOL clear_decompress_subcode_rlex(wStream* WINPR_RESTRICT s, UINT32 bitm
 		if ((pixelIndex + runLengthFactor) > pixelCount)
 		{
 			WLog_ERR(TAG,
-			         "pixelIndex %" PRIu32 " + runLengthFactor %" PRIu32 " > pixelCount %" PRIu32
-			         "",
+			         "pixelIndex %" PRIuz " + runLengthFactor %" PRIu32 " > pixelCount %" PRIu32 "",
 			         pixelIndex, runLengthFactor, pixelCount);
 			return FALSE;
 		}
@@ -285,7 +284,7 @@ static BOOL clear_decompress_subcode_rlex(wStream* WINPR_RESTRICT s, UINT32 bitm
 		if ((pixelIndex + (suiteDepth + 1)) > pixelCount)
 		{
 			WLog_ERR(TAG,
-			         "pixelIndex %" PRIu32 " + suiteDepth %" PRIu8 " + 1 > pixelCount %" PRIu32 "",
+			         "pixelIndex %" PRIuz " + suiteDepth %" PRIu8 " + 1 > pixelCount %" PRIu32 "",
 			         pixelIndex, suiteDepth, pixelCount);
 			return FALSE;
 		}
@@ -319,7 +318,7 @@ static BOOL clear_decompress_subcode_rlex(wStream* WINPR_RESTRICT s, UINT32 bitm
 
 	if (pixelIndex != pixelCount)
 	{
-		WLog_ERR(TAG, "pixelIndex %" PRIdz " != pixelCount %" PRIu32 "", pixelIndex, pixelCount);
+		WLog_ERR(TAG, "pixelIndex %" PRIuz " != pixelCount %" PRIu32 "", pixelIndex, pixelCount);
 		return FALSE;
 	}
 
@@ -342,7 +341,7 @@ static BOOL clear_resize_buffer(CLEAR_CONTEXT* WINPR_RESTRICT clear, UINT32 widt
 
 		if (!tmp)
 		{
-			WLog_ERR(TAG, "clear->TempBuffer winpr_aligned_recalloc failed for %" PRIu32 " bytes",
+			WLog_ERR(TAG, "clear->TempBuffer winpr_aligned_recalloc failed for %" PRIu64 " bytes",
 			         size);
 			return FALSE;
 		}
@@ -711,7 +710,7 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* WINPR_RESTRICT clear,
 				{
 					WLog_ERR(TAG,
 					         "clear->ShortVBarStorageCursor %" PRIu32
-					         " >= CLEARCODEC_VBAR_SHORT_SIZE (%" PRIu32 ")",
+					         " >= CLEARCODEC_VBAR_SHORT_SIZE (%" PRId32 ")",
 					         clear->ShortVBarStorageCursor, CLEARCODEC_VBAR_SHORT_SIZE);
 					return FALSE;
 				}
@@ -773,7 +772,7 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* WINPR_RESTRICT clear,
 				if (clear->VBarStorageCursor >= CLEARCODEC_VBAR_SIZE)
 				{
 					WLog_ERR(TAG,
-					         "clear->VBarStorageCursor %" PRIu32 " >= CLEARCODEC_VBAR_SIZE %" PRIu32
+					         "clear->VBarStorageCursor %" PRIu32 " >= CLEARCODEC_VBAR_SIZE %" PRId32
 					         "",
 					         clear->VBarStorageCursor, CLEARCODEC_VBAR_SIZE);
 					return FALSE;

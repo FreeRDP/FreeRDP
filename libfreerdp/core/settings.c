@@ -263,7 +263,7 @@ static void settings_client_load_hkey_local_machine(rdpSettings* settings)
 			settings_reg_query_word_val(hKey, numentries, &cache.cacheEntries);
 			settings_reg_query_word_val(hKey, maxsize, &cache.cacheMaximumCellSize);
 			if (!freerdp_settings_set_pointer_array(settings, FreeRDP_GlyphCache, x, &cache))
-				WLog_WARN(TAG, "Failed to store GlyphCache %" PRIuz, x);
+				WLog_WARN(TAG, "Failed to store GlyphCache %u", x);
 		}
 		{
 			GLYPH_CACHE_DEFINITION cache = { 0 };

@@ -361,7 +361,8 @@ static int transport_bio_simple_init(BIO* bio, SOCKET socket, int shutdown)
 	/* WSAEventSelect automatically sets the socket in non-blocking mode */
 	if (WSAEventSelect(ptr->socket, ptr->hEvent, FD_READ | FD_ACCEPT | FD_CLOSE))
 	{
-		WLog_ERR(TAG, "WSAEventSelect returned 0x%08X", WSAGetLastError());
+		WLog_ERR(TAG, "WSAEventSelect returned 0x%08x",
+		         WINPR_CXX_COMPAT_CAST(unsigned, WSAGetLastError()));
 		return 0;
 	}
 
@@ -865,7 +866,7 @@ static BOOL freerdp_tcp_connect_timeout(rdpContext* context, int sockfd, struct 
 		if (optval != 0)
 		{
 			char ebuffer[256] = { 0 };
-			WLog_DBG(TAG, "connect failed with error: %s [%" PRIu32 "]",
+			WLog_DBG(TAG, "connect failed with error: %s [%" PRId32 "]",
 			         winpr_strerror(optval, ebuffer, sizeof(ebuffer)), optval);
 			goto fail;
 		}
@@ -1175,7 +1176,7 @@ static int freerdp_vsock_connect(rdpContext* context, const char* hostname, int 
 	if (sockfd < 0)
 	{
 		char buffer[256] = { 0 };
-		WLog_WARN(TAG, "socket(AF_VSOCK, SOCK_STREAM, 0) failed with %s [%d]",
+		WLog_WARN(TAG, "socket(AF_VSOCK, SOCK_STREAM, 0) failed with %s",
 		          winpr_strerror(errno, buffer, sizeof(buffer)));
 		freerdp_set_last_error_if_not(context, FREERDP_ERROR_CONNECT_FAILED);
 		return -1;
@@ -1192,7 +1193,7 @@ static int freerdp_vsock_connect(rdpContext* context, const char* hostname, int 
 	if (errno || (val > UINT32_MAX))
 	{
 		char ebuffer[256] = { 0 };
-		WLog_ERR(TAG, "could not extract port from '%s', value=%ul, error=%s", hostname, val,
+		WLog_ERR(TAG, "could not extract port from '%s', value=%lu, error=%s", hostname, val,
 		         winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 		close(sockfd);
 		return -1;
@@ -1557,7 +1558,7 @@ rdpTransportLayer* freerdp_tcp_connect_layer(rdpContext* context, const char* ho
 	/* WSAEventSelect automatically sets the socket in non-blocking mode */
 	if (WSAEventSelect((SOCKET)sockfd, tcpLayer->hEvent, FD_READ | FD_ACCEPT | FD_CLOSE))
 	{
-		WLog_ERR(TAG, "WSAEventSelect returned 0x%08X", WSAGetLastError());
+		WLog_ERR(TAG, "WSAEventSelect returned 0x%08x", (unsigned)WSAGetLastError());
 		goto fail;
 	}
 

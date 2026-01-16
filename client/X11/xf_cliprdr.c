@@ -1443,7 +1443,8 @@ static xfCachedData* convert_data_from_existing_raw_data(xfClipboard* clipboard,
 	if (!success)
 	{
 		WLog_WARN(TAG, "Failed to set clipboard data (formatId: %u, data: %p, data_length: %u)",
-		          srcFormatId, cached_raw_data->data, cached_raw_data->data_length);
+		          srcFormatId, WINPR_CXX_COMPAT_CAST(const void*, cached_raw_data->data),
+		          cached_raw_data->data_length);
 		ClipboardUnlock(clipboard->system);
 		return NULL;
 	}
@@ -1578,7 +1579,7 @@ static BOOL xf_cliprdr_process_selection_request(xfClipboard* clipboard,
 				cached_data = HashTable_GetItemValue(clipboard->cachedRawData,
 				                                     format_to_cache_slot(formatId));
 
-			DEBUG_CLIPRDR("hasCachedData: %u, rawTransfer: %u", cached_data ? 1 : 0, rawTransfer);
+			DEBUG_CLIPRDR("hasCachedData: %u, rawTransfer: %d", cached_data ? 1u : 0u, rawTransfer);
 
 			if (!cached_data && !rawTransfer)
 			{
@@ -1591,7 +1592,7 @@ static BOOL xf_cliprdr_process_selection_request(xfClipboard* clipboard,
 				cached_raw_data =
 				    HashTable_GetItemValue(clipboard->cachedRawData, (void*)(UINT_PTR)srcFormatId);
 
-				DEBUG_CLIPRDR("hasCachedRawData: %u, rawDataLength: %u", cached_raw_data ? 1 : 0,
+				DEBUG_CLIPRDR("hasCachedRawData: %u, rawDataLength: %u", cached_raw_data ? 1u : 0u,
 				              cached_raw_data ? cached_raw_data->data_length : 0);
 
 				if (cached_raw_data && cached_raw_data->data_length != 0)
@@ -1599,7 +1600,7 @@ static BOOL xf_cliprdr_process_selection_request(xfClipboard* clipboard,
 					    clipboard, cached_raw_data, srcFormatId, nullTerminated, dstFormatId);
 			}
 
-			DEBUG_CLIPRDR("hasCachedData: %u", cached_data ? 1 : 0);
+			DEBUG_CLIPRDR("hasCachedData: %u", cached_data ? 1u : 0u);
 
 			if (cached_data)
 			{
@@ -2010,7 +2011,8 @@ static UINT xf_cliprdr_server_format_list(CliprdrClientContext* context,
 	if (!(clipboard->serverFormats =
 	          (CLIPRDR_FORMAT*)calloc(clipboard->numServerFormats, sizeof(CLIPRDR_FORMAT))))
 	{
-		WLog_ERR(TAG, "failed to allocate %d CLIPRDR_FORMAT structs", clipboard->numServerFormats);
+		WLog_ERR(TAG, "failed to allocate %" PRIu32 " CLIPRDR_FORMAT structs",
+		         clipboard->numServerFormats);
 		ret = CHANNEL_RC_NO_MEMORY;
 		goto out;
 	}

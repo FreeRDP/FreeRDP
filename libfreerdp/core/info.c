@@ -37,8 +37,8 @@
 
 #define TAG FREERDP_TAG("core.info")
 
-#define logonInfoV2Size (2 + 4 + 4 + 4 + 4)
-#define logonInfoV2ReservedSize 558
+#define logonInfoV2Size (2u + 4u + 4u + 4u + 4u)
+#define logonInfoV2ReservedSize 558u
 #define logonInfoV2TotalSize (logonInfoV2Size + logonInfoV2ReservedSize)
 
 static const char* INFO_TYPE_LOGON_STRINGS[4] = { "Logon Info V1", "Logon Info V2",
@@ -436,7 +436,7 @@ static BOOL rdp_read_extended_info_packet(rdpRdp* rdp, wStream* s)
 		{
 			WLog_WARN(TAG,
 			          "[MS-RDPBCGR] 2.2.1.11.1.1.1 Extended Info Packet "
-			          "(TS_EXTENDED_INFO_PACKET)::dynamicDaylightTimeDisabled value %" PRIu16
+			          "(TS_EXTENDED_INFO_PACKET)::dynamicDaylightTimeDisabled value %d"
 			          " not allowed in [0,1]",
 			          settings->DynamicDaylightTimeDisabled);
 			return FALSE;
@@ -1067,7 +1067,7 @@ static BOOL rdp_info_read_string(const char* what, wStream* s, size_t size, size
 
 	if (((size % sizeof(WCHAR)) != 0) || (size > max))
 	{
-		WLog_ERR(TAG, "protocol error: invalid %s value: %" PRIu32 "", what, size);
+		WLog_ERR(TAG, "protocol error: invalid %s value: %" PRIuz "", what, size);
 		return FALSE;
 	}
 
@@ -1148,7 +1148,7 @@ static BOOL rdp_recv_logon_info_v2(rdpRdp* rdp, wStream* s, logon_info* info)
 	Stream_Read_UINT16(s, Version); /* Version (2 bytes) */
 	if (Version != SAVE_SESSION_PDU_VERSION_ONE)
 	{
-		WLog_WARN(TAG, "LogonInfoV2::Version expected %" PRIu16 " bytes, got %" PRIu16,
+		WLog_WARN(TAG, "LogonInfoV2::Version expected %d bytes, got %" PRIu16,
 		          SAVE_SESSION_PDU_VERSION_ONE, Version);
 		return FALSE;
 	}
@@ -1209,7 +1209,7 @@ static BOOL rdp_recv_logon_info_v2(rdpRdp* rdp, wStream* s, logon_info* info)
 			}
 			if (warn)
 			{
-				WLog_WARN(TAG, "unexpected padding of %" PRIuz " bytes, data not '\0'", rem);
+				WLog_WARN(TAG, "unexpected padding of %" PRIuz " bytes, data not '\\0'", rem);
 				winpr_HexDump(TAG, WLOG_TRACE, str, rem);
 			}
 

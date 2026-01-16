@@ -79,7 +79,7 @@ static void ecam_dev_print_media_type(CAM_MEDIA_TYPE_DESCRIPTION* mediaType)
 {
 	WINPR_ASSERT(mediaType);
 
-	WLog_DBG(TAG, "Format: %d, width: %d, height: %d, fps: %d, flags: %d", mediaType->Format,
+	WLog_DBG(TAG, "Format: %u, width: %u, height: %u, fps: %u, flags: %u", mediaType->Format,
 	         mediaType->Width, mediaType->Height, mediaType->FrameRateNumerator, mediaType->Flags);
 }
 
@@ -299,7 +299,7 @@ static UINT ecam_dev_process_start_streams_request(CameraDevice* dev,
 
 	if (streamIndex >= ECAM_DEVICE_MAX_STREAMS)
 	{
-		WLog_ERR(TAG, "Incorrect streamIndex %" PRIuz, streamIndex);
+		WLog_ERR(TAG, "Incorrect streamIndex %" PRIu8, streamIndex);
 		ecam_channel_send_error_response(dev->ecam, hchannel, CAM_ERROR_CODE_InvalidStreamNumber);
 		return ERROR_INVALID_INDEX;
 	}
@@ -712,7 +712,7 @@ static UINT ecam_dev_on_data_received(IWTSVirtualChannelCallback* pChannelCallba
 
 	Stream_Read_UINT8(data, version);
 	Stream_Read_UINT8(data, messageId);
-	WLog_DBG(TAG, "ChannelId=%d, MessageId=0x%02" PRIx8 ", Version=%d",
+	WLog_DBG(TAG, "ChannelId=%" PRIu32 ", MessageId=0x%02" PRIx8 ", Version=%d",
 	         hchannel->channel_mgr->GetChannelId(hchannel->channel), messageId, version);
 
 	switch (messageId)

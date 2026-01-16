@@ -359,7 +359,7 @@ static void LIBUSB_CALL func_bulk_transfer_cb(struct libusb_transfer* transfer)
 	user_data = (ASYNC_TRANSFER_USER_DATA*)transfer->user_data;
 	if (!user_data)
 	{
-		WLog_ERR(TAG, "[%s]: Invalid transfer->user_data!");
+		WLog_ERR(TAG, "Invalid transfer->user_data!");
 		return;
 	}
 	list = user_data->queue;

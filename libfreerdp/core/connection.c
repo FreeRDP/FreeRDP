@@ -1066,7 +1066,7 @@ BOOL rdp_client_connect_mcs_channel_join_confirm(rdpRdp* rdp, wStream* s)
 	{
 		if (channelId != MCS_GLOBAL_CHANNEL_ID)
 		{
-			WLog_ERR(TAG, "expected uglobalser channel id %" PRIu16 ", but received %" PRIu16,
+			WLog_ERR(TAG, "expected uglobalser channel id %d, but received %" PRIu16,
 			         MCS_GLOBAL_CHANNEL_ID, channelId);
 			return FALSE;
 		}
@@ -1119,7 +1119,7 @@ BOOL rdp_client_connect_mcs_channel_join_confirm(rdpRdp* rdp, wStream* s)
 
 			if (cur->ChannelId != channelId)
 			{
-				WLog_ERR(TAG, "expected channel id %" PRIu16 ", but received %" PRIu16,
+				WLog_ERR(TAG, "expected channel id %d, but received %" PRIu16,
 				         MCS_GLOBAL_CHANNEL_ID, channelId);
 				return FALSE;
 			}
@@ -1252,7 +1252,7 @@ state_run_t rdp_client_connect_license(rdpRdp* rdp, wStream* s)
 	}
 
 	if (channelId != MCS_GLOBAL_CHANNEL_ID)
-		WLog_WARN(TAG, "unexpected message for channel %u, expected %u", channelId,
+		WLog_WARN(TAG, "unexpected message for channel %u, expected %d", channelId,
 		          MCS_GLOBAL_CHANNEL_ID);
 
 	if ((securityFlags & SEC_LICENSE_PKT) == 0)

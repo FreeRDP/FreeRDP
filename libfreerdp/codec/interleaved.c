@@ -387,7 +387,8 @@ static inline BOOL ensure_capacity_(const BYTE* start, const BYTE* end, size_t s
 		WLog_ERR(TAG,
 		         "[%s:%" PRIuz "] failed: start=%p <= end=%p, available=%" PRIuz " >= size=%" PRIuz
 		         " * base=%" PRIuz,
-		         fkt, line, start, end, available, size, base);
+		         fkt, line, WINPR_CXX_COMPAT_CAST(const void*, start),
+		         WINPR_CXX_COMPAT_CAST(const void*, end), available, size, base);
 	return res;
 }
 
@@ -540,8 +541,10 @@ BOOL interleaved_decompress(BITMAP_INTERLEAVED_CONTEXT* WINPR_RESTRICT interleav
 
 	if (!interleaved || !pSrcData || !pDstData)
 	{
-		WLog_ERR(TAG, "invalid arguments: interleaved=%p, pSrcData=%p, pDstData=%p", interleaved,
-		         pSrcData, pDstData);
+		WLog_ERR(TAG, "invalid arguments: interleaved=%p, pSrcData=%p, pDstData=%p",
+		         WINPR_CXX_COMPAT_CAST(const void*, interleaved),
+		         WINPR_CXX_COMPAT_CAST(const void*, pSrcData),
+		         WINPR_CXX_COMPAT_CAST(const void*, pDstData));
 		return FALSE;
 	}
 
@@ -583,7 +586,8 @@ BOOL interleaved_decompress(BITMAP_INTERLEAVED_CONTEXT* WINPR_RESTRICT interleav
 
 	if (!interleaved->TempBuffer)
 	{
-		WLog_ERR(TAG, "interleaved->TempBuffer=%p", interleaved->TempBuffer);
+		WLog_ERR(TAG, "interleaved->TempBuffer=%p",
+		         WINPR_CXX_COMPAT_CAST(const void*, interleaved->TempBuffer));
 		return FALSE;
 	}
 

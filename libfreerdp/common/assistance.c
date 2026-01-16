@@ -1047,7 +1047,7 @@ static int freerdp_assistance_parse_uploadinfo(rdpAssistanceFile* file, char* up
 
 	if (strnlen(uploadinfo, uploadinfosize) == uploadinfosize)
 	{
-		WLog_WARN(TAG, "UPLOADINFOR string is not '\0' terminated");
+		WLog_WARN(TAG, "UPLOADINFOR string is not '\\0' terminated");
 		return -1;
 	}
 
@@ -1199,14 +1199,15 @@ int freerdp_assistance_parse_file_buffer(rdpAssistanceFile* file, const char* cb
 
 	if (!cbuffer || (size == 0))
 	{
-		WLog_WARN(TAG, "no data supplied [%p, %" PRIuz "]", cbuffer, size);
+		WLog_WARN(TAG, "no data supplied [%p, %" PRIuz "]",
+		          WINPR_CXX_COMPAT_CAST(const void*, cbuffer), size);
 		return -1;
 	}
 
 	char* abuffer = strndup(cbuffer, size);
 	const size_t len = strnlen(cbuffer, size);
 	if (len == size)
-		WLog_WARN(TAG, "Input data not '\0' terminated");
+		WLog_WARN(TAG, "Input data not '\\0' terminated");
 
 	if (!abuffer)
 		return -1;

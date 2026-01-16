@@ -110,6 +110,32 @@ static BOOL FileCloseHandle(HANDLE handle)
 	return FileCloseHandleInt(handle, FALSE);
 }
 
+#define log_error(fkt, file) log_error_((fkt), (file), __FILE__, __func__, __LINE__)
+static BOOL log_error_(const char* name, const WINPR_FILE* pFile, const char* file, const char* fkt,
+                       size_t line)
+{
+	char ebuffer[256] = { 0 };
+
+	WINPR_ASSERT(name);
+	WINPR_ASSERT(pFile);
+	WINPR_ASSERT(file);
+	WINPR_ASSERT(fkt);
+
+	const DWORD level = WLOG_ERROR;
+	static wLog* log = NULL;
+	if (!log)
+		log = WLog_Get(TAG);
+
+	if (WLog_IsLevelActive(log, level))
+	{
+		WLog_PrintTextMessage(log, level, line, file, fkt, "%s %s failed with %s [0x08%x]", name,
+		                      pFile->lpFileName, winpr_strerror(errno, ebuffer, sizeof(ebuffer)),
+		                      WINPR_CXX_COMPAT_CAST(unsigned, errno));
+	}
+	SetLastError(map_posix_err(errno));
+	return FALSE;
+}
+
 static BOOL FileSetEndOfFile(HANDLE hFile)
 {
 	WINPR_FILE* pFile = (WINPR_FILE*)hFile;
@@ -122,13 +148,7 @@ static BOOL FileSetEndOfFile(HANDLE hFile)
 		return FALSE;
 
 	if (ftruncate(fileno(pFile->fp), (off_t)size) < 0)
-	{
-		char ebuffer[256] = { 0 };
-		WLog_ERR(TAG, "ftruncate %s failed with %s [0x%08X]", pFile->lpFileName,
-		         winpr_strerror(errno, ebuffer, sizeof(ebuffer)), errno);
-		SetLastError(map_posix_err(errno));
-		return FALSE;
-	}
+		return log_error("ftruncate", pFile);
 
 	return TRUE;
 }
@@ -171,10 +191,7 @@ static DWORD FileSetFilePointer(HANDLE hFile, LONG lDistanceToMove,
 
 	if (_fseeki64(pFile->fp, offset, whence))
 	{
-		char ebuffer[256] = { 0 };
-		WLog_ERR(TAG, "_fseeki64(%s) failed with %s [0x%08X]", pFile->lpFileName,
-		         winpr_strerror(errno, ebuffer, sizeof(ebuffer)), errno);
-		SetLastError(map_posix_err(errno));
+		(void)log_error("_fseeki64", pFile);
 		return INVALID_SET_FILE_POINTER;
 	}
 
@@ -206,13 +223,7 @@ static BOOL FileSetFilePointerEx(HANDLE hFile, LARGE_INTEGER liDistanceToMove,
 	}
 
 	if (_fseeki64(pFile->fp, liDistanceToMove.QuadPart, whence))
-	{
-		char ebuffer[256] = { 0 };
-		WLog_ERR(TAG, "_fseeki64(%s) failed with %s [0x%08X]", pFile->lpFileName,
-		         winpr_strerror(errno, ebuffer, sizeof(ebuffer)), errno);
-		SetLastError(map_posix_err(errno));
-		return FALSE;
-	}
+		return log_error("_fseeki64", pFile);
 
 	if (lpNewFilePointer)
 		lpNewFilePointer->QuadPart = _ftelli64(pFile->fp);
@@ -306,19 +317,13 @@ static DWORD FileGetFileSize(HANDLE Object, LPDWORD lpFileSizeHigh)
 
 	if (cur < 0)
 	{
-		char ebuffer[256] = { 0 };
-		WLog_ERR(TAG, "_ftelli64(%s) failed with %s [0x%08X]", file->lpFileName,
-		         winpr_strerror(errno, ebuffer, sizeof(ebuffer)), errno);
-		SetLastError(map_posix_err(errno));
+		(void)log_error("_ftelli64", file);
 		return INVALID_FILE_SIZE;
 	}
 
 	if (_fseeki64(file->fp, 0, SEEK_END) != 0)
 	{
-		char ebuffer[256] = { 0 };
-		WLog_ERR(TAG, "_fseeki64(%s) failed with %s [0x%08X]", file->lpFileName,
-		         winpr_strerror(errno, ebuffer, sizeof(ebuffer)), errno);
-		SetLastError(map_posix_err(errno));
+		(void)log_error("_fseeki64", file);
 		return INVALID_FILE_SIZE;
 	}
 
@@ -326,19 +331,13 @@ static DWORD FileGetFileSize(HANDLE Object, LPDWORD lpFileSizeHigh)
 
 	if (size < 0)
 	{
-		char ebuffer[256] = { 0 };
-		WLog_ERR(TAG, "_ftelli64(%s) failed with %s [0x%08X]", file->lpFileName,
-		         winpr_strerror(errno, ebuffer, sizeof(ebuffer)), errno);
-		SetLastError(map_posix_err(errno));
+		(void)log_error("_ftelli64", file);
 		return INVALID_FILE_SIZE;
 	}
 
 	if (_fseeki64(file->fp, cur, SEEK_SET) != 0)
 	{
-		char ebuffer[256] = { 0 };
-		WLog_ERR(TAG, "_ftelli64(%s) failed with %s [0x%08X]", file->lpFileName,
-		         winpr_strerror(errno, ebuffer, sizeof(ebuffer)), errno);
-		SetLastError(map_posix_err(errno));
+		(void)log_error("_fseeki64", file);
 		return INVALID_FILE_SIZE;
 	}
 
@@ -388,13 +387,7 @@ static BOOL FileGetFileInformationByHandle(HANDLE hFile,
 		return FALSE;
 
 	if (fstat(fileno(pFile->fp), &st) == -1)
-	{
-		char ebuffer[256] = { 0 };
-		WLog_ERR(TAG, "fstat failed with %s [%#08X]", errno,
-		         winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
-		SetLastError(map_posix_err(errno));
-		return FALSE;
-	}
+		return log_error("fstat", pFile);
 
 	lpFileInformation->dwFileAttributes = 0;
 
@@ -502,13 +495,7 @@ static BOOL FileLockFileEx(HANDLE hFile, DWORD dwFlags, WINPR_ATTR_UNUSED DWORD 
 		lock |= LOCK_NB;
 
 	if (flock(fileno(pFile->fp), lock) < 0)
-	{
-		char ebuffer[256] = { 0 };
-		WLog_ERR(TAG, "flock failed with %s [0x%08X]",
-		         winpr_strerror(errno, ebuffer, sizeof(ebuffer)), errno);
-		SetLastError(map_posix_err(errno));
-		return FALSE;
-	}
+		return log_error("flock", pFile);
 #endif
 
 	pFile->bLocked = TRUE;
@@ -541,23 +528,11 @@ static BOOL FileUnlockFile(HANDLE hFile, WINPR_ATTR_UNUSED DWORD dwFileOffsetLow
 	lock.l_whence = SEEK_SET;
 	lock.l_type = F_UNLCK;
 	if (fcntl(fileno(pFile->fp), F_GETLK, &lock) == -1)
-	{
-		char ebuffer[256] = { 0 };
-		WLog_ERR(TAG, "F_UNLCK on %s failed with %s [0x%08X]", pFile->lpFileName,
-		         winpr_strerror(errno, ebuffer, sizeof(ebuffer)), errno);
-		SetLastError(map_posix_err(errno));
-		return FALSE;
-	}
+		return log_error("F_GETLK", pFile);
 
 #else
 	if (flock(fileno(pFile->fp), LOCK_UN) < 0)
-	{
-		char ebuffer[256] = { 0 };
-		WLog_ERR(TAG, "flock(LOCK_UN) %s failed with %s [0x%08X]", pFile->lpFileName,
-		         winpr_strerror(errno, ebuffer, sizeof(ebuffer)), errno);
-		SetLastError(map_posix_err(errno));
-		return FALSE;
-	}
+		return log_error("flock", pFile);
 #endif
 
 	return TRUE;
@@ -595,22 +570,10 @@ static BOOL FileUnlockFileEx(HANDLE hFile, WINPR_ATTR_UNUSED DWORD dwReserved,
 	lock.l_whence = SEEK_SET;
 	lock.l_type = F_UNLCK;
 	if (fcntl(fileno(pFile->fp), F_GETLK, &lock) == -1)
-	{
-		char ebuffer[256] = { 0 };
-		WLog_ERR(TAG, "F_UNLCK on %s failed with %s [0x%08X]", pFile->lpFileName,
-		         winpr_strerror(errno, ebuffer, sizeof(ebuffer)), errno);
-		SetLastError(map_posix_err(errno));
-		return FALSE;
-	}
+		return log_error("F_GETLK", pFile);
 #else
 	if (flock(fileno(pFile->fp), LOCK_UN) < 0)
-	{
-		char ebuffer[256] = { 0 };
-		WLog_ERR(TAG, "flock(LOCK_UN) %s failed with %s [0x%08X]", pFile->lpFileName,
-		         winpr_strerror(errno, ebuffer, sizeof(ebuffer)), errno);
-		SetLastError(map_posix_err(errno));
-		return FALSE;
-	}
+		return log_error("flock", pFile);
 #endif
 
 	return TRUE;
@@ -1023,13 +986,10 @@ static HANDLE FileCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dw
 		if (flock(fileno(pFile->fp), lock) < 0)
 #endif
 		{
-			char ebuffer[256] = { 0 };
 #ifdef __sun
-			WLog_ERR(TAG, "F_SETLKW failed with %s [0x%08X]",
-			         winpr_strerror(errno, ebuffer, sizeof(ebuffer)), errno);
+			(void)log_error("F_SETLKW", pFile);
 #else
-			WLog_ERR(TAG, "flock failed with %s [0x%08X]",
-			         winpr_strerror(errno, ebuffer, sizeof(ebuffer)), errno);
+			(void)log_error("flock", pFile);
 #endif
 
 			SetLastError(map_posix_err(errno));

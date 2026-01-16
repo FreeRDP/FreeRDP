@@ -139,8 +139,8 @@ static UINT disp_recv_display_control_monitor_layout_pdu(wStream* s, DispServerC
 
 	if (pdu.MonitorLayoutSize != DISPLAY_CONTROL_MONITOR_LAYOUT_SIZE)
 	{
-		WLog_ERR(TAG, "MonitorLayoutSize is set to %" PRIu32 ". expected %" PRIu32 "",
-		         pdu.MonitorLayoutSize, DISPLAY_CONTROL_MONITOR_LAYOUT_SIZE);
+		WLog_ERR(TAG, "MonitorLayoutSize is set to %" PRIu32 ". expected %d", pdu.MonitorLayoutSize,
+		         DISPLAY_CONTROL_MONITOR_LAYOUT_SIZE);
 		return ERROR_INVALID_DATA;
 	}
 
