@@ -480,7 +480,7 @@ static BOOL tsmf_read_format_type(TS_AM_MEDIA_TYPE* mediatype, wStream* s, UINT3
 			break;
 
 		default:
-			WLog_INFO(TAG, "unhandled format type 0x%x", mediatype->FormatType);
+			WLog_INFO(TAG, "unhandled format type 0x%08x", (unsigned)mediatype->FormatType);
 			break;
 	}
 	return TRUE;
