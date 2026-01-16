@@ -1236,7 +1236,7 @@ static SSIZE_T http_response_recv_line(rdpTls* tls, HttpResponse* response)
 			continue;
 		else if (position > RESPONSE_SIZE_LIMIT)
 		{
-			WLog_ERR(TAG, "Request header too large! (%" PRIdz " bytes) Aborting!", bodyLength);
+			WLog_ERR(TAG, "Request header too large! (%" PRIuz " bytes) Aborting!", bodyLength);
 			goto out_error;
 		}
 
@@ -1321,7 +1321,7 @@ static BOOL http_response_recv_body(rdpTls* tls, HttpResponse* response, BOOL re
 
 			if (response->BodyLength > RESPONSE_SIZE_LIMIT)
 			{
-				WLog_ERR(TAG, "Request body too large! (%" PRIdz " bytes) Aborting!",
+				WLog_ERR(TAG, "Request body too large! (%" PRIuz " bytes) Aborting!",
 				         response->BodyLength);
 				goto out_error;
 			}
@@ -1451,7 +1451,7 @@ HttpResponse* http_response_recv(rdpTls* tls, BOOL readContentLength)
 
 		if (bodyLength > RESPONSE_SIZE_LIMIT)
 		{
-			WLog_ERR(TAG, "Expected request body too large! (%" PRIdz " bytes) Aborting!",
+			WLog_ERR(TAG, "Expected request body too large! (%" PRIuz " bytes) Aborting!",
 			         bodyLength);
 			goto out_error;
 		}
