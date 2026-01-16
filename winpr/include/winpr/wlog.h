@@ -30,6 +30,7 @@ extern "C"
 
 #include <stdarg.h>
 
+#include <winpr/platform.h>
 #include <winpr/wtypes.h>
 #include <winpr/winpr.h>
 #include <winpr/synch.h>
@@ -261,8 +262,10 @@ extern "C"
 		}                                                                                          \
 	} while (0)
 
+	WINPR_ATTR_FORMAT_ARG(6, 7)
 	static inline void WLog_Print_dbg_tag(const char* WINPR_RESTRICT tag, DWORD log_level,
-	                                      size_t line, const char* file, const char* fkt, ...)
+	                                      size_t line, const char* file, const char* fkt,
+	                                      WINPR_FORMAT_ARG const char* fmt, ...)
 	{
 		static wLog* log_cached_ptr = NULL;
 		if (!log_cached_ptr)
@@ -271,8 +274,8 @@ extern "C"
 		if (WLog_IsLevelActive(log_cached_ptr, log_level))
 		{
 			va_list ap;
-			va_start(ap, fkt);
-			WLog_PrintMessageVA(log_cached_ptr, WLOG_MESSAGE_TEXT, log_level, line, file, fkt, ap);
+			va_start(ap, fmt);
+			WLog_PrintTextMessageVA(log_cached_ptr, log_level, line, file, fkt, fmt, ap);
 			va_end(ap);
 		}
 	}
