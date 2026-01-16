@@ -1515,7 +1515,7 @@ static BOOL nla_read_ts_credentials(rdpNla* nla, SecBuffer* data)
 			break;
 		}
 		default:
-			WLog_DBG(TAG, "TSCredentials type " PRIu32 " not supported for now", credType);
+			WLog_DBG(TAG, "TSCredentials type %d not supported for now", credType);
 			ret = FALSE;
 			break;
 	}
@@ -2026,7 +2026,7 @@ BOOL nla_send(rdpNla* nla)
 	if (nla->errorCode && nla->peerVersion >= 3 && nla->peerVersion != 5)
 	{
 		WLog_DBG(TAG, "   ----->> error code %s 0x%08" PRIx32, NtStatus2Tag(nla->errorCode),
-		         nla->errorCode);
+		         WINPR_CXX_COMPAT_CAST(uint32_t, nla->errorCode));
 		if (!WinPrAsn1EncContextualInteger(
 		        enc, 4, WINPR_ASSERTING_INT_CAST(WinPrAsn1_INTEGER, nla->errorCode)))
 			goto fail;
@@ -2153,7 +2153,7 @@ static int nla_decode_ts_request(rdpNla* nla, wStream* s)
 					return -1;
 				nla->errorCode = val;
 				WLog_DBG(TAG, "   <<----- error code %s 0x%08" PRIx32, NtStatus2Tag(nla->errorCode),
-				         nla->errorCode);
+				         WINPR_CXX_COMPAT_CAST(uint32_t, nla->errorCode));
 				break;
 			case 5:
 				WLog_DBG(TAG, "   <<----- client nonce");
@@ -2243,8 +2243,9 @@ int nla_recv_pdu(rdpNla* nla, wStream* s)
 					break;
 
 				default:
-					WLog_ERR(TAG, "SPNEGO failed with NTSTATUS: %s [0x%08" PRIX32 "]",
-					         NtStatus2Tag(nla->errorCode), nla->errorCode);
+					WLog_ERR(TAG, "SPNEGO failed with NTSTATUS: %s [0x%08" PRIx32 "]",
+					         NtStatus2Tag(nla->errorCode),
+					         WINPR_CXX_COMPAT_CAST(uint32_t, nla->errorCode));
 					code = FREERDP_ERROR_AUTHENTICATION_FAILED;
 					break;
 			}
