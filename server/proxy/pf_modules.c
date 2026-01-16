@@ -357,7 +357,7 @@ static BOOL pf_modules_set_plugin_data(WINPR_ATTR_UNUSED proxyPluginsManager* mg
 
 	if (!HashTable_Insert(pdata->modules_info, ccharconv.cp, data))
 	{
-		WLog_ERR(TAG, "[%s]: HashTable_Insert failed!");
+		WLog_ERR(TAG, "HashTable_Insert failed!");
 		return FALSE;
 	}
 
