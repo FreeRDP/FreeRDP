@@ -744,7 +744,7 @@ UINT rdpei_server_handle_messages(RdpeiServerContext* context)
 		case EVENTID_CS_READY:
 			if (priv->automataState != STATE_WAITING_CLIENT_READY)
 			{
-				WLog_ERR(TAG, "not expecting a CS_READY packet in this state(%d)",
+				WLog_ERR(TAG, "not expecting a CS_READY packet in this state(%u)",
 				         priv->automataState);
 				return ERROR_INVALID_STATE;
 			}
@@ -800,7 +800,7 @@ UINT rdpei_server_send_sc_ready(RdpeiServerContext* context, UINT32 version, UIN
 
 	if (priv->automataState != STATE_INITIAL)
 	{
-		WLog_ERR(TAG, "called from unexpected state %d", priv->automataState);
+		WLog_ERR(TAG, "called from unexpected state %u", priv->automataState);
 		return ERROR_INVALID_STATE;
 	}
 
@@ -853,7 +853,7 @@ UINT rdpei_server_suspend(RdpeiServerContext* context)
 		case STATE_WAITING_FRAME:
 			break;
 		default:
-			WLog_ERR(TAG, "called from unexpected state %d", priv->automataState);
+			WLog_ERR(TAG, "called from unexpected state %u", priv->automataState);
 			return ERROR_INVALID_STATE;
 	}
 
@@ -899,7 +899,7 @@ UINT rdpei_server_resume(RdpeiServerContext* context)
 		case STATE_SUSPENDED:
 			break;
 		default:
-			WLog_ERR(TAG, "called from unexpected state %d", priv->automataState);
+			WLog_ERR(TAG, "called from unexpected state %u", priv->automataState);
 			return ERROR_INVALID_STATE;
 	}
 
