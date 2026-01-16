@@ -155,9 +155,6 @@ static UINT remdesk_recv_ctl_server_announce_pdu(WINPR_ATTR_UNUSED remdeskPlugin
 static UINT remdesk_recv_ctl_version_info_pdu(remdeskPlugin* remdesk, wStream* s,
                                               WINPR_ATTR_UNUSED REMDESK_CHANNEL_HEADER* header)
 {
-	UINT32 versionMajor = 0;
-	UINT32 versionMinor = 0;
-
 	WINPR_ASSERT(remdesk);
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(header);
@@ -165,12 +162,12 @@ static UINT remdesk_recv_ctl_version_info_pdu(remdeskPlugin* remdesk, wStream* s
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
 		return ERROR_INVALID_DATA;
 
-	Stream_Read_UINT32(s, versionMajor); /* versionMajor (4 bytes) */
-	Stream_Read_UINT32(s, versionMinor); /* versionMinor (4 bytes) */
+	const UINT32 versionMajor = Stream_Get_UINT32(s); /* versionMajor (4 bytes) */
+	const UINT32 versionMinor = Stream_Get_UINT32(s); /* versionMinor (4 bytes) */
 
 	if ((versionMajor != 1) || (versionMinor > 2) || (versionMinor == 0))
 	{
-		WLog_ERR(TAG, "Unsupported protocol version %" PRId32 ".%" PRId32, versionMajor,
+		WLog_ERR(TAG, "Unsupported protocol version %" PRIu32 ".%" PRIu32, versionMajor,
 		         versionMinor);
 	}
 
