@@ -188,8 +188,11 @@ HANDLE CreateMutexExW(LPSECURITY_ATTRIBUTES lpMutexAttributes, LPCWSTR lpName, D
 
 	/* TODO: support access modes */
 	if (dwDesiredAccess != 0)
-		WLog_WARN(TAG, "[%s] does not support dwDesiredAccess 0x%08" PRIx32, lpName,
-		          dwDesiredAccess);
+	{
+		char name[MAX_PATH] = { 0 };
+		ConvertWCharToUtf8(lpName, name, sizeof(name));
+		WLog_WARN(TAG, "[%s] does not support dwDesiredAccess 0x%08" PRIx32, name, dwDesiredAccess);
+	}
 
 	if (dwFlags & CREATE_MUTEX_INITIAL_OWNER)
 		initial = TRUE;
