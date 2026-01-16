@@ -133,7 +133,7 @@ static DWORD WINAPI smartcard_context_thread(LPVOID arg)
 				{
 					element->irp->Discard(element->irp);
 					smartcard_operation_free(&element->operation, TRUE);
-					WLog_ERR(TAG, "smartcard_irp_device_control_call failed with error %" PRIu32 "",
+					WLog_ERR(TAG, "smartcard_irp_device_control_call failed with error %" PRId32 "",
 					         status);
 					break;
 				}
