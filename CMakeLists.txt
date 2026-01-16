@@ -414,6 +414,10 @@ if(WITH_OPENH264 AND NOT WITH_OPENH264_LOADING)
   option(WITH_OPENH264_LOADING "Use LoadLibrary to load openh264 at runtime" OFF)
 endif(WITH_OPENH264 AND NOT WITH_OPENH264_LOADING)
 
+if(WITH_SWSCALE AND NOT WITH_SWSCALE_LOADING)
+  option(WITH_SWSCALE_LOADING "Use LoadLibrary to load swscale at runtime" OFF)
+endif(WITH_SWSCALE AND NOT WITH_SWSCALE_LOADING)
+
 # Version check, if we have detected FFMPEG but the version is too old
 # deactivate it as sound backend.
 if(WITH_DSP_FFMPEG)
