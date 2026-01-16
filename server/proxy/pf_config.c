@@ -378,8 +378,7 @@ static char* pf_config_decode_base64(const char* data, const char* name, size_t*
 	char* decoded = NULL;
 	if (!data)
 	{
-		WLog_ERR(TAG, "Invalid base64 data [%p] for %s", WINPR_CXX_COMPAT_CAST(const void*, data),
-		         name);
+		WLog_ERR(TAG, "Invalid base64 data [NULL] for %s", name);
 		return NULL;
 	}
 

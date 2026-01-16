@@ -388,8 +388,7 @@ char* GetKnownPath(eKnownPathTypes id)
 	}
 
 	if (!path)
-		WLog_WARN(TAG, "Path %s is %p", GetKnownPathIdString(WINPR_ASSERTING_INT_CAST(int, id)),
-		          WINPR_CXX_COMPAT_CAST(const void*, path));
+		WLog_WARN(TAG, "Path %s is NULL", GetKnownPathIdString(WINPR_ASSERTING_INT_CAST(int, id)));
 	return path;
 }
 

@@ -337,7 +337,8 @@ static BOOL clear_resize_buffer(CLEAR_CONTEXT* WINPR_RESTRICT clear, UINT32 widt
 
 	if (size > clear->TempSize / bpp)
 	{
-		BYTE* tmp = (BYTE*)winpr_aligned_recalloc(clear->TempBuffer, size, bpp, 32);
+		BYTE* tmp = (BYTE*)winpr_aligned_recalloc(clear->TempBuffer,
+		                                          WINPR_ASSERTING_INT_CAST(size_t, size), bpp, 32);
 
 		if (!tmp)
 		{
@@ -346,7 +347,7 @@ static BOOL clear_resize_buffer(CLEAR_CONTEXT* WINPR_RESTRICT clear, UINT32 widt
 			return FALSE;
 		}
 
-		clear->TempSize = size * bpp;
+		clear->TempSize = WINPR_ASSERTING_INT_CAST(size_t, size* bpp);
 		clear->TempBuffer = tmp;
 	}
 

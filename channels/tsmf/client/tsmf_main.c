@@ -100,11 +100,9 @@ BOOL tsmf_playback_ack(IWTSVirtualChannelCallback* pChannelCallback, UINT32 mess
 
 	if (!callback->channel || !callback->channel->Write)
 	{
-		WLog_ERR(TAG, "callback=%p, channel=%p, write=%p",
-		         WINPR_CXX_COMPAT_CAST(const void*, callback),
-		         WINPR_CXX_COMPAT_CAST(const void*, callback ? callback->channel : NULL),
-		         WINPR_CXX_COMPAT_CAST(
-		             const void*, callback && callback->channel ? callback->channel->Write : NULL));
+		WLog_ERR(TAG, "channel=%p, write=%p", WINPR_CXX_COMPAT_CAST(const void*, callback->channel),
+		         WINPR_CXX_COMPAT_CAST(const void*,
+		                               callback->channel ? callback->channel->Write : NULL));
 	}
 	else
 	{

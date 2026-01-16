@@ -36,7 +36,7 @@ SECURITY_STATUS checkNCryptHandle(NCRYPT_HANDLE handle, NCryptHandleType matchTy
 {
 	if (!handle)
 	{
-		WLog_VRB(TAG, "invalid handle '%p'", WINPR_CXX_COMPAT_CAST(const void*, handle));
+		WLog_VRB(TAG, "invalid handle 'NULL'");
 		return ERROR_INVALID_PARAMETER;
 	}
 

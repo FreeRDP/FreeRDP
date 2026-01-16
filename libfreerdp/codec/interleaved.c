@@ -586,8 +586,7 @@ BOOL interleaved_decompress(BITMAP_INTERLEAVED_CONTEXT* WINPR_RESTRICT interleav
 
 	if (!interleaved->TempBuffer)
 	{
-		WLog_ERR(TAG, "interleaved->TempBuffer=%p",
-		         WINPR_CXX_COMPAT_CAST(const void*, interleaved->TempBuffer));
+		WLog_ERR(TAG, "interleaved->TempBuffer=NULL");
 		return FALSE;
 	}
 

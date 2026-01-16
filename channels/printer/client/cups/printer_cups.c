@@ -70,7 +70,7 @@ static bool is_mac_os_sonoma_or_later(void)
 	const int rc = sscanf(str, "%d.%d.%d", &major, &minor, &patch);
 	if (rc != 3)
 	{
-		WLog_WARN(TAG, "could not match '%s' to format '%d.%d.%d'");
+		WLog_WARN(TAG, "could not match '%s' to format '%d.%d.%d'", str, major, minor, patch);
 		return false;
 	}
 

@@ -190,7 +190,7 @@ HANDLE CreateMutexExW(LPSECURITY_ATTRIBUTES lpMutexAttributes, LPCWSTR lpName, D
 	if (dwDesiredAccess != 0)
 	{
 		char name[MAX_PATH] = { 0 };
-		ConvertWCharToUtf8(lpName, name, sizeof(name));
+		ConvertWCharToUtf8(lpName, name, sizeof(name) - 1);
 		WLog_WARN(TAG, "[%s] does not support dwDesiredAccess 0x%08" PRIx32, name, dwDesiredAccess);
 	}
 
