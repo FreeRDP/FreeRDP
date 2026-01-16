@@ -529,8 +529,9 @@ BOOL freerdp_channels_data(freerdp* instance, UINT16 channelId, const BYTE* cdat
 	data.pcb = cdata;
 	if (!instance || !data.pcb)
 	{
-		WLog_ERR(TAG, "(%p, %" PRIu16 ", %p, 0x%08x): Invalid arguments", instance, channelId,
-		         data.pcb, flags);
+		WLog_ERR(TAG, "(%p, %" PRIu16 ", %p, 0x%08x): Invalid arguments",
+		         WINPR_CXX_COMPAT_CAST(const void*, instance), channelId,
+		         WINPR_CXX_COMPAT_CAST(const void*, data.pcb), flags);
 		return FALSE;
 	}
 
@@ -802,7 +803,8 @@ BOOL freerdp_client_channel_register(rdpChannels* channels, HANDLE handle,
 	if (!channels || (handle == INVALID_HANDLE_VALUE) || !fkt)
 	{
 		WLog_ERR(TAG, "Invalid function arguments (channels=%p, handle=%p, fkt=%p, userdata=%p",
-		         channels, handle, fkt, userdata);
+		         WINPR_CXX_COMPAT_CAST(const void*, channels), handle,
+		         WINPR_CXX_COMPAT_CAST(const void*, fkt), userdata);
 		return FALSE;
 	}
 
@@ -814,7 +816,8 @@ BOOL freerdp_client_channel_unregister(rdpChannels* channels, HANDLE handle)
 {
 	if (!channels || (handle == INVALID_HANDLE_VALUE))
 	{
-		WLog_ERR(TAG, "Invalid function arguments (channels=%p, handle=%p", channels, handle);
+		WLog_ERR(TAG, "Invalid function arguments (channels=%p, handle=%p",
+		         WINPR_CXX_COMPAT_CAST(const void*, channels), handle);
 		return FALSE;
 	}
 
