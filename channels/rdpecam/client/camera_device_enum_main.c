@@ -87,7 +87,7 @@ UINT ecam_channel_write(WINPR_ATTR_UNUSED CameraPlugin* ecam, GENERIC_CHANNEL_CA
 	Stream_SealLength(out);
 	WINPR_ASSERT(Stream_Length(out) <= UINT32_MAX);
 
-	WLog_DBG(TAG, "ChannelId=%d, MessageId=0x%02" PRIx8 ", Length=%d",
+	WLog_DBG(TAG, "ChannelId=%" PRIu32 ", MessageId=0x%02" PRIx8 ", Length=%" PRIuz,
 	         hchannel->channel_mgr->GetChannelId(hchannel->channel), msg, Stream_Length(out));
 
 	const UINT error = hchannel->channel->Write(hchannel->channel, (ULONG)Stream_Length(out),
@@ -231,7 +231,7 @@ static UINT ecam_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, 
 
 	Stream_Read_UINT8(data, version);
 	Stream_Read_UINT8(data, messageId);
-	WLog_DBG(TAG, "ChannelId=%d, MessageId=0x%02" PRIx8 ", Version=%d",
+	WLog_DBG(TAG, "ChannelId=%" PRIu32 ", MessageId=0x%02" PRIx8 ", Version=%d",
 	         hchannel->channel_mgr->GetChannelId(hchannel->channel), messageId, version);
 
 	switch (messageId)
