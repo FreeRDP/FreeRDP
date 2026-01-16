@@ -635,7 +635,7 @@ static UINT32 tsmf_ffmpeg_get_decoded_format(ITSMFDecoder* decoder)
 			return RDP_PIXFMT_I420;
 
 		default:
-			WLog_ERR(TAG, "unsupported pixel format %u", mdecoder->codec_context->pix_fmt);
+			WLog_ERR(TAG, "unsupported pixel format %d", mdecoder->codec_context->pix_fmt);
 			return (UINT32)-1;
 	}
 }
