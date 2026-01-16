@@ -1502,7 +1502,7 @@ UINT xf_AppUpdateWindowFromSurface(xfContext* xfc, gdiGfxSurface* surface)
 			{
 				WLog_WARN(TAG,
 				          "Failed create a XImage[%" PRIu32 "x%" PRIu32 ", scanline=%" PRIu32
-				          ", bpp=%" PRIu32 "] for window id=0x%08" PRIx64,
+				          ", bpp=%" PRId32 "] for window id=0x%08" PRIx64,
 				          surface->width, surface->height, surface->scanline, xfc->depth,
 				          surface->windowId);
 				goto fail;
