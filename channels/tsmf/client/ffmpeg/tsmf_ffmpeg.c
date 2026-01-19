@@ -205,6 +205,8 @@ static BOOL tsmf_ffmpeg_init_stream(ITSMFDecoder* decoder, const TS_AM_MEDIA_TYP
 		/* Add a padding to avoid invalid memory read in some codec */
 		mdecoder->codec_context->extradata_size =
 		    WINPR_ASSERTING_INT_CAST(int, media_type->ExtraDataSize + 8);
+		if (mdecoder->codec_context->extradata_size == 0)
+			return FALSE;
 		mdecoder->codec_context->extradata = calloc(1, mdecoder->codec_context->extradata_size);
 
 		if (!mdecoder->codec_context->extradata)

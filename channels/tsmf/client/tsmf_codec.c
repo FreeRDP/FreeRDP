@@ -489,7 +489,6 @@ static BOOL tsmf_read_format_type(TS_AM_MEDIA_TYPE* mediatype, wStream* s, UINT3
 BOOL tsmf_codec_parse_media_type(TS_AM_MEDIA_TYPE* mediatype, wStream* s)
 {
 	UINT32 cbFormat = 0;
-	BOOL ret = TRUE;
 
 	ZeroMemory(mediatype, sizeof(TS_AM_MEDIA_TYPE));
 
@@ -508,7 +507,7 @@ BOOL tsmf_codec_parse_media_type(TS_AM_MEDIA_TYPE* mediatype, wStream* s)
 
 	mediatype->MajorType = tsmf_major_type_map[i].type;
 	if (mediatype->MajorType == TSMF_MAJOR_TYPE_UNKNOWN)
-		ret = FALSE;
+		return FALSE;
 
 	DEBUG_TSMF("MediaMajorType %s", tsmf_major_type_map[i].name);
 	Stream_Seek(s, 16);
@@ -527,7 +526,7 @@ BOOL tsmf_codec_parse_media_type(TS_AM_MEDIA_TYPE* mediatype, wStream* s)
 
 	mediatype->SubType = tsmf_sub_type_map[i].type;
 	if (mediatype->SubType == TSMF_SUB_TYPE_UNKNOWN)
-		ret = FALSE;
+		return FALSE;
 
 	DEBUG_TSMF("MediaSubType %s", tsmf_sub_type_map[i].name);
 	Stream_Seek(s, 16);
@@ -551,7 +550,7 @@ BOOL tsmf_codec_parse_media_type(TS_AM_MEDIA_TYPE* mediatype, wStream* s)
 
 	mediatype->FormatType = tsmf_format_type_map[i].type;
 	if (mediatype->FormatType == TSMF_FORMAT_TYPE_UNKNOWN)
-		ret = FALSE;
+		return FALSE;
 
 	DEBUG_TSMF("FormatType %s", tsmf_format_type_map[i].name);
 	Stream_Seek(s, 16);
@@ -565,7 +564,7 @@ BOOL tsmf_codec_parse_media_type(TS_AM_MEDIA_TYPE* mediatype, wStream* s)
 	winpr_HexDump(TAG, WLOG_DEBUG, Stream_Pointer(s), cbFormat);
 #endif
 
-	ret = tsmf_read_format_type(mediatype, s, cbFormat);
+	const BOOL ret = tsmf_read_format_type(mediatype, s, cbFormat);
 
 	if (mediatype->SamplesPerSecond.Numerator == 0)
 		mediatype->SamplesPerSecond.Numerator = 1;

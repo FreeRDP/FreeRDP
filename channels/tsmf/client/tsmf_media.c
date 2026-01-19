@@ -691,14 +691,6 @@ static BOOL tsmf_sample_playback(TSMF_SAMPLE* sample)
 	else
 	{
 		UINT64 ack_anticipation_time = get_current_time();
-		BOOL buffer_filled = TRUE;
-
-		/* Classify the buffer as filled once it reaches minimum level */
-		if (stream->decoder->BufferLevel)
-		{
-			if (stream->currentBufferLevel < stream->minBufferLevel)
-				buffer_filled = FALSE;
-		}
 
 		ack_anticipation_time +=
 		    (sample->duration / 2 < MAX_ACK_TIME) ? sample->duration / 2 : MAX_ACK_TIME;
@@ -1460,13 +1452,12 @@ BOOL tsmf_stream_push_sample(TSMF_STREAM* stream, IWTSVirtualChannelCallback* pC
                              UINT32 sample_id, UINT64 start_time, UINT64 end_time, UINT64 duration,
                              UINT32 extensions, UINT32 data_size, BYTE* data)
 {
-	TSMF_SAMPLE* sample = NULL;
 	(void)SetEvent(stream->ready);
 
 	if (TERMINATING)
 		return TRUE;
 
-	sample = (TSMF_SAMPLE*)calloc(1, sizeof(TSMF_SAMPLE));
+	TSMF_SAMPLE* sample = (TSMF_SAMPLE*)calloc(1, sizeof(TSMF_SAMPLE));
 
 	if (!sample)
 	{
@@ -1497,6 +1488,7 @@ BOOL tsmf_stream_push_sample(TSMF_STREAM* stream, IWTSVirtualChannelCallback* pC
 	if (!Queue_Enqueue(stream->sample_list, sample))
 		goto fail;
 
+	// NOLINTNEXTLINE(clang-analyzer-unix.Malloc): Queue_Enqueue takes ownership of sample
 	return TRUE;
 
 fail:
