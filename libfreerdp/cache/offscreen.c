@@ -164,8 +164,6 @@ void offscreen_cache_put(rdpOffscreenCache* offscreenCache, UINT32 index, rdpBit
 
 void offscreen_cache_delete(rdpOffscreenCache* offscreenCache, UINT32 index)
 {
-	rdpBitmap* prevBitmap = NULL;
-
 	WINPR_ASSERT(offscreenCache);
 
 	if (index >= offscreenCache->maxEntries)
@@ -174,10 +172,16 @@ void offscreen_cache_delete(rdpOffscreenCache* offscreenCache, UINT32 index)
 		return;
 	}
 
-	prevBitmap = offscreenCache->entries[index];
+	rdpBitmap* prevBitmap = offscreenCache->entries[index];
 
 	if (prevBitmap != NULL)
+	{
+		WINPR_ASSERT(offscreenCache->context);
+
+		/* Ensure that the bitmap is no longer used in GDI */
+		IFCALL(prevBitmap->SetSurface, offscreenCache->context, NULL, FALSE);
 		Bitmap_Free(offscreenCache->context, prevBitmap);
+	}
 
 	offscreenCache->entries[index] = NULL;
 }
