@@ -1447,7 +1447,7 @@ static BOOL rdp_write_logon_info_v1(wStream* s, logon_info* info)
 	return TRUE;
 }
 
-static BOOL rdp_write_logon_info_v2(wStream* s, logon_info* info)
+static BOOL rdp_write_logon_info_v2(wStream* s, const logon_info* info)
 {
 	size_t domainLen = 0;
 	size_t usernameLen = 0;
@@ -1462,11 +1462,14 @@ static BOOL rdp_write_logon_info_v2(wStream* s, logon_info* info)
 	 */
 	Stream_Write_UINT32(s, logonInfoV2Size);
 	Stream_Write_UINT32(s, info->sessionId);
-	domainLen = strnlen(info->domain, 256); /* lmcons.h UNLEN */
+	if (info->domain)
+		domainLen = strnlen(info->domain, 256); /* lmcons.h UNLEN */
 	if (domainLen >= UINT32_MAX / sizeof(WCHAR))
 		return FALSE;
 	Stream_Write_UINT32(s, (UINT32)(domainLen + 1) * sizeof(WCHAR));
-	usernameLen = strnlen(info->username, 256); /* lmcons.h UNLEN */
+
+	if (info->username)
+		usernameLen = strnlen(info->username, 256); /* lmcons.h UNLEN */
 	if (usernameLen >= UINT32_MAX / sizeof(WCHAR))
 		return FALSE;
 	Stream_Write_UINT32(s, (UINT32)(usernameLen + 1) * sizeof(WCHAR));
@@ -1534,10 +1537,11 @@ static BOOL rdp_write_logon_info_ex(wStream* s, logon_info_ex* info)
 BOOL rdp_send_save_session_info(rdpContext* context, UINT32 type, void* data)
 {
 	UINT16 sec_flags = 0;
-	wStream* s = NULL;
 	BOOL status = 0;
+
+	WINPR_ASSERT(context);
 	rdpRdp* rdp = context->rdp;
-	s = rdp_data_pdu_init(rdp, &sec_flags);
+	wStream* s = rdp_data_pdu_init(rdp, &sec_flags);
 
 	if (!s)
 		return FALSE;
