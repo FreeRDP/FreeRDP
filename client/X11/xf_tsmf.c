@@ -44,7 +44,7 @@ static long xv_port = 0;
 
 struct xf_xv_context
 {
-	long xv_port;
+	XvPortID xv_port;
 	Atom xv_colorkey_atom;
 	int xv_image_size;
 	int xv_shmid;

@@ -344,7 +344,7 @@ static UINT16 dsp_decode_ima_adpcm_sample(ADPCM* WINPR_RESTRICT adpcm, unsigned 
 		d = 32767;
 
 	adpcm->ima.last_sample[channel] = (INT16)d;
-	adpcm->ima.last_step[channel] += ima_step_index_table[sample];
+	adpcm->ima.last_step[channel] = adpcm->ima.last_step[channel] + ima_step_index_table[sample];
 
 	if (adpcm->ima.last_step[channel] < 0)
 		adpcm->ima.last_step[channel] = 0;
@@ -795,7 +795,7 @@ static BYTE dsp_encode_ima_adpcm_sample(ADPCM* WINPR_RESTRICT adpcm, size_t chan
 		diff = 32767;
 
 	adpcm->ima.last_sample[channel] = (INT16)diff;
-	adpcm->ima.last_step[channel] += ima_step_index_table[enc];
+	adpcm->ima.last_step[channel] = adpcm->ima.last_step[channel] + ima_step_index_table[enc];
 
 	if (adpcm->ima.last_step[channel] < 0)
 		adpcm->ima.last_step[channel] = 0;
@@ -894,7 +894,7 @@ static const INT32 ms_adpcm_coeffs2[7] = { 0, -256, 0, 64, 0, -208, -232 };
 static inline INT16 freerdp_dsp_decode_ms_adpcm_sample(ADPCM* WINPR_RESTRICT adpcm, BYTE sample,
                                                        size_t channel)
 {
-	const INT8 nibble = (sample & 0x08 ? (INT8)sample - 16 : (INT8)sample);
+	const INT8 nibble = (sample & 0x08) ? (INT8)(sample - 16) : (INT8)sample;
 	INT32 presample =
 	    ((adpcm->ms.sample1[channel] * ms_adpcm_coeffs1[adpcm->ms.predictor[channel]]) +
 	     (adpcm->ms.sample2[channel] * ms_adpcm_coeffs2[adpcm->ms.predictor[channel]])) /

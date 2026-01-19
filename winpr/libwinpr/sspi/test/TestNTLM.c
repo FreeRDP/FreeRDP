@@ -179,10 +179,7 @@ static int test_ntlm_client_init(TEST_NTLM_CLIENT* ntlm, const char* user, const
 	ZeroMemory(&ntlm->inputBuffer, sizeof(SecBuffer));
 	ZeroMemory(&ntlm->outputBuffer, sizeof(SecBuffer));
 	ntlm->fContextReq = 0;
-#if 0
-	/* HTTP authentication flags */
-	ntlm->fContextReq |= ISC_REQ_CONFIDENTIALITY;
-#endif
+
 	/* NLA authentication flags */
 	ntlm->fContextReq |= ISC_REQ_MUTUAL_AUTH;
 	ntlm->fContextReq |= ISC_REQ_CONFIDENTIALITY;
