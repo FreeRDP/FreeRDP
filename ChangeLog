@@ -1,3 +1,33 @@
+# 2026-01-19 Version 3.21.0
+
+Bugfix release with a few new API functions addressing shortcomings with
+regard to input data validation.
+Thanks to @ehdgks0627 we have fixed the following additional (medium)
+client side vulnerabilities:
+* CVE-2026-23530
+* CVE-2026-23531
+* CVE-2026-23532
+* CVE-2026-23533
+* CVE-2026-23534
+* CVE-2026-23732
+* CVE-2026-23883
+* CVE-2026-23884
+
+## What's Changed
+* [client,sdl] fix monitor resolution (#12142)
+* [codec,progressive] fix progressive_rfx_upgrade_block (#12143)
+* Krb cache fix (#12145)
+* Rdpdr improved checks (#12141)
+* Codec advanced length checks (#12146)
+* Glyph fix length checks (#12151)
+* Wlog printf format string checks (#12150)
+* [warnings,format] fix format string warnings (#12152)
+* Double free fixes (#12153)
+* [clang-tidy] clean up code warnings (#12154)
+
+For a complete and detailed change log since the last release run:
+git log 3.21.0...3.20.2
+
 # 2026-01-14 Version 3.20.2
 
 Patch release fixing a regression with gateway connections introduced with 3.20.1
