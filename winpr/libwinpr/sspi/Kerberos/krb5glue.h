@@ -29,6 +29,8 @@
 typedef krb5_key krb5glue_key;
 typedef krb5_authenticator* krb5glue_authenticator;
 
+#define krb5glue_free_authenticator(ctx, auth) krb5_free_authenticator((ctx), (auth))
+
 #define krb5glue_crypto_length(ctx, key, type, size) \
 	krb5_c_crypto_length(ctx, krb5_k_key_enctype(ctx, key), type, size)
 #define krb5glue_crypto_length_iov(ctx, key, iov, size) \
@@ -56,6 +58,8 @@ krb5_prompt_type krb5glue_get_prompt_type(krb5_context ctx, krb5_prompt prompts[
 #elif defined(WITH_KRB5_HEIMDAL)
 typedef krb5_crypto krb5glue_key;
 typedef krb5_authenticator krb5glue_authenticator;
+
+#define krb5glue_free_authenticator(ctx, auth) krb5_free_authenticator((ctx), &(auth))
 
 krb5_error_code krb5glue_crypto_length(krb5_context ctx, krb5glue_key key, int type,
                                        unsigned int* size);

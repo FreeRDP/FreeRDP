@@ -1711,8 +1711,6 @@ static SECURITY_STATUS kerberos_ATTR_AUTH_IDENTITY(KRB_CONTEXT* context,
                                                    SecPkgContext_AuthIdentity* AuthIdentity)
 {
 	const SecPkgContext_AuthIdentity empty = { 0 };
-	krb5glue_authenticator authenticator = NULL;
-	char* name = NULL;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->auth_ctx);
@@ -1721,41 +1719,64 @@ static SECURITY_STATUS kerberos_ATTR_AUTH_IDENTITY(KRB_CONTEXT* context,
 	WINPR_ASSERT(AuthIdentity);
 	*AuthIdentity = empty;
 
+	krb5glue_authenticator authenticator = NULL;
 	krb5_error_code rv = krb_log_exec(krb5_auth_con_getauthenticator, credentials->ctx,
 	                                  context->auth_ctx, &authenticator);
 	if (rv)
-		return krb5_error_to_SECURITY_STATUS(rv);
+		goto fail;
 
-	krb5_data* realm_data = krb5_princ_realm(credentials->ctx, authenticator->client);
-	if (realm_data->length > (sizeof(AuthIdentity->Domain) - 1))
 	{
-		krb5_free_authenticator(credentials->ctx, authenticator);
-		return SEC_E_INTERNAL_ERROR;
+		rv = -1;
+
+#if defined(WITH_KRB5_HEIMDAL)
+		const Realm data = authenticator->crealm;
+		if (!data)
+			goto fail;
+		const size_t data_len = length_Realm(&data);
+#else
+		krb5_data* realm_data = krb5_princ_realm(credentials->ctx, authenticator->client);
+		if (!realm_data)
+			goto fail;
+		const char* data = realm_data->data;
+		if (!data)
+			goto fail;
+		const size_t data_len = realm_data->length;
+#endif
+
+		if (data_len > (sizeof(AuthIdentity->Domain) - 1))
+			goto fail;
+		strncpy(AuthIdentity->Domain, data, data_len);
 	}
 
-	rv = krb_log_exec(krb5_unparse_name_flags, credentials->ctx, authenticator->client,
-	                  KRB5_PRINCIPAL_UNPARSE_NO_REALM, &name);
-	if (rv)
 	{
-		krb5_free_authenticator(credentials->ctx, authenticator);
-		return krb5_error_to_SECURITY_STATUS(rv);
-	}
+#if defined(WITH_KRB5_HEIMDAL)
+		const PrincipalName* principal = &authenticator->cname;
+		const size_t name_length = length_PrincipalName(principal);
+		const char* name = principal->name_string.val;
+#else
+		char* name = NULL;
+		rv = krb_log_exec(krb5_unparse_name_flags, credentials->ctx, authenticator->client,
+		                  KRB5_PRINCIPAL_UNPARSE_NO_REALM, &name);
+		if (rv)
+			goto fail;
 
-	size_t name_length = strlen(name);
-	if (name_length > (sizeof(AuthIdentity->User) - 1))
-	{
+		const size_t name_length = strlen(name);
+#endif
+
+		const bool ok = (name_length <= (sizeof(AuthIdentity->User) - 1));
+		if (ok)
+			strncpy(AuthIdentity->User, name, name_length);
+		else
+			rv = -1;
+
+#if !defined(WITH_KRB5_HEIMDAL)
 		krb5_free_unparsed_name(credentials->ctx, name);
-		krb5_free_authenticator(credentials->ctx, authenticator);
-		return SEC_E_INTERNAL_ERROR;
+#endif
 	}
 
-	strncpy(AuthIdentity->User, name, name_length);
-	strncpy(AuthIdentity->Domain, realm_data->data, realm_data->length);
-
-	krb5_free_unparsed_name(credentials->ctx, name);
-	krb5_free_authenticator(credentials->ctx, authenticator);
-
-	return SEC_E_OK;
+fail:
+	krb5glue_free_authenticator(credentials->ctx, authenticator);
+	return krb5_error_to_SECURITY_STATUS(rv);
 }
 
 static SECURITY_STATUS kerberos_ATTR_TICKET_LOGON(KRB_CONTEXT* context,
