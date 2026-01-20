@@ -1768,8 +1768,8 @@ static SECURITY_STATUS kerberos_ATTR_AUTH_IDENTITY(KRB_CONTEXT* context,
 		const bool ok = (name_length <= (sizeof(AuthIdentity->User) - 1));
 		if (ok)
 			strncpy(AuthIdentity->User, name, name_length);
-		else
-			rv = -1;
+
+		rv = ok ? 0 : -1;
 
 #if !defined(WITH_KRB5_HEIMDAL)
 		krb5_free_unparsed_name(credentials->ctx, name);
