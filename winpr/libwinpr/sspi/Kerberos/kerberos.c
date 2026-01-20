@@ -1706,6 +1706,58 @@ static SECURITY_STATUS kerberos_ATTR_SIZES(KRB_CONTEXT* context, KRB_CREDENTIALS
 	return SEC_E_OK;
 }
 
+static SECURITY_STATUS kerberos_ATTR_AUTH_IDENTITY(KRB_CONTEXT* context,
+                                                   KRB_CREDENTIALS* credentials,
+                                                   SecPkgContext_AuthIdentity* AuthIdentity)
+{
+	const SecPkgContext_AuthIdentity empty = { 0 };
+	krb5glue_authenticator authenticator = NULL;
+	char* name = NULL;
+
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(context->auth_ctx);
+	WINPR_ASSERT(credentials);
+
+	WINPR_ASSERT(AuthIdentity);
+	*AuthIdentity = empty;
+
+	krb5_error_code rv = krb_log_exec(krb5_auth_con_getauthenticator, credentials->ctx,
+	                                  context->auth_ctx, &authenticator);
+	if (rv)
+		return krb5_error_to_SECURITY_STATUS(rv);
+
+	krb5_data* realm_data = krb5_princ_realm(credentials->ctx, authenticator->client);
+	if (realm_data->length > (sizeof(AuthIdentity->Domain) - 1))
+	{
+		krb5_free_authenticator(credentials->ctx, authenticator);
+		return SEC_E_INTERNAL_ERROR;
+	}
+
+	rv = krb_log_exec(krb5_unparse_name_flags, credentials->ctx, authenticator->client,
+	                  KRB5_PRINCIPAL_UNPARSE_NO_REALM, &name);
+	if (rv)
+	{
+		krb5_free_authenticator(credentials->ctx, authenticator);
+		return krb5_error_to_SECURITY_STATUS(rv);
+	}
+
+	size_t name_length = strlen(name);
+	if (name_length > (sizeof(AuthIdentity->User) - 1))
+	{
+		krb5_free_unparsed_name(credentials->ctx, name);
+		krb5_free_authenticator(credentials->ctx, authenticator);
+		return SEC_E_INTERNAL_ERROR;
+	}
+
+	strncpy(AuthIdentity->User, name, name_length);
+	strncpy(AuthIdentity->Domain, realm_data->data, realm_data->length);
+
+	krb5_free_unparsed_name(credentials->ctx, name);
+	krb5_free_authenticator(credentials->ctx, authenticator);
+
+	return SEC_E_OK;
+}
+
 static SECURITY_STATUS kerberos_ATTR_TICKET_LOGON(KRB_CONTEXT* context,
                                                   KRB_CREDENTIALS* credentials,
                                                   KERB_TICKET_LOGON* ticketLogon)
@@ -1803,6 +1855,10 @@ static SECURITY_STATUS SEC_ENTRY kerberos_QueryContextAttributesA(PCtxtHandle ph
 	{
 		case SECPKG_ATTR_SIZES:
 			return kerberos_ATTR_SIZES(context, credentials, (SecPkgContext_Sizes*)pBuffer);
+
+		case SECPKG_ATTR_AUTH_IDENTITY:
+			return kerberos_ATTR_AUTH_IDENTITY(context, credentials,
+			                                   (SecPkgContext_AuthIdentity*)pBuffer);
 
 		case SECPKG_CRED_ATTR_TICKET_LOGON:
 			return kerberos_ATTR_TICKET_LOGON(context, credentials, (KERB_TICKET_LOGON*)pBuffer);
