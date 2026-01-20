@@ -1752,7 +1752,9 @@ static SECURITY_STATUS kerberos_ATTR_AUTH_IDENTITY(KRB_CONTEXT* context,
 #if defined(WITH_KRB5_HEIMDAL)
 		const PrincipalName* principal = &authenticator->cname;
 		const size_t name_length = length_PrincipalName(principal);
-		const char* name = principal->name_string.val;
+		if (!principal->name_string.val)
+			goto fail;
+		const char* name = *principal->name_string.val;
 #else
 		char* name = NULL;
 		rv = krb_log_exec(krb5_unparse_name_flags, credentials->ctx, authenticator->client,
