@@ -21,6 +21,7 @@ cmd /c cmake . -B"./Build/x64" -G"Visual Studio 17 2022"^
     -DWITH_DSP_FFMPEG=OFF^
     -DWITH_SWSCALE=OFF^
     -DWITH_SHADOW=OFF^
+    -DWITH_VERBOSE_WINPR_ASSERT=OFF
 
 rem build freerdp libs
 set Configuration=%1

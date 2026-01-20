@@ -16,7 +16,9 @@ internal sealed class NativeLoggingForwarder : IDisposable
         // ordered by frequency
         "freerdp_check_fds() failed - 0", //24000+ in 50 sec
         "WARNING: invalid packet signature",
-        "transport_check_fds: transport->ReceiveCallback() - -4",
+        "transport_check_fds: transport->ReceiveCallback() - -4", // logged by 2.5
+        "transport_check_fds: transport->ReceiveCallback() - STATE_RUN_FAILED", // logged by 3.16
+        "CONNECTION_STATE_ACTIVE status STATE_RUN_FAILED", // logged just before the one above on 3.16
         "fastpath_recv_update_data() fail",
         "Stream_GetRemainingLength() < size",//20000+ in 50 sec
         "fastpath_recv_update_data: fastpath_recv_update() -",
@@ -24,6 +26,7 @@ internal sealed class NativeLoggingForwarder : IDisposable
         "Total size (", // 21234214) exceeds MultifragMaxRequestSize (65535) // 2000+ in 50 secs
         "Unexpected FASTPATH_FRAGMENT_SINGLE",//800+ in 50 sec
         "SECONDARY ORDER [0x",//<04/05/...>] Cache Bitmap V2 (Compressed) failed",
+        "Secondary Drawing Order [0x", // same as above, logged by 3.16
         "bulk_decompress() failed",
         "Decompression failure!",
         "Unknown bulk compression type 00000003",
@@ -32,11 +35,15 @@ internal sealed class NativeLoggingForwarder : IDisposable
         "history buffer index out of range",//10+
         "history buffer overflow",
         "fastpath_recv_update() - -1",
+        "Primary Drawing Order",
     };
 
     public string[] FilterRemoveStartsWithWarnings = new[]
     {
         "Primary Drawing Order",
+        "expected messageChannelId=0",
+        "license binary blob::type BB_ERROR_BLOB",
+        "This build does not support AAD security"
     };
 
     public NativeLoggingForwarder(ILoggerFactory loggerFactory)
