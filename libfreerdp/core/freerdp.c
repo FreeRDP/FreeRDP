@@ -1337,10 +1337,19 @@ BOOL freerdp_nla_decrypt(rdpContext* context, const SecBuffer* inBuffer, SecBuff
 
 SECURITY_STATUS freerdp_nla_QueryContextAttributes(rdpContext* context, DWORD ulAttr, PVOID pBuffer)
 {
+	rdpNla* nla;
+
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->rdp);
 
-	return nla_QueryContextAttributes(context->rdp->nla, ulAttr, pBuffer);
+	if (context->rdp->nla)
+		nla = context->rdp->nla;
+	else
+		nla = transport_get_nla(context->rdp->transport);
+
+	WINPR_ASSERT(nla);
+
+	return nla_QueryContextAttributes(nla, ulAttr, pBuffer);
 }
 
 HANDLE getChannelErrorEventHandle(rdpContext* context)
