@@ -479,17 +479,19 @@ static UINT ainput_process_message(ainput_server* ainput)
 	}
 
 	Stream_SetLength(s, ActualBytesReturned);
-	const UINT16 MessageId = Stream_Get_UINT16(s);
-
-	switch (MessageId)
 	{
-		case MSG_AINPUT_MOUSE:
-			error = ainput_server_recv_mouse_event(ainput, s);
-			break;
+		const UINT16 MessageId = Stream_Get_UINT16(s);
 
-		default:
-			WLog_ERR(TAG, "audin_server_thread_func: unknown MessageId %" PRIu16 "", MessageId);
-			break;
+		switch (MessageId)
+		{
+			case MSG_AINPUT_MOUSE:
+				error = ainput_server_recv_mouse_event(ainput, s);
+				break;
+
+			default:
+				WLog_ERR(TAG, "audin_server_thread_func: unknown MessageId %" PRIu16 "", MessageId);
+				break;
+		}
 	}
 
 out:

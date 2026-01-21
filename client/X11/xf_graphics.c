@@ -303,12 +303,14 @@ static BOOL xf_Pointer_New(rdpContext* context, rdpPointer* pointer)
 	xpointer->nCursors = 0;
 	xpointer->mCursors = 0;
 
-	const size_t size =
-	    1ull * pointer->height * pointer->width * FreeRDPGetBytesPerPixel(CursorFormat);
+	{
+		const size_t size =
+		    1ull * pointer->height * pointer->width * FreeRDPGetBytesPerPixel(CursorFormat);
 
-	xpointer->cursorPixels = (XcursorPixel*)winpr_aligned_malloc(size, 16);
-	if (!xpointer->cursorPixels)
-		goto fail;
+		xpointer->cursorPixels = (XcursorPixel*)winpr_aligned_malloc(size, 16);
+		if (!xpointer->cursorPixels)
+			goto fail;
+	}
 
 	if (!freerdp_image_copy_from_pointer_data(
 	        (BYTE*)xpointer->cursorPixels, CursorFormat, 0, 0, 0, pointer->width, pointer->height,
