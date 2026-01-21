@@ -1962,8 +1962,7 @@ static BOOL TsProxyAuthorizeTunnelReadResponse(rdpTsg* tsg, const RPC_PDU* pdu)
 		goto fail;
 	}
 
-	UINT32 PacketResponsePtr = 0;
-	if (!tsg_ndr_pointer_read(log, pdu->s, &index, &PacketResponsePtr, TRUE))
+	if (!tsg_ndr_pointer_read(log, pdu->s, &index, NULL, TRUE))
 		goto fail;
 
 	if (!Stream_CheckAndLogRequiredLengthWLog(log, pdu->s, 8))
