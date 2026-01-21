@@ -19,8 +19,6 @@ set(MODULE_NAME "freerdp-crypto")
 set(MODULE_PREFIX "FREERDP_CRYPTO")
 
 freerdp_module_add(
-  er.c
-  der.c
   ber.c
   per.c
   base64.c
@@ -39,6 +37,10 @@ freerdp_module_add(
   tls.h
   opensslcompat.c
 )
+
+if(NOT WITHOUT_FREERDP_3x_DEPRECATED)
+  freerdp_module_add(er.c der.c)
+endif()
 
 freerdp_include_directory_add(${OPENSSL_INCLUDE_DIR})
 

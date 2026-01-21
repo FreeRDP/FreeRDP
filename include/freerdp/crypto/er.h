@@ -21,6 +21,9 @@
 #ifndef FREERDP_CRYPTO_ER_H
 #define FREERDP_CRYPTO_ER_H
 
+#include <freerdp/config.h>
+#if !defined(WITHOUT_FREERDP_3x_DEPRECATED)
+
 #include <freerdp/api.h>
 #include <freerdp/types.h>
 
@@ -60,40 +63,70 @@ extern "C"
 {
 #endif
 
-	FREERDP_API void er_read_length(wStream* s, int* length);
-	FREERDP_API int er_write_length(wStream* s, int length, BOOL flag);
+	WINPR_DEPRECATED_VAR("since 3.21.1", FREERDP_API void er_read_length(wStream* s, int* length));
+	WINPR_DEPRECATED_VAR("since 3.21.1",
+	                     FREERDP_API int er_write_length(wStream* s, int length, BOOL flag));
 
 	// NOLINTNEXTLINE(bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
-	FREERDP_API int _er_skip_length(int length);
-	FREERDP_API int er_get_content_length(int length);
-	FREERDP_API BOOL er_read_universal_tag(wStream* s, BYTE tag, BOOL pc);
-	FREERDP_API void er_write_universal_tag(wStream* s, BYTE tag, BOOL pc);
-	FREERDP_API BOOL er_read_application_tag(wStream* s, BYTE tag, int* length);
-	FREERDP_API void er_write_application_tag(wStream* s, BYTE tag, int length, BOOL flag);
-	FREERDP_API BOOL er_read_enumerated(wStream* s, BYTE* enumerated, BYTE count);
-	FREERDP_API void er_write_enumerated(wStream* s, BYTE enumerated, BYTE count, BOOL flag);
-	FREERDP_API BOOL er_read_contextual_tag(wStream* s, BYTE tag, int* length, BOOL pc);
-	FREERDP_API int er_write_contextual_tag(wStream* s, BYTE tag, int length, BOOL pc, BOOL flag);
-	FREERDP_API int er_skip_contextual_tag(int length);
-	FREERDP_API BOOL er_read_sequence_tag(wStream* s, int* length);
-	FREERDP_API int er_write_sequence_tag(wStream* s, int length, BOOL flag);
-	FREERDP_API int er_skip_sequence(int length);
-	FREERDP_API int er_skip_sequence_tag(int length);
-	FREERDP_API BOOL er_read_bit_string(wStream* s, int* length, BYTE* padding);
-	FREERDP_API BOOL er_write_bit_string_tag(wStream* s, UINT32 length, BYTE padding, BOOL flag);
-	FREERDP_API BOOL er_read_octet_string(wStream* s, int* length);
-	FREERDP_API void er_write_octet_string(wStream* s, BYTE* oct_str, int length, BOOL flag);
-	FREERDP_API int er_write_octet_string_tag(wStream* s, int length, BOOL flag);
-	FREERDP_API int er_skip_octet_string(int length);
-	FREERDP_API BOOL er_read_BOOL(wStream* s, BOOL* value);
-	FREERDP_API void er_write_BOOL(wStream* s, BOOL value);
-	FREERDP_API BOOL er_read_integer(wStream* s, UINT32* value);
-	FREERDP_API int er_write_integer(wStream* s, INT32 value);
-	FREERDP_API BOOL er_read_integer_length(wStream* s, int* length);
-	FREERDP_API int er_skip_integer(INT32 value);
+	WINPR_DEPRECATED_VAR("since 3.21.1", FREERDP_API int _er_skip_length(int length));
+	WINPR_DEPRECATED_VAR("since 3.21.1", FREERDP_API int er_get_content_length(int length));
+	WINPR_DEPRECATED_VAR("since 3.21.1",
+	                     FREERDP_API BOOL er_read_universal_tag(wStream* s, BYTE tag, BOOL pc));
+	WINPR_DEPRECATED_VAR("since 3.21.1",
+	                     FREERDP_API void er_write_universal_tag(wStream* s, BYTE tag, BOOL pc));
+	WINPR_DEPRECATED_VAR("since 3.21.1",
+	                     FREERDP_API BOOL er_read_application_tag(wStream* s, BYTE tag,
+	                                                              int* length));
+	WINPR_DEPRECATED_VAR("since 3.21.1",
+	                     FREERDP_API void er_write_application_tag(wStream* s, BYTE tag, int length,
+	                                                               BOOL flag));
+	WINPR_DEPRECATED_VAR("since 3.21.1",
+	                     FREERDP_API BOOL er_read_enumerated(wStream* s, BYTE* enumerated,
+	                                                         BYTE count));
+	WINPR_DEPRECATED_VAR("since 3.21.1",
+	                     FREERDP_API void er_write_enumerated(wStream* s, BYTE enumerated,
+	                                                          BYTE count, BOOL flag));
+	WINPR_DEPRECATED_VAR("since 3.21.1",
+	                     FREERDP_API BOOL er_read_contextual_tag(wStream* s, BYTE tag, int* length,
+	                                                             BOOL pc));
+	WINPR_DEPRECATED_VAR("since 3.21.1",
+	                     FREERDP_API int er_write_contextual_tag(wStream* s, BYTE tag, int length,
+	                                                             BOOL pc, BOOL flag));
+	WINPR_DEPRECATED_VAR("since 3.21.1", FREERDP_API int er_skip_contextual_tag(int length));
+	WINPR_DEPRECATED_VAR("since 3.21.1",
+	                     FREERDP_API BOOL er_read_sequence_tag(wStream* s, int* length));
+	WINPR_DEPRECATED_VAR("since 3.21.1",
+	                     FREERDP_API int er_write_sequence_tag(wStream* s, int length, BOOL flag));
+	WINPR_DEPRECATED_VAR("since 3.21.1", FREERDP_API int er_skip_sequence(int length));
+	WINPR_DEPRECATED_VAR("since 3.21.1", FREERDP_API int er_skip_sequence_tag(int length));
+	WINPR_DEPRECATED_VAR("since 3.21.1",
+	                     FREERDP_API BOOL er_read_bit_string(wStream* s, int* length,
+	                                                         BYTE* padding));
+	WINPR_DEPRECATED_VAR("since 3.21.1",
+	                     FREERDP_API BOOL er_write_bit_string_tag(wStream* s, UINT32 length,
+	                                                              BYTE padding, BOOL flag));
+	WINPR_DEPRECATED_VAR("since 3.21.1",
+	                     FREERDP_API BOOL er_read_octet_string(wStream* s, int* length));
+	WINPR_DEPRECATED_VAR("since 3.21.1",
+	                     FREERDP_API void er_write_octet_string(wStream* s, BYTE* oct_str,
+	                                                            int length, BOOL flag));
+	WINPR_DEPRECATED_VAR("since 3.21.1",
+	                     FREERDP_API int er_write_octet_string_tag(wStream* s, int length,
+	                                                               BOOL flag));
+	WINPR_DEPRECATED_VAR("since 3.21.1", FREERDP_API int er_skip_octet_string(int length));
+	WINPR_DEPRECATED_VAR("since 3.21.1", FREERDP_API BOOL er_read_BOOL(wStream* s, BOOL* value));
+	WINPR_DEPRECATED_VAR("since 3.21.1", FREERDP_API void er_write_BOOL(wStream* s, BOOL value));
+	WINPR_DEPRECATED_VAR("since 3.21.1",
+	                     FREERDP_API BOOL er_read_integer(wStream* s, UINT32* value));
+	WINPR_DEPRECATED_VAR("since 3.21.1", FREERDP_API int er_write_integer(wStream* s, INT32 value));
+	WINPR_DEPRECATED_VAR("since 3.21.1",
+	                     FREERDP_API BOOL er_read_integer_length(wStream* s, int* length));
+	WINPR_DEPRECATED_VAR("since 3.21.1", FREERDP_API int er_skip_integer(INT32 value));
 
 #ifdef __cplusplus
 }
+#endif
+
 #endif
 
 #endif /* FREERDP_CRYPTO_ER_H */
