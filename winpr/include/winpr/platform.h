@@ -516,15 +516,15 @@ WINPR_PRAGMA_DIAG_POP
 
 #if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 202311L)
 #define WINPR_DEPRECATED(obj) [[deprecated]] obj
-#define WINPR_DEPRECATED_VAR(text, obj) [[deprecated(text)]] obj
+#define WINPR_DEPRECATED_VAR(text, obj) [[deprecated("[deprecated] " text)]] obj
 #define WINPR_NORETURN(obj) [[noreturn]] obj
 #elif defined(WIN32) && !defined(__CYGWIN__)
 #define WINPR_DEPRECATED(obj) __declspec(deprecated) obj
-#define WINPR_DEPRECATED_VAR(text, obj) __declspec(deprecated(text)) obj
+#define WINPR_DEPRECATED_VAR(text, obj) __declspec(deprecated("[deprecated] " text)) obj
 #define WINPR_NORETURN(obj) __declspec(noreturn) obj
 #elif defined(__GNUC__)
 #define WINPR_DEPRECATED(obj) obj __attribute__((deprecated))
-#define WINPR_DEPRECATED_VAR(text, obj) obj __attribute__((deprecated(text)))
+#define WINPR_DEPRECATED_VAR(text, obj) obj __attribute__((deprecated("[deprecated] " text)))
 #define WINPR_NORETURN(obj) __attribute__((__noreturn__)) obj
 #else
 #define WINPR_DEPRECATED(obj) obj
