@@ -1,3 +1,18 @@
+# 2026-01-28 Version 3.21.1
+
+Bugfix release addressing a regression with smartcards.
+
+## What's Changed
+* [core,info] fix missing NULL check (#12157)
+* [gateway,tsg] fix TSG_PACKET_RESPONSE parsing (#12161)
+* Allow querying auth identity with kerberos when running as a server (#12162)
+* Sspi krb heimdal (#12163)
+* Tsg fix idleTimeout parsing (#12167)
+* [channels,smartcard] revert 649f7deee4e32ecedf0dcdfe571e54134b5be81e (#12166)
+
+For a complete and detailed change log since the last release run:
+git log 3.21.1...3.21.0
+
 # 2026-01-19 Version 3.21.0
 
 Bugfix release with a few new API functions addressing shortcomings with
