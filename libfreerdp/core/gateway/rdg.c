@@ -64,21 +64,24 @@
 #define HTTP_EXTENDED_AUTH_BEARER 0x08    /* HTTP Bearer authentication. */
 
 /* HTTP packet types. */
-#define PKT_TYPE_HANDSHAKE_REQUEST 0x1
-#define PKT_TYPE_HANDSHAKE_RESPONSE 0x2
-#define PKT_TYPE_EXTENDED_AUTH_MSG 0x3
-#define PKT_TYPE_TUNNEL_CREATE 0x4
-#define PKT_TYPE_TUNNEL_RESPONSE 0x5
-#define PKT_TYPE_TUNNEL_AUTH 0x6
-#define PKT_TYPE_TUNNEL_AUTH_RESPONSE 0x7
-#define PKT_TYPE_CHANNEL_CREATE 0x8
-#define PKT_TYPE_CHANNEL_RESPONSE 0x9
-#define PKT_TYPE_DATA 0xA
-#define PKT_TYPE_SERVICE_MESSAGE 0xB
-#define PKT_TYPE_REAUTH_MESSAGE 0xC
-#define PKT_TYPE_KEEPALIVE 0xD
-#define PKT_TYPE_CLOSE_CHANNEL 0x10
-#define PKT_TYPE_CLOSE_CHANNEL_RESPONSE 0x11
+typedef enum
+{
+	PKT_TYPE_HANDSHAKE_REQUEST = 0x1,
+	PKT_TYPE_HANDSHAKE_RESPONSE = 0x2,
+	PKT_TYPE_EXTENDED_AUTH_MSG = 0x3,
+	PKT_TYPE_TUNNEL_CREATE = 0x4,
+	PKT_TYPE_TUNNEL_RESPONSE = 0x5,
+	PKT_TYPE_TUNNEL_AUTH = 0x6,
+	PKT_TYPE_TUNNEL_AUTH_RESPONSE = 0x7,
+	PKT_TYPE_CHANNEL_CREATE = 0x8,
+	PKT_TYPE_CHANNEL_RESPONSE = 0x9,
+	PKT_TYPE_DATA = 0xA,
+	PKT_TYPE_SERVICE_MESSAGE = 0xB,
+	PKT_TYPE_REAUTH_MESSAGE = 0xC,
+	PKT_TYPE_KEEPALIVE = 0xD,
+	PKT_TYPE_CLOSE_CHANNEL = 0x10,
+	PKT_TYPE_CLOSE_CHANNEL_RESPONSE = 0x11
+} RdgPktType;
 
 /* HTTP tunnel auth fields present flags. */
 // #define HTTP_TUNNEL_AUTH_FIELD_SOH 0x1
@@ -205,6 +208,35 @@ static const t_flag_mapping capabilities_enum[] = {
 	{ HTTP_CAPABILITY_REAUTH, "HTTP_CAPABILITY_REAUTH" },
 	{ HTTP_CAPABILITY_UDP_TRANSPORT, "HTTP_CAPABILITY_UDP_TRANSPORT" }
 };
+
+static const char* rdg_pkt_type_to_string(int type)
+{
+#define ENTRY(x) \
+	case x:      \
+		return "#x"
+
+	switch (type)
+	{
+		ENTRY(PKT_TYPE_HANDSHAKE_REQUEST);
+		ENTRY(PKT_TYPE_HANDSHAKE_RESPONSE);
+		ENTRY(PKT_TYPE_EXTENDED_AUTH_MSG);
+		ENTRY(PKT_TYPE_TUNNEL_CREATE);
+		ENTRY(PKT_TYPE_TUNNEL_RESPONSE);
+		ENTRY(PKT_TYPE_TUNNEL_AUTH);
+		ENTRY(PKT_TYPE_TUNNEL_AUTH_RESPONSE);
+		ENTRY(PKT_TYPE_CHANNEL_CREATE);
+		ENTRY(PKT_TYPE_CHANNEL_RESPONSE);
+		ENTRY(PKT_TYPE_DATA);
+		ENTRY(PKT_TYPE_SERVICE_MESSAGE);
+		ENTRY(PKT_TYPE_REAUTH_MESSAGE);
+		ENTRY(PKT_TYPE_KEEPALIVE);
+		ENTRY(PKT_TYPE_CLOSE_CHANNEL);
+		ENTRY(PKT_TYPE_CLOSE_CHANNEL_RESPONSE);
+		default:
+			return "PKT_TYPE_UNKNOWN";
+	}
+#undef ENTRY
+}
 
 static const char* flags_to_string(UINT32 flags, const t_flag_mapping* map, size_t elements)
 {
@@ -1106,7 +1138,8 @@ static BOOL rdg_process_packet(rdpRdg* rdg, wStream* s)
 
 		case PKT_TYPE_DATA:
 			WLog_Print(rdg->log, WLOG_ERROR, "Unexpected packet type DATA");
-			return FALSE;
+			status = FALSE;
+			break;
 
 		case PKT_TYPE_EXTENDED_AUTH_MSG:
 			status = rdg_process_extauth_sspi(rdg, s);
@@ -1114,9 +1147,17 @@ static BOOL rdg_process_packet(rdpRdg* rdg, wStream* s)
 
 		default:
 			WLog_Print(rdg->log, WLOG_ERROR, "PKG TYPE 0x%x not implemented", type);
-			return FALSE;
+			status = FALSE;
+			break;
 	}
 
+	if (status)
+	{
+		const size_t rem = Stream_GetRemainingLength(s);
+		if (rem > 0)
+			WLog_Print(rdg->log, WLOG_WARN, "[%s] unparsed data detected: %" PRIuz " bytes",
+			           rdg_pkt_type_to_string(type), rem);
+	}
 	return status;
 }
 
