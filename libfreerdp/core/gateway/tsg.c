@@ -2534,6 +2534,7 @@ BOOL tsg_recv_pdu(rdpTsg* tsg, const RPC_PDU* pdu)
 		Stream_Seek(pdu->s, len);
 	}
 
+	const TSG_STATE oldState = tsg->state;
 	switch (tsg->state)
 	{
 		case TSG_STATE_INITIAL:
@@ -2762,6 +2763,14 @@ BOOL tsg_recv_pdu(rdpTsg* tsg, const RPC_PDU* pdu)
 			break;
 	}
 
+	{
+		const size_t rem = Stream_GetRemainingLength(pdu->s);
+		if (rem > 0)
+		{
+			WLog_Print(tsg->log, WLOG_WARN, "[%s] unparsed bytes: %" PRIuz,
+			           tsg_state_to_string(oldState), rem);
+		}
+	}
 	return rc;
 }
 
