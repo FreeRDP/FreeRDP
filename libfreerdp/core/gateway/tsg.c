@@ -1808,22 +1808,26 @@ static BOOL tsg_ndr_read_timeout(wLog* log, wStream* s, size_t tlen)
 	return TRUE;
 }
 
-static BOOL tsg_ndr_read_sohr(wLog* log, wStream* s, size_t slen)
+static BOOL tsg_ndr_read_sohr(wLog* log, wStream* s, BOOL expected)
 {
-	if (slen == 0)
-	{
-		WLog_Print(log, WLOG_DEBUG, "[SOH] array element length %" PRIuz ", skipping read", slen);
-		return TRUE;
-	}
 	if (!Stream_CheckAndLogRequiredLengthOfSizeWLog(log, s, 1, sizeof(UINT32)))
 		return FALSE;
 
-	if (slen != 0)
+	const UINT32 len = Stream_Get_UINT32(s);
+	if (!expected)
 	{
-		WLog_Print(log, WLOG_DEBUG, "[SOH] array element length %" PRIuz, slen);
+		if (len != 0)
+		{
+			WLog_Print(log, WLOG_DEBUG, "[SOH] len=%" PRIu32 ": skipping", len);
+			return FALSE;
+		}
+		return TRUE;
+	}
+	else if (len == 0)
+	{
+		WLog_Print(log, WLOG_WARN, "[SOH] len=%" PRIu32 ": expected length > 0", len);
 	}
 
-	const UINT32 len = Stream_Get_UINT32(s);
 	WLog_Print(log, WLOG_DEBUG, "[SOH] len=%" PRIu32 ": TODO: unused", len);
 	if (!Stream_SafeSeek(s, len))
 		return FALSE;
@@ -1841,7 +1845,7 @@ static BOOL tsg_ndr_read_packet_response_data(rdpTsg* tsg, wStream* s,
 		return FALSE;
 
 	const uint32_t arrayMaxLen = Stream_Get_UINT32(s);
-	const size_t len = Stream_GetRemainingLength(s);
+	const size_t rem = Stream_GetRemainingLength(s);
 	if (arrayMaxLen != response->responseDataLen)
 	{
 		WLog_Print(tsg->log, WLOG_ERROR,
@@ -1853,17 +1857,6 @@ static BOOL tsg_ndr_read_packet_response_data(rdpTsg* tsg, wStream* s,
 	{
 		if (!Stream_CheckAndLogRequiredCapacityOfSizeWLog(tsg->log, s, 1, 4))
 			return FALSE;
-
-		const uint32_t arrayOffset = Stream_Get_UINT32(s);
-		if (arrayOffset != 0)
-		{
-			WLog_Print(tsg->log, WLOG_ERROR,
-			           "2.2.9.2.1.5 TSG_PACKET_RESPONSE array offset != 0: 0x%08" PRIx32,
-			           arrayOffset);
-			return FALSE;
-		}
-
-		const size_t rem = Stream_GetRemainingLength(s);
 
 		if (tsg->CapsResponse.versionCaps.tsgCaps.capabilityType != TSG_CAPABILITY_TYPE_NAP)
 		{
@@ -1881,26 +1874,19 @@ static BOOL tsg_ndr_read_packet_response_data(rdpTsg* tsg, wStream* s,
 		{
 			if (!tsg_ndr_read_timeout(tsg->log, s, arrayMaxLen))
 				return FALSE;
-			if (!tsg_ndr_read_sohr(tsg->log, s, arrayMaxLen - sizeof(uint32_t)))
+			if (!tsg_ndr_read_sohr(tsg->log, s, TRUE))
 				return FALSE;
 		}
 		else if ((val == TSG_NAP_CAPABILITY_QUAR_SOH) && (tsg->QuarreQuest.dataLen > 0))
 		{
-			if (!tsg_ndr_read_sohr(tsg->log, s, arrayMaxLen))
+			if (!tsg_ndr_read_sohr(tsg->log, s, TRUE))
 				return FALSE;
 		}
 		else if ((val & TSG_NAP_CAPABILITY_IDLE_TIMEOUT) != 0)
 		{
-			if (rem != response->responseDataLen)
-			{
-				WLog_Print(tsg->log, WLOG_ERROR,
-				           "2.2.9.2.1.5 TSG_PACKET_RESPONSE::responseDataLen=%" PRIu32
-				           ", expected 4 bytes and actually got %" PRIuz,
-				           response->responseDataLen, rem);
-				return FALSE;
-			}
-
 			if (!tsg_ndr_read_timeout(tsg->log, s, arrayMaxLen))
+				return FALSE;
+			if (!tsg_ndr_read_sohr(tsg->log, s, FALSE))
 				return FALSE;
 		}
 		else
@@ -1914,21 +1900,21 @@ static BOOL tsg_ndr_read_packet_response_data(rdpTsg* tsg, wStream* s,
 			return FALSE;
 		}
 	}
-	else if (len > 0)
+	else if (rem > 0)
 	{
 		WLog_Print(tsg->log, WLOG_ERROR,
 		           "2.2.9.2.1.5 TSG_PACKET_RESPONSE::responseDataLen=%" PRIu32
 		           ", but actually got %" PRIuz,
-		           response->responseDataLen, len);
+		           response->responseDataLen, rem);
 		return FALSE;
 	}
 
 	{
-		const size_t rem = Stream_GetRemainingLength(s);
-		if (rem > 0)
+		const size_t trem = Stream_GetRemainingLength(s);
+		if (trem > 0)
 		{
 			WLog_Print(tsg->log, WLOG_WARN,
-			           "2.2.9.2.1.5 TSG_PACKET_RESPONSE %" PRIuz " unhandled bytes remain", rem);
+			           "2.2.9.2.1.5 TSG_PACKET_RESPONSE %" PRIuz " unhandled bytes remain", trem);
 		}
 	}
 	return TRUE;
