@@ -147,7 +147,7 @@ static void sspi_ContextBufferAllocTableFree(void)
 	ContextBufferAllocTable.entries = NULL;
 }
 
-static void* sspi_ContextBufferAlloc(UINT32 allocatorIndex, size_t size)
+void* sspi_ContextBufferAlloc(UINT32 allocatorIndex, size_t size)
 {
 	void* contextBuffer = NULL;
 
@@ -1050,7 +1050,7 @@ static const SecurityFunctionTableW* sspi_GetSecurityFunctionTableWByNameA(const
 static void FreeContextBuffer_EnumerateSecurityPackages(void* contextBuffer);
 static void FreeContextBuffer_QuerySecurityPackageInfo(void* contextBuffer);
 
-static void sspi_ContextBufferFree(void* contextBuffer)
+void sspi_ContextBufferFree(void* contextBuffer)
 {
 	UINT32 allocatorIndex = 0;
 
