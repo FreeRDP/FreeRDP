@@ -74,206 +74,15 @@
 
 #define SDL_TAG CLIENT_TAG("SDL")
 
-enum SDL_EXIT_CODE
-{
-	/* section 0-15: protocol-independent codes */
-	SDL_EXIT_SUCCESS = 0,
-	SDL_EXIT_DISCONNECT = 1,
-	SDL_EXIT_LOGOFF = 2,
-	SDL_EXIT_IDLE_TIMEOUT = 3,
-	SDL_EXIT_LOGON_TIMEOUT = 4,
-	SDL_EXIT_CONN_REPLACED = 5,
-	SDL_EXIT_OUT_OF_MEMORY = 6,
-	SDL_EXIT_CONN_DENIED = 7,
-	SDL_EXIT_CONN_DENIED_FIPS = 8,
-	SDL_EXIT_USER_PRIVILEGES = 9,
-	SDL_EXIT_FRESH_CREDENTIALS_REQUIRED = 10,
-	SDL_EXIT_DISCONNECT_BY_USER = 11,
-
-	/* section 16-31: license error set */
-	SDL_EXIT_LICENSE_INTERNAL = 16,
-	SDL_EXIT_LICENSE_NO_LICENSE_SERVER = 17,
-	SDL_EXIT_LICENSE_NO_LICENSE = 18,
-	SDL_EXIT_LICENSE_BAD_CLIENT_MSG = 19,
-	SDL_EXIT_LICENSE_HWID_DOESNT_MATCH = 20,
-	SDL_EXIT_LICENSE_BAD_CLIENT = 21,
-	SDL_EXIT_LICENSE_CANT_FINISH_PROTOCOL = 22,
-	SDL_EXIT_LICENSE_CLIENT_ENDED_PROTOCOL = 23,
-	SDL_EXIT_LICENSE_BAD_CLIENT_ENCRYPTION = 24,
-	SDL_EXIT_LICENSE_CANT_UPGRADE = 25,
-	SDL_EXIT_LICENSE_NO_REMOTE_CONNECTIONS = 26,
-
-	/* section 32-127: RDP protocol error set */
-	SDL_EXIT_RDP = 32,
-
-	/* section 128-254: xfreerdp specific exit codes */
-	SDL_EXIT_PARSE_ARGUMENTS = 128,
-	SDL_EXIT_MEMORY = 129,
-	SDL_EXIT_PROTOCOL = 130,
-	SDL_EXIT_CONN_FAILED = 131,
-	SDL_EXIT_AUTH_FAILURE = 132,
-	SDL_EXIT_NEGO_FAILURE = 133,
-	SDL_EXIT_LOGON_FAILURE = 134,
-	SDL_EXIT_ACCOUNT_LOCKED_OUT = 135,
-	SDL_EXIT_PRE_CONNECT_FAILED = 136,
-	SDL_EXIT_CONNECT_UNDEFINED = 137,
-	SDL_EXIT_POST_CONNECT_FAILED = 138,
-	SDL_EXIT_DNS_ERROR = 139,
-	SDL_EXIT_DNS_NAME_NOT_FOUND = 140,
-	SDL_EXIT_CONNECT_FAILED = 141,
-	SDL_EXIT_MCS_CONNECT_INITIAL_ERROR = 142,
-	SDL_EXIT_TLS_CONNECT_FAILED = 143,
-	SDL_EXIT_INSUFFICIENT_PRIVILEGES = 144,
-	SDL_EXIT_CONNECT_CANCELLED = 145,
-
-	SDL_EXIT_CONNECT_TRANSPORT_FAILED = 147,
-	SDL_EXIT_CONNECT_PASSWORD_EXPIRED = 148,
-	SDL_EXIT_CONNECT_PASSWORD_MUST_CHANGE = 149,
-	SDL_EXIT_CONNECT_KDC_UNREACHABLE = 150,
-	SDL_EXIT_CONNECT_ACCOUNT_DISABLED = 151,
-	SDL_EXIT_CONNECT_PASSWORD_CERTAINLY_EXPIRED = 152,
-	SDL_EXIT_CONNECT_CLIENT_REVOKED = 153,
-	SDL_EXIT_CONNECT_WRONG_PASSWORD = 154,
-	SDL_EXIT_CONNECT_ACCESS_DENIED = 155,
-	SDL_EXIT_CONNECT_ACCOUNT_RESTRICTION = 156,
-	SDL_EXIT_CONNECT_ACCOUNT_EXPIRED = 157,
-	SDL_EXIT_CONNECT_LOGON_TYPE_NOT_GRANTED = 158,
-	SDL_EXIT_CONNECT_NO_OR_MISSING_CREDENTIALS = 159,
-	SDL_EXIT_CONNECT_TARGET_BOOTING = 160,
-
-	SDL_EXIT_UNKNOWN = 255,
-};
-
-struct sdl_exit_code_map_t
-{
-	DWORD error;
-	int code;
-	const char* code_tag;
-};
-
-#define ENTRY(x, y) { x, y, #y }
-static const struct sdl_exit_code_map_t sdl_exit_code_map[] = {
-	ENTRY(FREERDP_ERROR_SUCCESS, SDL_EXIT_SUCCESS), ENTRY(FREERDP_ERROR_NONE, SDL_EXIT_DISCONNECT),
-	ENTRY(FREERDP_ERROR_NONE, SDL_EXIT_LOGOFF), ENTRY(FREERDP_ERROR_NONE, SDL_EXIT_IDLE_TIMEOUT),
-	ENTRY(FREERDP_ERROR_NONE, SDL_EXIT_LOGON_TIMEOUT),
-	ENTRY(FREERDP_ERROR_NONE, SDL_EXIT_CONN_REPLACED),
-	ENTRY(FREERDP_ERROR_NONE, SDL_EXIT_OUT_OF_MEMORY),
-	ENTRY(FREERDP_ERROR_NONE, SDL_EXIT_CONN_DENIED),
-	ENTRY(FREERDP_ERROR_NONE, SDL_EXIT_CONN_DENIED_FIPS),
-	ENTRY(FREERDP_ERROR_NONE, SDL_EXIT_USER_PRIVILEGES),
-	ENTRY(FREERDP_ERROR_NONE, SDL_EXIT_FRESH_CREDENTIALS_REQUIRED),
-	ENTRY(ERRINFO_LOGOFF_BY_USER, SDL_EXIT_DISCONNECT_BY_USER),
-	ENTRY(FREERDP_ERROR_NONE, SDL_EXIT_UNKNOWN),
-
-	/* section 16-31: license error set */
-	ENTRY(FREERDP_ERROR_NONE, SDL_EXIT_LICENSE_INTERNAL),
-	ENTRY(FREERDP_ERROR_NONE, SDL_EXIT_LICENSE_NO_LICENSE_SERVER),
-	ENTRY(FREERDP_ERROR_NONE, SDL_EXIT_LICENSE_NO_LICENSE),
-	ENTRY(FREERDP_ERROR_NONE, SDL_EXIT_LICENSE_BAD_CLIENT_MSG),
-	ENTRY(FREERDP_ERROR_NONE, SDL_EXIT_LICENSE_HWID_DOESNT_MATCH),
-	ENTRY(FREERDP_ERROR_NONE, SDL_EXIT_LICENSE_BAD_CLIENT),
-	ENTRY(FREERDP_ERROR_NONE, SDL_EXIT_LICENSE_CANT_FINISH_PROTOCOL),
-	ENTRY(FREERDP_ERROR_NONE, SDL_EXIT_LICENSE_CLIENT_ENDED_PROTOCOL),
-	ENTRY(FREERDP_ERROR_NONE, SDL_EXIT_LICENSE_BAD_CLIENT_ENCRYPTION),
-	ENTRY(FREERDP_ERROR_NONE, SDL_EXIT_LICENSE_CANT_UPGRADE),
-	ENTRY(FREERDP_ERROR_NONE, SDL_EXIT_LICENSE_NO_REMOTE_CONNECTIONS),
-	ENTRY(FREERDP_ERROR_NONE, SDL_EXIT_LICENSE_CANT_UPGRADE),
-
-	/* section 32-127: RDP protocol error set */
-	ENTRY(FREERDP_ERROR_NONE, SDL_EXIT_RDP),
-
-	/* section 128-254: xfreerdp specific exit codes */
-	ENTRY(FREERDP_ERROR_NONE, SDL_EXIT_PARSE_ARGUMENTS), ENTRY(FREERDP_ERROR_NONE, SDL_EXIT_MEMORY),
-	ENTRY(FREERDP_ERROR_NONE, SDL_EXIT_PROTOCOL), ENTRY(FREERDP_ERROR_NONE, SDL_EXIT_CONN_FAILED),
-
-	ENTRY(FREERDP_ERROR_AUTHENTICATION_FAILED, SDL_EXIT_AUTH_FAILURE),
-	ENTRY(FREERDP_ERROR_SECURITY_NEGO_CONNECT_FAILED, SDL_EXIT_NEGO_FAILURE),
-	ENTRY(FREERDP_ERROR_CONNECT_LOGON_FAILURE, SDL_EXIT_LOGON_FAILURE),
-	ENTRY(FREERDP_ERROR_CONNECT_TARGET_BOOTING, SDL_EXIT_CONNECT_TARGET_BOOTING),
-	ENTRY(FREERDP_ERROR_CONNECT_ACCOUNT_LOCKED_OUT, SDL_EXIT_ACCOUNT_LOCKED_OUT),
-	ENTRY(FREERDP_ERROR_PRE_CONNECT_FAILED, SDL_EXIT_PRE_CONNECT_FAILED),
-	ENTRY(FREERDP_ERROR_CONNECT_UNDEFINED, SDL_EXIT_CONNECT_UNDEFINED),
-	ENTRY(FREERDP_ERROR_POST_CONNECT_FAILED, SDL_EXIT_POST_CONNECT_FAILED),
-	ENTRY(FREERDP_ERROR_DNS_ERROR, SDL_EXIT_DNS_ERROR),
-	ENTRY(FREERDP_ERROR_DNS_NAME_NOT_FOUND, SDL_EXIT_DNS_NAME_NOT_FOUND),
-	ENTRY(FREERDP_ERROR_CONNECT_FAILED, SDL_EXIT_CONNECT_FAILED),
-	ENTRY(FREERDP_ERROR_MCS_CONNECT_INITIAL_ERROR, SDL_EXIT_MCS_CONNECT_INITIAL_ERROR),
-	ENTRY(FREERDP_ERROR_TLS_CONNECT_FAILED, SDL_EXIT_TLS_CONNECT_FAILED),
-	ENTRY(FREERDP_ERROR_INSUFFICIENT_PRIVILEGES, SDL_EXIT_INSUFFICIENT_PRIVILEGES),
-	ENTRY(FREERDP_ERROR_CONNECT_CANCELLED, SDL_EXIT_CONNECT_CANCELLED),
-	ENTRY(FREERDP_ERROR_CONNECT_TRANSPORT_FAILED, SDL_EXIT_CONNECT_TRANSPORT_FAILED),
-	ENTRY(FREERDP_ERROR_CONNECT_PASSWORD_EXPIRED, SDL_EXIT_CONNECT_PASSWORD_EXPIRED),
-	ENTRY(FREERDP_ERROR_CONNECT_PASSWORD_MUST_CHANGE, SDL_EXIT_CONNECT_PASSWORD_MUST_CHANGE),
-	ENTRY(FREERDP_ERROR_CONNECT_KDC_UNREACHABLE, SDL_EXIT_CONNECT_KDC_UNREACHABLE),
-	ENTRY(FREERDP_ERROR_CONNECT_ACCOUNT_DISABLED, SDL_EXIT_CONNECT_ACCOUNT_DISABLED),
-	ENTRY(FREERDP_ERROR_CONNECT_PASSWORD_CERTAINLY_EXPIRED,
-	      SDL_EXIT_CONNECT_PASSWORD_CERTAINLY_EXPIRED),
-	ENTRY(FREERDP_ERROR_CONNECT_CLIENT_REVOKED, SDL_EXIT_CONNECT_CLIENT_REVOKED),
-	ENTRY(FREERDP_ERROR_CONNECT_WRONG_PASSWORD, SDL_EXIT_CONNECT_WRONG_PASSWORD),
-	ENTRY(FREERDP_ERROR_CONNECT_ACCESS_DENIED, SDL_EXIT_CONNECT_ACCESS_DENIED),
-	ENTRY(FREERDP_ERROR_CONNECT_ACCOUNT_RESTRICTION, SDL_EXIT_CONNECT_ACCOUNT_RESTRICTION),
-	ENTRY(FREERDP_ERROR_CONNECT_ACCOUNT_EXPIRED, SDL_EXIT_CONNECT_ACCOUNT_EXPIRED),
-	ENTRY(FREERDP_ERROR_CONNECT_LOGON_TYPE_NOT_GRANTED, SDL_EXIT_CONNECT_LOGON_TYPE_NOT_GRANTED),
-	ENTRY(FREERDP_ERROR_CONNECT_NO_OR_MISSING_CREDENTIALS,
-	      SDL_EXIT_CONNECT_NO_OR_MISSING_CREDENTIALS)
-};
-
-static const struct sdl_exit_code_map_t* sdl_map_entry_by_code(int exit_code)
-{
-	for (const auto& x : sdl_exit_code_map)
-	{
-		const struct sdl_exit_code_map_t* cur = &x;
-		if (cur->code == exit_code)
-			return cur;
-	}
-	return nullptr;
-}
-
-static const struct sdl_exit_code_map_t* sdl_map_entry_by_error(UINT32 error)
-{
-	for (const auto& x : sdl_exit_code_map)
-	{
-		const struct sdl_exit_code_map_t* cur = &x;
-		if (cur->error == error)
-			return cur;
-	}
-	return nullptr;
-}
-
-static int sdl_map_error_to_exit_code(DWORD error)
-{
-	const struct sdl_exit_code_map_t* entry = sdl_map_entry_by_error(error);
-	if (entry)
-		return entry->code;
-
-	return SDL_EXIT_CONN_FAILED;
-}
-
-static const char* sdl_map_error_to_code_tag(UINT32 error)
-{
-	const struct sdl_exit_code_map_t* entry = sdl_map_entry_by_error(error);
-	if (entry)
-		return entry->code_tag;
-	return nullptr;
-}
-
-static const char* sdl_map_to_code_tag(int code)
-{
-	const struct sdl_exit_code_map_t* entry = sdl_map_entry_by_code(code);
-	if (entry)
-		return entry->code_tag;
-	return nullptr;
-}
-
 static int error_info_to_error(freerdp* instance, DWORD* pcode, char** msg, size_t* len)
 {
 	const DWORD code = freerdp_error_info(instance);
 	const char* name = freerdp_get_error_info_name(code);
 	const char* str = freerdp_get_error_info_string(code);
-	const int exit_code = sdl_map_error_to_exit_code(code);
+	const int exit_code = sdl::error::errorToExitCode(code);
 
 	winpr_asprintf(msg, len, "Terminate with %s due to ERROR_INFO %s [0x%08" PRIx32 "]: %s",
-	               sdl_map_error_to_code_tag(code), name, code, str);
+	               sdl::error::errorToExitCodeTag(code), name, code, str);
 	SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "%s", *msg);
 	if (pcode)
 		*pcode = code;
@@ -1177,16 +986,16 @@ static void sdl_client_cleanup(SdlContext* sdl, int exit_code, const std::string
 	bool showError = false;
 	if (freerdp_settings_get_bool(settings, FreeRDP_AuthenticationOnly))
 		WLog_Print(sdl->log, WLOG_INFO, "Authentication only, exit status %s [%" PRId32 "]",
-		           sdl_map_to_code_tag(exit_code), exit_code);
+		           sdl::error::exitCodeToTag(exit_code), exit_code);
 	else
 	{
 		switch (exit_code)
 		{
-			case SDL_EXIT_SUCCESS:
-			case SDL_EXIT_DISCONNECT:
-			case SDL_EXIT_LOGOFF:
-			case SDL_EXIT_DISCONNECT_BY_USER:
-			case SDL_EXIT_CONNECT_CANCELLED:
+			case sdl::error::SUCCESS:
+			case sdl::error::DISCONNECT:
+			case sdl::error::LOGOFF:
+			case sdl::error::DISCONNECT_BY_USER:
+			case sdl::error::CONNECT_CANCELLED:
 				break;
 			default:
 			{
@@ -1218,11 +1027,11 @@ static int sdl_client_thread_connect(SdlContext* sdl, std::string& error_msg)
 	rdpSettings* settings = context->settings;
 	WINPR_ASSERT(settings);
 
-	int exit_code = SDL_EXIT_SUCCESS;
+	int exit_code = sdl::error::SUCCESS;
 	if (!rc)
 	{
 		UINT32 error = freerdp_get_last_error(context);
-		exit_code = sdl_map_error_to_exit_code(error);
+		exit_code = sdl::error::errorToExitCode(error);
 	}
 
 	if (freerdp_settings_get_bool(settings, FreeRDP_AuthenticationOnly))
@@ -1237,7 +1046,7 @@ static int sdl_client_thread_connect(SdlContext* sdl, std::string& error_msg)
 	if (!rc)
 	{
 		DWORD code = freerdp_error_info(instance);
-		if (exit_code == SDL_EXIT_SUCCESS)
+		if (exit_code == sdl::error::SUCCESS)
 		{
 			char* msg = nullptr;
 			size_t len = 0;
@@ -1260,12 +1069,12 @@ static int sdl_client_thread_connect(SdlContext* sdl, std::string& error_msg)
 			free(msg);
 		}
 
-		if (exit_code == SDL_EXIT_SUCCESS)
+		if (exit_code == sdl::error::SUCCESS)
 		{
 			if (last == FREERDP_ERROR_AUTHENTICATION_FAILED)
-				exit_code = SDL_EXIT_AUTH_FAILURE;
+				exit_code = sdl::error::AUTH_FAILURE;
 			else if (code == ERRINFO_SUCCESS)
-				exit_code = SDL_EXIT_CONN_FAILED;
+				exit_code = sdl::error::CONN_FAILED;
 		}
 
 		sdl->dialog.show(false);
@@ -1284,7 +1093,7 @@ static int sdl_client_thread_run(SdlContext* sdl, std::string& error_msg)
 	auto instance = context->instance;
 	WINPR_ASSERT(instance);
 
-	int exit_code = SDL_EXIT_SUCCESS;
+	int exit_code = sdl::error::SUCCESS;
 	while (!freerdp_shall_disconnect_context(context))
 	{
 		HANDLE handles[MAXIMUM_WAIT_OBJECTS] = {};
@@ -1331,7 +1140,7 @@ static int sdl_client_thread_run(SdlContext* sdl, std::string& error_msg)
 				 * did not succeed and no other error was specified.
 				 */
 				if (freerdp_error_info(instance) == 0)
-					exit_code = SDL_EXIT_CONN_FAILED;
+					exit_code = sdl::error::CONN_FAILED;
 			}
 
 			if (freerdp_get_last_error(context) == FREERDP_ERROR_SUCCESS)
@@ -1343,7 +1152,7 @@ static int sdl_client_thread_run(SdlContext* sdl, std::string& error_msg)
 		}
 	}
 
-	if (exit_code == SDL_EXIT_SUCCESS)
+	if (exit_code == sdl::error::SUCCESS)
 	{
 		DWORD code = 0;
 		{
@@ -1370,7 +1179,7 @@ static int sdl_client_thread_run(SdlContext* sdl, std::string& error_msg)
 
 			/* This situation might be limited to Windows XP. */
 			WLog_Print(sdl->log, WLOG_INFO, "%s", msg);
-			exit_code = SDL_EXIT_LOGOFF;
+			exit_code = sdl::error::LOGOFF;
 		}
 	}
 
@@ -1388,7 +1197,7 @@ static DWORD WINAPI sdl_client_thread_proc(SdlContext* sdl)
 
 	std::string error_msg;
 	int exit_code = sdl_client_thread_connect(sdl, error_msg);
-	if (exit_code == SDL_EXIT_SUCCESS)
+	if (exit_code == sdl::error::SUCCESS)
 		exit_code = sdl_client_thread_run(sdl, error_msg);
 	sdl_client_cleanup(sdl, exit_code, error_msg);
 

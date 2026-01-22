@@ -390,3 +390,169 @@ std::string sdl::utils::generate_uuid_v4()
 	}
 	return ss.str();
 }
+
+sdl::utils::HighDpiScaleMode sdl::utils::platformScaleMode()
+{
+	const auto platform = SDL_GetPlatform();
+	if (!platform)
+		return SCALE_MODE_INVALID;
+	if (strcmp("Windows", platform) == 0)
+		return SCALE_MODE_X11;
+	if (strcmp("macOS", platform) == 0)
+		return SCALE_MODE_WAYLAND;
+	if (strcmp("Linux", platform) == 0)
+	{
+		const auto driver = SDL_GetCurrentVideoDriver();
+		if (!driver)
+			return SCALE_MODE_WAYLAND;
+		if (strcmp("x11", driver) == 0)
+			return SCALE_MODE_X11;
+		if (strcmp("wayland", driver) == 0)
+			return SCALE_MODE_WAYLAND;
+	}
+	return SCALE_MODE_INVALID;
+}
+
+std::string sdl::utils::windowTitle(const rdpSettings* settings)
+{
+	const char* prefix = "FreeRDP:";
+
+	if (!settings)
+		return {};
+
+	const auto windowTitle = freerdp_settings_get_string(settings, FreeRDP_WindowTitle);
+	if (windowTitle)
+		return {};
+
+	const auto name = freerdp_settings_get_server_name(settings);
+	const auto port = freerdp_settings_get_uint32(settings, FreeRDP_ServerPort);
+
+	const auto addPort = (port != 3389);
+
+	std::stringstream ss;
+	ss << prefix << " ";
+	if (!addPort)
+		ss << name;
+	else
+		ss << name << ":" << port;
+
+	return ss.str();
+}
+
+namespace sdl::error
+{
+	struct sdl_exitCode_map_t
+	{
+		DWORD error;
+		int code;
+		const char* code_tag;
+	};
+
+#define ENTRY(x, y) { x, y, #y }
+	static const struct sdl_exitCode_map_t sdl_exitCode_map[] = {
+		ENTRY(FREERDP_ERROR_SUCCESS, SUCCESS), ENTRY(FREERDP_ERROR_NONE, DISCONNECT),
+		ENTRY(FREERDP_ERROR_NONE, LOGOFF), ENTRY(FREERDP_ERROR_NONE, IDLE_TIMEOUT),
+		ENTRY(FREERDP_ERROR_NONE, LOGON_TIMEOUT), ENTRY(FREERDP_ERROR_NONE, CONN_REPLACED),
+		ENTRY(FREERDP_ERROR_NONE, OUT_OF_MEMORY), ENTRY(FREERDP_ERROR_NONE, CONN_DENIED),
+		ENTRY(FREERDP_ERROR_NONE, CONN_DENIED_FIPS), ENTRY(FREERDP_ERROR_NONE, USER_PRIVILEGES),
+		ENTRY(FREERDP_ERROR_NONE, FRESH_CREDENTIALS_REQUIRED),
+		ENTRY(ERRINFO_LOGOFF_BY_USER, DISCONNECT_BY_USER), ENTRY(FREERDP_ERROR_NONE, UNKNOWN),
+
+		/* section 16-31: license error set */
+		ENTRY(FREERDP_ERROR_NONE, LICENSE_INTERNAL),
+		ENTRY(FREERDP_ERROR_NONE, LICENSE_NO_LICENSE_SERVER),
+		ENTRY(FREERDP_ERROR_NONE, LICENSE_NO_LICENSE),
+		ENTRY(FREERDP_ERROR_NONE, LICENSE_BAD_CLIENT_MSG),
+		ENTRY(FREERDP_ERROR_NONE, LICENSE_HWID_DOESNT_MATCH),
+		ENTRY(FREERDP_ERROR_NONE, LICENSE_BAD_CLIENT),
+		ENTRY(FREERDP_ERROR_NONE, LICENSE_CANT_FINISH_PROTOCOL),
+		ENTRY(FREERDP_ERROR_NONE, LICENSE_CLIENT_ENDED_PROTOCOL),
+		ENTRY(FREERDP_ERROR_NONE, LICENSE_BAD_CLIENT_ENCRYPTION),
+		ENTRY(FREERDP_ERROR_NONE, LICENSE_CANT_UPGRADE),
+		ENTRY(FREERDP_ERROR_NONE, LICENSE_NO_REMOTE_CONNECTIONS),
+		ENTRY(FREERDP_ERROR_NONE, LICENSE_CANT_UPGRADE),
+
+		/* section 32-127: RDP protocol error set */
+		ENTRY(FREERDP_ERROR_NONE, RDP),
+
+		/* section 128-254: xfreerdp specific exit codes */
+		ENTRY(FREERDP_ERROR_NONE, PARSE_ARGUMENTS), ENTRY(FREERDP_ERROR_NONE, MEMORY),
+		ENTRY(FREERDP_ERROR_NONE, PROTOCOL), ENTRY(FREERDP_ERROR_NONE, CONN_FAILED),
+
+		ENTRY(FREERDP_ERROR_AUTHENTICATION_FAILED, AUTH_FAILURE),
+		ENTRY(FREERDP_ERROR_SECURITY_NEGO_CONNECT_FAILED, NEGO_FAILURE),
+		ENTRY(FREERDP_ERROR_CONNECT_LOGON_FAILURE, LOGON_FAILURE),
+		ENTRY(FREERDP_ERROR_CONNECT_TARGET_BOOTING, CONNECT_TARGET_BOOTING),
+		ENTRY(FREERDP_ERROR_CONNECT_ACCOUNT_LOCKED_OUT, ACCOUNT_LOCKED_OUT),
+		ENTRY(FREERDP_ERROR_PRE_CONNECT_FAILED, PRE_CONNECT_FAILED),
+		ENTRY(FREERDP_ERROR_CONNECT_UNDEFINED, CONNECT_UNDEFINED),
+		ENTRY(FREERDP_ERROR_POST_CONNECT_FAILED, POST_CONNECT_FAILED),
+		ENTRY(FREERDP_ERROR_DNS_ERROR, DNS_ERROR),
+		ENTRY(FREERDP_ERROR_DNS_NAME_NOT_FOUND, DNS_NAME_NOT_FOUND),
+		ENTRY(FREERDP_ERROR_CONNECT_FAILED, CONNECT_FAILED),
+		ENTRY(FREERDP_ERROR_MCS_CONNECT_INITIAL_ERROR, MCS_CONNECT_INITIAL_ERROR),
+		ENTRY(FREERDP_ERROR_TLS_CONNECT_FAILED, TLS_CONNECT_FAILED),
+		ENTRY(FREERDP_ERROR_INSUFFICIENT_PRIVILEGES, INSUFFICIENT_PRIVILEGES),
+		ENTRY(FREERDP_ERROR_CONNECT_CANCELLED, CONNECT_CANCELLED),
+		ENTRY(FREERDP_ERROR_CONNECT_TRANSPORT_FAILED, CONNECT_TRANSPORT_FAILED),
+		ENTRY(FREERDP_ERROR_CONNECT_PASSWORD_EXPIRED, CONNECT_PASSWORD_EXPIRED),
+		ENTRY(FREERDP_ERROR_CONNECT_PASSWORD_MUST_CHANGE, CONNECT_PASSWORD_MUST_CHANGE),
+		ENTRY(FREERDP_ERROR_CONNECT_KDC_UNREACHABLE, CONNECT_KDC_UNREACHABLE),
+		ENTRY(FREERDP_ERROR_CONNECT_ACCOUNT_DISABLED, CONNECT_ACCOUNT_DISABLED),
+		ENTRY(FREERDP_ERROR_CONNECT_PASSWORD_CERTAINLY_EXPIRED, CONNECT_PASSWORD_CERTAINLY_EXPIRED),
+		ENTRY(FREERDP_ERROR_CONNECT_CLIENT_REVOKED, CONNECT_CLIENT_REVOKED),
+		ENTRY(FREERDP_ERROR_CONNECT_WRONG_PASSWORD, CONNECT_WRONG_PASSWORD),
+		ENTRY(FREERDP_ERROR_CONNECT_ACCESS_DENIED, CONNECT_ACCESS_DENIED),
+		ENTRY(FREERDP_ERROR_CONNECT_ACCOUNT_RESTRICTION, CONNECT_ACCOUNT_RESTRICTION),
+		ENTRY(FREERDP_ERROR_CONNECT_ACCOUNT_EXPIRED, CONNECT_ACCOUNT_EXPIRED),
+		ENTRY(FREERDP_ERROR_CONNECT_LOGON_TYPE_NOT_GRANTED, CONNECT_LOGON_TYPE_NOT_GRANTED),
+		ENTRY(FREERDP_ERROR_CONNECT_NO_OR_MISSING_CREDENTIALS, CONNECT_NO_OR_MISSING_CREDENTIALS)
+	};
+
+	static const sdl_exitCode_map_t* mapEntryByCode(int exit_code)
+	{
+		for (const auto& x : sdl_exitCode_map)
+		{
+			auto cur = &x;
+			if (cur->code == exit_code)
+				return cur;
+		}
+		return nullptr;
+	}
+
+	static const sdl_exitCode_map_t* mapEntryByError(UINT32 error)
+	{
+		for (const auto& x : sdl_exitCode_map)
+		{
+			auto cur = &x;
+			if (cur->error == error)
+				return cur;
+		}
+		return nullptr;
+	}
+}
+
+int sdl::error::errorToExitCode(DWORD error)
+{
+	auto entry = mapEntryByError(error);
+	if (entry)
+		return entry->code;
+
+	return CONN_FAILED;
+}
+
+const char* sdl::error::errorToExitCodeTag(UINT32 error)
+{
+	auto entry = mapEntryByError(error);
+	if (entry)
+		return entry->code_tag;
+	return nullptr;
+}
+
+const char* sdl::error::exitCodeToTag(int code)
+{
+	auto entry = mapEntryByCode(code);
+	if (entry)
+		return entry->code_tag;
+	return nullptr;
+}
