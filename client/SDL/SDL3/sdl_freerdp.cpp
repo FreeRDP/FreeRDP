@@ -513,23 +513,6 @@ static BOOL sdl_play_sound(rdpContext* context, const PLAY_SOUND_UPDATE* play_so
 	return TRUE;
 }
 
-static BOOL sdl_wait_for_init(SdlContext* sdl)
-{
-	WINPR_ASSERT(sdl);
-	sdl->initialize.set();
-
-	HANDLE handles[] = { sdl->initialized.handle(), freerdp_abort_event(sdl->context()) };
-
-	const DWORD rc = WaitForMultipleObjects(ARRAYSIZE(handles), handles, FALSE, INFINITE);
-	switch (rc)
-	{
-		case WAIT_OBJECT_0:
-			return TRUE;
-		default:
-			return FALSE;
-	}
-}
-
 /* Called before a connection is established.
  * Set all configuration options to support and load channels here. */
 static BOOL sdl_pre_connect(freerdp* instance)
@@ -563,9 +546,6 @@ static BOOL sdl_pre_connect(freerdp* instance)
 	{
 		UINT32 maxWidth = 0;
 		UINT32 maxHeight = 0;
-
-		if (!sdl_wait_for_init(sdl))
-			return FALSE;
 
 		if (!sdl_detect_monitors(sdl, &maxWidth, &maxHeight))
 			return FALSE;
@@ -638,22 +618,6 @@ static void sdl_term_handler([[maybe_unused]] int signum, [[maybe_unused]] const
                              [[maybe_unused]] void* context)
 {
 	sdl_push_quit();
-}
-
-static void sdl_cleanup_sdl(SdlContext* sdl)
-{
-	if (!sdl)
-		return;
-
-	std::unique_lock lock(sdl->critical);
-	sdl->windows.clear();
-	sdl->dialog.destroy();
-
-	sdl_destroy_primary(sdl);
-
-	freerdp_del_signal_cleanup_handler(sdl->context(), sdl_term_handler);
-	sdl_dialogs_uninit();
-	SDL_Quit();
 }
 
 static BOOL sdl_create_windows(SdlContext* sdl)
@@ -779,44 +743,10 @@ static int sdl_run(SdlContext* sdl)
 	int rc = -1;
 	WINPR_ASSERT(sdl);
 
-	HANDLE handles[] = { sdl->initialize.handle(), freerdp_abort_event(sdl->context()) };
-	const DWORD status = WaitForMultipleObjects(ARRAYSIZE(handles), handles, FALSE, INFINITE);
-	switch (status)
-	{
-		case WAIT_OBJECT_0:
-			break;
-		default:
-			return 0;
-	}
-
-	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS);
-	auto backend = SDL_GetCurrentVideoDriver();
-	WLog_Print(sdl->log, WLOG_DEBUG, "client is using backend '%s'", backend);
-	sdl_dialogs_init();
-
-	SDL_SetHint(SDL_HINT_ALLOW_ALT_TAB_WHILE_GRABBED, "0");
-	SDL_SetHint(SDL_HINT_VIDEO_X11_NET_WM_BYPASS_COMPOSITOR, "0");
-	SDL_SetHint(SDL_HINT_PEN_MOUSE_EVENTS, "0");
-	SDL_SetHint(SDL_HINT_TOUCH_MOUSE_EVENTS, "0");
-	SDL_SetHint(SDL_HINT_PEN_TOUCH_EVENTS, "1");
-	SDL_SetHint(SDL_HINT_TRACKPAD_IS_TOUCH_ONLY, "1");
-
-	freerdp_add_signal_cleanup_handler(sdl->context(), sdl_term_handler);
-	sdl->dialog.create(sdl->context());
-	sdl->dialog.setTitle("Connecting to '%s'",
-	                     freerdp_settings_get_server_name(sdl->context()->settings));
-	sdl->dialog.showInfo("The connection is being established\n\nPlease wait...");
-	if (!freerdp_settings_get_bool(sdl->context()->settings, FreeRDP_UseCommonStdioCallbacks))
-	{
-		sdl->dialog.show(true);
-	}
-
-	sdl->initialized.set();
-
-	while (!shall_abort(sdl))
+	while (!sdl->shallAbort())
 	{
 		SDL_Event windowEvent = {};
-		while (!shall_abort(sdl) && SDL_WaitEventTimeout(nullptr, 1000))
+		while (!sdl->shallAbort() && SDL_WaitEventTimeout(nullptr, 1000))
 		{
 			/* Only poll standard SDL events and SDL_EVENT_USERS meant to create
 			 * dialogs. do not process the dialog return value events here.
@@ -833,12 +763,12 @@ static int sdl_run(SdlContext* sdl)
 			SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "got event %s [0x%08" PRIx32 "]",
 			             sdl_event_type_str(windowEvent.type), windowEvent.type);
 #endif
+			if (sdl->shallAbort(true))
+				continue;
+
+			if (sdl->dialog.handleEvent(windowEvent))
 			{
-				std::unique_lock lock(sdl->critical);
-				/* The session might have been disconnected while we were waiting for a
-				 * new SDL event. In that case ignore the SDL event and terminate. */
-				if (freerdp_shall_disconnect_context(sdl->context()))
-					continue;
+				continue;
 			}
 
 			if (sdl->dialog.handleEvent(windowEvent))
@@ -1136,7 +1066,6 @@ static int sdl_run(SdlContext* sdl)
 
 	rc = 1;
 
-	sdl_cleanup_sdl(sdl);
 	return rc;
 }
 
@@ -1777,9 +1706,9 @@ static std::string getRdpFile()
 int main(int argc, char* argv[])
 {
 	int rc = -1;
-	int status = 0;
 	RDP_CLIENT_ENTRY_POINTS clientEntryPoints = {};
 
+	/* Allocate the RDP context first, we need to pass it to SDL */
 	RdpClientEntry(&clientEntryPoints);
 	std::unique_ptr<sdl_rdp_context, void (*)(sdl_rdp_context*)> sdl_rdp(
 	    reinterpret_cast<sdl_rdp_context*>(freerdp_client_context_new(&clientEntryPoints)),
@@ -1807,7 +1736,7 @@ int main(int argc, char* argv[])
 		}
 	}
 
-	status = freerdp_client_settings_parse_command_line(
+	auto status = freerdp_client_settings_parse_command_line(
 	    settings, WINPR_ASSERTING_INT_CAST(int, args.size()), args.data(), FALSE);
 	sdl_rdp->sdl->setMetadata();
 	if (status)
@@ -1832,10 +1761,42 @@ int main(int argc, char* argv[])
 		return rc;
 	}
 
+	/* Basic SDL initialization */
+	if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS))
+		return -1;
+
+	/* Redirect SDL log messages to wLog */
 	SDL_SetLogOutputFunction(winpr_LogOutputFunction, sdl);
 	auto level = WLog_GetLogLevel(sdl->log);
 	SDL_SetLogPriorities(wloglevel2dl(level));
 
+	auto backend = SDL_GetCurrentVideoDriver();
+	WLog_Print(sdl->log, WLOG_DEBUG, "client is using backend '%s'", backend);
+	sdl_dialogs_init();
+
+	SDL_SetHint(SDL_HINT_ALLOW_ALT_TAB_WHILE_GRABBED, "0");
+	SDL_SetHint(SDL_HINT_VIDEO_X11_NET_WM_BYPASS_COMPOSITOR, "0");
+	SDL_SetHint(SDL_HINT_PEN_MOUSE_EVENTS, "0");
+	SDL_SetHint(SDL_HINT_TOUCH_MOUSE_EVENTS, "0");
+	SDL_SetHint(SDL_HINT_PEN_TOUCH_EVENTS, "1");
+	SDL_SetHint(SDL_HINT_TRACKPAD_IS_TOUCH_ONLY, "1");
+
+	/* SDL cleanup code if the client exits */
+	ScopeGuard guard(
+	    [&]()
+	    {
+		    std::unique_lock lock(sdl->critical);
+		    sdl->windows.clear();
+		    sdl->dialog.destroy();
+
+		    sdl_destroy_primary(sdl);
+
+		    freerdp_del_signal_cleanup_handler(sdl->context(), sdl_term_handler);
+		    sdl_dialogs_uninit();
+		    SDL_Quit();
+	    });
+
+	/* Initialize RDP */
 	auto context = sdl->context();
 	WINPR_ASSERT(context);
 
@@ -1920,6 +1881,20 @@ void SdlContext::setMetadata()
 	SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_COPYRIGHT_STRING, SDL_CLIENT_COPYRIGHT);
 	SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_URL_STRING, SDL_CLIENT_URL);
 	SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_TYPE_STRING, SDL_CLIENT_TYPE);
+}
+
+bool SdlContext::shallAbort(bool ignoreDialogs)
+{
+	std::unique_lock lock(critical);
+	if (freerdp_shall_disconnect_context(context()))
+	{
+		if (ignoreDialogs)
+			return true;
+		if (rdp_thread_running)
+			return false;
+		return !dialog.isRunning();
+	}
+	return false;
 }
 
 bool SdlContext::redraw(bool suppress) const

@@ -83,6 +83,8 @@ class SdlContext
 
 	void setMetadata();
 
+	[[nodiscard]] bool shallAbort(bool ignoreDialogs = false);
+
   private:
 	rdpContext* _context;
 	std::atomic<bool> _connected = false;
@@ -105,8 +107,6 @@ class SdlContext
 
 	CriticalSection critical;
 	std::thread thread;
-	WinPREvent initialize;
-	WinPREvent initialized;
 	WinPREvent windows_created;
 	int exit_code = -1;
 
