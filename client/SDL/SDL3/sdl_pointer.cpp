@@ -22,7 +22,7 @@
 #include <freerdp/gdi/gdi.h>
 
 #include "sdl_pointer.hpp"
-#include "sdl_freerdp.hpp"
+#include "sdl_context.hpp"
 #include "sdl_touch.hpp"
 #include "sdl_utils.hpp"
 
@@ -136,7 +136,7 @@ BOOL sdl_Pointer_Set_Process(SdlContext* sdl)
 
 	sdl_Pointer_Clear(ptr);
 
-	ptr->image = SDL_CreateSurface(sw, sh, sdl->sdl_pixel_format);
+	ptr->image = SDL_CreateSurface(sw, sh, sdl->pixelFormat());
 	if (!ptr->image)
 		return FALSE;
 
@@ -153,11 +153,11 @@ BOOL sdl_Pointer_Set_Process(SdlContext* sdl)
 
 	// create a cursor image in 100% display scale to trick SDL into creating the cursor with the
 	// correct size
-	auto it = sdl->windows.begin();
-	if (it == sdl->windows.end())
+	auto fw = sdl->getFirstWindow();
+	if (!fw)
 		return FALSE;
 
-	const auto hidpi_scale = SDL_GetWindowDisplayScale(it->second.window());
+	const auto hidpi_scale = SDL_GetWindowDisplayScale(fw->window());
 	auto normal = SDL_CreateSurface(
 	    static_cast<int>(static_cast<float>(ptr->image->w) / hidpi_scale),
 	    static_cast<int>(static_cast<float>(ptr->image->h) / hidpi_scale), ptr->image->format);

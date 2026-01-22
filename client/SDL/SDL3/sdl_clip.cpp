@@ -29,7 +29,7 @@
 #include <winpr/image.h>
 
 #include "sdl_clip.hpp"
-#include "sdl_freerdp.hpp"
+#include "sdl_context.hpp"
 
 #define TAG CLIENT_TAG("sdl.cliprdr")
 
@@ -147,7 +147,7 @@ sdlClip::~sdlClip()
 	(void)CloseHandle(_event);
 }
 
-BOOL sdlClip::init(CliprdrClientContext* clip)
+bool sdlClip::init(CliprdrClientContext* clip)
 {
 	WINPR_ASSERT(clip);
 	_ctx = clip;
@@ -162,14 +162,14 @@ BOOL sdlClip::init(CliprdrClientContext* clip)
 	return cliprdr_file_context_init(_file, _ctx);
 }
 
-BOOL sdlClip::uninit(CliprdrClientContext* clip)
+bool sdlClip::uninit(CliprdrClientContext* clip)
 {
 	WINPR_ASSERT(clip);
 	if (!cliprdr_file_context_uninit(_file, _ctx))
-		return FALSE;
+		return false;
 	_ctx = nullptr;
 	clip->custom = nullptr;
-	return TRUE;
+	return true;
 }
 
 bool sdlClip::contains(const char** mime_types, Sint32 count)

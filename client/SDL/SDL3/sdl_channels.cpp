@@ -26,7 +26,7 @@
 #include <freerdp/client/disp.h>
 
 #include "sdl_channels.hpp"
-#include "sdl_freerdp.hpp"
+#include "sdl_context.hpp"
 #include "sdl_disp.hpp"
 
 void sdl_OnChannelConnectedEventHandler(void* context, const ChannelConnectedEventArgs* e)
@@ -43,13 +43,17 @@ void sdl_OnChannelConnectedEventHandler(void* context, const ChannelConnectedEve
 	{
 		auto clip = reinterpret_cast<CliprdrClientContext*>(e->pInterface);
 		WINPR_ASSERT(clip);
-		sdl->clip.init(clip);
+
+		if (!sdl->getClipboardChannelContext().init(clip))
+			WLog_Print(sdl->getWLog(), WLOG_WARN, "Failed to initialize clipboard channel");
 	}
 	else if (strcmp(e->name, DISP_DVC_CHANNEL_NAME) == 0)
 	{
 		auto disp = reinterpret_cast<DispClientContext*>(e->pInterface);
 		WINPR_ASSERT(disp);
-		(void)sdl->disp.init(disp);
+
+		if (!sdl->getDisplayChannelContext().init(disp))
+			WLog_Print(sdl->getWLog(), WLOG_WARN, "Failed to initialize display channel");
 	}
 	else
 		freerdp_client_OnChannelConnectedEventHandler(context, e);
@@ -70,14 +74,19 @@ void sdl_OnChannelDisconnectedEventHandler(void* context, const ChannelDisconnec
 	{
 		auto clip = reinterpret_cast<CliprdrClientContext*>(e->pInterface);
 		WINPR_ASSERT(clip);
-		(void)sdl->clip.uninit(clip);
+
+		if (!sdl->getClipboardChannelContext().uninit(clip))
+			WLog_Print(sdl->getWLog(), WLOG_WARN, "Failed to uninitialize clipboard channel");
 		clip->custom = nullptr;
 	}
 	else if (strcmp(e->name, DISP_DVC_CHANNEL_NAME) == 0)
 	{
 		auto disp = reinterpret_cast<DispClientContext*>(e->pInterface);
 		WINPR_ASSERT(disp);
-		(void)sdl->disp.uninit(disp);
+
+		if (!sdl->getDisplayChannelContext().uninit(disp))
+			WLog_Print(sdl->getWLog(), WLOG_WARN, "Failed to uninitialize display channel");
+		disp->custom = nullptr;
 	}
 	else
 		freerdp_client_OnChannelDisconnectedEventHandler(context, e);

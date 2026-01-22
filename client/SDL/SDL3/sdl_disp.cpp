@@ -28,7 +28,7 @@
 #include "sdl_disp.hpp"
 #include "sdl_kbd.hpp"
 #include "sdl_utils.hpp"
-#include "sdl_freerdp.hpp"
+#include "sdl_context.hpp"
 
 #include <freerdp/log.h>
 #define TAG CLIENT_TAG("sdl.disp")
@@ -90,7 +90,7 @@ bool sdlDispContext::sendResize()
 
 bool sdlDispContext::set_window_resizable()
 {
-	return _sdl->update_resizeable(true);
+	return _sdl->setResizeable(true);
 }
 
 static bool sdl_disp_check_context(void* context, SdlContext** ppsdl, sdlDispContext** ppsdlDisp,
@@ -107,7 +107,7 @@ static bool sdl_disp_check_context(void* context, SdlContext** ppsdl, sdlDispCon
 		return false;
 
 	*ppsdl = sdl;
-	*ppsdlDisp = &sdl->disp;
+	*ppsdlDisp = &sdl->getDisplayChannelContext();
 	*ppSettings = sdl->context()->settings;
 	return true;
 }
@@ -169,21 +169,21 @@ Uint32 sdlDispContext::OnTimer(void* param, [[maybe_unused]] SDL_TimerID timerID
 	if (!sdl_disp_check_context(sdl->context(), &sdl, &sdlDisp, &settings))
 		return 0;
 
-	WLog_Print(sdl->log, WLOG_TRACE, "checking for display changes...");
+	WLog_Print(sdl->getWLog(), WLOG_TRACE, "checking for display changes...");
 	if (!sdlDisp->_activated || freerdp_settings_get_bool(settings, FreeRDP_Fullscreen))
 		return 0;
 
 	auto rc = sdlDisp->sendResize();
 	if (!rc)
-		WLog_Print(sdl->log, WLOG_TRACE, "sent new display layout, result %d", rc);
+		WLog_Print(sdl->getWLog(), WLOG_TRACE, "sent new display layout, result %d", rc);
 
 	if (sdlDisp->_timer_retries++ >= MAX_RETRIES)
 	{
-		WLog_Print(sdl->log, WLOG_TRACE, "deactivate timer, retries exceeded");
+		WLog_Print(sdl->getWLog(), WLOG_TRACE, "deactivate timer, retries exceeded");
 		return 0;
 	}
 
-	WLog_Print(sdl->log, WLOG_TRACE, "fire timer one more time");
+	WLog_Print(sdl->getWLog(), WLOG_TRACE, "fire timer one more time");
 	return interval;
 }
 
@@ -276,7 +276,7 @@ bool sdlDispContext::addTimer()
 		return false;
 
 	SDL_RemoveTimer(_timer);
-	WLog_Print(_sdl->log, WLOG_TRACE, "adding new display check timer");
+	WLog_Print(_sdl->getWLog(), WLOG_TRACE, "adding new display check timer");
 
 	_timer_retries = 0;
 	sendResize();
@@ -293,10 +293,11 @@ bool sdlDispContext::updateMonitor(SDL_WindowID id)
 	if (!freerdp_settings_get_bool(_sdl->context()->settings, FreeRDP_DynamicResolutionUpdate))
 		return true;
 
-	const auto& window = _sdl->windows.at(id);
-	auto monitor = window.monitor(true);
+	const auto window = _sdl->getWindowForId(id);
+	if (!window)
+		return false;
 
-	monitor.is_primary = TRUE;
+	const auto& monitor = window->monitor(true);
 	if (!freerdp_settings_set_monitor_def_array_sorted(settings, &monitor, 1))
 		return false;
 
@@ -324,14 +325,7 @@ bool sdlDispContext::updateMonitors(SDL_EventType type)
 	if (!freerdp_settings_get_bool(settings, FreeRDP_DynamicResolutionUpdate))
 		return true;
 
-	std::vector<rdpMonitor> monitors;
-	monitors.reserve(_sdl->windows.size());
-	for (auto& smon : _sdl->windows)
-	{
-		monitors.emplace_back(smon.second.monitor(false));
-	}
-
-	if (!freerdp_settings_set_monitor_def_array_sorted(settings, monitors.data(), monitors.size()))
+	if (!_sdl->updateWindowList())
 		return false;
 	return addTimer();
 }
@@ -374,9 +368,9 @@ bool sdlDispContext::handle_window_event(const SDL_WindowEvent* ev)
 
 	auto bordered = freerdp_settings_get_bool(_sdl->context()->settings, FreeRDP_Decorations);
 
-	auto it = _sdl->windows.find(ev->windowID);
-	if (it != _sdl->windows.end())
-		it->second.setBordered(bordered);
+	auto window = _sdl->getWindowForId(ev->windowID);
+	if (window)
+		window->setBordered(bordered);
 
 	switch (ev->type)
 	{
@@ -403,14 +397,14 @@ bool sdlDispContext::handle_window_event(const SDL_WindowEvent* ev)
 			return updateMonitor(ev->windowID);
 		case SDL_EVENT_WINDOW_MOUSE_LEAVE:
 			WINPR_ASSERT(_sdl);
-			_sdl->input.keyboard_grab(ev->windowID, false);
-			return true;
+			return _sdl->getInputChannelContext().keyboard_grab(ev->windowID, false);
 		case SDL_EVENT_WINDOW_MOUSE_ENTER:
 			WINPR_ASSERT(_sdl);
-			_sdl->input.keyboard_grab(ev->windowID, true);
-			return _sdl->input.keyboard_focus_in();
+			if (!_sdl->getInputChannelContext().keyboard_grab(ev->windowID, true))
+				return false;
+			return _sdl->getInputChannelContext().keyboard_focus_in();
 		case SDL_EVENT_WINDOW_FOCUS_GAINED:
-			return _sdl->input.keyboard_focus_in();
+			return _sdl->getInputChannelContext().keyboard_focus_in();
 
 		default:
 			return true;
@@ -465,7 +459,7 @@ bool sdlDispContext::init(DispClientContext* disp)
 		disp->DisplayControlCaps = sdlDispContext::DisplayControlCaps;
 	}
 
-	return _sdl->update_resizeable(true);
+	return _sdl->setResizeable(true);
 }
 
 bool sdlDispContext::uninit(DispClientContext* disp)
@@ -474,7 +468,7 @@ bool sdlDispContext::uninit(DispClientContext* disp)
 		return false;
 
 	_disp = nullptr;
-	return _sdl->update_resizeable(false);
+	return _sdl->setResizeable(false);
 }
 
 sdlDispContext::sdlDispContext(SdlContext* sdl) : _sdl(sdl)

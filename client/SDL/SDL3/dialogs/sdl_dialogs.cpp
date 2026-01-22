@@ -26,7 +26,7 @@
 
 #include <SDL3/SDL.h>
 
-#include "../sdl_freerdp.hpp"
+#include "../sdl_context.hpp"
 #include "sdl_dialogs.hpp"
 #include "sdl_input_widget_pair.hpp"
 #include "sdl_input_widget_pair_list.hpp"
@@ -212,24 +212,24 @@ SSIZE_T sdl_retry_dialog(freerdp* instance, const char* what, size_t current,
 	const BOOL enabled = freerdp_settings_get_bool(settings, FreeRDP_AutoReconnectionEnabled);
 	const size_t delay = freerdp_settings_get_uint32(settings, FreeRDP_TcpConnectTimeout);
 
-	sdl->dialog.setTitle("Retry connection to %s",
-	                     freerdp_settings_get_server_name(instance->context->settings));
+	sdl->getDialog().setTitle("Retry connection to %s",
+	                          freerdp_settings_get_server_name(instance->context->settings));
 
 	if ((strcmp(what, "arm-transport") != 0) && (strcmp(what, "connection") != 0))
 	{
-		sdl->dialog.showError("Unknown module %s, aborting", what);
+		sdl->getDialog().showError("Unknown module %s, aborting", what);
 		return -1;
 	}
 
 	if (current == 0)
 	{
 		if (strcmp(what, "arm-transport") == 0)
-			sdl->dialog.showWarn("[%s] Starting your VM. It may take up to 5 minutes", what);
+			sdl->getDialog().showWarn("[%s] Starting your VM. It may take up to 5 minutes", what);
 	}
 
 	if (!enabled)
 	{
-		sdl->dialog.showError(
+		sdl->getDialog().showError(
 		    "Automatic reconnection disabled, terminating. Try to connect again later");
 		return -1;
 	}
@@ -237,16 +237,16 @@ SSIZE_T sdl_retry_dialog(freerdp* instance, const char* what, size_t current,
 	const size_t max = freerdp_settings_get_uint32(settings, FreeRDP_AutoReconnectMaxRetries);
 	if (current >= max)
 	{
-		sdl->dialog.showError(
+		sdl->getDialog().showError(
 		    "[%s] retries exceeded. Your VM failed to start. Try again later or contact your "
 		    "tech support for help if this keeps happening.",
 		    what);
 		return -1;
 	}
 
-	sdl->dialog.showInfo("[%s] retry %" PRIuz "/%" PRIuz ", delaying %" PRIuz
-	                     "ms before next attempt",
-	                     what, current + 1, max, delay);
+	sdl->getDialog().showInfo("[%s] retry %" PRIuz "/%" PRIuz ", delaying %" PRIuz
+	                          "ms before next attempt",
+	                          what, current + 1, max, delay);
 	return WINPR_ASSERTING_INT_CAST(ssize_t, delay);
 }
 

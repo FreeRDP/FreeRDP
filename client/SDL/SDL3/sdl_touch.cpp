@@ -20,7 +20,7 @@
 #include <freerdp/config.h>
 
 #include "sdl_touch.hpp"
-#include "sdl_freerdp.hpp"
+#include "sdl_context.hpp"
 
 #include <winpr/wtypes.h>
 #include <winpr/assert.h>
@@ -52,22 +52,15 @@ BOOL sdl_scale_coordinates(SdlContext* sdl, Uint32 windowId, INT32* px, INT32* p
 
 	int offset_x = 0;
 	int offset_y = 0;
-	for (const auto& it : sdl->windows)
+	auto window = sdl->getWindowForId(windowId);
+	if (window)
 	{
-		auto& window = it.second;
-		const auto id = window.id();
-		if (id != windowId)
-		{
-			continue;
-		}
-
-		auto size = window.rect();
+		auto size = window->rect();
 
 		sx = size.w / static_cast<double>(gdi->width);
 		sy = size.h / static_cast<double>(gdi->height);
-		offset_x = window.offsetX();
-		offset_y = window.offsetY();
-		break;
+		offset_x = window->offsetX();
+		offset_y = window->offsetY();
 	}
 
 	if (freerdp_settings_get_bool(sdl->context()->settings, FreeRDP_SmartSizing))
@@ -199,7 +192,7 @@ BOOL sdl_handle_mouse_motion(SdlContext* sdl, const SDL_MouseMotionEvent* ev)
 	WINPR_ASSERT(sdl);
 	WINPR_ASSERT(ev);
 
-	sdl->input.mouse_focus(ev->windowID);
+	sdl->getInputChannelContext().mouse_focus(ev->windowID);
 	const BOOL relative =
 	    freerdp_client_use_relative_mouse_events(sdl->common()) && !sdl->hasCursor();
 	auto x = static_cast<INT32>(relative ? ev->xrel : ev->x);

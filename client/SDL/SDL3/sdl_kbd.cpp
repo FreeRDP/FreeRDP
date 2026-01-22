@@ -19,7 +19,7 @@
 
 #include "sdl_kbd.hpp"
 #include "sdl_disp.hpp"
-#include "sdl_freerdp.hpp"
+#include "sdl_context.hpp"
 #include "sdl_utils.hpp"
 #include "sdl_prefs.hpp"
 #include "sdl_touch.hpp"
@@ -318,7 +318,7 @@ BOOL sdlInput::keyboard_focus_in()
 	// TODO: fullscreen/remote app
 	float fx = 0.0f;
 	float fy = 0.0f;
-	if (_sdl->fullscreen)
+	if (_sdl->fullscreen())
 	{
 		SDL_GetGlobalMouseState(&fx, &fy);
 	}
@@ -366,7 +366,7 @@ BOOL sdlInput::keyboard_set_ime_status(rdpContext* context, UINT16 imeId, UINT32
 	if (!context)
 		return FALSE;
 
-	WLog_Print(sdl->log, WLOG_WARN,
+	WLog_Print(sdl->getWLog(), WLOG_WARN,
 	           "KeyboardSetImeStatus(unitId=%04" PRIx16 ", imeState=%08" PRIx32
 	           ", imeConvMode=%08" PRIx32 ") ignored",
 	           imeId, imeState, imeConvMode);
@@ -447,7 +447,7 @@ bool sdlInput::prefToEnabled()
 		}
 		else
 		{
-			WLog_Print(_sdl->log, WLOG_WARN,
+			WLog_Print(_sdl->getWLog(), WLOG_WARN,
 			           "Invalid config::SDL_KeyModMask entry value '%s', disabling hotkeys",
 			           val.c_str());
 			enabled = false;
@@ -530,7 +530,7 @@ UINT32 sdlInput::scancode_to_rdp(Uint32 scancode)
 
 #if defined(WITH_DEBUG_SDL_KBD_EVENTS)
 	auto code = static_cast<SDL_Scancode>(scancode);
-	WLog_Print(_sdl->log, WLOG_DEBUG, "got %s [%s] -> [%s]", SDL_GetScancodeName(code),
+	WLog_Print(_sdl->getWLog(), WLOG_DEBUG, "got %s [%s] -> [%s]", SDL_GetScancodeName(code),
 	           sdl_scancode_name(scancode), sdl_rdp_scancode_name(rdp));
 #endif
 	return rdp;
@@ -580,30 +580,30 @@ BOOL sdlInput::keyboard_handle_event(const SDL_KeyboardEvent* ev)
 		{
 			if (ev->scancode == _hotkeyFullscreen)
 			{
-				WLog_Print(_sdl->log, WLOG_INFO, "%s+<%s> pressed, toggling fullscreen state",
+				WLog_Print(_sdl->getWLog(), WLOG_INFO, "%s+<%s> pressed, toggling fullscreen state",
 				           masktostr(_hotkeyModmask).c_str(), sdl_scancode_name(_hotkeyFullscreen));
 				keyboard_sync_state();
-				return _sdl->update_fullscreen(!_sdl->fullscreen);
+				return _sdl->toggleFullscreen();
 			}
 			if (ev->scancode == _hotkeyResizable)
 			{
-				WLog_Print(_sdl->log, WLOG_INFO, "%s+<%s> pressed, toggling resizeable state",
+				WLog_Print(_sdl->getWLog(), WLOG_INFO, "%s+<%s> pressed, toggling resizeable state",
 				           masktostr(_hotkeyModmask).c_str(), sdl_scancode_name(_hotkeyResizable));
 				keyboard_sync_state();
-				return _sdl->update_resizeable(!_sdl->resizeable);
+				return _sdl->toggleResizeable();
 			}
 
 			if (ev->scancode == _hotkeyGrab)
 			{
-				WLog_Print(_sdl->log, WLOG_INFO, "%s+<%s> pressed, toggling grab state",
+				WLog_Print(_sdl->getWLog(), WLOG_INFO, "%s+<%s> pressed, toggling grab state",
 				           masktostr(_hotkeyModmask).c_str(), sdl_scancode_name(_hotkeyGrab));
 				keyboard_sync_state();
-				keyboard_grab(ev->windowID, !_sdl->grab_kbd);
+				keyboard_grab(ev->windowID, !_sdl->grabKeyboard());
 				return TRUE;
 			}
 			if (ev->scancode == _hotkeyDisconnect)
 			{
-				WLog_Print(_sdl->log, WLOG_INFO, "%s+<%s> pressed, disconnecting RDP session",
+				WLog_Print(_sdl->getWLog(), WLOG_INFO, "%s+<%s> pressed, disconnecting RDP session",
 				           masktostr(_hotkeyModmask).c_str(), sdl_scancode_name(_hotkeyDisconnect));
 				keyboard_sync_state();
 				freerdp_abort_connect_context(_sdl->context());
@@ -611,10 +611,10 @@ BOOL sdlInput::keyboard_handle_event(const SDL_KeyboardEvent* ev)
 			}
 			if (ev->scancode == _hotkeyMinimize)
 			{
-				WLog_Print(_sdl->log, WLOG_INFO, "%s+<%s> pressed, minimizing client",
+				WLog_Print(_sdl->getWLog(), WLOG_INFO, "%s+<%s> pressed, minimizing client",
 				           masktostr(_hotkeyModmask).c_str(), sdl_scancode_name(_hotkeyMinimize));
 				keyboard_sync_state();
-				return _sdl->update_minimize();
+				return _sdl->setMinimized();
 			}
 		}
 	}
@@ -623,7 +623,7 @@ BOOL sdlInput::keyboard_handle_event(const SDL_KeyboardEvent* ev)
 	{
 		const BOOL ex = RDP_SCANCODE_EXTENDED(rdp_scancode);
 		const DWORD sc = RDP_SCANCODE_CODE(rdp_scancode);
-		WLog_Print(_sdl->log, WLOG_DEBUG,
+		WLog_Print(_sdl->getWLog(), WLOG_DEBUG,
 		           "SDL keycode: %02" PRIX32 " -> rdp code: [%04" PRIx16 "] %02" PRIX8 "%s",
 		           ev->scancode, rdp_scancode, sc, ex ? " extended" : "");
 	}
@@ -634,7 +634,7 @@ BOOL sdlInput::keyboard_handle_event(const SDL_KeyboardEvent* ev)
 	{
 		const BOOL ex = RDP_SCANCODE_EXTENDED(scancode);
 		const DWORD sc = RDP_SCANCODE_CODE(scancode);
-		WLog_Print(_sdl->log, WLOG_DEBUG,
+		WLog_Print(_sdl->getWLog(), WLOG_DEBUG,
 		           "SDL keycode: %02" PRIX32 " -> remapped rdp code: [%04" PRIx16 "] %02" PRIX8
 		           "%s",
 		           ev->scancode, scancode, sc, ex ? " extended" : "");
@@ -646,15 +646,16 @@ BOOL sdlInput::keyboard_handle_event(const SDL_KeyboardEvent* ev)
 
 BOOL sdlInput::keyboard_grab(Uint32 windowID, bool enable)
 {
-	auto it = _sdl->windows.find(windowID);
-	if (it == _sdl->windows.end())
+	const auto window = _sdl->getWindowForId(windowID);
+	if (!window)
 		return FALSE;
 
 	auto settings = _sdl->context()->settings;
 	auto kbd_enabled = freerdp_settings_get_bool(settings, FreeRDP_GrabKeyboard);
 	auto status = enable && kbd_enabled;
-	_sdl->grab_kbd = status;
-	return it->second.grabKeyboard(status);
+	if (!_sdl->setGrabKeyboard(status))
+		WLog_Print(_sdl->getWLog(), WLOG_WARN, "Failed to ungrab keyboard");
+	return window->grabKeyboard(status);
 }
 
 BOOL sdlInput::mouse_focus(Uint32 windowID)
@@ -662,22 +663,23 @@ BOOL sdlInput::mouse_focus(Uint32 windowID)
 	if (_lastWindowID != windowID)
 	{
 		_lastWindowID = windowID;
-		auto it = _sdl->windows.find(windowID);
-		if (it == _sdl->windows.end())
+		auto window = _sdl->getWindowForId(windowID);
+		if (!window)
 			return FALSE;
 
-		it->second.raise();
+		window->raise();
 	}
 	return TRUE;
 }
 
 BOOL sdlInput::mouse_grab(Uint32 windowID, bool enable)
 {
-	auto it = _sdl->windows.find(windowID);
-	if (it == _sdl->windows.end())
+	auto window = _sdl->getWindowForId(windowID);
+	if (!window)
 		return FALSE;
-	_sdl->grab_mouse = enable;
-	return it->second.grabMouse(enable);
+	if (!_sdl->setGrabMouse(enable))
+		WLog_Print(_sdl->getWLog(), WLOG_WARN, "Failed to ungrab mouse");
+	return window->grabMouse(enable);
 }
 
 sdlInput::sdlInput(SdlContext* sdl)

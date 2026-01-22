@@ -97,10 +97,10 @@ class sdlClip
 	sdlClip& operator=(const sdlClip&) = delete;
 	sdlClip& operator=(sdlClip&&) = delete;
 
-	BOOL init(CliprdrClientContext* clip);
-	BOOL uninit(CliprdrClientContext* clip);
+	[[nodiscard]] bool init(CliprdrClientContext* clip);
+	[[nodiscard]] bool uninit(CliprdrClientContext* clip);
 
-	bool handle_update(const SDL_ClipboardEvent& ev);
+	[[nodiscard]] bool handle_update(const SDL_ClipboardEvent& ev);
 
   private:
 	UINT SendClientCapabilities();

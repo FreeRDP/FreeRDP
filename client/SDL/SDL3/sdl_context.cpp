@@ -1,0 +1,1052 @@
+/**
+ * FreeRDP: A Remote Desktop Protocol Implementation
+ * SDL Client
+ *
+ * Copyright 2022 Armin Novak <armin.novak@thincast.com>
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+#include "sdl_context.hpp"
+#include "sdl_config.hpp"
+#include "sdl_channels.hpp"
+#include "sdl_monitor.hpp"
+#include "sdl_pointer.hpp"
+
+#include <sdl_common_utils.hpp>
+#include <scoped_guard.hpp>
+
+#include "dialogs/sdl_dialogs.hpp"
+
+#if defined(WITH_WEBVIEW)
+#include <aad/sdl_webview.hpp>
+#endif
+
+SdlContext::SdlContext(rdpContext* context)
+    : _context(context), _log(WLog_Get(CLIENT_TAG("SDL"))), _rdpThreadRunning(false),
+      _primary(nullptr, SDL_DestroySurface), _disp(this), _input(this), _clip(this), _dialog(_log)
+{
+	WINPR_ASSERT(context);
+	setMetadata();
+
+	auto instance = _context->instance;
+	WINPR_ASSERT(instance);
+
+	instance->PreConnect = preConnect;
+	instance->PostConnect = postConnect;
+	instance->PostDisconnect = postDisconnect;
+	instance->PostFinalDisconnect = postFinalDisconnect;
+	instance->AuthenticateEx = sdl_authenticate_ex;
+	instance->VerifyCertificateEx = sdl_verify_certificate_ex;
+	instance->VerifyChangedCertificateEx = sdl_verify_changed_certificate_ex;
+	instance->LogonErrorInfo = sdl_logon_error_info;
+	instance->PresentGatewayMessage = sdl_present_gateway_message;
+	instance->ChooseSmartcard = sdl_choose_smartcard;
+	instance->RetryDialog = sdl_retry_dialog;
+
+#ifdef WITH_WEBVIEW
+	instance->GetAccessToken = sdl_webview_get_access_token;
+#else
+	instance->GetAccessToken = client_cli_get_access_token;
+#endif
+	/* TODO: Client display set up */
+}
+
+SdlContext::~SdlContext()
+{
+}
+
+void SdlContext::setHasCursor(bool val)
+{
+	this->_cursor_visible = val;
+}
+
+bool SdlContext::hasCursor() const
+{
+	return _cursor_visible;
+}
+
+void SdlContext::setMetadata()
+{
+	auto wmclass = freerdp_settings_get_string(_context->settings, FreeRDP_WmClass);
+	if (!wmclass || (strlen(wmclass) == 0))
+		wmclass = SDL_CLIENT_UUID;
+
+	SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_IDENTIFIER_STRING, wmclass);
+	SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_NAME_STRING, SDL_CLIENT_NAME);
+	SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_VERSION_STRING, SDL_CLIENT_VERSION);
+	SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_CREATOR_STRING, SDL_CLIENT_VENDOR);
+	SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_COPYRIGHT_STRING, SDL_CLIENT_COPYRIGHT);
+	SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_URL_STRING, SDL_CLIENT_URL);
+	SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_TYPE_STRING, SDL_CLIENT_TYPE);
+}
+
+int SdlContext::start()
+{
+	_thread = std::thread(rdpThreadRun, this);
+	return 0;
+}
+
+int SdlContext::join()
+{
+	/* We do not want to use freerdp_abort_connect_context here.
+	 * It would change the exit code and we do not want that. */
+	HANDLE event = freerdp_abort_event(context());
+	if (!SetEvent(event))
+		return -1;
+
+	_thread.join();
+	return 0;
+}
+
+void SdlContext::cleanup()
+{
+	std::unique_lock lock(_critical);
+	_windows.clear();
+	_dialog.destroy();
+	_primary.reset();
+}
+
+bool SdlContext::shallAbort(bool ignoreDialogs)
+{
+	std::unique_lock lock(_critical);
+	if (freerdp_shall_disconnect_context(context()))
+	{
+		if (ignoreDialogs)
+			return true;
+		if (_rdpThreadRunning)
+			return false;
+		return !getDialog().isRunning();
+	}
+	return false;
+}
+
+/* Called before a connection is established.
+ * Set all configuration options to support and load channels here. */
+BOOL SdlContext::preConnect(freerdp* instance)
+{
+	WINPR_ASSERT(instance);
+	WINPR_ASSERT(instance->context);
+
+	auto sdl = get_context(instance->context);
+
+	auto settings = instance->context->settings;
+	WINPR_ASSERT(settings);
+
+	if (!freerdp_settings_set_bool(settings, FreeRDP_CertificateCallbackPreferPEM, TRUE))
+		return FALSE;
+
+	/* Optional OS identifier sent to server */
+	if (!freerdp_settings_set_uint32(settings, FreeRDP_OsMajorType, OSMAJORTYPE_UNIX))
+		return FALSE;
+	if (!freerdp_settings_set_uint32(settings, FreeRDP_OsMinorType, OSMINORTYPE_NATIVE_SDL))
+		return FALSE;
+	/* OrderSupport is initialized at this point.
+	 * Only override it if you plan to implement custom order
+	 * callbacks or deactivate certain features. */
+	/* Register the channel listeners.
+	 * They are required to set up / tear down channels if they are loaded. */
+	PubSub_SubscribeChannelConnected(instance->context->pubSub, sdl_OnChannelConnectedEventHandler);
+	PubSub_SubscribeChannelDisconnected(instance->context->pubSub,
+	                                    sdl_OnChannelDisconnectedEventHandler);
+
+	if (!freerdp_settings_get_bool(settings, FreeRDP_AuthenticationOnly))
+	{
+		UINT32 maxWidth = 0;
+		UINT32 maxHeight = 0;
+
+		if (!sdl_detect_monitors(sdl, &maxWidth, &maxHeight))
+			return FALSE;
+
+		if ((maxWidth != 0) && (maxHeight != 0) &&
+		    !freerdp_settings_get_bool(settings, FreeRDP_SmartSizing))
+		{
+			WLog_Print(sdl->getWLog(), WLOG_INFO, "Update size to %ux%u", maxWidth, maxHeight);
+			if (!freerdp_settings_set_uint32(settings, FreeRDP_DesktopWidth, maxWidth))
+				return FALSE;
+			if (!freerdp_settings_set_uint32(settings, FreeRDP_DesktopHeight, maxHeight))
+				return FALSE;
+		}
+	}
+	else
+	{
+		/* Check +auth-only has a username and password. */
+		if (!freerdp_settings_get_string(settings, FreeRDP_Password))
+		{
+			WLog_Print(sdl->getWLog(), WLOG_INFO,
+			           "auth-only, but no password set. Please provide one.");
+			return FALSE;
+		}
+
+		if (!freerdp_settings_set_bool(settings, FreeRDP_DeactivateClientDecoding, TRUE))
+			return FALSE;
+
+		WLog_Print(sdl->getWLog(), WLOG_INFO, "Authentication only. Don't connect SDL.");
+	}
+
+	if (!sdl->getInputChannelContext().initialize())
+		return FALSE;
+
+	/* TODO: Any code your client requires */
+	return TRUE;
+}
+
+/* Called after a RDP connection was successfully established.
+ * Settings might have changed during negotiation of client / server feature
+ * support.
+ *
+ * Set up local framebuffers and paing callbacks.
+ * If required, register pointer callbacks to change the local mouse cursor
+ * when hovering over the RDP window
+ */
+BOOL SdlContext::postConnect(freerdp* instance)
+{
+	WINPR_ASSERT(instance);
+
+	auto context = instance->context;
+	WINPR_ASSERT(context);
+
+	auto sdl = get_context(context);
+
+	// Retry was successful, discard dialog
+	sdl->getDialog().show(false);
+
+	if (freerdp_settings_get_bool(context->settings, FreeRDP_AuthenticationOnly))
+	{
+		/* Check +auth-only has a username and password. */
+		if (!freerdp_settings_get_string(context->settings, FreeRDP_Password))
+		{
+			WLog_Print(sdl->getWLog(), WLOG_INFO,
+			           "auth-only, but no password set. Please provide one.");
+			return FALSE;
+		}
+
+		WLog_Print(sdl->getWLog(), WLOG_INFO, "Authentication only. Don't connect to X.");
+		return TRUE;
+	}
+
+	if (!sdl->waitForWindowsCreated())
+		return FALSE;
+
+	sdl->_sdlPixelFormat = SDL_PIXELFORMAT_BGRA32;
+	if (!gdi_init(instance, PIXEL_FORMAT_BGRA32))
+		return FALSE;
+
+	if (!sdl->createPrimary())
+		return FALSE;
+
+	if (!sdl_register_pointer(instance->context->graphics))
+		return FALSE;
+
+	WINPR_ASSERT(context->update);
+
+	context->update->BeginPaint = beginPaint;
+	context->update->EndPaint = endPaint;
+	context->update->PlaySound = playSound;
+	context->update->DesktopResize = desktopResize;
+	context->update->SetKeyboardIndicators = sdlInput::keyboard_set_indicators;
+	context->update->SetKeyboardImeStatus = sdlInput::keyboard_set_ime_status;
+
+	if (!sdl->setResizeable(false))
+		return FALSE;
+	if (!sdl->setFullscreen(freerdp_settings_get_bool(context->settings, FreeRDP_Fullscreen) ||
+	                        freerdp_settings_get_bool(context->settings, FreeRDP_UseMultimon)))
+		return FALSE;
+	sdl->setConnected(true);
+	return TRUE;
+}
+
+/* This function is called whether a session ends by failure or success.
+ * Clean up everything allocated by pre_connect and post_connect.
+ */
+void SdlContext::postDisconnect(freerdp* instance)
+{
+	if (!instance)
+		return;
+
+	if (!instance->context)
+		return;
+
+	auto sdl = get_context(instance->context);
+	sdl->setConnected(false);
+
+	gdi_free(instance);
+}
+
+void SdlContext::postFinalDisconnect(freerdp* instance)
+{
+	if (!instance)
+		return;
+
+	if (!instance->context)
+		return;
+
+	PubSub_UnsubscribeChannelConnected(instance->context->pubSub,
+	                                   sdl_OnChannelConnectedEventHandler);
+	PubSub_UnsubscribeChannelDisconnected(instance->context->pubSub,
+	                                      sdl_OnChannelDisconnectedEventHandler);
+}
+
+/* Create a SDL surface from the GDI buffer */
+bool SdlContext::createPrimary()
+{
+	auto gdi = context()->gdi;
+	WINPR_ASSERT(gdi);
+
+	_primary = SDLSurfacePtr(
+	    SDL_CreateSurfaceFrom(static_cast<int>(gdi->width), static_cast<int>(gdi->height),
+	                          pixelFormat(), gdi->primary_buffer, static_cast<int>(gdi->stride)),
+	    SDL_DestroySurface);
+	if (!_primary)
+		return false;
+
+	SDL_SetSurfaceBlendMode(_primary.get(), SDL_BLENDMODE_NONE);
+	SDL_Rect surfaceRect = { 0, 0, gdi->width, gdi->height };
+	SDL_FillSurfaceRect(_primary.get(), &surfaceRect,
+	                    SDL_MapSurfaceRGBA(_primary.get(), 0, 0, 0, 0xff));
+
+	return true;
+}
+
+bool SdlContext::createWindows()
+{
+	auto settings = context()->settings;
+	const auto& title = windowTitle();
+
+	ScopeGuard guard1([&]() { _windowsCreatedEvent.set(); });
+
+	UINT32 windowCount = freerdp_settings_get_uint32(settings, FreeRDP_MonitorCount);
+
+	Sint32 originX = 0;
+	Sint32 originY = 0;
+	for (UINT32 x = 0; x < windowCount; x++)
+	{
+		auto id = monitorId(x);
+		if (id < 0)
+			return false;
+
+		auto monitor = static_cast<rdpMonitor*>(
+		    freerdp_settings_get_pointer_array_writable(settings, FreeRDP_MonitorDefArray, x));
+
+		originX = std::min<Sint32>(monitor->x, originX);
+		originY = std::min<Sint32>(monitor->y, originY);
+	}
+
+	for (UINT32 x = 0; x < windowCount; x++)
+	{
+		auto id = monitorId(x);
+		if (id < 0)
+			return false;
+
+		auto monitor = static_cast<rdpMonitor*>(
+		    freerdp_settings_get_pointer_array_writable(settings, FreeRDP_MonitorDefArray, x));
+
+		auto w = WINPR_ASSERTING_INT_CAST(Uint32, monitor->width);
+		auto h = WINPR_ASSERTING_INT_CAST(Uint32, monitor->height);
+		if (!(freerdp_settings_get_bool(settings, FreeRDP_UseMultimon) ||
+		      freerdp_settings_get_bool(settings, FreeRDP_Fullscreen)))
+		{
+			w = freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth);
+			h = freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight);
+		}
+
+		Uint32 flags = SDL_WINDOW_HIGH_PIXEL_DENSITY;
+
+		if (freerdp_settings_get_bool(settings, FreeRDP_Fullscreen) &&
+		    !freerdp_settings_get_bool(settings, FreeRDP_UseMultimon))
+		{
+			flags |= SDL_WINDOW_FULLSCREEN;
+		}
+
+		if (freerdp_settings_get_bool(settings, FreeRDP_UseMultimon))
+		{
+			flags |= SDL_WINDOW_BORDERLESS;
+		}
+
+		if (!freerdp_settings_get_bool(settings, FreeRDP_Decorations))
+			flags |= SDL_WINDOW_BORDERLESS;
+
+		std::stringstream ss;
+		ss << title << ":" << x;
+
+		auto did = WINPR_ASSERTING_INT_CAST(SDL_DisplayID, id);
+		auto window = SdlWindow::create(did, title, flags, w, h);
+		if (!window.window())
+			return false;
+
+		if (freerdp_settings_get_bool(settings, FreeRDP_UseMultimon))
+		{
+			window.setOffsetX(originX - monitor->x);
+			window.setOffsetY(originY - monitor->y);
+		}
+
+		_windows.insert({ window.id(), std::move(window) });
+	}
+
+	return true;
+}
+
+bool SdlContext::updateWindowList()
+{
+	std::vector<rdpMonitor> list;
+	list.reserve(_windows.size());
+	for (const auto& win : _windows)
+		list.push_back(win.second.monitor(_windows.size() == 1));
+
+	return freerdp_settings_set_monitor_def_array_sorted(context()->settings, list.data(),
+	                                                     list.size());
+}
+
+std::string SdlContext::windowTitle() const
+{
+	const char* prefix = "FreeRDP:";
+
+	const auto windowTitle = freerdp_settings_get_string(context()->settings, FreeRDP_WindowTitle);
+	if (windowTitle)
+		return windowTitle;
+
+	const auto name = freerdp_settings_get_server_name(context()->settings);
+	const auto port = freerdp_settings_get_uint32(context()->settings, FreeRDP_ServerPort);
+	const auto addPort = (port != 3389);
+
+	std::stringstream ss;
+	ss << prefix << " " << name;
+
+	if (addPort)
+		ss << ":" << port;
+
+	return ss.str();
+}
+
+bool SdlContext::waitForWindowsCreated()
+{
+	{
+		std::unique_lock<CriticalSection> lock(_critical);
+		_windowsCreatedEvent.clear();
+		if (!sdl_push_user_event(SDL_EVENT_USER_CREATE_WINDOWS, this))
+			return false;
+	}
+
+	HANDLE handles[] = { _windowsCreatedEvent.handle(), freerdp_abort_event(context()) };
+
+	const DWORD rc = WaitForMultipleObjects(ARRAYSIZE(handles), handles, FALSE, INFINITE);
+	switch (rc)
+	{
+		case WAIT_OBJECT_0:
+			return true;
+		default:
+			return false;
+	}
+}
+
+/* This function is called when the library completed composing a new
+ * frame. Read out the changed areas and blit them to your output device.
+ * The image buffer will have the format specified by gdi_init
+ */
+BOOL SdlContext::endPaint(rdpContext* context)
+{
+	auto sdl = get_context(context);
+	WINPR_ASSERT(sdl);
+
+	auto gdi = context->gdi;
+	WINPR_ASSERT(gdi);
+	WINPR_ASSERT(gdi->primary);
+
+	HGDI_DC hdc = gdi->primary->hdc;
+	WINPR_ASSERT(hdc);
+	if (!hdc->hwnd)
+		return TRUE;
+
+	HGDI_WND hwnd = hdc->hwnd;
+	WINPR_ASSERT(hwnd->invalid || (hwnd->ninvalid == 0));
+
+	if (hwnd->invalid->null)
+		return TRUE;
+
+	WINPR_ASSERT(hwnd->invalid);
+	if (gdi->suppressOutput || hwnd->invalid->null)
+		return TRUE;
+
+	const INT32 ninvalid = hwnd->ninvalid;
+	const GDI_RGN* cinvalid = hwnd->cinvalid;
+
+	if (ninvalid < 1)
+		return TRUE;
+
+	std::vector<SDL_Rect> rects;
+	for (INT32 x = 0; x < ninvalid; x++)
+	{
+		auto& rgn = cinvalid[x];
+		rects.push_back({ rgn.x, rgn.y, rgn.w, rgn.h });
+	}
+
+	sdl->push(std::move(rects));
+	return sdl_push_user_event(SDL_EVENT_USER_UPDATE);
+}
+
+void SdlContext::sdl_client_cleanup(int exit_code, const std::string& error_msg)
+{
+	rdpSettings* settings = context()->settings;
+	WINPR_ASSERT(settings);
+
+	_rdpThreadRunning = false;
+	bool showError = false;
+	if (freerdp_settings_get_bool(settings, FreeRDP_AuthenticationOnly))
+		WLog_Print(getWLog(), WLOG_INFO, "Authentication only, exit status %s [%" PRId32 "]",
+		           sdl::error::exitCodeToTag(exit_code), exit_code);
+	else
+	{
+		switch (exit_code)
+		{
+			case sdl::error::SUCCESS:
+			case sdl::error::DISCONNECT:
+			case sdl::error::LOGOFF:
+			case sdl::error::DISCONNECT_BY_USER:
+			case sdl::error::CONNECT_CANCELLED:
+				break;
+			default:
+			{
+				getDialog().showError(error_msg);
+			}
+			break;
+		}
+	}
+
+	if (!showError)
+		getDialog().show(false);
+
+	_exitCode = exit_code;
+	sdl_push_user_event(SDL_EVENT_USER_QUIT);
+	SDL_CleanupTLS();
+}
+
+int SdlContext::sdl_client_thread_connect(std::string& error_msg)
+{
+	auto instance = context()->instance;
+	WINPR_ASSERT(instance);
+
+	_rdpThreadRunning = true;
+	BOOL rc = freerdp_connect(instance);
+
+	rdpSettings* settings = context()->settings;
+	WINPR_ASSERT(settings);
+
+	int exit_code = sdl::error::SUCCESS;
+	if (!rc)
+	{
+		UINT32 error = freerdp_get_last_error(context());
+		exit_code = sdl::error::errorToExitCode(error);
+	}
+
+	if (freerdp_settings_get_bool(settings, FreeRDP_AuthenticationOnly))
+	{
+		DWORD code = freerdp_get_last_error(context());
+		freerdp_abort_connect_context(context());
+		WLog_Print(getWLog(), WLOG_ERROR, "Authentication only, %s [0x%08" PRIx32 "] %s",
+		           freerdp_get_last_error_name(code), code, freerdp_get_last_error_string(code));
+		return exit_code;
+	}
+
+	if (!rc)
+	{
+		DWORD code = freerdp_error_info(instance);
+		if (exit_code == sdl::error::SUCCESS)
+		{
+			char* msg = nullptr;
+			size_t len = 0;
+			exit_code = error_info_to_error(&code, &msg, &len);
+			if (msg)
+				error_msg = msg;
+			free(msg);
+		}
+
+		auto last = freerdp_get_last_error(context());
+		if (error_msg.empty())
+		{
+			char* msg = nullptr;
+			size_t len = 0;
+			winpr_asprintf(&msg, &len, "%s [0x%08" PRIx32 "]\n%s",
+			               freerdp_get_last_error_name(last), last,
+			               freerdp_get_last_error_string(last));
+			if (msg)
+				error_msg = msg;
+			free(msg);
+		}
+
+		if (exit_code == sdl::error::SUCCESS)
+		{
+			if (last == FREERDP_ERROR_AUTHENTICATION_FAILED)
+				exit_code = sdl::error::AUTH_FAILURE;
+			else if (code == ERRINFO_SUCCESS)
+				exit_code = sdl::error::CONN_FAILED;
+		}
+
+		getDialog().show(false);
+	}
+
+	return exit_code;
+}
+
+int SdlContext::sdl_client_thread_run(std::string& error_msg)
+{
+	auto instance = context()->instance;
+	WINPR_ASSERT(instance);
+
+	int exit_code = sdl::error::SUCCESS;
+	while (!freerdp_shall_disconnect_context(context()))
+	{
+		HANDLE handles[MAXIMUM_WAIT_OBJECTS] = {};
+		/*
+		 * win8 and server 2k12 seem to have some timing issue/race condition
+		 * when a initial sync request is send to sync the keyboard indicators
+		 * sending the sync event twice fixed this problem
+		 */
+		if (freerdp_focus_required(instance))
+		{
+			auto ctx = get_context(context());
+			WINPR_ASSERT(ctx);
+
+			auto& input = ctx->getInputChannelContext();
+			if (!input.keyboard_focus_in())
+				break;
+			if (!input.keyboard_focus_in())
+				break;
+		}
+
+		const DWORD nCount = freerdp_get_event_handles(context(), handles, ARRAYSIZE(handles));
+
+		if (nCount == 0)
+		{
+			WLog_Print(getWLog(), WLOG_ERROR, "freerdp_get_event_handles failed");
+			break;
+		}
+
+		const DWORD status = WaitForMultipleObjects(nCount, handles, FALSE, INFINITE);
+
+		if (status == WAIT_FAILED)
+			break;
+
+		if (!freerdp_check_event_handles(context()))
+		{
+			if (client_auto_reconnect(instance))
+			{
+				// Retry was successful, discard dialog
+				getDialog().show(false);
+				continue;
+			}
+			else
+			{
+				/*
+				 * Indicate an unsuccessful connection attempt if reconnect
+				 * did not succeed and no other error was specified.
+				 */
+				if (freerdp_error_info(instance) == 0)
+					exit_code = sdl::error::CONN_FAILED;
+			}
+
+			if (freerdp_get_last_error(context()) == FREERDP_ERROR_SUCCESS)
+				WLog_Print(getWLog(), WLOG_ERROR, "WaitForMultipleObjects failed with %" PRIu32 "",
+				           status);
+			if (freerdp_get_last_error(context()) == FREERDP_ERROR_SUCCESS)
+				WLog_Print(getWLog(), WLOG_ERROR, "Failed to check FreeRDP event handles");
+			break;
+		}
+	}
+
+	if (exit_code == sdl::error::SUCCESS)
+	{
+		DWORD code = 0;
+		{
+			char* emsg = nullptr;
+			size_t elen = 0;
+			exit_code = error_info_to_error(&code, &emsg, &elen);
+			if (emsg)
+				error_msg = emsg;
+			free(emsg);
+		}
+
+		if ((code == ERRINFO_LOGOFF_BY_USER) &&
+		    (freerdp_get_disconnect_ultimatum(context()) == Disconnect_Ultimatum_user_requested))
+		{
+			const char* msg = "Error info says user did not initiate but disconnect ultimatum says "
+			                  "they did; treat this as a user logoff";
+
+			char* emsg = nullptr;
+			size_t elen = 0;
+			winpr_asprintf(&emsg, &elen, "%s", msg);
+			if (emsg)
+				error_msg = emsg;
+			free(emsg);
+
+			/* This situation might be limited to Windows XP. */
+			WLog_Print(getWLog(), WLOG_INFO, "%s", msg);
+			exit_code = sdl::error::LOGOFF;
+		}
+	}
+
+	freerdp_disconnect(instance);
+
+	return exit_code;
+}
+
+/* RDP main loop.
+ * Connects RDP, loops while running and handles event and dispatch, cleans up
+ * after the connection ends. */
+DWORD SdlContext::rdpThreadRun(SdlContext* sdl)
+{
+	WINPR_ASSERT(sdl);
+
+	std::string error_msg;
+	int exit_code = sdl->sdl_client_thread_connect(error_msg);
+	if (exit_code == sdl::error::SUCCESS)
+		exit_code = sdl->sdl_client_thread_run(error_msg);
+	sdl->sdl_client_cleanup(exit_code, error_msg);
+
+	return static_cast<DWORD>(exit_code);
+}
+
+int SdlContext::error_info_to_error(DWORD* pcode, char** msg, size_t* len) const
+{
+	const DWORD code = freerdp_error_info(context()->instance);
+	const char* name = freerdp_get_error_info_name(code);
+	const char* str = freerdp_get_error_info_string(code);
+	const int exit_code = sdl::error::errorToExitCode(code);
+
+	winpr_asprintf(msg, len, "Terminate with %s due to ERROR_INFO %s [0x%08" PRIx32 "]: %s",
+	               sdl::error::errorToExitCodeTag(code), name, code, str);
+	SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "%s", *msg);
+	if (pcode)
+		*pcode = code;
+	return exit_code;
+}
+
+bool SdlContext::drawToWindow(SdlWindow& window, const std::vector<SDL_Rect>& rects)
+{
+	if (!isConnected())
+		return true;
+
+	auto gdi = context()->gdi;
+	WINPR_ASSERT(gdi);
+
+	auto size = window.rect();
+
+	std::unique_lock lock(_critical);
+	auto surface = _primary.get();
+	if (freerdp_settings_get_bool(context()->settings, FreeRDP_SmartSizing))
+	{
+		window.setOffsetX(0);
+		window.setOffsetY(0);
+		if (gdi->width < size.w)
+		{
+			window.setOffsetX((size.w - gdi->width) / 2);
+		}
+		if (gdi->height < size.h)
+		{
+			window.setOffsetY((size.h - gdi->height) / 2);
+		}
+		if (!window.drawScaledRects(surface, rects))
+			return false;
+	}
+	else
+	{
+		if (!window.drawRects(surface, { window.offsetX(), window.offsetY() }, rects))
+			return false;
+	}
+
+	window.updateSurface();
+	return true;
+}
+
+bool SdlContext::minimizeAllWindows()
+{
+	for (auto& w : _windows)
+		w.second.minimize();
+	return true;
+}
+
+int SdlContext::exitCode() const
+{
+	return _exitCode;
+}
+
+SDL_PixelFormat SdlContext::pixelFormat() const
+{
+	return _sdlPixelFormat;
+}
+
+SdlWindow* SdlContext::getWindowForId(SDL_WindowID id)
+{
+	auto it = _windows.find(id);
+	if (it == _windows.end())
+		return nullptr;
+	return &it->second;
+}
+
+SdlWindow* SdlContext::getFirstWindow()
+{
+	if (_windows.empty())
+		return nullptr;
+	return &_windows.begin()->second;
+}
+
+sdlDispContext& SdlContext::getDisplayChannelContext()
+{
+	return _disp;
+}
+
+sdlInput& SdlContext::getInputChannelContext()
+{
+	return _input;
+}
+
+sdlClip& SdlContext::getClipboardChannelContext()
+{
+	return _clip;
+}
+
+SdlConnectionDialogWrapper& SdlContext::getDialog()
+{
+	return _dialog;
+}
+
+wLog* SdlContext::getWLog()
+{
+	return _log;
+}
+
+bool SdlContext::drawToWindows(const std::vector<SDL_Rect>& rects)
+{
+	for (auto& window : _windows)
+	{
+		if (!drawToWindow(window.second, rects))
+			return FALSE;
+	}
+
+	return TRUE;
+}
+
+BOOL SdlContext::desktopResize(rdpContext* context)
+{
+	rdpGdi* gdi = nullptr;
+	rdpSettings* settings = nullptr;
+	auto sdl = get_context(context);
+
+	WINPR_ASSERT(sdl);
+	WINPR_ASSERT(context);
+
+	settings = context->settings;
+	WINPR_ASSERT(settings);
+
+	std::unique_lock lock(sdl->_critical);
+	gdi = context->gdi;
+	if (!gdi_resize(gdi, freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth),
+	                freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight)))
+		return FALSE;
+	return sdl->createPrimary();
+}
+
+/* This function is called to output a System BEEP */
+BOOL SdlContext::playSound(rdpContext* context, const PLAY_SOUND_UPDATE* play_sound)
+{
+	/* TODO: Implement */
+	WINPR_UNUSED(context);
+	WINPR_UNUSED(play_sound);
+	return TRUE;
+}
+
+/* This function is called whenever a new frame starts.
+ * It can be used to reset invalidated areas. */
+BOOL SdlContext::beginPaint(rdpContext* context)
+{
+	auto gdi = context->gdi;
+	WINPR_ASSERT(gdi);
+	WINPR_ASSERT(gdi->primary);
+
+	HGDI_DC hdc = gdi->primary->hdc;
+	WINPR_ASSERT(hdc);
+	if (!hdc->hwnd)
+		return TRUE;
+
+	HGDI_WND hwnd = hdc->hwnd;
+	WINPR_ASSERT(hwnd->invalid);
+	hwnd->invalid->null = TRUE;
+	hwnd->ninvalid = 0;
+
+	return TRUE;
+}
+
+bool SdlContext::redraw(bool suppress) const
+{
+	if (!_connected)
+		return true;
+
+	auto gdi = context()->gdi;
+	WINPR_ASSERT(gdi);
+	return gdi_send_suppress_output(gdi, suppress);
+}
+
+void SdlContext::setConnected(bool val)
+{
+	_connected = val;
+}
+
+bool SdlContext::isConnected() const
+{
+	return _connected;
+}
+
+rdpContext* SdlContext::context() const
+{
+	WINPR_ASSERT(_context);
+	return _context;
+}
+
+rdpClientContext* SdlContext::common() const
+{
+	return reinterpret_cast<rdpClientContext*>(context());
+}
+
+void SdlContext::setCursor(rdpPointer* cursor)
+{
+	_cursor = cursor;
+}
+
+rdpPointer* SdlContext::cursor() const
+{
+	return _cursor;
+}
+
+void SdlContext::setMonitorIds(const std::vector<SDL_DisplayID>& ids)
+{
+	_monitorIds.clear();
+	for (auto id : ids)
+	{
+		_monitorIds.push_back(id);
+	}
+}
+
+const std::vector<SDL_DisplayID>& SdlContext::monitorIds() const
+{
+	return _monitorIds;
+}
+
+int64_t SdlContext::monitorId(uint32_t index) const
+{
+	if (index >= _monitorIds.size())
+	{
+		return -1;
+	}
+	return _monitorIds[index];
+}
+
+void SdlContext::push(std::vector<SDL_Rect>&& rects)
+{
+	std::unique_lock lock(_queue_mux);
+	_queue.emplace(std::move(rects));
+}
+
+std::vector<SDL_Rect> SdlContext::pop()
+{
+	std::unique_lock lock(_queue_mux);
+	if (_queue.empty())
+	{
+		return {};
+	}
+	auto val = std::move(_queue.front());
+	_queue.pop();
+	return val;
+}
+
+bool SdlContext::setFullscreen(bool enter)
+{
+	for (const auto& window : _windows)
+	{
+		if (!sdl_push_user_event(SDL_EVENT_USER_WINDOW_FULLSCREEN, &window.second, enter))
+			return false;
+	}
+	_fullscreen = enter;
+	return true;
+}
+
+bool SdlContext::setMinimized()
+{
+	return sdl_push_user_event(SDL_EVENT_USER_WINDOW_MINIMIZE);
+}
+
+bool SdlContext::grabMouse() const
+{
+	return _grabMouse;
+}
+
+bool SdlContext::toggleGrabMouse()
+{
+	return setGrabMouse(!grabMouse());
+}
+
+bool SdlContext::setGrabMouse(bool enter)
+{
+	_grabMouse = enter;
+	return true;
+}
+
+bool SdlContext::grabKeyboard() const
+{
+	return _grabKeyboard;
+}
+
+bool SdlContext::toggleGrabKeyboard()
+{
+	return setGrabKeyboard(!grabKeyboard());
+}
+
+bool SdlContext::setGrabKeyboard(bool enter)
+{
+	_grabKeyboard = enter;
+	return true;
+}
+
+bool SdlContext::setResizeable(bool enable)
+{
+	const auto settings = context()->settings;
+	const bool dyn = freerdp_settings_get_bool(settings, FreeRDP_DynamicResolutionUpdate);
+	const bool smart = freerdp_settings_get_bool(settings, FreeRDP_SmartSizing);
+	bool use = (dyn && enable) || smart;
+
+	for (const auto& window : _windows)
+	{
+		if (!sdl_push_user_event(SDL_EVENT_USER_WINDOW_RESIZEABLE, &window.second, use))
+			return false;
+	}
+	_resizeable = use;
+
+	return true;
+}
+
+bool SdlContext::resizeable() const
+{
+	return _resizeable;
+}
+
+bool SdlContext::toggleResizeable()
+{
+	return setResizeable(!resizeable());
+}
+
+bool SdlContext::fullscreen() const
+{
+	return _fullscreen;
+}
+
+bool SdlContext::toggleFullscreen()
+{
+	return setFullscreen(!fullscreen());
+}

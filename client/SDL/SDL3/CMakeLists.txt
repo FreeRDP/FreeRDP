@@ -45,6 +45,8 @@ set(SRCS
     sdl_window.cpp
     sdl_clip.hpp
     sdl_clip.cpp
+    sdl_context.hpp
+    sdl_context.cpp
 )
 
 list(

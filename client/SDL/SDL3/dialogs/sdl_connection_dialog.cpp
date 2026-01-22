@@ -21,7 +21,7 @@
 
 #include "sdl_connection_dialog.hpp"
 #include "../sdl_utils.hpp"
-#include "../sdl_freerdp.hpp"
+#include "../sdl_context.hpp"
 #include "res/sdl3_resource_manager.hpp"
 
 static const SDL_Color textcolor = { 0xd1, 0xcf, 0xcd, 0xff };
@@ -130,11 +130,11 @@ bool SDLConnectionDialog::setModal()
 	if (_window)
 	{
 		auto sdl = get_context(_context);
-		if (sdl->windows.empty())
+		auto parent = sdl->getFirstWindow();
+		if (!parent)
 			return true;
 
-		auto parent = sdl->windows.begin()->second.window();
-		SDL_SetWindowParent(_window.get(), parent);
+		SDL_SetWindowParent(_window.get(), parent->window());
 		SDL_SetWindowModal(_window.get(), true);
 		SDL_RaiseWindow(_window.get());
 	}
