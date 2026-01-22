@@ -110,55 +110,6 @@ static BOOL sdl_begin_paint(rdpContext* context)
 	return TRUE;
 }
 
-static bool sdl_draw_to_window_rect([[maybe_unused]] SdlContext* sdl, SdlWindow& window,
-                                    SDL_Surface* surface, SDL_Point offset, const SDL_Rect& srcRect)
-{
-	WINPR_ASSERT(surface);
-	SDL_Rect dstRect = { offset.x + srcRect.x, offset.y + srcRect.y, srcRect.w, srcRect.h };
-	return window.blit(surface, srcRect, dstRect);
-}
-
-static bool sdl_draw_to_window_rect(SdlContext* sdl, SdlWindow& window, SDL_Surface* surface,
-                                    SDL_Point offset, const std::vector<SDL_Rect>& rects = {})
-{
-	if (rects.empty())
-	{
-		return sdl_draw_to_window_rect(sdl, window, surface, offset,
-		                               { 0, 0, surface->w, surface->h });
-	}
-	for (auto& srcRect : rects)
-	{
-		if (!sdl_draw_to_window_rect(sdl, window, surface, offset, srcRect))
-			return false;
-	}
-	return true;
-}
-
-static bool sdl_draw_to_window_scaled_rect(SdlContext* sdl, SdlWindow& window, SDL_Surface* surface,
-                                           const SDL_Rect& srcRect)
-{
-	SDL_Rect dstRect = srcRect;
-	sdl_scale_coordinates(sdl, window.id(), &dstRect.x, &dstRect.y, FALSE, TRUE);
-	sdl_scale_coordinates(sdl, window.id(), &dstRect.w, &dstRect.h, FALSE, TRUE);
-	return window.blit(surface, srcRect, dstRect);
-}
-
-static BOOL sdl_draw_to_window_scaled_rect(SdlContext* sdl, SdlWindow& window, SDL_Surface* surface,
-                                           const std::vector<SDL_Rect>& rects = {})
-{
-	if (rects.empty())
-	{
-		return sdl_draw_to_window_scaled_rect(sdl, window, surface,
-		                                      { 0, 0, surface->w, surface->h });
-	}
-	for (const auto& srcRect : rects)
-	{
-		if (!sdl_draw_to_window_scaled_rect(sdl, window, surface, srcRect))
-			return FALSE;
-	}
-	return TRUE;
-}
-
 static BOOL sdl_draw_to_window(SdlContext* sdl, SdlWindow& window,
                                const std::vector<SDL_Rect>& rects = {})
 {
@@ -187,14 +138,12 @@ static BOOL sdl_draw_to_window(SdlContext* sdl, SdlWindow& window,
 		{
 			window.setOffsetY((size.h - gdi->height) / 2);
 		}
-		if (!sdl_draw_to_window_scaled_rect(sdl, window, surface, rects))
+		if (!window.drawScaledRects(surface, rects))
 			return FALSE;
 	}
 	else
 	{
-
-		if (!sdl_draw_to_window_rect(sdl, window, surface, { window.offsetX(), window.offsetY() },
-		                             rects))
+		if (!window.drawRects(surface, { window.offsetX(), window.offsetY() }, rects))
 			return FALSE;
 	}
 
@@ -474,8 +423,6 @@ static BOOL sdl_create_windows(SdlContext* sdl)
 		}
 
 		Uint32 flags = SDL_WINDOW_HIGH_PIXEL_DENSITY;
-		auto startupX = SDL_WINDOWPOS_CENTERED_DISPLAY(id);
-		auto startupY = SDL_WINDOWPOS_CENTERED_DISPLAY(id);
 
 		if (freerdp_settings_get_bool(settings, FreeRDP_Fullscreen) &&
 		    !freerdp_settings_get_bool(settings, FreeRDP_UseMultimon))
@@ -493,12 +440,8 @@ static BOOL sdl_create_windows(SdlContext* sdl)
 
 		char buffer[MAX_PATH + 64] = {};
 		(void)sprintf_s(buffer, sizeof(buffer), "%s:%" PRIu32, title, x);
-		SdlWindow window{ buffer,
-			              static_cast<int>(startupX),
-			              static_cast<int>(startupY),
-			              static_cast<int>(w),
-			              static_cast<int>(h),
-			              flags };
+		auto window =
+		    SdlWindow::create(id, buffer, flags, static_cast<int>(w), static_cast<int>(h));
 		if (!window.window())
 			return FALSE;
 

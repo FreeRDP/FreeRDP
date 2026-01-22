@@ -294,7 +294,7 @@ bool sdlDispContext::updateMonitor(SDL_WindowID id)
 		return true;
 
 	const auto& window = _sdl->windows.at(id);
-	auto monitor = window.monitor();
+	auto monitor = window.monitor(true);
 
 	monitor.is_primary = TRUE;
 	if (!freerdp_settings_set_monitor_def_array_sorted(settings, &monitor, 1))
@@ -328,7 +328,7 @@ bool sdlDispContext::updateMonitors(SDL_EventType type)
 	monitors.reserve(_sdl->windows.size());
 	for (auto& smon : _sdl->windows)
 	{
-		monitors.emplace_back(smon.second.monitor());
+		monitors.emplace_back(smon.second.monitor(false));
 	}
 
 	if (!freerdp_settings_set_monitor_def_array_sorted(settings, monitors.data(), monitors.size()))

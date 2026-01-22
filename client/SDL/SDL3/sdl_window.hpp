@@ -20,6 +20,8 @@
 #pragma once
 
 #include <string>
+#include <vector>
+
 #include <SDL3/SDL.h>
 
 #include <freerdp/settings_types.h>
@@ -27,11 +29,12 @@
 class SdlWindow
 {
   public:
-	SdlWindow(const std::string& title, Sint32 startupX, Sint32 startupY, Sint32 width,
-	          Sint32 height, Uint32 flags);
+	[[nodiscard]] static SdlWindow create(SDL_DisplayID id, const std::string& title, Uint32 flags,
+	                                      Uint32 width = 0, Uint32 height = 0);
+
 	SdlWindow(SdlWindow&& other) noexcept;
 	SdlWindow(const SdlWindow& other) = delete;
-	~SdlWindow();
+	virtual ~SdlWindow();
 
 	SdlWindow& operator=(const SdlWindow& other) = delete;
 	SdlWindow& operator=(SdlWindow&& other) = delete;
@@ -47,23 +50,37 @@ class SdlWindow
 	void setOffsetY(Sint32 y);
 	[[nodiscard]] Sint32 offsetY() const;
 
-	[[nodiscard]] rdpMonitor monitor() const;
+	[[nodiscard]] rdpMonitor monitor(bool isPrimary) const;
 
-	bool grabKeyboard(bool enable);
-	bool grabMouse(bool enable);
+	[[nodiscard]] float scale() const;
+
+	[[nodiscard]] bool grabKeyboard(bool enable);
+	[[nodiscard]] bool grabMouse(bool enable);
 	void setBordered(bool bordered);
 	void raise();
 	void resizeable(bool use);
 	void fullscreen(bool enter);
 	void minimize();
 
-	bool fill(Uint8 r = 0x00, Uint8 g = 0x00, Uint8 b = 0x00, Uint8 a = 0xff);
-	bool blit(SDL_Surface* surface, const SDL_Rect& src, SDL_Rect& dst);
+	[[nodiscard]] bool resize(const SDL_Point& size);
+
+	[[nodiscard]] bool drawRect(SDL_Surface* surface, SDL_Point offset, const SDL_Rect& srcRect);
+	[[nodiscard]] bool drawRects(SDL_Surface* surface, SDL_Point offset,
+	                             const std::vector<SDL_Rect>& rects = {});
+	[[nodiscard]] bool drawScaledRect(SDL_Surface* surface, const SDL_Rect& srcRect);
+
+	[[nodiscard]] bool drawScaledRects(SDL_Surface* surface,
+	                                   const std::vector<SDL_Rect>& rects = {});
+
+	[[nodiscard]] bool fill(Uint8 r = 0x00, Uint8 g = 0x00, Uint8 b = 0x00, Uint8 a = 0xff);
+	[[nodiscard]] bool blit(SDL_Surface* surface, const SDL_Rect& src, SDL_Rect& dst);
 	void updateSurface();
 
-  private:
-	static UINT32 orientaion_to_rdp(SDL_DisplayOrientation orientation);
+  protected:
+	SdlWindow(const std::string& title, Sint32 startupX, Sint32 startupY, Sint32 width,
+	          Sint32 height, Uint32 flags);
 
+  private:
 	SDL_Window* _window = nullptr;
 	Sint32 _offset_x = 0;
 	Sint32 _offset_y = 0;
