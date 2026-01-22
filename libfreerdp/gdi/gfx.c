@@ -1360,33 +1360,36 @@ static UINT gdi_SurfaceToSurface(RdpgfxClientContext* context,
 	if (!is_rect_valid(rectSrc, surfaceSrc->width, surfaceSrc->height))
 		goto fail;
 
-	const UINT32 nWidth = rectSrc->right - rectSrc->left;
-	const UINT32 nHeight = rectSrc->bottom - rectSrc->top;
-
-	for (UINT16 index = 0; index < surfaceToSurface->destPtsCount; index++)
 	{
-		const RDPGFX_POINT16* destPt = &surfaceToSurface->destPts[index];
-		const RECTANGLE_16 rect = { destPt->x, destPt->y,
-			                        (UINT16)MIN(UINT16_MAX, destPt->x + nWidth),
-			                        (UINT16)MIN(UINT16_MAX, destPt->y + nHeight) };
-		if (!is_rect_valid(&rect, surfaceDst->width, surfaceDst->height))
-			goto fail;
+		const UINT32 nWidth = rectSrc->right - rectSrc->left;
+		const UINT32 nHeight = rectSrc->bottom - rectSrc->top;
 
-		const UINT32 rwidth = rect.right - rect.left;
-		const UINT32 rheight = rect.bottom - rect.top;
-		if (!freerdp_image_copy(surfaceDst->data, surfaceDst->format, surfaceDst->scanline,
-		                        destPt->x, destPt->y, rwidth, rheight, surfaceSrc->data,
-		                        surfaceSrc->format, surfaceSrc->scanline, rectSrc->left,
-		                        rectSrc->top, NULL, FREERDP_FLIP_NONE))
-			goto fail;
+		for (UINT16 index = 0; index < surfaceToSurface->destPtsCount; index++)
+		{
+			const RDPGFX_POINT16* destPt = &surfaceToSurface->destPts[index];
+			const RECTANGLE_16 rect = { destPt->x, destPt->y,
+				                        (UINT16)MIN(UINT16_MAX, destPt->x + nWidth),
+				                        (UINT16)MIN(UINT16_MAX, destPt->y + nHeight) };
+			if (!is_rect_valid(&rect, surfaceDst->width, surfaceDst->height))
+				goto fail;
 
-		invalidRect = rect;
-		region16_union_rect(&surfaceDst->invalidRegion, &surfaceDst->invalidRegion, &invalidRect);
-		status = IFCALLRESULT(CHANNEL_RC_OK, context->UpdateSurfaceArea, context,
-		                      surfaceDst->surfaceId, 1, &invalidRect);
+			const UINT32 rwidth = rect.right - rect.left;
+			const UINT32 rheight = rect.bottom - rect.top;
+			if (!freerdp_image_copy(surfaceDst->data, surfaceDst->format, surfaceDst->scanline,
+			                        destPt->x, destPt->y, rwidth, rheight, surfaceSrc->data,
+			                        surfaceSrc->format, surfaceSrc->scanline, rectSrc->left,
+			                        rectSrc->top, NULL, FREERDP_FLIP_NONE))
+				goto fail;
 
-		if (status != CHANNEL_RC_OK)
-			goto fail;
+			invalidRect = rect;
+			region16_union_rect(&surfaceDst->invalidRegion, &surfaceDst->invalidRegion,
+			                    &invalidRect);
+			status = IFCALLRESULT(CHANNEL_RC_OK, context->UpdateSurfaceArea, context,
+			                      surfaceDst->surfaceId, 1, &invalidRect);
+
+			if (status != CHANNEL_RC_OK)
+				goto fail;
+		}
 	}
 
 	LeaveCriticalSection(&context->mux);
