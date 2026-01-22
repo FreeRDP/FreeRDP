@@ -78,5 +78,6 @@ FREERDP_LOCAL void nla_set_early_user_auth(rdpNla* nla, BOOL earlyUserAuth);
 FREERDP_LOCAL BOOL nla_encrypt(rdpNla* nla, const SecBuffer* inBuffer, SecBuffer* outBuffer);
 FREERDP_LOCAL BOOL nla_decrypt(rdpNla* nla, const SecBuffer* inBuffer, SecBuffer* outBuffer);
 FREERDP_LOCAL SECURITY_STATUS nla_QueryContextAttributes(rdpNla* nla, DWORD ulAttr, PVOID pBuffer);
+FREERDP_LOCAL SECURITY_STATUS nla_FreeContextBuffer(rdpNla* nla, PVOID pBuffer);
 
 #endif /* FREERDP_LIB_CORE_NLA_H */

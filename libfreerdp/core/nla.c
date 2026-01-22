@@ -2455,3 +2455,14 @@ SECURITY_STATUS nla_QueryContextAttributes(rdpNla* nla, DWORD ulAttr, PVOID pBuf
 
 	return table->QueryContextAttributes(&context, ulAttr, pBuffer);
 }
+
+SECURITY_STATUS nla_FreeContextBuffer(rdpNla* nla, PVOID pBuffer)
+{
+	WINPR_ASSERT(nla);
+
+	SecurityFunctionTable* table = NULL;
+	CtxtHandle context = { 0 };
+	credssp_auth_tableAndContext(nla->auth, &table, &context);
+
+	return table->FreeContextBuffer(pBuffer);
+}
