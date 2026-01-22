@@ -897,6 +897,31 @@ static SECURITY_STATUS SEC_ENTRY ntlm_QueryContextAttributesW(PCtxtHandle phCont
 	{
 		return ntlm_computeMicValue(context, (SecBuffer*)pBuffer);
 	}
+	else if (ulAttribute == SECPKG_ATTR_PACKAGE_INFO)
+	{
+		SecPkgContext_PackageInfo* PackageInfo = (SecPkgContext_PackageInfo*)pBuffer;
+		size_t size = sizeof(SecPkgInfoA);
+		SecPkgInfoA* pPackageInfo =
+		    (SecPkgInfoA*)sspi_ContextBufferAlloc(QuerySecurityPackageInfoIndex, size);
+
+		if (!pPackageInfo)
+			return SEC_E_INSUFFICIENT_MEMORY;
+
+		pPackageInfo->fCapabilities = NTLM_SecPkgInfoA.fCapabilities;
+		pPackageInfo->wVersion = NTLM_SecPkgInfoA.wVersion;
+		pPackageInfo->wRPCID = NTLM_SecPkgInfoA.wRPCID;
+		pPackageInfo->cbMaxToken = NTLM_SecPkgInfoA.cbMaxToken;
+		pPackageInfo->Name = _strdup(NTLM_SecPkgInfoA.Name);
+		pPackageInfo->Comment = _strdup(NTLM_SecPkgInfoA.Comment);
+
+		if (!pPackageInfo->Name || !pPackageInfo->Comment)
+		{
+			sspi_ContextBufferFree(pPackageInfo);
+			return SEC_E_INSUFFICIENT_MEMORY;
+		}
+		PackageInfo->PackageInfo = pPackageInfo;
+		return SEC_E_OK;
+	}
 
 	WLog_ERR(TAG, "TODO: Implement ulAttribute=0x%08" PRIx32, ulAttribute);
 	return SEC_E_UNSUPPORTED_FUNCTION;
