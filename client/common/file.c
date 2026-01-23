@@ -716,6 +716,9 @@ static BOOL freerdp_client_rdp_file_set_string(rdpFile* file, const char* name, 
 
 	if (targetValue)
 	{
+		if ((uintptr_t)(*targetValue) != UINTPTR_MAX)
+			free(*targetValue);
+
 		*targetValue = _strdup(value);
 		if (!(*targetValue))
 			return FALSE;
