@@ -72,20 +72,20 @@
 
 @end
 
-BOOL mac_pre_connect(freerdp *instance);
-BOOL mac_post_connect(freerdp *instance);
+WINPR_ATTR_NODISCARD BOOL mac_pre_connect(freerdp *instance);
+WINPR_ATTR_NODISCARD BOOL mac_post_connect(freerdp *instance);
 void mac_post_disconnect(freerdp *instance);
-BOOL mac_authenticate_ex(freerdp *instance, char **username, char **password, char **domain,
-                         rdp_auth_reason reason);
+WINPR_ATTR_NODISCARD BOOL mac_authenticate_ex(freerdp *instance, char **username, char **password,
+                                              char **domain, rdp_auth_reason reason);
 
-DWORD mac_verify_certificate_ex(freerdp *instance, const char *host, UINT16 port,
-                                const char *common_name, const char *subject, const char *issuer,
-                                const char *fingerprint, DWORD flags);
-DWORD mac_verify_changed_certificate_ex(freerdp *instance, const char *host, UINT16 port,
-                                        const char *common_name, const char *subject,
-                                        const char *issuer, const char *fingerprint,
-                                        const char *old_subject, const char *old_issuer,
-                                        const char *old_fingerprint, DWORD flags);
+WINPR_ATTR_NODISCARD DWORD mac_verify_certificate_ex(freerdp *instance, const char *host,
+                                                     UINT16 port, const char *common_name,
+                                                     const char *subject, const char *issuer,
+                                                     const char *fingerprint, DWORD flags);
+WINPR_ATTR_NODISCARD DWORD mac_verify_changed_certificate_ex(
+    freerdp *instance, const char *host, UINT16 port, const char *common_name, const char *subject,
+    const char *issuer, const char *fingerprint, const char *old_subject, const char *old_issuer,
+    const char *old_fingerprint, DWORD flags);
 
-int mac_logon_error_info(freerdp *instance, UINT32 data, UINT32 type);
+WINPR_ATTR_NODISCARD int mac_logon_error_info(freerdp *instance, UINT32 data, UINT32 type);
 #endif /* FREERDP_CLIENT_MAC_MRDPVIEW_H */

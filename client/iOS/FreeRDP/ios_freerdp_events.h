@@ -15,13 +15,13 @@
 #import "ios_freerdp.h"
 
 // For UI: use to send events
-BOOL ios_events_send(mfInfo *mfi, NSDictionary *event_description);
+WINPR_ATTR_NODISCARD BOOL ios_events_send(mfInfo *mfi, NSDictionary *event_description);
 
 // For connection runloop: use to poll for queued input events
-HANDLE ios_events_get_handle(mfInfo *mfi);
-BOOL ios_events_check_handle(mfInfo *mfi);
+WINPR_ATTR_NODISCARD HANDLE ios_events_get_handle(mfInfo *mfi);
+WINPR_ATTR_NODISCARD BOOL ios_events_check_handle(mfInfo *mfi);
 
-BOOL ios_events_create_pipe(mfInfo *mfi);
+WINPR_ATTR_NODISCARD BOOL ios_events_create_pipe(mfInfo *mfi);
 void ios_events_free_pipe(mfInfo *mfi);
 
 #endif /* IOS_RDP_EVENT_H */

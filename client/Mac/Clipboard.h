@@ -25,7 +25,7 @@
 #import "freerdp/channels/channels.h"
 #import "freerdp/client/cliprdr.h"
 
-int mac_cliprdr_send_client_format_list(CliprdrClientContext* cliprdr);
+WINPR_ATTR_NODISCARD int mac_cliprdr_send_client_format_list(CliprdrClientContext* cliprdr);
 
 void mac_cliprdr_init(mfContext* mfc, CliprdrClientContext* cliprdr);
 void mac_cliprdr_uninit(mfContext* mfc, CliprdrClientContext* cliprdr);

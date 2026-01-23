@@ -160,28 +160,30 @@ struct xf_app_window
 
 void xf_ewmhints_init(xfContext* xfc);
 
-BOOL xf_GetWorkArea(xfContext* xfc);
+WINPR_ATTR_NODISCARD BOOL xf_GetWorkArea(xfContext* xfc);
 
 void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen);
 void xf_SetWindowMinimized(xfContext* xfc, xfWindow* window);
 void xf_SetWindowDecorations(xfContext* xfc, Window window, BOOL show);
 void xf_SetWindowUnlisted(xfContext* xfc, Window window);
 
-xfWindow* xf_CreateDesktopWindow(xfContext* xfc, char* name, int width, int height);
+WINPR_ATTR_NODISCARD xfWindow* xf_CreateDesktopWindow(xfContext* xfc, char* name, int width,
+                                                      int height);
 void xf_ResizeDesktopWindow(xfContext* xfc, xfWindow* window, int width, int height);
 void xf_DestroyDesktopWindow(xfContext* xfc, xfWindow* window);
 
-Window xf_CreateDummyWindow(xfContext* xfc);
+WINPR_ATTR_NODISCARD Window xf_CreateDummyWindow(xfContext* xfc);
 void xf_DestroyDummyWindow(xfContext* xfc, Window window);
 
-BOOL xf_GetWindowProperty(xfContext* xfc, Window window, Atom property, int length,
-                          unsigned long* nitems, unsigned long* bytes, BYTE** prop);
+WINPR_ATTR_NODISCARD BOOL xf_GetWindowProperty(xfContext* xfc, Window window, Atom property,
+                                               int length, unsigned long* nitems,
+                                               unsigned long* bytes, BYTE** prop);
 void xf_SendClientEvent(xfContext* xfc, Window window, Atom atom, unsigned int numArgs, ...);
 
-BOOL xf_AppWindowCreate(xfContext* xfc, xfAppWindow* appWindow);
-int xf_AppWindowInit(xfContext* xfc, xfAppWindow* appWindow);
+WINPR_ATTR_NODISCARD BOOL xf_AppWindowCreate(xfContext* xfc, xfAppWindow* appWindow);
+WINPR_ATTR_NODISCARD int xf_AppWindowInit(xfContext* xfc, xfAppWindow* appWindow);
 
-BOOL xf_AppWindowResize(xfContext* xfc, xfAppWindow* appWindow);
+WINPR_ATTR_NODISCARD BOOL xf_AppWindowResize(xfContext* xfc, xfAppWindow* appWindow);
 
 void xf_SetWindowText(xfContext* xfc, xfAppWindow* appWindow, const char* name);
 void xf_MoveWindow(xfContext* xfc, xfAppWindow* appWindow, int x, int y, int width, int height);
@@ -194,7 +196,7 @@ void xf_SetWindowStyle(xfContext* xfc, xfAppWindow* appWindow, UINT32 style, UIN
 void xf_SetWindowActions(xfContext* xfc, xfAppWindow* appWindow);
 void xf_UpdateWindowArea(xfContext* xfc, xfAppWindow* appWindow, int x, int y, int width,
                          int height);
-UINT xf_AppUpdateWindowFromSurface(xfContext* xfc, gdiGfxSurface* surface);
+WINPR_ATTR_NODISCARD UINT xf_AppUpdateWindowFromSurface(xfContext* xfc, gdiGfxSurface* surface);
 
 void xf_DestroyWindow(xfContext* xfc, xfAppWindow* appWindow);
 void xf_SetWindowMinMaxInfo(xfContext* xfc, xfAppWindow* appWindow, int maxWidth, int maxHeight,
@@ -202,9 +204,10 @@ void xf_SetWindowMinMaxInfo(xfContext* xfc, xfAppWindow* appWindow, int maxWidth
                             int maxTrackWidth, int maxTrackHeight);
 void xf_StartLocalMoveSize(xfContext* xfc, xfAppWindow* appWindow, int direction, int x, int y);
 void xf_EndLocalMoveSize(xfContext* xfc, xfAppWindow* appWindow);
-xfAppWindow* xf_AppWindowFromX11Window(xfContext* xfc, Window wnd);
+WINPR_ATTR_NODISCARD xfAppWindow* xf_AppWindowFromX11Window(xfContext* xfc, Window wnd);
 
-const char* window_styles_to_string(UINT32 style, char* buffer, size_t length);
-const char* window_styles_ex_to_string(UINT32 styleEx, char* buffer, size_t length);
+WINPR_ATTR_NODISCARD const char* window_styles_to_string(UINT32 style, char* buffer, size_t length);
+WINPR_ATTR_NODISCARD const char* window_styles_ex_to_string(UINT32 styleEx, char* buffer,
+                                                            size_t length);
 
 #endif /* FREERDP_CLIENT_X11_WINDOW_H */

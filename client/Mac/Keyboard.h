@@ -17,6 +17,8 @@
  * limitations under the License.
  */
 
+#pragma once
+
 enum APPLE_KEYBOARD_TYPE
 {
 	APPLE_KEYBOARD_TYPE_ANSI,
@@ -24,4 +26,4 @@ enum APPLE_KEYBOARD_TYPE
 	APPLE_KEYBOARD_TYPE_JIS
 };
 
-enum APPLE_KEYBOARD_TYPE mac_detect_keyboard_type(void);
+WINPR_ATTR_NODISCARD enum APPLE_KEYBOARD_TYPE mac_detect_keyboard_type(void);

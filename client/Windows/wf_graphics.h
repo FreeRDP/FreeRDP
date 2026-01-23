@@ -22,13 +22,13 @@
 
 #include "wf_client.h"
 
-HBITMAP wf_create_dib(wfContext* wfc, UINT32 width, UINT32 height, UINT32 format, const BYTE* data,
-                      BYTE** pdata);
-wfBitmap* wf_image_new(wfContext* wfc, UINT32 width, UINT32 height, UINT32 format,
-                       const BYTE* data);
+WINPR_ATTR_NODISCARD HBITMAP wf_create_dib(wfContext* wfc, UINT32 width, UINT32 height,
+                                           UINT32 format, const BYTE* data, BYTE** pdata);
+WINPR_ATTR_NODISCARD wfBitmap* wf_image_new(wfContext* wfc, UINT32 width, UINT32 height,
+                                            UINT32 format, const BYTE* data);
 void wf_image_free(wfBitmap* image);
 
-BOOL wf_register_pointer(rdpGraphics* graphics);
-BOOL wf_register_graphics(rdpGraphics* graphics);
+WINPR_ATTR_NODISCARD BOOL wf_register_pointer(rdpGraphics* graphics);
+WINPR_ATTR_NODISCARD BOOL wf_register_graphics(rdpGraphics* graphics);
 
 #endif /* FREERDP_CLIENT_WIN_GRAPHICS_H */

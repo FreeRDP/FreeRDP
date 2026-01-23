@@ -23,6 +23,6 @@
 
 #include <freerdp/graphics.h>
 
-BOOL wlf_register_pointer(rdpGraphics* graphics);
+WINPR_ATTR_NODISCARD BOOL wlf_register_pointer(rdpGraphics* graphics);
 
 #endif /* FREERDP_CLIENT_WAYLAND_POINTER_H */

@@ -28,8 +28,10 @@
 #include <freerdp/client/rdpgfx.h>
 #include <freerdp/client/encomsp.h>
 
-int wlf_on_channel_connected(freerdp* instance, const char* name, void* pInterface);
-int wlf_on_channel_disconnected(freerdp* instance, const char* name, void* pInterface);
+WINPR_ATTR_NODISCARD int wlf_on_channel_connected(freerdp* instance, const char* name,
+                                                  void* pInterface);
+WINPR_ATTR_NODISCARD int wlf_on_channel_disconnected(freerdp* instance, const char* name,
+                                                     void* pInterface);
 
 void wlf_OnChannelConnectedEventHandler(void* context, const ChannelConnectedEventArgs* e);
 void wlf_OnChannelDisconnectedEventHandler(void* context, const ChannelDisconnectedEventArgs* e);

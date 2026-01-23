@@ -25,10 +25,10 @@
 #include "xf_client.h"
 #include "xfreerdp.h"
 
-BOOL xf_keyboard_init(xfContext* xfc);
+WINPR_ATTR_NODISCARD BOOL xf_keyboard_init(xfContext* xfc);
 void xf_keyboard_free(xfContext* xfc);
 
-BOOL xf_keyboard_action_script_init(xfContext* xfc);
+WINPR_ATTR_NODISCARD BOOL xf_keyboard_action_script_init(xfContext* xfc);
 
 void xf_keyboard_key_press(xfContext* xfc, const XKeyEvent* event, KeySym keysym);
 void xf_keyboard_key_release(xfContext* xfc, const XKeyEvent* event, KeySym keysym);
@@ -36,11 +36,11 @@ void xf_keyboard_key_release(xfContext* xfc, const XKeyEvent* event, KeySym keys
 void xf_keyboard_release_all_keypress(xfContext* xfc);
 
 void xf_keyboard_focus_in(xfContext* xfc);
-BOOL xf_keyboard_set_indicators(rdpContext* context, UINT16 led_flags);
-BOOL xf_keyboard_set_ime_status(rdpContext* context, UINT16 imeId, UINT32 imeState,
-                                UINT32 imeConvMode);
+WINPR_ATTR_NODISCARD BOOL xf_keyboard_set_indicators(rdpContext* context, UINT16 led_flags);
+WINPR_ATTR_NODISCARD BOOL xf_keyboard_set_ime_status(rdpContext* context, UINT16 imeId,
+                                                     UINT32 imeState, UINT32 imeConvMode);
 
-BOOL xf_ungrab(xfContext* xfc);
+WINPR_ATTR_NODISCARD BOOL xf_ungrab(xfContext* xfc);
 
 void xf_button_map_init(xfContext* xfc);
 

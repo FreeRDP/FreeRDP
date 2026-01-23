@@ -17,35 +17,39 @@
 #define GET_TAG(section, row) ((((int)section) << 16) | ((int)(row)))
 #define GET_TAG_FROM_PATH(path) ((((int)path.section) << 16) | ((int)(path.row)))
 
-BOOL ScanHostNameAndPort(NSString *address, NSString **host, unsigned short *port);
+WINPR_ATTR_NODISCARD BOOL ScanHostNameAndPort(NSString *address, NSString **host,
+                                              unsigned short *port);
 
 #pragma mark -
 #pragma mark Screen Resolutions
 
-NSString *ScreenResolutionDescription(TSXScreenOptions type, int width, int height);
-BOOL ScanScreenResolution(NSString *description, int *width, int *height, TSXScreenOptions *type);
+WINPR_ATTR_NODISCARD NSString *ScreenResolutionDescription(TSXScreenOptions type, int width,
+                                                           int height);
+WINPR_ATTR_NODISCARD BOOL ScanScreenResolution(NSString *description, int *width, int *height,
+                                               TSXScreenOptions *type);
 
-NSDictionary *SelectionForColorSetting(void);
-NSArray *ResolutionModes(void);
+WINPR_ATTR_NODISCARD NSDictionary *SelectionForColorSetting(void);
+WINPR_ATTR_NODISCARD NSArray *ResolutionModes(void);
 
 #pragma mark Security Protocol
 
-NSString *ProtocolSecurityDescription(TSXProtocolSecurityOptions type);
-BOOL ScanProtocolSecurity(NSString *description, TSXProtocolSecurityOptions *type);
-NSDictionary *SelectionForSecuritySetting(void);
+WINPR_ATTR_NODISCARD NSString *ProtocolSecurityDescription(TSXProtocolSecurityOptions type);
+WINPR_ATTR_NODISCARD BOOL ScanProtocolSecurity(NSString *description,
+                                               TSXProtocolSecurityOptions *type);
+WINPR_ATTR_NODISCARD NSDictionary *SelectionForSecuritySetting(void);
 
 #pragma mark Bookmarks
 @class BookmarkBase;
-NSMutableArray *FilterBookmarks(NSArray *bookmarks, NSArray *filter_words);
-NSMutableArray *FilterHistory(NSArray *history, NSString *filterStr);
+WINPR_ATTR_NODISCARD NSMutableArray *FilterBookmarks(NSArray *bookmarks, NSArray *filter_words);
+WINPR_ATTR_NODISCARD NSMutableArray *FilterHistory(NSArray *history, NSString *filterStr);
 
 #pragma mark iPad/iPhone detection
 
-BOOL IsPad(void);
-BOOL IsPhone(void);
+WINPR_ATTR_NODISCARD BOOL IsPad(void);
+WINPR_ATTR_NODISCARD BOOL IsPhone(void);
 
 #pragma mark Version Info
-NSString *TSXAppFullVersion(void);
+WINPR_ATTR_NODISCARD NSString *TSXAppFullVersion(void);
 
 #pragma mark Touch/Mouse handling
 
@@ -56,25 +60,25 @@ void SetSwapMouseButtonsFlag(BOOL swapped);
 void SetInvertScrollingFlag(BOOL invert);
 
 // return event value for left mouse button
-int GetLeftMouseButtonClickEvent(BOOL down);
+WINPR_ATTR_NODISCARD int GetLeftMouseButtonClickEvent(BOOL down);
 
 // return event value for right mouse button
-int GetRightMouseButtonClickEvent(BOOL down);
+WINPR_ATTR_NODISCARD int GetRightMouseButtonClickEvent(BOOL down);
 
 // return event value for mouse move event
-int GetMouseMoveEvent(void);
+WINPR_ATTR_NODISCARD int GetMouseMoveEvent(void);
 
 // return mouse wheel event
-int GetMouseWheelEvent(BOOL down);
+WINPR_ATTR_NODISCARD int GetMouseWheelEvent(BOOL down);
 
 // scrolling gesture detection delta
-CGFloat GetScrollGestureDelta(void);
+WINPR_ATTR_NODISCARD CGFloat GetScrollGestureDelta(void);
 
 #pragma mark Connectivity tools
 // activates the iphone's WWAN interface in case it is offline
 void WakeUpWWAN(void);
 
 #pragma mark System Info functions
-NSString *TSXGetPlatform(void);
-BOOL TSXDeviceHasJailBreak(void);
-NSString *TSXGetPrimaryMACAddress(NSString *sep);
+WINPR_ATTR_NODISCARD NSString *TSXGetPlatform(void);
+WINPR_ATTR_NODISCARD BOOL TSXDeviceHasJailBreak(void);
+WINPR_ATTR_NODISCARD NSString *TSXGetPrimaryMACAddress(NSString *sep);

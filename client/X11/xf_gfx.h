@@ -36,7 +36,8 @@ struct xf_gfx_surface
 };
 typedef struct xf_gfx_surface xfGfxSurface;
 
-UINT xf_OutputExpose(xfContext* xfc, UINT32 x, UINT32 y, UINT32 width, UINT32 height);
+WINPR_ATTR_NODISCARD UINT xf_OutputExpose(xfContext* xfc, UINT32 x, UINT32 y, UINT32 width,
+                                          UINT32 height);
 
 void xf_graphics_pipeline_init(xfContext* xfc, RdpgfxClientContext* gfx);
 

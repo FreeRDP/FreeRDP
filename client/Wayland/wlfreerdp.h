@@ -53,9 +53,11 @@ typedef struct
 	FREERDP_REMAP_TABLE* remap_table;
 } wlfContext;
 
-BOOL wlf_scale_coordinates(rdpContext* context, UINT32* px, UINT32* py, BOOL fromLocalToRDP);
-BOOL wlf_copy_image(const void* src, size_t srcStride, size_t srcWidth, size_t srcHeight, void* dst,
-                    size_t dstStride, size_t dstWidth, size_t dstHeight, const RECTANGLE_16* area,
-                    BOOL scale);
+WINPR_ATTR_NODISCARD BOOL wlf_scale_coordinates(rdpContext* context, UINT32* px, UINT32* py,
+                                                BOOL fromLocalToRDP);
+WINPR_ATTR_NODISCARD BOOL wlf_copy_image(const void* src, size_t srcStride, size_t srcWidth,
+                                         size_t srcHeight, void* dst, size_t dstStride,
+                                         size_t dstWidth, size_t dstHeight,
+                                         const RECTANGLE_16* area, BOOL scale);
 
 #endif /* FREERDP_CLIENT_WAYLAND_FREERDP_H */

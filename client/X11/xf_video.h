@@ -29,7 +29,7 @@ void xf_video_control_uninit(xfContext* xfc, VideoClientContext* video);
 
 void xf_video_free(xfVideoContext* context);
 
-WINPR_ATTR_MALLOC(xf_video_free, 1)
-xfVideoContext* xf_video_new(xfContext* xfc);
+WINPR_ATTR_NODISCARD WINPR_ATTR_MALLOC(xf_video_free,
+                                       1) xfVideoContext* xf_video_new(xfContext* xfc);
 
 #endif /* CLIENT_X11_XF_VIDEO_H_ */
