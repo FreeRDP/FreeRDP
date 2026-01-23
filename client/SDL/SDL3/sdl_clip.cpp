@@ -964,10 +964,6 @@ ClipRequest::ClipRequest(UINT32 format, const std::string& mime)
 {
 }
 
-ClipRequest::~ClipRequest()
-{
-}
-
 uint32_t ClipRequest::format() const
 {
 	return _format;

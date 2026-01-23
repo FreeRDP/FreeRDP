@@ -354,16 +354,15 @@ bool SDLConnectionDialog::createWindow()
 			break;
 	}
 
-	const auto height = (total_height - 3ul * vpadding) / 2ul;
-	SDL_FRect iconRect{ hpadding, vpadding, widget_width / 4ul - 2ul * hpadding,
-		                static_cast<float>(height) };
+	const auto height = (total_height - 3.0f * vpadding) / 2.0f;
+	SDL_FRect iconRect{ hpadding, vpadding, widget_width / 4.0f - 2.0f * hpadding, height };
 	widget_cfg_t icon{ textcolor,
 		               res_bgcolor,
 		               { _renderer, iconRect,
 		                 SDL3ResourceManager::get(SDLResourceManager::typeImages(), res_name) } };
 	_list.emplace_back(std::move(icon));
 
-	iconRect.y += static_cast<float>(height);
+	iconRect.y += height;
 
 	widget_cfg_t logo{ textcolor,
 		               _backgroundcolor,
@@ -372,7 +371,7 @@ bool SDLConnectionDialog::createWindow()
 		                                          "FreeRDP_Icon.svg") } };
 	_list.emplace_back(std::move(logo));
 
-	SDL_FRect rect = { widget_width / 4ul, vpadding, widget_width * 3ul / 4ul,
+	SDL_FRect rect = { widget_width / 4.0f, vpadding, widget_width * 3.0f / 4.0f,
 		               total_height - 3ul * vpadding - widget_height };
 #else
 	SDL_FRect rect = { hpadding, vpadding, widget_width - 2ul * hpadding,

@@ -530,29 +530,30 @@ namespace sdl::error
 		}
 		return nullptr;
 	}
-}
 
-int sdl::error::errorToExitCode(DWORD error)
-{
-	auto entry = mapEntryByError(error);
-	if (entry)
-		return entry->code;
+	int errorToExitCode(DWORD error)
+	{
+		auto entry = mapEntryByError(error);
+		if (entry)
+			return entry->code;
 
-	return CONN_FAILED;
-}
+		return CONN_FAILED;
+	}
 
-const char* sdl::error::errorToExitCodeTag(UINT32 error)
-{
-	auto entry = mapEntryByError(error);
-	if (entry)
-		return entry->code_tag;
-	return nullptr;
-}
+	const char* errorToExitCodeTag(UINT32 error)
+	{
+		auto entry = mapEntryByError(error);
+		if (entry)
+			return entry->code_tag;
+		return nullptr;
+	}
 
-const char* sdl::error::exitCodeToTag(int code)
-{
-	auto entry = mapEntryByCode(code);
-	if (entry)
-		return entry->code_tag;
-	return nullptr;
-}
+	const char* exitCodeToTag(int code)
+	{
+		auto entry = mapEntryByCode(code);
+		if (entry)
+			return entry->code_tag;
+		return nullptr;
+	}
+
+} // namespace sdl::error

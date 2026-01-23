@@ -46,7 +46,7 @@ class SdlContext
 	explicit SdlContext(rdpContext* context);
 	SdlContext(const SdlContext& other) = delete;
 	SdlContext(SdlContext&& other) = delete;
-	virtual ~SdlContext();
+	~SdlContext() = default;
 
 	SdlContext& operator=(const SdlContext& other) = delete;
 	SdlContext& operator=(SdlContext&& other) = delete;
@@ -147,9 +147,9 @@ class SdlContext
 	std::atomic<bool> _connected = false;
 	bool _cursor_visible = true;
 	rdpPointer* _cursor = nullptr;
-	std::vector<SDL_DisplayID> _monitorIds{};
-	std::mutex _queue_mux{};
-	std::queue<std::vector<SDL_Rect>> _queue{};
+	std::vector<SDL_DisplayID> _monitorIds;
+	std::mutex _queue_mux;
+	std::queue<std::vector<SDL_Rect>> _queue;
 	/* SDL */
 	bool _fullscreen = false;
 	bool _resizeable = false;
@@ -159,7 +159,7 @@ class SdlContext
 	std::atomic<bool> _rdpThreadRunning = false;
 	SDL_PixelFormat _sdlPixelFormat = SDL_PIXELFORMAT_UNKNOWN;
 
-	CriticalSection _critical{};
+	CriticalSection _critical;
 
 	using SDLSurfacePtr = std::unique_ptr<SDL_Surface, decltype(&SDL_DestroySurface)>;
 
@@ -171,8 +171,8 @@ class SdlContext
 
 	SdlConnectionDialogWrapper _dialog;
 
-	std::map<Uint32, SdlWindow> _windows{};
+	std::map<Uint32, SdlWindow> _windows;
 
-	WinPREvent _windowsCreatedEvent{};
-	std::thread _thread{};
+	WinPREvent _windowsCreatedEvent;
+	std::thread _thread;
 };

@@ -41,7 +41,7 @@ class ClipRequest
 	ClipRequest(UINT32 format, const std::string& mime);
 	ClipRequest(const ClipRequest& other) = default;
 	ClipRequest(ClipRequest&& other) = default;
-	virtual ~ClipRequest();
+	~ClipRequest() = default;
 
 	ClipRequest& operator=(const ClipRequest& other) = delete;
 	ClipRequest& operator=(ClipRequest&& other) = delete;
@@ -130,14 +130,13 @@ class sdlClip
 	[[nodiscard]] static bool mime_is_bmp(const std::string& mime);
 	[[nodiscard]] static bool mime_is_html(const std::string& mime);
 
-  private:
 	SdlContext* _sdl = nullptr;
 	CliprdrFileContext* _file = nullptr;
 	CliprdrClientContext* _ctx = nullptr;
 	wLog* _log = nullptr;
 	wClipboard* _system = nullptr;
 	std::atomic<bool> _sync = false;
-	HANDLE _event;
+	HANDLE _event = nullptr;
 	Uint64 _last_timestamp = 0;
 
 	std::vector<CliprdrFormat> _serverFormats;

@@ -177,4 +177,4 @@ namespace sdl::error
 	[[nodiscard]] int errorToExitCode(DWORD error);
 	[[nodiscard]] const char* errorToExitCodeTag(UINT32 error);
 	[[nodiscard]] const char* exitCodeToTag(int code);
-}
+} // namespace sdl::error

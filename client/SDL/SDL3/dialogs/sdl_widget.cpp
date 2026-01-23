@@ -69,7 +69,7 @@ SdlWidget::SdlWidget(std::shared_ptr<SDL_Renderer>& renderer, const SDL_FRect& r
 {
 	if (ops)
 	{
-		_image = std::shared_ptr<SDL_Texture>(IMG_LoadTexture_IO(renderer.get(), ops, 1),
+		_image = std::shared_ptr<SDL_Texture>(IMG_LoadTexture_IO(renderer.get(), ops, true),
 		                                      SDL_DestroyTexture);
 		if (!_image)
 			(void)widget_log_error(false, "IMG_LoadTexture_IO");

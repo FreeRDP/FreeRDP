@@ -61,10 +61,6 @@ SdlContext::SdlContext(rdpContext* context)
 	/* TODO: Client display set up */
 }
 
-SdlContext::~SdlContext()
-{
-}
-
 void SdlContext::setHasCursor(bool val)
 {
 	this->_cursor_visible = val;
