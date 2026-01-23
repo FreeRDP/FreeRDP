@@ -75,6 +75,17 @@
 #define WINPR_FALLTHROUGH (void)0;
 #endif
 
+// C23 related macros
+#if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 202311L)
+#define WINPR_ATTR_NODISCARD [[nodiscard]]
+#elif defined(__clang__)
+#define WINPR_ATTR_NODISCARD __attribute__((warn_unused_result))
+#elif defined(__GNUC__) && (__GNUC__ >= 7)
+#define WINPR_ATTR_NODISCARD __attribute__((warn_unused_result))
+#else
+#define WINPR_ATTR_NODISCARD
+#endif
+
 #if defined(__clang__)
 #define WINPR_PRAGMA_DIAG_PUSH WINPR_DO_PRAGMA(clang diagnostic push)
 #define WINPR_PRAGMA_DIAG_IGNORED_OVERLENGTH_STRINGS \
