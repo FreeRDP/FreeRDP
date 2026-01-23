@@ -59,7 +59,7 @@
 #endif
 
 // C23 related macros
-#if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 202311L)
+#if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201904L)
 #define WINPR_FALLTHROUGH \
 	(void)0;              \
 	[[fallthrough]];
@@ -73,6 +73,17 @@
 	__attribute__((fallthrough));
 #else
 #define WINPR_FALLTHROUGH (void)0;
+#endif
+
+// C23 related macros
+#if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 202003L)
+#define WINPR_ATTR_NODISCARD [[nodiscard]]
+#elif defined(__clang__)
+#define WINPR_ATTR_NODISCARD __attribute__((warn_unused_result))
+#elif defined(__GNUC__) && (__GNUC__ >= 7)
+#define WINPR_ATTR_NODISCARD __attribute__((warn_unused_result))
+#else
+#define WINPR_ATTR_NODISCARD
 #endif
 
 #if defined(__clang__)
@@ -514,21 +525,26 @@ WINPR_PRAGMA_DIAG_IGNORED_RESERVED_ID_MACRO
 
 WINPR_PRAGMA_DIAG_POP
 
-#if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 202311L)
+#if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201904L)
 #define WINPR_DEPRECATED(obj) [[deprecated]] obj
 #define WINPR_DEPRECATED_VAR(text, obj) [[deprecated("[deprecated] " text)]] obj
+#elif defined(__GNUC__)
+#define WINPR_DEPRECATED(obj) obj __attribute__((deprecated))
+#define WINPR_DEPRECATED_VAR(text, obj) obj __attribute__((deprecated("[deprecated] " text)))
+#else
+#define WINPR_DEPRECATED(obj) obj
+#define WINPR_DEPRECATED_VAR(text, obj) obj
+#endif
+
+#if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 202202L)
 #define WINPR_NORETURN(obj) [[noreturn]] obj
 #elif defined(WIN32) && !defined(__CYGWIN__)
 #define WINPR_DEPRECATED(obj) __declspec(deprecated) obj
 #define WINPR_DEPRECATED_VAR(text, obj) __declspec(deprecated("[deprecated] " text)) obj
 #define WINPR_NORETURN(obj) __declspec(noreturn) obj
 #elif defined(__GNUC__)
-#define WINPR_DEPRECATED(obj) obj __attribute__((deprecated))
-#define WINPR_DEPRECATED_VAR(text, obj) obj __attribute__((deprecated("[deprecated] " text)))
 #define WINPR_NORETURN(obj) __attribute__((__noreturn__)) obj
 #else
-#define WINPR_DEPRECATED(obj) obj
-#define WINPR_DEPRECATED_VAR(text, obj) obj
 #define WINPR_NORETURN(obj) obj
 #endif
 
