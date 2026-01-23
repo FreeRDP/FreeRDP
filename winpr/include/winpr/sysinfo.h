@@ -99,8 +99,8 @@ extern "C"
 		WORD wProcessorRevision;
 	} SYSTEM_INFO, *LPSYSTEM_INFO;
 
-	WINPR_API void GetSystemInfo(LPSYSTEM_INFO lpSystemInfo);
-	WINPR_API void GetNativeSystemInfo(LPSYSTEM_INFO lpSystemInfo);
+    WINPR_API void GetSystemInfo(LPSYSTEM_INFO lpSystemInfo);
+    WINPR_API void GetNativeSystemInfo(LPSYSTEM_INFO lpSystemInfo);
 
 #if defined(WITH_WINPR_DEPRECATED)
 	typedef struct
@@ -190,16 +190,23 @@ extern "C"
 #define VER_NT_SERVER 0x0000003
 #define VER_NT_WORKSTATION 0x0000001
 
-	WINPR_API void GetSystemTime(LPSYSTEMTIME lpSystemTime);
-	WINPR_API BOOL SetSystemTime(CONST SYSTEMTIME* lpSystemTime);
-	WINPR_API VOID GetLocalTime(LPSYSTEMTIME lpSystemTime);
-	WINPR_API BOOL SetLocalTime(CONST SYSTEMTIME* lpSystemTime);
+    WINPR_API void GetSystemTime(LPSYSTEMTIME lpSystemTime);
 
-	WINPR_API VOID GetSystemTimeAsFileTime(LPFILETIME lpSystemTimeAsFileTime);
-	WINPR_API BOOL GetSystemTimeAdjustment(PDWORD lpTimeAdjustment, PDWORD lpTimeIncrement,
-	                                       PBOOL lpTimeAdjustmentDisabled);
+    WINPR_ATTR_NODISCARD
+    WINPR_API BOOL SetSystemTime(CONST SYSTEMTIME* lpSystemTime);
+    WINPR_API VOID GetLocalTime(LPSYSTEMTIME lpSystemTime);
 
-	WINPR_API BOOL IsProcessorFeaturePresent(DWORD ProcessorFeature);
+    WINPR_ATTR_NODISCARD
+    WINPR_API BOOL SetLocalTime(CONST SYSTEMTIME* lpSystemTime);
+
+    WINPR_API VOID GetSystemTimeAsFileTime(LPFILETIME lpSystemTimeAsFileTime);
+
+    WINPR_ATTR_NODISCARD
+    WINPR_API BOOL GetSystemTimeAdjustment(PDWORD lpTimeAdjustment, PDWORD lpTimeIncrement,
+                                           PBOOL lpTimeAdjustmentDisabled);
+
+    WINPR_ATTR_NODISCARD
+    WINPR_API BOOL IsProcessorFeaturePresent(DWORD ProcessorFeature);
 
 #define PF_FLOATING_POINT_PRECISION_ERRATA 0
 #define PF_FLOATING_POINT_EMULATED 1
@@ -280,7 +287,10 @@ extern "C"
 #if !defined(_WIN32) || defined(_UWP)
 
 #if defined(WITH_WINPR_DEPRECATED)
+	WINPR_ATTR_NODISCARD
 	WINPR_API BOOL GetVersionExA(LPOSVERSIONINFOA lpVersionInformation);
+
+	WINPR_ATTR_NODISCARD
 	WINPR_API BOOL GetVersionExW(LPOSVERSIONINFOW lpVersionInformation);
 
 #ifdef UNICODE
@@ -294,6 +304,7 @@ extern "C"
 
 #if !defined(_WIN32) || defined(_UWP)
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API DWORD GetTickCount(void);
 
 	typedef enum
@@ -311,11 +322,17 @@ extern "C"
 
 #define MAX_COMPUTERNAME_LENGTH 31
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API BOOL GetComputerNameA(LPSTR lpBuffer, LPDWORD lpnSize);
+
+	WINPR_ATTR_NODISCARD
 	WINPR_API BOOL GetComputerNameW(LPWSTR lpBuffer, LPDWORD lpnSize);
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API BOOL GetComputerNameExA(COMPUTER_NAME_FORMAT NameType, LPSTR lpBuffer,
 	                                  LPDWORD lpnSize);
+
+	WINPR_ATTR_NODISCARD
 	WINPR_API BOOL GetComputerNameExW(COMPUTER_NAME_FORMAT NameType, LPWSTR lpBuffer,
 	                                  LPDWORD lpnSize);
 
@@ -331,6 +348,7 @@ extern "C"
 
 #if (!defined(_WIN32)) || (defined(_WIN32) && (_WIN32_WINNT < 0x0600))
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API ULONGLONG winpr_GetTickCount64(void);
 #define GetTickCount64 winpr_GetTickCount64
 
@@ -348,16 +366,20 @@ extern "C"
 	 *   @since version 3.4.0
 	 *   @return The tick count in nanosecond resolution since a undefined reference data
 	 */
+	WINPR_ATTR_NODISCARD
 	WINPR_API UINT64 winpr_GetTickCount64NS(void);
 
 	/** @brief the the current time in nano second resolution
 	 *  @since version 3.4.0
 	 *  @return The nano seconds since 1.1.1970
 	 */
+	WINPR_ATTR_NODISCARD
 	WINPR_API UINT64 winpr_GetUnixTimeNS(void);
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API DWORD GetTickCountPrecise(void);
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API BOOL IsProcessorFeaturePresentEx(DWORD ProcessorFeature);
 
 /* extended flags */

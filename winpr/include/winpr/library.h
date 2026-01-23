@@ -49,14 +49,25 @@ extern "C"
 {
 #endif
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API DLL_DIRECTORY_COOKIE AddDllDirectory(PCWSTR NewDirectory);
+
+	WINPR_ATTR_NODISCARD
 	WINPR_API BOOL RemoveDllDirectory(DLL_DIRECTORY_COOKIE Cookie);
+
+	WINPR_ATTR_NODISCARD
 	WINPR_API BOOL SetDefaultDllDirectories(DWORD DirectoryFlags);
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API HMODULE LoadLibraryA(LPCSTR lpLibFileName);
+
+	WINPR_ATTR_NODISCARD
 	WINPR_API HMODULE LoadLibraryW(LPCWSTR lpLibFileName);
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API HMODULE LoadLibraryExA(LPCSTR lpLibFileName, HANDLE hFile, DWORD dwFlags);
+
+	WINPR_ATTR_NODISCARD
 	WINPR_API HMODULE LoadLibraryExW(LPCWSTR lpLibFileName, HANDLE hFile, DWORD dwFlags);
 
 #ifdef __cplusplus
@@ -77,8 +88,14 @@ extern "C"
 extern "C"
 {
 #endif
+#if !defined(_WIN32) && !defined(__CYGWIN__)
+	WINPR_API BOOL FreeLibrary(HMODULE hLibModule);
+#endif
 
+	WINPR_ATTR_MALLOC(FreeLibrary, 1)
 	WINPR_API HMODULE LoadLibraryX(LPCSTR lpLibFileName);
+
+	WINPR_ATTR_MALLOC(FreeLibrary, 1)
 	WINPR_API HMODULE LoadLibraryExX(LPCSTR lpLibFileName, HANDLE hFile, DWORD dwFlags);
 
 #ifdef __cplusplus
@@ -102,15 +119,20 @@ extern "C"
 {
 #endif
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API HMODULE GetModuleHandleA(LPCSTR lpModuleName);
+
+	WINPR_ATTR_NODISCARD
 	WINPR_API HMODULE GetModuleHandleW(LPCWSTR lpModuleName);
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API DWORD GetModuleFileNameA(HMODULE hModule, LPSTR lpFilename, DWORD nSize);
+
+	WINPR_ATTR_NODISCARD
 	WINPR_API DWORD GetModuleFileNameW(HMODULE hModule, LPWSTR lpFilename, DWORD nSize);
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API FARPROC GetProcAddress(HMODULE hModule, LPCSTR lpProcName);
-
-	WINPR_API BOOL FreeLibrary(HMODULE hLibModule);
 
 #ifdef __cplusplus
 }

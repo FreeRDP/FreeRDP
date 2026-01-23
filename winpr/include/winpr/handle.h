@@ -48,11 +48,15 @@ extern "C"
 
 	WINPR_API BOOL CloseHandle(HANDLE hObject);
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API BOOL DuplicateHandle(HANDLE hSourceProcessHandle, HANDLE hSourceHandle,
 	                               HANDLE hTargetProcessHandle, LPHANDLE lpTargetHandle,
 	                               DWORD dwDesiredAccess, BOOL bInheritHandle, DWORD dwOptions);
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API BOOL GetHandleInformation(HANDLE hObject, LPDWORD lpdwFlags);
+
+	WINPR_ATTR_NODISCARD
 	WINPR_API BOOL SetHandleInformation(HANDLE hObject, DWORD dwMask, DWORD dwFlags);
 
 #endif

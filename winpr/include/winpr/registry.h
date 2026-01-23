@@ -200,7 +200,10 @@ typedef PVALENTA PVALENT;
 
 	WINPR_API LONG RegCloseKey(HKEY hKey);
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API LONG RegCopyTreeW(HKEY hKeySrc, LPCWSTR lpSubKey, HKEY hKeyDest);
+
+	WINPR_ATTR_NODISCARD
 	WINPR_API LONG RegCopyTreeA(HKEY hKeySrc, LPCSTR lpSubKey, HKEY hKeyDest);
 
 #ifdef UNICODE
@@ -209,10 +212,13 @@ typedef PVALENTA PVALENT;
 #define RegCopyTree RegCopyTreeA
 #endif
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API LONG RegCreateKeyExW(HKEY hKey, LPCWSTR lpSubKey, DWORD Reserved, LPWSTR lpClass,
 	                               DWORD dwOptions, REGSAM samDesired,
 	                               LPSECURITY_ATTRIBUTES lpSecurityAttributes, PHKEY phkResult,
 	                               LPDWORD lpdwDisposition);
+
+	WINPR_ATTR_NODISCARD
 	WINPR_API LONG RegCreateKeyExA(HKEY hKey, LPCSTR lpSubKey, DWORD Reserved, LPSTR lpClass,
 	                               DWORD dwOptions, REGSAM samDesired,
 	                               LPSECURITY_ATTRIBUTES lpSecurityAttributes, PHKEY phkResult,
@@ -224,7 +230,10 @@ typedef PVALENTA PVALENT;
 #define RegCreateKeyEx RegCreateKeyExA
 #endif
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API LONG RegDeleteKeyExW(HKEY hKey, LPCWSTR lpSubKey, REGSAM samDesired, DWORD Reserved);
+
+	WINPR_ATTR_NODISCARD
 	WINPR_API LONG RegDeleteKeyExA(HKEY hKey, LPCSTR lpSubKey, REGSAM samDesired, DWORD Reserved);
 
 #ifdef UNICODE
@@ -233,7 +242,10 @@ typedef PVALENTA PVALENT;
 #define RegDeleteKeyEx RegDeleteKeyExA
 #endif
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API LONG RegDeleteTreeW(HKEY hKey, LPCWSTR lpSubKey);
+
+	WINPR_ATTR_NODISCARD
 	WINPR_API LONG RegDeleteTreeA(HKEY hKey, LPCSTR lpSubKey);
 
 #ifdef UNICODE
@@ -242,7 +254,10 @@ typedef PVALENTA PVALENT;
 #define RegDeleteTree RegDeleteTreeA
 #endif
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API LONG RegDeleteValueW(HKEY hKey, LPCWSTR lpValueName);
+
+	WINPR_ATTR_NODISCARD
 	WINPR_API LONG RegDeleteValueA(HKEY hKey, LPCSTR lpValueName);
 
 #ifdef UNICODE
@@ -251,11 +266,15 @@ typedef PVALENTA PVALENT;
 #define RegDeleteValue RegDeleteValueA
 #endif
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API LONG RegDisablePredefinedCacheEx(void);
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API LONG RegEnumKeyExW(HKEY hKey, DWORD dwIndex, LPWSTR lpName, LPDWORD lpcName,
 	                             LPDWORD lpReserved, LPWSTR lpClass, LPDWORD lpcClass,
 	                             PFILETIME lpftLastWriteTime);
+
+	WINPR_ATTR_NODISCARD
 	WINPR_API LONG RegEnumKeyExA(HKEY hKey, DWORD dwIndex, LPSTR lpName, LPDWORD lpcName,
 	                             LPDWORD lpReserved, LPSTR lpClass, LPDWORD lpcClass,
 	                             PFILETIME lpftLastWriteTime);
@@ -266,9 +285,12 @@ typedef PVALENTA PVALENT;
 #define RegEnumKeyEx RegEnumKeyExA
 #endif
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API LONG RegEnumValueW(HKEY hKey, DWORD dwIndex, LPWSTR lpValueName,
 	                             LPDWORD lpcchValueName, LPDWORD lpReserved, LPDWORD lpType,
 	                             LPBYTE lpData, LPDWORD lpcbData);
+
+	WINPR_ATTR_NODISCARD
 	WINPR_API LONG RegEnumValueA(HKEY hKey, DWORD dwIndex, LPSTR lpValueName,
 	                             LPDWORD lpcchValueName, LPDWORD lpReserved, LPDWORD lpType,
 	                             LPBYTE lpData, LPDWORD lpcbData);
@@ -279,14 +301,19 @@ typedef PVALENTA PVALENT;
 #define RegEnumValue RegEnumValueA
 #endif
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API LONG RegFlushKey(HKEY hKey);
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API LONG RegGetKeySecurity(HKEY hKey, SECURITY_INFORMATION SecurityInformation,
 	                                 PSECURITY_DESCRIPTOR pSecurityDescriptor,
 	                                 LPDWORD lpcbSecurityDescriptor);
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API LONG RegGetValueW(HKEY hkey, LPCWSTR lpSubKey, LPCWSTR lpValue, DWORD dwFlags,
 	                            LPDWORD pdwType, PVOID pvData, LPDWORD pcbData);
+
+	WINPR_ATTR_NODISCARD
 	WINPR_API LONG RegGetValueA(HKEY hkey, LPCSTR lpSubKey, LPCSTR lpValue, DWORD dwFlags,
 	                            LPDWORD pdwType, PVOID pvData, LPDWORD pcbData);
 
@@ -296,8 +323,11 @@ typedef PVALENTA PVALENT;
 #define RegGetValue RegGetValueA
 #endif
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API LONG RegLoadAppKeyW(LPCWSTR lpFile, PHKEY phkResult, REGSAM samDesired,
 	                              DWORD dwOptions, DWORD Reserved);
+
+	WINPR_ATTR_NODISCARD
 	WINPR_API LONG RegLoadAppKeyA(LPCSTR lpFile, PHKEY phkResult, REGSAM samDesired,
 	                              DWORD dwOptions, DWORD Reserved);
 
@@ -307,7 +337,10 @@ typedef PVALENTA PVALENT;
 #define RegLoadAppKey RegLoadAppKeyA
 #endif
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API LONG RegLoadKeyW(HKEY hKey, LPCWSTR lpSubKey, LPCWSTR lpFile);
+
+	WINPR_ATTR_NODISCARD
 	WINPR_API LONG RegLoadKeyA(HKEY hKey, LPCSTR lpSubKey, LPCSTR lpFile);
 
 #ifdef UNICODE
@@ -316,8 +349,11 @@ typedef PVALENTA PVALENT;
 #define RegLoadKey RegLoadKeyA
 #endif
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API LONG RegLoadMUIStringW(HKEY hKey, LPCWSTR pszValue, LPWSTR pszOutBuf, DWORD cbOutBuf,
 	                                 LPDWORD pcbData, DWORD Flags, LPCWSTR pszDirectory);
+
+	WINPR_ATTR_NODISCARD
 	WINPR_API LONG RegLoadMUIStringA(HKEY hKey, LPCSTR pszValue, LPSTR pszOutBuf, DWORD cbOutBuf,
 	                                 LPDWORD pcbData, DWORD Flags, LPCSTR pszDirectory);
 
@@ -327,13 +363,18 @@ typedef PVALENTA PVALENT;
 #define RegLoadMUIString RegLoadMUIStringA
 #endif
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API LONG RegNotifyChangeKeyValue(HKEY hKey, BOOL bWatchSubtree, DWORD dwNotifyFilter,
 	                                       HANDLE hEvent, BOOL fAsynchronous);
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API LONG RegOpenCurrentUser(REGSAM samDesired, PHKEY phkResult);
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API LONG RegOpenKeyExW(HKEY hKey, LPCWSTR lpSubKey, DWORD ulOptions, REGSAM samDesired,
 	                             PHKEY phkResult);
+
+	WINPR_ATTR_NODISCARD
 	WINPR_API LONG RegOpenKeyExA(HKEY hKey, LPCSTR lpSubKey, DWORD ulOptions, REGSAM samDesired,
 	                             PHKEY phkResult);
 
@@ -343,14 +384,18 @@ typedef PVALENTA PVALENT;
 #define RegOpenKeyEx RegOpenKeyExA
 #endif
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API LONG RegOpenUserClassesRoot(HANDLE hToken, DWORD dwOptions, REGSAM samDesired,
 	                                      PHKEY phkResult);
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API LONG RegQueryInfoKeyW(HKEY hKey, LPWSTR lpClass, LPDWORD lpcClass, LPDWORD lpReserved,
 	                                LPDWORD lpcSubKeys, LPDWORD lpcMaxSubKeyLen,
 	                                LPDWORD lpcMaxClassLen, LPDWORD lpcValues,
 	                                LPDWORD lpcMaxValueNameLen, LPDWORD lpcMaxValueLen,
 	                                LPDWORD lpcbSecurityDescriptor, PFILETIME lpftLastWriteTime);
+
+	WINPR_ATTR_NODISCARD
 	WINPR_API LONG RegQueryInfoKeyA(HKEY hKey, LPSTR lpClass, LPDWORD lpcClass, LPDWORD lpReserved,
 	                                LPDWORD lpcSubKeys, LPDWORD lpcMaxSubKeyLen,
 	                                LPDWORD lpcMaxClassLen, LPDWORD lpcValues,
@@ -363,8 +408,11 @@ typedef PVALENTA PVALENT;
 #define RegQueryInfoKey RegQueryInfoKeyA
 #endif
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API LONG RegQueryValueExW(HKEY hKey, LPCWSTR lpValueName, LPDWORD lpReserved,
 	                                LPDWORD lpType, LPBYTE lpData, LPDWORD lpcbData);
+
+	WINPR_ATTR_NODISCARD
 	WINPR_API LONG RegQueryValueExA(HKEY hKey, LPCSTR lpValueName, LPDWORD lpReserved,
 	                                LPDWORD lpType, LPBYTE lpData, LPDWORD lpcbData);
 
@@ -374,7 +422,10 @@ typedef PVALENTA PVALENT;
 #define RegQueryValueEx RegQueryValueExA
 #endif
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API LONG RegRestoreKeyW(HKEY hKey, LPCWSTR lpFile, DWORD dwFlags);
+
+	WINPR_ATTR_NODISCARD
 	WINPR_API LONG RegRestoreKeyA(HKEY hKey, LPCSTR lpFile, DWORD dwFlags);
 
 #ifdef UNICODE
@@ -383,8 +434,11 @@ typedef PVALENTA PVALENT;
 #define RegRestoreKey RegRestoreKeyA
 #endif
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API LONG RegSaveKeyExW(HKEY hKey, LPCWSTR lpFile,
 	                             LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD Flags);
+
+	WINPR_ATTR_NODISCARD
 	WINPR_API LONG RegSaveKeyExA(HKEY hKey, LPCSTR lpFile,
 	                             LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD Flags);
 
@@ -394,11 +448,15 @@ typedef PVALENTA PVALENT;
 #define RegSaveKeyEx RegSaveKeyExA
 #endif
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API LONG RegSetKeySecurity(HKEY hKey, SECURITY_INFORMATION SecurityInformation,
 	                                 PSECURITY_DESCRIPTOR pSecurityDescriptor);
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API LONG RegSetValueExW(HKEY hKey, LPCWSTR lpValueName, DWORD Reserved, DWORD dwType,
 	                              const BYTE* lpData, DWORD cbData);
+
+	WINPR_ATTR_NODISCARD
 	WINPR_API LONG RegSetValueExA(HKEY hKey, LPCSTR lpValueName, DWORD Reserved, DWORD dwType,
 	                              const BYTE* lpData, DWORD cbData);
 
@@ -408,7 +466,10 @@ typedef PVALENTA PVALENT;
 #define RegSetValueEx RegSetValueExA
 #endif
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API LONG RegUnLoadKeyW(HKEY hKey, LPCWSTR lpSubKey);
+
+	WINPR_ATTR_NODISCARD
 	WINPR_API LONG RegUnLoadKeyA(HKEY hKey, LPCSTR lpSubKey);
 
 #ifdef UNICODE

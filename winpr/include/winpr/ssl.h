@@ -37,9 +37,12 @@ extern "C"
 {
 #endif
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API BOOL winpr_InitializeSSL(DWORD flags);
+
 	WINPR_API BOOL winpr_CleanupSSL(DWORD flags);
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API BOOL winpr_FIPSMode(void);
 
 #ifdef __cplusplus
