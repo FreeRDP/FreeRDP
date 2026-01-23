@@ -24,6 +24,8 @@
 
 #include <winpr/wtypes.h>
 
+#include <freerdp/api.h>
+
 FREERDP_LOCAL WINPR_ATTR_NODISCARD void*
 test_codec_helper_read_data(const char* codec, const char* type, const char* name, size_t* plength);
 FREERDP_LOCAL void test_codec_helper_write_data(const char* codec, const char* type,
