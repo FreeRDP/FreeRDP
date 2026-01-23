@@ -200,10 +200,10 @@ extern "C"
 	WINPR_API WINPR_ATTR_NODISCARD BOOL WLog_SetContext(wLog* log, const char* (*fkt)(void*),
 	                                                    void* context);
 
-#define WLog_Print_unchecked(_log, _log_level, ...)                                         \
-	do                                                                                      \
-	{                                                                                       \
-		WLog_PrintTextMessage(_log, _log_level, __LINE__, __FILE__, __func__, __VA_ARGS__); \
+#define WLog_Print_unchecked(_log, _log_level, ...)                                               \
+	do                                                                                            \
+	{                                                                                             \
+		(void)WLog_PrintTextMessage(_log, _log_level, __LINE__, __FILE__, __func__, __VA_ARGS__); \
 	} while (0)
 
 #define WLog_Print(_log, _log_level, ...)                        \
@@ -215,19 +215,19 @@ extern "C"
 		}                                                        \
 	} while (0)
 
-#define WLog_Print_tag(_tag, _log_level, ...)                 \
-	do                                                        \
-	{                                                         \
-		static wLog* _log_cached_ptr = NULL;                  \
-		if (!_log_cached_ptr)                                 \
-			_log_cached_ptr = WLog_Get(_tag);                 \
-		WLog_Print(_log_cached_ptr, _log_level, __VA_ARGS__); \
+#define WLog_Print_tag(_tag, _log_level, ...)                       \
+	do                                                              \
+	{                                                               \
+		static wLog* _log_cached_ptr = NULL;                        \
+		if (!_log_cached_ptr)                                       \
+			_log_cached_ptr = WLog_Get(_tag);                       \
+		(void)WLog_Print(_log_cached_ptr, _log_level, __VA_ARGS__); \
 	} while (0)
 
-#define WLog_PrintVA_unchecked(_log, _log_level, _args)                                 \
-	do                                                                                  \
-	{                                                                                   \
-		WLog_PrintTextMessageVA(_log, _log_level, __LINE__, __FILE__, __func__, _args); \
+#define WLog_PrintVA_unchecked(_log, _log_level, _args)                                       \
+	do                                                                                        \
+	{                                                                                         \
+		(void)WLog_PrintTextMessageVA(_log, _log_level, __LINE__, __FILE__, __func__, _args); \
 	} while (0)
 
 #define WLog_PrintVA(_log, _log_level, _args)                \
@@ -239,34 +239,34 @@ extern "C"
 		}                                                    \
 	} while (0)
 
-#define WLog_Data(_log, _log_level, ...)                                                         \
-	do                                                                                           \
-	{                                                                                            \
-		if (WLog_IsLevelActive(_log, _log_level))                                                \
-		{                                                                                        \
-			WLog_PrintMessage(_log, WLOG_MESSAGE_DATA, _log_level, __LINE__, __FILE__, __func__, \
-			                  __VA_ARGS__);                                                      \
-		}                                                                                        \
+#define WLog_Data(_log, _log_level, ...)                                                     \
+	do                                                                                       \
+	{                                                                                        \
+		if (WLog_IsLevelActive(_log, _log_level))                                            \
+		{                                                                                    \
+			(void)WLog_PrintMessage(_log, WLOG_MESSAGE_DATA, _log_level, __LINE__, __FILE__, \
+			                        __func__, __VA_ARGS__);                                  \
+		}                                                                                    \
 	} while (0)
 
-#define WLog_Image(_log, _log_level, ...)                                                        \
-	do                                                                                           \
-	{                                                                                            \
-		if (WLog_IsLevelActive(_log, _log_level))                                                \
-		{                                                                                        \
-			WLog_PrintMessage(_log, WLOG_MESSAGE_DATA, _log_level, __LINE__, __FILE__, __func__, \
-			                  __VA_ARGS__);                                                      \
-		}                                                                                        \
+#define WLog_Image(_log, _log_level, ...)                                                    \
+	do                                                                                       \
+	{                                                                                        \
+		if (WLog_IsLevelActive(_log, _log_level))                                            \
+		{                                                                                    \
+			(void)WLog_PrintMessage(_log, WLOG_MESSAGE_DATA, _log_level, __LINE__, __FILE__, \
+			                        __func__, __VA_ARGS__);                                  \
+		}                                                                                    \
 	} while (0)
 
-#define WLog_Packet(_log, _log_level, ...)                                                         \
-	do                                                                                             \
-	{                                                                                              \
-		if (WLog_IsLevelActive(_log, _log_level))                                                  \
-		{                                                                                          \
-			WLog_PrintMessage(_log, WLOG_MESSAGE_PACKET, _log_level, __LINE__, __FILE__, __func__, \
-			                  __VA_ARGS__);                                                        \
-		}                                                                                          \
+#define WLog_Packet(_log, _log_level, ...)                                                     \
+	do                                                                                         \
+	{                                                                                          \
+		if (WLog_IsLevelActive(_log, _log_level))                                              \
+		{                                                                                      \
+			(void)WLog_PrintMessage(_log, WLOG_MESSAGE_PACKET, _log_level, __LINE__, __FILE__, \
+			                        __func__, __VA_ARGS__);                                    \
+		}                                                                                      \
 	} while (0)
 
 	WINPR_ATTR_FORMAT_ARG(6, 7)
@@ -282,7 +282,7 @@ extern "C"
 		{
 			va_list ap;
 			va_start(ap, fmt);
-			WLog_PrintTextMessageVA(log_cached_ptr, log_level, line, file, fkt, fmt, ap);
+			(void)WLog_PrintTextMessageVA(log_cached_ptr, log_level, line, file, fkt, fmt, ap);
 			va_end(ap);
 		}
 	}

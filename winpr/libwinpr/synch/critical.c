@@ -46,7 +46,7 @@
 
 VOID InitializeCriticalSection(LPCRITICAL_SECTION lpCriticalSection)
 {
-	InitializeCriticalSectionEx(lpCriticalSection, 0, 0);
+	(void)InitializeCriticalSectionEx(lpCriticalSection, 0, 0);
 }
 
 BOOL InitializeCriticalSectionEx(LPCRITICAL_SECTION lpCriticalSection, DWORD dwSpinCount,
