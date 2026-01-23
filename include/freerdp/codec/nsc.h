@@ -50,8 +50,9 @@ extern "C"
 	                         NSC_CONTEXT* context, UINT32 pixel_format));
 #endif
 
-	FREERDP_API WINPR_ATTR_NODISCARD BOOL nsc_context_set_parameters(
-	    NSC_CONTEXT* WINPR_RESTRICT context, NSC_PARAMETER what, UINT32 value);
+	FREERDP_API
+	WINPR_ATTR_NODISCARD BOOL nsc_context_set_parameters(NSC_CONTEXT* WINPR_RESTRICT context,
+	                                                     NSC_PARAMETER what, UINT32 value);
 
 	FREERDP_API WINPR_ATTR_NODISCARD BOOL nsc_process_message(
 	    NSC_CONTEXT* WINPR_RESTRICT context, UINT16 bpp, UINT32 width, UINT32 height,

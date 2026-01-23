@@ -1559,8 +1559,8 @@ extern "C"
 {
 #endif
 
-	WINPR_API WINPR_ATTR_NODISCARD BOOL
-	WTSRegisterWtsApiFunctionTable(const WtsApiFunctionTable* table);
+	WINPR_API
+	WINPR_ATTR_NODISCARD BOOL WTSRegisterWtsApiFunctionTable(const WtsApiFunctionTable* table);
 	WINPR_API WINPR_ATTR_NODISCARD const CHAR* WTSErrorToString(UINT error);
 	WINPR_API WINPR_ATTR_NODISCARD const CHAR*
 	WTSSessionStateToString(WTS_CONNECTSTATE_CLASS state);

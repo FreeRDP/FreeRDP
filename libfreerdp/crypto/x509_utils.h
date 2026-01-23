@@ -33,8 +33,8 @@ extern "C"
 {
 #endif
 
-	FREERDP_LOCAL WINPR_ATTR_NODISCARD WINPR_MD_TYPE
-	x509_utils_get_signature_alg(const X509* xcert);
+	FREERDP_LOCAL
+	WINPR_ATTR_NODISCARD WINPR_MD_TYPE x509_utils_get_signature_alg(const X509* xcert);
 	FREERDP_LOCAL WINPR_ATTR_NODISCARD BYTE* x509_utils_get_hash(const X509* xcert,
 	                                                             const char* hash, size_t* length);
 

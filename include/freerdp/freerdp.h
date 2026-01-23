@@ -638,8 +638,8 @@ owned by rdpRdp */
 	                         freerdp_shall_disconnect(const freerdp* instance));
 #endif
 
-	FREERDP_API WINPR_ATTR_NODISCARD BOOL
-	freerdp_shall_disconnect_context(const rdpContext* context);
+	FREERDP_API
+	WINPR_ATTR_NODISCARD BOOL freerdp_shall_disconnect_context(const rdpContext* context);
 	FREERDP_API WINPR_ATTR_NODISCARD BOOL freerdp_disconnect(freerdp* instance);
 
 	/** @brief stringify disconnect reason of type Disconnect_Ultimatum
@@ -658,8 +658,8 @@ owned by rdpRdp */
 	                         freerdp_disconnect_before_reconnect(freerdp* instance));
 #endif
 
-	FREERDP_API WINPR_ATTR_NODISCARD BOOL
-	freerdp_disconnect_before_reconnect_context(rdpContext* context);
+	FREERDP_API
+	WINPR_ATTR_NODISCARD BOOL freerdp_disconnect_before_reconnect_context(rdpContext* context);
 
 	FREERDP_API WINPR_ATTR_NODISCARD BOOL freerdp_reconnect(freerdp* instance);
 
