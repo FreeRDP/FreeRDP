@@ -195,6 +195,35 @@ static BOOL register_handlers(const int* signals, size_t count, void (*handler)(
 	return TRUE;
 }
 
+static void unregister_handlers(const int* signals, size_t count)
+{
+	WINPR_ASSERT(signals || (count == 0));
+
+	sigset_t orig_set = { 0 };
+	struct sigaction saction = { 0 };
+
+	pthread_sigmask(SIG_BLOCK, &(saction.sa_mask), &orig_set);
+
+	sigfillset(&(saction.sa_mask));
+	sigdelset(&(saction.sa_mask), SIGCONT);
+
+	saction.sa_handler = SIG_IGN;
+	saction.sa_flags = 0;
+
+	for (size_t x = 0; x < count; x++)
+	{
+		sigaction(signals[x], &saction, NULL);
+	}
+
+	pthread_sigmask(SIG_SETMASK, &orig_set, NULL);
+}
+
+static void unregister_all_handlers(void)
+{
+	unregister_handlers(fatal_signals, ARRAYSIZE(fatal_signals));
+	unregister_handlers(term_signals, ARRAYSIZE(term_signals));
+}
+
 int freerdp_handle_signals(void)
 {
 	int rc = -1;
@@ -203,6 +232,7 @@ int freerdp_handle_signals(void)
 
 	WLog_DBG(TAG, "Registering signal hook...");
 
+	(void)atexit(unregister_all_handlers);
 	if (!register_handlers(fatal_signals, ARRAYSIZE(fatal_signals), fatal_handler))
 		goto fail;
 	if (!register_handlers(term_signals, ARRAYSIZE(term_signals), term_handler))

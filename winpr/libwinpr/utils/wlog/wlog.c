@@ -74,10 +74,6 @@ static BOOL WLog_ParseFilter(wLog* root, wLogFilter* filter, LPCSTR name);
 static BOOL WLog_ParseFilters(wLog* root);
 static wLog* WLog_Get_int(wLog* root, LPCSTR name);
 
-#if !defined(_WIN32)
-static void WLog_Uninit_(void) __attribute__((destructor));
-#endif
-
 static void WLog_Uninit_(void)
 {
 	wLog* child = NULL;
