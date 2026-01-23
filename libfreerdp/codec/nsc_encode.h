@@ -23,6 +23,7 @@
 #define FREERDP_LIB_CODEC_NSC_ENCODE_H
 
 #include <freerdp/api.h>
+#include <freerdp/codec/nsc.h>
 
 FREERDP_LOCAL WINPR_ATTR_NODISCARD BOOL nsc_encode(NSC_CONTEXT* WINPR_RESTRICT context,
                                                    const BYTE* WINPR_RESTRICT bmpdata,

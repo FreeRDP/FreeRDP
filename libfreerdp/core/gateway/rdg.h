@@ -24,6 +24,9 @@
 #include <winpr/stream.h>
 #include <winpr/winpr.h>
 
+#include <freerdp/api.h>
+#include <freerdp/types.h>
+
 /* needed for BIO */
 #include <openssl/ssl.h>
 

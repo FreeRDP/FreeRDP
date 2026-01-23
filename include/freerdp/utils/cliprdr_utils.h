@@ -22,7 +22,9 @@
 #define FREERDP_UTILS_CLIPRDR_H
 
 #include <winpr/wtypes.h>
+#include <winpr/stream.h>
 #include <winpr/shell.h>
+
 #include <freerdp/api.h>
 
 #ifdef __cplusplus
