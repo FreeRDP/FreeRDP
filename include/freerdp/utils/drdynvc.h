@@ -30,7 +30,7 @@ extern "C"
 {
 #endif
 
-	FREERDP_API const char* drdynvc_get_packet_type(BYTE cmd);
+	FREERDP_API WINPR_ATTR_NODISCARD const char* drdynvc_get_packet_type(BYTE cmd);
 
 #ifdef __cplusplus
 }

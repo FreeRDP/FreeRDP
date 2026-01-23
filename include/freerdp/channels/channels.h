@@ -36,22 +36,27 @@ extern "C"
 	/** @since version 3.9.0 */
 	typedef BOOL (*freerdp_channel_handle_fkt_t)(rdpContext* context, void* userdata);
 
-	FREERDP_API int freerdp_channels_client_load(rdpChannels* channels, rdpSettings* settings,
-	                                             PVIRTUALCHANNELENTRY entry, void* data);
-	FREERDP_API int freerdp_channels_client_load_ex(rdpChannels* channels, rdpSettings* settings,
-	                                                PVIRTUALCHANNELENTRYEX entryEx, void* data);
-	FREERDP_API int freerdp_channels_load_plugin(rdpChannels* channels, rdpSettings* settings,
-	                                             const char* name, void* data);
+	FREERDP_API WINPR_ATTR_NODISCARD int freerdp_channels_client_load(rdpChannels* channels,
+	                                                                  rdpSettings* settings,
+	                                                                  PVIRTUALCHANNELENTRY entry,
+	                                                                  void* data);
+	FREERDP_API WINPR_ATTR_NODISCARD int
+	freerdp_channels_client_load_ex(rdpChannels* channels, rdpSettings* settings,
+	                                PVIRTUALCHANNELENTRYEX entryEx, void* data);
+	FREERDP_API WINPR_ATTR_NODISCARD int freerdp_channels_load_plugin(rdpChannels* channels,
+	                                                                  rdpSettings* settings,
+	                                                                  const char* name, void* data);
 #if defined(WITH_FREERDP_DEPRECATED)
 	WINPR_DEPRECATED_VAR("Use freerdp_channels_get_event_handle",
-	                     FREERDP_API BOOL freerdp_channels_get_fds(
+	                     FREERDP_API WINPR_ATTR_NODISCARD BOOL freerdp_channels_get_fds(
 	                         rdpChannels* channels, freerdp* instance, void** read_fds,
 	                         int* read_count, void** write_fds, int* write_count));
 #endif
-	FREERDP_API BOOL freerdp_channels_check_fds(rdpChannels* channels, freerdp* instance);
+	FREERDP_API WINPR_ATTR_NODISCARD BOOL freerdp_channels_check_fds(rdpChannels* channels,
+	                                                                 freerdp* instance);
 
-	FREERDP_API void* freerdp_channels_get_static_channel_interface(rdpChannels* channels,
-	                                                                const char* name);
+	FREERDP_API WINPR_ATTR_NODISCARD void*
+	freerdp_channels_get_static_channel_interface(rdpChannels* channels, const char* name);
 
 	/** @brief A channel may register an event handle and a callback function to be called by \b
 	 * freerdp_check_event_handles
@@ -73,9 +78,8 @@ extern "C"
 	 *
 	 *  @return \b TRUE if successful, \b FALSE if any error occurs.
 	 *  @since version 3.9.0 */
-	FREERDP_API BOOL freerdp_client_channel_register(rdpChannels* channels, HANDLE handle,
-	                                                 freerdp_channel_handle_fkt_t fkt,
-	                                                 void* userdata);
+	FREERDP_API WINPR_ATTR_NODISCARD BOOL freerdp_client_channel_register(
+	    rdpChannels* channels, HANDLE handle, freerdp_channel_handle_fkt_t fkt, void* userdata);
 
 	/** @brief Remove an existing registration for \b event-handle from the channels instance
 	 *
@@ -85,18 +89,23 @@ extern "C"
 	 *
 	 *  @return \b TRUE if successful, \b FALSE if any error occurs.
 	 *  @since version 3.9.0 */
-	FREERDP_API BOOL freerdp_client_channel_unregister(rdpChannels* channels, HANDLE handle);
+	FREERDP_API WINPR_ATTR_NODISCARD BOOL freerdp_client_channel_unregister(rdpChannels* channels,
+	                                                                        HANDLE handle);
 
-	FREERDP_API HANDLE freerdp_channels_get_event_handle(freerdp* instance);
-	FREERDP_API int freerdp_channels_process_pending_messages(freerdp* instance);
+	FREERDP_API WINPR_ATTR_NODISCARD HANDLE freerdp_channels_get_event_handle(freerdp* instance);
+	FREERDP_API WINPR_ATTR_NODISCARD int
+	freerdp_channels_process_pending_messages(freerdp* instance);
 
-	FREERDP_API BOOL freerdp_channels_data(freerdp* instance, UINT16 channelId, const BYTE* data,
-	                                       size_t dataSize, UINT32 flags, size_t totalSize);
+	FREERDP_API WINPR_ATTR_NODISCARD BOOL freerdp_channels_data(freerdp* instance, UINT16 channelId,
+	                                                            const BYTE* data, size_t dataSize,
+	                                                            UINT32 flags, size_t totalSize);
 
-	FREERDP_API UINT16 freerdp_channels_get_id_by_name(freerdp* instance, const char* channel_name);
-	FREERDP_API const char* freerdp_channels_get_name_by_id(freerdp* instance, UINT16 channelId);
+	FREERDP_API WINPR_ATTR_NODISCARD UINT16
+	freerdp_channels_get_id_by_name(freerdp* instance, const char* channel_name);
+	FREERDP_API WINPR_ATTR_NODISCARD const char* freerdp_channels_get_name_by_id(freerdp* instance,
+	                                                                             UINT16 channelId);
 
-	FREERDP_API const WtsApiFunctionTable* FreeRDP_InitWtsApi(void);
+	FREERDP_API WINPR_ATTR_NODISCARD const WtsApiFunctionTable* FreeRDP_InitWtsApi(void);
 
 #ifdef __cplusplus
 }

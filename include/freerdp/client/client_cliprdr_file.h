@@ -35,7 +35,7 @@ extern "C"
 	FREERDP_API void cliprdr_file_context_free(CliprdrFileContext* file);
 
 	WINPR_ATTR_MALLOC(cliprdr_file_context_free, 1)
-	FREERDP_API CliprdrFileContext* cliprdr_file_context_new(void* context);
+	FREERDP_API WINPR_ATTR_NODISCARD CliprdrFileContext* cliprdr_file_context_new(void* context);
 
 	/**! \brief returns if the implementation supports pasting files in a client file browser.
 	 *
@@ -43,7 +43,8 @@ extern "C"
 	 *
 	 * \return \b TRUE if files can be pasted locally, \b FALSE if not (e.g. no FUSE, ...)
 	 */
-	FREERDP_API BOOL cliprdr_file_context_has_local_support(CliprdrFileContext* file);
+	FREERDP_API WINPR_ATTR_NODISCARD BOOL
+	cliprdr_file_context_has_local_support(CliprdrFileContext* file);
 
 	/**! \brief sets state of local file paste support
 	 *
@@ -53,26 +54,30 @@ extern "C"
 	 *
 	 * \return \b TRUE for success, \b FALSE otherwise
 	 */
-	FREERDP_API BOOL cliprdr_file_context_set_locally_available(CliprdrFileContext* file,
-	                                                            BOOL available);
-	FREERDP_API BOOL cliprdr_file_context_remote_set_flags(CliprdrFileContext* file, UINT32 flags);
-	FREERDP_API UINT32 cliprdr_file_context_remote_get_flags(CliprdrFileContext* file);
+	FREERDP_API WINPR_ATTR_NODISCARD BOOL
+	cliprdr_file_context_set_locally_available(CliprdrFileContext* file, BOOL available);
+	FREERDP_API WINPR_ATTR_NODISCARD BOOL
+	cliprdr_file_context_remote_set_flags(CliprdrFileContext* file, UINT32 flags);
+	FREERDP_API WINPR_ATTR_NODISCARD UINT32
+	cliprdr_file_context_remote_get_flags(CliprdrFileContext* file);
 
-	FREERDP_API UINT32 cliprdr_file_context_current_flags(CliprdrFileContext* file);
+	FREERDP_API WINPR_ATTR_NODISCARD UINT32
+	cliprdr_file_context_current_flags(CliprdrFileContext* file);
 
-	FREERDP_API void* cliprdr_file_context_get_context(CliprdrFileContext* file);
+	FREERDP_API WINPR_ATTR_NODISCARD void*
+	cliprdr_file_context_get_context(CliprdrFileContext* file);
 
-	FREERDP_API BOOL cliprdr_file_context_init(CliprdrFileContext* file,
-	                                           CliprdrClientContext* cliprdr);
-	FREERDP_API BOOL cliprdr_file_context_uninit(CliprdrFileContext* file,
-	                                             CliprdrClientContext* cliprdr);
+	FREERDP_API WINPR_ATTR_NODISCARD BOOL cliprdr_file_context_init(CliprdrFileContext* file,
+	                                                                CliprdrClientContext* cliprdr);
+	FREERDP_API WINPR_ATTR_NODISCARD BOOL
+	cliprdr_file_context_uninit(CliprdrFileContext* file, CliprdrClientContext* cliprdr);
 
-	FREERDP_API BOOL cliprdr_file_context_clear(CliprdrFileContext* file);
+	FREERDP_API WINPR_ATTR_NODISCARD BOOL cliprdr_file_context_clear(CliprdrFileContext* file);
 
-	FREERDP_API UINT
+	FREERDP_API WINPR_ATTR_NODISCARD UINT
 	cliprdr_file_context_notify_new_server_format_list(CliprdrFileContext* file_context);
 
-	FREERDP_API UINT
+	FREERDP_API WINPR_ATTR_NODISCARD UINT
 	cliprdr_file_context_notify_new_client_format_list(CliprdrFileContext* file_context);
 
 	/** \brief updates the files the client announces to the server
@@ -83,8 +88,8 @@ extern "C"
 	 *
 	 * \return \b TRUE for success, \b FALSE otherwise
 	 */
-	FREERDP_API BOOL cliprdr_file_context_update_client_data(CliprdrFileContext* file,
-	                                                         const char* data, size_t count);
+	FREERDP_API WINPR_ATTR_NODISCARD BOOL cliprdr_file_context_update_client_data(
+	    CliprdrFileContext* file, const char* data, size_t count);
 	/** \brief updates the files the server announces to the client
 	 *
 	 * \param file the file context to update
@@ -94,9 +99,8 @@ extern "C"
 	 *
 	 * \return \b TRUE for success, \b FALSE otherwise
 	 */
-	FREERDP_API BOOL cliprdr_file_context_update_server_data(CliprdrFileContext* file,
-	                                                         wClipboard* clip, const void* data,
-	                                                         size_t size);
+	FREERDP_API WINPR_ATTR_NODISCARD BOOL cliprdr_file_context_update_server_data(
+	    CliprdrFileContext* file, wClipboard* clip, const void* data, size_t size);
 
 #ifdef __cplusplus
 }

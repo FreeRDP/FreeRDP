@@ -52,7 +52,7 @@ extern "C"
 	 * @param initialSize the initial capacity of the ringBuffer
 	 * @return if the initialisation was successful
 	 */
-	FREERDP_API BOOL ringbuffer_init(RingBuffer* rb, size_t initialSize);
+	FREERDP_API WINPR_ATTR_NODISCARD BOOL ringbuffer_init(RingBuffer* rb, size_t initialSize);
 
 	/**
 	 * destroys internal data used by this ringbuffer
@@ -67,14 +67,14 @@ extern "C"
 	 * @param ringbuffer A pointer to the ringbuffer
 	 * @return the number of bytes stored in that ringbuffer
 	 */
-	FREERDP_API size_t ringbuffer_used(const RingBuffer* ringbuffer);
+	FREERDP_API WINPR_ATTR_NODISCARD size_t ringbuffer_used(const RingBuffer* ringbuffer);
 
 	/** returns the capacity of the ring buffer
 	 *
 	 * @param ringbuffer A pointer to the ringbuffer
 	 * @return the capacity of this ring buffer
 	 */
-	FREERDP_API size_t ringbuffer_capacity(const RingBuffer* ringbuffer);
+	FREERDP_API WINPR_ATTR_NODISCARD size_t ringbuffer_capacity(const RingBuffer* ringbuffer);
 
 	/** writes some bytes in the ringbuffer, if the data doesn't fit, the ringbuffer
 	 * is resized automatically
@@ -84,7 +84,8 @@ extern "C"
 	 * @param sz the size of the data to add
 	 * @return if the operation was successful, it could fail in case of OOM during realloc()
 	 */
-	FREERDP_API BOOL ringbuffer_write(RingBuffer* rb, const BYTE* ptr, size_t sz);
+	FREERDP_API WINPR_ATTR_NODISCARD BOOL ringbuffer_write(RingBuffer* rb, const BYTE* ptr,
+	                                                       size_t sz);
 
 	/** ensures that we have sz bytes available at the write head, and return a pointer
 	 * on the write head
@@ -93,7 +94,8 @@ extern "C"
 	 * @param sz the size to ensure
 	 * @return a pointer on the write head, or NULL in case of OOM
 	 */
-	FREERDP_API BYTE* ringbuffer_ensure_linear_write(RingBuffer* rb, size_t sz);
+	FREERDP_API WINPR_ATTR_NODISCARD BYTE* ringbuffer_ensure_linear_write(RingBuffer* rb,
+	                                                                      size_t sz);
 
 	/** move ahead the write head in case some byte were written directly by using
 	 * a pointer retrieved via ringbuffer_ensure_linear_write(). This function is
@@ -104,7 +106,8 @@ extern "C"
 	 * @param sz the number of bytes that have been written
 	 * @return if the operation was successful, FALSE is sz is too big
 	 */
-	FREERDP_API BOOL ringbuffer_commit_written_bytes(RingBuffer* rb, size_t sz);
+	FREERDP_API WINPR_ATTR_NODISCARD BOOL ringbuffer_commit_written_bytes(RingBuffer* rb,
+	                                                                      size_t sz);
 
 	/** peeks the buffer chunks for sz bytes and returns how many chunks are filled.
 	 * Note that the sum of the resulting chunks may be smaller than sz.
@@ -114,7 +117,8 @@ extern "C"
 	 * @param sz the requested size
 	 * @return the number of chunks used for reading sz bytes
 	 */
-	FREERDP_API int ringbuffer_peek(const RingBuffer* rb, DataChunk chunks[2], size_t sz);
+	FREERDP_API WINPR_ATTR_NODISCARD int ringbuffer_peek(const RingBuffer* rb, DataChunk chunks[2],
+	                                                     size_t sz);
 
 	/** move ahead the read head in case some byte were read using ringbuffer_peek()
 	 * This function is used to commit the bytes that were effectively consumed.

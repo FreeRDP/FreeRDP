@@ -103,21 +103,34 @@ extern "C"
 		UINT32 paddingB[32 - 25]; /* 25 */
 	};
 
-	FREERDP_API BOOL freerdp_input_send_synchronize_event(rdpInput* input, UINT32 flags);
-	FREERDP_API BOOL freerdp_input_send_keyboard_event(rdpInput* input, UINT16 flags, UINT8 code);
-	FREERDP_API BOOL freerdp_input_send_keyboard_event_ex(rdpInput* input, BOOL down, BOOL repeat,
-	                                                      UINT32 rdp_scancode);
-	FREERDP_API BOOL freerdp_input_send_keyboard_pause_event(rdpInput* input);
-	FREERDP_API BOOL freerdp_input_send_unicode_keyboard_event(rdpInput* input, UINT16 flags,
-	                                                           UINT16 code);
-	FREERDP_API BOOL freerdp_input_send_mouse_event(rdpInput* input, UINT16 flags, UINT16 x,
-	                                                UINT16 y);
-	FREERDP_API BOOL freerdp_input_send_rel_mouse_event(rdpInput* input, UINT16 flags, INT16 xDelta,
-	                                                    INT16 yDelta);
-	FREERDP_API BOOL freerdp_input_send_qoe_timestamp(rdpInput* input, UINT32 timestampMS);
-	FREERDP_API BOOL freerdp_input_send_extended_mouse_event(rdpInput* input, UINT16 flags,
-	                                                         UINT16 x, UINT16 y);
-	FREERDP_API BOOL freerdp_input_send_focus_in_event(rdpInput* input, UINT16 toggleStates);
+	FREERDP_API WINPR_ATTR_NODISCARD BOOL freerdp_input_send_synchronize_event(rdpInput* input,
+	                                                                           UINT32 flags);
+	FREERDP_API WINPR_ATTR_NODISCARD BOOL freerdp_input_send_keyboard_event(rdpInput* input,
+	                                                                        UINT16 flags,
+	                                                                        UINT8 code);
+	FREERDP_API WINPR_ATTR_NODISCARD BOOL freerdp_input_send_keyboard_event_ex(rdpInput* input,
+	                                                                           BOOL down,
+	                                                                           BOOL repeat,
+	                                                                           UINT32 rdp_scancode);
+	FREERDP_API WINPR_ATTR_NODISCARD BOOL freerdp_input_send_keyboard_pause_event(rdpInput* input);
+	FREERDP_API WINPR_ATTR_NODISCARD BOOL freerdp_input_send_unicode_keyboard_event(rdpInput* input,
+	                                                                                UINT16 flags,
+	                                                                                UINT16 code);
+	FREERDP_API WINPR_ATTR_NODISCARD BOOL freerdp_input_send_mouse_event(rdpInput* input,
+	                                                                     UINT16 flags, UINT16 x,
+	                                                                     UINT16 y);
+	FREERDP_API WINPR_ATTR_NODISCARD BOOL freerdp_input_send_rel_mouse_event(rdpInput* input,
+	                                                                         UINT16 flags,
+	                                                                         INT16 xDelta,
+	                                                                         INT16 yDelta);
+	FREERDP_API WINPR_ATTR_NODISCARD BOOL freerdp_input_send_qoe_timestamp(rdpInput* input,
+	                                                                       UINT32 timestampMS);
+	FREERDP_API WINPR_ATTR_NODISCARD BOOL freerdp_input_send_extended_mouse_event(rdpInput* input,
+	                                                                              UINT16 flags,
+	                                                                              UINT16 x,
+	                                                                              UINT16 y);
+	FREERDP_API WINPR_ATTR_NODISCARD BOOL freerdp_input_send_focus_in_event(rdpInput* input,
+	                                                                        UINT16 toggleStates);
 
 	/** @brief stringify \b enum KBD_SYNC_FLAGS
 	 *
@@ -128,8 +141,8 @@ extern "C"
 	 *  @return A pointer to \ref buffer or \b NULL in case of failure
 	 *  @since version 3.19.0
 	 */
-	FREERDP_API const char* freerdp_input_keyboard_flags_string(uint32_t flags, char* buffer,
-	                                                            size_t len);
+	FREERDP_API WINPR_ATTR_NODISCARD const char*
+	freerdp_input_keyboard_flags_string(uint32_t flags, char* buffer, size_t len);
 
 #ifdef __cplusplus
 }

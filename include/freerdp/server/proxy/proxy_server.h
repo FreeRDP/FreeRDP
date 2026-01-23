@@ -46,7 +46,7 @@ extern "C"
 	 * @return A new proxy server instance or NULL on failure.
 	 */
 	WINPR_ATTR_MALLOC(pf_server_free, 1)
-	FREERDP_API proxyServer* pf_server_new(const proxyConfig* config);
+	FREERDP_API WINPR_ATTR_NODISCARD proxyServer* pf_server_new(const proxyConfig* config);
 
 	/**
 	 * @brief pf_server_add_module Allows registering proxy modules that are
@@ -59,8 +59,9 @@ extern "C"
 	 *
 	 * @return TRUE for success, FALSE otherwise.
 	 */
-	FREERDP_API BOOL pf_server_add_module(proxyServer* server, proxyModuleEntryPoint ep,
-	                                      void* userdata);
+	FREERDP_API WINPR_ATTR_NODISCARD BOOL pf_server_add_module(proxyServer* server,
+	                                                           proxyModuleEntryPoint ep,
+	                                                           void* userdata);
 
 	/**
 	 * @brief pf_server_start Starts the proxy, binding the configured port.
@@ -69,7 +70,7 @@ extern "C"
 	 *
 	 * @return TRUE for success, FALSE on error
 	 */
-	FREERDP_API BOOL pf_server_start(proxyServer* server);
+	FREERDP_API WINPR_ATTR_NODISCARD BOOL pf_server_start(proxyServer* server);
 
 	/**
 	 * @brief pf_server_start_from_socket Starts the proxy using an existing bound socket
@@ -79,7 +80,8 @@ extern "C"
 	 *
 	 * @return TRUE for success, FALSE on error
 	 */
-	FREERDP_API BOOL pf_server_start_from_socket(proxyServer* server, int socket);
+	FREERDP_API WINPR_ATTR_NODISCARD BOOL pf_server_start_from_socket(proxyServer* server,
+	                                                                  int socket);
 
 	/**
 	 * @brief pf_server_start_with_peer_socket Use existing peer socket
@@ -89,7 +91,8 @@ extern "C"
 	 *
 	 * @return TRUE for success, FALSE on error
 	 */
-	FREERDP_API BOOL pf_server_start_with_peer_socket(proxyServer* server, int socket);
+	FREERDP_API WINPR_ATTR_NODISCARD BOOL pf_server_start_with_peer_socket(proxyServer* server,
+	                                                                       int socket);
 
 	/**
 	 * @brief pf_server_stop Stops a server instance asynchronously.
@@ -106,7 +109,7 @@ extern "C"
 	 *
 	 * @return TRUE for successful termination, FALSE otherwise.
 	 */
-	FREERDP_API BOOL pf_server_run(proxyServer* server);
+	FREERDP_API WINPR_ATTR_NODISCARD BOOL pf_server_run(proxyServer* server);
 
 #ifdef __cplusplus
 }

@@ -41,23 +41,30 @@ extern "C"
 	FREERDP_API void smartcard_call_context_free(scard_call_context* ctx);
 
 	WINPR_ATTR_MALLOC(smartcard_call_context_free, 1)
-	FREERDP_API scard_call_context* smartcard_call_context_new(const rdpSettings* settings);
+	FREERDP_API WINPR_ATTR_NODISCARD scard_call_context*
+	smartcard_call_context_new(const rdpSettings* settings);
 
-	FREERDP_API BOOL smartcard_call_context_signal_stop(scard_call_context* ctx, BOOL reset);
-	FREERDP_API BOOL smartcard_call_context_add(scard_call_context* ctx, const char* name);
-	FREERDP_API BOOL smartcard_call_cancel_context(scard_call_context* ctx, SCARDCONTEXT context);
-	FREERDP_API BOOL smartcard_call_cancel_all_context(scard_call_context* ctx);
-	FREERDP_API BOOL smartcard_call_release_context(scard_call_context* ctx, SCARDCONTEXT context);
-	FREERDP_API BOOL smartcard_call_is_configured(scard_call_context* ctx);
+	FREERDP_API WINPR_ATTR_NODISCARD BOOL
+	smartcard_call_context_signal_stop(scard_call_context* ctx, BOOL reset);
+	FREERDP_API WINPR_ATTR_NODISCARD BOOL smartcard_call_context_add(scard_call_context* ctx,
+	                                                                 const char* name);
+	FREERDP_API WINPR_ATTR_NODISCARD BOOL smartcard_call_cancel_context(scard_call_context* ctx,
+	                                                                    SCARDCONTEXT context);
+	FREERDP_API WINPR_ATTR_NODISCARD BOOL
+	smartcard_call_cancel_all_context(scard_call_context* ctx);
+	FREERDP_API WINPR_ATTR_NODISCARD BOOL smartcard_call_release_context(scard_call_context* ctx,
+	                                                                     SCARDCONTEXT context);
+	FREERDP_API WINPR_ATTR_NODISCARD BOOL smartcard_call_is_configured(scard_call_context* ctx);
 
-	FREERDP_API BOOL smarcard_call_set_callbacks(scard_call_context* ctx, void* userdata,
-	                                             void* (*fn_new)(void*, SCARDCONTEXT),
-	                                             void (*fn_free)(void*));
-	FREERDP_API void* smartcard_call_get_context(scard_call_context* ctx, SCARDCONTEXT hContext);
+	FREERDP_API WINPR_ATTR_NODISCARD BOOL
+	smarcard_call_set_callbacks(scard_call_context* ctx, void* userdata,
+	                            void* (*fn_new)(void*, SCARDCONTEXT), void (*fn_free)(void*));
+	FREERDP_API WINPR_ATTR_NODISCARD void* smartcard_call_get_context(scard_call_context* ctx,
+	                                                                  SCARDCONTEXT hContext);
 
-	FREERDP_API LONG smartcard_irp_device_control_call(scard_call_context* context, wStream* out,
-	                                                   NTSTATUS* pIoStatus,
-	                                                   SMARTCARD_OPERATION* operation);
+	FREERDP_API WINPR_ATTR_NODISCARD LONG
+	smartcard_irp_device_control_call(scard_call_context* context, wStream* out,
+	                                  NTSTATUS* pIoStatus, SMARTCARD_OPERATION* operation);
 
 #ifdef __cplusplus
 }

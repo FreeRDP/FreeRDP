@@ -25,8 +25,9 @@
 #include "xf_client.h"
 #include "xfreerdp.h"
 
-FREERDP_API BOOL xf_disp_init(xfDispContext* xfDisp, DispClientContext* disp);
-FREERDP_API BOOL xf_disp_uninit(xfDispContext* xfDisp, DispClientContext* disp);
+FREERDP_API WINPR_ATTR_NODISCARD BOOL xf_disp_init(xfDispContext* xfDisp, DispClientContext* disp);
+FREERDP_API WINPR_ATTR_NODISCARD BOOL xf_disp_uninit(xfDispContext* xfDisp,
+                                                     DispClientContext* disp);
 
 void xf_disp_free(xfDispContext* disp);
 

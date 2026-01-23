@@ -30,7 +30,7 @@ extern "C"
 
 	typedef struct S_PROFILER PROFILER;
 
-	FREERDP_API PROFILER* profiler_create(const char* name);
+	FREERDP_API WINPR_ATTR_NODISCARD PROFILER* profiler_create(const char* name);
 	FREERDP_API void profiler_free(PROFILER* profiler);
 
 	FREERDP_API void profiler_enter(PROFILER* profiler);

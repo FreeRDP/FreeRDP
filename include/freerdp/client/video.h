@@ -63,8 +63,8 @@ extern "C"
 		pcVideoDeleteSurface deleteSurface;
 	};
 
-	FREERDP_API VideoSurface* VideoClient_CreateCommonContext(size_t size, UINT32 x, UINT32 y,
-	                                                          UINT32 w, UINT32 h);
+	FREERDP_API WINPR_ATTR_NODISCARD VideoSurface*
+	VideoClient_CreateCommonContext(size_t size, UINT32 x, UINT32 y, UINT32 w, UINT32 h);
 	FREERDP_API void VideoClient_DestroyCommonContext(VideoSurface* surface);
 
 #ifdef __cplusplus

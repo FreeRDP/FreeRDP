@@ -126,14 +126,17 @@ extern "C"
 	};
 	typedef struct rdp_transport_io rdpTransportIo;
 
-	FREERDP_API BOOL freerdp_io_callback_set_event(rdpContext* context, BOOL set);
+	FREERDP_API WINPR_ATTR_NODISCARD BOOL freerdp_io_callback_set_event(rdpContext* context,
+	                                                                    BOOL set);
 
-	FREERDP_API const rdpTransportIo* freerdp_get_io_callbacks(rdpContext* context);
-	FREERDP_API BOOL freerdp_set_io_callbacks(rdpContext* context,
-	                                          const rdpTransportIo* io_callbacks);
+	FREERDP_API WINPR_ATTR_NODISCARD const rdpTransportIo*
+	freerdp_get_io_callbacks(rdpContext* context);
+	FREERDP_API WINPR_ATTR_NODISCARD BOOL
+	freerdp_set_io_callbacks(rdpContext* context, const rdpTransportIo* io_callbacks);
 
-	FREERDP_API BOOL freerdp_set_io_callback_context(rdpContext* context, void* usercontext);
-	FREERDP_API void* freerdp_get_io_callback_context(rdpContext* context);
+	FREERDP_API WINPR_ATTR_NODISCARD BOOL freerdp_set_io_callback_context(rdpContext* context,
+	                                                                      void* usercontext);
+	FREERDP_API WINPR_ATTR_NODISCARD void* freerdp_get_io_callback_context(rdpContext* context);
 
 	/* PDU parser.
 	 * incomplete: FALSE if the whole PDU is available, TRUE otherwise
@@ -141,9 +144,10 @@ extern "C"
 	 *         >0 -> PDU header complete, length of PDU.
 	 *         <0 -> Abort, an error occurred
 	 */
-	FREERDP_API SSIZE_T transport_parse_pdu(rdpTransport* transport, wStream* s, BOOL* incomplete);
-	FREERDP_API rdpContext* transport_get_context(rdpTransport* transport);
-	FREERDP_API rdpTransport* freerdp_get_transport(rdpContext* context);
+	FREERDP_API WINPR_ATTR_NODISCARD SSIZE_T transport_parse_pdu(rdpTransport* transport,
+	                                                             wStream* s, BOOL* incomplete);
+	FREERDP_API WINPR_ATTR_NODISCARD rdpContext* transport_get_context(rdpTransport* transport);
+	FREERDP_API WINPR_ATTR_NODISCARD rdpTransport* freerdp_get_transport(rdpContext* context);
 
 	/**
 	 * @brief Free a transport layer instance
@@ -164,7 +168,8 @@ extern "C"
 	 * @since version 3.9.0
 	 */
 	WINPR_ATTR_MALLOC(transport_layer_free, 1)
-	FREERDP_API rdpTransportLayer* transport_layer_new(rdpTransport* transport, size_t contextSize);
+	FREERDP_API WINPR_ATTR_NODISCARD rdpTransportLayer* transport_layer_new(rdpTransport* transport,
+	                                                                        size_t contextSize);
 
 #ifdef __cplusplus
 }

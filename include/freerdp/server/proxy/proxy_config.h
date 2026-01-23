@@ -126,7 +126,7 @@ extern "C"
 	 * @param file The file to write to. Existing files are truncated.
 	 * @return TRUE for success, FALSE if the file could not be written.
 	 */
-	FREERDP_API BOOL pf_server_config_dump(const char* file);
+	FREERDP_API WINPR_ATTR_NODISCARD BOOL pf_server_config_dump(const char* file);
 
 	/**
 	 * @brief pf_server_config_free Releases all resources associated with proxyConfig
@@ -144,7 +144,7 @@ extern "C"
 	 * @return A proxyConfig or NULL in case of failure.
 	 */
 	WINPR_ATTR_MALLOC(pf_server_config_free, 1)
-	FREERDP_API proxyConfig* server_config_load_ini(wIniFile* ini);
+	FREERDP_API WINPR_ATTR_NODISCARD proxyConfig* server_config_load_ini(wIniFile* ini);
 	/**
 	 * @brief pf_server_config_load_file Create a proxyConfig from a INI file found at path.
 	 *
@@ -153,7 +153,7 @@ extern "C"
 	 * @return A proxyConfig or NULL in case of failure.
 	 */
 	WINPR_ATTR_MALLOC(pf_server_config_free, 1)
-	FREERDP_API proxyConfig* pf_server_config_load_file(const char* path);
+	FREERDP_API WINPR_ATTR_NODISCARD proxyConfig* pf_server_config_load_file(const char* path);
 
 	/**
 	 * @brief pf_server_config_load_buffer Create a proxyConfig from a memory string buffer in INI
@@ -164,7 +164,7 @@ extern "C"
 	 * @return A proxyConfig or NULL in case of failure.
 	 */
 	WINPR_ATTR_MALLOC(pf_server_config_free, 1)
-	FREERDP_API proxyConfig* pf_server_config_load_buffer(const char* buffer);
+	FREERDP_API WINPR_ATTR_NODISCARD proxyConfig* pf_server_config_load_buffer(const char* buffer);
 
 	/**
 	 * @brief pf_server_config_print Print the configuration to stdout
@@ -180,7 +180,8 @@ extern "C"
 	 *
 	 * @return The number of required plugins configured.
 	 */
-	FREERDP_API size_t pf_config_required_plugins_count(const proxyConfig* config);
+	FREERDP_API WINPR_ATTR_NODISCARD size_t
+	pf_config_required_plugins_count(const proxyConfig* config);
 
 	/**
 	 * @brief pf_config_required_plugin
@@ -189,7 +190,8 @@ extern "C"
 	 *
 	 * @return The name of the plugin or NULL.
 	 */
-	FREERDP_API const char* pf_config_required_plugin(const proxyConfig* config, size_t index);
+	FREERDP_API WINPR_ATTR_NODISCARD const char*
+	pf_config_required_plugin(const proxyConfig* config, size_t index);
 
 	/**
 	 * @brief pf_config_modules_count
@@ -198,7 +200,7 @@ extern "C"
 	 *
 	 * @return The number of proxy modules configured.
 	 */
-	FREERDP_API size_t pf_config_modules_count(const proxyConfig* config);
+	FREERDP_API WINPR_ATTR_NODISCARD size_t pf_config_modules_count(const proxyConfig* config);
 
 	/**
 	 * @brief pf_config_modules
@@ -206,7 +208,7 @@ extern "C"
 	 *
 	 * @return An array of strings of size pf_config_modules_count with the module names.
 	 */
-	FREERDP_API const char** pf_config_modules(const proxyConfig* config);
+	FREERDP_API WINPR_ATTR_NODISCARD const char** pf_config_modules(const proxyConfig* config);
 
 	/**
 	 * @brief pf_config_clone Create a copy of the configuration
@@ -215,7 +217,8 @@ extern "C"
 	 *
 	 * @return TRUE for success, FALSE otherwise
 	 */
-	FREERDP_API BOOL pf_config_clone(proxyConfig** dst, const proxyConfig* config);
+	FREERDP_API WINPR_ATTR_NODISCARD BOOL pf_config_clone(proxyConfig** dst,
+	                                                      const proxyConfig* config);
 
 	/**
 	 * @brief pf_config_plugin Register a proxy plugin handling event filtering
@@ -226,7 +229,8 @@ extern "C"
 	 *
 	 * @return  TRUE for success, FALSE for failure
 	 */
-	FREERDP_API BOOL pf_config_plugin(proxyPluginsManager* plugins_manager, void* userdata);
+	FREERDP_API WINPR_ATTR_NODISCARD BOOL pf_config_plugin(proxyPluginsManager* plugins_manager,
+	                                                       void* userdata);
 
 	/**
 	 * @brief pf_config_get get a value for a section/key
@@ -236,8 +240,8 @@ extern "C"
 	 *
 	 * @return A pointer to the value for \b section/key or \b NULL if not found
 	 */
-	FREERDP_API const char* pf_config_get(const proxyConfig* config, const char* section,
-	                                      const char* key);
+	FREERDP_API WINPR_ATTR_NODISCARD const char*
+	pf_config_get(const proxyConfig* config, const char* section, const char* key);
 
 #ifdef __cplusplus
 }

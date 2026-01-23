@@ -43,23 +43,25 @@ extern "C"
 	FREERDP_API void freerdp_certificate_store_free(rdpCertificateStore* store);
 
 	WINPR_ATTR_MALLOC(freerdp_certificate_store_free, 1)
-	FREERDP_API rdpCertificateStore* freerdp_certificate_store_new(const rdpSettings* settings);
+	FREERDP_API WINPR_ATTR_NODISCARD rdpCertificateStore*
+	freerdp_certificate_store_new(const rdpSettings* settings);
 
-	FREERDP_API freerdp_certificate_store_result freerdp_certificate_store_contains_data(
-	    rdpCertificateStore* store, const rdpCertificateData* data);
+	FREERDP_API WINPR_ATTR_NODISCARD freerdp_certificate_store_result
+	freerdp_certificate_store_contains_data(rdpCertificateStore* store,
+	                                        const rdpCertificateData* data);
 
 	WINPR_ATTR_MALLOC(freerdp_certificate_data_free, 1)
-	FREERDP_API rdpCertificateData*
+	FREERDP_API WINPR_ATTR_NODISCARD rdpCertificateData*
 	freerdp_certificate_store_load_data(rdpCertificateStore* store, const char* host, UINT16 port);
 
-	FREERDP_API BOOL freerdp_certificate_store_save_data(rdpCertificateStore* store,
-	                                                     const rdpCertificateData* data);
-	FREERDP_API BOOL freerdp_certificate_store_remove_data(rdpCertificateStore* store,
-	                                                       const rdpCertificateData* data);
+	FREERDP_API WINPR_ATTR_NODISCARD BOOL
+	freerdp_certificate_store_save_data(rdpCertificateStore* store, const rdpCertificateData* data);
+	FREERDP_API WINPR_ATTR_NODISCARD BOOL freerdp_certificate_store_remove_data(
+	    rdpCertificateStore* store, const rdpCertificateData* data);
 
-	FREERDP_API const char*
+	FREERDP_API WINPR_ATTR_NODISCARD const char*
 	freerdp_certificate_store_get_certs_path(const rdpCertificateStore* store);
-	FREERDP_API const char*
+	FREERDP_API WINPR_ATTR_NODISCARD const char*
 	freerdp_certificate_store_get_hosts_path(const rdpCertificateStore* store);
 
 	/** Query the certificate store path
@@ -72,8 +74,9 @@ extern "C"
 	 *
 	 *  @return The certificate store file path or \b NULL
 	 */
-	FREERDP_API char* freerdp_certificate_store_get_cert_path(const rdpCertificateStore* store,
-	                                                          const char* host, UINT16 port);
+	FREERDP_API WINPR_ATTR_NODISCARD char*
+	freerdp_certificate_store_get_cert_path(const rdpCertificateStore* store, const char* host,
+	                                        UINT16 port);
 
 #ifdef __cplusplus
 }

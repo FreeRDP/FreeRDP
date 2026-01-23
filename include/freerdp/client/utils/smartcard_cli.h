@@ -28,7 +28,7 @@ extern "C"
 {
 #endif /* __cplusplus */
 
-	FREERDP_API BOOL freerdp_smartcard_list(const rdpSettings* settings);
+	FREERDP_API WINPR_ATTR_NODISCARD BOOL freerdp_smartcard_list(const rdpSettings* settings);
 
 #ifdef __cplusplus
 }

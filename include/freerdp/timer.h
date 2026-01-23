@@ -82,9 +82,9 @@ extern "C"
 	 *  @return A new timer ID or \b 0 in case of failure
 	 *  @since version 3.16.0
 	 */
-	FREERDP_API FreeRDP_TimerID freerdp_timer_add(rdpContext* context, uint64_t intervalNS,
-	                                              FreeRDP_TimerCallback callback, void* userdata,
-	                                              bool mainloop);
+	FREERDP_API WINPR_ATTR_NODISCARD FreeRDP_TimerID
+	freerdp_timer_add(rdpContext* context, uint64_t intervalNS, FreeRDP_TimerCallback callback,
+	                  void* userdata, bool mainloop);
 
 	/** @brief Remove a timer from the list of running timers
 	 *
@@ -94,7 +94,8 @@ extern "C"
 	 *  @return \b true if the timer was removed, \b false otherwise
 	 *  @since version 3.16.0
 	 */
-	FREERDP_API bool freerdp_timer_remove(rdpContext* context, FreeRDP_TimerID id);
+	FREERDP_API WINPR_ATTR_NODISCARD bool freerdp_timer_remove(rdpContext* context,
+	                                                           FreeRDP_TimerID id);
 
 #ifdef __cplusplus
 }

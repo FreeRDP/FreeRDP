@@ -32,41 +32,44 @@ extern "C"
 	typedef struct rdp_assistance_file rdpAssistanceFile;
 
 	WINPR_ATTR_MALLOC(free, 1)
-	FREERDP_API BYTE* freerdp_assistance_hex_string_to_bin(const void* str, size_t* size);
+	FREERDP_API WINPR_ATTR_NODISCARD BYTE* freerdp_assistance_hex_string_to_bin(const void* str,
+	                                                                            size_t* size);
 
 	WINPR_ATTR_MALLOC(free, 1)
-	FREERDP_API char* freerdp_assistance_bin_to_hex_string(const void* data, size_t size);
+	FREERDP_API WINPR_ATTR_NODISCARD char* freerdp_assistance_bin_to_hex_string(const void* data,
+	                                                                            size_t size);
 
 	WINPR_ATTR_MALLOC(free, 1)
-	FREERDP_API char* freerdp_assistance_generate_pass_stub(DWORD flags);
+	FREERDP_API WINPR_ATTR_NODISCARD char* freerdp_assistance_generate_pass_stub(DWORD flags);
 
 	WINPR_ATTR_MALLOC(free, 1)
-	FREERDP_API char* freerdp_assistance_construct_expert_blob(const char* name, const char* pass);
+	FREERDP_API WINPR_ATTR_NODISCARD char*
+	freerdp_assistance_construct_expert_blob(const char* name, const char* pass);
 
 	WINPR_ATTR_MALLOC(free, 1)
-	FREERDP_API BYTE* freerdp_assistance_encrypt_pass_stub(const char* password,
-	                                                       const char* passStub,
-	                                                       size_t* pEncryptedSize);
+	FREERDP_API WINPR_ATTR_NODISCARD BYTE*
+	freerdp_assistance_encrypt_pass_stub(const char* password, const char* passStub,
+	                                     size_t* pEncryptedSize);
 
-	FREERDP_API int freerdp_assistance_set_connection_string2(rdpAssistanceFile* file,
-	                                                          const char* string,
-	                                                          const char* password);
+	FREERDP_API WINPR_ATTR_NODISCARD int
+	freerdp_assistance_set_connection_string2(rdpAssistanceFile* file, const char* string,
+	                                          const char* password);
 
-	FREERDP_API int freerdp_assistance_parse_file_buffer(rdpAssistanceFile* file,
-	                                                     const char* buffer, size_t size,
-	                                                     const char* password);
-	FREERDP_API int freerdp_assistance_parse_file(rdpAssistanceFile* file, const char* name,
-	                                              const char* password);
+	FREERDP_API WINPR_ATTR_NODISCARD int
+	freerdp_assistance_parse_file_buffer(rdpAssistanceFile* file, const char* buffer, size_t size,
+	                                     const char* password);
+	FREERDP_API WINPR_ATTR_NODISCARD int
+	freerdp_assistance_parse_file(rdpAssistanceFile* file, const char* name, const char* password);
 
-	FREERDP_API BOOL freerdp_assistance_populate_settings_from_assistance_file(
+	FREERDP_API WINPR_ATTR_NODISCARD BOOL freerdp_assistance_populate_settings_from_assistance_file(
 	    rdpAssistanceFile* file, rdpSettings* settings);
-	FREERDP_API BOOL freerdp_assistance_get_encrypted_pass_stub(rdpAssistanceFile* file,
-	                                                            const char** pwd, size_t* size);
+	FREERDP_API WINPR_ATTR_NODISCARD BOOL freerdp_assistance_get_encrypted_pass_stub(
+	    rdpAssistanceFile* file, const char** pwd, size_t* size);
 
 	FREERDP_API void freerdp_assistance_file_free(rdpAssistanceFile* file);
 
 	WINPR_ATTR_MALLOC(freerdp_assistance_file_free, 1)
-	FREERDP_API rdpAssistanceFile* freerdp_assistance_file_new(void);
+	FREERDP_API WINPR_ATTR_NODISCARD rdpAssistanceFile* freerdp_assistance_file_new(void);
 
 	FREERDP_API void freerdp_assistance_print_file(rdpAssistanceFile* file, wLog* log, DWORD level);
 

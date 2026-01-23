@@ -86,9 +86,8 @@ extern "C"
 		UINT32 outputBufferLength; /** @since version 3.13.0 */
 	} SMARTCARD_OPERATION;
 
-	FREERDP_API LONG smartcard_irp_device_control_decode(wStream* s, UINT32 CompletionId,
-	                                                     UINT32 FileId,
-	                                                     SMARTCARD_OPERATION* operation);
+	FREERDP_API WINPR_ATTR_NODISCARD LONG smartcard_irp_device_control_decode(
+	    wStream* s, UINT32 CompletionId, UINT32 FileId, SMARTCARD_OPERATION* operation);
 	FREERDP_API void smartcard_operation_free(SMARTCARD_OPERATION* op, BOOL allocated);
 
 #ifdef __cplusplus

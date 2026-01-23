@@ -45,12 +45,13 @@ extern "C"
 		UINT32 Version;
 	} RDPDR_CAPABILITY_HEADER;
 
-	FREERDP_API const char* rdpdr_component_string(UINT16 component);
-	FREERDP_API const char* rdpdr_packetid_string(UINT16 packetid);
-	FREERDP_API const char* rdpdr_irp_string(UINT32 major);
-	FREERDP_API const char* rdpdr_cap_type_string(UINT16 capability);
+	FREERDP_API WINPR_ATTR_NODISCARD const char* rdpdr_component_string(UINT16 component);
+	FREERDP_API WINPR_ATTR_NODISCARD const char* rdpdr_packetid_string(UINT16 packetid);
+	FREERDP_API WINPR_ATTR_NODISCARD const char* rdpdr_irp_string(UINT32 major);
+	FREERDP_API WINPR_ATTR_NODISCARD const char* rdpdr_cap_type_string(UINT16 capability);
 
-	FREERDP_API LONG scard_log_status_error(const char* tag, const char* what, LONG status);
+	FREERDP_API WINPR_ATTR_NODISCARD LONG scard_log_status_error(const char* tag, const char* what,
+	                                                             LONG status);
 
 	/** @brief log a smartcard related issue with a wLog
 	 *
@@ -61,20 +62,24 @@ extern "C"
 	 *  @return The \ref status logged
 	 *  @since version 3.16.0
 	 */
-	FREERDP_API LONG scard_log_status_error_wlog(wLog* log, const char* what, LONG status);
-	FREERDP_API const char* scard_get_ioctl_string(UINT32 ioControlCode, BOOL funcName);
+	FREERDP_API WINPR_ATTR_NODISCARD LONG scard_log_status_error_wlog(wLog* log, const char* what,
+	                                                                  LONG status);
+	FREERDP_API WINPR_ATTR_NODISCARD const char* scard_get_ioctl_string(UINT32 ioControlCode,
+	                                                                    BOOL funcName);
 
-	FREERDP_API BOOL rdpdr_write_iocompletion_header(wStream* out, UINT32 DeviceId,
-	                                                 UINT32 CompletionId, NTSTATUS ioStatus);
+	FREERDP_API WINPR_ATTR_NODISCARD BOOL rdpdr_write_iocompletion_header(wStream* out,
+	                                                                      UINT32 DeviceId,
+	                                                                      UINT32 CompletionId,
+	                                                                      NTSTATUS ioStatus);
 
 	FREERDP_API void rdpdr_dump_received_packet(wLog* log, DWORD lvl, wStream* out,
 	                                            const char* custom);
 	FREERDP_API void rdpdr_dump_send_packet(wLog* log, DWORD lvl, wStream* out, const char* custom);
 
-	FREERDP_API UINT rdpdr_read_capset_header(wLog* log, wStream* s,
-	                                          RDPDR_CAPABILITY_HEADER* header);
-	FREERDP_API UINT rdpdr_write_capset_header(wLog* log, wStream* s,
-	                                           const RDPDR_CAPABILITY_HEADER* header);
+	FREERDP_API WINPR_ATTR_NODISCARD UINT rdpdr_read_capset_header(wLog* log, wStream* s,
+	                                                               RDPDR_CAPABILITY_HEADER* header);
+	FREERDP_API WINPR_ATTR_NODISCARD UINT
+	rdpdr_write_capset_header(wLog* log, wStream* s, const RDPDR_CAPABILITY_HEADER* header);
 
 	/** @brief convert a constant of type \ref RDPDR_CAPS_IRP_MJ to string
 	 *
@@ -84,7 +89,7 @@ extern "C"
 	 *
 	 *  @since version 3.21.0
 	 */
-	FREERDP_API const char* rdpdr_irp_val2str(UINT32 ioCode1);
+	FREERDP_API WINPR_ATTR_NODISCARD const char* rdpdr_irp_val2str(UINT32 ioCode1);
 
 	/** @brief convert a mask of \ref RDPDR_CAPS_IRP_MJ type values to string
 	 *
@@ -96,7 +101,8 @@ extern "C"
 	 *
 	 *  @since version 3.21.0
 	 */
-	FREERDP_API const char* rdpdr_irp_mask2str(UINT32 ioCode1Mask, char* buffer, size_t len);
+	FREERDP_API WINPR_ATTR_NODISCARD const char* rdpdr_irp_mask2str(UINT32 ioCode1Mask,
+	                                                                char* buffer, size_t len);
 
 #ifdef __cplusplus
 }

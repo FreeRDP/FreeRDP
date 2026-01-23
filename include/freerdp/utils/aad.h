@@ -76,8 +76,8 @@ extern "C"
 	 * @return The token string or \b NULL
 	 */
 	WINPR_ATTR_MALLOC(free, 1)
-	FREERDP_API char* freerdp_utils_aad_get_access_token(wLog* log, const char* data,
-	                                                     size_t length);
+	FREERDP_API WINPR_ATTR_NODISCARD char*
+	freerdp_utils_aad_get_access_token(wLog* log, const char* data, size_t length);
 
 	/** Helper to stringify \ref AAD_WELLKNOWN_VALUES enum
 	 *
@@ -86,7 +86,8 @@ extern "C"
 	 *  @return The string representation of the enum value
 	 *  @since version 3.10.0
 	 */
-	FREERDP_API const char* freerdp_utils_aad_wellknwon_value_name(AAD_WELLKNOWN_VALUES which);
+	FREERDP_API WINPR_ATTR_NODISCARD const char*
+	freerdp_utils_aad_wellknwon_value_name(AAD_WELLKNOWN_VALUES which);
 
 	/** Helper to extract a string from AAD::wellknown JSON
 	 *
@@ -96,8 +97,8 @@ extern "C"
 	 *
 	 *  @since version 3.10.0
 	 */
-	FREERDP_API const char* freerdp_utils_aad_get_wellknown_string(rdpContext* context,
-	                                                               AAD_WELLKNOWN_VALUES which);
+	FREERDP_API WINPR_ATTR_NODISCARD const char*
+	freerdp_utils_aad_get_wellknown_string(rdpContext* context, AAD_WELLKNOWN_VALUES which);
 
 	/** Helper to extract a string from AAD::wellknown JSON
 	 *
@@ -107,8 +108,8 @@ extern "C"
 	 *
 	 *  @since version 3.10.0
 	 */
-	FREERDP_API const char* freerdp_utils_aad_get_wellknown_custom_string(rdpContext* context,
-	                                                                      const char* which);
+	FREERDP_API WINPR_ATTR_NODISCARD const char*
+	freerdp_utils_aad_get_wellknown_custom_string(rdpContext* context, const char* which);
 
 	/** Helper to extract a \b WINPR_JSON object from AAD::wellknown JSON
 	 *
@@ -118,8 +119,8 @@ extern "C"
 	 *
 	 *  @since version 3.10.0
 	 */
-	FREERDP_API WINPR_JSON* freerdp_utils_aad_get_wellknown_object(rdpContext* context,
-	                                                               AAD_WELLKNOWN_VALUES which);
+	FREERDP_API WINPR_ATTR_NODISCARD WINPR_JSON*
+	freerdp_utils_aad_get_wellknown_object(rdpContext* context, AAD_WELLKNOWN_VALUES which);
 
 	/** Helper to extract a \b WINPR_JSON object from AAD::wellknown JSON
 	 *
@@ -129,8 +130,8 @@ extern "C"
 	 *
 	 *  @since version 3.10.0
 	 */
-	FREERDP_API WINPR_JSON* freerdp_utils_aad_get_wellknown_custom_object(rdpContext* context,
-	                                                                      const char* which);
+	FREERDP_API WINPR_ATTR_NODISCARD WINPR_JSON*
+	freerdp_utils_aad_get_wellknown_custom_object(rdpContext* context, const char* which);
 
 	/** Helper to fetch a \b WINPR_JSON object from AAD/ARM::wellknown JSON
 	 *
@@ -142,8 +143,8 @@ extern "C"
 	 *  @since version 3.10.0
 	 */
 	WINPR_ATTR_MALLOC(WINPR_JSON_Delete, 1)
-	FREERDP_API WINPR_JSON* freerdp_utils_aad_get_wellknown(wLog* log, const char* base,
-	                                                        const char* tenantid);
+	FREERDP_API WINPR_ATTR_NODISCARD WINPR_JSON*
+	freerdp_utils_aad_get_wellknown(wLog* log, const char* base, const char* tenantid);
 
 #ifdef __cplusplus
 }

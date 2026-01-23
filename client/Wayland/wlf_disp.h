@@ -25,8 +25,10 @@
 
 #include "wlfreerdp.h"
 
-FREERDP_API BOOL wlf_disp_init(wlfDispContext* xfDisp, DispClientContext* disp);
-FREERDP_API BOOL wlf_disp_uninit(wlfDispContext* xfDisp, DispClientContext* disp);
+FREERDP_API WINPR_ATTR_NODISCARD BOOL wlf_disp_init(wlfDispContext* xfDisp,
+                                                    DispClientContext* disp);
+FREERDP_API WINPR_ATTR_NODISCARD BOOL wlf_disp_uninit(wlfDispContext* xfDisp,
+                                                      DispClientContext* disp);
 
 wlfDispContext* wlf_disp_new(wlfContext* wlc);
 void wlf_disp_free(wlfDispContext* disp);

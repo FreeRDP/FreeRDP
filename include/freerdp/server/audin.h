@@ -156,7 +156,7 @@ extern "C"
 	FREERDP_API void audin_server_context_free(audin_server_context* context);
 
 	WINPR_ATTR_MALLOC(audin_server_context_free, 1)
-	FREERDP_API audin_server_context* audin_server_context_new(HANDLE vcm);
+	FREERDP_API WINPR_ATTR_NODISCARD audin_server_context* audin_server_context_new(HANDLE vcm);
 
 	/** \brief sets the supported audio formats for AUDIN server channel context.
 	 *
@@ -166,10 +166,11 @@ extern "C"
 	 *
 	 *  \return \b TRUE if successful and at least one format is supported, \b FALSE otherwise.
 	 */
-	FREERDP_API BOOL audin_server_set_formats(audin_server_context* context, SSIZE_T count,
-	                                          const AUDIO_FORMAT* formats);
+	FREERDP_API WINPR_ATTR_NODISCARD BOOL audin_server_set_formats(audin_server_context* context,
+	                                                               SSIZE_T count,
+	                                                               const AUDIO_FORMAT* formats);
 
-	FREERDP_API const AUDIO_FORMAT*
+	FREERDP_API WINPR_ATTR_NODISCARD const AUDIO_FORMAT*
 	audin_server_get_negotiated_format(const audin_server_context* context);
 
 #ifdef __cplusplus

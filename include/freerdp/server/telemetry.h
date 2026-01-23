@@ -102,7 +102,8 @@ extern "C"
 	FREERDP_API void telemetry_server_context_free(TelemetryServerContext* context);
 
 	WINPR_ATTR_MALLOC(telemetry_server_context_free, 1)
-	FREERDP_API TelemetryServerContext* telemetry_server_context_new(HANDLE vcm);
+	FREERDP_API WINPR_ATTR_NODISCARD TelemetryServerContext*
+	telemetry_server_context_new(HANDLE vcm);
 
 #ifdef __cplusplus
 }
