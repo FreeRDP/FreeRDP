@@ -159,14 +159,13 @@ static RDPINPUT_CONTACT_POINT* rdpei_contact(RDPEI_PLUGIN* rdpei, INT32 external
  */
 static UINT rdpei_add_frame(RdpeiClientContext* context)
 {
-	RDPEI_PLUGIN* rdpei = NULL;
 	RDPINPUT_TOUCH_FRAME frame = { 0 };
 	RDPINPUT_CONTACT_DATA contacts[MAX_CONTACTS] = { 0 };
 
 	if (!context || !context->handle)
 		return ERROR_INTERNAL_ERROR;
 
-	rdpei = (RDPEI_PLUGIN*)context->handle;
+	RDPEI_PLUGIN* rdpei = (RDPEI_PLUGIN*)context->handle;
 	frame.contacts = contacts;
 
 	for (UINT16 i = 0; i < rdpei->maxTouchContacts; i++)
@@ -221,8 +220,6 @@ static UINT rdpei_add_frame(RdpeiClientContext* context)
 static UINT rdpei_send_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStream* s, UINT16 eventId,
                            size_t pduLength)
 {
-	UINT status = 0;
-
 	if (!callback || !s || !callback->channel || !callback->channel->Write)
 		return ERROR_INTERNAL_ERROR;
 
@@ -237,8 +234,8 @@ static UINT rdpei_send_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStream* s, UINT1
 	Stream_Write_UINT16(s, eventId);   /* eventId (2 bytes) */
 	Stream_Write_UINT32(s, (UINT32)pduLength); /* pduLength (4 bytes) */
 	Stream_SetPosition(s, Stream_Length(s));
-	status = callback->channel->Write(callback->channel, (UINT32)Stream_Length(s), Stream_Buffer(s),
-	                                  NULL);
+	const UINT status = callback->channel->Write(callback->channel, (UINT32)Stream_Length(s),
+	                                             Stream_Buffer(s), NULL);
 #ifdef WITH_DEBUG_RDPEI
 	WLog_Print(rdpei->base.log, WLOG_DEBUG,
 	           "rdpei_send_pdu: eventId: %" PRIu16 " (%s) length: %" PRIu32 " status: %" PRIu32 "",
@@ -303,9 +300,6 @@ static UINT rdpei_write_pen_frame(wStream* s, const RDPINPUT_PEN_FRAME* frame)
 static UINT rdpei_send_pen_event_pdu(GENERIC_CHANNEL_CALLBACK* callback, size_t frameOffset,
                                      const RDPINPUT_PEN_FRAME* frames, size_t count)
 {
-	UINT status = 0;
-	wStream* s = NULL;
-
 	WINPR_ASSERT(callback);
 
 	if (frameOffset > UINT32_MAX)
@@ -320,7 +314,7 @@ static UINT rdpei_send_pen_event_pdu(GENERIC_CHANNEL_CALLBACK* callback, size_t 
 	if (!frames || (count == 0))
 		return ERROR_INTERNAL_ERROR;
 
-	s = Stream_New(NULL, 64);
+	wStream* s = Stream_New(NULL, 64);
 
 	if (!s)
 	{
@@ -339,7 +333,8 @@ static UINT rdpei_send_pen_event_pdu(GENERIC_CHANNEL_CALLBACK* callback, size_t 
 
 	for (size_t x = 0; x < count; x++)
 	{
-		if ((status = rdpei_write_pen_frame(s, &frames[x])))
+		const UINT status = rdpei_write_pen_frame(s, &frames[x]);
+		if (status)
 		{
 			WLog_Print(rdpei->base.log, WLOG_ERROR,
 			           "rdpei_write_pen_frame failed with error %" PRIu32 "!", status);
@@ -349,7 +344,7 @@ static UINT rdpei_send_pen_event_pdu(GENERIC_CHANNEL_CALLBACK* callback, size_t 
 	}
 	Stream_SealLength(s);
 
-	status = rdpei_send_pdu(callback, s, EVENTID_PEN, Stream_Length(s));
+	const UINT status = rdpei_send_pdu(callback, s, EVENTID_PEN, Stream_Length(s));
 	Stream_Free(s, TRUE);
 	return status;
 }
@@ -357,13 +352,11 @@ static UINT rdpei_send_pen_event_pdu(GENERIC_CHANNEL_CALLBACK* callback, size_t 
 static UINT rdpei_send_pen_frame(RdpeiClientContext* context, RDPINPUT_PEN_FRAME* frame)
 {
 	const UINT64 currentTime = GetTickCount64();
-	RDPEI_PLUGIN* rdpei = NULL;
-	GENERIC_CHANNEL_CALLBACK* callback = NULL;
-	UINT error = 0;
 
 	if (!context)
 		return ERROR_INTERNAL_ERROR;
-	rdpei = (RDPEI_PLUGIN*)context->handle;
+
+	RDPEI_PLUGIN* rdpei = (RDPEI_PLUGIN*)context->handle;
 	if (!rdpei || !rdpei->base.listener_callback)
 		return ERROR_INTERNAL_ERROR;
 	if (!rdpei || !rdpei->rdpcontext)
@@ -371,7 +364,7 @@ static UINT rdpei_send_pen_frame(RdpeiClientContext* context, RDPINPUT_PEN_FRAME
 	if (freerdp_settings_get_bool(rdpei->rdpcontext->settings, FreeRDP_SuspendInput))
 		return CHANNEL_RC_OK;
 
-	callback = rdpei->base.listener_callback->channel_callback;
+	GENERIC_CHANNEL_CALLBACK* callback = rdpei->base.listener_callback->channel_callback;
 	/* Just ignore the event if the channel is not connected */
 	if (!callback)
 		return CHANNEL_RC_OK;
@@ -388,7 +381,7 @@ static UINT rdpei_send_pen_frame(RdpeiClientContext* context, RDPINPUT_PEN_FRAME
 	}
 
 	const size_t off = WINPR_ASSERTING_INT_CAST(size_t, frame->frameOffset);
-	error = rdpei_send_pen_event_pdu(callback, off, frame, 1);
+	const UINT error = rdpei_send_pen_event_pdu(callback, off, frame, 1);
 	if (error)
 		return error;
 
@@ -398,14 +391,13 @@ static UINT rdpei_send_pen_frame(RdpeiClientContext* context, RDPINPUT_PEN_FRAME
 
 static UINT rdpei_add_pen_frame(RdpeiClientContext* context)
 {
-	RDPEI_PLUGIN* rdpei = NULL;
 	RDPINPUT_PEN_FRAME penFrame = { 0 };
 	RDPINPUT_PEN_CONTACT penContacts[MAX_PEN_CONTACTS] = { 0 };
 
 	if (!context || !context->handle)
 		return ERROR_INTERNAL_ERROR;
 
-	rdpei = (RDPEI_PLUGIN*)context->handle;
+	RDPEI_PLUGIN* rdpei = (RDPEI_PLUGIN*)context->handle;
 
 	penFrame.contacts = penContacts;
 
@@ -495,10 +487,8 @@ static BOOL rdpei_poll_run(rdpContext* context, void* userdata)
 
 static DWORD WINAPI rdpei_periodic_update(LPVOID arg)
 {
-	DWORD status = 0;
 	RDPEI_PLUGIN* rdpei = (RDPEI_PLUGIN*)arg;
 	UINT error = CHANNEL_RC_OK;
-	RdpeiClientContext* context = NULL;
 
 	if (!rdpei)
 	{
@@ -506,9 +496,7 @@ static DWORD WINAPI rdpei_periodic_update(LPVOID arg)
 		goto out;
 	}
 
-	context = rdpei->context;
-
-	if (!context)
+	if (!rdpei->context)
 	{
 		error = ERROR_INVALID_PARAMETER;
 		goto out;
@@ -516,7 +504,7 @@ static DWORD WINAPI rdpei_periodic_update(LPVOID arg)
 
 	while (rdpei->running)
 	{
-		status = WaitForSingleObject(rdpei->event, 20);
+		const DWORD status = WaitForSingleObject(rdpei->event, 20);
 
 		if (status == WAIT_FAILED)
 		{
@@ -549,24 +537,19 @@ out:
  */
 static UINT rdpei_send_cs_ready_pdu(GENERIC_CHANNEL_CALLBACK* callback)
 {
-	UINT status = 0;
-	wStream* s = NULL;
-	UINT32 flags = 0;
-	UINT32 pduLength = 0;
-	RDPEI_PLUGIN* rdpei = NULL;
-
 	if (!callback || !callback->plugin)
 		return ERROR_INTERNAL_ERROR;
-	rdpei = (RDPEI_PLUGIN*)callback->plugin;
 
-	flags |= CS_READY_FLAGS_SHOW_TOUCH_VISUALS & rdpei->context->clientFeaturesMask;
+	RDPEI_PLUGIN* rdpei = (RDPEI_PLUGIN*)callback->plugin;
+
+	UINT32 flags = CS_READY_FLAGS_SHOW_TOUCH_VISUALS & rdpei->context->clientFeaturesMask;
 	if (rdpei->version > RDPINPUT_PROTOCOL_V10)
 		flags |= CS_READY_FLAGS_DISABLE_TIMESTAMP_INJECTION & rdpei->context->clientFeaturesMask;
 	if (rdpei->features & SC_READY_MULTIPEN_INJECTION_SUPPORTED)
 		flags |= CS_READY_FLAGS_ENABLE_MULTIPEN_INJECTION & rdpei->context->clientFeaturesMask;
 
-	pduLength = RDPINPUT_HEADER_LENGTH + 10;
-	s = Stream_New(NULL, pduLength);
+	UINT32 pduLength = RDPINPUT_HEADER_LENGTH + 10;
+	wStream* s = Stream_New(NULL, pduLength);
 
 	if (!s)
 	{
@@ -579,7 +562,8 @@ static UINT rdpei_send_cs_ready_pdu(GENERIC_CHANNEL_CALLBACK* callback)
 	Stream_Write_UINT32(s, rdpei->version);          /* protocolVersion (4 bytes) */
 	Stream_Write_UINT16(s, rdpei->maxTouchContacts); /* maxTouchContacts (2 bytes) */
 	Stream_SealLength(s);
-	status = rdpei_send_pdu(callback, s, EVENTID_CS_READY, pduLength);
+
+	const UINT status = rdpei_send_pdu(callback, s, EVENTID_CS_READY, pduLength);
 	Stream_Free(s, TRUE);
 	return status;
 }
@@ -624,7 +608,6 @@ static INT16 bounded(INT32 val)
 static UINT rdpei_write_touch_frame(wLog* log, wStream* s, RDPINPUT_TOUCH_FRAME* frame)
 {
 	int rectSize = 2;
-	RDPINPUT_CONTACT_DATA* contact = NULL;
 	if (!s || !frame)
 		return ERROR_INTERNAL_ERROR;
 #ifdef WITH_DEBUG_RDPEI
@@ -648,7 +631,8 @@ static UINT rdpei_write_touch_frame(wLog* log, wStream* s, RDPINPUT_TOUCH_FRAME*
 
 	for (UINT32 index = 0; index < frame->contactCount; index++)
 	{
-		contact = &frame->contacts[index];
+		RDPINPUT_CONTACT_DATA* contact = &frame->contacts[index];
+
 		contact->fieldsPresent |= CONTACT_DATA_CONTACTRECT_PRESENT;
 		contact->contactRectLeft = bounded(contact->x - rectSize);
 		contact->contactRectTop = bounded(contact->y - rectSize);
@@ -710,8 +694,6 @@ static UINT rdpei_write_touch_frame(wLog* log, wStream* s, RDPINPUT_TOUCH_FRAME*
 static UINT rdpei_send_touch_event_pdu(GENERIC_CHANNEL_CALLBACK* callback,
                                        RDPINPUT_TOUCH_FRAME* frame)
 {
-	UINT status = 0;
-
 	WINPR_ASSERT(callback);
 
 	RDPEI_PLUGIN* rdpei = (RDPEI_PLUGIN*)callback->plugin;
@@ -741,17 +723,18 @@ static UINT rdpei_send_touch_event_pdu(GENERIC_CHANNEL_CALLBACK* callback,
 	    s, (UINT32)frame->frameOffset); /* encodeTime (FOUR_BYTE_UNSIGNED_INTEGER) */
 	rdpei_write_2byte_unsigned(s, 1);   /* (frameCount) TWO_BYTE_UNSIGNED_INTEGER */
 
-	status = rdpei_write_touch_frame(rdpei->base.log, s, frame);
-	if (status)
+	const UINT rc = rdpei_write_touch_frame(rdpei->base.log, s, frame);
+	if (rc)
 	{
 		WLog_Print(rdpei->base.log, WLOG_ERROR,
-		           "rdpei_write_touch_frame failed with error %" PRIu32 "!", status);
+		           "rdpei_write_touch_frame failed with error %" PRIu32 "!", rc);
 		Stream_Free(s, TRUE);
-		return status;
+		return rc;
 	}
 
 	Stream_SealLength(s);
-	status = rdpei_send_pdu(callback, s, EVENTID_TOUCH, Stream_Length(s));
+
+	const UINT status = rdpei_send_pdu(callback, s, EVENTID_TOUCH, Stream_Length(s));
 	Stream_Free(s, TRUE);
 	return status;
 }
@@ -969,19 +952,19 @@ static UINT rdpei_on_close(IWTSVirtualChannelCallback* pChannelCallback)
 
 static UINT32 rdpei_get_version(RdpeiClientContext* context)
 {
-	RDPEI_PLUGIN* rdpei = NULL;
 	if (!context || !context->handle)
 		return 0;
-	rdpei = (RDPEI_PLUGIN*)context->handle;
+
+	RDPEI_PLUGIN* rdpei = (RDPEI_PLUGIN*)context->handle;
 	return rdpei->version;
 }
 
 static UINT32 rdpei_get_features(RdpeiClientContext* context)
 {
-	RDPEI_PLUGIN* rdpei = NULL;
 	if (!context || !context->handle)
 		return 0;
-	rdpei = (RDPEI_PLUGIN*)context->handle;
+
+	RDPEI_PLUGIN* rdpei = (RDPEI_PLUGIN*)context->handle;
 	return rdpei->features;
 }
 
@@ -994,10 +977,8 @@ UINT rdpei_send_frame(RdpeiClientContext* context, RDPINPUT_TOUCH_FRAME* frame)
 {
 	UINT64 currentTime = GetTickCount64();
 	RDPEI_PLUGIN* rdpei = (RDPEI_PLUGIN*)context->handle;
-	GENERIC_CHANNEL_CALLBACK* callback = NULL;
-	UINT error = 0;
 
-	callback = rdpei->base.listener_callback->channel_callback;
+	GENERIC_CHANNEL_CALLBACK* callback = rdpei->base.listener_callback->channel_callback;
 
 	/* Just ignore the event if the channel is not connected */
 	if (!callback)
@@ -1014,7 +995,8 @@ UINT rdpei_send_frame(RdpeiClientContext* context, RDPINPUT_TOUCH_FRAME* frame)
 		frame->frameOffset = rdpei->currentFrameTime - rdpei->previousFrameTime;
 	}
 
-	if ((error = rdpei_send_touch_event_pdu(callback, frame)))
+	const UINT error = rdpei_send_touch_event_pdu(callback, frame);
+	if (error)
 	{
 		WLog_Print(rdpei->base.log, WLOG_ERROR,
 		           "rdpei_send_touch_event_pdu failed with error %" PRIu32 "!", error);
@@ -1032,15 +1014,13 @@ UINT rdpei_send_frame(RdpeiClientContext* context, RDPINPUT_TOUCH_FRAME* frame)
  */
 static UINT rdpei_add_contact(RdpeiClientContext* context, const RDPINPUT_CONTACT_DATA* contact)
 {
-	RDPINPUT_CONTACT_POINT* contactPoint = NULL;
-	RDPEI_PLUGIN* rdpei = NULL;
 	if (!context || !contact || !context->handle)
 		return ERROR_INTERNAL_ERROR;
 
-	rdpei = (RDPEI_PLUGIN*)context->handle;
+	RDPEI_PLUGIN* rdpei = (RDPEI_PLUGIN*)context->handle;
 
 	EnterCriticalSection(&rdpei->lock);
-	contactPoint = &rdpei->contactPoints[contact->contactId];
+	RDPINPUT_CONTACT_POINT* contactPoint = &rdpei->contactPoints[contact->contactId];
 
 	if (contactPoint->dirty && contactPoint->data.contactFlags != contact->contactFlags)
 		rdpei_add_frame(context);
@@ -1057,7 +1037,6 @@ static UINT rdpei_touch_process(RdpeiClientContext* context, INT32 externalId, U
                                 INT32 x, INT32 y, INT32* contactId, UINT32 fieldFlags, va_list ap)
 {
 	INT64 contactIdlocal = -1;
-	RDPINPUT_CONTACT_POINT* contactPoint = NULL;
 	UINT error = CHANNEL_RC_OK;
 
 	if (!context || !contactId || !context->handle)
@@ -1067,13 +1046,15 @@ static UINT rdpei_touch_process(RdpeiClientContext* context, INT32 externalId, U
 	/* Create a new contact point in an empty slot */
 	EnterCriticalSection(&rdpei->lock);
 	const BOOL begin = (contactFlags & RDPINPUT_CONTACT_FLAG_DOWN) != 0;
-	contactPoint = rdpei_contact(rdpei, externalId, !begin);
+	RDPINPUT_CONTACT_POINT* contactPoint = rdpei_contact(rdpei, externalId, !begin);
 	if (contactPoint)
 		contactIdlocal = contactPoint->contactId;
-	LeaveCriticalSection(&rdpei->lock);
 
 	if (contactIdlocal > UINT32_MAX)
-		return ERROR_INVALID_PARAMETER;
+	{
+		error = ERROR_INVALID_PARAMETER;
+		goto fail;
+	}
 
 	if (contactIdlocal >= 0)
 	{
@@ -1128,8 +1109,11 @@ static UINT rdpei_touch_process(RdpeiClientContext* context, INT32 externalId, U
 		error = context->AddContact(context, &contact);
 	}
 
+fail:
 	if (contactId)
 		*contactId = (INT32)contactIdlocal;
+
+	LeaveCriticalSection(&rdpei->lock);
 	return error;
 }
 
@@ -1255,22 +1239,21 @@ static RDPINPUT_PEN_CONTACT_POINT* rdpei_pen_contact(RDPEI_PLUGIN* rdpei, INT32 
 static UINT rdpei_add_pen(RdpeiClientContext* context, INT32 externalId,
                           const RDPINPUT_PEN_CONTACT* contact)
 {
-	RDPEI_PLUGIN* rdpei = NULL;
-	RDPINPUT_PEN_CONTACT_POINT* contactPoint = NULL;
-
 	if (!context || !contact || !context->handle)
 		return ERROR_INTERNAL_ERROR;
 
-	rdpei = (RDPEI_PLUGIN*)context->handle;
+	RDPEI_PLUGIN* rdpei = (RDPEI_PLUGIN*)context->handle;
 
 	EnterCriticalSection(&rdpei->lock);
-	contactPoint = rdpei_pen_contact(rdpei, externalId, TRUE);
+
+	RDPINPUT_PEN_CONTACT_POINT* contactPoint = rdpei_pen_contact(rdpei, externalId, TRUE);
 	if (contactPoint)
 	{
 		contactPoint->data = *contact;
 		contactPoint->dirty = TRUE;
 		(void)SetEvent(rdpei->event);
 	}
+
 	LeaveCriticalSection(&rdpei->lock);
 
 	return CHANNEL_RC_OK;
@@ -1280,13 +1263,12 @@ static UINT rdpei_pen_process(RdpeiClientContext* context, INT32 externalId, UIN
                               UINT32 fieldFlags, INT32 x, INT32 y, va_list ap)
 {
 	RDPINPUT_PEN_CONTACT_POINT* contactPoint = NULL;
-	RDPEI_PLUGIN* rdpei = NULL;
 	UINT error = CHANNEL_RC_OK;
 
 	if (!context || !context->handle)
 		return ERROR_INTERNAL_ERROR;
 
-	rdpei = (RDPEI_PLUGIN*)context->handle;
+	RDPEI_PLUGIN* rdpei = (RDPEI_PLUGIN*)context->handle;
 
 	EnterCriticalSection(&rdpei->lock);
 	// Start a new contact only when it is not active.
@@ -1299,7 +1281,7 @@ static UINT rdpei_pen_process(RdpeiClientContext* context, INT32 externalId, UIN
 			contactPoint = rdpei_pen_contact(rdpei, externalId, FALSE);
 		}
 	}
-	LeaveCriticalSection(&rdpei->lock);
+
 	if (contactPoint != NULL)
 	{
 		RDPINPUT_PEN_CONTACT contact = { 0 };
@@ -1338,6 +1320,8 @@ static UINT rdpei_pen_process(RdpeiClientContext* context, INT32 externalId, UIN
 
 		error = context->AddPen(context, externalId, &contact);
 	}
+
+	LeaveCriticalSection(&rdpei->lock);
 
 	return error;
 }
