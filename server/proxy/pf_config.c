@@ -59,6 +59,8 @@
 
 static const char* bool_str_true = "true";
 static const char* bool_str_false = "false";
+
+WINPR_ATTR_NODISCARD
 static const char* boolstr(BOOL rc)
 {
 	return rc ? bool_str_true : bool_str_false;
@@ -129,6 +131,7 @@ static char** pf_config_parse_comma_separated_list(const char* list, size_t* cou
 	return CommandLineParseCommaSeparatedValues(list, count);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL pf_config_get_uint16(wIniFile* ini, const char* section, const char* key,
                                  UINT16* result, BOOL required)
 {
@@ -154,6 +157,7 @@ static BOOL pf_config_get_uint16(wIniFile* ini, const char* section, const char*
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL pf_config_get_uint32(wIniFile* ini, const char* section, const char* key,
                                  UINT32* result, BOOL required)
 {
@@ -178,6 +182,7 @@ static BOOL pf_config_get_uint32(wIniFile* ini, const char* section, const char*
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL pf_config_get_bool(wIniFile* ini, const char* section, const char* key, BOOL fallback)
 {
 	int num_value = 0;
@@ -204,6 +209,7 @@ static BOOL pf_config_get_bool(wIniFile* ini, const char* section, const char* k
 	return FALSE;
 }
 
+WINPR_ATTR_NODISCARD
 static const char* pf_config_get_str(wIniFile* ini, const char* section, const char* key,
                                      BOOL required)
 {
@@ -221,6 +227,7 @@ static const char* pf_config_get_str(wIniFile* ini, const char* section, const c
 	return value;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL pf_config_load_server(wIniFile* ini, proxyConfig* config)
 {
 	WINPR_ASSERT(config);
@@ -241,6 +248,7 @@ static BOOL pf_config_load_server(wIniFile* ini, proxyConfig* config)
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL pf_config_load_target(wIniFile* ini, proxyConfig* config)
 {
 	const char* target_value = NULL;
@@ -298,6 +306,7 @@ static BOOL pf_config_load_target(wIniFile* ini, proxyConfig* config)
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL pf_config_load_channels(wIniFile* ini, proxyConfig* config)
 {
 	WINPR_ASSERT(config);
@@ -323,6 +332,7 @@ static BOOL pf_config_load_channels(wIniFile* ini, proxyConfig* config)
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL pf_config_load_input(wIniFile* ini, proxyConfig* config)
 {
 	WINPR_ASSERT(config);
@@ -332,6 +342,7 @@ static BOOL pf_config_load_input(wIniFile* ini, proxyConfig* config)
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL pf_config_load_security(wIniFile* ini, proxyConfig* config)
 {
 	WINPR_ASSERT(config);
@@ -353,6 +364,7 @@ static BOOL pf_config_load_security(wIniFile* ini, proxyConfig* config)
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL pf_config_load_modules(wIniFile* ini, proxyConfig* config)
 {
 	const char* modules_to_load = NULL;
@@ -369,6 +381,7 @@ static BOOL pf_config_load_modules(wIniFile* ini, proxyConfig* config)
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static char* pf_config_decode_base64(const char* data, const char* name, size_t* pLength)
 {
 	const char* headers[] = { "-----BEGIN PUBLIC KEY-----", "-----BEGIN RSA PUBLIC KEY-----",
@@ -439,6 +452,7 @@ static char* pf_config_decode_base64(const char* data, const char* name, size_t*
 	return decoded;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL pf_config_load_certificates(wIniFile* ini, proxyConfig* config)
 {
 	const char* tmp1 = NULL;
@@ -921,6 +935,7 @@ const char** pf_config_modules(const proxyConfig* config)
 	return cnv.cppc;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL pf_config_copy_string(char** dst, const char* src)
 {
 	*dst = NULL;
@@ -929,6 +944,7 @@ static BOOL pf_config_copy_string(char** dst, const char* src)
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL pf_config_copy_string_n(char** dst, const char* src, size_t size)
 {
 	*dst = NULL;
@@ -945,6 +961,7 @@ static BOOL pf_config_copy_string_n(char** dst, const char* src, size_t size)
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL pf_config_copy_string_list(char*** dst, size_t* size, char** src, size_t srcSize)
 {
 	WINPR_ASSERT(dst);
@@ -1040,6 +1057,7 @@ static const char config_plugin_name[] = "config";
 static const char config_plugin_desc[] =
     "A plugin filtering according to proxy configuration file rules";
 
+WINPR_ATTR_NODISCARD
 static BOOL config_plugin_unload(proxyPlugin* plugin)
 {
 	WINPR_ASSERT(plugin);
@@ -1054,6 +1072,7 @@ static BOOL config_plugin_unload(proxyPlugin* plugin)
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL config_plugin_keyboard_event(proxyPlugin* plugin, WINPR_ATTR_UNUSED proxyData* pdata,
                                          void* param)
 {
@@ -1079,6 +1098,7 @@ static BOOL config_plugin_keyboard_event(proxyPlugin* plugin, WINPR_ATTR_UNUSED 
 	return rc;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL config_plugin_unicode_event(proxyPlugin* plugin, WINPR_ATTR_UNUSED proxyData* pdata,
                                         void* param)
 {
@@ -1104,6 +1124,7 @@ static BOOL config_plugin_unicode_event(proxyPlugin* plugin, WINPR_ATTR_UNUSED p
 	return rc;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL config_plugin_mouse_event(proxyPlugin* plugin, WINPR_ATTR_UNUSED proxyData* pdata,
                                       void* param)
 {
@@ -1128,6 +1149,7 @@ static BOOL config_plugin_mouse_event(proxyPlugin* plugin, WINPR_ATTR_UNUSED pro
 	return rc;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL config_plugin_mouse_ex_event(proxyPlugin* plugin, WINPR_ATTR_UNUSED proxyData* pdata,
                                          void* param)
 {
@@ -1152,6 +1174,7 @@ static BOOL config_plugin_mouse_ex_event(proxyPlugin* plugin, WINPR_ATTR_UNUSED 
 	return rc;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL config_plugin_client_channel_data(WINPR_ATTR_UNUSED proxyPlugin* plugin,
                                               WINPR_ATTR_UNUSED proxyData* pdata, void* param)
 {
@@ -1166,6 +1189,7 @@ static BOOL config_plugin_client_channel_data(WINPR_ATTR_UNUSED proxyPlugin* plu
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL config_plugin_server_channel_data(WINPR_ATTR_UNUSED proxyPlugin* plugin,
                                               WINPR_ATTR_UNUSED proxyData* pdata, void* param)
 {
@@ -1180,6 +1204,7 @@ static BOOL config_plugin_server_channel_data(WINPR_ATTR_UNUSED proxyPlugin* plu
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL config_plugin_dynamic_channel_create(proxyPlugin* plugin,
                                                  WINPR_ATTR_UNUSED proxyData* pdata, void* param)
 {
@@ -1246,6 +1271,7 @@ static BOOL config_plugin_dynamic_channel_create(proxyPlugin* plugin,
 	return accept;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL config_plugin_channel_create(proxyPlugin* plugin, WINPR_ATTR_UNUSED proxyData* pdata,
                                          void* param)
 {

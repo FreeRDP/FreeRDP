@@ -63,6 +63,7 @@ typedef struct
 	freerdp_peer* client;
 } peer_thread_args;
 
+WINPR_ATTR_NODISCARD
 static BOOL pf_server_parse_target_from_routing_token(rdpContext* context, rdpSettings* settings,
                                                       FreeRDP_Settings_Keys_String targetID,
                                                       FreeRDP_Settings_Keys_UInt32 portID)
@@ -108,6 +109,7 @@ static BOOL pf_server_parse_target_from_routing_token(rdpContext* context, rdpSe
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL pf_server_get_target_info(rdpContext* context, rdpSettings* settings,
                                       const proxyConfig* config)
 {
@@ -204,6 +206,7 @@ static BOOL pf_server_get_target_info(rdpContext* context, rdpSettings* settings
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL pf_server_setup_channels(freerdp_peer* peer)
 {
 	BOOL rc = FALSE;
@@ -283,6 +286,7 @@ fail:
  * The server may start sending graphics output and receiving keyboard/mouse
  * input after this callback returns.
  */
+WINPR_ATTR_NODISCARD
 static BOOL pf_server_post_connect(freerdp_peer* peer)
 {
 	pServerContext* ps = NULL;
@@ -345,6 +349,7 @@ static BOOL pf_server_post_connect(freerdp_peer* peer)
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL pf_server_activate(freerdp_peer* peer)
 {
 	pServerContext* ps = NULL;
@@ -369,6 +374,7 @@ static BOOL pf_server_activate(freerdp_peer* peer)
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL pf_server_logon(freerdp_peer* peer, const SEC_WINNT_AUTH_IDENTITY* identity,
                             BOOL automatic)
 {
@@ -392,6 +398,7 @@ static BOOL pf_server_logon(freerdp_peer* peer, const SEC_WINNT_AUTH_IDENTITY* i
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL pf_server_adjust_monitor_layout(WINPR_ATTR_UNUSED freerdp_peer* peer)
 {
 	WINPR_ASSERT(peer);
@@ -399,6 +406,7 @@ static BOOL pf_server_adjust_monitor_layout(WINPR_ATTR_UNUSED freerdp_peer* peer
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL pf_server_receive_channel_data_hook(freerdp_peer* peer, UINT16 channelId,
                                                 const BYTE* data, size_t size, UINT32 flags,
                                                 size_t totalSize)
@@ -461,6 +469,7 @@ original_cb:
 	                                                   totalSize);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL pf_server_initialize_peer_connection(freerdp_peer* peer)
 {
 	WINPR_ASSERT(peer);
@@ -572,6 +581,7 @@ static BOOL pf_server_initialize_peer_connection(freerdp_peer* peer)
  *
  * arg is a pointer to a freerdp_peer representing the client.
  */
+WINPR_ATTR_NODISCARD
 static DWORD WINAPI pf_server_handle_peer(LPVOID arg)
 {
 	HANDLE eventHandles[MAXIMUM_WAIT_OBJECTS] = { 0 };
@@ -714,7 +724,7 @@ fail:
 	/* Abort the client. */
 	proxy_data_abort_connect(pdata);
 
-	pf_modules_run_hook(pdata->module, HOOK_TYPE_SERVER_SESSION_END, pdata, client);
+	(void)pf_modules_run_hook(pdata->module, HOOK_TYPE_SERVER_SESSION_END, pdata, client);
 
 	PROXY_LOG_INFO(TAG, ps, "freeing server's channels");
 
@@ -752,6 +762,7 @@ out_free_peer:
 	return 0;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL pf_server_start_peer(freerdp_peer* client)
 {
 	HANDLE hThread = NULL;
@@ -787,6 +798,7 @@ static BOOL pf_server_start_peer(freerdp_peer* client)
 	return ResumeThread(hThread) != (DWORD)-1;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL pf_server_peer_accepted(freerdp_listener* listener, freerdp_peer* client)
 {
 	WINPR_ASSERT(listener);
@@ -910,6 +922,7 @@ fail:
 	return FALSE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL are_all_required_modules_loaded(proxyModule* module, const proxyConfig* config)
 {
 	for (size_t i = 0; i < pf_config_required_plugins_count(config); i++)

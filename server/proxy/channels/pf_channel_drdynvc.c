@@ -112,6 +112,7 @@ static const char* openstatus2str(PfDynChannelOpenStatus status)
 	dyn_log_((log), (level), (dynChannel), (cmd), (isBackData), __func__, __FILE__, __LINE__, \
 	         __VA_ARGS__)
 
+WINPR_ATTR_NODISCARD
 static const char* getDirection(BOOL isBackData)
 {
 	return isBackData ? "B->F" : "F->B";
@@ -145,6 +146,7 @@ static void dyn_log_(wLog* log, DWORD level, const pServerDynamicChannelContext*
 	free(msg);
 }
 
+WINPR_ATTR_NODISCARD
 static PfChannelResult data_cb(pServerContext* ps, pServerDynamicChannelContext* channel,
                                BOOL isBackData, ChannelStateTracker* tracker, BOOL firstPacket,
                                BOOL lastPacket)
@@ -174,6 +176,27 @@ static PfChannelResult data_cb(pServerContext* ps, pServerDynamicChannelContext*
 	return dyn.result;
 }
 
+static void DynamicChannelContext_free(void* ptr)
+{
+	pServerDynamicChannelContext* c = (pServerDynamicChannelContext*)ptr;
+	if (!c)
+		return;
+
+	if (c->backTracker.currentPacket)
+		Stream_Free(c->backTracker.currentPacket, TRUE);
+
+	if (c->frontTracker.currentPacket)
+		Stream_Free(c->frontTracker.currentPacket, TRUE);
+
+	if (c->channelDataDtor)
+		c->channelDataDtor(&c->channelData);
+
+	free(c->channelName);
+	free(c);
+}
+
+WINPR_ATTR_MALLOC(DynamicChannelContext_free, 1)
+WINPR_ATTR_NODISCARD
 static pServerDynamicChannelContext* DynamicChannelContext_new(wLog* log, pServerContext* ps,
                                                                const char* name, UINT32 id)
 {
@@ -210,31 +233,14 @@ static pServerDynamicChannelContext* DynamicChannelContext_new(wLog* log, pServe
 	return ret;
 }
 
-static void DynamicChannelContext_free(void* ptr)
-{
-	pServerDynamicChannelContext* c = (pServerDynamicChannelContext*)ptr;
-	if (!c)
-		return;
-
-	if (c->backTracker.currentPacket)
-		Stream_Free(c->backTracker.currentPacket, TRUE);
-
-	if (c->frontTracker.currentPacket)
-		Stream_Free(c->frontTracker.currentPacket, TRUE);
-
-	if (c->channelDataDtor)
-		c->channelDataDtor(&c->channelData);
-
-	free(c->channelName);
-	free(c);
-}
-
+WINPR_ATTR_NODISCARD
 static UINT32 ChannelId_Hash(const void* key)
 {
 	const UINT32* v = (const UINT32*)key;
 	return *v;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL ChannelId_Compare(const void* objA, const void* objB)
 {
 	const UINT32* v1 = objA;
@@ -242,6 +248,7 @@ static BOOL ChannelId_Compare(const void* objA, const void* objB)
 	return (*v1 == *v2);
 }
 
+WINPR_ATTR_NODISCARD
 static DynvcReadResult dynvc_read_varInt(wLog* log, wStream* s, size_t len, UINT64* varInt,
                                          BOOL last)
 {
@@ -271,6 +278,7 @@ static DynvcReadResult dynvc_read_varInt(wLog* log, wStream* s, size_t len, UINT
 	return DYNCVC_READ_OK;
 }
 
+WINPR_ATTR_NODISCARD
 static PfChannelResult DynvcTrackerPeekHandleByMode(ChannelStateTracker* tracker,
                                                     DynChannelTrackerState* trackerState,
                                                     pServerDynamicChannelContext* dynChannel,
@@ -332,6 +340,7 @@ static PfChannelResult DynvcTrackerPeekHandleByMode(ChannelStateTracker* tracker
 	return result;
 }
 
+WINPR_ATTR_NODISCARD
 static PfChannelResult DynvcTrackerHandleClose(ChannelStateTracker* tracker,
                                                pServerDynamicChannelContext* dynChannel,
                                                DynChannelContext* dynChannelContext,
@@ -358,6 +367,7 @@ static PfChannelResult DynvcTrackerHandleClose(ChannelStateTracker* tracker,
 	return channelTracker_flushCurrent(tracker, firstPacket, lastPacket, !isBackData);
 }
 
+WINPR_ATTR_NODISCARD
 static PfChannelResult DynvcTrackerHandleCreateBack(ChannelStateTracker* tracker, wStream* s,
                                                     DWORD flags, proxyData* pdata,
                                                     pServerDynamicChannelContext* dynChannel,
@@ -431,6 +441,7 @@ static PfChannelResult DynvcTrackerHandleCreateBack(ChannelStateTracker* tracker
 	return channelTracker_flushCurrent(tracker, firstPacket, lastPacket, FALSE);
 }
 
+WINPR_ATTR_NODISCARD
 static PfChannelResult DynvcTrackerHandleCreateFront(ChannelStateTracker* tracker, wStream* s,
                                                      DWORD flags,
                                                      WINPR_ATTR_UNUSED proxyData* pdata,
@@ -458,6 +469,7 @@ static PfChannelResult DynvcTrackerHandleCreateFront(ChannelStateTracker* tracke
 	return channelTracker_flushCurrent(tracker, firstPacket, lastPacket, TRUE);
 }
 
+WINPR_ATTR_NODISCARD
 static PfChannelResult DynvcTrackerHandleCreate(ChannelStateTracker* tracker, wStream* s,
                                                 DWORD flags,
                                                 pServerDynamicChannelContext* dynChannel,
@@ -488,6 +500,7 @@ static PfChannelResult DynvcTrackerHandleCreate(ChannelStateTracker* tracker, wS
 	                                     dynChannelId);
 }
 
+WINPR_ATTR_NODISCARD
 static PfChannelResult DynvcTrackerHandleCmdDATA(ChannelStateTracker* tracker,
                                                  pServerDynamicChannelContext* dynChannel,
                                                  wStream* s, BYTE cmd, UINT64 Length,
@@ -622,6 +635,7 @@ static PfChannelResult DynvcTrackerHandleCmdDATA(ChannelStateTracker* tracker,
 	                                    lastPacket);
 }
 
+WINPR_ATTR_NODISCARD
 static PfChannelResult DynvcTrackerHandleCmd(ChannelStateTracker* tracker,
                                              pServerDynamicChannelContext* dynChannel, wStream* s,
                                              BYTE cmd, UINT32 flags, UINT64 Length,
@@ -684,6 +698,7 @@ static PfChannelResult DynvcTrackerHandleCmd(ChannelStateTracker* tracker,
 	}
 }
 
+WINPR_ATTR_NODISCARD
 static PfChannelResult DynvcTrackerPeekFn(ChannelStateTracker* tracker, BOOL firstPacket,
                                           BOOL lastPacket)
 {
@@ -805,6 +820,7 @@ static void DynChannelContext_free(void* context)
 	free(c);
 }
 
+WINPR_ATTR_NODISCARD
 static const char* dynamic_context(void* arg)
 {
 	proxyData* pdata = arg;
@@ -813,6 +829,8 @@ static const char* dynamic_context(void* arg)
 	return pdata->session_id;
 }
 
+WINPR_ATTR_MALLOC(DynChannelContext_free, 1)
+WINPR_ATTR_NODISCARD
 static DynChannelContext* DynChannelContext_new(proxyData* pdata,
                                                 pServerStaticChannelContext* channel)
 {
@@ -862,6 +880,7 @@ fail:
 	return NULL;
 }
 
+WINPR_ATTR_NODISCARD
 static PfChannelResult pf_dynvc_back_data(proxyData* pdata,
                                           const pServerStaticChannelContext* channel,
                                           const BYTE* xdata, size_t xsize, UINT32 flags,
@@ -876,6 +895,7 @@ static PfChannelResult pf_dynvc_back_data(proxyData* pdata,
 	return channelTracker_update(dyn->backTracker, xdata, xsize, flags, totalSize);
 }
 
+WINPR_ATTR_NODISCARD
 static PfChannelResult pf_dynvc_front_data(proxyData* pdata,
                                            const pServerStaticChannelContext* channel,
                                            const BYTE* xdata, size_t xsize, UINT32 flags,

@@ -26,7 +26,8 @@ extern "C"
 {
 #endif
 
-	BOOL shadow_client_accepted(freerdp_listener* listener, freerdp_peer* peer);
+	WINPR_ATTR_NODISCARD BOOL shadow_client_accepted(freerdp_listener* listener,
+	                                                 freerdp_peer* peer);
 
 #ifdef __cplusplus
 }

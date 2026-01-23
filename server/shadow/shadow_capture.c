@@ -86,6 +86,7 @@ int shadow_capture_compare(const BYTE* WINPR_RESTRICT pData1, UINT32 nStep1, UIN
 }
 #endif
 
+WINPR_ATTR_NODISCARD
 static BOOL color_equal(UINT32 colorA, UINT32 formatA, UINT32 colorB, UINT32 formatB)
 {
 	BYTE ar = 0;
@@ -110,6 +111,7 @@ static BOOL color_equal(UINT32 colorA, UINT32 formatA, UINT32 colorB, UINT32 for
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL pixel_equal(const BYTE* WINPR_RESTRICT a, UINT32 formatA, const BYTE* WINPR_RESTRICT b,
                         UINT32 formatB, size_t count)
 {
@@ -127,6 +129,7 @@ static BOOL pixel_equal(const BYTE* WINPR_RESTRICT a, UINT32 formatA, const BYTE
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL color_equal_no_alpha(UINT32 colorA, UINT32 formatA, UINT32 colorB, UINT32 formatB)
 {
 	BYTE ar = 0;
@@ -147,6 +150,7 @@ static BOOL color_equal_no_alpha(UINT32 colorA, UINT32 formatA, UINT32 colorB, U
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL pixel_equal_no_alpha(const BYTE* WINPR_RESTRICT a, UINT32 formatA,
                                  const BYTE* WINPR_RESTRICT b, UINT32 formatB, size_t count)
 {
@@ -164,6 +168,7 @@ static BOOL pixel_equal_no_alpha(const BYTE* WINPR_RESTRICT a, UINT32 formatA,
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL pixel_equal_same_format(const BYTE* WINPR_RESTRICT a, UINT32 formatA,
                                     const BYTE* WINPR_RESTRICT b, UINT32 formatB, size_t count)
 {
@@ -176,6 +181,7 @@ static BOOL pixel_equal_same_format(const BYTE* WINPR_RESTRICT a, UINT32 formatA
 typedef BOOL (*pixel_equal_fn_t)(const BYTE* WINPR_RESTRICT a, UINT32 formatA,
                                  const BYTE* WINPR_RESTRICT b, UINT32 formatB, size_t count);
 
+WINPR_ATTR_NODISCARD
 static pixel_equal_fn_t get_comparison_fn(DWORD format1, DWORD format2)
 {
 

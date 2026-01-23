@@ -38,12 +38,14 @@
 
 #define TAG PROXY_TAG("server")
 
+WINPR_ATTR_NODISCARD
 static UINT32 ChannelId_Hash(const void* key)
 {
 	const UINT32* v = (const UINT32*)key;
 	return *v;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL ChannelId_Compare(const void* pv1, const void* pv2)
 {
 	const UINT32* v1 = pv1;
@@ -53,6 +55,7 @@ static BOOL ChannelId_Compare(const void* pv1, const void* pv2)
 	return (*v1 == *v2);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL dyn_intercept(pServerContext* ps, const char* name)
 {
 	if (strncmp(DRDYNVC_SVC_CHANNEL_NAME, name, sizeof(DRDYNVC_SVC_CHANNEL_NAME)) != 0)
@@ -129,6 +132,8 @@ static void HashStaticChannelContext_free(void* ptr)
 
 /* Proxy context initialization callback */
 static void client_to_proxy_context_free(freerdp_peer* client, rdpContext* ctx);
+
+WINPR_ATTR_NODISCARD
 static BOOL client_to_proxy_context_new(freerdp_peer* client, rdpContext* ctx)
 {
 	wObject* obj = NULL;
@@ -222,6 +227,7 @@ BOOL pf_context_init_server_context(freerdp_peer* client)
 	return freerdp_peer_context_new(client);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL pf_context_revert_str_settings(rdpSettings* dst, const rdpSettings* before, size_t nr,
                                            const FreeRDP_Settings_Keys_String* ids)
 {

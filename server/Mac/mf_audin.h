@@ -27,7 +27,7 @@
 #include "mf_types.h"
 #include "mfreerdp.h"
 
-BOOL mf_peer_audin_init(mfPeerContext* context);
+WINPR_ATTR_NODISCARD BOOL mf_peer_audin_init(mfPeerContext* context);
 void mf_peer_audin_uninit(mfPeerContext* context);
 
 #endif /* FREERDP_SERVER_MAC_AUDIN_H */

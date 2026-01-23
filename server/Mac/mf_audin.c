@@ -31,6 +31,7 @@
 #include <freerdp/log.h>
 #define TAG SERVER_TAG("mac")
 
+WINPR_ATTR_NODISCARD
 static UINT mf_peer_audin_data(audin_server_context* audin, const SNDIN_DATA* data)
 {
 	/* TODO: Implement */

@@ -35,9 +35,10 @@
  *         e.g. proxy client and server are termination points and data passed
  *         between.
  */
-pf_utils_channel_mode pf_utils_get_channel_mode(const proxyConfig* config, const char* name);
-const char* pf_utils_channel_mode_string(pf_utils_channel_mode mode);
+WINPR_ATTR_NODISCARD pf_utils_channel_mode pf_utils_get_channel_mode(const proxyConfig* config,
+                                                                     const char* name);
+WINPR_ATTR_NODISCARD const char* pf_utils_channel_mode_string(pf_utils_channel_mode mode);
 
-BOOL pf_utils_is_passthrough(const proxyConfig* config);
+WINPR_ATTR_NODISCARD BOOL pf_utils_is_passthrough(const proxyConfig* config);
 
 #endif /* FREERDP_SERVER_PROXY_PFUTILS_H */

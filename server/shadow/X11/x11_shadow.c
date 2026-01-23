@@ -1646,12 +1646,13 @@ static void x11_shadow_subsystem_free(rdpShadowSubsystem* subsystem)
 	free(subsystem);
 }
 
-FREERDP_ENTRY_POINT(FREERDP_API const char* ShadowSubsystemName(void))
+FREERDP_ENTRY_POINT(FREERDP_API WINPR_ATTR_NODISCARD const char* ShadowSubsystemName(void))
 {
 	return "X11";
 }
 
-FREERDP_ENTRY_POINT(FREERDP_API int ShadowSubsystemEntry(RDP_SHADOW_ENTRY_POINTS* pEntryPoints))
+FREERDP_ENTRY_POINT(FREERDP_API WINPR_ATTR_NODISCARD int ShadowSubsystemEntry(
+    RDP_SHADOW_ENTRY_POINTS* pEntryPoints))
 {
 	if (!pEntryPoints)
 		return -1;

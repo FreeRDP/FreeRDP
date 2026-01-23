@@ -43,11 +43,11 @@ extern "C"
 {
 #endif
 
-	int win_shadow_rdp_init(winShadowSubsystem* subsystem);
-	int win_shadow_rdp_uninit(winShadowSubsystem* subsystem);
+	WINPR_ATTR_NODISCARD int win_shadow_rdp_init(winShadowSubsystem* subsystem);
+	WINPR_ATTR_NODISCARD int win_shadow_rdp_uninit(winShadowSubsystem* subsystem);
 
-	int win_shadow_rdp_start(winShadowSubsystem* subsystem);
-	int win_shadow_rdp_stop(winShadowSubsystem* subsystem);
+	WINPR_ATTR_NODISCARD int win_shadow_rdp_start(winShadowSubsystem* subsystem);
+	WINPR_ATTR_NODISCARD int win_shadow_rdp_stop(winShadowSubsystem* subsystem);
 
 #ifdef __cplusplus
 }

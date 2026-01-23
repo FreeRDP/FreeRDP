@@ -25,10 +25,10 @@
 
 #include "sfreerdp.h"
 
-BOOL sf_peer_audin_init(testPeerContext* context);
+WINPR_ATTR_NODISCARD BOOL sf_peer_audin_init(testPeerContext* context);
 void sf_peer_audin_uninit(testPeerContext* context);
 
-BOOL sf_peer_audin_running(testPeerContext* context);
+WINPR_ATTR_NODISCARD BOOL sf_peer_audin_running(testPeerContext* context);
 BOOL sf_peer_audin_start(testPeerContext* context);
 BOOL sf_peer_audin_stop(testPeerContext* context);
 

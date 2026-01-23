@@ -62,6 +62,7 @@ static CGImageRef img;
 
 static void mf_peer_context_free(freerdp_peer* client, rdpContext* context);
 
+WINPR_ATTR_NODISCARD
 static BOOL mf_peer_get_fds(freerdp_peer* client, void** rfds, int* rcount)
 {
 	if (info_event_queue->pipe_fd[0] == -1)
@@ -139,6 +140,7 @@ static void mf_peer_rfx_update(freerdp_peer* client)
 	// clean up... maybe?
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL mf_peer_check_fds(freerdp_peer* client)
 {
 	mfPeerContext* context = (mfPeerContext*)client->context;
@@ -166,6 +168,7 @@ static BOOL mf_peer_check_fds(freerdp_peer* client)
 }
 
 /* Called when we have a new peer connecting */
+WINPR_ATTR_NODISCARD
 static BOOL mf_peer_context_new(freerdp_peer* client, rdpContext* context)
 {
 	rdpSettings* settings;
@@ -233,6 +236,7 @@ static void mf_peer_context_free(freerdp_peer* client, rdpContext* context)
 }
 
 /* Called when a new client connects */
+WINPR_ATTR_NODISCARD
 static BOOL mf_peer_init(freerdp_peer* client)
 {
 	client->ContextSize = sizeof(mfPeerContext);
@@ -262,6 +266,7 @@ static BOOL mf_peer_init(freerdp_peer* client)
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL mf_peer_post_connect(freerdp_peer* client)
 {
 	mfInfo* mfi = mf_info_get_instance();
@@ -313,6 +318,7 @@ static BOOL mf_peer_post_connect(freerdp_peer* client)
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL mf_peer_activate(freerdp_peer* client)
 {
 	WINPR_ASSERT(client);
@@ -330,11 +336,13 @@ static BOOL mf_peer_activate(freerdp_peer* client)
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL mf_peer_synchronize_event(rdpInput* input, UINT32 flags)
 {
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL mf_peer_keyboard_event(rdpInput* input, UINT16 flags, UINT8 code)
 {
 	bool state_down = FALSE;
@@ -346,16 +354,19 @@ static BOOL mf_peer_keyboard_event(rdpInput* input, UINT16 flags, UINT8 code)
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL mf_peer_unicode_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 {
 	return FALSE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL mf_peer_suppress_output(rdpContext* context, BYTE allow, const RECTANGLE_16* area)
 {
 	return FALSE;
 }
 
+WINPR_ATTR_NODISCARD
 static void* mf_peer_main_loop(void* arg)
 {
 	mfPeerContext* context;

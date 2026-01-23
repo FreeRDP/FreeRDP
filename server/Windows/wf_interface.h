@@ -115,23 +115,24 @@ typedef struct wf_server wfServer;
 
 typedef void(__stdcall* cbCallback)(int, UINT32);
 
-FREERDP_API int get_screen_info(int id, _TCHAR* name, size_t length, int* w, int* h, int* b);
+FREERDP_API WINPR_ATTR_NODISCARD int get_screen_info(int id, _TCHAR* name, size_t length, int* w,
+                                                     int* h, int* b);
 FREERDP_API void set_screen_id(int id);
 
-FREERDP_API BOOL wfreerdp_server_start(wfServer* server);
-FREERDP_API BOOL wfreerdp_server_stop(wfServer* server);
+FREERDP_API WINPR_ATTR_NODISCARD BOOL wfreerdp_server_start(wfServer* server);
+FREERDP_API WINPR_ATTR_NODISCARD BOOL wfreerdp_server_stop(wfServer* server);
 
-FREERDP_API wfServer* wfreerdp_server_new(void);
+FREERDP_API WINPR_ATTR_NODISCARD wfServer* wfreerdp_server_new(void);
 FREERDP_API void wfreerdp_server_free(wfServer* server);
 
-FREERDP_API BOOL wfreerdp_server_is_running(wfServer* server);
+FREERDP_API WINPR_ATTR_NODISCARD BOOL wfreerdp_server_is_running(wfServer* server);
 
-FREERDP_API UINT32 wfreerdp_server_num_peers(void);
-FREERDP_API UINT32 wfreerdp_server_get_peer_hostname(int pId, wchar_t* dstStr);
-FREERDP_API BOOL wfreerdp_server_peer_is_local(int pId);
-FREERDP_API BOOL wfreerdp_server_peer_is_connected(int pId);
-FREERDP_API BOOL wfreerdp_server_peer_is_activated(int pId);
-FREERDP_API BOOL wfreerdp_server_peer_is_authenticated(int pId);
+FREERDP_API WINPR_ATTR_NODISCARD UINT32 wfreerdp_server_num_peers(void);
+FREERDP_API WINPR_ATTR_NODISCARD UINT32 wfreerdp_server_get_peer_hostname(int pId, wchar_t* dstStr);
+FREERDP_API WINPR_ATTR_NODISCARD BOOL wfreerdp_server_peer_is_local(int pId);
+FREERDP_API WINPR_ATTR_NODISCARD BOOL wfreerdp_server_peer_is_connected(int pId);
+FREERDP_API WINPR_ATTR_NODISCARD BOOL wfreerdp_server_peer_is_activated(int pId);
+FREERDP_API WINPR_ATTR_NODISCARD BOOL wfreerdp_server_peer_is_authenticated(int pId);
 
 FREERDP_API void wfreerdp_server_register_callback_event(cbCallback cb);
 

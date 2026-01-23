@@ -30,6 +30,7 @@
 #include <freerdp/log.h>
 #define TAG SERVER_TAG("mac")
 
+WINPR_ATTR_NODISCARD
 static int mf_is_event_set(mfEventQueue* event_queue)
 {
 	fd_set rfds;

@@ -59,6 +59,7 @@ static int fail_at_(const COMMAND_LINE_ARGUMENT_A* arg, int rc, const char* file
 	return rc;
 }
 
+WINPR_ATTR_NODISCARD
 static int command_line_compare(const void* pa, const void* pb)
 {
 	const COMMAND_LINE_ARGUMENT_A* a = pa;
@@ -74,6 +75,7 @@ static int command_line_compare(const void* pa, const void* pb)
 	return strcmp(a->Name, b->Name);
 }
 
+WINPR_ATTR_NODISCARD
 static int shadow_server_print_command_line_help(int argc, char** argv,
                                                  const COMMAND_LINE_ARGUMENT_A* largs)
 {
@@ -612,13 +614,15 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 	return status;
 }
 
+WINPR_ATTR_NODISCARD
 static DWORD WINAPI shadow_server_thread(LPVOID arg)
 {
 	rdpShadowServer* server = (rdpShadowServer*)arg;
 	BOOL running = TRUE;
 	DWORD status = 0;
 	freerdp_listener* listener = server->listener;
-	shadow_subsystem_start(server->subsystem);
+	if (shadow_subsystem_start(server->subsystem) < 0)
+		running = FALSE;
 
 	while (running)
 	{
@@ -677,6 +681,7 @@ static DWORD WINAPI shadow_server_thread(LPVOID arg)
 	return 0;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL open_port(rdpShadowServer* server, char* address)
 {
 	BOOL status = 0;
@@ -835,6 +840,7 @@ int shadow_server_stop(rdpShadowServer* server)
 	return 0;
 }
 
+WINPR_ATTR_NODISCARD
 static int shadow_server_init_config_path(rdpShadowServer* server)
 {
 	if (!server->ConfigPath)
@@ -860,6 +866,7 @@ static int shadow_server_init_config_path(rdpShadowServer* server)
 	return 1;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL shadow_server_create_certificate(rdpShadowServer* server, const char* filepath)
 {
 	BOOL rc = FALSE;
@@ -897,6 +904,8 @@ out_fail:
 	makecert_context_free(makecert);
 	return rc;
 }
+
+WINPR_ATTR_NODISCARD
 static BOOL shadow_server_init_certificate(rdpShadowServer* server)
 {
 	char* filepath = NULL;
@@ -970,6 +979,7 @@ out_fail:
 	return ret;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL shadow_server_check_peer_restrictions(freerdp_listener* listener)
 {
 	WINPR_ASSERT(listener);

@@ -29,6 +29,7 @@
 
 #include "proxy_modules.h"
 
+WINPR_ATTR_NODISCARD
 static BOOL pf_server_check_and_sync_input_state(pClientContext* pc)
 {
 	WINPR_ASSERT(pc);
@@ -44,6 +45,7 @@ static BOOL pf_server_check_and_sync_input_state(pClientContext* pc)
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL pf_server_synchronize_event(rdpInput* input, UINT32 flags)
 {
 	pServerContext* ps = NULL;
@@ -63,6 +65,7 @@ static BOOL pf_server_synchronize_event(rdpInput* input, UINT32 flags)
 	return pf_server_check_and_sync_input_state(pc);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL pf_server_keyboard_event(rdpInput* input, UINT16 flags, UINT8 code)
 {
 	const proxyConfig* config = NULL;
@@ -96,6 +99,7 @@ static BOOL pf_server_keyboard_event(rdpInput* input, UINT16 flags, UINT8 code)
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL pf_server_unicode_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 {
 	const proxyConfig* config = NULL;
@@ -127,6 +131,7 @@ static BOOL pf_server_unicode_keyboard_event(rdpInput* input, UINT16 flags, UINT
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL pf_server_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 {
 	proxyMouseEventInfo event = { 0 };
@@ -161,6 +166,7 @@ static BOOL pf_server_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT1
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL pf_server_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 {
 	const proxyConfig* config = NULL;
