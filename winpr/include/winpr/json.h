@@ -46,7 +46,7 @@ extern "C"
 	 * @return length of the version string in bytes or negative for error
 	 * @since version 3.6.0
 	 */
-	WINPR_API int WINPR_JSON_version(char* buffer, size_t len);
+	WINPR_API WINPR_ATTR_NODISCARD int WINPR_JSON_version(char* buffer, size_t len);
 
 	/**
 	 * @brief Delete a @ref WINPR_JSON object
@@ -64,7 +64,7 @@ extern "C"
 	 * @since version 3.6.0
 	 */
 	WINPR_ATTR_MALLOC(WINPR_JSON_Delete, 1)
-	WINPR_API WINPR_JSON* WINPR_JSON_Parse(const char* value);
+	WINPR_API WINPR_ATTR_NODISCARD WINPR_JSON* WINPR_JSON_Parse(const char* value);
 
 	/**
 	 * @brief Parse a JSON string
@@ -75,7 +75,8 @@ extern "C"
 	 * @since version 3.6.0
 	 */
 	WINPR_ATTR_MALLOC(WINPR_JSON_Delete, 1)
-	WINPR_API WINPR_JSON* WINPR_JSON_ParseWithLength(const char* value, size_t buffer_length);
+	WINPR_API WINPR_ATTR_NODISCARD WINPR_JSON* WINPR_JSON_ParseWithLength(const char* value,
+	                                                                      size_t buffer_length);
 
 	/**
 	 * @brief Parse a JSON string read from a file \b filename
@@ -85,7 +86,7 @@ extern "C"
 	 * @since version 3.16.0
 	 */
 	WINPR_ATTR_MALLOC(WINPR_JSON_Delete, 1)
-	WINPR_API WINPR_JSON* WINPR_JSON_ParseFromFile(const char* filename);
+	WINPR_API WINPR_ATTR_NODISCARD WINPR_JSON* WINPR_JSON_ParseFromFile(const char* filename);
 
 	/**
 	 * @brief Parse a JSON string read from a \b FILE
@@ -95,7 +96,7 @@ extern "C"
 	 * @since version 3.16.0
 	 */
 	WINPR_ATTR_MALLOC(WINPR_JSON_Delete, 1)
-	WINPR_API WINPR_JSON* WINPR_JSON_ParseFromFileFP(FILE* fp);
+	WINPR_API WINPR_ATTR_NODISCARD WINPR_JSON* WINPR_JSON_ParseFromFileFP(FILE* fp);
 
 	/**
 	 * @brief Get the number of arrayitems from an array
@@ -104,7 +105,7 @@ extern "C"
 	 * @return number of array items
 	 * @since version 3.6.0
 	 */
-	WINPR_API size_t WINPR_JSON_GetArraySize(const WINPR_JSON* array);
+	WINPR_API WINPR_ATTR_NODISCARD size_t WINPR_JSON_GetArraySize(const WINPR_JSON* array);
 
 	/**
 	 * @brief Return a pointer to an item in the array
@@ -114,7 +115,8 @@ extern "C"
 	 * @return A pointer to the array item or \b NULL if failed
 	 * @since version 3.6.0
 	 */
-	WINPR_API WINPR_JSON* WINPR_JSON_GetArrayItem(const WINPR_JSON* array, size_t index);
+	WINPR_API WINPR_ATTR_NODISCARD WINPR_JSON* WINPR_JSON_GetArrayItem(const WINPR_JSON* array,
+	                                                                   size_t index);
 
 	/**
 	 * @brief Return a pointer to an JSON object item
@@ -123,7 +125,8 @@ extern "C"
 	 * @return A pointer to the object identified by @ref string or \b NULL
 	 * @since version 3.6.0
 	 */
-	WINPR_API WINPR_JSON* WINPR_JSON_GetObjectItem(const WINPR_JSON* object, const char* string);
+	WINPR_API WINPR_ATTR_NODISCARD WINPR_JSON* WINPR_JSON_GetObjectItem(const WINPR_JSON* object,
+	                                                                    const char* string);
 
 	/**
 	 * @brief Same as @ref WINPR_JSON_GetObjectItem but with case sensitive matching
@@ -133,8 +136,8 @@ extern "C"
 	 * @return A pointer to the object identified by @ref string or \b NULL
 	 * @since version 3.6.0
 	 */
-	WINPR_API WINPR_JSON* WINPR_JSON_GetObjectItemCaseSensitive(const WINPR_JSON* object,
-	                                                            const char* string);
+	WINPR_API WINPR_ATTR_NODISCARD WINPR_JSON*
+	WINPR_JSON_GetObjectItemCaseSensitive(const WINPR_JSON* object, const char* string);
 
 	/**
 	 * @brief Check if JSON has an object matching the name
@@ -143,14 +146,15 @@ extern "C"
 	 * @return \b TRUE if found, \b FALSE otherwise
 	 * @since version 3.6.0
 	 */
-	WINPR_API BOOL WINPR_JSON_HasObjectItem(const WINPR_JSON* object, const char* string);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL WINPR_JSON_HasObjectItem(const WINPR_JSON* object,
+	                                                             const char* string);
 
 	/**
 	 * @brief Return an error string
 	 * @return A string describing the last error that occurred or \b NULL
 	 * @since version 3.6.0
 	 */
-	WINPR_API const char* WINPR_JSON_GetErrorPtr(void);
+	WINPR_API WINPR_ATTR_NODISCARD const char* WINPR_JSON_GetErrorPtr(void);
 
 	/**
 	 * @brief Return the String value of a JSON item
@@ -158,7 +162,7 @@ extern "C"
 	 * @return The string value or \b NULL if failed
 	 * @since version 3.6.0
 	 */
-	WINPR_API const char* WINPR_JSON_GetStringValue(WINPR_JSON* item);
+	WINPR_API WINPR_ATTR_NODISCARD const char* WINPR_JSON_GetStringValue(WINPR_JSON* item);
 
 	/**
 	 * @brief Return the Number value of a JSON item
@@ -166,7 +170,7 @@ extern "C"
 	 * @return The Number value or \b NaN if failed
 	 * @since version 3.6.0
 	 */
-	WINPR_API double WINPR_JSON_GetNumberValue(const WINPR_JSON* item);
+	WINPR_API WINPR_ATTR_NODISCARD double WINPR_JSON_GetNumberValue(const WINPR_JSON* item);
 
 	/**
 	 * @brief Check if JSON item is valid
@@ -174,7 +178,7 @@ extern "C"
 	 * @return \b TRUE if valid, \b FALSE otherwise
 	 * @since version 3.6.0
 	 */
-	WINPR_API BOOL WINPR_JSON_IsInvalid(const WINPR_JSON* item);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL WINPR_JSON_IsInvalid(const WINPR_JSON* item);
 
 	/**
 	 * @brief Check if JSON item is BOOL value False
@@ -182,7 +186,7 @@ extern "C"
 	 * @return \b TRUE if False, \b FALSE otherwise
 	 * @since version 3.6.0
 	 */
-	WINPR_API BOOL WINPR_JSON_IsFalse(const WINPR_JSON* item);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL WINPR_JSON_IsFalse(const WINPR_JSON* item);
 
 	/**
 	 * @brief Check if JSON item is BOOL value True
@@ -190,7 +194,7 @@ extern "C"
 	 * @return \b TRUE if True, \b FALSE otherwise
 	 * @since version 3.6.0
 	 */
-	WINPR_API BOOL WINPR_JSON_IsTrue(const WINPR_JSON* item);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL WINPR_JSON_IsTrue(const WINPR_JSON* item);
 
 	/**
 	 * @brief Check if JSON item is of type BOOL
@@ -198,7 +202,7 @@ extern "C"
 	 * @return \b TRUE if the type is BOOL, \b FALSE otherwise
 	 * @since version 3.6.0
 	 */
-	WINPR_API BOOL WINPR_JSON_IsBool(const WINPR_JSON* item);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL WINPR_JSON_IsBool(const WINPR_JSON* item);
 
 	/**
 	 * @brief Check if JSON item is Null
@@ -206,7 +210,7 @@ extern "C"
 	 * @return \b TRUE if it is Null, \b FALSE otherwise
 	 * @since version 3.6.0
 	 */
-	WINPR_API BOOL WINPR_JSON_IsNull(const WINPR_JSON* item);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL WINPR_JSON_IsNull(const WINPR_JSON* item);
 
 	/**
 	 * @brief Check if JSON item is of type Number
@@ -214,7 +218,7 @@ extern "C"
 	 * @return \b TRUE if the type is Number, \b FALSE otherwise
 	 * @since version 3.6.0
 	 */
-	WINPR_API BOOL WINPR_JSON_IsNumber(const WINPR_JSON* item);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL WINPR_JSON_IsNumber(const WINPR_JSON* item);
 
 	/**
 	 * @brief Check if JSON item is of type String
@@ -222,7 +226,7 @@ extern "C"
 	 * @return \b TRUE if the type is String, \b FALSE otherwise
 	 * @since version 3.6.0
 	 */
-	WINPR_API BOOL WINPR_JSON_IsString(const WINPR_JSON* item);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL WINPR_JSON_IsString(const WINPR_JSON* item);
 
 	/**
 	 * @brief Check if JSON item is of type Array
@@ -230,7 +234,7 @@ extern "C"
 	 * @return \b TRUE if the type is Array, \b FALSE otherwise
 	 * @since version 3.6.0
 	 */
-	WINPR_API BOOL WINPR_JSON_IsArray(const WINPR_JSON* item);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL WINPR_JSON_IsArray(const WINPR_JSON* item);
 
 	/**
 	 * @brief Check if JSON item is of type Object
@@ -238,28 +242,28 @@ extern "C"
 	 * @return \b TRUE if the type is Object, \b FALSE otherwise
 	 * @since version 3.6.0
 	 */
-	WINPR_API BOOL WINPR_JSON_IsObject(const WINPR_JSON* item);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL WINPR_JSON_IsObject(const WINPR_JSON* item);
 
 	/**
 	 * @brief WINPR_JSON_CreateNull
 	 * @return a new JSON item of type and value Null
 	 * @since version 3.6.0
 	 */
-	WINPR_API WINPR_JSON* WINPR_JSON_CreateNull(void);
+	WINPR_API WINPR_ATTR_NODISCARD WINPR_JSON* WINPR_JSON_CreateNull(void);
 
 	/**
 	 * @brief WINPR_JSON_CreateTrue
 	 * @return a new JSON item of type Bool and value True
 	 * @since version 3.6.0
 	 */
-	WINPR_API WINPR_JSON* WINPR_JSON_CreateTrue(void);
+	WINPR_API WINPR_ATTR_NODISCARD WINPR_JSON* WINPR_JSON_CreateTrue(void);
 
 	/**
 	 * @brief WINPR_JSON_CreateFalse
 	 * @return a new JSON item of type Bool and value False
 	 * @since version 3.6.0
 	 */
-	WINPR_API WINPR_JSON* WINPR_JSON_CreateFalse(void);
+	WINPR_API WINPR_ATTR_NODISCARD WINPR_JSON* WINPR_JSON_CreateFalse(void);
 
 	/**
 	 * @brief WINPR_JSON_CreateBool
@@ -267,7 +271,7 @@ extern "C"
 	 * @return a new JSON item of type Bool
 	 * @since version 3.6.0
 	 */
-	WINPR_API WINPR_JSON* WINPR_JSON_CreateBool(BOOL boolean);
+	WINPR_API WINPR_ATTR_NODISCARD WINPR_JSON* WINPR_JSON_CreateBool(BOOL boolean);
 
 	/**
 	 * @brief WINPR_JSON_CreateNumber
@@ -275,7 +279,7 @@ extern "C"
 	 * @return a new JSON item of type Number
 	 * @since version 3.6.0
 	 */
-	WINPR_API WINPR_JSON* WINPR_JSON_CreateNumber(double num);
+	WINPR_API WINPR_ATTR_NODISCARD WINPR_JSON* WINPR_JSON_CreateNumber(double num);
 
 	/**
 	 * @brief WINPR_JSON_CreateString
@@ -283,21 +287,21 @@ extern "C"
 	 * @return a new JSON item of type String
 	 * @since version 3.6.0
 	 */
-	WINPR_API WINPR_JSON* WINPR_JSON_CreateString(const char* string);
+	WINPR_API WINPR_ATTR_NODISCARD WINPR_JSON* WINPR_JSON_CreateString(const char* string);
 
 	/**
 	 * @brief WINPR_JSON_CreateArray
 	 * @return a new JSON item of type array, empty
 	 * @since version 3.6.0
 	 */
-	WINPR_API WINPR_JSON* WINPR_JSON_CreateArray(void);
+	WINPR_API WINPR_ATTR_NODISCARD WINPR_JSON* WINPR_JSON_CreateArray(void);
 
 	/**
 	 * @brief WINPR_JSON_CreateObject
 	 * @return a new JSON item of type Object
 	 * @since version 3.6.0
 	 */
-	WINPR_API WINPR_JSON* WINPR_JSON_CreateObject(void);
+	WINPR_API WINPR_ATTR_NODISCARD WINPR_JSON* WINPR_JSON_CreateObject(void);
 
 	/**
 	 * @brief WINPR_JSON_AddNullToObject
@@ -306,7 +310,8 @@ extern "C"
 	 * @return the new JSON item added
 	 * @since version 3.6.0
 	 */
-	WINPR_API WINPR_JSON* WINPR_JSON_AddNullToObject(WINPR_JSON* object, const char* name);
+	WINPR_API WINPR_ATTR_NODISCARD WINPR_JSON* WINPR_JSON_AddNullToObject(WINPR_JSON* object,
+	                                                                      const char* name);
 
 	/**
 	 * @brief WINPR_JSON_AddTrueToObject
@@ -315,7 +320,8 @@ extern "C"
 	 * @return the new JSON item added
 	 * @since version 3.6.0
 	 */
-	WINPR_API WINPR_JSON* WINPR_JSON_AddTrueToObject(WINPR_JSON* object, const char* name);
+	WINPR_API WINPR_ATTR_NODISCARD WINPR_JSON* WINPR_JSON_AddTrueToObject(WINPR_JSON* object,
+	                                                                      const char* name);
 
 	/**
 	 * @brief WINPR_JSON_AddFalseToObject
@@ -324,7 +330,8 @@ extern "C"
 	 * @return the new JSON item added
 	 * @since version 3.6.0
 	 */
-	WINPR_API WINPR_JSON* WINPR_JSON_AddFalseToObject(WINPR_JSON* object, const char* name);
+	WINPR_API WINPR_ATTR_NODISCARD WINPR_JSON* WINPR_JSON_AddFalseToObject(WINPR_JSON* object,
+	                                                                       const char* name);
 
 	/**
 	 * @brief WINPR_JSON_AddBoolToObject
@@ -333,8 +340,8 @@ extern "C"
 	 * @return the new JSON item added
 	 * @since version 3.6.0
 	 */
-	WINPR_API WINPR_JSON* WINPR_JSON_AddBoolToObject(WINPR_JSON* object, const char* name,
-	                                                 BOOL boolean);
+	WINPR_API WINPR_ATTR_NODISCARD WINPR_JSON*
+	WINPR_JSON_AddBoolToObject(WINPR_JSON* object, const char* name, BOOL boolean);
 
 	/**
 	 * @brief WINPR_JSON_AddNumberToObject
@@ -343,8 +350,8 @@ extern "C"
 	 * @return the new JSON item added
 	 * @since version 3.6.0
 	 */
-	WINPR_API WINPR_JSON* WINPR_JSON_AddNumberToObject(WINPR_JSON* object, const char* name,
-	                                                   double number);
+	WINPR_API WINPR_ATTR_NODISCARD WINPR_JSON*
+	WINPR_JSON_AddNumberToObject(WINPR_JSON* object, const char* name, double number);
 
 	/**
 	 * @brief WINPR_JSON_AddIntegerToObject
@@ -353,8 +360,8 @@ extern "C"
 	 * @return the new JSON item added
 	 * @since version 3.6.0
 	 */
-	WINPR_API WINPR_JSON* WINPR_JSON_AddIntegerToObject(WINPR_JSON* object, const char* name,
-	                                                    int64_t number);
+	WINPR_API WINPR_ATTR_NODISCARD WINPR_JSON*
+	WINPR_JSON_AddIntegerToObject(WINPR_JSON* object, const char* name, int64_t number);
 
 	/**
 	 * @brief WINPR_JSON_AddStringToObject
@@ -363,8 +370,8 @@ extern "C"
 	 * @return the new JSON item added
 	 * @since version 3.6.0
 	 */
-	WINPR_API WINPR_JSON* WINPR_JSON_AddStringToObject(WINPR_JSON* object, const char* name,
-	                                                   const char* string);
+	WINPR_API WINPR_ATTR_NODISCARD WINPR_JSON*
+	WINPR_JSON_AddStringToObject(WINPR_JSON* object, const char* name, const char* string);
 
 	/**
 	 * @brief WINPR_JSON_AddObjectToObject
@@ -373,7 +380,8 @@ extern "C"
 	 * @return the new JSON item added
 	 * @since version 3.6.0
 	 */
-	WINPR_API WINPR_JSON* WINPR_JSON_AddObjectToObject(WINPR_JSON* object, const char* name);
+	WINPR_API WINPR_ATTR_NODISCARD WINPR_JSON* WINPR_JSON_AddObjectToObject(WINPR_JSON* object,
+	                                                                        const char* name);
 
 	/**
 	 * @brief WINPR_JSON_AddArrayToObject
@@ -382,7 +390,8 @@ extern "C"
 	 * @return the new JSON item added
 	 * @since version 3.6.0
 	 */
-	WINPR_API WINPR_JSON* WINPR_JSON_AddArrayToObject(WINPR_JSON* object, const char* name);
+	WINPR_API WINPR_ATTR_NODISCARD WINPR_JSON* WINPR_JSON_AddArrayToObject(WINPR_JSON* object,
+	                                                                       const char* name);
 
 	/**
 	 * @brief Add an item to an existing array
@@ -391,7 +400,8 @@ extern "C"
 	 * @return \b TRUE for success, \b FALSE for failure
 	 * @since version 3.7.0
 	 */
-	WINPR_API BOOL WINPR_JSON_AddItemToArray(WINPR_JSON* array, WINPR_JSON* item);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL WINPR_JSON_AddItemToArray(WINPR_JSON* array,
+	                                                              WINPR_JSON* item);
 
 	/**
 	 * @brief Serialize a JSON instance to string
@@ -402,7 +412,7 @@ extern "C"
 	 * @since version 3.6.0
 	 */
 	WINPR_ATTR_MALLOC(free, 1)
-	WINPR_API char* WINPR_JSON_Print(WINPR_JSON* item);
+	WINPR_API WINPR_ATTR_NODISCARD char* WINPR_JSON_Print(WINPR_JSON* item);
 
 	/**
 	 * @brief Serialize a JSON instance to string without formatting
@@ -413,7 +423,7 @@ extern "C"
 	 * @since version 3.6.0
 	 */
 	WINPR_ATTR_MALLOC(free, 1)
-	WINPR_API char* WINPR_JSON_PrintUnformatted(WINPR_JSON* item);
+	WINPR_API WINPR_ATTR_NODISCARD char* WINPR_JSON_PrintUnformatted(WINPR_JSON* item);
 
 #ifdef __cplusplus
 }

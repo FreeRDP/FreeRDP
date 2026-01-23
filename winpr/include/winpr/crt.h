@@ -125,7 +125,7 @@ extern "C"
 {
 #endif
 
-	WINPR_API PVOID SecureZeroMemory(PVOID ptr, size_t cnt);
+	WINPR_API WINPR_ATTR_NODISCARD PVOID SecureZeroMemory(PVOID ptr, size_t cnt);
 
 #ifdef __cplusplus
 }
@@ -154,13 +154,15 @@ extern "C"
 
 	/* Data Conversion */
 
-	WINPR_API errno_t _itoa_s(int value, char* buffer, size_t sizeInCharacters, int radix);
+	WINPR_API WINPR_ATTR_NODISCARD errno_t _itoa_s(int value, char* buffer, size_t sizeInCharacters,
+	                                               int radix);
 
 	/* Buffer Manipulation */
 
-	WINPR_API errno_t memmove_s(void* dest, size_t numberOfElements, const void* src, size_t count);
-	WINPR_API errno_t wmemmove_s(WCHAR* dest, size_t numberOfElements, const WCHAR* src,
-	                             size_t count);
+	WINPR_API WINPR_ATTR_NODISCARD errno_t memmove_s(void* dest, size_t numberOfElements,
+	                                                 const void* src, size_t count);
+	WINPR_API WINPR_ATTR_NODISCARD errno_t wmemmove_s(WCHAR* dest, size_t numberOfElements,
+	                                                  const WCHAR* src, size_t count);
 #ifdef __cplusplus
 }
 #endif
@@ -192,30 +194,36 @@ extern "C"
 	WINPR_API void winpr_aligned_free(void* memblock);
 
 	WINPR_ATTR_MALLOC(winpr_aligned_free, 1)
-	WINPR_API void* winpr_aligned_malloc(size_t size, size_t alignment);
+	WINPR_API WINPR_ATTR_NODISCARD void* winpr_aligned_malloc(size_t size, size_t alignment);
 
 	WINPR_ATTR_MALLOC(winpr_aligned_free, 1)
-	WINPR_API void* winpr_aligned_calloc(size_t count, size_t size, size_t alignment);
+	WINPR_API WINPR_ATTR_NODISCARD void* winpr_aligned_calloc(size_t count, size_t size,
+	                                                          size_t alignment);
 
 	WINPR_ATTR_MALLOC(winpr_aligned_free, 1)
-	WINPR_API void* winpr_aligned_realloc(void* memblock, size_t size, size_t alignment);
+	WINPR_API WINPR_ATTR_NODISCARD void* winpr_aligned_realloc(void* memblock, size_t size,
+	                                                           size_t alignment);
 
 	WINPR_ATTR_MALLOC(winpr_aligned_free, 1)
-	WINPR_API void* winpr_aligned_recalloc(void* memblock, size_t num, size_t size,
-	                                       size_t alignment);
+	WINPR_API WINPR_ATTR_NODISCARD void* winpr_aligned_recalloc(void* memblock, size_t num,
+	                                                            size_t size, size_t alignment);
 
 	WINPR_ATTR_MALLOC(winpr_aligned_free, 1)
-	WINPR_API void* winpr_aligned_offset_malloc(size_t size, size_t alignment, size_t offset);
+	WINPR_API WINPR_ATTR_NODISCARD void* winpr_aligned_offset_malloc(size_t size, size_t alignment,
+	                                                                 size_t offset);
 
 	WINPR_ATTR_MALLOC(winpr_aligned_free, 1)
-	WINPR_API void* winpr_aligned_offset_realloc(void* memblock, size_t size, size_t alignment,
-	                                             size_t offset);
+	WINPR_API WINPR_ATTR_NODISCARD void*
+	winpr_aligned_offset_realloc(void* memblock, size_t size, size_t alignment, size_t offset);
 
 	WINPR_ATTR_MALLOC(winpr_aligned_free, 1)
-	WINPR_API void* winpr_aligned_offset_recalloc(void* memblock, size_t num, size_t size,
-	                                              size_t alignment, size_t offset);
+	WINPR_API WINPR_ATTR_NODISCARD void* winpr_aligned_offset_recalloc(void* memblock, size_t num,
+	                                                                   size_t size,
+	                                                                   size_t alignment,
+	                                                                   size_t offset);
 
-	WINPR_API size_t winpr_aligned_msize(void* memblock, size_t alignment, size_t offset);
+	WINPR_API WINPR_ATTR_NODISCARD size_t winpr_aligned_msize(void* memblock, size_t alignment,
+	                                                          size_t offset);
 
 #ifdef __cplusplus
 }

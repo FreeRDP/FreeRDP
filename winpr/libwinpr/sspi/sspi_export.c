@@ -28,7 +28,7 @@
 #include <winpr/winpr.h>
 #if defined(SSPI_DLL)
 #define SEC_ENTRY
-#define SSPI_EXPORT WINPR_API
+#define SSPI_EXPORT WINPR_API WINPR_ATTR_NODISCARD
 #endif
 #endif
 

@@ -68,8 +68,9 @@ WINPR_PRAGMA_DIAG_IGNORED_RESERVED_IDENTIFIER
 
 #if (_WIN32_WINNT < 0x0600)
 
-WINPR_API PCSTR winpr_inet_ntop(INT Family, PVOID pAddr, PSTR pStringBuf, size_t StringBufSize);
-WINPR_API INT winpr_inet_pton(INT Family, PCSTR pszAddrString, PVOID pAddrBuf);
+WINPR_API WINPR_ATTR_NODISCARD PCSTR winpr_inet_ntop(INT Family, PVOID pAddr, PSTR pStringBuf,
+                                                     size_t StringBufSize);
+WINPR_API WINPR_ATTR_NODISCARD INT winpr_inet_pton(INT Family, PCSTR pszAddrString, PVOID pAddrBuf);
 
 #define inet_ntop winpr_inet_ntop
 #define inet_pton winpr_inet_pton
@@ -296,70 +297,78 @@ extern "C"
 {
 #endif
 
-	WINPR_API int WSAStartup(WORD wVersionRequired, LPWSADATA lpWSAData);
-	WINPR_API int WSACleanup(void);
+	WINPR_API WINPR_ATTR_NODISCARD int WSAStartup(WORD wVersionRequired, LPWSADATA lpWSAData);
+	WINPR_API WINPR_ATTR_NODISCARD int WSACleanup(void);
 
 	WINPR_API void WSASetLastError(int iError);
-	WINPR_API int WSAGetLastError(void);
+	WINPR_API WINPR_ATTR_NODISCARD int WSAGetLastError(void);
 
-	WINPR_API BOOL WSACloseEvent(HANDLE hEvent);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL WSACloseEvent(HANDLE hEvent);
 
 	WINPR_ATTR_MALLOC(WSACloseEvent, 1)
-	WINPR_API HANDLE WSACreateEvent(void);
-	WINPR_API BOOL WSASetEvent(HANDLE hEvent);
-	WINPR_API BOOL WSAResetEvent(HANDLE hEvent);
+	WINPR_API WINPR_ATTR_NODISCARD HANDLE WSACreateEvent(void);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL WSASetEvent(HANDLE hEvent);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL WSAResetEvent(HANDLE hEvent);
 
-	WINPR_API int WSAEventSelect(SOCKET s, WSAEVENT hEventObject, LONG lNetworkEvents);
+	WINPR_API WINPR_ATTR_NODISCARD int WSAEventSelect(SOCKET s, WSAEVENT hEventObject,
+	                                                  LONG lNetworkEvents);
 
-	WINPR_API DWORD WSAWaitForMultipleEvents(DWORD cEvents, const HANDLE* lphEvents, BOOL fWaitAll,
-	                                         DWORD dwTimeout, BOOL fAlertable);
+	WINPR_API WINPR_ATTR_NODISCARD DWORD WSAWaitForMultipleEvents(DWORD cEvents,
+	                                                              const HANDLE* lphEvents,
+	                                                              BOOL fWaitAll, DWORD dwTimeout,
+	                                                              BOOL fAlertable);
 
-	WINPR_API SOCKET WSASocketA(int af, int type, int protocol, LPWSAPROTOCOL_INFOA lpProtocolInfo,
-	                            GROUP g, DWORD dwFlags);
-	WINPR_API SOCKET WSASocketW(int af, int type, int protocol, LPWSAPROTOCOL_INFOW lpProtocolInfo,
-	                            GROUP g, DWORD dwFlags);
+	WINPR_API WINPR_ATTR_NODISCARD SOCKET WSASocketA(int af, int type, int protocol,
+	                                                 LPWSAPROTOCOL_INFOA lpProtocolInfo, GROUP g,
+	                                                 DWORD dwFlags);
+	WINPR_API WINPR_ATTR_NODISCARD SOCKET WSASocketW(int af, int type, int protocol,
+	                                                 LPWSAPROTOCOL_INFOW lpProtocolInfo, GROUP g,
+	                                                 DWORD dwFlags);
 
-	WINPR_API int WSAIoctl(SOCKET s, DWORD dwIoControlCode, LPVOID lpvInBuffer, DWORD cbInBuffer,
-	                       LPVOID lpvOutBuffer, DWORD cbOutBuffer, LPDWORD lpcbBytesReturned,
-	                       LPWSAOVERLAPPED lpOverlapped,
-	                       LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine);
+	WINPR_API WINPR_ATTR_NODISCARD int
+	WSAIoctl(SOCKET s, DWORD dwIoControlCode, LPVOID lpvInBuffer, DWORD cbInBuffer,
+	         LPVOID lpvOutBuffer, DWORD cbOutBuffer, LPDWORD lpcbBytesReturned,
+	         LPWSAOVERLAPPED lpOverlapped, LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine);
 
 	// NOLINTBEGIN(bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
-	WINPR_API SOCKET _accept(SOCKET s, struct sockaddr* addr, int* addrlen);
-	WINPR_API int _bind(SOCKET s, const struct sockaddr* addr, int namelen);
-	WINPR_API int closesocket(SOCKET s);
-	WINPR_API int _connect(SOCKET s, const struct sockaddr* name, int namelen);
-	WINPR_API int _ioctlsocket(SOCKET s, long cmd, u_long* argp);
-	WINPR_API int _getpeername(SOCKET s, struct sockaddr* name, int* namelen);
-	WINPR_API int _getsockname(SOCKET s, struct sockaddr* name, int* namelen);
-	WINPR_API int _getsockopt(SOCKET s, int level, int optname, char* optval, int* optlen);
-	WINPR_API u_long _htonl(u_long hostlong);
-	WINPR_API u_short _htons(u_short hostshort);
-	WINPR_API unsigned long _inet_addr(const char* cp);
-	WINPR_API char* _inet_ntoa(struct in_addr in);
-	WINPR_API int _listen(SOCKET s, int backlog);
-	WINPR_API u_long _ntohl(u_long netlong);
-	WINPR_API u_short _ntohs(u_short netshort);
-	WINPR_API int _recv(SOCKET s, char* buf, int len, int flags);
-	WINPR_API int _recvfrom(SOCKET s, char* buf, int len, int flags, struct sockaddr* from,
-	                        int* fromlen);
-	WINPR_API int _select(int nfds, fd_set* readfds, fd_set* writefds, fd_set* exceptfds,
-	                      const struct timeval* timeout);
-	WINPR_API int _send(SOCKET s, const char* buf, int len, int flags);
-	WINPR_API int _sendto(SOCKET s, const char* buf, int len, int flags, const struct sockaddr* to,
-	                      int tolen);
-	WINPR_API int _setsockopt(SOCKET s, int level, int optname, const char* optval, int optlen);
-	WINPR_API int _shutdown(SOCKET s, int how);
-	WINPR_API SOCKET _socket(int af, int type, int protocol);
-	WINPR_API struct hostent* _gethostbyaddr(const char* addr, int len, int type);
-	WINPR_API struct hostent* _gethostbyname(const char* name);
-	WINPR_API int _gethostname(char* name, int namelen);
-	WINPR_API struct servent* /* codespell:ignore servent */ _getservbyport(int port,
-	                                                                        const char* proto);
-	WINPR_API struct servent* /* codespell:ignore servent */ _getservbyname(const char* name,
-	                                                                        const char* proto);
-	WINPR_API struct protoent* _getprotobynumber(int number);
-	WINPR_API struct protoent* _getprotobyname(const char* name);
+	WINPR_API WINPR_ATTR_NODISCARD SOCKET _accept(SOCKET s, struct sockaddr* addr, int* addrlen);
+	WINPR_API WINPR_ATTR_NODISCARD int _bind(SOCKET s, const struct sockaddr* addr, int namelen);
+	WINPR_API WINPR_ATTR_NODISCARD int closesocket(SOCKET s);
+	WINPR_API WINPR_ATTR_NODISCARD int _connect(SOCKET s, const struct sockaddr* name, int namelen);
+	WINPR_API WINPR_ATTR_NODISCARD int _ioctlsocket(SOCKET s, long cmd, u_long* argp);
+	WINPR_API WINPR_ATTR_NODISCARD int _getpeername(SOCKET s, struct sockaddr* name, int* namelen);
+	WINPR_API WINPR_ATTR_NODISCARD int _getsockname(SOCKET s, struct sockaddr* name, int* namelen);
+	WINPR_API WINPR_ATTR_NODISCARD int _getsockopt(SOCKET s, int level, int optname, char* optval,
+	                                               int* optlen);
+	WINPR_API WINPR_ATTR_NODISCARD u_long _htonl(u_long hostlong);
+	WINPR_API WINPR_ATTR_NODISCARD u_short _htons(u_short hostshort);
+	WINPR_API WINPR_ATTR_NODISCARD unsigned long _inet_addr(const char* cp);
+	WINPR_API WINPR_ATTR_NODISCARD char* _inet_ntoa(struct in_addr in);
+	WINPR_API WINPR_ATTR_NODISCARD int _listen(SOCKET s, int backlog);
+	WINPR_API WINPR_ATTR_NODISCARD u_long _ntohl(u_long netlong);
+	WINPR_API WINPR_ATTR_NODISCARD u_short _ntohs(u_short netshort);
+	WINPR_API WINPR_ATTR_NODISCARD int _recv(SOCKET s, char* buf, int len, int flags);
+	WINPR_API WINPR_ATTR_NODISCARD int _recvfrom(SOCKET s, char* buf, int len, int flags,
+	                                             struct sockaddr* from, int* fromlen);
+	WINPR_API WINPR_ATTR_NODISCARD int _select(int nfds, fd_set* readfds, fd_set* writefds,
+	                                           fd_set* exceptfds, const struct timeval* timeout);
+	WINPR_API WINPR_ATTR_NODISCARD int _send(SOCKET s, const char* buf, int len, int flags);
+	WINPR_API WINPR_ATTR_NODISCARD int _sendto(SOCKET s, const char* buf, int len, int flags,
+	                                           const struct sockaddr* to, int tolen);
+	WINPR_API WINPR_ATTR_NODISCARD int _setsockopt(SOCKET s, int level, int optname,
+	                                               const char* optval, int optlen);
+	WINPR_API WINPR_ATTR_NODISCARD int _shutdown(SOCKET s, int how);
+	WINPR_API WINPR_ATTR_NODISCARD SOCKET _socket(int af, int type, int protocol);
+	WINPR_API WINPR_ATTR_NODISCARD struct hostent* _gethostbyaddr(const char* addr, int len,
+	                                                              int type);
+	WINPR_API WINPR_ATTR_NODISCARD struct hostent* _gethostbyname(const char* name);
+	WINPR_API WINPR_ATTR_NODISCARD int _gethostname(char* name, int namelen);
+	WINPR_API WINPR_ATTR_NODISCARD struct servent* /* codespell:ignore servent */
+	_getservbyport(int port, const char* proto);
+	WINPR_API WINPR_ATTR_NODISCARD struct servent* /* codespell:ignore servent */
+	_getservbyname(const char* name, const char* proto);
+	WINPR_API WINPR_ATTR_NODISCARD struct protoent* _getprotobynumber(int number);
+	WINPR_API WINPR_ATTR_NODISCARD struct protoent* _getprotobyname(const char* name);
 
 	// NOLINTEND(bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
 

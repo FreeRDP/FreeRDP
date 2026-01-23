@@ -107,26 +107,32 @@ extern "C"
 {
 #endif
 
-	WINPR_API BOOL LogonUserA(LPCSTR lpszUsername, LPCSTR lpszDomain, LPCSTR lpszPassword,
-	                          DWORD dwLogonType, DWORD dwLogonProvider, PHANDLE phToken);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL LogonUserA(LPCSTR lpszUsername, LPCSTR lpszDomain,
+	                                               LPCSTR lpszPassword, DWORD dwLogonType,
+	                                               DWORD dwLogonProvider, PHANDLE phToken);
 
-	WINPR_API BOOL LogonUserW(LPCWSTR lpszUsername, LPCWSTR lpszDomain, LPCWSTR lpszPassword,
-	                          DWORD dwLogonType, DWORD dwLogonProvider, PHANDLE phToken);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL LogonUserW(LPCWSTR lpszUsername, LPCWSTR lpszDomain,
+	                                               LPCWSTR lpszPassword, DWORD dwLogonType,
+	                                               DWORD dwLogonProvider, PHANDLE phToken);
 
-	WINPR_API BOOL LogonUserExA(LPCSTR lpszUsername, LPCSTR lpszDomain, LPCSTR lpszPassword,
-	                            DWORD dwLogonType, DWORD dwLogonProvider, PHANDLE phToken,
-	                            PSID* ppLogonSid, PVOID* ppProfileBuffer, LPDWORD pdwProfileLength,
-	                            PQUOTA_LIMITS pQuotaLimits);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL LogonUserExA(LPCSTR lpszUsername, LPCSTR lpszDomain,
+	                                                 LPCSTR lpszPassword, DWORD dwLogonType,
+	                                                 DWORD dwLogonProvider, PHANDLE phToken,
+	                                                 PSID* ppLogonSid, PVOID* ppProfileBuffer,
+	                                                 LPDWORD pdwProfileLength,
+	                                                 PQUOTA_LIMITS pQuotaLimits);
 
-	WINPR_API BOOL LogonUserExW(LPCWSTR lpszUsername, LPCWSTR lpszDomain, LPCWSTR lpszPassword,
-	                            DWORD dwLogonType, DWORD dwLogonProvider, PHANDLE phToken,
-	                            PSID* ppLogonSid, PVOID* ppProfileBuffer, LPDWORD pdwProfileLength,
-	                            PQUOTA_LIMITS pQuotaLimits);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL LogonUserExW(LPCWSTR lpszUsername, LPCWSTR lpszDomain,
+	                                                 LPCWSTR lpszPassword, DWORD dwLogonType,
+	                                                 DWORD dwLogonProvider, PHANDLE phToken,
+	                                                 PSID* ppLogonSid, PVOID* ppProfileBuffer,
+	                                                 LPDWORD pdwProfileLength,
+	                                                 PQUOTA_LIMITS pQuotaLimits);
 
-	WINPR_API BOOL GetUserNameExA(EXTENDED_NAME_FORMAT NameFormat, LPSTR lpNameBuffer,
-	                              PULONG nSize);
-	WINPR_API BOOL GetUserNameExW(EXTENDED_NAME_FORMAT NameFormat, LPWSTR lpNameBuffer,
-	                              PULONG nSize);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL GetUserNameExA(EXTENDED_NAME_FORMAT NameFormat,
+	                                                   LPSTR lpNameBuffer, PULONG nSize);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL GetUserNameExW(EXTENDED_NAME_FORMAT NameFormat,
+	                                                   LPWSTR lpNameBuffer, PULONG nSize);
 
 #ifdef __cplusplus
 }

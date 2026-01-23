@@ -37,7 +37,7 @@ extern "C"
 	 *
 	 *  @return > 0 for success, < 0 for failure
 	 */
-	WINPR_API int IniFile_ReadBuffer(wIniFile* ini, const char* buffer);
+	WINPR_API WINPR_ATTR_NODISCARD int IniFile_ReadBuffer(wIniFile* ini, const char* buffer);
 
 	/** @brief read an ini file from a file
 	 *
@@ -46,7 +46,7 @@ extern "C"
 	 *
 	 *  @return > 0 for success, < 0 for failure
 	 */
-	WINPR_API int IniFile_ReadFile(wIniFile* ini, const char* filename);
+	WINPR_API WINPR_ATTR_NODISCARD int IniFile_ReadFile(wIniFile* ini, const char* filename);
 
 	/** @brief write an ini instance to a buffer
 	 *
@@ -54,7 +54,7 @@ extern "C"
 	 *
 	 *  @return A newly allocated string, use \b free after use. \b NULL in case of failure
 	 */
-	WINPR_API char* IniFile_WriteBuffer(wIniFile* ini);
+	WINPR_API WINPR_ATTR_NODISCARD char* IniFile_WriteBuffer(wIniFile* ini);
 
 	/** @brief write an ini instance to a file
 	 *
@@ -63,7 +63,7 @@ extern "C"
 	 *
 	 *  @return > 0 for success, < 0 for failure
 	 */
-	WINPR_API int IniFile_WriteFile(wIniFile* ini, const char* filename);
+	WINPR_API WINPR_ATTR_NODISCARD int IniFile_WriteFile(wIniFile* ini, const char* filename);
 
 	/** @brief Get the number and names of sections in the ini instance
 	 *
@@ -72,7 +72,7 @@ extern "C"
 	 *
 	 *  @return A newly allocated array of strings (size \b count). Use \b free after use
 	 */
-	WINPR_API char** IniFile_GetSectionNames(wIniFile* ini, size_t* count);
+	WINPR_API WINPR_ATTR_NODISCARD char** IniFile_GetSectionNames(wIniFile* ini, size_t* count);
 
 	/** @brief Get the number and names of keys of a section in the ini instance
 	 *
@@ -82,7 +82,8 @@ extern "C"
 	 *
 	 *  @return A newly allocated array of strings (size \b count). Use \b free after use
 	 */
-	WINPR_API char** IniFile_GetSectionKeyNames(wIniFile* ini, const char* section, size_t* count);
+	WINPR_API WINPR_ATTR_NODISCARD char**
+	IniFile_GetSectionKeyNames(wIniFile* ini, const char* section, size_t* count);
 
 	/** @brief Get an ini [section/key] value of type string
 	 *
@@ -92,8 +93,8 @@ extern "C"
 	 *
 	 *  @return The value of the [section/key] as '\0' terminated string or \b NULL
 	 */
-	WINPR_API const char* IniFile_GetKeyValueString(wIniFile* ini, const char* section,
-	                                                const char* key);
+	WINPR_API WINPR_ATTR_NODISCARD const char*
+	IniFile_GetKeyValueString(wIniFile* ini, const char* section, const char* key);
 
 	/** @brief Get an ini [section/key] value of type int
 	 *
@@ -103,7 +104,8 @@ extern "C"
 	 *
 	 *  @return The value of the [section/key]
 	 */
-	WINPR_API int IniFile_GetKeyValueInt(wIniFile* ini, const char* section, const char* key);
+	WINPR_API WINPR_ATTR_NODISCARD int IniFile_GetKeyValueInt(wIniFile* ini, const char* section,
+	                                                          const char* key);
 
 	/** @brief Set an ini [section/key] value of type string
 	 *
@@ -114,8 +116,9 @@ extern "C"
 	 *
 	 *  @return > 0 for success, < 0 for failure
 	 */
-	WINPR_API int IniFile_SetKeyValueString(wIniFile* ini, const char* section, const char* key,
-	                                        const char* value);
+	WINPR_API WINPR_ATTR_NODISCARD int IniFile_SetKeyValueString(wIniFile* ini, const char* section,
+	                                                             const char* key,
+	                                                             const char* value);
 
 	/** @brief Set an ini [section/key] value of type int
 	 *
@@ -126,8 +129,8 @@ extern "C"
 	 *
 	 *  @return > 0 for success, < 0 for failure
 	 */
-	WINPR_API int IniFile_SetKeyValueInt(wIniFile* ini, const char* section, const char* key,
-	                                     int value);
+	WINPR_API WINPR_ATTR_NODISCARD int IniFile_SetKeyValueInt(wIniFile* ini, const char* section,
+	                                                          const char* key, int value);
 
 	/** @brief Free a ini instance
 	 *
@@ -140,7 +143,7 @@ extern "C"
 	 *  @return The newly allocated instance or \b NULL if failed.
 	 */
 	WINPR_ATTR_MALLOC(IniFile_Free, 1)
-	WINPR_API wIniFile* IniFile_New(void);
+	WINPR_API WINPR_ATTR_NODISCARD wIniFile* IniFile_New(void);
 
 	/** @brief Clone a ini instance
 	 *
@@ -148,7 +151,7 @@ extern "C"
 	 *
 	 *  @return the cloned instance or \b NULL in case of \b ini was \b NULL or failure
 	 */
-	WINPR_API wIniFile* IniFile_Clone(const wIniFile* ini);
+	WINPR_API WINPR_ATTR_NODISCARD wIniFile* IniFile_Clone(const wIniFile* ini);
 
 #ifdef __cplusplus
 }

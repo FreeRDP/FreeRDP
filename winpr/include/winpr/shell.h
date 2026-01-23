@@ -89,9 +89,11 @@ extern "C"
 {
 #endif
 
-	WINPR_API BOOL GetUserProfileDirectoryA(HANDLE hToken, LPSTR lpProfileDir, LPDWORD lpcchSize);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL GetUserProfileDirectoryA(HANDLE hToken, LPSTR lpProfileDir,
+	                                                             LPDWORD lpcchSize);
 
-	WINPR_API BOOL GetUserProfileDirectoryW(HANDLE hToken, LPWSTR lpProfileDir, LPDWORD lpcchSize);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL GetUserProfileDirectoryW(HANDLE hToken, LPWSTR lpProfileDir,
+	                                                             LPDWORD lpcchSize);
 
 #ifdef __cplusplus
 }

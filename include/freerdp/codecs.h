@@ -90,7 +90,7 @@ extern "C"
 
 #if !defined(WITHOUT_FREERDP_3x_DEPRECATED)
 	WINPR_DEPRECATED_VAR("[since 3.6.0] Use freerdp_client_codecs_free",
-	                     FREERDP_API WINPR_ATTR_NODISCARD void codecs_free(rdpCodecs* codecs));
+	                     FREERDP_API void codecs_free(rdpCodecs* codecs));
 
 	WINPR_DEPRECATED_VAR(
 	    "[since 3.6.0] Use freerdp_client_codecs_new",

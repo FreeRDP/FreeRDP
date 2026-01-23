@@ -74,33 +74,39 @@ extern "C"
 	WINPR_API void ClipboardLock(wClipboard* clipboard);
 	WINPR_API void ClipboardUnlock(wClipboard* clipboard);
 
-	WINPR_API BOOL ClipboardEmpty(wClipboard* clipboard);
-	WINPR_API UINT32 ClipboardCountFormats(wClipboard* clipboard);
-	WINPR_API UINT32 ClipboardGetFormatIds(wClipboard* clipboard, UINT32** ppFormatIds);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL ClipboardEmpty(wClipboard* clipboard);
+	WINPR_API WINPR_ATTR_NODISCARD UINT32 ClipboardCountFormats(wClipboard* clipboard);
+	WINPR_API WINPR_ATTR_NODISCARD UINT32 ClipboardGetFormatIds(wClipboard* clipboard,
+	                                                            UINT32** ppFormatIds);
 
-	WINPR_API UINT32 ClipboardCountRegisteredFormats(wClipboard* clipboard);
-	WINPR_API UINT32 ClipboardGetRegisteredFormatIds(wClipboard* clipboard, UINT32** ppFormatIds);
-	WINPR_API UINT32 ClipboardRegisterFormat(wClipboard* clipboard, const char* name);
+	WINPR_API WINPR_ATTR_NODISCARD UINT32 ClipboardCountRegisteredFormats(wClipboard* clipboard);
+	WINPR_API WINPR_ATTR_NODISCARD UINT32 ClipboardGetRegisteredFormatIds(wClipboard* clipboard,
+	                                                                      UINT32** ppFormatIds);
+	WINPR_API WINPR_ATTR_NODISCARD UINT32 ClipboardRegisterFormat(wClipboard* clipboard,
+	                                                              const char* name);
 
-	WINPR_API BOOL ClipboardRegisterSynthesizer(wClipboard* clipboard, UINT32 formatId,
-	                                            UINT32 syntheticId,
-	                                            CLIPBOARD_SYNTHESIZE_FN pfnSynthesize);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL
+	ClipboardRegisterSynthesizer(wClipboard* clipboard, UINT32 formatId, UINT32 syntheticId,
+	                             CLIPBOARD_SYNTHESIZE_FN pfnSynthesize);
 
-	WINPR_API UINT32 ClipboardGetFormatId(wClipboard* clipboard, const char* name);
-	WINPR_API const char* ClipboardGetFormatName(wClipboard* clipboard, UINT32 formatId);
-	WINPR_API void* ClipboardGetData(wClipboard* clipboard, UINT32 formatId, UINT32* pSize);
-	WINPR_API BOOL ClipboardSetData(wClipboard* clipboard, UINT32 formatId, const void* data,
-	                                UINT32 size);
+	WINPR_API WINPR_ATTR_NODISCARD UINT32 ClipboardGetFormatId(wClipboard* clipboard,
+	                                                           const char* name);
+	WINPR_API WINPR_ATTR_NODISCARD const char* ClipboardGetFormatName(wClipboard* clipboard,
+	                                                                  UINT32 formatId);
+	WINPR_API WINPR_ATTR_NODISCARD void* ClipboardGetData(wClipboard* clipboard, UINT32 formatId,
+	                                                      UINT32* pSize);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL ClipboardSetData(wClipboard* clipboard, UINT32 formatId,
+	                                                     const void* data, UINT32 size);
 
-	WINPR_API UINT64 ClipboardGetOwner(wClipboard* clipboard);
+	WINPR_API WINPR_ATTR_NODISCARD UINT64 ClipboardGetOwner(wClipboard* clipboard);
 	WINPR_API void ClipboardSetOwner(wClipboard* clipboard, UINT64 ownerId);
 
-	WINPR_API wClipboardDelegate* ClipboardGetDelegate(wClipboard* clipboard);
+	WINPR_API WINPR_ATTR_NODISCARD wClipboardDelegate* ClipboardGetDelegate(wClipboard* clipboard);
 
-	WINPR_API wClipboard* ClipboardCreate(void);
+	WINPR_API WINPR_ATTR_NODISCARD wClipboard* ClipboardCreate(void);
 	WINPR_API void ClipboardDestroy(wClipboard* clipboard);
 
-	WINPR_API const char* ClipboardGetFormatIdString(UINT32 formatId);
+	WINPR_API WINPR_ATTR_NODISCARD const char* ClipboardGetFormatIdString(UINT32 formatId);
 
 #ifdef __cplusplus
 }

@@ -625,217 +625,269 @@ extern "C"
 #define SCARD_PCI_T1 (&g_rgSCardT1Pci)
 #define SCARD_PCI_RAW (&g_rgSCardRawPci)
 
-	WINSCARDAPI LONG WINAPI SCardEstablishContext(DWORD dwScope, LPCVOID pvReserved1,
-	                                              LPCVOID pvReserved2, LPSCARDCONTEXT phContext);
+	WINSCARDAPI WINPR_ATTR_NODISCARD LONG WINAPI SCardEstablishContext(DWORD dwScope,
+	                                                                   LPCVOID pvReserved1,
+	                                                                   LPCVOID pvReserved2,
+	                                                                   LPSCARDCONTEXT phContext);
 
-	WINSCARDAPI LONG WINAPI SCardReleaseContext(SCARDCONTEXT hContext);
+	WINSCARDAPI WINPR_ATTR_NODISCARD LONG WINAPI SCardReleaseContext(SCARDCONTEXT hContext);
 
-	WINSCARDAPI LONG WINAPI SCardIsValidContext(SCARDCONTEXT hContext);
+	WINSCARDAPI WINPR_ATTR_NODISCARD LONG WINAPI SCardIsValidContext(SCARDCONTEXT hContext);
 
-	WINSCARDAPI LONG WINAPI SCardListReaderGroupsA(SCARDCONTEXT hContext, LPSTR mszGroups,
-	                                               LPDWORD pcchGroups);
-	WINSCARDAPI LONG WINAPI SCardListReaderGroupsW(SCARDCONTEXT hContext, LPWSTR mszGroups,
-	                                               LPDWORD pcchGroups);
+	WINSCARDAPI WINPR_ATTR_NODISCARD LONG WINAPI SCardListReaderGroupsA(SCARDCONTEXT hContext,
+	                                                                    LPSTR mszGroups,
+	                                                                    LPDWORD pcchGroups);
+	WINSCARDAPI WINPR_ATTR_NODISCARD LONG WINAPI SCardListReaderGroupsW(SCARDCONTEXT hContext,
+	                                                                    LPWSTR mszGroups,
+	                                                                    LPDWORD pcchGroups);
 
-	WINSCARDAPI LONG WINAPI SCardListReadersA(SCARDCONTEXT hContext, LPCSTR mszGroups,
-	                                          LPSTR mszReaders, LPDWORD pcchReaders);
-	WINSCARDAPI LONG WINAPI SCardListReadersW(SCARDCONTEXT hContext, LPCWSTR mszGroups,
-	                                          LPWSTR mszReaders, LPDWORD pcchReaders);
+	WINSCARDAPI WINPR_ATTR_NODISCARD LONG WINAPI SCardListReadersA(SCARDCONTEXT hContext,
+	                                                               LPCSTR mszGroups,
+	                                                               LPSTR mszReaders,
+	                                                               LPDWORD pcchReaders);
+	WINSCARDAPI WINPR_ATTR_NODISCARD LONG WINAPI SCardListReadersW(SCARDCONTEXT hContext,
+	                                                               LPCWSTR mszGroups,
+	                                                               LPWSTR mszReaders,
+	                                                               LPDWORD pcchReaders);
 
-	WINSCARDAPI LONG WINAPI SCardListCardsA(SCARDCONTEXT hContext, LPCBYTE pbAtr,
-	                                        LPCGUID rgquidInterfaces, DWORD cguidInterfaceCount,
-	                                        CHAR* mszCards, LPDWORD pcchCards);
+	WINSCARDAPI WINPR_ATTR_NODISCARD LONG WINAPI SCardListCardsA(SCARDCONTEXT hContext,
+	                                                             LPCBYTE pbAtr,
+	                                                             LPCGUID rgquidInterfaces,
+	                                                             DWORD cguidInterfaceCount,
+	                                                             CHAR* mszCards, LPDWORD pcchCards);
 
-	WINSCARDAPI LONG WINAPI SCardListCardsW(SCARDCONTEXT hContext, LPCBYTE pbAtr,
-	                                        LPCGUID rgquidInterfaces, DWORD cguidInterfaceCount,
-	                                        WCHAR* mszCards, LPDWORD pcchCards);
+	WINSCARDAPI WINPR_ATTR_NODISCARD LONG WINAPI
+	SCardListCardsW(SCARDCONTEXT hContext, LPCBYTE pbAtr, LPCGUID rgquidInterfaces,
+	                DWORD cguidInterfaceCount, WCHAR* mszCards, LPDWORD pcchCards);
 
-	WINSCARDAPI LONG WINAPI SCardListInterfacesA(SCARDCONTEXT hContext, LPCSTR szCard,
-	                                             LPGUID pguidInterfaces, LPDWORD pcguidInterfaces);
-	WINSCARDAPI LONG WINAPI SCardListInterfacesW(SCARDCONTEXT hContext, LPCWSTR szCard,
-	                                             LPGUID pguidInterfaces, LPDWORD pcguidInterfaces);
+	WINSCARDAPI WINPR_ATTR_NODISCARD LONG WINAPI SCardListInterfacesA(SCARDCONTEXT hContext,
+	                                                                  LPCSTR szCard,
+	                                                                  LPGUID pguidInterfaces,
+	                                                                  LPDWORD pcguidInterfaces);
+	WINSCARDAPI WINPR_ATTR_NODISCARD LONG WINAPI SCardListInterfacesW(SCARDCONTEXT hContext,
+	                                                                  LPCWSTR szCard,
+	                                                                  LPGUID pguidInterfaces,
+	                                                                  LPDWORD pcguidInterfaces);
 
-	WINSCARDAPI LONG WINAPI SCardGetProviderIdA(SCARDCONTEXT hContext, LPCSTR szCard,
-	                                            LPGUID pguidProviderId);
-	WINSCARDAPI LONG WINAPI SCardGetProviderIdW(SCARDCONTEXT hContext, LPCWSTR szCard,
-	                                            LPGUID pguidProviderId);
+	WINSCARDAPI WINPR_ATTR_NODISCARD LONG WINAPI SCardGetProviderIdA(SCARDCONTEXT hContext,
+	                                                                 LPCSTR szCard,
+	                                                                 LPGUID pguidProviderId);
+	WINSCARDAPI WINPR_ATTR_NODISCARD LONG WINAPI SCardGetProviderIdW(SCARDCONTEXT hContext,
+	                                                                 LPCWSTR szCard,
+	                                                                 LPGUID pguidProviderId);
 
-	WINSCARDAPI LONG WINAPI SCardGetCardTypeProviderNameA(SCARDCONTEXT hContext, LPCSTR szCardName,
-	                                                      DWORD dwProviderId, CHAR* szProvider,
-	                                                      LPDWORD pcchProvider);
-	WINSCARDAPI LONG WINAPI SCardGetCardTypeProviderNameW(SCARDCONTEXT hContext, LPCWSTR szCardName,
-	                                                      DWORD dwProviderId, WCHAR* szProvider,
-	                                                      LPDWORD pcchProvider);
+	WINSCARDAPI WINPR_ATTR_NODISCARD LONG WINAPI
+	SCardGetCardTypeProviderNameA(SCARDCONTEXT hContext, LPCSTR szCardName, DWORD dwProviderId,
+	                              CHAR* szProvider, LPDWORD pcchProvider);
+	WINSCARDAPI WINPR_ATTR_NODISCARD LONG WINAPI
+	SCardGetCardTypeProviderNameW(SCARDCONTEXT hContext, LPCWSTR szCardName, DWORD dwProviderId,
+	                              WCHAR* szProvider, LPDWORD pcchProvider);
 
-	WINSCARDAPI LONG WINAPI SCardIntroduceReaderGroupA(SCARDCONTEXT hContext, LPCSTR szGroupName);
-	WINSCARDAPI LONG WINAPI SCardIntroduceReaderGroupW(SCARDCONTEXT hContext, LPCWSTR szGroupName);
+	WINSCARDAPI WINPR_ATTR_NODISCARD LONG WINAPI SCardIntroduceReaderGroupA(SCARDCONTEXT hContext,
+	                                                                        LPCSTR szGroupName);
+	WINSCARDAPI WINPR_ATTR_NODISCARD LONG WINAPI SCardIntroduceReaderGroupW(SCARDCONTEXT hContext,
+	                                                                        LPCWSTR szGroupName);
 
-	WINSCARDAPI LONG WINAPI SCardForgetReaderGroupA(SCARDCONTEXT hContext, LPCSTR szGroupName);
-	WINSCARDAPI LONG WINAPI SCardForgetReaderGroupW(SCARDCONTEXT hContext, LPCWSTR szGroupName);
+	WINSCARDAPI WINPR_ATTR_NODISCARD LONG WINAPI SCardForgetReaderGroupA(SCARDCONTEXT hContext,
+	                                                                     LPCSTR szGroupName);
+	WINSCARDAPI WINPR_ATTR_NODISCARD LONG WINAPI SCardForgetReaderGroupW(SCARDCONTEXT hContext,
+	                                                                     LPCWSTR szGroupName);
 
-	WINSCARDAPI LONG WINAPI SCardIntroduceReaderA(SCARDCONTEXT hContext, LPCSTR szReaderName,
-	                                              LPCSTR szDeviceName);
-	WINSCARDAPI LONG WINAPI SCardIntroduceReaderW(SCARDCONTEXT hContext, LPCWSTR szReaderName,
-	                                              LPCWSTR szDeviceName);
+	WINSCARDAPI WINPR_ATTR_NODISCARD LONG WINAPI SCardIntroduceReaderA(SCARDCONTEXT hContext,
+	                                                                   LPCSTR szReaderName,
+	                                                                   LPCSTR szDeviceName);
+	WINSCARDAPI WINPR_ATTR_NODISCARD LONG WINAPI SCardIntroduceReaderW(SCARDCONTEXT hContext,
+	                                                                   LPCWSTR szReaderName,
+	                                                                   LPCWSTR szDeviceName);
 
-	WINSCARDAPI LONG WINAPI SCardForgetReaderA(SCARDCONTEXT hContext, LPCSTR szReaderName);
-	WINSCARDAPI LONG WINAPI SCardForgetReaderW(SCARDCONTEXT hContext, LPCWSTR szReaderName);
+	WINSCARDAPI WINPR_ATTR_NODISCARD LONG WINAPI SCardForgetReaderA(SCARDCONTEXT hContext,
+	                                                                LPCSTR szReaderName);
+	WINSCARDAPI WINPR_ATTR_NODISCARD LONG WINAPI SCardForgetReaderW(SCARDCONTEXT hContext,
+	                                                                LPCWSTR szReaderName);
 
-	WINSCARDAPI LONG WINAPI SCardAddReaderToGroupA(SCARDCONTEXT hContext, LPCSTR szReaderName,
-	                                               LPCSTR szGroupName);
-	WINSCARDAPI LONG WINAPI SCardAddReaderToGroupW(SCARDCONTEXT hContext, LPCWSTR szReaderName,
-	                                               LPCWSTR szGroupName);
+	WINSCARDAPI WINPR_ATTR_NODISCARD LONG WINAPI SCardAddReaderToGroupA(SCARDCONTEXT hContext,
+	                                                                    LPCSTR szReaderName,
+	                                                                    LPCSTR szGroupName);
+	WINSCARDAPI WINPR_ATTR_NODISCARD LONG WINAPI SCardAddReaderToGroupW(SCARDCONTEXT hContext,
+	                                                                    LPCWSTR szReaderName,
+	                                                                    LPCWSTR szGroupName);
 
-	WINSCARDAPI LONG WINAPI SCardRemoveReaderFromGroupA(SCARDCONTEXT hContext, LPCSTR szReaderName,
-	                                                    LPCSTR szGroupName);
-	WINSCARDAPI LONG WINAPI SCardRemoveReaderFromGroupW(SCARDCONTEXT hContext, LPCWSTR szReaderName,
-	                                                    LPCWSTR szGroupName);
+	WINSCARDAPI WINPR_ATTR_NODISCARD LONG WINAPI SCardRemoveReaderFromGroupA(SCARDCONTEXT hContext,
+	                                                                         LPCSTR szReaderName,
+	                                                                         LPCSTR szGroupName);
+	WINSCARDAPI WINPR_ATTR_NODISCARD LONG WINAPI SCardRemoveReaderFromGroupW(SCARDCONTEXT hContext,
+	                                                                         LPCWSTR szReaderName,
+	                                                                         LPCWSTR szGroupName);
 
-	WINSCARDAPI LONG WINAPI SCardIntroduceCardTypeA(SCARDCONTEXT hContext, LPCSTR szCardName,
-	                                                LPCGUID pguidPrimaryProvider,
-	                                                LPCGUID rgguidInterfaces,
-	                                                DWORD dwInterfaceCount, LPCBYTE pbAtr,
-	                                                LPCBYTE pbAtrMask, DWORD cbAtrLen);
-	WINSCARDAPI LONG WINAPI SCardIntroduceCardTypeW(SCARDCONTEXT hContext, LPCWSTR szCardName,
-	                                                LPCGUID pguidPrimaryProvider,
-	                                                LPCGUID rgguidInterfaces,
-	                                                DWORD dwInterfaceCount, LPCBYTE pbAtr,
-	                                                LPCBYTE pbAtrMask, DWORD cbAtrLen);
+	WINSCARDAPI WINPR_ATTR_NODISCARD LONG WINAPI
+	SCardIntroduceCardTypeA(SCARDCONTEXT hContext, LPCSTR szCardName, LPCGUID pguidPrimaryProvider,
+	                        LPCGUID rgguidInterfaces, DWORD dwInterfaceCount, LPCBYTE pbAtr,
+	                        LPCBYTE pbAtrMask, DWORD cbAtrLen);
+	WINSCARDAPI WINPR_ATTR_NODISCARD LONG WINAPI
+	SCardIntroduceCardTypeW(SCARDCONTEXT hContext, LPCWSTR szCardName, LPCGUID pguidPrimaryProvider,
+	                        LPCGUID rgguidInterfaces, DWORD dwInterfaceCount, LPCBYTE pbAtr,
+	                        LPCBYTE pbAtrMask, DWORD cbAtrLen);
 
-	WINSCARDAPI LONG WINAPI SCardSetCardTypeProviderNameA(SCARDCONTEXT hContext, LPCSTR szCardName,
-	                                                      DWORD dwProviderId, LPCSTR szProvider);
-	WINSCARDAPI LONG WINAPI SCardSetCardTypeProviderNameW(SCARDCONTEXT hContext, LPCWSTR szCardName,
-	                                                      DWORD dwProviderId, LPCWSTR szProvider);
+	WINSCARDAPI WINPR_ATTR_NODISCARD LONG WINAPI SCardSetCardTypeProviderNameA(
+	    SCARDCONTEXT hContext, LPCSTR szCardName, DWORD dwProviderId, LPCSTR szProvider);
+	WINSCARDAPI WINPR_ATTR_NODISCARD LONG WINAPI SCardSetCardTypeProviderNameW(
+	    SCARDCONTEXT hContext, LPCWSTR szCardName, DWORD dwProviderId, LPCWSTR szProvider);
 
-	WINSCARDAPI LONG WINAPI SCardForgetCardTypeA(SCARDCONTEXT hContext, LPCSTR szCardName);
-	WINSCARDAPI LONG WINAPI SCardForgetCardTypeW(SCARDCONTEXT hContext, LPCWSTR szCardName);
+	WINSCARDAPI WINPR_ATTR_NODISCARD LONG WINAPI SCardForgetCardTypeA(SCARDCONTEXT hContext,
+	                                                                  LPCSTR szCardName);
+	WINSCARDAPI WINPR_ATTR_NODISCARD LONG WINAPI SCardForgetCardTypeW(SCARDCONTEXT hContext,
+	                                                                  LPCWSTR szCardName);
 
-	WINSCARDAPI LONG WINAPI SCardFreeMemory(SCARDCONTEXT hContext, LPVOID pvMem);
+	WINSCARDAPI WINPR_ATTR_NODISCARD LONG WINAPI SCardFreeMemory(SCARDCONTEXT hContext,
+	                                                             LPVOID pvMem);
 
 	WINSCARDAPI HANDLE WINAPI SCardAccessStartedEvent(void);
 
 	WINSCARDAPI void WINAPI SCardReleaseStartedEvent(void);
 
-	WINSCARDAPI LONG WINAPI SCardLocateCardsA(SCARDCONTEXT hContext, LPCSTR mszCards,
-	                                          LPSCARD_READERSTATEA rgReaderStates, DWORD cReaders);
-	WINSCARDAPI LONG WINAPI SCardLocateCardsW(SCARDCONTEXT hContext, LPCWSTR mszCards,
-	                                          LPSCARD_READERSTATEW rgReaderStates, DWORD cReaders);
+	WINSCARDAPI WINPR_ATTR_NODISCARD LONG WINAPI
+	SCardLocateCardsA(SCARDCONTEXT hContext, LPCSTR mszCards, LPSCARD_READERSTATEA rgReaderStates,
+	                  DWORD cReaders);
+	WINSCARDAPI WINPR_ATTR_NODISCARD LONG WINAPI
+	SCardLocateCardsW(SCARDCONTEXT hContext, LPCWSTR mszCards, LPSCARD_READERSTATEW rgReaderStates,
+	                  DWORD cReaders);
 
-	WINSCARDAPI LONG WINAPI SCardLocateCardsByATRA(SCARDCONTEXT hContext,
-	                                               LPSCARD_ATRMASK rgAtrMasks, DWORD cAtrs,
-	                                               LPSCARD_READERSTATEA rgReaderStates,
-	                                               DWORD cReaders);
-	WINSCARDAPI LONG WINAPI SCardLocateCardsByATRW(SCARDCONTEXT hContext,
-	                                               LPSCARD_ATRMASK rgAtrMasks, DWORD cAtrs,
-	                                               LPSCARD_READERSTATEW rgReaderStates,
-	                                               DWORD cReaders);
+	WINSCARDAPI WINPR_ATTR_NODISCARD LONG WINAPI
+	SCardLocateCardsByATRA(SCARDCONTEXT hContext, LPSCARD_ATRMASK rgAtrMasks, DWORD cAtrs,
+	                       LPSCARD_READERSTATEA rgReaderStates, DWORD cReaders);
+	WINSCARDAPI WINPR_ATTR_NODISCARD LONG WINAPI
+	SCardLocateCardsByATRW(SCARDCONTEXT hContext, LPSCARD_ATRMASK rgAtrMasks, DWORD cAtrs,
+	                       LPSCARD_READERSTATEW rgReaderStates, DWORD cReaders);
 
-	WINSCARDAPI LONG WINAPI SCardGetStatusChangeA(SCARDCONTEXT hContext, DWORD dwTimeout,
-	                                              LPSCARD_READERSTATEA rgReaderStates,
-	                                              DWORD cReaders);
-	WINSCARDAPI LONG WINAPI SCardGetStatusChangeW(SCARDCONTEXT hContext, DWORD dwTimeout,
-	                                              LPSCARD_READERSTATEW rgReaderStates,
-	                                              DWORD cReaders);
+	WINSCARDAPI WINPR_ATTR_NODISCARD LONG WINAPI
+	SCardGetStatusChangeA(SCARDCONTEXT hContext, DWORD dwTimeout,
+	                      LPSCARD_READERSTATEA rgReaderStates, DWORD cReaders);
+	WINSCARDAPI WINPR_ATTR_NODISCARD LONG WINAPI
+	SCardGetStatusChangeW(SCARDCONTEXT hContext, DWORD dwTimeout,
+	                      LPSCARD_READERSTATEW rgReaderStates, DWORD cReaders);
 
-	WINSCARDAPI LONG WINAPI SCardCancel(SCARDCONTEXT hContext);
+	WINSCARDAPI WINPR_ATTR_NODISCARD LONG WINAPI SCardCancel(SCARDCONTEXT hContext);
 
-	WINSCARDAPI LONG WINAPI SCardConnectA(SCARDCONTEXT hContext, LPCSTR szReader, DWORD dwShareMode,
-	                                      DWORD dwPreferredProtocols, LPSCARDHANDLE phCard,
-	                                      LPDWORD pdwActiveProtocol);
-	WINSCARDAPI LONG WINAPI SCardConnectW(SCARDCONTEXT hContext, LPCWSTR szReader,
-	                                      DWORD dwShareMode, DWORD dwPreferredProtocols,
-	                                      LPSCARDHANDLE phCard, LPDWORD pdwActiveProtocol);
+	WINSCARDAPI WINPR_ATTR_NODISCARD LONG WINAPI SCardConnectA(SCARDCONTEXT hContext,
+	                                                           LPCSTR szReader, DWORD dwShareMode,
+	                                                           DWORD dwPreferredProtocols,
+	                                                           LPSCARDHANDLE phCard,
+	                                                           LPDWORD pdwActiveProtocol);
+	WINSCARDAPI WINPR_ATTR_NODISCARD LONG WINAPI SCardConnectW(SCARDCONTEXT hContext,
+	                                                           LPCWSTR szReader, DWORD dwShareMode,
+	                                                           DWORD dwPreferredProtocols,
+	                                                           LPSCARDHANDLE phCard,
+	                                                           LPDWORD pdwActiveProtocol);
 
-	WINSCARDAPI LONG WINAPI SCardReconnect(SCARDHANDLE hCard, DWORD dwShareMode,
-	                                       DWORD dwPreferredProtocols, DWORD dwInitialization,
-	                                       LPDWORD pdwActiveProtocol);
+	WINSCARDAPI WINPR_ATTR_NODISCARD LONG WINAPI SCardReconnect(SCARDHANDLE hCard,
+	                                                            DWORD dwShareMode,
+	                                                            DWORD dwPreferredProtocols,
+	                                                            DWORD dwInitialization,
+	                                                            LPDWORD pdwActiveProtocol);
 
-	WINSCARDAPI LONG WINAPI SCardDisconnect(SCARDHANDLE hCard, DWORD dwDisposition);
+	WINSCARDAPI WINPR_ATTR_NODISCARD LONG WINAPI SCardDisconnect(SCARDHANDLE hCard,
+	                                                             DWORD dwDisposition);
 
-	WINSCARDAPI LONG WINAPI SCardBeginTransaction(SCARDHANDLE hCard);
+	WINSCARDAPI WINPR_ATTR_NODISCARD LONG WINAPI SCardBeginTransaction(SCARDHANDLE hCard);
 
-	WINSCARDAPI LONG WINAPI SCardEndTransaction(SCARDHANDLE hCard, DWORD dwDisposition);
+	WINSCARDAPI WINPR_ATTR_NODISCARD LONG WINAPI SCardEndTransaction(SCARDHANDLE hCard,
+	                                                                 DWORD dwDisposition);
 
-	WINSCARDAPI LONG WINAPI SCardCancelTransaction(SCARDHANDLE hCard);
+	WINSCARDAPI WINPR_ATTR_NODISCARD LONG WINAPI SCardCancelTransaction(SCARDHANDLE hCard);
 
-	WINSCARDAPI LONG WINAPI SCardState(SCARDHANDLE hCard, LPDWORD pdwState, LPDWORD pdwProtocol,
-	                                   LPBYTE pbAtr, LPDWORD pcbAtrLen);
+	WINSCARDAPI WINPR_ATTR_NODISCARD LONG WINAPI SCardState(SCARDHANDLE hCard, LPDWORD pdwState,
+	                                                        LPDWORD pdwProtocol, LPBYTE pbAtr,
+	                                                        LPDWORD pcbAtrLen);
 
-	WINSCARDAPI LONG WINAPI SCardStatusA(SCARDHANDLE hCard, LPSTR mszReaderNames,
-	                                     LPDWORD pcchReaderLen, LPDWORD pdwState,
-	                                     LPDWORD pdwProtocol, LPBYTE pbAtr, LPDWORD pcbAtrLen);
-	WINSCARDAPI LONG WINAPI SCardStatusW(SCARDHANDLE hCard, LPWSTR mszReaderNames,
-	                                     LPDWORD pcchReaderLen, LPDWORD pdwState,
-	                                     LPDWORD pdwProtocol, LPBYTE pbAtr, LPDWORD pcbAtrLen);
+	WINSCARDAPI WINPR_ATTR_NODISCARD LONG WINAPI SCardStatusA(SCARDHANDLE hCard,
+	                                                          LPSTR mszReaderNames,
+	                                                          LPDWORD pcchReaderLen,
+	                                                          LPDWORD pdwState, LPDWORD pdwProtocol,
+	                                                          LPBYTE pbAtr, LPDWORD pcbAtrLen);
+	WINSCARDAPI WINPR_ATTR_NODISCARD LONG WINAPI SCardStatusW(SCARDHANDLE hCard,
+	                                                          LPWSTR mszReaderNames,
+	                                                          LPDWORD pcchReaderLen,
+	                                                          LPDWORD pdwState, LPDWORD pdwProtocol,
+	                                                          LPBYTE pbAtr, LPDWORD pcbAtrLen);
 
-	WINSCARDAPI LONG WINAPI SCardTransmit(SCARDHANDLE hCard, LPCSCARD_IO_REQUEST pioSendPci,
-	                                      LPCBYTE pbSendBuffer, DWORD cbSendLength,
-	                                      LPSCARD_IO_REQUEST pioRecvPci, LPBYTE pbRecvBuffer,
-	                                      LPDWORD pcbRecvLength);
+	WINSCARDAPI WINPR_ATTR_NODISCARD LONG WINAPI SCardTransmit(
+	    SCARDHANDLE hCard, LPCSCARD_IO_REQUEST pioSendPci, LPCBYTE pbSendBuffer, DWORD cbSendLength,
+	    LPSCARD_IO_REQUEST pioRecvPci, LPBYTE pbRecvBuffer, LPDWORD pcbRecvLength);
 
-	WINSCARDAPI LONG WINAPI SCardGetTransmitCount(SCARDHANDLE hCard, LPDWORD pcTransmitCount);
+	WINSCARDAPI WINPR_ATTR_NODISCARD LONG WINAPI SCardGetTransmitCount(SCARDHANDLE hCard,
+	                                                                   LPDWORD pcTransmitCount);
 
-	WINSCARDAPI LONG WINAPI SCardControl(SCARDHANDLE hCard, DWORD dwControlCode, LPCVOID lpInBuffer,
-	                                     DWORD cbInBufferSize, LPVOID lpOutBuffer,
-	                                     DWORD cbOutBufferSize, LPDWORD lpBytesReturned);
+	WINSCARDAPI WINPR_ATTR_NODISCARD LONG WINAPI
+	SCardControl(SCARDHANDLE hCard, DWORD dwControlCode, LPCVOID lpInBuffer, DWORD cbInBufferSize,
+	             LPVOID lpOutBuffer, DWORD cbOutBufferSize, LPDWORD lpBytesReturned);
 
-	WINSCARDAPI LONG WINAPI SCardGetAttrib(SCARDHANDLE hCard, DWORD dwAttrId, LPBYTE pbAttr,
-	                                       LPDWORD pcbAttrLen);
+	WINSCARDAPI WINPR_ATTR_NODISCARD LONG WINAPI SCardGetAttrib(SCARDHANDLE hCard, DWORD dwAttrId,
+	                                                            LPBYTE pbAttr, LPDWORD pcbAttrLen);
 
-	WINSCARDAPI LONG WINAPI SCardSetAttrib(SCARDHANDLE hCard, DWORD dwAttrId, LPCBYTE pbAttr,
-	                                       DWORD cbAttrLen);
+	WINSCARDAPI WINPR_ATTR_NODISCARD LONG WINAPI SCardSetAttrib(SCARDHANDLE hCard, DWORD dwAttrId,
+	                                                            LPCBYTE pbAttr, DWORD cbAttrLen);
 
-	WINSCARDAPI LONG WINAPI SCardUIDlgSelectCardA(LPOPENCARDNAMEA_EX pDlgStruc);
-	WINSCARDAPI LONG WINAPI SCardUIDlgSelectCardW(LPOPENCARDNAMEW_EX pDlgStruc);
+	WINSCARDAPI WINPR_ATTR_NODISCARD LONG WINAPI
+	SCardUIDlgSelectCardA(LPOPENCARDNAMEA_EX pDlgStruc);
+	WINSCARDAPI WINPR_ATTR_NODISCARD LONG WINAPI
+	SCardUIDlgSelectCardW(LPOPENCARDNAMEW_EX pDlgStruc);
 
-	WINSCARDAPI LONG WINAPI GetOpenCardNameA(LPOPENCARDNAMEA pDlgStruc);
-	WINSCARDAPI LONG WINAPI GetOpenCardNameW(LPOPENCARDNAMEW pDlgStruc);
+	WINSCARDAPI WINPR_ATTR_NODISCARD LONG WINAPI GetOpenCardNameA(LPOPENCARDNAMEA pDlgStruc);
+	WINSCARDAPI WINPR_ATTR_NODISCARD LONG WINAPI GetOpenCardNameW(LPOPENCARDNAMEW pDlgStruc);
 
-	WINSCARDAPI LONG WINAPI SCardDlgExtendedError(void);
+	WINSCARDAPI WINPR_ATTR_NODISCARD LONG WINAPI SCardDlgExtendedError(void);
 
-	WINSCARDAPI LONG WINAPI SCardReadCacheA(SCARDCONTEXT hContext, UUID* CardIdentifier,
-	                                        DWORD FreshnessCounter, LPSTR LookupName, PBYTE Data,
-	                                        DWORD* DataLen);
-	WINSCARDAPI LONG WINAPI SCardReadCacheW(SCARDCONTEXT hContext, UUID* CardIdentifier,
-	                                        DWORD FreshnessCounter, LPWSTR LookupName, PBYTE Data,
-	                                        DWORD* DataLen);
+	WINSCARDAPI WINPR_ATTR_NODISCARD LONG WINAPI SCardReadCacheA(SCARDCONTEXT hContext,
+	                                                             UUID* CardIdentifier,
+	                                                             DWORD FreshnessCounter,
+	                                                             LPSTR LookupName, PBYTE Data,
+	                                                             DWORD* DataLen);
+	WINSCARDAPI WINPR_ATTR_NODISCARD LONG WINAPI SCardReadCacheW(SCARDCONTEXT hContext,
+	                                                             UUID* CardIdentifier,
+	                                                             DWORD FreshnessCounter,
+	                                                             LPWSTR LookupName, PBYTE Data,
+	                                                             DWORD* DataLen);
 
-	WINSCARDAPI LONG WINAPI SCardWriteCacheA(SCARDCONTEXT hContext, UUID* CardIdentifier,
-	                                         DWORD FreshnessCounter, LPSTR LookupName, PBYTE Data,
-	                                         DWORD DataLen);
-	WINSCARDAPI LONG WINAPI SCardWriteCacheW(SCARDCONTEXT hContext, UUID* CardIdentifier,
-	                                         DWORD FreshnessCounter, LPWSTR LookupName, PBYTE Data,
-	                                         DWORD DataLen);
+	WINSCARDAPI WINPR_ATTR_NODISCARD LONG WINAPI SCardWriteCacheA(SCARDCONTEXT hContext,
+	                                                              UUID* CardIdentifier,
+	                                                              DWORD FreshnessCounter,
+	                                                              LPSTR LookupName, PBYTE Data,
+	                                                              DWORD DataLen);
+	WINSCARDAPI WINPR_ATTR_NODISCARD LONG WINAPI SCardWriteCacheW(SCARDCONTEXT hContext,
+	                                                              UUID* CardIdentifier,
+	                                                              DWORD FreshnessCounter,
+	                                                              LPWSTR LookupName, PBYTE Data,
+	                                                              DWORD DataLen);
 
-	WINSCARDAPI LONG WINAPI SCardGetReaderIconA(SCARDCONTEXT hContext, LPCSTR szReaderName,
-	                                            LPBYTE pbIcon, LPDWORD pcbIcon);
-	WINSCARDAPI LONG WINAPI SCardGetReaderIconW(SCARDCONTEXT hContext, LPCWSTR szReaderName,
-	                                            LPBYTE pbIcon, LPDWORD pcbIcon);
+	WINSCARDAPI WINPR_ATTR_NODISCARD LONG WINAPI SCardGetReaderIconA(SCARDCONTEXT hContext,
+	                                                                 LPCSTR szReaderName,
+	                                                                 LPBYTE pbIcon,
+	                                                                 LPDWORD pcbIcon);
+	WINSCARDAPI WINPR_ATTR_NODISCARD LONG WINAPI SCardGetReaderIconW(SCARDCONTEXT hContext,
+	                                                                 LPCWSTR szReaderName,
+	                                                                 LPBYTE pbIcon,
+	                                                                 LPDWORD pcbIcon);
 
-	WINSCARDAPI LONG WINAPI SCardGetDeviceTypeIdA(SCARDCONTEXT hContext, LPCSTR szReaderName,
-	                                              LPDWORD pdwDeviceTypeId);
-	WINSCARDAPI LONG WINAPI SCardGetDeviceTypeIdW(SCARDCONTEXT hContext, LPCWSTR szReaderName,
-	                                              LPDWORD pdwDeviceTypeId);
+	WINSCARDAPI WINPR_ATTR_NODISCARD LONG WINAPI SCardGetDeviceTypeIdA(SCARDCONTEXT hContext,
+	                                                                   LPCSTR szReaderName,
+	                                                                   LPDWORD pdwDeviceTypeId);
+	WINSCARDAPI WINPR_ATTR_NODISCARD LONG WINAPI SCardGetDeviceTypeIdW(SCARDCONTEXT hContext,
+	                                                                   LPCWSTR szReaderName,
+	                                                                   LPDWORD pdwDeviceTypeId);
 
-	WINSCARDAPI LONG WINAPI SCardGetReaderDeviceInstanceIdA(SCARDCONTEXT hContext,
-	                                                        LPCSTR szReaderName,
-	                                                        LPSTR szDeviceInstanceId,
-	                                                        LPDWORD pcchDeviceInstanceId);
-	WINSCARDAPI LONG WINAPI SCardGetReaderDeviceInstanceIdW(SCARDCONTEXT hContext,
-	                                                        LPCWSTR szReaderName,
-	                                                        LPWSTR szDeviceInstanceId,
-	                                                        LPDWORD pcchDeviceInstanceId);
+	WINSCARDAPI WINPR_ATTR_NODISCARD LONG WINAPI
+	SCardGetReaderDeviceInstanceIdA(SCARDCONTEXT hContext, LPCSTR szReaderName,
+	                                LPSTR szDeviceInstanceId, LPDWORD pcchDeviceInstanceId);
+	WINSCARDAPI WINPR_ATTR_NODISCARD LONG WINAPI
+	SCardGetReaderDeviceInstanceIdW(SCARDCONTEXT hContext, LPCWSTR szReaderName,
+	                                LPWSTR szDeviceInstanceId, LPDWORD pcchDeviceInstanceId);
 
-	WINSCARDAPI LONG WINAPI SCardListReadersWithDeviceInstanceIdA(SCARDCONTEXT hContext,
-	                                                              LPCSTR szDeviceInstanceId,
-	                                                              LPSTR mszReaders,
-	                                                              LPDWORD pcchReaders);
-	WINSCARDAPI LONG WINAPI SCardListReadersWithDeviceInstanceIdW(SCARDCONTEXT hContext,
-	                                                              LPCWSTR szDeviceInstanceId,
-	                                                              LPWSTR mszReaders,
-	                                                              LPDWORD pcchReaders);
+	WINSCARDAPI WINPR_ATTR_NODISCARD LONG WINAPI SCardListReadersWithDeviceInstanceIdA(
+	    SCARDCONTEXT hContext, LPCSTR szDeviceInstanceId, LPSTR mszReaders, LPDWORD pcchReaders);
+	WINSCARDAPI WINPR_ATTR_NODISCARD LONG WINAPI SCardListReadersWithDeviceInstanceIdW(
+	    SCARDCONTEXT hContext, LPCWSTR szDeviceInstanceId, LPWSTR mszReaders, LPDWORD pcchReaders);
 
-	WINSCARDAPI LONG WINAPI SCardAudit(SCARDCONTEXT hContext, DWORD dwEvent);
+	WINSCARDAPI WINPR_ATTR_NODISCARD LONG WINAPI SCardAudit(SCARDCONTEXT hContext, DWORD dwEvent);
 
 #ifdef UNICODE
 #define SCardListReaderGroups SCardListReaderGroupsW
@@ -1207,9 +1259,10 @@ extern "C"
 	WINSCARDAPI const char* WINAPI SCardGetCardStateString(DWORD dwCardState);
 	WINSCARDAPI char* WINAPI SCardGetReaderStateString(DWORD dwReaderState);
 
-	WINPR_API BOOL WinSCard_LoadApiTableFunctions(PSCardApiFunctionTable pWinSCardApiTable,
-	                                              HMODULE hWinSCardLibrary);
-	WINPR_API const SCardApiFunctionTable* WinPR_GetSCardApiFunctionTable(void);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL WinSCard_LoadApiTableFunctions(
+	    PSCardApiFunctionTable pWinSCardApiTable, HMODULE hWinSCardLibrary);
+	WINPR_API WINPR_ATTR_NODISCARD const SCardApiFunctionTable*
+	WinPR_GetSCardApiFunctionTable(void);
 
 #ifdef __cplusplus
 }

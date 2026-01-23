@@ -27,10 +27,10 @@ extern "C"
 {
 #endif
 
-WINPR_API void winpr_get_version(int* major, int* minor, int* revision);
-WINPR_API const char* winpr_get_version_string(void);
-WINPR_API const char* winpr_get_build_revision(void);
-WINPR_API const char* winpr_get_build_config(void);
+	WINPR_API void winpr_get_version(int* major, int* minor, int* revision);
+	WINPR_API WINPR_ATTR_NODISCARD const char* winpr_get_version_string(void);
+	WINPR_API WINPR_ATTR_NODISCARD const char* winpr_get_build_revision(void);
+	WINPR_API WINPR_ATTR_NODISCARD const char* winpr_get_build_config(void);
 
 #ifdef __cplusplus
 }

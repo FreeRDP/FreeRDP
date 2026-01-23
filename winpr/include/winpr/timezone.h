@@ -67,16 +67,19 @@ extern "C"
 #define TIME_ZONE_ID_DAYLIGHT 2
 	/** @} */
 
-	WINPR_API DWORD GetTimeZoneInformation(LPTIME_ZONE_INFORMATION lpTimeZoneInformation);
-	WINPR_API BOOL SetTimeZoneInformation(const TIME_ZONE_INFORMATION* lpTimeZoneInformation);
-	WINPR_API BOOL SystemTimeToFileTime(const SYSTEMTIME* lpSystemTime, LPFILETIME lpFileTime);
-	WINPR_API BOOL FileTimeToSystemTime(const FILETIME* lpFileTime, LPSYSTEMTIME lpSystemTime);
-	WINPR_API BOOL SystemTimeToTzSpecificLocalTime(LPTIME_ZONE_INFORMATION lpTimeZone,
-	                                               LPSYSTEMTIME lpUniversalTime,
-	                                               LPSYSTEMTIME lpLocalTime);
-	WINPR_API BOOL TzSpecificLocalTimeToSystemTime(LPTIME_ZONE_INFORMATION lpTimeZoneInformation,
-	                                               LPSYSTEMTIME lpLocalTime,
-	                                               LPSYSTEMTIME lpUniversalTime);
+	WINPR_API WINPR_ATTR_NODISCARD DWORD
+	GetTimeZoneInformation(LPTIME_ZONE_INFORMATION lpTimeZoneInformation);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL
+	SetTimeZoneInformation(const TIME_ZONE_INFORMATION* lpTimeZoneInformation);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL SystemTimeToFileTime(const SYSTEMTIME* lpSystemTime,
+	                                                         LPFILETIME lpFileTime);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL FileTimeToSystemTime(const FILETIME* lpFileTime,
+	                                                         LPSYSTEMTIME lpSystemTime);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL SystemTimeToTzSpecificLocalTime(
+	    LPTIME_ZONE_INFORMATION lpTimeZone, LPSYSTEMTIME lpUniversalTime, LPSYSTEMTIME lpLocalTime);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL
+	TzSpecificLocalTimeToSystemTime(LPTIME_ZONE_INFORMATION lpTimeZoneInformation,
+	                                LPSYSTEMTIME lpLocalTime, LPSYSTEMTIME lpUniversalTime);
 
 #endif
 
@@ -88,21 +91,21 @@ extern "C"
     (defined(_WIN32) && (defined(NTDDI_WIN8) && _WIN32_WINNT < 0x0600 || \
                          !defined(NTDDI_WIN8) && _WIN32_WINNT < 0x0501)) /* Windows Vista */
 
-	WINPR_API DWORD
+	WINPR_API WINPR_ATTR_NODISCARD DWORD
 	GetDynamicTimeZoneInformation(PDYNAMIC_TIME_ZONE_INFORMATION pTimeZoneInformation);
-	WINPR_API BOOL
+	WINPR_API WINPR_ATTR_NODISCARD BOOL
 	SetDynamicTimeZoneInformation(const DYNAMIC_TIME_ZONE_INFORMATION* lpTimeZoneInformation);
-	WINPR_API BOOL GetTimeZoneInformationForYear(USHORT wYear, PDYNAMIC_TIME_ZONE_INFORMATION pdtzi,
-	                                             LPTIME_ZONE_INFORMATION ptzi);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL GetTimeZoneInformationForYear(
+	    USHORT wYear, PDYNAMIC_TIME_ZONE_INFORMATION pdtzi, LPTIME_ZONE_INFORMATION ptzi);
 
 #endif
 
 #if !defined(_WIN32) || (defined(_WIN32) && (_WIN32_WINNT < 0x0601)) /* Windows 7 */
 
-	WINPR_API BOOL
+	WINPR_API WINPR_ATTR_NODISCARD BOOL
 	SystemTimeToTzSpecificLocalTimeEx(const DYNAMIC_TIME_ZONE_INFORMATION* lpTimeZoneInformation,
 	                                  const SYSTEMTIME* lpUniversalTime, LPSYSTEMTIME lpLocalTime);
-	WINPR_API BOOL
+	WINPR_API WINPR_ATTR_NODISCARD BOOL
 	TzSpecificLocalTimeToSystemTimeEx(const DYNAMIC_TIME_ZONE_INFORMATION* lpTimeZoneInformation,
 	                                  const SYSTEMTIME* lpLocalTime, LPSYSTEMTIME lpUniversalTime);
 
@@ -110,10 +113,9 @@ extern "C"
 
 #if !defined(_WIN32) || (defined(_WIN32) && (_WIN32_WINNT < 0x0602)) /* Windows 8 */
 
-	WINPR_API
-	DWORD EnumDynamicTimeZoneInformation(DWORD dwIndex,
-	                                     PDYNAMIC_TIME_ZONE_INFORMATION lpTimeZoneInformation);
-	WINPR_API DWORD GetDynamicTimeZoneInformationEffectiveYears(
+	WINPR_API WINPR_ATTR_NODISCARD DWORD EnumDynamicTimeZoneInformation(
+	    DWORD dwIndex, PDYNAMIC_TIME_ZONE_INFORMATION lpTimeZoneInformation);
+	WINPR_API WINPR_ATTR_NODISCARD DWORD GetDynamicTimeZoneInformationEffectiveYears(
 	    const DYNAMIC_TIME_ZONE_INFORMATION* lpTimeZoneInformation, LPDWORD FirstYear,
 	    LPDWORD LastYear);
 

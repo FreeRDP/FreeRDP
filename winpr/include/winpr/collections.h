@@ -69,14 +69,14 @@ extern "C"
 	 *  @return A clone of the source or \b NULL
 	 *  @since version 3.3.0
 	 */
-	WINPR_API void* winpr_ObjectStringClone(const void* pvstr);
+	WINPR_API WINPR_ATTR_NODISCARD void* winpr_ObjectStringClone(const void* pvstr);
 
 	/** @brief helper function to clone a WCHAR string
 	 *  @param pvstr the source string to clone
 	 *  @return A clone of the source or \b NULL
 	 *  @since version 3.3.0
 	 */
-	WINPR_API void* winpr_ObjectWStringClone(const void* pvstr);
+	WINPR_API WINPR_ATTR_NODISCARD void* winpr_ObjectWStringClone(const void* pvstr);
 
 	/** @brief helper function to free a (WCHAR) string
 	 *  @param pvstr the string to free
@@ -94,7 +94,7 @@ extern "C"
 	 *
 	 *  @return the number of objects queued
 	 */
-	WINPR_API size_t Queue_Count(wQueue* queue);
+	WINPR_API WINPR_ATTR_NODISCARD size_t Queue_Count(wQueue* queue);
 
 	/** @brief Mutex-Lock a queue
 	 *
@@ -113,7 +113,7 @@ extern "C"
 	 *
 	 *  @param queue A pointer to a queue, must not be \b NULL
 	 */
-	WINPR_API HANDLE Queue_Event(wQueue* queue);
+	WINPR_API WINPR_ATTR_NODISCARD HANDLE Queue_Event(wQueue* queue);
 
 	/** @brief Mutex-Lock a queue
 	 *
@@ -122,7 +122,7 @@ extern "C"
 	 *  @return A pointer to a \b wObject that contains the allocation/cleanup handlers for queue
 	 * elements
 	 */
-	WINPR_API wObject* Queue_Object(wQueue* queue);
+	WINPR_API WINPR_ATTR_NODISCARD wObject* Queue_Object(wQueue* queue);
 
 	/** @brief Remove all elements from a queue, call \b wObject cleanup functions \b fnObjectFree
 	 *
@@ -137,7 +137,7 @@ extern "C"
 	 *
 	 *  @return \b TRUE if the object was found, \b FALSE otherwise.
 	 */
-	WINPR_API BOOL Queue_Contains(wQueue* queue, const void* obj);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL Queue_Contains(wQueue* queue, const void* obj);
 
 	/** \brief Pushes a new element into the queue.
 	 *  If a \b fnObjectNew is set, the element is copied and the queue takes
@@ -148,7 +148,7 @@ extern "C"
 	 *
 	 *  \return TRUE for success, FALSE if failed.
 	 */
-	WINPR_API BOOL Queue_Enqueue(wQueue* queue, const void* obj);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL Queue_Enqueue(wQueue* queue, const void* obj);
 
 	/** \brief returns the element at the top of the queue. The element is removed from the queue,
 	 *  ownership of the element is passed on to the caller.
@@ -157,7 +157,7 @@ extern "C"
 	 *
 	 *  \return NULL if empty, a pointer to the memory on top of the queue otherwise.
 	 */
-	WINPR_API void* Queue_Dequeue(wQueue* queue);
+	WINPR_API WINPR_ATTR_NODISCARD void* Queue_Dequeue(wQueue* queue);
 
 	/** \brief returns the element at the top of the queue. The element is not removed from the
 	 * queue, ownership of the element stays with the queue.
@@ -166,7 +166,7 @@ extern "C"
 	 *
 	 *  \return NULL if empty, a pointer to the memory on top of the queue otherwise.
 	 */
-	WINPR_API void* Queue_Peek(wQueue* queue);
+	WINPR_API WINPR_ATTR_NODISCARD void* Queue_Peek(wQueue* queue);
 
 	/** \brief Removes the element at the top of the queue. If fnObjectFree is set, the element is
 	 * freed. This can be used in combination with Queue_Peek to handle an element and discard it
@@ -188,76 +188,84 @@ extern "C"
 	 *  @return A newly allocated queue or \b NULL in case of failure
 	 */
 	WINPR_ATTR_MALLOC(Queue_Free, 1)
-	WINPR_API wQueue* Queue_New(BOOL synchronized, SSIZE_T capacity, SSIZE_T growthFactor);
+	WINPR_API WINPR_ATTR_NODISCARD wQueue* Queue_New(BOOL synchronized, SSIZE_T capacity,
+	                                                 SSIZE_T growthFactor);
 
 	/* System.Collections.Stack */
 
 	typedef struct s_wStack wStack;
 
-	WINPR_API size_t Stack_Count(wStack* stack);
-	WINPR_API BOOL Stack_IsSynchronized(wStack* stack);
+	WINPR_API WINPR_ATTR_NODISCARD size_t Stack_Count(wStack* stack);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL Stack_IsSynchronized(wStack* stack);
 
-	WINPR_API wObject* Stack_Object(wStack* stack);
+	WINPR_API WINPR_ATTR_NODISCARD wObject* Stack_Object(wStack* stack);
 
 	WINPR_API void Stack_Clear(wStack* stack);
-	WINPR_API BOOL Stack_Contains(wStack* stack, const void* obj);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL Stack_Contains(wStack* stack, const void* obj);
 
 	WINPR_API void Stack_Push(wStack* stack, void* obj);
-	WINPR_API void* Stack_Pop(wStack* stack);
+	WINPR_API WINPR_ATTR_NODISCARD void* Stack_Pop(wStack* stack);
 
-	WINPR_API void* Stack_Peek(wStack* stack);
+	WINPR_API WINPR_ATTR_NODISCARD void* Stack_Peek(wStack* stack);
 
 	WINPR_API void Stack_Free(wStack* stack);
 
 	WINPR_ATTR_MALLOC(Stack_Free, 1)
-	WINPR_API wStack* Stack_New(BOOL synchronized);
+	WINPR_API WINPR_ATTR_NODISCARD wStack* Stack_New(BOOL synchronized);
 
 	/* System.Collections.ArrayList */
 
 	typedef struct s_wArrayList wArrayList;
 
-	WINPR_API size_t ArrayList_Capacity(wArrayList* arrayList);
-	WINPR_API size_t ArrayList_Count(wArrayList* arrayList);
-	WINPR_API size_t ArrayList_Items(wArrayList* arrayList, ULONG_PTR** ppItems);
-	WINPR_API BOOL ArrayList_IsFixedSized(wArrayList* arrayList);
-	WINPR_API BOOL ArrayList_IsReadOnly(wArrayList* arrayList);
-	WINPR_API BOOL ArrayList_IsSynchronized(wArrayList* arrayList);
+	WINPR_API WINPR_ATTR_NODISCARD size_t ArrayList_Capacity(wArrayList* arrayList);
+	WINPR_API WINPR_ATTR_NODISCARD size_t ArrayList_Count(wArrayList* arrayList);
+	WINPR_API WINPR_ATTR_NODISCARD size_t ArrayList_Items(wArrayList* arrayList,
+	                                                      ULONG_PTR** ppItems);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL ArrayList_IsFixedSized(wArrayList* arrayList);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL ArrayList_IsReadOnly(wArrayList* arrayList);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL ArrayList_IsSynchronized(wArrayList* arrayList);
 
 	WINPR_API void ArrayList_Lock(wArrayList* arrayList);
 	WINPR_API void ArrayList_Unlock(wArrayList* arrayList);
 
-	WINPR_API void* ArrayList_GetItem(wArrayList* arrayList, size_t index);
-	WINPR_API BOOL ArrayList_SetItem(wArrayList* arrayList, size_t index, const void* obj);
+	WINPR_API WINPR_ATTR_NODISCARD void* ArrayList_GetItem(wArrayList* arrayList, size_t index);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL ArrayList_SetItem(wArrayList* arrayList, size_t index,
+	                                                      const void* obj);
 
-	WINPR_API wObject* ArrayList_Object(wArrayList* arrayList);
+	WINPR_API WINPR_ATTR_NODISCARD wObject* ArrayList_Object(wArrayList* arrayList);
 
 	typedef BOOL (*ArrayList_ForEachFkt)(void* data, size_t index, va_list ap);
 
-	WINPR_API BOOL ArrayList_ForEach(wArrayList* arrayList, ArrayList_ForEachFkt fkt, ...);
-	WINPR_API BOOL ArrayList_ForEachAP(wArrayList* arrayList, ArrayList_ForEachFkt fkt, va_list ap);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL ArrayList_ForEach(wArrayList* arrayList,
+	                                                      ArrayList_ForEachFkt fkt, ...);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL ArrayList_ForEachAP(wArrayList* arrayList,
+	                                                        ArrayList_ForEachFkt fkt, va_list ap);
 
 	WINPR_API void ArrayList_Clear(wArrayList* arrayList);
-	WINPR_API BOOL ArrayList_Contains(wArrayList* arrayList, const void* obj);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL ArrayList_Contains(wArrayList* arrayList, const void* obj);
 
 #if defined(WITH_WINPR_DEPRECATED)
-	WINPR_DEPRECATED(WINPR_API int ArrayList_Add(wArrayList* arrayList, const void* obj));
+	WINPR_DEPRECATED(WINPR_API WINPR_ATTR_NODISCARD int ArrayList_Add(wArrayList* arrayList,
+	                                                                  const void* obj));
 #endif
 
-	WINPR_API BOOL ArrayList_Append(wArrayList* arrayList, const void* obj);
-	WINPR_API BOOL ArrayList_Insert(wArrayList* arrayList, size_t index, const void* obj);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL ArrayList_Append(wArrayList* arrayList, const void* obj);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL ArrayList_Insert(wArrayList* arrayList, size_t index,
+	                                                     const void* obj);
 
-	WINPR_API BOOL ArrayList_Remove(wArrayList* arrayList, const void* obj);
-	WINPR_API BOOL ArrayList_RemoveAt(wArrayList* arrayList, size_t index);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL ArrayList_Remove(wArrayList* arrayList, const void* obj);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL ArrayList_RemoveAt(wArrayList* arrayList, size_t index);
 
-	WINPR_API SSIZE_T ArrayList_IndexOf(wArrayList* arrayList, const void* obj, SSIZE_T startIndex,
-	                                    SSIZE_T count);
-	WINPR_API SSIZE_T ArrayList_LastIndexOf(wArrayList* arrayList, const void* obj,
-	                                        SSIZE_T startIndex, SSIZE_T count);
+	WINPR_API WINPR_ATTR_NODISCARD SSIZE_T ArrayList_IndexOf(wArrayList* arrayList, const void* obj,
+	                                                         SSIZE_T startIndex, SSIZE_T count);
+	WINPR_API WINPR_ATTR_NODISCARD SSIZE_T ArrayList_LastIndexOf(wArrayList* arrayList,
+	                                                             const void* obj,
+	                                                             SSIZE_T startIndex, SSIZE_T count);
 
 	WINPR_API void ArrayList_Free(wArrayList* arrayList);
 
 	WINPR_ATTR_MALLOC(ArrayList_Free, 1)
-	WINPR_API wArrayList* ArrayList_New(BOOL synchronized);
+	WINPR_API WINPR_ATTR_NODISCARD wArrayList* ArrayList_New(BOOL synchronized);
 
 	/* System.Collections.DictionaryBase */
 
@@ -270,7 +278,8 @@ extern "C"
 	 *
 	 *  @return a \b wObject used to initialize the key object, \b NULL in case of failure
 	 */
-	WINPR_API wObject* ListDictionary_KeyObject(wListDictionary* listDictionary);
+	WINPR_API WINPR_ATTR_NODISCARD wObject*
+	ListDictionary_KeyObject(wListDictionary* listDictionary);
 
 	/** @brief Get the \b wObject function pointer struct for the \b value of the dictionary.
 	 *
@@ -278,7 +287,8 @@ extern "C"
 	 *
 	 *  @return a \b wObject used to initialize the value object, \b NULL in case of failure
 	 */
-	WINPR_API wObject* ListDictionary_ValueObject(wListDictionary* listDictionary);
+	WINPR_API WINPR_ATTR_NODISCARD wObject*
+	ListDictionary_ValueObject(wListDictionary* listDictionary);
 
 	/** @brief Return the number of entries in the dictionary
 	 *
@@ -286,7 +296,7 @@ extern "C"
 	 *
 	 *  @return the number of entries
 	 */
-	WINPR_API size_t ListDictionary_Count(wListDictionary* listDictionary);
+	WINPR_API WINPR_ATTR_NODISCARD size_t ListDictionary_Count(wListDictionary* listDictionary);
 
 	/** @brief mutex-lock a dictionary
 	 *
@@ -308,8 +318,8 @@ extern "C"
 	 *
 	 *  @return \b TRUE for successful addition, \b FALSE for failure
 	 */
-	WINPR_API BOOL ListDictionary_Add(wListDictionary* listDictionary, const void* key,
-	                                  const void* value);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL ListDictionary_Add(wListDictionary* listDictionary,
+	                                                       const void* key, const void* value);
 
 	/** @brief Remove an item from the dictionary and return the value. Cleanup is up to the caller.
 	 *
@@ -318,7 +328,8 @@ extern "C"
 	 *
 	 *  @return a pointer to the value stored or \b NULL in case of failure or not found
 	 */
-	WINPR_API void* ListDictionary_Take(wListDictionary* listDictionary, const void* key);
+	WINPR_API WINPR_ATTR_NODISCARD void* ListDictionary_Take(wListDictionary* listDictionary,
+	                                                         const void* key);
 
 	/** @brief Remove an item from the dictionary and call \b fnObjectFree for key and value
 	 *
@@ -334,7 +345,7 @@ extern "C"
 	 *
 	 *  @return a pointer to the value stored or \b NULL in case of failure or not found
 	 */
-	WINPR_API void* ListDictionary_Take_Head(wListDictionary* listDictionary);
+	WINPR_API WINPR_ATTR_NODISCARD void* ListDictionary_Take_Head(wListDictionary* listDictionary);
 
 	/** @brief Remove the head item from the dictionary and call \b fnObjectFree for key and value
 	 *
@@ -355,7 +366,8 @@ extern "C"
 	 *
 	 *  @return \b TRUE if found, \b FALSE otherwise
 	 */
-	WINPR_API BOOL ListDictionary_Contains(wListDictionary* listDictionary, const void* key);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL ListDictionary_Contains(wListDictionary* listDictionary,
+	                                                            const void* key);
 
 	/** @brief return all keys the dictionary contains
 	 *
@@ -365,7 +377,8 @@ extern "C"
 	 *
 	 *  @return the number of keys found in the dictionary or \b 0 if \b ppKeys is \b NULL
 	 */
-	WINPR_API size_t ListDictionary_GetKeys(wListDictionary* listDictionary, ULONG_PTR** ppKeys);
+	WINPR_API WINPR_ATTR_NODISCARD size_t ListDictionary_GetKeys(wListDictionary* listDictionary,
+	                                                             ULONG_PTR** ppKeys);
 
 	/** @brief Get the value in the dictionary for a \b key. The ownership of the data stays with
 	 * the dictionary.
@@ -375,7 +388,8 @@ extern "C"
 	 *
 	 *  @return A pointer to the data in the dictionary or \b NULL if not found
 	 */
-	WINPR_API void* ListDictionary_GetItemValue(wListDictionary* listDictionary, const void* key);
+	WINPR_API WINPR_ATTR_NODISCARD void*
+	ListDictionary_GetItemValue(wListDictionary* listDictionary, const void* key);
 
 	/** @brief Set the value in the dictionary for a \b key. The entry must already exist, \b value
 	 * is copied if \b fnObjectNew is set
@@ -386,8 +400,9 @@ extern "C"
 	 *
 	 *  @return \b TRUE for success, \b FALSE in case of failure
 	 */
-	WINPR_API BOOL ListDictionary_SetItemValue(wListDictionary* listDictionary, const void* key,
-	                                           const void* value);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL ListDictionary_SetItemValue(wListDictionary* listDictionary,
+	                                                                const void* key,
+	                                                                const void* value);
 
 	/** @brief Free memory allocated by a dictionary. Calls \b ListDictionary_Clear
 	 *
@@ -402,7 +417,7 @@ extern "C"
 	 *  @return A newly allocated dictionary or \b NULL in case of failure
 	 */
 	WINPR_ATTR_MALLOC(ListDictionary_Free, 1)
-	WINPR_API wListDictionary* ListDictionary_New(BOOL synchronized);
+	WINPR_API WINPR_ATTR_NODISCARD wListDictionary* ListDictionary_New(BOOL synchronized);
 
 	/* System.Collections.Generic.LinkedList<T> */
 
@@ -414,7 +429,7 @@ extern "C"
 	 *
 	 * @return the number of elements in the list
 	 */
-	WINPR_API size_t LinkedList_Count(wLinkedList* list);
+	WINPR_API WINPR_ATTR_NODISCARD size_t LinkedList_Count(wLinkedList* list);
 
 	/** @brief Return the first element of the list, ownership stays with the list
 	 *
@@ -422,7 +437,7 @@ extern "C"
 	 *
 	 *  @return A pointer to the element or \b NULL if empty
 	 */
-	WINPR_API void* LinkedList_First(wLinkedList* list);
+	WINPR_API WINPR_ATTR_NODISCARD void* LinkedList_First(wLinkedList* list);
 
 	/** @brief Return the last element of the list, ownership stays with the list
 	 *
@@ -430,7 +445,7 @@ extern "C"
 	 *
 	 *  @return A pointer to the element or \b NULL if empty
 	 */
-	WINPR_API void* LinkedList_Last(wLinkedList* list);
+	WINPR_API WINPR_ATTR_NODISCARD void* LinkedList_Last(wLinkedList* list);
 
 	/** @brief Check if the linked list contains a value
 	 *
@@ -439,7 +454,7 @@ extern "C"
 	 *
 	 *  @return \b TRUE if found, \b FALSE otherwise
 	 */
-	WINPR_API BOOL LinkedList_Contains(wLinkedList* list, const void* value);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL LinkedList_Contains(wLinkedList* list, const void* value);
 
 	/** @brief Remove all elements of the linked list. \b fnObjectUninit and \b fnObjectFree are
 	 * called for each entry
@@ -457,7 +472,7 @@ extern "C"
 	 *
 	 * @return \b TRUE if successful, \b FALSE otherwise.
 	 */
-	WINPR_API BOOL LinkedList_AddFirst(wLinkedList* list, const void* value);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL LinkedList_AddFirst(wLinkedList* list, const void* value);
 
 	/** @brief Add a new element at the end of the linked list. \b fnObjectNew and \b fnObjectInit
 	 * is called for the new entry
@@ -467,7 +482,7 @@ extern "C"
 	 *
 	 * @return \b TRUE if successful, \b FALSE otherwise.
 	 */
-	WINPR_API BOOL LinkedList_AddLast(wLinkedList* list, const void* value);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL LinkedList_AddLast(wLinkedList* list, const void* value);
 
 	/** @brief Remove a element identified by \b value from the linked list. \b fnObjectUninit and
 	 * \b fnObjectFree is called for the entry
@@ -477,7 +492,7 @@ extern "C"
 	 *
 	 * @return \b TRUE if successful, \b FALSE otherwise.
 	 */
-	WINPR_API BOOL LinkedList_Remove(wLinkedList* list, const void* value);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL LinkedList_Remove(wLinkedList* list, const void* value);
 
 	/** @brief Remove the first element from the linked list. \b fnObjectUninit and \b fnObjectFree
 	 * is called for the entry
@@ -508,7 +523,7 @@ extern "C"
 	 *
 	 * @return A pointer to the current entry or \b NULL
 	 */
-	WINPR_API void* LinkedList_Enumerator_Current(wLinkedList* list);
+	WINPR_API WINPR_ATTR_NODISCARD void* LinkedList_Enumerator_Current(wLinkedList* list);
 
 	/** @brief Move enumerator to the next element
 	 *
@@ -516,7 +531,7 @@ extern "C"
 	 *
 	 *  @return \b TRUE if the move was successful, \b FALSE if not (e.g. no more entries)
 	 */
-	WINPR_API BOOL LinkedList_Enumerator_MoveNext(wLinkedList* list);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL LinkedList_Enumerator_MoveNext(wLinkedList* list);
 
 	/** @brief Free a linked list
 	 *
@@ -529,7 +544,7 @@ extern "C"
 	 * @return A pointer to the newly allocated linked list or \b NULL in case of failure
 	 */
 	WINPR_ATTR_MALLOC(LinkedList_Free, 1)
-	WINPR_API wLinkedList* LinkedList_New(void);
+	WINPR_API WINPR_ATTR_NODISCARD wLinkedList* LinkedList_New(void);
 
 	/** @brief Return the \b wObject function pointers for list elements
 	 *
@@ -537,7 +552,7 @@ extern "C"
 	 *
 	 *  @return A pointer to the wObject or \b NULL in case of failure
 	 */
-	WINPR_API wObject* LinkedList_Object(wLinkedList* list);
+	WINPR_API WINPR_ATTR_NODISCARD wObject* LinkedList_Object(wLinkedList* list);
 
 	/* System.Collections.Generic.KeyValuePair<TKey,TValue> */
 
@@ -551,7 +566,7 @@ extern "C"
 	 *
 	 *  @return The current event count
 	 */
-	WINPR_API size_t CountdownEvent_CurrentCount(wCountdownEvent* countdown);
+	WINPR_API WINPR_ATTR_NODISCARD size_t CountdownEvent_CurrentCount(wCountdownEvent* countdown);
 
 	/** @brief return the initial event count of the CountdownEvent
 	 *
@@ -559,7 +574,7 @@ extern "C"
 	 *
 	 *  @return The initial event count
 	 */
-	WINPR_API size_t CountdownEvent_InitialCount(wCountdownEvent* countdown);
+	WINPR_API WINPR_ATTR_NODISCARD size_t CountdownEvent_InitialCount(wCountdownEvent* countdown);
 
 	/** @brief return the current event state of the CountdownEvent
 	 *
@@ -567,7 +582,7 @@ extern "C"
 	 *
 	 *  @return \b TRUE if set, \b FALSE otherwise
 	 */
-	WINPR_API BOOL CountdownEvent_IsSet(wCountdownEvent* countdown);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL CountdownEvent_IsSet(wCountdownEvent* countdown);
 
 	/** @brief return the event HANDLE of the CountdownEvent to be used by \b WaitForSingleObject or
 	 * \b WaitForMultipleObjects
@@ -576,7 +591,7 @@ extern "C"
 	 *
 	 *  @return a \b HANDLE or \b NULL in case of failure
 	 */
-	WINPR_API HANDLE CountdownEvent_WaitHandle(wCountdownEvent* countdown);
+	WINPR_API WINPR_ATTR_NODISCARD HANDLE CountdownEvent_WaitHandle(wCountdownEvent* countdown);
 
 	/** @brief add \b signalCount to the current event count of the CountdownEvent
 	 *
@@ -593,7 +608,8 @@ extern "C"
 	 *
 	 *  @return \b TRUE if event is set, \b FALSE otherwise
 	 */
-	WINPR_API BOOL CountdownEvent_Signal(wCountdownEvent* countdown, size_t signalCount);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL CountdownEvent_Signal(wCountdownEvent* countdown,
+	                                                          size_t signalCount);
 
 	/** @brief reset the CountdownEvent
 	 *
@@ -615,7 +631,7 @@ extern "C"
 	 *  @return The newly allocated event or \b NULL in case of failure
 	 */
 	WINPR_ATTR_MALLOC(CountdownEvent_Free, 1)
-	WINPR_API wCountdownEvent* CountdownEvent_New(size_t initialCount);
+	WINPR_API WINPR_ATTR_NODISCARD wCountdownEvent* CountdownEvent_New(size_t initialCount);
 
 	/* Hash Table */
 
@@ -625,78 +641,89 @@ extern "C"
 
 	typedef BOOL (*HASH_TABLE_FOREACH_FN)(const void* key, void* value, void* arg);
 
-	WINPR_API size_t HashTable_Count(wHashTable* table);
+	WINPR_API WINPR_ATTR_NODISCARD size_t HashTable_Count(wHashTable* table);
 
 #if defined(WITH_WINPR_DEPRECATED)
-	WINPR_DEPRECATED(WINPR_API int HashTable_Add(wHashTable* table, const void* key,
-	                                             const void* value));
+	WINPR_DEPRECATED(WINPR_API WINPR_ATTR_NODISCARD int HashTable_Add(wHashTable* table,
+	                                                                  const void* key,
+	                                                                  const void* value));
 #endif
 
-	WINPR_API BOOL HashTable_Insert(wHashTable* table, const void* key, const void* value);
-	WINPR_API BOOL HashTable_Remove(wHashTable* table, const void* key);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL HashTable_Insert(wHashTable* table, const void* key,
+	                                                     const void* value);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL HashTable_Remove(wHashTable* table, const void* key);
 	WINPR_API void HashTable_Clear(wHashTable* table);
-	WINPR_API BOOL HashTable_Contains(wHashTable* table, const void* key);
-	WINPR_API BOOL HashTable_ContainsKey(wHashTable* table, const void* key);
-	WINPR_API BOOL HashTable_ContainsValue(wHashTable* table, const void* value);
-	WINPR_API void* HashTable_GetItemValue(wHashTable* table, const void* key);
-	WINPR_API BOOL HashTable_SetItemValue(wHashTable* table, const void* key, const void* value);
-	WINPR_API size_t HashTable_GetKeys(wHashTable* table, ULONG_PTR** ppKeys);
-	WINPR_API BOOL HashTable_Foreach(wHashTable* table, HASH_TABLE_FOREACH_FN fn, VOID* arg);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL HashTable_Contains(wHashTable* table, const void* key);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL HashTable_ContainsKey(wHashTable* table, const void* key);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL HashTable_ContainsValue(wHashTable* table,
+	                                                            const void* value);
+	WINPR_API WINPR_ATTR_NODISCARD void* HashTable_GetItemValue(wHashTable* table, const void* key);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL HashTable_SetItemValue(wHashTable* table, const void* key,
+	                                                           const void* value);
+	WINPR_API WINPR_ATTR_NODISCARD size_t HashTable_GetKeys(wHashTable* table, ULONG_PTR** ppKeys);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL HashTable_Foreach(wHashTable* table,
+	                                                      HASH_TABLE_FOREACH_FN fn, VOID* arg);
 
-	WINPR_API UINT32 HashTable_PointerHash(const void* pointer);
-	WINPR_API BOOL HashTable_PointerCompare(const void* pointer1, const void* pointer2);
+	WINPR_API WINPR_ATTR_NODISCARD UINT32 HashTable_PointerHash(const void* pointer);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL HashTable_PointerCompare(const void* pointer1,
+	                                                             const void* pointer2);
 
-	WINPR_API UINT32 HashTable_StringHash(const void* key);
-	WINPR_API BOOL HashTable_StringCompare(const void* string1, const void* string2);
-	WINPR_API void* HashTable_StringClone(const void* str);
+	WINPR_API WINPR_ATTR_NODISCARD UINT32 HashTable_StringHash(const void* key);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL HashTable_StringCompare(const void* string1,
+	                                                            const void* string2);
+	WINPR_API WINPR_ATTR_NODISCARD void* HashTable_StringClone(const void* str);
 	WINPR_API void HashTable_StringFree(void* str);
 
 	WINPR_API void HashTable_Free(wHashTable* table);
 
 	WINPR_ATTR_MALLOC(HashTable_Free, 1)
-	WINPR_API wHashTable* HashTable_New(BOOL synchronized);
+	WINPR_API WINPR_ATTR_NODISCARD wHashTable* HashTable_New(BOOL synchronized);
 
 	WINPR_API void HashTable_Lock(wHashTable* table);
 	WINPR_API void HashTable_Unlock(wHashTable* table);
 
-	WINPR_API wObject* HashTable_KeyObject(wHashTable* table);
-	WINPR_API wObject* HashTable_ValueObject(wHashTable* table);
+	WINPR_API WINPR_ATTR_NODISCARD wObject* HashTable_KeyObject(wHashTable* table);
+	WINPR_API WINPR_ATTR_NODISCARD wObject* HashTable_ValueObject(wHashTable* table);
 
-	WINPR_API BOOL HashTable_SetHashFunction(wHashTable* table, HASH_TABLE_HASH_FN fn);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL HashTable_SetHashFunction(wHashTable* table,
+	                                                              HASH_TABLE_HASH_FN fn);
 
 	/* Utility function to setup hash table for strings */
-	WINPR_API BOOL HashTable_SetupForStringData(wHashTable* table, BOOL stringValues);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL HashTable_SetupForStringData(wHashTable* table,
+	                                                                 BOOL stringValues);
 
 	/* BufferPool */
 
 	typedef struct s_wBufferPool wBufferPool;
 
-	WINPR_API SSIZE_T BufferPool_GetPoolSize(wBufferPool* pool);
-	WINPR_API SSIZE_T BufferPool_GetBufferSize(wBufferPool* pool, const void* buffer);
+	WINPR_API WINPR_ATTR_NODISCARD SSIZE_T BufferPool_GetPoolSize(wBufferPool* pool);
+	WINPR_API WINPR_ATTR_NODISCARD SSIZE_T BufferPool_GetBufferSize(wBufferPool* pool,
+	                                                                const void* buffer);
 
-	WINPR_API void* BufferPool_Take(wBufferPool* pool, SSIZE_T bufferSize);
-	WINPR_API BOOL BufferPool_Return(wBufferPool* pool, void* buffer);
+	WINPR_API WINPR_ATTR_NODISCARD void* BufferPool_Take(wBufferPool* pool, SSIZE_T bufferSize);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL BufferPool_Return(wBufferPool* pool, void* buffer);
 	WINPR_API void BufferPool_Clear(wBufferPool* pool);
 
 	WINPR_API void BufferPool_Free(wBufferPool* pool);
 
 	WINPR_ATTR_MALLOC(BufferPool_Free, 1)
-	WINPR_API wBufferPool* BufferPool_New(BOOL synchronized, SSIZE_T fixedSize, DWORD alignment);
+	WINPR_API WINPR_ATTR_NODISCARD wBufferPool* BufferPool_New(BOOL synchronized, SSIZE_T fixedSize,
+	                                                           DWORD alignment);
 
 	/* ObjectPool */
 
 	typedef struct s_wObjectPool wObjectPool;
 
-	WINPR_API void* ObjectPool_Take(wObjectPool* pool);
+	WINPR_API WINPR_ATTR_NODISCARD void* ObjectPool_Take(wObjectPool* pool);
 	WINPR_API void ObjectPool_Return(wObjectPool* pool, void* obj);
 	WINPR_API void ObjectPool_Clear(wObjectPool* pool);
 
-	WINPR_API wObject* ObjectPool_Object(wObjectPool* pool);
+	WINPR_API WINPR_ATTR_NODISCARD wObject* ObjectPool_Object(wObjectPool* pool);
 
 	WINPR_API void ObjectPool_Free(wObjectPool* pool);
 
 	WINPR_ATTR_MALLOC(ObjectPool_Free, 1)
-	WINPR_API wObjectPool* ObjectPool_New(BOOL synchronized);
+	WINPR_API WINPR_ATTR_NODISCARD wObjectPool* ObjectPool_New(BOOL synchronized);
 
 	/* Message Queue */
 
@@ -718,18 +745,20 @@ extern "C"
 
 #define WMQ_QUIT 0xFFFFFFFF
 
-	WINPR_API wObject* MessageQueue_Object(wMessageQueue* queue);
-	WINPR_API HANDLE MessageQueue_Event(wMessageQueue* queue);
-	WINPR_API BOOL MessageQueue_Wait(wMessageQueue* queue);
-	WINPR_API size_t MessageQueue_Size(wMessageQueue* queue);
+	WINPR_API WINPR_ATTR_NODISCARD wObject* MessageQueue_Object(wMessageQueue* queue);
+	WINPR_API WINPR_ATTR_NODISCARD HANDLE MessageQueue_Event(wMessageQueue* queue);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL MessageQueue_Wait(wMessageQueue* queue);
+	WINPR_API WINPR_ATTR_NODISCARD size_t MessageQueue_Size(wMessageQueue* queue);
 
-	WINPR_API BOOL MessageQueue_Dispatch(wMessageQueue* queue, const wMessage* message);
-	WINPR_API BOOL MessageQueue_Post(wMessageQueue* queue, void* context, UINT32 type, void* wParam,
-	                                 void* lParam);
-	WINPR_API BOOL MessageQueue_PostQuit(wMessageQueue* queue, int nExitCode);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL MessageQueue_Dispatch(wMessageQueue* queue,
+	                                                          const wMessage* message);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL MessageQueue_Post(wMessageQueue* queue, void* context,
+	                                                      UINT32 type, void* wParam, void* lParam);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL MessageQueue_PostQuit(wMessageQueue* queue, int nExitCode);
 
-	WINPR_API int MessageQueue_Get(wMessageQueue* queue, wMessage* message);
-	WINPR_API int MessageQueue_Peek(wMessageQueue* queue, wMessage* message, BOOL remove);
+	WINPR_API WINPR_ATTR_NODISCARD int MessageQueue_Get(wMessageQueue* queue, wMessage* message);
+	WINPR_API WINPR_ATTR_NODISCARD int MessageQueue_Peek(wMessageQueue* queue, wMessage* message,
+	                                                     BOOL remove);
 
 	/*! \brief Clears all elements in a message queue.
 	 *
@@ -741,7 +770,7 @@ extern "C"
 	 *
 	 *  \return 0 in case of success or a error code otherwise.
 	 */
-	WINPR_API int MessageQueue_Clear(wMessageQueue* queue);
+	WINPR_API WINPR_ATTR_NODISCARD int MessageQueue_Clear(wMessageQueue* queue);
 
 	/*! \brief Frees resources allocated by a message queue.
 	 * 				 This function will only free resources allocated
@@ -769,7 +798,7 @@ extern "C"
 	 * \return A pointer to a newly allocated MessageQueue or NULL.
 	 */
 	WINPR_ATTR_MALLOC(MessageQueue_Free, 1)
-	WINPR_API wMessageQueue* MessageQueue_New(const wObject* callback);
+	WINPR_API WINPR_ATTR_NODISCARD wMessageQueue* MessageQueue_New(const wObject* callback);
 
 	/* Message Pipe */
 
@@ -784,7 +813,7 @@ extern "C"
 	WINPR_API void MessagePipe_Free(wMessagePipe* pipe);
 
 	WINPR_ATTR_MALLOC(MessagePipe_Free, 1)
-	WINPR_API wMessagePipe* MessagePipe_New(void);
+	WINPR_API WINPR_ATTR_NODISCARD wMessagePipe* MessagePipe_New(void);
 
 	/* Publisher/Subscriber Pattern */
 
@@ -866,20 +895,23 @@ extern "C"
 	WINPR_API void PubSub_Lock(wPubSub* pubSub);
 	WINPR_API void PubSub_Unlock(wPubSub* pubSub);
 
-	WINPR_API wEventType* PubSub_GetEventTypes(wPubSub* pubSub, size_t* count);
+	WINPR_API WINPR_ATTR_NODISCARD wEventType* PubSub_GetEventTypes(wPubSub* pubSub, size_t* count);
 	WINPR_API void PubSub_AddEventTypes(wPubSub* pubSub, wEventType* events, size_t count);
-	WINPR_API wEventType* PubSub_FindEventType(wPubSub* pubSub, const char* EventName);
+	WINPR_API WINPR_ATTR_NODISCARD wEventType* PubSub_FindEventType(wPubSub* pubSub,
+	                                                                const char* EventName);
 
-	WINPR_API int PubSub_Subscribe(wPubSub* pubSub, const char* EventName, ...);
-	WINPR_API int PubSub_Unsubscribe(wPubSub* pubSub, const char* EventName, ...);
+	WINPR_API WINPR_ATTR_NODISCARD int PubSub_Subscribe(wPubSub* pubSub, const char* EventName,
+	                                                    ...);
+	WINPR_API WINPR_ATTR_NODISCARD int PubSub_Unsubscribe(wPubSub* pubSub, const char* EventName,
+	                                                      ...);
 
-	WINPR_API int PubSub_OnEvent(wPubSub* pubSub, const char* EventName, void* context,
-	                             const wEventArgs* e);
+	WINPR_API WINPR_ATTR_NODISCARD int PubSub_OnEvent(wPubSub* pubSub, const char* EventName,
+	                                                  void* context, const wEventArgs* e);
 
 	WINPR_API void PubSub_Free(wPubSub* pubSub);
 
 	WINPR_ATTR_MALLOC(PubSub_Free, 1)
-	WINPR_API wPubSub* PubSub_New(BOOL synchronized);
+	WINPR_API WINPR_ATTR_NODISCARD wPubSub* PubSub_New(BOOL synchronized);
 
 #ifdef __cplusplus
 }

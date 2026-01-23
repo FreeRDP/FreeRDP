@@ -175,14 +175,14 @@ extern "C"
 
 	WINPR_API void BitDump(const char* tag, UINT32 level, const BYTE* buffer, UINT32 length,
 	                       UINT32 flags);
-	WINPR_API UINT32 ReverseBits32(UINT32 bits, UINT32 nbits);
+	WINPR_API WINPR_ATTR_NODISCARD UINT32 ReverseBits32(UINT32 bits, UINT32 nbits);
 
 	WINPR_API void BitStream_Attach(wBitStream* bs, const BYTE* buffer, UINT32 capacity);
 
 	WINPR_API void BitStream_Free(wBitStream* bs);
 
 	WINPR_ATTR_MALLOC(BitStream_Free, 1)
-	WINPR_API wBitStream* BitStream_New(void);
+	WINPR_API WINPR_ATTR_NODISCARD wBitStream* BitStream_New(void);
 
 #ifdef __cplusplus
 }
