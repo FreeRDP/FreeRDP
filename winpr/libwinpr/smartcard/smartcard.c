@@ -45,7 +45,8 @@ static const SCardApiFunctionTable* g_SCardApi = NULL;
 #define str(s) #s
 
 #define SCARDAPI_STUB_CALL_LONG(_name, ...)                                                       \
-	InitOnceExecuteOnce(&g_Initialized, InitializeSCardApiStubs, NULL, NULL);                     \
+	if (!InitOnceExecuteOnce(&g_Initialized, InitializeSCardApiStubs, NULL, NULL))                \
+		return SCARD_E_NO_SERVICE;                                                                \
 	if (!g_SCardApi || !g_SCardApi->pfn##_name)                                                   \
 	{                                                                                             \
 		WLog_DBG(TAG, "Missing function pointer g_SCardApi=%p->" xstr(pfn##_name) "=%p",          \

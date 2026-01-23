@@ -956,13 +956,12 @@ size_t WinPrAsn1DecReadTagAndLen(WinPrAsn1Decoder* dec, WinPrAsn1_tag* tag, size
 
 size_t WinPrAsn1DecPeekTagAndLen(WinPrAsn1Decoder* dec, WinPrAsn1_tag* tag, size_t* len)
 {
-	wStream staticS;
-	wStream* s = &staticS;
+	wStream staticS = { 0 };
 
 	WINPR_ASSERT(dec);
 
-	Stream_StaticConstInit(s, Stream_ConstPointer(&dec->source),
-	                       Stream_GetRemainingLength(&dec->source));
+	wStream* s = Stream_StaticConstInit(&wStream, Stream_ConstPointer(&dec->source),
+	                                    Stream_GetRemainingLength(&dec->source));
 	return readTagAndLen(dec, s, tag, len);
 }
 

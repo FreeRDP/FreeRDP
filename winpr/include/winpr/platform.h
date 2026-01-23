@@ -595,7 +595,7 @@ WINPR_PRAGMA_DIAG_POP
 #endif
 
 #if defined(EXPORT_ALL_SYMBOLS)
-#define WINPR_LOCAL WINPR_API WINPR_ATTR_NODISCARD
+#define WINPR_LOCAL WINPR_API
 #else
 #if defined _WIN32 || defined __CYGWIN__
 #define WINPR_LOCAL

@@ -23,6 +23,6 @@
 #include "wlog.h"
 
 WINPR_ATTR_MALLOC(WLog_Appender_Free, 2)
-WINPR_LOCAL wLogAppender* WLog_ConsoleAppender_New(wLog* log);
+WINPR_LOCAL WINPR_ATTR_NODISCARD wLogAppender* WLog_ConsoleAppender_New(wLog* log);
 
 #endif /* WINPR_WLOG_CONSOLE_APPENDER_PRIVATE_H */

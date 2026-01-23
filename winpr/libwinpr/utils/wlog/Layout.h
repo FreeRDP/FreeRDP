@@ -36,6 +36,6 @@ struct s_wLogLayout
 WINPR_LOCAL void WLog_Layout_Free(wLog* log, wLogLayout* layout);
 
 WINPR_ATTR_MALLOC(WLog_Layout_Free, 2)
-WINPR_LOCAL wLogLayout* WLog_Layout_New(wLog* log);
+WINPR_LOCAL WINPR_ATTR_NODISCARD wLogLayout* WLog_Layout_New(wLog* log);
 
 #endif /* WINPR_WLOG_LAYOUT_PRIVATE_H */
