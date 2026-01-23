@@ -98,31 +98,34 @@ extern "C"
 {
 #endif
 
-	FREERDP_LOCAL const SSL_METHOD* freerdp_tls_get_ssl_method(BOOL isDtls, BOOL isClient);
+	FREERDP_LOCAL WINPR_ATTR_NODISCARD const SSL_METHOD* freerdp_tls_get_ssl_method(BOOL isDtls,
+	                                                                                BOOL isClient);
 
-	FREERDP_LOCAL int freerdp_tls_connect(rdpTls* tls, BIO* underlying);
+	FREERDP_LOCAL WINPR_ATTR_NODISCARD int freerdp_tls_connect(rdpTls* tls, BIO* underlying);
 
-	FREERDP_LOCAL TlsHandshakeResult freerdp_tls_connect_ex(rdpTls* tls, BIO* underlying,
-	                                                        const SSL_METHOD* methods);
+	FREERDP_LOCAL WINPR_ATTR_NODISCARD TlsHandshakeResult
+	freerdp_tls_connect_ex(rdpTls* tls, BIO* underlying, const SSL_METHOD* methods);
 
-	FREERDP_LOCAL BOOL freerdp_tls_accept(rdpTls* tls, BIO* underlying, rdpSettings* settings);
+	FREERDP_LOCAL WINPR_ATTR_NODISCARD BOOL freerdp_tls_accept(rdpTls* tls, BIO* underlying,
+	                                                           rdpSettings* settings);
 
-	FREERDP_LOCAL TlsHandshakeResult freerdp_tls_accept_ex(rdpTls* tls, BIO* underlying,
-	                                                       rdpSettings* settings,
-	                                                       const SSL_METHOD* methods);
+	FREERDP_LOCAL WINPR_ATTR_NODISCARD TlsHandshakeResult freerdp_tls_accept_ex(
+	    rdpTls* tls, BIO* underlying, rdpSettings* settings, const SSL_METHOD* methods);
 
-	FREERDP_LOCAL TlsHandshakeResult freerdp_tls_handshake(rdpTls* tls);
+	FREERDP_LOCAL WINPR_ATTR_NODISCARD TlsHandshakeResult freerdp_tls_handshake(rdpTls* tls);
 
-	FREERDP_LOCAL BOOL freerdp_tls_send_alert(rdpTls* tls);
+	FREERDP_LOCAL WINPR_ATTR_NODISCARD BOOL freerdp_tls_send_alert(rdpTls* tls);
 
-	FREERDP_LOCAL int freerdp_tls_write_all(rdpTls* tls, const BYTE* data, size_t length);
+	FREERDP_LOCAL WINPR_ATTR_NODISCARD int freerdp_tls_write_all(rdpTls* tls, const BYTE* data,
+	                                                             size_t length);
 
-	FREERDP_LOCAL int freerdp_tls_set_alert_code(rdpTls* tls, int level, int description);
+	FREERDP_LOCAL WINPR_ATTR_NODISCARD int freerdp_tls_set_alert_code(rdpTls* tls, int level,
+	                                                                  int description);
 
 	FREERDP_LOCAL void freerdp_tls_free(rdpTls* tls);
 
 	WINPR_ATTR_MALLOC(freerdp_tls_free, 1)
-	FREERDP_LOCAL rdpTls* freerdp_tls_new(rdpContext* context);
+	FREERDP_LOCAL WINPR_ATTR_NODISCARD rdpTls* freerdp_tls_new(rdpContext* context);
 
 #ifdef __cplusplus
 }

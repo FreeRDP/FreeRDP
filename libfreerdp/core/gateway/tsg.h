@@ -102,21 +102,23 @@ typedef enum
 FREERDP_LOCAL void tsg_free(rdpTsg* tsg);
 
 WINPR_ATTR_MALLOC(tsg_free, 1)
-FREERDP_LOCAL rdpTsg* tsg_new(rdpTransport* transport);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD rdpTsg* tsg_new(rdpTransport* transport);
 
-FREERDP_LOCAL BOOL tsg_proxy_begin(rdpTsg* tsg);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD BOOL tsg_proxy_begin(rdpTsg* tsg);
 
-FREERDP_LOCAL BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port, DWORD timeout);
-FREERDP_LOCAL BOOL tsg_disconnect(rdpTsg* tsg);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port,
+                                                    DWORD timeout);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD BOOL tsg_disconnect(rdpTsg* tsg);
 
-FREERDP_LOCAL BOOL tsg_recv_pdu(rdpTsg* tsg, const RPC_PDU* pdu);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD BOOL tsg_recv_pdu(rdpTsg* tsg, const RPC_PDU* pdu);
 
-FREERDP_LOCAL BOOL tsg_check_event_handles(rdpTsg* tsg);
-FREERDP_LOCAL DWORD tsg_get_event_handles(rdpTsg* tsg, HANDLE* events, DWORD count);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD BOOL tsg_check_event_handles(rdpTsg* tsg);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD DWORD tsg_get_event_handles(rdpTsg* tsg, HANDLE* events,
+                                                               DWORD count);
 
-FREERDP_LOCAL TSG_STATE tsg_get_state(rdpTsg* tsg);
-FREERDP_LOCAL BOOL tsg_set_state(rdpTsg* tsg, TSG_STATE state);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD TSG_STATE tsg_get_state(rdpTsg* tsg);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD BOOL tsg_set_state(rdpTsg* tsg, TSG_STATE state);
 
-FREERDP_LOCAL BIO* tsg_get_bio(rdpTsg* tsg);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD BIO* tsg_get_bio(rdpTsg* tsg);
 
 #endif /* FREERDP_LIB_CORE_GATEWAY_TSG_H */

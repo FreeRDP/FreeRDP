@@ -26,6 +26,7 @@
 #include <freerdp/api.h>
 #include <freerdp/types.h>
 
-FREERDP_LOCAL BOOL arm_resolve_endpoint(wLog* log, rdpContext* context, DWORD timeout);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD BOOL arm_resolve_endpoint(wLog* log, rdpContext* context,
+                                                             DWORD timeout);
 
 #endif /* FREERDP_LIB_CORE_GATEWAY_ARM_H */

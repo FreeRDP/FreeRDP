@@ -128,15 +128,17 @@ struct rdp_update_proxy
 	HANDLE thread;
 };
 
-FREERDP_LOCAL int update_message_queue_process_message(rdpUpdate* update, wMessage* message);
-FREERDP_LOCAL int update_message_queue_free_message(wMessage* message);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD int update_message_queue_process_message(rdpUpdate* update,
+                                                                            wMessage* message);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD int update_message_queue_free_message(wMessage* message);
 
-FREERDP_LOCAL int update_message_queue_process_pending_messages(rdpUpdate* update);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD int
+update_message_queue_process_pending_messages(rdpUpdate* update);
 
 FREERDP_LOCAL void update_message_proxy_free(rdpUpdateProxy* message);
 
 WINPR_ATTR_MALLOC(update_message_proxy_free, 1)
-FREERDP_LOCAL rdpUpdateProxy* update_message_proxy_new(rdpUpdate* update);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD rdpUpdateProxy* update_message_proxy_new(rdpUpdate* update);
 
 /**
  * Input Message Queue
@@ -159,8 +161,10 @@ struct rdp_input_proxy
 	pKeyboardPauseEvent KeyboardPauseEvent;
 };
 
-FREERDP_LOCAL int input_message_queue_process_message(rdpInput* input, wMessage* message);
-FREERDP_LOCAL int input_message_queue_free_message(wMessage* message);
-FREERDP_LOCAL int input_message_queue_process_pending_messages(rdpInput* input);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD int input_message_queue_process_message(rdpInput* input,
+                                                                           wMessage* message);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD int input_message_queue_free_message(wMessage* message);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD int
+input_message_queue_process_pending_messages(rdpInput* input);
 
 #endif /* FREERDP_LIB_CORE_MESSAGE_H */

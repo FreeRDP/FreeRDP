@@ -34,14 +34,15 @@ extern "C"
 {
 #endif
 
-	FREERDP_LOCAL rdpBitmap* offscreen_cache_get(rdpOffscreenCache* offscreen_cache, UINT32 index);
+	FREERDP_LOCAL WINPR_ATTR_NODISCARD rdpBitmap*
+	offscreen_cache_get(rdpOffscreenCache* offscreen_cache, UINT32 index);
 
 	FREERDP_LOCAL void offscreen_cache_register_callbacks(rdpUpdate* update);
 
 	FREERDP_LOCAL void offscreen_cache_free(rdpOffscreenCache* offscreen);
 
 	WINPR_ATTR_MALLOC(offscreen_cache_free, 1)
-	FREERDP_LOCAL rdpOffscreenCache* offscreen_cache_new(rdpContext* context);
+	FREERDP_LOCAL WINPR_ATTR_NODISCARD rdpOffscreenCache* offscreen_cache_new(rdpContext* context);
 
 #ifdef __cplusplus
 }

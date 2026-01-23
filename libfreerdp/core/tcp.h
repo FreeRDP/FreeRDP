@@ -92,26 +92,30 @@ static inline long BIO_wait_write(BIO* b, long c)
 	return BIO_ctrl(b, BIO_C_WAIT_WRITE, c, NULL);
 }
 
-FREERDP_LOCAL BIO_METHOD* BIO_s_simple_socket(void);
-FREERDP_LOCAL BIO_METHOD* BIO_s_buffered_socket(void);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD BIO_METHOD* BIO_s_simple_socket(void);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD BIO_METHOD* BIO_s_buffered_socket(void);
 
-FREERDP_LOCAL BOOL freerdp_tcp_set_keep_alive_mode(const rdpSettings* settings, int sockfd);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD BOOL freerdp_tcp_set_keep_alive_mode(const rdpSettings* settings,
+                                                                        int sockfd);
 
-FREERDP_LOCAL int freerdp_tcp_connect(rdpContext* context, const char* hostname, int port,
-                                      DWORD timeout);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD int
+freerdp_tcp_connect(rdpContext* context, const char* hostname, int port, DWORD timeout);
 
-FREERDP_LOCAL int freerdp_tcp_default_connect(rdpContext* context, rdpSettings* settings,
-                                              const char* hostname, int port, DWORD timeout);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD int freerdp_tcp_default_connect(rdpContext* context,
+                                                                   rdpSettings* settings,
+                                                                   const char* hostname, int port,
+                                                                   DWORD timeout);
 
-FREERDP_LOCAL rdpTransportLayer*
+FREERDP_LOCAL WINPR_ATTR_NODISCARD rdpTransportLayer*
 freerdp_tcp_connect_layer(rdpContext* context, const char* hostname, int port, DWORD timeout);
 
-FREERDP_LOCAL char* freerdp_tcp_get_peer_address(SOCKET sockfd);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD char* freerdp_tcp_get_peer_address(SOCKET sockfd);
 
-FREERDP_LOCAL struct addrinfo* freerdp_tcp_resolve_host(const char* hostname, int port,
-                                                        int ai_flags);
-FREERDP_LOCAL char* freerdp_tcp_address_to_string(const struct sockaddr_storage* addr, BOOL* pIPv6);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD struct addrinfo*
+freerdp_tcp_resolve_host(const char* hostname, int port, int ai_flags);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD char*
+freerdp_tcp_address_to_string(const struct sockaddr_storage* addr, BOOL* pIPv6);
 
-FREERDP_LOCAL BOOL freerdp_tcp_set_nodelay(wLog* log, DWORD level, int sockfd);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD BOOL freerdp_tcp_set_nodelay(wLog* log, DWORD level, int sockfd);
 
 #endif /* FREERDP_LIB_CORE_TCP_H */

@@ -27,9 +27,11 @@
 
 #include <freerdp/api.h>
 
-FREERDP_LOCAL BOOL gdi_bitmap_update(rdpContext* context, const BITMAP_UPDATE* bitmapUpdate);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD BOOL gdi_bitmap_update(rdpContext* context,
+                                                          const BITMAP_UPDATE* bitmapUpdate);
 
-FREERDP_LOCAL gdiBitmap* gdi_bitmap_new_ex(rdpGdi* gdi, int width, int height, int bpp, BYTE* data);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD gdiBitmap* gdi_bitmap_new_ex(rdpGdi* gdi, int width, int height,
+                                                                int bpp, BYTE* data);
 FREERDP_LOCAL void gdi_bitmap_free_ex(gdiBitmap* gdi_bmp);
 
 static inline BYTE* gdi_get_bitmap_pointer(HGDI_DC hdcBmp, INT32 x, INT32 y)

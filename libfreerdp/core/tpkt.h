@@ -28,12 +28,13 @@
 
 #define TPKT_HEADER_LENGTH 4
 
-FREERDP_LOCAL int tpkt_verify_header(wStream* s);
-FREERDP_LOCAL BOOL tpkt_read_header(wStream* s, UINT16* length);
-FREERDP_LOCAL BOOL tpkt_write_header(wStream* s, size_t length);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD int tpkt_verify_header(wStream* s);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD BOOL tpkt_read_header(wStream* s, UINT16* length);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD BOOL tpkt_write_header(wStream* s, size_t length);
 #define tpkt_ensure_stream_consumed(log, s, length) \
 	tpkt_ensure_stream_consumed_((log), (s), (length), __func__)
-FREERDP_LOCAL BOOL tpkt_ensure_stream_consumed_(wLog* log, wStream* s, size_t length,
-                                                const char* fkt);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD BOOL tpkt_ensure_stream_consumed_(wLog* log, wStream* s,
+                                                                     size_t length,
+                                                                     const char* fkt);
 
 #endif /* FREERDP_LIB_CORE_TPKT_H */

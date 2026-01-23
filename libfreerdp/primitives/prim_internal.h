@@ -332,7 +332,7 @@ FREERDP_LOCAL void primitives_init_YCoCg_opt(primitives_t* WINPR_RESTRICT prims)
 FREERDP_LOCAL void primitives_init_YUV_opt(primitives_t* WINPR_RESTRICT prims);
 
 #if defined(WITH_OPENCL)
-FREERDP_LOCAL BOOL primitives_init_opencl(primitives_t* WINPR_RESTRICT prims);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD BOOL primitives_init_opencl(primitives_t* WINPR_RESTRICT prims);
 #endif
 
 #endif /* FREERDP_LIB_PRIM_INTERNAL_H */

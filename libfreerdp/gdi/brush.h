@@ -32,11 +32,11 @@ extern "C"
 {
 #endif
 
-	FREERDP_LOCAL const char* gdi_rop_to_string(UINT32 code);
+	FREERDP_LOCAL WINPR_ATTR_NODISCARD const char* gdi_rop_to_string(UINT32 code);
 
-	FREERDP_LOCAL HGDI_BRUSH gdi_CreateSolidBrush(UINT32 crColor);
-	FREERDP_LOCAL HGDI_BRUSH gdi_CreatePatternBrush(HGDI_BITMAP hbmp);
-	FREERDP_LOCAL HGDI_BRUSH gdi_CreateHatchBrush(HGDI_BITMAP hbmp);
+	FREERDP_LOCAL WINPR_ATTR_NODISCARD HGDI_BRUSH gdi_CreateSolidBrush(UINT32 crColor);
+	FREERDP_LOCAL WINPR_ATTR_NODISCARD HGDI_BRUSH gdi_CreatePatternBrush(HGDI_BITMAP hbmp);
+	FREERDP_LOCAL WINPR_ATTR_NODISCARD HGDI_BRUSH gdi_CreateHatchBrush(HGDI_BITMAP hbmp);
 
 	static inline UINT32 gdi_GetBrushStyle(HGDI_DC hdc)
 	{

@@ -126,32 +126,42 @@ typedef struct
 	BYTE compression;
 } FASTPATH_UPDATE_HEADER;
 
-FREERDP_LOCAL BOOL fastpath_read_header_rdp(rdpFastPath* fastpath, wStream* s, UINT16* length);
-FREERDP_LOCAL state_run_t fastpath_recv_updates(rdpFastPath* fastpath, wStream* s);
-FREERDP_LOCAL state_run_t fastpath_recv_inputs(rdpFastPath* fastpath, wStream* s);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD BOOL fastpath_read_header_rdp(rdpFastPath* fastpath, wStream* s,
+                                                                 UINT16* length);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD state_run_t fastpath_recv_updates(rdpFastPath* fastpath,
+                                                                     wStream* s);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD state_run_t fastpath_recv_inputs(rdpFastPath* fastpath,
+                                                                    wStream* s);
 
-FREERDP_LOCAL BOOL fastpath_decrypt(rdpFastPath* fastpath, wStream* s, UINT16* length);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD BOOL fastpath_decrypt(rdpFastPath* fastpath, wStream* s,
+                                                         UINT16* length);
 
-FREERDP_LOCAL wStream* fastpath_input_pdu_init_header(rdpFastPath* fastpath, UINT16* sec_flags);
-FREERDP_LOCAL wStream* fastpath_input_pdu_init(rdpFastPath* fastpath, BYTE eventFlags,
-                                               BYTE eventCode, UINT16* sec_flags);
-FREERDP_LOCAL BOOL fastpath_send_multiple_input_pdu(rdpFastPath* fastpath, wStream* s,
-                                                    size_t iEventCount, UINT16 sec_flags);
-FREERDP_LOCAL BOOL fastpath_send_input_pdu(rdpFastPath* fastpath, wStream* s, UINT16 sec_flags);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD wStream* fastpath_input_pdu_init_header(rdpFastPath* fastpath,
+                                                                           UINT16* sec_flags);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD wStream*
+fastpath_input_pdu_init(rdpFastPath* fastpath, BYTE eventFlags, BYTE eventCode, UINT16* sec_flags);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD BOOL fastpath_send_multiple_input_pdu(rdpFastPath* fastpath,
+                                                                         wStream* s,
+                                                                         size_t iEventCount,
+                                                                         UINT16 sec_flags);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD BOOL fastpath_send_input_pdu(rdpFastPath* fastpath, wStream* s,
+                                                                UINT16 sec_flags);
 
 WINPR_ATTR_MALLOC(Stream_Release, 1)
-FREERDP_LOCAL wStream* fastpath_update_pdu_init(rdpFastPath* fastpath);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD wStream* fastpath_update_pdu_init(rdpFastPath* fastpath);
 
 WINPR_ATTR_MALLOC(Stream_Free, 1)
-FREERDP_LOCAL wStream* fastpath_update_pdu_init_new(rdpFastPath* fastpath);
-FREERDP_LOCAL BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s,
-                                            BOOL skipCompression);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD wStream* fastpath_update_pdu_init_new(rdpFastPath* fastpath);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD BOOL fastpath_send_update_pdu(rdpFastPath* fastpath,
+                                                                 BYTE updateCode, wStream* s,
+                                                                 BOOL skipCompression);
 
-FREERDP_LOCAL BOOL fastpath_send_surfcmd_frame_marker(rdpFastPath* fastpath, UINT16 frameAction,
-                                                      UINT32 frameId);
-FREERDP_LOCAL BYTE fastpath_get_encryption_flags(rdpFastPath* fastpath);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD BOOL fastpath_send_surfcmd_frame_marker(rdpFastPath* fastpath,
+                                                                           UINT16 frameAction,
+                                                                           UINT32 frameId);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD BYTE fastpath_get_encryption_flags(rdpFastPath* fastpath);
 
-FREERDP_LOCAL rdpFastPath* fastpath_new(rdpRdp* rdp);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD rdpFastPath* fastpath_new(rdpRdp* rdp);
 FREERDP_LOCAL void fastpath_free(rdpFastPath* fastpath);
 
 #endif /* FREERDP_LIB_CORE_FASTPATH_H */
