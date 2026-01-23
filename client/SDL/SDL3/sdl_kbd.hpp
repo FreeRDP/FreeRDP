@@ -37,47 +37,48 @@ class sdlInput
 	explicit sdlInput(SdlContext* sdl);
 	sdlInput(const sdlInput& other) = delete;
 	sdlInput(sdlInput&& other) = delete;
-	~sdlInput();
+	virtual ~sdlInput();
 
 	sdlInput& operator=(const sdlInput& other) = delete;
 	sdlInput& operator=(sdlInput&& other) = delete;
 
-	BOOL initialize();
+	[[nodiscard]] BOOL initialize();
 
-	BOOL keyboard_sync_state();
-	BOOL keyboard_focus_in();
+	[[nodiscard]] BOOL keyboard_sync_state();
+	[[nodiscard]] BOOL keyboard_focus_in();
 
-	BOOL keyboard_handle_event(const SDL_KeyboardEvent* ev);
+	[[nodiscard]] BOOL keyboard_handle_event(const SDL_KeyboardEvent* ev);
 
-	BOOL keyboard_grab(Uint32 windowID, bool enable);
-	BOOL mouse_focus(Uint32 windowID);
-	BOOL mouse_grab(Uint32 windowID, bool enable);
+	[[nodiscard]] BOOL keyboard_grab(Uint32 windowID, bool enable);
+	[[nodiscard]] BOOL mouse_focus(Uint32 windowID);
+	[[nodiscard]] BOOL mouse_grab(Uint32 windowID, bool enable);
 
-	static BOOL keyboard_set_indicators(rdpContext* context, UINT16 led_flags);
-	static BOOL keyboard_set_ime_status(rdpContext* context, UINT16 imeId, UINT32 imeState,
-	                                    UINT32 imeConvMode);
+	[[nodiscard]] static BOOL keyboard_set_indicators(rdpContext* context, UINT16 led_flags);
+	[[nodiscard]] static BOOL keyboard_set_ime_status(rdpContext* context, UINT16 imeId,
+	                                                  UINT32 imeState, UINT32 imeConvMode);
 
-	bool prefToEnabled();
-	uint32_t prefToMask();
-	static uint32_t prefKeyValue(const std::string& key, uint32_t fallback = SDL_SCANCODE_UNKNOWN);
+	[[nodiscard]] bool prefToEnabled();
+	[[nodiscard]] uint32_t prefToMask();
+	[[nodiscard]] static uint32_t prefKeyValue(const std::string& key,
+	                                           uint32_t fallback = SDL_SCANCODE_UNKNOWN);
 
   private:
-	static std::list<std::string> tokenize(const std::string& data,
-	                                       const std::string& delimiter = ",");
-	static bool extract(const std::string& token, uint32_t& key, uint32_t& value);
+	[[nodiscard]] static std::list<std::string> tokenize(const std::string& data,
+	                                                     const std::string& delimiter = ",");
+	[[nodiscard]] static bool extract(const std::string& token, uint32_t& key, uint32_t& value);
 
-	UINT32 scancode_to_rdp(Uint32 scancode);
+	[[nodiscard]] UINT32 scancode_to_rdp(Uint32 scancode);
 
-	SdlContext* _sdl;
-	Uint32 _lastWindowID;
+	SdlContext* _sdl = nullptr;
+	Uint32 _lastWindowID = 0;
 
 	// hotkey handling
-	bool _hotkeysEnabled;
-	uint32_t _hotkeyModmask; // modifier keys mask
-	uint32_t _hotkeyFullscreen;
-	uint32_t _hotkeyResizable;
-	uint32_t _hotkeyGrab;
-	uint32_t _hotkeyDisconnect;
-	uint32_t _hotkeyMinimize;
+	bool _hotkeysEnabled = false;
+	uint32_t _hotkeyModmask = 0; // modifier keys mask
+	uint32_t _hotkeyFullscreen = 0;
+	uint32_t _hotkeyResizable = 0;
+	uint32_t _hotkeyGrab = 0;
+	uint32_t _hotkeyDisconnect = 0;
+	uint32_t _hotkeyMinimize = 0;
 	FREERDP_REMAP_TABLE* _remapTable = nullptr;
 };

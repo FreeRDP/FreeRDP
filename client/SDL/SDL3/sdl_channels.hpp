@@ -22,8 +22,9 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/client/channels.h>
 
-int sdl_on_channel_connected(freerdp* instance, const char* name, void* pInterface);
-int sdl_on_channel_disconnected(freerdp* instance, const char* name, void* pInterface);
+[[nodiscard]] int sdl_on_channel_connected(freerdp* instance, const char* name, void* pInterface);
+[[nodiscard]] int sdl_on_channel_disconnected(freerdp* instance, const char* name,
+                                              void* pInterface);
 
 void sdl_OnChannelConnectedEventHandler(void* context, const ChannelConnectedEventArgs* e);
 void sdl_OnChannelDisconnectedEventHandler(void* context, const ChannelDisconnectedEventArgs* e);

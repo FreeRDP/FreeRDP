@@ -24,13 +24,13 @@
 #include <SDL3/SDL.h>
 #include "sdl_types.hpp"
 
-BOOL sdl_scale_coordinates(SdlContext* sdl, Uint32 windowId, INT32* px, INT32* py,
-                           BOOL fromLocalToRDP, BOOL applyOffset);
+[[nodiscard]] BOOL sdl_scale_coordinates(SdlContext* sdl, Uint32 windowId, INT32* px, INT32* py,
+                                         BOOL fromLocalToRDP, BOOL applyOffset);
 
-BOOL sdl_handle_mouse_motion(SdlContext* sdl, const SDL_MouseMotionEvent* ev);
-BOOL sdl_handle_mouse_wheel(SdlContext* sdl, const SDL_MouseWheelEvent* ev);
-BOOL sdl_handle_mouse_button(SdlContext* sdl, const SDL_MouseButtonEvent* ev);
+[[nodiscard]] BOOL sdl_handle_mouse_motion(SdlContext* sdl, const SDL_MouseMotionEvent* ev);
+[[nodiscard]] BOOL sdl_handle_mouse_wheel(SdlContext* sdl, const SDL_MouseWheelEvent* ev);
+[[nodiscard]] BOOL sdl_handle_mouse_button(SdlContext* sdl, const SDL_MouseButtonEvent* ev);
 
-BOOL sdl_handle_touch_down(SdlContext* sdl, const SDL_TouchFingerEvent* ev);
-BOOL sdl_handle_touch_up(SdlContext* sdl, const SDL_TouchFingerEvent* ev);
-BOOL sdl_handle_touch_motion(SdlContext* sdl, const SDL_TouchFingerEvent* ev);
+[[nodiscard]] BOOL sdl_handle_touch_down(SdlContext* sdl, const SDL_TouchFingerEvent* ev);
+[[nodiscard]] BOOL sdl_handle_touch_up(SdlContext* sdl, const SDL_TouchFingerEvent* ev);
+[[nodiscard]] BOOL sdl_handle_touch_motion(SdlContext* sdl, const SDL_TouchFingerEvent* ev);

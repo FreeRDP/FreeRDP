@@ -964,6 +964,10 @@ ClipRequest::ClipRequest(UINT32 format, const std::string& mime)
 {
 }
 
+ClipRequest::~ClipRequest()
+{
+}
+
 uint32_t ClipRequest::format() const
 {
 	return _format;
@@ -987,4 +991,22 @@ bool ClipRequest::success() const
 void ClipRequest::setSuccess(bool status)
 {
 	_success = status;
+}
+
+CliprdrFormat::CliprdrFormat(uint32_t formatID, const char* formatName) : _formatID(formatID)
+{
+	if (formatName)
+		_formatName = formatName;
+}
+
+uint32_t CliprdrFormat::formatId() const
+{
+	return _formatID;
+}
+
+const char* CliprdrFormat::formatName() const
+{
+	if (_formatName.empty())
+		return nullptr;
+	return _formatName.c_str();
 }

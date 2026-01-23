@@ -35,7 +35,7 @@ class sdlDispContext
 	explicit sdlDispContext(SdlContext* sdl);
 	sdlDispContext(const sdlDispContext& other) = delete;
 	sdlDispContext(sdlDispContext&& other) = delete;
-	~sdlDispContext();
+	virtual ~sdlDispContext();
 
 	sdlDispContext& operator=(const sdlDispContext& other) = delete;
 	sdlDispContext& operator=(sdlDispContext&& other) = delete;
@@ -47,24 +47,25 @@ class sdlDispContext
 	[[nodiscard]] bool handle_window_event(const SDL_WindowEvent* ev);
 
   private:
-	UINT DisplayControlCaps(UINT32 maxNumMonitors, UINT32 maxMonitorAreaFactorA,
-	                        UINT32 maxMonitorAreaFactorB);
-	bool set_window_resizable();
+	[[nodiscard]] UINT DisplayControlCaps(UINT32 maxNumMonitors, UINT32 maxMonitorAreaFactorA,
+	                                      UINT32 maxMonitorAreaFactorB);
+	[[nodiscard]] bool set_window_resizable();
 
-	bool sendResize();
-	bool settings_changed(const std::vector<DISPLAY_CONTROL_MONITOR_LAYOUT>& layout);
-	UINT sendLayout(const rdpMonitor* monitors, size_t nmonitors);
+	[[nodiscard]] bool sendResize();
+	[[nodiscard]] bool settings_changed(const std::vector<DISPLAY_CONTROL_MONITOR_LAYOUT>& layout);
+	[[nodiscard]] UINT sendLayout(const rdpMonitor* monitors, size_t nmonitors);
 
-	bool addTimer();
+	[[nodiscard]] bool addTimer();
 
 	bool updateMonitor(SDL_WindowID id);
 	bool updateMonitors(SDL_EventType type);
 
-	static UINT DisplayControlCaps(DispClientContext* disp, UINT32 maxNumMonitors,
-	                               UINT32 maxMonitorAreaFactorA, UINT32 maxMonitorAreaFactorB);
+	[[nodiscard]] static UINT DisplayControlCaps(DispClientContext* disp, UINT32 maxNumMonitors,
+	                                             UINT32 maxMonitorAreaFactorA,
+	                                             UINT32 maxMonitorAreaFactorB);
 	static void OnActivated(void* context, const ActivatedEventArgs* e);
 	static void OnGraphicsReset(void* context, const GraphicsResetEventArgs* e);
-	static Uint32 SDLCALL OnTimer(void* param, SDL_TimerID timerID, Uint32 interval);
+	[[nodiscard]] static Uint32 SDLCALL OnTimer(void* param, SDL_TimerID timerID, Uint32 interval);
 
 	SdlContext* _sdl = nullptr;
 	DispClientContext* _disp = nullptr;

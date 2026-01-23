@@ -24,5 +24,5 @@
 
 #include "sdl_types.hpp"
 
-int sdl_list_monitors(SdlContext* sdl);
-BOOL sdl_detect_monitors(SdlContext* sdl, UINT32* pMaxWidth, UINT32* ppMaxHeight);
+[[nodiscard]] int sdl_list_monitors(SdlContext* sdl);
+[[nodiscard]] BOOL sdl_detect_monitors(SdlContext* sdl, UINT32* pMaxWidth, UINT32* ppMaxHeight);
