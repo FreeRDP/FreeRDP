@@ -95,8 +95,10 @@ bool SdlButtonList::update()
 {
 	for (auto& btn : _list)
 	{
-		btn->highlight(btn == _highlighted);
-		btn->mouseover(btn == _mouseover);
+		if (!btn->highlight(btn == _highlighted))
+			return false;
+		if (!btn->mouseover(btn == _mouseover))
+			return false;
 
 		if (!btn->update())
 			return false;

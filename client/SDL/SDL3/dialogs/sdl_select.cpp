@@ -37,7 +37,7 @@ SdlSelectWidget::SdlSelectWidget(std::shared_ptr<SDL_Renderer>& renderer, const 
 {
 	_backgroundcolor = { 0x69, 0x66, 0x63, 0xff };
 	_fontcolor = { 0xd1, 0xcf, 0xcd, 0xff };
-	update_text(label);
+	(void)update_text(label);
 }
 
 SdlSelectWidget::~SdlSelectWidget() = default;

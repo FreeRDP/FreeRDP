@@ -57,8 +57,8 @@ class sdlDispContext
 
 	[[nodiscard]] bool addTimer();
 
-	bool updateMonitor(SDL_WindowID id);
-	bool updateMonitors(SDL_EventType type, SDL_DisplayID displayID);
+	[[nodiscard]] bool updateMonitor(SDL_WindowID id);
+	[[nodiscard]] bool updateMonitors(SDL_EventType type, SDL_DisplayID displayID);
 
 	[[nodiscard]] static UINT DisplayControlCaps(DispClientContext* disp, UINT32 maxNumMonitors,
 	                                             UINT32 maxMonitorAreaFactorA,

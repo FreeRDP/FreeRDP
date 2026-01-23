@@ -283,7 +283,7 @@ static const scancode_entry_t map[] = {
 	ENTRY(SDL_SCANCODE_MEDIA_FAST_FORWARD, RDP_SCANCODE_UNKNOWN)
 };
 
-static UINT32 sdl_get_kbd_flags()
+[[nodiscard]] static UINT32 sdl_get_kbd_flags()
 {
 	UINT32 flags = 0;
 
@@ -374,7 +374,7 @@ BOOL sdlInput::keyboard_set_ime_status(rdpContext* context, UINT16 imeId, UINT32
 	return TRUE;
 }
 
-static const std::map<std::string, uint32_t>& getSdlMap()
+[[nodiscard]] static const std::map<std::string, uint32_t>& getSdlMap()
 {
 	static std::map<std::string, uint32_t> s_map = {
 		{ "KMOD_LSHIFT", SDL_KMOD_LSHIFT },     { "KMOD_RSHIFT", SDL_KMOD_RSHIFT },
@@ -399,7 +399,7 @@ static const std::map<std::string, uint32_t>& getSdlMap()
 	return s_map;
 }
 
-static std::string modbyvalue(uint32_t val)
+[[nodiscard]] static std::string modbyvalue(uint32_t val)
 {
 	for (const auto& v : getSdlMap())
 	{
@@ -411,7 +411,7 @@ static std::string modbyvalue(uint32_t val)
 	return "KMOD_UNKNONW";
 }
 
-static std::string masktostr(uint32_t mask)
+[[nodiscard]] static std::string masktostr(uint32_t mask)
 {
 	if (mask == 0)
 		return "<NONE>";
@@ -470,7 +470,7 @@ uint32_t sdlInput::prefToMask()
 	return mod;
 }
 
-static const char* sdl_scancode_name(Uint32 scancode)
+[[nodiscard]] static const char* sdl_scancode_name(Uint32 scancode)
 {
 	for (const auto& cur : map)
 	{
@@ -481,7 +481,7 @@ static const char* sdl_scancode_name(Uint32 scancode)
 	return "SDL_SCANCODE_UNKNOWN";
 }
 
-static Uint32 sdl_scancode_val(const char* scancodeName)
+[[nodiscard]] static Uint32 sdl_scancode_val(const char* scancodeName)
 {
 	for (const auto& cur : map)
 	{
@@ -493,7 +493,7 @@ static Uint32 sdl_scancode_val(const char* scancodeName)
 }
 
 #if defined(WITH_DEBUG_SDL_KBD_EVENTS)
-static const char* sdl_rdp_scancode_name(UINT32 scancode)
+[[nodiscard]] static const char* sdl_rdp_scancode_name(UINT32 scancode)
 {
 	for (const auto& cur : map)
 	{
@@ -504,7 +504,7 @@ static const char* sdl_rdp_scancode_name(UINT32 scancode)
 	return "RDP_SCANCODE_UNKNOWN";
 }
 
-static UINT32 sdl_rdp_scancode_val(const char* scancodeName)
+[[nodiscard]] static UINT32 sdl_rdp_scancode_val(const char* scancodeName)
 {
 	for (const auto& cur : map)
 	{

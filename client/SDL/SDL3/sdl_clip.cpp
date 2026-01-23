@@ -37,7 +37,7 @@
 // NOLINTNEXTLINE(bugprone-suspicious-missing-comma)
 const char mime_text_utf8[] = mime_text_plain ";charset=utf-8";
 
-static const std::vector<const char*>& s_mime_text()
+[[nodiscard]] static const std::vector<const char*>& s_mime_text()
 {
 	static std::vector<const char*> values;
 	if (values.empty())
@@ -58,7 +58,7 @@ static const char s_mime_html[] = "text/html";
 
 #define BMP_MIME_LIST "image/bmp", "image/x-bmp", "image/x-MS-bmp", "image/x-win-bitmap"
 
-static const std::vector<const char*>& s_mime_bitmap()
+[[nodiscard]] static const std::vector<const char*>& s_mime_bitmap()
 {
 	static std::vector<const char*> values;
 	if (values.empty())
@@ -68,7 +68,7 @@ static const std::vector<const char*>& s_mime_bitmap()
 	return values;
 }
 
-static const std::vector<const char*>& s_mime_image()
+[[nodiscard]] static const std::vector<const char*>& s_mime_image()
 {
 	static std::vector<const char*> values;
 	if (values.empty())
@@ -144,7 +144,7 @@ sdlClip::~sdlClip()
 {
 	cliprdr_file_context_free(_file);
 	ClipboardDestroy(_system);
-	(void)CloseHandle(_event);
+	std::ignore = CloseHandle(_event);
 }
 
 bool sdlClip::init(CliprdrClientContext* clip)
@@ -876,7 +876,7 @@ const void* sdlClip::ClipDataCb(void* userdata, const char* mime_type, size_t* s
 		clip->_request_queue.pop();
 
 		if (clip->_request_queue.empty())
-			(void)ResetEvent(clip->_event);
+			std::ignore = ResetEvent(clip->_event);
 
 		if (request.success())
 		{

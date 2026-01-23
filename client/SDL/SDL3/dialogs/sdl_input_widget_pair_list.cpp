@@ -55,10 +55,10 @@ SdlInputWidgetPairList::SdlInputWidgetPairList(const std::string& title,
 			m_list.emplace_back(widget);
 		}
 
-		_buttons.populate(_renderer, buttonlabels, buttonids, total_width,
-		                  static_cast<Sint32>(input_height), static_cast<Sint32>(widget_width),
-		                  static_cast<Sint32>(widget_heigth));
-		_buttons.set_highlight(0);
+		(void)_buttons.populate(
+		    _renderer, buttonlabels, buttonids, total_width, static_cast<Sint32>(input_height),
+		    static_cast<Sint32>(widget_width), static_cast<Sint32>(widget_heigth));
+		(void)_buttons.set_highlight(0);
 		m_currentActiveTextInput = selected;
 	}
 }
@@ -211,7 +211,8 @@ int SdlInputWidgetPairList::run(std::vector<std::string>& result)
 									if (cur)
 									{
 										auto text = SDL_GetClipboardText();
-										cur->set_str(text);
+										if (!cur->set_str(text))
+											throw;
 									}
 								}
 								break;
@@ -245,7 +246,8 @@ int SdlInputWidgetPairList::run(std::vector<std::string>& result)
 								throw;
 						}
 
-						_buttons.set_mouseover(event.button.x, event.button.y);
+						if (!_buttons.set_mouseover(event.button.x, event.button.y))
+							throw;
 					}
 					break;
 					case SDL_EVENT_MOUSE_BUTTON_DOWN:

@@ -40,8 +40,8 @@ SdlInputWidgetPair::SdlInputWidgetPair(std::shared_ptr<SDL_Renderer>& renderer,
                          static_cast<float>(offset * (height + _vpadding)),
                          static_cast<float>(width), static_cast<float>(height) })
 {
-	_label.update_text(label);
-	update_input_text(initial);
+	(void)_label.update_text(label);
+	(void)update_input_text(initial);
 }
 
 SdlInputWidgetPair::SdlInputWidgetPair(SdlInputWidgetPair&& other) noexcept = default;

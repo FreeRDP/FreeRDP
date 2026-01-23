@@ -207,7 +207,8 @@ static int sdl_run(SdlContext* sdl)
 					SDLConnectionDialogHider hider(sdl);
 					auto title = static_cast<const char*>(windowEvent.user.data1);
 					auto msg = static_cast<const char*>(windowEvent.user.data2);
-					sdl_cert_dialog_show(title, msg);
+					if (!sdl_cert_dialog_show(title, msg))
+						return -1;
 				}
 				break;
 				case SDL_EVENT_USER_SHOW_DIALOG:
@@ -215,7 +216,8 @@ static int sdl_run(SdlContext* sdl)
 					SDLConnectionDialogHider hider(sdl);
 					auto title = static_cast<const char*>(windowEvent.user.data1);
 					auto msg = static_cast<const char*>(windowEvent.user.data2);
-					sdl_message_dialog_show(title, msg, windowEvent.user.code);
+					if (!sdl_message_dialog_show(title, msg, windowEvent.user.code))
+						return -1;
 				}
 				break;
 				case SDL_EVENT_USER_SCARD_DIALOG:
@@ -223,14 +225,16 @@ static int sdl_run(SdlContext* sdl)
 					SDLConnectionDialogHider hider(sdl);
 					auto title = static_cast<const char*>(windowEvent.user.data1);
 					auto msg = static_cast<const char**>(windowEvent.user.data2);
-					sdl_scard_dialog_show(title, windowEvent.user.code, msg);
+					if (!sdl_scard_dialog_show(title, windowEvent.user.code, msg))
+						return -1;
 				}
 				break;
 				case SDL_EVENT_USER_AUTH_DIALOG:
 				{
 					SDLConnectionDialogHider hider(sdl);
-					sdl_auth_dialog_show(
-					    reinterpret_cast<const SDL_UserAuthArg*>(windowEvent.padding));
+					if (!sdl_auth_dialog_show(
+					        reinterpret_cast<const SDL_UserAuthArg*>(windowEvent.padding)))
+						return -1;
 				}
 				break;
 				case SDL_EVENT_USER_UPDATE:

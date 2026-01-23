@@ -23,10 +23,10 @@ SdlSelectList::SdlSelectList(const std::string& title, const std::vector<std::st
 
 		const std::vector<int> buttonids = { INPUT_BUTTON_ACCEPT, INPUT_BUTTON_CANCEL };
 		const std::vector<std::string> buttonlabels = { "accept", "cancel" };
-		_buttons.populate(_renderer, buttonlabels, buttonids, widget_width,
-		                  static_cast<Sint32>(total_height), static_cast<Sint32>(widget_width / 2),
-		                  static_cast<Sint32>(widget_height));
-		_buttons.set_highlight(0);
+		(void)_buttons.populate(
+		    _renderer, buttonlabels, buttonids, widget_width, static_cast<Sint32>(total_height),
+		    static_cast<Sint32>(widget_width / 2), static_cast<Sint32>(widget_height));
+		(void)_buttons.set_highlight(0);
 	}
 }
 
@@ -111,7 +111,8 @@ int SdlSelectList::run()
 								throw;
 						}
 
-						_buttons.set_mouseover(event.button.x, event.button.y);
+						if (!_buttons.set_mouseover(event.button.x, event.button.y))
+							throw;
 					}
 					break;
 					case SDL_EVENT_MOUSE_BUTTON_DOWN:
@@ -147,7 +148,8 @@ int SdlSelectList::run()
 					throw;
 			}
 
-			update();
+			if (!update())
+				throw;
 		}
 	}
 	catch (...)
@@ -186,7 +188,7 @@ void SdlSelectList::reset_mouseover()
 {
 	for (auto& cur : _list)
 	{
-		cur.mouseover(false);
+		(void)cur.mouseover(false);
 	}
 }
 
@@ -194,6 +196,6 @@ void SdlSelectList::reset_highlight()
 {
 	for (auto& cur : _list)
 	{
-		cur.highlight(false);
+		(void)cur.highlight(false);
 	}
 }

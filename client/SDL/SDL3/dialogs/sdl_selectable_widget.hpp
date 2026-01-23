@@ -36,11 +36,11 @@ class SdlSelectableWidget : public SdlWidget
 	SdlSelectableWidget& operator=(const SdlSelectableWidget& other) = delete;
 	SdlSelectableWidget& operator=(SdlSelectableWidget&& other) = delete;
 
-	bool highlight(bool enable);
-	bool mouseover(bool enable);
+	[[nodiscard]] bool highlight(bool enable);
+	[[nodiscard]] bool mouseover(bool enable);
 
   protected:
-	bool updateInternal() override;
+	[[nodiscard]] bool updateInternal() override;
 	SDL_Color _highlightcolor = { 0xcd, 0xca, 0x35, 0x60 };
 	SDL_Color _mouseovercolor = { 0x66, 0xff, 0x66, 0x60 };
 

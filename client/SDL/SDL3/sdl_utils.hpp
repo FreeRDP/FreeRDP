@@ -96,7 +96,7 @@ namespace sdl::utils
 		SCALE_MODE_WAYLAND
 	};
 
-	HighDpiScaleMode platformScaleMode();
+	[[nodiscard]] HighDpiScaleMode platformScaleMode();
 
 	[[nodiscard]] std::string windowTitle(const rdpSettings* settings);
 

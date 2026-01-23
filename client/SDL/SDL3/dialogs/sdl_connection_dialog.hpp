@@ -42,40 +42,40 @@ class SDLConnectionDialog : public SdlWidgetList
 	SDLConnectionDialog& operator=(const SDLConnectionDialog& other) = delete;
 	SDLConnectionDialog& operator=(SDLConnectionDialog&& other) = delete;
 
-	bool setTitle(const char* fmt, ...);
-	bool showInfo(const char* fmt, ...);
-	bool showWarn(const char* fmt, ...);
-	bool showError(const char* fmt, ...);
+	[[nodiscard]] bool setTitle(const char* fmt, ...);
+	[[nodiscard]] bool showInfo(const char* fmt, ...);
+	[[nodiscard]] bool showWarn(const char* fmt, ...);
+	[[nodiscard]] bool showError(const char* fmt, ...);
 
-	bool show();
-	bool hide();
+	[[nodiscard]] bool show();
+	[[nodiscard]] bool hide();
 
-	bool running() const;
-	bool wait(bool ignoreRdpContextQuit = false);
+	[[nodiscard]] bool running() const;
+	[[nodiscard]] bool wait(bool ignoreRdpContextQuit = false);
 
-	bool handle(const SDL_Event& event);
+	[[nodiscard]] bool handle(const SDL_Event& event);
 
-	bool visible() const override;
+	[[nodiscard]] bool visible() const override;
 
   protected:
-	bool updateInternal() override;
+	[[nodiscard]] bool updateInternal() override;
 
   private:
-	bool createWindow();
+	[[nodiscard]] bool createWindow();
 	void destroyWindow();
 
-	bool updateMsg(SdlConnectionDialogWrapper::MsgType type);
+	[[nodiscard]] bool updateMsg(SdlConnectionDialogWrapper::MsgType type);
 
-	bool setModal();
+	[[nodiscard]] bool setModal();
 
-	bool show(SdlConnectionDialogWrapper::MsgType type, const char* fmt, va_list ap);
-	bool show(SdlConnectionDialogWrapper::MsgType type);
+	[[nodiscard]] bool show(SdlConnectionDialogWrapper::MsgType type, const char* fmt, va_list ap);
+	[[nodiscard]] bool show(SdlConnectionDialogWrapper::MsgType type);
 
-	static std::string print(const char* fmt, va_list ap);
-	bool setTimer(Uint32 timeoutMS = 15000);
+	[[nodiscard]] static std::string print(const char* fmt, va_list ap);
+	[[nodiscard]] bool setTimer(Uint32 timeoutMS = 15000);
 	void resetTimer();
 
-	static Uint32 timeout(void* pvthis, SDL_TimerID timerID, Uint32 intervalMS);
+	[[nodiscard]] static Uint32 timeout(void* pvthis, SDL_TimerID timerID, Uint32 intervalMS);
 
 	struct widget_cfg_t
 	{

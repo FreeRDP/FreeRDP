@@ -14,7 +14,7 @@ bool SdlWidgetList::reset(const std::string& title, size_t width, size_t height)
 	_renderer = std::shared_ptr<SDL_Renderer>(renderer, SDL_DestroyRenderer);
 	_window = std::shared_ptr<SDL_Window>(window, SDL_DestroyWindow);
 	if (!rc)
-		widget_log_error(rc, "SDL_CreateWindowAndRenderer");
+		(void)widget_log_error(rc, "SDL_CreateWindowAndRenderer");
 	return rc;
 }
 
@@ -47,8 +47,10 @@ bool SdlWidgetList::update()
 	if (!visible())
 		return true;
 
-	clearWindow();
-	updateInternal();
+	if (!clearWindow())
+		return false;
+	if (!updateInternal())
+		return false;
 	if (!_buttons.update())
 		return false;
 	auto rc = SDL_RenderPresent(_renderer.get());

@@ -37,7 +37,7 @@ typedef struct
 	void* data;
 } sdlPointer;
 
-static BOOL sdl_Pointer_New(rdpContext* context, rdpPointer* pointer)
+[[nodiscard]] static BOOL sdl_Pointer_New(rdpContext* context, rdpPointer* pointer)
 {
 	auto ptr = reinterpret_cast<sdlPointer*>(pointer);
 
@@ -90,14 +90,14 @@ static void sdl_Pointer_Free(rdpContext* context, rdpPointer* pointer)
 	}
 }
 
-static BOOL sdl_Pointer_SetDefault(rdpContext* context)
+[[nodiscard]] static BOOL sdl_Pointer_SetDefault(rdpContext* context)
 {
 	WINPR_UNUSED(context);
 
 	return sdl_push_user_event(SDL_EVENT_USER_POINTER_DEFAULT);
 }
 
-static BOOL sdl_Pointer_Set(rdpContext* context, rdpPointer* pointer)
+[[nodiscard]] static BOOL sdl_Pointer_Set(rdpContext* context, rdpPointer* pointer)
 {
 	WINPR_UNUSED(context);
 	return sdl_push_user_event(SDL_EVENT_USER_POINTER_SET, pointer);
@@ -178,14 +178,14 @@ BOOL sdl_Pointer_Set_Process(SdlContext* sdl)
 	return TRUE;
 }
 
-static BOOL sdl_Pointer_SetNull(rdpContext* context)
+[[nodiscard]] static BOOL sdl_Pointer_SetNull(rdpContext* context)
 {
 	WINPR_UNUSED(context);
 
 	return sdl_push_user_event(SDL_EVENT_USER_POINTER_NULL);
 }
 
-static BOOL sdl_Pointer_SetPosition(rdpContext* context, UINT32 x, UINT32 y)
+[[nodiscard]] static BOOL sdl_Pointer_SetPosition(rdpContext* context, UINT32 x, UINT32 y)
 {
 	WINPR_UNUSED(context);
 	WINPR_ASSERT(context);

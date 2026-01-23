@@ -18,14 +18,14 @@ class SdlWidgetList
 	SdlWidgetList& operator=(SdlWidgetList&& other) = delete;
 	virtual ~SdlWidgetList();
 
-	virtual bool reset(const std::string& title, size_t width, size_t height);
+	[[nodiscard]] virtual bool reset(const std::string& title, size_t width, size_t height);
 
 	[[nodiscard]] virtual bool visible() const;
 
   protected:
-	bool update();
-	virtual bool clearWindow();
-	virtual bool updateInternal() = 0;
+	[[nodiscard]] bool update();
+	[[nodiscard]] virtual bool clearWindow();
+	[[nodiscard]] virtual bool updateInternal() = 0;
 
 	std::shared_ptr<SDL_Window> _window;
 	std::shared_ptr<SDL_Renderer> _renderer;

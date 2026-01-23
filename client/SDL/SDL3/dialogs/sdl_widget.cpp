@@ -51,12 +51,12 @@ SdlWidget::SdlWidget(std::shared_ptr<SDL_Renderer>& renderer, const SDL_FRect& r
 	auto ops = SDL3ResourceManager::get(SDLResourceManager::typeFonts(),
 	                                    "OpenSans-VariableFont_wdth,wght.ttf");
 	if (!ops)
-		widget_log_error(false, "SDLResourceManager::get");
+		(void)widget_log_error(false, "SDLResourceManager::get");
 	else
 	{
 		_font = std::shared_ptr<TTF_Font>(TTF_OpenFontIO(ops, true, 64), TTF_CloseFont);
 		if (!_font)
-			widget_log_error(false, "TTF_OpenFontRW");
+			(void)widget_log_error(false, "TTF_OpenFontRW");
 	}
 }
 
@@ -72,7 +72,7 @@ SdlWidget::SdlWidget(std::shared_ptr<SDL_Renderer>& renderer, const SDL_FRect& r
 		_image = std::shared_ptr<SDL_Texture>(IMG_LoadTexture_IO(renderer.get(), ops, 1),
 		                                      SDL_DestroyTexture);
 		if (!_image)
-			widget_log_error(false, "IMG_LoadTexture_IO");
+			(void)widget_log_error(false, "IMG_LoadTexture_IO");
 	}
 }
 #endif
@@ -95,7 +95,7 @@ std::shared_ptr<SDL_Texture> SdlWidget::render_text(const std::string& text, SDL
 	    TTF_RenderText_Blended(_font.get(), text.c_str(), 0, fgcolor), SDL_DestroySurface);
 	if (!surface)
 	{
-		widget_log_error(false, "TTF_RenderText_Blended");
+		(void)widget_log_error(false, "TTF_RenderText_Blended");
 		return nullptr;
 	}
 
@@ -103,13 +103,13 @@ std::shared_ptr<SDL_Texture> SdlWidget::render_text(const std::string& text, SDL
 	    SDL_CreateTextureFromSurface(_renderer.get(), surface.get()), SDL_DestroyTexture);
 	if (!texture)
 	{
-		widget_log_error(false, "SDL_CreateTextureFromSurface");
+		(void)widget_log_error(false, "SDL_CreateTextureFromSurface");
 		return nullptr;
 	}
 
 	if (!_engine)
 	{
-		widget_log_error(false, "TTF_CreateRendererTextEngine");
+		(void)widget_log_error(false, "TTF_CreateRendererTextEngine");
 		return nullptr;
 	}
 
@@ -118,14 +118,14 @@ std::shared_ptr<SDL_Texture> SdlWidget::render_text(const std::string& text, SDL
 
 	if (!txt)
 	{
-		widget_log_error(false, "TTF_CreateText");
+		(void)widget_log_error(false, "TTF_CreateText");
 		return nullptr;
 	}
 	int w = 0;
 	int h = 0;
 	if (!TTF_GetTextSize(txt.get(), &w, &h))
 	{
-		widget_log_error(false, "TTF_GetTextSize");
+		(void)widget_log_error(false, "TTF_GetTextSize");
 		return nullptr;
 	}
 
@@ -170,7 +170,7 @@ std::shared_ptr<SDL_Texture> SdlWidget::render_text_wrapped(const std::string& t
 	    SDL_DestroySurface);
 	if (!surface)
 	{
-		widget_log_error(false, "TTF_RenderText_Blended");
+		(void)widget_log_error(false, "TTF_RenderText_Blended");
 		return nullptr;
 	}
 
@@ -181,7 +181,7 @@ std::shared_ptr<SDL_Texture> SdlWidget::render_text_wrapped(const std::string& t
 	    SDL_CreateTextureFromSurface(_renderer.get(), surface.get()), SDL_DestroyTexture);
 	if (!texture)
 	{
-		widget_log_error(false, "SDL_CreateTextureFromSurface");
+		(void)widget_log_error(false, "SDL_CreateTextureFromSurface");
 		return nullptr;
 	}
 
@@ -313,7 +313,10 @@ bool SdlWidget::update_text(const std::string& text)
 		auto w = SDL_GetNumberProperty(propId, SDL_PROP_TEXTURE_WIDTH_NUMBER, -1);
 		auto h = SDL_GetNumberProperty(propId, SDL_PROP_TEXTURE_HEIGHT_NUMBER, -1);
 		if (w < 0 || h < 0)
-			widget_log_error(false, "SDL_GetTextureProperties");
+		{
+			if (!widget_log_error(false, "SDL_GetTextureProperties"))
+				return false;
+		}
 		src.w = static_cast<float>(w);
 		src.h = static_cast<float>(h);
 	}

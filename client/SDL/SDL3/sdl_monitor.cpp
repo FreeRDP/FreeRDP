@@ -81,7 +81,8 @@ int sdl_list_monitors([[maybe_unused]] SdlContext* sdl)
 	return 0;
 }
 
-static BOOL sdl_apply_mon_max_size(SdlContext* sdl, UINT32* pMaxWidth, UINT32* pMaxHeight)
+[[nodiscard]] static BOOL sdl_apply_mon_max_size(SdlContext* sdl, UINT32* pMaxWidth,
+                                                 UINT32* pMaxHeight)
 {
 	int32_t left = 0;
 	int32_t right = 0;
@@ -113,7 +114,7 @@ static BOOL sdl_apply_mon_max_size(SdlContext* sdl, UINT32* pMaxWidth, UINT32* p
 	return TRUE;
 }
 
-static BOOL sdl_apply_max_size(SdlContext* sdl, UINT32* pMaxWidth, UINT32* pMaxHeight)
+[[nodiscard]] static BOOL sdl_apply_max_size(SdlContext* sdl, UINT32* pMaxWidth, UINT32* pMaxHeight)
 {
 	WINPR_ASSERT(sdl);
 	WINPR_ASSERT(pMaxWidth);
@@ -170,14 +171,15 @@ static BOOL sdl_apply_max_size(SdlContext* sdl, UINT32* pMaxWidth, UINT32* pMaxH
 	return TRUE;
 }
 
-static Uint32 scale(Uint32 val, float scale)
+[[nodiscard]] static Uint32 scale(Uint32 val, float scale)
 {
 	const auto dval = static_cast<float>(val);
 	const auto sval = dval / scale;
 	return static_cast<Uint32>(sval);
 }
 
-static BOOL sdl_apply_monitor_properties(rdpMonitor& monitor, SDL_DisplayID id, bool isPrimary)
+[[nodiscard]] static BOOL sdl_apply_monitor_properties(rdpMonitor& monitor, SDL_DisplayID id,
+                                                       bool isPrimary)
 {
 
 	float dpi = SDL_GetDisplayContentScale(id);
@@ -248,7 +250,7 @@ static BOOL sdl_apply_monitor_properties(rdpMonitor& monitor, SDL_DisplayID id, 
 	return TRUE;
 }
 
-static BOOL sdl_apply_display_properties(SdlContext* sdl)
+[[nodiscard]] static BOOL sdl_apply_display_properties(SdlContext* sdl)
 {
 	WINPR_ASSERT(sdl);
 
@@ -285,7 +287,8 @@ static BOOL sdl_apply_display_properties(SdlContext* sdl)
 	                                                     monitors.size());
 }
 
-static BOOL sdl_detect_single_window(SdlContext* sdl, UINT32* pMaxWidth, UINT32* pMaxHeight)
+[[nodiscard]] static BOOL sdl_detect_single_window(SdlContext* sdl, UINT32* pMaxWidth,
+                                                   UINT32* pMaxHeight)
 {
 	WINPR_ASSERT(sdl);
 	WINPR_ASSERT(pMaxWidth);
