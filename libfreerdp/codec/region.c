@@ -109,7 +109,7 @@ const RECTANGLE_16* region16_rects(const REGION16* region, UINT32* nbRects)
 	return data->rects;
 }
 
-static inline RECTANGLE_16* region16_rects_noconst(REGION16* region)
+static inline WINPR_ATTR_NODISCARD RECTANGLE_16* region16_rects_noconst(REGION16* region)
 {
 	WINPR_ASSERT(region);
 
@@ -224,7 +224,7 @@ static REGION16_DATA* allocateRegion(size_t nbItems)
 	return data;
 }
 
-static inline RECTANGLE_16* nextRect(REGION16_DATA* data, size_t index)
+static inline WINPR_ATTR_NODISCARD RECTANGLE_16* nextRect(REGION16_DATA* data, size_t index)
 {
 	WINPR_ASSERT(data);
 	if (index + 1 > data->nbRects)
@@ -279,7 +279,7 @@ static BOOL resizeRegion(REGION16* region, size_t nbItems)
 	return TRUE;
 }
 
-static inline BOOL region16_copy_data(REGION16* dst, const REGION16* src)
+static inline WINPR_ATTR_NODISCARD BOOL region16_copy_data(REGION16* dst, const REGION16* src)
 {
 	WINPR_ASSERT(dst);
 	WINPR_ASSERT(src);

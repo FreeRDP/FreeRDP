@@ -113,7 +113,8 @@ typedef struct
 	HANDLE_OPS* ops;
 } WINPR_HANDLE;
 
-static inline BOOL WINPR_HANDLE_IS_HANDLED(HANDLE handle, ULONG type, BOOL invalidValue)
+static inline WINPR_ATTR_NODISCARD BOOL WINPR_HANDLE_IS_HANDLED(HANDLE handle, ULONG type,
+                                                                BOOL invalidValue)
 {
 	WINPR_HANDLE* pWinprHandle = (WINPR_HANDLE*)handle;
 	BOOL invalid = !pWinprHandle;
@@ -141,7 +142,8 @@ static inline void WINPR_HANDLE_SET_TYPE_AND_MODE(void* _handle, ULONG _type, UL
 	hdl->Mode = _mode;
 }
 
-static inline BOOL winpr_Handle_GetInfo(HANDLE handle, ULONG* pType, WINPR_HANDLE** pObject)
+static inline WINPR_ATTR_NODISCARD BOOL winpr_Handle_GetInfo(HANDLE handle, ULONG* pType,
+                                                             WINPR_HANDLE** pObject)
 {
 	WINPR_HANDLE* wHandle = NULL;
 
@@ -163,7 +165,7 @@ static inline BOOL winpr_Handle_GetInfo(HANDLE handle, ULONG* pType, WINPR_HANDL
 	return TRUE;
 }
 
-static inline int winpr_Handle_getFd(HANDLE handle)
+static inline WINPR_ATTR_NODISCARD int winpr_Handle_getFd(HANDLE handle)
 {
 	WINPR_HANDLE* hdl = NULL;
 	ULONG type = 0;
@@ -177,7 +179,7 @@ static inline int winpr_Handle_getFd(HANDLE handle)
 	return hdl->ops->GetFd(handle);
 }
 
-static inline DWORD winpr_Handle_cleanup(HANDLE handle)
+static inline WINPR_ATTR_NODISCARD DWORD winpr_Handle_cleanup(HANDLE handle)
 {
 	WINPR_HANDLE* hdl = NULL;
 	ULONG type = 0;

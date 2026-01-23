@@ -193,7 +193,7 @@ FREERDP_API WINPR_ATTR_NODISCARD DWORD FreeRDPAreColorFormatsEqualNoAlpha(DWORD 
 #if defined(WITH_FREERDP_DEPRECATED)
 #define GetBitsPerPixel(...) FreeRDPGetBitsPerPixel(__VA_ARGS__)
 #endif
-	static inline UINT32 FreeRDPGetBitsPerPixel(UINT32 format)
+	static inline WINPR_ATTR_NODISCARD UINT32 FreeRDPGetBitsPerPixel(UINT32 format)
 	{
 		return (((format) >> 24) & 0x3F);
 	}
@@ -206,7 +206,7 @@ FREERDP_API WINPR_ATTR_NODISCARD DWORD FreeRDPAreColorFormatsEqualNoAlpha(DWORD 
 #if defined(WITH_FREERDP_DEPRECATED)
 #define ColorHasAlpha(...) FreeRDPColorHasAlpha(__VA_ARGS__)
 #endif
-	static inline BOOL FreeRDPColorHasAlpha(UINT32 format)
+	static inline WINPR_ATTR_NODISCARD BOOL FreeRDPColorHasAlpha(UINT32 format)
 	{
 		UINT32 alpha = (((format) >> 12) & 0x0F);
 
@@ -265,8 +265,9 @@ FREERDP_API WINPR_ATTR_NODISCARD DWORD FreeRDPAreColorFormatsEqualNoAlpha(DWORD 
 #if defined(WITH_FREERDP_DEPRECATED)
 #define ConvertColor(...) FreeRDPConvertColor(__VA_ARGS__)
 #endif
-	static inline UINT32 FreeRDPConvertColor(UINT32 color, UINT32 srcFormat, UINT32 dstFormat,
-	                                         const gdiPalette* palette)
+	static inline WINPR_ATTR_NODISCARD UINT32 FreeRDPConvertColor(UINT32 color, UINT32 srcFormat,
+	                                                              UINT32 dstFormat,
+	                                                              const gdiPalette* palette)
 	{
 		BYTE r = 0;
 		BYTE g = 0;
@@ -287,7 +288,7 @@ FREERDP_API WINPR_ATTR_NODISCARD DWORD FreeRDPAreColorFormatsEqualNoAlpha(DWORD 
 #if defined(WITH_FREERDP_DEPRECATED)
 #define GetBytesPerPixel(...) FreeRDPGetBytesPerPixel(__VA_ARGS__)
 #endif
-	static inline UINT32 FreeRDPGetBytesPerPixel(UINT32 format)
+	static inline WINPR_ATTR_NODISCARD UINT32 FreeRDPGetBytesPerPixel(UINT32 format)
 	{
 		return (FreeRDPGetBitsPerPixel(format) + 7) / 8;
 	}

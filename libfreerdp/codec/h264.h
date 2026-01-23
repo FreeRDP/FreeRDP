@@ -87,8 +87,8 @@ extern "C"
 		wLog* log;
 	};
 
-	FREERDP_LOCAL BOOL avc420_ensure_buffer(H264_CONTEXT* h264, UINT32 stride, UINT32 width,
-	                                        UINT32 height);
+	FREERDP_LOCAL WINPR_ATTR_NODISCARD BOOL avc420_ensure_buffer(H264_CONTEXT* h264, UINT32 stride,
+	                                                             UINT32 width, UINT32 height);
 
 #ifdef WITH_MEDIACODEC
 	extern const H264_CONTEXT_SUBSYSTEM g_Subsystem_mediacodec;

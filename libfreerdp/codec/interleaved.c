@@ -151,8 +151,9 @@ static const char* rle_code_str(UINT32 code)
 
 #define buffer_within_range(pbSrc, size, pbEnd) \
 	buffer_within_range_((pbSrc), (size), (pbEnd), __func__, __FILE__, __LINE__)
-static inline BOOL buffer_within_range_(const void* pbSrc, size_t size, const void* pbEnd,
-                                        const char* fkt, const char* file, size_t line)
+static inline WINPR_ATTR_NODISCARD BOOL buffer_within_range_(const void* pbSrc, size_t size,
+                                                             const void* pbEnd, const char* fkt,
+                                                             const char* file, size_t line)
 {
 	WINPR_UNUSED(file);
 	WINPR_ASSERT(pbSrc);
@@ -171,7 +172,7 @@ static inline BOOL buffer_within_range_(const void* pbSrc, size_t size, const vo
  * Reads the supplied order header and extracts the compression
  * order code ID.
  */
-static inline UINT32 ExtractCodeId(BYTE bOrderHdr)
+static inline WINPR_ATTR_NODISCARD UINT32 ExtractCodeId(BYTE bOrderHdr)
 {
 	if ((bOrderHdr & 0xC0U) != 0xC0U)
 	{
@@ -312,8 +313,8 @@ static UINT ExtractRunLengthLite(const BYTE* pbOrderHdr, const BYTE* pbEnd, UINT
 	return runLength;
 }
 
-static inline UINT32 ExtractRunLength(UINT32 code, const BYTE* pbOrderHdr, const BYTE* pbEnd,
-                                      UINT32* advance)
+static inline WINPR_ATTR_NODISCARD UINT32 ExtractRunLength(UINT32 code, const BYTE* pbOrderHdr,
+                                                           const BYTE* pbEnd, UINT32* advance)
 {
 	UINT32 runLength = 0;
 	UINT32 ladvance = 1;
@@ -375,9 +376,10 @@ static inline UINT32 ExtractRunLength(UINT32 code, const BYTE* pbOrderHdr, const
 
 #define ensure_capacity(start, end, size, base) \
 	ensure_capacity_((start), (end), (size), (base), __func__, __FILE__, __LINE__)
-static inline BOOL ensure_capacity_(const BYTE* start, const BYTE* end, size_t size, size_t base,
-                                    const char* fkt, WINPR_ATTR_UNUSED const char* file,
-                                    size_t line)
+static inline WINPR_ATTR_NODISCARD BOOL ensure_capacity_(const BYTE* start, const BYTE* end,
+                                                         size_t size, size_t base, const char* fkt,
+                                                         WINPR_ATTR_UNUSED const char* file,
+                                                         size_t line)
 {
 	const size_t available = (uintptr_t)end - (uintptr_t)start;
 	const BOOL rc = available >= size * base;

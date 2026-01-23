@@ -34,7 +34,7 @@ FREERDP_LOCAL WINPR_ATTR_NODISCARD gdiBitmap* gdi_bitmap_new_ex(rdpGdi* gdi, int
                                                                 int bpp, BYTE* data);
 FREERDP_LOCAL void gdi_bitmap_free_ex(gdiBitmap* gdi_bmp);
 
-static inline BYTE* gdi_get_bitmap_pointer(HGDI_DC hdcBmp, INT32 x, INT32 y)
+static inline WINPR_ATTR_NODISCARD BYTE* gdi_get_bitmap_pointer(HGDI_DC hdcBmp, INT32 x, INT32 y)
 {
 	HGDI_BITMAP hBmp = (HGDI_BITMAP)hdcBmp->selectedObject;
 
@@ -61,7 +61,7 @@ static inline BYTE* gdi_get_bitmap_pointer(HGDI_DC hdcBmp, INT32 x, INT32 y)
  * @param y dest y-coordinate
  * @return color pointer
  */
-static inline BYTE* gdi_get_brush_pointer(HGDI_DC hdcBrush, UINT32 x, UINT32 y)
+static inline WINPR_ATTR_NODISCARD BYTE* gdi_get_brush_pointer(HGDI_DC hdcBrush, UINT32 x, UINT32 y)
 {
 	BYTE* p = NULL;
 	UINT32 brushStyle = gdi_GetBrushStyle(hdcBrush);

@@ -484,13 +484,13 @@ typedef const BYTE* LPCBYTE;
 #include <stdio.h>
 
 // NOLINTNEXTLINE(bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
-static inline int _fseeki64(FILE* fp, INT64 offset, int origin)
+static inline WINPR_ATTR_NODISCARD int _fseeki64(FILE* fp, INT64 offset, int origin)
 {
 	return fseeko(fp, offset, origin);
 }
 
 // NOLINTNEXTLINE(bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
-static inline INT64 _ftelli64(FILE* fp)
+static inline WINPR_ATTR_NODISCARD INT64 _ftelli64(FILE* fp)
 {
 	return ftello(fp);
 }

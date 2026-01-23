@@ -458,12 +458,12 @@ static inline void rfx_idwt_extrapolate_vert_neon(const INT16* restrict pLowBand
 	}
 }
 
-static inline size_t prfx_get_band_l_count(size_t level)
+static inline WINPR_ATTR_NODISCARD size_t prfx_get_band_l_count(size_t level)
 {
 	return (64 >> level) + 1;
 }
 
-static inline size_t prfx_get_band_h_count(size_t level)
+static inline WINPR_ATTR_NODISCARD size_t prfx_get_band_h_count(size_t level)
 {
 	if (level == 1)
 		return (64 >> 1) - 1;

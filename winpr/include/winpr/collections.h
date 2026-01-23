@@ -849,24 +849,26 @@ extern "C"
 #define DEFINE_EVENT_HANDLER(name) \
 	typedef void (*p##name##EventHandler)(void* context, const name##EventArgs* e)
 
-#define DEFINE_EVENT_RAISE(name)                                                                \
-	static inline int PubSub_On##name(wPubSub* pubSub, void* context, const name##EventArgs* e) \
-	{                                                                                           \
-		WINPR_ASSERT(e);                                                                        \
-		return PubSub_OnEvent(pubSub, #name, context, &e->e);                                   \
+#define DEFINE_EVENT_RAISE(name)                                                           \
+	static inline WINPR_ATTR_NODISCARD int PubSub_On##name(wPubSub* pubSub, void* context, \
+	                                                       const name##EventArgs* e)       \
+	{                                                                                      \
+		WINPR_ASSERT(e);                                                                   \
+		return PubSub_OnEvent(pubSub, #name, context, &e->e);                              \
 	}
 
-#define DEFINE_EVENT_SUBSCRIBE(name)                                                              \
-	static inline int PubSub_Subscribe##name(wPubSub* pubSub, p##name##EventHandler EventHandler) \
-	{                                                                                             \
-		return PubSub_Subscribe(pubSub, #name, EventHandler);                                     \
+#define DEFINE_EVENT_SUBSCRIBE(name)                               \
+	static inline WINPR_ATTR_NODISCARD int PubSub_Subscribe##name( \
+	    wPubSub* pubSub, p##name##EventHandler EventHandler)       \
+	{                                                              \
+		return PubSub_Subscribe(pubSub, #name, EventHandler);      \
 	}
 
-#define DEFINE_EVENT_UNSUBSCRIBE(name)                                             \
-	static inline int PubSub_Unsubscribe##name(wPubSub* pubSub,                    \
-	                                           p##name##EventHandler EventHandler) \
-	{                                                                              \
-		return PubSub_Unsubscribe(pubSub, #name, EventHandler);                    \
+#define DEFINE_EVENT_UNSUBSCRIBE(name)                               \
+	static inline WINPR_ATTR_NODISCARD int PubSub_Unsubscribe##name( \
+	    wPubSub* pubSub, p##name##EventHandler EventHandler)         \
+	{                                                                \
+		return PubSub_Unsubscribe(pubSub, #name, EventHandler);      \
 	}
 
 #define DEFINE_EVENT_BEGIN(name) \

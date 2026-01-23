@@ -156,8 +156,9 @@ struct rdp_mcs
 #define MCS_TYPE_CONNECT_INITIAL 0x65
 #define MCS_TYPE_CONNECT_RESPONSE 0x66
 
-const char* mcs_domain_pdu_string(DomainMCSPDU pdu);
-BOOL mcs_server_apply_to_settings(const rdpMcs* mcs, rdpSettings* settings);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD const char* mcs_domain_pdu_string(DomainMCSPDU pdu);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD BOOL mcs_server_apply_to_settings(const rdpMcs* mcs,
+                                                                     rdpSettings* settings);
 
 FREERDP_LOCAL WINPR_ATTR_NODISCARD BOOL mcs_recv_connect_initial(rdpMcs* mcs, wStream* s);
 FREERDP_LOCAL WINPR_ATTR_NODISCARD BOOL mcs_recv_connect_response(rdpMcs* mcs, wStream* s);

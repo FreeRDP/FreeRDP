@@ -38,7 +38,7 @@ extern "C"
 	FREERDP_LOCAL WINPR_ATTR_NODISCARD HGDI_BRUSH gdi_CreatePatternBrush(HGDI_BITMAP hbmp);
 	FREERDP_LOCAL WINPR_ATTR_NODISCARD HGDI_BRUSH gdi_CreateHatchBrush(HGDI_BITMAP hbmp);
 
-	static inline UINT32 gdi_GetBrushStyle(HGDI_DC hdc)
+	static inline WINPR_ATTR_NODISCARD UINT32 gdi_GetBrushStyle(HGDI_DC hdc)
 	{
 		if (!hdc || !hdc->brush)
 			return GDI_BS_NULL;

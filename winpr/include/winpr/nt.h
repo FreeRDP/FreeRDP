@@ -1263,7 +1263,7 @@
 
 /* defined in ntstatus.h */
 #if !defined(NTSTATUS_FROM_WIN32) && !defined(inline_NTSTATUS_FROM_WIN32)
-static inline NTSTATUS NTSTATUS_FROM_WIN32(long x)
+static inline WINPR_ATTR_NODISCARD NTSTATUS NTSTATUS_FROM_WIN32(long x)
 {
 	return x <= 0 ? STATUS_CAST(NTSTATUS, x)
 	              : STATUS_CAST(NTSTATUS, ((x)&0x0000FFFF) | (0x7 << 16) | 0xC0000000);

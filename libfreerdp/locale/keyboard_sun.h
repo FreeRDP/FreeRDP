@@ -22,6 +22,6 @@
 
 #include <freerdp/api.h>
 
-FREERDP_LOCAL DWORD freerdp_detect_solaris_keyboard_layout();
+FREERDP_LOCAL WINPR_ATTR_NODISCARD DWORD freerdp_detect_solaris_keyboard_layout();
 
 #endif /* FREERDP_LOCALE_KEYBOARD_SUN_H */

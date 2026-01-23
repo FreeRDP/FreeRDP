@@ -35,7 +35,8 @@
 
 static primitives_t* generic = NULL;
 
-static inline uint8x8_t neon_YUV2R_single(uint16x8_t C, int16x8_t D, int16x8_t E)
+static inline WINPR_ATTR_NODISCARD uint8x8_t neon_YUV2R_single(uint16x8_t C, int16x8_t D,
+                                                               int16x8_t E)
 {
 	/* R = (256 * Y + 403 * (V - 128)) >> 8 */
 	const int32x4_t Ch = vreinterpretq_s32_u32(vmovl_u16(vget_high_u16(C)));
@@ -51,14 +52,16 @@ static inline uint8x8_t neon_YUV2R_single(uint16x8_t C, int16x8_t D, int16x8_t E
 	return vqmovun_s16(ce);
 }
 
-static inline uint8x8x2_t neon_YUV2R(uint16x8x2_t C, int16x8x2_t D, int16x8x2_t E)
+static inline WINPR_ATTR_NODISCARD uint8x8x2_t neon_YUV2R(uint16x8x2_t C, int16x8x2_t D,
+                                                          int16x8x2_t E)
 {
 	uint8x8x2_t res = { { neon_YUV2R_single(C.val[0], D.val[0], E.val[0]),
 		                  neon_YUV2R_single(C.val[1], D.val[1], E.val[1]) } };
 	return res;
 }
 
-static inline uint8x8_t neon_YUV2G_single(uint16x8_t C, int16x8_t D, int16x8_t E)
+static inline WINPR_ATTR_NODISCARD uint8x8_t neon_YUV2G_single(uint16x8_t C, int16x8_t D,
+                                                               int16x8_t E)
 {
 	/* G = (256L * Y -  48 * (U - 128) - 120 * (V - 128)) >> 8 */
 	const int16x8_t d48 = vmulq_n_s16(D, 48);
@@ -78,14 +81,16 @@ static inline uint8x8_t neon_YUV2G_single(uint16x8_t C, int16x8_t D, int16x8_t E
 	return vqmovun_s16(cde);
 }
 
-static inline uint8x8x2_t neon_YUV2G(uint16x8x2_t C, int16x8x2_t D, int16x8x2_t E)
+static inline WINPR_ATTR_NODISCARD uint8x8x2_t neon_YUV2G(uint16x8x2_t C, int16x8x2_t D,
+                                                          int16x8x2_t E)
 {
 	uint8x8x2_t res = { { neon_YUV2G_single(C.val[0], D.val[0], E.val[0]),
 		                  neon_YUV2G_single(C.val[1], D.val[1], E.val[1]) } };
 	return res;
 }
 
-static inline uint8x8_t neon_YUV2B_single(uint16x8_t C, int16x8_t D, int16x8_t E)
+static inline WINPR_ATTR_NODISCARD uint8x8_t neon_YUV2B_single(uint16x8_t C, int16x8_t D,
+                                                               int16x8_t E)
 {
 	/* B = (256L * Y + 475 * (U - 128)) >> 8*/
 	const int32x4_t Ch = vreinterpretq_s32_u32(vmovl_u16(vget_high_u16(C)));
@@ -101,15 +106,17 @@ static inline uint8x8_t neon_YUV2B_single(uint16x8_t C, int16x8_t D, int16x8_t E
 	return vqmovun_s16(cd);
 }
 
-static inline uint8x8x2_t neon_YUV2B(uint16x8x2_t C, int16x8x2_t D, int16x8x2_t E)
+static inline WINPR_ATTR_NODISCARD uint8x8x2_t neon_YUV2B(uint16x8x2_t C, int16x8x2_t D,
+                                                          int16x8x2_t E)
 {
 	uint8x8x2_t res = { { neon_YUV2B_single(C.val[0], D.val[0], E.val[0]),
 		                  neon_YUV2B_single(C.val[1], D.val[1], E.val[1]) } };
 	return res;
 }
 
-static inline void neon_store_bgrx(BYTE* WINPR_RESTRICT pRGB, uint8x8_t r, uint8x8_t g, uint8x8_t b,
-                                   uint8_t rPos, uint8_t gPos, uint8_t bPos, uint8_t aPos)
+static inline WINPR_ATTR_NODISCARD void neon_store_bgrx(BYTE* WINPR_RESTRICT pRGB, uint8x8_t r,
+                                                        uint8x8_t g, uint8x8_t b, uint8_t rPos,
+                                                        uint8_t gPos, uint8_t bPos, uint8_t aPos)
 {
 	uint8x8x4_t bgrx = vld4_u8(pRGB);
 	bgrx.val[rPos] = r;
@@ -118,9 +125,10 @@ static inline void neon_store_bgrx(BYTE* WINPR_RESTRICT pRGB, uint8x8_t r, uint8
 	vst4_u8(pRGB, bgrx);
 }
 
-static inline void neon_YuvToRgbPixel(BYTE* pRGB, uint8x8x2_t Y, int16x8x2_t D, int16x8x2_t E,
-                                      const uint8_t rPos, const uint8_t gPos, const uint8_t bPos,
-                                      const uint8_t aPos)
+static inline WINPR_ATTR_NODISCARD void neon_YuvToRgbPixel(BYTE* pRGB, uint8x8x2_t Y, int16x8x2_t D,
+                                                           int16x8x2_t E, const uint8_t rPos,
+                                                           const uint8_t gPos, const uint8_t bPos,
+                                                           const uint8_t aPos)
 {
 	/* Y * 256 == Y << 8  */
 	const uint16x8x2_t C = { { vshlq_n_u16(vmovl_u8(Y.val[0]), 8),
@@ -135,7 +143,7 @@ static inline void neon_YuvToRgbPixel(BYTE* pRGB, uint8x8x2_t Y, int16x8x2_t D, 
 	                aPos);
 }
 
-static inline int16x8x2_t loadUV(const BYTE* WINPR_RESTRICT pV, size_t x)
+static inline WINPR_ATTR_NODISCARD int16x8x2_t loadUV(const BYTE* WINPR_RESTRICT pV, size_t x)
 {
 	const uint8x8_t Vraw = vld1_u8(&pV[x / 2]);
 	const int16x8_t V = vreinterpretq_s16_u16(vmovl_u8(Vraw));
@@ -234,10 +242,10 @@ static inline void neon_YUV420ToX_SINGLE_ROW(const BYTE* WINPR_RESTRICT pY,
 	}
 }
 
-static inline pstatus_t neon_YUV420ToX(const BYTE* WINPR_RESTRICT pSrc[3], const UINT32 srcStep[3],
-                                       BYTE* WINPR_RESTRICT pDst, UINT32 dstStep,
-                                       const prim_size_t* WINPR_RESTRICT roi, const uint8_t rPos,
-                                       const uint8_t gPos, const uint8_t bPos, const uint8_t aPos)
+static inline WINPR_ATTR_NODISCARD pstatus_t
+neon_YUV420ToX(const BYTE* WINPR_RESTRICT pSrc[3], const UINT32 srcStep[3],
+               BYTE* WINPR_RESTRICT pDst, UINT32 dstStep, const prim_size_t* WINPR_RESTRICT roi,
+               const uint8_t rPos, const uint8_t gPos, const uint8_t bPos, const uint8_t aPos)
 {
 	const UINT32 nWidth = roi->width;
 	const UINT32 nHeight = roi->height;
@@ -293,7 +301,7 @@ static pstatus_t neon_YUV420ToRGB_8u_P3AC4R(const BYTE* WINPR_RESTRICT pSrc[3],
 	}
 }
 
-static inline int16x8_t loadUVreg(uint8x8_t Vraw)
+static inline WINPR_ATTR_NODISCARD int16x8_t loadUVreg(uint8x8_t Vraw)
 {
 	const int16x8_t V = vreinterpretq_s16_u16(vmovl_u8(Vraw));
 	const int16x8_t c128 = vdupq_n_s16(128);
@@ -301,7 +309,7 @@ static inline int16x8_t loadUVreg(uint8x8_t Vraw)
 	return E;
 }
 
-static inline int16x8x2_t loadUV444(uint8x16_t Vld)
+static inline WINPR_ATTR_NODISCARD int16x8x2_t loadUV444(uint8x16_t Vld)
 {
 	const uint8x8x2_t V = { { vget_low_u8(Vld), vget_high_u8(Vld) } };
 	const int16x8x2_t res = { {
@@ -368,12 +376,10 @@ static inline void neon_avgUV(uint8x16_t pU[2])
 	pU[0] = u;
 }
 
-static inline pstatus_t neon_YUV444ToX_SINGLE_ROW(const BYTE* WINPR_RESTRICT pY,
-                                                  const BYTE* WINPR_RESTRICT pU,
-                                                  const BYTE* WINPR_RESTRICT pV,
-                                                  BYTE* WINPR_RESTRICT pRGB, size_t width,
-                                                  const uint8_t rPos, const uint8_t gPos,
-                                                  const uint8_t bPos, const uint8_t aPos)
+static inline WINPR_ATTR_NODISCARD pstatus_t neon_YUV444ToX_SINGLE_ROW(
+    const BYTE* WINPR_RESTRICT pY, const BYTE* WINPR_RESTRICT pU, const BYTE* WINPR_RESTRICT pV,
+    BYTE* WINPR_RESTRICT pRGB, size_t width, const uint8_t rPos, const uint8_t gPos,
+    const uint8_t bPos, const uint8_t aPos)
 {
 	WINPR_ASSERT(width % 2 == 0);
 
@@ -407,12 +413,10 @@ static inline pstatus_t neon_YUV444ToX_SINGLE_ROW(const BYTE* WINPR_RESTRICT pY,
 	return PRIMITIVES_SUCCESS;
 }
 
-static inline pstatus_t neon_YUV444ToX_DOUBLE_ROW(const BYTE* WINPR_RESTRICT pY[2],
-                                                  const BYTE* WINPR_RESTRICT pU[2],
-                                                  const BYTE* WINPR_RESTRICT pV[2],
-                                                  BYTE* WINPR_RESTRICT pRGB[2], size_t width,
-                                                  const uint8_t rPos, const uint8_t gPos,
-                                                  const uint8_t bPos, const uint8_t aPos)
+static inline WINPR_ATTR_NODISCARD pstatus_t neon_YUV444ToX_DOUBLE_ROW(
+    const BYTE* WINPR_RESTRICT pY[2], const BYTE* WINPR_RESTRICT pU[2],
+    const BYTE* WINPR_RESTRICT pV[2], BYTE* WINPR_RESTRICT pRGB[2], size_t width,
+    const uint8_t rPos, const uint8_t gPos, const uint8_t bPos, const uint8_t aPos)
 {
 	WINPR_ASSERT(width % 2 == 0);
 
@@ -464,10 +468,10 @@ static inline pstatus_t neon_YUV444ToX_DOUBLE_ROW(const BYTE* WINPR_RESTRICT pY[
 	return PRIMITIVES_SUCCESS;
 }
 
-static inline pstatus_t neon_YUV444ToX(const BYTE* WINPR_RESTRICT pSrc[3], const UINT32 srcStep[3],
-                                       BYTE* WINPR_RESTRICT pDst, UINT32 dstStep,
-                                       const prim_size_t* WINPR_RESTRICT roi, const uint8_t rPos,
-                                       const uint8_t gPos, const uint8_t bPos, const uint8_t aPos)
+static inline WINPR_ATTR_NODISCARD pstatus_t
+neon_YUV444ToX(const BYTE* WINPR_RESTRICT pSrc[3], const UINT32 srcStep[3],
+               BYTE* WINPR_RESTRICT pDst, UINT32 dstStep, const prim_size_t* WINPR_RESTRICT roi,
+               const uint8_t rPos, const uint8_t gPos, const uint8_t bPos, const uint8_t aPos)
 {
 	WINPR_ASSERT(roi);
 	const UINT32 nWidth = roi->width;

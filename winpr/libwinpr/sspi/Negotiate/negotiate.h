@@ -47,7 +47,7 @@ typedef struct
 	BOOL spnego;
 } NEGOTIATE_CONTEXT;
 
-static inline NEGOTIATE_CONTEXT NEGOTIATE_CONTEXT_init(void)
+static inline WINPR_ATTR_NODISCARD NEGOTIATE_CONTEXT NEGOTIATE_CONTEXT_init(void)
 {
 	const NEGOTIATE_CONTEXT empty = { .state = NEGOTIATE_STATE_INITIAL,
 		                              .sub_context = { 0 },

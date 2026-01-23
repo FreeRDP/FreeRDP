@@ -40,8 +40,9 @@
 #include <winpr/crt.h>
 #include <winpr/sysinfo.h>
 
-static inline size_t nsc_encode_next_bgrx32(const BYTE* src, __m128i* r_val, __m128i* g_val,
-                                            __m128i* b_val, __m128i* a_val)
+static inline WINPR_ATTR_NODISCARD size_t nsc_encode_next_bgrx32(const BYTE* src, __m128i* r_val,
+                                                                 __m128i* g_val, __m128i* b_val,
+                                                                 __m128i* a_val)
 {
 	*b_val = _mm_set_epi16(*(src + 28), *(src + 24), *(src + 20), *(src + 16), *(src + 12),
 	                       *(src + 8), *(src + 4), *src);
@@ -53,8 +54,9 @@ static inline size_t nsc_encode_next_bgrx32(const BYTE* src, __m128i* r_val, __m
 	return 32;
 }
 
-static inline size_t nsc_encode_next_bgra32(const BYTE* src, __m128i* r_val, __m128i* g_val,
-                                            __m128i* b_val, __m128i* a_val)
+static inline WINPR_ATTR_NODISCARD size_t nsc_encode_next_bgra32(const BYTE* src, __m128i* r_val,
+                                                                 __m128i* g_val, __m128i* b_val,
+                                                                 __m128i* a_val)
 {
 	*b_val = _mm_set_epi16(*(src + 28), *(src + 24), *(src + 20), *(src + 16), *(src + 12),
 	                       *(src + 8), *(src + 4), *src);
@@ -67,8 +69,9 @@ static inline size_t nsc_encode_next_bgra32(const BYTE* src, __m128i* r_val, __m
 	return 32;
 }
 
-static inline size_t nsc_encode_next_rgbx32(const BYTE* src, __m128i* r_val, __m128i* g_val,
-                                            __m128i* b_val, __m128i* a_val)
+static inline WINPR_ATTR_NODISCARD size_t nsc_encode_next_rgbx32(const BYTE* src, __m128i* r_val,
+                                                                 __m128i* g_val, __m128i* b_val,
+                                                                 __m128i* a_val)
 {
 	*r_val = _mm_set_epi16(*(src + 28), *(src + 24), *(src + 20), *(src + 16), *(src + 12),
 	                       *(src + 8), *(src + 4), *src);
@@ -80,8 +83,9 @@ static inline size_t nsc_encode_next_rgbx32(const BYTE* src, __m128i* r_val, __m
 	return 32;
 }
 
-static inline size_t nsc_encode_next_rgba32(const BYTE* src, __m128i* r_val, __m128i* g_val,
-                                            __m128i* b_val, __m128i* a_val)
+static inline WINPR_ATTR_NODISCARD size_t nsc_encode_next_rgba32(const BYTE* src, __m128i* r_val,
+                                                                 __m128i* g_val, __m128i* b_val,
+                                                                 __m128i* a_val)
 {
 	*r_val = _mm_set_epi16(*(src + 28), *(src + 24), *(src + 20), *(src + 16), *(src + 12),
 	                       *(src + 8), *(src + 4), *src);
@@ -94,8 +98,9 @@ static inline size_t nsc_encode_next_rgba32(const BYTE* src, __m128i* r_val, __m
 	return 32;
 }
 
-static inline size_t nsc_encode_next_bgr24(const BYTE* src, __m128i* r_val, __m128i* g_val,
-                                           __m128i* b_val, __m128i* a_val)
+static inline WINPR_ATTR_NODISCARD size_t nsc_encode_next_bgr24(const BYTE* src, __m128i* r_val,
+                                                                __m128i* g_val, __m128i* b_val,
+                                                                __m128i* a_val)
 {
 	*b_val = _mm_set_epi16(*(src + 21), *(src + 18), *(src + 15), *(src + 12), *(src + 9),
 	                       *(src + 6), *(src + 3), *src);
@@ -107,8 +112,9 @@ static inline size_t nsc_encode_next_bgr24(const BYTE* src, __m128i* r_val, __m1
 	return 24;
 }
 
-static inline size_t nsc_encode_next_rgb24(const BYTE* src, __m128i* r_val, __m128i* g_val,
-                                           __m128i* b_val, __m128i* a_val)
+static inline WINPR_ATTR_NODISCARD size_t nsc_encode_next_rgb24(const BYTE* src, __m128i* r_val,
+                                                                __m128i* g_val, __m128i* b_val,
+                                                                __m128i* a_val)
 {
 	*r_val = _mm_set_epi16(*(src + 21), *(src + 18), *(src + 15), *(src + 12), *(src + 9),
 	                       *(src + 6), *(src + 3), *src);
@@ -120,8 +126,9 @@ static inline size_t nsc_encode_next_rgb24(const BYTE* src, __m128i* r_val, __m1
 	return 24;
 }
 
-static inline size_t nsc_encode_next_bgr16(const BYTE* src, __m128i* r_val, __m128i* g_val,
-                                           __m128i* b_val, __m128i* a_val)
+static inline WINPR_ATTR_NODISCARD size_t nsc_encode_next_bgr16(const BYTE* src, __m128i* r_val,
+                                                                __m128i* g_val, __m128i* b_val,
+                                                                __m128i* a_val)
 {
 	*b_val = _mm_set_epi16(
 	    WINPR_ASSERTING_INT_CAST(INT16, ((*(src + 15)) & 0xF8) | ((*(src + 15)) >> 5)),
@@ -168,8 +175,9 @@ static inline size_t nsc_encode_next_bgr16(const BYTE* src, __m128i* r_val, __m1
 	return 16;
 }
 
-static inline size_t nsc_encode_next_rgb16(const BYTE* src, __m128i* r_val, __m128i* g_val,
-                                           __m128i* b_val, __m128i* a_val)
+static inline WINPR_ATTR_NODISCARD size_t nsc_encode_next_rgb16(const BYTE* src, __m128i* r_val,
+                                                                __m128i* g_val, __m128i* b_val,
+                                                                __m128i* a_val)
 {
 	*r_val = _mm_set_epi16(WINPR_ASSERTING_INT_CAST(INT16, ((src[15] & 0xF8) | (src[15] >> 5))),
 	                       WINPR_ASSERTING_INT_CAST(INT16, ((src[13] & 0xF8) | (src[13] >> 5))),
@@ -215,8 +223,9 @@ static inline size_t nsc_encode_next_rgb16(const BYTE* src, __m128i* r_val, __m1
 	return 16;
 }
 
-static inline size_t nsc_encode_next_a4(const BYTE* src, const BYTE* palette, __m128i* r_val,
-                                        __m128i* g_val, __m128i* b_val, __m128i* a_val)
+static inline WINPR_ATTR_NODISCARD size_t nsc_encode_next_a4(const BYTE* src, const BYTE* palette,
+                                                             __m128i* r_val, __m128i* g_val,
+                                                             __m128i* b_val, __m128i* a_val)
 {
 	BYTE idx[8] = { 0 };
 
@@ -241,8 +250,9 @@ static inline size_t nsc_encode_next_a4(const BYTE* src, const BYTE* palette, __
 	return 4;
 }
 
-static inline size_t nsc_encode_next_rgb8(const BYTE* src, const BYTE* palette, __m128i* r_val,
-                                          __m128i* g_val, __m128i* b_val, __m128i* a_val)
+static inline WINPR_ATTR_NODISCARD size_t nsc_encode_next_rgb8(const BYTE* src, const BYTE* palette,
+                                                               __m128i* r_val, __m128i* g_val,
+                                                               __m128i* b_val, __m128i* a_val)
 {
 	*r_val = _mm_set_epi16(palette[(*(src + 7ULL)) * 3ULL], palette[(*(src + 6ULL)) * 3ULL],
 	                       palette[(*(src + 5ULL)) * 3ULL], palette[(*(src + 4ULL)) * 3ULL],
@@ -262,9 +272,10 @@ static inline size_t nsc_encode_next_rgb8(const BYTE* src, const BYTE* palette, 
 	return 8;
 }
 
-static inline size_t nsc_encode_next_rgba(UINT32 format, const BYTE* src, const BYTE* palette,
-                                          __m128i* r_val, __m128i* g_val, __m128i* b_val,
-                                          __m128i* a_val)
+static inline WINPR_ATTR_NODISCARD size_t nsc_encode_next_rgba(UINT32 format, const BYTE* src,
+                                                               const BYTE* palette, __m128i* r_val,
+                                                               __m128i* g_val, __m128i* b_val,
+                                                               __m128i* a_val)
 {
 	switch (format)
 	{

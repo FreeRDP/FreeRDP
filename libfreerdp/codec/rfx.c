@@ -69,9 +69,9 @@
  */
 static const UINT32 rfx_default_quantization_values[] = { 6, 6, 6, 6, 7, 7, 8, 8, 8, 9 };
 
-static inline BOOL rfx_write_progressive_tile_simple(RFX_CONTEXT* WINPR_RESTRICT rfx,
-                                                     wStream* WINPR_RESTRICT s,
-                                                     const RFX_TILE* WINPR_RESTRICT tile);
+static inline WINPR_ATTR_NODISCARD BOOL
+rfx_write_progressive_tile_simple(RFX_CONTEXT* WINPR_RESTRICT rfx, wStream* WINPR_RESTRICT s,
+                                  const RFX_TILE* WINPR_RESTRICT tile);
 
 static inline void rfx_profiler_create(RFX_CONTEXT* WINPR_RESTRICT context)
 {
@@ -155,7 +155,7 @@ static inline void rfx_tile_init(void* obj)
 	}
 }
 
-static inline void* rfx_decoder_tile_new(const void* val)
+static inline WINPR_ATTR_NODISCARD void* rfx_decoder_tile_new(const void* val)
 {
 	const size_t size = 4ULL * 64ULL * 64ULL;
 	RFX_TILE* tile = NULL;
@@ -187,7 +187,7 @@ static inline void rfx_decoder_tile_free(void* obj)
 	}
 }
 
-static inline void* rfx_encoder_tile_new(const void* val)
+static inline WINPR_ATTR_NODISCARD void* rfx_encoder_tile_new(const void* val)
 {
 	WINPR_UNUSED(val);
 	return winpr_aligned_calloc(1, sizeof(RFX_TILE), 32);
@@ -358,7 +358,8 @@ void rfx_context_free(RFX_CONTEXT* context)
 	winpr_aligned_free(context);
 }
 
-static inline RFX_TILE* rfx_message_get_tile(RFX_MESSAGE* WINPR_RESTRICT message, UINT32 index)
+static inline WINPR_ATTR_NODISCARD RFX_TILE*
+rfx_message_get_tile(RFX_MESSAGE* WINPR_RESTRICT message, UINT32 index)
 {
 	WINPR_ASSERT(message);
 	WINPR_ASSERT(message->tiles);
@@ -366,8 +367,8 @@ static inline RFX_TILE* rfx_message_get_tile(RFX_MESSAGE* WINPR_RESTRICT message
 	return message->tiles[index];
 }
 
-static inline const RFX_RECT* rfx_message_get_rect_const(const RFX_MESSAGE* WINPR_RESTRICT message,
-                                                         UINT32 index)
+static inline WINPR_ATTR_NODISCARD const RFX_RECT*
+rfx_message_get_rect_const(const RFX_MESSAGE* WINPR_RESTRICT message, UINT32 index)
 {
 	WINPR_ASSERT(message);
 	WINPR_ASSERT(message->rects);
@@ -375,7 +376,8 @@ static inline const RFX_RECT* rfx_message_get_rect_const(const RFX_MESSAGE* WINP
 	return &message->rects[index];
 }
 
-static inline RFX_RECT* rfx_message_get_rect(RFX_MESSAGE* WINPR_RESTRICT message, UINT32 index)
+static inline WINPR_ATTR_NODISCARD RFX_RECT*
+rfx_message_get_rect(RFX_MESSAGE* WINPR_RESTRICT message, UINT32 index)
 {
 	WINPR_ASSERT(message);
 	WINPR_ASSERT(message->rects);
@@ -423,8 +425,8 @@ BOOL rfx_context_reset(RFX_CONTEXT* WINPR_RESTRICT context, UINT32 width, UINT32
 	return TRUE;
 }
 
-static inline BOOL rfx_process_message_sync(RFX_CONTEXT* WINPR_RESTRICT context,
-                                            wStream* WINPR_RESTRICT s)
+static inline WINPR_ATTR_NODISCARD BOOL
+rfx_process_message_sync(RFX_CONTEXT* WINPR_RESTRICT context, wStream* WINPR_RESTRICT s)
 {
 	UINT32 magic = 0;
 
@@ -456,8 +458,8 @@ static inline BOOL rfx_process_message_sync(RFX_CONTEXT* WINPR_RESTRICT context,
 	return TRUE;
 }
 
-static inline BOOL rfx_process_message_codec_versions(RFX_CONTEXT* WINPR_RESTRICT context,
-                                                      wStream* WINPR_RESTRICT s)
+static inline WINPR_ATTR_NODISCARD BOOL
+rfx_process_message_codec_versions(RFX_CONTEXT* WINPR_RESTRICT context, wStream* WINPR_RESTRICT s)
 {
 	BYTE numCodecs = 0;
 
@@ -500,8 +502,8 @@ static inline BOOL rfx_process_message_codec_versions(RFX_CONTEXT* WINPR_RESTRIC
 	return TRUE;
 }
 
-static inline BOOL rfx_process_message_channels(RFX_CONTEXT* WINPR_RESTRICT context,
-                                                wStream* WINPR_RESTRICT s)
+static inline WINPR_ATTR_NODISCARD BOOL
+rfx_process_message_channels(RFX_CONTEXT* WINPR_RESTRICT context, wStream* WINPR_RESTRICT s)
 {
 	BYTE channelId = 0;
 	BYTE numChannels = 0;
@@ -557,8 +559,8 @@ static inline BOOL rfx_process_message_channels(RFX_CONTEXT* WINPR_RESTRICT cont
 	return TRUE;
 }
 
-static inline BOOL rfx_process_message_context(RFX_CONTEXT* WINPR_RESTRICT context,
-                                               wStream* WINPR_RESTRICT s)
+static inline WINPR_ATTR_NODISCARD BOOL
+rfx_process_message_context(RFX_CONTEXT* WINPR_RESTRICT context, wStream* WINPR_RESTRICT s)
 {
 	BYTE ctxId = 0;
 	UINT16 tileSize = 0;
@@ -610,7 +612,7 @@ static inline BOOL rfx_process_message_context(RFX_CONTEXT* WINPR_RESTRICT conte
 	return TRUE;
 }
 
-static inline BOOL rfx_process_message_frame_begin(
+static inline WINPR_ATTR_NODISCARD BOOL rfx_process_message_frame_begin(
     RFX_CONTEXT* WINPR_RESTRICT context, WINPR_ATTR_UNUSED RFX_MESSAGE* WINPR_RESTRICT message,
     wStream* WINPR_RESTRICT s, UINT16* WINPR_RESTRICT pExpectedBlockType)
 {
@@ -642,7 +644,7 @@ static inline BOOL rfx_process_message_frame_begin(
 	return TRUE;
 }
 
-static inline BOOL rfx_process_message_frame_end(
+static inline WINPR_ATTR_NODISCARD BOOL rfx_process_message_frame_end(
     RFX_CONTEXT* WINPR_RESTRICT context, WINPR_ATTR_UNUSED RFX_MESSAGE* WINPR_RESTRICT message,
     WINPR_ATTR_UNUSED wStream* WINPR_RESTRICT s, UINT16* WINPR_RESTRICT pExpectedBlockType)
 {
@@ -663,7 +665,7 @@ static inline BOOL rfx_process_message_frame_end(
 	return TRUE;
 }
 
-static inline BOOL rfx_resize_rects(RFX_MESSAGE* WINPR_RESTRICT message)
+static inline WINPR_ATTR_NODISCARD BOOL rfx_resize_rects(RFX_MESSAGE* WINPR_RESTRICT message)
 {
 	WINPR_ASSERT(message);
 
@@ -675,10 +677,9 @@ static inline BOOL rfx_resize_rects(RFX_MESSAGE* WINPR_RESTRICT message)
 	return TRUE;
 }
 
-static inline BOOL rfx_process_message_region(RFX_CONTEXT* WINPR_RESTRICT context,
-                                              RFX_MESSAGE* WINPR_RESTRICT message,
-                                              wStream* WINPR_RESTRICT s,
-                                              UINT16* WINPR_RESTRICT pExpectedBlockType)
+static inline WINPR_ATTR_NODISCARD BOOL
+rfx_process_message_region(RFX_CONTEXT* WINPR_RESTRICT context, RFX_MESSAGE* WINPR_RESTRICT message,
+                           wStream* WINPR_RESTRICT s, UINT16* WINPR_RESTRICT pExpectedBlockType)
 {
 	UINT16 regionType = 0;
 	UINT16 numTileSets = 0;
@@ -779,8 +780,8 @@ rfx_process_message_tile_work_callback(WINPR_ATTR_UNUSED PTP_CALLBACK_INSTANCE i
 	rfx_decode_rgb(param->context, param->tile, param->tile->data, 64 * 4);
 }
 
-static inline BOOL rfx_allocate_tiles(RFX_MESSAGE* WINPR_RESTRICT message, size_t count,
-                                      BOOL allocOnly)
+static inline WINPR_ATTR_NODISCARD BOOL rfx_allocate_tiles(RFX_MESSAGE* WINPR_RESTRICT message,
+                                                           size_t count, BOOL allocOnly)
 {
 	WINPR_ASSERT(message);
 
@@ -801,10 +802,9 @@ static inline BOOL rfx_allocate_tiles(RFX_MESSAGE* WINPR_RESTRICT message, size_
 	return TRUE;
 }
 
-static inline BOOL rfx_process_message_tileset(RFX_CONTEXT* WINPR_RESTRICT context,
-                                               RFX_MESSAGE* WINPR_RESTRICT message,
-                                               wStream* WINPR_RESTRICT s,
-                                               UINT16* WINPR_RESTRICT pExpectedBlockType)
+static inline WINPR_ATTR_NODISCARD BOOL rfx_process_message_tileset(
+    RFX_CONTEXT* WINPR_RESTRICT context, RFX_MESSAGE* WINPR_RESTRICT message,
+    wStream* WINPR_RESTRICT s, UINT16* WINPR_RESTRICT pExpectedBlockType)
 {
 	BOOL rc = 0;
 	size_t close_cnt = 0;
@@ -1504,8 +1504,8 @@ static inline void rfx_write_message_context(RFX_CONTEXT* WINPR_RESTRICT context
 	rfx_update_context_properties(context);
 }
 
-static inline BOOL rfx_compose_message_header(RFX_CONTEXT* WINPR_RESTRICT context,
-                                              wStream* WINPR_RESTRICT s)
+static inline WINPR_ATTR_NODISCARD BOOL
+rfx_compose_message_header(RFX_CONTEXT* WINPR_RESTRICT context, wStream* WINPR_RESTRICT s)
 {
 	WINPR_ASSERT(context);
 	if (!Stream_EnsureRemainingCapacity(s, 12 + 10 + 12 + 13))
@@ -1518,13 +1518,14 @@ static inline BOOL rfx_compose_message_header(RFX_CONTEXT* WINPR_RESTRICT contex
 	return TRUE;
 }
 
-static inline size_t rfx_tile_length(const RFX_TILE* WINPR_RESTRICT tile)
+static inline WINPR_ATTR_NODISCARD size_t rfx_tile_length(const RFX_TILE* WINPR_RESTRICT tile)
 {
 	WINPR_ASSERT(tile);
 	return 19ull + tile->YLen + tile->CbLen + tile->CrLen;
 }
 
-static inline BOOL rfx_write_tile(wStream* WINPR_RESTRICT s, const RFX_TILE* WINPR_RESTRICT tile)
+static inline WINPR_ATTR_NODISCARD BOOL rfx_write_tile(wStream* WINPR_RESTRICT s,
+                                                       const RFX_TILE* WINPR_RESTRICT tile)
 {
 	const size_t blockLen = rfx_tile_length(tile);
 	if (blockLen > UINT32_MAX)
@@ -1563,8 +1564,10 @@ rfx_compose_message_tile_work_callback(WINPR_ATTR_UNUSED PTP_CALLBACK_INSTANCE i
 	rfx_encode_rgb(param->context, param->tile);
 }
 
-static inline BOOL computeRegion(const RFX_RECT* WINPR_RESTRICT rects, size_t numRects,
-                                 REGION16* WINPR_RESTRICT region, size_t width, size_t height)
+static inline WINPR_ATTR_NODISCARD BOOL computeRegion(const RFX_RECT* WINPR_RESTRICT rects,
+                                                      size_t numRects,
+                                                      REGION16* WINPR_RESTRICT region, size_t width,
+                                                      size_t height)
 {
 	const RECTANGLE_16 mainRect = { 0, 0, WINPR_ASSERTING_INT_CAST(UINT16, width),
 		                            WINPR_ASSERTING_INT_CAST(UINT16, height) };
@@ -1588,7 +1591,8 @@ static inline BOOL computeRegion(const RFX_RECT* WINPR_RESTRICT rects, size_t nu
 
 #define TILE_NO(v) ((v) / 64)
 
-static inline BOOL setupWorkers(RFX_CONTEXT* WINPR_RESTRICT context, size_t nbTiles)
+static inline WINPR_ATTR_NODISCARD BOOL setupWorkers(RFX_CONTEXT* WINPR_RESTRICT context,
+                                                     size_t nbTiles)
 {
 	WINPR_ASSERT(context);
 
@@ -1613,7 +1617,8 @@ static inline BOOL setupWorkers(RFX_CONTEXT* WINPR_RESTRICT context, size_t nbTi
 	return TRUE;
 }
 
-static inline BOOL rfx_ensure_tiles(RFX_MESSAGE* WINPR_RESTRICT message, size_t count)
+static inline WINPR_ATTR_NODISCARD BOOL rfx_ensure_tiles(RFX_MESSAGE* WINPR_RESTRICT message,
+                                                         size_t count)
 {
 	WINPR_ASSERT(message);
 
@@ -1869,8 +1874,8 @@ skip_encoding_loop:
 	return NULL;
 }
 
-static inline BOOL rfx_clone_rects(RFX_MESSAGE* WINPR_RESTRICT dst,
-                                   const RFX_MESSAGE* WINPR_RESTRICT src)
+static inline WINPR_ATTR_NODISCARD BOOL rfx_clone_rects(RFX_MESSAGE* WINPR_RESTRICT dst,
+                                                        const RFX_MESSAGE* WINPR_RESTRICT src)
 {
 	WINPR_ASSERT(dst);
 	WINPR_ASSERT(src);
@@ -1892,8 +1897,8 @@ static inline BOOL rfx_clone_rects(RFX_MESSAGE* WINPR_RESTRICT dst,
 	return TRUE;
 }
 
-static inline BOOL rfx_clone_quants(RFX_MESSAGE* WINPR_RESTRICT dst,
-                                    const RFX_MESSAGE* WINPR_RESTRICT src)
+static inline WINPR_ATTR_NODISCARD BOOL rfx_clone_quants(RFX_MESSAGE* WINPR_RESTRICT dst,
+                                                         const RFX_MESSAGE* WINPR_RESTRICT src)
 {
 	WINPR_ASSERT(dst);
 	WINPR_ASSERT(src);
@@ -1911,9 +1916,9 @@ static inline BOOL rfx_clone_quants(RFX_MESSAGE* WINPR_RESTRICT dst,
 	return TRUE;
 }
 
-static inline RFX_MESSAGE* rfx_split_message(RFX_CONTEXT* WINPR_RESTRICT context,
-                                             RFX_MESSAGE* WINPR_RESTRICT message,
-                                             size_t* WINPR_RESTRICT numMessages, size_t maxDataSize)
+static inline WINPR_ATTR_NODISCARD RFX_MESSAGE*
+rfx_split_message(RFX_CONTEXT* WINPR_RESTRICT context, RFX_MESSAGE* WINPR_RESTRICT message,
+                  size_t* WINPR_RESTRICT numMessages, size_t maxDataSize)
 {
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(message);
@@ -1991,9 +1996,9 @@ void rfx_message_list_free(RFX_MESSAGE_LIST* messages)
 	free(messages);
 }
 
-static inline RFX_MESSAGE_LIST* rfx_message_list_new(RFX_CONTEXT* WINPR_RESTRICT context,
-                                                     RFX_MESSAGE* WINPR_RESTRICT messages,
-                                                     size_t count)
+static inline WINPR_ATTR_NODISCARD RFX_MESSAGE_LIST*
+rfx_message_list_new(RFX_CONTEXT* WINPR_RESTRICT context, RFX_MESSAGE* WINPR_RESTRICT messages,
+                     size_t count)
 {
 	WINPR_ASSERT(context);
 	RFX_MESSAGE_LIST* msg = calloc(1, sizeof(RFX_MESSAGE_LIST));
@@ -2027,9 +2032,9 @@ RFX_MESSAGE_LIST* rfx_encode_messages(RFX_CONTEXT* WINPR_RESTRICT context,
 	return rfx_message_list_new(context, list, *numMessages);
 }
 
-static inline BOOL rfx_write_message_tileset(RFX_CONTEXT* WINPR_RESTRICT context,
-                                             wStream* WINPR_RESTRICT s,
-                                             const RFX_MESSAGE* WINPR_RESTRICT message)
+static inline WINPR_ATTR_NODISCARD BOOL
+rfx_write_message_tileset(RFX_CONTEXT* WINPR_RESTRICT context, wStream* WINPR_RESTRICT s,
+                          const RFX_MESSAGE* WINPR_RESTRICT message)
 {
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(message);
@@ -2079,7 +2084,7 @@ static inline BOOL rfx_write_message_tileset(RFX_CONTEXT* WINPR_RESTRICT context
 	return TRUE;
 }
 
-static inline BOOL
+static inline WINPR_ATTR_NODISCARD BOOL
 rfx_write_message_frame_begin(WINPR_ATTR_UNUSED RFX_CONTEXT* WINPR_RESTRICT context,
                               wStream* WINPR_RESTRICT s, const RFX_MESSAGE* WINPR_RESTRICT message)
 {
@@ -2098,9 +2103,9 @@ rfx_write_message_frame_begin(WINPR_ATTR_UNUSED RFX_CONTEXT* WINPR_RESTRICT cont
 	return TRUE;
 }
 
-static inline BOOL rfx_write_message_region(WINPR_ATTR_UNUSED RFX_CONTEXT* WINPR_RESTRICT context,
-                                            wStream* WINPR_RESTRICT s,
-                                            const RFX_MESSAGE* WINPR_RESTRICT message)
+static inline WINPR_ATTR_NODISCARD BOOL
+rfx_write_message_region(WINPR_ATTR_UNUSED RFX_CONTEXT* WINPR_RESTRICT context,
+                         wStream* WINPR_RESTRICT s, const RFX_MESSAGE* WINPR_RESTRICT message)
 {
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(message);
@@ -2136,10 +2141,9 @@ static inline BOOL rfx_write_message_region(WINPR_ATTR_UNUSED RFX_CONTEXT* WINPR
 	return TRUE;
 }
 
-static inline BOOL
-rfx_write_message_frame_end(WINPR_ATTR_UNUSED RFX_CONTEXT* WINPR_RESTRICT context,
-                            wStream* WINPR_RESTRICT s,
-                            WINPR_ATTR_UNUSED const RFX_MESSAGE* WINPR_RESTRICT message)
+static inline WINPR_ATTR_NODISCARD BOOL rfx_write_message_frame_end(
+    WINPR_ATTR_UNUSED RFX_CONTEXT* WINPR_RESTRICT context, wStream* WINPR_RESTRICT s,
+    WINPR_ATTR_UNUSED const RFX_MESSAGE* WINPR_RESTRICT message)
 {
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(message);
@@ -2220,8 +2224,8 @@ UINT32 rfx_message_get_frame_idx(const RFX_MESSAGE* WINPR_RESTRICT message)
 	return message->frameIdx;
 }
 
-static inline BOOL rfx_write_progressive_wb_sync(WINPR_ATTR_UNUSED RFX_CONTEXT* WINPR_RESTRICT rfx,
-                                                 wStream* WINPR_RESTRICT s)
+static inline WINPR_ATTR_NODISCARD BOOL rfx_write_progressive_wb_sync(
+    WINPR_ATTR_UNUSED RFX_CONTEXT* WINPR_RESTRICT rfx, wStream* WINPR_RESTRICT s)
 {
 	const UINT32 blockLen = 12;
 	WINPR_ASSERT(rfx);
@@ -2237,9 +2241,8 @@ static inline BOOL rfx_write_progressive_wb_sync(WINPR_ATTR_UNUSED RFX_CONTEXT* 
 	return TRUE;
 }
 
-static inline BOOL
-rfx_write_progressive_wb_context(WINPR_ATTR_UNUSED RFX_CONTEXT* WINPR_RESTRICT rfx,
-                                 wStream* WINPR_RESTRICT s)
+static inline WINPR_ATTR_NODISCARD BOOL rfx_write_progressive_wb_context(
+    WINPR_ATTR_UNUSED RFX_CONTEXT* WINPR_RESTRICT rfx, wStream* WINPR_RESTRICT s)
 {
 	const UINT32 blockLen = 10;
 	WINPR_ASSERT(rfx);
@@ -2256,9 +2259,9 @@ rfx_write_progressive_wb_context(WINPR_ATTR_UNUSED RFX_CONTEXT* WINPR_RESTRICT r
 	return TRUE;
 }
 
-static inline BOOL rfx_write_progressive_region(RFX_CONTEXT* WINPR_RESTRICT rfx,
-                                                wStream* WINPR_RESTRICT s,
-                                                const RFX_MESSAGE* WINPR_RESTRICT msg)
+static inline WINPR_ATTR_NODISCARD BOOL
+rfx_write_progressive_region(RFX_CONTEXT* WINPR_RESTRICT rfx, wStream* WINPR_RESTRICT s,
+                             const RFX_MESSAGE* WINPR_RESTRICT msg)
 {
 	/* RFX_REGION */
 	UINT32 blockLen = 18;
@@ -2335,7 +2338,7 @@ static inline BOOL rfx_write_progressive_region(RFX_CONTEXT* WINPR_RESTRICT rfx,
 	return (used == blockLen);
 }
 
-static inline BOOL
+static inline WINPR_ATTR_NODISCARD BOOL
 rfx_write_progressive_frame_begin(WINPR_ATTR_UNUSED RFX_CONTEXT* WINPR_RESTRICT rfx,
                                   wStream* WINPR_RESTRICT s, const RFX_MESSAGE* WINPR_RESTRICT msg)
 {
@@ -2355,9 +2358,8 @@ rfx_write_progressive_frame_begin(WINPR_ATTR_UNUSED RFX_CONTEXT* WINPR_RESTRICT 
 	return TRUE;
 }
 
-static inline BOOL
-rfx_write_progressive_frame_end(WINPR_ATTR_UNUSED RFX_CONTEXT* WINPR_RESTRICT rfx,
-                                wStream* WINPR_RESTRICT s)
+static inline WINPR_ATTR_NODISCARD BOOL rfx_write_progressive_frame_end(
+    WINPR_ATTR_UNUSED RFX_CONTEXT* WINPR_RESTRICT rfx, wStream* WINPR_RESTRICT s)
 {
 	const UINT32 blockLen = 6;
 	WINPR_ASSERT(rfx);
@@ -2372,7 +2374,7 @@ rfx_write_progressive_frame_end(WINPR_ATTR_UNUSED RFX_CONTEXT* WINPR_RESTRICT rf
 	return TRUE;
 }
 
-static inline BOOL
+static inline WINPR_ATTR_NODISCARD BOOL
 rfx_write_progressive_tile_simple(WINPR_ATTR_UNUSED RFX_CONTEXT* WINPR_RESTRICT rfx,
                                   wStream* WINPR_RESTRICT s, const RFX_TILE* WINPR_RESTRICT tile)
 {

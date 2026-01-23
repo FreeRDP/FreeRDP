@@ -1011,7 +1011,8 @@ static BOOL clear_decompress_glyph_data(CLEAR_CONTEXT* WINPR_RESTRICT clear,
 	return TRUE;
 }
 
-static inline BOOL updateContextFormat(CLEAR_CONTEXT* WINPR_RESTRICT clear, UINT32 DstFormat)
+static inline WINPR_ATTR_NODISCARD BOOL updateContextFormat(CLEAR_CONTEXT* WINPR_RESTRICT clear,
+                                                            UINT32 DstFormat)
 {
 	if (!clear || !clear->nsc)
 		return FALSE;

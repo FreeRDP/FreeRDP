@@ -27,104 +27,105 @@ extern "C"
 {
 #endif
 
-#define POD_ARRAYS_IMPL(T, TLOWER)                                                        \
-	typedef struct                                                                        \
-	{                                                                                     \
-		T* values;                                                                        \
-		size_t nvalues;                                                                   \
-	} Array##T;                                                                           \
-	typedef BOOL Array##T##Cb(T* v, void* data);                                          \
-                                                                                          \
-	static inline void array_##TLOWER##_init(Array##T* a)                                 \
-	{                                                                                     \
-		WINPR_ASSERT(a);                                                                  \
-		a->values = NULL;                                                                 \
-		a->nvalues = 0;                                                                   \
-	}                                                                                     \
-                                                                                          \
-	static inline size_t array_##TLOWER##_size(const Array##T* a)                         \
-	{                                                                                     \
-		WINPR_ASSERT(a);                                                                  \
-		return a->nvalues;                                                                \
-	}                                                                                     \
-                                                                                          \
-	static inline T* array_##TLOWER##_data(const Array##T* a)                             \
-	{                                                                                     \
-		WINPR_ASSERT(a);                                                                  \
-		return a->values;                                                                 \
-	}                                                                                     \
-                                                                                          \
-	static inline const T* array_##TLOWER##_cdata(const Array##T* a)                      \
-	{                                                                                     \
-		WINPR_ASSERT(a);                                                                  \
-		return (const T*)a->values;                                                       \
-	}                                                                                     \
-                                                                                          \
-	static inline T array_##TLOWER##_get(const Array##T* a, size_t idx)                   \
-	{                                                                                     \
-		WINPR_ASSERT(a);                                                                  \
-		WINPR_ASSERT(a->nvalues > idx);                                                   \
-		return a->values[idx];                                                            \
-	}                                                                                     \
-                                                                                          \
-	static inline void array_##TLOWER##_set(Array##T* a, size_t idx, T v)                 \
-	{                                                                                     \
-		WINPR_ASSERT(a);                                                                  \
-		WINPR_ASSERT(a->nvalues > idx);                                                   \
-		a->values[idx] = v;                                                               \
-	}                                                                                     \
-                                                                                          \
-	static inline BOOL array_##TLOWER##_append(Array##T* a, T v)                          \
-	{                                                                                     \
-		WINPR_ASSERT(a);                                                                  \
-		T* tmp = realloc(a->values, sizeof(T) * (a->nvalues + 1));                        \
-		if (!tmp)                                                                         \
-			return FALSE;                                                                 \
-                                                                                          \
-		tmp[a->nvalues] = v;                                                              \
-		a->values = tmp;                                                                  \
-		a->nvalues++;                                                                     \
-		return TRUE;                                                                      \
-	}                                                                                     \
-                                                                                          \
-	static inline BOOL array_##TLOWER##_contains(const Array##T* a, T v)                  \
-	{                                                                                     \
-		WINPR_ASSERT(a);                                                                  \
-                                                                                          \
-		for (UINT32 i = 0; i < a->nvalues; i++)                                           \
-		{                                                                                 \
-			if (memcmp(&a->values[i], &v, sizeof(T)) == 0)                                \
-				return TRUE;                                                              \
-		}                                                                                 \
-                                                                                          \
-		return FALSE;                                                                     \
-	}                                                                                     \
-                                                                                          \
-	static inline BOOL array_##TLOWER##_foreach(Array##T* a, Array##T##Cb cb, void* data) \
-	{                                                                                     \
-		WINPR_ASSERT(a);                                                                  \
-		for (size_t i = 0; i < a->nvalues; i++)                                           \
-		{                                                                                 \
-			if (!cb(&a->values[i], data))                                                 \
-				return FALSE;                                                             \
-		}                                                                                 \
-                                                                                          \
-		return TRUE;                                                                      \
-	}                                                                                     \
-                                                                                          \
-	static inline void array_##TLOWER##_reset(Array##T* a)                                \
-	{                                                                                     \
-		WINPR_ASSERT(a);                                                                  \
-		a->nvalues = 0;                                                                   \
-	}                                                                                     \
-                                                                                          \
-	static inline void array_##TLOWER##_uninit(Array##T* a)                               \
-	{                                                                                     \
-		WINPR_ASSERT(a);                                                                  \
-		free(a->values);                                                                  \
-                                                                                          \
-		a->values = NULL;                                                                 \
-		a->nvalues = 0;                                                                   \
+#define POD_ARRAYS_IMPL(T, TLOWER)                                                                 \
+	typedef struct                                                                                 \
+	{                                                                                              \
+		T* values;                                                                                 \
+		size_t nvalues;                                                                            \
+	} Array##T;                                                                                    \
+	typedef BOOL Array##T##Cb(T* v, void* data);                                                   \
+                                                                                                   \
+	static inline void array_##TLOWER##_init(Array##T* a)                                          \
+	{                                                                                              \
+		WINPR_ASSERT(a);                                                                           \
+		a->values = NULL;                                                                          \
+		a->nvalues = 0;                                                                            \
+	}                                                                                              \
+                                                                                                   \
+	static inline WINPR_ATTR_NODISCARD size_t array_##TLOWER##_size(const Array##T* a)             \
+	{                                                                                              \
+		WINPR_ASSERT(a);                                                                           \
+		return a->nvalues;                                                                         \
+	}                                                                                              \
+                                                                                                   \
+	static inline WINPR_ATTR_NODISCARD T* array_##TLOWER##_data(const Array##T* a)                 \
+	{                                                                                              \
+		WINPR_ASSERT(a);                                                                           \
+		return a->values;                                                                          \
+	}                                                                                              \
+                                                                                                   \
+	static inline WINPR_ATTR_NODISCARD const T* array_##TLOWER##_cdata(const Array##T* a)          \
+	{                                                                                              \
+		WINPR_ASSERT(a);                                                                           \
+		return (const T*)a->values;                                                                \
+	}                                                                                              \
+                                                                                                   \
+	static inline WINPR_ATTR_NODISCARD T array_##TLOWER##_get(const Array##T* a, size_t idx)       \
+	{                                                                                              \
+		WINPR_ASSERT(a);                                                                           \
+		WINPR_ASSERT(a->nvalues > idx);                                                            \
+		return a->values[idx];                                                                     \
+	}                                                                                              \
+                                                                                                   \
+	static inline void array_##TLOWER##_set(Array##T* a, size_t idx, T v)                          \
+	{                                                                                              \
+		WINPR_ASSERT(a);                                                                           \
+		WINPR_ASSERT(a->nvalues > idx);                                                            \
+		a->values[idx] = v;                                                                        \
+	}                                                                                              \
+                                                                                                   \
+	static inline WINPR_ATTR_NODISCARD BOOL array_##TLOWER##_append(Array##T* a, T v)              \
+	{                                                                                              \
+		WINPR_ASSERT(a);                                                                           \
+		T* tmp = realloc(a->values, sizeof(T) * (a->nvalues + 1));                                 \
+		if (!tmp)                                                                                  \
+			return FALSE;                                                                          \
+                                                                                                   \
+		tmp[a->nvalues] = v;                                                                       \
+		a->values = tmp;                                                                           \
+		a->nvalues++;                                                                              \
+		return TRUE;                                                                               \
+	}                                                                                              \
+                                                                                                   \
+	static inline WINPR_ATTR_NODISCARD BOOL array_##TLOWER##_contains(const Array##T* a, T v)      \
+	{                                                                                              \
+		WINPR_ASSERT(a);                                                                           \
+                                                                                                   \
+		for (UINT32 i = 0; i < a->nvalues; i++)                                                    \
+		{                                                                                          \
+			if (memcmp(&a->values[i], &v, sizeof(T)) == 0)                                         \
+				return TRUE;                                                                       \
+		}                                                                                          \
+                                                                                                   \
+		return FALSE;                                                                              \
+	}                                                                                              \
+                                                                                                   \
+	static inline WINPR_ATTR_NODISCARD BOOL array_##TLOWER##_foreach(Array##T* a, Array##T##Cb cb, \
+	                                                                 void* data)                   \
+	{                                                                                              \
+		WINPR_ASSERT(a);                                                                           \
+		for (size_t i = 0; i < a->nvalues; i++)                                                    \
+		{                                                                                          \
+			if (!cb(&a->values[i], data))                                                          \
+				return FALSE;                                                                      \
+		}                                                                                          \
+                                                                                                   \
+		return TRUE;                                                                               \
+	}                                                                                              \
+                                                                                                   \
+	static inline void array_##TLOWER##_reset(Array##T* a)                                         \
+	{                                                                                              \
+		WINPR_ASSERT(a);                                                                           \
+		a->nvalues = 0;                                                                            \
+	}                                                                                              \
+                                                                                                   \
+	static inline void array_##TLOWER##_uninit(Array##T* a)                                        \
+	{                                                                                              \
+		WINPR_ASSERT(a);                                                                           \
+		free(a->values);                                                                           \
+                                                                                                   \
+		a->values = NULL;                                                                          \
+		a->nvalues = 0;                                                                            \
 	}
 
 	POD_ARRAYS_IMPL(UINT16, uint16)

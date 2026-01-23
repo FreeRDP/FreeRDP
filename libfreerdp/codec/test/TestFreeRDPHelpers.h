@@ -22,9 +22,13 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-void* test_codec_helper_read_data(const char* codec, const char* type, const char* name,
-                                  size_t* plength);
-void test_codec_helper_write_data(const char* codec, const char* type, const char* name,
-                                  const void* data, size_t length);
-bool test_codec_helper_compare(const char* codec, const char* type, const char* name,
-                               const void* data, size_t length);
+#include <winpr/wtypes.h>
+
+FREERDP_LOCAL WINPR_ATTR_NODISCARD void*
+test_codec_helper_read_data(const char* codec, const char* type, const char* name, size_t* plength);
+FREERDP_LOCAL void test_codec_helper_write_data(const char* codec, const char* type,
+                                                const char* name, const void* data, size_t length);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD bool test_codec_helper_compare(const char* codec,
+                                                                  const char* type,
+                                                                  const char* name,
+                                                                  const void* data, size_t length);

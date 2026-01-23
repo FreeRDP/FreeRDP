@@ -163,7 +163,7 @@ static BOOL json_get_string_alloc(wLog* wlog, WINPR_JSON* json, const char* key,
 	return *result != NULL;
 }
 
-static inline const char* aad_auth_result_to_string(DWORD code)
+static inline WINPR_ATTR_NODISCARD const char* aad_auth_result_to_string(DWORD code)
 {
 #define ERROR_CASE(cd, x)   \
 	if ((cd) == (DWORD)(x)) \

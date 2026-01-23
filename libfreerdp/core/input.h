@@ -44,7 +44,7 @@ typedef struct
 	wLog* log;
 } rdp_input_internal;
 
-static inline rdp_input_internal* input_cast(rdpInput* input)
+static inline WINPR_ATTR_NODISCARD rdp_input_internal* input_cast(rdpInput* input)
 {
 	union
 	{

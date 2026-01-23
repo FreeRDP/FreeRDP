@@ -65,7 +65,7 @@ typedef struct
 	BYTE val4;
 } FOUR_BYTE_FLOAT;
 
-static inline FOUR_BYTE_SIGNED_INTEGER FOUR_BYTE_SIGNED_INTEGER_init(void)
+static inline WINPR_ATTR_NODISCARD FOUR_BYTE_SIGNED_INTEGER FOUR_BYTE_SIGNED_INTEGER_init(void)
 {
 	const FOUR_BYTE_SIGNED_INTEGER empty = {
 		.c = ONE_BYTE_VAL, .s = POSITIVE_VAL, .val1 = 0, .val2 = 0, .val3 = 0, .val4 = 0
@@ -73,7 +73,7 @@ static inline FOUR_BYTE_SIGNED_INTEGER FOUR_BYTE_SIGNED_INTEGER_init(void)
 	return empty;
 }
 
-static inline FOUR_BYTE_FLOAT FOUR_BYTE_FLOAT_init(void)
+static inline WINPR_ATTR_NODISCARD FOUR_BYTE_FLOAT FOUR_BYTE_FLOAT_init(void)
 {
 	const FOUR_BYTE_FLOAT empty = {
 		.c = ONE_BYTE_VAL, .s = POSITIVE_VAL, .e = 0, .val1 = 0, .val2 = 0, .val3 = 0, .val4 = 0

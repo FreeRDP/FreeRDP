@@ -33,13 +33,11 @@
 #include <emmintrin.h>
 #include <immintrin.h>
 
-static inline pstatus_t sse_image_copy_bgr24_bgrx32(BYTE* WINPR_RESTRICT pDstData, UINT32 nDstStep,
-                                                    UINT32 nXDst, UINT32 nYDst, UINT32 nWidth,
-                                                    UINT32 nHeight,
-                                                    const BYTE* WINPR_RESTRICT pSrcData,
-                                                    UINT32 nSrcStep, UINT32 nXSrc, UINT32 nYSrc,
-                                                    int64_t srcVMultiplier, int64_t srcVOffset,
-                                                    int64_t dstVMultiplier, int64_t dstVOffset)
+static inline WINPR_ATTR_NODISCARD pstatus_t sse_image_copy_bgr24_bgrx32(
+    BYTE* WINPR_RESTRICT pDstData, UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst, UINT32 nWidth,
+    UINT32 nHeight, const BYTE* WINPR_RESTRICT pSrcData, UINT32 nSrcStep, UINT32 nXSrc,
+    UINT32 nYSrc, int64_t srcVMultiplier, int64_t srcVOffset, int64_t dstVMultiplier,
+    int64_t dstVOffset)
 {
 
 	const int64_t srcByte = 3;
@@ -84,13 +82,11 @@ static inline pstatus_t sse_image_copy_bgr24_bgrx32(BYTE* WINPR_RESTRICT pDstDat
 	return PRIMITIVES_SUCCESS;
 }
 
-static inline pstatus_t sse_image_copy_bgrx32_bgrx32(BYTE* WINPR_RESTRICT pDstData, UINT32 nDstStep,
-                                                     UINT32 nXDst, UINT32 nYDst, UINT32 nWidth,
-                                                     UINT32 nHeight,
-                                                     const BYTE* WINPR_RESTRICT pSrcData,
-                                                     UINT32 nSrcStep, UINT32 nXSrc, UINT32 nYSrc,
-                                                     int64_t srcVMultiplier, int64_t srcVOffset,
-                                                     int64_t dstVMultiplier, int64_t dstVOffset)
+static inline WINPR_ATTR_NODISCARD pstatus_t sse_image_copy_bgrx32_bgrx32(
+    BYTE* WINPR_RESTRICT pDstData, UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst, UINT32 nWidth,
+    UINT32 nHeight, const BYTE* WINPR_RESTRICT pSrcData, UINT32 nSrcStep, UINT32 nXSrc,
+    UINT32 nYSrc, int64_t srcVMultiplier, int64_t srcVOffset, int64_t dstVMultiplier,
+    int64_t dstVOffset)
 {
 
 	const int64_t srcByte = 4;

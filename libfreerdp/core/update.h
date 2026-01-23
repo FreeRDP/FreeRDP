@@ -120,7 +120,7 @@ typedef struct
 	BOOL glyph_v2;
 } rdp_secondary_update_internal;
 
-static inline rdp_update_internal* update_cast(rdpUpdate* update)
+static inline WINPR_ATTR_NODISCARD rdp_update_internal* update_cast(rdpUpdate* update)
 {
 	union
 	{
@@ -133,7 +133,8 @@ static inline rdp_update_internal* update_cast(rdpUpdate* update)
 	return cnv.internal;
 }
 
-static inline rdp_altsec_update_internal* altsec_update_cast(rdpAltSecUpdate* update)
+static inline WINPR_ATTR_NODISCARD rdp_altsec_update_internal*
+altsec_update_cast(rdpAltSecUpdate* update)
 {
 	union
 	{
@@ -146,7 +147,8 @@ static inline rdp_altsec_update_internal* altsec_update_cast(rdpAltSecUpdate* up
 	return cnv.internal;
 }
 
-static inline rdp_primary_update_internal* primary_update_cast(rdpPrimaryUpdate* update)
+static inline WINPR_ATTR_NODISCARD rdp_primary_update_internal*
+primary_update_cast(rdpPrimaryUpdate* update)
 {
 	union
 	{
@@ -159,7 +161,8 @@ static inline rdp_primary_update_internal* primary_update_cast(rdpPrimaryUpdate*
 	return cnv.internal;
 }
 
-static inline rdp_secondary_update_internal* secondary_update_cast(rdpSecondaryUpdate* update)
+static inline WINPR_ATTR_NODISCARD rdp_secondary_update_internal*
+secondary_update_cast(rdpSecondaryUpdate* update)
 {
 	union
 	{

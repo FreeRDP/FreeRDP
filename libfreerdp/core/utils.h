@@ -42,24 +42,32 @@ typedef enum
 	AUTH_FAILED
 } auth_status;
 
-auth_status utils_authenticate_gateway(freerdp* instance, rdp_auth_reason reason);
-auth_status utils_authenticate(freerdp* instance, rdp_auth_reason reason, BOOL override);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD auth_status utils_authenticate_gateway(freerdp* instance,
+                                                                          rdp_auth_reason reason);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD auth_status utils_authenticate(freerdp* instance,
+                                                                  rdp_auth_reason reason,
+                                                                  BOOL override);
 
-HANDLE utils_get_abort_event(rdpRdp* rdp);
-BOOL utils_abort_event_is_set(const rdpRdp* rdp);
-BOOL utils_reset_abort(rdpRdp* rdp);
-BOOL utils_abort_connect(rdpRdp* rdp);
-BOOL utils_sync_credentials(rdpSettings* settings, BOOL toGateway);
-BOOL utils_persist_credentials(rdpSettings* settings, const rdpSettings* current);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD HANDLE utils_get_abort_event(rdpRdp* rdp);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD BOOL utils_abort_event_is_set(const rdpRdp* rdp);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD BOOL utils_reset_abort(rdpRdp* rdp);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD BOOL utils_abort_connect(rdpRdp* rdp);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD BOOL utils_sync_credentials(rdpSettings* settings,
+                                                               BOOL toGateway);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD BOOL utils_persist_credentials(rdpSettings* settings,
+                                                                  const rdpSettings* current);
 
-BOOL utils_str_is_empty(const char* str);
-BOOL utils_str_copy(const char* value, char** dst);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD BOOL utils_str_is_empty(const char* str);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD BOOL utils_str_copy(const char* value, char** dst);
 
-const char* utils_is_vsock(const char* hostname);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD const char* utils_is_vsock(const char* hostname);
 
-BOOL utils_apply_gateway_policy(wLog* log, rdpContext* context, UINT32 flags, const char* module);
-char* utils_redir_flags_to_string(UINT32 flags, char* buffer, size_t size);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD BOOL utils_apply_gateway_policy(wLog* log, rdpContext* context,
+                                                                   UINT32 flags,
+                                                                   const char* module);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD char* utils_redir_flags_to_string(UINT32 flags, char* buffer,
+                                                                     size_t size);
 
-BOOL utils_reload_channels(rdpContext* context);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD BOOL utils_reload_channels(rdpContext* context);
 
 #endif /* FREERDP_LIB_CORE_UTILS_H */

@@ -29,7 +29,7 @@
 typedef struct vgids_context vgidsContext;
 
 /* Creates a new virtual gids context */
-vgidsContext* vgids_new(void);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD vgidsContext* vgids_new(void);
 
 /*
    Initializes the virtual gids context.
@@ -38,7 +38,8 @@ vgidsContext* vgids_new(void);
      pin: Pin protecting the usage of the private key
      Returns: TRUE on success, FALSE in case of an error
 */
-BOOL vgids_init(vgidsContext* ctx, const char* cert, const char* privateKey, const char* pin);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD BOOL vgids_init(vgidsContext* ctx, const char* cert,
+                                                   const char* privateKey, const char* pin);
 
 /*
    Processes the provided APDU returning a response for each processed command.
@@ -48,10 +49,11 @@ BOOL vgids_init(vgidsContext* ctx, const char* cert, const char* privateKey, con
      responseSize: Size of the returned data buffer
      Returns: TRUE on success, FALSE in case of an error
 */
-BOOL vgids_process_apdu(vgidsContext* context, const BYTE* data, DWORD dataSize, BYTE** response,
-                        DWORD* responseSize);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD BOOL vgids_process_apdu(vgidsContext* context, const BYTE* data,
+                                                           DWORD dataSize, BYTE** response,
+                                                           DWORD* responseSize);
 
 /* frees a previously created virtual gids context */
-void vgids_free(vgidsContext* context);
+FREERDP_LOCAL void vgids_free(vgidsContext* context);
 
 #endif /* WINPR_SMARTCARD_VIRTUAL_GIDS_H */

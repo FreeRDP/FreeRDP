@@ -167,7 +167,7 @@ extern "C"
 		}
 	}
 
-	static inline size_t BitStream_GetRemainingLength(wBitStream* _bs)
+	static inline WINPR_ATTR_NODISCARD size_t BitStream_GetRemainingLength(wBitStream* _bs)
 	{
 		WINPR_ASSERT(_bs);
 		return (_bs->length - _bs->position);
