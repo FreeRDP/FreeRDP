@@ -49,7 +49,7 @@ class sdlDispContext
   private:
 	[[nodiscard]] UINT DisplayControlCaps(UINT32 maxNumMonitors, UINT32 maxMonitorAreaFactorA,
 	                                      UINT32 maxMonitorAreaFactorB);
-	[[nodiscard]] bool set_window_resizable();
+	[[nodiscard]] bool setWindowResizeable();
 
 	[[nodiscard]] bool sendResize();
 	[[nodiscard]] bool settings_changed(const std::vector<DISPLAY_CONTROL_MONITOR_LAYOUT>& layout);
@@ -58,7 +58,7 @@ class sdlDispContext
 	[[nodiscard]] bool addTimer();
 
 	bool updateMonitor(SDL_WindowID id);
-	bool updateMonitors(SDL_EventType type);
+	bool updateMonitors(SDL_EventType type, SDL_DisplayID displayID);
 
 	[[nodiscard]] static UINT DisplayControlCaps(DispClientContext* disp, UINT32 maxNumMonitors,
 	                                             UINT32 maxMonitorAreaFactorA,

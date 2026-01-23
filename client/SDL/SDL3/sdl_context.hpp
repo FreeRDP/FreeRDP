@@ -109,6 +109,9 @@ class SdlContext
 	[[nodiscard]] SdlWindow* getWindowForId(SDL_WindowID id);
 	[[nodiscard]] SdlWindow* getFirstWindow();
 
+	[[nodiscard]] bool addDisplayWindow(SDL_DisplayID id);
+	[[nodiscard]] bool removeDisplay(SDL_DisplayID id);
+
 	[[nodiscard]] sdlDispContext& getDisplayChannelContext();
 	[[nodiscard]] sdlInput& getInputChannelContext();
 	[[nodiscard]] sdlClip& getClipboardChannelContext();

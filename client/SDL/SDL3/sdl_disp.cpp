@@ -88,7 +88,7 @@ bool sdlDispContext::sendResize()
 	return sendLayout(monitors, mcount) != CHANNEL_RC_OK;
 }
 
-bool sdlDispContext::set_window_resizable()
+bool sdlDispContext::setWindowResizeable()
 {
 	return _sdl->setResizeable(true);
 }
@@ -125,7 +125,8 @@ void sdlDispContext::OnActivated(void* context, const ActivatedEventArgs* e)
 
 	if (sdlDisp->_activated && !freerdp_settings_get_bool(settings, FreeRDP_Fullscreen))
 	{
-		sdlDisp->set_window_resizable();
+		if (!sdlDisp->setWindowResizeable())
+			return;
 
 		if (e->firstActivation)
 			return;
@@ -148,7 +149,7 @@ void sdlDispContext::OnGraphicsReset(void* context, const GraphicsResetEventArgs
 
 	if (sdlDisp->_activated && !freerdp_settings_get_bool(settings, FreeRDP_Fullscreen))
 	{
-		sdlDisp->set_window_resizable();
+		sdlDisp->setWindowResizeable();
 		sdlDisp->addTimer();
 	}
 }
@@ -170,8 +171,6 @@ Uint32 sdlDispContext::OnTimer(void* param, [[maybe_unused]] SDL_TimerID timerID
 		return 0;
 
 	WLog_Print(sdl->getWLog(), WLOG_TRACE, "checking for display changes...");
-	if (!sdlDisp->_activated || freerdp_settings_get_bool(settings, FreeRDP_Fullscreen))
-		return 0;
 
 	auto rc = sdlDisp->sendResize();
 	if (!rc)
@@ -279,7 +278,8 @@ bool sdlDispContext::addTimer()
 	WLog_Print(_sdl->getWLog(), WLOG_TRACE, "adding new display check timer");
 
 	_timer_retries = 0;
-	sendResize();
+	if (!sendResize())
+		return false;
 	_timer = SDL_AddTimer(1000, sdlDispContext::OnTimer, this);
 	return true;
 }
@@ -288,42 +288,39 @@ bool sdlDispContext::updateMonitor(SDL_WindowID id)
 {
 	auto settings = _sdl->context()->settings;
 	if (freerdp_settings_get_bool(settings, FreeRDP_UseMultimon))
-		return updateMonitors(SDL_EVENT_DISPLAY_CURRENT_MODE_CHANGED);
+		return updateMonitors(SDL_EVENT_DISPLAY_CURRENT_MODE_CHANGED, id);
 
 	if (!freerdp_settings_get_bool(_sdl->context()->settings, FreeRDP_DynamicResolutionUpdate))
 		return true;
 
-	const auto window = _sdl->getWindowForId(id);
-	if (!window)
-		return false;
-
-	const auto& monitor = window->monitor(true);
-	if (!freerdp_settings_set_monitor_def_array_sorted(settings, &monitor, 1))
+	if (!_sdl->updateWindowList())
 		return false;
 
 	return addTimer();
 }
 
-bool sdlDispContext::updateMonitors(SDL_EventType type)
+bool sdlDispContext::updateMonitors(SDL_EventType type, SDL_DisplayID displayID)
 {
-	switch (type)
-	{
-		case SDL_EVENT_DISPLAY_ADDED:
-		case SDL_EVENT_DISPLAY_REMOVED:
-		case SDL_EVENT_DISPLAY_MOVED:
-			SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "TODO [%s] Not fully supported yet",
-			            sdl_event_type_str(type));
-			break;
-		default:
-			break;
-	}
-
 	auto settings = _sdl->context()->settings;
 	if (!freerdp_settings_get_bool(settings, FreeRDP_UseMultimon))
 		return true;
 
 	if (!freerdp_settings_get_bool(settings, FreeRDP_DynamicResolutionUpdate))
 		return true;
+
+	switch (type)
+	{
+		case SDL_EVENT_DISPLAY_ADDED:
+			if (!_sdl->addDisplayWindow(displayID))
+				return false;
+			break;
+		case SDL_EVENT_DISPLAY_REMOVED:
+			if (!_sdl->removeDisplay(displayID))
+				return false;
+			break;
+		default:
+			break;
+	}
 
 	if (!_sdl->updateWindowList())
 		return false;
@@ -338,25 +335,25 @@ bool sdlDispContext::handle_display_event(const SDL_DisplayEvent* ev)
 	{
 		case SDL_EVENT_DISPLAY_ADDED:
 			SDL_Log("A new display with id %u was connected", ev->displayID);
-			return updateMonitors(ev->type);
+			return updateMonitors(ev->type, ev->displayID);
 		case SDL_EVENT_DISPLAY_REMOVED:
 			SDL_Log("The display with id %u was disconnected", ev->displayID);
-			return updateMonitors(ev->type);
+			return updateMonitors(ev->type, ev->displayID);
 		case SDL_EVENT_DISPLAY_ORIENTATION:
 			SDL_Log("The orientation of display with id %u was changed", ev->displayID);
-			return updateMonitors(ev->type);
+			return updateMonitors(ev->type, ev->displayID);
 		case SDL_EVENT_DISPLAY_MOVED:
 			SDL_Log("The display with id %u was moved", ev->displayID);
-			return updateMonitors(ev->type);
+			return updateMonitors(ev->type, ev->displayID);
 		case SDL_EVENT_DISPLAY_CONTENT_SCALE_CHANGED:
 			SDL_Log("The display with id %u changed scale", ev->displayID);
-			return updateMonitors(ev->type);
+			return updateMonitors(ev->type, ev->displayID);
 		case SDL_EVENT_DISPLAY_CURRENT_MODE_CHANGED:
 			SDL_Log("The display with id %u changed mode", ev->displayID);
-			return updateMonitors(ev->type);
+			return updateMonitors(ev->type, ev->displayID);
 		case SDL_EVENT_DISPLAY_DESKTOP_MODE_CHANGED:
 			SDL_Log("The display with id %u changed desktop mode", ev->displayID);
-			return updateMonitors(ev->type);
+			return updateMonitors(ev->type, ev->displayID);
 		default:
 			return true;
 	}
@@ -438,7 +435,7 @@ UINT sdlDispContext::DisplayControlCaps(UINT32 maxNumMonitors, UINT32 maxMonitor
 		return CHANNEL_RC_OK;
 
 	WLog_DBG(TAG, "DisplayControlCapsPdu: setting the window as resizable");
-	return set_window_resizable() ? CHANNEL_RC_OK : CHANNEL_RC_NO_MEMORY;
+	return setWindowResizeable() ? CHANNEL_RC_OK : CHANNEL_RC_NO_MEMORY;
 }
 
 bool sdlDispContext::init(DispClientContext* disp)

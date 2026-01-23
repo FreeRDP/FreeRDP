@@ -783,6 +783,26 @@ SDL_PixelFormat SdlContext::pixelFormat() const
 	return _sdlPixelFormat;
 }
 
+bool SdlContext::addDisplayWindow(SDL_DisplayID id)
+{
+	const auto flags =
+	    SDL_WINDOW_HIGH_PIXEL_DENSITY | SDL_WINDOW_FULLSCREEN | SDL_WINDOW_BORDERLESS;
+	auto title = sdl::utils::windowTitle(context()->settings);
+	auto w = SdlWindow::create(id, title, flags);
+	_windows.emplace(w.id(), std::move(w));
+	return true;
+}
+
+bool SdlContext::removeDisplay(SDL_DisplayID id)
+{
+	for (auto& w : _windows)
+	{
+		if (w.second.displayIndex() == id)
+			_windows.erase(w.first);
+	}
+	return true;
+}
+
 SdlWindow* SdlContext::getWindowForId(SDL_WindowID id)
 {
 	auto it = _windows.find(id);
