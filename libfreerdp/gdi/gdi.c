@@ -326,9 +326,10 @@ static const BYTE GDI_BS_HATCHED_PATTERNS[] = {
 };
 
 #define gdi_rop3_code_checked(code) gdi_rop3_code_checked_int((code), __FILE__, __func__, __LINE__)
-static inline WINPR_ATTR_NODISCARD DWORD
-gdi_rop3_code_checked_int(UINT32 code, WINPR_ATTR_UNUSED const char* file,
-                          WINPR_ATTR_UNUSED const char* fkt, WINPR_ATTR_UNUSED size_t line)
+static inline WINPR_ATTR_NODISCARD
+    DWORD gdi_rop3_code_checked_int(UINT32 code, WINPR_ATTR_UNUSED const char* file,
+                                    WINPR_ATTR_UNUSED const char* fkt,
+                                    WINPR_ATTR_UNUSED size_t line)
 {
 	WINPR_ASSERT_AT(code <= UINT8_MAX, file, fkt, line);
 	return gdi_rop3_code((UINT8)code);

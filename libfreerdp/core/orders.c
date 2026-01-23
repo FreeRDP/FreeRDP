@@ -119,9 +119,10 @@ gdi_rob3_code_string_checked_int(UINT32 rob, WINPR_ATTR_UNUSED const char* file,
 
 #define gdi_rop3_code_checked(value) \
 	gdi_rop3_code_checked_int((value), __FILE__, __func__, __LINE__)
-static inline WINPR_ATTR_NODISCARD DWORD
-gdi_rop3_code_checked_int(UINT32 code, WINPR_ATTR_UNUSED const char* file,
-                          WINPR_ATTR_UNUSED const char* fkt, WINPR_ATTR_UNUSED size_t line)
+static inline WINPR_ATTR_NODISCARD
+    DWORD gdi_rop3_code_checked_int(UINT32 code, WINPR_ATTR_UNUSED const char* file,
+                                    WINPR_ATTR_UNUSED const char* fkt,
+                                    WINPR_ATTR_UNUSED size_t line)
 {
 	WINPR_ASSERT_AT(code <= UINT8_MAX, file, fkt, line);
 	return gdi_rop3_code((UINT8)code);

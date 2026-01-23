@@ -464,10 +464,11 @@ static inline WINPR_ATTR_NODISCARD UINT16 out_from_count_3(UINT16 in_count,
 	 ((!(counts)->bicolor_spin && (pixel == bicolor1) && (last_pixel == bicolor2)) || \
 	  ((counts)->bicolor_spin && (pixel == bicolor2) && (last_pixel == bicolor1))))
 
-static inline WINPR_ATTR_NODISCARD SSIZE_T freerdp_bitmap_compress_24(
-    const void* WINPR_RESTRICT srcData, UINT32 width, WINPR_ATTR_UNUSED UINT32 height,
-    wStream* WINPR_RESTRICT s, UINT32 byte_limit, UINT32 start_line, wStream* WINPR_RESTRICT temp_s,
-    UINT32 e)
+static inline WINPR_ATTR_NODISCARD
+    SSIZE_T freerdp_bitmap_compress_24(const void* WINPR_RESTRICT srcData, UINT32 width,
+                                       WINPR_ATTR_UNUSED UINT32 height, wStream* WINPR_RESTRICT s,
+                                       UINT32 byte_limit, UINT32 start_line,
+                                       wStream* WINPR_RESTRICT temp_s, UINT32 e)
 {
 	uint8_t fom_mask[8192] = { 0 }; /* good for up to 64K bitmap */
 	SSIZE_T lines_sent = 0;
