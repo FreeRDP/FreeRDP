@@ -77,6 +77,7 @@
 #define FDServer 0x00000002
 #define FDOutProxy 0x00000003
 
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL rts_generate_cookie(BYTE* cookie);
 
 WINPR_ATTR_NODISCARD

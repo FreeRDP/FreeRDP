@@ -123,6 +123,7 @@ extern "C"
 
 #ifdef WINPR_THREAD_POOL
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API PTP_WAIT winpr_CreateThreadpoolWait(PTP_WAIT_CALLBACK pfnwa, PVOID pv,
 	                                              PTP_CALLBACK_ENVIRON pcbe);
 	WINPR_API VOID winpr_CloseThreadpoolWait(PTP_WAIT pwa);
@@ -136,12 +137,17 @@ extern "C"
 
 	/* Work */
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API PTP_WORK winpr_CreateThreadpoolWork(PTP_WORK_CALLBACK pfnwk, PVOID pv,
 	                                              PTP_CALLBACK_ENVIRON pcbe);
+
 	WINPR_API VOID winpr_CloseThreadpoolWork(PTP_WORK pwk);
 	WINPR_API VOID winpr_SubmitThreadpoolWork(PTP_WORK pwk);
+
+	WINPR_ATTR_NODISCARD
 	WINPR_API BOOL winpr_TrySubmitThreadpoolCallback(PTP_SIMPLE_CALLBACK pfns, PVOID pv,
 	                                                 PTP_CALLBACK_ENVIRON pcbe);
+
 	WINPR_API VOID winpr_WaitForThreadpoolWorkCallbacks(PTP_WORK pwk, BOOL fCancelPendingCallbacks);
 
 #define CreateThreadpoolWork winpr_CreateThreadpoolWork
@@ -152,10 +158,14 @@ extern "C"
 
 	/* Timer */
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API PTP_TIMER winpr_CreateThreadpoolTimer(PTP_TIMER_CALLBACK pfnti, PVOID pv,
 	                                                PTP_CALLBACK_ENVIRON pcbe);
 	WINPR_API VOID winpr_CloseThreadpoolTimer(PTP_TIMER pti);
+
+	WINPR_ATTR_NODISCARD
 	WINPR_API BOOL winpr_IsThreadpoolTimerSet(PTP_TIMER pti);
+
 	WINPR_API VOID winpr_SetThreadpoolTimer(PTP_TIMER pti, PFILETIME pftDueTime, DWORD msPeriod,
 	                                        DWORD msWindowLength);
 	WINPR_API VOID winpr_WaitForThreadpoolTimerCallbacks(PTP_TIMER pti,
@@ -169,8 +179,10 @@ extern "C"
 
 	/* I/O */
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API PTP_IO winpr_CreateThreadpoolIo(HANDLE fl, PTP_WIN32_IO_CALLBACK pfnio, PVOID pv,
 	                                          PTP_CALLBACK_ENVIRON pcbe);
+
 	WINPR_API VOID winpr_CloseThreadpoolIo(PTP_IO pio);
 	WINPR_API VOID winpr_StartThreadpoolIo(PTP_IO pio);
 	WINPR_API VOID winpr_CancelThreadpoolIo(PTP_IO pio);
@@ -187,7 +199,10 @@ extern "C"
 	WINPR_API VOID winpr_SetThreadpoolCallbackCleanupGroup(PTP_CALLBACK_ENVIRON pcbe,
 	                                                       PTP_CLEANUP_GROUP ptpcg,
 	                                                       PTP_CLEANUP_GROUP_CANCEL_CALLBACK pfng);
+
+	WINPR_ATTR_NODISCARD
 	WINPR_API PTP_CLEANUP_GROUP winpr_CreateThreadpoolCleanupGroup(void);
+
 	WINPR_API VOID winpr_CloseThreadpoolCleanupGroupMembers(PTP_CLEANUP_GROUP ptpcg,
 	                                                        BOOL fCancelPendingCallbacks,
 	                                                        PVOID pvCleanupContext);
@@ -200,9 +215,14 @@ extern "C"
 
 	/* Pool */
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API PTP_POOL winpr_CreateThreadpool(PVOID reserved);
+
 	WINPR_API VOID winpr_CloseThreadpool(PTP_POOL ptpp);
+
+	WINPR_ATTR_NODISCARD
 	WINPR_API BOOL winpr_SetThreadpoolThreadMinimum(PTP_POOL ptpp, DWORD cthrdMic);
+
 	WINPR_API VOID winpr_SetThreadpoolThreadMaximum(PTP_POOL ptpp, DWORD cthrdMost);
 
 #define CreateThreadpool winpr_CreateThreadpool
@@ -212,6 +232,7 @@ extern "C"
 
 	/* Callback */
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API BOOL winpr_CallbackMayRunLong(PTP_CALLBACK_INSTANCE pci);
 
 	/* Callback Clean-up */

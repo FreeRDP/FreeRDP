@@ -141,26 +141,40 @@ extern "C"
 
 	WINPR_API VOID InitializeSListHead(WINPR_PSLIST_HEADER ListHead);
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API WINPR_PSLIST_ENTRY InterlockedPushEntrySList(WINPR_PSLIST_HEADER ListHead,
 	                                                       WINPR_PSLIST_ENTRY ListEntry);
+
+	WINPR_ATTR_NODISCARD
 	WINPR_API WINPR_PSLIST_ENTRY InterlockedPushListSListEx(WINPR_PSLIST_HEADER ListHead,
 	                                                        WINPR_PSLIST_ENTRY List,
 	                                                        WINPR_PSLIST_ENTRY ListEnd,
 	                                                        ULONG Count);
+
+	WINPR_ATTR_NODISCARD
 	WINPR_API WINPR_PSLIST_ENTRY InterlockedPopEntrySList(WINPR_PSLIST_HEADER ListHead);
+
+	WINPR_ATTR_NODISCARD
 	WINPR_API WINPR_PSLIST_ENTRY InterlockedFlushSList(WINPR_PSLIST_HEADER ListHead);
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API USHORT QueryDepthSList(WINPR_PSLIST_HEADER ListHead);
 
 	WINPR_API LONG InterlockedIncrement(LONG volatile* Addend);
+
 	WINPR_API LONG InterlockedDecrement(LONG volatile* Addend);
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API LONG InterlockedExchange(LONG volatile* Target, LONG Value);
+
+	WINPR_ATTR_NODISCARD
 	WINPR_API LONG InterlockedExchangeAdd(LONG volatile* Addend, LONG Value);
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API LONG InterlockedCompareExchange(LONG volatile* Destination, LONG Exchange,
 	                                          LONG Comperand);
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API PVOID InterlockedCompareExchangePointer(PVOID volatile* Destination, PVOID Exchange,
 	                                                  PVOID Comperand);
 
@@ -186,6 +200,7 @@ extern "C"
 
 #ifdef WINPR_INTERLOCKED_COMPARE_EXCHANGE64
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API LONGLONG InterlockedCompareExchange64(LONGLONG volatile* Destination,
 	                                                LONGLONG Exchange, LONGLONG Comperand);
 
@@ -195,22 +210,31 @@ extern "C"
 
 	WINPR_API VOID InitializeListHead(WINPR_PLIST_ENTRY ListHead);
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API BOOL IsListEmpty(const WINPR_LIST_ENTRY* ListHead);
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API BOOL RemoveEntryList(WINPR_PLIST_ENTRY Entry);
 
 	WINPR_API VOID InsertHeadList(WINPR_PLIST_ENTRY ListHead, WINPR_PLIST_ENTRY Entry);
+
+	WINPR_ATTR_NODISCARD
 	WINPR_API WINPR_PLIST_ENTRY RemoveHeadList(WINPR_PLIST_ENTRY ListHead);
 
 	WINPR_API VOID InsertTailList(WINPR_PLIST_ENTRY ListHead, WINPR_PLIST_ENTRY Entry);
+
+	WINPR_ATTR_NODISCARD
 	WINPR_API WINPR_PLIST_ENTRY RemoveTailList(WINPR_PLIST_ENTRY ListHead);
+
 	WINPR_API VOID AppendTailList(WINPR_PLIST_ENTRY ListHead, WINPR_PLIST_ENTRY ListToAppend);
 
 	WINPR_API VOID PushEntryList(WINPR_PSINGLE_LIST_ENTRY ListHead, WINPR_PSINGLE_LIST_ENTRY Entry);
+
+	WINPR_ATTR_NODISCARD
 	WINPR_API WINPR_PSINGLE_LIST_ENTRY PopEntryList(WINPR_PSINGLE_LIST_ENTRY ListHead);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* WINPR_INTERLOCKED_H */
+#endif /* WINPR_INTERLOCKED_H */:

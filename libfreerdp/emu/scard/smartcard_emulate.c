@@ -254,6 +254,7 @@ static void scard_handle_free(void* handle)
 	free(hdl);
 }
 
+WINPR_ATTR_MALLOC(scard_handle_free, 1)
 static SCardHandle* scard_handle_new(SmartcardEmulationContext* smartcard, SCARDCONTEXT context,
                                      const void* name, BOOL unicode)
 {
@@ -1589,6 +1590,7 @@ SCardHandle* find_reader(SmartcardEmulationContext* smartcard, const void* szRea
 	return hdl;
 }
 
+WINPR_ATTR_MALLOC(scard_handle_free, 1)
 static SCardHandle* reader2handle(SmartcardEmulationContext* smartcard, SCARDCONTEXT hContext,
                                   const void* szReader, BOOL unicode, DWORD dwShareMode,
                                   SCARDHANDLE* phCard, DWORD dwPreferredProtocols,

@@ -167,7 +167,7 @@ extern "C"
 		}
 	}
 
-	static inline size_t BitStream_GetRemainingLength(wBitStream* _bs)
+	WINPR_ATTR_NODISCARD static inline size_t BitStream_GetRemainingLength(wBitStream* _bs)
 	{
 		WINPR_ASSERT(_bs);
 		return (_bs->length - _bs->position);
@@ -175,6 +175,8 @@ extern "C"
 
 	WINPR_API void BitDump(const char* tag, UINT32 level, const BYTE* buffer, UINT32 length,
 	                       UINT32 flags);
+
+	WINPR_ATTR_NODISCARD
 	WINPR_API UINT32 ReverseBits32(UINT32 bits, UINT32 nbits);
 
 	WINPR_API void BitStream_Attach(wBitStream* bs, const BYTE* buffer, UINT32 capacity);
@@ -182,7 +184,6 @@ extern "C"
 	WINPR_API void BitStream_Free(wBitStream* bs);
 
 	WINPR_ATTR_MALLOC(BitStream_Free, 1)
-	WINPR_ATTR_NODISCARD
 	WINPR_API wBitStream* BitStream_New(void);
 
 #ifdef __cplusplus

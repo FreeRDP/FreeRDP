@@ -47,11 +47,11 @@ typedef struct
 	BOOL spnego;
 } NEGOTIATE_CONTEXT;
 
-static inline NEGOTIATE_CONTEXT NEGOTIATE_CONTEXT_init(void)
+WINPR_ATTR_NODISCARD static inline NEGOTIATE_CONTEXT NEGOTIATE_CONTEXT_init(void)
 {
 	const NEGOTIATE_CONTEXT empty = { .state = NEGOTIATE_STATE_INITIAL,
-		                              .sub_context = { 0 },
-		                              .mechTypes = { 0 },
+		                              .sub_context = WINPR_C_ARRAY_INIT,
+		                              .mechTypes = WINPR_C_ARRAY_INIT,
 		                              .mech = nullptr,
 		                              .mic = FALSE,
 		                              .spnego = FALSE };
@@ -63,6 +63,7 @@ extern const SecPkgInfoW NEGOTIATE_SecPkgInfoW;
 extern const SecurityFunctionTableA NEGOTIATE_SecurityFunctionTableA;
 extern const SecurityFunctionTableW NEGOTIATE_SecurityFunctionTableW;
 
+WINPR_ATTR_NODISCARD
 BOOL NEGOTIATE_init(void);
 
 #endif /* WINPR_SSPI_NEGOTIATE_PRIVATE_H */

@@ -140,20 +140,27 @@ extern "C"
 	WINPR_API int CommandLineClearArgumentsA(COMMAND_LINE_ARGUMENT_A* options);
 	WINPR_API int CommandLineClearArgumentsW(COMMAND_LINE_ARGUMENT_W* options);
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API int CommandLineParseArgumentsA(int argc, LPSTR* argv,
 	                                         COMMAND_LINE_ARGUMENT_A* options, DWORD flags,
 	                                         void* context, COMMAND_LINE_PRE_FILTER_FN_A preFilter,
 	                                         COMMAND_LINE_POST_FILTER_FN_A postFilter);
+
+	WINPR_ATTR_NODISCARD
 	WINPR_API int CommandLineParseArgumentsW(int argc, LPWSTR* argv,
 	                                         COMMAND_LINE_ARGUMENT_W* options, DWORD flags,
 	                                         void* context, COMMAND_LINE_PRE_FILTER_FN_W preFilter,
 	                                         COMMAND_LINE_POST_FILTER_FN_W postFilter);
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API const COMMAND_LINE_ARGUMENT_A*
 	CommandLineFindArgumentA(const COMMAND_LINE_ARGUMENT_A* options, LPCSTR Name);
+
+	WINPR_ATTR_NODISCARD
 	WINPR_API const COMMAND_LINE_ARGUMENT_W*
 	CommandLineFindArgumentW(const COMMAND_LINE_ARGUMENT_W* options, LPCWSTR Name);
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API const COMMAND_LINE_ARGUMENT_A*
 	CommandLineFindNextArgumentA(const COMMAND_LINE_ARGUMENT_A* argument);
 
@@ -166,20 +173,16 @@ extern "C"
 	WINPR_API void CommandLineParserFree(char** ptr);
 
 	WINPR_ATTR_MALLOC(CommandLineParserFree, 1)
-	WINPR_ATTR_NODISCARD
 	WINPR_API char** CommandLineParseCommaSeparatedValues(const char* list, size_t* count);
 
 	WINPR_ATTR_MALLOC(CommandLineParserFree, 1)
-	WINPR_ATTR_NODISCARD
 	WINPR_API char** CommandLineParseCommaSeparatedValuesEx(const char* name, const char* list,
 	                                                        size_t* count);
 
 	WINPR_ATTR_MALLOC(free, 1)
-	WINPR_ATTR_NODISCARD
 	WINPR_API char* CommandLineToCommaSeparatedValues(int argc, char* argv[]);
 
 	WINPR_ATTR_MALLOC(free, 1)
-	WINPR_ATTR_NODISCARD
 	WINPR_API char* CommandLineToCommaSeparatedValuesEx(int argc, char* argv[],
 	                                                    const char* filters[], size_t number);
 

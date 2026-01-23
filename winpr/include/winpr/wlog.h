@@ -176,9 +176,16 @@ extern "C"
 	WINPR_API BOOL WLog_PrintMessageVA(wLog* log, DWORD type, DWORD level, size_t line,
 	                                   const char* file, const char* function, va_list args);
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API wLog* WLog_GetRoot(void);
+
+	WINPR_ATTR_NODISCARD
 	WINPR_API wLog* WLog_Get(LPCSTR name);
+
+	WINPR_ATTR_NODISCARD
 	WINPR_API DWORD WLog_GetLogLevel(wLog* log);
+
+	WINPR_ATTR_NODISCARD
 	WINPR_API BOOL WLog_IsLevelActive(wLog* _log, DWORD _log_level);
 
 	/** @brief Set a custom context for a dynamic logger.
@@ -191,6 +198,7 @@ extern "C"
 	 *
 	 *  @return \b TRUE for success, \b FALSE otherwise.
 	 */
+	WINPR_ATTR_NODISCARD
 	WINPR_API BOOL WLog_SetContext(wLog* log, const char* (*fkt)(void*), void* context);
 
 #define WLog_Print_unchecked(_log, _log_level, ...)                                         \
@@ -295,24 +303,42 @@ extern "C"
 #define WLog_FATAL(tag, ...) \
 	WLog_Print_dbg_tag(tag, WLOG_FATAL, __LINE__, __FILE__, __func__, __VA_ARGS__)
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API BOOL WLog_SetLogLevel(wLog* log, DWORD logLevel);
+
+	WINPR_ATTR_NODISCARD
 	WINPR_API BOOL WLog_SetStringLogLevel(wLog* log, LPCSTR level);
+
+	WINPR_ATTR_NODISCARD
 	WINPR_API BOOL WLog_AddStringLogFilters(LPCSTR filter);
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API BOOL WLog_SetLogAppenderType(wLog* log, DWORD logAppenderType);
+
+	WINPR_ATTR_NODISCARD
 	WINPR_API wLogAppender* WLog_GetLogAppender(wLog* log);
+
+	WINPR_ATTR_NODISCARD
 	WINPR_API BOOL WLog_OpenAppender(wLog* log);
+
+	WINPR_ATTR_NODISCARD
 	WINPR_API BOOL WLog_CloseAppender(wLog* log);
+
+	WINPR_ATTR_NODISCARD
 	WINPR_API BOOL WLog_ConfigureAppender(wLogAppender* appender, const char* setting, void* value);
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API wLogLayout* WLog_GetLogLayout(wLog* log);
+
+	WINPR_ATTR_NODISCARD
 	WINPR_API BOOL WLog_Layout_SetPrefixFormat(wLog* log, wLogLayout* layout, const char* format);
 
 #if defined(WITH_WINPR_DEPRECATED)
 	/** Deprecated */
-	WINPR_DEPRECATED(WINPR_API BOOL WLog_Init(void));
+	WINPR_DEPRECATED(WINPR_ATTR_NODISCARD WINPR_API BOOL WLog_Init(void));
+
 	/** Deprecated */
-	WINPR_DEPRECATED(WINPR_API BOOL WLog_Uninit(void));
+	WINPR_DEPRECATED(WINPR_ATTR_NODISCARD WINPR_API BOOL WLog_Uninit(void));
 #endif
 
 	typedef BOOL (*wLogCallbackMessage_t)(const wLogMessage* msg);

@@ -41,11 +41,13 @@ extern "C"
 	                                size_t width);
 
 	WINPR_ATTR_MALLOC(free, 1)
-	WINPR_ATTR_NODISCARD
 	WINPR_API char* winpr_BinToHexString(const BYTE* data, size_t length, BOOL space);
+
+	WINPR_ATTR_NODISCARD
 	WINPR_API size_t winpr_BinToHexStringBuffer(const BYTE* data, size_t length, char* dstStr,
 	                                            size_t dstSize, BOOL space);
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API size_t winpr_HexStringToBinBuffer(const char* str, size_t strLength, BYTE* data,
 	                                            size_t dataLength);
 
