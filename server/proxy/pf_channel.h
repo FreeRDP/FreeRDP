@@ -41,25 +41,26 @@ ChannelStateTracker* channelTracker_new(pServerStaticChannelContext* channel,
                                         ChannelTrackerPeekFn fn, void* data);
 
 BOOL channelTracker_setMode(ChannelStateTracker* tracker, ChannelTrackerMode mode);
-ChannelTrackerMode channelTracker_getMode(ChannelStateTracker* tracker);
+WINPR_ATTR_NODISCARD ChannelTrackerMode channelTracker_getMode(ChannelStateTracker* tracker);
 
-BOOL channelTracker_setPData(ChannelStateTracker* tracker, proxyData* pdata);
-proxyData* channelTracker_getPData(ChannelStateTracker* tracker);
+WINPR_ATTR_NODISCARD BOOL channelTracker_setPData(ChannelStateTracker* tracker, proxyData* pdata);
+WINPR_ATTR_NODISCARD proxyData* channelTracker_getPData(ChannelStateTracker* tracker);
 
-BOOL channelTracker_setCustomData(ChannelStateTracker* tracker, void* data);
-void* channelTracker_getCustomData(ChannelStateTracker* tracker);
+WINPR_ATTR_NODISCARD BOOL channelTracker_setCustomData(ChannelStateTracker* tracker, void* data);
+WINPR_ATTR_NODISCARD void* channelTracker_getCustomData(ChannelStateTracker* tracker);
 
-wStream* channelTracker_getCurrentPacket(ChannelStateTracker* tracker);
+WINPR_ATTR_NODISCARD wStream* channelTracker_getCurrentPacket(ChannelStateTracker* tracker);
 
-size_t channelTracker_getCurrentPacketSize(ChannelStateTracker* tracker);
+WINPR_ATTR_NODISCARD size_t channelTracker_getCurrentPacketSize(ChannelStateTracker* tracker);
 BOOL channelTracker_setCurrentPacketSize(ChannelStateTracker* tracker, size_t size);
 
-PfChannelResult channelTracker_update(ChannelStateTracker* tracker, const BYTE* xdata, size_t xsize,
-                                      UINT32 flags, size_t totalSize);
+WINPR_ATTR_NODISCARD PfChannelResult channelTracker_update(ChannelStateTracker* tracker,
+                                                           const BYTE* xdata, size_t xsize,
+                                                           UINT32 flags, size_t totalSize);
 
-PfChannelResult channelTracker_flushCurrent(ChannelStateTracker* t, BOOL first, BOOL last,
-                                            BOOL toBack);
+WINPR_ATTR_NODISCARD PfChannelResult channelTracker_flushCurrent(ChannelStateTracker* t, BOOL first,
+                                                                 BOOL last, BOOL toBack);
 
-BOOL pf_channel_setup_generic(pServerStaticChannelContext* channel);
+WINPR_ATTR_NODISCARD BOOL pf_channel_setup_generic(pServerStaticChannelContext* channel);
 
 #endif /* SERVER_PROXY_PF_CHANNEL_H_ */

@@ -21,6 +21,7 @@
 
 #include <freerdp/server/proxy/proxy_context.h>
 
-BOOL pf_channel_setup_drdynvc(proxyData* pdata, pServerStaticChannelContext* channel);
+WINPR_ATTR_NODISCARD BOOL pf_channel_setup_drdynvc(proxyData* pdata,
+                                                   pServerStaticChannelContext* channel);
 
 #endif /* SERVER_PROXY_CHANNELS_PF_CHANNEL_DRDYNVC_H_ */

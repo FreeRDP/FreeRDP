@@ -26,8 +26,8 @@
 
 #include "wf_interface.h"
 
-int wf_rdpsnd_lock(void);
-int wf_rdpsnd_unlock(void);
-BOOL wf_peer_rdpsnd_init(wfPeerContext* context);
+WINPR_ATTR_NODISCARD int wf_rdpsnd_lock(void);
+WINPR_ATTR_NODISCARD int wf_rdpsnd_unlock(void);
+WINPR_ATTR_NODISCARD BOOL wf_peer_rdpsnd_init(wfPeerContext* context);
 
 #endif /* FREERDP_SERVER_WIN_RDPSND_H */

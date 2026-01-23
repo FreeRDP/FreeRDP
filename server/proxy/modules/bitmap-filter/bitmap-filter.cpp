@@ -478,15 +478,16 @@ extern "C"
 {
 #endif
 #if defined(BUILD_SHARED_LIBS)
-	FREERDP_API BOOL proxy_module_entry_point(proxyPluginsManager* plugins_manager, void* userdata);
+	FREERDP_API WINPR_ATTR_NODISCARD BOOL
+	proxy_module_entry_point(proxyPluginsManager* plugins_manager, void* userdata);
 
 	BOOL proxy_module_entry_point(proxyPluginsManager* plugins_manager, void* userdata)
 	{
 		return int_proxy_module_entry_point(plugins_manager, userdata);
 	}
 #else
-FREERDP_API BOOL bitmap_filter_proxy_module_entry_point(proxyPluginsManager* plugins_manager,
-                                                        void* userdata);
+FREERDP_API WINPR_ATTR_NODISCARD BOOL
+bitmap_filter_proxy_module_entry_point(proxyPluginsManager* plugins_manager, void* userdata);
 BOOL bitmap_filter_proxy_module_entry_point(proxyPluginsManager* plugins_manager, void* userdata)
 {
 	return int_proxy_module_entry_point(plugins_manager, userdata);

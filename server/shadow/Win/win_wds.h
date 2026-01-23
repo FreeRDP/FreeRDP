@@ -38,8 +38,8 @@ extern "C"
 {
 #endif
 
-	int win_shadow_wds_init(winShadowSubsystem* subsystem);
-	int win_shadow_wds_uninit(winShadowSubsystem* subsystem);
+	WINPR_ATTR_NODISCARD int win_shadow_wds_init(winShadowSubsystem* subsystem);
+	WINPR_ATTR_NODISCARD int win_shadow_wds_uninit(winShadowSubsystem* subsystem);
 
 #ifdef __cplusplus
 }

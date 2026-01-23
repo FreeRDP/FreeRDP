@@ -81,13 +81,15 @@ extern "C"
 	 * @param ep A module entry point function, must NOT be NULL
 	 * @return TRUE for success, FALSE otherwise
 	 */
-	BOOL pf_modules_add(proxyModule* module, proxyModuleEntryPoint ep, void* userdata);
+	WINPR_ATTR_NODISCARD BOOL pf_modules_add(proxyModule* module, proxyModuleEntryPoint ep,
+	                                         void* userdata);
 
-	BOOL pf_modules_is_plugin_loaded(proxyModule* module, const char* plugin_name);
+	WINPR_ATTR_NODISCARD BOOL pf_modules_is_plugin_loaded(proxyModule* module,
+	                                                      const char* plugin_name);
 	void pf_modules_list_loaded_plugins(proxyModule* module);
 
-	BOOL pf_modules_run_filter(proxyModule* module, PF_FILTER_TYPE type, proxyData* pdata,
-	                           void* param);
+	WINPR_ATTR_NODISCARD BOOL pf_modules_run_filter(proxyModule* module, PF_FILTER_TYPE type,
+	                                                proxyData* pdata, void* param);
 	BOOL pf_modules_run_hook(proxyModule* module, PF_HOOK_TYPE type, proxyData* pdata,
 	                         void* custom);
 

@@ -762,16 +762,19 @@ static BOOL tf_peer_post_connect(freerdp_peer* client)
 
 	if (WTSVirtualChannelManagerIsChannelJoined(context->vcm, RDPSND_CHANNEL_NAME))
 	{
-		sf_peer_rdpsnd_init(context); /* Audio Output */
+		if (!sf_peer_rdpsnd_init(context)) /* Audio Output */
+			return FALSE;
 	}
 
 	if (WTSVirtualChannelManagerIsChannelJoined(context->vcm, ENCOMSP_SVC_CHANNEL_NAME))
 	{
-		sf_peer_encomsp_init(context); /* Lync Multiparty */
+		if (!sf_peer_encomsp_init(context)) /* Lync Multiparty */
+			return FALSE;
 	}
 
 	/* Dynamic Virtual Channels */
-	sf_peer_audin_init(context); /* Audio Input */
+	if (!sf_peer_audin_init(context)) /* Audio Input */
+		return FALSE;
 
 #if defined(CHANNEL_AINPUT_SERVER)
 	sf_peer_ainput_init(context);
